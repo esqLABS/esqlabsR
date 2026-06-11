@@ -250,3 +250,34 @@ test_that("addScenario rejects NA-valued FK args", {
     )
   )
 })
+
+test_that("addScenario stores steadyStateTime in base units and round-trips the declared unit", {
+  project <- testProject()
+  addScenario(
+    project,
+    scenarioName = "SS",
+    modelFile = "Aciclovir.pkml",
+    individualId = "Indiv1",
+    steadyState = TRUE,
+    steadyStateTime = 10,
+    steadyStateTimeUnit = "h"
+  )
+
+  # Stored value is the base unit (minutes): 10 h -> 600 min.
+  expect_equal(project$scenarios[["SS"]]$steadyStateTime, 600)
+  expect_equal(project$scenarios[["SS"]]$steadyStateTimeUnit, "h")
+
+  # Saved JSON carries the declared 10 / "h" (the serializer converts the
+  # base-unit value back to the declared unit).
+  out <- withr::local_tempfile(fileext = ".json")
+  esqlabsR:::.saveProjectJson(project, out)
+  raw <- jsonlite::fromJSON(out, simplifyVector = FALSE)
+  savedSS <- Filter(\(s) identical(s[["name"]], "SS"), raw$scenarios)[[1]]
+  expect_equal(savedSS$steadyStateTime, 10)
+  expect_equal(savedSS$steadyStateTimeUnit, "h")
+
+  # Reload round-trips back to the base-unit value.
+  reloaded <- loadProject(out)
+  expect_equal(reloaded$scenarios[["SS"]]$steadyStateTime, 600)
+  expect_equal(reloaded$scenarios[["SS"]]$steadyStateTimeUnit, "h")
+})

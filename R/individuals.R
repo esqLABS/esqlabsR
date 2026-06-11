@@ -170,6 +170,21 @@ addIndividual <- function(project, individualId, species, ...) {
     )
   }
 
+  # `gender` is a required field per `.validateIndividuals()`; reject it at
+  # add time so a gender-less individual cannot enter the project only to be
+  # flagged as a Critical Error later (mirrors the validator's contract:
+  # missing, NA, or empty are all invalid).
+  gender <- dots$gender
+  if (
+    is.null(gender) ||
+      !is.character(gender) ||
+      length(gender) != 1L ||
+      is.na(gender) ||
+      nchar(gender) == 0
+  ) {
+    errors <- c(errors, "gender must be a non-empty string")
+  }
+
   if (length(errors) > 0L) {
     cli::cli_abort(c(
       "Cannot add individual {.val {individualId}}:",

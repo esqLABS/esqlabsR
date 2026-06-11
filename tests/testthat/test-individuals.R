@@ -55,6 +55,15 @@ test_that("addIndividual aborts when individualId already exists", {
   )
 })
 
+test_that("addIndividual aborts when gender is missing", {
+  project <- testProject()
+  expect_snapshot(
+    error = TRUE,
+    addIndividual(project, "NewI", species = "Human")
+  )
+  expect_false("NewI" %in% names(project$individuals))
+})
+
 test_that("removeIndividual warns when referenced by a scenario", {
   project <- testProject()
   referenced <- "Indiv1"

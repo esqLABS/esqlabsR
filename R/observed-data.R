@@ -275,6 +275,22 @@ addObservedData <- function(project, entry) {
         "i" = "Must be one of: {.val {validTypes}}."
       ))
     }
+    # Validate the full entry shape (per-type required fields), not just the
+    # type, so an under-specified config entry is rejected at add time.
+    .validateObservedDataEntry(entry, length(project$observedData) + 1L)
+    # Config entries are keyed by `file` basename (see removeObservedData);
+    # abort on a duplicate to match the other mutators' convention.
+    fileBase <- basename(entry$file)
+    existingFiles <- vapply(
+      project$observedData,
+      function(e) if (is.null(e$file)) NA_character_ else basename(e$file),
+      character(1)
+    )
+    if (fileBase %in% existingFiles) {
+      cli::cli_abort(
+        "observedData entry with file {.val {fileBase}} already exists"
+      )
+    }
     state$.observedDataNamesCache <- NULL
     project$observedData <- c(project$observedData, list(entry))
     project$.markModified()

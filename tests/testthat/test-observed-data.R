@@ -226,3 +226,40 @@ test_that("loadObservedData errors when dataFolder is not declared", {
   project <- loadProject(jsonPath)
   expect_snapshot(error = TRUE, loadObservedData(project))
 })
+
+test_that("addObservedData appends a valid config entry", {
+  project <- testProject()
+  before <- length(project$observedData)
+  addObservedData(project, list(type = "pkml", file = "extra.pkml"))
+  expect_length(project$observedData, before + 1L)
+  expect_equal(
+    project$observedData[[before + 1L]],
+    list(type = "pkml", file = "extra.pkml")
+  )
+})
+
+test_that("addObservedData rejects an under-specified config entry", {
+  project <- testProject()
+  expect_snapshot(
+    error = TRUE,
+    addObservedData(project, list(type = "excel", file = "x.xlsx"))
+  )
+  expect_length(project$observedData, 1L)
+})
+
+test_that("addObservedData rejects a duplicate config entry file", {
+  project <- testProject()
+  expect_snapshot(
+    error = TRUE,
+    addObservedData(
+      project,
+      list(
+        type = "excel",
+        file = "Aciclovir_TimeValuesData.xlsx",
+        importerConfiguration = "esqlabs_dataImporter_configuration.xml",
+        sheets = list("Laskin 1982.Group A")
+      )
+    )
+  )
+  expect_length(project$observedData, 1L)
+})
