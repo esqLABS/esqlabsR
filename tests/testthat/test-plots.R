@@ -44,3 +44,33 @@ test_that("addPlotGrid aborts when no plots are defined", {
     addPlotGrid(project, "G1", plotIDs = "MissingPlot")
   )
 })
+
+test_that("addPlot stores a vector-valued field as a single row", {
+  project <- exampleProject()
+  addDataCombined(
+    project,
+    "DC_vec",
+    simulated = list(list(
+      label = "sim",
+      scenario = "Aciclovir_iv_population",
+      path = project$outputPaths$Aciclovir_PVB,
+      group = "g"
+    ))
+  )
+  addPlot(
+    project,
+    "P_vec",
+    "DC_vec",
+    "population",
+    quantiles = c(0.05, 0.5, 0.95)
+  )
+
+  cfg <- project$plots$plotConfiguration
+  # One new row, no recycling into three, and no mangled column name.
+  expect_equal(sum(cfg$plotID == "P_vec"), 1L)
+  expect_true("quantiles" %in% names(cfg))
+  expect_equal(
+    cfg$quantiles[[which(cfg$plotID == "P_vec")]],
+    c(0.05, 0.5, 0.95)
+  )
+})
