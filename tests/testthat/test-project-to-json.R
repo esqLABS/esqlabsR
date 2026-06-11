@@ -305,6 +305,79 @@ test_that("round-trip preserves outputPathIds order", {
   )
 })
 
+test_that("steadyState=false with a declared time and unit round-trips", {
+  raw <- list(
+    list(
+      name = "S",
+      individualId = "I",
+      modelFile = "m.pkml",
+      steadyState = FALSE,
+      steadyStateTime = 2,
+      steadyStateTimeUnit = "h"
+    )
+  )
+  scenarios <- esqlabsR:::.parseScenarios(raw, list())
+  sc <- scenarios[["S"]]
+
+  # Parser stored the time in base units (minutes) but kept the flag off.
+  expect_false(sc$simulateSteadyState)
+  expect_equal(sc$steadyStateTime, 120)
+  expect_identical(sc$steadyStateTimeUnit, "h")
+
+  project <- .fakeProject(scenarios = scenarios)
+  out <- esqlabsR:::.scenariosToJson(project)[[1L]]
+
+  # The flag stays false, and the declared time/unit survive instead of
+  # being dropped to null.
+  expect_false(out$steadyState)
+  expect_equal(out$steadyStateTime, 2)
+  expect_identical(out$steadyStateTimeUnit, "h")
+})
+
+test_that("a standalone simulationTimeUnit round-trips when simulationTime is null", {
+  raw <- list(
+    list(
+      name = "S",
+      individualId = "I",
+      modelFile = "m.pkml",
+      simulationTimeUnit = "h"
+    )
+  )
+  scenarios <- esqlabsR:::.parseScenarios(raw, list())
+
+  expect_null(scenarios[["S"]]$simulationTime)
+  expect_identical(scenarios[["S"]]$simulationTimeUnit, "h")
+
+  project <- .fakeProject(scenarios = scenarios)
+  out <- esqlabsR:::.scenariosToJson(project)[[1L]]
+  expect_null(out$simulationTime)
+  expect_identical(out$simulationTimeUnit, "h")
+})
+
+test_that("populationId is emitted even when simulationType has drifted", {
+  sc <- Scenario(
+    scenarioName = "S",
+    modelFile = "m.pkml",
+    individualId = "I"
+  )
+  # Drift: populationId set but type left at the Individual default.
+  sc$populationId <- "Pop"
+  expect_identical(sc$simulationType, "Individual")
+
+  project <- .fakeProject(scenarios = list(S = sc))
+  out <- esqlabsR:::.scenariosToJson(project)[[1L]]
+  expect_identical(out$populationId, "Pop")
+})
+
+test_that(".validateScenarios warns on populationId / simulationType drift", {
+  sc <- Scenario(scenarioName = "S", modelFile = "m.pkml")
+  sc$populationId <- "Pop"
+
+  result <- esqlabsR:::.validateScenarios(list(S = sc))
+  msgs <- vapply(result$warnings, \(w) w$message, character(1))
+  expect_true(any(grepl("populationId but simulationType", msgs)))
+})
+
 test_that(".scenariosToJson errors when scenario outputPaths reference unknown ids", {
   project <- exampleProject()
   # Mutate the first scenario to add a named path whose id is not in

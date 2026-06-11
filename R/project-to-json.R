@@ -157,23 +157,21 @@
     }
 
     if (sc$simulateSteadyState && is.null(sc$steadyStateTimeUnit)) {
-      stop(
-        "Scenario '",
-        sc$scenarioName,
-        "' has simulateSteadyState=TRUE but steadyStateTimeUnit is NULL. ",
-        "Set steadyStateTimeUnit (e.g. \"min\") so the value can round-trip.",
-        call. = FALSE
-      )
+      cli::cli_abort(c(
+        "Scenario {.val {sc$scenarioName}} has {.field simulateSteadyState}=TRUE \\
+        but {.field steadyStateTimeUnit} is NULL.",
+        "i" = "Set {.field steadyStateTimeUnit} (e.g. {.val min}) so the value \\
+        can round-trip."
+      ))
     }
 
     list(
       name = sc$scenarioName,
       individualId = sc$individualId,
-      populationId = if (sc$simulationType == "Population") {
-        sc$populationId
-      } else {
-        NULL
-      },
+      # Emit the populationId verbatim rather than keying off the derived
+      # `simulationType`, so a drifted record (populationId set while the
+      # type reads "Individual") does not silently lose its populationId.
+      populationId = sc$populationId,
       readPopulationFromCSV = sc$readPopulationFromCSV,
       # `as.list(NULL)` -> `list()`; this collapses both "key absent" and
       # "empty array" in the parsed scenario to JSON `[]`. Matches the
@@ -189,9 +187,11 @@
       simulationTime = simTimeStr,
       simulationTimeUnit = sc$simulationTimeUnit,
       steadyState = sc$simulateSteadyState,
-      steadyStateTime = if (
-        sc$simulateSteadyState && !is.null(sc$steadyStateTimeUnit)
-      ) {
+      # Emit the steady-state time/unit whenever a unit is declared,
+      # independently of `simulateSteadyState`. A declared time with the
+      # flag off (e.g. `steadyState: false` plus a preset time) is valid
+      # JSON the parser reads back, so dropping it would lose data.
+      steadyStateTime = if (!is.null(sc$steadyStateTimeUnit)) {
         ospsuite::toUnit(
           quantityOrDimension = ospDimensions$Time,
           values = sc$steadyStateTime,
@@ -200,11 +200,7 @@
       } else {
         NULL
       },
-      steadyStateTimeUnit = if (sc$simulateSteadyState) {
-        sc$steadyStateTimeUnit
-      } else {
-        NULL
-      },
+      steadyStateTimeUnit = sc$steadyStateTimeUnit,
       overwriteFormulasInSS = sc$overwriteFormulasInSS,
       modelFile = sc$modelFile,
       outputPathIds = outputPathIds

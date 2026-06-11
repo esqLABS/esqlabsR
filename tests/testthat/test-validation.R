@@ -139,27 +139,8 @@ test_that("validationResult add_warning with details works", {
 
 # Lightweight Project factory for adapter unit tests. Creates an empty
 # in-memory Project and overrides specific fields so each test can target
-# one adapter without dragging the whole fixture in.
-.fakeProject <- function(...) {
-  project <- Project$new()
-  project$schemaVersion <- "2.0"
-  project$esqlabsRVersion <- NA_character_
-  project$outputPaths <- list()
-  project$scenarios <- list()
-  project$modelParameterSets <- list()
-  project$individualParameterSets <- list()
-  project$applicationParameterSets <- list()
-  project$individuals <- list()
-  project$populations <- list()
-  project$applications <- list()
-  project$observedData <- list()
-  project$plots <- NULL
-  overrides <- list(...)
-  for (nm in names(overrides)) {
-    project[[nm]] <- overrides[[nm]]
-  }
-  project
-}
+# one adapter without dragging the whole fixture in. `.fakeProject()` lives
+# in tests/testthat/helpers.R so several test files can share it.
 
 test_that("validateProject() rejects non-Project inputs", {
   expect_snapshot(error = TRUE, validateProject("not a project"))

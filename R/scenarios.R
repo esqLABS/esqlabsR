@@ -176,38 +176,43 @@ print.Scenario <- function(x, ...) {
 
   result <- list()
   for (entry in scenariosData) {
+    # Use `[[` rather than `$` throughout: list `$` does partial matching,
+    # so `entry$simulationTime` would wrongly resolve to `simulationTimeUnit`
+    # (and `steadyStateTime` to `steadyStateTimeUnit`) when only the unit is
+    # declared.
     simulationTime <- NULL
-    simulationTimeUnit <- NULL
-    if (!is.null(entry$simulationTime)) {
-      simulationTime <- .parseSimulationTimeIntervals(entry$simulationTime)
-      simulationTimeUnit <- entry$simulationTimeUnit
+    if (!is.null(entry[["simulationTime"]])) {
+      simulationTime <- .parseSimulationTimeIntervals(entry[["simulationTime"]])
     }
+    # Preserve a declared unit even when `simulationTime` is null, so a
+    # standalone `simulationTimeUnit` round-trips instead of being dropped.
+    simulationTimeUnit <- entry[["simulationTimeUnit"]]
 
     steadyStateTime <- 1000
     steadyStateTimeUnit <- NULL
-    if (!is.null(entry$steadyStateTime)) {
-      if (is.null(entry$steadyStateTimeUnit)) {
+    if (!is.null(entry[["steadyStateTime"]])) {
+      if (is.null(entry[["steadyStateTimeUnit"]])) {
         cli::cli_abort(
-          "Scenario {.val {entry$name}} has {.field steadyStateTime} set \\
+          "Scenario {.val {entry[['name']]}} has {.field steadyStateTime} set \\
           but {.field steadyStateTimeUnit} is null. Please specify a unit \\
           (e.g. {.val min})."
         )
       }
       steadyStateTime <- ospsuite::toBaseUnit(
         quantityOrDimension = ospDimensions$Time,
-        values = entry$steadyStateTime,
-        unit = entry$steadyStateTimeUnit
+        values = entry[["steadyStateTime"]],
+        unit = entry[["steadyStateTimeUnit"]]
       )
-      steadyStateTimeUnit <- entry$steadyStateTimeUnit
+      steadyStateTimeUnit <- entry[["steadyStateTimeUnit"]]
     }
 
     scenarioOutputPaths <- NULL
-    if (!is.null(entry$outputPathIds)) {
-      pathIds <- unlist(entry$outputPathIds)
+    if (!is.null(entry[["outputPathIds"]])) {
+      pathIds <- unlist(entry[["outputPathIds"]])
       unknown <- setdiff(pathIds, names(outputPaths))
       if (length(unknown) > 0) {
         cli::cli_abort(
-          "Scenario {.val {entry$name}} references unknown outputPathIds: \\
+          "Scenario {.val {entry[['name']]}} references unknown outputPathIds: \\
           {.val {unknown}}."
         )
       }
@@ -217,22 +222,22 @@ print.Scenario <- function(x, ...) {
       )
     }
 
-    result[[entry$name]] <- Scenario(
-      scenarioName = entry$name,
-      modelFile = entry$modelFile,
-      applicationProtocol = entry$applicationProtocol %||% NA,
-      individualId = entry$individualId,
-      populationId = entry$populationId,
+    result[[entry[["name"]]]] <- Scenario(
+      scenarioName = entry[["name"]],
+      modelFile = entry[["modelFile"]],
+      applicationProtocol = entry[["applicationProtocol"]] %||% NA,
+      individualId = entry[["individualId"]],
+      populationId = entry[["populationId"]],
       outputPaths = scenarioOutputPaths,
-      readPopulationFromCSV = entry$readPopulationFromCSV %||% FALSE,
-      simulateSteadyState = isTRUE(entry$steadyState),
+      readPopulationFromCSV = entry[["readPopulationFromCSV"]] %||% FALSE,
+      simulateSteadyState = isTRUE(entry[["steadyState"]]),
       simulationTime = simulationTime,
       simulationTimeUnit = simulationTimeUnit,
       steadyStateTime = steadyStateTime,
       steadyStateTimeUnit = steadyStateTimeUnit,
-      overwriteFormulasInSS = entry$overwriteFormulasInSS %||% FALSE,
-      modelParameterSets = if (!is.null(entry$modelParameterSets)) {
-        unlist(entry$modelParameterSets)
+      overwriteFormulasInSS = entry[["overwriteFormulasInSS"]] %||% FALSE,
+      modelParameterSets = if (!is.null(entry[["modelParameterSets"]])) {
+        unlist(entry[["modelParameterSets"]])
       }
     )
   }
@@ -312,6 +317,23 @@ print.Scenario <- function(x, ...) {
       result$add_critical_error(
         "Missing Fields",
         paste0("Population scenario '", name, "' has no populationId")
+      )
+    }
+
+    if (
+      simType != "Population" &&
+        !is.null(sc$populationId) &&
+        sc$populationId != ""
+    ) {
+      result$add_warning(
+        "Validation",
+        paste0(
+          "Scenario '",
+          name,
+          "' has a populationId but simulationType is '",
+          simType,
+          "'; it will load as a Population scenario on the next reload."
+        )
       )
     }
   }
@@ -581,8 +603,15 @@ addScenario <- function(
     simulationTime = if (!is.null(simulationTime)) {
       .parseSimulationTimeIntervals(simulationTime)
     },
-    simulationTimeUnit = if (!is.null(simulationTime)) simulationTimeUnit,
-    steadyStateTime = steadyStateTime,
+    simulationTimeUnit = simulationTimeUnit,
+    # The field contract stores steadyStateTime in the base unit (minutes);
+    # convert from the user-declared unit so a non-minute unit round-trips
+    # correctly (the serializer converts back to steadyStateTimeUnit).
+    steadyStateTime = ospsuite::toBaseUnit(
+      quantityOrDimension = ospDimensions$Time,
+      values = steadyStateTime,
+      unit = steadyStateTimeUnit
+    ),
     steadyStateTimeUnit = steadyStateTimeUnit,
     overwriteFormulasInSS = overwriteFormulasInSS,
     modelParameterSets = modelParameterSets
