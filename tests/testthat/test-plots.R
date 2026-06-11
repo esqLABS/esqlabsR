@@ -66,11 +66,13 @@ test_that("addPlot stores a vector-valued field as a single row", {
   )
 
   cfg <- project$plots$plotConfiguration
-  # One new row, no recycling into three, and no mangled column name.
+  # One new row, no recycling into three, and no mangled column name. The
+  # vector is stored as a comma-separated string to match the parser shape
+  # and the dispatcher's `strsplit(quantiles, ",")`.
   expect_equal(sum(cfg$plotID == "P_vec"), 1L)
   expect_true("quantiles" %in% names(cfg))
   expect_equal(
     cfg$quantiles[[which(cfg$plotID == "P_vec")]],
-    c(0.05, 0.5, 0.95)
+    "0.05, 0.5, 0.95"
   )
 })

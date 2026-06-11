@@ -282,10 +282,16 @@
 # Normalise `...` for use as a single row in `as.data.frame()`:
 # - NULL becomes NA so the column is kept (otherwise it is silently
 #   dropped).
-# - Multi-length vectors and lists are wrapped in `list(...)` so they
-#   become a 1-element list-column instead of recycling into multiple
-#   rows (e.g. `xValuesLimits = c(0, 100)` would otherwise expand to
-#   two rows).
+# - A multi-element atomic vector is collapsed to a comma-separated string
+#   (e.g. `quantiles = c(0.05, 0.5, 0.95)` becomes `"0.05, 0.5, 0.95"`).
+#   This is the canonical in-memory shape for the multi-value
+#   plotConfiguration fields: the JSON stores them as comma-separated
+#   strings, the parser keeps them as strings, and the plot dispatchers
+#   re-split them with `strsplit(x, ",")`. A bare vector would instead
+#   recycle into one row per element under `as.data.frame()`, and a
+#   list-column would not `bind_rows()` with the parser's string columns.
+# - A list is wrapped in `I(list(...))` so it survives as a single
+#   list-column cell rather than being unwrapped by `as.data.frame()`.
 #
 # @keywords internal
 # @noRd
@@ -295,8 +301,11 @@
     if (is.null(v)) {
       return(NA)
     }
-    if (length(v) > 1L || is.list(v)) {
-      return(list(v))
+    if (is.list(v)) {
+      return(I(list(v)))
+    }
+    if (length(v) > 1L) {
+      return(paste(v, collapse = ", "))
     }
     v
   })

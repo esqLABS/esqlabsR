@@ -59,9 +59,24 @@ createPlots <- function(
   if (is.null(plotGridNames)) {
     plotGridNames <- gridDf$name
   }
-  # Filter to only requested grids and any plot configs they reference.
+  # Unknown grid names are silently dropped below; surface them when the
+  # caller asked us to stop on unresolved references.
+  if (isTRUE(stopIfNotFound)) {
+    unknownGrids <- setdiff(plotGridNames, gridDf$name)
+    if (length(unknownGrids) > 0) {
+      cli::cli_abort(messages$stopPlotGridNamesNotFound(unknownGrids))
+    }
+  }
+  # Filter to only the requested grids and the plot configs they reference,
+  # so validation and DataCombined building stay scoped to this build. An
+  # unfiltered cfgDf would validate plots whose DataCombined is not built
+  # (e.g. plots in other grids, or plots in no grid at all) and abort.
   gridDf <- gridDf[gridDf$name %in% plotGridNames, , drop = FALSE]
   if (nrow(gridDf) == 0) return(list())
+  referencedPlotIDs <- unique(unlist(lapply(gridDf$plotIDs, .splitPlotIDs)))
+  if (nrow(cfgDf) > 0) {
+    cfgDf <- cfgDf[cfgDf$plotID %in% referencedPlotIDs, , drop = FALSE]
+  }
 
   # Build DataCombined for the configs referenced by the requested grids.
   if (is.null(dataCombinedList)) {
@@ -420,8 +435,9 @@ createPlotsFromExcel <- function(...) {
 #'
 #' @param dfPlotConfigurations data.frame with one row per plot, columns
 #'   include plotID, DataCombinedName, plotType, title, subtitle, plus
-#'   axis/styling fields. Rows whose DataCombinedName is not present in
-#'   `dataCombinedList` are pruned by `.validatePlotConfigurationFromExcel()`.
+#'   axis/styling fields. Callers must pass only plots whose DataCombinedName
+#'   is built in `dataCombinedList`; `.validatePlotConfigurationFromExcel()`
+#'   aborts on any DataCombinedName missing from the list.
 #' @param dfPlotGrids data.frame with one row per grid, columns include name,
 #'   plotIDs, title.
 #' @param dataCombinedList named list of DataCombined objects keyed by name.
@@ -462,7 +478,7 @@ createPlotsFromExcel <- function(...) {
           ))
       ]
     )
-    if (!is.na(row[["title"]])) {
+    if ("title" %in% names(row) && !is.na(row[["title"]])) {
       plotConfiguration$title <- row[["title"]]
     }
     if ("subtitle" %in% names(row) && !is.na(row[["subtitle"]])) {
@@ -513,7 +529,7 @@ createPlotsFromExcel <- function(...) {
         foldDist <- dfPlotConfigurations[
           dfPlotConfigurations$plotID == plotId,
         ]$foldDistance
-        if (is.na(foldDist)) {
+        if (is.null(foldDist) || is.na(foldDist)) {
           plotObservedVsSimulated(
             dataCombined,
             plotConfigurationList[[plotId]]
@@ -544,7 +560,7 @@ createPlotsFromExcel <- function(...) {
       defaultConfiguration = defaultPlotGridConfig,
       row[!(names(row) %in% c("name", "plotIDs", "title"))]
     )
-    if (!is.na(row$title) && !is.null(row$title)) {
+    if (!is.null(row$title) && !is.na(row$title)) {
       plotGridConfiguration$title <- row$title
     }
     plotsToAdd <- plotList[intersect(
@@ -559,17 +575,6 @@ createPlotsFromExcel <- function(...) {
       plotGridConfiguration$tagLevels <- NULL
     }
     plotGridConfiguration$addPlots(plots = plotsToAdd)
-    if (
-      length(
-        invalidPlotIDs <- setdiff(
-          unlist(row$plotIDs),
-          dfPlotConfigurations$plotID
-        )
-      ) !=
-        0
-    ) {
-      warning(messages$warningInvalidPlotID(invalidPlotIDs, row$title))
-    }
     plotGrid(plotGridConfiguration)
   })
   names(plotGrids) <- dfPlotGrids$name

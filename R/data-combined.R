@@ -31,6 +31,7 @@ createDataCombined <- function(
   stopIfNotFound = TRUE
 ) {
   validateIsOfType(project, "Project")
+  validateIsString(dataCombinedNames, nullAllowed = TRUE)
   validateIsString(plotGridNames, nullAllowed = TRUE)
 
   if (is.null(dataCombinedNames) && is.null(plotGridNames)) {
@@ -168,6 +169,14 @@ createDataCombinedFromExcel <- function(...) {
     stopIfNotFound
   )
 
+  # Simulated rows whose scenario run failed or whose output path was not
+  # simulated are skipped here when `stopIfNotFound = FALSE`. Their labels
+  # are collected so the corresponding rows can be dropped from
+  # `dfDataCombined` before the transform block, which otherwise operates on
+  # an all-NA row (the label was never added to the DataCombined) and
+  # surfaces an opaque error from `toUnit(NA, ...)`.
+  skippedLabels <- list()
+
   dataCombinedList <- lapply(unique(dfDataCombined$DataCombinedName), \(name) {
     dataCombined <- DataCombined$new()
     simulated <- dplyr::filter(
@@ -177,35 +186,40 @@ createDataCombinedFromExcel <- function(...) {
     )
     if (nrow(simulated) > 0) {
       for (j in seq_len(nrow(simulated))) {
-        if (
-          any(
-            simulatedScenarios[[
-              simulated[j, ]$scenario
-            ]]$results$allQuantityPaths ==
-              simulated[j, ]$path
-          )
-        ) {
+        scenarioName <- simulated[j, ]$scenario
+        scenarioResult <- simulatedScenarios[[scenarioName]]
+        results <- scenarioResult$results
+        if (any(results$allQuantityPaths == simulated[j, ]$path)) {
           dataCombined$addSimulationResults(
-            simulationResults = simulatedScenarios[[
-              simulated[j, ]$scenario
-            ]]$results,
+            simulationResults = results,
             quantitiesOrPaths = simulated[j, ]$path,
             groups = simulated[j, ]$group,
             names = simulated[j, ]$label
           )
         } else {
-          if (stopIfNotFound) {
-            cli::cli_abort(messages$stopWrongOutputPath(
+          # A scenario that is present but whose run failed carries
+          # `results = NULL`; distinguish it from a genuinely wrong path.
+          msg <- if (!is.null(scenarioResult) && is.null(results)) {
+            messages$stopScenarioRunFailed(
               dataCombinedName = name,
-              scenarioName = simulated[j, ]$scenario,
+              scenarioName = scenarioName,
               path = simulated[j, ]$path
-            ))
+            )
+          } else {
+            messages$stopWrongOutputPath(
+              dataCombinedName = name,
+              scenarioName = scenarioName,
+              path = simulated[j, ]$path
+            )
           }
-          cli::cli_warn(messages$stopWrongOutputPath(
-            dataCombinedName = name,
-            scenarioName = simulated[j, ]$scenario,
-            path = simulated[j, ]$path
-          ))
+          if (stopIfNotFound) {
+            cli::cli_abort(msg)
+          }
+          cli::cli_warn(msg)
+          skippedLabels[[length(skippedLabels) + 1L]] <<- list(
+            DataCombinedName = name,
+            label = simulated[j, ]$label
+          )
         }
       }
     }
@@ -226,6 +240,17 @@ createDataCombinedFromExcel <- function(...) {
     return(dataCombined)
   })
   names(dataCombinedList) <- unique(dfDataCombined$DataCombinedName)
+
+  # Drop the skipped simulated rows so the transform block below never
+  # processes an entry that was not added to the DataCombined.
+  for (skipped in skippedLabels) {
+    dfDataCombined <- dfDataCombined[
+      !(dfDataCombined$DataCombinedName == skipped$DataCombinedName &
+        dfDataCombined$dataType == "simulated" &
+        !is.na(dfDataCombined$label) &
+        dfDataCombined$label == skipped$label),
+    ]
+  }
 
   dfTransform <- dplyr::filter(
     dfDataCombined,

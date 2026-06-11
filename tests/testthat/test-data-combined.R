@@ -192,9 +192,11 @@ test_that("createDataCombined builds DataCombined for Example project", {
 
 test_that("createDataCombined errors when dataCombinedNames is not a string", {
   project <- testProject()
-  expect_snapshot(
-    error = TRUE,
-    createDataCombined(project, dataCombinedNames = 123)
+  # The leading call-context in the validator message is context-dependent,
+  # so match only the stable type-mismatch portion.
+  expect_error(
+    createDataCombined(project, dataCombinedNames = 123),
+    "is of type <numeric>, but expected <character>"
   )
 })
 

@@ -357,14 +357,6 @@ messages$warningInvalidDataSetName <- function(dataSetNames) {
 }
 
 # Plots.xlsx####
-messages$warningInvalidPlotID <- function(plotIDs, plotGridTitle) {
-  cliFormat(
-    "The plots with plotIDs {.val {paste(plotIDs, collapse = ',\n')}} could not be added to plot grid
-    {.field {plotGridTitle}}. Please check if they are defined in sheet {.var plotConfiguration} and data is added in
-    sheet {.var DataCombined}."
-  )
-}
-
 messages$warningLogScaleWithZeroLimit <- function(
   plotID,
   axisLimitsField,
@@ -445,6 +437,25 @@ messages$stopWrongOutputPath <- function(dataCombinedName, scenarioName, path) {
     "Output path {.path {path}} is defined in the DataCombined {.val {paste(dataCombinedName, collapse = \", \")}}
     for scenario {.cls {scenarioName}} but has not been simulated.
     Please check that the output path is specified for this scenario."
+  )
+}
+
+messages$stopScenarioRunFailed <- function(
+  dataCombinedName,
+  scenarioName,
+  path
+) {
+  cliFormat(
+    "The DataCombined {.val {paste(dataCombinedName, collapse = \", \")}} references the output path
+    {.path {path}} of scenario {.cls {scenarioName}}, but that scenario produced no results.
+    Re-run the scenario and check that it completed successfully."
+  )
+}
+
+messages$stopPlotGridNamesNotFound <- function(plotGridNames) {
+  cliFormat(
+    "The following plot grids are not defined in the project:
+    {.val {paste(plotGridNames, collapse = ', ')}}"
   )
 }
 

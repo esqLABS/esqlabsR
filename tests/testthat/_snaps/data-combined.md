@@ -1,11 +1,3 @@
-# createDataCombined errors when dataCombinedNames is not a string
-
-    Code
-      createDataCombined(project, dataCombinedNames = 123)
-    Condition
-      Error in `createDataCombined()`:
-      ! The following DataCombined names are not defined in the Excel file: "123"
-
 # createDataCombined reports a failed scenario run distinctly
 
     Code
@@ -13,5 +5,5 @@
         simulatedScenarios = failedRun)
     Condition
       Error in `FUN()`:
-      ! Output path 'Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)' is defined in the DataCombined "DC_failed" for scenario <TestScenario> but has not been simulated. Please check that the output path is specified for this scenario.
+      ! The DataCombined "DC_failed" references the output path 'Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)' of scenario <TestScenario>, but that scenario produced no results. Re-run the scenario and check that it completed successfully.
 
