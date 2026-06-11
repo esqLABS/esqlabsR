@@ -20,5 +20,5 @@
       loadObservedData(project)
     Condition
       Error in `.resolveDataPath()`:
-      ! x dataFolder is not declared in `filePaths`; cannot resolve 'x.pkml'.
+      ! dataFolder is not declared in `filePaths`; cannot resolve 'x.pkml'.
 

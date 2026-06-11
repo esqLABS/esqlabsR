@@ -846,7 +846,7 @@ messages$observedDataScriptWrongReturnType <- function(filePath, klass) {
 }
 
 messages$observedDataDataFolderNotDeclared <- function(file) {
-  cli::format_message(c(
-    "x" = "{.field dataFolder} is not declared in {.code filePaths}; cannot resolve {.path {file}}."
-  ))
+  cliFormat(
+    "{.field dataFolder} is not declared in {.code filePaths}; cannot resolve {.path {file}}."
+  )
 }
