@@ -50,6 +50,45 @@ test_that("saveProject errors when project has no jsonPath and path is NULL", {
   expect_snapshot(saveProject(project), error = TRUE)
 })
 
+test_that("saveProject to a new path rebinds jsonPath, projectFilePath, and projectDirPath", {
+  project <- testProject()
+  newPath <- withr::local_tempfile(fileext = ".json")
+
+  saveProject(project, newPath)
+
+  expect_identical(project$jsonPath, fs::path_abs(newPath))
+  expect_identical(project$projectFilePath, fs::path_abs(newPath))
+  expect_identical(project$projectDirPath, dirname(fs::path_abs(newPath)))
+})
+
+test_that("a bare saveProject after a save-as writes to the new location", {
+  project <- testProject()
+  newPath <- withr::local_tempfile(fileext = ".json")
+  saveProject(project, newPath)
+
+  project$modelFolder <- "Models2"
+  expect_true(project$modified)
+
+  saveProject(project)
+  expect_false(project$modified)
+  expect_identical(
+    loadProject(newPath)$modelFolder,
+    fs::path_abs(
+      file.path(dirname(fs::path_abs(newPath)), "Models2")
+    )
+  )
+})
+
+test_that("saveProject surfaces a missing parent directory with file context", {
+  project <- testProject()
+  badPath <- file.path(withr::local_tempdir(), "does-not-exist", "Project.json")
+  # Path is environment-specific, so match the message rather than snapshot it.
+  expect_error(
+    saveProject(project, badPath),
+    "Parent directory does not exist"
+  )
+})
+
 test_that("saveProject errors on non-Project input", {
   expect_error(saveProject("not a project"), "Project")
 })

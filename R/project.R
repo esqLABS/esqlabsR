@@ -433,6 +433,21 @@ Project <- R6::R6Class(
       invisible(self)
     },
 
+    #' @description Internal method to rebind the project to a new file
+    #'   location after a save-as. Updates `projectFilePath` / `jsonPath`
+    #'   and `projectDirPath` (the base for relative-path resolution) so a
+    #'   subsequent bare `saveProject()` and any relative-path access target
+    #'   the new file. Not a mutation, so it leaves the flags untouched.
+    #'   Not intended for end-user use.
+    #' @param path Absolute or relative path the project was saved to.
+    #' @keywords internal
+    .rebindPath = function(path) {
+      path <- fs::path_abs(path)
+      private$.projectFilePath <- path
+      private$.projectDirPath <- dirname(path)
+      invisible(self)
+    },
+
     #' @description Internal method to record that a full project
     #'   validation has succeeded with no critical errors. Sets the
     #'   `validatedSinceMutation` flag. Not intended for end-user use.

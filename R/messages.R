@@ -80,6 +80,13 @@ messages$invalidPathArgument <- function() {
   cliFormat("{.arg path} must be a single non-empty, non-NA string.")
 }
 
+messages$noProjectPath <- function() {
+  cliFormat(
+    "No {.arg path} specified and the project has no {.field jsonPath}. \\
+    Provide a {.arg path} to save the project for the first time."
+  )
+}
+
 messages$pathNotFound <- function(path) {
   cliFormat(
     "The specified destination folder does not exist. ({.path {path}}) "

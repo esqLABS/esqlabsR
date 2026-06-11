@@ -140,6 +140,7 @@ schema. Reflects any in-memory modifications. Read-only.}
   \itemize{
     \item \href{#method-Project-initialize}{\code{Project$new()}}
     \item \href{#method-Project-.markSaved}{\code{Project$.markSaved()}}
+    \item \href{#method-Project-.rebindPath}{\code{Project$.rebindPath()}}
     \item \href{#method-Project-.markValidated}{\code{Project$.markValidated()}}
     \item \href{#method-Project-.markModified}{\code{Project$.markModified()}}
     \item \href{#method-Project-.getFilePathsData}{\code{Project$.getFilePathsData()}}
@@ -181,6 +182,30 @@ Not intended for end-user use.
   \subsection{Usage}{
     \if{html}{\out{<div class="r">}}
     \preformatted{Project$.markSaved()}
+    \if{html}{\out{</div>}}
+  }
+}
+
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Project-.rebindPath"></a>}}
+\if{latex}{\out{\hypertarget{method-Project-.rebindPath}{}}}
+\subsection{\code{Project$.rebindPath()}}{
+  Internal method to rebind the project to a new file
+location after a save-as. Updates \code{projectFilePath} / \code{jsonPath}
+and \code{projectDirPath} (the base for relative-path resolution) so a
+subsequent bare \code{saveProject()} and any relative-path access target
+the new file. Not a mutation, so it leaves the flags untouched.
+Not intended for end-user use.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{Project$.rebindPath(path)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{path}}{Absolute or relative path the project was saved to.}
+    }
     \if{html}{\out{</div>}}
   }
 }

@@ -4,5 +4,5 @@
       saveProject(project)
     Condition
       Error in `saveProject()`:
-      ! No path specified and project has no jsonPath. Provide a path argument.
+      ! No `path` specified and the project has no jsonPath. Provide a `path` to save the project for the first time.
 

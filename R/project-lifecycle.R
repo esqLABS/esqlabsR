@@ -80,21 +80,17 @@ saveProject <- function(project, path = NULL) {
   if (is.null(path)) {
     path <- project$jsonPath
     if (is.null(path)) {
-      stop(
-        "No path specified and project has no jsonPath. Provide a path argument."
-      )
+      cli::cli_abort(messages$noProjectPath())
     }
   }
 
-  jsonData <- .projectToJson(project)
-  jsonlite::write_json(
-    jsonData,
-    path,
-    auto_unbox = TRUE,
-    null = "null",
-    pretty = TRUE
-  )
+  # Delegate to the internal writer so the parent-directory guard and the
+  # canonical write options live in one place.
+  .saveProjectJson(project, path)
 
+  # Rebind to the written location so a save-as updates jsonPath /
+  # projectFilePath / projectDirPath; a no-op rebind for a bare save.
+  project$.rebindPath(path)
   project$.markSaved()
   invisible(path)
 }
