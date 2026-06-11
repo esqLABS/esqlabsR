@@ -71,6 +71,7 @@
 ## Minor improvements and bug fixes
 
 - `loadScenarioResults()` now restores the full four-field record produced by `runScenarios()`: it reloads the `population` from `<scenario>_population.csv` for population scenarios (previously dropped) and extracts `outputValues` for the simulation's recorded output paths with the population attached, so a reloaded result matches the original run. (#1054)
+- `saveScenarioResults()` now reports a failed save with a cli warning that names the affected scenario and carries the underlying error message, instead of a generic base warning, and continues saving the remaining scenarios. (#1054)
 
 ## Breaking changes (previous chapters)
 
