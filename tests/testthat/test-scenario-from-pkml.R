@@ -343,6 +343,19 @@ test_that("user simulationTime overrides PKML extraction", {
   expect_identical(sc$simulationTime, list(c(0, 24, 60)))
 })
 
+test_that("a user simulationTimeUnit is recorded on the extracted scenario", {
+  # When simulationTime is left to PKML extraction, a user-supplied
+  # simulationTimeUnit overrides the schema's own unit.
+  project <- testProject()
+  suppressMessages(createScenariosFromPKML(
+    pkmlFixture,
+    project = project,
+    scenarioNames = "Seeded",
+    simulationTimeUnit = "min"
+  ))
+  expect_identical(project$scenarios[["Seeded"]]$simulationTimeUnit, "min")
+})
+
 # createScenariosFromPKML: steady state ----
 
 test_that("steadyState = TRUE seeds a base-unit steadyStateTime and a unit", {
@@ -525,6 +538,45 @@ test_that(".dedupeScenarioNames probes suffixes against project and call names",
       c("A", "B")
     )
   )
+})
+
+test_that(".extractSimulationTimeFromPkml joins intervals and converts to the target unit", {
+  # A self-consistent schema stub: values genuinely in base-unit minutes.
+  sim <- list(
+    outputSchema = list(
+      intervals = list(
+        list(
+          startTime = list(value = 0, displayUnit = "min"),
+          endTime = list(value = 60, displayUnit = "min"),
+          resolution = list(value = 2)
+        ),
+        list(
+          startTime = list(value = 60, displayUnit = "min"),
+          endTime = list(value = 120, displayUnit = "min"),
+          resolution = list(value = 1)
+        )
+      )
+    )
+  )
+
+  # No override: intervals are joined with "; " and the schema unit is kept.
+  kept <- .extractSimulationTimeFromPkml(sim)
+  expect_identical(kept$simulationTimeUnit, "min")
+  expect_identical(kept$simulationTime, "0, 60, 2; 60, 120, 1")
+
+  # Override to hours: the bounds are converted (60 min -> 1 h), the
+  # resolution is left untouched, and the unit is the requested one.
+  converted <- .extractSimulationTimeFromPkml(sim, targetUnit = "h")
+  expect_identical(converted$simulationTimeUnit, "h")
+  expect_identical(converted$simulationTime, "0, 1, 2; 1, 2, 1")
+})
+
+test_that(".extractSimulationTimeFromPkml returns NULLs when the schema has no intervals", {
+  out <- .extractSimulationTimeFromPkml(list(
+    outputSchema = list(intervals = list())
+  ))
+  expect_null(out$simulationTime)
+  expect_null(out$simulationTimeUnit)
 })
 
 test_that(".generateOutputPathId builds readable ids from the last two segments", {
