@@ -247,12 +247,11 @@ addObservedData <- function(project, entry) {
       )
     }
     state$.programmaticDataSets[[name]] <- entry
-    state$.observedDataNamesCache <- c(
-      state$.observedDataNamesCache,
-      name
-    )
     sentinel <- list(type = "programmatic", name = name)
+    # The observedData setter resets the names cache, so the cache must be
+    # rebuilt after the write, from the names known before it.
     project$observedData <- c(project$observedData, list(sentinel))
+    state$.observedDataNamesCache <- c(existingNames, name)
     project$.markModified()
     cli::cli_inform(c(
       "i" = paste0(

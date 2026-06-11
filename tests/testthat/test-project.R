@@ -444,3 +444,66 @@ test_that("a fresh project starts unmodified and unvalidated", {
   expect_false(project$modified)
   expect_false(project$validatedSinceMutation)
 })
+
+test_that("a direct write to a section field invalidates the project", {
+  project <- testProject()
+  project$.markValidated()
+  expect_false(project$modified)
+  expect_true(project$validatedSinceMutation)
+
+  project$scenarios[["New"]] <- Scenario(
+    scenarioName = "New",
+    modelFile = "m.pkml"
+  )
+
+  expect_true(project$modified)
+  expect_false(project$validatedSinceMutation)
+})
+
+test_that("the documented c() attach idiom invalidates the project", {
+  project <- testProject()
+  scenarios <- list(Attached = Scenario(scenarioName = "Attached"))
+
+  project$scenarios <- c(project$scenarios, scenarios)
+
+  expect_true(project$modified)
+  expect_s3_class(project$scenarios[["Attached"]], "Scenario")
+})
+
+test_that("nested subscript-assignment on a section entry invalidates the project", {
+  project <- testProject()
+  project$individuals[["Indiv1"]]$weight <- 81
+
+  expect_true(project$modified)
+  expect_identical(project$individuals[["Indiv1"]]$weight, 81)
+})
+
+test_that("an extracted Scenario is a copy and cannot mutate the project silently", {
+  project <- testProject()
+  sc <- project$scenarios[["TestScenario"]]
+  sc$modelFile <- "HIJACKED.pkml"
+
+  expect_false(project$modified)
+  expect_false(
+    identical(project$scenarios[["TestScenario"]]$modelFile, "HIJACKED.pkml")
+  )
+})
+
+test_that("jsonPath is read-only and aliases projectFilePath", {
+  project <- testProject()
+  expect_identical(project$jsonPath, project$projectFilePath)
+  expect_snapshot(error = TRUE, project$jsonPath <- "elsewhere.json")
+})
+
+test_that("sync() reports a direct section-field write as unsaved changes", {
+  tmp <- withr::local_tempfile(fileext = ".json")
+  saveProject(testProject(), tmp)
+  project <- loadProject(tmp)
+
+  project$scenarios[["TestScenario"]]$modelFile <- "Changed.pkml"
+
+  status <- project$sync(silent = TRUE)
+  expect_true(status$unsaved_changes)
+  expect_false(status$json_modified)
+  expect_false(status$in_sync)
+})

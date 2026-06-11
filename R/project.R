@@ -49,6 +49,36 @@ Project <- R6::R6Class(
       private$.validatedSinceMutation
     },
 
+    #' @field schemaVersion Schema version declared in the JSON. Always "2.0"
+    #'   for projects loaded by this parser. Writing marks the project as
+    #'   modified.
+    schemaVersion = function(value) {
+      if (!missing(value)) {
+        private$.schemaVersion <- value
+        private$.invalidate()
+        return(invisible(value))
+      }
+      private$.schemaVersion
+    },
+
+    #' @field esqlabsRVersion Informational version string from the JSON.
+    #'   Writing marks the project as modified.
+    esqlabsRVersion = function(value) {
+      if (!missing(value)) {
+        private$.esqlabsRVersion <- value
+        private$.invalidate()
+        return(invisible(value))
+      }
+      private$.esqlabsRVersion
+    },
+
+    #' @field jsonPath Read-only. Absolute path the project was loaded from
+    #'   (an alias of `projectFilePath`), or `NULL` for an in-memory project.
+    jsonPath = function(value) {
+      if (!missing(value)) cli::cli_abort("{.field jsonPath} is readonly")
+      private$.projectFilePath
+    },
+
     #' @field modelFolder Path to the folder containing pkml simulation files.
     modelFolder = function(value) {
       if (!missing(value)) {
@@ -204,6 +234,139 @@ Project <- R6::R6Class(
       )
     },
 
+    # Section data. Each binding stores the section in a private backing
+    # field and invalidates on write, so any assignment (including
+    # subscript forms like `project$scenarios[[name]] <- sc`, which R
+    # desugars into a full read-modify-write through the setter) marks
+    # the project modified and clears `validatedSinceMutation`.
+
+    #' @field outputPaths Named character vector. Names are IDs, values are
+    #'   output path strings. Writing marks the project as modified.
+    outputPaths = function(value) {
+      if (!missing(value)) {
+        private$.outputPaths <- value
+        private$.invalidate()
+        return(invisible(value))
+      }
+      private$.outputPaths
+    },
+
+    #' @field scenarios Named list of `Scenario` records, keyed by scenario
+    #'   name. Entries are plain-data records with copy semantics; write a
+    #'   modified entry back (e.g. `project$scenarios[[name]] <- sc`) to
+    #'   mutate the project. Writing marks the project as modified.
+    scenarios = function(value) {
+      if (!missing(value)) {
+        private$.scenarios <- value
+        private$.invalidate()
+        return(invisible(value))
+      }
+      private$.scenarios
+    },
+
+    #' @field modelParameterSets Named list of parameter structures, keyed by
+    #'   set name. Writing marks the project as modified.
+    modelParameterSets = function(value) {
+      if (!missing(value)) {
+        private$.modelParameterSets <- value
+        private$.invalidate()
+        return(invisible(value))
+      }
+      private$.modelParameterSets
+    },
+
+    #' @field individualParameterSets Named list of parameter structures,
+    #'   keyed by set name. Writing marks the project as modified.
+    individualParameterSets = function(value) {
+      if (!missing(value)) {
+        private$.individualParameterSets <- value
+        private$.invalidate()
+        return(invisible(value))
+      }
+      private$.individualParameterSets
+    },
+
+    #' @field applicationParameterSets Named list of parameter structures,
+    #'   keyed by set name. Writing marks the project as modified.
+    applicationParameterSets = function(value) {
+      if (!missing(value)) {
+        private$.applicationParameterSets <- value
+        private$.invalidate()
+        return(invisible(value))
+      }
+      private$.applicationParameterSets
+    },
+
+    #' @field individuals Named list of plain lists, keyed by individualId.
+    #'   Writing marks the project as modified.
+    individuals = function(value) {
+      if (!missing(value)) {
+        private$.individuals <- value
+        private$.invalidate()
+        return(invisible(value))
+      }
+      private$.individuals
+    },
+
+    #' @field populations Named list of plain lists, keyed by populationId.
+    #'   Writing marks the project as modified.
+    populations = function(value) {
+      if (!missing(value)) {
+        private$.populations <- value
+        private$.invalidate()
+        return(invisible(value))
+      }
+      private$.populations
+    },
+
+    #' @field applications Named list of parameter structures, keyed by
+    #'   protocol name. Writing marks the project as modified.
+    applications = function(value) {
+      if (!missing(value)) {
+        private$.applications <- value
+        private$.invalidate()
+        return(invisible(value))
+      }
+      private$.applications
+    },
+
+    #' @field observedData List of observed data source declarations parsed
+    #'   from JSON. Writing marks the project as modified and resets the
+    #'   cached observed-data names.
+    observedData = function(value) {
+      if (!missing(value)) {
+        private$.observedData <- value
+        private$.observedDataNamesCache <- NULL
+        private$.invalidate()
+        return(invisible(value))
+      }
+      private$.observedData
+    },
+
+    #' @field plots List with 3 elements: `dataCombined`, `plotConfiguration`,
+    #'   `plotGrids`. Writing marks the project as modified.
+    plots = function(value) {
+      if (!missing(value)) {
+        private$.plots <- value
+        private$.invalidate()
+        return(invisible(value))
+      }
+      private$.plots
+    },
+
+    #' @field parameterIdentification Named list keyed by PI task id; each
+    #'   entry is a `PITask` record. May be `NULL` or an empty list when
+    #'   the project declares no PI tasks. Writing marks the project as
+    #'   modified.
+    parameterIdentification = function(value) {
+      if (!missing(value)) {
+        private$.parameterIdentification <- value
+        private$.invalidate()
+        return(invisible(value))
+      }
+      private$.parameterIdentification
+    },
+
     #' @field filePaths Read-only named list of declared file/folder paths
     #'   (the `filePaths` JSON section). Values are returned verbatim as
     #'   strings; no resolution is performed at this stage.
@@ -224,59 +387,6 @@ Project <- R6::R6Class(
     }
   ),
   public = list(
-    #' @field schemaVersion Schema version declared in the JSON. Always "2.0"
-    #'   for projects loaded by this parser.
-    schemaVersion = NULL,
-
-    #' @field esqlabsRVersion Informational version string from the JSON.
-    esqlabsRVersion = NULL,
-
-    #' @field jsonPath Absolute path the project was loaded from, or `NULL`.
-    jsonPath = NULL,
-
-    #' @field outputPaths Named character vector. Names are IDs, values are
-    #'   output path strings.
-    outputPaths = NULL,
-
-    #' @field scenarios Named list of `Scenario` objects, keyed by scenario
-    #'   name. Populated by JSON loading.
-    scenarios = NULL,
-
-    #' @field modelParameterSets Named list of parameter structures, keyed by
-    #'   set name.
-    modelParameterSets = NULL,
-
-    #' @field individualParameterSets Named list of parameter structures,
-    #'   keyed by set name.
-    individualParameterSets = NULL,
-
-    #' @field applicationParameterSets Named list of parameter structures,
-    #'   keyed by set name.
-    applicationParameterSets = NULL,
-
-    #' @field individuals Named list of plain lists, keyed by individualId.
-    individuals = NULL,
-
-    #' @field populations Named list of plain lists, keyed by populationId.
-    populations = NULL,
-
-    #' @field applications Named list of parameter structures, keyed by
-    #'   protocol name.
-    applications = NULL,
-
-    #' @field observedData List of observed data source declarations parsed from
-    #'   JSON.
-    observedData = NULL,
-
-    #' @field plots List with 3 elements: `dataCombined`, `plotConfiguration`,
-    #'   `plotGrids`.
-    plots = NULL,
-
-    #' @field parameterIdentification Named list keyed by PI task id; each
-    #'   entry is a `PITask` record. May be `NULL` or an empty list when
-    #'   the project declares no PI tasks.
-    parameterIdentification = list(),
-
     #' @description Construct a `Project` from a JSON file path, or create an
     #'   empty in-memory project when called with no arguments.
     #'
@@ -441,6 +551,22 @@ Project <- R6::R6Class(
     .programmaticDataSets = list(),
     .observedDataNamesCache = NULL,
 
+    # Backing stores for the section-data active bindings. The parser
+    # writes these directly so loading does not flip `modified`.
+    .schemaVersion = NULL,
+    .esqlabsRVersion = NULL,
+    .outputPaths = NULL,
+    .scenarios = NULL,
+    .modelParameterSets = NULL,
+    .individualParameterSets = NULL,
+    .applicationParameterSets = NULL,
+    .individuals = NULL,
+    .populations = NULL,
+    .applications = NULL,
+    .observedData = NULL,
+    .plots = NULL,
+    .parameterIdentification = list(),
+
     .invalidate = function() {
       private$.modified <- TRUE
       private$.validatedSinceMutation <- FALSE
@@ -506,9 +632,8 @@ Project <- R6::R6Class(
           "Unsupported schemaVersion: {.val {jsonData$schemaVersion %||% '<missing>'}}. Expected {.val 2.0}."
         )
       }
-      self$schemaVersion <- jsonData$schemaVersion
-      self$esqlabsRVersion <- jsonData$esqlabsRVersion
-      self$jsonPath <- jsonPath
+      private$.schemaVersion <- jsonData$schemaVersion
+      private$.esqlabsRVersion <- jsonData$esqlabsRVersion
       private$.projectFilePath <- jsonPath
       private$.projectDirPath <- dirname(jsonPath)
 
@@ -518,19 +643,22 @@ Project <- R6::R6Class(
         private$.filePathsData[[n]] <- list(value = fp[[n]], description = "")
       }
 
-      self$outputPaths <- jsonData$outputPaths %||% list()
-      self$modelParameterSets <- jsonData$modelParameterSets %||% list()
-      self$individualParameterSets <- jsonData$individualParameterSets %||%
+      private$.outputPaths <- jsonData$outputPaths %||% list()
+      private$.modelParameterSets <- jsonData$modelParameterSets %||% list()
+      private$.individualParameterSets <- jsonData$individualParameterSets %||%
         list()
-      self$applicationParameterSets <- jsonData$applicationParameterSets %||%
+      private$.applicationParameterSets <- jsonData$applicationParameterSets %||%
         list()
-      self$individuals <- .parseIndividuals(jsonData$individuals)
-      self$populations <- .parsePopulations(jsonData$populations)
-      self$applications <- .parseApplications(jsonData$applications)
-      self$scenarios <- .parseScenarios(jsonData$scenarios, self$outputPaths)
-      self$observedData <- jsonData$observedData %||% list()
-      self$plots <- .parsePlots(jsonData$plots)
-      self$parameterIdentification <- .parsePITasks(
+      private$.individuals <- .parseIndividuals(jsonData$individuals)
+      private$.populations <- .parsePopulations(jsonData$populations)
+      private$.applications <- .parseApplications(jsonData$applications)
+      private$.scenarios <- .parseScenarios(
+        jsonData$scenarios,
+        private$.outputPaths
+      )
+      private$.observedData <- jsonData$observedData %||% list()
+      private$.plots <- .parsePlots(jsonData$plots)
+      private$.parameterIdentification <- .parsePITasks(
         jsonData$parameterIdentification
       )
 
