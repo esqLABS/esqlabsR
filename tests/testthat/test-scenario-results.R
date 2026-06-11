@@ -67,6 +67,10 @@ test_that("saveScenarioResults reports the real error rather than a path warning
 
   resultsFolder <- withr::local_tempdir()
   expect_snapshot(
-    saveScenarioResults(broken, project, outputFolder = resultsFolder)
+    invisible(saveScenarioResults(
+      broken,
+      project,
+      outputFolder = resultsFolder
+    ))
   )
 })

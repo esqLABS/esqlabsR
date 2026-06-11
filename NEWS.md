@@ -68,6 +68,10 @@
 - `restoreProjectConfiguration()` warns and forwards to `exportProjectToExcel()`. (#908)
 - `snapshotProjectConfiguration()` warns and forwards to `importProjectFromExcel()`. (#908)
 
+## Minor improvements and bug fixes
+
+- `loadScenarioResults()` now restores the full four-field record produced by `runScenarios()`: it reloads the `population` from `<scenario>_population.csv` for population scenarios (previously dropped) and extracts `outputValues` for the simulation's recorded output paths with the population attached, so a reloaded result matches the original run. (#1054)
+
 ## Breaking changes (previous chapters)
 
 - Individual parameter sets in `Individuals.xlsx` must now be specified

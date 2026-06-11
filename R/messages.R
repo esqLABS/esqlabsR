@@ -315,6 +315,13 @@ messages$missingSteadyStateTimeUnit <- function(scenarioName) {
     "Missing unit for steady-state time (column {.field SteadyStateTimeUnit}) for scenario {.val {scenarioName}}."
   )
 }
+
+messages$errorSavingScenarioResult <- function(scenarioName, conditionMessage) {
+  cli::format_message(c(
+    "x" = "Failed to save results for scenario {.val {scenarioName}}.",
+    "i" = "{conditionMessage}"
+  ))
+}
 # sensitivity-calculation####
 messages$noPKDataToWrite <- function() {
   cliFormat(

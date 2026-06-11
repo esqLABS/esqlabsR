@@ -13,10 +13,13 @@ loadScenarioResults(scenarioNames, resultsFolder)
 the corresponding simulations as pkml are located.}
 }
 \value{
-A named list, where the names are scenario names, and the values are
-lists with the entries \code{simulation} being the initialized \code{Simulation} object with applied parameters,
-\code{results} being \code{SimulatioResults} object produced by running the simulation,
-and \code{outputValues} the output values of the \code{SimulationResults}.
+A named list keyed by scenario name. Each entry mirrors the record
+produced by \code{runScenarios()}: \code{simulation} (the initialized \code{Simulation}
+object with applied parameters), \code{results} (the \code{SimulationResults} object
+reloaded from csv), \code{outputValues} (the output values extracted for the
+simulation's recorded output paths), and \code{population} (the \code{Population}
+reloaded from \verb{<scenario>_population.csv} for population scenarios, or \code{NULL}
+for individual scenarios).
 }
 \description{
 Load simulated scenarios from csv and pkml.

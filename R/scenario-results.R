@@ -4,8 +4,9 @@
 #'
 #' @param simulatedScenariosResults Named list with `simulation`, `results`, `outputValues`,
 #' and `population` as produced by `runScenarios()`.
-#' @param projectConfiguration A `Project` object providing the `outputFolder`
-#' used to derive the default destination.
+#' @param projectConfiguration A `Project` object (loaded with `loadProject()`)
+#' providing the `outputFolder` used to derive the default destination. The
+#' argument keeps its historical name for backward compatibility.
 #' @param outputFolder Optional - path to the folder where the results will be
 #' stored. If `NULL` (default), a sub-folder in
 #' `project$outputFolder/SimulationResults/<DateSuffix>`.
@@ -79,9 +80,10 @@ saveScenarioResults <- function(
         ospsuite::exportResultsToCSV(results = results, filePath = outputPath)
       },
       error = function(cond) {
-        warning(paste0("Cannot save to path '", outputFolder, "'"))
-        message("Original error message:")
-        message(cond)
+        cli::cli_warn(messages$errorSavingScenarioResult(
+          scenarioName = scenarioName,
+          conditionMessage = conditionMessage(cond)
+        ))
       },
       warning = function(cond) {
         warning(cond)
@@ -101,10 +103,13 @@ saveScenarioResults <- function(
 #' simulation files being located in the same folder (`resultsFolder`) and have
 #' the names of the scenarios.
 #'
-#' @returns A named list, where the names are scenario names, and the values are
-#' lists with the entries `simulation` being the initialized `Simulation` object with applied parameters,
-#' `results` being `SimulatioResults` object produced by running the simulation,
-#' and `outputValues` the output values of the `SimulationResults`.
+#' @returns A named list keyed by scenario name. Each entry mirrors the record
+#' produced by `runScenarios()`: `simulation` (the initialized `Simulation`
+#' object with applied parameters), `results` (the `SimulationResults` object
+#' reloaded from csv), `outputValues` (the output values extracted for the
+#' simulation's recorded output paths), and `population` (the `Population`
+#' reloaded from `<scenario>_population.csv` for population scenarios, or `NULL`
+#' for individual scenarios).
 #'
 #' @export
 #'
@@ -128,28 +133,43 @@ loadScenarioResults <- function(scenarioNames, resultsFolder) {
     # Used only for loading the results, the name of the scenario is not changed.
     scenarioNameForPath <- gsub("[\\\\/]", "_", scenarioName)
 
-    simulation <- loadSimulation(paste0(
-      resultsFolder,
-      "/",
-      scenarioNameForPath,
-      ".pkml"
-    ))
+    simulation <- loadSimulation(
+      file.path(resultsFolder, paste0(scenarioNameForPath, ".pkml"))
+    )
 
     results <- importResultsFromCSV(
       simulation = simulation,
-      filePaths = paste0(resultsFolder, "/", scenarioNameForPath, ".csv")
+      filePaths = file.path(resultsFolder, paste0(scenarioNameForPath, ".csv"))
     )
 
+    # Restore the population if a population csv was written for this scenario.
+    populationPath <- file.path(
+      resultsFolder,
+      paste0(scenarioNameForPath, "_population.csv")
+    )
+    population <- NULL
+    if (file.exists(populationPath)) {
+      population <- loadPopulation(populationPath)
+    }
+
+    # Extract output values for the simulation's recorded output paths and pass
+    # the population so the metadata columns match what runScenarios() produced.
+    outputQuantities <- getAllQuantitiesMatching(
+      results$allQuantityPaths,
+      simulation
+    )
     outputValues <- getOutputValues(
       results,
-      quantitiesOrPaths = results$allQuantityPaths,
+      quantitiesOrPaths = outputQuantities,
+      population = population,
       addMetaData = FALSE
     )
     simulatedScenariosResults[[scenarioNames[[i]]]] <-
       list(
         simulation = simulation,
         results = results,
-        outputValues = outputValues
+        outputValues = outputValues,
+        population = population
       )
   }
 
