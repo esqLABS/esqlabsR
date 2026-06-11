@@ -119,8 +119,26 @@ sensitivityCalculation <- function(
   # Normalize variationRange
   variationRange <- .normalizeVariationRange(variationRange, parameterPaths)
 
-  # Store old simulation outputs and set user defined
-  oldOutputSelections <- simulation$outputSelections$allOutputs
+  # Store old simulation outputs and set user defined. The original output
+  # selections are restored on exit (including on error) so the caller's
+  # simulation is left untouched by the sensitivity sweep.
+  oldOutputPaths <- vapply(
+    simulation$outputSelections$allOutputs,
+    function(x) x$path,
+    character(1)
+  )
+  on.exit(
+    {
+      clearOutputs(simulation = simulation)
+      if (length(oldOutputPaths) > 0) {
+        ospsuite::addOutputs(
+          quantitiesOrPaths = oldOutputPaths,
+          simulation = simulation
+        )
+      }
+    },
+    add = TRUE
+  )
   setOutputs(quantitiesOrPaths = outputPaths, simulation = simulation)
 
   # Store initial value for each parameter
@@ -303,16 +321,8 @@ sensitivityCalculation <- function(
     "pkData" = pkData
   )
 
-  # Reset simulation outputs
-  oldOutputSelections <- simulation$outputSelections$allOutputs
-  clearOutputs(simulation = simulation)
-
-  for (outputSelection in oldOutputSelections) {
-    ospsuite::addOutputs(
-      quantitiesOrPaths = outputSelection$path,
-      simulation = simulation
-    )
-  }
+  # Original output selections are restored by the on.exit() handler registered
+  # above.
 
   class(results) <- c("SensitivityCalculation", class(results))
 

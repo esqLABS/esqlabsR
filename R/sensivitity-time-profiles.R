@@ -197,8 +197,6 @@ sensitivityTimeProfiles <- function(
 
   # create plot for each output path
   for (outputPath in names(splitData)) {
-    subsetData <- splitData[[outputPath]]
-
     lsPlots[[outputPath]] <- .createTimeProfiles(
       splitData[[outputPath]],
       defaultPlotConfiguration = customPlotConfiguration

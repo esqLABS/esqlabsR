@@ -55,6 +55,34 @@ test_that("loadSensitivityCalculation() restores functional results", {
   )
 })
 
+test_that("loadSensitivityCalculation() round-trips per-parameter variationRange", {
+  # Per-parameter ranges yield a different set of factors per parameter, so the
+  # naive `parameters * unique(factors)` count is wrong. The load must accept
+  # the genuinely saved results.
+  set.seed(123)
+  perParamResults <- sensitivityCalculation(
+    simulation = simulation,
+    outputPaths = outputPaths,
+    parameterPaths = parameterPaths[1:2],
+    variationRange = list(c(0.5, 2), c(0.1, 0.5, 5, 10))
+  )
+
+  tempDir <- withr::local_tempdir()
+  saveSensitivityCalculation(
+    perParamResults,
+    outputDir = tempDir,
+    overwrite = TRUE
+  )
+
+  expect_no_error(resultLoaded <- loadSensitivityCalculation(tempDir))
+  expect_s3_class(resultLoaded, "SensitivityCalculation")
+  expect_equal(
+    lengths(resultLoaded$simulationResults),
+    lengths(perParamResults$simulationResults)
+  )
+  expect_equal(resultLoaded$pkData, perParamResults$pkData)
+})
+
 test_that("loadSensitivityCalculation() fails when simulation result file is missing", {
   tempDir <- withr::local_tempdir()
 
@@ -95,8 +123,29 @@ test_that("loadSensitivityCalculation() fails when simulation can't be retrieved
   ))
 })
 
+test_that(".simulationResultsToPKDataFrame() handles a parameter whose runs all failed", {
+  # When every run for a parameter fails, the nesting step drops all results,
+  # leaving an empty named list. The extractor must warn and return a
+  # well-formed empty frame rather than erroring in dplyr::rename().
+  emptyBatch <- stats::setNames(list(), character(0))
+
+  expect_warning(
+    pkData <- .simulationResultsToPKDataFrame(
+      emptyBatch,
+      "SomeParameter",
+      NULL
+    ),
+    messages$warningSensitivityAllRunsFailed("SomeParameter"),
+    fixed = TRUE
+  )
+
+  expect_equal(nrow(pkData), 0L)
+  expect_equal(pkData, .emptyPKDataFrame())
+})
+
 test_that(".computePercentChange() handles missing baseline simulation data", {
   successData <- data.frame(
+    OutputPath = "OutA",
     ParameterPath = "TestPath",
     PKParameter = "C_max",
     ParameterFactor = c(0.5, 1.0, 2.0),
@@ -106,6 +155,7 @@ test_that(".computePercentChange() handles missing baseline simulation data", {
   )
 
   failureData <- data.frame(
+    OutputPath = "OutA",
     ParameterPath = "TestPath",
     PKParameter = "C_max",
     ParameterFactor = c(0.5, 2.0),
@@ -125,4 +175,136 @@ test_that(".computePercentChange() handles missing baseline simulation data", {
   expect_true(all(is.na(resultFailure$PKPercentChange)))
   expect_true(all(is.na(resultFailure$SensitivityPKParameter)))
   expect_equal(nrow(resultFailure), nrow(failureData))
+})
+
+test_that(".computePercentChange() aligns baselines by OutputPath, not by row order", {
+  # Two output paths with different baselines. Rows are interleaved (not ordered
+  # output-major), so silent vector recycling would misalign baselines. The join
+  # on OutputPath must pick each row's own baseline.
+  data <- data.frame(
+    OutputPath = c("OutA", "OutB", "OutA", "OutB"),
+    ParameterPath = "TestPath",
+    PKParameter = "C_max",
+    ParameterFactor = c(1.0, 1.0, 2.0, 2.0),
+    PKParameterValue = c(10, 100, 20, 400),
+    ParameterValue = c(5, 5, 10, 10),
+    stringsAsFactors = FALSE
+  )
+
+  result <- .computePercentChange(data)
+  result <- result[result$ParameterFactor == 2.0, ]
+  result <- result[order(result$OutputPath), ]
+
+  # OutA: (20 - 10) / 10 * 100 = 100; OutB: (400 - 100) / 100 * 100 = 300
+  expect_equal(result$PKPercentChange, c(100, 300))
+})
+
+test_that(".computePercentChange() names the parameter in the missing-baseline warning under group_modify", {
+  # group_modify() strips the grouping columns from .x, so without the group
+  # keys the warning would render with blank ParameterPath / PKParameter.
+  failureData <- data.frame(
+    OutputPath = "OutA",
+    ParameterPath = "TestPath",
+    PKParameter = "C_max",
+    ParameterFactor = c(0.5, 2.0),
+    PKParameterValue = c(10, 30),
+    ParameterValue = c(5, 20),
+    stringsAsFactors = FALSE
+  )
+
+  expect_warning(
+    dplyr::group_by(failureData, ParameterPath, PKParameter) |>
+      dplyr::group_modify(.f = ~ .computePercentChange(.x, .y)) |>
+      dplyr::ungroup(),
+    messages$warningSensitivityPKParameterNotCalculated("TestPath", "C_max"),
+    fixed = TRUE
+  )
+})
+
+test_that(".computePercentChange() integrates correctly under group_modify with multiple OutputPaths", {
+  # Reproduces the production call path: grouped by ParameterPath + PKParameter,
+  # with OutputPath as a non-grouping column, so a group spans both outputs.
+  data <- data.frame(
+    OutputPath = c("OutA", "OutB", "OutA", "OutB"),
+    ParameterPath = "TestPath",
+    PKParameter = "C_max",
+    ParameterFactor = c(1.0, 1.0, 2.0, 2.0),
+    PKParameterValue = c(10, 100, 20, 400),
+    ParameterValue = c(5, 5, 10, 10),
+    stringsAsFactors = FALSE
+  )
+
+  result <- dplyr::group_by(data, ParameterPath, PKParameter) |>
+    dplyr::group_modify(.f = ~ .computePercentChange(.x, .y)) |>
+    dplyr::ungroup()
+  result <- result[result$ParameterFactor == 2.0, ]
+  result <- result[order(result$OutputPath), ]
+
+  expect_equal(result$PKPercentChange, c(100, 300))
+})
+
+# End-to-end through sensitivityCalculation() -----------------------------
+
+test_that("missing-baseline warning carries parameter context through sensitivityCalculation()", {
+  # The issue requires exercising the warning through the real production path,
+  # not the bare helper: group_modify() strips the grouping columns, so the
+  # warning used to render with blank ParameterPath / PKParameter names.
+  localSim <- loadSimulation(
+    system.file("extdata", "Aciclovir.pkml", package = "ospsuite")
+  )
+  parameterPath <- "Aciclovir|Lipophilicity"
+
+  realRunBatches <- runSimulationBatches
+  local_mocked_bindings(
+    runSimulationBatches = function(simulationBatches, ...) {
+      out <- realRunBatches(simulationBatches = simulationBatches, ...)
+      # Drop the baseline (ParameterFactor == 1, sorted first) run so the
+      # percent-change groups have no baseline row.
+      out[[1]][[1]] <- NULL
+      out
+    }
+  )
+
+  warnings <- testthat::capture_warnings(
+    sensitivityCalculation(
+      localSim,
+      outputPaths,
+      parameterPath,
+      variationRange = c(2, 5)
+    )
+  )
+
+  baselineWarnings <- grep("could not be calculated", warnings, value = TRUE)
+  expect_gt(length(baselineWarnings), 0)
+  expect_true(all(grepl(parameterPath, baselineWarnings, fixed = TRUE)))
+})
+
+test_that("sensitivityCalculation() does not error when every run for a parameter fails", {
+  localSim <- loadSimulation(
+    system.file("extdata", "Aciclovir.pkml", package = "ospsuite")
+  )
+  parameterPath <- "Aciclovir|Lipophilicity"
+
+  realRunBatches <- runSimulationBatches
+  local_mocked_bindings(
+    runSimulationBatches = function(simulationBatches, ...) {
+      out <- realRunBatches(simulationBatches = simulationBatches, ...)
+      # Every run for the (single, constant) parameter fails.
+      out[[1]][] <- NULL
+      out
+    }
+  )
+
+  expect_no_error(
+    res <- suppressWarnings(
+      sensitivityCalculation(
+        localSim,
+        outputPaths,
+        parameterPath,
+        variationRange = c(2, 5)
+      )
+    )
+  )
+  expect_s3_class(res, "SensitivityCalculation")
+  expect_equal(nrow(res$pkData), 0L)
 })
