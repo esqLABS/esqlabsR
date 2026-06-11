@@ -289,13 +289,63 @@ test_that(".validatePopulations warns on inverted ranges", {
 
 # Section adapter: parameter sets ----
 
-test_that(".validateParameterSets flags mismatched paths/values", {
-  sets <- list(
-    bad = list(paths = c("A|p", "B|q"), values = 1, units = c("", ""))
+# Fixtures here are built through the public mutators so the validator is
+# exercised against the array-of-records shape the parser and mutators
+# actually produce, never a hand-rolled legacy `paths`/`values` shape.
+
+test_that(".validateParameterSets flags empty paths in a real model set", {
+  project <- loadProject(testthat::test_path("data/TestProject/Project.json"))
+  # Real parsed shape: list of {containerPath, parameterName, value, units}.
+  project$modelParameterSets[["Global"]] <- list(
+    list(containerPath = "", parameterName = "", value = 1, units = NULL)
   )
-  result <- esqlabsR:::.validateParameterSets(sets, "modelParameterSets")
+  result <- esqlabsR:::.validateParameterSets(
+    project$modelParameterSets,
+    "modelParameterSets"
+  )
   msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
-  expect_true(any(grepl("different lengths", msgs)))
+  expect_true(any(grepl("empty parameter paths", msgs)))
+})
+
+test_that(".validateParameterSets flags non-numeric values in a real set", {
+  project <- loadProject(testthat::test_path("data/TestProject/Project.json"))
+  project$modelParameterSets[["Global"]] <- list(
+    list(containerPath = "A", parameterName = "p", value = "abc", units = NULL)
+  )
+  result <- esqlabsR:::.validateParameterSets(
+    project$modelParameterSets,
+    "modelParameterSets"
+  )
+  msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
+  expect_true(any(grepl("non-numeric value", msgs)))
+})
+
+test_that(".validateParameterSets flags all three parameter-set sections", {
+  project <- loadProject(testthat::test_path("data/TestProject/Project.json"))
+  badEntry <- list(
+    list(containerPath = "", parameterName = "p", value = 1, units = NULL)
+  )
+  project$modelParameterSets[["Global"]] <- badEntry
+  project$individualParameterSets[["Indiv1_default"]] <- badEntry
+  project$applicationParameterSets[["Aciclovir_iv_250mg_default"]] <- badEntry
+
+  for (section in c(
+    "modelParameterSets",
+    "individualParameterSets",
+    "applicationParameterSets"
+  )) {
+    result <- esqlabsR:::.validateParameterSets(project[[section]], section)
+    expect_gte(length(result$critical_errors), 1)
+  }
+})
+
+test_that("validateProject() flags an invalid parameter set in the real shape", {
+  project <- loadProject(testthat::test_path("data/TestProject/Project.json"))
+  project$modelParameterSets[["Global"]] <- list(
+    list(containerPath = "", parameterName = "", value = "abc", units = NULL)
+  )
+  results <- suppressWarnings(validateProject(project))
+  expect_true(isAnyCriticalErrors(results))
 })
 
 # Section adapter: applications ----
@@ -491,4 +541,279 @@ test_that("createPlots(validate = TRUE) aborts on a clearly broken project", {
   )
   project <- .fakeProject(plots = plots)
   expect_snapshot(error = TRUE, createPlots(project))
+})
+
+# .abortValidationErrors: glue metacharacters in messages ----
+
+test_that(".abortValidationErrors escapes glue metacharacters in messages", {
+  result <- validationResult$new()
+  result$add_critical_error("Structure", "Scenario \"Dose {mg}\" is broken")
+  result$add_critical_error("Structure", "Scenario S{1} also broken")
+  results <- list(scenarios = result)
+  expect_snapshot(
+    error = TRUE,
+    esqlabsR:::.abortValidationErrors(results, "runScenarios")
+  )
+})
+
+# Cross-reference: scenario -> outputPath ----
+
+test_that("validateProject() flags a scenario referencing a removed outputPath", {
+  project <- loadProject(testthat::test_path("data/TestProject/Project.json"))
+  # Aciclovir_fat_cell is used by TestScenario_steadystate and by no PI task,
+  # isolating the scenario -> outputPath reference.
+  suppressWarnings(removeOutputPath(project, "Aciclovir_fat_cell"))
+  results <- suppressWarnings(validateProject(project))
+  msgs <- vapply(
+    results$crossReferences$critical_errors,
+    \(e) e$message,
+    character(1)
+  )
+  expect_true(any(grepl("Aciclovir_fat_cell", msgs)))
+})
+
+# Cross-reference: dataCombined -> observed dataSet ----
+
+test_that(".validatePlots flags an empty observed dataSet reference", {
+  project <- loadProject(testthat::test_path("data/TestProject/Project.json"))
+  project$plots <- NULL
+  addDataCombined(
+    project,
+    name = "DC1",
+    simulated = list(list(
+      label = "sim",
+      scenario = "TestScenario",
+      path = "Organism|A"
+    ))
+  )
+  # Inject an empty observed dataSet directly, mimicking a hand-edited
+  # Project.json that bypassed the addDataCombined() guard.
+  project$plots$dataCombined$DC1$observed <- list(
+    list(label = "obs", dataSet = "")
+  )
+  result <- esqlabsR:::.validatePlots(project$plots)
+  msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
+  expect_true(any(grepl("dataSet", msgs)))
+})
+
+test_that("removeObservedData warns when a dataCombined still references it", {
+  project <- loadProject(testthat::test_path("data/TestProject/Project.json"))
+  ds <- ospsuite::DataSet$new(name = "MyObs")
+  ds$setValues(c(1, 2, 3), c(10, 20, 30))
+  suppressMessages(addObservedData(project, ds))
+  project$plots <- NULL
+  addDataCombined(
+    project,
+    name = "DC1",
+    observed = list(list(label = "obs", dataSet = "MyObs"))
+  )
+  expect_snapshot(removeObservedData(project, "MyObs"))
+})
+
+# Section adapter: plots, plotType enum ----
+
+test_that(".validatePlots flags an unknown plotType from JSON", {
+  project <- loadProject(testthat::test_path("data/TestProject/Project.json"))
+  project$plots <- NULL
+  addDataCombined(
+    project,
+    name = "DC1",
+    simulated = list(list(
+      label = "sim",
+      scenario = "TestScenario",
+      path = "Organism|A"
+    ))
+  )
+  # Inject an unknown plotType directly, bypassing the addPlot() enum guard
+  # to mimic a hand-edited Project.json.
+  project$plots$plotConfiguration <- data.frame(
+    plotID = "p1",
+    DataCombinedName = "DC1",
+    plotType = "bogusType",
+    stringsAsFactors = FALSE
+  )
+  result <- esqlabsR:::.validatePlots(project$plots)
+  msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
+  expect_true(any(grepl("plotType", msgs)))
+})
+
+test_that(".validatePlots hard-errors on unknown plotGrid plotIDs", {
+  project <- loadProject(testthat::test_path("data/TestProject/Project.json"))
+  project$plots <- NULL
+  addDataCombined(
+    project,
+    name = "DC1",
+    simulated = list(list(
+      label = "sim",
+      scenario = "TestScenario",
+      path = "Organism|A"
+    ))
+  )
+  addPlot(project, "p1", "DC1", "individual")
+  project$plots$plotGrids <- data.frame(
+    name = "G1",
+    plotIDs = "ghost",
+    stringsAsFactors = FALSE
+  )
+  result <- esqlabsR:::.validatePlots(project$plots)
+  msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
+  expect_true(any(grepl("ghost", msgs)))
+})
+
+test_that(".validatePlots flags unknown plotGrid ids even with empty plotConfig", {
+  plots <- list(
+    dataCombined = list(),
+    plotConfiguration = data.frame(),
+    plotGrids = data.frame(
+      name = "G1",
+      plotIDs = "ghost",
+      stringsAsFactors = FALSE
+    )
+  )
+  result <- esqlabsR:::.validatePlots(plots)
+  msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
+  expect_true(any(grepl("ghost", msgs)))
+})
+
+# Section adapter: PI per-task scenario consistency ----
+
+test_that(".validatePI flags a parameter scenario outside the task's scenarios", {
+  project <- loadProject(testthat::test_path("data/TestProject/Project.json"))
+  # Task scoped to TestScenario; parameter references a different (valid)
+  # project scenario that is not part of the task.
+  addPITask(
+    project,
+    id = "T2",
+    scenarios = c("TestScenario"),
+    parameters = list(esqlabsR:::PIParameter(
+      id = "P1",
+      scenarios = c("TestScenario_steadystate"),
+      path = "Organism|Liver|EHC continuous fraction",
+      minValue = 0.5,
+      maxValue = 1,
+      startValue = 0.8
+    )),
+    outputMappings = list(esqlabsR:::PIOutputMapping(
+      id = "M1",
+      scenarios = c("TestScenario"),
+      outputPathId = "Aciclovir_PVB",
+      observedDataId = "obs"
+    ))
+  )
+  result <- esqlabsR:::.validatePI(project$parameterIdentification)
+  msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
+  expect_true(any(grepl("TestScenario_steadystate", msgs)))
+})
+
+test_that(".validatePI flags a mapping scenario outside the task's scenarios", {
+  project <- loadProject(testthat::test_path("data/TestProject/Project.json"))
+  addPITask(
+    project,
+    id = "T2",
+    scenarios = c("TestScenario"),
+    parameters = list(esqlabsR:::PIParameter(
+      id = "P1",
+      scenarios = c("TestScenario"),
+      path = "Organism|Liver|EHC continuous fraction",
+      minValue = 0.5,
+      maxValue = 1,
+      startValue = 0.8
+    )),
+    outputMappings = list(esqlabsR:::PIOutputMapping(
+      id = "M1",
+      scenarios = c("PopulationScenario"),
+      outputPathId = "Aciclovir_PVB",
+      observedDataId = "obs"
+    ))
+  )
+  result <- esqlabsR:::.validatePI(project$parameterIdentification)
+  msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
+  expect_true(any(grepl("PopulationScenario", msgs)))
+})
+
+# Cross-reference branches with previously zero coverage ----
+
+test_that("validateProject() flags a scenario referencing a removed population", {
+  project <- loadProject(testthat::test_path("data/TestProject/Project.json"))
+  suppressWarnings(removePopulation(project, "TestPopulation"))
+  results <- suppressWarnings(validateProject(project))
+  msgs <- vapply(
+    results$crossReferences$critical_errors,
+    \(e) e$message,
+    character(1)
+  )
+  expect_true(any(grepl("populationId", msgs)))
+})
+
+test_that("validateProject() flags a scenario referencing a removed model set", {
+  project <- loadProject(testthat::test_path("data/TestProject/Project.json"))
+  suppressWarnings(removeModelParameterSet(project, "Global"))
+  results <- suppressWarnings(validateProject(project))
+  msgs <- vapply(
+    results$crossReferences$critical_errors,
+    \(e) e$message,
+    character(1)
+  )
+  expect_true(any(grepl("model parameter sets", msgs)))
+})
+
+test_that("validateProject() flags a scenario referencing a removed application", {
+  project <- loadProject(testthat::test_path("data/TestProject/Project.json"))
+  suppressWarnings(removeApplication(project, "Aciclovir_iv_250mg"))
+  results <- suppressWarnings(validateProject(project))
+  msgs <- vapply(
+    results$crossReferences$critical_errors,
+    \(e) e$message,
+    character(1)
+  )
+  expect_true(any(grepl("applicationProtocol", msgs)))
+})
+
+test_that("validateProject() flags an application referencing a removed set", {
+  project <- loadProject(testthat::test_path("data/TestProject/Project.json"))
+  suppressWarnings(removeApplicationParameterSet(
+    project,
+    "Aciclovir_iv_250mg_default"
+  ))
+  results <- suppressWarnings(validateProject(project))
+  msgs <- vapply(
+    results$crossReferences$critical_errors,
+    \(e) e$message,
+    character(1)
+  )
+  expect_true(any(grepl("applicationParameterSets", msgs)))
+})
+
+test_that("validateProject() flags a dataCombined referencing an unknown scenario", {
+  project <- loadProject(testthat::test_path("data/TestProject/Project.json"))
+  project$plots <- NULL
+  addDataCombined(
+    project,
+    name = "DC1",
+    simulated = list(list(
+      label = "sim",
+      scenario = "GhostScenario",
+      path = "Organism|A"
+    ))
+  )
+  results <- suppressWarnings(validateProject(project))
+  msgs <- vapply(
+    results$crossReferences$critical_errors,
+    \(e) e$message,
+    character(1)
+  )
+  expect_true(any(grepl("GhostScenario", msgs)))
+})
+
+test_that("validateProject() flags a PI outputMapping referencing a removed outputPath", {
+  project <- loadProject(testthat::test_path("data/TestProject/Project.json"))
+  # The bundled PI task maps Aciclovir_PVB; removing it strands the mapping.
+  suppressWarnings(removeOutputPath(project, "Aciclovir_PVB"))
+  results <- suppressWarnings(validateProject(project))
+  msgs <- vapply(
+    results$crossReferences$critical_errors,
+    \(e) e$message,
+    character(1)
+  )
+  expect_true(any(grepl("outputPathId", msgs)))
 })
