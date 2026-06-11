@@ -117,6 +117,79 @@ test_that("isProjectInitialized handles non-existent directories", {
   expect_false(isProjectInitialized("non_existent_directory"))
 })
 
+test_that("isProjectInitialized does not false-positive on a dir whose path contains 'Project'", {
+  parent <- withr::local_tempdir()
+  # The directory's own path contains "Project"; an unrelated .xlsx inside
+  # it must not be mistaken for a project config file.
+  dir <- file.path(parent, "MyProjectFolder")
+  dir.create(dir)
+  writeLines("x", file.path(dir, "data.xlsx"))
+
+  expect_false(isProjectInitialized(dir))
+})
+
+test_that("initProject(type = 'minimal', createExcel = FALSE) creates the JSON skeleton", {
+  dir <- withr::local_tempdir()
+  initProject(destination = dir, type = "minimal", createExcel = FALSE)
+
+  expect_true(file.exists(file.path(dir, "Project.json")))
+  expect_false(file.exists(file.path(dir, "Project.xlsx")))
+  expect_true(dir.exists(file.path(dir, "Models", "Simulations")))
+  expect_true(dir.exists(file.path(dir, "Results", "Figures")))
+})
+
+test_that("initProject(createExcel = FALSE) over an existing project does not write Excel", {
+  dir <- withr::local_tempdir()
+  initProject(destination = dir, type = "minimal", createExcel = FALSE)
+
+  initProject(
+    destination = dir,
+    type = "minimal",
+    createExcel = FALSE,
+    overwrite = TRUE
+  )
+  expect_false(file.exists(file.path(dir, "Project.xlsx")))
+})
+
+test_that("initProject aborts non-interactively when a project exists and overwrite = FALSE", {
+  dir <- withr::local_tempdir()
+  initProject(destination = dir, type = "minimal", createExcel = FALSE)
+
+  # Tests run non-interactively, so the prompt path must abort with guidance.
+  expect_snapshot(
+    error = TRUE,
+    initProject(destination = dir, type = "minimal", createExcel = FALSE)
+  )
+})
+
+test_that("initProject aborts when the user declines the overwrite prompt", {
+  dir <- withr::local_tempdir()
+  initProject(destination = dir, type = "minimal", createExcel = FALSE)
+
+  local_mocked_bindings(
+    .isInteractive = function() TRUE,
+    .confirmOverwrite = function() FALSE
+  )
+  expect_snapshot(
+    error = TRUE,
+    initProject(destination = dir, type = "minimal", createExcel = FALSE)
+  )
+})
+
+test_that("initProject proceeds when the user accepts the overwrite prompt", {
+  dir <- withr::local_tempdir()
+  initProject(destination = dir, type = "minimal", createExcel = FALSE)
+
+  local_mocked_bindings(
+    .isInteractive = function() TRUE,
+    .confirmOverwrite = function() TRUE
+  )
+  expect_invisible(
+    initProject(destination = dir, type = "minimal", createExcel = FALSE)
+  )
+  expect_true(isProjectInitialized(dir))
+})
+
 test_that("initProject with overwrite = TRUE doesn't ask for permission", {
   temp_project <- with_temp_project()
 

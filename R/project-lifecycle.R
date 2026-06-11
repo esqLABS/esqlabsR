@@ -136,8 +136,15 @@ isProjectInitialized <- function(destination = ".") {
   # Check for Project.json file
   hasJsonFile <- file.exists(file.path(destination, "Project.json"))
 
-  # Check for ProjectConfiguration*.xlsx file
-  hasConfigFile <- length(fs::dir_ls(destination, glob = "*Project*.xlsx")) > 0
+  # Check for a *Project*.xlsx file. Match on the basename: fs::dir_ls()
+  # globs the full path, so a destination directory whose own path contains
+  # "Project" would otherwise match any .xlsx inside it.
+  xlsxFiles <- fs::path_file(fs::dir_ls(
+    destination,
+    glob = "*.xlsx",
+    fail = FALSE
+  ))
+  hasConfigFile <- any(grepl("Project", xlsxFiles, fixed = TRUE))
 
   # Check for Configurations folder
   hasConfigFolder <- fs::dir_exists(file.path(destination, "Configurations"))
@@ -190,29 +197,27 @@ initProject <- function(
       # Overwrite without asking
       message(messages$overwriteDestination(destination))
     } else {
-      # Ask for permission to overwrite
-      qs <- sample(c("Absolutely not", "Yes", "No way"))
-
-      out <- utils::menu(
-        title = "The destination folder seems to already contain an esqlabsR project. Do you want to overwrite it?",
-        choices = qs
-      )
-
-      if (out == 0L || qs[[out]] != "Yes") {
+      if (!.isInteractive()) {
+        cli::cli_abort(messages$cannotPromptNonInteractive())
+      }
+      if (!.confirmOverwrite()) {
         cli::cli_abort(messages$abortedByUser())
       }
-
       message(messages$overwriteDestination(destination))
     }
   }
 
   # Copy template files (just the JSON for minimal, full fixture for example)
-  res <- file.copy(
-    list.files(source_folder, full.names = TRUE),
+  sourceFiles <- list.files(source_folder, full.names = TRUE)
+  copied <- file.copy(
+    sourceFiles,
     destination,
     recursive = TRUE,
     overwrite = TRUE
   )
+  if (!all(copied)) {
+    cli::cli_abort(messages$failedToCopyTemplate(sourceFiles[!copied]))
+  }
 
   # Create empty directory structure
   dirs_to_create <- c(
@@ -237,6 +242,30 @@ initProject <- function(
   }
 
   invisible(destination)
+}
+
+# Thin wrapper around base::interactive(), as a package-local binding so
+# tests can mock the interactive/non-interactive branch of initProject().
+#
+# @keywords internal
+# @noRd
+.isInteractive <- function() {
+  interactive()
+}
+
+# Ask the interactive user whether to overwrite an existing project.
+# Returns TRUE only if they pick "Yes". Wrapped in a package-local helper
+# so tests can mock it without touching the `utils` namespace.
+#
+# @keywords internal
+# @noRd
+.confirmOverwrite <- function() {
+  qs <- sample(c("Absolutely not", "Yes", "No way"))
+  out <- utils::menu(
+    title = "The destination folder seems to already contain an esqlabsR project. Do you want to overwrite it?",
+    choices = qs
+  )
+  out != 0L && qs[[out]] == "Yes"
 }
 
 #' Get the path to the example Project.json

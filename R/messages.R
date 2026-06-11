@@ -729,6 +729,20 @@ messages$abortedByUser <- function() {
   )
 }
 
+messages$cannotPromptNonInteractive <- function() {
+  cliFormat(
+    "The destination already contains an esqlabsR project and cannot prompt \\
+    in a non-interactive session. Pass {.code overwrite = TRUE} to overwrite it."
+  )
+}
+
+messages$failedToCopyTemplate <- function(paths) {
+  cliFormat(
+    "Failed to copy {length(paths)} template file{?s} to the destination: \\
+    {.file {paths}}."
+  )
+}
+
 messages$errorPIDatasetNotFound <- function(datasetName, availableDatasets) {
   cli::format_message(c(
     "x" = "Dataset {.val {datasetName}} not found",
