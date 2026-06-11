@@ -93,6 +93,28 @@ test_that("PIParameter() errors on non-scalar units", {
   )
 })
 
+test_that("PIParameter() accepts an unitless parameter (NULL or empty string)", {
+  empty <- PIParameter(
+    id = "x",
+    scenarios = "S1",
+    path = "Organism|x|y",
+    units = "",
+    minValue = 0,
+    maxValue = 1,
+    startValue = 0.5
+  )
+  null <- PIParameter(
+    id = "x",
+    scenarios = "S1",
+    path = "Organism|x|y",
+    minValue = 0,
+    maxValue = 1,
+    startValue = 0.5
+  )
+  expect_identical(empty$units, "")
+  expect_null(null$units)
+})
+
 test_that("PIOutputMapping() builds a plain-data record with the expected shape", {
   m <- PIOutputMapping(
     id = "PVB_obs",
@@ -1743,6 +1765,42 @@ test_that(".createSinglePITask applies the declared PIParameter units to the run
   expect_equal(runtime$startValue, 2000)
   expect_equal(runtime$minValue, 1000)
   expect_equal(runtime$maxValue, 5000)
+})
+
+test_that(".createSinglePITask leaves the model default unit for an unitless PIParameter", {
+  # An empty `units` means "no display unit"; the builder must not overwrite
+  # the runtime unit, so it stays at the model default (Liver Volume is `l`).
+  project <- loadProject(test_path("data", "TestProject", "Project.json"))
+  task <- PITask(
+    id = "T",
+    scenarios = "TestScenario",
+    parameters = list(
+      PIParameter(
+        id = "V",
+        scenarios = "TestScenario",
+        path = "Organism|Liver|Volume",
+        units = "",
+        minValue = 0.5,
+        maxValue = 5,
+        startValue = 1
+      )
+    ),
+    outputMappings = list(
+      PIOutputMapping(
+        id = "PVB",
+        scenarios = "TestScenario",
+        outputPathId = "Aciclovir_PVB",
+        observedDataId = "Laskin 1982.Group A_Aciclovir_1_Human_MALE_PeripheralVenousBlood_Plasma_2.5 mg/kg_iv_"
+      )
+    ),
+    configuration = list(algorithm = "BOBYQA")
+  )
+  pi <- esqlabsR:::.createSinglePITask(
+    project = project,
+    piTask = task,
+    observedData = loadObservedData(project)
+  )
+  expect_identical(pi$parameters[[1]]$unit, "l")
 })
 
 test_that("PIOutputMapping weight survives a Project save / load round trip", {
