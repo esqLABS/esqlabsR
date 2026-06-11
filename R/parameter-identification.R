@@ -356,8 +356,10 @@ print.PITask <- function(x, ...) {
 # Section-local validation: id uniqueness within parameter / outputMapping
 # lists; defensive bounds re-check (records were already validated at
 # construction time, but late-binding writes through the active binding
-# could bypass that). NULL/empty section yields a "no PI tasks" warning,
-# not a critical error.
+# could bypass that); and that each parameter / outputMapping references
+# only scenarios that belong to the task's own `scenarios` (the runtime
+# build hard-fails otherwise). NULL/empty section yields a "no PI tasks"
+# warning, not a critical error.
 #
 # @keywords internal
 # @noRd
@@ -406,6 +408,37 @@ print.PITask <- function(x, ...) {
             p$minValue,
             p$startValue,
             p$maxValue
+          )
+        )
+      }
+      outsideTask <- setdiff(p$scenarios, task$scenarios)
+      if (length(outsideTask) > 0L) {
+        result$add_critical_error(
+          "Invalid Reference",
+          paste0(
+            "PI task '",
+            taskId,
+            "', parameter '",
+            p$id,
+            "' references scenarios not in the task's scenarios: ",
+            paste(outsideTask, collapse = ", ")
+          )
+        )
+      }
+    }
+
+    for (m in task$outputMappings) {
+      outsideTask <- setdiff(m$scenarios, task$scenarios)
+      if (length(outsideTask) > 0L) {
+        result$add_critical_error(
+          "Invalid Reference",
+          paste0(
+            "PI task '",
+            taskId,
+            "', outputMapping '",
+            m$id,
+            "' references scenarios not in the task's scenarios: ",
+            paste(outsideTask, collapse = ", ")
           )
         )
       }

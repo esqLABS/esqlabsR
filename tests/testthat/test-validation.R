@@ -316,14 +316,19 @@ test_that(".validateParameterSets flags non-numeric values in a real set", {
     project$modelParameterSets,
     "modelParameterSets"
   )
-  msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
+  msgs <- vapply(result$warnings, \(w) w$message, character(1))
   expect_true(any(grepl("non-numeric value", msgs)))
 })
 
 test_that(".validateParameterSets flags all three parameter-set sections", {
   project <- loadProject(testthat::test_path("data/TestProject/Project.json"))
   badEntry <- list(
-    list(containerPath = "", parameterName = "p", value = 1, units = NULL)
+    list(
+      containerPath = "Organism",
+      parameterName = "",
+      value = 1,
+      units = NULL
+    )
   )
   project$modelParameterSets[["Global"]] <- badEntry
   project$individualParameterSets[["Indiv1_default"]] <- badEntry
@@ -445,7 +450,12 @@ test_that(".validateCrossReferences flags individual referencing unknown paramet
   project <- .fakeProject(
     individuals = individuals,
     individualParameterSets = list(
-      real = list(paths = "A|p", values = 1, units = "")
+      real = list(list(
+        containerPath = "A",
+        parameterName = "p",
+        value = 1,
+        units = NULL
+      ))
     )
   )
   result <- esqlabsR:::.validateCrossReferences(project, list())

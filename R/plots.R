@@ -95,14 +95,17 @@
 #'
 #' Covers `dataCombined`, `plotConfiguration`, and `plotGrids`:
 #'   * dataCombined entries must declare a non-empty `scenario` on
-#'     each simulated row.
+#'     each simulated row and a non-empty `dataSet` on each observed
+#'     row.
 #'   * plotConfiguration must declare `plotID`, `DataCombinedName`, and
 #'     `plotType` columns; `plotID` must be unique; `DataCombinedName`
-#'     must reference a known dataCombined entry.
+#'     must reference a known dataCombined entry; `plotType` must be one
+#'     of `.validPlotTypes`.
 #'   * plotGrids entries reference `plotConfiguration$plotID` via a
-#'     comma-separated `plotIDs` string; unknown ids are surfaced as a
-#'     warning (not a critical error) since unknown grid ids fail
-#'     softly during plot creation.
+#'     comma-separated `plotIDs` string; unknown ids are a critical
+#'     error, mirroring the hard failure in `createPlots()`. This check
+#'     also runs when `plotConfiguration` is empty (every referenced id
+#'     is then unknown).
 #'
 #' Cross-section references that escape this section (dataCombined ->
 #' scenarios) are validated in `.validateCrossReferences()`.
@@ -140,6 +143,22 @@
           )
         }
       }
+      for (entry in dc$observed %||% list()) {
+        ds <- entry$dataSet
+        if (
+          is.null(ds) ||
+            (length(ds) == 1L && (is.na(ds) || identical(ds, "")))
+        ) {
+          result$add_critical_error(
+            "Missing Fields",
+            paste0(
+              "Observed entry in dataCombined '",
+              dcName,
+              "' is missing 'dataSet'"
+            )
+          )
+        }
+      }
     }
   }
 
@@ -163,6 +182,24 @@
       )
     }
 
+    if ("plotType" %in% names(plotConfig)) {
+      knownTypes <- as.character(plotConfig$plotType[
+        !is.na(plotConfig$plotType)
+      ])
+      invalidTypes <- setdiff(knownTypes, .validPlotTypes)
+      if (length(invalidTypes) > 0) {
+        result$add_critical_error(
+          "Invalid Reference",
+          paste0(
+            "plotConfiguration has unknown plotType(s): ",
+            paste(unique(invalidTypes), collapse = ", "),
+            ". Must be one of: ",
+            paste(.validPlotTypes, collapse = ", ")
+          )
+        )
+      }
+    }
+
     if ("DataCombinedName" %in% names(plotConfig)) {
       invalidDataCombinedRefs <- setdiff(
         plotConfig$DataCombinedName[!is.na(plotConfig$DataCombinedName)],
@@ -180,28 +217,38 @@
     }
   }
 
+  # plotGrid plotID references are a hard failure in createPlots()
+  # (.validatePlotGridsFromExcel), so flag unknown ids as critical here
+  # too. The check runs even when plotConfiguration is empty (the state
+  # after removing the last plot): every referenced id is then unknown.
   plotGrids <- plots$plotGrids
   if (
     !is.null(plotGrids) &&
       nrow(plotGrids) > 0 &&
-      !is.null(plotConfig) &&
-      nrow(plotConfig) > 0
+      "plotIDs" %in% names(plotGrids)
   ) {
-    if ("plotIDs" %in% names(plotGrids) && "plotID" %in% names(plotConfig)) {
-      allGridIds <- unlist(lapply(
-        plotGrids$plotIDs[!is.na(plotGrids$plotIDs)],
-        function(x) trimws(strsplit(x, ",")[[1]])
-      ))
-      invalidGridRefs <- setdiff(allGridIds, plotConfig$plotID)
-      if (length(invalidGridRefs) > 0) {
-        result$add_warning(
-          "Invalid Reference",
-          paste0(
-            "plotGrids references unknown plotIDs: ",
-            paste(invalidGridRefs, collapse = ", ")
-          )
+    knownPlotIDs <- if (
+      !is.null(plotConfig) &&
+        nrow(plotConfig) > 0 &&
+        "plotID" %in% names(plotConfig)
+    ) {
+      plotConfig$plotID
+    } else {
+      character(0)
+    }
+    allGridIds <- unlist(lapply(
+      plotGrids$plotIDs[!is.na(plotGrids$plotIDs)],
+      function(x) trimws(strsplit(x, ",")[[1]])
+    ))
+    invalidGridRefs <- setdiff(allGridIds, knownPlotIDs)
+    if (length(invalidGridRefs) > 0) {
+      result$add_critical_error(
+        "Invalid Reference",
+        paste0(
+          "plotGrids references unknown plotIDs: ",
+          paste(invalidGridRefs, collapse = ", ")
         )
-      }
+      )
     }
   }
 

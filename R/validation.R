@@ -263,6 +263,10 @@ validateProject <- function(project) {
       lines <- c(lines, paste0("[", section, "] ", e$message))
     }
   }
+  # Validation messages embed user-controlled ids (scenario names, paths)
+  # that may contain glue metacharacters. Double the braces so cli treats
+  # them literally instead of trying to evaluate `{...}` expressions.
+  lines <- .escapeCliBraces(lines)
   bullets <- stats::setNames(lines, rep("x", length(lines)))
   cli::cli_abort(c(
     "Cannot {opName}: project has {length(lines)} critical validation \\
@@ -270,6 +274,20 @@ validateProject <- function(project) {
     bullets,
     "i" = "Run {.code validateProject(project)} for a full report."
   ))
+}
+
+#' Escape glue/cli metacharacters in literal text
+#'
+#' Doubles `{` and `}` so a string can be placed inside a `cli` message
+#' as literal text without `cli` attempting to evaluate `{...}` glue
+#' expressions. Used to neutralise user-controlled ids (scenario names,
+#' parameter paths) embedded in validation messages.
+#'
+#' @keywords internal
+#' @noRd
+.escapeCliBraces <- function(x) {
+  x <- gsub("{", "{{", x, fixed = TRUE)
+  gsub("}", "}}", x, fixed = TRUE)
 }
 
 # Shared helpers used by section adapters ----
@@ -417,8 +435,10 @@ validateProject <- function(project) {
 #' Validate a parameter-set structure
 #'
 #' Shared body used by the model / individual / application
-#' parameter-set adapters. Each parameter set is expected to be a list
-#' with `paths`, `values`, and `units` parallel vectors.
+#' parameter-set adapters. Each parameter set is the array-of-records
+#' shape the parser and the `add*ParameterEntry()` mutators produce: a
+#' list of `list(containerPath, parameterName, value, units)` entries.
+#' The full parameter path is `containerPath|parameterName`.
 #'
 #' @keywords internal
 #' @noRd
@@ -432,28 +452,23 @@ validateProject <- function(project) {
 
   for (setName in names(parameterSets)) {
     set <- parameterSets[[setName]]
-    paths <- set$paths %||% character(0)
-    values <- set$values %||% numeric(0)
-
-    if (length(paths) != length(values)) {
-      result$add_critical_error(
-        "Structure",
-        paste0(
-          "Set '",
-          setName,
-          "' in ",
-          sectionName,
-          ": paths and values have different lengths"
-        )
-      )
+    if (length(set) == 0) {
       next
     }
 
-    if (length(paths) == 0) {
-      next
-    }
+    containerPaths <- vapply(
+      set,
+      function(e) as.character(e$containerPath %||% NA_character_),
+      character(1)
+    )
+    parameterNames <- vapply(
+      set,
+      function(e) as.character(e$parameterName %||% NA_character_),
+      character(1)
+    )
+    values <- lapply(set, function(e) e$value)
 
-    if (any(is.na(paths) | paths == "")) {
+    if (any(is.na(parameterNames) | parameterNames == "")) {
       result$add_critical_error(
         "Missing Fields",
         paste0(
@@ -466,7 +481,12 @@ validateProject <- function(project) {
       )
     }
 
-    if (!is.numeric(values)) {
+    nonNumeric <- vapply(
+      values,
+      function(v) is.null(v) || length(v) != 1L || !is.numeric(v) || is.na(v),
+      logical(1)
+    )
+    if (any(nonNumeric)) {
       result$add_warning(
         "Data Type",
         paste0(
@@ -479,7 +499,8 @@ validateProject <- function(project) {
       )
     }
 
-    dupes <- paths[duplicated(paths) & !is.na(paths)]
+    fullPaths <- paste(containerPaths, parameterNames, sep = "|")
+    dupes <- fullPaths[duplicated(fullPaths) & !is.na(fullPaths)]
     if (length(dupes) > 0) {
       result$add_warning(
         "Uniqueness",
@@ -502,11 +523,12 @@ validateProject <- function(project) {
 #'
 #' Hand-rolled monolith that checks references that span sections:
 #' `scenario.individualId/populationId` against the individuals and
-#' populations sections, `scenario.modelParameterSets` and
-#' `scenario.applicationProtocol` against their respective lookups,
-#' `individual.parameterSets` and `application.parameterSets` against
-#' the corresponding parameter-set sections, and
-#' `dataCombined.simulated.scenario` against scenarios. Skips itself
+#' populations sections, `scenario.modelParameterSets`,
+#' `scenario.applicationProtocol`, and `scenario.outputPaths` against
+#' their respective lookups, `individual.parameterSets` and
+#' `application.parameterSets` against the corresponding parameter-set
+#' sections, and `dataCombined.simulated.scenario` against scenarios.
+#' Skips itself
 #' when any prior section validator already flagged a critical error
 #' and surfaces a single "skipped" warning naming the checks that were
 #' not performed, since cross-references built on broken sections tend
@@ -529,6 +551,7 @@ validateProject <- function(project) {
       "scenario individualId / populationId references",
       "scenario modelParameterSets references",
       "scenario applicationProtocol references",
+      "scenario outputPaths references",
       "individual parameterSets references",
       "application parameterSets references",
       "plot dataCombined scenario references",
@@ -551,6 +574,7 @@ validateProject <- function(project) {
   populationIds <- names(project$populations %||% list())
   modelParamKeys <- names(project$modelParameterSets %||% list())
   applicationKeys <- names(project$applications %||% list())
+  outputPathKeys <- names(project$outputPaths %||% list())
 
   for (scName in names(scenarioList)) {
     sc <- scenarioList[[scName]]
@@ -620,6 +644,28 @@ validateProject <- function(project) {
           "'"
         )
       )
+    }
+
+    # The in-memory scenario carries its output paths as a named vector
+    # (id-as-name, resolved-path-as-value); the names are the references
+    # into project$outputPaths, mirroring the serializer's reverse map.
+    scOutputPathIds <- names(sc$outputPaths)
+    if (!is.null(scOutputPathIds)) {
+      invalidOutputPaths <- setdiff(scOutputPathIds, outputPathKeys)
+      invalidOutputPaths <- invalidOutputPaths[
+        !is.na(invalidOutputPaths) & invalidOutputPaths != ""
+      ]
+      if (length(invalidOutputPaths) > 0) {
+        result$add_critical_error(
+          "Invalid Reference",
+          paste0(
+            "Scenario '",
+            scName,
+            "' references undefined outputPathIds: ",
+            paste(invalidOutputPaths, collapse = ", ")
+          )
+        )
+      }
     }
   }
 
