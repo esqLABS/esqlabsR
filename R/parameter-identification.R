@@ -33,6 +33,16 @@ PIParameter <- function(
   ) {
     cli::cli_abort(messages$errorPIRequiredField("path", "PIParameter", id))
   }
+  # `units` is optional: NULL or an empty string both mean "no display unit".
+  # A non-empty string is the declared unit. NA or a non-scalar must never
+  # reach the builder, where `nchar(NA) == 2` would slip the guard and assign
+  # NA to the runtime unit.
+  if (
+    !is.null(units) &&
+      (!is.character(units) || length(units) != 1L || is.na(units))
+  ) {
+    cli::cli_abort(messages$errorPIRequiredField("units", "PIParameter", id))
+  }
   if (!is.numeric(minValue) || length(minValue) != 1L || is.na(minValue)) {
     cli::cli_abort(messages$errorPIRequiredField("minValue", "PIParameter", id))
   }

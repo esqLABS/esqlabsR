@@ -63,6 +63,36 @@ test_that("PIParameter() errors on empty scenarios", {
   )
 })
 
+test_that("PIParameter() errors on NA units", {
+  expect_snapshot(
+    error = TRUE,
+    PIParameter(
+      id = "x",
+      scenarios = "S1",
+      path = "Organism|x|y",
+      units = NA_character_,
+      minValue = 0,
+      maxValue = 1,
+      startValue = 0.5
+    )
+  )
+})
+
+test_that("PIParameter() errors on non-scalar units", {
+  expect_snapshot(
+    error = TRUE,
+    PIParameter(
+      id = "x",
+      scenarios = "S1",
+      path = "Organism|x|y",
+      units = c("l", "ml"),
+      minValue = 0,
+      maxValue = 1,
+      startValue = 0.5
+    )
+  )
+})
+
 test_that("PIOutputMapping() builds a plain-data record with the expected shape", {
   m <- PIOutputMapping(
     id = "PVB_obs",
@@ -2063,6 +2093,15 @@ test_that(".createSinglePITask honours non-default transforms and weights", {
   )
   expect_s3_class(pi, "ParameterIdentification")
   expect_length(pi$outputMappings, 1L)
+  # The transform block and weight must land on the runtime mapping, keyed by
+  # the observed dataset id; a silent drop would leave defaults (0/1) and NULL.
+  runtime <- pi$outputMappings[[1]]
+  transforms <- runtime$dataTransformations
+  expect_identical(unname(transforms$xOffsets[obsId]), 1)
+  expect_identical(unname(transforms$yOffsets[obsId]), 0)
+  expect_identical(unname(transforms$xFactors[obsId]), 1)
+  expect_identical(unname(transforms$yFactors[obsId]), 2)
+  expect_equal(unique(runtime$dataWeights[[obsId]]), 3)
 })
 
 test_that("runPI(piTaskNames = ) runs only the requested subset", {

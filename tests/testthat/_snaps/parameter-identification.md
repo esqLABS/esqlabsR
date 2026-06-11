@@ -25,6 +25,24 @@
       Error in `PIParameter()`:
       ! Field `scenarios` on PIParameter "x" must be a non-empty character vector.
 
+# PIParameter() errors on NA units
+
+    Code
+      PIParameter(id = "x", scenarios = "S1", path = "Organism|x|y", units = NA_character_,
+        minValue = 0, maxValue = 1, startValue = 0.5)
+    Condition
+      Error in `PIParameter()`:
+      ! Required field "units" is missing or empty on PIParameter "x".
+
+# PIParameter() errors on non-scalar units
+
+    Code
+      PIParameter(id = "x", scenarios = "S1", path = "Organism|x|y", units = c("l",
+        "ml"), minValue = 0, maxValue = 1, startValue = 0.5)
+    Condition
+      Error in `PIParameter()`:
+      ! Required field "units" is missing or empty on PIParameter "x".
+
 # PIOutputMapping() errors on missing required fields
 
     Code
