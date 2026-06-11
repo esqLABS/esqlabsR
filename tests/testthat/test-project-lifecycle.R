@@ -24,6 +24,40 @@ test_that("loadProject() errors on an unsupported schemaVersion", {
   )
 })
 
+test_that("loadProject() warns on a dangling cross-reference", {
+  path <- withr::local_tempfile(fileext = ".json")
+  jsonlite::write_json(
+    list(
+      schemaVersion = "2.0",
+      esqlabsRVersion = "6.0.0",
+      filePaths = structure(list(), names = character(0)),
+      observedData = list(),
+      outputPaths = list(O1 = "Organism|A|Concentration in container"),
+      scenarios = list(list(
+        name = "S",
+        individualId = "Ghost",
+        modelFile = "m.pkml",
+        outputPathIds = list("O1")
+      )),
+      individuals = structure(list(), names = character(0)),
+      populations = structure(list(), names = character(0)),
+      applications = structure(list(), names = character(0))
+    ),
+    path,
+    auto_unbox = TRUE,
+    null = "null"
+  )
+
+  expect_warning(
+    loadProject(path),
+    "unresolved cross-reference.*Ghost"
+  )
+})
+
+test_that("loadProject() loads a clean project without a cross-reference warning", {
+  expect_no_warning(testProject())
+})
+
 test_that("saveProject writes a Project to disk and clears modified flag", {
   project <- testProject()
   project$modelFolder <- "AnotherModels"
