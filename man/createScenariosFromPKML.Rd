@@ -90,7 +90,7 @@ each scenario. Default is \code{FALSE}. Can be a single logical value
 
 \item{steadyStateTime}{Numeric vector. Steady-state times. Only used when
 corresponding \code{steadyState} is \code{TRUE}. If \code{NULL} (default), no
-steady-state time is set on the scenario, and \code{Scenario$new()}'s default
+steady-state time is set on the scenario, and \code{Scenario()}'s default
 of 1000 (in the configured time unit) takes effect at simulation time.
 Can be a single numeric value (recycled for all scenarios) or a vector
 with the same length as \code{pkmlFilePaths}.}

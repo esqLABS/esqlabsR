@@ -31,7 +31,7 @@ test_that("createScenariosFromPKML returns a named list of Scenario objects", {
   )
   expect_type(scenarios, "list")
   expect_named(scenarios, "Test1")
-  expect_r6_class(scenarios[["Test1"]], "Scenario")
+  expect_s3_class(scenarios[["Test1"]], "Scenario")
 })
 
 test_that("paramSheets argument is soft-deprecated", {

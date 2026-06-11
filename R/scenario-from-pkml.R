@@ -63,7 +63,7 @@
 #'   `pkmlFilePaths`.
 #' @param steadyStateTime Numeric vector. Steady-state times. Only used when
 #'   corresponding `steadyState` is `TRUE`. If `NULL` (default), no
-#'   steady-state time is set on the scenario, and `Scenario$new()`'s default
+#'   steady-state time is set on the scenario, and `Scenario()`'s default
 #'   of 1000 (in the configured time unit) takes effect at simulation time.
 #'   Can be a single numeric value (recycled for all scenarios) or a vector
 #'   with the same length as `pkmlFilePaths`.
@@ -401,7 +401,7 @@ createScenariosFromPKML <- function(
     originalScenarioNames <- c(originalScenarioNames, originalScenarioName)
 
     # Create Scenario object
-    sc <- Scenario$new()
+    sc <- Scenario()
     sc$scenarioName <- scenarioName
     sc$modelFile <- fs::path_rel(
       pkmlPath,

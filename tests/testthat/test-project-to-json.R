@@ -310,9 +310,8 @@ test_that(".scenariosToJson errors when scenario outputPaths reference unknown i
   # Mutate the first scenario to add a named path whose id is not in
   # project$outputPaths. (Parser would have rejected this, but a Chapter
   # 7+ programmatic mutation could land us here.)
-  sc <- project$scenarios[[1L]]
-  sc$outputPaths <- c(
-    sc$outputPaths,
+  project$scenarios[[1L]]$outputPaths <- c(
+    project$scenarios[[1L]]$outputPaths,
     c(UnknownId = "Organism|NotDeclared|Path")
   )
 
@@ -324,9 +323,10 @@ test_that(".scenariosToJson errors when scenario outputPaths reference unknown i
 
 test_that(".scenariosToJson errors when outputPaths has unnamed elements", {
   project <- exampleProject()
-  sc <- project$scenarios[[1L]]
   # Strip names to simulate a programmatic mutation that violates the invariant.
-  sc$outputPaths <- unname(sc$outputPaths)
+  project$scenarios[[1L]]$outputPaths <- unname(
+    project$scenarios[[1L]]$outputPaths
+  )
 
   expect_error(
     esqlabsR:::.projectToJson(project),
@@ -339,8 +339,7 @@ test_that(".scenariosToJson errors when simulateSteadyState is TRUE without a un
   # Aciclovir_iv has simulateSteadyState=FALSE and no unit.
   # Flip the flag without setting the unit — the round-trip cannot
   # carry the steady-state time, so the serializer must reject it.
-  sc <- project$scenarios[["Aciclovir_iv"]]
-  sc$simulateSteadyState <- TRUE
+  project$scenarios[["Aciclovir_iv"]]$simulateSteadyState <- TRUE
 
   expect_error(
     esqlabsR:::.projectToJson(project),
@@ -350,8 +349,7 @@ test_that(".scenariosToJson errors when simulateSteadyState is TRUE without a un
 
 test_that("round-trip preserves empty modelParameterSets as a JSON array", {
   project <- exampleProject()
-  sc <- project$scenarios[["Aciclovir_iv"]]
-  sc$modelParameterSets <- character(0)
+  project$scenarios[["Aciclovir_iv"]]$modelParameterSets <- character(0)
 
   out <- withr::local_tempfile(fileext = ".json")
   esqlabsR:::.saveProjectJson(project, out)
@@ -366,8 +364,7 @@ test_that("round-trip preserves empty modelParameterSets as a JSON array", {
 
 test_that("round-trip preserves empty outputPathIds as a JSON array", {
   project <- exampleProject()
-  sc <- project$scenarios[["Aciclovir_iv"]]
-  sc$outputPaths <- NULL
+  project$scenarios[["Aciclovir_iv"]]$outputPaths <- NULL
 
   out <- withr::local_tempfile(fileext = ".json")
   esqlabsR:::.saveProjectJson(project, out)

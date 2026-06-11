@@ -22,31 +22,15 @@
 
   result <- list()
   for (entry in scenariosData) {
-    sc <- Scenario$new()
-    sc$scenarioName <- entry$name
-    sc$modelFile <- entry$modelFile
-    sc$applicationProtocol <- entry$applicationProtocol %||% NA
-    sc$individualId <- entry$individualId
-
-    if (!is.null(entry$populationId)) {
-      sc$populationId <- entry$populationId
-      sc$simulationType <- "Population"
-    }
-    if (!is.null(entry$readPopulationFromCSV)) {
-      sc$readPopulationFromCSV <- entry$readPopulationFromCSV
-    }
-    if (!is.null(entry$modelParameterSets)) {
-      sc$modelParameterSets <- unlist(entry$modelParameterSets)
-    }
+    simulationTime <- NULL
+    simulationTimeUnit <- NULL
     if (!is.null(entry$simulationTime)) {
-      sc$simulationTime <- .parseSimulationTimeIntervals(
-        entry$simulationTime
-      )
-      sc$simulationTimeUnit <- entry$simulationTimeUnit
+      simulationTime <- .parseSimulationTimeIntervals(entry$simulationTime)
+      simulationTimeUnit <- entry$simulationTimeUnit
     }
-    if (isTRUE(entry$steadyState)) {
-      sc$simulateSteadyState <- TRUE
-    }
+
+    steadyStateTime <- 1000
+    steadyStateTimeUnit <- NULL
     if (!is.null(entry$steadyStateTime)) {
       if (is.null(entry$steadyStateTimeUnit)) {
         cli::cli_abort(
@@ -55,17 +39,15 @@
           (e.g. {.val min})."
         )
       }
-      sc$steadyStateTime <- ospsuite::toBaseUnit(
+      steadyStateTime <- ospsuite::toBaseUnit(
         quantityOrDimension = ospDimensions$Time,
         values = entry$steadyStateTime,
         unit = entry$steadyStateTimeUnit
       )
-      sc$steadyStateTimeUnit <- entry$steadyStateTimeUnit
-    }
-    if (!is.null(entry$overwriteFormulasInSS)) {
-      sc$overwriteFormulasInSS <- entry$overwriteFormulasInSS
+      steadyStateTimeUnit <- entry$steadyStateTimeUnit
     }
 
+    scenarioOutputPaths <- NULL
     if (!is.null(entry$outputPathIds)) {
       pathIds <- unlist(entry$outputPathIds)
       unknown <- setdiff(pathIds, names(outputPaths))
@@ -75,13 +57,30 @@
           {.val {unknown}}."
         )
       }
-      sc$outputPaths <- setNames(
+      scenarioOutputPaths <- setNames(
         unlist(outputPaths[pathIds], use.names = FALSE),
         pathIds
       )
     }
 
-    result[[entry$name]] <- sc
+    result[[entry$name]] <- Scenario(
+      scenarioName = entry$name,
+      modelFile = entry$modelFile,
+      applicationProtocol = entry$applicationProtocol %||% NA,
+      individualId = entry$individualId,
+      populationId = entry$populationId,
+      outputPaths = scenarioOutputPaths,
+      readPopulationFromCSV = entry$readPopulationFromCSV %||% FALSE,
+      simulateSteadyState = isTRUE(entry$steadyState),
+      simulationTime = simulationTime,
+      simulationTimeUnit = simulationTimeUnit,
+      steadyStateTime = steadyStateTime,
+      steadyStateTimeUnit = steadyStateTimeUnit,
+      overwriteFormulasInSS = entry$overwriteFormulasInSS %||% FALSE,
+      modelParameterSets = if (!is.null(entry$modelParameterSets)) {
+        unlist(entry$modelParameterSets)
+      }
+    )
   }
   result
 }
@@ -411,36 +410,29 @@ addScenario <- function(
     ))
   }
 
-  sc <- Scenario$new()
-  sc$scenarioName <- scenarioName
-  sc$modelFile <- modelFile
-  sc$individualId <- individualId
-  sc$applicationProtocol <- applicationProtocol %||% NA
-
-  if (!is.null(populationId)) {
-    sc$populationId <- populationId
-    sc$simulationType <- "Population"
-  }
-
-  sc$modelParameterSets <- modelParameterSets
-  sc$readPopulationFromCSV <- readPopulationFromCSV
-
-  if (!is.null(outputPathIds)) {
-    sc$outputPaths <- setNames(
-      unlist(project$outputPaths[outputPathIds], use.names = FALSE),
-      outputPathIds
-    )
-  }
-
-  if (!is.null(simulationTime)) {
-    sc$simulationTime <- .parseSimulationTimeIntervals(simulationTime)
-    sc$simulationTimeUnit <- simulationTimeUnit
-  }
-
-  sc$simulateSteadyState <- steadyState
-  sc$steadyStateTime <- steadyStateTime
-  sc$steadyStateTimeUnit <- steadyStateTimeUnit
-  sc$overwriteFormulasInSS <- overwriteFormulasInSS
+  sc <- Scenario(
+    scenarioName = scenarioName,
+    modelFile = modelFile,
+    applicationProtocol = applicationProtocol %||% NA,
+    individualId = individualId,
+    populationId = populationId,
+    outputPaths = if (!is.null(outputPathIds)) {
+      setNames(
+        unlist(project$outputPaths[outputPathIds], use.names = FALSE),
+        outputPathIds
+      )
+    },
+    readPopulationFromCSV = readPopulationFromCSV,
+    simulateSteadyState = steadyState,
+    simulationTime = if (!is.null(simulationTime)) {
+      .parseSimulationTimeIntervals(simulationTime)
+    },
+    simulationTimeUnit = if (!is.null(simulationTime)) simulationTimeUnit,
+    steadyStateTime = steadyStateTime,
+    steadyStateTimeUnit = steadyStateTimeUnit,
+    overwriteFormulasInSS = overwriteFormulasInSS,
+    modelParameterSets = modelParameterSets
+  )
 
   project$scenarios[[scenarioName]] <- sc
   project$.markModified()
