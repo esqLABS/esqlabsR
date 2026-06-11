@@ -754,6 +754,20 @@ messages$errorPIScenariosEmpty <- function(recordType, recordId) {
   )
 }
 
+messages$errorPIInvalidNumericField <- function(field, recordId, value) {
+  cliFormat(
+    "Field {.code {field}} on PIOutputMapping {.val {recordId}} is invalid: \\
+    {.val {value}}. Expected a finite numeric value."
+  )
+}
+
+messages$errorPIInvalidScaling <- function(recordId, value) {
+  cliFormat(
+    "Field {.code scaling} on PIOutputMapping {.val {recordId}} is invalid: \\
+    {.val {value}}. Expected a non-empty string."
+  )
+}
+
 messages$errorPIWrongElementType <- function(
   field,
   index,

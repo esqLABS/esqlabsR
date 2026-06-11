@@ -1129,7 +1129,12 @@ test_that("runPI(project) runs a task end to end and returns a PIResult", {
 test_that("runPI(project) hard-fails when the build phase errors", {
   project <- loadProject(test_path("data", "TestProject", "Project.json"))
   local_mocked_bindings(
-    .createSinglePITask = function(project, piTask, observedData) {
+    .createSinglePITask = function(
+      project,
+      piTask,
+      observedData,
+      stopIfParameterNotFound = TRUE
+    ) {
       stop("Parameter |Organism|Live|EHC| not found in simulation")
     }
   )
@@ -1147,7 +1152,12 @@ test_that("runPI(project) soft-fails when the optimisation phase errors", {
     class = "ParameterIdentification"
   )
   local_mocked_bindings(
-    .createSinglePITask = function(project, piTask, observedData) {
+    .createSinglePITask = function(
+      project,
+      piTask,
+      observedData,
+      stopIfParameterNotFound = TRUE
+    ) {
       fakeRuntime
     }
   )
@@ -1493,7 +1503,9 @@ test_that("addPIParameter() auto-generates id when absent", {
     "id"
   )
   expect_length(ids, 2L)
-  expect_identical(ids[[2]], "T_param_2")
+  # The auto-id scans for the first free "T_param_<N>" slot starting at 1; the
+  # explicit "p1" id does not occupy "T_param_1".
+  expect_identical(ids[[2]], "T_param_1")
 })
 
 test_that("removePIParameter() warns and no-ops on missing id", {
@@ -1960,6 +1972,16 @@ test_that("PIOutputMapping() validates scaling and the offset / factor / weight 
       weight = "heavy"
     )
   )
+  expect_snapshot(
+    error = TRUE,
+    PIOutputMapping(
+      id = "m",
+      scenarios = "S1",
+      outputPathId = "P",
+      observedDataId = "D",
+      scaling = ""
+    )
+  )
 })
 
 test_that("addPITask() rejects malformed outputMappings with a typed error", {
@@ -2122,22 +2144,23 @@ test_that("runPI() builds every task before optimising any (fail fast on a build
     configuration = list(algorithm = "BOBYQA")
   )
   runCount <- 0L
-  trackingBuild <- function(project, piTask, observedData) {
-    structure(
-      list(run = function() {
-        runCount <<- runCount + 1L
-        NULL
-      }),
-      class = "ParameterIdentification"
-    )
-  }
-  realBuild <- esqlabsR:::.createSinglePITask
   local_mocked_bindings(
-    .createSinglePITask = function(project, piTask, observedData) {
+    .createSinglePITask = function(
+      project,
+      piTask,
+      observedData,
+      stopIfParameterNotFound = TRUE
+    ) {
       if (identical(piTask$id, "Broken")) {
         stop("Parameter not found in simulation")
       }
-      trackingBuild(project, piTask, observedData)
+      structure(
+        list(run = function() {
+          runCount <<- runCount + 1L
+          NULL
+        }),
+        class = "ParameterIdentification"
+      )
     }
   )
   expect_error(

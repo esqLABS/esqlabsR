@@ -123,6 +123,33 @@ PIOutputMapping <- function(
       id
     ))
   }
+  if (
+    !is.null(scaling) &&
+      (!is.character(scaling) ||
+        length(scaling) != 1L ||
+        is.na(scaling) ||
+        nchar(scaling) == 0)
+  ) {
+    cli::cli_abort(messages$errorPIInvalidScaling(id, scaling))
+  }
+  for (field in c("xOffset", "yOffset", "xFactor", "yFactor")) {
+    value <- get(field)
+    if (!is.numeric(value) || length(value) != 1L || is.na(value)) {
+      cli::cli_abort(messages$errorPIInvalidNumericField(field, id, value))
+    }
+  }
+  # `weight` may arrive as a bare list of numbers from a JSON round trip, so
+  # flatten before checking. A non-numeric or NA element is invalid.
+  if (!is.null(weight)) {
+    flatWeight <- unlist(weight)
+    if (
+      length(flatWeight) == 0L ||
+        !is.numeric(flatWeight) ||
+        any(is.na(flatWeight))
+    ) {
+      cli::cli_abort(messages$errorPIInvalidNumericField("weight", id, weight))
+    }
+  }
 
   rec <- list(
     id = id,
@@ -134,7 +161,10 @@ PIOutputMapping <- function(
     yOffset = as.double(yOffset),
     xFactor = as.double(xFactor),
     yFactor = as.double(yFactor),
-    weight = weight
+    # Coerce to a flat double vector so a JSON round trip (which reparses a
+    # length-1 weight as integer and a length-n weight as a bare list) stays
+    # identical to the originally constructed value.
+    weight = if (is.null(weight)) NULL else as.double(unlist(weight))
   )
   class(rec) <- c("PIOutputMapping", "list")
   rec
@@ -181,7 +211,7 @@ PITask <- function(
   }
   for (i in seq_along(outputMappings)) {
     if (!inherits(outputMappings[[i]], "PIOutputMapping")) {
-      stop(
+      cli::cli_abort(
         messages$errorPIWrongElementType(
           "outputMappings",
           i,
@@ -426,7 +456,12 @@ print.PITask <- function(x, ...) {
 
 # @keywords internal
 # @noRd
-.createSinglePITask <- function(project, piTask, observedData) {
+.createSinglePITask <- function(
+  project,
+  piTask,
+  observedData,
+  stopIfParameterNotFound = TRUE
+) {
   # Build simulations for this task's scenarios via the modern primitive.
   cache <- new.env(parent = emptyenv())
   cache$individuals <- list()
@@ -447,7 +482,8 @@ print.PITask <- function(x, ...) {
       project = project,
       customParams = NULL,
       cache = cache,
-      simulationRunOptions = NULL
+      simulationRunOptions = NULL,
+      stopIfParameterNotFound = stopIfParameterNotFound
     )
   }
   simulations <- lapply(prepared, `[[`, "simulation")
@@ -491,9 +527,17 @@ print.PITask <- function(x, ...) {
     runtime <- ospsuite.parameteridentification::PIParameters$new(
       parameters = if (length(paramObjs) == 1L) paramObjs[[1]] else paramObjs
     )
+    # Apply the declared display unit first so bounds and start value are
+    # interpreted in it. Then assign startValue before minValue/maxValue: the
+    # upstream setters validate min/max against the current start value, which
+    # would otherwise still be the model default and reject any bounds that do
+    # not bracket it.
+    if (!is.null(p$units) && nchar(p$units) > 0) {
+      runtime$unit <- p$units
+    }
+    runtime$startValue <- p$startValue
     runtime$minValue <- p$minValue
     runtime$maxValue <- p$maxValue
-    runtime$startValue <- p$startValue
     runtime
   })
 
@@ -621,6 +665,22 @@ print.PITask <- function(x, ...) {
   piConfig
 }
 
+# @keywords internal
+# @noRd
+# Return the first "<prefix><N>" id (N starting at 1) not already present in
+# `existingIds`. Scanning for a free slot (rather than length + 1) keeps
+# auto-generated ids collision-free after a removal.
+.nextFreeId <- function(prefix, existingIds) {
+  n <- 1L
+  repeat {
+    candidate <- paste0(prefix, n)
+    if (!(candidate %in% existingIds)) {
+      return(candidate)
+    }
+    n <- n + 1L
+  }
+}
+
 # Public runtime API ----
 
 #' Run Parameter Identification tasks defined in a Project
@@ -638,8 +698,11 @@ print.PITask <- function(x, ...) {
 #' @param observedData Optional named list of pre-loaded `DataSet`
 #'   objects that overrides automatic resolution from
 #'   `project$observedData`.
-#' @param stopIfParameterNotFound Logical. Forwarded to
-#'   `.prepareScenario()` for parameter merging.
+#' @param stopIfParameterNotFound Logical. When `TRUE` (default), a
+#'   parameter listed in a scenario's parameter sets but absent from the
+#'   simulation aborts the build; when `FALSE`, it is skipped with a
+#'   warning. Forwarded through `.prepareScenario()` to
+#'   `initializeSimulation()`.
 #' @returns Named list of per-task results. Each entry is a list with
 #'   `task` (the runtime `ParameterIdentification` object), `result`
 #'   (the `PIResult` from `task$run()`, or `NULL` on optimisation
@@ -698,15 +761,24 @@ runPI <- function(
 
   observedData <- observedData %||% loadObservedData(project)
 
+  # Build every runtime first so a configuration error (path typo, missing
+  # dataset, etc.) fails fast and propagates before any optimisation runs.
+  # Otherwise a late build error would discard already-completed (potentially
+  # hours-long) optimisations.
+  runtimes <- list()
+  for (taskName in piTaskNames) {
+    runtimes[[taskName]] <- .createSinglePITask(
+      project = project,
+      piTask = taskMap[[taskName]],
+      observedData = observedData,
+      stopIfParameterNotFound = stopIfParameterNotFound
+    )
+  }
+
   results <- list()
   for (taskName in piTaskNames) {
     message(messages$messageRunningPITask(taskName))
-    piTask <- taskMap[[taskName]]
-    runtime <- .createSinglePITask(
-      project = project,
-      piTask = piTask,
-      observedData = observedData
-    )
+    runtime <- runtimes[[taskName]]
     entry <- tryCatch(
       list(task = runtime, result = runtime$run()),
       error = function(e) {
@@ -799,16 +871,24 @@ addPITask <- function(
     )
   }
 
-  for (m in outputMappings) {
-    if (!(m$outputPathId %in% names(project$outputPaths))) {
-      errors <- c(
-        errors,
-        paste0(
-          "outputPathId '",
-          m$outputPathId,
-          "' not found in project$outputPaths"
+  # Only dereference outputPathId on well-typed records. Malformed entries are
+  # left for PITask() to reject with the typed errorPIWrongElementType, instead
+  # of dying here on a raw "$ operator is invalid for atomic vectors".
+  if (is.list(outputMappings)) {
+    for (m in outputMappings) {
+      if (
+        inherits(m, "PIOutputMapping") &&
+          !(m$outputPathId %in% names(project$outputPaths))
+      ) {
+        errors <- c(
+          errors,
+          paste0(
+            "outputPathId '",
+            m$outputPathId,
+            "' not found in project$outputPaths"
+          )
         )
-      )
+      }
     }
   }
 
@@ -890,10 +970,11 @@ addPIParameter <- function(
     )
   }
   task <- project$parameterIdentification[[taskId]]
+  existingIds <- vapply(task$parameters, `[[`, character(1), "id")
   if (is.null(id)) {
-    id <- paste0(taskId, "_param_", length(task$parameters) + 1L)
+    id <- .nextFreeId(paste0(taskId, "_param_"), existingIds)
   }
-  if (id %in% vapply(task$parameters, `[[`, character(1), "id")) {
+  if (id %in% existingIds) {
     cli::cli_abort(
       "Parameter {.val {id}} already exists in task {.val {taskId}}"
     )
@@ -985,10 +1066,11 @@ addPIOutputMapping <- function(
     cli::cli_abort("scenarios not found: {.val {unknownScenarios}}")
   }
   task <- project$parameterIdentification[[taskId]]
+  existingIds <- vapply(task$outputMappings, `[[`, character(1), "id")
   if (is.null(id)) {
-    id <- paste0(taskId, "_mapping_", length(task$outputMappings) + 1L)
+    id <- .nextFreeId(paste0(taskId, "_mapping_"), existingIds)
   }
-  if (id %in% vapply(task$outputMappings, `[[`, character(1), "id")) {
+  if (id %in% existingIds) {
     cli::cli_abort(
       "Output mapping {.val {id}} already exists in task {.val {taskId}}"
     )

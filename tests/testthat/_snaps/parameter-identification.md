@@ -234,3 +234,57 @@
       Error in `addPIOutputMapping()`:
       ! outputPathId "DoesNotExist" not found in project$outputPaths
 
+# addPIParameter() errors on an explicit duplicate id
+
+    Code
+      addPIParameter(project, taskId = "T", id = "dup", path = "a|b", scenarios = "TestScenario",
+        minValue = 0, maxValue = 1, startValue = 0.5)
+    Condition
+      Error in `addPIParameter()`:
+      ! Parameter "dup" already exists in task "T"
+
+# PIOutputMapping() validates scaling and the offset / factor / weight fields
+
+    Code
+      PIOutputMapping(id = "m", scenarios = "S1", outputPathId = "P", observedDataId = "D",
+        xOffset = "not a number")
+    Condition
+      Error in `PIOutputMapping()`:
+      ! Field `xOffset` on PIOutputMapping "m" is invalid: "not a number". Expected a finite numeric value.
+
+---
+
+    Code
+      PIOutputMapping(id = "m", scenarios = "S1", outputPathId = "P", observedDataId = "D",
+        weight = "heavy")
+    Condition
+      Error in `PIOutputMapping()`:
+      ! Field `weight` on PIOutputMapping "m" is invalid: "heavy". Expected a finite numeric value.
+
+---
+
+    Code
+      PIOutputMapping(id = "m", scenarios = "S1", outputPathId = "P", observedDataId = "D",
+        scaling = "")
+    Condition
+      Error in `PIOutputMapping()`:
+      ! Field `scaling` on PIOutputMapping "m" is invalid: "". Expected a non-empty string.
+
+# addPITask() rejects malformed outputMappings with a typed error
+
+    Code
+      addPITask(project, id = "T", scenarios = "TestScenario", parameters = list(
+        PIParameter(id = "k", scenarios = "TestScenario", path = "x|y", minValue = 0,
+          maxValue = 1, startValue = 0.5)), outputMappings = list("not a mapping"))
+    Condition
+      Error in `PITask()`:
+      ! Element outputMappings[[1]] on PITask "T" must be a PIOutputMapping.
+
+# runPI(piTaskNames = ) aborts on an unknown task name
+
+    Code
+      runPI(project, piTaskNames = "Ghost")
+    Condition
+      Error in `runPI()`:
+      ! Unknown `piTaskNames`: "Ghost". Available: "AciclovirSimple".
+
