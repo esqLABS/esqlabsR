@@ -546,7 +546,10 @@ print.PITask <- function(x, ...) {
         )
       }
       if (!is.null(m$weight)) {
-        runtime$setDataWeights(setNames(list(m$weight), m$observedDataId))
+        runtime$setDataWeights(stats::setNames(
+          list(m$weight),
+          m$observedDataId
+        ))
       }
       outputMappings[[length(outputMappings) + 1L]] <- runtime
     }

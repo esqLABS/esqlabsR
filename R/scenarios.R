@@ -216,7 +216,7 @@ print.Scenario <- function(x, ...) {
           {.val {unknown}}."
         )
       }
-      scenarioOutputPaths <- setNames(
+      scenarioOutputPaths <- stats::setNames(
         unlist(outputPaths[pathIds], use.names = FALSE),
         pathIds
       )
@@ -593,7 +593,7 @@ addScenario <- function(
     individualId = individualId,
     populationId = populationId,
     outputPaths = if (!is.null(outputPathIds)) {
-      setNames(
+      stats::setNames(
         unlist(project$outputPaths[outputPathIds], use.names = FALSE),
         outputPathIds
       )
