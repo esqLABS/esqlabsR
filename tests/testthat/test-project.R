@@ -437,6 +437,28 @@ test_that("Project$print() summarises section counts", {
   expect_output(print(project), "scenarios:\\s+3")
   expect_output(print(project), "individuals:\\s+1")
   expect_output(print(project), "populations:\\s+1")
+  # plotConfiguration is a 1-row, 15-column data frame: report 1 plot,
+  # not the column count.
+  expect_output(
+    print(project),
+    "1 dataCombined / 1 plot\\(s\\) / 1 grid\\(s\\)"
+  )
+})
+
+test_that(".markSaved clears modified but leaves validatedSinceMutation set", {
+  project <- testProject()
+  # A mutation marks the project modified and clears the validation flag.
+  project$.markModified()
+  expect_true(project$modified)
+
+  # Validating sets the flag; a subsequent save must not clear it.
+  project$.markValidated()
+  project$.markSaved()
+
+  expect_false(project$modified)
+  # Saving is not a mutation, so a project validated before the save stays
+  # validated after it; runScenarios()/createPlots() need not re-validate.
+  expect_true(project$validatedSinceMutation)
 })
 
 test_that("a fresh project starts unmodified and unvalidated", {

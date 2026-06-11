@@ -423,11 +423,13 @@ Project <- R6::R6Class(
     },
 
     #' @description Internal method to clear the `modified` flag after saving.
+    #'   Saving is not a mutation, so it leaves `validatedSinceMutation`
+    #'   untouched: a project validated before a save stays validated, and
+    #'   a later `runScenarios()` / `createPlots()` need not re-validate.
     #'   Not intended for end-user use.
     #' @keywords internal
     .markSaved = function() {
       private$.modified <- FALSE
-      private$.validatedSinceMutation <- FALSE
       invisible(self)
     },
 
@@ -539,13 +541,19 @@ Project <- R6::R6Class(
       if (is.null(self$plots)) {
         cat("  plots:           (none)\n")
       } else {
+        # plotConfiguration / plotGrids are data frames (one row per plot /
+        # grid), dataCombined is a named list; count rows or length
+        # accordingly so the summary reports plot counts, not column counts.
+        countSection <- function(x) {
+          if (is.data.frame(x)) nrow(x) else length(x %||% list())
+        }
         cat(
           "  plots:           ",
-          length(self$plots$dataCombined %||% list()),
+          countSection(self$plots$dataCombined),
           " dataCombined / ",
-          length(self$plots$plotConfiguration %||% list()),
+          countSection(self$plots$plotConfiguration),
           " plot(s) / ",
-          length(self$plots$plotGrids %||% list()),
+          countSection(self$plots$plotGrids),
           " grid(s)\n",
           sep = ""
         )

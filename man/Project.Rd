@@ -174,6 +174,9 @@ JSON file.}
 \if{latex}{\out{\hypertarget{method-Project-.markSaved}{}}}
 \subsection{\code{Project$.markSaved()}}{
   Internal method to clear the \code{modified} flag after saving.
+Saving is not a mutation, so it leaves \code{validatedSinceMutation}
+untouched: a project validated before a save stays validated, and
+a later \code{runScenarios()} / \code{createPlots()} need not re-validate.
 Not intended for end-user use.
   \subsection{Usage}{
     \if{html}{\out{<div class="r">}}
