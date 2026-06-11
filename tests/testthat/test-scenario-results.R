@@ -66,11 +66,16 @@ test_that("saveScenarioResults reports the real error rather than a path warning
   broken$TestScenario$simulation <- "not a simulation"
 
   resultsFolder <- withr::local_tempdir()
+  # The embedded error carries the calling-function name from
+  # ospsuite.utils::validateIsOfType, which differs between `devtools::test()`
+  # and `R CMD check`. Scrub it to a stable placeholder so the snapshot stays
+  # harness-independent while still asserting the scenario name and real error.
   expect_snapshot(
     invisible(saveScenarioResults(
       broken,
       project,
       outputFolder = resultsFolder
-    ))
+    )),
+    transform = \(lines) gsub("`[^`]+\\(\\)`:", "`<caller>`:", lines)
   )
 })
