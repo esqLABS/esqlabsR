@@ -249,8 +249,10 @@ Project <- R6::R6Class(
     # desugars into a full read-modify-write through the setter) marks
     # the project modified and clears `validatedSinceMutation`.
 
-    #' @field outputPaths Named character vector. Names are IDs, values are
-    #'   output path strings. Writing marks the project as modified.
+    #' @field outputPaths Named list mapping output-path IDs to OSPS-notation
+    #'   path strings (e.g. `list(PVB = "Organism|...")`). A named character
+    #'   vector is also accepted on write and coerced to a list on save.
+    #'   Writing marks the project as modified.
     outputPaths = function(value) {
       if (!missing(value)) {
         private$.outputPaths <- value

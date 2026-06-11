@@ -190,6 +190,37 @@ test_that("round-trip preserves NULL fields", {
   expect_null(raw$scenarios[[1L]]$steadyStateTime)
 })
 
+test_that("an empty Project saves a file that loadProject can reload", {
+  out <- withr::local_tempfile(fileext = ".json")
+  esqlabsR:::.saveProjectJson(Project$new(), out)
+
+  raw <- jsonlite::fromJSON(out, simplifyVector = FALSE)
+  expect_identical(raw$schemaVersion, "2.0")
+
+  # Reload must succeed (the schemaVersion guard would reject a null).
+  reloaded <- loadProject(out)
+  expect_identical(reloaded$schemaVersion, "2.0")
+  expect_length(reloaded$scenarios, 0L)
+})
+
+test_that("outputPaths supplied as a named character vector serialize as a JSON object", {
+  project <- .fakeProject(
+    outputPaths = c(PVB = "Organism|PVB|Drug", Fat = "Organism|Fat|Drug")
+  )
+  out <- withr::local_tempfile(fileext = ".json")
+  esqlabsR:::.saveProjectJson(project, out)
+
+  raw <- jsonlite::fromJSON(out, simplifyVector = FALSE)
+  expect_type(raw$outputPaths, "list")
+  expect_named(raw$outputPaths, c("PVB", "Fat"))
+  expect_identical(raw$outputPaths$PVB, "Organism|PVB|Drug")
+})
+
+test_that(".outputPathsToJson errors on a non-empty unnamed value", {
+  project <- .fakeProject(outputPaths = c("Organism|PVB|Drug"))
+  expect_snapshot(error = TRUE, esqlabsR:::.outputPathsToJson(project))
+})
+
 test_that("empty map sections serialize as JSON objects, not arrays", {
   empty <- withr::local_tempfile(fileext = ".json")
   jsonlite::write_json(

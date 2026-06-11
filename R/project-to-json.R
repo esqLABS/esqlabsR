@@ -35,7 +35,9 @@
   }
 
   list(
-    schemaVersion = project$schemaVersion,
+    # Default the version so an empty `Project$new()` serializes a file that
+    # `loadProject()` accepts (mirrors the Excel bridge in project-excel.R).
+    schemaVersion = project$schemaVersion %||% "2.0",
     esqlabsRVersion = project$esqlabsRVersion,
     filePaths = .filePathsToJson(project),
     observedData = .observedDataToJson(project),
@@ -103,9 +105,24 @@
   .asJsonObject(result)
 }
 
-# JSON object (map of id → output path string).
+# JSON object (map of id → output path string). Coerces a named character
+# vector to a list so jsonlite emits a JSON object, not an array (which
+# would silently drop every id). Errors on a non-empty unnamed value.
 .outputPathsToJson <- function(project) {
-  .asJsonObject(project$outputPaths)
+  outputPaths <- project$outputPaths
+  if (length(outputPaths) > 0L) {
+    nms <- names(outputPaths)
+    if (is.null(nms) || any(nms == "")) {
+      cli::cli_abort(c(
+        "{.field outputPaths} must be a named map of id to path string.",
+        "i" = "Found {length(outputPaths)} entr{?y/ies} without an id."
+      ))
+    }
+    if (!is.list(outputPaths)) {
+      outputPaths <- as.list(outputPaths)
+    }
+  }
+  .asJsonObject(outputPaths)
 }
 
 # JSON array of scenario objects. Reverses the parse-time

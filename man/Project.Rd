@@ -86,8 +86,10 @@ located.}
     \item{\code{outputFolder}}{Path to the folder where the results should be saved
 relative to the "Code" folder}
 
-    \item{\code{outputPaths}}{Named character vector. Names are IDs, values are
-output path strings. Writing marks the project as modified.}
+    \item{\code{outputPaths}}{Named list mapping output-path IDs to OSPS-notation
+path strings (e.g. \code{list(PVB = "Organism|...")}). A named character
+vector is also accepted on write and coerced to a list on save.
+Writing marks the project as modified.}
 
     \item{\code{scenarios}}{Named list of \code{Scenario} records, keyed by scenario
 name. Entries are plain-data records with copy semantics; write a
