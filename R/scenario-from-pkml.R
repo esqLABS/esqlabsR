@@ -199,7 +199,7 @@ createScenariosFromPKML <- function(
 
   # Validate inputs
   validateIsCharacter(pkmlFilePaths)
-  validateIsOfType(project, Project)
+  validateIsOfType(project, "Project")
   if (!is.null(scenarioNames)) {
     validateIsCharacter(scenarioNames)
   }
