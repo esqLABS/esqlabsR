@@ -111,6 +111,10 @@ located.}
     \item{\code{outputFolder}}{Path to the folder where the results should be saved
 relative to the "Code" folder}
 
+    \item{\code{filePaths}}{Read-only named list of declared file/folder paths
+(the \code{filePaths} JSON section). Values are returned verbatim as
+strings; no resolution is performed at this stage.}
+
     \item{\code{asList}}{Returns the current project as a list matching the JSON
 schema. Reflects any in-memory modifications. Read-only.}
   }

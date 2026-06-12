@@ -273,7 +273,7 @@ Project <- R6::R6Class(
     initialize = function(projectFilePath = character()) {
       private$.modified <- FALSE
       private$.validatedSinceMutation <- FALSE
-      if (!missing(projectFilePath) && length(projectFilePath) > 0L) {
+      if (length(projectFilePath) > 0L) {
         private$.read_json(projectFilePath)
       } else {
         private$.projectDirPath <- NULL
