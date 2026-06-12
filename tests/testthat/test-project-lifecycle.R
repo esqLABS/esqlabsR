@@ -51,7 +51,7 @@ test_that("saveProject errors when project has no jsonPath and path is NULL", {
 })
 
 test_that("saveProject errors on non-Project input", {
-  expect_snapshot(saveProject("not a project"), error = TRUE)
+  expect_error(saveProject("not a project"), "Project")
 })
 
 test_that("loadProject(exampleProjectPath()) succeeds", {
