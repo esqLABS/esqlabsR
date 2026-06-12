@@ -448,14 +448,14 @@ test_that("isTableFormulasEqual compares every point pair, not just the first", 
     list(allPoints = Map(function(x, y) list(x = x, y = y), xs, ys))
   }
 
-  identical <- makeTableFormula(c(0, 1, 2), c(0, 10, 20))
+  equalFormula <- makeTableFormula(c(0, 1, 2), c(0, 10, 20))
   differAtSecond <- makeTableFormula(c(0, 1, 2), c(0, 99, 20))
   differentLength <- makeTableFormula(c(0, 1), c(0, 10))
 
-  expect_true(isTableFormulasEqual(identical, identical))
+  expect_true(isTableFormulasEqual(equalFormula, equalFormula))
   # tables that match at point 1 but differ later must not compare as equal
-  expect_false(isTableFormulasEqual(identical, differAtSecond))
-  expect_false(isTableFormulasEqual(identical, differentLength))
+  expect_false(isTableFormulasEqual(equalFormula, differAtSecond))
+  expect_false(isTableFormulasEqual(equalFormula, differentLength))
 })
 
 test_that("isTableFormulasEqual treats two empty tables as equal", {
