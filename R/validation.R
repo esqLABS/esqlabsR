@@ -90,7 +90,8 @@ validateProject <- function(project) {
   applications = .applicationsValidatorAdapter,
   applicationParameterSets = .applicationParameterSetsValidatorAdapter,
   plots = .plotsValidatorAdapter,
-  observedData = .observedDataValidatorAdapter
+  observedData = .observedDataValidatorAdapter,
+  parameterIdentification = .parameterIdentificationValidatorAdapter
 )
 
 #' Run a (possibly targeted) project validation
@@ -445,7 +446,8 @@ validateProject <- function(project) {
       "scenario applicationProtocol references",
       "individual parameterSets references",
       "application parameterSets references",
-      "plot dataCombined scenario references"
+      "plot dataCombined scenario references",
+      "PI scenarios / outputPath references"
     )
     result$add_warning(
       "Skipped",
@@ -591,6 +593,76 @@ validateProject <- function(project) {
           paste(invalidScenarios, collapse = ", ")
         )
       )
+    }
+  }
+
+  # parameterIdentification cross-references -----------------------
+  piTasks <- project$parameterIdentification %||% list()
+  scenarioNames <- names(scenarioList)
+  outputPathIds <- names(project$outputPaths %||% list())
+
+  for (taskId in names(piTasks)) {
+    task <- piTasks[[taskId]]
+
+    badTaskScenarios <- setdiff(task$scenarios, scenarioNames)
+    if (length(badTaskScenarios) > 0L) {
+      result$add_critical_error(
+        "Invalid Reference",
+        paste0(
+          "PI task '",
+          taskId,
+          "' references undefined scenarios: ",
+          paste(badTaskScenarios, collapse = ", ")
+        )
+      )
+    }
+
+    for (p in task$parameters) {
+      bad <- setdiff(p$scenarios, scenarioNames)
+      if (length(bad) > 0L) {
+        result$add_critical_error(
+          "Invalid Reference",
+          paste0(
+            "PI task '",
+            taskId,
+            "', parameter '",
+            p$id,
+            "' references undefined scenarios: ",
+            paste(bad, collapse = ", ")
+          )
+        )
+      }
+    }
+
+    for (m in task$outputMappings) {
+      badScenarios <- setdiff(m$scenarios, scenarioNames)
+      if (length(badScenarios) > 0L) {
+        result$add_critical_error(
+          "Invalid Reference",
+          paste0(
+            "PI task '",
+            taskId,
+            "', outputMapping '",
+            m$id,
+            "' references undefined scenarios: ",
+            paste(badScenarios, collapse = ", ")
+          )
+        )
+      }
+      if (!(m$outputPathId %in% outputPathIds)) {
+        result$add_critical_error(
+          "Invalid Reference",
+          paste0(
+            "PI task '",
+            taskId,
+            "', outputMapping '",
+            m$id,
+            "' references undefined outputPathId '",
+            m$outputPathId,
+            "'"
+          )
+        )
+      }
     }
   }
 

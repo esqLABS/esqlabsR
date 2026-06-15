@@ -25,6 +25,21 @@
     `plotGrids` as data.frames.
   - `project$dataFolder` is now a resolved path field on `Project`.
 
+- Parameter identification joins the JSON-first project model. PI tasks live
+  as a parsed `parameterIdentification` section on `Project`, and the runtime
+  drives off the parsed `Project` via `runPI(project, piTaskNames = NULL,
+  observedData = NULL, stopIfParameterNotFound = TRUE)`. New plain-data
+  records `PITask`, `PIParameter`, and `PIOutputMapping` (one entry per
+  optimisation variable, one entry per `(output, dataset)` pair) replace the
+  legacy R6 `PITaskConfiguration` and its Excel reader. The mutation API
+  ships alongside: `addPITask()` / `removePITask()` plus the inline
+  `addPIParameter()` / `removePIParameter()` and `addPIOutputMapping()` /
+  `removePIOutputMapping()` helpers, all of which mark the project modified.
+  `PITaskConfiguration` and `readPITaskConfigurationFromExcel()` are removed
+  outright; `createPITasks()` is a soft-deprecation stub that errors with a
+  pointer to `runPI(project, ...)`. The Excel project to JSON migration path
+  lands in a follow-up chapter (#928).
+
 ## Breaking changes
 
 - Individual parameter sets in `Individuals.xlsx` must now be specified
@@ -39,7 +54,6 @@
 ## New features
 
 - Added `overwriteFormulasInSS` property to `ScenarioConfiguration`. When set to `TRUE`, formula-defined parameters will be overwritten with their steady-state values (corresponds to `ignoreIfFormula = FALSE` in `ospsuite::getSteadyState()`). Default is `FALSE` (formula-defined parameters are kept, i.e. `ignoreIfFormula = TRUE`). The property can be set via a new `OverwriteFormulasInSS` column in the `Scenarios` sheet of `Scenarios.xlsx` (placed after `SteadyStateTimeUnit`). Also available as a parameter in `createScenarioConfigurationsFromPKML()`.
-- Added Excel-based parameter identification (PI) workflow: `readPITaskConfigurationFromExcel()`, `createPITasks()`, and `runPI()` enable defining and running PI tasks from `ParameterIdentification.xlsx`. Supports multi-scenario fitting, parameter grouping, residual scaling, and optional confidence interval estimation. See `vignette("pi-workflow")` (\#928).
 
 ## Minor improvements and bug fixes
 

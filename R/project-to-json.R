@@ -48,7 +48,8 @@
     populations = .populationsToJson(project),
     applications = .applicationsToJson(project),
     applicationParameterSets = .applicationParameterSetsToJson(project),
-    plots = .plotsToJson(project)
+    plots = .plotsToJson(project),
+    parameterIdentification = .parameterIdentificationToJson(project)
   )
 }
 
@@ -350,4 +351,59 @@
     return(structure(list(), names = character(0L)))
   }
   x
+}
+
+# Serialize Project$parameterIdentification (a named list of PITask
+# records) back to the JSON-shaped list. Returns NULL when there are no
+# PI tasks, matching the parser-symmetric "absent section" shape used
+# by other sections.
+#
+# @keywords internal
+# @noRd
+.parameterIdentificationToJson <- function(project) {
+  tasks <- project$parameterIdentification
+  if (is.null(tasks) || length(tasks) == 0L) {
+    return(NULL)
+  }
+  lapply(tasks, function(task) {
+    list(
+      id = task$id,
+      scenarios = as.list(task$scenarios),
+      parameters = lapply(task$parameters, .piParameterToJson),
+      outputMappings = lapply(task$outputMappings, .piOutputMappingToJson),
+      configuration = task$configuration
+    )
+  }) |>
+    unname()
+}
+
+# @keywords internal
+# @noRd
+.piParameterToJson <- function(p) {
+  list(
+    id = p$id,
+    scenarios = as.list(p$scenarios),
+    path = p$path,
+    units = p$units,
+    minValue = p$minValue,
+    maxValue = p$maxValue,
+    startValue = p$startValue
+  )
+}
+
+# @keywords internal
+# @noRd
+.piOutputMappingToJson <- function(m) {
+  list(
+    id = m$id,
+    scenarios = as.list(m$scenarios),
+    outputPathId = m$outputPathId,
+    observedDataId = m$observedDataId,
+    scaling = m$scaling,
+    xOffset = m$xOffset,
+    yOffset = m$yOffset,
+    xFactor = m$xFactor,
+    yFactor = m$yFactor,
+    weight = m$weight
+  )
 }
