@@ -11,7 +11,7 @@
 #   - excel  : ospsuite::loadDataSetsFromExcel via importer config
 #   - pkml   : ospsuite::loadDataSetFromPKML
 #   - script : R script sourced; must return DataSet or list of DataSets
-#   - programmatic : DataSets added at runtime via project$addObservedData().
+#   - programmatic : DataSets added at runtime via addObservedData(project).
 #                    The DataSet itself is not JSON-serializable, so it
 #                    is held on the Project's private slot
 #                    (.programmaticDataSets) and the JSON sentinel
