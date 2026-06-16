@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">esqlabsR</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.7.0.9001</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.7.0.9002</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -54,6 +54,23 @@
 
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="development version" id="esqlabsr-development-version">esqlabsR (development version)<a class="anchor" aria-label="anchor" href="#esqlabsr-development-version"></a></h2>
+<div class="section level3">
+<h3 id="minor-improvements-and-bug-fixes-development-version">Minor improvements and bug fixes<a class="anchor" aria-label="anchor" href="#minor-improvements-and-bug-fixes-development-version"></a></h3>
+<ul><li>
+<code><a href="../reference/isTableFormulasEqual.html">isTableFormulasEqual()</a></code> now compares every point pair of the two table formulas instead of only the first, and treats two empty tables as equal (previously returned <code>NULL</code>) (<a href="https://github.com/esqLABS/esqlabsR/issues/1056" class="external-link">#1056</a>).</li>
+<li>
+<code><a href="../reference/loadSensitivityCalculation.html">loadSensitivityCalculation()</a></code> no longer rejects valid saved results that use per-parameter variation ranges, absolute variation, or that dropped failed runs; the integrity check now counts the actually saved result files (<a href="https://github.com/esqLABS/esqlabsR/issues/1056" class="external-link">#1056</a>).</li>
+<li>
+<code><a href="../reference/sensitivityCalculation.html">sensitivityCalculation()</a></code> now restores the simulation’s original output selections after the analysis, including when an error occurs, so the supplied simulation is left unchanged (<a href="https://github.com/esqLABS/esqlabsR/issues/1056" class="external-link">#1056</a>).</li>
+<li>
+<code><a href="../reference/sensitivityCalculation.html">sensitivityCalculation()</a></code> now errors clearly when <code>variationType = "absolute"</code> is used with a parameter whose initial value is 0, instead of silently producing invalid scaling factors (<a href="https://github.com/esqLABS/esqlabsR/issues/1056" class="external-link">#1056</a>).</li>
+<li>
+<code><a href="../reference/sensitivityCalculation.html">sensitivityCalculation()</a></code> now aligns baseline values by output path when computing percent change and sensitivity, fixing possible misalignment with multiple output paths (<a href="https://github.com/esqLABS/esqlabsR/issues/1056" class="external-link">#1056</a>).</li>
+<li>
+<code><a href="../reference/sensitivityCalculation.html">sensitivityCalculation()</a></code> no longer errors when all runs for a parameter fail; it now warns and omits that parameter from the results (<a href="https://github.com/esqLABS/esqlabsR/issues/1056" class="external-link">#1056</a>).</li>
+<li>
+<code><a href="../reference/sensitivityTornadoPlot.html">sensitivityTornadoPlot()</a></code> now matches the <code>parameterFactor</code> and its reciprocal against the analysis results with a numerical tolerance, so user supplied reciprocal factors are no longer rejected due to floating point representation (<a href="https://github.com/esqLABS/esqlabsR/issues/1056" class="external-link">#1056</a>).</li>
+</ul></div>
 </div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="5.7.0" id="esqlabsr-570">esqlabsR 5.7.0<a class="anchor" aria-label="anchor" href="#esqlabsr-570"></a></h2>

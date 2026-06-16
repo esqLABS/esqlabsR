@@ -2,6 +2,44 @@
 
 ## esqlabsR (development version)
 
+### Minor improvements and bug fixes
+
+- [`isTableFormulasEqual()`](https://esqlabs.github.io/esqlabsR/dev/reference/isTableFormulasEqual.md)
+  now compares every point pair of the two table formulas instead of
+  only the first, and treats two empty tables as equal (previously
+  returned `NULL`)
+  ([\#1056](https://github.com/esqLABS/esqlabsR/issues/1056)).
+- [`loadSensitivityCalculation()`](https://esqlabs.github.io/esqlabsR/dev/reference/loadSensitivityCalculation.md)
+  no longer rejects valid saved results that use per-parameter variation
+  ranges, absolute variation, or that dropped failed runs; the integrity
+  check now counts the actually saved result files
+  ([\#1056](https://github.com/esqLABS/esqlabsR/issues/1056)).
+- [`sensitivityCalculation()`](https://esqlabs.github.io/esqlabsR/dev/reference/sensitivityCalculation.md)
+  now restores the simulation’s original output selections after the
+  analysis, including when an error occurs, so the supplied simulation
+  is left unchanged
+  ([\#1056](https://github.com/esqLABS/esqlabsR/issues/1056)).
+- [`sensitivityCalculation()`](https://esqlabs.github.io/esqlabsR/dev/reference/sensitivityCalculation.md)
+  now errors clearly when `variationType = "absolute"` is used with a
+  parameter whose initial value is 0, instead of silently producing
+  invalid scaling factors
+  ([\#1056](https://github.com/esqLABS/esqlabsR/issues/1056)).
+- [`sensitivityCalculation()`](https://esqlabs.github.io/esqlabsR/dev/reference/sensitivityCalculation.md)
+  now aligns baseline values by output path when computing percent
+  change and sensitivity, fixing possible misalignment with multiple
+  output paths
+  ([\#1056](https://github.com/esqLABS/esqlabsR/issues/1056)).
+- [`sensitivityCalculation()`](https://esqlabs.github.io/esqlabsR/dev/reference/sensitivityCalculation.md)
+  no longer errors when all runs for a parameter fail; it now warns and
+  omits that parameter from the results
+  ([\#1056](https://github.com/esqLABS/esqlabsR/issues/1056)).
+- [`sensitivityTornadoPlot()`](https://esqlabs.github.io/esqlabsR/dev/reference/sensitivityTornadoPlot.md)
+  now matches the `parameterFactor` and its reciprocal against the
+  analysis results with a numerical tolerance, so user supplied
+  reciprocal factors are no longer rejected due to floating point
+  representation
+  ([\#1056](https://github.com/esqLABS/esqlabsR/issues/1056)).
+
 ## esqlabsR 5.7.0
 
 ### New features

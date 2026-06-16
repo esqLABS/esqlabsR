@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">esqlabsR</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.7.0.9001</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.7.0.9002</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -107,7 +107,9 @@ c(0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1, 2, 3, 4, 5, 6, 7, 8, 9,
 <code>variationRange</code> are applied as <code>"absolute"</code> or <code>"relative"</code> scaling. When
 set to <code>"absolute"</code>, the values are interpreted as absolute parameter
 values. When set to <code>"relative"</code>, the values are interpreted as scaling
-factors relative to the initial parameter values. Default is <code>"relative"</code>.</p></dd>
+factors relative to the initial parameter values. Default is <code>"relative"</code>.
+When <code>"absolute"</code>, every parameter must have a non-zero initial value; an
+error is thrown otherwise.</p></dd>
 
 
 <dt id="arg-pkparameters">pkParameters<a class="anchor" aria-label="anchor" href="#arg-pkparameters"></a></dt>
