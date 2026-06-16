@@ -440,3 +440,25 @@ test_that("exportParametersToXLS creates new sheet when appending to existing fi
     }
   )
 })
+
+# isTableFormulasEqual ----------------------------------------------------
+
+test_that("isTableFormulasEqual compares every point pair, not just the first", {
+  makeTableFormula <- function(xs, ys) {
+    list(allPoints = Map(function(x, y) list(x = x, y = y), xs, ys))
+  }
+
+  equalFormula <- makeTableFormula(c(0, 1, 2), c(0, 10, 20))
+  differAtSecond <- makeTableFormula(c(0, 1, 2), c(0, 99, 20))
+  differentLength <- makeTableFormula(c(0, 1), c(0, 10))
+
+  expect_true(isTableFormulasEqual(equalFormula, equalFormula))
+  # tables that match at point 1 but differ later must not compare as equal
+  expect_false(isTableFormulasEqual(equalFormula, differAtSecond))
+  expect_false(isTableFormulasEqual(equalFormula, differentLength))
+})
+
+test_that("isTableFormulasEqual treats two empty tables as equal", {
+  empty <- list(allPoints = list())
+  expect_true(isTableFormulasEqual(empty, empty))
+})
