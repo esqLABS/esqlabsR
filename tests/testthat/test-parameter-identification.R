@@ -762,6 +762,329 @@ test_that(".createSinglePITask keeps the same path independent across scenarios 
   expect_length(pi$parameters[[2]]$parameters, 1L)
 })
 
+test_that(".createSinglePITask errors when observedDataId is not in observedData", {
+  project <- loadProject(test_path("data", "TestProject", "Project.json"))
+  task <- PITask(
+    id = "T",
+    scenarios = "TestScenario",
+    parameters = list(
+      PIParameter(
+        id = "EHC",
+        scenarios = "TestScenario",
+        path = "Organism|Liver|EHC continuous fraction",
+        minValue = 0.5,
+        maxValue = 1.0,
+        startValue = 0.8
+      )
+    ),
+    outputMappings = list(
+      PIOutputMapping(
+        id = "PVB",
+        scenarios = "TestScenario",
+        outputPathId = "Aciclovir_PVB",
+        observedDataId = "NonExistentDataSet"
+      )
+    ),
+    configuration = list(algorithm = "BOBYQA")
+  )
+
+  expect_error(
+    esqlabsR:::.createSinglePITask(
+      project = project,
+      piTask = task,
+      observedData = loadObservedData(project)
+    ),
+    regexp = "NonExistentDataSet"
+  )
+})
+
+test_that(".createSinglePITask errors when a parameter path is not in the simulation", {
+  project <- loadProject(test_path("data", "TestProject", "Project.json"))
+  task <- PITask(
+    id = "T",
+    scenarios = "TestScenario",
+    parameters = list(
+      PIParameter(
+        id = "EHC",
+        scenarios = "TestScenario",
+        path = "Organism|Nonexistent|Parameter",
+        minValue = 0.5,
+        maxValue = 1.0,
+        startValue = 0.8
+      )
+    ),
+    outputMappings = list(
+      PIOutputMapping(
+        id = "PVB",
+        scenarios = "TestScenario",
+        outputPathId = "Aciclovir_PVB",
+        observedDataId = "Laskin 1982.Group A_Aciclovir_1_Human_MALE_PeripheralVenousBlood_Plasma_2.5 mg/kg_iv_"
+      )
+    ),
+    configuration = list(algorithm = "BOBYQA")
+  )
+
+  expect_error(
+    esqlabsR:::.createSinglePITask(
+      project = project,
+      piTask = task,
+      observedData = loadObservedData(project)
+    ),
+    regexp = "Organism\\|Nonexistent\\|Parameter"
+  )
+})
+
+test_that(".createSinglePITask applies objectiveFunctionOptions from the configuration block", {
+  project <- loadProject(test_path("data", "TestProject", "Project.json"))
+  observedData <- loadObservedData(project)
+  mkTask <- function(configuration) {
+    PITask(
+      id = "T",
+      scenarios = "TestScenario",
+      parameters = list(
+        PIParameter(
+          id = "EHC",
+          scenarios = "TestScenario",
+          path = "Organism|Liver|EHC continuous fraction",
+          minValue = 0.5,
+          maxValue = 1.0,
+          startValue = 0.8
+        )
+      ),
+      outputMappings = list(
+        PIOutputMapping(
+          id = "PVB",
+          scenarios = "TestScenario",
+          outputPathId = "Aciclovir_PVB",
+          observedDataId = "Laskin 1982.Group A_Aciclovir_1_Human_MALE_PeripheralVenousBlood_Plasma_2.5 mg/kg_iv_"
+        )
+      ),
+      configuration = configuration
+    )
+  }
+
+  # Empty configuration: runtime defaults are preserved.
+  pi <- esqlabsR:::.createSinglePITask(project, mkTask(list()), observedData)
+  ofo <- pi$configuration$objectiveFunctionOptions
+  expect_equal(ofo$objectiveFunctionType, "lsq")
+  expect_equal(ofo$residualWeightingMethod, "none")
+  expect_equal(ofo$robustMethod, "none")
+
+  # String fields land.
+  pi <- esqlabsR:::.createSinglePITask(
+    project,
+    mkTask(list(
+      objectiveFunction = list(
+        type = "m3",
+        residualWeightingMethod = "error"
+      )
+    )),
+    observedData
+  )
+  ofo <- pi$configuration$objectiveFunctionOptions
+  expect_equal(ofo$objectiveFunctionType, "m3")
+  expect_equal(ofo$residualWeightingMethod, "error")
+  expect_equal(ofo$robustMethod, "none")
+
+  # Numeric fields land.
+  pi <- esqlabsR:::.createSinglePITask(
+    project,
+    mkTask(list(objectiveFunction = list(linScaleCV = 0.3, logScaleSD = 0.1))),
+    observedData
+  )
+  ofo <- pi$configuration$objectiveFunctionOptions
+  expect_equal(ofo$linScaleCV, 0.3)
+  expect_equal(ofo$logScaleSD, 0.1)
+})
+
+test_that(".createSinglePITask applies simulationRunOptions from the configuration block", {
+  project <- loadProject(test_path("data", "TestProject", "Project.json"))
+  observedData <- loadObservedData(project)
+  mkTask <- function(configuration) {
+    PITask(
+      id = "T",
+      scenarios = "TestScenario",
+      parameters = list(
+        PIParameter(
+          id = "EHC",
+          scenarios = "TestScenario",
+          path = "Organism|Liver|EHC continuous fraction",
+          minValue = 0.5,
+          maxValue = 1.0,
+          startValue = 0.8
+        )
+      ),
+      outputMappings = list(
+        PIOutputMapping(
+          id = "PVB",
+          scenarios = "TestScenario",
+          outputPathId = "Aciclovir_PVB",
+          observedDataId = "Laskin 1982.Group A_Aciclovir_1_Human_MALE_PeripheralVenousBlood_Plasma_2.5 mg/kg_iv_"
+        )
+      ),
+      configuration = configuration
+    )
+  }
+
+  # No block: simulationRunOptions stays NULL.
+  pi <- esqlabsR:::.createSinglePITask(project, mkTask(list()), observedData)
+  expect_null(pi$configuration$simulationRunOptions)
+
+  # numberOfCores only.
+  pi <- esqlabsR:::.createSinglePITask(
+    project,
+    mkTask(list(simulationRunOptions = list(numberOfCores = 2))),
+    observedData
+  )
+  opts <- pi$configuration$simulationRunOptions
+  expect_s3_class(opts, "SimulationRunOptions")
+  expect_equal(opts$numberOfCores, 2L)
+
+  # checkForNegativeValues only.
+  pi <- esqlabsR:::.createSinglePITask(
+    project,
+    mkTask(list(simulationRunOptions = list(checkForNegativeValues = FALSE))),
+    observedData
+  )
+  expect_false(pi$configuration$simulationRunOptions$checkForNegativeValues)
+
+  # Both set.
+  pi <- esqlabsR:::.createSinglePITask(
+    project,
+    mkTask(list(
+      simulationRunOptions = list(
+        numberOfCores = 4,
+        checkForNegativeValues = FALSE
+      )
+    )),
+    observedData
+  )
+  opts <- pi$configuration$simulationRunOptions
+  expect_equal(opts$numberOfCores, 4L)
+  expect_false(opts$checkForNegativeValues)
+})
+
+test_that(".createSinglePITask overwrites scenario output paths with the PI-specified paths", {
+  project <- loadProject(test_path("data", "TestProject", "Project.json"))
+  task <- PITask(
+    id = "T",
+    scenarios = "TestScenario",
+    parameters = list(
+      PIParameter(
+        id = "EHC",
+        scenarios = "TestScenario",
+        path = "Organism|Liver|EHC continuous fraction",
+        minValue = 0.5,
+        maxValue = 1.0,
+        startValue = 0.8
+      )
+    ),
+    outputMappings = list(
+      PIOutputMapping(
+        id = "PVB",
+        scenarios = "TestScenario",
+        outputPathId = "Aciclovir_PVB",
+        observedDataId = "Laskin 1982.Group A_Aciclovir_1_Human_MALE_PeripheralVenousBlood_Plasma_2.5 mg/kg_iv_"
+      )
+    ),
+    configuration = list(algorithm = "BOBYQA")
+  )
+
+  pi <- esqlabsR:::.createSinglePITask(
+    project = project,
+    piTask = task,
+    observedData = loadObservedData(project)
+  )
+
+  outputSelections <- vapply(
+    pi$simulations[[1]]$outputSelections$allOutputs,
+    function(x) x$path,
+    character(1)
+  )
+  expect_equal(outputSelections, project$outputPaths[["Aciclovir_PVB"]])
+})
+
+test_that(".createSinglePITask applies a scalar weight to the runtime dataWeights", {
+  project <- loadProject(test_path("data", "TestProject", "Project.json"))
+  observedDataId <- "Laskin 1982.Group A_Aciclovir_1_Human_MALE_PeripheralVenousBlood_Plasma_2.5 mg/kg_iv_"
+  task <- PITask(
+    id = "T",
+    scenarios = "TestScenario",
+    parameters = list(
+      PIParameter(
+        id = "EHC",
+        scenarios = "TestScenario",
+        path = "Organism|Liver|EHC continuous fraction",
+        minValue = 0.5,
+        maxValue = 1.0,
+        startValue = 0.8
+      )
+    ),
+    outputMappings = list(
+      PIOutputMapping(
+        id = "PVB",
+        scenarios = "TestScenario",
+        outputPathId = "Aciclovir_PVB",
+        observedDataId = observedDataId,
+        weight = 2
+      )
+    ),
+    configuration = list(algorithm = "BOBYQA")
+  )
+
+  pi <- esqlabsR:::.createSinglePITask(
+    project = project,
+    piTask = task,
+    observedData = loadObservedData(project)
+  )
+
+  expect_all_equal(pi$outputMappings[[1]]$dataWeights[[observedDataId]], 2)
+})
+
+test_that(".createSinglePITask applies xOffset/yOffset/xFactor/yFactor to the runtime dataTransformations", {
+  project <- loadProject(test_path("data", "TestProject", "Project.json"))
+  observedDataId <- "Laskin 1982.Group A_Aciclovir_1_Human_MALE_PeripheralVenousBlood_Plasma_2.5 mg/kg_iv_"
+  task <- PITask(
+    id = "T",
+    scenarios = "TestScenario",
+    parameters = list(
+      PIParameter(
+        id = "EHC",
+        scenarios = "TestScenario",
+        path = "Organism|Liver|EHC continuous fraction",
+        minValue = 0.5,
+        maxValue = 1.0,
+        startValue = 0.8
+      )
+    ),
+    outputMappings = list(
+      PIOutputMapping(
+        id = "PVB",
+        scenarios = "TestScenario",
+        outputPathId = "Aciclovir_PVB",
+        observedDataId = observedDataId,
+        xOffset = 0.5,
+        yOffset = 1.0,
+        xFactor = 2.0,
+        yFactor = 0.5
+      )
+    ),
+    configuration = list(algorithm = "BOBYQA")
+  )
+
+  pi <- esqlabsR:::.createSinglePITask(
+    project = project,
+    piTask = task,
+    observedData = loadObservedData(project)
+  )
+
+  transformations <- pi$outputMappings[[1]]$dataTransformations
+  expect_equal(transformations$xOffsets[[observedDataId]], 0.5)
+  expect_equal(transformations$yOffsets[[observedDataId]], 1.0)
+  expect_equal(transformations$xFactors[[observedDataId]], 2.0)
+  expect_equal(transformations$yFactors[[observedDataId]], 0.5)
+})
+
 test_that("runPI(project) refuses to run when validation has critical errors", {
   project <- loadProject(test_path("data", "TestProject", "Project.json"))
   bad <- PITask(
