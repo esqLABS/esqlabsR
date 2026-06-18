@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.esqlabs.com/esqlabsR/snapshot/2.0/faithful/applicationParameterSets.schema.json",
+  "title": "applicationParameterSets",
+  "description": "Map of set name -> array of parameter modifications (DIFF §5). Referenced by applications[*].parameterSets[].",
+  "type": "object",
+  "additionalProperties": {
+    "type": "array",
+    "items": { "$ref": "parameterModification.schema.json" }
+  }
+}

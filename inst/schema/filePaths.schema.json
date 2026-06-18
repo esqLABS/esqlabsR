@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.esqlabs.com/esqlabsR/snapshot/2.0/faithful/filePaths.schema.json",
+  "title": "filePaths",
+  "description": "Project folder/file layout. v6 still names the Excel source files (DIFF §1.4, OPEN_QUESTIONS §1).",
+  "type": "object",
+  "properties": {
+    "modelFolder": { "type": "string" },
+    "configurationsFolder": { "type": "string" },
+    "modelParamsFile": { "type": "string", "description": "Excel-era source (OPEN_QUESTIONS §1)." },
+    "individualsFile": { "type": "string", "description": "Excel-era source (OPEN_QUESTIONS §1)." },
+    "populationsFile": { "type": "string", "description": "Excel-era source (OPEN_QUESTIONS §1)." },
+    "populationsFolder": { "type": "string" },
+    "scenariosFile": { "type": "string", "description": "Excel-era source (OPEN_QUESTIONS §1)." },
+    "applicationsFile": { "type": "string", "description": "Excel-era source (OPEN_QUESTIONS §1)." },
+    "plotsFile": { "type": "string", "description": "Excel-era source (OPEN_QUESTIONS §1)." },
+    "dataFolder": { "type": "string" },
+    "outputFolder": { "type": "string" }
+  },
+  "required": [
+    "modelFolder",
+    "configurationsFolder",
+    "modelParamsFile",
+    "individualsFile",
+    "populationsFile",
+    "populationsFolder",
+    "scenariosFile",
+    "applicationsFile",
+    "plotsFile",
+    "dataFolder",
+    "outputFolder"
+  ],
+  "additionalProperties": false,
+  "$comment": "PROVISIONAL: additionalProperties pending team decision (see ISSUE_additionalProperties.md)."
+}

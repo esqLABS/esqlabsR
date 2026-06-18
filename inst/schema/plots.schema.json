@@ -1,0 +1,138 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.esqlabs.com/esqlabsR/snapshot/2.0/faithful/plots.schema.json",
+  "title": "plots",
+  "description": "Figure definitions (DIFF §8). Null when a project declares no plots (e.g. TestProject).",
+  "type": ["object", "null"],
+  "properties": {
+    "dataCombined": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "simulated": {
+            "type": "array",
+            "items": { "$ref": "#/$defs/simulatedCurve" }
+          },
+          "observed": {
+            "type": "array",
+            "items": { "$ref": "#/$defs/observedCurve" }
+          }
+        },
+        "required": ["name"],
+        "additionalProperties": false
+      }
+    },
+    "plotConfiguration": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "plotID": { "type": "string" },
+          "DataCombinedName": {
+            "type": ["string", "null"],
+            "description": "-> dataCombined[].name."
+          },
+          "plotType": {
+            "type": ["string", "null"],
+            "description": "Not closed in code; pass-through to ospsuite/tlf (OPEN_QUESTIONS §3)."
+          },
+          "title": { "type": ["string", "null"] },
+          "subtitle": { "type": ["string", "null"] },
+          "xUnit": { "type": ["string", "null"] },
+          "yUnit": { "type": ["string", "null"] },
+          "xAxisScale": {
+            "enum": ["lin", "log", null],
+            "description": "Closed enum {lin,log} in R/plots-utils.R (DIFF §8.3)."
+          },
+          "yAxisScale": {
+            "enum": ["lin", "log", null],
+            "description": "Closed enum {lin,log} in R/plots-utils.R (DIFF §8.3)."
+          },
+          "xValuesLimits": {
+            "type": ["string", "null"],
+            "description": "String 'min, max' (DIFF §12.2). Clean set promotes to [min, max] numbers."
+          },
+          "yValuesLimits": {
+            "type": ["string", "null"],
+            "description": "String 'min, max' (DIFF §12.2). Clean set promotes to [min, max] numbers."
+          },
+          "aggregation": {
+            "type": ["string", "null"],
+            "description": "Not closed in code (OPEN_QUESTIONS §3)."
+          },
+          "quantiles": {
+            "description": "Type unconfirmed; null in fixtures (OPEN_QUESTIONS §12)."
+          },
+          "nsd": {
+            "description": "Type unconfirmed; null in fixtures (OPEN_QUESTIONS §12)."
+          },
+          "foldDistance": {
+            "description": "Type unconfirmed; null in fixtures (OPEN_QUESTIONS §12)."
+          }
+        },
+        "required": ["plotID"],
+        "additionalProperties": false
+      }
+    },
+    "plotGrids": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "plotIDs": {
+            "type": ["string", "null"],
+            "description": "String 'P1, P2' (DIFF §12.2) -> plotConfiguration[].plotID. Clean set promotes to an array."
+          },
+          "title": { "type": ["string", "null"] },
+          "subtitle": { "type": ["string", "null"] }
+        },
+        "required": ["name"],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": ["dataCombined", "plotConfiguration", "plotGrids"],
+  "additionalProperties": false,
+  "$comment": "PROVISIONAL: additionalProperties pending team decision (see ISSUE_additionalProperties.md).",
+  "$defs": {
+    "simulatedCurve": {
+      "type": "object",
+      "properties": {
+        "label": { "type": ["string", "null"] },
+        "scenario": { "type": "string", "description": "-> scenarios[].name." },
+        "path": { "type": "string", "description": "Model path string (matches an outputPaths value)." },
+        "group": { "type": ["string", "null"] },
+        "xOffsets": { "type": ["number", "null"] },
+        "xOffsetsUnits": { "type": ["string", "null"] },
+        "yOffsets": { "type": ["number", "null"] },
+        "yOffsetsUnits": { "type": ["string", "null"] },
+        "xScaleFactors": { "type": ["number", "null"] },
+        "yScaleFactors": { "type": ["number", "null"] }
+      },
+      "required": ["scenario", "path"],
+      "additionalProperties": false
+    },
+    "observedCurve": {
+      "type": "object",
+      "properties": {
+        "label": { "type": ["string", "null"] },
+        "dataSet": {
+          "type": "string",
+          "description": "Derived importer label (OPEN_QUESTIONS §9)."
+        },
+        "group": { "type": ["string", "null"] },
+        "xOffsets": { "type": ["number", "null"] },
+        "xOffsetsUnits": { "type": ["string", "null"] },
+        "yOffsets": { "type": ["number", "null"] },
+        "yOffsetsUnits": { "type": ["string", "null"] },
+        "xScaleFactors": { "type": ["number", "null"] },
+        "yScaleFactors": { "type": ["number", "null"] }
+      },
+      "required": ["dataSet"],
+      "additionalProperties": false
+    }
+  }
+}

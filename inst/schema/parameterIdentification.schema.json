@@ -1,0 +1,83 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.esqlabs.com/esqlabsR/snapshot/2.0/faithful/parameterIdentification.schema.json",
+  "title": "parameterIdentification",
+  "description": "Parameter-identification tasks (DIFF §11). Optional array; absent in projects with no PI (e.g. Blank).",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "properties": {
+      "id": { "type": "string" },
+      "scenarios": {
+        "type": "array",
+        "items": { "type": "string" },
+        "description": "-> scenarios[].name."
+      },
+      "parameters": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "id": { "type": "string" },
+            "scenarios": { "type": "array", "items": { "type": "string" } },
+            "path": { "type": "string" },
+            "units": { "type": ["string", "null"] },
+            "minValue": { "type": "number" },
+            "maxValue": { "type": "number" },
+            "startValue": { "type": "number" }
+          },
+          "required": ["id", "path", "minValue", "maxValue", "startValue"],
+          "additionalProperties": false
+        }
+      },
+      "outputMappings": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "id": { "type": "string" },
+            "scenarios": { "type": "array", "items": { "type": "string" } },
+            "outputPathId": { "type": "string", "description": "-> outputPaths key." },
+            "observedDataId": {
+              "type": "string",
+              "description": "Derived importer label (OPEN_QUESTIONS §9)."
+            },
+            "scaling": {
+              "type": "string",
+              "enum": ["lin", "log"],
+              "description": "Closed enum {lin,log} (DIFF §11, OPEN_QUESTIONS §3)."
+            },
+            "xOffset": { "type": "number" },
+            "yOffset": { "type": "number" },
+            "xFactor": { "type": "number" },
+            "yFactor": { "type": "number" }
+          },
+          "required": ["id", "outputPathId", "observedDataId", "scaling"],
+          "additionalProperties": false
+        }
+      },
+      "configuration": {
+        "type": "object",
+        "properties": {
+          "algorithm": {
+            "type": "string",
+            "description": "Free string in v6 (OPEN_QUESTIONS §3)."
+          },
+          "ciMethod": {
+            "type": "string",
+            "description": "Free string in v6 (OPEN_QUESTIONS §3)."
+          },
+          "algorithmOptions": {
+            "type": ["object", "null"],
+            "description": "Optional algorithm-specific options (DIFF §11)."
+          }
+        },
+        "required": ["algorithm", "ciMethod"],
+        "additionalProperties": false
+      }
+    },
+    "required": ["id", "scenarios", "parameters", "outputMappings", "configuration"],
+    "additionalProperties": false,
+    "$comment": "PROVISIONAL: additionalProperties pending team decision (see ISSUE_additionalProperties.md)."
+  }
+}

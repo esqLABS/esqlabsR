@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.esqlabs.com/esqlabsR/snapshot/2.0/faithful/individual.schema.json",
+  "title": "individual",
+  "description": "A single individual (DIFF §3). Parameter overrides are split into individualParameterSets, referenced by parameterSets[].",
+  "type": "object",
+  "properties": {
+    "individualId": { "type": "string" },
+    "species": {
+      "type": "string",
+      "description": "OSP species name; free string in v6 (OPEN_QUESTIONS §3)."
+    },
+    "population": {
+      "type": "string",
+      "description": "OSP population/db name; free string in v6 (OPEN_QUESTIONS §3)."
+    },
+    "gender": {
+      "type": "string",
+      "description": "Free string in v6; conventionally MALE/FEMALE (OPEN_QUESTIONS §3)."
+    },
+    "weight": { "type": ["number", "null"] },
+    "height": { "type": ["number", "null"] },
+    "age": { "type": ["number", "null"] },
+    "proteinOntogenies": {
+      "type": ["string", "null"],
+      "description": "String grammar 'Protein:Ontogeny[, ...]' (DIFF §12.2). Clean set promotes to an array of objects."
+    },
+    "parameterSets": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "-> individualParameterSets keys."
+    }
+  },
+  "required": ["individualId", "species", "gender"],
+  "additionalProperties": false,
+  "$comment": "PROVISIONAL: additionalProperties pending team decision (see ISSUE_additionalProperties.md). species+gender required (DIFF §3.4)."
+}
