@@ -12,7 +12,7 @@
       project$validatedSinceMutation <- TRUE
     Condition
       Error:
-      ! validatedSinceMutation is read-only.
+      ! validatedSinceMutation is readonly
 
 # .ensureValid aborts with a formatted summary on critical errors
 

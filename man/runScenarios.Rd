@@ -9,15 +9,11 @@ runScenarios(
   scenarioNames = NULL,
   customParams = NULL,
   simulationRunOptions = NULL,
-  validate = TRUE,
-  scenarios = lifecycle::deprecated()
+  validate = TRUE
 )
 }
 \arguments{
-\item{project}{A \link{Project} object loaded from a \code{Project.json} file.
-In the legacy positional form, this argument also accepts a list
-of \link{LegacyScenario} objects produced by \code{\link[=createScenarios]{createScenarios()}} — see
-"Details".}
+\item{project}{A \link{Project} object loaded from a \code{Project.json} file.}
 
 \item{scenarioNames}{Optional character vector of scenario names to
 run. \code{NULL} (default) runs all scenarios in the project.}
@@ -35,11 +31,6 @@ section validators via \code{\link[=validateProject]{validateProject()}} before 
 aborts with a formatted summary on critical errors. Set to
 \code{FALSE} to skip the pre-flight check (e.g. when the caller has
 already validated the project).}
-
-\item{scenarios}{\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}} Legacy alias
-for the first positional argument when passing a list of
-\link{LegacyScenario} objects. Use \code{project = loadProject(...)} and
-the modern signature instead.}
 }
 \value{
 A named list keyed by scenario name. Each entry is a list
@@ -58,11 +49,4 @@ loaded with \code{\link[=loadProject]{loadProject()}}.
 \details{
 If a scenario's simulation fails, a warning is produced
 and \code{outputValues} for that scenario is \code{NULL}.
-
-The legacy signatures
-\code{runScenarios(scenariosList, simulationRunOptions)} (positional)
-and \code{runScenarios(scenarios = ..., simulationRunOptions = ...)}
-(named) — taking a list of \link{LegacyScenario} objects produced by
-\code{\link[=createScenarios]{createScenarios()}} — are still accepted but soft-deprecated.
-New code should use the JSON-first form shown above.
 }

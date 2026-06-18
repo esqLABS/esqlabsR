@@ -95,10 +95,13 @@
 # move here from caller code (e.g. relative-path normalization, ID
 # dereferencing, unit conversions).
 
-# JSON object. Will eventually convert absolute paths back to relative paths
-# rooted at `project$projectDirPath`.
+# JSON object. Walks the raw `{value, description}` records in
+# `.getFilePathsData()` and emits a flat `{name: value}` map.
 .filePathsToJson <- function(project) {
-  .asJsonObject(project$filePaths)
+  data <- project$.getFilePathsData()
+  if (length(data) == 0L) return(setNames(list(), character(0)))
+  result <- lapply(data, function(entry) entry$value)
+  .asJsonObject(result)
 }
 
 # JSON object (map of id → output path string).

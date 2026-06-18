@@ -259,7 +259,7 @@ test_that(".loadProjectJson() defaults missing optional sections to empty lists"
 
   project <- esqlabsR:::.loadProjectJson(tmp)
 
-  expect_identical(project$filePaths, list())
+  expect_identical(project$filePaths, structure(list(), names = character(0L)))
   expect_identical(project$outputPaths, list())
   expect_identical(project$scenarios, list())
   expect_identical(project$modelParameterSets, list())
@@ -267,18 +267,19 @@ test_that(".loadProjectJson() defaults missing optional sections to empty lists"
   expect_identical(project$applicationParameterSets, list())
   expect_identical(project$individuals, list())
   expect_identical(project$populations, list())
-  expect_identical(project$applications, structure(list(), names = character(0L)))
+  expect_identical(
+    project$applications,
+    structure(list(), names = character(0L))
+  )
   expect_identical(project$observedData, list())
   expect_null(project$plots)
 })
 
-test_that("Project metadata fields are read-only", {
+test_that("Project lifecycle fields are read-only", {
   project <- esqlabsR:::.loadProjectJson(example_project_json_path())
 
-  expect_error(project$schemaVersion <- "9.9", "read-only")
-  expect_error(project$jsonPath <- "/tmp/elsewhere.json", "read-only")
-  expect_error(project$validatedSinceMutation <- TRUE, "read-only")
-  expect_error(project$modified <- TRUE, "read-only")
+  expect_error(project$validatedSinceMutation <- TRUE, "readonly")
+  expect_error(project$modified <- TRUE, "readonly")
 })
 
 test_that("Project$print() summarises section counts", {

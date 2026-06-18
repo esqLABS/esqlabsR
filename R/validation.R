@@ -38,8 +38,7 @@
 #'   `"ValidationResults"`. Order matches `.validationAdapters`,
 #'   with `crossReferences` last.
 #' @export
-#' @seealso [validateAllConfigurations()] for the legacy Excel-driven
-#'   validator, [isAnyCriticalErrors()], [validationSummary()].
+#' @seealso [isAnyCriticalErrors()], [validationSummary()].
 #' @examples
 #' \dontrun{
 #' project <- loadProject("Project.json")
@@ -71,7 +70,7 @@ validateProject <- function(project) {
 #' Named list mapping each section name to the adapter that validates
 #' it. Order determines the order of keys in the `validateProject()`
 #' result. `crossReferences` is not listed here; it is appended as a
-#' fixed final phase by [.runProjectValidation()] so it can see
+#' fixed final phase by `.runProjectValidation()` so it can see
 #' partial section results.
 #'
 #' Building the list at package load means a missing or misspelled
@@ -667,4 +666,49 @@ validateProject <- function(project) {
   }
 
   result
+}
+
+#' Check if validation results contain any critical errors
+#' @param validationResults Output from validateProject
+#' @return Logical indicating if there are critical errors
+#' @export
+isAnyCriticalErrors <- function(validationResults) {
+  any(sapply(validationResults, function(r) {
+    if (inherits(r, "validationResult")) {
+      r$has_critical_errors()
+    } else {
+      FALSE
+    }
+  }))
+}
+
+#' Get summary of all validation results
+#' @param validationResults Output from validateProject
+#' @return List with summary statistics
+#' @export
+validationSummary <- function(validationResults) {
+  summary <- list(
+    total_critical_errors = 0,
+    total_warnings = 0,
+    files_with_errors = character(),
+    files_with_warnings = character()
+  )
+
+  for (name in names(validationResults)) {
+    result <- validationResults[[name]]
+    if (inherits(result, "validationResult")) {
+      if (result$has_critical_errors()) {
+        summary$total_critical_errors <- summary$total_critical_errors +
+          length(result$critical_errors)
+        summary$files_with_errors <- c(summary$files_with_errors, name)
+      }
+      if (length(result$warnings) > 0) {
+        summary$total_warnings <- summary$total_warnings +
+          length(result$warnings)
+        summary$files_with_warnings <- c(summary$files_with_warnings, name)
+      }
+    }
+  }
+
+  summary
 }

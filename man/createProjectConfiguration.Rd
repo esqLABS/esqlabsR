@@ -4,10 +4,7 @@
 \alias{createProjectConfiguration}
 \title{Create a \code{ProjectConfiguration}}
 \usage{
-createProjectConfiguration(
-  path = file.path("ProjectConfiguration.xlsx"),
-  ignoreVersionCheck = FALSE
-)
+createProjectConfiguration(path = "Project.json", ignoreVersionCheck = FALSE)
 }
 \arguments{
 \item{path}{path to the \code{ProjectConfiguration.xlsx} file. default to the

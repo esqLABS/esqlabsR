@@ -531,3 +531,20 @@ removePopulation <- function(project, populationId) {
   project$.markModified()
   invisible(project)
 }
+
+.splitCommaString <- function(string) {
+  if (is.na(string)) {
+    return(character(0))
+  }
+
+  string <- as.character(string)
+
+  values <- trimws(scan(
+    text = string,
+    what = "character",
+    sep = ",",
+    quiet = TRUE
+  ))
+
+  return(values)
+}

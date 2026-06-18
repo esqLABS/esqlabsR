@@ -83,7 +83,7 @@ test_that("project$dataFolder is NULL when filePaths.dataFolder is unset", {
   expect_null(project$dataFolder)
 })
 
-test_that("project active path fields are read-only", {
+test_that("project path fields are writable after the merger", {
   project <- esqlabsR:::.loadProjectJson(
     system.file(
       "extdata",
@@ -94,22 +94,9 @@ test_that("project active path fields are read-only", {
       mustWork = TRUE
     )
   )
-  expect_error(
-    project$modelFolder <- "x",
-    regexp = "modelFolder.*read-only"
-  )
-  expect_error(
-    project$configurationsFolder <- "x",
-    regexp = "configurationsFolder.*read-only"
-  )
-  expect_error(
-    project$populationsFolder <- "x",
-    regexp = "populationsFolder.*read-only"
-  )
-  expect_error(
-    project$dataFolder <- "x",
-    regexp = "dataFolder.*read-only"
-  )
+  expect_false(project$modified)
+  project$modelFolder <- "AnotherModels"
+  expect_true(project$modified)
 })
 
 test_that(".clean_path expands env vars (other than PATH) and resolves to absolute", {

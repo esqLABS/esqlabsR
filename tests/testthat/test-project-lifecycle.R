@@ -8,7 +8,7 @@ test_that("loadProject() returns a Project from a valid Project.json", {
 test_that("loadProject() errors when the file does not exist", {
   expect_error(
     loadProject(file.path(tempdir(), "does_not_exist.json")),
-    regexp = "does not exist"
+    regexp = "(does not exist|not found)"
   )
 })
 

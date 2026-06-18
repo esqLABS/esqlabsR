@@ -42,14 +42,15 @@ createDefaultProjectConfiguration <- function(
 #' @returns Object of type `ProjectConfiguration`
 #' @export
 createProjectConfiguration <- function(
-  path = file.path("ProjectConfiguration.xlsx"),
+  path = "Project.json",
   ignoreVersionCheck = FALSE
 ) {
-  projectConfiguration <- ProjectConfiguration$new(
-    projectConfigurationFilePath = path,
-    ignoreVersionCheck = ignoreVersionCheck
+  lifecycle::deprecate_warn(
+    when = "7.0.0",
+    what = "createProjectConfiguration()",
+    with = "loadProject()"
   )
-  return(projectConfiguration)
+  loadProject(path)
 }
 
 #' Check if a directory contains an esqlabsR project

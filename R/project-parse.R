@@ -13,10 +13,10 @@
 
 #' Internal: load a v2.0 `Project.json` into a `Project` object.
 #'
-#' Not exported. Callers must use `esqlabsR:::.loadProjectJson()`.
+#' Thin shim that delegates to `Project$new()`. Validation (path checks,
+#' schema version guard) is performed inside `private$.read_json`.
 #'
-#' @param path Path to a `Project.json` file. Must exist and declare
-#'   `schemaVersion == "2.0"`.
+#' @param path Path to a `Project.json` file.
 #'
 #' @return A `Project` (R6) holding the parsed sections.
 #'
@@ -31,43 +31,7 @@
   if (!file.exists(path)) {
     stop("Project file does not exist: ", path, call. = FALSE)
   }
-
-  raw <- jsonlite::fromJSON(path, simplifyVector = FALSE)
-
-  schemaVersion <- raw$schemaVersion
-  if (!identical(schemaVersion, "2.0")) {
-    stop(
-      "Unsupported schemaVersion: ",
-      format(schemaVersion %||% "<missing>"),
-      ". Expected '2.0'.",
-      call. = FALSE
-    )
-  }
-
-  jsonPath <- normalizePath(path, winslash = "/", mustWork = FALSE)
-  projectDirPath <- dirname(jsonPath)
-
-  outputPaths <- raw$outputPaths %||% list()
-  scenarios <- .parseScenarios(raw$scenarios, outputPaths)
-
-  Project$new(
-    schemaVersion = schemaVersion,
-    esqlabsRVersion = raw$esqlabsRVersion,
-    jsonPath = jsonPath,
-    projectDirPath = projectDirPath,
-    filePaths = raw$filePaths %||% list(),
-    outputPaths = outputPaths,
-    scenarios = scenarios,
-    modelParameterSets = raw$modelParameterSets %||% list(),
-    individualParameterSets = raw$individualParameterSets %||% list(),
-    applicationParameterSets = raw$applicationParameterSets %||% list(),
-    individuals = .parseIndividuals(raw$individuals),
-    populations = .parsePopulations(raw$populations),
-    applications = .parseApplications(raw$applications),
-    observedData = raw$observedData %||% list(),
-    plots = .parsePlots(raw$plots),
-    parameterIdentification = .parsePITasks(raw$parameterIdentification)
-  )
+  Project$new(projectFilePath = path)
 }
 
 # Parse the `individuals` JSON array into a named list keyed by
