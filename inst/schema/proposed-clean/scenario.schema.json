@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.esqlabs.com/esqlabsR/snapshot/2.0/clean/scenario.schema.json",
+  "title": "scenario (clean)",
+  "description": "Identity unified to 'id' (was 'name'); simulationTime promoted to a structured array (RATIONALE §2, §3).",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Stable id (was 'name' in faithful; RATIONALE §3, OPEN_QUESTIONS §8)."
+    },
+    "name": {
+      "type": "string",
+      "description": "Optional mutable display label, separated from id (RATIONALE §3, OPEN_QUESTIONS §8)."
+    },
+    "individualId": { "type": "string", "description": "-> individuals[].id." },
+    "populationId": { "type": ["string", "null"], "description": "-> populations[].id; null for an individual simulation." },
+    "readPopulationFromCSV": { "type": "boolean" },
+    "modelParameterSets": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "-> modelParameterSets[].id."
+    },
+    "applicationProtocol": { "type": "string", "description": "-> applications[].id." },
+    "simulationTime": {
+      "type": "array",
+      "description": "Structured intervals (was the string '0, 24, 60'; RATIONALE §2).",
+      "items": {
+        "type": "object",
+        "properties": {
+          "start": { "type": "number" },
+          "end": { "type": "number" },
+          "resolution": { "type": "number" }
+        },
+        "required": ["start", "end", "resolution"],
+        "additionalProperties": false
+      }
+    },
+    "simulationTimeUnit": { "type": "string" },
+    "steadyState": { "type": "boolean" },
+    "steadyStateTime": { "type": ["number", "null"] },
+    "steadyStateTimeUnit": { "type": ["string", "null"] },
+    "overwriteFormulasInSS": { "type": "boolean" },
+    "modelFile": { "type": "string" },
+    "outputPathIds": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "-> outputPaths[].id."
+    }
+  },
+  "required": [
+    "id",
+    "individualId",
+    "modelParameterSets",
+    "applicationProtocol",
+    "simulationTime",
+    "simulationTimeUnit",
+    "steadyState",
+    "modelFile",
+    "outputPathIds"
+  ],
+  "allOf": [
+    {
+      "if": {
+        "properties": { "steadyState": { "const": true } },
+        "required": ["steadyState"]
+      },
+      "then": {
+        "properties": {
+          "steadyStateTime": { "type": "number" },
+          "steadyStateTimeUnit": { "type": "string" }
+        },
+        "required": ["steadyStateTime", "steadyStateTimeUnit"]
+      }
+    }
+  ],
+  "additionalProperties": false,
+  "$comment": "PROVISIONAL: additionalProperties pending team decision (see ISSUE_additionalProperties.md)."
+}

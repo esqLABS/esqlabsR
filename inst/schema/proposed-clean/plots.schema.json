@@ -1,0 +1,115 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.esqlabs.com/esqlabsR/snapshot/2.0/clean/plots.schema.json",
+  "title": "plots (clean)",
+  "description": "Figure definitions. xValuesLimits/yValuesLimits become [min,max] numbers; plotIDs becomes an array; axis scales tightened (RATIONALE §2).",
+  "type": ["object", "null"],
+  "properties": {
+    "dataCombined": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "simulated": { "type": "array", "items": { "$ref": "#/$defs/simulatedCurve" } },
+          "observed": { "type": "array", "items": { "$ref": "#/$defs/observedCurve" } }
+        },
+        "required": ["name"],
+        "additionalProperties": false
+      }
+    },
+    "plotConfiguration": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "plotID": { "type": "string" },
+          "DataCombinedName": { "type": ["string", "null"], "description": "-> dataCombined[].name." },
+          "plotType": { "type": ["string", "null"] },
+          "title": { "type": ["string", "null"] },
+          "subtitle": { "type": ["string", "null"] },
+          "xUnit": { "type": ["string", "null"] },
+          "yUnit": { "type": ["string", "null"] },
+          "xAxisScale": { "type": ["string", "null"], "enum": ["lin", "log", null] },
+          "yAxisScale": { "type": ["string", "null"], "enum": ["lin", "log", null] },
+          "xValuesLimits": {
+            "type": ["array", "null"],
+            "description": "[min, max] numbers (was the string 'a, b'; RATIONALE §2).",
+            "items": { "type": "number" },
+            "minItems": 2,
+            "maxItems": 2
+          },
+          "yValuesLimits": {
+            "type": ["array", "null"],
+            "description": "[min, max] numbers (was the string 'a, b'; RATIONALE §2).",
+            "items": { "type": "number" },
+            "minItems": 2,
+            "maxItems": 2
+          },
+          "aggregation": { "type": ["string", "null"] },
+          "quantiles": { "type": ["array", "null"], "items": { "type": "number" }, "description": "Structured list (OPEN_QUESTIONS §12)." },
+          "nsd": { "type": ["number", "null"], "description": "OPEN_QUESTIONS §12." },
+          "foldDistance": { "type": ["number", "null"], "description": "OPEN_QUESTIONS §12." }
+        },
+        "required": ["plotID"],
+        "additionalProperties": false
+      }
+    },
+    "plotGrids": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "plotIDs": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Array (was the string 'P1, P2'; RATIONALE §2) -> plotConfiguration[].plotID."
+          },
+          "title": { "type": ["string", "null"] },
+          "subtitle": { "type": ["string", "null"] }
+        },
+        "required": ["name"],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": ["dataCombined", "plotConfiguration", "plotGrids"],
+  "additionalProperties": false,
+  "$comment": "PROVISIONAL: additionalProperties pending team decision (see ISSUE_additionalProperties.md).",
+  "$defs": {
+    "simulatedCurve": {
+      "type": "object",
+      "properties": {
+        "label": { "type": ["string", "null"] },
+        "scenario": { "type": "string", "description": "-> scenarios[].id." },
+        "path": { "type": "string" },
+        "group": { "type": ["string", "null"] },
+        "xOffsets": { "type": ["number", "null"] },
+        "xOffsetsUnits": { "type": ["string", "null"] },
+        "yOffsets": { "type": ["number", "null"] },
+        "yOffsetsUnits": { "type": ["string", "null"] },
+        "xScaleFactors": { "type": ["number", "null"] },
+        "yScaleFactors": { "type": ["number", "null"] }
+      },
+      "required": ["scenario", "path"],
+      "additionalProperties": false
+    },
+    "observedCurve": {
+      "type": "object",
+      "properties": {
+        "label": { "type": ["string", "null"] },
+        "dataSet": { "type": "string", "description": "-> observedData[].id (clean; OPEN_QUESTIONS §9)." },
+        "group": { "type": ["string", "null"] },
+        "xOffsets": { "type": ["number", "null"] },
+        "xOffsetsUnits": { "type": ["string", "null"] },
+        "yOffsets": { "type": ["number", "null"] },
+        "yOffsetsUnits": { "type": ["string", "null"] },
+        "xScaleFactors": { "type": ["number", "null"] },
+        "yScaleFactors": { "type": ["number", "null"] }
+      },
+      "required": ["dataSet"],
+      "additionalProperties": false
+    }
+  }
+}
