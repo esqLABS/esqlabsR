@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.esqlabs.com/esqlabsR/snapshot/2.0/faithful/parameterModification.schema.json",
+  "title": "parameterModification",
+  "description": "A single parameter override (DIFF §5). Shared by model/individual/application parameter sets.",
+  "type": "object",
+  "properties": {
+    "containerPath": { "type": "string" },
+    "parameterName": { "type": "string" },
+    "value": { "type": "number" },
+    "units": {
+      "type": ["string", "null"],
+      "description": "Free string; not a closed enum in v6 (OPEN_QUESTIONS §3)."
+    }
+  },
+  "required": ["containerPath", "parameterName", "value"],
+  "additionalProperties": false,
+  "$comment": "PROVISIONAL: additionalProperties pending team decision (see ISSUE_additionalProperties.md)."
+}

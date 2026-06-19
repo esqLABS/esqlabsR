@@ -1,0 +1,78 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.esqlabs.com/esqlabsR/snapshot/2.0/faithful/scenario.schema.json",
+  "title": "scenario",
+  "description": "A single simulation scenario (DIFF §2). References are by id/name (referential integrity is out of scope, OPEN_QUESTIONS §7).",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Identity and display label (OPEN_QUESTIONS §8)."
+    },
+    "individualId": {
+      "type": "string",
+      "description": "-> individuals[].individualId."
+    },
+    "populationId": {
+      "type": ["string", "null"],
+      "description": "-> populations[].populationId; null for an individual simulation."
+    },
+    "readPopulationFromCSV": { "type": "boolean" },
+    "modelParameterSets": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "-> modelParameterSets keys."
+    },
+    "applicationProtocol": {
+      "type": "string",
+      "description": "-> applications key."
+    },
+    "simulationTime": {
+      "type": "string",
+      "pattern": "^\\s*-?\\d+(\\.\\d+)?\\s*,\\s*-?\\d+(\\.\\d+)?\\s*,\\s*-?\\d+(\\.\\d+)?\\s*(;\\s*-?\\d+(\\.\\d+)?\\s*,\\s*-?\\d+(\\.\\d+)?\\s*,\\s*-?\\d+(\\.\\d+)?\\s*)*$",
+      "description": "String grammar 'start, end, resolution' per interval, ';'-joined (DIFF §10, OPEN_QUESTIONS §6). Clean set promotes this to a real array."
+    },
+    "simulationTimeUnit": { "type": "string" },
+    "steadyState": { "type": "boolean" },
+    "steadyStateTime": { "type": ["number", "null"] },
+    "steadyStateTimeUnit": { "type": ["string", "null"] },
+    "overwriteFormulasInSS": { "type": "boolean" },
+    "modelFile": { "type": "string" },
+    "outputPathIds": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "-> outputPaths keys."
+    }
+  },
+  "required": [
+    "name",
+    "individualId",
+    "populationId",
+    "readPopulationFromCSV",
+    "modelParameterSets",
+    "applicationProtocol",
+    "simulationTime",
+    "simulationTimeUnit",
+    "steadyState",
+    "overwriteFormulasInSS",
+    "modelFile",
+    "outputPathIds"
+  ],
+  "allOf": [
+    {
+      "if": {
+        "properties": { "steadyState": { "const": true } },
+        "required": ["steadyState"]
+      },
+      "then": {
+        "properties": {
+          "steadyStateTime": { "type": "number" },
+          "steadyStateTimeUnit": { "type": "string" }
+        },
+        "required": ["steadyStateTime", "steadyStateTimeUnit"]
+      }
+    }
+  ],
+  "additionalProperties": false,
+  "$comment": "PROVISIONAL: additionalProperties pending team decision (see ISSUE_additionalProperties.md). steadyState=true requires steadyStateTime+Unit (DIFF §2.4)."
+}

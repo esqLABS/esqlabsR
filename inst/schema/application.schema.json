@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.esqlabs.com/esqlabsR/snapshot/2.0/faithful/application.schema.json",
+  "title": "applications",
+  "description": "Map of applicationProtocolId -> { parameterSets } (DIFF §6). Actual values live in applicationParameterSets.",
+  "type": "object",
+  "additionalProperties": {
+    "type": "object",
+    "properties": {
+      "parameterSets": {
+        "type": "array",
+        "items": { "type": "string" },
+        "description": "-> applicationParameterSets keys."
+      }
+    },
+    "required": ["parameterSets"],
+    "additionalProperties": false,
+    "$comment": "PROVISIONAL: additionalProperties pending team decision (see ISSUE_additionalProperties.md)."
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.esqlabs.com/esqlabsR/snapshot/2.0/faithful/population.schema.json",
+  "title": "population",
+  "description": "A single population definition (DIFF §4). Min/Max range fields are nullable.",
+  "type": "object",
+  "properties": {
+    "populationId": { "type": "string" },
+    "species": { "type": "string", "description": "Free string in v6 (OPEN_QUESTIONS §3)." },
+    "population": { "type": "string", "description": "OSP population/db name; free string in v6 (OPEN_QUESTIONS §3)." },
+    "numberOfIndividuals": { "type": "integer" },
+    "proportionOfFemales": { "type": "number" },
+    "weightMin": { "type": ["number", "null"] },
+    "weightMax": { "type": ["number", "null"] },
+    "weightUnit": { "type": ["string", "null"] },
+    "heightMin": { "type": ["number", "null"] },
+    "heightMax": { "type": ["number", "null"] },
+    "heightUnit": { "type": ["string", "null"] },
+    "ageMin": { "type": ["number", "null"] },
+    "ageMax": { "type": ["number", "null"] },
+    "BMIMin": { "type": ["number", "null"] },
+    "BMIMax": { "type": ["number", "null"] },
+    "BMIUnit": { "type": ["string", "null"] },
+    "proteinOntogenies": {
+      "type": ["string", "null"],
+      "description": "String grammar 'Protein:Ontogeny[, ...]' (DIFF §12.2). Clean set promotes to an array of objects."
+    }
+  },
+  "required": ["populationId", "species", "population", "numberOfIndividuals"],
+  "additionalProperties": false,
+  "$comment": "PROVISIONAL: additionalProperties pending team decision (see ISSUE_additionalProperties.md)."
+}
