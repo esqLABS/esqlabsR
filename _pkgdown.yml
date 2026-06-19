@@ -16,11 +16,17 @@ development:
 reference:
   - title: Project workflow
     contents:
-      - contains("Project")
-      - contains("Scenario")
-      - projectConfigurationStatus
-      - createPlotsFromExcel
+      - Project
+      - loadProject
+      - saveProject
       - initProject
+      - exampleProjectPath
+      - importProjectFromExcel
+      - exportProjectToExcel
+      - projectStatus
+      - createScenariosFromPKML
+      - contains("Scenario")
+      - createPlotsFromExcel
   - title: Programmatic Project mutation
     contents:
       - addScenario
@@ -125,6 +131,18 @@ reference:
       - removeFromList
       - sourceAll
       - esqlabsRSettingNames
+  - title: Deprecated
+    desc: |
+      Legacy entry points retained for migration only. They emit a
+      deprecation warning. Use the new project-driven API above.
+    contents:
+      - ProjectConfiguration
+      - createProjectConfiguration
+      - createDefaultProjectConfiguration
+      - exampleProjectConfigurationPath
+      - snapshotProjectConfiguration
+      - restoreProjectConfiguration
+      - projectConfigurationStatus
   - title: Inherited classes
     contents: ExportConfiguration
 articles:

@@ -23,3 +23,41 @@ test_that("loadProject() errors on an unsupported schemaVersion", {
     regexp = "Unsupported schemaVersion"
   )
 })
+
+test_that("saveProject writes a Project to disk and clears modified flag", {
+  project <- loadProject(testProjectJSONPath())
+  project$modelFolder <- "AnotherModels"
+  expect_true(project$modified)
+
+  tmp <- withr::local_tempfile(fileext = ".json")
+  saveProject(project, tmp)
+  expect_true(file.exists(tmp))
+  expect_false(project$modified)
+})
+
+test_that("saveProject defaults to project$jsonPath when path is NULL", {
+  tmp_src <- withr::local_tempfile(fileext = ".json")
+  project <- loadProject(testProjectJSONPath())
+  saveProject(project, tmp_src)
+  reloaded <- loadProject(tmp_src)
+  reloaded$modelFolder <- "Models2"
+  saveProject(reloaded)
+  expect_false(reloaded$modified)
+})
+
+test_that("saveProject errors when project has no jsonPath and path is NULL", {
+  project <- Project$new()
+  expect_snapshot(saveProject(project), error = TRUE)
+})
+
+test_that("saveProject errors on non-Project input", {
+  expect_error(saveProject("not a project"), "Project")
+})
+
+test_that("loadProject(exampleProjectPath()) succeeds", {
+  path <- exampleProjectPath()
+  expect_true(file.exists(path))
+  project <- loadProject(path)
+  expect_s3_class(project, "Project")
+  expect_equal(project$schemaVersion, "2.0")
+})

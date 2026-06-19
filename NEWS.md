@@ -2,15 +2,6 @@
 
 ## Internal (work in progress)
 
-- Groundwork for the JSON-first project format: a v2.0 `Project.json` schema
-  example (`inst/extdata/projects/Example/Project.json`), an internal `Project`
-  R6 class, and an internal parser/serializer pair (`.loadProjectJson()` and
-  `.projectToJson()` / `.saveProjectJson()`) that round-trip the schema.
-  Nothing in the package reads from this layer at runtime yet —
-  `runScenarios()`, the validators, and the plotting layer still drive off
-  `ProjectConfiguration` and the Excel workflow. The class, parser, and
-  serializer are all intentionally unexported.
-
 - The data and plotting layers start driving off the parsed `Project`:
   - `loadObservedData(project)` is the new public loader, dispatching across
     `excel` / `pkml` / `script` source declarations in `project$observedData`.
@@ -41,6 +32,33 @@
   lands in a follow-up chapter (#928).
 
 ## Breaking changes
+
+- `Project` (R6 class) is now exported and replaces `ProjectConfiguration` as the canonical in-memory project representation. The class merges the JSON-parsed sections (scenarios, individuals, populations, applications, observed data, plots, parameter identification) with the Excel-bridge file paths previously held by `ProjectConfiguration`. (#908)
+- `ScenarioConfiguration`, `addScenarioConfigurationsToExcel()`, `createScenarioConfigurationsFromPKML()`, `readScenarioConfigurationFromExcel()`, and `setApplications()` are removed. The Excel to JSON migration path is now `importProjectFromExcel()`; the reverse is `exportProjectToExcel()`. The scenario-construction-from-PKML surface is now `createScenariosFromPKML()`. (#908)
+- `validateAllConfigurations()` is removed. Use `validateProject()` instead. (#908)
+- `LegacyScenario` and `createScenarios()` (which built `LegacyScenario` objects from `ScenarioConfiguration`) are removed. `runScenarios()` now accepts only a `Project`. (#908)
+
+## New features
+
+- `createScenariosFromPKML(pkmlFilePaths, project, ...)` reads scenarios from PKML simulation files into a `Project`. Replaces the removed `createScenarioConfigurationsFromPKML()`. (#908)
+- `exampleProjectPath()` returns the bundled example `Project.json`. (#908)
+- `exportProjectToExcel(project, outputDir, silent)` writes a `Project` back to Excel configuration files. (#908)
+- `importProjectFromExcel(projectConfigPath, outputDir, silent)` reads an Excel-based project and writes a v2.0 `Project.json`. (#908)
+- `initProject(destination, type, createExcel, overwrite)` is rewritten. `type` is `"minimal"` (default) or `"example"`; with `createExcel = TRUE` (the default) Excel side-cars are also produced. (#908)
+- `Project` (R6 class) replaces `ProjectConfiguration`. (#908)
+- `projectStatus(project)` reports synchronisation between the JSON file and its Excel sidecar files. (#908)
+- `saveProject(project, path)` writes a `Project` back to `Project.json`. (#908)
+
+## Soft deprecations
+
+- `createDefaultProjectConfiguration()` and `createProjectConfiguration()` now warn and forward to `loadProject()`. The default `path` changes from `"ProjectConfiguration.xlsx"` to `"Project.json"`. (#908)
+- `exampleProjectConfigurationPath()` warns and forwards to `exampleProjectPath()`. (#908)
+- `ProjectConfiguration()` warns and forwards to `Project$new()`. (#908)
+- `projectConfigurationStatus()` warns and forwards to `projectStatus()`. (#908)
+- `restoreProjectConfiguration()` warns and forwards to `exportProjectToExcel()`. (#908)
+- `snapshotProjectConfiguration()` warns and forwards to `importProjectFromExcel()`. (#908)
+
+## Breaking changes (previous chapters)
 
 - Individual parameter sets in `Individuals.xlsx` must now be specified
   explicitly via the new required column `Individual Parameter Sets` in the

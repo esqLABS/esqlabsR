@@ -138,3 +138,10 @@ test_that(".clean_path returns NULL on NULL/NA/zero-length input", {
   expect_null(cp(NA_character_, parent = NULL))
   expect_null(cp(character(0), parent = NULL))
 })
+
+test_that("exampleProjectPath returns an existing Project.json", {
+  path <- exampleProjectPath()
+  expect_type(path, "character")
+  expect_match(path, "Project\\.json$")
+  expect_true(file.exists(path))
+})

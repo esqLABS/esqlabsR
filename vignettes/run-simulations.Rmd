@@ -9,6 +9,7 @@ vignette: >
 
 ```{r, include = FALSE, warning = FALSE}
 knitr::opts_chunk$set(
+  eval = FALSE, # TODO(#908): re-enable when chapter 9 rewrites vignettes
   collapse = TRUE,
   comment = "#>",
   fig.showtext = TRUE
