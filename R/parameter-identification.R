@@ -710,7 +710,16 @@ runPI <- function(
     entry <- tryCatch(
       list(task = runtime, result = runtime$run()),
       error = function(e) {
-        cli::cli_warn(messages$warningPIOptimizationFailed(taskName, e$message))
+        # Interpolate once here, with the optimizer's `e$message` bound as a local
+        # so cli treats it as data. Routing it through a pre-rendered `messages$`
+        # string instead would let cli re-parse the message as a glue template, so
+        # a literal `{`/`}` in the (uncontrolled) optimizer error would crash the
+        # soft-fail handler itself.
+        errorMessage <- e$message
+        cli::cli_warn(
+          "Parameter identification task {.val {taskName}} optimisation \\
+          failed: {.emph {errorMessage}}"
+        )
         list(task = runtime, result = NULL, error = e$message)
       }
     )

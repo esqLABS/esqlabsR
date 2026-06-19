@@ -1159,6 +1159,30 @@ test_that("runPI(project) soft-fails when the optimisation phase errors", {
   expect_identical(results[[1]]$task, fakeRuntime)
 })
 
+test_that("runPI(project) soft-fails when the optimiser error message contains braces", {
+  skip_if_not_installed("ospsuite.parameteridentification")
+  project <- loadProject(test_path("data", "TestProject", "Project.json"))
+  fakeRuntime <- structure(
+    list(run = function() stop("solver failed at x={k}")),
+    class = "ParameterIdentification"
+  )
+  local_mocked_bindings(
+    .createSinglePITask = function(project, piTask, observedData) {
+      fakeRuntime
+    }
+  )
+  # A literal `{`/`}` in the optimiser message must not be re-evaluated as a cli
+  # glue expression: the loop should still degrade to a soft-fail, not crash.
+  expect_warning(
+    results <- runPI(project),
+    "solver failed at x={k}",
+    fixed = TRUE
+  )
+  expect_null(results[[1]]$result)
+  expect_identical(results[[1]]$task, fakeRuntime)
+  expect_identical(results[[1]]$error, "solver failed at x={k}")
+})
+
 test_that("createPITasks() emits a soft-deprecation warning", {
   expect_snapshot(
     error = TRUE,
