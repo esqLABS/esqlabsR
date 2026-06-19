@@ -12,8 +12,23 @@ test_that("validationResult class works correctly", {
   expect_equal(length(result$warnings), 1)
 
   summary <- result$get_summary()
+  expect_named(
+    summary,
+    c("has_critical_errors", "critical_error_count", "warning_count")
+  )
   expect_equal(summary$critical_error_count, 1)
   expect_equal(summary$warning_count, 1)
+})
+
+test_that("validationResult exposes no dead `data` surface", {
+  result <- validationResult$new()
+
+  # `data`/`set_data()`/`has_data` were removed (#1066): in the JSON-primary
+  # model the parsed Project is the validated payload, nothing populates a
+  # separate one.
+  expect_null(result$data)
+  expect_null(result$set_data)
+  expect_false("has_data" %in% names(result$get_summary()))
 })
 
 test_that("isAnyCriticalErrors detects errors in validation results", {
@@ -72,13 +87,19 @@ test_that("validationSummary correctly counts errors and warnings", {
 
   summary <- validationSummary(validationResults)
 
+  expect_named(
+    summary,
+    c(
+      "total_critical_errors",
+      "total_warnings",
+      "sections_with_errors",
+      "sections_with_warnings"
+    )
+  )
   expect_equal(summary$total_critical_errors, 2)
   expect_equal(summary$total_warnings, 2)
-  expect_equal(length(summary$files_with_errors), 1)
-  expect_equal(length(summary$files_with_warnings), 2)
-  expect_true("scenarios" %in% summary$files_with_errors)
-  expect_true("scenarios" %in% summary$files_with_warnings)
-  expect_true("plots" %in% summary$files_with_warnings)
+  expect_setequal(summary$sections_with_errors, "scenarios")
+  expect_setequal(summary$sections_with_warnings, c("scenarios", "plots"))
 })
 
 test_that("validationSummary handles empty validation results", {
@@ -89,8 +110,8 @@ test_that("validationSummary handles empty validation results", {
 
   expect_equal(summary$total_critical_errors, 0)
   expect_equal(summary$total_warnings, 0)
-  expect_equal(length(summary$files_with_errors), 0)
-  expect_equal(length(summary$files_with_warnings), 0)
+  expect_equal(summary$sections_with_errors, character())
+  expect_equal(summary$sections_with_warnings, character())
 })
 
 test_that("validationResult get_formatted_messages works correctly", {

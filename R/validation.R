@@ -22,9 +22,6 @@
 validationResult <- R6::R6Class(
   "validationResult",
   public = list(
-    #' @field data Successfully validated/processed data
-    data = NULL,
-
     #' @field critical_errors List of critical errors (blocking issues)
     critical_errors = list(),
 
@@ -35,7 +32,6 @@ validationResult <- R6::R6Class(
     initialize = function() {
       self$critical_errors <- list()
       self$warnings <- list()
-      self$data <- NULL
     },
 
     #' @description Add a critical error
@@ -66,12 +62,6 @@ validationResult <- R6::R6Class(
       self$warnings <- append(self$warnings, list(warning_entry))
     },
 
-    #' @description Set validated data
-    #' @param data The validated/processed data to store
-    set_data = function(data) {
-      self$data <- data
-    },
-
     #' @description Check if validation passed (no critical errors)
     is_valid = function() {
       length(self$critical_errors) == 0
@@ -99,8 +89,7 @@ validationResult <- R6::R6Class(
       list(
         has_critical_errors = self$has_critical_errors(),
         critical_error_count = length(self$critical_errors),
-        warning_count = length(self$warnings),
-        has_data = !is.null(self$data)
+        warning_count = length(self$warnings)
       )
     }
   )
@@ -826,8 +815,8 @@ validationSummary <- function(validationResults) {
   summary <- list(
     total_critical_errors = 0,
     total_warnings = 0,
-    files_with_errors = character(),
-    files_with_warnings = character()
+    sections_with_errors = character(),
+    sections_with_warnings = character()
   )
 
   for (name in names(validationResults)) {
@@ -836,12 +825,15 @@ validationSummary <- function(validationResults) {
       if (result$has_critical_errors()) {
         summary$total_critical_errors <- summary$total_critical_errors +
           length(result$critical_errors)
-        summary$files_with_errors <- c(summary$files_with_errors, name)
+        summary$sections_with_errors <- c(summary$sections_with_errors, name)
       }
       if (length(result$warnings) > 0) {
         summary$total_warnings <- summary$total_warnings +
           length(result$warnings)
-        summary$files_with_warnings <- c(summary$files_with_warnings, name)
+        summary$sections_with_warnings <- c(
+          summary$sections_with_warnings,
+          name
+        )
       }
     }
   }

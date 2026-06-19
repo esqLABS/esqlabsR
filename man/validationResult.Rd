@@ -9,8 +9,6 @@ R6 class for storing validation results
 \section{Public fields}{
   \if{html}{\out{<div class="r6-fields">}}
   \describe{
-    \item{\code{data}}{Successfully validated/processed data}
-
     \item{\code{critical_errors}}{List of critical errors (blocking issues)}
 
     \item{\code{warnings}}{List of warnings (non-blocking issues)}
@@ -23,7 +21,6 @@ R6 class for storing validation results
     \item \href{#method-validationResult-initialize}{\code{validationResult$new()}}
     \item \href{#method-validationResult-add_critical_error}{\code{validationResult$add_critical_error()}}
     \item \href{#method-validationResult-add_warning}{\code{validationResult$add_warning()}}
-    \item \href{#method-validationResult-set_data}{\code{validationResult$set_data()}}
     \item \href{#method-validationResult-is_valid}{\code{validationResult$is_valid()}}
     \item \href{#method-validationResult-has_critical_errors}{\code{validationResult$has_critical_errors()}}
     \item \href{#method-validationResult-get_formatted_messages}{\code{validationResult$get_formatted_messages()}}
@@ -80,25 +77,6 @@ R6 class for storing validation results
       \item{\code{category}}{Warning category (e.g., "Data", "Structure")}
       \item{\code{message}}{Warning message}
       \item{\code{details}}{Optional list with additional details (sheet, row, column)}
-    }
-    \if{html}{\out{</div>}}
-  }
-}
-
-\if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-validationResult-set_data"></a>}}
-\if{latex}{\out{\hypertarget{method-validationResult-set_data}{}}}
-\subsection{\code{validationResult$set_data()}}{
-  Set validated data
-  \subsection{Usage}{
-    \if{html}{\out{<div class="r">}}
-    \preformatted{validationResult$set_data(data)}
-    \if{html}{\out{</div>}}
-  }
-  \subsection{Arguments}{
-    \if{html}{\out{<div class="arguments">}}
-    \describe{
-      \item{\code{data}}{The validated/processed data to store}
     }
     \if{html}{\out{</div>}}
   }
