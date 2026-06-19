@@ -1229,7 +1229,12 @@ test_that("runPI(project) soft-fails when the optimiser error message contains b
     class = "ParameterIdentification"
   )
   local_mocked_bindings(
-    .createSinglePITask = function(project, piTask, observedData) {
+    .createSinglePITask = function(
+      project,
+      piTask,
+      observedData,
+      stopIfParameterNotFound = TRUE
+    ) {
       fakeRuntime
     }
   )
