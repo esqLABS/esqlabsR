@@ -22,6 +22,14 @@ test_that(".parseExcelMultiValueField numeric conversion path is covered", {
   )
 })
 
+test_that(".validateClassHasField is NA-safe when the object has NA names", {
+  object <- list(1, 2)
+  names(object) <- c(NA, "b")
+
+  expect_false(esqlabsR:::.validateClassHasField(object, "x"))
+  expect_true(esqlabsR:::.validateClassHasField(object, "b"))
+})
+
 # createPlots(project, ...) tests ----
 
 test_that("createPlots errors on non-Project input", {

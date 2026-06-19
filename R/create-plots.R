@@ -329,7 +329,7 @@ createPlotsFromExcel <- function(...) {
 #'   otherwise.
 #' @keywords internal
 .validateClassHasField <- function(object, field) {
-  if (!any(names(object) == field)) {
+  if (!(field %in% names(object))) {
     return(FALSE)
   }
   return(TRUE)

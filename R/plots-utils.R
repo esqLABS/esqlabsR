@@ -246,7 +246,7 @@ createEsqlabsPlotGridConfiguration <- function() {
     } else if (
       !is.null(defaultValues[[name]]) && !is.null(plotConfiguration[[name]])
     ) {
-      if (all(plotConfiguration[[name]] == defaultValues[[name]])) {
+      if (isTRUE(all(plotConfiguration[[name]] == defaultValues[[name]]))) {
         plotConfiguration[[name]] <- plotOverrideConfig[[name]]
       }
     }
@@ -434,4 +434,3 @@ createEsqlabsPlotGridConfiguration <- function() {
 
   return(plotConfigurationOptions[names])
 }
-
