@@ -1,11 +1,10 @@
-# v2.0 Project → JSON serialization (internal, work-in-progress) ----
+# v2.0 Project → JSON serialization (internal) ----
 #
-# Inverse of `.loadProjectJson()` (`R/project-parse.R`). Walks an internal
+# Inverse of `Project$.read_json()` (called by `Project$new()`). Walks a
 # `Project` and emits a v2.0 `Project.json` file. The contract is:
 #
-#   .loadProjectJson(path) |> .saveProjectJson(out)  produces a JSON file
-#   that, when re-parsed, yields a `Project` structurally identical to the
-#   first one.
+#   loadProject(path) |> saveProject(out)  produces a JSON file that, when
+#   re-loaded, yields a `Project` structurally identical to the first one.
 #
 # Layered to mirror the end-state shape: a top-level `.projectToJson()`
 # delegates to per-section helpers (`.filePathsToJson`, `.scenariosToJson`,
@@ -19,8 +18,8 @@
 
 #' Internal: render a `Project` to a JSON-shaped R list in the v2.0 schema.
 #'
-#' Not exported. Companion to `.loadProjectJson()`. The list returned here is
-#' the canonical input to `jsonlite::write_json` (see `.saveProjectJson()`);
+#' Not exported. Companion to `Project$.read_json()`. The list returned here
+#' is the canonical input to `jsonlite::write_json` (see `.saveProjectJson()`);
 #' writing and re-parsing it yields a structurally identical `Project`.
 #'
 #' @param project A `Project` (R6) instance.
@@ -88,8 +87,8 @@
 
 # Per-section helpers ---------------------------------------------------------
 #
-# Each helper is paired with a `.parse<Section>()` (currently inlined in
-# `.loadProjectJson`) and is the canonical place for that section's
+# Each helper is paired with a `.parse<Section>()` (called from
+# `Project$.read_json()`) and is the canonical place for that section's
 # JSON-shape concerns. Today most helpers are trivial because the parser is
 # JSON-faithful; the bodies will grow as section-specific transformations
 # move here from caller code (e.g. relative-path normalization, ID
@@ -294,52 +293,9 @@
   project$observedData
 }
 
-# JSON object with `dataCombined` / `plotConfiguration` / `plotGrids` arrays;
-# `null` when the project carries no plots section.
-.plotsToJson <- function(project) {
-  plots <- project$plots
-  if (is.null(plots)) {
-    return(NULL)
-  }
-  list(
-    dataCombined = .dataCombinedToNestedJson(plots$dataCombined),
-    plotConfiguration = .dataFrameToListOfLists(plots$plotConfiguration),
-    plotGrids = .dataFrameToListOfLists(plots$plotGrids)
-  )
-}
-
-# Inverts .parseNestedDataCombined: re-adds the `name` field from the list
-# key. Empty `simulated`/`observed` lists are omitted to keep the JSON terse.
-#
-# @keywords internal
-# @noRd
-.dataCombinedToNestedJson <- function(dataCombined) {
-  if (is.null(dataCombined) || length(dataCombined) == 0) {
-    return(list())
-  }
-  unname(lapply(names(dataCombined), function(name) {
-    dc <- dataCombined[[name]]
-    entry <- list(name = name)
-    if (length(dc$simulated) > 0) entry$simulated <- dc$simulated
-    if (length(dc$observed) > 0) entry$observed <- dc$observed
-    entry
-  }))
-}
-
-# Convert a data.frame back to a list of named lists. NA cells are dropped
-# per row so they round-trip to JSON `null`/absent.
-#
-# @keywords internal
-# @noRd
-.dataFrameToListOfLists <- function(df) {
-  if (is.null(df) || nrow(df) == 0) {
-    return(list())
-  }
-  lapply(seq_len(nrow(df)), function(i) {
-    row <- as.list(df[i, , drop = FALSE])
-    Filter(function(x) !(length(x) == 1 && is.na(x)), row)
-  })
-}
+# `.plotsToJson` and its data-shape helpers (`.dataCombinedToNestedJson`,
+# `.dataFrameToListOfLists`) live in R/plots.R alongside the plots section
+# parse + validate + mutation API.
 
 # Shape-coercion helper -------------------------------------------------------
 

@@ -1,13 +1,7 @@
 # Project (JSON) validation framework.
 #
-# Implements Chapter 4 of the JSON-as-primary-input refactor (see
-# .claude/superpowers/specs/2026-05-04-json-based-project-chapters.md).
-#
-# This file is the JSON-driven counterpart to the Excel-driven
-# `validateAllConfigurations()` (R/validation-all-configurations.R).
-#
 # The dispatcher is a named list of adapters in `.validationAdapters`.
-# Each section file (R/utilities-scenarios.R, R/utilities-individual.R,
+# Each section file (R/scenarios.R, R/individuals.R, R/populations.R,
 # ...) defines a top-level `.<section>ValidatorAdapter <- function(project)`
 # that pulls the right slice of the project and calls a section-local
 # `.validate<Section>()` function. Adding a new section means dropping
@@ -19,6 +13,156 @@
 # results to decide whether to skip itself (skip on prior critical
 # errors). It is appended as a fixed final phase by the dispatcher
 # rather than masquerading as a section.
+
+# validationResult class ----
+
+#' @title validationResult
+#' @description R6 class for storing validation results
+#' @export
+validationResult <- R6::R6Class(
+  "validationResult",
+  public = list(
+    #' @field data Successfully validated/processed data
+    data = NULL,
+
+    #' @field critical_errors List of critical errors (blocking issues)
+    critical_errors = list(),
+
+    #' @field warnings List of warnings (non-blocking issues)
+    warnings = list(),
+
+    #' @description Initialize a new ValidationResult
+    initialize = function() {
+      self$critical_errors <- list()
+      self$warnings <- list()
+      self$data <- NULL
+    },
+
+    #' @description Add a critical error
+    #' @param category Error category (e.g., "Structure", "Missing Fields", "Uniqueness")
+    #' @param message Error message
+    #' @param details Optional list with additional details (sheet, row, column)
+    add_critical_error = function(category, message, details = NULL) {
+      error_entry <- list(
+        category = category,
+        message = message,
+        details = details,
+        timestamp = Sys.time()
+      )
+      self$critical_errors <- append(self$critical_errors, list(error_entry))
+    },
+
+    #' @description Add a warning
+    #' @param category Warning category (e.g., "Data", "Structure")
+    #' @param message Warning message
+    #' @param details Optional list with additional details (sheet, row, column)
+    add_warning = function(category, message, details = NULL) {
+      warning_entry <- list(
+        category = category,
+        message = message,
+        details = details,
+        timestamp = Sys.time()
+      )
+      self$warnings <- append(self$warnings, list(warning_entry))
+    },
+
+    #' @description Set validated data
+    #' @param data The validated/processed data to store
+    set_data = function(data) {
+      self$data <- data
+    },
+
+    #' @description Check if validation passed (no critical errors)
+    is_valid = function() {
+      length(self$critical_errors) == 0
+    },
+
+    #' @description Check if there are critical errors
+    has_critical_errors = function() {
+      length(self$critical_errors) > 0
+    },
+
+    #' @description Get formatted messages for display
+    get_formatted_messages = function() {
+      list(
+        critical = lapply(self$critical_errors, function(e) {
+          paste0("[", e$category, "] ", e$message)
+        }),
+        warnings = lapply(self$warnings, function(w) {
+          paste0("[", w$category, "] ", w$message)
+        })
+      )
+    },
+
+    #' @description Get validation summary
+    get_summary = function() {
+      list(
+        has_critical_errors = self$has_critical_errors(),
+        critical_error_count = length(self$critical_errors),
+        warning_count = length(self$warnings),
+        has_data = !is.null(self$data)
+      )
+    }
+  )
+)
+
+# Helper functions ----
+
+#' Safe execution wrapper that captures errors and warnings
+#' @param expr Expression to evaluate
+#' @param result Existing validationResult to append to (optional)
+#' @keywords internal
+.safe_validate <- function(expr, result = NULL) {
+  if (is.null(result)) {
+    result <- validationResult$new()
+  }
+
+  tryCatch(
+    {
+      withCallingHandlers(
+        {
+          # Evaluate in the parent environment to preserve variable scope
+          output <- eval(expr, envir = parent.frame())
+          result$set_data(output)
+        },
+        warning = function(w) {
+          category <- .categorize_message(conditionMessage(w))
+          result$add_warning(category, conditionMessage(w))
+          invokeRestart("muffleWarning")
+        }
+      )
+    },
+    error = function(e) {
+      category <- .categorize_message(conditionMessage(e))
+      result$add_critical_error(category, conditionMessage(e))
+    }
+  )
+
+  return(result)
+}
+
+#' Categorize validation messages
+#' @keywords internal
+.categorize_message <- function(message) {
+  dplyr::case_when(
+    grepl(
+      "missing|empty|not found",
+      message,
+      ignore.case = TRUE
+    ) ~
+      "Missing Fields",
+    grepl("duplicate|unique", message, ignore.case = TRUE) ~ "Uniqueness",
+    grepl(
+      "not defined|invalid.*reference",
+      message,
+      ignore.case = TRUE
+    ) ~
+      "Invalid Reference",
+    grepl("format|separated|Wrong number", message) ~ "Format Error",
+    grepl("sheet|column|structure", message, ignore.case = TRUE) ~ "Structure",
+    .default = "Validation"
+  )
+}
 
 # Public API ----
 

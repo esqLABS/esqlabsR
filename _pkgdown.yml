@@ -26,7 +26,6 @@ reference:
       - projectStatus
       - createScenariosFromPKML
       - contains("Scenario")
-      - createPlotsFromExcel
   - title: Programmatic Project mutation
     contents:
       - addScenario
@@ -84,7 +83,6 @@ reference:
       - matches("^set")
       - matches("^write")
       - matches("^export")
-      - createDataCombinedFromExcel
   - title: Helpers for modeling and simulation
     contents:
       - matches("^compare")
@@ -99,8 +97,6 @@ reference:
       - LLOQMode
       - ULOQMode
       - loadObservedData
-      - loadObservedDataFromExcel
-      - loadObservedDataFromPKML
   - title: Helpers for plotting
     contents:
       - matches("^plot")
@@ -109,8 +105,6 @@ reference:
       - has_concept("create-plotting-configurations")
       - createDataCombined
       - createPlots
-      - createDataCombinedFromExcel
-      - createPlotsFromExcel
   - title: Input validation
     contents:
       - matches("^valid")
@@ -143,8 +137,8 @@ reference:
       - snapshotProjectConfiguration
       - restoreProjectConfiguration
       - projectConfigurationStatus
-  - title: Inherited classes
-    contents: ExportConfiguration
+      - createDataCombinedFromExcel
+      - createPlotsFromExcel
 articles:
   - title: esqlabsR Workflow
     navbar: esqlabsR Workflow

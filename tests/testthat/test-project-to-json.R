@@ -4,7 +4,7 @@
 # scalar vs length-1 array, NULL preservation) get their own focused tests.
 
 test_that(".projectToJson() returns a JSON-shaped list with the canonical top-level keys", {
-  project <- esqlabsR:::.loadProjectJson(example_project_json_path())
+  project <- exampleProject()
   tree <- esqlabsR:::.projectToJson(project)
 
   expect_type(tree, "list")
@@ -37,7 +37,7 @@ test_that(".projectToJson() rejects non-Project input", {
 })
 
 test_that(".saveProjectJson() writes a valid JSON file", {
-  project <- esqlabsR:::.loadProjectJson(example_project_json_path())
+  project <- exampleProject()
   out <- withr::local_tempfile(fileext = ".json")
 
   result <- esqlabsR:::.saveProjectJson(project, out)
@@ -52,7 +52,7 @@ test_that(".saveProjectJson() writes a valid JSON file", {
 })
 
 test_that(".saveProjectJson() rejects non-string paths", {
-  project <- esqlabsR:::.loadProjectJson(example_project_json_path())
+  project <- exampleProject()
   expect_error(
     esqlabsR:::.saveProjectJson(project, NULL),
     "must be a single non-empty, non-NA string"
@@ -68,7 +68,7 @@ test_that(".saveProjectJson() rejects non-string paths", {
 })
 
 test_that(".saveProjectJson() refuses to write to a missing directory", {
-  project <- esqlabsR:::.loadProjectJson(example_project_json_path())
+  project <- exampleProject()
   out <- file.path(tempfile(), "nested", "Project.json")
 
   expect_error(
@@ -78,10 +78,10 @@ test_that(".saveProjectJson() refuses to write to a missing directory", {
 })
 
 test_that("round-trip is structurally identical for the bundled example", {
-  project <- esqlabsR:::.loadProjectJson(example_project_json_path())
+  project <- exampleProject()
   out <- withr::local_tempfile(fileext = ".json")
   esqlabsR:::.saveProjectJson(project, out)
-  reloaded <- esqlabsR:::.loadProjectJson(out)
+  reloaded <- loadProject(out)
 
   # jsonPath / projectDirPath legitimately differ; everything else must match.
   expect_identical(reloaded$schemaVersion, project$schemaVersion)
@@ -159,12 +159,12 @@ test_that(".plotsToJson returns NULL when project has no plots section", {
     tmp,
     auto_unbox = TRUE
   )
-  project <- esqlabsR:::.loadProjectJson(tmp)
+  project <- loadProject(tmp)
   expect_null(esqlabsR:::.plotsToJson(project))
 })
 
 test_that("round-trip preserves length-1 arrays as arrays, not scalars", {
-  project <- esqlabsR:::.loadProjectJson(example_project_json_path())
+  project <- exampleProject()
   out <- withr::local_tempfile(fileext = ".json")
   esqlabsR:::.saveProjectJson(project, out)
 
@@ -178,7 +178,7 @@ test_that("round-trip preserves length-1 arrays as arrays, not scalars", {
 })
 
 test_that("round-trip preserves NULL fields", {
-  project <- esqlabsR:::.loadProjectJson(example_project_json_path())
+  project <- exampleProject()
   out <- withr::local_tempfile(fileext = ".json")
   esqlabsR:::.saveProjectJson(project, out)
 
@@ -197,7 +197,7 @@ test_that("empty map sections serialize as JSON objects, not arrays", {
     empty,
     auto_unbox = TRUE
   )
-  project <- esqlabsR:::.loadProjectJson(empty)
+  project <- loadProject(empty)
 
   out <- withr::local_tempfile(fileext = ".json")
   esqlabsR:::.saveProjectJson(project, out)
@@ -227,11 +227,11 @@ test_that("empty map sections survive a round-trip as empty named lists", {
     empty,
     auto_unbox = TRUE
   )
-  project <- esqlabsR:::.loadProjectJson(empty)
+  project <- loadProject(empty)
 
   out <- withr::local_tempfile(fileext = ".json")
   esqlabsR:::.saveProjectJson(project, out)
-  reloaded <- esqlabsR:::.loadProjectJson(out)
+  reloaded <- loadProject(out)
 
   # On the second hop the JSON is `{}` (because the serializer emits map
   # sections that way), so jsonlite returns a *named* empty list. The
@@ -249,7 +249,7 @@ test_that("empty map sections survive a round-trip as empty named lists", {
   # not drift further.
   out2 <- withr::local_tempfile(fileext = ".json")
   esqlabsR:::.saveProjectJson(reloaded, out2)
-  reloaded2 <- esqlabsR:::.loadProjectJson(out2)
+  reloaded2 <- loadProject(out2)
   expect_identical(reloaded2$filePaths, reloaded$filePaths)
   expect_identical(reloaded2$outputPaths, reloaded$outputPaths)
   expect_identical(reloaded2$applications, reloaded$applications)
@@ -268,7 +268,7 @@ test_that("empty map sections survive a round-trip as empty named lists", {
 })
 
 test_that("round-trip preserves a steady-state scenario including unit conversion", {
-  project <- esqlabsR:::.loadProjectJson(example_project_json_path())
+  project <- exampleProject()
   out <- withr::local_tempfile(fileext = ".json")
   esqlabsR:::.saveProjectJson(project, out)
 
@@ -287,7 +287,7 @@ test_that("round-trip preserves a steady-state scenario including unit conversio
 })
 
 test_that("round-trip preserves outputPathIds order", {
-  project <- esqlabsR:::.loadProjectJson(example_project_json_path())
+  project <- exampleProject()
   out <- withr::local_tempfile(fileext = ".json")
   esqlabsR:::.saveProjectJson(project, out)
 
@@ -306,7 +306,7 @@ test_that("round-trip preserves outputPathIds order", {
 })
 
 test_that(".scenariosToJson errors when scenario outputPaths reference unknown ids", {
-  project <- esqlabsR:::.loadProjectJson(example_project_json_path())
+  project <- exampleProject()
   # Mutate the first scenario to add a named path whose id is not in
   # project$outputPaths. (Parser would have rejected this, but a Chapter
   # 7+ programmatic mutation could land us here.)
@@ -323,7 +323,7 @@ test_that(".scenariosToJson errors when scenario outputPaths reference unknown i
 })
 
 test_that(".scenariosToJson errors when outputPaths has unnamed elements", {
-  project <- esqlabsR:::.loadProjectJson(example_project_json_path())
+  project <- exampleProject()
   sc <- project$scenarios[[1L]]
   # Strip names to simulate a programmatic mutation that violates the invariant.
   sc$outputPaths <- unname(sc$outputPaths)
@@ -335,7 +335,7 @@ test_that(".scenariosToJson errors when outputPaths has unnamed elements", {
 })
 
 test_that(".scenariosToJson errors when simulateSteadyState is TRUE without a unit", {
-  project <- esqlabsR:::.loadProjectJson(example_project_json_path())
+  project <- exampleProject()
   # Aciclovir_iv has simulateSteadyState=FALSE and no unit.
   # Flip the flag without setting the unit — the round-trip cannot
   # carry the steady-state time, so the serializer must reject it.
@@ -349,7 +349,7 @@ test_that(".scenariosToJson errors when simulateSteadyState is TRUE without a un
 })
 
 test_that("round-trip preserves empty modelParameterSets as a JSON array", {
-  project <- esqlabsR:::.loadProjectJson(example_project_json_path())
+  project <- exampleProject()
   sc <- project$scenarios[["Aciclovir_iv"]]
   sc$modelParameterSets <- character(0)
 
@@ -365,7 +365,7 @@ test_that("round-trip preserves empty modelParameterSets as a JSON array", {
 })
 
 test_that("round-trip preserves empty outputPathIds as a JSON array", {
-  project <- esqlabsR:::.loadProjectJson(example_project_json_path())
+  project <- exampleProject()
   sc <- project$scenarios[["Aciclovir_iv"]]
   sc$outputPaths <- NULL
 
@@ -414,7 +414,7 @@ test_that(".scenariosToJson preserves both ids when two ids map to the same lite
   jsonPath <- withr::local_tempfile(fileext = ".json")
   writeLines(jsonString, jsonPath)
 
-  project <- esqlabsR:::.loadProjectJson(jsonPath)
+  project <- suppressWarnings(loadProject(jsonPath))
   rebuilt <- esqlabsR:::.scenariosToJson(project)
 
   expect_equal(rebuilt[[1]]$outputPathIds, list("primary", "alias"))

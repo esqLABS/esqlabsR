@@ -173,8 +173,8 @@ PITask <- function(
   rec
 }
 
-#' @method print PIParameter
-#' @rawNamespace S3method(print, PIParameter)
+#' @exportS3Method
+#' @noRd
 print.PIParameter <- function(x, ...) {
   ospsuite.utils::ospPrintClass(x)
   ospsuite.utils::ospPrintItems(
@@ -195,12 +195,15 @@ print.PIParameter <- function(x, ...) {
   invisible(x)
 }
 
-#' @method print PIOutputMapping
-#' @rawNamespace S3method(print, PIOutputMapping)
+#' @exportS3Method
+#' @noRd
 print.PIOutputMapping <- function(x, ...) {
   ospsuite.utils::ospPrintClass(x)
-  weightDisplay <- if (is.null(x$weight)) "" else
+  weightDisplay <- if (is.null(x$weight)) {
+    ""
+  } else {
     paste(x$weight, collapse = ", ")
+  }
   ospsuite.utils::ospPrintItems(
     list(
       "Id" = x$id,
@@ -215,8 +218,8 @@ print.PIOutputMapping <- function(x, ...) {
   invisible(x)
 }
 
-#' @method print PITask
-#' @rawNamespace S3method(print, PITask)
+#' @exportS3Method
+#' @noRd
 print.PITask <- function(x, ...) {
   ospsuite.utils::ospPrintClass(x)
   ospsuite.utils::ospPrintItems(
@@ -231,6 +234,81 @@ print.PITask <- function(x, ...) {
     print_empty = TRUE
   )
   invisible(x)
+}
+
+# Parse ----
+#
+# Parse the `parameterIdentification` JSON array into a named list keyed
+# by task id. Each entry becomes a `PITask` containing a list of
+# `PIParameter` and a list of `PIOutputMapping` records. Returns an
+# empty list when the section is absent or empty.
+#
+# @keywords internal
+# @noRd
+.parsePITasks <- function(piData) {
+  if (is.null(piData) || length(piData) == 0L) {
+    return(list())
+  }
+  result <- list()
+  for (rawTask in piData) {
+    parameters <- .parsePIParameters(rawTask$parameters %||% list(), rawTask$id)
+    outputMappings <- .parsePIOutputMappings(
+      rawTask$outputMappings %||% list(),
+      rawTask$id
+    )
+    task <- PITask(
+      id = rawTask$id,
+      scenarios = as.character(unlist(rawTask$scenarios %||% list())),
+      parameters = parameters,
+      outputMappings = outputMappings,
+      configuration = rawTask$configuration %||% list()
+    )
+    result[[rawTask$id]] <- task
+  }
+  result
+}
+
+# @keywords internal
+# @noRd
+.parsePIParameters <- function(rawList, taskId) {
+  out <- vector("list", length(rawList))
+  for (i in seq_along(rawList)) {
+    raw <- rawList[[i]]
+    id <- raw$id %||% paste0(taskId, "_param_", i)
+    out[[i]] <- PIParameter(
+      id = id,
+      scenarios = as.character(unlist(raw$scenarios %||% list())),
+      path = raw$path,
+      units = raw$units,
+      minValue = raw$minValue,
+      maxValue = raw$maxValue,
+      startValue = raw$startValue
+    )
+  }
+  out
+}
+
+# @keywords internal
+# @noRd
+.parsePIOutputMappings <- function(rawList, taskId) {
+  out <- vector("list", length(rawList))
+  for (i in seq_along(rawList)) {
+    raw <- rawList[[i]]
+    id <- raw$id %||% paste0(taskId, "_mapping_", i)
+    out[[i]] <- PIOutputMapping(
+      id = id,
+      scenarios = as.character(unlist(raw$scenarios %||% list())),
+      outputPathId = raw$outputPathId,
+      observedDataId = raw$observedDataId,
+      scaling = raw$scaling,
+      xOffset = raw$xOffset %||% 0,
+      yOffset = raw$yOffset %||% 0,
+      xFactor = raw$xFactor %||% 1,
+      yFactor = raw$yFactor %||% 1,
+      weight = raw$weight
+    )
+  }
+  out
 }
 
 # Section validation adapter ----
@@ -448,8 +526,12 @@ print.PITask <- function(x, ...) {
 # @noRd
 .buildPIConfiguration <- function(cfg) {
   piConfig <- ospsuite.parameteridentification::PIConfiguration$new()
-  if (!is.null(cfg$algorithm)) piConfig$algorithm <- cfg$algorithm
-  if (!is.null(cfg$ciMethod)) piConfig$ciMethod <- cfg$ciMethod
+  if (!is.null(cfg$algorithm)) {
+    piConfig$algorithm <- cfg$algorithm
+  }
+  if (!is.null(cfg$ciMethod)) {
+    piConfig$ciMethod <- cfg$ciMethod
+  }
   if (!is.null(cfg$autoEstimateCI)) {
     piConfig$autoEstimateCI <- isTRUE(cfg$autoEstimateCI)
   }

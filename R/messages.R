@@ -64,23 +64,10 @@ messages$errorDistributionNotSupported <- function(string) {
   )
 }
 
-messages$errorWrongPopulationName <- function(populationName) {
-  cliFormat(
-    "Population name {.val {populationName}} is not specified in the population file!"
-  )
-}
-
 messages$errorWrongOntogenyStructure <- function(entry) {
   cliFormat(
     "Wrong structure provided for the protein ontogeny specification.
     Expected is a pair of {.cls ProteinName:Ontogeny}, but the entry is: {.val {entry}}"
-  )
-}
-
-# utilities-individual####
-messages$errorWrongIndividualId <- function(individualId) {
-  cliFormat(
-    "Individual with id {.var {individualId}} is not specified in the individual characteristics file!"
   )
 }
 
@@ -286,15 +273,6 @@ messages$warningNoIndividualCharacteristics <- function(
   )
 }
 
-messages$errorIndividualParameterSetNotFound <- function(
-  scenarioName,
-  parameterSetName
-) {
-  cliFormat(
-    "Scenario {.val {scenarioName}}: Individual parameter set {.val {parameterSetName}} not found in the individuals file."
-  )
-}
-
 messages$noPopulationIdForPopulationScenario <- function(scenarioName) {
   cliFormat(
     "Simulation type of the scenario with scenario name {.val {scenarioName}} is set to {.val Population},
@@ -491,27 +469,6 @@ messages$invalidConfigurationPropertyFromExcel <- function(
     "Trying to apply property {.arg {propertyName}} that is not supported by 
     the configuration {.var {configurationType}}! Check column names in the 
     excel file defining plot configurations."
-  )
-}
-
-messages$missingOutputFileName <- function() {
-  cliFormat(
-    "Missing values found in mandatory column {.arg outputName} of sheet {.var exportConfiguration}. No plots are exported to file for corresponding rows."
-  )
-}
-
-messages$missingPlotGrids <- function(missingPlotGrids) {
-  cliFormat(
-    "Invalid values in column {.arg plotGridName} of sheet {.var exportConfiguration}:
-    {.val {paste0(missingPlotGrids, collapse = ',\n')}}. Plot grids are either not defined or empty and can not be
-    exported to file."
-  )
-}
-
-messages$invalidPlotGridNames <- function(plotGridNames) {
-  cliFormat(
-    "Following plot grid names have been specified but are not present in the {.field plotGrids} sheet!
-  Define these plots first: {.val {paste(plotGridNames, collapse = ',\n')}}"
   )
 }
 
@@ -716,7 +673,6 @@ messages$excelNoCompleteRows <- function() {
     "*" = "Please fill all the columns and try again."
   ))
 }
-
 
 messages$excelSheetEmptyOrInvalid <- function() {
   cli::format_message(c(

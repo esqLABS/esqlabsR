@@ -1,20 +1,20 @@
 # esqlabsR (development version)
 
+## Internal
+
+- Internal reorganisation: per-domain R files. `R/utilities-scenarios.R` splits into `R/scenarios.R` and `R/output-paths.R`; `R/utilities-individual.R` → `R/individuals.R`; `R/utilities-population.R` → `R/populations.R`; `R/utilities-parameters.R` → `R/parameters.R`; `R/utilities-figures.R` → `R/plots.R`; `R/utilities-data-combined.R` → `R/data-combined.R`. Followup file renames: `utilities-data.R` → `data-utils.R`, `utilities-file.R` → `file-utils.R`, `utilities-parallel.R` → `parallel.R`, `utilities-simulation.R` → `simulation.R`, `utilities.R` → `utils.R`, `utilities-sensitivity-calculation.R` → `sensitivity-calculation-utils.R`, `sensivitity-time-profiles.R` → `sensitivity-time-profiles.R` (also fixes typo); foldings: `project-parse.R` distributes parse helpers into the relevant section files; `validation-result.R` and `validation-utils.R` fold into `validation.R`; `enum.R`, `error-checks.R`, and `utilities-quantity.R` fold into `utils.R` / `parameters.R` / `plots.R`. `R/plots.R` splits into `R/plots.R` (section parse/validate/serialize/mutation), `R/create-plots.R` (public `createPlots` plus Excel parsing/validation helpers), and `R/plots-utils.R` (palette, plot/grid configuration constructors, override and overlay helpers). `saveScenarioResults()` and `loadScenarioResults()` move from `R/scenarios.R` to `R/scenario-results.R`. `applyIndividualParameters()` moves from `R/individuals.R` to `R/simulation.R`. No behaviour changes. (#908)
+
 ## Internal (work in progress)
 
-- The data and plotting layers start driving off the parsed `Project`:
-  - `loadObservedData(project)` is the new public loader, dispatching across
+- The data and plotting layers drive off the parsed `Project`:
+  - `loadObservedData(project)` is the public loader, dispatching across
     `excel` / `pkml` / `script` source declarations in `project$observedData`.
-    The legacy `loadObservedData(projectConfiguration, ...)` is renamed to
-    `loadObservedDataFromExcel()`; together with `loadObservedDataFromPKML()`,
-    both are soft-deprecated.
   - `createDataCombined(project, ...)` and `createPlots(project, ...)` accept
-    a `Project` directly. The Excel-driven `createDataCombinedFromExcel()`
-    and `createPlotsFromExcel()` are soft-deprecated.
+    a `Project` directly.
   - `project$plots` parses into the in-memory shape future chapters rely on:
     `dataCombined` as a named list keyed by name, `plotConfiguration` and
     `plotGrids` as data.frames.
-  - `project$dataFolder` is now a resolved path field on `Project`.
+  - `project$dataFolder` is a resolved path field on `Project`.
 
 - Parameter identification joins the JSON-first project model. PI tasks live
   as a parsed `parameterIdentification` section on `Project`, and the runtime
@@ -37,6 +37,9 @@
 - `ScenarioConfiguration`, `addScenarioConfigurationsToExcel()`, `createScenarioConfigurationsFromPKML()`, `readScenarioConfigurationFromExcel()`, and `setApplications()` are removed. The Excel to JSON migration path is now `importProjectFromExcel()`; the reverse is `exportProjectToExcel()`. The scenario-construction-from-PKML surface is now `createScenariosFromPKML()`. (#908)
 - `validateAllConfigurations()` is removed. Use `validateProject()` instead. (#908)
 - `LegacyScenario` and `createScenarios()` (which built `LegacyScenario` objects from `ScenarioConfiguration`) are removed. `runScenarios()` now accepts only a `Project`. (#908)
+- `loadObservedDataFromExcel()` and `loadObservedDataFromPKML()` are removed (soft-deprecated since 5.7.0). Use `loadObservedData(project)` on a JSON-first `Project` instead. (#908)
+- `readPopulationCharacteristicsFromXLS()`, `readIndividualCharacteristicsFromXLS()`, `writeIndividualToXLS()`, `writeParameterStructureToXLS()`, and `exportParametersToXLS()` are removed. The supported user-facing Excel surface is now restricted to Excel <-> JSON interop: `importProjectFromExcel()` and `exportProjectToExcel()`. (#908)
+- `ExportConfiguration` (R6 class) and `createEsqlabsExportConfiguration()` are removed. The Excel-driven plot export pipeline they belonged to is no longer supported; use the plot objects returned by `createPlots()` and save them directly via `ggplot2::ggsave()`. (#908)
 
 ## New features
 
@@ -51,6 +54,7 @@
 
 ## Soft deprecations
 
+- `createDataCombinedFromExcel()` and `createPlotsFromExcel()` now simply forward to `createDataCombined()` / `createPlots()` after emitting a `lifecycle::deprecate_soft()` warning. Pass a `Project` from `loadProject()`. (#908)
 - `createDefaultProjectConfiguration()` and `createProjectConfiguration()` now warn and forward to `loadProject()`. The default `path` changes from `"ProjectConfiguration.xlsx"` to `"Project.json"`. (#908)
 - `exampleProjectConfigurationPath()` warns and forwards to `exampleProjectPath()`. (#908)
 - `ProjectConfiguration()` warns and forwards to `Project$new()`. (#908)

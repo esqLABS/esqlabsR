@@ -43,7 +43,7 @@ test_that("loadObservedData returns empty list when observedData is empty array"
 })
 
 test_that("loadObservedData loads excel observed data from TestProject", {
-  project <- loadProject(testProjectJSONPath())
+  project <- testProject()
   result <- loadObservedData(project)
   expect_type(result, "list")
   expect_true(length(result) >= 1)

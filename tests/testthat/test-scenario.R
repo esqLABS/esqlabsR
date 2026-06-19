@@ -1,16 +1,5 @@
 # Tests for the Scenario class and the .parseScenarios helper.
 
-example_project_json_path <- function() {
-  system.file(
-    "extdata",
-    "projects",
-    "Example",
-    "Project.json",
-    package = "esqlabsR",
-    mustWork = TRUE
-  )
-}
-
 test_that("Scenario has the documented field defaults", {
   sc <- Scenario$new()
 
@@ -43,7 +32,7 @@ test_that(".parseScenarios returns list() for NULL input", {
 })
 
 test_that(".parseScenarios copies basic fields for an individual scenario", {
-  project <- esqlabsR:::.loadProjectJson(example_project_json_path())
+  project <- exampleProject()
   sc <- project$scenarios[["Aciclovir_iv"]]
 
   expect_s3_class(sc, "Scenario")
@@ -58,7 +47,7 @@ test_that(".parseScenarios copies basic fields for an individual scenario", {
 })
 
 test_that(".parseScenarios sets simulationType=Population when populationId present", {
-  project <- esqlabsR:::.loadProjectJson(example_project_json_path())
+  project <- exampleProject()
   sc <- project$scenarios[["Aciclovir_iv_population"]]
 
   expect_identical(sc$populationId, "European_adults")
@@ -81,7 +70,7 @@ test_that(".parseScenarios defaults applicationProtocol to NA when JSON has null
 })
 
 test_that(".parseScenarios converts steadyStateTime to base units (minutes)", {
-  project <- esqlabsR:::.loadProjectJson(example_project_json_path())
+  project <- exampleProject()
   sc <- project$scenarios[["Aciclovir_iv_steadystate"]]
 
   expect_true(sc$simulateSteadyState)
@@ -91,7 +80,7 @@ test_that(".parseScenarios converts steadyStateTime to base units (minutes)", {
 })
 
 test_that(".parseScenarios leaves simulateSteadyState=FALSE when JSON omits/sets false", {
-  project <- esqlabsR:::.loadProjectJson(example_project_json_path())
+  project <- exampleProject()
   sc <- project$scenarios[["Aciclovir_iv"]]
 
   expect_false(sc$simulateSteadyState)
@@ -117,7 +106,7 @@ test_that(".parseScenarios errors when steadyStateTime set without unit", {
 })
 
 test_that(".parseScenarios parses simulationTime to a list of length-3 numerics", {
-  project <- esqlabsR:::.loadProjectJson(example_project_json_path())
+  project <- exampleProject()
   sc <- project$scenarios[["Aciclovir_iv"]]
 
   expect_type(sc$simulationTime, "list")
@@ -127,7 +116,7 @@ test_that(".parseScenarios parses simulationTime to a list of length-3 numerics"
 })
 
 test_that(".parseScenarios resolves outputPathIds to literal outputPaths in declared order", {
-  project <- esqlabsR:::.loadProjectJson(example_project_json_path())
+  project <- exampleProject()
   sc <- project$scenarios[["Aciclovir_iv_steadystate"]]
 
   expect_type(sc$outputPaths, "character")
@@ -144,7 +133,7 @@ test_that(".parseScenarios resolves outputPathIds to literal outputPaths in decl
 })
 
 test_that(".parseScenarios single outputPathId resolves to a length-1 named character vector", {
-  project <- esqlabsR:::.loadProjectJson(example_project_json_path())
+  project <- exampleProject()
   sc <- project$scenarios[["Aciclovir_iv"]]
 
   expect_type(sc$outputPaths, "character")

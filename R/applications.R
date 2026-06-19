@@ -1,9 +1,32 @@
-# Applications: public CRUD for the `applications` and
+# Applications: parse + mutation API for the `applications` and
 # `applicationParameterSets` sections.
+
+# Parse ----
 #
-# The parser/validator/serializer for the section live in
-# `R/utilities-scenarios.R` and `R/project-parse.R` until the file
-# reorg in Chapter 7. This file only owns the mutation API.
+# Parse the `applications` JSON object. Each entry is stamped with
+# `class = c("Application", "list")`. The current schema stores
+# applications as a map of name -> object containing only
+# `parameterSets`. The map is preserved verbatim except for the class
+# attribute and a coercion of `parameterSets` to character.
+#
+# @keywords internal
+# @noRd
+.parseApplications <- function(appsData) {
+  if (is.null(appsData) || length(appsData) == 0L) {
+    return(structure(list(), names = character(0L)))
+  }
+  result <- list()
+  for (id in names(appsData)) {
+    entry <- appsData[[id]]
+    app <- list()
+    if (!is.null(entry$parameterSets)) {
+      app$parameterSets <- as.character(unlist(entry$parameterSets))
+    }
+    class(app) <- c("Application", "list")
+    result[[id]] <- app
+  }
+  result
+}
 
 # Public CRUD: applications ----
 
