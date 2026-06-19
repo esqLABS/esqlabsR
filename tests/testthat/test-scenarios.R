@@ -49,6 +49,13 @@ test_that("as.list(Scenario()) exposes exactly the v2.0 schema fields", {
   )
 })
 
+test_that(".scenarioFieldNames stays in sync with the Scenario() formals", {
+  # Guards against silent drift between the two sources of the field set:
+  # a formal added without updating the constant would be silently dropped,
+  # and a constant entry without a matching formal errors at construction.
+  expect_identical(.scenarioFieldNames, names(formals(Scenario)))
+})
+
 test_that("Scenario records have copy semantics", {
   sc <- Scenario(scenarioName = "A", modelFile = "m.pkml")
   copy <- sc
