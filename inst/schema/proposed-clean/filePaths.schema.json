@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.esqlabs.com/esqlabsR/snapshot/2.0/clean/filePaths.schema.json",
+  "title": "filePaths (clean)",
+  "description": "Project folder/file layout. Excel *File entries kept for round-trip but marked deprecated (RATIONALE §4).",
+  "type": "object",
+  "properties": {
+    "modelFolder": { "type": "string" },
+    "configurationsFolder": { "type": "string" },
+    "modelParamsFile": { "type": "string", "deprecated": true, "$comment": "Excel holdover; vestigial once JSON is source of truth (RATIONALE §4, OPEN_QUESTIONS §1)." },
+    "individualsFile": { "type": "string", "deprecated": true, "$comment": "Excel holdover (RATIONALE §4)." },
+    "populationsFile": { "type": "string", "deprecated": true, "$comment": "Excel holdover (RATIONALE §4)." },
+    "populationsFolder": { "type": "string" },
+    "scenariosFile": { "type": "string", "deprecated": true, "$comment": "Excel holdover (RATIONALE §4)." },
+    "applicationsFile": { "type": "string", "deprecated": true, "$comment": "Excel holdover (RATIONALE §4)." },
+    "plotsFile": { "type": "string", "deprecated": true, "$comment": "Excel holdover (RATIONALE §4)." },
+    "dataFolder": { "type": "string" },
+    "outputFolder": { "type": "string" }
+  },
+  "required": [
+    "modelFolder",
+    "configurationsFolder",
+    "populationsFolder",
+    "dataFolder",
+    "outputFolder"
+  ],
+  "additionalProperties": false,
+  "$comment": "PROVISIONAL: additionalProperties pending team decision (see ISSUE_additionalProperties.md). Deprecated *File entries are optional in the clean variant."
+}

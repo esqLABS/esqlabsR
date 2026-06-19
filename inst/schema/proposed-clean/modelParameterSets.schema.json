@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.esqlabs.com/esqlabsR/snapshot/2.0/clean/modelParameterSets.schema.json",
+  "title": "modelParameterSets (clean)",
+  "description": "Array-with-id (was a name-keyed map in faithful; RATIONALE §1).",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "properties": {
+      "id": { "type": "string" },
+      "parameters": {
+        "type": "array",
+        "items": { "$ref": "parameterModification.schema.json" }
+      }
+    },
+    "required": ["id", "parameters"],
+    "additionalProperties": false,
+    "$comment": "PROVISIONAL: additionalProperties pending team decision (see ISSUE_additionalProperties.md)."
+  }
+}

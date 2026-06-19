@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.esqlabs.com/esqlabsR/snapshot/2.0/clean/project.schema.json",
+  "x-schemaPackageVersion": "0.1.0",
+  "x-snapshotSchemaVersion": "2.0",
+  "title": "esqlabsR v6 project snapshot (clean proposal)",
+  "description": "Normalised v6 project snapshot: all collections are arrays-with-id, structured fields replace string encodings (see RATIONALE.md). RFC; does not validate current fixtures by design.",
+  "type": "object",
+  "properties": {
+    "schemaVersion": {
+      "const": "2.0",
+      "description": "Snapshot content-schema version. Clean encoding would carry a later bump (OPEN_QUESTIONS §11)."
+    },
+    "esqlabsRVersion": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+([.-].+)?$",
+      "description": "esqlabsR package version that wrote the snapshot."
+    },
+    "filePaths": { "$ref": "filePaths.schema.json" },
+    "observedData": { "$ref": "observedData.schema.json" },
+    "outputPaths": { "$ref": "outputPaths.schema.json" },
+    "scenarios": {
+      "type": "array",
+      "items": { "$ref": "scenario.schema.json" }
+    },
+    "modelParameterSets": { "$ref": "modelParameterSets.schema.json" },
+    "individuals": {
+      "type": "array",
+      "items": { "$ref": "individual.schema.json" }
+    },
+    "individualParameterSets": { "$ref": "individualParameterSets.schema.json" },
+    "populations": {
+      "type": "array",
+      "items": { "$ref": "population.schema.json" }
+    },
+    "applications": { "$ref": "application.schema.json" },
+    "applicationParameterSets": { "$ref": "applicationParameterSets.schema.json" },
+    "plots": { "$ref": "plots.schema.json" },
+    "parameterIdentification": { "$ref": "parameterIdentification.schema.json" }
+  },
+  "required": [
+    "schemaVersion",
+    "esqlabsRVersion",
+    "filePaths",
+    "observedData",
+    "outputPaths",
+    "scenarios",
+    "modelParameterSets",
+    "individuals",
+    "individualParameterSets",
+    "populations",
+    "applications",
+    "applicationParameterSets",
+    "plots"
+  ],
+  "additionalProperties": false,
+  "$comment": "PROVISIONAL: additionalProperties pending team decision (see ISSUE_additionalProperties.md)."
+}

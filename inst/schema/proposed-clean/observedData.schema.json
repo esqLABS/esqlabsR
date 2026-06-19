@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.esqlabs.com/esqlabsR/snapshot/2.0/clean/observedData.schema.json",
+  "title": "observedData (clean)",
+  "description": "Observed-data sources. Each declares an explicit id so plots/PI can reference it without reproducing importer label logic (OPEN_QUESTIONS §9).",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "properties": {
+      "id": {
+        "type": "string",
+        "description": "Stable id for cross-reference (clean addition; resolves OPEN_QUESTIONS §9)."
+      },
+      "type": {
+        "type": "string",
+        "enum": ["excel", "pkml", "script", "programmatic"]
+      },
+      "file": { "type": "string" },
+      "importerConfiguration": { "type": "string" },
+      "sheets": {
+        "type": "array",
+        "items": { "type": "string" }
+      }
+    },
+    "required": ["id", "type"],
+    "allOf": [
+      {
+        "if": { "properties": { "type": { "const": "excel" } } },
+        "then": { "required": ["file", "importerConfiguration", "sheets"] }
+      },
+      {
+        "if": { "properties": { "type": { "enum": ["pkml", "script"] } } },
+        "then": { "required": ["file"] }
+      }
+    ],
+    "additionalProperties": false,
+    "$comment": "PROVISIONAL: additionalProperties pending team decision (see ISSUE_additionalProperties.md)."
+  }
+}

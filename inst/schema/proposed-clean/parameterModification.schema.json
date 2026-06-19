@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.esqlabs.com/esqlabsR/snapshot/2.0/clean/parameterModification.schema.json",
+  "title": "parameterModification (clean)",
+  "description": "A single parameter override. Same shape as faithful (RATIONALE: encoding-only changes elsewhere).",
+  "type": "object",
+  "properties": {
+    "containerPath": { "type": "string" },
+    "parameterName": { "type": "string" },
+    "value": { "type": "number" },
+    "units": { "type": ["string", "null"] }
+  },
+  "required": ["containerPath", "parameterName", "value"],
+  "additionalProperties": false,
+  "$comment": "PROVISIONAL: additionalProperties pending team decision (see ISSUE_additionalProperties.md)."
+}

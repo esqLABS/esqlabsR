@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.esqlabs.com/esqlabsR/snapshot/2.0/clean/parameterIdentification.schema.json",
+  "title": "parameterIdentification (clean)",
+  "description": "Parameter-identification tasks. References use unified ids; observedDataId -> observedData[].id (RATIONALE §3, OPEN_QUESTIONS §9).",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "properties": {
+      "id": { "type": "string" },
+      "scenarios": {
+        "type": "array",
+        "items": { "type": "string" },
+        "description": "-> scenarios[].id."
+      },
+      "parameters": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "id": { "type": "string" },
+            "scenarios": { "type": "array", "items": { "type": "string" } },
+            "path": { "type": "string" },
+            "units": { "type": ["string", "null"] },
+            "minValue": { "type": "number" },
+            "maxValue": { "type": "number" },
+            "startValue": { "type": "number" }
+          },
+          "required": ["id", "path", "minValue", "maxValue", "startValue"],
+          "additionalProperties": false
+        }
+      },
+      "outputMappings": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "id": { "type": "string" },
+            "scenarios": { "type": "array", "items": { "type": "string" } },
+            "outputPathId": { "type": "string", "description": "-> outputPaths[].id." },
+            "observedDataId": { "type": "string", "description": "-> observedData[].id (clean; OPEN_QUESTIONS §9)." },
+            "scaling": { "type": "string", "enum": ["lin", "log"] },
+            "xOffset": { "type": "number" },
+            "yOffset": { "type": "number" },
+            "xFactor": { "type": "number" },
+            "yFactor": { "type": "number" }
+          },
+          "required": ["id", "outputPathId", "observedDataId", "scaling"],
+          "additionalProperties": false
+        }
+      },
+      "configuration": {
+        "type": "object",
+        "properties": {
+          "algorithm": { "type": "string" },
+          "ciMethod": { "type": "string" },
+          "algorithmOptions": { "type": ["object", "null"] }
+        },
+        "required": ["algorithm", "ciMethod"],
+        "additionalProperties": false
+      }
+    },
+    "required": ["id", "scenarios", "parameters", "outputMappings", "configuration"],
+    "additionalProperties": false,
+    "$comment": "PROVISIONAL: additionalProperties pending team decision (see ISSUE_additionalProperties.md)."
+  }
+}

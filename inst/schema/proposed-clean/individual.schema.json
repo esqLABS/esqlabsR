@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.esqlabs.com/esqlabsR/snapshot/2.0/clean/individual.schema.json",
+  "title": "individual (clean)",
+  "description": "Identity unified to 'id' (was 'individualId'); proteinOntogenies promoted to a structured array; gender tightened (RATIONALE §2, §3).",
+  "type": "object",
+  "properties": {
+    "id": { "type": "string", "description": "Stable id (was 'individualId'; RATIONALE §3)." },
+    "species": { "type": "string" },
+    "population": { "type": "string", "description": "OSP population/db name." },
+    "gender": {
+      "type": "string",
+      "enum": ["MALE", "FEMALE"],
+      "description": "Tightened enum in clean (OPEN_QUESTIONS §3)."
+    },
+    "weight": { "type": ["number", "null"] },
+    "height": { "type": ["number", "null"] },
+    "age": { "type": ["number", "null"] },
+    "proteinOntogenies": {
+      "type": "array",
+      "description": "Structured (was the string 'CYP3A4:CYP3A4'; RATIONALE §2).",
+      "items": {
+        "type": "object",
+        "properties": {
+          "protein": { "type": "string" },
+          "ontogeny": { "type": "string" }
+        },
+        "required": ["protein", "ontogeny"],
+        "additionalProperties": false
+      }
+    },
+    "parameterSets": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "-> individualParameterSets[].id."
+    }
+  },
+  "required": ["id", "species", "gender"],
+  "additionalProperties": false,
+  "$comment": "PROVISIONAL: additionalProperties pending team decision (see ISSUE_additionalProperties.md)."
+}
