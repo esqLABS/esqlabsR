@@ -6,6 +6,27 @@
 # Population loading, no parameter merging. Construction is by direct
 # field assignment.
 
+# Explicit field list backing `Scenario$asList`. Kept in sync with the
+# v2.0 `Project.json` scenario entry shape so adding a method on
+# `Scenario` does not change the JSON-shape contract.
+.scenarioFieldNames <- c(
+  "scenarioName",
+  "modelFile",
+  "applicationProtocol",
+  "individualId",
+  "populationId",
+  "outputPaths",
+  "simulationType",
+  "readPopulationFromCSV",
+  "simulateSteadyState",
+  "simulationTime",
+  "simulationTimeUnit",
+  "steadyStateTime",
+  "steadyStateTimeUnit",
+  "overwriteFormulasInSS",
+  "modelParameterSets"
+)
+
 #' @title Scenario
 #' @docType class
 #' @description Plain-data class holding scenario configuration fields
@@ -17,6 +38,20 @@
 Scenario <- R6::R6Class(
   "Scenario",
   cloneable = TRUE,
+  active = list(
+    #' @field asList Returns the current scenario as a plain list of its
+    #'   field values. Read-only. Useful for programmatic inspection and
+    #'   for snapshot-testing the full object shape in one assertion.
+    asList = function(value) {
+      if (!missing(value)) {
+        cli::cli_abort("{.field asList} is read-only")
+      }
+      stats::setNames(
+        lapply(.scenarioFieldNames, function(n) self[[n]]),
+        .scenarioFieldNames
+      )
+    }
+  ),
   public = list(
     #' @field scenarioName Character. Name of the scenario.
     scenarioName = NULL,

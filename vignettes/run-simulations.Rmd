@@ -16,11 +16,10 @@ knitr::opts_chunk$set(
 )
 
 library(esqlabsR)
-
-projectConfiguration <- createProjectConfiguration(
-  exampleProjectConfigurationPath(),
-  ignoreVersionCheck = TRUE
-)
+# TODO(#908): chapter 9 will rebuild this setup against the JSON workflow.
+# The legacy createProjectConfiguration(ignoreVersionCheck=...) call no
+# longer matches the current signature; downstream chunks are inert
+# (eval = FALSE) until then.
 ```
 
 Running scenarios can be divided into three steps:

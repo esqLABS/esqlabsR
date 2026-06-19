@@ -27,11 +27,15 @@ objects that overrides automatic resolution from
 \value{
 Named list of per-task results. Each entry is a list with
 \code{task} (the runtime \code{ParameterIdentification} object), \code{result}
-(the \code{PIResult} from \code{task$run()}, or \code{NULL} on failure), and
-optional \code{error} (the failure message, absent on success).
+(the \code{PIResult} from \code{task$run()}, or \code{NULL} on optimisation
+failure), and optional \code{error} (the optimiser's failure message,
+absent on success).
 }
 \description{
-Builds and runs every requested PI task in the Project. Each task is
-built and executed inside a \code{tryCatch}; a build failure or
-optimisation failure on one task degrades to \verb{result = NULL, error = <message>} and the loop continues.
+Builds and runs every requested PI task in the Project. Build errors
+(typos in parameter paths, unknown outputs, missing observed data, etc.)
+propagate as hard errors so users can fix them immediately. Only the
+optimisation step is wrapped in \code{tryCatch}: a numerical failure inside
+\code{task$run()} degrades to \verb{result = NULL, error = <message>} so the loop
+continues with the remaining tasks.
 }

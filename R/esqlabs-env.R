@@ -25,7 +25,10 @@ esqlabsRSettingNames <- enum(names(esqlabsEnv))
 #' getEsqlabsRSetting("packageName")
 getEsqlabsRSetting <- function(settingName) {
   if (!(any(names(esqlabsEnv) == settingName))) {
-    stop(messages$errorPackageSettingNotFound(settingName, esqlabsEnv))
+    cli::cli_abort(messages$errorPackageSettingNotFound(
+      settingName,
+      esqlabsEnv
+    ))
   }
 
   obj <- esqlabsEnv[[settingName]]

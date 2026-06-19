@@ -21,8 +21,9 @@ knitr::opts_chunk$set(
   fig.showtext = TRUE
 )
 
-devtools::load_all()
-# library(esqlabsR)
+library(esqlabsR)
+# TODO(#908): chapter 9 will rewrite this vignette for the JSON-first PI
+# workflow. Until then, downstream chunks are inert (eval = FALSE).
 ```
 
 ```{css, echo = FALSE}

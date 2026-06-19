@@ -24,7 +24,7 @@ importProjectFromExcel <- function(
   validateIsString(projectConfigPath)
 
   if (!file.exists(projectConfigPath)) {
-    stop(messages$fileNotFound(projectConfigPath))
+    cli::cli_abort(messages$fileNotFound(projectConfigPath))
   }
 
   # Read the Project.xlsx to get path settings
@@ -234,7 +234,7 @@ importProjectFromExcel <- function(
 #' @export
 snapshotProjectConfiguration <- function(...) {
   lifecycle::deprecate_warn(
-    "7.0.0",
+    "6.0.0",
     "snapshotProjectConfiguration()",
     "importProjectFromExcel()"
   )
@@ -350,7 +350,7 @@ exportProjectToExcel <- function(
   if (!is.null(project$outputPaths) && length(project$outputPaths) > 0) {
     scenSheets[["OutputPaths"]] <- data.frame(
       OutputPathId = names(project$outputPaths),
-      OutputPath = unname(project$outputPaths),
+      OutputPath = unlist(project$outputPaths, use.names = FALSE),
       stringsAsFactors = FALSE
     )
   }
@@ -415,7 +415,7 @@ restoreProjectConfiguration <- function(
   ...
 ) {
   lifecycle::deprecate_warn(
-    "7.0.0",
+    "6.0.0",
     "restoreProjectConfiguration()",
     "exportProjectToExcel()"
   )
@@ -464,7 +464,7 @@ projectStatus <- function(
   }
 
   if (!file.exists(projectConfigPath)) {
-    stop(messages$fileNotFound(projectConfigPath))
+    cli::cli_abort(messages$fileNotFound(projectConfigPath))
   }
 
   # Determine JSON path if not provided
@@ -473,7 +473,7 @@ projectStatus <- function(
   }
 
   if (!file.exists(jsonPath)) {
-    stop("JSON file does not exist: ", jsonPath)
+    cli::cli_abort("JSON file does not exist: {.path {jsonPath}}")
   }
 
   # Create temporary snapshot from current Excel files
@@ -551,7 +551,7 @@ projectStatus <- function(
     )
 
     if (!silent) {
-      warning(messages$excelNotInSync())
+      cli::cli_warn(messages$excelNotInSync())
 
       cli::cli_h2("File Sync Status:")
       for (file in names(fileStatus)) {
@@ -587,7 +587,7 @@ projectStatus <- function(
 #' @export
 projectConfigurationStatus <- function(...) {
   lifecycle::deprecate_warn(
-    "7.0.0",
+    "6.0.0",
     "projectConfigurationStatus()",
     "projectStatus()"
   )

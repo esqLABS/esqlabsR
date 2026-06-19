@@ -30,7 +30,7 @@ createDataCombined <- function(
   simulatedScenarios = NULL,
   stopIfNotFound = TRUE
 ) {
-  ospsuite.utils::validateIsOfType(project, "Project")
+  validateIsOfType(project, "Project")
   validateIsString(plotGridNames, nullAllowed = TRUE)
 
   if (is.null(dataCombinedNames) && is.null(plotGridNames)) {
@@ -52,7 +52,7 @@ createDataCombined <- function(
     names(allSpecs)
   )
   if (length(missingNames) > 0) {
-    stop(messages$stopDataCombinedNamesNotFound(missingNames))
+    cli::cli_abort(messages$stopDataCombinedNamesNotFound(missingNames))
   }
 
   selectedSpecs <- allSpecs[intersect(names(allSpecs), dataCombinedNames)]
@@ -195,13 +195,13 @@ createDataCombinedFromExcel <- function(...) {
           )
         } else {
           if (stopIfNotFound) {
-            stop(messages$stopWrongOutputPath(
+            cli::cli_abort(messages$stopWrongOutputPath(
               dataCombinedName = name,
               scenarioName = simulated[j, ]$scenario,
               path = simulated[j, ]$path
             ))
           }
-          warning(messages$stopWrongOutputPath(
+          cli::cli_warn(messages$stopWrongOutputPath(
             dataCombinedName = name,
             scenarioName = simulated[j, ]$scenario,
             path = simulated[j, ]$path
@@ -245,7 +245,9 @@ createDataCombinedFromExcel <- function(...) {
         (!is.na(row[["xOffsets"]]) & is.na(row[["xOffsetsUnits"]])) |
           (!is.na(row[["yOffsets"]]) & is.na(row[["yOffsetsUnits"]]))
       ) {
-        stop(messages$offsetUnitsNotDefined(row[["DataCombinedName"]]))
+        cli::cli_abort(messages$offsetUnitsNotDefined(row[[
+          "DataCombinedName"
+        ]]))
       }
 
       xDimension <- singleRow$xDimension
@@ -310,13 +312,13 @@ createDataCombinedFromExcel <- function(...) {
   # mandatory column label is empty - throw error
   missingLabel <- sum(is.na(dfDataCombined$label))
   if (missingLabel > 0) {
-    stop(messages$missingLabel())
+    cli::cli_abort(messages$missingLabel())
   }
 
   # mandatory column dataType is empty - throw error
   missingLabel <- sum(is.na(dfDataCombined$dataType))
   if (missingLabel > 0) {
-    stop(messages$missingDataType())
+    cli::cli_abort(messages$missingDataType())
   }
 
   # dataType == simulated, but no scenario defined - throw error
@@ -324,7 +326,7 @@ createDataCombinedFromExcel <- function(...) {
     dfDataCombined[dfDataCombined$dataType == "simulated", ]$scenario
   ))
   if (missingLabel > 0) {
-    stop(messages$missingScenarioName())
+    cli::cli_abort(messages$missingScenarioName())
   }
 
   # dataType == simulated, but no path defined - throw error
@@ -332,7 +334,7 @@ createDataCombinedFromExcel <- function(...) {
     dfDataCombined[dfDataCombined$dataType == "simulated", ]$path
   )
   if (sum(missingLabel) > 0) {
-    stop(messages$stopNoPathProvided(dfDataCombined[
+    cli::cli_abort(messages$stopNoPathProvided(dfDataCombined[
       dfDataCombined$dataType == "simulated",
     ]$DataCombinedName[missingLabel]))
   }
@@ -342,7 +344,7 @@ createDataCombinedFromExcel <- function(...) {
     dfDataCombined[dfDataCombined$dataType == "observed", ]$dataSet
   )
   if (sum(missingLabel) > 0) {
-    stop(messages$stopNoDataSetProvided(dfDataCombined[
+    cli::cli_abort(messages$stopNoDataSetProvided(dfDataCombined[
       dfDataCombined$dataType == "observed",
     ]$DataCombinedName[missingLabel]))
   }
@@ -360,9 +362,9 @@ createDataCombinedFromExcel <- function(...) {
   )
   if (length(missingScenarios) != 0) {
     if (stopIfNotFound) {
-      stop(messages$warningInvalidScenarioName(missingScenarios))
+      cli::cli_abort(messages$warningInvalidScenarioName(missingScenarios))
     }
-    warning(messages$warningInvalidScenarioName(missingScenarios))
+    cli::cli_warn(messages$warningInvalidScenarioName(missingScenarios))
     dfDataCombined <- dplyr::filter(
       dfDataCombined,
       (dataType == "observed") | !(scenario %in% missingScenarios)
@@ -375,9 +377,9 @@ createDataCombinedFromExcel <- function(...) {
   )
   if (length(missingDataSets) != 0) {
     if (stopIfNotFound) {
-      stop(messages$stopInvalidDataSetName(missingDataSets))
+      cli::cli_abort(messages$stopInvalidDataSetName(missingDataSets))
     }
-    warning(messages$warningInvalidDataSetName(missingDataSets))
+    cli::cli_warn(messages$warningInvalidDataSetName(missingDataSets))
     dfDataCombined <- dfDataCombined[
       !(dfDataCombined$dataSet %in% missingDataSets),
     ]

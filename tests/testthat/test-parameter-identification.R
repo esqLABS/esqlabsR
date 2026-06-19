@@ -1126,28 +1126,61 @@ test_that("runPI(project) runs a task end to end and returns a PIResult", {
   expect_null(entry$error)
 })
 
-test_that("runPI(project) degrades to a warning and NULL result when a task fails", {
+test_that("runPI(project) hard-fails when the build phase errors", {
   project <- loadProject(test_path("data", "TestProject", "Project.json"))
-
-  failing <- structure(
-    list(run = function() stop("Simulated optimization failure")),
-    class = c("ParameterIdentification", "R6")
+  local_mocked_bindings(
+    .createSinglePITask = function(project, piTask, observedData) {
+      stop("Parameter |Organism|Live|EHC| not found in simulation")
+    }
   )
-  local_mocked_bindings(.createSinglePITask = function(...) failing)
+  expect_error(
+    runPI(project),
+    "not found in simulation"
+  )
+})
 
+test_that("runPI(project) soft-fails when the optimisation phase errors", {
+  skip_if_not_installed("ospsuite.parameteridentification")
+  project <- loadProject(test_path("data", "TestProject", "Project.json"))
+  fakeRuntime <- structure(
+    list(run = function() stop("optimiser diverged")),
+    class = "ParameterIdentification"
+  )
+  local_mocked_bindings(
+    .createSinglePITask = function(project, piTask, observedData) {
+      fakeRuntime
+    }
+  )
   expect_warning(
-    invisible(capture.output(suppressMessages(results <- runPI(project)))),
-    messages$warningPIOptimizationFailed(
-      "AciclovirSimple",
-      "Simulated optimization failure"
-    ),
+    results <- runPI(project),
+    "optimiser diverged"
+  )
+  expect_null(results[[1]]$result)
+  expect_identical(results[[1]]$task, fakeRuntime)
+})
+
+test_that("runPI(project) soft-fails when the optimiser error message contains braces", {
+  skip_if_not_installed("ospsuite.parameteridentification")
+  project <- loadProject(test_path("data", "TestProject", "Project.json"))
+  fakeRuntime <- structure(
+    list(run = function() stop("solver failed at x={k}")),
+    class = "ParameterIdentification"
+  )
+  local_mocked_bindings(
+    .createSinglePITask = function(project, piTask, observedData) {
+      fakeRuntime
+    }
+  )
+  # A literal `{`/`}` in the optimiser message must not be re-evaluated as a cli
+  # glue expression: the loop should still degrade to a soft-fail, not crash.
+  expect_warning(
+    results <- runPI(project),
+    "solver failed at x={k}",
     fixed = TRUE
   )
-
-  entry <- results[["AciclovirSimple"]]
-  expect_null(entry$task)
-  expect_null(entry$result)
-  expect_identical(entry$error, "Simulated optimization failure")
+  expect_null(results[[1]]$result)
+  expect_identical(results[[1]]$task, fakeRuntime)
+  expect_identical(results[[1]]$error, "solver failed at x={k}")
 })
 
 test_that("createPITasks() emits a soft-deprecation warning", {

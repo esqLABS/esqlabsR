@@ -14,7 +14,11 @@ PIParameter <- function(
   startValue
 ) {
   if (!is.character(id) || length(id) != 1L || is.na(id) || nchar(id) == 0) {
-    stop(messages$errorPIRequiredField("id", "PIParameter", "<unset>"))
+    cli::cli_abort(messages$errorPIRequiredField(
+      "id",
+      "PIParameter",
+      "<unset>"
+    ))
   }
   if (
     !is.character(scenarios) ||
@@ -22,26 +26,35 @@ PIParameter <- function(
       any(is.na(scenarios)) ||
       any(nchar(scenarios) == 0)
   ) {
-    stop(messages$errorPIScenariosEmpty("PIParameter", id))
+    cli::cli_abort(messages$errorPIScenariosEmpty("PIParameter", id))
   }
   if (
     !is.character(path) || length(path) != 1L || is.na(path) || nchar(path) == 0
   ) {
-    stop(messages$errorPIRequiredField("path", "PIParameter", id))
+    cli::cli_abort(messages$errorPIRequiredField("path", "PIParameter", id))
   }
   if (!is.numeric(minValue) || length(minValue) != 1L || is.na(minValue)) {
-    stop(messages$errorPIRequiredField("minValue", "PIParameter", id))
+    cli::cli_abort(messages$errorPIRequiredField("minValue", "PIParameter", id))
   }
   if (!is.numeric(maxValue) || length(maxValue) != 1L || is.na(maxValue)) {
-    stop(messages$errorPIRequiredField("maxValue", "PIParameter", id))
+    cli::cli_abort(messages$errorPIRequiredField("maxValue", "PIParameter", id))
   }
   if (
     !is.numeric(startValue) || length(startValue) != 1L || is.na(startValue)
   ) {
-    stop(messages$errorPIRequiredField("startValue", "PIParameter", id))
+    cli::cli_abort(messages$errorPIRequiredField(
+      "startValue",
+      "PIParameter",
+      id
+    ))
   }
   if (minValue > maxValue || startValue < minValue || startValue > maxValue) {
-    stop(messages$errorPIInvalidBounds(path, minValue, startValue, maxValue))
+    cli::cli_abort(messages$errorPIInvalidBounds(
+      path,
+      minValue,
+      startValue,
+      maxValue
+    ))
   }
 
   rec <- list(
@@ -72,7 +85,11 @@ PIOutputMapping <- function(
   weight = NULL
 ) {
   if (!is.character(id) || length(id) != 1L || is.na(id) || nchar(id) == 0) {
-    stop(messages$errorPIRequiredField("id", "PIOutputMapping", "<unset>"))
+    cli::cli_abort(messages$errorPIRequiredField(
+      "id",
+      "PIOutputMapping",
+      "<unset>"
+    ))
   }
   if (
     !is.character(scenarios) ||
@@ -80,7 +97,7 @@ PIOutputMapping <- function(
       any(is.na(scenarios)) ||
       any(nchar(scenarios) == 0)
   ) {
-    stop(messages$errorPIScenariosEmpty("PIOutputMapping", id))
+    cli::cli_abort(messages$errorPIScenariosEmpty("PIOutputMapping", id))
   }
   if (
     !is.character(outputPathId) ||
@@ -88,7 +105,11 @@ PIOutputMapping <- function(
       is.na(outputPathId) ||
       nchar(outputPathId) == 0
   ) {
-    stop(messages$errorPIRequiredField("outputPathId", "PIOutputMapping", id))
+    cli::cli_abort(messages$errorPIRequiredField(
+      "outputPathId",
+      "PIOutputMapping",
+      id
+    ))
   }
   if (
     !is.character(observedDataId) ||
@@ -96,7 +117,11 @@ PIOutputMapping <- function(
       is.na(observedDataId) ||
       nchar(observedDataId) == 0
   ) {
-    stop(messages$errorPIRequiredField("observedDataId", "PIOutputMapping", id))
+    cli::cli_abort(messages$errorPIRequiredField(
+      "observedDataId",
+      "PIOutputMapping",
+      id
+    ))
   }
 
   rec <- list(
@@ -125,7 +150,7 @@ PITask <- function(
   configuration = list()
 ) {
   if (!is.character(id) || length(id) != 1L || is.na(id) || nchar(id) == 0) {
-    stop(messages$errorPIRequiredField("id", "PITask", "<unset>"))
+    cli::cli_abort(messages$errorPIRequiredField("id", "PITask", "<unset>"))
   }
 
   if (
@@ -134,20 +159,25 @@ PITask <- function(
       any(is.na(scenarios)) ||
       any(nchar(scenarios) == 0)
   ) {
-    stop(messages$errorPIScenariosEmpty("PITask", id))
+    cli::cli_abort(messages$errorPIScenariosEmpty("PITask", id))
   }
 
   if (!is.list(parameters) || length(parameters) == 0L) {
-    stop(messages$errorPIEmptyList("parameters", id))
+    cli::cli_abort(messages$errorPIEmptyList("parameters", id))
   }
   for (i in seq_along(parameters)) {
     if (!inherits(parameters[[i]], "PIParameter")) {
-      stop(messages$errorPIWrongElementType("parameters", i, id, "PIParameter"))
+      cli::cli_abort(messages$errorPIWrongElementType(
+        "parameters",
+        i,
+        id,
+        "PIParameter"
+      ))
     }
   }
 
   if (!is.list(outputMappings) || length(outputMappings) == 0L) {
-    stop(messages$errorPIEmptyList("outputMappings", id))
+    cli::cli_abort(messages$errorPIEmptyList("outputMappings", id))
   }
   for (i in seq_along(outputMappings)) {
     if (!inherits(outputMappings[[i]], "PIOutputMapping")) {
@@ -407,7 +437,10 @@ print.PITask <- function(x, ...) {
   for (sName in scenarioNames) {
     sc <- project$scenarios[[sName]]
     if (is.null(sc)) {
-      stop(messages$errorPIScenarioNotFound(sName, names(project$scenarios)))
+      cli::cli_abort(messages$errorPIScenarioNotFound(
+        sName,
+        names(project$scenarios)
+      ))
     }
     prepared[[sName]] <- .prepareScenario(
       scenario = sc,
@@ -444,11 +477,14 @@ print.PITask <- function(x, ...) {
     paramObjs <- lapply(p$scenarios, function(sName) {
       sim <- simulations[[sName]]
       if (is.null(sim)) {
-        stop(messages$errorPIScenarioNotFound(sName, names(simulations)))
+        cli::cli_abort(messages$errorPIScenarioNotFound(
+          sName,
+          names(simulations)
+        ))
       }
       param <- ospsuite::getParameter(p$path, container = sim)
       if (is.null(param)) {
-        stop(messages$errorPIParameterNotFound(p$path, sim$name))
+        cli::cli_abort(messages$errorPIParameterNotFound(p$path, sim$name))
       }
       param
     })
@@ -468,18 +504,24 @@ print.PITask <- function(x, ...) {
     for (sName in m$scenarios) {
       sim <- simulations[[sName]]
       if (is.null(sim)) {
-        stop(messages$errorPIScenarioNotFound(sName, names(simulations)))
+        cli::cli_abort(messages$errorPIScenarioNotFound(
+          sName,
+          names(simulations)
+        ))
       }
       quantity <- ospsuite::getQuantity(fullPath, container = sim)
       if (is.null(quantity)) {
-        stop(messages$errorPIOutputQuantityNotFound(fullPath, sim$name))
+        cli::cli_abort(messages$errorPIOutputQuantityNotFound(
+          fullPath,
+          sim$name
+        ))
       }
       runtime <- ospsuite.parameteridentification::PIOutputMapping$new(
         quantity = quantity
       )
       ds <- observedData[[m$observedDataId]]
       if (is.null(ds)) {
-        stop(messages$errorPIDatasetNotFound(
+        cli::cli_abort(messages$errorPIDatasetNotFound(
           m$observedDataId,
           names(observedData)
         ))
@@ -583,10 +625,12 @@ print.PITask <- function(x, ...) {
 
 #' Run Parameter Identification tasks defined in a Project
 #'
-#' Builds and runs every requested PI task in the Project. Each task is
-#' built and executed inside a `tryCatch`; a build failure or
-#' optimisation failure on one task degrades to `result = NULL,
-#' error = <message>` and the loop continues.
+#' Builds and runs every requested PI task in the Project. Build errors
+#' (typos in parameter paths, unknown outputs, missing observed data, etc.)
+#' propagate as hard errors so users can fix them immediately. Only the
+#' optimisation step is wrapped in `tryCatch`: a numerical failure inside
+#' `task$run()` degrades to `result = NULL, error = <message>` so the loop
+#' continues with the remaining tasks.
 #'
 #' @param project A `Project` object (see [loadProject()]).
 #' @param piTaskNames Optional character vector. When `NULL` (default),
@@ -598,8 +642,9 @@ print.PITask <- function(x, ...) {
 #'   `.prepareScenario()` for parameter merging.
 #' @returns Named list of per-task results. Each entry is a list with
 #'   `task` (the runtime `ParameterIdentification` object), `result`
-#'   (the `PIResult` from `task$run()`, or `NULL` on failure), and
-#'   optional `error` (the failure message, absent on success).
+#'   (the `PIResult` from `task$run()`, or `NULL` on optimisation
+#'   failure), and optional `error` (the optimiser's failure message,
+#'   absent on success).
 #' @export
 runPI <- function(
   project,
@@ -611,7 +656,7 @@ runPI <- function(
   # ParameterIdentification objects, not a Project).
   if (!inherits(project, "Project")) {
     lifecycle::deprecate_warn(
-      when = "6.1.0",
+      when = "6.0.0",
       what = "runPI(piTasks)",
       with = "runPI(project)",
       details = paste(
@@ -657,18 +702,25 @@ runPI <- function(
   for (taskName in piTaskNames) {
     message(messages$messageRunningPITask(taskName))
     piTask <- taskMap[[taskName]]
+    runtime <- .createSinglePITask(
+      project = project,
+      piTask = piTask,
+      observedData = observedData
+    )
     entry <- tryCatch(
-      {
-        runtime <- .createSinglePITask(
-          project = project,
-          piTask = piTask,
-          observedData = observedData
-        )
-        list(task = runtime, result = runtime$run())
-      },
+      list(task = runtime, result = runtime$run()),
       error = function(e) {
-        warning(messages$warningPIOptimizationFailed(taskName, e$message))
-        list(task = NULL, result = NULL, error = e$message)
+        # Interpolate once here, with the optimizer's `e$message` bound as a local
+        # so cli treats it as data. Routing it through a pre-rendered `messages$`
+        # string instead would let cli re-parse the message as a glue template, so
+        # a literal `{`/`}` in the (uncontrolled) optimizer error would crash the
+        # soft-fail handler itself.
+        errorMessage <- e$message
+        cli::cli_warn(
+          "Parameter identification task {.val {taskName}} optimisation \\
+          failed: {.emph {errorMessage}}"
+        )
+        list(task = runtime, result = NULL, error = e$message)
       }
     )
     results[[taskName]] <- entry
@@ -689,7 +741,7 @@ runPI <- function(
 #' @export
 createPITasks <- function(...) {
   lifecycle::deprecate_warn(
-    when = "6.1.0",
+    when = "6.0.0",
     what = "createPITasks()",
     with = "runPI(project)",
     details = paste(

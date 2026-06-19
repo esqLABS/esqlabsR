@@ -11,7 +11,7 @@
 #   - excel  : ospsuite::loadDataSetsFromExcel via importer config
 #   - pkml   : ospsuite::loadDataSetFromPKML
 #   - script : R script sourced; must return DataSet or list of DataSets
-#   - programmatic : DataSets added at runtime via project$addObservedData().
+#   - programmatic : DataSets added at runtime via addObservedData(project).
 #                    The DataSet itself is not JSON-serializable, so it
 #                    is held on the Project's private slot
 #                    (.programmaticDataSets) and the JSON sentinel
@@ -173,7 +173,7 @@
 #' }
 #' @export
 loadObservedData <- function(project) {
-  ospsuite.utils::validateIsOfType(project, "Project")
+  validateIsOfType(project, "Project")
   if (is.null(project$observedData) || length(project$observedData) == 0) {
     return(list())
   }
@@ -211,7 +211,7 @@ loadObservedData <- function(project) {
 #' @export
 #' @family observedData
 getObservedDataNames <- function(project) {
-  ospsuite.utils::validateIsOfType(project, "Project")
+  validateIsOfType(project, "Project")
   state <- .projectPrivate(project)
   if (!is.null(state$.observedDataNamesCache)) {
     return(state$.observedDataNamesCache)
@@ -235,7 +235,7 @@ getObservedDataNames <- function(project) {
 #' @export
 #' @family observedData
 addObservedData <- function(project, entry) {
-  ospsuite.utils::validateIsOfType(project, "Project")
+  validateIsOfType(project, "Project")
   state <- .projectPrivate(project)
 
   if (inherits(entry, "DataSet")) {
@@ -299,7 +299,7 @@ addObservedData <- function(project, entry) {
 #' @export
 #' @family observedData
 removeObservedData <- function(project, name) {
-  ospsuite.utils::validateIsOfType(project, "Project")
+  validateIsOfType(project, "Project")
   if (
     !is.character(name) ||
       length(name) != 1L ||

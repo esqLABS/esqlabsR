@@ -4,10 +4,11 @@
 #'
 #' @param simulatedScenariosResults Named list with `simulation`, `results`, `outputValues`,
 #' and `population` as produced by `runScenarios()`.
-#' @param projectConfiguration An instance of `ProjectConfiguration`
+#' @param projectConfiguration A `Project` object providing the `outputFolder`
+#' used to derive the default destination.
 #' @param outputFolder Optional - path to the folder where the results will be
 #' stored. If `NULL` (default), a sub-folder in
-#' `ProjectConfiguration$outputFolder/SimulationResults/<DateSuffix>`.
+#' `project$outputFolder/SimulationResults/<DateSuffix>`.
 #' @param saveSimulationsToPKML If `TRUE` (default), simulations corresponding to
 #' the results are saved to PKML along with the results.
 #'
@@ -20,15 +21,9 @@
 #' @returns `outputFolder` or the created output folder path, if no `outputFolder` was provided.
 #'
 #' @examples \dontrun{
-#' projectConfiguration <- esqlabsR::createProjectConfiguration()
-#' scenarioConfigurations <- readScenarioConfigurationFromExcel(
-#'   projectConfiguration = projectConfiguration
-#' )
-#' scenarios <- createScenarios(scenarioConfigurations = scenarioConfigurations)
-#' simulatedScenariosResults <- runScenarios(
-#'   scenarios = scenarios
-#' )
-#' saveScenarioResults(simulatedScenariosResults, projectConfiguration)
+#' project <- loadProject("Project.json")
+#' simulatedScenariosResults <- runScenarios(project)
+#' saveScenarioResults(simulatedScenariosResults, project)
 #' }
 saveScenarioResults <- function(
   simulatedScenariosResults,
@@ -115,21 +110,14 @@ saveScenarioResults <- function(
 #'
 #' @examples \dontrun{
 #' # First simulate scenarios and save the results
-#' projectConfiguration <- esqlabsR::createProjectConfiguration()
-#' scenarioConfigurations <- readScenarioConfigurationFromExcel(
-#'   projectConfiguration = projectConfiguration
-#' )
-#' scenarios <- createScenarios(scenarioConfigurations = scenarioConfigurations)
-#' simulatedScenariosResults <- runScenarios(
-#'   scenarios = scenarios
-#' )
-#' saveResults(simulatedScenariosResults, projectConfiguration)
+#' project <- loadProject("Project.json")
+#' simulatedScenariosResults <- runScenarios(project)
+#' resultsFolder <- saveScenarioResults(simulatedScenariosResults, project)
 #'
 #' # Now load the results
-#' scnarioNames <- names(scenarios)
 #' simulatedScenariosResults <- loadScenarioResults(
-#'   scnarioNames = scnarioNames,
-#'   resultsFolder = pathToTheFolder
+#'   scenarioNames = names(project$scenarios),
+#'   resultsFolder = resultsFolder
 #' )
 #' }
 loadScenarioResults <- function(scenarioNames, resultsFolder) {

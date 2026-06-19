@@ -16,7 +16,8 @@ Project <- R6::R6Class(
     #'   (see `projectDirPath`). `NULL` for an empty in-memory project; in
     #'   that case all path fields must be absolute.
     projectFilePath = function(value) {
-      if (!missing(value)) stop("projectFilePath is readonly")
+      if (!missing(value))
+        cli::cli_abort("{.field projectFilePath} is readonly")
       private$.projectFilePath
     },
 
@@ -25,7 +26,7 @@ Project <- R6::R6Class(
     #'   base for resolving relative paths. `NULL` if the project was not
     #'   loaded from a file.
     projectDirPath = function(value) {
-      if (!missing(value)) stop("projectDirPath is readonly")
+      if (!missing(value)) cli::cli_abort("{.field projectDirPath} is readonly")
       private$.projectDirPath
     },
 
@@ -33,7 +34,7 @@ Project <- R6::R6Class(
     #'   has been modified since the project was loaded or saved. Cleared
     #'   internally by [saveProject()].
     modified = function(value) {
-      if (!missing(value)) stop("modified is readonly")
+      if (!missing(value)) cli::cli_abort("{.field modified} is readonly")
       private$.modified
     },
 
@@ -43,7 +44,8 @@ Project <- R6::R6Class(
     #'   validation hooks (e.g. in [runScenarios()] and [createPlots()]) to
     #'   skip redundant re-validation of an unchanged project.
     validatedSinceMutation = function(value) {
-      if (!missing(value)) stop("validatedSinceMutation is readonly")
+      if (!missing(value))
+        cli::cli_abort("{.field validatedSinceMutation} is readonly")
       private$.validatedSinceMutation
     },
 
@@ -206,7 +208,7 @@ Project <- R6::R6Class(
     #'   (the `filePaths` JSON section). Values are returned verbatim as
     #'   strings; no resolution is performed at this stage.
     filePaths = function(value) {
-      if (!missing(value)) stop("filePaths is readonly")
+      if (!missing(value)) cli::cli_abort("{.field filePaths} is readonly")
       data <- private$.filePathsData
       if (length(data) == 0L) {
         return(structure(list(), names = character(0L)))
@@ -217,7 +219,7 @@ Project <- R6::R6Class(
     #' @field asList Returns the current project as a list matching the JSON
     #'   schema. Reflects any in-memory modifications. Read-only.
     asList = function(value) {
-      if (!missing(value)) stop("asList is readonly")
+      if (!missing(value)) cli::cli_abort("{.field asList} is readonly")
       .projectToJson(self)
     }
   ),
@@ -293,7 +295,7 @@ Project <- R6::R6Class(
           is.na(projectFilePath) ||
           !nzchar(projectFilePath)
       ) {
-        stop(messages$invalidPathArgument(), call. = FALSE)
+        cli::cli_abort(messages$invalidPathArgument())
       }
       private$.read_json(projectFilePath)
       invisible(self)
@@ -332,449 +334,6 @@ Project <- R6::R6Class(
     #' @keywords internal
     .getFilePathsData = function() {
       private$.filePathsData
-    },
-
-    #' @description Add a scenario programmatically. Delegates to the
-    #'   standalone [addScenario()] function.
-    #' @param scenarioName Character. Name for the new scenario.
-    #' @param modelFile Character. Name of the `.pkml` model file.
-    #' @param ... Additional arguments passed to [addScenario()].
-    addScenario = function(scenarioName, modelFile, ...) {
-      addScenario(
-        project = self,
-        scenarioName = scenarioName,
-        modelFile = modelFile,
-        ...
-      )
-    },
-
-    #' @description Remove a scenario programmatically. Delegates to the
-    #'   standalone [removeScenario()] function.
-    #' @param name Character.
-    removeScenario = function(name) {
-      removeScenario(project = self, name = name)
-    },
-
-    #' @description Add an individual programmatically. Delegates to the
-    #'   standalone [addIndividual()] function.
-    #' @param individualId Character. Unique ID.
-    #' @param species Character. Species name.
-    #' @param ... Additional fields passed to [addIndividual()].
-    addIndividual = function(individualId, species, ...) {
-      addIndividual(
-        project = self,
-        individualId = individualId,
-        species = species,
-        ...
-      )
-    },
-
-    #' @description Remove an individual programmatically. Delegates to the
-    #'   standalone [removeIndividual()] function.
-    #' @param individualId Character.
-    removeIndividual = function(individualId) {
-      removeIndividual(project = self, individualId = individualId)
-    },
-
-    #' @description Replace the parameter-set references on an individual.
-    #' @param individualId Character.
-    #' @param parameterSets Character vector of set ids.
-    setIndividualParameterSets = function(individualId, parameterSets) {
-      setIndividualParameterSets(self, individualId, parameterSets)
-    },
-
-    #' @description Add a population programmatically.
-    #' @param populationId Character.
-    #' @param species Character.
-    #' @param numberOfIndividuals Integer.
-    #' @param ... Passed to [addPopulation()].
-    addPopulation = function(populationId, species, numberOfIndividuals, ...) {
-      addPopulation(
-        project = self,
-        populationId = populationId,
-        species = species,
-        numberOfIndividuals = numberOfIndividuals,
-        ...
-      )
-    },
-
-    #' @description Remove a population programmatically.
-    #' @param populationId Character.
-    removePopulation = function(populationId) {
-      removePopulation(project = self, populationId = populationId)
-    },
-
-    #' @description Add an application protocol programmatically.
-    #' @param applicationId Character.
-    #' @param parameterSets Optional character vector of set ids.
-    addApplication = function(applicationId, parameterSets = NULL) {
-      addApplication(
-        project = self,
-        applicationId = applicationId,
-        parameterSets = parameterSets
-      )
-    },
-
-    #' @description Remove an application protocol programmatically.
-    #' @param applicationId Character.
-    removeApplication = function(applicationId) {
-      removeApplication(project = self, applicationId = applicationId)
-    },
-
-    #' @description Replace the parameter-set references on an application.
-    #' @param applicationId Character.
-    #' @param parameterSets Character vector of set ids.
-    setApplicationParameterSets = function(applicationId, parameterSets) {
-      setApplicationParameterSets(self, applicationId, parameterSets)
-    },
-
-    #' @description Create a model parameter set.
-    #' @param id Character.
-    addModelParameterSet = function(id) {
-      addModelParameterSet(self, id)
-    },
-
-    #' @description Remove a model parameter set.
-    #' @param id Character.
-    removeModelParameterSet = function(id) {
-      removeModelParameterSet(self, id)
-    },
-
-    #' @description Add a parameter entry to a named model-parameter set.
-    #' @param id Character.
-    #' @param containerPath Character.
-    #' @param parameterName Character.
-    #' @param value Numeric.
-    #' @param units Character.
-    addModelParameterEntry = function(
-      id,
-      containerPath,
-      parameterName,
-      value,
-      units
-    ) {
-      addModelParameterEntry(
-        self,
-        id,
-        containerPath,
-        parameterName,
-        value,
-        units
-      )
-    },
-
-    #' @description Remove a parameter entry from a named model-parameter set.
-    #' @param id Character.
-    #' @param containerPath Character.
-    #' @param parameterName Character.
-    removeModelParameterEntry = function(id, containerPath, parameterName) {
-      removeModelParameterEntry(self, id, containerPath, parameterName)
-    },
-
-    #' @description Create an individual parameter set.
-    #' @param id Character.
-    addIndividualParameterSet = function(id) {
-      addIndividualParameterSet(self, id)
-    },
-
-    #' @description Remove an individual parameter set.
-    #' @param id Character.
-    removeIndividualParameterSet = function(id) {
-      removeIndividualParameterSet(self, id)
-    },
-
-    #' @description Add a parameter entry to a named individual parameter set.
-    #' @param id Character.
-    #' @param containerPath Character.
-    #' @param parameterName Character.
-    #' @param value Numeric.
-    #' @param units Character.
-    addIndividualParameterSetEntry = function(
-      id,
-      containerPath,
-      parameterName,
-      value,
-      units
-    ) {
-      addIndividualParameterSetEntry(
-        self,
-        id,
-        containerPath,
-        parameterName,
-        value,
-        units
-      )
-    },
-
-    #' @description Remove a parameter entry from a named individual
-    #'   parameter set.
-    #' @param id Character.
-    #' @param containerPath Character.
-    #' @param parameterName Character.
-    removeIndividualParameterSetEntry = function(
-      id,
-      containerPath,
-      parameterName
-    ) {
-      removeIndividualParameterSetEntry(
-        self,
-        id,
-        containerPath,
-        parameterName
-      )
-    },
-
-    #' @description Create an application parameter set.
-    #' @param id Character.
-    addApplicationParameterSet = function(id) {
-      addApplicationParameterSet(self, id)
-    },
-
-    #' @description Remove an application parameter set.
-    #' @param id Character.
-    removeApplicationParameterSet = function(id) {
-      removeApplicationParameterSet(self, id)
-    },
-
-    #' @description Add a parameter entry to a named application parameter set.
-    #' @param id Character.
-    #' @param containerPath Character.
-    #' @param parameterName Character.
-    #' @param value Numeric.
-    #' @param units Character.
-    addApplicationParameterSetEntry = function(
-      id,
-      containerPath,
-      parameterName,
-      value,
-      units
-    ) {
-      addApplicationParameterSetEntry(
-        self,
-        id,
-        containerPath,
-        parameterName,
-        value,
-        units
-      )
-    },
-
-    #' @description Remove a parameter entry from a named application
-    #'   parameter set.
-    #' @param id Character.
-    #' @param containerPath Character.
-    #' @param parameterName Character.
-    removeApplicationParameterSetEntry = function(
-      id,
-      containerPath,
-      parameterName
-    ) {
-      removeApplicationParameterSetEntry(
-        self,
-        id,
-        containerPath,
-        parameterName
-      )
-    },
-
-    #' @description Add one or more output paths programmatically.
-    #' @param id Character vector.
-    #' @param path Character vector.
-    addOutputPath = function(id, path) {
-      addOutputPath(self, id, path)
-    },
-
-    #' @description Remove an output path programmatically.
-    #' @param id Character.
-    removeOutputPath = function(id) {
-      removeOutputPath(self, id)
-    },
-
-    #' @description Add observed data programmatically.
-    #' @param entry Either a `DataSet` object or a list with observedData
-    #'   config (see [addObservedData()]).
-    addObservedData = function(entry) {
-      addObservedData(project = self, entry = entry)
-    },
-
-    #' @description Remove observed data programmatically.
-    #' @param name DataSet name or config entry file basename.
-    removeObservedData = function(name) {
-      removeObservedData(project = self, name = name)
-    },
-
-    #' @description Add a DataCombined programmatically.
-    #' @param name DataCombined name.
-    #' @param simulated List of simulated entry lists.
-    #' @param observed List of observed entry lists.
-    addDataCombined = function(name, simulated = list(), observed = list()) {
-      addDataCombined(
-        project = self,
-        name = name,
-        simulated = simulated,
-        observed = observed
-      )
-    },
-
-    #' @description Remove a DataCombined programmatically.
-    #' @param name DataCombined name.
-    removeDataCombined = function(name) {
-      removeDataCombined(project = self, name = name)
-    },
-
-    #' @description Add a plot configuration programmatically.
-    #' @param plotID Unique plot identifier.
-    #' @param dataCombinedName DataCombined the plot draws from.
-    #' @param plotType One of the supported plot types.
-    #' @param ... Optional plot-configuration fields.
-    addPlot = function(plotID, dataCombinedName, plotType, ...) {
-      addPlot(
-        project = self,
-        plotID = plotID,
-        dataCombinedName = dataCombinedName,
-        plotType = plotType,
-        ...
-      )
-    },
-
-    #' @description Remove a plot configuration programmatically.
-    #' @param plotID Plot identifier.
-    removePlot = function(plotID) {
-      removePlot(project = self, plotID = plotID)
-    },
-
-    #' @description Add a plot grid programmatically.
-    #' @param name Plot-grid name.
-    #' @param plotIDs Character vector of plot IDs.
-    #' @param ... Optional plot-grid fields.
-    addPlotGrid = function(name, plotIDs, ...) {
-      addPlotGrid(
-        project = self,
-        name = name,
-        plotIDs = plotIDs,
-        ...
-      )
-    },
-
-    #' @description Remove a plot grid programmatically.
-    #' @param name Plot-grid name.
-    removePlotGrid = function(name) {
-      removePlotGrid(project = self, name = name)
-    },
-
-    #' @description Add a PI task programmatically. Delegates to
-    #'   [addPITask()].
-    #' @param id PI task id (character scalar).
-    #' @param scenarios Character vector of scenario names.
-    #' @param parameters List of `PIParameter` records.
-    #' @param outputMappings List of `PIOutputMapping` records.
-    #' @param configuration Named list. See [addPITask()] for the shape.
-    addPITask = function(
-      id,
-      scenarios,
-      parameters,
-      outputMappings,
-      configuration = list()
-    ) {
-      addPITask(
-        project = self,
-        id = id,
-        scenarios = scenarios,
-        parameters = parameters,
-        outputMappings = outputMappings,
-        configuration = configuration
-      )
-    },
-
-    #' @description Remove a PI task programmatically. Delegates to
-    #'   [removePITask()].
-    #' @param id PI task id (character scalar).
-    removePITask = function(id) {
-      removePITask(project = self, id = id)
-    },
-
-    #' @description Add a PI parameter. Delegates to [addPIParameter()].
-    #' @param taskId PI task id (character scalar).
-    #' @param path Parameter path (character scalar).
-    #' @param scenarios Character vector of scenario names.
-    #' @param minValue,maxValue,startValue Numeric scalars.
-    #' @param units Optional character scalar.
-    #' @param id Optional character scalar.
-    addPIParameter = function(
-      taskId,
-      path,
-      scenarios,
-      minValue,
-      maxValue,
-      startValue,
-      units = NULL,
-      id = NULL
-    ) {
-      addPIParameter(
-        self,
-        taskId = taskId,
-        path = path,
-        scenarios = scenarios,
-        minValue = minValue,
-        maxValue = maxValue,
-        startValue = startValue,
-        units = units,
-        id = id
-      )
-    },
-
-    #' @description Remove a PI parameter. Delegates to
-    #'   [removePIParameter()].
-    #' @param taskId PI task id.
-    #' @param id Parameter id.
-    removePIParameter = function(taskId, id) {
-      removePIParameter(self, taskId = taskId, id = id)
-    },
-
-    #' @description Add a PI output mapping. Delegates to
-    #'   [addPIOutputMapping()].
-    #' @param taskId PI task id.
-    #' @param outputPathId Output-path id (character scalar).
-    #' @param observedDataId Observed-data id (character scalar).
-    #' @param scenarios Character vector of scenario names.
-    #' @param scaling,xOffset,yOffset,xFactor,yFactor,weight Optional
-    #'   fitting metadata.
-    #' @param id Optional character scalar.
-    addPIOutputMapping = function(
-      taskId,
-      outputPathId,
-      observedDataId,
-      scenarios,
-      scaling = NULL,
-      xOffset = 0,
-      yOffset = 0,
-      xFactor = 1,
-      yFactor = 1,
-      weight = NULL,
-      id = NULL
-    ) {
-      addPIOutputMapping(
-        self,
-        taskId = taskId,
-        outputPathId = outputPathId,
-        observedDataId = observedDataId,
-        scenarios = scenarios,
-        scaling = scaling,
-        xOffset = xOffset,
-        yOffset = yOffset,
-        xFactor = xFactor,
-        yFactor = yFactor,
-        weight = weight,
-        id = id
-      )
-    },
-
-    #' @description Remove a PI output mapping. Delegates to
-    #'   [removePIOutputMapping()].
-    #' @param taskId PI task id.
-    #' @param id Output mapping id.
-    removePIOutputMapping = function(taskId, id) {
-      removePIOutputMapping(self, taskId = taskId, id = id)
     },
 
     #' @description Check synchronization status of a Project.
@@ -931,22 +490,20 @@ Project <- R6::R6Class(
           (length(parent) == 1L && is.na(parent)) ||
           fs::is_absolute_path(path)
       ) {
-        abs_path <- fs::path_abs(path)
+        fs::path_abs(path)
       } else {
-        abs_path <- fs::path_abs(file.path(parent, path))
+        fs::path_abs(file.path(parent, path))
       }
-      abs_path
     },
 
     .read_json = function(jsonPath) {
       jsonPath <- fs::path_abs(jsonPath)
-      if (!fs::file_exists(jsonPath)) stop(messages$fileNotFound(jsonPath))
+      if (!fs::file_exists(jsonPath))
+        cli::cli_abort(messages$fileNotFound(jsonPath))
       jsonData <- jsonlite::fromJSON(jsonPath, simplifyVector = FALSE)
       if (!identical(jsonData$schemaVersion, "2.0")) {
-        stop(
-          "Unsupported schemaVersion: ",
-          format(jsonData$schemaVersion %||% "<missing>"),
-          ". Expected '2.0'."
+        cli::cli_abort(
+          "Unsupported schemaVersion: {.val {jsonData$schemaVersion %||% '<missing>'}}. Expected {.val 2.0}."
         )
       }
       self$schemaVersion <- jsonData$schemaVersion
@@ -990,6 +547,6 @@ ProjectConfiguration <- function(
   projectConfigurationFilePath = character(),
   ...
 ) {
-  lifecycle::deprecate_warn("7.0.0", "ProjectConfiguration()", "Project$new()")
+  lifecycle::deprecate_warn("6.0.0", "ProjectConfiguration()", "Project$new()")
   Project$new(projectFilePath = projectConfigurationFilePath)
 }

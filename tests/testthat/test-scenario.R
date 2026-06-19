@@ -24,6 +24,36 @@ test_that("Scenario has the documented field defaults", {
   expect_null(sc$modelParameterSets)
 })
 
+test_that("Scenario$asList exposes exactly the v2.0 schema fields", {
+  sc <- Scenario$new()
+
+  expect_named(
+    sc$asList,
+    c(
+      "scenarioName",
+      "modelFile",
+      "applicationProtocol",
+      "individualId",
+      "populationId",
+      "outputPaths",
+      "simulationType",
+      "readPopulationFromCSV",
+      "simulateSteadyState",
+      "simulationTime",
+      "simulationTimeUnit",
+      "steadyStateTime",
+      "steadyStateTimeUnit",
+      "overwriteFormulasInSS",
+      "modelParameterSets"
+    )
+  )
+})
+
+test_that("Scenario$asList is read-only", {
+  sc <- Scenario$new()
+  expect_snapshot(error = TRUE, sc$asList <- list())
+})
+
 test_that(".parseScenarios returns list() for NULL input", {
   expect_identical(
     esqlabsR:::.parseScenarios(NULL, list()),

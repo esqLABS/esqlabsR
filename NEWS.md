@@ -2,6 +2,7 @@
 
 ## Internal
 
+- Error and warning style on the chapter-chain code (PI module, parsed-Project section files, scenario-from-pkml, project lifecycle/excel-bridge) is now `cli::cli_abort()` / `cli::cli_warn()`. Legacy code outside the chain still uses `stop()`/`warning()`; converging the rest is tracked as a follow-up. (#908)
 - Internal reorganisation: per-domain R files. `R/utilities-scenarios.R` splits into `R/scenarios.R` and `R/output-paths.R`; `R/utilities-individual.R` → `R/individuals.R`; `R/utilities-population.R` → `R/populations.R`; `R/utilities-parameters.R` → `R/parameters.R`; `R/utilities-figures.R` → `R/plots.R`; `R/utilities-data-combined.R` → `R/data-combined.R`. Followup file renames: `utilities-data.R` → `data-utils.R`, `utilities-file.R` → `file-utils.R`, `utilities-parallel.R` → `parallel.R`, `utilities-simulation.R` → `simulation.R`, `utilities.R` → `utils.R`, `utilities-sensitivity-calculation.R` → `sensitivity-calculation-utils.R`, `sensivitity-time-profiles.R` → `sensitivity-time-profiles.R` (also fixes typo); foldings: `project-parse.R` distributes parse helpers into the relevant section files; `validation-result.R` and `validation-utils.R` fold into `validation.R`; `enum.R`, `error-checks.R`, and `utilities-quantity.R` fold into `utils.R` / `parameters.R` / `plots.R`. `R/plots.R` splits into `R/plots.R` (section parse/validate/serialize/mutation), `R/create-plots.R` (public `createPlots` plus Excel parsing/validation helpers), and `R/plots-utils.R` (palette, plot/grid configuration constructors, override and overlay helpers). `saveScenarioResults()` and `loadScenarioResults()` move from `R/scenarios.R` to `R/scenario-results.R`. `applyIndividualParameters()` moves from `R/individuals.R` to `R/simulation.R`. No behaviour changes. (#908)
 
 ## Internal (work in progress)
@@ -28,11 +29,15 @@
   `removePIOutputMapping()` helpers, all of which mark the project modified.
   `PITaskConfiguration` and `readPITaskConfigurationFromExcel()` are removed
   outright; `createPITasks()` is a soft-deprecation stub that errors with a
-  pointer to `runPI(project, ...)`. The Excel project to JSON migration path
-  lands in a follow-up chapter (#928).
+  pointer to `runPI(project, ...)`. `runPI()` now hard-fails on build errors
+  (typos in parameter paths, unknown outputs, missing observed data) and
+  only soft-fails on numerical optimisation failures, so user typos surface
+  immediately instead of being swallowed into a warning. The Excel project
+  to JSON migration path lands in a follow-up chapter (#928).
 
 ## Breaking changes
 
+- `createDefaultProjectConfiguration()` is removed. Use `loadProject()` instead. The function had been soft-deprecated since 5.3.0. (#908)
 - `Project` (R6 class) is now exported and replaces `ProjectConfiguration` as the canonical in-memory project representation. The class merges the JSON-parsed sections (scenarios, individuals, populations, applications, observed data, plots, parameter identification) with the Excel-bridge file paths previously held by `ProjectConfiguration`. (#908)
 - `ScenarioConfiguration`, `addScenarioConfigurationsToExcel()`, `createScenarioConfigurationsFromPKML()`, `readScenarioConfigurationFromExcel()`, and `setApplications()` are removed. The Excel to JSON migration path is now `importProjectFromExcel()`; the reverse is `exportProjectToExcel()`. The scenario-construction-from-PKML surface is now `createScenariosFromPKML()`. (#908)
 - `validateAllConfigurations()` is removed. Use `validateProject()` instead. (#908)
@@ -40,6 +45,7 @@
 - `loadObservedDataFromExcel()` and `loadObservedDataFromPKML()` are removed (soft-deprecated since 5.7.0). Use `loadObservedData(project)` on a JSON-first `Project` instead. (#908)
 - `readPopulationCharacteristicsFromXLS()`, `readIndividualCharacteristicsFromXLS()`, `writeIndividualToXLS()`, `writeParameterStructureToXLS()`, and `exportParametersToXLS()` are removed. The supported user-facing Excel surface is now restricted to Excel <-> JSON interop: `importProjectFromExcel()` and `exportProjectToExcel()`. (#908)
 - `ExportConfiguration` (R6 class) and `createEsqlabsExportConfiguration()` are removed. The Excel-driven plot export pipeline they belonged to is no longer supported; use the plot objects returned by `createPlots()` and save them directly via `ggplot2::ggsave()`. (#908)
+- `Project` no longer exposes mutation methods (`project$addScenario()`, `project$removeScenario()`, `project$addIndividual()`, etc.). The free-function form is canonical: call `addScenario(project, ...)`, `removeScenario(project, ...)`, and the matching mutators directly. The R6 wrappers were pure delegation and have been removed to keep one mutation surface to maintain. (#908)
 
 ## New features
 
@@ -55,7 +61,7 @@
 ## Soft deprecations
 
 - `createDataCombinedFromExcel()` and `createPlotsFromExcel()` now simply forward to `createDataCombined()` / `createPlots()` after emitting a `lifecycle::deprecate_soft()` warning. Pass a `Project` from `loadProject()`. (#908)
-- `createDefaultProjectConfiguration()` and `createProjectConfiguration()` now warn and forward to `loadProject()`. The default `path` changes from `"ProjectConfiguration.xlsx"` to `"Project.json"`. (#908)
+- `createProjectConfiguration()` now warns and forwards to `loadProject()`. The default `path` changes from `"ProjectConfiguration.xlsx"` to `"Project.json"`. (#908)
 - `exampleProjectConfigurationPath()` warns and forwards to `exampleProjectPath()`. (#908)
 - `ProjectConfiguration()` warns and forwards to `Project$new()`. (#908)
 - `projectConfigurationStatus()` warns and forwards to `projectStatus()`. (#908)

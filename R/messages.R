@@ -57,7 +57,7 @@ messages$errorEnumPutListMultipleKeys <- function() {
   cliFormat("Trying to put multiple keys, but only one key is allowed!")
 }
 
-# utilities-population####
+# populations ####
 messages$errorDistributionNotSupported <- function(string) {
   cliFormat(
     "The distribution {.val {string}} is not supported. Supported distributions are listed in {.var Distributions}."
@@ -175,7 +175,7 @@ messages$valueShouldNotBeNegative <- function(parameterName, value) {
   )
 }
 
-# utilities-data####
+# data-utils ####
 messages$errorInvalidMeanMethod <- function() {
   cliFormat(
     "Invalid value for argument {.arg method}, supported values are {.val arithmetic} or {.val geometric}"
@@ -194,7 +194,7 @@ messages$offsetUnitsNotDefined <- function(rows) {
   ))
 }
 
-# utilities-figures####
+# plots ####
 messages$nrOfColorsShouldBePositive <- function(nrOfColors) {
   cliFormat(
     "nrOfColors must be positive, value {.val {nrOfColors}} is not valid!"
@@ -338,7 +338,7 @@ messages$errorOptionOutOfBounds <- function(parameterFactor) {
   )
 }
 
-# utilities-quantity####
+# quantities ####
 messages$cannotGetMoleculeFromQuantity <- function(
   quantityPath,
   optionalMessage = ""
@@ -784,12 +784,6 @@ messages$errorPIScenarioNotFound <- function(scenarioName, availableScenarios) {
     "x" = "Scenario {.val {scenarioName}} referenced in PI task configuration not found",
     "i" = "Available scenarios: {.val {paste(availableScenarios, collapse = ', ')}}"
   ))
-}
-
-messages$warningPIOptimizationFailed <- function(piTaskName, errorMessage) {
-  cliFormat(
-    "Parameter identification task {.val {piTaskName}} failed: {.emph {errorMessage}}"
-  )
 }
 
 messages$messageRunningPITask <- function(piTaskName) {

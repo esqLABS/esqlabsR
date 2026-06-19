@@ -48,7 +48,7 @@ readParametersFromXLS <- function(paramsXLSpath, sheets = NULL) {
     data <- readExcel(path = paramsXLSpath, sheet = sheet)
 
     if (!all(columnNames %in% names(data))) {
-      stop(messages$errorWrongXLSStructure(
+      cli::cli_abort(messages$errorWrongXLSStructure(
         filePath = paramsXLSpath,
         expectedColNames = columnNames
       ))
@@ -631,7 +631,9 @@ removeModelParameterEntry <- function(
   }
 
   if (!identical(names(parameterStructure), c("paths", "values", "units"))) {
-    stop(messages$wrongParametersStructure(argumentName = argumentName))
+    cli::cli_abort(messages$wrongParametersStructure(
+      argumentName = argumentName
+    ))
   }
   return(invisible(TRUE))
 }

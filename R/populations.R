@@ -237,18 +237,18 @@ extendPopulationFromXLS <- function(population, XLSpath, sheet = NULL) {
   }
 
   if (nrow(data) == 0) {
-    stop(messages$excelNoDataRows())
+    cli::cli_abort(messages$excelNoDataRows())
   }
 
   complete_data <- data |>
     dplyr::filter(!dplyr::if_any(dplyr::everything(), ~ is.na(.)))
 
   if (nrow(complete_data) < nrow(data)) {
-    warning(messages$excelUncompleteRows())
+    cli::cli_warn(messages$excelUncompleteRows())
   }
 
   if (nrow(complete_data) == 0) {
-    stop(messages$excelNoCompleteRows())
+    cli::cli_abort(messages$excelNoCompleteRows())
   }
 
   extendPopulationByUserDefinedParams(
@@ -283,7 +283,7 @@ Distributions <- enum(list(
 #' @export
 sampleRandomValue <- function(distribution, mean, sd, n) {
   if (!enumHasKey(distribution, Distributions)) {
-    stop(messages$errorDistributionNotSupported(distribution))
+    cli::cli_abort(messages$errorDistributionNotSupported(distribution))
   }
 
   if (distribution == Distributions$Normal) {
