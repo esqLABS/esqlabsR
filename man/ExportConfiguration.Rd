@@ -3,9 +3,6 @@
 \name{ExportConfiguration}
 \alias{ExportConfiguration}
 \title{ExportConfiguration}
-\value{
-The file name of the exported plot
-}
 \description{
 R6 class extending \link[tlf:ExportConfiguration]{tlf::ExportConfiguration} with row-aware
 height.
@@ -23,67 +20,71 @@ Inherits fields and behavior from \link[tlf:ExportConfiguration]{tlf::ExportConf
 \code{\link[tlf:ExportConfiguration]{tlf::ExportConfiguration}} -> \code{ExportConfiguration}
 }
 \section{Active bindings}{
-\if{html}{\out{<div class="r6-active-bindings">}}
-\describe{
-\item{\code{heightPerRow}}{The height of the plot dimensions for a row in a
+  \if{html}{\out{<div class="r6-active-bindings">}}
+  \describe{
+    \item{\code{heightPerRow}}{The height of the plot dimensions for a row in a
 multi panel plot. The final height of the figure will be 'heightPerRow'
 times the number of rows. If \code{NULL} (default), value used in \code{height}
 is used. If not \code{NULL}, this value always overrides the \code{height}
 property.}
-}
-\if{html}{\out{</div>}}
+  }
+  \if{html}{\out{</div>}}
 }
 \section{Methods}{
 \subsection{Public methods}{
-\itemize{
-\item \href{#method-ExportConfiguration-savePlot}{\code{ExportConfiguration$savePlot()}}
-\item \href{#method-ExportConfiguration-clone}{\code{ExportConfiguration$clone()}}
+  \itemize{
+    \item \href{#method-ExportConfiguration-savePlot}{\code{ExportConfiguration$savePlot()}}
+    \item \href{#method-ExportConfiguration-clone}{\code{ExportConfiguration$clone()}}
+  }
 }
-}
-\if{html}{\out{
-<details open><summary>Inherited methods</summary>
+\if{html}{\out{<details open><summary>Inherited methods</summary>
 <ul>
-<li><span class="pkg-link" data-pkg="tlf" data-topic="ExportConfiguration" data-id="convertPixels"><a href='../../tlf/html/ExportConfiguration.html#method-ExportConfiguration-convertPixels'><code>tlf::ExportConfiguration$convertPixels()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tlf" data-topic="ExportConfiguration" data-id="getFileName"><a href='../../tlf/html/ExportConfiguration.html#method-ExportConfiguration-getFileName'><code>tlf::ExportConfiguration$getFileName()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tlf" data-topic="ExportConfiguration" data-id="initialize"><a href='../../tlf/html/ExportConfiguration.html#method-ExportConfiguration-initialize'><code>tlf::ExportConfiguration$initialize()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tlf" data-topic="ExportConfiguration" data-id="print"><a href='../../tlf/html/ExportConfiguration.html#method-ExportConfiguration-print'><code>tlf::ExportConfiguration$print()</code></a></span></li>
+  <li><span class="pkg-link" data-pkg="tlf" data-topic="ExportConfiguration" data-id="convertPixels"><a href='../../tlf/html/ExportConfiguration.html#method-ExportConfiguration-convertPixels'><code>tlf::ExportConfiguration$convertPixels()</code></a></span></li>
+  <li><span class="pkg-link" data-pkg="tlf" data-topic="ExportConfiguration" data-id="getFileName"><a href='../../tlf/html/ExportConfiguration.html#method-ExportConfiguration-getFileName'><code>tlf::ExportConfiguration$getFileName()</code></a></span></li>
+  <li><span class="pkg-link" data-pkg="tlf" data-topic="ExportConfiguration" data-id="initialize"><a href='../../tlf/html/ExportConfiguration.html#method-ExportConfiguration-initialize'><code>tlf::ExportConfiguration$initialize()</code></a></span></li>
+  <li><span class="pkg-link" data-pkg="tlf" data-topic="ExportConfiguration" data-id="print"><a href='../../tlf/html/ExportConfiguration.html#method-ExportConfiguration-print'><code>tlf::ExportConfiguration$print()</code></a></span></li>
 </ul>
-</details>
-}}
+</details>}}
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-ExportConfiguration-savePlot"></a>}}
 \if{latex}{\out{\hypertarget{method-ExportConfiguration-savePlot}{}}}
-\subsection{Method \code{savePlot()}}{
-Save/Export a plot
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{ExportConfiguration$savePlot(plotObject, fileName = NULL)}\if{html}{\out{</div>}}
+\subsection{\code{ExportConfiguration$savePlot()}}{
+  Save/Export a plot
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{ExportConfiguration$savePlot(plotObject, fileName = NULL)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{plotObject}}{A \code{ggplot} object}
+      \item{\code{fileName}}{character file name of the exported plot}
+    }
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Returns}{
+    The file name of the exported plot
+  }
 }
 
-\subsection{Arguments}{
-\if{html}{\out{<div class="arguments">}}
-\describe{
-\item{\code{plotObject}}{A \code{ggplot} object}
-
-\item{\code{fileName}}{character file name of the exported plot}
-}
-\if{html}{\out{</div>}}
-}
-}
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-ExportConfiguration-clone"></a>}}
 \if{latex}{\out{\hypertarget{method-ExportConfiguration-clone}{}}}
-\subsection{Method \code{clone()}}{
-The objects of this class are cloneable with this method.
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{ExportConfiguration$clone(deep = FALSE)}\if{html}{\out{</div>}}
+\subsection{\code{ExportConfiguration$clone()}}{
+  The objects of this class are cloneable with this method.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{ExportConfiguration$clone(deep = FALSE)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{deep}}{Whether to make a deep clone.}
+    }
+    \if{html}{\out{</div>}}
+  }
 }
 
-\subsection{Arguments}{
-\if{html}{\out{<div class="arguments">}}
-\describe{
-\item{\code{deep}}{Whether to make a deep clone.}
-}
-\if{html}{\out{</div>}}
-}
-}
 }
