@@ -15,12 +15,17 @@ loadObservedData(
 the necessary information.}
 
 \item{sheets}{String or a list of strings defining which sheets to load. If
-\code{NULL} (default), all sheets within the file are loaded.}
+\code{NULL} (default), all sheets within the file are loaded. This parameter
+takes precedence over any sheets defined in \code{importerConfiguration}: the
+function always sets \code{importerConfiguration$sheets} to \code{NULL} before
+calling \code{ospsuite::loadDataSetsFromExcel()}, so the passed
+\code{importerConfiguration} object is mutated as a side effect.}
 
 \item{importerConfiguration}{\code{DataImporterConfiguration} object used to load
 the data. If \code{NULL} (default), default esqlabs importer configuration as
 defined in \code{projectConfiguration$dataImporterConfigurationFile} will be
-used.}
+used. Note: the \code{sheets} property of this object is always set to \code{NULL}
+by this function (see the \code{sheets} parameter description).}
 }
 \value{
 A named list of \code{DataSet} objects, with names being the names of the

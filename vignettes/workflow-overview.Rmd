@@ -55,3 +55,9 @@ Learn more in `vignette("run-simulations")`.
 `esqlabsR` implements convenient and automated ways to generate various plots for visual representation of simulation results.
 
 Learn more in `vignette("plot-results")`.
+
+## Parameter Identification
+
+For fitting model parameters to observed data, `esqlabsR` provides a separate
+excel-based workflow for parameter identification. Learn more in
+`vignette("pi-workflow")`.

@@ -80,7 +80,7 @@
     # Get scenario names from DataCombined sheet
     if (!is.null(plots_data[["DataCombined"]])) {
       simulated_data <- plots_data[["DataCombined"]][
-        plots_data$DataCombined$dataType == "simulated",
+        plots_data[["DataCombined"]][["dataType"]] == "simulated",
       ]
 
       invalid_scenarios <- setdiff(

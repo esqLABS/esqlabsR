@@ -23,8 +23,6 @@
         * Read population from csv file: FALSE
         * Parameters sheets: mySheet1, mySheet2
         * Initial values sheets: <empty vector>
-        * Simulate steady-state: TRUE
-        * Steady-state time: 5
       
       -- Simulation time intervals --
       
@@ -36,4 +34,5 @@
       Steady state:
         * Simulate steady-state: TRUE
         * Steady-state time: 5
+        * Overwrite formulas in steady-state: FALSE
 

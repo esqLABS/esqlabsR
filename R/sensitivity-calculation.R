@@ -55,8 +55,8 @@
 #' outputPaths <- "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
 #' parameterPaths <- c(
 #'   "Aciclovir|Lipophilicity",
-#'   "Applications|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose",
-#'   "Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Glomerular Filtration-GFR|GFR fraction"
+#'   "Events|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose",
+#'   "Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Glomerular Filtration-GFR-Aciclovir|GFR fraction"
 #' )
 #'
 #' # extract the results into a list of dataframes
@@ -230,9 +230,6 @@ sensitivityCalculation <- function(
     simulationBatches = simulationBatches,
     simulationRunOptions = simulationRunOptions
   )
-
-  # Call gc() on .NET
-  ospsuite::clearMemory()
 
   # Remove top-level names to flatten the list in the next step
   names(simulationBatchesResults) <- NULL

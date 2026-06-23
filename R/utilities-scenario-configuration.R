@@ -15,9 +15,9 @@
 #'   following columns: `Scenario_name`, `IndividualId`, `PopulationId`,
 #'   `ReadPopulationFromCSV`, `ModelParameterSheets`, `InitialValuesSet`,
 #'   `ApplicationProtocol`, `SimulationTime`, `SimulationTimeUnit`,
-#'   `SteadyState`, `SteadyStateTime`, `SteadyStateTimeUnit`, `ModelFile`,
-#'   `OutputPathsIds`. It also expects an "OutputPaths" sheet with `OutputPathId`
-#'   and `OutputPath` columns.
+#'   `SteadyState`, `SteadyStateTime`, `SteadyStateTimeUnit`,
+#'   `OverwriteFormulasInSS`, `ModelFile`, `OutputPathsIds`. It also expects an
+#'   "OutputPaths" sheet with `OutputPathId` and `OutputPath` columns.
 #'
 #' @returns A named list of `ScenarioConfiguration` objects with the names of
 #'   the list being scenario names.
@@ -26,7 +26,7 @@
 #' @examples
 #' \dontrun{
 #' # Create default ProjectConfiguration
-#' projectConfiguration <- createProjectConfiguration()
+#' projectConfiguration <- createProjectConfiguration(ignoreVersionCheck = TRUE)
 #' scenarioName <- "MyScenario"
 #' # Read scenario definition from Excel
 #' scenarioConfiguration <- readScenarioConfigurationFromExcel(
@@ -55,6 +55,7 @@ readScenarioConfigurationFromExcel <- function(
     "SteadyState",
     "SteadyStateTime",
     "SteadyStateTimeUnit",
+    "OverwriteFormulasInSS",
     "ModelFile",
     "OutputPathsIds"
   )
@@ -72,6 +73,7 @@ readScenarioConfigurationFromExcel <- function(
     "logical",
     "numeric",
     "text",
+    "logical",
     "text",
     "text"
   )
@@ -98,7 +100,8 @@ readScenarioConfigurationFromExcel <- function(
     path = projectConfiguration$scenariosFile,
     sheet = "Scenarios",
     col_types = colTypes
-  )
+  ) |>
+    .cleanTextColumns()
 
   # Remove empty rows
   wholeData <- dplyr::filter(
@@ -112,7 +115,8 @@ readScenarioConfigurationFromExcel <- function(
   outputPathsDf <- readExcel(
     path = projectConfiguration$scenariosFile,
     sheet = "OutputPaths"
-  )
+  ) |>
+    .cleanTextColumns()
 
   scenarioNames <- scenarioNames %||% wholeData$Scenario_name
   # Create a scenario configuration for each name
@@ -139,14 +143,8 @@ readScenarioConfigurationFromExcel <- function(
     paramSheets <- data$ModelParameterSheets
 
     if (!is.na(paramSheets)) {
-      # The values can be enclosed in "" in case sheet names contain a ','.
-      # Split the input string by ',' but do not split within ""
-      paramSheets <- trimws(scan(
-        text = as.character(paramSheets),
-        what = "character",
-        sep = ",",
-        quiet = TRUE
-      ))
+      # Split comma-separated parameter sheets
+      paramSheets <- .splitCommaString(paramSheets)
       scenarioConfiguration$addParamSheets(paramSheets)
     }
 
@@ -216,16 +214,18 @@ readScenarioConfigurationFromExcel <- function(
       )
     }
 
+    # Overwrite formulas in steady-state?
+    if (!is.na(data$OverwriteFormulasInSS)) {
+      scenarioConfiguration$overwriteFormulasInSS <- data$OverwriteFormulasInSS
+    }
+
     # Model file
     scenarioConfiguration$modelFile <- data$ModelFile
 
     # OutputPaths
     if (!is.na(data$OutputPathsIds)) {
-      pathIds <- strsplit(x = data$OutputPathsIds, split = ",", fixed = TRUE)[[
-        1
-      ]]
-      # Remove leading/trailing whitespaces
-      pathIds <- trimws(pathIds)
+      # Split comma-separated output path IDs
+      pathIds <- .splitCommaString(data$OutputPathsIds)
       # Check if all paths IDs are defined in the OutputPaths sheet
       missingIds <- setdiff(pathIds, outputPathsDf$OutputPathId)
       if (length(missingIds) != 0) {
@@ -343,6 +343,11 @@ setApplications <- function(simulation, scenarioConfiguration) {
 #' @param steadyStateTimeUnit Character vector. Steady-state time units. Only used when `steadyState = TRUE` and `steadyStateTime` is provided.
 #'   If `NULL` (default), "min" will be used. Can be a single string (recycled for all scenarios) or a vector
 #'   with the same length as `pkmlFilePaths`.
+#' @param overwriteFormulasInSS Logical vector. Whether to overwrite formula-defined parameters with
+#'   their steady-state values. When `TRUE`, corresponds to `ignoreIfFormula = FALSE` in
+#'   `ospsuite::getSteadyState()` (formulas are overwritten). Default is `FALSE` (formula-defined
+#'   parameters are kept unchanged). Can be a single logical value (recycled for all scenarios) or
+#'   a vector with the same length as `pkmlFilePaths`.
 #' @param readPopulationFromCSV Logical vector. Whether to read population from CSV for each scenario. Default is `FALSE`.
 #'   Can be a single logical value (recycled for all scenarios) or a vector with the same length as `pkmlFilePaths`.
 #'
@@ -452,6 +457,7 @@ createScenarioConfigurationsFromPKML <- function(
   steadyState = FALSE,
   steadyStateTime = NULL,
   steadyStateTimeUnit = NULL,
+  overwriteFormulasInSS = FALSE,
   readPopulationFromCSV = FALSE
 ) {
   # Validate inputs
@@ -488,6 +494,7 @@ createScenarioConfigurationsFromPKML <- function(
   if (!is.null(steadyStateTimeUnit)) {
     validateIsCharacter(steadyStateTimeUnit)
   }
+  validateIsLogical(overwriteFormulasInSS)
   validateIsLogical(readPopulationFromCSV)
 
   # Get the number of scenarios to create based on vector arguments
@@ -505,6 +512,7 @@ createScenarioConfigurationsFromPKML <- function(
     steadyState,
     steadyStateTime,
     steadyStateTimeUnit,
+    overwriteFormulasInSS,
     readPopulationFromCSV
   )
 
@@ -597,6 +605,11 @@ createScenarioConfigurationsFromPKML <- function(
     "steadyStateTimeUnit",
     nScenarios
   )
+  overwriteFormulasInSS <- .recycleOrValidateVector(
+    overwriteFormulasInSS,
+    "overwriteFormulasInSS",
+    nScenarios
+  )
   readPopulationFromCSV <- .recycleOrValidateVector(
     readPopulationFromCSV,
     "readPopulationFromCSV",
@@ -681,7 +694,7 @@ createScenarioConfigurationsFromPKML <- function(
         if (
           is.character(scenarioParamSheets) && length(scenarioParamSheets) == 1
         ) {
-          scenarioParamSheets <- trimws(strsplit(scenarioParamSheets, ",")[[1]])
+          scenarioParamSheets <- .splitCommaString(scenarioParamSheets)
         }
         scenarioConfiguration$addParamSheets(scenarioParamSheets)
       }
@@ -722,7 +735,7 @@ createScenarioConfigurationsFromPKML <- function(
             length(scenarioOutputPaths) == 1 &&
             is.null(names(scenarioOutputPaths))
         ) {
-          scenarioOutputPaths <- trimws(strsplit(scenarioOutputPaths, ",")[[1]])
+          scenarioOutputPaths <- .splitCommaString(scenarioOutputPaths)
         }
         # Handle named vectors: preserve names if they exist
         scenarioConfiguration$outputPaths <- scenarioOutputPaths
@@ -839,6 +852,7 @@ createScenarioConfigurationsFromPKML <- function(
           )
         }
       }
+      scenarioConfiguration$overwriteFormulasInSS <- overwriteFormulasInSS[[i]]
     }
 
     scenarioConfigurations[[scenarioName]] <- scenarioConfiguration
@@ -1093,6 +1107,7 @@ addScenarioConfigurationsToExcel <- function(
     SteadyState = logical(),
     SteadyStateTime = numeric(),
     SteadyStateTimeUnit = character(),
+    OverwriteFormulasInSS = logical(),
     ModelFile = character(),
     OutputPathsIds = character(),
     stringsAsFactors = FALSE
@@ -1244,6 +1259,7 @@ addScenarioConfigurationsToExcel <- function(
         "min",
         ""
       ),
+      OverwriteFormulasInSS = scenarioConfig$overwriteFormulasInSS,
       ModelFile = scenarioConfig$modelFile,
       OutputPathsIds = paste(scenarioOutputPathIds, collapse = ", "),
       stringsAsFactors = FALSE
@@ -1351,13 +1367,17 @@ addScenarioConfigurationsToExcel <- function(
     "SteadyState",
     "SteadyStateTime",
     "SteadyStateTimeUnit",
+    "OverwriteFormulasInSS",
     "ModelFile",
     "OutputPathsIds"
   )
   for (col in requiredScenarioCols) {
     if (!col %in% colnames(scenariosData)) {
       # Use appropriate NA type
-      if (col %in% c("ReadPopulationFromCSV", "SteadyState")) {
+      if (
+        col %in%
+          c("ReadPopulationFromCSV", "SteadyState", "OverwriteFormulasInSS")
+      ) {
         scenariosData[[col]] <- as.logical(NA)
       } else if (col == "SteadyStateTime") {
         scenariosData[[col]] <- as.numeric(NA)
@@ -1400,6 +1420,9 @@ addScenarioConfigurationsToExcel <- function(
   scenariosData$SteadyStateTime <- as.numeric(scenariosData$SteadyStateTime)
   scenariosData$SteadyStateTimeUnit <- as.character(
     scenariosData$SteadyStateTimeUnit
+  )
+  scenariosData$OverwriteFormulasInSS <- as.logical(
+    scenariosData$OverwriteFormulasInSS
   )
   scenariosData$ModelFile <- as.character(scenariosData$ModelFile)
   scenariosData$OutputPathsIds <- as.character(scenariosData$OutputPathsIds)
@@ -1665,4 +1688,36 @@ addScenarioConfigurationsToExcel <- function(
       nScenarios
     ))
   }
+}
+
+#' Split comma-separated string from Excel cells
+#'
+#' @param string Character string with comma-separated values. Can be `NA`.
+#' @details Splits comma-separated values from Excel cells. Handles Excel NA
+#'   types, respects quoted strings (e.g., `"a, b"`), and trims whitespace.
+#'   Returns `character(0)` for `NA` input.
+#'
+#' @returns Character vector with comma-separated values split and whitespace
+#'   trimmed.
+#' @keywords internal
+#' @noRd
+.splitCommaString <- function(string) {
+  if (is.na(string)) {
+    return(character(0))
+  }
+
+  # Convert to character as sometimes Excel NA values are not recognized
+  # as chr NA, but some other NA type
+  string <- as.character(string)
+
+  # Use scan() to split by comma while respecting quoted strings
+  # (e.g., "value with, comma" will be treated as a single value)
+  values <- trimws(scan(
+    text = string,
+    what = "character",
+    sep = ",",
+    quiet = TRUE
+  ))
+
+  return(values)
 }

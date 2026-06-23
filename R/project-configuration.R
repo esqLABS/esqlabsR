@@ -172,6 +172,20 @@ ProjectConfiguration <- R6::R6Class(
         self$configurationsFolder
       )
     },
+    #' @field parameterIdentificationFile Name of the excel file with parameter
+    #'   identification definitions.
+    #' Must be located in the "configurationsFolder".
+    parameterIdentificationFile = function(value) {
+      if (!missing(value)) {
+        private$.projectConfigurationData$parameterIdentificationFile$value <-
+          value
+        private$.modified <- TRUE
+      }
+      private$.clean_path(
+        private$.projectConfigurationData$parameterIdentificationFile$value,
+        self$configurationsFolder
+      )
+    },
     #' @field dataFolder Path to the folder where experimental data files are
     #'   located.
     dataFolder = function(value) {
@@ -225,6 +239,15 @@ ProjectConfiguration <- R6::R6Class(
         self$projectConfigurationDirPath,
         must_work = FALSE
       )
+    },
+    #' @field esqlabsRVersion Version of the esqlabsR package stored in the
+    #'   project configuration. Read-only.
+    esqlabsRVersion = function(value) {
+      if (missing(value)) {
+        private$.projectConfigurationData$esqlabsRVersion$value
+      } else {
+        stop("esqlabsRVersion is readonly")
+      }
     }
   ),
   private = list(
@@ -233,6 +256,7 @@ ProjectConfiguration <- R6::R6Class(
     .projectConfigurationDirPath = NULL,
     .modified = FALSE,
     .warned_paths = character(),
+    .ignoreVersionCheck = FALSE,
     .checkProjectConfigurationFile = function() {
       data <- private$.projectConfigurationData
 
@@ -278,6 +302,14 @@ ProjectConfiguration <- R6::R6Class(
         data$compoundPropertiesFile <- NULL
       }
 
+      # Add parameterIdentificationFile if missing (pre-PI-workflow projects)
+      if (is.null(data$parameterIdentificationFile)) {
+        data$parameterIdentificationFile <- list(
+          value = NA,
+          description = "Name of the parameter identification configuration file"
+        )
+      }
+
       # If one of the excel configuration is not expected, return an error.
       for (property in names(data)) {
         if (!(property %in% names(self))) {
@@ -287,7 +319,60 @@ ProjectConfiguration <- R6::R6Class(
           ))
         }
       }
-      private$.projectConfigurationData <- data
+
+      # Check esqlabsR version
+      if (!private$.ignoreVersionCheck) {
+        storedVersion <- data$esqlabsRVersion$value
+        currentVersion <- as.character(utils::packageVersion("esqlabsR"))
+        versionIssue <- if (is.null(storedVersion) || is.na(storedVersion)) {
+          "notStored"
+        } else if (!identical(as.character(storedVersion), currentVersion)) {
+          "mismatch"
+        } else {
+          NULL
+        }
+
+        shouldSave <- FALSE
+        if (!is.null(versionIssue)) {
+          if (versionIssue == "notStored") {
+            message(messages$versionNotStored(currentVersion))
+          } else {
+            message(messages$versionMismatch(
+              as.character(storedVersion),
+              currentVersion
+            ))
+          }
+
+          if (interactive()) {
+            qs <- sample(c("Absolutely not", "Yes", "No way"))
+            out <- utils::menu(
+              title = "Do you want to update the version in the project configuration and continue?",
+              choices = qs
+            )
+            if (out == 0L || qs[[out]] != "Yes") {
+              stop(messages$abortedByUser())
+            }
+          } else {
+            stop(
+              "esqlabsR version mismatch. You must update the version in the project configuration before continuing."
+            )
+          }
+
+          # User confirmed: update version in data before saving
+          data$esqlabsRVersion <- list(
+            value = currentVersion,
+            description = "Version of the esqlabsR package used to create this configuration"
+          )
+          shouldSave <- TRUE
+        }
+
+        private$.projectConfigurationData <- data
+        if (shouldSave) {
+          self$save(private$.projectConfigurationFilePath)
+        }
+      } else {
+        private$.projectConfigurationData <- data
+      }
     },
     .read_config = function(file_path) {
       path <- private$.clean_path(file_path, replace_env_var = FALSE)
@@ -381,9 +466,15 @@ ProjectConfiguration <- R6::R6Class(
     #'
     #' @param projectConfigurationFilePath A string representing the path to the
     #'   project configuration file.
-    initialize = function(projectConfigurationFilePath = character()) {
+    #' @param ignoreVersionCheck If `TRUE`, skip the version mismatch check when
+    #'   loading the configuration file. Defaults to `FALSE`.
+    initialize = function(
+      projectConfigurationFilePath = character(),
+      ignoreVersionCheck = FALSE
+    ) {
       # Initialize as not modified
       private$.modified <- FALSE
+      private$.ignoreVersionCheck <- isTRUE(ignoreVersionCheck)
 
       if (!missing(projectConfigurationFilePath)) {
         self$projectConfigurationFilePath <- projectConfigurationFilePath
@@ -401,7 +492,8 @@ ProjectConfiguration <- R6::R6Class(
       }
       ospsuite.utils::ospPrintItems(list(
         "Working Directory" = getwd(),
-        "Project Configuration file stored at" = self$projectConfigurationFilePath
+        "Project Configuration file stored at" = self$projectConfigurationFilePath,
+        "esqlabsR version" = self$esqlabsRVersion
       ))
 
       ospsuite.utils::ospPrintHeader("Paths", level = 2)
@@ -425,6 +517,7 @@ ProjectConfiguration <- R6::R6Class(
           "Scenarios File" = self$scenariosFile,
           "Applications File" = self$applicationsFile,
           "Plots File" = self$plotsFile,
+          "Parameter Identification File" = self$parameterIdentificationFile,
           "Data File" = self$dataFile,
           "Data Importer Configuration File" = self$dataImporterConfigurationFile
         ),
@@ -449,6 +542,12 @@ ProjectConfiguration <- R6::R6Class(
     #'
     #' @export
     save = function(path) {
+      # Update stored version to current package version
+      private$.projectConfigurationData$esqlabsRVersion <- list(
+        value = as.character(utils::packageVersion("esqlabsR")),
+        description = "Version of the esqlabsR package used to create this configuration"
+      )
+
       df <- data.frame(
         Property = character(),
         Value = character(),
@@ -466,10 +565,12 @@ ProjectConfiguration <- R6::R6Class(
         "scenariosFile",
         "applicationsFile",
         "plotsFile",
+        "parameterIdentificationFile",
         "dataFolder",
         "dataFile",
         "dataImporterConfigurationFile",
-        "outputFolder"
+        "outputFolder",
+        "esqlabsRVersion"
       )) {
         df <- rbind(
           df,
