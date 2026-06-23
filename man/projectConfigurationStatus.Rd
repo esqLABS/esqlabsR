@@ -39,8 +39,8 @@ to determine if they are synchronized. The JSON snapshot is considered the
 source of truth.
 }
 \seealso{
-Other project configuration snapshots: 
-\code{\link{restoreProjectConfiguration}()},
-\code{\link{snapshotProjectConfiguration}()}
+Other project configuration snapshots:
+\code{\link[=restoreProjectConfiguration]{restoreProjectConfiguration()}},
+\code{\link[=snapshotProjectConfiguration]{snapshotProjectConfiguration()}}
 }
 \concept{project configuration snapshots}

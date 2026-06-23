@@ -20,6 +20,8 @@
 #'   set to `"absolute"`, the values are interpreted as absolute parameter
 #'   values. When set to `"relative"`, the values are interpreted as scaling
 #'   factors relative to the initial parameter values. Default is `"relative"`.
+#'   When `"absolute"`, every parameter must have a non-zero initial value; an
+#'   error is thrown otherwise.
 #' @param pkParameters A vector of names of PK parameters for which the
 #'   sensitivities will be calculated. For a full set of available standard PK
 #'   parameters, run `names(ospsuite::StandardPKParameter)`. By default, the
@@ -119,8 +121,26 @@ sensitivityCalculation <- function(
   # Normalize variationRange
   variationRange <- .normalizeVariationRange(variationRange, parameterPaths)
 
-  # Store old simulation outputs and set user defined
-  oldOutputSelections <- simulation$outputSelections$allOutputs
+  # Store old simulation outputs and set user defined. The original output
+  # selections are restored on exit (including on error) so the caller's
+  # simulation is left untouched by the sensitivity sweep.
+  oldOutputPaths <- vapply(
+    simulation$outputSelections$allOutputs,
+    function(x) x$path,
+    character(1)
+  )
+  on.exit(
+    {
+      clearOutputs(simulation = simulation)
+      if (length(oldOutputPaths) > 0) {
+        ospsuite::addOutputs(
+          quantitiesOrPaths = oldOutputPaths,
+          simulation = simulation
+        )
+      }
+    },
+    add = TRUE
+  )
   setOutputs(quantitiesOrPaths = outputPaths, simulation = simulation)
 
   # Store initial value for each parameter
@@ -303,16 +323,8 @@ sensitivityCalculation <- function(
     "pkData" = pkData
   )
 
-  # Reset simulation outputs
-  oldOutputSelections <- simulation$outputSelections$allOutputs
-  clearOutputs(simulation = simulation)
-
-  for (outputSelection in oldOutputSelections) {
-    ospsuite::addOutputs(
-      quantitiesOrPaths = outputSelection$path,
-      simulation = simulation
-    )
-  }
+  # Original output selections are restored by the on.exit() handler registered
+  # above.
 
   class(results) <- c("SensitivityCalculation", class(results))
 

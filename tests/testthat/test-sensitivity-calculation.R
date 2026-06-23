@@ -388,6 +388,25 @@ test_that("sensitivityCalculation fails with invalid `variationType`", {
   )
 })
 
+test_that("sensitivityCalculation errors on absolute variation with zero initial value", {
+  localSim <- loadSimulation(
+    system.file("extdata", "Aciclovir.pkml", package = "ospsuite")
+  )
+  zeroParam <- "Aciclovir|Lipophilicity"
+  setParameterValuesByPath(zeroParam, 0, localSim)
+
+  expect_snapshot(
+    sensitivityCalculation(
+      simulation = localSim,
+      outputPaths = outputPaths,
+      parameterPaths = zeroParam,
+      variationRange = c(1, 2),
+      variationType = "absolute"
+    ),
+    error = TRUE
+  )
+})
+
 # Check SensitivityCalculation object -------------------------------------
 
 test_that("sensitivityCalculation returns a valid `SensitivityCalculation` object", {

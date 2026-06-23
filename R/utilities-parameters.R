@@ -377,8 +377,13 @@ isTableFormulasEqual <- function(formula1, formula2) {
     point1 <- allPoints1[[i]]
     point2 <- allPoints2[[i]]
 
-    return((point1$x == point2$x) && (point1$y == point2$y))
+    if (!((point1$x == point2$x) && (point1$y == point2$y))) {
+      return(FALSE)
+    }
   }
+
+  # Tables with no points (and tables whose every point pair matched) are equal.
+  return(TRUE)
 }
 
 #' Set the values of parameters in the simulation by path, if the `condition` is
