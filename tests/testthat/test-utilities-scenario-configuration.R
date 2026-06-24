@@ -586,6 +586,56 @@ test_that("OverwriteFormulasInSS is FALSE when NA in Excel", {
   )
 })
 
+test_that("InitialValuesSet column is read into initialValuesSheets", {
+  temp_project <- with_temp_project()
+  projectConfiguration <- temp_project$config
+
+  scenarioConfigurations <- readScenarioConfigurationFromExcel(
+    scenarioNames = c("TestScenario", "TestScenario2"),
+    projectConfiguration = projectConfiguration
+  )
+
+  # TestScenario defines InitialValuesSet = "Global"
+  expect_setequal(
+    enumKeys(scenarioConfigurations[["TestScenario"]]$initialValuesSheets),
+    "Global"
+  )
+  # TestScenario2 has no InitialValuesSet defined
+  expect_length(
+    enumKeys(scenarioConfigurations[["TestScenario2"]]$initialValuesSheets),
+    0
+  )
+})
+
+test_that("InitialValuesSet with several comma-separated sheets is parsed", {
+  tempDir <- tempdir()
+  projectConfigurationLocal <- projectConfiguration$clone()
+  projectConfigurationLocal$configurationsFolder <- tempDir
+  withr::with_tempfile(
+    new = "Scenarios.xlsx",
+    tmpdir = tempDir,
+    code = {
+      scenariosDfLocal <- scenariosDf
+      scenariosDfLocal$InitialValuesSet <- "Global, Liver"
+      .writeExcel(
+        data = list(
+          "Scenarios" = scenariosDfLocal,
+          "OutputPaths" = data.frame()
+        ),
+        path = file.path(tempDir, "Scenarios.xlsx"),
+      )
+
+      scenarioConfigurations <- readScenarioConfigurationFromExcel(
+        projectConfiguration = projectConfigurationLocal
+      )
+      expect_setequal(
+        enumKeys(scenarioConfigurations[["TestScenario"]]$initialValuesSheets),
+        c("Global", "Liver")
+      )
+    }
+  )
+})
+
 # Tests for Excel sheet name sanitization
 test_that(".sanitizeExcelSheetName handles valid names correctly", {
   expect_equal(.sanitizeExcelSheetName("ValidName", warn = FALSE), "ValidName")

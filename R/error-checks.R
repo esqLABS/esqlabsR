@@ -1,7 +1,8 @@
 #' Validate parameter list structure
 #'
 #' @param parameterStructure Object to be checked. Expected is a named list with
-#'   names "paths", "values", and "units".
+#'   names "paths", "values", and "units". `paths` and `units` must be character
+#'   vectors and `values` a numeric vector.
 #'
 #' @keywords internal
 #'
@@ -19,6 +20,21 @@
   if (!identical(names(parameterStructure), c("paths", "values", "units"))) {
     stop(messages$wrongParametersStructure(argumentName = argumentName))
   }
+
+  # Validate the data type of each vector. Empty structures may carry `NULL`
+  # vectors (e.g. when no parameters were found), which are treated as valid.
+  isValidType <- function(x, typeCheck) {
+    is.null(x) || typeCheck(x)
+  }
+  typesValid <-
+    isValidType(parameterStructure$paths, is.character) &&
+    isValidType(parameterStructure$values, is.numeric) &&
+    isValidType(parameterStructure$units, is.character)
+
+  if (!typesValid) {
+    stop(messages$wrongParametersStructure(argumentName = argumentName))
+  }
+
   return(invisible(TRUE))
 }
 

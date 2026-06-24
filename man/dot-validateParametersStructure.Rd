@@ -12,7 +12,8 @@
 }
 \arguments{
 \item{parameterStructure}{Object to be checked. Expected is a named list with
-names "paths", "values", and "units".}
+names "paths", "values", and "units". \code{paths} and \code{units} must be character
+vectors and \code{values} a numeric vector.}
 }
 \value{
 \code{TRUE} if validation succeeded (silently). Throws an error

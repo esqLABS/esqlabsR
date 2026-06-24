@@ -268,6 +268,50 @@ test_that("Warning is shown when an individual parameter set sheet is not found"
   )
 })
 
+test_that("Initial values from 'InitialValuesSet' sheets are applied to the simulation", {
+  temp_project <- with_temp_project()
+  projectConfiguration <- temp_project$config
+
+  scenarioConfigurations <- readScenarioConfigurationFromExcel(
+    scenarioNames = "TestScenario",
+    projectConfiguration = projectConfiguration
+  )
+
+  # TestScenario references the "Global" initial values sheet, which sets
+  # Aciclovir in Liver|Periportal|Intracellular to 0.5 µmol.
+  expect_setequal(
+    enumKeys(scenarioConfigurations$TestScenario$initialValuesSheets),
+    "Global"
+  )
+
+  moleculePath <- "Organism|Liver|Periportal|Intracellular|Aciclovir"
+
+  # Baseline: without the initial values sheet the molecule keeps its model value
+  scenarioConfigurations$TestScenario$removeInitialValuesSheets(NULL)
+  baselineScenario <- Scenario$new(
+    scenarioConfigurations$TestScenario,
+    stopIfParameterNotFound = FALSE
+  )
+  baselineValue <- ospsuite::getAllMoleculesMatching(
+    moleculePath,
+    baselineScenario$simulation
+  )[[1]]$value
+
+  # With the initial values sheet the molecule start value becomes 0.5 µmol
+  scenarioConfigurations$TestScenario$addInitialValuesSheets("Global")
+  scenario <- Scenario$new(
+    scenarioConfigurations$TestScenario,
+    stopIfParameterNotFound = FALSE
+  )
+  appliedValue <- ospsuite::getAllMoleculesMatching(
+    moleculePath,
+    scenario$simulation
+  )[[1]]$value
+
+  expect_equal(appliedValue, 0.5)
+  expect_false(isTRUE(all.equal(appliedValue, baselineValue)))
+})
+
 
 test_that("Population from CSV is loaded correctly", {
   temp_project <- with_temp_project()

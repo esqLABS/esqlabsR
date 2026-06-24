@@ -462,3 +462,134 @@ test_that("isTableFormulasEqual treats two empty tables as equal", {
   empty <- list(allPoints = list())
   expect_true(isTableFormulasEqual(empty, empty))
 })
+
+# readInitialValuesFromXLS --------------------------------------------------
+
+initialValuesXLSpath <- file.path(dataFolder, "InitialValues.xlsx")
+
+test_that("`readInitialValuesFromXLS()` reads a valid sheet and builds molecule paths", {
+  initialValues <- readInitialValuesFromXLS(
+    filePath = initialValuesXLSpath,
+    sheets = "ValidSheet"
+  )
+
+  # The result must be a valid parameter structure (correct names and types)
+  expect_true(.validateParametersStructure(initialValues))
+  # Path is built as "Container Path|Molecule Name"
+  expect_setequal(
+    initialValues$paths,
+    c("Organism|Liver|A", "Organism|Liver|B")
+  )
+})
+
+test_that("`readInitialValuesFromXLS()` returns the values and units of present molecules", {
+  initialValues <- readInitialValuesFromXLS(
+    filePath = initialValuesXLSpath,
+    sheets = "ValidSheet"
+  )
+
+  idxA <- which(initialValues$paths == "Organism|Liver|A")
+  idxB <- which(initialValues$paths == "Organism|Liver|B")
+  expect_equal(initialValues$values[[idxA]], 0.5)
+  expect_equal(initialValues$values[[idxB]], 1.0)
+  expect_equal(initialValues$units[[idxA]], "µmol")
+  expect_equal(initialValues$units[[idxB]], "µmol")
+})
+
+test_that("`readInitialValuesFromXLS()` ignores rows where 'Is Present' is FALSE but keeps NA", {
+  initialValues <- readInitialValuesFromXLS(
+    filePath = initialValuesXLSpath,
+    sheets = "ValidSheet"
+  )
+
+  # Kidney|A has 'Is Present' == FALSE and must be excluded
+  expect_false("Organism|Kidney|A" %in% initialValues$paths)
+  # Liver|B has empty 'Is Present' (NA) and must be kept
+  expect_true("Organism|Liver|B" %in% initialValues$paths)
+})
+
+test_that("`readInitialValuesFromXLS()` uses the first sheet when no sheet is provided", {
+  initialValues <- readInitialValuesFromXLS(filePath = initialValuesXLSpath)
+
+  # First sheet in the file is "ValidSheet"
+  expect_setequal(
+    initialValues$paths,
+    c("Organism|Liver|A", "Organism|Liver|B")
+  )
+})
+
+test_that("`readInitialValuesFromXLS()` overwrites values when a path appears in multiple sheets", {
+  initialValues <- readInitialValuesFromXLS(
+    filePath = initialValuesXLSpath,
+    sheets = c("ValidSheet", "SecondSheet")
+  )
+
+  idxA <- which(initialValues$paths == "Organism|Liver|A")
+  # SecondSheet overrides Liver|A from 0.5 to 2.5
+  expect_equal(initialValues$values[[idxA]], 2.5)
+  # The path should appear only once
+  expect_length(idxA, 1)
+})
+
+test_that("`readInitialValuesFromXLS()` returns empty structure when all molecules are absent", {
+  initialValues <- readInitialValuesFromXLS(
+    filePath = initialValuesXLSpath,
+    sheets = "AllAbsent"
+  )
+
+  # An empty result is still a valid parameter structure
+  expect_true(.validateParametersStructure(initialValues))
+  expect_length(initialValues$paths, 0)
+  expect_length(initialValues$values, 0)
+  expect_length(initialValues$units, 0)
+})
+
+test_that("`readInitialValuesFromXLS()` errors when units are missing for a present molecule", {
+  expect_error(
+    readInitialValuesFromXLS(
+      filePath = initialValuesXLSpath,
+      sheets = "MissingUnits"
+    ),
+    regexp = messages$errorMissingUnitsInInitialValues(
+      filePath = initialValuesXLSpath,
+      moleculePaths = "Organism|Liver|A"
+    ),
+    fixed = TRUE
+  )
+})
+
+test_that("`readInitialValuesFromXLS()` errors when a sheet has the wrong structure", {
+  columnNames <- c(
+    "Container Path",
+    "Molecule Name",
+    "Is Present",
+    "Value",
+    "Units",
+    "Scale Divisor",
+    "Neg. Values Allowed"
+  )
+  expect_error(
+    readInitialValuesFromXLS(
+      filePath = initialValuesXLSpath,
+      sheets = "InvalidSheet"
+    ),
+    regexp = messages$errorWrongXLSStructure(
+      filePath = initialValuesXLSpath,
+      expectedColNames = columnNames
+    ),
+    fixed = TRUE
+  )
+})
+
+test_that("`readInitialValuesFromXLS()` validates its arguments", {
+  expect_error(
+    readInitialValuesFromXLS(filePath = 123),
+    regexp = 'argument "filePath" is of type <numeric>, but expected <character>!',
+    fixed = TRUE
+  )
+  expect_error(
+    readInitialValuesFromXLS(filePath = initialValuesXLSpath, sheets = 123),
+    regexp = 'argument "sheets" is of type <numeric>, but expected <character>!',
+    fixed = TRUE
+  )
+})

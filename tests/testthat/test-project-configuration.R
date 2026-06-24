@@ -75,6 +75,34 @@ test_that("Project Configuration can be customized but throws warning if path ar
   expect_warning({
     myConfig$dataImporterConfigurationFile <- "importer_donotexist.xml"
   })
+  expect_warning({
+    myConfig$modelInitialValuesFile <- "initialvalues_donotexist.xlsx"
+  })
+})
+
+test_that("`modelInitialValuesFile` resolves to a path under the configurations folder", {
+  myConfig <- testProjectConfiguration()
+
+  expect_equal(
+    basename(myConfig$modelInitialValuesFile),
+    "ModelInitialValues.xlsx"
+  )
+  expect_equal(
+    normalizePath(dirname(myConfig$modelInitialValuesFile), mustWork = FALSE),
+    normalizePath(myConfig$configurationsFolder, mustWork = FALSE)
+  )
+})
+
+test_that("Setting `modelInitialValuesFile` sets the modified flag", {
+  myConfig <- testProjectConfiguration()
+  expect_false(myConfig$modified)
+
+  suppressWarnings(myConfig$modelInitialValuesFile <- "newInitialValues.xlsx")
+  expect_true(myConfig$modified)
+  expect_equal(
+    basename(myConfig$modelInitialValuesFile),
+    "newInitialValues.xlsx"
+  )
 })
 
 

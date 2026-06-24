@@ -29,6 +29,71 @@ test_that("`initializeSimulation()` does not fail when additionalParams is empty
   expect_true(isOfType(simulationResults, "SimulationResults"))
 })
 
+test_that("`initializeSimulation()` applies additional initial conditions", {
+  simulation <- loadSimulation(system.file(
+    "extdata",
+    "simple.pkml",
+    package = "ospsuite"
+  ))
+
+  moleculePath <- "Organism|Liver|A"
+  initialConditions <- list(
+    paths = moleculePath,
+    values = 5,
+    units = "µmol"
+  )
+
+  initializeSimulation(
+    simulation,
+    additionalInitialConditions = initialConditions
+  )
+
+  molecule <- ospsuite::getAllMoleculesMatching(moleculePath, simulation)[[1]]
+  expect_equal(molecule$value, 5)
+})
+
+test_that("`initializeSimulation()` does not fail when additionalInitialConditions is empty", {
+  simulation <- loadSimulation(system.file(
+    "extdata",
+    "simple.pkml",
+    package = "ospsuite"
+  ))
+
+  emptyInitialConditions <- list(
+    paths = character(0),
+    values = numeric(0),
+    units = character(0)
+  )
+
+  initializeSimulation(
+    simulation,
+    additionalInitialConditions = emptyInitialConditions
+  )
+  simulationResults <- runSimulations(simulation)
+  expect_true(isOfType(simulationResults, "SimulationResults"))
+})
+
+test_that("`initializeSimulation()` errors on malformed additionalInitialConditions", {
+  simulation <- loadSimulation(system.file(
+    "extdata",
+    "simple.pkml",
+    package = "ospsuite"
+  ))
+
+  expect_error(
+    initializeSimulation(
+      simulation,
+      # missing the required 'units' element
+      additionalInitialConditions = list(
+        paths = "Organism|Liver|A",
+        values = 5
+      )
+    ),
+    regexp = messages$wrongParametersStructure("additionalInitialConditions"),
+    fixed = TRUE
+  )
+})
+
 
 test_that("`compareSimulations()` produces no differences with identical simulations", {
   simPath <- system.file("extdata", "simple.pkml", package = "ospsuite")

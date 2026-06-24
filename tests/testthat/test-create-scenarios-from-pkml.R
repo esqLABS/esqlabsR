@@ -1294,3 +1294,54 @@ test_that("Deprecated setApplications function works", {
     "setApplications.*deprecated"
   )
 })
+
+test_that("overwriteFormulasInSS defaults to FALSE", {
+  temp_project <- with_temp_project()
+  projectConfiguration <- temp_project$config
+  pkmlPath <- file.path(temp_project$config$modelFolder, "Aciclovir.pkml")
+
+  scenarioConfigurations <- createScenarioConfigurationsFromPKML(
+    pkmlFilePaths = pkmlPath,
+    projectConfiguration = projectConfiguration,
+    scenarioNames = "Scenario1"
+  )
+
+  expect_false(scenarioConfigurations[["Scenario1"]]$overwriteFormulasInSS)
+})
+
+test_that("overwriteFormulasInSS is recycled across scenarios (steady-state on)", {
+  temp_project <- with_temp_project()
+  projectConfiguration <- temp_project$config
+  pkmlPath <- file.path(temp_project$config$modelFolder, "Aciclovir.pkml")
+
+  # overwriteFormulasInSS is only meaningful (and only applied) for scenarios
+  # with steady-state enabled.
+  scenarioConfigurations <- createScenarioConfigurationsFromPKML(
+    pkmlFilePaths = pkmlPath,
+    projectConfiguration = projectConfiguration,
+    scenarioNames = c("S1", "S2"),
+    steadyState = TRUE,
+    overwriteFormulasInSS = TRUE
+  )
+
+  expect_true(scenarioConfigurations[["S1"]]$overwriteFormulasInSS)
+  expect_true(scenarioConfigurations[["S2"]]$overwriteFormulasInSS)
+})
+
+test_that("overwriteFormulasInSS accepts a per-scenario vector (steady-state on)", {
+  temp_project <- with_temp_project()
+  projectConfiguration <- temp_project$config
+  pkmlPath <- file.path(temp_project$config$modelFolder, "Aciclovir.pkml")
+
+  scenarioConfigurations <- createScenarioConfigurationsFromPKML(
+    pkmlFilePaths = pkmlPath,
+    projectConfiguration = projectConfiguration,
+    scenarioNames = c("S1", "S2", "S3"),
+    steadyState = TRUE,
+    overwriteFormulasInSS = c(FALSE, TRUE, FALSE)
+  )
+
+  expect_false(scenarioConfigurations[["S1"]]$overwriteFormulasInSS)
+  expect_true(scenarioConfigurations[["S2"]]$overwriteFormulasInSS)
+  expect_false(scenarioConfigurations[["S3"]]$overwriteFormulasInSS)
+})
