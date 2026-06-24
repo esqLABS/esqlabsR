@@ -29,6 +29,10 @@ with model parameterization.}
     \item{\code{modelParamsFile}}{Name of the excel file with global model
 parameterization. Must be located in the "configurationsFolder".}
 
+    \item{\code{modelInitialValuesFile}}{Name of the excel file with initial
+conditions (molecule start values) for the model.
+Must be located in the "configurationsFolder".}
+
     \item{\code{individualsFile}}{Name of the excel file with individual-specific
 model parameterization.
 Must be located in the "configurationsFolder".}

@@ -58,8 +58,17 @@ defined in the column \code{TimeUnit}.}
     \item{\code{steadyStateTime}}{Time in minutes to simulate if simulating
 steady-state. May be \code{NULL}.}
 
+    \item{\code{overwriteFormulasInSS}}{Boolean representing whether formula-defined
+parameters will be overwritten with their steady-state values.
+When \code{TRUE}, corresponds to \code{ignoreIfFormula = FALSE} in
+\code{ospsuite::getSteadyState} (formulas are overwritten). Default is
+\code{FALSE} (formula-defined parameters are kept unchanged).}
+
     \item{\code{paramSheets}}{A named list. Names of the sheets from the
 parameters-excel file that will be applied to the simulation}
+
+    \item{\code{initialValuesSheets}}{A named list. Names of the sheets from the
+model initial values excel file that will be applied to the simulation.}
 
     \item{\code{simulationType}}{Type of the simulation - "Individual" or
 "Population". If "Population", population characteristics are created
@@ -77,6 +86,8 @@ scenarios. Read-only}
     \item \href{#method-ScenarioConfiguration-initialize}{\code{ScenarioConfiguration$new()}}
     \item \href{#method-ScenarioConfiguration-addParamSheets}{\code{ScenarioConfiguration$addParamSheets()}}
     \item \href{#method-ScenarioConfiguration-removeParamSheets}{\code{ScenarioConfiguration$removeParamSheets()}}
+    \item \href{#method-ScenarioConfiguration-addInitialValuesSheets}{\code{ScenarioConfiguration$addInitialValuesSheets()}}
+    \item \href{#method-ScenarioConfiguration-removeInitialValuesSheets}{\code{ScenarioConfiguration$removeInitialValuesSheets()}}
     \item \href{#method-ScenarioConfiguration-print}{\code{ScenarioConfiguration$print()}}
     \item \href{#method-ScenarioConfiguration-clone}{\code{ScenarioConfiguration$clone()}}
   }
@@ -132,6 +143,47 @@ the list of sheets \code{paramSheets}
   \subsection{Usage}{
     \if{html}{\out{<div class="r">}}
     \preformatted{ScenarioConfiguration$removeParamSheets(sheetNames = NULL)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{sheetNames}}{A name or a list of names of the excel sheet. If \code{NULL}
+(default), all sheets are removed.}
+    }
+    \if{html}{\out{</div>}}
+  }
+}
+
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-ScenarioConfiguration-addInitialValuesSheets"></a>}}
+\if{latex}{\out{\hypertarget{method-ScenarioConfiguration-addInitialValuesSheets}{}}}
+\subsection{\code{ScenarioConfiguration$addInitialValuesSheets()}}{
+  Add the names of sheets in the model initial values
+excel-file that will be applied to the simulation
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{ScenarioConfiguration$addInitialValuesSheets(sheetNames)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{sheetNames}}{A name or a list of names of the excel sheet}
+    }
+    \if{html}{\out{</div>}}
+  }
+}
+
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-ScenarioConfiguration-removeInitialValuesSheets"></a>}}
+\if{latex}{\out{\hypertarget{method-ScenarioConfiguration-removeInitialValuesSheets}{}}}
+\subsection{\code{ScenarioConfiguration$removeInitialValuesSheets()}}{
+  Remove the names of sheets in the model initial values
+excel-file from the list of sheets \code{initialValuesSheets}
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{ScenarioConfiguration$removeInitialValuesSheets(sheetNames = NULL)}
     \if{html}{\out{</div>}}
   }
   \subsection{Arguments}{

@@ -29,10 +29,10 @@ found in the Excel file, an error is thrown.
 
 The function expects the Excel file to have a "Scenarios" sheet with the
 following columns: \code{Scenario_name}, \code{IndividualId}, \code{PopulationId},
-\code{ReadPopulationFromCSV}, \code{ModelParameterSheets}, \code{ApplicationProtocol},
-\code{SimulationTime}, \code{SimulationTimeUnit}, \code{SteadyState}, \code{SteadyStateTime},
-\code{SteadyStateTimeUnit}, \code{OverwriteFormulasInSS}, \code{ModelFile},
-\code{OutputPathsIds}. It also expects an
+\code{ReadPopulationFromCSV}, \code{ModelParameterSheets}, \code{InitialValuesSet},
+\code{ApplicationProtocol}, \code{SimulationTime}, \code{SimulationTimeUnit},
+\code{SteadyState}, \code{SteadyStateTime}, \code{SteadyStateTimeUnit},
+\code{OverwriteFormulasInSS}, \code{ModelFile}, \code{OutputPathsIds}. It also expects an
 "OutputPaths" sheet with \code{OutputPathId} and \code{OutputPath} columns.
 }
 \examples{

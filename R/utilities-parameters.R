@@ -520,7 +520,8 @@ readInitialValuesFromXLS <- function(filePath, sheets = NULL) {
     pathsValuesVector[fullPaths] <- as.numeric(data[["Value"]])
 
     unitsRaw <- as.character(data[["Units"]])
-    missingUnits <- is.na(data[["Units"]]) | trimws(as.character(data[["Units"]])) == ""
+    missingUnits <- is.na(data[["Units"]]) |
+      trimws(as.character(data[["Units"]])) == ""
     if (any(missingUnits)) {
       stop(messages$errorMissingUnitsInInitialValues(
         filePath = filePath,

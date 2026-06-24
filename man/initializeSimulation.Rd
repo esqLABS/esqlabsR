@@ -8,6 +8,7 @@ initializeSimulation(
   simulation,
   individualCharacteristics = NULL,
   additionalParams = NULL,
+  additionalInitialConditions = NULL,
   stopIfParameterNotFound = TRUE
 )
 }
@@ -19,6 +20,11 @@ describing an individual.}
 
 \item{additionalParams}{Optional named list with lists 'paths', 'values', and
 'units'.}
+
+\item{additionalInitialConditions}{Optional named list with lists 'paths',
+'values', and 'units'. Initial conditions (molecule start values) to apply
+after setting parameters. Values are applied using
+\code{ospsuite::setQuantityValuesByPath}.}
 
 \item{stopIfParameterNotFound}{Logical. If \code{TRUE} (default), an error is
 thrown if any of the \code{additionalParams} does not exist. If \code{FALSE},
