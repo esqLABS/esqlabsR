@@ -197,8 +197,7 @@ PITaskConfiguration <- R6::R6Class(
   )
 )
 
-#' @method print piParameters_view
-#' @rawNamespace S3method(print, piParameters_view)
+#' @exportS3Method print piParameters_view
 print.piParameters_view <- function(x, ...) {
   ospsuite.utils::ospPrintHeader("PI Parameters", level = 2)
 
@@ -229,8 +228,7 @@ print.piParameters_view <- function(x, ...) {
   invisible(x)
 }
 
-#' @method print piOutputMappings_view
-#' @rawNamespace S3method(print, piOutputMappings_view)
+#' @exportS3Method print piOutputMappings_view
 print.piOutputMappings_view <- function(x, ...) {
   ospsuite.utils::ospPrintHeader("PI Output Mappings", level = 2)
 
@@ -257,8 +255,7 @@ print.piOutputMappings_view <- function(x, ...) {
   invisible(x)
 }
 
-#' @method print piConfiguration_view
-#' @rawNamespace S3method(print, piConfiguration_view)
+#' @exportS3Method print piConfiguration_view
 print.piConfiguration_view <- function(x, ...) {
   ospsuite.utils::ospPrintHeader("PI Configuration", level = 2)
 
