@@ -1,3 +1,12 @@
+# sensitivityCalculation errors on absolute variation with zero initial value
+
+    Code
+      sensitivityCalculation(simulation = localSim, outputPaths = outputPaths,
+        parameterPaths = zeroParam, variationRange = c(1, 2), variationType = "absolute")
+    Condition
+      Error in `.transformVariationRange()`:
+      ! `variationType = "absolute"` requires a non-zero initial value for every parameter, but the following parameter(s) have an initial value of 0: "Aciclovir|Lipophilicity". Use `variationType = "relative"` or provide parameters with non-zero initial values.
+
 # sensitivityCalculation PK parameters tidy dataframe is as expected
 
     Code

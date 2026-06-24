@@ -39,7 +39,9 @@ c(0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1, 2, 3, 4, 5, 6, 7, 8, 9,
 \code{variationRange} are applied as \code{"absolute"} or \code{"relative"} scaling. When
 set to \code{"absolute"}, the values are interpreted as absolute parameter
 values. When set to \code{"relative"}, the values are interpreted as scaling
-factors relative to the initial parameter values. Default is \code{"relative"}.}
+factors relative to the initial parameter values. Default is \code{"relative"}.
+When \code{"absolute"}, every parameter must have a non-zero initial value; an
+error is thrown otherwise.}
 
 \item{pkParameters}{A vector of names of PK parameters for which the
 sensitivities will be calculated. For a full set of available standard PK
@@ -107,9 +109,9 @@ sensitivityCalculation(
 
 }
 \seealso{
-Other sensitivity-calculation: 
-\code{\link{sensitivitySpiderPlot}()},
-\code{\link{sensitivityTimeProfiles}()},
-\code{\link{sensitivityTornadoPlot}()}
+Other sensitivity-calculation:
+\code{\link[=sensitivitySpiderPlot]{sensitivitySpiderPlot()}},
+\code{\link[=sensitivityTimeProfiles]{sensitivityTimeProfiles()}},
+\code{\link[=sensitivityTornadoPlot]{sensitivityTornadoPlot()}}
 }
 \concept{sensitivity-calculation}

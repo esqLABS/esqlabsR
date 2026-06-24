@@ -636,7 +636,6 @@ test_that("When custom DataCombined is passed, it is used instead of the one def
 
   expect_no_error(plots)
 
-  skip_on_os("mac")
   vdiffr::expect_doppelganger(title = "firstPlot", plots[[1]])
   vdiffr::expect_doppelganger(title = "secondPlot", plots[[2]])
 })

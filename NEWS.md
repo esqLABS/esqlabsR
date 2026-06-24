@@ -1,5 +1,17 @@
 # esqlabsR (development version)
 
+## Minor improvements and bug fixes
+
+- `isTableFormulasEqual()` now compares every point pair of the two table formulas instead of only the first, and treats two empty tables as equal (previously returned `NULL`) (#1056).
+- `loadSensitivityCalculation()` no longer rejects valid saved results that use per-parameter variation ranges, absolute variation, or that dropped failed runs; the integrity check now counts the actually saved result files (#1056).
+- `sensitivityCalculation()` now restores the simulation's original output selections after the analysis, including when an error occurs, so the supplied simulation is left unchanged (#1056).
+- `sensitivityCalculation()` now errors clearly when `variationType = "absolute"` is used with a parameter whose initial value is 0, instead of silently producing invalid scaling factors (#1056).
+- `sensitivityCalculation()` now aligns baseline values by output path when computing percent change and sensitivity, fixing possible misalignment with multiple output paths (#1056).
+- `sensitivityCalculation()` no longer errors when all runs for a parameter fail; it now warns and omits that parameter from the results (#1056).
+- `sensitivityTornadoPlot()` now matches the `parameterFactor` and its reciprocal against the analysis results with a numerical tolerance, so user supplied reciprocal factors are no longer rejected due to floating point representation (#1056).
+
+# esqlabsR 5.7.0
+
 ## Breaking changes
 
 - Individual parameter sets in `Individuals.xlsx` must now be specified
@@ -18,6 +30,10 @@
 - Added support for defining initial conditions (molecule start values) in scenarios. A new column `InitialValuesSet` can be added to `Scenarios.xlsx` referencing sheets in a new `ModelInitialValues.xlsx` file. The file uses columns `Container Path`, `Molecule Name`, `Is Present`, `Value`, `Units`, `Scale Divisor`, and `Neg. Values Allowed`. Values are applied during simulation initialization using `ospsuite::setQuantityValuesByPath`. A new property `modelInitialValuesFile` was added to `ProjectConfiguration`. The new file is included in project snapshots (`snapshotProjectConfiguration()` / `restoreProjectConfiguration()`). The new `readInitialValuesFromXLS()` function reads initial values from the Excel file.
 - Added `overwriteFormulasInSS` property to `ScenarioConfiguration`. When set to `TRUE`, formula-defined parameters will be overwritten with their steady-state values (corresponds to `ignoreIfFormula = FALSE` in `ospsuite::getSteadyState()`). Default is `FALSE` (formula-defined parameters are kept, i.e. `ignoreIfFormula = TRUE`). The property can be set via a new `OverwriteFormulasInSS` column in the `Scenarios` sheet of `Scenarios.xlsx` (placed after `SteadyStateTimeUnit`). Also available as a parameter in `createScenarioConfigurationsFromPKML()`.
 - Added Excel-based parameter identification (PI) workflow: `readPITaskConfigurationFromExcel()`, `createPITasks()`, and `runPI()` enable defining and running PI tasks from `ParameterIdentification.xlsx`. Supports multi-scenario fitting, parameter grouping, residual scaling, and optional confidence interval estimation. See `vignette("pi-workflow")` (\#928).
+
+## Breaking changes
+
+- Bumped minimum required `ospsuite` version to 12.4.2; earlier versions fail to load data correctly (#1000).
 
 ## Minor improvements and bug fixes
 
