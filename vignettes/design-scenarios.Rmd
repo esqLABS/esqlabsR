@@ -80,9 +80,10 @@ columns:
 -   **Is Present**: A logical value (`TRUE`/`FALSE`) indicating whether
     the molecule is present. Rows where `Is Present` is `FALSE` are
     skipped.
--   **Value**: The start value.
--   **Units**: The unit of the start value (e.g., `µmol`). If empty,
-    the value is assumed to be in base units.
+-   **Value**: The start value. Mandatory for present molecules; a
+    missing or non-numeric value raises an error.
+-   **Units**: The unit of the start value (e.g., `µmol`). Mandatory —
+    an empty unit for a present molecule raises an error.
 -   **Scale Divisor**: The scale divisor (for reference; not currently
     applied).
 -   **Neg. Values Allowed**: Logical indicating if negative values are
@@ -405,9 +406,10 @@ by a `,`. Each sheet must contain `Container Path`, `Molecule Name`,
 applied to the model after all parameter values have been set, overriding
 the start values of molecules defined in the `.pkml` file. The full path
 to a molecule is constructed as `Container Path|Molecule Name`. Rows
-where **Is Present** is `FALSE` are skipped. If **Units** is empty, the
-value is assumed to be in base units. **InitialValuesSet** may be empty
-if no initial conditions need to be overridden.
+where **Is Present** is `FALSE` are skipped. For every present molecule,
+both **Value** and **Units** are mandatory; a missing value or an empty
+unit raises an error. **InitialValuesSet** may be empty if no initial
+conditions need to be overridden.
 
 #### ApplicationProtocol
 
@@ -578,8 +580,8 @@ sheet must have the following columns:
 | `Container Path` | Path to the container holding the molecule (e.g., `Organism|Liver|Intracellular`) |
 | `Molecule Name` | Name of the molecule (e.g., `DrugA`) |
 | `Is Present` | Logical (`TRUE`/`FALSE`). Rows with `FALSE` are skipped |
-| `Value` | Start value of the molecule |
-| `Units` | Unit of the start value (e.g., `µmol`). Empty means base units |
+| `Value` | Start value of the molecule. Mandatory; missing/non-numeric values raise an error |
+| `Units` | Unit of the start value (e.g., `µmol`). Mandatory; empty units for a present molecule raise an error |
 | `Scale Divisor` | Scale divisor (for reference) |
 | `Neg. Values Allowed` | Logical indicating if negative values are allowed (for reference) |
 

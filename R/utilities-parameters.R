@@ -504,30 +504,57 @@ readInitialValuesFromXLS <- function(filePath, sheets = NULL) {
       ))
     }
 
-    # Only include rows where Is Present is not explicitly FALSE
+    fullPathsAll <- paste(
+      data[["Container Path"]],
+      data[["Molecule Name"]],
+      sep = "|"
+    )
+
+    # "Is Present" must be a logical value or empty. An empty/NA cell is
+    # treated as present. Any other value (e.g. "yes", "1") is rejected rather
+    # than silently coerced to NA (which would otherwise be kept as present).
     isPresentCol <- data[["Is Present"]]
-    data <- data[is.na(isPresentCol) | as.logical(isPresentCol), ]
+    isPresentChr <- trimws(as.character(isPresentCol))
+    isBlank <- is.na(isPresentCol) | isPresentChr == ""
+    isPresent <- as.logical(isPresentChr)
+    invalidIsPresent <- !isBlank & is.na(isPresent)
+    if (any(invalidIsPresent)) {
+      stop(messages$errorInvalidIsPresentInInitialValues(
+        filePath = filePath,
+        moleculePaths = fullPathsAll[invalidIsPresent]
+      ))
+    }
+
+    # Only include rows where Is Present is not explicitly FALSE
+    keepRows <- isBlank | isPresent
+    data <- data[keepRows, ]
+    fullPaths <- fullPathsAll[keepRows]
 
     if (nrow(data) == 0) {
       next
     }
 
-    fullPaths <- paste(
-      data[["Container Path"]],
-      data[["Molecule Name"]],
-      sep = "|"
-    )
-    pathsValuesVector[fullPaths] <- as.numeric(data[["Value"]])
+    # Validate values and units before mutating the accumulators, so a failure
+    # leaves no partial state behind.
+    parsedValues <- suppressWarnings(as.numeric(data[["Value"]]))
+    missingValues <- is.na(parsedValues)
+    if (any(missingValues)) {
+      stop(messages$errorMissingValuesInInitialValues(
+        filePath = filePath,
+        moleculePaths = fullPaths[missingValues]
+      ))
+    }
 
     unitsRaw <- as.character(data[["Units"]])
-    missingUnits <- is.na(data[["Units"]]) |
-      trimws(as.character(data[["Units"]])) == ""
+    missingUnits <- is.na(data[["Units"]]) | trimws(unitsRaw) == ""
     if (any(missingUnits)) {
       stop(messages$errorMissingUnitsInInitialValues(
         filePath = filePath,
         moleculePaths = fullPaths[missingUnits]
       ))
     }
+
+    pathsValuesVector[fullPaths] <- parsedValues
     pathsUnitsVector[fullPaths] <- unitsRaw
   }
 

@@ -558,6 +558,34 @@ test_that("`readInitialValuesFromXLS()` errors when units are missing for a pres
   )
 })
 
+test_that("`readInitialValuesFromXLS()` errors when a value is missing for a present molecule", {
+  expect_error(
+    readInitialValuesFromXLS(
+      filePath = initialValuesXLSpath,
+      sheets = "MissingValue"
+    ),
+    regexp = messages$errorMissingValuesInInitialValues(
+      filePath = initialValuesXLSpath,
+      moleculePaths = "Organism|Liver|A"
+    ),
+    fixed = TRUE
+  )
+})
+
+test_that("`readInitialValuesFromXLS()` errors on a non-logical 'Is Present' value", {
+  expect_error(
+    readInitialValuesFromXLS(
+      filePath = initialValuesXLSpath,
+      sheets = "BadIsPresent"
+    ),
+    regexp = messages$errorInvalidIsPresentInInitialValues(
+      filePath = initialValuesXLSpath,
+      moleculePaths = "Organism|Liver|A"
+    ),
+    fixed = TRUE
+  )
+})
+
 test_that("`readInitialValuesFromXLS()` errors when a sheet has the wrong structure", {
   columnNames <- c(
     "Container Path",

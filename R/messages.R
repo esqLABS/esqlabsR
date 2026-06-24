@@ -50,6 +50,18 @@ messages$errorMissingUnitsInInitialValues <- function(filePath, moleculePaths) {
   )
 }
 
+messages$errorMissingValuesInInitialValues <- function(filePath, moleculePaths) {
+  cliFormat(
+    "Missing or non-numeric values in initial values file {.file {filePath}} for molecule(s): {.val {paste(moleculePaths, collapse = ', ')}}. A numeric value must be specified for all present molecules."
+  )
+}
+
+messages$errorInvalidIsPresentInInitialValues <- function(filePath, moleculePaths) {
+  cliFormat(
+    "Invalid 'Is Present' values in initial values file {.file {filePath}} for molecule(s): {.val {paste(moleculePaths, collapse = ', ')}}. 'Is Present' must be a logical value (TRUE/FALSE) or empty."
+  )
+}
+
 messages$wrongParametersStructure <- function(argumentName) {
   cliFormat(
     "Argument {.arg {argumentName}} has wrong structure. Expected is a named list with three vectors `paths` 

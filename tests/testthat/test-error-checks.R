@@ -72,3 +72,15 @@ test_that("`.validateParametersStructure()` rejects non-character units", {
     fixed = TRUE
   )
 })
+
+test_that("`.validateParametersStructure()` rejects vectors of unequal length", {
+  expect_error(
+    .validateParametersStructure(list(
+      paths = c("Organism|A", "Organism|B"),
+      values = c(1, 2),
+      units = "µmol"
+    )),
+    regexp = messages$wrongParametersStructure(argumentName = NULL),
+    fixed = TRUE
+  )
+})

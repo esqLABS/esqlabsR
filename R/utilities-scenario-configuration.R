@@ -152,14 +152,8 @@ readScenarioConfigurationFromExcel <- function(
     initialValuesSet <- data$InitialValuesSet
 
     if (!is.na(initialValuesSet)) {
-      # The values can be enclosed in "" in case sheet names contain a ','.
-      # Split the input string by ',' but do not split within ""
-      initialValuesSet <- trimws(scan(
-        text = as.character(initialValuesSet),
-        what = "character",
-        sep = ",",
-        quiet = TRUE
-      ))
+      # Split comma-separated initial values sheets
+      initialValuesSet <- .splitCommaString(initialValuesSet)
       scenarioConfiguration$addInitialValuesSheets(initialValuesSet)
     }
 

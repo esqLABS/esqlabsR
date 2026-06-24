@@ -35,6 +35,16 @@
     stop(messages$wrongParametersStructure(argumentName = argumentName))
   }
 
+  # All three vectors must have the same length
+  vectorLengths <- c(
+    length(parameterStructure$paths),
+    length(parameterStructure$values),
+    length(parameterStructure$units)
+  )
+  if (length(unique(vectorLengths)) != 1L) {
+    stop(messages$wrongParametersStructure(argumentName = argumentName))
+  }
+
   return(invisible(TRUE))
 }
 
