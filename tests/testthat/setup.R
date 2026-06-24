@@ -14,4 +14,3 @@ withr::local_envvar(
 # specifically assert a `lifecycle_warning_deprecated` use
 # `withr::local_options(lifecycle_verbosity = "warning")` to opt back in.
 options(lifecycle_verbosity = "quiet")
-
