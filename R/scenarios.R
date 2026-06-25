@@ -618,7 +618,6 @@ addScenario <- function(
   )
 
   project$scenarios[[scenarioName]] <- sc
-  project$.markModified()
 
   invisible(project)
 }
@@ -644,6 +643,5 @@ removeScenario <- function(project, scenarioName) {
     return(invisible(project))
   }
   project$scenarios[[scenarioName]] <- NULL
-  project$.markModified()
   invisible(project)
 }

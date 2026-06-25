@@ -830,7 +830,6 @@ addPITask <- function(
     configuration = configuration
   )
   project$parameterIdentification[[id]] <- task
-  project$.markModified()
   invisible(project)
 }
 
@@ -853,7 +852,6 @@ removePITask <- function(project, id) {
     return(invisible(project))
   }
   project$parameterIdentification[[id]] <- NULL
-  project$.markModified()
   invisible(project)
 }
 
@@ -912,7 +910,6 @@ addPIParameter <- function(
   )
   task$parameters[[length(task$parameters) + 1L]] <- newParam
   project$parameterIdentification[[taskId]] <- task
-  project$.markModified()
   invisible(project)
 }
 
@@ -951,7 +948,6 @@ removePIParameter <- function(project, taskId, id) {
   } else {
     project$parameterIdentification[[taskId]] <- task
   }
-  project$.markModified()
   invisible(project)
 }
 
@@ -1020,7 +1016,6 @@ addPIOutputMapping <- function(
   )
   task$outputMappings[[length(task$outputMappings) + 1L]] <- newMapping
   project$parameterIdentification[[taskId]] <- task
-  project$.markModified()
   invisible(project)
 }
 
@@ -1059,6 +1054,5 @@ removePIOutputMapping <- function(project, taskId, id) {
   } else {
     project$parameterIdentification[[taskId]] <- task
   }
-  project$.markModified()
   invisible(project)
 }
