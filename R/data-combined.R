@@ -70,7 +70,8 @@ createDataCombined <- function(
       dfDataCombined = dfDataCombined,
       simulatedScenarios = simulatedScenarios,
       observedData = observedData,
-      stopIfNotFound = stopIfNotFound
+      stopIfNotFound = stopIfNotFound,
+      call = rlang::current_env()
     )
   } else {
     dataCombinedList <- list()
@@ -166,7 +167,8 @@ createDataCombinedFromExcel <- function(...) {
   dfDataCombined,
   simulatedScenarios,
   observedData,
-  stopIfNotFound
+  stopIfNotFound,
+  call = rlang::caller_env()
 ) {
   dfDataCombined <- .validateDataCombinedFromExcel(
     dfDataCombined,
@@ -219,7 +221,7 @@ createDataCombinedFromExcel <- function(...) {
             )
           }
           if (stopIfNotFound) {
-            cli::cli_abort(msg)
+            cli::cli_abort(msg, call = call)
           }
           cli::cli_warn(msg)
           skippedLabels[[length(skippedLabels) + 1L]] <<- list(

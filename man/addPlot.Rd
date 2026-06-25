@@ -12,7 +12,7 @@ addPlot(project, plotId, dataCombinedName, plotType, ...)
 \item{plotId}{Character scalar. Unique plot identifier.}
 
 \item{dataCombinedName}{Character scalar. Must reference an existing
-DataCombined name on the project. Stored in the \code{DataCombinedName}
+DataCombined name on the project. Stored in the \code{dataCombinedName}
 column to match the JSON schema.}
 
 \item{plotType}{Character scalar. One of \code{"individual"},

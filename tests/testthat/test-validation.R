@@ -355,7 +355,7 @@ test_that(".validatePlots flags missing scenario in dataCombined", {
   expect_true(any(grepl("missing 'scenario'", msgs)))
 })
 
-test_that(".validatePlots flags duplicate plotIds and unknown DataCombinedName", {
+test_that(".validatePlots flags duplicate plotIds and unknown dataCombinedName", {
   plots <- list(
     dataCombined = list(DC1 = list(simulated = list(list(scenario = "S1")))),
     plotConfiguration = data.frame(
@@ -369,7 +369,7 @@ test_that(".validatePlots flags duplicate plotIds and unknown DataCombinedName",
   result <- esqlabsR:::.validatePlots(plots)
   msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
   expect_true(any(grepl("Duplicate plotId", msgs)))
-  expect_true(any(grepl("unknown DataCombinedName", msgs)))
+  expect_true(any(grepl("unknown dataCombinedName", msgs)))
 })
 
 # Cross-references ----

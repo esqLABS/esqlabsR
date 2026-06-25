@@ -204,7 +204,7 @@ messages$nrOfColorsShouldBePositive <- function(nrOfColors) {
 messages$PlotIDsMustBeUnique <- function(duplicated_plotIDs = "") {
   duplicates <- paste(duplicated_plotIDs, collapse = ", ")
   cliFormat(
-    "PlotID must be unique in PlotConfiguration, but the following plotIDs are duplicated: {.val {duplicates}}"
+    "plotId must be unique in plotConfiguration, but the following plotIds are duplicated: {.val {duplicates}}"
   )
 }
 
@@ -370,14 +370,14 @@ messages$warningLogScaleWithZeroLimit <- function(
 
 messages$errorInvalidPlotID <- function(plotIDs) {
   cliFormat(
-    "The plots with plotIDs {.val {paste(plotIDs, collapse = ',\n')}} are used in the sheet
+    "The plots with plotIds {.val {paste(plotIDs, collapse = ',\n')}} are used in the sheet
     {.field plotGrids} but are not defined in the sheet {.var plotConfiguration}."
   )
 }
 
 messages$missingPlotIDs <- function() {
   cliFormat(
-    "Missing values found in mandatory column {.val plotIDs} of sheet {.field plotGrids}. Fill in values to proceed."
+    "Missing values found in mandatory column {.val plotIds} of sheet {.field plotGrids}. Fill in values to proceed."
   )
 }
 
@@ -407,7 +407,7 @@ messages$missingScenarioName <- function() {
 
 messages$missingDataCombinedName <- function() {
   cliFormat(
-    "Missing values found in mandatory column {.val DataCombinedName} of sheet {.var plotConfiguration}. Fill in values to proceed."
+    "Missing values found in mandatory column {.val dataCombinedName} of sheet {.var plotConfiguration}. Fill in values to proceed."
   )
 }
 

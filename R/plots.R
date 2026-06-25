@@ -172,7 +172,7 @@
         result$add_critical_error(
           "Invalid Reference",
           paste0(
-            "plotConfiguration references unknown DataCombinedName: ",
+            "plotConfiguration references unknown dataCombinedName: ",
             paste(invalidDataCombinedRefs, collapse = ", ")
           )
         )
@@ -292,10 +292,7 @@
 #   plotConfiguration fields: the JSON stores them as comma-separated
 #   strings, the parser keeps them as strings, and the plot dispatchers
 #   re-split them with `strsplit(x, ",")`. A bare vector would instead
-#   recycle into one row per element under `as.data.frame()`, and a
-#   list-column would not `bind_rows()` with the parser's string columns.
-# - A list is wrapped in `I(list(...))` so it survives as a single
-#   list-column cell rather than being unwrapped by `as.data.frame()`.
+#   recycle into one row per element under `as.data.frame()`.
 #
 # @keywords internal
 # @noRd
@@ -304,9 +301,6 @@
   lapply(dots, function(v) {
     if (is.null(v)) {
       return(NA)
-    }
-    if (is.list(v)) {
-      return(I(list(v)))
     }
     if (length(v) > 1L) {
       return(paste(v, collapse = ", "))
