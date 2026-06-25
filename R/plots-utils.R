@@ -434,4 +434,3 @@ createEsqlabsPlotGridConfiguration <- function() {
 
   return(plotConfigurationOptions[names])
 }
-

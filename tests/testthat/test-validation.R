@@ -328,6 +328,19 @@ test_that(".validateParameterSets flags empty paths in a real model set", {
   expect_true(any(grepl("empty parameter paths", msgs)))
 })
 
+test_that(".validateParameterSets flags empty containerPath with valid parameterName", {
+  project <- loadProject(testthat::test_path("data/TestProject/Project.json"))
+  project$modelParameterSets[["Global"]] <- list(
+    list(containerPath = "", parameterName = "BMI", value = 1, units = NULL)
+  )
+  result <- esqlabsR:::.validateParameterSets(
+    project$modelParameterSets,
+    "modelParameterSets"
+  )
+  msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
+  expect_true(any(grepl("empty parameter paths", msgs)))
+})
+
 test_that(".validateParameterSets flags non-numeric values in a real set", {
   project <- loadProject(testthat::test_path("data/TestProject/Project.json"))
   project$modelParameterSets[["Global"]] <- list(
