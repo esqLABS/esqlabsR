@@ -634,11 +634,31 @@ print.PITask <- function(x, ...) {
   if (!is.null(cfg$printEvaluationFeedback)) {
     piConfig$printEvaluationFeedback <- isTRUE(cfg$printEvaluationFeedback)
   }
-  if (!is.null(cfg$algorithmOptions)) {
-    piConfig$algorithmOptions <- cfg$algorithmOptions
+  # Merge user-supplied algorithmOptions on top of per-algorithm defaults so a
+  # partial block still gets all remaining defaults filled in.
+  algDefaults <- if (!is.null(cfg$algorithm)) {
+    ospsuite.parameteridentification::AlgorithmDefaults[[cfg$algorithm]]
+  } else {
+    NULL
   }
-  if (!is.null(cfg$ciOptions)) {
-    piConfig$ciOptions <- cfg$ciOptions
+  if (!is.null(algDefaults) || !is.null(cfg$algorithmOptions)) {
+    piConfig$algorithmOptions <- modifyList(
+      algDefaults %||% list(),
+      cfg$algorithmOptions %||% list()
+    )
+  }
+
+  # Merge user-supplied ciOptions on top of per-method defaults the same way.
+  ciDefaults <- if (!is.null(cfg$ciMethod)) {
+    ospsuite.parameteridentification::CIDefaults[[cfg$ciMethod]]
+  } else {
+    NULL
+  }
+  if (!is.null(ciDefaults) || !is.null(cfg$ciOptions)) {
+    piConfig$ciOptions <- modifyList(
+      ciDefaults %||% list(),
+      cfg$ciOptions %||% list()
+    )
   }
 
   ofo <- cfg$objectiveFunction

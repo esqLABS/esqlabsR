@@ -2121,6 +2121,41 @@ test_that(".buildPIConfiguration() maps type to objectiveFunctionType and builds
   expect_false(piConfig$simulationRunOptions$checkForNegativeValues)
 })
 
+test_that(".buildPIConfiguration() merges partial algorithmOptions and ciOptions with per-algorithm defaults", {
+  skip_if_not_installed("ospsuite.parameteridentification")
+  cfg <- list(
+    algorithm = "BOBYQA",
+    algorithmOptions = list(maxeval = 500L),
+    ciMethod = "PL",
+    ciOptions = list(confLevel = 0.9)
+  )
+  piConfig <- esqlabsR:::.buildPIConfiguration(cfg)
+  # User-supplied value overrides the default.
+  expect_identical(piConfig$algorithmOptions$maxeval, 500L)
+  # Remaining BOBYQA defaults are still filled in.
+  expect_identical(
+    piConfig$algorithmOptions$xtol_rel,
+    ospsuite.parameteridentification::AlgorithmDefaults$BOBYQA$xtol_rel
+  )
+  # User-supplied ciOptions value overrides the default.
+  expect_identical(piConfig$ciOptions$confLevel, 0.9)
+  # Remaining PL defaults are still filled in.
+  expect_identical(
+    piConfig$ciOptions$maxIter,
+    ospsuite.parameteridentification::CIDefaults$PL$maxIter
+  )
+})
+
+test_that(".buildPIConfiguration() fills all algorithm defaults when algorithmOptions is absent", {
+  skip_if_not_installed("ospsuite.parameteridentification")
+  cfg <- list(algorithm = "HJKB")
+  piConfig <- esqlabsR:::.buildPIConfiguration(cfg)
+  expect_equal(
+    piConfig$algorithmOptions,
+    ospsuite.parameteridentification::AlgorithmDefaults$HJKB
+  )
+})
+
 test_that(".createSinglePITask honours non-default transforms and weights", {
   project <- loadProject(test_path("data", "TestProject", "Project.json"))
   obsId <- "Laskin 1982.Group A_Aciclovir_1_Human_MALE_PeripheralVenousBlood_Plasma_2.5 mg/kg_iv_"
