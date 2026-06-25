@@ -5,6 +5,7 @@
     "modelFolder": "Models/Simulations/",
     "configurationsFolder": "Configurations/",
     "modelParamsFile": "ModelParameters.xlsx",
+    "modelInitialValuesFile": null,
     "individualsFile": "Individuals.xlsx",
     "populationsFile": "Populations.xlsx",
     "populationsFolder": "Populations",
@@ -33,6 +34,7 @@
       "populationId": null,
       "readPopulationFromCSV": false,
       "modelParameterSets": ["Global"],
+      "modelInitialConditions": [],
       "applicationProtocol": "Aciclovir_iv_250mg",
       "simulationTime": "0, 24, 60",
       "simulationTimeUnit": "h",
@@ -49,6 +51,7 @@
       "populationId": null,
       "readPopulationFromCSV": false,
       "modelParameterSets": ["Global", "Aciclovir"],
+      "modelInitialConditions": [],
       "applicationProtocol": "Aciclovir_iv_250mg",
       "simulationTime": "0, 24, 60",
       "simulationTimeUnit": "h",
@@ -65,6 +68,7 @@
       "populationId": "TestPopulation",
       "readPopulationFromCSV": false,
       "modelParameterSets": ["Global"],
+      "modelInitialConditions": [],
       "applicationProtocol": "Aciclovir_iv_250mg",
       "simulationTime": "0, 12, 20",
       "simulationTimeUnit": "h",
@@ -81,6 +85,7 @@
       "populationId": "TestPopulation",
       "readPopulationFromCSV": true,
       "modelParameterSets": ["Global"],
+      "modelInitialConditions": [],
       "applicationProtocol": "Aciclovir_iv_250mg",
       "simulationTime": "0, 12, 20",
       "simulationTimeUnit": "h",
@@ -107,6 +112,15 @@
         "parameterName": "Lipophilicity",
         "value": -0.1,
         "units": "Log Units"
+      }
+    ]
+  },
+  "modelInitialConditions": {
+    "TestInitialSet": [
+      {
+        "path": "Organism|Liver|A",
+        "value": 0.5,
+        "unit": "µmol"
       }
     ]
   },

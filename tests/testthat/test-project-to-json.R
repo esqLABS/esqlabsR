@@ -18,6 +18,7 @@ test_that(".projectToJson() returns a JSON-shaped list with the canonical top-le
       "outputPaths",
       "scenarios",
       "modelParameterSets",
+      "modelInitialConditions",
       "individuals",
       "individualParameterSets",
       "populations",
@@ -237,9 +238,10 @@ test_that("empty map sections serialize as JSON objects, not arrays", {
     collapse = "\n"
   )
 
-  # Map-shaped sections must be `{}` even when empty; array-shaped sections
-  # are `[]`. The schema is asymmetric on purpose.
-  expect_match(text, '"filePaths":\\s*\\{\\s*\\}')
+  # filePaths is now always backfilled with the 12 declared keys (null values),
+  # so it serializes as a non-empty object rather than `{}`. The other
+  # map-shaped sections remain empty objects; array-shaped sections are `[]`.
+  expect_match(text, '"filePaths":\\s*\\{')
   expect_match(text, '"outputPaths":\\s*\\{\\s*\\}')
   expect_match(text, '"applications":\\s*\\{\\s*\\}')
   expect_match(text, '"modelParameterSets":\\s*\\{\\s*\\}')
@@ -264,12 +266,28 @@ test_that("empty map sections survive a round-trip as empty named lists", {
   esqlabsR:::.saveProjectJson(project, out)
   reloaded <- loadProject(out)
 
-  # On the second hop the JSON is `{}` (because the serializer emits map
-  # sections that way), so jsonlite returns a *named* empty list. The
-  # contract is that this representation is stable: a second save/reload
-  # produces an identical structure.
+  # filePaths is always backfilled with the 12 declared keys (all null), so
+  # the round-trip yields a 12-entry named list rather than an empty one.
+  # The other map-shaped sections remain empty named lists.
+  expect_named(
+    reloaded$filePaths,
+    c(
+      "modelFolder",
+      "configurationsFolder",
+      "modelParamsFile",
+      "modelInitialValuesFile",
+      "individualsFile",
+      "populationsFile",
+      "populationsFolder",
+      "scenariosFile",
+      "applicationsFile",
+      "plotsFile",
+      "dataFolder",
+      "outputFolder"
+    )
+  )
+  expect_true(all(vapply(reloaded$filePaths, is.null, logical(1))))
   empty_named <- structure(list(), names = character(0L))
-  expect_identical(reloaded$filePaths, empty_named)
   expect_identical(reloaded$outputPaths, empty_named)
   expect_identical(reloaded$applications, empty_named)
   expect_identical(reloaded$modelParameterSets, empty_named)
@@ -519,4 +537,33 @@ test_that(".scenariosToJson preserves both ids when two ids map to the same lite
   rebuilt <- esqlabsR:::.scenariosToJson(project)
 
   expect_equal(rebuilt[[1]]$outputPathIds, list("primary", "alias"))
+})
+
+test_that("round-trip from TestProject preserves modelInitialValuesFile and modelInitialConditions", {
+  project <- testProject()
+  out <- withr::local_tempfile(fileext = ".json")
+  esqlabsR:::.saveProjectJson(project, out)
+
+  raw <- jsonlite::fromJSON(out, simplifyVector = FALSE)
+
+  expect_true("modelInitialValuesFile" %in% names(raw$filePaths))
+  expect_true("modelInitialConditions" %in% names(raw))
+  for (sc in raw$scenarios) {
+    expect_true("modelInitialConditions" %in% names(sc))
+    expect_type(sc$modelInitialConditions, "list")
+  }
+})
+
+test_that("round-trip from TestProject preserves modelInitialConditions project-level data", {
+  project <- testProject()
+  out <- withr::local_tempfile(fileext = ".json")
+  esqlabsR:::.saveProjectJson(project, out)
+
+  reloaded <- loadProject(out)
+
+  expect_equal(length(reloaded$modelInitialConditions), 1L)
+  expect_true("TestInitialSet" %in% names(reloaded$modelInitialConditions))
+  entry <- reloaded$modelInitialConditions[["TestInitialSet"]][[1]]
+  expect_identical(entry$path, "Organism|Liver|A")
+  expect_equal(entry$value, 0.5)
 })

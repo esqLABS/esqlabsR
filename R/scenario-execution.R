@@ -249,23 +249,29 @@
     }
   }
 
-  # 2c. Collect initial conditions if this scenario references any sheets
+  # 2c. Collect initial conditions from the project map. Each key in
+  # scenario$modelInitialConditions references an entry in
+  # project$modelInitialConditions (a list of {path, value, unit} records).
+  # Unknown keys are silently skipped (consistent with modelParameterSets).
   initialConditions <- NULL
   if (
-    !is.null(scenario$initialValuesSheets) &&
-      length(scenario$initialValuesSheets) > 0
+    !is.null(scenario$modelInitialConditions) &&
+      length(scenario$modelInitialConditions) > 0
   ) {
-    initialValuesFile <- project$modelInitialValuesFile
-    if (is.null(initialValuesFile)) {
-      cli::cli_abort(
-        "Scenario {.val {scenario$scenarioName}} references initial values sheets \\
-        but {.field modelInitialValuesFile} is not set on the project."
+    for (setId in scenario$modelInitialConditions) {
+      entries <- project$modelInitialConditions[[setId]]
+      if (is.null(entries) || length(entries) == 0L) {
+        next
+      }
+      paths <- vapply(entries, function(e) e$path, character(1))
+      values <- vapply(entries, function(e) as.numeric(e$value), numeric(1))
+      units <- vapply(entries, function(e) e$unit %||% "", character(1))
+      setConditions <- list(paths = paths, values = values, units = units)
+      initialConditions <- extendParameterStructure(
+        parameters = initialConditions,
+        newParameters = setConditions
       )
     }
-    initialConditions <- readInitialValuesFromXLS(
-      filePath = initialValuesFile,
-      sheets = scenario$initialValuesSheets
-    )
   }
 
   # 5. Initialize simulation

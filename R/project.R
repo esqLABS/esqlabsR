@@ -309,6 +309,18 @@ Project <- R6::R6Class(
       private$.modelParameterSets
     },
 
+    #' @field modelInitialConditions Named list of initial-conditions structures,
+    #'   keyed by set name. Each entry is a list of records with fields `path`,
+    #'   `value`, and `unit`. Writing marks the project as modified.
+    modelInitialConditions = function(value) {
+      if (!missing(value)) {
+        private$.modelInitialConditions <- value
+        private$.invalidate()
+        return(invisible(value))
+      }
+      private$.modelInitialConditions
+    },
+
     #' @field individualParameterSets Named list of parameter structures,
     #'   keyed by set name. Writing marks the project as modified.
     individualParameterSets = function(value) {
@@ -561,6 +573,12 @@ Project <- R6::R6Class(
         sep = ""
       )
       cat(
+        "  modelInitialConditions:   ",
+        length(self$modelInitialConditions),
+        " set(s)\n",
+        sep = ""
+      )
+      cat(
         "  individualParameterSets:  ",
         length(self$individualParameterSets),
         " set(s)\n",
@@ -619,6 +637,7 @@ Project <- R6::R6Class(
     .outputPaths = NULL,
     .scenarios = NULL,
     .modelParameterSets = NULL,
+    .modelInitialConditions = NULL,
     .individualParameterSets = NULL,
     .applicationParameterSets = NULL,
     .individuals = NULL,
@@ -712,9 +731,33 @@ Project <- R6::R6Class(
       for (n in names(fp)) {
         private$.filePathsData[[n]] <- list(value = fp[[n]], description = "")
       }
+      # Backfill any declared file-path key that the loaded JSON omitted, so
+      # all active bindings (e.g. modelInitialValuesFile) always have a backing
+      # entry and round-trip through the serializer without error.
+      declared_keys <- c(
+        "modelFolder",
+        "configurationsFolder",
+        "modelParamsFile",
+        "modelInitialValuesFile",
+        "individualsFile",
+        "populationsFile",
+        "populationsFolder",
+        "scenariosFile",
+        "applicationsFile",
+        "plotsFile",
+        "dataFolder",
+        "outputFolder"
+      )
+      for (k in declared_keys) {
+        if (is.null(private$.filePathsData[[k]])) {
+          private$.filePathsData[[k]] <- list(value = NULL, description = "")
+        }
+      }
 
       private$.outputPaths <- jsonData$outputPaths %||% list()
       private$.modelParameterSets <- jsonData$modelParameterSets %||% list()
+      private$.modelInitialConditions <- jsonData$modelInitialConditions %||%
+        list()
       private$.individualParameterSets <- jsonData$individualParameterSets %||%
         list()
       private$.applicationParameterSets <- jsonData$applicationParameterSets %||%

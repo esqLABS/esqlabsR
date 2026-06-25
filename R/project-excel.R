@@ -132,6 +132,16 @@ importProjectFromExcel <- function(
     )
   }
 
+  # --- ModelInitialConditions ---
+  modelInitialValuesFile <- resolveConfigFile(
+    propOrDefault("modelInitialValuesFile")
+  )
+  if (!is.null(modelInitialValuesFile) && file.exists(modelInitialValuesFile)) {
+    jsonData$modelInitialConditions <- .parseExcelInitialConditions(
+      modelInitialValuesFile
+    )
+  }
+
   # --- Individuals ---
   individualsFile <- resolveConfigFile(propOrDefault("individualsFile"))
   if (!is.null(individualsFile) && file.exists(individualsFile)) {
@@ -309,6 +319,15 @@ exportProjectToExcel <- function(
   ) {
     sheets <- .parameterStructuresToExcelSheets(project$modelParameterSets)
     .writeExcel(sheets, file.path(configDir, "ModelParameters.xlsx"))
+  }
+
+  # --- ModelInitialValues.xlsx ---
+  if (
+    !is.null(project$modelInitialConditions) &&
+      length(project$modelInitialConditions) > 0
+  ) {
+    sheets <- .initialConditionsToExcelSheets(project$modelInitialConditions)
+    .writeExcel(sheets, file.path(configDir, "ModelInitialValues.xlsx"))
   }
 
   # --- Individuals.xlsx ---
@@ -732,6 +751,68 @@ projectConfigurationStatus <- function(...) {
   result
 }
 
+#' Parse initial-conditions sheets from an Excel file into JSON structure
+#'
+#' Reads `ModelInitialValues.xlsx` sheet by sheet and returns a named list
+#' where each key is a sheet name and each value is a list of records with
+#' fields `path`, `value`, and `unit`. The flat path is built by joining
+#' `Container Path` and `Molecule Name` with `|`.
+#'
+#' @param filePath Path to the Excel file.
+#' @param sheetNames Sheets to read. If NULL, reads all sheets.
+#' @returns Named list of initial-conditions arrays.
+#' @keywords internal
+#' @noRd
+.parseExcelInitialConditions <- function(
+  filePath,
+  sheetNames = NULL
+) {
+  if (is.null(sheetNames)) {
+    sheetNames <- readxl::excel_sheets(filePath)
+  }
+  result <- list()
+  for (sheet in sheetNames) {
+    df <- readExcel(filePath, sheet = sheet)
+    entries <- list()
+    if (nrow(df) > 0) {
+      for (i in seq_len(nrow(df))) {
+        isPresentRaw <- df[["Is Present"]][[i]]
+        isPresentChr <- trimws(as.character(isPresentRaw))
+        isBlank <- is.na(isPresentRaw) || isPresentChr == ""
+        isPresent <- if (isBlank) {
+          TRUE
+        } else if (isPresentChr %in% c("0", "1")) {
+          isPresentChr == "1"
+        } else {
+          isTRUE(as.logical(isPresentChr))
+        }
+        if (!isPresent) {
+          next
+        }
+        containerPath <- as.character(df[["Container Path"]][[i]])
+        moleculeName <- as.character(df[["Molecule Name"]][[i]])
+        path <- paste(containerPath, moleculeName, sep = "|")
+        value <- as.numeric(df[["Value"]][[i]])
+        unit <- if (
+          is.na(df[["Units"]][[i]]) ||
+            trimws(as.character(df[["Units"]][[i]])) == ""
+        ) {
+          NULL
+        } else {
+          as.character(df[["Units"]][[i]])
+        }
+        entries[[length(entries) + 1L]] <- list(
+          path = path,
+          value = value,
+          unit = unit
+        )
+      }
+    }
+    result[[sheet]] <- entries
+  }
+  result
+}
+
 #' Parse Scenarios Excel sheet into JSON structure
 #' @param scenarioDf Data frame from the Scenarios sheet
 #' @returns List of scenario objects
@@ -747,7 +828,7 @@ projectConfigurationStatus <- function(...) {
       populationId = .naToNull(as.character(row$PopulationId)),
       readPopulationFromCSV = .naToNull(as.logical(row$ReadPopulationFromCSV)),
       modelParameterSets = .parseCommaListToArray(row$ModelParameterSheets),
-      initialValuesSheets = .parseCommaListToArray(
+      modelInitialConditions = .parseCommaListToArray(
         if ("InitialValuesSet" %in% names(row)) row$InitialValuesSet else NA
       ),
       applicationProtocol = .naToNull(as.character(row$ApplicationProtocol)),
@@ -904,6 +985,60 @@ projectConfigurationStatus <- function(...) {
   sheets
 }
 
+#' Convert initial-conditions structures to Excel sheet data frames
+#' @param initialConditions Named list of initial-conditions arrays (each entry
+#'   is a list of records with fields `path`, `value`, `unit`).
+#' @returns Named list of data frames suitable for Excel sheets.
+#' @keywords internal
+#' @noRd
+.initialConditionsToExcelSheets <- function(initialConditions) {
+  sheets <- list()
+  for (name in names(initialConditions)) {
+    entries <- initialConditions[[name]]
+    if (is.null(entries) || length(entries) == 0L) {
+      sheets[[name]] <- data.frame(
+        `Container Path` = character(0),
+        `Molecule Name` = character(0),
+        `Is Present` = logical(0),
+        Value = numeric(0),
+        Units = character(0),
+        `Scale Divisor` = numeric(0),
+        `Neg. Values Allowed` = logical(0),
+        check.names = FALSE,
+        stringsAsFactors = FALSE
+      )
+      next
+    }
+    splitPaths <- lapply(entries, function(e) {
+      parts <- strsplit(e$path, "|", fixed = TRUE)[[1]]
+      list(
+        containerPath = paste(parts[-length(parts)], collapse = "|"),
+        moleculeName = parts[[length(parts)]]
+      )
+    })
+    sheets[[name]] <- data.frame(
+      `Container Path` = vapply(
+        splitPaths,
+        function(x) x$containerPath,
+        character(1)
+      ),
+      `Molecule Name` = vapply(
+        splitPaths,
+        function(x) x$moleculeName,
+        character(1)
+      ),
+      `Is Present` = rep(TRUE, length(entries)),
+      Value = vapply(entries, function(e) as.double(e$value), double(1)),
+      Units = vapply(entries, function(e) e$unit %||% "", character(1)),
+      `Scale Divisor` = rep(1, length(entries)),
+      `Neg. Values Allowed` = rep(FALSE, length(entries)),
+      check.names = FALSE,
+      stringsAsFactors = FALSE
+    )
+  }
+  sheets
+}
+
 #' Convert individuals data to an IndividualBiometrics data frame
 #' @param individuals Named list of IndividualCharacteristics objects
 #' @returns A data frame
@@ -1053,7 +1188,7 @@ projectConfigurationStatus <- function(...) {
       },
       ReadPopulationFromCSV = sc$readPopulationFromCSV %||% FALSE,
       ModelParameterSheets = paramSetsStr,
-      InitialValuesSet = .formatArrayToCommaList(sc$initialValuesSheets),
+      InitialValuesSet = .formatArrayToCommaList(sc$modelInitialConditions),
       ApplicationProtocol = sc$applicationProtocol %||% NA,
       SimulationTime = simTimeStr,
       SimulationTimeUnit = sc$simulationTimeUnit %||% NA,

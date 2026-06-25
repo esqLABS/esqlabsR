@@ -418,7 +418,27 @@ test_that("loadProject() defaults missing optional sections to empty lists", {
 
   project <- loadProject(tmp)
 
-  expect_identical(project$filePaths, structure(list(), names = character(0L)))
+  # filePaths is always backfilled with the 12 declared keys (all null values),
+  # so a project loaded from JSON with no filePaths section still exposes all
+  # bindings (e.g. modelInitialValuesFile) with a null backing entry.
+  expect_named(
+    project$filePaths,
+    c(
+      "modelFolder",
+      "configurationsFolder",
+      "modelParamsFile",
+      "modelInitialValuesFile",
+      "individualsFile",
+      "populationsFile",
+      "populationsFolder",
+      "scenariosFile",
+      "applicationsFile",
+      "plotsFile",
+      "dataFolder",
+      "outputFolder"
+    )
+  )
+  expect_true(all(vapply(project$filePaths, is.null, logical(1))))
   expect_identical(project$outputPaths, list())
   expect_identical(project$scenarios, list())
   expect_identical(project$modelParameterSets, list())

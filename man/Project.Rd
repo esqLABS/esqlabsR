@@ -103,6 +103,10 @@ mutate the project. Writing marks the project as modified.}
     \item{\code{modelParameterSets}}{Named list of parameter structures, keyed by
 set name. Writing marks the project as modified.}
 
+    \item{\code{modelInitialConditions}}{Named list of initial-conditions structures,
+keyed by set name. Each entry is a list of records with fields \code{path},
+\code{value}, and \code{unit}. Writing marks the project as modified.}
+
     \item{\code{individualParameterSets}}{Named list of parameter structures,
 keyed by set name. Writing marks the project as modified.}
 
