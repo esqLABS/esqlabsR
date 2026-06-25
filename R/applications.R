@@ -194,7 +194,7 @@ removeApplicationParameterSet <- function(project, id) {
 #' @returns The `project` object, invisibly.
 #' @export
 #' @family parameters
-addApplicationParameterSetEntry <- function(
+addApplicationParameterEntry <- function(
   project,
   id,
   containerPath,
@@ -225,11 +225,11 @@ addApplicationParameterSetEntry <- function(
 #' `project$applicationParameterSets`. Warns if the set or entry doesn't
 #' exist.
 #'
-#' @inheritParams addApplicationParameterSetEntry
+#' @inheritParams addApplicationParameterEntry
 #' @returns The `project` object, invisibly.
 #' @export
 #' @family parameters
-removeApplicationParameterSetEntry <- function(
+removeApplicationParameterEntry <- function(
   project,
   id,
   containerPath,

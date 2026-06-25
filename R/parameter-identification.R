@@ -918,7 +918,10 @@ addPIParameter <- function(
 
 #' Remove a parameter from a PI task
 #'
-#' Warns and is a no-op when the parameter id does not exist.
+#' Warns and is a no-op when the parameter id does not exist. If removing
+#' the parameter leaves the task with no parameters AND no output mappings,
+#' the task is auto-removed from `project$parameterIdentification` and a
+#' warning is emitted.
 #'
 #' @param project A `Project` object.
 #' @param taskId Character scalar. Existing PI task id.
@@ -940,7 +943,14 @@ removePIParameter <- function(project, taskId, id) {
     return(invisible(project))
   }
   task$parameters <- task$parameters[ids != id]
-  project$parameterIdentification[[taskId]] <- task
+  if (length(task$parameters) == 0L && length(task$outputMappings) == 0L) {
+    cli::cli_warn(
+      "PI task {.val {taskId}} is now empty and has been removed."
+    )
+    project$parameterIdentification[[taskId]] <- NULL
+  } else {
+    project$parameterIdentification[[taskId]] <- task
+  }
   project$.markModified()
   invisible(project)
 }
@@ -1016,7 +1026,10 @@ addPIOutputMapping <- function(
 
 #' Remove an output mapping from a PI task
 #'
-#' Warns and is a no-op when the mapping id does not exist.
+#' Warns and is a no-op when the mapping id does not exist. If removing
+#' the output mapping leaves the task with no parameters AND no output
+#' mappings, the task is auto-removed from
+#' `project$parameterIdentification` and a warning is emitted.
 #'
 #' @param project A `Project` object.
 #' @param taskId Character scalar. Existing PI task id.
@@ -1038,7 +1051,14 @@ removePIOutputMapping <- function(project, taskId, id) {
     return(invisible(project))
   }
   task$outputMappings <- task$outputMappings[ids != id]
-  project$parameterIdentification[[taskId]] <- task
+  if (length(task$parameters) == 0L && length(task$outputMappings) == 0L) {
+    cli::cli_warn(
+      "PI task {.val {taskId}} is now empty and has been removed."
+    )
+    project$parameterIdentification[[taskId]] <- NULL
+  } else {
+    project$parameterIdentification[[taskId]] <- task
+  }
   project$.markModified()
   invisible(project)
 }

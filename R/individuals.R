@@ -18,9 +18,13 @@
   for (entry in individualsData) {
     indiv <- list()
     for (field in names(entry)) {
-      if (field == "individualId") next
+      if (field == "individualId") {
+        next
+      }
       val <- entry[[field]]
-      if (is.null(val)) next
+      if (is.null(val)) {
+        next
+      }
       if (field %in% numericFields) {
         val <- as.double(val)
       } else if (field == "parameterSets") {
@@ -338,7 +342,7 @@ removeIndividualParameterSet <- function(project, id) {
 #' @returns The `project` object, invisibly.
 #' @export
 #' @family parameters
-addIndividualParameterSetEntry <- function(
+addIndividualParameterEntry <- function(
   project,
   id,
   containerPath,
@@ -369,11 +373,11 @@ addIndividualParameterSetEntry <- function(
 #' `project$individualParameterSets`. Warns if the set or entry doesn't
 #' exist.
 #'
-#' @inheritParams addIndividualParameterSetEntry
+#' @inheritParams addIndividualParameterEntry
 #' @returns The `project` object, invisibly.
 #' @export
 #' @family parameters
-removeIndividualParameterSetEntry <- function(
+removeIndividualParameterEntry <- function(
   project,
   id,
   containerPath,
