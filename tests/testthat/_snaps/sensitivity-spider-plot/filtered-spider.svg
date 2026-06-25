@@ -165,6 +165,6 @@
 <rect x='328.12' y='519.52' width='17.28' height='17.28' style='stroke-width: 1.07; stroke: none; fill: #FFFFFF;' />
 <line x1='329.85' y1='528.16' x2='343.67' y2='528.16' style='stroke-width: 2.99; stroke: #4ABDCB; stroke-opacity: 0.75; stroke-linecap: butt;' />
 <text x='350.88' y='531.19' style='font-size: 8.80px; font-family: sans;' textLength='80.55px' lengthAdjust='spacingAndGlyphs'>Aciclovir|Lipophilicity</text>
-<text x='360.00' y='16.57' text-anchor='middle' style='font-size: 14.00px; font-family: sans;' textLength='250.59px' lengthAdjust='spacingAndGlyphs'>Organism|ArterialBlood|Plasma|Aciclovir</text>
+<text x='10.96' y='15.11' style='font-size: 14.00px; font-family: sans;' textLength='250.59px' lengthAdjust='spacingAndGlyphs'>Organism|ArterialBlood|Plasma|Aciclovir</text>
 </g>
 </svg>
