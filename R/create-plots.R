@@ -55,7 +55,9 @@ createPlots <- function(
   }
   cfgDf <- project$plots$plotConfiguration %||% data.frame()
   gridDf <- project$plots$plotGrids %||% data.frame()
-  if (nrow(gridDf) == 0) return(list())
+  if (nrow(gridDf) == 0) {
+    return(list())
+  }
   if (is.null(plotGridNames)) {
     plotGridNames <- gridDf$name
   }
@@ -72,7 +74,9 @@ createPlots <- function(
   # unfiltered cfgDf would validate plots whose DataCombined is not built
   # (e.g. plots in other grids, or plots in no grid at all) and abort.
   gridDf <- gridDf[gridDf$name %in% plotGridNames, , drop = FALSE]
-  if (nrow(gridDf) == 0) return(list())
+  if (nrow(gridDf) == 0) {
+    return(list())
+  }
   referencedPlotIDs <- unique(unlist(lapply(gridDf$plotIDs, .splitPlotIDs)))
   if (nrow(cfgDf) > 0) {
     cfgDf <- cfgDf[cfgDf$plotID %in% referencedPlotIDs, , drop = FALSE]

@@ -236,8 +236,12 @@
   unname(lapply(names(dataCombined), function(name) {
     dc <- dataCombined[[name]]
     entry <- list(name = name)
-    if (length(dc$simulated) > 0) entry$simulated <- dc$simulated
-    if (length(dc$observed) > 0) entry$observed <- dc$observed
+    if (length(dc$simulated) > 0) {
+      entry$simulated <- dc$simulated
+    }
+    if (length(dc$observed) > 0) {
+      entry$observed <- dc$observed
+    }
     entry
   }))
 }
@@ -338,12 +342,12 @@
 #' Add a plot configuration to a Project
 #'
 #' Append a new row to `project$plots$plotConfiguration`. Errors if
-#' `plotID` already exists, if `dataCombinedName` is not present in
+#' `plotId` already exists, if `dataCombinedName` is not present in
 #' `project$plots$dataCombined`, or if `plotType` is not one of the
 #' supported types.
 #'
 #' @param project A `Project` object.
-#' @param plotID Character scalar. Unique plot identifier.
+#' @param plotId Character scalar. Unique plot identifier.
 #' @param dataCombinedName Character scalar. Must reference an existing
 #'   DataCombined name on the project. Stored in the `DataCombinedName`
 #'   column to match the JSON schema.
@@ -357,9 +361,9 @@
 #' @returns The `project` object, invisibly.
 #' @export
 #' @family plots
-addPlot <- function(project, plotID, dataCombinedName, plotType, ...) {
+addPlot <- function(project, plotId, dataCombinedName, plotType, ...) {
   validateIsOfType(project, "Project")
-  .requireNonEmptyString(plotID, "plotID")
+  .requireNonEmptyString(plotId, "plotId")
   .requireNonEmptyString(dataCombinedName, "dataCombinedName")
   .requireNonEmptyString(plotType, "plotType")
 
@@ -367,9 +371,9 @@ addPlot <- function(project, plotID, dataCombinedName, plotType, ...) {
   if (
     !is.null(existingPlots) &&
       nrow(existingPlots) > 0 &&
-      plotID %in% existingPlots$plotID
+      plotId %in% existingPlots$plotID
   ) {
-    cli::cli_abort("plot {.val {plotID}} already exists")
+    cli::cli_abort("plot {.val {plotId}} already exists")
   }
 
   if (!(dataCombinedName %in% names(project$plots$dataCombined))) {
@@ -387,7 +391,7 @@ addPlot <- function(project, plotID, dataCombinedName, plotType, ...) {
 
   newRow <- c(
     list(
-      plotID = plotID,
+      plotID = plotId,
       DataCombinedName = dataCombinedName,
       plotType = plotType
     ),
@@ -405,22 +409,22 @@ addPlot <- function(project, plotID, dataCombinedName, plotType, ...) {
 
 #' Remove a plot configuration from a Project
 #'
-#' Drop the row with matching `plotID`. Warns (no-op) if `plotID` is
+#' Drop the row with matching `plotId`. Warns (no-op) if `plotId` is
 #' not found, and warns when the plot is referenced by any `plotGrids`
 #' entry.
 #'
 #' @param project A `Project` object.
-#' @param plotID Character scalar.
+#' @param plotId Character scalar.
 #' @returns The `project` object, invisibly.
 #' @export
 #' @family plots
-removePlot <- function(project, plotID) {
+removePlot <- function(project, plotId) {
   validateIsOfType(project, "Project")
-  .requireNonEmptyString(plotID, "plotID")
+  .requireNonEmptyString(plotId, "plotId")
 
   df <- project$plots$plotConfiguration
-  if (is.null(df) || nrow(df) == 0 || !(plotID %in% df$plotID)) {
-    cli::cli_warn("plot {.val {plotID}} not found; no-op.")
+  if (is.null(df) || nrow(df) == 0 || !(plotId %in% df$plotID)) {
+    cli::cli_warn("plot {.val {plotId}} not found; no-op.")
     return(invisible(project))
   }
 
@@ -428,19 +432,19 @@ removePlot <- function(project, plotID) {
   if (!is.null(grids) && nrow(grids) > 0) {
     referencingGrids <- grids$name[vapply(
       grids$plotIDs,
-      function(s) plotID %in% .splitPlotIDs(s),
+      function(s) plotId %in% .splitPlotIDs(s),
       logical(1)
     )]
     if (length(referencingGrids) > 0) {
       cli::cli_warn(c(
-        "Removed plot {.val {plotID}} is still referenced by {length(referencingGrids)} plot grid{?s}:",
+        "Removed plot {.val {plotId}} is still referenced by {length(referencingGrids)} plot grid{?s}:",
         "*" = "{referencingGrids}"
       ))
     }
   }
 
   project$plots$plotConfiguration <- df[
-    which(df$plotID != plotID),
+    which(df$plotID != plotId),
     ,
     drop = FALSE
   ]
@@ -451,27 +455,27 @@ removePlot <- function(project, plotID) {
 #' Add a plot grid to a Project
 #'
 #' Append a new row to `project$plots$plotGrids`. Errors if `name`
-#' already exists or if any of the supplied `plotIDs` are not present
+#' already exists or if any of the supplied `plotIds` are not present
 #' in `project$plots$plotConfiguration`.
 #'
 #' @param project A `Project` object.
 #' @param name Character scalar. Unique plot-grid name.
-#' @param plotIDs Character vector of `plotID`s to include in the grid.
+#' @param plotIds Character vector of `plotId`s to include in the grid.
 #'   Stored internally as a comma-separated string.
 #' @param ... Optional plot-grid fields, e.g. `title`, `subtitle`.
 #' @returns The `project` object, invisibly.
 #' @export
 #' @family plots
-addPlotGrid <- function(project, name, plotIDs, ...) {
+addPlotGrid <- function(project, name, plotIds, ...) {
   validateIsOfType(project, "Project")
   .requireNonEmptyString(name, "name")
   if (
-    !is.character(plotIDs) ||
-      length(plotIDs) == 0L ||
-      any(is.na(plotIDs)) ||
-      any(nchar(plotIDs) == 0)
+    !is.character(plotIds) ||
+      length(plotIds) == 0L ||
+      any(is.na(plotIds)) ||
+      any(nchar(plotIds) == 0)
   ) {
-    cli::cli_abort("{.arg plotIDs} must be a non-empty character vector")
+    cli::cli_abort("{.arg plotIds} must be a non-empty character vector")
   }
 
   existingGrids <- project$plots$plotGrids
@@ -487,13 +491,13 @@ addPlotGrid <- function(project, name, plotIDs, ...) {
   if (is.null(existingPlotIDs)) {
     cli::cli_abort(c(
       "no plots are defined; add plots before creating a plot grid.",
-      "i" = "use {.fn addPlot} to add plots referenced by {.arg plotIDs}."
+      "i" = "use {.fn addPlot} to add plots referenced by {.arg plotIds}."
     ))
   }
-  unknown <- setdiff(plotIDs, existingPlotIDs)
+  unknown <- setdiff(plotIds, existingPlotIDs)
   if (length(unknown) > 0L) {
     cli::cli_abort(c(
-      "{.arg plotIDs} references unknown plotIDs:",
+      "{.arg plotIds} references unknown plotIds:",
       "x" = "{.val {unknown}}"
     ))
   }
@@ -501,7 +505,7 @@ addPlotGrid <- function(project, name, plotIDs, ...) {
   newRow <- c(
     list(
       name = name,
-      plotIDs = paste(plotIDs, collapse = ", ")
+      plotIDs = paste(plotIds, collapse = ", ")
     ),
     .namedDotsAsRow(...)
   )
@@ -577,8 +581,12 @@ addDataCombined <- function(
     )
   }
 
-  for (e in simulated) .checkDataCombinedEntry(e, "simulated")
-  for (e in observed) .checkDataCombinedEntry(e, "observed")
+  for (e in simulated) {
+    .checkDataCombinedEntry(e, "simulated")
+  }
+  for (e in observed) {
+    .checkDataCombinedEntry(e, "observed")
+  }
 
   if (is.null(project$plots)) {
     project$plots <- list(

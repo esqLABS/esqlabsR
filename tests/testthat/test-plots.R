@@ -41,7 +41,7 @@ test_that("addPlotGrid aborts when no plots are defined", {
   )
   expect_snapshot(
     error = TRUE,
-    addPlotGrid(project, "G1", plotIDs = "MissingPlot")
+    addPlotGrid(project, "G1", plotIds = "MissingPlot")
   )
 })
 

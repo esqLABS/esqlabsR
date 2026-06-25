@@ -4,12 +4,12 @@
 \alias{addPlot}
 \title{Add a plot configuration to a Project}
 \usage{
-addPlot(project, plotID, dataCombinedName, plotType, ...)
+addPlot(project, plotId, dataCombinedName, plotType, ...)
 }
 \arguments{
 \item{project}{A \code{Project} object.}
 
-\item{plotID}{Character scalar. Unique plot identifier.}
+\item{plotId}{Character scalar. Unique plot identifier.}
 
 \item{dataCombinedName}{Character scalar. Must reference an existing
 DataCombined name on the project. Stored in the \code{DataCombinedName}
@@ -29,7 +29,7 @@ The \code{project} object, invisibly.
 }
 \description{
 Append a new row to \code{project$plots$plotConfiguration}. Errors if
-\code{plotID} already exists, if \code{dataCombinedName} is not present in
+\code{plotId} already exists, if \code{dataCombinedName} is not present in
 \code{project$plots$dataCombined}, or if \code{plotType} is not one of the
 supported types.
 }

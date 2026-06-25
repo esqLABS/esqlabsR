@@ -537,7 +537,9 @@ removeModelParameterEntry <- function(
     ))
   }
 
-  if (is.null(parameters)) parameters <- list()
+  if (is.null(parameters)) {
+    parameters <- list()
+  }
 
   existingIdx <- .findParameterEntryIndex(
     parameters,

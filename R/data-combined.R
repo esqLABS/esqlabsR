@@ -131,12 +131,18 @@ createDataCombined <- function(
   plotGridNames
 ) {
   gridDf <- project$plots$plotGrids %||% data.frame()
-  if (nrow(gridDf) == 0) return(character(0))
+  if (nrow(gridDf) == 0) {
+    return(character(0))
+  }
   selectedGrids <- gridDf[gridDf$name %in% plotGridNames, , drop = FALSE]
-  if (nrow(selectedGrids) == 0) return(character(0))
+  if (nrow(selectedGrids) == 0) {
+    return(character(0))
+  }
   ids <- unique(unlist(strsplit(selectedGrids$plotIDs, "\\s*,\\s*")))
   cfgDf <- project$plots$plotConfiguration %||% data.frame()
-  if (nrow(cfgDf) == 0) return(character(0))
+  if (nrow(cfgDf) == 0) {
+    return(character(0))
+  }
   unique(cfgDf$DataCombinedName[cfgDf$plotID %in% ids])
 }
 

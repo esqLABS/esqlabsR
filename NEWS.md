@@ -37,6 +37,7 @@
 
 ## Breaking changes
 
+- `addPlot()`, `removePlot()`, and `addPlotGrid()` argument names updated to follow the package's camelCase convention: `plotID` is now `plotId` and `plotIDs` is now `plotIds`. Positional calls are unaffected. (#1078)
 - `createDefaultProjectConfiguration()` is removed. Use `loadProject()` instead. The function had been soft-deprecated since 5.3.0. (#908)
 - `Project` (R6 class) is now exported and replaces `ProjectConfiguration` as the canonical in-memory project representation. The class merges the JSON-parsed sections (scenarios, individuals, populations, applications, observed data, plots, parameter identification) with the Excel-bridge file paths previously held by `ProjectConfiguration`. (#908)
 - `ScenarioConfiguration`, `addScenarioConfigurationsToExcel()`, `createScenarioConfigurationsFromPKML()`, `readScenarioConfigurationFromExcel()`, and `setApplications()` are removed. The Excel to JSON migration path is now `importProjectFromExcel()`; the reverse is `exportProjectToExcel()`. The scenario-construction-from-PKML surface is now `createScenariosFromPKML()`. (#908)

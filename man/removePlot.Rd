@@ -4,18 +4,18 @@
 \alias{removePlot}
 \title{Remove a plot configuration from a Project}
 \usage{
-removePlot(project, plotID)
+removePlot(project, plotId)
 }
 \arguments{
 \item{project}{A \code{Project} object.}
 
-\item{plotID}{Character scalar.}
+\item{plotId}{Character scalar.}
 }
 \value{
 The \code{project} object, invisibly.
 }
 \description{
-Drop the row with matching \code{plotID}. Warns (no-op) if \code{plotID} is
+Drop the row with matching \code{plotId}. Warns (no-op) if \code{plotId} is
 not found, and warns when the plot is referenced by any \code{plotGrids}
 entry.
 }

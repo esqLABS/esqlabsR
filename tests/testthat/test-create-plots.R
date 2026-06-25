@@ -98,7 +98,7 @@ test_that("createPlots grid subset ignores plots in other grids", {
     ))
   )
   addPlot(project, "P_other", "DC_other", "population")
-  addPlotGrid(project, "Grid_other", plotIDs = "P_other")
+  addPlotGrid(project, "Grid_other", plotIds = "P_other")
   simulated <- runScenarios(project, scenarioNames = "Aciclovir_iv")
 
   # Requesting only the original grid must not abort over Grid_other's DC,
@@ -177,7 +177,7 @@ test_that("createPlots builds every plot type end to end", {
   addPlotGrid(
     project,
     "Grid_all",
-    plotIDs = c("P_ind", "P_pop", "P_ovs", "P_rvs", "P_rvt")
+    plotIds = c("P_ind", "P_pop", "P_ovs", "P_rvs", "P_rvt")
   )
   simulated <- runScenarios(
     project,
@@ -216,7 +216,7 @@ test_that("createPlots survives a save/load round trip that drops the title colu
     ))
   )
   addPlot(project, "P_nt", "DC_nt", "individual")
-  addPlotGrid(project, "Grid_nt", plotIDs = "P_nt")
+  addPlotGrid(project, "Grid_nt", plotIds = "P_nt")
   # Drop the original titled plot/grid so no plot or grid sets a title; the
   # title column is then dropped on save and absent on reload.
   removePlotGrid(project, "Individual_diagnostics")
@@ -259,7 +259,7 @@ test_that("createPlots observedVsSimulated survives a dropped foldDistance colum
   )
   # Title kept, foldDistance left unset so its column is dropped on save.
   addPlot(project, "P_ovs", "DC_ovs", "observedVsSimulated", title = "OvS")
-  addPlotGrid(project, "Grid_ovs", plotIDs = "P_ovs", title = "Grid OvS")
+  addPlotGrid(project, "Grid_ovs", plotIds = "P_ovs", title = "Grid OvS")
   removePlotGrid(project, "Individual_diagnostics")
   removePlot(project, "P1")
   saveProject(project)

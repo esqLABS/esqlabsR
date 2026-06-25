@@ -14,7 +14,9 @@
   result <- list()
   for (entry in individualsData) {
     indiv <- list()
-    if (!is.null(entry$species)) indiv$species <- entry$species
+    if (!is.null(entry$species)) {
+      indiv$species <- entry$species
+    }
     for (field in c("population", "gender", "proteinOntogenies")) {
       if (!is.null(entry[[field]])) indiv[[field]] <- entry[[field]]
     }
