@@ -256,6 +256,6 @@
 <text x='201.93' y='508.43' style='font-size: 8.80px; font-family: sans;' textLength='80.55px' lengthAdjust='spacingAndGlyphs'>Aciclovir|Lipophilicity</text>
 <text x='201.93' y='531.19' style='font-size: 8.80px; font-family: sans;' textLength='255.24px' lengthAdjust='spacingAndGlyphs'>Events|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose</text>
 <text x='201.93' y='553.95' style='font-size: 8.80px; font-family: sans;' textLength='376.00px' lengthAdjust='spacingAndGlyphs'>Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Glomerular Filtration-GFR-Aciclovir|GFR fraction</text>
-<text x='360.00' y='16.57' text-anchor='middle' style='font-size: 14.00px; font-family: sans;' textLength='485.66px' lengthAdjust='spacingAndGlyphs'>Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)</text>
+<text x='10.96' y='15.11' style='font-size: 14.00px; font-family: sans;' textLength='485.66px' lengthAdjust='spacingAndGlyphs'>Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)</text>
 </g>
 </svg>
