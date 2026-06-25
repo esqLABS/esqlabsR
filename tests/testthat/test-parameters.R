@@ -193,7 +193,7 @@ test_that("removeModelParameterEntry auto-removes empty parameter sets", {
   expect_false("TempSet" %in% names(project$modelParameterSets))
 })
 
-test_that("remove*ParameterSetEntry no-op on missing entry does not mark modified", {
+test_that("remove*ParameterEntry no-op on missing entry does not mark modified", {
   project <- testProject()
   addModelParameterEntry(project, "MSet", "Organism|A", "K", 1.5, "1/h")
   addApplicationParameterEntry(
