@@ -62,6 +62,24 @@ messages$errorInvalidIsPresentInInitialValues <- function(filePath, moleculePath
   )
 }
 
+messages$errorMissingPathInInitialValues <- function(filePath, sheet, rows) {
+  cliFormat(
+    "Missing {.field Container Path} or {.field Molecule Name} in initial values file {.file {filePath}}, sheet {.val {sheet}}, data row(s): {.val {paste(rows, collapse = ', ')}}."
+  )
+}
+
+messages$warningDuplicateInitialValues <- function(filePath, moleculePaths) {
+  cliFormat(
+    "Duplicate molecule path(s) in initial values file {.file {filePath}}: {.val {paste(moleculePaths, collapse = ', ')}}. Only the last value defined for each path is used."
+  )
+}
+
+messages$errorDuplicateIndividualId <- function(individualId) {
+  cliFormat(
+    "Multiple rows with individual id {.val {individualId}} found in the individuals file. Individual ids must be unique."
+  )
+}
+
 messages$wrongParametersStructure <- function(argumentName) {
   cliFormat(
     "Argument {.arg {argumentName}} has wrong structure. Expected is a named list with three vectors `paths` 

@@ -586,6 +586,50 @@ test_that("`readInitialValuesFromXLS()` errors on a non-logical 'Is Present' val
   )
 })
 
+test_that("`readInitialValuesFromXLS()` accepts numeric 0/1 for 'Is Present'", {
+  initialValues <- readInitialValuesFromXLS(
+    filePath = initialValuesXLSpath,
+    sheets = "NumericIsPresent"
+  )
+
+  # 1 -> present, 0 -> skipped
+  expect_setequal(initialValues$paths, "Organism|Liver|A")
+  expect_equal(initialValues$values[[1]], 0.5)
+})
+
+test_that("`readInitialValuesFromXLS()` warns and keeps the last value for a duplicate path", {
+  expect_warning(
+    initialValues <- readInitialValuesFromXLS(
+      filePath = initialValuesXLSpath,
+      sheets = "DuplicatePath"
+    ),
+    regexp = messages$warningDuplicateInitialValues(
+      filePath = initialValuesXLSpath,
+      moleculePaths = "Organism|Liver|A"
+    ),
+    fixed = TRUE
+  )
+
+  expect_setequal(initialValues$paths, "Organism|Liver|A")
+  # The later row (2.5) wins
+  expect_equal(initialValues$values[[1]], 2.5)
+})
+
+test_that("`readInitialValuesFromXLS()` errors when a present row has a blank container path", {
+  expect_error(
+    readInitialValuesFromXLS(
+      filePath = initialValuesXLSpath,
+      sheets = "BlankPath"
+    ),
+    regexp = messages$errorMissingPathInInitialValues(
+      filePath = initialValuesXLSpath,
+      sheet = "BlankPath",
+      rows = 1
+    ),
+    fixed = TRUE
+  )
+})
+
 test_that("`readInitialValuesFromXLS()` errors when a sheet has the wrong structure", {
   columnNames <- c(
     "Container Path",

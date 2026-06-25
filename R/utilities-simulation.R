@@ -109,7 +109,8 @@ initializeSimulation <- function(
         quantityPaths = additionalInitialConditions$paths,
         values = additionalInitialConditions$values,
         units = additionalInitialConditions$units,
-        simulation = simulation
+        simulation = simulation,
+        stopIfNotFound = stopIfParameterNotFound
       )
     }
   }

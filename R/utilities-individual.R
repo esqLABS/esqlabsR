@@ -168,8 +168,17 @@ readIndividualCharacteristicsFromXLS <- function(
   if (length(rowIdx) == 0) {
     return(NULL)
   }
+  if (length(rowIdx) > 1) {
+    stop(messages$errorDuplicateIndividualId(individualId = individualId))
+  }
 
   # "Individual Parameter Sets" column is required
+  if (!"Individual Parameter Sets" %in% names(data)) {
+    stop(messages$validationMissingColumns(
+      sheet = sheet,
+      columns = "Individual Parameter Sets"
+    ))
+  }
   paramSetsStr <- data[["Individual Parameter Sets"]][[rowIdx]]
 
   # Initialize empty params structure

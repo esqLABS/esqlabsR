@@ -82,6 +82,52 @@ test_that("`.readIndividualParameterSetsFromXLS()` errors for missing sheets", {
   )
 })
 
+test_that("`.readIndividualParameterSetsFromXLS()` errors on a duplicate individual id", {
+  tmpXLS <- withr::local_tempfile(fileext = ".xlsx")
+  biometrics <- data.frame(
+    IndividualId = c("DupIndiv", "DupIndiv"),
+    Species = c("Human", "Human"),
+    "Individual Parameter Sets" = c(NA_character_, NA_character_),
+    check.names = FALSE,
+    stringsAsFactors = FALSE
+  )
+  .writeExcel(data = list(IndividualBiometrics = biometrics), path = tmpXLS)
+
+  expect_error(
+    esqlabsR:::.readIndividualParameterSetsFromXLS(
+      XLSpath = tmpXLS,
+      individualId = "DupIndiv",
+      scenarioName = "TestScenario"
+    ),
+    regexp = messages$errorDuplicateIndividualId("DupIndiv"),
+    fixed = TRUE
+  )
+})
+
+test_that("`.readIndividualParameterSetsFromXLS()` errors when the 'Individual Parameter Sets' column is missing", {
+  tmpXLS <- withr::local_tempfile(fileext = ".xlsx")
+  biometrics <- data.frame(
+    IndividualId = c("NoColIndiv"),
+    Species = c("Human"),
+    check.names = FALSE,
+    stringsAsFactors = FALSE
+  )
+  .writeExcel(data = list(IndividualBiometrics = biometrics), path = tmpXLS)
+
+  expect_error(
+    esqlabsR:::.readIndividualParameterSetsFromXLS(
+      XLSpath = tmpXLS,
+      individualId = "NoColIndiv",
+      scenarioName = "TestScenario"
+    ),
+    regexp = messages$validationMissingColumns(
+      sheet = "IndividualBiometrics",
+      columns = "Individual Parameter Sets"
+    ),
+    fixed = TRUE
+  )
+})
+
 
 test_that("`writeIndividualToXLS()` writes correct data to a spreadsheet", {
   withr::with_tempdir(

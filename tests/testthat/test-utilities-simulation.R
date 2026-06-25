@@ -94,6 +94,44 @@ test_that("`initializeSimulation()` errors on malformed additionalInitialConditi
   )
 })
 
+test_that("`initializeSimulation()` honours stopIfParameterNotFound for initial conditions", {
+  badInitialConditions <- list(
+    paths = "Organism|NonExistentContainer|X",
+    values = 5,
+    units = "µmol"
+  )
+
+  # With stopIfParameterNotFound = FALSE a missing molecule path is tolerated
+  simulation <- loadSimulation(system.file(
+    "extdata",
+    "simple.pkml",
+    package = "ospsuite"
+  ))
+  expect_no_error(
+    suppressWarnings(initializeSimulation(
+      simulation,
+      additionalInitialConditions = badInitialConditions,
+      stopIfParameterNotFound = FALSE
+    ))
+  )
+
+  # With the default (TRUE) the missing path raises an error
+  simulation <- loadSimulation(system.file(
+    "extdata",
+    "simple.pkml",
+    package = "ospsuite"
+  ))
+  expect_error(
+    initializeSimulation(
+      simulation,
+      additionalInitialConditions = badInitialConditions,
+      stopIfParameterNotFound = TRUE
+    ),
+    regexp = "no entity exists for path \"Organism|NonExistentContainer|X\"",
+    fixed = TRUE
+  )
+})
+
 
 test_that("`compareSimulations()` produces no differences with identical simulations", {
   simPath <- system.file("extdata", "simple.pkml", package = "ospsuite")

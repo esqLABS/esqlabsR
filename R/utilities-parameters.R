@@ -504,34 +504,62 @@ readInitialValuesFromXLS <- function(filePath, sheets = NULL) {
       ))
     }
 
-    fullPathsAll <- paste(
-      data[["Container Path"]],
-      data[["Molecule Name"]],
-      sep = "|"
-    )
-
     # "Is Present" must be a logical value or empty. An empty/NA cell is
-    # treated as present. Any other value (e.g. "yes", "1") is rejected rather
-    # than silently coerced to NA (which would otherwise be kept as present).
+    # treated as present. Numeric 0/1 (a common Excel representation of a
+    # logical column) is accepted. Any other value (e.g. "yes") is rejected
+    # rather than silently coerced to NA (which would be kept as present).
     isPresentCol <- data[["Is Present"]]
     isPresentChr <- trimws(as.character(isPresentCol))
     isBlank <- is.na(isPresentCol) | isPresentChr == ""
     isPresent <- as.logical(isPresentChr)
+    numericFlag <- isPresentChr %in% c("0", "1")
+    isPresent[numericFlag] <- isPresentChr[numericFlag] == "1"
     invalidIsPresent <- !isBlank & is.na(isPresent)
     if (any(invalidIsPresent)) {
       stop(messages$errorInvalidIsPresentInInitialValues(
         filePath = filePath,
-        moleculePaths = fullPathsAll[invalidIsPresent]
+        moleculePaths = paste(
+          data[["Container Path"]],
+          data[["Molecule Name"]],
+          sep = "|"
+        )[invalidIsPresent]
       ))
     }
 
     # Only include rows where Is Present is not explicitly FALSE
     keepRows <- isBlank | isPresent
+    keptRowNumbers <- which(keepRows)
     data <- data[keepRows, ]
-    fullPaths <- fullPathsAll[keepRows]
 
     if (nrow(data) == 0) {
       next
+    }
+
+    # Container Path and Molecule Name must be filled for every kept row,
+    # otherwise the constructed path contains "NA" and fails deep in the
+    # ospsuite layer with no reference to the originating row.
+    containerPath <- as.character(data[["Container Path"]])
+    moleculeName <- as.character(data[["Molecule Name"]])
+    missingPathParts <- is.na(containerPath) | trimws(containerPath) == "" |
+      is.na(moleculeName) | trimws(moleculeName) == ""
+    if (any(missingPathParts)) {
+      stop(messages$errorMissingPathInInitialValues(
+        filePath = filePath,
+        sheet = sheet,
+        rows = keptRowNumbers[missingPathParts]
+      ))
+    }
+
+    fullPaths <- paste(containerPath, moleculeName, sep = "|")
+
+    # Warn (rather than silently overwrite) when the same molecule path appears
+    # more than once in a sheet; the named-vector assignment keeps the last.
+    duplicatePaths <- unique(fullPaths[duplicated(fullPaths)])
+    if (length(duplicatePaths) > 0) {
+      warning(messages$warningDuplicateInitialValues(
+        filePath = filePath,
+        moleculePaths = duplicatePaths
+      ))
     }
 
     # Validate values and units before mutating the accumulators, so a failure
