@@ -78,7 +78,7 @@ importProjectFromExcel <- function(
   # set a custom path).
   defaultConfigFile <- list(
     modelParamsFile = "ModelParameters.xlsx",
-    modelInitialValuesFile = "ModelInitialValues.xlsx",
+    initialConditionsFile = "InitialConditions.xlsx",
     individualsFile = "Individuals.xlsx",
     populationsFile = "Populations.xlsx",
     scenariosFile = "Scenarios.xlsx",
@@ -133,12 +133,12 @@ importProjectFromExcel <- function(
   }
 
   # --- ModelInitialConditions ---
-  modelInitialValuesFile <- resolveConfigFile(
-    propOrDefault("modelInitialValuesFile")
+  initialConditionsFile <- resolveConfigFile(
+    propOrDefault("initialConditionsFile")
   )
-  if (!is.null(modelInitialValuesFile) && file.exists(modelInitialValuesFile)) {
-    jsonData$modelInitialConditions <- .parseExcelInitialConditions(
-      modelInitialValuesFile
+  if (!is.null(initialConditionsFile) && file.exists(initialConditionsFile)) {
+    jsonData$initialConditions <- .parseExcelInitialConditions(
+      initialConditionsFile
     )
   }
 
@@ -321,13 +321,13 @@ exportProjectToExcel <- function(
     .writeExcel(sheets, file.path(configDir, "ModelParameters.xlsx"))
   }
 
-  # --- ModelInitialValues.xlsx ---
+  # --- InitialConditions.xlsx ---
   if (
-    !is.null(project$modelInitialConditions) &&
-      length(project$modelInitialConditions) > 0
+    !is.null(project$initialConditions) &&
+      length(project$initialConditions) > 0
   ) {
-    sheets <- .initialConditionsToExcelSheets(project$modelInitialConditions)
-    .writeExcel(sheets, file.path(configDir, "ModelInitialValues.xlsx"))
+    sheets <- .initialConditionsToExcelSheets(project$initialConditions)
+    .writeExcel(sheets, file.path(configDir, "InitialConditions.xlsx"))
   }
 
   # --- Individuals.xlsx ---
@@ -753,7 +753,7 @@ projectConfigurationStatus <- function(...) {
 
 #' Parse initial-conditions sheets from an Excel file into JSON structure
 #'
-#' Reads `ModelInitialValues.xlsx` sheet by sheet and returns a named list
+#' Reads `InitialConditions.xlsx` sheet by sheet and returns a named list
 #' where each key is a sheet name and each value is a list of records with
 #' fields `path`, `value`, and `unit`. The flat path is built by joining
 #' `Container Path` and `Molecule Name` with `|`.
@@ -828,8 +828,8 @@ projectConfigurationStatus <- function(...) {
       populationId = .naToNull(as.character(row$PopulationId)),
       readPopulationFromCSV = .naToNull(as.logical(row$ReadPopulationFromCSV)),
       modelParameterSets = .parseCommaListToArray(row$ModelParameterSheets),
-      modelInitialConditions = .parseCommaListToArray(
-        if ("InitialValuesSet" %in% names(row)) row$InitialValuesSet else NA
+      initialConditions = .parseCommaListToArray(
+        if ("InitialConditions" %in% names(row)) row$InitialConditions else NA
       ),
       applicationProtocol = .naToNull(as.character(row$ApplicationProtocol)),
       simulationTime = .naToNull(as.character(row$SimulationTime)),
@@ -1188,7 +1188,7 @@ projectConfigurationStatus <- function(...) {
       },
       ReadPopulationFromCSV = sc$readPopulationFromCSV %||% FALSE,
       ModelParameterSheets = paramSetsStr,
-      InitialValuesSet = .formatArrayToCommaList(sc$modelInitialConditions),
+      InitialConditions = .formatArrayToCommaList(sc$initialConditions),
       ApplicationProtocol = sc$applicationProtocol %||% NA,
       SimulationTime = simTimeStr,
       SimulationTimeUnit = sc$simulationTimeUnit %||% NA,

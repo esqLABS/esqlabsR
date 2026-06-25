@@ -5,7 +5,7 @@
     "modelFolder": "Models/Simulations/",
     "configurationsFolder": "Configurations/",
     "modelParamsFile": "ModelParameters.xlsx",
-    "modelInitialValuesFile": null,
+    "initialConditionsFile": null,
     "individualsFile": "Individuals.xlsx",
     "populationsFile": "Populations.xlsx",
     "populationsFolder": "Populations",
@@ -34,7 +34,7 @@
       "populationId": null,
       "readPopulationFromCSV": false,
       "modelParameterSets": ["Global"],
-      "modelInitialConditions": [],
+      "initialConditions": [],
       "applicationProtocol": "Aciclovir_iv_250mg",
       "simulationTime": "0, 24, 60",
       "simulationTimeUnit": "h",
@@ -51,7 +51,7 @@
       "populationId": null,
       "readPopulationFromCSV": false,
       "modelParameterSets": ["Global", "Aciclovir"],
-      "modelInitialConditions": [],
+      "initialConditions": [],
       "applicationProtocol": "Aciclovir_iv_250mg",
       "simulationTime": "0, 24, 60",
       "simulationTimeUnit": "h",
@@ -68,7 +68,7 @@
       "populationId": "TestPopulation",
       "readPopulationFromCSV": false,
       "modelParameterSets": ["Global"],
-      "modelInitialConditions": [],
+      "initialConditions": [],
       "applicationProtocol": "Aciclovir_iv_250mg",
       "simulationTime": "0, 12, 20",
       "simulationTimeUnit": "h",
@@ -85,7 +85,7 @@
       "populationId": "TestPopulation",
       "readPopulationFromCSV": true,
       "modelParameterSets": ["Global"],
-      "modelInitialConditions": [],
+      "initialConditions": [],
       "applicationProtocol": "Aciclovir_iv_250mg",
       "simulationTime": "0, 12, 20",
       "simulationTimeUnit": "h",
@@ -115,7 +115,7 @@
       }
     ]
   },
-  "modelInitialConditions": {
+  "initialConditions": {
     "TestInitialSet": [
       {
         "path": "Organism|Liver|A",

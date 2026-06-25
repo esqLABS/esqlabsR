@@ -52,13 +52,16 @@ messages$wrongParametersStructure <- function(argumentName) {
   )
 }
 
-messages$errorMissingUnitsInInitialValues <- function(filePath, moleculePaths) {
+messages$errorMissingUnitsInInitialConditions <- function(
+  filePath,
+  moleculePaths
+) {
   cliFormat(
     "Missing units in initial values file {.file {filePath}} for molecule(s): {.val {paste(moleculePaths, collapse = ', ')}}. Units must be specified for all molecule initial values."
   )
 }
 
-messages$errorMissingValuesInInitialValues <- function(
+messages$errorMissingValuesInInitialConditions <- function(
   filePath,
   moleculePaths
 ) {
@@ -67,7 +70,7 @@ messages$errorMissingValuesInInitialValues <- function(
   )
 }
 
-messages$errorInvalidIsPresentInInitialValues <- function(
+messages$errorInvalidIsPresentInInitialConditions <- function(
   filePath,
   moleculePaths
 ) {
@@ -76,13 +79,20 @@ messages$errorInvalidIsPresentInInitialValues <- function(
   )
 }
 
-messages$errorMissingPathInInitialValues <- function(filePath, sheet, rows) {
+messages$errorMissingPathInInitialConditions <- function(
+  filePath,
+  sheet,
+  rows
+) {
   cliFormat(
     "Missing {.field Container Path} or {.field Molecule Name} in initial values file {.file {filePath}}, sheet {.val {sheet}}, data row(s): {.val {paste(rows, collapse = ', ')}}."
   )
 }
 
-messages$warningDuplicateInitialValues <- function(filePath, moleculePaths) {
+messages$warningDuplicateInitialConditions <- function(
+  filePath,
+  moleculePaths
+) {
   cliFormat(
     "Duplicate molecule path(s) in initial values file {.file {filePath}}: {.val {paste(moleculePaths, collapse = ', ')}}. Only the last value defined for each path is used."
   )

@@ -60,7 +60,7 @@ files. Used by the Excel import/export bridge.}
     \item{\code{modelParamsFile}}{Path to the Excel file with global model
 parameterization. Used by the Excel import/export bridge.}
 
-    \item{\code{modelInitialValuesFile}}{Path to the Excel file with initial
+    \item{\code{initialConditionsFile}}{Path to the Excel file with initial
 conditions (molecule start values) for the model. Used by the
 Excel import/export bridge.}
 
@@ -103,7 +103,7 @@ mutate the project. Writing marks the project as modified.}
     \item{\code{modelParameterSets}}{Named list of parameter structures, keyed by
 set name. Writing marks the project as modified.}
 
-    \item{\code{modelInitialConditions}}{Named list of initial-conditions structures,
+    \item{\code{initialConditions}}{Named list of initial-conditions structures,
 keyed by set name. Each entry is a list of records with fields \code{path},
 \code{value}, and \code{unit}. Writing marks the project as modified.}
 

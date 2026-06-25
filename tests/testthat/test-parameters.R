@@ -193,13 +193,13 @@ test_that("removeModelParameterEntry auto-removes empty parameter sets", {
   expect_false("TempSet" %in% names(project$modelParameterSets))
 })
 
-# readInitialValuesFromXLS ----
+# readInitialConditionsFromXLS ----
 
-initialValuesXLSpath <- file.path(dataFolder, "InitialValues.xlsx")
+initialConditionsXLSpath <- file.path(dataFolder, "InitialConditions.xlsx")
 
-test_that("`readInitialValuesFromXLS()` reads a valid sheet and builds molecule paths", {
-  initialValues <- readInitialValuesFromXLS(
-    filePath = initialValuesXLSpath,
+test_that("`readInitialConditionsFromXLS()` reads a valid sheet and builds molecule paths", {
+  initialValues <- readInitialConditionsFromXLS(
+    filePath = initialConditionsXLSpath,
     sheets = "ValidSheet"
   )
 
@@ -210,9 +210,9 @@ test_that("`readInitialValuesFromXLS()` reads a valid sheet and builds molecule 
   )
 })
 
-test_that("`readInitialValuesFromXLS()` returns the values and units of present molecules", {
-  initialValues <- readInitialValuesFromXLS(
-    filePath = initialValuesXLSpath,
+test_that("`readInitialConditionsFromXLS()` returns the values and units of present molecules", {
+  initialValues <- readInitialConditionsFromXLS(
+    filePath = initialConditionsXLSpath,
     sheets = "ValidSheet"
   )
 
@@ -224,9 +224,9 @@ test_that("`readInitialValuesFromXLS()` returns the values and units of present 
   expect_equal(initialValues$units[[idxB]], "µmol")
 })
 
-test_that("`readInitialValuesFromXLS()` ignores rows where 'Is Present' is FALSE but keeps NA", {
-  initialValues <- readInitialValuesFromXLS(
-    filePath = initialValuesXLSpath,
+test_that("`readInitialConditionsFromXLS()` ignores rows where 'Is Present' is FALSE but keeps NA", {
+  initialValues <- readInitialConditionsFromXLS(
+    filePath = initialConditionsXLSpath,
     sheets = "ValidSheet"
   )
 
@@ -234,8 +234,8 @@ test_that("`readInitialValuesFromXLS()` ignores rows where 'Is Present' is FALSE
   expect_true("Organism|Liver|B" %in% initialValues$paths)
 })
 
-test_that("`readInitialValuesFromXLS()` uses the first sheet when no sheet is provided", {
-  initialValues <- readInitialValuesFromXLS(filePath = initialValuesXLSpath)
+test_that("`readInitialConditionsFromXLS()` uses the first sheet when no sheet is provided", {
+  initialValues <- readInitialConditionsFromXLS(filePath = initialConditionsXLSpath)
 
   expect_setequal(
     initialValues$paths,
@@ -243,9 +243,9 @@ test_that("`readInitialValuesFromXLS()` uses the first sheet when no sheet is pr
   )
 })
 
-test_that("`readInitialValuesFromXLS()` overwrites values when a path appears in multiple sheets", {
-  initialValues <- readInitialValuesFromXLS(
-    filePath = initialValuesXLSpath,
+test_that("`readInitialConditionsFromXLS()` overwrites values when a path appears in multiple sheets", {
+  initialValues <- readInitialConditionsFromXLS(
+    filePath = initialConditionsXLSpath,
     sheets = c("ValidSheet", "SecondSheet")
   )
 
@@ -254,9 +254,9 @@ test_that("`readInitialValuesFromXLS()` overwrites values when a path appears in
   expect_length(idxA, 1)
 })
 
-test_that("`readInitialValuesFromXLS()` returns empty structure when all molecules are absent", {
-  initialValues <- readInitialValuesFromXLS(
-    filePath = initialValuesXLSpath,
+test_that("`readInitialConditionsFromXLS()` returns empty structure when all molecules are absent", {
+  initialValues <- readInitialConditionsFromXLS(
+    filePath = initialConditionsXLSpath,
     sheets = "AllAbsent"
   )
 
@@ -266,51 +266,51 @@ test_that("`readInitialValuesFromXLS()` returns empty structure when all molecul
   expect_length(initialValues$units, 0)
 })
 
-test_that("`readInitialValuesFromXLS()` errors when units are missing for a present molecule", {
+test_that("`readInitialConditionsFromXLS()` errors when units are missing for a present molecule", {
   expect_error(
-    readInitialValuesFromXLS(
-      filePath = initialValuesXLSpath,
+    readInitialConditionsFromXLS(
+      filePath = initialConditionsXLSpath,
       sheets = "MissingUnits"
     ),
-    regexp = messages$errorMissingUnitsInInitialValues(
-      filePath = initialValuesXLSpath,
+    regexp = messages$errorMissingUnitsInInitialConditions(
+      filePath = initialConditionsXLSpath,
       moleculePaths = "Organism|Liver|A"
     ),
     fixed = TRUE
   )
 })
 
-test_that("`readInitialValuesFromXLS()` errors when a value is missing for a present molecule", {
+test_that("`readInitialConditionsFromXLS()` errors when a value is missing for a present molecule", {
   expect_error(
-    readInitialValuesFromXLS(
-      filePath = initialValuesXLSpath,
+    readInitialConditionsFromXLS(
+      filePath = initialConditionsXLSpath,
       sheets = "MissingValue"
     ),
-    regexp = messages$errorMissingValuesInInitialValues(
-      filePath = initialValuesXLSpath,
+    regexp = messages$errorMissingValuesInInitialConditions(
+      filePath = initialConditionsXLSpath,
       moleculePaths = "Organism|Liver|A"
     ),
     fixed = TRUE
   )
 })
 
-test_that("`readInitialValuesFromXLS()` errors on a non-logical 'Is Present' value", {
+test_that("`readInitialConditionsFromXLS()` errors on a non-logical 'Is Present' value", {
   expect_error(
-    readInitialValuesFromXLS(
-      filePath = initialValuesXLSpath,
+    readInitialConditionsFromXLS(
+      filePath = initialConditionsXLSpath,
       sheets = "BadIsPresent"
     ),
-    regexp = messages$errorInvalidIsPresentInInitialValues(
-      filePath = initialValuesXLSpath,
+    regexp = messages$errorInvalidIsPresentInInitialConditions(
+      filePath = initialConditionsXLSpath,
       moleculePaths = "Organism|Liver|A"
     ),
     fixed = TRUE
   )
 })
 
-test_that("`readInitialValuesFromXLS()` accepts numeric 0/1 for 'Is Present'", {
-  initialValues <- readInitialValuesFromXLS(
-    filePath = initialValuesXLSpath,
+test_that("`readInitialConditionsFromXLS()` accepts numeric 0/1 for 'Is Present'", {
+  initialValues <- readInitialConditionsFromXLS(
+    filePath = initialConditionsXLSpath,
     sheets = "NumericIsPresent"
   )
 
@@ -318,14 +318,14 @@ test_that("`readInitialValuesFromXLS()` accepts numeric 0/1 for 'Is Present'", {
   expect_equal(initialValues$values[[1]], 0.5)
 })
 
-test_that("`readInitialValuesFromXLS()` warns and keeps the last value for a duplicate path", {
+test_that("`readInitialConditionsFromXLS()` warns and keeps the last value for a duplicate path", {
   expect_warning(
-    initialValues <- readInitialValuesFromXLS(
-      filePath = initialValuesXLSpath,
+    initialValues <- readInitialConditionsFromXLS(
+      filePath = initialConditionsXLSpath,
       sheets = "DuplicatePath"
     ),
-    regexp = messages$warningDuplicateInitialValues(
-      filePath = initialValuesXLSpath,
+    regexp = messages$warningDuplicateInitialConditions(
+      filePath = initialConditionsXLSpath,
       moleculePaths = "Organism|Liver|A"
     ),
     fixed = TRUE
@@ -335,14 +335,14 @@ test_that("`readInitialValuesFromXLS()` warns and keeps the last value for a dup
   expect_equal(initialValues$values[[1]], 2.5)
 })
 
-test_that("`readInitialValuesFromXLS()` errors when a present row has a blank container path", {
+test_that("`readInitialConditionsFromXLS()` errors when a present row has a blank container path", {
   expect_error(
-    readInitialValuesFromXLS(
-      filePath = initialValuesXLSpath,
+    readInitialConditionsFromXLS(
+      filePath = initialConditionsXLSpath,
       sheets = "BlankPath"
     ),
-    regexp = messages$errorMissingPathInInitialValues(
-      filePath = initialValuesXLSpath,
+    regexp = messages$errorMissingPathInInitialConditions(
+      filePath = initialConditionsXLSpath,
       sheet = "BlankPath",
       rows = 1
     ),
@@ -350,7 +350,7 @@ test_that("`readInitialValuesFromXLS()` errors when a present row has a blank co
   )
 })
 
-test_that("`readInitialValuesFromXLS()` errors when a sheet has the wrong structure", {
+test_that("`readInitialConditionsFromXLS()` errors when a sheet has the wrong structure", {
   columnNames <- c(
     "Container Path",
     "Molecule Name",
@@ -361,26 +361,26 @@ test_that("`readInitialValuesFromXLS()` errors when a sheet has the wrong struct
     "Neg. Values Allowed"
   )
   expect_error(
-    readInitialValuesFromXLS(
-      filePath = initialValuesXLSpath,
+    readInitialConditionsFromXLS(
+      filePath = initialConditionsXLSpath,
       sheets = "InvalidSheet"
     ),
     regexp = messages$errorWrongXLSStructure(
-      filePath = initialValuesXLSpath,
+      filePath = initialConditionsXLSpath,
       expectedColNames = columnNames
     ),
     fixed = TRUE
   )
 })
 
-test_that("`readInitialValuesFromXLS()` validates its arguments", {
+test_that("`readInitialConditionsFromXLS()` validates its arguments", {
   expect_error(
-    readInitialValuesFromXLS(filePath = 123),
+    readInitialConditionsFromXLS(filePath = 123),
     regexp = 'argument "filePath" is of type <numeric>, but expected <character>!',
     fixed = TRUE
   )
   expect_error(
-    readInitialValuesFromXLS(filePath = initialValuesXLSpath, sheets = 123),
+    readInitialConditionsFromXLS(filePath = initialConditionsXLSpath, sheets = 123),
     regexp = 'argument "sheets" is of type <numeric>, but expected <character>!',
     fixed = TRUE
   )

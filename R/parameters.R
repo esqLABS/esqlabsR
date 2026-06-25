@@ -684,7 +684,7 @@ removeModelParameterEntry <- function(
 #'   quantities, `values` the values, and `units` with the units the values
 #'   are in.
 #' @export
-readInitialValuesFromXLS <- function(filePath, sheets = NULL) {
+readInitialConditionsFromXLS <- function(filePath, sheets = NULL) {
   columnNames <- c(
     "Container Path",
     "Molecule Name",
@@ -726,7 +726,7 @@ readInitialValuesFromXLS <- function(filePath, sheets = NULL) {
     isPresent[numericFlag] <- isPresentChr[numericFlag] == "1"
     invalidIsPresent <- !isBlank & is.na(isPresent)
     if (any(invalidIsPresent)) {
-      stop(messages$errorInvalidIsPresentInInitialValues(
+      stop(messages$errorInvalidIsPresentInInitialConditions(
         filePath = filePath,
         moleculePaths = paste(
           data[["Container Path"]],
@@ -755,7 +755,7 @@ readInitialValuesFromXLS <- function(filePath, sheets = NULL) {
       is.na(moleculeName) |
       trimws(moleculeName) == ""
     if (any(missingPathParts)) {
-      stop(messages$errorMissingPathInInitialValues(
+      stop(messages$errorMissingPathInInitialConditions(
         filePath = filePath,
         sheet = sheet,
         rows = keptRowNumbers[missingPathParts]
@@ -768,7 +768,7 @@ readInitialValuesFromXLS <- function(filePath, sheets = NULL) {
     # more than once in a sheet; the named-vector assignment keeps the last.
     duplicatePaths <- unique(fullPaths[duplicated(fullPaths)])
     if (length(duplicatePaths) > 0) {
-      warning(messages$warningDuplicateInitialValues(
+      warning(messages$warningDuplicateInitialConditions(
         filePath = filePath,
         moleculePaths = duplicatePaths
       ))
@@ -779,7 +779,7 @@ readInitialValuesFromXLS <- function(filePath, sheets = NULL) {
     parsedValues <- suppressWarnings(as.numeric(data[["Value"]]))
     missingValues <- is.na(parsedValues)
     if (any(missingValues)) {
-      stop(messages$errorMissingValuesInInitialValues(
+      stop(messages$errorMissingValuesInInitialConditions(
         filePath = filePath,
         moleculePaths = fullPaths[missingValues]
       ))
@@ -788,7 +788,7 @@ readInitialValuesFromXLS <- function(filePath, sheets = NULL) {
     unitsRaw <- as.character(data[["Units"]])
     missingUnits <- is.na(data[["Units"]]) | trimws(unitsRaw) == ""
     if (any(missingUnits)) {
-      stop(messages$errorMissingUnitsInInitialValues(
+      stop(messages$errorMissingUnitsInInitialConditions(
         filePath = filePath,
         moleculePaths = fullPaths[missingUnits]
       ))

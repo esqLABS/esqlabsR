@@ -20,7 +20,7 @@ Scenario(
   steadyStateTimeUnit = NULL,
   overwriteFormulasInSS = FALSE,
   modelParameterSets = NULL,
-  modelInitialConditions = NULL
+  initialConditions = NULL
 )
 }
 \arguments{
@@ -71,8 +71,8 @@ during steady-state.}
 \item{modelParameterSets}{Character vector. Parameter-set names
 referencing \code{project$modelParameterSets}.}
 
-\item{modelInitialConditions}{Character vector. Initial-conditions set names
-referencing \code{project$modelInitialConditions}.}
+\item{initialConditions}{Character vector. Initial-conditions set names
+referencing \code{project$initialConditions}.}
 }
 \value{
 A \code{Scenario} object: a named list carrying exactly the fields

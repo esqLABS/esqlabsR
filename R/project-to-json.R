@@ -44,7 +44,7 @@
     outputPaths = .outputPathsToJson(project),
     scenarios = .scenariosToJson(project),
     modelParameterSets = .modelParameterSetsToJson(project),
-    modelInitialConditions = .modelInitialConditionsToJson(project),
+    initialConditions = .initialConditionsToJson(project),
     individuals = .individualsToJson(project),
     individualParameterSets = .individualParameterSetsToJson(project),
     populations = .populationsToJson(project),
@@ -197,7 +197,7 @@
       # "empty array" in the parsed scenario to JSON `[]`. Matches the
       # end-state serializer in `json-as-primary-input-v2`.
       modelParameterSets = as.list(sc$modelParameterSets),
-      modelInitialConditions = as.list(sc$modelInitialConditions),
+      initialConditions = as.list(sc$initialConditions),
       applicationProtocol = if (
         is.null(sc$applicationProtocol) || is.na(sc$applicationProtocol)
       ) {
@@ -236,8 +236,8 @@
 
 # JSON object (map of initial-conditions set name → array of initial-value
 # records). Mirrors `.modelParameterSetsToJson()`.
-.modelInitialConditionsToJson <- function(project) {
-  .asJsonObject(project$modelInitialConditions)
+.initialConditionsToJson <- function(project) {
+  .asJsonObject(project$initialConditions)
 }
 
 # JSON object (map of parameter-set name → array of parameter entries).

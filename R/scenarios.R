@@ -26,7 +26,7 @@
   "steadyStateTimeUnit",
   "overwriteFormulasInSS",
   "modelParameterSets",
-  "modelInitialConditions"
+  "initialConditions"
 )
 
 #' Create a Scenario
@@ -72,8 +72,8 @@
 #'   during steady-state.
 #' @param modelParameterSets Character vector. Parameter-set names
 #'   referencing `project$modelParameterSets`.
-#' @param modelInitialConditions Character vector. Initial-conditions set names
-#'   referencing `project$modelInitialConditions`.
+#' @param initialConditions Character vector. Initial-conditions set names
+#'   referencing `project$initialConditions`.
 #'
 #' @returns A `Scenario` object: a named list carrying exactly the fields
 #'   above.
@@ -94,7 +94,7 @@ Scenario <- function(
   steadyStateTimeUnit = NULL,
   overwriteFormulasInSS = FALSE,
   modelParameterSets = NULL,
-  modelInitialConditions = NULL
+  initialConditions = NULL
 ) {
   rec <- stats::setNames(
     vector("list", length(.scenarioFieldNames)),
@@ -143,10 +143,10 @@ print.Scenario <- function(x, ...) {
       "\n"
     )
   }
-  if (!is.null(x$modelInitialConditions)) {
+  if (!is.null(x$initialConditions)) {
     cat(
       "  Initial val sets: ",
-      paste(x$modelInitialConditions, collapse = ", "),
+      paste(x$initialConditions, collapse = ", "),
       "\n"
     )
   }
@@ -250,10 +250,8 @@ print.Scenario <- function(x, ...) {
       modelParameterSets = if (!is.null(entry[["modelParameterSets"]])) {
         unlist(entry[["modelParameterSets"]])
       },
-      modelInitialConditions = if (
-        !is.null(entry[["modelInitialConditions"]])
-      ) {
-        unlist(entry[["modelInitialConditions"]])
+      initialConditions = if (!is.null(entry[["initialConditions"]])) {
+        unlist(entry[["initialConditions"]])
       }
     )
   }

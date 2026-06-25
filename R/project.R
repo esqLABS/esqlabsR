@@ -137,17 +137,17 @@ Project <- R6::R6Class(
       )
     },
 
-    #' @field modelInitialValuesFile Path to the Excel file with initial
+    #' @field initialConditionsFile Path to the Excel file with initial
     #'   conditions (molecule start values) for the model. Used by the
     #'   Excel import/export bridge.
-    modelInitialValuesFile = function(value) {
+    initialConditionsFile = function(value) {
       if (!missing(value)) {
-        private$.filePathsData$modelInitialValuesFile$value <- value
+        private$.filePathsData$initialConditionsFile$value <- value
         private$.invalidate()
         return(invisible(value))
       }
       private$.clean_path(
-        private$.filePathsData$modelInitialValuesFile$value,
+        private$.filePathsData$initialConditionsFile$value,
         self$configurationsFolder
       )
     },
@@ -309,16 +309,16 @@ Project <- R6::R6Class(
       private$.modelParameterSets
     },
 
-    #' @field modelInitialConditions Named list of initial-conditions structures,
+    #' @field initialConditions Named list of initial-conditions structures,
     #'   keyed by set name. Each entry is a list of records with fields `path`,
     #'   `value`, and `unit`. Writing marks the project as modified.
-    modelInitialConditions = function(value) {
+    initialConditions = function(value) {
       if (!missing(value)) {
-        private$.modelInitialConditions <- value
+        private$.initialConditions <- value
         private$.invalidate()
         return(invisible(value))
       }
-      private$.modelInitialConditions
+      private$.initialConditions
     },
 
     #' @field individualParameterSets Named list of parameter structures,
@@ -573,8 +573,8 @@ Project <- R6::R6Class(
         sep = ""
       )
       cat(
-        "  modelInitialConditions:   ",
-        length(self$modelInitialConditions),
+        "  initialConditions:   ",
+        length(self$initialConditions),
         " set(s)\n",
         sep = ""
       )
@@ -637,7 +637,7 @@ Project <- R6::R6Class(
     .outputPaths = NULL,
     .scenarios = NULL,
     .modelParameterSets = NULL,
-    .modelInitialConditions = NULL,
+    .initialConditions = NULL,
     .individualParameterSets = NULL,
     .applicationParameterSets = NULL,
     .individuals = NULL,
@@ -732,13 +732,13 @@ Project <- R6::R6Class(
         private$.filePathsData[[n]] <- list(value = fp[[n]], description = "")
       }
       # Backfill any declared file-path key that the loaded JSON omitted, so
-      # all active bindings (e.g. modelInitialValuesFile) always have a backing
+      # all active bindings (e.g. initialConditionsFile) always have a backing
       # entry and round-trip through the serializer without error.
       declared_keys <- c(
         "modelFolder",
         "configurationsFolder",
         "modelParamsFile",
-        "modelInitialValuesFile",
+        "initialConditionsFile",
         "individualsFile",
         "populationsFile",
         "populationsFolder",
@@ -756,7 +756,7 @@ Project <- R6::R6Class(
 
       private$.outputPaths <- jsonData$outputPaths %||% list()
       private$.modelParameterSets <- jsonData$modelParameterSets %||% list()
-      private$.modelInitialConditions <- jsonData$modelInitialConditions %||%
+      private$.initialConditions <- jsonData$initialConditions %||%
         list()
       private$.individualParameterSets <- jsonData$individualParameterSets %||%
         list()

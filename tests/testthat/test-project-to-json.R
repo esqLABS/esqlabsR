@@ -18,7 +18,7 @@ test_that(".projectToJson() returns a JSON-shaped list with the canonical top-le
       "outputPaths",
       "scenarios",
       "modelParameterSets",
-      "modelInitialConditions",
+      "initialConditions",
       "individuals",
       "individualParameterSets",
       "populations",
@@ -275,7 +275,7 @@ test_that("empty map sections survive a round-trip as empty named lists", {
       "modelFolder",
       "configurationsFolder",
       "modelParamsFile",
-      "modelInitialValuesFile",
+      "initialConditionsFile",
       "individualsFile",
       "populationsFile",
       "populationsFolder",
@@ -539,31 +539,31 @@ test_that(".scenariosToJson preserves both ids when two ids map to the same lite
   expect_equal(rebuilt[[1]]$outputPathIds, list("primary", "alias"))
 })
 
-test_that("round-trip from TestProject preserves modelInitialValuesFile and modelInitialConditions", {
+test_that("round-trip from TestProject preserves initialConditionsFile and initialConditions", {
   project <- testProject()
   out <- withr::local_tempfile(fileext = ".json")
   esqlabsR:::.saveProjectJson(project, out)
 
   raw <- jsonlite::fromJSON(out, simplifyVector = FALSE)
 
-  expect_true("modelInitialValuesFile" %in% names(raw$filePaths))
-  expect_true("modelInitialConditions" %in% names(raw))
+  expect_true("initialConditionsFile" %in% names(raw$filePaths))
+  expect_true("initialConditions" %in% names(raw))
   for (sc in raw$scenarios) {
-    expect_true("modelInitialConditions" %in% names(sc))
-    expect_type(sc$modelInitialConditions, "list")
+    expect_true("initialConditions" %in% names(sc))
+    expect_type(sc$initialConditions, "list")
   }
 })
 
-test_that("round-trip from TestProject preserves modelInitialConditions project-level data", {
+test_that("round-trip from TestProject preserves initialConditions project-level data", {
   project <- testProject()
   out <- withr::local_tempfile(fileext = ".json")
   esqlabsR:::.saveProjectJson(project, out)
 
   reloaded <- loadProject(out)
 
-  expect_equal(length(reloaded$modelInitialConditions), 1L)
-  expect_true("TestInitialSet" %in% names(reloaded$modelInitialConditions))
-  entry <- reloaded$modelInitialConditions[["TestInitialSet"]][[1]]
+  expect_equal(length(reloaded$initialConditions), 1L)
+  expect_true("TestInitialSet" %in% names(reloaded$initialConditions))
+  entry <- reloaded$initialConditions[["TestInitialSet"]][[1]]
   expect_identical(entry$path, "Organism|Liver|A")
   expect_equal(entry$value, 0.5)
 })

@@ -420,14 +420,14 @@ test_that("loadProject() defaults missing optional sections to empty lists", {
 
   # filePaths is always backfilled with the 12 declared keys (all null values),
   # so a project loaded from JSON with no filePaths section still exposes all
-  # bindings (e.g. modelInitialValuesFile) with a null backing entry.
+  # bindings (e.g. initialConditionsFile) with a null backing entry.
   expect_named(
     project$filePaths,
     c(
       "modelFolder",
       "configurationsFolder",
       "modelParamsFile",
-      "modelInitialValuesFile",
+      "initialConditionsFile",
       "individualsFile",
       "populationsFile",
       "populationsFolder",

@@ -250,16 +250,16 @@
   }
 
   # 2c. Collect initial conditions from the project map. Each key in
-  # scenario$modelInitialConditions references an entry in
-  # project$modelInitialConditions (a list of {path, value, unit} records).
+  # scenario$initialConditions references an entry in
+  # project$initialConditions (a list of {path, value, unit} records).
   # Unknown keys are silently skipped (consistent with modelParameterSets).
   initialConditions <- NULL
   if (
-    !is.null(scenario$modelInitialConditions) &&
-      length(scenario$modelInitialConditions) > 0
+    !is.null(scenario$initialConditions) &&
+      length(scenario$initialConditions) > 0
   ) {
-    for (setId in scenario$modelInitialConditions) {
-      entries <- project$modelInitialConditions[[setId]]
+    for (setId in scenario$initialConditions) {
+      entries <- project$initialConditions[[setId]]
       if (is.null(entries) || length(entries) == 0L) {
         next
       }

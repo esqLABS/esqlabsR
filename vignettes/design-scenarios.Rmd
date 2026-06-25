@@ -65,13 +65,13 @@ load in the `ModelParameterSheets` column of the `Scenarios.xlsx` file.
 ### 4a. Initial Conditions (Molecule Start Values)
 
 You can override the initial conditions (molecule start values) of a
-simulation by defining them in the `ModelInitialValues.xlsx` file.
+simulation by defining them in the `InitialConditions.xlsx` file.
 To apply initial conditions to a scenario, specify the name of the sheet
-to load in the `InitialValuesSet` column of the `Scenarios.xlsx` file.
+to load in the `InitialConditions` column of the `Scenarios.xlsx` file.
 Multiple sheets can be specified as a comma-separated list (e.g.,
 `GlobalInitial, CompoundInitial`).
 
-The `ModelInitialValues.xlsx` file has one or more sheets, each
+The `InitialConditions.xlsx` file has one or more sheets, each
 containing molecule start values. Each sheet must have the following
 columns:
 
@@ -94,8 +94,8 @@ The full path for each molecule is constructed as
 `Container Path|Molecule Name`. Values are applied using
 `ospsuite::setQuantityValuesByPath()` after all parameters are set.
 
-The path to the `ModelInitialValues.xlsx` file is specified in the
-project configuration under the `modelInitialValuesFile` property.
+The path to the `InitialConditions.xlsx` file is specified in the
+project configuration under the `initialConditionsFile` property.
 
 ### 5. Individuals {#individuals}
 
@@ -328,7 +328,7 @@ The relevant Excel files for the definition of the scenarios are:
 
 -   `ApplicationParameters.xlsx`
 -   `Individuals.xlsx`
--   `ModelInitialValues.xlsx`
+-   `InitialConditions.xlsx`
 -   `ModelParameters.xlsx`
 -   `PopulationParameters.xlsx`
 -   `Scenarios.xlsx`
@@ -398,9 +398,9 @@ parameters for, e.g., different *disease states* (parameter sheets
 `Healthy` and `CKD`) or separate parametrization of different
 *compounds* (sheet `Aciclovir`).
 
-#### InitialValuesSet
+#### InitialConditions
 
-A list of sheet names from the `ModelInitialValues.xlsx` file, separated
+A list of sheet names from the `InitialConditions.xlsx` file, separated
 by a `,`. Each sheet must contain `Container Path`, `Molecule Name`,
 `Is Present`, `Value`, `Units`, `Scale Divisor`, and
 `Neg. Values Allowed`. Initial conditions from the specified sheets are
@@ -409,7 +409,7 @@ the start values of molecules defined in the `.pkml` file. The full path
 to a molecule is constructed as `Container Path|Molecule Name`. Rows
 where **Is Present** is `FALSE` are skipped. For every present molecule,
 both **Value** and **Units** are mandatory; a missing value or an empty
-unit raises an error. **InitialValuesSet** may be empty if no initial
+unit raises an error. **InitialConditions** may be empty if no initial
 conditions need to be overridden.
 
 #### ApplicationProtocol
@@ -564,15 +564,15 @@ The order of parameter sheets of the "ModelParameters.xlsx" file defined
 in the **ModelParameterSheets** column defines the order in which the
 parameters are applied.
 
-Initial conditions defined via the **InitialValuesSet** column are
+Initial conditions defined via the **InitialConditions** column are
 applied after all parameter values have been set, overriding the molecule
 start values from the `.pkml` file.
 
-### `ModelInitialValues.xlsx` file structure
+### `InitialConditions.xlsx` file structure
 
-The `ModelInitialValues.xlsx` file defines the initial conditions
+The `InitialConditions.xlsx` file defines the initial conditions
 (molecule start values) for simulations. The path to this file is defined
-in `project$modelInitialValuesFile`. The file can contain
+in `project$initialConditionsFile`. The file can contain
 multiple sheets, each representing a named "initial values set". Each
 sheet must have the following columns:
 
