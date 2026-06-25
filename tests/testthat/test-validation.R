@@ -274,6 +274,32 @@ test_that(".validateScenarios flags Population scenario without populationId", {
   expect_true(any(grepl("populationId", msgs)))
 })
 
+test_that(".validateScenarios warns when modelFile does not exist on disk", {
+  sc <- esqlabsR:::Scenario$new()
+  sc$modelFile <- "missing.pkml"
+  sc$simulationType <- "Individual"
+  result <- esqlabsR:::.validateScenarios(
+    list(s1 = sc),
+    modelFolder = withr::local_tempdir()
+  )
+  msgs <- vapply(result$warnings, \(w) w$message, character(1))
+  expect_true(any(grepl("missing\\.pkml", msgs)))
+})
+
+test_that(".validateScenarios passes when modelFile exists on disk", {
+  dir <- withr::local_tempdir()
+  file.create(file.path(dir, "model.pkml"))
+  sc <- esqlabsR:::Scenario$new()
+  sc$modelFile <- "model.pkml"
+  sc$simulationType <- "Individual"
+  result <- esqlabsR:::.validateScenarios(list(s1 = sc), modelFolder = dir)
+  file_not_found_warns <- Filter(
+    \(w) w$section == "File Not Found",
+    result$warnings
+  )
+  expect_length(file_not_found_warns, 0)
+})
+
 # Section adapter: individuals ----
 
 test_that(".validateIndividuals warns on empty section", {

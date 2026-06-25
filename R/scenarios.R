@@ -97,7 +97,7 @@
 #' @keywords internal
 #' @noRd
 .scenariosValidatorAdapter <- function(project) {
-  .validateScenarios(project$scenarios)
+  .validateScenarios(project$scenarios, project$modelFolder)
 }
 
 #' @keywords internal
@@ -108,8 +108,8 @@
 
 #' Validate the `scenarios` section of a Project
 #'
-#' Per-entry checks: `modelFile` is set and non-empty,
-#' `simulationType` is one of the supported values, and
+#' Per-entry checks: `modelFile` is set and non-empty, resolves on disk
+#' (warning), `simulationType` is one of the supported values, and
 #' population-typed scenarios declare a `populationId`.
 #'
 #' Cross-section reference checks (individualId, modelParameterSets,
@@ -117,10 +117,12 @@
 #'
 #' @param scenarios Named list of `Scenario` objects from
 #'   `project$scenarios`.
+#' @param modelFolder Character. Absolute path to the project's model folder,
+#'   used to resolve relative `modelFile` paths. May be `NULL`.
 #' @return validationResult.
 #' @keywords internal
 #' @noRd
-.validateScenarios <- function(scenarios) {
+.validateScenarios <- function(scenarios, modelFolder = NULL) {
   result <- validationResult$new()
 
   if (is.null(scenarios) || length(scenarios) == 0) {
@@ -136,6 +138,19 @@
         "Missing Fields",
         paste0("Scenario '", name, "' has no modelFile")
       )
+    } else if (!is.null(modelFolder)) {
+      modelFilePath <- file.path(modelFolder, sc$modelFile)
+      if (!file.exists(modelFilePath)) {
+        result$add_warning(
+          "File Not Found",
+          paste0(
+            "Scenario '",
+            name,
+            "' references non-existent modelFile: ",
+            sc$modelFile
+          )
+        )
+      }
     }
 
     simType <- sc$simulationType %||% ""
