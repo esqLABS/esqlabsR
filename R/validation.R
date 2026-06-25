@@ -468,7 +468,14 @@ validateProject <- function(project) {
     )
     values <- lapply(set, function(e) e$value)
 
-    if (any(is.na(parameterNames) | parameterNames == "")) {
+    if (
+      any(
+        is.na(containerPaths) |
+          containerPaths == "" |
+          is.na(parameterNames) |
+          parameterNames == ""
+      )
+    ) {
       result$add_critical_error(
         "Missing Fields",
         paste0(
@@ -500,7 +507,7 @@ validateProject <- function(project) {
     }
 
     fullPaths <- paste(containerPaths, parameterNames, sep = "|")
-    dupes <- fullPaths[duplicated(fullPaths) & !is.na(fullPaths)]
+    dupes <- fullPaths[duplicated(fullPaths)]
     if (length(dupes) > 0) {
       result$add_warning(
         "Uniqueness",

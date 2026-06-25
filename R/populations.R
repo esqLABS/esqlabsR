@@ -26,9 +26,13 @@
   for (entry in populationsData) {
     popData <- list()
     for (field in names(entry)) {
-      if (field == "populationId") next
+      if (field == "populationId") {
+        next
+      }
       val <- entry[[field]]
-      if (is.null(val)) next
+      if (is.null(val)) {
+        next
+      }
       if (field %in% numericFields) {
         val <- as.double(val)
       }

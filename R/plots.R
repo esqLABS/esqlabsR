@@ -283,8 +283,12 @@
   unname(lapply(names(dataCombined), function(name) {
     dc <- dataCombined[[name]]
     entry <- list(name = name)
-    if (length(dc$simulated) > 0) entry$simulated <- dc$simulated
-    if (length(dc$observed) > 0) entry$observed <- dc$observed
+    if (length(dc$simulated) > 0) {
+      entry$simulated <- dc$simulated
+    }
+    if (length(dc$observed) > 0) {
+      entry$observed <- dc$observed
+    }
     entry
   }))
 }
@@ -615,8 +619,12 @@ addDataCombined <- function(
     )
   }
 
-  for (e in simulated) .checkDataCombinedEntry(e, "simulated")
-  for (e in observed) .checkDataCombinedEntry(e, "observed")
+  for (e in simulated) {
+    .checkDataCombinedEntry(e, "simulated")
+  }
+  for (e in observed) {
+    .checkDataCombinedEntry(e, "observed")
+  }
 
   if (is.null(project$plots)) {
     project$plots <- list(
