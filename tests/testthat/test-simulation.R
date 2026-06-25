@@ -9,6 +9,106 @@ test_that("`initializeSimulation()` loads a simulation at the minimum", {
   expect_true(isOfType(simulationResults, "SimulationResults"))
 })
 
+test_that("`initializeSimulation()` applies additional initial conditions", {
+  simulation <- loadSimulation(system.file(
+    "extdata",
+    "simple.pkml",
+    package = "ospsuite"
+  ))
+
+  moleculePath <- "Organism|Liver|A"
+  initialConditions <- list(
+    paths = moleculePath,
+    values = 5,
+    units = "µmol"
+  )
+
+  initializeSimulation(
+    simulation,
+    additionalInitialConditions = initialConditions
+  )
+
+  molecule <- ospsuite::getAllMoleculesMatching(moleculePath, simulation)[[1]]
+  expect_equal(molecule$value, 5)
+})
+
+test_that("`initializeSimulation()` does not fail when additionalInitialConditions is empty", {
+  simulation <- loadSimulation(system.file(
+    "extdata",
+    "simple.pkml",
+    package = "ospsuite"
+  ))
+
+  emptyInitialConditions <- list(
+    paths = character(0),
+    values = numeric(0),
+    units = character(0)
+  )
+
+  initializeSimulation(
+    simulation,
+    additionalInitialConditions = emptyInitialConditions
+  )
+  simulationResults <- runSimulations(simulation)
+  expect_true(isOfType(simulationResults, "SimulationResults"))
+})
+
+test_that("`initializeSimulation()` errors on malformed additionalInitialConditions", {
+  simulation <- loadSimulation(system.file(
+    "extdata",
+    "simple.pkml",
+    package = "ospsuite"
+  ))
+
+  expect_error(
+    initializeSimulation(
+      simulation,
+      additionalInitialConditions = list(
+        paths = "Organism|Liver|A",
+        values = 5
+      )
+    ),
+    regexp = "additionalInitialConditions.*wrong structure",
+    fixed = FALSE
+  )
+})
+
+test_that("`initializeSimulation()` honours stopIfParameterNotFound for initial conditions", {
+  badInitialConditions <- list(
+    paths = "Organism|NonExistentContainer|X",
+    values = 5,
+    units = "µmol"
+  )
+
+  simulation <- loadSimulation(system.file(
+    "extdata",
+    "simple.pkml",
+    package = "ospsuite"
+  ))
+  expect_no_error(
+    suppressWarnings(initializeSimulation(
+      simulation,
+      additionalInitialConditions = badInitialConditions,
+      stopIfParameterNotFound = FALSE
+    ))
+  )
+
+  simulation <- loadSimulation(system.file(
+    "extdata",
+    "simple.pkml",
+    package = "ospsuite"
+  ))
+  expect_error(
+    initializeSimulation(
+      simulation,
+      additionalInitialConditions = badInitialConditions,
+      stopIfParameterNotFound = TRUE
+    ),
+    regexp = "no entity exists for path \"Organism|NonExistentContainer|X\"",
+    fixed = TRUE
+  )
+})
+
 test_that("`initializeSimulation()` does not fail when additionalParams is empty", {
   simulation <- loadSimulation(system.file(
     "extdata",

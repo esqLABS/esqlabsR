@@ -44,7 +44,8 @@ test_that("as.list(Scenario()) exposes exactly the v2.0 schema fields", {
       "steadyStateTime",
       "steadyStateTimeUnit",
       "overwriteFormulasInSS",
-      "modelParameterSets"
+      "modelParameterSets",
+      "initialValuesSheets"
     )
   )
 })

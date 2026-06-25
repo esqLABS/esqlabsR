@@ -193,6 +193,199 @@ test_that("removeModelParameterEntry auto-removes empty parameter sets", {
   expect_false("TempSet" %in% names(project$modelParameterSets))
 })
 
+# readInitialValuesFromXLS ----
+
+initialValuesXLSpath <- file.path(dataFolder, "InitialValues.xlsx")
+
+test_that("`readInitialValuesFromXLS()` reads a valid sheet and builds molecule paths", {
+  initialValues <- readInitialValuesFromXLS(
+    filePath = initialValuesXLSpath,
+    sheets = "ValidSheet"
+  )
+
+  expect_true(.validateParametersStructure(initialValues))
+  expect_setequal(
+    initialValues$paths,
+    c("Organism|Liver|A", "Organism|Liver|B")
+  )
+})
+
+test_that("`readInitialValuesFromXLS()` returns the values and units of present molecules", {
+  initialValues <- readInitialValuesFromXLS(
+    filePath = initialValuesXLSpath,
+    sheets = "ValidSheet"
+  )
+
+  idxA <- which(initialValues$paths == "Organism|Liver|A")
+  idxB <- which(initialValues$paths == "Organism|Liver|B")
+  expect_equal(initialValues$values[[idxA]], 0.5)
+  expect_equal(initialValues$values[[idxB]], 1.0)
+  expect_equal(initialValues$units[[idxA]], "µmol")
+  expect_equal(initialValues$units[[idxB]], "µmol")
+})
+
+test_that("`readInitialValuesFromXLS()` ignores rows where 'Is Present' is FALSE but keeps NA", {
+  initialValues <- readInitialValuesFromXLS(
+    filePath = initialValuesXLSpath,
+    sheets = "ValidSheet"
+  )
+
+  expect_false("Organism|Kidney|A" %in% initialValues$paths)
+  expect_true("Organism|Liver|B" %in% initialValues$paths)
+})
+
+test_that("`readInitialValuesFromXLS()` uses the first sheet when no sheet is provided", {
+  initialValues <- readInitialValuesFromXLS(filePath = initialValuesXLSpath)
+
+  expect_setequal(
+    initialValues$paths,
+    c("Organism|Liver|A", "Organism|Liver|B")
+  )
+})
+
+test_that("`readInitialValuesFromXLS()` overwrites values when a path appears in multiple sheets", {
+  initialValues <- readInitialValuesFromXLS(
+    filePath = initialValuesXLSpath,
+    sheets = c("ValidSheet", "SecondSheet")
+  )
+
+  idxA <- which(initialValues$paths == "Organism|Liver|A")
+  expect_equal(initialValues$values[[idxA]], 2.5)
+  expect_length(idxA, 1)
+})
+
+test_that("`readInitialValuesFromXLS()` returns empty structure when all molecules are absent", {
+  initialValues <- readInitialValuesFromXLS(
+    filePath = initialValuesXLSpath,
+    sheets = "AllAbsent"
+  )
+
+  expect_true(.validateParametersStructure(initialValues))
+  expect_length(initialValues$paths, 0)
+  expect_length(initialValues$values, 0)
+  expect_length(initialValues$units, 0)
+})
+
+test_that("`readInitialValuesFromXLS()` errors when units are missing for a present molecule", {
+  expect_error(
+    readInitialValuesFromXLS(
+      filePath = initialValuesXLSpath,
+      sheets = "MissingUnits"
+    ),
+    regexp = messages$errorMissingUnitsInInitialValues(
+      filePath = initialValuesXLSpath,
+      moleculePaths = "Organism|Liver|A"
+    ),
+    fixed = TRUE
+  )
+})
+
+test_that("`readInitialValuesFromXLS()` errors when a value is missing for a present molecule", {
+  expect_error(
+    readInitialValuesFromXLS(
+      filePath = initialValuesXLSpath,
+      sheets = "MissingValue"
+    ),
+    regexp = messages$errorMissingValuesInInitialValues(
+      filePath = initialValuesXLSpath,
+      moleculePaths = "Organism|Liver|A"
+    ),
+    fixed = TRUE
+  )
+})
+
+test_that("`readInitialValuesFromXLS()` errors on a non-logical 'Is Present' value", {
+  expect_error(
+    readInitialValuesFromXLS(
+      filePath = initialValuesXLSpath,
+      sheets = "BadIsPresent"
+    ),
+    regexp = messages$errorInvalidIsPresentInInitialValues(
+      filePath = initialValuesXLSpath,
+      moleculePaths = "Organism|Liver|A"
+    ),
+    fixed = TRUE
+  )
+})
+
+test_that("`readInitialValuesFromXLS()` accepts numeric 0/1 for 'Is Present'", {
+  initialValues <- readInitialValuesFromXLS(
+    filePath = initialValuesXLSpath,
+    sheets = "NumericIsPresent"
+  )
+
+  expect_setequal(initialValues$paths, "Organism|Liver|A")
+  expect_equal(initialValues$values[[1]], 0.5)
+})
+
+test_that("`readInitialValuesFromXLS()` warns and keeps the last value for a duplicate path", {
+  expect_warning(
+    initialValues <- readInitialValuesFromXLS(
+      filePath = initialValuesXLSpath,
+      sheets = "DuplicatePath"
+    ),
+    regexp = messages$warningDuplicateInitialValues(
+      filePath = initialValuesXLSpath,
+      moleculePaths = "Organism|Liver|A"
+    ),
+    fixed = TRUE
+  )
+
+  expect_setequal(initialValues$paths, "Organism|Liver|A")
+  expect_equal(initialValues$values[[1]], 2.5)
+})
+
+test_that("`readInitialValuesFromXLS()` errors when a present row has a blank container path", {
+  expect_error(
+    readInitialValuesFromXLS(
+      filePath = initialValuesXLSpath,
+      sheets = "BlankPath"
+    ),
+    regexp = messages$errorMissingPathInInitialValues(
+      filePath = initialValuesXLSpath,
+      sheet = "BlankPath",
+      rows = 1
+    ),
+    fixed = TRUE
+  )
+})
+
+test_that("`readInitialValuesFromXLS()` errors when a sheet has the wrong structure", {
+  columnNames <- c(
+    "Container Path",
+    "Molecule Name",
+    "Is Present",
+    "Value",
+    "Units",
+    "Scale Divisor",
+    "Neg. Values Allowed"
+  )
+  expect_error(
+    readInitialValuesFromXLS(
+      filePath = initialValuesXLSpath,
+      sheets = "InvalidSheet"
+    ),
+    regexp = messages$errorWrongXLSStructure(
+      filePath = initialValuesXLSpath,
+      expectedColNames = columnNames
+    ),
+    fixed = TRUE
+  )
+})
+
+test_that("`readInitialValuesFromXLS()` validates its arguments", {
+  expect_error(
+    readInitialValuesFromXLS(filePath = 123),
+    regexp = 'argument "filePath" is of type <numeric>, but expected <character>!',
+    fixed = TRUE
+  )
+  expect_error(
+    readInitialValuesFromXLS(filePath = initialValuesXLSpath, sheets = 123),
+    regexp = 'argument "sheets" is of type <numeric>, but expected <character>!',
+    fixed = TRUE
+  )
+})
+
 test_that("remove*ParameterEntry no-op on missing entry does not mark modified", {
   project <- testProject()
   addModelParameterEntry(project, "MSet", "Organism|A", "K", 1.5, "1/h")
