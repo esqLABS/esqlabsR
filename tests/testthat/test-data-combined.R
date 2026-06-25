@@ -15,7 +15,7 @@ observedData <- loadObservedData(.testProjectForDC)
 
 # Create a proper data frame with paths for all entries
 dataCombinedDf <- data.frame(list(
-  "DataCombinedName" = c(
+  "dataCombinedName" = c(
     "AciclovirPVB",
     "AciclovirPVB",
     "DC_missingPath",

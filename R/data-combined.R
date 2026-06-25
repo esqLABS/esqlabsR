@@ -106,7 +106,7 @@ createDataCombined <- function(
 
 .specEntryToRow <- function(dataCombinedName, dataType, entry) {
   list(
-    DataCombinedName = dataCombinedName,
+    dataCombinedName = dataCombinedName,
     dataType = dataType,
     label = entry$label %||% NA_character_,
     scenario = entry$scenario %||% NA_character_,
@@ -138,12 +138,12 @@ createDataCombined <- function(
   if (nrow(selectedGrids) == 0) {
     return(character(0))
   }
-  ids <- unique(unlist(strsplit(selectedGrids$plotIDs, "\\s*,\\s*")))
+  ids <- unique(unlist(strsplit(selectedGrids$plotIds, "\\s*,\\s*")))
   cfgDf <- project$plots$plotConfiguration %||% data.frame()
   if (nrow(cfgDf) == 0) {
     return(character(0))
   }
-  unique(cfgDf$DataCombinedName[cfgDf$plotID %in% ids])
+  unique(cfgDf$dataCombinedName[cfgDf$plotId %in% ids])
 }
 
 #' @rdname createDataCombined
@@ -183,11 +183,11 @@ createDataCombinedFromExcel <- function(...) {
   # surfaces an opaque error from `toUnit(NA, ...)`.
   skippedLabels <- list()
 
-  dataCombinedList <- lapply(unique(dfDataCombined$DataCombinedName), \(name) {
+  dataCombinedList <- lapply(unique(dfDataCombined$dataCombinedName), \(name) {
     dataCombined <- DataCombined$new()
     simulated <- dplyr::filter(
       dfDataCombined,
-      DataCombinedName == name,
+      dataCombinedName == name,
       dataType == "simulated"
     )
     if (nrow(simulated) > 0) {
@@ -223,7 +223,7 @@ createDataCombinedFromExcel <- function(...) {
           }
           cli::cli_warn(msg)
           skippedLabels[[length(skippedLabels) + 1L]] <<- list(
-            DataCombinedName = name,
+            dataCombinedName = name,
             label = simulated[j, ]$label
           )
         }
@@ -232,7 +232,7 @@ createDataCombinedFromExcel <- function(...) {
 
     observed <- dplyr::filter(
       dfDataCombined,
-      DataCombinedName == name,
+      dataCombinedName == name,
       dataType == "observed"
     )
     if (nrow(observed) > 0) {
@@ -245,13 +245,13 @@ createDataCombinedFromExcel <- function(...) {
     }
     return(dataCombined)
   })
-  names(dataCombinedList) <- unique(dfDataCombined$DataCombinedName)
+  names(dataCombinedList) <- unique(dfDataCombined$dataCombinedName)
 
   # Drop the skipped simulated rows so the transform block below never
   # processes an entry that was not added to the DataCombined.
   for (skipped in skippedLabels) {
     dfDataCombined <- dfDataCombined[
-      !(dfDataCombined$DataCombinedName == skipped$DataCombinedName &
+      !(dfDataCombined$dataCombinedName == skipped$dataCombinedName &
         dfDataCombined$dataType == "simulated" &
         !is.na(dfDataCombined$label) &
         dfDataCombined$label == skipped$label),
@@ -268,7 +268,7 @@ createDataCombinedFromExcel <- function(...) {
   if (dim(dfTransform)[[1]] != 0) {
     apply(dfTransform, 1, \(row) {
       dataCombinedDf <- dataCombinedList[[row[[
-        "DataCombinedName"
+        "dataCombinedName"
       ]]]]$toDataFrame()
       singleRow <- dataCombinedDf[dataCombinedDf$name == row[["label"]], ][1, ]
 
@@ -277,7 +277,7 @@ createDataCombinedFromExcel <- function(...) {
           (!is.na(row[["yOffsets"]]) & is.na(row[["yOffsetsUnits"]]))
       ) {
         cli::cli_abort(messages$offsetUnitsNotDefined(row[[
-          "DataCombinedName"
+          "dataCombinedName"
         ]]))
       }
 
@@ -310,7 +310,7 @@ createDataCombinedFromExcel <- function(...) {
         molWeightUnit = ospUnits$`Molecular weight`$`g/mol`
       )
 
-      dataCombinedList[[row[["DataCombinedName"]]]]$setDataTransformations(
+      dataCombinedList[[row[["dataCombinedName"]]]]$setDataTransformations(
         forNames = row[["label"]],
         xOffsets = as.numeric(row[["xOffsets"]]),
         yOffsets = as.numeric(row[["yOffsets"]]),
@@ -367,7 +367,7 @@ createDataCombinedFromExcel <- function(...) {
   if (sum(missingLabel) > 0) {
     cli::cli_abort(messages$stopNoPathProvided(dfDataCombined[
       dfDataCombined$dataType == "simulated",
-    ]$DataCombinedName[missingLabel]))
+    ]$dataCombinedName[missingLabel]))
   }
 
   # dataType == observed, but no data set defined - throw error
@@ -377,13 +377,13 @@ createDataCombinedFromExcel <- function(...) {
   if (sum(missingLabel) > 0) {
     cli::cli_abort(messages$stopNoDataSetProvided(dfDataCombined[
       dfDataCombined$dataType == "observed",
-    ]$DataCombinedName[missingLabel]))
+    ]$dataCombinedName[missingLabel]))
   }
 
   # Store the names of all DataCombined before filtering. This is required
   # to create empty rows for DataCombined for which no data exists. This way,
   # empty data combined can still be created.
-  dcNames <- unique(dfDataCombined$DataCombinedName)
+  dcNames <- unique(dfDataCombined$dataCombinedName)
 
   # warnings for invalid data in plot definitions from excel
   # scenario not present in simulatedScenarios
@@ -416,7 +416,7 @@ createDataCombinedFromExcel <- function(...) {
     ]
   }
   # Identify the names of DataCombined that have been completely removed
-  missingDc <- setdiff(dcNames, unique(dfDataCombined$DataCombinedName))
+  missingDc <- setdiff(dcNames, unique(dfDataCombined$dataCombinedName))
   # Create empty rows for each missing DataCombined
   for (name in missingDc) {
     dfDataCombined[nrow(dfDataCombined) + 1, 1] <- name

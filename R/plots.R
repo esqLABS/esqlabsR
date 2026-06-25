@@ -96,11 +96,11 @@
 #' Covers `dataCombined`, `plotConfiguration`, and `plotGrids`:
 #'   * dataCombined entries must declare a non-empty `scenario` on
 #'     each simulated row.
-#'   * plotConfiguration must declare `plotID`, `DataCombinedName`, and
-#'     `plotType` columns; `plotID` must be unique; `DataCombinedName`
+#'   * plotConfiguration must declare `plotId`, `dataCombinedName`, and
+#'     `plotType` columns; `plotId` must be unique; `dataCombinedName`
 #'     must reference a known dataCombined entry.
-#'   * plotGrids entries reference `plotConfiguration$plotID` via a
-#'     comma-separated `plotIDs` string; unknown ids are surfaced as a
+#'   * plotGrids entries reference `plotConfiguration$plotId` via a
+#'     comma-separated `plotIds` string; unknown ids are surfaced as a
 #'     warning (not a critical error) since unknown grid ids fail
 #'     softly during plot creation.
 #'
@@ -146,7 +146,7 @@
   if (is.null(plotConfig) || nrow(plotConfig) == 0) {
     result$add_warning("Data", "plotConfiguration is empty")
   } else {
-    for (col in c("plotID", "DataCombinedName", "plotType")) {
+    for (col in c("plotId", "dataCombinedName", "plotType")) {
       if (!col %in% names(plotConfig)) {
         result$add_critical_error(
           "Missing Fields",
@@ -155,17 +155,17 @@
       }
     }
 
-    if ("plotID" %in% names(plotConfig)) {
+    if ("plotId" %in% names(plotConfig)) {
       result <- .check_no_duplicates(
-        plotConfig$plotID[!is.na(plotConfig$plotID)],
-        "plotID",
+        plotConfig$plotId[!is.na(plotConfig$plotId)],
+        "plotId",
         result
       )
     }
 
-    if ("DataCombinedName" %in% names(plotConfig)) {
+    if ("dataCombinedName" %in% names(plotConfig)) {
       invalidDataCombinedRefs <- setdiff(
-        plotConfig$DataCombinedName[!is.na(plotConfig$DataCombinedName)],
+        plotConfig$dataCombinedName[!is.na(plotConfig$dataCombinedName)],
         names(dataCombined %||% list())
       )
       if (length(invalidDataCombinedRefs) > 0) {
@@ -187,17 +187,17 @@
       !is.null(plotConfig) &&
       nrow(plotConfig) > 0
   ) {
-    if ("plotIDs" %in% names(plotGrids) && "plotID" %in% names(plotConfig)) {
+    if ("plotIds" %in% names(plotGrids) && "plotId" %in% names(plotConfig)) {
       allGridIds <- unlist(lapply(
-        plotGrids$plotIDs[!is.na(plotGrids$plotIDs)],
+        plotGrids$plotIds[!is.na(plotGrids$plotIds)],
         function(x) trimws(strsplit(x, ",")[[1]])
       ))
-      invalidGridRefs <- setdiff(allGridIds, plotConfig$plotID)
+      invalidGridRefs <- setdiff(allGridIds, plotConfig$plotId)
       if (length(invalidGridRefs) > 0) {
         result$add_warning(
           "Invalid Reference",
           paste0(
-            "plotGrids references unknown plotIDs: ",
+            "plotGrids references unknown plotIds: ",
             paste(invalidGridRefs, collapse = ", ")
           )
         )
@@ -349,7 +349,7 @@
 #' @param project A `Project` object.
 #' @param plotId Character scalar. Unique plot identifier.
 #' @param dataCombinedName Character scalar. Must reference an existing
-#'   DataCombined name on the project. Stored in the `DataCombinedName`
+#'   DataCombined name on the project. Stored in the `dataCombinedName`
 #'   column to match the JSON schema.
 #' @param plotType Character scalar. One of `"individual"`,
 #'   `"population"`, `"observedVsSimulated"`,
@@ -371,7 +371,7 @@ addPlot <- function(project, plotId, dataCombinedName, plotType, ...) {
   if (
     !is.null(existingPlots) &&
       nrow(existingPlots) > 0 &&
-      plotId %in% existingPlots$plotID
+      plotId %in% existingPlots$plotId
   ) {
     cli::cli_abort("plot {.val {plotId}} already exists")
   }
@@ -391,8 +391,8 @@ addPlot <- function(project, plotId, dataCombinedName, plotType, ...) {
 
   newRow <- c(
     list(
-      plotID = plotId,
-      DataCombinedName = dataCombinedName,
+      plotId = plotId,
+      dataCombinedName = dataCombinedName,
       plotType = plotType
     ),
     .namedDotsAsRow(...)
@@ -423,7 +423,7 @@ removePlot <- function(project, plotId) {
   .requireNonEmptyString(plotId, "plotId")
 
   df <- project$plots$plotConfiguration
-  if (is.null(df) || nrow(df) == 0 || !(plotId %in% df$plotID)) {
+  if (is.null(df) || nrow(df) == 0 || !(plotId %in% df$plotId)) {
     cli::cli_warn("plot {.val {plotId}} not found; no-op.")
     return(invisible(project))
   }
@@ -431,7 +431,7 @@ removePlot <- function(project, plotId) {
   grids <- project$plots$plotGrids
   if (!is.null(grids) && nrow(grids) > 0) {
     referencingGrids <- grids$name[vapply(
-      grids$plotIDs,
+      grids$plotIds,
       function(s) plotId %in% .splitPlotIDs(s),
       logical(1)
     )]
@@ -444,7 +444,7 @@ removePlot <- function(project, plotId) {
   }
 
   project$plots$plotConfiguration <- df[
-    which(df$plotID != plotId),
+    which(df$plotId != plotId),
     ,
     drop = FALSE
   ]
@@ -487,7 +487,7 @@ addPlotGrid <- function(project, name, plotIds, ...) {
     cli::cli_abort("plot grid {.val {name}} already exists")
   }
 
-  existingPlotIDs <- project$plots$plotConfiguration$plotID
+  existingPlotIDs <- project$plots$plotConfiguration$plotId
   if (is.null(existingPlotIDs)) {
     cli::cli_abort(c(
       "no plots are defined; add plots before creating a plot grid.",
@@ -505,7 +505,7 @@ addPlotGrid <- function(project, name, plotIds, ...) {
   newRow <- c(
     list(
       name = name,
-      plotIDs = paste(plotIds, collapse = ", ")
+      plotIds = paste(plotIds, collapse = ", ")
     ),
     .namedDotsAsRow(...)
   )
@@ -625,8 +625,8 @@ removeDataCombined <- function(project, name) {
 
   plotCfg <- project$plots$plotConfiguration
   if (!is.null(plotCfg) && nrow(plotCfg) > 0) {
-    referencingPlots <- plotCfg$plotID[
-      !is.na(plotCfg$DataCombinedName) & plotCfg$DataCombinedName == name
+    referencingPlots <- plotCfg$plotId[
+      !is.na(plotCfg$dataCombinedName) & plotCfg$dataCombinedName == name
     ]
     if (length(referencingPlots) > 0) {
       cli::cli_warn(c(

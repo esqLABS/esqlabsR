@@ -188,8 +188,8 @@
     ],
     "plotConfiguration": [
       {
-        "plotID": "P1",
-        "DataCombinedName": "Aciclovir_individual",
+        "plotId": "P1",
+        "dataCombinedName": "Aciclovir_individual",
         "plotType": "individual",
         "title": "Aciclovir IV 250 mg",
         "subtitle": "Individual time profiles",
@@ -208,7 +208,7 @@
     "plotGrids": [
       {
         "name": "Individual_diagnostics",
-        "plotIDs": "P1",
+        "plotIds": "P1",
         "title": "Aciclovir — Individual Diagnostics",
         "subtitle": null
       }

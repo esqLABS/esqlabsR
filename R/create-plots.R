@@ -77,9 +77,9 @@ createPlots <- function(
   if (nrow(gridDf) == 0) {
     return(list())
   }
-  referencedPlotIDs <- unique(unlist(lapply(gridDf$plotIDs, .splitPlotIDs)))
+  referencedPlotIDs <- unique(unlist(lapply(gridDf$plotIds, .splitPlotIDs)))
   if (nrow(cfgDf) > 0) {
-    cfgDf <- cfgDf[cfgDf$plotID %in% referencedPlotIDs, , drop = FALSE]
+    cfgDf <- cfgDf[cfgDf$plotId %in% referencedPlotIDs, , drop = FALSE]
   }
 
   # Build DataCombined for the configs referenced by the requested grids.
@@ -113,7 +113,7 @@ createPlotsFromExcel <- function(...) {
 #' Parse and validate comma-separated Excel field
 #'
 #' Parses comma-separated values from Excel and validates using ospsuite.utils.
-#' Provides Excel-specific error context (plotID, field name) for common issues.
+#' Provides Excel-specific error context (plotId, field name) for common issues.
 #'
 #' @param value Raw value from Excel cell
 #' @param fieldName Name of the field for error messages
@@ -278,8 +278,8 @@ createPlotsFromExcel <- function(...) {
         value <- .parseExcelMultiValueField(
           value = value,
           fieldName = colName,
-          plotID = if ("plotID" %in% names(columns)) {
-            columns[["plotID"]]
+          plotID = if ("plotId" %in% names(columns)) {
+            columns[["plotId"]]
           } else {
             NULL
           },
@@ -353,15 +353,15 @@ createPlotsFromExcel <- function(...) {
   dfPlotConfigurations,
   dataCombinedNames
 ) {
-  # mandatory column DataCombinedName is empty - throw error
-  missingLabel <- sum(is.na(dfPlotConfigurations$DataCombinedName))
+  # mandatory column dataCombinedName is empty - throw error
+  missingLabel <- sum(is.na(dfPlotConfigurations$dataCombinedName))
   if (missingLabel > 0) {
     stop(messages$missingDataCombinedName())
   }
 
-  # plotIDs must be unique
-  duplicated_plotIDs <- dfPlotConfigurations$plotID[duplicated(
-    dfPlotConfigurations$plotID
+  # plotIds must be unique
+  duplicated_plotIDs <- dfPlotConfigurations$plotId[duplicated(
+    dfPlotConfigurations$plotId
   )]
   if (length(duplicated_plotIDs) > 0) {
     stop(messages$PlotIDsMustBeUnique(duplicated_plotIDs))
@@ -375,7 +375,7 @@ createPlotsFromExcel <- function(...) {
 
   # DataCombined that are not defined in the DataCombined sheet. Stop if any.
   missingDataCombined <- setdiff(
-    setdiff(dfPlotConfigurations$DataCombinedName, dataCombinedNames),
+    setdiff(dfPlotConfigurations$dataCombinedName, dataCombinedNames),
     NA
   )
   if (length(missingDataCombined) != 0) {
@@ -393,8 +393,8 @@ createPlotsFromExcel <- function(...) {
 #' @returns Processed `dfPlotGrids`
 #' @keywords internal
 .validatePlotGridsFromExcel <- function(dfPlotGrids, plotIDs) {
-  # mandatory column plotIDs is empty - throw error
-  missingLabel <- sum(is.na(dfPlotGrids$plotIDs))
+  # mandatory column plotIds is empty - throw error
+  missingLabel <- sum(is.na(dfPlotGrids$plotIds))
   if (missingLabel > 0) {
     stop(messages$missingPlotIDs())
   }
@@ -408,10 +408,10 @@ createPlotsFromExcel <- function(...) {
   # The values can be enclosed in "" in case the title should contain a ','.
   # Split the input string by ',' but do not split within "" Have to do it one
   # row at a time, otherwise it returns one separate list entry for each plot it
-  # (and not lists of plot ids). Skipped when plotIDs is already a list-column
+  # (and not lists of plot ids). Skipped when plotIds is already a list-column
   # (e.g. when this validator runs a second time inside the shared helper).
-  if (!is.list(dfPlotGrids$plotIDs)) {
-    dfPlotGrids$plotIDs <- lapply(dfPlotGrids$plotIDs, \(plotId) {
+  if (!is.list(dfPlotGrids$plotIds)) {
+    dfPlotGrids$plotIds <- lapply(dfPlotGrids$plotIds, \(plotId) {
       unlist(trimws(scan(
         text = as.character(plotId),
         what = "character",
@@ -421,9 +421,9 @@ createPlotsFromExcel <- function(...) {
     })
   }
 
-  # plotIDs that are not defined in the plotConfiguration sheet. Stop if any.
+  # plotIds that are not defined in the plotConfiguration sheet. Stop if any.
   missingPlots <- setdiff(
-    setdiff(unique(unlist(dfPlotGrids$plotIDs)), plotIDs),
+    setdiff(unique(unlist(dfPlotGrids$plotIds)), plotIDs),
     NA
   )
   if (length(missingPlots) != 0) {
@@ -438,12 +438,12 @@ createPlotsFromExcel <- function(...) {
 #' Used by `createPlots(project, ...)`.
 #'
 #' @param dfPlotConfigurations data.frame with one row per plot, columns
-#'   include plotID, DataCombinedName, plotType, title, subtitle, plus
-#'   axis/styling fields. Callers must pass only plots whose DataCombinedName
+#'   include plotId, dataCombinedName, plotType, title, subtitle, plus
+#'   axis/styling fields. Callers must pass only plots whose dataCombinedName
 #'   is built in `dataCombinedList`; `.validatePlotConfigurationFromExcel()`
-#'   aborts on any DataCombinedName missing from the list.
+#'   aborts on any dataCombinedName missing from the list.
 #' @param dfPlotGrids data.frame with one row per grid, columns include name,
-#'   plotIDs, title.
+#'   plotIds, title.
 #' @param dataCombinedList named list of DataCombined objects keyed by name.
 #'
 #' @noRd
@@ -458,7 +458,7 @@ createPlotsFromExcel <- function(...) {
   )
   dfPlotGrids <- .validatePlotGridsFromExcel(
     dfPlotGrids,
-    unique(dfPlotConfigurations$plotID)
+    unique(dfPlotConfigurations$plotId)
   )
 
   defaultPlotConfiguration <- createEsqlabsPlotConfiguration()
@@ -468,8 +468,8 @@ createPlotsFromExcel <- function(...) {
       row[
         !(names(row) %in%
           c(
-            "plotID",
-            "DataCombinedName",
+            "plotId",
+            "dataCombinedName",
             "plotType",
             "title",
             "subtitle",
@@ -488,32 +488,32 @@ createPlotsFromExcel <- function(...) {
     if ("subtitle" %in% names(row) && !is.na(row[["subtitle"]])) {
       plotConfiguration$subtitle <- row[["subtitle"]]
     }
-    .validateLogScaleAxisLimits(plotConfiguration, row[["plotID"]])
+    .validateLogScaleAxisLimits(plotConfiguration, row[["plotId"]])
     return(plotConfiguration)
   })
-  names(plotConfigurationList) <- dfPlotConfigurations$plotID
+  names(plotConfigurationList) <- dfPlotConfigurations$plotId
 
-  plotList <- lapply(dfPlotConfigurations$plotID, \(plotId) {
+  plotList <- lapply(dfPlotConfigurations$plotId, \(plotId) {
     dataCombined <- dataCombinedList[[
       dfPlotConfigurations[
-        dfPlotConfigurations$plotID == plotId,
-      ]$DataCombinedName
+        dfPlotConfigurations$plotId == plotId,
+      ]$dataCombinedName
     ]]
     switch(
-      dfPlotConfigurations[dfPlotConfigurations$plotID == plotId, ]$plotType,
+      dfPlotConfigurations[dfPlotConfigurations$plotId == plotId, ]$plotType,
       individual = plotIndividualTimeProfile(
         dataCombined,
         plotConfigurationList[[plotId]]
       ),
       population = {
         aggregation <- dfPlotConfigurations[
-          dfPlotConfigurations$plotID == plotId,
+          dfPlotConfigurations$plotId == plotId,
         ]$aggregation
         quantiles <- dfPlotConfigurations[
-          dfPlotConfigurations$plotID == plotId,
+          dfPlotConfigurations$plotId == plotId,
         ]$quantiles
         nsd <- dfPlotConfigurations[
-          dfPlotConfigurations$plotID == plotId,
+          dfPlotConfigurations$plotId == plotId,
         ]$nsd
         args <- list()
         args$dataCombined <- dataCombined
@@ -531,7 +531,7 @@ createPlotsFromExcel <- function(...) {
       },
       observedVsSimulated = {
         foldDist <- dfPlotConfigurations[
-          dfPlotConfigurations$plotID == plotId,
+          dfPlotConfigurations$plotId == plotId,
         ]$foldDistance
         if (is.null(foldDist) || is.na(foldDist)) {
           plotObservedVsSimulated(
@@ -556,20 +556,20 @@ createPlotsFromExcel <- function(...) {
       )
     )
   })
-  names(plotList) <- dfPlotConfigurations$plotID
+  names(plotList) <- dfPlotConfigurations$plotId
 
   defaultPlotGridConfig <- createEsqlabsPlotGridConfiguration()
   plotGrids <- apply(dfPlotGrids, 1, \(row) {
     plotGridConfiguration <- .createConfigurationFromRow(
       defaultConfiguration = defaultPlotGridConfig,
-      row[!(names(row) %in% c("name", "plotIDs", "title"))]
+      row[!(names(row) %in% c("name", "plotIds", "title"))]
     )
     if (!is.null(row$title) && !is.na(row$title)) {
       plotGridConfiguration$title <- row$title
     }
     plotsToAdd <- plotList[intersect(
-      unlist(row$plotIDs),
-      dfPlotConfigurations$plotID
+      unlist(row$plotIds),
+      dfPlotConfigurations$plotId
     )]
     plotsToAdd <- plotsToAdd[lengths(plotsToAdd) != 0]
     if (length(plotsToAdd) == 0) {
