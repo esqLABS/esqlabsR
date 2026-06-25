@@ -153,6 +153,13 @@ messages$outputPathIdCollision <- function(id, existingPath, newPath) {
   ))
 }
 
+messages$outputPathAliasIgnored <- function(userAlias, registeredId, path) {
+  cli::format_message(c(
+    "i" = "Output path alias {.val {userAlias}} ignored: \\
+    path {.val {path}} is already registered as {.val {registeredId}}."
+  ))
+}
+
 messages$noModelFolderForRelativeModelFile <- function(
   scenarioName,
   modelFile

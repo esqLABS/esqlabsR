@@ -6,6 +6,15 @@
     Message
       i Added 1 scenario: "Seeded"
 
+# user alias ignored in favour of registered id emits an inform
+
+    Code
+      createScenariosFromPKML(pkmlFixture, project = project, scenarioNames = "Seeded",
+        outputPaths = stats::setNames(existingPath, "myAlias"))
+    Message
+      i Output path alias "myAlias" ignored: path "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)" is already registered as "Aciclovir_PVB".
+      i Added 1 scenario: "Seeded"
+
 # named outputPaths colliding with an existing id mapped to a different path abort and leave the project unchanged
 
     Code

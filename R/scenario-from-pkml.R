@@ -521,6 +521,7 @@ createScenariosFromPKML <- function(
   oldScenarios <- project$scenarios
   oldOutputPaths <- project$outputPaths
   wasModified <- project$modified
+  wasValidated <- project$validatedSinceMutation
 
   tryCatch(
     {
@@ -556,6 +557,9 @@ createScenariosFromPKML <- function(
       project$outputPaths <- oldOutputPaths
       if (!wasModified) {
         project$.markSaved()
+      }
+      if (wasValidated) {
+        project$.markValidated()
       }
       stop(cnd)
     }
@@ -717,9 +721,18 @@ createScenariosFromPKML <- function(
     matchIdx <- which(known == path)
 
     if (length(matchIdx) > 0) {
-      # Reuse the existing id for this literal path (a conflicting
-      # user-supplied name is dropped in favour of the registered id).
-      outputPathIds[[i]] <- names(known)[[matchIdx[[1]]]]
+      # Reuse the existing id for this literal path. If the user supplied a
+      # name that differs from the registered id, inform them it was ignored.
+      registeredId <- names(known)[[matchIdx[[1]]]]
+      outputPathIds[[i]] <- registeredId
+      userName <- if (!is.null(userNames)) userNames[[i]] else ""
+      if (!is.null(userName) && nzchar(userName) && userName != registeredId) {
+        cli::cli_inform(messages$outputPathAliasIgnored(
+          userName,
+          registeredId,
+          path
+        ))
+      }
       next
     }
 

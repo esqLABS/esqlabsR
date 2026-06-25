@@ -136,6 +136,20 @@ test_that("user-supplied outputPaths reuse the existing id when the literal path
   expect_identical(names(project$outputPaths), idsBefore)
 })
 
+test_that("user alias ignored in favour of registered id emits an inform", {
+  project <- testProject()
+  existingPath <- project$outputPaths[["Aciclovir_PVB"]]
+
+  expect_snapshot(
+    createScenariosFromPKML(
+      pkmlFixture,
+      project = project,
+      scenarioNames = "Seeded",
+      outputPaths = stats::setNames(existingPath, "myAlias")
+    )
+  )
+})
+
 test_that("named outputPaths colliding with an existing id mapped to a different path abort and leave the project unchanged", {
   project <- testProject()
   idsBefore <- names(project$outputPaths)
@@ -478,6 +492,25 @@ test_that("a failing addScenario rolls back scenarios and outputPaths", {
   expect_identical(names(project$scenarios), scenariosBefore)
   expect_identical(names(project$outputPaths), outputsBefore)
   expect_identical(project$modified, modifiedBefore)
+})
+
+test_that("a failing addScenario rollback preserves validatedSinceMutation", {
+  project <- .fakeProject(
+    modelParameterSets = list(Global = list())
+  )
+  project$modelFolder <- dirname(pkmlFixture)
+  project$.markValidated()
+
+  expect_error(
+    suppressMessages(createScenariosFromPKML(
+      rep(pkmlFixture, 2),
+      project = project,
+      scenarioNames = c("Ok", "Bad"),
+      modelParameterSets = c("Global", "DoesNotExist")
+    ))
+  )
+
+  expect_true(project$validatedSinceMutation)
 })
 
 # createScenariosFromPKML: end-to-end round trips ----
