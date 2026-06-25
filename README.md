@@ -4,7 +4,7 @@
 
 <!-- badges: start -->
 
-[![](https://img.shields.io/github/actions/workflow/status/esqlabs/esqlabsR/merge-to-main.yaml?branch=main&label=Build)](https://github.com/esqlabs/esqlabsR/actions/workflows/merge-to-main.yaml)
+[![Build status](https://img.shields.io/github/actions/workflow/status/esqlabs/esqlabsR/merge-to-main.yaml?branch=main&label=Build)](https://github.com/esqlabs/esqlabsR/actions/workflows/merge-to-main.yaml)
 [![Codecov test
 coverage](https://codecov.io/gh/esqlabs/esqlabsR/branch/main/graph/badge.svg)](https://app.codecov.io/gh/esqlabs/esqlabsR?branch=main)
 
