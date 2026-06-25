@@ -4,9 +4,8 @@
 #'
 #' @param simulatedScenariosResults Named list with `simulation`, `results`, `outputValues`,
 #' and `population` as produced by `runScenarios()`.
-#' @param projectConfiguration A `Project` object (loaded with `loadProject()`)
-#' providing the `outputFolder` used to derive the default destination. The
-#' argument keeps its historical name for backward compatibility.
+#' @param project A `Project` object (loaded with `loadProject()`) providing
+#' the `outputFolder` used to derive the default destination.
 #' @param outputFolder Optional - path to the folder where the results will be
 #' stored. If `NULL` (default), a sub-folder in
 #' `project$outputFolder/SimulationResults/<DateSuffix>`.
@@ -28,7 +27,7 @@
 #' }
 saveScenarioResults <- function(
   simulatedScenariosResults,
-  projectConfiguration,
+  project,
   outputFolder = NULL,
   saveSimulationsToPKML = TRUE
 ) {
@@ -36,7 +35,7 @@ saveScenarioResults <- function(
 
   outputFolder <- outputFolder %||%
     file.path(
-      projectConfiguration$outputFolder,
+      project$outputFolder,
       "SimulationResults",
       format(Sys.time(), "%F %H-%M")
     )
@@ -154,15 +153,9 @@ loadScenarioResults <- function(scenarioNames, resultsFolder) {
       population <- loadPopulation(populationPath)
     }
 
-    # Extract output values for the simulation's recorded output paths and pass
-    # the population so the metadata columns match what runScenarios() produced.
-    outputQuantities <- getAllQuantitiesMatching(
-      results$allQuantityPaths,
-      simulation
-    )
     outputValues <- getOutputValues(
       results,
-      quantitiesOrPaths = outputQuantities,
+      quantitiesOrPaths = results$allQuantityPaths,
       population = population,
       addMetaData = FALSE
     )

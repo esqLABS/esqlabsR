@@ -6,7 +6,7 @@
 \usage{
 saveScenarioResults(
   simulatedScenariosResults,
-  projectConfiguration,
+  project,
   outputFolder = NULL,
   saveSimulationsToPKML = TRUE
 )
@@ -15,9 +15,8 @@ saveScenarioResults(
 \item{simulatedScenariosResults}{Named list with \code{simulation}, \code{results}, \code{outputValues},
 and \code{population} as produced by \code{runScenarios()}.}
 
-\item{projectConfiguration}{A \code{Project} object (loaded with \code{loadProject()})
-providing the \code{outputFolder} used to derive the default destination. The
-argument keeps its historical name for backward compatibility.}
+\item{project}{A \code{Project} object (loaded with \code{loadProject()}) providing
+the \code{outputFolder} used to derive the default destination.}
 
 \item{outputFolder}{Optional - path to the folder where the results will be
 stored. If \code{NULL} (default), a sub-folder in
