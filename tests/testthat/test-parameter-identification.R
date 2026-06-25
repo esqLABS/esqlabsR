@@ -1609,6 +1609,74 @@ test_that("loadProject() parses TestProject's parameterIdentification section", 
   )
 })
 
+test_that("removePIParameter() auto-removes the task when it becomes empty", {
+  project <- loadProject(test_path("data", "TestProject", "Project.json"))
+  addPITask(
+    project,
+    id = "T",
+    scenarios = "TestScenario",
+    parameters = list(
+      PIParameter(
+        id = "p1",
+        scenarios = "TestScenario",
+        path = "x|y",
+        minValue = 0,
+        maxValue = 1,
+        startValue = 0.5
+      )
+    ),
+    outputMappings = list(
+      PIOutputMapping(
+        id = "m1",
+        scenarios = "TestScenario",
+        outputPathId = "Aciclovir_PVB",
+        observedDataId = "L"
+      )
+    )
+  )
+  removePIOutputMapping(project, taskId = "T", id = "m1")
+  expect_length(project$parameterIdentification$T$outputMappings, 0L)
+  expect_warning(
+    removePIParameter(project, taskId = "T", id = "p1"),
+    "empty"
+  )
+  expect_null(project$parameterIdentification[["T"]])
+})
+
+test_that("removePIOutputMapping() auto-removes the task when it becomes empty", {
+  project <- loadProject(test_path("data", "TestProject", "Project.json"))
+  addPITask(
+    project,
+    id = "T",
+    scenarios = "TestScenario",
+    parameters = list(
+      PIParameter(
+        id = "p1",
+        scenarios = "TestScenario",
+        path = "x|y",
+        minValue = 0,
+        maxValue = 1,
+        startValue = 0.5
+      )
+    ),
+    outputMappings = list(
+      PIOutputMapping(
+        id = "m1",
+        scenarios = "TestScenario",
+        outputPathId = "Aciclovir_PVB",
+        observedDataId = "L"
+      )
+    )
+  )
+  removePIParameter(project, taskId = "T", id = "p1")
+  expect_length(project$parameterIdentification$T$parameters, 0L)
+  expect_warning(
+    removePIOutputMapping(project, taskId = "T", id = "m1"),
+    "empty"
+  )
+  expect_null(project$parameterIdentification[["T"]])
+})
+
 test_that("Project save / load round-trip preserves the parameterIdentification section", {
   tmp <- withr::local_tempfile(fileext = ".json")
   source <- test_path("data", "TestProject", "Project.json")

@@ -17,7 +17,10 @@ removePIParameter(project, taskId, id)
 The \code{project} object, invisibly.
 }
 \description{
-Warns and is a no-op when the parameter id does not exist.
+Warns and is a no-op when the parameter id does not exist. If removing
+the parameter leaves the task with no parameters AND no output mappings,
+the task is auto-removed from \code{project$parameterIdentification} and a
+warning is emitted.
 }
 \seealso{
 Other parameterIdentification:

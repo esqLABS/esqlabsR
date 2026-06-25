@@ -258,6 +258,18 @@ test_that("addScenario rejects NA-valued FK args", {
   )
 })
 
+test_that("removeScenario uses scenarioName argument matching addScenario", {
+  project <- testProject()
+  addScenario(
+    project,
+    scenarioName = "ToRemove",
+    modelFile = "Aciclovir.pkml"
+  )
+  expect_true("ToRemove" %in% names(project$scenarios))
+  removeScenario(project, scenarioName = "ToRemove")
+  expect_false("ToRemove" %in% names(project$scenarios))
+})
+
 test_that("addScenario stores steadyStateTime in base units and round-trips the declared unit", {
   project <- testProject()
   addScenario(

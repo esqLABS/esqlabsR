@@ -100,7 +100,9 @@
 # `.getFilePathsData()` and emits a flat `{name: value}` map.
 .filePathsToJson <- function(project) {
   data <- project$.getFilePathsData()
-  if (length(data) == 0L) return(stats::setNames(list(), character(0)))
+  if (length(data) == 0L) {
+    return(stats::setNames(list(), character(0)))
+  }
   result <- lapply(data, function(entry) entry$value)
   .asJsonObject(result)
 }

@@ -55,13 +55,17 @@ createPlots <- function(
   }
   cfgDf <- project$plots$plotConfiguration %||% data.frame()
   gridDf <- project$plots$plotGrids %||% data.frame()
-  if (nrow(gridDf) == 0) return(list())
+  if (nrow(gridDf) == 0) {
+    return(list())
+  }
   if (is.null(plotGridNames)) {
     plotGridNames <- gridDf$name
   }
   # Filter to only requested grids and any plot configs they reference.
   gridDf <- gridDf[gridDf$name %in% plotGridNames, , drop = FALSE]
-  if (nrow(gridDf) == 0) return(list())
+  if (nrow(gridDf) == 0) {
+    return(list())
+  }
 
   # Build DataCombined for the configs referenced by the requested grids.
   if (is.null(dataCombinedList)) {

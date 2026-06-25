@@ -625,25 +625,25 @@ addScenario <- function(
 
 #' Remove a scenario from a Project
 #' @param project A `Project` object.
-#' @param name Character scalar, scenario name.
+#' @param scenarioName Character scalar, scenario name.
 #' @returns The `project` object, invisibly.
 #' @export
 #' @family scenario
-removeScenario <- function(project, name) {
+removeScenario <- function(project, scenarioName) {
   validateIsOfType(project, "Project")
   if (
-    !is.character(name) ||
-      length(name) != 1L ||
-      is.na(name) ||
-      nchar(name) == 0
+    !is.character(scenarioName) ||
+      length(scenarioName) != 1L ||
+      is.na(scenarioName) ||
+      nchar(scenarioName) == 0
   ) {
-    cli::cli_abort("{.arg name} must be a non-empty string")
+    cli::cli_abort("{.arg scenarioName} must be a non-empty string")
   }
-  if (!(name %in% names(project$scenarios))) {
-    cli::cli_warn("scenario {.val {name}} not found; no-op.")
+  if (!(scenarioName %in% names(project$scenarios))) {
+    cli::cli_warn("scenario {.val {scenarioName}} not found; no-op.")
     return(invisible(project))
   }
-  project$scenarios[[name]] <- NULL
+  project$scenarios[[scenarioName]] <- NULL
   project$.markModified()
   invisible(project)
 }
