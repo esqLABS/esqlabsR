@@ -800,6 +800,10 @@ messages$errorPIScenarioNotFound <- function(scenarioName, availableScenarios) {
   ))
 }
 
+messages$messageBuildingPITask <- function(piTaskName) {
+  cliFormat("Building PI task: {.val {piTaskName}}")
+}
+
 messages$messageRunningPITask <- function(piTaskName) {
   cliFormat("Running PI task: {.val {piTaskName}}")
 }

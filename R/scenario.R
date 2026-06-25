@@ -105,8 +105,7 @@ Scenario <- R6::R6Class(
 
     #' @description Create a new Scenario. All fields default;
     #'   the parser populates them by direct assignment.
-    initialize = function() {
-    },
+    initialize = function() {},
 
     #' @description Print a one-line-per-field summary.
     #' @param ... Unused; present for S3 method consistency.

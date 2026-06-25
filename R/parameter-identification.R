@@ -797,6 +797,7 @@ runPI <- function(
   # hours-long) optimisations.
   runtimes <- list()
   for (taskName in piTaskNames) {
+    message(messages$messageBuildingPITask(taskName))
     runtimes[[taskName]] <- .createSinglePITask(
       project = project,
       piTask = taskMap[[taskName]],
