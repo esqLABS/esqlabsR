@@ -259,6 +259,40 @@ test_that("addScenario rejects NA-valued FK args", {
   )
 })
 
+test_that("addScenario stores initialConditions and round-trips through JSON", {
+  project <- testProject()
+  addScenario(
+    project,
+    scenarioName = "WithIC",
+    modelFile = "Aciclovir.pkml",
+    initialConditions = "TestInitialSet"
+  )
+
+  expect_equal(
+    project$scenarios[["WithIC"]]$initialConditions,
+    "TestInitialSet"
+  )
+
+  out <- withr::local_tempfile(fileext = ".json")
+  esqlabsR:::.saveProjectJson(project, out)
+  raw <- jsonlite::fromJSON(out, simplifyVector = FALSE)
+  savedIC <- Filter(\(s) identical(s[["name"]], "WithIC"), raw$scenarios)[[1]]
+  expect_equal(unlist(savedIC$initialConditions), "TestInitialSet")
+})
+
+test_that("addScenario aborts when a referenced initialConditions set is unknown", {
+  project <- testProject()
+  expect_snapshot(
+    error = TRUE,
+    addScenario(
+      project,
+      scenarioName = "BadIC",
+      modelFile = "Aciclovir.pkml",
+      initialConditions = "Ghost"
+    )
+  )
+})
+
 test_that("removeScenario uses scenarioName argument matching addScenario", {
   project <- testProject()
   addScenario(

@@ -673,18 +673,59 @@ removeModelParameterEntry <- function(
 #'
 #' @description Each excel sheet must consist of columns `Container Path`,
 #'   `Molecule Name`, `Is Present`, `Value`, `Units`, `Scale Divisor`, and
-#'   `Neg. Values Allowed`.
+#'   `Neg. Values Allowed`. Units are mandatory for every present molecule; a
+#'   present row with a blank `Units` cell is an error.
 #'
 #' @param filePath Path to the excel file
 #' @param sheets Names of the excel sheets containing the information about
 #'   the initial values. Multiple sheets can be processed. If no sheets are
 #'   provided, the first one in the Excel file is used.
 #'
-#' @returns A list containing vectors `paths` with the full paths to the
-#'   quantities, `values` the values, and `units` with the units the values
-#'   are in.
+#' @returns A single list combining all processed sheets, containing vectors
+#'   `paths` with the full molecule paths, `values` with the values, and `units`
+#'   with the units the values are in. When multiple sheets are read, their rows
+#'   are merged into this one structure; if the same molecule path occurs more
+#'   than once, the last occurrence wins (last sheet, then last row). A duplicate
+#'   path, whether within a single sheet or repeated across sheets, triggers a
+#'   warning before the earlier value is replaced.
 #' @export
 readInitialConditionsFromXLS <- function(filePath, sheets = NULL) {
+  rows <- .readInitialConditionsRows(filePath = filePath, sheets = sheets)
+
+  pathsValuesVector <- vector(mode = "numeric")
+  pathsUnitsVector <- vector(mode = "character")
+  for (row in rows) {
+    pathsValuesVector[row$fullPath] <- row$value
+    pathsUnitsVector[row$fullPath] <- row$unit
+  }
+
+  return(.parametersVectorToList(pathsValuesVector, pathsUnitsVector))
+}
+
+#' Read and validate initial-condition rows from a structured Excel file.
+#'
+#' Shared reader used by both [readInitialConditionsFromXLS()] (which collapses
+#' the rows into a flat `{paths, values, units}` structure) and the Excel-import
+#' parser `.parseExcelInitialConditions()` (which maps each row to a JSON
+#' `{path, value, unit}` record). Centralising the column-structure, `Is
+#' Present`, blank-path, duplicate-path, value and unit validation here keeps the
+#' two readers from drifting apart.
+#'
+#' @param filePath Path to the excel file.
+#' @param sheets Sheets to read. If `NULL`, only the first sheet is read.
+#' @param call Environment used to attribute raised conditions to the public
+#'   caller rather than this internal helper.
+#'
+#' @returns A list of per-row records (one per kept, present molecule), each a
+#'   list with `sheet`, `containerPath`, `moleculeName`, `fullPath`, `value`,
+#'   and `unit`. Rows where `Is Present` is explicitly `FALSE`/`0` are dropped.
+#' @keywords internal
+#' @noRd
+.readInitialConditionsRows <- function(
+  filePath,
+  sheets = NULL,
+  call = rlang::caller_env()
+) {
   columnNames <- c(
     "Container Path",
     "Molecule Name",
@@ -698,20 +739,21 @@ readInitialConditionsFromXLS <- function(filePath, sheets = NULL) {
   validateIsString(sheets, nullAllowed = TRUE)
 
   if (is.null(sheets)) {
-    sheets <- c(1)
+    sheets <- readxl::excel_sheets(filePath)[1L]
   }
 
-  pathsValuesVector <- vector(mode = "numeric")
-  pathsUnitsVector <- vector(mode = "character")
+  rows <- list()
+  seenPaths <- character(0)
 
   for (sheet in sheets) {
     data <- readExcel(path = filePath, sheet = sheet)
 
     if (!all(columnNames %in% names(data))) {
-      stop(messages$errorWrongXLSStructure(
+      msg <- messages$errorWrongXLSStructure(
         filePath = filePath,
         expectedColNames = columnNames
-      ))
+      )
+      cli::cli_abort(c("x" = "{msg}"), call = call)
     }
 
     # "Is Present" must be a logical value or empty. An empty/NA cell is
@@ -726,14 +768,15 @@ readInitialConditionsFromXLS <- function(filePath, sheets = NULL) {
     isPresent[numericFlag] <- isPresentChr[numericFlag] == "1"
     invalidIsPresent <- !isBlank & is.na(isPresent)
     if (any(invalidIsPresent)) {
-      stop(messages$errorInvalidIsPresentInInitialConditions(
+      msg <- messages$errorInvalidIsPresentInInitialConditions(
         filePath = filePath,
         moleculePaths = paste(
           data[["Container Path"]],
           data[["Molecule Name"]],
           sep = "|"
         )[invalidIsPresent]
-      ))
+      )
+      cli::cli_abort(c("x" = "{msg}"), call = call)
     }
 
     # Only include rows where Is Present is not explicitly FALSE
@@ -755,48 +798,65 @@ readInitialConditionsFromXLS <- function(filePath, sheets = NULL) {
       is.na(moleculeName) |
       trimws(moleculeName) == ""
     if (any(missingPathParts)) {
-      stop(messages$errorMissingPathInInitialConditions(
+      msg <- messages$errorMissingPathInInitialConditions(
         filePath = filePath,
         sheet = sheet,
         rows = keptRowNumbers[missingPathParts]
-      ))
+      )
+      cli::cli_abort(c("x" = "{msg}"), call = call)
     }
 
     fullPaths <- paste(containerPath, moleculeName, sep = "|")
 
     # Warn (rather than silently overwrite) when the same molecule path appears
-    # more than once in a sheet; the named-vector assignment keeps the last.
-    duplicatePaths <- unique(fullPaths[duplicated(fullPaths)])
+    # more than once: either within this sheet, or already defined on a prior
+    # sheet. The last occurrence wins downstream.
+    duplicatePaths <- unique(c(
+      fullPaths[duplicated(fullPaths)],
+      intersect(fullPaths, seenPaths)
+    ))
     if (length(duplicatePaths) > 0) {
-      warning(messages$warningDuplicateInitialConditions(
+      msg <- messages$warningDuplicateInitialConditions(
         filePath = filePath,
         moleculePaths = duplicatePaths
-      ))
+      )
+      cli::cli_warn(c("!" = "{msg}"), call = call)
     }
 
-    # Validate values and units before mutating the accumulators, so a failure
-    # leaves no partial state behind.
+    # Validate values and units before accumulating rows, so a failure leaves
+    # no partial state behind.
     parsedValues <- suppressWarnings(as.numeric(data[["Value"]]))
     missingValues <- is.na(parsedValues)
     if (any(missingValues)) {
-      stop(messages$errorMissingValuesInInitialConditions(
+      msg <- messages$errorMissingValuesInInitialConditions(
         filePath = filePath,
         moleculePaths = fullPaths[missingValues]
-      ))
+      )
+      cli::cli_abort(c("x" = "{msg}"), call = call)
     }
 
     unitsRaw <- as.character(data[["Units"]])
     missingUnits <- is.na(data[["Units"]]) | trimws(unitsRaw) == ""
     if (any(missingUnits)) {
-      stop(messages$errorMissingUnitsInInitialConditions(
+      msg <- messages$errorMissingUnitsInInitialConditions(
         filePath = filePath,
         moleculePaths = fullPaths[missingUnits]
-      ))
+      )
+      cli::cli_abort(c("x" = "{msg}"), call = call)
     }
 
-    pathsValuesVector[fullPaths] <- parsedValues
-    pathsUnitsVector[fullPaths] <- unitsRaw
+    for (i in seq_len(nrow(data))) {
+      rows[[length(rows) + 1L]] <- list(
+        sheet = sheet,
+        containerPath = containerPath[[i]],
+        moleculeName = moleculeName[[i]],
+        fullPath = fullPaths[[i]],
+        value = parsedValues[[i]],
+        unit = unitsRaw[[i]]
+      )
+    }
+    seenPaths <- union(seenPaths, fullPaths)
   }
 
-  return(.parametersVectorToList(pathsValuesVector, pathsUnitsVector))
+  rows
 }

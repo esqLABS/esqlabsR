@@ -22,10 +22,10 @@ objects that overrides automatic resolution from
 \code{project$observedData}.}
 
 \item{stopIfParameterNotFound}{Logical. When \code{TRUE} (default), a
-parameter listed in a scenario's parameter sets but absent from the
-simulation aborts the build; when \code{FALSE}, it is skipped with a
-warning. Forwarded through \code{.prepareScenario()} to
-\code{initializeSimulation()}.}
+parameter listed in a scenario's parameter sets, or an
+initial-condition quantity path, that is absent from the simulation
+aborts the build; when \code{FALSE}, it is skipped with a warning.
+Forwarded through \code{.prepareScenario()} to \code{initializeSimulation()}.}
 }
 \value{
 Named list of per-task results. Each entry is a list with

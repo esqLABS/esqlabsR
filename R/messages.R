@@ -75,7 +75,7 @@ messages$errorInvalidIsPresentInInitialConditions <- function(
   moleculePaths
 ) {
   cliFormat(
-    "Invalid 'Is Present' values in initial values file {.file {filePath}} for molecule(s): {.val {paste(moleculePaths, collapse = ', ')}}. 'Is Present' must be a logical value (TRUE/FALSE) or empty."
+    "Invalid 'Is Present' values in initial values file {.file {filePath}} for molecule(s): {.val {paste(moleculePaths, collapse = ', ')}}. 'Is Present' must be a logical value (TRUE/FALSE), numeric 1/0 (present/not present), or empty."
   )
 }
 

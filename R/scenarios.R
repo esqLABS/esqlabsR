@@ -145,7 +145,7 @@ print.Scenario <- function(x, ...) {
   }
   if (!is.null(x$initialConditions)) {
     cat(
-      "  Initial val sets: ",
+      "  Init. conds:    ",
       paste(x$initialConditions, collapse = ", "),
       "\n"
     )
@@ -465,6 +465,8 @@ runScenarios <- function(
 #'   referencing `project$applications`.
 #' @param modelParameterSets Character vector or `NULL`. Set names
 #'   referencing `project$modelParameterSets`.
+#' @param initialConditions Character vector or `NULL`. Set names
+#'   referencing `project$initialConditions`.
 #' @param outputPathIds Character vector or `NULL`. IDs referencing
 #'   `project$outputPaths`.
 #' @param simulationTime Character or `NULL`. Format
@@ -494,6 +496,7 @@ addScenario <- function(
   populationId = NULL,
   applicationProtocol = NULL,
   modelParameterSets = NULL,
+  initialConditions = NULL,
   outputPathIds = NULL,
   simulationTime = NULL,
   simulationTimeUnit = "h",
@@ -601,6 +604,12 @@ addScenario <- function(
       "project$modelParameterSets"
     ),
     checkVectorFK(
+      initialConditions,
+      "initialConditions",
+      project$initialConditions,
+      "project$initialConditions"
+    ),
+    checkVectorFK(
       outputPathIds,
       "outputPathIds",
       project$outputPaths,
@@ -643,7 +652,8 @@ addScenario <- function(
     ),
     steadyStateTimeUnit = steadyStateTimeUnit,
     overwriteFormulasInSS = overwriteFormulasInSS,
-    modelParameterSets = modelParameterSets
+    modelParameterSets = modelParameterSets,
+    initialConditions = initialConditions
   )
 
   project$scenarios[[scenarioName]] <- sc

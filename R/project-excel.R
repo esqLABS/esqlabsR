@@ -758,6 +758,20 @@ projectConfigurationStatus <- function(...) {
 #' fields `path`, `value`, and `unit`. The flat path is built by joining
 #' `Container Path` and `Molecule Name` with `|`.
 #'
+#' Validation is shared with [readInitialConditionsFromXLS()] via the internal
+#' `.readInitialConditionsRows()` reader, so a malformed Excel sheet (wrong
+#' columns, invalid `Is Present`, blank path, missing value, blank unit) aborts
+#' the import rather than serialising bad records into the JSON project.
+#'
+#' Only `path`, `value`, and `unit` are carried into the record. `Is Present`,
+#' `Scale Divisor`, and `Neg. Values Allowed` are NOT preserved: `Is
+#' Present=FALSE`/`0` rows are dropped at read time, and the other two columns
+#' are unused by esqlabsR (the simulation consumes only path/value/unit). On an
+#' Excel export they are regenerated with defaults (`Is Present=TRUE`, `Scale
+#' Divisor=1`, `Neg. Values Allowed=FALSE`), so a non-default value in those
+#' columns is not preserved across an Excel -> JSON -> Excel round-trip. Units
+#' are mandatory for present molecules, so a record can never carry a blank unit.
+#'
 #' @param filePath Path to the Excel file.
 #' @param sheetNames Sheets to read. If NULL, reads all sheets.
 #' @returns Named list of initial-conditions arrays.
@@ -770,45 +784,20 @@ projectConfigurationStatus <- function(...) {
   if (is.null(sheetNames)) {
     sheetNames <- readxl::excel_sheets(filePath)
   }
+  rows <- .readInitialConditionsRows(filePath = filePath, sheets = sheetNames)
+
   result <- list()
+  # Seed every requested sheet so empty sheets still surface as empty arrays.
   for (sheet in sheetNames) {
-    df <- readExcel(filePath, sheet = sheet)
-    entries <- list()
-    if (nrow(df) > 0) {
-      for (i in seq_len(nrow(df))) {
-        isPresentRaw <- df[["Is Present"]][[i]]
-        isPresentChr <- trimws(as.character(isPresentRaw))
-        isBlank <- is.na(isPresentRaw) || isPresentChr == ""
-        isPresent <- if (isBlank) {
-          TRUE
-        } else if (isPresentChr %in% c("0", "1")) {
-          isPresentChr == "1"
-        } else {
-          isTRUE(as.logical(isPresentChr))
-        }
-        if (!isPresent) {
-          next
-        }
-        containerPath <- as.character(df[["Container Path"]][[i]])
-        moleculeName <- as.character(df[["Molecule Name"]][[i]])
-        path <- paste(containerPath, moleculeName, sep = "|")
-        value <- as.numeric(df[["Value"]][[i]])
-        unit <- if (
-          is.na(df[["Units"]][[i]]) ||
-            trimws(as.character(df[["Units"]][[i]])) == ""
-        ) {
-          NULL
-        } else {
-          as.character(df[["Units"]][[i]])
-        }
-        entries[[length(entries) + 1L]] <- list(
-          path = path,
-          value = value,
-          unit = unit
-        )
-      }
-    }
-    result[[sheet]] <- entries
+    result[[sheet]] <- list()
+  }
+  for (row in rows) {
+    sheet <- row$sheet
+    result[[sheet]][[length(result[[sheet]]) + 1L]] <- list(
+      path = row$fullPath,
+      value = row$value,
+      unit = row$unit
+    )
   }
   result
 }
@@ -986,6 +975,12 @@ projectConfigurationStatus <- function(...) {
 }
 
 #' Convert initial-conditions structures to Excel sheet data frames
+#'
+#' The record carries only `path`, `value`, and `unit`, so the `Is Present`,
+#' `Scale Divisor`, and `Neg. Values Allowed` columns are emitted as fixed
+#' defaults (`TRUE`, `1`, `FALSE`); these columns are not preserved across an
+#' Excel -> JSON -> Excel round-trip.
+#'
 #' @param initialConditions Named list of initial-conditions arrays (each entry
 #'   is a list of records with fields `path`, `value`, `unit`).
 #' @returns Named list of data frames suitable for Excel sheets.

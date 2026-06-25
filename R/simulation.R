@@ -63,8 +63,9 @@ applyIndividualParameters <- function(individualCharacteristics, simulation) {
 #'   values) to apply after setting parameters. Values are applied using
 #'   `ospsuite::setQuantityValuesByPath`.
 #' @param stopIfParameterNotFound Logical. If `TRUE` (default), an error is
-#'   thrown if any of the `additionalParams` does not exist. If `FALSE`,
-#'   non-existent parameters are  ignored.
+#'   thrown if any path in `additionalParams` or
+#'   `additionalInitialConditions` does not exist in the simulation. If
+#'   `FALSE`, non-existent paths are skipped with a warning.
 #' @export
 #'
 #' @examples

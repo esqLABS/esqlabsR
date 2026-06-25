@@ -116,6 +116,38 @@ test_that(".mergeScenarioParameters silently skips an unknown modelParameterSets
   expect_true("Organism|Liver|EHC continuous fraction" %in% merged$paths)
 })
 
+test_that(".prepareScenario silently skips an unknown initialConditions group", {
+  withr::local_options(lifecycle_verbosity = "quiet")
+  project <- .testProject()
+  scenario <- project$scenarios[["TestScenario"]]
+  scenario$initialConditions <- c("TestInitialSet", "DoesNotExist")
+
+  newCache <- function() {
+    cache <- new.env(parent = emptyenv())
+    cache$individuals <- list()
+    cache$populations <- list()
+    cache
+  }
+
+  # The unknown key contributes nothing: preparing with it present must
+  # succeed (stopIfParameterNotFound = FALSE lets the synthetic IC path
+  # warn rather than abort) and yield the same prepared simulation as the
+  # scenario that references only the known set.
+  expect_no_error(
+    suppressWarnings(
+      prepared <- esqlabsR:::.prepareScenario(
+        scenario = scenario,
+        project = project,
+        customParams = NULL,
+        cache = newCache(),
+        simulationRunOptions = NULL,
+        stopIfParameterNotFound = FALSE
+      )
+    )
+  )
+  expect_s3_class(prepared$simulation, "Simulation")
+})
+
 test_that(".mergeScenarioParameters silently skips an unknown individual parameter-set id", {
   project <- .testProject()
   scenario <- project$scenarios[["TestScenario"]]

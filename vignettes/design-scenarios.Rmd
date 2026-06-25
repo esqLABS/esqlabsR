@@ -79,7 +79,9 @@ columns:
     (e.g., `Organism|Liver|Intracellular`).
 -   **Molecule Name**: The name of the molecule (e.g., `DrugA`).
 -   **Is Present**: A logical value (`TRUE`/`FALSE`) indicating whether
-    the molecule is present. Rows where `Is Present` is `FALSE` are
+    the molecule is present. A numeric `0`/`1` cell is also accepted
+    (`0` = absent, `1` = present), as Excel commonly stores logical
+    columns as 0/1. Rows where `Is Present` is `FALSE` (or `0`) are
     skipped.
 -   **Value**: The start value. Mandatory for present molecules; a
     missing or non-numeric value raises an error.
@@ -406,8 +408,9 @@ by a `,`. Each sheet must contain `Container Path`, `Molecule Name`,
 `Neg. Values Allowed`. Initial conditions from the specified sheets are
 applied to the model after all parameter values have been set, overriding
 the start values of molecules defined in the `.pkml` file. The full path
-to a molecule is constructed as `Container Path|Molecule Name`. Rows
-where **Is Present** is `FALSE` are skipped. For every present molecule,
+to a molecule is constructed as `Container Path|Molecule Name`. **Is
+Present** accepts `TRUE`/`FALSE` or numeric `1`/`0`, and rows where it is
+`FALSE` (or `0`) are skipped. For every present molecule,
 both **Value** and **Units** are mandatory; a missing value or an empty
 unit raises an error. **InitialConditions** may be empty if no initial
 conditions need to be overridden.
@@ -580,7 +583,7 @@ sheet must have the following columns:
 |--------|-------------|
 | `Container Path` | Path to the container holding the molecule (e.g., `Organism|Liver|Intracellular`) |
 | `Molecule Name` | Name of the molecule (e.g., `DrugA`) |
-| `Is Present` | Logical (`TRUE`/`FALSE`). Rows with `FALSE` are skipped |
+| `Is Present` | Logical (`TRUE`/`FALSE`) or numeric (`1`/`0`). Rows with `FALSE`/`0` are skipped |
 | `Value` | Start value of the molecule. Mandatory; missing/non-numeric values raise an error |
 | `Units` | Unit of the start value (e.g., `µmol`). Mandatory; empty units for a present molecule raise an error |
 | `Scale Divisor` | Scale divisor (for reference) |

@@ -12,6 +12,7 @@ addScenario(
   populationId = NULL,
   applicationProtocol = NULL,
   modelParameterSets = NULL,
+  initialConditions = NULL,
   outputPathIds = NULL,
   simulationTime = NULL,
   simulationTimeUnit = "h",
@@ -42,6 +43,9 @@ referencing \code{project$applications}.}
 
 \item{modelParameterSets}{Character vector or \code{NULL}. Set names
 referencing \code{project$modelParameterSets}.}
+
+\item{initialConditions}{Character vector or \code{NULL}. Set names
+referencing \code{project$initialConditions}.}
 
 \item{outputPathIds}{Character vector or \code{NULL}. IDs referencing
 \code{project$outputPaths}.}

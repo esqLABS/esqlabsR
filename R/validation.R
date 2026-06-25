@@ -542,6 +542,7 @@ validateProject <- function(project) {
 #' Hand-rolled monolith that checks references that span sections:
 #' `scenario.individualId/populationId` against the individuals and
 #' populations sections, `scenario.modelParameterSets`,
+#' `scenario.initialConditions`,
 #' `scenario.applicationProtocol`, and `scenario.outputPaths` against
 #' their respective lookups, `individual.parameterSets` and
 #' `application.parameterSets` against the corresponding parameter-set
@@ -568,6 +569,7 @@ validateProject <- function(project) {
     skipped <- c(
       "scenario individualId / populationId references",
       "scenario modelParameterSets references",
+      "scenario initialConditions references",
       "scenario applicationProtocol references",
       "scenario outputPaths references",
       "individual parameterSets references",
@@ -591,6 +593,7 @@ validateProject <- function(project) {
   individualIds <- names(project$individuals %||% list())
   populationIds <- names(project$populations %||% list())
   modelParamKeys <- names(project$modelParameterSets %||% list())
+  initialConditionKeys <- names(project$initialConditions %||% list())
   applicationKeys <- names(project$applications %||% list())
   outputPathKeys <- names(project$outputPaths %||% list())
 
@@ -642,6 +645,22 @@ validateProject <- function(project) {
             scName,
             "' references undefined model parameter sets: ",
             paste(invalidSets, collapse = ", ")
+          )
+        )
+      }
+    }
+
+    if (!is.null(sc$initialConditions) && length(sc$initialConditions) > 0) {
+      invalidICs <- setdiff(sc$initialConditions, initialConditionKeys)
+      invalidICs <- invalidICs[!is.na(invalidICs) & invalidICs != ""]
+      if (length(invalidICs) > 0) {
+        result$add_critical_error(
+          "Invalid Reference",
+          paste0(
+            "Scenario '",
+            scName,
+            "' references undefined initial conditions: ",
+            paste(invalidICs, collapse = ", ")
           )
         )
       }

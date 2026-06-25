@@ -14,12 +14,17 @@ the initial values. Multiple sheets can be processed. If no sheets are
 provided, the first one in the Excel file is used.}
 }
 \value{
-A list containing vectors \code{paths} with the full paths to the
-quantities, \code{values} the values, and \code{units} with the units the values
-are in.
+A single list combining all processed sheets, containing vectors
+\code{paths} with the full molecule paths, \code{values} with the values, and \code{units}
+with the units the values are in. When multiple sheets are read, their rows
+are merged into this one structure; if the same molecule path occurs more
+than once, the last occurrence wins (last sheet, then last row). A duplicate
+path, whether within a single sheet or repeated across sheets, triggers a
+warning before the earlier value is replaced.
 }
 \description{
 Each excel sheet must consist of columns \verb{Container Path},
 \verb{Molecule Name}, \verb{Is Present}, \code{Value}, \code{Units}, \verb{Scale Divisor}, and
-\verb{Neg. Values Allowed}.
+\verb{Neg. Values Allowed}. Units are mandatory for every present molecule; a
+present row with a blank \code{Units} cell is an error.
 }

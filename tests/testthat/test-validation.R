@@ -482,6 +482,30 @@ test_that(".validateCrossReferences flags scenario referencing missing individua
   expect_true(any(grepl("undefined individualId 'Ghost'", msgs)))
 })
 
+test_that(".validateCrossReferences flags scenario referencing undefined initial conditions", {
+  sc <- esqlabsR:::Scenario()
+  sc$modelFile <- "x.pkml"
+  sc$initialConditions <- "Ghost"
+  project <- .fakeProject(scenarios = list(s1 = sc))
+  result <- esqlabsR:::.validateCrossReferences(project, list())
+  msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
+  expect_true(any(grepl("undefined initial conditions", msgs)))
+})
+
+test_that(".validateCrossReferences accepts a scenario referencing a defined initial conditions set", {
+  sc <- esqlabsR:::Scenario()
+  sc$modelFile <- "x.pkml"
+  sc$initialConditions <- "Real"
+  project <- .fakeProject(
+    scenarios = list(s1 = sc),
+    initialConditions = list(
+      Real = list(list(path = "A|B", value = 1, unit = "mg"))
+    )
+  )
+  result <- esqlabsR:::.validateCrossReferences(project, list())
+  expect_length(result$critical_errors, 0)
+})
+
 test_that(".validateCrossReferences flags individual referencing unknown parameter set", {
   individuals <- list(
     I1 = list(

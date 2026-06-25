@@ -28,3 +28,13 @@
       ! Cannot add scenario "S":
       x outputPathIds must be a non-empty character vector with no NA or empty entries
 
+# addScenario aborts when a referenced initialConditions set is unknown
+
+    Code
+      addScenario(project, scenarioName = "BadIC", modelFile = "Aciclovir.pkml",
+        initialConditions = "Ghost")
+    Condition
+      Error in `addScenario()`:
+      ! Cannot add scenario "BadIC":
+      x initialConditions not found in project$initialConditions: Ghost
+

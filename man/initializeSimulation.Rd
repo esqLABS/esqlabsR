@@ -27,8 +27,9 @@ values) to apply after setting parameters. Values are applied using
 \code{ospsuite::setQuantityValuesByPath}.}
 
 \item{stopIfParameterNotFound}{Logical. If \code{TRUE} (default), an error is
-thrown if any of the \code{additionalParams} does not exist. If \code{FALSE},
-non-existent parameters are  ignored.}
+thrown if any path in \code{additionalParams} or
+\code{additionalInitialConditions} does not exist in the simulation. If
+\code{FALSE}, non-existent paths are skipped with a warning.}
 }
 \description{
 Helper method that combines a set of common steps performed

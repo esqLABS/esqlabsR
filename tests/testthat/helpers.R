@@ -232,6 +232,7 @@ createValidPISheets <- function() {
   project$outputPaths <- list()
   project$scenarios <- list()
   project$modelParameterSets <- list()
+  project$initialConditions <- list()
   project$individualParameterSets <- list()
   project$applicationParameterSets <- list()
   project$individuals <- list()

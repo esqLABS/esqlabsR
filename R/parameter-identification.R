@@ -765,10 +765,10 @@ print.PITask <- function(x, ...) {
 #'   objects that overrides automatic resolution from
 #'   `project$observedData`.
 #' @param stopIfParameterNotFound Logical. When `TRUE` (default), a
-#'   parameter listed in a scenario's parameter sets but absent from the
-#'   simulation aborts the build; when `FALSE`, it is skipped with a
-#'   warning. Forwarded through `.prepareScenario()` to
-#'   `initializeSimulation()`.
+#'   parameter listed in a scenario's parameter sets, or an
+#'   initial-condition quantity path, that is absent from the simulation
+#'   aborts the build; when `FALSE`, it is skipped with a warning.
+#'   Forwarded through `.prepareScenario()` to `initializeSimulation()`.
 #' @returns Named list of per-task results. Each entry is a list with
 #'   `task` (the runtime `ParameterIdentification` object), `result`
 #'   (the `PIResult` from `task$run()`, or `NULL` on optimisation

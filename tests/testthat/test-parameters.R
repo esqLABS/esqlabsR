@@ -235,7 +235,9 @@ test_that("`readInitialConditionsFromXLS()` ignores rows where 'Is Present' is F
 })
 
 test_that("`readInitialConditionsFromXLS()` uses the first sheet when no sheet is provided", {
-  initialValues <- readInitialConditionsFromXLS(filePath = initialConditionsXLSpath)
+  initialValues <- readInitialConditionsFromXLS(
+    filePath = initialConditionsXLSpath
+  )
 
   expect_setequal(
     initialValues$paths,
@@ -243,10 +245,12 @@ test_that("`readInitialConditionsFromXLS()` uses the first sheet when no sheet i
   )
 })
 
-test_that("`readInitialConditionsFromXLS()` overwrites values when a path appears in multiple sheets", {
-  initialValues <- readInitialConditionsFromXLS(
-    filePath = initialConditionsXLSpath,
-    sheets = c("ValidSheet", "SecondSheet")
+test_that("`readInitialConditionsFromXLS()` warns and overwrites a path repeated across sheets", {
+  expect_snapshot(
+    initialValues <- readInitialConditionsFromXLS(
+      filePath = initialConditionsXLSpath,
+      sheets = c("ValidSheet", "SecondSheet")
+    )
   )
 
   idxA <- which(initialValues$paths == "Organism|Liver|A")
@@ -267,44 +271,32 @@ test_that("`readInitialConditionsFromXLS()` returns empty structure when all mol
 })
 
 test_that("`readInitialConditionsFromXLS()` errors when units are missing for a present molecule", {
-  expect_error(
+  expect_snapshot(
+    error = TRUE,
     readInitialConditionsFromXLS(
       filePath = initialConditionsXLSpath,
       sheets = "MissingUnits"
-    ),
-    regexp = messages$errorMissingUnitsInInitialConditions(
-      filePath = initialConditionsXLSpath,
-      moleculePaths = "Organism|Liver|A"
-    ),
-    fixed = TRUE
+    )
   )
 })
 
 test_that("`readInitialConditionsFromXLS()` errors when a value is missing for a present molecule", {
-  expect_error(
+  expect_snapshot(
+    error = TRUE,
     readInitialConditionsFromXLS(
       filePath = initialConditionsXLSpath,
       sheets = "MissingValue"
-    ),
-    regexp = messages$errorMissingValuesInInitialConditions(
-      filePath = initialConditionsXLSpath,
-      moleculePaths = "Organism|Liver|A"
-    ),
-    fixed = TRUE
+    )
   )
 })
 
 test_that("`readInitialConditionsFromXLS()` errors on a non-logical 'Is Present' value", {
-  expect_error(
+  expect_snapshot(
+    error = TRUE,
     readInitialConditionsFromXLS(
       filePath = initialConditionsXLSpath,
       sheets = "BadIsPresent"
-    ),
-    regexp = messages$errorInvalidIsPresentInInitialConditions(
-      filePath = initialConditionsXLSpath,
-      moleculePaths = "Organism|Liver|A"
-    ),
-    fixed = TRUE
+    )
   )
 })
 
@@ -319,16 +311,11 @@ test_that("`readInitialConditionsFromXLS()` accepts numeric 0/1 for 'Is Present'
 })
 
 test_that("`readInitialConditionsFromXLS()` warns and keeps the last value for a duplicate path", {
-  expect_warning(
+  expect_snapshot(
     initialValues <- readInitialConditionsFromXLS(
       filePath = initialConditionsXLSpath,
       sheets = "DuplicatePath"
-    ),
-    regexp = messages$warningDuplicateInitialConditions(
-      filePath = initialConditionsXLSpath,
-      moleculePaths = "Organism|Liver|A"
-    ),
-    fixed = TRUE
+    )
   )
 
   expect_setequal(initialValues$paths, "Organism|Liver|A")
@@ -336,40 +323,22 @@ test_that("`readInitialConditionsFromXLS()` warns and keeps the last value for a
 })
 
 test_that("`readInitialConditionsFromXLS()` errors when a present row has a blank container path", {
-  expect_error(
+  expect_snapshot(
+    error = TRUE,
     readInitialConditionsFromXLS(
       filePath = initialConditionsXLSpath,
       sheets = "BlankPath"
-    ),
-    regexp = messages$errorMissingPathInInitialConditions(
-      filePath = initialConditionsXLSpath,
-      sheet = "BlankPath",
-      rows = 1
-    ),
-    fixed = TRUE
+    )
   )
 })
 
 test_that("`readInitialConditionsFromXLS()` errors when a sheet has the wrong structure", {
-  columnNames <- c(
-    "Container Path",
-    "Molecule Name",
-    "Is Present",
-    "Value",
-    "Units",
-    "Scale Divisor",
-    "Neg. Values Allowed"
-  )
-  expect_error(
+  expect_snapshot(
+    error = TRUE,
     readInitialConditionsFromXLS(
       filePath = initialConditionsXLSpath,
       sheets = "InvalidSheet"
-    ),
-    regexp = messages$errorWrongXLSStructure(
-      filePath = initialConditionsXLSpath,
-      expectedColNames = columnNames
-    ),
-    fixed = TRUE
+    )
   )
 })
 
@@ -380,7 +349,10 @@ test_that("`readInitialConditionsFromXLS()` validates its arguments", {
     fixed = TRUE
   )
   expect_error(
-    readInitialConditionsFromXLS(filePath = initialConditionsXLSpath, sheets = 123),
+    readInitialConditionsFromXLS(
+      filePath = initialConditionsXLSpath,
+      sheets = 123
+    ),
     regexp = 'argument "sheets" is of type <numeric>, but expected <character>!',
     fixed = TRUE
   )
