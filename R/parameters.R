@@ -637,5 +637,166 @@ removeModelParameterEntry <- function(
       argumentName = argumentName
     ))
   }
+
+  # Validate the data type of each vector. Empty structures may carry `NULL`
+  # vectors (e.g. when no parameters were found), which are treated as valid.
+  isValidType <- function(x, typeCheck) {
+    is.null(x) || typeCheck(x)
+  }
+  typesValid <-
+    isValidType(parameterStructure$paths, is.character) &&
+    isValidType(parameterStructure$values, is.numeric) &&
+    isValidType(parameterStructure$units, is.character)
+
+  if (!typesValid) {
+    cli::cli_abort(messages$wrongParametersStructure(
+      argumentName = argumentName
+    ))
+  }
+
+  # All three vectors must have the same length
+  vectorLengths <- c(
+    length(parameterStructure$paths),
+    length(parameterStructure$values),
+    length(parameterStructure$units)
+  )
+  if (length(unique(vectorLengths)) != 1L) {
+    cli::cli_abort(messages$wrongParametersStructure(
+      argumentName = argumentName
+    ))
+  }
+
   return(invisible(TRUE))
+}
+
+#' Read initial values (molecule start values) from a structured Excel file.
+#'
+#' @description Each excel sheet must consist of columns `Container Path`,
+#'   `Molecule Name`, `Is Present`, `Value`, `Units`, `Scale Divisor`, and
+#'   `Neg. Values Allowed`.
+#'
+#' @param filePath Path to the excel file
+#' @param sheets Names of the excel sheets containing the information about
+#'   the initial values. Multiple sheets can be processed. If no sheets are
+#'   provided, the first one in the Excel file is used.
+#'
+#' @returns A list containing vectors `paths` with the full paths to the
+#'   quantities, `values` the values, and `units` with the units the values
+#'   are in.
+#' @export
+readInitialValuesFromXLS <- function(filePath, sheets = NULL) {
+  columnNames <- c(
+    "Container Path",
+    "Molecule Name",
+    "Is Present",
+    "Value",
+    "Units",
+    "Scale Divisor",
+    "Neg. Values Allowed"
+  )
+  validateIsString(filePath)
+  validateIsString(sheets, nullAllowed = TRUE)
+
+  if (is.null(sheets)) {
+    sheets <- c(1)
+  }
+
+  pathsValuesVector <- vector(mode = "numeric")
+  pathsUnitsVector <- vector(mode = "character")
+
+  for (sheet in sheets) {
+    data <- readExcel(path = filePath, sheet = sheet)
+
+    if (!all(columnNames %in% names(data))) {
+      stop(messages$errorWrongXLSStructure(
+        filePath = filePath,
+        expectedColNames = columnNames
+      ))
+    }
+
+    # "Is Present" must be a logical value or empty. An empty/NA cell is
+    # treated as present. Numeric 0/1 (a common Excel representation of a
+    # logical column) is accepted. Any other value (e.g. "yes") is rejected
+    # rather than silently coerced to NA (which would be kept as present).
+    isPresentCol <- data[["Is Present"]]
+    isPresentChr <- trimws(as.character(isPresentCol))
+    isBlank <- is.na(isPresentCol) | isPresentChr == ""
+    isPresent <- as.logical(isPresentChr)
+    numericFlag <- isPresentChr %in% c("0", "1")
+    isPresent[numericFlag] <- isPresentChr[numericFlag] == "1"
+    invalidIsPresent <- !isBlank & is.na(isPresent)
+    if (any(invalidIsPresent)) {
+      stop(messages$errorInvalidIsPresentInInitialValues(
+        filePath = filePath,
+        moleculePaths = paste(
+          data[["Container Path"]],
+          data[["Molecule Name"]],
+          sep = "|"
+        )[invalidIsPresent]
+      ))
+    }
+
+    # Only include rows where Is Present is not explicitly FALSE
+    keepRows <- isBlank | isPresent
+    keptRowNumbers <- which(keepRows)
+    data <- data[keepRows, ]
+
+    if (nrow(data) == 0) {
+      next
+    }
+
+    # Container Path and Molecule Name must be filled for every kept row,
+    # otherwise the constructed path contains "NA" and fails deep in the
+    # ospsuite layer with no reference to the originating row.
+    containerPath <- as.character(data[["Container Path"]])
+    moleculeName <- as.character(data[["Molecule Name"]])
+    missingPathParts <- is.na(containerPath) |
+      trimws(containerPath) == "" |
+      is.na(moleculeName) |
+      trimws(moleculeName) == ""
+    if (any(missingPathParts)) {
+      stop(messages$errorMissingPathInInitialValues(
+        filePath = filePath,
+        sheet = sheet,
+        rows = keptRowNumbers[missingPathParts]
+      ))
+    }
+
+    fullPaths <- paste(containerPath, moleculeName, sep = "|")
+
+    # Warn (rather than silently overwrite) when the same molecule path appears
+    # more than once in a sheet; the named-vector assignment keeps the last.
+    duplicatePaths <- unique(fullPaths[duplicated(fullPaths)])
+    if (length(duplicatePaths) > 0) {
+      warning(messages$warningDuplicateInitialValues(
+        filePath = filePath,
+        moleculePaths = duplicatePaths
+      ))
+    }
+
+    # Validate values and units before mutating the accumulators, so a failure
+    # leaves no partial state behind.
+    parsedValues <- suppressWarnings(as.numeric(data[["Value"]]))
+    missingValues <- is.na(parsedValues)
+    if (any(missingValues)) {
+      stop(messages$errorMissingValuesInInitialValues(
+        filePath = filePath,
+        moleculePaths = fullPaths[missingValues]
+      ))
+    }
+
+    unitsRaw <- as.character(data[["Units"]])
+    missingUnits <- is.na(data[["Units"]]) | trimws(unitsRaw) == ""
+    if (any(missingUnits)) {
+      stop(messages$errorMissingUnitsInInitialValues(
+        filePath = filePath,
+        moleculePaths = fullPaths[missingUnits]
+      ))
+    }
+
+    pathsValuesVector[fullPaths] <- parsedValues
+    pathsUnitsVector[fullPaths] <- unitsRaw
+  }
+
+  return(.parametersVectorToList(pathsValuesVector, pathsUnitsVector))
 }

@@ -60,6 +60,10 @@ files. Used by the Excel import/export bridge.}
     \item{\code{modelParamsFile}}{Path to the Excel file with global model
 parameterization. Used by the Excel import/export bridge.}
 
+    \item{\code{modelInitialValuesFile}}{Path to the Excel file with initial
+conditions (molecule start values) for the model. Used by the
+Excel import/export bridge.}
+
     \item{\code{individualsFile}}{Path to the Excel file with individual-specific
 model parameterization. Used by the Excel import/export bridge.}
 

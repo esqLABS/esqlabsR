@@ -46,9 +46,51 @@ messages$errorWrongXLSStructure <- function(
 
 messages$wrongParametersStructure <- function(argumentName) {
   cliFormat(
-    "Argument {.arg {argumentName}} has wrong structure. Expected is a named list with three vectors `paths` 
-    representing full parameter paths, `values` with numerical values of the parameters, 
+    "Argument {.arg {argumentName}} has wrong structure. Expected is a named list with three vectors `paths`
+    representing full parameter paths, `values` with numerical values of the parameters,
     and `units` representing the units the values are in. All three vectors must have the same length"
+  )
+}
+
+messages$errorMissingUnitsInInitialValues <- function(filePath, moleculePaths) {
+  cliFormat(
+    "Missing units in initial values file {.file {filePath}} for molecule(s): {.val {paste(moleculePaths, collapse = ', ')}}. Units must be specified for all molecule initial values."
+  )
+}
+
+messages$errorMissingValuesInInitialValues <- function(
+  filePath,
+  moleculePaths
+) {
+  cliFormat(
+    "Missing or non-numeric values in initial values file {.file {filePath}} for molecule(s): {.val {paste(moleculePaths, collapse = ', ')}}. A numeric value must be specified for all present molecules."
+  )
+}
+
+messages$errorInvalidIsPresentInInitialValues <- function(
+  filePath,
+  moleculePaths
+) {
+  cliFormat(
+    "Invalid 'Is Present' values in initial values file {.file {filePath}} for molecule(s): {.val {paste(moleculePaths, collapse = ', ')}}. 'Is Present' must be a logical value (TRUE/FALSE) or empty."
+  )
+}
+
+messages$errorMissingPathInInitialValues <- function(filePath, sheet, rows) {
+  cliFormat(
+    "Missing {.field Container Path} or {.field Molecule Name} in initial values file {.file {filePath}}, sheet {.val {sheet}}, data row(s): {.val {paste(rows, collapse = ', ')}}."
+  )
+}
+
+messages$warningDuplicateInitialValues <- function(filePath, moleculePaths) {
+  cliFormat(
+    "Duplicate molecule path(s) in initial values file {.file {filePath}}: {.val {paste(moleculePaths, collapse = ', ')}}. Only the last value defined for each path is used."
+  )
+}
+
+messages$errorDuplicateIndividualId <- function(individualId) {
+  cliFormat(
+    "Multiple rows with individual id {.val {individualId}} found in the individuals file. Individual ids must be unique."
   )
 }
 

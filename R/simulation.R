@@ -58,6 +58,10 @@ applyIndividualParameters <- function(individualCharacteristics, simulation) {
 #'   describing an individual.
 #' @param additionalParams Optional named list with lists 'paths', 'values', and
 #'   'units'.
+#' @param additionalInitialConditions Optional named list with lists
+#'   'paths', 'values', and 'units'. Initial conditions (molecule start
+#'   values) to apply after setting parameters. Values are applied using
+#'   `ospsuite::setQuantityValuesByPath`.
 #' @param stopIfParameterNotFound Logical. If `TRUE` (default), an error is
 #'   thrown if any of the `additionalParams` does not exist. If `FALSE`,
 #'   non-existent parameters are  ignored.
@@ -78,6 +82,7 @@ initializeSimulation <- function(
   simulation,
   individualCharacteristics = NULL,
   additionalParams = NULL,
+  additionalInitialConditions = NULL,
   stopIfParameterNotFound = TRUE
 ) {
   validateIsOfType(simulation, "Simulation", nullAllowed = FALSE)
@@ -89,6 +94,11 @@ initializeSimulation <- function(
   .validateParametersStructure(
     additionalParams,
     "additionalParams",
+    nullAllowed = TRUE
+  )
+  .validateParametersStructure(
+    additionalInitialConditions,
+    "additionalInitialConditions",
     nullAllowed = TRUE
   )
 
@@ -134,6 +144,19 @@ initializeSimulation <- function(
         values = additionalParams$values,
         simulation = simulation,
         units = additionalParams$units,
+        stopIfNotFound = stopIfParameterNotFound
+      )
+    }
+  }
+
+  # Apply initial conditions (molecule start values) if provided
+  if (!is.null(additionalInitialConditions)) {
+    if (!isEmpty(additionalInitialConditions$paths)) {
+      ospsuite::setQuantityValuesByPath(
+        quantityPaths = additionalInitialConditions$paths,
+        values = additionalInitialConditions$values,
+        units = additionalInitialConditions$units,
+        simulation = simulation,
         stopIfNotFound = stopIfParameterNotFound
       )
     }

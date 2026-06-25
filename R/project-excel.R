@@ -78,6 +78,7 @@ importProjectFromExcel <- function(
   # set a custom path).
   defaultConfigFile <- list(
     modelParamsFile = "ModelParameters.xlsx",
+    modelInitialValuesFile = "ModelInitialValues.xlsx",
     individualsFile = "Individuals.xlsx",
     populationsFile = "Populations.xlsx",
     scenariosFile = "Scenarios.xlsx",
@@ -746,6 +747,9 @@ projectConfigurationStatus <- function(...) {
       populationId = .naToNull(as.character(row$PopulationId)),
       readPopulationFromCSV = .naToNull(as.logical(row$ReadPopulationFromCSV)),
       modelParameterSets = .parseCommaListToArray(row$ModelParameterSheets),
+      initialValuesSheets = .parseCommaListToArray(
+        if ("InitialValuesSet" %in% names(row)) row$InitialValuesSet else NA
+      ),
       applicationProtocol = .naToNull(as.character(row$ApplicationProtocol)),
       simulationTime = .naToNull(as.character(row$SimulationTime)),
       simulationTimeUnit = .naToNull(as.character(row$SimulationTimeUnit)),
@@ -1049,6 +1053,7 @@ projectConfigurationStatus <- function(...) {
       },
       ReadPopulationFromCSV = sc$readPopulationFromCSV %||% FALSE,
       ModelParameterSheets = paramSetsStr,
+      InitialValuesSet = .formatArrayToCommaList(sc$initialValuesSheets),
       ApplicationProtocol = sc$applicationProtocol %||% NA,
       SimulationTime = simTimeStr,
       SimulationTimeUnit = sc$simulationTimeUnit %||% NA,

@@ -249,11 +249,31 @@
     }
   }
 
+  # 2c. Collect initial conditions if this scenario references any sheets
+  initialConditions <- NULL
+  if (
+    !is.null(scenario$initialValuesSheets) &&
+      length(scenario$initialValuesSheets) > 0
+  ) {
+    initialValuesFile <- project$modelInitialValuesFile
+    if (is.null(initialValuesFile)) {
+      cli::cli_abort(
+        "Scenario {.val {scenario$scenarioName}} references initial values sheets \\
+        but {.field modelInitialValuesFile} is not set on the project."
+      )
+    }
+    initialConditions <- readInitialValuesFromXLS(
+      filePath = initialValuesFile,
+      sheets = scenario$initialValuesSheets
+    )
+  }
+
   # 5. Initialize simulation
   initializeSimulation(
     simulation = simulation,
     individualCharacteristics = individualCharacteristics,
     additionalParams = params,
+    additionalInitialConditions = initialConditions,
     stopIfParameterNotFound = stopIfParameterNotFound
   )
 

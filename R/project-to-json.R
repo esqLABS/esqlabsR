@@ -196,6 +196,7 @@
       # "empty array" in the parsed scenario to JSON `[]`. Matches the
       # end-state serializer in `json-as-primary-input-v2`.
       modelParameterSets = as.list(sc$modelParameterSets),
+      initialValuesSheets = as.list(sc$initialValuesSheets),
       applicationProtocol = if (
         is.null(sc$applicationProtocol) || is.na(sc$applicationProtocol)
       ) {

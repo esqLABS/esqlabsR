@@ -137,6 +137,21 @@ Project <- R6::R6Class(
       )
     },
 
+    #' @field modelInitialValuesFile Path to the Excel file with initial
+    #'   conditions (molecule start values) for the model. Used by the
+    #'   Excel import/export bridge.
+    modelInitialValuesFile = function(value) {
+      if (!missing(value)) {
+        private$.filePathsData$modelInitialValuesFile$value <- value
+        private$.invalidate()
+        return(invisible(value))
+      }
+      private$.clean_path(
+        private$.filePathsData$modelInitialValuesFile$value,
+        self$configurationsFolder
+      )
+    },
+
     #' @field individualsFile Path to the Excel file with individual-specific
     #'   model parameterization. Used by the Excel import/export bridge.
     individualsFile = function(value) {
