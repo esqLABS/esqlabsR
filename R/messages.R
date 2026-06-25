@@ -130,6 +130,47 @@ messages$scenarioConfigurationNotNamedList <- function() {
   ))
 }
 
+messages$scenariosAddedToProject <- function(scenarioNames) {
+  cli::format_message(c(
+    "i" = "Added {length(scenarioNames)} scenario{?s}: {.val {scenarioNames}}"
+  ))
+}
+
+messages$noModelFolderUsingAbsolutePath <- function(pkmlPath) {
+  cli::format_message(c(
+    "!" = "The project has no {.field modelFolder}; storing an absolute model \\
+    file path.",
+    "i" = "Set a {.field modelFolder} on the project so the scenario stores a \\
+    portable relative path ({.file {pkmlPath}})."
+  ))
+}
+
+messages$outputPathIdCollision <- function(id, existingPath, newPath) {
+  cli::format_message(c(
+    "x" = "Output path id {.val {id}} already maps to a different path.",
+    "i" = "Existing: {.val {existingPath}}",
+    "i" = "Requested: {.val {newPath}}"
+  ))
+}
+
+messages$outputPathAliasIgnored <- function(userAlias, registeredId, path) {
+  cli::format_message(c(
+    "i" = "Output path alias {.val {userAlias}} ignored: \\
+    path {.val {path}} is already registered as {.val {registeredId}}."
+  ))
+}
+
+messages$noModelFolderForRelativeModelFile <- function(
+  scenarioName,
+  modelFile
+) {
+  cli::format_message(c(
+    "x" = "Cannot resolve the model file for scenario {.val {scenarioName}}.",
+    "i" = "{.field modelFile} {.val {modelFile}} is relative but the project \\
+    has no {.field modelFolder} to resolve it against."
+  ))
+}
+
 
 messages$createdFileSnapshot <- function(inputFile, outputFile) {
   cliFormat(

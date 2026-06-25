@@ -156,9 +156,21 @@
   cache,
   simulationRunOptions
 ) {
-  # 1. Load simulation
+  # 1. Load simulation. An absolute `modelFile` is used as-is; a relative one
+  # is resolved against the project's model folder, which must exist for the
+  # join to be meaningful (`file.path(NULL, x)` yields `character(0)`).
+  if (fs::is_absolute_path(scenario$modelFile)) {
+    modelFilePath <- scenario$modelFile
+  } else if (!is.null(project$modelFolder)) {
+    modelFilePath <- file.path(project$modelFolder, scenario$modelFile)
+  } else {
+    cli::cli_abort(messages$noModelFolderForRelativeModelFile(
+      scenarioName = scenario$scenarioName,
+      modelFile = scenario$modelFile
+    ))
+  }
   simulation <- ospsuite::loadSimulation(
-    filePath = file.path(project$modelFolder, scenario$modelFile),
+    filePath = modelFilePath,
     loadFromCache = FALSE
   )
   simulation$name <- scenario$scenarioName

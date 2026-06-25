@@ -199,3 +199,36 @@ test_that(".runScenariosFromProject errors on unknown scenarioNames", {
     regexp = "NopeNope"
   )
 })
+
+# Model file resolution ----
+
+test_that("a scenario with an absolute modelFile runs when modelFolder is NULL", {
+  withr::local_options(lifecycle_verbosity = "quiet")
+  project <- .testProject()
+  absModel <- normalizePath(file.path(project$modelFolder, "Aciclovir.pkml"))
+  scenario <- project$scenarios[["TestScenario"]]
+  scenario$modelFile <- absModel
+  project$scenarios[["TestScenario"]] <- scenario
+  project$modelFolder <- NULL
+
+  out <- esqlabsR:::.runScenariosFromProject(
+    project,
+    scenarioNames = "TestScenario",
+    validate = FALSE
+  )
+  expect_false(is.null(out$TestScenario$outputValues))
+})
+
+test_that("a relative modelFile with NULL modelFolder aborts with a clear message", {
+  withr::local_options(lifecycle_verbosity = "quiet")
+  project <- .testProject()
+  project$modelFolder <- NULL
+  expect_snapshot(
+    error = TRUE,
+    esqlabsR:::.runScenariosFromProject(
+      project,
+      scenarioNames = "TestScenario",
+      validate = FALSE
+    )
+  )
+})
