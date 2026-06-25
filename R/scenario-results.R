@@ -45,10 +45,12 @@ saveScenarioResults <- function(
     results <- simulatedScenariosResults[[i]]$results
     scenarioName <- names(simulatedScenariosResults)[[i]]
 
-    # Replace "\" and "/" by "_" so the file name does not result in folders
-    scenarioName <- gsub("[\\\\/]", "_", scenarioName)
+    # Replace "\" and "/" by "_" so the file name does not result in folders.
+    # The sanitized form is used only for file paths; the original is preserved
+    # so error messages report the name the user actually passed.
+    scenarioNameForPath <- gsub("[\\\\/]", "_", scenarioName)
 
-    outputPath <- file.path(outputFolder, paste0(scenarioName, ".csv"))
+    outputPath <- file.path(outputFolder, paste0(scenarioNameForPath, ".csv"))
     tryCatch(
       {
         # Create a new folder if it does not exist
@@ -59,7 +61,7 @@ saveScenarioResults <- function(
         if (saveSimulationsToPKML) {
           outputPathSim <- file.path(
             outputFolder,
-            paste0(scenarioName, ".pkml")
+            paste0(scenarioNameForPath, ".pkml")
           )
           ospsuite::saveSimulation(
             simulation = simulatedScenariosResults[[i]]$simulation,
@@ -72,7 +74,7 @@ saveScenarioResults <- function(
             simulatedScenariosResults[[i]]$population,
             filePath = file.path(
               outputFolder,
-              paste0(scenarioName, "_population.csv")
+              paste0(scenarioNameForPath, "_population.csv")
             )
           )
         }

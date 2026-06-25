@@ -79,3 +79,40 @@ test_that("saveScenarioResults reports the real error rather than a path warning
     transform = \(lines) gsub("`[^`]+\\(\\)`:", "`<caller>`:", lines)
   )
 })
+
+test_that("saveScenarioResults warning survives braces in the underlying error message", {
+  withr::local_options(lifecycle_verbosity = "quiet")
+  project <- testProject()
+  original <- runScenarios(project, scenarioNames = "TestScenario")
+
+  # A broken simulation field triggers saveSimulation() to error; the error
+  # message contains literal braces. Before the fix, cli_warn() tried to
+  # re-interpret those braces as glue expressions and crashed.
+  broken <- original
+  broken$TestScenario$simulation <- "not {a} simulation"
+
+  resultsFolder <- withr::local_tempdir()
+  expect_warning(
+    saveScenarioResults(broken, project, outputFolder = resultsFolder),
+    regexp = "Failed to save results for scenario"
+  )
+})
+
+test_that("saveScenarioResults warning shows the original scenario name, not the path-sanitized one", {
+  withr::local_options(lifecycle_verbosity = "quiet")
+  project <- testProject()
+  original <- runScenarios(project, scenarioNames = "TestScenario")
+
+  # Rename the entry to include a slash; saveScenarioResults replaces "/" with
+  # "_" for file-path use. The warning must show the original "/" name, not the
+  # sanitized "_" form.
+  slashed <- setNames(original, "Group/A")
+  slashed$`Group/A`$simulation <- "not a simulation"
+
+  resultsFolder <- withr::local_tempdir()
+  expect_warning(
+    saveScenarioResults(slashed, project, outputFolder = resultsFolder),
+    regexp = "Group/A",
+    fixed = TRUE
+  )
+})
