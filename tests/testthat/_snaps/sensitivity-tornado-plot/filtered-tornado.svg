@@ -62,8 +62,8 @@
 <polyline points='364.15,278.83 364.15,45.63 ' style='stroke-width: 0.53; stroke: #DEDEDE; stroke-linecap: butt;' />
 <polyline points='481.63,278.83 481.63,45.63 ' style='stroke-width: 0.53; stroke: #DEDEDE; stroke-linecap: butt;' />
 <polyline points='599.12,278.83 599.12,45.63 ' style='stroke-width: 0.53; stroke: #DEDEDE; stroke-linecap: butt;' />
-<rect x='364.15' y='74.78' width='213.67' height='174.90' style='stroke-width: 1.07; stroke: #BEBEBE; stroke-linecap: butt; stroke-linejoin: miter; fill: #FF7878; fill-opacity: 0.50;' />
-<rect x='336.08' y='74.78' width='28.06' height='174.90' style='stroke-width: 1.07; stroke: #BEBEBE; stroke-linecap: butt; stroke-linejoin: miter; fill: #60CDDB; fill-opacity: 0.50;' />
+<rect x='364.15' y='74.78' width='213.67' height='174.90' style='stroke-width: 1.07; stroke: #BEBEBE; stroke-linecap: butt; stroke-linejoin: miter; fill: #FF7878;' />
+<rect x='336.08' y='74.78' width='28.06' height='174.90' style='stroke-width: 1.07; stroke: #BEBEBE; stroke-linecap: butt; stroke-linejoin: miter; fill: #60CDDB;' />
 <line x1='364.15' y1='278.83' x2='364.15' y2='45.63' style='stroke-width: 2.13; stroke: #BEBEBE; stroke-linecap: butt;' />
 <rect x='126.76' y='45.63' width='474.76' height='233.20' style='stroke-width: 1.07; stroke: #B3B3B3;' />
 </g>
@@ -95,8 +95,8 @@
 <polyline points='364.15,539.63 364.15,306.44 ' style='stroke-width: 0.53; stroke: #DEDEDE; stroke-linecap: butt;' />
 <polyline points='481.63,539.63 481.63,306.44 ' style='stroke-width: 0.53; stroke: #DEDEDE; stroke-linecap: butt;' />
 <polyline points='599.12,539.63 599.12,306.44 ' style='stroke-width: 0.53; stroke: #DEDEDE; stroke-linecap: butt;' />
-<rect x='364.15' y='335.59' width='24.74' height='174.90' style='stroke-width: 1.07; stroke: #BEBEBE; stroke-linecap: butt; stroke-linejoin: miter; fill: #FF7878; fill-opacity: 0.50;' />
-<rect x='358.93' y='335.59' width='5.21' height='174.90' style='stroke-width: 1.07; stroke: #BEBEBE; stroke-linecap: butt; stroke-linejoin: miter; fill: #60CDDB; fill-opacity: 0.50;' />
+<rect x='364.15' y='335.59' width='24.74' height='174.90' style='stroke-width: 1.07; stroke: #BEBEBE; stroke-linecap: butt; stroke-linejoin: miter; fill: #FF7878;' />
+<rect x='358.93' y='335.59' width='5.21' height='174.90' style='stroke-width: 1.07; stroke: #BEBEBE; stroke-linecap: butt; stroke-linejoin: miter; fill: #60CDDB;' />
 <line x1='364.15' y1='539.63' x2='364.15' y2='306.44' style='stroke-width: 2.13; stroke: #BEBEBE; stroke-linecap: butt;' />
 <rect x='126.76' y='306.44' width='474.76' height='233.20' style='stroke-width: 1.07; stroke: #B3B3B3;' />
 </g>
@@ -129,11 +129,11 @@
 <rect x='612.49' y='262.21' width='96.55' height='60.85' style='stroke-width: 1.07; stroke: none; fill: #FFFFFF;' />
 <text x='617.97' y='276.40' style='font-size: 11.00px; font-family: sans;' textLength='85.60px' lengthAdjust='spacingAndGlyphs'>Parameter Factor</text>
 <rect x='617.97' y='283.02' width='17.28' height='17.28' style='stroke-width: 1.07; stroke: none; fill: #FFFFFF;' />
-<rect x='618.67' y='283.73' width='15.86' height='15.86' style='stroke-width: 1.07; stroke: #BEBEBE; stroke-linecap: butt; stroke-linejoin: miter; fill: #60CDDB; fill-opacity: 0.50;' />
+<rect x='618.67' y='283.73' width='15.86' height='15.86' style='stroke-width: 1.07; stroke: #BEBEBE; stroke-linecap: butt; stroke-linejoin: miter; fill: #60CDDB;' />
 <rect x='617.97' y='300.30' width='17.28' height='17.28' style='stroke-width: 1.07; stroke: none; fill: #FFFFFF;' />
-<rect x='618.67' y='301.01' width='15.86' height='15.86' style='stroke-width: 1.07; stroke: #BEBEBE; stroke-linecap: butt; stroke-linejoin: miter; fill: #FF7878; fill-opacity: 0.50;' />
+<rect x='618.67' y='301.01' width='15.86' height='15.86' style='stroke-width: 1.07; stroke: #BEBEBE; stroke-linecap: butt; stroke-linejoin: miter; fill: #FF7878;' />
 <text x='640.73' y='294.69' style='font-size: 8.80px; font-family: sans;' textLength='12.23px' lengthAdjust='spacingAndGlyphs'>0.1</text>
 <text x='640.73' y='311.97' style='font-size: 8.80px; font-family: sans;' textLength='9.79px' lengthAdjust='spacingAndGlyphs'>10</text>
-<text x='360.00' y='16.57' text-anchor='middle' style='font-size: 14.00px; font-family: sans;' textLength='250.59px' lengthAdjust='spacingAndGlyphs'>Organism|ArterialBlood|Plasma|Aciclovir</text>
+<text x='10.96' y='15.11' style='font-size: 14.00px; font-family: sans;' textLength='250.59px' lengthAdjust='spacingAndGlyphs'>Organism|ArterialBlood|Plasma|Aciclovir</text>
 </g>
 </svg>

@@ -428,6 +428,6 @@
 <polygon points='426.92,537.56 428.87,535.60 430.83,537.56 428.87,539.51 ' style='stroke-width: 0.71; stroke: none; fill: #000000;' />
 <text x='332.06' y='540.59' style='font-size: 8.80px; font-family: sans;' textLength='82.69px' lengthAdjust='spacingAndGlyphs'>Laskin 1982.Group A</text>
 <text x='442.99' y='540.59' style='font-size: 8.80px; font-family: sans;' textLength='111.55px' lengthAdjust='spacingAndGlyphs'>Laskin 1982.Group A - Mock</text>
-<text x='360.00' y='16.57' text-anchor='middle' style='font-size: 14.00px; font-family: sans;' textLength='485.66px' lengthAdjust='spacingAndGlyphs'>Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)</text>
+<text x='10.96' y='15.11' style='font-size: 14.00px; font-family: sans;' textLength='485.66px' lengthAdjust='spacingAndGlyphs'>Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)</text>
 </g>
 </svg>
