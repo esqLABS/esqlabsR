@@ -129,3 +129,40 @@ test_that("parameter sets round-trip through Excel sheet-name sanitization", {
     toJson(paramSets[[badName]])
   )
 })
+
+test_that("Project round-trips through Excel preserving plots sections", {
+  work_dir <- withr::local_tempdir()
+  file.copy(dirname(exampleProjectPath()), work_dir, recursive = TRUE)
+  project <- loadProject(file.path(work_dir, "Example", "Project.json"))
+
+  expect_gt(length(project$plots$dataCombined), 0)
+
+  toJson <- function(x) {
+    jsonlite::toJSON(x, auto_unbox = TRUE, null = "null", digits = NA)
+  }
+  roundtrip <- function(p) {
+    excel_out <- withr::local_tempdir()
+    exportProjectToExcel(p, outputDir = excel_out, silent = TRUE)
+    json <- importProjectFromExcel(
+      file.path(excel_out, "Project.xlsx"),
+      silent = TRUE
+    )
+    loadProject(json)
+  }
+
+  # dataCombined survives the round trip (it was previously dropped on
+  # export). The fixed point holds from the first export onward; compare
+  # two successive round trips so source-only present-null fields, which
+  # collapse to absent on the first pass, do not register as drift.
+  rt1 <- roundtrip(project)
+  expect_gt(length(rt1$plots$dataCombined), 0)
+  expect_named(rt1$plots$dataCombined, names(project$plots$dataCombined))
+
+  rt2 <- roundtrip(rt1)
+  for (section in c("dataCombined", "plotConfiguration", "plotGrids")) {
+    expect_equal(
+      toJson(rt2$plots[[section]]),
+      toJson(rt1$plots[[section]])
+    )
+  }
+})

@@ -381,11 +381,21 @@ exportProjectToExcel <- function(
   # --- Plots.xlsx ---
   if (!is.null(project$plots)) {
     plotSheets <- list()
-    for (sheetName in names(project$plots)) {
-      df <- project$plots[[sheetName]]
-      if (is.data.frame(df) && nrow(df) > 0) {
-        plotSheets[[sheetName]] <- df
-      }
+    dcDf <- .dataCombinedToExcelDf(project$plots$dataCombined)
+    if (!is.null(dcDf) && nrow(dcDf) > 0) {
+      plotSheets[["DataCombined"]] <- dcDf
+    }
+    if (
+      is.data.frame(project$plots$plotConfiguration) &&
+        nrow(project$plots$plotConfiguration) > 0
+    ) {
+      plotSheets[["plotConfiguration"]] <- project$plots$plotConfiguration
+    }
+    if (
+      is.data.frame(project$plots$plotGrids) &&
+        nrow(project$plots$plotGrids) > 0
+    ) {
+      plotSheets[["plotGrids"]] <- project$plots$plotGrids
     }
     if (length(plotSheets) > 0) {
       .writeExcel(plotSheets, file.path(configDir, "Plots.xlsx"))
@@ -841,7 +851,12 @@ projectConfigurationStatus <- function(...) {
   populations
 }
 
-#' Parse Plots Excel file into JSON structure
+#' Parse Plots Excel file into the JSON `plots` section shape
+#'
+#' Produces `{dataCombined, plotConfiguration, plotGrids}` where
+#' `dataCombined` is the nested array of `{name, simulated[], observed[]}`
+#' (inverting `.dataCombinedToExcelDf()`) and the other two are flat
+#' arrays of row objects, ready for `.parsePlots()`.
 #' @param plotsFile Path to the Plots.xlsx file
 #' @returns Named list with dataCombined, plotConfiguration, plotGrids
 #' @keywords internal
@@ -849,24 +864,71 @@ projectConfigurationStatus <- function(...) {
 .parseExcelPlots <- function(plotsFile) {
   sheets <- readxl::excel_sheets(plotsFile)
   result <- list()
-  for (sheet in sheets) {
+  if ("DataCombined" %in% sheets) {
+    result$dataCombined <- .parseExcelDataCombined(
+      readExcel(plotsFile, sheet = "DataCombined")
+    )
+  }
+  for (sheet in intersect(c("plotConfiguration", "plotGrids"), sheets)) {
     df <- readExcel(plotsFile, sheet = sheet)
-    if (nrow(df) == 0) {
-      result[[sheet]] <- list()
-      next
-    }
     entries <- list()
-    for (i in seq_len(nrow(df))) {
-      entry <- list()
-      for (col in names(df)) {
-        val <- df[[col]][[i]]
-        entry[[col]] <- .naToNull(val)
+    if (nrow(df) > 0) {
+      for (i in seq_len(nrow(df))) {
+        entry <- list()
+        for (col in names(df)) {
+          entry[[col]] <- .naToNull(df[[col]][[i]])
+        }
+        entries[[i]] <- entry
       }
-      entries[[i]] <- entry
     }
     result[[sheet]] <- entries
   }
   result
+}
+
+#' Invert `.dataCombinedToExcelDf()` back to the nested JSON array
+#'
+#' Groups the flattened rows by `DataCombinedName`, splits each group by
+#' the `dataType` discriminator into `simulated` / `observed` arrays, and
+#' drops the two bookkeeping columns. Within each dataType the *native*
+#' columns are those non-NA in at least one row of that type (e.g.
+#' `scenario`/`path` for simulated, `dataSet` for observed); those columns
+#' are kept on every entry (NA -> null) so a present-null field in the
+#' source round-trips as present-null, while columns that belong only to
+#' the other dataType are dropped rather than carried as a spurious null.
+#' @param df Data frame read from the DataCombined sheet.
+#' @returns Unnamed list of `{name, simulated[], observed[]}` objects.
+#' @keywords internal
+#' @noRd
+.parseExcelDataCombined <- function(df) {
+  if (nrow(df) == 0) {
+    return(list())
+  }
+  entryCols <- setdiff(names(df), c("DataCombinedName", "dataType"))
+  # Preserve first-seen order of the dataCombined names.
+  dcNames <- unique(as.character(df$DataCombinedName))
+  lapply(dcNames, function(dcName) {
+    dcRows <- df[as.character(df$DataCombinedName) == dcName, , drop = FALSE]
+    entry <- list(name = dcName)
+    for (type in c("simulated", "observed")) {
+      typeRows <- dcRows[as.character(dcRows$dataType) == type, , drop = FALSE]
+      if (nrow(typeRows) == 0) {
+        next
+      }
+      nativeCols <- Filter(
+        function(col) any(!is.na(typeRows[[col]])),
+        entryCols
+      )
+      entry[[type]] <- lapply(seq_len(nrow(typeRows)), function(i) {
+        record <- lapply(nativeCols, function(col) {
+          .naToNull(typeRows[[col]][[i]])
+        })
+        names(record) <- nativeCols
+        record
+      })
+    }
+    entry
+  })
 }
 
 #' Convert parameter structures to Excel sheet data frames
@@ -952,6 +1014,46 @@ projectConfigurationStatus <- function(...) {
     }
     i <- i + 1L
   }
+}
+
+#' Flatten the nested dataCombined section into a single Excel data frame
+#'
+#' Each simulated/observed entry becomes one row tagged with its parent
+#' `DataCombinedName` and a `dataType` discriminator (`simulated` /
+#' `observed`). Columns are the union of all entry fields across both
+#' types; missing fields are NA. `.parseExcelPlots()` inverts this.
+#' @param dataCombined Named list keyed by name, each
+#'   `{simulated = list(), observed = list()}`.
+#' @returns A data frame, or NULL when there is nothing to write.
+#' @keywords internal
+#' @noRd
+.dataCombinedToExcelDf <- function(dataCombined) {
+  if (is.null(dataCombined) || length(dataCombined) == 0) {
+    return(NULL)
+  }
+  rows <- list()
+  for (dcName in names(dataCombined)) {
+    dc <- dataCombined[[dcName]]
+    for (type in c("simulated", "observed")) {
+      for (entry in dc[[type]] %||% list()) {
+        row <- c(
+          list(DataCombinedName = dcName, dataType = type),
+          lapply(entry, function(v) v %||% NA)
+        )
+        rows[[length(rows) + 1]] <- row
+      }
+    }
+  }
+  if (length(rows) == 0) {
+    return(NULL)
+  }
+  allCols <- unique(unlist(lapply(rows, names)))
+  normalized <- lapply(rows, function(row) {
+    cells <- lapply(allCols, function(col) row[[col]] %||% NA)
+    names(cells) <- allCols
+    as.data.frame(cells, check.names = FALSE, stringsAsFactors = FALSE)
+  })
+  as.data.frame(dplyr::bind_rows(normalized))
 }
 
 #' Convert individuals data to an IndividualBiometrics data frame
