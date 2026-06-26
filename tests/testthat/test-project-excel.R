@@ -166,3 +166,52 @@ test_that("Project round-trips through Excel preserving plots sections", {
     )
   }
 })
+
+test_that("Project round-trips through Excel preserving observedData", {
+  work_dir <- withr::local_tempdir()
+  file.copy(dirname(exampleProjectPath()), work_dir, recursive = TRUE)
+  project <- loadProject(file.path(work_dir, "Example", "Project.json"))
+
+  expect_gt(length(project$observedData), 0)
+
+  excel_out <- withr::local_tempdir()
+  exportProjectToExcel(project, outputDir = excel_out, silent = TRUE)
+  reimportedJson <- importProjectFromExcel(
+    file.path(excel_out, "Project.xlsx"),
+    silent = TRUE
+  )
+  reimported <- loadProject(reimportedJson)
+
+  toJson <- function(x) {
+    jsonlite::toJSON(x, auto_unbox = TRUE, null = "null", digits = NA)
+  }
+  expect_equal(
+    toJson(reimported$observedData),
+    toJson(project$observedData)
+  )
+})
+
+test_that(".observedDataToExcelDf round-trips heterogeneous entry types", {
+  observedData <- list(
+    list(
+      type = "excel",
+      file = "a.xlsx",
+      importerConfiguration = "cfg.xml",
+      sheets = list("S1", "S2, with comma")
+    ),
+    list(type = "pkml", file = "b.pkml"),
+    list(type = "script", file = "c.R")
+  )
+
+  df <- esqlabsR:::.observedDataToExcelDf(observedData)
+  tmp <- withr::local_tempfile(fileext = ".xlsx")
+  writexl::write_xlsx(list(ObservedData = df), tmp)
+  reimported <- esqlabsR:::.parseExcelObservedData(
+    readExcel(tmp, sheet = "ObservedData")
+  )
+
+  toJson <- function(x) {
+    jsonlite::toJSON(x, auto_unbox = TRUE, null = "null", digits = NA)
+  }
+  expect_equal(toJson(reimported), toJson(observedData))
+})

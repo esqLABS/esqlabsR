@@ -82,7 +82,8 @@ importProjectFromExcel <- function(
     populationsFile = "Populations.xlsx",
     scenariosFile = "Scenarios.xlsx",
     applicationsFile = "Applications.xlsx",
-    plotsFile = "Plots.xlsx"
+    plotsFile = "Plots.xlsx",
+    observedDataFile = "ObservedData.xlsx"
   )
   # Property lookup with default-filename fallback.
   propOrDefault <- function(name) {
@@ -196,6 +197,17 @@ importProjectFromExcel <- function(
   plotsFile <- resolveConfigFile(propOrDefault("plotsFile"))
   if (!is.null(plotsFile) && file.exists(plotsFile)) {
     jsonData$plots <- .parseExcelPlots(plotsFile)
+  }
+
+  # --- ObservedData ---
+  observedDataFile <- resolveConfigFile(propOrDefault("observedDataFile"))
+  if (!is.null(observedDataFile) && file.exists(observedDataFile)) {
+    sheets <- readxl::excel_sheets(observedDataFile)
+    if ("ObservedData" %in% sheets) {
+      jsonData$observedData <- .parseExcelObservedData(
+        readExcel(observedDataFile, sheet = "ObservedData")
+      )
+    }
   }
 
   # --- Determine output path ---
@@ -400,6 +412,15 @@ exportProjectToExcel <- function(
     if (length(plotSheets) > 0) {
       .writeExcel(plotSheets, file.path(configDir, "Plots.xlsx"))
     }
+  }
+
+  # --- ObservedData.xlsx ---
+  if (!is.null(project$observedData) && length(project$observedData) > 0) {
+    obsDf <- .observedDataToExcelDf(project$observedData)
+    .writeExcel(
+      list(ObservedData = obsDf),
+      file.path(configDir, "ObservedData.xlsx")
+    )
   }
 
   if (interactive() && !silent) {
@@ -926,6 +947,62 @@ projectConfigurationStatus <- function(...) {
         names(record) <- nativeCols
         record
       })
+    }
+    entry
+  })
+}
+
+#' Flatten the type-tagged observedData array into an Excel data frame
+#'
+#' One row per observedData entry. Scalar fields map to columns directly;
+#' the multi-valued `sheets` field (excel type) is collapsed to a
+#' comma-separated cell. Columns are the union across entry types, so a
+#' field absent on one type is NA there. `.parseExcelObservedData()`
+#' inverts this.
+#' @param observedData Unnamed list of type-tagged entries.
+#' @returns A data frame.
+#' @keywords internal
+#' @noRd
+.observedDataToExcelDf <- function(observedData) {
+  rows <- lapply(observedData, function(entry) {
+    row <- lapply(entry, function(v) {
+      if (length(v) > 1 || is.list(v)) {
+        .formatArrayToCommaList(unlist(v))
+      } else {
+        v %||% NA
+      }
+    })
+    as.data.frame(row, check.names = FALSE, stringsAsFactors = FALSE)
+  })
+  as.data.frame(dplyr::bind_rows(rows))
+}
+
+#' Invert `.observedDataToExcelDf()` back to the type-tagged array
+#'
+#' One entry per row; NA cells are dropped so a field absent for the
+#' entry's type round-trips to absent. The `sheets` cell is split back to
+#' an array (kept as a list so a single sheet still serializes as a JSON
+#' array, matching the canonical passthrough shape).
+#' @param df Data frame read from the ObservedData sheet.
+#' @returns Unnamed list of type-tagged entries.
+#' @keywords internal
+#' @noRd
+.parseExcelObservedData <- function(df) {
+  if (nrow(df) == 0) {
+    return(list())
+  }
+  lapply(seq_len(nrow(df)), function(i) {
+    entry <- list()
+    for (col in names(df)) {
+      val <- .naToNull(df[[col]][[i]])
+      if (is.null(val)) {
+        next
+      }
+      if (col == "sheets") {
+        entry[[col]] <- as.list(.parseCommaListToArray(val))
+      } else {
+        entry[[col]] <- val
+      }
     }
     entry
   })
