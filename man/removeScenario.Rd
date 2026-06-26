@@ -4,12 +4,12 @@
 \alias{removeScenario}
 \title{Remove a scenario from a Project}
 \usage{
-removeScenario(project, name)
+removeScenario(project, scenarioName)
 }
 \arguments{
 \item{project}{A \code{Project} object.}
 
-\item{name}{Character scalar, scenario name.}
+\item{scenarioName}{Character scalar, scenario name.}
 }
 \value{
 The \code{project} object, invisibly.

@@ -381,6 +381,18 @@ test_that("loadProject() rejects a missing file", {
   )
 })
 
+test_that("loadProject() wraps a non-JSON file with file context", {
+  tmp <- withr::local_tempfile(fileext = ".json")
+  writeLines("this is not valid json {", tmp)
+
+  # The path is environment-specific, so match the wrapping message; the
+  # underlying jsonlite lexical error is attached as the parent.
+  expect_error(
+    loadProject(tmp),
+    "Failed to parse.*as JSON"
+  )
+})
+
 test_that("loadProject() rejects a non-string path", {
   expect_error(
     loadProject(NULL),
@@ -437,10 +449,146 @@ test_that("Project$print() summarises section counts", {
   expect_output(print(project), "scenarios:\\s+3")
   expect_output(print(project), "individuals:\\s+1")
   expect_output(print(project), "populations:\\s+1")
+  # plotConfiguration is a 1-row, 15-column data frame: report 1 plot,
+  # not the column count.
+  expect_output(
+    print(project),
+    "1 dataCombined / 1 plot\\(s\\) / 1 grid\\(s\\)"
+  )
+})
+
+test_that(".markSaved clears modified but leaves validatedSinceMutation set", {
+  project <- testProject()
+  # A mutation marks the project modified and clears the validation flag.
+  project$.markModified()
+  expect_true(project$modified)
+
+  # Validating sets the flag; a subsequent save must not clear it.
+  project$.markValidated()
+  project$.markSaved()
+
+  expect_false(project$modified)
+  # Saving is not a mutation, so a project validated before the save stays
+  # validated after it; runScenarios()/createPlots() need not re-validate.
+  expect_true(project$validatedSinceMutation)
 })
 
 test_that("a fresh project starts unmodified and unvalidated", {
   project <- testProject()
   expect_false(project$modified)
   expect_false(project$validatedSinceMutation)
+})
+
+test_that("a direct write to a section field invalidates the project", {
+  project <- testProject()
+  project$.markValidated()
+  expect_false(project$modified)
+  expect_true(project$validatedSinceMutation)
+
+  project$scenarios[["New"]] <- Scenario(
+    scenarioName = "New",
+    modelFile = "m.pkml"
+  )
+
+  expect_true(project$modified)
+  expect_false(project$validatedSinceMutation)
+})
+
+test_that("the documented c() attach idiom invalidates the project", {
+  project <- testProject()
+  scenarios <- list(Attached = Scenario(scenarioName = "Attached"))
+
+  project$scenarios <- c(project$scenarios, scenarios)
+
+  expect_true(project$modified)
+  expect_s3_class(project$scenarios[["Attached"]], "Scenario")
+})
+
+test_that("nested subscript-assignment on a section entry invalidates the project", {
+  project <- testProject()
+  project$individuals[["Indiv1"]]$weight <- 81
+
+  expect_true(project$modified)
+  expect_identical(project$individuals[["Indiv1"]]$weight, 81)
+})
+
+test_that("an extracted Scenario is a copy and cannot mutate the project silently", {
+  project <- testProject()
+  sc <- project$scenarios[["TestScenario"]]
+  sc$modelFile <- "HIJACKED.pkml"
+
+  expect_false(project$modified)
+  expect_false(
+    identical(project$scenarios[["TestScenario"]]$modelFile, "HIJACKED.pkml")
+  )
+})
+
+test_that("jsonPath is read-only and aliases projectFilePath", {
+  project <- testProject()
+  expect_identical(project$jsonPath, project$projectFilePath)
+  expect_snapshot(error = TRUE, project$jsonPath <- "elsewhere.json")
+})
+
+test_that("sync() reports a direct section-field write as unsaved changes", {
+  tmp <- withr::local_tempfile(fileext = ".json")
+  saveProject(testProject(), tmp)
+  project <- loadProject(tmp)
+
+  project$scenarios[["TestScenario"]]$modelFile <- "Changed.pkml"
+
+  status <- project$sync(silent = TRUE)
+  expect_true(status$unsaved_changes)
+  expect_false(status$json_modified)
+  expect_false(status$in_sync)
+})
+
+# Clone safety ----
+
+test_that("mutating a clone's scenario leaves the source untouched", {
+  project <- testProject()
+  clone <- project$clone()
+
+  clone$scenarios[["TestScenario"]]$modelFile <- "OnlyOnClone.pkml"
+
+  expect_identical(
+    clone$scenarios[["TestScenario"]]$modelFile,
+    "OnlyOnClone.pkml"
+  )
+  expect_false(
+    identical(project$scenarios[["TestScenario"]]$modelFile, "OnlyOnClone.pkml")
+  )
+})
+
+test_that("adding a scenario to a clone leaves the source untouched", {
+  project <- testProject()
+  clone <- project$clone()
+  before <- length(project$scenarios)
+
+  clone$scenarios[["Fresh"]] <- Scenario(scenarioName = "Fresh")
+
+  expect_length(project$scenarios, before)
+  expect_false("Fresh" %in% names(project$scenarios))
+})
+
+test_that("mutating a clone's nested individual entry leaves the source untouched", {
+  project <- testProject()
+  clone <- project$clone()
+
+  clone$individuals[["Indiv1"]]$weight <- 99
+
+  expect_identical(clone$individuals[["Indiv1"]]$weight, 99)
+  expect_false(identical(project$individuals[["Indiv1"]]$weight, 99))
+})
+
+test_that("clone modified/validated flags are independent of the source", {
+  project <- testProject()
+  project$.markValidated()
+  clone <- project$clone()
+
+  clone$scenarios[["TestScenario"]]$modelFile <- "Changed.pkml"
+
+  expect_true(clone$modified)
+  expect_false(clone$validatedSinceMutation)
+  expect_false(project$modified)
+  expect_true(project$validatedSinceMutation)
 })

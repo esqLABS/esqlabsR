@@ -1,9 +1,11 @@
 # Parse ----
 #
 # Parse the `individuals` JSON array into a named list keyed by
-# `individualId`. Per-entry numeric fields are coerced via `as.double`.
-# Each entry is stamped with `class = c("Individual", "list")` to enable
-# S3 dispatch on individual objects.
+# `individualId`. Like `.parsePopulations()`, every field except the key
+# is passed through (unknown fields are preserved so newer-schema files
+# round-trip); the known numeric fields are coerced via `as.double` and
+# `parameterSets` to a character vector. Each entry is stamped with
+# `class = c("Individual", "list")` to enable S3 dispatch.
 #
 # @keywords internal
 # @noRd
@@ -11,22 +13,24 @@
   if (is.null(individualsData) || length(individualsData) == 0L) {
     return(list())
   }
+  numericFields <- c("weight", "height", "age")
   result <- list()
   for (entry in individualsData) {
     indiv <- list()
-    if (!is.null(entry$species)) {
-      indiv$species <- entry$species
-    }
-    for (field in c("population", "gender", "proteinOntogenies")) {
-      if (!is.null(entry[[field]])) indiv[[field]] <- entry[[field]]
-    }
-    for (field in c("weight", "height", "age")) {
-      if (!is.null(entry[[field]])) {
-        indiv[[field]] <- as.double(entry[[field]])
+    for (field in names(entry)) {
+      if (field == "individualId") {
+        next
       }
-    }
-    if (!is.null(entry$parameterSets)) {
-      indiv$parameterSets <- as.character(unlist(entry$parameterSets))
+      val <- entry[[field]]
+      if (is.null(val)) {
+        next
+      }
+      if (field %in% numericFields) {
+        val <- as.double(val)
+      } else if (field == "parameterSets") {
+        val <- as.character(unlist(val))
+      }
+      indiv[[field]] <- val
     }
     class(indiv) <- c("Individual", "list")
     result[[entry$individualId]] <- indiv
@@ -168,6 +172,21 @@ addIndividual <- function(project, individualId, species, ...) {
         paste(allowed, collapse = ", ")
       )
     )
+  }
+
+  # `gender` is a required field per `.validateIndividuals()`; reject it at
+  # add time so a gender-less individual cannot enter the project only to be
+  # flagged as a Critical Error later (mirrors the validator's contract:
+  # missing, NA, or empty are all invalid).
+  gender <- dots$gender
+  if (
+    is.null(gender) ||
+      !is.character(gender) ||
+      length(gender) != 1L ||
+      is.na(gender) ||
+      nchar(gender) == 0
+  ) {
+    errors <- c(errors, "gender must be a non-empty string")
   }
 
   if (length(errors) > 0L) {
@@ -323,7 +342,7 @@ removeIndividualParameterSet <- function(project, id) {
 #' @returns The `project` object, invisibly.
 #' @export
 #' @family parameters
-addIndividualParameterSetEntry <- function(
+addIndividualParameterEntry <- function(
   project,
   id,
   containerPath,
@@ -354,11 +373,11 @@ addIndividualParameterSetEntry <- function(
 #' `project$individualParameterSets`. Warns if the set or entry doesn't
 #' exist.
 #'
-#' @inheritParams addIndividualParameterSetEntry
+#' @inheritParams addIndividualParameterEntry
 #' @returns The `project` object, invisibly.
 #' @export
 #' @family parameters
-removeIndividualParameterSetEntry <- function(
+removeIndividualParameterEntry <- function(
   project,
   id,
   containerPath,

@@ -1144,3 +1144,72 @@ projectConfigurationStatus <- function(...) {
   parts <- trimws(parts)
   parts[nzchar(parts)]
 }
+
+#' Sanitize a string to be a valid Excel sheet name
+#'
+#' @param sheetName Character string. The proposed sheet name to sanitize.
+#' @param warn Logical. Whether to warn if the sheet name was modified.
+#'   Default is `TRUE`.
+#'
+#' @details
+#' Sanitizes a string to comply with Excel sheet naming rules:
+#' * Must be 31 characters or less.
+#' * Cannot contain any of these characters: `/ \ * [ ] : ?`
+#' * Cannot be empty.
+#' * Leading/trailing spaces are trimmed.
+#'
+#' If the name becomes empty after sanitization, `"Sheet"` is used as
+#' default. If the name is too long, it is truncated. If `warn = TRUE` and
+#' the name was modified, a warning is issued.
+#'
+#' @returns A valid Excel sheet name.
+#' @keywords internal
+.sanitizeExcelSheetName <- function(sheetName, warn = TRUE) {
+  if (is.null(sheetName) || is.na(sheetName)) {
+    return("Sheet")
+  }
+
+  # Store original name for comparison
+  originalName <- as.character(sheetName)
+
+  # Convert to character and trim spaces
+  sheetName <- trimws(originalName)
+
+  # If empty after trimming, use default
+  if (nchar(sheetName) == 0) {
+    if (warn && originalName != "Sheet") {
+      cli::cli_warn(messages$excelSheetEmptyOrInvalid())
+    }
+    return("Sheet")
+  }
+
+  # Remove invalid characters: / \ * [ ] : ?
+  sanitizedName <- sheetName
+  sanitizedName <- gsub("/", "_", sanitizedName) # Replace /
+  sanitizedName <- gsub("\\\\", "_", sanitizedName) # Replace \
+  sanitizedName <- gsub("\\*", "_", sanitizedName) # Replace *
+  sanitizedName <- gsub("\\[", "_", sanitizedName) # Replace [
+  sanitizedName <- gsub("\\]", "_", sanitizedName) # Replace ]
+  sanitizedName <- gsub(":", "_", sanitizedName) # Replace :
+  sanitizedName <- gsub("\\?", "_", sanitizedName) # Replace ?
+
+  # Trim to 31 characters maximum
+  if (nchar(sanitizedName) > 31) {
+    sanitizedName <- substr(sanitizedName, 1, 31)
+  }
+
+  # Final check: if still empty (unlikely), use default
+  if (nchar(trimws(sanitizedName)) == 0) {
+    if (warn) {
+      cli::cli_warn(messages$excelSheetSanitized(originalName))
+    }
+    return("Sheet")
+  }
+
+  # Warn if the name was changed
+  if (warn && sanitizedName != originalName) {
+    cli::cli_warn(messages$excelSheetSanitizedInfo(originalName, sanitizedName))
+  }
+
+  return(sanitizedName)
+}
