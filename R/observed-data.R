@@ -247,13 +247,11 @@ addObservedData <- function(project, entry) {
       )
     }
     state$.programmaticDataSets[[name]] <- entry
-    state$.observedDataNamesCache <- c(
-      state$.observedDataNamesCache,
-      name
-    )
     sentinel <- list(type = "programmatic", name = name)
+    # The observedData setter resets the names cache, so the cache must be
+    # rebuilt after the write, from the names known before it.
     project$observedData <- c(project$observedData, list(sentinel))
-    project$.markModified()
+    state$.observedDataNamesCache <- c(existingNames, name)
     cli::cli_inform(c(
       "i" = paste0(
         "For reproducibility, consider declaring this DataSet via a ",
@@ -276,9 +274,26 @@ addObservedData <- function(project, entry) {
         "i" = "Must be one of: {.val {validTypes}}."
       ))
     }
+    # Validate the full entry shape (per-type required fields), not just the
+    # type, so an under-specified config entry is rejected at add time.
+    .validateObservedDataEntry(entry, length(project$observedData) + 1L)
+    # Config entries are keyed by `file` basename (see removeObservedData);
+    # abort on a duplicate to match the other mutators' convention.
+    fileBase <- basename(entry[["file"]])
+    existingFiles <- vapply(
+      project$observedData,
+      function(e) {
+        if (is.null(e[["file"]])) NA_character_ else basename(e[["file"]])
+      },
+      character(1)
+    )
+    if (fileBase %in% existingFiles) {
+      cli::cli_abort(
+        "observedData entry with file {.val {fileBase}} already exists"
+      )
+    }
     state$.observedDataNamesCache <- NULL
     project$observedData <- c(project$observedData, list(entry))
-    project$.markModified()
     return(invisible(project))
   }
 
@@ -323,14 +338,13 @@ removeObservedData <- function(project, name) {
       project$observedData <- project$observedData[-matchIdx[[1]]]
     }
     state$.observedDataNamesCache <- NULL
-    project$.markModified()
     return(invisible(project))
   }
 
   matchIdx <- which(vapply(
     project$observedData,
     function(e) {
-      !is.null(e$file) && identical(basename(e$file), name)
+      !is.null(e[["file"]]) && identical(basename(e[["file"]]), name)
     },
     logical(1)
   ))
@@ -342,7 +356,6 @@ removeObservedData <- function(project, name) {
 
   project$observedData <- project$observedData[-matchIdx[[1]]]
   state$.observedDataNamesCache <- NULL
-  project$.markModified()
   invisible(project)
 }
 

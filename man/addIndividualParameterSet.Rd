@@ -19,15 +19,15 @@ Create an individual parameter set
 }
 \seealso{
 Other parameters:
+\code{\link[=addApplicationParameterEntry]{addApplicationParameterEntry()}},
 \code{\link[=addApplicationParameterSet]{addApplicationParameterSet()}},
-\code{\link[=addApplicationParameterSetEntry]{addApplicationParameterSetEntry()}},
-\code{\link[=addIndividualParameterSetEntry]{addIndividualParameterSetEntry()}},
+\code{\link[=addIndividualParameterEntry]{addIndividualParameterEntry()}},
 \code{\link[=addModelParameterEntry]{addModelParameterEntry()}},
 \code{\link[=addModelParameterSet]{addModelParameterSet()}},
+\code{\link[=removeApplicationParameterEntry]{removeApplicationParameterEntry()}},
 \code{\link[=removeApplicationParameterSet]{removeApplicationParameterSet()}},
-\code{\link[=removeApplicationParameterSetEntry]{removeApplicationParameterSetEntry()}},
+\code{\link[=removeIndividualParameterEntry]{removeIndividualParameterEntry()}},
 \code{\link[=removeIndividualParameterSet]{removeIndividualParameterSet()}},
-\code{\link[=removeIndividualParameterSetEntry]{removeIndividualParameterSetEntry()}},
 \code{\link[=removeModelParameterEntry]{removeModelParameterEntry()}},
 \code{\link[=removeModelParameterSet]{removeModelParameterSet()}}
 }

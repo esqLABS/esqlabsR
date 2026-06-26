@@ -7,52 +7,17 @@
 \title{Project}
 \description{
 An R6 class representing an esqlabsR project
+
+\code{Project} is cloneable. All section data (\code{scenarios}, \code{individuals},
+\code{populations}, \code{outputPaths}, the parameter sets, \code{plots},
+\code{parameterIdentification}, ...) consists of plain-data records with
+copy semantics, so a clone's section data is fully independent of the
+source: mutating one does not affect the other. The one exception is
+programmatic observed data added via \code{\link[=addObservedData]{addObservedData()}} with a
+\code{DataSet} object; those \code{ospsuite::DataSet} objects wrap external
+handles and are shared by reference between a project and its clone.
 }
 \keyword{internal}
-\section{Public fields}{
-  \if{html}{\out{<div class="r6-fields">}}
-  \describe{
-    \item{\code{schemaVersion}}{Schema version declared in the JSON. Always "2.0"
-for projects loaded by this parser.}
-
-    \item{\code{esqlabsRVersion}}{Informational version string from the JSON.}
-
-    \item{\code{jsonPath}}{Absolute path the project was loaded from, or \code{NULL}.}
-
-    \item{\code{outputPaths}}{Named character vector. Names are IDs, values are
-output path strings.}
-
-    \item{\code{scenarios}}{Named list of \code{Scenario} objects, keyed by scenario
-name. Populated by JSON loading.}
-
-    \item{\code{modelParameterSets}}{Named list of parameter structures, keyed by
-set name.}
-
-    \item{\code{individualParameterSets}}{Named list of parameter structures,
-keyed by set name.}
-
-    \item{\code{applicationParameterSets}}{Named list of parameter structures,
-keyed by set name.}
-
-    \item{\code{individuals}}{Named list of plain lists, keyed by individualId.}
-
-    \item{\code{populations}}{Named list of plain lists, keyed by populationId.}
-
-    \item{\code{applications}}{Named list of parameter structures, keyed by
-protocol name.}
-
-    \item{\code{observedData}}{List of observed data source declarations parsed from
-JSON.}
-
-    \item{\code{plots}}{List with 3 elements: \code{dataCombined}, \code{plotConfiguration},
-\code{plotGrids}.}
-
-    \item{\code{parameterIdentification}}{Named list keyed by PI task id; each
-entry is a \code{PITask} record. May be \code{NULL} or an empty list when
-the project declares no PI tasks.}
-  }
-  \if{html}{\out{</div>}}
-}
 \section{Active bindings}{
   \if{html}{\out{<div class="r6-active-bindings">}}
   \describe{
@@ -76,6 +41,16 @@ internally by \code{\link[=saveProject]{saveProject()}}.}
 or load. Cleared by any mutation. Used internally by automatic
 validation hooks (e.g. in \code{\link[=runScenarios]{runScenarios()}} and \code{\link[=createPlots]{createPlots()}}) to
 skip redundant re-validation of an unchanged project.}
+
+    \item{\code{schemaVersion}}{Schema version declared in the JSON. Always "2.0"
+for projects loaded by this parser. Writing marks the project as
+modified.}
+
+    \item{\code{esqlabsRVersion}}{Informational version string from the JSON.
+Writing marks the project as modified.}
+
+    \item{\code{jsonPath}}{Read-only. Absolute path the project was loaded from
+(an alias of \code{projectFilePath}), or \code{NULL} for an in-memory project.}
 
     \item{\code{modelFolder}}{Path to the folder containing pkml simulation files.}
 
@@ -111,6 +86,46 @@ located.}
     \item{\code{outputFolder}}{Path to the folder where the results should be saved
 relative to the "Code" folder}
 
+    \item{\code{outputPaths}}{Named list mapping output-path IDs to OSPS-notation
+path strings (e.g. \code{list(PVB = "Organism|...")}). A named character
+vector is also accepted on write and coerced to a list on save.
+Writing marks the project as modified.}
+
+    \item{\code{scenarios}}{Named list of \code{Scenario} records, keyed by scenario
+name. Entries are plain-data records with copy semantics; write a
+modified entry back (e.g. \code{project$scenarios[[name]] <- sc}) to
+mutate the project. Writing marks the project as modified.}
+
+    \item{\code{modelParameterSets}}{Named list of parameter structures, keyed by
+set name. Writing marks the project as modified.}
+
+    \item{\code{individualParameterSets}}{Named list of parameter structures,
+keyed by set name. Writing marks the project as modified.}
+
+    \item{\code{applicationParameterSets}}{Named list of parameter structures,
+keyed by set name. Writing marks the project as modified.}
+
+    \item{\code{individuals}}{Named list of plain lists, keyed by individualId.
+Writing marks the project as modified.}
+
+    \item{\code{populations}}{Named list of plain lists, keyed by populationId.
+Writing marks the project as modified.}
+
+    \item{\code{applications}}{Named list of parameter structures, keyed by
+protocol name. Writing marks the project as modified.}
+
+    \item{\code{observedData}}{List of observed data source declarations parsed
+from JSON. Writing marks the project as modified and resets the
+cached observed-data names.}
+
+    \item{\code{plots}}{List with 3 elements: \code{dataCombined}, \code{plotConfiguration},
+\code{plotGrids}. Writing marks the project as modified.}
+
+    \item{\code{parameterIdentification}}{Named list keyed by PI task id; each
+entry is a \code{PITask} record. May be \code{NULL} or an empty list when
+the project declares no PI tasks. Writing marks the project as
+modified.}
+
     \item{\code{filePaths}}{Read-only named list of declared file/folder paths
 (the \code{filePaths} JSON section). Values are returned verbatim as
 strings; no resolution is performed at this stage.}
@@ -125,6 +140,7 @@ schema. Reflects any in-memory modifications. Read-only.}
   \itemize{
     \item \href{#method-Project-initialize}{\code{Project$new()}}
     \item \href{#method-Project-.markSaved}{\code{Project$.markSaved()}}
+    \item \href{#method-Project-.rebindPath}{\code{Project$.rebindPath()}}
     \item \href{#method-Project-.markValidated}{\code{Project$.markValidated()}}
     \item \href{#method-Project-.markModified}{\code{Project$.markModified()}}
     \item \href{#method-Project-.getFilePathsData}{\code{Project$.getFilePathsData()}}
@@ -159,10 +175,37 @@ JSON file.}
 \if{latex}{\out{\hypertarget{method-Project-.markSaved}{}}}
 \subsection{\code{Project$.markSaved()}}{
   Internal method to clear the \code{modified} flag after saving.
+Saving is not a mutation, so it leaves \code{validatedSinceMutation}
+untouched: a project validated before a save stays validated, and
+a later \code{runScenarios()} / \code{createPlots()} need not re-validate.
 Not intended for end-user use.
   \subsection{Usage}{
     \if{html}{\out{<div class="r">}}
     \preformatted{Project$.markSaved()}
+    \if{html}{\out{</div>}}
+  }
+}
+
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Project-.rebindPath"></a>}}
+\if{latex}{\out{\hypertarget{method-Project-.rebindPath}{}}}
+\subsection{\code{Project$.rebindPath()}}{
+  Internal method to rebind the project to a new file
+location after a save-as. Updates \code{projectFilePath} / \code{jsonPath}
+and \code{projectDirPath} (the base for relative-path resolution) so a
+subsequent bare \code{saveProject()} and any relative-path access target
+the new file. Not a mutation, so it leaves the flags untouched.
+Not intended for end-user use.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{Project$.rebindPath(path)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{path}}{Absolute or relative path the project was saved to.}
+    }
     \if{html}{\out{</div>}}
   }
 }

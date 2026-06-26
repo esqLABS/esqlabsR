@@ -139,27 +139,8 @@ test_that("validationResult add_warning with details works", {
 
 # Lightweight Project factory for adapter unit tests. Creates an empty
 # in-memory Project and overrides specific fields so each test can target
-# one adapter without dragging the whole fixture in.
-.fakeProject <- function(...) {
-  project <- Project$new()
-  project$schemaVersion <- "2.0"
-  project$esqlabsRVersion <- NA_character_
-  project$outputPaths <- list()
-  project$scenarios <- list()
-  project$modelParameterSets <- list()
-  project$individualParameterSets <- list()
-  project$applicationParameterSets <- list()
-  project$individuals <- list()
-  project$populations <- list()
-  project$applications <- list()
-  project$observedData <- list()
-  project$plots <- NULL
-  overrides <- list(...)
-  for (nm in names(overrides)) {
-    project[[nm]] <- overrides[[nm]]
-  }
-  project
-}
+# one adapter without dragging the whole fixture in. `.fakeProject()` lives
+# in tests/testthat/helpers.R so several test files can share it.
 
 test_that("validateProject() rejects non-Project inputs", {
   expect_snapshot(error = TRUE, validateProject("not a project"))
@@ -188,7 +169,7 @@ test_that("validateProject() flips validatedSinceMutation when clean", {
 
 test_that("validateProject() leaves validatedSinceMutation FALSE on errors", {
   project <- .fakeProject(
-    scenarios = list(Bad = esqlabsR:::Scenario$new())
+    scenarios = list(Bad = esqlabsR:::Scenario())
   )
 
   results <- validateProject(project)
@@ -237,14 +218,14 @@ test_that(".validateOutputPaths warns when ids collide on a path", {
 # Section adapter: scenarios ----
 
 test_that(".validateScenarios flags missing modelFile and bad simulationType", {
-  sc <- esqlabsR:::Scenario$new()
+  sc <- esqlabsR:::Scenario()
   sc$modelFile <- ""
   result <- esqlabsR:::.validateScenarios(list(s1 = sc))
   expect_gte(length(result$critical_errors), 1)
 })
 
 test_that(".validateScenarios flags Population scenario without populationId", {
-  sc <- esqlabsR:::Scenario$new()
+  sc <- esqlabsR:::Scenario()
   sc$modelFile <- "model.pkml"
   sc$simulationType <- "Population"
   sc$populationId <- ""
@@ -375,7 +356,7 @@ test_that(".validatePlots flags duplicate plotIds and unknown dataCombinedName",
 # Cross-references ----
 
 test_that(".validateCrossReferences flags scenario referencing missing individualId", {
-  sc <- esqlabsR:::Scenario$new()
+  sc <- esqlabsR:::Scenario()
   sc$modelFile <- "x.pkml"
   sc$individualId <- "Ghost"
   project <- .fakeProject(scenarios = list(s1 = sc))
@@ -408,7 +389,7 @@ test_that(".validateCrossReferences resolves individuals/populations as named li
     I1 = list(species = "Human", gender = "MALE")
   )
   populations <- list(P1 = list(species = "Human"))
-  sc <- esqlabsR:::Scenario$new()
+  sc <- esqlabsR:::Scenario()
   sc$modelFile <- "x.pkml"
   sc$individualId <- "I1"
   sc$populationId <- "P1"
@@ -456,7 +437,7 @@ test_that(".ensureValid short-circuits when validatedSinceMutation is TRUE", {
 })
 
 test_that(".ensureValid aborts with a formatted summary on critical errors", {
-  sc <- esqlabsR:::Scenario$new()
+  sc <- esqlabsR:::Scenario()
   sc$modelFile <- ""
   project <- .fakeProject(scenarios = list(s1 = sc))
   expect_snapshot(

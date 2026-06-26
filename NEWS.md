@@ -1,70 +1,43 @@
 # esqlabsR (development version)
 
-## Internal
-
-- Error and warning style on the chapter-chain code (PI module, parsed-Project section files, scenario-from-pkml, project lifecycle/excel-bridge) is now `cli::cli_abort()` / `cli::cli_warn()`. Legacy code outside the chain still uses `stop()`/`warning()`; converging the rest is tracked as a follow-up. (#908)
-- Internal reorganisation: per-domain R files. `R/utilities-scenarios.R` splits into `R/scenarios.R` and `R/output-paths.R`; `R/utilities-individual.R` → `R/individuals.R`; `R/utilities-population.R` → `R/populations.R`; `R/utilities-parameters.R` → `R/parameters.R`; `R/utilities-figures.R` → `R/plots.R`; `R/utilities-data-combined.R` → `R/data-combined.R`. Followup file renames: `utilities-data.R` → `data-utils.R`, `utilities-file.R` → `file-utils.R`, `utilities-parallel.R` → `parallel.R`, `utilities-simulation.R` → `simulation.R`, `utilities.R` → `utils.R`, `utilities-sensitivity-calculation.R` → `sensitivity-calculation-utils.R`, `sensivitity-time-profiles.R` → `sensitivity-time-profiles.R` (also fixes typo); foldings: `project-parse.R` distributes parse helpers into the relevant section files; `validation-result.R` and `validation-utils.R` fold into `validation.R`; `enum.R`, `error-checks.R`, and `utilities-quantity.R` fold into `utils.R` / `parameters.R` / `plots.R`. `R/plots.R` splits into `R/plots.R` (section parse/validate/serialize/mutation), `R/create-plots.R` (public `createPlots` plus Excel parsing/validation helpers), and `R/plots-utils.R` (palette, plot/grid configuration constructors, override and overlay helpers). `saveScenarioResults()` and `loadScenarioResults()` move from `R/scenarios.R` to `R/scenario-results.R`. `applyIndividualParameters()` moves from `R/individuals.R` to `R/simulation.R`. No behaviour changes. (#908)
-
-## Internal (work in progress)
-
-- The data and plotting layers drive off the parsed `Project`:
-  - `loadObservedData(project)` is the public loader, dispatching across
-    `excel` / `pkml` / `script` source declarations in `project$observedData`.
-  - `createDataCombined(project, ...)` and `createPlots(project, ...)` accept
-    a `Project` directly.
-  - `project$plots` parses into the in-memory shape future chapters rely on:
-    `dataCombined` as a named list keyed by name, `plotConfiguration` and
-    `plotGrids` as data.frames.
-  - `project$dataFolder` is a resolved path field on `Project`.
-
-- Parameter identification joins the JSON-first project model. PI tasks live
-  as a parsed `parameterIdentification` section on `Project`, and the runtime
-  drives off the parsed `Project` via `runPI(project, piTaskNames = NULL,
-  observedData = NULL, stopIfParameterNotFound = TRUE)`. New plain-data
-  records `PITask`, `PIParameter`, and `PIOutputMapping` (one entry per
-  optimisation variable, one entry per `(output, dataset)` pair) replace the
-  legacy R6 `PITaskConfiguration` and its Excel reader. The mutation API
-  ships alongside: `addPITask()` / `removePITask()` plus the inline
-  `addPIParameter()` / `removePIParameter()` and `addPIOutputMapping()` /
-  `removePIOutputMapping()` helpers, all of which mark the project modified.
-  `PITaskConfiguration` and `readPITaskConfigurationFromExcel()` are removed
-  outright; `createPITasks()` is a soft-deprecation stub that errors with a
-  pointer to `runPI(project, ...)`. `runPI()` now hard-fails on build errors
-  (typos in parameter paths, unknown outputs, missing observed data) and
-  only soft-fails on numerical optimisation failures, so user typos surface
-  immediately instead of being swallowed into a warning. The Excel project
-  to JSON migration path lands in a follow-up chapter (#928).
-
 ## Breaking changes
 
+- The project model is now JSON-first. A project is a `Project` (R6 class) loaded from a `Project.json` via `loadProject()` and saved with `saveProject()`; `Project` replaces `ProjectConfiguration` as the canonical in-memory representation, merging the project sections (scenarios, individuals, populations, applications, observed data, plots, parameter identification) with the file paths previously held by `ProjectConfiguration`. Excel becomes a secondary I/O bridge through `importProjectFromExcel()` and `exportProjectToExcel()`. (#908)
+- `ScenarioConfiguration`, `addScenarioConfigurationsToExcel()`, `createScenarioConfigurationsFromPKML()`, `readScenarioConfigurationFromExcel()`, `setApplications()`, `LegacyScenario`, and `createScenarios()` are removed. `runScenarios()` now accepts only a `Project`, and scenarios are constructed from PKML via `createScenariosFromPKML(pkmlFilePaths, project, ...)`. (#908)
+- `Scenario` is now a plain-data record built with `Scenario()`. Reading an entry from `project$scenarios` returns an independent copy, so a modified entry must be written back (`project$scenarios[["X"]] <- sc`) to take effect. (#908, #1048)
+- The `Project` section fields (`scenarios`, `outputPaths`, `individuals`, `populations`, the parameter sets, `observedData`, `plots`, `parameterIdentification`) mark the project as modified on any write, including subscript and nested assignment such as `project$scenarios[["X"]] <- sc` or `project$scenarios <- c(project$scenarios, more)`. `project$jsonPath` is read-only. (#1048)
+- Project mutation is done through standalone functions, not methods: `addScenario(project, ...)`, `removeScenario(project, ...)`, and the matching `add*` / `remove*` helpers for every section. (#908)
+- `validateAllConfigurations()` is removed; use `validateProject(project)`. (#908)
+- Parameter identification is JSON-first. PI tasks live as a `parameterIdentification` section on `Project` and run via `runPI(project, piTaskNames = NULL, observedData = NULL, stopIfParameterNotFound = TRUE)`, built from the plain-data records `PITask`, `PIParameter`, and `PIOutputMapping` (one entry per optimisation variable, one per output/dataset pair). The Excel `PITaskConfiguration`, `readPITaskConfigurationFromExcel()`, and `createPITasks()` are removed. `runPI()` hard-fails on build errors (bad parameter paths, unknown outputs, missing observed data) and only soft-fails on numerical optimisation failures. (#928)
+- `createDefaultProjectConfiguration()` is removed; use `loadProject()`. (#908)
+- `loadObservedDataFromExcel()` and `loadObservedDataFromPKML()` are removed; use `loadObservedData(project)` on a JSON-first `Project`. (#908)
+- `readPopulationCharacteristicsFromXLS()`, `readIndividualCharacteristicsFromXLS()`, `writeIndividualToXLS()`, `writeParameterStructureToXLS()`, and `exportParametersToXLS()` are removed. The supported Excel surface is restricted to Excel <-> JSON interop via `importProjectFromExcel()` and `exportProjectToExcel()`. (#908)
+- `ExportConfiguration` (R6 class) and `createEsqlabsExportConfiguration()` are removed. Save the plot objects returned by `createPlots()` directly via `ggplot2::ggsave()`. (#908)
+- Individual parameter sets in `Individuals.xlsx` must now be specified explicitly via the required `Individual Parameter Sets` column in the `IndividualBiometrics` sheet, a comma-separated list of sheet names applied in order. The previous fallback that applied a sheet named after the `IndividualId` is removed; existing files must add and populate the new column. (#970)
+- `removeScenario()` argument renamed from `name` to `scenarioName` to align with `addScenario()`. (#1076)
+- `addIndividualParameterSetEntry()` and `removeIndividualParameterSetEntry()` are renamed to `addIndividualParameterEntry()` and `removeIndividualParameterEntry()`; `addApplicationParameterSetEntry()` and `removeApplicationParameterSetEntry()` are renamed to `addApplicationParameterEntry()` and `removeApplicationParameterEntry()`. (#1077)
+- `removePIParameter()` and `removePIOutputMapping()` now auto-remove the parent PI task from the project when it becomes empty (no parameters and no output mappings), emitting a warning. This aligns with the behavior of `removeModelParameterEntry()` for empty parameter sets. (#1079)
 - `addPlot()`, `removePlot()`, and `addPlotGrid()` argument names updated to follow the package's camelCase convention: `plotID` is now `plotId` and `plotIDs` is now `plotIds`. Positional calls are unaffected. (#1078)
-- `createDefaultProjectConfiguration()` is removed. Use `loadProject()` instead. The function had been soft-deprecated since 5.3.0. (#908)
-- `Project` (R6 class) is now exported and replaces `ProjectConfiguration` as the canonical in-memory project representation. The class merges the JSON-parsed sections (scenarios, individuals, populations, applications, observed data, plots, parameter identification) with the Excel-bridge file paths previously held by `ProjectConfiguration`. (#908)
-- `ScenarioConfiguration`, `addScenarioConfigurationsToExcel()`, `createScenarioConfigurationsFromPKML()`, `readScenarioConfigurationFromExcel()`, and `setApplications()` are removed. The Excel to JSON migration path is now `importProjectFromExcel()`; the reverse is `exportProjectToExcel()`. The scenario-construction-from-PKML surface is now `createScenariosFromPKML()`. (#908)
-- `validateAllConfigurations()` is removed. Use `validateProject()` instead. (#908)
-- `LegacyScenario` and `createScenarios()` (which built `LegacyScenario` objects from `ScenarioConfiguration`) are removed. `runScenarios()` now accepts only a `Project`. (#908)
-- `loadObservedDataFromExcel()` and `loadObservedDataFromPKML()` are removed (soft-deprecated since 5.7.0). Use `loadObservedData(project)` on a JSON-first `Project` instead. (#908)
-- `readPopulationCharacteristicsFromXLS()`, `readIndividualCharacteristicsFromXLS()`, `writeIndividualToXLS()`, `writeParameterStructureToXLS()`, and `exportParametersToXLS()` are removed. The supported user-facing Excel surface is now restricted to Excel <-> JSON interop: `importProjectFromExcel()` and `exportProjectToExcel()`. (#908)
-- `ExportConfiguration` (R6 class) and `createEsqlabsExportConfiguration()` are removed. The Excel-driven plot export pipeline they belonged to is no longer supported; use the plot objects returned by `createPlots()` and save them directly via `ggplot2::ggsave()`. (#908)
-- `Project` no longer exposes mutation methods (`project$addScenario()`, `project$removeScenario()`, `project$addIndividual()`, etc.). The free-function form is canonical: call `addScenario(project, ...)`, `removeScenario(project, ...)`, and the matching mutators directly. The R6 wrappers were pure delegation and have been removed to keep one mutation surface to maintain. (#908)
+- `saveScenarioResults()` renames its second argument from `projectConfiguration` to `project` to match the v6 naming convention. Update any calls that pass the argument by name. (#1062)
 
-## New features
+## Major changes
 
-- `createScenariosFromPKML(pkmlFilePaths, project, ...)` reads scenarios from PKML simulation files into a `Project`. Replaces the removed `createScenarioConfigurationsFromPKML()`. (#908)
-- `exampleProjectPath()` returns the bundled example `Project.json`. (#908)
-- `exportProjectToExcel(project, outputDir, silent)` writes a `Project` back to Excel configuration files. (#908)
-- `importProjectFromExcel(projectConfigPath, outputDir, silent)` reads an Excel-based project and writes a v2.0 `Project.json`. (#908)
-- `initProject(destination, type, createExcel, overwrite)` is rewritten. `type` is `"minimal"` (default) or `"example"`; with `createExcel = TRUE` (the default) Excel side-cars are also produced. (#908)
-- `Project` (R6 class) replaces `ProjectConfiguration`. (#908)
-- `projectStatus(project)` reports synchronisation between the JSON file and its Excel sidecar files. (#908)
-- `saveProject(project, path)` writes a `Project` back to `Project.json`. (#908)
+- `loadProject(path)` loads a `Project` from a `Project.json` and is the primary entry point for the workflow. (#908)
+- `saveProject(project, path)` writes a `Project` back to `Project.json`. Saving to a new path rebinds the project to that location. (#908)
+- `validateProject(project)` validates a parsed project and reports per-section critical errors and warnings. (#908)
+- `createDataCombined(project, ...)` and `createPlots(project, ...)` accept a `Project` directly and resolve their inputs from the JSON, with `loadObservedData(project)` dispatching across `excel` / `pkml` / `script` observed-data sources. (#908)
+- The full programmatic mutation API: `addScenario()` / `removeScenario()`, `addIndividual()` / `removeIndividual()`, `addPopulation()` / `removePopulation()`, `addApplication()` / `removeApplication()`, `addOutputPath()` / `removeOutputPath()`, the parameter-set helpers (`addModelParameterEntry()`, `addIndividualParameterEntry()`, `addApplicationParameterEntry()`, and their `remove*` counterparts), `addObservedData()` / `removeObservedData()`, the plot helpers, and the PI helpers `addPITask()` / `removePITask()` (plus inline `addPIParameter()` / `addPIOutputMapping()` and their removals). (#908, #1076, #1077)
+- `initProject(destination, type, createExcel, overwrite)` scaffolds a project. `type` is `"minimal"` (default) or `"example"`; with `createExcel = TRUE` (default) Excel side-cars are also produced. (#908)
+- `createScenariosFromPKML(pkmlFilePaths, project, ...)` reads scenarios from PKML files and adds them to a `Project` in place, returning the project invisibly. Output paths are registered in `project$outputPaths` (reusing an existing id when the literal path is already registered, otherwise generating a readable one), scenario names are made unique against the project, and a scenario has no application protocol by default since the PKML embeds its own. Steady-state overwrite of formula-defined parameters is controlled by the `overwriteFormulasInSS` field on a `Scenario` (corresponding to `ignoreIfFormula = FALSE` in `ospsuite::getSteadyState()`), defaulting to `FALSE`. (#908, #1050)
+- `importProjectFromExcel(projectConfigPath, outputDir, silent)` reads an Excel-based project and writes a v2.0 `Project.json`; `exportProjectToExcel(project, outputDir, silent)` writes the reverse; `projectStatus(project)` reports synchronisation between the JSON file and its Excel side-cars. (#908)
+- `exampleProjectPath()` returns the path to the bundled example `Project.json`. (#908)
 
 ## Soft deprecations
 
-- `createDataCombinedFromExcel()` and `createPlotsFromExcel()` now simply forward to `createDataCombined()` / `createPlots()` after emitting a `lifecycle::deprecate_soft()` warning. Pass a `Project` from `loadProject()`. (#908)
-- `createProjectConfiguration()` now warns and forwards to `loadProject()`. The default `path` changes from `"ProjectConfiguration.xlsx"` to `"Project.json"`. (#908)
-- `exampleProjectConfigurationPath()` warns and forwards to `exampleProjectPath()`. (#908)
+- `createProjectConfiguration()` warns and forwards to `loadProject()`; its default `path` changes from `"ProjectConfiguration.xlsx"` to `"Project.json"`. (#908)
 - `ProjectConfiguration()` warns and forwards to `Project$new()`. (#908)
+- `createDataCombinedFromExcel()` and `createPlotsFromExcel()` warn and forward to `createDataCombined()` / `createPlots()`; pass a `Project` from `loadProject()`. (#908)
+- `exampleProjectConfigurationPath()` warns and forwards to `exampleProjectPath()`. (#908)
 - `projectConfigurationStatus()` warns and forwards to `projectStatus()`. (#908)
 - `restoreProjectConfiguration()` warns and forwards to `exportProjectToExcel()`. (#908)
 - `snapshotProjectConfiguration()` warns and forwards to `importProjectFromExcel()`. (#908)
@@ -73,29 +46,7 @@
 
 - `loadScenarioResults()` now restores the full four-field record produced by `runScenarios()`: it reloads the `population` from `<scenario>_population.csv` for population scenarios (previously dropped) and extracts `outputValues` for the simulation's recorded output paths with the population attached, so a reloaded result matches the original run. (#1054)
 - `saveScenarioResults()` now reports a failed save with a cli warning that names the affected scenario and carries the underlying error message, instead of a generic base warning, and continues saving the remaining scenarios. (#1054)
-
-## Breaking changes
-
-- `saveScenarioResults()` renames its second argument from `projectConfiguration` to `project` to match the v6 naming convention. Update any calls that pass the argument by name. (#1062)
-
-## Breaking changes (previous chapters)
-
-- Individual parameter sets in `Individuals.xlsx` must now be specified
-  explicitly via the new required column `Individual Parameter Sets` in the
-  `IndividualBiometrics` sheet. The column must contain a comma-separated list
-  of sheet names (in the same file) whose parameters will be applied to the
-  simulation in order. Previously, a sheet named after the `IndividualId` was
-  applied automatically; this fallback is removed. Existing `Individuals.xlsx`
-  files must be updated to add the `Individual Parameter Sets` column and
-  populate it with the relevant sheet names. (#970)
-
-## New features
-
-- Added `overwriteFormulasInSS` property to `ScenarioConfiguration`. When set to `TRUE`, formula-defined parameters will be overwritten with their steady-state values (corresponds to `ignoreIfFormula = FALSE` in `ospsuite::getSteadyState()`). Default is `FALSE` (formula-defined parameters are kept, i.e. `ignoreIfFormula = TRUE`). The property can be set via a new `OverwriteFormulasInSS` column in the `Scenarios` sheet of `Scenarios.xlsx` (placed after `SteadyStateTimeUnit`). Also available as a parameter in `createScenarioConfigurationsFromPKML()`.
-
-## Minor improvements and bug fixes
-
-- `snapshotProjectConfiguration()` and `projectConfigurationStatus()` no longer fail on projects that have no PI configuration (i.e. `parameterIdentificationFile` is not set) (#1007).
+- `snapshotProjectConfiguration()` and `projectConfigurationStatus()` no longer fail on projects that have no PI configuration (i.e. `parameterIdentificationFile` is not set). (#1007)
 
 # esqlabsR 5.6.0
 

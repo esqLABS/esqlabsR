@@ -2,7 +2,7 @@
 % Please edit documentation in R/scenario-from-pkml.R
 \name{createScenariosFromPKML}
 \alias{createScenariosFromPKML}
-\title{Create scenario configurations from PKML files}
+\title{Create scenarios from PKML files}
 \usage{
 createScenariosFromPKML(
   pkmlFilePaths,
@@ -48,9 +48,12 @@ provided, sets simulation type to "Population". Can be a single string
 \code{pkmlFilePaths}.}
 
 \item{applicationProtocols}{Character vector. Optional application protocol
-names to use for scenarios. If \code{NULL} (default), application protocols
-will be set to the scenario name. Can be a single string (recycled for
-all scenarios) or a vector with the same length as \code{pkmlFilePaths}.}
+names to use for scenarios, each referencing \code{project$applications}. If
+\code{NULL} (default), the scenario has no application protocol (the PKML file
+already embeds its own application). Values are used verbatim and are
+validated against \code{project$applications}. Can be a single string
+(recycled for all scenarios) or a vector with the same length as
+\code{pkmlFilePaths}.}
 
 \item{modelParameterSets}{Character vector. Optional model parameter set
 ids to apply to scenarios (referencing \code{project$modelParameterSets}).
@@ -64,9 +67,11 @@ to use for scenarios. If \code{NULL} (default), output paths will be
 extracted from the PKML files' output selections. Can be a single string
 (recycled for all scenarios) or a vector with the same length as
 \code{pkmlFilePaths}. If providing multiple paths per scenario, separate them
-with commas in the string. Named vectors are supported where names serve
-as aliases for the paths, e.g.,
-\code{c("plasma" = "Organism|VenousBlood|Plasma|Drug|Concentration")}.}
+with commas in the string. Named vectors are supported where the names
+become the registered output-path ids, e.g.,
+\code{c("plasma" = "Organism|VenousBlood|Plasma|Drug|Concentration")}. When a
+literal path is already registered in \code{project$outputPaths}, its existing
+id is reused; unnamed new paths receive a readable generated id.}
 
 \item{simulationTime}{Character vector. Optional simulation time to use for
 scenarios as character strings containing one or multiple time intervals
@@ -88,12 +93,11 @@ each scenario. Default is \code{FALSE}. Can be a single logical value
 (recycled for all scenarios) or a vector with the same length as
 \code{pkmlFilePaths}.}
 
-\item{steadyStateTime}{Numeric vector. Steady-state times. Only used when
-corresponding \code{steadyState} is \code{TRUE}. If \code{NULL} (default), no
-steady-state time is set on the scenario, and \code{Scenario$new()}'s default
-of 1000 (in the configured time unit) takes effect at simulation time.
-Can be a single numeric value (recycled for all scenarios) or a vector
-with the same length as \code{pkmlFilePaths}.}
+\item{steadyStateTime}{Numeric vector. Steady-state times in
+\code{steadyStateTimeUnit}. If \code{NULL} (default), \code{1000} is used (matching
+\code{\link[=addScenario]{addScenario()}}). The value is stored in base units (minutes) on the
+scenario. Can be a single numeric value (recycled for all scenarios) or a
+vector with the same length as \code{pkmlFilePaths}.}
 
 \item{steadyStateTimeUnit}{Character vector. Steady-state time units. Only
 used when \code{steadyState = TRUE} and \code{steadyStateTime} is provided. If
@@ -116,19 +120,23 @@ value (recycled for all scenarios) or a vector with the same length as
 \code{modelParameterSets} instead.}
 }
 \value{
-A named list of \code{Scenario} objects with the names being the
-scenario names.
+The \code{project}, invisibly, with the new scenarios added to
+\code{project$scenarios} and any new output paths registered in
+\code{project$outputPaths}.
 }
 \description{
-Creates scenario configurations from PKML files by extracting available
-information such as applications, output paths, and simulation time
-settings. This function creates scenario configuration objects that can
-be used with the esqlabsR workflow.
+Reads scenarios from PKML files, extracting output paths and simulation
+time settings, and adds them to a \code{Project} in place. Output paths are
+registered in \code{project$outputPaths} (reusing an existing id when the
+literal path is already registered, otherwise generating a readable one),
+and scenario names are made unique against the scenarios already on the
+project. The function mutates \code{project} directly and returns it invisibly,
+like the other \verb{add*} mutators; the created scenario names are reported in
+a message.
 }
 \details{
 This function extracts the following information from PKML files:
 \itemize{
-\item \strong{Applications}: Application protocol names (defaults to scenario name).
 \item \strong{Output paths}: All selected outputs for the simulation from
 \code{outputSelections$allOutputs}.
 \item \strong{Simulation time}: Time intervals with start time, end time, and
@@ -162,8 +170,9 @@ parameter values.
 and parameter values.
 }
 
-The function handles duplicate scenario names by appending indices
-(e.g., \code{"Scenario_1"}, \code{"Scenario_2"}).
+The function handles duplicate scenario names, both against each other and
+against the scenarios already on the project, by appending indices (e.g.,
+\code{"Scenario"}, \code{"Scenario_2"}).
 }
 }
 \examples{
@@ -171,19 +180,18 @@ The function handles duplicate scenario names by appending indices
 # Load project
 project <- loadProject("Project.json")
 
-# Create scenarios from a single PKML file
-pkmlPath <- "path/to/simulation.pkml"
-scenarios <- createScenariosFromPKML(
-  pkmlFilePaths = pkmlPath,
+# Read scenarios from a single PKML file into the project
+createScenariosFromPKML(
+  pkmlFilePaths = "path/to/simulation.pkml",
   project = project
 )
 
-# Add to project and run
-project$scenarios <- c(project$scenarios, scenarios)
-results <- runScenarios(project, scenarioNames = names(scenarios))
+# The project now holds the new scenarios; run and save them
+results <- runScenarios(project)
+saveProject(project)
 
 # Example of vector recycling: single value applied to all scenarios
-scenarios <- createScenariosFromPKML(
+createScenariosFromPKML(
   pkmlFilePaths = c("sim1.pkml", "sim2.pkml", "sim3.pkml"),
   project = project,
   individualId = "Individual_001",
@@ -192,24 +200,13 @@ scenarios <- createScenariosFromPKML(
 )
 
 # Example of vector arguments: different values per scenario
-scenarios <- createScenariosFromPKML(
+createScenariosFromPKML(
   pkmlFilePaths = c("pediatric.pkml", "adult.pkml", "elderly.pkml"),
   project = project,
   scenarioNames = c("Pediatric", "Adult", "Elderly"),
   individualId = c("Child_001", "Adult_001", "Elderly_001"),
-  applicationProtocols = c("Pediatric_Dose", "Standard_Dose", "Reduced_Dose"),
   steadyState = c(FALSE, TRUE, TRUE),
   steadyStateTime = c(NA, 2000, 1500)
-)
-
-# Example of PKML recycling: same model, different settings
-scenarios <- createScenariosFromPKML(
-  pkmlFilePaths = "base_model.pkml",
-  project = project,
-  scenarioNames = c("LowDose", "MediumDose", "HighDose"),
-  individualId = c("Patient1", "Patient2", "Patient3"),
-  applicationProtocols = c("Low_Protocol", "Med_Protocol", "High_Protocol"),
-  steadyState = c(FALSE, TRUE, TRUE)
 )
 }
 }

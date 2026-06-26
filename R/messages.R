@@ -80,6 +80,13 @@ messages$invalidPathArgument <- function() {
   cliFormat("{.arg path} must be a single non-empty, non-NA string.")
 }
 
+messages$noProjectPath <- function() {
+  cliFormat(
+    "No {.arg path} specified and the project has no {.field jsonPath}. \\
+    Provide a {.arg path} to save the project for the first time."
+  )
+}
+
 messages$pathNotFound <- function(path) {
   cliFormat(
     "The specified destination folder does not exist. ({.path {path}}) "
@@ -120,6 +127,47 @@ messages$scenarioConfigurationNotNamedList <- function() {
     "Invalid scenarioConfigurations:",
     "x" = "scenarioConfigurations must be a named list",
     "i" = "Each scenario configuration must have a unique name"
+  ))
+}
+
+messages$scenariosAddedToProject <- function(scenarioNames) {
+  cli::format_message(c(
+    "i" = "Added {length(scenarioNames)} scenario{?s}: {.val {scenarioNames}}"
+  ))
+}
+
+messages$noModelFolderUsingAbsolutePath <- function(pkmlPath) {
+  cli::format_message(c(
+    "!" = "The project has no {.field modelFolder}; storing an absolute model \\
+    file path.",
+    "i" = "Set a {.field modelFolder} on the project so the scenario stores a \\
+    portable relative path ({.file {pkmlPath}})."
+  ))
+}
+
+messages$outputPathIdCollision <- function(id, existingPath, newPath) {
+  cli::format_message(c(
+    "x" = "Output path id {.val {id}} already maps to a different path.",
+    "i" = "Existing: {.val {existingPath}}",
+    "i" = "Requested: {.val {newPath}}"
+  ))
+}
+
+messages$outputPathAliasIgnored <- function(userAlias, registeredId, path) {
+  cli::format_message(c(
+    "i" = "Output path alias {.val {userAlias}} ignored: \\
+    path {.val {path}} is already registered as {.val {registeredId}}."
+  ))
+}
+
+messages$noModelFolderForRelativeModelFile <- function(
+  scenarioName,
+  modelFile
+) {
+  cli::format_message(c(
+    "x" = "Cannot resolve the model file for scenario {.val {scenarioName}}.",
+    "i" = "{.field modelFile} {.val {modelFile}} is relative but the project \\
+    has no {.field modelFolder} to resolve it against."
   ))
 }
 
@@ -751,6 +799,20 @@ messages$abortedByUser <- function() {
   )
 }
 
+messages$cannotPromptNonInteractive <- function() {
+  cliFormat(
+    "The destination already contains an esqlabsR project and cannot prompt \\
+    in a non-interactive session. Pass {.code overwrite = TRUE} to overwrite it."
+  )
+}
+
+messages$failedToCopyTemplate <- function(paths) {
+  cliFormat(
+    "Failed to copy {length(paths)} template file{?s} to the destination: \\
+    {.file {paths}}."
+  )
+}
+
 messages$errorPIDatasetNotFound <- function(datasetName, availableDatasets) {
   cli::format_message(c(
     "x" = "Dataset {.val {datasetName}} not found",
@@ -872,7 +934,7 @@ messages$observedDataScriptWrongReturnType <- function(filePath, klass) {
 }
 
 messages$observedDataDataFolderNotDeclared <- function(file) {
-  cli::format_message(c(
-    "x" = "{.field dataFolder} is not declared in {.code filePaths}; cannot resolve {.path {file}}."
-  ))
+  cliFormat(
+    "{.field dataFolder} is not declared in {.code filePaths}; cannot resolve {.path {file}}."
+  )
 }

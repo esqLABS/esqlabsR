@@ -221,3 +221,27 @@ createValidPISheets <- function() {
     )
   )
 }
+
+# Builds a minimal in-memory `Project` for validation/serialization tests:
+# all section fields default to empty, and `...` overrides named fields so a
+# test can target one section without loading the full TestProject fixture.
+.fakeProject <- function(...) {
+  project <- Project$new()
+  project$schemaVersion <- "2.0"
+  project$esqlabsRVersion <- NA_character_
+  project$outputPaths <- list()
+  project$scenarios <- list()
+  project$modelParameterSets <- list()
+  project$individualParameterSets <- list()
+  project$applicationParameterSets <- list()
+  project$individuals <- list()
+  project$populations <- list()
+  project$applications <- list()
+  project$observedData <- list()
+  project$plots <- NULL
+  overrides <- list(...)
+  for (nm in names(overrides)) {
+    project[[nm]] <- overrides[[nm]]
+  }
+  project
+}

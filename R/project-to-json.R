@@ -35,7 +35,9 @@
   }
 
   list(
-    schemaVersion = project$schemaVersion,
+    # Default the version so an empty `Project$new()` serializes a file that
+    # `loadProject()` accepts (mirrors the Excel bridge in project-excel.R).
+    schemaVersion = project$schemaVersion %||% "2.0",
     esqlabsRVersion = project$esqlabsRVersion,
     filePaths = .filePathsToJson(project),
     observedData = .observedDataToJson(project),
@@ -99,15 +101,30 @@
 .filePathsToJson <- function(project) {
   data <- project$.getFilePathsData()
   if (length(data) == 0L) {
-    return(setNames(list(), character(0)))
+    return(stats::setNames(list(), character(0)))
   }
   result <- lapply(data, function(entry) entry$value)
   .asJsonObject(result)
 }
 
-# JSON object (map of id → output path string).
+# JSON object (map of id → output path string). Coerces a named character
+# vector to a list so jsonlite emits a JSON object, not an array (which
+# would silently drop every id). Errors on a non-empty unnamed value.
 .outputPathsToJson <- function(project) {
-  .asJsonObject(project$outputPaths)
+  outputPaths <- project$outputPaths
+  if (length(outputPaths) > 0L) {
+    nms <- names(outputPaths)
+    if (is.null(nms) || any(nms == "")) {
+      cli::cli_abort(c(
+        "{.field outputPaths} must be a named map of id to path string.",
+        "i" = "Found {length(outputPaths)} entr{?y/ies} without an id."
+      ))
+    }
+    if (!is.list(outputPaths)) {
+      outputPaths <- as.list(outputPaths)
+    }
+  }
+  .asJsonObject(outputPaths)
 }
 
 # JSON array of scenario objects. Reverses the parse-time
@@ -159,23 +176,21 @@
     }
 
     if (sc$simulateSteadyState && is.null(sc$steadyStateTimeUnit)) {
-      stop(
-        "Scenario '",
-        sc$scenarioName,
-        "' has simulateSteadyState=TRUE but steadyStateTimeUnit is NULL. ",
-        "Set steadyStateTimeUnit (e.g. \"min\") so the value can round-trip.",
-        call. = FALSE
-      )
+      cli::cli_abort(c(
+        "Scenario {.val {sc$scenarioName}} has {.field simulateSteadyState}=TRUE \\
+        but {.field steadyStateTimeUnit} is NULL.",
+        "i" = "Set {.field steadyStateTimeUnit} (e.g. {.val min}) so the value \\
+        can round-trip."
+      ))
     }
 
     list(
       name = sc$scenarioName,
       individualId = sc$individualId,
-      populationId = if (sc$simulationType == "Population") {
-        sc$populationId
-      } else {
-        NULL
-      },
+      # Emit the populationId verbatim rather than keying off the derived
+      # `simulationType`, so a drifted record (populationId set while the
+      # type reads "Individual") does not silently lose its populationId.
+      populationId = sc$populationId,
       readPopulationFromCSV = sc$readPopulationFromCSV,
       # `as.list(NULL)` -> `list()`; this collapses both "key absent" and
       # "empty array" in the parsed scenario to JSON `[]`. Matches the
@@ -191,9 +206,11 @@
       simulationTime = simTimeStr,
       simulationTimeUnit = sc$simulationTimeUnit,
       steadyState = sc$simulateSteadyState,
-      steadyStateTime = if (
-        sc$simulateSteadyState && !is.null(sc$steadyStateTimeUnit)
-      ) {
+      # Emit the steady-state time/unit whenever a unit is declared,
+      # independently of `simulateSteadyState`. A declared time with the
+      # flag off (e.g. `steadyState: false` plus a preset time) is valid
+      # JSON the parser reads back, so dropping it would lose data.
+      steadyStateTime = if (!is.null(sc$steadyStateTimeUnit)) {
         ospsuite::toUnit(
           quantityOrDimension = ospDimensions$Time,
           values = sc$steadyStateTime,
@@ -202,11 +219,7 @@
       } else {
         NULL
       },
-      steadyStateTimeUnit = if (sc$simulateSteadyState) {
-        sc$steadyStateTimeUnit
-      } else {
-        NULL
-      },
+      steadyStateTimeUnit = sc$steadyStateTimeUnit,
       overwriteFormulasInSS = sc$overwriteFormulasInSS,
       modelFile = sc$modelFile,
       outputPathIds = outputPathIds
@@ -230,29 +243,21 @@
 }
 
 # JSON array of individual objects. The in-memory shape is a named list
-# keyed by `individualId`; serialization re-attaches that key as the
-# `individualId` field on each entry.
+# keyed by `individualId`; serialization re-attaches that key and otherwise
+# passes every field through in record order (mirroring `.populationsToJson`),
+# so unknown fields from a newer schema round-trip. `parameterSets` is
+# emitted as a JSON array.
 .individualsToJson <- function(project) {
   individuals <- project$individuals
   if (is.null(individuals) || length(individuals) == 0L) {
     return(list())
   }
   unname(lapply(names(individuals), function(id) {
-    indiv <- individuals[[id]]
-    entry <- list(individualId = id)
-    for (field in c("species", "population", "gender", "proteinOntogenies")) {
-      if (!is.null(indiv[[field]])) entry[[field]] <- indiv[[field]]
+    indiv <- unclass(individuals[[id]])
+    if (!is.null(indiv$parameterSets)) {
+      indiv$parameterSets <- as.list(indiv$parameterSets)
     }
-    for (field in c("weight", "height", "age")) {
-      val <- indiv[[field]]
-      if (length(val) > 0L && !is.na(val)) {
-        entry[[field]] <- as.double(val)
-      }
-    }
-    if (!is.null(indiv$parameterSets) && length(indiv$parameterSets) > 0L) {
-      entry$parameterSets <- as.list(indiv$parameterSets)
-    }
-    entry
+    c(list(individualId = id), indiv)
   }))
 }
 

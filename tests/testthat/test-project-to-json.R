@@ -190,6 +190,37 @@ test_that("round-trip preserves NULL fields", {
   expect_null(raw$scenarios[[1L]]$steadyStateTime)
 })
 
+test_that("an empty Project saves a file that loadProject can reload", {
+  out <- withr::local_tempfile(fileext = ".json")
+  esqlabsR:::.saveProjectJson(Project$new(), out)
+
+  raw <- jsonlite::fromJSON(out, simplifyVector = FALSE)
+  expect_identical(raw$schemaVersion, "2.0")
+
+  # Reload must succeed (the schemaVersion guard would reject a null).
+  reloaded <- loadProject(out)
+  expect_identical(reloaded$schemaVersion, "2.0")
+  expect_length(reloaded$scenarios, 0L)
+})
+
+test_that("outputPaths supplied as a named character vector serialize as a JSON object", {
+  project <- .fakeProject(
+    outputPaths = c(PVB = "Organism|PVB|Drug", Fat = "Organism|Fat|Drug")
+  )
+  out <- withr::local_tempfile(fileext = ".json")
+  esqlabsR:::.saveProjectJson(project, out)
+
+  raw <- jsonlite::fromJSON(out, simplifyVector = FALSE)
+  expect_type(raw$outputPaths, "list")
+  expect_named(raw$outputPaths, c("PVB", "Fat"))
+  expect_identical(raw$outputPaths$PVB, "Organism|PVB|Drug")
+})
+
+test_that(".outputPathsToJson errors on a non-empty unnamed value", {
+  project <- .fakeProject(outputPaths = c("Organism|PVB|Drug"))
+  expect_snapshot(error = TRUE, esqlabsR:::.outputPathsToJson(project))
+})
+
 test_that("empty map sections serialize as JSON objects, not arrays", {
   empty <- withr::local_tempfile(fileext = ".json")
   jsonlite::write_json(
@@ -305,14 +336,86 @@ test_that("round-trip preserves outputPathIds order", {
   )
 })
 
+test_that("steadyState=false with a declared time and unit round-trips", {
+  raw <- list(
+    list(
+      name = "S",
+      individualId = "I",
+      modelFile = "m.pkml",
+      steadyState = FALSE,
+      steadyStateTime = 2,
+      steadyStateTimeUnit = "h"
+    )
+  )
+  scenarios <- esqlabsR:::.parseScenarios(raw, list())
+  sc <- scenarios[["S"]]
+
+  # Parser stored the time in base units (minutes) but kept the flag off.
+  expect_false(sc$simulateSteadyState)
+  expect_equal(sc$steadyStateTime, 120)
+  expect_identical(sc$steadyStateTimeUnit, "h")
+
+  project <- .fakeProject(scenarios = scenarios)
+  out <- esqlabsR:::.scenariosToJson(project)[[1L]]
+
+  # The flag stays false, and the declared time/unit survive instead of
+  # being dropped to null.
+  expect_false(out$steadyState)
+  expect_equal(out$steadyStateTime, 2)
+  expect_identical(out$steadyStateTimeUnit, "h")
+})
+
+test_that("a standalone simulationTimeUnit round-trips when simulationTime is null", {
+  raw <- list(
+    list(
+      name = "S",
+      individualId = "I",
+      modelFile = "m.pkml",
+      simulationTimeUnit = "h"
+    )
+  )
+  scenarios <- esqlabsR:::.parseScenarios(raw, list())
+
+  expect_null(scenarios[["S"]]$simulationTime)
+  expect_identical(scenarios[["S"]]$simulationTimeUnit, "h")
+
+  project <- .fakeProject(scenarios = scenarios)
+  out <- esqlabsR:::.scenariosToJson(project)[[1L]]
+  expect_null(out$simulationTime)
+  expect_identical(out$simulationTimeUnit, "h")
+})
+
+test_that("populationId is emitted even when simulationType has drifted", {
+  sc <- Scenario(
+    scenarioName = "S",
+    modelFile = "m.pkml",
+    individualId = "I"
+  )
+  # Drift: populationId set but type left at the Individual default.
+  sc$populationId <- "Pop"
+  expect_identical(sc$simulationType, "Individual")
+
+  project <- .fakeProject(scenarios = list(S = sc))
+  out <- esqlabsR:::.scenariosToJson(project)[[1L]]
+  expect_identical(out$populationId, "Pop")
+})
+
+test_that(".validateScenarios warns on populationId / simulationType drift", {
+  sc <- Scenario(scenarioName = "S", modelFile = "m.pkml")
+  sc$populationId <- "Pop"
+
+  result <- esqlabsR:::.validateScenarios(list(S = sc))
+  msgs <- vapply(result$warnings, \(w) w$message, character(1))
+  expect_true(any(grepl("populationId but simulationType", msgs)))
+})
+
 test_that(".scenariosToJson errors when scenario outputPaths reference unknown ids", {
   project <- exampleProject()
   # Mutate the first scenario to add a named path whose id is not in
   # project$outputPaths. (Parser would have rejected this, but a Chapter
   # 7+ programmatic mutation could land us here.)
-  sc <- project$scenarios[[1L]]
-  sc$outputPaths <- c(
-    sc$outputPaths,
+  project$scenarios[[1L]]$outputPaths <- c(
+    project$scenarios[[1L]]$outputPaths,
     c(UnknownId = "Organism|NotDeclared|Path")
   )
 
@@ -324,9 +427,10 @@ test_that(".scenariosToJson errors when scenario outputPaths reference unknown i
 
 test_that(".scenariosToJson errors when outputPaths has unnamed elements", {
   project <- exampleProject()
-  sc <- project$scenarios[[1L]]
   # Strip names to simulate a programmatic mutation that violates the invariant.
-  sc$outputPaths <- unname(sc$outputPaths)
+  project$scenarios[[1L]]$outputPaths <- unname(
+    project$scenarios[[1L]]$outputPaths
+  )
 
   expect_error(
     esqlabsR:::.projectToJson(project),
@@ -339,8 +443,7 @@ test_that(".scenariosToJson errors when simulateSteadyState is TRUE without a un
   # Aciclovir_iv has simulateSteadyState=FALSE and no unit.
   # Flip the flag without setting the unit — the round-trip cannot
   # carry the steady-state time, so the serializer must reject it.
-  sc <- project$scenarios[["Aciclovir_iv"]]
-  sc$simulateSteadyState <- TRUE
+  project$scenarios[["Aciclovir_iv"]]$simulateSteadyState <- TRUE
 
   expect_error(
     esqlabsR:::.projectToJson(project),
@@ -350,8 +453,7 @@ test_that(".scenariosToJson errors when simulateSteadyState is TRUE without a un
 
 test_that("round-trip preserves empty modelParameterSets as a JSON array", {
   project <- exampleProject()
-  sc <- project$scenarios[["Aciclovir_iv"]]
-  sc$modelParameterSets <- character(0)
+  project$scenarios[["Aciclovir_iv"]]$modelParameterSets <- character(0)
 
   out <- withr::local_tempfile(fileext = ".json")
   esqlabsR:::.saveProjectJson(project, out)
@@ -366,8 +468,7 @@ test_that("round-trip preserves empty modelParameterSets as a JSON array", {
 
 test_that("round-trip preserves empty outputPathIds as a JSON array", {
   project <- exampleProject()
-  sc <- project$scenarios[["Aciclovir_iv"]]
-  sc$outputPaths <- NULL
+  project$scenarios[["Aciclovir_iv"]]$outputPaths <- NULL
 
   out <- withr::local_tempfile(fileext = ".json")
   esqlabsR:::.saveProjectJson(project, out)
