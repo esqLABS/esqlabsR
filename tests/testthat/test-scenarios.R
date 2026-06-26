@@ -270,6 +270,19 @@ test_that("removeScenario uses scenarioName argument matching addScenario", {
   expect_false("ToRemove" %in% names(project$scenarios))
 })
 
+test_that("addScenario and removeScenario mark the project modified", {
+  project <- testProject()
+  project$.markValidated()
+  expect_false(project$modified)
+
+  addScenario(project, scenarioName = "X", modelFile = "Aciclovir.pkml")
+  expect_true(project$modified)
+
+  project$.markValidated()
+  removeScenario(project, scenarioName = "X")
+  expect_true(project$modified)
+})
+
 test_that("addScenario stores steadyStateTime in base units and round-trips the declared unit", {
   project <- testProject()
   addScenario(
