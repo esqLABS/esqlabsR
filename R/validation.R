@@ -818,10 +818,26 @@ validateProject <- function(project) {
   result
 }
 
-#' Check if validation results contain any critical errors
-#' @param validationResults Output from validateProject
-#' @return Logical indicating if there are critical errors
+#' @title isAnyCriticalErrors
+#'
+#' @description Reports whether any section of a validation run produced a
+#'   critical error, collapsing the per-section results from
+#'   [validateProject()] into a single logical.
+#'
+#' @param validationResults Named list of class `"ValidationResults"`, the
+#'   output of [validateProject()].
+#' @return A single logical: `TRUE` if any section has critical errors,
+#'   otherwise `FALSE`.
 #' @export
+#' @seealso [validateProject()], [validationSummary()].
+#' @examples
+#' \dontrun{
+#' project <- loadProject("Project.json")
+#' results <- validateProject(project)
+#' if (isAnyCriticalErrors(results)) {
+#'   print(validationSummary(results))
+#' }
+#' }
 isAnyCriticalErrors <- function(validationResults) {
   any(vapply(
     validationResults,
@@ -836,10 +852,25 @@ isAnyCriticalErrors <- function(validationResults) {
   ))
 }
 
-#' Get summary of all validation results
-#' @param validationResults Output from validateProject
-#' @return List with summary statistics
+#' @title validationSummary
+#'
+#' @description Aggregates the per-section results from [validateProject()]
+#'   into overall counts of critical errors and warnings, plus the names of
+#'   the sections that produced each.
+#'
+#' @param validationResults Named list of class `"ValidationResults"`, the
+#'   output of [validateProject()].
+#' @return A list with `total_critical_errors`, `total_warnings`,
+#'   `sections_with_errors`, and `sections_with_warnings`.
 #' @export
+#' @seealso [validateProject()], [isAnyCriticalErrors()].
+#' @examples
+#' \dontrun{
+#' project <- loadProject("Project.json")
+#' results <- validateProject(project)
+#' summary <- validationSummary(results)
+#' summary$total_critical_errors
+#' }
 validationSummary <- function(validationResults) {
   summary <- list(
     total_critical_errors = 0,

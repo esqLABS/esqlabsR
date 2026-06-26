@@ -2,16 +2,31 @@
 % Please edit documentation in R/validation.R
 \name{validationSummary}
 \alias{validationSummary}
-\title{Get summary of all validation results}
+\title{validationSummary}
 \usage{
 validationSummary(validationResults)
 }
 \arguments{
-\item{validationResults}{Output from validateProject}
+\item{validationResults}{Named list of class \code{"ValidationResults"}, the
+output of \code{\link[=validateProject]{validateProject()}}.}
 }
 \value{
-List with summary statistics
+A list with \code{total_critical_errors}, \code{total_warnings},
+\code{sections_with_errors}, and \code{sections_with_warnings}.
 }
 \description{
-Get summary of all validation results
+Aggregates the per-section results from \code{\link[=validateProject]{validateProject()}}
+into overall counts of critical errors and warnings, plus the names of
+the sections that produced each.
+}
+\examples{
+\dontrun{
+project <- loadProject("Project.json")
+results <- validateProject(project)
+summary <- validationSummary(results)
+summary$total_critical_errors
+}
+}
+\seealso{
+\code{\link[=validateProject]{validateProject()}}, \code{\link[=isAnyCriticalErrors]{isAnyCriticalErrors()}}.
 }

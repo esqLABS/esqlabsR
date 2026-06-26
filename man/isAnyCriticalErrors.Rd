@@ -2,16 +2,32 @@
 % Please edit documentation in R/validation.R
 \name{isAnyCriticalErrors}
 \alias{isAnyCriticalErrors}
-\title{Check if validation results contain any critical errors}
+\title{isAnyCriticalErrors}
 \usage{
 isAnyCriticalErrors(validationResults)
 }
 \arguments{
-\item{validationResults}{Output from validateProject}
+\item{validationResults}{Named list of class \code{"ValidationResults"}, the
+output of \code{\link[=validateProject]{validateProject()}}.}
 }
 \value{
-Logical indicating if there are critical errors
+A single logical: \code{TRUE} if any section has critical errors,
+otherwise \code{FALSE}.
 }
 \description{
-Check if validation results contain any critical errors
+Reports whether any section of a validation run produced a
+critical error, collapsing the per-section results from
+\code{\link[=validateProject]{validateProject()}} into a single logical.
+}
+\examples{
+\dontrun{
+project <- loadProject("Project.json")
+results <- validateProject(project)
+if (isAnyCriticalErrors(results)) {
+  print(validationSummary(results))
+}
+}
+}
+\seealso{
+\code{\link[=validateProject]{validateProject()}}, \code{\link[=validationSummary]{validationSummary()}}.
 }
