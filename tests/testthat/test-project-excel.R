@@ -261,3 +261,30 @@ test_that("Project round-trips through Excel preserving parameterIdentification"
     toJson(rt1$parameterIdentification)
   )
 })
+
+test_that("Excel scenario round-trip matches the canonical JSON serializer", {
+  work_dir <- withr::local_tempdir()
+  file.copy(dirname(exampleProjectPath()), work_dir, recursive = TRUE)
+  project <- loadProject(file.path(work_dir, "Example", "Project.json"))
+
+  # The Example exercises the three scenario drift cases: a Population
+  # scenario (populationId must survive verbatim), a steady-state scenario
+  # with a declared unit, and Individual scenarios carrying a
+  # steadyStateTime but no unit and simulateSteadyState = FALSE (the
+  # canonical serializer drops the time; a value-based guard would
+  # resurrect it with a fabricated unit).
+  excel_out <- withr::local_tempdir()
+  exportProjectToExcel(project, outputDir = excel_out, silent = TRUE)
+  reimported <- loadProject(importProjectFromExcel(
+    file.path(excel_out, "Project.xlsx"),
+    silent = TRUE
+  ))
+
+  toJson <- function(x) {
+    jsonlite::toJSON(x, auto_unbox = TRUE, null = "null", digits = NA)
+  }
+  expect_equal(
+    toJson(esqlabsR:::.scenariosToJson(reimported)),
+    toJson(esqlabsR:::.scenariosToJson(project))
+  )
+})

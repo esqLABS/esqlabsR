@@ -364,8 +364,7 @@ exportProjectToExcel <- function(
       length(project$scenarios) > 0
   ) {
     scenSheets[["Scenarios"]] <- .scenarioConfigurationsToExcelDf(
-      project$scenarios,
-      outputPaths = project$outputPaths
+      project$scenarios
     )
   }
   if (!is.null(project$outputPaths) && length(project$outputPaths) > 0) {
@@ -1398,16 +1397,10 @@ projectConfigurationStatus <- function(...) {
 
 #' Convert Scenario objects to an Excel data frame
 #' @param scenarioConfigs Named list of Scenario objects
-#' @param outputPaths Named character vector of output paths (names are IDs,
-#'   values are path strings) from `Project$outputPaths`.
-#'   Used to reverse-lookup scenario output paths back to IDs.
 #' @returns A data frame
 #' @keywords internal
 #' @noRd
-.scenarioConfigurationsToExcelDf <- function(
-  scenarioConfigs,
-  outputPaths = NULL
-) {
+.scenarioConfigurationsToExcelDf <- function(scenarioConfigs) {
   rows <- list()
   for (name in names(scenarioConfigs)) {
     sc <- scenarioConfigs[[name]]
@@ -1424,25 +1417,26 @@ projectConfigurationStatus <- function(...) {
       )
       simTimeStr <- paste(intervals, collapse = "; ")
     }
-    # outputPaths -> reverse-lookup IDs from project$outputPaths
+    # outputPaths -> ids. The ids ARE the names of the named character
+    # vector `sc$outputPaths` (id-as-name, literal-path-as-value), so read
+    # `names()` directly. This mirrors `.scenariosToJson()`; a value-based
+    # reverse match would break on duplicate path values.
     outputPathIdsStr <- NA
-    if (!is.null(sc$outputPaths) && !is.null(outputPaths)) {
-      matchedIds <- names(outputPaths)[match(sc$outputPaths, outputPaths)]
-      matchedIds <- matchedIds[!is.na(matchedIds)]
-      if (length(matchedIds) > 0) {
-        outputPathIdsStr <- .formatArrayToCommaList(matchedIds)
+    if (!is.null(sc$outputPaths)) {
+      pathIds <- names(sc$outputPaths)
+      if (length(pathIds) > 0) {
+        outputPathIdsStr <- .formatArrayToCommaList(pathIds)
       }
     }
 
-    # Reconstruct steadyStateTime back to the original unit
+    # Emit the steady-state time/unit whenever a unit is declared,
+    # independently of `simulateSteadyState` or the value, mirroring
+    # `.scenariosToJson()`. A value-based guard fabricates a unit and
+    # resurrects a time the canonical serializer drops.
     ssTime <- NA
     ssTimeUnit <- NA
-    if (
-      !is.null(sc$steadyStateTime) &&
-        !is.na(sc$steadyStateTime) &&
-        sc$steadyStateTime > 0
-    ) {
-      ssTimeUnit <- sc$steadyStateTimeUnit %||% "min"
+    if (!is.null(sc$steadyStateTimeUnit)) {
+      ssTimeUnit <- sc$steadyStateTimeUnit
       ssTime <- ospsuite::toUnit(
         quantityOrDimension = ospDimensions$Time,
         values = sc$steadyStateTime,
@@ -1453,11 +1447,11 @@ projectConfigurationStatus <- function(...) {
     rows[[length(rows) + 1]] <- data.frame(
       Scenario_name = sc$scenarioName,
       IndividualId = sc$individualId %||% NA,
-      PopulationId = if (sc$simulationType == "Population") {
-        sc$populationId
-      } else {
-        NA
-      },
+      # Emit populationId verbatim rather than keying off the derived
+      # simulationType, so a drifted record (populationId set while the
+      # type reads "Individual") keeps its populationId. Mirrors
+      # `.scenariosToJson()`.
+      PopulationId = sc$populationId %||% NA,
       ReadPopulationFromCSV = sc$readPopulationFromCSV %||% FALSE,
       ModelParameterSheets = paramSetsStr,
       ApplicationProtocol = sc$applicationProtocol %||% NA,
