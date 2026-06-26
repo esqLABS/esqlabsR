@@ -215,3 +215,49 @@ test_that(".observedDataToExcelDf round-trips heterogeneous entry types", {
   }
   expect_equal(toJson(reimported), toJson(observedData))
 })
+
+test_that("Project round-trips through Excel preserving parameterIdentification", {
+  work_dir <- withr::local_tempdir()
+  file.copy(dirname(exampleProjectPath()), work_dir, recursive = TRUE)
+  project <- loadProject(file.path(work_dir, "Example", "Project.json"))
+
+  expect_gt(length(project$parameterIdentification), 0)
+
+  toJson <- function(x) {
+    jsonlite::toJSON(x, auto_unbox = TRUE, null = "null", digits = NA)
+  }
+  roundtrip <- function(p) {
+    excel_out <- withr::local_tempdir()
+    exportProjectToExcel(p, outputDir = excel_out, silent = TRUE)
+    json <- importProjectFromExcel(
+      file.path(excel_out, "Project.xlsx"),
+      silent = TRUE
+    )
+    loadProject(json)
+  }
+
+  # The nested PITask/PIParameter/PIOutputMapping/configuration structure
+  # survives. Two successive round trips reach a fixed point (the source's
+  # empty-string units normalize to absent on the first pass).
+  rt1 <- roundtrip(project)
+  expect_named(
+    rt1$parameterIdentification,
+    names(project$parameterIdentification)
+  )
+
+  task <- rt1$parameterIdentification[[1]]
+  expect_length(
+    task$parameters,
+    length(project$parameterIdentification[[1]]$parameters)
+  )
+  expect_length(
+    task$outputMappings,
+    length(project$parameterIdentification[[1]]$outputMappings)
+  )
+
+  rt2 <- roundtrip(rt1)
+  expect_equal(
+    toJson(rt2$parameterIdentification),
+    toJson(rt1$parameterIdentification)
+  )
+})

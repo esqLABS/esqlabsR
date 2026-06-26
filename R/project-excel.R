@@ -83,7 +83,8 @@ importProjectFromExcel <- function(
     scenariosFile = "Scenarios.xlsx",
     applicationsFile = "Applications.xlsx",
     plotsFile = "Plots.xlsx",
-    observedDataFile = "ObservedData.xlsx"
+    observedDataFile = "ObservedData.xlsx",
+    parameterIdentificationFile = "ParameterIdentification.xlsx"
   )
   # Property lookup with default-filename fallback.
   propOrDefault <- function(name) {
@@ -208,6 +209,14 @@ importProjectFromExcel <- function(
         readExcel(observedDataFile, sheet = "ObservedData")
       )
     }
+  }
+
+  # --- ParameterIdentification ---
+  piFile <- resolveConfigFile(propOrDefault("parameterIdentificationFile"))
+  if (!is.null(piFile) && file.exists(piFile)) {
+    jsonData$parameterIdentification <- .parseExcelParameterIdentification(
+      piFile
+    )
   }
 
   # --- Determine output path ---
@@ -421,6 +430,17 @@ exportProjectToExcel <- function(
       list(ObservedData = obsDf),
       file.path(configDir, "ObservedData.xlsx")
     )
+  }
+
+  # --- ParameterIdentification.xlsx ---
+  if (
+    !is.null(project$parameterIdentification) &&
+      length(project$parameterIdentification) > 0
+  ) {
+    piSheets <- .parameterIdentificationToExcelSheets(
+      project$parameterIdentification
+    )
+    .writeExcel(piSheets, file.path(configDir, "ParameterIdentification.xlsx"))
   }
 
   if (interactive() && !silent) {
@@ -1005,6 +1025,164 @@ projectConfigurationStatus <- function(...) {
       }
     }
     entry
+  })
+}
+
+#' Flatten the nested parameterIdentification section into Excel sheets
+#'
+#' Three related sheets, joined by a `taskId` foreign key: `PITasks` (one
+#' row per task, the small `configuration` dict flattened to `config.<key>`
+#' columns), `PIParameters`, and `PIOutputMappings` (one row per nested
+#' record). `scenarios` arrays become comma-separated cells.
+#' `.parseExcelParameterIdentification()` inverts this.
+#' @param tasks Named list of PITask records.
+#' @returns Named list of data frames (one per non-empty sheet).
+#' @keywords internal
+#' @noRd
+.parameterIdentificationToExcelSheets <- function(tasks) {
+  taskRows <- list()
+  paramRows <- list()
+  mappingRows <- list()
+  for (task in tasks) {
+    taskRow <- list(
+      taskId = task$id,
+      scenarios = .formatArrayToCommaList(unlist(task$scenarios))
+    )
+    for (key in names(task$configuration %||% list())) {
+      taskRow[[paste0("config.", key)]] <- task$configuration[[key]] %||% NA
+    }
+    taskRows[[length(taskRows) + 1]] <- as.data.frame(
+      taskRow,
+      check.names = FALSE,
+      stringsAsFactors = FALSE
+    )
+    for (p in task$parameters %||% list()) {
+      paramRows[[length(paramRows) + 1]] <- as.data.frame(
+        list(
+          taskId = task$id,
+          id = p$id,
+          scenarios = .formatArrayToCommaList(unlist(p$scenarios)),
+          path = p$path %||% NA,
+          units = p$units %||% NA,
+          minValue = p$minValue %||% NA,
+          maxValue = p$maxValue %||% NA,
+          startValue = p$startValue %||% NA
+        ),
+        check.names = FALSE,
+        stringsAsFactors = FALSE
+      )
+    }
+    for (m in task$outputMappings %||% list()) {
+      mappingRows[[length(mappingRows) + 1]] <- as.data.frame(
+        list(
+          taskId = task$id,
+          id = m$id,
+          scenarios = .formatArrayToCommaList(unlist(m$scenarios)),
+          outputPathId = m$outputPathId %||% NA,
+          observedDataId = m$observedDataId %||% NA,
+          scaling = m$scaling %||% NA,
+          xOffset = m$xOffset %||% NA,
+          yOffset = m$yOffset %||% NA,
+          xFactor = m$xFactor %||% NA,
+          yFactor = m$yFactor %||% NA,
+          weight = if (is.null(m$weight)) {
+            NA
+          } else {
+            .formatArrayToCommaList(unlist(m$weight))
+          }
+        ),
+        check.names = FALSE,
+        stringsAsFactors = FALSE
+      )
+    }
+  }
+  sheets <- list(PITasks = as.data.frame(dplyr::bind_rows(taskRows)))
+  if (length(paramRows) > 0) {
+    sheets[["PIParameters"]] <- as.data.frame(dplyr::bind_rows(paramRows))
+  }
+  if (length(mappingRows) > 0) {
+    sheets[["PIOutputMappings"]] <- as.data.frame(dplyr::bind_rows(mappingRows))
+  }
+  sheets
+}
+
+#' Invert `.parameterIdentificationToExcelSheets()` to the JSON PI array
+#'
+#' Reads the three sheets and reassembles each task's nested
+#' `parameters` / `outputMappings` arrays (joined by `taskId`) and its
+#' `configuration` dict (from the `config.*` columns), producing the
+#' `{id, scenarios[], parameters[], outputMappings[], configuration}`
+#' shape `.parsePITasks()` consumes.
+#' @param piFile Path to the ParameterIdentification.xlsx file.
+#' @returns Unnamed list of PITask JSON objects.
+#' @keywords internal
+#' @noRd
+.parseExcelParameterIdentification <- function(piFile) {
+  sheets <- readxl::excel_sheets(piFile)
+  if (!("PITasks" %in% sheets)) {
+    return(list())
+  }
+  taskDf <- readExcel(piFile, sheet = "PITasks")
+  paramDf <- if ("PIParameters" %in% sheets) {
+    readExcel(piFile, sheet = "PIParameters")
+  } else {
+    NULL
+  }
+  mappingDf <- if ("PIOutputMappings" %in% sheets) {
+    readExcel(piFile, sheet = "PIOutputMappings")
+  } else {
+    NULL
+  }
+  lapply(seq_len(nrow(taskDf)), function(i) {
+    taskId <- as.character(taskDf$taskId[[i]])
+    configCols <- grep("^config\\.", names(taskDf), value = TRUE)
+    configuration <- list()
+    for (col in configCols) {
+      val <- .naToNull(taskDf[[col]][[i]])
+      if (!is.null(val)) {
+        configuration[[sub("^config\\.", "", col)]] <- val
+      }
+    }
+    list(
+      id = taskId,
+      scenarios = as.list(.parseCommaListToArray(taskDf$scenarios[[i]])),
+      parameters = .parseExcelPIRows(paramDf, taskId, "parameter"),
+      outputMappings = .parseExcelPIRows(mappingDf, taskId, "mapping"),
+      configuration = configuration
+    )
+  })
+}
+
+#' Parse the PIParameters / PIOutputMappings rows for one task
+#'
+#' Filters `df` to the rows whose `taskId` matches, drops the `taskId`
+#' bookkeeping column, splits `scenarios` (and `weight`, when present)
+#' back to arrays, and drops NA cells so optional fields stay absent.
+#' @keywords internal
+#' @noRd
+.parseExcelPIRows <- function(df, taskId, kind) {
+  if (is.null(df) || nrow(df) == 0) {
+    return(list())
+  }
+  rows <- df[as.character(df$taskId) == taskId, , drop = FALSE]
+  if (nrow(rows) == 0) {
+    return(list())
+  }
+  cols <- setdiff(names(rows), "taskId")
+  lapply(seq_len(nrow(rows)), function(i) {
+    record <- list()
+    for (col in cols) {
+      val <- .naToNull(rows[[col]][[i]])
+      if (is.null(val)) {
+        next
+      }
+      record[[col]] <- if (col %in% c("scenarios", "weight")) {
+        as.list(.parseCommaListToArray(val))
+      } else {
+        val
+      }
+    }
+    record
   })
 }
 
