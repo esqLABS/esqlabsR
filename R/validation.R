@@ -286,7 +286,9 @@ validateProject <- function(project) {
 #' Walks the project to find inbound references to `id` of the given
 #' `entityType` and emits a `cli::cli_warn()` listing them. Used by the
 #' `remove*()` mutators: removal proceeds anyway, leaving the dangling
-#' reference for the next [validateProject()] call to surface.
+#' reference for the next [validateProject()] call to surface. For
+#' `"outputPath"`, both scenario `outputPaths` and parameter identification
+#' output mappings are scanned.
 #'
 #' @param project A `Project` object.
 #' @param entityType One of `"individual"`, `"population"`, `"application"`,
@@ -330,6 +332,26 @@ validateProject <- function(project) {
       ))
     }
     return(invisible(NULL))
+  }
+
+  if (entityType == "outputPath") {
+    piHolders <- character()
+    for (taskId in names(project$parameterIdentification %||% list())) {
+      task <- project$parameterIdentification[[taskId]]
+      for (m in task$outputMappings %||% list()) {
+        if (identical(m$outputPathId, id)) {
+          piHolders <- c(piHolders, taskId)
+        }
+      }
+    }
+    piHolders <- unique(piHolders)
+    if (length(piHolders) > 0) {
+      cli::cli_warn(c(
+        "Removed outputPath {.val {id}} is still referenced by {length(piHolders)} parameter identification task{?s}:",
+        "*" = "{piHolders}",
+        "i" = "These PI tasks now have a dangling reference. Update or remove them."
+      ))
+    }
   }
 
   scenarios <- project$scenarios %||% list()

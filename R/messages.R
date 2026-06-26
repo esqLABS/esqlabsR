@@ -315,6 +315,24 @@ messages$missingSteadyStateTimeUnit <- function(scenarioName) {
     "Missing unit for steady-state time (column {.field SteadyStateTimeUnit}) for scenario {.val {scenarioName}}."
   )
 }
+
+messages$errorSavingScenarioResult <- function(scenarioName, conditionMessage) {
+  # Escape braces in the condition message so that cli does not try to
+  # re-interpret arbitrary error text as glue expressions when cli_warn()
+  # processes the returned vector.
+  safe_msg <- gsub(
+    "}",
+    "}}",
+    gsub("{", "{{", conditionMessage, fixed = TRUE),
+    fixed = TRUE
+  )
+  c(
+    "x" = cli::format_inline(
+      "Failed to save results for scenario {.val {scenarioName}}."
+    ),
+    "i" = safe_msg
+  )
+}
 # sensitivity-calculation####
 messages$noPKDataToWrite <- function() {
   cliFormat(
@@ -754,6 +772,20 @@ messages$errorPIScenariosEmpty <- function(recordType, recordId) {
   )
 }
 
+messages$errorPIInvalidNumericField <- function(field, recordId, value) {
+  cliFormat(
+    "Field {.code {field}} on PIOutputMapping {.val {recordId}} is invalid: \\
+    {.val {value}}. Expected a finite numeric value."
+  )
+}
+
+messages$errorPIInvalidScaling <- function(recordId, value) {
+  cliFormat(
+    "Field {.code scaling} on PIOutputMapping {.val {recordId}} is invalid: \\
+    {.val {value}}. Expected a non-empty string."
+  )
+}
+
 messages$errorPIWrongElementType <- function(
   field,
   index,
@@ -784,6 +816,10 @@ messages$errorPIScenarioNotFound <- function(scenarioName, availableScenarios) {
     "x" = "Scenario {.val {scenarioName}} referenced in PI task configuration not found",
     "i" = "Available scenarios: {.val {paste(availableScenarios, collapse = ', ')}}"
   ))
+}
+
+messages$messageBuildingPITask <- function(piTaskName) {
+  cliFormat("Building PI task: {.val {piTaskName}}")
 }
 
 messages$messageRunningPITask <- function(piTaskName) {
