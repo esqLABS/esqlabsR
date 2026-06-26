@@ -256,9 +256,10 @@ test_that(".validateScenarios flags Population scenario without populationId", {
 })
 
 test_that(".validateScenarios warns when modelFile does not exist on disk", {
-  sc <- esqlabsR:::Scenario$new()
-  sc$modelFile <- "missing.pkml"
-  sc$simulationType <- "Individual"
+  sc <- esqlabsR:::Scenario(
+    modelFile = "missing.pkml",
+    simulationType = "Individual"
+  )
   result <- esqlabsR:::.validateScenarios(
     list(s1 = sc),
     modelFolder = withr::local_tempdir()
@@ -270,9 +271,10 @@ test_that(".validateScenarios warns when modelFile does not exist on disk", {
 test_that(".validateScenarios passes when modelFile exists on disk", {
   dir <- withr::local_tempdir()
   file.create(file.path(dir, "model.pkml"))
-  sc <- esqlabsR:::Scenario$new()
-  sc$modelFile <- "model.pkml"
-  sc$simulationType <- "Individual"
+  sc <- esqlabsR:::Scenario(
+    modelFile = "model.pkml",
+    simulationType = "Individual"
+  )
   result <- esqlabsR:::.validateScenarios(list(s1 = sc), modelFolder = dir)
   file_not_found_warns <- Filter(
     \(w) w$section == "File Not Found",
