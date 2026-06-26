@@ -8,7 +8,8 @@
 importProjectFromExcel(
   projectConfigPath = "Project.xlsx",
   outputDir = NULL,
-  silent = FALSE
+  silent = FALSE,
+  overwrite = FALSE
 )
 
 snapshotProjectConfiguration(...)
@@ -23,6 +24,11 @@ Excel file.}
 
 \item{silent}{Logical. If \code{TRUE}, suppresses informational messages.
 Defaults to \code{FALSE}.}
+
+\item{overwrite}{Logical. If \code{FALSE} (default), the function aborts
+rather than overwrite an existing target JSON file, so a migration
+re-run cannot silently clobber a project the user has since edited.
+Pass \code{TRUE} to overwrite.}
 
 \item{...}{Arguments passed to \code{importProjectFromExcel()}.}
 }

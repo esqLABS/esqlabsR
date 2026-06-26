@@ -13,13 +13,18 @@
 #'   Excel file.
 #' @param silent Logical. If `TRUE`, suppresses informational messages.
 #'   Defaults to `FALSE`.
+#' @param overwrite Logical. If `FALSE` (default), the function aborts
+#'   rather than overwrite an existing target JSON file, so a migration
+#'   re-run cannot silently clobber a project the user has since edited.
+#'   Pass `TRUE` to overwrite.
 #'
 #' @return Invisibly returns the path to the created JSON file.
 #' @export
 importProjectFromExcel <- function(
   projectConfigPath = "Project.xlsx",
   outputDir = NULL,
-  silent = FALSE
+  silent = FALSE,
+  overwrite = FALSE
 ) {
   validateIsString(projectConfigPath)
 
@@ -227,6 +232,10 @@ importProjectFromExcel <- function(
   outputFileName <- sub("\\.xlsx$", ".json", basename(projectConfigPath))
   outputPath <- file.path(outputDir, outputFileName)
 
+  if (file.exists(outputPath) && !overwrite) {
+    cli::cli_abort(messages$importWouldOverwrite(outputPath))
+  }
+
   if (!dir.exists(dirname(outputPath))) {
     dir.create(dirname(outputPath), recursive = TRUE)
   }
@@ -292,10 +301,41 @@ exportProjectToExcel <- function(
     dir.create(outputDir, recursive = TRUE)
   }
 
-  configDir <- file.path(outputDir, "Configurations")
+  # Write config files into the project's own configurationsFolder so they
+  # land where the importer (which resolves config files relative to that
+  # same property) will look for them. An absolute value is used as-is; a
+  # relative one (the default `Configurations/`) joins to outputDir.
+  configsValue <- .extractFilePathsData(project)$configurationsFolder$value
+  configsValue <- if (is.null(configsValue) || configsValue == "") {
+    "Configurations"
+  } else {
+    configsValue
+  }
+  configDir <- if (fs::is_absolute_path(configsValue)) {
+    configsValue
+  } else {
+    file.path(outputDir, configsValue)
+  }
   if (!dir.exists(configDir)) {
     dir.create(configDir, recursive = TRUE, showWarnings = FALSE)
   }
+
+  # Clear the workbooks this exporter manages before rewriting, so a
+  # section removed from the project does not survive as a stale file and
+  # resurrect on the next import. Only the managed set is touched; other
+  # files in the folder are left alone.
+  managedWorkbooks <- c(
+    "ModelParameters.xlsx",
+    "Individuals.xlsx",
+    "Populations.xlsx",
+    "Scenarios.xlsx",
+    "Applications.xlsx",
+    "Plots.xlsx",
+    "ObservedData.xlsx",
+    "ParameterIdentification.xlsx"
+  )
+  stalePaths <- file.path(configDir, managedWorkbooks)
+  file.remove(stalePaths[file.exists(stalePaths)])
 
   # --- Project.xlsx ---
   # Version metadata rows

@@ -184,6 +184,13 @@ messages$restoredProjectConfiguration <- function(inputFile, outputFile) {
   )
 }
 
+messages$importWouldOverwrite <- function(outputPath) {
+  cli::format_message(c(
+    "x" = "{.file {outputPath}} already exists.",
+    "i" = "Pass {.code overwrite = TRUE} to replace it."
+  ))
+}
+
 messages$hasUnsavedChanges <- function() {
   cli::format_message(c(
     "!" = "The Project object has been modified since loading from file.",

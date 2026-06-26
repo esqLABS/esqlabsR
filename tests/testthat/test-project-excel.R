@@ -288,3 +288,60 @@ test_that("Excel scenario round-trip matches the canonical JSON serializer", {
     toJson(esqlabsR:::.scenariosToJson(project))
   )
 })
+
+test_that("exportProjectToExcel writes into the project's configurationsFolder", {
+  work_dir <- withr::local_tempdir()
+  file.copy(dirname(exampleProjectPath()), work_dir, recursive = TRUE)
+  project <- loadProject(file.path(work_dir, "Example", "Project.json"))
+  project$configurationsFolder <- "Configs/v2"
+
+  excel_out <- withr::local_tempdir()
+  exportProjectToExcel(project, outputDir = excel_out, silent = TRUE)
+
+  expect_true(file.exists(
+    file.path(excel_out, "Configs", "v2", "Scenarios.xlsx")
+  ))
+  expect_false(dir.exists(file.path(excel_out, "Configurations")))
+
+  reimported <- loadProject(importProjectFromExcel(
+    file.path(excel_out, "Project.xlsx"),
+    silent = TRUE
+  ))
+  expect_named(reimported$scenarios, names(project$scenarios))
+})
+
+test_that("exportProjectToExcel clears stale section workbooks", {
+  work_dir <- withr::local_tempdir()
+  file.copy(dirname(exampleProjectPath()), work_dir, recursive = TRUE)
+  project <- loadProject(file.path(work_dir, "Example", "Project.json"))
+
+  excel_out <- withr::local_tempdir()
+  exportProjectToExcel(project, outputDir = excel_out, silent = TRUE)
+  plotsFile <- file.path(excel_out, "Configurations", "Plots.xlsx")
+  expect_true(file.exists(plotsFile))
+
+  # Re-export the same project with plots removed: the stale workbook must
+  # not survive to resurrect the section on the next import.
+  project$plots <- NULL
+  exportProjectToExcel(project, outputDir = excel_out, silent = TRUE)
+  expect_false(file.exists(plotsFile))
+})
+
+test_that("importProjectFromExcel guards against overwriting an existing JSON", {
+  work_dir <- withr::local_tempdir()
+  file.copy(dirname(exampleProjectPath()), work_dir, recursive = TRUE)
+  project <- loadProject(file.path(work_dir, "Example", "Project.json"))
+
+  excel_out <- withr::local_tempdir()
+  exportProjectToExcel(project, outputDir = excel_out, silent = TRUE)
+  xlsx <- file.path(excel_out, "Project.xlsx")
+  importProjectFromExcel(xlsx, silent = TRUE)
+
+  # The message embeds the temp output path, so match the stable guidance
+  # rather than snapshotting a non-deterministic path.
+  expect_error(
+    importProjectFromExcel(xlsx, silent = TRUE),
+    "overwrite = TRUE"
+  )
+  expect_no_error(importProjectFromExcel(xlsx, silent = TRUE, overwrite = TRUE))
+})
