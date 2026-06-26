@@ -571,8 +571,10 @@ projectStatus <- function(
   dir.create(tempDir, showWarnings = FALSE, recursive = TRUE)
   on.exit(unlink(tempDir, recursive = TRUE), add = TRUE)
 
-  tempJsonPath <- file.path(tempDir, basename(jsonPath))
-  importProjectFromExcel(
+  # Use the path importProjectFromExcel actually writes (derived from the
+  # Excel basename), not one reconstructed from jsonPath: the two basenames
+  # need not match, and reconstructing it read a nonexistent file.
+  tempJsonPath <- importProjectFromExcel(
     projectConfigPath,
     outputDir = tempDir,
     silent = TRUE
@@ -724,22 +726,35 @@ projectConfigurationStatus <- function(...) {
     return(invisible(result))
   }
 
+  # Unsaved in-memory edits and an external JSON edit are independent: the
+  # `modified` flag tracks the former, the load-time baseline the latter.
+  # Evaluate both, so a project that is BOTH modified in memory AND edited
+  # on disk reports both, rather than the JSON edit being masked.
   if (project$modified) {
     result$unsaved_changes <- TRUE
     result$in_sync <- FALSE
-  } else {
-    fileProject <- loadProject(jsonPath)
+  }
+
+  fileProject <- loadProject(jsonPath)
+  fileJson <- jsonlite::toJSON(
+    .projectToJson(fileProject),
+    auto_unbox = TRUE,
+    null = "null"
+  )
+  baselineJson <- project$.getLoadedJson()
+  if (!is.null(baselineJson) && !identical(fileJson, baselineJson)) {
+    # The JSON on disk differs from what this project was loaded from: an
+    # external edit, regardless of in-memory state.
+    result$json_modified <- TRUE
+    result$in_sync <- FALSE
+  } else if (!project$modified) {
+    # No external edit and no in-memory edit, but still compare the current
+    # state against the file (covers projects with no captured baseline).
     currentJson <- jsonlite::toJSON(
       .projectToJson(project),
       auto_unbox = TRUE,
       null = "null"
     )
-    fileJson <- jsonlite::toJSON(
-      .projectToJson(fileProject),
-      auto_unbox = TRUE,
-      null = "null"
-    )
-
     if (!identical(currentJson, fileJson)) {
       result$json_modified <- TRUE
       result$in_sync <- FALSE
@@ -754,7 +769,11 @@ projectConfigurationStatus <- function(...) {
         jsonPath = jsonPath,
         silent = TRUE
       ),
-      error = function(e) list(in_sync = TRUE)
+      # A corrupt or unreadable Excel source is definitively NOT in sync;
+      # never let the error path report in_sync = TRUE.
+      error = function(e) {
+        list(in_sync = FALSE, details = list(error = conditionMessage(e)))
+      }
     )
     if (!isTRUE(excelStatus$in_sync)) {
       result$excel_modified <- TRUE

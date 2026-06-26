@@ -486,6 +486,13 @@ Project <- R6::R6Class(
       private$.filePathsData
     },
 
+    #' @description Canonical JSON captured at load, for the sync check's
+    #'   external-edit detection. NULL for a project not loaded from a file.
+    #' @keywords internal
+    .getLoadedJson = function() {
+      private$.loadedJson
+    },
+
     #' @description Check synchronization status of a Project.
     #' @param silent Logical. If `TRUE`, suppresses informational messages.
     #'   Defaults to `FALSE`.
@@ -593,6 +600,12 @@ Project <- R6::R6Class(
     .projectDirPath = NULL,
     .modified = FALSE,
     .validatedSinceMutation = FALSE,
+    # Canonical JSON the project was loaded from, captured at load. Lets
+    # the sync check detect an external edit to the JSON file even while
+    # the in-memory project also has unsaved changes (the two are
+    # independent: `.modified` tracks in-memory edits, this tracks the
+    # file). NULL for a project not loaded from a file.
+    .loadedJson = NULL,
     .filePathsData = list(),
     .programmaticDataSets = list(),
     .observedDataNamesCache = NULL,
@@ -719,6 +732,15 @@ Project <- R6::R6Class(
 
       private$.modified <- FALSE
       private$.validatedSinceMutation <- FALSE
+      # Baseline for external-edit detection in the sync check: the
+      # canonical serialization of the just-loaded state. Captured here
+      # rather than from the raw file bytes so it is directly comparable
+      # to a later re-serialization (whitespace/key-order agnostic).
+      private$.loadedJson <- jsonlite::toJSON(
+        .projectToJson(self),
+        auto_unbox = TRUE,
+        null = "null"
+      )
     }
   )
 )

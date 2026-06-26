@@ -345,3 +345,63 @@ test_that("importProjectFromExcel guards against overwriting an existing JSON", 
   )
   expect_no_error(importProjectFromExcel(xlsx, silent = TRUE, overwrite = TRUE))
 })
+
+test_that("sync() reports a freshly loaded project as in sync", {
+  work_dir <- withr::local_tempdir()
+  file.copy(dirname(exampleProjectPath()), work_dir, recursive = TRUE)
+  project <- loadProject(file.path(work_dir, "Example", "Project.json"))
+
+  status <- project$sync(silent = TRUE)
+  expect_true(status$in_sync)
+  expect_false(status$unsaved_changes)
+})
+
+test_that("sync() flags unsaved in-memory edits", {
+  work_dir <- withr::local_tempdir()
+  file.copy(dirname(exampleProjectPath()), work_dir, recursive = TRUE)
+  project <- loadProject(file.path(work_dir, "Example", "Project.json"))
+
+  project$configurationsFolder <- "Changed/"
+  status <- project$sync(silent = TRUE)
+  expect_false(status$in_sync)
+  expect_true(status$unsaved_changes)
+})
+
+test_that("sync() flags an external JSON edit, even alongside in-memory edits", {
+  work_dir <- withr::local_tempdir()
+  file.copy(dirname(exampleProjectPath()), work_dir, recursive = TRUE)
+  jsonPath <- file.path(work_dir, "Example", "Project.json")
+  project <- loadProject(jsonPath)
+
+  # JSON-only edit (no in-memory change).
+  raw <- readLines(jsonPath, warn = FALSE)
+  writeLines(sub("\"modelFolder\"", "\"modelFolder_EDITED\"", raw), jsonPath)
+  status <- project$sync(silent = TRUE)
+  expect_false(status$in_sync)
+  expect_true(status$json_modified)
+
+  # Combined: an in-memory edit must not mask the external JSON edit.
+  project2 <- loadProject(jsonPath)
+  project2$configurationsFolder <- "Changed/"
+  after <- readLines(jsonPath, warn = FALSE)
+  writeLines(sub("modelFolder_EDITED", "modelFolder_AGAIN", after), jsonPath)
+  status2 <- project2$sync(silent = TRUE)
+  expect_false(status2$in_sync)
+  expect_true(status2$unsaved_changes)
+  expect_true(status2$json_modified)
+})
+
+test_that("sync() does not report a corrupt Excel source as in sync", {
+  work_dir <- withr::local_tempdir()
+  file.copy(dirname(exampleProjectPath()), work_dir, recursive = TRUE)
+  jsonPath <- file.path(work_dir, "Example", "Project.json")
+  project <- loadProject(jsonPath)
+
+  exportProjectToExcel(project, outputDir = dirname(jsonPath), silent = TRUE)
+  xlsx <- sub("\\.json$", ".xlsx", jsonPath)
+  writeLines("not a valid xlsx", xlsx)
+
+  status <- project$sync(silent = TRUE)
+  expect_false(status$in_sync)
+  expect_true(status$excel_modified)
+})
