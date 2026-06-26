@@ -710,12 +710,26 @@ projectConfigurationStatus <- function(...) {
   result <- list()
   for (sheet in sheetNames) {
     df <- readExcel(filePath, sheet = sheet)
+    # The canonical set name is carried in the `Set Name` column so it
+    # survives sheet-name sanitization; fall back to the sheet name for
+    # legacy or hand-authored sheets that predate that column.
+    setName <- if ("Set Name" %in% names(df) && nrow(df) > 0) {
+      as.character(df[["Set Name"]][[1]])
+    } else {
+      sheet
+    }
     entries <- list()
     if (nrow(df) > 0) {
       for (i in seq_len(nrow(df))) {
+        containerPath <- df[["Container Path"]][[i]]
+        parameterName <- df[["Parameter Name"]][[i]]
+        # A name-only row (no path/name) is the empty-set marker.
+        if (is.na(containerPath) && is.na(parameterName)) {
+          next
+        }
         entry <- list(
-          containerPath = as.character(df[["Container Path"]][[i]]),
-          parameterName = as.character(df[["Parameter Name"]][[i]]),
+          containerPath = as.character(containerPath),
+          parameterName = as.character(parameterName),
           value = as.numeric(df[["Value"]][[i]]),
           units = if (is.na(df[["Units"]][[i]]) || df[["Units"]][[i]] == "") {
             NULL
@@ -723,10 +737,10 @@ projectConfigurationStatus <- function(...) {
             as.character(df[["Units"]][[i]])
           }
         )
-        entries[[i]] <- entry
+        entries[[length(entries) + 1]] <- entry
       }
     }
-    result[[sheet]] <- entries
+    result[[setName]] <- entries
   }
   result
 }
@@ -856,27 +870,42 @@ projectConfigurationStatus <- function(...) {
 }
 
 #' Convert parameter structures to Excel sheet data frames
-#' @param parameterSets Named list of parameter structures (paths, values,
-#'   units)
-#' @returns Named list of data frames suitable for Excel sheets
+#'
+#' The canonical set name (which scenarios reference) is carried in a
+#' `Set Name` column rather than relying on the sheet name, because Excel
+#' sheet names are capped at 31 characters and forbid `/ \ * [ ] : ?`.
+#' Sanitizing the sheet name for Excel therefore cannot orphan the
+#' reference: the importer keys each set by the `Set Name` cell, not the
+#' (possibly sanitized or de-duplicated) sheet name. An empty set is
+#' written as a single name-only row so its name still round-trips.
+#'
+#' @param parameterSets Named list of parameter structures, each an
+#'   unnamed list of `{containerPath, parameterName, value, units}` records
+#' @returns Named list of data frames suitable for Excel sheets, keyed by
+#'   the sanitized (and de-duplicated) sheet name
 #' @keywords internal
 #' @noRd
 .parameterStructuresToExcelSheets <- function(parameterSets) {
   sheets <- list()
+  usedSheetNames <- character(0)
   for (name in names(parameterSets)) {
     params <- parameterSets[[name]]
+    sheetName <- .uniqueExcelSheetName(name, usedSheetNames)
+    usedSheetNames <- c(usedSheetNames, sheetName)
     if (is.null(params) || length(params) == 0) {
-      sheets[[name]] <- data.frame(
-        `Container Path` = character(0),
-        `Parameter Name` = character(0),
-        Value = numeric(0),
-        Units = character(0),
+      sheets[[sheetName]] <- data.frame(
+        `Set Name` = name,
+        `Container Path` = NA_character_,
+        `Parameter Name` = NA_character_,
+        Value = NA_real_,
+        Units = NA_character_,
         check.names = FALSE,
         stringsAsFactors = FALSE
       )
       next
     }
-    sheets[[name]] <- data.frame(
+    sheets[[sheetName]] <- data.frame(
+      `Set Name` = name,
       `Container Path` = vapply(
         params,
         function(p) as.character(p$containerPath),
@@ -898,6 +927,31 @@ projectConfigurationStatus <- function(...) {
     )
   }
   sheets
+}
+
+#' Sanitize a sheet name and disambiguate it against names already used
+#'
+#' Distinct canonical set names can sanitize to the same Excel sheet name
+#' (truncation or character replacement collisions). Append a numeric
+#' suffix so each sheet name is unique while staying within the 31-char
+#' Excel cap.
+#' @keywords internal
+#' @noRd
+.uniqueExcelSheetName <- function(name, usedSheetNames) {
+  sheetName <- .sanitizeExcelSheetName(name, warn = FALSE)
+  if (!sheetName %in% usedSheetNames) {
+    return(sheetName)
+  }
+  i <- 2L
+  repeat {
+    suffix <- paste0("_", i)
+    base <- substr(sheetName, 1, 31 - nchar(suffix))
+    candidate <- paste0(base, suffix)
+    if (!candidate %in% usedSheetNames) {
+      return(candidate)
+    }
+    i <- i + 1L
+  }
 }
 
 #' Convert individuals data to an IndividualBiometrics data frame

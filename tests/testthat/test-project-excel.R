@@ -94,3 +94,38 @@ test_that("Project round-trips through Excel preserving modelParameterSets", {
     toJson(project$modelParameterSets)
   )
 })
+
+test_that("parameter sets round-trip through Excel sheet-name sanitization", {
+  # A set name that is both > 31 chars and uses Excel-forbidden chars,
+  # plus an empty set, must round-trip without crashing the writer and
+  # without orphaning the canonical name scenarios reference.
+  badName <- "Liver/Plasma Ratio: very-long-name [PK]"
+  paramSets <- list()
+  paramSets[[badName]] <- list(
+    list(
+      containerPath = "Organism|Liver",
+      parameterName = "Foo",
+      value = 1.5,
+      units = NULL
+    )
+  )
+  paramSets[["EmptySet"]] <- list()
+
+  sheets <- esqlabsR:::.parameterStructuresToExcelSheets(paramSets)
+  expect_true(all(nchar(names(sheets)) <= 31))
+
+  tmp <- withr::local_tempfile(fileext = ".xlsx")
+  expect_no_error(writexl::write_xlsx(sheets, path = tmp))
+
+  reimported <- esqlabsR:::.parseExcelParameterSheets(tmp)
+  expect_setequal(names(reimported), c(badName, "EmptySet"))
+  expect_length(reimported[["EmptySet"]], 0)
+
+  toJson <- function(x) {
+    jsonlite::toJSON(x, auto_unbox = TRUE, null = "null", digits = NA)
+  }
+  expect_equal(
+    toJson(reimported[[badName]]),
+    toJson(paramSets[[badName]])
+  )
+})
