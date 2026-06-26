@@ -17,14 +17,14 @@ test_that(".parseNestedDataCombined returns empty list for NULL or empty input",
 
 test_that(".listOfListsToDataFrame pads missing fields with NA", {
   raw <- list(
-    list(plotID = "P1", plotType = "individual", title = "T1"),
-    list(plotID = "P2", plotType = "population")
+    list(plotId = "P1", plotType = "individual", title = "T1"),
+    list(plotId = "P2", plotType = "population")
   )
   df <- esqlabsR:::.listOfListsToDataFrame(raw)
   expect_s3_class(df, "data.frame")
   expect_equal(nrow(df), 2)
-  expect_setequal(names(df), c("plotID", "plotType", "title"))
-  expect_true(is.na(df$title[df$plotID == "P2"]))
+  expect_setequal(names(df), c("plotId", "plotType", "title"))
+  expect_true(is.na(df$title[df$plotId == "P2"]))
 })
 
 test_that(".listOfListsToDataFrame returns empty data.frame for NULL or empty", {
@@ -41,6 +41,38 @@ test_that("addPlotGrid aborts when no plots are defined", {
   )
   expect_snapshot(
     error = TRUE,
-    addPlotGrid(project, "G1", plotIDs = "MissingPlot")
+    addPlotGrid(project, "G1", plotIds = "MissingPlot")
+  )
+})
+
+test_that("addPlot stores a vector-valued field as a single row", {
+  project <- exampleProject()
+  addDataCombined(
+    project,
+    "DC_vec",
+    simulated = list(list(
+      label = "sim",
+      scenario = "Aciclovir_iv_population",
+      path = project$outputPaths$Aciclovir_PVB,
+      group = "g"
+    ))
+  )
+  addPlot(
+    project,
+    "P_vec",
+    "DC_vec",
+    "population",
+    quantiles = c(0.05, 0.5, 0.95)
+  )
+
+  cfg <- project$plots$plotConfiguration
+  # One new row, no recycling into three, and no mangled column name. The
+  # vector is stored as a comma-separated string to match the parser shape
+  # and the dispatcher's `strsplit(quantiles, ",")`.
+  expect_equal(sum(cfg$plotId == "P_vec"), 1L)
+  expect_true("quantiles" %in% names(cfg))
+  expect_equal(
+    cfg$quantiles[[which(cfg$plotId == "P_vec")]],
+    "0.05, 0.5, 0.95"
   )
 })

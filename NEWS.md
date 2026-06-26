@@ -17,6 +17,8 @@
 - `removeScenario()` argument renamed from `name` to `scenarioName` to align with `addScenario()`. (#1076)
 - `addIndividualParameterSetEntry()` and `removeIndividualParameterSetEntry()` are renamed to `addIndividualParameterEntry()` and `removeIndividualParameterEntry()`; `addApplicationParameterSetEntry()` and `removeApplicationParameterSetEntry()` are renamed to `addApplicationParameterEntry()` and `removeApplicationParameterEntry()`. (#1077)
 - `removePIParameter()` and `removePIOutputMapping()` now auto-remove the parent PI task from the project when it becomes empty (no parameters and no output mappings), emitting a warning. This aligns with the behavior of `removeModelParameterEntry()` for empty parameter sets. (#1079)
+- `addPlot()`, `removePlot()`, and `addPlotGrid()` argument names updated to follow the package's camelCase convention: `plotID` is now `plotId` and `plotIDs` is now `plotIds`. Positional calls are unaffected. (#1078)
+- `saveScenarioResults()` renames its second argument from `projectConfiguration` to `project` to match the v6 naming convention. Update any calls that pass the argument by name. (#1062)
 
 ## Major changes
 
@@ -42,6 +44,8 @@
 
 ## Minor improvements and bug fixes
 
+- `loadScenarioResults()` now restores the full four-field record produced by `runScenarios()`: it reloads the `population` from `<scenario>_population.csv` for population scenarios (previously dropped) and extracts `outputValues` for the simulation's recorded output paths with the population attached, so a reloaded result matches the original run. (#1054)
+- `saveScenarioResults()` now reports a failed save with a cli warning that names the affected scenario and carries the underlying error message, instead of a generic base warning, and continues saving the remaining scenarios. (#1054)
 - `snapshotProjectConfiguration()` and `projectConfigurationStatus()` no longer fail on projects that have no PI configuration (i.e. `parameterIdentificationFile` is not set). (#1007)
 
 # esqlabsR 5.6.0

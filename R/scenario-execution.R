@@ -154,7 +154,8 @@
   project,
   customParams,
   cache,
-  simulationRunOptions
+  simulationRunOptions,
+  stopIfParameterNotFound = TRUE
 ) {
   # 1. Load simulation. An absolute `modelFile` is used as-is; a relative one
   # is resolved against the project's model folder, which must exist for the
@@ -253,7 +254,7 @@
     simulation = simulation,
     individualCharacteristics = individualCharacteristics,
     additionalParams = params,
-    stopIfParameterNotFound = TRUE
+    stopIfParameterNotFound = stopIfParameterNotFound
   )
 
   # 6. Population

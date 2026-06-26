@@ -252,7 +252,7 @@ messages$nrOfColorsShouldBePositive <- function(nrOfColors) {
 messages$PlotIDsMustBeUnique <- function(duplicated_plotIDs = "") {
   duplicates <- paste(duplicated_plotIDs, collapse = ", ")
   cliFormat(
-    "PlotID must be unique in PlotConfiguration, but the following plotIDs are duplicated: {.val {duplicates}}"
+    "plotId must be unique in plotConfiguration, but the following plotIds are duplicated: {.val {duplicates}}"
   )
 }
 
@@ -363,6 +363,24 @@ messages$missingSteadyStateTimeUnit <- function(scenarioName) {
     "Missing unit for steady-state time (column {.field SteadyStateTimeUnit}) for scenario {.val {scenarioName}}."
   )
 }
+
+messages$errorSavingScenarioResult <- function(scenarioName, conditionMessage) {
+  # Escape braces in the condition message so that cli does not try to
+  # re-interpret arbitrary error text as glue expressions when cli_warn()
+  # processes the returned vector.
+  safe_msg <- gsub(
+    "}",
+    "}}",
+    gsub("{", "{{", conditionMessage, fixed = TRUE),
+    fixed = TRUE
+  )
+  c(
+    "x" = cli::format_inline(
+      "Failed to save results for scenario {.val {scenarioName}}."
+    ),
+    "i" = safe_msg
+  )
+}
 # sensitivity-calculation####
 messages$noPKDataToWrite <- function() {
   cliFormat(
@@ -405,14 +423,6 @@ messages$warningInvalidDataSetName <- function(dataSetNames) {
 }
 
 # Plots.xlsx####
-messages$warningInvalidPlotID <- function(plotIDs, plotGridTitle) {
-  cliFormat(
-    "The plots with plotIDs {.val {paste(plotIDs, collapse = ',\n')}} could not be added to plot grid
-    {.field {plotGridTitle}}. Please check if they are defined in sheet {.var plotConfiguration} and data is added in
-    sheet {.var DataCombined}."
-  )
-}
-
 messages$warningLogScaleWithZeroLimit <- function(
   plotID,
   axisLimitsField,
@@ -426,14 +436,14 @@ messages$warningLogScaleWithZeroLimit <- function(
 
 messages$errorInvalidPlotID <- function(plotIDs) {
   cliFormat(
-    "The plots with plotIDs {.val {paste(plotIDs, collapse = ',\n')}} are used in the sheet
+    "The plots with plotIds {.val {paste(plotIDs, collapse = ',\n')}} are used in the sheet
     {.field plotGrids} but are not defined in the sheet {.var plotConfiguration}."
   )
 }
 
 messages$missingPlotIDs <- function() {
   cliFormat(
-    "Missing values found in mandatory column {.val plotIDs} of sheet {.field plotGrids}. Fill in values to proceed."
+    "Missing values found in mandatory column {.val plotIds} of sheet {.field plotGrids}. Fill in values to proceed."
   )
 }
 
@@ -463,7 +473,7 @@ messages$missingScenarioName <- function() {
 
 messages$missingDataCombinedName <- function() {
   cliFormat(
-    "Missing values found in mandatory column {.val DataCombinedName} of sheet {.var plotConfiguration}. Fill in values to proceed."
+    "Missing values found in mandatory column {.val dataCombinedName} of sheet {.var plotConfiguration}. Fill in values to proceed."
   )
 }
 
@@ -493,6 +503,25 @@ messages$stopWrongOutputPath <- function(dataCombinedName, scenarioName, path) {
     "Output path {.path {path}} is defined in the DataCombined {.val {paste(dataCombinedName, collapse = \", \")}}
     for scenario {.cls {scenarioName}} but has not been simulated.
     Please check that the output path is specified for this scenario."
+  )
+}
+
+messages$stopScenarioRunFailed <- function(
+  dataCombinedName,
+  scenarioName,
+  path
+) {
+  cliFormat(
+    "The DataCombined {.val {paste(dataCombinedName, collapse = \", \")}} references the output path
+    {.path {path}} of scenario {.cls {scenarioName}}, but that scenario produced no results.
+    Re-run the scenario and check that it completed successfully."
+  )
+}
+
+messages$stopPlotGridNamesNotFound <- function(plotGridNames) {
+  cliFormat(
+    "The following plot grids are not defined in the project:
+    {.val {paste(plotGridNames, collapse = ', ')}}"
   )
 }
 
@@ -816,6 +845,20 @@ messages$errorPIScenariosEmpty <- function(recordType, recordId) {
   )
 }
 
+messages$errorPIInvalidNumericField <- function(field, recordId, value) {
+  cliFormat(
+    "Field {.code {field}} on PIOutputMapping {.val {recordId}} is invalid: \\
+    {.val {value}}. Expected a finite numeric value."
+  )
+}
+
+messages$errorPIInvalidScaling <- function(recordId, value) {
+  cliFormat(
+    "Field {.code scaling} on PIOutputMapping {.val {recordId}} is invalid: \\
+    {.val {value}}. Expected a non-empty string."
+  )
+}
+
 messages$errorPIWrongElementType <- function(
   field,
   index,
@@ -846,6 +889,10 @@ messages$errorPIScenarioNotFound <- function(scenarioName, availableScenarios) {
     "x" = "Scenario {.val {scenarioName}} referenced in PI task configuration not found",
     "i" = "Available scenarios: {.val {paste(availableScenarios, collapse = ', ')}}"
   ))
+}
+
+messages$messageBuildingPITask <- function(piTaskName) {
+  cliFormat("Building PI task: {.val {piTaskName}}")
 }
 
 messages$messageRunningPITask <- function(piTaskName) {

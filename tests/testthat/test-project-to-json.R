@@ -141,7 +141,7 @@ test_that(".dataCombinedToNestedJson handles NULL and empty input", {
 
 test_that(".dataFrameToListOfLists drops NA cells per row", {
   df <- data.frame(
-    plotID = c("P1", "P2"),
+    plotId = c("P1", "P2"),
     plotType = c("individual", "population"),
     title = c("T1", NA),
     stringsAsFactors = FALSE

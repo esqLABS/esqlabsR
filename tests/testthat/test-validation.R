@@ -336,12 +336,12 @@ test_that(".validatePlots flags missing scenario in dataCombined", {
   expect_true(any(grepl("missing 'scenario'", msgs)))
 })
 
-test_that(".validatePlots flags duplicate plotIDs and unknown DataCombinedName", {
+test_that(".validatePlots flags duplicate plotIds and unknown dataCombinedName", {
   plots <- list(
     dataCombined = list(DC1 = list(simulated = list(list(scenario = "S1")))),
     plotConfiguration = data.frame(
-      plotID = c("p1", "p1"),
-      DataCombinedName = c("DC1", "Unknown"),
+      plotId = c("p1", "p1"),
+      dataCombinedName = c("DC1", "Unknown"),
       plotType = c("individual", "individual"),
       stringsAsFactors = FALSE
     ),
@@ -349,8 +349,8 @@ test_that(".validatePlots flags duplicate plotIDs and unknown DataCombinedName",
   )
   result <- esqlabsR:::.validatePlots(plots)
   msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
-  expect_true(any(grepl("Duplicate plotID", msgs)))
-  expect_true(any(grepl("unknown DataCombinedName", msgs)))
+  expect_true(any(grepl("Duplicate plotId", msgs)))
+  expect_true(any(grepl("unknown dataCombinedName", msgs)))
 })
 
 # Cross-references ----
@@ -459,14 +459,14 @@ test_that("createPlots(validate = TRUE) aborts on a clearly broken project", {
   plots <- list(
     dataCombined = list(),
     plotConfiguration = data.frame(
-      plotID = "p1",
-      DataCombinedName = "Ghost",
+      plotId = "p1",
+      dataCombinedName = "Ghost",
       plotType = "individual",
       stringsAsFactors = FALSE
     ),
     plotGrids = data.frame(
       name = "G1",
-      plotIDs = "p1",
+      plotIds = "p1",
       stringsAsFactors = FALSE
     )
   )
