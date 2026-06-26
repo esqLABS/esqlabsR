@@ -405,3 +405,49 @@ test_that("sync() does not report a corrupt Excel source as in sync", {
   expect_false(status$in_sync)
   expect_true(status$excel_modified)
 })
+
+test_that("whole Project reaches a stable fixed point through Excel", {
+  work_dir <- withr::local_tempdir()
+  file.copy(dirname(exampleProjectPath()), work_dir, recursive = TRUE)
+  project <- loadProject(file.path(work_dir, "Example", "Project.json"))
+
+  toJson <- function(x) {
+    jsonlite::toJSON(x, auto_unbox = TRUE, null = "null", digits = NA)
+  }
+  roundtrip <- function(p) {
+    excel_out <- withr::local_tempdir()
+    exportProjectToExcel(p, outputDir = excel_out, silent = TRUE)
+    json <- importProjectFromExcel(
+      file.path(excel_out, "Project.xlsx"),
+      silent = TRUE
+    )
+    loadProject(json)
+  }
+
+  rt1 <- roundtrip(project)
+  rt2 <- roundtrip(rt1)
+
+  # Every section reaches a fixed point from the first export onward (the
+  # first pass may normalize semantically-null fields). Build fixtures
+  # through loadProject(), never hand-rolled shapes.
+  sections <- c(
+    "modelParameterSets",
+    "individualParameterSets",
+    "applicationParameterSets",
+    "scenarios",
+    "individuals",
+    "populations",
+    "applications",
+    "outputPaths",
+    "plots",
+    "observedData",
+    "parameterIdentification"
+  )
+  for (section in sections) {
+    expect_equal(
+      toJson(rt2[[section]]),
+      toJson(rt1[[section]]),
+      info = section
+    )
+  }
+})
