@@ -99,3 +99,15 @@ test_that("createEsqlabsPlotConfiguration() works with ospsuite::plotIndividualT
     fig = plotIndividualTimeProfile(oneObsSimDC, esqlabsConfig)
   )
 })
+
+test_that(".updatePlotConfiguration is NA-safe when a field comparison yields NA", {
+  plotConfiguration <- createEsqlabsPlotConfiguration()
+  plotConfiguration$titleSize <- NA_real_
+
+  result <- .updatePlotConfiguration(
+    plotConfiguration,
+    list(titleSize = 99)
+  )
+
+  expect_identical(result$titleSize, NA_real_)
+})

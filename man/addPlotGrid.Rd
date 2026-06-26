@@ -4,14 +4,14 @@
 \alias{addPlotGrid}
 \title{Add a plot grid to a Project}
 \usage{
-addPlotGrid(project, name, plotIDs, ...)
+addPlotGrid(project, name, plotIds, ...)
 }
 \arguments{
 \item{project}{A \code{Project} object.}
 
 \item{name}{Character scalar. Unique plot-grid name.}
 
-\item{plotIDs}{Character vector of \code{plotID}s to include in the grid.
+\item{plotIds}{Character vector of \code{plotId}s to include in the grid.
 Stored internally as a comma-separated string.}
 
 \item{...}{Optional plot-grid fields, e.g. \code{title}, \code{subtitle}.}
@@ -21,7 +21,7 @@ The \code{project} object, invisibly.
 }
 \description{
 Append a new row to \code{project$plots$plotGrids}. Errors if \code{name}
-already exists or if any of the supplied \code{plotIDs} are not present
+already exists or if any of the supplied \code{plotIds} are not present
 in \code{project$plots$plotConfiguration}.
 }
 \seealso{

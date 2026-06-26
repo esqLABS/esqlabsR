@@ -346,7 +346,7 @@ test_that("loadProject() parses plots into the asymmetric in-memory shape", {
   expect_s3_class(project$plots$plotGrids, "data.frame")
   expect_equal(nrow(project$plots$plotConfiguration), 1L)
   expect_equal(nrow(project$plots$plotGrids), 1L)
-  expect_true("plotID" %in% names(project$plots$plotConfiguration))
+  expect_true("plotId" %in% names(project$plots$plotConfiguration))
   expect_true("name" %in% names(project$plots$plotGrids))
 })
 

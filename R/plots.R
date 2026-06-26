@@ -97,12 +97,12 @@
 #'   * dataCombined entries must declare a non-empty `scenario` on
 #'     each simulated row and a non-empty `dataSet` on each observed
 #'     row.
-#'   * plotConfiguration must declare `plotID`, `DataCombinedName`, and
-#'     `plotType` columns; `plotID` must be unique; `DataCombinedName`
+#'   * plotConfiguration must declare `plotId`, `dataCombinedName`, and
+#'     `plotType` columns; `plotId` must be unique; `dataCombinedName`
 #'     must reference a known dataCombined entry; `plotType` must be one
 #'     of `.validPlotTypes`.
-#'   * plotGrids entries reference `plotConfiguration$plotID` via a
-#'     comma-separated `plotIDs` string; unknown ids are a critical
+#'   * plotGrids entries reference `plotConfiguration$plotId` via a
+#'     comma-separated `plotIds` string; unknown ids are a critical
 #'     error, mirroring the hard failure in `createPlots()`. This check
 #'     also runs when `plotConfiguration` is empty (every referenced id
 #'     is then unknown).
@@ -165,7 +165,7 @@
   if (is.null(plotConfig) || nrow(plotConfig) == 0) {
     result$add_warning("Data", "plotConfiguration is empty")
   } else {
-    for (col in c("plotID", "DataCombinedName", "plotType")) {
+    for (col in c("plotId", "dataCombinedName", "plotType")) {
       if (!col %in% names(plotConfig)) {
         result$add_critical_error(
           "Missing Fields",
@@ -174,10 +174,10 @@
       }
     }
 
-    if ("plotID" %in% names(plotConfig)) {
+    if ("plotId" %in% names(plotConfig)) {
       result <- .check_no_duplicates(
-        plotConfig$plotID[!is.na(plotConfig$plotID)],
-        "plotID",
+        plotConfig$plotId[!is.na(plotConfig$plotId)],
+        "plotId",
         result
       )
     }
@@ -200,16 +200,16 @@
       }
     }
 
-    if ("DataCombinedName" %in% names(plotConfig)) {
+    if ("dataCombinedName" %in% names(plotConfig)) {
       invalidDataCombinedRefs <- setdiff(
-        plotConfig$DataCombinedName[!is.na(plotConfig$DataCombinedName)],
+        plotConfig$dataCombinedName[!is.na(plotConfig$dataCombinedName)],
         names(dataCombined %||% list())
       )
       if (length(invalidDataCombinedRefs) > 0) {
         result$add_critical_error(
           "Invalid Reference",
           paste0(
-            "plotConfiguration references unknown DataCombinedName: ",
+            "plotConfiguration references unknown dataCombinedName: ",
             paste(invalidDataCombinedRefs, collapse = ", ")
           )
         )
@@ -225,27 +225,27 @@
   if (
     !is.null(plotGrids) &&
       nrow(plotGrids) > 0 &&
-      "plotIDs" %in% names(plotGrids)
+      "plotIds" %in% names(plotGrids)
   ) {
-    knownPlotIDs <- if (
+    knownPlotIds <- if (
       !is.null(plotConfig) &&
         nrow(plotConfig) > 0 &&
-        "plotID" %in% names(plotConfig)
+        "plotId" %in% names(plotConfig)
     ) {
-      plotConfig$plotID
+      plotConfig$plotId
     } else {
       character(0)
     }
     allGridIds <- unlist(lapply(
-      plotGrids$plotIDs[!is.na(plotGrids$plotIDs)],
+      plotGrids$plotIds[!is.na(plotGrids$plotIds)],
       function(x) trimws(strsplit(x, ",")[[1]])
     ))
-    invalidGridRefs <- setdiff(allGridIds, knownPlotIDs)
+    invalidGridRefs <- setdiff(allGridIds, knownPlotIds)
     if (length(invalidGridRefs) > 0) {
       result$add_critical_error(
         "Invalid Reference",
         paste0(
-          "plotGrids references unknown plotIDs: ",
+          "plotGrids references unknown plotIds: ",
           paste(invalidGridRefs, collapse = ", ")
         )
       )
@@ -333,10 +333,13 @@
 # Normalise `...` for use as a single row in `as.data.frame()`:
 # - NULL becomes NA so the column is kept (otherwise it is silently
 #   dropped).
-# - Multi-length vectors and lists are wrapped in `list(...)` so they
-#   become a 1-element list-column instead of recycling into multiple
-#   rows (e.g. `xValuesLimits = c(0, 100)` would otherwise expand to
-#   two rows).
+# - A multi-element atomic vector is collapsed to a comma-separated string
+#   (e.g. `quantiles = c(0.05, 0.5, 0.95)` becomes `"0.05, 0.5, 0.95"`).
+#   This is the canonical in-memory shape for the multi-value
+#   plotConfiguration fields: the JSON stores them as comma-separated
+#   strings, the parser keeps them as strings, and the plot dispatchers
+#   re-split them with `strsplit(x, ",")`. A bare vector would instead
+#   recycle into one row per element under `as.data.frame()`.
 #
 # @keywords internal
 # @noRd
@@ -346,8 +349,8 @@
     if (is.null(v)) {
       return(NA)
     }
-    if (length(v) > 1L || is.list(v)) {
-      return(list(v))
+    if (length(v) > 1L) {
+      return(paste(v, collapse = ", "))
     }
     v
   })
@@ -380,14 +383,14 @@
 #' Add a plot configuration to a Project
 #'
 #' Append a new row to `project$plots$plotConfiguration`. Errors if
-#' `plotID` already exists, if `dataCombinedName` is not present in
+#' `plotId` already exists, if `dataCombinedName` is not present in
 #' `project$plots$dataCombined`, or if `plotType` is not one of the
 #' supported types.
 #'
 #' @param project A `Project` object.
-#' @param plotID Character scalar. Unique plot identifier.
+#' @param plotId Character scalar. Unique plot identifier.
 #' @param dataCombinedName Character scalar. Must reference an existing
-#'   DataCombined name on the project. Stored in the `DataCombinedName`
+#'   DataCombined name on the project. Stored in the `dataCombinedName`
 #'   column to match the JSON schema.
 #' @param plotType Character scalar. One of `"individual"`,
 #'   `"population"`, `"observedVsSimulated"`,
@@ -399,9 +402,9 @@
 #' @returns The `project` object, invisibly.
 #' @export
 #' @family plots
-addPlot <- function(project, plotID, dataCombinedName, plotType, ...) {
+addPlot <- function(project, plotId, dataCombinedName, plotType, ...) {
   validateIsOfType(project, "Project")
-  .requireNonEmptyString(plotID, "plotID")
+  .requireNonEmptyString(plotId, "plotId")
   .requireNonEmptyString(dataCombinedName, "dataCombinedName")
   .requireNonEmptyString(plotType, "plotType")
 
@@ -409,9 +412,9 @@ addPlot <- function(project, plotID, dataCombinedName, plotType, ...) {
   if (
     !is.null(existingPlots) &&
       nrow(existingPlots) > 0 &&
-      plotID %in% existingPlots$plotID
+      plotId %in% existingPlots$plotId
   ) {
-    cli::cli_abort("plot {.val {plotID}} already exists")
+    cli::cli_abort("plot {.val {plotId}} already exists")
   }
 
   if (!(dataCombinedName %in% names(project$plots$dataCombined))) {
@@ -429,8 +432,8 @@ addPlot <- function(project, plotID, dataCombinedName, plotType, ...) {
 
   newRow <- c(
     list(
-      plotID = plotID,
-      DataCombinedName = dataCombinedName,
+      plotId = plotId,
+      dataCombinedName = dataCombinedName,
       plotType = plotType
     ),
     .namedDotsAsRow(...)
@@ -447,42 +450,42 @@ addPlot <- function(project, plotID, dataCombinedName, plotType, ...) {
 
 #' Remove a plot configuration from a Project
 #'
-#' Drop the row with matching `plotID`. Warns (no-op) if `plotID` is
+#' Drop the row with matching `plotId`. Warns (no-op) if `plotId` is
 #' not found, and warns when the plot is referenced by any `plotGrids`
 #' entry.
 #'
 #' @param project A `Project` object.
-#' @param plotID Character scalar.
+#' @param plotId Character scalar.
 #' @returns The `project` object, invisibly.
 #' @export
 #' @family plots
-removePlot <- function(project, plotID) {
+removePlot <- function(project, plotId) {
   validateIsOfType(project, "Project")
-  .requireNonEmptyString(plotID, "plotID")
+  .requireNonEmptyString(plotId, "plotId")
 
   df <- project$plots$plotConfiguration
-  if (is.null(df) || nrow(df) == 0 || !(plotID %in% df$plotID)) {
-    cli::cli_warn("plot {.val {plotID}} not found; no-op.")
+  if (is.null(df) || nrow(df) == 0 || !(plotId %in% df$plotId)) {
+    cli::cli_warn("plot {.val {plotId}} not found; no-op.")
     return(invisible(project))
   }
 
   grids <- project$plots$plotGrids
   if (!is.null(grids) && nrow(grids) > 0) {
     referencingGrids <- grids$name[vapply(
-      grids$plotIDs,
-      function(s) plotID %in% .splitPlotIDs(s),
+      grids$plotIds,
+      function(s) plotId %in% .splitPlotIDs(s),
       logical(1)
     )]
     if (length(referencingGrids) > 0) {
       cli::cli_warn(c(
-        "Removed plot {.val {plotID}} is still referenced by {length(referencingGrids)} plot grid{?s}:",
+        "Removed plot {.val {plotId}} is still referenced by {length(referencingGrids)} plot grid{?s}:",
         "*" = "{referencingGrids}"
       ))
     }
   }
 
   project$plots$plotConfiguration <- df[
-    which(df$plotID != plotID),
+    which(df$plotId != plotId),
     ,
     drop = FALSE
   ]
@@ -493,27 +496,27 @@ removePlot <- function(project, plotID) {
 #' Add a plot grid to a Project
 #'
 #' Append a new row to `project$plots$plotGrids`. Errors if `name`
-#' already exists or if any of the supplied `plotIDs` are not present
+#' already exists or if any of the supplied `plotIds` are not present
 #' in `project$plots$plotConfiguration`.
 #'
 #' @param project A `Project` object.
 #' @param name Character scalar. Unique plot-grid name.
-#' @param plotIDs Character vector of `plotID`s to include in the grid.
+#' @param plotIds Character vector of `plotId`s to include in the grid.
 #'   Stored internally as a comma-separated string.
 #' @param ... Optional plot-grid fields, e.g. `title`, `subtitle`.
 #' @returns The `project` object, invisibly.
 #' @export
 #' @family plots
-addPlotGrid <- function(project, name, plotIDs, ...) {
+addPlotGrid <- function(project, name, plotIds, ...) {
   validateIsOfType(project, "Project")
   .requireNonEmptyString(name, "name")
   if (
-    !is.character(plotIDs) ||
-      length(plotIDs) == 0L ||
-      any(is.na(plotIDs)) ||
-      any(nchar(plotIDs) == 0)
+    !is.character(plotIds) ||
+      length(plotIds) == 0L ||
+      any(is.na(plotIds)) ||
+      any(nchar(plotIds) == 0)
   ) {
-    cli::cli_abort("{.arg plotIDs} must be a non-empty character vector")
+    cli::cli_abort("{.arg plotIds} must be a non-empty character vector")
   }
 
   existingGrids <- project$plots$plotGrids
@@ -525,17 +528,17 @@ addPlotGrid <- function(project, name, plotIDs, ...) {
     cli::cli_abort("plot grid {.val {name}} already exists")
   }
 
-  existingPlotIDs <- project$plots$plotConfiguration$plotID
+  existingPlotIDs <- project$plots$plotConfiguration$plotId
   if (is.null(existingPlotIDs)) {
     cli::cli_abort(c(
       "no plots are defined; add plots before creating a plot grid.",
-      "i" = "use {.fn addPlot} to add plots referenced by {.arg plotIDs}."
+      "i" = "use {.fn addPlot} to add plots referenced by {.arg plotIds}."
     ))
   }
-  unknown <- setdiff(plotIDs, existingPlotIDs)
+  unknown <- setdiff(plotIds, existingPlotIDs)
   if (length(unknown) > 0L) {
     cli::cli_abort(c(
-      "{.arg plotIDs} references unknown plotIDs:",
+      "{.arg plotIds} references unknown plotIds:",
       "x" = "{.val {unknown}}"
     ))
   }
@@ -543,7 +546,7 @@ addPlotGrid <- function(project, name, plotIDs, ...) {
   newRow <- c(
     list(
       name = name,
-      plotIDs = paste(plotIDs, collapse = ", ")
+      plotIds = paste(plotIds, collapse = ", ")
     ),
     .namedDotsAsRow(...)
   )
@@ -663,8 +666,8 @@ removeDataCombined <- function(project, name) {
 
   plotCfg <- project$plots$plotConfiguration
   if (!is.null(plotCfg) && nrow(plotCfg) > 0) {
-    referencingPlots <- plotCfg$plotID[
-      !is.na(plotCfg$DataCombinedName) & plotCfg$DataCombinedName == name
+    referencingPlots <- plotCfg$plotId[
+      !is.na(plotCfg$dataCombinedName) & plotCfg$dataCombinedName == name
     ]
     if (length(referencingPlots) > 0) {
       cli::cli_warn(c(

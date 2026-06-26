@@ -15,7 +15,7 @@ observedData <- loadObservedData(.testProjectForDC)
 
 # Create a proper data frame with paths for all entries
 dataCombinedDf <- data.frame(list(
-  "DataCombinedName" = c(
+  "dataCombinedName" = c(
     "AciclovirPVB",
     "AciclovirPVB",
     "DC_missingPath",
@@ -188,6 +188,120 @@ test_that("createDataCombined builds DataCombined for Example project", {
   expect_s3_class(result[[dcName]], "DataCombined")
   df <- result[[dcName]]$toDataFrame()
   expect_setequal(unique(df$dataType), c("simulated", "observed"))
+})
+
+test_that("createDataCombined errors when dataCombinedNames is not a string", {
+  project <- testProject()
+  # The leading call-context in the validator message is context-dependent,
+  # so match only the stable type-mismatch portion.
+  expect_error(
+    createDataCombined(project, dataCombinedNames = 123),
+    "is of type <numeric>, but expected <character>"
+  )
+})
+
+test_that("createDataCombined applies declared offsets and scale factors", {
+  project <- testProject()
+  path <- project$outputPaths$Aciclovir_PVB
+  addDataCombined(
+    project,
+    "DC_plain",
+    simulated = list(list(
+      label = "sim",
+      scenario = "TestScenario",
+      path = path,
+      group = "g"
+    ))
+  )
+  addDataCombined(
+    project,
+    "DC_offset",
+    simulated = list(list(
+      label = "sim",
+      scenario = "TestScenario",
+      path = path,
+      group = "g",
+      xOffsets = 1,
+      xOffsetsUnits = "h",
+      yScaleFactors = 2
+    ))
+  )
+  simulated <- runScenarios(project, scenarioNames = "TestScenario")
+
+  result <- createDataCombined(
+    project,
+    dataCombinedNames = c("DC_plain", "DC_offset"),
+    simulatedScenarios = simulated
+  )
+  plain <- result$DC_plain$toDataFrame()
+  offset <- result$DC_offset$toDataFrame()
+
+  # 1 h x-offset shifts time by 60 (base unit minutes); yScaleFactor doubles y.
+  expect_equal(min(offset$xValues), min(plain$xValues) + 60)
+  expect_equal(offset$yValues, plain$yValues * 2)
+})
+
+test_that("createDataCombined(stopIfNotFound = FALSE) drops a wrong-path entry with offsets", {
+  project <- testProject()
+  addDataCombined(
+    project,
+    "DC_wrong",
+    simulated = list(list(
+      label = "sim",
+      scenario = "TestScenario",
+      path = "Organism|NotAReal|Path",
+      group = "g",
+      xOffsets = 1,
+      xOffsetsUnits = "h"
+    ))
+  )
+  simulated <- runScenarios(project, scenarioNames = "TestScenario")
+
+  expect_warning(
+    result <- createDataCombined(
+      project,
+      dataCombinedNames = "DC_wrong",
+      simulatedScenarios = simulated,
+      stopIfNotFound = FALSE
+    ),
+    "has not been simulated"
+  )
+  expect_s3_class(result$DC_wrong, "DataCombined")
+  # The skipped row must not reach the transform block.
+  expect_null(result$DC_wrong$toDataFrame())
+})
+
+test_that("createDataCombined reports a failed scenario run distinctly", {
+  project <- testProject()
+  path <- project$outputPaths$Aciclovir_PVB
+  addDataCombined(
+    project,
+    "DC_failed",
+    simulated = list(list(
+      label = "sim",
+      scenario = "TestScenario",
+      path = path,
+      group = "g"
+    ))
+  )
+  # A failed run is present in simulatedScenarios but carries results = NULL.
+  failedRun <- list(
+    TestScenario = list(
+      simulation = NULL,
+      results = NULL,
+      outputValues = NULL,
+      population = NULL
+    )
+  )
+
+  expect_snapshot(
+    error = TRUE,
+    createDataCombined(
+      project,
+      dataCombinedNames = "DC_failed",
+      simulatedScenarios = failedRun
+    )
+  )
 })
 
 test_that("createDataCombined returns empty DataCombined when spec has no entries", {
