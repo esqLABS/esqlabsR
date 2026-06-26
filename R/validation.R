@@ -22,9 +22,6 @@
 validationResult <- R6::R6Class(
   "validationResult",
   public = list(
-    #' @field data Successfully validated/processed data
-    data = NULL,
-
     #' @field critical_errors List of critical errors (blocking issues)
     critical_errors = list(),
 
@@ -35,7 +32,6 @@ validationResult <- R6::R6Class(
     initialize = function() {
       self$critical_errors <- list()
       self$warnings <- list()
-      self$data <- NULL
     },
 
     #' @description Add a critical error
@@ -66,12 +62,6 @@ validationResult <- R6::R6Class(
       self$warnings <- append(self$warnings, list(warning_entry))
     },
 
-    #' @description Set validated data
-    #' @param data The validated/processed data to store
-    set_data = function(data) {
-      self$data <- data
-    },
-
     #' @description Check if validation passed (no critical errors)
     is_valid = function() {
       length(self$critical_errors) == 0
@@ -99,8 +89,7 @@ validationResult <- R6::R6Class(
       list(
         has_critical_errors = self$has_critical_errors(),
         critical_error_count = length(self$critical_errors),
-        warning_count = length(self$warnings),
-        has_data = !is.null(self$data)
+        warning_count = length(self$warnings)
       )
     }
   )
@@ -263,6 +252,10 @@ validateProject <- function(project) {
       lines <- c(lines, paste0("[", section, "] ", e$message))
     }
   }
+  # Validation messages embed user-controlled ids (scenario names, paths)
+  # that may contain glue metacharacters. Double the braces so cli treats
+  # them literally instead of trying to evaluate `{...}` expressions.
+  lines <- .escapeCliBraces(lines)
   bullets <- stats::setNames(lines, rep("x", length(lines)))
   cli::cli_abort(c(
     "Cannot {opName}: project has {length(lines)} critical validation \\
@@ -270,6 +263,20 @@ validateProject <- function(project) {
     bullets,
     "i" = "Run {.code validateProject(project)} for a full report."
   ))
+}
+
+#' Escape glue/cli metacharacters in literal text
+#'
+#' Doubles `{` and `}` so a string can be placed inside a `cli` message
+#' as literal text without `cli` attempting to evaluate `{...}` glue
+#' expressions. Used to neutralise user-controlled ids (scenario names,
+#' parameter paths) embedded in validation messages.
+#'
+#' @keywords internal
+#' @noRd
+.escapeCliBraces <- function(x) {
+  x <- gsub("{", "{{", x, fixed = TRUE)
+  gsub("}", "}}", x, fixed = TRUE)
 }
 
 # Shared helpers used by section adapters ----
@@ -439,8 +446,10 @@ validateProject <- function(project) {
 #' Validate a parameter-set structure
 #'
 #' Shared body used by the model / individual / application
-#' parameter-set adapters. Each parameter set is expected to be a list
-#' with `paths`, `values`, and `units` parallel vectors.
+#' parameter-set adapters. Each parameter set is the array-of-records
+#' shape the parser and the `add*ParameterEntry()` mutators produce: a
+#' list of `list(containerPath, parameterName, value, units)` entries.
+#' The full parameter path is `containerPath|parameterName`.
 #'
 #' @keywords internal
 #' @noRd
@@ -454,28 +463,30 @@ validateProject <- function(project) {
 
   for (setName in names(parameterSets)) {
     set <- parameterSets[[setName]]
-    paths <- set$paths %||% character(0)
-    values <- set$values %||% numeric(0)
+    if (length(set) == 0) {
+      next
+    }
 
-    if (length(paths) != length(values)) {
-      result$add_critical_error(
-        "Structure",
-        paste0(
-          "Set '",
-          setName,
-          "' in ",
-          sectionName,
-          ": paths and values have different lengths"
-        )
+    containerPaths <- vapply(
+      set,
+      function(e) as.character(e$containerPath %||% NA_character_),
+      character(1)
+    )
+    parameterNames <- vapply(
+      set,
+      function(e) as.character(e$parameterName %||% NA_character_),
+      character(1)
+    )
+    values <- lapply(set, function(e) e$value)
+
+    if (
+      any(
+        is.na(containerPaths) |
+          containerPaths == "" |
+          is.na(parameterNames) |
+          parameterNames == ""
       )
-      next
-    }
-
-    if (length(paths) == 0) {
-      next
-    }
-
-    if (any(is.na(paths) | paths == "")) {
+    ) {
       result$add_critical_error(
         "Missing Fields",
         paste0(
@@ -488,7 +499,12 @@ validateProject <- function(project) {
       )
     }
 
-    if (!is.numeric(values)) {
+    nonNumeric <- vapply(
+      values,
+      function(v) is.null(v) || length(v) != 1L || !is.numeric(v) || is.na(v),
+      logical(1)
+    )
+    if (any(nonNumeric)) {
       result$add_warning(
         "Data Type",
         paste0(
@@ -501,7 +517,8 @@ validateProject <- function(project) {
       )
     }
 
-    dupes <- paths[duplicated(paths) & !is.na(paths)]
+    fullPaths <- paste(containerPaths, parameterNames, sep = "|")
+    dupes <- fullPaths[duplicated(fullPaths)]
     if (length(dupes) > 0) {
       result$add_warning(
         "Uniqueness",
@@ -524,11 +541,12 @@ validateProject <- function(project) {
 #'
 #' Hand-rolled monolith that checks references that span sections:
 #' `scenario.individualId/populationId` against the individuals and
-#' populations sections, `scenario.modelParameterSets` and
-#' `scenario.applicationProtocol` against their respective lookups,
-#' `individual.parameterSets` and `application.parameterSets` against
-#' the corresponding parameter-set sections, and
-#' `dataCombined.simulated.scenario` against scenarios. Skips itself
+#' populations sections, `scenario.modelParameterSets`,
+#' `scenario.applicationProtocol`, and `scenario.outputPaths` against
+#' their respective lookups, `individual.parameterSets` and
+#' `application.parameterSets` against the corresponding parameter-set
+#' sections, and `dataCombined.simulated.scenario` against scenarios.
+#' Skips itself
 #' when any prior section validator already flagged a critical error
 #' and surfaces a single "skipped" warning naming the checks that were
 #' not performed, since cross-references built on broken sections tend
@@ -551,6 +569,7 @@ validateProject <- function(project) {
       "scenario individualId / populationId references",
       "scenario modelParameterSets references",
       "scenario applicationProtocol references",
+      "scenario outputPaths references",
       "individual parameterSets references",
       "application parameterSets references",
       "plot dataCombined scenario references",
@@ -573,6 +592,7 @@ validateProject <- function(project) {
   populationIds <- names(project$populations %||% list())
   modelParamKeys <- names(project$modelParameterSets %||% list())
   applicationKeys <- names(project$applications %||% list())
+  outputPathKeys <- names(project$outputPaths %||% list())
 
   for (scName in names(scenarioList)) {
     sc <- scenarioList[[scName]]
@@ -642,6 +662,28 @@ validateProject <- function(project) {
           "'"
         )
       )
+    }
+
+    # The in-memory scenario carries its output paths as a named vector
+    # (id-as-name, resolved-path-as-value); the names are the references
+    # into project$outputPaths, mirroring the serializer's reverse map.
+    scOutputPathIds <- names(sc$outputPaths)
+    if (!is.null(scOutputPathIds)) {
+      invalidOutputPaths <- setdiff(scOutputPathIds, outputPathKeys)
+      invalidOutputPaths <- invalidOutputPaths[
+        !is.na(invalidOutputPaths) & invalidOutputPaths != ""
+      ]
+      if (length(invalidOutputPaths) > 0) {
+        result$add_critical_error(
+          "Invalid Reference",
+          paste0(
+            "Scenario '",
+            scName,
+            "' references undefined outputPathIds: ",
+            paste(invalidOutputPaths, collapse = ", ")
+          )
+        )
+      }
     }
   }
 
@@ -776,10 +818,26 @@ validateProject <- function(project) {
   result
 }
 
-#' Check if validation results contain any critical errors
-#' @param validationResults Output from validateProject
-#' @return Logical indicating if there are critical errors
+#' @title isAnyCriticalErrors
+#'
+#' @description Reports whether any section of a validation run produced a
+#'   critical error, collapsing the per-section results from
+#'   [validateProject()] into a single logical.
+#'
+#' @param validationResults Named list of class `"ValidationResults"`, the
+#'   output of [validateProject()].
+#' @return A single logical: `TRUE` if any section has critical errors,
+#'   otherwise `FALSE`.
 #' @export
+#' @seealso [validateProject()], [validationSummary()].
+#' @examples
+#' \dontrun{
+#' project <- loadProject("Project.json")
+#' results <- validateProject(project)
+#' if (isAnyCriticalErrors(results)) {
+#'   print(validationSummary(results))
+#' }
+#' }
 isAnyCriticalErrors <- function(validationResults) {
   any(vapply(
     validationResults,
@@ -794,16 +852,31 @@ isAnyCriticalErrors <- function(validationResults) {
   ))
 }
 
-#' Get summary of all validation results
-#' @param validationResults Output from validateProject
-#' @return List with summary statistics
+#' @title validationSummary
+#'
+#' @description Aggregates the per-section results from [validateProject()]
+#'   into overall counts of critical errors and warnings, plus the names of
+#'   the sections that produced each.
+#'
+#' @param validationResults Named list of class `"ValidationResults"`, the
+#'   output of [validateProject()].
+#' @return A list with `total_critical_errors`, `total_warnings`,
+#'   `sections_with_errors`, and `sections_with_warnings`.
 #' @export
+#' @seealso [validateProject()], [isAnyCriticalErrors()].
+#' @examples
+#' \dontrun{
+#' project <- loadProject("Project.json")
+#' results <- validateProject(project)
+#' summary <- validationSummary(results)
+#' summary$total_critical_errors
+#' }
 validationSummary <- function(validationResults) {
   summary <- list(
     total_critical_errors = 0,
     total_warnings = 0,
-    files_with_errors = character(),
-    files_with_warnings = character()
+    sections_with_errors = character(),
+    sections_with_warnings = character()
   )
 
   for (name in names(validationResults)) {
@@ -812,12 +885,15 @@ validationSummary <- function(validationResults) {
       if (result$has_critical_errors()) {
         summary$total_critical_errors <- summary$total_critical_errors +
           length(result$critical_errors)
-        summary$files_with_errors <- c(summary$files_with_errors, name)
+        summary$sections_with_errors <- c(summary$sections_with_errors, name)
       }
       if (length(result$warnings) > 0) {
         summary$total_warnings <- summary$total_warnings +
           length(result$warnings)
-        summary$files_with_warnings <- c(summary$files_with_warnings, name)
+        summary$sections_with_warnings <- c(
+          summary$sections_with_warnings,
+          name
+        )
       }
     }
   }

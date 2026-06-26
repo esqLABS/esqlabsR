@@ -34,3 +34,24 @@
       x [plots] plotConfiguration references unknown dataCombinedName: Ghost
       i Run `validateProject(project)` for a full report.
 
+# .abortValidationErrors escapes glue metacharacters in messages
+
+    Code
+      esqlabsR:::.abortValidationErrors(results, "runScenarios")
+    Condition
+      Error in `esqlabsR:::.abortValidationErrors()`:
+      ! Cannot runScenarios: project has 2 critical validation errors.
+      x [scenarios] Scenario "Dose {mg}" is broken
+      x [scenarios] Scenario S{1} also broken
+      i Run `validateProject(project)` for a full report.
+
+# removeObservedData warns when a dataCombined still references it
+
+    Code
+      removeObservedData(project, "MyObs")
+    Condition
+      Warning:
+      Removed observedData "MyObs" is still referenced by 1 dataCombined entry:
+      * DC1
+      i These dataCombined entries now have a dangling reference. Update or remove them.
+

@@ -326,6 +326,7 @@ removeObservedData <- function(project, name) {
   state <- .projectPrivate(project)
 
   if (name %in% names(state$.programmaticDataSets)) {
+    .warnIfObservedDataReferenced(project, name)
     state$.programmaticDataSets[[name]] <- NULL
     matchIdx <- which(vapply(
       project$observedData,
@@ -354,9 +355,42 @@ removeObservedData <- function(project, name) {
     return(invisible(project))
   }
 
+  .warnIfObservedDataReferenced(project, name)
   project$observedData <- project$observedData[-matchIdx[[1]]]
   state$.observedDataNamesCache <- NULL
   invisible(project)
+}
+
+# Warn when a removed observedData name is still referenced as a
+# `dataSet` by any `plots$dataCombined` observed entry. Removal proceeds
+# anyway, leaving the dangling reference for the next validateProject()
+# call to surface, matching the .warnIfReferenced() convention used by
+# the other remove*() mutators.
+#
+# @keywords internal
+# @noRd
+.warnIfObservedDataReferenced <- function(project, name) {
+  dataCombined <- project$plots$dataCombined %||% list()
+  holders <- character()
+  for (dcName in names(dataCombined)) {
+    observed <- dataCombined[[dcName]]$observed %||% list()
+    refs <- vapply(
+      observed,
+      function(e) as.character(e$dataSet %||% NA_character_),
+      character(1)
+    )
+    if (name %in% refs) {
+      holders <- c(holders, dcName)
+    }
+  }
+  if (length(holders) > 0) {
+    cli::cli_warn(c(
+      "Removed observedData {.val {name}} is still referenced by {length(holders)} dataCombined entr{?y/ies}:",
+      "*" = "{holders}",
+      "i" = "These dataCombined entries now have a dangling reference. Update or remove them."
+    ))
+  }
+  invisible(NULL)
 }
 
 # Internal helpers ----

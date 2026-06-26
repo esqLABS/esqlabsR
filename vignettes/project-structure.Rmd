@@ -151,7 +151,7 @@ validation_results <- validateAllConfigurations(exampleProjectConfigurationPath(
 if (isAnyCriticalErrors(validation_results)) {
   # Get detailed summary
   summary <- validationSummary(validation_results)
-  print(paste("Critical errors found in:", paste(summary$files_with_errors, collapse = ", ")))
+  print(paste("Critical errors found in:", paste(summary$sections_with_errors, collapse = ", ")))
   print(paste("Total critical errors:", summary$total_critical_errors))
 } else {
   print("All validations passed!")
