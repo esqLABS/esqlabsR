@@ -70,3 +70,27 @@ test_that("Project round-trips through Excel preserving outputPaths", {
     unlist(project$outputPaths)
   )
 })
+
+test_that("Project round-trips through Excel preserving modelParameterSets", {
+  work_dir <- withr::local_tempdir()
+  file.copy(dirname(exampleProjectPath()), work_dir, recursive = TRUE)
+  project <- loadProject(file.path(work_dir, "Example", "Project.json"))
+
+  expect_gt(length(project$modelParameterSets), 0)
+
+  excel_out <- withr::local_tempdir()
+  exportProjectToExcel(project, outputDir = excel_out, silent = TRUE)
+  reimportedJson <- importProjectFromExcel(
+    file.path(excel_out, "Project.xlsx"),
+    silent = TRUE
+  )
+  reimported <- loadProject(reimportedJson)
+
+  toJson <- function(x) {
+    jsonlite::toJSON(x, auto_unbox = TRUE, null = "null", digits = NA)
+  }
+  expect_equal(
+    toJson(reimported$modelParameterSets),
+    toJson(project$modelParameterSets)
+  )
+})

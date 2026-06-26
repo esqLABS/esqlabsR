@@ -865,7 +865,7 @@ projectConfigurationStatus <- function(...) {
   sheets <- list()
   for (name in names(parameterSets)) {
     params <- parameterSets[[name]]
-    if (is.null(params) || length(params$paths) == 0) {
+    if (is.null(params) || length(params) == 0) {
       sheets[[name]] <- data.frame(
         `Container Path` = character(0),
         `Parameter Name` = character(0),
@@ -876,23 +876,23 @@ projectConfigurationStatus <- function(...) {
       )
       next
     }
-    splitPaths <- lapply(
-      params$paths,
-      .splitParameterPathIntoContainerAndName
-    )
     sheets[[name]] <- data.frame(
       `Container Path` = vapply(
-        splitPaths,
-        function(x) x$containerPath,
+        params,
+        function(p) as.character(p$containerPath),
         character(1)
       ),
       `Parameter Name` = vapply(
-        splitPaths,
-        function(x) x$parameterName,
+        params,
+        function(p) as.character(p$parameterName),
         character(1)
       ),
-      Value = params$values,
-      Units = params$units,
+      Value = vapply(params, function(p) as.numeric(p$value), numeric(1)),
+      Units = vapply(
+        params,
+        function(p) p$units %||% NA_character_,
+        character(1)
+      ),
       check.names = FALSE,
       stringsAsFactors = FALSE
     )
