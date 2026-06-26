@@ -21,8 +21,11 @@ every task on the Project is run.}
 objects that overrides automatic resolution from
 \code{project$observedData}.}
 
-\item{stopIfParameterNotFound}{Logical. Forwarded to
-\code{.prepareScenario()} for parameter merging.}
+\item{stopIfParameterNotFound}{Logical. When \code{TRUE} (default), a
+parameter listed in a scenario's parameter sets but absent from the
+simulation aborts the build; when \code{FALSE}, it is skipped with a
+warning. Forwarded through \code{.prepareScenario()} to
+\code{initializeSimulation()}.}
 }
 \value{
 Named list of per-task results. Each entry is a list with

@@ -154,7 +154,8 @@
   project,
   customParams,
   cache,
-  simulationRunOptions
+  simulationRunOptions,
+  stopIfParameterNotFound = TRUE
 ) {
   # 1. Load simulation
   simulation <- ospsuite::loadSimulation(
@@ -241,7 +242,7 @@
     simulation = simulation,
     individualCharacteristics = individualCharacteristics,
     additionalParams = params,
-    stopIfParameterNotFound = TRUE
+    stopIfParameterNotFound = stopIfParameterNotFound
   )
 
   # 6. Population

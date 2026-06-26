@@ -247,4 +247,3 @@ test_that("Check key-value mappings work", {
     overwrite = TRUE
   ))
 })
-
