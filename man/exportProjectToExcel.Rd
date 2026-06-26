@@ -35,5 +35,13 @@ Invisibly returns the path to the created
 \description{
 Writes Excel configuration files from a \code{Project}
 object (typically loaded from JSON). This is the reverse of
-\code{importProjectFromExcel()}.
+\code{importProjectFromExcel()} and round-trips every project section,
+including the nested \code{dataCombined} plots, observed data, and
+parameter identification.
+
+Section workbooks are written into the project's configured
+\code{configurationsFolder} (relative to \code{outputDir}). Any pre-existing
+section workbook that this exporter manages is cleared first, so a
+section removed from the project does not survive as a stale file and
+reappear on the next import.
 }

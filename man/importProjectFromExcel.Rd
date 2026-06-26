@@ -38,5 +38,7 @@ Invisibly returns the path to the created JSON file.
 \description{
 Reads all Excel configuration files in an esqlabsR project and
 produces a single v2.0 JSON file. This is the migration path from
-Excel-based projects to the JSON-primary workflow.
+Excel-based projects to the JSON-primary workflow, and the inverse of
+\code{exportProjectToExcel()}; together they round-trip every project
+section losslessly.
 }

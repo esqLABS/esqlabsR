@@ -144,6 +144,7 @@ schema. Reflects any in-memory modifications. Read-only.}
     \item \href{#method-Project-.markValidated}{\code{Project$.markValidated()}}
     \item \href{#method-Project-.markModified}{\code{Project$.markModified()}}
     \item \href{#method-Project-.getFilePathsData}{\code{Project$.getFilePathsData()}}
+    \item \href{#method-Project-.getLoadedJson}{\code{Project$.getLoadedJson()}}
     \item \href{#method-Project-sync}{\code{Project$sync()}}
     \item \href{#method-Project-print}{\code{Project$print()}}
     \item \href{#method-Project-clone}{\code{Project$clone()}}
@@ -248,6 +249,19 @@ end-user use; consumed by the Excel import/export bridge.
   \subsection{Usage}{
     \if{html}{\out{<div class="r">}}
     \preformatted{Project$.getFilePathsData()}
+    \if{html}{\out{</div>}}
+  }
+}
+
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Project-.getLoadedJson"></a>}}
+\if{latex}{\out{\hypertarget{method-Project-.getLoadedJson}{}}}
+\subsection{\code{Project$.getLoadedJson()}}{
+  Canonical JSON captured at load, for the sync check's
+external-edit detection. NULL for a project not loaded from a file.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{Project$.getLoadedJson()}
     \if{html}{\out{</div>}}
   }
 }

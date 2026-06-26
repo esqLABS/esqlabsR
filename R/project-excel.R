@@ -4,7 +4,9 @@
 #'
 #' @description Reads all Excel configuration files in an esqlabsR project and
 #' produces a single v2.0 JSON file. This is the migration path from
-#' Excel-based projects to the JSON-primary workflow.
+#' Excel-based projects to the JSON-primary workflow, and the inverse of
+#' `exportProjectToExcel()`; together they round-trip every project
+#' section losslessly.
 #'
 #' @param projectConfigPath Path to the `Project.xlsx` file.
 #'   Defaults to `"Project.xlsx"`.
@@ -275,7 +277,15 @@ snapshotProjectConfiguration <- function(...) {
 #'
 #' @description Writes Excel configuration files from a `Project`
 #' object (typically loaded from JSON). This is the reverse of
-#' `importProjectFromExcel()`.
+#' `importProjectFromExcel()` and round-trips every project section,
+#' including the nested `dataCombined` plots, observed data, and
+#' parameter identification.
+#'
+#' Section workbooks are written into the project's configured
+#' `configurationsFolder` (relative to `outputDir`). Any pre-existing
+#' section workbook that this exporter manages is cleared first, so a
+#' section removed from the project does not survive as a stale file and
+#' reappear on the next import.
 #'
 #' @param project A `Project` object.
 #' @param outputDir Directory where the Excel files will be created. Defaults
