@@ -595,6 +595,29 @@
 
 # save / load SensitivityCalculation ------------
 
+#' Simulation of the first retained `SimulationResults`
+#'
+#' The nested `simulationResults` structure drops entries whose runs all failed,
+#' so individual per-parameter buckets (and their factor entries) may be empty.
+#' Returns the `Simulation` of the first retained result, scanning across
+#' parameters and factors, rather than assuming `[[1]][[1]]` exists.
+#'
+#' @param simulationResults The nested `simulationResults` list from a
+#'   `SensitivityCalculation`.
+#'
+#' @keywords internal
+#' @noRd
+.firstRetainedSimulation <- function(simulationResults) {
+  for (parameterResults in simulationResults) {
+    for (simulationResult in parameterResults) {
+      if (!is.null(simulationResult)) {
+        return(simulationResult$simulation)
+      }
+    }
+  }
+  stop(messages$errorNoRetainedSimulationResults())
+}
+
 #' Save Sensitivity Calculation Results
 #'
 #' Saves the results of a sensitivity analysis to a specified directory,
@@ -658,8 +681,10 @@ saveSensitivityCalculation <- function(
 
   simulationResults <- sensitivityCalculation$simulationResults
 
-  # Store the simulation source path so it can be reloaded later
-  simulation <- simulationResults[[1]][[1]]$simulation
+  # Store the simulation source path so it can be reloaded later. The first
+  # parameter bucket can be empty when all of its runs failed, so locate the
+  # first retained result rather than assuming `[[1]][[1]]` exists.
+  simulation <- .firstRetainedSimulation(simulationResults)
   simFilePath <- simulation$sourceFile
   sensitivityCalculation$simFilePath <- simFilePath
 
@@ -732,22 +757,24 @@ loadSensitivityCalculation <- function(outputDir, simulation = NULL) {
 
   # Resolve the simulation if not provided explicitly. Prefer the pkml bundled
   # in `outputDir` (self-contained, portable) and fall back to the source path
-  # stored in the metadata for folders saved before the pkml was bundled.
+  # stored in the metadata for folders saved before the pkml was bundled. Both
+  # sources share the same error handling so callers get a consistent,
+  # actionable message when loading fails (e.g. a corrupt bundled pkml).
   if (is.null(simulation)) {
     bundledSimPath <- file.path(outputDir, "simulation.pkml")
-    if (file.exists(bundledSimPath)) {
-      simulation <- ospsuite::loadSimulation(bundledSimPath)
+    simSource <- if (file.exists(bundledSimPath)) {
+      bundledSimPath
     } else {
-      simFilePath <- sensitivityCalculation$simFilePath
-      simulation <- tryCatch(
-        {
-          ospsuite::loadSimulation(simFilePath)
-        },
-        error = function(e) {
-          stop(messages$errorFailedToLoadSimulation(simFilePath, e$message))
-        }
-      )
+      sensitivityCalculation$simFilePath
     }
+    simulation <- tryCatch(
+      {
+        ospsuite::loadSimulation(simSource)
+      },
+      error = function(e) {
+        stop(messages$errorFailedToLoadSimulation(simSource, e$message))
+      }
+    )
   }
 
   # Locate simulation result files
