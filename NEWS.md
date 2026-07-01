@@ -2,6 +2,7 @@
 
 ## Minor improvements and bug fixes
 
+- `saveSensitivityCalculation()` now writes the simulation as `simulation.pkml` into the output directory, and `loadSensitivityCalculation()` loads it from there, so a saved sensitivity calculation is self-contained and can be reloaded even when the original simulation file is unavailable (#878).
 - `isTableFormulasEqual()` now compares every point pair of the two table formulas instead of only the first, and treats two empty tables as equal (previously returned `NULL`) (#1056).
 - `loadSensitivityCalculation()` no longer rejects valid saved results that use per-parameter variation ranges, absolute variation, or that dropped failed runs; the integrity check now counts the actually saved result files (#1056).
 - `sensitivityCalculation()` now restores the simulation's original output selections after the analysis, including when an error occurs, so the supplied simulation is left unchanged (#1056).

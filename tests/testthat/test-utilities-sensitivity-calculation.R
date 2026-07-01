@@ -25,9 +25,11 @@ test_that("saveSensitivityCalculation() writes files and respects overwrite flag
     saveSensitivityCalculation(results, outputDir = tempDir, overwrite = TRUE)
   )
 
+  # One CSV per (parameter, factor), plus the metadata file and the bundled
+  # simulation.pkml.
   expect_length(
     list.files(tempDir),
-    (length(variationRange) + 1) * length(parameterPaths) + 1
+    (length(variationRange) + 1) * length(parameterPaths) + 2
   )
 
   # Save again without overwrite should fail
@@ -107,6 +109,10 @@ test_that("loadSensitivityCalculation() fails when simulation can't be retrieved
 
   saveSensitivityCalculation(results, outputDir = tempDir, overwrite = TRUE)
 
+  # Remove the bundled pkml so the source-path fallback is exercised, then point
+  # it at a non-existent file.
+  file.remove(file.path(tempDir, "simulation.pkml"))
+
   metaPath <- file.path(tempDir, "sensitivityCalculation.meta")
   meta <- readRDS(metaPath)
   meta$simFilePath <- tempfile(fileext = ".pkml")
@@ -121,6 +127,42 @@ test_that("loadSensitivityCalculation() fails when simulation can't be retrieved
     conditionMessage(err),
     messages$errorFailedToLoadSimulation(meta$simFilePath, "")
   ))
+})
+
+test_that("saveSensitivityCalculation() writes the simulation as simulation.pkml", {
+  tempDir <- withr::local_tempdir()
+
+  saveSensitivityCalculation(results, outputDir = tempDir, overwrite = TRUE)
+
+  expect_true(file.exists(file.path(tempDir, "simulation.pkml")))
+})
+
+test_that("loadSensitivityCalculation() uses the bundled simulation.pkml when the source path is invalid", {
+  # The saved folder must be self-contained: loading has to succeed from the
+  # bundled pkml even when the original source file is gone (moved/renamed or
+  # the folder was shared with another machine).
+  tempDir <- withr::local_tempdir()
+  saveSensitivityCalculation(results, outputDir = tempDir, overwrite = TRUE)
+
+  metaPath <- file.path(tempDir, "sensitivityCalculation.meta")
+  meta <- readRDS(metaPath)
+  meta$simFilePath <- tempfile(fileext = ".pkml")
+  saveRDS(meta, metaPath)
+
+  expect_no_error(resultLoaded <- loadSensitivityCalculation(tempDir))
+  expect_s3_class(resultLoaded, "SensitivityCalculation")
+})
+
+test_that("loadSensitivityCalculation() falls back to simFilePath when no bundled pkml is present", {
+  # Backward compatibility with folders saved before the pkml was bundled: the
+  # stored source path must still be used when simulation.pkml is absent.
+  tempDir <- withr::local_tempdir()
+  saveSensitivityCalculation(results, outputDir = tempDir, overwrite = TRUE)
+
+  file.remove(file.path(tempDir, "simulation.pkml"))
+
+  expect_no_error(resultLoaded <- loadSensitivityCalculation(tempDir))
+  expect_s3_class(resultLoaded, "SensitivityCalculation")
 })
 
 test_that(".simulationResultsToPKDataFrame() handles a parameter whose runs all failed", {

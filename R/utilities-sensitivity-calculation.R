@@ -599,7 +599,9 @@
 #'
 #' Saves the results of a sensitivity analysis to a specified directory,
 #' including metadata and simulation output required for restoring or sharing
-#' the analysis.
+#' the analysis. The underlying simulation is written to `simulation.pkml` in the
+#' same directory so the saved calculation is self-contained and can be reloaded
+#' without access to the original simulation file.
 #'
 #' @param sensitivityCalculation A named list of class `SensitivityCalculation`
 #'   as returned by [sensitivityCalculation()], containing `simulationResults`,
@@ -657,8 +659,17 @@ saveSensitivityCalculation <- function(
   simulationResults <- sensitivityCalculation$simulationResults
 
   # Store the simulation source path so it can be reloaded later
-  simFilePath <- simulationResults[[1]][[1]]$simulation$sourceFile
+  simulation <- simulationResults[[1]][[1]]$simulation
+  simFilePath <- simulation$sourceFile
   sensitivityCalculation$simFilePath <- simFilePath
+
+  # Save the simulation itself into the output folder so the saved calculation
+  # is self-contained and can be reloaded even when the original source file is
+  # unavailable (e.g. moved, renamed, or the folder shared with another user).
+  ospsuite::saveSimulation(
+    simulation = simulation,
+    filePath = file.path(outputDir, "simulation.pkml")
+  )
 
   # Export each SimulationResults object to CSV
   for (i in seq_along(simulationResults)) {
@@ -688,13 +699,15 @@ saveSensitivityCalculation <- function(
 #'
 #' Restores a previously saved sensitivity calculation from a directory created
 #' with [saveSensitivityCalculation()]. If no simulation object is provided, the
-#' function attempts to load it from the saved simulation file path.
+#' function loads the `simulation.pkml` bundled in the directory, falling back to
+#' the simulation file path stored in the metadata for folders saved before the
+#' pkml was bundled.
 #'
 #' @param outputDir Path to the directory containing the saved sensitivity
 #'   calculation files.
 #' @param simulation Optional. A `Simulation` object. If not provided, the
-#'   function will attempt to load the simulation from the path stored in the
-#'   metadata.
+#'   function loads the `simulation.pkml` bundled in `outputDir`, or, if absent,
+#'   the simulation stored at the source path recorded in the metadata.
 #'
 #' @return A named list of class `SensitivityCalculation`.
 #'
@@ -717,17 +730,24 @@ loadSensitivityCalculation <- function(outputDir, simulation = NULL) {
   # Load sensitivityCalculation structure
   sensitivityCalculation <- readRDS(metaPath)
 
-  # Attempt to load simulation if not provided
+  # Resolve the simulation if not provided explicitly. Prefer the pkml bundled
+  # in `outputDir` (self-contained, portable) and fall back to the source path
+  # stored in the metadata for folders saved before the pkml was bundled.
   if (is.null(simulation)) {
-    simFilePath <- sensitivityCalculation$simFilePath
-    simulation <- tryCatch(
-      {
-        ospsuite::loadSimulation(simFilePath)
-      },
-      error = function(e) {
-        stop(messages$errorFailedToLoadSimulation(simFilePath, e$message))
-      }
-    )
+    bundledSimPath <- file.path(outputDir, "simulation.pkml")
+    if (file.exists(bundledSimPath)) {
+      simulation <- ospsuite::loadSimulation(bundledSimPath)
+    } else {
+      simFilePath <- sensitivityCalculation$simFilePath
+      simulation <- tryCatch(
+        {
+          ospsuite::loadSimulation(simFilePath)
+        },
+        error = function(e) {
+          stop(messages$errorFailedToLoadSimulation(simFilePath, e$message))
+        }
+      )
+    }
   }
 
   # Locate simulation result files
