@@ -100,7 +100,10 @@ test_that("createEsqlabsPlotConfiguration() works with ospsuite::plotIndividualT
   )
 })
 
-test_that(".updatePlotConfiguration is NA-safe when a field comparison yields NA", {
+test_that(".updatePlotConfiguration keeps a user-customized field over the override", {
+  # The field differs from the default (the user set it), so the override is
+  # NOT applied even though the current value carries an NA. A plain `==`
+  # comparison also yields NA here, so this case passed before and after.
   plotConfiguration <- createEsqlabsPlotConfiguration()
   plotConfiguration$titleSize <- NA_real_
 
@@ -110,4 +113,29 @@ test_that(".updatePlotConfiguration is NA-safe when a field comparison yields NA
   )
 
   expect_identical(result$titleSize, NA_real_)
+})
+
+test_that(".updatePlotConfiguration applies the override when a default value carries an NA", {
+  # Regression for the NA-unsafe default comparison: when the current value
+  # still equals the default AND that value contains an NA, `all(x == x)`
+  # returns NA and `isTRUE(NA)` is FALSE, so a legit override was silently
+  # skipped. Build a config whose default `titleMargin` carries a matching NA
+  # (capture the real default first to avoid recursing into the mock).
+  realConfig <- createEsqlabsPlotConfiguration()
+  withNA <- realConfig$titleMargin
+  withNA[[2]] <- NA_real_
+  naDefaultConfig <- realConfig
+  naDefaultConfig$titleMargin <- withNA
+
+  local_mocked_bindings(
+    createEsqlabsPlotConfiguration = function(...) naDefaultConfig
+  )
+  # Current value equals the (NA-carrying) default, so the override must apply.
+  plotConfiguration <- naDefaultConfig
+  result <- .updatePlotConfiguration(
+    plotConfiguration,
+    list(titleMargin = c(5, 5, 5, 5))
+  )
+
+  expect_identical(result$titleMargin, c(5, 5, 5, 5))
 })

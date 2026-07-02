@@ -181,15 +181,13 @@ createPlotsFromExcel <- function(...) {
         numericTest <- suppressWarnings(as.numeric(spaceSplit))
         if (!any(is.na(numericTest))) {
           # User likely used spaces instead of commas
-          stop(
-            messages$excelFieldFormatError(
-              fieldName,
-              originalValue,
-              plotID,
-              "comma-separated"
-            ),
-            call. = FALSE
+          msg <- messages$excelFieldFormatError(
+            fieldName,
+            originalValue,
+            plotID,
+            "comma-separated"
           )
+          cli::cli_abort("{msg}")
         }
       }
     }
@@ -200,16 +198,14 @@ createPlotsFromExcel <- function(...) {
     tryCatch(
       ospsuite.utils::validateIsOfLength(parsed, expectedLength),
       error = function(e) {
-        stop(
-          messages$excelFieldLengthError(
-            fieldName,
-            originalValue,
-            plotID,
-            expectedLength,
-            length(parsed)
-          ),
-          call. = FALSE
+        msg <- messages$excelFieldLengthError(
+          fieldName,
+          originalValue,
+          plotID,
+          expectedLength,
+          length(parsed)
         )
+        cli::cli_abort("{msg}")
       }
     )
   }
@@ -220,15 +216,13 @@ createPlotsFromExcel <- function(...) {
     tryCatch(
       ospsuite.utils::validateIsNumeric(numericParsed),
       error = function(e) {
-        stop(
-          messages$excelFieldTypeError(
-            fieldName,
-            originalValue,
-            plotID,
-            "numeric"
-          ),
-          call. = FALSE
+        msg <- messages$excelFieldTypeError(
+          fieldName,
+          originalValue,
+          plotID,
+          "numeric"
         )
+        cli::cli_abort("{msg}")
       }
     )
     return(numericParsed)
@@ -264,11 +258,12 @@ createPlotsFromExcel <- function(...) {
       for (limitsField in check$limits) {
         limitsValue <- plotConfiguration[[limitsField]]
         if (!is.null(limitsValue) && 0 %in% limitsValue) {
-          warning(messages$warningLogScaleWithZeroLimit(
+          msg <- messages$warningLogScaleWithZeroLimit(
             plotID = plotID,
             axisLimitsField = limitsField,
             axis = check$axis
-          ))
+          )
+          cli::cli_warn("{msg}")
         }
       }
     }
@@ -294,10 +289,11 @@ createPlotsFromExcel <- function(...) {
     }
     # Check if the field name is supported by the configuration class
     if (!.validateClassHasField(object = newConfiguration, field = colName)) {
-      stop(messages$invalidConfigurationPropertyFromExcel(
+      msg <- messages$invalidConfigurationPropertyFromExcel(
         propertyName = colName,
         configurationType = class(newConfiguration)[[1]]
-      ))
+      )
+      cli::cli_abort("{msg}")
     }
     # Special treatment for axis limits - parse and validate early with clear errors
     if (

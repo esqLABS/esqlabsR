@@ -52,7 +52,7 @@ esqlabsColors <- function(nrOfColors) {
     min(esqRedHSV[3], esqGreenHSV[3])
 
   if (nrOfColors < 0) {
-    stop(messages$nrOfColorsShouldBePositive(nrOfColors))
+    cli::cli_abort(messages$nrOfColorsShouldBePositive(nrOfColors))
   }
   if (nrOfColors == 0) {
     return(c())
@@ -237,7 +237,7 @@ createEsqlabsPlotGridConfiguration <- function() {
 
   for (name in names(plotOverrideConfig)) {
     if (!name %in% names(plotConfiguration)) {
-      warning(messages$UnknownPlotConfiguration(name))
+      cli::cli_warn(messages$UnknownPlotConfiguration(name))
       next
     }
 
@@ -246,7 +246,17 @@ createEsqlabsPlotGridConfiguration <- function() {
     } else if (
       !is.null(defaultValues[[name]]) && !is.null(plotConfiguration[[name]])
     ) {
-      if (isTRUE(all(plotConfiguration[[name]] == defaultValues[[name]]))) {
+      # Apply the override only when the current value still equals the
+      # default (the user has not customized it). Use an NA-safe comparison:
+      # a plain `all(x == default)` returns NA when either side holds an NA,
+      # and `isTRUE(NA)` is FALSE, which would silently skip a legit override.
+      if (
+        isTRUE(all.equal(
+          plotConfiguration[[name]],
+          defaultValues[[name]],
+          check.attributes = FALSE
+        ))
+      ) {
         plotConfiguration[[name]] <- plotOverrideConfig[[name]]
       }
     }
