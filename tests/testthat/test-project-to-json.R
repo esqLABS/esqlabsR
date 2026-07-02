@@ -13,22 +13,66 @@ test_that(".projectToJson() returns a JSON-shaped list with the canonical top-le
     c(
       "schemaVersion",
       "esqlabsRVersion",
+      "name",
+      "description",
+      "definitionsFolder",
       "filePaths",
+      "defaultSimulationRunOptions",
       "observedData",
       "outputPaths",
       "scenarios",
-      "modelParameterSets",
+      "parameterSets",
+      "initialConditions",
       "individuals",
-      "individualParameterSets",
       "populations",
       "applications",
-      "applicationParameterSets",
+      "dataCombined",
       "plots",
-      "parameterIdentification"
+      "plotGrids",
+      "parameterIdentification",
+      # The Excel-bridge block is emitted only when the project carries
+      # Excel-bridge fields (the bundled example does).
+      "excel"
     ),
     ignore.order = TRUE
   )
   expect_identical(tree$schemaVersion, "2.0")
+})
+
+test_that(".projectToJson() splits the container path fields into filePaths and excel", {
+  project <- exampleProject()
+  tree <- esqlabsR:::.projectToJson(project)
+
+  # The four live working folders stay in `filePaths`.
+  expect_named(
+    tree$filePaths,
+    c("modelFolder", "populationsFolder", "dataFolder", "outputFolder"),
+    ignore.order = TRUE
+  )
+  # The seven Excel-bridge sheet names move to the `excel` block.
+  expect_named(
+    tree$excel,
+    c(
+      "configurationsFolder",
+      "modelParamsFile",
+      "individualsFile",
+      "populationsFile",
+      "scenariosFile",
+      "applicationsFile",
+      "plotsFile"
+    ),
+    ignore.order = TRUE
+  )
+})
+
+test_that(".projectToJson() omits the excel block for a from-scratch project", {
+  project <- Project$new()
+  tree <- esqlabsR:::.projectToJson(project)
+
+  expect_false("excel" %in% names(tree))
+  expect_null(tree$name)
+  expect_null(tree$description)
+  expect_null(tree$defaultSimulationRunOptions)
 })
 
 test_that(".projectToJson() rejects non-Project input", {
@@ -89,16 +133,8 @@ test_that("round-trip is structurally identical for the bundled example", {
   expect_identical(reloaded$filePaths, project$filePaths)
   expect_identical(reloaded$outputPaths, project$outputPaths)
   expect_identical(
-    reloaded$modelParameterSets,
-    project$modelParameterSets
-  )
-  expect_identical(
-    reloaded$individualParameterSets,
-    project$individualParameterSets
-  )
-  expect_identical(
-    reloaded$applicationParameterSets,
-    project$applicationParameterSets
+    reloaded$parameterSets,
+    project$parameterSets
   )
   expect_identical(reloaded$individuals, project$individuals)
   expect_identical(reloaded$populations, project$populations)
@@ -119,17 +155,17 @@ test_that("round-trip is structurally identical for the bundled example", {
   )
 })
 
-test_that(".dataCombinedToNestedJson re-adds the name field and drops empty sublists", {
+test_that(".dataCombinedToNestedJson re-adds the id field and drops empty sublists", {
   parsed <- list(
     DC1 = list(simulated = list(list(label = "a")), observed = list()),
     DC2 = list(simulated = list(), observed = list(list(label = "b")))
   )
   json <- esqlabsR:::.dataCombinedToNestedJson(parsed)
   expect_length(json, 2)
-  expect_equal(json[[1]]$name, "DC1")
+  expect_equal(json[[1]]$dataCombinedId, "DC1")
   expect_equal(json[[1]]$simulated[[1]]$label, "a")
   expect_null(json[[1]]$observed) # empty observed dropped
-  expect_equal(json[[2]]$name, "DC2")
+  expect_equal(json[[2]]$dataCombinedId, "DC2")
   expect_null(json[[2]]$simulated)
   expect_equal(json[[2]]$observed[[1]]$label, "b")
 })
@@ -139,20 +175,33 @@ test_that(".dataCombinedToNestedJson handles NULL and empty input", {
   expect_identical(esqlabsR:::.dataCombinedToNestedJson(NULL), list())
 })
 
-test_that(".dataFrameToListOfLists drops NA cells per row", {
-  df <- data.frame(
-    plotId = c("P1", "P2"),
-    plotType = c("individual", "population"),
-    title = c("T1", NA),
-    stringsAsFactors = FALSE
+test_that(".plotEntriesToJson strips the entry class and drops the list name", {
+  entries <- list(
+    P1 = structure(
+      list(plotId = "P1", plotType = "individual", title = "T1"),
+      class = c("Plot", "list")
+    ),
+    P2 = structure(
+      list(plotId = "P2", plotType = "population"),
+      class = c("Plot", "list")
+    )
   )
-  result <- esqlabsR:::.dataFrameToListOfLists(df)
+  result <- esqlabsR:::.plotEntriesToJson(entries)
+  # A plain unnamed array of records, with the Plot class stripped so it never
+  # leaks into JSON.
+  expect_null(names(result))
   expect_length(result, 2)
+  expect_identical(class(result[[1]]), "list")
   expect_equal(result[[1]]$title, "T1")
-  expect_null(result[[2]]$title) # NA dropped
+  expect_false("title" %in% names(result[[2]]))
 })
 
-test_that(".plotsToJson returns NULL when project has no plots section", {
+test_that(".plotEntriesToJson returns an empty list for NULL or empty", {
+  expect_identical(esqlabsR:::.plotEntriesToJson(NULL), list())
+  expect_identical(esqlabsR:::.plotEntriesToJson(list()), list())
+})
+
+test_that("the plots-section serializers return NULL when empty", {
   tmp <- withr::local_tempfile(fileext = ".json")
   jsonlite::write_json(
     list(schemaVersion = "2.0", esqlabsRVersion = "6.0.0"),
@@ -160,7 +209,9 @@ test_that(".plotsToJson returns NULL when project has no plots section", {
     auto_unbox = TRUE
   )
   project <- loadProject(tmp)
-  expect_null(esqlabsR:::.plotsToJson(project))
+  expect_null(esqlabsR:::.dataCombinedSectionToJson(project))
+  expect_null(esqlabsR:::.plotsSectionToJson(project))
+  expect_null(esqlabsR:::.plotGridsSectionToJson(project))
 })
 
 test_that("round-trip preserves length-1 arrays as arrays, not scalars", {
@@ -169,12 +220,12 @@ test_that("round-trip preserves length-1 arrays as arrays, not scalars", {
   esqlabsR:::.saveProjectJson(project, out)
 
   raw <- jsonlite::fromJSON(out, simplifyVector = FALSE)
-  # outputPathIds for Aciclovir_iv has one entry; auto_unbox must
+  # outputPaths for Aciclovir_iv has one entry; auto_unbox must
   # not collapse it to a scalar string.
-  ids <- raw$scenarios[[1L]]$outputPathIds
+  ids <- raw$scenarios[[1L]]$outputPaths
   expect_type(ids, "list")
   expect_length(ids, 1L)
-  expect_identical(ids[[1L]], "Aciclovir_PVB")
+  expect_identical(ids[[1L]], "aciclovir_pvb")
 })
 
 test_that("round-trip preserves NULL fields", {
@@ -183,10 +234,10 @@ test_that("round-trip preserves NULL fields", {
   esqlabsR:::.saveProjectJson(project, out)
 
   raw <- jsonlite::fromJSON(out, simplifyVector = FALSE)
-  # The first scenario has populationId: null and steadyStateTime: null.
+  # The first scenario has population: null and steadyStateTime: null.
   # Without `null = "null"`, jsonlite would drop them; the field would be
   # absent on reload, breaking equality.
-  expect_null(raw$scenarios[[1L]]$populationId)
+  expect_null(raw$scenarios[[1L]]$population)
   expect_null(raw$scenarios[[1L]]$steadyStateTime)
 })
 
@@ -242,9 +293,8 @@ test_that("empty map sections serialize as JSON objects, not arrays", {
   expect_match(text, '"filePaths":\\s*\\{\\s*\\}')
   expect_match(text, '"outputPaths":\\s*\\{\\s*\\}')
   expect_match(text, '"applications":\\s*\\{\\s*\\}')
-  expect_match(text, '"modelParameterSets":\\s*\\{\\s*\\}')
-  expect_match(text, '"individualParameterSets":\\s*\\{\\s*\\}')
-  expect_match(text, '"applicationParameterSets":\\s*\\{\\s*\\}')
+  expect_match(text, '"parameterSets":\\s*\\{\\s*\\}')
+  expect_match(text, '"initialConditions":\\s*\\{\\s*\\}')
   expect_match(text, '"scenarios":\\s*\\[\\s*\\]')
   expect_match(text, '"individuals":\\s*\\[\\s*\\]')
   expect_match(text, '"populations":\\s*\\[\\s*\\]')
@@ -268,13 +318,17 @@ test_that("empty map sections survive a round-trip as empty named lists", {
   # sections that way), so jsonlite returns a *named* empty list. The
   # contract is that this representation is stable: a second save/reload
   # produces an identical structure.
+  # Section accessors wrap the stored list in a printable DefinitionList; unwrap
+  # to assert the underlying named-empty shape.
   empty_named <- structure(list(), names = character(0L))
   expect_identical(reloaded$filePaths, empty_named)
-  expect_identical(reloaded$outputPaths, empty_named)
-  expect_identical(reloaded$applications, empty_named)
-  expect_identical(reloaded$modelParameterSets, empty_named)
-  expect_identical(reloaded$individualParameterSets, empty_named)
-  expect_identical(reloaded$applicationParameterSets, empty_named)
+  expect_identical(.unwrapDefinitionList(reloaded$outputPaths), empty_named)
+  expect_identical(.unwrapDefinitionList(reloaded$applications), empty_named)
+  expect_identical(.unwrapDefinitionList(reloaded$parameterSets), empty_named)
+  expect_identical(
+    .unwrapDefinitionList(reloaded$initialConditions),
+    empty_named
+  )
 
   # And the round-trip is stable from there: re-saving and re-loading does
   # not drift further.
@@ -285,16 +339,39 @@ test_that("empty map sections survive a round-trip as empty named lists", {
   expect_identical(reloaded2$outputPaths, reloaded$outputPaths)
   expect_identical(reloaded2$applications, reloaded$applications)
   expect_identical(
-    reloaded2$modelParameterSets,
-    reloaded$modelParameterSets
+    reloaded2$parameterSets,
+    reloaded$parameterSets
   )
-  expect_identical(
-    reloaded2$individualParameterSets,
-    reloaded$individualParameterSets
+})
+
+test_that("a populated initialConditions section round-trips through a snapshot", {
+  # An inline snapshot with one initial-condition set. Loading it, saving a
+  # snapshot, and reloading yields an identical section (a fixed point).
+  src <- withr::local_tempfile(fileext = ".json")
+  jsonlite::write_json(
+    list(
+      schemaVersion = "2.0",
+      esqlabsRVersion = "6.0.0",
+      initialConditions = list(
+        testinitialset = list(
+          list(path = "Organism|A|Concentration", value = 1.5, unit = "mg/l"),
+          list(path = "Organism|B|Concentration", value = 0.5, unit = "µmol/l")
+        )
+      )
+    ),
+    src,
+    auto_unbox = TRUE
   )
+  project <- loadProject(src)
+  expect_named(project$initialConditions, "testinitialset")
+  expect_length(project$initialConditions$testinitialset, 2L)
+
+  out <- withr::local_tempfile(fileext = ".json")
+  esqlabsR:::.saveProjectJson(project, out)
+  reloaded <- loadProject(out)
   expect_identical(
-    reloaded2$applicationParameterSets,
-    reloaded$applicationParameterSets
+    reloaded$initialConditions,
+    project$initialConditions
   )
 })
 
@@ -305,7 +382,7 @@ test_that("round-trip preserves a steady-state scenario including unit conversio
 
   raw <- jsonlite::fromJSON(out, simplifyVector = FALSE)
   ss <- Filter(
-    function(s) s$name == "Aciclovir_iv_steadystate",
+    function(s) s$name == "aciclovir_iv_steadystate",
     raw$scenarios
   )[[1L]]
 
@@ -317,22 +394,22 @@ test_that("round-trip preserves a steady-state scenario including unit conversio
   expect_identical(ss$steadyStateTimeUnit, "h")
 })
 
-test_that("round-trip preserves outputPathIds order", {
+test_that("round-trip preserves outputPaths order", {
   project <- exampleProject()
   out <- withr::local_tempfile(fileext = ".json")
   esqlabsR:::.saveProjectJson(project, out)
 
   raw <- jsonlite::fromJSON(out, simplifyVector = FALSE)
   ss <- Filter(
-    function(s) s$name == "Aciclovir_iv_steadystate",
+    function(s) s$name == "aciclovir_iv_steadystate",
     raw$scenarios
   )[[1L]]
 
   # JSON declared fat_cell, PVB (non-alphabetical). The order must be
   # preserved through parse -> serialize.
   expect_identical(
-    ss$outputPathIds,
-    list("Aciclovir_fat_cell", "Aciclovir_PVB")
+    ss$outputPaths,
+    list("aciclovir_fat_cell", "aciclovir_pvb")
   )
 })
 
@@ -340,7 +417,7 @@ test_that("steadyState=false with a declared time and unit round-trips", {
   raw <- list(
     list(
       name = "S",
-      individualId = "I",
+      individual = "I",
       modelFile = "m.pkml",
       steadyState = FALSE,
       steadyStateTime = 2,
@@ -369,7 +446,7 @@ test_that("a standalone simulationTimeUnit round-trips when simulationTime is nu
   raw <- list(
     list(
       name = "S",
-      individualId = "I",
+      individual = "I",
       modelFile = "m.pkml",
       simulationTimeUnit = "h"
     )
@@ -385,7 +462,7 @@ test_that("a standalone simulationTimeUnit round-trips when simulationTime is nu
   expect_identical(out$simulationTimeUnit, "h")
 })
 
-test_that("populationId is emitted even when simulationType has drifted", {
+test_that("population is emitted even when simulationType has drifted", {
   sc <- Scenario(
     scenarioName = "S",
     modelFile = "m.pkml",
@@ -397,7 +474,7 @@ test_that("populationId is emitted even when simulationType has drifted", {
 
   project <- .fakeProject(scenarios = list(S = sc))
   out <- esqlabsR:::.scenariosToJson(project)[[1L]]
-  expect_identical(out$populationId, "Pop")
+  expect_identical(out$population, "Pop")
 })
 
 test_that(".validateScenarios warns on populationId / simulationType drift", {
@@ -409,28 +486,24 @@ test_that(".validateScenarios warns on populationId / simulationType drift", {
   expect_true(any(grepl("populationId but simulationType", msgs)))
 })
 
-test_that(".scenariosToJson errors when scenario outputPaths reference unknown ids", {
-  project <- exampleProject()
-  # Mutate the first scenario to add a named path whose id is not in
-  # project$outputPaths. (Parser would have rejected this, but a Chapter
-  # 7+ programmatic mutation could land us here.)
-  project$scenarios[[1L]]$outputPaths <- c(
-    project$scenarios[[1L]]$outputPaths,
-    c(UnknownId = "Organism|NotDeclared|Path")
-  )
+test_that(".scenariosToJson keeps unknown outputPaths (referential, lazy)", {
+  # An unknown outputPathId is a referential issue caught lazily by the
+  # cross-reference validator, not a serialization error: the id round-trips
+  # verbatim so a transiently-dangling reference is not lost on save.
+  sc <- Scenario(scenarioName = "S", modelFile = "m.pkml")
+  sc$outputPaths <- c(UnknownId = "Organism|NotDeclared|Path")
+  project <- .fakeProject(scenarios = list(S = sc))
 
-  expect_error(
-    esqlabsR:::.projectToJson(project),
-    "unknown outputPathIds.*UnknownId"
-  )
+  out <- esqlabsR:::.scenariosToJson(project)[[1L]]
+  expect_identical(out$outputPaths, list("UnknownId"))
 })
 
 test_that(".scenariosToJson errors when outputPaths has unnamed elements", {
-  project <- exampleProject()
-  # Strip names to simulate a programmatic mutation that violates the invariant.
-  project$scenarios[[1L]]$outputPaths <- unname(
-    project$scenarios[[1L]]$outputPaths
-  )
+  # Build the bad state on an in-memory project so the serializer guard is
+  # exercised directly (a tree-backed project would fail-fast at write).
+  sc <- Scenario(scenarioName = "S", modelFile = "m.pkml")
+  sc$outputPaths <- unname(c(PVB = "Organism|PVB|Drug"))
+  project <- .fakeProject(scenarios = list(S = sc))
 
   expect_error(
     esqlabsR:::.projectToJson(project),
@@ -439,21 +512,24 @@ test_that(".scenariosToJson errors when outputPaths has unnamed elements", {
 })
 
 test_that(".scenariosToJson errors when simulateSteadyState is TRUE without a unit", {
-  project <- exampleProject()
-  # Aciclovir_iv has simulateSteadyState=FALSE and no unit.
-  # Flip the flag without setting the unit — the round-trip cannot
-  # carry the steady-state time, so the serializer must reject it.
-  project$scenarios[["Aciclovir_iv"]]$simulateSteadyState <- TRUE
+  # The round-trip cannot carry the steady-state time without a unit, so the
+  # serializer must reject it. Built on an in-memory project to exercise the
+  # serializer guard directly.
+  sc <- Scenario(scenarioName = "S", modelFile = "m.pkml")
+  sc$simulateSteadyState <- TRUE
+  project <- .fakeProject(scenarios = list(S = sc))
 
   expect_error(
     esqlabsR:::.projectToJson(project),
-    "Aciclovir_iv.*simulateSteadyState=TRUE.*steadyStateTimeUnit"
+    "S.*simulateSteadyState=TRUE.*steadyStateTimeUnit"
   )
 })
 
 test_that("round-trip preserves empty modelParameterSets as a JSON array", {
   project <- exampleProject()
-  project$scenarios[["Aciclovir_iv"]]$modelParameterSets <- character(0)
+  scenarios <- project$.getSection("scenarios")
+  scenarios[["aciclovir_iv"]]$modelParameterSets <- character(0)
+  project$.setSection("scenarios", scenarios)
 
   out <- withr::local_tempfile(fileext = ".json")
   esqlabsR:::.saveProjectJson(project, out)
@@ -461,21 +537,23 @@ test_that("round-trip preserves empty modelParameterSets as a JSON array", {
 
   # Empty modelParameterSets must serialise as `[]`, not `null`, so the
   # JSON shape stays an array.
-  mp <- raw$scenarios[[1L]]$modelParameterSets
+  mp <- raw$scenarios[[1L]]$parameterSets
   expect_type(mp, "list")
   expect_length(mp, 0L)
 })
 
-test_that("round-trip preserves empty outputPathIds as a JSON array", {
+test_that("round-trip preserves empty outputPaths as a JSON array", {
   project <- exampleProject()
-  project$scenarios[["Aciclovir_iv"]]$outputPaths <- NULL
+  scenarios <- project$.getSection("scenarios")
+  scenarios[["aciclovir_iv"]]$outputPaths <- NULL
+  project$.setSection("scenarios", scenarios)
 
   out <- withr::local_tempfile(fileext = ".json")
   esqlabsR:::.saveProjectJson(project, out)
   raw <- jsonlite::fromJSON(out, simplifyVector = FALSE)
 
   # Absent / empty outputPaths must serialise as `[]`, not `null`.
-  ids <- raw$scenarios[[1L]]$outputPathIds
+  ids <- raw$scenarios[[1L]]$outputPaths
   expect_type(ids, "list")
   expect_length(ids, 0L)
 })
@@ -492,11 +570,11 @@ test_that(".scenariosToJson preserves both ids when two ids map to the same lite
     },
     "scenarios": [{
       "name": "S",
-      "individualId": "I",
-      "populationId": null,
+      "individual": "I",
+      "population": null,
       "readPopulationFromCSV": false,
-      "modelParameterSets": [],
-      "applicationProtocol": null,
+      "parameterSets": [],
+      "application": null,
       "simulationTime": null,
       "simulationTimeUnit": null,
       "steadyState": false,
@@ -504,7 +582,7 @@ test_that(".scenariosToJson preserves both ids when two ids map to the same lite
       "steadyStateTimeUnit": null,
       "overwriteFormulasInSS": false,
       "modelFile": "M.pkml",
-      "outputPathIds": ["primary", "alias"]
+      "outputPaths": ["primary", "alias"]
     }],
     "modelParameterSets": {},
     "individuals": [],
@@ -518,5 +596,5 @@ test_that(".scenariosToJson preserves both ids when two ids map to the same lite
   project <- suppressWarnings(loadProject(jsonPath))
   rebuilt <- esqlabsR:::.scenariosToJson(project)
 
-  expect_equal(rebuilt[[1]]$outputPathIds, list("primary", "alias"))
+  expect_equal(rebuilt[[1]]$outputPaths, list("primary", "alias"))
 })
