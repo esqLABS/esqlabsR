@@ -29,6 +29,40 @@ test_that("`initializeSimulation()` does not fail when additionalParams is empty
   expect_true(isOfType(simulationResults, "SimulationResults"))
 })
 
+test_that("`initializeSimulation()` applies additionalInitialConditions", {
+  simulation <- loadSimulation(system.file(
+    "extdata",
+    "simple.pkml",
+    package = "ospsuite"
+  ))
+  initialConditions <- list(
+    paths = "Organism|A",
+    values = 42,
+    units = "µmol"
+  )
+  initializeSimulation(
+    simulation,
+    additionalInitialConditions = initialConditions
+  )
+  applied <- ospsuite::getQuantityValuesByPath(
+    quantityPaths = "Organism|A",
+    simulation = simulation
+  )
+  expect_equal(applied, 42)
+})
+
+test_that("`initializeSimulation()` does not fail when additionalInitialConditions is empty", {
+  simulation <- loadSimulation(system.file(
+    "extdata",
+    "simple.pkml",
+    package = "ospsuite"
+  ))
+  emptyIC <- list(paths = NULL, values = NULL, units = NULL)
+  initializeSimulation(simulation, additionalInitialConditions = emptyIC)
+  simulationResults <- runSimulations(simulation)
+  expect_true(isOfType(simulationResults, "SimulationResults"))
+})
+
 
 test_that("`compareSimulations()` produces no differences with identical simulations", {
   simPath <- system.file("extdata", "simple.pkml", package = "ospsuite")
@@ -80,15 +114,16 @@ test_that("`compareSimulations()` lists differencies on parameter correctly", {
 # getAllApplicationParameters
 
 simPath <- system.file("extdata", "Aciclovir.pkml", package = "ospsuite")
-simulation <- loadSimulation(simPath)
 
 test_that("It returns application parameters when no molecules are defined", {
+  simulation <- loadSimulation(simPath)
   applicationParams <- getAllApplicationParameters(simulation = simulation)
 
   expect_length(applicationParams, 5)
 })
 
 test_that("It returns application parameters when a molecule are defined", {
+  simulation <- loadSimulation(simPath)
   molecule <- "Aciclovir"
   applicationParams <- getAllApplicationParameters(
     simulation = simulation,
@@ -99,6 +134,7 @@ test_that("It returns application parameters when a molecule are defined", {
 })
 
 test_that("It returns an empty list when a molecule is defined that is not in the model", {
+  simulation <- loadSimulation(simPath)
   molecule <- "Foo"
   applicationParams <- getAllApplicationParameters(
     simulation = simulation,

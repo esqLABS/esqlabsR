@@ -30,8 +30,8 @@ test_that("paramSheets argument is soft-deprecated", {
     suppressMessages(createScenariosFromPKML(
       pkmlFixture,
       project = project,
-      scenarioNames = "Test1",
-      modelParameterSets = "Global",
+      scenarios = "test1",
+      parameterSets = "Global",
       paramSheets = "Aciclovir"
     )),
     class = "lifecycle_warning_deprecated"
@@ -40,22 +40,20 @@ test_that("paramSheets argument is soft-deprecated", {
 
 # createScenariosFromPKML: in-place mutation ----
 
-test_that("createScenariosFromPKML adds scenarios in place, marks the project modified, and returns it invisibly", {
+test_that("createScenariosFromPKML adds scenarios in place and returns the project invisibly", {
   project <- testProject()
-  expect_false(project$modified)
 
   expect_snapshot(
     result <- createScenariosFromPKML(
       pkmlFixture,
       project = project,
-      scenarioNames = "Seeded"
+      scenarios = "seeded"
     )
   )
 
   expect_identical(result, project)
-  expect_true("Seeded" %in% names(project$scenarios))
-  expect_s3_class(project$scenarios[["Seeded"]], "Scenario")
-  expect_true(project$modified)
+  expect_true("seeded" %in% names(project$scenarios))
+  expect_s3_class(project$scenarios[["seeded"]], "Scenario")
 })
 
 # createScenariosFromPKML: output path resolution ----
@@ -67,33 +65,33 @@ test_that("PKML-extracted output paths reuse existing project ids for known lite
   suppressMessages(createScenariosFromPKML(
     pkmlFixture,
     project = project,
-    scenarioNames = "Seeded"
+    scenarios = "seeded"
   ))
 
-  sc <- project$scenarios[["Seeded"]]
+  sc <- project$scenarios[["seeded"]]
   # The PVB path is already registered as `Aciclovir_PVB`, so its id is reused.
-  expect_true("Aciclovir_PVB" %in% names(sc$outputPaths))
+  expect_true("aciclovir_pvb" %in% names(sc$outputPaths))
   expect_true(all(names(sc$outputPaths) %in% names(project$outputPaths)))
 })
 
 test_that("PKML-extracted output paths register generated readable ids when unknown", {
   project <- .fakeProject(
-    modelParameterSets = list(Global = list())
+    parameterSets = list(global = list())
   )
   project$modelFolder <- dirname(pkmlFixture)
 
   suppressMessages(createScenariosFromPKML(
     pkmlFixture,
     project = project,
-    scenarioNames = "Seeded"
+    scenarios = "seeded"
   ))
 
-  sc <- project$scenarios[["Seeded"]]
+  sc <- project$scenarios[["seeded"]]
   expect_gt(length(sc$outputPaths), 0)
   # Every id used by the scenario must be registered on the project.
   expect_true(all(names(sc$outputPaths) %in% names(project$outputPaths)))
   # Generated ids are readable (built from the path's last two segments).
-  expect_match(names(sc$outputPaths), "^Aciclovir_", all = TRUE)
+  expect_match(names(sc$outputPaths), "^aciclovir_", all = TRUE)
 })
 
 test_that("user-supplied named outputPaths register under the user ids", {
@@ -103,13 +101,13 @@ test_that("user-supplied named outputPaths register under the user ids", {
   suppressMessages(createScenariosFromPKML(
     pkmlFixture,
     project = project,
-    scenarioNames = "Seeded",
+    scenarios = "seeded",
     outputPaths = c(
       plasma = "Organism|VenousBlood|Plasma|Aciclovir|Concentration"
     )
   ))
 
-  sc <- project$scenarios[["Seeded"]]
+  sc <- project$scenarios[["seeded"]]
   expect_named(sc$outputPaths, "plasma")
   expect_identical(
     project$outputPaths[["plasma"]],
@@ -119,32 +117,32 @@ test_that("user-supplied named outputPaths register under the user ids", {
 
 test_that("user-supplied outputPaths reuse the existing id when the literal path already exists", {
   project <- testProject()
-  existingPath <- project$outputPaths[["Aciclovir_PVB"]]
+  existingPath <- project$outputPaths[["aciclovir_pvb"]]
   idsBefore <- names(project$outputPaths)
 
   suppressMessages(createScenariosFromPKML(
     pkmlFixture,
     project = project,
-    scenarioNames = "Seeded",
+    scenarios = "seeded",
     # User invents a different id for an already-registered path.
     outputPaths = stats::setNames(existingPath, "myAlias")
   ))
 
-  sc <- project$scenarios[["Seeded"]]
+  sc <- project$scenarios[["seeded"]]
   # The registered id wins; the user alias is dropped, no new entry added.
-  expect_named(sc$outputPaths, "Aciclovir_PVB")
+  expect_named(sc$outputPaths, "aciclovir_pvb")
   expect_identical(names(project$outputPaths), idsBefore)
 })
 
 test_that("user alias ignored in favour of registered id emits an inform", {
   project <- testProject()
-  existingPath <- project$outputPaths[["Aciclovir_PVB"]]
+  existingPath <- project$outputPaths[["aciclovir_pvb"]]
 
   expect_snapshot(
     createScenariosFromPKML(
       pkmlFixture,
       project = project,
-      scenarioNames = "Seeded",
+      scenarios = "seeded",
       outputPaths = stats::setNames(existingPath, "myAlias")
     )
   )
@@ -160,8 +158,8 @@ test_that("named outputPaths colliding with an existing id mapped to a different
     createScenariosFromPKML(
       pkmlFixture,
       project = project,
-      scenarioNames = "Seeded",
-      outputPaths = c(Aciclovir_PVB = "Organism|Some|Other|Path")
+      scenarios = "seeded",
+      outputPaths = c(aciclovir_pvb = "Organism|Some|Other|Path")
     )
   )
 
@@ -176,11 +174,11 @@ test_that("comma-separated outputPaths strings are split and registered per scen
   suppressMessages(createScenariosFromPKML(
     pkmlFixture,
     project = project,
-    scenarioNames = "Seeded",
+    scenarios = "seeded",
     outputPaths = "Organism|A|Conc, Organism|B|Conc"
   ))
 
-  sc <- project$scenarios[["Seeded"]]
+  sc <- project$scenarios[["seeded"]]
   expect_length(sc$outputPaths, 2)
   expect_setequal(
     unname(sc$outputPaths),
@@ -195,34 +193,34 @@ test_that("list-valued outputPaths assign per-scenario named vectors", {
   suppressMessages(createScenariosFromPKML(
     c(pkmlFixture, pkmlFixture),
     project = project,
-    scenarioNames = c("A", "B"),
+    scenarios = c("a", "b"),
     outputPaths = list(
       c(p1 = "Organism|A|Conc"),
       c(p2 = "Organism|B|Conc")
     )
   ))
 
-  expect_named(project$scenarios[["A"]]$outputPaths, "p1")
-  expect_named(project$scenarios[["B"]]$outputPaths, "p2")
+  expect_named(project$scenarios[["a"]]$outputPaths, "p1")
+  expect_named(project$scenarios[["b"]]$outputPaths, "p2")
 })
 
 # createScenariosFromPKML: model parameter sets ----
 
-test_that("comma-separated modelParameterSets are split and FK-validated", {
+test_that("comma-separated parameterSets are split and FK-validated", {
   project <- testProject()
   suppressMessages(createScenariosFromPKML(
     pkmlFixture,
     project = project,
-    scenarioNames = "Seeded",
-    modelParameterSets = "Global, Aciclovir"
+    scenarios = "seeded",
+    parameterSets = "global, aciclovir"
   ))
   expect_identical(
-    project$scenarios[["Seeded"]]$modelParameterSets,
-    c("Global", "Aciclovir")
+    project$scenarios[["seeded"]]$modelParameterSets,
+    c("global", "aciclovir")
   )
 })
 
-test_that("unknown modelParameterSets abort and leave the project unchanged", {
+test_that("unknown parameterSets abort and leave the project unchanged", {
   project <- testProject()
   scenariosBefore <- names(project$scenarios)
   expect_snapshot(
@@ -230,8 +228,8 @@ test_that("unknown modelParameterSets abort and leave the project unchanged", {
     createScenariosFromPKML(
       pkmlFixture,
       project = project,
-      scenarioNames = "Seeded",
-      modelParameterSets = "DoesNotExist"
+      scenarios = "seeded",
+      parameterSets = "DoesNotExist"
     )
   )
   expect_identical(names(project$scenarios), scenariosBefore)
@@ -244,36 +242,38 @@ test_that("applicationProtocol defaults to NA and the seeded scenario passes val
   suppressMessages(createScenariosFromPKML(
     pkmlFixture,
     project = project,
-    scenarioNames = "Seeded"
+    scenarios = "seeded"
   ))
-  expect_true(is.na(project$scenarios[["Seeded"]]$applicationProtocol))
+  expect_true(is.na(project$scenarios[["seeded"]]$applicationProtocol))
   expect_false(isAnyCriticalErrors(validateProject(project)))
 })
 
-test_that("user applicationProtocols are taken verbatim without Excel sanitization", {
+test_that("a user application is taken verbatim without Excel sanitization", {
   project <- testProject()
-  longProtocol <- "Aciclovir_iv_250mg"
+  # A canonical (already-lowercase) protocol id is taken as-is: no warning,
+  # no Excel-specific mangling beyond id canonicalization.
+  longProtocol <- "aciclovir_iv_250mg"
   expect_no_warning(suppressMessages(createScenariosFromPKML(
     pkmlFixture,
     project = project,
-    scenarioNames = "Seeded",
-    applicationProtocols = longProtocol
+    scenarios = "seeded",
+    application = longProtocol
   )))
   expect_identical(
-    project$scenarios[["Seeded"]]$applicationProtocol,
+    project$scenarios[["seeded"]]$applicationProtocol,
     longProtocol
   )
 })
 
-test_that("unknown applicationProtocols abort", {
+test_that("an unknown application aborts", {
   project <- testProject()
   expect_snapshot(
     error = TRUE,
     createScenariosFromPKML(
       pkmlFixture,
       project = project,
-      scenarioNames = "Seeded",
-      applicationProtocols = "NoSuchProtocol"
+      scenarios = "seeded",
+      application = "NoSuchProtocol"
     )
   )
 })
@@ -287,10 +287,10 @@ test_that("duplicate scenario names are expanded with numeric suffixes", {
     createScenariosFromPKML(
       c(pkmlFixture, pkmlFixture),
       project = project,
-      scenarioNames = c("S", "S")
+      scenarios = c("s", "s")
     )
   )
-  expect_true(all(c("S", "S_2") %in% names(project$scenarios)))
+  expect_true(all(c("s", "s_2") %in% names(project$scenarios)))
 })
 
 test_that("duplicate-name expansion respects explicit later names", {
@@ -299,9 +299,9 @@ test_that("duplicate-name expansion respects explicit later names", {
   suppressWarnings(suppressMessages(createScenariosFromPKML(
     rep(pkmlFixture, 3),
     project = project,
-    scenarioNames = c("S", "S", "S_2")
+    scenarios = c("s", "s", "s_2")
   )))
-  expect_true(all(c("S", "S_2", "S_2_2") %in% names(project$scenarios)))
+  expect_true(all(c("s", "s_2", "s_2_2") %in% names(project$scenarios)))
 })
 
 test_that("scenario names colliding with pre-existing project scenarios are suffixed", {
@@ -309,19 +309,19 @@ test_that("scenario names colliding with pre-existing project scenarios are suff
   suppressWarnings(suppressMessages(createScenariosFromPKML(
     pkmlFixture,
     project = project,
-    scenarioNames = "TestScenario"
+    scenarios = "testscenario"
   )))
-  expect_true("TestScenario_2" %in% names(project$scenarios))
+  expect_true("testscenario_2" %in% names(project$scenarios))
 })
 
-test_that("scenarioNames = NULL derives names from the simulation and dedupes a recycled PKML", {
+test_that("scenarios = NULL derives names from the simulation and dedupes a recycled PKML", {
   project <- .fakeProject()
   project$modelFolder <- dirname(pkmlFixture)
   suppressWarnings(suppressMessages(createScenariosFromPKML(
     pkmlFixture,
     project = project,
-    individualId = NULL,
-    populationId = NULL,
+    individual = NULL,
+    population = NULL,
     simulationTime = c("0, 1, 1", "0, 2, 1", "0, 3, 1")
   )))
   # Three scenarios from one recycled PKML, names deduped off the sim name.
@@ -336,9 +336,9 @@ test_that("simulation time and unit are extracted from the PKML output schema", 
   suppressMessages(createScenariosFromPKML(
     pkmlFixture,
     project = project,
-    scenarioNames = "Seeded"
+    scenarios = "seeded"
   ))
-  sc <- project$scenarios[["Seeded"]]
+  sc <- project$scenarios[["seeded"]]
   expect_false(is.null(sc$simulationTime))
   expect_false(is.null(sc$simulationTimeUnit))
 })
@@ -348,11 +348,11 @@ test_that("user simulationTime overrides PKML extraction", {
   suppressMessages(createScenariosFromPKML(
     pkmlFixture,
     project = project,
-    scenarioNames = "Seeded",
+    scenarios = "seeded",
     simulationTime = "0, 24, 60",
     simulationTimeUnit = "h"
   ))
-  sc <- project$scenarios[["Seeded"]]
+  sc <- project$scenarios[["seeded"]]
   expect_identical(sc$simulationTimeUnit, "h")
   expect_identical(sc$simulationTime, list(c(0, 24, 60)))
 })
@@ -364,10 +364,10 @@ test_that("a user simulationTimeUnit is recorded on the extracted scenario", {
   suppressMessages(createScenariosFromPKML(
     pkmlFixture,
     project = project,
-    scenarioNames = "Seeded",
+    scenarios = "seeded",
     simulationTimeUnit = "min"
   ))
-  expect_identical(project$scenarios[["Seeded"]]$simulationTimeUnit, "min")
+  expect_identical(project$scenarios[["seeded"]]$simulationTimeUnit, "min")
 })
 
 # createScenariosFromPKML: steady state ----
@@ -377,12 +377,12 @@ test_that("steadyState = TRUE seeds a base-unit steadyStateTime and a unit", {
   suppressMessages(createScenariosFromPKML(
     pkmlFixture,
     project = project,
-    scenarioNames = "SS",
+    scenarios = "ss",
     steadyState = TRUE,
     steadyStateTime = 10,
     steadyStateTimeUnit = "h"
   ))
-  sc <- project$scenarios[["SS"]]
+  sc <- project$scenarios[["ss"]]
   expect_true(sc$simulateSteadyState)
   # 10 h stored in base units (minutes).
   expect_equal(sc$steadyStateTime, 600)
@@ -394,10 +394,10 @@ test_that("steadyState defaults to 1000 min when no time is supplied", {
   suppressMessages(createScenariosFromPKML(
     pkmlFixture,
     project = project,
-    scenarioNames = "SS",
+    scenarios = "ss",
     steadyState = TRUE
   ))
-  sc <- project$scenarios[["SS"]]
+  sc <- project$scenarios[["ss"]]
   expect_equal(sc$steadyStateTime, 1000)
   expect_identical(sc$steadyStateTimeUnit, "min")
 })
@@ -405,10 +405,10 @@ test_that("steadyState defaults to 1000 min when no time is supplied", {
 test_that("seeded scenarios match addScenario-created scenarios field for field", {
   fromPkml <- testProject()
   suppressMessages(createScenariosFromPKML(
-    pkmlFixture,
+    file.path(fromPkml$modelFolder, "Aciclovir.pkml"),
     project = fromPkml,
-    scenarioNames = "Seeded",
-    outputPaths = c(Aciclovir_PVB = fromPkml$outputPaths[["Aciclovir_PVB"]]),
+    scenarios = "seeded",
+    outputPaths = c(aciclovir_pvb = fromPkml$outputPaths[["aciclovir_pvb"]]),
     simulationTime = "0, 24, 60",
     simulationTimeUnit = "h"
   ))
@@ -416,16 +416,16 @@ test_that("seeded scenarios match addScenario-created scenarios field for field"
   viaAdd <- testProject()
   addScenario(
     viaAdd,
-    scenarioName = "Seeded",
+    id = "seeded",
     modelFile = "Aciclovir.pkml",
-    outputPathIds = "Aciclovir_PVB",
+    outputPaths = "aciclovir_pvb",
     simulationTime = "0, 24, 60",
     simulationTimeUnit = "h"
   )
 
   expect_equal(
-    fromPkml$scenarios[["Seeded"]],
-    viaAdd$scenarios[["Seeded"]]
+    fromPkml$scenarios[["seeded"]],
+    viaAdd$scenarios[["seeded"]]
   )
 })
 
@@ -434,11 +434,11 @@ test_that("seeded scenarios match addScenario-created scenarios field for field"
 test_that("modelFile is stored relative to project$modelFolder as a plain character", {
   project <- testProject()
   suppressMessages(createScenariosFromPKML(
-    pkmlFixture,
+    file.path(project$modelFolder, "Aciclovir.pkml"),
     project = project,
-    scenarioNames = "Seeded"
+    scenarios = "seeded"
   ))
-  sc <- project$scenarios[["Seeded"]]
+  sc <- project$scenarios[["seeded"]]
   expect_identical(sc$modelFile, "Aciclovir.pkml")
   expect_type(sc$modelFile, "character")
 })
@@ -450,10 +450,10 @@ test_that("NULL modelFolder falls back to the absolute pkml path with a warning"
     suppressMessages(createScenariosFromPKML(
       pkmlFixture,
       project = project,
-      scenarioNames = "Seeded"
+      scenarios = "seeded"
     ))
   )
-  sc <- project$scenarios[["Seeded"]]
+  sc <- project$scenarios[["seeded"]]
   expect_true(fs::is_absolute_path(sc$modelFile))
 })
 
@@ -466,37 +466,35 @@ test_that("inconsistent vector argument lengths abort", {
     createScenariosFromPKML(
       rep(pkmlFixture, 2),
       project = project,
-      scenarioNames = c("A", "B", "C")
+      scenarios = c("A", "B", "C")
     )
   )
 })
 
 test_that("a failing addScenario rolls back scenarios and outputPaths", {
   project <- .fakeProject(
-    modelParameterSets = list(Global = list())
+    parameterSets = list(global = list())
   )
   project$modelFolder <- dirname(pkmlFixture)
   scenariosBefore <- names(project$scenarios)
   outputsBefore <- names(project$outputPaths)
-  modifiedBefore <- project$modified
 
   expect_error(
     suppressMessages(createScenariosFromPKML(
       rep(pkmlFixture, 2),
       project = project,
-      scenarioNames = c("Ok", "Bad"),
-      modelParameterSets = c("Global", "DoesNotExist")
+      scenarios = c("Ok", "Bad"),
+      parameterSets = c("Global", "DoesNotExist")
     ))
   )
 
   expect_identical(names(project$scenarios), scenariosBefore)
   expect_identical(names(project$outputPaths), outputsBefore)
-  expect_identical(project$modified, modifiedBefore)
 })
 
 test_that("a failing addScenario rollback preserves validatedSinceMutation", {
   project <- .fakeProject(
-    modelParameterSets = list(Global = list())
+    parameterSets = list(global = list())
   )
   project$modelFolder <- dirname(pkmlFixture)
   project$.markValidated()
@@ -505,60 +503,89 @@ test_that("a failing addScenario rollback preserves validatedSinceMutation", {
     suppressMessages(createScenariosFromPKML(
       rep(pkmlFixture, 2),
       project = project,
-      scenarioNames = c("Ok", "Bad"),
-      modelParameterSets = c("Global", "DoesNotExist")
+      scenarios = c("Ok", "Bad"),
+      parameterSets = c("Global", "DoesNotExist")
     ))
   )
 
   expect_true(project$validatedSinceMutation)
 })
 
+test_that("a failing addScenario rolls back the on-disk scenario tree", {
+  # The in-memory rollback tests use `.fakeProject()` (no directory), so the
+  # branch that writes the restored section back to disk is never hit. Use a
+  # real on-disk project so the rollback materializes to `definitions/scenarios`.
+  project <- testProject()
+  project$modelFolder <- dirname(pkmlFixture)
+  scenariosDir <- file.path(
+    project$projectDirPath,
+    project$definitionsFolder,
+    "scenarios"
+  )
+  filesBefore <- sort(list.files(scenariosDir))
+
+  expect_error(
+    suppressMessages(createScenariosFromPKML(
+      rep(pkmlFixture, 2),
+      project = project,
+      scenarios = c("Ok", "Bad"),
+      parameterSets = c("global", "doesnotexist")
+    ))
+  )
+
+  # The successful first scenario must not survive on disk.
+  expect_identical(sort(list.files(scenariosDir)), filesBefore)
+  reloaded <- loadProject(project$projectFilePath)
+  expect_named(
+    reloaded$scenarios,
+    names(project$scenarios),
+    ignore.order = TRUE
+  )
+  expect_false("ok" %in% names(reloaded$scenarios))
+})
+
 # createScenariosFromPKML: end-to-end round trips ----
 
-test_that("end-to-end: seed from PKML, saveProject, loadProject round-trips", {
+test_that("end-to-end: seed from PKML, snapshot, loadProject round-trips", {
   project <- testProject()
   suppressMessages(createScenariosFromPKML(
     pkmlFixture,
     project = project,
-    scenarioNames = "Seeded"
+    scenarios = "seeded"
   ))
 
-  dir <- withr::local_tempdir()
-  path <- file.path(dir, "Project.json")
-  saveProject(project, path)
+  path <- saveSnapshot(project, local_projectPath())
   reloaded <- loadProject(path)
 
   expect_equal(
-    reloaded$scenarios[["Seeded"]],
-    project$scenarios[["Seeded"]]
+    reloaded$scenarios[["seeded"]],
+    project$scenarios[["seeded"]]
   )
   expect_equal(reloaded$outputPaths, project$outputPaths)
 })
 
-test_that("end-to-end: steadyState = TRUE round-trips through save and load", {
+test_that("end-to-end: steadyState = TRUE round-trips through snapshot and load", {
   project <- testProject()
   suppressMessages(createScenariosFromPKML(
     pkmlFixture,
     project = project,
-    scenarioNames = "SS",
+    scenarios = "ss",
     steadyState = TRUE,
     steadyStateTime = 10,
     steadyStateTimeUnit = "h"
   ))
 
-  dir <- withr::local_tempdir()
-  path <- file.path(dir, "Project.json")
-  saveProject(project, path)
+  path <- saveSnapshot(project, local_projectPath())
   reloaded <- loadProject(path)
 
-  expect_equal(reloaded$scenarios[["SS"]], project$scenarios[["SS"]])
+  expect_equal(reloaded$scenarios[["ss"]], project$scenarios[["ss"]])
 })
 
 # Internal helpers ----
 
 test_that(".dedupeScenarioNames probes suffixes against project and call names", {
-  out <- suppressWarnings(.dedupeScenarioNames(c("S", "S", "S_2"), character()))
-  expect_identical(out, c("S", "S_2", "S_2_2"))
+  out <- suppressWarnings(.dedupeScenarioNames(c("s", "s", "s_2"), character()))
+  expect_identical(out, c("s", "s_2", "s_2_2"))
 
   expect_warning(
     .dedupeScenarioNames("TestScenario", "TestScenario"),
@@ -613,19 +640,20 @@ test_that(".extractSimulationTimeFromPkml returns NULLs when the schema has no i
 })
 
 test_that(".generateOutputPathId builds readable ids from the last two segments", {
+  # Generated ids are canonical (lowercase) so addOutputPath() does not warn.
   expect_identical(
     .generateOutputPathId(
       "Organism|Fat|Intracellular|Aciclovir|Concentration in container",
       character()
     ),
-    "Aciclovir_Concentration_in_container"
+    "aciclovir_concentration_in_container"
   )
   expect_identical(
     .generateOutputPathId(
       "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)",
-      "Aciclovir_Plasma_Peripheral_Venous_Blood"
+      "aciclovir_plasma_peripheral_venous_blood"
     ),
-    "Aciclovir_Plasma_Peripheral_Venous_Blood_2"
+    "aciclovir_plasma_peripheral_venous_blood_2"
   )
 })
 
