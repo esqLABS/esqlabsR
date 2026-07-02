@@ -612,6 +612,10 @@ print.Scenario <- function(x, ...) {
 #'   aborts with a formatted summary on critical errors. Set to
 #'   `FALSE` to skip the pre-flight check (e.g. when the caller has
 #'   already validated the project).
+#' @param stopIfParameterNotFound Logical. If `TRUE` (default), a
+#'   `customParams` path that matches no parameter in a scenario's
+#'   simulation aborts the run. Set to `FALSE` to skip such paths with a
+#'   warning instead.
 #'
 #' @returns A named list keyed by scenario name. Each entry is a list
 #'   with `simulation` (the initialized [ospsuite::Simulation]),
@@ -629,7 +633,8 @@ runScenarios <- function(
   scenarios = NULL,
   customParams = NULL,
   simulationRunOptions = NULL,
-  validate = TRUE
+  validate = TRUE,
+  stopIfParameterNotFound = TRUE
 ) {
   if (!inherits(project, "Project")) {
     cli::cli_abort(
@@ -642,7 +647,8 @@ runScenarios <- function(
     scenarios,
     customParams,
     simulationRunOptions,
-    validate
+    validate,
+    stopIfParameterNotFound
   )
 }
 

@@ -81,6 +81,42 @@ test_that("runScenarios lets an explicit simulationRunOptions argument win over 
   expect_identical(captured$numberOfCores, 5L)
 })
 
+test_that("runScenarios threads stopIfParameterNotFound through to .prepareScenario", {
+  # The public arg must reach the per-scenario prep. Same capture-then-abort
+  # mock, no native simulation. Default is TRUE; an explicit FALSE must win.
+  withr::local_options(lifecycle_verbosity = "quiet")
+  project <- .testProject()
+
+  captured <- NULL
+  local_mocked_bindings(
+    .prepareScenario = function(
+      scenario,
+      project,
+      ...,
+      stopIfParameterNotFound
+    ) {
+      captured <<- stopIfParameterNotFound
+      stop("stop before simulating")
+    }
+  )
+
+  expect_error(
+    runScenarios(project, scenarios = "testscenario"),
+    "stop before simulating"
+  )
+  expect_true(captured)
+
+  expect_error(
+    runScenarios(
+      project,
+      scenarios = "testscenario",
+      stopIfParameterNotFound = FALSE
+    ),
+    "stop before simulating"
+  )
+  expect_false(captured)
+})
+
 test_that(".parameterSetToStructure flattens record-shape into paths/values/units", {
   records <- list(
     list(

@@ -476,7 +476,8 @@
   scenarioNames = NULL,
   customParams = NULL,
   simulationRunOptions = NULL,
-  validate = TRUE
+  validate = TRUE,
+  stopIfParameterNotFound = TRUE
 ) {
   validateIsOfType(project, "Project")
   .validateParametersStructure(
@@ -532,7 +533,8 @@
       project = project,
       customParams = customParams,
       cache = cache,
-      simulationRunOptions = simulationRunOptions
+      simulationRunOptions = simulationRunOptions,
+      stopIfParameterNotFound = stopIfParameterNotFound
     )
     names(prepared)[[idx]] <- name
   }
