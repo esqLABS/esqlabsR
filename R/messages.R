@@ -366,6 +366,14 @@ messages$errorSavingScenarioResult <- function(scenarioName, conditionMessage) {
     "i" = safe_msg
   )
 }
+
+messages$scenarioResultNameCollision <- function(colliding) {
+  cli::format_message(c(
+    "x" = "Scenario names collide once {.val /} and {.val \\\\} are replaced with {.val _} for file names:",
+    "*" = "{.val {colliding}}",
+    "i" = "Rename the scenarios so their file-safe names differ before saving."
+  ))
+}
 # sensitivity-calculation####
 messages$noPKDataToWrite <- function(saOutputFilePath) {
   cliFormat(
@@ -695,29 +703,6 @@ messages$excelNoCompleteRows <- function() {
   ))
 }
 
-messages$excelSheetEmptyOrInvalid <- function() {
-  cli::format_message(c(
-    "Excel sheet name was empty or invalid:",
-    "i" = "Using default name {.val Sheet}"
-  ))
-}
-
-messages$excelSheetSanitized <- function(originalName) {
-  cli::format_message(c(
-    "Excel sheet name became empty after sanitization:",
-    "x" = "Original name: {.val {originalName}}",
-    "i" = "Using default name {.val Sheet}"
-  ))
-}
-
-messages$excelSheetSanitizedInfo <- function(originalName, sanitizedName) {
-  cli::format_message(c(
-    "Excel sheet name was sanitized to comply with naming rules:",
-    "x" = "Original name: {.val {originalName}}",
-    "v" = "Sanitized name: {.val {sanitizedName}}",
-    "i" = "Excel sheet names must be 31 characters or less and cannot contain: / \\\\ * [ ] : ?"
-  ))
-}
 
 messages$excelNotInSync <- function(message = "") {
   cliFormat(
@@ -868,4 +853,11 @@ messages$observedDataDataFolderNotDeclared <- function(file) {
   cliFormat(
     "{.field dataFolder} is not declared in {.code filePaths}; cannot resolve {.path {file}}."
   )
+}
+
+messages$observedDataNameCollision <- function(duplicates) {
+  cli::format_message(c(
+    "x" = "Duplicate observed-data set name{?s} across sources: {.val {duplicates}}.",
+    "i" = "Each loaded {.cls DataSet} must have a unique name; rename the source or the data set."
+  ))
 }
