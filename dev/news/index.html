@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">esqlabsR</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.7.0.9003</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.7.0.9004</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -57,6 +57,8 @@
 <div class="section level3">
 <h3 id="minor-improvements-and-bug-fixes-development-version">Minor improvements and bug fixes<a class="anchor" aria-label="anchor" href="#minor-improvements-and-bug-fixes-development-version"></a></h3>
 <ul><li>
+<code><a href="../reference/saveSensitivityCalculation.html">saveSensitivityCalculation()</a></code> now writes the simulation as <code>simulation.pkml</code> into the output directory, and <code><a href="../reference/loadSensitivityCalculation.html">loadSensitivityCalculation()</a></code> loads it from there, so a saved sensitivity calculation is self-contained and can be reloaded even when the original simulation file is unavailable (<a href="https://github.com/esqLABS/esqlabsR/issues/878" class="external-link">#878</a>).</li>
+<li>
 <code><a href="../reference/isTableFormulasEqual.html">isTableFormulasEqual()</a></code> now compares every point pair of the two table formulas instead of only the first, and treats two empty tables as equal (previously returned <code>NULL</code>) (<a href="https://github.com/esqLABS/esqlabsR/issues/1056" class="external-link">#1056</a>).</li>
 <li>
 <code><a href="../reference/loadSensitivityCalculation.html">loadSensitivityCalculation()</a></code> no longer rejects valid saved results that use per-parameter variation ranges, absolute variation, or that dropped failed runs; the integrity check now counts the actually saved result files (<a href="https://github.com/esqLABS/esqlabsR/issues/1056" class="external-link">#1056</a>).</li>

@@ -4,6 +4,14 @@
 
 ### Minor improvements and bug fixes
 
+- [`saveSensitivityCalculation()`](https://esqlabs.github.io/esqlabsR/dev/reference/saveSensitivityCalculation.md)
+  now writes the simulation as `simulation.pkml` into the output
+  directory, and
+  [`loadSensitivityCalculation()`](https://esqlabs.github.io/esqlabsR/dev/reference/loadSensitivityCalculation.md)
+  loads it from there, so a saved sensitivity calculation is
+  self-contained and can be reloaded even when the original simulation
+  file is unavailable
+  ([\#878](https://github.com/esqLABS/esqlabsR/issues/878)).
 - [`isTableFormulasEqual()`](https://esqlabs.github.io/esqlabsR/dev/reference/isTableFormulasEqual.md)
   now compares every point pair of the two table formulas instead of
   only the first, and treats two empty tables as equal (previously
