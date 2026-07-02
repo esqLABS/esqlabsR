@@ -30,6 +30,23 @@ test_that(".validateClassHasField is NA-safe when the object has NA names", {
   expect_true(esqlabsR:::.validateClassHasField(object, "b"))
 })
 
+test_that("the plot-build assertion helpers raise cli (rlang) errors", {
+  expect_error(
+    esqlabsR:::.assertPlotConfigurationsBuildable(
+      list(a = list(plotId = "p1", plotType = "individual")),
+      dataCombinedNames = character()
+    ),
+    class = "rlang_error"
+  )
+  expect_error(
+    esqlabsR:::.assertPlotGridsBuildable(
+      list(g = list(plotGridId = "g1", plotIds = "ghost")),
+      plotIDs = "p1"
+    ),
+    class = "rlang_error"
+  )
+})
+
 # createPlots(project, ...) tests ----
 
 test_that("createPlots errors on non-Project input", {
@@ -43,13 +60,13 @@ test_that("createPlots returns empty list when project has no plots", {
 
 test_that("createPlots builds plot grids for Example project", {
   project <- exampleProject()
-  simulated <- runScenarios(project, scenarioNames = "Aciclovir_iv")
-  gridName <- project$plots$plotGrids$name[[1]]
+  simulated <- runScenarios(project, scenarios = "aciclovir_iv")
+  gridName <- names(project$plotGrids)[[1]]
 
   result <- createPlots(
     project,
-    plotGridNames = gridName,
-    simulatedScenarios = simulated
+    plotGrids = gridName,
+    scenarioResults = simulated
   )
 
   expect_named(result, gridName)
@@ -58,13 +75,13 @@ test_that("createPlots builds plot grids for Example project", {
 
 test_that("createPlots succeeds when a plot belongs to no grid", {
   project <- exampleProject()
-  path <- project$outputPaths$Aciclovir_PVB
+  path <- project$outputPaths$aciclovir_pvb
   addDataCombined(
     project,
     "DC_outside",
     simulated = list(list(
       label = "sim",
-      scenario = "Aciclovir_iv",
+      scenario = "aciclovir_iv",
       path = path,
       group = "g"
     ))
@@ -72,71 +89,71 @@ test_that("createPlots succeeds when a plot belongs to no grid", {
   # Plot referencing DC_outside is in no grid; createPlots(project) builds
   # all grids and must not abort just because DC_outside is unbuilt.
   addPlot(project, "P_outside", "DC_outside", "individual")
-  simulated <- runScenarios(project, scenarioNames = "Aciclovir_iv")
+  simulated <- runScenarios(project, scenarios = "aciclovir_iv")
 
   result <- suppressWarnings(createPlots(
     project,
-    simulatedScenarios = simulated,
+    scenarioResults = simulated,
     validate = FALSE
   ))
 
-  expect_named(result, "Individual_diagnostics")
-  expect_s3_class(result[["Individual_diagnostics"]], "patchwork")
+  expect_named(result, "individual_diagnostics")
+  expect_s3_class(result[["individual_diagnostics"]], "patchwork")
 })
 
 test_that("createPlots grid subset ignores plots in other grids", {
   project <- exampleProject()
-  path <- project$outputPaths$Aciclovir_PVB
+  path <- project$outputPaths$aciclovir_pvb
   addDataCombined(
     project,
     "DC_other",
     simulated = list(list(
       label = "sim",
-      scenario = "Aciclovir_iv_population",
+      scenario = "aciclovir_iv_population",
       path = path,
       group = "g"
     ))
   )
   addPlot(project, "P_other", "DC_other", "population")
-  addPlotGrid(project, "Grid_other", plotIds = "P_other")
-  simulated <- runScenarios(project, scenarioNames = "Aciclovir_iv")
+  addPlotGrid(project, "Grid_other", plots = "P_other")
+  simulated <- runScenarios(project, scenarios = "aciclovir_iv")
 
   # Requesting only the original grid must not abort over Grid_other's DC,
   # which references a scenario absent from `simulated`.
   result <- suppressWarnings(createPlots(
     project,
-    plotGridNames = "Individual_diagnostics",
-    simulatedScenarios = simulated,
+    plotGrids = "individual_diagnostics",
+    scenarioResults = simulated,
     validate = FALSE
   ))
 
-  expect_named(result, "Individual_diagnostics")
+  expect_named(result, "individual_diagnostics")
 })
 
-test_that("createPlots aborts on unknown plotGridNames when stopIfNotFound", {
+test_that("createPlots aborts on unknown plotGrids when stopIfNotFound", {
   project <- exampleProject()
-  simulated <- runScenarios(project, scenarioNames = "Aciclovir_iv")
+  simulated <- runScenarios(project, scenarios = "aciclovir_iv")
 
   expect_snapshot(
     error = TRUE,
     createPlots(
       project,
-      plotGridNames = "DoesNotExist",
-      simulatedScenarios = simulated,
+      plotGrids = "DoesNotExist",
+      scenarioResults = simulated,
       validate = FALSE,
       stopIfNotFound = TRUE
     )
   )
 })
 
-test_that("createPlots silently drops unknown plotGridNames when not stopIfNotFound", {
+test_that("createPlots silently drops unknown plotGrids when not stopIfNotFound", {
   project <- exampleProject()
-  simulated <- runScenarios(project, scenarioNames = "Aciclovir_iv")
+  simulated <- runScenarios(project, scenarios = "aciclovir_iv")
 
   result <- suppressWarnings(createPlots(
     project,
-    plotGridNames = "DoesNotExist",
-    simulatedScenarios = simulated,
+    plotGrids = "DoesNotExist",
+    scenarioResults = simulated,
     validate = FALSE,
     stopIfNotFound = FALSE
   ))
@@ -145,15 +162,15 @@ test_that("createPlots silently drops unknown plotGridNames when not stopIfNotFo
 
 test_that("createPlots builds every plot type end to end", {
   project <- testProject()
-  path <- project$outputPaths$Aciclovir_PVB
+  path <- project$outputPaths$aciclovir_pvb
   dataSet <- names(loadObservedData(project))
 
   addDataCombined(
     project,
-    "DC_ind",
+    "dc_ind",
     simulated = list(list(
       label = "sim",
-      scenario = "TestScenario",
+      scenario = "testscenario",
       path = path,
       group = "g"
     )),
@@ -161,38 +178,38 @@ test_that("createPlots builds every plot type end to end", {
   )
   addDataCombined(
     project,
-    "DC_pop",
+    "dc_pop",
     simulated = list(list(
       label = "sim",
-      scenario = "PopulationScenario",
+      scenario = "populationscenario",
       path = path,
       group = "g"
     ))
   )
-  addPlot(project, "P_ind", "DC_ind", "individual")
-  addPlot(project, "P_pop", "DC_pop", "population")
-  addPlot(project, "P_ovs", "DC_ind", "observedVsSimulated")
-  addPlot(project, "P_rvs", "DC_ind", "residualsVsSimulated")
-  addPlot(project, "P_rvt", "DC_ind", "residualsVsTime")
+  addPlot(project, "p_ind", "dc_ind", "individual")
+  addPlot(project, "p_pop", "dc_pop", "population")
+  addPlot(project, "p_ovs", "dc_ind", "observedVsSimulated")
+  addPlot(project, "p_rvs", "dc_ind", "residualsVsSimulated")
+  addPlot(project, "p_rvt", "dc_ind", "residualsVsTime")
   addPlotGrid(
     project,
-    "Grid_all",
-    plotIds = c("P_ind", "P_pop", "P_ovs", "P_rvs", "P_rvt")
+    "grid_all",
+    plots = c("p_ind", "p_pop", "p_ovs", "p_rvs", "p_rvt")
   )
   simulated <- runScenarios(
     project,
-    scenarioNames = c("TestScenario", "PopulationScenario")
+    scenarios = c("testscenario", "populationscenario")
   )
 
   result <- suppressWarnings(createPlots(
     project,
-    plotGridNames = "Grid_all",
-    simulatedScenarios = simulated,
+    plotGrids = "grid_all",
+    scenarioResults = simulated,
     validate = FALSE
   ))
 
-  expect_named(result, "Grid_all")
-  expect_s3_class(result[["Grid_all"]], "patchwork")
+  expect_named(result, "grid_all")
+  expect_s3_class(result[["grid_all"]], "patchwork")
 })
 
 test_that("createPlots survives a save/load round trip that drops the title column", {
@@ -204,35 +221,35 @@ test_that("createPlots survives a save/load round trip that drops the title colu
     overwrite = TRUE
   )
   project <- loadProject(file.path(dir, "Project.json"))
-  path <- project$outputPaths$Aciclovir_PVB
+  path <- project$outputPaths$aciclovir_pvb
   addDataCombined(
     project,
-    "DC_nt",
+    "dc_nt",
     simulated = list(list(
       label = "sim",
-      scenario = "Aciclovir_iv",
+      scenario = "aciclovir_iv",
       path = path,
       group = "g"
     ))
   )
-  addPlot(project, "P_nt", "DC_nt", "individual")
-  addPlotGrid(project, "Grid_nt", plotIds = "P_nt")
+  addPlot(project, "p_nt", "dc_nt", "individual")
+  addPlotGrid(project, "grid_nt", plots = "p_nt")
   # Drop the original titled plot/grid so no plot or grid sets a title; the
   # title column is then dropped on save and absent on reload.
-  removePlotGrid(project, "Individual_diagnostics")
-  removePlot(project, "P1")
-  saveProject(project)
+  removePlotGrid(project, "individual_diagnostics")
+  removePlot(project, "p1")
+  # The plots section is write-through, so the edits are already on disk.
 
   reloaded <- loadProject(file.path(dir, "Project.json"))
-  expect_false("title" %in% names(reloaded$plots$plotConfiguration))
-  simulated <- runScenarios(reloaded, scenarioNames = "Aciclovir_iv")
+  expect_false("title" %in% names(reloaded$plots$p_nt))
+  simulated <- runScenarios(reloaded, scenarios = "aciclovir_iv")
 
   result <- suppressWarnings(createPlots(
     reloaded,
-    simulatedScenarios = simulated,
+    scenarioResults = simulated,
     validate = FALSE
   ))
-  expect_named(result, "Grid_nt")
+  expect_named(result, "grid_nt")
 })
 
 test_that("createPlots observedVsSimulated survives a dropped foldDistance column", {
@@ -244,34 +261,186 @@ test_that("createPlots observedVsSimulated survives a dropped foldDistance colum
     overwrite = TRUE
   )
   project <- loadProject(file.path(dir, "Project.json"))
-  path <- project$outputPaths$Aciclovir_PVB
+  path <- project$outputPaths$aciclovir_pvb
   dataSet <- names(loadObservedData(project))
   addDataCombined(
     project,
-    "DC_ovs",
+    "dc_ovs",
     simulated = list(list(
       label = "sim",
-      scenario = "Aciclovir_iv",
+      scenario = "aciclovir_iv",
       path = path,
       group = "g"
     )),
     observed = list(list(label = "obs", dataSet = dataSet, group = "g"))
   )
   # Title kept, foldDistance left unset so its column is dropped on save.
-  addPlot(project, "P_ovs", "DC_ovs", "observedVsSimulated", title = "OvS")
-  addPlotGrid(project, "Grid_ovs", plotIds = "P_ovs", title = "Grid OvS")
-  removePlotGrid(project, "Individual_diagnostics")
-  removePlot(project, "P1")
-  saveProject(project)
+  addPlot(project, "p_ovs", "dc_ovs", "observedVsSimulated", title = "OvS")
+  addPlotGrid(project, "grid_ovs", plots = "p_ovs", title = "Grid OvS")
+  removePlotGrid(project, "individual_diagnostics")
+  removePlot(project, "p1")
+  # The plots section is write-through, so the edits are already on disk.
 
   reloaded <- loadProject(file.path(dir, "Project.json"))
-  expect_false("foldDistance" %in% names(reloaded$plots$plotConfiguration))
-  simulated <- runScenarios(reloaded, scenarioNames = "Aciclovir_iv")
+  expect_false(
+    "foldDistance" %in% names(reloaded$plots$p_ovs)
+  )
+  simulated <- runScenarios(reloaded, scenarios = "aciclovir_iv")
 
   result <- suppressWarnings(createPlots(
     reloaded,
-    simulatedScenarios = simulated,
+    scenarioResults = simulated,
     validate = FALSE
   ))
-  expect_named(result, "Grid_ovs")
+  expect_named(result, "grid_ovs")
+})
+
+# createPlots(plots = ...): standalone single plots ----
+
+test_that("createPlots(plots) returns a single plot keyed by plotId", {
+  project <- exampleProject()
+  simulated <- runScenarios(project, scenarios = "aciclovir_iv")
+
+  result <- suppressWarnings(createPlots(
+    project,
+    plots = "p1",
+    scenarioResults = simulated,
+    validate = FALSE
+  ))
+
+  # One entry, keyed by the plotId, holding the rendered single plot (not a
+  # 1-cell grid).
+  expect_named(result, "p1")
+  expect_false(inherits(result$p1, "patchwork"))
+  expect_s3_class(result$p1, "ggplot")
+})
+
+test_that("createPlots unions plotGrids and plots, keyed by id", {
+  project <- exampleProject()
+  simulated <- runScenarios(project, scenarios = "aciclovir_iv")
+
+  result <- suppressWarnings(createPlots(
+    project,
+    plotGrids = "individual_diagnostics",
+    plots = "p1",
+    scenarioResults = simulated,
+    validate = FALSE
+  ))
+
+  # The grid (keyed by plotGridId) and the standalone plot (keyed by plotId)
+  # both appear: a plotId that is also inside a requested grid still gets its
+  # own standalone entry (independent selectors, no de-dup).
+  expect_setequal(names(result), c("individual_diagnostics", "p1"))
+  expect_s3_class(result$individual_diagnostics, "patchwork")
+  expect_s3_class(result$p1, "ggplot")
+})
+
+test_that("createPlots(plots) aborts on an unknown plotId when stopIfNotFound", {
+  project <- exampleProject()
+  simulated <- runScenarios(project, scenarios = "aciclovir_iv")
+
+  expect_snapshot(
+    error = TRUE,
+    createPlots(
+      project,
+      plots = "ghost_plot",
+      scenarioResults = simulated,
+      validate = FALSE,
+      stopIfNotFound = TRUE
+    )
+  )
+})
+
+test_that("createPlots(plots) drops an unknown plotId when not stopIfNotFound", {
+  project <- exampleProject()
+  simulated <- runScenarios(project, scenarios = "aciclovir_iv")
+
+  result <- suppressWarnings(createPlots(
+    project,
+    plots = "ghost_plot",
+    scenarioResults = simulated,
+    validate = FALSE,
+    stopIfNotFound = FALSE
+  ))
+  expect_identical(result, list())
+})
+
+test_that("createPlots with neither argument still returns all grids", {
+  project <- exampleProject()
+  simulated <- runScenarios(project, scenarios = "aciclovir_iv")
+
+  result <- suppressWarnings(createPlots(
+    project,
+    scenarioResults = simulated,
+    validate = FALSE
+  ))
+
+  # Default (neither plotGrids nor plots): every grid, no standalone plot.
+  expect_named(result, "individual_diagnostics")
+  expect_s3_class(result$individual_diagnostics, "patchwork")
+})
+
+test_that("createPlots NULL/NULL default returns every grid keyed by gridId", {
+  # A second grid so "all grids" is not coincidentally the lone example grid;
+  # a regression defaulting to an empty or single-grid result would be caught.
+  project <- exampleProject()
+  path <- project$outputPaths$aciclovir_pvb
+  addDataCombined(
+    project,
+    "dc_second",
+    simulated = list(list(
+      label = "sim",
+      scenario = "aciclovir_iv",
+      path = path,
+      group = "g"
+    ))
+  )
+  addPlot(project, "p_second", "dc_second", "individual")
+  addPlotGrid(project, "grid_second", plots = "p_second")
+  simulated <- runScenarios(project, scenarios = "aciclovir_iv")
+
+  # Both plotGrids and plots omitted (NULL): the result must hold every
+  # grid in the project, keyed by gridId, and nothing else.
+  result <- suppressWarnings(createPlots(
+    project,
+    scenarioResults = simulated,
+    validate = FALSE
+  ))
+
+  expect_length(result, length(project$plotGrids))
+  expect_setequal(names(result), names(project$plotGrids))
+  expect_setequal(
+    names(result),
+    c("individual_diagnostics", "grid_second")
+  )
+  expect_s3_class(result$individual_diagnostics, "patchwork")
+  expect_s3_class(result$grid_second, "patchwork")
+})
+
+test_that("createPlots(plots) builds the DataCombined the standalone plot needs", {
+  project <- exampleProject()
+  path <- project$outputPaths$aciclovir_pvb
+  # A standalone plot whose DataCombined is referenced by no grid: the build
+  # must still construct that DataCombined (the scope extends to plots).
+  addDataCombined(
+    project,
+    "dc_solo",
+    simulated = list(list(
+      label = "sim",
+      scenario = "aciclovir_iv",
+      path = path,
+      group = "g"
+    ))
+  )
+  addPlot(project, "p_solo", "dc_solo", "individual")
+  simulated <- runScenarios(project, scenarios = "aciclovir_iv")
+
+  result <- suppressWarnings(createPlots(
+    project,
+    plots = "p_solo",
+    scenarioResults = simulated,
+    validate = FALSE
+  ))
+  expect_named(result, "p_solo")
+  expect_s3_class(result$p_solo, "ggplot")
 })

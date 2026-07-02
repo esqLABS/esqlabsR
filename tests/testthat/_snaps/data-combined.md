@@ -1,9 +1,8 @@
 # createDataCombined reports a failed scenario run distinctly
 
     Code
-      createDataCombined(project, dataCombinedNames = "DC_failed",
-        simulatedScenarios = failedRun)
+      createDataCombined(project, dataCombined = "dc_failed", scenarioResults = failedRun)
     Condition
-      Error in `createDataCombined()`:
-      ! The DataCombined "DC_failed" references the output path 'Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)' of scenario <TestScenario>, but that scenario produced no results. Re-run the scenario and check that it completed successfully.
+      Error in `.validateDataCombinedFromExcel()`:
+      ! The following scenarios are not present in `scenarioResults`: "testscenario". Data cannot be added to `DataCombined` object.
 

@@ -2,19 +2,19 @@
 #'
 #' @description
 #' Builds [`ospsuite::DataCombined`] objects from a JSON-driven
-#' [Project][loadProject()]. The project's `plots$dataCombined` section
-#' declares the simulated/observed entries; `loadObservedData(project)`
-#' resolves observed sources internally. Either `dataCombinedNames` or
-#' `plotGridNames` (or both) selects which DataCombined to build.
+#' [Project][loadProject()]. The project's `dataCombined` section declares the
+#' simulated/observed entries; `loadObservedData(project)` resolves observed
+#' sources internally. Either `dataCombined` or `plotGrids` (or both)
+#' selects which DataCombined to build.
 #'
 #' @param project A `Project` (see [loadProject()]).
-#' @param dataCombinedNames Names of the DataCombined entries to build. If
-#'   any name is not declared in `project$plots$dataCombined`, an error is
+#' @param dataCombined Names of the DataCombined entries to build. If
+#'   any name is not declared in `project$dataCombined`, an error is
 #'   thrown.
-#' @param plotGridNames Names of plot grids whose DataCombined dependencies
-#'   should be built. Combined with `dataCombinedNames` if both are given.
-#' @param simulatedScenarios A named list of simulated scenarios (as
-#'   returned by [runScenarios()]).
+#' @param plotGrids Names of plot grids whose DataCombined dependencies
+#'   should be built. Combined with `dataCombined` if both are given.
+#' @param scenarioResults A named list of Scenario Results (as
+#'   returned by [runScenarios()]). Not the OSPS `SimulationResults`.
 #' @param stopIfNotFound If `TRUE` (default), the function errors when a
 #'   referenced simulated path or observed dataSet cannot be resolved. If
 #'   `FALSE`, a warning is emitted and the entry is skipped.
@@ -25,38 +25,38 @@
 #' @export
 createDataCombined <- function(
   project,
-  dataCombinedNames = NULL,
-  plotGridNames = NULL,
-  simulatedScenarios = NULL,
+  dataCombined = NULL,
+  plotGrids = NULL,
+  scenarioResults = NULL,
   stopIfNotFound = TRUE
 ) {
   validateIsOfType(project, "Project")
-  validateIsString(dataCombinedNames, nullAllowed = TRUE)
-  validateIsString(plotGridNames, nullAllowed = TRUE)
+  validateIsString(dataCombined, nullAllowed = TRUE)
+  validateIsString(plotGrids, nullAllowed = TRUE)
 
-  if (is.null(dataCombinedNames) && is.null(plotGridNames)) {
+  if (is.null(dataCombined) && is.null(plotGrids)) {
     return(list())
   }
 
   observedData <- loadObservedData(project)
 
-  if (!is.null(plotGridNames)) {
-    dataCombinedNames <- union(
-      dataCombinedNames,
-      .extractDataCombinedNamesForPlotsFromProject(project, plotGridNames)
+  if (!is.null(plotGrids)) {
+    dataCombined <- union(
+      dataCombined,
+      .extractDataCombinedNamesForPlotsFromProject(project, plotGrids)
     )
   }
 
-  allSpecs <- project$plots$dataCombined %||% list()
+  allSpecs <- .unwrapDefinitionList(project$dataCombined) %||% list()
   missingNames <- setdiff(
-    dataCombinedNames[!is.na(dataCombinedNames)],
+    dataCombined[!is.na(dataCombined)],
     names(allSpecs)
   )
   if (length(missingNames) > 0) {
     cli::cli_abort(messages$stopDataCombinedNamesNotFound(missingNames))
   }
 
-  selectedSpecs <- allSpecs[intersect(names(allSpecs), dataCombinedNames)]
+  selectedSpecs <- allSpecs[intersect(names(allSpecs), dataCombined)]
   hasEntries <- vapply(
     selectedSpecs,
     \(s) length(s$simulated %||% list()) + length(s$observed %||% list()) > 0,
@@ -68,7 +68,7 @@ createDataCombined <- function(
     dfDataCombined <- .specsToDataCombinedDataFrame(selectedSpecs[hasEntries])
     dataCombinedList <- .createDataCombinedFromProcessedDF(
       dfDataCombined = dfDataCombined,
-      simulatedScenarios = simulatedScenarios,
+      scenarioResults = scenarioResults,
       observedData = observedData,
       stopIfNotFound = stopIfNotFound,
       call = rlang::current_env()
@@ -131,20 +131,21 @@ createDataCombined <- function(
   project,
   plotGridNames
 ) {
-  gridDf <- project$plots$plotGrids %||% data.frame()
-  if (nrow(gridDf) == 0) {
+  grids <- .unwrapDefinitionList(project$plotGrids) %||% list()
+  selectedGrids <- grids[intersect(names(grids), plotGridNames)]
+  if (length(selectedGrids) == 0) {
     return(character(0))
   }
-  selectedGrids <- gridDf[gridDf$name %in% plotGridNames, , drop = FALSE]
-  if (nrow(selectedGrids) == 0) {
+  ids <- unique(unlist(lapply(
+    selectedGrids,
+    function(g) .splitPlotIDs(g$plotIds)
+  )))
+  plotConfig <- .unwrapDefinitionList(project$plots) %||% list()
+  referenced <- plotConfig[intersect(names(plotConfig), ids)]
+  if (length(referenced) == 0) {
     return(character(0))
   }
-  ids <- unique(unlist(strsplit(selectedGrids$plotIds, "\\s*,\\s*")))
-  cfgDf <- project$plots$plotConfiguration %||% data.frame()
-  if (nrow(cfgDf) == 0) {
-    return(character(0))
-  }
-  unique(cfgDf$dataCombinedName[cfgDf$plotId %in% ids])
+  unique(unlist(lapply(referenced, function(p) p$dataCombinedId)))
 }
 
 #' @rdname createDataCombined
@@ -165,14 +166,14 @@ createDataCombinedFromExcel <- function(...) {
 # @noRd
 .createDataCombinedFromProcessedDF <- function(
   dfDataCombined,
-  simulatedScenarios,
+  scenarioResults,
   observedData,
   stopIfNotFound,
   call = rlang::caller_env()
 ) {
   dfDataCombined <- .validateDataCombinedFromExcel(
     dfDataCombined,
-    simulatedScenarios,
+    scenarioResults,
     observedData,
     stopIfNotFound
   )
@@ -195,7 +196,7 @@ createDataCombinedFromExcel <- function(...) {
     if (nrow(simulated) > 0) {
       for (j in seq_len(nrow(simulated))) {
         scenarioName <- simulated[j, ]$scenario
-        scenarioResult <- simulatedScenarios[[scenarioName]]
+        scenarioResult <- scenarioResults[[scenarioName]]
         results <- scenarioResult$results
         if (any(results$allQuantityPaths == simulated[j, ]$path)) {
           dataCombined$addSimulationResults(
@@ -328,7 +329,7 @@ createDataCombinedFromExcel <- function(...) {
 #' Validate and process the 'DataCombined' sheet
 #'
 #' @param dfDataCombined Data frame created by reading the ' DataCombined' sheet
-#' @param simulatedScenarios List of simulated scenarios as created by
+#' @param scenarioResults Named list of Scenario Results as returned by
 #'   `runScenarios()`
 #' @param observedData Observed data objects
 #' @param stopIfNotFound if `TRUE`, throw an error if a simulated result of an
@@ -338,7 +339,7 @@ createDataCombinedFromExcel <- function(...) {
 #' @keywords internal
 .validateDataCombinedFromExcel <- function(
   dfDataCombined,
-  simulatedScenarios,
+  scenarioResults,
   observedData,
   stopIfNotFound
 ) {
@@ -388,9 +389,9 @@ createDataCombinedFromExcel <- function(...) {
   dcNames <- unique(dfDataCombined$dataCombinedName)
 
   # warnings for invalid data in plot definitions from excel
-  # scenario not present in simulatedScenarios
+  # scenario not present in scenarioResults
   missingScenarios <- setdiff(
-    setdiff(dfDataCombined$scenario, names(simulatedScenarios)),
+    setdiff(dfDataCombined$scenario, names(scenarioResults)),
     NA
   )
   if (length(missingScenarios) != 0) {
