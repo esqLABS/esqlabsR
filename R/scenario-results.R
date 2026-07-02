@@ -40,6 +40,22 @@ saveScenarioResults <- function(
       format(Sys.time(), "%F %H-%M")
     )
 
+  # Guard up front against distinct scenario names that collapse to the same
+  # file-safe name (e.g. "A/B" and "A_B" both become "A_B"): their csv/pkml
+  # files would silently overwrite each other. Abort before writing anything.
+  scenarioNames <- names(simulatedScenariosResults)
+  safeNames <- gsub("[\\\\/]", "_", scenarioNames)
+  colliding <- unique(scenarioNames[
+    duplicated(safeNames) |
+      duplicated(
+        safeNames,
+        fromLast = TRUE
+      )
+  ])
+  if (length(colliding) > 0L) {
+    cli::cli_abort(messages$scenarioResultNameCollision(colliding))
+  }
+
   for (i in seq_along(simulatedScenariosResults)) {
     results <- simulatedScenariosResults[[i]]$results
     scenarioName <- names(simulatedScenariosResults)[[i]]

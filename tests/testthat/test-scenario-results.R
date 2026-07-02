@@ -116,3 +116,20 @@ test_that("saveScenarioResults warning shows the original scenario name, not the
     fixed = TRUE
   )
 })
+
+test_that("saveScenarioResults aborts when two names collide after sanitization", {
+  withr::local_options(lifecycle_verbosity = "quiet")
+  project <- testProject()
+  original <- runScenarios(project, scenarios = "testscenario")
+
+  # "A/B" and "A_B" both sanitize to file name "A_B"; their result files would
+  # silently overwrite each other, so the save must abort before writing.
+  colliding <- setNames(c(original, original), c("A/B", "A_B"))
+  resultsFolder <- withr::local_tempdir()
+  expect_error(
+    saveScenarioResults(colliding, project, outputFolder = resultsFolder),
+    "collide"
+  )
+  # Nothing was written.
+  expect_length(list.files(resultsFolder), 0L)
+})
