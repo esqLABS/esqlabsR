@@ -70,3 +70,443 @@ test_that("Project round-trips through Excel preserving outputPaths", {
     unlist(project$outputPaths)
   )
 })
+
+test_that("Excel round-trip preserves parameter set values, paths, and units", {
+  work_dir <- withr::local_tempdir()
+  file.copy(dirname(exampleProjectPath()), work_dir, recursive = TRUE)
+  project <- loadProject(file.path(work_dir, "Example", "Project.json"))
+
+  excel_out <- withr::local_tempdir()
+  exportProjectToExcel(project, outputDir = excel_out, silent = TRUE)
+  reimportedJson <- suppressWarnings(importProjectFromExcel(
+    file.path(excel_out, "Project.xlsx"),
+    outputDir = withr::local_tempdir(),
+    silent = TRUE
+  ))
+  reimported <- suppressWarnings(loadProject(reimportedJson))
+
+  # The whole section must survive byte-equivalent: every set keeps its full
+  # list of records (containerPath / parameterName / value / units), not just
+  # the sheet names. A regression here would silently empty every sheet.
+  # `.unwrapDefinitionList()` peels the read-only accessor wrapper so the stored
+  # plain lists compare cleanly.
+  expect_equal(
+    .unwrapDefinitionList(reimported$parameterSets),
+    .unwrapDefinitionList(project$parameterSets)
+  )
+})
+
+test_that("Excel round-trip preserves initial-condition sets and scenario refs", {
+  project <- testProject()
+  addInitialConditions(project, "icset")
+  suppressMessages(
+    addInitialConditionEntry(
+      project,
+      "icset",
+      path = c("Organism|A|Concentration", "Organism|B|Concentration"),
+      value = c(1.5, 0.5),
+      unit = c("mg/l", "µmol/l")
+    )
+  )
+  setScenario(project, "testscenario", initialConditions = "icset")
+
+  excel_out <- withr::local_tempdir()
+  exportProjectToExcel(project, outputDir = excel_out, silent = TRUE)
+  # The workbook is written from the tree.
+  expect_true(file.exists(file.path(
+    excel_out,
+    "Configurations",
+    "InitialConditions.xlsx"
+  )))
+
+  reimportedJson <- suppressWarnings(importProjectFromExcel(
+    file.path(excel_out, "Project.xlsx"),
+    outputDir = withr::local_tempdir(),
+    silent = TRUE
+  ))
+  reimported <- suppressWarnings(loadProject(reimportedJson))
+
+  # The IC set round-trips byte-equivalent (records carry path / value / unit).
+  # Compare per-set by name: the Excel sheet order need not match the in-memory
+  # map order, so assert the same set ids and each set's records, not key order.
+  before <- .unwrapDefinitionList(project$initialConditions)
+  after <- .unwrapDefinitionList(reimported$initialConditions)
+  expect_setequal(names(after), names(before))
+  for (id in names(before)) {
+    expect_equal(after[[id]], before[[id]])
+  }
+  # The scenario's reference to the set survives both directions.
+  expect_identical(
+    reimported$scenarios[["testscenario"]]$initialConditions,
+    "icset"
+  )
+})
+
+test_that("Excel round-trip preserves parameter identification tasks", {
+  work_dir <- withr::local_tempdir()
+  file.copy(dirname(exampleProjectPath()), work_dir, recursive = TRUE)
+  project <- loadProject(file.path(work_dir, "Example", "Project.json"))
+
+  excel_out <- withr::local_tempdir()
+  exportProjectToExcel(project, outputDir = excel_out, silent = TRUE)
+  reimportedJson <- suppressWarnings(importProjectFromExcel(
+    file.path(excel_out, "Project.xlsx"),
+    outputDir = withr::local_tempdir(),
+    silent = TRUE
+  ))
+  reimported <- suppressWarnings(loadProject(reimportedJson))
+
+  # The whole PI section must survive the three-sheet (PITasks / PIParameters /
+  # PIOutputMappings) round-trip: each task keeps its scenarios, its flattened
+  # `configuration`, and every nested parameter and output-mapping record.
+  # Excel cannot store an empty string distinctly from an empty cell, so a
+  # parameter whose `units` is "" reimports as NULL; the model treats "" and
+  # NULL as the same "unitless" state (see the PIParameter constructor test),
+  # so the comparison normalizes that one equivalence rather than asserting a
+  # byte-identical empty string.
+  normalizeUnitlessParams <- function(tasks) {
+    lapply(tasks, function(task) {
+      task$parameters <- lapply(task$parameters, function(p) {
+        # Keep the `units` key present but set its value to NULL (single-bracket
+        # list assignment; `p$units <- NULL` would drop the key instead), so it
+        # matches the reimported record, which carries a present-but-NULL units.
+        if (identical(p$units, "")) {
+          p["units"] <- list(NULL)
+        }
+        p
+      })
+      task
+    })
+  }
+  expect_equal(
+    .unwrapDefinitionList(reimported$parameterIdentification),
+    normalizeUnitlessParams(.unwrapDefinitionList(
+      project$parameterIdentification
+    ))
+  )
+})
+
+test_that("Excel round-trip preserves DataCombined numeric offsets and scales", {
+  work_dir <- withr::local_tempdir()
+  file.copy(dirname(exampleProjectPath()), work_dir, recursive = TRUE)
+  project <- loadProject(file.path(work_dir, "Example", "Project.json"))
+
+  # The example DataCombined leaves all offset / scale fields null, so add one
+  # with populated numerics (fractional, so the values are unambiguously double
+  # and cannot be re-read as integer by the JSON layer) to prove they survive
+  # as numbers, not strings. The unit siblings stay character.
+  addDataCombined(
+    project,
+    id = "dc_numeric",
+    simulated = list(list(
+      label = "sim",
+      scenario = "aciclovir_iv",
+      path = paste0(
+        "Organism|PeripheralVenousBlood|Aciclovir|",
+        "Plasma (Peripheral Venous Blood)"
+      ),
+      xOffsets = 2.5,
+      xOffsetsUnits = "h",
+      yOffsets = -1.25,
+      yOffsetsUnits = "mg/l",
+      xScaleFactors = 1.5,
+      yScaleFactors = 0.5
+    )),
+    observed = list(list(
+      label = "obs",
+      dataSet = "someObservedSet",
+      xOffsets = 3.25,
+      xScaleFactors = 4.5
+    ))
+  )
+
+  excel_out <- withr::local_tempdir()
+  exportProjectToExcel(project, outputDir = excel_out, silent = TRUE)
+  reimportedJson <- suppressWarnings(importProjectFromExcel(
+    file.path(excel_out, "Project.xlsx"),
+    outputDir = withr::local_tempdir(),
+    silent = TRUE
+  ))
+  reimported <- suppressWarnings(loadProject(reimportedJson))
+  dc <- .unwrapDefinitionList(reimported$dataCombined)[["dc_numeric"]]
+  sim <- dc$simulated[[1]]
+  obs <- dc$observed[[1]]
+
+  expect_identical(sim$xOffsets, 2.5)
+  expect_identical(sim$yOffsets, -1.25)
+  expect_identical(sim$xScaleFactors, 1.5)
+  expect_identical(sim$yScaleFactors, 0.5)
+  expect_identical(sim$xOffsetsUnits, "h")
+  expect_identical(sim$yOffsetsUnits, "mg/l")
+  expect_identical(obs$xOffsets, 3.25)
+  expect_identical(obs$xScaleFactors, 4.5)
+})
+
+test_that("Excel round-trip does not fabricate a steady-state unit", {
+  work_dir <- withr::local_tempdir()
+  file.copy(dirname(exampleProjectPath()), work_dir, recursive = TRUE)
+  project <- loadProject(file.path(work_dir, "Example", "Project.json"))
+
+  excel_out <- withr::local_tempdir()
+  exportProjectToExcel(project, outputDir = excel_out, silent = TRUE)
+  reimportedJson <- suppressWarnings(importProjectFromExcel(
+    file.path(excel_out, "Project.xlsx"),
+    outputDir = withr::local_tempdir(),
+    silent = TRUE
+  ))
+  reimported <- suppressWarnings(loadProject(reimportedJson))
+  before <- .unwrapDefinitionList(project$scenarios)
+  after <- .unwrapDefinitionList(reimported$scenarios)
+
+  # A non-steady-state scenario carries the parser's default steadyStateTime and
+  # a null unit; the export must not fabricate a unit for it, so the unit stays
+  # null across the round trip. (The steadyStateTime value's int-vs-double type
+  # for a whole-number steady-state time is a separate JSON-layer concern owned
+  # elsewhere, so this asserts the unit, the part the Excel bridge controls.)
+  nonSteady <- "aciclovir_iv"
+  expect_false(isTRUE(before[[nonSteady]]$simulateSteadyState))
+  expect_null(before[[nonSteady]]$steadyStateTimeUnit)
+  expect_null(after[[nonSteady]]$steadyStateTimeUnit)
+
+  # A genuine steady-state scenario keeps its declared unit.
+  steady <- "aciclovir_iv_steadystate"
+  expect_true(isTRUE(before[[steady]]$simulateSteadyState))
+  expect_identical(
+    after[[steady]]$steadyStateTimeUnit,
+    before[[steady]]$steadyStateTimeUnit
+  )
+})
+
+test_that("Excel round-trip preserves individuals, populations, and applications", {
+  work_dir <- withr::local_tempdir()
+  file.copy(dirname(exampleProjectPath()), work_dir, recursive = TRUE)
+  project <- loadProject(file.path(work_dir, "Example", "Project.json"))
+
+  excel_out <- withr::local_tempdir()
+  exportProjectToExcel(project, outputDir = excel_out, silent = TRUE)
+  reimportedJson <- suppressWarnings(importProjectFromExcel(
+    file.path(excel_out, "Project.xlsx"),
+    outputDir = withr::local_tempdir(),
+    silent = TRUE
+  ))
+  reimported <- suppressWarnings(loadProject(reimportedJson))
+
+  expect_equal(
+    .unwrapDefinitionList(reimported$individuals),
+    .unwrapDefinitionList(project$individuals)
+  )
+  expect_equal(
+    .unwrapDefinitionList(reimported$populations),
+    .unwrapDefinitionList(project$populations)
+  )
+  expect_equal(
+    .unwrapDefinitionList(reimported$applications),
+    .unwrapDefinitionList(project$applications)
+  )
+})
+
+test_that("Excel round-trip preserves a comma-bearing plot id inside a grid", {
+  work_dir <- withr::local_tempdir()
+  file.copy(dirname(exampleProjectPath()), work_dir, recursive = TRUE)
+  project <- loadProject(file.path(work_dir, "Example", "Project.json"))
+
+  # A comma is a legal plot-id character; a grid stores its membership as one
+  # comma-separated string, so a comma-bearing id must be escaped or it is
+  # shredded into several at the Excel boundary.
+  addPlot(
+    project,
+    id = "cmax, ss",
+    dataCombined = "aciclovir_individual",
+    plotType = "individual"
+  )
+  addPlotGrid(project, id = "grid_comma", plots = c("p1", "cmax, ss"))
+
+  excel_out <- withr::local_tempdir()
+  exportProjectToExcel(project, outputDir = excel_out, silent = TRUE)
+  reimportedJson <- suppressWarnings(importProjectFromExcel(
+    file.path(excel_out, "Project.xlsx"),
+    outputDir = withr::local_tempdir(),
+    silent = TRUE
+  ))
+  reimported <- suppressWarnings(loadProject(reimportedJson))
+  grid <- .unwrapDefinitionList(reimported$plotGrids)[["grid_comma"]]
+
+  expect_identical(.splitPlotIDs(grid$plotIds), c("p1", "cmax, ss"))
+})
+
+test_that("Excel round-trip preserves project name and description", {
+  work_dir <- withr::local_tempdir()
+  file.copy(dirname(exampleProjectPath()), work_dir, recursive = TRUE)
+  project <- loadProject(file.path(work_dir, "Example", "Project.json"))
+  project$name <- "RT_Name"
+  project$description <- "RT_Desc"
+
+  excel_out <- withr::local_tempdir()
+  exportProjectToExcel(project, outputDir = excel_out, silent = TRUE)
+  reimportedJson <- importProjectFromExcel(
+    file.path(excel_out, "Project.xlsx"),
+    outputDir = withr::local_tempdir(),
+    silent = TRUE
+  )
+  reimported <- suppressWarnings(loadProject(reimportedJson))
+
+  expect_identical(reimported$name, "RT_Name")
+  expect_identical(reimported$description, "RT_Desc")
+})
+
+test_that("Excel round-trip preserves the filePaths/excel container split", {
+  work_dir <- withr::local_tempdir()
+  file.copy(dirname(exampleProjectPath()), work_dir, recursive = TRUE)
+  project <- loadProject(file.path(work_dir, "Example", "Project.json"))
+
+  excel_out <- withr::local_tempdir()
+  exportProjectToExcel(project, outputDir = excel_out, silent = TRUE)
+  reimportedJson <- importProjectFromExcel(
+    file.path(excel_out, "Project.xlsx"),
+    silent = TRUE
+  )
+  reimported <- loadProject(reimportedJson)
+
+  # The four live folders stay in filePaths; the seven Excel-bridge sheet names
+  # re-split back into the excel block (not leaking into filePaths).
+  expect_named(
+    reimported$filePaths,
+    c("modelFolder", "populationsFolder", "dataFolder", "outputFolder"),
+    ignore.order = TRUE
+  )
+  expect_named(
+    reimported$excel,
+    c(
+      "configurationsFolder",
+      "modelParamsFile",
+      "individualsFile",
+      "populationsFile",
+      "scenariosFile",
+      "applicationsFile",
+      "plotsFile"
+    ),
+    ignore.order = TRUE
+  )
+})
+
+test_that("importProjectFromExcel writes a usable definitions/ tree", {
+  out <- withr::local_tempdir()
+  jsonPath <- importProjectFromExcel(
+    testProjectExcelPath(),
+    outputDir = out,
+    silent = TRUE
+  )
+
+  # The import yields a ready-to-use tree project: the container plus a
+  # per-kind tree under definitions/, so loadProject() reads a tree project
+  # with no extra materialize step.
+  expect_true(file.exists(jsonPath))
+  expect_true(dir.exists(file.path(out, "definitions", "scenarios")))
+  expect_gt(
+    length(list.files(file.path(out, "definitions", "scenarios"))),
+    0L
+  )
+})
+
+test_that("the imported tree reads the same entities as the inlined import", {
+  out <- withr::local_tempdir()
+  jsonPath <- importProjectFromExcel(
+    testProjectExcelPath(),
+    outputDir = out,
+    silent = TRUE
+  )
+
+  # loadProject() of the import reads the tree; comparing against the inlined
+  # Project.json the import also wrote (loaded as a standalone snapshot in a
+  # tree-free directory) confirms the tree carries the same entities.
+  fromTree <- suppressWarnings(loadProject(jsonPath))
+
+  inlineDir <- withr::local_tempdir()
+  inlineJson <- file.path(inlineDir, "Project.json")
+  file.copy(jsonPath, inlineJson)
+  fromInline <- suppressWarnings(loadProject(inlineJson))
+
+  expect_named(
+    fromTree$scenarios,
+    names(fromInline$scenarios),
+    ignore.order = TRUE
+  )
+  expect_named(
+    fromTree$parameterSets,
+    names(fromInline$parameterSets),
+    ignore.order = TRUE
+  )
+  expect_named(
+    fromTree$individuals,
+    names(fromInline$individuals),
+    ignore.order = TRUE
+  )
+  expect_named(
+    fromTree$outputPaths,
+    names(fromInline$outputPaths),
+    ignore.order = TRUE
+  )
+})
+
+# Pin the imported content to the known TestProjectExcel fixture rather than
+# only comparing the import against itself. The fixture's canonical ids and the
+# two output-path literals are stable, so they can be asserted directly.
+test_that("the Excel import carries the known fixture ids and values", {
+  out <- withr::local_tempdir()
+  jsonPath <- suppressWarnings(importProjectFromExcel(
+    testProjectExcelPath(),
+    outputDir = out,
+    silent = TRUE
+  ))
+  project <- suppressWarnings(loadProject(jsonPath))
+
+  # Output paths: both ids and their OSPS-notation literals are pinned.
+  expect_setequal(
+    names(project$outputPaths),
+    c("aciclovir_pvb", "aciclovir_fat_cell")
+  )
+  expect_identical(
+    project$outputPaths[["aciclovir_pvb"]],
+    "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
+  )
+  expect_identical(
+    project$outputPaths[["aciclovir_fat_cell"]],
+    "Organism|Fat|Intracellular|Aciclovir|Concentration in container"
+  )
+
+  # The single biometric individual and its two populations are present.
+  expect_identical(names(project$individuals), "indiv1")
+  expect_setequal(
+    names(project$populations),
+    c("testpopulation", "testpopulation_noonto")
+  )
+
+  # The known scenarios are all imported (canonical, lowercased ids).
+  expect_true(all(
+    c("testscenario", "pitestscenario", "populationscenario") %in%
+      names(project$scenarios)
+  ))
+})
+
+# Loading the imported project emits the expected cross-reference warnings,
+# they are asserted rather than suppressed. The TestProjectExcel fixture has a
+# known legacy gap: the per-sheet Excel project encodes application protocols as
+# parameter-set sheets, so the Excel->JSON bridge does not populate an
+# `applications` section, leaving each scenario's `applicationProtocol`
+# reference dangling. This is the documented Excel round-trip lossiness, not a
+# regression, so the dangling-applicationProtocol warning is the expected signal.
+test_that("loading the Excel import warns about the dangling applicationProtocol refs", {
+  out <- withr::local_tempdir()
+  jsonPath <- suppressWarnings(importProjectFromExcel(
+    testProjectExcelPath(),
+    outputDir = out,
+    silent = TRUE
+  ))
+
+  # No `applications` section is produced by the per-sheet Excel project, so the
+  # scenarios' applicationProtocol references cannot resolve on load.
+  expect_warning(
+    loadProject(jsonPath),
+    "undefined application"
+  )
+})
