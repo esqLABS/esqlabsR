@@ -331,7 +331,8 @@ importProjectFromExcel <- function(
   if (interactive() && !silent) {
     inputFile <- fs::path_rel(projectConfigPath, start = getwd())
     outputFile <- fs::path_rel(outputPath, start = getwd())
-    message(messages$createdFileSnapshot(inputFile, outputFile))
+    msg <- messages$createdFileSnapshot(inputFile, outputFile)
+    cli::cli_inform("{msg}")
   }
 
   invisible(outputPath)
@@ -538,10 +539,11 @@ exportProjectToExcel <- function(
 
   if (interactive() && !silent) {
     relPath <- fs::path_rel(projConfigPath, start = getwd())
-    message(messages$restoredProjectConfiguration(
+    msg <- messages$restoredProjectConfiguration(
       project$jsonPath %||% "Project",
       relPath
-    ))
+    )
+    cli::cli_inform("{msg}")
   }
 
   invisible(projConfigPath)
@@ -577,10 +579,14 @@ restoreProjectConfiguration <- function(
 #' @description Compares Excel configuration files against their JSON
 #' configuration to determine if they are synchronized.
 #'
-#' @param projectConfigPath Path to a `Project.xlsx` file.
-#'   Defaults to `"Project.xlsx"`.
+#' @param projectConfigPath Either a path to a `Project.xlsx` file
+#'   (defaults to `"Project.xlsx"`) or a loaded [Project] object. When a
+#'   `Project` is passed, its `Project.xlsx` side-car and JSON path are
+#'   derived from the object, so `jsonPath` is optional.
 #' @param jsonPath Path to the JSON configuration file. If `NULL` (default),
-#'   the function looks for a JSON file with the same base name.
+#'   the function looks for a JSON file with the same base name (or, when a
+#'   `Project` object is passed as `projectConfigPath`, uses that object's
+#'   JSON path).
 #' @param silent Logical indicating whether to suppress informational messages.
 #'   Defaults to `FALSE`.
 #'
@@ -668,7 +674,7 @@ projectStatus <- function(
       details = list()
     )
     if (!silent) {
-      message(messages$excelInSync())
+      cli::cli_inform(messages$excelInSync())
     }
   } else {
     fileChanges <- list()
@@ -813,7 +819,7 @@ projectConfigurationStatus <- function(...) {
 
   if (!silent) {
     if (result$excel_in_sync) {
-      message(messages$excelInSync())
+      cli::cli_inform(messages$excelInSync())
     } else {
       cli::cli_alert_warning("Excel files differ from the project.")
     }
