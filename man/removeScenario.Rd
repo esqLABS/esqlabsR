@@ -2,25 +2,29 @@
 % Please edit documentation in R/scenarios.R
 \name{removeScenario}
 \alias{removeScenario}
-\title{Remove a scenario from a Project}
+\title{Remove one or more scenarios from a Project}
 \usage{
-removeScenario(project, scenarioName)
+removeScenario(project, id)
 }
 \arguments{
 \item{project}{A \code{Project} object.}
 
-\item{scenarioName}{Character scalar, scenario name.}
+\item{id}{Character vector of scenario ids to remove in one write-through.
+Each is canonicalized the same way \code{\link[=addScenario]{addScenario()}} canonicalizes it, so
+the same typed id removes what it created. A not-found id warns and is
+skipped.}
 }
 \value{
 The \code{project} object, invisibly.
 }
 \description{
-Remove a scenario from a Project
+Remove one or more scenarios from a Project
 }
 \seealso{
 Other scenario:
-\code{\link[=addOutputPath]{addOutputPath()}},
 \code{\link[=addScenario]{addScenario()}},
-\code{\link[=removeOutputPath]{removeOutputPath()}}
+\code{\link[=duplicateScenario]{duplicateScenario()}},
+\code{\link[=renameScenario]{renameScenario()}},
+\code{\link[=setScenario]{setScenario()}}
 }
 \concept{scenario}

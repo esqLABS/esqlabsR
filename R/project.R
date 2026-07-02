@@ -32,7 +32,7 @@
 #'   handles and are shared by reference between a project and its clone.
 #'
 #'   A clone is also detached from the source on disk: it does not own the
-#'   source's entity tree, so its write-through mutations (`addScenario()`,
+#'   source's definitions tree, so its write-through mutations (`addScenario()`,
 #'   `removeScenario()`, and the other `add*` / `remove*` / `set*` helpers)
 #'   stay in memory only and never touch the source's `definitions/`
 #'   directory. Use [saveSnapshot()] to write the clone to a single-file
@@ -386,7 +386,7 @@ Project <- R6::R6Class(
     #' @field outputPaths Read-only named list mapping output-path IDs to
     #'   OSPS-notation path strings (e.g. `list(PVB = "Organism|...")`). To
     #'   change it, use [addOutputPath()] / [setOutputPath()] /
-    #'   [removeOutputPath()] or edit the entity files under
+    #'   [removeOutputPath()] or edit the definition files under
     #'   `definitions/output-paths/`; an authoring write persists each changed
     #'   output path to (or deletes it from) its file.
     outputPaths = function(value) {
@@ -399,7 +399,7 @@ Project <- R6::R6Class(
     #' @field scenarios Read-only named list of `Scenario` records, keyed by
     #'   scenario name. To change it, use [addScenario()] / [setScenario()] /
     #'   [removeScenario()] (or [renameScenario()] / [duplicateScenario()]), or
-    #'   edit the entity files under `definitions/scenarios/`. The canonical
+    #'   edit the definition files under `definitions/scenarios/`. The canonical
     #'   edit loop is read-modify-resubmit: read a record
     #'   (`sc <- project$scenarios[["id"]]`), change the detached copy
     #'   (`sc$modelFile <- ...`), then re-submit it
@@ -434,7 +434,7 @@ Project <- R6::R6Class(
     #'   (`path`, `value`, `unit`), applied to a scenario's simulation via its
     #'   `initialConditions` field. To change it, use [addInitialConditions()] /
     #'   [removeInitialConditions()] / [addInitialConditionEntry()] /
-    #'   [removeInitialConditionEntry()] or edit the entity files under
+    #'   [removeInitialConditionEntry()] or edit the definition files under
     #'   `definitions/initial-conditions/`.
     initialConditions = function(value) {
       if (!missing(value)) {
@@ -445,7 +445,7 @@ Project <- R6::R6Class(
 
     #' @field individuals Read-only named list of plain lists, keyed by
     #'   individualId. To change it, use [addIndividual()] / [setIndividual()] /
-    #'   [removeIndividual()] or edit the entity files under
+    #'   [removeIndividual()] or edit the definition files under
     #'   `definitions/individuals/`.
     individuals = function(value) {
       if (!missing(value)) {
@@ -456,7 +456,7 @@ Project <- R6::R6Class(
 
     #' @field populations Read-only named list of plain lists, keyed by
     #'   populationId. To change it, use [addPopulation()] / [setPopulation()] /
-    #'   [removePopulation()] or edit the entity files under
+    #'   [removePopulation()] or edit the definition files under
     #'   `definitions/populations/`.
     populations = function(value) {
       if (!missing(value)) {
@@ -467,7 +467,7 @@ Project <- R6::R6Class(
 
     #' @field applications Read-only named list of parameter structures, keyed
     #'   by protocol name. To change it, use [addApplication()] /
-    #'   [removeApplication()] or edit the entity files under
+    #'   [removeApplication()] or edit the definition files under
     #'   `definitions/applications/`.
     applications = function(value) {
       if (!missing(value)) {
@@ -478,7 +478,7 @@ Project <- R6::R6Class(
 
     #' @field observedData Read-only list of observed data source declarations.
     #'   To change it, use [addObservedData()] / [removeObservedData()] or edit
-    #'   the entity files under `definitions/observed-data/` (one file per
+    #'   the definition files under `definitions/observed-data/` (one file per
     #'   declaration).
     observedData = function(value) {
       if (!missing(value)) {
@@ -490,7 +490,7 @@ Project <- R6::R6Class(
     #' @field dataCombined Read-only named list of `DataCombined` definitions,
     #'   keyed by `dataCombinedId`. Each entry pairs simulated and/or observed
     #'   curves. To change it, use [addDataCombined()] / [removeDataCombined()]
-    #'   or edit the entity files under `definitions/data-combined/`.
+    #'   or edit the definition files under `definitions/data-combined/`.
     dataCombined = function(value) {
       if (!missing(value)) {
         .definitionListReadOnlyError("dataCombined")
@@ -501,7 +501,7 @@ Project <- R6::R6Class(
     #' @field plots Read-only named list of plot definitions, keyed by `plotId`.
     #'   Each entry is a single plot's configuration (`dataCombinedId`,
     #'   `plotType`, and styling fields). To change it, use [addPlot()] /
-    #'   [removePlot()] or edit the entity files under `definitions/plots/`.
+    #'   [removePlot()] or edit the definition files under `definitions/plots/`.
     plots = function(value) {
       if (!missing(value)) {
         .definitionListReadOnlyError("plots")
@@ -511,7 +511,7 @@ Project <- R6::R6Class(
 
     #' @field plotGrids Read-only named list of plot-grid definitions, keyed by
     #'   `plotGridId`. Each entry lays out one or more plots. To change it, use
-    #'   [addPlotGrid()] / [removePlotGrid()] or edit the entity files under
+    #'   [addPlotGrid()] / [removePlotGrid()] or edit the definition files under
     #'   `definitions/plot-grids/`.
     plotGrids = function(value) {
       if (!missing(value)) {
@@ -524,7 +524,7 @@ Project <- R6::R6Class(
     #'   each entry is a `PITask` record. May be `NULL` or an empty list when the
     #'   project declares no PI tasks. To change it, use [addPITask()] /
     #'   [removePITask()] (and the per-task [addPIParameter()] /
-    #'   [addPIOutputMapping()] and their removals) or edit the entity files
+    #'   [addPIOutputMapping()] and their removals) or edit the definition files
     #'   under `definitions/parameter-identification/`.
     parameterIdentification = function(value) {
       if (!missing(value)) {
@@ -589,7 +589,7 @@ Project <- R6::R6Class(
     #' @description Internal method to rebind the project to a new file
     #'   location. Updates `projectFilePath` / `jsonPath` and `projectDirPath`
     #'   (the base for relative-path resolution) so any relative-path access
-    #'   targets the new file, and re-claims the entity tree so a clone bound to
+    #'   targets the new file, and re-claims the definitions tree so a clone bound to
     #'   its own location becomes write-through there. Not a mutation, so it
     #'   leaves the flags untouched. Not intended for end-user use.
     #' @param path Absolute or relative path the project was bound to.
@@ -685,7 +685,7 @@ Project <- R6::R6Class(
     },
 
     #' @description Report whether the project's Excel side-car is in sync
-    #'   with its entity files. Every section is write-through to its
+    #'   with its definition files. Every section is write-through to its
     #'   `definitions/<kind>/` tree and the `Project.json` container is a
     #'   derived snapshot, so the only drift that can still occur is between
     #'   the project and a sibling `Project.xlsx` produced by

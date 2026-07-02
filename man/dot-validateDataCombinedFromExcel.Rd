@@ -6,7 +6,7 @@
 \usage{
 .validateDataCombinedFromExcel(
   dfDataCombined,
-  simulatedScenarios,
+  scenarioResults,
   observedData,
   stopIfNotFound
 )
@@ -14,7 +14,7 @@
 \arguments{
 \item{dfDataCombined}{Data frame created by reading the ' DataCombined' sheet}
 
-\item{simulatedScenarios}{List of simulated scenarios as created by
+\item{scenarioResults}{Named list of Scenario Results as returned by
 \code{runScenarios()}}
 
 \item{observedData}{Observed data objects}

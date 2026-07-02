@@ -34,3 +34,13 @@ Reads all Excel configuration files in an esqlabsR project and
 produces a single v2.0 JSON file. This is the migration path from
 Excel-based projects to the JSON-primary workflow.
 }
+\seealso{
+Other project persistence:
+\code{\link[=exampleProjectPath]{exampleProjectPath()}},
+\code{\link[=exportProjectToExcel]{exportProjectToExcel()}},
+\code{\link[=initProject]{initProject()}},
+\code{\link[=loadProject]{loadProject()}},
+\code{\link[=loadSnapshot]{loadSnapshot()}},
+\code{\link[=saveSnapshot]{saveSnapshot()}}
+}
+\concept{project persistence}

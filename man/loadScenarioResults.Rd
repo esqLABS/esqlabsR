@@ -4,10 +4,10 @@
 \alias{loadScenarioResults}
 \title{Load simulated scenarios from csv and pkml.}
 \usage{
-loadScenarioResults(scenarioNames, resultsFolder)
+loadScenarioResults(scenarios, resultsFolder)
 }
 \arguments{
-\item{scenarioNames}{Names of simulated scenarios}
+\item{scenarios}{Names of simulated scenarios}
 
 \item{resultsFolder}{Path to the folder where simulation results as csv and
 the corresponding simulations as pkml are located.}
@@ -38,7 +38,7 @@ resultsFolder <- saveScenarioResults(simulatedScenariosResults, project)
 
 # Now load the results
 simulatedScenariosResults <- loadScenarioResults(
-  scenarioNames = names(project$scenarios),
+  scenarios = names(project$scenarios),
   resultsFolder = resultsFolder
 )
 }

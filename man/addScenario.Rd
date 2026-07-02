@@ -2,17 +2,18 @@
 % Please edit documentation in R/scenarios.R
 \name{addScenario}
 \alias{addScenario}
-\title{Add a scenario programmatically to a Project}
+\title{Add one or more scenarios programmatically to a Project}
 \usage{
 addScenario(
   project,
-  scenarioName,
+  id,
   modelFile,
-  individualId = NULL,
-  populationId = NULL,
-  applicationProtocol = NULL,
-  modelParameterSets = NULL,
-  outputPathIds = NULL,
+  individual = NULL,
+  population = NULL,
+  application = NULL,
+  parameterSets = NULL,
+  initialConditions = NULL,
+  outputPaths = NULL,
   simulationTime = NULL,
   simulationTimeUnit = "h",
   steadyState = FALSE,
@@ -25,26 +26,32 @@ addScenario(
 \arguments{
 \item{project}{A \code{Project} object.}
 
-\item{scenarioName}{Character. Name for the new scenario. Must not
-already exist in \code{project$scenarios}.}
+\item{id}{Character vector of ids (names) for the new scenarios (the number
+of scenarios to add). Each is canonicalized to a safe, lowercase,
+single-path-segment id (a warning names the result if it changed); each
+canonical id must not already exist in \code{project$scenarios}.}
 
 \item{modelFile}{Character. Name of the \code{.pkml} model file (relative
 to model folder).}
 
-\item{individualId}{Character or \code{NULL}. ID referencing
+\item{individual}{Character or \code{NULL}. Id referencing
 \code{project$individuals}.}
 
-\item{populationId}{Character or \code{NULL}. ID referencing
+\item{population}{Character or \code{NULL}. Id referencing
 \code{project$populations}.}
 
-\item{applicationProtocol}{Character or \code{NULL}. Protocol name
+\item{application}{Character or \code{NULL}. Id of the application protocol
 referencing \code{project$applications}.}
 
-\item{modelParameterSets}{Character vector or \code{NULL}. Set names
-referencing \code{project$modelParameterSets}.}
+\item{parameterSets}{Character vector or \code{NULL}. Parameter-set ids
+referencing \code{project$parameterSets}. Applied whole to every scenario.}
 
-\item{outputPathIds}{Character vector or \code{NULL}. IDs referencing
-\code{project$outputPaths}.}
+\item{initialConditions}{Character vector or \code{NULL}. Initial-condition set
+ids referencing \code{project$initialConditions}. Applied whole to every
+scenario.}
+
+\item{outputPaths}{Character vector or \code{NULL}. Output-path ids referencing
+\code{project$outputPaths}. Applied whole to every scenario.}
 
 \item{simulationTime}{Character or \code{NULL}. Format
 \code{"start, end, resolution"} or
@@ -72,13 +79,52 @@ Default \code{FALSE}.}
 The \code{project} object, invisibly.
 }
 \description{
-Creates a new \code{Scenario} and adds it to \code{project$scenarios} after
-validating all references.
+Creates new \code{Scenario} records and adds them to \code{project$scenarios} after
+validating all references. The call vectorizes over a vector of ids (see
+the recycling rule under Details). Scalar-per-entity fields (\code{modelFile},
+\code{individual}, \code{population}, \code{application}, \code{simulationTime},
+\code{simulationTimeUnit}, \code{steadyState}, \code{steadyStateTime},
+\code{steadyStateTimeUnit}, \code{overwriteFormulasInSS}, \code{readPopulationFromCSV})
+follow the recycle/align rule. The vector-valued-per-entity fields
+\code{parameterSets} and \code{outputPaths} are applied whole to every
+scenario; to give a different set per scenario, pass a list of the same
+length as \code{id} (one character vector per scenario). \code{initialConditions}
+follows the same whole-vector rule.
+}
+\details{
+The id argument sets \code{N}, the number of definitions to act on, and cannot
+itself be recycled: when any scalar-per-entity field has length greater than
+1, the id vector must have that same length. A length-1 id with all-scalar
+fields is the ordinary single-definition call.
+
+Each scalar-per-entity field is either length 1 (recycled to all \code{N}
+definitions) or length \code{N} (aligned to the ids by position). Any other
+length is an error naming the field and the lengths.
+
+A vector-valued-per-entity field (an individual's or application's
+\code{parameterSets}, a scenario's \code{outputPaths} and \code{parameterSets}) is
+applied whole to every definition, never split positionally. To give a
+different multi-valued list per definition, pass a list of the same length
+as the id vector (one vector per definition).
+
+The call is all-or-nothing: every definition is validated first, and if any
+fails the whole call aborts and writes nothing. On success all definitions
+are folded into the section and persisted in a single write-through.
+
+Two families of authoring functions sit outside this id-sets-\code{N} rule.
+\code{addParameterEntry()} and \code{removeParameterEntry()} vectorize over parameter
+entries (parallel \code{containerPath} / \code{parameterName} / \code{value} / \code{units}
+vectors) within a single named set, a different axis than the id-sets-\code{N}
+rule described here. \code{renameScenario()}, \code{duplicateScenario()},
+\code{addObservedData()}, \code{addPITask()}, and the per-task
+parameter-identification sub-entity helpers act on a single definition per
+call.
 }
 \seealso{
 Other scenario:
-\code{\link[=addOutputPath]{addOutputPath()}},
-\code{\link[=removeOutputPath]{removeOutputPath()}},
-\code{\link[=removeScenario]{removeScenario()}}
+\code{\link[=duplicateScenario]{duplicateScenario()}},
+\code{\link[=removeScenario]{removeScenario()}},
+\code{\link[=renameScenario]{renameScenario()}},
+\code{\link[=setScenario]{setScenario()}}
 }
 \concept{scenario}

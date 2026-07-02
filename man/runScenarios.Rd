@@ -6,7 +6,7 @@
 \usage{
 runScenarios(
   project,
-  scenarioNames = NULL,
+  scenarios = NULL,
   customParams = NULL,
   simulationRunOptions = NULL,
   validate = TRUE
@@ -15,7 +15,7 @@ runScenarios(
 \arguments{
 \item{project}{A \link{Project} object loaded from a \code{Project.json} file.}
 
-\item{scenarioNames}{Optional character vector of scenario names to
+\item{scenarios}{Optional character vector of scenario names to
 run. \code{NULL} (default) runs all scenarios in the project.}
 
 \item{customParams}{A list with vectors \code{paths}, \code{values}, and

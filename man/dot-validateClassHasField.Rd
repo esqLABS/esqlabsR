@@ -2,7 +2,7 @@
 % Please edit documentation in R/create-plots.R
 \name{.validateClassHasField}
 \alias{.validateClassHasField}
-\title{Validate and process the 'plotConfiguration' sheet}
+\title{Check that an object has a named field}
 \usage{
 .validateClassHasField(object, field)
 }

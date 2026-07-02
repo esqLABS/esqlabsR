@@ -4,34 +4,68 @@
 \alias{addPlot}
 \title{Add a plot configuration to a Project}
 \usage{
-addPlot(project, plotId, dataCombinedName, plotType, ...)
+addPlot(project, id, dataCombined, plotType, ...)
 }
 \arguments{
 \item{project}{A \code{Project} object.}
 
-\item{plotId}{Character scalar. Unique plot identifier.}
+\item{id}{Character vector of unique plot identifiers (the number of plots
+to add). Each is canonicalized to a safe, lowercase id (a warning names
+the result if it changed). Stored in the \code{plotId} field.}
 
-\item{dataCombinedName}{Character scalar. Must reference an existing
-DataCombined name on the project. Stored in the \code{dataCombinedName}
-column to match the JSON schema.}
+\item{dataCombined}{Character, length 1 (recycled to all plots) or the
+same length as \code{id} (aligned by position). Each must reference an
+existing DataCombined id on the project.}
 
-\item{plotType}{Character scalar. One of \code{"individual"},
-\code{"population"}, \code{"observedVsSimulated"},
+\item{plotType}{Character, length 1 (recycled) or the same length as \code{id}.
+Each one of \code{"individual"}, \code{"population"}, \code{"observedVsSimulated"},
 \code{"residualsVsSimulated"}, \code{"residualsVsTime"}.}
 
 \item{...}{Optional plot-configuration fields, e.g. \code{title},
 \code{subtitle}, \code{xUnit}, \code{yUnit}, \code{xAxisScale}, \code{yAxisScale},
 \code{xValuesLimits}, \code{yValuesLimits}, \code{aggregation}, \code{quantiles},
-\code{nsd}, \code{foldDistance}.}
+\code{nsd}, \code{foldDistance}. A multi-value field (e.g.
+\code{quantiles = c(0.05, 0.5, 0.95)}) is applied whole to every plot and
+stored as a comma-separated string; to set a scalar field differently
+per plot, pass a list of the same length as \code{id}.}
 }
 \value{
 The \code{project} object, invisibly.
 }
 \description{
-Append a new row to \code{project$plots$plotConfiguration}. Errors if
-\code{plotId} already exists, if \code{dataCombinedName} is not present in
-\code{project$plots$dataCombined}, or if \code{plotType} is not one of the
+Add one or more entries to \code{project$plots} (a keyed list, one entry per
+plot). Errors if a \code{plotId} already exists, if a \code{dataCombined} is not
+present in \code{project$dataCombined}, or if a \code{plotType} is not one of the
 supported types.
+}
+\details{
+The id argument sets \code{N}, the number of definitions to act on, and cannot
+itself be recycled: when any scalar-per-entity field has length greater than
+1, the id vector must have that same length. A length-1 id with all-scalar
+fields is the ordinary single-definition call.
+
+Each scalar-per-entity field is either length 1 (recycled to all \code{N}
+definitions) or length \code{N} (aligned to the ids by position). Any other
+length is an error naming the field and the lengths.
+
+A vector-valued-per-entity field (an individual's or application's
+\code{parameterSets}, a scenario's \code{outputPaths} and \code{parameterSets}) is
+applied whole to every definition, never split positionally. To give a
+different multi-valued list per definition, pass a list of the same length
+as the id vector (one vector per definition).
+
+The call is all-or-nothing: every definition is validated first, and if any
+fails the whole call aborts and writes nothing. On success all definitions
+are folded into the section and persisted in a single write-through.
+
+Two families of authoring functions sit outside this id-sets-\code{N} rule.
+\code{addParameterEntry()} and \code{removeParameterEntry()} vectorize over parameter
+entries (parallel \code{containerPath} / \code{parameterName} / \code{value} / \code{units}
+vectors) within a single named set, a different axis than the id-sets-\code{N}
+rule described here. \code{renameScenario()}, \code{duplicateScenario()},
+\code{addObservedData()}, \code{addPITask()}, and the per-task
+parameter-identification sub-entity helpers act on a single definition per
+call.
 }
 \seealso{
 Other plots:

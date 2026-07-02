@@ -2,33 +2,70 @@
 % Please edit documentation in R/individuals.R
 \name{addIndividual}
 \alias{addIndividual}
-\title{Add an individual to a Project}
+\title{Add one or more individuals to a Project}
 \usage{
-addIndividual(project, individualId, species, ...)
+addIndividual(project, id, species, ...)
 }
 \arguments{
 \item{project}{A \code{Project} object.}
 
-\item{individualId}{Character scalar, unique ID for the individual.}
+\item{id}{Character vector of unique ids for the individuals (the number of
+individuals to add). Each is canonicalized to a safe, lowercase id (a
+warning names the result if it changed).}
 
-\item{species}{Character scalar, species name.}
+\item{species}{Character scalar (recycled) or the same length as \code{id},
+species name.}
 
 \item{...}{Optional named fields: \code{population}, \code{gender}, \code{weight},
 \code{height}, \code{age}, \code{proteinOntogenies}, \code{parameterSets}. Numeric
 fields are coerced via \code{as.double()}. \code{parameterSets} is a
-character vector of ids referencing
-\code{project$individualParameterSets}. Unknown fields trigger an
-error.}
+character vector of ids referencing \code{project$parameterSets}.
+Unknown fields trigger an error.}
 }
 \value{
 The \code{project} object, invisibly.
 }
 \description{
-Add an individual to a Project
+Add individuals to \code{project$individuals}, vectorizing over a vector of ids
+(see the recycling rule under Details). Scalar-per-entity fields (\code{species}
+and the \code{...} fields \code{population}, \code{gender}, \code{weight}, \code{height}, \code{age},
+\code{proteinOntogenies}) follow the recycle/align rule; \code{parameterSets} is
+vector-valued-per-entity (applied whole to every individual, or one vector
+per individual via a length-\code{id} list).
+}
+\details{
+The id argument sets \code{N}, the number of definitions to act on, and cannot
+itself be recycled: when any scalar-per-entity field has length greater than
+1, the id vector must have that same length. A length-1 id with all-scalar
+fields is the ordinary single-definition call.
+
+Each scalar-per-entity field is either length 1 (recycled to all \code{N}
+definitions) or length \code{N} (aligned to the ids by position). Any other
+length is an error naming the field and the lengths.
+
+A vector-valued-per-entity field (an individual's or application's
+\code{parameterSets}, a scenario's \code{outputPaths} and \code{parameterSets}) is
+applied whole to every definition, never split positionally. To give a
+different multi-valued list per definition, pass a list of the same length
+as the id vector (one vector per definition).
+
+The call is all-or-nothing: every definition is validated first, and if any
+fails the whole call aborts and writes nothing. On success all definitions
+are folded into the section and persisted in a single write-through.
+
+Two families of authoring functions sit outside this id-sets-\code{N} rule.
+\code{addParameterEntry()} and \code{removeParameterEntry()} vectorize over parameter
+entries (parallel \code{containerPath} / \code{parameterName} / \code{value} / \code{units}
+vectors) within a single named set, a different axis than the id-sets-\code{N}
+rule described here. \code{renameScenario()}, \code{duplicateScenario()},
+\code{addObservedData()}, \code{addPITask()}, and the per-task
+parameter-identification sub-entity helpers act on a single definition per
+call.
 }
 \seealso{
 Other individual:
 \code{\link[=removeIndividual]{removeIndividual()}},
+\code{\link[=setIndividual]{setIndividual()}},
 \code{\link[=setIndividualParameterSets]{setIndividualParameterSets()}}
 }
 \concept{individual}

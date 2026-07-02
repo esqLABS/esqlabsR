@@ -25,9 +25,10 @@ in \code{names(project$scenarios)}.}
 \item{parameters}{Non-empty list of \code{PIParameter} records.}
 
 \item{outputMappings}{Non-empty list of \code{PIOutputMapping} records.
-Each \code{outputPathId} must exist in \code{names(project$outputPaths)}.}
+Each \code{outputPath} must exist in \code{names(project$outputPaths)}.}
 
-\item{configuration}{Named list. See PRD for the nested-block shape.}
+\item{configuration}{Named list of solver settings; see the \code{configuration}
+argument of \code{\link[=PITask]{PITask()}} for the supported keys.}
 }
 \value{
 The \code{project} object, invisibly.
@@ -37,6 +38,9 @@ Add a Parameter Identification task to a Project
 }
 \seealso{
 Other parameterIdentification:
+\code{\link[=PIOutputMapping]{PIOutputMapping()}},
+\code{\link[=PIParameter]{PIParameter()}},
+\code{\link[=PITask]{PITask()}},
 \code{\link[=addPIOutputMapping]{addPIOutputMapping()}},
 \code{\link[=addPIParameter]{addPIParameter()}},
 \code{\link[=removePIOutputMapping]{removePIOutputMapping()}},

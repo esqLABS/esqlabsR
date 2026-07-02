@@ -6,7 +6,7 @@
 \usage{
 runPI(
   project,
-  piTaskNames = NULL,
+  tasks = NULL,
   observedData = NULL,
   stopIfParameterNotFound = TRUE
 )
@@ -14,8 +14,10 @@ runPI(
 \arguments{
 \item{project}{A \code{Project} object (see \code{\link[=loadProject]{loadProject()}}).}
 
-\item{piTaskNames}{Optional character vector. When \code{NULL} (default),
-every task on the Project is run.}
+\item{tasks}{Optional character vector of task ids to run. When
+\code{NULL} (default), every task on the Project is run. The ids are
+canonicalized the same way \code{addPITask()} canonicalizes a task id, so a
+name typed as it was first passed to \code{addPITask()} still resolves.}
 
 \item{observedData}{Optional named list of pre-loaded \code{DataSet}
 objects that overrides automatic resolution from

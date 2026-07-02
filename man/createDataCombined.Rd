@@ -7,9 +7,9 @@
 \usage{
 createDataCombined(
   project,
-  dataCombinedNames = NULL,
-  plotGridNames = NULL,
-  simulatedScenarios = NULL,
+  dataCombined = NULL,
+  plotGrids = NULL,
+  scenarioResults = NULL,
   stopIfNotFound = TRUE
 )
 
@@ -18,15 +18,15 @@ createDataCombinedFromExcel(...)
 \arguments{
 \item{project}{A \code{Project} (see \code{\link[=loadProject]{loadProject()}}).}
 
-\item{dataCombinedNames}{Names of the DataCombined entries to build. If
-any name is not declared in \code{project$plots$dataCombined}, an error is
+\item{dataCombined}{Names of the DataCombined entries to build. If
+any name is not declared in \code{project$dataCombined}, an error is
 thrown.}
 
-\item{plotGridNames}{Names of plot grids whose DataCombined dependencies
-should be built. Combined with \code{dataCombinedNames} if both are given.}
+\item{plotGrids}{Names of plot grids whose DataCombined dependencies
+should be built. Combined with \code{dataCombined} if both are given.}
 
-\item{simulatedScenarios}{A named list of simulated scenarios (as
-returned by \code{\link[=runScenarios]{runScenarios()}}).}
+\item{scenarioResults}{A named list of Scenario Results (as
+returned by \code{\link[=runScenarios]{runScenarios()}}). Not the OSPS \code{SimulationResults}.}
 
 \item{stopIfNotFound}{If \code{TRUE} (default), the function errors when a
 referenced simulated path or observed dataSet cannot be resolved. If
@@ -38,8 +38,8 @@ Empty list when no names are requested.
 }
 \description{
 Builds \code{\link[ospsuite:DataCombined]{ospsuite::DataCombined}} objects from a JSON-driven
-\link[=loadProject]{Project}. The project's \code{plots$dataCombined} section
-declares the simulated/observed entries; \code{loadObservedData(project)}
-resolves observed sources internally. Either \code{dataCombinedNames} or
-\code{plotGridNames} (or both) selects which DataCombined to build.
+\link[=loadProject]{Project}. The project's \code{dataCombined} section declares the
+simulated/observed entries; \code{loadObservedData(project)} resolves observed
+sources internally. Either \code{dataCombined} or \code{plotGrids} (or both)
+selects which DataCombined to build.
 }

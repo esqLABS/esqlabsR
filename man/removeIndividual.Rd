@@ -2,24 +2,28 @@
 % Please edit documentation in R/individuals.R
 \name{removeIndividual}
 \alias{removeIndividual}
-\title{Remove an individual from a Project}
+\title{Remove one or more individuals from a Project}
 \usage{
-removeIndividual(project, individualId)
+removeIndividual(project, id)
 }
 \arguments{
 \item{project}{A \code{Project} object.}
 
-\item{individualId}{Character scalar, ID of the individual to remove.}
+\item{id}{Character vector of individual ids to remove. Each is
+canonicalized the same way \code{\link[=addIndividual]{addIndividual()}} canonicalizes it.}
 }
 \value{
 The \code{project} object, invisibly.
 }
 \description{
-Remove an individual from a Project
+Drop the individuals with matching ids in one write-through. Warns (and
+skips) any id not present, and warns when a removed individual is still
+referenced.
 }
 \seealso{
 Other individual:
 \code{\link[=addIndividual]{addIndividual()}},
+\code{\link[=setIndividual]{setIndividual()}},
 \code{\link[=setIndividualParameterSets]{setIndividualParameterSets()}}
 }
 \concept{individual}

@@ -2,18 +2,21 @@
 % Please edit documentation in R/populations.R
 \name{addPopulation}
 \alias{addPopulation}
-\title{Add a population to a Project}
+\title{Add one or more populations to a Project}
 \usage{
-addPopulation(project, populationId, species, numberOfIndividuals, ...)
+addPopulation(project, id, species, numberOfIndividuals, ...)
 }
 \arguments{
 \item{project}{A \code{Project} object.}
 
-\item{populationId}{Character scalar, unique ID.}
+\item{id}{Character vector of unique ids (the number of populations to add).
+Each is canonicalized to a safe, lowercase id (a warning names the result
+if it changed).}
 
-\item{species}{Character scalar.}
+\item{species}{Character scalar (recycled) or the same length as \code{id}.}
 
-\item{numberOfIndividuals}{Integer, positive.}
+\item{numberOfIndividuals}{Positive number, scalar (recycled) or the same
+length as \code{id}.}
 
 \item{...}{Optional named fields. Accepted: \code{proportionOfFemales},
 \code{weightMin}, \code{weightMax}, \code{heightMin}, \code{heightMax}, \code{ageMin},
@@ -25,10 +28,42 @@ fields are coerced via \code{as.double()}.}
 The \code{project} object, invisibly.
 }
 \description{
-Add a population to a Project
+Add populations to \code{project$populations}, vectorizing over a vector of ids
+(see the recycling rule under Details). \code{species}, \code{numberOfIndividuals},
+and the optional \code{...} fields are all scalar-per-entity (recycle/align).
+}
+\details{
+The id argument sets \code{N}, the number of definitions to act on, and cannot
+itself be recycled: when any scalar-per-entity field has length greater than
+1, the id vector must have that same length. A length-1 id with all-scalar
+fields is the ordinary single-definition call.
+
+Each scalar-per-entity field is either length 1 (recycled to all \code{N}
+definitions) or length \code{N} (aligned to the ids by position). Any other
+length is an error naming the field and the lengths.
+
+A vector-valued-per-entity field (an individual's or application's
+\code{parameterSets}, a scenario's \code{outputPaths} and \code{parameterSets}) is
+applied whole to every definition, never split positionally. To give a
+different multi-valued list per definition, pass a list of the same length
+as the id vector (one vector per definition).
+
+The call is all-or-nothing: every definition is validated first, and if any
+fails the whole call aborts and writes nothing. On success all definitions
+are folded into the section and persisted in a single write-through.
+
+Two families of authoring functions sit outside this id-sets-\code{N} rule.
+\code{addParameterEntry()} and \code{removeParameterEntry()} vectorize over parameter
+entries (parallel \code{containerPath} / \code{parameterName} / \code{value} / \code{units}
+vectors) within a single named set, a different axis than the id-sets-\code{N}
+rule described here. \code{renameScenario()}, \code{duplicateScenario()},
+\code{addObservedData()}, \code{addPITask()}, and the per-task
+parameter-identification sub-entity helpers act on a single definition per
+call.
 }
 \seealso{
 Other population:
-\code{\link[=removePopulation]{removePopulation()}}
+\code{\link[=removePopulation]{removePopulation()}},
+\code{\link[=setPopulation]{setPopulation()}}
 }
 \concept{population}

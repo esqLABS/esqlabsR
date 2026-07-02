@@ -4,12 +4,12 @@
 \alias{removePIOutputMapping}
 \title{Remove an output mapping from a PI task}
 \usage{
-removePIOutputMapping(project, taskId, id)
+removePIOutputMapping(project, task, id)
 }
 \arguments{
 \item{project}{A \code{Project} object.}
 
-\item{taskId}{Character scalar. Existing PI task id.}
+\item{task}{Character scalar. Existing PI task id.}
 
 \item{id}{Character scalar. Output mapping id to remove.}
 }
@@ -24,6 +24,9 @@ mappings, the task is auto-removed from
 }
 \seealso{
 Other parameterIdentification:
+\code{\link[=PIOutputMapping]{PIOutputMapping()}},
+\code{\link[=PIParameter]{PIParameter()}},
+\code{\link[=PITask]{PITask()}},
 \code{\link[=addPIOutputMapping]{addPIOutputMapping()}},
 \code{\link[=addPIParameter]{addPIParameter()}},
 \code{\link[=addPITask]{addPITask()}},

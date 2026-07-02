@@ -37,3 +37,13 @@ Writes Excel configuration files from a \code{Project}
 object (typically loaded from JSON). This is the reverse of
 \code{importProjectFromExcel()}.
 }
+\seealso{
+Other project persistence:
+\code{\link[=exampleProjectPath]{exampleProjectPath()}},
+\code{\link[=importProjectFromExcel]{importProjectFromExcel()}},
+\code{\link[=initProject]{initProject()}},
+\code{\link[=loadProject]{loadProject()}},
+\code{\link[=loadSnapshot]{loadSnapshot()}},
+\code{\link[=saveSnapshot]{saveSnapshot()}}
+}
+\concept{project persistence}
