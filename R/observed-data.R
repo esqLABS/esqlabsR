@@ -178,9 +178,12 @@ print.ObservedDataSource <- function(x, ...) {
 #' @description
 #' Reads the `observedData` declarations from a [Project][loadProject()]
 #' and returns the corresponding [`ospsuite::DataSet`] objects. Source
-#' types: `excel` (via importer configuration), `pkml`, `script`. The
-#' `programmatic` type is reserved for a later milestone and currently
-#' errors fast.
+#' types: `excel` (via importer configuration), `pkml`, `script`, and
+#' `programmatic`. A `programmatic` declaration is a sentinel for a
+#' `DataSet` added at runtime with [addObservedData()]; its data lives in
+#' the session (not on disk), so it is resolved from the in-memory store
+#' and is not reproducible across a reload. Prefer a `script` source for a
+#' reproducible programmatic data set.
 #'
 #' @param project A `Project` object (see [loadProject()]).
 #' @returns A named list of [`ospsuite::DataSet`] objects. Empty list when
@@ -209,13 +212,32 @@ loadObservedData <- function(project) {
       "programmatic" = NULL
     )
     if (!is.null(dataSets)) {
-      allDataSets <- c(allDataSets, dataSets)
+      allDataSets <- .mergeObservedDataSets(allDataSets, dataSets)
     }
   }
   # Merge runtime programmatic store, then cache names.
-  allDataSets <- c(allDataSets, state$.programmaticDataSets)
+  allDataSets <- .mergeObservedDataSets(
+    allDataSets,
+    state$.programmaticDataSets
+  )
   state$.observedDataNamesCache <- names(allDataSets)
   allDataSets
+}
+
+# Merge a batch of loaded DataSets into the accumulator, aborting on a name
+# collision instead of letting `c()` silently keep both (a duplicate name would
+# then shadow the earlier set when the list is indexed by name).
+#' @keywords internal
+#' @noRd
+.mergeObservedDataSets <- function(accumulated, incoming) {
+  if (length(incoming) == 0) {
+    return(accumulated)
+  }
+  duplicates <- intersect(names(accumulated), names(incoming))
+  if (length(duplicates) > 0) {
+    cli::cli_abort(messages$observedDataNameCollision(duplicates))
+  }
+  c(accumulated, incoming)
 }
 
 #' Get names of all observed data in a Project
@@ -518,6 +540,10 @@ removeObservedData <- function(project, id) {
       length(result) > 0 &&
       all(vapply(result, inherits, logical(1), "DataSet"))
   ) {
+    # Re-key by each DataSet's own name so a list return is keyed the same
+    # way as a single-DataSet return (the script's own list names, if any,
+    # are ignored in favour of the authoritative `$name`).
+    names(result) <- vapply(result, function(ds) ds$name, character(1))
     return(result)
   }
   cli::cli_abort(

@@ -288,6 +288,20 @@ test_that("setPopulation rejects a non-positive numberOfIndividuals", {
   expect_equal(project$populations[["testpopulation"]], before)
 })
 
+test_that("addPopulation rejects a non-integer numberOfIndividuals", {
+  project <- testProject()
+  expect_error(
+    addPopulation(
+      project,
+      "frac",
+      species = "Human",
+      numberOfIndividuals = 2.5
+    ),
+    "whole number"
+  )
+  expect_false("frac" %in% names(project$populations))
+})
+
 test_that("setPopulation on a clone does not affect the source on disk", {
   source <- testProject()
   before <- source$populations[["testpopulation"]]

@@ -249,6 +249,18 @@ addIndividual <- function(project, id, species, ...) {
     errors <- c(errors, "gender must be a non-empty string")
   }
 
+  # weight/height/age are stored as doubles. Reject a value that is not a
+  # finite number rather than silently coercing it to NA (e.g. "80kg").
+  for (field in c("weight", "height", "age")) {
+    value <- fields[[field]]
+    if (
+      !is.null(value) &&
+        (!is.numeric(value) || length(value) != 1L || !is.finite(value))
+    ) {
+      errors <- c(errors, paste0(field, " must be a single finite number"))
+    }
+  }
+
   if (length(errors) > 0L) {
     cli::cli_abort(
       c(
@@ -483,28 +495,4 @@ setIndividual <- function(project, id, ...) {
   }
   class(entry) <- c("Individual", "list")
   entry
-}
-
-#' Replace the parameter-set references on one or more individuals
-#'
-#' @description A convenience wrapper for
-#'   `setIndividual(project, id, parameterSets = parameterSets)`, which is the
-#'   canonical way to change an individual's parameter-set references.
-#'   Prefer [setIndividual()] directly; this function exists for callers that
-#'   only need to replace the references.
-#'
-#' @inherit vectorizedAuthoring details
-#'
-#' @param project A `Project` object.
-#' @param id Character vector of individual ids. Each is canonicalized the
-#'   same way [addIndividual()] canonicalizes it.
-#' @param parameterSets Character vector of set ids (from
-#'   `project$parameterSets`), applied whole to every individual; use
-#'   `character(0)` to clear. To set a different list per individual, pass a
-#'   list of the same length as `id` (one character vector per individual).
-#' @returns The `project` object, invisibly.
-#' @export
-#' @family individual
-setIndividualParameterSets <- function(project, id, parameterSets) {
-  setIndividual(project, id, parameterSets = parameterSets)
 }

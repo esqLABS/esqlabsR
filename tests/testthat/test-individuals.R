@@ -64,6 +64,22 @@ test_that("addIndividual aborts when gender is missing", {
   expect_false("newi" %in% names(project$individuals))
 })
 
+test_that("addIndividual rejects a non-numeric weight/height/age", {
+  project <- testProject()
+  # "80kg" would silently coerce to NA via as.double(); it must abort instead.
+  expect_error(
+    addIndividual(
+      project,
+      "bad",
+      species = "Human",
+      gender = "MALE",
+      weight = "80kg"
+    ),
+    "weight must be a single finite number"
+  )
+  expect_false("bad" %in% names(project$individuals))
+})
+
 test_that("removeIndividual warns when referenced by a scenario", {
   project <- testProject()
   referenced <- "indiv1"
@@ -149,13 +165,13 @@ test_that("setIndividual on a clone does not affect the source on disk", {
   expect_equal(reloaded$individuals[["indiv1"]], before)
 })
 
-# setIndividualParameterSets ----
+# setIndividual parameterSets replacement ----
 
-test_that("setIndividualParameterSets replaces the refs and persists to file", {
+test_that("setIndividual replaces the parameter-set refs and persists to file", {
   project <- testProject()
   # The fixture individual references "indiv1_default"; point it at another
   # existing set instead.
-  setIndividualParameterSets(project, "indiv1", "global")
+  setIndividual(project, "indiv1", parameterSets = "global")
   expect_identical(
     project$individuals[["indiv1"]]$parameterSets,
     "global"
@@ -169,12 +185,12 @@ test_that("setIndividualParameterSets replaces the refs and persists to file", {
   )
 })
 
-test_that("setIndividualParameterSets aborts on an undefined parameter set", {
+test_that("setIndividual aborts on an undefined parameter set", {
   project <- testProject()
   before <- project$individuals[["indiv1"]]
   expect_snapshot(
     error = TRUE,
-    setIndividualParameterSets(project, "indiv1", "Ghost")
+    setIndividual(project, "indiv1", parameterSets = "Ghost")
   )
   expect_identical(project$individuals[["indiv1"]], before)
 })
@@ -322,10 +338,10 @@ test_that("removeIndividual removes a vector of ids in one write-through", {
   expect_false(any(c("a", "b") %in% names(reloaded$individuals)))
 })
 
-test_that("setIndividualParameterSets vectorizes whole across N ids", {
+test_that("setIndividual parameterSets vectorizes whole across N ids", {
   project <- testProject()
   addIndividual(project, c("a", "b"), species = "Human", gender = "MALE")
-  setIndividualParameterSets(project, c("a", "b"), c("global", "aciclovir"))
+  setIndividual(project, c("a", "b"), parameterSets = c("global", "aciclovir"))
   expect_identical(
     project$individuals$a$parameterSets,
     c("global", "aciclovir")

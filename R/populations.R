@@ -444,9 +444,10 @@ addPopulation <- function(
     !is.numeric(numberOfIndividuals) ||
       length(numberOfIndividuals) != 1L ||
       is.na(numberOfIndividuals) ||
-      numberOfIndividuals <= 0
+      numberOfIndividuals <= 0 ||
+      numberOfIndividuals != round(numberOfIndividuals)
   ) {
-    errors <- c(errors, "numberOfIndividuals must be a positive number")
+    errors <- c(errors, "numberOfIndividuals must be a positive whole number")
   }
 
   allowed <- c(

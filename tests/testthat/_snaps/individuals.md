@@ -47,10 +47,10 @@
       ! `parameterSets` references undefined parameter sets:
       x "ghost"
 
-# setIndividualParameterSets aborts on an undefined parameter set
+# setIndividual aborts on an undefined parameter set
 
     Code
-      setIndividualParameterSets(project, "indiv1", "Ghost")
+      setIndividual(project, "indiv1", parameterSets = "Ghost")
     Condition
       Warning:
       Canonicalized 1 referenced id to a safe form:

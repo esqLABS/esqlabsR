@@ -187,6 +187,77 @@ test_that("loadObservedData sources script entries", {
   expect_s3_class(result$TestDataSet, "DataSet")
 })
 
+test_that("loadObservedData re-keys a script's list of DataSets by each name", {
+  tmpDir <- withr::local_tempdir()
+  scriptPath <- file.path(tmpDir, "make_list.R")
+  writeLines(
+    c(
+      "a <- ospsuite::DataSet$new(name = 'Alpha')",
+      "a$setValues(xValues = c(0, 1), yValues = c(1, 2))",
+      "b <- ospsuite::DataSet$new(name = 'Beta')",
+      "b$setValues(xValues = c(0, 1), yValues = c(3, 4))",
+      # Deliberately give the list the wrong names; the loader must ignore
+      # them and key by each DataSet's own $name.
+      "list(wrong1 = a, wrong2 = b)"
+    ),
+    scriptPath
+  )
+  jsonPath <- file.path(tmpDir, "Project.json")
+  jsonlite::write_json(
+    list(
+      schemaVersion = "2.0",
+      filePaths = list(dataFolder = "."),
+      outputPaths = structure(list(), names = character(0)),
+      scenarios = list(),
+      observedData = list(list(type = "script", file = "make_list.R"))
+    ),
+    jsonPath,
+    auto_unbox = TRUE,
+    null = "null"
+  )
+  project <- loadProject(jsonPath)
+  result <- loadObservedData(project)
+  expect_named(result, c("Alpha", "Beta"))
+})
+
+test_that("loadObservedData aborts on a name collision across sources", {
+  tmpDir <- withr::local_tempdir()
+  writeLines(
+    c(
+      "ds <- ospsuite::DataSet$new(name = 'Dup')",
+      "ds$setValues(xValues = c(0, 1), yValues = c(1, 2))",
+      "ds"
+    ),
+    file.path(tmpDir, "one.R")
+  )
+  writeLines(
+    c(
+      "ds <- ospsuite::DataSet$new(name = 'Dup')",
+      "ds$setValues(xValues = c(0, 1), yValues = c(3, 4))",
+      "ds"
+    ),
+    file.path(tmpDir, "two.R")
+  )
+  jsonPath <- file.path(tmpDir, "Project.json")
+  jsonlite::write_json(
+    list(
+      schemaVersion = "2.0",
+      filePaths = list(dataFolder = "."),
+      outputPaths = structure(list(), names = character(0)),
+      scenarios = list(),
+      observedData = list(
+        list(type = "script", file = "one.R"),
+        list(type = "script", file = "two.R")
+      )
+    ),
+    jsonPath,
+    auto_unbox = TRUE,
+    null = "null"
+  )
+  project <- loadProject(jsonPath)
+  expect_error(loadObservedData(project), "Duplicate observed-data set name")
+})
+
 test_that("loadObservedData errors when script returns wrong type", {
   tmpDir <- withr::local_tempdir()
   scriptPath <- file.path(tmpDir, "bad.R")

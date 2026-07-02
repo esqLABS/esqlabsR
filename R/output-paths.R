@@ -42,6 +42,12 @@ addOutputPath <- function(project, id, path) {
       length as id"
     ))
   }
+  if (anyNA(path) || any(nchar(path) == 0)) {
+    cli::cli_abort(c(
+      "Cannot add outputPath:",
+      "x" = "path must contain non-empty strings"
+    ))
+  }
   clash <- intersect(id, names(project$outputPaths))
   if (length(clash) > 0L) {
     cli::cli_abort("outputPath {.val {clash}} already exists")

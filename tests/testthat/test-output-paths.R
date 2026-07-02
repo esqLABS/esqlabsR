@@ -171,3 +171,13 @@ test_that("addOutputPath aborts the whole batch and writes nothing on one bad id
   reloaded <- loadProject(project$jsonPath)
   expect_identical(names(reloaded$outputPaths), before)
 })
+
+test_that("addOutputPath rejects an empty or NA path", {
+  project <- testProject()
+  before <- names(project$outputPaths)
+  expect_error(addOutputPath(project, "empty", ""), "non-empty")
+  expect_error(addOutputPath(project, "missing", NA_character_), "non-empty")
+  # A bad path in a batch aborts the whole call and writes nothing.
+  expect_error(addOutputPath(project, c("a", "b"), c("Organism|X", "")))
+  expect_identical(names(project$outputPaths), before)
+})
