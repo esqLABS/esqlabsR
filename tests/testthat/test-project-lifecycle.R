@@ -35,9 +35,9 @@ test_that("loadProject() warns on a dangling cross-reference", {
       outputPaths = list(O1 = "Organism|A|Concentration in container"),
       scenarios = list(list(
         name = "S",
-        individualId = "Ghost",
+        individual = "Ghost",
         modelFile = "m.pkml",
-        outputPathIds = list("O1")
+        outputPaths = list("O1")
       )),
       individuals = structure(list(), names = character(0)),
       populations = structure(list(), names = character(0)),
@@ -58,73 +58,18 @@ test_that("loadProject() loads a clean project without a cross-reference warning
   expect_no_warning(testProject())
 })
 
-test_that("saveProject writes a Project to disk and clears modified flag", {
-  project <- testProject()
+test_that("a bound project's container edit persists immediately", {
+  tmp <- saveSnapshot(testProject(), local_projectPath())
+  project <- loadProject(tmp)
+
   project$modelFolder <- "AnotherModels"
-  expect_true(project$modified)
 
-  tmp <- withr::local_tempfile(fileext = ".json")
-  saveProject(project, tmp)
-  expect_true(file.exists(tmp))
-  expect_false(project$modified)
-})
-
-test_that("saveProject defaults to project$jsonPath when path is NULL", {
-  tmp_src <- withr::local_tempfile(fileext = ".json")
-  project <- testProject()
-  saveProject(project, tmp_src)
-  reloaded <- loadProject(tmp_src)
-  reloaded$modelFolder <- "Models2"
-  saveProject(reloaded)
-  expect_false(reloaded$modified)
-})
-
-test_that("saveProject errors when project has no jsonPath and path is NULL", {
-  project <- Project$new()
-  expect_snapshot(saveProject(project), error = TRUE)
-})
-
-test_that("saveProject to a new path rebinds jsonPath, projectFilePath, and projectDirPath", {
-  project <- testProject()
-  newPath <- withr::local_tempfile(fileext = ".json")
-
-  saveProject(project, newPath)
-
-  expect_identical(project$jsonPath, fs::path_abs(newPath))
-  expect_identical(project$projectFilePath, fs::path_abs(newPath))
-  expect_identical(project$projectDirPath, dirname(fs::path_abs(newPath)))
-})
-
-test_that("a bare saveProject after a save-as writes to the new location", {
-  project <- testProject()
-  newPath <- withr::local_tempfile(fileext = ".json")
-  saveProject(project, newPath)
-
-  project$modelFolder <- "Models2"
-  expect_true(project$modified)
-
-  saveProject(project)
-  expect_false(project$modified)
+  # Container metadata is write-through: a reload sees the new value with no
+  # separate save step.
   expect_identical(
-    loadProject(newPath)$modelFolder,
-    fs::path_abs(
-      file.path(dirname(fs::path_abs(newPath)), "Models2")
-    )
+    loadProject(tmp)$modelFolder,
+    fs::path_abs(file.path(dirname(tmp), "AnotherModels"))
   )
-})
-
-test_that("saveProject surfaces a missing parent directory with file context", {
-  project <- testProject()
-  badPath <- file.path(withr::local_tempdir(), "does-not-exist", "Project.json")
-  # Path is environment-specific, so match the message rather than snapshot it.
-  expect_error(
-    saveProject(project, badPath),
-    "Parent directory does not exist"
-  )
-})
-
-test_that("saveProject errors on non-Project input", {
-  expect_error(saveProject("not a project"), "Project")
 })
 
 test_that("exampleProject() succeeds", {
@@ -304,13 +249,13 @@ test_that("a mutation after validateProject() forces .ensureValid to re-validate
   expect_false(project$validatedSinceMutation)
 })
 
-test_that("mutated project survives a saveProject -> loadProject round-trip", {
+test_that("mutated project survives a snapshot -> loadProject round-trip", {
   project <- testProject()
 
-  addOutputPath(project, "RoundtripX", "Organism|A|Concentration in container")
+  addOutputPath(project, "roundtripx", "Organism|A|Concentration in container")
   addIndividual(
     project,
-    "Pediatric_male",
+    "pediatric_male",
     species = "Human",
     population = "European_ICRP_2002",
     gender = "MALE",
@@ -324,9 +269,9 @@ test_that("mutated project survives a saveProject -> loadProject round-trip", {
   reloaded <- loadProject(out)
 
   expect_identical(
-    reloaded$outputPaths$RoundtripX,
-    project$outputPaths$RoundtripX
+    reloaded$outputPaths$roundtripx,
+    project$outputPaths$roundtripx
   )
   expect_named(reloaded$individuals, names(project$individuals))
-  expect_identical(reloaded$individuals$Pediatric_male$weight, 25)
+  expect_identical(reloaded$individuals$pediatric_male$weight, 25)
 })
