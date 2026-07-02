@@ -18,7 +18,8 @@ reference:
     contents:
       - Project
       - loadProject
-      - saveProject
+      - loadSnapshot
+      - saveSnapshot
       - initProject
       - exampleProjectPath
       - importProjectFromExcel
@@ -30,16 +31,22 @@ reference:
     contents:
       - addScenario
       - removeScenario
+      - setScenario
+      - renameScenario
+      - duplicateScenario
       - addIndividual
       - removeIndividual
+      - setIndividual
       - setIndividualParameterSets
       - addPopulation
       - removePopulation
+      - setPopulation
       - addApplication
       - removeApplication
       - setApplicationParameterSets
       - addOutputPath
       - removeOutputPath
+      - setOutputPath
       - addObservedData
       - removeObservedData
       - getObservedDataNames
@@ -49,20 +56,19 @@ reference:
       - removePlot
       - addPlotGrid
       - removePlotGrid
-      - addModelParameterSet
-      - removeModelParameterSet
-      - addModelParameterEntry
-      - removeModelParameterEntry
-      - addIndividualParameterSet
-      - removeIndividualParameterSet
-      - addIndividualParameterSetEntry
-      - removeIndividualParameterSetEntry
-      - addApplicationParameterSet
-      - removeApplicationParameterSet
-      - addApplicationParameterSetEntry
-      - removeApplicationParameterSetEntry
+      - addParameterSet
+      - removeParameterSet
+      - addParameterEntry
+      - removeParameterEntry
+      - addInitialConditions
+      - removeInitialConditions
+      - addInitialConditionEntry
+      - removeInitialConditionEntry
   - title: Parameter identification workflow
     contents:
+      - PITask
+      - PIParameter
+      - PIOutputMapping
       - runPI
       - addPITask
       - removePITask
@@ -109,6 +115,8 @@ reference:
     contents:
       - matches("^valid")
       - matches("^is")
+      - print.ValidationResults
+      - format.ValidationResults
       - stringToNum
       - GenderInt
       - contains("Types")
@@ -139,23 +147,27 @@ reference:
       - createDataCombinedFromExcel
       - createPlotsFromExcel
 articles:
-  - title: esqlabsR Workflow
-    navbar: esqlabsR Workflow
+  - title: Workflow
+    navbar: Workflow
     contents:
-      - workflow-overview
-      - project-structure
+      - esqlabsR
+      - projects
       - design-scenarios
+      - validate-project
       - run-simulations
       - plot-results
-      - sensitivity
-      - sensitivity-plots
-  - title: Parameter Identification
-    navbar: Parameter Identification
+      - observed-data
+  - title: Parameter identification
+    navbar: Parameter identification
     contents:
       - pi-workflow
+  - title: Sensitivity analysis
+    navbar: Sensitivity analysis
+    contents:
+      - sensitivity
+      - sensitivity-plots
   - title: Miscellaneous
     navbar: Miscellaneous
     contents:
+      - migrate-from-excel
       - presentations
-      - advanced
-      - project-migration-guide
