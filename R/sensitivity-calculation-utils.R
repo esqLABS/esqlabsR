@@ -172,7 +172,7 @@
         "x,y" = customOutputFunction(x = x, y = y),
         "x" = customOutputFunction(x = x),
         "y" = customOutputFunction(y = y),
-        stop(messages$invalidCustomFunctionParameters(formalNames))
+        cli::cli_abort(messages$invalidCustomFunctionParameters(formalNames))
       )
 
       userPKValueList[[customFunctionName]] <- data.frame(
@@ -218,12 +218,11 @@
     parameterPath <- unique(data$ParameterPath)[1]
     pkParameter <- unique(data$PKParameter)[1]
 
-    warning(
+    cli::cli_warn(
       messages$warningSensitivityPKParameterNotCalculated(
         parameterPath,
         pkParameter
-      ),
-      call. = FALSE
+      )
     )
 
     return(
@@ -295,7 +294,9 @@
 #'
 #' @param data A dataframe returned by `pkAnalysesAsDataFrame()` or by
 #'   `simulationResultsToDataFrame()`.
-#' @inheritParams .simulationResultsToTimeSeriesDataFrame
+#' @param simulationResults List of simulation results the parameter details are
+#'   read from.
+#' @param parameterPath Path to the parameter in the simulation results.
 #'
 #' @note Note that the function will work only with a single parameter path.
 #'
@@ -371,7 +372,7 @@
     # Ensure the lengths of variationRange and parameterPath are equal
     variationRange <- rep(variationRange, length(parameterPaths))
   } else if (length(variationRange) != length(parameterPaths)) {
-    stop(
+    cli::cli_abort(
       messages$invalidVariationRangeLength()
     )
   }
@@ -431,22 +432,26 @@
     if (nullAllowed) {
       return(invisible(NULL))
     }
-    stop(messages$errorWrongType(objectName, class(object)[1], objectType))
+    cli::cli_abort(
+      messages$errorWrongType(objectName, class(object)[1], objectType)
+    )
   }
 
   # Check if the argument is of type character
   if (!(is.atomic(object) && typeof(object) == objectType)) {
-    stop(messages$errorWrongType(objectName, class(object)[1], objectType))
+    cli::cli_abort(
+      messages$errorWrongType(objectName, class(object)[1], objectType)
+    )
   }
 
   # Ensure all values are distinct
   if (!hasOnlyDistinctValues(object)) {
-    stop(messages$errorDuplicatedValues())
+    cli::cli_abort(messages$errorDuplicatedValues())
   }
 
   # Check for empty string values
   if (any(!nzchar(object))) {
-    stop(messages$errorEmptyString(objectName))
+    cli::cli_abort(messages$errorEmptyString(objectName))
   }
 }
 
@@ -464,10 +469,7 @@
       !pkParameters %in% ospsuite::allPKParameterNames()
     ]
 
-    message(
-      "Following PK parameters are specified but were not calculated:\n",
-      paste0(nsPKNames, collapse = "\n")
-    )
+    cli::cli_inform(messages$nonStandardPKParametersNotCalculated(nsPKNames))
   }
 }
 
@@ -486,51 +488,12 @@
     listNames <- names(object)
     argName <- deparse(substitute(object))
     if (hasEmptyStrings(listNames)) {
-      stop(messages$errorNotNamedList(argName))
+      cli::cli_abort(messages$errorNotNamedList(argName))
     }
   }
 }
 
 # plotting helpers ------------------------------
-
-#' @name savePlotList
-#' @title Save a list of plots
-#'
-#' @param plotlist A list of plots (ideally form `sensitivityTimeProfiles()` or
-#'   `sensitivitySpiderPlot()`).
-#' @param plot.type A string specifying the prefix for plot filename.
-#' @inheritParams sensitivitySpiderPlot
-#'
-#' @seealso sensitivityTimeProfiles, sensitivitySpiderPlot
-#'
-#' @examples
-#'
-#' # first check out examples for `sensitivityTimeProfiles()` and
-#' # `sensitivitySpiderPlot()`
-#'
-#' @keywords internal
-#' @noRd
-.savePlotList <- function(
-  plotlist,
-  plot.type,
-  outputFolder = "",
-  width = 16,
-  height = 9,
-  dpi = 300
-) {
-  purrr::walk2(
-    .x = plotlist,
-    .y = seq_along(plotlist),
-    .f = ~ ggplot2::ggsave(
-      filename = paste0(outputFolder, plot.type, "OutputPath", .y, ".png"),
-      plot = .x,
-      height = height,
-      width = width,
-      units = "cm",
-      dpi = dpi
-    )
-  )
-}
 
 #' Filter out data not needed for plotting
 #'
@@ -607,13 +570,13 @@ saveSensitivityCalculation <- function(
 
   if (dir.exists(outputDir)) {
     if (!overwrite) {
-      stop(messages$errorOutputDirExists(outputDir))
+      cli::cli_abort(messages$errorOutputDirExists(outputDir))
     }
 
     contents <- list.files(outputDir, all.files = TRUE, no.. = TRUE)
     if (interactive() && length(contents) > 0) {
       if (!usethis::ui_yeah(messages$promptDeleteOutputDir(outputDir))) {
-        stop(messages$abortedByUser())
+        cli::cli_abort(messages$abortedByUser())
       }
     }
 
@@ -679,7 +642,7 @@ loadSensitivityCalculation <- function(outputDir, simulation = NULL) {
 
   metaPath <- file.path(outputDir, "sensitivityCalculation.meta")
   if (!file.exists(metaPath)) {
-    stop(messages$errorSensitivityCalculationNotFound(metaPath))
+    cli::cli_abort(messages$errorSensitivityCalculationNotFound(metaPath))
   }
 
   # Load sensitivityCalculation structure
@@ -693,7 +656,9 @@ loadSensitivityCalculation <- function(outputDir, simulation = NULL) {
         ospsuite::loadSimulation(simFilePath)
       },
       error = function(e) {
-        stop(messages$errorFailedToLoadSimulation(simFilePath, e$message))
+        cli::cli_abort(
+          messages$errorFailedToLoadSimulation(simFilePath, e$message)
+        )
       }
     )
   }
@@ -710,7 +675,7 @@ loadSensitivityCalculation <- function(outputDir, simulation = NULL) {
 
   expectedCount <- length(parameterPaths) * length(variationRange)
   if (length(simResultFiles) != expectedCount) {
-    stop(messages$errorCorruptSensitivityCalculation(outputDir))
+    cli::cli_abort(messages$errorCorruptSensitivityCalculation(outputDir))
   }
 
   simulationResults <- sensitivityCalculation$simulationResults
@@ -733,7 +698,7 @@ loadSensitivityCalculation <- function(outputDir, simulation = NULL) {
           simulationResult$allQuantityPaths
       )
     ) {
-      stop(messages$errorCorruptSensitivityCalculation(outputDir))
+      cli::cli_abort(messages$errorCorruptSensitivityCalculation(outputDir))
     }
   }
 

@@ -8,6 +8,12 @@ esqlabsEnv$packageName <- "esqlabsR"
 # Version of the package
 esqlabsEnv$packageVersion <- getNamespaceVersion("esqlabsR")
 
+# Declared here (as an empty placeholder) so its name is present when
+# `esqlabsRSettingNames` is built at package-namespace load. `.onLoad()` then
+# fills it with the real color palette; without this declaration the exported
+# enum would omit `colorPalette` even though it is a valid working setting.
+esqlabsEnv$colorPalette <- NULL
+
 #' Names of the settings stored in esqlabsEnv Can be used with `getEsqlabsRSetting()`
 #' @export
 esqlabsRSettingNames <- enum(names(esqlabsEnv))

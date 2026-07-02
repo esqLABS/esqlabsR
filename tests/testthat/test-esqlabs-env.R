@@ -2,7 +2,8 @@ test_that("esqlabsRSettingNames function returns correct enum", {
   # Check that esqlabsRSettingNames returns an enum
   expect_true(is.list(esqlabsRSettingNames))
   expect_true(all(
-    c("packageName", "packageVersion") %in% names(esqlabsRSettingNames)
+    c("packageName", "packageVersion", "colorPalette") %in%
+      names(esqlabsRSettingNames)
   ))
 })
 

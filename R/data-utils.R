@@ -148,7 +148,8 @@ calculateMeanDataSet <- function(
 ) {
   validateIsOfType(dataSets, "DataSet")
   if (!any(c("arithmetic", "geometric") == method)) {
-    stop(messages$errorInvalidMeanMethod())
+    msg <- messages$errorInvalidMeanMethod()
+    cli::cli_abort("{msg}")
   }
   validateEnumValue(lloqMode, LLOQMode)
 
@@ -167,7 +168,8 @@ calculateMeanDataSet <- function(
   } else if (length(molWeights) > 1) {
     # molWeight is not specified by user and molWeights of data sets differ -
     # error
-    stop(messages$errorOutputMolWeightNeeded())
+    msg <- messages$errorOutputMolWeightNeeded()
+    cli::cli_abort("{msg}")
   } else if (!is.na(molWeights)) {
     # molWeight is not specified by user and all molWeights are equal and not NULL -
     # take this value

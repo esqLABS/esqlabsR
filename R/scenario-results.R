@@ -96,7 +96,7 @@ saveScenarioResults <- function(
 
 #' Load simulated scenarios from csv and pkml.
 #'
-#' @param scenarioNames Names of simulated scenarios
+#' @param scenarios Names of simulated scenarios
 #' @param resultsFolder Path to the folder where simulation results as csv and
 #' the corresponding simulations as pkml are located.
 #'
@@ -122,14 +122,14 @@ saveScenarioResults <- function(
 #'
 #' # Now load the results
 #' simulatedScenariosResults <- loadScenarioResults(
-#'   scenarioNames = names(project$scenarios),
+#'   scenarios = names(project$scenarios),
 #'   resultsFolder = resultsFolder
 #' )
 #' }
-loadScenarioResults <- function(scenarioNames, resultsFolder) {
+loadScenarioResults <- function(scenarios, resultsFolder) {
   simulatedScenariosResults <- list()
-  for (i in seq_along(scenarioNames)) {
-    scenarioName <- scenarioNames[[i]]
+  for (i in seq_along(scenarios)) {
+    scenarioName <- scenarios[[i]]
     # Replace "\" and "/" by "_" so the file name does not result in folders.
     # Used only for loading the results, the name of the scenario is not changed.
     scenarioNameForPath <- gsub("[\\\\/]", "_", scenarioName)
@@ -159,7 +159,7 @@ loadScenarioResults <- function(scenarioNames, resultsFolder) {
       population = population,
       addMetaData = FALSE
     )
-    simulatedScenariosResults[[scenarioNames[[i]]]] <-
+    simulatedScenariosResults[[scenarios[[i]]]] <-
       list(
         simulation = simulation,
         results = results,

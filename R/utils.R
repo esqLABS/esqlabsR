@@ -47,10 +47,8 @@ getIndexClosestToValue <- function(
   idx <- which(distances == min(distances) & distances <= thresholdAbs)
 
   if (length(idx) == 0) {
-    warning(messages$warningValueWithinThresholdNotExisting(
-      value,
-      thresholdAbs
-    ))
+    msg <- messages$warningValueWithinThresholdNotExisting(value, thresholdAbs)
+    cli::cli_warn("{msg}")
     return(NULL)
   }
 
@@ -121,18 +119,20 @@ compareWithNA <- function(v1, v2) {
   simulationTimeIntervals <- lapply(simulationTimeIntervals, as.numeric)
   validateIsNumeric(simulationTimeIntervals)
   if (any(unlist(simulationTimeIntervals) < 0)) {
-    stop(messages$stopWrongTimeIntervalString(simulationTimeIntervalsString))
+    msg <- messages$stopWrongTimeIntervalString(simulationTimeIntervalsString)
+    cli::cli_abort("{msg}")
   }
   if (any(vapply(simulationTimeIntervals, length, integer(1)) != 3)) {
-    stop(messages$stopWrongTimeIntervalString(simulationTimeIntervalsString))
+    msg <- messages$stopWrongTimeIntervalString(simulationTimeIntervalsString)
+    cli::cli_abort("{msg}")
   }
-  if (any(vapply(simulationTimeIntervals, function(x) x[3] <= 0, logical(1)))) {
-    stop(messages$stopWrongTimeIntervalString(simulationTimeIntervalsString))
+  if (any(vapply(simulationTimeIntervals, \(x) x[3] <= 0, logical(1)))) {
+    msg <- messages$stopWrongTimeIntervalString(simulationTimeIntervalsString)
+    cli::cli_abort("{msg}")
   }
-  if (
-    any(vapply(simulationTimeIntervals, function(x) x[1] >= x[2], logical(1)))
-  ) {
-    stop(messages$stopWrongTimeIntervalString(simulationTimeIntervalsString))
+  if (any(vapply(simulationTimeIntervals, \(x) x[1] >= x[2], logical(1)))) {
+    msg <- messages$stopWrongTimeIntervalString(simulationTimeIntervalsString)
+    cli::cli_abort("{msg}")
   }
   return(simulationTimeIntervals)
 }
@@ -178,7 +178,8 @@ getMoleculeNameFromQuantity <- function(quantity) {
 
   # If parent container is not a molecule, stop with an error
   if (!(any(c("Drug", "Molecule") == parentContainerType))) {
-    stop(messages$cannotGetMoleculeFromQuantity(quantity$path))
+    msg <- messages$cannotGetMoleculeFromQuantity(quantity$path)
+    cli::cli_abort("{msg}")
   }
 
   return(parentContainer$name)
@@ -204,10 +205,12 @@ getMoleculeNameFromQuantity <- function(quantity) {
 #' myEnum <- enumPutList("g", list(12, 2, "a"), myEnum, overwrite = TRUE)
 enumPutList <- function(key, values, enum, overwrite = FALSE) {
   if (length(key) > 1) {
-    stop(messages$errorEnumPutListMultipleKeys())
+    msg <- messages$errorEnumPutListMultipleKeys()
+    cli::cli_abort("{msg}")
   }
   if (enumHasKey(key, enum) && !overwrite) {
-    stop(messages$errorKeyInEnumPresent(key))
+    msg <- messages$errorKeyInEnumPresent(key)
+    cli::cli_abort("{msg}")
   }
   enum[[key]] <- values
 
