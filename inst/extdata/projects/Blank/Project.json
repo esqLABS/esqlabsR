@@ -1,31 +1,29 @@
 {
   "schemaVersion": "2.0",
   "esqlabsRVersion": "6.0.0",
+  "name": "Blank",
+  "definitionsFolder": "definitions",
   "filePaths": {
     "modelFolder": "Models/Simulations/",
-    "configurationsFolder": "Configurations/",
-    "modelParamsFile": "ModelParameters.xlsx",
-    "individualsFile": "Individuals.xlsx",
-    "populationsFile": "Populations.xlsx",
     "populationsFolder": "Populations",
-    "scenariosFile": "Scenarios.xlsx",
-    "applicationsFile": "Applications.xlsx",
-    "plotsFile": "Plots.xlsx",
     "dataFolder": "Data/",
     "outputFolder": "Results/"
   },
   "observedData": [],
   "outputPaths": {},
   "scenarios": [],
-  "modelParameterSets": {},
+  "parameterSets": {},
   "individuals": [],
-  "individualParameterSets": {},
   "populations": [],
   "applications": {},
-  "applicationParameterSets": {},
-  "plots": {
-    "dataCombined": [],
-    "plotConfiguration": [],
-    "plotGrids": []
+  "parameterIdentification": [],
+  "excel": {
+    "configurationsFolder": "Configurations/",
+    "modelParamsFile": "ModelParameters.xlsx",
+    "individualsFile": "Individuals.xlsx",
+    "populationsFile": "Populations.xlsx",
+    "scenariosFile": "Scenarios.xlsx",
+    "applicationsFile": "Applications.xlsx",
+    "plotsFile": "Plots.xlsx"
   }
 }

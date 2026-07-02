@@ -1,0 +1,39 @@
+{
+  "id": "aciclovirsimple",
+  "scenarios": [
+    "testscenario"
+  ],
+  "parameters": [
+    {
+      "id": "ehc",
+      "scenarios": [
+        "testscenario"
+      ],
+      "path": "Organism|Liver|EHC continuous fraction",
+      "units": "",
+      "minValue": 0.5,
+      "maxValue": 1,
+      "startValue": 0.8
+    }
+  ],
+  "outputMappings": [
+    {
+      "id": "pvb",
+      "scenarios": [
+        "testscenario"
+      ],
+      "outputPath": "aciclovir_pvb",
+      "observedData": "Laskin 1982.Group A_Aciclovir_1_Human_MALE_PeripheralVenousBlood_Plasma_2.5 mg/kg_iv_",
+      "scaling": "lin",
+      "xOffset": 0,
+      "yOffset": 0,
+      "xFactor": 1,
+      "yFactor": 1,
+      "weight": null
+    }
+  ],
+  "configuration": {
+    "algorithm": "BOBYQA",
+    "ciMethod": "hessian"
+  }
+}
