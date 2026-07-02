@@ -232,10 +232,11 @@ test_that("addObservedData appends a valid config entry", {
   before <- length(project$observedData)
   addObservedData(project, list(type = "pkml", file = "extra.pkml"))
   expect_length(project$observedData, before + 1L)
-  expect_equal(
-    project$observedData[[before + 1L]],
-    list(type = "pkml", file = "extra.pkml")
-  )
+  added <- project$observedData[[before + 1L]]
+  # The entry is classed as an ObservedDataSource (a transparent list wrapper
+  # for printing); compare the fields, not the class.
+  expect_s3_class(added, "ObservedDataSource")
+  expect_equal(unclass(added), list(type = "pkml", file = "extra.pkml"))
 })
 
 test_that("addObservedData rejects an under-specified config entry", {
@@ -262,4 +263,91 @@ test_that("addObservedData rejects a duplicate config entry file", {
     )
   )
   expect_length(project$observedData, 1L)
+})
+
+# Two declarations whose `file` differs only by directory derive the same
+# on-disk id (the basename) and would silently overwrite each other (the second
+# lost on reload). The section accessor is read-only, so the only way such a
+# section reaches the write path is a raw `.setSection()` write, which bypasses
+# addObservedData()'s own basename guard; it must fail fast in the
+# serialize/write path naming the collision, leaving disk and memory unchanged.
+test_that("observedData declarations sharing a basename fail the write-through", {
+  project <- testProject()
+  dir <- file.path(project$projectDirPath, "definitions", "observed-data")
+  before <- if (dir.exists(dir)) list.files(dir) else character()
+  beforeMem <- project$observedData
+
+  colliding <- list(
+    list(type = "pkml", file = "dirA/obs.pkml"),
+    list(type = "pkml", file = "dirB/obs.pkml")
+  )
+  expect_snapshot(
+    project$.setSection("observedData", colliding),
+    error = TRUE
+  )
+
+  # Neither the in-memory section nor the on-disk tree changed.
+  expect_identical(project$observedData, beforeMem)
+  if (dir.exists(dir)) {
+    expect_setequal(list.files(dir), before)
+  }
+})
+
+# removeObservedData write-through ----
+
+test_that("removeObservedData deletes the entity file and persists to disk", {
+  project <- testProject()
+  dir <- file.path(project$projectDirPath, "definitions", "observed-data")
+  # The fixture declares one Excel source, filed under its basename.
+  id <- "Aciclovir_TimeValuesData.xlsx"
+  expect_true(file.exists(file.path(dir, paste0(id, ".json"))))
+
+  suppressWarnings(removeObservedData(project, id))
+
+  # In memory the declaration is gone, the entity file is deleted, and a fresh
+  # load no longer sees it.
+  expect_false(any(vapply(
+    project$observedData,
+    function(e) identical(basename(e[["file"]] %||% ""), id),
+    logical(1)
+  )))
+  expect_false(file.exists(file.path(dir, paste0(id, ".json"))))
+  reloaded <- loadProject(project$jsonPath)
+  expect_length(reloaded$observedData, 0L)
+})
+
+test_that("removeObservedData removes a vector of ids in one pass", {
+  project <- testProject()
+  addObservedData(project, list(type = "pkml", file = "one.pkml"))
+  addObservedData(project, list(type = "pkml", file = "two.pkml"))
+  before <- length(project$observedData)
+
+  removeObservedData(project, c("one.pkml", "two.pkml"))
+  expect_length(project$observedData, before - 2L)
+  files <- vapply(
+    project$observedData,
+    function(e) basename(e[["file"]] %||% NA_character_),
+    character(1)
+  )
+  expect_false(any(c("one.pkml", "two.pkml") %in% files))
+})
+
+test_that("removeObservedData warns and skips a not-found id in the batch", {
+  project <- testProject()
+  addObservedData(project, list(type = "pkml", file = "one.pkml"))
+  before <- length(project$observedData)
+  expect_warning(
+    removeObservedData(project, c("one.pkml", "ghost.pkml")),
+    "ghost.pkml"
+  )
+  expect_length(project$observedData, before - 1L)
+})
+
+# Print method ----
+
+test_that("print.ObservedDataSource renders the source declaration", {
+  project <- testProject()
+  withr::local_options(cli.unicode = FALSE)
+  local_reproducible_output()
+  expect_snapshot(print(project$observedData[[1]]))
 })

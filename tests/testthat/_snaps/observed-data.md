@@ -40,3 +40,25 @@
       Error in `addObservedData()`:
       ! observedData entry with file "Aciclovir_TimeValuesData.xlsx" already exists
 
+# observedData declarations sharing a basename fail the write-through
+
+    Code
+      project$.setSection("observedData", colliding)
+    Condition
+      Error in `.serializeObservedDataSet()`:
+      ! Two observedData declarations map to the same entity file 'obs.pkml.json'.
+      x The on-disk id is the file basename (or the programmatic name), so two sources sharing a basename collide.
+      i Rename one source so the basenames differ.
+
+# print.ObservedDataSource renders the source declaration
+
+    Code
+      print(project$observedData[[1]])
+    Output
+      <ObservedDataSource>
+        * Type: excel
+        * File: Aciclovir_TimeValuesData.xlsx
+        * Name: <empty string>
+        * Importer Configuration: esqlabs_dataImporter_configuration.xml
+        * Sheets: Laskin 1982.Group A
+
