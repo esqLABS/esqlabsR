@@ -182,7 +182,8 @@ initProject <- function(
   if (isProjectInitialized(destination)) {
     if (overwrite) {
       # Overwrite without asking
-      message(messages$overwriteDestination(destination))
+      msg <- messages$overwriteDestination(destination)
+      cli::cli_inform("{msg}")
     } else {
       if (!.isInteractive()) {
         cli::cli_abort(messages$cannotPromptNonInteractive())
@@ -190,7 +191,8 @@ initProject <- function(
       if (!.confirmOverwrite()) {
         cli::cli_abort(messages$abortedByUser())
       }
-      message(messages$overwriteDestination(destination))
+      msg <- messages$overwriteDestination(destination)
+      cli::cli_inform("{msg}")
     }
   }
 

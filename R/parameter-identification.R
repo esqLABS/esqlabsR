@@ -958,7 +958,8 @@ runPI <- function(
   # hours-long) optimisations.
   runtimes <- list()
   for (taskName in tasks) {
-    message(messages$messageBuildingPITask(taskName))
+    msg <- messages$messageBuildingPITask(taskName)
+    cli::cli_inform("{msg}")
     runtimes[[taskName]] <- .createSinglePITask(
       project = project,
       piTask = taskMap[[taskName]],
@@ -969,7 +970,8 @@ runPI <- function(
 
   results <- list()
   for (taskName in tasks) {
-    message(messages$messageRunningPITask(taskName))
+    msg <- messages$messageRunningPITask(taskName)
+    cli::cli_inform("{msg}")
     runtime <- runtimes[[taskName]]
     entry <- tryCatch(
       {
