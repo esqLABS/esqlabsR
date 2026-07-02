@@ -14,6 +14,20 @@
       Error:
       ! validatedSinceMutation is readonly
 
+# .validateCrossReferences suggests a near match for an individual's parameterSets
+
+    Code
+      cat(msgs[grepl("Individual", msgs)], sep = "\n")
+    Output
+      Individual 'I1' references undefined parameterSets: PresysSet2 (did you mean 'PresysSet1'?)
+
+# .validateCrossReferences suggests a near match for an application's parameterSets
+
+    Code
+      cat(msgs[grepl("Application", msgs)], sep = "\n")
+    Output
+      Application 'A1' references undefined parameterSets: PresysSet2 (did you mean 'PresysSet1'?)
+
 # .ensureValid aborts with a formatted summary on critical errors
 
     Code
@@ -31,7 +45,7 @@
     Condition
       Error in `.abortValidationErrors()`:
       ! Cannot createPlots: project has 1 critical validation error.
-      x [plots] plotConfiguration references unknown dataCombinedName: Ghost
+      x [plots] plotConfiguration references unknown dataCombinedId: Ghost
       i Run `validateProject(project)` for a full report.
 
 # .abortValidationErrors escapes glue metacharacters in messages
@@ -52,6 +66,29 @@
     Condition
       Warning:
       Removed observedData "MyObs" is still referenced by 1 dataCombined entry:
-      * DC1
+      * dc1
       i These dataCombined entries now have a dangling reference. Update or remove them.
+
+# print.ValidationResults renders a grouped summary with glyphs
+
+    Code
+      print(.fakeValidationResults())
+    Output
+      Validation report: 2 critical errors, 2 warnings.
+      scenarios
+        x [Invalid Reference] Scenario 'S1' references undefined individual 'ghost'
+        ! [Data] Scenario 'S1' modelFile not found on disk
+      parameterSets
+        ! [Data] No parameter sets defined
+      crossReferences
+        x [Invalid Reference] dataCombined references undefined scenarios: ghost
+      1 section OK.
+
+# print.ValidationResults renders an all-OK line for a clean result
+
+    Code
+      print(clean)
+    Output
+      Validation report: 0 critical errors, 0 warnings.
+      v No issues found.
 
