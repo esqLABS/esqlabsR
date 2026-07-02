@@ -9,7 +9,8 @@ runScenarios(
   scenarios = NULL,
   customParams = NULL,
   simulationRunOptions = NULL,
-  validate = TRUE
+  validate = TRUE,
+  stopIfParameterNotFound = TRUE
 )
 }
 \arguments{
@@ -31,6 +32,11 @@ section validators via \code{\link[=validateProject]{validateProject()}} before 
 aborts with a formatted summary on critical errors. Set to
 \code{FALSE} to skip the pre-flight check (e.g. when the caller has
 already validated the project).}
+
+\item{stopIfParameterNotFound}{Logical. If \code{TRUE} (default), a
+\code{customParams} path that matches no parameter in a scenario's
+simulation aborts the run. Set to \code{FALSE} to skip such paths with a
+warning instead.}
 }
 \value{
 A named list keyed by scenario name. Each entry is a list

@@ -14,11 +14,15 @@ projectStatus(
 projectConfigurationStatus(...)
 }
 \arguments{
-\item{projectConfigPath}{Path to a \code{Project.xlsx} file.
-Defaults to \code{"Project.xlsx"}.}
+\item{projectConfigPath}{Either a path to a \code{Project.xlsx} file
+(defaults to \code{"Project.xlsx"}) or a loaded \link{Project} object. When a
+\code{Project} is passed, its \code{Project.xlsx} side-car and JSON path are
+derived from the object, so \code{jsonPath} is optional.}
 
 \item{jsonPath}{Path to the JSON configuration file. If \code{NULL} (default),
-the function looks for a JSON file with the same base name.}
+the function looks for a JSON file with the same base name (or, when a
+\code{Project} object is passed as \code{projectConfigPath}, uses that object's
+JSON path).}
 
 \item{silent}{Logical indicating whether to suppress informational messages.
 Defaults to \code{FALSE}.}

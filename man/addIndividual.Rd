@@ -65,7 +65,6 @@ call.
 \seealso{
 Other individual:
 \code{\link[=removeIndividual]{removeIndividual()}},
-\code{\link[=setIndividual]{setIndividual()}},
-\code{\link[=setIndividualParameterSets]{setIndividualParameterSets()}}
+\code{\link[=setIndividual]{setIndividual()}}
 }
 \concept{individual}

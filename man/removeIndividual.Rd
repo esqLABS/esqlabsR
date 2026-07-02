@@ -23,7 +23,6 @@ referenced.
 \seealso{
 Other individual:
 \code{\link[=addIndividual]{addIndividual()}},
-\code{\link[=setIndividual]{setIndividual()}},
-\code{\link[=setIndividualParameterSets]{setIndividualParameterSets()}}
+\code{\link[=setIndividual]{setIndividual()}}
 }
 \concept{individual}

@@ -16,9 +16,12 @@ A named list of \code{\link[ospsuite:DataSet]{ospsuite::DataSet}} objects. Empty
 \description{
 Reads the \code{observedData} declarations from a \link[=loadProject]{Project}
 and returns the corresponding \code{\link[ospsuite:DataSet]{ospsuite::DataSet}} objects. Source
-types: \code{excel} (via importer configuration), \code{pkml}, \code{script}. The
-\code{programmatic} type is reserved for a later milestone and currently
-errors fast.
+types: \code{excel} (via importer configuration), \code{pkml}, \code{script}, and
+\code{programmatic}. A \code{programmatic} declaration is a sentinel for a
+\code{DataSet} added at runtime with \code{\link[=addObservedData]{addObservedData()}}; its data lives in
+the session (not on disk), so it is resolved from the in-memory store
+and is not reproducible across a reload. Prefer a \code{script} source for a
+reproducible programmatic data set.
 }
 \examples{
 \dontrun{
