@@ -19,7 +19,7 @@ jobs:
       contents: write # pushes the dev-version bump to main
     uses: Open-Systems-Pharmacology/Workflows/.github/workflows/bump-dev-version.yaml@main
     with:
-      app-id: ${{ vars.ACTIONS_MANAGER_APPID }}
+      client-id: ${{ vars.ACTIONS_MANAGER_APPID }}
     secrets:
       private-key: ${{ secrets.ACTIONS_MANAGER_TOKEN }}
 
