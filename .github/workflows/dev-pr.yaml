@@ -16,6 +16,6 @@ jobs:
   dev-pr:
     uses: Open-Systems-Pharmacology/Workflows/.github/workflows/dev-pr.yaml@main
     with:
-      client-id: ${{ vars.ACTIONS_MANAGER_APPID }}
+      client-id: ${{ vars.ACTIONS_MANAGER_CLIENTID }}
     secrets:
       private-key: ${{ secrets.ACTIONS_MANAGER_TOKEN }}

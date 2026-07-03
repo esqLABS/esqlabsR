@@ -28,6 +28,6 @@ jobs:
     uses: Open-Systems-Pharmacology/Workflows/.github/workflows/release-pr.yaml@main
     with:
       which: ${{ inputs.which }}
-      client-id: ${{ vars.ACTIONS_MANAGER_APPID }}
+      client-id: ${{ vars.ACTIONS_MANAGER_CLIENTID }}
     secrets:
       private-key: ${{ secrets.ACTIONS_MANAGER_TOKEN }}
