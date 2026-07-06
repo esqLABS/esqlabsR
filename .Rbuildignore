@@ -53,4 +53,6 @@ _\.new\.png$
 ^[.]?air[.]toml$
 ^\.vscode$
 ^AGENTS\.md$
+^CLAUDE\.md$
+^\.claude/\.
 ^.cursor/.
