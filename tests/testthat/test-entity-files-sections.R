@@ -544,3 +544,27 @@ test_that("snapshot then load is a fixed point over the three plots folders", {
   expect_identical(reloadedJson$plots, sourceJson$plots)
   expect_identical(reloadedJson$plotGrids, sourceJson$plotGrids)
 })
+
+# plots / PI serialize key-alignment guards ----
+
+# The on-disk filename is the map key, but the record carries its own stored id.
+# When they diverge the reload aborts (the load side compares the inner id to
+# the filename), so the write must reject the mismatch up front rather than
+# emit an unreadable file.
+test_that("a plots entry whose stored id differs from its map key aborts", {
+  entries <- list(p1 = list(plotId = "p2"))
+
+  expect_snapshot(
+    esqlabsR:::.serializePlotEntrySet(entries, "plotId", "plot"),
+    error = TRUE
+  )
+})
+
+test_that("a PI task whose $id differs from its map key aborts", {
+  tasks <- list(task1 = list(id = "task2"))
+
+  expect_snapshot(
+    esqlabsR:::.serializePITaskSet(tasks),
+    error = TRUE
+  )
+})

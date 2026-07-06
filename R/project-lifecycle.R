@@ -214,7 +214,8 @@ initProject <- function(
     "Data",
     "Populations",
     "Results/Figures",
-    "Results/SimulationResults"
+    "Results/SimulationResults",
+    "definitions"
   )
   for (d in dirs_to_create) {
     dir.create(

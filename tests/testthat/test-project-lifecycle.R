@@ -117,6 +117,13 @@ test_that("initProject(type = 'minimal', createExcel = FALSE) creates the JSON s
   expect_true(dir.exists(file.path(dir, "Results", "Figures")))
 })
 
+test_that("initProject(type = 'minimal') scaffolds a definitions/ directory", {
+  dir <- withr::local_tempdir()
+  initProject(destination = dir, type = "minimal", createExcel = FALSE)
+
+  expect_true(dir.exists(file.path(dir, "definitions")))
+})
+
 test_that("initProject(createExcel = FALSE) over an existing project does not write Excel", {
   dir <- withr::local_tempdir()
   initProject(destination = dir, type = "minimal", createExcel = FALSE)

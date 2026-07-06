@@ -59,3 +59,23 @@
       i A hand-edit that turned `"species": null` into `{}` (the usual jsonlite round-trip) is the usual cause; restore the value or remove the field.
       i Check '<project>/definitions/individuals/adult_male.json'.
 
+# a plots entry whose stored id differs from its map key aborts
+
+    Code
+      esqlabsR:::.serializePlotEntrySet(entries, "plotId", "plot")
+    Condition
+      Error in `esqlabsR:::.serializePlotEntrySet()`:
+      ! A plot entry's plotId disagrees with its map key.
+      x The map key is "p1" but plotId is "p2".
+      i They must agree so the on-disk filename stays the authoritative key; store the entry under its plotId.
+
+# a PI task whose $id differs from its map key aborts
+
+    Code
+      esqlabsR:::.serializePITaskSet(tasks)
+    Condition
+      Error in `esqlabsR:::.serializePITaskSet()`:
+      ! A parameterIdentification task's id disagrees with its map key.
+      x The map key is "task1" but id is "task2".
+      i They must agree so the on-disk filename stays the authoritative key; store the task under its id.
+

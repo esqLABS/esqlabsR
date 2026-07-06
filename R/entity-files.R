@@ -781,6 +781,7 @@
   out <- list()
   for (entry in observedData) {
     id <- .observedDataEntryId(entry)
+    .validateObservedDataId(id)
     # The on-disk id is the file basename (or the programmatic DataSet name).
     # Two declarations whose `file` differs only by directory derive the same
     # basename and would silently overwrite each other (one file on disk, the
@@ -851,6 +852,28 @@
     ))
   }
   id
+}
+
+# The observed-data id becomes a filename via `.entityFilePath(dir, id)`, so it
+# must be a single safe path segment or it could escape the kind directory. A
+# programmatic `name` reaches this verbatim (unlike the other keyed kinds, whose
+# key is validated by `.validateEntityTreeKey`). Reject rather than rewrite: the
+# id doubles as the match key for `removeObservedData()`, so canonicalizing it
+# would desync the on-disk filename from the match key.
+#
+# @keywords internal
+# @noRd
+.validateObservedDataId <- function(id) {
+  if (grepl("[/\\]", id) || id %in% c(".", "..") || basename(id) != id) {
+    cli::cli_abort(c(
+      "observedData id {.val {id}} is not a single safe filename segment.",
+      "x" = "It must not contain a path separator or be {.val .} / {.val ..}, \\
+      so it cannot escape the observed-data entity directory.",
+      "i" = "Rename the source (its {.field file} basename or programmatic \\
+      {.field name}) to a single safe filename segment."
+    ))
+  }
+  invisible(NULL)
 }
 
 # plots: three keyed kinds, one part of the `project$plots` trio each.
@@ -965,6 +988,16 @@
       ))
     }
     .validateEntityTreeKey(id, entityLabel)
+    if (!identical(id, recId)) {
+      cli::cli_abort(c(
+        "A {.field {entityLabel}} entry's {.field {idField}} disagrees with its \\
+        map key.",
+        "x" = "The map key is {.val {id}} but {.field {idField}} is \\
+        {.val {recId}}.",
+        "i" = "They must agree so the on-disk filename stays the authoritative \\
+        key; store the entry under its {.field {idField}}."
+      ))
+    }
     rec <- .plotRefFieldToKey(rec, class(rec)[[1]])
     class(rec) <- "list"
     out[[id]] <- rec
@@ -1000,6 +1033,15 @@
   for (id in names(tasks)) {
     .validateEntityTreeKey(id, "parameterIdentification task")
     task <- tasks[[id]]
+    if (!identical(id, task$id)) {
+      cli::cli_abort(c(
+        "A {.field parameterIdentification task}'s {.field id} disagrees with \\
+        its map key.",
+        "x" = "The map key is {.val {id}} but {.field id} is {.val {task$id}}.",
+        "i" = "They must agree so the on-disk filename stays the authoritative \\
+        key; store the task under its {.field id}."
+      ))
+    }
     out[[id]] <- list(
       id = task$id,
       scenarios = as.list(task$scenarios),

@@ -543,3 +543,19 @@ test_that("a tree-loaded initialConditions id must match its filename stem", {
 
   expect_snapshot(spec$parse(list(rec), NULL), error = TRUE)
 })
+
+# observed-data id escape guard ----
+
+# The observed-data id becomes a filename, and a programmatic `name` reaches it
+# verbatim. A name carrying a path separator (or `..`) must be rejected so it
+# cannot escape the observed-data entity directory.
+test_that("a programmatic observedData name that escapes its directory aborts", {
+  entries <- list(
+    list(type = "programmatic", name = "../escape")
+  )
+
+  expect_snapshot(
+    esqlabsR:::.serializeObservedDataSet(entries),
+    error = TRUE
+  )
+})

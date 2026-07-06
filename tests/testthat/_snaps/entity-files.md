@@ -136,3 +136,13 @@
       x id is "myset" but the file is "otherset".json.
       i The filename stem is the entity's id; rename the file or the id so they match. Check 'somewhere/otherset.json'.
 
+# a programmatic observedData name that escapes its directory aborts
+
+    Code
+      esqlabsR:::.serializeObservedDataSet(entries)
+    Condition
+      Error in `.validateObservedDataId()`:
+      ! observedData id "../escape" is not a single safe filename segment.
+      x It must not contain a path separator or be "." / "..", so it cannot escape the observed-data entity directory.
+      i Rename the source (its file basename or programmatic name) to a single safe filename segment.
+
