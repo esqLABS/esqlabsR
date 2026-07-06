@@ -1,6 +1,6 @@
 # Project R6 class ----
 
-# The seven container path fields that belong to the Excel import/export
+# The nine container path fields that belong to the Excel import/export
 # bridge (the `excel` block), as opposed to the four live working folders
 # (`modelFolder`, `dataFolder`, `outputFolder`, `populationsFolder`) that the
 # runtime reads (the `filePaths` block). A legacy `Project.json` carries all
@@ -135,7 +135,8 @@ Project <- R6::R6Class(
     #' @field excel Read-only named list of the Excel import/export bridge
     #'   sheet-name fields (`configurationsFolder`, `modelParamsFile`,
     #'   `individualsFile`, `populationsFile`, `scenariosFile`,
-    #'   `applicationsFile`, `plotsFile`, `parameterIdentificationFile`).
+    #'   `applicationsFile`, `plotsFile`, `parameterIdentificationFile`,
+    #'   `initialConditionsFile`).
     #'   Returned verbatim as strings (no resolution). Empty for a from-scratch
     #'   JSON project that has no Excel side-car.
     excel = function(value) {
@@ -955,8 +956,8 @@ Project <- R6::R6Class(
       # the in-memory maps (by key presence and per-entity value identity) and
       # only the entities that actually changed are serialized and written, so a
       # single mutation costs O(changed entities), not O(section size). The
-      # plots `plotConfiguration` / `plotGrids` parts are keyed lists, so they
-      # take this fast path too. An `observedData` section is an unnamed list
+      # plots kinds `dataCombined` / `plots` / `plotGrids` are keyed lists, so
+      # they take this fast path too. An `observedData` section is an unnamed list
       # keyed by a derived id (its `names()` are not the on-disk ids), so it
       # cannot be diffed by name and falls back to the whole-section serialize
       # diff below (it is small and never a buildup hot path).

@@ -69,7 +69,8 @@ Recognized fields: \code{numberOfCores}, \code{checkForNegativeValues},
     \item{\code{excel}}{Read-only named list of the Excel import/export bridge
 sheet-name fields (\code{configurationsFolder}, \code{modelParamsFile},
 \code{individualsFile}, \code{populationsFile}, \code{scenariosFile},
-\code{applicationsFile}, \code{plotsFile}, \code{parameterIdentificationFile}).
+\code{applicationsFile}, \code{plotsFile}, \code{parameterIdentificationFile},
+\code{initialConditionsFile}).
 Returned verbatim as strings (no resolution). Empty for a from-scratch
 JSON project that has no Excel side-car.}
 
