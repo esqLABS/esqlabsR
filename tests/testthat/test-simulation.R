@@ -46,7 +46,8 @@ test_that("`initializeSimulation()` applies additionalInitialConditions", {
   )
   applied <- ospsuite::getQuantityValuesByPath(
     quantityPaths = "Organism|A",
-    simulation = simulation
+    simulation = simulation,
+    units = "µmol"
   )
   expect_equal(applied, 42)
 })

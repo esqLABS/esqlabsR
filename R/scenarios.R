@@ -1255,35 +1255,28 @@ setScenario <- function(
     sc$simulateSteadyState <- fields$steadyState
   }
   if ("steadyStateTime" %in% supplied || "steadyStateTimeUnit" %in% supplied) {
-    # steadyStateTime is stored in the base unit (minutes); convert from the
-    # declared unit so a non-minute unit round-trips. Both arguments interact,
-    # so recompute the stored base value whenever either is supplied, falling
-    # back to the record's current unit/value for the one not given.
+    # steadyStateTime is stored in the base unit (minutes). When a value is
+    # supplied it is interpreted under the effective unit (the newly supplied
+    # unit if given, else the record's current unit) and converted to the base
+    # value. A unit-only change is a pure relabel: it updates the declared unit
+    # while leaving the stored base value untouched (converting there would
+    # rescale the physical duration).
     newUnit <- if ("steadyStateTimeUnit" %in% supplied) {
       fields$steadyStateTimeUnit
     } else {
       sc$steadyStateTimeUnit
     }
-    newTime <- if ("steadyStateTime" %in% supplied) {
-      fields$steadyStateTime
-    } else if (!is.null(sc$steadyStateTimeUnit)) {
-      ospsuite::toUnit(
-        quantityOrDimension = ospDimensions$Time,
-        values = sc$steadyStateTime,
-        targetUnit = sc$steadyStateTimeUnit
-      )
-    } else {
-      sc$steadyStateTime
-    }
     sc$steadyStateTimeUnit <- newUnit
-    sc$steadyStateTime <- if (is.null(newUnit)) {
-      newTime
-    } else {
-      ospsuite::toBaseUnit(
-        quantityOrDimension = ospDimensions$Time,
-        values = newTime,
-        unit = newUnit
-      )
+    if ("steadyStateTime" %in% supplied) {
+      sc$steadyStateTime <- if (is.null(newUnit)) {
+        fields$steadyStateTime
+      } else {
+        ospsuite::toBaseUnit(
+          quantityOrDimension = ospDimensions$Time,
+          values = fields$steadyStateTime,
+          unit = newUnit
+        )
+      }
     }
   }
   if ("overwriteFormulasInSS" %in% supplied) {
@@ -1337,6 +1330,10 @@ renameScenario <- function(project, id, newId) {
   # the write-through emits (`name = sc$scenarioName`) and the key agree, which
   # is what `.validateScenarioStructure()` enforces.
   sc$scenarioName <- newId
+
+  # Renaming de-references the old id just like removing it: warn about any
+  # holder still naming the scenario by its old id before the key changes.
+  .warnIfReferenced(project, "scenario", id)
 
   # Rebuild the whole section in one write so the write-through diff sees the
   # new key (written through to `newId`'s file) and the gone key (its file

@@ -110,6 +110,16 @@
       Canonicalized 1 id to a safe form:
       * "New Name" -> "new name"
 
+# renameScenario warns when a dataCombined still references it
+
+    Code
+      renameScenario(project, "testscenario", "renamed")
+    Condition
+      Warning:
+      Removed scenario "testscenario" is still referenced by 1 dataCombined definition:
+      * dc_ref
+      i These now have a dangling reference. Update or remove them.
+
 # duplicateScenario errors on a non-existent source id
 
     Code
