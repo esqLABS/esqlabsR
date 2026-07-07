@@ -64,10 +64,17 @@
     ))
   }
 
-  # Two distinct inputs that collapse to one canonical id are real ambiguity.
-  dup <- canonical[duplicated(canonical)]
-  if (length(dup) > 0L) {
-    clashing <- unique(dup)
+  # Two DISTINCT inputs that collapse to one canonical id are real ambiguity.
+  # A canonical id reached from a single distinct pre-image (the same id
+  # supplied twice) is not a collision, so keep only canonicals with more than
+  # one distinct offender.
+  clashing <- unique(canonical[duplicated(canonical)])
+  clashing <- clashing[vapply(
+    clashing,
+    function(c) length(unique(ids[canonical == c])) > 1L,
+    logical(1)
+  )]
+  if (length(clashing) > 0L) {
     bullets <- vapply(
       clashing,
       function(c) {
@@ -104,7 +111,12 @@
   if (is.null(ref) || !is.character(ref) || length(ref) == 0L) {
     return(ref)
   }
-  keep <- !is.na(ref) & nzchar(ref)
+  # Canonicalize `""` too, not just non-empty refs: the definition side
+  # (`.canonicalizeOneId("")`) maps `""` to `"_"`, so a reference of `""` must
+  # follow the same transform or it would never resolve to a definition made
+  # from `""`. Only `NA` passes through untouched (the FK validators reject it
+  # with a clearer message).
+  keep <- !is.na(ref)
   if (!any(keep)) {
     return(ref)
   }
@@ -262,7 +274,11 @@
   if (nchar(out) == 0L) {
     return("_")
   }
-  if (out %in% .windowsReservedBasenames) {
+  # A Windows device name is reserved regardless of any extension, so the
+  # segment before the first dot decides it: `con.txt` is as unwritable as
+  # `con`. Test that base segment, and suffix the whole id so the reserved
+  # base is disarmed while any extension is preserved (`con.txt` -> `con.txt_`).
+  if (sub("\\..*$", "", out) %in% .windowsReservedBasenames) {
     out <- paste0(out, "_")
   }
   out

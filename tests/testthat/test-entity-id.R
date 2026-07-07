@@ -52,6 +52,19 @@ test_that(".canonicalizeId suffixes a Windows reserved basename", {
   expect_identical(.canonicalizeId("com10"), "com10")
 })
 
+test_that(".canonicalizeOneId suffixes a reserved basename even with an extension", {
+  # A Windows device name is reserved regardless of any extension, so the base
+  # segment (before the first dot) is what decides it.
+  expect_identical(.canonicalizeOneId("con.txt"), "con.txt_")
+  expect_identical(.canonicalizeOneId("com1.log"), "com1.log_")
+  expect_identical(.canonicalizeOneId("LPT9.dat"), "lpt9.dat_")
+  # A bare reserved name is still suffixed.
+  expect_identical(.canonicalizeOneId("con"), "con_")
+  # A non-reserved name with an extension is left untouched.
+  expect_identical(.canonicalizeOneId("data.txt"), "data.txt")
+  expect_identical(.canonicalizeOneId("console.txt"), "console.txt")
+})
+
 test_that(".canonicalizeId is vectorized", {
   expect_identical(
     suppressWarnings(.canonicalizeId(c("A", "b/c", "CON"))),
@@ -71,6 +84,24 @@ test_that(".canonicalizeId does not warn when nothing changes", {
 test_that(".canonicalizeId errors on a post-canonicalization collision", {
   expect_snapshot(error = TRUE, .canonicalizeId(c("ID", "id")))
   expect_snapshot(error = TRUE, .canonicalizeId(c("a/b", "a:b")))
+})
+
+test_that(".canonicalizeId does not treat an identically repeated id as a collision", {
+  # One distinct id supplied twice canonicalizes to a single value with a
+  # single pre-image; that is not ambiguity, so it must not abort.
+  expect_identical(
+    suppressWarnings(.canonicalizeId(c("Foo", "Foo"))),
+    c("foo", "foo")
+  )
+  expect_identical(
+    .canonicalizeId(c("safe_id", "safe_id", "safe_id")),
+    c("safe_id", "safe_id", "safe_id")
+  )
+})
+
+test_that(".canonicalizeId still errors when distinct ids collide via characters", {
+  # Two genuinely distinct inputs collapsing to one canonical id is ambiguity.
+  expect_snapshot(error = TRUE, .canonicalizeId(c("a/b", "a_b")))
 })
 
 # The collision guard must fire through the public authoring API for a
@@ -98,6 +129,31 @@ test_that(".canonicalizeId errors on an id too long to be a filename", {
 test_that(".canonicalizeId accepts an id at the byte limit", {
   atLimit <- strrep("a", 250L)
   expect_identical(.canonicalizeId(atLimit), atLimit)
+})
+
+# .canonicalizeIdRef ----
+
+test_that(".canonicalizeIdRef canonicalizes an empty string like the definition side", {
+  # The definition side maps `""` to `"_"`; a reference of `""` must follow the
+  # same transform so both sides land on the same canonical id.
+  expect_identical(
+    suppressWarnings(.canonicalizeIdRef("")),
+    .canonicalizeOneId("")
+  )
+  expect_identical(suppressWarnings(.canonicalizeIdRef("")), "_")
+})
+
+test_that(".canonicalizeIdRef passes NA through unchanged", {
+  expect_identical(.canonicalizeIdRef(NA_character_), NA_character_)
+  expect_identical(
+    suppressWarnings(.canonicalizeIdRef(c("A", NA, ""))),
+    c("a", NA, "_")
+  )
+})
+
+test_that(".canonicalizeIdRef canonicalizes a normal reference", {
+  expect_identical(suppressWarnings(.canonicalizeIdRef("Indiv1")), "indiv1")
+  expect_identical(.canonicalizeIdRef("already_safe"), "already_safe")
 })
 
 # .nearestMatch ----

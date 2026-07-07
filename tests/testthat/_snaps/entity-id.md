@@ -34,6 +34,19 @@
       x "a/b" and "a:b" -> "a_b"
       i Two distinct ids that canonicalize to the same id are ambiguous; rename so they differ by more than case or forbidden characters.
 
+# .canonicalizeId still errors when distinct ids collide via characters
+
+    Code
+      .canonicalizeId(c("a/b", "a_b"))
+    Condition
+      Warning:
+      Canonicalized 1 id to a safe form:
+      * "a/b" -> "a_b"
+      Error in `.canonicalizeId()`:
+      ! Ids collide after canonicalization:
+      x "a/b" and "a_b" -> "a_b"
+      i Two distinct ids that canonicalize to the same id are ambiguous; rename so they differ by more than case or forbidden characters.
+
 # a public authoring call aborts on a case-differing id collision
 
     Code
