@@ -3,7 +3,6 @@ test_that("Project$new() creates an empty in-memory project", {
   expect_s3_class(project, "Project")
   expect_null(project$projectFilePath)
   expect_null(project$projectDirPath)
-  expect_false(project$modified)
   expect_false(project$validatedSinceMutation)
 })
 
@@ -13,14 +12,7 @@ test_that("Project$new(path) loads a v2.0 JSON file", {
   )
   expect_s3_class(project, "Project")
   expect_equal(project$schemaVersion, "2.0")
-  expect_false(project$modified)
-})
-
-test_that("Excel-bridge file fields can be set and clear modified flag accordingly", {
-  project <- Project$new()
-  expect_false(project$modified)
-  project$modelParamsFile <- "X.xlsx"
-  expect_true(project$modified)
+  expect_false(project$validatedSinceMutation)
 })
 
 test_that("asList round-trips with .projectToJson", {
@@ -124,19 +116,11 @@ test_that("project$dataFolder is NULL when filePaths.dataFolder is unset", {
 })
 
 test_that("project path fields are writable after the merger", {
-  project <- loadProject(
-    system.file(
-      "extdata",
-      "projects",
-      "Example",
-      "Project.json",
-      package = "esqlabsR",
-      mustWork = TRUE
-    )
-  )
-  expect_false(project$modified)
+  tmp <- saveSnapshot(testProject(), local_projectPath())
+  project <- loadProject(tmp)
+
   project$modelFolder <- "AnotherModels"
-  expect_true(project$modified)
+  expect_match(project$modelFolder, "AnotherModels$")
 })
 
 test_that(".clean_path expands env vars (other than PATH) and resolves to absolute", {
@@ -209,8 +193,9 @@ test_that("loadProject() exposes filePaths verbatim", {
 
   expect_type(project$filePaths, "list")
   expect_identical(project$filePaths$modelFolder, "Models/Simulations/")
-  expect_identical(project$filePaths$configurationsFolder, "Configurations/")
   expect_identical(project$filePaths$dataFolder, "Data/")
+  # The Excel-bridge sheet names live in the separate `excel` block now.
+  expect_identical(project$excel$configurationsFolder, "Configurations/")
 })
 
 test_that("loadProject() preserves outputPaths as a named list", {
@@ -219,11 +204,11 @@ test_that("loadProject() preserves outputPaths as a named list", {
   expect_type(project$outputPaths, "list")
   expect_named(
     project$outputPaths,
-    c("Aciclovir_PVB", "Aciclovir_fat_cell"),
+    c("aciclovir_pvb", "aciclovir_fat_cell"),
     ignore.order = TRUE
   )
   expect_identical(
-    project$outputPaths$Aciclovir_PVB,
+    project$outputPaths$aciclovir_pvb,
     "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
   )
 })
@@ -235,74 +220,85 @@ test_that("loadProject() parses scenarios into Scenario objects keyed by name", 
   expect_length(project$scenarios, 3L)
   expect_named(
     project$scenarios,
-    c("Aciclovir_iv", "Aciclovir_iv_population", "Aciclovir_iv_steadystate")
+    c("aciclovir_iv", "aciclovir_iv_population", "aciclovir_iv_steadystate")
   )
 
-  first <- project$scenarios[["Aciclovir_iv"]]
+  first <- project$scenarios[["aciclovir_iv"]]
   expect_s3_class(first, "Scenario")
-  expect_identical(first$scenarioName, "Aciclovir_iv")
-  expect_identical(first$individualId, "Adult_male")
+  expect_identical(first$scenarioName, "aciclovir_iv")
+  expect_identical(first$individualId, "adult_male")
   expect_null(first$populationId)
-  expect_identical(first$modelParameterSets, c("Global", "Aciclovir"))
+  expect_identical(first$modelParameterSets, c("global", "aciclovir"))
 })
 
-test_that("loadProject() preserves modelParameterSets as a named list of sets", {
+test_that("loadProject() preserves parameterSets as a single named list of sets", {
   project <- exampleProject()
 
+  # The three former parameter-set kinds (model / individual / application)
+  # now share one `parameterSets` map keyed by set id.
   expect_named(
-    project$modelParameterSets,
-    c("Global", "Aciclovir"),
+    project$parameterSets,
+    c(
+      "global",
+      "aciclovir",
+      "adult_male_default",
+      "aciclovir_iv_250mg_default"
+    ),
     ignore.order = TRUE
   )
-  expect_length(project$modelParameterSets$Global, 1L)
+  expect_length(project$parameterSets$global, 1L)
   expect_identical(
-    project$modelParameterSets$Global[[1L]]$parameterName,
+    project$parameterSets$global[[1L]]$parameterName,
     "EHC continuous fraction"
   )
-})
-
-test_that("loadProject() preserves individualParameterSets as a named list of sets", {
-  project <- exampleProject()
-
-  expect_named(project$individualParameterSets, "Adult_male_default")
-  expect_length(project$individualParameterSets$Adult_male_default, 1L)
   expect_identical(
-    project$individualParameterSets$Adult_male_default[[1L]]$parameterName,
+    project$parameterSets$adult_male_default[[1L]]$parameterName,
     "GFR"
   )
-})
-
-test_that("loadProject() preserves applicationParameterSets as a named list of sets", {
-  project <- exampleProject()
-
-  expect_named(project$applicationParameterSets, "Aciclovir_iv_250mg_default")
-  expect_length(
-    project$applicationParameterSets$Aciclovir_iv_250mg_default,
-    1L
-  )
   expect_identical(
-    project$applicationParameterSets$Aciclovir_iv_250mg_default[[
-      1L
-    ]]$parameterName,
+    project$parameterSets$aciclovir_iv_250mg_default[[1L]]$parameterName,
     "Dose"
   )
+})
+
+test_that("loadProject() reads initialConditions and the binding is read-only", {
+  project <- testProject()
+  # The TestProject fixture carries one initial-condition set referenced by a
+  # scenario; the binding surfaces it keyed by set id.
+  expect_true("testinitialset" %in% names(project$initialConditions))
+  set <- project$initialConditions$testinitialset
+  expect_s3_class(set, "InitialConditionSet")
+  expect_identical(set[[1L]]$path, "Organism|VenousBlood|Plasma|Aciclovir")
+
+  expect_error(project$initialConditions <- list(), "read-only")
+})
+
+test_that("a project with no initial-conditions tree surfaces an empty section", {
+  blank <- loadProject(system.file(
+    "extdata",
+    "projects",
+    "Blank",
+    "Project.json",
+    package = "esqlabsR"
+  ))
+  expect_identical(.unwrapDefinitionList(blank$initialConditions), list())
 })
 
 test_that("loadProject() preserves individuals as a named list keyed by individualId", {
   project <- exampleProject()
 
-  expect_named(project$individuals, "Adult_male")
-  ind <- project$individuals[["Adult_male"]]
+  expect_named(project$individuals, "adult_male")
+  ind <- project$individuals[["adult_male"]]
   expect_s3_class(ind, "Individual")
   expect_identical(ind$gender, "MALE")
-  expect_identical(ind$parameterSets, "Adult_male_default")
+  expect_identical(ind$parameterSets, "adult_male_default")
 })
 
 test_that("loadProject() preserves populations as a named list keyed by populationId", {
   project <- exampleProject()
 
-  expect_named(project$populations, "European_adults")
-  pop <- project$populations[["European_adults"]]
+  expect_named(project$populations, "european_adults")
+  pop <- project$populations[["european_adults"]]
   expect_s3_class(pop, "Population")
   expect_identical(pop$numberOfIndividuals, 50)
 })
@@ -310,10 +306,10 @@ test_that("loadProject() preserves populations as a named list keyed by populati
 test_that("loadProject() preserves applications as a named list keyed by protocol name", {
   project <- exampleProject()
 
-  expect_named(project$applications, "Aciclovir_iv_250mg")
-  app <- project$applications[["Aciclovir_iv_250mg"]]
+  expect_named(project$applications, "aciclovir_iv_250mg")
+  app <- project$applications[["aciclovir_iv_250mg"]]
   expect_s3_class(app, "Application")
-  expect_identical(app$parameterSets, "Aciclovir_iv_250mg_default")
+  expect_identical(app$parameterSets, "aciclovir_iv_250mg_default")
 })
 
 test_that("loadProject() preserves the observedData section", {
@@ -326,28 +322,26 @@ test_that("loadProject() preserves the observedData section", {
   expect_identical(source$sheets, list("Laskin 1982.Group A"))
 })
 
-test_that("loadProject() parses plots into the asymmetric in-memory shape", {
+test_that("loadProject() parses plots into three top-level keyed sections", {
   project <- exampleProject()
 
-  expect_type(project$plots, "list")
-  expect_named(
-    project$plots,
-    c("dataCombined", "plotConfiguration", "plotGrids"),
-    ignore.order = TRUE
-  )
-  # dataCombined: named list keyed by name (no `name` field on entries)
-  expect_named(project$plots$dataCombined, "Aciclovir_individual")
-  dc <- project$plots$dataCombined$Aciclovir_individual
+  # dataCombined: named list keyed by id (no `dataCombinedId` field on entries)
+  expect_named(project$dataCombined, "aciclovir_individual")
+  dc <- project$dataCombined$aciclovir_individual
   expect_named(dc, c("simulated", "observed"), ignore.order = TRUE)
   expect_length(dc$simulated, 1L)
   expect_length(dc$observed, 1L)
-  # plotConfiguration / plotGrids: data.frames
-  expect_s3_class(project$plots$plotConfiguration, "data.frame")
-  expect_s3_class(project$plots$plotGrids, "data.frame")
-  expect_equal(nrow(project$plots$plotConfiguration), 1L)
-  expect_equal(nrow(project$plots$plotGrids), 1L)
-  expect_true("plotId" %in% names(project$plots$plotConfiguration))
-  expect_true("name" %in% names(project$plots$plotGrids))
+  # plots / plotGrids: keyed lists, each entry a classed named list of its
+  # rationalized fields.
+  expect_named(project$plots, "p1")
+  expect_named(project$plotGrids, "individual_diagnostics")
+  p1 <- project$plots$p1
+  expect_s3_class(p1, "Plot")
+  expect_identical(p1$plotId, "p1")
+  expect_identical(p1$dataCombinedId, "aciclovir_individual")
+  grid <- project$plotGrids$individual_diagnostics
+  expect_s3_class(grid, "PlotGrid")
+  expect_identical(grid$plotGridId, "individual_diagnostics")
 })
 
 test_that("loadProject() rejects a missing schemaVersion", {
@@ -418,27 +412,28 @@ test_that("loadProject() defaults missing optional sections to empty lists", {
 
   project <- loadProject(tmp)
 
+  # Section accessors wrap the stored list in a printable DefinitionList; unwrap
+  # to assert the underlying absent-vs-empty shape the parser produced.
   expect_identical(project$filePaths, structure(list(), names = character(0L)))
-  expect_identical(project$outputPaths, list())
-  expect_identical(project$scenarios, list())
-  expect_identical(project$modelParameterSets, list())
-  expect_identical(project$individualParameterSets, list())
-  expect_identical(project$applicationParameterSets, list())
-  expect_identical(project$individuals, list())
-  expect_identical(project$populations, list())
+  expect_identical(.unwrapDefinitionList(project$outputPaths), list())
+  expect_identical(.unwrapDefinitionList(project$scenarios), list())
+  expect_identical(.unwrapDefinitionList(project$parameterSets), list())
+  expect_identical(.unwrapDefinitionList(project$individuals), list())
+  expect_identical(.unwrapDefinitionList(project$populations), list())
   expect_identical(
-    project$applications,
+    .unwrapDefinitionList(project$applications),
     structure(list(), names = character(0L))
   )
-  expect_identical(project$observedData, list())
-  expect_null(project$plots)
+  expect_identical(.unwrapDefinitionList(project$observedData), list())
+  expect_identical(.unwrapDefinitionList(project$dataCombined), list())
+  expect_identical(.unwrapDefinitionList(project$plots), list())
+  expect_identical(.unwrapDefinitionList(project$plotGrids), list())
 })
 
 test_that("Project lifecycle fields are read-only", {
   project <- exampleProject()
 
   expect_error(project$validatedSinceMutation <- TRUE, "readonly")
-  expect_error(project$modified <- TRUE, "readonly")
 })
 
 test_that("Project$print() summarises section counts", {
@@ -449,77 +444,413 @@ test_that("Project$print() summarises section counts", {
   expect_output(print(project), "scenarios:\\s+3")
   expect_output(print(project), "individuals:\\s+1")
   expect_output(print(project), "populations:\\s+1")
-  # plotConfiguration is a 1-row, 15-column data frame: report 1 plot,
-  # not the column count.
+  # The three plots-related sections each report their entry count.
+  expect_output(print(project), "dataCombined:\\s+1")
+  expect_output(print(project), "plots:\\s+1")
+  expect_output(print(project), "plotGrids:\\s+1")
+})
+
+# Container rework: metadata, definitionsFolder, the filePaths/excel split,
+# and defaultSimulationRunOptions.
+
+test_that("loadProject() exposes name and description metadata", {
+  project <- exampleProject()
+  expect_identical(project$name, "Example")
+  expect_identical(project$description, "Aciclovir IV PK example project")
+})
+
+test_that("name and description are writable and persist write-through", {
+  project <- exampleProject()
+  project$name <- "Renamed"
+  project$description <- "A new description"
+  expect_identical(project$name, "Renamed")
+  expect_identical(project$description, "A new description")
+
+  reloaded <- loadProject(project$jsonPath)
+  expect_identical(reloaded$name, "Renamed")
+  expect_identical(reloaded$description, "A new description")
+})
+
+test_that("filePaths holds only the four live working folders", {
+  project <- exampleProject()
+  expect_named(
+    project$filePaths,
+    c("modelFolder", "populationsFolder", "dataFolder", "outputFolder"),
+    ignore.order = TRUE
+  )
+})
+
+test_that("excel exposes the seven Excel-bridge sheet-name fields", {
+  project <- exampleProject()
+  expect_named(
+    project$excel,
+    c(
+      "configurationsFolder",
+      "modelParamsFile",
+      "individualsFile",
+      "populationsFile",
+      "scenariosFile",
+      "applicationsFile",
+      "plotsFile"
+    ),
+    ignore.order = TRUE
+  )
+  expect_identical(project$excel$modelParamsFile, "ModelParameters.xlsx")
+})
+
+test_that("excel is read-only", {
+  project <- exampleProject()
+  expect_error(project$excel <- list(), "readonly")
+})
+
+test_that("a from-scratch project carries no excel block", {
+  project <- Project$new()
+  expect_length(project$excel, 0L)
+})
+
+test_that("definitionsFolder defaults to 'definitions' and is reported", {
+  project <- exampleProject()
+  expect_identical(project$definitionsFolder, "definitions")
+})
+
+test_that("a legacy flat-filePaths Project.json loads and splits the fields", {
+  tmp <- withr::local_tempfile(fileext = ".json")
+  jsonlite::write_json(
+    list(
+      schemaVersion = "2.0",
+      esqlabsRVersion = "6.0.0",
+      filePaths = list(
+        modelFolder = "Models/",
+        configurationsFolder = "Configurations/",
+        modelParamsFile = "ModelParameters.xlsx",
+        dataFolder = "Data/",
+        outputFolder = "Results/"
+      ),
+      outputPaths = structure(list(), names = character(0)),
+      scenarios = list()
+    ),
+    tmp,
+    auto_unbox = TRUE,
+    null = "null"
+  )
+  project <- loadProject(tmp)
+
+  expect_named(
+    project$filePaths,
+    c("modelFolder", "dataFolder", "outputFolder"),
+    ignore.order = TRUE
+  )
+  expect_named(
+    project$excel,
+    c("configurationsFolder", "modelParamsFile"),
+    ignore.order = TRUE
+  )
+})
+
+test_that("definitionsFolder honors a non-default tree location", {
+  # Write a tree project under a custom definitions folder, then load it.
+  src <- exampleProject()
+  scratch <- src$clone()
+  scratch$definitionsFolder <- "defs"
+  dir <- withr::local_tempdir("custom_defs_")
+  esqlabsR:::.writeProjectTree(scratch, dir)
+
+  expect_true(dir.exists(file.path(dir, "defs", "scenarios")))
+  expect_false(dir.exists(file.path(dir, "definitions")))
+
+  reloaded <- loadProject(file.path(dir, "Project.json"))
+  expect_identical(reloaded$definitionsFolder, "defs")
+  expect_length(reloaded$scenarios, 3L)
+})
+
+test_that("the tree wins over a conflicting non-empty inline Project.json section", {
+  # A tree project never writes an inline copy of a section, so a non-empty
+  # inline section that disagrees with the tree can only arise from hand-editing
+  # the Project.json. Construct that conflicting state directly and assert the
+  # loader takes the tree value and ignores the stale inline copy.
+  project <- testProject()
+  jsonPath <- project$jsonPath
+  treeDir <- file.path(dirname(jsonPath), "definitions", "scenarios")
+  expect_true(dir.exists(treeDir))
+
+  raw <- jsonlite::fromJSON(jsonPath, simplifyVector = FALSE)
+  expect_length(raw$scenarios, 0L)
+
+  # Inject a conflicting inline scenario for an id that also lives in the tree,
+  # giving it a different modelFile than the tree entity carries.
+  treeModelFile <- project$scenarios[["testscenario"]]$modelFile
+  raw$scenarios <- list(
+    list(
+      name = "testscenario",
+      modelFile = "INLINE_SHOULD_NOT_WIN.pkml"
+    )
+  )
+  writeLines(
+    jsonlite::toJSON(raw, auto_unbox = TRUE, null = "null", pretty = TRUE),
+    jsonPath
+  )
+
+  reloaded <- loadProject(jsonPath)
+  expect_identical(
+    reloaded$scenarios[["testscenario"]]$modelFile,
+    treeModelFile
+  )
+  expect_false(
+    identical(
+      reloaded$scenarios[["testscenario"]]$modelFile,
+      "INLINE_SHOULD_NOT_WIN.pkml"
+    )
+  )
+})
+
+test_that("a container-field write empties sections in Project.json yet the tree restores them on reload", {
+  treeSections <- c(
+    "scenarios",
+    "individuals",
+    "populations",
+    "parameterSets",
+    "applications",
+    "outputPaths",
+    "observedData",
+    "dataCombined",
+    "plots",
+    "plotGrids",
+    "parameterIdentification"
+  )
+  project <- exampleProject()
+  before <- vapply(treeSections, \(s) length(project[[s]]), integer(1))
+  expect_gt(sum(before), 0L)
+
+  # A container-metadata write persists only the container; the tree owns the
+  # sections, so they must not be re-inlined into Project.json.
+  project$name <- "RenamedX"
+  onDisk <- jsonlite::fromJSON(project$jsonPath, simplifyVector = FALSE)
+  expect_identical(onDisk$name, "RenamedX")
+  expect_false(is.null(onDisk$filePaths))
+  for (s in treeSections) {
+    expect_length(onDisk[[s]], 0L)
+  }
+
+  # Reload restores every section from the tree, and the metadata edit stuck.
+  reloaded <- loadProject(project$jsonPath)
+  after <- vapply(treeSections, \(s) length(reloaded[[s]]), integer(1))
+  expect_identical(after, before)
+  expect_identical(reloaded$name, "RenamedX")
+})
+
+test_that("Project$print() shows name and description", {
+  project <- exampleProject()
+  expect_output(print(project), "name:\\s+Example")
   expect_output(
     print(project),
-    "1 dataCombined / 1 plot\\(s\\) / 1 grid\\(s\\)"
+    "description:\\s+Aciclovir IV PK example project"
   )
 })
 
-test_that(".markSaved clears modified but leaves validatedSinceMutation set", {
+test_that("defaultSimulationRunOptions round-trips and defaults to NULL", {
+  project <- exampleProject()
+  expect_null(project$defaultSimulationRunOptions)
+
+  project$defaultSimulationRunOptions <- list(
+    numberOfCores = 2,
+    checkForNegativeValues = TRUE
+  )
+  reloaded <- loadProject(project$jsonPath)
+  expect_equal(reloaded$defaultSimulationRunOptions$numberOfCores, 2)
+  expect_true(reloaded$defaultSimulationRunOptions$checkForNegativeValues)
+})
+
+test_that("an Excel-bridge file field write targets the excel block", {
+  project <- Project$new()
+  project$modelParamsFile <- "X.xlsx"
+  expect_match(project$modelParamsFile, "X\\.xlsx$")
+  expect_identical(project$excel$modelParamsFile, "X.xlsx")
+})
+
+test_that(".markValidated leaves the validation cache set until the next mutation", {
   project <- testProject()
-  # A mutation marks the project modified and clears the validation flag.
+  project$.markValidated()
+  expect_true(project$validatedSinceMutation)
+
+  # A mutation clears the validation cache so runScenarios()/createPlots()
+  # re-validate the new shape.
   project$.markModified()
-  expect_true(project$modified)
-
-  # Validating sets the flag; a subsequent save must not clear it.
-  project$.markValidated()
-  project$.markSaved()
-
-  expect_false(project$modified)
-  # Saving is not a mutation, so a project validated before the save stays
-  # validated after it; runScenarios()/createPlots() need not re-validate.
-  expect_true(project$validatedSinceMutation)
-})
-
-test_that("a fresh project starts unmodified and unvalidated", {
-  project <- testProject()
-  expect_false(project$modified)
   expect_false(project$validatedSinceMutation)
 })
 
-test_that("a direct write to a section field invalidates the project", {
+test_that("a fresh project starts unvalidated", {
   project <- testProject()
-  project$.markValidated()
-  expect_false(project$modified)
-  expect_true(project$validatedSinceMutation)
-
-  project$scenarios[["New"]] <- Scenario(
-    scenarioName = "New",
-    modelFile = "m.pkml"
-  )
-
-  expect_true(project$modified)
   expect_false(project$validatedSinceMutation)
 })
 
-test_that("the documented c() attach idiom invalidates the project", {
+test_that("addScenario() invalidates the validation cache", {
   project <- testProject()
-  scenarios <- list(Attached = Scenario(scenarioName = "Attached"))
+  project$.markValidated()
+  expect_true(project$validatedSinceMutation)
 
-  project$scenarios <- c(project$scenarios, scenarios)
+  addScenario(project, "new", modelFile = "m.pkml")
 
-  expect_true(project$modified)
-  expect_s3_class(project$scenarios[["Attached"]], "Scenario")
+  expect_false(project$validatedSinceMutation)
 })
 
-test_that("nested subscript-assignment on a section entry invalidates the project", {
+test_that("setScenario() invalidates the validation cache", {
   project <- testProject()
-  project$individuals[["Indiv1"]]$weight <- 81
+  project$.markValidated()
 
-  expect_true(project$modified)
-  expect_identical(project$individuals[["Indiv1"]]$weight, 81)
+  setScenario(project, "testscenario", modelFile = "Aciclovir.pkml")
+
+  expect_false(project$validatedSinceMutation)
+  expect_s3_class(project$scenarios[["testscenario"]], "Scenario")
+})
+
+test_that("a section-entry authoring write invalidates the validation cache", {
+  project <- testProject()
+  project$.markValidated()
+  setIndividual(project, "indiv1", weight = 81)
+
+  expect_false(project$validatedSinceMutation)
+  expect_identical(project$individuals[["indiv1"]]$weight, 81)
 })
 
 test_that("an extracted Scenario is a copy and cannot mutate the project silently", {
   project <- testProject()
-  sc <- project$scenarios[["TestScenario"]]
+  project$.markValidated()
+  sc <- project$scenarios[["testscenario"]]
   sc$modelFile <- "HIJACKED.pkml"
 
-  expect_false(project$modified)
+  # Reading and mutating a copy is not a project mutation.
+  expect_true(project$validatedSinceMutation)
   expect_false(
-    identical(project$scenarios[["TestScenario"]]$modelFile, "HIJACKED.pkml")
+    identical(project$scenarios[["testscenario"]]$modelFile, "HIJACKED.pkml")
+  )
+})
+
+# Section accessors are read-only ----
+
+test_that("a whole-section assignment through a section accessor is rejected", {
+  project <- testProject()
+  expect_snapshot(error = TRUE, project$scenarios <- list())
+})
+
+test_that("a subscript assignment through a section accessor is rejected", {
+  project <- testProject()
+  expect_snapshot(
+    error = TRUE,
+    project$scenarios[["aciclovir_iv"]] <- Scenario(
+      scenarioName = "aciclovir_iv",
+      modelFile = "m.pkml"
+    )
+  )
+})
+
+test_that("a nested field assignment through a section accessor is rejected", {
+  project <- testProject()
+  # The most insidious form: `project$scenarios[["x"]]$field <- v` desugars to
+  # the same read-modify-write the subscript form does, so it is rejected too.
+  expect_snapshot(
+    error = TRUE,
+    project$scenarios[["testscenario"]]$individualId <- "indiv1"
+  )
+})
+
+test_that("a negative-index assignment through a section accessor is rejected", {
+  project <- testProject()
+  expect_snapshot(error = TRUE, project$scenarios[-1] <- list())
+})
+
+test_that("the read-only block applies to every section accessor", {
+  project <- testProject()
+  sections <- c(
+    "outputPaths",
+    "scenarios",
+    "parameterSets",
+    "initialConditions",
+    "individuals",
+    "populations",
+    "applications",
+    "observedData",
+    "dataCombined",
+    "plots",
+    "plotGrids",
+    "parameterIdentification"
+  )
+  for (section in sections) {
+    expect_error(
+      eval(bquote(project[[.(section)]] <- list())),
+      "read-only"
+    )
+  }
+})
+
+test_that("sub-element and negative-index assignment are rejected on every section accessor", {
+  project <- testProject()
+  # The scenarios section is covered by its own dedicated blocks above; the
+  # DefinitionList replacement methods (`[[<-`/`[<-`/`$<-`) dispatch purely on
+  # the shared wrapper class (the kind only feeds the message text), so a loop
+  # over the other ten sections asserts they traverse the same read-only path.
+  sections <- c(
+    "outputPaths",
+    "parameterSets",
+    "initialConditions",
+    "individuals",
+    "populations",
+    "applications",
+    "observedData",
+    "dataCombined",
+    "plots",
+    "plotGrids",
+    "parameterIdentification"
+  )
+  for (section in sections) {
+    expect_error(
+      eval(bquote(project[[.(section)]][["new_id"]] <- list())),
+      "read-only"
+    )
+    expect_error(
+      eval(bquote(project[[.(section)]][-1] <- list())),
+      "read-only"
+    )
+  }
+})
+
+test_that("reading a record, editing the copy, and re-submitting it is the supported edit loop", {
+  project <- testProject()
+  # The canonical edit loop: the accessor returns a detached copy; mutating it
+  # does not touch the project, and the change lands only when re-submitted
+  # through an authoring function.
+  sc <- project$scenarios[["testscenario"]]
+  sc$modelFile <- "Edited.pkml"
+  expect_false(
+    identical(project$scenarios[["testscenario"]]$modelFile, "Edited.pkml")
+  )
+  setScenario(project, "testscenario", modelFile = "Edited.pkml")
+  expect_identical(
+    project$scenarios[["testscenario"]]$modelFile,
+    "Edited.pkml"
+  )
+})
+
+# The sanctioned write path (the authoring functions, funneling through the
+# internal .setSection() entry point) must reject a structurally bad record,
+# not silently persist it: a wrong-typed reference field and an unknown field
+# both abort. (Regression guard for the write-path validation gap.)
+test_that("the write path rejects a wrong-typed scalar reference field", {
+  project <- testProject()
+  scenarios <- project$.getSection("scenarios")
+  scenarios[["testscenario"]]$individualId <- list(a = 1)
+  expect_error(
+    project$.setSection("scenarios", scenarios),
+    "individualId.*single string"
+  )
+})
+
+test_that("the write path rejects an unknown field on a record", {
+  project <- testProject()
+  scenarios <- project$.getSection("scenarios")
+  scenarios[["testscenario"]]$totallyBogusField <- "nonsense"
+  expect_error(
+    project$.setSection("scenarios", scenarios),
+    "unknown field"
   )
 })
 
@@ -529,17 +860,20 @@ test_that("jsonPath is read-only and aliases projectFilePath", {
   expect_snapshot(error = TRUE, project$jsonPath <- "elsewhere.json")
 })
 
-test_that("sync() reports a direct section-field write as unsaved changes", {
-  tmp <- withr::local_tempfile(fileext = ".json")
-  saveProject(testProject(), tmp)
+test_that("syncStatus() reports NA when there is no Excel side-car", {
+  tmp <- saveSnapshot(testProject(), local_projectPath())
   project <- loadProject(tmp)
 
-  project$scenarios[["TestScenario"]]$modelFile <- "Changed.pkml"
+  # Every section is write-through, so the project and its entity files never
+  # diverge; with no Project.xlsx alongside there is nothing to compare.
+  status <- project$syncStatus(silent = TRUE)
+  expect_identical(status$excel_in_sync, NA)
+  expect_identical(status$details, list())
+})
 
-  status <- project$sync(silent = TRUE)
-  expect_true(status$unsaved_changes)
-  expect_false(status$json_modified)
-  expect_false(status$in_sync)
+test_that("syncStatus() reports NA for an in-memory project", {
+  status <- Project$new()$syncStatus(silent = TRUE)
+  expect_identical(status$excel_in_sync, NA)
 })
 
 # Clone safety ----
@@ -548,14 +882,14 @@ test_that("mutating a clone's scenario leaves the source untouched", {
   project <- testProject()
   clone <- project$clone()
 
-  clone$scenarios[["TestScenario"]]$modelFile <- "OnlyOnClone.pkml"
+  setScenario(clone, "testscenario", modelFile = "OnlyOnClone.pkml")
 
   expect_identical(
-    clone$scenarios[["TestScenario"]]$modelFile,
+    clone$scenarios[["testscenario"]]$modelFile,
     "OnlyOnClone.pkml"
   )
   expect_false(
-    identical(project$scenarios[["TestScenario"]]$modelFile, "OnlyOnClone.pkml")
+    identical(project$scenarios[["testscenario"]]$modelFile, "OnlyOnClone.pkml")
   )
 })
 
@@ -564,31 +898,94 @@ test_that("adding a scenario to a clone leaves the source untouched", {
   clone <- project$clone()
   before <- length(project$scenarios)
 
-  clone$scenarios[["Fresh"]] <- Scenario(scenarioName = "Fresh")
+  addScenario(clone, "fresh", modelFile = "Aciclovir.pkml")
 
   expect_length(project$scenarios, before)
-  expect_false("Fresh" %in% names(project$scenarios))
+  expect_false("fresh" %in% names(project$scenarios))
 })
 
 test_that("mutating a clone's nested individual entry leaves the source untouched", {
   project <- testProject()
   clone <- project$clone()
 
-  clone$individuals[["Indiv1"]]$weight <- 99
+  setIndividual(clone, "indiv1", weight = 99)
 
-  expect_identical(clone$individuals[["Indiv1"]]$weight, 99)
-  expect_false(identical(project$individuals[["Indiv1"]]$weight, 99))
+  expect_identical(clone$individuals[["indiv1"]]$weight, 99)
+  expect_false(identical(project$individuals[["indiv1"]]$weight, 99))
 })
 
-test_that("clone modified/validated flags are independent of the source", {
+test_that("clone validated flag is independent of the source", {
   project <- testProject()
   project$.markValidated()
   clone <- project$clone()
 
-  clone$scenarios[["TestScenario"]]$modelFile <- "Changed.pkml"
+  setScenario(clone, "testscenario", modelFile = "Changed.pkml")
 
-  expect_true(clone$modified)
+  # Mutating the clone clears only the clone's validation cache; the source's
+  # cache is untouched.
   expect_false(clone$validatedSinceMutation)
-  expect_false(project$modified)
   expect_true(project$validatedSinceMutation)
+})
+
+# DefinitionList section-accessor printing ----
+
+test_that("a section accessor prints a count and the definition names", {
+  project <- testProject()
+  withr::local_options(cli.unicode = FALSE)
+  local_reproducible_output()
+  expect_snapshot(print(project$individuals))
+  expect_snapshot(print(project$parameterSets))
+})
+
+test_that("an empty section accessor prints zero definitions", {
+  project <- .fakeProject()
+  withr::local_options(cli.unicode = FALSE)
+  local_reproducible_output()
+  expect_snapshot(print(project$individuals))
+})
+
+test_that("print on a section accessor returns the value invisibly", {
+  project <- testProject()
+  expect_invisible(print(project$individuals))
+  returned <- withr::with_output_sink(
+    withr::local_tempfile(),
+    print(project$individuals)
+  )
+  expect_s3_class(returned, "DefinitionList")
+})
+
+test_that("a wrapped section accessor still behaves as a list", {
+  project <- testProject()
+  indivs <- project$individuals
+  expect_type(indivs, "list")
+  expect_length(indivs, 1L)
+  expect_named(indivs, "indiv1")
+  expect_s3_class(indivs[["indiv1"]], "Individual")
+  # c() and named extraction are transparent.
+  expect_length(c(indivs, list(extra = 1)), 2L)
+})
+
+test_that("the stored section stays a plain list (no DefinitionList class)", {
+  project <- testProject()
+  # Reading wraps, but the backing private store is plain: a round-trip
+  # through a mutator persists and reloads identically.
+  stored <- .unwrapDefinitionList(project$individuals)
+  expect_false(inherits(stored, "DefinitionList"))
+
+  addIndividual(project, "extra", species = "Human", gender = "MALE")
+  reloaded <- loadProject(project$jsonPath)
+  expect_true("extra" %in% names(reloaded$individuals))
+  expect_false(inherits(
+    .unwrapDefinitionList(reloaded$individuals),
+    "DefinitionList"
+  ))
+})
+
+test_that("the three plots sections each print a count and ids", {
+  project <- exampleProject()
+  withr::local_options(cli.unicode = FALSE)
+  local_reproducible_output()
+  expect_snapshot(print(project$plots))
+  expect_snapshot(print(project$plotGrids))
+  expect_snapshot(print(project$dataCombined))
 })
