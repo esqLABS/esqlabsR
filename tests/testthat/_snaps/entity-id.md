@@ -7,6 +7,15 @@
       Canonicalized 1 id to a safe form:
       * "My ID*" -> "my id_"
 
+# .canonicalizeId canonicalizes and warns on an id containing braces instead of aborting
+
+    Code
+      out <- .canonicalizeId("Conc{Organ}")
+    Condition
+      Warning:
+      Canonicalized 1 id to a safe form:
+      * "Conc{Organ}" -> "conc{organ}"
+
 # .canonicalizeId errors on a post-canonicalization collision
 
     Code
@@ -69,4 +78,13 @@
       ! Entity id is too long to be a safe filename: 300 bytes (limit 250).
       x "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
       i An id becomes the file '<id>.json'; shorten it to at most 250 bytes.
+
+# .canonicalizeIdRef canonicalizes and warns on a reference containing braces instead of aborting
+
+    Code
+      out <- .canonicalizeIdRef("Ind{Organ}")
+    Condition
+      Warning:
+      Canonicalized 1 referenced id to a safe form:
+      * "Ind{Organ}" -> "ind{organ}"
 

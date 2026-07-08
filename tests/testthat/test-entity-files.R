@@ -490,6 +490,32 @@ test_that("a mutation lands on disk immediately; syncStatus has nothing to flag"
   expect_identical(status$excel_in_sync, NA)
 })
 
+test_that("a high-precision numeric value survives an entity write/reload round-trip", {
+  project <- testProject()
+  preciseValue <- 1.234567890123
+
+  addInitialConditionEntry(
+    project,
+    "precise",
+    path = "Organism|A|Concentration",
+    value = preciseValue,
+    unit = "mg/l"
+  )
+
+  reloaded <- loadProject(project$jsonPath)
+  expect_identical(
+    reloaded$initialConditions[["precise"]][[1]]$value,
+    preciseValue
+  )
+
+  snap <- saveSnapshot(reloaded, local_projectPath())
+  snapshotReloaded <- loadProject(snap)
+  expect_identical(
+    snapshotReloaded$initialConditions[["precise"]][[1]]$value,
+    preciseValue
+  )
+})
+
 # initialConditions tree kind ----
 
 test_that("the initialConditions spec serializes and parses a set round-trip", {

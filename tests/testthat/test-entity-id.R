@@ -77,6 +77,21 @@ test_that(".canonicalizeId warns naming each changed id", {
   expect_identical(out, "my id_")
 })
 
+test_that(".canonicalizeId canonicalizes and warns on an id containing braces instead of aborting", {
+  expect_snapshot(out <- .canonicalizeId("Conc{Organ}"))
+  expect_identical(out, "conc{organ}")
+})
+
+test_that(".canonicalizeId does not evaluate brace content as R code", {
+  # The quotes are forbidden characters and get replaced with `_`, so the id
+  # does change (and warns); the real assertion is that this returns at all
+  # rather than evaluating `stop("boom")`, which would raise "boom" instead.
+  expect_identical(
+    suppressWarnings(.canonicalizeId('x{stop("boom")}')),
+    "x{stop(_boom_)}"
+  )
+})
+
 test_that(".canonicalizeId does not warn when nothing changes", {
   expect_no_warning(.canonicalizeId("already_safe"))
 })
@@ -154,6 +169,11 @@ test_that(".canonicalizeIdRef passes NA through unchanged", {
 test_that(".canonicalizeIdRef canonicalizes a normal reference", {
   expect_identical(suppressWarnings(.canonicalizeIdRef("Indiv1")), "indiv1")
   expect_identical(.canonicalizeIdRef("already_safe"), "already_safe")
+})
+
+test_that(".canonicalizeIdRef canonicalizes and warns on a reference containing braces instead of aborting", {
+  expect_snapshot(out <- .canonicalizeIdRef("Ind{Organ}"))
+  expect_identical(out, "ind{organ}")
 })
 
 # .nearestMatch ----

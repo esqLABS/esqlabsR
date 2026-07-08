@@ -313,7 +313,8 @@
     path,
     auto_unbox = TRUE,
     null = "null",
-    pretty = TRUE
+    pretty = TRUE,
+    digits = NA
   )
   invisible(NULL)
 }
@@ -1262,7 +1263,7 @@ saveSnapshot <- function(project, path = NULL) {
   if (ext == "" || identical(tolower(ext), "json")) {
     return(fs::path_ext_set(path, "esqlabsR"))
   }
-  if (identical(ext, "esqlabsR")) {
+  if (identical(tolower(ext), "esqlabsr")) {
     return(path)
   }
   cli::cli_inform(c(
@@ -1376,6 +1377,6 @@ loadSnapshot <- function(file, dir) {
   # Write the container with the inline sections emptied: the tree owns them,
   # matching the on-disk shape `loadProject()` reads for a tree project.
   containerPath <- file.path(dir, "Project.json")
-  .saveProjectJson(project, containerPath, includeScenarios = FALSE)
+  .saveProjectJson(project, containerPath, containerOnly = TRUE)
   containerPath
 }

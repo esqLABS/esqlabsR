@@ -51,17 +51,14 @@
 
   changed <- !is.na(ids) & ids != canonical
   if (any(changed)) {
-    pairs <- paste0(
-      "{.val ",
-      ids[changed],
-      "} -> {.val ",
-      canonical[changed],
-      "}"
+    rendered <- .canonicalizedIdBullets(ids[changed], canonical[changed])
+    cli::cli_warn(
+      c(
+        "Canonicalized {sum(changed)} id{?s} to a safe form:",
+        rendered$bullets
+      ),
+      .envir = rendered$envir
     )
-    cli::cli_warn(c(
-      "Canonicalized {sum(changed)} id{?s} to a safe form:",
-      stats::setNames(pairs, rep("*", length(pairs)))
-    ))
   }
 
   # Two DISTINCT inputs that collapse to one canonical id are real ambiguity.
@@ -94,6 +91,45 @@
   }
 
   canonical
+}
+
+# Build one `input -> canonical` bullet template per pair for the changed-id
+# / changed-reference warnings, quoting each value safely rather than
+# inlining raw user text into a cli glue template (which would evaluate
+# `{...}` content in the text as an R expression). Returns the bullet
+# templates (still unglued) together with the environment binding their
+# variables; the caller passes both straight to a single `cli_warn()` /
+# `cli_abort()` call (`.envir = rendered$envir`) so the templates are
+# glue-parsed exactly once. Pre-rendering each bullet with
+# `cli::format_inline()` and handing the *rendered* strings to a second
+# `cli_warn()` call is not actually safe: the rendered text still contains
+# the value's literal `{`/`}` characters, and cli glue-parses that text again
+# when the outer call formats it, evaluating the very content this is meant
+# to guard against. Binding each pair's `input`/`canonical` under
+# bullet-indexed variable names avoids that second pass entirely. The
+# returned environment's parent is the caller of this function, so the
+# caller's own glue expressions elsewhere in the same message (e.g.
+# `{sum(changed)}` in a summary line) still resolve normally.
+#
+# @keywords internal
+# @noRd
+.canonicalizedIdBullets <- function(inputs, canonicals) {
+  envir <- new.env(parent = parent.frame())
+  bullets <- vapply(
+    seq_along(inputs),
+    function(i) {
+      inputVar <- paste0("input", i)
+      canonVar <- paste0("canon", i)
+      assign(inputVar, inputs[i], envir = envir)
+      assign(canonVar, canonicals[i], envir = envir)
+      sprintf("{.val {%s}} -> {.val {%s}}", inputVar, canonVar)
+    },
+    character(1)
+  )
+  list(
+    bullets = stats::setNames(bullets, rep("*", length(bullets))),
+    envir = envir
+  )
 }
 
 # Canonicalize a foreign-key reference argument (e.g. a scenario's
@@ -220,11 +256,17 @@
 # @keywords internal
 # @noRd
 .warnCanonicalizedRefs <- function(inputs, canonicals) {
-  pairs <- paste0("{.val ", inputs, "} -> {.val ", canonicals, "}")
-  cli::cli_warn(c(
-    "Canonicalized {length(inputs)} referenced id{?s} to a safe form:",
-    stats::setNames(pairs, rep("*", length(pairs)))
-  ))
+  # Same fix as `.canonicalizeId()`'s changed-id warning: build the bullet
+  # templates and their binding environment via `.canonicalizedIdBullets()`
+  # and glue-parse them in a single outer `cli_warn()` call.
+  rendered <- .canonicalizedIdBullets(inputs, canonicals)
+  cli::cli_warn(
+    c(
+      "Canonicalized {length(inputs)} referenced id{?s} to a safe form:",
+      rendered$bullets
+    ),
+    .envir = rendered$envir
+  )
 }
 
 # Reserved Windows device basenames (case-insensitive), never allowed as a

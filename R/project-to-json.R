@@ -181,7 +181,8 @@
     path,
     auto_unbox = TRUE,
     null = "null",
-    pretty = TRUE
+    pretty = TRUE,
+    digits = NA
   )
   invisible(path)
 }
