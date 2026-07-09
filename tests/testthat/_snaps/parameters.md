@@ -246,3 +246,11 @@
       ! `units` must be `NULL`, a scalar, or have the same length as `parameterPaths`.
       x Got lengths 3 and 2.
 
+# .splitParameterPathIntoContainerAndName aborts on a separator-less path
+
+    Code
+      esqlabsR:::.splitParameterPathIntoContainerAndName("Volume")
+    Condition
+      Error in `esqlabsR:::.splitParameterPathIntoContainerAndName()`:
+      ! parameter path "Volume" must contain a container path and a parameter name separated by "|".
+

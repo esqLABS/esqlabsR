@@ -598,8 +598,19 @@ setParameterValuesByPathWithCondition <- function(
 .splitParameterPathIntoContainerAndName <- function(parameterPath) {
   fullPathParts <- strsplit(parameterPath, split = "|", fixed = TRUE)[[1]]
 
+  # A parameter path must carry both a container path and a parameter name; a
+  # separator-less path has no container and cannot be split. Aborting here
+  # fails fast rather than silently emitting an empty container path (which the
+  # Excel exporter would then write as a blank cell).
+  if (length(fullPathParts) < 2L) {
+    cli::cli_abort(
+      "parameter path {.val {parameterPath}} must contain a container path \\
+      and a parameter name separated by {.val |}."
+    )
+  }
+
   containerPath <- paste(
-    fullPathParts[seq_along(fullPathParts) - 1],
+    utils::head(fullPathParts, -1L),
     collapse = "|"
   )
   paramName <- fullPathParts[[length(fullPathParts)]]

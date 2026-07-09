@@ -982,3 +982,20 @@ test_that("setParameterValuesByPathWithCondition aborts on a units length mismat
     )
   )
 })
+
+# .splitParameterPathIntoContainerAndName ----
+
+test_that(".splitParameterPathIntoContainerAndName splits a multi-segment path", {
+  split <- esqlabsR:::.splitParameterPathIntoContainerAndName(
+    "Organism|Liver|Volume"
+  )
+  expect_identical(split$containerPath, "Organism|Liver")
+  expect_identical(split$parameterName, "Volume")
+})
+
+test_that(".splitParameterPathIntoContainerAndName aborts on a separator-less path", {
+  expect_snapshot(
+    error = TRUE,
+    esqlabsR:::.splitParameterPathIntoContainerAndName("Volume")
+  )
+})
