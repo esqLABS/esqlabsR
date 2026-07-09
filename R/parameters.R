@@ -550,6 +550,30 @@ setParameterValuesByPathWithCondition <- function(
   },
   units = NULL
 ) {
+  # Guard the parallel-vector shape before touching the simulation, so a scalar
+  # `values` against multi-element `parameterPaths` fails fast here rather than
+  # aborting mid-loop with an opaque "subscript out of bounds". `values` may be
+  # a scalar (recycled to every path) or match `parameterPaths` length; `units`
+  # is optional and, when given, may be a scalar (recycled) or match.
+  nPaths <- length(parameterPaths)
+  if (length(values) != 1L && length(values) != nPaths) {
+    cli::cli_abort(c(
+      "{.arg values} must be a scalar or have the same length as \\
+      {.arg parameterPaths}.",
+      "x" = "Got lengths {.val {length(values)}} and {.val {nPaths}}."
+    ))
+  }
+  if (!is.null(units) && length(units) != 1L && length(units) != nPaths) {
+    cli::cli_abort(c(
+      "{.arg units} must be {.code NULL}, a scalar, or have the same length \\
+      as {.arg parameterPaths}.",
+      "x" = "Got lengths {.val {length(units)}} and {.val {nPaths}}."
+    ))
+  }
+  values <- rep(values, length.out = nPaths)
+  if (!is.null(units)) {
+    units <- rep(units, length.out = nPaths)
+  }
   for (i in seq_along(parameterPaths)) {
     path <- parameterPaths[[i]]
     if (condition(path)) {

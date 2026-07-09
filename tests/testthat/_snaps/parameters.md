@@ -225,3 +225,24 @@
       Error in `readInitialConditionsFromXLS()`:
       x Loading from XLS failed, the file 'data/InitialConditions.xlsx' has wrong structure!  The file should contain columns "Container Path, Molecule Name, Is Present, Value, Units, Scale Divisor, Neg. Values Allowed".
 
+# setParameterValuesByPathWithCondition aborts on a values length mismatch
+
+    Code
+      setParameterValuesByPathWithCondition(parameterPaths = c(
+        "Organism|Liver|Volume", "Organism|Volume"), values = c(1, 2, 3), simulation = NULL)
+    Condition
+      Error in `setParameterValuesByPathWithCondition()`:
+      ! `values` must be a scalar or have the same length as `parameterPaths`.
+      x Got lengths 3 and 2.
+
+# setParameterValuesByPathWithCondition aborts on a units length mismatch
+
+    Code
+      setParameterValuesByPathWithCondition(parameterPaths = c(
+        "Organism|Liver|Volume", "Organism|Volume"), values = c(1, 2), simulation = NULL,
+      units = c("l", "l", "l"))
+    Condition
+      Error in `setParameterValuesByPathWithCondition()`:
+      ! `units` must be `NULL`, a scalar, or have the same length as `parameterPaths`.
+      x Got lengths 3 and 2.
+

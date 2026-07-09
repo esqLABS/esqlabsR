@@ -954,3 +954,31 @@ test_that("isTableFormulasEqual compares every point, not just the first", {
   # Differing lengths are never equal.
   expect_false(isTableFormulasEqual(f1, tableFormula(c(0, 1))))
 })
+
+# setParameterValuesByPathWithCondition ----
+
+# The length guard fires before any ospsuite/simulation call, so it can be
+# exercised without a live Simulation (passing `simulation = NULL` is safe: the
+# abort happens first).
+test_that("setParameterValuesByPathWithCondition aborts on a values length mismatch", {
+  expect_snapshot(
+    error = TRUE,
+    setParameterValuesByPathWithCondition(
+      parameterPaths = c("Organism|Liver|Volume", "Organism|Volume"),
+      values = c(1, 2, 3),
+      simulation = NULL
+    )
+  )
+})
+
+test_that("setParameterValuesByPathWithCondition aborts on a units length mismatch", {
+  expect_snapshot(
+    error = TRUE,
+    setParameterValuesByPathWithCondition(
+      parameterPaths = c("Organism|Liver|Volume", "Organism|Volume"),
+      values = c(1, 2),
+      simulation = NULL,
+      units = c("l", "l", "l")
+    )
+  )
+})
