@@ -668,6 +668,7 @@ addParameterSet <- function(project, id) {
   validateIsOfType(project, "Project")
   .assertIdVector(id)
   id <- .canonicalizeId(id)
+  .assertNoDuplicateIds(id, "parameter set")
   clash <- intersect(id, names(project$parameterSets))
   if (length(clash) > 0L) {
     cli::cli_abort("parameter set {.val {clash}} already exists")
@@ -1096,6 +1097,7 @@ addInitialConditions <- function(project, id) {
   validateIsOfType(project, "Project")
   .assertIdVector(id)
   id <- .canonicalizeId(id)
+  .assertNoDuplicateIds(id, "initial-condition set")
   clash <- intersect(id, names(project$initialConditions))
   if (length(clash) > 0L) {
     cli::cli_abort("initial-condition set {.val {clash}} already exists")

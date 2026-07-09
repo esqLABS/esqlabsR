@@ -6,6 +6,14 @@
       Error in `addOutputPath()`:
       ! outputPath "aciclovir_fat_cell" already exists
 
+# addOutputPath aborts on a duplicate id in the batch
+
+    Code
+      addOutputPath(project, c("a", "a"), "Organism|other|Concentration in container")
+    Condition
+      Error in `addOutputPath()`:
+      ! duplicate outputPath id in the batch: "a"
+
 # setOutputPath aborts on a non-existent id
 
     Code

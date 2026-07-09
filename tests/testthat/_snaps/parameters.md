@@ -15,6 +15,14 @@
       Error in `addParameterSet()`:
       ! parameter set "global" already exists
 
+# addParameterSet aborts on a duplicate id in the batch
+
+    Code
+      addParameterSet(project, c("a", "a"))
+    Condition
+      Error in `addParameterSet()`:
+      ! duplicate parameter set id in the batch: "a"
+
 # addParameterEntry creates the set on demand and appends entries
 
     Code
@@ -85,6 +93,14 @@
     Condition
       Error in `addInitialConditions()`:
       ! initial-condition set "dupset" already exists
+
+# addInitialConditions aborts on a duplicate id in the batch
+
+    Code
+      addInitialConditions(project, c("a", "a"))
+    Condition
+      Error in `addInitialConditions()`:
+      ! duplicate initial-condition set id in the batch: "a"
 
 # addInitialConditionEntry creates the set on demand and appends
 

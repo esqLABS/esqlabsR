@@ -95,6 +95,26 @@ NULL
   invisible(id)
 }
 
+# Abort when a batch `add*` id vector repeats the same (canonical) id, naming
+# the offenders. Batch `add*` functions fold each entry into the section keyed
+# by its id, so a repeated id would silently overwrite the earlier entry rather
+# than add a distinct one. `.canonicalizeId()` deliberately lets an identical
+# repeat through (it aborts only on distinct pre-images that collapse together),
+# so the within-batch guard is the caller's responsibility. Call after
+# canonicalization so the check runs on the ids actually used as keys.
+#
+# @keywords internal
+# @noRd
+.assertNoDuplicateIds <- function(id, entity, call = rlang::caller_env()) {
+  if (anyDuplicated(id) > 0L) {
+    cli::cli_abort(
+      "duplicate {entity} id{?s} in the batch: {.val {id[duplicated(id)]}}",
+      call = call
+    )
+  }
+  invisible(id)
+}
+
 # Recycle / align one scalar-per-entity field to N entities. A length-1 value
 # is recycled to all N; a length-N value is aligned by position; any other
 # length aborts naming the field and the lengths. `NULL` passes through as

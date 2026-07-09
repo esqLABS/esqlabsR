@@ -168,6 +168,7 @@ addIndividual <- function(project, id, species, ...) {
 
   # Validate all N first (all-or-nothing): build every entry before folding any,
   # so an invalid entity in the batch writes nothing.
+  .assertNoDuplicateIds(id, "individual")
   clash <- intersect(id, names(project$individuals))
   if (length(clash) > 0L) {
     cli::cli_abort("individual {.val {clash}} already exists")

@@ -407,6 +407,19 @@ test_that("addPopulation aborts on a mismatched scalar field length", {
   )
 })
 
+test_that("addPopulation aborts on a duplicate id in the batch", {
+  project <- testProject()
+  expect_snapshot(
+    error = TRUE,
+    addPopulation(
+      project,
+      c("a", "a"),
+      species = "Human",
+      numberOfIndividuals = 5
+    )
+  )
+})
+
 test_that("setPopulation vectorizes a partial update across N ids", {
   project <- testProject()
   addPopulation(

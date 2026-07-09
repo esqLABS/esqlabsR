@@ -204,6 +204,11 @@ test_that("addParameterSet aborts on a duplicate id", {
   expect_snapshot(error = TRUE, addParameterSet(project, "global"))
 })
 
+test_that("addParameterSet aborts on a duplicate id in the batch", {
+  project <- testProject()
+  expect_snapshot(error = TRUE, addParameterSet(project, c("a", "a")))
+})
+
 test_that("addParameterEntry creates the set on demand and appends entries", {
   project <- testProject()
   # Creating a set on demand is divergent from the other add* functions, so it
@@ -548,6 +553,11 @@ test_that("addInitialConditions aborts on a duplicate id", {
   project <- testProject()
   addInitialConditions(project, "dupset")
   expect_snapshot(error = TRUE, addInitialConditions(project, "dupset"))
+})
+
+test_that("addInitialConditions aborts on a duplicate id in the batch", {
+  project <- testProject()
+  expect_snapshot(error = TRUE, addInitialConditions(project, c("a", "a")))
 })
 
 test_that("addInitialConditionEntry creates the set on demand and appends", {

@@ -382,6 +382,7 @@ addPopulation <- function(
     )
   )
 
+  .assertNoDuplicateIds(id, "population")
   clash <- intersect(id, names(project$populations))
   if (length(clash) > 0L) {
     cli::cli_abort("population {.val {clash}} already exists")

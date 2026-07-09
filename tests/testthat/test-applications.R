@@ -97,6 +97,11 @@ test_that("addApplication aborts the whole batch and writes nothing on a bad ref
   expect_identical(names(reloaded$applications), before)
 })
 
+test_that("addApplication aborts on a duplicate id in the batch", {
+  project <- testProject()
+  expect_snapshot(error = TRUE, addApplication(project, c("p1", "p1")))
+})
+
 test_that("removeApplication removes a vector of ids in one write-through", {
   project <- testProject()
   addApplication(project, c("p1", "p2"))

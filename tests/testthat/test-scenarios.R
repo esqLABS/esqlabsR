@@ -819,6 +819,20 @@ test_that("addScenario adds N scenarios in one call equal to N scalar adds", {
   )
 })
 
+test_that("addScenario aborts on a duplicate id in the batch", {
+  project <- testProject()
+  expect_snapshot(
+    error = TRUE,
+    addScenario(
+      project,
+      c("s1", "s1"),
+      modelFile = "Aciclovir.pkml",
+      individual = "indiv1",
+      outputPaths = "aciclovir_pvb"
+    )
+  )
+})
+
 test_that("removeScenario warns when a dataCombined still references it", {
   project <- testProject()
   addDataCombined(

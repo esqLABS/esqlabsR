@@ -45,6 +45,7 @@ addApplication <- function(project, id, parameterSets = NULL) {
   n <- length(id)
   perId <- .wholeField(parameterSets, n)
 
+  .assertNoDuplicateIds(id, "application")
   clash <- intersect(id, names(project$applications))
   if (length(clash) > 0L) {
     cli::cli_abort("application {.val {clash}} already exists")

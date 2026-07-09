@@ -708,11 +708,7 @@ addPlot <- function(project, id, dataCombined, plotType, ...) {
 
   # Validate the whole batch first (all-or-nothing): no entry is folded in (and
   # so nothing is written through) unless every entry is valid.
-  if (anyDuplicated(id) > 0L) {
-    cli::cli_abort(
-      "duplicate plot id{?s} in the batch: {.val {id[duplicated(id)]}}"
-    )
-  }
+  .assertNoDuplicateIds(id, "plot")
   existing <- names(project$plots)
   clash <- intersect(id, existing)
   if (length(clash) > 0L) {
@@ -854,11 +850,7 @@ addPlotGrid <- function(project, id, plots, ...) {
   perGridFields <- .dotsToPerEntityFields(list(...), n)
 
   # Validate the whole batch first (all-or-nothing).
-  if (anyDuplicated(id) > 0L) {
-    cli::cli_abort(
-      "duplicate plot grid id{?s} in the batch: {.val {id[duplicated(id)]}}"
-    )
-  }
+  .assertNoDuplicateIds(id, "plot grid")
   clash <- intersect(id, names(project$plotGrids))
   if (length(clash) > 0L) {
     cli::cli_abort("plot grid {.val {clash}} already exists")
@@ -973,11 +965,7 @@ addDataCombined <- function(
   perIdObserved <- .perDataCombinedEntries(observed, n)
 
   # Validate the whole batch first (all-or-nothing).
-  if (anyDuplicated(id) > 0L) {
-    cli::cli_abort(
-      "duplicate DataCombined id{?s} in the batch: {.val {id[duplicated(id)]}}"
-    )
-  }
+  .assertNoDuplicateIds(id, "DataCombined")
   clash <- intersect(id, names(project$dataCombined))
   if (length(clash) > 0L) {
     cli::cli_abort("DataCombined {.val {clash}} already exists")

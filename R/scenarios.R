@@ -754,6 +754,7 @@ addScenario <- function(
     )
   )
 
+  .assertNoDuplicateIds(id, "scenario")
   clash <- intersect(id, names(project$scenarios))
   if (length(clash) > 0L) {
     cli::cli_abort("scenario {.val {clash}} already exists")

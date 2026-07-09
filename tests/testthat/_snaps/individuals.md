@@ -74,10 +74,8 @@
     Code
       addIndividual(project, c("a", "a"), species = "Human", gender = "MALE")
     Condition
-      Error in `.canonicalizeId()`:
-      ! Ids collide after canonicalization:
-      x "a" -> "a"
-      i Two distinct ids that canonicalize to the same id are ambiguous; rename so they differ by more than case or forbidden characters.
+      Error in `addIndividual()`:
+      ! duplicate individual id in the batch: "a"
 
 # print.Individual renders the configured fields
 

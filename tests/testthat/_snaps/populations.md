@@ -293,6 +293,14 @@
       ! `numberOfIndividuals` must be length 1 or length 3 (the number of ids).
       x It is length 2.
 
+# addPopulation aborts on a duplicate id in the batch
+
+    Code
+      addPopulation(project, c("a", "a"), species = "Human", numberOfIndividuals = 5)
+    Condition
+      Error in `addPopulation()`:
+      ! duplicate population id in the batch: "a"
+
 # removePopulation warns when still referenced by a scenario, removes anyway
 
     Code

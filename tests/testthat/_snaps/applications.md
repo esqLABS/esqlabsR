@@ -20,6 +20,14 @@
       ! `parameterSets` references undefined parameter sets:
       x "ghost"
 
+# addApplication aborts on a duplicate id in the batch
+
+    Code
+      addApplication(project, c("p1", "p1"))
+    Condition
+      Error in `addApplication()`:
+      ! duplicate application id in the batch: "p1"
+
 # print.Application renders its parameter-set references
 
     Code

@@ -29,6 +29,18 @@ test_that("addOutputPath aborts on a duplicate id", {
   )
 })
 
+test_that("addOutputPath aborts on a duplicate id in the batch", {
+  project <- testProject()
+  expect_snapshot(
+    error = TRUE,
+    addOutputPath(
+      project,
+      c("a", "a"),
+      "Organism|other|Concentration in container"
+    )
+  )
+})
+
 test_that("removeOutputPath warns when the id is referenced by a scenario, removes anyway", {
   project <- testProject()
   referenced <- intersect(

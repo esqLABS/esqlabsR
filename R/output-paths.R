@@ -27,10 +27,11 @@
 addOutputPath <- function(project, id, path) {
   validateIsOfType(project, "Project")
   # Route the id-vector check through the shared helper every sibling add* uses,
-  # then canonicalize (which aborts on an in-batch collision, so no separate
-  # duplicate guard is needed).
+  # then canonicalize and guard against an in-batch duplicate id (which would
+  # otherwise silently overwrite an earlier entry keyed by the same id).
   .assertIdVector(id)
   id <- .canonicalizeId(id)
+  .assertNoDuplicateIds(id, "outputPath")
 
   if (
     !is.character(path) ||
