@@ -444,3 +444,75 @@ test_that("createPlots(plots) builds the DataCombined the standalone plot needs"
   expect_named(result, "p_solo")
   expect_s3_class(result$p_solo, "ggplot")
 })
+
+# createPlots: axis labels and plotType validation ----
+
+test_that("createPlots carries xLabel/yLabel onto the built plot", {
+  project <- exampleProject()
+  path <- project$outputPaths$aciclovir_pvb
+  addDataCombined(
+    project,
+    "dc_lab",
+    simulated = list(list(
+      label = "sim",
+      scenario = "aciclovir_iv",
+      path = path,
+      group = "g"
+    ))
+  )
+  # xLabel/yLabel were silently dropped before: they were listed in the
+  # excluded styleFields yet never re-applied, so a user's axis labels were
+  # ignored. The rendered plot must now carry them.
+  addPlot(
+    project,
+    "p_lab",
+    "dc_lab",
+    "individual",
+    xLabel = "Time [h]",
+    yLabel = "Conc"
+  )
+  simulated <- runScenarios(project, scenarios = "aciclovir_iv")
+
+  result <- suppressWarnings(createPlots(
+    project,
+    plots = "p_lab",
+    scenarioResults = simulated,
+    validate = FALSE
+  ))
+
+  expect_identical(result$p_lab$labels$x, "Time [h]")
+  expect_identical(result$p_lab$labels$y, "Conc")
+})
+
+test_that("createPlots aborts on an unknown plotType even when validate = FALSE", {
+  project <- exampleProject()
+  path <- project$outputPaths$aciclovir_pvb
+  addDataCombined(
+    project,
+    "dc_bad",
+    simulated = list(list(
+      label = "sim",
+      scenario = "aciclovir_iv",
+      path = path,
+      group = "g"
+    ))
+  )
+  # An unknown plotType used to build to NULL invisibly (silently dropped
+  # from a grid). It must abort during the buildability check, naming the
+  # offending plot and type, regardless of `validate`.
+  addPlot(project, "p_bad", "dc_bad", "individual")
+  plots <- project$.getSection("plots")
+  plots[["p_bad"]]$plotType <- "timeprofile"
+  project$.setSection("plots", plots)
+  simulated <- runScenarios(project, scenarios = "aciclovir_iv")
+
+  expect_snapshot(
+    error = TRUE,
+    suppressWarnings(createPlots(
+      project,
+      plots = "p_bad",
+      scenarioResults = simulated,
+      validate = FALSE
+    ))
+  )
+})

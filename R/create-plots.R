@@ -403,6 +403,19 @@ createPlotsFromExcel <- function(...) {
     msg <- messages$missingPlotType()
     cli::cli_abort("{msg}")
   }
+  # Reject any plotType that is not one of the supported kinds. The build
+  # `switch()` has no default arm, so an unknown type would otherwise return
+  # NULL invisibly (silently dropped from a grid). Aborting here runs before
+  # the build regardless of `validate`, naming the offending plot and type.
+  invalidTypeIdx <- which(!(unlist(plotTypes) %in% .validPlotTypes))
+  if (length(invalidTypeIdx) > 0) {
+    badId <- ids[[invalidTypeIdx[[1]]]]
+    badType <- plotTypes[[invalidTypeIdx[[1]]]]
+    cli::cli_abort(c(
+      "Invalid {.field plotType} {.val {badType}} for plot {.val {badId}}.",
+      "i" = "Must be one of: {.val {(.validPlotTypes)}}."
+    ))
+  }
   missingDataCombined <- setdiff(
     unlist(dataCombinedIds),
     dataCombinedNames
@@ -506,11 +519,21 @@ createPlotsFromExcel <- function(...) {
       defaultConfiguration = defaultPlotConfiguration,
       fields = entry[!(names(entry) %in% styleFields)]
     )
+    # Free-text scalar fields are excluded from `styleFields` and re-applied
+    # here verbatim, not through `.createConfigurationFromEntry`, so a label
+    # containing a comma (e.g. "Concentration, ng/mL") is not shredded into a
+    # character vector by the comma-splitting scan.
     if (!is.null(entry$title)) {
       plotConfiguration$title <- entry$title
     }
     if (!is.null(entry$subtitle)) {
       plotConfiguration$subtitle <- entry$subtitle
+    }
+    if (!is.null(entry$xLabel)) {
+      plotConfiguration$xLabel <- entry$xLabel
+    }
+    if (!is.null(entry$yLabel)) {
+      plotConfiguration$yLabel <- entry$yLabel
     }
     .validateLogScaleAxisLimits(plotConfiguration, entry$plotId)
     plotConfiguration
@@ -602,5 +625,9 @@ createPlotsFromExcel <- function(...) {
   # also inside a requested grid still gets its own entry here (independent
   # selectors). The grid entries and the standalone entries are unioned.
   standalonePlots <- plotList[intersect(standalonePlotIds, names(plotList))]
+  # Drop any NULL entry for symmetry with the grid path. The plotType-enum
+  # check in `.assertPlotConfigurationsBuildable()` already prevents unknown
+  # types from producing a NULL here, so this is belt-and-suspenders.
+  standalonePlots <- standalonePlots[lengths(standalonePlots) != 0]
   c(builtGrids, standalonePlots)
 }

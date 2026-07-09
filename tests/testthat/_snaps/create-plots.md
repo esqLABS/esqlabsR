@@ -16,3 +16,13 @@
       Error in `createPlots()`:
       ! The following plots are not defined in the project: "ghost_plot"
 
+# createPlots aborts on an unknown plotType even when validate = FALSE
+
+    Code
+      suppressWarnings(createPlots(project, plots = "p_bad", scenarioResults = simulated,
+        validate = FALSE))
+    Condition
+      Error in `.assertPlotConfigurationsBuildable()`:
+      ! Invalid plotType "timeprofile" for plot "p_bad".
+      i Must be one of: "individual", "population", "observedVsSimulated", "residualsVsSimulated", and "residualsVsTime".
+
