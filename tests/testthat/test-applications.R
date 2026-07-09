@@ -53,6 +53,18 @@ test_that("setApplicationParameterSets aborts on an undefined parameter set", {
   expect_identical(project$applications[["aciclovir_iv_250mg"]], before)
 })
 
+test_that("addApplication and setApplicationParameterSets reject a non-character parameterSets with the same message", {
+  # Both paths route through the shared `.resolveParameterSetRefs()`, so the
+  # "must be a character vector of set ids" type-check message no longer drifts
+  # between them.
+  project <- testProject()
+  expect_snapshot(error = TRUE, addApplication(project, "p", parameterSets = 1))
+  expect_snapshot(
+    error = TRUE,
+    setApplicationParameterSets(project, "aciclovir_iv_250mg", 1)
+  )
+})
+
 # Vectorized authoring ----
 
 test_that("addApplication adds N protocols in one call equal to N scalar adds", {

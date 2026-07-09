@@ -20,6 +20,22 @@
       ! `parameterSets` references undefined parameter sets:
       x "ghost"
 
+# addApplication and setApplicationParameterSets reject a non-character parameterSets with the same message
+
+    Code
+      addApplication(project, "p", parameterSets = 1)
+    Condition
+      Error in `addApplication()`:
+      ! `parameterSets` must be a character vector of set ids
+
+---
+
+    Code
+      setApplicationParameterSets(project, "aciclovir_iv_250mg", 1)
+    Condition
+      Error in `setApplicationParameterSets()`:
+      ! `parameterSets` must be a character vector of set ids
+
 # addApplication aborts on a duplicate id in the batch
 
     Code
