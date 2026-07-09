@@ -29,8 +29,8 @@
 #'   persisted as an entity tree alongside the container, not inline. Ignored
 #'   when `containerOnly` is `TRUE` (every section is emptied then).
 #' @param containerOnly Logical. When `TRUE`, every tree-owned section
-#'   (scenarios, individuals, populations, parameterSets, applications,
-#'   outputPaths, observedData, dataCombined, plots, plotGrids,
+#'   (scenarios, individuals, populations, parameterSets, initialConditions,
+#'   applications, outputPaths, observedData, dataCombined, plots, plotGrids,
 #'   parameterIdentification) is emitted in its canonical empty shape rather
 #'   than serialized, leaving only the container itself (metadata, filePaths,
 #'   defaultSimulationRunOptions, excel). This is the on-disk `Project.json`
@@ -53,8 +53,8 @@
     cli::cli_abort("{.arg project} must be a {.cls Project} R6 instance.")
   }
 
-  # The container separates two path concerns: the four live working folders
-  # (`filePaths`) the runtime reads, and the seven Excel-bridge sheet names
+  # The container separates two path concerns: the live working folders
+  # (`filePaths`) the runtime reads, and the Excel-bridge sheet names
   # (`excel`). The `excel` block is emitted only when the project actually
   # carries Excel-bridge fields (an Excel side-car exists); a from-scratch JSON
   # project omits it. The `name` / `description` metadata, `definitionsFolder`,
@@ -211,7 +211,7 @@
 
 # JSON object (the `excel` block) or an empty list when the project has no
 # Excel side-car. Walks the raw `{value, description}` records in
-# `.getExcelData()` (the seven Excel-bridge sheet-name fields) and emits a flat
+# `.getExcelData()` (the Excel-bridge sheet-name fields) and emits a flat
 # `{name: value}` map. Returns `list()` (length 0) when there are no fields, so
 # `.projectToJson()` can omit the `excel` key entirely for a from-scratch JSON
 # project.
@@ -252,7 +252,7 @@
   if (is.null(scenarios) || length(scenarios) == 0L) {
     return(list())
   }
-  unname(lapply(scenarios, .scenarioToJson, outputPaths = project$outputPaths))
+  unname(lapply(scenarios, .scenarioToJson))
 }
 
 # Serialize one `Scenario` record to its JSON object shape. Reverses the
@@ -267,7 +267,7 @@
 #
 # @keywords internal
 # @noRd
-.scenarioToJson <- function(sc, outputPaths) {
+.scenarioToJson <- function(sc) {
   # Default to `list()` so the JSON output is `[]` when the scenario
   # has no resolved paths (whether the JSON had `outputPaths: []`,
   # omitted the key, or `sc$outputPaths` was set to `NULL`

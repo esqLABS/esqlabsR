@@ -131,7 +131,7 @@
     scenarios = list(
       kind = "scenarios",
       serialize = function(section, project) {
-        .serializeScenarioSet(section, project$outputPaths)
+        .serializeScenarioSet(section)
       },
       parse = function(records, project) {
         .parseScenarios(records, project$outputPaths)
@@ -460,12 +460,12 @@
 #
 # @keywords internal
 # @noRd
-.serializeScenarioSet <- function(scenarios, outputPaths) {
+.serializeScenarioSet <- function(scenarios) {
   scenarios <- scenarios %||% list()
   serialized <- list()
   for (name in names(scenarios)) {
     .validateScenarioStructure(scenarios[[name]], name)
-    serialized[[name]] <- .scenarioToJson(scenarios[[name]], outputPaths)
+    serialized[[name]] <- .scenarioToJson(scenarios[[name]])
   }
   serialized
 }

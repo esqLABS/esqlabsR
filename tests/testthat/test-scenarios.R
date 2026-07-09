@@ -118,7 +118,7 @@ test_that("a scenario's initialConditions round-trips through serialize/parse", 
     modelFile = "m.pkml",
     initialConditions = c("ic1", "ic2")
   )
-  json <- esqlabsR:::.scenarioToJson(sc, outputPaths = list())
+  json <- esqlabsR:::.scenarioToJson(sc)
   expect_identical(json$initialConditions, list("ic1", "ic2"))
 
   reparsed <- esqlabsR:::.parseScenarios(

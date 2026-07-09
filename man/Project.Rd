@@ -384,7 +384,7 @@ consumed by the Excel import/export bridge.
 \subsection{\code{Project$.getExcelData()}}{
   Internal method to retrieve the raw Excel-bridge metadata
 (the \code{excel} block: a named list of \code{list(value, description)} entries
-for the seven sheet-name fields). Empty when the project has no Excel
+for the sheet-name fields). Empty when the project has no Excel
 side-car. Not intended for end-user use; consumed by the Excel
 import/export bridge.
   \subsection{Usage}{

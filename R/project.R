@@ -1,11 +1,11 @@
 # Project R6 class ----
 
-# The nine container path fields that belong to the Excel import/export
-# bridge (the `excel` block), as opposed to the four live working folders
-# (`modelFolder`, `dataFolder`, `outputFolder`, `populationsFolder`) that the
-# runtime reads (the `filePaths` block). A legacy `Project.json` carries all
-# eleven in one flat `filePaths` block; this fixed mapping is what splits them
-# on read and routes each to its own container block on write.
+# The container path fields that belong to the Excel import/export bridge
+# (the `excel` block), as opposed to the live working folders (`modelFolder`,
+# `dataFolder`, `outputFolder`, `populationsFolder`) that the runtime reads
+# (the `filePaths` block). A legacy `Project.json` carries both sets in one
+# flat `filePaths` block; this fixed mapping is what splits them on read and
+# routes each to its own container block on write.
 .excelFilePathFields <- c(
   "configurationsFolder",
   "modelParamsFile",
@@ -677,7 +677,7 @@ Project <- R6::R6Class(
 
     #' @description Internal method to retrieve the raw Excel-bridge metadata
     #'   (the `excel` block: a named list of `list(value, description)` entries
-    #'   for the seven sheet-name fields). Empty when the project has no Excel
+    #'   for the sheet-name fields). Empty when the project has no Excel
     #'   side-car. Not intended for end-user use; consumed by the Excel
     #'   import/export bridge.
     #' @keywords internal
@@ -806,7 +806,7 @@ Project <- R6::R6Class(
     # runtime reads (`modelFolder`, `dataFolder`, `outputFolder`,
     # `populationsFolder`).
     .filePathsData = list(),
-    # Excel import/export bridge sheet names (the `excel` block): the seven
+    # Excel import/export bridge sheet names (the `excel` block): the
     # vestigial fields only the Excel bridge reads. Empty for a from-scratch
     # JSON project with no Excel side-car, in which case no `excel` block is
     # written to `Project.json`.
@@ -1158,10 +1158,10 @@ Project <- R6::R6Class(
       private$.projectDirPath <- dirname(jsonPath)
       private$.claimEntityTree()
 
-      # The container separates two concerns: the four live working folders
-      # (the `filePaths` block) the runtime reads, and the seven Excel-bridge
+      # The container separates two concerns: the live working folders
+      # (the `filePaths` block) the runtime reads, and the Excel-bridge
       # sheet-name fields (the `excel` block) only the Excel bridge reads. A
-      # legacy project carries all eleven in one flat `filePaths` block; split
+      # legacy project carries both sets in one flat `filePaths` block; split
       # it on read so both on-disk shapes load (the field-to-block mapping is
       # fixed, so the partition is deterministic). A new-shape project reads
       # each block from its own key; any Excel field that still appears in
