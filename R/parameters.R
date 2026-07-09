@@ -1,23 +1,61 @@
-# Section validation adapters ----
+# Section validation adapter ----
 #
 # Registered in `.validationAdapters` (R/validation.R) and called by
 # `.runProjectValidation()`. The actual shape check lives in
-# `.validateParameterSets()` (in `R/validation.R`), which is shared by
-# all three parameter-set sections.
+# `.validateParameterSets()` (in `R/validation.R`).
 
 #' @keywords internal
 #' @noRd
-.modelParameterSetsValidatorAdapter <- function(project) {
-  .validateParameterSets(project$modelParameterSets, "modelParameterSets")
+.parameterSetsValidatorAdapter <- function(project) {
+  .validateParameterSets(project$parameterSets, "parameterSets")
 }
 
-#' @keywords internal
-#' @noRd
-.applicationParameterSetsValidatorAdapter <- function(project) {
-  .validateParameterSets(
-    project$applicationParameterSets,
-    "applicationParameterSets"
+# Merge the parameter-set sections of a parsed `Project.json` into the single
+# unified `parameterSets` map. The canonical source is the `parameterSets`
+# section; a legacy project that still carries the three separate sections
+# (`modelParameterSets` / `individualParameterSets` /
+# `applicationParameterSets`) has them merged in. An id that appears in more
+# than one input section is a genuine collision and aborts, since the three
+# former namespaces now share one and a referrer cannot disambiguate.
+#
+# @keywords internal
+# @noRd
+.mergeParameterSetSections <- function(jsonData) {
+  legacy <- list(
+    modelParameterSets = jsonData$modelParameterSets %||% list(),
+    individualParameterSets = jsonData$individualParameterSets %||% list(),
+    applicationParameterSets = jsonData$applicationParameterSets %||% list()
   )
+  hasLegacy <- any(vapply(legacy, length, integer(1)) > 0L)
+
+  # No legacy sections to fold in: the `parameterSets` section is used as-is,
+  # preserving its own shape (absent -> bare `list()`, empty `{}` -> a named
+  # empty list, exactly like the other map sections). `%||%` covers an absent
+  # section.
+  if (!hasLegacy) {
+    return(jsonData$parameterSets %||% list())
+  }
+
+  sources <- c(list(parameterSets = jsonData$parameterSets %||% list()), legacy)
+  merged <- list()
+  origin <- character()
+  for (section in names(sources)) {
+    sets <- sources[[section]]
+    for (id in names(sets)) {
+      if (id %in% names(merged)) {
+        cli::cli_abort(c(
+          "Parameter set id {.val {id}} is defined in more than one section.",
+          "i" = "It appears in both {.field {origin[[id]]}} and \\
+          {.field {section}}; the three former parameter-set kinds now share \\
+          one {.field parameterSets} namespace, so ids must be unique. Rename \\
+          one of them."
+        ))
+      }
+      merged[[id]] <- sets[[id]]
+      origin[[id]] <- section
+    }
+  }
+  merged
 }
 
 #' Read parameter values from a structured Excel file. Each excel sheet must
@@ -65,6 +103,40 @@ readParametersFromXLS <- function(paramsXLSpath, sheets = NULL) {
       data = as.character(data[["Units"]]),
       replace = ""
     )
+  }
+
+  return(.parametersVectorToList(pathsValuesVector, pathsUnitsVector))
+}
+
+#' Read initial values (molecule start values) from a structured Excel file.
+#'
+#' @description Each excel sheet must consist of columns `Container Path`,
+#'   `Molecule Name`, `Is Present`, `Value`, `Units`, `Scale Divisor`, and
+#'   `Neg. Values Allowed`. Units are mandatory for every present molecule; a
+#'   present row with a blank `Units` cell is an error.
+#'
+#' @param filePath Path to the excel file
+#' @param sheets Names of the excel sheets containing the information about
+#'   the initial values. Multiple sheets can be processed. If no sheets are
+#'   provided, the first one in the Excel file is used.
+#'
+#' @returns A single list combining all processed sheets, containing vectors
+#'   `paths` with the full molecule paths, `values` with the values, and `units`
+#'   with the units the values are in. When multiple sheets are read, their rows
+#'   are merged into this one structure; if the same molecule path occurs more
+#'   than once, the last occurrence wins (last sheet, then last row). A duplicate
+#'   path, whether within a single sheet or repeated across sheets, triggers a
+#'   warning before the earlier value is replaced.
+#' @export
+#' @family parameters
+readInitialConditionsFromXLS <- function(filePath, sheets = NULL) {
+  rows <- .readInitialConditionsRows(filePath = filePath, sheets = sheets)
+
+  pathsValuesVector <- vector(mode = "numeric")
+  pathsUnitsVector <- vector(mode = "character")
+  for (row in rows) {
+    pathsValuesVector[row$fullPath] <- row$value
+    pathsUnitsVector[row$fullPath] <- row$unit
   }
 
   return(.parametersVectorToList(pathsValuesVector, pathsUnitsVector))
@@ -148,6 +220,165 @@ extendParameterStructure <- function(parameters, newParameters) {
   )
 
   return(returnVal)
+}
+
+# Read and validate initial-condition rows from a structured Excel file.
+#
+# Shared reader used by both `readInitialConditionsFromXLS()` (which collapses
+# the rows into a flat `{paths, values, units}` structure) and the Excel-import
+# parser `.parseExcelInitialConditions()` (which maps each row to a JSON
+# `{path, value, unit}` record). Centralising the column-structure, `Is
+# Present`, blank-path, duplicate-path, value and unit validation here keeps the
+# two readers from drifting apart.
+#
+# @param filePath Path to the excel file.
+# @param sheets Sheets to read. If `NULL`, only the first sheet is read.
+# @param call Environment used to attribute raised conditions to the public
+#   caller rather than this internal helper.
+#
+# @returns A list of per-row records (one per kept, present molecule), each a
+#   list with `sheet`, `containerPath`, `moleculeName`, `fullPath`, `value`,
+#   and `unit`. Rows where `Is Present` is explicitly `FALSE`/`0` are dropped.
+# @keywords internal
+# @noRd
+.readInitialConditionsRows <- function(
+  filePath,
+  sheets = NULL,
+  call = rlang::caller_env()
+) {
+  columnNames <- c(
+    "Container Path",
+    "Molecule Name",
+    "Is Present",
+    "Value",
+    "Units",
+    "Scale Divisor",
+    "Neg. Values Allowed"
+  )
+  validateIsString(filePath)
+  validateIsString(sheets, nullAllowed = TRUE)
+
+  if (is.null(sheets)) {
+    sheets <- readxl::excel_sheets(filePath)[1L]
+  }
+
+  rows <- list()
+  seenPaths <- character(0)
+
+  for (sheet in sheets) {
+    data <- readExcel(path = filePath, sheet = sheet)
+
+    if (!all(columnNames %in% names(data))) {
+      msg <- messages$errorWrongXLSStructure(
+        filePath = filePath,
+        expectedColNames = columnNames
+      )
+      cli::cli_abort(c("x" = "{msg}"), call = call)
+    }
+
+    # "Is Present" must be a logical value or empty. An empty/NA cell is
+    # treated as present. Numeric 0/1 (a common Excel representation of a
+    # logical column) is accepted. Any other value (e.g. "yes") is rejected
+    # rather than silently coerced to NA (which would be kept as present).
+    isPresentCol <- data[["Is Present"]]
+    isPresentChr <- trimws(as.character(isPresentCol))
+    isBlank <- is.na(isPresentCol) | isPresentChr == ""
+    isPresent <- as.logical(isPresentChr)
+    numericFlag <- isPresentChr %in% c("0", "1")
+    isPresent[numericFlag] <- isPresentChr[numericFlag] == "1"
+    invalidIsPresent <- !isBlank & is.na(isPresent)
+    if (any(invalidIsPresent)) {
+      msg <- messages$errorInvalidIsPresentInInitialConditions(
+        filePath = filePath,
+        moleculePaths = paste(
+          data[["Container Path"]],
+          data[["Molecule Name"]],
+          sep = "|"
+        )[invalidIsPresent]
+      )
+      cli::cli_abort(c("x" = "{msg}"), call = call)
+    }
+
+    # Only include rows where Is Present is not explicitly FALSE
+    keepRows <- isBlank | isPresent
+    keptRowNumbers <- which(keepRows)
+    data <- data[keepRows, ]
+
+    if (nrow(data) == 0) {
+      next
+    }
+
+    # Container Path and Molecule Name must be filled for every kept row,
+    # otherwise the constructed path contains "NA" and fails deep in the
+    # ospsuite layer with no reference to the originating row.
+    containerPath <- as.character(data[["Container Path"]])
+    moleculeName <- as.character(data[["Molecule Name"]])
+    missingPathParts <- is.na(containerPath) |
+      trimws(containerPath) == "" |
+      is.na(moleculeName) |
+      trimws(moleculeName) == ""
+    if (any(missingPathParts)) {
+      msg <- messages$errorMissingPathInInitialConditions(
+        filePath = filePath,
+        sheet = sheet,
+        rows = keptRowNumbers[missingPathParts]
+      )
+      cli::cli_abort(c("x" = "{msg}"), call = call)
+    }
+
+    fullPaths <- paste(containerPath, moleculeName, sep = "|")
+
+    # Warn (rather than silently overwrite) when the same molecule path appears
+    # more than once: either within this sheet, or already defined on a prior
+    # sheet. The last occurrence wins downstream.
+    duplicatePaths <- unique(c(
+      fullPaths[duplicated(fullPaths)],
+      intersect(fullPaths, seenPaths)
+    ))
+    if (length(duplicatePaths) > 0) {
+      msg <- messages$warningDuplicateInitialConditions(
+        filePath = filePath,
+        moleculePaths = duplicatePaths
+      )
+      cli::cli_warn(c("!" = "{msg}"), call = call)
+    }
+
+    # Validate values and units before accumulating rows, so a failure leaves
+    # no partial state behind.
+    parsedValues <- suppressWarnings(as.numeric(data[["Value"]]))
+    missingValues <- is.na(parsedValues)
+    if (any(missingValues)) {
+      msg <- messages$errorMissingValuesInInitialConditions(
+        filePath = filePath,
+        moleculePaths = fullPaths[missingValues]
+      )
+      cli::cli_abort(c("x" = "{msg}"), call = call)
+    }
+
+    unitsRaw <- as.character(data[["Units"]])
+    missingUnits <- is.na(data[["Units"]]) | trimws(unitsRaw) == ""
+    if (any(missingUnits)) {
+      msg <- messages$errorMissingUnitsInInitialConditions(
+        filePath = filePath,
+        moleculePaths = fullPaths[missingUnits]
+      )
+      cli::cli_abort(c("x" = "{msg}"), call = call)
+    }
+
+    for (i in seq_len(nrow(data))) {
+      rows[[length(rows) + 1L]] <- list(
+        sheet = sheet,
+        containerPath = containerPath[[i]],
+        moleculeName = moleculeName[[i]],
+        fullPath = fullPaths[[i]],
+        value = parsedValues[[i]],
+        unit = unitsRaw[[i]]
+      )
+    }
+    seenPaths <- union(seenPaths, fullPaths)
+  }
+
+  rows
 }
 
 #' @title Check if two parameters are equal with respect to certain properties.
@@ -347,62 +578,164 @@ setParameterValuesByPathWithCondition <- function(
   return(list(containerPath = containerPath, parameterName = paramName))
 }
 
-# Public CRUD: modelParameterSets ----
+# Print ----
 
-#' Create a model parameter set
+#' @exportS3Method
+#' @noRd
+print.ParameterSet <- function(x, ...) {
+  ospsuite.utils::ospPrintClass(x)
+  entries <- unclass(x)
+  ospsuite.utils::ospPrintItems(
+    list("Number of Entries" = length(entries)),
+    print_empty = TRUE
+  )
+  if (length(entries) > 0L) {
+    lines <- vapply(
+      entries,
+      function(e) {
+        units <- if (is.null(e$units) || !nzchar(e$units)) {
+          ""
+        } else {
+          paste0(" [", e$units, "]")
+        }
+        paste0(
+          e$containerPath,
+          "|",
+          e$parameterName,
+          " = ",
+          format(e$value),
+          units
+        )
+      },
+      character(1)
+    )
+    ospsuite.utils::ospPrintItems(
+      stats::setNames(as.list(lines), rep("", length(lines)))
+    )
+  }
+  invisible(x)
+}
+
+#' @exportS3Method
+#' @noRd
+print.InitialConditionSet <- function(x, ...) {
+  ospsuite.utils::ospPrintClass(x)
+  entries <- unclass(x)
+  ospsuite.utils::ospPrintItems(
+    list("Number of Entries" = length(entries)),
+    print_empty = TRUE
+  )
+  if (length(entries) > 0L) {
+    lines <- vapply(
+      entries,
+      function(e) {
+        unit <- if (is.null(e$unit) || !nzchar(e$unit)) {
+          ""
+        } else {
+          paste0(" [", e$unit, "]")
+        }
+        paste0(e$path, " = ", format(e$value), unit)
+      },
+      character(1)
+    )
+    ospsuite.utils::ospPrintItems(
+      stats::setNames(as.list(lines), rep("", length(lines)))
+    )
+  }
+  invisible(x)
+}
+
+# Public CRUD: parameterSets ----
+
+#' Create one or more parameter sets
+#'
+#' Adds empty parameter sets to the project's single `parameterSets` section,
+#' vectorizing over a vector of ids (all N added in one write-through). A
+#' scenario references the sets it applies through its `modelParameterSets`
+#' field, an individual or application through its `parameterSets` field; all
+#' three resolve against this one section.
+#'
+#' @inherit vectorizedAuthoring details
 #'
 #' @param project A `Project` object.
-#' @param id Character scalar, set name. Must not already exist.
+#' @param id Character vector of set ids. Each is canonicalized to a safe,
+#'   lowercase id (a warning names the result if it changed); each canonical
+#'   id must not already exist.
 #' @returns The `project` object, invisibly.
 #' @export
 #' @family parameters
-addModelParameterSet <- function(project, id) {
+addParameterSet <- function(project, id) {
   validateIsOfType(project, "Project")
-  if (!is.character(id) || length(id) != 1L || is.na(id) || nchar(id) == 0) {
-    cli::cli_abort("{.arg id} must be a non-empty string")
+  .assertIdVector(id)
+  id <- .canonicalizeId(id)
+  clash <- intersect(id, names(project$parameterSets))
+  if (length(clash) > 0L) {
+    cli::cli_abort("parameter set {.val {clash}} already exists")
   }
-  if (id %in% names(project$modelParameterSets)) {
-    cli::cli_abort("model parameter set {.val {id}} already exists")
+  parameterSets <- project$.getSection("parameterSets") %||% list()
+  for (one in id) {
+    parameterSets[[one]] <- .asParameterSet(list())
   }
-  project$modelParameterSets[[id]] <- list()
-  project$.markModified()
+  project$.setSection("parameterSets", parameterSets)
   invisible(project)
 }
 
-#' Remove a model parameter set
-#' @inheritParams addModelParameterSet
+#' Remove one or more parameter sets
+#'
+#' Drop the parameter sets with matching ids in one write-through. Warns (and
+#' skips) any id not present, and warns when a removed set is still
+#' referenced.
+#'
+#' @inherit vectorizedAuthoring details
+#' @inheritParams addParameterSet
 #' @returns The `project` object, invisibly.
 #' @export
 #' @family parameters
-removeModelParameterSet <- function(project, id) {
+removeParameterSet <- function(project, id) {
   validateIsOfType(project, "Project")
-  if (!(id %in% names(project$modelParameterSets))) {
-    cli::cli_warn("model parameter set {.val {id}} not found; no-op.")
+  .assertIdVector(id)
+  id <- .canonicalizeId(id)
+  missingIds <- setdiff(id, names(project$parameterSets))
+  if (length(missingIds) > 0L) {
+    cli::cli_warn("parameter set {.val {missingIds}} not found; no-op.")
+  }
+  toRemove <- intersect(id, names(project$parameterSets))
+  if (length(toRemove) == 0L) {
     return(invisible(project))
   }
-  .warnIfReferenced(project, "modelParameterSet", id)
-  project$modelParameterSets[[id]] <- NULL
-  project$.markModified()
+  for (one in toRemove) {
+    .warnIfReferenced(project, "parameterSet", one)
+  }
+  parameterSets <- project$.getSection("parameterSets")
+  parameterSets[toRemove] <- NULL
+  project$.setSection("parameterSets", parameterSets)
   invisible(project)
 }
 
-#' Add a parameter entry to a named model-parameter set
+#' Add one or many parameter entries to a named parameter set
 #'
-#' Adds one parameter entry to the named set in
-#' `project$modelParameterSets`. The set is created on demand if it does
-#' not yet exist. Last-write-wins on duplicate `(containerPath,
-#' parameterName)` pairs.
+#' Adds parameter entries to the named set in `project$parameterSets`.
+#' `containerPath`, `parameterName`, `value`, and `units` accept parallel
+#' vectors of equal length N to add all N entries in a single call (and a
+#' single write to disk); a scalar call (length-1 vectors) adds one entry.
+#' Building a large set with one vectorized call is far cheaper than a loop of
+#' scalar calls, since each call rewrites the whole set file.
+#'
+#' Unlike the other `add*` functions, which abort on a missing parent, this
+#' creates the parent set on demand if it does not yet exist (informing you
+#' when it does). Last-write-wins on duplicate `(containerPath, parameterName)`
+#' pairs, including duplicates within a single vectorized call.
 #'
 #' @param project A `Project` object.
-#' @param id Character scalar, set name. Created if not present.
-#' @param containerPath Character scalar.
-#' @param parameterName Character scalar.
-#' @param value Numeric scalar.
-#' @param units Character scalar.
+#' @param id Character scalar, set id. Canonicalized; created if not present.
+#' @param containerPath Character vector of container paths (length N).
+#' @param parameterName Character vector of parameter names (length N).
+#' @param value Numeric vector of values (length N).
+#' @param units Character vector of units (length N; use `""` for none).
 #' @returns The `project` object, invisibly.
 #' @export
 #' @family parameters
-addModelParameterEntry <- function(
+addParameterEntry <- function(
   project,
   id,
   containerPath,
@@ -414,33 +747,55 @@ addModelParameterEntry <- function(
   if (!is.character(id) || length(id) != 1L || is.na(id) || nchar(id) == 0) {
     cli::cli_abort("{.arg id} must be a non-empty string")
   }
-  current <- project$modelParameterSets[[id]]
-  project$modelParameterSets[[id]] <- .addParameterEntry(
-    current,
+  id <- .canonicalizeId(id)
+  # Validate the batch shape up front so a mismatched call fails fast, before
+  # any on-demand set creation is reported.
+  .assertParameterEntryVectorLengths(
     containerPath,
     parameterName,
     value,
     units
   )
-  project$.markModified()
+  current <- project$parameterSets[[id]]
+  # Unlike the other `add*` functions, `addParameterEntry()` creates its parent
+  # set on demand rather than aborting on a missing parent. Inform the user when
+  # it does, so the on-demand creation is not silent.
+  if (is.null(current)) {
+    cli::cli_inform(
+      "Created parameter set {.val {id}} on demand to hold the new entr{?y/ies}."
+    )
+  }
+  # Fold all N entries into the set in memory first, so the single write below
+  # triggers exactly one write-through (not one per entry).
+  parameterSets <- project$.getSection("parameterSets")
+  parameterSets[[id]] <- .asParameterSet(.addParameterEntries(
+    current,
+    containerPath,
+    parameterName,
+    value,
+    units
+  ))
+  project$.setSection("parameterSets", parameterSets)
   invisible(project)
 }
 
-#' Remove a parameter entry from a named model-parameter set
+#' Remove one or many parameter entries from a named parameter set
 #'
-#' Removes one parameter entry from the named set. If the removed entry
-#' was the last in the set, the set itself is auto-removed from
-#' `project$modelParameterSets`. Warns if the set or entry doesn't
-#' exist.
+#' Removes parameter entries from the named set. `containerPath` and
+#' `parameterName` accept parallel vectors of equal length N to remove all N
+#' entries in a single call (and a single write to disk); a scalar call
+#' (length-1 vectors) removes one entry. If every entry of the set is removed,
+#' the set itself is auto-removed from `project$parameterSets`. Warns if the
+#' set or any named entry doesn't exist.
 #'
 #' @param project A `Project` object.
-#' @param id Character scalar, set name.
-#' @param containerPath Character scalar.
-#' @param parameterName Character scalar.
+#' @param id Character scalar, set id. Canonicalized.
+#' @param containerPath Character vector of container paths (length N).
+#' @param parameterName Character vector of parameter names (length N).
 #' @returns The `project` object, invisibly.
 #' @export
 #' @family parameters
-removeModelParameterEntry <- function(
+removeParameterEntry <- function(
   project,
   id,
   containerPath,
@@ -450,25 +805,29 @@ removeModelParameterEntry <- function(
   if (!is.character(id) || length(id) != 1L) {
     cli::cli_abort("{.arg id} must be a string scalar")
   }
-  if (!(id %in% names(project$modelParameterSets))) {
-    cli::cli_warn("model parameter set {.val {id}} not found; no-op.")
+  id <- .canonicalizeId(id)
+  if (!(id %in% names(project$parameterSets))) {
+    cli::cli_warn("parameter set {.val {id}} not found; no-op.")
     return(invisible(project))
   }
-  result <- .removeParameterEntry(
-    project$modelParameterSets[[id]],
+  # Fold all N removals into the set in memory first, so the single assignment
+  # below triggers exactly one write-through (not one per entry).
+  result <- .removeParameterEntries(
+    project$parameterSets[[id]],
     containerPath,
     parameterName
   )
   if (!result$removed) {
     return(invisible(project))
   }
+  parameterSets <- project$.getSection("parameterSets")
   if (is.null(result$parameters)) {
-    .warnIfReferenced(project, "modelParameterSet", id)
-    project$modelParameterSets[[id]] <- NULL
+    .warnIfReferenced(project, "parameterSet", id)
+    parameterSets[[id]] <- NULL
   } else {
-    project$modelParameterSets[[id]] <- result$parameters
+    parameterSets[[id]] <- .asParameterSet(result$parameters)
   }
-  project$.markModified()
+  project$.setSection("parameterSets", parameterSets)
   invisible(project)
 }
 
@@ -508,6 +867,70 @@ removeModelParameterEntry <- function(
     errors <- c(errors, "units must be a string scalar (use \"\" for none)")
   }
   errors
+}
+
+# Assert that the parallel `(containerPath, parameterName, value, units)`
+# argument vectors all share the same length (the batch size). A scalar
+# call is the length-1 case. Aborts naming the lengths otherwise.
+#
+# @keywords internal
+# @noRd
+.assertParameterEntryVectorLengths <- function(
+  containerPath,
+  parameterName,
+  value,
+  units
+) {
+  lengths <- c(
+    containerPath = length(containerPath),
+    parameterName = length(parameterName),
+    value = length(value),
+    units = length(units)
+  )
+  if (length(unique(lengths)) != 1L) {
+    cli::cli_abort(c(
+      "{.arg containerPath}, {.arg parameterName}, {.arg value}, and \\
+      {.arg units} must be vectors of the same length.",
+      "x" = "Got lengths {.val {lengths[['containerPath']]}}, \\
+      {.val {lengths[['parameterName']]}}, {.val {lengths[['value']]}}, \\
+      and {.val {lengths[['units']]}}."
+    ))
+  }
+  invisible(lengths[["containerPath"]])
+}
+
+# Fold N parameter entries (parallel vectors) into a parameter set in one
+# pass, returning the updated list. Each entry is validated and appended (or
+# replaced, last-write-wins) via `.addParameterEntry`, so an in-batch duplicate
+# `(containerPath, parameterName)` resolves to the last value, matching the
+# scalar semantics. N=1 is the scalar case. Folding in memory first lets the
+# caller persist the whole set in a single write-through.
+#
+# @keywords internal
+# @noRd
+.addParameterEntries <- function(
+  parameters,
+  containerPath,
+  parameterName,
+  value,
+  units
+) {
+  n <- .assertParameterEntryVectorLengths(
+    containerPath,
+    parameterName,
+    value,
+    units
+  )
+  for (i in seq_len(n)) {
+    parameters <- .addParameterEntry(
+      parameters,
+      containerPath[[i]],
+      parameterName[[i]],
+      value[[i]],
+      units[[i]]
+    )
+  }
+  parameters
 }
 
 # Append (or replace, last-write-wins) one parameter entry to a
@@ -560,13 +983,48 @@ removeModelParameterEntry <- function(
   parameters
 }
 
+# Drop N parameter entries (parallel vectors) from a parameter set in one
+# pass, returning the same `list(parameters=, removed=)` shape as
+# `.removeParameterEntry`. `removed` is `TRUE` if ANY named entry was actually
+# removed (a not-found entry warns and is skipped, as in the scalar case);
+# `parameters` is `NULL` when the removals emptied the set, so the caller
+# auto-removes it. N=1 is the scalar case. Folding in memory first lets the
+# caller persist the whole set in a single write-through.
+#
+# @keywords internal
+# @noRd
+.removeParameterEntries <- function(parameters, containerPath, parameterName) {
+  if (length(containerPath) != length(parameterName)) {
+    cli::cli_abort(c(
+      "{.arg containerPath} and {.arg parameterName} must be vectors of \\
+      the same length.",
+      "x" = "Got lengths {.val {length(containerPath)}} and \\
+      {.val {length(parameterName)}}."
+    ))
+  }
+  anyRemoved <- FALSE
+  for (i in seq_along(containerPath)) {
+    result <- .removeParameterEntry(
+      parameters,
+      containerPath[[i]],
+      parameterName[[i]]
+    )
+    anyRemoved <- anyRemoved || result$removed
+    # A removal that empties the set yields `NULL`; preserve it so a later
+    # not-found entry warns against the empty set, matching the scalar path.
+    parameters <- result$parameters
+  }
+  list(parameters = parameters, removed = anyRemoved)
+}
+
 # Drop one parameter entry from a JSON-faithful array-of-records
 # parameter set. Returns a list with:
 #   - `parameters`: the updated set, or `NULL` if removal emptied the set
 #     (callers use the `NULL` to auto-remove the named set).
 #   - `removed`: `TRUE` if an entry was actually removed, `FALSE` for a
-#     no-op (entry not found). Callers gate `.markModified()` on this so
-#     a no-op warn doesn't invalidate the validation cache.
+#     no-op (entry not found). Callers gate the write-through on this so
+#     a no-op warn doesn't touch the section (and so doesn't invalidate the
+#     validation cache).
 #
 # @keywords internal
 # @noRd
@@ -610,6 +1068,350 @@ removeModelParameterEntry <- function(
       identical(e$containerPath, containerPath) &&
         identical(e$parameterName, parameterName)
     },
+    logical(1)
+  )
+  which(hits)
+}
+
+# Public CRUD: initialConditions ----
+
+#' Create one or more initial-condition sets
+#'
+#' Adds empty initial-condition sets to the project's `initialConditions`
+#' section, vectorizing over a vector of ids (all N added in one write-through).
+#' An initial-condition set holds molecule start values (`path`, `value`,
+#' `unit`) a scenario applies through its `initialConditions` field, distinct
+#' from parameter sets (which set model parameters, not molecule start values).
+#'
+#' @inherit vectorizedAuthoring details
+#'
+#' @param project A `Project` object.
+#' @param id Character vector of set ids. Each is canonicalized to a safe,
+#'   lowercase id (a warning names the result if it changed); each canonical
+#'   id must not already exist.
+#' @returns The `project` object, invisibly.
+#' @export
+#' @family parameters
+addInitialConditions <- function(project, id) {
+  validateIsOfType(project, "Project")
+  .assertIdVector(id)
+  id <- .canonicalizeId(id)
+  clash <- intersect(id, names(project$initialConditions))
+  if (length(clash) > 0L) {
+    cli::cli_abort("initial-condition set {.val {clash}} already exists")
+  }
+  initialConditions <- project$.getSection("initialConditions") %||% list()
+  for (one in id) {
+    initialConditions[[one]] <- .asInitialConditionSet(list())
+  }
+  project$.setSection("initialConditions", initialConditions)
+  invisible(project)
+}
+
+#' Remove one or more initial-condition sets
+#'
+#' Drop the initial-condition sets with matching ids in one write-through.
+#' Warns (and skips) any id not present, and warns when a removed set is still
+#' referenced.
+#'
+#' @inherit vectorizedAuthoring details
+#' @inheritParams addInitialConditions
+#' @returns The `project` object, invisibly.
+#' @export
+#' @family parameters
+removeInitialConditions <- function(project, id) {
+  validateIsOfType(project, "Project")
+  .assertIdVector(id)
+  id <- .canonicalizeId(id)
+  missingIds <- setdiff(id, names(project$initialConditions))
+  if (length(missingIds) > 0L) {
+    cli::cli_warn("initial-condition set {.val {missingIds}} not found; no-op.")
+  }
+  toRemove <- intersect(id, names(project$initialConditions))
+  if (length(toRemove) == 0L) {
+    return(invisible(project))
+  }
+  for (one in toRemove) {
+    .warnIfReferenced(project, "initialConditions", one)
+  }
+  initialConditions <- project$.getSection("initialConditions")
+  initialConditions[toRemove] <- NULL
+  project$.setSection("initialConditions", initialConditions)
+  invisible(project)
+}
+
+#' Add one or many entries to a named initial-condition set
+#'
+#' Adds molecule start-value entries to the named set in
+#' `project$initialConditions`. `path`, `value`, and `unit` accept parallel
+#' vectors of equal length N to add all N entries in a single call (and a
+#' single write to disk); a scalar call (length-1 vectors) adds one entry.
+#' Building a large set with one vectorized call is far cheaper than a loop of
+#' scalar calls, since each call rewrites the whole set file.
+#'
+#' Unlike the other `add*` functions, which abort on a missing parent, this
+#' creates the parent set on demand if it does not yet exist (informing you
+#' when it does). Last-write-wins on a duplicate `path`, including duplicates
+#' within a single vectorized call.
+#'
+#' @param project A `Project` object.
+#' @param id Character scalar, set id. Canonicalized; created if not present.
+#' @param path Character vector of molecule paths (length N).
+#' @param value Numeric vector of start values (length N).
+#' @param unit Character vector of units (length N). A unit is mandatory for a
+#'   molecule start value; a blank unit is rejected.
+#' @returns The `project` object, invisibly.
+#' @export
+#' @family parameters
+addInitialConditionEntry <- function(project, id, path, value, unit) {
+  validateIsOfType(project, "Project")
+  if (!is.character(id) || length(id) != 1L || is.na(id) || nchar(id) == 0) {
+    cli::cli_abort("{.arg id} must be a non-empty string")
+  }
+  id <- .canonicalizeId(id)
+  # Validate the batch shape up front so a mismatched call fails fast, before
+  # any on-demand set creation is reported.
+  .assertInitialConditionEntryVectorLengths(path, value, unit)
+  current <- project$initialConditions[[id]]
+  # Unlike the other `add*` functions, this creates its parent set on demand
+  # rather than aborting on a missing parent. Inform the user when it does, so
+  # the on-demand creation is not silent.
+  if (is.null(current)) {
+    cli::cli_inform(
+      "Created initial-condition set {.val {id}} on demand to hold the new entr{?y/ies}."
+    )
+  }
+  # Fold all N entries into the set in memory first, so the single write below
+  # triggers exactly one write-through (not one per entry).
+  initialConditions <- project$.getSection("initialConditions")
+  initialConditions[[id]] <- .asInitialConditionSet(.addInitialConditionEntries(
+    current,
+    path,
+    value,
+    unit
+  ))
+  project$.setSection("initialConditions", initialConditions)
+  invisible(project)
+}
+
+#' Remove one or many entries from a named initial-condition set
+#'
+#' Removes molecule start-value entries from the named set. `path` accepts a
+#' vector of length N to remove all N entries in a single call (and a single
+#' write to disk); a scalar call (length-1 vector) removes one entry. If every
+#' entry of the set is removed, the set itself is auto-removed from
+#' `project$initialConditions`. Warns if the set or any named entry doesn't
+#' exist.
+#'
+#' @param project A `Project` object.
+#' @param id Character scalar, set id. Canonicalized.
+#' @param path Character vector of molecule paths (length N).
+#' @returns The `project` object, invisibly.
+#' @export
+#' @family parameters
+removeInitialConditionEntry <- function(project, id, path) {
+  validateIsOfType(project, "Project")
+  if (!is.character(id) || length(id) != 1L) {
+    cli::cli_abort("{.arg id} must be a string scalar")
+  }
+  id <- .canonicalizeId(id)
+  if (!(id %in% names(project$initialConditions))) {
+    cli::cli_warn("initial-condition set {.val {id}} not found; no-op.")
+    return(invisible(project))
+  }
+  # Fold all N removals into the set in memory first, so the single assignment
+  # below triggers exactly one write-through (not one per entry).
+  result <- .removeInitialConditionEntries(
+    project$initialConditions[[id]],
+    path
+  )
+  if (!result$removed) {
+    return(invisible(project))
+  }
+  initialConditions <- project$.getSection("initialConditions")
+  if (is.null(result$entries)) {
+    .warnIfReferenced(project, "initialConditions", id)
+    initialConditions[[id]] <- NULL
+  } else {
+    initialConditions[[id]] <- .asInitialConditionSet(result$entries)
+  }
+  project$.setSection("initialConditions", initialConditions)
+  invisible(project)
+}
+
+# Validate scalar inputs for a `(path, value, unit)` initial-condition entry.
+# Returns a character vector of error messages (empty if validation passes).
+#
+# @keywords internal
+# @noRd
+.validateInitialConditionEntryArgs <- function(path, value, unit) {
+  errors <- character()
+  if (
+    !is.character(path) ||
+      length(path) != 1L ||
+      is.na(path) ||
+      nchar(path) == 0
+  ) {
+    errors <- c(errors, "path must be a non-empty string")
+  }
+  if (!is.numeric(value) || length(value) != 1L || is.na(value)) {
+    errors <- c(errors, "value must be a numeric scalar")
+  }
+  # A unit is mandatory for a molecule start value: `ospsuite::setQuantityValuesByPath()`
+  # rejects a blank unit at run time, so reject it here (fail fast at authoring)
+  # rather than deferring an opaque failure to the simulation.
+  if (
+    !is.character(unit) ||
+      length(unit) != 1L ||
+      is.na(unit) ||
+      nchar(unit) == 0L
+  ) {
+    errors <- c(errors, "unit must be a non-empty string")
+  }
+  errors
+}
+
+# Assert that the parallel `(path, value, unit)` argument vectors all share the
+# same length (the batch size). A scalar call is the length-1 case. Aborts
+# naming the lengths otherwise.
+#
+# @keywords internal
+# @noRd
+.assertInitialConditionEntryVectorLengths <- function(path, value, unit) {
+  lengths <- c(
+    path = length(path),
+    value = length(value),
+    unit = length(unit)
+  )
+  if (length(unique(lengths)) != 1L) {
+    cli::cli_abort(c(
+      "{.arg path}, {.arg value}, and {.arg unit} must be vectors of the \\
+      same length.",
+      "x" = "Got lengths {.val {lengths[['path']]}}, \\
+      {.val {lengths[['value']]}}, and {.val {lengths[['unit']]}}."
+    ))
+  }
+  invisible(lengths[["path"]])
+}
+
+# Fold N initial-condition entries (parallel vectors) into a set in one pass,
+# returning the updated list. Each entry is validated and appended (or replaced,
+# last-write-wins) via `.addInitialConditionEntry`, so an in-batch duplicate
+# `path` resolves to the last value, matching the scalar semantics. N=1 is the
+# scalar case. Folding in memory first lets the caller persist the whole set in
+# a single write-through.
+#
+# @keywords internal
+# @noRd
+.addInitialConditionEntries <- function(entries, path, value, unit) {
+  n <- .assertInitialConditionEntryVectorLengths(path, value, unit)
+  for (i in seq_len(n)) {
+    entries <- .addInitialConditionEntry(
+      entries,
+      path[[i]],
+      value[[i]],
+      unit[[i]]
+    )
+  }
+  entries
+}
+
+# Append (or replace, last-write-wins) one initial-condition entry to a
+# JSON-faithful array-of-records set. `entries` is a list of
+# `list(path, value, unit)` entries (or `NULL`); returns the updated list.
+#
+# @keywords internal
+# @noRd
+.addInitialConditionEntry <- function(entries, path, value, unit) {
+  errors <- .validateInitialConditionEntryArgs(path, value, unit)
+  if (length(errors) > 0L) {
+    cli::cli_abort(c(
+      "Invalid initial-condition entry:",
+      stats::setNames(errors, rep("x", length(errors)))
+    ))
+  }
+
+  if (is.null(entries)) {
+    entries <- list()
+  }
+
+  existingIdx <- .findInitialConditionEntryIndex(entries, path)
+  # A unit is mandatory (the validator above rejects a blank one), so it is
+  # always a real string here, distinct from a parameter entry's optional units.
+  newEntry <- list(
+    path = path,
+    value = as.double(value),
+    unit = unit
+  )
+  if (length(existingIdx) > 0L) {
+    entries[[existingIdx]] <- newEntry
+  } else {
+    entries[[length(entries) + 1L]] <- newEntry
+  }
+  entries
+}
+
+# Drop N initial-condition entries (parallel vector) from a set in one pass,
+# returning the same `list(entries=, removed=)` shape as
+# `.removeInitialConditionEntry`. `removed` is `TRUE` if ANY named entry was
+# actually removed (a not-found entry warns and is skipped, as in the scalar
+# case); `entries` is `NULL` when the removals emptied the set, so the caller
+# auto-removes it. N=1 is the scalar case. Folding in memory first lets the
+# caller persist the whole set in a single write-through.
+#
+# @keywords internal
+# @noRd
+.removeInitialConditionEntries <- function(entries, path) {
+  anyRemoved <- FALSE
+  for (i in seq_along(path)) {
+    result <- .removeInitialConditionEntry(entries, path[[i]])
+    anyRemoved <- anyRemoved || result$removed
+    # A removal that empties the set yields `NULL`; preserve it so a later
+    # not-found entry warns against the empty set, matching the scalar path.
+    entries <- result$entries
+  }
+  list(entries = entries, removed = anyRemoved)
+}
+
+# Drop one initial-condition entry from a JSON-faithful array-of-records set.
+# Returns a list with:
+#   - `entries`: the updated set, or `NULL` if removal emptied the set (callers
+#     use the `NULL` to auto-remove the named set).
+#   - `removed`: `TRUE` if an entry was actually removed, `FALSE` for a no-op
+#     (entry not found). Callers gate the write-through on this so a no-op warn
+#     doesn't touch the section (and so doesn't invalidate the validation cache).
+#
+# @keywords internal
+# @noRd
+.removeInitialConditionEntry <- function(entries, path) {
+  if (is.null(entries) || length(entries) == 0L) {
+    cli::cli_warn("initial condition {.val {path}} not found; no-op.")
+    return(list(entries = entries, removed = FALSE))
+  }
+  idx <- .findInitialConditionEntryIndex(entries, path)
+  if (length(idx) == 0L) {
+    cli::cli_warn("initial condition {.val {path}} not found; no-op.")
+    return(list(entries = entries, removed = FALSE))
+  }
+  entries <- entries[-idx]
+  if (length(entries) == 0L) {
+    return(list(entries = NULL, removed = TRUE))
+  }
+  list(entries = entries, removed = TRUE)
+}
+
+# Locate a `path` entry in an initial-condition array-of-records. Returns an
+# integer index or `integer(0)` if absent.
+#
+# @keywords internal
+# @noRd
+.findInitialConditionEntryIndex <- function(entries, path) {
+  if (is.null(entries) || length(entries) == 0L) {
+    return(integer(0))
+  }
+  hits <- vapply(
+    entries,
+    function(e) identical(e$path, path),
     logical(1)
   )
   which(hits)
