@@ -64,6 +64,21 @@ test_that("addIndividual aborts when gender is missing", {
   expect_false("newi" %in% names(project$individuals))
 })
 
+test_that("addIndividual aborts when gender is not a valid GenderInt token", {
+  project <- testProject()
+  expect_snapshot(
+    error = TRUE,
+    addIndividual(project, "newi", species = "Human", gender = "banana")
+  )
+  expect_false("newi" %in% names(project$individuals))
+})
+
+test_that("addIndividual accepts a valid GenderInt token", {
+  project <- testProject()
+  addIndividual(project, "newi", species = "Human", gender = "FEMALE")
+  expect_identical(project$individuals$newi$gender, "FEMALE")
+})
+
 test_that("addIndividual rejects a non-numeric weight/height/age", {
   project <- testProject()
   # "80kg" would silently coerce to NA via as.double(); it must abort instead.
@@ -165,6 +180,23 @@ test_that("setIndividual rejects an empty gender like addIndividual", {
   )
   # Memory unchanged after the rejected write.
   expect_equal(project$individuals[["indiv1"]], before)
+})
+
+test_that("setIndividual rejects a gender that is not a valid GenderInt token", {
+  project <- testProject()
+  before <- project$individuals[["indiv1"]]
+  expect_snapshot(
+    error = TRUE,
+    setIndividual(project, "indiv1", gender = "banana")
+  )
+  # Memory unchanged after the rejected write.
+  expect_equal(project$individuals[["indiv1"]], before)
+})
+
+test_that("setIndividual accepts a valid GenderInt token", {
+  project <- testProject()
+  setIndividual(project, "indiv1", gender = "FEMALE")
+  expect_identical(project$individuals[["indiv1"]]$gender, "FEMALE")
 })
 
 test_that("setIndividual rejects parameterSets that do not resolve", {

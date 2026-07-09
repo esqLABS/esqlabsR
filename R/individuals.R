@@ -248,6 +248,14 @@ addIndividual <- function(project, id, species, ...) {
       nchar(gender) == 0
   ) {
     errors <- c(errors, "gender must be a non-empty string")
+  } else if (!(gender %in% names(GenderInt))) {
+    errors <- c(
+      errors,
+      paste0(
+        "gender must be one of ",
+        paste(names(GenderInt), collapse = ", ")
+      )
+    )
   }
 
   # weight/height/age are stored as doubles. Reject a value that is not a
@@ -461,6 +469,12 @@ setIndividual <- function(project, id, ...) {
         nchar(gender) == 0
     ) {
       cli::cli_abort("{.arg gender} must be a non-empty string", call = call)
+    }
+    if (!(gender %in% names(GenderInt))) {
+      cli::cli_abort(
+        "{.arg gender} must be one of {.val {names(GenderInt)}}",
+        call = call
+      )
     }
   }
   if ("parameterSets" %in% names(fields)) {

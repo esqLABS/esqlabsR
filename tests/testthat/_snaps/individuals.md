@@ -15,6 +15,15 @@
       ! Cannot add individual "newi":
       x gender must be a non-empty string
 
+# addIndividual aborts when gender is not a valid GenderInt token
+
+    Code
+      addIndividual(project, "newi", species = "Human", gender = "banana")
+    Condition
+      Error in `addIndividual()`:
+      ! Cannot add individual "newi":
+      x gender must be one of MALE, FEMALE, UNKNOWN
+
 # setIndividual aborts on a non-existent individual
 
     Code
@@ -34,6 +43,14 @@
     Condition
       Error in `setIndividual()`:
       ! `gender` must be a non-empty string
+
+# setIndividual rejects a gender that is not a valid GenderInt token
+
+    Code
+      setIndividual(project, "indiv1", gender = "banana")
+    Condition
+      Error in `setIndividual()`:
+      ! `gender` must be one of "MALE", "FEMALE", and "UNKNOWN"
 
 # setIndividual rejects parameterSets that do not resolve
 
