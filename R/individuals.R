@@ -489,7 +489,7 @@ setIndividual <- function(project, id, ...) {
   entry <- project$individuals[[id]]
   for (field in names(fields)) {
     if (field %in% c("weight", "height", "age")) {
-      entry[[field]] <- as.double(fields[[field]])
+      entry[[field]] <- .coerceNumericField(fields[[field]])
     } else {
       entry[[field]] <- fields[[field]]
     }

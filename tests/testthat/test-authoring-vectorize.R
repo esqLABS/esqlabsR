@@ -84,3 +84,11 @@ test_that(".alignAuthoringArgs propagates a length error naming the field", {
     )
   )
 })
+
+test_that(".coerceNumericField returns NULL for NULL and as.double otherwise", {
+  # A NULL passes through as NULL so the set-path loops delete the key (clearing
+  # the optional field); any other value coerces with as.double().
+  expect_null(.coerceNumericField(NULL))
+  expect_identical(.coerceNumericField(45), 45)
+  expect_identical(.coerceNumericField("45"), 45)
+})

@@ -207,3 +207,21 @@ NULL
   }
   value[[i]]
 }
+
+# Coerce a numeric authoring field for the set path, preserving the NULL-clears
+# contract. A supplied `NULL` returns `NULL` so `entry[[field]] <- NULL` deletes
+# the key (clearing the optional field); any other value coerces with
+# `as.double()`. This mirrors the add-path builders' `if (!is.null(...))` guard
+# so both set-path loops (`.setOneIndividual()`, `.setOnePopulation()`) treat a
+# `NULL` numeric field as "clear it", not "store numeric(0)". Purely a coercion:
+# it does not validate; validation happens in the `.setOne*` guards above the
+# assignment loop.
+#
+# @keywords internal
+# @noRd
+.coerceNumericField <- function(value) {
+  if (is.null(value)) {
+    return(NULL)
+  }
+  as.double(value)
+}

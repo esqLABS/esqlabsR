@@ -263,6 +263,24 @@ test_that("setPopulation partial update leaves other fields untouched", {
   }
 })
 
+test_that("setPopulation clears a numeric field passed NULL", {
+  # A NULL clears (removes) the optional field: the key must be ABSENT, not
+  # present as numeric(0). The testpopulation fixture carries ageMin, so its
+  # removal is observable.
+  project <- testProject()
+  before <- project$populations[["testpopulation"]]
+  setPopulation(project, "testpopulation", ageMin = NULL)
+
+  after <- project$populations[["testpopulation"]]
+  expect_false("ageMin" %in% names(after))
+  expect_null(after$ageMin)
+  # No other field changed, and no unexpected key was added.
+  expect_setequal(names(after), setdiff(names(before), "ageMin"))
+  for (f in setdiff(names(before), "ageMin")) {
+    expect_equal(after[[f]], before[[f]])
+  }
+})
+
 test_that("setPopulation clears validatedSinceMutation", {
   project <- testProject()
   project$.markValidated()

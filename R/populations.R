@@ -647,7 +647,7 @@ setPopulation <- function(project, id, ...) {
   entry <- project$populations[[id]]
   for (field in names(fields)) {
     if (field %in% numericFields) {
-      entry[[field]] <- as.double(fields[[field]])
+      entry[[field]] <- .coerceNumericField(fields[[field]])
     } else {
       entry[[field]] <- fields[[field]]
     }

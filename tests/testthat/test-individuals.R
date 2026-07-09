@@ -117,6 +117,30 @@ test_that("setIndividual partial update leaves other fields untouched", {
   }
 })
 
+test_that("setIndividual clears a numeric field passed NULL", {
+  # A NULL clears (removes) the optional field: the key must be ABSENT, not
+  # present as numeric(0). The indiv1 fixture carries weight/height/age, so
+  # each removal is observable.
+  for (field in c("weight", "height", "age")) {
+    project <- testProject()
+    before <- project$individuals[["indiv1"]]
+
+    do.call(
+      setIndividual,
+      c(list(project, "indiv1"), stats::setNames(list(NULL), field))
+    )
+
+    after <- project$individuals[["indiv1"]]
+    expect_false(field %in% names(after))
+    expect_null(after[[field]])
+    # No other field changed, and no unexpected key was added.
+    expect_setequal(names(after), setdiff(names(before), field))
+    for (f in setdiff(names(before), field)) {
+      expect_equal(after[[f]], before[[f]])
+    }
+  }
+})
+
 test_that("setIndividual clears validatedSinceMutation", {
   project <- testProject()
   project$.markValidated()
