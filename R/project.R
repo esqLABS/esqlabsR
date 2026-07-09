@@ -985,9 +985,9 @@ Project <- R6::R6Class(
       # keyed by a derived id (its `names()` are not the on-disk ids), so it
       # cannot be diffed by name and falls back to the whole-section serialize
       # diff below (it is small and never a buildup hot path).
-      keyed <- !is.data.frame(new) &&
-        !is.data.frame(old) &&
-        (length(new) == 0L || !is.null(names(new)))
+      # A keyed section is a named map; only observedData is an unnamed list and
+      # takes the slow path. No section is ever a data frame.
+      keyed <- length(new) == 0L || !is.null(names(new))
       if (keyed && (length(old) == 0L || !is.null(names(old)))) {
         newNames <- names(new)
         oldNames <- names(old)
