@@ -692,11 +692,17 @@ test_that("removeInitialConditionEntry no-op on a missing entry warns", {
   suppressMessages(
     addInitialConditionEntry(project, "mset", "Organism|A", 1.5, "mg/l")
   )
+  project$.markValidated()
+  expect_true(project$validatedSinceMutation)
+
   expect_warning(
     removeInitialConditionEntry(project, "mset", "Organism|Ghost"),
     "not found"
   )
+
   expect_length(project$initialConditions$mset, 1L)
+
+  expect_true(project$validatedSinceMutation)
 })
 
 test_that("removeInitialConditions warns when still referenced by a scenario, removes anyway", {
