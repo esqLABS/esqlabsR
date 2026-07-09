@@ -97,7 +97,7 @@ test_that("It returns multiple indeces for multiple lowest values with a relativ
   )
 })
 
-test_that("It returns NULL if the distance is higher than the absolute threshold", {
+test_that("It returns NULL if the distance is higher than the relative threshold", {
   array <- c(-1, 0, 1, 2, 3)
   value <- -0.5
 
