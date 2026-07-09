@@ -342,15 +342,30 @@ createEsqlabsPlotGridConfiguration <- function() {
 #' @noRd
 .calculateLimits <- function(x, scaling = NULL) {
   if (!is.null(scaling) && scaling == "log") {
+    positive <- x[x > 0]
     limits <- c(
-      min(x[x > 0], na.rm = TRUE) * 0.9,
-      max(x[x > 0], na.rm = TRUE) * 1.1
+      min(positive, na.rm = TRUE) * 0.9,
+      max(positive, na.rm = TRUE) * 1.1
     )
+    # A single distinct value collapses the range; widen multiplicatively so
+    # both bounds stay strictly positive (a log axis cannot include zero).
+    if (limits[[1]] == limits[[2]]) {
+      v <- limits[[1]]
+      limits <- c(v * 0.95, v * 1.05)
+    }
   } else {
     limits <- c(
       (if (min(x, na.rm = TRUE) <= 0) 1.01 else 0.99) * min(x, na.rm = TRUE),
       (if (max(x, na.rm = TRUE) > 0) 1.01 else 0.99) * max(x, na.rm = TRUE)
     )
+    # A single distinct value (e.g. all zeros -> c(0, 0)) collapses the range,
+    # which renders as a blank panel downstream. Widen to a small symmetric pad
+    # around the value.
+    if (limits[[1]] == limits[[2]]) {
+      v <- limits[[1]]
+      pad <- max(abs(v), 1) * 0.05
+      limits <- c(v - pad, v + pad)
+    }
   }
 
   return(limits)
