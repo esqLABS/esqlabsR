@@ -1023,12 +1023,18 @@ runPI <- function(
     return(invisible(NULL))
   }
   # A parameter has no usable uncertainty when SD, CV, and both CI bounds are
-  # all NA. These vectors are parallel to `paramNames` (one entry per
-  # parameter), each defaulting to NA when the CI step yielded nothing.
-  unquantified <- is.na(info$sd) &
-    is.na(info$cv) &
-    is.na(info$lowerCI) &
-    is.na(info$upperCI)
+  # all NA. These vectors are meant to be parallel to `paramNames` (one entry
+  # per parameter), each defaulting to NA when the CI step yielded nothing. Guard
+  # the shape: a NULL or wrong-length vector is treated as all-NA of the right
+  # length, so the elementwise `&` never recycles or indexes out of range.
+  n <- length(paramNames)
+  asParallelNA <- function(x) {
+    if (length(x) == n) is.na(x) else rep(TRUE, n)
+  }
+  unquantified <- asParallelNA(info$sd) &
+    asParallelNA(info$cv) &
+    asParallelNA(info$lowerCI) &
+    asParallelNA(info$upperCI)
   for (i in which(unquantified)) {
     paramName <- paramNames[[i]]
     cli::cli_warn(c(

@@ -1236,6 +1236,43 @@ test_that(".warnUnquantifiedUncertainty is silent when uncertainty is quantified
   ))
 })
 
+test_that(".warnUnquantifiedUncertainty tolerates short or absent uncertainty vectors", {
+  # A well-formed `toList()` keeps sd/cv/lowerCI/upperCI parallel to
+  # `paramNames`, but a degenerate result can carry a shorter vector or omit one
+  # entirely (NULL). Such a vector must be treated as all-NA of the right length
+  # so the elementwise combination stays well-formed: no recycling warning, no
+  # out-of-range indexing, one warning per genuinely unquantified parameter.
+  fakeResult <- list(
+    toList = function() {
+      list(
+        convergence = TRUE,
+        paramNames = c("k_clear", "k_bound"),
+        finalParameters = c(0.5, 1.2),
+        sd = NA_real_, # short: length 1 against 2 parameters
+        cv = NULL, # absent entirely
+        lowerCI = c(NA_real_, NA_real_),
+        upperCI = c(NA_real_, NA_real_)
+      )
+    }
+  )
+
+  warnings <- character()
+  withCallingHandlers(
+    esqlabsR:::.warnUnquantifiedUncertainty("myTask", fakeResult),
+    warning = function(cnd) {
+      warnings <<- c(warnings, conditionMessage(cnd))
+      invokeRestart("muffleWarning")
+    }
+  )
+
+  # Both parameters are unquantified (sd/cv unavailable, CI all NA); each is
+  # named exactly once, and no recycling warning is raised.
+  expect_length(warnings, 2L)
+  expect_match(warnings[[1]], "k_clear", fixed = TRUE)
+  expect_match(warnings[[2]], "k_bound", fixed = TRUE)
+  expect_false(any(grepl("not a multiple", warnings)))
+})
+
 test_that("runPI(project) hard-fails when the build phase errors", {
   project <- testProject()
   local_mocked_bindings(
