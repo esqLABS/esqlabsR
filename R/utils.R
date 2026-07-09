@@ -44,7 +44,11 @@ getIndexClosestToValue <- function(
 
   # Calculate distances
   distances <- abs(array - value)
-  idx <- which(distances == min(distances) & distances <= thresholdAbs)
+  # Compute the minimum distance ignoring NA entries so an exact match is not
+  # lost when the array contains NA. If every distance is NA (or the array is
+  # empty), `minDist` is not finite and no index qualifies below.
+  minDist <- suppressWarnings(min(distances, na.rm = TRUE))
+  idx <- which(distances == minDist & distances <= thresholdAbs)
 
   if (length(idx) == 0) {
     msg <- messages$warningValueWithinThresholdNotExisting(value, thresholdAbs)

@@ -166,6 +166,22 @@ test_that("It finds a 0 with relative threshold", {
   )
 })
 
+test_that("It finds an exact match when the array contains NA", {
+  array <- c(1, NA, 3)
+  value <- 3
+
+  expect_equal(getIndexClosestToValue(value = value, array = array), 3)
+})
+
+test_that("It returns NULL when every array entry is NA", {
+  array <- c(NA, NA)
+  value <- 3
+
+  suppressWarnings(expect_null(
+    getIndexClosestToValue(value = value, array = array)
+  ))
+})
+
 test_that("`compareWithNA()` works as expected", {
   res <- compareWithNA(
     c(NA, "a", "b", NA),
