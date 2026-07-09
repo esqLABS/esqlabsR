@@ -970,6 +970,26 @@ test_that("validateProject() flags a PI outputMapping referencing a removed outp
   expect_true(any(grepl("undefined outputPath", msgs)))
 })
 
+test_that("validateProject() flags a PI outputMapping with no outputPath", {
+  project <- testProject()
+  # Mimic a hand-edited Project.json whose PI outputMapping lost its
+  # `outputPath`: the record reaches cross-reference validation with a NULL
+  # `outputPathId`. This must be reported as a critical error, not crash the
+  # cross-reference pass with "argument is of length zero".
+  private <- project$.__enclos_env__$private
+  tasks <- private$.parameterIdentification
+  tasks[["aciclovirsimple"]]$outputMappings[[1]]$outputPathId <- NULL
+  private$.parameterIdentification <- tasks
+
+  results <- suppressWarnings(validateProject(project))
+  msgs <- vapply(
+    results$crossReferences$critical_errors,
+    \(e) e$message,
+    character(1)
+  )
+  expect_true(any(grepl("does not define an outputPath", msgs)))
+})
+
 # print.ValidationResults ----
 
 # Builds a deterministic `ValidationResults` list with a known mix of critical

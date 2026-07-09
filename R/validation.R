@@ -986,7 +986,18 @@ validateProject <- function(project) {
           )
         )
       }
-      if (!(m$outputPathId %in% outputPathIds)) {
+      if (is.null(m$outputPathId) || is.na(m$outputPathId)) {
+        result$add_critical_error(
+          "Invalid Reference",
+          paste0(
+            "PI task '",
+            taskId,
+            "', outputMapping '",
+            m$id,
+            "' does not define an outputPath"
+          )
+        )
+      } else if (!(m$outputPathId %in% outputPathIds)) {
         result$add_critical_error(
           "Invalid Reference",
           paste0(
