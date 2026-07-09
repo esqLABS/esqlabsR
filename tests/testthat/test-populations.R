@@ -306,6 +306,30 @@ test_that("setPopulation rejects a non-positive numberOfIndividuals", {
   expect_equal(project$populations[["testpopulation"]], before)
 })
 
+test_that("setPopulation rejects a non-numeric range field", {
+  project <- testProject()
+  before <- project$populations[["testpopulation"]]
+  # "heavy" would silently coerce to NA via as.double(); it must abort instead,
+  # mirroring the numeric-field guard on the individual set path.
+  expect_snapshot(
+    error = TRUE,
+    setPopulation(project, "testpopulation", weightMin = "heavy")
+  )
+  expect_equal(project$populations[["testpopulation"]], before)
+})
+
+test_that("setPopulation rejects a non-integer numberOfIndividuals", {
+  project <- testProject()
+  before <- project$populations[["testpopulation"]]
+  # 2.5 would be stored as-is; the set path must reject it the same way the
+  # add path does.
+  expect_snapshot(
+    error = TRUE,
+    setPopulation(project, "testpopulation", numberOfIndividuals = 2.5)
+  )
+  expect_equal(project$populations[["testpopulation"]], before)
+})
+
 test_that("addPopulation rejects a non-integer numberOfIndividuals", {
   project <- testProject()
   expect_error(

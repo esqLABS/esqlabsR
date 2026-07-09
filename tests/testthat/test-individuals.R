@@ -193,6 +193,19 @@ test_that("setIndividual rejects a gender that is not a valid GenderInt token", 
   expect_equal(project$individuals[["indiv1"]], before)
 })
 
+test_that("setIndividual rejects a non-numeric weight like addIndividual", {
+  project <- testProject()
+  before <- project$individuals[["indiv1"]]
+  # "80kg" would silently coerce to NA via as.double(); it must abort instead,
+  # mirroring the add-path guard.
+  expect_snapshot(
+    error = TRUE,
+    setIndividual(project, "indiv1", weight = "80kg")
+  )
+  # Memory unchanged after the rejected write.
+  expect_equal(project$individuals[["indiv1"]], before)
+})
+
 test_that("setIndividual accepts a valid GenderInt token", {
   project <- testProject()
   setIndividual(project, "indiv1", gender = "FEMALE")

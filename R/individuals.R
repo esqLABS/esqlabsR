@@ -258,15 +258,17 @@ addIndividual <- function(project, id, species, ...) {
     )
   }
 
-  # weight/height/age are stored as doubles. Reject a value that is not a
-  # finite number rather than silently coercing it to NA (e.g. "80kg").
+  # weight/height/age are stored as doubles. Coerce a numeric-like value
+  # (including a character such as "45") and reject only a value that does not
+  # coerce to a single finite number (e.g. "80kg" -> NA) rather than silently
+  # storing NA. This matches the set path (`.setOneIndividual()`).
   for (field in c("weight", "height", "age")) {
     value <- fields[[field]]
-    if (
-      !is.null(value) &&
-        (!is.numeric(value) || length(value) != 1L || !is.finite(value))
-    ) {
-      errors <- c(errors, paste0(field, " must be a single finite number"))
+    if (!is.null(value)) {
+      coerced <- suppressWarnings(as.double(value))
+      if (length(value) != 1L || is.na(coerced) || !is.finite(coerced)) {
+        errors <- c(errors, paste0(field, " must be a single finite number"))
+      }
     }
   }
 
@@ -475,6 +477,25 @@ setIndividual <- function(project, id, ...) {
         "{.arg gender} must be one of {.val {names(GenderInt)}}",
         call = call
       )
+    }
+  }
+  # weight/height/age are stored as doubles. Coerce a numeric-like value
+  # (including a character such as "45" from Excel) and reject only a value
+  # that does not coerce to a single finite number (e.g. "80kg" -> NA) rather
+  # than silently storing NA. A NULL is allowed here: it clears the field via
+  # `.coerceNumericField()` below.
+  for (field in c("weight", "height", "age")) {
+    if (field %in% names(fields)) {
+      value <- fields[[field]]
+      if (!is.null(value)) {
+        coerced <- suppressWarnings(as.double(value))
+        if (length(value) != 1L || is.na(coerced) || !is.finite(coerced)) {
+          cli::cli_abort(
+            "{field} must be a single finite number",
+            call = call
+          )
+        }
+      }
     }
   }
   if ("parameterSets" %in% names(fields)) {

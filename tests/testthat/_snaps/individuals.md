@@ -52,6 +52,14 @@
       Error in `setIndividual()`:
       ! `gender` must be one of "MALE", "FEMALE", and "UNKNOWN"
 
+# setIndividual rejects a non-numeric weight like addIndividual
+
+    Code
+      setIndividual(project, "indiv1", weight = "80kg")
+    Condition
+      Error in `setIndividual()`:
+      ! weight must be a single finite number
+
 # setIndividual rejects parameterSets that do not resolve
 
     Code

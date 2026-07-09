@@ -473,6 +473,20 @@ addPopulation <- function(
     )
   }
 
+  # The numeric range fields are stored as doubles. Coerce a numeric-like
+  # value and reject only a value that does not coerce to a single finite
+  # number (e.g. "heavy" -> NA) rather than silently storing NA. This matches
+  # the set path (`.setOnePopulation()`).
+  for (field in .populationNumericFields) {
+    value <- fields[[field]]
+    if (!is.null(value)) {
+      coerced <- suppressWarnings(as.double(value))
+      if (length(value) != 1L || is.na(coerced) || !is.finite(coerced)) {
+        errors <- c(errors, paste0(field, " must be a single finite number"))
+      }
+    }
+  }
+
   if (length(errors) > 0L) {
     cli::cli_abort(
       c(
@@ -635,12 +649,32 @@ setPopulation <- function(project, id, ...) {
       !is.numeric(count) ||
         length(count) != 1L ||
         is.na(count) ||
-        count <= 0
+        count <= 0 ||
+        count != round(count)
     ) {
       cli::cli_abort(
-        "{.arg numberOfIndividuals} must be a positive number",
+        "{.arg numberOfIndividuals} must be a positive whole number",
         call = call
       )
+    }
+  }
+  # The numeric range fields are stored as doubles. Coerce a numeric-like
+  # value (including a character such as "75" from Excel) and reject only a
+  # value that does not coerce to a single finite number (e.g. "heavy" -> NA)
+  # rather than silently storing NA. A NULL is allowed: it clears the field
+  # via `.coerceNumericField()` below.
+  for (field in .populationNumericFields) {
+    if (field %in% names(fields)) {
+      value <- fields[[field]]
+      if (!is.null(value)) {
+        coerced <- suppressWarnings(as.double(value))
+        if (length(value) != 1L || is.na(coerced) || !is.finite(coerced)) {
+          cli::cli_abort(
+            "{field} must be a single finite number",
+            call = call
+          )
+        }
+      }
     }
   }
 
