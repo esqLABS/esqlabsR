@@ -287,14 +287,19 @@ addObservedData <- function(project, entry) {
         "observedData entry with name {.val {name}} already exists"
       )
     }
-    state$.programmaticDataSets[[name]] <- entry
     sentinel <- .asObservedDataSource(list(type = "programmatic", name = name))
-    # The observedData setter resets the names cache, so the cache must be
-    # rebuilt after the write, from the names known before it.
+    # Write through to disk FIRST: `.setSection()` can abort (e.g. an on-disk
+    # id/basename collision surfaced by the serializer), so mutate the runtime
+    # store only after the write succeeds. Committing the store first would
+    # leave a runtime DataSet with no disk sentinel if the write aborts, i.e.
+    # memory and disk disagreeing.
     project$.setSection(
       "observedData",
       c(project$.getSection("observedData"), list(sentinel))
     )
+    state$.programmaticDataSets[[name]] <- entry
+    # The observedData setter resets the names cache, so rebuild it after the
+    # write, from the names known before it plus the newly added name.
     state$.observedDataNamesCache <- c(existingNames, name)
     cli::cli_inform(c(
       "i" = paste0(
@@ -423,13 +428,18 @@ removeObservedData <- function(project, id) {
     return(invisible(project))
   }
 
-  for (name in programmaticNames) {
-    state$.programmaticDataSets[[name]] <- NULL
-  }
   if (length(dropIdx) > 0L) {
     observedData <- observedData[-unique(dropIdx)]
   }
+  # Write through to disk FIRST: `.setSection()` can abort (the serializer can
+  # reject the resulting section on an id/basename collision), so clear the
+  # runtime store only after the write succeeds. Clearing the store first would
+  # drop the in-memory DataSet while the disk sentinel survives if the write
+  # aborts, i.e. memory and disk disagreeing.
   project$.setSection("observedData", observedData)
+  for (name in programmaticNames) {
+    state$.programmaticDataSets[[name]] <- NULL
+  }
   state$.observedDataNamesCache <- NULL
   invisible(project)
 }

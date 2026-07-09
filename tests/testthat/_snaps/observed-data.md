@@ -50,6 +50,26 @@
       x The on-disk id is the file basename (or the programmatic name), so two sources sharing a basename collide.
       i Rename one source so the basenames differ.
 
+# addObservedData leaves the runtime store untouched when the write-through aborts
+
+    Code
+      addObservedData(project, ds)
+    Condition
+      Error in `.serializeObservedDataSet()`:
+      ! Two observedData declarations map to the same entity file 'Aciclovir_TimeValuesData.xlsx.json'.
+      x The on-disk id is the file basename (or the programmatic name), so two sources sharing a basename collide.
+      i Rename one source so the basenames differ.
+
+# removeObservedData leaves the runtime store untouched when the write-through aborts
+
+    Code
+      removeObservedData(project, "myProgSet")
+    Condition
+      Error in `.serializeObservedDataSet()`:
+      ! Two observedData declarations map to the same entity file 'obs.pkml.json'.
+      x The on-disk id is the file basename (or the programmatic name), so two sources sharing a basename collide.
+      i Rename one source so the basenames differ.
+
 # print.ObservedDataSource renders the source declaration
 
     Code

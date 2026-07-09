@@ -364,6 +364,39 @@ test_that("observedData declarations sharing a basename fail the write-through",
   }
 })
 
+# The DataSet branch writes through to disk BEFORE committing the runtime store,
+# so a failed write can never leave a runtime DataSet with no disk sentinel
+# (memory and disk in disagreement). Drive a real abort via a serializer
+# basename collision: a programmatic DataSet whose name equals an existing
+# file-based entry's on-disk id (its basename) passes the name pre-check (which
+# compares against loaded DataSet names, not on-disk ids) but collides at
+# serialize time.
+test_that("addObservedData leaves the runtime store untouched when the write-through aborts", {
+  project <- testProject()
+  state <- .projectPrivate(project)
+  # The fixture declares a file-based Excel source filed under this basename.
+  ds <- ospsuite::DataSet$new(name = "Aciclovir_TimeValuesData.xlsx")
+  ds$setValues(xValues = c(1, 2), yValues = c(3, 4))
+
+  # Warm the names cache before the call so the pre-check's lazy load (a
+  # read-only side effect, not a store mutation) is already reflected and the
+  # cache comparison isolates the write's effect.
+  beforeCache <- getObservedDataNames(project)
+  beforeStore <- state$.programmaticDataSets
+  beforeSection <- project$observedData
+
+  expect_snapshot(addObservedData(project, ds), error = TRUE)
+
+  # The aborted write mutated nothing: the DataSet name is absent from the
+  # runtime store, and the section and names cache are unchanged.
+  expect_false(
+    "Aciclovir_TimeValuesData.xlsx" %in% names(state$.programmaticDataSets)
+  )
+  expect_identical(state$.programmaticDataSets, beforeStore)
+  expect_identical(project$observedData, beforeSection)
+  expect_identical(state$.observedDataNamesCache, beforeCache)
+})
+
 # removeObservedData write-through ----
 
 test_that("removeObservedData deletes the entity file and persists to disk", {
@@ -412,6 +445,39 @@ test_that("removeObservedData warns and skips a not-found id in the batch", {
     "ghost.pkml"
   )
   expect_length(project$observedData, before - 1L)
+})
+
+# The remove path writes through to disk BEFORE clearing the runtime store, so a
+# failed write can never drop the in-memory DataSet while its disk sentinel
+# survives (memory and disk in disagreement). Removal only shrinks the section,
+# so it cannot introduce a collision by itself; force the abort by seeding the
+# backing section (bypassing the serializing setter, which would itself reject a
+# collision) with a colliding pair of surviving file entries alongside the
+# programmatic sentinel queued for removal. After the sentinel is dropped, the
+# surviving pair still collides on serialize, so the write-through aborts.
+test_that("removeObservedData leaves the runtime store untouched when the write-through aborts", {
+  project <- testProject()
+  state <- .projectPrivate(project)
+  ds <- ospsuite::DataSet$new(name = "myProgSet")
+  ds$setValues(xValues = c(1, 2), yValues = c(3, 4))
+  addObservedData(project, ds)
+
+  # Seed a colliding pair of surviving entries directly into the backing field.
+  state$.observedData <- list(
+    .asObservedDataSource(list(type = "programmatic", name = "myProgSet")),
+    .asObservedDataSource(list(type = "pkml", file = "dirA/obs.pkml")),
+    .asObservedDataSource(list(type = "pkml", file = "dirB/obs.pkml"))
+  )
+  beforeStore <- state$.programmaticDataSets
+  beforeSection <- project$observedData
+
+  expect_snapshot(removeObservedData(project, "myProgSet"), error = TRUE)
+
+  # The aborted write cleared nothing: the queued programmatic name is still in
+  # the runtime store, and the section is unchanged.
+  expect_true("myProgSet" %in% names(state$.programmaticDataSets))
+  expect_identical(state$.programmaticDataSets, beforeStore)
+  expect_identical(project$observedData, beforeSection)
 })
 
 # Print method ----
