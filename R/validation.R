@@ -253,6 +253,89 @@ validateProject <- function(project) {
   results
 }
 
+#' @title isAnyCriticalErrors
+#'
+#' @description Reports whether any section of a validation run produced a
+#'   critical error, collapsing the per-section results from
+#'   [validateProject()] into a single logical.
+#'
+#' @param validationResults Named list of class `"ValidationResults"`, the
+#'   output of [validateProject()].
+#' @return A single logical: `TRUE` if any section has critical errors,
+#'   otherwise `FALSE`.
+#' @export
+#' @seealso [validateProject()], [validationSummary()].
+#' @examples
+#' \dontrun{
+#' project <- loadProject("Project.json")
+#' results <- validateProject(project)
+#' if (isAnyCriticalErrors(results)) {
+#'   print(validationSummary(results))
+#' }
+#' }
+isAnyCriticalErrors <- function(validationResults) {
+  any(vapply(
+    validationResults,
+    function(r) {
+      if (inherits(r, "validationResult")) {
+        r$has_critical_errors()
+      } else {
+        FALSE
+      }
+    },
+    logical(1)
+  ))
+}
+
+#' @title validationSummary
+#'
+#' @description Aggregates the per-section results from [validateProject()]
+#'   into overall counts of critical errors and warnings, plus the names of
+#'   the sections that produced each.
+#'
+#' @param validationResults Named list of class `"ValidationResults"`, the
+#'   output of [validateProject()].
+#' @return A list with `total_critical_errors`, `total_warnings`,
+#'   `sections_with_errors`, and `sections_with_warnings`.
+#' @export
+#' @seealso [validateProject()], [isAnyCriticalErrors()].
+#' @examples
+#' \dontrun{
+#' project <- loadProject("Project.json")
+#' results <- validateProject(project)
+#' summary <- validationSummary(results)
+#' summary$total_critical_errors
+#' }
+validationSummary <- function(validationResults) {
+  summary <- list(
+    total_critical_errors = 0,
+    total_warnings = 0,
+    sections_with_errors = character(),
+    sections_with_warnings = character()
+  )
+
+  for (name in names(validationResults)) {
+    result <- validationResults[[name]]
+    if (inherits(result, "validationResult")) {
+      if (result$has_critical_errors()) {
+        summary$total_critical_errors <- summary$total_critical_errors +
+          length(result$critical_errors)
+        summary$sections_with_errors <- c(summary$sections_with_errors, name)
+      }
+      if (length(result$warnings) > 0) {
+        summary$total_warnings <- summary$total_warnings +
+          length(result$warnings)
+        summary$sections_with_warnings <- c(
+          summary$sections_with_warnings,
+          name
+        )
+      }
+    }
+  }
+
+  summary
+}
+
 # Section validator dispatch ----
 
 #' Canonical ordered registry of section validator adapters
@@ -527,8 +610,11 @@ validateProject <- function(project) {
       "population" = identical(sc$populationId, id),
       "application" = identical(sc$applicationProtocol, id),
       "outputPath" = {
-        pathValue <- project$outputPaths[[id]]
-        isTRUE(pathValue %in% sc$outputPaths)
+        # `sc$outputPaths` is a named vector keyed by output-path id (names are
+        # the ids, values the resolved paths). Match on the id, not the resolved
+        # path value: two ids can share one path (value match over-reports) and
+        # an id may resolve to NA (value match misses it).
+        isTRUE(id %in% names(sc$outputPaths))
       },
       FALSE
     )
@@ -1016,87 +1102,4 @@ validateProject <- function(project) {
   }
 
   result
-}
-
-#' @title isAnyCriticalErrors
-#'
-#' @description Reports whether any section of a validation run produced a
-#'   critical error, collapsing the per-section results from
-#'   [validateProject()] into a single logical.
-#'
-#' @param validationResults Named list of class `"ValidationResults"`, the
-#'   output of [validateProject()].
-#' @return A single logical: `TRUE` if any section has critical errors,
-#'   otherwise `FALSE`.
-#' @export
-#' @seealso [validateProject()], [validationSummary()].
-#' @examples
-#' \dontrun{
-#' project <- loadProject("Project.json")
-#' results <- validateProject(project)
-#' if (isAnyCriticalErrors(results)) {
-#'   print(validationSummary(results))
-#' }
-#' }
-isAnyCriticalErrors <- function(validationResults) {
-  any(vapply(
-    validationResults,
-    function(r) {
-      if (inherits(r, "validationResult")) {
-        r$has_critical_errors()
-      } else {
-        FALSE
-      }
-    },
-    logical(1)
-  ))
-}
-
-#' @title validationSummary
-#'
-#' @description Aggregates the per-section results from [validateProject()]
-#'   into overall counts of critical errors and warnings, plus the names of
-#'   the sections that produced each.
-#'
-#' @param validationResults Named list of class `"ValidationResults"`, the
-#'   output of [validateProject()].
-#' @return A list with `total_critical_errors`, `total_warnings`,
-#'   `sections_with_errors`, and `sections_with_warnings`.
-#' @export
-#' @seealso [validateProject()], [isAnyCriticalErrors()].
-#' @examples
-#' \dontrun{
-#' project <- loadProject("Project.json")
-#' results <- validateProject(project)
-#' summary <- validationSummary(results)
-#' summary$total_critical_errors
-#' }
-validationSummary <- function(validationResults) {
-  summary <- list(
-    total_critical_errors = 0,
-    total_warnings = 0,
-    sections_with_errors = character(),
-    sections_with_warnings = character()
-  )
-
-  for (name in names(validationResults)) {
-    result <- validationResults[[name]]
-    if (inherits(result, "validationResult")) {
-      if (result$has_critical_errors()) {
-        summary$total_critical_errors <- summary$total_critical_errors +
-          length(result$critical_errors)
-        summary$sections_with_errors <- c(summary$sections_with_errors, name)
-      }
-      if (length(result$warnings) > 0) {
-        summary$total_warnings <- summary$total_warnings +
-          length(result$warnings)
-        summary$sections_with_warnings <- c(
-          summary$sections_with_warnings,
-          name
-        )
-      }
-    }
-  }
-
-  summary
 }

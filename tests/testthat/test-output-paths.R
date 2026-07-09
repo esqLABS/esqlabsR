@@ -52,6 +52,23 @@ test_that("removeOutputPath warns when the id is referenced by a scenario, remov
   expect_false(referenced %in% names(project$outputPaths))
 })
 
+test_that("removeOutputPath does not over-report when an unreferenced id shares a path", {
+  project <- testProject()
+  # An id that IS referenced by a scenario, plus a second id resolving to the
+  # SAME literal path but referenced by no scenario.
+  referenced <- intersect(
+    names(project$outputPaths),
+    unlist(lapply(project$scenarios, \(sc) names(sc$outputPaths)))
+  )[[1]]
+  addOutputPath(project, "shared_copy", project$outputPaths[[referenced]])
+
+  # The reference check keys on the output-path id, not the resolved path, so
+  # removing `shared_copy` (which no scenario references by id) must not warn,
+  # even though its path value also appears under `referenced`.
+  expect_no_warning(removeOutputPath(project, "shared_copy"))
+  expect_false("shared_copy" %in% names(project$outputPaths))
+})
+
 # setOutputPath ----
 
 test_that("setOutputPath changes the literal path and persists to file and memory", {
