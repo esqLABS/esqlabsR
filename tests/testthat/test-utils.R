@@ -182,6 +182,20 @@ test_that("It returns NULL when every array entry is NA", {
   ))
 })
 
+test_that("It aborts when `value` has more than one element", {
+  array <- c(1, 2, 3)
+  value <- c(1, 2)
+
+  # `validateIsOfLength()` prefixes the message with the outermost calling
+  # function, which differs between test runners (test_file() vs test()). Scrub
+  # it so the snapshot is stable regardless of how the suite is invoked.
+  expect_snapshot(
+    getIndexClosestToValue(value = value, array = array, thresholdRel = 0.1),
+    error = TRUE,
+    transform = \(lines) gsub("`[^`]*\\(\\)`: Object", "Object", lines)
+  )
+})
+
 test_that("`compareWithNA()` works as expected", {
   res <- compareWithNA(
     c(NA, "a", "b", NA),

@@ -30,6 +30,10 @@ getIndexClosestToValue <- function(
   thresholdAbs = NULL,
   thresholdRel = NULL
 ) {
+  # `value` must be a single scalar; a vector would silently recycle through the
+  # threshold and distance arithmetic below and return garbage.
+  ospsuite.utils::validateIsOfLength(value, 1)
+
   # If no absolute threshold is set, calculate if from relative threshold
   if (is.null(thresholdAbs)) {
     # If no relative threshold is set also, no threshold is applied
