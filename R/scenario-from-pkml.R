@@ -794,22 +794,15 @@ createScenariosFromPKML <- function(
   vector_lengths <- valid_lengths[valid_lengths > 1]
 
   if (length(vector_lengths) == 0) {
-    # No vectors with length > 1.
-    # If pkmlFilePaths exists and has length 1, and all other args are
-    # length 1 or NULL, create exactly 1 scenario.
-    pkml_length <- length(pkmlFilePaths)
-    if (pkml_length == 1) {
-      return(1)
-    } else {
-      # Shouldn't happen since pkmlFilePaths length > 1 would be in
-      # vector_lengths.
-      return(pkml_length)
-    }
+    # No vectors with length > 1, so `pkmlFilePaths` is length 0 or 1 (a
+    # length > 1 would appear in `vector_lengths`). Its length is the scenario
+    # count: 0 (empty input, a no-op) or 1 (a single scenario).
+    return(as.integer(length(pkmlFilePaths)))
   } else {
     # At least one vector with length > 1
     if (length(unique(vector_lengths)) == 1) {
       # All vectors with length > 1 have the same length
-      return(vector_lengths[1])
+      return(as.integer(vector_lengths[1]))
     } else {
       # Inconsistent vector lengths
       cli::cli_abort(messages$inconsistentArgumentLengths(vector_lengths))
