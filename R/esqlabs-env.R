@@ -37,14 +37,7 @@ getEsqlabsRSetting <- function(settingName) {
     ))
   }
 
-  obj <- esqlabsEnv[[settingName]]
-  # Evaluate if the object is a function. This is required since some properties
-  # are defined as function reference
-  if (is.function(obj)) {
-    return(obj())
-  }
-
-  return(obj)
+  esqlabsEnv[[settingName]]
 }
 
 .getEsqlabsColors <- function() {
