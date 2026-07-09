@@ -842,8 +842,8 @@ removeParameterEntry <- function(
   parameterName
 ) {
   validateIsOfType(project, "Project")
-  if (!is.character(id) || length(id) != 1L) {
-    cli::cli_abort("{.arg id} must be a string scalar")
+  if (!is.character(id) || length(id) != 1L || is.na(id) || nchar(id) == 0) {
+    cli::cli_abort("{.arg id} must be a non-empty string")
   }
   id <- .canonicalizeId(id)
   if (!(id %in% names(project$parameterSets))) {
@@ -1252,8 +1252,8 @@ addInitialConditionEntry <- function(project, id, path, value, unit) {
 #' @family parameters
 removeInitialConditionEntry <- function(project, id, path) {
   validateIsOfType(project, "Project")
-  if (!is.character(id) || length(id) != 1L) {
-    cli::cli_abort("{.arg id} must be a string scalar")
+  if (!is.character(id) || length(id) != 1L || is.na(id) || nchar(id) == 0) {
+    cli::cli_abort("{.arg id} must be a non-empty string")
   }
   id <- .canonicalizeId(id)
   if (!(id %in% names(project$initialConditions))) {

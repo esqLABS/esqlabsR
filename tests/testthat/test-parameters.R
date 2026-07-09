@@ -386,6 +386,32 @@ test_that("removeParameterEntry accepts parallel vectors", {
   )
 })
 
+test_that("removeParameterEntry rejects an empty or NA id", {
+  project <- testProject()
+
+  expect_snapshot(
+    removeParameterEntry(project, "", "Organism|A", "K"),
+    error = TRUE
+  )
+  expect_snapshot(
+    removeParameterEntry(project, NA_character_, "Organism|A", "K"),
+    error = TRUE
+  )
+})
+
+test_that("removeInitialConditionEntry rejects an empty or NA id", {
+  project <- testProject()
+
+  expect_snapshot(
+    removeInitialConditionEntry(project, "", "Organism|A"),
+    error = TRUE
+  )
+  expect_snapshot(
+    removeInitialConditionEntry(project, NA_character_, "Organism|A"),
+    error = TRUE
+  )
+})
+
 test_that("removeParameterEntry auto-removes an emptied parameter set", {
   project <- testProject()
   suppressMessages(

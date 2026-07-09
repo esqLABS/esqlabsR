@@ -40,6 +40,38 @@
       ! `containerPath`, `parameterName`, `value`, and `units` must be vectors of the same length.
       x Got lengths 2, 1, 2, and 1.
 
+# removeParameterEntry rejects an empty or NA id
+
+    Code
+      removeParameterEntry(project, "", "Organism|A", "K")
+    Condition
+      Error in `removeParameterEntry()`:
+      ! `id` must be a non-empty string
+
+---
+
+    Code
+      removeParameterEntry(project, NA_character_, "Organism|A", "K")
+    Condition
+      Error in `removeParameterEntry()`:
+      ! `id` must be a non-empty string
+
+# removeInitialConditionEntry rejects an empty or NA id
+
+    Code
+      removeInitialConditionEntry(project, "", "Organism|A")
+    Condition
+      Error in `removeInitialConditionEntry()`:
+      ! `id` must be a non-empty string
+
+---
+
+    Code
+      removeInitialConditionEntry(project, NA_character_, "Organism|A")
+    Condition
+      Error in `removeInitialConditionEntry()`:
+      ! `id` must be a non-empty string
+
 # removeParameterSet warns when still referenced by a scenario, removes anyway
 
     Code
