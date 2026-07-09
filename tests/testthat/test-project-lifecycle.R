@@ -72,6 +72,28 @@ test_that("a bound project's container edit persists immediately", {
   )
 })
 
+test_that("a container edit on an inline-only project keeps its sections", {
+  # An inline snapshot has every section inlined in the container file and no
+  # `definitions/` tree on disk. A container-metadata edit must materialize the
+  # still-inline sections before the container-only write empties their inline
+  # copies, or the next load's inline fallback reads them all empty.
+  tmp <- saveSnapshot(testProject(), local_projectPath())
+  project <- loadProject(tmp)
+  before <- project$scenarios
+
+  project$name <- "Renamed"
+
+  reloaded <- loadProject(tmp)
+  expect_named(reloaded$scenarios, names(before))
+  expect_length(reloaded$scenarios, length(before))
+  expect_identical(
+    reloaded$scenarios$testscenario$modelFile,
+    before$testscenario$modelFile
+  )
+  # The container edit itself still takes effect on reload.
+  expect_identical(reloaded$name, "Renamed")
+})
+
 test_that("exampleProject() succeeds", {
   path <- exampleProjectPath()
   expect_true(file.exists(path))

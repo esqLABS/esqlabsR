@@ -879,6 +879,30 @@ Project <- R6::R6Class(
       if (is.null(private$.projectFilePath) || !private$.ownsEntityTree()) {
         return(invisible(NULL))
       }
+      # Before emptying the inline sections in `Project.json`, materialize any
+      # kind that has no `definitions/<kind>/` tree yet (an inline-only project
+      # loaded from a snapshot, whose sections live only inline). Without this a
+      # container edit would empty the sole on-disk copy and the next load's
+      # inline fallback would read them all empty. A kind whose tree already
+      # exists is left untouched (the tree owns it), so a fully-materialized
+      # project stays a pure container-only write. Mirrors the not-yet-
+      # materialized-tree guard in `.persistKindChanges()`, applied per kind.
+      for (kind in .entityKindNames()) {
+        spec <- .entityTreeSpec(kind)
+        dir <- .entityKindDir(
+          private$.projectDirPath,
+          spec$kind,
+          self$definitionsFolder
+        )
+        if (!is.null(dir) && !dir.exists(dir)) {
+          .writeEntityTree(
+            .sectionForKind(self, kind),
+            kind,
+            self,
+            private$.projectDirPath
+          )
+        }
+      }
       .saveProjectJson(
         self,
         private$.projectFilePath,
