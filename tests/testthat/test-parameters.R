@@ -928,3 +928,29 @@ test_that("`readInitialConditionsFromXLS()` validates its arguments", {
     fixed = TRUE
   )
 })
+
+# isTableFormulasEqual ----
+
+# `isTableFormulasEqual()` only reads `$allPoints` and each point's `$x`/`$y`.
+# A real `TableFormula` requires a live PK-Sim/.NET object (no exported
+# constructor), so we exercise the comparison with lightweight stubs that mirror
+# that interface, keeping the test self-contained.
+test_that("isTableFormulasEqual compares every point, not just the first", {
+  tableFormula <- function(...) {
+    list(allPoints = lapply(list(...), \(p) list(x = p[[1]], y = p[[2]])))
+  }
+
+  f1 <- tableFormula(c(0, 1), c(10, 2), c(30, 3))
+  # Differs from f1 only in the last point; the old loop returned after point 1
+  # and wrongly reported these as equal.
+  fLateDiff <- tableFormula(c(0, 1), c(10, 2), c(30, 99))
+
+  expect_false(isTableFormulasEqual(f1, fLateDiff))
+  expect_true(isTableFormulasEqual(f1, f1))
+
+  # Two empty table formulas are equal (old code fell through and returned NULL).
+  expect_true(isTableFormulasEqual(tableFormula(), tableFormula()))
+
+  # Differing lengths are never equal.
+  expect_false(isTableFormulasEqual(f1, tableFormula(c(0, 1))))
+})

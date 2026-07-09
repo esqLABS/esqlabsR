@@ -497,12 +497,16 @@ isTableFormulasEqual <- function(formula1, formula2) {
     return(FALSE)
   }
 
-  for (i in seq_along(allPoints1)) {
-    point1 <- allPoints1[[i]]
-    point2 <- allPoints2[[i]]
-
-    return((point1$x == point2$x) && (point1$y == point2$y))
-  }
+  # Two empty table formulas (no points) are equal. Otherwise every point's x
+  # and y must match; the loop only runs once the lengths are known equal.
+  all(vapply(
+    seq_along(allPoints1),
+    \(i) {
+      allPoints1[[i]]$x == allPoints2[[i]]$x &&
+        allPoints1[[i]]$y == allPoints2[[i]]$y
+    },
+    logical(1)
+  ))
 }
 
 #' Set the values of parameters in the simulation by path, if the `condition` is
