@@ -17,29 +17,29 @@
 #'   a vector with the same length as the number of scenarios being created
 #'   (determined by the longest vector argument).
 #' @param project A `Project` object holding base information.
-#' @param scenarioNames Character vector. Optional custom names for the
+#' @param scenarios Character vector. Optional custom names for the
 #'   scenarios. If `NULL` (default), scenario names will be extracted from
 #'   the simulation names in the PKML files. If provided, must have the same
 #'   length as `pkmlFilePaths`.
-#' @param individualId Character vector. Optional individual IDs to use for
+#' @param individual Character vector. Optional individual ids to use for
 #'   scenarios. If `NULL` (default), no individual will be specified. Can be
 #'   a single string (recycled for all scenarios) or a vector with the same
 #'   length as `pkmlFilePaths`.
-#' @param populationId Character vector. Optional population IDs to use for
+#' @param population Character vector. Optional population ids to use for
 #'   scenarios. If `NULL` (default), no population will be specified. If
 #'   provided, sets simulation type to "Population". Can be a single string
 #'   (recycled for all scenarios) or a vector with the same length as
 #'   `pkmlFilePaths`.
-#' @param applicationProtocols Character vector. Optional application protocol
-#'   names to use for scenarios, each referencing `project$applications`. If
+#' @param application Character vector. Optional application protocol
+#'   ids to use for scenarios, each referencing `project$applications`. If
 #'   `NULL` (default), the scenario has no application protocol (the PKML file
 #'   already embeds its own application). Values are used verbatim and are
 #'   validated against `project$applications`. Can be a single string
 #'   (recycled for all scenarios) or a vector with the same length as
 #'   `pkmlFilePaths`.
-#' @param modelParameterSets Character vector. Optional model parameter set
-#'   ids to apply to scenarios (referencing `project$modelParameterSets`).
-#'   If `NULL` (default), no model parameter sets will be applied. Can be a
+#' @param parameterSets Character vector. Optional parameter set
+#'   ids to apply to scenarios (referencing `project$parameterSets`).
+#'   If `NULL` (default), no parameter sets will be applied. Can be a
 #'   single string (recycled for all scenarios) or a vector with the same
 #'   length as `pkmlFilePaths`. If providing multiple set ids per scenario,
 #'   separate them with commas in the string.
@@ -90,7 +90,7 @@
 #'   value (recycled for all scenarios) or a vector with the same length as
 #'   `pkmlFilePaths`.
 #' @param paramSheets `r lifecycle::badge("deprecated")` Use
-#'   `modelParameterSets` instead.
+#'   `parameterSets` instead.
 #'
 #' @details
 #' This function extracts the following information from PKML files:
@@ -143,15 +143,15 @@
 #'   project = project
 #' )
 #'
-#' # The project now holds the new scenarios; run and save them
+#' # The project now holds the new scenarios (already written through to
+#' # their entity files); run them
 #' results <- runScenarios(project)
-#' saveProject(project)
 #'
 #' # Example of vector recycling: single value applied to all scenarios
 #' createScenariosFromPKML(
 #'   pkmlFilePaths = c("sim1.pkml", "sim2.pkml", "sim3.pkml"),
 #'   project = project,
-#'   individualId = "Individual_001",
+#'   individual = "Individual_001",
 #'   steadyState = TRUE,
 #'   steadyStateTime = 1000
 #' )
@@ -160,8 +160,8 @@
 #' createScenariosFromPKML(
 #'   pkmlFilePaths = c("pediatric.pkml", "adult.pkml", "elderly.pkml"),
 #'   project = project,
-#'   scenarioNames = c("Pediatric", "Adult", "Elderly"),
-#'   individualId = c("Child_001", "Adult_001", "Elderly_001"),
+#'   scenarios = c("Pediatric", "Adult", "Elderly"),
+#'   individual = c("Child_001", "Adult_001", "Elderly_001"),
 #'   steadyState = c(FALSE, TRUE, TRUE),
 #'   steadyStateTime = c(NA, 2000, 1500)
 #' )
@@ -169,11 +169,11 @@
 createScenariosFromPKML <- function(
   pkmlFilePaths,
   project,
-  scenarioNames = NULL,
-  individualId = NULL,
-  populationId = NULL,
-  applicationProtocols = NULL,
-  modelParameterSets = NULL,
+  scenarios = NULL,
+  individual = NULL,
+  population = NULL,
+  application = NULL,
+  parameterSets = NULL,
   outputPaths = NULL,
   simulationTime = NULL,
   simulationTimeUnit = NULL,
@@ -188,29 +188,29 @@ createScenariosFromPKML <- function(
   if (lifecycle::is_present(paramSheets)) {
     lifecycle::deprecate_soft(
       what = "createScenariosFromPKML(paramSheets)",
-      with = "createScenariosFromPKML(modelParameterSets)",
+      with = "createScenariosFromPKML(parameterSets)",
       when = "6.0.0"
     )
-    modelParameterSets <- modelParameterSets %||% paramSheets
+    parameterSets <- parameterSets %||% paramSheets
   }
 
   # Validate inputs
   validateIsCharacter(pkmlFilePaths)
   validateIsOfType(project, "Project")
-  if (!is.null(scenarioNames)) {
-    validateIsCharacter(scenarioNames)
+  if (!is.null(scenarios)) {
+    validateIsCharacter(scenarios)
   }
-  if (!is.null(individualId)) {
-    validateIsCharacter(individualId)
+  if (!is.null(individual)) {
+    validateIsCharacter(individual)
   }
-  if (!is.null(populationId)) {
-    validateIsCharacter(populationId)
+  if (!is.null(population)) {
+    validateIsCharacter(population)
   }
-  if (!is.null(applicationProtocols)) {
-    validateIsCharacter(applicationProtocols)
+  if (!is.null(application)) {
+    validateIsCharacter(application)
   }
-  if (!is.null(modelParameterSets)) {
-    validateIsCharacter(modelParameterSets)
+  if (!is.null(parameterSets)) {
+    validateIsCharacter(parameterSets)
   }
   if (!is.null(outputPaths)) {
     validateIsCharacter(outputPaths)
@@ -235,11 +235,11 @@ createScenariosFromPKML <- function(
   # Note: project is excluded as it should always be a single object.
   nScenarios <- .getScenarioCount(
     pkmlFilePaths,
-    scenarioNames,
-    individualId,
-    populationId,
-    applicationProtocols,
-    modelParameterSets,
+    scenarios,
+    individual,
+    population,
+    application,
+    parameterSets,
     outputPaths,
     simulationTime,
     simulationTimeUnit,
@@ -256,29 +256,29 @@ createScenariosFromPKML <- function(
     "pkmlFilePaths",
     nScenarios
   )
-  scenarioNames <- .recycleOrValidateVector(
-    scenarioNames,
-    "scenarioNames",
+  scenarios <- .recycleOrValidateVector(
+    scenarios,
+    "scenarios",
     nScenarios
   )
-  individualId <- .recycleOrValidateVector(
-    individualId,
-    "individualId",
+  individual <- .recycleOrValidateVector(
+    individual,
+    "individual",
     nScenarios
   )
-  populationId <- .recycleOrValidateVector(
-    populationId,
-    "populationId",
+  population <- .recycleOrValidateVector(
+    population,
+    "population",
     nScenarios
   )
-  applicationProtocols <- .recycleOrValidateVector(
-    applicationProtocols,
-    "applicationProtocols",
+  application <- .recycleOrValidateVector(
+    application,
+    "application",
     nScenarios
   )
-  modelParameterSets <- .recycleOrValidateVector(
-    modelParameterSets,
-    "modelParameterSets",
+  parameterSets <- .recycleOrValidateVector(
+    parameterSets,
+    "parameterSets",
     nScenarios
   )
 
@@ -376,12 +376,24 @@ createScenariosFromPKML <- function(
         loadFromCache = FALSE
       )
     }
-    requestedNames[[i]] <- if (is.null(scenarioNames)) {
+    requestedNames[[i]] <- if (is.null(scenarios)) {
       simulationCache[[pkmlPath]]$name
     } else {
-      scenarioNames[[i]]
+      scenarios[[i]]
     }
   }
+  # Canonicalize each requested id before deduping so collision suffixing
+  # operates in canonical (lowercase, safe) space and the canonical ids the
+  # specs are built with are exactly what `addScenario()` will store, so its
+  # duplicate-name abort can never fire on a case-only or sanitization clash.
+  # Per-element (no within-call collision error): a recycled PKML legitimately
+  # yields identical names that `.dedupeScenarioNames()` then suffixes.
+  requestedNames <- vapply(
+    requestedNames,
+    function(n) suppressWarnings(.canonicalizeOneId(n)),
+    character(1),
+    USE.NAMES = FALSE
+  )
   finalNames <- .dedupeScenarioNames(
     requestedNames,
     names(project$scenarios)
@@ -413,17 +425,17 @@ createScenariosFromPKML <- function(
     # so the default is absent). `NA` means absent and is mapped to NULL for
     # `addScenario()`, whose FK check rejects NA.
     applicationProtocol <- NULL
-    if (!is.null(applicationProtocols)) {
-      candidate <- applicationProtocols[[i]]
+    if (!is.null(application)) {
+      candidate <- application[[i]]
       if (!is.na(candidate)) {
         applicationProtocol <- candidate
       }
     }
 
-    # Model parameter sets: split a single comma-separated string into ids.
+    # Parameter sets: split a single comma-separated string into ids.
     modelParameterSetIds <- NULL
-    if (!is.null(modelParameterSets)) {
-      paramSetIds <- modelParameterSets[[i]]
+    if (!is.null(parameterSets)) {
+      paramSetIds <- parameterSets[[i]]
       if (!is.na(paramSetIds) && nchar(paramSetIds) > 0) {
         modelParameterSetIds <- .splitCommaSeparated(paramSetIds)
       }
@@ -499,11 +511,11 @@ createScenariosFromPKML <- function(
     specs[[i]] <- list(
       scenarioName = scenarioName,
       modelFile = modelFile,
-      individualId = if (!is.null(individualId)) individualId[[i]],
-      populationId = if (!is.null(populationId)) populationId[[i]],
-      applicationProtocol = applicationProtocol,
-      modelParameterSets = modelParameterSetIds,
-      outputPathIds = outputPathIds,
+      individual = if (!is.null(individual)) individual[[i]],
+      population = if (!is.null(population)) population[[i]],
+      application = applicationProtocol,
+      parameterSets = modelParameterSetIds,
+      outputPaths = outputPathIds,
       simulationTime = simulationTimeStr,
       simulationTimeUnit = scenarioSimTimeUnit,
       steadyState = steadyState[[i]],
@@ -515,12 +527,11 @@ createScenariosFromPKML <- function(
   }
 
   # Phase B: apply the specs to the project transactionally. A failing
-  # `addScenario()` (e.g. an unknown individualId) on scenario `i` must not
+  # `addScenario()` (e.g. an unknown individual) on scenario `i` must not
   # leave scenarios 1..i-1 and freshly registered output paths behind, so
   # snapshot the section fields and restore them on error.
-  oldScenarios <- project$scenarios
-  oldOutputPaths <- project$outputPaths
-  wasModified <- project$modified
+  oldScenarios <- project$.getSection("scenarios")
+  oldOutputPaths <- project$.getSection("outputPaths")
   wasValidated <- project$validatedSinceMutation
 
   tryCatch(
@@ -535,13 +546,13 @@ createScenariosFromPKML <- function(
       for (spec in specs) {
         addScenario(
           project,
-          scenarioName = spec$scenarioName,
+          id = spec$scenarioName,
           modelFile = spec$modelFile,
-          individualId = spec$individualId,
-          populationId = spec$populationId,
-          applicationProtocol = spec$applicationProtocol,
-          modelParameterSets = spec$modelParameterSets,
-          outputPathIds = spec$outputPathIds,
+          individual = spec$individual,
+          population = spec$population,
+          application = spec$application,
+          parameterSets = spec$parameterSets,
+          outputPaths = spec$outputPaths,
           simulationTime = spec$simulationTime,
           simulationTimeUnit = spec$simulationTimeUnit,
           steadyState = spec$steadyState,
@@ -553,11 +564,8 @@ createScenariosFromPKML <- function(
       }
     },
     error = function(cnd) {
-      project$scenarios <- oldScenarios
-      project$outputPaths <- oldOutputPaths
-      if (!wasModified) {
-        project$.markSaved()
-      }
+      project$.setSection("scenarios", oldScenarios)
+      project$.setSection("outputPaths", oldOutputPaths)
       if (wasValidated) {
         project$.markValidated()
       }
@@ -690,6 +698,9 @@ createScenariosFromPKML <- function(
   if (nchar(base) == 0) {
     base <- "outputPath"
   }
+  # Generate the id already canonical (lowercase, safe) so `addOutputPath()`
+  # does not warn about canonicalizing an id the package itself created.
+  base <- .canonicalizeOneId(base)
   candidate <- base
   suffix <- 2L
   while (candidate %in% takenIds) {

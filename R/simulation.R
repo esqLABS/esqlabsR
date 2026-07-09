@@ -58,6 +58,9 @@ applyIndividualParameters <- function(individualCharacteristics, simulation) {
 #'   describing an individual.
 #' @param additionalParams Optional named list with lists 'paths', 'values', and
 #'   'units'.
+#' @param additionalInitialConditions Optional named list with lists 'paths',
+#'   'values', and 'units', giving molecule start values to apply via
+#'   `ospsuite::setQuantityValuesByPath()` after the parameters.
 #' @param stopIfParameterNotFound Logical. If `TRUE` (default), an error is
 #'   thrown if any of the `additionalParams` does not exist. If `FALSE`,
 #'   non-existent parameters are  ignored.
@@ -78,6 +81,7 @@ initializeSimulation <- function(
   simulation,
   individualCharacteristics = NULL,
   additionalParams = NULL,
+  additionalInitialConditions = NULL,
   stopIfParameterNotFound = TRUE
 ) {
   validateIsOfType(simulation, "Simulation", nullAllowed = FALSE)
@@ -89,6 +93,11 @@ initializeSimulation <- function(
   .validateParametersStructure(
     additionalParams,
     "additionalParams",
+    nullAllowed = TRUE
+  )
+  .validateParametersStructure(
+    additionalInitialConditions,
+    "additionalInitialConditions",
     nullAllowed = TRUE
   )
 
@@ -134,6 +143,21 @@ initializeSimulation <- function(
         values = additionalParams$values,
         simulation = simulation,
         units = additionalParams$units,
+        stopIfNotFound = stopIfParameterNotFound
+      )
+    }
+  }
+
+  # Apply additional initial conditions (molecule start values), after the
+  # parameters so a start value overrides any parameter-driven default.
+  if (!is.null(additionalInitialConditions)) {
+    # Skip if the correct structure is supplied, but no entries are defined
+    if (!isEmpty(additionalInitialConditions$paths)) {
+      ospsuite::setQuantityValuesByPath(
+        quantityPaths = additionalInitialConditions$paths,
+        values = additionalInitialConditions$values,
+        simulation = simulation,
+        units = additionalInitialConditions$units,
         stopIfNotFound = stopIfParameterNotFound
       )
     }
