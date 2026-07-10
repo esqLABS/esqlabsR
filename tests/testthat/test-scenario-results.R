@@ -54,6 +54,51 @@ test_that("save/load round trip preserves population and outputValues (populatio
   )
 })
 
+test_that("loadScenarioResults with project restricts to the declared output paths", {
+  withr::local_options(lifecycle_verbosity = "quiet")
+  project <- testProject()
+  run <- runScenarios(project, scenarios = "testscenario")
+
+  resultsFolder <- withr::local_tempdir()
+  saveScenarioResults(run, project, outputFolder = resultsFolder)
+
+  # Simulate the case where the saved csv/pkml on disk record MORE output paths
+  # than the scenario declares (e.g. the model or scenario changed between save
+  # and reload): re-run the saved simulation with an extra recorded output and
+  # overwrite the artifacts. `testscenario` declares only `aciclovir_pvb`.
+  simulation <- run$testscenario$simulation
+  declaredPaths <- unname(project$scenarios[["testscenario"]]$outputPaths)
+  extraPath <- project$outputPaths[["aciclovir_fat_cell"]]
+  setOutputs(
+    quantitiesOrPaths = c(declaredPaths, extraPath),
+    simulation = simulation
+  )
+  expandedResults <- runSimulations(simulation)[[simulation$id]]
+  ospsuite::saveSimulation(
+    simulation,
+    filePath = file.path(resultsFolder, "testscenario.pkml")
+  )
+  ospsuite::exportResultsToCSV(
+    expandedResults,
+    filePath = file.path(resultsFolder, "testscenario.csv")
+  )
+
+  # With the project supplied, the reloaded output-path column set equals the
+  # column set `runScenarios()` produced: the extra recorded path is dropped.
+  reloaded <- loadScenarioResults(
+    "testscenario",
+    resultsFolder,
+    project = project
+  )
+  expect_equal(
+    names(reloaded$testscenario$outputValues$data),
+    names(run$testscenario$outputValues$data)
+  )
+  # The declared path is present; the extra recorded path is not.
+  expect_true(declaredPaths %in% names(reloaded$testscenario$outputValues$data))
+  expect_false(extraPath %in% names(reloaded$testscenario$outputValues$data))
+})
+
 test_that("saveScenarioResults reports the real error rather than a path warning", {
   withr::local_options(lifecycle_verbosity = "quiet")
   project <- testProject()

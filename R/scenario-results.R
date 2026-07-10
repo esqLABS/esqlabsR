@@ -115,6 +115,11 @@ saveScenarioResults <- function(
 #' @param scenarios Names of simulated scenarios
 #' @param resultsFolder Path to the folder where simulation results as csv and
 #' the corresponding simulations as pkml are located.
+#' @param project Optional `Project` object (loaded with `loadProject()`) whose
+#' scenarios declare the output paths that were run. When supplied, the reloaded
+#' `outputValues` are restricted to each scenario's declared output paths, so
+#' the reloaded column set matches what `runScenarios()` produced. When `NULL`
+#' (default), all output paths recorded in the csv are extracted.
 #'
 #' @details This function requires simulation results AND the corresponding
 #' simulation files being located in the same folder (`resultsFolder`) and have
@@ -124,9 +129,10 @@ saveScenarioResults <- function(
 #' produced by `runScenarios()`: `simulation` (the initialized `Simulation`
 #' object with applied parameters), `results` (the `SimulationResults` object
 #' reloaded from csv), `outputValues` (the output values extracted for the
-#' simulation's recorded output paths), and `population` (the `Population`
-#' reloaded from `<scenario>_population.csv` for population scenarios, or `NULL`
-#' for individual scenarios).
+#' scenario's declared output paths when `project` is supplied, otherwise for
+#' all recorded output paths), and `population` (the `Population` reloaded from
+#' `<scenario>_population.csv` for population scenarios, or `NULL` for individual
+#' scenarios).
 #'
 #' @export
 #'
@@ -136,13 +142,16 @@ saveScenarioResults <- function(
 #' simulatedScenariosResults <- runScenarios(project)
 #' resultsFolder <- saveScenarioResults(simulatedScenariosResults, project)
 #'
-#' # Now load the results
+#' # Now load the results, restricting to each scenario's declared output paths
 #' simulatedScenariosResults <- loadScenarioResults(
 #'   scenarios = names(project$scenarios),
-#'   resultsFolder = resultsFolder
+#'   resultsFolder = resultsFolder,
+#'   project = project
 #' )
 #' }
-loadScenarioResults <- function(scenarios, resultsFolder) {
+loadScenarioResults <- function(scenarios, resultsFolder, project = NULL) {
+  validateIsOfType(project, "Project", nullAllowed = TRUE)
+
   simulatedScenariosResults <- list()
   for (i in seq_along(scenarios)) {
     scenarioName <- scenarios[[i]]
@@ -169,9 +178,25 @@ loadScenarioResults <- function(scenarios, resultsFolder) {
       population <- loadPopulation(populationPath)
     }
 
+    # Restrict the reloaded output values to the scenario's declared output
+    # paths when a project is supplied, mirroring how `runScenarios()` collects
+    # results (see `.collectScenarioResult()`); otherwise fall back to every
+    # output path recorded in the csv. This keeps a reload from silently gaining
+    # extra series relative to the original run.
+    quantitiesOrPaths <- results$allQuantityPaths
+    if (!is.null(project)) {
+      scenario <- project$scenarios[[scenarioName]]
+      if (!is.null(scenario) && !is.null(scenario$outputPaths)) {
+        quantitiesOrPaths <- getAllQuantitiesMatching(
+          unname(scenario$outputPaths),
+          simulation
+        )
+      }
+    }
+
     outputValues <- getOutputValues(
       results,
-      quantitiesOrPaths = results$allQuantityPaths,
+      quantitiesOrPaths = quantitiesOrPaths,
       population = population,
       addMetaData = FALSE
     )
