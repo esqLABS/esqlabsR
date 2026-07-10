@@ -663,3 +663,30 @@ test_that(".compareJsonToExcel does not count id canonicalization as drift", {
   ))
   expect_true(stillInSync$excel_in_sync)
 })
+
+# A corrupt or unreadable Excel side-car cannot be compared. The sync status
+# must report that honestly as NA (the "cannot compare" state), not silently
+# claim the project is in sync, and must warn when not silent.
+test_that("syncStatus() reports NA (and warns) when the Excel side-car is unreadable", {
+  work_dir <- withr::local_tempdir()
+  file.copy(dirname(exampleProjectPath()), work_dir, recursive = TRUE)
+  jsonPath <- file.path(work_dir, "Example", "Project.json")
+  project <- suppressWarnings(loadProject(jsonPath))
+
+  # A corrupt Project.xlsx side-car next to the container: not a valid workbook,
+  # so the comparison's re-import aborts.
+  writeLines(
+    "this is not a valid xlsx workbook",
+    file.path(work_dir, "Example", "Project.xlsx")
+  )
+
+  # Silent: the status is NA, no warning surfaces.
+  status <- suppressWarnings(project$syncStatus(silent = TRUE))
+  expect_identical(status$excel_in_sync, NA)
+
+  # Non-silent: a warning surfaces naming the comparison failure.
+  expect_warning(
+    project$syncStatus(silent = FALSE),
+    "Cannot compare the Excel side-car"
+  )
+})

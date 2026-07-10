@@ -787,9 +787,10 @@ projectConfigurationStatus <- function(...) {
 #' @param project A `Project` object.
 #' @param silent Logical. If `TRUE`, suppresses informational messages.
 #' @returns Invisibly returns a named list with `excel_in_sync` (logical, or
-#'   `NA` when there is no Excel side-car to compare against) and `details` (the
-#'   per-section differences, empty when in sync or when there is nothing to
-#'   compare).
+#'   `NA` when there is no Excel side-car to compare against, or when the
+#'   side-car cannot be read/compared) and `details` (the per-section
+#'   differences, empty when in sync or when there is nothing to compare). When
+#'   not `silent`, a comparison failure surfaces a warning.
 #' @keywords internal
 #' @noRd
 .projectSyncStatus <- function(project, silent = FALSE) {
@@ -816,14 +817,37 @@ projectConfigurationStatus <- function(...) {
     return(invisible(result))
   }
 
+  # A corrupt or unreadable Excel side-car cannot be compared. Report that
+  # honestly as `NA` (the documented "cannot compare" state) rather than
+  # claiming the project is in sync, and surface a warning in the non-silent
+  # branch so the failure is not swallowed.
+  compareError <- NULL
   excelStatus <- tryCatch(
     .compareJsonToExcel(
       jsonPath = jsonPath,
       projectConfigPath = excelPath,
       silent = TRUE
     ),
-    error = function(e) list(excel_in_sync = TRUE)
+    error = function(e) {
+      compareError <<- e
+      NULL
+    }
   )
+
+  if (!is.null(compareError)) {
+    result$excel_in_sync <- NA
+    if (!silent) {
+      cli::cli_warn(
+        c(
+          "Cannot compare the Excel side-car to the project.",
+          "x" = conditionMessage(compareError),
+          "i" = "The {.field excel_in_sync} status is reported as {.val NA}."
+        )
+      )
+    }
+    return(invisible(result))
+  }
+
   result$excel_in_sync <- isTRUE(excelStatus$excel_in_sync)
   if (!result$excel_in_sync) {
     result$details$excel <- excelStatus$details
