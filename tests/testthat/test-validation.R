@@ -252,7 +252,7 @@ test_that(".validateScenarios flags Population scenario without populationId", {
   sc$populationId <- ""
   result <- esqlabsR:::.validateScenarios(list(s1 = sc))
   msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
-  expect_true(any(grepl("populationId", msgs)))
+  expect_match(msgs, "populationId", all = FALSE)
 })
 
 test_that(".validateScenarios warns when modelFile does not exist on disk", {
@@ -265,7 +265,7 @@ test_that(".validateScenarios warns when modelFile does not exist on disk", {
     modelFolder = withr::local_tempdir()
   )
   msgs <- vapply(result$warnings, \(w) w$message, character(1))
-  expect_true(any(grepl("missing\\.pkml", msgs)))
+  expect_match(msgs, "missing\\.pkml", all = FALSE)
 })
 
 test_that(".validateScenarios passes when modelFile exists on disk", {
@@ -298,8 +298,8 @@ test_that(".validateIndividuals catches missing required fields", {
   )
   result <- esqlabsR:::.validateIndividuals(individuals)
   msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
-  expect_true(any(grepl("gender", msgs)))
-  expect_true(any(grepl("species", msgs)))
+  expect_match(msgs, "gender", all = FALSE)
+  expect_match(msgs, "species", all = FALSE)
 })
 
 # Section adapter: populations ----
@@ -314,7 +314,7 @@ test_that(".validatePopulations warns on inverted ranges", {
   )
   result <- esqlabsR:::.validatePopulations(populations)
   msgs <- vapply(result$warnings, \(w) w$message, character(1))
-  expect_true(any(grepl("ageMin > ageMax", msgs)))
+  expect_match(msgs, "ageMin > ageMax", all = FALSE)
 })
 
 # Section adapter: parameter sets ----
@@ -334,7 +334,7 @@ test_that(".validateParameterSets flags empty paths in a real set", {
   )
   result <- esqlabsR:::.validateParameterSets(parameterSets, "parameterSets")
   msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
-  expect_true(any(grepl("empty parameter paths", msgs)))
+  expect_match(msgs, "empty parameter paths", all = FALSE)
 })
 
 test_that(".validateParameterSets flags empty containerPath with valid parameterName", {
@@ -345,7 +345,7 @@ test_that(".validateParameterSets flags empty containerPath with valid parameter
   )
   result <- esqlabsR:::.validateParameterSets(parameterSets, "parameterSets")
   msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
-  expect_true(any(grepl("empty parameter paths", msgs)))
+  expect_match(msgs, "empty parameter paths", all = FALSE)
 })
 
 test_that(".validateParameterSets flags non-numeric values in a real set", {
@@ -361,7 +361,7 @@ test_that(".validateParameterSets flags non-numeric values in a real set", {
   )
   result <- esqlabsR:::.validateParameterSets(parameterSets, "parameterSets")
   msgs <- vapply(result$warnings, \(w) w$message, character(1))
-  expect_true(any(grepl("non-numeric value", msgs)))
+  expect_match(msgs, "non-numeric value", all = FALSE)
 })
 
 test_that(".validateParameterSets flags a bad set in the unified section", {
@@ -423,9 +423,9 @@ test_that(".validateObservedData flags unknown type and missing required fields"
   )
   result <- esqlabsR:::.validateObservedData(observedData, NULL)
   msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
-  expect_true(any(grepl("invalid type 'weird'", msgs)))
-  expect_true(any(grepl("file", msgs)))
-  expect_true(any(grepl("type", msgs)))
+  expect_match(msgs, "invalid type 'weird'", all = FALSE)
+  expect_match(msgs, "file", all = FALSE)
+  expect_match(msgs, "type", all = FALSE)
 })
 
 test_that(".validateObservedData warns on missing files when dataFolder set", {
@@ -435,7 +435,7 @@ test_that(".validateObservedData warns on missing files when dataFolder set", {
   )
   result <- esqlabsR:::.validateObservedData(observedData, tmp)
   msgs <- vapply(result$warnings, \(w) w$message, character(1))
-  expect_true(any(grepl("non-existent file", msgs)))
+  expect_match(msgs, "non-existent file", all = FALSE)
 })
 
 # Section adapter: plots ----
@@ -454,7 +454,7 @@ test_that(".validatePlots flags missing scenario in dataCombined", {
   )
   result <- esqlabsR:::.validatePlots(dataCombined, list(), list())
   msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
-  expect_true(any(grepl("missing 'scenario'", msgs)))
+  expect_match(msgs, "missing 'scenario'", all = FALSE)
 })
 
 test_that(".validatePlots flags a missing label in a dataCombined entry", {
@@ -469,8 +469,8 @@ test_that(".validatePlots flags a missing label in a dataCombined entry", {
   result <- esqlabsR:::.validatePlots(dataCombined, list(), list())
   expect_false(result$is_valid())
   msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
-  expect_true(any(grepl("Simulated entry.*missing 'label'", msgs)))
-  expect_true(any(grepl("Observed entry.*missing 'label'", msgs)))
+  expect_match(msgs, "Simulated entry.*missing 'label'", all = FALSE)
+  expect_match(msgs, "Observed entry.*missing 'label'", all = FALSE)
 })
 
 test_that(".validatePlots flags duplicate plotIds and unknown dataCombinedId", {
@@ -488,8 +488,8 @@ test_that(".validatePlots flags duplicate plotIds and unknown dataCombinedId", {
   )
   result <- esqlabsR:::.validatePlots(dataCombined, plotConfig, list())
   msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
-  expect_true(any(grepl("Duplicate plotId", msgs)))
-  expect_true(any(grepl("unknown dataCombinedId", msgs)))
+  expect_match(msgs, "Duplicate plotId", all = FALSE)
+  expect_match(msgs, "unknown dataCombinedId", all = FALSE)
 })
 
 # Cross-references ----
@@ -501,7 +501,7 @@ test_that(".validateCrossReferences flags scenario referencing missing individua
   project <- .fakeProject(scenarios = list(s1 = sc))
   result <- esqlabsR:::.validateCrossReferences(project, list())
   msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
-  expect_true(any(grepl("undefined individual 'Ghost'", msgs)))
+  expect_match(msgs, "undefined individual 'Ghost'", all = FALSE)
 })
 
 test_that(".validateCrossReferences flags individual referencing unknown parameter set", {
@@ -525,7 +525,7 @@ test_that(".validateCrossReferences flags individual referencing unknown paramet
   )
   result <- esqlabsR:::.validateCrossReferences(project, list())
   msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
-  expect_true(any(grepl("undefined parameterSets", msgs)))
+  expect_match(msgs, "undefined parameterSets", all = FALSE)
 })
 
 test_that(".validateCrossReferences suggests a near match for an individual's parameterSets", {
@@ -582,7 +582,7 @@ test_that(".validateCrossReferences flags a scenario's dangling initialCondition
   )
   result <- esqlabsR:::.validateCrossReferences(project, list())
   msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
-  expect_true(any(grepl("undefined initial-condition sets", msgs)))
+  expect_match(msgs, "undefined initial-condition sets", all = FALSE)
 })
 
 test_that(".validateCrossReferences suggests a near match for a scenario's initialConditions", {
@@ -729,7 +729,7 @@ test_that("validateProject() flags a scenario referencing a removed outputPath",
     \(e) e$message,
     character(1)
   )
-  expect_true(any(grepl("aciclovir_fat_cell", msgs)))
+  expect_match(msgs, "aciclovir_fat_cell", all = FALSE)
 })
 
 # Cross-reference: dataCombined -> observed dataSet ----
@@ -754,7 +754,7 @@ test_that(".validatePlots flags an empty observed dataSet reference", {
   project$.setSection("dataCombined", dc)
   result <- esqlabsR:::.plotsValidatorAdapter(project)
   msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
-  expect_true(any(grepl("dataSet", msgs)))
+  expect_match(msgs, "dataSet", all = FALSE)
 })
 
 test_that("removeObservedData warns when a dataCombined still references it", {
@@ -794,7 +794,7 @@ test_that(".validatePlots flags an unknown plotType from JSON", {
   )
   result <- esqlabsR:::.plotsValidatorAdapter(project)
   msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
-  expect_true(any(grepl("plotType", msgs)))
+  expect_match(msgs, "plotType", all = FALSE)
 })
 
 test_that(".validatePlots hard-errors on unknown plotGrid plotIDs", {
@@ -815,7 +815,7 @@ test_that(".validatePlots hard-errors on unknown plotGrid plotIDs", {
   )
   result <- esqlabsR:::.plotsValidatorAdapter(project)
   msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
-  expect_true(any(grepl("ghost", msgs)))
+  expect_match(msgs, "ghost", all = FALSE)
 })
 
 test_that(".validatePlots flags unknown plotGrid ids even with empty plotConfig", {
@@ -825,7 +825,7 @@ test_that(".validatePlots flags unknown plotGrid ids even with empty plotConfig"
     list(g1 = list(plotGridId = "g1", plotIds = "ghost"))
   )
   msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
-  expect_true(any(grepl("ghost", msgs)))
+  expect_match(msgs, "ghost", all = FALSE)
 })
 
 # Section adapter: PI per-task scenario consistency ----
@@ -855,7 +855,7 @@ test_that(".validatePI flags a parameter scenario outside the task's scenarios",
   )
   result <- esqlabsR:::.validatePI(project$parameterIdentification)
   msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
-  expect_true(any(grepl("testscenario_steadystate", msgs)))
+  expect_match(msgs, "testscenario_steadystate", all = FALSE)
 })
 
 test_that(".validatePI flags a mapping scenario outside the task's scenarios", {
@@ -881,7 +881,7 @@ test_that(".validatePI flags a mapping scenario outside the task's scenarios", {
   )
   result <- esqlabsR:::.validatePI(project$parameterIdentification)
   msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
-  expect_true(any(grepl("populationscenario", msgs)))
+  expect_match(msgs, "populationscenario", all = FALSE)
 })
 
 # Cross-reference branches with previously zero coverage ----
@@ -895,7 +895,7 @@ test_that("validateProject() flags a scenario referencing a removed population",
     \(e) e$message,
     character(1)
   )
-  expect_true(any(grepl("undefined population", msgs)))
+  expect_match(msgs, "undefined population", all = FALSE)
 })
 
 test_that("validateProject() flags a scenario referencing a removed model set", {
@@ -907,7 +907,7 @@ test_that("validateProject() flags a scenario referencing a removed model set", 
     \(e) e$message,
     character(1)
   )
-  expect_true(any(grepl("model parameter sets", msgs)))
+  expect_match(msgs, "model parameter sets", all = FALSE)
 })
 
 test_that("validateProject() flags a scenario referencing a removed application", {
@@ -919,7 +919,7 @@ test_that("validateProject() flags a scenario referencing a removed application"
     \(e) e$message,
     character(1)
   )
-  expect_true(any(grepl("undefined application", msgs)))
+  expect_match(msgs, "undefined application", all = FALSE)
 })
 
 test_that("validateProject() flags an application referencing a removed set", {
@@ -934,7 +934,7 @@ test_that("validateProject() flags an application referencing a removed set", {
     \(e) e$message,
     character(1)
   )
-  expect_true(any(grepl("Application.*undefined parameterSets", msgs)))
+  expect_match(msgs, "Application.*undefined parameterSets", all = FALSE)
 })
 
 test_that("validateProject() flags a dataCombined referencing an unknown scenario", {
@@ -954,7 +954,7 @@ test_that("validateProject() flags a dataCombined referencing an unknown scenari
     \(e) e$message,
     character(1)
   )
-  expect_true(any(grepl("ghostscenario", msgs)))
+  expect_match(msgs, "ghostscenario", all = FALSE)
 })
 
 test_that("validateProject() flags a PI outputMapping referencing a removed outputPath", {
@@ -967,7 +967,7 @@ test_that("validateProject() flags a PI outputMapping referencing a removed outp
     \(e) e$message,
     character(1)
   )
-  expect_true(any(grepl("undefined outputPath", msgs)))
+  expect_match(msgs, "undefined outputPath", all = FALSE)
 })
 
 test_that("validateProject() flags a PI outputMapping with no outputPath", {
@@ -987,7 +987,7 @@ test_that("validateProject() flags a PI outputMapping with no outputPath", {
     \(e) e$message,
     character(1)
   )
-  expect_true(any(grepl("does not define an outputPath", msgs)))
+  expect_match(msgs, "does not define an outputPath", all = FALSE)
 })
 
 # print.ValidationResults ----
@@ -1059,5 +1059,5 @@ test_that("print.ValidationResults leaves the structured object indexable", {
 test_that("format.ValidationResults returns the printed lines as a character vector", {
   lines <- format(.fakeValidationResults())
   expect_type(lines, "character")
-  expect_true(any(grepl("scenarios", lines)))
+  expect_match(lines, "scenarios", all = FALSE)
 })
