@@ -226,3 +226,26 @@ test_that("sensitivityTornadoPlot plots are as expected with filters", {
     )
   )
 })
+
+# .splitParameterName ----------------------------------------------------
+
+test_that(".splitParameterName inserts a line break after the third pipe", {
+  split <- esqlabsR:::.splitParameterName
+
+  # NULL passes through unchanged, regardless of `equalLines`.
+  expect_null(split(NULL))
+  expect_null(split(NULL, equalLines = TRUE))
+
+  # Fewer than three pipes: unchanged by default, a trailing "\n" appended
+  # only when `equalLines = TRUE` (to keep multi-line labels vertically even).
+  expect_equal(split("a"), "a")
+  expect_equal(split("a", equalLines = TRUE), "a\n")
+  expect_equal(split("a|b|c"), "a|b|c")
+  expect_equal(split("a|b|c", equalLines = TRUE), "a|b|c\n")
+
+  # Three or more pipes: a newline is inserted after the third pipe. This
+  # branch wins over `equalLines`, so both calls give the same result.
+  expect_equal(split("a|b|c|d"), "a|b|c|\nd")
+  expect_equal(split("a|b|c|d", equalLines = TRUE), "a|b|c|\nd")
+  expect_equal(split("a|b|c|d|e"), "a|b|c|\nd|e")
+})
