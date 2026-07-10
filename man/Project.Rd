@@ -57,7 +57,18 @@ container for a bound project.}
 \code{projectDirPath}) that holds the project's authored entity-definition
 tree. Defaults to \code{"definitions"}. Writing persists the container for
 a bound project; changing it moves where future write-through edits
-are read from and written to.}
+are read from and written to.
+
+A change is refused once the project owns a materialized tree on disk:
+silently re-pointing such a project at a new folder would
+re-materialize its sections into that folder and orphan the old tree
+(the old folder survives, unreferenced). Load and construction assign
+the private backing field directly and so are never blocked by this
+guard; a clone does not own the source's tree (its write-through is an
+in-memory no-op), so it may re-point freely; only a deliberate write on
+an already-materialized owning project is refused. To relocate the tree
+on purpose, snapshot the project and reload it into a fresh directory
+under the new folder name (see \code{\link[=saveSnapshot]{saveSnapshot()}} / \code{\link[=loadSnapshot]{loadSnapshot()}}).}
 
     \item{\code{defaultSimulationRunOptions}}{Named list of the project-level
 default simulation run options (the \code{defaultSimulationRunOptions} JSON

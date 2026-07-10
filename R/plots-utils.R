@@ -24,7 +24,6 @@
 #'
 #' @import grDevices
 #' @returns A list of colors as HEX values.
-#' @import grDevices
 #' @export
 esqlabsColors <- function(nrOfColors) {
   # esqLABS colors in HSV model
@@ -127,7 +126,6 @@ esqlabsColors <- function(nrOfColors) {
 #'
 #' @examples
 #' col2hsv("yellow")
-#' @export
 col2hsv <- function(color) {
   validateIsString(color)
   rgb <- col2rgb(color)

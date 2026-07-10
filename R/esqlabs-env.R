@@ -14,7 +14,10 @@ esqlabsEnv$packageVersion <- getNamespaceVersion("esqlabsR")
 # enum would omit `colorPalette` even though it is a valid working setting.
 esqlabsEnv$colorPalette <- NULL
 
-#' Names of the settings stored in esqlabsEnv Can be used with `getEsqlabsRSetting()`
+#' Names of the settings stored in esqlabsEnv
+#'
+#' The returned names can be used with `getEsqlabsRSetting()` to look up the
+#' value of a global esqlabsR setting.
 #' @export
 esqlabsRSettingNames <- enum(names(esqlabsEnv))
 

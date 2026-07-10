@@ -8,6 +8,11 @@
 #' Generate plots from a Project
 #'
 #' @description
+#' **Returns plot grids, not standalone plots.** By default `createPlots()`
+#' builds every plot grid declared in `project$plotGrids` and no standalone
+#' plots, and hands back a **named list of plot grids keyed by Plot Grid name**
+#' (the `plots` argument opts individual standalone plots into that same list).
+#'
 #' Reads `project$plots` and `project$plotGrids` (both keyed lists, one entry
 #' per plot / grid) to build the requested plot grids and, optionally,
 #' standalone single plots. DataCombined objects are resolved via
@@ -41,10 +46,12 @@
 #'   to `FALSE` to skip the pre-flight check (e.g. when the caller has
 #'   already validated the project).
 #'
-#' @returns A named list keyed by id: one entry per requested plot grid
-#'   (keyed by `plotGridId`) unioned with one entry per requested standalone
-#'   plot (keyed by `plotId`). An empty list when the project has no plots to
-#'   build.
+#' @returns A named list of **plot grids** keyed by Plot Grid name: one entry
+#'   per requested plot grid (keyed by its `plotGridId`), unioned with one entry
+#'   per requested standalone plot (keyed by its `plotId`) when `plots` is
+#'   given. Note the list holds plot grids, not standalone `Plot` objects,
+#'   unless standalone plots were explicitly requested via `plots`. An empty
+#'   list when the project has no plots to build.
 #'
 #' @import tidyr
 #'
