@@ -420,9 +420,13 @@ createDataCombinedFromExcel <- function(...) {
   }
   # Identify the names of DataCombined that have been completely removed
   missingDc <- setdiff(dcNames, unique(dfDataCombined$dataCombinedName))
-  # Create empty rows for each missing DataCombined
+  # Create empty rows for each missing DataCombined. Only the
+  # `dataCombinedName` column is populated; the remaining columns stay NA on
+  # purpose so downstream code can build an empty DataCombined carrying just
+  # the name. Assign by column name (not position) so the reconstruction stays
+  # correct even if the column order changes.
   for (name in missingDc) {
-    dfDataCombined[nrow(dfDataCombined) + 1, 1] <- name
+    dfDataCombined[nrow(dfDataCombined) + 1, "dataCombinedName"] <- name
   }
 
   return(dfDataCombined)
