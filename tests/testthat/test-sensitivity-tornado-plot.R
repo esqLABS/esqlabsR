@@ -119,12 +119,15 @@ test_that("sensitivityTornadoPlot creates default plot", {
 
 test_that("sensitivityTornadoPlot creates default plot with custom parameter path labels", {
   simulation <- sensFixture()$simulation
-  names(parameterPaths) <- c("Lipophilicity", "Dose", "GFR fraction")
+  # Work on a labelled local copy so the file-scope `parameterPaths` is never
+  # mutated for other tests in this file.
+  namedParameterPaths <- parameterPaths
+  names(namedParameterPaths) <- c("Lipophilicity", "Dose", "GFR fraction")
 
   resultsLab <- sensitivityCalculation(
     simulation = simulation,
     outputPaths = outputPaths,
-    parameterPaths = parameterPaths,
+    parameterPaths = namedParameterPaths,
     variationRange = variationRange
   )
 
@@ -139,7 +142,7 @@ test_that("sensitivityTornadoPlot creates default plot with custom parameter pat
   pb <- ggplot2::ggplot_build(p[[n]][[1]])
 
   expect_setequal(
-    names(parameterPaths),
+    names(namedParameterPaths),
     pb$layout$panel_params[[1]]$y$get_labels()
   )
 })

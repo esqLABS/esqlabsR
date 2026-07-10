@@ -165,12 +165,15 @@ test_that("sensitivityTimeProfiles creates expected default plot", {
 
 test_that("sensitivityTimeProfiles applies user-defined parameter labels", {
   simulation <- sensFixture()$simulation
-  names(parameterPaths) <- c("Lipophilicity", "Dose", "GFR fraction")
+  # Work on a labelled local copy so the file-scope `parameterPaths` is never
+  # mutated for other tests in this file.
+  namedParameterPaths <- parameterPaths
+  names(namedParameterPaths) <- c("Lipophilicity", "Dose", "GFR fraction")
 
   resultsLab <- sensitivityCalculation(
     simulation = simulation,
     outputPaths = outputPaths,
-    parameterPaths = parameterPaths,
+    parameterPaths = namedParameterPaths,
     variationRange = variationRange
   )
 
