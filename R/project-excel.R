@@ -866,7 +866,14 @@ projectConfigurationStatus <- function(...) {
     }
     nms <- names(section)
     if (!is.null(nms)) {
-      names(section) <- vapply(nms, .canonicalizeOneId, character(1))
+      # Route the section's keyed ids through the collision-CHECKING path so
+      # that two ids collapsing to the same canonical id abort the migration
+      # (matching interactive authoring), rather than letting a downstream
+      # rename silently drop the second entity. `.canonicalizeId()` also warns
+      # per changed id; an Excel import renames in bulk and the migrate guide
+      # documents that, so the per-id warning is suppressed while the
+      # collision abort is allowed to propagate.
+      names(section) <- suppressWarnings(.canonicalizeId(nms))
     }
     section
   }

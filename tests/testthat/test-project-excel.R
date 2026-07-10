@@ -510,3 +510,43 @@ test_that("loading the Excel import warns about the dangling applicationProtocol
     "undefined application"
   )
 })
+
+# The migration canonicalizes every id to a safe, lowercase form. When two
+# distinct source ids collapse to the same canonical id, the migration must
+# abort (matching interactive authoring) rather than silently let a downstream
+# rename drop the second entity.
+test_that("importProjectFromExcel aborts when two ids canonicalize to the same value", {
+  work_dir <- withr::local_tempdir()
+  file.copy(
+    dirname(testProjectExcelPath()),
+    work_dir,
+    recursive = TRUE
+  )
+  projectDir <- file.path(work_dir, "TestProjectExcel")
+  scenariosFile <- file.path(projectDir, "Configurations", "Scenarios.xlsx")
+
+  # Rewrite the OutputPaths sheet so two ids (`Aciclovir_PVB` and its
+  # case variant) canonicalize to the same `aciclovir_pvb`.
+  collidingOutputPaths <- data.frame(
+    OutputPathId = c("Aciclovir_PVB", "aciclovir_pvb"),
+    OutputPath = c(
+      "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)",
+      "Organism|Fat|Intracellular|Aciclovir|Concentration in container"
+    ),
+    stringsAsFactors = FALSE
+  )
+  scenariosSheet <- readExcel(scenariosFile, sheet = "Scenarios")
+  .writeExcel(
+    list(OutputPaths = collidingOutputPaths, Scenarios = scenariosSheet),
+    scenariosFile
+  )
+
+  expect_snapshot(
+    error = TRUE,
+    importProjectFromExcel(
+      file.path(projectDir, "ProjectConfiguration.xlsx"),
+      outputDir = withr::local_tempdir(),
+      silent = TRUE
+    )
+  )
+})
