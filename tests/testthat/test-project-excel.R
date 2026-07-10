@@ -550,3 +550,35 @@ test_that("importProjectFromExcel aborts when two ids canonicalize to the same v
     )
   )
 })
+
+# Two distinct output-path ids may resolve to the same literal path. The export
+# must key the scenario's ids off `names(sc$outputPaths)` (the ids themselves),
+# not a value-based reverse-lookup that would collapse both to one id and drop
+# the other.
+test_that("exportProjectToExcel keeps both ids when two share one output path", {
+  project <- testProject()
+  suppressMessages(suppressWarnings({
+    addOutputPath(
+      project,
+      id = c("op_dup_a", "op_dup_b"),
+      path = "Organism|A|Concentration"
+    )
+    setScenario(
+      project,
+      "testscenario",
+      outputPaths = c("op_dup_a", "op_dup_b")
+    )
+  }))
+
+  excel_out <- withr::local_tempdir()
+  suppressMessages(suppressWarnings(
+    exportProjectToExcel(project, outputDir = excel_out, silent = TRUE)
+  ))
+
+  scenariosFile <- file.path(excel_out, "Configurations", "Scenarios.xlsx")
+  scenariosSheet <- readExcel(scenariosFile, sheet = "Scenarios")
+  row <- scenariosSheet[scenariosSheet$Scenario_name == "testscenario", ]
+  exportedIds <- .parseCommaListToArray(row$OutputPathsIds)
+
+  expect_setequal(exportedIds, c("op_dup_a", "op_dup_b"))
+})

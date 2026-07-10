@@ -1821,9 +1821,9 @@ projectConfigurationStatus <- function(...) {
 
 #' Convert Scenario objects to an Excel data frame
 #' @param scenarioConfigs Named list of Scenario objects
-#' @param outputPaths Named character vector of output paths (names are IDs,
-#'   values are path strings) from `Project$outputPaths`.
-#'   Used to reverse-lookup scenario output paths back to IDs.
+#' @param outputPaths Retained for call-site compatibility; unused. Each
+#'   scenario carries its output-path ids as the names of its own
+#'   `outputPaths` vector, so no project-level reverse-lookup is needed.
 #' @returns A data frame
 #' @keywords internal
 #' @noRd
@@ -1848,13 +1848,17 @@ projectConfigurationStatus <- function(...) {
       )
       simTimeStr <- paste(intervals, collapse = "; ")
     }
-    # outputPaths -> reverse-lookup IDs from project$outputPaths
+    # outputPaths -> the ids are the names of `sc$outputPaths` (a named vector
+    # of id -> resolved path). Export those names directly rather than
+    # reverse-looking-them-up by path value: two distinct ids may resolve to the
+    # same literal path, and a value-based `match()` would collapse them to one
+    # id and drop the other.
     outputPathIdsStr <- NA
-    if (!is.null(sc$outputPaths) && !is.null(outputPaths)) {
-      matchedIds <- names(outputPaths)[match(sc$outputPaths, outputPaths)]
-      matchedIds <- matchedIds[!is.na(matchedIds)]
-      if (length(matchedIds) > 0) {
-        outputPathIdsStr <- .formatArrayToCommaList(matchedIds)
+    if (!is.null(sc$outputPaths)) {
+      ids <- names(sc$outputPaths)
+      ids <- ids[!is.na(ids) & nzchar(ids)]
+      if (length(ids) > 0) {
+        outputPathIdsStr <- .formatArrayToCommaList(ids)
       }
     }
 
