@@ -438,6 +438,57 @@ test_that(".validateObservedData warns on missing files when dataFolder set", {
   expect_match(msgs, "non-existent file", all = FALSE)
 })
 
+# The two observed-data validators, the project-validator adapter
+# (.validateObservedData) and the load/add-time guard (.validateObservedDataEntry),
+# share one required-field spec. Both must treat `sheets` on an Excel source the
+# same way: an absent `sheets` and a present-but-empty `sheets` are both a
+# missing required field.
+
+test_that("both observed-data validators require a present, non-empty sheets on excel", {
+  missingSheets <- list(type = "excel", file = "x", importerConfiguration = "c")
+  emptySheets <- list(
+    type = "excel",
+    file = "x",
+    importerConfiguration = "c",
+    sheets = list()
+  )
+
+  # .validateObservedData (project validator): a critical error naming `sheets`.
+  missingResult <- esqlabsR:::.validateObservedData(list(missingSheets), NULL)
+  emptyResult <- esqlabsR:::.validateObservedData(list(emptySheets), NULL)
+  missingMsgs <- vapply(
+    missingResult$critical_errors,
+    \(e) e$message,
+    character(1)
+  )
+  emptyMsgs <- vapply(emptyResult$critical_errors, \(e) e$message, character(1))
+  expect_match(missingMsgs, "sheets", all = FALSE)
+  expect_match(emptyMsgs, "sheets", all = FALSE)
+
+  # .validateObservedDataEntry (load/add guard): aborts naming `sheets`.
+  # Before unification an empty-but-present `sheets` slipped through here.
+  expect_error(
+    esqlabsR:::.validateObservedDataEntry(missingSheets, 1L),
+    "sheets"
+  )
+  expect_error(
+    esqlabsR:::.validateObservedDataEntry(emptySheets, 1L),
+    "sheets"
+  )
+})
+
+test_that("both observed-data validators accept a well-formed excel entry", {
+  good <- list(
+    type = "excel",
+    file = "x.xlsx",
+    importerConfiguration = "c.xml",
+    sheets = list("Sheet1")
+  )
+  result <- esqlabsR:::.validateObservedData(list(good), NULL)
+  expect_length(result$critical_errors, 0)
+  expect_true(esqlabsR:::.validateObservedDataEntry(good, 1L))
+})
+
 # Section adapter: plots ----
 
 test_that(".validatePlots warns when project has no plots sections", {

@@ -6,8 +6,16 @@ messages <- ospsuite.utils::messages
 # through the `cli` wrappers `cli::cli_abort()` (errors) and `cli::cli_warn()`
 # (warnings); `cli::cli_inform()` surfaces informational text. New user-facing
 # text belongs here as a catalog entry routed through those wrappers, not as a
-# base `stop()`/`warning()`/`message()` on an inline literal string, so all
-# wording lives in one auditable place.
+# base `stop()`/`warning()`/`message()` on an inline literal string.
+#
+# One known exception: the project validation framework (`R/validation.R` and
+# the per-section validators in `R/scenarios.R`, `R/individuals.R`,
+# `R/populations.R`, `R/output-paths.R`, `R/plots.R`,
+# `R/parameter-identification.R`) builds most of its `validationResult`
+# messages inline with `paste0()` rather than through this catalog. The
+# observed-data validator (`R/observed-data.R`) is routed through the catalog
+# (the `validationObservedData*` entries below); the remaining validators are
+# not yet migrated, so not all validation wording lives here.
 
 # Parameters structure####
 messages$errorWrongXLSStructure <- function(
@@ -860,4 +868,44 @@ messages$observedDataNameCollision <- function(duplicates) {
     "x" = "Duplicate observed-data set name{?s} across sources: {.val {duplicates}}.",
     "i" = "Each loaded {.cls DataSet} must have a unique name; rename the source or the data set."
   ))
+}
+
+# Observed-data messages surfaced by the project validator (`validateProject()`)
+# rather than by the load/add path. These are stored verbatim as the `message`
+# of a `validationResult` entry (a plain string, not a `cli`-tagged vector), so
+# they interpolate the ids as plain text (single-quoted to match the rest of the
+# validator's wording) instead of styling them with `cli` `{.val}` markup.
+messages$validationObservedDataMissingType <- function(entryLabel) {
+  cliFormat("{entryLabel} is missing required field 'type'")
+}
+
+messages$validationObservedDataInvalidType <- function(
+  entryLabel,
+  type,
+  validTypes
+) {
+  cliFormat(
+    "{entryLabel} has invalid type '{type}'. Must be one of: {paste(validTypes, collapse = \", \")}"
+  )
+}
+
+messages$validationObservedDataMissingField <- function(
+  entryLabel,
+  type,
+  field
+) {
+  cliFormat("{entryLabel} ({type}) is missing required field '{field}'")
+}
+
+messages$validationObservedDataFileNotFound <- function(entryLabel, file) {
+  cliFormat("{entryLabel} references non-existent file: {file}")
+}
+
+messages$validationObservedDataImporterNotFound <- function(
+  entryLabel,
+  importerConfiguration
+) {
+  cliFormat(
+    "{entryLabel} references non-existent importer config: {importerConfiguration}"
+  )
 }
