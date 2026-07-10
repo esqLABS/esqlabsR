@@ -6,7 +6,7 @@ test_that("`sampleRandomValue()` rejects an unsupported distribution", {
 })
 
 test_that("`sampleRandomValue()` returns the requested number of values", {
-  set.seed(123)
+  withr::local_seed(123)
   expect_length(sampleRandomValue(Distributions$Normal, 5, 2, 10), 10)
   expect_length(sampleRandomValue(Distributions$LogNormal, 5, 2, 10), 10)
 })
@@ -17,7 +17,7 @@ test_that("`sampleRandomValue()` returns the requested number of values", {
 # parameterized so their realized mean is `mean` and sd is `sd`), within a
 # generous tolerance that still catches a broken sampler.
 test_that("`sampleRandomValue()` Normal draws match the target mean and sd", {
-  set.seed(123)
+  withr::local_seed(123)
   mean <- 5
   sd <- 2
   values <- sampleRandomValue(Distributions$Normal, mean, sd, 1e5)
@@ -27,7 +27,7 @@ test_that("`sampleRandomValue()` Normal draws match the target mean and sd", {
 })
 
 test_that("`sampleRandomValue()` LogNormal draws are positive and match target moments", {
-  set.seed(123)
+  withr::local_seed(123)
   mean <- 5
   sd <- 2
   values <- sampleRandomValue(Distributions$LogNormal, mean, sd, 1e5)
