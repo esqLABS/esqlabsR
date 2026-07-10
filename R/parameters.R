@@ -81,6 +81,7 @@ readParametersFromXLS <- function(paramsXLSpath, sheets = NULL) {
 
   pathsValuesVector <- vector(mode = "numeric")
   pathsUnitsVector <- vector(mode = "character")
+  seenPaths <- character(0)
 
   for (sheet in sheets) {
     data <- readExcel(path = paramsXLSpath, sheet = sheet)
@@ -97,12 +98,43 @@ readParametersFromXLS <- function(paramsXLSpath, sheets = NULL) {
       data[["Parameter Name"]],
       sep = "|"
     )
-    pathsValuesVector[fullPaths] <- as.numeric(data[["Value"]])
+
+    # A non-blank `Value` cell that does not coerce to a number is an error,
+    # rather than silently coerced to NA and carried through. A genuinely blank
+    # cell (empty/NA) is left as NA and allowed. Mirrors the initial-conditions
+    # reader's value validation.
+    valuesRaw <- data[["Value"]]
+    parsedValues <- suppressWarnings(as.numeric(valuesRaw))
+    isBlankValue <- is.na(valuesRaw) | trimws(as.character(valuesRaw)) == ""
+    invalidValues <- !isBlankValue & is.na(parsedValues)
+    if (any(invalidValues)) {
+      cli::cli_abort(messages$errorMissingValuesInParameters(
+        filePath = paramsXLSpath,
+        parameterPaths = fullPaths[invalidValues]
+      ))
+    }
+
+    # Warn (rather than silently last-wins) when the same parameter path appears
+    # more than once: either within this sheet, or already defined on a prior
+    # sheet. The last occurrence wins downstream.
+    duplicatePaths <- unique(c(
+      fullPaths[duplicated(fullPaths)],
+      intersect(fullPaths, seenPaths)
+    ))
+    if (length(duplicatePaths) > 0) {
+      cli::cli_warn(messages$warningDuplicateParameters(
+        filePath = paramsXLSpath,
+        parameterPaths = duplicatePaths
+      ))
+    }
+
+    pathsValuesVector[fullPaths] <- parsedValues
 
     pathsUnitsVector[fullPaths] <- tidyr::replace_na(
       data = as.character(data[["Units"]]),
       replace = ""
     )
+    seenPaths <- union(seenPaths, fullPaths)
   }
 
   return(.parametersVectorToList(pathsValuesVector, pathsUnitsVector))

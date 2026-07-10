@@ -1,3 +1,27 @@
+# It overwrites the value if the path is present in multiple sheets
+
+    Code
+      params <- readParametersFromXLS(paramsXLSpath = paramsXLSpath, sheets = sheets)
+    Condition
+      Warning:
+      Duplicate parameter path(s) in parameters file 'data/Parameters.xlsx': "Path1|Param1, Applications|Glucose_iv_infusion|Active". Only the last value defined for each path is used.
+
+# `readParametersFromXLS()` errors on a non-numeric Value cell
+
+    Code
+      readParametersFromXLS(paramsXLSpath = paramsXLSpath)
+    Condition
+      Error in `readParametersFromXLS()`:
+      ! Missing or non-numeric values in parameters file 'Parameters.xlsx' for parameter(s): "Path1|Param1". A numeric value must be specified for all parameters.
+
+# `readParametersFromXLS()` warns and keeps the last value for a duplicate path
+
+    Code
+      params <- readParametersFromXLS(paramsXLSpath = paramsXLSpath)
+    Condition
+      Warning:
+      Duplicate parameter path(s) in parameters file 'Parameters.xlsx': "Path1|Param1". Only the last value defined for each path is used.
+
 # addParameterSet canonicalizes its id
 
     Code

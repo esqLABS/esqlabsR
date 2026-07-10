@@ -37,6 +37,24 @@ messages$wrongParametersStructure <- function(argumentName) {
   )
 }
 
+messages$errorMissingValuesInParameters <- function(
+  filePath,
+  parameterPaths
+) {
+  cliFormat(
+    "Missing or non-numeric values in parameters file {.file {filePath}} for parameter(s): {.val {paste(parameterPaths, collapse = ', ')}}. A numeric value must be specified for all parameters."
+  )
+}
+
+messages$warningDuplicateParameters <- function(
+  filePath,
+  parameterPaths
+) {
+  cliFormat(
+    "Duplicate parameter path(s) in parameters file {.file {filePath}}: {.val {paste(parameterPaths, collapse = ', ')}}. Only the last value defined for each path is used."
+  )
+}
+
 messages$errorMissingUnitsInInitialConditions <- function(
   filePath,
   moleculePaths

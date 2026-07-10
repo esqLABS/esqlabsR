@@ -46,9 +46,11 @@ test_that("It throws an error when a sheet has wrong structure", {
 test_that("It overwrites the value if the path is present in multiple sheets", {
   paramsXLSpath <- getTestDataFilePath("Parameters.xlsx")
   sheets <- c("ValidSheet", "SecondSheet")
-  params <- readParametersFromXLS(
-    paramsXLSpath = paramsXLSpath,
-    sheets = sheets
+  expect_snapshot(
+    params <- readParametersFromXLS(
+      paramsXLSpath = paramsXLSpath,
+      sheets = sheets
+    )
   )
 
   paramsPaths <- c(
@@ -61,6 +63,73 @@ test_that("It overwrites the value if the path is present in multiple sheets", {
   idx <- match(paramsPaths, params$paths)
   expect_equal(expectedVals, params$values[idx])
   expect_equal(expectedUnits, params$units[idx])
+})
+
+test_that("`readParametersFromXLS()` errors on a non-numeric Value cell", {
+  paramsXLSpath <- file.path(withr::local_tempdir(), "Parameters.xlsx")
+  writexl::write_xlsx(
+    data.frame(
+      "Container Path" = c("Path1", "Path2"),
+      "Parameter Name" = c("Param1", "Param2"),
+      "Value" = c("not a number", "2"),
+      "Units" = c("mg", "mg"),
+      check.names = FALSE,
+      stringsAsFactors = FALSE
+    ),
+    path = paramsXLSpath
+  )
+
+  # The temp directory is non-deterministic, so scrub everything up to the
+  # stable file name from the captured message.
+  expect_snapshot(
+    error = TRUE,
+    readParametersFromXLS(paramsXLSpath = paramsXLSpath),
+    transform = \(lines) gsub("'.*Parameters.xlsx'", "'Parameters.xlsx'", lines)
+  )
+})
+
+test_that("`readParametersFromXLS()` allows a genuinely blank Value cell", {
+  paramsXLSpath <- withr::local_tempfile(fileext = ".xlsx")
+  writexl::write_xlsx(
+    data.frame(
+      "Container Path" = c("Path1", "Path2"),
+      "Parameter Name" = c("Param1", "Param2"),
+      "Value" = c(NA_real_, 2),
+      "Units" = c("mg", "mg"),
+      check.names = FALSE,
+      stringsAsFactors = FALSE
+    ),
+    path = paramsXLSpath
+  )
+
+  params <- readParametersFromXLS(paramsXLSpath = paramsXLSpath)
+  idx <- match("Path1|Param1", params$paths)
+  expect_true(is.na(params$values[idx]))
+})
+
+test_that("`readParametersFromXLS()` warns and keeps the last value for a duplicate path", {
+  paramsXLSpath <- file.path(withr::local_tempdir(), "Parameters.xlsx")
+  writexl::write_xlsx(
+    data.frame(
+      "Container Path" = c("Path1", "Path1"),
+      "Parameter Name" = c("Param1", "Param1"),
+      "Value" = c(1, 2),
+      "Units" = c("mg", "mg"),
+      check.names = FALSE,
+      stringsAsFactors = FALSE
+    ),
+    path = paramsXLSpath
+  )
+
+  # The temp directory is non-deterministic, so scrub everything up to the
+  # stable file name from the captured message.
+  expect_snapshot(
+    params <- readParametersFromXLS(paramsXLSpath = paramsXLSpath),
+    transform = \(lines) gsub("'.*Parameters.xlsx'", "'Parameters.xlsx'", lines)
+  )
+
+  idx <- match("Path1|Param1", params$paths)
+  expect_equal(params$values[idx], 2)
 })
 
 
