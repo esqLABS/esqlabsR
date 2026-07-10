@@ -124,28 +124,35 @@ test_that("sensitivityCalculation fails with invalid `outputPaths`", {
     'argument "outputPaths" has empty strings'
   )
 
-  expect_error(
+  # The validator prefixes the message with the enclosing function name, which
+  # differs across run contexts (`test_that()`, `test_file()`, `test_dir()`);
+  # scrub it so the snapshot only pins the validation message itself.
+  scrubCaller <- \(lines) gsub("`[^`]+\\(\\)`: ", "", lines)
+
+  expect_snapshot(
+    error = TRUE,
     sensitivityCalculation(
       simulation = simulation,
       outputPaths = c(
         "",
         "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
       ),
-      parameterPaths = parameterPath
+      parameterPaths = parameterPaths
     ),
-    'argument "outputPaths" has empty strings'
+    transform = scrubCaller
   )
 
-  expect_error(
+  expect_snapshot(
+    error = TRUE,
     sensitivityCalculation(
       simulation = simulation,
       outputPaths = rep(
         "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)",
         2
       ),
-      parameterPaths = parameterPath
+      parameterPaths = parameterPaths
     ),
-    "duplicated values"
+    transform = scrubCaller
   )
 })
 
