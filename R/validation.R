@@ -781,6 +781,118 @@ validationSummary <- function(validationResults) {
 
 # Cross-reference validation (monolith) ----
 
+#' Canonicalize ids for a cross-reference membership test
+#'
+#' On-disk section keys are canonicalized (lower-cased, slugified) by the
+#' authoring / load path, but a hand-edited `Project.json` can carry a
+#' non-canonical reference (e.g. `individualId: "Adult"` against a disk key of
+#' `adult`). Cross-reference resolution must compare on the same footing, so
+#' both the reference side and the candidate keys are run through the same
+#' deterministic transform (`.canonicalizeOneId()`) before the `%in%` /
+#' `setdiff()` test. A case-only (or otherwise canonically-equal) mismatch then
+#' resolves instead of being reported as a dangling reference.
+#'
+#' Silent by design: this is a read-only comparison, not an authoring edit, so
+#' it never warns about the canonicalization (unlike `.canonicalizeIdRef()`).
+#' `NA` and `NULL` pass through so the callers' own presence guards still apply,
+#' and the transform is applied element-wise to a vector of references.
+#'
+#' @param ids Character vector (or `NULL`) of ids / references.
+#' @return `ids` with each non-`NA` element canonicalized; `NULL`/`NA` preserved.
+#' @keywords internal
+#' @noRd
+.canonicalizeForCompare <- function(ids) {
+  if (is.null(ids)) {
+    return(ids)
+  }
+  ids <- as.character(ids)
+  keep <- !is.na(ids)
+  if (any(keep)) {
+    ids[keep] <- vapply(
+      ids[keep],
+      .canonicalizeOneId,
+      character(1),
+      USE.NAMES = FALSE
+    )
+  }
+  ids
+}
+
+#' Does a single reference resolve against a set of candidate keys?
+#'
+#' Canonicalizes BOTH the reference and the candidate keys before the `%in%`
+#' test, so a case-only (or otherwise canonically-equal) reference resolves. The
+#' caller keeps the candidate keys in their original spelling for the "did you
+#' mean" suffix; this helper canonicalizes them locally only for the comparison.
+#'
+#' @param ref Character scalar reference (original spelling).
+#' @param candidateKeys Candidate keys in their original spelling.
+#' @return `TRUE` if `ref` canonically matches a candidate key.
+#' @keywords internal
+#' @noRd
+.refResolves <- function(ref, candidateKeys) {
+  .canonicalizeForCompare(ref) %in% .canonicalizeForCompare(candidateKeys)
+}
+
+#' Dangling references in a reference vector, compared canonically
+#'
+#' Returns the subset of `refs` (in their ORIGINAL spelling, so error messages
+#' stay faithful to what the user wrote) whose canonical form is not among the
+#' canonical forms of `candidateKeys`. `NA` and empty-string references are
+#' dropped (they carry no reference). A case-only mismatch canonicalizes onto a
+#' candidate and so is not returned. Candidate keys are passed in their original
+#' spelling (so a caller can reuse the same vector for `.suggestSuffixMulti()`)
+#' and canonicalized here for the comparison.
+#'
+#' @param refs Character vector of references (original spelling).
+#' @param candidateKeys Candidate keys in their original spelling.
+#' @return Character vector of dangling references, original spelling.
+#' @keywords internal
+#' @noRd
+.danglingRefs <- function(refs, candidateKeys) {
+  refs <- as.character(refs)
+  present <- !is.na(refs) & refs != ""
+  refs <- refs[present]
+  if (length(refs) == 0L) {
+    return(character(0))
+  }
+  canonicalCandidates <- .canonicalizeForCompare(candidateKeys)
+  dangling <- !.canonicalizeForCompare(refs) %in% canonicalCandidates
+  refs[dangling]
+}
+
+#' Does any section of the project have a critical error?
+#'
+#' Decides whether `.validateCrossReferences()` should skip itself. Evaluates
+#' the validity of EVERY section adapter against the project so the answer does
+#' not depend on which subset of sections the current run happened to validate.
+#' Results already computed in this run (`collected`) are reused; only the
+#' section adapters not present there are run, so a full `validateProject()`
+#' pays no extra cost and a targeted `.ensureValid()` subset still sees a broken
+#' sibling section it did not itself request.
+#'
+#' `crossReferences` is excluded (it is the caller and is not a section
+#' adapter).
+#'
+#' @param project A loaded `Project` object.
+#' @param collected Named list of `validationResult`s already computed in this
+#'   run (the `validationResults` passed to `.validateCrossReferences()`).
+#' @return A single logical.
+#' @keywords internal
+#' @noRd
+.anyProjectSectionHasErrors <- function(project, collected) {
+  for (section in names(.validationAdapters)) {
+    sectionResult <- collected[[section]]
+    if (!inherits(sectionResult, "validationResult")) {
+      sectionResult <- .validationAdapters[[section]](project)
+    }
+    if (sectionResult$has_critical_errors()) {
+      return(TRUE)
+    }
+  }
+  FALSE
+}
+
 #' Validate cross-references between Project sections
 #'
 #' Hand-rolled monolith that checks references that span sections:
@@ -808,7 +920,15 @@ validationSummary <- function(validationResults) {
 .validateCrossReferences <- function(project, validationResults) {
   result <- validationResult$new()
 
-  if (isAnyCriticalErrors(validationResults)) {
+  # Skip-on-prior-errors must consult the PROJECT'S actual section validity, not
+  # just the sections present in this run's `validationResults`. A full
+  # `validateProject()` run collects every section, so a broken sibling is
+  # visible here; a targeted `.ensureValid()` subset collects only the requested
+  # sections, so a broken sibling that the subset did not run would otherwise be
+  # invisible and the cross-reference pass would emit spurious errors built on
+  # it. Evaluating full-project section validity (reusing the results already
+  # computed in this run) makes a full run and a targeted subset behave the same.
+  if (.anyProjectSectionHasErrors(project, validationResults)) {
     skipped <- c(
       "scenario individual / population references",
       "scenario parameterSets references",
@@ -833,6 +953,12 @@ validationSummary <- function(validationResults) {
   }
 
   scenarioList <- project$scenarios %||% list()
+  # Keep the section keys in their ORIGINAL spelling: the "did you mean" suffix
+  # (`.suggestSuffix*`) shows them verbatim, and the membership helpers
+  # (`.refResolves`, `.danglingRefs`) canonicalize BOTH sides internally, so a
+  # hand-edited reference that differs from its definition only by case (or
+  # another canonically-equal spelling) resolves instead of being flagged as
+  # dangling.
   individualIds <- names(project$individuals %||% list())
   populationIds <- names(project$populations %||% list())
   parameterSetKeys <- names(project$parameterSets %||% list())
@@ -846,7 +972,7 @@ validationSummary <- function(validationResults) {
     if (
       !is.null(sc$individualId) &&
         !is.na(sc$individualId) &&
-        !sc$individualId %in% individualIds
+        !.refResolves(sc$individualId, individualIds)
     ) {
       result$add_critical_error(
         "Invalid Reference",
@@ -864,7 +990,7 @@ validationSummary <- function(validationResults) {
     if (
       !is.null(sc$populationId) &&
         !is.na(sc$populationId) &&
-        !sc$populationId %in% populationIds
+        !.refResolves(sc$populationId, populationIds)
     ) {
       result$add_critical_error(
         "Invalid Reference",
@@ -880,8 +1006,7 @@ validationSummary <- function(validationResults) {
     }
 
     if (!is.null(sc$modelParameterSets) && length(sc$modelParameterSets) > 0) {
-      invalidSets <- setdiff(sc$modelParameterSets, parameterSetKeys)
-      invalidSets <- invalidSets[!is.na(invalidSets) & invalidSets != ""]
+      invalidSets <- .danglingRefs(sc$modelParameterSets, parameterSetKeys)
       if (length(invalidSets) > 0) {
         result$add_critical_error(
           "Invalid Reference",
@@ -897,8 +1022,7 @@ validationSummary <- function(validationResults) {
     }
 
     if (!is.null(sc$initialConditions) && length(sc$initialConditions) > 0) {
-      invalidICs <- setdiff(sc$initialConditions, initialConditionKeys)
-      invalidICs <- invalidICs[!is.na(invalidICs) & invalidICs != ""]
+      invalidICs <- .danglingRefs(sc$initialConditions, initialConditionKeys)
       if (length(invalidICs) > 0) {
         result$add_critical_error(
           "Invalid Reference",
@@ -916,7 +1040,7 @@ validationSummary <- function(validationResults) {
     if (
       !is.null(sc$applicationProtocol) &&
         !is.na(sc$applicationProtocol) &&
-        !sc$applicationProtocol %in% applicationKeys
+        !.refResolves(sc$applicationProtocol, applicationKeys)
     ) {
       result$add_critical_error(
         "Invalid Reference",
@@ -936,10 +1060,7 @@ validationSummary <- function(validationResults) {
     # into project$outputPaths, mirroring the serializer's reverse map.
     scOutputPathIds <- names(sc$outputPaths)
     if (!is.null(scOutputPathIds)) {
-      invalidOutputPaths <- setdiff(scOutputPathIds, outputPathKeys)
-      invalidOutputPaths <- invalidOutputPaths[
-        !is.na(invalidOutputPaths) & invalidOutputPaths != ""
-      ]
+      invalidOutputPaths <- .danglingRefs(scOutputPathIds, outputPathKeys)
       if (length(invalidOutputPaths) > 0) {
         result$add_critical_error(
           "Invalid Reference",
@@ -960,7 +1081,7 @@ validationSummary <- function(validationResults) {
   for (id in names(project$individuals %||% list())) {
     refs <- project$individuals[[id]]$parameterSets %||% character(0)
     refs <- as.character(unlist(refs))
-    invalid <- setdiff(refs, parameterSetKeys)
+    invalid <- .danglingRefs(refs, parameterSetKeys)
     if (length(invalid) > 0) {
       result$add_critical_error(
         "Invalid Reference",
@@ -978,7 +1099,7 @@ validationSummary <- function(validationResults) {
   for (id in names(project$applications %||% list())) {
     refs <- project$applications[[id]]$parameterSets %||% character(0)
     refs <- as.character(unlist(refs))
-    invalid <- setdiff(refs, parameterSetKeys)
+    invalid <- .danglingRefs(refs, parameterSetKeys)
     if (length(invalid) > 0) {
       result$add_critical_error(
         "Invalid Reference",
@@ -993,6 +1114,11 @@ validationSummary <- function(validationResults) {
     }
   }
 
+  # Scenario keys keep their original spelling; `.danglingRefs()` canonicalizes
+  # both sides for the membership test and `.suggestSuffixMulti()` shows the
+  # original spelling in the "did you mean" hint.
+  scenarioNames <- names(scenarioList)
+
   dataCombined <- .unwrapDefinitionList(project$dataCombined)
   if (!is.null(dataCombined) && length(dataCombined) > 0) {
     referencedScenarios <- unlist(lapply(dataCombined, function(dc) {
@@ -1002,29 +1128,30 @@ validationSummary <- function(validationResults) {
         character(1)
       )
     }))
-    referencedScenarios <- referencedScenarios[!is.na(referencedScenarios)]
-    invalidScenarios <- setdiff(referencedScenarios, names(scenarioList))
+    invalidScenarios <- .danglingRefs(referencedScenarios, scenarioNames)
     if (length(invalidScenarios) > 0) {
       result$add_critical_error(
         "Invalid Reference",
         paste0(
           "dataCombined references undefined scenarios: ",
           paste(invalidScenarios, collapse = ", "),
-          .suggestSuffixMulti(invalidScenarios, names(scenarioList))
+          .suggestSuffixMulti(invalidScenarios, scenarioNames)
         )
       )
     }
   }
 
   # parameterIdentification cross-references -----------------------
+  # `scenarioNames` / `outputPathIds` keep the original spellings for the
+  # "did you mean" suffix; membership is tested canonically via `.danglingRefs()`
+  # / `.refResolves()`, which canonicalize both sides internally.
   piTasks <- project$parameterIdentification %||% list()
-  scenarioNames <- names(scenarioList)
   outputPathIds <- names(project$outputPaths %||% list())
 
   for (taskId in names(piTasks)) {
     task <- piTasks[[taskId]]
 
-    badTaskScenarios <- setdiff(task$scenarios, scenarioNames)
+    badTaskScenarios <- .danglingRefs(task$scenarios, scenarioNames)
     if (length(badTaskScenarios) > 0L) {
       result$add_critical_error(
         "Invalid Reference",
@@ -1039,7 +1166,7 @@ validationSummary <- function(validationResults) {
     }
 
     for (p in task$parameters) {
-      bad <- setdiff(p$scenarios, scenarioNames)
+      bad <- .danglingRefs(p$scenarios, scenarioNames)
       if (length(bad) > 0L) {
         result$add_critical_error(
           "Invalid Reference",
@@ -1057,7 +1184,7 @@ validationSummary <- function(validationResults) {
     }
 
     for (m in task$outputMappings) {
-      badScenarios <- setdiff(m$scenarios, scenarioNames)
+      badScenarios <- .danglingRefs(m$scenarios, scenarioNames)
       if (length(badScenarios) > 0L) {
         result$add_critical_error(
           "Invalid Reference",
@@ -1083,7 +1210,7 @@ validationSummary <- function(validationResults) {
             "' does not define an outputPath"
           )
         )
-      } else if (!(m$outputPathId %in% outputPathIds)) {
+      } else if (!.refResolves(m$outputPathId, outputPathKeys)) {
         result$add_critical_error(
           "Invalid Reference",
           paste0(

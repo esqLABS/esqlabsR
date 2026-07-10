@@ -706,6 +706,67 @@ test_that(".validateCrossReferences skips and warns when prior section had criti
   expect_match(result$warnings[[1]]$message, "skipped")
 })
 
+test_that(".validateCrossReferences resolves a case-only mismatched reference", {
+  # Disk keys are canonical (lower-cased); a hand-edited Project.json can carry a
+  # non-canonical reference. `individualId = 'Adult'` against a disk key of
+  # `adult` (and likewise for population / application / outputPath) must NOT be
+  # flagged dangling: both sides are canonicalized before comparison.
+  individuals <- list(adult = list(species = "Human", gender = "MALE"))
+  populations <- list(elderly = list(species = "Human"))
+  applications <- list(iv_bolus = list())
+  sc <- esqlabsR:::Scenario()
+  sc$modelFile <- "x.pkml"
+  sc$individualId <- "Adult"
+  sc$populationId <- "Elderly"
+  sc$applicationProtocol <- "IV_Bolus"
+  sc$simulationType <- "Population"
+  sc$outputPaths <- stats::setNames("Organism|A", "OutPath_1")
+  project <- .fakeProject(
+    scenarios = list(s1 = sc),
+    individuals = individuals,
+    populations = populations,
+    applications = applications,
+    outputPaths = c(outpath_1 = "Organism|A")
+  )
+  result <- esqlabsR:::.validateCrossReferences(project, list())
+  # No dangling-reference error: every case-only mismatch canonically resolves.
+  expect_length(result$critical_errors, 0)
+})
+
+test_that(".validateCrossReferences skip guard consults full-project validity, not just the current run's sections", {
+  # A broken scenarios section (empty modelFile -> critical error) plus a
+  # dataCombined that references a non-existent scenario. A FULL run skips the
+  # cross-reference pass (a prior section is broken), suppressing the
+  # dataCombined error until the section is fixed. A targeted subset that does
+  # NOT itself validate scenarios must reach the SAME conclusion (skip), rather
+  # than emitting the dataCombined error the full run suppressed.
+  sc <- esqlabsR:::Scenario()
+  sc$modelFile <- "" # critical error in the scenarios section
+  project <- .fakeProject(
+    scenarios = list(s1 = sc),
+    dataCombined = list(
+      dc1 = list(simulated = list(list(label = "sim", scenario = "ghost")))
+    )
+  )
+
+  # Full run: scenarios broken, so cross-references are skipped (a warning, no
+  # critical error, and the "ghost" reference is NOT reported yet).
+  fullResults <- esqlabsR:::.runProjectValidation(project, sections = NULL)
+  fullCross <- fullResults$crossReferences
+  expect_length(fullCross$critical_errors, 0)
+  expect_length(fullCross$warnings, 1)
+
+  # Targeted subset that omits the scenarios adapter: the guard must still see
+  # the broken scenarios section (full-project validity) and skip identically.
+  subsetResults <- esqlabsR:::.runProjectValidation(
+    project,
+    sections = c("plots", "crossReferences")
+  )
+  subsetCross <- subsetResults$crossReferences
+  expect_length(subsetCross$critical_errors, 0)
+  expect_length(subsetCross$warnings, 1)
+})
+
 # Dispatcher behaviour ----
 
 test_that(".runProjectValidation honors a targeted sections vector", {
