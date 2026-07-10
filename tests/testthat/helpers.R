@@ -102,9 +102,10 @@ testProjectExcelConfigurationsPath <- function(...) {
 }
 
 executeWithTestFile <- function(actionWithFile) {
-  newFile <- tempfile()
+  # Tie the temp file's lifetime to the calling test's frame so it is removed
+  # even if `actionWithFile()` errors.
+  newFile <- withr::local_tempfile(.local_envir = parent.frame())
   actionWithFile(newFile)
-  file.remove(newFile)
 }
 
 #' Redact the throwaway-project absolute prefix from a quoted path in an error
@@ -195,13 +196,14 @@ summarizer <- function(data, path) {
 #' temp_project$project
 #' }
 with_temp_project <- function(projectName = NULL, overwrite = TRUE) {
-  if (is.null(projectName)) {
-    temp_dir <- tempfile("esqlabsR_test_")
+  prefix <- if (is.null(projectName)) {
+    "esqlabsR_test_"
   } else {
-    temp_dir <- tempfile(paste0("esqlabsR_", projectName, "_"))
+    paste0("esqlabsR_", projectName, "_")
   }
-  dir.create(temp_dir, recursive = TRUE, showWarnings = FALSE)
-  withr::defer(unlink(temp_dir, recursive = TRUE), envir = parent.frame())
+  # `local_tempdir()` creates the directory and, scoped to the calling test's
+  # frame, removes it when that test exits (even on error).
+  temp_dir <- withr::local_tempdir(prefix, .local_envir = parent.frame())
 
   initProject(
     destination = temp_dir,
