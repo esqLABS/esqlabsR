@@ -108,8 +108,26 @@ Project <- R6::R6Class(
     #'   tree. Defaults to `"definitions"`. Writing persists the container for
     #'   a bound project; changing it moves where future write-through edits
     #'   are read from and written to.
+    #'
+    #'   A change is refused once the project owns a materialized tree on disk:
+    #'   silently re-pointing such a project at a new folder would
+    #'   re-materialize its sections into that folder and orphan the old tree
+    #'   (the old folder survives, unreferenced). Load and construction assign
+    #'   the private backing field directly and so are never blocked by this
+    #'   guard; a clone does not own the source's tree (its write-through is an
+    #'   in-memory no-op), so it may re-point freely; only a deliberate write on
+    #'   an already-materialized owning project is refused. To relocate the tree
+    #'   on purpose, snapshot the project and reload it into a fresh directory
+    #'   under the new folder name (see [saveSnapshot()] / [loadSnapshot()]).
     definitionsFolder = function(value) {
       if (!missing(value)) {
+        current <- private$.definitionsFolder %||% "definitions"
+        if (!identical(value, current) && private$.ownsMaterializedTree()) {
+          cli::cli_abort(messages$definitionsFolderChangeOnMaterialized(
+            current,
+            value
+          ))
+        }
         private$.definitionsFolder <- value
         private$.invalidateContainer()
         return(invisible(value))
@@ -925,6 +943,21 @@ Project <- R6::R6Class(
     .ownsEntityTree = function() {
       token <- private$.entityTreeOwnerToken
       !is.null(token) && identical(token$owner, self)
+    },
+
+    # TRUE when this instance OWNS an on-disk entity tree for the CURRENT
+    # `definitionsFolder` (the `<projectDir>/<definitionsFolder>/` directory is
+    # present and this instance is the recorded tree owner). Used by the
+    # `definitionsFolder` setter to refuse a folder change that would orphan a
+    # materialized tree it owns. An in-memory project (no directory) has no
+    # tree; a clone is not the owner (its write-through is an in-memory no-op),
+    # so it can re-point freely without orphaning anything.
+    .ownsMaterializedTree = function() {
+      if (!private$.ownsEntityTree()) {
+        return(FALSE)
+      }
+      dir <- .definitionsDir(private$.projectDirPath, self$definitionsFolder)
+      !is.null(dir) && dir.exists(dir)
     },
 
     # Write-through for one project section: persist only what changed to its

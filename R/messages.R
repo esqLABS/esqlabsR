@@ -143,6 +143,14 @@ messages$snapshotOntoOwnContainer <- function() {
   )
 }
 
+messages$definitionsFolderChangeOnMaterialized <- function(current, value) {
+  c(
+    "Cannot change {.field definitionsFolder} from {.val {current}} to {.val {value}} while the tree exists on disk.",
+    "x" = "Re-pointing a materialized project would leave the old {.path {current}/} tree orphaned and unreferenced.",
+    "i" = "To relocate the tree deliberately, snapshot the project with {.fn saveSnapshot} and reload it into a fresh directory under the new folder with {.fn loadSnapshot}."
+  )
+}
+
 messages$loadSnapshotDirNotEmpty <- function(dir) {
   c(
     "{.arg dir} already contains an esqlabsR project ({.path {dir}}).",

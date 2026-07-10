@@ -563,6 +563,46 @@ test_that("definitionsFolder honors a non-default tree location", {
   expect_length(reloaded$scenarios, 3L)
 })
 
+test_that("changing definitionsFolder on a project whose tree exists is refused", {
+  temp <- with_temp_project()
+  project <- temp$project
+  expect_true(dir.exists(file.path(temp$path, "definitions")))
+  expect_snapshot(
+    error = TRUE,
+    project$definitionsFolder <- "other-defs"
+  )
+  # The refused change did not touch the folder name.
+  expect_identical(project$definitionsFolder, "definitions")
+})
+
+test_that("changing definitionsFolder is allowed before a tree exists", {
+  # An in-memory project (no directory) and a bound project whose tree is not
+  # yet on disk may still re-point the folder freely.
+  inMemory <- Project$new()
+  inMemory$definitionsFolder <- "defs"
+  expect_identical(inMemory$definitionsFolder, "defs")
+
+  # A bound project with an inline-only Project.json (no `definitions/` tree)
+  # can still change the folder.
+  dir <- withr::local_tempdir("inline_only_")
+  jsonlite::write_json(
+    list(
+      schemaVersion = "2.0",
+      esqlabsRVersion = "6.0.0",
+      filePaths = list(modelFolder = "Models/"),
+      scenarios = list(),
+      outputPaths = structure(list(), names = character(0))
+    ),
+    file.path(dir, "Project.json"),
+    auto_unbox = TRUE,
+    null = "null"
+  )
+  bound <- loadProject(file.path(dir, "Project.json"))
+  expect_false(dir.exists(file.path(dir, "definitions")))
+  bound$definitionsFolder <- "defs"
+  expect_identical(bound$definitionsFolder, "defs")
+})
+
 test_that("the tree wins over a conflicting non-empty inline Project.json section", {
   # A tree project never writes an inline copy of a section, so a non-empty
   # inline section that disagrees with the tree can only arise from hand-editing

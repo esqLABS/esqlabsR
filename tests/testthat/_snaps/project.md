@@ -1,3 +1,13 @@
+# changing definitionsFolder on a project whose tree exists is refused
+
+    Code
+      project$definitionsFolder <- "other-defs"
+    Condition
+      Error:
+      ! Cannot change definitionsFolder from "definitions" to "other-defs" while the tree exists on disk.
+      x Re-pointing a materialized project would leave the old 'definitions/' tree orphaned and unreferenced.
+      i To relocate the tree deliberately, snapshot the project with `saveSnapshot()` and reload it into a fresh directory under the new folder with `loadSnapshot()`.
+
 # a whole-section assignment through a section accessor is rejected
 
     Code
