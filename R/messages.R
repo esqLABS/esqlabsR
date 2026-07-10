@@ -181,6 +181,16 @@ messages$overwriteDestination <- function(path) {
   cliFormat("Overwriting existing esqlabsR project in {.path {path}} ")
 }
 
+messages$failedToClearProjectArtifacts <- function(path) {
+  # Interpolate eagerly here where `path` is in scope; the `cli::cli_abort()`
+  # call site passes a local whose name is not `path`.
+  cli::format_message(c(
+    "Failed to remove an existing project artifact before overwriting.",
+    "x" = "{.path {path}}",
+    "i" = "Overwriting requires removing the old project's definitions tree and container first; check the path's permissions and remove it manually."
+  ))
+}
+
 messages$inconsistentArgumentLengths <- function(vectorLengths) {
   cli::format_message(c(
     "Inconsistent vector argument lengths:",
