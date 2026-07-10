@@ -585,3 +585,78 @@ test_that("a programmatic observedData name that escapes its directory aborts", 
     error = TRUE
   )
 })
+
+# Stale-file policy: full-tree writes own the directory, incremental writes
+# preserve orphans ----
+
+# A minimal on-disk tree project with one scenario, loaded without the
+# cross-reference warning pass, so these tests exercise the entity-tree writers
+# directly.
+.stalePolicyProject <- function(envir = parent.frame()) {
+  dir <- withr::local_tempdir("stale_policy_", .local_envir = envir)
+  initProject(dir, type = "example", createExcel = FALSE, overwrite = TRUE)
+  Project$new(file.path(dir, "Project.json"))
+}
+
+test_that("a full-tree write removes a stale entity file", {
+  # A full-tree write owns the `definitions/<kind>/` directory: any `.json`
+  # file not in the freshly-written keep-set is stale and is deleted.
+  project <- .stalePolicyProject()
+  scenariosDir <- file.path(project$projectDirPath, "definitions", "scenarios")
+  # Drop an orphan file that no in-memory scenario corresponds to. Written
+  # after load, so the loader never parses it.
+  orphan <- file.path(scenariosDir, "orphanentity.json")
+  writeLines("{}", orphan)
+  expect_true(file.exists(orphan))
+
+  esqlabsR:::.writeEntityTree(
+    project$scenarios,
+    "scenarios",
+    project,
+    project$projectDirPath
+  )
+  expect_false(file.exists(orphan))
+})
+
+test_that("an incremental write preserves an orphan entity file", {
+  # An incremental write (a single authoring mutation) knows only the entity
+  # it changed, so it must not delete a sibling file it never loaded.
+  project <- .stalePolicyProject()
+  scenariosDir <- file.path(project$projectDirPath, "definitions", "scenarios")
+  orphan <- file.path(scenariosDir, "orphanentity.json")
+  writeLines("{}", orphan)
+  expect_true(file.exists(orphan))
+
+  # A single write-through mutation on the scenarios section.
+  addScenario(project, "incrementaladd", modelFile = "Aciclovir.pkml")
+  expect_true(file.exists(orphan))
+})
+
+test_that("a full-tree write aborts when a stale file cannot be removed", {
+  # Simulate a delete failure by making the entity directory read-only, so
+  # `file.remove()` on its contents returns FALSE. This relies on POSIX
+  # directory-write permission gating removal, which is not portable to
+  # Windows.
+  skip_on_os("windows")
+
+  project <- .stalePolicyProject()
+  scenariosDir <- file.path(project$projectDirPath, "definitions", "scenarios")
+  orphan <- file.path(scenariosDir, "orphanentity.json")
+  writeLines("{}", orphan)
+
+  Sys.chmod(scenariosDir, mode = "0500")
+  # Restore write permission on exit so the temp tree can be cleaned up even if
+  # the expectation fails.
+  withr::defer(Sys.chmod(scenariosDir, mode = "0700"))
+
+  expect_snapshot(
+    error = TRUE,
+    esqlabsR:::.writeEntityTree(
+      project$scenarios,
+      "scenarios",
+      project,
+      project$projectDirPath
+    ),
+    transform = .redactTmpPath
+  )
+})

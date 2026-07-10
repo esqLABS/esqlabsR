@@ -413,10 +413,22 @@
 }
 
 # Write a whole section's tree to `definitions/<kind>/`, one file per entity.
-# Removes files that no longer correspond to a section entity so the tree never
-# carries stale entries (an emptied section clears its folder). A NULL directory
-# (in-memory project) is a silent no-op. The full set is serialized in memory
-# first, so a serializer-hostile entity aborts before any file is touched.
+#
+# Stale-file policy (full-tree write): this writer OWNS the `<kind>/`
+# directory. `section` is the authoritative complete set for the kind, so any
+# `.json` file the directory holds that is NOT in the freshly-written keep-set
+# is a stale entry (a removed entity, or an orphan a hand-edit or a prior run
+# dropped in) and is deleted. This is the deliberate opposite of the
+# incremental writer `.persistKindChanges()`, which preserves orphans: a
+# full-tree write (materialize, snapshot-load, whole-section rewrite) knows the
+# entire section, so it can and must reconcile the directory to it; an
+# incremental write only knows the one entity it changed, so it must not delete
+# a sibling it never loaded. See `.persistKindChanges()` for the other half of
+# this asymmetry.
+#
+# A NULL directory (in-memory project) is a silent no-op. The full set is
+# serialized in memory first, so a serializer-hostile entity aborts before any
+# file is touched.
 #
 # @keywords internal
 # @noRd
@@ -437,8 +449,19 @@
     keep <- c(keep, paste0(id, ".json"))
   }
   existing <- list.files(dir, pattern = "\\.json$")
-  for (f in setdiff(existing, keep)) {
-    file.remove(file.path(dir, f))
+  # Delete stale files, checking each `file.remove()` result: a stale entry
+  # that fails to delete (a permission or lock problem) would silently survive
+  # and re-enter the section on the next `loadProject()`, so the section would
+  # not match the set just written. Abort naming the file(s) rather than let a
+  # ghost entity reappear.
+  stale <- setdiff(existing, keep)
+  if (length(stale) > 0L) {
+    removed <- file.remove(file.path(dir, stale))
+    if (!all(removed)) {
+      cli::cli_abort(messages$failedToRemoveStaleEntityFiles(
+        file.path(dir, stale[!removed])
+      ))
+    }
   }
   invisible(NULL)
 }

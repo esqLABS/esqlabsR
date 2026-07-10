@@ -159,6 +159,18 @@ messages$loadSnapshotDirNotEmpty <- function(dir) {
   )
 }
 
+messages$failedToRemoveStaleEntityFiles <- function(paths) {
+  n <- length(paths)
+  # Interpolate eagerly here, where `n` and `paths` are in scope: the
+  # `cli::cli_abort()` call site does not carry these names, so a lazily
+  # interpolated glue vector would fail to evaluate `{n}` / `{paths}` there.
+  cli::format_message(c(
+    "Failed to remove {n} stale entity file{?s} from the definitions tree.",
+    "x" = "{.file {paths}}",
+    "i" = "A stale file that cannot be deleted would reappear as an entity on the next {.fn loadProject}; check the file permissions and remove it manually."
+  ))
+}
+
 messages$pathNotFound <- function(path) {
   cliFormat(
     "The specified destination folder does not exist. ({.path {path}}) "

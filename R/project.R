@@ -971,6 +971,21 @@ Project <- R6::R6Class(
     # Persist one kind's changes (the unit a single `definitions/<kind>/` tree
     # owns). Persist only what changed between the old and new section value.
     #
+    # Stale-file policy (incremental write): this writer PRESERVES orphans. It
+    # is the deliberate opposite of the full-tree writer `.writeEntityTree()`,
+    # which owns the directory and deletes any file not in its keep-set. An
+    # incremental write knows only the one entity it changed (it diffs `old`
+    # against `new`, both in-memory sections), so it deletes only the files it
+    # can prove were removed from the section; a file on disk with no in-memory
+    # entity (an orphan a hand-edit or a concurrent process dropped in) is left
+    # alone, because this write cannot tell an orphan from a sibling it simply
+    # never loaded. Reconciling the whole directory against the section belongs
+    # to a full-tree write (materialize / snapshot-load / whole-section
+    # rewrite), which does know the entire section; see `.writeEntityTree()`.
+    # No entity is lost either way: the orphan is picked up (or re-ignored) on
+    # the next `loadProject()`, which re-reads the whole tree. The detailed
+    # rationale is at the stale-removal loop below.
+    #
     # An in-memory project (no directory) is a silent no-op, and so is a clone
     # that does not own the tree (its mutations stay in memory until a re-bind
     # to its own location). The caller invokes this before it updates the

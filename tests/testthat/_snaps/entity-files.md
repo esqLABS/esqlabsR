@@ -146,3 +146,14 @@
       x It must not contain a path separator or be "." / "..", so it cannot escape the observed-data entity directory.
       i Rename the source (its file basename or programmatic name) to a single safe filename segment.
 
+# a full-tree write aborts when a stale file cannot be removed
+
+    Code
+      esqlabsR:::.writeEntityTree(project$scenarios, "scenarios", project, project$
+        projectDirPath)
+    Condition
+      Warning in `file.remove()`:
+      cannot remove file '<project>/definitions/scenarios/orphanentity.json', reason 'Permission denied'
+      Error in `esqlabsR:::.writeEntityTree()`:
+      ! Failed to remove 1 stale entity file from the definitions tree. x '<project>/definitions/scenarios/orphanentity.json' i A stale file that cannot be deleted would reappear as an entity on the next `loadProject()`; check the file permissions and remove it manually.
+
