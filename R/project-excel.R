@@ -145,132 +145,132 @@ importProjectFromExcel <- function(
     jsonData$excel <- excelProps
   }
 
-  # --- OutputPaths ---
-  scenariosFile <- resolveConfigFile(propOrDefault("scenariosFile"))
-  if (!is.null(scenariosFile) && file.exists(scenariosFile)) {
-    sheets <- readxl::excel_sheets(scenariosFile)
-    if ("OutputPaths" %in% sheets) {
-      outputPathsDf <- readExcel(scenariosFile, sheet = "OutputPaths")
-      outputPaths <- stats::setNames(
-        as.character(outputPathsDf$OutputPath),
-        as.character(outputPathsDf$OutputPathId)
-      )
-      jsonData$outputPaths <- as.list(outputPaths)
-    }
-  }
-
-  # --- Scenarios ---
-  if (!is.null(scenariosFile) && file.exists(scenariosFile)) {
-    sheets <- readxl::excel_sheets(scenariosFile)
-    if ("Scenarios" %in% sheets) {
-      scenarioDf <- readExcel(scenariosFile, sheet = "Scenarios")
-      scenarioDf <- dplyr::filter(scenarioDf, !is.na(Scenario_name))
-      jsonData$scenarios <- .parseExcelScenarios(scenarioDf)
-    }
-  }
-
-  # --- ParameterSets ---
-  # The three former parameter-set kinds (model / individual / application)
-  # are imported from their respective Excel sources into the single unified
-  # `parameterSets` section. An id defined in more than one source is a
-  # collision that aborts the eventual load (`.mergeParameterSetSections`).
+  # The unified `parameterSets` section is accumulated across several sources
+  # (the model-parameters workbook, plus the non-primary sheets of the
+  # individuals and applications workbooks). Seed it here so the section
+  # descriptors below can append to it. An id defined in more than one source
+  # is a collision that aborts the eventual load (`.mergeParameterSetSections`).
   jsonData$parameterSets <- list()
 
-  modelParamsFile <- resolveConfigFile(propOrDefault("modelParamsFile"))
-  if (!is.null(modelParamsFile) && file.exists(modelParamsFile)) {
-    jsonData$parameterSets <- c(
-      jsonData$parameterSets,
-      .parseExcelParameterSheets(modelParamsFile)
-    )
-  }
-
-  # --- Individuals ---
-  individualsFile <- resolveConfigFile(propOrDefault("individualsFile"))
-  if (!is.null(individualsFile) && file.exists(individualsFile)) {
-    sheets <- readxl::excel_sheets(individualsFile)
-    if ("IndividualBiometrics" %in% sheets) {
-      indivDf <- readExcel(individualsFile, sheet = "IndividualBiometrics")
-      jsonData$individuals <- .parseExcelIndividuals(indivDf)
-    }
-    # Non-biometrics sheets are parameter sets, keyed by sheet name.
-    paramSheetNames <- setdiff(sheets, "IndividualBiometrics")
-    if (length(paramSheetNames) > 0) {
-      jsonData$parameterSets <- c(
-        jsonData$parameterSets,
-        .parseExcelParameterSheets(
-          individualsFile,
-          sheetNames = paramSheetNames
+  # Each import section is described by the config-file property that locates
+  # its workbook and a `parse(file, jsonData)` closure that reads that workbook
+  # and returns the updated `jsonData`. One loop below resolves each property,
+  # skips a section whose workbook is absent, and applies its closure, so every
+  # section shares one existence guard rather than repeating it. The closures
+  # keep each section's own (heterogeneous) sheet handling explicit.
+  sections <- list(
+    # OutputPaths and Scenarios both live in the scenarios workbook.
+    list(
+      property = "scenariosFile",
+      parse = function(file, jsonData) {
+        sheets <- readxl::excel_sheets(file)
+        if ("OutputPaths" %in% sheets) {
+          outputPathsDf <- readExcel(file, sheet = "OutputPaths")
+          outputPaths <- stats::setNames(
+            as.character(outputPathsDf$OutputPath),
+            as.character(outputPathsDf$OutputPathId)
+          )
+          jsonData$outputPaths <- as.list(outputPaths)
+        }
+        if ("Scenarios" %in% sheets) {
+          scenarioDf <- readExcel(file, sheet = "Scenarios")
+          scenarioDf <- dplyr::filter(scenarioDf, !is.na(Scenario_name))
+          jsonData$scenarios <- .parseExcelScenarios(scenarioDf)
+        }
+        jsonData
+      }
+    ),
+    # Model parameters: every sheet is a parameter set.
+    list(
+      property = "modelParamsFile",
+      parse = function(file, jsonData) {
+        jsonData$parameterSets <- c(
+          jsonData$parameterSets,
+          .parseExcelParameterSheets(file)
         )
-      )
-    }
-  }
-
-  # --- Populations ---
-  populationsFile <- resolveConfigFile(propOrDefault("populationsFile"))
-  if (!is.null(populationsFile) && file.exists(populationsFile)) {
-    popDf <- readExcel(populationsFile, sheet = 1)
-    jsonData$populations <- .parseExcelPopulations(popDf)
-  }
-
-  # --- Applications ---
-  applicationsFile <- resolveConfigFile(propOrDefault("applicationsFile"))
-  if (!is.null(applicationsFile) && file.exists(applicationsFile)) {
-    sheets <- readxl::excel_sheets(applicationsFile)
-    appsObj <- list()
-    if ("ApplicationProtocols" %in% sheets) {
-      appsDf <- readExcel(applicationsFile, sheet = "ApplicationProtocols")
-      hasParameterSets <- "ParameterSets" %in% names(appsDf)
-      for (i in seq_len(nrow(appsDf))) {
-        id <- as.character(appsDf$ApplicationId[i])
-        appEntry <- list()
-        if (hasParameterSets) {
-          raw <- appsDf$ParameterSets[i]
-          if (!is.null(raw) && !is.na(raw) && nchar(as.character(raw)) > 0) {
-            appEntry$parameterSets <- as.list(
-              .parseCommaListToArray(as.character(raw))
-            )
+        jsonData
+      }
+    ),
+    # Individuals: the biometrics sheet is the individuals section; every other
+    # sheet is a parameter set keyed by sheet name.
+    list(
+      property = "individualsFile",
+      parse = function(file, jsonData) {
+        sheets <- readxl::excel_sheets(file)
+        if ("IndividualBiometrics" %in% sheets) {
+          indivDf <- readExcel(file, sheet = "IndividualBiometrics")
+          jsonData$individuals <- .parseExcelIndividuals(indivDf)
+        }
+        paramSheetNames <- setdiff(sheets, "IndividualBiometrics")
+        if (length(paramSheetNames) > 0) {
+          jsonData$parameterSets <- c(
+            jsonData$parameterSets,
+            .parseExcelParameterSheets(file, sheetNames = paramSheetNames)
+          )
+        }
+        jsonData
+      }
+    ),
+    list(
+      property = "populationsFile",
+      parse = function(file, jsonData) {
+        popDf <- readExcel(file, sheet = 1)
+        jsonData$populations <- .parseExcelPopulations(popDf)
+        jsonData
+      }
+    ),
+    # Applications: the protocols sheet is the applications section; every other
+    # sheet is a parameter set keyed by sheet name.
+    list(
+      property = "applicationsFile",
+      parse = function(file, jsonData) {
+        sheets <- readxl::excel_sheets(file)
+        if ("ApplicationProtocols" %in% sheets) {
+          appsDf <- readExcel(file, sheet = "ApplicationProtocols")
+          appsObj <- .parseExcelApplications(appsDf)
+          if (length(appsObj) > 0) {
+            jsonData$applications <- appsObj
           }
         }
-        appsObj[[id]] <- appEntry
+        paramSheetNames <- setdiff(sheets, "ApplicationProtocols")
+        if (length(paramSheetNames) > 0) {
+          jsonData$parameterSets <- c(
+            jsonData$parameterSets,
+            .parseExcelParameterSheets(file, sheetNames = paramSheetNames)
+          )
+        }
+        jsonData
       }
-    }
-    if (length(appsObj) > 0) {
-      jsonData$applications <- appsObj
-    }
-    paramSheetNames <- setdiff(sheets, "ApplicationProtocols")
-    if (length(paramSheetNames) > 0) {
-      jsonData$parameterSets <- c(
-        jsonData$parameterSets,
-        .parseExcelParameterSheets(
-          applicationsFile,
-          sheetNames = paramSheetNames
-        )
-      )
-    }
-  }
-
-  # --- InitialConditions ---
-  initialConditionsFile <- resolveConfigFile(
-    propOrDefault("initialConditionsFile")
+    ),
+    list(
+      property = "initialConditionsFile",
+      parse = function(file, jsonData) {
+        jsonData$initialConditions <- .parseExcelInitialConditions(file)
+        jsonData
+      }
+    ),
+    list(
+      property = "plotsFile",
+      parse = function(file, jsonData) {
+        jsonData$plots <- .parseExcelPlots(file)
+        jsonData
+      }
+    ),
+    list(
+      property = "parameterIdentificationFile",
+      parse = function(file, jsonData) {
+        jsonData$parameterIdentification <-
+          .parseExcelParameterIdentification(file)
+        jsonData
+      }
+    )
   )
-  if (!is.null(initialConditionsFile) && file.exists(initialConditionsFile)) {
-    jsonData$initialConditions <- .parseExcelInitialConditions(
-      initialConditionsFile
-    )
-  }
 
-  # --- Plots ---
-  plotsFile <- resolveConfigFile(propOrDefault("plotsFile"))
-  if (!is.null(plotsFile) && file.exists(plotsFile)) {
-    jsonData$plots <- .parseExcelPlots(plotsFile)
-  }
-
-  # --- Parameter identification ---
-  piFile <- resolveConfigFile(propOrDefault("parameterIdentificationFile"))
-  if (!is.null(piFile) && file.exists(piFile)) {
-    jsonData$parameterIdentification <- .parseExcelParameterIdentification(
-      piFile
-    )
+  for (section in sections) {
+    file <- resolveConfigFile(propOrDefault(section$property))
+    if (!is.null(file) && file.exists(file)) {
+      jsonData <- section$parse(file, jsonData)
+    }
   }
 
   # --- Determine output path ---
@@ -1159,39 +1159,111 @@ projectConfigurationStatus <- function(...) {
   result
 }
 
+# The columns a Scenarios sheet must carry. `InitialConditions` is a newer,
+# optional column (an older sheet omits it), so it is validated separately.
+# Column access below uses `[[` (exact match) rather than `$` (partial match),
+# so a renamed column (e.g. `OutputPathsId` for `OutputPathsIds`) is caught by
+# the schema guard instead of silently resolving to a partial-prefix match or
+# yielding NULL.
+.scenarioSheetRequiredColumns <- c(
+  "Scenario_name",
+  "IndividualId",
+  "PopulationId",
+  "ReadPopulationFromCSV",
+  "ModelParameterSheets",
+  "ApplicationProtocol",
+  "SimulationTime",
+  "SimulationTimeUnit",
+  "SteadyState",
+  "SteadyStateTime",
+  "SteadyStateTimeUnit",
+  "OverwriteFormulasInSS",
+  "ModelFile",
+  "OutputPathsIds"
+)
+
 #' Parse Scenarios Excel sheet into JSON structure
 #' @param scenarioDf Data frame from the Scenarios sheet
 #' @returns List of scenario objects
 #' @keywords internal
 #' @noRd
 .parseExcelScenarios <- function(scenarioDf) {
+  requiredColumns <- .scenarioSheetRequiredColumns
+  missingColumns <- setdiff(requiredColumns, names(scenarioDf))
+  if (length(missingColumns) > 0L) {
+    cli::cli_abort(c(
+      "The {.field Scenarios} sheet is missing required \\
+      column{?s}: {.val {missingColumns}}.",
+      "i" = "Expected column{?s}: {.val {requiredColumns}}."
+    ))
+  }
+
   scenarios <- list()
   for (i in seq_len(nrow(scenarioDf))) {
     row <- scenarioDf[i, ]
     scenario <- list(
-      name = as.character(row$Scenario_name),
-      individual = .naToNull(as.character(row$IndividualId)),
-      population = .naToNull(as.character(row$PopulationId)),
-      readPopulationFromCSV = .naToNull(as.logical(row$ReadPopulationFromCSV)),
-      parameterSets = .parseCommaListToArray(row$ModelParameterSheets),
-      # `InitialConditions` is a newer column; an older Scenarios sheet omits it,
-      # so guard the lookup rather than warn on an unknown column.
-      initialConditions = .parseCommaListToArray(
-        if ("InitialConditions" %in% names(row)) row$InitialConditions else NA
+      name = as.character(row[["Scenario_name"]]),
+      individual = .naToNull(as.character(row[["IndividualId"]])),
+      population = .naToNull(as.character(row[["PopulationId"]])),
+      readPopulationFromCSV = .naToNull(
+        .toLogical(row[["ReadPopulationFromCSV"]], "ReadPopulationFromCSV")
       ),
-      application = .naToNull(as.character(row$ApplicationProtocol)),
-      simulationTime = .naToNull(as.character(row$SimulationTime)),
-      simulationTimeUnit = .naToNull(as.character(row$SimulationTimeUnit)),
-      steadyState = .naToNull(as.logical(row$SteadyState)),
-      steadyStateTime = .naToNull(as.numeric(row$SteadyStateTime)),
-      steadyStateTimeUnit = .naToNull(as.character(row$SteadyStateTimeUnit)),
-      overwriteFormulasInSS = .naToNull(as.logical(row$OverwriteFormulasInSS)),
-      modelFile = as.character(row$ModelFile),
-      outputPaths = .parseCommaListToArray(row$OutputPathsIds)
+      parameterSets = .parseCommaListToArray(row[["ModelParameterSheets"]]),
+      # `InitialConditions` is a newer column; an older Scenarios sheet omits it,
+      # so guard the lookup rather than abort on its absence.
+      initialConditions = .parseCommaListToArray(
+        if ("InitialConditions" %in% names(row)) {
+          row[["InitialConditions"]]
+        } else {
+          NA
+        }
+      ),
+      application = .naToNull(as.character(row[["ApplicationProtocol"]])),
+      simulationTime = .naToNull(as.character(row[["SimulationTime"]])),
+      simulationTimeUnit = .naToNull(as.character(row[["SimulationTimeUnit"]])),
+      steadyState = .naToNull(.toLogical(row[["SteadyState"]], "SteadyState")),
+      steadyStateTime = .naToNull(as.numeric(row[["SteadyStateTime"]])),
+      steadyStateTimeUnit = .naToNull(
+        as.character(row[["SteadyStateTimeUnit"]])
+      ),
+      overwriteFormulasInSS = .naToNull(
+        .toLogical(row[["OverwriteFormulasInSS"]], "OverwriteFormulasInSS")
+      ),
+      modelFile = as.character(row[["ModelFile"]]),
+      outputPaths = .parseCommaListToArray(row[["OutputPathsIds"]])
     )
     scenarios[[i]] <- scenario
   }
   scenarios
+}
+
+#' Parse the ApplicationProtocols Excel sheet into JSON structure
+#'
+#' One record per row keyed by `ApplicationId`. When the sheet carries a
+#' `ParameterSets` column, its comma-separated cell becomes the record's
+#' `parameterSets` array; a blank cell yields a record with no `parameterSets`.
+#'
+#' @param appsDf Data frame from the ApplicationProtocols sheet.
+#' @returns Named list of application records (empty when `appsDf` has no rows).
+#' @keywords internal
+#' @noRd
+.parseExcelApplications <- function(appsDf) {
+  appsObj <- list()
+  hasParameterSets <- "ParameterSets" %in% names(appsDf)
+  for (i in seq_len(nrow(appsDf))) {
+    id <- as.character(appsDf[["ApplicationId"]][[i]])
+    appEntry <- list()
+    if (hasParameterSets) {
+      raw <- appsDf[["ParameterSets"]][[i]]
+      if (!is.null(raw) && !is.na(raw) && nchar(as.character(raw)) > 0) {
+        appEntry$parameterSets <- as.list(
+          .parseCommaListToArray(as.character(raw))
+        )
+      }
+    }
+    appsObj[[id]] <- appEntry
+  }
+  appsObj
 }
 
 #' Parse IndividualBiometrics Excel sheet into JSON structure
@@ -1980,6 +2052,54 @@ projectConfigurationStatus <- function(...) {
     return(NULL)
   }
   x
+}
+
+#' Coerce a single Excel logical cell tolerantly to `TRUE`/`FALSE`/`NA`
+#'
+#' Bare `as.logical()` only recognises `"TRUE"`/`"FALSE"`/`"T"`/`"F"`; a legacy
+#' Excel sheet may store a boolean as `1`/`0`, `Yes`/`No`, or `true`/`false`,
+#' all of which `as.logical()` silently turns into `NA` (which then defaults to
+#' `FALSE` downstream, flipping the meaning). This helper accepts those common
+#' spellings, case-insensitively, and aborts on a genuinely unparseable value
+#' naming the field so a typo is caught rather than silently dropped. A blank
+#' cell (`NA` / empty string) stays `NA` (the field is absent).
+#'
+#' @param x A length-1 cell value (logical, numeric, or character).
+#' @param field Name of the field, used in the abort message.
+#' @returns A length-1 logical (`TRUE`, `FALSE`, or `NA`).
+#' @keywords internal
+#' @noRd
+.toLogical <- function(x, field) {
+  if (is.null(x) || length(x) == 0L || is.na(x)) {
+    return(NA)
+  }
+  if (is.logical(x)) {
+    return(x)
+  }
+  if (is.numeric(x)) {
+    if (x == 1) {
+      return(TRUE)
+    }
+    if (x == 0) {
+      return(FALSE)
+    }
+  } else {
+    token <- tolower(trimws(as.character(x)))
+    if (token == "") {
+      return(NA)
+    }
+    if (token %in% c("true", "t", "yes", "y", "1")) {
+      return(TRUE)
+    }
+    if (token %in% c("false", "f", "no", "n", "0")) {
+      return(FALSE)
+    }
+  }
+  cli::cli_abort(c(
+    "Cannot interpret {.field {field}} value {.val {x}} as a logical.",
+    "i" = "Use a boolean-like value \\
+    ({.val TRUE}/{.val FALSE}, {.val 1}/{.val 0}, {.val Yes}/{.val No})."
+  ))
 }
 
 #' Coerce a single Excel numeric cell, aborting on a non-blank unparseable value

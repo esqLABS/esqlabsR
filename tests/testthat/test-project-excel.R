@@ -690,3 +690,86 @@ test_that("syncStatus() reports NA (and warns) when the Excel side-car is unread
     "Cannot compare the Excel side-car"
   )
 })
+
+# A legacy Scenarios sheet may spell booleans as `1`/`0`, `Yes`/`No`, or
+# `true`/`false`; bare `as.logical()` turns the string forms into NA (silently
+# defaulting to FALSE downstream), so the parser must interpret them tolerantly.
+test_that(".parseExcelScenarios interprets legacy boolean spellings", {
+  scenarioDf <- data.frame(
+    Scenario_name = c("s_yes", "s_no", "s_num"),
+    IndividualId = NA_character_,
+    PopulationId = NA_character_,
+    ReadPopulationFromCSV = c("Yes", "no", "1"),
+    ModelParameterSheets = NA_character_,
+    ApplicationProtocol = NA_character_,
+    SimulationTime = NA_character_,
+    SimulationTimeUnit = NA_character_,
+    SteadyState = c("true", "FALSE", "0"),
+    SteadyStateTime = NA_real_,
+    SteadyStateTimeUnit = NA_character_,
+    OverwriteFormulasInSS = c("y", "n", "1"),
+    ModelFile = "m.pkml",
+    OutputPathsIds = "op1",
+    stringsAsFactors = FALSE
+  )
+  scenarios <- .parseExcelScenarios(scenarioDf)
+
+  expect_identical(scenarios[[1]]$readPopulationFromCSV, TRUE)
+  expect_identical(scenarios[[1]]$steadyState, TRUE)
+  expect_identical(scenarios[[1]]$overwriteFormulasInSS, TRUE)
+
+  expect_identical(scenarios[[2]]$readPopulationFromCSV, FALSE)
+  expect_identical(scenarios[[2]]$steadyState, FALSE)
+  expect_identical(scenarios[[2]]$overwriteFormulasInSS, FALSE)
+
+  expect_identical(scenarios[[3]]$readPopulationFromCSV, TRUE)
+  expect_identical(scenarios[[3]]$steadyState, FALSE)
+  expect_identical(scenarios[[3]]$overwriteFormulasInSS, TRUE)
+})
+
+test_that(".parseExcelScenarios aborts on an unparseable boolean cell", {
+  scenarioDf <- data.frame(
+    Scenario_name = "s1",
+    IndividualId = NA_character_,
+    PopulationId = NA_character_,
+    ReadPopulationFromCSV = NA_character_,
+    ModelParameterSheets = NA_character_,
+    ApplicationProtocol = NA_character_,
+    SimulationTime = NA_character_,
+    SimulationTimeUnit = NA_character_,
+    SteadyState = "maybe",
+    SteadyStateTime = NA_real_,
+    SteadyStateTimeUnit = NA_character_,
+    OverwriteFormulasInSS = NA_character_,
+    ModelFile = "m.pkml",
+    OutputPathsIds = "op1",
+    stringsAsFactors = FALSE
+  )
+  expect_snapshot(error = TRUE, .parseExcelScenarios(scenarioDf))
+})
+
+# A renamed or absent scenario-sheet column (e.g. `OutputPathsId` for
+# `OutputPathsIds`) must abort naming the missing column, rather than silently
+# yielding a scenario with no output paths (the partial-match `$` access
+# previously masked this).
+test_that(".parseExcelScenarios aborts on a renamed required column", {
+  scenarioDf <- data.frame(
+    Scenario_name = "s1",
+    IndividualId = NA_character_,
+    PopulationId = NA_character_,
+    ReadPopulationFromCSV = NA,
+    ModelParameterSheets = NA_character_,
+    ApplicationProtocol = NA_character_,
+    SimulationTime = NA_character_,
+    SimulationTimeUnit = NA_character_,
+    SteadyState = NA,
+    SteadyStateTime = NA_real_,
+    SteadyStateTimeUnit = NA_character_,
+    OverwriteFormulasInSS = NA,
+    ModelFile = "m.pkml",
+    # `OutputPathsIds` misspelled as `OutputPathsId`.
+    OutputPathsId = "op1",
+    stringsAsFactors = FALSE
+  )
+  expect_snapshot(error = TRUE, .parseExcelScenarios(scenarioDf))
+})
