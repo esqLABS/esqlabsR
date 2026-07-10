@@ -474,7 +474,9 @@ test_that(".validatePlots flags a missing label in a dataCombined entry", {
 })
 
 test_that(".validatePlots flags duplicate plotIds and unknown dataCombinedId", {
-  dataCombined <- list(DC1 = list(simulated = list(list(scenario = "S1"))))
+  dataCombined <- list(
+    DC1 = list(simulated = list(list(label = "L1", scenario = "S1")))
+  )
   # Two entries deliberately sharing the same plotId (a hand-edit could file
   # both under one key only by colliding; here two list slots carry the same
   # inner plotId) to exercise the duplicate-id check.
@@ -490,6 +492,66 @@ test_that(".validatePlots flags duplicate plotIds and unknown dataCombinedId", {
   msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
   expect_match(msgs, "Duplicate plotId", all = FALSE)
   expect_match(msgs, "unknown dataCombinedId", all = FALSE)
+})
+
+test_that(".validatePlots warns on plotType-irrelevant fields (non-blocking)", {
+  dataCombined <- list(
+    DC1 = list(simulated = list(list(label = "L1", scenario = "S1")))
+  )
+  # An individual plot carrying population-only `quantiles`, and a population
+  # plot carrying observedVsSimulated-only `foldDistance`. Both misuses should
+  # produce a warning, not a critical error (the plot still renders).
+  plotConfig <- list(
+    a = list(
+      plotId = "p_ind",
+      dataCombinedId = "DC1",
+      plotType = "individual",
+      quantiles = "0.05, 0.5, 0.95"
+    ),
+    b = list(
+      plotId = "p_pop",
+      dataCombinedId = "DC1",
+      plotType = "population",
+      foldDistance = "2"
+    )
+  )
+  result <- esqlabsR:::.validatePlots(dataCombined, plotConfig, list())
+
+  expect_length(result$critical_errors, 0)
+  msgs <- vapply(result$warnings, \(w) w$message, character(1))
+  expect_snapshot(cat(sort(msgs), sep = "\n"))
+})
+
+test_that(".validatePlots does not warn when the field matches its plotType", {
+  dataCombined <- list(
+    DC1 = list(simulated = list(list(label = "L1", scenario = "S1")))
+  )
+  # `quantiles`/`aggregation`/`nsd` on a population plot and `foldDistance` on
+  # an observedVsSimulated plot are all legitimate: no irrelevant-field warning.
+  plotConfig <- list(
+    a = list(
+      plotId = "p_pop",
+      dataCombinedId = "DC1",
+      plotType = "population",
+      quantiles = "0.05, 0.5, 0.95",
+      aggregation = "quantiles",
+      nsd = "2"
+    ),
+    b = list(
+      plotId = "p_ovs",
+      dataCombinedId = "DC1",
+      plotType = "observedVsSimulated",
+      foldDistance = "2"
+    )
+  )
+  result <- esqlabsR:::.validatePlots(dataCombined, plotConfig, list())
+
+  expect_length(result$critical_errors, 0)
+  irrelevant <- Filter(
+    \(w) grepl("only applies to plotType", w$message),
+    result$warnings
+  )
+  expect_length(irrelevant, 0)
 })
 
 # Cross-references ----

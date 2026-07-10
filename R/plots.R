@@ -377,6 +377,13 @@ print.DataCombined <- function(x, ...) {
         )
       )
     }
+
+    # Fields that only take effect for a specific plotType. `quantiles`,
+    # `aggregation`, and `nsd` are consumed only by population plots;
+    # `foldDistance` only by observedVsSimulated plots. Setting one on any
+    # other plotType is silently ignored by the build, so warn (non-blocking)
+    # rather than fail: the plot still renders, just without that field.
+    result <- .warnPlotTypeIrrelevantFields(plotConfig, result)
   }
 
   # plotGrid plot id references are a hard failure in createPlots(), so flag
@@ -402,6 +409,61 @@ print.DataCombined <- function(x, ...) {
           paste(invalidGridRefs, collapse = ", ")
         )
       )
+    }
+  }
+
+  result
+}
+
+#' Warn about plotType-irrelevant fields on a plot configuration
+#'
+#' `quantiles`, `aggregation`, and `nsd` only take effect for `population`
+#' plots; `foldDistance` only for `observedVsSimulated` plots. When one is set
+#' on any other `plotType`, the build path silently ignores it. This adds a
+#' non-blocking warning to `result` for each such field so the mismatch is
+#' surfaced without gating execution.
+#'
+#' @param plotConfig Named list from `project$plots` (keyed by `plotId`).
+#' @param result `validationResult` to mutate.
+#' @return The mutated `validationResult`.
+#' @keywords internal
+#' @noRd
+.warnPlotTypeIrrelevantFields <- function(plotConfig, result) {
+  # Each entry: the fields that only apply to `plotType`.
+  fieldsByPlotType <- list(
+    population = c("quantiles", "aggregation", "nsd"),
+    observedVsSimulated = "foldDistance"
+  )
+
+  for (usedByType in names(fieldsByPlotType)) {
+    typeFields <- fieldsByPlotType[[usedByType]]
+    for (entry in plotConfig) {
+      plotType <- entry$plotType
+      if (is.null(plotType) || identical(plotType, usedByType)) {
+        next
+      }
+      presentFields <- intersect(typeFields, names(entry))
+      # A field present but empty (NULL / NA) is not really "set"; skip it.
+      presentFields <- Filter(
+        function(f) !.isMissingField(entry[[f]]),
+        presentFields
+      )
+      for (field in presentFields) {
+        result$add_warning(
+          "Data",
+          paste0(
+            "Plot '",
+            entry$plotId %||% "<unknown>",
+            "' of plotType '",
+            plotType,
+            "' sets '",
+            field,
+            "', which only applies to plotType '",
+            usedByType,
+            "' and is ignored."
+          )
+        )
+      }
     }
   }
 
