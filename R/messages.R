@@ -220,6 +220,17 @@ messages$noModelFolderForRelativeModelFile <- function(
   ))
 }
 
+messages$noPopulationsFolderForCSVPopulation <- function(
+  scenarioName,
+  populationId
+) {
+  cli::format_message(c(
+    "x" = "Cannot resolve the population csv for scenario {.val {scenarioName}}.",
+    "i" = "{.field populationId} {.val {populationId}} is read from a csv but \\
+    the project has no {.field populationsFolder} to resolve it against."
+  ))
+}
+
 
 messages$createdFileSnapshot <- function(inputFile, outputFile) {
   cliFormat(

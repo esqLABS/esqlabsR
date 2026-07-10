@@ -431,3 +431,19 @@ test_that("a relative modelFile with NULL modelFolder aborts with a clear messag
     )
   )
 })
+
+# Population file resolution ----
+
+test_that("a CSV-population scenario with NULL populationsFolder aborts with a clear message", {
+  withr::local_options(lifecycle_verbosity = "quiet")
+  project <- .testProject()
+  project$populationsFolder <- NULL
+  expect_snapshot(
+    error = TRUE,
+    esqlabsR:::.runScenariosFromProject(
+      project,
+      scenarioNames = "populationscenariofromcsv",
+      validate = FALSE
+    )
+  )
+})
