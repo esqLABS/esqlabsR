@@ -663,6 +663,18 @@ projectStatus <- function(
   originalJsonObj <- jsonlite::fromJSON(jsonPath, simplifyVector = FALSE)
   currentJsonObj <- jsonlite::fromJSON(tempJsonPath, simplifyVector = FALSE)
 
+  # The Excel re-import canonicalizes every id (via
+  # `.canonicalizeProjectJsonIds()`), but the original JSON may carry a
+  # non-canonical id. Canonicalize the original the same way before comparing
+  # so id canonicalization is not itself counted as drift (which would make an
+  # otherwise-in-sync project report out-of-sync). An already-canonical id is
+  # unchanged, so this is a no-op for a canonical original. Warnings are
+  # suppressed (an in-place re-canonicalization of an already-canonical id
+  # emits none anyway).
+  originalJsonObj <- suppressWarnings(
+    .canonicalizeProjectJsonIds(originalJsonObj)
+  )
+
   # Remove esqlabsRVersion -- it changes with package updates and would cause
   # false out-of-sync reports
   originalJsonObj[["esqlabsRVersion"]] <- NULL

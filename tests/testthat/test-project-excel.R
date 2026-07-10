@@ -618,3 +618,48 @@ test_that(".parseExcelParameterSheets allows a blank Value cell", {
   parsed <- .parseExcelParameterSheets(paramFile)
   expect_identical(parsed$Global[[1]]$value, NA_real_)
 })
+
+# The Excel re-import canonicalizes every id, so an original JSON that carries a
+# non-canonical id must not report out-of-sync purely because of that
+# canonicalization: both sides are canonicalized before the comparison.
+test_that(".compareJsonToExcel does not count id canonicalization as drift", {
+  out <- withr::local_tempdir()
+  excelPath <- testProjectExcelPath()
+
+  # A JSON produced by importing the Excel fixture is in-sync with its source.
+  jsonPath <- suppressWarnings(importProjectFromExcel(
+    excelPath,
+    outputDir = out,
+    silent = TRUE
+  ))
+  inSync <- suppressWarnings(.compareJsonToExcel(
+    jsonPath = jsonPath,
+    projectConfigPath = excelPath,
+    silent = TRUE
+  ))
+  expect_true(inSync$excel_in_sync)
+
+  # Rewrite the original JSON with a non-canonical (uppercased) output-path id.
+  # The Excel re-import still canonicalizes to `aciclovir_pvb`, and so now does
+  # the original side, so the comparison must still report in-sync.
+  obj <- jsonlite::fromJSON(jsonPath, simplifyVector = FALSE)
+  names(obj$outputPaths)[names(obj$outputPaths) == "aciclovir_pvb"] <-
+    "Aciclovir_PVB"
+  writeLines(
+    jsonlite::toJSON(
+      obj,
+      pretty = TRUE,
+      auto_unbox = TRUE,
+      digits = NA,
+      null = "null"
+    ),
+    jsonPath
+  )
+
+  stillInSync <- suppressWarnings(.compareJsonToExcel(
+    jsonPath = jsonPath,
+    projectConfigPath = excelPath,
+    silent = TRUE
+  ))
+  expect_true(stillInSync$excel_in_sync)
+})
