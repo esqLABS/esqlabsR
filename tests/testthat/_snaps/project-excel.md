@@ -9,3 +9,13 @@
       x "Aciclovir_PVB" and "aciclovir_pvb" -> "aciclovir_pvb"
       i Two distinct ids that canonicalize to the same id are ambiguous; rename so they differ by more than case or forbidden characters.
 
+# .parseExcelParameterSheets aborts on a non-numeric Value cell
+
+    Code
+      .parseExcelParameterSheets(paramFile)
+    Condition
+      Error in `.parseNumericCell()`:
+      ! Cannot interpret the Value cell as a number.
+      x Sheet "Global", row 1: "not_a_number".
+      i A blank cell is allowed; a non-blank cell must be numeric (use "." as the decimal separator).
+

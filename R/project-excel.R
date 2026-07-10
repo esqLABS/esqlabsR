@@ -1055,7 +1055,12 @@ projectConfigurationStatus <- function(...) {
         entry <- list(
           containerPath = as.character(df[["Container Path"]][[i]]),
           parameterName = as.character(df[["Parameter Name"]][[i]]),
-          value = as.numeric(df[["Value"]][[i]]),
+          value = .parseNumericCell(
+            df[["Value"]][[i]],
+            sheet = sheet,
+            row = i,
+            column = "Value"
+          ),
           units = if (is.na(df[["Units"]][[i]]) || df[["Units"]][[i]] == "") {
             NULL
           } else {
@@ -1939,6 +1944,37 @@ projectConfigurationStatus <- function(...) {
     return(NULL)
   }
   x
+}
+
+#' Coerce a single Excel numeric cell, aborting on a non-blank unparseable value
+#'
+#' A blank cell (`NA` / empty string) yields `NA` (an absent value is allowed).
+#' A non-blank cell that does not coerce to a number (text, or a comma-decimal
+#' such as `1,5`) aborts naming the sheet, row, and column, rather than silently
+#' becoming `NA` and serialising a value-less parameter into the JSON project.
+#'
+#' @param x A length-1 cell value.
+#' @param sheet,row,column The cell's location, used in the abort message.
+#' @returns A length-1 numeric (`NA` for a blank cell).
+#' @keywords internal
+#' @noRd
+.parseNumericCell <- function(x, sheet, row, column) {
+  if (is.null(x) || length(x) == 0L) {
+    return(NA_real_)
+  }
+  if (is.na(x) || (is.character(x) && trimws(x) == "")) {
+    return(NA_real_)
+  }
+  value <- suppressWarnings(as.numeric(x))
+  if (is.na(value)) {
+    cli::cli_abort(c(
+      "Cannot interpret the {.field {column}} cell as a number.",
+      "x" = "Sheet {.val {sheet}}, row {row}: {.val {x}}.",
+      "i" = "A blank cell is allowed; a non-blank cell must be numeric \\
+      (use {.val .} as the decimal separator)."
+    ))
+  }
+  value
 }
 
 #' Format a character vector as a comma-separated Excel-bridge cell

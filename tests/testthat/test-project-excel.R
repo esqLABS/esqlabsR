@@ -582,3 +582,39 @@ test_that("exportProjectToExcel keeps both ids when two share one output path", 
 
   expect_setequal(exportedIds, c("op_dup_a", "op_dup_b"))
 })
+
+# A non-blank parameter `Value` cell that does not coerce to a number (text, a
+# comma-decimal) must abort naming the sheet and row, rather than silently
+# becoming NA and serialising a value-less parameter into the JSON project.
+test_that(".parseExcelParameterSheets aborts on a non-numeric Value cell", {
+  paramFile <- withr::local_tempfile(fileext = ".xlsx")
+  df <- data.frame(
+    `Container Path` = "Organism|A",
+    `Parameter Name` = "P",
+    Value = "not_a_number",
+    Units = "mg",
+    check.names = FALSE,
+    stringsAsFactors = FALSE
+  )
+  .writeExcel(list(Global = df), paramFile)
+
+  expect_snapshot(error = TRUE, .parseExcelParameterSheets(paramFile))
+})
+
+# A blank `Value` cell stays allowed (NA), so a partially-filled sheet still
+# imports without aborting.
+test_that(".parseExcelParameterSheets allows a blank Value cell", {
+  paramFile <- withr::local_tempfile(fileext = ".xlsx")
+  df <- data.frame(
+    `Container Path` = "Organism|A",
+    `Parameter Name` = "P",
+    Value = NA_real_,
+    Units = "mg",
+    check.names = FALSE,
+    stringsAsFactors = FALSE
+  )
+  .writeExcel(list(Global = df), paramFile)
+
+  parsed <- .parseExcelParameterSheets(paramFile)
+  expect_identical(parsed$Global[[1]]$value, NA_real_)
+})
