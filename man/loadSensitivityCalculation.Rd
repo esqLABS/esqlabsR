@@ -11,8 +11,8 @@ loadSensitivityCalculation(outputDir, simulation = NULL)
 calculation files.}
 
 \item{simulation}{Optional. A \code{Simulation} object. If not provided, the
-function will attempt to load the simulation from the path stored in the
-metadata.}
+function loads the \code{simulation.pkml} bundled in \code{outputDir}, or, if absent,
+the simulation stored at the source path recorded in the metadata.}
 }
 \value{
 A named list of class \code{SensitivityCalculation}.
@@ -20,7 +20,9 @@ A named list of class \code{SensitivityCalculation}.
 \description{
 Restores a previously saved sensitivity calculation from a directory created
 with \code{\link[=saveSensitivityCalculation]{saveSensitivityCalculation()}}. If no simulation object is provided, the
-function attempts to load it from the saved simulation file path.
+function loads the \code{simulation.pkml} bundled in the directory, falling back to
+the simulation file path stored in the metadata for folders saved before the
+pkml was bundled.
 }
 \examples{
 \dontrun{
