@@ -25,6 +25,25 @@
   project$.__enclos_env__$private
 }
 
+# Print ----
+
+#' @exportS3Method
+#' @noRd
+print.ObservedDataSource <- function(x, ...) {
+  ospsuite.utils::ospPrintClass(x)
+  ospsuite.utils::ospPrintItems(
+    list(
+      "Type" = x$type %||% "",
+      "File" = x$file %||% "",
+      "Name" = x$name %||% "",
+      "Importer Configuration" = x$importerConfiguration %||% "",
+      "Sheets" = paste(unlist(x$sheets), collapse = ", ")
+    ),
+    print_empty = TRUE
+  )
+  invisible(x)
+}
+
 # Section validation adapter ----
 
 #' @keywords internal
@@ -247,10 +266,13 @@ addObservedData <- function(project, entry) {
       )
     }
     state$.programmaticDataSets[[name]] <- entry
-    sentinel <- list(type = "programmatic", name = name)
+    sentinel <- .asObservedDataSource(list(type = "programmatic", name = name))
     # The observedData setter resets the names cache, so the cache must be
     # rebuilt after the write, from the names known before it.
-    project$observedData <- c(project$observedData, list(sentinel))
+    project$.setSection(
+      "observedData",
+      c(project$.getSection("observedData"), list(sentinel))
+    )
     state$.observedDataNamesCache <- c(existingNames, name)
     cli::cli_inform(c(
       "i" = paste0(
@@ -293,7 +315,13 @@ addObservedData <- function(project, entry) {
       )
     }
     state$.observedDataNamesCache <- NULL
-    project$observedData <- c(project$observedData, list(entry))
+    project$.setSection(
+      "observedData",
+      c(
+        project$.getSection("observedData"),
+        list(.asObservedDataSource(entry))
+      )
+    )
     return(invisible(project))
   }
 
@@ -302,67 +330,90 @@ addObservedData <- function(project, entry) {
   )
 }
 
-#' Remove observed data from a Project
+#' Remove one or more observed-data sources from a Project
 #'
 #' Removes by DataSet name (for `type = "programmatic"` entries) or by
 #' `file` basename (for `type` `"excel"` / `"pkml"` / `"script"`
-#' entries). Warns and is a no-op if no matching entry is found.
+#' entries). Vectorizes over a vector of ids, removing each in one
+#' write-through. Warns and skips any id with no matching entry.
+#'
+#' Unlike the other authoring functions, `addObservedData()` is not
+#' vectorized over ids: its second argument is a `DataSet` or a configuration
+#' list, not an id, so it adds a single source per call. Add several sources
+#' with several calls.
 #'
 #' @param project A `Project` object.
-#' @param name DataSet name or config entry file basename.
+#' @param id Character vector of ids. An observed-data id comes from the data
+#'   source (an OSPS `DataSet` name or a file basename) and is matched
+#'   verbatim, not canonicalized.
 #' @returns The `project` object, invisibly.
 #' @export
 #' @family observedData
-removeObservedData <- function(project, name) {
+removeObservedData <- function(project, id) {
   validateIsOfType(project, "Project")
-  if (
-    !is.character(name) ||
-      length(name) != 1L ||
-      is.na(name) ||
-      nchar(name) == 0
-  ) {
-    cli::cli_abort("{.arg name} must be a non-empty string")
-  }
+  .assertIdVector(id)
   state <- .projectPrivate(project)
+  observedData <- project$.getSection("observedData")
 
-  if (name %in% names(state$.programmaticDataSets)) {
-    .warnIfObservedDataReferenced(project, name)
-    state$.programmaticDataSets[[name]] <- NULL
+  # Resolve every id to the section index it removes (a programmatic sentinel or
+  # a file-based entry) before touching anything, so the whole batch is
+  # validated first and applied in a single write-through, matching the
+  # all-or-nothing invariant every other vectorized remove* upholds.
+  dropIdx <- integer()
+  programmaticNames <- character()
+  missingIds <- character()
+  for (one in id) {
+    if (one %in% names(state$.programmaticDataSets)) {
+      programmaticNames <- c(programmaticNames, one)
+      matchIdx <- which(vapply(
+        observedData,
+        function(e) {
+          identical(e$type, "programmatic") && identical(e$name, one)
+        },
+        logical(1)
+      ))
+      dropIdx <- c(dropIdx, matchIdx)
+      next
+    }
     matchIdx <- which(vapply(
-      project$observedData,
+      observedData,
       function(e) {
-        identical(e$type, "programmatic") && identical(e$name, name)
+        !is.null(e[["file"]]) && identical(basename(e[["file"]]), one)
       },
       logical(1)
     ))
-    if (length(matchIdx) > 0L) {
-      project$observedData <- project$observedData[-matchIdx[[1]]]
+    if (length(matchIdx) == 0L) {
+      missingIds <- c(missingIds, one)
+      next
     }
-    state$.observedDataNamesCache <- NULL
+    dropIdx <- c(dropIdx, matchIdx)
+  }
+
+  if (length(missingIds) > 0L) {
+    cli::cli_warn("observedData entry {.val {missingIds}} not found; no-op.")
+  }
+  # Warn once per removed id that is still referenced, then drop everything in a
+  # single write. A not-found id contributes nothing to the write.
+  for (one in setdiff(id, missingIds)) {
+    .warnIfObservedDataReferenced(project, one)
+  }
+  if (length(dropIdx) == 0L && length(programmaticNames) == 0L) {
     return(invisible(project))
   }
 
-  matchIdx <- which(vapply(
-    project$observedData,
-    function(e) {
-      !is.null(e[["file"]]) && identical(basename(e[["file"]]), name)
-    },
-    logical(1)
-  ))
-
-  if (length(matchIdx) == 0L) {
-    cli::cli_warn("observedData entry {.val {name}} not found; no-op.")
-    return(invisible(project))
+  for (name in programmaticNames) {
+    state$.programmaticDataSets[[name]] <- NULL
   }
-
-  .warnIfObservedDataReferenced(project, name)
-  project$observedData <- project$observedData[-matchIdx[[1]]]
+  if (length(dropIdx) > 0L) {
+    observedData <- observedData[-unique(dropIdx)]
+  }
+  project$.setSection("observedData", observedData)
   state$.observedDataNamesCache <- NULL
   invisible(project)
 }
 
 # Warn when a removed observedData name is still referenced as a
-# `dataSet` by any `plots$dataCombined` observed entry. Removal proceeds
+# `dataSet` by any `dataCombined` observed entry. Removal proceeds
 # anyway, leaving the dangling reference for the next validateProject()
 # call to surface, matching the .warnIfReferenced() convention used by
 # the other remove*() mutators.
@@ -370,7 +421,7 @@ removeObservedData <- function(project, name) {
 # @keywords internal
 # @noRd
 .warnIfObservedDataReferenced <- function(project, name) {
-  dataCombined <- project$plots$dataCombined %||% list()
+  dataCombined <- .unwrapDefinitionList(project$dataCombined) %||% list()
   holders <- character()
   for (dcName in names(dataCombined)) {
     observed <- dataCombined[[dcName]]$observed %||% list()

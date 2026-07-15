@@ -226,3 +226,222 @@ test_that("extendPopulationFromXLS throws an error if specified sheet is empty o
     }
   )
 })
+
+# setPopulation ----
+
+test_that("setPopulation changes a field and persists to file and memory", {
+  project <- testProject()
+  setPopulation(project, "testpopulation", numberOfIndividuals = 50)
+  expect_equal(project$populations[["testpopulation"]]$numberOfIndividuals, 50)
+
+  # The write-through must reach disk: a throwaway reload sees the new value.
+  reloaded <- loadProject(project$jsonPath)
+  expect_equal(
+    reloaded$populations[["testpopulation"]]$numberOfIndividuals,
+    50
+  )
+})
+
+test_that("setPopulation coerces numeric fields like addPopulation", {
+  project <- testProject()
+  setPopulation(project, "testpopulation", proportionOfFemales = "75")
+  expect_identical(
+    project$populations[["testpopulation"]]$proportionOfFemales,
+    75
+  )
+})
+
+test_that("setPopulation partial update leaves other fields untouched", {
+  project <- testProject()
+  before <- project$populations[["testpopulation"]]
+  setPopulation(project, "testpopulation", ageMin = 20)
+
+  after <- project$populations[["testpopulation"]]
+  expect_equal(after$ageMin, 20)
+  for (f in setdiff(names(before), "ageMin")) {
+    expect_equal(after[[f]], before[[f]])
+  }
+})
+
+test_that("setPopulation clears validatedSinceMutation", {
+  project <- testProject()
+  project$.markValidated()
+  setPopulation(project, "testpopulation", numberOfIndividuals = 10)
+  expect_false(project$validatedSinceMutation)
+})
+
+test_that("setPopulation aborts on a non-existent population", {
+  project <- testProject()
+  expect_snapshot(
+    error = TRUE,
+    setPopulation(project, "Ghost", numberOfIndividuals = 10)
+  )
+})
+
+test_that("setPopulation rejects a non-positive numberOfIndividuals", {
+  project <- testProject()
+  before <- project$populations[["testpopulation"]]
+  expect_snapshot(
+    error = TRUE,
+    setPopulation(project, "testpopulation", numberOfIndividuals = 0)
+  )
+  expect_equal(project$populations[["testpopulation"]], before)
+})
+
+test_that("setPopulation on a clone does not affect the source on disk", {
+  source <- testProject()
+  before <- source$populations[["testpopulation"]]
+  clone <- source$clone()
+  setPopulation(clone, "testpopulation", numberOfIndividuals = 7)
+
+  expect_equal(clone$populations[["testpopulation"]]$numberOfIndividuals, 7)
+  expect_equal(source$populations[["testpopulation"]], before)
+  # The clone's edit must not reach the source's on-disk tree.
+  reloaded <- loadProject(source$jsonPath)
+  expect_equal(reloaded$populations[["testpopulation"]], before)
+})
+
+# Vectorized authoring ----
+
+test_that("addPopulation adds N populations in one call equal to N scalar adds", {
+  vectorized <- testProject()
+  addPopulation(
+    vectorized,
+    c("young", "old"),
+    species = "Human",
+    numberOfIndividuals = c(10, 20),
+    ageMin = c(18, 65),
+    ageMax = c(40, 90)
+  )
+
+  scalar <- testProject()
+  addPopulation(
+    scalar,
+    "young",
+    species = "Human",
+    numberOfIndividuals = 10,
+    ageMin = 18,
+    ageMax = 40
+  )
+  addPopulation(
+    scalar,
+    "old",
+    species = "Human",
+    numberOfIndividuals = 20,
+    ageMin = 65,
+    ageMax = 90
+  )
+
+  expect_identical(
+    vectorized$populations[c("young", "old")],
+    scalar$populations[c("young", "old")]
+  )
+})
+
+test_that("addPopulation recycles a scalar field and aligns a length-N field", {
+  project <- testProject()
+  addPopulation(
+    project,
+    c("a", "b"),
+    species = "Human",
+    numberOfIndividuals = c(5, 7)
+  )
+  expect_identical(project$populations$a$species, "Human")
+  expect_identical(project$populations$b$species, "Human")
+  expect_identical(project$populations$a$numberOfIndividuals, 5)
+  expect_identical(project$populations$b$numberOfIndividuals, 7)
+})
+
+test_that("addPopulation persists all N to disk in one write-through", {
+  project <- testProject()
+  addPopulation(
+    project,
+    c("a", "b"),
+    species = "Human",
+    numberOfIndividuals = 5
+  )
+  reloaded <- loadProject(project$jsonPath)
+  expect_true(all(c("a", "b") %in% names(reloaded$populations)))
+})
+
+test_that("addPopulation aborts the whole batch and writes nothing on one bad entry", {
+  project <- testProject()
+  before <- names(project$populations)
+  expect_error(
+    addPopulation(
+      project,
+      c("a", "b"),
+      species = "Human",
+      numberOfIndividuals = c(5, -1)
+    )
+  )
+  expect_identical(names(project$populations), before)
+  reloaded <- loadProject(project$jsonPath)
+  expect_identical(names(reloaded$populations), before)
+})
+
+test_that("addPopulation aborts on a mismatched scalar field length", {
+  project <- testProject()
+  expect_snapshot(
+    error = TRUE,
+    addPopulation(
+      project,
+      c("a", "b", "c"),
+      species = "Human",
+      numberOfIndividuals = c(5, 7)
+    )
+  )
+})
+
+test_that("setPopulation vectorizes a partial update across N ids", {
+  project <- testProject()
+  addPopulation(
+    project,
+    c("a", "b"),
+    species = "Human",
+    numberOfIndividuals = 5
+  )
+  setPopulation(project, c("a", "b"), numberOfIndividuals = c(50, 60))
+  expect_identical(project$populations$a$numberOfIndividuals, 50)
+  expect_identical(project$populations$b$numberOfIndividuals, 60)
+  expect_identical(project$populations$a$species, "Human")
+})
+
+test_that("removePopulation removes a vector of ids in one write-through", {
+  project <- testProject()
+  addPopulation(
+    project,
+    c("a", "b"),
+    species = "Human",
+    numberOfIndividuals = 5
+  )
+  removePopulation(project, c("a", "b"))
+  expect_false(any(c("a", "b") %in% names(project$populations)))
+  reloaded <- loadProject(project$jsonPath)
+  expect_false(any(c("a", "b") %in% names(reloaded$populations)))
+})
+
+test_that("removePopulation warns when still referenced by a scenario, removes anyway", {
+  project <- testProject()
+  withr::local_options(cli.unicode = FALSE)
+  # `testpopulation` is the `populationId` of two scenarios in the fixture.
+  expect_snapshot(removePopulation(project, "testpopulation"))
+  expect_false("testpopulation" %in% names(project$populations))
+})
+
+# Print method ----
+
+test_that("print.Population renders the configured fields", {
+  project <- testProject()
+  withr::local_options(cli.unicode = FALSE)
+  local_reproducible_output()
+  expect_snapshot(print(project$populations[["testpopulation"]]))
+})
+
+test_that("print.Population renders a minimal population", {
+  project <- testProject()
+  addPopulation(project, "minimal", species = "Human", numberOfIndividuals = 10)
+  withr::local_options(cli.unicode = FALSE)
+  local_reproducible_output()
+  expect_snapshot(print(project$populations[["minimal"]]))
+})

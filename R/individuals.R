@@ -16,6 +16,8 @@
   numericFields <- c("weight", "height", "age")
   result <- list()
   for (entry in individualsData) {
+    id <- .keyedTreeRecordId(entry, "individualId", "individual")
+    .assertNoEmptyObjectFields(entry, "individual")
     indiv <- list()
     for (field in names(entry)) {
       if (field == "individualId") {
@@ -33,7 +35,7 @@
       indiv[[field]] <- val
     }
     class(indiv) <- c("Individual", "list")
-    result[[entry$individualId]] <- indiv
+    result[[id]] <- indiv
   }
   result
 }
@@ -49,20 +51,11 @@
   .validateIndividuals(project$individuals)
 }
 
-#' @keywords internal
-#' @noRd
-.individualParameterSetsValidatorAdapter <- function(project) {
-  .validateParameterSets(
-    project$individualParameterSets,
-    "individualParameterSets"
-  )
-}
-
 #' Validate the `individuals` section of a Project
 #'
 #' Checks `species` and `gender` are present and warns when numeric
 #' fields (`weight`, `height`, `age`) are non-numeric. Cross-references
-#' to `individualParameterSets` are validated in
+#' to `parameterSets` are validated in
 #' `.validateCrossReferences()`.
 #'
 #' @param individuals Named list from `project$individuals`.
@@ -108,51 +101,108 @@
   result
 }
 
+# Print ----
+
+#' @exportS3Method
+#' @noRd
+print.Individual <- function(x, ...) {
+  ospsuite.utils::ospPrintClass(x)
+  ospsuite.utils::ospPrintItems(
+    list(
+      "Species" = x$species %||% "",
+      "Population" = x$population %||% "",
+      "Gender" = x$gender %||% "",
+      "Weight" = x$weight %||% "",
+      "Height" = x$height %||% "",
+      "Age" = x$age %||% "",
+      "Parameter Sets" = paste(x$parameterSets, collapse = ", ")
+    ),
+    print_empty = TRUE
+  )
+  invisible(x)
+}
+
 # Public CRUD: individuals ----
 
-#' Add an individual to a Project
+#' Add one or more individuals to a Project
+#'
+#' Add individuals to `project$individuals`, vectorizing over a vector of ids
+#' (see the recycling rule under Details). Scalar-per-entity fields (`species`
+#' and the `...` fields `population`, `gender`, `weight`, `height`, `age`,
+#' `proteinOntogenies`) follow the recycle/align rule; `parameterSets` is
+#' vector-valued-per-entity (applied whole to every individual, or one vector
+#' per individual via a length-`id` list).
+#'
+#' @inherit vectorizedAuthoring details
 #'
 #' @param project A `Project` object.
-#' @param individualId Character scalar, unique ID for the individual.
-#' @param species Character scalar, species name.
+#' @param id Character vector of unique ids for the individuals (the number of
+#'   individuals to add). Each is canonicalized to a safe, lowercase id (a
+#'   warning names the result if it changed).
+#' @param species Character scalar (recycled) or the same length as `id`,
+#'   species name.
 #' @param ... Optional named fields: `population`, `gender`, `weight`,
 #'   `height`, `age`, `proteinOntogenies`, `parameterSets`. Numeric
 #'   fields are coerced via `as.double()`. `parameterSets` is a
-#'   character vector of ids referencing
-#'   `project$individualParameterSets`. Unknown fields trigger an
-#'   error.
+#'   character vector of ids referencing `project$parameterSets`.
+#'   Unknown fields trigger an error.
 #' @returns The `project` object, invisibly.
 #' @export
 #' @family individual
-addIndividual <- function(project, individualId, species, ...) {
+addIndividual <- function(project, id, species, ...) {
   validateIsOfType(project, "Project")
-  errors <- character()
-
-  if (
-    !is.character(individualId) ||
-      length(individualId) != 1L ||
-      is.na(individualId) ||
-      nchar(individualId) == 0
-  ) {
-    errors <- c(errors, "individualId must be a non-empty string")
-  } else if (individualId %in% names(project$individuals)) {
-    errors <- c(
-      errors,
-      paste0("individual '", individualId, "' already exists")
-    )
-  }
-
-  if (
-    !is.character(species) ||
-      length(species) != 1L ||
-      is.na(species) ||
-      nchar(species) == 0
-  ) {
-    errors <- c(errors, "species must be a non-empty string")
-  }
+  .assertIdVector(id)
+  id <- .canonicalizeId(id)
+  n <- length(id)
 
   dots <- list(...)
+  # `parameterSets` is the one vector-valued-per-entity field; everything else
+  # is scalar-per-entity. `species` is a positional formal, not a `...` field.
+  wholeNames <- intersect("parameterSets", names(dots))
+  scalarDots <- dots[setdiff(names(dots), wholeNames)]
+  perEntity <- .alignAuthoringArgs(
+    id,
+    scalarFields = c(list(species = species), scalarDots),
+    wholeFields = dots[wholeNames]
+  )
+
+  # Validate all N first (all-or-nothing): build every entry before folding any,
+  # so an invalid entity in the batch writes nothing.
+  clash <- intersect(id, names(project$individuals))
+  if (length(clash) > 0L) {
+    cli::cli_abort("individual {.val {clash}} already exists")
+  }
+  call <- rlang::current_env()
+  entries <- .collectCanonicalizedRefs(lapply(seq_len(n), function(i) {
+    .buildIndividualEntry(project, id[[i]], perEntity[[i]], call = call)
+  }))
+
+  # Fold all N into the section in memory, then ONE assignment triggers one
+  # write-through.
+  individuals <- project$.getSection("individuals") %||% list()
+  for (i in seq_len(n)) {
+    individuals[[id[[i]]]] <- entries[[i]]
+  }
+  project$.setSection("individuals", individuals)
+  invisible(project)
+}
+
+# Build one classed `Individual` entry from its id and per-entity field list,
+# validating the same way the scalar path always has (`species` and `gender`
+# required non-empty, `parameterSets` a resolvable character vector). Aborts
+# naming the individual on the first problem.
+#
+# @keywords internal
+# @noRd
+.buildIndividualEntry <- function(
+  project,
+  id,
+  fields,
+  call = rlang::caller_env()
+) {
+  errors <- character()
   allowed <- c(
+    "species",
     "population",
     "gender",
     "weight",
@@ -161,7 +211,7 @@ addIndividual <- function(project, individualId, species, ...) {
     "proteinOntogenies",
     "parameterSets"
   )
-  unknown <- setdiff(names(dots), allowed)
+  unknown <- setdiff(names(fields), allowed)
   if (length(unknown) > 0L) {
     errors <- c(
       errors,
@@ -174,11 +224,21 @@ addIndividual <- function(project, individualId, species, ...) {
     )
   }
 
+  species <- fields$species
+  if (
+    !is.character(species) ||
+      length(species) != 1L ||
+      is.na(species) ||
+      nchar(species) == 0
+  ) {
+    errors <- c(errors, "species must be a non-empty string")
+  }
+
   # `gender` is a required field per `.validateIndividuals()`; reject it at
   # add time so a gender-less individual cannot enter the project only to be
   # flagged as a Critical Error later (mirrors the validator's contract:
   # missing, NA, or empty are all invalid).
-  gender <- dots$gender
+  gender <- fields$gender
   if (
     is.null(gender) ||
       !is.character(gender) ||
@@ -190,221 +250,261 @@ addIndividual <- function(project, individualId, species, ...) {
   }
 
   if (length(errors) > 0L) {
-    cli::cli_abort(c(
-      "Cannot add individual {.val {individualId}}:",
-      stats::setNames(errors, rep("x", length(errors)))
-    ))
+    cli::cli_abort(
+      c(
+        "Cannot add individual {.val {id}}:",
+        stats::setNames(errors, rep("x", length(errors)))
+      ),
+      call = call
+    )
   }
 
   entry <- list(species = species)
   for (field in c("population", "gender", "proteinOntogenies")) {
-    if (!is.null(dots[[field]])) entry[[field]] <- dots[[field]]
+    if (!is.null(fields[[field]])) entry[[field]] <- fields[[field]]
   }
   for (field in c("weight", "height", "age")) {
-    if (!is.null(dots[[field]])) {
-      entry[[field]] <- as.double(dots[[field]])
+    if (!is.null(fields[[field]])) {
+      entry[[field]] <- as.double(fields[[field]])
     }
   }
-  if (!is.null(dots$parameterSets)) {
-    if (!is.character(dots$parameterSets)) {
+  if (!is.null(fields$parameterSets)) {
+    if (!is.character(fields$parameterSets)) {
       cli::cli_abort(
-        "{.arg parameterSets} must be a character vector of set ids"
+        "{.arg parameterSets} must be a character vector of set ids",
+        call = call
       )
     }
-    bad <- setdiff(
-      dots$parameterSets,
-      names(project$individualParameterSets %||% list())
-    )
+    sets <- .canonicalizeIdRef(fields$parameterSets)
+    bad <- setdiff(sets, names(project$parameterSets %||% list()))
     if (length(bad) > 0L) {
-      cli::cli_abort(c(
-        "{.arg parameterSets} references undefined individual parameter sets:",
-        "x" = "{.val {bad}}"
-      ))
+      cli::cli_abort(
+        c(
+          "{.arg parameterSets} references undefined parameter sets:",
+          "x" = "{.val {bad}}"
+        ),
+        call = call
+      )
     }
-    entry$parameterSets <- dots$parameterSets
+    entry$parameterSets <- sets
   }
   class(entry) <- c("Individual", "list")
-
-  project$individuals[[individualId]] <- entry
-  project$.markModified()
-  invisible(project)
+  entry
 }
 
-#' Remove an individual from a Project
+#' Remove one or more individuals from a Project
+#'
+#' Drop the individuals with matching ids in one write-through. Warns (and
+#' skips) any id not present, and warns when a removed individual is still
+#' referenced.
 #'
 #' @param project A `Project` object.
-#' @param individualId Character scalar, ID of the individual to remove.
+#' @param id Character vector of individual ids to remove. Each is
+#'   canonicalized the same way [addIndividual()] canonicalizes it.
 #' @returns The `project` object, invisibly.
 #' @export
 #' @family individual
-removeIndividual <- function(project, individualId) {
+removeIndividual <- function(project, id) {
   validateIsOfType(project, "Project")
-  if (
-    !is.character(individualId) ||
-      length(individualId) != 1L ||
-      is.na(individualId) ||
-      nchar(individualId) == 0
-  ) {
-    cli::cli_abort("{.arg individualId} must be a non-empty string")
+  .assertIdVector(id)
+  id <- .canonicalizeId(id)
+
+  missingIds <- setdiff(id, names(project$individuals))
+  if (length(missingIds) > 0L) {
+    cli::cli_warn("individual {.val {missingIds}} not found; no-op.")
   }
-  if (!(individualId %in% names(project$individuals))) {
-    cli::cli_warn("individual {.val {individualId}} not found; no-op.")
+  toRemove <- intersect(id, names(project$individuals))
+  if (length(toRemove) == 0L) {
     return(invisible(project))
   }
-  .warnIfReferenced(project, "individual", individualId)
-  project$individuals[[individualId]] <- NULL
-  project$.markModified()
+  for (one in toRemove) {
+    .warnIfReferenced(project, "individual", one)
+  }
+  individuals <- project$.getSection("individuals")
+  individuals[toRemove] <- NULL
+  project$.setSection("individuals", individuals)
   invisible(project)
 }
 
-#' Replace the parameter-set references on an individual
+#' Modify fields of an existing individual
+#'
+#' @description Changes one or more fields of the individual identified by
+#'   `id` and persists the change immediately to the individual definition
+#'   (write-through). The `project$individuals` accessor is read-only, so this
+#'   is the way to revise an existing individual in place.
+#'
+#'   Only the arguments you pass via `...` are changed; every other field
+#'   keeps its current value (partial update). Validation matches
+#'   [addIndividual()]: numeric fields (`weight`, `height`, `age`) are
+#'   coerced via `as.double()`, `gender` (if supplied) must be a non-empty
+#'   string, and `parameterSets` (if supplied) must be a character vector of
+#'   ids that resolve in `project$parameterSets`. The required
+#'   `species` field, if supplied, must be a non-empty string.
+#'
+#' @inherit vectorizedAuthoring details
 #'
 #' @param project A `Project` object.
-#' @param individualId Character scalar.
-#' @param parameterSets Character vector of set ids (from
-#'   `project$individualParameterSets`). Use `character(0)` to clear.
+#' @param id Character vector. Ids of the individuals to modify. Each is
+#'   canonicalized the same way [addIndividual()] canonicalizes it, and must
+#'   already exist in `project$individuals`.
+#' @param ... Named fields to change. Accepted: `species`, `population`,
+#'   `gender`, `weight`, `height`, `age`, `proteinOntogenies`,
+#'   `parameterSets`. Scalar-per-entity fields recycle/align across `id`;
+#'   `parameterSets` is applied whole (or one vector per individual via a
+#'   length-`id` list). Unknown fields trigger an error.
+#'
 #' @returns The `project` object, invisibly.
 #' @export
 #' @family individual
-setIndividualParameterSets <- function(project, individualId, parameterSets) {
+setIndividual <- function(project, id, ...) {
   validateIsOfType(project, "Project")
-  if (!(individualId %in% names(project$individuals))) {
-    cli::cli_abort("individual {.val {individualId}} not found")
-  }
-  if (!is.character(parameterSets)) {
-    cli::cli_abort("{.arg parameterSets} must be a character vector")
-  }
-  bad <- setdiff(
-    parameterSets,
-    names(project$individualParameterSets %||% list())
-  )
-  if (length(bad) > 0L) {
+  .assertIdVector(id)
+  id <- .canonicalizeId(id)
+  n <- length(id)
+  missingIds <- setdiff(id, names(project$individuals))
+  if (length(missingIds) > 0L) {
     cli::cli_abort(c(
-      "{.arg parameterSets} references undefined individual parameter sets:",
-      "x" = "{.val {bad}}"
+      "Cannot modify individual {.val {missingIds}}: it does not exist.",
+      "i" = "Use {.fn addIndividual} to create it first."
     ))
   }
-  project$individuals[[individualId]]$parameterSets <- parameterSets
-  project$.markModified()
-  invisible(project)
-}
 
-# Public CRUD: individualParameterSets ----
-
-#' Create an individual parameter set
-#' @param project A `Project` object.
-#' @param id Character scalar, set name. Must not already exist.
-#' @returns The `project` object, invisibly.
-#' @export
-#' @family parameters
-addIndividualParameterSet <- function(project, id) {
-  validateIsOfType(project, "Project")
-  if (!is.character(id) || length(id) != 1L || is.na(id) || nchar(id) == 0) {
-    cli::cli_abort("{.arg id} must be a non-empty string")
-  }
-  if (id %in% names(project$individualParameterSets)) {
-    cli::cli_abort("individual parameter set {.val {id}} already exists")
-  }
-  project$individualParameterSets[[id]] <- list()
-  project$.markModified()
-  invisible(project)
-}
-
-#' Remove an individual parameter set
-#' @inheritParams addIndividualParameterSet
-#' @returns The `project` object, invisibly.
-#' @export
-#' @family parameters
-removeIndividualParameterSet <- function(project, id) {
-  validateIsOfType(project, "Project")
-  if (!(id %in% names(project$individualParameterSets))) {
-    cli::cli_warn("individual parameter set {.val {id}} not found; no-op.")
-    return(invisible(project))
-  }
-  .warnIfReferenced(project, "individualParameterSet", id)
-  project$individualParameterSets[[id]] <- NULL
-  project$.markModified()
-  invisible(project)
-}
-
-#' Add a parameter entry to a named individual parameter set
-#'
-#' Adds one parameter entry to the named set in
-#' `project$individualParameterSets`. The set is created on demand if it
-#' does not yet exist. Last-write-wins on duplicate paths.
-#'
-#' @param project A `Project` object.
-#' @param id Character scalar, set name. Created if not present.
-#' @param containerPath Character scalar.
-#' @param parameterName Character scalar.
-#' @param value Numeric scalar.
-#' @param units Character scalar.
-#' @returns The `project` object, invisibly.
-#' @export
-#' @family parameters
-addIndividualParameterEntry <- function(
-  project,
-  id,
-  containerPath,
-  parameterName,
-  value,
-  units
-) {
-  validateIsOfType(project, "Project")
-  if (!is.character(id) || length(id) != 1L || is.na(id) || nchar(id) == 0) {
-    cli::cli_abort("{.arg id} must be a non-empty string")
-  }
-  current <- project$individualParameterSets[[id]]
-  project$individualParameterSets[[id]] <- .addParameterEntry(
-    current,
-    containerPath,
-    parameterName,
-    value,
-    units
+  dots <- list(...)
+  wholeNames <- intersect("parameterSets", names(dots))
+  scalarDots <- dots[setdiff(names(dots), wholeNames)]
+  perEntity <- .alignAuthoringArgs(
+    id,
+    scalarFields = scalarDots,
+    wholeFields = dots[wholeNames]
   )
-  project$.markModified()
+  # Only the field names the caller actually supplied are applied (partial
+  # update); the engine carries every supplied field for each entity.
+  suppliedNames <- names(dots)
+
+  call <- rlang::current_env()
+  entries <- .collectCanonicalizedRefs(lapply(seq_len(n), function(i) {
+    .setOneIndividual(
+      project,
+      id[[i]],
+      perEntity[[i]][suppliedNames],
+      call = call
+    )
+  }))
+
+  individuals <- project$.getSection("individuals")
+  for (i in seq_len(n)) {
+    individuals[[id[[i]]]] <- entries[[i]]
+  }
+  project$.setSection("individuals", individuals)
   invisible(project)
 }
 
-#' Remove a parameter entry from a named individual parameter set
+# Apply a partial-update field set to one existing individual, returning the
+# updated classed entry. Validates only the supplied fields, matching the
+# scalar partial-update contract. Aborts naming the individual on a problem.
+#
+# @keywords internal
+# @noRd
+.setOneIndividual <- function(project, id, fields, call = rlang::caller_env()) {
+  allowed <- c(
+    "species",
+    "population",
+    "gender",
+    "weight",
+    "height",
+    "age",
+    "proteinOntogenies",
+    "parameterSets"
+  )
+  unknown <- setdiff(names(fields), allowed)
+  if (length(unknown) > 0L) {
+    cli::cli_abort(
+      c(
+        "Cannot modify individual {.val {id}}:",
+        "x" = "unknown fields: {.val {unknown}}. Allowed: {.val {allowed}}."
+      ),
+      call = call
+    )
+  }
+
+  if ("species" %in% names(fields)) {
+    species <- fields$species
+    if (
+      !is.character(species) ||
+        length(species) != 1L ||
+        is.na(species) ||
+        nchar(species) == 0
+    ) {
+      cli::cli_abort("{.arg species} must be a non-empty string", call = call)
+    }
+  }
+  if ("gender" %in% names(fields)) {
+    gender <- fields$gender
+    if (
+      is.null(gender) ||
+        !is.character(gender) ||
+        length(gender) != 1L ||
+        is.na(gender) ||
+        nchar(gender) == 0
+    ) {
+      cli::cli_abort("{.arg gender} must be a non-empty string", call = call)
+    }
+  }
+  if ("parameterSets" %in% names(fields)) {
+    if (!is.character(fields$parameterSets)) {
+      cli::cli_abort(
+        "{.arg parameterSets} must be a character vector of set ids",
+        call = call
+      )
+    }
+    fields$parameterSets <- .canonicalizeIdRef(fields$parameterSets)
+    bad <- setdiff(
+      fields$parameterSets,
+      names(project$parameterSets %||% list())
+    )
+    if (length(bad) > 0L) {
+      cli::cli_abort(
+        c(
+          "{.arg parameterSets} references undefined parameter sets:",
+          "x" = "{.val {bad}}"
+        ),
+        call = call
+      )
+    }
+  }
+
+  entry <- project$individuals[[id]]
+  for (field in names(fields)) {
+    if (field %in% c("weight", "height", "age")) {
+      entry[[field]] <- as.double(fields[[field]])
+    } else {
+      entry[[field]] <- fields[[field]]
+    }
+  }
+  class(entry) <- c("Individual", "list")
+  entry
+}
+
+#' Replace the parameter-set references on one or more individuals
 #'
-#' Removes one parameter entry from the named set. If the removed entry
-#' was the last in the set, the set itself is auto-removed from
-#' `project$individualParameterSets`. Warns if the set or entry doesn't
-#' exist.
+#' @description A convenience wrapper for
+#'   `setIndividual(project, id, parameterSets = parameterSets)`, which is the
+#'   canonical way to change an individual's parameter-set references.
+#'   Prefer [setIndividual()] directly; this function exists for callers that
+#'   only need to replace the references.
 #'
-#' @inheritParams addIndividualParameterEntry
+#' @inherit vectorizedAuthoring details
+#'
+#' @param project A `Project` object.
+#' @param id Character vector of individual ids. Each is canonicalized the
+#'   same way [addIndividual()] canonicalizes it.
+#' @param parameterSets Character vector of set ids (from
+#'   `project$parameterSets`), applied whole to every individual; use
+#'   `character(0)` to clear. To set a different list per individual, pass a
+#'   list of the same length as `id` (one character vector per individual).
 #' @returns The `project` object, invisibly.
 #' @export
-#' @family parameters
-removeIndividualParameterEntry <- function(
-  project,
-  id,
-  containerPath,
-  parameterName
-) {
-  validateIsOfType(project, "Project")
-  if (!is.character(id) || length(id) != 1L) {
-    cli::cli_abort("{.arg id} must be a string scalar")
-  }
-  if (!(id %in% names(project$individualParameterSets))) {
-    cli::cli_warn("individual parameter set {.val {id}} not found; no-op.")
-    return(invisible(project))
-  }
-  result <- .removeParameterEntry(
-    project$individualParameterSets[[id]],
-    containerPath,
-    parameterName
-  )
-  if (!result$removed) {
-    return(invisible(project))
-  }
-  if (is.null(result$parameters)) {
-    .warnIfReferenced(project, "individualParameterSet", id)
-    project$individualParameterSets[[id]] <- NULL
-  } else {
-    project$individualParameterSets[[id]] <- result$parameters
-  }
-  project$.markModified()
-  invisible(project)
+#' @family individual
+setIndividualParameterSets <- function(project, id, parameterSets) {
+  setIndividual(project, id, parameterSets = parameterSets)
 }

@@ -5,6 +5,151 @@
 # parsing is shallow (no helpers needed beyond the parser default), so
 # this file owns validation and mutation.
 
+# Public CRUD: output paths ----
+
+#' Add one or more output paths to a Project
+#'
+#' Add output paths to `project$outputPaths`, vectorizing over a vector of ids
+#' (see the recycling rule under Details). `path` is scalar-per-entity: a
+#' single path is recycled to every id, or a length-`id` vector aligns by
+#' position.
+#'
+#' @inherit vectorizedAuthoring details
+#'
+#' @param project A `Project` object.
+#' @param id Character vector of output path ids (unique within the call and
+#'   not already present in `project$outputPaths`). Each is canonicalized.
+#' @param path Character vector of output paths, length 1 (recycled) or the
+#'   same length as `id`.
+#' @returns The `project` object, invisibly.
+#' @export
+#' @family output path
+addOutputPath <- function(project, id, path) {
+  validateIsOfType(project, "Project")
+  # Route the id-vector check through the shared helper every sibling add* uses,
+  # then canonicalize (which aborts on an in-batch collision, so no separate
+  # duplicate guard is needed).
+  .assertIdVector(id)
+  id <- .canonicalizeId(id)
+
+  if (
+    !is.character(path) ||
+      !(length(path) == 1L || length(path) == length(id))
+  ) {
+    cli::cli_abort(c(
+      "Cannot add outputPath:",
+      "x" = "path must be a character vector of length 1 or the same \\
+      length as id"
+    ))
+  }
+  clash <- intersect(id, names(project$outputPaths))
+  if (length(clash) > 0L) {
+    cli::cli_abort("outputPath {.val {clash}} already exists")
+  }
+
+  # Recycle a single path to every id (the scalar-per-entity rule).
+  if (length(path) == 1L) {
+    path <- rep(path, length(id))
+  }
+  newPaths <- as.list(path)
+  names(newPaths) <- id
+  outputPaths <- c(project$.getSection("outputPaths"), newPaths)
+  project$.setSection("outputPaths", outputPaths)
+  invisible(project)
+}
+
+#' Remove one or more output paths from a Project
+#'
+#' Drop the output paths with matching ids in one write-through. Warns (and
+#' skips) any id not present, and warns when a removed output path is still
+#' referenced.
+#'
+#' @param project A `Project` object.
+#' @param id Character vector of output-path ids to remove. Each is
+#'   canonicalized the same way [addOutputPath()] canonicalizes it.
+#' @returns The `project` object, invisibly.
+#' @export
+#' @family output path
+removeOutputPath <- function(project, id) {
+  validateIsOfType(project, "Project")
+  .assertIdVector(id)
+  id <- .canonicalizeId(id)
+
+  missingIds <- setdiff(id, names(project$outputPaths))
+  if (length(missingIds) > 0L) {
+    cli::cli_warn("outputPath {.val {missingIds}} not found; no-op.")
+  }
+  toRemove <- intersect(id, names(project$outputPaths))
+  if (length(toRemove) == 0L) {
+    return(invisible(project))
+  }
+  for (one in toRemove) {
+    .warnIfReferenced(project, "outputPath", one)
+  }
+  outputPaths <- project$.getSection("outputPaths")
+  outputPaths <- outputPaths[setdiff(names(outputPaths), toRemove)]
+  project$.setSection("outputPaths", outputPaths)
+  invisible(project)
+}
+
+#' Change the literal path of one or more existing output paths
+#'
+#' @description Updates the OSPS-notation path string bound to existing
+#'   output-path ids and persists the change immediately to the output-path
+#'   definition (write-through). The ids themselves are not changed (use
+#'   [removeOutputPath()] + [addOutputPath()] to rename), so
+#'   every scenario that records these output paths keeps referencing them.
+#'   The `project$outputPaths` accessor is read-only, so this is the way to
+#'   change a path in place. The call vectorizes over a vector of ids (see the
+#'   recycling rule under Details); `path` is scalar-per-entity (one path
+#'   recycled to every id, or a length-`id` vector aligned by position).
+#'
+#' @inherit vectorizedAuthoring details
+#'
+#' @param project A `Project` object.
+#' @param id Character vector. The output-path ids to modify. Each must
+#'   already exist in `project$outputPaths`.
+#' @param path Character vector of new non-empty OSPS-notation path strings,
+#'   length 1 (recycled) or the same length as `id`.
+#'
+#' @returns The `project` object, invisibly.
+#' @export
+#' @family output path
+setOutputPath <- function(project, id, path) {
+  validateIsOfType(project, "Project")
+  .assertIdVector(id)
+  id <- .canonicalizeId(id)
+  n <- length(id)
+  missingIds <- setdiff(id, names(project$outputPaths))
+  if (length(missingIds) > 0L) {
+    cli::cli_abort(c(
+      "Cannot modify output path {.val {missingIds}}: it does not exist.",
+      "i" = "Use {.fn addOutputPath} to create it first."
+    ))
+  }
+  perId <- .recycleField(path, n, "path")
+  for (i in seq_len(n)) {
+    one <- perId[[i]]
+    if (
+      !is.character(one) ||
+        length(one) != 1L ||
+        is.na(one) ||
+        nchar(one) == 0
+    ) {
+      cli::cli_abort("{.arg path} must contain non-empty strings")
+    }
+  }
+
+  outputPaths <- project$.getSection("outputPaths")
+  for (i in seq_len(n)) {
+    outputPaths[[id[[i]]]] <- perId[[i]]
+  }
+  project$.setSection("outputPaths", outputPaths)
+  invisible(project)
+}
+
+# Section validation adapter ----
+
 #' @keywords internal
 #' @noRd
 .outputPathsValidatorAdapter <- function(project) {
@@ -56,91 +201,4 @@
   }
 
   result
-}
-
-#' Add output paths to a Project
-#'
-#' @param project A `Project` object.
-#' @param id Character vector of output path IDs (unique within the call
-#'   and not already present in `project$outputPaths`).
-#' @param path Character vector of output paths, same length as `id`.
-#' @returns The `project` object, invisibly.
-#' @export
-#' @family scenario
-addOutputPath <- function(project, id, path) {
-  validateIsOfType(project, "Project")
-  errors <- character()
-
-  if (
-    !is.character(id) ||
-      length(id) < 1L ||
-      any(is.na(id)) ||
-      any(nchar(id) == 0)
-  ) {
-    errors <- c(errors, "id must be a non-empty character vector")
-  }
-  if (!is.character(path) || length(path) != length(id)) {
-    errors <- c(
-      errors,
-      "id and path must be character vectors of the same length"
-    )
-  }
-  if (is.character(id) && any(duplicated(id))) {
-    errors <- c(
-      errors,
-      paste0(
-        "duplicate ids within call: ",
-        paste(unique(id[duplicated(id)]), collapse = ", ")
-      )
-    )
-  }
-  if (is.character(id)) {
-    collisions <- intersect(id, names(project$outputPaths))
-    if (length(collisions) > 0) {
-      errors <- c(
-        errors,
-        paste0(
-          "outputPath id already exists: ",
-          paste(collisions, collapse = ", ")
-        )
-      )
-    }
-  }
-
-  if (length(errors) > 0) {
-    cli::cli_abort(c(
-      "Cannot add outputPath:",
-      stats::setNames(errors, rep("x", length(errors)))
-    ))
-  }
-
-  newPaths <- as.list(path)
-  names(newPaths) <- id
-  project$outputPaths <- c(project$outputPaths, newPaths)
-  project$.markModified()
-  invisible(project)
-}
-
-#' Remove an output path from a Project
-#' @param project A `Project` object.
-#' @param id Character scalar.
-#' @returns The `project` object, invisibly.
-#' @export
-#' @family scenario
-removeOutputPath <- function(project, id) {
-  validateIsOfType(project, "Project")
-  if (!is.character(id) || length(id) != 1L || is.na(id) || nchar(id) == 0) {
-    cli::cli_abort("{.arg id} must be a non-empty string")
-  }
-  if (!(id %in% names(project$outputPaths))) {
-    cli::cli_warn("outputPath {.val {id}} not found; no-op.")
-    return(invisible(project))
-  }
-  .warnIfReferenced(project, "outputPath", id)
-  project$outputPaths <- project$outputPaths[setdiff(
-    names(project$outputPaths),
-    id
-  )]
-  project$.markModified()
-  invisible(project)
 }
