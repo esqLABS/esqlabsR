@@ -1,3 +1,11 @@
+# .assertPlotGridsBuildable aborts on a grid missing its plotGridId
+
+    Code
+      esqlabsR:::.assertPlotGridsBuildable(list(list(plotIds = "p1")), plotIDs = "p1")
+    Condition
+      Error in `esqlabsR:::.assertPlotGridsBuildable()`:
+      ! Every plot grid must declare a `plotGridId`.
+
 # createPlots aborts on unknown plotGrids when stopIfNotFound
 
     Code

@@ -41,6 +41,11 @@ createDataCombined <- function(
   observedData <- loadObservedData(project)
 
   if (!is.null(plotGrids)) {
+    allGridIds <- names(.unwrapDefinitionList(project$plotGrids) %||% list())
+    missingGrids <- setdiff(plotGrids[!is.na(plotGrids)], allGridIds)
+    if (length(missingGrids) > 0) {
+      cli::cli_abort(messages$stopPlotGridNamesNotFound(missingGrids))
+    }
     dataCombined <- union(
       dataCombined,
       .extractDataCombinedNamesForPlotsFromProject(project, plotGrids)
@@ -129,10 +134,10 @@ createDataCombined <- function(
 # @noRd
 .extractDataCombinedNamesForPlotsFromProject <- function(
   project,
-  plotGridNames
+  plotGrids
 ) {
   grids <- .unwrapDefinitionList(project$plotGrids) %||% list()
-  selectedGrids <- grids[intersect(names(grids), plotGridNames)]
+  selectedGrids <- grids[intersect(names(grids), plotGrids)]
   if (length(selectedGrids) == 0) {
     return(character(0))
   }

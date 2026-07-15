@@ -47,6 +47,18 @@ test_that("the plot-build assertion helpers raise cli (rlang) errors", {
   )
 })
 
+test_that(".assertPlotGridsBuildable aborts on a grid missing its plotGridId", {
+  # A grid declaring plotIds but no plotGridId must be rejected up front,
+  # rather than slipping through to fail opaquely at grid-name assignment.
+  expect_snapshot(
+    error = TRUE,
+    esqlabsR:::.assertPlotGridsBuildable(
+      list(list(plotIds = "p1")),
+      plotIDs = "p1"
+    )
+  )
+})
+
 # createPlots(project, ...) tests ----
 
 test_that("createPlots errors on non-Project input", {

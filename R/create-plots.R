@@ -79,7 +79,7 @@ createPlots <- function(
   # Only default to "all grids" when neither selector is given. A caller that
   # asks only for standalone `plots` should not also get every grid.
   requestSpecified <- !is.null(plotGrids) || !is.null(plots)
-  if (is.null(plotGrids) && !requestSpecified) {
+  if (!requestSpecified) {
     plotGrids <- names(allPlotGrids)
   }
 
@@ -446,6 +446,10 @@ createPlotsFromExcel <- function(...) {
 .assertPlotGridsBuildable <- function(plotGrids, plotIDs) {
   if (any(vapply(plotGrids, function(g) is.null(g$plotIds), logical(1)))) {
     msg <- messages$missingPlotIDs()
+    cli::cli_abort("{msg}")
+  }
+  if (any(vapply(plotGrids, function(g) is.null(g$plotGridId), logical(1)))) {
+    msg <- messages$missingPlotGridId()
     cli::cli_abort("{msg}")
   }
   gridIds <- vapply(

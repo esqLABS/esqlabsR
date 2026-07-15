@@ -72,6 +72,8 @@ Deprecation intensity follows the lifecycle policy: forwarding shims that still 
 - `addIndividual()` now rejects a non-numeric `weight` / `height` / `age` with a clear error instead of silently coercing it to `NA` (e.g. `weight = "80kg"`). (#1055)
 - `addOutputPath()` now rejects an empty or `NA` path, matching `setOutputPath()`; previously an empty path was accepted and stored. (#1055)
 - `addPopulation()` now rejects a non-integer `numberOfIndividuals` (e.g. `2.5`); it must be a positive whole number. (#1055)
+- `createDataCombined()` now aborts when a requested `plotGrids` name is not defined in the project, naming the unknown grids, instead of silently dropping it and returning an incomplete or empty result. (#1094)
+- `createPlots()` now aborts when a plot grid is missing its `plotGridId`, instead of failing later with an opaque error or misreporting two id-less grids as a duplicate-id violation. (#1094)
 - `initProject()` now creates a `definitions/` directory in the project scaffold, matching its documented contract that the scaffold includes a `definitions/` tree. (#1088)
 - `loadObservedData()` now aborts when two observed-data sources resolve to the same data-set name (previously the later source silently shadowed the earlier), and a `script` source that returns a list of data sets is keyed by each data set's own name. (#1055)
 - `loadScenarioResults()` now restores the full four-field record produced by `runScenarios()`: it reloads the `population` from `<scenario>_population.csv` for population scenarios (previously dropped) and extracts `outputValues` for the simulation's recorded output paths with the population attached, so a reloaded result matches the original run. (#1054)
