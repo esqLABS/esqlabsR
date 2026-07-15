@@ -754,6 +754,16 @@ print.DataCombined <- function(x, ...) {
 #'   `quantiles = c(0.05, 0.5, 0.95)`) is applied whole to every plot and
 #'   stored as a comma-separated string; to set a scalar field differently
 #'   per plot, pass a list of the same length as `id`.
+#'
+#'   Note the deliberate asymmetry with the positional scalar args above: a
+#'   length-`N` *vector* passed to `dataCombined` or `plotType` aligns to the
+#'   ids **by position** (one value per plot), whereas a length-`N` *atomic
+#'   vector* passed as a `...` field is treated as one multi-value field and
+#'   applied **whole** to every plot (collapsed to a comma-separated string),
+#'   not split one-per-plot. So `title = c("A", "B")` gives every plot the
+#'   single title `"A, B"`, not plot 1 `"A"` and plot 2 `"B"`. To vary a
+#'   `...` field per plot, pass a length-`N` **list** (`title = list("A",
+#'   "B")`).
 #' @returns The `project` object, invisibly.
 #' @export
 #' @family plots
@@ -889,6 +899,13 @@ removePlot <- function(project, id) {
 #' @param ... Optional plot-grid fields, e.g. `title`, `subtitle`. A scalar
 #'   field is recycled to every grid; to set one differently per grid, pass a
 #'   list of the same length as `id`.
+#'
+#'   A length-`N` *atomic vector* passed as a `...` field is treated as one
+#'   multi-value field and applied **whole** to every grid (collapsed to a
+#'   comma-separated string), not split one-per-grid. So `title = c("A", "B")`
+#'   gives every grid the single title `"A, B"`, not grid 1 `"A"` and grid 2
+#'   `"B"`. To vary a `...` field per grid, pass a length-`N` **list**
+#'   (`title = list("A", "B")`).
 #' @returns The `project` object, invisibly.
 #' @export
 #' @family plots

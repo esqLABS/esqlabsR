@@ -397,6 +397,16 @@ createPlotsFromExcel <- function(...) {
   dataCombinedIds <- lapply(plotConfigurations, function(p) p$dataCombinedId)
   plotTypes <- lapply(plotConfigurations, function(p) p$plotType)
 
+  # Reject any plot missing its `plotId` up front. The duplicate check below
+  # only catches two-or-more missing ids (`duplicated(c(NA, NA))` flags the
+  # second); a single id-less entry would otherwise slip through and fail
+  # opaquely at `configPlotIds <- vapply(..., function(p) p$plotId, ...)` in
+  # `.createPlotGridsFromEntries()`. Mirrors the `plotGridId` guard in
+  # `.assertPlotGridsBuildable()`.
+  if (any(vapply(plotConfigurations, function(p) is.null(p$plotId), logical(1)))) {
+    msg <- messages$missingPlotId()
+    cli::cli_abort("{msg}")
+  }
   if (any(vapply(dataCombinedIds, is.null, logical(1)))) {
     msg <- messages$missingDataCombinedName()
     cli::cli_abort("{msg}")

@@ -59,6 +59,19 @@ test_that(".assertPlotGridsBuildable aborts on a grid missing its plotGridId", {
   )
 })
 
+test_that(".assertPlotConfigurationsBuildable aborts on a plot missing its plotId", {
+  # A single plot with no plotId must be rejected up front. The downstream
+  # duplicate check only flags two-or-more missing ids, so one id-less entry
+  # would otherwise slip through and fail opaquely at grid build.
+  expect_snapshot(
+    error = TRUE,
+    esqlabsR:::.assertPlotConfigurationsBuildable(
+      list(list(dataCombinedId = "dc", plotType = "individual")),
+      dataCombinedNames = "dc"
+    )
+  )
+})
+
 # createPlots(project, ...) tests ----
 
 test_that("createPlots errors on non-Project input", {

@@ -502,6 +502,10 @@ messages$missingPlotGridId <- function() {
   cliFormat("Every plot grid must declare a `plotGridId`.")
 }
 
+messages$missingPlotId <- function() {
+  cliFormat("Every plot must declare a `plotId`.")
+}
+
 messages$missingLabel <- function() {
   cliFormat(
     "Missing values found in mandatory column {.val label} of sheet {.var DataCombined}. Fill in values to proceed."

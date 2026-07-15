@@ -27,7 +27,16 @@ Each one of \code{"individual"}, \code{"population"}, \code{"observedVsSimulated
 \code{nsd}, \code{foldDistance}. A multi-value field (e.g.
 \code{quantiles = c(0.05, 0.5, 0.95)}) is applied whole to every plot and
 stored as a comma-separated string; to set a scalar field differently
-per plot, pass a list of the same length as \code{id}.}
+per plot, pass a list of the same length as \code{id}.
+
+Note the deliberate asymmetry with the positional scalar args above: a
+length-\code{N} \emph{vector} passed to \code{dataCombined} or \code{plotType} aligns to the
+ids \strong{by position} (one value per plot), whereas a length-\code{N} \emph{atomic
+vector} passed as a \code{...} field is treated as one multi-value field and
+applied \strong{whole} to every plot (collapsed to a comma-separated string),
+not split one-per-plot. So \code{title = c("A", "B")} gives every plot the
+single title \code{"A, B"}, not plot 1 \code{"A"} and plot 2 \code{"B"}. To vary a
+\code{...} field per plot, pass a length-\code{N} \strong{list} (\code{title = list("A", "B")}).}
 }
 \value{
 The \code{project} object, invisibly.

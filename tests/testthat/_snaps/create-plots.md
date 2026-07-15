@@ -6,6 +6,15 @@
       Error in `esqlabsR:::.assertPlotGridsBuildable()`:
       ! Every plot grid must declare a `plotGridId`.
 
+# .assertPlotConfigurationsBuildable aborts on a plot missing its plotId
+
+    Code
+      esqlabsR:::.assertPlotConfigurationsBuildable(list(list(dataCombinedId = "dc",
+        plotType = "individual")), dataCombinedNames = "dc")
+    Condition
+      Error in `esqlabsR:::.assertPlotConfigurationsBuildable()`:
+      ! Every plot must declare a `plotId`.
+
 # createPlots aborts on unknown plotGrids when stopIfNotFound
 
     Code

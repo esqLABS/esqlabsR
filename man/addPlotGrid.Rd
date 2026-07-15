@@ -20,7 +20,14 @@ same length as \code{id} (one character vector per grid).}
 
 \item{...}{Optional plot-grid fields, e.g. \code{title}, \code{subtitle}. A scalar
 field is recycled to every grid; to set one differently per grid, pass a
-list of the same length as \code{id}.}
+list of the same length as \code{id}.
+
+A length-\code{N} \emph{atomic vector} passed as a \code{...} field is treated as one
+multi-value field and applied \strong{whole} to every grid (collapsed to a
+comma-separated string), not split one-per-grid. So \code{title = c("A", "B")}
+gives every grid the single title \code{"A, B"}, not grid 1 \code{"A"} and grid 2
+\code{"B"}. To vary a \code{...} field per grid, pass a length-\code{N} \strong{list}
+(\code{title = list("A", "B")}).}
 }
 \value{
 The \code{project} object, invisibly.
