@@ -1,0 +1,321 @@
+# Entity id canonicalization + suggestion ----
+#
+# Every definition in a Project (a scenario, parameter set, individual,
+# population, application, output path, plot, ...) is referenced by its
+# **id**, and for the entity-file tree the id equals its on-disk filename.
+# Ids therefore have to be safe single path segments on every target
+# filesystem.
+#
+# Rather than rejecting an unsafe id, the authoring API runs it through a
+# deterministic canonicalizer (`.canonicalizeId()`) the moment it enters the
+# system: both when a definition is created (the `id` argument of an `add*`
+# / `set*` function) and when an id is referenced (a foreign-key argument
+# such as a scenario's `individualId` or its parameter-set list). Because the
+# transform is deterministic and applied identically on both sides, a
+# definition and a reference made from the same typed string always land on
+# the same canonical id, which is what makes lossy sanitization safe: a
+# reference still resolves even if the user types the un-sanitized form.
+#
+# A reference that has no matching definition (after canonicalization) is a
+# genuine referential problem; `.nearestMatch()` / `.suggestSuffix()` turn it
+# into a "did you mean '...'?" hint, surfaced by the cross-reference
+# validator.
+
+# Canonicalize one or more entity ids into safe, lowercase, single
+# path-segment ids. Vectorized over `ids`.
+#
+# Rules (intersection of Windows + macOS + Linux filename rules):
+#   - lowercase
+#   - replace each of `/ \ : * ? " < > |` and control characters with `_`
+#   - trim leading/trailing dots and spaces
+#   - an id that is empty or trims to nothing becomes `_`
+#   - a Windows reserved basename (CON, PRN, AUX, NUL, COM1-9, LPT1-9,
+#     case-insensitive) gets a `_` suffix so it is never a bare reserved name
+#
+# Warns (once per call) naming each `input -> canonical` pair that changed,
+# so the user knows the id that was actually used. Errors when two distinct
+# inputs in the same call canonicalize to the same id (real ambiguity, not a
+# fixable character issue).
+#
+# @keywords internal
+# @noRd
+.canonicalizeId <- function(ids) {
+  if (!is.character(ids)) {
+    cli::cli_abort("{.arg id} must be a character vector.")
+  }
+  if (length(ids) == 0L) {
+    return(ids)
+  }
+
+  canonical <- vapply(ids, .canonicalizeOneId, character(1), USE.NAMES = FALSE)
+
+  changed <- !is.na(ids) & ids != canonical
+  if (any(changed)) {
+    pairs <- paste0(
+      "{.val ",
+      ids[changed],
+      "} -> {.val ",
+      canonical[changed],
+      "}"
+    )
+    cli::cli_warn(c(
+      "Canonicalized {sum(changed)} id{?s} to a safe form:",
+      stats::setNames(pairs, rep("*", length(pairs)))
+    ))
+  }
+
+  # Two distinct inputs that collapse to one canonical id are real ambiguity.
+  dup <- canonical[duplicated(canonical)]
+  if (length(dup) > 0L) {
+    clashing <- unique(dup)
+    bullets <- vapply(
+      clashing,
+      function(c) {
+        offenders <- unique(ids[canonical == c])
+        # Interpolate the variables (so cli quotes each safely) rather than
+        # inlining user text into the glue expression itself.
+        cli::format_inline("{.val {offenders}} -> {.val {c}}")
+      },
+      character(1)
+    )
+    cli::cli_abort(c(
+      "Ids collide after canonicalization:",
+      stats::setNames(bullets, rep("x", length(bullets))),
+      "i" = "Two distinct ids that canonicalize to the same id are ambiguous; \\
+      rename so they differ by more than case or forbidden characters."
+    ))
+  }
+
+  canonical
+}
+
+# Canonicalize a foreign-key reference argument (e.g. a scenario's
+# `individualId`, or its `modelParameterSets` / `outputPathIds` vector) the
+# same way `.canonicalizeId()` canonicalizes a definition's id, so a
+# reference made from the same typed string as the definition resolves to
+# it. `NULL` passes through unchanged (the reference is absent), and so does
+# `NA` (the FK validators reject NA with their own clearer message). Unlike
+# `.canonicalizeId()`, this does not error on within-vector collisions: a
+# reference list is deduplicated by the lookup anyway.
+#
+# @keywords internal
+# @noRd
+.canonicalizeIdRef <- function(ref) {
+  if (is.null(ref) || !is.character(ref) || length(ref) == 0L) {
+    return(ref)
+  }
+  keep <- !is.na(ref) & nzchar(ref)
+  if (!any(keep)) {
+    return(ref)
+  }
+  out <- ref
+  canon <- vapply(
+    ref[keep],
+    .canonicalizeOneId,
+    character(1),
+    USE.NAMES = FALSE
+  )
+  changed <- ref[keep] != canon
+  if (any(changed)) {
+    # When a batch authoring call is collecting reference canonicalizations
+    # (`.collectCanonicalizedRefs()`), record each changed pair and stay
+    # silent so the caller emits one consolidated warning per call instead of
+    # one per entity. Outside a collector (a standalone call) warn immediately.
+    inputs <- ref[keep][changed]
+    canonicals <- canon[changed]
+    if (.canonRefSink$depth > 0L) {
+      .canonRefSink$inputs <- c(.canonRefSink$inputs, inputs)
+      .canonRefSink$canonicals <- c(.canonRefSink$canonicals, canonicals)
+    } else {
+      .warnCanonicalizedRefs(inputs, canonicals)
+    }
+  }
+  out[keep] <- canon
+  out
+}
+
+# Sink for collecting reference-canonicalization changes across the per-entity
+# builds of one vectorized authoring call, so the whole call emits a single
+# warning naming each `input -> canonical` change rather than one warning per
+# entity. `depth` guards re-entrancy; the inputs/canonicals accumulate the
+# changed pairs.
+#
+# @keywords internal
+# @noRd
+.canonRefSink <- new.env(parent = emptyenv())
+.canonRefSink$depth <- 0L
+.canonRefSink$inputs <- character()
+.canonRefSink$canonicals <- character()
+
+# Run `expr` while collecting every reference canonicalization it triggers
+# (via `.canonicalizeIdRef()`), then emit ONE consolidated warning naming each
+# unique `input -> canonical` change. The consolidated warning is flushed on
+# normal completion and, via a calling handler, before an error propagates, so
+# a batch that aborts partway still surfaces the canonicalizations that
+# happened before the abort (preserving the warning-then-error order the
+# per-entity path had). Re-entrant collectors share the outermost sink; only
+# the outermost one flushes.
+#
+# @keywords internal
+# @noRd
+.collectCanonicalizedRefs <- function(expr) {
+  outermost <- .canonRefSink$depth == 0L
+  if (outermost) {
+    .canonRefSink$inputs <- character()
+    .canonRefSink$canonicals <- character()
+  }
+  .canonRefSink$depth <- .canonRefSink$depth + 1L
+  flushed <- FALSE
+  flush <- function() {
+    if (flushed || !outermost) {
+      return(invisible(NULL))
+    }
+    flushed <<- TRUE
+    inputs <- .canonRefSink$inputs
+    canonicals <- .canonRefSink$canonicals
+    if (length(inputs) > 0L) {
+      # Deduplicate by pair, keeping first-seen order, so a reference repeated
+      # across several entities in the batch is named once.
+      key <- paste(inputs, canonicals, sep = "\r")
+      firstSeen <- !duplicated(key)
+      .warnCanonicalizedRefs(inputs[firstSeen], canonicals[firstSeen])
+    }
+  }
+  on.exit(
+    {
+      .canonRefSink$depth <- .canonRefSink$depth - 1L
+    },
+    add = TRUE
+  )
+  withCallingHandlers(
+    {
+      result <- force(expr)
+      flush()
+      result
+    },
+    error = function(cnd) {
+      # Flush the collected canonicalizations before the error unwinds the
+      # stack; the handler does not catch the error, so it propagates unchanged.
+      flush()
+    }
+  )
+}
+
+# Render the consolidated reference-canonicalization warning. Shared by the
+# standalone `.canonicalizeIdRef()` path and the batch collector so both emit
+# byte-identical text.
+#
+# @keywords internal
+# @noRd
+.warnCanonicalizedRefs <- function(inputs, canonicals) {
+  pairs <- paste0("{.val ", inputs, "} -> {.val ", canonicals, "}")
+  cli::cli_warn(c(
+    "Canonicalized {length(inputs)} referenced id{?s} to a safe form:",
+    stats::setNames(pairs, rep("*", length(pairs)))
+  ))
+}
+
+# Reserved Windows device basenames (case-insensitive), never allowed as a
+# bare filename on Windows.
+.windowsReservedBasenames <- c(
+  "con",
+  "prn",
+  "aux",
+  "nul",
+  paste0("com", 1:9),
+  paste0("lpt", 1:9)
+)
+
+# Canonicalize a single id (scalar). NA passes through unchanged so the
+# vectorized caller can flag it the same way a malformed value is flagged
+# upstream.
+#
+# @keywords internal
+# @noRd
+.canonicalizeOneId <- function(id) {
+  if (is.na(id)) {
+    return(NA_character_)
+  }
+  # An id becomes a filename (`<id>.json`), so it must fit the filesystem's
+  # per-component byte limit. Bound it before the transform so an over-long id
+  # aborts with a clear message naming the id and the limit, rather than the
+  # opaque `cannot open the connection` the eventual `write_json` would raise.
+  # 255 bytes is the common single-component cap (ext4, APFS, NTFS); leave room
+  # for the `.json` suffix.
+  limit <- .maxEntityIdBytes
+  nbytes <- nchar(id, type = "bytes")
+  if (nbytes > limit) {
+    cli::cli_abort(c(
+      "Entity id is too long to be a safe filename: {nbytes} bytes \\
+      (limit {limit}).",
+      "x" = "{.val {id}}",
+      "i" = "An id becomes the file {.file <id>.json}; shorten it to at most \\
+      {limit} bytes."
+    ))
+  }
+  out <- tolower(id)
+  # Forbidden characters and control characters -> underscore.
+  out <- gsub("[/\\:*?\"<>|[:cntrl:]]", "_", out)
+  # Trim leading/trailing dots and spaces (illegal as a trailing segment on
+  # Windows, and a leading dot hides the file on Unix).
+  out <- gsub("^[. ]+|[. ]+$", "", out)
+  if (nchar(out) == 0L) {
+    return("_")
+  }
+  if (out %in% .windowsReservedBasenames) {
+    out <- paste0(out, "_")
+  }
+  out
+}
+
+# Maximum byte length of an entity id, so `<id>.json` fits the common
+# single-path-component filesystem cap (255 bytes on ext4 / APFS / NTFS) with
+# room for the `.json` suffix.
+.maxEntityIdBytes <- 250L
+
+# Find the candidate ids closest to `x` (typo-tolerant). Mirrors ESQmrg's
+# `nearest_match`: `utils::adist(ignore.case = TRUE)`, a distance threshold of
+# `max(1, min(3, ceiling(nchar(x) / 3)))`, returning at most the `n` closest.
+# Returns `character(0)` when there are no candidates or nothing is within
+# threshold.
+#
+# @keywords internal
+# @noRd
+.nearestMatch <- function(x, candidates, n = 3L) {
+  if (length(candidates) == 0L) {
+    return(character(0))
+  }
+  d <- utils::adist(x, candidates, ignore.case = TRUE)[1, ]
+  ord <- order(d)
+  thr <- max(1L, min(3L, ceiling(nchar(x) / 3)))
+  keep <- ord[d[ord] <= thr]
+  candidates[utils::head(keep, n)]
+}
+
+# Build a "did you mean '...'?" suffix for a dangling reference `x` against
+# the existing `candidates`, or `""` when no candidate is close enough.
+# Appended to cross-reference validation messages.
+#
+# @keywords internal
+# @noRd
+.suggestSuffix <- function(x, candidates) {
+  near <- .nearestMatch(x, candidates)
+  if (length(near) == 0L) {
+    return("")
+  }
+  paste0(" (did you mean ", paste0("'", near, "'", collapse = ", "), "?)")
+}
+
+# Build a single "did you mean ...?" suffix for a set of dangling references
+# `xs` against the existing `candidates`: collects the closest candidate for
+# each dangling id, deduplicates, and renders one combined suffix (or `""`).
+#
+# @keywords internal
+# @noRd
+.suggestSuffixMulti <- function(xs, candidates) {
+  near <- unique(unlist(lapply(xs, function(x) .nearestMatch(x, candidates))))
+  if (length(near) == 0L) {
+    return("")
+  }
+  paste0(" (did you mean ", paste0("'", near, "'", collapse = ", "), "?)")
+}

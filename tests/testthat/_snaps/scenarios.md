@@ -1,30 +1,168 @@
-# addScenario aborts when a referenced individualId is unknown
+# addScenario aborts when a referenced individual is unknown
 
     Code
-      addScenario(project, scenarioName = "Bad", modelFile = "Aciclovir.pkml",
-        individualId = "Ghost")
+      addScenario(project, id = "bad", modelFile = "Aciclovir.pkml", individual = "Ghost")
+    Condition
+      Warning:
+      Canonicalized 1 referenced id to a safe form:
+      * "Ghost" -> "ghost"
+      Error in `addScenario()`:
+      ! Cannot add scenario "bad":
+      x individual 'ghost' not found in individuals
+
+# addScenario aborts eagerly on a dangling initialConditions ref
+
+    Code
+      addScenario(project, id = "bad", modelFile = "Aciclovir.pkml",
+        initialConditions = "ghostset")
     Condition
       Error in `addScenario()`:
-      ! Cannot add scenario "Bad":
-      x individualId 'Ghost' not found in individuals
+      ! Cannot add scenario "bad":
+      x initialConditions not found in project$initialConditions: ghostset
+
+# setScenario aborts eagerly on a dangling initialConditions ref
+
+    Code
+      setScenario(project, "sc", initialConditions = "ghostset")
+    Condition
+      Error in `setScenario()`:
+      ! Cannot modify scenario "sc":
+      x initialConditions not found in project$initialConditions: ghostset
 
 # addScenario rejects NA-valued FK args
 
     Code
-      addScenario(project, scenarioName = "S", modelFile = "Aciclovir.pkml",
-        individualId = NA_character_)
+      addScenario(project, id = "S", modelFile = "Aciclovir.pkml", individual = NA_character_)
     Condition
+      Warning:
+      Canonicalized 1 id to a safe form:
+      * "S" -> "s"
       Error in `addScenario()`:
-      ! Cannot add scenario "S":
-      x individualId must be a non-empty string or NULL
+      ! Cannot add scenario "s":
+      x individual must be a non-empty string or NULL
 
 ---
 
     Code
-      addScenario(project, scenarioName = "S", modelFile = "Aciclovir.pkml",
-        outputPathIds = c("Output1", NA_character_))
+      addScenario(project, id = "S", modelFile = "Aciclovir.pkml", outputPaths = c(
+        "Output1", NA_character_))
+    Condition
+      Warning:
+      Canonicalized 1 id to a safe form:
+      * "S" -> "s"
+      Warning:
+      Canonicalized 1 referenced id to a safe form:
+      * "Output1" -> "output1"
+      Error in `addScenario()`:
+      ! Cannot add scenario "s":
+      x outputPaths must be a non-empty character vector with no NA or empty entries
+
+# setScenario aborts on a non-existent scenario, no file written
+
+    Code
+      setScenario(project, "Ghost", simulationTimeUnit = "min")
+    Condition
+      Warning:
+      Canonicalized 1 id to a safe form:
+      * "Ghost" -> "ghost"
+      Error in `setScenario()`:
+      ! Cannot modify scenario "ghost": it does not exist.
+      i Use `addScenario()` to create it first.
+
+# setScenario rejects an unknown foreign key like addScenario
+
+    Code
+      setScenario(project, "testscenario", individual = "Ghost")
+    Condition
+      Warning:
+      Canonicalized 1 referenced id to a safe form:
+      * "Ghost" -> "ghost"
+      Error in `setScenario()`:
+      ! Cannot modify scenario "testscenario":
+      x individual 'ghost' not found in individuals
+
+# renameScenario errors clearly on a non-existent id
+
+    Code
+      renameScenario(project, "Ghost", "renamed")
+    Condition
+      Warning:
+      Canonicalized 1 id to a safe form:
+      * "Ghost" -> "ghost"
+      Error in `renameScenario()`:
+      ! Cannot rename scenario "ghost": it does not exist.
+      i Available scenarios: "populationscenario", "populationscenariofromcsv", "testscenario", and "testscenario_steadystate"
+
+# renameScenario errors when the target id already exists
+
+    Code
+      renameScenario(project, "testscenario", "populationscenario")
+    Condition
+      Error in `renameScenario()`:
+      ! Cannot use "populationscenario": a scenario with that id already exists.
+
+# renameScenario canonicalizes newId, warning and landing on the canonical form
+
+    Code
+      renameScenario(project, "testscenario", "New Name")
+    Condition
+      Warning:
+      Canonicalized 1 id to a safe form:
+      * "New Name" -> "new name"
+
+# duplicateScenario errors on a non-existent source id
+
+    Code
+      duplicateScenario(project, "Ghost", "copy")
+    Condition
+      Warning:
+      Canonicalized 1 id to a safe form:
+      * "Ghost" -> "ghost"
+      Error in `duplicateScenario()`:
+      ! Cannot duplicate scenario "ghost": it does not exist.
+      i Available scenarios: "populationscenario", "populationscenariofromcsv", "testscenario", and "testscenario_steadystate"
+
+# duplicateScenario errors when the target id already exists
+
+    Code
+      duplicateScenario(project, "testscenario", "populationscenario")
+    Condition
+      Error in `duplicateScenario()`:
+      ! Cannot use "populationscenario": a scenario with that id already exists.
+
+# removeScenario warns when a dataCombined still references it
+
+    Code
+      removeScenario(project, "testscenario")
+    Condition
+      Warning:
+      Removed scenario "testscenario" is still referenced by 1 dataCombined definition:
+      * dc_ref
+      i These now have a dangling reference. Update or remove them.
+
+# addScenario aborts on a mismatched scalar field length
+
+    Code
+      addScenario(project, c("s1", "s2", "s3"), modelFile = c("A.pkml", "B.pkml"))
     Condition
       Error in `addScenario()`:
-      ! Cannot add scenario "S":
-      x outputPathIds must be a non-empty character vector with no NA or empty entries
+      ! `modelFile` must be length 1 or length 3 (the number of ids).
+      x It is length 2.
+
+# print.Scenario renders the configured fields
+
+    Code
+      print(project$scenarios[["testscenario"]])
+    Output
+      <Scenario>
+        * Name: testscenario
+        * Model: Aciclovir.pkml
+        * Type: Individual
+        * Individual: indiv1
+        * Population: <empty string>
+        * Protocol: aciclovir_iv_250mg
+        * Parameter Sets: global
+        * Initial Conditions: testinitialset
+        * Output Paths: 1
+        * Steady State: FALSE
 

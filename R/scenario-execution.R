@@ -2,11 +2,35 @@
 #
 # Modern (JSON-Project-driven) runtime path.
 
-# Convert a record-shape parameter list (one entry of any of the
-# project-level `*ParameterSets` bags: `modelParameterSets`,
-# `individualParameterSets`, or `applicationParameterSets`) into
-# the parallel-vector `list(paths, values, units)` shape consumed
-# by `extendParameterStructure()`.
+# Build an `ospsuite::SimulationRunOptions` from the project-level
+# `defaultSimulationRunOptions` record (a plain list parsed from the
+# `defaultSimulationRunOptions` JSON block), or return NULL when no defaults
+# are declared (so the caller keeps the package defaults). Only the three
+# settable fields are honored; an unset field keeps the `SimulationRunOptions`
+# default. Mirrors the PI-config builder in `R/parameter-identification.R`.
+# @keywords internal
+# @noRd
+.buildSimulationRunOptions <- function(defaults) {
+  if (is.null(defaults) || length(defaults) == 0L) {
+    return(NULL)
+  }
+  runOpts <- ospsuite::SimulationRunOptions$new()
+  if (!is.null(defaults$numberOfCores)) {
+    runOpts$numberOfCores <- as.integer(defaults$numberOfCores)
+  }
+  if (!is.null(defaults$checkForNegativeValues)) {
+    runOpts$checkForNegativeValues <- isTRUE(defaults$checkForNegativeValues)
+  }
+  if (!is.null(defaults$showProgress)) {
+    runOpts$showProgress <- isTRUE(defaults$showProgress)
+  }
+  runOpts
+}
+
+# Convert a record-shape parameter list (one set from the project's unified
+# `parameterSets` section) into the parallel-vector
+# `list(paths, values, units)` shape consumed by
+# `extendParameterStructure()`.
 # @keywords internal
 # @noRd
 .parameterSetToStructure <- function(entries) {
@@ -25,17 +49,58 @@
   list(paths = paths, values = values, units = units)
 }
 
+# Convert one initial-condition set (a list of `{path, value, unit}` records)
+# into the parallel-vector `list(paths, values, units)` shape consumed by
+# `initializeSimulation()`'s `additionalInitialConditions`. The IC path is the
+# full molecule path (no container/name split), so it maps straight to `paths`.
+# @keywords internal
+# @noRd
+.initialConditionSetToStructure <- function(entries) {
+  if (is.null(entries) || length(entries) == 0L) {
+    return(NULL)
+  }
+  paths <- vapply(entries, function(e) e$path, character(1))
+  values <- vapply(entries, function(e) as.numeric(e$value), numeric(1))
+  units <- vapply(entries, function(e) e$unit %||% "", character(1))
+  list(paths = paths, values = values, units = units)
+}
+
+# Build a `list(paths, values, units)` initial-condition structure (or `NULL`)
+# for one scenario, from its `initialConditions` set references. Each id is
+# looked up in the project's `initialConditions` section and its entries folded
+# in (last-write-wins on a repeated path, via `extendParameterStructure`).
+# Unknown set ids are silently skipped, matching `.mergeScenarioParameters`.
+# @keywords internal
+# @noRd
+.mergeScenarioInitialConditions <- function(scenario, project) {
+  if (is.null(scenario$initialConditions)) {
+    return(NULL)
+  }
+  conditions <- NULL
+  for (setId in scenario$initialConditions) {
+    setConditions <- .initialConditionSetToStructure(
+      project$initialConditions[[setId]]
+    )
+    if (!is.null(setConditions)) {
+      conditions <- extendParameterStructure(
+        parameters = conditions,
+        newParameters = setConditions
+      )
+    }
+  }
+  conditions
+}
+
 # Five-layer merge ----
 
 # Pure function. Builds a `list(paths, values, units)` parameter
 # structure (or `NULL`) for one scenario. Layers, in order
 # (last-write-wins): scenario `modelParameterSets` -> species defaults
 # -> individual `parameterSets` -> application `parameterSets` ->
-# caller-supplied `customParams`. Each `*ParameterSets` field is a
-# list of set ids, iterated in listed order; ids are looked up in
-# the matching project-level bag (`modelParameterSets`,
-# `individualParameterSets`, `applicationParameterSets`). Unknown
-# ids are silently skipped (consistent across all three layers).
+# caller-supplied `customParams`. Each of those reference fields is a
+# list of set ids, iterated in listed order; every id is looked up in
+# the project's single `parameterSets` section. Unknown ids are silently
+# skipped (consistent across all three layers).
 # @keywords internal
 # @noRd
 .mergeScenarioParameters <- function(scenario, project, customParams = NULL) {
@@ -45,7 +110,7 @@
   if (!is.null(scenario$modelParameterSets)) {
     for (setId in scenario$modelParameterSets) {
       setParams <- .parameterSetToStructure(
-        project$modelParameterSets[[setId]]
+        project$parameterSets[[setId]]
       )
       if (!is.null(setParams)) {
         params <- extendParameterStructure(
@@ -69,7 +134,7 @@
       }
       for (setId in unlist(indivData$parameterSets)) {
         setParams <- .parameterSetToStructure(
-          project$individualParameterSets[[setId]]
+          project$parameterSets[[setId]]
         )
         if (!is.null(setParams)) {
           params <- extendParameterStructure(
@@ -95,7 +160,7 @@
     }
     for (setId in unlist(appData$parameterSets)) {
       setParams <- .parameterSetToStructure(
-        project$applicationParameterSets[[setId]]
+        project$parameterSets[[setId]]
       )
       if (!is.null(setParams)) {
         params <- extendParameterStructure(
@@ -179,6 +244,9 @@
   # 2. Build merged parameter structure
   params <- .mergeScenarioParameters(scenario, project, customParams)
 
+  # 2a. Build merged initial-condition (molecule start value) structure
+  initialConditions <- .mergeScenarioInitialConditions(scenario, project)
+
   # 2b. IndividualCharacteristics
   individualCharacteristics <- NULL
   if (!is.null(scenario$individualId) && !is.na(scenario$individualId)) {
@@ -254,6 +322,7 @@
     simulation = simulation,
     individualCharacteristics = individualCharacteristics,
     additionalParams = params,
+    additionalInitialConditions = initialConditions,
     stopIfParameterNotFound = stopIfParameterNotFound
   )
 
@@ -415,6 +484,15 @@
     argumentName = "customParams",
     nullAllowed = TRUE
   )
+  # When the caller does not pass run options, fall back to the project-level
+  # `defaultSimulationRunOptions` (a reproducible run from the shared artifact).
+  # An explicit caller argument always wins; an absent project default leaves
+  # `simulationRunOptions` NULL, i.e. exactly the package defaults as before.
+  if (is.null(simulationRunOptions)) {
+    simulationRunOptions <- .buildSimulationRunOptions(
+      project$defaultSimulationRunOptions
+    )
+  }
   if (isTRUE(validate)) {
     .ensureValid(
       project,
@@ -422,11 +500,9 @@
         "outputPaths",
         "scenarios",
         "individuals",
-        "individualParameterSets",
         "populations",
         "applications",
-        "applicationParameterSets",
-        "modelParameterSets",
+        "parameterSets",
         "crossReferences"
       ),
       opName = "runScenarios"

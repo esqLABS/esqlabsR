@@ -16,11 +16,32 @@
 #'
 #' @returns Object of type `Project`
 #' @export
+#' @family project persistence
+#'
+#' @section Editing a loaded project is write-through:
+#'   A loaded project is bound to its directory on disk, and every
+#'   authoring edit is write-through: a single `addOutputPath()`,
+#'   `addScenario()`, `setIndividual()`, or `removeParameterSet()` writes (or
+#'   deletes) the affected entity's file immediately. The `project$<section>`
+#'   accessors are read-only, so a definition only ever changes through an
+#'   authoring function. There is no separate save step, and there is no undo:
+#'   the edit is on disk the moment the call returns.
+#'
+#'   To experiment without touching the on-disk project, work on a detached
+#'   copy. `project$clone()` returns an in-memory copy whose edits stay in
+#'   memory (they do not write to the source's `definitions/` tree) until it
+#'   is bound to a directory of its own. To capture a shareable freeze-frame
+#'   of the current state, use [saveSnapshot()], and reload it elsewhere
+#'   with [loadSnapshot()].
 #'
 #' @examples
 #' \dontrun{
 #' project <- loadProject("Project.json")
 #' results <- runScenarios(project)
+#'
+#' # Edits are write-through; clone first for scratch work.
+#' scratch <- project$clone()
+#' addOutputPath(scratch, "x", "Organism|A|Concentration in container")
 #' }
 loadProject <- function(path = "Project.json") {
   project <- Project$new(projectFilePath = path)
@@ -53,46 +74,6 @@ loadProject <- function(path = "Project.json") {
     "i" = "Run {.code validateProject(project)} for the full report."
   ))
   invisible(NULL)
-}
-
-#' Save a project to a JSON file
-#'
-#' @description Serializes the in-memory `Project` object back to JSON with
-#'   round-trip fidelity. This allows persisting changes made programmatically
-#'   (e.g., via [addScenario()]).
-#'
-#' @param project A `Project` object.
-#' @param path Path where the JSON file should be written. If `NULL` (default),
-#'   uses `project$jsonPath` (the path the project was loaded from).
-#'
-#' @returns Invisibly returns the path where the file was written.
-#' @export
-#'
-#' @examples
-#' \dontrun{
-#' project <- loadProject("Project.json")
-#' addScenario(project, "NewScenario", "Model.pkml", individualId = "Indiv1")
-#' saveProject(project)
-#' }
-saveProject <- function(project, path = NULL) {
-  validateIsOfType(project, "Project")
-
-  if (is.null(path)) {
-    path <- project$jsonPath
-    if (is.null(path)) {
-      cli::cli_abort(messages$noProjectPath())
-    }
-  }
-
-  # Delegate to the internal writer so the parent-directory guard and the
-  # canonical write options live in one place.
-  .saveProjectJson(project, path)
-
-  # Rebind to the written location so a save-as updates jsonPath /
-  # projectFilePath / projectDirPath; a no-op rebind for a bare save.
-  project$.rebindPath(path)
-  project$.markSaved()
-  invisible(path)
 }
 
 #' @rdname loadProject
@@ -156,8 +137,11 @@ isProjectInitialized <- function(destination = ".") {
 #'
 #' @description
 #'
-#' Creates the default project folder structure with Excel file templates in the
-#' working directory.
+#' Scaffolds a JSON-first esqlabsR project in `destination`: a `Project.json`
+#' container plus a `definitions/` tree of authored definitions, alongside the
+#' working folders (`Models/`, `Data/`, `Populations/`, `Results/`). By default
+#' it also writes optional Excel side-cars from the JSON; set
+#' `createExcel = FALSE` for a JSON-only project.
 #'
 #' @param destination A string defining the path where to initialize the
 #'   project. default to current working directory.
@@ -169,7 +153,10 @@ isProjectInitialized <- function(destination = ".") {
 #' @param overwrite If TRUE, overwrites existing project without asking for
 #'   permission. If FALSE and a project already exists, asks user for permission
 #'   to overwrite.
+#' @returns Invisibly returns `destination`, the path the project was
+#'   initialized in.
 #' @export
+#' @family project persistence
 initProject <- function(
   destination = ".",
   type = c("minimal", "example"),
@@ -180,7 +167,7 @@ initProject <- function(
   type <- match.arg(type)
 
   if (!fs::dir_exists(destination)) {
-    stop(
+    cli::cli_abort(
       messages$pathNotFound(destination)
     )
   }
@@ -273,6 +260,7 @@ initProject <- function(
 #' @returns A string representing the path to the example
 #'   `Project.json` file shipped with the package.
 #' @export
+#' @family project persistence
 #' @examples
 #' exampleProjectPath()
 exampleProjectPath <- function() {

@@ -1,8 +1,85 @@
-# Local test helper. Once Task 8 ships loadProject(), the production
-# helpers.R::testProject() will work directly and this can be removed.
-.testProject <- function() {
-  testProject()
+# Local test helper delegating to helpers.R::testProject(). It forwards the
+# calling test's frame so the throwaway project copy (a write-through entity
+# tree) lives until the test finishes, not until this wrapper returns.
+.testProject <- function(envir = parent.frame()) {
+  testProject(envir = envir)
 }
+
+test_that(".buildSimulationRunOptions returns NULL when no defaults are declared", {
+  expect_null(esqlabsR:::.buildSimulationRunOptions(NULL))
+  expect_null(esqlabsR:::.buildSimulationRunOptions(list()))
+})
+
+test_that(".buildSimulationRunOptions maps the three settable fields", {
+  opts <- esqlabsR:::.buildSimulationRunOptions(list(
+    numberOfCores = 3,
+    checkForNegativeValues = TRUE,
+    showProgress = FALSE
+  ))
+  expect_s3_class(opts, "SimulationRunOptions")
+  expect_identical(opts$numberOfCores, 3L)
+  expect_true(opts$checkForNegativeValues)
+  expect_false(opts$showProgress)
+})
+
+test_that(".buildSimulationRunOptions leaves an unset field at its default", {
+  baseline <- ospsuite::SimulationRunOptions$new()$checkForNegativeValues
+  opts <- esqlabsR:::.buildSimulationRunOptions(list(numberOfCores = 1))
+  expect_identical(opts$numberOfCores, 1L)
+  expect_identical(opts$checkForNegativeValues, baseline)
+})
+
+test_that("runScenarios falls back to the project default run options when the caller passes none", {
+  # Capture the run options `.runScenariosFromProject` resolves without a native
+  # simulation: mock `.prepareScenario` to record them and abort immediately.
+  withr::local_options(lifecycle_verbosity = "quiet")
+  project <- .testProject()
+  project$defaultSimulationRunOptions <- list(numberOfCores = 2)
+
+  captured <- NULL
+  local_mocked_bindings(
+    .prepareScenario = function(scenario, project, ..., simulationRunOptions) {
+      captured <<- simulationRunOptions
+      stop("stop before simulating")
+    }
+  )
+  expect_error(
+    esqlabsR:::.runScenariosFromProject(
+      project,
+      scenarioNames = "testscenario"
+    ),
+    "stop before simulating"
+  )
+  expect_s3_class(captured, "SimulationRunOptions")
+  expect_identical(captured$numberOfCores, 2L)
+})
+
+test_that("runScenarios lets an explicit simulationRunOptions argument win over the project default", {
+  # The caller's argument must override `defaultSimulationRunOptions` entirely,
+  # not merge with it. Same capture-then-abort mock, no native simulation.
+  withr::local_options(lifecycle_verbosity = "quiet")
+  project <- .testProject()
+  project$defaultSimulationRunOptions <- list(numberOfCores = 2)
+  callerOptions <- ospsuite::SimulationRunOptions$new(numberOfCores = 5)
+
+  captured <- NULL
+  local_mocked_bindings(
+    .prepareScenario = function(scenario, project, ..., simulationRunOptions) {
+      captured <<- simulationRunOptions
+      stop("stop before simulating")
+    }
+  )
+  expect_error(
+    esqlabsR:::.runScenariosFromProject(
+      project,
+      scenarioNames = "testscenario",
+      simulationRunOptions = callerOptions
+    ),
+    "stop before simulating"
+  )
+  expect_identical(captured, callerOptions)
+  expect_identical(captured$numberOfCores, 5L)
+})
 
 test_that(".parameterSetToStructure flattens record-shape into paths/values/units", {
   records <- list(
@@ -27,7 +104,7 @@ test_that(".parameterSetToStructure returns NULL on empty input", {
 
 test_that(".mergeScenarioParameters returns NULL when no layer contributes", {
   project <- .testProject()
-  scenario <- project$scenarios[["TestScenario"]]
+  scenario <- project$scenarios[["testscenario"]]
   scenario$modelParameterSets <- NULL
   scenario$individualId <- NULL
   scenario$applicationProtocol <- NA
@@ -38,7 +115,7 @@ test_that(".mergeScenarioParameters returns NULL when no layer contributes", {
 
 test_that(".mergeScenarioParameters layer 1 (modelParameterSets) iterates listed groups in order", {
   project <- .testProject()
-  scenario <- project$scenarios[["TestScenario_steadystate"]]
+  scenario <- project$scenarios[["testscenario_steadystate"]]
   scenario$individualId <- NULL
   scenario$applicationProtocol <- NA
   merged <- esqlabsR:::.mergeScenarioParameters(scenario, project, NULL)
@@ -48,8 +125,9 @@ test_that(".mergeScenarioParameters layer 1 (modelParameterSets) iterates listed
 
 test_that(".mergeScenarioParameters layer 4 (application) overrides layer 1 on overlapping path", {
   project <- .testProject()
-  scenario <- project$scenarios[["TestScenario"]]
-  project$modelParameterSets$Global <- list(
+  scenario <- project$scenarios[["testscenario"]]
+  parameterSets <- project$.getSection("parameterSets")
+  parameterSets$global <- list(
     list(
       containerPath = "OverlapContainer",
       parameterName = "OverlapParam",
@@ -57,7 +135,7 @@ test_that(".mergeScenarioParameters layer 4 (application) overrides layer 1 on o
       units = NULL
     )
   )
-  project$applicationParameterSets$Override <- list(
+  parameterSets$override <- list(
     list(
       containerPath = "OverlapContainer",
       parameterName = "OverlapParam",
@@ -65,7 +143,10 @@ test_that(".mergeScenarioParameters layer 4 (application) overrides layer 1 on o
       units = NULL
     )
   )
-  project$applications$Aciclovir_iv_250mg$parameterSets <- list("Override")
+  project$.setSection("parameterSets", parameterSets)
+  apps <- project$.getSection("applications")
+  apps$aciclovir_iv_250mg$parameterSets <- list("override")
+  project$.setSection("applications", apps)
   scenario$individualId <- NULL
   merged <- esqlabsR:::.mergeScenarioParameters(scenario, project, NULL)
   idx <- match("OverlapContainer|OverlapParam", merged$paths)
@@ -74,7 +155,7 @@ test_that(".mergeScenarioParameters layer 4 (application) overrides layer 1 on o
 
 test_that(".mergeScenarioParameters layer 5 (customParams) wins over all earlier layers", {
   project <- .testProject()
-  scenario <- project$scenarios[["TestScenario"]]
+  scenario <- project$scenarios[["testscenario"]]
   customParams <- list(
     paths = "Organism|Liver|EHC continuous fraction",
     values = 42,
@@ -87,7 +168,7 @@ test_that(".mergeScenarioParameters layer 5 (customParams) wins over all earlier
 
 test_that(".mergeScenarioParameters skips application layer when applicationProtocol is NA", {
   project <- .testProject()
-  scenario <- project$scenarios[["TestScenario"]]
+  scenario <- project$scenarios[["testscenario"]]
   scenario$applicationProtocol <- NA
   scenario$modelParameterSets <- NULL
   scenario$individualId <- NULL
@@ -98,7 +179,7 @@ test_that(".mergeScenarioParameters skips application layer when applicationProt
 
 test_that(".mergeScenarioParameters errors when applicationProtocol is set but unknown", {
   project <- .testProject()
-  scenario <- project$scenarios[["TestScenario"]]
+  scenario <- project$scenarios[["testscenario"]]
   scenario$applicationProtocol <- "DoesNotExist"
   expect_error(
     esqlabsR:::.mergeScenarioParameters(scenario, project, NULL),
@@ -108,8 +189,8 @@ test_that(".mergeScenarioParameters errors when applicationProtocol is set but u
 
 test_that(".mergeScenarioParameters silently skips an unknown modelParameterSets group", {
   project <- .testProject()
-  scenario <- project$scenarios[["TestScenario"]]
-  scenario$modelParameterSets <- c("Global", "DoesNotExist")
+  scenario <- project$scenarios[["testscenario"]]
+  scenario$modelParameterSets <- c("global", "DoesNotExist")
   scenario$individualId <- NULL
   scenario$applicationProtocol <- NA
   merged <- esqlabsR:::.mergeScenarioParameters(scenario, project, NULL)
@@ -118,11 +199,13 @@ test_that(".mergeScenarioParameters silently skips an unknown modelParameterSets
 
 test_that(".mergeScenarioParameters silently skips an unknown individual parameter-set id", {
   project <- .testProject()
-  scenario <- project$scenarios[["TestScenario"]]
-  project$individuals[[1L]]$parameterSets <- list(
-    "Indiv1_default",
+  scenario <- project$scenarios[["testscenario"]]
+  individuals <- project$.getSection("individuals")
+  individuals[[1L]]$parameterSets <- list(
+    "indiv1_default",
     "DoesNotExist"
   )
+  project$.setSection("individuals", individuals)
   scenario$modelParameterSets <- NULL
   scenario$applicationProtocol <- NA
   merged <- esqlabsR:::.mergeScenarioParameters(scenario, project, NULL)
@@ -131,11 +214,13 @@ test_that(".mergeScenarioParameters silently skips an unknown individual paramet
 
 test_that(".mergeScenarioParameters silently skips an unknown application parameter-set id", {
   project <- .testProject()
-  scenario <- project$scenarios[["TestScenario"]]
-  project$applications$Aciclovir_iv_250mg$parameterSets <- list(
-    "Aciclovir_iv_250mg_default",
+  scenario <- project$scenarios[["testscenario"]]
+  apps <- project$.getSection("applications")
+  apps$aciclovir_iv_250mg$parameterSets <- list(
+    "aciclovir_iv_250mg_default",
     "DoesNotExist"
   )
+  project$.setSection("applications", apps)
   scenario$modelParameterSets <- NULL
   scenario$individualId <- NULL
   merged <- esqlabsR:::.mergeScenarioParameters(scenario, project, NULL)
@@ -145,20 +230,78 @@ test_that(".mergeScenarioParameters silently skips an unknown application parame
   )
 })
 
+# Initial conditions merge ----
+
+test_that(".initialConditionSetToStructure flattens records into paths/values/units", {
+  records <- list(
+    list(path = "Organism|A", value = 1.5, unit = "mg/l"),
+    list(path = "Organism|B", value = 2, unit = NULL)
+  )
+  out <- esqlabsR:::.initialConditionSetToStructure(records)
+  expect_equal(out$paths, c("Organism|A", "Organism|B"))
+  expect_equal(out$values, c(1.5, 2))
+  expect_equal(out$units, c("mg/l", ""))
+})
+
+test_that(".initialConditionSetToStructure returns NULL on empty input", {
+  expect_null(esqlabsR:::.initialConditionSetToStructure(NULL))
+  expect_null(esqlabsR:::.initialConditionSetToStructure(list()))
+})
+
+test_that(".mergeScenarioInitialConditions returns NULL when no set is referenced", {
+  project <- .testProject()
+  scenario <- project$scenarios[["testscenario"]]
+  scenario$initialConditions <- NULL
+  expect_null(
+    esqlabsR:::.mergeScenarioInitialConditions(scenario, project)
+  )
+})
+
+test_that(".mergeScenarioInitialConditions folds referenced sets last-write-wins", {
+  project <- .testProject()
+  addInitialConditions(project, "icset")
+  suppressMessages(
+    addInitialConditionEntry(
+      project,
+      "icset",
+      path = c("Organism|A", "Organism|B"),
+      value = c(1, 2),
+      unit = c("mg/l", "µmol/l")
+    )
+  )
+  scenario <- project$scenarios[["testscenario"]]
+  scenario$initialConditions <- "icset"
+  merged <- esqlabsR:::.mergeScenarioInitialConditions(scenario, project)
+  expect_equal(merged$paths, c("Organism|A", "Organism|B"))
+  expect_equal(merged$values, c(1, 2))
+})
+
+test_that(".mergeScenarioInitialConditions silently skips an unknown set id", {
+  project <- .testProject()
+  addInitialConditions(project, "icset")
+  suppressMessages(
+    addInitialConditionEntry(project, "icset", "Organism|A", 1, "mg/l")
+  )
+  scenario <- project$scenarios[["testscenario"]]
+  scenario$initialConditions <- c("icset", "DoesNotExist")
+  merged <- esqlabsR:::.mergeScenarioInitialConditions(scenario, project)
+  expect_equal(merged$paths, "Organism|A")
+})
+
 test_that(".runScenariosFromProject returns the documented per-scenario list shape (individual)", {
   withr::local_options(lifecycle_verbosity = "quiet")
   project <- .testProject()
   out <- esqlabsR:::.runScenariosFromProject(
     project,
-    scenarioNames = "TestScenario"
+    scenarioNames = "testscenario"
   )
-  expect_named(out, "TestScenario")
+  expect_named(out, "testscenario")
   expect_named(
-    out$TestScenario,
+    out$testscenario,
     c("simulation", "results", "outputValues", "population")
   )
-  expect_s3_class(out$TestScenario$simulation, "Simulation")
-  expect_null(out$TestScenario$population)
+  expect_s3_class(out$testscenario$simulation, "Simulation")
+  expect_null(out$testscenario$population)
 })
 
 test_that(".runScenariosFromProject runs a steady-state scenario without error", {
@@ -166,9 +309,31 @@ test_that(".runScenariosFromProject runs a steady-state scenario without error",
   project <- .testProject()
   out <- esqlabsR:::.runScenariosFromProject(
     project,
-    scenarioNames = "TestScenario_steadystate"
+    scenarioNames = "testscenario_steadystate"
   )
-  expect_s3_class(out$TestScenario_steadystate$simulation, "Simulation")
+  expect_s3_class(out$testscenario_steadystate$simulation, "Simulation")
+})
+
+test_that(".runScenariosFromProject applies a scenario's initialConditions", {
+  withr::local_options(lifecycle_verbosity = "quiet")
+  project <- .testProject()
+  path <- "Organism|VenousBlood|Plasma|Aciclovir"
+  addInitialConditions(project, "icset")
+  suppressMessages(
+    addInitialConditionEntry(project, "icset", path, 7, "µmol")
+  )
+  setScenario(project, "testscenario", initialConditions = "icset")
+
+  out <- esqlabsR:::.runScenariosFromProject(
+    project,
+    scenarioNames = "testscenario"
+  )
+  applied <- ospsuite::getQuantityValuesByPath(
+    quantityPaths = path,
+    simulation = out$testscenario$simulation,
+    units = "µmol"
+  )
+  expect_equal(applied, 7)
 })
 
 test_that(".runScenariosFromProject runs a population scenario and attaches a Population", {
@@ -176,9 +341,9 @@ test_that(".runScenariosFromProject runs a population scenario and attaches a Po
   project <- .testProject()
   out <- esqlabsR:::.runScenariosFromProject(
     project,
-    scenarioNames = "PopulationScenario"
+    scenarioNames = "populationscenario"
   )
-  expect_s3_class(out$PopulationScenario$population, "Population")
+  expect_s3_class(out$populationscenario$population, "Population")
 })
 
 test_that(".runScenariosFromProject runs a CSV-population scenario and attaches a Population", {
@@ -186,9 +351,9 @@ test_that(".runScenariosFromProject runs a CSV-population scenario and attaches 
   project <- .testProject()
   out <- esqlabsR:::.runScenariosFromProject(
     project,
-    scenarioNames = "PopulationScenarioFromCSV"
+    scenarioNames = "populationscenariofromcsv"
   )
-  expect_s3_class(out$PopulationScenarioFromCSV$population, "Population")
+  expect_s3_class(out$populationscenariofromcsv$population, "Population")
 })
 
 test_that(".runScenariosFromProject errors on unknown scenarioNames", {
@@ -206,17 +371,15 @@ test_that("a scenario with an absolute modelFile runs when modelFolder is NULL",
   withr::local_options(lifecycle_verbosity = "quiet")
   project <- .testProject()
   absModel <- normalizePath(file.path(project$modelFolder, "Aciclovir.pkml"))
-  scenario <- project$scenarios[["TestScenario"]]
-  scenario$modelFile <- absModel
-  project$scenarios[["TestScenario"]] <- scenario
+  setScenario(project, "testscenario", modelFile = absModel)
   project$modelFolder <- NULL
 
   out <- esqlabsR:::.runScenariosFromProject(
     project,
-    scenarioNames = "TestScenario",
+    scenarioNames = "testscenario",
     validate = FALSE
   )
-  expect_false(is.null(out$TestScenario$outputValues))
+  expect_false(is.null(out$testscenario$outputValues))
 })
 
 test_that("a relative modelFile with NULL modelFolder aborts with a clear message", {
@@ -227,7 +390,7 @@ test_that("a relative modelFile with NULL modelFolder aborts with a clear messag
     error = TRUE,
     esqlabsR:::.runScenariosFromProject(
       project,
-      scenarioNames = "TestScenario",
+      scenarioNames = "testscenario",
       validate = FALSE
     )
   )

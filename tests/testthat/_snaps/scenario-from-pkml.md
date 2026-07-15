@@ -1,65 +1,70 @@
-# createScenariosFromPKML adds scenarios in place, marks the project modified, and returns it invisibly
+# createScenariosFromPKML adds scenarios in place and returns the project invisibly
 
     Code
-      result <- createScenariosFromPKML(pkmlFixture, project = project,
-        scenarioNames = "Seeded")
+      result <- createScenariosFromPKML(pkmlFixture, project = project, scenarios = "seeded")
     Message
-      i Added 1 scenario: "Seeded"
+      i Added 1 scenario: "seeded"
 
 # user alias ignored in favour of registered id emits an inform
 
     Code
-      createScenariosFromPKML(pkmlFixture, project = project, scenarioNames = "Seeded",
+      createScenariosFromPKML(pkmlFixture, project = project, scenarios = "seeded",
         outputPaths = stats::setNames(existingPath, "myAlias"))
     Message
-      i Output path alias "myAlias" ignored: path "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)" is already registered as "Aciclovir_PVB".
-      i Added 1 scenario: "Seeded"
+      i Output path alias "myAlias" ignored: path "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)" is already registered as "aciclovir_pvb".
+      i Added 1 scenario: "seeded"
 
 # named outputPaths colliding with an existing id mapped to a different path abort and leave the project unchanged
 
     Code
-      createScenariosFromPKML(pkmlFixture, project = project, scenarioNames = "Seeded",
-        outputPaths = c(Aciclovir_PVB = "Organism|Some|Other|Path"))
+      createScenariosFromPKML(pkmlFixture, project = project, scenarios = "seeded",
+        outputPaths = c(aciclovir_pvb = "Organism|Some|Other|Path"))
     Condition
       Error in `.resolveScenarioOutputPaths()`:
-      ! x Output path id "Aciclovir_PVB" already maps to a different path. i Existing: "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)" i Requested: "Organism|Some|Other|Path"
+      ! x Output path id "aciclovir_pvb" already maps to a different path. i Existing: "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)" i Requested: "Organism|Some|Other|Path"
 
-# unknown modelParameterSets abort and leave the project unchanged
-
-    Code
-      createScenariosFromPKML(pkmlFixture, project = project, scenarioNames = "Seeded",
-        modelParameterSets = "DoesNotExist")
-    Condition
-      Error in `addScenario()`:
-      ! Cannot add scenario "Seeded":
-      x modelParameterSets not found in project$modelParameterSets: DoesNotExist
-
-# unknown applicationProtocols abort
+# unknown parameterSets abort and leave the project unchanged
 
     Code
-      createScenariosFromPKML(pkmlFixture, project = project, scenarioNames = "Seeded",
-        applicationProtocols = "NoSuchProtocol")
+      createScenariosFromPKML(pkmlFixture, project = project, scenarios = "seeded",
+        parameterSets = "DoesNotExist")
     Condition
+      Warning:
+      Canonicalized 1 referenced id to a safe form:
+      * "DoesNotExist" -> "doesnotexist"
       Error in `addScenario()`:
-      ! Cannot add scenario "Seeded":
-      x applicationProtocol 'NoSuchProtocol' not found in applications
+      ! Cannot add scenario "seeded":
+      x parameterSets not found in project$parameterSets: doesnotexist
+
+# an unknown application aborts
+
+    Code
+      createScenariosFromPKML(pkmlFixture, project = project, scenarios = "seeded",
+        application = "NoSuchProtocol")
+    Condition
+      Warning:
+      Canonicalized 1 referenced id to a safe form:
+      * "NoSuchProtocol" -> "nosuchprotocol"
+      Error in `addScenario()`:
+      ! Cannot add scenario "seeded":
+      x application 'nosuchprotocol' not found in applications
 
 # duplicate scenario names are expanded with numeric suffixes
 
     Code
       createScenariosFromPKML(c(pkmlFixture, pkmlFixture), project = project,
-      scenarioNames = c("S", "S"))
+      scenarios = c("s", "s"))
     Condition
       Warning:
-      Duplicate scenario names found and made unique by adding indices: i Duplicated names: "S", renamed to "S_2"
+      Duplicate scenario names found and made unique by adding indices: i Duplicated names: "s", renamed to "s_2"
     Message
-      i Added 2 scenarios: "S" and "S_2"
+      i Added 2 scenarios: "s" and "s_2"
 
 # NULL modelFolder falls back to the absolute pkml path with a warning
 
     Code
       suppressMessages(createScenariosFromPKML(pkmlFixture, project = project,
-        scenarioNames = "Seeded"))
+        scenarios = "seeded"))
     Condition
       Warning:
       ! The project has no modelFolder; storing an absolute model file path. i Set a modelFolder on the project so the scenario stores a portable relative path ('data/TestProject/Models/Simulations/Aciclovir.pkml').
@@ -67,7 +72,7 @@
 # inconsistent vector argument lengths abort
 
     Code
-      createScenariosFromPKML(rep(pkmlFixture, 2), project = project, scenarioNames = c(
+      createScenariosFromPKML(rep(pkmlFixture, 2), project = project, scenarios = c(
         "A", "B", "C"))
     Condition
       Error in `.getScenarioCount()`:
