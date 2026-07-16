@@ -439,13 +439,27 @@ test_that("Project lifecycle fields are read-only", {
 test_that("Project$print() renders the example project through ospPrint*", {
   project <- exampleProject()
 
-  # The example project is loaded from a throwaway temp-dir copy, so its
-  # `JSON Path` and the resolved `Paths` values carry a machine-specific
-  # absolute prefix. Redact everything up to and including the temp copy's
-  # `Example_<hash>` directory so the snapshot stays portable while the
-  # section structure and folder labels remain reviewable.
+  # `expect_snapshot()` fixes the console width at 80 columns via
+  # `local_reproducible_output()`. The project is loaded from a temp copy, so
+  # each `* Label: <path>` item carries an absolute path whose length depends on
+  # the OS temp base (`/var/folders/...` on macOS is far longer than
+  # `/tmp/Rtmp...` on Linux). At 80 columns that difference flips whether the
+  # item wraps onto a second line, so the same print produces a different line
+  # count on macOS versus Linux CI. Widen the reproducible-output width for this
+  # snapshot so every item stays on one line regardless of the path length,
+  # making the layout OS-independent (the path text is redacted below). The
+  # section rules render at this width, which is why the snapshot's rules are
+  # wide.
+  testthat::local_reproducible_output(width = 300L)
+
+  # Redact the absolute path segment up to and including the temp copy's
+  # `Example_<hash>` directory so the snapshot stays portable while the section
+  # structure and folder labels remain reviewable. Anchor on the path itself (a
+  # leading `/` run ending in `Example_<hash>`) rather than a greedy `.*`, so a
+  # `* Label: <path>` item rendered on one line keeps its label; only the path
+  # is replaced.
   redactTempPaths <- function(lines) {
-    gsub(".*(Example_[^/]+)", "<tmp>", lines)
+    gsub("/[^[:space:]]*Example_[^/[:space:]]+", "<tmp>", lines)
   }
 
   expect_snapshot(print(project), transform = redactTempPaths)

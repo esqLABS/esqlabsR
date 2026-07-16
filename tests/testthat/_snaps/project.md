@@ -8,20 +8,15 @@
         * Description: Aciclovir IV PK example project
         * Schema Version: 2.0
         * esqlabsR Version: 6.0.0
-        * JSON Path:
-      <tmp>/Project.json
+        * JSON Path: <tmp>/Project.json
       
-      -- Paths -----------------------------------------------------------------------
-        * Simulations Folder:
-      <tmp>/Models/Simulations
-        * Data Folder:
-      <tmp>/Data
-        * Populations Folder:
-      <tmp>/Populations
-        * Output Folder:
-      <tmp>/Results
+      -- Paths ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+        * Simulations Folder: <tmp>/Models/Simulations
+        * Data Folder: <tmp>/Data
+        * Populations Folder: <tmp>/Populations
+        * Output Folder: <tmp>/Results
       
-      -- Definitions -----------------------------------------------------------------
+      -- Definitions ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
         * Scenarios: 3
         * Individuals: 1
         * Populations: 1
@@ -35,7 +30,7 @@
         * Plot Grids: 1
         * Parameter Identification: 1
       
-      -- Excel -----------------------------------------------------------------------
+      -- Excel ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
         * Configurations Folder: Configurations/
         * Model Parameters File: ModelParameters.xlsx
         * Individuals File: Individuals.xlsx
