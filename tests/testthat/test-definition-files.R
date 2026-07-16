@@ -638,6 +638,10 @@ test_that("a full-tree write aborts when a stale file cannot be removed", {
   # directory-write permission gating removal, which is not portable to
   # Windows.
   skip_on_os("windows")
+  # CI runners execute as root, and root ignores the `0500` permission this test
+  # sets to force the removal to fail, so the expected warning/error never fires
+  # and the snapshot diverges. Skip on CI; it still runs on POSIX dev machines.
+  skip_on_ci()
 
   project <- .stalePolicyProject()
   scenariosDir <- file.path(project$projectDirPath, "definitions", "scenarios")
