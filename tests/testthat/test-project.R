@@ -436,18 +436,19 @@ test_that("Project lifecycle fields are read-only", {
   expect_error(project$validatedSinceMutation <- TRUE, "readonly")
 })
 
-test_that("Project$print() summarises section counts", {
+test_that("Project$print() renders the example project through ospPrint*", {
   project <- exampleProject()
 
-  expect_output(print(project), "<Project>")
-  expect_output(print(project), "schema 2.0")
-  expect_output(print(project), "scenarios:\\s+3")
-  expect_output(print(project), "individuals:\\s+1")
-  expect_output(print(project), "populations:\\s+1")
-  # The three plots-related sections each report their entry count.
-  expect_output(print(project), "dataCombined:\\s+1")
-  expect_output(print(project), "plots:\\s+1")
-  expect_output(print(project), "plotGrids:\\s+1")
+  # The example project is loaded from a throwaway temp-dir copy, so its
+  # `JSON Path` and the resolved `Paths` values carry a machine-specific
+  # absolute prefix. Redact everything up to and including the temp copy's
+  # `Example_<hash>` directory so the snapshot stays portable while the
+  # section structure and folder labels remain reviewable.
+  redactTempPaths <- function(lines) {
+    gsub(".*(Example_[^/]+)", "<tmp>", lines)
+  }
+
+  expect_snapshot(print(project), transform = redactTempPaths)
 })
 
 # Container rework: metadata, definitionsFolder, the filePaths/excel split,
@@ -678,13 +679,24 @@ test_that("a container-field write empties sections in Project.json yet the tree
   expect_identical(reloaded$name, "RenamedX")
 })
 
-test_that("Project$print() shows name and description", {
-  project <- exampleProject()
-  expect_output(print(project), "name:\\s+Example")
-  expect_output(
-    print(project),
-    "description:\\s+Aciclovir IV PK example project"
-  )
+test_that("Project$print() omits zero-count definition sections", {
+  project <- Project$new()
+  addScenario(project, "s1", modelFile = "m.pkml")
+
+  # Only the populated `Scenarios` section prints under `Definitions`; the
+  # eleven empty sections produce no `• Label: 0` line. A from-scratch project
+  # also has no working folders and no Excel side-car, so neither the `Paths`
+  # nor the `Excel` header appears.
+  expect_snapshot(print(project))
+})
+
+test_that("Project$print() hides the Excel section and empty sections", {
+  project <- Project$new()
+
+  # A from-scratch JSON-only project prints just the `<Project>` header: no
+  # metadata bullets, no `Paths`, `Definitions`, or `Excel` headers, and no
+  # stray bullets.
+  expect_snapshot(print(project))
 })
 
 test_that("defaultSimulationRunOptions round-trips and defaults to NULL", {
