@@ -104,7 +104,7 @@ Project <- R6::R6Class(
     },
 
     #' @field definitionsFolder Name of the folder (relative to
-    #'   `projectDirPath`) that holds the project's authored definition-definition
+    #'   `projectDirPath`) that holds the project's authored definitions
     #'   tree. Defaults to `"definitions"`. Writing persists the container for
     #'   a bound project; changing it moves where future write-through edits
     #'   are read from and written to.
@@ -1081,7 +1081,10 @@ Project <- R6::R6Class(
         if (length(changedIds) > 0L) {
           serializedChanged <- spec$serialize(new[changedIds], self)
           for (id in names(serializedChanged)) {
-            .writeDefinitionJson(serializedChanged[[id]], .definitionFilePath(dir, id))
+            .writeDefinitionJson(
+              serializedChanged[[id]],
+              .definitionFilePath(dir, id)
+            )
           }
         }
         # A genuinely-removed definition's on-disk id is its serialized key; for a

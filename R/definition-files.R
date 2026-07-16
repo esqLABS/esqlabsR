@@ -46,7 +46,7 @@
 # `validateProject()` / `createPlots()`, never a write-time abort. The derived
 # single-file snapshot inlines all three as three top-level JSON sections.
 
-# Resolve the definition-definition root for a project directory. This is the
+# Resolve the definitions root for a project directory. This is the
 # folder that holds the project's authored definition files, separated from the
 # referenced working files (`Models/`, `Data/`, `Populations/`, `Results/`)
 # and the `Project.json` container. Its name is configurable via the
@@ -434,7 +434,11 @@
 # @noRd
 .writeDefinitionTree <- function(section, kind, project, projectDirPath) {
   spec <- .definitionTreeSpec(kind)
-  dir <- .definitionKindDir(projectDirPath, spec$kind, project$definitionsFolder)
+  dir <- .definitionKindDir(
+    projectDirPath,
+    spec$kind,
+    project$definitionsFolder
+  )
   if (is.null(dir)) {
     return(invisible(NULL))
   }

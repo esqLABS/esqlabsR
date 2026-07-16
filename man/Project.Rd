@@ -54,7 +54,7 @@ container for a bound project.}
 container for a bound project.}
 
     \item{\code{definitionsFolder}}{Name of the folder (relative to
-\code{projectDirPath}) that holds the project's authored definition-definition
+\code{projectDirPath}) that holds the project's authored definitions
 tree. Defaults to \code{"definitions"}. Writing persists the container for
 a bound project; changing it moves where future write-through edits
 are read from and written to.
