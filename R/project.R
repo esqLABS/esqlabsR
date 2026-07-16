@@ -726,84 +726,86 @@ Project <- R6::R6Class(
     #' @description Print a summary of the Project.
     #' @param ... Unused; present for S3 method consistency.
     print = function(...) {
-      cat(
-        "<Project> (schema ",
-        self$schemaVersion %||% "unknown",
-        ")\n",
-        sep = ""
+      ospsuite.utils::ospPrintClass(self)
+
+      # Metadata bullets. `print_empty = FALSE` drops the NULL/empty entries
+      # (e.g. `jsonPath` for an in-memory project), so no explicit filtering
+      # is needed here.
+      ospsuite.utils::ospPrintItems(
+        list(
+          "Name" = self$name,
+          "Description" = self$description,
+          "Schema Version" = self$schemaVersion,
+          "esqlabsR Version" = self$esqlabsRVersion,
+          "JSON Path" = self$jsonPath
+        )
       )
-      if (!is.null(self$name)) {
-        cat("  name:            ", self$name, "\n", sep = "")
+
+      # Paths section: only the four live working folders. `configurationsFolder`
+      # and the workbook file fields belong to the Excel block, not here. Drop
+      # unset (NULL) folders and omit the header when none is set.
+      paths <- Filter(
+        Negate(is.null),
+        list(
+          "Simulations Folder" = self$modelFolder,
+          "Data Folder" = self$dataFolder,
+          "Populations Folder" = self$populationsFolder,
+          "Output Folder" = self$outputFolder
+        )
+      )
+      if (length(paths) > 0L) {
+        ospsuite.utils::ospPrintHeader("Paths")
+        ospsuite.utils::ospPrintItems(paths)
       }
-      if (!is.null(self$description)) {
-        cat("  description:     ", self$description, "\n", sep = "")
+
+      # Definitions section: the per-section entry counts. `ospPrintItems()`
+      # prints an integer `0`, so zero-count sections are dropped explicitly
+      # (not via `print_empty`). Omit the header when every section is empty.
+      counts <- list(
+        "Scenarios" = length(self$scenarios),
+        "Individuals" = length(self$individuals),
+        "Populations" = length(self$populations),
+        "Parameter Sets" = length(self$parameterSets),
+        "Initial Conditions" = length(self$initialConditions),
+        "Applications" = length(self$applications),
+        "Output Paths" = length(self$outputPaths),
+        "Observed Data" = length(self$observedData),
+        "Data Combined" = length(self$dataCombined),
+        "Plots" = length(self$plots),
+        "Plot Grids" = length(self$plotGrids),
+        "Parameter Identification" = length(self$parameterIdentification)
+      )
+      counts <- Filter(function(n) n > 0L, counts)
+      if (length(counts) > 0L) {
+        ospsuite.utils::ospPrintHeader("Definitions")
+        ospsuite.utils::ospPrintItems(counts)
       }
-      if (!is.null(self$jsonPath)) {
-        cat("  jsonPath:        ", self$jsonPath, "\n", sep = "")
+
+      # Excel section: only when the project has an Excel side-car. Relabel the
+      # raw `excel` field names to friendly labels, falling back to the raw name
+      # so a future field is never silently dropped.
+      excel <- self$excel
+      if (length(excel) > 0L) {
+        labels <- c(
+          "configurationsFolder" = "Configurations Folder",
+          "modelParamsFile" = "Model Parameters File",
+          "individualsFile" = "Individuals File",
+          "populationsFile" = "Populations File",
+          "scenariosFile" = "Scenarios File",
+          "applicationsFile" = "Applications File",
+          "plotsFile" = "Plots File",
+          "parameterIdentificationFile" = "Parameter Identification File",
+          "initialConditionsFile" = "Initial Conditions File"
+        )
+        names(excel) <- vapply(
+          names(excel),
+          function(field) labels[[field]] %||% field,
+          character(1L)
+        )
+        ospsuite.utils::ospPrintHeader("Excel")
+        ospsuite.utils::ospPrintItems(excel)
       }
-      cat(
-        "  esqlabsRVersion: ",
-        self$esqlabsRVersion %||% "NA",
-        "\n",
-        sep = ""
-      )
-      cat("  files:\n")
-      cat(
-        "    modelFolder:         ",
-        self$modelFolder %||% "(unset)",
-        "\n",
-        sep = ""
-      )
-      cat(
-        "    configurationsFolder:",
-        self$configurationsFolder %||% "(unset)",
-        "\n",
-        sep = ""
-      )
-      cat(
-        "    dataFolder:          ",
-        self$dataFolder %||% "(unset)",
-        "\n",
-        sep = ""
-      )
-      cat(
-        "    outputFolder:        ",
-        self$outputFolder %||% "(unset)",
-        "\n",
-        sep = ""
-      )
-      cat("  scenarios:       ", length(self$scenarios), "\n", sep = "")
-      cat("  individuals:     ", length(self$individuals), "\n", sep = "")
-      cat("  populations:     ", length(self$populations), "\n", sep = "")
-      cat(
-        "  parameterSets:   ",
-        length(self$parameterSets),
-        " set(s)\n",
-        sep = ""
-      )
-      cat(
-        "  initialConditions: ",
-        length(self$initialConditions),
-        " set(s)\n",
-        sep = ""
-      )
-      cat("  applications:    ", length(self$applications), "\n", sep = "")
-      cat("  outputPaths:     ", length(self$outputPaths), "\n", sep = "")
-      cat(
-        "  observedData:    ",
-        length(self$observedData),
-        " source(s)\n",
-        sep = ""
-      )
-      cat("  dataCombined:    ", length(self$dataCombined), "\n", sep = "")
-      cat("  plots:           ", length(self$plots), "\n", sep = "")
-      cat("  plotGrids:       ", length(self$plotGrids), "\n", sep = "")
-      cat(
-        "  parameterIdentification: ",
-        length(self$parameterIdentification),
-        " task(s)\n",
-        sep = ""
-      )
+
       invisible(self)
     }
   ),
