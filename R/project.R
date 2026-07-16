@@ -728,6 +728,22 @@ Project <- R6::R6Class(
     print = function(...) {
       ospsuite.utils::ospPrintClass(self)
 
+      # Show file locations relative to the project directory rather than as
+      # absolute paths. The absolute prefix is machine-specific (and, for a
+      # project loaded from a temp copy, varies in length by OS), so printing it
+      # is both noisy for the user and a source of non-reproducible output. The
+      # container is shown as its basename (`JSON File`); the working folders are
+      # made relative to `projectDirPath`. Falls back to the raw value when there
+      # is no project directory (an in-memory project), matching the already
+      # project-relative Excel block below.
+      relToProject <- function(path) {
+        dir <- self$projectDirPath
+        if (is.null(path) || is.null(dir)) {
+          return(path)
+        }
+        as.character(fs::path_rel(path, start = dir))
+      }
+
       # Metadata bullets. `print_empty = FALSE` drops the NULL/empty entries
       # (e.g. `jsonPath` for an in-memory project), so no explicit filtering
       # is needed here.
@@ -737,20 +753,23 @@ Project <- R6::R6Class(
           "Description" = self$description,
           "Schema Version" = self$schemaVersion,
           "esqlabsR Version" = self$esqlabsRVersion,
-          "JSON Path" = self$jsonPath
+          "JSON File" = if (!is.null(self$jsonPath)) {
+            fs::path_file(self$jsonPath)
+          }
         )
       )
 
-      # Paths section: only the four live working folders. `configurationsFolder`
-      # and the workbook file fields belong to the Excel block, not here. Drop
-      # unset (NULL) folders and omit the header when none is set.
+      # Paths section: only the four live working folders, shown relative to the
+      # project directory. `configurationsFolder` and the workbook file fields
+      # belong to the Excel block, not here. Drop unset (NULL) folders and omit
+      # the header when none is set.
       paths <- Filter(
         Negate(is.null),
         list(
-          "Simulations Folder" = self$modelFolder,
-          "Data Folder" = self$dataFolder,
-          "Populations Folder" = self$populationsFolder,
-          "Output Folder" = self$outputFolder
+          "Simulations Folder" = relToProject(self$modelFolder),
+          "Data Folder" = relToProject(self$dataFolder),
+          "Populations Folder" = relToProject(self$populationsFolder),
+          "Output Folder" = relToProject(self$outputFolder)
         )
       )
       if (length(paths) > 0L) {
