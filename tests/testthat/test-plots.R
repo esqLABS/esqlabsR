@@ -110,7 +110,7 @@ test_that("addPlot adds N plots in one call (recycle + align + whole-vector)", {
     id = c("pa", "pb"),
     dataCombined = c("dc_a", "dc_b"), # length-N, aligned
     plotType = "individual", # length-1, recycled
-    title = list("Plot A", "Plot B"), # per-entity list aligns
+    title = list("Plot A", "Plot B"), # per-definition list aligns
     xUnit = "h", # scalar recycled
     quantiles = c(0.05, 0.5, 0.95) # whole-vector applied to both
   )
@@ -332,7 +332,7 @@ test_that("addDataCombined vectorizes with per-id entry lists", {
 
 # removeDataCombined ----
 
-test_that("removeDataCombined drops the entry and deletes its entity file", {
+test_that("removeDataCombined drops the entry and deletes its definition file", {
   project <- exampleProject()
   dcFile <- file.path(
     project$projectDirPath,

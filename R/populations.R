@@ -343,7 +343,7 @@ sampleRandomValue <- function(distribution, mean, sd, n) {
 #'
 #' Add populations to `project$populations`, vectorizing over a vector of ids
 #' (see the recycling rule under Details). `species`, `numberOfIndividuals`,
-#' and the optional `...` fields are all scalar-per-entity (recycle/align).
+#' and the optional `...` fields are all scalar-per-definition (recycle/align).
 #'
 #' @inherit vectorizedAuthoring details
 #'
@@ -374,7 +374,7 @@ addPopulation <- function(
   id <- .canonicalizeId(id)
   n <- length(id)
 
-  perEntity <- .alignAuthoringArgs(
+  perDefinition <- .alignAuthoringArgs(
     id,
     scalarFields = c(
       list(species = species, numberOfIndividuals = numberOfIndividuals),
@@ -389,7 +389,7 @@ addPopulation <- function(
   }
   call <- rlang::current_env()
   entries <- lapply(seq_len(n), function(i) {
-    .buildPopulationEntry(id[[i]], perEntity[[i]], call = call)
+    .buildPopulationEntry(id[[i]], perDefinition[[i]], call = call)
   })
 
   populations <- project$.getSection("populations") %||% list()
@@ -422,7 +422,7 @@ addPopulation <- function(
   "diseaseState"
 )
 
-# Build one classed `Population` entry from its id and per-entity field list,
+# Build one classed `Population` entry from its id and per-definition field list,
 # validating the same way the scalar path always has (`species` non-empty,
 # `numberOfIndividuals` positive). Aborts naming the population on a problem.
 #
@@ -569,7 +569,7 @@ removePopulation <- function(project, id) {
 #'   `numberOfIndividuals`, `proportionOfFemales`, `weightMin`,
 #'   `weightMax`, `heightMin`, `heightMax`, `ageMin`, `ageMax`, `BMIMin`,
 #'   `BMIMax`, `gender`, `weightUnit`, `heightUnit`, `ageUnit`, `BMIUnit`,
-#'   `population`, `diseaseState`. Scalar-per-entity fields recycle/align
+#'   `population`, `diseaseState`. Scalar-per-definition fields recycle/align
 #'   across `id`. Numeric fields are coerced via `as.double()`. Unknown
 #'   fields trigger an error.
 #'
@@ -590,7 +590,7 @@ setPopulation <- function(project, id, ...) {
   }
 
   dots <- list(...)
-  perEntity <- .alignAuthoringArgs(id, scalarFields = dots)
+  perDefinition <- .alignAuthoringArgs(id, scalarFields = dots)
   suppliedNames <- names(dots)
 
   call <- rlang::current_env()
@@ -598,7 +598,7 @@ setPopulation <- function(project, id, ...) {
     .setOnePopulation(
       project,
       id[[i]],
-      perEntity[[i]][suppliedNames],
+      perDefinition[[i]][suppliedNames],
       call = call
     )
   })

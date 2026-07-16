@@ -26,7 +26,7 @@ getTestDataFilePath <- function(fileName = "") {
 
 #' Load the canonical test `Project` from a throwaway copy.
 #'
-#' The scenarios section is a write-through entity tree, so mutating a
+#' The scenarios section is a write-through definition tree, so mutating a
 #' loaded project (`addScenario()`, `removeScenario()`, scenario write-back)
 #' writes to its `definitions/scenarios/` directory. To keep the
 #' version-controlled fixture pristine and tests isolated from one another,
@@ -40,9 +40,9 @@ testProject <- function(envir = parent.frame()) {
 #'
 #' Use this as a `saveSnapshot()` target instead of a bare
 #' `withr::local_tempfile()`: a project is a directory (the `Project.json`
-#' container plus a `definitions/` entity tree alongside it), so writing into
+#' container plus a `definitions/` definition tree alongside it), so writing into
 #' the shared session tempdir would scatter a `definitions/` directory there
-#' and leak entities into unrelated `loadProject()` calls.
+#' and leak definitions into unrelated `loadProject()` calls.
 #' The directory is removed when the calling test finishes.
 local_projectPath <- function(envir = parent.frame()) {
   file.path(
@@ -111,7 +111,7 @@ executeWithTestFile <- function(actionWithFile) {
 #' Redact the throwaway-project absolute prefix from a quoted path in an error
 #' message so an `expect_snapshot()` is stable across runs, keeping the
 #' project-relative `definitions/...` tail that carries the meaning. Used as the
-#' `transform` of snapshots whose error names an absolute entity-file path in a
+#' `transform` of snapshots whose error names an absolute definition-file path in a
 #' temp directory.
 .redactTmpPath <- function(lines) {
   gsub("'[^']*/(definitions(/[^']*)?)'", "'<project>/\\1'", lines)

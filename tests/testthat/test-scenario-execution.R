@@ -1,5 +1,5 @@
 # Local test helper delegating to helpers.R::testProject(). It forwards the
-# calling test's frame so the throwaway project copy (a write-through entity
+# calling test's frame so the throwaway project copy (a write-through definition
 # tree) lives until the test finishes, not until this wrapper returns.
 .testProject <- function(envir = parent.frame()) {
   testProject(envir = envir)

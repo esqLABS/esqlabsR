@@ -10,7 +10,7 @@
 #' Add one or more output paths to a Project
 #'
 #' Add output paths to `project$outputPaths`, vectorizing over a vector of ids
-#' (see the recycling rule under Details). `path` is scalar-per-entity: a
+#' (see the recycling rule under Details). `path` is scalar-per-definition: a
 #' single path is recycled to every id, or a length-`id` vector aligns by
 #' position.
 #'
@@ -54,7 +54,7 @@ addOutputPath <- function(project, id, path) {
     cli::cli_abort("outputPath {.val {clash}} already exists")
   }
 
-  # Recycle a single path to every id (the scalar-per-entity rule).
+  # Recycle a single path to every id (the scalar-per-definition rule).
   if (length(path) == 1L) {
     path <- rep(path, length(id))
   }
@@ -108,7 +108,7 @@ removeOutputPath <- function(project, id) {
 #'   every scenario that records these output paths keeps referencing them.
 #'   The `project$outputPaths` accessor is read-only, so this is the way to
 #'   change a path in place. The call vectorizes over a vector of ids (see the
-#'   recycling rule under Details); `path` is scalar-per-entity (one path
+#'   recycling rule under Details); `path` is scalar-per-definition (one path
 #'   recycled to every id, or a length-`id` vector aligned by position).
 #'
 #' @inherit vectorizedAuthoring details

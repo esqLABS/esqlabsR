@@ -22,7 +22,7 @@ print.Application <- function(x, ...) {
 #'
 #' Add protocols to `project$applications`, vectorizing over a vector of ids
 #' (see the recycling rule under Details). `parameterSets` is
-#' vector-valued-per-entity: it is applied whole to every protocol; to give a
+#' vector-valued-per-definition: it is applied whole to every protocol; to give a
 #' different set per protocol, pass a list of the same length as `id` (one
 #' character vector per protocol).
 #'

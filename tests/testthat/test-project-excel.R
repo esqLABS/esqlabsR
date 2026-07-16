@@ -408,7 +408,7 @@ test_that("importProjectFromExcel writes a usable definitions/ tree", {
   )
 })
 
-test_that("the imported tree reads the same entities as the inlined import", {
+test_that("the imported tree reads the same definitions as the inlined import", {
   out <- withr::local_tempdir()
   jsonPath <- importProjectFromExcel(
     testProjectExcelPath(),
@@ -418,7 +418,7 @@ test_that("the imported tree reads the same entities as the inlined import", {
 
   # loadProject() of the import reads the tree; comparing against the inlined
   # Project.json the import also wrote (loaded as a standalone snapshot in a
-  # tree-free directory) confirms the tree carries the same entities.
+  # tree-free directory) confirms the tree carries the same definitions.
   fromTree <- suppressWarnings(loadProject(jsonPath))
 
   inlineDir <- withr::local_tempdir()
@@ -514,7 +514,7 @@ test_that("loading the Excel import warns about the dangling applicationProtocol
 # The migration canonicalizes every id to a safe, lowercase form. When two
 # distinct source ids collapse to the same canonical id, the migration must
 # abort (matching interactive authoring) rather than silently let a downstream
-# rename drop the second entity.
+# rename drop the second definition.
 test_that("importProjectFromExcel aborts when two ids canonicalize to the same value", {
   work_dir <- withr::local_tempdir()
   file.copy(

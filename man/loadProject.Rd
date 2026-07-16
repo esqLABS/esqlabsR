@@ -31,7 +31,7 @@ still succeeds. Use \code{\link[=validateProject]{validateProject()}} for a full
 A loaded project is bound to its directory on disk, and every
 authoring edit is write-through: a single \code{addOutputPath()},
 \code{addScenario()}, \code{setIndividual()}, or \code{removeParameterSet()} writes (or
-deletes) the affected entity's file immediately. The \verb{project$<section>}
+deletes) the affected definition's file immediately. The \verb{project$<section>}
 accessors are read-only, so a definition only ever changes through an
 authoring function. There is no separate save step, and there is no undo:
 the edit is on disk the moment the call returns.

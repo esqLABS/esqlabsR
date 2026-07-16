@@ -22,7 +22,7 @@
 #'   A loaded project is bound to its directory on disk, and every
 #'   authoring edit is write-through: a single `addOutputPath()`,
 #'   `addScenario()`, `setIndividual()`, or `removeParameterSet()` writes (or
-#'   deletes) the affected entity's file immediately. The `project$<section>`
+#'   deletes) the affected definition's file immediately. The `project$<section>`
 #'   accessors are read-only, so a definition only ever changes through an
 #'   authoring function. There is no separate save step, and there is no undo:
 #'   the edit is on disk the moment the call returns.
@@ -195,7 +195,7 @@ initProject <- function(
       cli::cli_inform("{msg}")
     }
     # Overwrite means REPLACE, not merge. Copying the template with
-    # `overwrite = TRUE` refreshes the files it ships, but an entity file the
+    # `overwrite = TRUE` refreshes the files it ships, but a definition file the
     # old project's `definitions/<kind>/` tree carried and the template does
     # not would survive and re-load as a stale definition. Remove the known
     # project artifacts (the definitions tree and `Project.json`) first, scoped
@@ -246,7 +246,7 @@ initProject <- function(
 # overwrite, so `initProject(overwrite = TRUE)` REPLACES rather than merges. It
 # removes only the scaffold the initializer owns:
 #   - the definitions tree (`<destination>/<definitionsFolder>/`), the sole
-#     source of the stale-entity leak, because a per-entity file the old tree
+#     source of the stale-definition leak, because a per-definition file the old tree
 #     carried and the template does not would otherwise survive the copy and
 #     re-load as a stale definition. The existing project's `definitionsFolder`
 #     is read from its `Project.json` (default `"definitions"`) so a custom

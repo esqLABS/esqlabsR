@@ -612,7 +612,7 @@ test_that("the tree wins over a conflicting non-empty inline Project.json sectio
   expect_length(raw$scenarios, 0L)
 
   # Inject a conflicting inline scenario for an id that also lives in the tree,
-  # giving it a different modelFile than the tree entity carries.
+  # giving it a different modelFile than the tree definition carries.
   treeModelFile <- project$scenarios[["testscenario"]]$modelFile
   raw$scenarios <- list(
     list(
@@ -910,7 +910,7 @@ test_that("syncStatus() reports NA when there is no Excel side-car", {
   tmp <- saveSnapshot(testProject(), local_projectPath())
   project <- loadProject(tmp)
 
-  # Every section is write-through, so the project and its entity files never
+  # Every section is write-through, so the project and its definition files never
   # diverge; with no Project.xlsx alongside there is nothing to compare.
   status <- project$syncStatus(silent = TRUE)
   expect_identical(status$excel_in_sync, NA)

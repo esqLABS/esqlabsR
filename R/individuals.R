@@ -127,10 +127,10 @@ print.Individual <- function(x, ...) {
 #' Add one or more individuals to a Project
 #'
 #' Add individuals to `project$individuals`, vectorizing over a vector of ids
-#' (see the recycling rule under Details). Scalar-per-entity fields (`species`
+#' (see the recycling rule under Details). Scalar-per-definition fields (`species`
 #' and the `...` fields `population`, `gender`, `weight`, `height`, `age`,
 #' `proteinOntogenies`) follow the recycle/align rule; `parameterSets` is
-#' vector-valued-per-entity (applied whole to every individual, or one vector
+#' vector-valued-per-definition (applied whole to every individual, or one vector
 #' per individual via a length-`id` list).
 #'
 #' @inherit vectorizedAuthoring details
@@ -156,18 +156,18 @@ addIndividual <- function(project, id, species, ...) {
   n <- length(id)
 
   dots <- list(...)
-  # `parameterSets` is the one vector-valued-per-entity field; everything else
-  # is scalar-per-entity. `species` is a positional formal, not a `...` field.
+  # `parameterSets` is the one vector-valued-per-definition field; everything else
+  # is scalar-per-definition. `species` is a positional formal, not a `...` field.
   wholeNames <- intersect("parameterSets", names(dots))
   scalarDots <- dots[setdiff(names(dots), wholeNames)]
-  perEntity <- .alignAuthoringArgs(
+  perDefinition <- .alignAuthoringArgs(
     id,
     scalarFields = c(list(species = species), scalarDots),
     wholeFields = dots[wholeNames]
   )
 
   # Validate all N first (all-or-nothing): build every entry before folding any,
-  # so an invalid entity in the batch writes nothing.
+  # so an invalid definition in the batch writes nothing.
   .assertNoDuplicateIds(id, "individual")
   clash <- intersect(id, names(project$individuals))
   if (length(clash) > 0L) {
@@ -175,7 +175,7 @@ addIndividual <- function(project, id, species, ...) {
   }
   call <- rlang::current_env()
   entries <- .collectCanonicalizedRefs(lapply(seq_len(n), function(i) {
-    .buildIndividualEntry(project, id[[i]], perEntity[[i]], call = call)
+    .buildIndividualEntry(project, id[[i]], perDefinition[[i]], call = call)
   }))
 
   # Fold all N into the section in memory, then ONE assignment triggers one
@@ -188,7 +188,7 @@ addIndividual <- function(project, id, species, ...) {
   invisible(project)
 }
 
-# Build one classed `Individual` entry from its id and per-entity field list,
+# Build one classed `Individual` entry from its id and per-definition field list,
 # validating the same way the scalar path always has (`species` and `gender`
 # required non-empty, `parameterSets` a resolvable character vector). Aborts
 # naming the individual on the first problem.
@@ -372,7 +372,7 @@ removeIndividual <- function(project, id) {
 #'   already exist in `project$individuals`.
 #' @param ... Named fields to change. Accepted: `species`, `population`,
 #'   `gender`, `weight`, `height`, `age`, `proteinOntogenies`,
-#'   `parameterSets`. Scalar-per-entity fields recycle/align across `id`;
+#'   `parameterSets`. Scalar-per-definition fields recycle/align across `id`;
 #'   `parameterSets` is applied whole (or one vector per individual via a
 #'   length-`id` list). Unknown fields trigger an error.
 #'
@@ -395,13 +395,13 @@ setIndividual <- function(project, id, ...) {
   dots <- list(...)
   wholeNames <- intersect("parameterSets", names(dots))
   scalarDots <- dots[setdiff(names(dots), wholeNames)]
-  perEntity <- .alignAuthoringArgs(
+  perDefinition <- .alignAuthoringArgs(
     id,
     scalarFields = scalarDots,
     wholeFields = dots[wholeNames]
   )
   # Only the field names the caller actually supplied are applied (partial
-  # update); the engine carries every supplied field for each entity.
+  # update); the engine carries every supplied field for each definition.
   suppliedNames <- names(dots)
 
   call <- rlang::current_env()
@@ -409,7 +409,7 @@ setIndividual <- function(project, id, ...) {
     .setOneIndividual(
       project,
       id[[i]],
-      perEntity[[i]][suppliedNames],
+      perDefinition[[i]][suppliedNames],
       call = call
     )
   }))

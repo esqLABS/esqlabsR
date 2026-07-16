@@ -494,7 +494,7 @@ test_that("removeParameterEntry auto-removes an emptied parameter set", {
 
 # On-disk delete / nested-record-update write-through ----
 
-test_that("removeParameterSet deletes the entity file and persists to disk", {
+test_that("removeParameterSet deletes the definition file and persists to disk", {
   project <- testProject()
   dir <- file.path(project$projectDirPath, "definitions", "parameter-sets")
   suppressMessages(
@@ -504,7 +504,7 @@ test_that("removeParameterSet deletes the entity file and persists to disk", {
 
   removeParameterSet(project, "tempset")
 
-  # In memory gone, entity file deleted, and absent from a fresh load.
+  # In memory gone, definition file deleted, and absent from a fresh load.
   expect_false("tempset" %in% names(project$parameterSets))
   expect_false(file.exists(file.path(dir, "tempset.json")))
   reloaded <- loadProject(project$jsonPath)
@@ -828,7 +828,7 @@ test_that("print.InitialConditionSet renders the entry count and a compact table
 })
 
 test_that("print.InitialConditionSet renders a unit-less entry", {
-  # A hand-edited entity file can carry a record with no unit; the print method
+  # A hand-edited definition file can carry a record with no unit; the print method
   # must still render it (blank-unit branch). Build the set directly since the
   # authoring API requires a unit.
   set <- esqlabsR:::.asInitialConditionSet(list(
