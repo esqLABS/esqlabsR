@@ -297,6 +297,16 @@ print.DataCombined <- function(x, ...) {
             )
           )
         }
+        if (.isMissingField(entry$path)) {
+          result$add_critical_error(
+            "Missing Fields",
+            paste0(
+              "Simulated entry in dataCombined '",
+              dcName,
+              "' is missing 'path'"
+            )
+          )
+        }
       }
       for (entry in dc$observed %||% list()) {
         if (.isMissingField(entry$label)) {

@@ -508,6 +508,20 @@ test_that(".validatePlots flags missing scenario in dataCombined", {
   expect_match(msgs, "missing 'scenario'", all = FALSE)
 })
 
+test_that(".validatePlots flags a simulated entry missing its path", {
+  # `path` is required to build a simulated dataCombined entry (the write-gate
+  # `.checkDataCombinedEntry()` rejects its absence). A dataCombined loaded from
+  # JSON can bypass that gate, so the lazy validator must flag the same gap.
+  dataCombined <- list(
+    DC1 = list(
+      simulated = list(list(label = "L1", scenario = "S1"))
+    )
+  )
+  result <- esqlabsR:::.validatePlots(dataCombined, list(), list())
+  msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
+  expect_match(msgs, "Simulated entry.*missing 'path'", all = FALSE)
+})
+
 test_that(".validatePlots flags a missing label in a dataCombined entry", {
   dataCombined <- list(
     DC1 = list(
@@ -547,7 +561,7 @@ test_that(".validatePlots flags duplicate plotIds and unknown dataCombinedId", {
 
 test_that(".validatePlots warns on plotType-irrelevant fields (non-blocking)", {
   dataCombined <- list(
-    DC1 = list(simulated = list(list(label = "L1", scenario = "S1")))
+    DC1 = list(simulated = list(list(label = "L1", scenario = "S1", path = "P")))
   )
   # An individual plot carrying population-only `quantiles`, and a population
   # plot carrying observedVsSimulated-only `foldDistance`. Both misuses should
@@ -575,7 +589,7 @@ test_that(".validatePlots warns on plotType-irrelevant fields (non-blocking)", {
 
 test_that(".validatePlots does not warn when the field matches its plotType", {
   dataCombined <- list(
-    DC1 = list(simulated = list(list(label = "L1", scenario = "S1")))
+    DC1 = list(simulated = list(list(label = "L1", scenario = "S1", path = "P")))
   )
   # `quantiles`/`aggregation`/`nsd` on a population plot and `foldDistance` on
   # an observedVsSimulated plot are all legitimate: no irrelevant-field warning.

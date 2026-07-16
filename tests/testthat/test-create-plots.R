@@ -509,6 +509,42 @@ test_that("createPlots carries xLabel/yLabel onto the built plot", {
   expect_identical(result$p_lab$labels$y, "Conc")
 })
 
+test_that("createPlots keeps a comma-bearing grid subtitle intact", {
+  project <- exampleProject()
+  path <- project$outputPaths$aciclovir_pvb
+  addDataCombined(
+    project,
+    "dc_sub",
+    simulated = list(list(
+      label = "sim",
+      scenario = "aciclovir_iv",
+      path = path,
+      group = "g"
+    ))
+  )
+  addPlot(project, "p_sub", "dc_sub", "individual")
+  # A grid subtitle used to be routed through the comma-splitting scan (it was
+  # missing from `gridStyleFields`), so "Model A, Model B" was silently shredded
+  # into c("Model A", "Model B"). It must now reach the grid as one string.
+  addPlotGrid(
+    project,
+    "grid_sub",
+    plots = "p_sub",
+    subtitle = "Model A, Model B"
+  )
+  simulated <- runScenarios(project, scenarios = "aciclovir_iv")
+
+  result <- suppressWarnings(createPlots(
+    project,
+    plotGrids = "grid_sub",
+    scenarioResults = simulated,
+    validate = FALSE
+  ))
+
+  subtitle <- patchwork:::get_patches(result$grid_sub)$annotation$subtitle
+  expect_identical(subtitle, "Model A, Model B")
+})
+
 test_that("createPlots aborts on an unknown plotType even when validate = FALSE", {
   project <- exampleProject()
   path <- project$outputPaths$aciclovir_pvb

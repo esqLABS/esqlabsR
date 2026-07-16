@@ -616,14 +616,21 @@ createPlotsFromExcel <- function(...) {
   names(plotList) <- configPlotIds
 
   defaultPlotGridConfig <- createEsqlabsPlotGridConfiguration()
-  gridStyleFields <- c("plotGridId", "plotIds", "title")
+  gridStyleFields <- c("plotGridId", "plotIds", "title", "subtitle")
   builtGrids <- lapply(plotGrids, function(entry) {
     plotGridConfiguration <- .createConfigurationFromEntry(
       defaultConfiguration = defaultPlotGridConfig,
       fields = entry[!(names(entry) %in% gridStyleFields)]
     )
+    # Free-text scalar fields are excluded from `gridStyleFields` and re-applied
+    # here verbatim, not through `.createConfigurationFromEntry`, so a value
+    # containing a comma (e.g. "Model A, Model B") is not shredded into a
+    # character vector by the comma-splitting scan.
     if (!is.null(entry$title)) {
       plotGridConfiguration$title <- entry$title
+    }
+    if (!is.null(entry$subtitle)) {
+      plotGridConfiguration$subtitle <- entry$subtitle
     }
     plotsToAdd <- plotList[intersect(
       .splitPlotIDs(entry$plotIds),
