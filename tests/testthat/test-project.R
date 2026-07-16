@@ -439,16 +439,10 @@ test_that("Project lifecycle fields are read-only", {
 test_that("Project$print() renders the example project through ospPrint*", {
   project <- exampleProject()
 
-  # The example project is loaded from a throwaway temp-dir copy, so its
-  # `JSON Path` and the resolved `Paths` values carry a machine-specific
-  # absolute prefix. Redact everything up to and including the temp copy's
-  # `Example_<hash>` directory so the snapshot stays portable while the
-  # section structure and folder labels remain reviewable.
-  redactTempPaths <- function(lines) {
-    gsub(".*(Example_[^/]+)", "<tmp>", lines)
-  }
-
-  expect_snapshot(print(project), transform = redactTempPaths)
+  # `print()` shows file locations relative to the project directory, so the
+  # output carries no machine-specific absolute path and needs no redaction or
+  # width override to stay reproducible across operating systems.
+  expect_snapshot(print(project))
 })
 
 # Container rework: metadata, definitionsFolder, the filePaths/excel split,
