@@ -22,9 +22,9 @@ any id not present.
 \details{
 \code{addPITask()} is not vectorized over ids: each task is composed of its own
 distinct lists of \code{PIParameter} / \code{PIOutputMapping} records, so several
-tasks are added with several calls. The per-task sub-entity helpers
+tasks are added with several calls. The per-task sub-definition helpers
 (\code{addPIParameter()} / \code{addPIOutputMapping()} and their removals) act on one
-parent task identified by \code{task}, so they likewise stay single-entity.
+parent task identified by \code{task}, so they likewise stay single-definition.
 }
 \seealso{
 Other parameterIdentification:

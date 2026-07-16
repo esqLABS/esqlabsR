@@ -8,7 +8,7 @@ PIParameter(id, scenarios, path, units = NULL, minValue, maxValue, startValue)
 }
 \arguments{
 \item{id}{Character scalar. Identifier for this parameter, unique within
-its task. Used as a free label by the PI run, not as an entity-file id.}
+its task. Used as a free label by the PI run, not as a definition-file id.}
 
 \item{scenarios}{Character vector of scenario ids the parameter is
 estimated across. Listing several scenarios fits one shared value

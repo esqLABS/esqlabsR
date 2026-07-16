@@ -102,7 +102,7 @@
       removeParameterSet(project, "global")
     Condition
       Warning:
-      Removed parameterSet "global" is still referenced by 4 entities:
+      Removed parameterSet "global" is still referenced by 4 definitions:
       * scenario 'populationscenario', scenario 'populationscenariofromcsv', scenario 'testscenario', and scenario 'testscenario_steadystate'
       i These now have a dangling reference. Update or remove them.
 
@@ -112,7 +112,7 @@
       removeParameterSet(project, "indiv1_default")
     Condition
       Warning:
-      Removed parameterSet "indiv1_default" is still referenced by 1 entity:
+      Removed parameterSet "indiv1_default" is still referenced by 1 definition:
       * individual 'indiv1'
       i These now have a dangling reference. Update or remove them.
 

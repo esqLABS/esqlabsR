@@ -1,4 +1,4 @@
-# Tests for the single-file snapshot artifact (R/entity-files.R):
+# Tests for the single-file snapshot artifact (R/definition-files.R):
 # the `.esqlabsR` extension normalization on saveSnapshot(), and the
 # two-argument loadSnapshot(file, dir) which reads a snapshot and writes a
 # full definitions/<kind>/ tree project at `dir`, returning the Project bound
@@ -325,7 +325,7 @@ test_that("loadSnapshot migrates a legacy inlined Project.json end to end", {
 })
 
 # A legacy single-file Project.json may carry non-canonical ids (mixed case),
-# which the entity tree (keyed by canonical id) cannot store. loadSnapshot()
+# which the definition tree (keyed by canonical id) cannot store. loadSnapshot()
 # must canonicalize on the way in, lossless across every section: definitions
 # AND the references that point at them (a scenario id used by a plot's
 # dataCombined row and by a PI task / output mapping) are lowercased together,

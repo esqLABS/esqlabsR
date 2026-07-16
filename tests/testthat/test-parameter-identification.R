@@ -1775,7 +1775,7 @@ test_that("removing the last PI parameter and mapping deletes the task file", {
   expect_true(file.exists(file.path(dir, "aciclovirsimple.json")))
 
   # Removing the last mapping then the last parameter empties the task, which
-  # auto-removes it; the entity file must be deleted.
+  # auto-removes it; the definition file must be deleted.
   suppressWarnings(
     removePIOutputMapping(project, task = "aciclovirsimple", id = "pvb")
   )

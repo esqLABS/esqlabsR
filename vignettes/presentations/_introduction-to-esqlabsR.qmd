@@ -189,7 +189,7 @@ I The project
 
 ## A project is a directory {auto-animate=true}
 
-A `Project.json` container plus a `definitions/` tree, one JSON file per entity.
+A `Project.json` container plus a `definitions/` tree, one JSON file per definition.
 
 ```{.sh}
 my_project

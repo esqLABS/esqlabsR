@@ -54,7 +54,7 @@ container for a bound project.}
 container for a bound project.}
 
     \item{\code{definitionsFolder}}{Name of the folder (relative to
-\code{projectDirPath}) that holds the project's authored entity-definition
+\code{projectDirPath}) that holds the project's authored definition-definition
 tree. Defaults to \code{"definitions"}. Writing persists the container for
 a bound project; changing it moves where future write-through edits
 are read from and written to.
@@ -167,7 +167,7 @@ project: a scenario references the sets it applies through its
 \code{modelParameterSets} field, an individual or application through its
 \code{parameterSets} field; all three resolve against this one map. To
 change it, use \code{\link[=addParameterSet]{addParameterSet()}} / \code{\link[=removeParameterSet]{removeParameterSet()}} /
-\code{\link[=addParameterEntry]{addParameterEntry()}} / \code{\link[=removeParameterEntry]{removeParameterEntry()}} or edit the entity
+\code{\link[=addParameterEntry]{addParameterEntry()}} / \code{\link[=removeParameterEntry]{removeParameterEntry()}} or edit the definition
 files under \verb{definitions/parameter-sets/}.}
 
     \item{\code{initialConditions}}{Read-only named list of initial-condition sets,

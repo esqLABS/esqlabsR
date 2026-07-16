@@ -104,7 +104,7 @@ Project <- R6::R6Class(
     },
 
     #' @field definitionsFolder Name of the folder (relative to
-    #'   `projectDirPath`) that holds the project's authored entity-definition
+    #'   `projectDirPath`) that holds the project's authored definition-definition
     #'   tree. Defaults to `"definitions"`. Writing persists the container for
     #'   a bound project; changing it moves where future write-through edits
     #'   are read from and written to.
@@ -398,7 +398,7 @@ Project <- R6::R6Class(
     # (`addScenario()` / `setScenario()` / `removeScenario()` and their
     # per-section siblings) or editing the definition's JSON file; those write
     # through the internal `.setSection()` entry point, which structurally
-    # validates each changed entity, persists it to (or deletes it from) its
+    # validates each changed definition, persists it to (or deletes it from) its
     # `definitions/<kind>/` tree, and clears `validatedSinceMutation` so the
     # next run/plot re-validates.
 
@@ -439,7 +439,7 @@ Project <- R6::R6Class(
     #'   `modelParameterSets` field, an individual or application through its
     #'   `parameterSets` field; all three resolve against this one map. To
     #'   change it, use [addParameterSet()] / [removeParameterSet()] /
-    #'   [addParameterEntry()] / [removeParameterEntry()] or edit the entity
+    #'   [addParameterEntry()] / [removeParameterEntry()] or edit the definition
     #'   files under `definitions/parameter-sets/`.
     parameterSets = function(value) {
       if (!missing(value)) {
@@ -617,9 +617,9 @@ Project <- R6::R6Class(
       path <- fs::path_abs(path)
       private$.projectFilePath <- path
       private$.projectDirPath <- dirname(path)
-      # Re-binding makes this instance the owner of the (new) entity tree, so a
+      # Re-binding makes this instance the owner of the (new) definition tree, so a
       # clone bound to its own location becomes write-through there.
-      private$.claimEntityTree()
+      private$.claimDefinitionTree()
       invisible(self)
     },
 
@@ -813,15 +813,15 @@ Project <- R6::R6Class(
     .projectFilePath = NULL,
     .projectDirPath = NULL,
     .validatedSinceMutation = FALSE,
-    # Disk-ownership token for the project's entity tree. A bound project
+    # Disk-ownership token for the project's definition tree. A bound project
     # (one loaded with `loadProject()` or saved with `saveSnapshot()`/a re-bind)
     # records itself as the token's owner. R6's `clone()` copies private fields
     # by value but shares this token environment by reference, so a clone is not
-    # the recorded owner; `.ownsEntityTree()` returns `FALSE` for it and its
+    # the recorded owner; `.ownsDefinitionTree()` returns `FALSE` for it and its
     # write-through becomes an in-memory no-op until a re-bind to a new location.
     # This keeps a clone's on-disk state independent of the source it was cloned
     # from.
-    .entityTreeOwnerToken = NULL,
+    .definitionTreeOwnerToken = NULL,
     # Working-folder paths (the `filePaths` block): the four live folders the
     # runtime reads (`modelFolder`, `dataFolder`, `outputFolder`,
     # `populationsFolder`).
@@ -859,14 +859,14 @@ Project <- R6::R6Class(
     # Resolve a section kind to its private backing-field name (`.<kind>`),
     # aborting on an unknown kind. Each section maps one-to-one onto a private
     # backing field named `.<kind>` and onto its `definitions/<kind>/` tree. The
-    # set of valid kinds is the single source of truth `.entityKindNames()`
-    # (derived from the entity-tree specs), so a typo cannot silently create a
+    # set of valid kinds is the single source of truth `.definitionKindNames()`
+    # (derived from the definition-tree specs), so a typo cannot silently create a
     # stray `private$.<typo>` field and the kind list is not duplicated here.
     .sectionField = function(kind) {
       if (
         !is.character(kind) ||
           length(kind) != 1L ||
-          !(kind %in% .entityKindNames())
+          !(kind %in% .definitionKindNames())
       ) {
         cli::cli_abort("Unknown project section {.val {kind}}.")
       }
@@ -892,11 +892,11 @@ Project <- R6::R6Class(
 
     # Write the `Project.json` container (every inline section emptied, the
     # tree owns them) to the project's own location, when this instance owns
-    # its entity tree. A NULL directory (in-memory project) or a non-owning
+    # its definition tree. A NULL directory (in-memory project) or a non-owning
     # clone is a silent no-op (its container edits stay in memory until it is
     # bound to its own location).
     .persistContainer = function() {
-      if (is.null(private$.projectFilePath) || !private$.ownsEntityTree()) {
+      if (is.null(private$.projectFilePath) || !private$.ownsDefinitionTree()) {
         return(invisible(NULL))
       }
       # Before emptying the inline sections in `Project.json`, materialize any
@@ -907,15 +907,15 @@ Project <- R6::R6Class(
       # exists is left untouched (the tree owns it), so a fully-materialized
       # project stays a pure container-only write. Mirrors the not-yet-
       # materialized-tree guard in `.persistKindChanges()`, applied per kind.
-      for (kind in .entityKindNames()) {
-        spec <- .entityTreeSpec(kind)
-        dir <- .entityKindDir(
+      for (kind in .definitionKindNames()) {
+        spec <- .definitionTreeSpec(kind)
+        dir <- .definitionKindDir(
           private$.projectDirPath,
           spec$kind,
           self$definitionsFolder
         )
         if (!is.null(dir) && !dir.exists(dir)) {
-          .writeEntityTree(
+          .writeDefinitionTree(
             .sectionForKind(self, kind),
             kind,
             self,
@@ -931,23 +931,23 @@ Project <- R6::R6Class(
       invisible(NULL)
     },
 
-    # Record this instance as the owner of its entity tree. Called whenever
+    # Record this instance as the owner of its definition tree. Called whenever
     # the project binds to a directory (`.read_json`, `.rebindPath`).
-    .claimEntityTree = function() {
-      private$.entityTreeOwnerToken <- new.env(parent = emptyenv())
-      private$.entityTreeOwnerToken$owner <- self
+    .claimDefinitionTree = function() {
+      private$.definitionTreeOwnerToken <- new.env(parent = emptyenv())
+      private$.definitionTreeOwnerToken$owner <- self
       invisible(self)
     },
 
-    # TRUE only when this instance recorded itself as the entity-tree owner.
+    # TRUE only when this instance recorded itself as the definition-tree owner.
     # A clone shares the token by reference (its `owner` is the source), so it
     # is not the owner until a re-bind to its own location.
-    .ownsEntityTree = function() {
-      token <- private$.entityTreeOwnerToken
+    .ownsDefinitionTree = function() {
+      token <- private$.definitionTreeOwnerToken
       !is.null(token) && identical(token$owner, self)
     },
 
-    # TRUE when this instance OWNS an on-disk entity tree for the CURRENT
+    # TRUE when this instance OWNS an on-disk definition tree for the CURRENT
     # `definitionsFolder` (the `<projectDir>/<definitionsFolder>/` directory is
     # present and this instance is the recorded tree owner). Used by the
     # `definitionsFolder` setter to refuse a folder change that would orphan a
@@ -955,7 +955,7 @@ Project <- R6::R6Class(
     # tree; a clone is not the owner (its write-through is an in-memory no-op),
     # so it can re-point freely without orphaning anything.
     .ownsMaterializedTree = function() {
-      if (!private$.ownsEntityTree()) {
+      if (!private$.ownsDefinitionTree()) {
         return(FALSE)
       }
       dir <- .definitionsDir(private$.projectDirPath, self$definitionsFolder)
@@ -974,17 +974,17 @@ Project <- R6::R6Class(
     # owns). Persist only what changed between the old and new section value.
     #
     # Stale-file policy (incremental write): this writer PRESERVES orphans. It
-    # is the deliberate opposite of the full-tree writer `.writeEntityTree()`,
+    # is the deliberate opposite of the full-tree writer `.writeDefinitionTree()`,
     # which owns the directory and deletes any file not in its keep-set. An
-    # incremental write knows only the one entity it changed (it diffs `old`
+    # incremental write knows only the one definition it changed (it diffs `old`
     # against `new`, both in-memory sections), so it deletes only the files it
     # can prove were removed from the section; a file on disk with no in-memory
-    # entity (an orphan a hand-edit or a concurrent process dropped in) is left
+    # definition (an orphan a hand-edit or a concurrent process dropped in) is left
     # alone, because this write cannot tell an orphan from a sibling it simply
     # never loaded. Reconciling the whole directory against the section belongs
     # to a full-tree write (materialize / snapshot-load / whole-section
-    # rewrite), which does know the entire section; see `.writeEntityTree()`.
-    # No entity is lost either way: the orphan is picked up (or re-ignored) on
+    # rewrite), which does know the entire section; see `.writeDefinitionTree()`.
+    # No definition is lost either way: the orphan is picked up (or re-ignored) on
     # the next `loadProject()`, which re-reads the whole tree. The detailed
     # rationale is at the stale-removal loop below.
     #
@@ -997,14 +997,14 @@ Project <- R6::R6Class(
     # First write into a project whose `definitions/<kind>/` directory does not
     # yet exist (a snapshot-loaded project, whose sections were inlined in
     # `Project.json` with no tree on disk) takes a full-materialize path: the
-    # diff-only path would write just the changed entity and assume the
+    # diff-only path would write just the changed definition and assume the
     # untouched siblings already exist as files, but they do not, so on the
     # next load the now-present tree would win and the inline siblings would be
     # lost. `new` is the authoritative full set to write; the dir was absent,
     # so there is nothing stale to remove.
     .persistKindChanges = function(kind, old, new) {
-      spec <- .entityTreeSpec(kind)
-      dir <- .entityKindDir(
+      spec <- .definitionTreeSpec(kind)
+      dir <- .definitionKindDir(
         private$.projectDirPath,
         spec$kind,
         self$definitionsFolder
@@ -1012,24 +1012,24 @@ Project <- R6::R6Class(
       if (is.null(dir)) {
         return(invisible(NULL))
       }
-      if (!private$.ownsEntityTree()) {
+      if (!private$.ownsDefinitionTree()) {
         return(invisible(NULL))
       }
 
       # First write into a not-yet-materialized tree writes the full set.
       if (!dir.exists(dir)) {
-        .writeEntityTree(new, kind, self, private$.projectDirPath)
+        .writeDefinitionTree(new, kind, self, private$.projectDirPath)
         return(invisible(NULL))
       }
 
       old <- old %||% list()
       new <- new %||% list()
 
-      # A keyed kind is a named map whose names are the entity ids (which equal
+      # A keyed kind is a named map whose names are the definition ids (which equal
       # the on-disk filenames). For such a kind the diff is computed directly on
-      # the in-memory maps (by key presence and per-entity value identity) and
-      # only the entities that actually changed are serialized and written, so a
-      # single mutation costs O(changed entities), not O(section size). The
+      # the in-memory maps (by key presence and per-definition value identity) and
+      # only the definitions that actually changed are serialized and written, so a
+      # single mutation costs O(changed definitions), not O(section size). The
       # plots kinds `dataCombined` / `plots` / `plotGrids` are keyed lists, so
       # they take this fast path too. An `observedData` section is an unnamed list
       # keyed by a derived id (its `names()` are not the on-disk ids), so it
@@ -1045,7 +1045,7 @@ Project <- R6::R6Class(
         # absent from new (both via cheap name set ops, no value comparison).
         # An id present in both whose value object is not the very same record
         # (an in-place edit) is changed. `match()` aligns the common keys so
-        # only those need the per-entity `identical()` check, keeping the diff
+        # only those need the per-definition `identical()` check, keeping the diff
         # proportional to the number of common keys without re-checking added
         # ones.
         inOld <- newNames %in% oldNames
@@ -1056,7 +1056,7 @@ Project <- R6::R6Class(
         # with the old list (an `[[<-` mutation does not copy untouched
         # siblings), so when nothing in the common set changed this single
         # `identical()` short-circuits on reference equality with no R-level
-        # per-element loop. Only when some common entity did change (an in-place
+        # per-element loop. Only when some common definition did change (an in-place
         # edit) do we fall back to a per-element scan to find which one(s).
         nc <- new[commonIds]
         oc <- old[commonIds]
@@ -1072,7 +1072,7 @@ Project <- R6::R6Class(
           ]
         }
         changedIds <- c(addedIds, changedCommon)
-        # Serialize only the changed entities (validating each), in memory and
+        # Serialize only the changed definitions (validating each), in memory and
         # before writing any file, so a serializer-hostile record aborts the
         # whole write and leaves the tree (and the not-yet-updated in-memory
         # store) unchanged. The serializer also enforces that each key is a
@@ -1081,26 +1081,26 @@ Project <- R6::R6Class(
         if (length(changedIds) > 0L) {
           serializedChanged <- spec$serialize(new[changedIds], self)
           for (id in names(serializedChanged)) {
-            .writeEntityJson(serializedChanged[[id]], .entityFilePath(dir, id))
+            .writeDefinitionJson(serializedChanged[[id]], .definitionFilePath(dir, id))
           }
         }
-        # A genuinely-removed entity's on-disk id is its serialized key; for a
+        # A genuinely-removed definition's on-disk id is its serialized key; for a
         # keyed kind that equals the map key, so the removed files can be deleted
         # without serializing.
         #
         # Stale removal is reconciled against the previous in-memory section
         # (`old`), not against the directory listing. So a file created
-        # out-of-band on disk (an orphan with no in-memory entity, e.g. one a
+        # out-of-band on disk (an orphan with no in-memory definition, e.g. one a
         # concurrent process or a hand-edit dropped in) is not deleted by an
         # unrelated mutation here; it survives until the next `loadProject()`,
         # which re-reads the whole tree and re-derives the section from what is
         # actually on disk. This is deliberate: the in-memory diff cannot tell an
         # orphan from a sibling it simply did not load, and reconciling against
         # the directory on every write would couple each mutation to a directory
-        # scan for no data-safety gain (no entity is lost; the orphan is just
+        # scan for no data-safety gain (no definition is lost; the orphan is just
         # picked up, or ignored, on the next load).
         for (id in oldNames[!(oldNames %in% newNames)]) {
-          f <- .entityFilePath(dir, id)
+          f <- .definitionFilePath(dir, id)
           if (file.exists(f)) {
             file.remove(f)
           }
@@ -1119,10 +1119,10 @@ Project <- R6::R6Class(
         names(serializedNew)
       )
       for (id in changed) {
-        .writeEntityJson(serializedNew[[id]], .entityFilePath(dir, id))
+        .writeDefinitionJson(serializedNew[[id]], .definitionFilePath(dir, id))
       }
       for (id in setdiff(names(serializedOld), names(serializedNew))) {
-        f <- .entityFilePath(dir, id)
+        f <- .definitionFilePath(dir, id)
         if (file.exists(f)) {
           file.remove(f)
         }
@@ -1206,7 +1206,7 @@ Project <- R6::R6Class(
       private$.defaultSimulationRunOptions <- jsonData$defaultSimulationRunOptions
       private$.projectFilePath <- jsonPath
       private$.projectDirPath <- dirname(jsonPath)
-      private$.claimEntityTree()
+      private$.claimDefinitionTree()
 
       # The container separates two concerns: the live working folders
       # (the `filePaths` block) the runtime reads, and the Excel-bridge
@@ -1231,9 +1231,9 @@ Project <- R6::R6Class(
         private$.excelData[[n]] <- list(value = excel[[n]], description = "")
       }
 
-      # Every authored section is an entity tree under `definitions/<kind>/`; a
+      # Every authored section is a definition tree under `definitions/<kind>/`; a
       # single-file snapshot with no tree falls back to the inline section in
-      # `Project.json`. `.loadEntityTree()` resolves tree-vs-inline per kind and
+      # `Project.json`. `.loadDefinitionTree()` resolves tree-vs-inline per kind and
       # the kind's spec parses the raw records into the in-memory shape. Output
       # paths load before scenarios because scenarios dereference their
       # `outputPathIds` against the project-level `outputPaths` map. The
@@ -1270,8 +1270,8 @@ Project <- R6::R6Class(
     # snapshot fallback) and parse the raw records into the in-memory shape via
     # the kind's spec.
     .loadSection = function(kind, jsonData) {
-      spec <- .entityTreeSpec(kind)
-      records <- .loadEntityTree(
+      spec <- .definitionTreeSpec(kind)
+      records <- .loadDefinitionTree(
         private$.projectDirPath,
         kind,
         spec$inline(jsonData),

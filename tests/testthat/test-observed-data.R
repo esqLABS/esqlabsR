@@ -399,7 +399,7 @@ test_that("addObservedData leaves the runtime store untouched when the write-thr
 
 # removeObservedData write-through ----
 
-test_that("removeObservedData deletes the entity file and persists to disk", {
+test_that("removeObservedData deletes the definition file and persists to disk", {
   project <- testProject()
   dir <- file.path(project$projectDirPath, "definitions", "observed-data")
   # The fixture declares one Excel source, filed under its basename.
@@ -408,7 +408,7 @@ test_that("removeObservedData deletes the entity file and persists to disk", {
 
   suppressWarnings(removeObservedData(project, id))
 
-  # In memory the declaration is gone, the entity file is deleted, and a fresh
+  # In memory the declaration is gone, the definition file is deleted, and a fresh
   # load no longer sees it.
   expect_false(any(vapply(
     project$observedData,

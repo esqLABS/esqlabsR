@@ -31,21 +31,21 @@ test_that(".recycleField aborts on a length that is neither 1 nor N", {
   expect_snapshot(error = TRUE, .recycleField(c("a", "b"), 3L, "weight"))
 })
 
-test_that(".wholeField applies a vector whole to every entity", {
+test_that(".wholeField applies a vector whole to every definition", {
   expect_identical(
     .wholeField(c("global", "def"), 2L),
     list(c("global", "def"), c("global", "def"))
   )
 })
 
-test_that(".wholeField aligns a length-N list of vectors per entity", {
+test_that(".wholeField aligns a length-N list of vectors per definition", {
   expect_identical(
     .wholeField(list(c("a", "b"), "c"), 2L),
     list(c("a", "b"), "c")
   )
 })
 
-test_that(".alignAuthoringArgs builds N per-entity field sets", {
+test_that(".alignAuthoringArgs builds N per-definition field sets", {
   out <- .alignAuthoringArgs(
     id = c("a", "b"),
     scalarFields = list(species = "Human", gender = c("FEMALE", "MALE")),
