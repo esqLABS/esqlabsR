@@ -26,24 +26,23 @@ getTestDataFilePath <- function(fileName = "") {
 
 #' Load the canonical test `Project` from a throwaway copy.
 #'
-#' The scenarios section is a write-through entity tree, so mutating a
-#' loaded project (`addScenario()`, `removeScenario()`, scenario write-back)
-#' writes to its `definitions/scenarios/` directory. To keep the
-#' version-controlled fixture pristine and tests isolated from one another,
-#' the fixture is copied to a temporary directory and the project is loaded
-#' from the copy. The copy is removed when the calling test finishes.
+#' Saving a loaded project (`saveProject()`) writes to its
+#' `definitions/<kind>/` tree. To keep the version-controlled fixture pristine
+#' and tests isolated from one another, the fixture is copied to a temporary
+#' directory and the project is loaded from the copy. The copy is removed when
+#' the calling test finishes.
 testProject <- function(envir = parent.frame()) {
   loadProject(file.path(.copyTestProjectDir(envir), "Project.json"))
 }
 
 #' A `Project.json` path inside a fresh throwaway directory.
 #'
-#' Use this as a `saveSnapshot()` target instead of a bare
-#' `withr::local_tempfile()`: a project is a directory (the `Project.json`
-#' container plus a `definitions/` entity tree alongside it), so writing into
-#' the shared session tempdir would scatter a `definitions/` directory there
-#' and leak entities into unrelated `loadProject()` calls.
-#' The directory is removed when the calling test finishes.
+#' Use this when a test needs a throwaway project location: a project is a
+#' directory (the `Project.json` container plus a `definitions/` entity tree
+#' alongside it), so writing into the shared session tempdir would scatter a
+#' `definitions/` directory there and leak entities into unrelated
+#' `loadProject()` calls. The directory is removed when the calling test
+#' finishes.
 local_projectPath <- function(envir = parent.frame()) {
   file.path(
     withr::local_tempdir("project_", .local_envir = envir),
@@ -67,8 +66,8 @@ local_projectPath <- function(envir = parent.frame()) {
 #' Load the bundled example `Project` from a throwaway copy.
 #'
 #' Like [testProject()], the bundled example is copied to a temporary
-#' directory before loading so that write-through scenario mutations never
-#' touch the version-controlled fixture under `inst/extdata`. The copy is
+#' directory before loading so that saving edits (`saveProject()`) never
+#' touches the version-controlled fixture under `inst/extdata`. The copy is
 #' removed when the calling test finishes.
 exampleProject <- function(envir = parent.frame()) {
   src <- dirname(exampleProjectPath())
@@ -115,6 +114,21 @@ executeWithTestFile <- function(actionWithFile) {
 #' temp directory.
 .redactTmpPath <- function(lines) {
   gsub("'[^']*/(definitions(/[^']*)?)'", "'<project>/\\1'", lines)
+}
+
+#' Redact a whole quoted absolute path that lives under the session temp
+#' directory, so an `expect_snapshot()` of a message naming a per-run temp path
+#' (a snapshot file, a target directory) is stable across runs. Both the temp
+#' root and the random per-run basename vary run to run, so the whole quoted
+#' path is collapsed to `'<tmp-path>'`, keeping a fixed `.esqlabsR` suffix when
+#' present so a snapshot-file message still reads as one. Used as the
+#' `transform` of snapshots whose message names such a path with no meaningful
+#' project-relative tail.
+.redactTmpDir <- function(lines) {
+  # A quoted path ending in the snapshot extension keeps that suffix; any other
+  # quoted absolute path collapses to a bare placeholder.
+  lines <- gsub("'/[^']*\\.esqlabsR'", "'<tmp-path>.esqlabsR'", lines)
+  gsub("'/[^']*'", "'<tmp-path>'", lines)
 }
 
 #' Extract axis ranges from plots

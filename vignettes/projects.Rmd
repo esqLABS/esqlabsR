@@ -73,7 +73,7 @@ The distinction between these two regions matters:
 
 The `Project.json` file records the project metadata and the working-folder layout. Its main fields are:
 
-- `name` and optional `description`: a human label and free text, surfaced when you print the project. Both are write-through, so `project$name <- "..."` persists immediately.
+- `name` and optional `description`: a human label and free text, surfaced when you print the project. Editing one (`project$name <- "..."`) changes the project in memory; it reaches disk on the next `saveProject()`.
 - the schema and esqlabsR versions that wrote the file.
 - `definitionsFolder`: where the `definitions/` tree lives (`definitions` by default).
 - `filePaths`: the four working folders (model, data, populations, output).
@@ -134,28 +134,36 @@ initProject(destination = example_dir, type = "example", createExcel = FALSE)
 
 Choosing `type = "example"` instead fills the `definitions/` tree shown above, one file per definition. (We pass `createExcel = FALSE` to keep the example focused on the JSON form; `initProject()` can also write an Excel project, covered in `vignette("migrate-from-excel")`.)
 
-### Saving and sharing
+### Editing, saving, and sharing
 
-There is no separate save step. Every authoring function is **write-through**: when you `addScenario()`, `addIndividual()`, or edit a field with `setScenario()`, the change is validated and written straight to that definition's file under `definitions/`. By the time a call returns, the project on disk already matches the project in memory. The section accessors (`project$scenarios` and the rest) are read-only, so a definition only ever changes through one of these functions (or by editing its file directly); to revise an existing record, read it, edit the copy, and pass it back through the matching authoring function.
+Editing follows an **explicit-save** model: for a loaded project, memory is the source of truth. When you `addScenario()`, `addIndividual()`, or edit a field with `setScenario()`, the change is made in memory and the project is marked as having unsaved changes; nothing touches the `definitions/` tree yet. The section accessors (`project$scenarios` and the rest) are read-only, so a definition only ever changes through one of these functions (or by editing its file directly); to revise an existing record, read it, edit the copy, and pass it back through the matching authoring function.
 
-Use `saveSnapshot()` to write a single self-contained `.esqlabsR` file with every section inlined, so the whole project travels as one file rather than a `definitions/` tree. It adds the extension for you and returns the path it wrote. Because a snapshot inlines what the `definitions/` tree owns, you cannot write one on top of a project's own files; pass it a distinct location.
+`saveProject()` commits the edits: it reconciles the on-disk tree to memory, writing only the entities that changed and deleting the files of entities you removed, so `git diff` shows exactly what you touched. A clean save (nothing to write) is a harmless no-op that says so. Here we work against the writable copy scaffolded above (`example_dir`) rather than the read-only installed example:
+
+```{r}
+editable <- loadProject(file.path(example_dir, "Project.json"))
+addOutputPath(editable, "pvb", "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)")
+saveProject(editable)
+```
+
+`reloadProject()` is the undo: it discards every unsaved edit and re-reads the project from disk, in place. `print(editable)` marks a project with unsaved changes as `<Project 'name'> [unsaved changes]`, and `syncStatus(editable)` reports, on two axes, whether there are unsaved edits and whether a sibling Excel project is a stale export.
+
+Use `snapshotProject()` to freeze the current in-memory state (unsaved edits included) to a single self-contained `.esqlabsR` file with every section inlined, so the whole project travels as one file rather than a `definitions/` tree. You give it a target `dir` and an optional `name` (the `.esqlabsR` extension is added for you; the default name is timestamped), and it returns the path it wrote.
 
 ```{r}
 snapshot_dir <- withr::local_tempdir()
-snapshot_path <- saveSnapshot(project, file.path(snapshot_dir, "study"))
+snapshot_path <- snapshotProject(editable, dir = snapshot_dir, name = "study")
 ```
 
-`loadSnapshot()` reads such a file back into a working project. You give it a target directory, and it materializes the full `definitions/` tree and `Project.json` file there, then returns the `Project` bound to that directory, so further edits are write-through to the new tree:
+`restoreProject()` reads such a file back into a working project. You give it a target directory, and it materializes the full `definitions/` tree and `Project.json` file there, then returns a freshly-loaded `Project` bound to that directory:
 
 ```{r}
 restored_dir <- withr::local_tempdir()
-shared <- loadSnapshot(snapshot_path, restored_dir)
+shared <- restoreProject(snapshot_path, restored_dir)
 shared
 ```
 
-The target directory must be empty (or not yet exist); `loadSnapshot()` will not overwrite an existing project. A snapshot reloads into a structurally identical project.
-
-The `Project.json` metadata (the file paths and folders) is write-through too, so editing `project$modelFolder` and the like persists immediately. The one thing that can drift is a sibling Excel project (`Project.xlsx`); `project$syncStatus()` reports whether it is in sync with the definition files, and returns `NA` when there is no Excel project to compare against.
+By default `restoreProject()` unpacks into a fresh directory and refuses one that already holds a project; pass `overwrite = TRUE` to roll a working directory back to the snapshot in place. A snapshot reloads into a structurally identical project.
 
 ## Validating a project
 

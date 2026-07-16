@@ -25,7 +25,7 @@ test_that("removeApplication warns when still referenced by a scenario, removes 
 
 # setApplicationParameterSets ----
 
-test_that("setApplicationParameterSets replaces the refs and persists to file", {
+test_that("setApplicationParameterSets replaces the refs and persists on save", {
   project <- testProject()
   # The fixture application references one set; point it at a different
   # existing set instead.
@@ -35,7 +35,8 @@ test_that("setApplicationParameterSets replaces the refs and persists to file", 
     "global"
   )
 
-  # The write-through must reach disk.
+  # The edit reaches disk on save.
+  saveProject(project)
   reloaded <- loadProject(project$jsonPath)
   expect_identical(
     reloaded$applications[["aciclovir_iv_250mg"]]$parameterSets,

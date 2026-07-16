@@ -104,7 +104,7 @@ Read this name from `getObservedDataNames()` rather than typing the long, fully 
 
 ## Author your own figures
 
-Beyond a project's predefined figures, you can describe new ones in R with `addDataCombined()`, `addPlot()`, and `addPlotGrid()`. Like every authoring function, these are write-through: each writes its definition straight to the project's `definitions/data-combined/`, `definitions/plots/`, or `definitions/plot-grids/` folder. Because you scaffolded a writable copy above, these edits land in the temporary project, not the installed package.
+Beyond a project's predefined figures, you can describe new ones in R with `addDataCombined()`, `addPlot()`, and `addPlotGrid()`. Like every authoring function, these edit the project in memory; `saveProject()` then writes each definition to the project's `definitions/data-combined/`, `definitions/plots/`, or `definitions/plot-grids/` folder. Because you scaffolded a writable copy above, a save lands in the temporary project, not the installed package.
 
 First, define a **DataCombined** that pairs the simulated peripheral-venous-blood curve with the observed data. Curves that share a `group` are plotted together.
 

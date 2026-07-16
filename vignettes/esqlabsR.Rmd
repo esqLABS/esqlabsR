@@ -33,7 +33,7 @@ library(esqlabsR)
 
 ## Load a project
 
-The package bundles a complete example Project. Because authoring is **write-through**, you work against a writable copy rather than the read-only example inside the installed package: `initProject()` scaffolds a copy into a temporary directory, and `loadProject()` reads it into an in-memory `Project` object. (`initProject()` returns the directory it scaffolds; `loadProject()` wants the `Project.json` path inside it.)
+The package bundles a complete example Project. So that `saveProject()` never touches the read-only example inside the installed package, you work against a writable copy: `initProject()` scaffolds a copy into a temporary directory, and `loadProject()` reads it into an in-memory `Project` object. (`initProject()` returns the directory it scaffolds; `loadProject()` wants the `Project.json` path inside it.)
 
 ```{r}
 project_dir <- withr::local_tempdir()
@@ -68,7 +68,7 @@ A single definition prints its configured fields, so you can inspect one without
 project$individuals$adult_male
 ```
 
-Authoring is **write-through**: when you add or edit a definition with one of the `add*` / `set*` / `remove*` functions, the change is validated and written straight to that definition's file under `definitions/`. There is no separate save step, which is why you work against a writable copy rather than the installed example.
+Editing follows an **explicit-save** model: when you add or edit a definition with one of the `add*` / `set*` / `remove*` functions, the change is made in memory, and `saveProject(project)` reconciles it to the `definitions/` tree on disk. That save is why you work against a writable copy rather than the installed example.
 
 ## Define: author a scenario and a figure
 

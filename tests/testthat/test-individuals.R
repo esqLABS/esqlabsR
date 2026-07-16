@@ -104,12 +104,13 @@ test_that("removeIndividual warns when referenced by a scenario", {
 
 # setIndividual ----
 
-test_that("setIndividual changes a field and persists to file and memory", {
+test_that("setIndividual changes a field in memory and persists on save", {
   project <- testProject()
   setIndividual(project, "indiv1", weight = 80)
   expect_equal(project$individuals[["indiv1"]]$weight, 80)
 
-  # The write-through must reach disk: a throwaway reload sees the new value.
+  # The edit reaches disk on save: a throwaway reload sees the new value.
+  saveProject(project)
   reloaded <- loadProject(project$jsonPath)
   expect_equal(reloaded$individuals[["indiv1"]]$weight, 80)
 })
@@ -220,23 +221,21 @@ test_that("setIndividual rejects parameterSets that do not resolve", {
   )
 })
 
-test_that("setIndividual on a clone does not affect the source on disk", {
+test_that("setIndividual stays in memory until saveProject()", {
   source <- testProject()
   before <- source$individuals[["indiv1"]]
-  clone <- source$clone()
-  setIndividual(clone, "indiv1", weight = 99)
+  setIndividual(source, "indiv1", weight = 99)
 
-  expect_equal(clone$individuals[["indiv1"]]$weight, 99)
-  expect_equal(source$individuals[["indiv1"]], before)
-  # The clone's edit must not reach the source's on-disk tree: a fresh load
-  # of the source still sees the original value.
+  expect_equal(source$individuals[["indiv1"]]$weight, 99)
+  # The edit must not reach the on-disk tree before a save: a fresh load still
+  # sees the original value.
   reloaded <- loadProject(source$jsonPath)
   expect_equal(reloaded$individuals[["indiv1"]], before)
 })
 
 # setIndividual parameterSets replacement ----
 
-test_that("setIndividual replaces the parameter-set refs and persists to file", {
+test_that("setIndividual replaces the parameter-set refs and persists on save", {
   project <- testProject()
   # The fixture individual references "indiv1_default"; point it at another
   # existing set instead.
@@ -246,7 +245,8 @@ test_that("setIndividual replaces the parameter-set refs and persists to file", 
     "global"
   )
 
-  # The write-through must reach disk.
+  # The edit reaches disk on save.
+  saveProject(project)
   reloaded <- loadProject(project$jsonPath)
   expect_identical(
     reloaded$individuals[["indiv1"]]$parameterSets,
@@ -334,7 +334,7 @@ test_that("addIndividual recycles scalar fields and applies parameterSets whole"
   )
 })
 
-test_that("addIndividual persists all N to disk in one write-through", {
+test_that("addIndividual persists all N to disk in one saveProject()", {
   project <- testProject()
   addIndividual(
     project,
@@ -342,6 +342,7 @@ test_that("addIndividual persists all N to disk in one write-through", {
     species = "Human",
     gender = "MALE"
   )
+  saveProject(project)
   reloaded <- loadProject(project$jsonPath)
   expect_true(all(c("a", "b") %in% names(reloaded$individuals)))
 })

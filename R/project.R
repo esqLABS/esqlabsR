@@ -20,29 +20,31 @@
 
 #' @title Project
 #' @docType class
-#' @description An R6 class representing an esqlabsR project
+#' @description An R6 class representing an esqlabsR project.
 #'
-#'   `Project` is cloneable. All section data (`scenarios`, `individuals`,
-#'   `populations`, `outputPaths`, the parameter sets, `plots`,
-#'   `parameterIdentification`, ...) consists of plain-data records with
-#'   copy semantics, so a clone's section data is fully independent of the
-#'   source: mutating one does not affect the other. The one exception is
-#'   programmatic observed data added via [addObservedData()] with a
-#'   `DataSet` object; those `ospsuite::DataSet` objects wrap external
-#'   handles and are shared by reference between a project and its clone.
+#'   Under the explicit-save model, memory is the source of truth for a loaded
+#'   project: every `add*` / `set*` / `remove*` authoring edit mutates memory
+#'   in place and sets an internal dirty bit, but nothing touches the on-disk
+#'   `definitions/` tree until [saveProject()] reconciles it. A loaded project
+#'   is therefore a disk-free scratch space you commit deliberately; use
+#'   [reloadProject()] to discard unsaved edits, and
+#'   [snapshotProject()] / [restoreProject()] to checkpoint and roll back.
 #'
-#'   A clone is also detached from the source on disk: it does not own the
-#'   source's definitions tree, so its write-through mutations (`addScenario()`,
-#'   `removeScenario()`, and the other `add*` / `remove*` / `set*` helpers)
-#'   stay in memory only and never touch the source's `definitions/`
-#'   directory. Use [saveSnapshot()] to write the clone to a single-file
-#'   snapshot you can reload with [loadSnapshot()].
+#'   `Project` is not cloneable (`cloneable = FALSE`): explicit-save already
+#'   makes every loaded project a disk-free scratch space, so the clone-for-
+#'   scratch-work idiom the auto-save model needed is obsolete. All section
+#'   data (`scenarios`, `individuals`, `populations`, `outputPaths`, the
+#'   parameter sets, `plots`, `parameterIdentification`, ...) consists of
+#'   plain-data records with copy semantics, so reading a record hands back an
+#'   independent copy; the exception is programmatic observed data added via
+#'   [addObservedData()] with a `DataSet` object, whose `ospsuite::DataSet`
+#'   wraps an external handle shared by reference.
 #' @format NULL
 #' @import fs
 #' @export
 Project <- R6::R6Class(
   "Project",
-  cloneable = TRUE,
+  cloneable = FALSE,
   active = list(
     #' @field projectFilePath Read-only. Absolute path to the JSON
     #'   configuration file the project was loaded from. All other relative
@@ -80,8 +82,8 @@ Project <- R6::R6Class(
     },
 
     #' @field name Human-readable project name (the `name` JSON field). May be
-    #'   `NULL` when the project declares no name. Writing persists the
-    #'   container for a bound project.
+    #'   `NULL` when the project declares no name. Writing updates memory and
+    #'   sets the dirty bit; it persists on the next [saveProject()].
     name = function(value) {
       if (!missing(value)) {
         private$.name <- value
@@ -92,8 +94,8 @@ Project <- R6::R6Class(
     },
 
     #' @field description Optional free-text project description (the
-    #'   `description` JSON field). May be `NULL`. Writing persists the
-    #'   container for a bound project.
+    #'   `description` JSON field). May be `NULL`. Writing updates memory and
+    #'   sets the dirty bit; it persists on the next [saveProject()].
     description = function(value) {
       if (!missing(value)) {
         private$.description <- value
@@ -105,29 +107,12 @@ Project <- R6::R6Class(
 
     #' @field definitionsFolder Name of the folder (relative to
     #'   `projectDirPath`) that holds the project's authored entity-definition
-    #'   tree. Defaults to `"definitions"`. Writing persists the container for
-    #'   a bound project; changing it moves where future write-through edits
-    #'   are read from and written to.
-    #'
-    #'   A change is refused once the project owns a materialized tree on disk:
-    #'   silently re-pointing such a project at a new folder would
-    #'   re-materialize its sections into that folder and orphan the old tree
-    #'   (the old folder survives, unreferenced). Load and construction assign
-    #'   the private backing field directly and so are never blocked by this
-    #'   guard; a clone does not own the source's tree (its write-through is an
-    #'   in-memory no-op), so it may re-point freely; only a deliberate write on
-    #'   an already-materialized owning project is refused. To relocate the tree
-    #'   on purpose, snapshot the project and reload it into a fresh directory
-    #'   under the new folder name (see [saveSnapshot()] / [loadSnapshot()]).
+    #'   tree. Defaults to `"definitions"`. Writing updates memory and sets the
+    #'   dirty bit; it changes where the next [saveProject()] writes the tree
+    #'   and where the tree is read from, but nothing moves on disk until the
+    #'   next save.
     definitionsFolder = function(value) {
       if (!missing(value)) {
-        current <- private$.definitionsFolder %||% "definitions"
-        if (!identical(value, current) && private$.ownsMaterializedTree()) {
-          cli::cli_abort(messages$definitionsFolderChangeOnMaterialized(
-            current,
-            value
-          ))
-        }
         private$.definitionsFolder <- value
         private$.invalidateContainer()
         return(invisible(value))
@@ -140,7 +125,8 @@ Project <- R6::R6Class(
     #'   field), or `NULL` when none are declared. Used by [runScenarios()] as
     #'   the default `simulationRunOptions` when the caller does not pass one.
     #'   Recognized fields: `numberOfCores`, `checkForNegativeValues`,
-    #'   `showProgress`. Writing persists the container for a bound project.
+    #'   `showProgress`. Writing updates memory and sets the dirty bit; it
+    #'   persists on the next [saveProject()].
     defaultSimulationRunOptions = function(value) {
       if (!missing(value)) {
         private$.defaultSimulationRunOptions <- value
@@ -169,8 +155,8 @@ Project <- R6::R6Class(
     },
 
     #' @field schemaVersion Schema version declared in the JSON. Always "2.0"
-    #'   for projects loaded by this parser. Writing persists the container
-    #'   for a bound project.
+    #'   for projects loaded by this parser. Writing updates memory and sets
+    #'   the dirty bit; it persists on the next [saveProject()].
     schemaVersion = function(value) {
       if (!missing(value)) {
         private$.schemaVersion <- value
@@ -181,7 +167,8 @@ Project <- R6::R6Class(
     },
 
     #' @field esqlabsRVersion Informational version string from the JSON.
-    #'   Writing persists the container for a bound project.
+    #'   Writing updates memory and sets the dirty bit; it persists on the next
+    #'   [saveProject()].
     esqlabsRVersion = function(value) {
       if (!missing(value)) {
         private$.esqlabsRVersion <- value
@@ -396,18 +383,19 @@ Project <- R6::R6Class(
     # the nested `project$x[["id"]]$f <- v`, `project$x[-i] <- v`) aborts. The
     # only sanctioned way to change a section is an authoring function
     # (`addScenario()` / `setScenario()` / `removeScenario()` and their
-    # per-section siblings) or editing the definition's JSON file; those write
-    # through the internal `.setSection()` entry point, which structurally
-    # validates each changed entity, persists it to (or deletes it from) its
-    # `definitions/<kind>/` tree, and clears `validatedSinceMutation` so the
-    # next run/plot re-validates.
+    # per-section siblings) or editing the definition's JSON file; those route
+    # through the internal `.setSection()` entry point, which updates the
+    # in-memory backing field, sets the dirty bit, and clears
+    # `validatedSinceMutation` so the next run/plot re-validates. Nothing
+    # touches the `definitions/<kind>/` tree until `saveProject()` reconciles
+    # it to memory.
 
     #' @field outputPaths Read-only named list mapping output-path IDs to
     #'   OSPS-notation path strings (e.g. `list(PVB = "Organism|...")`). To
     #'   change it, use [addOutputPath()] / [setOutputPath()] /
     #'   [removeOutputPath()] or edit the definition files under
-    #'   `definitions/output-paths/`; an authoring write persists each changed
-    #'   output path to (or deletes it from) its file.
+    #'   `definitions/output-paths/`; an authoring edit updates memory and sets
+    #'   the dirty bit, persisting on the next [saveProject()].
     outputPaths = function(value) {
       if (!missing(value)) {
         .definitionListReadOnlyError("outputPaths")
@@ -422,10 +410,9 @@ Project <- R6::R6Class(
     #'   edit loop is read-modify-resubmit: read a record
     #'   (`sc <- project$scenarios[["id"]]`), change the detached copy
     #'   (`sc$modelFile <- ...`), then re-submit it
-    #'   (`setScenario(project, "id", ...)`). An authoring write structurally
-    #'   validates each changed scenario and persists it to (or deletes it from)
-    #'   its file; an in-memory project (no directory) holds scenarios in memory
-    #'   only.
+    #'   (`setScenario(project, "id", ...)`). An authoring edit updates memory
+    #'   and sets the dirty bit; it persists to the tree on the next
+    #'   [saveProject()].
     scenarios = function(value) {
       if (!missing(value)) {
         .definitionListReadOnlyError("scenarios")
@@ -579,6 +566,20 @@ Project <- R6::R6Class(
         cli::cli_abort("{.field asList} is readonly")
       }
       .projectToJson(self)
+    },
+
+    #' @field status Read-only, machine-oriented two-axis sync report as a
+    #'   structured list: `tree_in_sync` (`FALSE` when there are unsaved
+    #'   in-memory edits vs. the on-disk tree, `NA` for an unbound in-memory
+    #'   project), `excel_in_sync` (`TRUE`/`FALSE`, or `NA` when no Excel
+    #'   side-car is configured or it cannot be read), and `details` (per-axis
+    #'   differences, empty when both axes are in sync). The same information
+    #'   [syncStatus()] prints. Read-only; assignment aborts.
+    status = function(value) {
+      if (!missing(value)) {
+        cli::cli_abort("{.field status} is readonly")
+      }
+      .projectSyncStatus(self, silent = TRUE)
     }
   ),
   public = list(
@@ -605,24 +606,6 @@ Project <- R6::R6Class(
       invisible(self)
     },
 
-    #' @description Internal method to rebind the project to a new file
-    #'   location. Updates `projectFilePath` / `jsonPath` and `projectDirPath`
-    #'   (the base for relative-path resolution) so any relative-path access
-    #'   targets the new file, and re-claims the definitions tree so a clone bound to
-    #'   its own location becomes write-through there. Not a mutation, so it
-    #'   leaves the flags untouched. Not intended for end-user use.
-    #' @param path Absolute or relative path the project was bound to.
-    #' @keywords internal
-    .rebindPath = function(path) {
-      path <- fs::path_abs(path)
-      private$.projectFilePath <- path
-      private$.projectDirPath <- dirname(path)
-      # Re-binding makes this instance the owner of the (new) entity tree, so a
-      # clone bound to its own location becomes write-through there.
-      private$.claimEntityTree()
-      invisible(self)
-    },
-
     #' @description Internal method to record that a full project
     #'   validation has succeeded with no critical errors. Sets the
     #'   `validatedSinceMutation` flag. Not intended for end-user use.
@@ -633,12 +616,44 @@ Project <- R6::R6Class(
     },
 
     #' @description Internal method invoked by mutators after a successful
-    #'   programmatic change. Clears the `validatedSinceMutation` flag so the
-    #'   next `runScenarios()` / `createPlots()` re-validates the project. Not
+    #'   programmatic change. Sets the in-memory dirty bit and clears the
+    #'   `validatedSinceMutation` flag so the next `runScenarios()` /
+    #'   `createPlots()` re-validates the project. Does not touch disk. Not
     #'   intended for end-user use.
     #' @keywords internal
     .markModified = function() {
+      private$.modified <- TRUE
       private$.invalidate()
+      invisible(self)
+    },
+
+    #' @description Internal accessor for the in-memory dirty bit: `TRUE` when
+    #'   there are edits not yet reconciled to the on-disk tree. Read by
+    #'   [saveProject()] (clean-save short-circuit) and by [syncStatus()] (the
+    #'   memory-vs-tree axis). Not intended for end-user use.
+    #' @keywords internal
+    .isModified = function() {
+      private$.modified
+    },
+
+    #' @description Internal method to clear the in-memory dirty bit, marking
+    #'   memory as in sync with the on-disk tree. Called after a successful
+    #'   [saveProject()]. Not intended for end-user use.
+    #' @keywords internal
+    .clearModified = function() {
+      private$.modified <- FALSE
+      invisible(self)
+    },
+
+    #' @description Internal method to re-read the project from its bound file,
+    #'   discarding any in-memory edits (the undo). Re-runs the parser against
+    #'   `projectFilePath`, which overwrites every backing field and clears the
+    #'   dirty and validation flags. Object identity is preserved (R6
+    #'   reference), so existing handles stay valid. Not intended for end-user
+    #'   use; call [reloadProject()].
+    #' @keywords internal
+    .reload = function() {
+      private$.read_json(private$.projectFilePath)
       invisible(self)
     },
 
@@ -655,31 +670,27 @@ Project <- R6::R6Class(
     },
 
     #' @description Internal write entry point for one definition section. This
-    #'   is the only sanctioned way to change a section: it runs the same
-    #'   structural validation and write-through persistence the public
-    #'   active-binding setter used to, then stores the new list in the private
-    #'   backing field and invalidates the validation cache. The public
-    #'   `project$<section> <- ...` setter no longer writes (it aborts
-    #'   read-only); every `add*`/`set*`/`remove*` authoring function routes its
-    #'   write here. Accepts a plain list; a `DefinitionList` is unwrapped
-    #'   defensively. Not intended for end-user use.
+    #'   is the only sanctioned way to change a section: it stores the new list
+    #'   in the private backing field, sets the in-memory dirty bit, and
+    #'   invalidates the validation cache. It does not touch disk; nothing
+    #'   persists until [saveProject()] reconciles the tree to memory. The
+    #'   public `project$<section> <- ...` setter aborts read-only; every
+    #'   `add*`/`set*`/`remove*` authoring function routes its write here.
+    #'   Accepts a plain list; a `DefinitionList` is unwrapped defensively. Not
+    #'   intended for end-user use.
     #' @param kind Character scalar naming the section (e.g. `"scenarios"`).
     #' @param value The new section list.
     #' @keywords internal
     .setSection = function(kind, value) {
       field <- private$.sectionField(kind)
       value <- .unwrapDefinitionList(value)
-      old <- private[[field]]
-      # Persist before updating the backing store, so a structural failure
-      # during serialization aborts the write and leaves disk and memory
-      # unchanged (the same ordering the active-binding setter relied on).
-      private$.persistSectionChanges(kind, old, value)
       private[[field]] <- value
       # Writing observed data invalidates the cached observed-data names, as
       # the active-binding setter did.
       if (identical(kind, "observedData")) {
         private$.observedDataNamesCache <- NULL
       }
+      private$.modified <- TRUE
       private$.invalidate()
       invisible(value)
     },
@@ -703,30 +714,18 @@ Project <- R6::R6Class(
       private$.excelData
     },
 
-    #' @description Report whether the project's Excel side-car is in sync
-    #'   with its definition files. Every section is write-through to its
-    #'   `definitions/<kind>/` tree and the `Project.json` container is a
-    #'   derived snapshot, so the only drift that can still occur is between
-    #'   the project and a sibling `Project.xlsx` produced by
-    #'   [exportProjectToExcel()]. This method compares the two; it is
-    #'   read-only and never reconciles them (use [exportProjectToExcel()] or
-    #'   [importProjectFromExcel()] to do that).
-    #' @param silent Logical. If `TRUE`, suppresses informational messages.
-    #'   Defaults to `FALSE`.
-    #' @return Invisibly, a list with two components: `excel_in_sync` (a
-    #'   logical, or `NA` when there is no Excel side-car to compare against)
-    #'   and `details` (a list of the per-section differences, empty when in
-    #'   sync or when there is nothing to compare). This is the same shape the
-    #'   path-based [projectStatus()] returns; the two share one comparison
-    #'   builder.
-    syncStatus = function(silent = FALSE) {
-      .projectSyncStatus(self, silent = silent)
-    },
-
     #' @description Print a summary of the Project.
     #' @param ... Unused; present for S3 method consistency.
     print = function(...) {
       ospsuite.utils::ospPrintClass(self)
+
+      # Passive dirty-state cue: mark the class line when there are unsaved
+      # in-memory edits. `ospPrintClass()` prints the `<Project 'name'>` line
+      # itself and takes no suffix, so the marker is printed immediately after
+      # so the rendered first line reads `<Project 'name'> [unsaved changes]`.
+      if (isTRUE(private$.modified)) {
+        cli::cli_text("{.emph [unsaved changes]}")
+      }
 
       # Metadata bullets. `print_empty = FALSE` drops the NULL/empty entries
       # (e.g. `jsonPath` for an in-memory project), so no explicit filtering
@@ -813,15 +812,15 @@ Project <- R6::R6Class(
     .projectFilePath = NULL,
     .projectDirPath = NULL,
     .validatedSinceMutation = FALSE,
-    # Disk-ownership token for the project's entity tree. A bound project
-    # (one loaded with `loadProject()` or saved with `saveSnapshot()`/a re-bind)
-    # records itself as the token's owner. R6's `clone()` copies private fields
-    # by value but shares this token environment by reference, so a clone is not
-    # the recorded owner; `.ownsEntityTree()` returns `FALSE` for it and its
-    # write-through becomes an in-memory no-op until a re-bind to a new location.
-    # This keeps a clone's on-disk state independent of the source it was cloned
-    # from.
-    .entityTreeOwnerToken = NULL,
+    # In-memory dirty bit: TRUE when the in-memory project has edits that have
+    # not yet been reconciled to the on-disk `definitions/` tree. Set by
+    # `.setSection()`, the container-metadata setters, and `.markModified()`;
+    # cleared on load / reload / a successful `saveProject()`. It feeds the
+    # `print()` marker, the clean-save short-circuit, and the memory-vs-tree
+    # axis of `syncStatus()`. A private field with no active binding keeps it
+    # off the public surface. A freshly constructed in-memory project starts
+    # clean (FALSE).
+    .modified = FALSE,
     # Working-folder paths (the `filePaths` block): the four live folders the
     # runtime reads (`modelFolder`, `dataFolder`, `outputFolder`,
     # `populationsFolder`).
@@ -881,253 +880,14 @@ Project <- R6::R6Class(
       invisible(self)
     },
 
-    # Container-metadata edit: invalidate the validation cache, then write the
-    # container through to `Project.json` so the metadata (schema/version, file
-    # paths, folders) is persisted immediately, just as every section is.
+    # Container-metadata edit (name, description, definitionsFolder, folders,
+    # ...): invalidate the validation cache and set the in-memory dirty bit.
+    # It does not touch disk; the metadata is persisted only when
+    # `saveProject()` reconciles the container `Project.json` to memory.
     .invalidateContainer = function() {
       private$.invalidate()
-      private$.persistContainer()
+      private$.modified <- TRUE
       invisible(self)
-    },
-
-    # Write the `Project.json` container (every inline section emptied, the
-    # tree owns them) to the project's own location, when this instance owns
-    # its entity tree. A NULL directory (in-memory project) or a non-owning
-    # clone is a silent no-op (its container edits stay in memory until it is
-    # bound to its own location).
-    .persistContainer = function() {
-      if (is.null(private$.projectFilePath) || !private$.ownsEntityTree()) {
-        return(invisible(NULL))
-      }
-      # Before emptying the inline sections in `Project.json`, materialize any
-      # kind that has no `definitions/<kind>/` tree yet (an inline-only project
-      # loaded from a snapshot, whose sections live only inline). Without this a
-      # container edit would empty the sole on-disk copy and the next load's
-      # inline fallback would read them all empty. A kind whose tree already
-      # exists is left untouched (the tree owns it), so a fully-materialized
-      # project stays a pure container-only write. Mirrors the not-yet-
-      # materialized-tree guard in `.persistKindChanges()`, applied per kind.
-      for (kind in .entityKindNames()) {
-        spec <- .entityTreeSpec(kind)
-        dir <- .entityKindDir(
-          private$.projectDirPath,
-          spec$kind,
-          self$definitionsFolder
-        )
-        if (!is.null(dir) && !dir.exists(dir)) {
-          .writeEntityTree(
-            .sectionForKind(self, kind),
-            kind,
-            self,
-            private$.projectDirPath
-          )
-        }
-      }
-      .saveProjectJson(
-        self,
-        private$.projectFilePath,
-        containerOnly = TRUE
-      )
-      invisible(NULL)
-    },
-
-    # Record this instance as the owner of its entity tree. Called whenever
-    # the project binds to a directory (`.read_json`, `.rebindPath`).
-    .claimEntityTree = function() {
-      private$.entityTreeOwnerToken <- new.env(parent = emptyenv())
-      private$.entityTreeOwnerToken$owner <- self
-      invisible(self)
-    },
-
-    # TRUE only when this instance recorded itself as the entity-tree owner.
-    # A clone shares the token by reference (its `owner` is the source), so it
-    # is not the owner until a re-bind to its own location.
-    .ownsEntityTree = function() {
-      token <- private$.entityTreeOwnerToken
-      !is.null(token) && identical(token$owner, self)
-    },
-
-    # TRUE when this instance OWNS an on-disk entity tree for the CURRENT
-    # `definitionsFolder` (the `<projectDir>/<definitionsFolder>/` directory is
-    # present and this instance is the recorded tree owner). Used by the
-    # `definitionsFolder` setter to refuse a folder change that would orphan a
-    # materialized tree it owns. An in-memory project (no directory) has no
-    # tree; a clone is not the owner (its write-through is an in-memory no-op),
-    # so it can re-point freely without orphaning anything.
-    .ownsMaterializedTree = function() {
-      if (!private$.ownsEntityTree()) {
-        return(FALSE)
-      }
-      dir <- .definitionsDir(private$.projectDirPath, self$definitionsFolder)
-      !is.null(dir) && dir.exists(dir)
-    },
-
-    # Write-through for one project section: persist only what changed to its
-    # `definitions/<kind>/` tree. Every section now maps one-to-one onto a kind
-    # (the plots trio was split into three top-level sections
-    # `dataCombined` / `plots` / `plotGrids`, each its own keyed kind).
-    .persistSectionChanges = function(kind, old, new) {
-      private$.persistKindChanges(kind, old, new)
-    },
-
-    # Persist one kind's changes (the unit a single `definitions/<kind>/` tree
-    # owns). Persist only what changed between the old and new section value.
-    #
-    # Stale-file policy (incremental write): this writer PRESERVES orphans. It
-    # is the deliberate opposite of the full-tree writer `.writeEntityTree()`,
-    # which owns the directory and deletes any file not in its keep-set. An
-    # incremental write knows only the one entity it changed (it diffs `old`
-    # against `new`, both in-memory sections), so it deletes only the files it
-    # can prove were removed from the section; a file on disk with no in-memory
-    # entity (an orphan a hand-edit or a concurrent process dropped in) is left
-    # alone, because this write cannot tell an orphan from a sibling it simply
-    # never loaded. Reconciling the whole directory against the section belongs
-    # to a full-tree write (materialize / snapshot-load / whole-section
-    # rewrite), which does know the entire section; see `.writeEntityTree()`.
-    # No entity is lost either way: the orphan is picked up (or re-ignored) on
-    # the next `loadProject()`, which re-reads the whole tree. The detailed
-    # rationale is at the stale-removal loop below.
-    #
-    # An in-memory project (no directory) is a silent no-op, and so is a clone
-    # that does not own the tree (its mutations stay in memory until a re-bind
-    # to its own location). The caller invokes this before it updates the
-    # in-memory backing store, so a structural failure during serialization
-    # aborts the write and leaves both disk and memory unchanged.
-    #
-    # First write into a project whose `definitions/<kind>/` directory does not
-    # yet exist (a snapshot-loaded project, whose sections were inlined in
-    # `Project.json` with no tree on disk) takes a full-materialize path: the
-    # diff-only path would write just the changed entity and assume the
-    # untouched siblings already exist as files, but they do not, so on the
-    # next load the now-present tree would win and the inline siblings would be
-    # lost. `new` is the authoritative full set to write; the dir was absent,
-    # so there is nothing stale to remove.
-    .persistKindChanges = function(kind, old, new) {
-      spec <- .entityTreeSpec(kind)
-      dir <- .entityKindDir(
-        private$.projectDirPath,
-        spec$kind,
-        self$definitionsFolder
-      )
-      if (is.null(dir)) {
-        return(invisible(NULL))
-      }
-      if (!private$.ownsEntityTree()) {
-        return(invisible(NULL))
-      }
-
-      # First write into a not-yet-materialized tree writes the full set.
-      if (!dir.exists(dir)) {
-        .writeEntityTree(new, kind, self, private$.projectDirPath)
-        return(invisible(NULL))
-      }
-
-      old <- old %||% list()
-      new <- new %||% list()
-
-      # A keyed kind is a named map whose names are the entity ids (which equal
-      # the on-disk filenames). For such a kind the diff is computed directly on
-      # the in-memory maps (by key presence and per-entity value identity) and
-      # only the entities that actually changed are serialized and written, so a
-      # single mutation costs O(changed entities), not O(section size). The
-      # plots kinds `dataCombined` / `plots` / `plotGrids` are keyed lists, so
-      # they take this fast path too. An `observedData` section is an unnamed list
-      # keyed by a derived id (its `names()` are not the on-disk ids), so it
-      # cannot be diffed by name and falls back to the whole-section serialize
-      # diff below (it is small and never a buildup hot path).
-      # A keyed section is a named map; only observedData is an unnamed list and
-      # takes the slow path. No section is ever a data frame.
-      keyed <- length(new) == 0L || !is.null(names(new))
-      if (keyed && (length(old) == 0L || !is.null(names(old)))) {
-        newNames <- names(new)
-        oldNames <- names(old)
-        # Added ids are new keys absent from old; removed ids are old keys
-        # absent from new (both via cheap name set ops, no value comparison).
-        # An id present in both whose value object is not the very same record
-        # (an in-place edit) is changed. `match()` aligns the common keys so
-        # only those need the per-entity `identical()` check, keeping the diff
-        # proportional to the number of common keys without re-checking added
-        # ones.
-        inOld <- newNames %in% oldNames
-        addedIds <- newNames[!inOld]
-        commonIds <- newNames[inOld]
-        # Extract the common-key sublists once (C-level subset) and compare them
-        # as whole objects first: an unchanged element shares its record object
-        # with the old list (an `[[<-` mutation does not copy untouched
-        # siblings), so when nothing in the common set changed this single
-        # `identical()` short-circuits on reference equality with no R-level
-        # per-element loop. Only when some common entity did change (an in-place
-        # edit) do we fall back to a per-element scan to find which one(s).
-        nc <- new[commonIds]
-        oc <- old[commonIds]
-        changedCommon <- character()
-        if (length(commonIds) > 0L && !identical(nc, oc)) {
-          changedCommon <- commonIds[
-            !vapply(
-              seq_along(commonIds),
-              function(i) identical(nc[[i]], oc[[i]]),
-              logical(1),
-              USE.NAMES = FALSE
-            )
-          ]
-        }
-        changedIds <- c(addedIds, changedCommon)
-        # Serialize only the changed entities (validating each), in memory and
-        # before writing any file, so a serializer-hostile record aborts the
-        # whole write and leaves the tree (and the not-yet-updated in-memory
-        # store) unchanged. The serializer also enforces that each key is a
-        # canonical (lowercase, safe) id, so two keys can never collide on a
-        # case-insensitive filesystem.
-        if (length(changedIds) > 0L) {
-          serializedChanged <- spec$serialize(new[changedIds], self)
-          for (id in names(serializedChanged)) {
-            .writeEntityJson(serializedChanged[[id]], .entityFilePath(dir, id))
-          }
-        }
-        # A genuinely-removed entity's on-disk id is its serialized key; for a
-        # keyed kind that equals the map key, so the removed files can be deleted
-        # without serializing.
-        #
-        # Stale removal is reconciled against the previous in-memory section
-        # (`old`), not against the directory listing. So a file created
-        # out-of-band on disk (an orphan with no in-memory entity, e.g. one a
-        # concurrent process or a hand-edit dropped in) is not deleted by an
-        # unrelated mutation here; it survives until the next `loadProject()`,
-        # which re-reads the whole tree and re-derives the section from what is
-        # actually on disk. This is deliberate: the in-memory diff cannot tell an
-        # orphan from a sibling it simply did not load, and reconciling against
-        # the directory on every write would couple each mutation to a directory
-        # scan for no data-safety gain (no entity is lost; the orphan is just
-        # picked up, or ignored, on the next load).
-        for (id in oldNames[!(oldNames %in% newNames)]) {
-          f <- .entityFilePath(dir, id)
-          if (file.exists(f)) {
-            file.remove(f)
-          }
-        }
-        return(invisible(NULL))
-      }
-
-      # Fallback for a kind whose on-disk id is derived rather than the map key
-      # (the unnamed `observedData` list): serialize the full old and new
-      # sections to their `id -> record` maps in memory before writing any file
-      # (same atomicity guarantee), then diff on the derived ids.
-      serializedNew <- spec$serialize(new, self)
-      serializedOld <- spec$serialize(old, self)
-      changed <- Filter(
-        function(id) !identical(serializedNew[[id]], serializedOld[[id]]),
-        names(serializedNew)
-      )
-      for (id in changed) {
-        .writeEntityJson(serializedNew[[id]], .entityFilePath(dir, id))
-      }
-      for (id in setdiff(names(serializedOld), names(serializedNew))) {
-        f <- .entityFilePath(dir, id)
-        if (file.exists(f)) {
-          file.remove(f)
-        }
-      }
-      invisible(NULL)
     },
 
     .replace_env_var = function(path) {
@@ -1206,7 +966,6 @@ Project <- R6::R6Class(
       private$.defaultSimulationRunOptions <- jsonData$defaultSimulationRunOptions
       private$.projectFilePath <- jsonPath
       private$.projectDirPath <- dirname(jsonPath)
-      private$.claimEntityTree()
 
       # The container separates two concerns: the live working folders
       # (the `filePaths` block) the runtime reads, and the Excel-bridge
@@ -1264,6 +1023,8 @@ Project <- R6::R6Class(
       )
 
       private$.validatedSinceMutation <- FALSE
+      # A freshly loaded project has no unsaved changes: memory equals the tree.
+      private$.modified <- FALSE
     },
 
     # Load one section: read its `definitions/<kind>/` tree (or the inline

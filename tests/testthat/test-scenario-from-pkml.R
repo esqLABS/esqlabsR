@@ -554,7 +554,7 @@ test_that("end-to-end: seed from PKML, snapshot, loadProject round-trips", {
     scenarios = "seeded"
   ))
 
-  path <- saveSnapshot(project, local_projectPath())
+  path <- snapshotProject(project, dir = withr::local_tempdir())
   reloaded <- loadProject(path)
 
   expect_equal(
@@ -575,7 +575,7 @@ test_that("end-to-end: steadyState = TRUE round-trips through snapshot and load"
     steadyStateTimeUnit = "h"
   ))
 
-  path <- saveSnapshot(project, local_projectPath())
+  path <- snapshotProject(project, dir = withr::local_tempdir())
   reloaded <- loadProject(path)
 
   expect_equal(reloaded$scenarios[["ss"]], project$scenarios[["ss"]])

@@ -296,10 +296,10 @@ importProjectFromExcel <- function(
   jsonData <- .canonicalizeProjectJsonIds(jsonData)
 
   # Write the single inlined `Project.json`. The inlined form is kept (rather
-  # than only the tree) because `projectStatus()` / `Project$syncStatus()`
-  # re-import the Excel into a fresh JSON and compare it section-by-section
-  # against this file's raw content; emptying the inline sections would blind
-  # that comparison.
+  # than only the tree) because `projectStatus()` / `syncStatus()` re-import the
+  # Excel into a fresh JSON and compare it section-by-section against this
+  # file's raw content; emptying the inline sections would blind that
+  # comparison.
   jsonText <- jsonlite::toJSON(
     jsonData,
     pretty = TRUE,
@@ -594,9 +594,9 @@ restoreProjectConfiguration <- function(
 #'   whether the Excel files and the JSON are synchronized}
 #'   \item{details}{A list with detailed comparison results}
 #'
-#' @seealso The method `Project$syncStatus()` reports the same comparison for a
-#'   loaded `Project` (against its `Project.xlsx` side-car) and returns the same
-#'   `excel_in_sync` / `details` shape.
+#' @seealso [syncStatus()] reports the same Excel comparison for a loaded
+#'   `Project` (against its `Project.xlsx` side-car) as one of its two axes,
+#'   alongside the memory-vs-tree axis.
 #'
 #' @import cli
 #' @export
@@ -638,9 +638,9 @@ projectStatus <- function(
 }
 
 # Compare a project's JSON against its Excel side-car and report whether they
-# are in sync. Shared by the public `projectStatus()` and the
-# `Project$syncStatus()` path (`.projectSyncStatus()`) so both surfaces return
-# the same `list(excel_in_sync = <logical>, details = <list>)` contract.
+# are in sync. Shared by the public `projectStatus()` and the Excel axis of
+# `syncStatus()` (via `.projectSyncStatus()`) so both surfaces return the same
+# `list(excel_in_sync = <logical>, details = <list>)` contract.
 # Re-imports the Excel into a temporary JSON and diffs it section-by-section
 # against the project's `Project.json` (ignoring the volatile `esqlabsRVersion`).
 #
@@ -777,26 +777,89 @@ projectConfigurationStatus <- function(...) {
 
 # Excel <-> JSON bridge: sync helper ----
 
-#' Sync-status helper called by `Project$syncStatus()`
+#' Report a project's two-axis sync status
 #'
-#' Reports whether the project's Excel side-car (`Project.xlsx` next to the
-#' project's `Project.json`) is in sync with the project's entity files. Every
-#' section is write-through to its `definitions/<kind>/` tree, so the only drift
-#' that can still occur is between the project and a sibling Excel export.
+#' @description Human-oriented, read-only report of how a `Project`'s in-memory
+#'   state diverges from disk, on two axes:
+#'
+#'   - memory vs. tree: whether there are unsaved in-memory edits (the project
+#'     is dirty). Reported as `NA` for an unbound in-memory project.
+#'   - memory vs. Excel: when a `Project.xlsx` side-car is configured, whether
+#'     it is a stale export of the current project (one-way: would re-exporting
+#'     change it). Reported as `NA` when no side-car is configured or it cannot
+#'     be read.
+#'
+#'   `syncStatus()` never reconciles either axis. To sync the tree, call
+#'   [saveProject()]; to sync Excel, call [exportProjectToExcel()] or
+#'   [importProjectFromExcel()].
 #'
 #' @param project A `Project` object.
-#' @param silent Logical. If `TRUE`, suppresses informational messages.
-#' @returns Invisibly returns a named list with `excel_in_sync` (logical, or
-#'   `NA` when there is no Excel side-car to compare against, or when the
-#'   side-car cannot be read/compared) and `details` (the per-section
-#'   differences, empty when in sync or when there is nothing to compare). When
-#'   not `silent`, a comparison failure surfaces a warning.
+#' @param silent Logical. If `TRUE`, suppresses the printed report and only
+#'   returns the structured result (the same shape as `project$status`).
+#'   Defaults to `FALSE`.
+#'
+#' @returns Invisibly, a `list(tree_in_sync, excel_in_sync, details)` (see
+#'   the `status` field of [Project]).
+#' @export
+#' @family project persistence
+#' @seealso [saveProject()], [reloadProject()], [exportProjectToExcel()],
+#'   [importProjectFromExcel()].
+#' @examples
+#' \dontrun{
+#' project <- loadProject("Project.json")
+#' syncStatus(project) # human-readable two-axis report
+#' project$status # the same information as a structured list
+#' }
+syncStatus <- function(project, silent = FALSE) {
+  validateIsOfType(project, "Project")
+  invisible(.projectSyncStatus(project, silent = silent))
+}
+
+#' Two-axis sync-status engine behind `syncStatus()` and `project$status`
+#'
+#' Reports both sync axes of an explicit-save project:
+#'   - memory vs. tree: whether there are unsaved in-memory edits, driven by
+#'     the project's internal dirty bit (`NA` for an unbound in-memory project);
+#'   - memory vs. Excel: whether a configured `Project.xlsx` side-car is a stale
+#'     export of the current project, reusing the `.compareJsonToExcel()`
+#'     comparison (`NA` when there is no side-car or it cannot be read).
+#'
+#' @param project A `Project` object.
+#' @param silent Logical. If `TRUE`, suppresses the printed report.
+#' @returns Invisibly a named list with `tree_in_sync` (logical, or `NA` for an
+#'   unbound in-memory project), `excel_in_sync` (logical, or `NA` when there
+#'   is no Excel side-car to compare against, or when it cannot be
+#'   read/compared) and `details` (per-axis differences, empty when both axes
+#'   are in sync). When not `silent`, both axes are reported and a comparison
+#'   failure surfaces a warning.
 #' @keywords internal
 #' @noRd
 .projectSyncStatus <- function(project, silent = FALSE) {
-  result <- list(excel_in_sync = NA, details = list())
+  result <- list(tree_in_sync = NA, excel_in_sync = NA, details = list())
 
+  # Axis 1: memory vs. tree. The dirty bit is the divergence signal; an unbound
+  # in-memory project has no tree, reported as `NA`.
   jsonPath <- project$jsonPath
+  if (is.null(jsonPath)) {
+    result$tree_in_sync <- NA
+  } else {
+    result$tree_in_sync <- !project$.isModified()
+    if (!result$tree_in_sync) {
+      result$details$tree <- "unsaved in-memory edits"
+    }
+  }
+
+  if (!silent) {
+    if (is.na(result$tree_in_sync)) {
+      cli::cli_alert_info(messages$syncNoTree())
+    } else if (isTRUE(result$tree_in_sync)) {
+      cli::cli_alert_success(messages$syncTreeClean())
+    } else {
+      cli::cli_alert_warning(messages$syncTreeDirty())
+    }
+  }
+
+  # Axis 2: memory vs. Excel side-car.
   if (is.null(jsonPath) || !file.exists(jsonPath)) {
     if (!silent) {
       cli::cli_alert_info(messages$syncNoExcel())

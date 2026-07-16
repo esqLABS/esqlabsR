@@ -58,30 +58,37 @@ test_that("loadProject() loads a clean project without a cross-reference warning
   expect_no_warning(testProject())
 })
 
-test_that("a bound project's container edit persists immediately", {
-  tmp <- saveSnapshot(testProject(), local_projectPath())
-  project <- loadProject(tmp)
+test_that("a bound project's container edit stays in memory until saveProject()", {
+  project <- testProject()
+  tmp <- project$projectFilePath
+  original <- project$modelFolder
 
   project$modelFolder <- "AnotherModels"
 
-  # Container metadata is write-through: a reload sees the new value with no
-  # separate save step.
+  # The edit is in memory only: a fresh load still reads the old value, and the
+  # project is dirty.
+  expect_identical(loadProject(tmp)$modelFolder, original)
+  expect_true(project$.isModified())
+
+  # After an explicit save, a fresh load sees the new value.
+  saveProject(project)
   expect_identical(
     loadProject(tmp)$modelFolder,
     fs::path_abs(file.path(dirname(tmp), "AnotherModels"))
   )
+  expect_false(project$.isModified())
 })
 
-test_that("a container edit on an inline-only project keeps its sections", {
-  # An inline snapshot has every section inlined in the container file and no
-  # `definitions/` tree on disk. A container-metadata edit must materialize the
-  # still-inline sections before the container-only write empties their inline
-  # copies, or the next load's inline fallback reads them all empty.
-  tmp <- saveSnapshot(testProject(), local_projectPath())
-  project <- loadProject(tmp)
+test_that("a container edit followed by saveProject() keeps the sections", {
+  # A container-metadata edit and save must not empty the section trees: the
+  # full-tree reconciler `.writeProjectTree` (which `saveProject` drives)
+  # rewrites every kind's tree plus the container.
+  project <- testProject()
+  tmp <- project$projectFilePath
   before <- project$scenarios
 
   project$name <- "Renamed"
+  saveProject(project)
 
   reloaded <- loadProject(tmp)
   expect_named(reloaded$scenarios, names(before))
@@ -90,8 +97,107 @@ test_that("a container edit on an inline-only project keeps its sections", {
     reloaded$scenarios$testscenario$modelFile,
     before$testscenario$modelFile
   )
-  # The container edit itself still takes effect on reload.
+  # The container edit takes effect on reload.
   expect_identical(reloaded$name, "Renamed")
+})
+
+# --- saveProject() ------------------------------------------------------------
+
+test_that("saveProject() writes only the changed entity's file (write-if-different)", {
+  project <- testProject()
+  saveProject(project) # settle the tree (byte-stable) so mtimes are a baseline
+  scenarioDir <- file.path(project$projectDirPath, "definitions", "scenarios")
+
+  # Edit exactly one scenario, leaving its siblings untouched.
+  setScenario(project, "testscenario", modelFile = "AnotherModel.pkml")
+
+  before <- file.info(list.files(scenarioDir, full.names = TRUE))$mtime
+  names(before) <- list.files(scenarioDir)
+  Sys.sleep(1.05) # coarse mtime resolution: separate the save in time
+
+  saveProject(project)
+
+  after <- file.info(list.files(scenarioDir, full.names = TRUE))$mtime
+  names(after) <- list.files(scenarioDir)
+  changed <- names(after)[after > before]
+  expect_identical(changed, "testscenario.json")
+})
+
+test_that("saveProject() deletes an orphan and leaves other kinds untouched", {
+  project <- testProject()
+  saveProject(project)
+  scenarioDir <- file.path(project$projectDirPath, "definitions", "scenarios")
+  outputPathDir <- file.path(
+    project$projectDirPath,
+    "definitions",
+    "output-paths"
+  )
+
+  target <- file.path(scenarioDir, "testscenario.json")
+  expect_true(file.exists(target))
+  outputPathsBefore <- list.files(outputPathDir)
+
+  removeScenario(project, "testscenario")
+  saveProject(project)
+
+  # The removed scenario's file is gone; files under another kind are untouched.
+  expect_false(file.exists(target))
+  expect_identical(list.files(outputPathDir), outputPathsBefore)
+})
+
+test_that("a clean saveProject() is a no-op with the up-to-date message", {
+  project <- testProject()
+  saveProject(project) # first save clears the dirty bit
+
+  expect_snapshot(saveProject(project))
+})
+
+test_that("saveProject() on an unbound in-memory project aborts", {
+  project <- Project$new()
+  project$schemaVersion <- "2.0"
+  project$.setSection("scenarios", list())
+
+  expect_snapshot(saveProject(project), error = TRUE)
+})
+
+test_that("saveProject() never warns about a stale Excel side-car", {
+  # Build a project with an Excel side-car that has drifted, then edit and save.
+  temp_project <- with_temp_project()
+  project <- temp_project$project
+
+  addOutputPath(project, "singleaxis", "Organism|A|Concentration in container")
+
+  # saveProject reconciles memory -> tree only; it emits no Excel warning even
+  # though the workbook is now a stale export of the project.
+  expect_no_warning(saveProject(project))
+})
+
+# --- reloadProject() ----------------------------------------------------------
+
+test_that("reloadProject() discards in-memory edits and clears the dirty bit", {
+  project <- testProject()
+
+  addScenario(project, "willbediscarded", modelFile = "Aciclovir.pkml")
+  expect_true("willbediscarded" %in% names(project$scenarios))
+  expect_true(project$.isModified())
+
+  reloadProject(project)
+
+  expect_false("willbediscarded" %in% names(project$scenarios))
+  expect_false(project$.isModified())
+  expect_true(project$status$tree_in_sync)
+})
+
+test_that("a clean reloadProject() is silent", {
+  project <- testProject()
+  expect_no_message(reloadProject(project))
+})
+
+test_that("reloadProject() on an unbound in-memory project aborts", {
+  project <- Project$new()
+  project$schemaVersion <- "2.0"
+
+  expect_snapshot(reloadProject(project), error = TRUE)
 })
 
 test_that("exampleProject() succeeds", {

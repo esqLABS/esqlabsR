@@ -116,8 +116,7 @@ test_that("project$dataFolder is NULL when filePaths.dataFolder is unset", {
 })
 
 test_that("project path fields are writable after the merger", {
-  tmp <- saveSnapshot(testProject(), local_projectPath())
-  project <- loadProject(tmp)
+  project <- testProject()
 
   project$modelFolder <- "AnotherModels"
   expect_match(project$modelFolder, "AnotherModels$")
@@ -460,13 +459,18 @@ test_that("loadProject() exposes name and description metadata", {
   expect_identical(project$description, "Aciclovir IV PK example project")
 })
 
-test_that("name and description are writable and persist write-through", {
+test_that("name and description are writable and persist on saveProject()", {
   project <- exampleProject()
   project$name <- "Renamed"
   project$description <- "A new description"
   expect_identical(project$name, "Renamed")
   expect_identical(project$description, "A new description")
 
+  # The edit stays in memory until an explicit save.
+  expect_true(project$.isModified())
+  expect_false(identical(loadProject(project$jsonPath)$name, "Renamed"))
+
+  saveProject(project)
   reloaded <- loadProject(project$jsonPath)
   expect_identical(reloaded$name, "Renamed")
   expect_identical(reloaded$description, "A new description")
@@ -550,11 +554,12 @@ test_that("a legacy flat-filePaths Project.json loads and splits the fields", {
 
 test_that("definitionsFolder honors a non-default tree location", {
   # Write a tree project under a custom definitions folder, then load it.
+  # Re-pointing the folder is a pure in-memory change now (no clone, no
+  # materialized-tree guard), so set it directly on the loaded project.
   src <- exampleProject()
-  scratch <- src$clone()
-  scratch$definitionsFolder <- "defs"
+  src$definitionsFolder <- "defs"
   dir <- withr::local_tempdir("custom_defs_")
-  esqlabsR:::.writeProjectTree(scratch, dir)
+  esqlabsR:::.writeProjectTree(src, dir)
 
   expect_true(dir.exists(file.path(dir, "defs", "scenarios")))
   expect_false(dir.exists(file.path(dir, "definitions")))
@@ -564,44 +569,25 @@ test_that("definitionsFolder honors a non-default tree location", {
   expect_length(reloaded$scenarios, 3L)
 })
 
-test_that("changing definitionsFolder on a project whose tree exists is refused", {
+test_that("changing definitionsFolder is a pure in-memory change", {
+  # Under explicit-save re-pointing the folder is always allowed; it only
+  # changes where the next saveProject() writes, so it sets the dirty bit and
+  # touches nothing on disk.
   temp <- with_temp_project()
   project <- temp$project
   expect_true(dir.exists(file.path(temp$path, "definitions")))
-  expect_snapshot(
-    error = TRUE,
-    project$definitionsFolder <- "other-defs"
-  )
-  # The refused change did not touch the folder name.
-  expect_identical(project$definitionsFolder, "definitions")
-})
 
-test_that("changing definitionsFolder is allowed before a tree exists", {
-  # An in-memory project (no directory) and a bound project whose tree is not
-  # yet on disk may still re-point the folder freely.
+  project$definitionsFolder <- "other-defs"
+  expect_identical(project$definitionsFolder, "other-defs")
+  expect_true(project$.isModified())
+  # No tree moved on disk until a save.
+  expect_true(dir.exists(file.path(temp$path, "definitions")))
+  expect_false(dir.exists(file.path(temp$path, "other-defs")))
+
+  # An in-memory project (no directory) may re-point the folder freely too.
   inMemory <- Project$new()
   inMemory$definitionsFolder <- "defs"
   expect_identical(inMemory$definitionsFolder, "defs")
-
-  # A bound project with an inline-only Project.json (no `definitions/` tree)
-  # can still change the folder.
-  dir <- withr::local_tempdir("inline_only_")
-  jsonlite::write_json(
-    list(
-      schemaVersion = "2.0",
-      esqlabsRVersion = "6.0.0",
-      filePaths = list(modelFolder = "Models/"),
-      scenarios = list(),
-      outputPaths = structure(list(), names = character(0))
-    ),
-    file.path(dir, "Project.json"),
-    auto_unbox = TRUE,
-    null = "null"
-  )
-  bound <- loadProject(file.path(dir, "Project.json"))
-  expect_false(dir.exists(file.path(dir, "definitions")))
-  bound$definitionsFolder <- "defs"
-  expect_identical(bound$definitionsFolder, "defs")
 })
 
 test_that("the tree wins over a conflicting non-empty inline Project.json section", {
@@ -644,7 +630,7 @@ test_that("the tree wins over a conflicting non-empty inline Project.json sectio
   )
 })
 
-test_that("a container-field write empties sections in Project.json yet the tree restores them on reload", {
+test_that("saveProject() writes an empty-sections container yet the tree restores them on reload", {
   treeSections <- c(
     "scenarios",
     "individuals",
@@ -662,9 +648,10 @@ test_that("a container-field write empties sections in Project.json yet the tree
   before <- vapply(treeSections, \(s) length(project[[s]]), integer(1))
   expect_gt(sum(before), 0L)
 
-  # A container-metadata write persists only the container; the tree owns the
-  # sections, so they must not be re-inlined into Project.json.
+  # After a container-metadata edit and save, the container holds only the
+  # container itself; the tree owns the sections, so they are not re-inlined.
   project$name <- "RenamedX"
+  saveProject(project)
   onDisk <- jsonlite::fromJSON(project$jsonPath, simplifyVector = FALSE)
   expect_identical(onDisk$name, "RenamedX")
   expect_false(is.null(onDisk$filePaths))
@@ -707,6 +694,7 @@ test_that("defaultSimulationRunOptions round-trips and defaults to NULL", {
     numberOfCores = 2,
     checkForNegativeValues = TRUE
   )
+  saveProject(project)
   reloaded <- loadProject(project$jsonPath)
   expect_equal(reloaded$defaultSimulationRunOptions$numberOfCores, 2)
   expect_true(reloaded$defaultSimulationRunOptions$checkForNegativeValues)
@@ -882,26 +870,28 @@ test_that("reading a record, editing the copy, and re-submitting it is the suppo
   )
 })
 
-# The sanctioned write path (the authoring functions, funneling through the
-# internal .setSection() entry point) must reject a structurally bad record,
-# not silently persist it: a wrong-typed reference field and an unknown field
-# both abort. (Regression guard for the write-path validation gap.)
-test_that("the write path rejects a wrong-typed scalar reference field", {
+# Under explicit-save, `.setSection()` no longer serializes on write, so a
+# structurally bad record is accepted in memory but must abort the save: the
+# serialize-in-memory-first guarantee in `.writeEntityTree()` (driven by
+# `saveProject()`) rejects a wrong-typed reference field and an unknown field.
+test_that("saveProject() rejects a wrong-typed scalar reference field", {
   project <- testProject()
   scenarios <- project$.getSection("scenarios")
   scenarios[["testscenario"]]$individualId <- list(a = 1)
+  project$.setSection("scenarios", scenarios)
   expect_error(
-    project$.setSection("scenarios", scenarios),
+    saveProject(project),
     "individualId.*single string"
   )
 })
 
-test_that("the write path rejects an unknown field on a record", {
+test_that("saveProject() rejects an unknown field on a record", {
   project <- testProject()
   scenarios <- project$.getSection("scenarios")
   scenarios[["testscenario"]]$totallyBogusField <- "nonsense"
+  project$.setSection("scenarios", scenarios)
   expect_error(
-    project$.setSection("scenarios", scenarios),
+    saveProject(project),
     "unknown field"
   )
 })
@@ -912,71 +902,76 @@ test_that("jsonPath is read-only and aliases projectFilePath", {
   expect_snapshot(error = TRUE, project$jsonPath <- "elsewhere.json")
 })
 
-test_that("syncStatus() reports NA when there is no Excel side-car", {
-  tmp <- saveSnapshot(testProject(), local_projectPath())
-  project <- loadProject(tmp)
+test_that("syncStatus() reports a clean bound project on both axes", {
+  project <- testProject()
 
-  # Every section is write-through, so the project and its entity files never
-  # diverge; with no Project.xlsx alongside there is nothing to compare.
-  status <- project$syncStatus(silent = TRUE)
+  # A freshly loaded, bound project with no Excel side-car: the tree axis is in
+  # sync (no unsaved edits), the Excel axis is NA (nothing to compare).
+  status <- syncStatus(project, silent = TRUE)
+  expect_true(status$tree_in_sync)
   expect_identical(status$excel_in_sync, NA)
   expect_identical(status$details, list())
 })
 
-test_that("syncStatus() reports NA for an in-memory project", {
-  status <- Project$new()$syncStatus(silent = TRUE)
+test_that("syncStatus() reports NA on both axes for an in-memory project", {
+  status <- syncStatus(Project$new(), silent = TRUE)
+  expect_identical(status$tree_in_sync, NA)
   expect_identical(status$excel_in_sync, NA)
 })
 
-# Clone safety ----
-
-test_that("mutating a clone's scenario leaves the source untouched", {
+test_that("syncStatus() reports unsaved edits on the tree axis", {
   project <- testProject()
-  clone <- project$clone()
+  addOutputPath(project, "dirtypath", "Organism|A|Concentration in container")
 
-  setScenario(clone, "testscenario", modelFile = "OnlyOnClone.pkml")
-
-  expect_identical(
-    clone$scenarios[["testscenario"]]$modelFile,
-    "OnlyOnClone.pkml"
-  )
-  expect_false(
-    identical(project$scenarios[["testscenario"]]$modelFile, "OnlyOnClone.pkml")
-  )
+  status <- syncStatus(project, silent = TRUE)
+  expect_false(status$tree_in_sync)
 })
 
-test_that("adding a scenario to a clone leaves the source untouched", {
+# No clone ----
+
+test_that("Project is not cloneable", {
   project <- testProject()
-  clone <- project$clone()
-  before <- length(project$scenarios)
-
-  addScenario(clone, "fresh", modelFile = "Aciclovir.pkml")
-
-  expect_length(project$scenarios, before)
-  expect_false("fresh" %in% names(project$scenarios))
+  # `cloneable = FALSE` removes the `clone` method entirely.
+  expect_null(project$clone)
 })
 
-test_that("mutating a clone's nested individual entry leaves the source untouched", {
+# project$status ----
+
+test_that("project$status returns the two-axis structured shape", {
   project <- testProject()
-  clone <- project$clone()
-
-  setIndividual(clone, "indiv1", weight = 99)
-
-  expect_identical(clone$individuals[["indiv1"]]$weight, 99)
-  expect_false(identical(project$individuals[["indiv1"]]$weight, 99))
+  expect_named(project$status, c("tree_in_sync", "excel_in_sync", "details"))
 })
 
-test_that("clone validated flag is independent of the source", {
+test_that("project$status is read-only", {
   project <- testProject()
-  project$.markValidated()
-  clone <- project$clone()
+  expect_snapshot(error = TRUE, project$status <- list())
+})
 
-  setScenario(clone, "testscenario", modelFile = "Changed.pkml")
+# Dirty bit and print marker ----
 
-  # Mutating the clone clears only the clone's validation cache; the source's
-  # cache is untouched.
-  expect_false(clone$validatedSinceMutation)
-  expect_true(project$validatedSinceMutation)
+# The print output carries per-run temp-dir prefixes (the JSON path and the
+# resolved working-folder paths); redact everything up to and including the
+# throwaway `TestProject_<hash>` directory so the class line's marker and the
+# section structure stay reviewable and portable.
+.redactJsonPathLine <- function(lines) {
+  gsub(".*(TestProject_[^/]+)", "<tmp>", lines)
+}
+
+test_that("print() shows the unsaved-changes marker after an edit", {
+  project <- testProject()
+  addOutputPath(project, "markerpath", "Organism|A|Concentration in container")
+  expect_snapshot(print(project), transform = .redactJsonPathLine)
+})
+
+test_that("print() shows no marker on a freshly loaded or saved project", {
+  project <- testProject()
+  # Freshly loaded: clean.
+  expect_snapshot(print(project), transform = .redactJsonPathLine)
+
+  addOutputPath(project, "markerpath", "Organism|A|Concentration in container")
+  saveProject(project)
+  # After saving: clean again.
+  expect_snapshot(print(project), transform = .redactJsonPathLine)
 })
 
 # DefinitionList section-accessor printing ----
@@ -1020,11 +1015,12 @@ test_that("a wrapped section accessor still behaves as a list", {
 test_that("the stored section stays a plain list (no DefinitionList class)", {
   project <- testProject()
   # Reading wraps, but the backing private store is plain: a round-trip
-  # through a mutator persists and reloads identically.
+  # through a mutator and saveProject() persists and reloads identically.
   stored <- .unwrapDefinitionList(project$individuals)
   expect_false(inherits(stored, "DefinitionList"))
 
   addIndividual(project, "extra", species = "Human", gender = "MALE")
+  saveProject(project)
   reloaded <- loadProject(project$jsonPath)
   expect_true("extra" %in% names(reloaded$individuals))
   expect_false(inherits(

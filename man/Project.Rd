@@ -6,23 +6,25 @@
 \alias{ProjectConfiguration}
 \title{Project}
 \description{
-An R6 class representing an esqlabsR project
+An R6 class representing an esqlabsR project.
 
-\code{Project} is cloneable. All section data (\code{scenarios}, \code{individuals},
-\code{populations}, \code{outputPaths}, the parameter sets, \code{plots},
-\code{parameterIdentification}, ...) consists of plain-data records with
-copy semantics, so a clone's section data is fully independent of the
-source: mutating one does not affect the other. The one exception is
-programmatic observed data added via \code{\link[=addObservedData]{addObservedData()}} with a
-\code{DataSet} object; those \code{ospsuite::DataSet} objects wrap external
-handles and are shared by reference between a project and its clone.
+Under the explicit-save model, memory is the source of truth for a loaded
+project: every \verb{add*} / \verb{set*} / \verb{remove*} authoring edit mutates memory
+in place and sets an internal dirty bit, but nothing touches the on-disk
+\verb{definitions/} tree until \code{\link[=saveProject]{saveProject()}} reconciles it. A loaded project
+is therefore a disk-free scratch space you commit deliberately; use
+\code{\link[=reloadProject]{reloadProject()}} to discard unsaved edits, and
+\code{\link[=snapshotProject]{snapshotProject()}} / \code{\link[=restoreProject]{restoreProject()}} to checkpoint and roll back.
 
-A clone is also detached from the source on disk: it does not own the
-source's definitions tree, so its write-through mutations (\code{addScenario()},
-\code{removeScenario()}, and the other \verb{add*} / \verb{remove*} / \verb{set*} helpers)
-stay in memory only and never touch the source's \verb{definitions/}
-directory. Use \code{\link[=saveSnapshot]{saveSnapshot()}} to write the clone to a single-file
-snapshot you can reload with \code{\link[=loadSnapshot]{loadSnapshot()}}.
+\code{Project} is not cloneable (\code{cloneable = FALSE}): explicit-save already
+makes every loaded project a disk-free scratch space, so the clone-for-
+scratch-work idiom the auto-save model needed is obsolete. All section
+data (\code{scenarios}, \code{individuals}, \code{populations}, \code{outputPaths}, the
+parameter sets, \code{plots}, \code{parameterIdentification}, ...) consists of
+plain-data records with copy semantics, so reading a record hands back an
+independent copy; the exception is programmatic observed data added via
+\code{\link[=addObservedData]{addObservedData()}} with a \code{DataSet} object, whose \code{ospsuite::DataSet}
+wraps an external handle shared by reference.
 }
 \keyword{internal}
 \section{Active bindings}{
@@ -46,36 +48,27 @@ validation hooks (e.g. in \code{\link[=runScenarios]{runScenarios()}} and \code{
 skip redundant re-validation of an unchanged project.}
 
     \item{\code{name}}{Human-readable project name (the \code{name} JSON field). May be
-\code{NULL} when the project declares no name. Writing persists the
-container for a bound project.}
+\code{NULL} when the project declares no name. Writing updates memory and
+sets the dirty bit; it persists on the next \code{\link[=saveProject]{saveProject()}}.}
 
     \item{\code{description}}{Optional free-text project description (the
-\code{description} JSON field). May be \code{NULL}. Writing persists the
-container for a bound project.}
+\code{description} JSON field). May be \code{NULL}. Writing updates memory and
+sets the dirty bit; it persists on the next \code{\link[=saveProject]{saveProject()}}.}
 
     \item{\code{definitionsFolder}}{Name of the folder (relative to
 \code{projectDirPath}) that holds the project's authored entity-definition
-tree. Defaults to \code{"definitions"}. Writing persists the container for
-a bound project; changing it moves where future write-through edits
-are read from and written to.
-
-A change is refused once the project owns a materialized tree on disk:
-silently re-pointing such a project at a new folder would
-re-materialize its sections into that folder and orphan the old tree
-(the old folder survives, unreferenced). Load and construction assign
-the private backing field directly and so are never blocked by this
-guard; a clone does not own the source's tree (its write-through is an
-in-memory no-op), so it may re-point freely; only a deliberate write on
-an already-materialized owning project is refused. To relocate the tree
-on purpose, snapshot the project and reload it into a fresh directory
-under the new folder name (see \code{\link[=saveSnapshot]{saveSnapshot()}} / \code{\link[=loadSnapshot]{loadSnapshot()}}).}
+tree. Defaults to \code{"definitions"}. Writing updates memory and sets the
+dirty bit; it changes where the next \code{\link[=saveProject]{saveProject()}} writes the tree
+and where the tree is read from, but nothing moves on disk until the
+next save.}
 
     \item{\code{defaultSimulationRunOptions}}{Named list of the project-level
 default simulation run options (the \code{defaultSimulationRunOptions} JSON
 field), or \code{NULL} when none are declared. Used by \code{\link[=runScenarios]{runScenarios()}} as
 the default \code{simulationRunOptions} when the caller does not pass one.
 Recognized fields: \code{numberOfCores}, \code{checkForNegativeValues},
-\code{showProgress}. Writing persists the container for a bound project.}
+\code{showProgress}. Writing updates memory and sets the dirty bit; it
+persists on the next \code{\link[=saveProject]{saveProject()}}.}
 
     \item{\code{excel}}{Read-only named list of the Excel import/export bridge
 sheet-name fields (\code{configurationsFolder}, \code{modelParamsFile},
@@ -86,11 +79,12 @@ Returned verbatim as strings (no resolution). Empty for a from-scratch
 JSON project that has no Excel side-car.}
 
     \item{\code{schemaVersion}}{Schema version declared in the JSON. Always "2.0"
-for projects loaded by this parser. Writing persists the container
-for a bound project.}
+for projects loaded by this parser. Writing updates memory and sets
+the dirty bit; it persists on the next \code{\link[=saveProject]{saveProject()}}.}
 
     \item{\code{esqlabsRVersion}}{Informational version string from the JSON.
-Writing persists the container for a bound project.}
+Writing updates memory and sets the dirty bit; it persists on the next
+\code{\link[=saveProject]{saveProject()}}.}
 
     \item{\code{jsonPath}}{Read-only. Absolute path the project was loaded from
 (an alias of \code{projectFilePath}), or \code{NULL} for an in-memory project.}
@@ -146,8 +140,8 @@ relative to the "Code" folder}
 OSPS-notation path strings (e.g. \code{list(PVB = "Organism|...")}). To
 change it, use \code{\link[=addOutputPath]{addOutputPath()}} / \code{\link[=setOutputPath]{setOutputPath()}} /
 \code{\link[=removeOutputPath]{removeOutputPath()}} or edit the definition files under
-\verb{definitions/output-paths/}; an authoring write persists each changed
-output path to (or deletes it from) its file.}
+\verb{definitions/output-paths/}; an authoring edit updates memory and sets
+the dirty bit, persisting on the next \code{\link[=saveProject]{saveProject()}}.}
 
     \item{\code{scenarios}}{Read-only named list of \code{Scenario} records, keyed by
 scenario name. To change it, use \code{\link[=addScenario]{addScenario()}} / \code{\link[=setScenario]{setScenario()}} /
@@ -156,10 +150,9 @@ edit the definition files under \verb{definitions/scenarios/}. The canonical
 edit loop is read-modify-resubmit: read a record
 (\code{sc <- project$scenarios[["id"]]}), change the detached copy
 (\code{sc$modelFile <- ...}), then re-submit it
-(\code{setScenario(project, "id", ...)}). An authoring write structurally
-validates each changed scenario and persists it to (or deletes it from)
-its file; an in-memory project (no directory) holds scenarios in memory
-only.}
+(\code{setScenario(project, "id", ...)}). An authoring edit updates memory
+and sets the dirty bit; it persists to the tree on the next
+\code{\link[=saveProject]{saveProject()}}.}
 
     \item{\code{parameterSets}}{Read-only named list of parameter structures, keyed
 by set id. This single section holds every parameter set in the
@@ -229,6 +222,14 @@ not here.}
 
     \item{\code{asList}}{Returns the current project as a list matching the JSON
 schema. Reflects any in-memory modifications. Read-only.}
+
+    \item{\code{status}}{Read-only, machine-oriented two-axis sync report as a
+structured list: \code{tree_in_sync} (\code{FALSE} when there are unsaved
+in-memory edits vs. the on-disk tree, \code{NA} for an unbound in-memory
+project), \code{excel_in_sync} (\code{TRUE}/\code{FALSE}, or \code{NA} when no Excel
+side-car is configured or it cannot be read), and \code{details} (per-axis
+differences, empty when both axes are in sync). The same information
+\code{\link[=syncStatus]{syncStatus()}} prints. Read-only; assignment aborts.}
   }
   \if{html}{\out{</div>}}
 }
@@ -236,16 +237,16 @@ schema. Reflects any in-memory modifications. Read-only.}
 \subsection{Public methods}{
   \itemize{
     \item \href{#method-Project-initialize}{\code{Project$new()}}
-    \item \href{#method-Project-.rebindPath}{\code{Project$.rebindPath()}}
     \item \href{#method-Project-.markValidated}{\code{Project$.markValidated()}}
     \item \href{#method-Project-.markModified}{\code{Project$.markModified()}}
+    \item \href{#method-Project-.isModified}{\code{Project$.isModified()}}
+    \item \href{#method-Project-.clearModified}{\code{Project$.clearModified()}}
+    \item \href{#method-Project-.reload}{\code{Project$.reload()}}
     \item \href{#method-Project-.getSection}{\code{Project$.getSection()}}
     \item \href{#method-Project-.setSection}{\code{Project$.setSection()}}
     \item \href{#method-Project-.getFilePathsData}{\code{Project$.getFilePathsData()}}
     \item \href{#method-Project-.getExcelData}{\code{Project$.getExcelData()}}
-    \item \href{#method-Project-syncStatus}{\code{Project$syncStatus()}}
     \item \href{#method-Project-print}{\code{Project$print()}}
-    \item \href{#method-Project-clone}{\code{Project$clone()}}
   }
 }
 \if{html}{\out{<hr>}}
@@ -270,30 +271,6 @@ JSON file.}
 }
 
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-Project-.rebindPath"></a>}}
-\if{latex}{\out{\hypertarget{method-Project-.rebindPath}{}}}
-\subsection{\code{Project$.rebindPath()}}{
-  Internal method to rebind the project to a new file
-location. Updates \code{projectFilePath} / \code{jsonPath} and \code{projectDirPath}
-(the base for relative-path resolution) so any relative-path access
-targets the new file, and re-claims the definitions tree so a clone bound to
-its own location becomes write-through there. Not a mutation, so it
-leaves the flags untouched. Not intended for end-user use.
-  \subsection{Usage}{
-    \if{html}{\out{<div class="r">}}
-    \preformatted{Project$.rebindPath(path)}
-    \if{html}{\out{</div>}}
-  }
-  \subsection{Arguments}{
-    \if{html}{\out{<div class="arguments">}}
-    \describe{
-      \item{\code{path}}{Absolute or relative path the project was bound to.}
-    }
-    \if{html}{\out{</div>}}
-  }
-}
-
-\if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-Project-.markValidated"></a>}}
 \if{latex}{\out{\hypertarget{method-Project-.markValidated}{}}}
 \subsection{\code{Project$.markValidated()}}{
@@ -312,12 +289,59 @@ validation has succeeded with no critical errors. Sets the
 \if{latex}{\out{\hypertarget{method-Project-.markModified}{}}}
 \subsection{\code{Project$.markModified()}}{
   Internal method invoked by mutators after a successful
-programmatic change. Clears the \code{validatedSinceMutation} flag so the
-next \code{runScenarios()} / \code{createPlots()} re-validates the project. Not
+programmatic change. Sets the in-memory dirty bit and clears the
+\code{validatedSinceMutation} flag so the next \code{runScenarios()} /
+\code{createPlots()} re-validates the project. Does not touch disk. Not
 intended for end-user use.
   \subsection{Usage}{
     \if{html}{\out{<div class="r">}}
     \preformatted{Project$.markModified()}
+    \if{html}{\out{</div>}}
+  }
+}
+
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Project-.isModified"></a>}}
+\if{latex}{\out{\hypertarget{method-Project-.isModified}{}}}
+\subsection{\code{Project$.isModified()}}{
+  Internal accessor for the in-memory dirty bit: \code{TRUE} when
+there are edits not yet reconciled to the on-disk tree. Read by
+\code{\link[=saveProject]{saveProject()}} (clean-save short-circuit) and by \code{\link[=syncStatus]{syncStatus()}} (the
+memory-vs-tree axis). Not intended for end-user use.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{Project$.isModified()}
+    \if{html}{\out{</div>}}
+  }
+}
+
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Project-.clearModified"></a>}}
+\if{latex}{\out{\hypertarget{method-Project-.clearModified}{}}}
+\subsection{\code{Project$.clearModified()}}{
+  Internal method to clear the in-memory dirty bit, marking
+memory as in sync with the on-disk tree. Called after a successful
+\code{\link[=saveProject]{saveProject()}}. Not intended for end-user use.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{Project$.clearModified()}
+    \if{html}{\out{</div>}}
+  }
+}
+
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Project-.reload"></a>}}
+\if{latex}{\out{\hypertarget{method-Project-.reload}{}}}
+\subsection{\code{Project$.reload()}}{
+  Internal method to re-read the project from its bound file,
+discarding any in-memory edits (the undo). Re-runs the parser against
+\code{projectFilePath}, which overwrites every backing field and clears the
+dirty and validation flags. Object identity is preserved (R6
+reference), so existing handles stay valid. Not intended for end-user
+use; call \code{\link[=reloadProject]{reloadProject()}}.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{Project$.reload()}
     \if{html}{\out{</div>}}
   }
 }
@@ -351,14 +375,14 @@ use; the public accessor is the read-only end-user surface.
 \if{latex}{\out{\hypertarget{method-Project-.setSection}{}}}
 \subsection{\code{Project$.setSection()}}{
   Internal write entry point for one definition section. This
-is the only sanctioned way to change a section: it runs the same
-structural validation and write-through persistence the public
-active-binding setter used to, then stores the new list in the private
-backing field and invalidates the validation cache. The public
-\verb{project$<section> <- ...} setter no longer writes (it aborts
-read-only); every \verb{add*}/\verb{set*}/\verb{remove*} authoring function routes its
-write here. Accepts a plain list; a \code{DefinitionList} is unwrapped
-defensively. Not intended for end-user use.
+is the only sanctioned way to change a section: it stores the new list
+in the private backing field, sets the in-memory dirty bit, and
+invalidates the validation cache. It does not touch disk; nothing
+persists until \code{\link[=saveProject]{saveProject()}} reconciles the tree to memory. The
+public \verb{project$<section> <- ...} setter aborts read-only; every
+\verb{add*}/\verb{set*}/\verb{remove*} authoring function routes its write here.
+Accepts a plain list; a \code{DefinitionList} is unwrapped defensively. Not
+intended for end-user use.
   \subsection{Usage}{
     \if{html}{\out{<div class="r">}}
     \preformatted{Project$.setSection(kind, value)}
@@ -406,41 +430,6 @@ import/export bridge.
 }
 
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-Project-syncStatus"></a>}}
-\if{latex}{\out{\hypertarget{method-Project-syncStatus}{}}}
-\subsection{\code{Project$syncStatus()}}{
-  Report whether the project's Excel side-car is in sync
-with its definition files. Every section is write-through to its
-\verb{definitions/<kind>/} tree and the \code{Project.json} container is a
-derived snapshot, so the only drift that can still occur is between
-the project and a sibling \code{Project.xlsx} produced by
-\code{\link[=exportProjectToExcel]{exportProjectToExcel()}}. This method compares the two; it is
-read-only and never reconciles them (use \code{\link[=exportProjectToExcel]{exportProjectToExcel()}} or
-\code{\link[=importProjectFromExcel]{importProjectFromExcel()}} to do that).
-  \subsection{Usage}{
-    \if{html}{\out{<div class="r">}}
-    \preformatted{Project$syncStatus(silent = FALSE)}
-    \if{html}{\out{</div>}}
-  }
-  \subsection{Arguments}{
-    \if{html}{\out{<div class="arguments">}}
-    \describe{
-      \item{\code{silent}}{Logical. If \code{TRUE}, suppresses informational messages.
-Defaults to \code{FALSE}.}
-    }
-    \if{html}{\out{</div>}}
-  }
-  \subsection{Returns}{
-    Invisibly, a list with two components: \code{excel_in_sync} (a
-logical, or \code{NA} when there is no Excel side-car to compare against)
-and \code{details} (a list of the per-section differences, empty when in
-sync or when there is nothing to compare). This is the same shape the
-path-based \code{\link[=projectStatus]{projectStatus()}} returns; the two share one comparison
-builder.
-  }
-}
-
-\if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-Project-print"></a>}}
 \if{latex}{\out{\hypertarget{method-Project-print}{}}}
 \subsection{\code{Project$print()}}{
@@ -454,25 +443,6 @@ builder.
     \if{html}{\out{<div class="arguments">}}
     \describe{
       \item{\code{...}}{Unused; present for S3 method consistency.}
-    }
-    \if{html}{\out{</div>}}
-  }
-}
-
-\if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-Project-clone"></a>}}
-\if{latex}{\out{\hypertarget{method-Project-clone}{}}}
-\subsection{\code{Project$clone()}}{
-  The objects of this class are cloneable with this method.
-  \subsection{Usage}{
-    \if{html}{\out{<div class="r">}}
-    \preformatted{Project$clone(deep = FALSE)}
-    \if{html}{\out{</div>}}
-  }
-  \subsection{Arguments}{
-    \if{html}{\out{<div class="arguments">}}
-    \describe{
-      \item{\code{deep}}{Whether to make a deep clone.}
     }
     \if{html}{\out{</div>}}
   }

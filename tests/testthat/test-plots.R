@@ -148,6 +148,7 @@ test_that("addPlot vectorized equals N scalar adds and persists once", {
     plotType = c("individual", "observedVsSimulated")
   )
 
+  saveProject(project)
   reloaded <- loadProject(project$jsonPath)
   expect_true(all(
     c("p_one", "p_two") %in% names(reloaded$plots)
@@ -221,6 +222,7 @@ test_that("addPlotGrid vectorizes with per-grid plots and one write-through", {
     title = list("One", "Two")
   )
 
+  saveProject(project)
   reloaded <- loadProject(project$jsonPath)
   expect_true(all(
     c("grid_one", "grid_two") %in% names(reloaded$plotGrids)
@@ -244,6 +246,7 @@ test_that("addPlotGrid accepts a plain list of plot ids for a single grid", {
 
   addPlotGrid(project, "single_grid", plots = list("sp1", "sp2"))
 
+  saveProject(project)
   reloaded <- loadProject(project$jsonPath)
   expect_identical(
     esqlabsR:::.splitPlotIDs(reloaded$plotGrids$single_grid$plotIds),
@@ -266,6 +269,7 @@ test_that("addPlotGrid round-trips a plot id containing a comma", {
   addPlot(project, "p,evil", "dc_c", "individual")
   addPlotGrid(project, "comma_grid", plots = c("p,evil"))
 
+  saveProject(project)
   reloaded <- loadProject(project$jsonPath)
   expect_identical(
     esqlabsR:::.splitPlotIDs(reloaded$plotGrids$comma_grid$plotIds),
@@ -297,6 +301,7 @@ test_that("removePlot removes a vector of ids in one pass and warns on misses", 
   addPlot(project, c("rp1", "rp2"), "dc_r", "individual")
 
   suppressWarnings(removePlot(project, c("rp1", "rp2", "ghost")))
+  saveProject(project)
   reloaded <- loadProject(project$jsonPath)
   expect_false(any(
     c("rp1", "rp2") %in% names(reloaded$plots)
@@ -322,6 +327,7 @@ test_that("addDataCombined vectorizes with per-id entry lists", {
     )
   )
 
+  saveProject(project)
   reloaded <- loadProject(project$jsonPath)
   expect_true(all(c("dcm1", "dcm2") %in% names(reloaded$dataCombined)))
   expect_identical(
@@ -349,10 +355,11 @@ test_that("removeDataCombined drops the entry and deletes its entity file", {
   suppressWarnings(removeDataCombined(project, "aciclovir_individual"))
   expect_false("aciclovir_individual" %in% names(project$dataCombined))
 
-  # The data-combined kind is write-through one-file-per-entry: removing the
-  # entry deletes its file (the plotConfiguration row that referenced it is left
+  # The data-combined kind is one-file-per-entry: on save, removing the entry
+  # deletes its file (the plotConfiguration row that referenced it is left
   # intact, that is the dangling reference the warning named) and it is gone from
   # a fresh reload.
+  saveProject(project)
   expect_false(file.exists(dcFile))
   reloaded <- loadProject(project$jsonPath)
   expect_false(

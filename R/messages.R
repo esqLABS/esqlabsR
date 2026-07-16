@@ -129,33 +129,46 @@ messages$invalidPathArgument <- function() {
   cliFormat("{.arg path} must be a single non-empty, non-NA string.")
 }
 
-messages$noProjectPath <- function() {
-  cliFormat(
-    "No {.arg path} specified and the project has no {.field jsonPath}. \\
-    Provide a {.arg path} to save the project for the first time."
-  )
-}
-
-messages$snapshotOntoOwnContainer <- function() {
+messages$saveProjectNoTree <- function() {
   c(
-    "A snapshot is a derived artifact and must be written to a location other than the project's own {.field jsonPath}.",
-    "i" = "Pass a {.arg path} to a different file. The authoritative {.path definitions/} tree and {.file Project.json} container are already write-through, so there is nothing to save in place."
+    "This project is not bound to a directory, so there is nothing to save in place.",
+    "i" = "Use {.fn snapshotProject} to write a portable single-file snapshot.",
+    "i" = "Use {.fn initProject} then {.fn loadProject} to give the project a home on disk."
   )
 }
 
-messages$definitionsFolderChangeOnMaterialized <- function(current, value) {
+messages$reloadProjectNoTree <- function() {
   c(
-    "Cannot change {.field definitionsFolder} from {.val {current}} to {.val {value}} while the tree exists on disk.",
-    "x" = "Re-pointing a materialized project would leave the old {.path {current}/} tree orphaned and unreferenced.",
-    "i" = "To relocate the tree deliberately, snapshot the project with {.fn saveSnapshot} and reload it into a fresh directory under the new folder with {.fn loadSnapshot}."
+    "This project is not bound to a directory, so there is nothing to reload from.",
+    "i" = "{.fn reloadProject} re-reads a project's on-disk tree; an in-memory project has none."
   )
 }
 
-messages$loadSnapshotDirNotEmpty <- function(dir) {
+messages$projectAlreadyUpToDate <- function() {
+  "Project is already up to date; nothing to save."
+}
+
+messages$snapshotFileExists <- function(path) {
+  c(
+    "A snapshot file already exists at {.file {path}}.",
+    "i" = "Pass {.code overwrite = TRUE} to replace it, or a different {.arg name}."
+  )
+}
+
+messages$restoreDirNotEmpty <- function(dir) {
   c(
     "{.arg dir} already contains an esqlabsR project ({.path {dir}}).",
-    "i" = "{.fn loadSnapshot} writes a fresh tree project and will not overwrite \\
-    an existing one. Pass an empty or new {.arg dir}."
+    "i" = "Pass {.code overwrite = TRUE} to replace the existing project in \\
+    {.arg dir}, or an empty or new {.arg dir}."
+  )
+}
+
+messages$restoreOverwroteTree <- function(dir) {
+  c(
+    "Replaced the existing project in {.path {dir}} with the snapshot.",
+    "!" = "Any {.cls Project} previously loaded from {.arg dir} is now stale.",
+    "i" = "Rebind to the object {.fn restoreProject} returned, or \\
+    {.fn reloadProject} the old handle."
   )
 }
 
@@ -274,12 +287,31 @@ messages$restoredProjectConfiguration <- function(inputFile, outputFile) {
   )
 }
 
-# Every section is write-through to its `definitions/<kind>/` tree, so the only
-# drift a sync check can still report is between the project and a sibling
-# `Project.xlsx`. With no Excel side-car there is nothing to compare.
+# The Excel axis of `syncStatus()`: with no `Project.xlsx` side-car there is
+# nothing to compare the in-memory project against.
 messages$syncNoExcel <- function() {
   cli::format_inline(
     "No {.file Project.xlsx} side-car to compare against; nothing to sync."
+  )
+}
+
+# The tree axis of `syncStatus()`: whether in-memory edits diverge from the
+# on-disk `definitions/` tree (the dirty bit).
+messages$syncTreeDirty <- function() {
+  cli::format_inline(
+    "Unsaved changes: the project has in-memory edits not yet saved to the tree."
+  )
+}
+
+messages$syncTreeClean <- function() {
+  cli::format_inline(
+    "No unsaved changes: memory matches the on-disk tree."
+  )
+}
+
+messages$syncNoTree <- function() {
+  cli::format_inline(
+    "No on-disk tree: this in-memory project is not bound to a directory."
   )
 }
 

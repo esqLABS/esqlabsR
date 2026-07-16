@@ -7,19 +7,19 @@
       Canonicalized 1 id to a safe form:
       * "My/Scenario" -> "my_scenario"
 
-# a scenarioName that disagrees with its list key aborts the write
+# a scenarioName that disagrees with its list key aborts saveProject()
 
     Code
-      project$.setSection("scenarios", scenarios)
+      saveProject(project)
     Condition
       Error in `.validateScenarioStructure()`:
       ! Scenario scenarioName "testscenario" does not match the key "renamed" it is stored under.
       i Store a scenario under a key equal to its scenarioName (or leave scenarioName unset).
 
-# a write-back under a non-canonical key aborts the write
+# a write-back under a non-canonical key aborts saveProject()
 
     Code
-      project$.setSection("scenarios", scenarios)
+      saveProject(project)
     Condition
       Error in `.validateScenarioStructure()`:
       ! Scenario id "Renamed" is not a canonical entity-file id.
@@ -42,24 +42,6 @@
       Warning:
       Canonicalized 1 id to a safe form:
       * "sub/evil" -> "sub_evil"
-
-# saveSnapshot refuses to overwrite the project's own container
-
-    Code
-      saveSnapshot(project)
-    Condition
-      Error in `saveSnapshot()`:
-      ! A snapshot is a derived artifact and must be written to a location other than the project's own jsonPath.
-      i Pass a `path` to a different file. The authoritative 'definitions/' tree and 'Project.json' container are already write-through, so there is nothing to save in place.
-
----
-
-    Code
-      saveSnapshot(project, project$jsonPath)
-    Condition
-      Error in `saveSnapshot()`:
-      ! A snapshot is a derived artifact and must be written to a location other than the project's own jsonPath.
-      i Pass a `path` to a different file. The authoritative 'definitions/' tree and 'Project.json' container are already write-through, so there is nothing to save in place.
 
 # structural validation rejects a serializer-hostile scenario
 

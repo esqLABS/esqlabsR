@@ -225,12 +225,13 @@ test_that("extendPopulationFromXLS throws an error if specified sheet is empty o
 
 # setPopulation ----
 
-test_that("setPopulation changes a field and persists to file and memory", {
+test_that("setPopulation changes a field in memory and persists on save", {
   project <- testProject()
   setPopulation(project, "testpopulation", numberOfIndividuals = 50)
   expect_equal(project$populations[["testpopulation"]]$numberOfIndividuals, 50)
 
-  # The write-through must reach disk: a throwaway reload sees the new value.
+  # The edit reaches disk on save: a throwaway reload sees the new value.
+  saveProject(project)
   reloaded <- loadProject(project$jsonPath)
   expect_equal(
     reloaded$populations[["testpopulation"]]$numberOfIndividuals,
@@ -340,15 +341,13 @@ test_that("addPopulation rejects a non-integer numberOfIndividuals", {
   expect_false("frac" %in% names(project$populations))
 })
 
-test_that("setPopulation on a clone does not affect the source on disk", {
+test_that("setPopulation stays in memory until saveProject()", {
   source <- testProject()
   before <- source$populations[["testpopulation"]]
-  clone <- source$clone()
-  setPopulation(clone, "testpopulation", numberOfIndividuals = 7)
+  setPopulation(source, "testpopulation", numberOfIndividuals = 7)
 
-  expect_equal(clone$populations[["testpopulation"]]$numberOfIndividuals, 7)
-  expect_equal(source$populations[["testpopulation"]], before)
-  # The clone's edit must not reach the source's on-disk tree.
+  expect_equal(source$populations[["testpopulation"]]$numberOfIndividuals, 7)
+  # The edit must not reach the on-disk tree before a save.
   reloaded <- loadProject(source$jsonPath)
   expect_equal(reloaded$populations[["testpopulation"]], before)
 })
@@ -404,7 +403,7 @@ test_that("addPopulation recycles a scalar field and aligns a length-N field", {
   expect_identical(project$populations$b$numberOfIndividuals, 7)
 })
 
-test_that("addPopulation persists all N to disk in one write-through", {
+test_that("addPopulation persists all N to disk in one saveProject()", {
   project <- testProject()
   addPopulation(
     project,
@@ -412,6 +411,7 @@ test_that("addPopulation persists all N to disk in one write-through", {
     species = "Human",
     numberOfIndividuals = 5
   )
+  saveProject(project)
   reloaded <- loadProject(project$jsonPath)
   expect_true(all(c("a", "b") %in% names(reloaded$populations)))
 })

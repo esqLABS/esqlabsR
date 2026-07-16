@@ -11,12 +11,14 @@
 # consumer (`runScenarios()`, `createPlots()`, validation, parameter
 # identification) is unaffected.
 #
-# Direction of truth: the entity files are authoritative. Loading globs each
-# kind's tree; the section mutators (every `add*` / `remove*` / `set*` and any
-# write-back through `project$<section>`) are write-through, structurally
-# validating the changed entity then writing (or deleting) its single file.
-# `saveSnapshot()` renders a derived single-file `Project.json` with every
-# section inlined, for sharing or archiving.
+# Direction of truth: for a loaded project, memory is authoritative until the
+# user saves. Loading globs each kind's tree into memory; the section mutators
+# (every `add*` / `remove*` / `set*` and any write-back through
+# `project$<section>`) update memory and set the dirty bit, and `saveProject()`
+# reconciles the whole tree to memory (write-if-different plus orphan-delete).
+# `snapshotProject()` renders a derived single-file `.esqlabsR` with every
+# section inlined, for sharing or archiving; `restoreProject()` materializes
+# one back into a tree.
 #
 # Per-kind subfolder names and granularity (all under `definitions/`):
 #   scenarios                -> scenarios/                one file per scenario
@@ -305,17 +307,32 @@
 # Canonical JSON write options shared by every entity file and the snapshot,
 # for byte-stable round-trips.
 #
+# Write-if-different: serialize the content to a string first and, when the
+# target file already holds byte-identical content, skip the write entirely.
+# This keeps a `saveProject()` from bumping the mtime of an entity the user did
+# not change, so `git diff` (and any file-watcher) sees exactly the entities
+# that actually changed, which is a core reason the entity-files format exists.
+#
 # @keywords internal
 # @noRd
 .writeEntityJson <- function(content, path) {
-  jsonlite::write_json(
+  serialized <- jsonlite::toJSON(
     content,
-    path,
     auto_unbox = TRUE,
     null = "null",
     pretty = TRUE,
     digits = NA
   )
+  if (file.exists(path)) {
+    current <- paste0(
+      readLines(path, warn = FALSE, encoding = "UTF-8"),
+      collapse = "\n"
+    )
+    if (identical(as.character(serialized), current)) {
+      return(invisible(NULL))
+    }
+  }
+  writeLines(as.character(serialized), path, useBytes = TRUE)
   invisible(NULL)
 }
 
@@ -325,8 +342,9 @@
 # files are globbed, parsed, and returned as the list of per-file records in
 # sorted-filename order for a stable load order. When there is no
 # `definitions/<kind>/` directory, the inline section from the `Project.json` is
-# used instead, so a derived single-file snapshot (see `saveSnapshot()`) reloads
-# self-contained. A malformed file is a structural error and aborts the load.
+# used instead, so a derived single-file snapshot (see `snapshotProject()`)
+# reloads self-contained. A malformed file is a structural error and aborts the
+# load.
 #
 # @keywords internal
 # @noRd
@@ -414,17 +432,16 @@
 
 # Write a whole section's tree to `definitions/<kind>/`, one file per entity.
 #
-# Stale-file policy (full-tree write): this writer OWNS the `<kind>/`
+# Stale-file policy (full-tree reconcile): this writer OWNS the `<kind>/`
 # directory. `section` is the authoritative complete set for the kind, so any
 # `.json` file the directory holds that is NOT in the freshly-written keep-set
 # is a stale entry (a removed entity, or an orphan a hand-edit or a prior run
-# dropped in) and is deleted. This is the deliberate opposite of the
-# incremental writer `.persistKindChanges()`, which preserves orphans: a
-# full-tree write (materialize, snapshot-load, whole-section rewrite) knows the
-# entire section, so it can and must reconcile the directory to it; an
-# incremental write only knows the one entity it changed, so it must not delete
-# a sibling it never loaded. See `.persistKindChanges()` for the other half of
-# this asymmetry.
+# dropped in) and is deleted. After a write the directory mirrors the in-memory
+# section exactly. This is the "make disk look like my project now" contract
+# `saveProject()` and `restoreProject()` both rely on: because they hold the
+# whole section in memory, they can and must reconcile the directory to it.
+# Each entity file is written write-if-different (see `.writeEntityJson()`), so
+# an unchanged entity's file (and mtime) is left untouched.
 #
 # A NULL directory (in-memory project) is a silent no-op. The full set is
 # serialized in memory first, so a serializer-hostile entity aborts before any
@@ -1194,156 +1211,140 @@
 
 # Snapshot ----
 
-#' Write a derived single-file Project snapshot
+#' Freeze a project to a portable single-file snapshot
 #'
-#' @description Renders a `Project` to a single self-contained `.esqlabsR`
-#'   snapshot file with every section inlined. The content is JSON; the
-#'   `.esqlabsR` extension marks the file as a portable shareable freeze-frame,
+#' @description Write the current in-memory state of a `Project` to a single
+#'   self-contained `.esqlabsR` file with every section inlined. Unsaved edits
+#'   are included, so a snapshot is a faithful freeze of the project as it is
+#'   right now, and a legitimate "stash my experiment, then [reloadProject()]
+#'   back to the saved state" move. The content is JSON; the `.esqlabsR`
+#'   extension marks the file as a portable, shareable freeze-frame,
 #'   distinguishing it at a glance from the `Project.json` container of a live
-#'   tree project. The snapshot is derived; the authoritative form remains the
-#'   definitions tree (the `definitions/` directory next to the project file).
-#'   Reloading a snapshot with [loadSnapshot()] writes the project back out as
-#'   an on-disk `definitions/` tree (loading a snapshot materializes it) and
-#'   yields a `Project` structurally identical to the source, so snapshot then
-#'   load then snapshot is a fixed point.
+#'   tree project.
 #'
-#'   Authoring is write-through: every `add*` / `remove*` / `set*` edit lands
-#'   in its definition file immediately, so `saveSnapshot()` is not needed to
-#'   persist edits. It produces the single-file shareable freeze-frame.
+#'   Materialize a snapshot back into a working tree with [restoreProject()];
+#'   snapshot then restore then snapshot is a fixed point.
 #'
-#' @param project A `Project` object.
-#' @param path Path where the snapshot should be written. The output is
-#'   normalized to a `.esqlabsR` file: a path with no extension or a `.json`
-#'   extension is written as `.esqlabsR` (e.g. `"study1"` and `"study1.json"`
-#'   both write `study1.esqlabsR`); a `.esqlabsR` path is used verbatim; any
-#'   other explicit extension is honored as given (with an informational note
-#'   that `.esqlabsR` is the canonical form). Must resolve to a location other
-#'   than the project's own container (`project$jsonPath`): a snapshot is a
-#'   derived artifact, so writing it onto the authoritative tree's container
-#'   would inline sections that the `definitions/` tree already owns and the
-#'   two would diverge on reload. For an in-memory project (no `jsonPath`),
-#'   `path` is required.
+#' @param project A `Project` object. It need not be bound to a directory; an
+#'   in-memory project can be snapshotted too.
+#' @param dir Target folder for the snapshot file (default `"."`). Created if
+#'   it does not exist.
+#' @param name Filename stem for the snapshot (the `.esqlabsR` extension is
+#'   always forced, so any extension you include is replaced: `"exp.zip"` and
+#'   `"study.json"` both become `exp.esqlabsR` / `study.esqlabsR`). When `NULL`
+#'   (default), a colon-free timestamped stem
+#'   `<projectName>-YYYY-MM-DD-HHMMSS` is used (sortable and Windows-safe);
+#'   `<projectName>` falls back to `"project"` when the project has no name.
+#' @param overwrite If `FALSE` (default), writing over an existing snapshot
+#'   file aborts. Pass `TRUE` to replace it.
 #'
-#' @returns Invisibly returns the (normalized) path the snapshot was written
-#'   to.
+#' @returns Invisibly, the (normalized `.esqlabsR`) path the snapshot was
+#'   written to.
 #' @export
 #' @family project persistence
-#' @seealso [loadSnapshot()], [loadProject()].
+#' @seealso [restoreProject()], [loadProject()], [saveProject()].
 #' @examples
 #' # Scaffold a throwaway example project and snapshot it to a single file.
 #' dir <- file.path(tempdir(), "snapshot-example")
 #' dir.create(dir, showWarnings = FALSE)
 #' initProject(dir, type = "example", createExcel = FALSE)
 #' project <- loadProject(file.path(dir, "Project.json"))
-#' snapshot <- saveSnapshot(project, file.path(tempdir(), "study"))
+#' snapshot <- snapshotProject(project, dir = tempdir(), name = "study")
 #' snapshot # the normalized .esqlabsR path
-saveSnapshot <- function(project, path = NULL) {
+snapshotProject <- function(
+  project,
+  dir = ".",
+  name = NULL,
+  overwrite = FALSE
+) {
   validateIsOfType(project, "Project")
 
-  if (is.null(path)) {
-    if (is.null(project$jsonPath)) {
-      cli::cli_abort(messages$noProjectPath())
-    }
-    cli::cli_abort(messages$snapshotOntoOwnContainer())
+  # Resolve the filename stem. A NULL `name` gets the colon-free timestamped
+  # default; a nameless project falls back to the fixed "project" stem.
+  if (is.null(name)) {
+    projectName <- project$name %||% "project"
+    stem <- paste0(projectName, "-", format(Sys.time(), "%Y-%m-%d-%H%M%S"))
+  } else {
+    stem <- name
   }
 
-  rawPath <- path
-  path <- .normalizeSnapshotPath(path)
+  # A snapshot IS a `.esqlabsR`; force the extension regardless of what the
+  # caller included (idempotent for a `.esqlabsR` stem).
+  fileName <- fs::path_ext_set(stem, "esqlabsR")
+  path <- file.path(dir, fileName)
 
-  # A snapshot is a derived freeze-frame, not the authoritative form. Writing
-  # it onto the project's own container would inline the sections while the
-  # `definitions/` tree (which wins on reload) stays in place, so the two would
-  # diverge. Refuse and point the user at a distinct location. Check both the
-  # path as given (so passing `project$jsonPath`, a `Project.json`, is refused
-  # even though it normalizes to `Project.esqlabsR`) and the normalized path
-  # (so a path that *lands* on the container is also caught).
-  if (!is.null(project$jsonPath)) {
-    container <- as.character(fs::path_abs(project$jsonPath))
-    targets <- c(
-      as.character(fs::path_abs(rawPath)),
-      as.character(fs::path_abs(path))
-    )
-    if (container %in% targets) {
-      cli::cli_abort(messages$snapshotOntoOwnContainer())
-    }
+  if (!dir.exists(dir)) {
+    dir.create(dir, recursive = TRUE, showWarnings = FALSE)
+  }
+
+  if (file.exists(path) && !overwrite) {
+    cli::cli_abort(messages$snapshotFileExists(path))
   }
 
   .saveProjectJson(project, path)
   invisible(path)
 }
 
-# Normalize a snapshot output path to the `.esqlabsR` artifact extension. A
-# path with no extension or a `.json` extension becomes `.esqlabsR` (the
-# canonical portable-snapshot form); a `.esqlabsR` path is returned verbatim;
-# any other explicit extension is honored as given, with an informational note
-# that `.esqlabsR` is canonical so the user knows the convention but is not
-# overruled. The content is JSON either way.
-#
-# @keywords internal
-# @noRd
-.normalizeSnapshotPath <- function(path) {
-  ext <- fs::path_ext(path)
-  if (ext == "" || identical(tolower(ext), "json")) {
-    return(fs::path_ext_set(path, "esqlabsR"))
-  }
-  if (identical(tolower(ext), "esqlabsr")) {
-    return(path)
-  }
-  cli::cli_inform(c(
-    "i" = "Writing the snapshot to {.file {path}}, keeping the \\
-    {.field .{ext}} extension you gave.",
-    "i" = "The canonical single-file snapshot extension is {.field .esqlabsR}."
-  ))
-  path
-}
-
-#' Load a Project from a single-file snapshot, materializing its tree
+#' Restore a project tree from a single-file snapshot
 #'
-#' @description Reads a single self-contained snapshot file (a portable
-#'   freeze-frame with every section inlined) and writes it back out as a full
+#' @description Read a single self-contained snapshot file (a portable
+#'   freeze-frame with every section inlined) and materialize it into a full
 #'   on-disk tree project at `dir`: a `Project.json` container plus a
 #'   `definitions/<kind>/` tree (one file per definition) for every section.
-#'   Loading a snapshot *is* materializing it; there is no separate materialize
-#'   step. The returned `Project` is bound to `dir`, so further `add*` /
-#'   `remove*` / `set*` edits are write-through to the new tree.
+#'   Returns a freshly-loaded `Project` bound to `dir`.
+#'
+#'   Restore is path-based and needs no loaded project: the driving use case is
+#'   sharing, where a colleague hands you a `.esqlabsR` and
+#'   `restoreProject("theirs.esqlabsR", "myproj")` recreates the working tree
+#'   from scratch. It is also the rollback half of the save-point story: with
+#'   `overwrite = TRUE` it rolls a working directory back to a snapshot in
+#'   place.
 #'
 #'   The canonical snapshot form is a `.esqlabsR` file (as written by
-#'   [saveSnapshot()]), but a plain inlined `Project.json` is also accepted for
-#'   back-compatibility (for example, the file [importProjectFromExcel()]
+#'   [snapshotProject()]), but a plain inlined `Project.json` is also accepted
+#'   for back-compatibility (for example, the file [importProjectFromExcel()]
 #'   writes). The result is a normal tree project: [loadProject()] reads it back
 #'   from `dir` identically (section for section).
 #'
-#' @param file Path to the snapshot file to read (a `.esqlabsR` file, or a
-#'   plain inlined `Project.json`). Required; a snapshot path is never
-#'   optional.
-#' @param dir Target directory for the materialized tree project. Required.
-#'   It is created if it does not exist. If it already contains an esqlabsR
-#'   project, `loadSnapshot()` aborts rather than overwrite it; pass an empty
-#'   or new directory.
+#' @param snapshot Path to the snapshot file to read (a `.esqlabsR` file, or a
+#'   plain inlined `Project.json`). Must exist.
+#' @param dir Target directory for the materialized tree project (default
+#'   `"."`). Created if it does not exist.
+#' @param overwrite If `FALSE` (default), a `dir` that already contains an
+#'   esqlabsR project aborts; unpack into a fresh directory only. If `TRUE`,
+#'   the existing tree in `dir` is replaced in place (an in-place rollback),
+#'   and a warning is raised that any `Project` previously loaded from `dir` is
+#'   now stale. Rebind to the returned object, or [reloadProject()] the old
+#'   handle. The blessed idiom is `p <- restoreProject(snap, dir,
+#'   overwrite = TRUE)`.
 #'
-#' @returns Object of type `Project`, bound to `dir`.
+#' @returns A freshly-loaded `Project`, bound to `dir`, with a clear dirty bit.
 #' @export
 #' @family project persistence
-#' @seealso [saveSnapshot()], [loadProject()].
+#' @seealso [snapshotProject()], [loadProject()], [reloadProject()].
 #' @examples
 #' # Write a snapshot, then materialize it into a fresh tree project.
-#' src <- file.path(tempdir(), "loadsnapshot-src")
+#' src <- file.path(tempdir(), "restore-src")
 #' dir.create(src, showWarnings = FALSE)
 #' initProject(src, type = "example", createExcel = FALSE)
-#' snapshot <- saveSnapshot(
+#' snapshot <- snapshotProject(
 #'   loadProject(file.path(src, "Project.json")),
-#'   file.path(tempdir(), "shared")
+#'   dir = tempdir(),
+#'   name = "shared"
 #' )
-#' project <- loadSnapshot(snapshot, file.path(tempdir(), "restored"))
-loadSnapshot <- function(file, dir) {
-  validateIsString(file)
+#' project <- restoreProject(snapshot, file.path(tempdir(), "restored"))
+restoreProject <- function(snapshot, dir = ".", overwrite = FALSE) {
+  validateIsString(snapshot)
   validateIsString(dir)
-  if (!file.exists(file)) {
-    cli::cli_abort(messages$fileNotFound(file))
+  if (!file.exists(snapshot)) {
+    cli::cli_abort(messages$fileNotFound(snapshot))
   }
 
-  if (isProjectInitialized(dir)) {
-    cli::cli_abort(messages$loadSnapshotDirNotEmpty(dir))
+  # A non-empty `dir` is only replaced with `overwrite = TRUE`; that overwrite
+  # is what fires the stale-handle warning below.
+  replacedExistingTree <- isProjectInitialized(dir)
+  if (replacedExistingTree && !overwrite) {
+    cli::cli_abort(messages$restoreDirNotEmpty(dir))
   }
   if (!dir.exists(dir)) {
     dir.create(dir, recursive = TRUE, showWarnings = FALSE)
@@ -1358,7 +1359,7 @@ loadSnapshot <- function(file, dir) {
   # still resolve). The canonicalized JSON is written to a throwaway file and
   # loaded from there, so the in-memory project the tree is exploded from is
   # already canonical.
-  jsonData <- jsonlite::fromJSON(file, simplifyVector = FALSE)
+  jsonData <- jsonlite::fromJSON(snapshot, simplifyVector = FALSE)
   jsonData <- .canonicalizeProjectJsonIds(jsonData)
   canonFile <- tempfile(fileext = ".json")
   on.exit(unlink(canonFile), add = TRUE)
@@ -1373,20 +1374,32 @@ loadSnapshot <- function(file, dir) {
 
   # Read the canonicalized snapshot into an in-memory `Project`, then explode it
   # into the `definitions/<kind>/` tree at `dir`. Loading the materialized
-  # container back returns a tree-backed `Project` whose write-through edits land
-  # in `dir`.
-  snapshotProject <- loadProject(canonFile)
-  containerPath <- .writeProjectTree(snapshotProject, dir)
-  loadProject(containerPath)
+  # container back returns a fresh tree-backed `Project` bound to `dir`. The
+  # local is named `inMemory` (not `snapshotProject`) so it does not shadow the
+  # exported `snapshotProject()` function.
+  inMemory <- loadProject(canonFile)
+  containerPath <- .writeProjectTree(inMemory, dir)
+  restored <- loadProject(containerPath)
+
+  # The overwrite replaced a live tree; any `Project` loaded from `dir` before
+  # this call now points at stale in-memory state. Warn on the overwrite action
+  # (there is no live-object registry to detect a specific handle).
+  if (replacedExistingTree && overwrite) {
+    cli::cli_warn(messages$restoreOverwroteTree(dir))
+  }
+
+  restored
 }
 
 # Explode an in-memory `Project` into a full on-disk tree project at `dir`: a
 # `Project.json` container plus a `definitions/<kind>/` tree (one file per
-# entity) for every section. Returns the container path. Reuses the
-# write-through serializer per kind (no parallel serializer); a keyed kind's
-# writer removes files that no longer correspond to a section entity, so a
-# re-run leaves no stale entries (idempotent overwrite). Shared by
-# `loadSnapshot()` and the Excel import.
+# entity) for every section. Returns the container path. This is the full-tree
+# reconciler that `saveProject()` and `restoreProject()` both drive: it
+# serializes every kind and writes each entity write-if-different, and each
+# kind's writer owns its `<kind>/` directory (it deletes any `.json` not in the
+# freshly-written keep-set), so a re-run reconciles the tree to memory exactly,
+# leaving no stale entries. Shared by `saveProject()`, `restoreProject()`, and
+# the Excel import.
 #
 # @keywords internal
 # @noRd

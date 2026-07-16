@@ -71,7 +71,7 @@ test_that("removeOutputPath does not over-report when an unreferenced id shares 
 
 # setOutputPath ----
 
-test_that("setOutputPath changes the literal path and persists to file and memory", {
+test_that("setOutputPath changes the literal path in memory and persists on save", {
   project <- testProject()
   id <- names(project$outputPaths)[[1]]
   setOutputPath(project, id, "Organism|Lung|Concentration in container")
@@ -81,7 +81,8 @@ test_that("setOutputPath changes the literal path and persists to file and memor
     "Organism|Lung|Concentration in container"
   )
 
-  # The write-through must reach disk: a throwaway reload sees the new path.
+  # The edit reaches disk on save: a throwaway reload sees the new path.
+  saveProject(project)
   reloaded <- loadProject(project$jsonPath)
   expect_equal(
     reloaded$outputPaths[[id]],
@@ -126,19 +127,17 @@ test_that("setOutputPath rejects an empty path", {
   expect_equal(project$outputPaths[[id]], before)
 })
 
-test_that("setOutputPath on a clone does not affect the source on disk", {
+test_that("setOutputPath stays in memory until saveProject()", {
   source <- testProject()
   id <- names(source$outputPaths)[[1]]
   before <- source$outputPaths[[id]]
-  clone <- source$clone()
-  setOutputPath(clone, id, "Organism|Lung|Concentration in container")
+  setOutputPath(source, id, "Organism|Lung|Concentration in container")
 
   expect_equal(
-    clone$outputPaths[[id]],
+    source$outputPaths[[id]],
     "Organism|Lung|Concentration in container"
   )
-  expect_equal(source$outputPaths[[id]], before)
-  # The clone's edit must not reach the source's on-disk tree.
+  # The edit must not reach the on-disk tree before a save.
   reloaded <- loadProject(source$jsonPath)
   expect_equal(reloaded$outputPaths[[id]], before)
 })
@@ -157,6 +156,7 @@ test_that("addOutputPath aligns a length-N path vector by position", {
   addOutputPath(project, c("a", "b"), c("Organism|A", "Organism|B"))
   expect_identical(project$outputPaths$a, "Organism|A")
   expect_identical(project$outputPaths$b, "Organism|B")
+  saveProject(project)
   reloaded <- loadProject(project$jsonPath)
   expect_identical(reloaded$outputPaths$a, "Organism|A")
   expect_identical(reloaded$outputPaths$b, "Organism|B")

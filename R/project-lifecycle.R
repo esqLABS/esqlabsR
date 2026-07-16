@@ -17,36 +17,150 @@
 #' @returns Object of type `Project`
 #' @export
 #' @family project persistence
+#' @seealso [saveProject()], [reloadProject()], [snapshotProject()],
+#'   [restoreProject()], [syncStatus()].
 #'
-#' @section Editing a loaded project is write-through:
-#'   A loaded project is bound to its directory on disk, and every
-#'   authoring edit is write-through: a single `addOutputPath()`,
-#'   `addScenario()`, `setIndividual()`, or `removeParameterSet()` writes (or
-#'   deletes) the affected entity's file immediately. The `project$<section>`
-#'   accessors are read-only, so a definition only ever changes through an
-#'   authoring function. There is no separate save step, and there is no undo:
-#'   the edit is on disk the moment the call returns.
+#' @section Editing a loaded project (explicit save):
+#'   A loaded project holds its entity tree in memory, and memory is the source
+#'   of truth: every authoring edit (`addOutputPath()`, `addScenario()`,
+#'   `setIndividual()`, `removeParameterSet()`, and the metadata setters)
+#'   mutates memory in place and sets an internal dirty bit, but nothing
+#'   touches the on-disk `definitions/` tree. The `project$<section>` accessors
+#'   are read-only, so a definition only ever changes through an authoring
+#'   function.
 #'
-#'   To experiment without touching the on-disk project, work on a detached
-#'   copy. `project$clone()` returns an in-memory copy whose edits stay in
-#'   memory (they do not write to the source's `definitions/` tree) until it
-#'   is bound to a directory of its own. To capture a shareable freeze-frame
-#'   of the current state, use [saveSnapshot()], and reload it elsewhere
-#'   with [loadSnapshot()].
+#'   Commit the edits to disk with [saveProject()], which reconciles the tree
+#'   to memory (write-if-different, and orphan-delete for removed entities).
+#'   Discard unsaved edits and re-read from disk with [reloadProject()] (the
+#'   undo). Checkpoint the current state to a portable single file with
+#'   [snapshotProject()], and roll a working directory back to one with
+#'   [restoreProject()]. Inspect divergence with [syncStatus()].
 #'
 #' @examples
 #' \dontrun{
 #' project <- loadProject("Project.json")
 #' results <- runScenarios(project)
 #'
-#' # Edits are write-through; clone first for scratch work.
-#' scratch <- project$clone()
-#' addOutputPath(scratch, "x", "Organism|A|Concentration in container")
+#' # Edits stay in memory until you save.
+#' addOutputPath(project, "x", "Organism|A|Concentration in container")
+#' saveProject(project)
 #' }
 loadProject <- function(path = "Project.json") {
   project <- Project$new(projectFilePath = path)
   .warnOnCrossReferenceErrors(project)
   project
+}
+
+#' Save a project's in-memory edits to its on-disk tree
+#'
+#' @description Reconcile the on-disk `definitions/` tree to the in-memory
+#'   project, in place. This is the commit step of the explicit-save model:
+#'   authoring edits (`addScenario()`, `setIndividual()`,
+#'   `removeParameterSet()`, and the metadata setters) stay in memory until
+#'   `saveProject()` writes them out.
+#'
+#'   The save is a full-tree reconciliation, not an incremental write:
+#'
+#'   - Write-if-different: only entity files whose serialized content differs
+#'     from what is already on disk are written, so `git diff` shows exactly
+#'     the entities you changed.
+#'   - Orphan reconciliation: an entity removed in memory has its
+#'     `definitions/<kind>/<id>.json` deleted. Deletion is strictly scoped to
+#'     the definitions tree; nothing outside it is touched.
+#'   - The `Project.json` container is rewritten with its inline sections
+#'     emptied (the tree owns them).
+#'
+#'   A clean save (nothing diverges from disk) is an idempotent no-op that
+#'   reports an informational message, never an error.
+#'
+#'   `saveProject()` is single-axis: it reconciles memory to the tree only and
+#'   never warns about a stale Excel side-car. Refresh the workbook separately
+#'   with [exportProjectToExcel()]; inspect divergence with [syncStatus()].
+#'
+#' @param project A `Project` bound to a directory (loaded with [loadProject()]
+#'   or restored with [restoreProject()]). An unbound in-memory project (from
+#'   `Project$new()`) has no tree to save to and aborts; use [snapshotProject()]
+#'   to write a portable file, or [initProject()] plus [loadProject()] to give
+#'   it a home.
+#'
+#' @returns Invisibly, the `project`.
+#' @export
+#' @family project persistence
+#' @seealso [loadProject()], [reloadProject()], [snapshotProject()],
+#'   [restoreProject()], [syncStatus()].
+#' @examples
+#' \dontrun{
+#' project <- loadProject("Project.json")
+#' addOutputPath(project, "PVB", "Organism|PeripheralVenousBlood|...")
+#' saveProject(project) # tree now mirrors memory
+#' saveProject(project) # clean save: "Project is already up to date; ..."
+#' }
+saveProject <- function(project) {
+  validateIsOfType(project, "Project")
+
+  if (is.null(project$projectFilePath)) {
+    cli::cli_abort(messages$saveProjectNoTree())
+  }
+
+  # The dirty bit is the memory-vs-tree divergence signal. A clean save is a
+  # reassuring, idempotent no-op, never an error.
+  if (!project$.isModified()) {
+    cli::cli_inform(messages$projectAlreadyUpToDate())
+    return(invisible(project))
+  }
+
+  # Drive the full-tree reconciler: `.writeProjectTree()` writes every kind's
+  # write-if-different, orphan-reconciled tree and the `containerOnly = TRUE`
+  # `Project.json` in one pass, which is exactly `saveProject()`'s contract.
+  .writeProjectTree(project, project$projectDirPath)
+
+  project$.clearModified()
+  invisible(project)
+}
+
+#' Discard a project's in-memory edits and re-read it from disk
+#'
+#' @description The undo of the explicit-save model: discard every unsaved
+#'   in-memory edit and re-read the project from its on-disk tree, in place.
+#'   The `Project` object identity is preserved (edits are reverted by R6
+#'   reference), so existing handles stay valid.
+#'
+#'   A clean reload (no unsaved edits) is a silent no-op. Unlike a clean
+#'   [saveProject()], it prints nothing, because reverting to what is already
+#'   in memory needs no announcement.
+#'
+#' @param project A `Project` bound to a directory. An unbound in-memory
+#'   project has nothing to reload from and aborts.
+#'
+#' @returns Invisibly, the `project`, with in-memory edits discarded and the
+#'   dirty bit cleared.
+#' @export
+#' @family project persistence
+#' @seealso [loadProject()], [saveProject()], [snapshotProject()],
+#'   [restoreProject()], [syncStatus()].
+#' @examples
+#' \dontrun{
+#' project <- loadProject("Project.json")
+#' addScenario(project, "oops", modelFile = "model.pkml")
+#' reloadProject(project) # discard the edit, back to disk
+#' }
+reloadProject <- function(project) {
+  validateIsOfType(project, "Project")
+
+  if (is.null(project$projectFilePath)) {
+    cli::cli_abort(messages$reloadProjectNoTree())
+  }
+
+  # Silent-when-clean: skip the re-read entirely so a clean reload emits no
+  # message and re-fires no cross-reference warning. Check the bit before
+  # re-reading, since `.reload()` clears it.
+  if (!project$.isModified()) {
+    return(invisible(project))
+  }
+
+  project$.reload()
+  .warnOnCrossReferenceErrors(project)
+  invisible(project)
 }
 
 #' Emit a `cli_warn` listing critical cross-reference errors, if any

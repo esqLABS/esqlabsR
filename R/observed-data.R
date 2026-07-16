@@ -297,11 +297,10 @@ addObservedData <- function(project, entry) {
       )
     }
     sentinel <- .asObservedDataSource(list(type = "programmatic", name = name))
-    # Write through to disk FIRST: `.setSection()` can abort (e.g. an on-disk
-    # id/basename collision surfaced by the serializer), so mutate the runtime
-    # store only after the write succeeds. Committing the store first would
-    # leave a runtime DataSet with no disk sentinel if the write aborts, i.e.
-    # memory and disk disagreeing.
+    # Update the in-memory section and the runtime store together: under
+    # explicit-save `.setSection()` does not touch disk, so both are pure
+    # in-memory mutations. Any on-disk id/basename collision is surfaced later,
+    # by the serializer, when `saveProject()` reconciles the tree.
     project$.setSection(
       "observedData",
       c(project$.getSection("observedData"), list(sentinel))
@@ -440,11 +439,9 @@ removeObservedData <- function(project, id) {
   if (length(dropIdx) > 0L) {
     observedData <- observedData[-unique(dropIdx)]
   }
-  # Write through to disk FIRST: `.setSection()` can abort (the serializer can
-  # reject the resulting section on an id/basename collision), so clear the
-  # runtime store only after the write succeeds. Clearing the store first would
-  # drop the in-memory DataSet while the disk sentinel survives if the write
-  # aborts, i.e. memory and disk disagreeing.
+  # Update the in-memory section and the runtime store together (both pure
+  # in-memory mutations under explicit-save; nothing touches disk until
+  # `saveProject()`).
   project$.setSection("observedData", observedData)
   for (name in programmaticNames) {
     state$.programmaticDataSets[[name]] <- NULL

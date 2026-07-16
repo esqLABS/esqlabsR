@@ -26,22 +26,22 @@ that is not defined). Any such issues are reported via \code{\link[cli:cli_warn]
 so that obvious configuration mistakes surface immediately, but loading
 still succeeds. Use \code{\link[=validateProject]{validateProject()}} for a full report.
 }
-\section{Editing a loaded project is write-through}{
+\section{Editing a loaded project (explicit save)}{
 
-A loaded project is bound to its directory on disk, and every
-authoring edit is write-through: a single \code{addOutputPath()},
-\code{addScenario()}, \code{setIndividual()}, or \code{removeParameterSet()} writes (or
-deletes) the affected entity's file immediately. The \verb{project$<section>}
-accessors are read-only, so a definition only ever changes through an
-authoring function. There is no separate save step, and there is no undo:
-the edit is on disk the moment the call returns.
+A loaded project holds its entity tree in memory, and memory is the source
+of truth: every authoring edit (\code{addOutputPath()}, \code{addScenario()},
+\code{setIndividual()}, \code{removeParameterSet()}, and the metadata setters)
+mutates memory in place and sets an internal dirty bit, but nothing
+touches the on-disk \verb{definitions/} tree. The \verb{project$<section>} accessors
+are read-only, so a definition only ever changes through an authoring
+function.
 
-To experiment without touching the on-disk project, work on a detached
-copy. \code{project$clone()} returns an in-memory copy whose edits stay in
-memory (they do not write to the source's \verb{definitions/} tree) until it
-is bound to a directory of its own. To capture a shareable freeze-frame
-of the current state, use \code{\link[=saveSnapshot]{saveSnapshot()}}, and reload it elsewhere
-with \code{\link[=loadSnapshot]{loadSnapshot()}}.
+Commit the edits to disk with \code{\link[=saveProject]{saveProject()}}, which reconciles the tree
+to memory (write-if-different, and orphan-delete for removed entities).
+Discard unsaved edits and re-read from disk with \code{\link[=reloadProject]{reloadProject()}} (the
+undo). Checkpoint the current state to a portable single file with
+\code{\link[=snapshotProject]{snapshotProject()}}, and roll a working directory back to one with
+\code{\link[=restoreProject]{restoreProject()}}. Inspect divergence with \code{\link[=syncStatus]{syncStatus()}}.
 }
 
 \examples{
@@ -49,18 +49,24 @@ with \code{\link[=loadSnapshot]{loadSnapshot()}}.
 project <- loadProject("Project.json")
 results <- runScenarios(project)
 
-# Edits are write-through; clone first for scratch work.
-scratch <- project$clone()
-addOutputPath(scratch, "x", "Organism|A|Concentration in container")
+# Edits stay in memory until you save.
+addOutputPath(project, "x", "Organism|A|Concentration in container")
+saveProject(project)
 }
 }
 \seealso{
+\code{\link[=saveProject]{saveProject()}}, \code{\link[=reloadProject]{reloadProject()}}, \code{\link[=snapshotProject]{snapshotProject()}},
+\code{\link[=restoreProject]{restoreProject()}}, \code{\link[=syncStatus]{syncStatus()}}.
+
 Other project persistence:
 \code{\link[=exampleProjectPath]{exampleProjectPath()}},
 \code{\link[=exportProjectToExcel]{exportProjectToExcel()}},
 \code{\link[=importProjectFromExcel]{importProjectFromExcel()}},
 \code{\link[=initProject]{initProject()}},
-\code{\link[=loadSnapshot]{loadSnapshot()}},
-\code{\link[=saveSnapshot]{saveSnapshot()}}
+\code{\link[=reloadProject]{reloadProject()}},
+\code{\link[=restoreProject]{restoreProject()}},
+\code{\link[=saveProject]{saveProject()}},
+\code{\link[=snapshotProject]{snapshotProject()}},
+\code{\link[=syncStatus]{syncStatus()}}
 }
 \concept{project persistence}

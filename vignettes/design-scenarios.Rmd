@@ -26,7 +26,7 @@ This article assumes you know what a Project is and how to load one; see `vignet
 
 ## Working against a writable copy
 
-Every authoring function in this article mutates a Project, and scenario edits are **write-through**: the moment you add or change a scenario, its definition file is written to disk under `definitions/scenarios/`. So you never want to author against the package's own bundled example. Instead, scaffold a fresh, writable copy of the worked example into a temporary directory and load that:
+Every authoring function in this article mutates a Project in memory, and `saveProject()` reconciles those edits to the `definitions/scenarios/` tree on disk. So you never want to author against (and save over) the package's own bundled example. Instead, scaffold a fresh, writable copy of the worked example into a temporary directory and load that:
 
 ```{r}
 project_dir <- withr::local_tempdir()
@@ -109,7 +109,7 @@ project$individuals[["adult_female"]]
 
 The `parameterSets` argument is a character vector of ids referencing the project's parameter sets; it is validated immediately, so a typo in a set id is caught at add time rather than at run time.
 
-The authoring functions are **vectorized over the id**: pass a vector of ids to add several definitions in one call (one write-through). The id sets the count, a scalar field is recycled to all of them, a length-matched vector is aligned by position, and a field that is itself a vector for one definition (such as `parameterSets`) is applied whole to each. The call is all-or-nothing: if any one definition fails validation, nothing is written.
+The authoring functions are **vectorized over the id**: pass a vector of ids to add several definitions in one call. The id sets the count, a scalar field is recycled to all of them, a length-matched vector is aligned by position, and a field that is itself a vector for one definition (such as `parameterSets`) is applied whole to each. The call is all-or-nothing: if any one definition fails validation, none is applied.
 
 ```{r}
 addIndividual(

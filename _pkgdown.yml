@@ -18,8 +18,11 @@ reference:
     contents:
       - Project
       - loadProject
-      - loadSnapshot
-      - saveSnapshot
+      - saveProject
+      - reloadProject
+      - snapshotProject
+      - restoreProject
+      - syncStatus
       - initProject
       - exampleProjectPath
       - importProjectFromExcel

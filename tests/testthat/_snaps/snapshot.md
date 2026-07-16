@@ -1,9 +1,19 @@
-# saveSnapshot refuses the own container path
+# snapshotProject errors over an existing file unless overwrite
 
     Code
-      saveSnapshot(project, project$jsonPath)
+      snapshotProject(project, dir = dir, name = "study")
     Condition
-      Error in `saveSnapshot()`:
-      ! A snapshot is a derived artifact and must be written to a location other than the project's own jsonPath.
-      i Pass a `path` to a different file. The authoritative 'definitions/' tree and 'Project.json' container are already write-through, so there is nothing to save in place.
+      Error in `snapshotProject()`:
+      ! A snapshot file already exists at '<tmp-path>.esqlabsR'.
+      i Pass `overwrite = TRUE` to replace it, or a different `name`.
+
+# restoreProject with overwrite = TRUE rolls back in place and warns
+
+    Code
+      rolledBack <- restoreProject(out, dir, overwrite = TRUE)
+    Condition
+      Warning:
+      Replaced the existing project in '<tmp-path>' with the snapshot.
+      ! Any <Project> previously loaded from `dir` is now stale.
+      i Rebind to the object `restoreProject()` returned, or `reloadProject()` the old handle.
 

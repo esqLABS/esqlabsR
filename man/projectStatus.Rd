@@ -37,7 +37,7 @@ Compares Excel configuration files against their JSON
 configuration to determine if they are synchronized.
 }
 \seealso{
-The method \code{Project$syncStatus()} reports the same comparison for a
-loaded \code{Project} (against its \code{Project.xlsx} side-car) and returns the same
-\code{excel_in_sync} / \code{details} shape.
+\code{\link[=syncStatus]{syncStatus()}} reports the same Excel comparison for a loaded
+\code{Project} (against its \code{Project.xlsx} side-car) as one of its two axes,
+alongside the memory-vs-tree axis.
 }

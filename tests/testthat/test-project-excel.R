@@ -664,10 +664,11 @@ test_that(".compareJsonToExcel does not count id canonicalization as drift", {
   expect_true(stillInSync$excel_in_sync)
 })
 
-# A corrupt or unreadable Excel side-car cannot be compared. The sync status
-# must report that honestly as NA (the "cannot compare" state), not silently
-# claim the project is in sync, and must warn when not silent.
-test_that("syncStatus() reports NA (and warns) when the Excel side-car is unreadable", {
+# A corrupt or unreadable Excel side-car cannot be compared. The Excel axis of
+# syncStatus() must report that honestly as NA (the "cannot compare" state),
+# not silently claim the project is in sync, and must warn when not silent. The
+# tree axis is unaffected (a freshly loaded project is in sync).
+test_that("syncStatus() reports the Excel axis as NA (and warns) when the side-car is unreadable", {
   work_dir <- withr::local_tempdir()
   file.copy(dirname(exampleProjectPath()), work_dir, recursive = TRUE)
   jsonPath <- file.path(work_dir, "Example", "Project.json")
@@ -680,13 +681,15 @@ test_that("syncStatus() reports NA (and warns) when the Excel side-car is unread
     file.path(work_dir, "Example", "Project.xlsx")
   )
 
-  # Silent: the status is NA, no warning surfaces.
-  status <- suppressWarnings(project$syncStatus(silent = TRUE))
+  # Silent: the Excel axis is one of two; it is NA, the tree axis is in sync.
+  status <- suppressWarnings(syncStatus(project, silent = TRUE))
+  expect_named(status, c("tree_in_sync", "excel_in_sync", "details"))
   expect_identical(status$excel_in_sync, NA)
+  expect_true(status$tree_in_sync)
 
   # Non-silent: a warning surfaces naming the comparison failure.
   expect_warning(
-    project$syncStatus(silent = FALSE),
+    syncStatus(project, silent = FALSE),
     "Cannot compare the Excel side-car"
   )
 })

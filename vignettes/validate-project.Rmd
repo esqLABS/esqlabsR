@@ -103,7 +103,7 @@ validationSummary(broken_results)
 
 ## Resolve and re-validate
 
-Fixing the problem is the same authoring you already know. Here the scenario simply needs to point at the correct individual id; `setScenario()` updates it in place (and write-through persists the fix to the scenario file):
+Fixing the problem is the same authoring you already know. Here the scenario simply needs to point at the correct individual id; `setScenario()` updates it in memory (call `saveProject()` when you want the fix on disk):
 
 ```{r}
 setScenario(broken, "aciclovir_iv", individual = "adult_male")

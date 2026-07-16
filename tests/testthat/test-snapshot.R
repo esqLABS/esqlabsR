@@ -1,59 +1,111 @@
 # Tests for the single-file snapshot artifact (R/entity-files.R):
-# the `.esqlabsR` extension normalization on saveSnapshot(), and the
-# two-argument loadSnapshot(file, dir) which reads a snapshot and writes a
-# full definitions/<kind>/ tree project at `dir`, returning the Project bound
-# to `dir`. Loading a snapshot IS materializing it; the surface is just save
-# and load, with no separate explode-the-tree verb.
+# `snapshotProject(project, dir, name, overwrite)` writes a portable
+# `.esqlabsR` freeze of the in-memory state, and
+# `restoreProject(snapshot, dir, overwrite)` reads one and materializes a full
+# definitions/<kind>/ tree project at `dir`, returning the Project bound to
+# `dir`. Restoring a snapshot IS materializing it; there is no separate
+# explode-the-tree verb.
 
-# --- saveSnapshot: the `.esqlabsR` extension ----------------------------------
+# --- snapshotProject: the `.esqlabsR` extension -------------------------------
 
-test_that("saveSnapshot normalizes a no-extension path to .esqlabsR", {
+test_that("snapshotProject forces .esqlabsR for a no-extension name", {
   project <- testProject()
   dir <- withr::local_tempdir()
-  out <- saveSnapshot(project, file.path(dir, "study1"))
+  out <- snapshotProject(project, dir = dir, name = "study1")
 
   expect_identical(fs::path_ext(out), "esqlabsR")
   expect_true(file.exists(out))
   expect_false(file.exists(file.path(dir, "study1")))
 })
 
-test_that("saveSnapshot normalizes a .json path to .esqlabsR", {
+test_that("snapshotProject forces .esqlabsR for a .json name", {
   project <- testProject()
   dir <- withr::local_tempdir()
-  out <- saveSnapshot(project, file.path(dir, "study1.json"))
+  out <- snapshotProject(project, dir = dir, name = "study1.json")
 
   expect_identical(fs::path_ext(out), "esqlabsR")
   expect_true(file.exists(out))
   expect_false(file.exists(file.path(dir, "study1.json")))
 })
 
-test_that("saveSnapshot keeps an explicit .esqlabsR path verbatim", {
+test_that("snapshotProject keeps an explicit .esqlabsR name verbatim", {
   project <- testProject()
   dir <- withr::local_tempdir()
-  out <- saveSnapshot(project, file.path(dir, "study1.esqlabsR"))
+  out <- snapshotProject(project, dir = dir, name = "study1.esqlabsR")
 
   expect_identical(out, file.path(dir, "study1.esqlabsR"))
   expect_true(file.exists(out))
 })
 
-test_that("saveSnapshot honors a different explicit extension with a note", {
+test_that("snapshotProject forces .esqlabsR over any foreign extension", {
   project <- testProject()
   dir <- withr::local_tempdir()
-  # The note carries the tempdir path, so match the canonical-form sentence
-  # rather than snapshotting the whole message.
-  expect_message(
-    out <- saveSnapshot(project, file.path(dir, "study1.txt")),
-    "canonical single-file snapshot extension"
+  # A foreign extension is replaced, not honored: `exp.zip` -> `exp.esqlabsR`,
+  # silently (no informational note).
+  out <- expect_no_message(
+    snapshotProject(project, dir = dir, name = "exp.zip")
   )
 
-  expect_identical(fs::path_ext(out), "txt")
+  expect_identical(fs::path_file(out), "exp.esqlabsR")
+  expect_true(file.exists(out))
+})
+
+test_that("snapshotProject uses a timestamped default name from the project", {
+  project <- testProject()
+  dir <- withr::local_tempdir()
+  out <- snapshotProject(project, dir = dir)
+
+  # <projectName>-YYYY-MM-DD-HHMMSS.esqlabsR, colon-free and sortable. Match the
+  # pattern, not the exact timestamp.
+  expect_match(
+    fs::path_file(out),
+    paste0("^", project$name, "-\\d{4}-\\d{2}-\\d{2}-\\d{6}\\.esqlabsR$")
+  )
+  expect_true(file.exists(out))
+})
+
+test_that("snapshotProject default name falls back to 'project' when nameless", {
+  project <- Project$new()
+  project$schemaVersion <- "2.0"
+  dir <- withr::local_tempdir()
+  out <- snapshotProject(project, dir = dir)
+
+  expect_match(
+    fs::path_file(out),
+    "^project-\\d{4}-\\d{2}-\\d{2}-\\d{6}\\.esqlabsR$"
+  )
+  expect_true(file.exists(out))
+})
+
+test_that("snapshotProject creates dir when absent", {
+  project <- testProject()
+  dir <- file.path(withr::local_tempdir(), "new", "nested")
+  expect_false(dir.exists(dir))
+
+  out <- snapshotProject(project, dir = dir, name = "study")
+  expect_true(file.exists(out))
+})
+
+test_that("snapshotProject errors over an existing file unless overwrite", {
+  project <- testProject()
+  dir <- withr::local_tempdir()
+  snapshotProject(project, dir = dir, name = "study")
+
+  expect_snapshot(
+    snapshotProject(project, dir = dir, name = "study"),
+    error = TRUE,
+    transform = .redactTmpDir
+  )
+
+  # `overwrite = TRUE` replaces it.
+  out <- snapshotProject(project, dir = dir, name = "study", overwrite = TRUE)
   expect_true(file.exists(out))
 })
 
 test_that("the .esqlabsR snapshot content is the inlined-JSON snapshot", {
   project <- testProject()
   dir <- withr::local_tempdir()
-  out <- saveSnapshot(project, file.path(dir, "study1"))
+  out <- snapshotProject(project, dir = dir, name = "study1")
 
   # Content is still JSON, with every section inlined and no tree alongside.
   raw <- jsonlite::fromJSON(out, simplifyVector = FALSE)
@@ -61,53 +113,49 @@ test_that("the .esqlabsR snapshot content is the inlined-JSON snapshot", {
   expect_false(dir.exists(file.path(dir, "definitions")))
 })
 
-test_that("saveSnapshot refuses the own container path", {
+test_that("snapshotProject freezes unsaved in-memory edits", {
   project <- testProject()
-  # Passing the container path (Project.json) is refused even though it would
-  # normalize to Project.esqlabsR, because the intent is clearly the container.
-  expect_snapshot(saveSnapshot(project, project$jsonPath), error = TRUE)
-})
-
-test_that("saveSnapshot writes Project.esqlabsR next to the container safely", {
-  project <- testProject()
-  # A no-extension stem of the container basename normalizes to a distinct
-  # `.esqlabsR` file, so it does not clobber the authoritative Project.json.
-  containerNoExt <- fs::path_ext_remove(project$jsonPath)
-  out <- saveSnapshot(project, containerNoExt)
-
-  expect_identical(out, fs::path_ext_set(containerNoExt, "esqlabsR"))
-  expect_true(file.exists(out))
-  # The authoritative container is untouched (still tree-shape: scenarios []).
-  raw <- jsonlite::fromJSON(project$jsonPath, simplifyVector = FALSE)
-  expect_length(raw$scenarios, 0L)
-})
-
-# --- loadSnapshot(file, dir): load IS the materialize -------------------------
-
-test_that("loadSnapshot writes a tree and returns the Project bound to dir", {
-  out <- saveSnapshot(testProject(), file.path(withr::local_tempdir(), "study"))
+  addScenario(project, "freshone", modelFile = "Aciclovir.pkml")
   dir <- withr::local_tempdir()
 
-  project <- loadSnapshot(out, dir)
+  # The snapshot reflects memory (including the unsaved scenario), not disk.
+  out <- snapshotProject(project, dir = dir, name = "study")
+  raw <- jsonlite::fromJSON(out, simplifyVector = FALSE)
+  snapshotScenarioNames <- vapply(raw$scenarios, \(s) s$name, character(1L))
+  expect_true("freshone" %in% snapshotScenarioNames)
+})
+
+# --- restoreProject(snapshot, dir): restore IS the materialize ----------------
+
+test_that("restoreProject writes a tree and returns the Project bound to dir", {
+  out <- snapshotProject(
+    testProject(),
+    dir = withr::local_tempdir(),
+    name = "study"
+  )
+  dir <- withr::local_tempdir()
+
+  project <- restoreProject(out, dir)
 
   # The full tree project is written at `dir`: container + per-kind tree.
   expect_true(file.exists(file.path(dir, "Project.json")))
   expect_true(dir.exists(file.path(dir, "definitions", "scenarios")))
-  # The returned project is bound to `dir`.
+  # The returned project is bound to `dir`, dirty bit clear.
   expect_identical(
     project$projectDirPath,
     dirname(fs::path_abs(
       file.path(dir, "Project.json")
     ))
   )
+  expect_false(project$.isModified())
 })
 
-test_that("loadSnapshot's tree reloads via loadProject identically", {
+test_that("restoreProject's tree reloads via loadProject identically", {
   source <- exampleProject()
-  out <- saveSnapshot(source, file.path(withr::local_tempdir(), "study"))
+  out <- snapshotProject(source, dir = withr::local_tempdir(), name = "study")
   dir <- withr::local_tempdir()
 
-  project <- loadSnapshot(out, dir)
+  project <- restoreProject(out, dir)
   reloaded <- loadProject(file.path(dir, "Project.json"))
 
   expect_named(
@@ -132,16 +180,21 @@ test_that("loadSnapshot's tree reloads via loadProject identically", {
   )
 })
 
-test_that("a loadSnapshot project edits write-through to dir like any tree", {
-  out <- saveSnapshot(testProject(), file.path(withr::local_tempdir(), "study"))
+test_that("a restored project saves edits to dir like any tree", {
+  out <- snapshotProject(
+    testProject(),
+    dir = withr::local_tempdir(),
+    name = "study"
+  )
   dir <- withr::local_tempdir()
-  project <- loadSnapshot(out, dir)
+  project <- restoreProject(out, dir)
   before <- names(project$scenarios)
   scenarioDir <- file.path(dir, "definitions", "scenarios")
 
   addScenario(project, "freshone", modelFile = "Aciclovir.pkml")
-  # Write-through lands the file under `dir`, and a reload sees it alongside
-  # the materialized siblings.
+  # The edit stays in memory until saveProject().
+  expect_false(file.exists(file.path(scenarioDir, "freshone.json")))
+  saveProject(project)
   expect_true(file.exists(file.path(scenarioDir, "freshone.json")))
   reloaded <- loadProject(file.path(dir, "Project.json"))
   expect_named(
@@ -151,14 +204,19 @@ test_that("a loadSnapshot project edits write-through to dir like any tree", {
   )
 
   removeScenario(project, "freshone")
+  saveProject(project)
   expect_false(file.exists(file.path(scenarioDir, "freshone.json")))
 })
 
-test_that("loadSnapshot reads a .esqlabsR snapshot", {
-  out <- saveSnapshot(testProject(), file.path(withr::local_tempdir(), "study"))
+test_that("restoreProject reads a .esqlabsR snapshot", {
+  out <- snapshotProject(
+    testProject(),
+    dir = withr::local_tempdir(),
+    name = "study"
+  )
   expect_identical(fs::path_ext(out), "esqlabsR")
 
-  project <- loadSnapshot(out, withr::local_tempdir())
+  project <- restoreProject(out, withr::local_tempdir())
   expect_named(
     project$scenarios,
     names(testProject()$scenarios),
@@ -166,16 +224,17 @@ test_that("loadSnapshot reads a .esqlabsR snapshot", {
   )
 })
 
-test_that("loadSnapshot still reads a plain inlined Project.json (back-compat)", {
-  # importProjectFromExcel() writes a single inlined Project.json; loadSnapshot()
-  # must still accept that legacy form as the snapshot to materialize.
+test_that("restoreProject still reads a plain inlined Project.json (back-compat)", {
+  # importProjectFromExcel() writes a single inlined Project.json;
+  # restoreProject() must still accept that legacy form as the snapshot to
+  # materialize.
   source <- testProject()
   legacyDir <- withr::local_tempdir()
   legacy <- file.path(legacyDir, "Project.json")
   .saveProjectJson(source, legacy, includeScenarios = TRUE)
 
   dir <- withr::local_tempdir()
-  project <- loadSnapshot(legacy, dir)
+  project <- restoreProject(legacy, dir)
   expect_true(dir.exists(file.path(dir, "definitions", "scenarios")))
   expect_named(
     project$scenarios,
@@ -184,12 +243,16 @@ test_that("loadSnapshot still reads a plain inlined Project.json (back-compat)",
   )
 })
 
-test_that("loadSnapshot creates dir when absent", {
-  out <- saveSnapshot(testProject(), file.path(withr::local_tempdir(), "study"))
+test_that("restoreProject creates dir when absent", {
+  out <- snapshotProject(
+    testProject(),
+    dir = withr::local_tempdir(),
+    name = "study"
+  )
   dir <- file.path(withr::local_tempdir(), "new", "nested")
   expect_false(dir.exists(dir))
 
-  project <- loadSnapshot(out, dir)
+  project <- restoreProject(out, dir)
   expect_true(dir.exists(file.path(dir, "definitions", "scenarios")))
   expect_identical(
     project$projectDirPath,
@@ -199,24 +262,51 @@ test_that("loadSnapshot creates dir when absent", {
   )
 })
 
-test_that("loadSnapshot refuses a dir that already holds a project", {
-  out <- saveSnapshot(testProject(), file.path(withr::local_tempdir(), "study"))
+test_that("restoreProject refuses a non-empty dir without overwrite", {
+  out <- snapshotProject(
+    testProject(),
+    dir = withr::local_tempdir(),
+    name = "study"
+  )
   # `dir` already contains a tree project, so materializing into it would
-  # clobber the existing work; refuse rather than silently overwrite. The
-  # message carries the (per-run) tempdir path, so match the stable sentence.
+  # clobber the existing work; refuse rather than silently overwrite.
   dir <- testProject()$projectDirPath
 
-  expect_error(loadSnapshot(out, dir), "already contains an esqlabsR project")
+  expect_error(restoreProject(out, dir), "already contains an esqlabsR project")
 })
 
-test_that("snapshot -> loadSnapshot -> snapshot is a fixed point over .esqlabsR", {
+test_that("restoreProject with overwrite = TRUE rolls back in place and warns", {
+  # Build a working tree, snapshot it, then diverge it and roll back.
+  source <- testProject()
+  out <- snapshotProject(source, dir = withr::local_tempdir(), name = "study")
+  dir <- withr::local_tempdir()
+  restoreProject(out, dir)
+
+  # An in-place rollback replaces the existing tree and warns about stale
+  # handles on the overwrite action.
+  expect_snapshot(
+    rolledBack <- restoreProject(out, dir, overwrite = TRUE),
+    transform = .redactTmpDir
+  )
+  expect_named(
+    rolledBack$scenarios,
+    names(source$scenarios),
+    ignore.order = TRUE
+  )
+})
+
+test_that("snapshot -> restore -> snapshot is a fixed point over .esqlabsR", {
   project <- testProject()
 
-  out1 <- saveSnapshot(project, file.path(withr::local_tempdir(), "study"))
+  out1 <- snapshotProject(project, dir = withr::local_tempdir(), name = "study")
   expect_identical(fs::path_ext(out1), "esqlabsR")
-  reloaded <- loadSnapshot(out1, withr::local_tempdir())
+  reloaded <- restoreProject(out1, withr::local_tempdir())
 
-  out2 <- saveSnapshot(reloaded, file.path(withr::local_tempdir(), "study"))
+  out2 <- snapshotProject(
+    reloaded,
+    dir = withr::local_tempdir(),
+    name = "study"
+  )
   # Byte-stable git diffs are the stated design goal, so assert byte equality,
   # not just structural equality: the two snapshots must be identical line for
   # line.
@@ -234,9 +324,13 @@ test_that("snapshot byte-identity fixed point holds for the plots trio", {
     expect_gt(length(list.files(file.path(treeDir, kind))), 0L)
   }
 
-  out1 <- saveSnapshot(project, file.path(withr::local_tempdir(), "study"))
-  reloaded <- loadSnapshot(out1, withr::local_tempdir())
-  out2 <- saveSnapshot(reloaded, file.path(withr::local_tempdir(), "study"))
+  out1 <- snapshotProject(project, dir = withr::local_tempdir(), name = "study")
+  reloaded <- restoreProject(out1, withr::local_tempdir())
+  out2 <- snapshotProject(
+    reloaded,
+    dir = withr::local_tempdir(),
+    name = "study"
+  )
   # Byte-stable snapshot for a project whose plots trio is populated.
   expect_identical(readLines(out1), readLines(out2))
 })
@@ -244,8 +338,8 @@ test_that("snapshot byte-identity fixed point holds for the plots trio", {
 test_that("snapshot preserves metadata and the filePaths/excel split", {
   project <- exampleProject()
 
-  out <- saveSnapshot(project, file.path(withr::local_tempdir(), "study"))
-  restored <- loadSnapshot(out, withr::local_tempdir())
+  out <- snapshotProject(project, dir = withr::local_tempdir(), name = "study")
+  restored <- restoreProject(out, withr::local_tempdir())
 
   expect_identical(restored$name, "Example")
   expect_identical(restored$description, "Aciclovir IV PK example project")
@@ -258,27 +352,27 @@ test_that("snapshot preserves metadata and the filePaths/excel split", {
   expect_length(restored$excel, 7L)
 })
 
-test_that("loadSnapshot errors on a non-existent snapshot file", {
+test_that("restoreProject errors on a non-existent snapshot file", {
   # The message carries the (per-run) path, so match the stable sentence.
   dir <- withr::local_tempdir()
   expect_error(
-    loadSnapshot(file.path(dir, "missing.esqlabsR"), withr::local_tempdir()),
+    restoreProject(file.path(dir, "missing.esqlabsR"), withr::local_tempdir()),
     "File not found"
   )
 })
 
 # --- migration of a legacy inlined single-file project ------------------------
 
-test_that("loadSnapshot migrates a legacy inlined Project.json end to end", {
+test_that("restoreProject migrates a legacy inlined Project.json end to end", {
   # The public migration path for a handed-over single-file project is
-  # loadSnapshot(file, dir): it explodes the inlined snapshot into a tree.
+  # restoreProject(snapshot, dir): it explodes the inlined snapshot into a tree.
   source <- exampleProject()
   legacyDir <- withr::local_tempdir()
   legacy <- file.path(legacyDir, "Project.json")
   .saveProjectJson(source, legacy, includeScenarios = TRUE)
 
   dir <- withr::local_tempdir()
-  loadSnapshot(legacy, dir)
+  restoreProject(legacy, dir)
   migrated <- loadProject(file.path(dir, "Project.json"))
 
   # Section for section, the migrated tree project matches the original.
@@ -325,12 +419,12 @@ test_that("loadSnapshot migrates a legacy inlined Project.json end to end", {
 })
 
 # A legacy single-file Project.json may carry non-canonical ids (mixed case),
-# which the entity tree (keyed by canonical id) cannot store. loadSnapshot()
+# which the entity tree (keyed by canonical id) cannot store. restoreProject()
 # must canonicalize on the way in, lossless across every section: definitions
 # AND the references that point at them (a scenario id used by a plot's
 # dataCombined row and by a PI task / output mapping) are lowercased together,
 # so the migrated tree's foreign keys still resolve.
-test_that("loadSnapshot migrates a non-canonical legacy Project.json losslessly", {
+test_that("restoreProject migrates a non-canonical legacy Project.json losslessly", {
   source <- exampleProject()
   legacyDir <- withr::local_tempdir()
   legacy <- file.path(legacyDir, "Project.json")
@@ -347,7 +441,7 @@ test_that("loadSnapshot migrates a non-canonical legacy Project.json losslessly"
 
   dir <- withr::local_tempdir()
   # The migration must not abort on the non-canonical id at the tree writer.
-  expect_no_error(loadSnapshot(legacy, dir))
+  expect_no_error(restoreProject(legacy, dir))
   migrated <- loadProject(file.path(dir, "Project.json"))
 
   # The scenario and output-path definitions are filed under their canonical
