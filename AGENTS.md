@@ -43,11 +43,13 @@ The target reader of all user-facing documentation (roxygen `@description`, `@pa
 - Describe behavior by **what the user sees and does**, not by mechanism. Prefer "Only files with actual changes are re-written, so `git diff` shows exactly the definitions you edited" over "write-if-different reconciliation".
 - Say things plainly: "idempotent no-op" → "saving repeatedly is always safe"; "orphan deletion" → "if you removed a scenario, its file is deleted".
 - State what a function does *not* do and what to call instead (e.g. saving does not update the Excel files; use `exportProjectToExcel()`).
+- Document important APIs in the vignettes, with a description of what they do and when to use them.
 - Internal comments and `@keywords internal` docs may stay technical — this rule is about what package users read.
 
 ## Pull requests
 
 - Open new PRs as **draft (WIP)**.
+- Add one `NEWS.md` bullet per PR with user-facing changes, summarizing them for the end user. Skip the bullet when a PR has none.
 
 ## Documentation / Rd files
 
