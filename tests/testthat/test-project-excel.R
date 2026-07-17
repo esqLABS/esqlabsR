@@ -690,7 +690,7 @@ test_that("syncStatus() reports the Excel axis as NA (and warns) when the side-c
   # Non-silent: a warning surfaces naming the comparison failure.
   expect_warning(
     syncStatus(project, silent = FALSE),
-    "Cannot compare the Excel side-car"
+    "Cannot compare the Excel configuration files"
   )
 })
 

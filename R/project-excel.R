@@ -913,7 +913,7 @@ syncStatus <- function(project, silent = FALSE) {
     if (!silent) {
       cli::cli_warn(
         c(
-          "Cannot compare the Excel side-car to the project.",
+          "Cannot compare the Excel configuration files to the project.",
           "x" = conditionMessage(compareError),
           "i" = "The {.field excel_in_sync} status is reported as {.val NA}."
         )
