@@ -24,14 +24,57 @@ getTestDataFilePath <- function(fileName = "") {
   testthat::test_path("data", fileName)
 }
 
-#' Load the canonical test `Project`.
-testProject <- function() {
-  loadProject(testthat::test_path("data", "TestProject", "Project.json"))
+#' Load the canonical test `Project` from a throwaway copy.
+#'
+#' The scenarios section is a write-through entity tree, so mutating a
+#' loaded project (`addScenario()`, `removeScenario()`, scenario write-back)
+#' writes to its `definitions/scenarios/` directory. To keep the
+#' version-controlled fixture pristine and tests isolated from one another,
+#' the fixture is copied to a temporary directory and the project is loaded
+#' from the copy. The copy is removed when the calling test finishes.
+testProject <- function(envir = parent.frame()) {
+  loadProject(file.path(.copyTestProjectDir(envir), "Project.json"))
 }
 
-#' Load the bundled example `Project`.
-exampleProject <- function() {
-  loadProject(exampleProjectPath())
+#' A `Project.json` path inside a fresh throwaway directory.
+#'
+#' Use this as a `saveSnapshot()` target instead of a bare
+#' `withr::local_tempfile()`: a project is a directory (the `Project.json`
+#' container plus a `definitions/` entity tree alongside it), so writing into
+#' the shared session tempdir would scatter a `definitions/` directory there
+#' and leak entities into unrelated `loadProject()` calls.
+#' The directory is removed when the calling test finishes.
+local_projectPath <- function(envir = parent.frame()) {
+  file.path(
+    withr::local_tempdir("project_", .local_envir = envir),
+    "Project.json"
+  )
+}
+
+#' Copy the canonical TestProject fixture to a throwaway directory and
+#' return that directory. Cleaned up when the calling test finishes.
+.copyTestProjectDir <- function(envir = parent.frame()) {
+  src <- testthat::test_path("data", "TestProject")
+  dest <- withr::local_tempdir("TestProject_", .local_envir = envir)
+  file.copy(
+    list.files(src, full.names = TRUE),
+    dest,
+    recursive = TRUE
+  )
+  dest
+}
+
+#' Load the bundled example `Project` from a throwaway copy.
+#'
+#' Like [testProject()], the bundled example is copied to a temporary
+#' directory before loading so that write-through scenario mutations never
+#' touch the version-controlled fixture under `inst/extdata`. The copy is
+#' removed when the calling test finishes.
+exampleProject <- function(envir = parent.frame()) {
+  src <- dirname(exampleProjectPath())
+  dest <- withr::local_tempdir("Example_", .local_envir = envir)
+  file.copy(list.files(src, full.names = TRUE), dest, recursive = TRUE)
+  loadProject(file.path(dest, "Project.json"))
 }
 
 #' Path to the legacy Excel `ProjectConfiguration.xlsx` fixture, used by
@@ -62,6 +105,15 @@ executeWithTestFile <- function(actionWithFile) {
   newFile <- tempfile()
   actionWithFile(newFile)
   file.remove(newFile)
+}
+
+#' Redact the throwaway-project absolute prefix from a quoted path in an error
+#' message so an `expect_snapshot()` is stable across runs, keeping the
+#' project-relative `definitions/...` tail that carries the meaning. Used as the
+#' `transform` of snapshots whose error names an absolute entity-file path in a
+#' temp directory.
+.redactTmpPath <- function(lines) {
+  gsub("'[^']*/(definitions(/[^']*)?)'", "'<project>/\\1'", lines)
 }
 
 #' Extract axis ranges from plots
@@ -225,23 +277,32 @@ createValidPISheets <- function() {
 # Builds a minimal in-memory `Project` for validation/serialization tests:
 # all section fields default to empty, and `...` overrides named fields so a
 # test can target one section without loading the full TestProject fixture.
+# The section accessors are read-only from the handle, so sections are written
+# through the internal `.setSection()` entry point the authoring functions use
+# (this is test setup standing in for an authoring call, not end-user code).
 .fakeProject <- function(...) {
   project <- Project$new()
   project$schemaVersion <- "2.0"
   project$esqlabsRVersion <- NA_character_
-  project$outputPaths <- list()
-  project$scenarios <- list()
-  project$modelParameterSets <- list()
-  project$individualParameterSets <- list()
-  project$applicationParameterSets <- list()
-  project$individuals <- list()
-  project$populations <- list()
-  project$applications <- list()
-  project$observedData <- list()
-  project$plots <- NULL
+  sections <- c(
+    "outputPaths",
+    "scenarios",
+    "parameterSets",
+    "initialConditions",
+    "individuals",
+    "populations",
+    "applications",
+    "observedData",
+    "dataCombined",
+    "plots",
+    "plotGrids"
+  )
+  for (section in sections) {
+    project$.setSection(section, list())
+  }
   overrides <- list(...)
   for (nm in names(overrides)) {
-    project[[nm]] <- overrides[[nm]]
+    project$.setSection(nm, overrides[[nm]])
   }
   project
 }
