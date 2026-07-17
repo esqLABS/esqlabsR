@@ -3,7 +3,7 @@
 \name{importProjectFromExcel}
 \alias{importProjectFromExcel}
 \alias{snapshotProjectConfiguration}
-\title{Import project configuration from Excel files to v2.0 JSON}
+\title{Import project configuration from Excel files}
 \usage{
 importProjectFromExcel(
   projectConfigPath = "Project.xlsx",
@@ -17,9 +17,8 @@ snapshotProjectConfiguration(...)
 \item{projectConfigPath}{Path to the \code{Project.xlsx} file.
 Defaults to \code{"Project.xlsx"}.}
 
-\item{outputDir}{Directory where the JSON file will be saved. If \code{NULL}
-(default), the JSON file is created in the same directory as the source
-Excel file.}
+\item{outputDir}{Directory where the JSON project is created. If \code{NULL}
+(default), it is created in the same directory as the source Excel file.}
 
 \item{silent}{Logical. If \code{TRUE}, suppresses informational messages.
 Defaults to \code{FALSE}.}
@@ -27,12 +26,16 @@ Defaults to \code{FALSE}.}
 \item{...}{Arguments passed to \code{importProjectFromExcel()}.}
 }
 \value{
-Invisibly returns the path to the created JSON file.
+Invisibly returns the path to the created project file (the
+\code{Project.json}).
 }
 \description{
 Reads all Excel configuration files in an esqlabsR project and
-produces a single v2.0 JSON file. This is the migration path from
-Excel-based projects to the JSON-primary workflow.
+converts them to the JSON project format: a project file (named after the
+Excel file, e.g. \code{Project.xlsx} becomes \code{Project.json}) plus one file per
+definition in the \verb{definitions/} folder. The result is a ready-to-use
+project — \code{\link[=loadProject]{loadProject()}} can open it directly. This is the migration path
+from Excel-based projects to the JSON-primary workflow.
 }
 \seealso{
 Other project persistence:

@@ -2,7 +2,7 @@
 % Please edit documentation in R/project-excel.R
 \name{syncStatus}
 \alias{syncStatus}
-\title{Report a project's two-axis sync status}
+\title{Check a loaded project for unsaved changes and outdated Excel files}
 \usage{
 syncStatus(project, silent = FALSE)
 }
@@ -18,25 +18,26 @@ Invisibly, a \code{list(tree_in_sync, excel_in_sync, details)} (see
 the \code{status} field of \link{Project}).
 }
 \description{
-Human-oriented, read-only report of how a \code{Project}'s in-memory
-state diverges from disk, on two axes:
+Prints a report of how the \code{Project} in your R session
+compares to the files on disk, in two parts:
 \itemize{
-\item memory vs. tree: whether there are unsaved in-memory edits (the project
-is dirty). Reported as \code{NA} for an unbound in-memory project.
-\item memory vs. Excel: when a \code{Project.xlsx} side-car is configured, whether
-it is a stale export of the current project (one-way: would re-exporting
-change it). Reported as \code{NA} when no side-car is configured or it cannot
-be read.
+\item project vs. saved files: whether the project carries changes that have
+not been saved with \code{\link[=saveProject]{saveProject()}} yet. Reported as \code{NA} for a project
+that exists only in the R session, without a folder on disk.
+\item project vs. Excel: when the project has a \code{Project.xlsx} Excel file,
+whether that file still matches the current project (one-way: would
+exporting again change it). Reported as \code{NA} when there is no Excel
+file or it cannot be read.
 }
 
-\code{syncStatus()} never reconciles either axis. To sync the tree, call
-\code{\link[=saveProject]{saveProject()}}; to sync Excel, call \code{\link[=exportProjectToExcel]{exportProjectToExcel()}} or
-\code{\link[=importProjectFromExcel]{importProjectFromExcel()}}.
+\code{syncStatus()} only reports; it never changes any files. To save your
+changes, call \code{\link[=saveProject]{saveProject()}}; to bring the Excel files up to date, call
+\code{\link[=exportProjectToExcel]{exportProjectToExcel()}} or \code{\link[=importProjectFromExcel]{importProjectFromExcel()}}.
 }
 \examples{
 \dontrun{
 project <- loadProject("Project.json")
-syncStatus(project) # human-readable two-axis report
+syncStatus(project) # readable report
 project$status # the same information as a structured list
 }
 }

@@ -5,11 +5,11 @@
 #' @description Load a `Project` from a JSON file. This is the
 #'   primary entry point for working with esqlabsR projects.
 #'
-#'   On load the project is checked for the most common cross-reference
-#'   problems (e.g. a scenario referring to an individual or population
-#'   that is not defined). Any such issues are reported via [cli::cli_warn()]
-#'   so that obvious configuration mistakes surface immediately, but loading
-#'   still succeeds. Use [validateProject()] for a full report.
+#'   On load, the project is checked for the most common reference mistakes
+#'   (for example a scenario referring to an individual or population that is
+#'   not defined). Such issues are reported as warnings so that obvious
+#'   configuration mistakes surface immediately, but loading still succeeds.
+#'   Use [validateProject()] for a full report.
 #'
 #' @param path Path to the `Project.json` file. Defaults to
 #'   `Project.json` in the working directory.
@@ -20,21 +20,21 @@
 #' @seealso [saveProject()], [reloadProject()], [snapshotProject()],
 #'   [restoreProject()], [syncStatus()].
 #'
-#' @section Editing a loaded project (explicit save):
-#'   A loaded project holds its definition tree in memory, and memory is the
-#'   source of truth: every authoring edit (`addOutputPath()`, `addScenario()`,
-#'   `setIndividual()`, `removeParameterSet()`, and the metadata setters)
-#'   mutates memory in place and sets an internal dirty bit, but nothing
-#'   touches the on-disk `definitions/` tree. The `project$<section>` accessors
-#'   are read-only, so a definition only ever changes through an authoring
-#'   function.
+#' @section Editing a loaded project:
+#'   Changes you make to a loaded project — with `addScenario()`,
+#'   `setIndividual()`, `removeParameterSet()`, `addOutputPath()`, and the
+#'   other add/set/remove functions — live only in your R session until you
+#'   save them; the files on disk stay as they are. Reading a section
+#'   directly (for example `project$scenarios`) never changes the project: a
+#'   definition changes only through the add/set/remove functions.
 #'
-#'   Commit the edits to disk with [saveProject()], which reconciles the tree
-#'   to memory (write-if-different, and orphan-delete for removed entities).
-#'   Discard unsaved edits and re-read from disk with [reloadProject()] (the
-#'   undo). Checkpoint the current state to a portable single file with
-#'   [snapshotProject()], and roll a working directory back to one with
-#'   [restoreProject()]. Inspect divergence with [syncStatus()].
+#'   Write your changes to the project files with [saveProject()]. Discard
+#'   unsaved changes and go back to what is saved on disk with
+#'   [reloadProject()]. Save the current state of the whole project to a
+#'   single file you can archive or share with [snapshotProject()], and
+#'   recreate a project folder from such a file (or roll an existing one
+#'   back) with [restoreProject()]. Check for unsaved changes and outdated
+#'   Excel files with [syncStatus()].
 #'
 #' @examples
 #' \dontrun{

@@ -2,52 +2,52 @@
 % Please edit documentation in R/project-snapshot.R
 \name{snapshotProject}
 \alias{snapshotProject}
-\title{Freeze a project to a portable single-file snapshot}
+\title{Save the whole project to a single shareable snapshot file}
 \usage{
 snapshotProject(project, dir = ".", name = NULL, overwrite = FALSE)
 }
 \arguments{
-\item{project}{A \code{Project} object. It need not be bound to a directory; an
-in-memory project can be snapshotted too.}
+\item{project}{A \code{Project} object. It does not need a folder on disk; a
+project that exists only in the R session can be snapshotted too.}
 
 \item{dir}{Target folder for the snapshot file (default \code{"."}). Created if
 it does not exist.}
 
-\item{name}{Filename stem for the snapshot (the \code{.esqlabsR} extension is
-always forced, so any extension you include is replaced: \code{"exp.zip"} and
-\code{"study.json"} both become \code{exp.esqlabsR} / \code{study.esqlabsR}). When \code{NULL}
-(default), a colon-free timestamped stem
-\verb{<projectName>-YYYY-MM-DD-HHMMSS} is used (sortable and Windows-safe);
-\verb{<projectName>} falls back to \code{"project"} when the project has no name.}
+\item{name}{File name for the snapshot, without extension: the \code{.esqlabsR}
+extension is always added, and any extension you include is replaced
+(\code{"exp.zip"} and \code{"study.json"} both become \code{exp.esqlabsR} /
+\code{study.esqlabsR}). When \code{NULL} (default), a timestamped name
+\verb{<projectName>-YYYY-MM-DD-HHMMSS} is used (it sorts by date and is safe
+as a Windows file name); \verb{<projectName>} falls back to \code{"project"} when
+the project has no name.}
 
 \item{overwrite}{If \code{FALSE} (default), writing over an existing snapshot
 file aborts. Pass \code{TRUE} to replace it.}
 }
 \value{
-Invisibly, the (normalized \code{.esqlabsR}) path the snapshot was
-written to.
+Invisibly, the path of the written snapshot file (always with the
+\code{.esqlabsR} extension).
 }
 \description{
-Write the current in-memory state of a \code{Project} to a single
-self-contained \code{.esqlabsR} file with every section inlined. Unsaved edits
-are included, so a snapshot is a faithful freeze of the project as it is
-right now, and a legitimate "stash my experiment, then \code{\link[=reloadProject]{reloadProject()}}
-back to the saved state" move. The content is JSON; the \code{.esqlabsR}
-extension marks the file as a portable, shareable freeze-frame,
-distinguishing it at a glance from the \code{Project.json} container of a live
-tree project.
+Write a \code{Project}, exactly as it is in your R session, to a
+single self-contained \code{.esqlabsR} file. Unsaved changes are included, so
+the snapshot captures the project as it is right now — which also makes
+it a good way to set an experiment aside: snapshot it, then go back to
+the saved state with \code{\link[=reloadProject]{reloadProject()}}. The file content is JSON; the
+\code{.esqlabsR} extension simply marks the file as a portable snapshot, so
+it is not confused with the \code{Project.json} file of a project folder.
 
-Materialize a snapshot back into a working tree with \code{\link[=restoreProject]{restoreProject()}};
-snapshot then restore then snapshot is a fixed point.
+Turn a snapshot back into a full project folder with \code{\link[=restoreProject]{restoreProject()}};
+nothing is lost in the round trip.
 }
 \examples{
-# Scaffold a throwaway example project and snapshot it to a single file.
+# Create a temporary example project and snapshot it to a single file.
 dir <- file.path(tempdir(), "snapshot-example")
 dir.create(dir, showWarnings = FALSE)
 initProject(dir, type = "example", createExcel = FALSE)
 project <- loadProject(file.path(dir, "Project.json"))
 snapshot <- snapshotProject(project, dir = tempdir(), name = "study")
-snapshot # the normalized .esqlabsR path
+snapshot # the path of the snapshot file
 }
 \seealso{
 \code{\link[=restoreProject]{restoreProject()}}, \code{\link[=loadProject]{loadProject()}}, \code{\link[=saveProject]{saveProject()}}.

@@ -323,7 +323,12 @@ test_that("initProject(overwrite = TRUE) replaces, removing stale definition fil
 
   # A stale definition file the template does not ship (simulating an old project's
   # definition), and an unrelated user file that must survive the overwrite.
-  staleDefinition <- file.path(dir, "definitions", "scenarios", "staledefinition.json")
+  staleDefinition <- file.path(
+    dir,
+    "definitions",
+    "scenarios",
+    "staledefinition.json"
+  )
   writeLines("{}", staleDefinition)
   userFile <- file.path(dir, "my_notes.txt")
   writeLines("keep me", userFile)

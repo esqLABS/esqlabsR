@@ -2,51 +2,51 @@
 % Please edit documentation in R/project-snapshot.R
 \name{restoreProject}
 \alias{restoreProject}
-\title{Restore a project tree from a single-file snapshot}
+\title{Recreate a project folder from a snapshot file}
 \usage{
 restoreProject(snapshot, dir = ".", overwrite = FALSE)
 }
 \arguments{
-\item{snapshot}{Path to the snapshot file to read (a \code{.esqlabsR} file, or a
-plain inlined \code{Project.json}). Must exist.}
+\item{snapshot}{Path to the snapshot file to read (a \code{.esqlabsR} file, or
+a legacy single-file \code{Project.json}). Must exist.}
 
-\item{dir}{Target directory for the materialized tree project (default
-\code{"."}). Created if it does not exist.}
+\item{dir}{Folder in which the project is recreated (default \code{"."}).
+Created if it does not exist.}
 
-\item{overwrite}{If \code{FALSE} (default), a non-empty \code{dir} (any files,
-whether a full esqlabsR project, unrelated files, or a partial tree)
-aborts; unpack into a fresh directory only. If \code{TRUE}, the contents of
-\code{dir} are replaced in place (an in-place rollback), and, when \code{dir} held a
-real esqlabsR project, a warning is raised that any \code{Project} previously
-loaded from \code{dir} is now stale. Rebind to the returned object, or
-\code{\link[=reloadProject]{reloadProject()}} the old handle. The blessed idiom is
+\item{overwrite}{If \code{FALSE} (default), \code{restoreProject()} aborts when
+\code{dir} already contains any files — a project, unrelated files, anything;
+restore into a fresh folder only. If \code{TRUE}, the contents of \code{dir} are
+replaced with the snapshot. When \code{dir} held an esqlabsR project, a
+warning reminds you that a \code{Project} you loaded from \code{dir} earlier no
+longer matches the files: continue with the returned project, or refresh
+the old one with \code{\link[=reloadProject]{reloadProject()}}. The recommended form is
 \code{p <- restoreProject(snap, dir, overwrite = TRUE)}.}
 }
 \value{
-A freshly-loaded \code{Project}, bound to \code{dir}, with a clear dirty bit.
+A freshly loaded \code{Project} working from \code{dir}, with no unsaved
+changes.
 }
 \description{
-Read a single self-contained snapshot file (a portable
-freeze-frame with every section inlined) and materialize it into a full
-on-disk tree project at \code{dir}: a \code{Project.json} container plus a
-\verb{definitions/<kind>/} tree (one file per definition) for every section.
-Returns a freshly-loaded \code{Project} bound to \code{dir}.
+Read a snapshot file and recreate a full project folder from
+it at \code{dir}: a \code{Project.json} file plus the \verb{definitions/} folder with
+one file per definition. Returns a freshly loaded \code{Project} that works
+from \code{dir}.
 
-Restore is path-based and needs no loaded project: the driving use case is
-sharing, where a colleague hands you a \code{.esqlabsR} and
-\code{restoreProject("theirs.esqlabsR", "myproj")} recreates the working tree
-from scratch. It is also the rollback half of the save-point story: with
-\code{overwrite = TRUE} it rolls a working directory back to a snapshot in
-place.
+You only need the file, not a loaded project. The typical use is
+sharing: a colleague sends you a \code{.esqlabsR} file, and
+\code{restoreProject("theirs.esqlabsR", "myproj")} recreates the whole
+project folder from it. It is also the way back to an earlier state:
+with \code{overwrite = TRUE} it rolls an existing project folder back to the
+snapshot.
 
-The canonical snapshot form is a \code{.esqlabsR} file (as written by
-\code{\link[=snapshotProject]{snapshotProject()}}), but a plain inlined \code{Project.json} is also accepted
-for back-compatibility (for example, the file \code{\link[=importProjectFromExcel]{importProjectFromExcel()}}
-writes). The result is a normal tree project: \code{\link[=loadProject]{loadProject()}} reads it back
-from \code{dir} identically (section for section).
+Snapshots are usually \code{.esqlabsR} files written by \code{\link[=snapshotProject]{snapshotProject()}},
+but a \code{Project.json} in which all sections are written out in the file
+itself, rather than in a \verb{definitions/} folder (a legacy single-file
+project), is accepted too. The result is a normal project:
+\code{\link[=loadProject]{loadProject()}} opens it from \code{dir} with exactly the same content.
 }
 \examples{
-# Write a snapshot, then materialize it into a fresh tree project.
+# Write a snapshot, then recreate a project folder from it.
 src <- file.path(tempdir(), "restore-src")
 dir.create(src, showWarnings = FALSE)
 initProject(src, type = "example", createExcel = FALSE)

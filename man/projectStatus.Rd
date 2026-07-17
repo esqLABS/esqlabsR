@@ -14,17 +14,17 @@ projectStatus(
 projectConfigurationStatus(...)
 }
 \arguments{
-\item{projectConfigPath}{Either a path to a \code{Project.xlsx} file
-(defaults to \code{"Project.xlsx"}) or a loaded \link{Project} object. When a
-\code{Project} is passed, its \code{Project.xlsx} side-car and JSON path are
-derived from the object, so \code{jsonPath} is optional.}
+\item{projectConfigPath}{Either the path to the project's \code{Project.xlsx}
+file (defaults to \code{"Project.xlsx"}) or a loaded \link{Project} object. When a
+\code{Project} is passed, its \code{Project.xlsx} and JSON paths are taken from
+the object, so \code{jsonPath} is optional.}
 
-\item{jsonPath}{Path to the JSON configuration file. If \code{NULL} (default),
-the function looks for a JSON file with the same base name (or, when a
-\code{Project} object is passed as \code{projectConfigPath}, uses that object's
-JSON path).}
+\item{jsonPath}{Path to the JSON project file. If \code{NULL} (default), a JSON
+file with the same base name as the Excel file is used (or, when a
+\code{Project} object is passed as \code{projectConfigPath}, that object's JSON
+path).}
 
-\item{silent}{Logical indicating whether to suppress informational messages.
+\item{silent}{Logical. If \code{TRUE}, suppresses informational messages.
 Defaults to \code{FALSE}.}
 }
 \value{
@@ -33,22 +33,22 @@ whether the Excel files and the JSON are synchronized}
 \item{details}{A list with detailed comparison results}
 }
 \description{
-Compares the \strong{persisted} JSON configuration on disk
-(\code{Project.json} plus its \verb{definitions/} tree) against the Excel
-configuration files to determine whether they are synchronized. This is a
-disk-to-disk comparison and does not read a loaded project's in-memory
-state.
+Compares the JSON project as saved on disk (\code{Project.json}
+plus its \verb{definitions/} folder) against the Excel configuration files and
+reports whether the two carry the same configuration. Only the files on
+disk are compared: edits made in the current R session but not yet saved
+with \code{\link[=saveProject]{saveProject()}} play no role here.
 
-This is related to, but distinct from, the Excel axis of \code{\link[=syncStatus]{syncStatus()}}.
-\code{projectStatus()} compares the JSON \emph{as saved on disk} against Excel, while
-\code{\link[=syncStatus]{syncStatus()}}'s Excel axis compares the \emph{current in-memory} project against
-Excel. The two can disagree when the project has unsaved edits (memory
-differs from the saved JSON), so save the project before relying on either
-to reflect the same state.
+This is related to, but distinct from, the Excel comparison that
+\code{\link[=syncStatus]{syncStatus()}} reports: \code{projectStatus()} compares the JSON files \emph{as saved
+on disk} against Excel, while \code{\link[=syncStatus]{syncStatus()}} compares the project \emph{as
+currently loaded in R} against Excel. The two can disagree while the
+project has unsaved changes, so save the project first if both should
+describe the same state.
 }
 \seealso{
 \code{\link[=syncStatus]{syncStatus()}} reports a related Excel comparison for a loaded
-\code{Project} as one of its two axes (alongside the memory-vs-tree axis), but
-compares the \emph{in-memory} project against the \code{Project.xlsx} side-car,
-whereas \code{projectStatus()} compares the \emph{persisted} JSON against Excel.
+\code{Project}, but compares the project as currently loaded in R against the
+project's Excel files, whereas \code{projectStatus()} compares the JSON files
+saved on disk.
 }
