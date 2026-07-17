@@ -34,7 +34,7 @@ A pre-6.0.0 project is an *Excel project*: a `ProjectConfiguration.xlsx` (called
 
 * **One unified parameter-set collection.** The Excel format kept parameter sets in three separate places: the model parameters workbook, the non-biometrics sheets of the individuals workbook, and the non-protocol sheets of the applications workbook. In 6.0.0 these merge into a single `parameterSets` collection. A scenario, an individual, and an application all reference parameter sets from this one collection, by id.
 
-* **Plots and parameter identification live inside the project.** What used to be separate Excel sheets (the plots workbook, and parameter identification configuration) are now sections of the project itself rather than side-car spreadsheets.
+* **Plots and parameter identification live inside the project.** What used to be separate Excel sheets (the plots workbook, and parameter identification configuration) are now sections of the project itself rather than separate spreadsheets.
 
 * **Definition ids are canonicalized.** Every definition (a scenario, a parameter set, an individual, a population, an application, an output path) is referenced by an **id**, and that id doubles as its on-disk filename in the `definitions/` tree. So ids are lowercased and made filename-safe on import, and every reference is rewritten the same way, so it still resolves even if it was typed in a different case. Watch for this when reading the imported project: an id you spelled `MyScenario` in Excel becomes `myscenario`. See `vignette("projects")` for the full treatment.
 

@@ -141,8 +141,8 @@ Project <- R6::R6Class(
     #'   `individualsFile`, `populationsFile`, `scenariosFile`,
     #'   `applicationsFile`, `plotsFile`, `parameterIdentificationFile`,
     #'   `initialConditionsFile`).
-    #'   Returned verbatim as strings (no resolution). Empty for a from-scratch
-    #'   JSON project that has no Excel side-car.
+    #'   Returned verbatim as strings (no resolution). Empty for a project
+    #'   created directly in the JSON format, without Excel files.
     excel = function(value) {
       if (!missing(value)) {
         cli::cli_abort("{.field excel} is readonly")
@@ -568,12 +568,12 @@ Project <- R6::R6Class(
       .projectToJson(self)
     },
 
-    #' @field status Read-only, machine-oriented two-axis sync report as a
-    #'   structured list: `tree_in_sync` (`FALSE` when there are unsaved
-    #'   in-memory edits vs. the on-disk tree, `NA` for an unbound in-memory
-    #'   project), `excel_in_sync` (`TRUE`/`FALSE`, or `NA` when no Excel
-    #'   side-car is configured or it cannot be read), and `details` (per-axis
-    #'   differences, empty when both axes are in sync). The same information
+    #' @field status Read-only sync report as a structured list:
+    #'   `tree_in_sync` (`FALSE` when the project carries unsaved changes,
+    #'   `NA` for a project that exists only in the R session, without a
+    #'   folder on disk), `excel_in_sync` (`TRUE`/`FALSE`, or `NA` when the
+    #'   project has no Excel file or it cannot be read), and `details` (the
+    #'   differences, empty when everything is in sync). The same information
     #'   [syncStatus()] prints. Read-only; assignment aborts.
     status = function(value) {
       if (!missing(value)) {

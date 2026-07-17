@@ -116,24 +116,22 @@ saveProject <- function(project) {
   invisible(project)
 }
 
-#' Discard a project's in-memory edits and re-read it from disk
+#' Discard a project's unsaved changes and re-read it from disk
 #'
-#' @description The undo of the explicit-save model: discard every unsaved
-#'   in-memory edit and re-read the project from its on-disk tree, in place.
-#'   The `Project` object identity is preserved (edits are reverted by R6
-#'   reference), so existing handles stay valid.
+#' @description The undo of saving: discard every unsaved change and re-read
+#'   the project from its files on disk, in place. The `Project` stays the
+#'   same object, so every variable that points to it stays valid.
 #'
-#'   `reloadProject()` always re-reads the bound tree from disk and updates the
-#'   project in place, so it also picks up external changes to the files (for
-#'   example after [restoreProject()] rolled the tree back). It simply produces
-#'   no announcement when there were no unsaved edits: unlike a clean
-#'   [saveProject()], a clean reload prints nothing.
+#'   `reloadProject()` always re-reads the project's files and updates the
+#'   project in place, so it also picks up changes made to the files outside
+#'   the R session (for example after [restoreProject()] rolled the project
+#'   back). It simply produces no announcement when there was nothing to
+#'   discard: unlike a clean [saveProject()], a clean reload prints nothing.
 #'
-#' @param project A `Project` bound to a directory. An unbound in-memory
-#'   project has nothing to reload from and aborts.
+#' @param project A `Project` with a folder on disk. A project that exists
+#'   only in the R session has nothing to reload from and aborts.
 #'
-#' @returns Invisibly, the `project`, with in-memory edits discarded and the
-#'   dirty bit cleared.
+#' @returns Invisibly, the `project`, with unsaved changes discarded.
 #' @export
 #' @family project persistence
 #' @seealso [loadProject()], [saveProject()], [snapshotProject()],
@@ -251,11 +249,12 @@ isProjectInitialized <- function(destination = ".") {
 #'
 #' @description
 #'
-#' Scaffolds a JSON-first esqlabsR project in `destination`: a `Project.json`
-#' container plus a `definitions/` tree of authored definitions, alongside the
-#' working folders (`Models/`, `Data/`, `Populations/`, `Results/`). By default
-#' it also writes optional Excel side-cars from the JSON; set
-#' `createExcel = FALSE` for a JSON-only project.
+#' Creates a new JSON-based esqlabsR project in `destination`: a
+#' `Project.json` file plus a `definitions/` folder holding one file per
+#' definition, alongside the working folders (`Models/`, `Data/`,
+#' `Populations/`, `Results/`). By default it also writes the optional Excel
+#' configuration files from the JSON; set `createExcel = FALSE` for a
+#' JSON-only project.
 #'
 #' @param destination A string defining the path where to initialize the
 #'   project. default to current working directory.

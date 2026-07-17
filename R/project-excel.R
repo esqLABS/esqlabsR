@@ -1,20 +1,23 @@
 # Excel <-> JSON bridge: public API ----
 
-#' Import project configuration from Excel files to v2.0 JSON
+#' Import project configuration from Excel files
 #'
 #' @description Reads all Excel configuration files in an esqlabsR project and
-#' produces a single v2.0 JSON file. This is the migration path from
-#' Excel-based projects to the JSON-primary workflow.
+#' converts them to the JSON project format: a project file (named after the
+#' Excel file, e.g. `Project.xlsx` becomes `Project.json`) plus one file per
+#' definition in the `definitions/` folder. The result is a ready-to-use
+#' project — [loadProject()] can open it directly. This is the migration path
+#' from Excel-based projects to the JSON-primary workflow.
 #'
 #' @param projectConfigPath Path to the `Project.xlsx` file.
 #'   Defaults to `"Project.xlsx"`.
-#' @param outputDir Directory where the JSON file will be saved. If `NULL`
-#'   (default), the JSON file is created in the same directory as the source
-#'   Excel file.
+#' @param outputDir Directory where the JSON project is created. If `NULL`
+#'   (default), it is created in the same directory as the source Excel file.
 #' @param silent Logical. If `TRUE`, suppresses informational messages.
 #'   Defaults to `FALSE`.
 #'
-#' @return Invisibly returns the path to the created JSON file.
+#' @return Invisibly returns the path to the created project file (the
+#'   `Project.json`).
 #' @export
 #' @family project persistence
 importProjectFromExcel <- function(
@@ -576,28 +579,28 @@ restoreProjectConfiguration <- function(
 
 #' Check if Excel configuration files are in sync with JSON
 #'
-#' @description Compares the **persisted** JSON configuration on disk
-#' (`Project.json` plus its `definitions/` tree) against the Excel
-#' configuration files to determine whether they are synchronized. This is a
-#' disk-to-disk comparison and does not read a loaded project's in-memory
-#' state.
+#' @description Compares the JSON project as saved on disk (`Project.json`
+#' plus its `definitions/` folder) against the Excel configuration files and
+#' reports whether the two carry the same configuration. Only the files on
+#' disk are compared: edits made in the current R session but not yet saved
+#' with [saveProject()] play no role here.
 #'
-#' This is related to, but distinct from, the Excel axis of [syncStatus()].
-#' `projectStatus()` compares the JSON *as saved on disk* against Excel, while
-#' [syncStatus()]'s Excel axis compares the *current in-memory* project against
-#' Excel. The two can disagree when the project has unsaved edits (memory
-#' differs from the saved JSON), so save the project before relying on either
-#' to reflect the same state.
+#' This is related to, but distinct from, the Excel comparison that
+#' [syncStatus()] reports: `projectStatus()` compares the JSON files *as saved
+#' on disk* against Excel, while [syncStatus()] compares the project *as
+#' currently loaded in R* against Excel. The two can disagree while the
+#' project has unsaved changes, so save the project first if both should
+#' describe the same state.
 #'
-#' @param projectConfigPath Either a path to a `Project.xlsx` file
-#'   (defaults to `"Project.xlsx"`) or a loaded [Project] object. When a
-#'   `Project` is passed, its `Project.xlsx` side-car and JSON path are
-#'   derived from the object, so `jsonPath` is optional.
-#' @param jsonPath Path to the JSON configuration file. If `NULL` (default),
-#'   the function looks for a JSON file with the same base name (or, when a
-#'   `Project` object is passed as `projectConfigPath`, uses that object's
-#'   JSON path).
-#' @param silent Logical indicating whether to suppress informational messages.
+#' @param projectConfigPath Either the path to the project's `Project.xlsx`
+#'   file (defaults to `"Project.xlsx"`) or a loaded [Project] object. When a
+#'   `Project` is passed, its `Project.xlsx` and JSON paths are taken from
+#'   the object, so `jsonPath` is optional.
+#' @param jsonPath Path to the JSON project file. If `NULL` (default), a JSON
+#'   file with the same base name as the Excel file is used (or, when a
+#'   `Project` object is passed as `projectConfigPath`, that object's JSON
+#'   path).
+#' @param silent Logical. If `TRUE`, suppresses informational messages.
 #'   Defaults to `FALSE`.
 #'
 #' @return A list with components: \item{excel_in_sync}{Logical indicating
@@ -605,9 +608,9 @@ restoreProjectConfiguration <- function(
 #'   \item{details}{A list with detailed comparison results}
 #'
 #' @seealso [syncStatus()] reports a related Excel comparison for a loaded
-#'   `Project` as one of its two axes (alongside the memory-vs-tree axis), but
-#'   compares the *in-memory* project against the `Project.xlsx` side-car,
-#'   whereas `projectStatus()` compares the *persisted* JSON against Excel.
+#'   `Project`, but compares the project as currently loaded in R against the
+#'   project's Excel files, whereas `projectStatus()` compares the JSON files
+#'   saved on disk.
 #'
 #' @import cli
 #' @export
@@ -788,21 +791,22 @@ projectConfigurationStatus <- function(...) {
 
 # Excel <-> JSON bridge: sync helper ----
 
-#' Report a project's two-axis sync status
+#' Check a loaded project for unsaved changes and outdated Excel files
 #'
-#' @description Human-oriented, read-only report of how a `Project`'s in-memory
-#'   state diverges from disk, on two axes:
+#' @description Prints a report of how the `Project` in your R session
+#'   compares to the files on disk, in two parts:
 #'
-#'   - memory vs. tree: whether there are unsaved in-memory edits (the project
-#'     is dirty). Reported as `NA` for an unbound in-memory project.
-#'   - memory vs. Excel: when a `Project.xlsx` side-car is configured, whether
-#'     it is a stale export of the current project (one-way: would re-exporting
-#'     change it). Reported as `NA` when no side-car is configured or it cannot
-#'     be read.
+#'   - project vs. saved files: whether the project carries changes that have
+#'     not been saved with [saveProject()] yet. Reported as `NA` for a project
+#'     that exists only in the R session, without a folder on disk.
+#'   - project vs. Excel: when the project has a `Project.xlsx` Excel file,
+#'     whether that file still matches the current project (one-way: would
+#'     exporting again change it). Reported as `NA` when there is no Excel
+#'     file or it cannot be read.
 #'
-#'   `syncStatus()` never reconciles either axis. To sync the tree, call
-#'   [saveProject()]; to sync Excel, call [exportProjectToExcel()] or
-#'   [importProjectFromExcel()].
+#'   `syncStatus()` only reports; it never changes any files. To save your
+#'   changes, call [saveProject()]; to bring the Excel files up to date, call
+#'   [exportProjectToExcel()] or [importProjectFromExcel()].
 #'
 #' @param project A `Project` object.
 #' @param silent Logical. If `TRUE`, suppresses the printed report and only
@@ -818,7 +822,7 @@ projectConfigurationStatus <- function(...) {
 #' @examples
 #' \dontrun{
 #' project <- loadProject("Project.json")
-#' syncStatus(project) # human-readable two-axis report
+#' syncStatus(project) # readable report
 #' project$status # the same information as a structured list
 #' }
 syncStatus <- function(project, silent = FALSE) {
