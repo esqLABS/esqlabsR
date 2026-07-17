@@ -46,17 +46,16 @@
 # PIOutputMapping() errors on missing required fields
 
     Code
-      PIOutputMapping(id = "x", scenarios = "S1", outputPathId = "", observedDataId = "Laskin")
+      PIOutputMapping(id = "x", scenarios = "S1", outputPath = "", observedData = "Laskin")
     Condition
       Error in `PIOutputMapping()`:
-      ! Required field "outputPathId" is missing or empty on PIOutputMapping "x".
+      ! Required field "outputPath" is missing or empty on PIOutputMapping "x".
 
 # PITask() errors when parameters is empty
 
     Code
       PITask(id = "x", scenarios = "S1", parameters = list(), outputMappings = list(
-        PIOutputMapping(id = "m", scenarios = "S1", outputPathId = "PVB",
-          observedDataId = "Laskin")))
+        PIOutputMapping(id = "m", scenarios = "S1", outputPath = "PVB", observedData = "Laskin")))
     Condition
       Error in `PITask()`:
       ! Field "parameters" on PITask "x" must contain at least one entry.
@@ -76,8 +75,8 @@
     Code
       PITask(id = "x", scenarios = character(0), parameters = list(PIParameter(id = "k",
         scenarios = "S1", path = "x|y", minValue = 0, maxValue = 1, startValue = 0.5)),
-      outputMappings = list(PIOutputMapping(id = "m", scenarios = "S1", outputPathId = "PVB",
-        observedDataId = "Laskin")))
+      outputMappings = list(PIOutputMapping(id = "m", scenarios = "S1", outputPath = "PVB",
+        observedData = "Laskin")))
     Condition
       Error in `PITask()`:
       ! Field `scenarios` on PITask "x" must be a non-empty character vector.
@@ -86,8 +85,8 @@
 
     Code
       PITask(id = "x", scenarios = "S1", parameters = list("not a record"),
-      outputMappings = list(PIOutputMapping(id = "m", scenarios = "S1", outputPathId = "PVB",
-        observedDataId = "Laskin")))
+      outputMappings = list(PIOutputMapping(id = "m", scenarios = "S1", outputPath = "PVB",
+        observedData = "Laskin")))
     Condition
       Error in `PITask()`:
       ! Element parameters[[1]] on PITask "x" must be a PIParameter.
@@ -122,7 +121,7 @@
       <PIOutputMapping>
         * Id: PVB_obs
         * Scenarios: S1
-        * Output Path Id: Aciclovir_PVB
+        * Output Path Id: aciclovir_pvb
         * Observed Data Id: Laskin_GroupA
         * Scaling: lin
         * Weight: 1, 2, 3
@@ -133,7 +132,7 @@
       print(t)
     Output
       <PITask>
-        * Id: AciclovirSimple
+        * Id: aciclovirsimple
         * Scenarios: S1, S2
         * Number of Parameters: 1
         * Number of Output Mappings: 1
@@ -147,22 +146,29 @@
     Condition
       Error in `.abortValidationErrors()`:
       ! Cannot runPI: project has 3 critical validation errors.
-      x [crossReferences] PI task 'T' references undefined scenarios: DoesNotExist
-      x [crossReferences] PI task 'T', parameter 'p' references undefined scenarios: DoesNotExist
-      x [crossReferences] PI task 'T', outputMapping 'm' references undefined scenarios: DoesNotExist
+      x [crossReferences] PI task 't' references undefined scenarios: DoesNotExist
+      x [crossReferences] PI task 't', parameter 'p' references undefined scenarios: DoesNotExist
+      x [crossReferences] PI task 't', outputMapping 'm' references undefined scenarios: DoesNotExist
       i Run `validateProject(project)` for a full report.
 
-# createPITasks() emits a soft-deprecation warning
+# .warnUnquantifiedUncertainty fires once per NA-uncertainty parameter
+
+    Code
+      esqlabsR:::.warnUnquantifiedUncertainty("myTask", fakeResult)
+    Condition
+      Warning:
+      Parameter identification task "myTask": uncertainty could not be quantified for parameter "k_clear" (standard deviation, CV, and confidence interval are all "NA").
+      i The reported estimate has no usable uncertainty even though convergence is reported. Likely causes: a singular or ill-conditioned Hessian, the estimate sitting at a parameter bound, or the objective being insensitive to this parameter.
+
+# createPITasks() is defunct and aborts
 
     Code
       createPITasks()
     Condition
-      Warning:
-      `createPITasks()` was deprecated in esqlabsR 6.0.0.
+      Error:
+      ! `createPITasks()` was deprecated in esqlabsR 6.0.0 and is now defunct.
       i Please use the `project` argument of `runPI()` instead.
       i createPITasks() is removed. runPI(project) builds and runs PI tasks in one step.
-      Error in `createPITasks()`:
-      ! `createPITasks()` has been removed. Use `runPI()`(`project`, piTaskNames = ...).
 
 # runPI() with the legacy first-arg shape (non-Project) emits a soft-deprecation warning
 
@@ -182,32 +188,53 @@
       addPITask(project, id = "Bad", scenarios = "Ghost", parameters = list(
         PIParameter(id = "k", scenarios = "Ghost", path = "x|y", minValue = 0,
           maxValue = 1, startValue = 0.5)), outputMappings = list(PIOutputMapping(id = "m",
-        scenarios = "Ghost", outputPathId = "Aciclovir_PVB", observedDataId = "Laskin")))
+        scenarios = "Ghost", outputPath = "aciclovir_pvb", observedData = "Laskin")))
     Condition
+      Warning:
+      Canonicalized 1 id to a safe form:
+      * "Bad" -> "bad"
+      Warning:
+      Canonicalized 1 referenced id to a safe form:
+      * "Ghost" -> "ghost"
+      Warning:
+      Canonicalized 1 referenced id to a safe form:
+      * "Ghost" -> "ghost"
+      Warning:
+      Canonicalized 1 referenced id to a safe form:
+      * "Ghost" -> "ghost"
       Error in `addPITask()`:
-      ! Cannot add PI task "Bad":
-      x scenarios not found in project$scenarios: Ghost
+      ! Cannot add PI task "bad":
+      x scenarios not found in project$scenarios: ghost
 
-# addPITask() errors on unknown outputPathId
+# addPITask() errors on unknown outputPath
 
     Code
-      addPITask(project, id = "Bad", scenarios = "TestScenario", parameters = list(
-        PIParameter(id = "k", scenarios = "TestScenario", path = "x|y", minValue = 0,
+      addPITask(project, id = "Bad", scenarios = "testscenario", parameters = list(
+        PIParameter(id = "k", scenarios = "testscenario", path = "x|y", minValue = 0,
           maxValue = 1, startValue = 0.5)), outputMappings = list(PIOutputMapping(id = "m",
-        scenarios = "TestScenario", outputPathId = "DoesNotExist", observedDataId = "Laskin")))
+        scenarios = "testscenario", outputPath = "DoesNotExist", observedData = "Laskin")))
     Condition
+      Warning:
+      Canonicalized 1 id to a safe form:
+      * "Bad" -> "bad"
+      Warning:
+      Canonicalized 1 referenced id to a safe form:
+      * "DoesNotExist" -> "doesnotexist"
       Error in `addPITask()`:
-      ! Cannot add PI task "Bad":
-      x outputPathId 'DoesNotExist' not found in project$outputPaths
+      ! Cannot add PI task "bad":
+      x outputPath 'doesnotexist' not found in project$outputPaths
 
 # addPITask() errors on duplicate id
 
     Code
       do.call(addPITask, c(list(project = project), args))
     Condition
+      Warning:
+      Canonicalized 1 id to a safe form:
+      * "Dup" -> "dup"
       Error:
-      ! Cannot add PI task "Dup":
-      x PI task 'Dup' already exists
+      ! Cannot add PI task "dup":
+      x PI task 'dup' already exists
 
 # removePITask() warns and no-ops on missing id
 
@@ -215,56 +242,68 @@
       removePITask(project, "NotThere")
     Condition
       Warning:
-      PI task "NotThere" not found; no-op.
+      Canonicalized 1 id to a safe form:
+      * "NotThere" -> "notthere"
+      Warning:
+      PI task "notthere" not found; no-op.
 
-# addPIParameter() errors on unknown taskId
+# addPIParameter() errors on unknown task
 
     Code
-      addPIParameter(project, taskId = "Ghost", id = "p", scenarios = "TestScenario",
+      addPIParameter(project, task = "Ghost", id = "p", scenarios = "testscenario",
         path = "x|y", minValue = 0, maxValue = 1, startValue = 0.5)
     Condition
+      Warning:
+      Canonicalized 1 id to a safe form:
+      * "Ghost" -> "ghost"
       Error in `addPIParameter()`:
-      ! PI task "Ghost" not found
+      ! PI task "ghost" not found
 
 # addPIParameter() errors on unknown scenario id
 
     Code
-      addPIParameter(project, taskId = "T", id = "ghost-param", scenarios = "Ghost",
+      addPIParameter(project, task = "t", id = "ghost-param", scenarios = "Ghost",
         path = "a|b", minValue = 0, maxValue = 1, startValue = 0.5)
     Condition
+      Warning:
+      Canonicalized 1 referenced id to a safe form:
+      * "Ghost" -> "ghost"
       Error in `addPIParameter()`:
-      ! scenarios not found: "Ghost"
+      ! scenarios not found: "ghost"
 
 # removePIParameter() warns and no-ops on missing id
 
     Code
-      removePIParameter(project, taskId = "T", id = "ghost")
+      removePIParameter(project, task = "t", id = "ghost")
     Condition
       Warning:
-      Parameter "ghost" not found in task "T"; no-op.
+      Parameter "ghost" not found in task "t"; no-op.
 
-# addPIOutputMapping() errors on unknown outputPathId
+# addPIOutputMapping() errors on unknown outputPath
 
     Code
-      addPIOutputMapping(project, taskId = "T", id = "m2", scenarios = "TestScenario",
-        outputPathId = "DoesNotExist", observedDataId = "L")
+      addPIOutputMapping(project, task = "t", id = "m2", scenarios = "testscenario",
+        outputPath = "DoesNotExist", observedData = "L")
     Condition
+      Warning:
+      Canonicalized 1 referenced id to a safe form:
+      * "DoesNotExist" -> "doesnotexist"
       Error in `addPIOutputMapping()`:
-      ! outputPathId "DoesNotExist" not found in project$outputPaths
+      ! outputPath "doesnotexist" not found in project$outputPaths
 
 # addPIParameter() errors on an explicit duplicate id
 
     Code
-      addPIParameter(project, taskId = "T", id = "dup", path = "a|b", scenarios = "TestScenario",
+      addPIParameter(project, task = "t", id = "dup", path = "a|b", scenarios = "testscenario",
         minValue = 0, maxValue = 1, startValue = 0.5)
     Condition
       Error in `addPIParameter()`:
-      ! Parameter "dup" already exists in task "T"
+      ! Parameter "dup" already exists in task "t"
 
 # PIOutputMapping() validates scaling and the offset / factor / weight fields
 
     Code
-      PIOutputMapping(id = "m", scenarios = "S1", outputPathId = "P", observedDataId = "D",
+      PIOutputMapping(id = "m", scenarios = "S1", outputPath = "P", observedData = "D",
         xOffset = "not a number")
     Condition
       Error in `PIOutputMapping()`:
@@ -273,7 +312,7 @@
 ---
 
     Code
-      PIOutputMapping(id = "m", scenarios = "S1", outputPathId = "P", observedDataId = "D",
+      PIOutputMapping(id = "m", scenarios = "S1", outputPath = "P", observedData = "D",
         weight = "heavy")
     Condition
       Error in `PIOutputMapping()`:
@@ -282,7 +321,7 @@
 ---
 
     Code
-      PIOutputMapping(id = "m", scenarios = "S1", outputPathId = "P", observedDataId = "D",
+      PIOutputMapping(id = "m", scenarios = "S1", outputPath = "P", observedData = "D",
         scaling = "")
     Condition
       Error in `PIOutputMapping()`:
@@ -291,18 +330,21 @@
 # addPITask() rejects malformed outputMappings with a typed error
 
     Code
-      addPITask(project, id = "T", scenarios = "TestScenario", parameters = list(
-        PIParameter(id = "k", scenarios = "TestScenario", path = "x|y", minValue = 0,
+      addPITask(project, id = "t", scenarios = "testscenario", parameters = list(
+        PIParameter(id = "k", scenarios = "testscenario", path = "x|y", minValue = 0,
           maxValue = 1, startValue = 0.5)), outputMappings = list("not a mapping"))
     Condition
       Error in `PITask()`:
-      ! Element outputMappings[[1]] on PITask "T" must be a PIOutputMapping.
+      ! Element outputMappings[[1]] on PITask "t" must be a PIOutputMapping.
 
-# runPI(piTaskNames = ) aborts on an unknown task name
+# runPI(tasks = ) aborts on an unknown task name
 
     Code
-      runPI(project, piTaskNames = "Ghost")
+      runPI(project, tasks = "Ghost")
     Condition
+      Warning:
+      Canonicalized 1 referenced id to a safe form:
+      * "Ghost" -> "ghost"
       Error in `runPI()`:
-      ! Unknown `piTaskNames`: "Ghost". Available: "AciclovirSimple".
+      ! Unknown `tasks`: "ghost". Available: "aciclovirsimple".
 
