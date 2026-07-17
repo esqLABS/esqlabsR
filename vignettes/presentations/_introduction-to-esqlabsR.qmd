@@ -23,7 +23,6 @@ execute:
 
 ```{r, include=FALSE, message = FALSE, warning = FALSE}
 require(emoji)
-require(readxl)
 require(reactable)
 library(esqlabsR)
 library(dplyr)
@@ -32,8 +31,8 @@ library(showtext)
 
 showtext::showtext_opts(dpi = 300)
 
-my_project_configuration <-
-  createProjectConfiguration(path = exampleProjectConfigurationPath())
+# Load the worked example shipped with the package (read-only).
+project <- loadProject(exampleProjectPath())
 ```
 
 ```{css, echo = FALSE}
@@ -76,14 +75,14 @@ Software](https://www.open-systems-pharmacology.org/)
 ## `{esqlabsR}` Why ?
 <br>
 
--   Simple functions to design, run and save simulations,
--   Interact with the {ospsuite} features using Excel files,
+-   Simple functions to design, run, and save simulations,
+-   Store a whole modeling project as plain text files,
 -   Generate standardized plots automatically.
 
 <br>
 
 ::: {.center}
-**`r emoji::emoji(keyword = "arrow_right")` Streamlined Simulation Workflow `r emoji::emoji(keyword = "rocket")`
+**`r emoji::emoji(keyword = "arrow_right")` Streamlined simulation workflow `r emoji::emoji(keyword = "rocket")`
 **
 :::
 
@@ -99,7 +98,7 @@ Software](https://www.open-systems-pharmacology.org/)
 
 - {{< fa book >}} Documentation: [esqlabs.github.io/esqlabsR/](https://esqlabs.github.io/esqlabsR)
 
-- {{< fa arrow-trend-up >}} [Get Started Tutorial](https://esqlabs.github.io/esqlabsR/articles/esqlabsR.html)
+- {{< fa arrow-trend-up >}} [Get started tutorial](https://esqlabs.github.io/esqlabsR/articles/esqlabsR.html)
 
 
 ::: footer
@@ -128,7 +127,7 @@ pak::pak("esqLABS/esqlabsR*release")
 ![](../Figures/esqlabs-workflow.png)
 <br>
 
-**esqlabsR Workflow**
+**esqlabsR workflow**
 :::
 
 ::: footer
@@ -136,184 +135,165 @@ pak::pak("esqLABS/esqlabsR*release")
 :::
 
 
-# Get Started {background-color="#26B042" .white-text}
+# Get started {background-color="#26B042" .white-text}
 
 
-# I. Project Configuration
+# I. The project
 
-## Project Structure
+## What is a project ?
 <br>
 
-```{r, eval=FALSE, echo = TRUE}
+A **Project** holds everything a simulation needs: models, scenarios,
+individuals, populations, parameters, output paths, observed data, and plots.
+
+. . .
+
+<br>
+
+On disk, a project is a directory. In R, it is one object you load once and
+pass to every workflow function.
+
+```{r, eval=FALSE}
 library(esqlabsR)
-initProject()
+project <- loadProject("path/to/Project.json")
 ```
-
-<br>
-
-`initProject()` will create the expected simulation project's folder structure.
-
-<br>
 
 ::: footer
-I Project Configuration
+I The project
 :::
 
-## Project Structure {auto-animate=true}
-Each one of these folders contains a series of .xlsx files with specific purpose.
+## Start a new project
+<br>
 
-```{r, echo = FALSE, eval=FALSE}
-# rerun this if project structure change and paste below
-file_tree <- fs::dir_tree(esqlabsR:::exampleDirectory("TestProject"), glob = "*.md|*.R", invert = TRUE)
+`initProject()` scaffolds the directory structure for you.
+
+```{r, eval=FALSE}
+# An empty project to fill in
+initProject("my_project", type = "minimal")
+
+# A ready-to-run worked example
+initProject("my_example", type = "example")
 ```
+
+<br>
+
+The bundled worked example is one call away:
+
+```{r, eval=FALSE}
+project <- loadProject(exampleProjectPath())
+```
+
+::: footer
+I The project
+:::
+
+## A project is a directory {auto-animate=true}
+
+A `Project.json` container plus a `definitions/` tree, one JSON file per entity.
 
 ```{.sh}
 my_project
-├── ProjectConfiguration.xlsx
-├── ProjectConfiguration.json
-├── Configurations
-│   ├── Applications.xlsx
-│   ├── Individuals.xlsx
-│   ├── ModelParameters.xlsx
-│   ├── Plots.xlsx
-│   ├── Populations.xlsx
-│   ├── PopulationsCSV
-│   │   └── TestPopulation.csv
-│   └── Scenarios.xlsx
-├── Data
+├── Project.json
+├── definitions
+│   ├── scenarios
+│   │   └── aciclovir_iv.json
+│   ├── individuals
+│   │   └── adult_male.json
+│   ├── populations
+│   │   └── european_adults.json
+│   ├── parameter-sets
+│   │   ├── global.json
+│   │   └── aciclovir.json
+│   ├── applications
+│   │   └── aciclovir_iv_250mg.json
+│   ├── output-paths
+│   │   └── aciclovir_pvb.json
+│   └── plots
+│       └── plots.json
 ├── Models
 │   └── Simulations
 │       └── Aciclovir.pkml
+├── Data
 └── Results
-    ├── Figures
-    └── SimulationResults
 ```
+
 ::: footer
-I Project Configuration
+I The project
 :::
 
-## Project Structure {auto-animate=true}
+## A project is a directory {auto-animate=true}
 
-Project's files are linked by the `ProjectConfiguration.xlsx` file.
+`Project.json` is the container; the `definitions/` tree is the source of truth.
 
-```{.sh code-line-numbers="2"}
+```{.sh code-line-numbers="2,3"}
 my_project
-├── ProjectConfiguration.xlsx
-├── ProjectConfiguration.json
-├── Configurations
-│   ├── Applications.xlsx
-│   ├── Individuals.xlsx
-│   ├── ModelParameters.xlsx
-│   ├── Plots.xlsx
-│   ├── Populations.xlsx
-│   ├── PopulationsCSV
-│   │   └── TestPopulation.csv
-│   └── Scenarios.xlsx
-├── Data
+├── Project.json
+├── definitions
+│   ├── scenarios
+│   │   └── aciclovir_iv.json
+│   ├── individuals
+│   │   └── adult_male.json
+│   ├── populations
+│   │   └── european_adults.json
+│   ├── parameter-sets
+│   │   ├── global.json
+│   │   └── aciclovir.json
+│   ├── applications
+│   │   └── aciclovir_iv_250mg.json
+│   ├── output-paths
+│   │   └── aciclovir_pvb.json
+│   └── plots
+│       └── plots.json
 ├── Models
 │   └── Simulations
 │       └── Aciclovir.pkml
+├── Data
 └── Results
-    ├── Figures
-    └── SimulationResults
 ```
 
 ::: footer
-I Project Configuration
+I The project
 :::
 
-## Project Structure {auto-animate=true}
+## One object, every section
 
-Everything is already configured !
+`loadProject()` reads the whole tree into a single `Project` object.
 
-```{r, echo = FALSE}
-reactable::reactable(
-  data = head(readxl::read_xlsx(path = exampleProjectConfigurationPath())),
-  columns = list(
-    "Property" = reactable::colDef(minWidth = 50),
-    "Value" = reactable::colDef(minWidth = 50),
-    "Description" = reactable::colDef(minWidth = 100)
-  ),
-  outlined = TRUE,
-  pagination = FALSE,
-  highlight = TRUE, style = list(fontSize = 20)
-)
+```{r}
+project
 ```
 
 ::: footer
-I Project Configuration
+I The project
 :::
 
-## ProjectConfiguration
+## Share a project as one file {auto-animate=true}
+
 <br>
 
-:::{.center}
-`createProjectConfiguration(path)`
-:::
-
-- targets `ProjectConfiguration.xlsx` file,
-- creates a `ProjectConfiguration` object,
-- Needed for all next steps !
+A **snapshot** packs a project into a single portable `.esqlabsR` file.
 
 <br>
 
 ```{r, eval = FALSE}
-my_project_configuration <-
-  createProjectConfiguration(path = "path/to/ProjectConfiguration.xlsx")
-```
+# Freeze the project into one shareable file
+saveSnapshot(project, "aciclovir_study")  # writes aciclovir_study.esqlabsR
 
-::: footer
-I Project Configuration
-:::
-
-## ProjectConfiguration
-
-```{r, eval = FALSE}
-my_project_configuration
+# Re-materialize it as a full project directory
+loadSnapshot("aciclovir_study.esqlabsR", dir = "restored_project")
 ```
 
 <br>
 
-```
-ProjectConfiguration:
-Project Configuration File: TestProject/ProjectConfiguration.xlsx
-Model folder: TestProject/Models/Simulations
-Configurations folder: TestProject/Configurations
-Model parameters file: TestProject/Configurations/ModelParameters.xlsx
-Individuals file: TestProject/Configurations/Individuals.xlsx
-...
-```
-::: footer
-I Project Configuration
-:::
-
-## Version Control & Project Sharing {auto-animate=true}
-
-<br>
-
-**JSON Snapshots** for version control and team collaboration
-
-<br>
-
-```{r, eval = FALSE}
-# Create snapshot
-snapshotProjectConfiguration("ProjectConfiguration.xlsx")
-
-# Restore from snapshot
-restoreProjectConfiguration("ProjectConfiguration.json")
-```
-
-<br>
-
-- Text-based format (Git-friendly)
-- Easy team collaboration
+- Plain text, JSON-based (Git-friendly)
+- One file to send a colleague
 - Reproducible project setup
 
 ::: footer
-I Project Configuration
+I The project
 :::
 
-# II. Design Scenarios
+# II. Authoring scenarios
 
 ## Scenarios
 <br>
@@ -322,236 +302,273 @@ Simulations are defined by **Scenarios**.
 
 . . .
 
-Scenarios are setup in the `Configurations/Scenarios.xlsx` file.
+A scenario pins down a model, an individual or population, an application,
+the parameter sets to apply, a time grid, and the output paths to record.
 
 . . .
 
-
-```{r, echo = FALSE}
-scenarios <-
-  readxl::read_xlsx(my_project_configuration$scenariosFile)
-
-reactable::reactable(
-  data = scenarios |>
-    select(
-      Scenario_name,
-      ModelFile,
-      ModelParameterSheets,
-      SimulationTime,
-      IndividualId,
-      PopulationId
-    ),
-  outlined = TRUE,
-  pagination = FALSE,
-  highlight = TRUE,
-  style = list(fontSize = 20)
-)
+```{r}
+names(project$scenarios)
 ```
 
 ::: footer
-II Design Scenarios
+II Authoring scenarios
 :::
 
-## Scenarios parameterization
-
-- Model
-- Model parameters
-- Application protocol
-- Time range
-- Individual characteristics
-- Population
-- ...
-
-. . .
-
-:::{.center}
-**All in {{< fa file-excel >}} files !**
-:::
-
-
-::: footer
-II Design Scenarios
-:::
-
-## Parameters files
+## What a scenario links {auto-animate=true}
 
 ```{mermaid}
 %%| echo: false
 flowchart TD
-    Scenarios["`**Scenarios.xlsx**
-    • ModelFile
-    • ModelParametersSheets
-    • ApplicationProtocol
-    • IndividualId
-    • PopulationId`"]
+    Scenario["`**Scenario**
+    aciclovir_iv`"]
 
-    Models["`**Models/**
-    • Model1.pkml
-    • Model2.pkml`"]
+    Model["`**Model**
+    Aciclovir.pkml`"]
 
-    ModelParams["`**ModelParameters.xlsx**
-    ModelParametersSheets...
-    • ContainerPath
-    • Parameter Name
-    • Value
-    • Units`"]
+    ParamSets["`**Parameter Sets**
+    global
+    aciclovir`"]
 
-    Applications["`**Applications.xlsx**
-    ApplicationProtocol...
-    • ContainerPath
-    • Parameter Name
-    • Value
-    • Units`"]
+    Application["`**Application**
+    aciclovir_iv_250mg`"]
 
-    Individuals["`**Individuals.xlsx**
-    IndividualBiometrics
-    IndividualId...
-    • ContainerPath
-    • Parameter Name
-    • Value
-    • Units`"]
+    Individual["`**Individual**
+    adult_male`"]
 
-    Populations["`**Populations.xlsx**
-    Demographics
-    PopulationId...
-    • ContainerPath
-    • Parameter Name
-    • Mean
-    • SD
-    • Distribution`"]
+    OutputPaths["`**Output Paths**
+    aciclovir_pvb`"]
 
-    Scenarios -->|ModelFile| Models
-    Scenarios -->|ModelParametersSheets| ModelParams
-    Scenarios -->|ApplicationProtocol| Applications
-    Scenarios -->|IndividualId| Individuals
-    Scenarios -->|PopulationId| Populations
+    Scenario -->|modelFile| Model
+    Scenario -->|parameterSets| ParamSets
+    Scenario -->|application| Application
+    Scenario -->|individual| Individual
+    Scenario -->|outputPaths| OutputPaths
 
-    style Scenarios fill:#e1f5e1,stroke:#4caf50,stroke-width:3px
-    style Models fill:#fff9c4,stroke:#fbc02d,stroke-width:2px
-    style ModelParams fill:#e1f5e1,stroke:#4caf50,stroke-width:2px
-    style Applications fill:#e1f5e1,stroke:#4caf50,stroke-width:2px
-    style Individuals fill:#e1f5e1,stroke:#4caf50,stroke-width:2px
-    style Populations fill:#e1f5e1,stroke:#4caf50,stroke-width:2px
+    style Scenario fill:#e1f5e1,stroke:#4caf50,stroke-width:3px
+    style Model fill:#fff9c4,stroke:#fbc02d,stroke-width:2px
+    style ParamSets fill:#e1f5e1,stroke:#4caf50,stroke-width:2px
+    style Application fill:#e1f5e1,stroke:#4caf50,stroke-width:2px
+    style Individual fill:#e1f5e1,stroke:#4caf50,stroke-width:2px
+    style OutputPaths fill:#e1f5e1,stroke:#4caf50,stroke-width:2px
 ```
 
 ::: footer
-II Design Scenarios
+II Authoring scenarios
 :::
 
-# III. Run Simulations
+## Authoring in R
+<br>
 
-## Read Scenarios
+The `add*` / `set*` / `remove*` family edits a project by id.
 
-```{r, cache = FALSE}
-#| code-line-numbers: "3"
-my_scenarios <- createScenarios(
-  readScenarioConfigurationFromExcel(
-    scenarioNames = "TestScenario",
-    projectConfiguration = my_project_configuration
-  )
+```{r, eval = FALSE}
+# Output path: a short id bound to an OSPS-notation path
+addOutputPath(
+  project,
+  id = "aciclovir_pvb",
+  path = "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
+)
+
+# Scenario referencing definitions by their ids
+addScenario(
+  project,
+  id = "aciclovir_iv",
+  modelFile = "Aciclovir.pkml",
+  individual = "adult_male",
+  application = "aciclovir_iv_250mg",
+  parameterSets = c("global", "aciclovir"),
+  outputPaths = "aciclovir_pvb"
 )
 ```
 
 ::: footer
-III Run Simulations
+II Authoring scenarios
 :::
 
-## Scenarios Recap
+## Authoring is write-through
+<br>
+
+Every edit lands in its entity file immediately. There is no separate save
+step.
 
 ```{r, eval = FALSE}
-my_scenarios
+# Build a parameter set entry by entry
+addParameterSet(project, id = "aciclovir")
+addParameterEntry(
+  project,
+  id = "aciclovir",
+  containerPath = "Aciclovir",
+  parameterName = "Lipophilicity",
+  value = -0.09,
+  units = "Log Units"
+)
+
+# Add an individual
+addIndividual(project, id = "adult_male", species = "Human", gender = "MALE")
 ```
 
-```{r, echo = FALSE}
-my_scenarios$TestScenario$scenarioConfiguration$print(projectConfiguration = FALSE)
+. . .
+
+::: {.center}
+Ids are canonicalized: lowercased and made filename-safe.
+:::
+
+::: footer
+II Authoring scenarios
+:::
+
+# III. Run simulations
+
+## Run scenarios
+<br>
+
+`runScenarios()` takes the project and the scenario ids to run.
+
+```{r}
+results <- runScenarios(project, scenarios = "aciclovir_iv")
+```
+
+<br>
+
+It returns a **Scenario Result** list, keyed by scenario name.
+
+```{r}
+names(results)
+names(results$aciclovir_iv)
 ```
 
 ::: footer
-III Run Simulations
+III Run simulations
 :::
 
-## Run Simulations
-
-```{r, cache = FALSE}
-myScenarioResults <- runScenarios(my_scenarios)
-```
-
+## Inside a Scenario Result
 <br>
 
 ```{r, echo = FALSE}
 reactable::reactable(
-  data = head(myScenarioResults$TestScenario$outputValues$data),
-  columns = list(
-    "IndividualId" = reactable::colDef(minWidth = 50),
-    "Time" = reactable::colDef(minWidth = 50),
-    "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)" = reactable::colDef(minWidth = 200)
-  ),
+  data = head(results$aciclovir_iv$outputValues$data),
   outlined = TRUE,
   pagination = FALSE,
-  highlight = TRUE, style = list(fontSize = 20)
+  highlight = TRUE,
+  style = list(fontSize = 18)
 )
 ```
 
+<br>
+
+Each result bundles the simulation, the raw results, the extracted output
+values, and the population (when there is one).
 
 ::: footer
-III Run Simulations
+III Run simulations
 :::
 
 
-# IV. Plot Results
+# IV. Plot results
 
-## {ospsuite} plotting functions
+## DataCombined and plots
+<br>
 
-Simulation results are compatible with `{ospsuite}` plotting workflow.
+Plots are declared in the project. `createPlots()` reads them and the
+simulated scenarios, and returns **Plot Grids**.
 
+```{r, fig.align="center", out.width="70%", fig.width=6, fig.asp=0.7, dpi=300}
+grids <- createPlots(project, scenarioResults = results)
 
-```{r, cache = FALSE}
-my_datacombined <- DataCombined$new()
-
-my_datacombined$addSimulationResults(myScenarioResults$TestScenario$results,
-  names = "Simulated",
-  groups = "Aciclovir"
-)
+grids[["individual_diagnostics"]]
 ```
 
 ::: footer
-IV Plot Results
+IV Plot results
 :::
 
-## {ospsuite} plotting functions
-
-```{r, cache = TRUE, out.width="80%", fig.align="center", fig.width=5, fig.asp=0.618, dpi=300}
-plotIndividualTimeProfile(my_datacombined)
-```
-
-::: footer
-IV Plot Results
-:::
-
-## Create Plots from Excel
-
+## Combine data yourself
 <br>
 
-:::{.center}
-
-Create plots (or plotgrids) from excel files using `createPlotsFromExcel()`.
-
-<br>
+Need finer control ? Build the `DataCombined` directly with
+`createDataCombined()`, then plot with the `{ospsuite}` workflow.
 
 ```{r, eval = FALSE}
-plots <- createPlotsFromExcel(
-  projectConfiguration = my_project_configuration
+dc <- createDataCombined(
+  project,
+  dataCombinedNames = "aciclovir_individual",
+  scenarioResults = results
 )
+
+ospsuite::plotIndividualTimeProfile(dc$aciclovir_individual)
+```
+
+::: footer
+IV Plot results
+:::
+
+
+# V. And more {background-color="#0D8DDA" .white-text}
+
+## Validation
+<br>
+
+`validateProject()` checks every section and the cross-references between
+them, returning one result per section.
+
+```{r, eval = FALSE}
+results <- validateProject(project)
+
+if (isAnyCriticalErrors(results)) {
+  print(validationSummary(results))
+}
+```
+
+::: footer
+V And more
+:::
+
+## Parameter identification & sensitivity
+<br>
+
+Fit parameters to observed data, declared as tasks in the project:
+
+```{r, eval = FALSE}
+piResults <- runPI(project, tasks = "aciclovirsimple")
 ```
 
 <br>
 
-**Available in esqlabsR v5.0.0+**
+Quantify how outputs respond to parameter changes:
 
-:::
+```{r, eval = FALSE}
+sens <- sensitivityCalculation(
+  simulation = results$aciclovir_iv$simulation,
+  outputPaths = project$outputPaths[["aciclovir_pvb"]],
+  parameterPaths = "Aciclovir|Lipophilicity"
+)
+```
 
 ::: footer
-IV Plot Results
+V And more
+:::
+
+## Excel bridge
+<br>
+
+Prefer spreadsheets ? Move a project to and from Excel without losing the
+working tree.
+
+```{r, eval = FALSE}
+# Excel -> working tree project
+project <- importProjectFromExcel("Project.xlsx")
+
+# Project -> Excel mirror
+exportProjectToExcel(project, outputDir = "excel_export")
+```
+
+<br>
+
+The project tree stays authoritative; the round trip is a fixed point.
+
+::: footer
+V And more
 :::
 
 
@@ -580,5 +597,5 @@ IV Plot Results
 # ![](../../man/figures/logo.png){width=400}
 
 :::{.center}
-**Thank You**
+**Thank you**
 :::
