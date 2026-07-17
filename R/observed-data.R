@@ -369,8 +369,9 @@ addObservedData <- function(project, entry) {
 #'
 #' Removes by DataSet name (for `type = "programmatic"` entries) or by
 #' `file` basename (for `type` `"excel"` / `"pkml"` / `"script"`
-#' entries). Vectorizes over a vector of ids, removing each in one
-#' write-through. Warns and skips any id with no matching entry.
+#' entries). Vectorizes over a vector of ids, removing each in one in-memory
+#' update; persist with [saveProject()]. Warns and skips any id with no
+#' matching entry.
 #'
 #' Unlike the other authoring functions, `addObservedData()` is not
 #' vectorized over ids: its second argument is a `DataSet` or a configuration
@@ -392,8 +393,9 @@ removeObservedData <- function(project, id) {
 
   # Resolve every id to the section index it removes (a programmatic sentinel or
   # a file-based entry) before touching anything, so the whole batch is
-  # validated first and applied in a single write-through, matching the
-  # all-or-nothing invariant every other vectorized remove* upholds.
+  # validated first and applied in a single in-memory update, matching the
+  # all-or-nothing invariant every other vectorized remove* upholds. Nothing
+  # touches disk; persist with saveProject().
   dropIdx <- integer()
   programmaticNames <- character()
   missingIds <- character()
@@ -428,7 +430,7 @@ removeObservedData <- function(project, id) {
     cli::cli_warn("observedData entry {.val {missingIds}} not found; no-op.")
   }
   # Warn once per removed id that is still referenced, then drop everything in a
-  # single write. A not-found id contributes nothing to the write.
+  # single in-memory update. A not-found id contributes nothing to the update.
   for (one in setdiff(id, missingIds)) {
     .warnIfObservedDataReferenced(project, one)
   }

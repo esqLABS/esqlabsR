@@ -125,9 +125,11 @@ saveProject <- function(project) {
 #'   The `Project` object identity is preserved (edits are reverted by R6
 #'   reference), so existing handles stay valid.
 #'
-#'   A clean reload (no unsaved edits) is a silent no-op. Unlike a clean
-#'   [saveProject()], it prints nothing, because reverting to what is already
-#'   in memory needs no announcement.
+#'   `reloadProject()` always re-reads the bound tree from disk and updates the
+#'   project in place, so it also picks up external changes to the files (for
+#'   example after [restoreProject()] rolled the tree back). It simply produces
+#'   no announcement when there were no unsaved edits: unlike a clean
+#'   [saveProject()], a clean reload prints nothing.
 #'
 #' @param project A `Project` bound to a directory. An unbound in-memory
 #'   project has nothing to reload from and aborts.
@@ -151,13 +153,13 @@ reloadProject <- function(project) {
     cli::cli_abort(messages$reloadProjectNoTree())
   }
 
-  # Silent-when-clean: skip the re-read entirely so a clean reload emits no
-  # message and re-fires no cross-reference warning. Check the bit before
-  # re-reading, since `.reload()` clears it.
-  if (!project$.isModified()) {
-    return(invisible(project))
-  }
-
+  # Always re-read from disk, even when the handle is clean: a clean handle can
+  # still be stale after `restoreProject(..., overwrite = TRUE)` rolled the tree
+  # back, or after an external edit to the JSON, and the blessed rollback idiom
+  # relies on reload refreshing in place. "Silent when clean" is about the
+  # message only: `.reload()` emits no success announcement, so a clean reload
+  # stays quiet; the cross-reference warning re-fires only when there are
+  # genuine cross-ref errors, which is correct regardless of the dirty bit.
   project$.reload()
   .warnOnCrossReferenceErrors(project)
   invisible(project)

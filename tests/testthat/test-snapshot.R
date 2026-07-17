@@ -102,6 +102,39 @@ test_that("snapshotProject errors over an existing file unless overwrite", {
   expect_true(file.exists(out))
 })
 
+test_that("snapshotProject rejects a name that escapes dir", {
+  project <- testProject()
+  dir <- withr::local_tempdir()
+
+  # A `..` or separator in the explicit `name` could join to a path outside
+  # `dir` and clobber an unrelated `.esqlabsR`; both are rejected before any
+  # file is written.
+  expect_snapshot(
+    snapshotProject(project, dir = dir, name = "../backup"),
+    error = TRUE
+  )
+  expect_snapshot(
+    snapshotProject(project, dir = dir, name = "sub/study"),
+    error = TRUE
+  )
+})
+
+test_that("snapshotProject rejects a default name that escapes dir", {
+  # The default stem is derived from `project$name`; a name carrying a
+  # separator must abort on the default path too, rather than silently escape
+  # `dir`. The default stem embeds a volatile timestamp, so assert the stable
+  # message rather than snapshotting the timestamped stem.
+  project <- Project$new()
+  project$schemaVersion <- "2.0"
+  project$name <- "sub/evil"
+  dir <- withr::local_tempdir()
+
+  expect_error(
+    snapshotProject(project, dir = dir),
+    "must be a single filename stem without path separators"
+  )
+})
+
 test_that("the .esqlabsR snapshot content is the inlined-JSON snapshot", {
   project <- testProject()
   dir <- withr::local_tempdir()
@@ -272,7 +305,31 @@ test_that("restoreProject refuses a non-empty dir without overwrite", {
   # clobber the existing work; refuse rather than silently overwrite.
   dir <- testProject()$projectDirPath
 
-  expect_error(restoreProject(out, dir), "already contains an esqlabsR project")
+  expect_error(restoreProject(out, dir), "is not empty")
+})
+
+test_that("restoreProject refuses a dir holding unrelated files without overwrite", {
+  out <- snapshotProject(
+    testProject(),
+    dir = withr::local_tempdir(),
+    name = "study"
+  )
+  # A `dir` that is non-empty but is NOT an initialized project (an unrelated
+  # file, no `Project.json`) must still be refused: unpack into a fresh
+  # directory only unless `overwrite = TRUE`.
+  dir <- withr::local_tempdir()
+  writeLines("keep me", file.path(dir, "notes.txt"))
+
+  expect_error(restoreProject(out, dir), "is not empty")
+
+  # With `overwrite = TRUE` it materializes over the contents in place.
+  project <- restoreProject(out, dir, overwrite = TRUE)
+  expect_true(file.exists(file.path(dir, "Project.json")))
+  expect_named(
+    project$scenarios,
+    names(testProject()$scenarios),
+    ignore.order = TRUE
+  )
 })
 
 test_that("restoreProject with overwrite = TRUE rolls back in place and warns", {

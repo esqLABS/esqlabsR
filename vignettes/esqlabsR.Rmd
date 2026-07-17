@@ -89,7 +89,7 @@ addIndividual(
 )
 ```
 
-The new definition is written to `definitions/individuals/adult_female.json` immediately.
+The new definition is staged in memory; it lands in `definitions/individuals/adult_female.json` once you call `saveProject(project)`.
 
 With the individual in place, add a **Scenario** that simulates aciclovir in her. A Scenario pins a model to a subject, dosing, parameters, a time grid, and the outputs to record; the `id` comes first and `modelFile` is the only other required field, with everything else an optional reference into the project's other definitions. References are checked as the scenario is added, so a typo in an id is caught here rather than at run time. See `vignette("design-scenarios")` for the full set of fields.
 
@@ -129,6 +129,12 @@ addPlot(
   plotType = "individual",
   title = "Aciclovir plasma profile (adult female)"
 )
+```
+
+Everything so far has edited the project in memory. Persist the new individual, scenario, DataCombined, and plot to the `definitions/` tree with `saveProject()`:
+
+```{r}
+saveProject(project)
 ```
 
 ## Run the scenario

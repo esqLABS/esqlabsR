@@ -33,11 +33,22 @@ whether the Excel files and the JSON are synchronized}
 \item{details}{A list with detailed comparison results}
 }
 \description{
-Compares Excel configuration files against their JSON
-configuration to determine if they are synchronized.
+Compares the \strong{persisted} JSON configuration on disk
+(\code{Project.json} plus its \verb{definitions/} tree) against the Excel
+configuration files to determine whether they are synchronized. This is a
+disk-to-disk comparison and does not read a loaded project's in-memory
+state.
+
+This is related to, but distinct from, the Excel axis of \code{\link[=syncStatus]{syncStatus()}}.
+\code{projectStatus()} compares the JSON \emph{as saved on disk} against Excel, while
+\code{\link[=syncStatus]{syncStatus()}}'s Excel axis compares the \emph{current in-memory} project against
+Excel. The two can disagree when the project has unsaved edits (memory
+differs from the saved JSON), so save the project before relying on either
+to reflect the same state.
 }
 \seealso{
-\code{\link[=syncStatus]{syncStatus()}} reports the same Excel comparison for a loaded
-\code{Project} (against its \code{Project.xlsx} side-car) as one of its two axes,
-alongside the memory-vs-tree axis.
+\code{\link[=syncStatus]{syncStatus()}} reports a related Excel comparison for a loaded
+\code{Project} as one of its two axes (alongside the memory-vs-tree axis), but
+compares the \emph{in-memory} project against the \code{Project.xlsx} side-car,
+whereas \code{projectStatus()} compares the \emph{persisted} JSON against Excel.
 }

@@ -576,8 +576,18 @@ restoreProjectConfiguration <- function(
 
 #' Check if Excel configuration files are in sync with JSON
 #'
-#' @description Compares Excel configuration files against their JSON
-#' configuration to determine if they are synchronized.
+#' @description Compares the **persisted** JSON configuration on disk
+#' (`Project.json` plus its `definitions/` tree) against the Excel
+#' configuration files to determine whether they are synchronized. This is a
+#' disk-to-disk comparison and does not read a loaded project's in-memory
+#' state.
+#'
+#' This is related to, but distinct from, the Excel axis of [syncStatus()].
+#' `projectStatus()` compares the JSON *as saved on disk* against Excel, while
+#' [syncStatus()]'s Excel axis compares the *current in-memory* project against
+#' Excel. The two can disagree when the project has unsaved edits (memory
+#' differs from the saved JSON), so save the project before relying on either
+#' to reflect the same state.
 #'
 #' @param projectConfigPath Either a path to a `Project.xlsx` file
 #'   (defaults to `"Project.xlsx"`) or a loaded [Project] object. When a
@@ -594,9 +604,10 @@ restoreProjectConfiguration <- function(
 #'   whether the Excel files and the JSON are synchronized}
 #'   \item{details}{A list with detailed comparison results}
 #'
-#' @seealso [syncStatus()] reports the same Excel comparison for a loaded
-#'   `Project` (against its `Project.xlsx` side-car) as one of its two axes,
-#'   alongside the memory-vs-tree axis.
+#' @seealso [syncStatus()] reports a related Excel comparison for a loaded
+#'   `Project` as one of its two axes (alongside the memory-vs-tree axis), but
+#'   compares the *in-memory* project against the `Project.xlsx` side-car,
+#'   whereas `projectStatus()` compares the *persisted* JSON against Excel.
 #'
 #' @import cli
 #' @export

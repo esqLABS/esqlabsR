@@ -385,6 +385,28 @@ test_that("addObservedData mutates memory only; a basename collision aborts save
   expect_snapshot(saveProject(project), error = TRUE)
 })
 
+# A programmatic DataSet is session-only runtime state, not part of the on-disk
+# tree, so reloadProject() (which re-reads the tree) must drop it: otherwise the
+# reloaded section loses the sentinel but loadObservedData() would still return
+# the discarded runtime dataset.
+test_that("reloadProject clears a session-only programmatic DataSet", {
+  project <- testProject()
+  state <- .projectPrivate(project)
+  ds <- ospsuite::DataSet$new(name = "SessionOnlySet")
+  ds$setValues(xValues = c(1, 2), yValues = c(3, 4))
+
+  addObservedData(project, ds)
+  expect_true("SessionOnlySet" %in% names(state$.programmaticDataSets))
+  expect_true("SessionOnlySet" %in% names(loadObservedData(project)))
+
+  reloadProject(project)
+
+  # The reload returned the project to the on-disk state: the runtime store is
+  # cleared and the discarded dataset no longer surfaces via loadObservedData().
+  expect_false("SessionOnlySet" %in% names(state$.programmaticDataSets))
+  expect_false("SessionOnlySet" %in% names(loadObservedData(project)))
+})
+
 # removeObservedData write-through ----
 
 test_that("removeObservedData deletes the definition file on save", {

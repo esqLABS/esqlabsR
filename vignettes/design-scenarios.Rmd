@@ -192,7 +192,7 @@ Two behaviors matter here:
 
 The `simulationTime` argument is a string of one or more intervals. A single interval is `"start, end, resolution"`, where resolution is the number of points per unit of `simulationTimeUnit`. Several intervals are separated by `;`, for example `"0, 20, 60; 20, 504, 1"` to simulate the first 20 hours densely and a longer tail coarsely.
 
-To make it a population scenario, pass a `population` instead of (or alongside) an `individual`; the scenario's type switches to a population simulation automatically. For a steady-state run, set `steadyState = TRUE` and give `steadyStateTime` and `steadyStateTimeUnit`. As with every authoring call, the scenario is written through to `definitions/scenarios/aciclovir_iv_ckd.json` the moment it is added.
+To make it a population scenario, pass a `population` instead of (or alongside) an `individual`; the scenario's type switches to a population simulation automatically. For a steady-state run, set `steadyState = TRUE` and give `steadyStateTime` and `steadyStateTimeUnit`. As with every authoring call, the scenario is staged in memory; it lands in `definitions/scenarios/aciclovir_iv_ckd.json` when you call `saveProject()`.
 
 ## Editing a scenario in place
 
@@ -245,7 +245,7 @@ duplicateScenario(project, "aciclovir_iv", "aciclovir_iv_highdose")
 names(project$scenarios)
 ```
 
-`renameScenario()` changes a scenario's id, moving its definition file accordingly and keeping the stored name in step with the new key:
+`renameScenario()` changes a scenario's id in memory, keeping the stored name in step with the new key; the next `saveProject()` reconciles the tree, writing the definition under the new id and deleting the old file:
 
 ```{r}
 renameScenario(project, "aciclovir_iv_highdose", "aciclovir_iv_high")
@@ -254,7 +254,7 @@ names(project$scenarios)
 
 Both take the existing id first and the new id second, and both canonicalize their ids the same way `addScenario()` does. Neither will silently overwrite an existing scenario: a rename or duplicate onto an id already in use aborts.
 
-When a scenario has served its purpose, `removeScenario()` drops it from the project and deletes its definition file:
+When a scenario has served its purpose, `removeScenario()` drops it from the in-memory project; the next `saveProject()` reconciles the tree and deletes its definition file:
 
 ```{r}
 removeScenario(project, "aciclovir_iv_high")
@@ -287,6 +287,6 @@ This is a starting point, not the finished article: the scenarios it creates are
 
 ## Where to go next
 
-You now have the full authoring loop: build the supporting definitions (output paths, parameter sets, individuals, populations, applications), assemble them into scenarios with `addScenario()`, refine them with `setScenario()` and the other field setters, and reshape the set with `duplicateScenario()`, `renameScenario()`, and `removeScenario()`. Every edit is written through to the `definitions/` tree as you make it.
+You now have the full authoring loop: build the supporting definitions (output paths, parameter sets, individuals, populations, applications), assemble them into scenarios with `addScenario()`, refine them with `setScenario()` and the other field setters, and reshape the set with `duplicateScenario()`, `renameScenario()`, and `removeScenario()`. Every edit is staged in memory; call `saveProject(project)` to reconcile the `definitions/` tree to the current in-memory state, or `reloadProject(project)` to discard the unsaved edits and re-read from disk.
 
 From here, validate what you have built with `validateProject()` (see `vignette("validate-project")`), then run it: `vignette("run-simulations")` covers passing the project to `runScenarios()` and collecting results, and `vignette("plot-results")` covers turning those results into figures.

@@ -1273,6 +1273,13 @@ snapshotProject <- function(
     stem <- name
   }
 
+  # The stem becomes a filename via `file.path(dir, ...)`, so a stem carrying a
+  # path separator or a `..` segment could escape `dir` and write over (or
+  # delete) an unrelated `.esqlabsR`. Reject it: both an explicit `name` and a
+  # `project$name`-derived default are checked, so a project whose name contains
+  # a separator aborts predictably rather than silently escaping.
+  .validateSnapshotStem(stem)
+
   # A snapshot IS a `.esqlabsR`; force the extension regardless of what the
   # caller included (idempotent for a `.esqlabsR` stem).
   fileName <- fs::path_ext_set(stem, "esqlabsR")
@@ -1315,13 +1322,14 @@ snapshotProject <- function(
 #'   plain inlined `Project.json`). Must exist.
 #' @param dir Target directory for the materialized tree project (default
 #'   `"."`). Created if it does not exist.
-#' @param overwrite If `FALSE` (default), a `dir` that already contains an
-#'   esqlabsR project aborts; unpack into a fresh directory only. If `TRUE`,
-#'   the existing tree in `dir` is replaced in place (an in-place rollback),
-#'   and a warning is raised that any `Project` previously loaded from `dir` is
-#'   now stale. Rebind to the returned object, or [reloadProject()] the old
-#'   handle. The blessed idiom is `p <- restoreProject(snap, dir,
-#'   overwrite = TRUE)`.
+#' @param overwrite If `FALSE` (default), a non-empty `dir` (any files,
+#'   whether a full esqlabsR project, unrelated files, or a partial tree)
+#'   aborts; unpack into a fresh directory only. If `TRUE`, the contents of
+#'   `dir` are replaced in place (an in-place rollback), and, when `dir` held a
+#'   real esqlabsR project, a warning is raised that any `Project` previously
+#'   loaded from `dir` is now stale. Rebind to the returned object, or
+#'   [reloadProject()] the old handle. The blessed idiom is
+#'   `p <- restoreProject(snap, dir, overwrite = TRUE)`.
 #'
 #' @returns A freshly-loaded `Project`, bound to `dir`, with a clear dirty bit.
 #' @export
@@ -1345,12 +1353,20 @@ restoreProject <- function(snapshot, dir = ".", overwrite = FALSE) {
     cli::cli_abort(messages$fileNotFound(snapshot))
   }
 
-  # A non-empty `dir` is only replaced with `overwrite = TRUE`; that overwrite
-  # is what fires the stale-handle warning below.
-  replacedExistingTree <- isProjectInitialized(dir)
-  if (replacedExistingTree && !overwrite) {
+  # Refuse writing into a `dir` that already holds anything unless
+  # `overwrite = TRUE`: restore unpacks into a fresh directory (spec 3.6). The
+  # non-empty check is broader than `isProjectInitialized()` on purpose, because
+  # a `dir` holding unrelated files, or a partial `definitions/` tree with no
+  # `Project.json`, is still not a safe place to unpack into without consent.
+  dirNotEmpty <- dir.exists(dir) &&
+    length(list.files(dir, all.files = TRUE, no.. = TRUE)) > 0L
+  if (dirNotEmpty && !overwrite) {
     cli::cli_abort(messages$restoreDirNotEmpty(dir))
   }
+  # Whether the overwrite is replacing a real project tree decides whether to
+  # warn about stale handles below (an unrelated non-empty dir has no live
+  # `Project` bound to it to go stale).
+  replacedExistingTree <- isProjectInitialized(dir)
   if (!dir.exists(dir)) {
     dir.create(dir, recursive = TRUE, showWarnings = FALSE)
   }
@@ -1420,4 +1436,28 @@ restoreProject <- function(snapshot, dir = ".", overwrite = FALSE) {
   containerPath <- file.path(dir, "Project.json")
   .saveProjectJson(project, containerPath, containerOnly = TRUE)
   containerPath
+}
+
+# Reject a snapshot filename stem that could escape `dir`. The stem is joined to
+# `dir` via `file.path()`, so a stem that is not a single filename segment (it
+# holds a `/` or `\` separator, or is `"."` / `".."`) could write outside `dir`
+# and clobber an unrelated `.esqlabsR`. Both an explicit `name` and the
+# `project$name`-derived default are validated, so a project whose name contains
+# a separator aborts predictably rather than silently escaping. A stem must be a
+# single non-empty, non-NA character scalar.
+#
+# @keywords internal
+# @noRd
+.validateSnapshotStem <- function(stem) {
+  if (
+    !is.character(stem) ||
+      length(stem) != 1L ||
+      is.na(stem) ||
+      !nzchar(stem) ||
+      grepl("[/\\]", stem) ||
+      stem %in% c(".", "..")
+  ) {
+    cli::cli_abort(messages$invalidSnapshotName(stem))
+  }
+  invisible(NULL)
 }

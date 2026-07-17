@@ -155,11 +155,22 @@ messages$snapshotFileExists <- function(path) {
   )
 }
 
+messages$invalidSnapshotName <- function(stem) {
+  c(
+    "{.arg name} must be a single filename stem without path separators.",
+    "x" = "The stem {.val {stem}} contains a path separator or is {.val .} / \\
+    {.val ..}, so it could write outside {.arg dir}.",
+    "i" = "Pass a single filename segment (no path separator and not {.val .} / \\
+    {.val ..}), or leave {.arg name} as {.code NULL} for a timestamped default."
+  )
+}
+
 messages$restoreDirNotEmpty <- function(dir) {
   c(
-    "{.arg dir} already contains an esqlabsR project ({.path {dir}}).",
-    "i" = "Pass {.code overwrite = TRUE} to replace the existing project in \\
-    {.arg dir}, or an empty or new {.arg dir}."
+    "{.arg dir} is not empty ({.path {dir}}).",
+    "i" = "Restore unpacks into a fresh directory. Pass \\
+    {.code overwrite = TRUE} to replace the contents of {.arg dir}, or an \\
+    empty or new {.arg dir}."
   )
 }
 

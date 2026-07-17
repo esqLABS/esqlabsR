@@ -20,9 +20,11 @@ in-memory edit and re-read the project from its on-disk tree, in place.
 The \code{Project} object identity is preserved (edits are reverted by R6
 reference), so existing handles stay valid.
 
-A clean reload (no unsaved edits) is a silent no-op. Unlike a clean
-\code{\link[=saveProject]{saveProject()}}, it prints nothing, because reverting to what is already
-in memory needs no announcement.
+\code{reloadProject()} always re-reads the bound tree from disk and updates the
+project in place, so it also picks up external changes to the files (for
+example after \code{\link[=restoreProject]{restoreProject()}} rolled the tree back). It simply produces
+no announcement when there were no unsaved edits: unlike a clean
+\code{\link[=saveProject]{saveProject()}}, a clean reload prints nothing.
 }
 \examples{
 \dontrun{

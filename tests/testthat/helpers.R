@@ -124,11 +124,37 @@ executeWithTestFile <- function(actionWithFile) {
 #' present so a snapshot-file message still reads as one. Used as the
 #' `transform` of snapshots whose message names such a path with no meaningful
 #' project-relative tail.
+#'
+#' Redaction is restricted to quoted paths under `tempdir()`: a quoted absolute
+#' path elsewhere is left intact, so a meaningful assertion on a real path is
+#' never silently hidden. Separators are normalized to `/` first (so a Windows
+#' backslash path matches), and both a Unix (`/tmp/...`) and a drive-prefixed
+#' Windows (`C:/...`) temp path are matched.
 .redactTmpDir <- function(lines) {
-  # A quoted path ending in the snapshot extension keeps that suffix; any other
-  # quoted absolute path collapses to a bare placeholder.
-  lines <- gsub("'/[^']*\\.esqlabsR'", "'<tmp-path>.esqlabsR'", lines)
-  gsub("'/[^']*'", "'<tmp-path>'", lines)
+  # Normalize backslashes to forward slashes so a Windows path (in the message
+  # or in `tempdir()`) matches the same pattern as a Unix one.
+  lines <- gsub("\\\\", "/", lines)
+  tmp <- gsub("\\\\", "/", tempdir())
+  # Anchor the match to the escaped `tempdir()` prefix, so only a quoted path
+  # that actually starts under `tempdir()` is redacted. On Windows `tempdir()`
+  # already carries the drive letter (`C:/...`), so escaping it verbatim also
+  # matches the drive-prefixed form a message reports; a Unix path starts with
+  # `/tmp/...`. Either way, an unrelated absolute path is left intact.
+  prefix <- .escapeRegex(tmp)
+  # A quoted temp path ending in the snapshot extension keeps that suffix; any
+  # other quoted temp path collapses to a bare placeholder.
+  lines <- gsub(
+    paste0("'", prefix, "[^']*\\.esqlabsR'"),
+    "'<tmp-path>.esqlabsR'",
+    lines
+  )
+  gsub(paste0("'", prefix, "[^']*'"), "'<tmp-path>'", lines)
+}
+
+#' Escape the regex metacharacters in a literal string so it can be embedded in
+#' a pattern as a fixed prefix.
+.escapeRegex <- function(x) {
+  gsub("([.^$*+?()\\[\\]{}|\\\\])", "\\\\\\1", x, perl = TRUE)
 }
 
 #' Extract axis ranges from plots

@@ -1041,6 +1041,16 @@ Project <- R6::R6Class(
         jsonData
       )
 
+      # Session-only observed-data state (runtime programmatic DataSets added via
+      # `addObservedData(project, <DataSet>)`, and the observed-data names cache)
+      # is not part of the on-disk tree, so a re-read must drop it: otherwise a
+      # `reloadProject()` would leave a programmatic dataset that the reloaded
+      # `observedData` section no longer carries, and `loadObservedData()` would
+      # still return the discarded runtime dataset. Reset it so a reload fully
+      # returns the object to the on-disk state.
+      private$.programmaticDataSets <- list()
+      private$.observedDataNamesCache <- NULL
+
       private$.validatedSinceMutation <- FALSE
       # A freshly loaded project has no unsaved changes: memory equals the tree.
       private$.modified <- FALSE

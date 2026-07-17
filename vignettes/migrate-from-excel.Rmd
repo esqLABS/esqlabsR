@@ -80,7 +80,7 @@ project <- loadProject(jsonPath)
 
 `loadProject()` already runs a quick check for the most common cross-reference problems (for example a scenario that points at an individual or population that no longer exists) and warns about them, but it still returns the project so you can inspect it. For the full picture, validate explicitly.
 
-The imported project is a normal tree project: every authoring function (`addScenario()`, `setIndividual()`, and so on) writes straight through to that definition's file under `definitions/`.
+The imported project is a normal tree project: every authoring function (`addScenario()`, `setIndividual()`, and so on) edits the project in memory, and `saveProject(project)` reconciles those edits to the definition files under `definitions/`.
 
 ## Step 3: validate what carried over
 

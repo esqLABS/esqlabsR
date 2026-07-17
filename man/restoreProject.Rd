@@ -13,12 +13,14 @@ plain inlined \code{Project.json}). Must exist.}
 \item{dir}{Target directory for the materialized tree project (default
 \code{"."}). Created if it does not exist.}
 
-\item{overwrite}{If \code{FALSE} (default), a \code{dir} that already contains an
-esqlabsR project aborts; unpack into a fresh directory only. If \code{TRUE},
-the existing tree in \code{dir} is replaced in place (an in-place rollback),
-and a warning is raised that any \code{Project} previously loaded from \code{dir} is
-now stale. Rebind to the returned object, or \code{\link[=reloadProject]{reloadProject()}} the old
-handle. The blessed idiom is \code{p <- restoreProject(snap, dir, overwrite = TRUE)}.}
+\item{overwrite}{If \code{FALSE} (default), a non-empty \code{dir} (any files,
+whether a full esqlabsR project, unrelated files, or a partial tree)
+aborts; unpack into a fresh directory only. If \code{TRUE}, the contents of
+\code{dir} are replaced in place (an in-place rollback), and, when \code{dir} held a
+real esqlabsR project, a warning is raised that any \code{Project} previously
+loaded from \code{dir} is now stale. Rebind to the returned object, or
+\code{\link[=reloadProject]{reloadProject()}} the old handle. The blessed idiom is
+\code{p <- restoreProject(snap, dir, overwrite = TRUE)}.}
 }
 \value{
 A freshly-loaded \code{Project}, bound to \code{dir}, with a clear dirty bit.
