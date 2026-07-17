@@ -46,7 +46,7 @@ test_that(".parsePlotEntries returns an empty list for NULL or empty", {
 
 test_that("addPlotGrid aborts when no plots are defined", {
   project <- testProject()
-  project$.setSection("plots", list())
+  .setSection(project, "plots", list())
   expect_snapshot(
     error = TRUE,
     addPlotGrid(project, "G1", plots = "MissingPlot")

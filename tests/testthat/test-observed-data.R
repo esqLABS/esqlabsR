@@ -351,7 +351,7 @@ test_that("observedData declarations sharing a basename fail saveProject()", {
     list(type = "pkml", file = "dirA/obs.pkml"),
     list(type = "pkml", file = "dirB/obs.pkml")
   )
-  project$.setSection("observedData", colliding)
+  .setSection(project, "observedData", colliding)
   expect_snapshot(
     saveProject(project),
     error = TRUE
@@ -369,7 +369,7 @@ test_that("observedData declarations sharing a basename fail saveProject()", {
 # is accepted in memory but surfaces as a serializer error at saveProject().
 test_that("addObservedData mutates memory only; a basename collision aborts saveProject()", {
   project <- testProject()
-  state <- .projectPrivate(project)
+  state <- .projectSeam(project)
   # The fixture declares a file-based Excel source filed under this basename.
   ds <- ospsuite::DataSet$new(name = "Aciclovir_TimeValuesData.xlsx")
   ds$setValues(xValues = c(1, 2), yValues = c(3, 4))
@@ -391,7 +391,7 @@ test_that("addObservedData mutates memory only; a basename collision aborts save
 # the discarded runtime dataset.
 test_that("reloadProject clears a session-only programmatic DataSet", {
   project <- testProject()
-  state <- .projectPrivate(project)
+  state <- .projectSeam(project)
   ds <- ospsuite::DataSet$new(name = "SessionOnlySet")
   ds$setValues(xValues = c(1, 2), yValues = c(3, 4))
 
@@ -468,7 +468,7 @@ test_that("removeObservedData warns and skips a not-found id in the batch", {
 test_that("removeObservedData mutates memory only; a surviving collision aborts saveProject()", {
   project <- testProject()
   saveProject(project)
-  state <- .projectPrivate(project)
+  state <- .projectSeam(project)
   ds <- ospsuite::DataSet$new(name = "myProgSet")
   ds$setValues(xValues = c(1, 2), yValues = c(3, 4))
   addObservedData(project, ds)

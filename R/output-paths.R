@@ -26,6 +26,17 @@
 #' @family output path
 addOutputPath <- function(project, id, path) {
   validateIsOfType(project, "Project")
+  project$addOutputPath(id, path)
+}
+
+# Implementation behind `project$addOutputPath()` / `addOutputPath()`.
+#
+# @keywords internal
+# @noRd
+.addOutputPath_impl <- function(self, private, id, path) {
+  # Attribute any abort to the public authoring function the user called
+  # (the free-function forwarder), not this internal `_impl`.
+  rlang::local_error_call(rlang::caller_env(2))
   # Route the id-vector check through the shared helper every sibling add* uses,
   # then canonicalize and guard against an in-batch duplicate id (which would
   # otherwise silently overwrite an earlier entry keyed by the same id).
@@ -49,7 +60,7 @@ addOutputPath <- function(project, id, path) {
       "x" = "path must contain non-empty strings"
     ))
   }
-  clash <- intersect(id, names(project$outputPaths))
+  clash <- intersect(id, names(self$outputPaths))
   if (length(clash) > 0L) {
     cli::cli_abort("outputPath {.val {clash}} already exists")
   }
@@ -60,9 +71,9 @@ addOutputPath <- function(project, id, path) {
   }
   newPaths <- as.list(path)
   names(newPaths) <- id
-  outputPaths <- c(project$.getSection("outputPaths"), newPaths)
-  project$.setSection("outputPaths", outputPaths)
-  invisible(project)
+  outputPaths <- c(private$.getSection("outputPaths"), newPaths)
+  private$.setSection("outputPaths", outputPaths)
+  invisible(self)
 }
 
 #' Remove one or more output paths from a Project
@@ -79,24 +90,35 @@ addOutputPath <- function(project, id, path) {
 #' @family output path
 removeOutputPath <- function(project, id) {
   validateIsOfType(project, "Project")
+  project$removeOutputPath(id)
+}
+
+# Implementation behind `project$removeOutputPath()` / `removeOutputPath()`.
+#
+# @keywords internal
+# @noRd
+.removeOutputPath_impl <- function(self, private, id) {
+  # Attribute any abort to the public authoring function the user called
+  # (the free-function forwarder), not this internal `_impl`.
+  rlang::local_error_call(rlang::caller_env(2))
   .assertIdVector(id)
   id <- .canonicalizeId(id)
 
-  missingIds <- setdiff(id, names(project$outputPaths))
+  missingIds <- setdiff(id, names(self$outputPaths))
   if (length(missingIds) > 0L) {
     cli::cli_warn("outputPath {.val {missingIds}} not found; no-op.")
   }
-  toRemove <- intersect(id, names(project$outputPaths))
+  toRemove <- intersect(id, names(self$outputPaths))
   if (length(toRemove) == 0L) {
-    return(invisible(project))
+    return(invisible(self))
   }
   for (one in toRemove) {
-    .warnIfReferenced(project, "outputPath", one)
+    .warnIfReferenced(self, "outputPath", one)
   }
-  outputPaths <- project$.getSection("outputPaths")
+  outputPaths <- private$.getSection("outputPaths")
   outputPaths <- outputPaths[setdiff(names(outputPaths), toRemove)]
-  project$.setSection("outputPaths", outputPaths)
-  invisible(project)
+  private$.setSection("outputPaths", outputPaths)
+  invisible(self)
 }
 
 #' Change the literal path of one or more existing output paths
@@ -124,10 +146,21 @@ removeOutputPath <- function(project, id) {
 #' @family output path
 setOutputPath <- function(project, id, path) {
   validateIsOfType(project, "Project")
+  project$setOutputPath(id, path)
+}
+
+# Implementation behind `project$setOutputPath()` / `setOutputPath()`.
+#
+# @keywords internal
+# @noRd
+.setOutputPath_impl <- function(self, private, id, path) {
+  # Attribute any abort to the public authoring function the user called
+  # (the free-function forwarder), not this internal `_impl`.
+  rlang::local_error_call(rlang::caller_env(2))
   .assertIdVector(id)
   id <- .canonicalizeId(id)
   n <- length(id)
-  missingIds <- setdiff(id, names(project$outputPaths))
+  missingIds <- setdiff(id, names(self$outputPaths))
   if (length(missingIds) > 0L) {
     cli::cli_abort(c(
       "Cannot modify output path {.val {missingIds}}: it does not exist.",
@@ -147,12 +180,12 @@ setOutputPath <- function(project, id, path) {
     }
   }
 
-  outputPaths <- project$.getSection("outputPaths")
+  outputPaths <- private$.getSection("outputPaths")
   for (i in seq_len(n)) {
     outputPaths[[id[[i]]]] <- perId[[i]]
   }
-  project$.setSection("outputPaths", outputPaths)
-  invisible(project)
+  private$.setSection("outputPaths", outputPaths)
+  invisible(self)
 }
 
 # Section validation adapter ----

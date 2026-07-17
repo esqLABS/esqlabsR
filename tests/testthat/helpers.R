@@ -316,11 +316,40 @@ createValidPISheets <- function() {
   )
 }
 
+# White-box test hooks onto the `Project` internal seam.
+#
+# The read/write seam (`.getSection`, `.setSection`, the lifecycle markers) is a
+# set of `private$` methods on the class, reachable only from within a method of
+# the instance, never from a free function. Tests that need to seed raw section
+# state (often deliberately invalid, to exercise a validator) or assert on the
+# dirty/validation bits reach the live private environment through
+# `.__enclos_env__`, the standard R6 white-box test hook. These wrappers keep
+# that reach in one documented place instead of scattering it across the suite;
+# they are test-only and never part of the package surface.
+.projectSeam <- function(project) {
+  project$.__enclos_env__$private
+}
+.getSection <- function(project, kind) {
+  .projectSeam(project)$.getSection(kind)
+}
+.setSection <- function(project, kind, value) {
+  .projectSeam(project)$.setSection(kind, value)
+}
+.markModified <- function(project) {
+  .projectSeam(project)$.markModified()
+}
+.markValidated <- function(project) {
+  .projectSeam(project)$.markValidated()
+}
+.isModified <- function(project) {
+  .projectSeam(project)$.isModified()
+}
+
 # Builds a minimal in-memory `Project` for validation/serialization tests:
 # all section fields default to empty, and `...` overrides named fields so a
 # test can target one section without loading the full TestProject fixture.
 # The section accessors are read-only from the handle, so sections are written
-# through the internal `.setSection()` entry point the authoring functions use
+# through the internal `.setSection()` seam the authoring methods use
 # (this is test setup standing in for an authoring call, not end-user code).
 .fakeProject <- function(...) {
   project <- Project$new()
@@ -340,11 +369,11 @@ createValidPISheets <- function() {
     "plotGrids"
   )
   for (section in sections) {
-    project$.setSection(section, list())
+    .setSection(project, section, list())
   }
   overrides <- list(...)
   for (nm in names(overrides)) {
-    project$.setSection(nm, overrides[[nm]])
+    .setSection(project, nm, overrides[[nm]])
   }
   project
 }

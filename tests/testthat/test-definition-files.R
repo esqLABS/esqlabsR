@@ -69,10 +69,10 @@ test_that("saveProject() structurally fail-fasts and leaves disk unchanged", {
   # happens at saveProject() (the serialize-in-memory-first guarantee), before
   # any file is written.
   scenarios <- c(
-    project$.getSection("scenarios"),
+    .getSection(project, "scenarios"),
     list(bad = Scenario(scenarioName = "bad"))
   )
-  project$.setSection("scenarios", scenarios)
+  .setSection(project, "scenarios", scenarios)
   expect_error(
     saveProject(project),
     "bad.*modelFile"
@@ -88,12 +88,12 @@ test_that("an unknown outputPathId is a lazy referential finding, not a load err
   # ref reaches the project is a hand-edited file or a raw `.setSection()`
   # write; both leave the structurally-valid record in place for the lazy
   # referential check at validateProject().
-  scenarios <- project$.getSection("scenarios")
+  scenarios <- .getSection(project, "scenarios")
   sc <- scenarios[["testscenario"]]
   sc$outputPaths <- c(sc$outputPaths, Ghost = NA_character_)
   scenarios[["testscenario"]] <- sc
   # Write-through accepts it (structurally valid); referential check is lazy.
-  expect_no_error(project$.setSection("scenarios", scenarios))
+  expect_no_error(.setSection(project, "scenarios", scenarios))
 
   results <- suppressWarnings(validateProject(project))
   msgs <- vapply(
@@ -202,9 +202,9 @@ test_that("a scenarioName that disagrees with its list key aborts saveProject()"
   # Store an existing scenario under a different key without updating its
   # scenarioName. The structural backstop at save (the serialize-in-memory-first
   # guarantee) rejects the key/name disagreement before any file is written.
-  scenarios <- project$.getSection("scenarios")
+  scenarios <- .getSection(project, "scenarios")
   scenarios[["renamed"]] <- scenarios[["testscenario"]]
-  project$.setSection("scenarios", scenarios)
+  .setSection(project, "scenarios", scenarios)
   expect_snapshot(
     saveProject(project),
     error = TRUE
@@ -224,11 +224,11 @@ test_that("a write-back under a non-canonical key aborts saveProject()", {
   # write. The structural validator at save is the backstop: a non-canonical
   # key (mixed case or a forbidden character) aborts, pointing the user at
   # addScenario().
-  scenarios <- project$.getSection("scenarios")
+  scenarios <- .getSection(project, "scenarios")
   sc <- scenarios[["testscenario"]]
   sc$scenarioName <- "Renamed"
   scenarios[["Renamed"]] <- sc
-  project$.setSection("scenarios", scenarios)
+  .setSection(project, "scenarios", scenarios)
   expect_snapshot(
     saveProject(project),
     error = TRUE
@@ -340,10 +340,10 @@ test_that("a multi-definition saveProject() aborting on one definition is atomic
   hostile$steadyStateTimeUnit <- NULL
 
   newSection <- c(
-    project$.getSection("scenarios"),
+    .getSection(project, "scenarios"),
     list(fresh_ok = valid, fresh_bad = hostile)
   )
-  project$.setSection("scenarios", newSection)
+  .setSection(project, "scenarios", newSection)
   expect_error(
     saveProject(project),
     "steadyStateTimeUnit"

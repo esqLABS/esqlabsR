@@ -38,6 +38,56 @@
 #'   it with the matching set function. The one exception is observed data
 #'   added as a `DataSet` object via [addObservedData()]: the `DataSet` is
 #'   shared, so changes to that object are seen by the project too.
+#'
+#'   The public authoring methods (`project$addScenario(...)`,
+#'   `project$addOutputPath(...)`, the whole `add*` / `set*` / `remove*` family)
+#'   mirror the exported free functions of the same name; the free function is
+#'   the primary entry point, carries the full per-argument documentation, and
+#'   forwards to the method. The method arguments are summarised once below
+#'   (roxygen2 documents R6 method arguments in the class topic); for the
+#'   authoritative, per-function argument descriptions see the linked free
+#'   function, e.g. [addScenario()], [setScenario()], [addOutputPath()],
+#'   [addParameterEntry()], [addPITask()], [createScenariosFromPKML()].
+#'
+#' @param id Character id (name) of the definition to add, modify, or remove.
+#' @param modelFile Character name of the `.pkml` model file. See
+#'   [addScenario()].
+#' @param individual,population,application Character id (or `NULL`) of the
+#'   individual / population / application a scenario references. See
+#'   [addScenario()].
+#' @param parameterSets,initialConditions,outputPaths Character vectors (or
+#'   `NULL`) of definition ids a scenario references, or the target of an
+#'   `add*`/`set*`/`remove*` call. See [addScenario()].
+#' @param simulationTime,simulationTimeUnit Simulation time specification and
+#'   its unit. See [addScenario()].
+#' @param steadyState,steadyStateTime,steadyStateTimeUnit Steady-state flag,
+#'   time, and unit. See [addScenario()].
+#' @param overwriteFormulasInSS,readPopulationFromCSV Logical scenario options.
+#'   See [addScenario()].
+#' @param newId Character new id for [renameScenario()] / [duplicateScenario()].
+#' @param path Character path: an output-path string ([addOutputPath()]) or a
+#'   parameter/initial-condition path ([addParameterEntry()] /
+#'   [addInitialConditionEntry()]).
+#' @param containerPath,parameterName,value,units,unit Parameter- and
+#'   initial-condition entry fields. See [addParameterEntry()] /
+#'   [addInitialConditionEntry()].
+#' @param entry An observed-data source: a `DataSet` or a configuration list.
+#'   See [addObservedData()].
+#' @param simulated,observed Simulated / observed inputs to a `DataCombined`.
+#'   See [addDataCombined()].
+#' @param task Character id of the parameter-identification task a sub-item
+#'   belongs to. See [addPIParameter()].
+#' @param scenarios,parameters,outputMappings,configuration
+#'   Parameter-identification task components. See [addPITask()].
+#' @param minValue,maxValue,startValue Numeric bounds and start value of a PI
+#'   parameter. See [addPIParameter()].
+#' @param outputPath,observedData,scaling,xOffset,yOffset,xFactor,yFactor,weight
+#'   Fields of a PI output mapping. See [addPIOutputMapping()].
+#' @param pkmlFilePaths Character vector of `.pkml` file paths. See
+#'   [createScenariosFromPKML()].
+#' @param ... Passed to the matching authoring free function (e.g. the
+#'   partial-update fields of [setScenario()] / [setIndividual()], or the
+#'   remaining arguments of [createScenariosFromPKML()]).
 #' @format NULL
 #' @import fs
 #' @export
@@ -548,6 +598,41 @@ Project <- R6::R6Class(
       lapply(data, function(entry) entry$value)
     },
 
+    #' @field rawFilePaths Read-only. The raw `filePaths` block as stored: a
+    #'   named list of `list(value, description)` records for the four live
+    #'   working folders. Unlike `filePaths` (which returns just the values),
+    #'   this keeps the per-folder descriptions the Excel bridge round-trips.
+    #'   Package-internal; consumed by the JSON writer and the Excel exporter.
+    rawFilePaths = function(value) {
+      if (!missing(value)) {
+        cli::cli_abort("{.field rawFilePaths} is readonly")
+      }
+      private$.filePathsData
+    },
+
+    #' @field rawExcel Read-only. The raw `excel` block as stored: a named list
+    #'   of `list(value, description)` records for the Excel-bridge sheet-name
+    #'   fields. Unlike `excel` (which returns just the values), this keeps the
+    #'   descriptions. Empty when the project has no Excel side-car.
+    #'   Package-internal; consumed by the JSON writer and the Excel exporter.
+    rawExcel = function(value) {
+      if (!missing(value)) {
+        cli::cli_abort("{.field rawExcel} is readonly")
+      }
+      private$.excelData
+    },
+
+    #' @field isModified Read-only logical. `TRUE` when the in-memory project
+    #'   carries edits not yet reconciled to the on-disk `definitions/` tree
+    #'   (the dirty bit). The same signal `syncStatus()` reports on its
+    #'   memory-vs-tree axis. Package-internal; consumed by the sync reporter.
+    isModified = function(value) {
+      if (!missing(value)) {
+        cli::cli_abort("{.field isModified} is readonly")
+      }
+      private$.modified
+    },
+
     #' @field asList Returns the current project as a list matching the JSON
     #'   schema. Reflects any in-memory modifications. Read-only.
     asList = function(value) {
@@ -595,112 +680,368 @@ Project <- R6::R6Class(
       invisible(self)
     },
 
-    #' @description Internal method to record that a full project
-    #'   validation has succeeded with no critical errors. Sets the
-    #'   `validatedSinceMutation` flag. Not intended for end-user use.
-    #' @keywords internal
-    .markValidated = function() {
-      private$.validatedSinceMutation <- TRUE
-      invisible(self)
+    # Public authoring methods ----
+    #
+    # One method per exported authoring free function. Each is a thin forwarder
+    # to an `_impl()` free function in the relevant domain file, handing that
+    # impl its own `self` / `private` so the logic can touch the private state
+    # seam directly (the `_impl` functions are not attached to the object, so a
+    # user cannot call them or reach `private` through them). The exported free
+    # functions (`addScenario()` etc.) forward here and remain the primary,
+    # documented entry point. Each method's parameters are documented once, on
+    # that free function, and pulled in here with `@inheritParams` so no
+    # `@param` block is ever duplicated between a method and its free function.
+
+    #' @description Add scenarios. See [addScenario()], the primary entry point.
+    addScenario = function(
+      id,
+      modelFile,
+      individual = NULL,
+      population = NULL,
+      application = NULL,
+      parameterSets = NULL,
+      initialConditions = NULL,
+      outputPaths = NULL,
+      simulationTime = NULL,
+      simulationTimeUnit = "h",
+      steadyState = FALSE,
+      steadyStateTime = 1000,
+      steadyStateTimeUnit = "min",
+      overwriteFormulasInSS = FALSE,
+      readPopulationFromCSV = FALSE
+    ) {
+      .addScenario_impl(
+        self,
+        private,
+        id,
+        modelFile,
+        individual,
+        population,
+        application,
+        parameterSets,
+        initialConditions,
+        outputPaths,
+        simulationTime,
+        simulationTimeUnit,
+        steadyState,
+        steadyStateTime,
+        steadyStateTimeUnit,
+        overwriteFormulasInSS,
+        readPopulationFromCSV
+      )
     },
 
-    #' @description Internal method invoked by mutators after a successful
-    #'   programmatic change. Sets the in-memory dirty bit and clears the
-    #'   `validatedSinceMutation` flag so the next `runScenarios()` /
-    #'   `createPlots()` re-validates the project. Does not touch disk. Not
-    #'   intended for end-user use.
-    #' @keywords internal
-    .markModified = function() {
-      private$.modified <- TRUE
-      private$.invalidate()
-      invisible(self)
+    #' @description Remove scenarios. See [removeScenario()].
+    removeScenario = function(id) {
+      .removeScenario_impl(self, private, id)
     },
 
-    #' @description Internal accessor for the in-memory dirty bit: `TRUE` when
-    #'   there are edits not yet reconciled to the on-disk tree. Read by
-    #'   [saveProject()] (clean-save short-circuit) and by [projectStatus()] (the
-    #'   memory-vs-tree axis). Not intended for end-user use.
-    #' @keywords internal
-    .isModified = function() {
-      private$.modified
+    #' @description Modify fields of existing scenarios. See [setScenario()].
+    #'   The `...` carries only the fields to change (partial update); a field
+    #'   passed as `NULL` is cleared, an omitted field is left untouched.
+    setScenario = function(id, ...) {
+      .setScenario_impl(self, private, id, ...)
     },
 
-    #' @description Internal method to clear the in-memory dirty bit, marking
-    #'   memory as in sync with the on-disk tree. Called after a successful
-    #'   [saveProject()]. Not intended for end-user use.
-    #' @keywords internal
-    .clearModified = function() {
-      private$.modified <- FALSE
-      invisible(self)
+    #' @description Rename a scenario. See [renameScenario()].
+    renameScenario = function(id, newId) {
+      .renameScenario_impl(self, private, id, newId)
     },
 
-    #' @description Internal method to re-read the project from its bound file,
-    #'   discarding any in-memory edits (the undo). Re-runs the parser against
-    #'   `projectFilePath`, which overwrites every backing field and clears the
-    #'   dirty and validation flags. Object identity is preserved (R6
-    #'   reference), so existing handles stay valid. Not intended for end-user
-    #'   use; call [reloadProject()].
-    #' @keywords internal
-    .reload = function() {
-      private$.read_json(private$.projectFilePath)
-      invisible(self)
+    #' @description Duplicate a scenario. See [duplicateScenario()].
+    duplicateScenario = function(id, newId) {
+      .duplicateScenario_impl(self, private, id, newId)
     },
 
-    #' @description Internal read accessor for one definition section. Returns
-    #'   the plain backing list (NOT wrapped in the read-only `DefinitionList`
-    #'   the public `project$<section>` getter returns), so an authoring
-    #'   function may bind it to a local copy and subscript-assign that copy
-    #'   before re-submitting it via `.setSection()`. Not intended for end-user
-    #'   use; the public accessor is the read-only end-user surface.
-    #' @param kind Character scalar naming the section (e.g. `"scenarios"`).
-    #' @keywords internal
-    .getSection = function(kind) {
-      private[[private$.sectionField(kind)]]
+    #' @description Create scenarios from PKML model files. See
+    #'   [createScenariosFromPKML()].
+    createScenariosFromPKML = function(pkmlFilePaths, ...) {
+      .createScenariosFromPKML_impl(self, private, pkmlFilePaths, ...)
     },
 
-    #' @description Internal write entry point for one definition section. This
-    #'   is the only sanctioned way to change a section: it stores the new list
-    #'   in the private backing field, sets the in-memory dirty bit, and
-    #'   invalidates the validation cache. It does not touch disk; nothing
-    #'   persists until [saveProject()] reconciles the tree to memory. The
-    #'   public `project$<section> <- ...` setter aborts read-only; every
-    #'   `add*`/`set*`/`remove*` authoring function routes its write here.
-    #'   Accepts a plain list; a `DefinitionList` is unwrapped defensively. Not
-    #'   intended for end-user use.
-    #' @param kind Character scalar naming the section (e.g. `"scenarios"`).
-    #' @param value The new section list.
-    #' @keywords internal
-    .setSection = function(kind, value) {
-      field <- private$.sectionField(kind)
-      value <- .unwrapDefinitionList(value)
-      private[[field]] <- value
-      # Writing observed data invalidates the cached observed-data names, as
-      # the active-binding setter did.
-      if (identical(kind, "observedData")) {
-        private$.observedDataNamesCache <- NULL
-      }
-      private$.modified <- TRUE
-      private$.invalidate()
-      invisible(value)
+    #' @description Add an individual. See [addIndividual()].
+    addIndividual = function(...) {
+      .addIndividual_impl(self, private, ...)
     },
 
-    #' @description Internal method to retrieve the raw working-folder metadata
-    #'   (the `filePaths` block: a named list of `list(value, description)`
-    #'   entries for the four live folders). Not intended for end-user use;
-    #'   consumed by the Excel import/export bridge.
-    #' @keywords internal
-    .getFilePathsData = function() {
-      private$.filePathsData
+    #' @description Remove individuals. See [removeIndividual()].
+    removeIndividual = function(id) {
+      .removeIndividual_impl(self, private, id)
     },
 
-    #' @description Internal method to retrieve the raw Excel-bridge metadata
-    #'   (the `excel` block: a named list of `list(value, description)` entries
-    #'   for the sheet-name fields). Empty when the project has no Excel
-    #'   side-car. Not intended for end-user use; consumed by the Excel
-    #'   import/export bridge.
-    #' @keywords internal
-    .getExcelData = function() {
-      private$.excelData
+    #' @description Modify an existing individual. See [setIndividual()].
+    setIndividual = function(...) {
+      .setIndividual_impl(self, private, ...)
+    },
+
+    #' @description Add a population. See [addPopulation()].
+    addPopulation = function(...) {
+      .addPopulation_impl(self, private, ...)
+    },
+
+    #' @description Remove populations. See [removePopulation()].
+    removePopulation = function(id) {
+      .removePopulation_impl(self, private, id)
+    },
+
+    #' @description Modify an existing population. See [setPopulation()].
+    setPopulation = function(...) {
+      .setPopulation_impl(self, private, ...)
+    },
+
+    #' @description Add an application. See [addApplication()].
+    addApplication = function(id, parameterSets = NULL) {
+      .addApplication_impl(self, private, id, parameterSets)
+    },
+
+    #' @description Remove applications. See [removeApplication()].
+    removeApplication = function(id) {
+      .removeApplication_impl(self, private, id)
+    },
+
+    #' @description Set an application's parameter sets. See
+    #'   [setApplicationParameterSets()].
+    setApplicationParameterSets = function(id, parameterSets) {
+      .setApplicationParameterSets_impl(self, private, id, parameterSets)
+    },
+
+    #' @description Add an output path. See [addOutputPath()].
+    addOutputPath = function(id, path) {
+      .addOutputPath_impl(self, private, id, path)
+    },
+
+    #' @description Remove output paths. See [removeOutputPath()].
+    removeOutputPath = function(id) {
+      .removeOutputPath_impl(self, private, id)
+    },
+
+    #' @description Modify an existing output path. See [setOutputPath()].
+    setOutputPath = function(id, path) {
+      .setOutputPath_impl(self, private, id, path)
+    },
+
+    #' @description Add a parameter set. See [addParameterSet()].
+    addParameterSet = function(id) {
+      .addParameterSet_impl(self, private, id)
+    },
+
+    #' @description Remove parameter sets. See [removeParameterSet()].
+    removeParameterSet = function(id) {
+      .removeParameterSet_impl(self, private, id)
+    },
+
+    #' @description Add an entry to a parameter set. See [addParameterEntry()].
+    addParameterEntry = function(
+      id,
+      containerPath,
+      parameterName,
+      value,
+      units
+    ) {
+      .addParameterEntry_impl(
+        self,
+        private,
+        id,
+        containerPath,
+        parameterName,
+        value,
+        units
+      )
+    },
+
+    #' @description Remove an entry from a parameter set. See
+    #'   [removeParameterEntry()].
+    removeParameterEntry = function(id, containerPath, parameterName) {
+      .removeParameterEntry_impl(
+        self,
+        private,
+        id,
+        containerPath,
+        parameterName
+      )
+    },
+
+    #' @description Add an initial-conditions set. See [addInitialConditions()].
+    addInitialConditions = function(id) {
+      .addInitialConditions_impl(self, private, id)
+    },
+
+    #' @description Remove initial-conditions sets. See
+    #'   [removeInitialConditions()].
+    removeInitialConditions = function(id) {
+      .removeInitialConditions_impl(self, private, id)
+    },
+
+    #' @description Add an entry to an initial-conditions set. See
+    #'   [addInitialConditionEntry()].
+    addInitialConditionEntry = function(id, path, value, unit) {
+      .addInitialConditionEntry_impl(self, private, id, path, value, unit)
+    },
+
+    #' @description Remove an entry from an initial-conditions set. See
+    #'   [removeInitialConditionEntry()].
+    removeInitialConditionEntry = function(id, path) {
+      .removeInitialConditionEntry_impl(self, private, id, path)
+    },
+
+    #' @description Add a plot. See [addPlot()].
+    addPlot = function(...) {
+      .addPlot_impl(self, private, ...)
+    },
+
+    #' @description Remove plots. See [removePlot()].
+    removePlot = function(id) {
+      .removePlot_impl(self, private, id)
+    },
+
+    #' @description Add a plot grid. See [addPlotGrid()].
+    addPlotGrid = function(...) {
+      .addPlotGrid_impl(self, private, ...)
+    },
+
+    #' @description Remove plot grids. See [removePlotGrid()].
+    removePlotGrid = function(id) {
+      .removePlotGrid_impl(self, private, id)
+    },
+
+    #' @description Add a data-combined entry. See [addDataCombined()].
+    addDataCombined = function(id, simulated = list(), observed = list()) {
+      .addDataCombined_impl(self, private, id, simulated, observed)
+    },
+
+    #' @description Remove data-combined entries. See [removeDataCombined()].
+    removeDataCombined = function(id) {
+      .removeDataCombined_impl(self, private, id)
+    },
+
+    #' @description Add observed data. See [addObservedData()].
+    addObservedData = function(entry) {
+      .addObservedData_impl(self, private, entry)
+    },
+
+    #' @description Remove observed data. See [removeObservedData()].
+    removeObservedData = function(id) {
+      .removeObservedData_impl(self, private, id)
+    },
+
+    #' @description Load the project's observed data. See [loadObservedData()].
+    loadObservedData = function() {
+      .loadObservedData_impl(self, private)
+    },
+
+    #' @description Names of the project's observed data. See
+    #'   [getObservedDataNames()].
+    getObservedDataNames = function() {
+      .getObservedDataNames_impl(self, private)
+    },
+
+    #' @description Add a parameter-identification task. See [addPITask()].
+    addPITask = function(
+      id,
+      scenarios,
+      parameters,
+      outputMappings,
+      configuration = list()
+    ) {
+      .addPITask_impl(
+        self,
+        private,
+        id,
+        scenarios,
+        parameters,
+        outputMappings,
+        configuration
+      )
+    },
+
+    #' @description Remove parameter-identification tasks. See [removePITask()].
+    removePITask = function(id) {
+      .removePITask_impl(self, private, id)
+    },
+
+    #' @description Add a parameter to a PI task. See [addPIParameter()].
+    addPIParameter = function(
+      task,
+      path,
+      scenarios,
+      minValue,
+      maxValue,
+      startValue,
+      units = NULL,
+      id = NULL
+    ) {
+      .addPIParameter_impl(
+        self,
+        private,
+        task,
+        path,
+        scenarios,
+        minValue,
+        maxValue,
+        startValue,
+        units,
+        id
+      )
+    },
+
+    #' @description Remove a parameter from a PI task. See [removePIParameter()].
+    removePIParameter = function(task, id) {
+      .removePIParameter_impl(self, private, task, id)
+    },
+
+    #' @description Add an output mapping to a PI task. See
+    #'   [addPIOutputMapping()].
+    addPIOutputMapping = function(
+      task,
+      outputPath,
+      observedData,
+      scenarios,
+      scaling = NULL,
+      xOffset = 0,
+      yOffset = 0,
+      xFactor = 1,
+      yFactor = 1,
+      weight = NULL,
+      id = NULL
+    ) {
+      .addPIOutputMapping_impl(
+        self,
+        private,
+        task,
+        outputPath,
+        observedData,
+        scenarios,
+        scaling,
+        xOffset,
+        yOffset,
+        xFactor,
+        yFactor,
+        weight,
+        id
+      )
+    },
+
+    #' @description Remove an output mapping from a PI task. See
+    #'   [removePIOutputMapping()].
+    removePIOutputMapping = function(task, id) {
+      .removePIOutputMapping_impl(self, private, task, id)
+    },
+
+    #' @description Save the project's in-memory edits to its on-disk tree. See
+    #'   [saveProject()].
+    save = function() {
+      .saveProject_impl(self, private)
+    },
+
+    #' @description Discard in-memory edits and re-read from disk. See
+    #'   [reloadProject()].
+    reload = function() {
+      .reloadProject_impl(self, private)
+    },
+
+    #' @description Validate the project. See [validateProject()].
+    validate = function() {
+      .validateProject_impl(self, private)
     },
 
     #' @description Print a summary of the Project.
@@ -895,6 +1236,85 @@ Project <- R6::R6Class(
     .invalidateContainer = function() {
       private$.invalidate()
       private$.modified <- TRUE
+      invisible(self)
+    },
+
+    # Package-internal read/write seam ----
+    #
+    # These private methods are the single sanctioned way to read and write a
+    # project's in-memory state. They carry no `#'` roxygen and are dot-prefixed
+    # private members, so they never appear on the public surface: a modeler
+    # cannot call `project$.setSection(...)`. The public authoring methods
+    # (`addScenario()`, `setParameter()`, the whole `add*`/`set*`/`remove*`
+    # family) route every state change through them; the authoring logic lives
+    # in `_impl()` free functions in the domain files, which receive `private`
+    # from the calling method and reach the seam through it.
+
+    # Read one definition section. Returns the plain backing list (NOT wrapped
+    # in the read-only `DefinitionList` the public `project$<section>` getter
+    # returns), so an authoring impl may bind it to a local copy and
+    # subscript-assign that copy before re-submitting it via `.setSection()`.
+    # Resolves `kind` through `.sectionField()`, which aborts on an unknown kind.
+    .getSection = function(kind) {
+      private[[private$.sectionField(kind)]]
+    },
+
+    # Write one definition section. The only sanctioned way to change a section:
+    # it stores the new list in the private backing field, sets the in-memory
+    # dirty bit, and invalidates the validation cache. It does not touch disk;
+    # nothing persists until `saveProject()` reconciles the tree to memory.
+    # Accepts a plain list; a `DefinitionList` is unwrapped defensively.
+    .setSection = function(kind, value) {
+      field <- private$.sectionField(kind)
+      value <- .unwrapDefinitionList(value)
+      private[[field]] <- value
+      # Writing observed data invalidates the cached observed-data names, as the
+      # active-binding setter did.
+      if (identical(kind, "observedData")) {
+        private$.observedDataNamesCache <- NULL
+      }
+      private$.modified <- TRUE
+      private$.invalidate()
+      invisible(value)
+    },
+
+    # Record that a full project validation has succeeded with no critical
+    # errors. Sets the `validatedSinceMutation` flag.
+    .markValidated = function() {
+      private$.validatedSinceMutation <- TRUE
+      invisible(self)
+    },
+
+    # Invoked by mutators after a successful programmatic change. Sets the
+    # in-memory dirty bit and clears the `validatedSinceMutation` flag (via
+    # `.invalidate()`) so the next `runScenarios()` / `createPlots()`
+    # re-validates the project. Does not touch disk.
+    .markModified = function() {
+      private$.modified <- TRUE
+      private$.invalidate()
+      invisible(self)
+    },
+
+    # Read the in-memory dirty bit: `TRUE` when there are edits not yet
+    # reconciled to the on-disk tree.
+    .isModified = function() {
+      private$.modified
+    },
+
+    # Clear the in-memory dirty bit, marking memory as in sync with the on-disk
+    # tree. Called after a successful `saveProject()`.
+    .clearModified = function() {
+      private$.modified <- FALSE
+      invisible(self)
+    },
+
+    # Re-read the project from its bound file, discarding any in-memory edits
+    # (the undo). Re-runs the parser against `projectFilePath`, which overwrites
+    # every backing field and clears the dirty and validation flags. Object
+    # identity is preserved (the same R6 instance is mutated), so existing
+    # handles stay valid.
+    .reload = function() {
+      private$.read_json(private$.projectFilePath)
       invisible(self)
     },
 

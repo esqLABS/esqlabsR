@@ -461,7 +461,7 @@ test_that("name and description are writable and persist on saveProject()", {
   expect_identical(project$description, "A new description")
 
   # The edit stays in memory until an explicit save.
-  expect_true(project$.isModified())
+  expect_true(.isModified(project))
   expect_false(identical(loadProject(project$jsonPath)$name, "Renamed"))
 
   saveProject(project)
@@ -573,7 +573,7 @@ test_that("changing definitionsFolder is a pure in-memory change", {
 
   project$definitionsFolder <- "other-defs"
   expect_identical(project$definitionsFolder, "other-defs")
-  expect_true(project$.isModified())
+  expect_true(.isModified(project))
   # No tree moved on disk until a save.
   expect_true(dir.exists(file.path(temp$path, "definitions")))
   expect_false(dir.exists(file.path(temp$path, "other-defs")))
@@ -703,12 +703,12 @@ test_that("an Excel-bridge file field write targets the excel block", {
 
 test_that(".markValidated leaves the validation cache set until the next mutation", {
   project <- testProject()
-  project$.markValidated()
+  .markValidated(project)
   expect_true(project$validatedSinceMutation)
 
   # A mutation clears the validation cache so runScenarios()/createPlots()
   # re-validate the new shape.
-  project$.markModified()
+  .markModified(project)
   expect_false(project$validatedSinceMutation)
 })
 
@@ -719,7 +719,7 @@ test_that("a fresh project starts unvalidated", {
 
 test_that("addScenario() invalidates the validation cache", {
   project <- testProject()
-  project$.markValidated()
+  .markValidated(project)
   expect_true(project$validatedSinceMutation)
 
   addScenario(project, "new", modelFile = "m.pkml")
@@ -729,7 +729,7 @@ test_that("addScenario() invalidates the validation cache", {
 
 test_that("setScenario() invalidates the validation cache", {
   project <- testProject()
-  project$.markValidated()
+  .markValidated(project)
 
   setScenario(project, "testscenario", modelFile = "Aciclovir.pkml")
 
@@ -739,7 +739,7 @@ test_that("setScenario() invalidates the validation cache", {
 
 test_that("a section-entry authoring write invalidates the validation cache", {
   project <- testProject()
-  project$.markValidated()
+  .markValidated(project)
   setIndividual(project, "indiv1", weight = 81)
 
   expect_false(project$validatedSinceMutation)
@@ -748,7 +748,7 @@ test_that("a section-entry authoring write invalidates the validation cache", {
 
 test_that("an extracted Scenario is a copy and cannot mutate the project silently", {
   project <- testProject()
-  project$.markValidated()
+  .markValidated(project)
   sc <- project$scenarios[["testscenario"]]
   sc$modelFile <- "HIJACKED.pkml"
 
@@ -870,9 +870,9 @@ test_that("reading a record, editing the copy, and re-submitting it is the suppo
 # `saveProject()`) rejects a wrong-typed reference field and an unknown field.
 test_that("saveProject() rejects a wrong-typed scalar reference field", {
   project <- testProject()
-  scenarios <- project$.getSection("scenarios")
+  scenarios <- .getSection(project, "scenarios")
   scenarios[["testscenario"]]$individualId <- list(a = 1)
-  project$.setSection("scenarios", scenarios)
+  .setSection(project, "scenarios", scenarios)
   expect_error(
     saveProject(project),
     "individualId.*single string"
@@ -881,9 +881,9 @@ test_that("saveProject() rejects a wrong-typed scalar reference field", {
 
 test_that("saveProject() rejects an unknown field on a record", {
   project <- testProject()
-  scenarios <- project$.getSection("scenarios")
+  scenarios <- .getSection(project, "scenarios")
   scenarios[["testscenario"]]$totallyBogusField <- "nonsense"
-  project$.setSection("scenarios", scenarios)
+  .setSection(project, "scenarios", scenarios)
   expect_error(
     saveProject(project),
     "unknown field"

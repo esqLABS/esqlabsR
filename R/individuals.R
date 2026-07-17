@@ -151,6 +151,17 @@ print.Individual <- function(x, ...) {
 #' @family individual
 addIndividual <- function(project, id, species, ...) {
   validateIsOfType(project, "Project")
+  project$addIndividual(id, species, ...)
+}
+
+# Implementation behind `project$addIndividual()` / `addIndividual()`.
+#
+# @keywords internal
+# @noRd
+.addIndividual_impl <- function(self, private, id, species, ...) {
+  # Attribute any abort to the public authoring function the user called
+  # (the free-function forwarder), not this internal `_impl`.
+  rlang::local_error_call(rlang::caller_env(2))
   .assertIdVector(id)
   id <- .canonicalizeId(id)
   n <- length(id)
@@ -169,23 +180,23 @@ addIndividual <- function(project, id, species, ...) {
   # Validate all N first (all-or-nothing): build every entry before folding any,
   # so an invalid definition in the batch writes nothing.
   .assertNoDuplicateIds(id, "individual")
-  clash <- intersect(id, names(project$individuals))
+  clash <- intersect(id, names(self$individuals))
   if (length(clash) > 0L) {
     cli::cli_abort("individual {.val {clash}} already exists")
   }
-  call <- rlang::current_env()
+  call <- rlang::caller_env(2)
   entries <- .collectCanonicalizedRefs(lapply(seq_len(n), function(i) {
-    .buildIndividualEntry(project, id[[i]], perDefinition[[i]], call = call)
+    .buildIndividualEntry(self, id[[i]], perDefinition[[i]], call = call)
   }))
 
   # Fold all N into the section in memory, then ONE assignment triggers one
   # write-through.
-  individuals <- project$.getSection("individuals") %||% list()
+  individuals <- private$.getSection("individuals") %||% list()
   for (i in seq_len(n)) {
     individuals[[id[[i]]]] <- entries[[i]]
   }
-  project$.setSection("individuals", individuals)
-  invisible(project)
+  private$.setSection("individuals", individuals)
+  invisible(self)
 }
 
 # Build one classed `Individual` entry from its id and per-definition field list,
@@ -329,24 +340,35 @@ addIndividual <- function(project, id, species, ...) {
 #' @family individual
 removeIndividual <- function(project, id) {
   validateIsOfType(project, "Project")
+  project$removeIndividual(id)
+}
+
+# Implementation behind `project$removeIndividual()` / `removeIndividual()`.
+#
+# @keywords internal
+# @noRd
+.removeIndividual_impl <- function(self, private, id) {
+  # Attribute any abort to the public authoring function the user called
+  # (the free-function forwarder), not this internal `_impl`.
+  rlang::local_error_call(rlang::caller_env(2))
   .assertIdVector(id)
   id <- .canonicalizeId(id)
 
-  missingIds <- setdiff(id, names(project$individuals))
+  missingIds <- setdiff(id, names(self$individuals))
   if (length(missingIds) > 0L) {
     cli::cli_warn("individual {.val {missingIds}} not found; no-op.")
   }
-  toRemove <- intersect(id, names(project$individuals))
+  toRemove <- intersect(id, names(self$individuals))
   if (length(toRemove) == 0L) {
-    return(invisible(project))
+    return(invisible(self))
   }
   for (one in toRemove) {
-    .warnIfReferenced(project, "individual", one)
+    .warnIfReferenced(self, "individual", one)
   }
-  individuals <- project$.getSection("individuals")
+  individuals <- private$.getSection("individuals")
   individuals[toRemove] <- NULL
-  project$.setSection("individuals", individuals)
-  invisible(project)
+  private$.setSection("individuals", individuals)
+  invisible(self)
 }
 
 #' Modify fields of an existing individual
@@ -381,10 +403,21 @@ removeIndividual <- function(project, id) {
 #' @family individual
 setIndividual <- function(project, id, ...) {
   validateIsOfType(project, "Project")
+  project$setIndividual(id, ...)
+}
+
+# Implementation behind `project$setIndividual()` / `setIndividual()`.
+#
+# @keywords internal
+# @noRd
+.setIndividual_impl <- function(self, private, id, ...) {
+  # Attribute any abort to the public authoring function the user called
+  # (the free-function forwarder), not this internal `_impl`.
+  rlang::local_error_call(rlang::caller_env(2))
   .assertIdVector(id)
   id <- .canonicalizeId(id)
   n <- length(id)
-  missingIds <- setdiff(id, names(project$individuals))
+  missingIds <- setdiff(id, names(self$individuals))
   if (length(missingIds) > 0L) {
     cli::cli_abort(c(
       "Cannot modify individual {.val {missingIds}}: it does not exist.",
@@ -404,22 +437,22 @@ setIndividual <- function(project, id, ...) {
   # update); the engine carries every supplied field for each definition.
   suppliedNames <- names(dots)
 
-  call <- rlang::current_env()
+  call <- rlang::caller_env(2)
   entries <- .collectCanonicalizedRefs(lapply(seq_len(n), function(i) {
     .setOneIndividual(
-      project,
+      self,
       id[[i]],
       perDefinition[[i]][suppliedNames],
       call = call
     )
   }))
 
-  individuals <- project$.getSection("individuals")
+  individuals <- private$.getSection("individuals")
   for (i in seq_len(n)) {
     individuals[[id[[i]]]] <- entries[[i]]
   }
-  project$.setSection("individuals", individuals)
-  invisible(project)
+  private$.setSection("individuals", individuals)
+  invisible(self)
 }
 
 # Apply a partial-update field set to one existing individual, returning the

@@ -243,11 +243,22 @@ validateProject <- function(project) {
       "{.arg project} must be a {.cls Project} object; got {.cls {class(project)[[1]]}}."
     )
   }
+  project$validate()
+}
 
-  results <- .runProjectValidation(project, sections = NULL)
+# Implementation behind `project$validate()` / `validateProject()`. Marks the
+# project validated through its own `private` when no critical errors surface.
+#
+# @keywords internal
+# @noRd
+.validateProject_impl <- function(self, private) {
+  # Attribute any abort to the public authoring function the user called
+  # (the free-function forwarder), not this internal `_impl`.
+  rlang::local_error_call(rlang::caller_env(2))
+  results <- .runProjectValidation(self, sections = NULL)
 
   if (!isAnyCriticalErrors(results)) {
-    project$.markValidated()
+    private$.markValidated()
   }
 
   results

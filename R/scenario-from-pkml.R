@@ -184,6 +184,55 @@ createScenariosFromPKML <- function(
   readPopulationFromCSV = FALSE,
   paramSheets = lifecycle::deprecated()
 ) {
+  validateIsOfType(project, "Project")
+  project$createScenariosFromPKML(
+    pkmlFilePaths,
+    scenarios = scenarios,
+    individual = individual,
+    population = population,
+    application = application,
+    parameterSets = parameterSets,
+    outputPaths = outputPaths,
+    simulationTime = simulationTime,
+    simulationTimeUnit = simulationTimeUnit,
+    steadyState = steadyState,
+    steadyStateTime = steadyStateTime,
+    steadyStateTimeUnit = steadyStateTimeUnit,
+    overwriteFormulasInSS = overwriteFormulasInSS,
+    readPopulationFromCSV = readPopulationFromCSV,
+    paramSheets = paramSheets
+  )
+}
+
+# Implementation behind `project$createScenariosFromPKML()` /
+# `createScenariosFromPKML()`. Its happy path composes the public authoring
+# methods (`addOutputPath()` / `addScenario()`); the transactional rollback on
+# failure restores the affected sections through its own `private`.
+#
+# @keywords internal
+# @noRd
+.createScenariosFromPKML_impl <- function(
+  self,
+  private,
+  pkmlFilePaths,
+  scenarios = NULL,
+  individual = NULL,
+  population = NULL,
+  application = NULL,
+  parameterSets = NULL,
+  outputPaths = NULL,
+  simulationTime = NULL,
+  simulationTimeUnit = NULL,
+  steadyState = FALSE,
+  steadyStateTime = NULL,
+  steadyStateTimeUnit = NULL,
+  overwriteFormulasInSS = FALSE,
+  readPopulationFromCSV = FALSE,
+  paramSheets = lifecycle::deprecated()
+) {
+  # Attribute any abort to the public authoring function the user called
+  # (the free-function forwarder), not this internal `_impl`.
+  rlang::local_error_call(rlang::caller_env(2))
   # Handle deprecated paramSheets argument
   if (lifecycle::is_present(paramSheets)) {
     lifecycle::deprecate_soft(
@@ -196,7 +245,6 @@ createScenariosFromPKML <- function(
 
   # Validate inputs
   validateIsCharacter(pkmlFilePaths)
-  validateIsOfType(project, "Project")
   if (!is.null(scenarios)) {
     validateIsCharacter(scenarios)
   }
@@ -396,7 +444,7 @@ createScenariosFromPKML <- function(
   )
   finalNames <- .dedupeScenarioNames(
     requestedNames,
-    names(project$scenarios)
+    names(self$scenarios)
   )
 
   specs <- vector("list", length(pkmlFilePaths))
@@ -411,13 +459,13 @@ createScenariosFromPKML <- function(
     # Resolve the model file relative to the project's model folder so the
     # stored path is portable. `as.character()` strips the `fs_path` class so
     # the value round-trips identically through save/load.
-    if (is.null(project$modelFolder)) {
+    if (is.null(self$modelFolder)) {
       cli::cli_warn(messages$noModelFolderUsingAbsolutePath(pkmlPath))
       modelFile <- as.character(fs::path_abs(pkmlPath))
     } else {
       modelFile <- as.character(fs::path_rel(
         pkmlPath,
-        start = project$modelFolder
+        start = self$modelFolder
       ))
     }
 
@@ -463,7 +511,7 @@ createScenariosFromPKML <- function(
       }
       resolved <- .resolveScenarioOutputPaths(
         scenarioOutputPaths,
-        project,
+        self,
         pending
       )
       outputPathIds <- resolved$outputPathIds
@@ -530,22 +578,22 @@ createScenariosFromPKML <- function(
   # `addScenario()` (e.g. an unknown individual) on scenario `i` must not
   # leave scenarios 1..i-1 and freshly registered output paths behind, so
   # snapshot the section fields and restore them on error.
-  oldScenarios <- project$.getSection("scenarios")
-  oldOutputPaths <- project$.getSection("outputPaths")
-  wasValidated <- project$validatedSinceMutation
+  oldScenarios <- private$.getSection("scenarios")
+  oldOutputPaths <- private$.getSection("outputPaths")
+  wasValidated <- self$validatedSinceMutation
 
   tryCatch(
     {
       if (length(pending) > 0) {
         addOutputPath(
-          project,
+          self,
           id = names(pending),
           path = unname(pending)
         )
       }
       for (spec in specs) {
         addScenario(
-          project,
+          self,
           id = spec$scenarioName,
           modelFile = spec$modelFile,
           individual = spec$individual,
@@ -564,10 +612,10 @@ createScenariosFromPKML <- function(
       }
     },
     error = function(cnd) {
-      project$.setSection("scenarios", oldScenarios)
-      project$.setSection("outputPaths", oldOutputPaths)
+      private$.setSection("scenarios", oldScenarios)
+      private$.setSection("outputPaths", oldOutputPaths)
       if (wasValidated) {
-        project$.markValidated()
+        private$.markValidated()
       }
       stop(cnd)
     }
@@ -578,7 +626,7 @@ createScenariosFromPKML <- function(
     cli::cli_inform(messages$scenariosAddedToProject(addedNames))
   }
 
-  invisible(project)
+  invisible(self)
 }
 
 #' @keywords internal

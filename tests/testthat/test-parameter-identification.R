@@ -649,7 +649,7 @@ test_that("validateProject() flags PI parameters that reference unknown scenario
       )
     )
   )
-  project$.setSection("parameterIdentification", list(t = task))
+  .setSection(project, "parameterIdentification", list(t = task))
   results <- validateProject(project)
   expect_true(esqlabsR::isAnyCriticalErrors(results))
 })
@@ -678,7 +678,7 @@ test_that("validateProject() flags PI outputMappings that reference unknown outp
       )
     )
   )
-  project$.setSection("parameterIdentification", list(t = task))
+  .setSection(project, "parameterIdentification", list(t = task))
   results <- validateProject(project)
   expect_true(esqlabsR::isAnyCriticalErrors(results))
 })
@@ -1161,7 +1161,7 @@ test_that("runPI(project) refuses to run when validation has critical errors", {
       )
     )
   )
-  project$.setSection("parameterIdentification", list(t = bad))
+  .setSection(project, "parameterIdentification", list(t = bad))
   expect_snapshot(error = TRUE, runPI(project))
 })
 
@@ -2576,7 +2576,7 @@ test_that("runPI() builds every task before optimising any (fail fast on a build
 
 test_that("runPI() returns an empty list on a project with zero PI tasks", {
   project <- testProject()
-  project$.setSection("parameterIdentification", list())
+  .setSection(project, "parameterIdentification", list())
   results <- suppressMessages(runPI(project))
   expect_identical(results, list())
 })

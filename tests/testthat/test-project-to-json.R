@@ -527,9 +527,9 @@ test_that(".scenariosToJson errors when simulateSteadyState is TRUE without a un
 
 test_that("round-trip preserves empty modelParameterSets as a JSON array", {
   project <- exampleProject()
-  scenarios <- project$.getSection("scenarios")
+  scenarios <- .getSection(project, "scenarios")
   scenarios[["aciclovir_iv"]]$modelParameterSets <- character(0)
-  project$.setSection("scenarios", scenarios)
+  .setSection(project, "scenarios", scenarios)
 
   out <- withr::local_tempfile(fileext = ".json")
   esqlabsR:::.saveProjectJson(project, out)
@@ -544,9 +544,9 @@ test_that("round-trip preserves empty modelParameterSets as a JSON array", {
 
 test_that("round-trip preserves empty outputPaths as a JSON array", {
   project <- exampleProject()
-  scenarios <- project$.getSection("scenarios")
+  scenarios <- .getSection(project, "scenarios")
   scenarios[["aciclovir_iv"]]$outputPaths <- NULL
-  project$.setSection("scenarios", scenarios)
+  .setSection(project, "scenarios", scenarios)
 
   out <- withr::local_tempfile(fileext = ".json")
   esqlabsR:::.saveProjectJson(project, out)

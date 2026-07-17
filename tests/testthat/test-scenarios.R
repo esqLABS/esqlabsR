@@ -427,13 +427,13 @@ test_that("removeScenario uses the id argument matching addScenario", {
 
 test_that("addScenario and removeScenario clear the validation cache", {
   project <- testProject()
-  project$.markValidated()
+  .markValidated(project)
   expect_true(project$validatedSinceMutation)
 
   addScenario(project, id = "x", modelFile = "Aciclovir.pkml")
   expect_false(project$validatedSinceMutation)
 
-  project$.markValidated()
+  .markValidated(project)
   removeScenario(project, id = "x")
   expect_false(project$validatedSinceMutation)
 })
@@ -506,7 +506,7 @@ test_that("setScenario partial update leaves other fields untouched", {
 
 test_that("setScenario invalidates the validation cache", {
   project <- testProject()
-  project$.markValidated()
+  .markValidated(project)
   expect_true(project$validatedSinceMutation)
 
   setScenario(project, "testscenario", simulationTimeUnit = "min")
@@ -569,11 +569,11 @@ test_that("the write path allows a dangling outputPathId as a lazy referential f
   # write-through entry point (`.setSection()`) is structural-only: an unknown
   # output-path id is allowed at write time (referential checks are lazy); it
   # is the cross-reference validator that flags it later.
-  scenarios <- project$.getSection("scenarios")
+  scenarios <- .getSection(project, "scenarios")
   sc <- scenarios[["testscenario"]]
   sc$outputPaths <- c(sc$outputPaths, Ghost = NA_character_)
   scenarios[["testscenario"]] <- sc
-  expect_no_error(project$.setSection("scenarios", scenarios))
+  expect_no_error(.setSection(project, "scenarios", scenarios))
 })
 
 test_that("setScenario stays in memory until saveProject()", {

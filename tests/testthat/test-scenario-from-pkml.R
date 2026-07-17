@@ -497,7 +497,7 @@ test_that("a failing addScenario rollback preserves validatedSinceMutation", {
     parameterSets = list(global = list())
   )
   project$modelFolder <- dirname(pkmlFixture)
-  project$.markValidated()
+  .markValidated(project)
 
   expect_error(
     suppressMessages(createScenariosFromPKML(

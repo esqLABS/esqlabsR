@@ -1109,19 +1109,37 @@ addPITask <- function(
   configuration = list()
 ) {
   validateIsOfType(project, "Project")
+  project$addPITask(id, scenarios, parameters, outputMappings, configuration)
+}
 
+# Implementation behind `project$addPITask()` / `addPITask()`.
+#
+# @keywords internal
+# @noRd
+.addPITask_impl <- function(
+  self,
+  private,
+  id,
+  scenarios,
+  parameters,
+  outputMappings,
+  configuration = list()
+) {
+  # Attribute any abort to the public authoring function the user called
+  # (the free-function forwarder), not this internal `_impl`.
+  rlang::local_error_call(rlang::caller_env(2))
   errors <- character()
   if (!is.character(id) || length(id) != 1L || is.na(id) || nchar(id) == 0) {
     errors <- c(errors, "id must be a non-empty string")
   } else {
     id <- .canonicalizeId(id)
-    if (id %in% names(project$parameterIdentification)) {
+    if (id %in% names(self$parameterIdentification)) {
       errors <- c(errors, paste0("PI task '", id, "' already exists"))
     }
   }
 
   scenarios <- .canonicalizeIdRef(scenarios)
-  unknownScenarios <- setdiff(scenarios, names(project$scenarios))
+  unknownScenarios <- setdiff(scenarios, names(self$scenarios))
   if (length(unknownScenarios) > 0L) {
     errors <- c(
       errors,
@@ -1146,7 +1164,7 @@ addPITask <- function(
     for (m in outputMappings) {
       if (
         inherits(m, "PIOutputMapping") &&
-          !(m$outputPathId %in% names(project$outputPaths))
+          !(m$outputPathId %in% names(self$outputPaths))
       ) {
         errors <- c(
           errors,
@@ -1174,10 +1192,10 @@ addPITask <- function(
     outputMappings = outputMappings,
     configuration = configuration
   )
-  tasks <- project$.getSection("parameterIdentification")
+  tasks <- private$.getSection("parameterIdentification")
   tasks[[id]] <- task
-  project$.setSection("parameterIdentification", tasks)
-  invisible(project)
+  private$.setSection("parameterIdentification", tasks)
+  invisible(self)
 }
 
 #' Remove one or more Parameter Identification tasks from a Project
@@ -1199,20 +1217,31 @@ addPITask <- function(
 #' @family parameterIdentification
 removePITask <- function(project, id) {
   validateIsOfType(project, "Project")
+  project$removePITask(id)
+}
+
+# Implementation behind `project$removePITask()` / `removePITask()`.
+#
+# @keywords internal
+# @noRd
+.removePITask_impl <- function(self, private, id) {
+  # Attribute any abort to the public authoring function the user called
+  # (the free-function forwarder), not this internal `_impl`.
+  rlang::local_error_call(rlang::caller_env(2))
   .assertIdVector(id)
   id <- .canonicalizeId(id)
-  missingIds <- setdiff(id, names(project$parameterIdentification))
+  missingIds <- setdiff(id, names(self$parameterIdentification))
   if (length(missingIds) > 0L) {
     cli::cli_warn("PI task {.val {missingIds}} not found; no-op.")
   }
-  toRemove <- intersect(id, names(project$parameterIdentification))
+  toRemove <- intersect(id, names(self$parameterIdentification))
   if (length(toRemove) == 0L) {
-    return(invisible(project))
+    return(invisible(self))
   }
-  tasks <- project$.getSection("parameterIdentification")
+  tasks <- private$.getSection("parameterIdentification")
   tasks[toRemove] <- NULL
-  project$.setSection("parameterIdentification", tasks)
-  invisible(project)
+  private$.setSection("parameterIdentification", tasks)
+  invisible(self)
 }
 
 # Canonicalize the scenario references on a PIParameter record (its `id` is a
@@ -1271,18 +1300,49 @@ addPIParameter <- function(
   id = NULL
 ) {
   validateIsOfType(project, "Project")
+  project$addPIParameter(
+    task,
+    path,
+    scenarios,
+    minValue,
+    maxValue,
+    startValue,
+    units,
+    id
+  )
+}
+
+# Implementation behind `project$addPIParameter()` / `addPIParameter()`.
+#
+# @keywords internal
+# @noRd
+.addPIParameter_impl <- function(
+  self,
+  private,
+  task,
+  path,
+  scenarios,
+  minValue,
+  maxValue,
+  startValue,
+  units = NULL,
+  id = NULL
+) {
+  # Attribute any abort to the public authoring function the user called
+  # (the free-function forwarder), not this internal `_impl`.
+  rlang::local_error_call(rlang::caller_env(2))
   task <- .canonicalizeId(task)
-  if (!(task %in% names(project$parameterIdentification))) {
+  if (!(task %in% names(self$parameterIdentification))) {
     cli::cli_abort("PI task {.val {task}} not found")
   }
   scenarios <- .canonicalizeIdRef(scenarios)
-  unknownScenarios <- setdiff(scenarios, names(project$scenarios))
+  unknownScenarios <- setdiff(scenarios, names(self$scenarios))
   if (length(unknownScenarios) > 0L) {
     cli::cli_abort(
       "scenarios not found: {.val {unknownScenarios}}"
     )
   }
-  piTask <- project$parameterIdentification[[task]]
+  piTask <- self$parameterIdentification[[task]]
   existingIds <- vapply(piTask$parameters, `[[`, character(1), "id")
   if (is.null(id)) {
     id <- .nextFreeId(paste0(task, "_param_"), existingIds)
@@ -1302,10 +1362,10 @@ addPIParameter <- function(
     startValue = startValue
   )
   piTask$parameters[[length(piTask$parameters) + 1L]] <- newParam
-  tasks <- project$.getSection("parameterIdentification")
+  tasks <- private$.getSection("parameterIdentification")
   tasks[[task]] <- piTask
-  project$.setSection("parameterIdentification", tasks)
-  invisible(project)
+  private$.setSection("parameterIdentification", tasks)
+  invisible(self)
 }
 
 #' Remove a parameter from a PI task
@@ -1323,20 +1383,31 @@ addPIParameter <- function(
 #' @family parameterIdentification
 removePIParameter <- function(project, task, id) {
   validateIsOfType(project, "Project")
+  project$removePIParameter(task, id)
+}
+
+# Implementation behind `project$removePIParameter()` / `removePIParameter()`.
+#
+# @keywords internal
+# @noRd
+.removePIParameter_impl <- function(self, private, task, id) {
+  # Attribute any abort to the public authoring function the user called
+  # (the free-function forwarder), not this internal `_impl`.
+  rlang::local_error_call(rlang::caller_env(2))
   task <- .canonicalizeId(task)
-  if (!(task %in% names(project$parameterIdentification))) {
+  if (!(task %in% names(self$parameterIdentification))) {
     cli::cli_abort("PI task {.val {task}} not found")
   }
-  piTask <- project$parameterIdentification[[task]]
+  piTask <- self$parameterIdentification[[task]]
   ids <- vapply(piTask$parameters, `[[`, character(1), "id")
   if (!(id %in% ids)) {
     cli::cli_warn(
       "Parameter {.val {id}} not found in task {.val {task}}; no-op."
     )
-    return(invisible(project))
+    return(invisible(self))
   }
   piTask$parameters <- piTask$parameters[ids != id]
-  tasks <- project$.getSection("parameterIdentification")
+  tasks <- private$.getSection("parameterIdentification")
   if (length(piTask$parameters) == 0L && length(piTask$outputMappings) == 0L) {
     cli::cli_warn(
       "PI task {.val {task}} is now empty and has been removed."
@@ -1345,8 +1416,8 @@ removePIParameter <- function(project, task, id) {
   } else {
     tasks[[task]] <- piTask
   }
-  project$.setSection("parameterIdentification", tasks)
-  invisible(project)
+  private$.setSection("parameterIdentification", tasks)
+  invisible(self)
 }
 
 #' Add an output mapping to an existing PI task
@@ -1379,22 +1450,59 @@ addPIOutputMapping <- function(
   id = NULL
 ) {
   validateIsOfType(project, "Project")
+  project$addPIOutputMapping(
+    task,
+    outputPath,
+    observedData,
+    scenarios,
+    scaling,
+    xOffset,
+    yOffset,
+    xFactor,
+    yFactor,
+    weight,
+    id
+  )
+}
+
+# Implementation behind `project$addPIOutputMapping()` / `addPIOutputMapping()`.
+#
+# @keywords internal
+# @noRd
+.addPIOutputMapping_impl <- function(
+  self,
+  private,
+  task,
+  outputPath,
+  observedData,
+  scenarios,
+  scaling = NULL,
+  xOffset = 0,
+  yOffset = 0,
+  xFactor = 1,
+  yFactor = 1,
+  weight = NULL,
+  id = NULL
+) {
+  # Attribute any abort to the public authoring function the user called
+  # (the free-function forwarder), not this internal `_impl`.
+  rlang::local_error_call(rlang::caller_env(2))
   task <- .canonicalizeId(task)
-  if (!(task %in% names(project$parameterIdentification))) {
+  if (!(task %in% names(self$parameterIdentification))) {
     cli::cli_abort("PI task {.val {task}} not found")
   }
   outputPath <- .canonicalizeIdRef(outputPath)
-  if (!(outputPath %in% names(project$outputPaths))) {
+  if (!(outputPath %in% names(self$outputPaths))) {
     cli::cli_abort(
       "outputPath {.val {outputPath}} not found in project$outputPaths"
     )
   }
   scenarios <- .canonicalizeIdRef(scenarios)
-  unknownScenarios <- setdiff(scenarios, names(project$scenarios))
+  unknownScenarios <- setdiff(scenarios, names(self$scenarios))
   if (length(unknownScenarios) > 0L) {
     cli::cli_abort("scenarios not found: {.val {unknownScenarios}}")
   }
-  piTask <- project$parameterIdentification[[task]]
+  piTask <- self$parameterIdentification[[task]]
   existingIds <- vapply(piTask$outputMappings, `[[`, character(1), "id")
   if (is.null(id)) {
     id <- .nextFreeId(paste0(task, "_mapping_"), existingIds)
@@ -1417,10 +1525,10 @@ addPIOutputMapping <- function(
     weight = weight
   )
   piTask$outputMappings[[length(piTask$outputMappings) + 1L]] <- newMapping
-  tasks <- project$.getSection("parameterIdentification")
+  tasks <- private$.getSection("parameterIdentification")
   tasks[[task]] <- piTask
-  project$.setSection("parameterIdentification", tasks)
-  invisible(project)
+  private$.setSection("parameterIdentification", tasks)
+  invisible(self)
 }
 
 #' Remove an output mapping from a PI task
@@ -1438,20 +1546,32 @@ addPIOutputMapping <- function(
 #' @family parameterIdentification
 removePIOutputMapping <- function(project, task, id) {
   validateIsOfType(project, "Project")
+  project$removePIOutputMapping(task, id)
+}
+
+# Implementation behind `project$removePIOutputMapping()` /
+# `removePIOutputMapping()`.
+#
+# @keywords internal
+# @noRd
+.removePIOutputMapping_impl <- function(self, private, task, id) {
+  # Attribute any abort to the public authoring function the user called
+  # (the free-function forwarder), not this internal `_impl`.
+  rlang::local_error_call(rlang::caller_env(2))
   task <- .canonicalizeId(task)
-  if (!(task %in% names(project$parameterIdentification))) {
+  if (!(task %in% names(self$parameterIdentification))) {
     cli::cli_abort("PI task {.val {task}} not found")
   }
-  piTask <- project$parameterIdentification[[task]]
+  piTask <- self$parameterIdentification[[task]]
   ids <- vapply(piTask$outputMappings, `[[`, character(1), "id")
   if (!(id %in% ids)) {
     cli::cli_warn(
       "Output mapping {.val {id}} not found in task {.val {task}}; no-op."
     )
-    return(invisible(project))
+    return(invisible(self))
   }
   piTask$outputMappings <- piTask$outputMappings[ids != id]
-  tasks <- project$.getSection("parameterIdentification")
+  tasks <- private$.getSection("parameterIdentification")
   if (length(piTask$parameters) == 0L && length(piTask$outputMappings) == 0L) {
     cli::cli_warn(
       "PI task {.val {task}} is now empty and has been removed."
@@ -1460,6 +1580,6 @@ removePIOutputMapping <- function(project, task, id) {
   } else {
     tasks[[task]] <- piTask
   }
-  project$.setSection("parameterIdentification", tasks)
-  invisible(project)
+  private$.setSection("parameterIdentification", tasks)
+  invisible(self)
 }

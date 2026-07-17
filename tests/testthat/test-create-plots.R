@@ -564,9 +564,9 @@ test_that("createPlots aborts on an unknown plotType even when validate = FALSE"
   # from a grid). It must abort during the buildability check, naming the
   # offending plot and type, regardless of `validate`.
   addPlot(project, "p_bad", "dc_bad", "individual")
-  plots <- project$.getSection("plots")
+  plots <- .getSection(project, "plots")
   plots[["p_bad"]]$plotType <- "timeprofile"
-  project$.setSection("plots", plots)
+  .setSection(project, "plots", plots)
   simulated <- runScenarios(project, scenarios = "aciclovir_iv")
 
   expect_snapshot(

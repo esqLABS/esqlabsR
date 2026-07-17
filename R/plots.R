@@ -779,6 +779,17 @@ print.DataCombined <- function(x, ...) {
 #' @family plots
 addPlot <- function(project, id, dataCombined, plotType, ...) {
   validateIsOfType(project, "Project")
+  project$addPlot(id, dataCombined, plotType, ...)
+}
+
+# Implementation behind `project$addPlot()` / `addPlot()`.
+#
+# @keywords internal
+# @noRd
+.addPlot_impl <- function(self, private, id, dataCombined, plotType, ...) {
+  # Attribute any abort to the public authoring function the user called
+  # (the free-function forwarder), not this internal `_impl`.
+  rlang::local_error_call(rlang::caller_env(2))
   .requireNonEmptyStringVector(id, "id")
   id <- .canonicalizeId(id)
   n <- length(id)
@@ -791,12 +802,12 @@ addPlot <- function(project, id, dataCombined, plotType, ...) {
   # Validate the whole batch first (all-or-nothing): no entry is folded in (and
   # so nothing is written through) unless every entry is valid.
   .assertNoDuplicateIds(id, "plot")
-  existing <- names(project$plots)
+  existing <- names(self$plots)
   clash <- intersect(id, existing)
   if (length(clash) > 0L) {
     cli::cli_abort("plot {.val {clash}} already exists")
   }
-  unknownDc <- setdiff(dataCombined, names(project$dataCombined))
+  unknownDc <- setdiff(dataCombined, names(self$dataCombined))
   if (length(unknownDc) > 0L) {
     cli::cli_abort("dataCombined {.val {unknownDc}} not found in project")
   }
@@ -810,7 +821,7 @@ addPlot <- function(project, id, dataCombined, plotType, ...) {
 
   # Fold all N entries into the section in memory, then ONE assignment triggers
   # exactly one write-through.
-  plotConfig <- .unwrapDefinitionList(project$plots) %||% list()
+  plotConfig <- .unwrapDefinitionList(private$.getSection("plots")) %||% list()
   for (i in seq_len(n)) {
     plotConfig[[id[[i]]]] <- .buildPlotEntry(
       id[[i]],
@@ -819,9 +830,9 @@ addPlot <- function(project, id, dataCombined, plotType, ...) {
       perDefinitionFields[[i]]
     )
   }
-  project$.setSection("plots", plotConfig)
-  project$.markModified()
-  invisible(project)
+  private$.setSection("plots", plotConfig)
+  private$.markModified()
+  invisible(self)
 }
 
 # Build one classed plotConfiguration entry from its scalar fields and the
@@ -856,20 +867,31 @@ addPlot <- function(project, id, dataCombined, plotType, ...) {
 #' @family plots
 removePlot <- function(project, id) {
   validateIsOfType(project, "Project")
+  project$removePlot(id)
+}
+
+# Implementation behind `project$removePlot()` / `removePlot()`.
+#
+# @keywords internal
+# @noRd
+.removePlot_impl <- function(self, private, id) {
+  # Attribute any abort to the public authoring function the user called
+  # (the free-function forwarder), not this internal `_impl`.
+  rlang::local_error_call(rlang::caller_env(2))
   .requireNonEmptyStringVector(id, "id")
   id <- .canonicalizeId(id)
 
-  plotConfig <- .unwrapDefinitionList(project$plots) %||% list()
+  plotConfig <- .unwrapDefinitionList(private$.getSection("plots")) %||% list()
   missingIds <- setdiff(id, names(plotConfig))
   if (length(missingIds) > 0L) {
     cli::cli_warn("plot {.val {missingIds}} not found; no-op.")
   }
   toRemove <- intersect(id, names(plotConfig))
   if (length(toRemove) == 0L) {
-    return(invisible(project))
+    return(invisible(self))
   }
 
-  grids <- .unwrapDefinitionList(project$plotGrids) %||% list()
+  grids <- .unwrapDefinitionList(private$.getSection("plotGrids")) %||% list()
   if (length(grids) > 0) {
     referencingGrids <- names(grids)[vapply(
       grids,
@@ -885,9 +907,9 @@ removePlot <- function(project, id) {
   }
 
   plotConfig[toRemove] <- NULL
-  project$.setSection("plots", plotConfig)
-  project$.markModified()
-  invisible(project)
+  private$.setSection("plots", plotConfig)
+  private$.markModified()
+  invisible(self)
 }
 
 #' Add one or more plot grids to a Project
@@ -921,6 +943,17 @@ removePlot <- function(project, id) {
 #' @family plots
 addPlotGrid <- function(project, id, plots, ...) {
   validateIsOfType(project, "Project")
+  project$addPlotGrid(id, plots, ...)
+}
+
+# Implementation behind `project$addPlotGrid()` / `addPlotGrid()`.
+#
+# @keywords internal
+# @noRd
+.addPlotGrid_impl <- function(self, private, id, plots, ...) {
+  # Attribute any abort to the public authoring function the user called
+  # (the free-function forwarder), not this internal `_impl`.
+  rlang::local_error_call(rlang::caller_env(2))
   .requireNonEmptyStringVector(id, "id")
   id <- .canonicalizeId(id)
   n <- length(id)
@@ -940,11 +973,11 @@ addPlotGrid <- function(project, id, plots, ...) {
 
   # Validate the whole batch first (all-or-nothing).
   .assertNoDuplicateIds(id, "plot grid")
-  clash <- intersect(id, names(project$plotGrids))
+  clash <- intersect(id, names(self$plotGrids))
   if (length(clash) > 0L) {
     cli::cli_abort("plot grid {.val {clash}} already exists")
   }
-  existingPlotIDs <- names(project$plots)
+  existingPlotIDs <- names(self$plots)
   if (is.null(existingPlotIDs)) {
     cli::cli_abort(c(
       "no plots are defined; add plots before creating a plot grid.",
@@ -964,7 +997,8 @@ addPlotGrid <- function(project, id, plots, ...) {
   }
 
   # Fold all N grids in, then ONE assignment triggers one write-through.
-  plotGrids <- .unwrapDefinitionList(project$plotGrids) %||% list()
+  plotGrids <- .unwrapDefinitionList(private$.getSection("plotGrids")) %||%
+    list()
   for (i in seq_len(n)) {
     entry <- c(
       list(
@@ -976,9 +1010,9 @@ addPlotGrid <- function(project, id, plots, ...) {
     class(entry) <- c("PlotGrid", "list")
     plotGrids[[id[[i]]]] <- entry
   }
-  project$.setSection("plotGrids", plotGrids)
-  project$.markModified()
-  invisible(project)
+  private$.setSection("plotGrids", plotGrids)
+  private$.markModified()
+  invisible(self)
 }
 
 #' Remove one or more plot grids from a Project
@@ -994,23 +1028,35 @@ addPlotGrid <- function(project, id, plots, ...) {
 #' @family plots
 removePlotGrid <- function(project, id) {
   validateIsOfType(project, "Project")
+  project$removePlotGrid(id)
+}
+
+# Implementation behind `project$removePlotGrid()` / `removePlotGrid()`.
+#
+# @keywords internal
+# @noRd
+.removePlotGrid_impl <- function(self, private, id) {
+  # Attribute any abort to the public authoring function the user called
+  # (the free-function forwarder), not this internal `_impl`.
+  rlang::local_error_call(rlang::caller_env(2))
   .requireNonEmptyStringVector(id, "id")
   id <- .canonicalizeId(id)
 
-  plotGrids <- .unwrapDefinitionList(project$plotGrids) %||% list()
+  plotGrids <- .unwrapDefinitionList(private$.getSection("plotGrids")) %||%
+    list()
   missingIds <- setdiff(id, names(plotGrids))
   if (length(missingIds) > 0L) {
     cli::cli_warn("plot grid {.val {missingIds}} not found; no-op.")
   }
   toRemove <- intersect(id, names(plotGrids))
   if (length(toRemove) == 0L) {
-    return(invisible(project))
+    return(invisible(self))
   }
 
   plotGrids[toRemove] <- NULL
-  project$.setSection("plotGrids", plotGrids)
-  project$.markModified()
-  invisible(project)
+  private$.setSection("plotGrids", plotGrids)
+  private$.markModified()
+  invisible(self)
 }
 
 #' Add one or more DataCombined to a Project
@@ -1044,6 +1090,23 @@ addDataCombined <- function(
   observed = list()
 ) {
   validateIsOfType(project, "Project")
+  project$addDataCombined(id, simulated, observed)
+}
+
+# Implementation behind `project$addDataCombined()` / `addDataCombined()`.
+#
+# @keywords internal
+# @noRd
+.addDataCombined_impl <- function(
+  self,
+  private,
+  id,
+  simulated = list(),
+  observed = list()
+) {
+  # Attribute any abort to the public authoring function the user called
+  # (the free-function forwarder), not this internal `_impl`.
+  rlang::local_error_call(rlang::caller_env(2))
   .requireNonEmptyStringVector(id, "id")
   id <- .canonicalizeId(id)
   n <- length(id)
@@ -1055,7 +1118,7 @@ addDataCombined <- function(
 
   # Validate the whole batch first (all-or-nothing).
   .assertNoDuplicateIds(id, "DataCombined")
-  clash <- intersect(id, names(project$dataCombined))
+  clash <- intersect(id, names(self$dataCombined))
   if (length(clash) > 0L) {
     cli::cli_abort("DataCombined {.val {clash}} already exists")
   }
@@ -1074,7 +1137,10 @@ addDataCombined <- function(
   }
 
   # Fold all N in, then ONE assignment triggers one write-through.
-  dataCombined <- .unwrapDefinitionList(project$dataCombined) %||% list()
+  dataCombined <- .unwrapDefinitionList(private$.getSection(
+    "dataCombined"
+  )) %||%
+    list()
   for (i in seq_len(n)) {
     # Canonicalize the scenario reference on each simulated entry so it matches
     # the canonical scenario id its definition was filed under.
@@ -1091,9 +1157,9 @@ addDataCombined <- function(
     class(entry) <- c("DataCombined", "list")
     dataCombined[[id[[i]]]] <- entry
   }
-  project$.setSection("dataCombined", dataCombined)
-  project$.markModified()
-  invisible(project)
+  private$.setSection("dataCombined", dataCombined)
+  private$.markModified()
+  invisible(self)
 }
 
 # Resolve the `simulated` / `observed` argument to a per-DataCombined list of
@@ -1126,20 +1192,34 @@ addDataCombined <- function(
 #' @family dataCombined
 removeDataCombined <- function(project, id) {
   validateIsOfType(project, "Project")
+  project$removeDataCombined(id)
+}
+
+# Implementation behind `project$removeDataCombined()` / `removeDataCombined()`.
+#
+# @keywords internal
+# @noRd
+.removeDataCombined_impl <- function(self, private, id) {
+  # Attribute any abort to the public authoring function the user called
+  # (the free-function forwarder), not this internal `_impl`.
+  rlang::local_error_call(rlang::caller_env(2))
   .requireNonEmptyStringVector(id, "id")
   id <- .canonicalizeId(id)
 
-  dataCombined <- .unwrapDefinitionList(project$dataCombined) %||% list()
+  dataCombined <- .unwrapDefinitionList(private$.getSection(
+    "dataCombined"
+  )) %||%
+    list()
   missingIds <- setdiff(id, names(dataCombined))
   if (length(missingIds) > 0L) {
     cli::cli_warn("DataCombined {.val {missingIds}} not found; no-op.")
   }
   toRemove <- intersect(id, names(dataCombined))
   if (length(toRemove) == 0L) {
-    return(invisible(project))
+    return(invisible(self))
   }
 
-  plotCfg <- .unwrapDefinitionList(project$plots) %||% list()
+  plotCfg <- .unwrapDefinitionList(private$.getSection("plots")) %||% list()
   if (length(plotCfg) > 0) {
     referencingPlots <- names(plotCfg)[vapply(
       plotCfg,
@@ -1155,7 +1235,7 @@ removeDataCombined <- function(project, id) {
   }
 
   dataCombined[toRemove] <- NULL
-  project$.setSection("dataCombined", dataCombined)
-  project$.markModified()
-  invisible(project)
+  private$.setSection("dataCombined", dataCombined)
+  private$.markModified()
+  invisible(self)
 }

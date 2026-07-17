@@ -162,7 +162,7 @@ test_that(".mergeScenarioParameters layer 1 (modelParameterSets) iterates listed
 test_that(".mergeScenarioParameters layer 4 (application) overrides layer 1 on overlapping path", {
   project <- .testProject()
   scenario <- project$scenarios[["testscenario"]]
-  parameterSets <- project$.getSection("parameterSets")
+  parameterSets <- .getSection(project, "parameterSets")
   parameterSets$global <- list(
     list(
       containerPath = "OverlapContainer",
@@ -179,10 +179,10 @@ test_that(".mergeScenarioParameters layer 4 (application) overrides layer 1 on o
       units = NULL
     )
   )
-  project$.setSection("parameterSets", parameterSets)
-  apps <- project$.getSection("applications")
+  .setSection(project, "parameterSets", parameterSets)
+  apps <- .getSection(project, "applications")
   apps$aciclovir_iv_250mg$parameterSets <- list("override")
-  project$.setSection("applications", apps)
+  .setSection(project, "applications", apps)
   scenario$individualId <- NULL
   merged <- esqlabsR:::.mergeScenarioParameters(scenario, project, NULL)
   idx <- match("OverlapContainer|OverlapParam", merged$paths)
@@ -236,12 +236,12 @@ test_that(".mergeScenarioParameters silently skips an unknown modelParameterSets
 test_that(".mergeScenarioParameters silently skips an unknown individual parameter-set id", {
   project <- .testProject()
   scenario <- project$scenarios[["testscenario"]]
-  individuals <- project$.getSection("individuals")
+  individuals <- .getSection(project, "individuals")
   individuals[[1L]]$parameterSets <- list(
     "indiv1_default",
     "DoesNotExist"
   )
-  project$.setSection("individuals", individuals)
+  .setSection(project, "individuals", individuals)
   scenario$modelParameterSets <- NULL
   scenario$applicationProtocol <- NA
   merged <- esqlabsR:::.mergeScenarioParameters(scenario, project, NULL)
@@ -251,12 +251,12 @@ test_that(".mergeScenarioParameters silently skips an unknown individual paramet
 test_that(".mergeScenarioParameters silently skips an unknown application parameter-set id", {
   project <- .testProject()
   scenario <- project$scenarios[["testscenario"]]
-  apps <- project$.getSection("applications")
+  apps <- .getSection(project, "applications")
   apps$aciclovir_iv_250mg$parameterSets <- list(
     "aciclovir_iv_250mg_default",
     "DoesNotExist"
   )
-  project$.setSection("applications", apps)
+  .setSection(project, "applications", apps)
   scenario$modelParameterSets <- NULL
   scenario$individualId <- NULL
   merged <- esqlabsR:::.mergeScenarioParameters(scenario, project, NULL)

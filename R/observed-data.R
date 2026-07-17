@@ -18,13 +18,6 @@
 #                    `{type: "programmatic", name: ...}` is what
 #                    survives a round-trip.
 
-# Reach into Project's R6 private slot. R does not enforce R6 privacy
-# at runtime; this helper stays narrow to the observed-data module so
-# the rest of the codebase does not pick up the pattern.
-.projectPrivate <- function(project) {
-  project$.__enclos_env__$private
-}
-
 # Print ----
 
 #' @exportS3Method
@@ -205,19 +198,31 @@ print.ObservedDataSource <- function(x, ...) {
 #' @export
 loadObservedData <- function(project) {
   validateIsOfType(project, "Project")
-  if (is.null(project$observedData) || length(project$observedData) == 0) {
+  project$loadObservedData()
+}
+
+# Implementation behind `project$loadObservedData()` / `loadObservedData()`.
+# Reaches the runtime programmatic store and the names cache through its own
+# `private` (handed in by the method), not through an accessor.
+#
+# @keywords internal
+# @noRd
+.loadObservedData_impl <- function(self, private) {
+  # Attribute any abort to the public authoring function the user called
+  # (the free-function forwarder), not this internal `_impl`.
+  rlang::local_error_call(rlang::caller_env(2))
+  if (is.null(self$observedData) || length(self$observedData) == 0) {
     return(list())
   }
-  state <- .projectPrivate(project)
   allDataSets <- list()
-  for (i in seq_along(project$observedData)) {
-    entry <- project$observedData[[i]]
+  for (i in seq_along(self$observedData)) {
+    entry <- self$observedData[[i]]
     .validateObservedDataEntry(entry, i)
     dataSets <- switch(
       entry$type,
-      "excel" = .loadObservedExcel(entry, project$dataFolder),
-      "pkml" = .loadObservedPkml(entry, project$dataFolder),
-      "script" = .loadObservedScript(entry, project$dataFolder),
+      "excel" = .loadObservedExcel(entry, self$dataFolder),
+      "pkml" = .loadObservedPkml(entry, self$dataFolder),
+      "script" = .loadObservedScript(entry, self$dataFolder),
       "programmatic" = NULL
     )
     if (!is.null(dataSets)) {
@@ -227,9 +232,9 @@ loadObservedData <- function(project) {
   # Merge runtime programmatic store, then cache names.
   allDataSets <- .mergeObservedDataSets(
     allDataSets,
-    state$.programmaticDataSets
+    private$.programmaticDataSets
   )
-  state$.observedDataNamesCache <- names(allDataSets)
+  private$.observedDataNamesCache <- names(allDataSets)
   allDataSets
 }
 
@@ -262,12 +267,23 @@ loadObservedData <- function(project) {
 #' @family observedData
 getObservedDataNames <- function(project) {
   validateIsOfType(project, "Project")
-  state <- .projectPrivate(project)
-  if (!is.null(state$.observedDataNamesCache)) {
-    return(state$.observedDataNamesCache)
+  project$getObservedDataNames()
+}
+
+# Implementation behind `project$getObservedDataNames()` /
+# `getObservedDataNames()`.
+#
+# @keywords internal
+# @noRd
+.getObservedDataNames_impl <- function(self, private) {
+  # Attribute any abort to the public authoring function the user called
+  # (the free-function forwarder), not this internal `_impl`.
+  rlang::local_error_call(rlang::caller_env(2))
+  if (!is.null(private$.observedDataNamesCache)) {
+    return(private$.observedDataNamesCache)
   }
-  loadObservedData(project)
-  state$.observedDataNamesCache %||% character(0)
+  .loadObservedData_impl(self, private)
+  private$.observedDataNamesCache %||% character(0)
 }
 
 # Public CRUD: observedData ----
@@ -286,11 +302,21 @@ getObservedDataNames <- function(project) {
 #' @family observedData
 addObservedData <- function(project, entry) {
   validateIsOfType(project, "Project")
-  state <- .projectPrivate(project)
+  project$addObservedData(entry)
+}
 
+# Implementation behind `project$addObservedData()` / `addObservedData()`.
+# Reaches the runtime programmatic store and names cache through `private`.
+#
+# @keywords internal
+# @noRd
+.addObservedData_impl <- function(self, private, entry) {
+  # Attribute any abort to the public authoring function the user called
+  # (the free-function forwarder), not this internal `_impl`.
+  rlang::local_error_call(rlang::caller_env(2))
   if (inherits(entry, "DataSet")) {
     name <- entry$name
-    existingNames <- getObservedDataNames(project)
+    existingNames <- .getObservedDataNames_impl(self, private)
     if (name %in% existingNames) {
       cli::cli_abort(
         "observedData entry with name {.val {name}} already exists"
@@ -301,14 +327,14 @@ addObservedData <- function(project, entry) {
     # explicit-save `.setSection()` does not touch disk, so both are pure
     # in-memory mutations. Any on-disk id/basename collision is surfaced later,
     # by the serializer, when `saveProject()` reconciles the tree.
-    project$.setSection(
+    private$.setSection(
       "observedData",
-      c(project$.getSection("observedData"), list(sentinel))
+      c(private$.getSection("observedData"), list(sentinel))
     )
-    state$.programmaticDataSets[[name]] <- entry
+    private$.programmaticDataSets[[name]] <- entry
     # The observedData setter resets the names cache, so rebuild it after the
     # write, from the names known before it plus the newly added name.
-    state$.observedDataNamesCache <- c(existingNames, name)
+    private$.observedDataNamesCache <- c(existingNames, name)
     cli::cli_inform(c(
       "i" = paste0(
         "For reproducibility, consider declaring this DataSet via a ",
@@ -317,7 +343,7 @@ addObservedData <- function(project, entry) {
         "{.code file = \"scripts/your_script.R\"}."
       )
     ))
-    return(invisible(project))
+    return(invisible(self))
   }
 
   if (is.list(entry)) {
@@ -333,12 +359,12 @@ addObservedData <- function(project, entry) {
     }
     # Validate the full entry shape (per-type required fields), not just the
     # type, so an under-specified config entry is rejected at add time.
-    .validateObservedDataEntry(entry, length(project$observedData) + 1L)
+    .validateObservedDataEntry(entry, length(self$observedData) + 1L)
     # Config entries are keyed by `file` basename (see removeObservedData);
     # abort on a duplicate to match the other mutators' convention.
     fileBase <- basename(entry[["file"]])
     existingFiles <- vapply(
-      project$observedData,
+      self$observedData,
       function(e) {
         if (is.null(e[["file"]])) NA_character_ else basename(e[["file"]])
       },
@@ -349,15 +375,15 @@ addObservedData <- function(project, entry) {
         "observedData entry with file {.val {fileBase}} already exists"
       )
     }
-    state$.observedDataNamesCache <- NULL
-    project$.setSection(
+    private$.observedDataNamesCache <- NULL
+    private$.setSection(
       "observedData",
       c(
-        project$.getSection("observedData"),
+        private$.getSection("observedData"),
         list(.asObservedDataSource(entry))
       )
     )
-    return(invisible(project))
+    return(invisible(self))
   }
 
   cli::cli_abort(
@@ -387,9 +413,19 @@ addObservedData <- function(project, entry) {
 #' @family observedData
 removeObservedData <- function(project, id) {
   validateIsOfType(project, "Project")
+  project$removeObservedData(id)
+}
+
+# Implementation behind `project$removeObservedData()` / `removeObservedData()`.
+#
+# @keywords internal
+# @noRd
+.removeObservedData_impl <- function(self, private, id) {
+  # Attribute any abort to the public authoring function the user called
+  # (the free-function forwarder), not this internal `_impl`.
+  rlang::local_error_call(rlang::caller_env(2))
   .assertIdVector(id)
-  state <- .projectPrivate(project)
-  observedData <- project$.getSection("observedData")
+  observedData <- private$.getSection("observedData")
 
   # Resolve every id to the section index it removes (a programmatic sentinel or
   # a file-based entry) before touching anything, so the whole batch is
@@ -400,7 +436,7 @@ removeObservedData <- function(project, id) {
   programmaticNames <- character()
   missingIds <- character()
   for (one in id) {
-    if (one %in% names(state$.programmaticDataSets)) {
+    if (one %in% names(private$.programmaticDataSets)) {
       programmaticNames <- c(programmaticNames, one)
       matchIdx <- which(vapply(
         observedData,
@@ -432,10 +468,10 @@ removeObservedData <- function(project, id) {
   # Warn once per removed id that is still referenced, then drop everything in a
   # single in-memory update. A not-found id contributes nothing to the update.
   for (one in setdiff(id, missingIds)) {
-    .warnIfObservedDataReferenced(project, one)
+    .warnIfObservedDataReferenced(self, one)
   }
   if (length(dropIdx) == 0L && length(programmaticNames) == 0L) {
-    return(invisible(project))
+    return(invisible(self))
   }
 
   if (length(dropIdx) > 0L) {
@@ -444,12 +480,12 @@ removeObservedData <- function(project, id) {
   # Update the in-memory section and the runtime store together (both pure
   # in-memory mutations under explicit-save; nothing touches disk until
   # `saveProject()`).
-  project$.setSection("observedData", observedData)
+  private$.setSection("observedData", observedData)
   for (name in programmaticNames) {
-    state$.programmaticDataSets[[name]] <- NULL
+    private$.programmaticDataSets[[name]] <- NULL
   }
-  state$.observedDataNamesCache <- NULL
-  invisible(project)
+  private$.observedDataNamesCache <- NULL
+  invisible(self)
 }
 
 # Warn when a removed observedData name is still referenced as a

@@ -474,9 +474,9 @@ test_that("a dangling cross-file plot ref is a lazy error, not a write abort", {
   # A plot referencing a non-existent dataCombined: the write itself is
   # structural-only (the plot's own shape), so it does not abort. The dangling
   # ref is caught lazily by validateProject(), exactly as before the split.
-  pc <- project$.getSection("plots")
+  pc <- .getSection(project, "plots")
   pc$p1$dataCombinedId <- "ghost_dc"
-  project$.setSection("plots", pc)
+  .setSection(project, "plots", pc)
   saveProject(project)
   expect_true(file.exists(file.path(plotsDir, "p1.json")))
 
@@ -496,9 +496,9 @@ test_that("a grid pointing at a missing plot stays a lazy error after reload", {
 
   # Repoint the grid at a plot id that does not exist; the grid write succeeds
   # (its own structure is valid), the dangling plotIds ref is lazy.
-  pg <- project$.getSection("plotGrids")
+  pg <- .getSection(project, "plotGrids")
   pg$individual_diagnostics$plotIds <- "ghost_plot"
-  project$.setSection("plotGrids", pg)
+  .setSection(project, "plotGrids", pg)
   saveProject(project)
   expect_true(file.exists(file.path(gridsDir, "individual_diagnostics.json")))
 

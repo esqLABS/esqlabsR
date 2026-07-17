@@ -208,10 +208,10 @@ test_that(".markValidated and .markModified flip the flag", {
   project <- .fakeProject()
   expect_false(project$validatedSinceMutation)
 
-  project$.markValidated()
+  .markValidated(project)
   expect_true(project$validatedSinceMutation)
 
-  project$.markModified()
+  .markModified(project)
   expect_false(project$validatedSinceMutation)
 })
 
@@ -851,7 +851,7 @@ test_that(".runProjectValidation honors a targeted sections vector", {
 
 test_that(".ensureValid short-circuits when validatedSinceMutation is TRUE", {
   project <- .fakeProject()
-  project$.markValidated()
+  .markValidated(project)
   expect_invisible(esqlabsR:::.ensureValid(
     project,
     sections = c("scenarios"),
@@ -941,9 +941,9 @@ test_that(".validatePlots flags an empty observed dataSet reference", {
   # Project.json that bypassed the addDataCombined() guard. The section
   # accessor is read-only; an in-memory project writes through .setSection()
   # without validating, so the malformed record survives for the validator.
-  dc <- project$.getSection("dataCombined")
+  dc <- .getSection(project, "dataCombined")
   dc$dc1$observed <- list(list(label = "obs", dataSet = ""))
-  project$.setSection("dataCombined", dc)
+  .setSection(project, "dataCombined", dc)
   result <- esqlabsR:::.plotsValidatorAdapter(project)
   msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
   expect_match(msgs, "dataSet", all = FALSE)
@@ -978,7 +978,8 @@ test_that(".validatePlots flags an unknown plotType from JSON", {
   # Inject an unknown plotType directly, bypassing the addPlot() enum guard
   # to mimic a hand-edited Project.json (an in-memory .setSection() does not
   # validate the malformed record).
-  project$.setSection(
+  .setSection(
+    project,
     "plots",
     list(
       p1 = list(plotId = "p1", dataCombinedId = "dc1", plotType = "bogusType")
@@ -1001,7 +1002,8 @@ test_that(".validatePlots hard-errors on unknown plotGrid plotIDs", {
     ))
   )
   addPlot(project, "p1", "dc1", "individual")
-  project$.setSection(
+  .setSection(
+    project,
     "plotGrids",
     list(g1 = list(plotGridId = "g1", plotIds = "ghost"))
   )

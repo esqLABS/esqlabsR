@@ -370,6 +370,24 @@ addPopulation <- function(
   ...
 ) {
   validateIsOfType(project, "Project")
+  project$addPopulation(id, species, numberOfIndividuals, ...)
+}
+
+# Implementation behind `project$addPopulation()` / `addPopulation()`.
+#
+# @keywords internal
+# @noRd
+.addPopulation_impl <- function(
+  self,
+  private,
+  id,
+  species,
+  numberOfIndividuals,
+  ...
+) {
+  # Attribute any abort to the public authoring function the user called
+  # (the free-function forwarder), not this internal `_impl`.
+  rlang::local_error_call(rlang::caller_env(2))
   .assertIdVector(id)
   id <- .canonicalizeId(id)
   n <- length(id)
@@ -383,21 +401,21 @@ addPopulation <- function(
   )
 
   .assertNoDuplicateIds(id, "population")
-  clash <- intersect(id, names(project$populations))
+  clash <- intersect(id, names(self$populations))
   if (length(clash) > 0L) {
     cli::cli_abort("population {.val {clash}} already exists")
   }
-  call <- rlang::current_env()
+  call <- rlang::caller_env(2)
   entries <- lapply(seq_len(n), function(i) {
     .buildPopulationEntry(id[[i]], perDefinition[[i]], call = call)
   })
 
-  populations <- project$.getSection("populations") %||% list()
+  populations <- private$.getSection("populations") %||% list()
   for (i in seq_len(n)) {
     populations[[id[[i]]]] <- entries[[i]]
   }
-  project$.setSection("populations", populations)
-  invisible(project)
+  private$.setSection("populations", populations)
+  invisible(self)
 }
 
 .populationNumericFields <- c(
@@ -525,24 +543,35 @@ addPopulation <- function(
 #' @family population
 removePopulation <- function(project, id) {
   validateIsOfType(project, "Project")
+  project$removePopulation(id)
+}
+
+# Implementation behind `project$removePopulation()` / `removePopulation()`.
+#
+# @keywords internal
+# @noRd
+.removePopulation_impl <- function(self, private, id) {
+  # Attribute any abort to the public authoring function the user called
+  # (the free-function forwarder), not this internal `_impl`.
+  rlang::local_error_call(rlang::caller_env(2))
   .assertIdVector(id)
   id <- .canonicalizeId(id)
 
-  missingIds <- setdiff(id, names(project$populations))
+  missingIds <- setdiff(id, names(self$populations))
   if (length(missingIds) > 0L) {
     cli::cli_warn("population {.val {missingIds}} not found; no-op.")
   }
-  toRemove <- intersect(id, names(project$populations))
+  toRemove <- intersect(id, names(self$populations))
   if (length(toRemove) == 0L) {
-    return(invisible(project))
+    return(invisible(self))
   }
   for (one in toRemove) {
-    .warnIfReferenced(project, "population", one)
+    .warnIfReferenced(self, "population", one)
   }
-  populations <- project$.getSection("populations")
+  populations <- private$.getSection("populations")
   populations[toRemove] <- NULL
-  project$.setSection("populations", populations)
-  invisible(project)
+  private$.setSection("populations", populations)
+  invisible(self)
 }
 
 #' Modify fields of an existing population
@@ -578,10 +607,21 @@ removePopulation <- function(project, id) {
 #' @family population
 setPopulation <- function(project, id, ...) {
   validateIsOfType(project, "Project")
+  project$setPopulation(id, ...)
+}
+
+# Implementation behind `project$setPopulation()` / `setPopulation()`.
+#
+# @keywords internal
+# @noRd
+.setPopulation_impl <- function(self, private, id, ...) {
+  # Attribute any abort to the public authoring function the user called
+  # (the free-function forwarder), not this internal `_impl`.
+  rlang::local_error_call(rlang::caller_env(2))
   .assertIdVector(id)
   id <- .canonicalizeId(id)
   n <- length(id)
-  missingIds <- setdiff(id, names(project$populations))
+  missingIds <- setdiff(id, names(self$populations))
   if (length(missingIds) > 0L) {
     cli::cli_abort(c(
       "Cannot modify population {.val {missingIds}}: it does not exist.",
@@ -593,22 +633,22 @@ setPopulation <- function(project, id, ...) {
   perDefinition <- .alignAuthoringArgs(id, scalarFields = dots)
   suppliedNames <- names(dots)
 
-  call <- rlang::current_env()
+  call <- rlang::caller_env(2)
   entries <- lapply(seq_len(n), function(i) {
     .setOnePopulation(
-      project,
+      self,
       id[[i]],
       perDefinition[[i]][suppliedNames],
       call = call
     )
   })
 
-  populations <- project$.getSection("populations")
+  populations <- private$.getSection("populations")
   for (i in seq_len(n)) {
     populations[[id[[i]]]] <- entries[[i]]
   }
-  project$.setSection("populations", populations)
-  invisible(project)
+  private$.setSection("populations", populations)
+  invisible(self)
 }
 
 # Apply a partial-update field set to one existing population, returning the

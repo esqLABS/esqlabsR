@@ -180,7 +180,7 @@ test_that("restoreProject writes a tree and returns the Project bound to dir", {
       file.path(dir, "Project.json")
     ))
   )
-  expect_false(project$.isModified())
+  expect_false(.isModified(project))
 })
 
 test_that("restoreProject's tree reloads via loadProject identically", {

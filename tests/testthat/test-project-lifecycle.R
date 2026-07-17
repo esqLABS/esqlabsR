@@ -68,7 +68,7 @@ test_that("a bound project's container edit stays in memory until saveProject()"
   # The edit is in memory only: a fresh load still reads the old value, and the
   # project is dirty.
   expect_identical(loadProject(tmp)$modelFolder, original)
-  expect_true(project$.isModified())
+  expect_true(.isModified(project))
 
   # After an explicit save, a fresh load sees the new value.
   saveProject(project)
@@ -76,7 +76,7 @@ test_that("a bound project's container edit stays in memory until saveProject()"
     loadProject(tmp)$modelFolder,
     fs::path_abs(file.path(dirname(tmp), "AnotherModels"))
   )
-  expect_false(project$.isModified())
+  expect_false(.isModified(project))
 })
 
 test_that("a container edit followed by saveProject() keeps the sections", {
@@ -155,7 +155,7 @@ test_that("a clean saveProject() is a no-op with the up-to-date message", {
 test_that("saveProject() on an unbound in-memory project aborts", {
   project <- Project$new()
   project$schemaVersion <- "2.0"
-  project$.setSection("scenarios", list())
+  .setSection(project, "scenarios", list())
 
   expect_snapshot(saveProject(project), error = TRUE)
 })
@@ -179,12 +179,12 @@ test_that("reloadProject() discards in-memory edits and clears the dirty bit", {
 
   addScenario(project, "willbediscarded", modelFile = "Aciclovir.pkml")
   expect_true("willbediscarded" %in% names(project$scenarios))
-  expect_true(project$.isModified())
+  expect_true(.isModified(project))
 
   reloadProject(project)
 
   expect_false("willbediscarded" %in% names(project$scenarios))
-  expect_false(project$.isModified())
+  expect_false(.isModified(project))
   expect_true(project$status$tree_in_sync)
 })
 
@@ -400,7 +400,7 @@ test_that("a mutation after validateProject() forces .ensureValid to re-validate
   # Force the cache flag without having to run a full validation
   # (validateProject() depends on dataFolder existing in the test
   # fixture, which is a separate concern).
-  project$.markValidated()
+  .markValidated(project)
   expect_true(project$validatedSinceMutation)
 
   # A mutation must clear the cache so .ensureValid re-runs the
@@ -412,7 +412,7 @@ test_that("a mutation after validateProject() forces .ensureValid to re-validate
   # .ensureValid short-circuits only when the flag is TRUE; re-mark
   # validated, mutate again, and confirm the flag is cleared a second
   # time (i.e. every successful mutator goes through .markModified).
-  project$.markValidated()
+  .markValidated(project)
   removeOutputPath(project, "X")
   expect_false(project$validatedSinceMutation)
 })

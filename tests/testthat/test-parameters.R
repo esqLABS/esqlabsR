@@ -543,7 +543,7 @@ test_that("removeParameterEntry no-op on a missing entry does not mark modified"
   suppressMessages(
     addParameterEntry(project, "mset", "Organism|A", "K", 1.5, "1/h")
   )
-  project$.markValidated()
+  .markValidated(project)
   expect_true(project$validatedSinceMutation)
 
   expect_warning(
@@ -798,7 +798,7 @@ test_that("removeInitialConditionEntry no-op on a missing entry warns", {
   suppressMessages(
     addInitialConditionEntry(project, "mset", "Organism|A", 1.5, "mg/l")
   )
-  project$.markValidated()
+  .markValidated(project)
   expect_true(project$validatedSinceMutation)
 
   expect_warning(

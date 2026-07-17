@@ -736,7 +736,7 @@ projectStatus <- function(project, silent = FALSE) {
   if (is.null(jsonPath)) {
     result$tree_in_sync <- NA
   } else {
-    result$tree_in_sync <- !project$.isModified()
+    result$tree_in_sync <- !project$isModified
     if (!result$tree_in_sync) {
       result$details$tree <- "unsaved in-memory edits"
     }
@@ -1985,7 +1985,7 @@ projectStatus <- function(project, silent = FALSE) {
 #' @keywords internal
 #' @noRd
 .extractFilePathsData <- function(project) {
-  project$.getFilePathsData()
+  project$rawFilePaths
 }
 
 #' Extract private .excelData from a Project (the Excel-bridge sheet names)
@@ -1994,7 +1994,7 @@ projectStatus <- function(project, silent = FALSE) {
 #' @keywords internal
 #' @noRd
 .extractExcelData <- function(project) {
-  project$.getExcelData()
+  project$rawExcel
 }
 
 #' Convert NA to NULL for JSON serialization

@@ -9,9 +9,10 @@
 # accessor's active-binding setter aborts, and the `[[<-` / `$<-` / `[<-`
 # replacement methods below abort too, so neither `project$x <- v` nor
 # `project$x[["id"]] <- v` nor the nested `project$x[["id"]]$f <- v` can mutate
-# the project. The only sanctioned writes are the authoring functions (which go
-# through the internal `Project$.setSection()`); they read the plain backing
-# list via `Project$.getSection()`, never this wrapper.
+# the project. The only sanctioned writes are the authoring methods on
+# `Project` (which the exported authoring functions forward to); they go through
+# the private write seam `private$.setSection()` and read the plain backing list
+# via `private$.getSection()`, never this wrapper.
 #
 # For reads the wrapper is transparent: it is `c("DefinitionList", "list")`, so
 # `length()`, `names()`, `[[`, `[`, `c()`, and iteration all dispatch to the
