@@ -1,36 +1,13 @@
 messages <- ospsuite.utils::messages
 
-# Project config####
-messages$oldProjectConfigurationLayout <- function() {
-  cli::format_message(c(
-    "!" = "The project configuration file layout used is from an older version of the package.",
-    "i" = "This version is still supported and will be loaded but it is recommended to update the project configuration file.
-      To do so, use the {.code $save} method of the project configuration object."
-  ))
-}
-
-messages$invalidConfigurationProperty <- function(
-  property,
-  path
-) {
-  cli::format_message(c(
-    "x" = "Property {.arg {property}} is not a valid configuration property for {.path {path}}"
-  ))
-}
-
-messages$versionMismatch <- function(storedVersion, currentVersion) {
-  cli::format_message(c(
-    "!" = "The esqlabsR version stored in the project configuration ({.val {storedVersion}}) does not match the currently installed version ({.val {currentVersion}}).",
-    "i" = "Please review the package NEWS for breaking changes: {.url https://esqlabs.github.io/esqlabsR/news/index.html}"
-  ))
-}
-
-messages$versionNotStored <- function(currentVersion) {
-  cli::format_message(c(
-    "!" = "No esqlabsR version is stored in the project configuration.",
-    "i" = "The configuration may have been created with an older version of the package."
-  ))
-}
+# `messages$` is the central catalog for this package's user-facing error,
+# warning, and message text: each entry is a builder returning a formatted
+# string (or a `cli`-tagged character vector). Sites raise a catalog entry
+# through the `cli` wrappers `cli::cli_abort()` (errors) and `cli::cli_warn()`
+# (warnings); `cli::cli_inform()` surfaces informational text. New user-facing
+# text belongs here as a catalog entry routed through those wrappers, not as a
+# base `stop()`/`warning()`/`message()` on an inline literal string, so all
+# wording lives in one auditable place.
 
 # Parameters structure####
 messages$errorWrongXLSStructure <- function(
@@ -46,9 +23,55 @@ messages$errorWrongXLSStructure <- function(
 
 messages$wrongParametersStructure <- function(argumentName) {
   cliFormat(
-    "Argument {.arg {argumentName}} has wrong structure. Expected is a named list with three vectors `paths` 
-    representing full parameter paths, `values` with numerical values of the parameters, 
+    "Argument {.arg {argumentName}} has wrong structure. Expected is a named list with three vectors `paths`
+    representing full parameter paths, `values` with numerical values of the parameters,
     and `units` representing the units the values are in. All three vectors must have the same length"
+  )
+}
+
+messages$errorMissingUnitsInInitialConditions <- function(
+  filePath,
+  moleculePaths
+) {
+  cliFormat(
+    "Missing units in initial values file {.file {filePath}} for molecule(s): {.val {paste(moleculePaths, collapse = ', ')}}. Units must be specified for all molecule initial values."
+  )
+}
+
+messages$errorMissingValuesInInitialConditions <- function(
+  filePath,
+  moleculePaths
+) {
+  cliFormat(
+    "Missing or non-numeric values in initial values file {.file {filePath}} for molecule(s): {.val {paste(moleculePaths, collapse = ', ')}}. A numeric value must be specified for all present molecules."
+  )
+}
+
+messages$errorInvalidIsPresentInInitialConditions <- function(
+  filePath,
+  moleculePaths
+) {
+  cliFormat(
+    "Invalid 'Is Present' values in initial values file {.file {filePath}} for molecule(s): {.val {paste(moleculePaths, collapse = ', ')}}. 'Is Present' must be a logical value (TRUE/FALSE), numeric 1/0 (present/not present), or empty."
+  )
+}
+
+messages$errorMissingPathInInitialConditions <- function(
+  filePath,
+  sheet,
+  rows
+) {
+  cliFormat(
+    "Missing {.field Container Path} or {.field Molecule Name} in initial values file {.file {filePath}}, sheet {.val {sheet}}, data row(s): {.val {paste(rows, collapse = ', ')}}."
+  )
+}
+
+messages$warningDuplicateInitialConditions <- function(
+  filePath,
+  moleculePaths
+) {
+  cliFormat(
+    "Duplicate molecule path(s) in initial values file {.file {filePath}}: {.val {paste(moleculePaths, collapse = ', ')}}. Only the last value defined for each path is used."
   )
 }
 
@@ -87,6 +110,21 @@ messages$noProjectPath <- function() {
   )
 }
 
+messages$snapshotOntoOwnContainer <- function() {
+  c(
+    "A snapshot is a derived artifact and must be written to a location other than the project's own {.field jsonPath}.",
+    "i" = "Pass a {.arg path} to a different file. The authoritative {.path definitions/} tree and {.file Project.json} container are already write-through, so there is nothing to save in place."
+  )
+}
+
+messages$loadSnapshotDirNotEmpty <- function(dir) {
+  c(
+    "{.arg dir} already contains an esqlabsR project ({.path {dir}}).",
+    "i" = "{.fn loadSnapshot} writes a fresh tree project and will not overwrite \\
+    an existing one. Pass an empty or new {.arg dir}."
+  )
+}
+
 messages$pathNotFound <- function(path) {
   cliFormat(
     "The specified destination folder does not exist. ({.path {path}}) "
@@ -105,13 +143,6 @@ messages$inconsistentArgumentLengths <- function(vectorLengths) {
   ))
 }
 
-messages$errorDuplicateScenarioNames <- function(duplicateNames) {
-  cliFormat(
-    "Duplicate scenario names found: '{.val {paste(duplicateNames, collapse = \"', '\")}}'.
-    Please provide unique scenario names."
-  )
-}
-
 messages$autocorrectDuplicateScenarioNames <- function(
   originalScenarioName,
   scenarioName
@@ -119,14 +150,6 @@ messages$autocorrectDuplicateScenarioNames <- function(
   cli::format_message(c(
     "Duplicate scenario names found and made unique by adding indices:",
     "i" = "Duplicated names: {.val {originalScenarioName}}, renamed to {.val {scenarioName}}"
-  ))
-}
-
-messages$scenarioConfigurationNotNamedList <- function() {
-  cli::format_message(c(
-    "Invalid scenarioConfigurations:",
-    "x" = "scenarioConfigurations must be a named list",
-    "i" = "Each scenario configuration must have a unique name"
   ))
 }
 
@@ -184,12 +207,13 @@ messages$restoredProjectConfiguration <- function(inputFile, outputFile) {
   )
 }
 
-messages$hasUnsavedChanges <- function() {
-  cli::format_message(c(
-    "!" = "The Project object has been modified since loading from file.",
-    "i" = "The object properties don't match the original Excel file.",
-    ">" = "Consider running {.run projectConfig$save()} to save changes to the Excel file."
-  ))
+# Every section is write-through to its `definitions/<kind>/` tree, so the only
+# drift a sync check can still report is between the project and a sibling
+# `Project.xlsx`. With no Excel side-car there is nothing to compare.
+messages$syncNoExcel <- function() {
+  cli::format_inline(
+    "No {.file Project.xlsx} side-car to compare against; nothing to sync."
+  )
 }
 
 messages$invalidArgumentLength <- function(noOfOutpaths, noOfScenarios) {
@@ -207,19 +231,6 @@ messages$warningValueWithinThresholdNotExisting <- function(
 ) {
   cliFormat(
     "value {.val {value}} not found in the array within the absolute threshold of {.val {threshold}}. {optionalMessage}"
-  )
-}
-
-messages$errorWrongArguments <- function(expectedArguments) {
-  cliFormat(
-    "Wrong arguments provided for the function! Expected arguments are: {.arg {expectedArguments}}."
-  )
-}
-
-# utilities numerics####
-messages$valueShouldNotBeNegative <- function(parameterName, value) {
-  cliFormat(
-    "{.arg {parameterName}} must be a positive numerical value, but the value is {.val {value}}"
   )
 }
 
@@ -279,23 +290,9 @@ messages$errorApplicationProtocolNotFound <- function(
     in the excel file {.file ApplicationProtocols.xlsx}"
   )
 }
-messages$wrongSimulationType <- function() {
-  cliFormat(
-    "Wrong value for {.var simulationType}! Accepted values are {.val Individual} and {.val Population}"
-  )
-}
-
-messages$scenarioConfigurationNameNotFoundWhenReading <- function(
-  scenarioName
-) {
-  cliFormat(
-    "readScenarioDefinition: Scenario {.cls {scenarioName}} is not specified!"
-  )
-}
-
 messages$warningInvalidScenarioName <- function(scenarioNames) {
   cliFormat(
-    "The following scenarios are not present in {.cls simulatedScenarios}:
+    "The following scenarios are not present in {.arg scenarioResults}:
     {.val {paste(scenarioNames, collapse = \",\n\")}}. Data cannot be added to {.var DataCombined} object."
   )
 }
@@ -328,12 +325,6 @@ messages$noPopulationIdForPopulationScenario <- function(scenarioName) {
   )
 }
 
-messages$stopScenarioNameNonUnique <- function(scenarioName) {
-  cliFormat(
-    "Scenario {.val {scenarioName}} is defined multiple times! Make sure that each scenario defined in the excel file has a unique name."
-  )
-}
-
 messages$stopWrongTimeIntervalString <- function(timeIntervalString) {
   cliFormat(
     "The time interval string {.val {timeIntervalString}} is not valid! Please 
@@ -358,12 +349,6 @@ messages$missingResultsForScenario <- function(scenarioName) {
   )
 }
 
-messages$missingSteadyStateTimeUnit <- function(scenarioName) {
-  cliFormat(
-    "Missing unit for steady-state time (column {.field SteadyStateTimeUnit}) for scenario {.val {scenarioName}}."
-  )
-}
-
 messages$errorSavingScenarioResult <- function(scenarioName, conditionMessage) {
   # Escape braces in the condition message so that cli does not try to
   # re-interpret arbitrary error text as glue expressions when cli_warn()
@@ -382,9 +367,9 @@ messages$errorSavingScenarioResult <- function(scenarioName, conditionMessage) {
   )
 }
 # sensitivity-calculation####
-messages$noPKDataToWrite <- function() {
+messages$noPKDataToWrite <- function(saOutputFilePath) {
   cliFormat(
-    "{.path saOutputFilePath} argument is specified, but there is no PK parameters data to write to spreadsheets."
+    "{.arg saOutputFilePath} ({.path {saOutputFilePath}}) is specified, but there is no PK parameters data to write to spreadsheets."
   )
 }
 
@@ -392,15 +377,6 @@ messages$noPKDataToWrite <- function() {
 messages$noParameterFactor <- function(data, parameterFactor) {
   cliFormat(
     "{.arg parameterFactor} values of {parameterFactor} and {1 / parameterFactor} are not included in the sensitivity analysis results. Current values: {.val {paste(sort(unique(data$ParameterFactor)), collapse = ', ')}}. Please rerun the sensitivity analysis with the required values."
-  )
-}
-
-messages$errorOptionOutOfBounds <- function(parameterFactor) {
-  range <- .getPlotConfigurationOptions(
-    "parameterFactor"
-  )$parameterFactor$valueRange
-  cliFormat(
-    "Value(s) out of the allowed range [{.val {range[1]}}, {.val {range[2]}}]"
   )
 }
 
@@ -473,7 +449,7 @@ messages$missingScenarioName <- function() {
 
 messages$missingDataCombinedName <- function() {
   cliFormat(
-    "Missing values found in mandatory column {.val dataCombinedName} of sheet {.var plotConfiguration}. Fill in values to proceed."
+    "Missing values found in mandatory column {.val dataCombinedId} of sheet {.var plotConfiguration}. Fill in values to proceed."
   )
 }
 
@@ -525,6 +501,13 @@ messages$stopPlotGridNamesNotFound <- function(plotGridNames) {
   )
 }
 
+messages$stopPlotIdsNotFound <- function(plotIds) {
+  cliFormat(
+    "The following plots are not defined in the project:
+    {.val {paste(plotIds, collapse = ', ')}}"
+  )
+}
+
 messages$stopNoDataSetProvided <- function(dataCombinedName) {
   cliFormat(
     "No data set is defined for the DataCombined {.val {paste(dataCombinedName, collapse = \", \n\")}}.
@@ -549,14 +532,6 @@ messages$invalidConfigurationPropertyFromExcel <- function(
   )
 }
 
-messages$invalidOutputPathIds <- function(outputPathIds, scenarioName) {
-  cliFormat(
-    "Following output path IDs have been specified as output for scenario {.val {scenarioName}},
-    but are not present in the {.field OutputPaths} sheet! Define these outputs first:
-    {.val {paste(outputPathIds, collapse = ',\n')}}"
-  )
-}
-
 messages$invalidSimulationResultNames <- function(
   simulationResultNames,
   parameterPaths
@@ -570,14 +545,14 @@ messages$invalidSimulationResultNames <- function(
   )
 }
 
-messages$errorDataCombinedListMustBeList <- function(type) {
-  cliFormat(
-    "The argument {.arg dataCombined} must be a named list of DataCombined objects, but the
-    type of passed argument is {.code {type}}."
-  )
+# Sensitivity calculation####
+messages$nonStandardPKParametersNotCalculated <- function(pkParameterNames) {
+  cli::format_message(c(
+    "i" = "The following PK parameters are specified but were not calculated:",
+    "*" = "{.val {pkParameterNames}}"
+  ))
 }
 
-# Sensitivity calculation####
 messages$sensitivityAnalysisSimulationFailure <- function(
   parameterPath,
   parameterFactor
@@ -699,37 +674,6 @@ messages$warningSensitivityPKParameterNotCalculated <- function(
   )
 }
 
-# Validation framework messages ####
-messages$validationFileNotFound <- function(filePath) {
-  cliFormat("File not found: {.file {filePath}}")
-}
-
-messages$validationMissingSheets <- function(sheets) {
-  cliFormat("Missing required sheets: {.val {paste(sheets, collapse = ', ')}}")
-}
-
-messages$validationMissingColumns <- function(sheet, columns) {
-  cliFormat(
-    "Missing required columns in sheet {.val {sheet}}: {.val {paste(columns, collapse = ', ')}}"
-  )
-}
-
-messages$validationEmptySheet <- function(sheet) {
-  cliFormat("Sheet {.val {sheet}} is empty or contains no data")
-}
-
-messages$validationCrossReference <- function(source, target, missing) {
-  cliFormat(
-    "Invalid references from {.val {source}} to {.val {target}}: {.val {paste(missing, collapse = ', ')}}"
-  )
-}
-
-messages$validationRequiredFileNotConfigured <- function(fileName) {
-  cliFormat(
-    "Required configuration file {.file {fileName}} is not configured in Project"
-  )
-}
-
 messages$excelNoDataRows <- function() {
   cli::format_message(c(
     "x" = "The specified excel sheet does not contain any rows with data.",
@@ -784,12 +728,6 @@ messages$excelNotInSync <- function(message = "") {
 messages$excelInSync <- function() {
   cliFormat(
     "Excel configuration files are in sync with JSON snapshot."
-  )
-}
-
-messages$projectConfigUnsavedChanges <- function() {
-  cliFormat(
-    "The Project object has {.strong unsaved changes} that differ from the Excel file."
   )
 }
 
@@ -910,13 +848,6 @@ messages$observedDataInvalidEntryType <- function(badType, validTypes) {
 messages$observedDataMissingField <- function(entryIndex, type, field) {
   cli::format_message(c(
     "x" = "{.code observedData} entry {entryIndex} (type {.val {type}}) is missing required field {.field {field}}."
-  ))
-}
-
-messages$observedDataProgrammaticNotYetAvailable <- function() {
-  cli::format_message(c(
-    "x" = "{.val programmatic} {.code observedData} entries are not yet supported.",
-    "i" = "The {.fn addObservedData} runtime API lands in a later milestone."
   ))
 }
 
