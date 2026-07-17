@@ -11,6 +11,30 @@ Follows the [OSPSuite-R](https://github.com/Open-Systems-Pharmacology/OSPSuite-R
 - Helper collections use a `utilities-` prefix: `utilities-data.R`, `utilities-file.R`, `utilities-scenarios.R`.
 - Tests mirror their source file: `R/scenario-configuration.R` → `tests/testthat/test-scenario-configuration.R`.
 
+## OSP ecosystem dependencies
+
+esqlabsR builds on the Open Systems Pharmacology ecosystem. When unsure about an API, inspect the source code of the dependency and its official vignettes instead of guessing:
+
+- [`ospsuite`](https://github.com/Open-Systems-Pharmacology/OSPSuite-R) — core PBPK simulation interface
+- [`ospsuite.utils`](https://github.com/Open-Systems-Pharmacology/OSPSuite.RUtils) — validation and utility helpers
+- [`tlf`](https://github.com/Open-Systems-Pharmacology/TLF-Library) — plotting
+- [`ospsuite.parameteridentification`](https://github.com/Open-Systems-Pharmacology/OSPSuite.ParameterIdentification) — parameter identification
+
+## Coding conventions
+
+- Type checking: use `ospsuite.utils::validateIsOfType()` / `ospsuite.utils::isOfType()` instead of native `inherits()` checks.
+- All user-facing messages, warnings, and errors live in `R/messages.R` as dedicated functions using `ospsuite.utils::cliFormat()` with cli markup (`{.val {x}}`, `{.arg {name}}`). Never inline message strings or build them with `paste()`.
+- Use explicit `package::function()` for functions from other packages. Never use `library()` or `require()` in package code. In tests, call esqlabsR's own functions directly, without a namespace prefix.
+- Use vectorized operations for simple vector math. For complex operations, prefer explicit `for` loops over `apply()`/`purrr::map()`.
+
+## Testing
+
+- Test whole structures in one assertion: `expect_equal(result, expected)` over multiple partial checks.
+- Compare against independently constructed expected values — never re-use the output of the function under test as the oracle.
+- Test errors and warnings against the specific message, preferably with `expect_snapshot(error = TRUE)`.
+- Do not add tests that cannot fail for a real defect; avoid trivial assertions.
+- Use meaningful, domain-specific test data; avoid unexplained literals like `42` or `"foo"`.
+
 ## User-visible documentation
 
 The target reader of all user-facing documentation (roxygen `@description`, `@param`, `@details`, vignettes, messages) is a **modeling expert, not a coder or data scientist**. They know PBPK/QSP modeling, scenarios, individuals, and populations; they do not know software-engineering vocabulary.
@@ -27,4 +51,6 @@ The target reader of all user-facing documentation (roxygen `@description`, `@pa
 
 ## Documentation / Rd files
 
+- Exported functions need complete roxygen2 docs: `@title`, `@param` (with types and defaults), `@return`, `@examples`.
+- Internal functions need minimal documentation plus `@keywords internal` and `@noRd`.
 - When updating roxygen documentation, do **not** automatically re-generate the `man/*.Rd` files (`devtools::document()`). Rd generation is done once at the end of the work, before the PR is marked ready for review.
