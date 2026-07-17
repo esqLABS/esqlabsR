@@ -16,6 +16,7 @@
 #'
 #' @return Invisibly returns the path to the created JSON file.
 #' @export
+#' @family project persistence
 importProjectFromExcel <- function(
   projectConfigPath = "Project.xlsx",
   outputDir = NULL,
@@ -27,8 +28,22 @@ importProjectFromExcel <- function(
     cli::cli_abort(messages$fileNotFound(projectConfigPath))
   }
 
-  # Read the Project.xlsx to get path settings
-  pcExcel <- readExcel(projectConfigPath)
+  # Read the Project.xlsx to get path settings. A corrupt or empty file is not
+  # a valid Excel workbook, so `readxl` raises a raw "zip file cannot be opened"
+  # error that names nothing useful; wrap it in a clear message naming the path.
+  pcExcel <- tryCatch(
+    readExcel(projectConfigPath),
+    error = function(e) {
+      cli::cli_abort(
+        c(
+          "{.path {projectConfigPath}} is not a readable Excel project file.",
+          "i" = "It must be a valid {.field .xlsx} workbook \\
+          (the project's {.file Project.xlsx})."
+        ),
+        parent = e
+      )
+    }
+  )
   pcDir <- dirname(fs::path_abs(projectConfigPath))
 
   # Build a lookup of Property -> Value from the Excel file
@@ -50,8 +65,20 @@ importProjectFromExcel <- function(
   # Read version metadata (with fallback for old Excel files)
   schemaVersion <- prop("schemaVersion") %||% "2.0"
 
-  # Remove version metadata from file path properties
-  pcProps <- pcProps[!names(pcProps) %in% c("schemaVersion", "esqlabsRVersion")]
+  # Read container metadata. `name` / `description` are top-level container
+  # fields written by `exportProjectToExcel()`; read them back here so the
+  # round trip restores them. An absent row (an old Excel file) or an
+  # empty-string row (a project that carried no name/description on export)
+  # both resolve to NULL, so a nameless project does not gain an empty name.
+  emptyToNull <- function(x) if (is.null(x) || !nzchar(x)) NULL else x
+  projectName <- emptyToNull(prop("name"))
+  projectDescription <- emptyToNull(prop("description"))
+
+  # Remove version and container metadata from file path properties
+  pcProps <- pcProps[
+    !names(pcProps) %in%
+      c("schemaVersion", "esqlabsRVersion", "name", "description")
+  ]
 
   # Resolve the configurations folder relative to the Excel file
   configsFolder <- prop("configurationsFolder")
@@ -82,7 +109,9 @@ importProjectFromExcel <- function(
     populationsFile = "Populations.xlsx",
     scenariosFile = "Scenarios.xlsx",
     applicationsFile = "Applications.xlsx",
-    plotsFile = "Plots.xlsx"
+    plotsFile = "Plots.xlsx",
+    parameterIdentificationFile = "ParameterIdentification.xlsx",
+    initialConditionsFile = "InitialConditions.xlsx"
   )
   # Property lookup with default-filename fallback.
   propOrDefault <- function(name) {
@@ -95,9 +124,26 @@ importProjectFromExcel <- function(
     schemaVersion = schemaVersion,
     esqlabsRVersion = as.character(utils::packageVersion("esqlabsR"))
   )
+  # Carry the container metadata through only when present, so an old Excel
+  # file (no `name` / `description` rows) yields a project without them rather
+  # than null-valued fields.
+  if (!is.null(projectName)) {
+    jsonData$name <- projectName
+  }
+  if (!is.null(projectDescription)) {
+    jsonData$description <- projectDescription
+  }
 
-  # filePaths section -- raw path properties
-  jsonData$filePaths <- as.list(pcProps)
+  # Path properties from Project.xlsx split into the two container blocks: the
+  # four live working folders (`filePaths`) and the seven Excel-bridge sheet
+  # names (`excel`). Any other property is treated as a live working folder.
+  pathProps <- as.list(pcProps)
+  excelProps <- pathProps[names(pathProps) %in% .excelFilePathFields]
+  filePathProps <- pathProps[!(names(pathProps) %in% .excelFilePathFields)]
+  jsonData$filePaths <- filePathProps
+  if (length(excelProps) > 0L) {
+    jsonData$excel <- excelProps
+  }
 
   # --- OutputPaths ---
   scenariosFile <- resolveConfigFile(propOrDefault("scenariosFile"))
@@ -123,11 +169,18 @@ importProjectFromExcel <- function(
     }
   }
 
-  # --- ModelParameterSets ---
+  # --- ParameterSets ---
+  # The three former parameter-set kinds (model / individual / application)
+  # are imported from their respective Excel sources into the single unified
+  # `parameterSets` section. An id defined in more than one source is a
+  # collision that aborts the eventual load (`.mergeParameterSetSections`).
+  jsonData$parameterSets <- list()
+
   modelParamsFile <- resolveConfigFile(propOrDefault("modelParamsFile"))
   if (!is.null(modelParamsFile) && file.exists(modelParamsFile)) {
-    jsonData$modelParameterSets <- .parseExcelParameterSheets(
-      modelParamsFile
+    jsonData$parameterSets <- c(
+      jsonData$parameterSets,
+      .parseExcelParameterSheets(modelParamsFile)
     )
   }
 
@@ -139,14 +192,16 @@ importProjectFromExcel <- function(
       indivDf <- readExcel(individualsFile, sheet = "IndividualBiometrics")
       jsonData$individuals <- .parseExcelIndividuals(indivDf)
     }
-    # Non-biometrics sheets are individual parameter sets, keyed by sheet name.
+    # Non-biometrics sheets are parameter sets, keyed by sheet name.
     paramSheetNames <- setdiff(sheets, "IndividualBiometrics")
     if (length(paramSheetNames) > 0) {
-      paramSets <- .parseExcelParameterSheets(
-        individualsFile,
-        sheetNames = paramSheetNames
+      jsonData$parameterSets <- c(
+        jsonData$parameterSets,
+        .parseExcelParameterSheets(
+          individualsFile,
+          sheetNames = paramSheetNames
+        )
       )
-      jsonData$individualParameterSets <- paramSets
     }
   }
 
@@ -184,18 +239,38 @@ importProjectFromExcel <- function(
     }
     paramSheetNames <- setdiff(sheets, "ApplicationProtocols")
     if (length(paramSheetNames) > 0) {
-      paramSets <- .parseExcelParameterSheets(
-        applicationsFile,
-        sheetNames = paramSheetNames
+      jsonData$parameterSets <- c(
+        jsonData$parameterSets,
+        .parseExcelParameterSheets(
+          applicationsFile,
+          sheetNames = paramSheetNames
+        )
       )
-      jsonData$applicationParameterSets <- paramSets
     }
+  }
+
+  # --- InitialConditions ---
+  initialConditionsFile <- resolveConfigFile(
+    propOrDefault("initialConditionsFile")
+  )
+  if (!is.null(initialConditionsFile) && file.exists(initialConditionsFile)) {
+    jsonData$initialConditions <- .parseExcelInitialConditions(
+      initialConditionsFile
+    )
   }
 
   # --- Plots ---
   plotsFile <- resolveConfigFile(propOrDefault("plotsFile"))
   if (!is.null(plotsFile) && file.exists(plotsFile)) {
     jsonData$plots <- .parseExcelPlots(plotsFile)
+  }
+
+  # --- Parameter identification ---
+  piFile <- resolveConfigFile(propOrDefault("parameterIdentificationFile"))
+  if (!is.null(piFile) && file.exists(piFile)) {
+    jsonData$parameterIdentification <- .parseExcelParameterIdentification(
+      piFile
+    )
   }
 
   # --- Determine output path ---
@@ -210,7 +285,21 @@ importProjectFromExcel <- function(
     dir.create(dirname(outputPath), recursive = TRUE)
   }
 
-  # Write JSON
+  # Canonicalize every id (and every reference to one) so the imported project
+  # uses safe, lowercase, single-path-segment ids. This is the same transform
+  # the authoring API applies, run here because the entity-file tree keys files
+  # by id and so requires canonical ids; applying it to definitions and
+  # references together keeps foreign keys resolvable (a reference made from the
+  # same Excel spelling as its definition still resolves). Excel ids that were
+  # not already canonical (e.g. `Global`, `Aciclovir_PVB`) become `global`,
+  # `aciclovir_pvb`.
+  jsonData <- .canonicalizeProjectJsonIds(jsonData)
+
+  # Write the single inlined `Project.json`. The inlined form is kept (rather
+  # than only the tree) because `projectStatus()` / `Project$syncStatus()`
+  # re-import the Excel into a fresh JSON and compare it section-by-section
+  # against this file's raw content; emptying the inline sections would blind
+  # that comparison.
   jsonText <- jsonlite::toJSON(
     jsonData,
     pretty = TRUE,
@@ -219,6 +308,25 @@ importProjectFromExcel <- function(
     null = "null"
   )
   writeLines(jsonText, outputPath)
+
+  # Also explode the imported project into its `definitions/<kind>/` tree next
+  # to the container, so the import yields a ready-to-use tree project: a later
+  # `loadProject(outputPath)` reads the tree (which wins over the inline
+  # sections), and edits are write-through to it, with no separate materialize
+  # step. The container the tree writer leaves in place still carries the
+  # inlined sections above (the tree writer only adds the `definitions/` files),
+  # so the sync comparison keeps working. `Project$new()` (not `loadProject()`)
+  # parses the just-written snapshot without running the cross-reference warning
+  # pass, so a project with dangling refs imports quietly under `silent`.
+  importedProject <- Project$new(projectFilePath = outputPath)
+  for (kind in .entityKindNames()) {
+    .writeEntityTree(
+      .sectionForKind(importedProject, kind),
+      kind,
+      importedProject,
+      outputDir
+    )
+  }
 
   if (interactive() && !silent) {
     inputFile <- fs::path_rel(projectConfigPath, start = getwd())
@@ -256,6 +364,7 @@ snapshotProjectConfiguration <- function(...) {
 #' @return Invisibly returns the path to the created
 #'   `Project.xlsx`.
 #' @export
+#' @family project persistence
 exportProjectToExcel <- function(
   project,
   outputDir = NULL,
@@ -285,12 +394,22 @@ exportProjectToExcel <- function(
     "esqlabsR version used to generate this file"
   )
 
-  # File path property rows
-  filePathsData <- .extractFilePathsData(project)
-  for (propName in names(filePathsData)) {
+  # Container metadata rows. `name` and `description` are top-level container
+  # fields; writing them here (and reading them back on import) keeps the
+  # round trip lossless for the project's human-readable metadata.
+  props <- c(props, "name", "description")
+  vals <- c(vals, project$name %||% "", project$description %||% "")
+  descs <- c(descs, "Project name", "Project description")
+
+  # File path property rows. Both container blocks are written into the single
+  # `Project.xlsx` Property table: the live working folders (`filePaths`) and
+  # the Excel-bridge sheet names (`excel`). Re-importing reads them back and
+  # re-splits them into the two blocks, so the round trip is lossless.
+  pathPropsData <- c(.extractFilePathsData(project), .extractExcelData(project))
+  for (propName in names(pathPropsData)) {
     props <- c(props, propName)
-    vals <- c(vals, filePathsData[[propName]]$value %||% "")
-    descs <- c(descs, filePathsData[[propName]]$description %||% "")
+    vals <- c(vals, pathPropsData[[propName]]$value %||% "")
+    descs <- c(descs, pathPropsData[[propName]]$description %||% "")
   }
   projConfigDf <- data.frame(
     Property = props,
@@ -302,12 +421,27 @@ exportProjectToExcel <- function(
   .writeExcel(projConfigDf, projConfigPath)
 
   # --- ModelParameters.xlsx ---
+  # The project's single `parameterSets` section is exported as one workbook,
+  # one sheet per set. Re-importing reads them all back into the same unified
+  # section, so the round trip is lossless under the unified model.
   if (
-    !is.null(project$modelParameterSets) &&
-      length(project$modelParameterSets) > 0
+    !is.null(project$parameterSets) &&
+      length(project$parameterSets) > 0
   ) {
-    sheets <- .parameterStructuresToExcelSheets(project$modelParameterSets)
+    sheets <- .parameterStructuresToExcelSheets(project$parameterSets)
     .writeExcel(sheets, file.path(configDir, "ModelParameters.xlsx"))
+  }
+
+  # --- InitialConditions.xlsx ---
+  # One sheet per initial-condition set. The tolerant columns (`Is Present`,
+  # `Scale Divisor`, `Neg. Values Allowed`) are regenerated with defaults, so
+  # they are not preserved across an export/import round-trip.
+  if (
+    !is.null(project$initialConditions) &&
+      length(project$initialConditions) > 0
+  ) {
+    icSheets <- .initialConditionsToExcelSheets(project$initialConditions)
+    .writeExcel(icSheets, file.path(configDir, "InitialConditions.xlsx"))
   }
 
   # --- Individuals.xlsx ---
@@ -316,15 +450,6 @@ exportProjectToExcel <- function(
     indivSheets[["IndividualBiometrics"]] <- .individualsToExcelDf(
       project$individuals
     )
-  }
-  if (
-    !is.null(project$individualParameterSets) &&
-      length(project$individualParameterSets) > 0
-  ) {
-    paramSheets <- .parameterStructuresToExcelSheets(
-      project$individualParameterSets
-    )
-    indivSheets <- c(indivSheets, paramSheets)
   }
   if (length(indivSheets) > 0) {
     .writeExcel(indivSheets, file.path(configDir, "Individuals.xlsx"))
@@ -359,37 +484,56 @@ exportProjectToExcel <- function(
   }
 
   # --- Applications.xlsx ---
+  # Parameter sets all live in ModelParameters.xlsx now (one unified section),
+  # so this workbook carries only the application protocols.
   appSheets <- list()
   if (!is.null(project$applications) && length(project$applications) > 0) {
     appSheets[["ApplicationProtocols"]] <- .applicationsToExcelDf(
       project$applications
     )
   }
-  if (
-    !is.null(project$applicationParameterSets) &&
-      length(project$applicationParameterSets) > 0
-  ) {
-    paramSheets <- .parameterStructuresToExcelSheets(
-      project$applicationParameterSets
-    )
-    appSheets <- c(appSheets, paramSheets)
-  }
   if (length(appSheets) > 0) {
     .writeExcel(appSheets, file.path(configDir, "Applications.xlsx"))
   }
 
   # --- Plots.xlsx ---
-  if (!is.null(project$plots)) {
+  # The three plots sections are keyed lists; render each back to the Excel
+  # sheet shape (`DataCombined` long-format, `plotConfiguration`, `plotGrids`)
+  # so the export round-trips through `.parseExcelPlots()`. Empty sections are
+  # skipped.
+  dataCombined <- .unwrapDefinitionList(project$dataCombined)
+  plots <- .unwrapDefinitionList(project$plots)
+  plotGrids <- .unwrapDefinitionList(project$plotGrids)
+  if (
+    length(dataCombined %||% list()) > 0 ||
+      length(plots %||% list()) > 0 ||
+      length(plotGrids %||% list()) > 0
+  ) {
     plotSheets <- list()
-    for (sheetName in names(project$plots)) {
-      df <- project$plots[[sheetName]]
-      if (is.data.frame(df) && nrow(df) > 0) {
-        plotSheets[[sheetName]] <- df
-      }
+    dcSheet <- .dataCombinedToExcelDf(dataCombined)
+    if (!is.null(dcSheet)) {
+      plotSheets[["DataCombined"]] <- dcSheet
+    }
+    pcSheet <- .plotEntriesToExcelDf(plots)
+    if (!is.null(pcSheet)) {
+      plotSheets[["plotConfiguration"]] <- pcSheet
+    }
+    pgSheet <- .plotEntriesToExcelDf(plotGrids)
+    if (!is.null(pgSheet)) {
+      plotSheets[["plotGrids"]] <- pgSheet
     }
     if (length(plotSheets) > 0) {
       .writeExcel(plotSheets, file.path(configDir, "Plots.xlsx"))
     }
+  }
+
+  # --- ParameterIdentification.xlsx ---
+  # The nested PI section becomes three `taskId`-joined sheets, inverted on
+  # import by `.parseExcelParameterIdentification()`. Skipped when empty.
+  piTasks <- .unwrapDefinitionList(project$parameterIdentification)
+  if (length(piTasks %||% list()) > 0) {
+    piSheets <- .parameterIdentificationToExcelSheets(piTasks)
+    .writeExcel(piSheets, file.path(configDir, "ParameterIdentification.xlsx"))
   }
 
   if (interactive() && !silent) {
@@ -440,9 +584,13 @@ restoreProjectConfiguration <- function(
 #' @param silent Logical indicating whether to suppress informational messages.
 #'   Defaults to `FALSE`.
 #'
-#' @return A list with components: \item{in_sync}{Logical indicating whether
-#'   all files are synchronized} \item{details}{A list with detailed comparison
-#'   results}
+#' @return A list with components: \item{excel_in_sync}{Logical indicating
+#'   whether the Excel files and the JSON are synchronized}
+#'   \item{details}{A list with detailed comparison results}
+#'
+#' @seealso The method `Project$syncStatus()` reports the same comparison for a
+#'   loaded `Project` (against its `Project.xlsx` side-car) and returns the same
+#'   `excel_in_sync` / `details` shape.
 #'
 #' @import cli
 #' @export
@@ -476,6 +624,23 @@ projectStatus <- function(
     cli::cli_abort("JSON file does not exist: {.path {jsonPath}}")
   }
 
+  invisible(.compareJsonToExcel(
+    jsonPath = jsonPath,
+    projectConfigPath = projectConfigPath,
+    silent = silent
+  ))
+}
+
+# Compare a project's JSON against its Excel side-car and report whether they
+# are in sync. Shared by the public `projectStatus()` and the
+# `Project$syncStatus()` path (`.projectSyncStatus()`) so both surfaces return
+# the same `list(excel_in_sync = <logical>, details = <list>)` contract.
+# Re-imports the Excel into a temporary JSON and diffs it section-by-section
+# against the project's `Project.json` (ignoring the volatile `esqlabsRVersion`).
+#
+# @keywords internal
+# @noRd
+.compareJsonToExcel <- function(jsonPath, projectConfigPath, silent = FALSE) {
   # Create temporary snapshot from current Excel files
   tempDir <- tempfile("config_snapshot")
   dir.create(tempDir, showWarnings = FALSE, recursive = TRUE)
@@ -499,9 +664,8 @@ projectStatus <- function(
 
   if (identical(originalJsonObj, currentJsonObj)) {
     result <- list(
-      in_sync = TRUE,
-      details = list(),
-      unsaved_changes = FALSE
+      excel_in_sync = TRUE,
+      details = list()
     )
     if (!silent) {
       message(messages$excelInSync())
@@ -545,9 +709,8 @@ projectStatus <- function(
     )
 
     result <- list(
-      in_sync = FALSE,
-      details = differences,
-      unsaved_changes = FALSE
+      excel_in_sync = FALSE,
+      details = differences
     )
 
     if (!silent) {
@@ -596,96 +759,63 @@ projectConfigurationStatus <- function(...) {
 
 # Excel <-> JSON bridge: sync helper ----
 
-#' Sync-status helper called by `Project$sync()`
+#' Sync-status helper called by `Project$syncStatus()`
+#'
+#' Reports whether the project's Excel side-car (`Project.xlsx` next to the
+#' project's `Project.json`) is in sync with the project's entity files. Every
+#' section is write-through to its `definitions/<kind>/` tree, so the only drift
+#' that can still occur is between the project and a sibling Excel export.
 #'
 #' @param project A `Project` object.
 #' @param silent Logical. If `TRUE`, suppresses informational messages.
-#' @returns Invisibly returns a named list with sync status components.
+#' @returns Invisibly returns a named list with `excel_in_sync` (logical, or
+#'   `NA` when there is no Excel side-car to compare against) and `details` (the
+#'   per-section differences, empty when in sync or when there is nothing to
+#'   compare).
 #' @keywords internal
 #' @noRd
-.projectSync <- function(project, silent = FALSE) {
-  result <- list(
-    in_sync = TRUE,
-    unsaved_changes = FALSE,
-    json_modified = FALSE,
-    excel_modified = FALSE,
-    details = list()
-  )
+.projectSyncStatus <- function(project, silent = FALSE) {
+  result <- list(excel_in_sync = NA, details = list())
 
   jsonPath <- project$jsonPath
   if (is.null(jsonPath) || !file.exists(jsonPath)) {
-    result$in_sync <- project$modified == FALSE
-    result$unsaved_changes <- project$modified
-
-    # Even without a JSON file, sibling Excel files may exist; flag those as
-    # excel_modified relative to the absent JSON so callers don't get a false
-    # in_sync = TRUE.
-    if (!is.null(jsonPath)) {
-      excelPath <- sub("\\.json$", ".xlsx", jsonPath)
-      if (file.exists(excelPath)) {
-        result$excel_modified <- TRUE
-        result$in_sync <- FALSE
-      }
-    }
-
-    if (!silent && result$unsaved_changes) {
-      message("Project has unsaved changes (no JSON file to compare).")
+    if (!silent) {
+      cli::cli_alert_info(messages$syncNoExcel())
     }
     return(invisible(result))
   }
 
-  if (project$modified) {
-    result$unsaved_changes <- TRUE
-    result$in_sync <- FALSE
-  } else {
-    fileProject <- loadProject(jsonPath)
-    currentJson <- jsonlite::toJSON(
-      .projectToJson(project),
-      auto_unbox = TRUE,
-      null = "null"
-    )
-    fileJson <- jsonlite::toJSON(
-      .projectToJson(fileProject),
-      auto_unbox = TRUE,
-      null = "null"
-    )
-
-    if (!identical(currentJson, fileJson)) {
-      result$json_modified <- TRUE
-      result$in_sync <- FALSE
+  # Derive the Excel side-car by swapping the extension to `.xlsx`. Using
+  # `path_ext_set` (rather than a `.json`-only substitution) keeps the
+  # derivation correct for any container extension, including a `.esqlabsR`
+  # snapshot, so a snapshot-loaded project does not mistake itself for its own
+  # Excel side-car.
+  excelPath <- as.character(fs::path_ext_set(jsonPath, "xlsx"))
+  if (!file.exists(excelPath)) {
+    if (!silent) {
+      cli::cli_alert_info(messages$syncNoExcel())
     }
+    return(invisible(result))
   }
 
-  excelPath <- sub("\\.json$", ".xlsx", jsonPath)
-  if (file.exists(excelPath)) {
-    excelStatus <- tryCatch(
-      projectStatus(
-        projectConfigPath = excelPath,
-        jsonPath = jsonPath,
-        silent = TRUE
-      ),
-      error = function(e) list(in_sync = TRUE)
-    )
-    if (!isTRUE(excelStatus$in_sync)) {
-      result$excel_modified <- TRUE
-      result$in_sync <- FALSE
-      result$details$excel <- excelStatus$details
-    }
+  excelStatus <- tryCatch(
+    .compareJsonToExcel(
+      jsonPath = jsonPath,
+      projectConfigPath = excelPath,
+      silent = TRUE
+    ),
+    error = function(e) list(excel_in_sync = TRUE)
+  )
+  result$excel_in_sync <- isTRUE(excelStatus$excel_in_sync)
+  if (!result$excel_in_sync) {
+    result$details$excel <- excelStatus$details
   }
 
   if (!silent) {
-    if (result$in_sync) {
-      message("Project is in sync with all source files.")
+    if (result$excel_in_sync) {
+      message(messages$excelInSync())
     } else {
-      if (result$unsaved_changes) {
-        cli::cli_alert_warning("In-memory changes not saved to JSON.")
-      }
-      if (result$json_modified) {
-        cli::cli_alert_warning("JSON file has been modified externally.")
-      }
-      if (result$excel_modified) {
-        cli::cli_alert_warning("Excel files differ from JSON.")
-      }
+      cli::cli_alert_warning("Excel files differ from the project.")
     }
   }
 
@@ -693,6 +823,202 @@ projectConfigurationStatus <- function(...) {
 }
 
 # Excel <-> JSON bridge: internal helpers ----
+
+#' Canonicalize every id and id-reference in an imported `Project.json` list
+#'
+#' Runs `.canonicalizeOneId()` over the keyed-section ids (`outputPaths`,
+#' `parameterSets`, `applications` map keys; the scenario `name` and the
+#' `individualId` / `populationId` self-id fields of the individual /
+#' population records) and over every reference to one (a scenario's
+#' `individual`, `population`, `application`, `parameterSets`,
+#' `outputPaths`; an individual's or application's `parameterSets`). The same
+#' deterministic transform is applied to a definition and to a reference, so a
+#' reference made from the same Excel spelling as its definition still resolves
+#' after canonicalization. Used by `importProjectFromExcel()` so the imported
+#' project carries safe, lowercase, single-path-segment ids that the entity
+#' tree can key files by. Silent (no per-id warning): an Excel import renames in
+#' bulk and the migrate-from-excel guide documents the renaming.
+#'
+#' @keywords internal
+#' @noRd
+.canonicalizeProjectJsonIds <- function(jsonData) {
+  canonScalar <- function(x) {
+    if (is.null(x)) {
+      return(x)
+    }
+    .canonicalizeOneId(as.character(x))
+  }
+  canonVec <- function(x) {
+    if (is.null(x)) {
+      return(x)
+    }
+    lapply(x, function(e) .canonicalizeOneId(as.character(e)))
+  }
+  canonNames <- function(section) {
+    if (is.null(section) || length(section) == 0L) {
+      return(section)
+    }
+    nms <- names(section)
+    if (!is.null(nms)) {
+      names(section) <- vapply(nms, .canonicalizeOneId, character(1))
+    }
+    section
+  }
+
+  jsonData$outputPaths <- canonNames(jsonData$outputPaths)
+  jsonData$parameterSets <- canonNames(jsonData$parameterSets)
+  jsonData$initialConditions <- canonNames(jsonData$initialConditions)
+  jsonData$applications <- canonNames(jsonData$applications)
+
+  if (!is.null(jsonData$applications)) {
+    jsonData$applications <- lapply(jsonData$applications, function(app) {
+      if (!is.null(app$parameterSets)) {
+        app$parameterSets <- canonVec(app$parameterSets)
+      }
+      app
+    })
+  }
+
+  if (!is.null(jsonData$scenarios)) {
+    jsonData$scenarios <- lapply(jsonData$scenarios, function(sc) {
+      sc$name <- canonScalar(sc$name)
+      sc$individual <- canonScalar(sc$individual)
+      sc$population <- canonScalar(sc$population)
+      sc$application <- canonScalar(sc$application)
+      sc$parameterSets <- canonVec(sc$parameterSets)
+      sc$initialConditions <- canonVec(sc$initialConditions)
+      sc$outputPaths <- canonVec(sc$outputPaths)
+      sc
+    })
+  }
+
+  if (!is.null(jsonData$individuals)) {
+    jsonData$individuals <- lapply(jsonData$individuals, function(ind) {
+      ind$individualId <- canonScalar(ind$individualId)
+      if (!is.null(ind$parameterSets)) {
+        ind$parameterSets <- canonVec(ind$parameterSets)
+      }
+      ind
+    })
+  }
+
+  if (!is.null(jsonData$populations)) {
+    jsonData$populations <- lapply(jsonData$populations, function(pop) {
+      pop$populationId <- canonScalar(pop$populationId)
+      pop
+    })
+  }
+
+  # A legacy (pre-6.0.0-split) snapshot nests the three plots parts under one
+  # `plots` object (`plots = {dataCombined, plotConfiguration, plotGrids}`).
+  # The current shape is three top-level sections (`dataCombined`, `plots` the
+  # plot list, `plotGrids`). Lift a legacy nested object to the three top-level
+  # keys so a legacy snapshot still migrates losslessly into the tree. A new
+  # snapshot already carries the three top-level keys and is untouched here (its
+  # `plots` is an array of plot records, not an object with a `dataCombined`
+  # field).
+  legacyPlots <- jsonData$plots
+  if (
+    is.list(legacyPlots) &&
+      !is.null(names(legacyPlots)) &&
+      any(
+        c("dataCombined", "plotConfiguration", "plotGrids") %in%
+          names(legacyPlots)
+      )
+  ) {
+    jsonData$dataCombined <- legacyPlots$dataCombined
+    jsonData$plots <- legacyPlots$plotConfiguration
+    jsonData$plotGrids <- legacyPlots$plotGrids
+  }
+
+  # The three plots sections each persist as a keyed entity tree that keys
+  # files by a canonical id (`dataCombinedId` / `plotId` / `plotGridId`), so
+  # canonicalize those ids and every reference among the three together with the
+  # same deterministic helper, so the migrated tree's inner cross-references
+  # still resolve. A plot's `dataCombined` rows also reference a scenario by id;
+  # canonicalize that so it resolves against the (canonicalized) scenario
+  # definitions. The `dataSet` / `observedData` references point at observed
+  # data, whose ids are file basenames / DataSet names matched verbatim and
+  # never canonicalized, so they are deliberately left untouched.
+  if (!is.null(jsonData$dataCombined)) {
+    jsonData$dataCombined <- lapply(
+      jsonData$dataCombined,
+      function(dc) {
+        dc$dataCombinedId <- canonScalar(dc$dataCombinedId)
+        if (!is.null(dc$simulated)) {
+          dc$simulated <- lapply(dc$simulated, function(sim) {
+            sim$scenario <- canonScalar(sim$scenario)
+            sim
+          })
+        }
+        dc
+      }
+    )
+  }
+  if (!is.null(jsonData$plots)) {
+    jsonData$plots <- lapply(
+      jsonData$plots,
+      function(plot) {
+        plot$plotId <- canonScalar(plot$plotId)
+        plot$dataCombined <- canonScalar(plot$dataCombined)
+        plot
+      }
+    )
+  }
+  if (!is.null(jsonData$plotGrids)) {
+    jsonData$plotGrids <- lapply(
+      jsonData$plotGrids,
+      function(grid) {
+        grid$plotGridId <- canonScalar(grid$plotGridId)
+        # `plots` is the grid's plot-id set stored as one comma-separated
+        # string. A plot id may legally contain a comma, so decode and re-encode
+        # with the escape-aware pair (`.splitPlotIDs()` / `.joinPlotIDs()`) that
+        # every other reader/writer of this string uses; a plain
+        # `strsplit(",")` / `paste(collapse = ", ")` here shreds a comma-bearing
+        # id into several. Canonicalize each id in between.
+        if (!is.null(grid$plots)) {
+          ids <- .splitPlotIDs(as.character(grid$plots))
+          ids <- vapply(ids, .canonicalizeOneId, character(1))
+          grid$plots <- .joinPlotIDs(ids)
+        }
+        grid
+      }
+    )
+  }
+
+  # A parameter-identification task is keyed by its `id` (the entity-file id)
+  # and references scenarios and output paths; canonicalize the task id and
+  # every scenario / output-path reference it carries (at the task level and on
+  # each parameter and output mapping) so the migrated tree's foreign keys
+  # resolve. A mapping's `observedData` references observed data (verbatim
+  # ids), and a parameter's / mapping's own `id` is an inner id, not an
+  # entity-file id, so those are left untouched.
+  if (!is.null(jsonData$parameterIdentification)) {
+    jsonData$parameterIdentification <- lapply(
+      jsonData$parameterIdentification,
+      function(task) {
+        task$id <- canonScalar(task$id)
+        task$scenarios <- canonVec(task$scenarios)
+        if (!is.null(task$parameters)) {
+          task$parameters <- lapply(task$parameters, function(param) {
+            param$scenarios <- canonVec(param$scenarios)
+            param
+          })
+        }
+        if (!is.null(task$outputMappings)) {
+          task$outputMappings <- lapply(task$outputMappings, function(mapping) {
+            mapping$scenarios <- canonVec(mapping$scenarios)
+            mapping$outputPath <- canonScalar(mapping$outputPath)
+            mapping
+          })
+        }
+        task
+      }
+    )
+  }
+
+  jsonData
+}
 
 #' Parse parameter sheets from an Excel file into JSON structure
 #' @param filePath Path to the Excel file
@@ -731,6 +1057,54 @@ projectConfigurationStatus <- function(...) {
   result
 }
 
+#' Parse InitialConditions Excel file into JSON structure
+#'
+#' Reads `InitialConditions.xlsx` sheet by sheet and returns a named list
+#' where each key is a sheet name (the initial-condition set id) and each value
+#' is a list of records with fields `path`, `value`, and `unit`. The flat path
+#' is built by joining `Container Path` and `Molecule Name` with `|`.
+#'
+#' Validation is shared with [readInitialConditionsFromXLS()] via the internal
+#' `.readInitialConditionsRows()` reader, so a malformed Excel sheet (wrong
+#' columns, invalid `Is Present`, blank path, missing value, blank unit) aborts
+#' the import rather than serialising bad records into the JSON project.
+#'
+#' Only `path`, `value`, and `unit` are carried into the record. `Is Present`,
+#' `Scale Divisor`, and `Neg. Values Allowed` are NOT preserved: `Is
+#' Present=FALSE`/`0` rows are dropped at read time, and the other two columns
+#' are unused by esqlabsR (the simulation consumes only path/value/unit). On an
+#' Excel export they are regenerated with defaults (`Is Present=TRUE`, `Scale
+#' Divisor=1`, `Neg. Values Allowed=FALSE`), so a non-default value in those
+#' columns is not preserved across an Excel -> JSON -> Excel round-trip. Units
+#' are mandatory for present molecules, so a record never carries a blank unit.
+#'
+#' @param filePath Path to the Excel file.
+#' @param sheetNames Sheets to read. If NULL, reads all sheets.
+#' @returns Named list of initial-conditions arrays.
+#' @keywords internal
+#' @noRd
+.parseExcelInitialConditions <- function(filePath, sheetNames = NULL) {
+  if (is.null(sheetNames)) {
+    sheetNames <- readxl::excel_sheets(filePath)
+  }
+  rows <- .readInitialConditionsRows(filePath = filePath, sheets = sheetNames)
+
+  result <- list()
+  # Seed every requested sheet so empty sheets still surface as empty arrays.
+  for (sheet in sheetNames) {
+    result[[sheet]] <- list()
+  }
+  for (row in rows) {
+    sheet <- row$sheet
+    result[[sheet]][[length(result[[sheet]]) + 1L]] <- list(
+      path = row$fullPath,
+      value = row$value,
+      unit = row$unit
+    )
+  }
+  result
+}
+
 #' Parse Scenarios Excel sheet into JSON structure
 #' @param scenarioDf Data frame from the Scenarios sheet
 #' @returns List of scenario objects
@@ -742,11 +1116,16 @@ projectConfigurationStatus <- function(...) {
     row <- scenarioDf[i, ]
     scenario <- list(
       name = as.character(row$Scenario_name),
-      individualId = .naToNull(as.character(row$IndividualId)),
-      populationId = .naToNull(as.character(row$PopulationId)),
+      individual = .naToNull(as.character(row$IndividualId)),
+      population = .naToNull(as.character(row$PopulationId)),
       readPopulationFromCSV = .naToNull(as.logical(row$ReadPopulationFromCSV)),
-      modelParameterSets = .parseCommaListToArray(row$ModelParameterSheets),
-      applicationProtocol = .naToNull(as.character(row$ApplicationProtocol)),
+      parameterSets = .parseCommaListToArray(row$ModelParameterSheets),
+      # `InitialConditions` is a newer column; an older Scenarios sheet omits it,
+      # so guard the lookup rather than warn on an unknown column.
+      initialConditions = .parseCommaListToArray(
+        if ("InitialConditions" %in% names(row)) row$InitialConditions else NA
+      ),
+      application = .naToNull(as.character(row$ApplicationProtocol)),
       simulationTime = .naToNull(as.character(row$SimulationTime)),
       simulationTimeUnit = .naToNull(as.character(row$SimulationTimeUnit)),
       steadyState = .naToNull(as.logical(row$SteadyState)),
@@ -754,7 +1133,7 @@ projectConfigurationStatus <- function(...) {
       steadyStateTimeUnit = .naToNull(as.character(row$SteadyStateTimeUnit)),
       overwriteFormulasInSS = .naToNull(as.logical(row$OverwriteFormulasInSS)),
       modelFile = as.character(row$ModelFile),
-      outputPathIds = .parseCommaListToArray(row$OutputPathsIds)
+      outputPaths = .parseCommaListToArray(row$OutputPathsIds)
     )
     scenarios[[i]] <- scenario
   }
@@ -827,44 +1206,426 @@ projectConfigurationStatus <- function(...) {
   populations
 }
 
-#' Parse Plots Excel file into JSON structure
-#' @param plotsFile Path to the Plots.xlsx file
-#' @returns Named list with dataCombined, plotConfiguration, plotGrids
+#' Parse Plots Excel file into the project's nested plots JSON structure
+#'
+#' Maps the legacy Excel plot sheets onto the v2.0 plots section so the import
+#' round-trips through the entity-file tree (which keys files by `plotId` /
+#' `plotGridId` / `dataCombinedId`). The `DataCombined` sheet is long-format
+#' (one row per simulated/observed curve, grouped by `DataCombinedName`); the
+#' `plotConfiguration` and `plotGrids` sheets carry the legacy `plotID` /
+#' `DataCombinedName` / `name` / `plotIDs` column spellings. Only these three
+#' sheets are plot sources; any other sheet (`exportConfiguration`,
+#' `dataTypes`, `plotTypes`, `ObservedDataNames`) is ignored. A row missing a
+#' usable id is dropped (so a stray/blank legacy row cannot abort the load).
+#'
+#' @param plotsFile Path to the Plots.xlsx file.
+#' @returns Named list with `dataCombined` (nested), `plotConfiguration`, and
+#'   `plotGrids` (arrays of records with canonical field names).
 #' @keywords internal
 #' @noRd
 .parseExcelPlots <- function(plotsFile) {
   sheets <- readxl::excel_sheets(plotsFile)
-  result <- list()
-  for (sheet in sheets) {
-    df <- readExcel(plotsFile, sheet = sheet)
+  readSheet <- function(name) {
+    if (!name %in% sheets) {
+      return(NULL)
+    }
+    df <- readExcel(plotsFile, sheet = name)
     if (nrow(df) == 0) {
-      result[[sheet]] <- list()
-      next
+      return(NULL)
     }
-    entries <- list()
-    for (i in seq_len(nrow(df))) {
-      entry <- list()
-      for (col in names(df)) {
-        val <- df[[col]][[i]]
-        entry[[col]] <- .naToNull(val)
-      }
-      entries[[i]] <- entry
-    }
-    result[[sheet]] <- entries
+    df
   }
-  result
+  rowToFields <- function(df, i, idColumn, idField, drop = character()) {
+    fields <- list()
+    for (col in names(df)) {
+      if (col %in% drop) {
+        next
+      }
+      val <- .naToNull(df[[col]][[i]])
+      if (is.null(val)) {
+        next
+      }
+      field <- if (identical(col, idColumn)) idField else col
+      fields[[field]] <- val
+    }
+    fields
+  }
+
+  list(
+    dataCombined = .parseExcelDataCombinedSheet(readSheet("DataCombined")),
+    plotConfiguration = .parseExcelPlotSheet(
+      readSheet("plotConfiguration"),
+      rowToFields
+    ),
+    plotGrids = .parseExcelPlotGridSheet(readSheet("plotGrids"), rowToFields)
+  )
 }
 
-#' Convert parameter structures to Excel sheet data frames
-#' @param parameterSets Named list of parameter structures (paths, values,
-#'   units)
+# The numeric fields on a DataCombined simulated / observed curve. Their unit
+# siblings (`xOffsetsUnits` / `yOffsetsUnits`) stay character and are not listed.
+.dataCombinedNumericFields <- c(
+  "xOffsets",
+  "yOffsets",
+  "xScaleFactors",
+  "yScaleFactors"
+)
+
+# Group the long-format DataCombined sheet (one row per simulated/observed
+# curve, distinguished by the `dataType` column) into nested dataCombined
+# records keyed by `dataCombinedId` (the `DataCombinedName` column). A row with
+# no `DataCombinedName` is dropped.
+#
+# @keywords internal
+# @noRd
+.parseExcelDataCombinedSheet <- function(df) {
+  if (is.null(df)) {
+    return(list())
+  }
+  grouped <- list()
+  for (i in seq_len(nrow(df))) {
+    name <- .naToNull(df$DataCombinedName[[i]])
+    if (is.null(name)) {
+      next
+    }
+    name <- as.character(name)
+    dataType <- .naToNull(df$dataType[[i]])
+    entry <- list()
+    for (col in names(df)) {
+      if (col %in% c("DataCombinedName", "dataType")) {
+        next
+      }
+      val <- .naToNull(df[[col]][[i]])
+      if (!is.null(val)) {
+        # The offset / scale-factor fields are numeric; a data.frame column that
+        # also holds text in another row is read as character, so re-coerce
+        # them so they round-trip as numbers rather than strings.
+        if (col %in% .dataCombinedNumericFields) {
+          val <- as.numeric(val)
+        }
+        entry[[col]] <- val
+      }
+    }
+    if (is.null(grouped[[name]])) {
+      grouped[[name]] <- list(
+        dataCombinedId = name,
+        simulated = list(),
+        observed = list()
+      )
+    }
+    if (identical(as.character(dataType), "observed")) {
+      grouped[[name]]$observed <- c(grouped[[name]]$observed, list(entry))
+    } else {
+      grouped[[name]]$simulated <- c(grouped[[name]]$simulated, list(entry))
+    }
+  }
+  unname(grouped)
+}
+
+# @keywords internal
+# @noRd
+.parseExcelPlotSheet <- function(df, rowToFields) {
+  if (is.null(df)) {
+    return(list())
+  }
+  records <- list()
+  for (i in seq_len(nrow(df))) {
+    fields <- rowToFields(
+      df,
+      i,
+      idColumn = "plotID",
+      idField = "plotId",
+      drop = "DataCombinedName"
+    )
+    # Map the legacy `DataCombinedName` column onto the canonical JSON key; a
+    # sheet that already uses `dataCombined` (e.g. one written by
+    # `exportProjectToExcel()`) passes that column through verbatim instead.
+    if ("DataCombinedName" %in% names(df)) {
+      dataCombinedName <- .naToNull(df$DataCombinedName[[i]])
+      if (!is.null(dataCombinedName)) {
+        fields$dataCombined <- dataCombinedName
+      }
+    }
+    if (is.null(fields$plotId)) {
+      next
+    }
+    records[[length(records) + 1L]] <- fields
+  }
+  records
+}
+
+# @keywords internal
+# @noRd
+.parseExcelPlotGridSheet <- function(df, rowToFields) {
+  if (is.null(df)) {
+    return(list())
+  }
+  records <- list()
+  for (i in seq_len(nrow(df))) {
+    fields <- rowToFields(
+      df,
+      i,
+      idColumn = "name",
+      idField = "plotGridId",
+      drop = "plotIDs"
+    )
+    # Map the legacy `plotIDs` column onto the canonical `plots` JSON key; a
+    # sheet that already uses `plots` passes that column through verbatim.
+    if ("plotIDs" %in% names(df)) {
+      plotIds <- .naToNull(df$plotIDs[[i]])
+      if (!is.null(plotIds)) {
+        fields$plots <- plotIds
+      }
+    }
+    if (is.null(fields$plotGridId)) {
+      next
+    }
+    records[[length(records) + 1L]] <- fields
+  }
+  records
+}
+
+# Flatten the nested parameterIdentification section into Excel sheets.
+# Three related sheets, joined by a `taskId` foreign key: `PITasks` (one row
+# per task, the small `configuration` dict flattened to `config.<key>`
+# columns), `PIParameters`, and `PIOutputMappings` (one row per nested
+# record). `scenarios` arrays become comma-separated cells.
+# `.parseExcelParameterIdentification()` inverts this. Returns a named list of
+# data frames (one per non-empty sheet).
+#
+# @keywords internal
+# @noRd
+.parameterIdentificationToExcelSheets <- function(tasks) {
+  taskRows <- list()
+  paramRows <- list()
+  mappingRows <- list()
+  for (task in tasks) {
+    taskRow <- list(
+      taskId = task$id,
+      scenarios = .formatArrayToCommaList(unlist(task$scenarios))
+    )
+    for (key in names(task$configuration %||% list())) {
+      taskRow[[paste0("config.", key)]] <- task$configuration[[key]] %||% NA
+    }
+    taskRows[[length(taskRows) + 1]] <- as.data.frame(
+      taskRow,
+      check.names = FALSE,
+      stringsAsFactors = FALSE
+    )
+    for (p in task$parameters %||% list()) {
+      paramRows[[length(paramRows) + 1]] <- as.data.frame(
+        list(
+          taskId = task$id,
+          id = p$id,
+          scenarios = .formatArrayToCommaList(unlist(p$scenarios)),
+          path = p$path %||% NA,
+          units = p$units %||% NA,
+          minValue = p$minValue %||% NA,
+          maxValue = p$maxValue %||% NA,
+          startValue = p$startValue %||% NA
+        ),
+        check.names = FALSE,
+        stringsAsFactors = FALSE
+      )
+    }
+    for (m in task$outputMappings %||% list()) {
+      mappingRows[[length(mappingRows) + 1]] <- as.data.frame(
+        list(
+          taskId = task$id,
+          id = m$id,
+          scenarios = .formatArrayToCommaList(unlist(m$scenarios)),
+          outputPath = m$outputPath %||% NA,
+          observedData = m$observedData %||% NA,
+          scaling = m$scaling %||% NA,
+          xOffset = m$xOffset %||% NA,
+          yOffset = m$yOffset %||% NA,
+          xFactor = m$xFactor %||% NA,
+          yFactor = m$yFactor %||% NA,
+          weight = if (is.null(m$weight)) {
+            NA
+          } else {
+            .formatArrayToCommaList(unlist(m$weight))
+          }
+        ),
+        check.names = FALSE,
+        stringsAsFactors = FALSE
+      )
+    }
+  }
+  sheets <- list(PITasks = as.data.frame(dplyr::bind_rows(taskRows)))
+  if (length(paramRows) > 0) {
+    sheets[["PIParameters"]] <- as.data.frame(dplyr::bind_rows(paramRows))
+  }
+  if (length(mappingRows) > 0) {
+    sheets[["PIOutputMappings"]] <- as.data.frame(dplyr::bind_rows(mappingRows))
+  }
+  sheets
+}
+
+# Invert `.parameterIdentificationToExcelSheets()` to the JSON PI array. Reads
+# the three sheets and reassembles each task's nested `parameters` /
+# `outputMappings` arrays (joined by `taskId`) and its `configuration` dict
+# (from the `config.*` columns), producing the
+# `{id, scenarios[], parameters[], outputMappings[], configuration}` shape
+# `.parsePITasks()` consumes. Returns an unnamed list of PITask JSON objects.
+#
+# @keywords internal
+# @noRd
+.parseExcelParameterIdentification <- function(piFile) {
+  sheets <- readxl::excel_sheets(piFile)
+  if (!("PITasks" %in% sheets)) {
+    return(list())
+  }
+  taskDf <- readExcel(piFile, sheet = "PITasks")
+  paramDf <- if ("PIParameters" %in% sheets) {
+    readExcel(piFile, sheet = "PIParameters")
+  } else {
+    NULL
+  }
+  mappingDf <- if ("PIOutputMappings" %in% sheets) {
+    readExcel(piFile, sheet = "PIOutputMappings")
+  } else {
+    NULL
+  }
+  lapply(seq_len(nrow(taskDf)), function(i) {
+    taskId <- as.character(taskDf$taskId[[i]])
+    configCols <- grep("^config\\.", names(taskDf), value = TRUE)
+    configuration <- list()
+    for (col in configCols) {
+      val <- .naToNull(taskDf[[col]][[i]])
+      if (!is.null(val)) {
+        configuration[[sub("^config\\.", "", col)]] <- val
+      }
+    }
+    list(
+      id = taskId,
+      scenarios = as.list(.parseCommaListToArray(taskDf$scenarios[[i]])),
+      parameters = .parseExcelPIRows(paramDf, taskId, "parameter"),
+      outputMappings = .parseExcelPIRows(mappingDf, taskId, "mapping"),
+      configuration = configuration
+    )
+  })
+}
+
+# Parse the PIParameters / PIOutputMappings rows for one task. Filters `df` to
+# the rows whose `taskId` matches, drops the `taskId` bookkeeping column,
+# splits `scenarios` (and `weight`, when present) back to arrays, and drops NA
+# cells so optional fields stay absent.
+#
+# @keywords internal
+# @noRd
+.parseExcelPIRows <- function(df, taskId, kind) {
+  if (is.null(df) || nrow(df) == 0) {
+    return(list())
+  }
+  rows <- df[as.character(df$taskId) == taskId, , drop = FALSE]
+  if (nrow(rows) == 0) {
+    return(list())
+  }
+  cols <- setdiff(names(rows), "taskId")
+  lapply(seq_len(nrow(rows)), function(i) {
+    record <- list()
+    for (col in cols) {
+      val <- .naToNull(rows[[col]][[i]])
+      if (is.null(val)) {
+        next
+      }
+      record[[col]] <- if (col %in% c("scenarios", "weight")) {
+        as.list(.parseCommaListToArray(val))
+      } else {
+        val
+      }
+    }
+    record
+  })
+}
+
+# Render the nested `dataCombined` keyed list back to the long-format
+# `DataCombined` sheet (one row per simulated/observed curve, the `dataType`
+# column distinguishing them, the `DataCombinedName` column the list key). The
+# canonical-field export round-trips through `.parseExcelDataCombinedSheet()`.
+# Returns NULL for an empty section.
+#
+# @keywords internal
+# @noRd
+.dataCombinedToExcelDf <- function(dataCombined) {
+  dataCombined <- dataCombined %||% list()
+  rows <- list()
+  for (id in names(dataCombined)) {
+    dc <- dataCombined[[id]]
+    addRows <- function(entries, dataType) {
+      for (entry in entries %||% list()) {
+        row <- c(
+          list(DataCombinedName = id, dataType = dataType),
+          entry
+        )
+        rows[[length(rows) + 1L]] <<- row
+      }
+    }
+    addRows(dc$simulated, "simulated")
+    addRows(dc$observed, "observed")
+  }
+  .recordsToExcelDf(rows)
+}
+
+# Render a keyed list of plot / grid entries (each a named list of canonical
+# fields) back to one data.frame row per entry. The in-memory reference field is
+# mapped back to its suffixless on-disk key (`dataCombinedId` -> `dataCombined`,
+# `plotIds` -> `plots`) so the exported column header matches the JSON key and
+# the sheet round-trips through `.parseExcelPlots()`. Returns NULL for an empty
+# part.
+#
+# @keywords internal
+# @noRd
+.plotEntriesToExcelDf <- function(entries) {
+  entries <- entries %||% list()
+  .recordsToExcelDf(unname(lapply(entries, function(e) {
+    e <- .plotRefFieldToKey(e, class(e)[[1]])
+    class(e) <- "list"
+    e
+  })))
+}
+
+# Bind a list of named-list records into a single data.frame, padding missing
+# fields with NA across rows. Returns NULL for zero records.
+#
+# @keywords internal
+# @noRd
+.recordsToExcelDf <- function(records) {
+  if (length(records) == 0) {
+    return(NULL)
+  }
+  allCols <- unique(unlist(lapply(records, names)))
+  rowDfs <- lapply(records, function(rec) {
+    cells <- lapply(allCols, function(col) {
+      val <- rec[[col]]
+      if (is.null(val)) NA else paste(val, collapse = ", ")
+    })
+    names(cells) <- allCols
+    as.data.frame(cells, stringsAsFactors = FALSE, check.names = FALSE)
+  })
+  as.data.frame(
+    dplyr::bind_rows(rowDfs),
+    stringsAsFactors = FALSE,
+    check.names = FALSE
+  )
+}
+
+#' Convert parameter sets to Excel sheet data frames
+#'
+#' Each set is a `parameterSets` section entry: a list of records shaped
+#' `list(containerPath, parameterName, value, units)`. `.parameterSetToStructure()`
+#' collapses that record list into the parallel `list(paths, values, units)`
+#' vectors this writer needs (and returns `NULL` for an empty set), so the
+#' exported sheet carries the set's values, paths, and units.
+#'
+#' @param parameterSets Named list of `parameterSets` section entries.
 #' @returns Named list of data frames suitable for Excel sheets
 #' @keywords internal
 #' @noRd
 .parameterStructuresToExcelSheets <- function(parameterSets) {
   sheets <- list()
   for (name in names(parameterSets)) {
-    params <- parameterSets[[name]]
+    params <- .parameterSetToStructure(parameterSets[[name]])
     if (is.null(params) || length(params$paths) == 0) {
       sheets[[name]] <- data.frame(
         `Container Path` = character(0),
@@ -893,6 +1654,66 @@ projectConfigurationStatus <- function(...) {
       ),
       Value = params$values,
       Units = params$units,
+      check.names = FALSE,
+      stringsAsFactors = FALSE
+    )
+  }
+  sheets
+}
+
+#' Convert initial-conditions structures to Excel sheet data frames
+#'
+#' The record carries only `path`, `value`, and `unit`, so the `Is Present`,
+#' `Scale Divisor`, and `Neg. Values Allowed` columns are emitted as fixed
+#' defaults (`TRUE`, `1`, `FALSE`); these columns are not preserved across an
+#' Excel -> JSON -> Excel round-trip.
+#'
+#' @param initialConditions Named list of initial-conditions sets (each set is a
+#'   list of records with fields `path`, `value`, `unit`).
+#' @returns Named list of data frames suitable for Excel sheets.
+#' @keywords internal
+#' @noRd
+.initialConditionsToExcelSheets <- function(initialConditions) {
+  sheets <- list()
+  for (name in names(initialConditions)) {
+    entries <- initialConditions[[name]]
+    if (is.null(entries) || length(entries) == 0L) {
+      sheets[[name]] <- data.frame(
+        `Container Path` = character(0),
+        `Molecule Name` = character(0),
+        `Is Present` = logical(0),
+        Value = numeric(0),
+        Units = character(0),
+        `Scale Divisor` = numeric(0),
+        `Neg. Values Allowed` = logical(0),
+        check.names = FALSE,
+        stringsAsFactors = FALSE
+      )
+      next
+    }
+    splitPaths <- lapply(entries, function(e) {
+      parts <- strsplit(e$path, "|", fixed = TRUE)[[1]]
+      list(
+        containerPath = paste(parts[-length(parts)], collapse = "|"),
+        moleculeName = parts[[length(parts)]]
+      )
+    })
+    sheets[[name]] <- data.frame(
+      `Container Path` = vapply(
+        splitPaths,
+        function(x) x$containerPath,
+        character(1)
+      ),
+      `Molecule Name` = vapply(
+        splitPaths,
+        function(x) x$moleculeName,
+        character(1)
+      ),
+      `Is Present` = rep(TRUE, length(entries)),
+      Value = vapply(entries, function(e) as.double(e$value), double(1)),
+      Units = vapply(entries, function(e) e$unit %||% "", character(1)),
+      `Scale Divisor` = rep(1, length(entries)),
+      `Neg. Values Allowed` = rep(FALSE, length(entries)),
       check.names = FALSE,
       stringsAsFactors = FALSE
     )
@@ -1001,6 +1822,7 @@ projectConfigurationStatus <- function(...) {
   for (name in names(scenarioConfigs)) {
     sc <- scenarioConfigs[[name]]
     paramSetsStr <- .formatArrayToCommaList(sc$modelParameterSets)
+    initialConditionsStr <- .formatArrayToCommaList(sc$initialConditions)
     # simulationTime -> string representation
     simTimeStr <- NA
     if (!is.null(sc$simulationTime)) {
@@ -1023,11 +1845,16 @@ projectConfigurationStatus <- function(...) {
       }
     }
 
-    # Reconstruct steadyStateTime back to the original unit
+    # Reconstruct steadyStateTime back to the original unit, but only for a
+    # scenario that actually runs steady-state. A non-steady-state scenario
+    # carries the parser's default `steadyStateTime` (with a null unit); writing
+    # it here would fabricate a unit and a steady-state time that re-import then
+    # materializes as a spurious configuration, so it is left blank instead.
     ssTime <- NA
     ssTimeUnit <- NA
     if (
-      !is.null(sc$steadyStateTime) &&
+      isTRUE(sc$simulateSteadyState) &&
+        !is.null(sc$steadyStateTime) &&
         !is.na(sc$steadyStateTime) &&
         sc$steadyStateTime > 0
     ) {
@@ -1049,6 +1876,7 @@ projectConfigurationStatus <- function(...) {
       },
       ReadPopulationFromCSV = sc$readPopulationFromCSV %||% FALSE,
       ModelParameterSheets = paramSetsStr,
+      InitialConditions = initialConditionsStr,
       ApplicationProtocol = sc$applicationProtocol %||% NA,
       SimulationTime = simTimeStr,
       SimulationTimeUnit = sc$simulationTimeUnit %||% NA,
@@ -1065,13 +1893,22 @@ projectConfigurationStatus <- function(...) {
   do.call(rbind, rows)
 }
 
-#' Extract private .filePathsData from a Project
+#' Extract private .filePathsData from a Project (the live working folders)
 #' @param project Project object
 #' @returns Named list of property data
 #' @keywords internal
 #' @noRd
 .extractFilePathsData <- function(project) {
   project$.getFilePathsData()
+}
+
+#' Extract private .excelData from a Project (the Excel-bridge sheet names)
+#' @param project Project object
+#' @returns Named list of property data (empty when no Excel side-car)
+#' @keywords internal
+#' @noRd
+.extractExcelData <- function(project) {
+  project$.getExcelData()
 }
 
 #' Convert NA to NULL for JSON serialization
@@ -1143,73 +1980,4 @@ projectConfigurationStatus <- function(...) {
   parts <- c(parts, current)
   parts <- trimws(parts)
   parts[nzchar(parts)]
-}
-
-#' Sanitize a string to be a valid Excel sheet name
-#'
-#' @param sheetName Character string. The proposed sheet name to sanitize.
-#' @param warn Logical. Whether to warn if the sheet name was modified.
-#'   Default is `TRUE`.
-#'
-#' @details
-#' Sanitizes a string to comply with Excel sheet naming rules:
-#' * Must be 31 characters or less.
-#' * Cannot contain any of these characters: `/ \ * [ ] : ?`
-#' * Cannot be empty.
-#' * Leading/trailing spaces are trimmed.
-#'
-#' If the name becomes empty after sanitization, `"Sheet"` is used as
-#' default. If the name is too long, it is truncated. If `warn = TRUE` and
-#' the name was modified, a warning is issued.
-#'
-#' @returns A valid Excel sheet name.
-#' @keywords internal
-.sanitizeExcelSheetName <- function(sheetName, warn = TRUE) {
-  if (is.null(sheetName) || is.na(sheetName)) {
-    return("Sheet")
-  }
-
-  # Store original name for comparison
-  originalName <- as.character(sheetName)
-
-  # Convert to character and trim spaces
-  sheetName <- trimws(originalName)
-
-  # If empty after trimming, use default
-  if (nchar(sheetName) == 0) {
-    if (warn && originalName != "Sheet") {
-      cli::cli_warn(messages$excelSheetEmptyOrInvalid())
-    }
-    return("Sheet")
-  }
-
-  # Remove invalid characters: / \ * [ ] : ?
-  sanitizedName <- sheetName
-  sanitizedName <- gsub("/", "_", sanitizedName) # Replace /
-  sanitizedName <- gsub("\\\\", "_", sanitizedName) # Replace \
-  sanitizedName <- gsub("\\*", "_", sanitizedName) # Replace *
-  sanitizedName <- gsub("\\[", "_", sanitizedName) # Replace [
-  sanitizedName <- gsub("\\]", "_", sanitizedName) # Replace ]
-  sanitizedName <- gsub(":", "_", sanitizedName) # Replace :
-  sanitizedName <- gsub("\\?", "_", sanitizedName) # Replace ?
-
-  # Trim to 31 characters maximum
-  if (nchar(sanitizedName) > 31) {
-    sanitizedName <- substr(sanitizedName, 1, 31)
-  }
-
-  # Final check: if still empty (unlikely), use default
-  if (nchar(trimws(sanitizedName)) == 0) {
-    if (warn) {
-      cli::cli_warn(messages$excelSheetSanitized(originalName))
-    }
-    return("Sheet")
-  }
-
-  # Warn if the name was changed
-  if (warn && sanitizedName != originalName) {
-    cli::cli_warn(messages$excelSheetSanitizedInfo(originalName, sanitizedName))
-  }
-
-  return(sanitizedName)
 }
