@@ -51,37 +51,35 @@ loadProject <- function(path = "Project.json") {
   project
 }
 
-#' Save a project's in-memory edits to its on-disk tree
+#' Save the project to the disk
 #'
-#' @description Reconcile the on-disk `definitions/` tree to the in-memory
-#'   project, in place. This is the commit step of the explicit-save model:
-#'   authoring edits (`addScenario()`, `setIndividual()`,
-#'   `removeParameterSet()`, and the metadata setters) stay in memory until
-#'   `saveProject()` writes them out.
+#' @description Write your changes to the project files on disk. Changes made
+#'   in your R session (e.g. with `addScenario()`, `setIndividual()`,
+#'   `removeParameterSet()`) only live in memory until you call
+#'   `saveProject()`.
 #'
-#'   The save is a full-tree reconciliation, not an incremental write:
+#'   What happens when you save:
 #'
-#'   - Write-if-different: only entity files whose serialized content differs
-#'     from what is already on disk are written, so `git diff` shows exactly
-#'     the entities you changed.
-#'   - Orphan reconciliation: an entity removed in memory has its
-#'     `definitions/<kind>/<id>.json` deleted. Deletion is strictly scoped to
-#'     the definitions tree; nothing outside it is touched.
-#'   - The `Project.json` container is rewritten with its inline sections
-#'     emptied (the tree owns them).
+#'   - Only files with actual changes are re-written, so `git diff` shows
+#'     exactly the definitions you edited.
+#'   - If you removed something from the project (e.g. a scenario), its file
+#'     in the `definitions/` folder is deleted. Files outside the
+#'     `definitions/` folder are never touched.
+#'   - The `Project.json` file is updated.
 #'
-#'   A clean save (nothing diverges from disk) is an idempotent no-op that
-#'   reports an informational message, never an error.
+#'   If there is nothing to save, `saveProject()` simply reports that the
+#'   project is already up to date. Saving repeatedly is always safe.
 #'
-#'   `saveProject()` is single-axis: it reconciles memory to the tree only and
-#'   never warns about a stale Excel side-car. Refresh the workbook separately
-#'   with [exportProjectToExcel()]; inspect divergence with [syncStatus()].
+#'   Saving does not update the Excel files. If you also work with the Excel
+#'   configuration files, refresh them with [exportProjectToExcel()]. Use
+#'   [syncStatus()] to check whether project files on disk, the Excel files,
+#'   and your R session are in sync.
 #'
-#' @param project A `Project` bound to a directory (loaded with [loadProject()]
-#'   or restored with [restoreProject()]). An unbound in-memory project (from
-#'   `Project$new()`) has no tree to save to and aborts; use [snapshotProject()]
-#'   to write a portable file, or [initProject()] plus [loadProject()] to give
-#'   it a home.
+#' @param project A `Project` loaded from disk with [loadProject()] (or
+#'   restored with [restoreProject()]). A project created directly with
+#'   `Project$new()` has no folder on disk to save to; use [snapshotProject()]
+#'   to write it to a single file, or create a project folder first with
+#'   [initProject()].
 #'
 #' @returns Invisibly, the `project`.
 #' @export
