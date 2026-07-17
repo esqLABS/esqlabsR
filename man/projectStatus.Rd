@@ -24,11 +24,16 @@ the function looks for a JSON file with the same base name.}
 Defaults to \code{FALSE}.}
 }
 \value{
-A list with components: \item{in_sync}{Logical indicating whether
-all files are synchronized} \item{details}{A list with detailed comparison
-results}
+A list with components: \item{excel_in_sync}{Logical indicating
+whether the Excel files and the JSON are synchronized}
+\item{details}{A list with detailed comparison results}
 }
 \description{
 Compares Excel configuration files against their JSON
 configuration to determine if they are synchronized.
+}
+\seealso{
+The method \code{Project$syncStatus()} reports the same comparison for a
+loaded \code{Project} (against its \code{Project.xlsx} side-car) and returns the same
+\code{excel_in_sync} / \code{details} shape.
 }

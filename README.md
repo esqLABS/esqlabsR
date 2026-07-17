@@ -64,9 +64,9 @@ Note: For projects created for version 3 of `esqlabsR` package, refer to
 
 A `{esqlabsR}` project is a directory. At its root sits a `Project.json`
 container alongside a `definitions/` folder that holds your authored
-entity files, one file per entity, with the scenarios living under
-`definitions/scenarios/`. The package ships a complete worked example
-project that you can load and run directly.
+definition files, one file per definition, with the scenarios living
+under `definitions/scenarios/`. The package ships a complete worked
+example project that you can load and run directly.
 
 The quickest way to see the workflow end to end is to load the example
 project, run one of its scenarios, and plot the result:
@@ -98,12 +98,12 @@ structure and files in the current working directory with:
 esqlabsR::initProject()
 ```
 
-You then author and edit the project’s entities, scenarios, individuals,
-populations, parameter sets, output paths, observed data, and plots,
-with the `add*()`, `set*()`, and `remove*()` functions. Each of these
-takes the entity `id` first, for example
+You then author and edit the project’s definitions, scenarios,
+individuals, populations, parameter sets, output paths, observed data,
+and plots, with the `add*()`, `set*()`, and `remove*()` functions. Each
+of these takes the definition `id` first, for example
 `addScenario(project, id = "aciclovir_iv", ...)`. These edits are
-write-through: each one persists to its entity file immediately, so
+write-through: each one persists to its definition file immediately, so
 there is no separate save step. Once your project is configured, you run
 it with `runScenarios()`, plot it with `createPlots()`, and check it for
 configuration problems with `validateProject()`.

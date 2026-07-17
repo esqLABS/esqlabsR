@@ -2,23 +2,27 @@
 % Please edit documentation in R/populations.R
 \name{removePopulation}
 \alias{removePopulation}
-\title{Remove a population from a Project}
+\title{Remove one or more populations from a Project}
 \usage{
-removePopulation(project, populationId)
+removePopulation(project, id)
 }
 \arguments{
 \item{project}{A \code{Project} object.}
 
-\item{populationId}{Character scalar.}
+\item{id}{Character vector of population ids to remove. Each is
+canonicalized the same way \code{\link[=addPopulation]{addPopulation()}} canonicalizes it.}
 }
 \value{
 The \code{project} object, invisibly.
 }
 \description{
-Remove a population from a Project
+Drop the populations with matching ids in one write-through. Warns (and
+skips) any id not present, and warns when a removed population is still
+referenced.
 }
 \seealso{
 Other population:
-\code{\link[=addPopulation]{addPopulation()}}
+\code{\link[=addPopulation]{addPopulation()}},
+\code{\link[=setPopulation]{setPopulation()}}
 }
 \concept{population}

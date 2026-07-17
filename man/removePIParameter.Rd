@@ -4,12 +4,12 @@
 \alias{removePIParameter}
 \title{Remove a parameter from a PI task}
 \usage{
-removePIParameter(project, taskId, id)
+removePIParameter(project, task, id)
 }
 \arguments{
 \item{project}{A \code{Project} object.}
 
-\item{taskId}{Character scalar. Existing PI task id.}
+\item{task}{Character scalar. Existing PI task id.}
 
 \item{id}{Character scalar. Parameter id to remove.}
 }
@@ -24,6 +24,9 @@ warning is emitted.
 }
 \seealso{
 Other parameterIdentification:
+\code{\link[=PIOutputMapping]{PIOutputMapping()}},
+\code{\link[=PIParameter]{PIParameter()}},
+\code{\link[=PITask]{PITask()}},
 \code{\link[=addPIOutputMapping]{addPIOutputMapping()}},
 \code{\link[=addPIParameter]{addPIParameter()}},
 \code{\link[=addPITask]{addPITask()}},

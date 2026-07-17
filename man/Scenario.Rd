@@ -19,7 +19,8 @@ Scenario(
   steadyStateTime = 1000,
   steadyStateTimeUnit = NULL,
   overwriteFormulasInSS = FALSE,
-  modelParameterSets = NULL
+  modelParameterSets = NULL,
+  initialConditions = NULL
 )
 }
 \arguments{
@@ -40,8 +41,8 @@ protocol; \code{NA} when absent.}
 \item{outputPaths}{Named character vector of literal output paths.
 Names are the ids referencing \code{project$outputPaths}; values are the
 literal paths. \code{NULL} when the scenario declares no outputs.
-Round-trip serialization reads \code{names(outputPaths)} to rebuild
-\code{outputPathIds}, so the named-vector invariant must be preserved.}
+Round-trip serialization reads \code{names(outputPaths)} to rebuild the
+\code{outputPaths} id array, so the named-vector invariant must be preserved.}
 
 \item{simulationType}{Character. \code{"Individual"} or \code{"Population"}.
 Defaults to \code{"Population"} when \code{populationId} is set,
@@ -67,8 +68,11 @@ the main simulation.}
 \item{overwriteFormulasInSS}{Logical. Overwrite formula parameters
 during steady-state.}
 
-\item{modelParameterSets}{Character vector. Parameter-set names
-referencing \code{project$modelParameterSets}.}
+\item{modelParameterSets}{Character vector. Parameter-set ids
+referencing \code{project$parameterSets}.}
+
+\item{initialConditions}{Character vector. Initial-condition set ids
+referencing \code{project$initialConditions}.}
 }
 \value{
 A \code{Scenario} object: a named list carrying exactly the fields
@@ -81,6 +85,8 @@ not create or hold ospsuite runtime objects; the runtime is built by
 \code{\link[=runScenarios]{runScenarios()}} at execution time.
 
 A \code{Scenario} is a named list with copy semantics: an entry extracted
-from \code{project$scenarios} is an independent copy, and writing it back
-(e.g. \code{project$scenarios[[name]] <- sc}) is what mutates the project.
+from \code{project$scenarios} is an independent copy. The section accessor is
+read-only, so to apply a change you pass the record to an authoring
+function (\code{addScenario()} / \code{setScenario()}), which validates and writes
+it through to the project.
 }

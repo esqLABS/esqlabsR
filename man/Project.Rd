@@ -16,6 +16,13 @@ source: mutating one does not affect the other. The one exception is
 programmatic observed data added via \code{\link[=addObservedData]{addObservedData()}} with a
 \code{DataSet} object; those \code{ospsuite::DataSet} objects wrap external
 handles and are shared by reference between a project and its clone.
+
+A clone is also detached from the source on disk: it does not own the
+source's definitions tree, so its write-through mutations (\code{addScenario()},
+\code{removeScenario()}, and the other \verb{add*} / \verb{remove*} / \verb{set*} helpers)
+stay in memory only and never touch the source's \verb{definitions/}
+directory. Use \code{\link[=saveSnapshot]{saveSnapshot()}} to write the clone to a single-file
+snapshot you can reload with \code{\link[=loadSnapshot]{loadSnapshot()}}.
 }
 \keyword{internal}
 \section{Active bindings}{
@@ -32,22 +39,46 @@ configuration file (i.e. \code{dirname(projectFilePath)}). Used as the
 base for resolving relative paths. \code{NULL} if the project was not
 loaded from a file.}
 
-    \item{\code{modified}}{Read-only logical. \code{TRUE} if any configuration property
-has been modified since the project was loaded or saved. Cleared
-internally by \code{\link[=saveProject]{saveProject()}}.}
-
     \item{\code{validatedSinceMutation}}{Read-only logical. \code{TRUE} if a full
 \code{\link[=validateProject]{validateProject()}} has succeeded since the last project mutation
 or load. Cleared by any mutation. Used internally by automatic
 validation hooks (e.g. in \code{\link[=runScenarios]{runScenarios()}} and \code{\link[=createPlots]{createPlots()}}) to
 skip redundant re-validation of an unchanged project.}
 
+    \item{\code{name}}{Human-readable project name (the \code{name} JSON field). May be
+\code{NULL} when the project declares no name. Writing persists the
+container for a bound project.}
+
+    \item{\code{description}}{Optional free-text project description (the
+\code{description} JSON field). May be \code{NULL}. Writing persists the
+container for a bound project.}
+
+    \item{\code{definitionsFolder}}{Name of the folder (relative to
+\code{projectDirPath}) that holds the project's authored entity-definition
+tree. Defaults to \code{"definitions"}. Writing persists the container for
+a bound project; changing it moves where future write-through edits
+are read from and written to.}
+
+    \item{\code{defaultSimulationRunOptions}}{Named list of the project-level
+default simulation run options (the \code{defaultSimulationRunOptions} JSON
+field), or \code{NULL} when none are declared. Used by \code{\link[=runScenarios]{runScenarios()}} as
+the default \code{simulationRunOptions} when the caller does not pass one.
+Recognized fields: \code{numberOfCores}, \code{checkForNegativeValues},
+\code{showProgress}. Writing persists the container for a bound project.}
+
+    \item{\code{excel}}{Read-only named list of the Excel import/export bridge
+sheet-name fields (\code{configurationsFolder}, \code{modelParamsFile},
+\code{individualsFile}, \code{populationsFile}, \code{scenariosFile},
+\code{applicationsFile}, \code{plotsFile}, \code{parameterIdentificationFile}).
+Returned verbatim as strings (no resolution). Empty for a from-scratch
+JSON project that has no Excel side-car.}
+
     \item{\code{schemaVersion}}{Schema version declared in the JSON. Always "2.0"
-for projects loaded by this parser. Writing marks the project as
-modified.}
+for projects loaded by this parser. Writing persists the container
+for a bound project.}
 
     \item{\code{esqlabsRVersion}}{Informational version string from the JSON.
-Writing marks the project as modified.}
+Writing persists the container for a bound project.}
 
     \item{\code{jsonPath}}{Read-only. Absolute path the project was loaded from
 (an alias of \code{projectFilePath}), or \code{NULL} for an in-memory project.}
@@ -55,26 +86,39 @@ Writing marks the project as modified.}
     \item{\code{modelFolder}}{Path to the folder containing pkml simulation files.}
 
     \item{\code{configurationsFolder}}{Path to the folder containing configuration
-files. Used by the Excel import/export bridge.}
+files. Part of the Excel import/export bridge (the \code{excel} container
+block).}
 
     \item{\code{modelParamsFile}}{Path to the Excel file with global model
-parameterization. Used by the Excel import/export bridge.}
+parameterization. Part of the Excel import/export bridge (the \code{excel}
+container block).}
 
     \item{\code{individualsFile}}{Path to the Excel file with individual-specific
-model parameterization. Used by the Excel import/export bridge.}
+model parameterization. Part of the Excel import/export bridge (the
+\code{excel} container block).}
 
     \item{\code{populationsFile}}{Path to the Excel file with population
-information. Used by the Excel import/export bridge.}
+information. Part of the Excel import/export bridge (the \code{excel}
+container block).}
 
     \item{\code{scenariosFile}}{Path to the Excel file with scenario definitions.
-Used by the Excel import/export bridge.}
+Part of the Excel import/export bridge (the \code{excel} container block).}
 
     \item{\code{applicationsFile}}{Path to the Excel file with scenario-specific
-parameters such as application protocol parameters. Used by the
-Excel import/export bridge.}
+parameters such as application protocol parameters. Part of the Excel
+import/export bridge (the \code{excel} container block).}
 
-    \item{\code{plotsFile}}{Path to the Excel file with plot definitions. Used by
-the Excel import/export bridge.}
+    \item{\code{plotsFile}}{Path to the Excel file with plot definitions. Part of
+the Excel import/export bridge (the \code{excel} container block).}
+
+    \item{\code{parameterIdentificationFile}}{Name of the Excel workbook holding
+the parameter-identification sheets (\code{PITasks}, \code{PIParameters},
+\code{PIOutputMappings}). Resolved relative to \code{configurationsFolder}.}
+
+    \item{\code{initialConditionsFile}}{Name of the Excel workbook holding the
+initial-condition (molecule start value) sheets, one sheet per set.
+Part of the Excel import/export bridge (the \code{excel} container block);
+resolved relative to \code{configurationsFolder}.}
 
     \item{\code{populationsFolder}}{Name of the folder containing population
 definitions as CSV files. Resolved relative to \code{projectDirPath}.
@@ -86,49 +130,90 @@ located.}
     \item{\code{outputFolder}}{Path to the folder where the results should be saved
 relative to the "Code" folder}
 
-    \item{\code{outputPaths}}{Named list mapping output-path IDs to OSPS-notation
-path strings (e.g. \code{list(PVB = "Organism|...")}). A named character
-vector is also accepted on write and coerced to a list on save.
-Writing marks the project as modified.}
+    \item{\code{outputPaths}}{Read-only named list mapping output-path IDs to
+OSPS-notation path strings (e.g. \code{list(PVB = "Organism|...")}). To
+change it, use \code{\link[=addOutputPath]{addOutputPath()}} / \code{\link[=setOutputPath]{setOutputPath()}} /
+\code{\link[=removeOutputPath]{removeOutputPath()}} or edit the definition files under
+\verb{definitions/output-paths/}; an authoring write persists each changed
+output path to (or deletes it from) its file.}
 
-    \item{\code{scenarios}}{Named list of \code{Scenario} records, keyed by scenario
-name. Entries are plain-data records with copy semantics; write a
-modified entry back (e.g. \code{project$scenarios[[name]] <- sc}) to
-mutate the project. Writing marks the project as modified.}
+    \item{\code{scenarios}}{Read-only named list of \code{Scenario} records, keyed by
+scenario name. To change it, use \code{\link[=addScenario]{addScenario()}} / \code{\link[=setScenario]{setScenario()}} /
+\code{\link[=removeScenario]{removeScenario()}} (or \code{\link[=renameScenario]{renameScenario()}} / \code{\link[=duplicateScenario]{duplicateScenario()}}), or
+edit the definition files under \verb{definitions/scenarios/}. The canonical
+edit loop is read-modify-resubmit: read a record
+(\code{sc <- project$scenarios[["id"]]}), change the detached copy
+(\code{sc$modelFile <- ...}), then re-submit it
+(\code{setScenario(project, "id", ...)}). An authoring write structurally
+validates each changed scenario and persists it to (or deletes it from)
+its file; an in-memory project (no directory) holds scenarios in memory
+only.}
 
-    \item{\code{modelParameterSets}}{Named list of parameter structures, keyed by
-set name. Writing marks the project as modified.}
+    \item{\code{parameterSets}}{Read-only named list of parameter structures, keyed
+by set id. This single section holds every parameter set in the
+project: a scenario references the sets it applies through its
+\code{modelParameterSets} field, an individual or application through its
+\code{parameterSets} field; all three resolve against this one map. To
+change it, use \code{\link[=addParameterSet]{addParameterSet()}} / \code{\link[=removeParameterSet]{removeParameterSet()}} /
+\code{\link[=addParameterEntry]{addParameterEntry()}} / \code{\link[=removeParameterEntry]{removeParameterEntry()}} or edit the entity
+files under \verb{definitions/parameter-sets/}.}
 
-    \item{\code{individualParameterSets}}{Named list of parameter structures,
-keyed by set name. Writing marks the project as modified.}
+    \item{\code{initialConditions}}{Read-only named list of initial-condition sets,
+keyed by set id. Each set is a list of molecule start-value records
+(\code{path}, \code{value}, \code{unit}), applied to a scenario's simulation via its
+\code{initialConditions} field. To change it, use \code{\link[=addInitialConditions]{addInitialConditions()}} /
+\code{\link[=removeInitialConditions]{removeInitialConditions()}} / \code{\link[=addInitialConditionEntry]{addInitialConditionEntry()}} /
+\code{\link[=removeInitialConditionEntry]{removeInitialConditionEntry()}} or edit the definition files under
+\verb{definitions/initial-conditions/}.}
 
-    \item{\code{applicationParameterSets}}{Named list of parameter structures,
-keyed by set name. Writing marks the project as modified.}
+    \item{\code{individuals}}{Read-only named list of plain lists, keyed by
+individualId. To change it, use \code{\link[=addIndividual]{addIndividual()}} / \code{\link[=setIndividual]{setIndividual()}} /
+\code{\link[=removeIndividual]{removeIndividual()}} or edit the definition files under
+\verb{definitions/individuals/}.}
 
-    \item{\code{individuals}}{Named list of plain lists, keyed by individualId.
-Writing marks the project as modified.}
+    \item{\code{populations}}{Read-only named list of plain lists, keyed by
+populationId. To change it, use \code{\link[=addPopulation]{addPopulation()}} / \code{\link[=setPopulation]{setPopulation()}} /
+\code{\link[=removePopulation]{removePopulation()}} or edit the definition files under
+\verb{definitions/populations/}.}
 
-    \item{\code{populations}}{Named list of plain lists, keyed by populationId.
-Writing marks the project as modified.}
+    \item{\code{applications}}{Read-only named list of parameter structures, keyed
+by protocol name. To change it, use \code{\link[=addApplication]{addApplication()}} /
+\code{\link[=removeApplication]{removeApplication()}} or edit the definition files under
+\verb{definitions/applications/}.}
 
-    \item{\code{applications}}{Named list of parameter structures, keyed by
-protocol name. Writing marks the project as modified.}
+    \item{\code{observedData}}{Read-only list of observed data source declarations.
+To change it, use \code{\link[=addObservedData]{addObservedData()}} / \code{\link[=removeObservedData]{removeObservedData()}} or edit
+the definition files under \verb{definitions/observed-data/} (one file per
+declaration).}
 
-    \item{\code{observedData}}{List of observed data source declarations parsed
-from JSON. Writing marks the project as modified and resets the
-cached observed-data names.}
+    \item{\code{dataCombined}}{Read-only named list of \code{DataCombined} definitions,
+keyed by \code{dataCombinedId}. Each entry pairs simulated and/or observed
+curves. To change it, use \code{\link[=addDataCombined]{addDataCombined()}} / \code{\link[=removeDataCombined]{removeDataCombined()}}
+or edit the definition files under \verb{definitions/data-combined/}.}
 
-    \item{\code{plots}}{List with 3 elements: \code{dataCombined}, \code{plotConfiguration},
-\code{plotGrids}. Writing marks the project as modified.}
+    \item{\code{plots}}{Read-only named list of plot definitions, keyed by \code{plotId}.
+Each entry is a single plot's configuration (\code{dataCombinedId},
+\code{plotType}, and styling fields). To change it, use \code{\link[=addPlot]{addPlot()}} /
+\code{\link[=removePlot]{removePlot()}} or edit the definition files under \verb{definitions/plots/}.}
 
-    \item{\code{parameterIdentification}}{Named list keyed by PI task id; each
-entry is a \code{PITask} record. May be \code{NULL} or an empty list when
-the project declares no PI tasks. Writing marks the project as
-modified.}
+    \item{\code{plotGrids}}{Read-only named list of plot-grid definitions, keyed by
+\code{plotGridId}. Each entry lays out one or more plots. To change it, use
+\code{\link[=addPlotGrid]{addPlotGrid()}} / \code{\link[=removePlotGrid]{removePlotGrid()}} or edit the definition files under
+\verb{definitions/plot-grids/}.}
 
-    \item{\code{filePaths}}{Read-only named list of declared file/folder paths
-(the \code{filePaths} JSON section). Values are returned verbatim as
-strings; no resolution is performed at this stage.}
+    \item{\code{parameterIdentification}}{Read-only named list keyed by PI task id;
+each entry is a \code{PITask} record. May be \code{NULL} or an empty list when the
+project declares no PI tasks. To change it, use \code{\link[=addPITask]{addPITask()}} /
+\code{\link[=removePITask]{removePITask()}} (and the per-task \code{\link[=addPIParameter]{addPIParameter()}} /
+\code{\link[=addPIOutputMapping]{addPIOutputMapping()}} and their removals) or edit the definition files
+under \verb{definitions/parameter-identification/}.}
+
+    \item{\code{filePaths}}{Read-only named list of the project's working-folder
+paths (the \code{filePaths} JSON block): \code{modelFolder}, \code{dataFolder},
+\code{outputFolder}, and \code{populationsFolder}. Values are returned verbatim
+as strings; no resolution is performed at this stage. The Excel-bridge
+sheet-name fields live in the separate \code{excel} block (\code{project$excel}),
+not here.}
 
     \item{\code{asList}}{Returns the current project as a list matching the JSON
 schema. Reflects any in-memory modifications. Read-only.}
@@ -139,12 +224,14 @@ schema. Reflects any in-memory modifications. Read-only.}
 \subsection{Public methods}{
   \itemize{
     \item \href{#method-Project-initialize}{\code{Project$new()}}
-    \item \href{#method-Project-.markSaved}{\code{Project$.markSaved()}}
     \item \href{#method-Project-.rebindPath}{\code{Project$.rebindPath()}}
     \item \href{#method-Project-.markValidated}{\code{Project$.markValidated()}}
     \item \href{#method-Project-.markModified}{\code{Project$.markModified()}}
+    \item \href{#method-Project-.getSection}{\code{Project$.getSection()}}
+    \item \href{#method-Project-.setSection}{\code{Project$.setSection()}}
     \item \href{#method-Project-.getFilePathsData}{\code{Project$.getFilePathsData()}}
-    \item \href{#method-Project-sync}{\code{Project$sync()}}
+    \item \href{#method-Project-.getExcelData}{\code{Project$.getExcelData()}}
+    \item \href{#method-Project-syncStatus}{\code{Project$syncStatus()}}
     \item \href{#method-Project-print}{\code{Project$print()}}
     \item \href{#method-Project-clone}{\code{Project$clone()}}
   }
@@ -171,31 +258,15 @@ JSON file.}
 }
 
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-Project-.markSaved"></a>}}
-\if{latex}{\out{\hypertarget{method-Project-.markSaved}{}}}
-\subsection{\code{Project$.markSaved()}}{
-  Internal method to clear the \code{modified} flag after saving.
-Saving is not a mutation, so it leaves \code{validatedSinceMutation}
-untouched: a project validated before a save stays validated, and
-a later \code{runScenarios()} / \code{createPlots()} need not re-validate.
-Not intended for end-user use.
-  \subsection{Usage}{
-    \if{html}{\out{<div class="r">}}
-    \preformatted{Project$.markSaved()}
-    \if{html}{\out{</div>}}
-  }
-}
-
-\if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-Project-.rebindPath"></a>}}
 \if{latex}{\out{\hypertarget{method-Project-.rebindPath}{}}}
 \subsection{\code{Project$.rebindPath()}}{
   Internal method to rebind the project to a new file
-location after a save-as. Updates \code{projectFilePath} / \code{jsonPath}
-and \code{projectDirPath} (the base for relative-path resolution) so a
-subsequent bare \code{saveProject()} and any relative-path access target
-the new file. Not a mutation, so it leaves the flags untouched.
-Not intended for end-user use.
+location. Updates \code{projectFilePath} / \code{jsonPath} and \code{projectDirPath}
+(the base for relative-path resolution) so any relative-path access
+targets the new file, and re-claims the definitions tree so a clone bound to
+its own location becomes write-through there. Not a mutation, so it
+leaves the flags untouched. Not intended for end-user use.
   \subsection{Usage}{
     \if{html}{\out{<div class="r">}}
     \preformatted{Project$.rebindPath(path)}
@@ -204,7 +275,7 @@ Not intended for end-user use.
   \subsection{Arguments}{
     \if{html}{\out{<div class="arguments">}}
     \describe{
-      \item{\code{path}}{Absolute or relative path the project was saved to.}
+      \item{\code{path}}{Absolute or relative path the project was bound to.}
     }
     \if{html}{\out{</div>}}
   }
@@ -229,8 +300,9 @@ validation has succeeded with no critical errors. Sets the
 \if{latex}{\out{\hypertarget{method-Project-.markModified}{}}}
 \subsection{\code{Project$.markModified()}}{
   Internal method invoked by mutators after a successful
-programmatic change. Sets the \code{modified} flag and clears the
-\code{validatedSinceMutation} flag. Not intended for end-user use.
+programmatic change. Clears the \code{validatedSinceMutation} flag so the
+next \code{runScenarios()} / \code{createPlots()} re-validates the project. Not
+intended for end-user use.
   \subsection{Usage}{
     \if{html}{\out{<div class="r">}}
     \preformatted{Project$.markModified()}
@@ -239,12 +311,65 @@ programmatic change. Sets the \code{modified} flag and clears the
 }
 
 \if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Project-.getSection"></a>}}
+\if{latex}{\out{\hypertarget{method-Project-.getSection}{}}}
+\subsection{\code{Project$.getSection()}}{
+  Internal read accessor for one definition section. Returns
+the plain backing list (NOT wrapped in the read-only \code{DefinitionList}
+the public \verb{project$<section>} getter returns), so an authoring
+function may bind it to a local copy and subscript-assign that copy
+before re-submitting it via \code{.setSection()}. Not intended for end-user
+use; the public accessor is the read-only end-user surface.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{Project$.getSection(kind)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{kind}}{Character scalar naming the section (e.g. \code{"scenarios"}).}
+    }
+    \if{html}{\out{</div>}}
+  }
+}
+
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Project-.setSection"></a>}}
+\if{latex}{\out{\hypertarget{method-Project-.setSection}{}}}
+\subsection{\code{Project$.setSection()}}{
+  Internal write entry point for one definition section. This
+is the only sanctioned way to change a section: it runs the same
+structural validation and write-through persistence the public
+active-binding setter used to, then stores the new list in the private
+backing field and invalidates the validation cache. The public
+\verb{project$<section> <- ...} setter no longer writes (it aborts
+read-only); every \verb{add*}/\verb{set*}/\verb{remove*} authoring function routes its
+write here. Accepts a plain list; a \code{DefinitionList} is unwrapped
+defensively. Not intended for end-user use.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{Project$.setSection(kind, value)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{kind}}{Character scalar naming the section (e.g. \code{"scenarios"}).}
+      \item{\code{value}}{The new section list.}
+    }
+    \if{html}{\out{</div>}}
+  }
+}
+
+\if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-Project-.getFilePathsData"></a>}}
 \if{latex}{\out{\hypertarget{method-Project-.getFilePathsData}{}}}
 \subsection{\code{Project$.getFilePathsData()}}{
-  Internal method to retrieve the raw filePaths metadata
-(a named list of \code{list(value, description)} entries). Not intended for
-end-user use; consumed by the Excel import/export bridge.
+  Internal method to retrieve the raw working-folder metadata
+(the \code{filePaths} block: a named list of \code{list(value, description)}
+entries for the four live folders). Not intended for end-user use;
+consumed by the Excel import/export bridge.
   \subsection{Usage}{
     \if{html}{\out{<div class="r">}}
     \preformatted{Project$.getFilePathsData()}
@@ -253,13 +378,36 @@ end-user use; consumed by the Excel import/export bridge.
 }
 
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-Project-sync"></a>}}
-\if{latex}{\out{\hypertarget{method-Project-sync}{}}}
-\subsection{\code{Project$sync()}}{
-  Check synchronization status of a Project.
+\if{html}{\out{<a id="method-Project-.getExcelData"></a>}}
+\if{latex}{\out{\hypertarget{method-Project-.getExcelData}{}}}
+\subsection{\code{Project$.getExcelData()}}{
+  Internal method to retrieve the raw Excel-bridge metadata
+(the \code{excel} block: a named list of \code{list(value, description)} entries
+for the seven sheet-name fields). Empty when the project has no Excel
+side-car. Not intended for end-user use; consumed by the Excel
+import/export bridge.
   \subsection{Usage}{
     \if{html}{\out{<div class="r">}}
-    \preformatted{Project$sync(silent = FALSE)}
+    \preformatted{Project$.getExcelData()}
+    \if{html}{\out{</div>}}
+  }
+}
+
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Project-syncStatus"></a>}}
+\if{latex}{\out{\hypertarget{method-Project-syncStatus}{}}}
+\subsection{\code{Project$syncStatus()}}{
+  Report whether the project's Excel side-car is in sync
+with its definition files. Every section is write-through to its
+\verb{definitions/<kind>/} tree and the \code{Project.json} container is a
+derived snapshot, so the only drift that can still occur is between
+the project and a sibling \code{Project.xlsx} produced by
+\code{\link[=exportProjectToExcel]{exportProjectToExcel()}}. This method compares the two; it is
+read-only and never reconciles them (use \code{\link[=exportProjectToExcel]{exportProjectToExcel()}} or
+\code{\link[=importProjectFromExcel]{importProjectFromExcel()}} to do that).
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{Project$syncStatus(silent = FALSE)}
     \if{html}{\out{</div>}}
   }
   \subsection{Arguments}{
@@ -269,6 +417,14 @@ end-user use; consumed by the Excel import/export bridge.
 Defaults to \code{FALSE}.}
     }
     \if{html}{\out{</div>}}
+  }
+  \subsection{Returns}{
+    Invisibly, a list with two components: \code{excel_in_sync} (a
+logical, or \code{NA} when there is no Excel side-car to compare against)
+and \code{details} (a list of the per-section differences, empty when in
+sync or when there is nothing to compare). This is the same shape the
+path-based \code{\link[=projectStatus]{projectStatus()}} returns; the two share one comparison
+builder.
   }
 }
 

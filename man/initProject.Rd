@@ -26,7 +26,24 @@ from the JSON. Set to \code{FALSE} for a JSON-only workflow.}
 permission. If FALSE and a project already exists, asks user for permission
 to overwrite.}
 }
-\description{
-Creates the default project folder structure with Excel file templates in the
-working directory.
+\value{
+Invisibly returns \code{destination}, the path the project was
+initialized in.
 }
+\description{
+Scaffolds a JSON-first esqlabsR project in \code{destination}: a \code{Project.json}
+container plus a \verb{definitions/} tree of authored definitions, alongside the
+working folders (\verb{Models/}, \verb{Data/}, \verb{Populations/}, \verb{Results/}). By default
+it also writes optional Excel side-cars from the JSON; set
+\code{createExcel = FALSE} for a JSON-only project.
+}
+\seealso{
+Other project persistence:
+\code{\link[=exampleProjectPath]{exampleProjectPath()}},
+\code{\link[=exportProjectToExcel]{exportProjectToExcel()}},
+\code{\link[=importProjectFromExcel]{importProjectFromExcel()}},
+\code{\link[=loadProject]{loadProject()}},
+\code{\link[=loadSnapshot]{loadSnapshot()}},
+\code{\link[=saveSnapshot]{saveSnapshot()}}
+}
+\concept{project persistence}

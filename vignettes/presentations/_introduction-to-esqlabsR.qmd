@@ -389,7 +389,7 @@ II Authoring scenarios
 ## Authoring is write-through
 <br>
 
-Every edit lands in its entity file immediately. There is no separate save
+Every edit lands in its definition file immediately. There is no separate save
 step.
 
 ```{r, eval = FALSE}

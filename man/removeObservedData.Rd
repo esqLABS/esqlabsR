@@ -2,14 +2,16 @@
 % Please edit documentation in R/observed-data.R
 \name{removeObservedData}
 \alias{removeObservedData}
-\title{Remove observed data from a Project}
+\title{Remove one or more observed-data sources from a Project}
 \usage{
-removeObservedData(project, name)
+removeObservedData(project, id)
 }
 \arguments{
 \item{project}{A \code{Project} object.}
 
-\item{name}{DataSet name or config entry file basename.}
+\item{id}{Character vector of ids. An observed-data id comes from the data
+source (an OSPS \code{DataSet} name or a file basename) and is matched
+verbatim, not canonicalized.}
 }
 \value{
 The \code{project} object, invisibly.
@@ -17,7 +19,14 @@ The \code{project} object, invisibly.
 \description{
 Removes by DataSet name (for \code{type = "programmatic"} entries) or by
 \code{file} basename (for \code{type} \code{"excel"} / \code{"pkml"} / \code{"script"}
-entries). Warns and is a no-op if no matching entry is found.
+entries). Vectorizes over a vector of ids, removing each in one
+write-through. Warns and skips any id with no matching entry.
+}
+\details{
+Unlike the other authoring functions, \code{addObservedData()} is not
+vectorized over ids: its second argument is a \code{DataSet} or a configuration
+list, not an id, so it adds a single source per call. Add several sources
+with several calls.
 }
 \seealso{
 Other observedData:

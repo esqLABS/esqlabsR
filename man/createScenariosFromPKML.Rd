@@ -7,11 +7,11 @@
 createScenariosFromPKML(
   pkmlFilePaths,
   project,
-  scenarioNames = NULL,
-  individualId = NULL,
-  populationId = NULL,
-  applicationProtocols = NULL,
-  modelParameterSets = NULL,
+  scenarios = NULL,
+  individual = NULL,
+  population = NULL,
+  application = NULL,
+  parameterSets = NULL,
   outputPaths = NULL,
   simulationTime = NULL,
   simulationTimeUnit = NULL,
@@ -31,33 +31,33 @@ a vector with the same length as the number of scenarios being created
 
 \item{project}{A \code{Project} object holding base information.}
 
-\item{scenarioNames}{Character vector. Optional custom names for the
+\item{scenarios}{Character vector. Optional custom names for the
 scenarios. If \code{NULL} (default), scenario names will be extracted from
 the simulation names in the PKML files. If provided, must have the same
 length as \code{pkmlFilePaths}.}
 
-\item{individualId}{Character vector. Optional individual IDs to use for
+\item{individual}{Character vector. Optional individual ids to use for
 scenarios. If \code{NULL} (default), no individual will be specified. Can be
 a single string (recycled for all scenarios) or a vector with the same
 length as \code{pkmlFilePaths}.}
 
-\item{populationId}{Character vector. Optional population IDs to use for
+\item{population}{Character vector. Optional population ids to use for
 scenarios. If \code{NULL} (default), no population will be specified. If
 provided, sets simulation type to "Population". Can be a single string
 (recycled for all scenarios) or a vector with the same length as
 \code{pkmlFilePaths}.}
 
-\item{applicationProtocols}{Character vector. Optional application protocol
-names to use for scenarios, each referencing \code{project$applications}. If
+\item{application}{Character vector. Optional application protocol
+ids to use for scenarios, each referencing \code{project$applications}. If
 \code{NULL} (default), the scenario has no application protocol (the PKML file
 already embeds its own application). Values are used verbatim and are
 validated against \code{project$applications}. Can be a single string
 (recycled for all scenarios) or a vector with the same length as
 \code{pkmlFilePaths}.}
 
-\item{modelParameterSets}{Character vector. Optional model parameter set
-ids to apply to scenarios (referencing \code{project$modelParameterSets}).
-If \code{NULL} (default), no model parameter sets will be applied. Can be a
+\item{parameterSets}{Character vector. Optional parameter set
+ids to apply to scenarios (referencing \code{project$parameterSets}).
+If \code{NULL} (default), no parameter sets will be applied. Can be a
 single string (recycled for all scenarios) or a vector with the same
 length as \code{pkmlFilePaths}. If providing multiple set ids per scenario,
 separate them with commas in the string.}
@@ -117,7 +117,7 @@ value (recycled for all scenarios) or a vector with the same length as
 \code{pkmlFilePaths}.}
 
 \item{paramSheets}{\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}} Use
-\code{modelParameterSets} instead.}
+\code{parameterSets} instead.}
 }
 \value{
 The \code{project}, invisibly, with the new scenarios added to
@@ -186,15 +186,15 @@ createScenariosFromPKML(
   project = project
 )
 
-# The project now holds the new scenarios; run and save them
+# The project now holds the new scenarios (already written through to
+# their entity files); run them
 results <- runScenarios(project)
-saveProject(project)
 
 # Example of vector recycling: single value applied to all scenarios
 createScenariosFromPKML(
   pkmlFilePaths = c("sim1.pkml", "sim2.pkml", "sim3.pkml"),
   project = project,
-  individualId = "Individual_001",
+  individual = "Individual_001",
   steadyState = TRUE,
   steadyStateTime = 1000
 )
@@ -203,8 +203,8 @@ createScenariosFromPKML(
 createScenariosFromPKML(
   pkmlFilePaths = c("pediatric.pkml", "adult.pkml", "elderly.pkml"),
   project = project,
-  scenarioNames = c("Pediatric", "Adult", "Elderly"),
-  individualId = c("Child_001", "Adult_001", "Elderly_001"),
+  scenarios = c("Pediatric", "Adult", "Elderly"),
+  individual = c("Child_001", "Adult_001", "Elderly_001"),
   steadyState = c(FALSE, TRUE, TRUE),
   steadyStateTime = c(NA, 2000, 1500)
 )

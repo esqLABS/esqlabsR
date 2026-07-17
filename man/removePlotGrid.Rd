@@ -2,21 +2,22 @@
 % Please edit documentation in R/plots.R
 \name{removePlotGrid}
 \alias{removePlotGrid}
-\title{Remove a plot grid from a Project}
+\title{Remove one or more plot grids from a Project}
 \usage{
-removePlotGrid(project, name)
+removePlotGrid(project, id)
 }
 \arguments{
 \item{project}{A \code{Project} object.}
 
-\item{name}{Character scalar.}
+\item{id}{Character vector of plot-grid ids. Each is canonicalized the same
+way \code{\link[=addPlotGrid]{addPlotGrid()}} canonicalizes it.}
 }
 \value{
 The \code{project} object, invisibly.
 }
 \description{
-Drop the row with matching \code{name}. Warns (no-op) if \code{name} is not
-present.
+Drop the entries with matching \code{plotGridId}s. Warns (and skips) any \code{id}
+not present. All removals are written through in a single pass.
 }
 \seealso{
 Other plots:

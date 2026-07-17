@@ -6,9 +6,9 @@
 \usage{
 addPIOutputMapping(
   project,
-  taskId,
-  outputPathId,
-  observedDataId,
+  task,
+  outputPath,
+  observedData,
   scenarios,
   scaling = NULL,
   xOffset = 0,
@@ -22,12 +22,12 @@ addPIOutputMapping(
 \arguments{
 \item{project}{A \code{Project} object.}
 
-\item{taskId}{Character scalar. Existing PI task id.}
+\item{task}{Character scalar. Existing PI task id.}
 
-\item{outputPathId}{Character scalar. Must exist in
+\item{outputPath}{Character scalar. Must exist in
 \code{names(project$outputPaths)}.}
 
-\item{observedDataId}{Character scalar. Name of the observed dataset.}
+\item{observedData}{Character scalar. Name of the observed dataset.}
 
 \item{scenarios}{Character vector of scenario names.}
 
@@ -35,7 +35,7 @@ addPIOutputMapping(
 per-mapping fitting metadata. Defaults match \code{PIOutputMapping()}.}
 
 \item{id}{Optional character scalar; auto-generated as
-\verb{<taskId>_mapping_<N>} when absent.}
+\verb{<task>_mapping_<N>} when absent.}
 }
 \value{
 The \code{project} object, invisibly.
@@ -45,6 +45,9 @@ Add an output mapping to an existing PI task
 }
 \seealso{
 Other parameterIdentification:
+\code{\link[=PIOutputMapping]{PIOutputMapping()}},
+\code{\link[=PIParameter]{PIParameter()}},
+\code{\link[=PITask]{PITask()}},
 \code{\link[=addPIParameter]{addPIParameter()}},
 \code{\link[=addPITask]{addPITask()}},
 \code{\link[=removePIOutputMapping]{removePIOutputMapping()}},

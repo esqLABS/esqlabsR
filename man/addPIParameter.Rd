@@ -6,7 +6,7 @@
 \usage{
 addPIParameter(
   project,
-  taskId,
+  task,
   path,
   scenarios,
   minValue,
@@ -19,7 +19,7 @@ addPIParameter(
 \arguments{
 \item{project}{A \code{Project} object.}
 
-\item{taskId}{Character scalar. Existing PI task id.}
+\item{task}{Character scalar. Existing PI task id.}
 
 \item{path}{Character scalar. Full simulation parameter path.}
 
@@ -31,7 +31,7 @@ exist in \code{project$scenarios}.}
 \item{units}{Optional character scalar.}
 
 \item{id}{Optional character scalar; auto-generated as
-\verb{<taskId>_param_<N>} when absent.}
+\verb{<task>_param_<N>} when absent.}
 }
 \value{
 The \code{project} object, invisibly.
@@ -41,6 +41,9 @@ Add a parameter to an existing PI task
 }
 \seealso{
 Other parameterIdentification:
+\code{\link[=PIOutputMapping]{PIOutputMapping()}},
+\code{\link[=PIParameter]{PIParameter()}},
+\code{\link[=PITask]{PITask()}},
 \code{\link[=addPIOutputMapping]{addPIOutputMapping()}},
 \code{\link[=addPITask]{addPITask()}},
 \code{\link[=removePIOutputMapping]{removePIOutputMapping()}},

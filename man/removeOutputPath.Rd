@@ -2,25 +2,27 @@
 % Please edit documentation in R/output-paths.R
 \name{removeOutputPath}
 \alias{removeOutputPath}
-\title{Remove an output path from a Project}
+\title{Remove one or more output paths from a Project}
 \usage{
 removeOutputPath(project, id)
 }
 \arguments{
 \item{project}{A \code{Project} object.}
 
-\item{id}{Character scalar.}
+\item{id}{Character vector of output-path ids to remove. Each is
+canonicalized the same way \code{\link[=addOutputPath]{addOutputPath()}} canonicalizes it.}
 }
 \value{
 The \code{project} object, invisibly.
 }
 \description{
-Remove an output path from a Project
+Drop the output paths with matching ids in one write-through. Warns (and
+skips) any id not present, and warns when a removed output path is still
+referenced.
 }
 \seealso{
-Other scenario:
+Other output path:
 \code{\link[=addOutputPath]{addOutputPath()}},
-\code{\link[=addScenario]{addScenario()}},
-\code{\link[=removeScenario]{removeScenario()}}
+\code{\link[=setOutputPath]{setOutputPath()}}
 }
-\concept{scenario}
+\concept{output path}

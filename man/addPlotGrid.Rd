@@ -2,27 +2,62 @@
 % Please edit documentation in R/plots.R
 \name{addPlotGrid}
 \alias{addPlotGrid}
-\title{Add a plot grid to a Project}
+\title{Add one or more plot grids to a Project}
 \usage{
-addPlotGrid(project, name, plotIds, ...)
+addPlotGrid(project, id, plots, ...)
 }
 \arguments{
 \item{project}{A \code{Project} object.}
 
-\item{name}{Character scalar. Unique plot-grid name.}
+\item{id}{Character vector of unique plot-grid ids (the number of grids to
+add). Each is canonicalized to a safe, lowercase id (a warning names the
+result if it changed). Stored in the \code{plotGridId} field.}
 
-\item{plotIds}{Character vector of \code{plotId}s to include in the grid.
-Stored internally as a comma-separated string.}
+\item{plots}{The plot ids each grid includes (stored internally as a
+comma-separated string). A character vector is applied whole to every
+grid; to give a different set of plot ids per grid, pass a list of the
+same length as \code{id} (one character vector per grid).}
 
-\item{...}{Optional plot-grid fields, e.g. \code{title}, \code{subtitle}.}
+\item{...}{Optional plot-grid fields, e.g. \code{title}, \code{subtitle}. A scalar
+field is recycled to every grid; to set one differently per grid, pass a
+list of the same length as \code{id}.}
 }
 \value{
 The \code{project} object, invisibly.
 }
 \description{
-Append a new row to \code{project$plots$plotGrids}. Errors if \code{name}
-already exists or if any of the supplied \code{plotIds} are not present
-in \code{project$plots$plotConfiguration}.
+Add new entries to \code{project$plotGrids} (a keyed list, one entry per grid).
+Errors if a \code{plotGridId} already exists or if any of the supplied \code{plots}
+are not present in \code{project$plots}.
+}
+\details{
+The id argument sets \code{N}, the number of definitions to act on, and cannot
+itself be recycled: when any scalar-per-entity field has length greater than
+1, the id vector must have that same length. A length-1 id with all-scalar
+fields is the ordinary single-definition call.
+
+Each scalar-per-entity field is either length 1 (recycled to all \code{N}
+definitions) or length \code{N} (aligned to the ids by position). Any other
+length is an error naming the field and the lengths.
+
+A vector-valued-per-entity field (an individual's or application's
+\code{parameterSets}, a scenario's \code{outputPaths} and \code{parameterSets}) is
+applied whole to every definition, never split positionally. To give a
+different multi-valued list per definition, pass a list of the same length
+as the id vector (one vector per definition).
+
+The call is all-or-nothing: every definition is validated first, and if any
+fails the whole call aborts and writes nothing. On success all definitions
+are folded into the section and persisted in a single write-through.
+
+Two families of authoring functions sit outside this id-sets-\code{N} rule.
+\code{addParameterEntry()} and \code{removeParameterEntry()} vectorize over parameter
+entries (parallel \code{containerPath} / \code{parameterName} / \code{value} / \code{units}
+vectors) within a single named set, a different axis than the id-sets-\code{N}
+rule described here. \code{renameScenario()}, \code{duplicateScenario()},
+\code{addObservedData()}, \code{addPITask()}, and the per-task
+parameter-identification sub-entity helpers act on a single definition per
+call.
 }
 \seealso{
 Other plots:

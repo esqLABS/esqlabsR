@@ -34,5 +34,6 @@ if (isAnyCriticalErrors(results)) {
 }
 }
 \seealso{
-\code{\link[=isAnyCriticalErrors]{isAnyCriticalErrors()}}, \code{\link[=validationSummary]{validationSummary()}}.
+\code{\link[=isAnyCriticalErrors]{isAnyCriticalErrors()}}, \code{\link[=validationSummary]{validationSummary()}},
+\code{\link[=print.ValidationResults]{print.ValidationResults()}}.
 }
