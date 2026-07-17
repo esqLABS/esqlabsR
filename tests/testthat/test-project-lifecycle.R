@@ -317,17 +317,17 @@ test_that("initProject with overwrite = TRUE doesn't ask for permission", {
   expect_true(isProjectInitialized(temp_project$path))
 })
 
-test_that("initProject(overwrite = TRUE) replaces, removing stale entity files but keeping unrelated user files", {
+test_that("initProject(overwrite = TRUE) replaces, removing stale definition files but keeping unrelated user files", {
   dir <- withr::local_tempdir()
   initProject(destination = dir, type = "example", createExcel = FALSE)
 
-  # A stale entity file the template does not ship (simulating an old project's
+  # A stale definition file the template does not ship (simulating an old project's
   # definition), and an unrelated user file that must survive the overwrite.
-  staleEntity <- file.path(dir, "definitions", "scenarios", "staleentity.json")
-  writeLines("{}", staleEntity)
+  staleDefinition <- file.path(dir, "definitions", "scenarios", "staledefinition.json")
+  writeLines("{}", staleDefinition)
   userFile <- file.path(dir, "my_notes.txt")
   writeLines("keep me", userFile)
-  expect_true(file.exists(staleEntity))
+  expect_true(file.exists(staleDefinition))
 
   initProject(
     destination = dir,
@@ -338,7 +338,7 @@ test_that("initProject(overwrite = TRUE) replaces, removing stale entity files b
 
   # Overwrite means replace: the stale definition is gone, the unrelated user
   # file is untouched, and the fresh project scaffold is present.
-  expect_false(file.exists(staleEntity))
+  expect_false(file.exists(staleDefinition))
   expect_true(file.exists(userFile))
   expect_identical(readLines(userFile), "keep me")
   expect_true(file.exists(file.path(dir, "Project.json")))

@@ -46,7 +46,7 @@
       saveProject(project)
     Condition
       Error in `.serializeObservedDataSet()`:
-      ! Two observedData declarations map to the same entity file 'obs.pkml.json'.
+      ! Two observedData declarations map to the same definition file 'obs.pkml.json'.
       x The on-disk id is the file basename (or the programmatic name), so two sources sharing a basename collide.
       i Rename one source so the basenames differ.
 
@@ -56,7 +56,7 @@
       saveProject(project)
     Condition
       Error in `.serializeObservedDataSet()`:
-      ! Two observedData declarations map to the same entity file 'Aciclovir_TimeValuesData.xlsx.json'.
+      ! Two observedData declarations map to the same definition file 'Aciclovir_TimeValuesData.xlsx.json'.
       x The on-disk id is the file basename (or the programmatic name), so two sources sharing a basename collide.
       i Rename one source so the basenames differ.
 
@@ -66,7 +66,7 @@
       saveProject(project)
     Condition
       Error in `.serializeObservedDataSet()`:
-      ! Two observedData declarations map to the same entity file 'obs.pkml.json'.
+      ! Two observedData declarations map to the same definition file 'obs.pkml.json'.
       x The on-disk id is the file basename (or the programmatic name), so two sources sharing a basename collide.
       i Rename one source so the basenames differ.
 

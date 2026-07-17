@@ -477,24 +477,24 @@ validationSummary <- function(validationResults) {
 
 # Shared helpers used by section adapters ----
 
-#' Warn if a removed entity is still referenced elsewhere in the project.
+#' Warn if a removed definition is still referenced elsewhere in the project.
 #'
 #' Walks the project to find inbound references to `id` of the given
-#' `entityType` and emits a `cli::cli_warn()` listing them. Used by the
+#' `definitionType` and emits a `cli::cli_warn()` listing them. Used by the
 #' `remove*()` mutators: removal proceeds anyway, leaving the dangling
 #' reference for the next [validateProject()] call to surface. For
 #' `"outputPath"`, both scenario `outputPaths` and parameter identification
 #' output mappings are scanned.
 #'
 #' @param project A `Project` object.
-#' @param entityType One of `"individual"`, `"population"`, `"application"`,
+#' @param definitionType One of `"individual"`, `"population"`, `"application"`,
 #'   `"parameterSet"`, `"initialConditions"`, `"outputPath"`, `"scenario"`.
 #' @param id Character scalar of the id being removed.
 #' @return `invisible(NULL)`.
 #' @keywords internal
 #' @noRd
-.warnIfReferenced <- function(project, entityType, id) {
-  if (entityType == "parameterSet") {
+.warnIfReferenced <- function(project, definitionType, id) {
+  if (definitionType == "parameterSet") {
     # A single parameter set can be referenced from three sides: a scenario's
     # `modelParameterSets`, an individual's `parameterSets`, an application's
     # `parameterSets`. Scan all three since they now share one namespace.
@@ -523,7 +523,7 @@ validationSummary <- function(validationResults) {
     }
     if (length(holders) > 0) {
       cli::cli_warn(c(
-        "Removed parameterSet {.val {id}} is still referenced by {length(holders)} entit{?y/ies}:",
+        "Removed parameterSet {.val {id}} is still referenced by {length(holders)} definition{?s}:",
         "*" = "{holders}",
         "i" = "These now have a dangling reference. Update or remove them."
       ))
@@ -531,7 +531,7 @@ validationSummary <- function(validationResults) {
     return(invisible(NULL))
   }
 
-  if (entityType == "initialConditions") {
+  if (definitionType == "initialConditions") {
     # An initial-condition set is referenced from a scenario's
     # `initialConditions` field (a character vector of set ids).
     holders <- character()
@@ -553,7 +553,7 @@ validationSummary <- function(validationResults) {
     return(invisible(NULL))
   }
 
-  if (entityType == "outputPath") {
+  if (definitionType == "outputPath") {
     piHolders <- character()
     for (taskId in names(project$parameterIdentification %||% list())) {
       task <- project$parameterIdentification[[taskId]]
@@ -573,7 +573,7 @@ validationSummary <- function(validationResults) {
     }
   }
 
-  if (entityType == "scenario") {
+  if (definitionType == "scenario") {
     # A scenario is referenced from the other direction: a `dataCombined`
     # entry's `simulated[*]$scenario` names the scenario whose results it
     # plots. Scan every dataCombined simulated entry for the removed id.
@@ -605,7 +605,7 @@ validationSummary <- function(validationResults) {
   for (name in names(scenarios)) {
     sc <- scenarios[[name]]
     hit <- switch(
-      entityType,
+      definitionType,
       "individual" = identical(sc$individualId, id),
       "population" = identical(sc$populationId, id),
       "application" = identical(sc$applicationProtocol, id),
@@ -623,7 +623,7 @@ validationSummary <- function(validationResults) {
 
   if (length(refs) > 0) {
     cli::cli_warn(c(
-      "Removed {entityType} {.val {id}} is still referenced by {length(refs)} scenario{?s}:",
+      "Removed {definitionType} {.val {id}} is still referenced by {length(refs)} scenario{?s}:",
       "*" = "{refs}",
       "i" = "These scenarios now have a dangling reference. Update or remove them."
     ))

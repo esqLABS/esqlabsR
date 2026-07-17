@@ -106,7 +106,7 @@ Project <- R6::R6Class(
     },
 
     #' @field definitionsFolder Name of the folder (relative to
-    #'   `projectDirPath`) that holds the project's authored entity-definition
+    #'   `projectDirPath`) that holds the project's authored definitions
     #'   tree. Defaults to `"definitions"`. Writing updates memory and sets the
     #'   dirty bit; it changes where the next [saveProject()] writes the tree
     #'   and where the tree is read from, but nothing moves on disk until the
@@ -426,7 +426,7 @@ Project <- R6::R6Class(
     #'   `modelParameterSets` field, an individual or application through its
     #'   `parameterSets` field; all three resolve against this one map. To
     #'   change it, use [addParameterSet()] / [removeParameterSet()] /
-    #'   [addParameterEntry()] / [removeParameterEntry()] or edit the entity
+    #'   [addParameterEntry()] / [removeParameterEntry()] or edit the definition
     #'   files under `definitions/parameter-sets/`.
     parameterSets = function(value) {
       if (!missing(value)) {
@@ -727,6 +727,22 @@ Project <- R6::R6Class(
         cli::cli_text("{.emph [unsaved changes]}")
       }
 
+      # Show file locations relative to the project directory rather than as
+      # absolute paths. The absolute prefix is machine-specific (and, for a
+      # project loaded from a temp copy, varies in length by OS), so printing it
+      # is both noisy for the user and a source of non-reproducible output. The
+      # container is shown as its basename (`JSON File`); the working folders are
+      # made relative to `projectDirPath`. Falls back to the raw value when there
+      # is no project directory (an in-memory project), matching the already
+      # project-relative Excel block below.
+      relToProject <- function(path) {
+        dir <- self$projectDirPath
+        if (is.null(path) || is.null(dir)) {
+          return(path)
+        }
+        as.character(fs::path_rel(path, start = dir))
+      }
+
       # Metadata bullets. `print_empty = FALSE` drops the NULL/empty entries
       # (e.g. `jsonPath` for an in-memory project), so no explicit filtering
       # is needed here.
@@ -736,20 +752,23 @@ Project <- R6::R6Class(
           "Description" = self$description,
           "Schema Version" = self$schemaVersion,
           "esqlabsR Version" = self$esqlabsRVersion,
-          "JSON Path" = self$jsonPath
+          "JSON File" = if (!is.null(self$jsonPath)) {
+            fs::path_file(self$jsonPath)
+          }
         )
       )
 
-      # Paths section: only the four live working folders. `configurationsFolder`
-      # and the workbook file fields belong to the Excel block, not here. Drop
-      # unset (NULL) folders and omit the header when none is set.
+      # Paths section: only the four live working folders, shown relative to the
+      # project directory. `configurationsFolder` and the workbook file fields
+      # belong to the Excel block, not here. Drop unset (NULL) folders and omit
+      # the header when none is set.
       paths <- Filter(
         Negate(is.null),
         list(
-          "Simulations Folder" = self$modelFolder,
-          "Data Folder" = self$dataFolder,
-          "Populations Folder" = self$populationsFolder,
-          "Output Folder" = self$outputFolder
+          "Simulations Folder" = relToProject(self$modelFolder),
+          "Data Folder" = relToProject(self$dataFolder),
+          "Populations Folder" = relToProject(self$populationsFolder),
+          "Output Folder" = relToProject(self$outputFolder)
         )
       )
       if (length(paths) > 0L) {
@@ -858,14 +877,14 @@ Project <- R6::R6Class(
     # Resolve a section kind to its private backing-field name (`.<kind>`),
     # aborting on an unknown kind. Each section maps one-to-one onto a private
     # backing field named `.<kind>` and onto its `definitions/<kind>/` tree. The
-    # set of valid kinds is the single source of truth `.entityKindNames()`
-    # (derived from the entity-tree specs), so a typo cannot silently create a
+    # set of valid kinds is the single source of truth `.definitionKindNames()`
+    # (derived from the definition-tree specs), so a typo cannot silently create a
     # stray `private$.<typo>` field and the kind list is not duplicated here.
     .sectionField = function(kind) {
       if (
         !is.character(kind) ||
           length(kind) != 1L ||
-          !(kind %in% .entityKindNames())
+          !(kind %in% .definitionKindNames())
       ) {
         cli::cli_abort("Unknown project section {.val {kind}}.")
       }
@@ -990,9 +1009,9 @@ Project <- R6::R6Class(
         private$.excelData[[n]] <- list(value = excel[[n]], description = "")
       }
 
-      # Every authored section is an entity tree under `definitions/<kind>/`; a
+      # Every authored section is a definition tree under `definitions/<kind>/`; a
       # single-file snapshot with no tree falls back to the inline section in
-      # `Project.json`. `.loadEntityTree()` resolves tree-vs-inline per kind and
+      # `Project.json`. `.loadDefinitionTree()` resolves tree-vs-inline per kind and
       # the kind's spec parses the raw records into the in-memory shape. Output
       # paths load before scenarios because scenarios dereference their
       # `outputPathIds` against the project-level `outputPaths` map. The
@@ -1031,8 +1050,8 @@ Project <- R6::R6Class(
     # snapshot fallback) and parse the raw records into the in-memory shape via
     # the kind's spec.
     .loadSection = function(kind, jsonData) {
-      spec <- .entityTreeSpec(kind)
-      records <- .loadEntityTree(
+      spec <- .definitionTreeSpec(kind)
+      records <- .loadDefinitionTree(
         private$.projectDirPath,
         kind,
         spec$inline(jsonData),

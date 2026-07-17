@@ -387,7 +387,7 @@ test_that("addObservedData mutates memory only; a basename collision aborts save
 
 # removeObservedData write-through ----
 
-test_that("removeObservedData deletes the entity file on save", {
+test_that("removeObservedData deletes the definition file on save", {
   project <- testProject()
   dir <- file.path(project$projectDirPath, "definitions", "observed-data")
   # The fixture declares one Excel source, filed under its basename.
@@ -396,8 +396,8 @@ test_that("removeObservedData deletes the entity file on save", {
 
   suppressWarnings(removeObservedData(project, id))
 
-  # In memory the declaration is gone; the entity file is deleted on save and a
-  # fresh load no longer sees it.
+  # In memory the declaration is gone; the definition file is deleted on save
+  # and a fresh load no longer sees it.
   expect_false(any(vapply(
     project$observedData,
     function(e) identical(basename(e[["file"]] %||% ""), id),

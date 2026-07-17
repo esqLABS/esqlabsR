@@ -21,8 +21,8 @@
 #'   [restoreProject()], [syncStatus()].
 #'
 #' @section Editing a loaded project (explicit save):
-#'   A loaded project holds its entity tree in memory, and memory is the source
-#'   of truth: every authoring edit (`addOutputPath()`, `addScenario()`,
+#'   A loaded project holds its definition tree in memory, and memory is the
+#'   source of truth: every authoring edit (`addOutputPath()`, `addScenario()`,
 #'   `setIndividual()`, `removeParameterSet()`, and the metadata setters)
 #'   mutates memory in place and sets an internal dirty bit, but nothing
 #'   touches the on-disk `definitions/` tree. The `project$<section>` accessors
@@ -309,7 +309,7 @@ initProject <- function(
       cli::cli_inform("{msg}")
     }
     # Overwrite means REPLACE, not merge. Copying the template with
-    # `overwrite = TRUE` refreshes the files it ships, but an entity file the
+    # `overwrite = TRUE` refreshes the files it ships, but a definition file the
     # old project's `definitions/<kind>/` tree carried and the template does
     # not would survive and re-load as a stale definition. Remove the known
     # project artifacts (the definitions tree and `Project.json`) first, scoped
@@ -360,7 +360,7 @@ initProject <- function(
 # overwrite, so `initProject(overwrite = TRUE)` REPLACES rather than merges. It
 # removes only the scaffold the initializer owns:
 #   - the definitions tree (`<destination>/<definitionsFolder>/`), the sole
-#     source of the stale-entity leak, because a per-entity file the old tree
+#     source of the stale-definition leak, because a per-definition file the old tree
 #     carried and the template does not would otherwise survive the copy and
 #     re-load as a stale definition. The existing project's `definitionsFolder`
 #     is read from its `Project.json` (default `"definitions"`) so a custom

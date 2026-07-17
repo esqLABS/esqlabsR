@@ -22,7 +22,7 @@
       saveProject(project)
     Condition
       Error in `.validateScenarioStructure()`:
-      ! Scenario id "Renamed" is not a canonical entity-file id.
+      ! Scenario id "Renamed" is not a canonical definition-file id.
       i Use `addScenario(project, "Renamed", ...)`, which canonicalizes it to "renamed", or store the scenario under the key "renamed".
 
 # a scenario id with path separators is canonicalized, not rejected
@@ -84,8 +84,8 @@
       loadProject(project$jsonPath)
     Condition
       Error in `.keyedTreeRecordId()`:
-      ! An entity file for kind scenario has no usable name.
-      x name must be a single non-empty string (it names the entity and its file).
+      ! A definition file for kind scenario has no usable name.
+      x name must be a single non-empty string (it names the definition and its file).
       i Check '<project>/definitions/scenarios/populationscenario.json'.
 
 # a scenario file whose name disagrees with its filename aborts
@@ -94,9 +94,9 @@
       loadProject(project$jsonPath)
     Condition
       Error in `.keyedTreeRecordId()`:
-      ! An entity file for kind scenario has a stored name that disagrees with its filename.
+      ! A definition file for kind scenario has a stored name that disagrees with its filename.
       x name is "differentname" but the file is "populationscenario".json.
-      i The filename stem is the entity's id; rename the file or the name so they match. Check '<project>/definitions/scenarios/populationscenario.json'.
+      i The filename stem is the definition's id; rename the file or the name so they match. Check '<project>/definitions/scenarios/populationscenario.json'.
 
 # a non-scalar scalar field fails load naming the scenario and field
 
@@ -114,9 +114,9 @@
       spec$parse(list(rec), NULL)
     Condition
       Error in `.keyedTreeRecordId()`:
-      ! An entity file for kind initialConditionSet has a stored id that disagrees with its filename.
+      ! A definition file for kind initialConditionSet has a stored id that disagrees with its filename.
       x id is "myset" but the file is "otherset".json.
-      i The filename stem is the entity's id; rename the file or the id so they match. Check 'somewhere/otherset.json'.
+      i The filename stem is the definition's id; rename the file or the id so they match. Check 'somewhere/otherset.json'.
 
 # a programmatic observedData name that escapes its directory aborts
 
@@ -125,17 +125,17 @@
     Condition
       Error in `.validateObservedDataId()`:
       ! observedData id "../escape" is not a single safe filename segment.
-      x It must not contain a path separator or be "." / "..", so it cannot escape the observed-data entity directory.
+      x It must not contain a path separator or be "." / "..", so it cannot escape the observed-data definition directory.
       i Rename the source (its file basename or programmatic name) to a single safe filename segment.
 
 # a full-tree write aborts when a stale file cannot be removed
 
     Code
-      esqlabsR:::.writeEntityTree(project$scenarios, "scenarios", project, project$
-        projectDirPath)
+      esqlabsR:::.writeDefinitionTree(project$scenarios, "scenarios", project,
+      project$projectDirPath)
     Condition
       Warning in `file.remove()`:
-      cannot remove file '<project>/definitions/scenarios/orphanentity.json', reason 'Permission denied'
-      Error in `esqlabsR:::.writeEntityTree()`:
-      ! Failed to remove 1 stale entity file from the definitions tree. x '<project>/definitions/scenarios/orphanentity.json' i A stale file that cannot be deleted would reappear as an entity on the next `loadProject()`; check the file permissions and remove it manually.
+      cannot remove file '<project>/definitions/scenarios/orphandefinition.json', reason 'Permission denied'
+      Error in `esqlabsR:::.writeDefinitionTree()`:
+      ! Failed to remove 1 stale definition file from the definitions tree. x '<project>/definitions/scenarios/orphandefinition.json' i A stale file that cannot be deleted would reappear as a definition on the next `loadProject()`; check the file permissions and remove it manually.
 

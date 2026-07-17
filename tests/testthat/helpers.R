@@ -38,9 +38,9 @@ testProject <- function(envir = parent.frame()) {
 #' A `Project.json` path inside a fresh throwaway directory.
 #'
 #' Use this when a test needs a throwaway project location: a project is a
-#' directory (the `Project.json` container plus a `definitions/` entity tree
+#' directory (the `Project.json` container plus a `definitions/` definition tree
 #' alongside it), so writing into the shared session tempdir would scatter a
-#' `definitions/` directory there and leak entities into unrelated
+#' `definitions/` directory there and leak definitions into unrelated
 #' `loadProject()` calls. The directory is removed when the calling test
 #' finishes.
 local_projectPath <- function(envir = parent.frame()) {
@@ -110,7 +110,7 @@ executeWithTestFile <- function(actionWithFile) {
 #' Redact the throwaway-project absolute prefix from a quoted path in an error
 #' message so an `expect_snapshot()` is stable across runs, keeping the
 #' project-relative `definitions/...` tail that carries the meaning. Used as the
-#' `transform` of snapshots whose error names an absolute entity-file path in a
+#' `transform` of snapshots whose error names an absolute definition-file path in a
 #' temp directory.
 .redactTmpPath <- function(lines) {
   gsub("'[^']*/(definitions(/[^']*)?)'", "'<project>/\\1'", lines)

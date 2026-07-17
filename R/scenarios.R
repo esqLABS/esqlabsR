@@ -174,7 +174,7 @@ print.Scenario <- function(x, ...) {
 
   result <- list()
   for (entry in scenariosData) {
-    # The scenario name is the entity id and the filename stem; assert it is a
+    # The scenario name is the definition id and the filename stem; assert it is a
     # usable scalar that matches the file before anything else, so a file with
     # no `name` (or one disagreeing with its filename) aborts naming the file
     # rather than producing an opaque base-R index error or a dangling key.
@@ -418,7 +418,7 @@ print.Scenario <- function(x, ...) {
 #' Structural fail-fast validation for one scenario, run on write-through
 #'
 #' Checks a single scenario's own shape (independent of cross-references)
-#' before it is persisted to its entity file: it must be a `Scenario`
+#' before it is persisted to its definition file: it must be a `Scenario`
 #' record, carry a name that is a safe single path segment and matches the
 #' list key it is stored under, carry a non-empty `modelFile`, and declare
 #' a supported `simulationType`. Referential checks (does `individual` /
@@ -430,7 +430,7 @@ print.Scenario <- function(x, ...) {
 #' lands on disk.
 #'
 #' @param sc A `Scenario` record.
-#' @param name The scenario's key (the authoritative id; the entity file
+#' @param name The scenario's key (the authoritative id; the definition file
 #'   is named after it).
 #' @keywords internal
 #' @noRd
@@ -440,7 +440,7 @@ print.Scenario <- function(x, ...) {
       "Scenario {.val {name}} must be a {.cls Scenario} record."
     )
   }
-  # The list key is the authoritative scenario id: it names the entity file
+  # The list key is the authoritative scenario id: it names the definition file
   # and is what removal, cross-reference validation, and `names()` key off.
   # The authoring API (`addScenario()` / `setScenario()`) canonicalizes the
   # id before it reaches here, so the key is already safe. This structural
@@ -454,7 +454,7 @@ print.Scenario <- function(x, ...) {
   canonical <- suppressWarnings(.canonicalizeId(name))
   if (!identical(name, canonical)) {
     cli::cli_abort(c(
-      "Scenario id {.val {name}} is not a canonical entity-file id.",
+      "Scenario id {.val {name}} is not a canonical definition-file id.",
       "i" = "Use {.code addScenario(project, {.val {name}}, ...)}, which \\
       canonicalizes it to {.val {canonical}}, or store the scenario under \\
       the key {.val {canonical}}."
@@ -522,7 +522,7 @@ print.Scenario <- function(x, ...) {
   # The scalar reference fields the serializer emits verbatim
   # (`.scenarioToJson`) must be a length-1 scalar when present, or a wrong-typed
   # value (e.g. `individualId <- list(...)`) would silently serialize to a
-  # malformed entity file the parser then rejects on the next load. NULL or a
+  # malformed definition file the parser then rejects on the next load. NULL or a
   # length-1 `NA` is allowed: both are the established "no reference" sentinel
   # the serializer handles (an Individual scenario has no population; a scenario
   # may have no application).
@@ -658,11 +658,11 @@ runScenarios <- function(
 #'
 #' Creates new `Scenario` records and adds them to `project$scenarios` after
 #' validating all references. The call vectorizes over a vector of ids (see
-#' the recycling rule under Details). Scalar-per-entity fields (`modelFile`,
+#' the recycling rule under Details). Scalar-per-definition fields (`modelFile`,
 #' `individual`, `population`, `application`, `simulationTime`,
 #' `simulationTimeUnit`, `steadyState`, `steadyStateTime`,
 #' `steadyStateTimeUnit`, `overwriteFormulasInSS`, `readPopulationFromCSV`)
-#' follow the recycle/align rule. The vector-valued-per-entity fields
+#' follow the recycle/align rule. The vector-valued-per-definition fields
 #' `parameterSets` and `outputPaths` are applied whole to every
 #' scenario; to give a different set per scenario, pass a list of the same
 #' length as `id` (one character vector per scenario). `initialConditions`
@@ -732,7 +732,7 @@ addScenario <- function(
   id <- .canonicalizeId(id)
   n <- length(id)
 
-  perEntity <- .alignAuthoringArgs(
+  perDefinition <- .alignAuthoringArgs(
     id,
     scalarFields = list(
       modelFile = modelFile,
@@ -761,7 +761,7 @@ addScenario <- function(
   }
   call <- rlang::current_env()
   scenarios <- .collectCanonicalizedRefs(lapply(seq_len(n), function(i) {
-    .buildScenarioEntry(project, id[[i]], perEntity[[i]], call = call)
+    .buildScenarioEntry(project, id[[i]], perDefinition[[i]], call = call)
   }))
 
   newScenarios <- project$.getSection("scenarios") %||% list()
@@ -772,7 +772,7 @@ addScenario <- function(
   invisible(project)
 }
 
-# Build one `Scenario` record from its id and per-entity field list, running
+# Build one `Scenario` record from its id and per-definition field list, running
 # the same foreign-key + structural checks `addScenario()` always has. Aborts
 # naming the scenario on a problem. `call` attributes the abort to the public
 # caller.
@@ -951,7 +951,7 @@ removeScenario <- function(project, id) {
 #'   deferred to [validateProject()].
 #'
 #'   The call vectorizes over a vector of ids (see the recycling rule under
-#'   Details): a supplied scalar-per-entity field is recycled or aligned
+#'   Details): a supplied scalar-per-definition field is recycled or aligned
 #'   across `id`, and the whole-vector fields `parameterSets` /
 #'   `initialConditions` / `outputPaths` are applied whole to every scenario. A
 #'   field left unsupplied is untouched on every scenario.
@@ -1063,7 +1063,7 @@ setScenario <- function(
     wholeSupplied["outputPaths"] <- list(outputPaths)
   }
 
-  perEntity <- .alignAuthoringArgs(
+  perDefinition <- .alignAuthoringArgs(
     id,
     scalarFields = scalarSupplied,
     wholeFields = wholeSupplied
@@ -1075,7 +1075,7 @@ setScenario <- function(
     .setOneScenario(
       project,
       id[[i]],
-      perEntity[[i]][suppliedNames],
+      perDefinition[[i]][suppliedNames],
       call = call
     )
   }))
@@ -1327,7 +1327,7 @@ renameScenario <- function(project, id, newId) {
   .assertScenarioTargetFree(project, newId)
 
   sc <- project$scenarios[[id]]
-  # Keep the record's stored name in step with its new key so the entity file
+  # Keep the record's stored name in step with its new key so the definition file
   # the write-through emits (`name = sc$scenarioName`) and the key agree, which
   # is what `.validateScenarioStructure()` enforces.
   sc$scenarioName <- newId

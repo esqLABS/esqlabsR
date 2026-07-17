@@ -635,7 +635,7 @@ test_that("setScenario with steadyStateTime still converts under the effective u
 
 # renameScenario ----
 
-test_that("renameScenario moves the entity file on save and changes the in-memory key", {
+test_that("renameScenario moves the definition file on save and changes the in-memory key", {
   project <- testProject()
   saveProject(project)
   dir <- file.path(project$projectDirPath, "definitions", "scenarios")
@@ -740,7 +740,7 @@ test_that("duplicateScenario creates an independent copy in memory, persisted on
   # Both exist in memory; the original is untouched.
   expect_true(all(c("testscenario", "copy") %in% names(project$scenarios)))
   expect_equal(project$scenarios[["copy"]]$scenarioName, "copy")
-  # On save, the copy is a new entity file alongside the original.
+  # On save, the copy is a new definition file alongside the original.
   saveProject(project)
   expect_true(file.exists(file.path(dir, "testscenario.json")))
   expect_true(file.exists(file.path(dir, "copy.json")))

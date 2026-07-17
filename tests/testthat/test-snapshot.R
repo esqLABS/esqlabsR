@@ -1,4 +1,4 @@
-# Tests for the single-file snapshot artifact (R/entity-files.R):
+# Tests for the single-file snapshot artifact (R/definition-files.R):
 # `snapshotProject(project, dir, name, overwrite)` writes a portable
 # `.esqlabsR` freeze of the in-memory state, and
 # `restoreProject(snapshot, dir, overwrite)` reads one and materializes a full
@@ -419,7 +419,7 @@ test_that("restoreProject migrates a legacy inlined Project.json end to end", {
 })
 
 # A legacy single-file Project.json may carry non-canonical ids (mixed case),
-# which the entity tree (keyed by canonical id) cannot store. restoreProject()
+# which the definition tree (keyed by canonical id) cannot store. restoreProject()
 # must canonicalize on the way in, lossless across every section: definitions
 # AND the references that point at them (a scenario id used by a plot's
 # dataCombined row and by a PI task / output mapping) are lowercased together,

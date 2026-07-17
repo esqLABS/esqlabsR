@@ -26,7 +26,7 @@
 #' @param includeScenarios Logical. When `TRUE` (default), the `scenarios`
 #'   array is inlined (the self-contained snapshot shape). When `FALSE`,
 #'   `scenarios` is emitted as an empty array, because scenarios are
-#'   persisted as an entity tree alongside the container, not inline. Ignored
+#'   persisted as a definition tree alongside the container, not inline. Ignored
 #'   when `containerOnly` is `TRUE` (every section is emptied then).
 #' @param containerOnly Logical. When `TRUE`, every tree-owned section
 #'   (scenarios, individuals, populations, parameterSets, initialConditions,
@@ -145,7 +145,7 @@
 #' @param path Destination path. Parent directory must exist.
 #' @param includeScenarios Logical. Passed to `.projectToJson()`: `TRUE`
 #'   (default) inlines the scenarios array (snapshot shape); `FALSE` writes
-#'   the container shape with scenarios held as an entity tree alongside.
+#'   the container shape with scenarios held as a definition tree alongside.
 #'   Ignored when `containerOnly` is `TRUE`.
 #' @param containerOnly Logical. Passed to `.projectToJson()`: `TRUE` writes
 #'   only the container (metadata, filePaths, defaultSimulationRunOptions,
@@ -245,7 +245,7 @@
 
 # JSON array of scenario objects. A thin wrapper over the per-scenario
 # serializer `.scenarioToJson()`; used by the monolithic snapshot
-# (`.projectToJson()`). The entity-files writer calls `.scenarioToJson()`
+# (`.projectToJson()`). The definition-files writer calls `.scenarioToJson()`
 # directly, one scenario per file.
 .scenariosToJson <- function(project) {
   scenarios <- project$scenarios
@@ -263,7 +263,7 @@
 # back to its declared unit. Field order matches the example fixture so
 # round-trip diffs stay zero-noise. The same object is one element of the
 # monolithic `scenarios` array and the entire content of one scenario
-# entity file.
+# definition file.
 #
 # @keywords internal
 # @noRd

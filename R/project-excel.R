@@ -287,7 +287,7 @@ importProjectFromExcel <- function(
 
   # Canonicalize every id (and every reference to one) so the imported project
   # uses safe, lowercase, single-path-segment ids. This is the same transform
-  # the authoring API applies, run here because the entity-file tree keys files
+  # the authoring API applies, run here because the definition-file tree keys files
   # by id and so requires canonical ids; applying it to definitions and
   # references together keeps foreign keys resolvable (a reference made from the
   # same Excel spelling as its definition still resolves). Excel ids that were
@@ -319,8 +319,8 @@ importProjectFromExcel <- function(
   # parses the just-written snapshot without running the cross-reference warning
   # pass, so a project with dangling refs imports quietly under `silent`.
   importedProject <- Project$new(projectFilePath = outputPath)
-  for (kind in .entityKindNames()) {
-    .writeEntityTree(
+  for (kind in .definitionKindNames()) {
+    .writeDefinitionTree(
       .sectionForKind(importedProject, kind),
       kind,
       importedProject,
@@ -940,7 +940,7 @@ syncStatus <- function(project, silent = FALSE) {
 #' deterministic transform is applied to a definition and to a reference, so a
 #' reference made from the same Excel spelling as its definition still resolves
 #' after canonicalization. Used by `importProjectFromExcel()` so the imported
-#' project carries safe, lowercase, single-path-segment ids that the entity
+#' project carries safe, lowercase, single-path-segment ids that the definition
 #' tree can key files by. Silent (no per-id warning): an Excel import renames in
 #' bulk and the migrate-from-excel guide documents the renaming.
 #'
@@ -968,7 +968,7 @@ syncStatus <- function(project, silent = FALSE) {
       # Route the section's keyed ids through the collision-CHECKING path so
       # that two ids collapsing to the same canonical id abort the migration
       # (matching interactive authoring), rather than letting a downstream
-      # rename silently drop the second entity. `.canonicalizeId()` also warns
+      # rename silently drop the second definition. `.canonicalizeId()` also warns
       # per changed id; an Excel import renames in bulk and the migrate guide
       # documents that, so the per-id warning is suppressed while the
       # collision abort is allowed to propagate.
@@ -1043,7 +1043,7 @@ syncStatus <- function(project, silent = FALSE) {
     jsonData$plotGrids <- legacyPlots$plotGrids
   }
 
-  # The three plots sections each persist as a keyed entity tree that keys
+  # The three plots sections each persist as a keyed definition tree that keys
   # files by a canonical id (`dataCombinedId` / `plotId` / `plotGridId`), so
   # canonicalize those ids and every reference among the three together with the
   # same deterministic helper, so the migrated tree's inner cross-references
@@ -1098,13 +1098,13 @@ syncStatus <- function(project, silent = FALSE) {
     )
   }
 
-  # A parameter-identification task is keyed by its `id` (the entity-file id)
+  # A parameter-identification task is keyed by its `id` (the definition-file id)
   # and references scenarios and output paths; canonicalize the task id and
   # every scenario / output-path reference it carries (at the task level and on
   # each parameter and output mapping) so the migrated tree's foreign keys
   # resolve. A mapping's `observedData` references observed data (verbatim
   # ids), and a parameter's / mapping's own `id` is an inner id, not an
-  # entity-file id, so those are left untouched.
+  # definition-file id, so those are left untouched.
   if (!is.null(jsonData$parameterIdentification)) {
     jsonData$parameterIdentification <- lapply(
       jsonData$parameterIdentification,
@@ -1398,7 +1398,7 @@ syncStatus <- function(project, silent = FALSE) {
 #' Parse Plots Excel file into the project's nested plots JSON structure
 #'
 #' Maps the legacy Excel plot sheets onto the v2.0 plots section so the import
-#' round-trips through the entity-file tree (which keys files by `plotId` /
+#' round-trips through the definition-file tree (which keys files by `plotId` /
 #' `plotGridId` / `dataCombinedId`). The `DataCombined` sheet is long-format
 #' (one row per simulated/observed curve, grouped by `DataCombinedName`); the
 #' `plotConfiguration` and `plotGrids` sheets carry the legacy `plotID` /

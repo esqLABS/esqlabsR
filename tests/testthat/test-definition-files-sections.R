@@ -1,6 +1,6 @@
-# Tests for the entity-files write-through generalization (Phase 2b):
-# every Project section, not only scenarios, is persisted as a per-entity
-# tree under `definitions/<kind>/`. Mirrors test-entity-files.R but exercises
+# Tests for the definition-files write-through generalization (Phase 2b):
+# every Project section, not only scenarios, is persisted as a per-definition
+# tree under `definitions/<kind>/`. Mirrors test-definition-files.R but exercises
 # the other eight sections. The scenarios slice keeps its own dedicated tests.
 
 test_that("loadProject reads every section from its definitions/<kind>/ tree", {
@@ -40,7 +40,7 @@ test_that("loadProject reads every section from its definitions/<kind>/ tree", {
   expect_length(raw$outputPaths, 0L)
 })
 
-test_that("saveProject() writes one individual entity file; a removal deletes it", {
+test_that("saveProject() writes one individual definition file; a removal deletes it", {
   project <- exampleProject()
   dir <- file.path(project$projectDirPath, "definitions", "individuals")
 
@@ -60,7 +60,7 @@ test_that("saveProject() writes one individual entity file; a removal deletes it
   expect_false(file.exists(file.path(dir, "newindiv.json")))
 })
 
-test_that("saveProject() writes population / application / output-path entity files", {
+test_that("saveProject() writes population / application / output-path definition files", {
   project <- exampleProject()
   defs <- file.path(project$projectDirPath, "definitions")
 
@@ -81,7 +81,7 @@ test_that("saveProject() writes population / application / output-path entity fi
   )
 })
 
-test_that("saveProject() writes the parameter set's entity file", {
+test_that("saveProject() writes the parameter set's definition file", {
   project <- exampleProject()
   dir <- file.path(project$projectDirPath, "definitions", "parameter-sets")
 
@@ -95,11 +95,11 @@ test_that("saveProject() writes the parameter set's entity file", {
   expect_identical(reloaded$parameterSets[["newset"]][[1]]$value, 1.5)
 })
 
-# saveProject() writes if-different: a save after editing one entity rewrites
-# only that entity's file, leaving every unchanged sibling's file (and its
-# mtime) untouched. This keeps `git diff` showing exactly the entities the user
-# changed.
-test_that("saveProject() rewrites only the changed entity's file (write-if-different)", {
+# saveProject() writes if-different: a save after editing one definition
+# rewrites only that definition's file, leaving every unchanged sibling's file
+# (and its mtime) untouched. This keeps `git diff` showing exactly the
+# definitions the user changed.
+test_that("saveProject() rewrites only the changed definition's file (write-if-different)", {
   project <- exampleProject()
   dir <- file.path(project$projectDirPath, "definitions", "parameter-sets")
 
@@ -121,11 +121,11 @@ test_that("saveProject() rewrites only the changed entity's file (write-if-diffe
   expect_identical(changed, "setb.json")
 })
 
-# Adding N entities one at a time must be ~linear in the number of mutations,
-# not quadratic. Each in-memory add touches only the one entity, so the cost of
-# adding the Nth entity is independent of how many already exist. (A prior
-# whole-section-serialize-on-every-add path was O(section size) per add, i.e.
-# O(N^2) for N adds.)
+# Adding N definitions one at a time must be ~linear in the number of
+# mutations, not quadratic. Each in-memory add touches only the one definition,
+# so the cost of adding the Nth definition is independent of how many already
+# exist. (A prior whole-section-serialize-on-every-add path was O(section size)
+# per add, i.e. O(N^2) for N adds.)
 test_that("adding many parameter sets one at a time scales linearly", {
   skip_on_cran()
 
@@ -148,7 +148,7 @@ test_that("adding many parameter sets one at a time scales linearly", {
   expect_lt(ratio, 40)
 })
 
-test_that("addPITask writes a per-task entity file; removePITask deletes it", {
+test_that("addPITask writes a per-task definition file; removePITask deletes it", {
   project <- exampleProject()
   dir <- file.path(
     project$projectDirPath,
@@ -195,8 +195,8 @@ test_that("the three plots parts write to data-combined / plots / plot-grids", {
   plotsDir <- file.path(defs, "plots")
   gridsDir <- file.path(defs, "plot-grids")
 
-  # Each part persists one file per entity, keyed by its rationalized id, on
-  # save.
+  # Each part persists one file per definition, keyed by its rationalized id,
+  # on save.
   addDataCombined(
     project,
     "newdc",
@@ -220,7 +220,7 @@ test_that("the three plots parts write to data-combined / plots / plot-grids", {
   expect_true("newgrid" %in% names(reloaded$plotGrids))
 })
 
-test_that("removing a plot entity deletes only its file on save, leaving siblings", {
+test_that("removing a plot definition deletes only its file on save, leaving siblings", {
   project <- exampleProject()
   plotsDir <- file.path(project$projectDirPath, "definitions", "plots")
   dcDir <- file.path(project$projectDirPath, "definitions", "data-combined")
@@ -238,7 +238,7 @@ test_that("removing a plot entity deletes only its file on save, leaving sibling
   expect_true(file.exists(file.path(plotsDir, "p1.json")))
 })
 
-test_that("saveProject() writes an observed-data (config) entity file", {
+test_that("saveProject() writes an observed-data (config) definition file", {
   project <- exampleProject()
   dir <- file.path(project$projectDirPath, "definitions", "observed-data")
 
@@ -323,7 +323,7 @@ test_that("a definitions/ root that is a file aborts the load", {
   )
 })
 
-# A keyed entity file missing its id field used to abort with an opaque base-R
+# A keyed definition file missing its id field used to abort with an opaque base-R
 # `list[[NULL]] <- x` error that named nothing. It must now abort naming the
 # file and the missing field.
 test_that("a keyed file missing its id field aborts naming the file", {

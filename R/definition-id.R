@@ -1,8 +1,8 @@
-# Entity id canonicalization + suggestion ----
+# Definition id canonicalization + suggestion ----
 #
 # Every definition in a Project (a scenario, parameter set, individual,
 # population, application, output path, plot, ...) is referenced by its
-# **id**, and for the entity-file tree the id equals its on-disk filename.
+# **id**, and for the definition-file tree the id equals its on-disk filename.
 # Ids therefore have to be safe single path segments on every target
 # filesystem.
 #
@@ -21,7 +21,7 @@
 # into a "did you mean '...'?" hint, surfaced by the cross-reference
 # validator.
 
-# Canonicalize one or more entity ids into safe, lowercase, single
+# Canonicalize one or more definition ids into safe, lowercase, single
 # path-segment ids. Vectorized over `ids`.
 #
 # Rules (intersection of Windows + macOS + Linux filename rules):
@@ -168,7 +168,7 @@
     # When a batch authoring call is collecting reference canonicalizations
     # (`.collectCanonicalizedRefs()`), record each changed pair and stay
     # silent so the caller emits one consolidated warning per call instead of
-    # one per entity. Outside a collector (a standalone call) warn immediately.
+    # one per definition. Outside a collector (a standalone call) warn immediately.
     inputs <- ref[keep][changed]
     canonicals <- canon[changed]
     if (.canonRefSink$depth > 0L) {
@@ -182,10 +182,10 @@
   out
 }
 
-# Sink for collecting reference-canonicalization changes across the per-entity
+# Sink for collecting reference-canonicalization changes across the per-definition
 # builds of one vectorized authoring call, so the whole call emits a single
 # warning naming each `input -> canonical` change rather than one warning per
-# entity. `depth` guards re-entrancy; the inputs/canonicals accumulate the
+# definition. `depth` guards re-entrancy; the inputs/canonicals accumulate the
 # changed pairs.
 #
 # @keywords internal
@@ -201,7 +201,7 @@
 # normal completion and, via a calling handler, before an error propagates, so
 # a batch that aborts partway still surfaces the canonicalizations that
 # happened before the abort (preserving the warning-then-error order the
-# per-entity path had). Re-entrant collectors share the outermost sink; only
+# per-definition path had). Re-entrant collectors share the outermost sink; only
 # the outermost one flushes.
 #
 # @keywords internal
@@ -223,7 +223,7 @@
     canonicals <- .canonRefSink$canonicals
     if (length(inputs) > 0L) {
       # Deduplicate by pair, keeping first-seen order, so a reference repeated
-      # across several entities in the batch is named once.
+      # across several definitions in the batch is named once.
       key <- paste(inputs, canonicals, sep = "\r")
       firstSeen <- !duplicated(key)
       .warnCanonicalizedRefs(inputs[firstSeen], canonicals[firstSeen])
@@ -296,11 +296,11 @@
   # opaque `cannot open the connection` the eventual `write_json` would raise.
   # 255 bytes is the common single-component cap (ext4, APFS, NTFS); leave room
   # for the `.json` suffix.
-  limit <- .maxEntityIdBytes
+  limit <- .maxDefinitionIdBytes
   nbytes <- nchar(id, type = "bytes")
   if (nbytes > limit) {
     cli::cli_abort(c(
-      "Entity id is too long to be a safe filename: {nbytes} bytes \\
+      "Definition id is too long to be a safe filename: {nbytes} bytes \\
       (limit {limit}).",
       "x" = "{.val {id}}",
       "i" = "An id becomes the file {.file <id>.json}; shorten it to at most \\
@@ -326,10 +326,10 @@
   out
 }
 
-# Maximum byte length of an entity id, so `<id>.json` fits the common
+# Maximum byte length of a definition id, so `<id>.json` fits the common
 # single-path-component filesystem cap (255 bytes on ext4 / APFS / NTFS) with
 # room for the `.json` suffix.
-.maxEntityIdBytes <- 250L
+.maxDefinitionIdBytes <- 250L
 
 # Find the candidate ids closest to `x` (typo-tolerant). Mirrors ESQmrg's
 # `nearest_match`: `utils::adist(ignore.case = TRUE)`, a distance threshold of

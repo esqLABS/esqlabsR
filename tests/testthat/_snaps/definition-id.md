@@ -75,7 +75,7 @@
       .canonicalizeId(longId)
     Condition
       Error in `FUN()`:
-      ! Entity id is too long to be a safe filename: 300 bytes (limit 250).
+      ! Definition id is too long to be a safe filename: 300 bytes (limit 250).
       x "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
       i An id becomes the file '<id>.json'; shorten it to at most 250 bytes.
 

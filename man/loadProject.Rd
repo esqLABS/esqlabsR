@@ -28,8 +28,8 @@ still succeeds. Use \code{\link[=validateProject]{validateProject()}} for a full
 }
 \section{Editing a loaded project (explicit save)}{
 
-A loaded project holds its entity tree in memory, and memory is the source
-of truth: every authoring edit (\code{addOutputPath()}, \code{addScenario()},
+A loaded project holds its definition tree in memory, and memory is the
+source of truth: every authoring edit (\code{addOutputPath()}, \code{addScenario()},
 \code{setIndividual()}, \code{removeParameterSet()}, and the metadata setters)
 mutates memory in place and sets an internal dirty bit, but nothing
 touches the on-disk \verb{definitions/} tree. The \verb{project$<section>} accessors

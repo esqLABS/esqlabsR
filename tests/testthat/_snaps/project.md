@@ -8,18 +8,13 @@
         * Description: Aciclovir IV PK example project
         * Schema Version: 2.0
         * esqlabsR Version: 6.0.0
-        * JSON Path:
-      <tmp>/Project.json
+        * JSON File: Project.json
       
       -- Paths -----------------------------------------------------------------------
-        * Simulations Folder:
-      <tmp>/Models/Simulations
-        * Data Folder:
-      <tmp>/Data
-        * Populations Folder:
-      <tmp>/Populations
-        * Output Folder:
-      <tmp>/Results
+        * Simulations Folder: Models/Simulations
+        * Data Folder: Data
+        * Populations Folder: Populations
+        * Output Folder: Results
       
       -- Definitions -----------------------------------------------------------------
         * Scenarios: 3
@@ -133,18 +128,13 @@
         * Name: TestProject
         * Schema Version: 2.0
         * esqlabsR Version: 6.0.0
-        * JSON Path:
-      <tmp>/Project.json
+        * JSON File: Project.json
       
       -- Paths -----------------------------------------------------------------------
-        * Simulations Folder:
-      <tmp>/Models/Simulations
-        * Data Folder:
-      <tmp>/Data
-        * Populations Folder:
-      <tmp>/Populations
-        * Output Folder:
-      <tmp>/Results
+        * Simulations Folder: Models/Simulations
+        * Data Folder: Data
+        * Populations Folder: Populations
+        * Output Folder: Results
       
       -- Definitions -----------------------------------------------------------------
         * Scenarios: 4
@@ -175,18 +165,13 @@
         * Name: TestProject
         * Schema Version: 2.0
         * esqlabsR Version: 6.0.0
-        * JSON Path:
-      <tmp>/Project.json
+        * JSON File: Project.json
       
       -- Paths -----------------------------------------------------------------------
-        * Simulations Folder:
-      <tmp>/Models/Simulations
-        * Data Folder:
-      <tmp>/Data
-        * Populations Folder:
-      <tmp>/Populations
-        * Output Folder:
-      <tmp>/Results
+        * Simulations Folder: Models/Simulations
+        * Data Folder: Data
+        * Populations Folder: Populations
+        * Output Folder: Results
       
       -- Definitions -----------------------------------------------------------------
         * Scenarios: 4
@@ -217,18 +202,13 @@
         * Name: TestProject
         * Schema Version: 2.0
         * esqlabsR Version: 6.0.0
-        * JSON Path:
-      <tmp>/Project.json
+        * JSON File: Project.json
       
       -- Paths -----------------------------------------------------------------------
-        * Simulations Folder:
-      <tmp>/Models/Simulations
-        * Data Folder:
-      <tmp>/Data
-        * Populations Folder:
-      <tmp>/Populations
-        * Output Folder:
-      <tmp>/Results
+        * Simulations Folder: Models/Simulations
+        * Data Folder: Data
+        * Populations Folder: Populations
+        * Output Folder: Results
       
       -- Definitions -----------------------------------------------------------------
         * Scenarios: 4

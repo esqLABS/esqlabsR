@@ -12,7 +12,7 @@
 # independent of this file.
 #
 # Called by:
-#   - Project$.read_json() via the three plots entity-tree specs
+#   - Project$.read_json() via the three plots definition-tree specs
 #     (data-combined / plots / plot-grids).
 #   - .runProjectValidation() via .validatePlots()
 #   - .projectToJson() via .dataCombinedSectionToJson() / .plotsSectionToJson()
@@ -484,7 +484,7 @@ print.DataCombined <- function(x, ...) {
 #
 # The plots concern serializes as three top-level JSON sections in the inlined
 # snapshot (`dataCombined`, `plots`, `plotGrids`), each the JSON array its own
-# entity tree inlines. `.projectToJson()` emits each via one of these helpers.
+# definition tree inlines. `.projectToJson()` emits each via one of these helpers.
 
 # JSON array of dataCombined records (the inlined `dataCombined` section);
 # `NULL` when the section is empty so the key round-trips as the absent shape.
@@ -589,7 +589,7 @@ print.DataCombined <- function(x, ...) {
   invisible(x)
 }
 
-# Recycle / align a scalar-per-entity argument to N entities. A length-1 value
+# Recycle / align a scalar-per-definition argument to N definitions. A length-1 value
 # is recycled to all N; a length-N value is aligned by position. Any other
 # length aborts naming the argument and the lengths. Used by the vectorized
 # plot mutators so a scalar field follows the same recycling rule as the id
@@ -610,19 +610,19 @@ print.DataCombined <- function(x, ...) {
   ))
 }
 
-# Build the N per-entity `...` field sets for a vectorized plot / grid add. A
+# Build the N per-definition `...` field sets for a vectorized plot / grid add. A
 # `...` field that is a list of length N aligns by position (one element per
-# entity); any other `...` field (a scalar, or an atomic vector, e.g.
-# `quantiles = c(0.05, 0.5, 0.95)`) is a whole-per-entity value applied to
-# every entity. This matches the recycling rule: vector-valued-per-entity
+# definition); any other `...` field (a scalar, or an atomic vector, e.g.
+# `quantiles = c(0.05, 0.5, 0.95)`) is a whole-per-definition value applied to
+# every definition. This matches the recycling rule: vector-valued-per-definition
 # fields are applied whole, never split positionally; to vary a multi-valued
-# field per entity, pass a length-N list. Each per-entity set is normalized
+# field per definition, pass a length-N list. Each per-definition set is normalized
 # via `.namedDotsAsFields` (NULL dropped, atomic vector collapsed to CSV).
 #
 # @keywords internal
 # @noRd
-.dotsToPerEntityFields <- function(dots, n) {
-  perEntity <- vector("list", n)
+.dotsToPerDefinitionFields <- function(dots, n) {
+  perDefinition <- vector("list", n)
   for (i in seq_len(n)) {
     fields <- list()
     for (nm in names(dots)) {
@@ -633,9 +633,9 @@ print.DataCombined <- function(x, ...) {
         value
       }
     }
-    perEntity[[i]] <- do.call(.namedDotsAsFields, fields)
+    perDefinition[[i]] <- do.call(.namedDotsAsFields, fields)
   }
-  perEntity
+  perDefinition
 }
 
 # Normalise `...` into a keyed list of optional plot / grid fields:
@@ -786,7 +786,7 @@ addPlot <- function(project, id, dataCombined, plotType, ...) {
     .recycleScalarArg(dataCombined, n, "dataCombined")
   )
   plotType <- .recycleScalarArg(plotType, n, "plotType")
-  perEntityFields <- .dotsToPerEntityFields(list(...), n)
+  perDefinitionFields <- .dotsToPerDefinitionFields(list(...), n)
 
   # Validate the whole batch first (all-or-nothing): no entry is folded in (and
   # so nothing is written through) unless every entry is valid.
@@ -816,7 +816,7 @@ addPlot <- function(project, id, dataCombined, plotType, ...) {
       id[[i]],
       dataCombined[[i]],
       plotType[[i]],
-      perEntityFields[[i]]
+      perDefinitionFields[[i]]
     )
   }
   project$.setSection("plots", plotConfig)
@@ -936,7 +936,7 @@ addPlotGrid <- function(project, id, plots, ...) {
   } else {
     rep(list(plots), n)
   }
-  perGridFields <- .dotsToPerEntityFields(list(...), n)
+  perGridFields <- .dotsToPerDefinitionFields(list(...), n)
 
   # Validate the whole batch first (all-or-nothing).
   .assertNoDuplicateIds(id, "plot grid")

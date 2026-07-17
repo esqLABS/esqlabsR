@@ -187,7 +187,7 @@ createScenariosFromPKML(
 )
 
 # The project now holds the new scenarios (already written through to
-# their entity files); run them
+# their definition files); run them
 results <- runScenarios(project)
 
 # Example of vector recycling: single value applied to all scenarios
