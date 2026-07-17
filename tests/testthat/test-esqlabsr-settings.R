@@ -3,7 +3,8 @@ test_that("Names for settings are as expected", {
     esqlabsRSettingNames,
     list(
       packageVersion = "packageVersion",
-      packageName = "packageName"
+      packageName = "packageName",
+      colorPalette = "colorPalette"
     )
   )
 })

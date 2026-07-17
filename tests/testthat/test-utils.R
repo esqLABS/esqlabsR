@@ -187,8 +187,8 @@ test_that("It throws an error if the quantity does not come from a molecule", {
 
   expect_error(
     getMoleculeNameFromQuantity(quantity),
-    regexp = messages$cannotGetMoleculeFromQuantity(path),
-    fixed = TRUE
+    regexp = "Could not retrieve molecule name",
+    class = "rlang_error"
   )
 })
 

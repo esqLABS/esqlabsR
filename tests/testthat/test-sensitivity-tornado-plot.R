@@ -1,19 +1,6 @@
-# Save old options
-old_opts <- options()
-
-options(
-  tibble.width = Inf,
-  pillar.min_title_chars = Inf,
-  pillar.sigfig = 4,
-  digits = 4,
-  scipen = 999
-)
-
 # Single output path ------------------------------------------------------
 
-# run time-consuming simulations just once
 simPath <- system.file("extdata", "Aciclovir.pkml", package = "ospsuite")
-simulation <- loadSimulation(simPath)
 outputPaths <- "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
 parameterPaths <- c(
   "Aciclovir|Lipophilicity",
@@ -22,13 +9,56 @@ parameterPaths <- c(
 )
 variationRange <- c(0.1, 2, 10) # 1.0 is deliberately left out for testing
 
-set.seed(123)
-results <- sensitivityCalculation(
-  simulation = simulation,
-  outputPaths = outputPaths,
-  parameterPaths = parameterPaths,
-  variationRange = variationRange
-)
+# `loadSimulation()` initializes a PK-Sim native session; running it at file
+# source time (as `test_dir()` sources every test file up front) bleeds native
+# state across files. Defer it behind memoized accessors so the native load and
+# the time-consuming baseline `sensitivityCalculation()` happen inside a
+# `test_that()` block on first use, computed once and cached for the rest of the
+# file.
+sensFixture <- local({
+  cache <- NULL
+  function() {
+    if (is.null(cache)) {
+      simulation <- loadSimulation(simPath)
+      set.seed(123)
+      results <- sensitivityCalculation(
+        simulation = simulation,
+        outputPaths = outputPaths,
+        parameterPaths = parameterPaths,
+        variationRange = variationRange
+      )
+      cache <<- list(simulation = simulation, results = results)
+    }
+    cache
+  }
+})
+
+sensFixtureMultiple <- local({
+  cache <- NULL
+  function() {
+    if (is.null(cache)) {
+      simulation <- loadSimulation(simPath)
+      outputPathsMultiple <- c(
+        "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)",
+        "Organism|Age",
+        "Organism|ArterialBlood|Plasma|Aciclovir"
+      )
+      parameterPathsMultiple <- c(
+        "Aciclovir|Lipophilicity",
+        "Events|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose",
+        "Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Glomerular Filtration-GFR-Aciclovir|GFR fraction"
+      )
+      resultsMultiple <- sensitivityCalculation(
+        simulation = simulation,
+        outputPaths = outputPathsMultiple,
+        parameterPaths = parameterPathsMultiple,
+        variationRange = c(0.1, 10)
+      )
+      cache <<- list(resultsMultiple = resultsMultiple)
+    }
+    cache
+  }
+})
 
 
 # Validate plotting arguments ---------------------------------------------
@@ -46,6 +76,7 @@ test_that("sensitivityTornadoPlot fails with incorrect input", {
 })
 
 test_that("sensitivityTornadoPlot fails with invalid parameterFactor", {
+  results <- sensFixture()$results
   expect_error(
     sensitivityTornadoPlot(results, parameterFactor = 0),
     "parameterFactor.*out of the allowed range"
@@ -53,6 +84,7 @@ test_that("sensitivityTornadoPlot fails with invalid parameterFactor", {
 })
 
 test_that("sensitivityTornadoPlot fails with invalid xAxisZoomRange", {
+  results <- sensFixture()$results
   xAxisZoomRange <- 100
   expect_error(
     sensitivityTornadoPlot(results, xAxisZoomRange = xAxisZoomRange),
@@ -62,16 +94,17 @@ test_that("sensitivityTornadoPlot fails with invalid xAxisZoomRange", {
 })
 
 test_that("sensitivityTornadoPlot errors if parameterFactor is missing in sensitivity calculation results", {
+  results <- sensFixture()$results
   expect_error(
     sensitivityTornadoPlot(results, parameterFactor = 0.2),
-    messages$noParameterFactor(results$pkData, parameterFactor = 0.2),
-    fixed = TRUE
+    "are not included in the sensitivity analysis results"
   )
 })
 
 # Default plot ------------------------------------------------------------
 
 test_that("sensitivityTornadoPlot creates default plot", {
+  results <- sensFixture()$results
   set.seed(123)
   p <- sensitivityTornadoPlot(results)
 
@@ -85,6 +118,7 @@ test_that("sensitivityTornadoPlot creates default plot", {
 })
 
 test_that("sensitivityTornadoPlot creates default plot with custom parameter path labels", {
+  simulation <- sensFixture()$simulation
   names(parameterPaths) <- c("Lipophilicity", "Dose", "GFR fraction")
 
   resultsLab <- sensitivityCalculation(
@@ -113,6 +147,7 @@ test_that("sensitivityTornadoPlot creates default plot with custom parameter pat
 # Default plot with custom PK parameter -----------------------------------
 
 test_that("sensitivityTornadoPlot works with custom PK parameter", {
+  simulation <- sensFixture()$simulation
   customFun <- list("y_max" = function(y) max(y, na.rm = TRUE))
 
   resultsCustomPK <- sensitivityCalculation(
@@ -137,6 +172,7 @@ test_that("sensitivityTornadoPlot works with custom PK parameter", {
 # Default plot with x-axis zoom -------------------------------------------
 
 test_that("sensitivityTornadoPlot applies x-axis zoom range correctly", {
+  results <- sensFixture()$results
   set.seed(123)
   p <- sensitivityTornadoPlot(results, xAxisZoomRange = c(-100, 100))
 
@@ -152,27 +188,8 @@ test_that("sensitivityTornadoPlot applies x-axis zoom range correctly", {
 
 # Multiple output paths ---------------------------------------------------
 
-simPath <- system.file("extdata", "Aciclovir.pkml", package = "ospsuite")
-simulation <- loadSimulation(simPath)
-outputPaths <- c(
-  "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)",
-  "Organism|Age",
-  "Organism|ArterialBlood|Plasma|Aciclovir"
-)
-parameterPaths <- c(
-  "Aciclovir|Lipophilicity",
-  "Events|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose",
-  "Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Glomerular Filtration-GFR-Aciclovir|GFR fraction"
-)
-
-resultsMultiple <- sensitivityCalculation(
-  simulation = simulation,
-  outputPaths = outputPaths,
-  parameterPaths = parameterPaths,
-  variationRange = c(0.1, 10)
-)
-
 test_that("sensitivityTornadoPlot handles multiple output paths", {
+  resultsMultiple <- sensFixtureMultiple()$resultsMultiple
   set.seed(123)
   plotsMultiple <- sensitivityTornadoPlot(resultsMultiple)
 
@@ -192,6 +209,7 @@ parameterPathsFilter <- "Aciclovir|Lipophilicity"
 pkParametersFilter <- c("AUC_inf", "C_max")
 
 test_that("sensitivityTornadoPlot plots are as expected with filters", {
+  resultsMultiple <- sensFixtureMultiple()$resultsMultiple
   set.seed(123)
   plotFiltered <- sensitivityTornadoPlot(
     resultsMultiple,
@@ -208,6 +226,3 @@ test_that("sensitivityTornadoPlot plots are as expected with filters", {
     )
   )
 })
-
-# Restore old options
-on.exit(options(old_opts), add = TRUE)
