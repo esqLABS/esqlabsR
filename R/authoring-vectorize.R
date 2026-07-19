@@ -3,20 +3,20 @@
 # Every `add*` / `set*` function accepts a vector of ids and vectorizes over
 # them under one recycling rule (locked 2026-06-30):
 #
-#   1. `project` is always length 1. The `id` argument sets N (the entity
+#   1. `project` is always length 1. The `id` argument sets N (the definition
 #      count) and CANNOT be recycled: when any scalar field has length > 1,
 #      `id` must have that same length. A length-1 `id` with all-scalar fields
-#      is the ordinary single-entity call (N = 1).
-#   2. Every scalar-per-entity field is length 1 (recycled to all N) or length
+#      is the ordinary single-definition call (N = 1).
+#   2. Every scalar-per-definition field is length 1 (recycled to all N) or length
 #      N (aligned by position). Any other length is an error naming the field
 #      and the lengths.
-#   3. A vector-valued-per-entity field (an individual's / application's
+#   3. A vector-valued-per-definition field (an individual's / application's
 #      `parameterSets`, a scenario's `outputPaths` / `parameterSets`)
-#      is applied WHOLE to every entity, never split positionally. To give a
-#      different multi-valued list per entity, the caller passes a length-N
-#      list (one vector per entity); anything else is the one value applied to
-#      every entity. Whole fields are exempt from the length check.
-#   4. All-or-nothing: the caller validates all N entities first and writes
+#      is applied WHOLE to every definition, never split positionally. To give a
+#      different multi-valued list per definition, the caller passes a length-N
+#      list (one vector per definition); anything else is the one value applied to
+#      every definition. Whole fields are exempt from the length check.
+#   4. All-or-nothing: the caller validates all N definitions first and writes
 #      nothing on any failure, then folds all N into the section and triggers
 #      exactly one write-through.
 #
@@ -25,12 +25,12 @@
 # entries (parallel `containerPath` / `parameterName` / `value` / `units`
 # vectors) for a single named set, a different axis than the id-sets-N rule.
 # `renameScenario()`, `duplicateScenario()`, `addObservedData()`, and the
-# parameter-identification adders (`addPITask()` and its per-task sub-entity
+# parameter-identification adders (`addPITask()` and its per-task sub-definition
 # helpers) act on a single definition per call.
 #
 # This file holds the pure recycle/align/length-check core. It is project-free
 # and unit-testable in isolation. The plot mutators in R/plots.R carry their own
-# specialized variant (`.recycleScalarArg` / `.dotsToPerEntityFields`), which
+# specialized variant (`.recycleScalarArg` / `.dotsToPerDefinitionFields`), which
 # predates this engine; the two share the same rule.
 
 #' Vectorized authoring (the recycling rule)
@@ -41,15 +41,15 @@
 #'
 #' @details
 #' The id argument sets `N`, the number of definitions to act on, and cannot
-#' itself be recycled: when any scalar-per-entity field has length greater than
+#' itself be recycled: when any scalar-per-definition field has length greater than
 #' 1, the id vector must have that same length. A length-1 id with all-scalar
 #' fields is the ordinary single-definition call.
 #'
-#' Each scalar-per-entity field is either length 1 (recycled to all `N`
+#' Each scalar-per-definition field is either length 1 (recycled to all `N`
 #' definitions) or length `N` (aligned to the ids by position). Any other
 #' length is an error naming the field and the lengths.
 #'
-#' A vector-valued-per-entity field (an individual's or application's
+#' A vector-valued-per-definition field (an individual's or application's
 #' `parameterSets`, a scenario's `outputPaths` and `parameterSets`) is
 #' applied whole to every definition, never split positionally. To give a
 #' different multi-valued list per definition, pass a list of the same length
@@ -65,7 +65,7 @@
 #' vectors) within a single named set, a different axis than the id-sets-`N`
 #' rule described here. `renameScenario()`, `duplicateScenario()`,
 #' `addObservedData()`, `addPITask()`, and the per-task
-#' parameter-identification sub-entity helpers act on a single definition per
+#' parameter-identification sub-definition helpers act on a single definition per
 #' call.
 #'
 #' @name vectorizedAuthoring
@@ -95,11 +95,31 @@ NULL
   invisible(id)
 }
 
-# Recycle / align one scalar-per-entity field to N entities. A length-1 value
+# Abort when a batch `add*` id vector repeats the same (canonical) id, naming
+# the offenders. Batch `add*` functions fold each entry into the section keyed
+# by its id, so a repeated id would silently overwrite the earlier entry rather
+# than add a distinct one. `.canonicalizeId()` deliberately lets an identical
+# repeat through (it aborts only on distinct pre-images that collapse together),
+# so the within-batch guard is the caller's responsibility. Call after
+# canonicalization so the check runs on the ids actually used as keys.
+#
+# @keywords internal
+# @noRd
+.assertNoDuplicateIds <- function(id, definition, call = rlang::caller_env()) {
+  if (anyDuplicated(id) > 0L) {
+    cli::cli_abort(
+      "duplicate {definition} id{?s} in the batch: {.val {id[duplicated(id)]}}",
+      call = call
+    )
+  }
+  invisible(id)
+}
+
+# Recycle / align one scalar-per-definition field to N definitions. A length-1 value
 # is recycled to all N; a length-N value is aligned by position; any other
 # length aborts naming the field and the lengths. `NULL` passes through as
 # `NULL` (an absent field stays absent, recycled to all N). A list of length N
-# also aligns (so a per-entity scalar can be given as a length-N list).
+# also aligns (so a per-definition scalar can be given as a length-N list).
 #
 # @keywords internal
 # @noRd
@@ -123,9 +143,9 @@ NULL
   )
 }
 
-# Resolve a whole-vector-per-entity field to N per-entity values. A length-N
-# list aligns by position (one element per entity); any other value (a scalar,
-# an atomic vector, or `NULL`) is applied verbatim to every entity. This is the
+# Resolve a whole-vector-per-definition field to N per-definition values. A length-N
+# list aligns by position (one element per definition); any other value (a scalar,
+# an atomic vector, or `NULL`) is applied verbatim to every definition. This is the
 # "applied whole, never split positionally" rule for vector-valued fields.
 #
 # @keywords internal
@@ -137,10 +157,10 @@ NULL
   rep(list(value), n)
 }
 
-# Align an id vector + named scalar/whole field lists into N per-entity field
+# Align an id vector + named scalar/whole field lists into N per-definition field
 # sets. `scalarFields` and `wholeFields` are named lists of argument values;
 # each scalar field is recycled/aligned (rule 2), each whole field applied
-# verbatim (rule 3). Returns a list of N named lists, one per entity, each
+# verbatim (rule 3). Returns a list of N named lists, one per definition, each
 # carrying every supplied field (NULL fields preserved as NULL so an `add*`
 # builder can tell "absent" from "present"). `call` attributes any length-error
 # abort to the public caller.
@@ -186,4 +206,22 @@ NULL
     return(value[[i]])
   }
   value[[i]]
+}
+
+# Coerce a numeric authoring field for the set path, preserving the NULL-clears
+# contract. A supplied `NULL` returns `NULL` so `entry[[field]] <- NULL` deletes
+# the key (clearing the optional field); any other value coerces with
+# `as.double()`. This mirrors the add-path builders' `if (!is.null(...))` guard
+# so both set-path loops (`.setOneIndividual()`, `.setOnePopulation()`) treat a
+# `NULL` numeric field as "clear it", not "store numeric(0)". Purely a coercion:
+# it does not validate; validation happens in the `.setOne*` guards above the
+# assignment loop.
+#
+# @keywords internal
+# @noRd
+.coerceNumericField <- function(value) {
+  if (is.null(value)) {
+    return(NULL)
+  }
+  as.double(value)
 }

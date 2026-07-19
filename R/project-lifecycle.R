@@ -22,7 +22,7 @@
 #'   A loaded project is bound to its directory on disk, and every
 #'   authoring edit is write-through: a single `addOutputPath()`,
 #'   `addScenario()`, `setIndividual()`, or `removeParameterSet()` writes (or
-#'   deletes) the affected entity's file immediately. The `project$<section>`
+#'   deletes) the affected definition's file immediately. The `project$<section>`
 #'   accessors are read-only, so a definition only ever changes through an
 #'   authoring function. There is no separate save step, and there is no undo:
 #'   the edit is on disk the moment the call returns.
@@ -182,7 +182,8 @@ initProject <- function(
   if (isProjectInitialized(destination)) {
     if (overwrite) {
       # Overwrite without asking
-      message(messages$overwriteDestination(destination))
+      msg <- messages$overwriteDestination(destination)
+      cli::cli_inform("{msg}")
     } else {
       if (!.isInteractive()) {
         cli::cli_abort(messages$cannotPromptNonInteractive())
@@ -190,8 +191,17 @@ initProject <- function(
       if (!.confirmOverwrite()) {
         cli::cli_abort(messages$abortedByUser())
       }
-      message(messages$overwriteDestination(destination))
+      msg <- messages$overwriteDestination(destination)
+      cli::cli_inform("{msg}")
     }
+    # Overwrite means REPLACE, not merge. Copying the template with
+    # `overwrite = TRUE` refreshes the files it ships, but a definition file the
+    # old project's `definitions/<kind>/` tree carried and the template does
+    # not would survive and re-load as a stale definition. Remove the known
+    # project artifacts (the definitions tree and `Project.json`) first, scoped
+    # to just those paths so unrelated user files in the destination are left
+    # intact.
+    .clearProjectArtifacts(destination)
   }
 
   # Copy template files (just the JSON for minimal, full fixture for example)
@@ -212,7 +222,8 @@ initProject <- function(
     "Data",
     "Populations",
     "Results/Figures",
-    "Results/SimulationResults"
+    "Results/SimulationResults",
+    "definitions"
   )
   for (d in dirs_to_create) {
     dir.create(
@@ -229,6 +240,54 @@ initProject <- function(
   }
 
   invisible(destination)
+}
+
+# Remove the known esqlabsR project artifacts from `destination` before an
+# overwrite, so `initProject(overwrite = TRUE)` REPLACES rather than merges. It
+# removes only the scaffold the initializer owns:
+#   - the definitions tree (`<destination>/<definitionsFolder>/`), the sole
+#     source of the stale-definition leak, because a per-definition file the old tree
+#     carried and the template does not would otherwise survive the copy and
+#     re-load as a stale definition. The existing project's `definitionsFolder`
+#     is read from its `Project.json` (default `"definitions"`) so a custom
+#     tree location is cleared too;
+#   - the `Project.json` container.
+# Everything else in `destination` (working folders, and any unrelated user
+# file) is left untouched. `unlink()`/`file.remove()` return values are checked
+# so a failed removal aborts loudly rather than leaving a half-cleared project.
+#
+# @keywords internal
+# @noRd
+.clearProjectArtifacts <- function(destination) {
+  jsonPath <- file.path(destination, "Project.json")
+
+  # The definitions folder name is configurable; read it from the existing
+  # container so a non-default tree is cleared. A missing or unreadable
+  # container falls back to the default folder name.
+  definitionsFolder <- "definitions"
+  if (file.exists(jsonPath)) {
+    existing <- tryCatch(
+      jsonlite::fromJSON(jsonPath, simplifyVector = FALSE),
+      error = function(e) NULL
+    )
+    definitionsFolder <- existing$definitionsFolder %||% "definitions"
+  }
+
+  definitionsDir <- file.path(destination, definitionsFolder)
+  if (dir.exists(definitionsDir)) {
+    failed <- unlink(definitionsDir, recursive = TRUE, force = TRUE)
+    if (failed != 0L || dir.exists(definitionsDir)) {
+      cli::cli_abort(messages$failedToClearProjectArtifacts(definitionsDir))
+    }
+  }
+
+  if (file.exists(jsonPath)) {
+    if (!file.remove(jsonPath)) {
+      cli::cli_abort(messages$failedToClearProjectArtifacts(jsonPath))
+    }
+  }
+
+  invisible(NULL)
 }
 
 # Thin wrapper around base::interactive(), as a package-local binding so

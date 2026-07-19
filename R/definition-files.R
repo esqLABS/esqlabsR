@@ -1,20 +1,20 @@
-# Entity-files format layer ----
+# Definition-files format layer ----
 #
 # Every authored Project section is stored as a tree of JSON files under
-# `definitions/<kind>/`, one subfolder per entity kind beneath the project's
+# `definitions/<kind>/`, one subfolder per definition kind beneath the project's
 # `definitions/` root (next to `Project.json`), rather than as an array or
 # object inside the monolithic `Project.json`. The `definitions/` folder holds
-# the project's authored entity files, separated from the referenced working
+# the project's authored definition files, separated from the referenced working
 # files (`Models/`, `Data/`, `Populations/`, `Results/`) and the `Project.json`
-# container. Each file holds the same per-entity JSON the monolithic
+# container. Each file holds the same per-definition JSON the monolithic
 # serializer emitted, so the in-memory section shapes are unchanged and every
 # consumer (`runScenarios()`, `createPlots()`, validation, parameter
 # identification) is unaffected.
 #
-# Direction of truth: the entity files are authoritative. Loading globs each
+# Direction of truth: the definition files are authoritative. Loading globs each
 # kind's tree; the section mutators (every `add*` / `remove*` / `set*` and any
 # write-back through `project$<section>`) are write-through, structurally
-# validating the changed entity then writing (or deleting) its single file.
+# validating the changed definition then writing (or deleting) its single file.
 # `saveSnapshot()` renders a derived single-file `Project.json` with every
 # section inlined, for sharing or archiving.
 #
@@ -39,22 +39,22 @@
 # The plots concern is three independent top-level keyed sections, each its own
 # kind: `dataCombined` (`data-combined/<dataCombinedId>.json`), `plots`
 # (`plots/<plotId>.json`, the plot list keyed by `plotId`), and `plotGrids`
-# (`plot-grids/<plotGridId>.json`), one file per entity like every other
+# (`plot-grids/<plotGridId>.json`), one file per definition like every other
 # section. The inner cross-references (a grid's `plotIds` -> a plot's `plotId`
 # -> a `dataCombinedId`) are validated lazily by `.validatePlots()`, not at
 # write, so a dangling inner ref stays a Critical Error surfaced at
 # `validateProject()` / `createPlots()`, never a write-time abort. The derived
 # single-file snapshot inlines all three as three top-level JSON sections.
 
-# Resolve the entity-definition root for a project directory. This is the
-# folder that holds the project's authored entity files, separated from the
+# Resolve the definitions root for a project directory. This is the
+# folder that holds the project's authored definition files, separated from the
 # referenced working files (`Models/`, `Data/`, `Populations/`, `Results/`)
 # and the `Project.json` container. Its name is configurable via the
 # container's `definitionsFolder` field (default `"definitions"`), passed in by
 # the caller (a project's `definitionsFolder` binding); the default keeps every
-# existing project working. Each entity kind lives in its own subfolder
-# (`<definitionsFolder>/<kind>/`); see `.entityKindDir()`. Returns NULL when the
-# project has no directory (an in-memory project), in which case no entity tree
+# existing project working. Each definition kind lives in its own subfolder
+# (`<definitionsFolder>/<kind>/`); see `.definitionKindDir()`. Returns NULL when the
+# project has no directory (an in-memory project), in which case no definition tree
 # is persisted.
 #
 # @keywords internal
@@ -66,7 +66,7 @@
   file.path(projectDirPath, definitionsFolder %||% "definitions")
 }
 
-# Resolve the entity directory for one kind (`scenarios`, `individuals`,
+# Resolve the definition directory for one kind (`scenarios`, `individuals`,
 # `populations`, etc.) under the project's definitions root. This single
 # per-kind resolver is the one place a kind's on-disk location is computed, so
 # a future kind slots in by calling it with its own name rather than
@@ -76,7 +76,7 @@
 #
 # @keywords internal
 # @noRd
-.entityKindDir <- function(
+.definitionKindDir <- function(
   projectDirPath,
   kind,
   definitionsFolder = "definitions"
@@ -88,10 +88,10 @@
   file.path(root, kind)
 }
 
-# Per-kind entity-tree spec registry ----
+# Per-kind definition-tree spec registry ----
 #
 # Each kind has a spec describing how its section is read from and written to
-# the tree. Every kind is one-file-per-entity, keyed by id (the id is the
+# the tree. Every kind is one-file-per-definition, keyed by id (the id is the
 # filename). A spec is a list with:
 #   - kind        : the `definitions/<kind>/` subfolder name.
 #   - serialize   : function(section, project) -> a named `id -> json-record`
@@ -107,31 +107,31 @@
 #
 # The scenarios kind has its own dedicated serialize/parse helpers (the file
 # content differs structurally from the in-memory record); the others reuse
-# their section's existing per-entity JSON shape. The plots concern is three
+# their section's existing per-definition JSON shape. The plots concern is three
 # independent top-level keyed sections (`dataCombined`, `plots`, `plotGrids`),
 # each its own kind like any other section.
 #
 # @keywords internal
 # @noRd
-.entityTreeSpec <- function(kind) {
-  specs <- .entityTreeSpecs()
+.definitionTreeSpec <- function(kind) {
+  specs <- .definitionTreeSpecs()
   spec <- specs[[kind]]
   if (is.null(spec)) {
-    cli::cli_abort("No entity-tree spec for kind {.val {kind}}.")
+    cli::cli_abort("No definition-tree spec for kind {.val {kind}}.")
   }
   spec
 }
 
-# All entity-tree specs, keyed by section field name.
+# All definition-tree specs, keyed by section field name.
 #
 # @keywords internal
 # @noRd
-.entityTreeSpecs <- function() {
+.definitionTreeSpecs <- function() {
   list(
     scenarios = list(
       kind = "scenarios",
       serialize = function(section, project) {
-        .serializeScenarioSet(section, project$outputPaths)
+        .serializeScenarioSet(section)
       },
       parse = function(records, project) {
         .parseScenarios(records, project$outputPaths)
@@ -266,7 +266,7 @@
 
 # The list of all tree-backed spec names, each a one-to-one `project$<name>`
 # section field. This is the single source of truth for the set of section
-# kinds: it is derived from the keys of `.entityTreeSpecs()`, and the project
+# kinds: it is derived from the keys of `.definitionTreeSpecs()`, and the project
 # object's section membership check reads it too, so adding or renaming a kind
 # is a one-place edit (the spec) rather than three lists kept in lockstep. Used
 # by the whole-tree writers, where write order does not matter (each kind writes
@@ -275,13 +275,13 @@
 #
 # @keywords internal
 # @noRd
-.entityKindNames <- function() {
-  names(.entityTreeSpecs())
+.definitionKindNames <- function() {
+  names(.definitionTreeSpecs())
 }
 
 # Resolve the in-memory section a tree-spec name serializes: the
 # `project$<name>` field. Used by the whole-tree writer (`.writeProjectTree`)
-# so it can iterate `.entityKindNames()` uniformly. Strips the printable
+# so it can iterate `.definitionKindNames()` uniformly. Strips the printable
 # DefinitionList wrapper a section accessor adds on read, so the whole-tree
 # writers operate on plain lists.
 #
@@ -291,29 +291,30 @@
   .unwrapDefinitionList(project[[name]])
 }
 
-# Path to a single entity's file. The filename is `<id>.json`. Callers pass an
+# Path to a single definition's file. The filename is `<id>.json`. Callers pass an
 # id already validated as a safe single path segment (canonicalized by the
 # authoring API and re-checked by the per-section structural validator), so
 # the id is used verbatim here.
 #
 # @keywords internal
 # @noRd
-.entityFilePath <- function(dir, id) {
+.definitionFilePath <- function(dir, id) {
   file.path(dir, paste0(id, ".json"))
 }
 
-# Canonical JSON write options shared by every entity file and the snapshot,
+# Canonical JSON write options shared by every definition file and the snapshot,
 # for byte-stable round-trips.
 #
 # @keywords internal
 # @noRd
-.writeEntityJson <- function(content, path) {
+.writeDefinitionJson <- function(content, path) {
   jsonlite::write_json(
     content,
     path,
     auto_unbox = TRUE,
     null = "null",
-    pretty = TRUE
+    pretty = TRUE,
+    digits = NA
   )
   invisible(NULL)
 }
@@ -329,25 +330,25 @@
 #
 # @keywords internal
 # @noRd
-.loadEntityTree <- function(
+.loadDefinitionTree <- function(
   projectDirPath,
   kind,
   inlineSection = NULL,
   definitionsFolder = "definitions"
 ) {
-  spec <- .entityTreeSpec(kind)
+  spec <- .definitionTreeSpec(kind)
   # The definitions root and the per-kind subfolder must each be a real
   # directory when present. A path that exists but is a regular file is a
   # corrupted or mis-synced tree, not an absent section, so it must abort rather
   # than silently fall back to the inline section (which would load the project
   # as structurally-valid but empty).
   root <- definitionsFolder %||% "definitions"
-  .assertEntityTreePathIsDir(
+  .assertDefinitionTreePathIsDir(
     .definitionsDir(projectDirPath, root),
     root
   )
-  dir <- .entityKindDir(projectDirPath, spec$kind, root)
-  .assertEntityTreePathIsDir(dir, file.path(root, spec$kind))
+  dir <- .definitionKindDir(projectDirPath, spec$kind, root)
+  .assertDefinitionTreePathIsDir(dir, file.path(root, spec$kind))
 
   if (is.null(dir) || !dir.exists(dir)) {
     # `inlineSection` is `NULL` for a genuinely absent section and an empty
@@ -368,13 +369,13 @@
   # offending file in a load error and check the inner id against the filename
   # stem. An inline-snapshot fallback record carries no such tag.
   lapply(files, function(f) {
-    rec <- .readEntityJsonFile(f)
-    attr(rec, ".entityFile") <- f
+    rec <- .readDefinitionJsonFile(f)
+    attr(rec, ".definitionFile") <- f
     rec
   })
 }
 
-# Abort when an entity-tree path exists on disk but is a regular file rather
+# Abort when a definition-tree path exists on disk but is a regular file rather
 # than a directory. `dir.exists()` is FALSE for both an absent path and a path
 # that is a file, so the caller cannot tell a genuinely-missing section (a
 # legitimate inline fallback) from a corrupted tree. A NULL path (in-memory
@@ -383,45 +384,61 @@
 #
 # @keywords internal
 # @noRd
-.assertEntityTreePathIsDir <- function(path, relLabel) {
+.assertDefinitionTreePathIsDir <- function(path, relLabel) {
   if (is.null(path) || !file.exists(path) || dir.exists(path)) {
     return(invisible(NULL))
   }
   cli::cli_abort(c(
-    "Project entity path {.file {path}} exists but is not a directory.",
-    "x" = "{.file {relLabel}} must be a directory of entity files.",
+    "Project definition path {.file {path}} exists but is not a directory.",
+    "x" = "{.file {relLabel}} must be a directory of definition files.",
     "i" = "A regular file here is a corrupted or mis-synced project tree."
   ))
 }
 
-# Parse one decoded entity file, aborting with a clear message on malformed
+# Parse one decoded definition file, aborting with a clear message on malformed
 # JSON.
 #
 # @keywords internal
 # @noRd
-.readEntityJsonFile <- function(f) {
+.readDefinitionJsonFile <- function(f) {
   tryCatch(
     jsonlite::fromJSON(f, simplifyVector = FALSE),
     error = function(e) {
       cli::cli_abort(
-        "Failed to parse entity file {.file {f}} as JSON.",
+        "Failed to parse definition file {.file {f}} as JSON.",
         parent = e
       )
     }
   )
 }
 
-# Write a whole section's tree to `definitions/<kind>/`, one file per entity.
-# Removes files that no longer correspond to a section entity so the tree never
-# carries stale entries (an emptied section clears its folder). A NULL directory
-# (in-memory project) is a silent no-op. The full set is serialized in memory
-# first, so a serializer-hostile entity aborts before any file is touched.
+# Write a whole section's tree to `definitions/<kind>/`, one file per definition.
+#
+# Stale-file policy (full-tree write): this writer OWNS the `<kind>/`
+# directory. `section` is the authoritative complete set for the kind, so any
+# `.json` file the directory holds that is NOT in the freshly-written keep-set
+# is a stale entry (a removed definition, or an orphan a hand-edit or a prior run
+# dropped in) and is deleted. This is the deliberate opposite of the
+# incremental writer `.persistKindChanges()`, which preserves orphans: a
+# full-tree write (materialize, snapshot-load, whole-section rewrite) knows the
+# entire section, so it can and must reconcile the directory to it; an
+# incremental write only knows the one definition it changed, so it must not delete
+# a sibling it never loaded. See `.persistKindChanges()` for the other half of
+# this asymmetry.
+#
+# A NULL directory (in-memory project) is a silent no-op. The full set is
+# serialized in memory first, so a serializer-hostile definition aborts before any
+# file is touched.
 #
 # @keywords internal
 # @noRd
-.writeEntityTree <- function(section, kind, project, projectDirPath) {
-  spec <- .entityTreeSpec(kind)
-  dir <- .entityKindDir(projectDirPath, spec$kind, project$definitionsFolder)
+.writeDefinitionTree <- function(section, kind, project, projectDirPath) {
+  spec <- .definitionTreeSpec(kind)
+  dir <- .definitionKindDir(
+    projectDirPath,
+    spec$kind,
+    project$definitionsFolder
+  )
   if (is.null(dir)) {
     return(invisible(NULL))
   }
@@ -432,12 +449,23 @@
   }
   keep <- character()
   for (id in names(serialized)) {
-    .writeEntityJson(serialized[[id]], .entityFilePath(dir, id))
+    .writeDefinitionJson(serialized[[id]], .definitionFilePath(dir, id))
     keep <- c(keep, paste0(id, ".json"))
   }
   existing <- list.files(dir, pattern = "\\.json$")
-  for (f in setdiff(existing, keep)) {
-    file.remove(file.path(dir, f))
+  # Delete stale files, checking each `file.remove()` result: a stale entry
+  # that fails to delete (a permission or lock problem) would silently survive
+  # and re-enter the section on the next `loadProject()`, so the section would
+  # not match the set just written. Abort naming the file(s) rather than let a
+  # ghost definition reappear.
+  stale <- setdiff(existing, keep)
+  if (length(stale) > 0L) {
+    removed <- file.remove(file.path(dir, stale))
+    if (!all(removed)) {
+      cli::cli_abort(messages$failedToRemoveStaleDefinitionFiles(
+        file.path(dir, stale[!removed])
+      ))
+    }
   }
   invisible(NULL)
 }
@@ -448,7 +476,7 @@
 # differs structurally from the in-memory `Scenario` record (the named-vector
 # `outputPaths` record field rebuilt as the `outputPaths` id array, parsed
 # `simulationTime` rejoined, base-unit `steadyStateTime` converted back). The
-# other kinds' file content is their existing per-entity JSON shape.
+# other kinds' file content is their existing per-definition JSON shape.
 
 # Serialize a whole set of scenarios to their JSON-list representation, keyed
 # by scenario name, without touching disk. Reuses the per-scenario structural
@@ -459,12 +487,12 @@
 #
 # @keywords internal
 # @noRd
-.serializeScenarioSet <- function(scenarios, outputPaths) {
+.serializeScenarioSet <- function(scenarios) {
   scenarios <- scenarios %||% list()
   serialized <- list()
   for (name in names(scenarios)) {
     .validateScenarioStructure(scenarios[[name]], name)
-    serialized[[name]] <- .scenarioToJson(scenarios[[name]], outputPaths)
+    serialized[[name]] <- .scenarioToJson(scenarios[[name]])
   }
   serialized
 }
@@ -483,7 +511,7 @@
   individuals <- individuals %||% list()
   out <- list()
   for (id in names(individuals)) {
-    .validateEntityTreeKey(id, "individual")
+    .validateDefinitionTreeKey(id, "individual")
     indiv <- unclass(individuals[[id]])
     if (!is.null(indiv$parameterSets)) {
       indiv$parameterSets <- as.list(indiv$parameterSets)
@@ -501,7 +529,7 @@
   populations <- populations %||% list()
   out <- list()
   for (id in names(populations)) {
-    .validateEntityTreeKey(id, "population")
+    .validateDefinitionTreeKey(id, "population")
     pop <- unclass(populations[[id]])
     out[[id]] <- c(list(populationId = id), pop)
   }
@@ -516,7 +544,7 @@
   parameterSets <- parameterSets %||% list()
   out <- list()
   for (id in names(parameterSets)) {
-    .validateEntityTreeKey(id, "parameterSet")
+    .validateDefinitionTreeKey(id, "parameterSet")
     out[[id]] <- list(
       id = id,
       parameters = unclass(parameterSets[[id]] %||% list())
@@ -618,7 +646,7 @@
   initialConditions <- initialConditions %||% list()
   out <- list()
   for (id in names(initialConditions)) {
-    .validateEntityTreeKey(id, "initialConditionSet")
+    .validateDefinitionTreeKey(id, "initialConditionSet")
     out[[id]] <- list(
       id = id,
       initialConditions = unclass(initialConditions[[id]] %||% list())
@@ -678,7 +706,7 @@
   applications <- applications %||% list()
   out <- list()
   for (id in names(applications)) {
-    .validateEntityTreeKey(id, "application")
+    .validateDefinitionTreeKey(id, "application")
     app <- applications[[id]]
     rec <- list(id = id)
     if (!is.null(app$parameterSets) && length(app$parameterSets) > 0L) {
@@ -738,7 +766,7 @@
   }
   out <- list()
   for (id in ids) {
-    .validateEntityTreeKey(id, "outputPath")
+    .validateDefinitionTreeKey(id, "outputPath")
     out[[id]] <- list(id = id, path = outputPaths[[id]])
   }
   out
@@ -781,6 +809,7 @@
   out <- list()
   for (entry in observedData) {
     id <- .observedDataEntryId(entry)
+    .validateObservedDataId(id)
     # The on-disk id is the file basename (or the programmatic DataSet name).
     # Two declarations whose `file` differs only by directory derive the same
     # basename and would silently overwrite each other (one file on disk, the
@@ -788,7 +817,7 @@
     # than dropping a declaration.
     if (!is.null(out[[id]])) {
       cli::cli_abort(c(
-        "Two observedData declarations map to the same entity file {.file {id}.json}.",
+        "Two observedData declarations map to the same definition file {.file {id}.json}.",
         "x" = "The on-disk id is the file basename (or the programmatic name), \\
         so two sources sharing a basename collide.",
         "i" = "Rename one source so the basenames differ."
@@ -807,13 +836,13 @@
   if (is.null(records)) {
     return(list())
   }
-  # Drop the transient `.entityFile` load tag the tree loader attaches; it is
+  # Drop the transient `.definitionFile` load tag the tree loader attaches; it is
   # used only for error messages, and must not leak into the in-memory record
   # (which would make a tree-loaded section differ from an inline-loaded one).
   # Stamp each declaration with `c("ObservedDataSource", "list")` so a single
   # source dispatches its print method (the serializers strip it before JSON).
   records <- lapply(records, function(rec) {
-    attr(rec, ".entityFile") <- NULL
+    attr(rec, ".definitionFile") <- NULL
     .asObservedDataSource(rec)
   })
   unname(records)
@@ -845,12 +874,34 @@
   }
   if (is.null(id) || !nzchar(id)) {
     cli::cli_abort(c(
-      "An observedData declaration has no id to name its entity file.",
+      "An observedData declaration has no id to name its definition file.",
       "i" = "A file-based entry needs a {.field file}; a programmatic entry \\
       needs a {.field name}."
     ))
   }
   id
+}
+
+# The observed-data id becomes a filename via `.definitionFilePath(dir, id)`, so it
+# must be a single safe path segment or it could escape the kind directory. A
+# programmatic `name` reaches this verbatim (unlike the other keyed kinds, whose
+# key is validated by `.validateDefinitionTreeKey`). Reject rather than rewrite: the
+# id doubles as the match key for `removeObservedData()`, so canonicalizing it
+# would desync the on-disk filename from the match key.
+#
+# @keywords internal
+# @noRd
+.validateObservedDataId <- function(id) {
+  if (grepl("[/\\]", id) || id %in% c(".", "..") || basename(id) != id) {
+    cli::cli_abort(c(
+      "observedData id {.val {id}} is not a single safe filename segment.",
+      "x" = "It must not contain a path separator or be {.val .} / {.val ..}, \\
+      so it cannot escape the observed-data definition directory.",
+      "i" = "Rename the source (its {.field file} basename or programmatic \\
+      {.field name}) to a single safe filename segment."
+    ))
+  }
+  invisible(NULL)
 }
 
 # plots: three keyed kinds, one part of the `project$plots` trio each.
@@ -866,7 +917,7 @@
 
 # data-combined: one file per dataCombined entry, the nested JSON object with
 # its `dataCombinedId` re-added (the list key). The serializer canonicalizes
-# nothing; `.validateEntityTreeKey` enforces the key is already canonical.
+# nothing; `.validateDefinitionTreeKey` enforces the key is already canonical.
 #
 # @keywords internal
 # @noRd
@@ -874,7 +925,7 @@
   dataCombined <- dataCombined %||% list()
   out <- list()
   for (id in names(dataCombined)) {
-    .validateEntityTreeKey(id, "dataCombined")
+    .validateDefinitionTreeKey(id, "dataCombined")
     dc <- dataCombined[[id]]
     rec <- list(dataCombinedId = id)
     if (length(dc$simulated %||% list()) > 0) {
@@ -902,7 +953,7 @@
     .keyedTreeRecordId(rec, "dataCombinedId", "dataCombined")
   }
   .parseNestedDataCombined(lapply(records, function(rec) {
-    attr(rec, ".entityFile") <- NULL
+    attr(rec, ".definitionFile") <- NULL
     rec
   }))
 }
@@ -946,7 +997,7 @@
 #
 # @keywords internal
 # @noRd
-.serializePlotEntrySet <- function(entries, idField, entityLabel) {
+.serializePlotEntrySet <- function(entries, idField, definitionLabel) {
   entries <- entries %||% list()
   out <- list()
   for (id in names(entries)) {
@@ -960,11 +1011,21 @@
         !nzchar(recId)
     ) {
       cli::cli_abort(c(
-        "A {.field {entityLabel}} entry has no usable {.field {idField}}.",
+        "A {.field {definitionLabel}} entry has no usable {.field {idField}}.",
         "x" = "{.field {idField}} must be a single non-empty string."
       ))
     }
-    .validateEntityTreeKey(id, entityLabel)
+    .validateDefinitionTreeKey(id, definitionLabel)
+    if (!identical(id, recId)) {
+      cli::cli_abort(c(
+        "A {.field {definitionLabel}} entry's {.field {idField}} disagrees with its \\
+        map key.",
+        "x" = "The map key is {.val {id}} but {.field {idField}} is \\
+        {.val {recId}}.",
+        "i" = "They must agree so the on-disk filename stays the authoritative \\
+        key; store the entry under its {.field {idField}}."
+      ))
+    }
     rec <- .plotRefFieldToKey(rec, class(rec)[[1]])
     class(rec) <- "list"
     out[[id]] <- rec
@@ -978,13 +1039,13 @@
 #
 # @keywords internal
 # @noRd
-.parsePlotEntryTree <- function(records, idField, entityLabel, idClass) {
+.parsePlotEntryTree <- function(records, idField, definitionLabel, idClass) {
   if (is.null(records) || length(records) == 0L) {
     return(list())
   }
   cleaned <- lapply(records, function(rec) {
-    .keyedTreeRecordId(rec, idField, entityLabel)
-    attr(rec, ".entityFile") <- NULL
+    .keyedTreeRecordId(rec, idField, definitionLabel)
+    attr(rec, ".definitionFile") <- NULL
     rec
   })
   .parsePlotEntries(cleaned, idField, idClass)
@@ -998,8 +1059,17 @@
   tasks <- tasks %||% list()
   out <- list()
   for (id in names(tasks)) {
-    .validateEntityTreeKey(id, "parameterIdentification task")
+    .validateDefinitionTreeKey(id, "parameterIdentification task")
     task <- tasks[[id]]
+    if (!identical(id, task$id)) {
+      cli::cli_abort(c(
+        "A {.field parameterIdentification task}'s {.field id} disagrees with \\
+        its map key.",
+        "x" = "The map key is {.val {id}} but {.field id} is {.val {task$id}}.",
+        "i" = "They must agree so the on-disk filename stays the authoritative \\
+        key; store the task under its {.field id}."
+      ))
+    }
     out[[id]] <- list(
       id = task$id,
       scenarios = as.list(task$scenarios),
@@ -1022,20 +1092,20 @@
 #
 # @keywords internal
 # @noRd
-.validateEntityTreeKey <- function(key, entityLabel) {
+.validateDefinitionTreeKey <- function(key, definitionLabel) {
   canonical <- suppressWarnings(.canonicalizeId(key))
   if (!identical(key, canonical)) {
     cli::cli_abort(c(
-      "{entityLabel} id {.val {key}} is not a canonical entity-file id.",
+      "{definitionLabel} id {.val {key}} is not a canonical definition-file id.",
       "i" = "Use the add/set API, which canonicalizes it to {.val {canonical}}, \\
-      or store the entity under the key {.val {canonical}}."
+      or store the definition under the key {.val {canonical}}."
     ))
   }
   invisible(NULL)
 }
 
 # Load-side id guard shared by the keyed kinds. The write path enforces the
-# "id is the filename" contract (`.validateEntityTreeKey`), but the load path
+# "id is the filename" contract (`.validateDefinitionTreeKey`), but the load path
 # applied none of it: a record missing its id field aborted with an opaque
 # base-R `list[[NULL]] <- x` error naming nothing, and a record whose inner id
 # disagreed with its filename loaded keyed by the inner id (breaking
@@ -1044,15 +1114,15 @@
 # given the record, the name of its id field, and a human label for the kind:
 #   - the id field must be a non-empty scalar string (else abort naming the
 #     file, mirroring the PI-task message);
-#   - for a record loaded from a tree file (tagged with `.entityFile`), the
+#   - for a record loaded from a tree file (tagged with `.definitionFile`), the
 #     inner id must equal the filename stem, so the on-disk filename stays the
 #     authoritative key and two files can never collapse onto one id.
-# An inline-snapshot record (no `.entityFile` tag) skips the filename check.
+# An inline-snapshot record (no `.definitionFile` tag) skips the filename check.
 #
 # @keywords internal
 # @noRd
-.keyedTreeRecordId <- function(record, idField, entityLabel) {
-  file <- attr(record, ".entityFile")
+.keyedTreeRecordId <- function(record, idField, definitionLabel) {
+  file <- attr(record, ".definitionFile")
   id <- record[[idField]]
   if (!is.character(id) || length(id) != 1L || is.na(id) || !nzchar(id)) {
     where <- if (is.null(file)) {
@@ -1061,10 +1131,10 @@
       c("i" = "Check {.file {file}}.")
     }
     cli::cli_abort(c(
-      "An entity file for kind {.field {entityLabel}} has no usable \\
+      "A definition file for kind {.field {definitionLabel}} has no usable \\
       {.field {idField}}.",
       "x" = "{.field {idField}} must be a single non-empty string \\
-      (it names the entity and its file).",
+      (it names the definition and its file).",
       where
     ))
   }
@@ -1072,11 +1142,11 @@
     stem <- tools::file_path_sans_ext(basename(file))
     if (!identical(id, stem)) {
       cli::cli_abort(c(
-        "An entity file for kind {.field {entityLabel}} has a stored \\
+        "A definition file for kind {.field {definitionLabel}} has a stored \\
         {.field {idField}} that disagrees with its filename.",
         "x" = "{.field {idField}} is {.val {id}} but the file is \\
         {.val {stem}}.json.",
-        "i" = "The filename stem is the entity's id; rename the file or the \\
+        "i" = "The filename stem is the definition's id; rename the file or the \\
         {.field {idField}} so they match. Check {.file {file}}."
       ))
     }
@@ -1097,8 +1167,8 @@
 #
 # @keywords internal
 # @noRd
-.assertNoEmptyObjectFields <- function(record, entityLabel) {
-  file <- attr(record, ".entityFile")
+.assertNoEmptyObjectFields <- function(record, definitionLabel) {
+  file <- attr(record, ".definitionFile")
   for (field in names(record)) {
     value <- record[[field]]
     if (
@@ -1112,7 +1182,7 @@
         c("i" = "Check {.file {file}}.")
       }
       cli::cli_abort(c(
-        "An entity of kind {.field {entityLabel}} has an invalid \\
+        "A definition of kind {.field {definitionLabel}} has an invalid \\
         {.field {field}}.",
         "x" = "{.field {field}} is an empty object {.code {{}}} where a single \\
         value or {.code null} was expected.",
@@ -1220,7 +1290,7 @@ saveSnapshot <- function(project, path = NULL) {
   if (ext == "" || identical(tolower(ext), "json")) {
     return(fs::path_ext_set(path, "esqlabsR"))
   }
-  if (identical(ext, "esqlabsR")) {
+  if (identical(tolower(ext), "esqlabsr")) {
     return(path)
   }
   cli::cli_inform(c(
@@ -1284,7 +1354,7 @@ loadSnapshot <- function(file, dir) {
   }
 
   # A legacy or hand-authored snapshot may carry non-canonical ids (e.g.
-  # `Sim_A`, `Aciclovir_PVB`), but the entity tree keys files by canonical id,
+  # `Sim_A`, `Aciclovir_PVB`), but the definition tree keys files by canonical id,
   # so the tree writer requires them. Canonicalize every id and every reference
   # to one in the raw snapshot JSON before parsing it, so a legacy single-file
   # `Project.json` migrates losslessly into the tree (definitions and references
@@ -1316,9 +1386,9 @@ loadSnapshot <- function(file, dir) {
 
 # Explode an in-memory `Project` into a full on-disk tree project at `dir`: a
 # `Project.json` container plus a `definitions/<kind>/` tree (one file per
-# entity) for every section. Returns the container path. Reuses the
+# definition) for every section. Returns the container path. Reuses the
 # write-through serializer per kind (no parallel serializer); a keyed kind's
-# writer removes files that no longer correspond to a section entity, so a
+# writer removes files that no longer correspond to a section definition, so a
 # re-run leaves no stale entries (idempotent overwrite). Shared by
 # `loadSnapshot()` and the Excel import.
 #
@@ -1328,12 +1398,12 @@ loadSnapshot <- function(file, dir) {
   if (!dir.exists(dir)) {
     dir.create(dir, recursive = TRUE, showWarnings = FALSE)
   }
-  for (kind in .entityKindNames()) {
-    .writeEntityTree(.sectionForKind(project, kind), kind, project, dir)
+  for (kind in .definitionKindNames()) {
+    .writeDefinitionTree(.sectionForKind(project, kind), kind, project, dir)
   }
   # Write the container with the inline sections emptied: the tree owns them,
   # matching the on-disk shape `loadProject()` reads for a tree project.
   containerPath <- file.path(dir, "Project.json")
-  .saveProjectJson(project, containerPath, includeScenarios = FALSE)
+  .saveProjectJson(project, containerPath, containerOnly = TRUE)
   containerPath
 }

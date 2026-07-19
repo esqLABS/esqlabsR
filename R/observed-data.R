@@ -52,6 +52,42 @@ print.ObservedDataSource <- function(x, ...) {
   .validateObservedData(project$observedData, project$dataFolder)
 }
 
+# Single source of truth for observed-data source shape, shared by both
+# validation entry points (`.validateObservedData`, the project validator
+# adapter, and `.validateObservedDataEntry`, the load/add-time guard) so they
+# can never disagree about which fields a source type requires.
+#
+# The rule an Excel source carries `sheets` (the sheet names to import), while
+# `pkml` / `script` sources are a single file and `programmatic` is a runtime
+# sentinel with no source fields at all. `sheets` is a required field for
+# `excel` in BOTH entry points.
+#
+# @keywords internal
+# @noRd
+.observedDataValidTypes <- c("excel", "pkml", "script", "programmatic")
+
+.observedDataRequiredFields <- function(type) {
+  switch(
+    type,
+    "excel" = c("file", "importerConfiguration", "sheets"),
+    "pkml" = "file",
+    "script" = "file",
+    "programmatic" = character(0),
+    character(0)
+  )
+}
+
+# A field is "missing" when it is absent (`NULL`) or an empty collection
+# (`length 0`, e.g. `sheets = list()`). Both entry points use this one
+# predicate so an empty-but-present `sheets` is treated the same everywhere.
+#
+# @keywords internal
+# @noRd
+.observedDataFieldMissing <- function(entry, field) {
+  val <- entry[[field]]
+  is.null(val) || length(val) == 0L
+}
+
 #' Validate the `observedData` section of a Project
 #'
 #' Per-entry checks: `type` is set and is one of `excel`, `pkml`,
@@ -73,7 +109,7 @@ print.ObservedDataSource <- function(x, ...) {
     return(result)
   }
 
-  validTypes <- c("excel", "pkml", "script", "programmatic")
+  validTypes <- .observedDataValidTypes
 
   for (i in seq_along(observedData)) {
     entry <- observedData[[i]]
@@ -82,7 +118,7 @@ print.ObservedDataSource <- function(x, ...) {
     if (is.null(entry$type)) {
       result$add_critical_error(
         "Missing Fields",
-        paste0(entryLabel, " is missing required field 'type'")
+        messages$validationObservedDataMissingType(entryLabel)
       )
       next
     }
@@ -90,80 +126,53 @@ print.ObservedDataSource <- function(x, ...) {
     if (!entry$type %in% validTypes) {
       result$add_critical_error(
         "Invalid Value",
-        paste0(
+        messages$validationObservedDataInvalidType(
           entryLabel,
-          " has invalid type '",
           entry$type,
-          "'. Must be one of: ",
-          paste(validTypes, collapse = ", ")
+          validTypes
         )
       )
       next
     }
 
-    if (entry$type == "excel") {
-      if (is.null(entry$file)) {
+    # Required-field list is the single source of truth shared with the
+    # load/add path (`.validateObservedDataEntry`), so the two entry points
+    # never disagree about, e.g., whether an Excel source needs `sheets`.
+    for (field in .observedDataRequiredFields(entry$type)) {
+      if (.observedDataFieldMissing(entry, field)) {
         result$add_critical_error(
           "Missing Fields",
-          paste0(entryLabel, " (excel) is missing required field 'file'")
-        )
-      } else if (!is.null(dataFolder)) {
-        filePath <- file.path(dataFolder, entry$file)
-        if (!file.exists(filePath)) {
-          result$add_warning(
-            "File Not Found",
-            paste0(entryLabel, " references non-existent file: ", entry$file)
-          )
-        }
-      }
-
-      if (is.null(entry$importerConfiguration)) {
-        result$add_critical_error(
-          "Missing Fields",
-          paste0(
+          messages$validationObservedDataMissingField(
             entryLabel,
-            " (excel) is missing required field 'importerConfiguration'"
+            entry$type,
+            field
           )
-        )
-      } else if (!is.null(dataFolder)) {
-        importerPath <- file.path(dataFolder, entry$importerConfiguration)
-        if (!file.exists(importerPath)) {
-          result$add_warning(
-            "File Not Found",
-            paste0(
-              entryLabel,
-              " references non-existent importer config: ",
-              entry$importerConfiguration
-            )
-          )
-        }
-      }
-
-      if (is.null(entry$sheets) || length(entry$sheets) == 0) {
-        result$add_critical_error(
-          "Missing Fields",
-          paste0(entryLabel, " (excel) is missing required field 'sheets'")
         )
       }
     }
 
-    if (entry$type %in% c("pkml", "script")) {
-      if (is.null(entry$file)) {
-        result$add_critical_error(
-          "Missing Fields",
-          paste0(
-            entryLabel,
-            " (",
-            entry$type,
-            ") is missing required field 'file'"
-          )
-        )
-      } else if (!is.null(dataFolder)) {
+    # File existence is a warning (a missing source does not block parsing).
+    if (!is.null(dataFolder)) {
+      if (!is.null(entry$file)) {
         filePath <- file.path(dataFolder, entry$file)
         if (!file.exists(filePath)) {
           result$add_warning(
             "File Not Found",
-            paste0(entryLabel, " references non-existent file: ", entry$file)
+            messages$validationObservedDataFileNotFound(entryLabel, entry$file)
+          )
+        }
+      }
+      if (
+        identical(entry$type, "excel") && !is.null(entry$importerConfiguration)
+      ) {
+        importerPath <- file.path(dataFolder, entry$importerConfiguration)
+        if (!file.exists(importerPath)) {
+          result$add_warning(
+            "File Not Found",
+            messages$validationObservedDataImporterNotFound(
+              entryLabel,
+              entry$importerConfiguration
+            )
           )
         }
       }
@@ -178,9 +187,12 @@ print.ObservedDataSource <- function(x, ...) {
 #' @description
 #' Reads the `observedData` declarations from a [Project][loadProject()]
 #' and returns the corresponding [`ospsuite::DataSet`] objects. Source
-#' types: `excel` (via importer configuration), `pkml`, `script`. The
-#' `programmatic` type is reserved for a later milestone and currently
-#' errors fast.
+#' types: `excel` (via importer configuration), `pkml`, `script`, and
+#' `programmatic`. A `programmatic` declaration is a sentinel for a
+#' `DataSet` added at runtime with [addObservedData()]; its data lives in
+#' the session (not on disk), so it is resolved from the in-memory store
+#' and is not reproducible across a reload. Prefer a `script` source for a
+#' reproducible programmatic data set.
 #'
 #' @param project A `Project` object (see [loadProject()]).
 #' @returns A named list of [`ospsuite::DataSet`] objects. Empty list when
@@ -209,13 +221,32 @@ loadObservedData <- function(project) {
       "programmatic" = NULL
     )
     if (!is.null(dataSets)) {
-      allDataSets <- c(allDataSets, dataSets)
+      allDataSets <- .mergeObservedDataSets(allDataSets, dataSets)
     }
   }
   # Merge runtime programmatic store, then cache names.
-  allDataSets <- c(allDataSets, state$.programmaticDataSets)
+  allDataSets <- .mergeObservedDataSets(
+    allDataSets,
+    state$.programmaticDataSets
+  )
   state$.observedDataNamesCache <- names(allDataSets)
   allDataSets
+}
+
+# Merge a batch of loaded DataSets into the accumulator, aborting on a name
+# collision instead of letting `c()` silently keep both (a duplicate name would
+# then shadow the earlier set when the list is indexed by name).
+#' @keywords internal
+#' @noRd
+.mergeObservedDataSets <- function(accumulated, incoming) {
+  if (length(incoming) == 0) {
+    return(accumulated)
+  }
+  duplicates <- intersect(names(accumulated), names(incoming))
+  if (length(duplicates) > 0) {
+    cli::cli_abort(messages$observedDataNameCollision(duplicates))
+  }
+  c(accumulated, incoming)
 }
 
 #' Get names of all observed data in a Project
@@ -265,14 +296,19 @@ addObservedData <- function(project, entry) {
         "observedData entry with name {.val {name}} already exists"
       )
     }
-    state$.programmaticDataSets[[name]] <- entry
     sentinel <- .asObservedDataSource(list(type = "programmatic", name = name))
-    # The observedData setter resets the names cache, so the cache must be
-    # rebuilt after the write, from the names known before it.
+    # Write through to disk FIRST: `.setSection()` can abort (e.g. an on-disk
+    # id/basename collision surfaced by the serializer), so mutate the runtime
+    # store only after the write succeeds. Committing the store first would
+    # leave a runtime DataSet with no disk sentinel if the write aborts, i.e.
+    # memory and disk disagreeing.
     project$.setSection(
       "observedData",
       c(project$.getSection("observedData"), list(sentinel))
     )
+    state$.programmaticDataSets[[name]] <- entry
+    # The observedData setter resets the names cache, so rebuild it after the
+    # write, from the names known before it plus the newly added name.
     state$.observedDataNamesCache <- c(existingNames, name)
     cli::cli_inform(c(
       "i" = paste0(
@@ -401,13 +437,18 @@ removeObservedData <- function(project, id) {
     return(invisible(project))
   }
 
-  for (name in programmaticNames) {
-    state$.programmaticDataSets[[name]] <- NULL
-  }
   if (length(dropIdx) > 0L) {
     observedData <- observedData[-unique(dropIdx)]
   }
+  # Write through to disk FIRST: `.setSection()` can abort (the serializer can
+  # reject the resulting section on an id/basename collision), so clear the
+  # runtime store only after the write succeeds. Clearing the store first would
+  # drop the in-memory DataSet while the disk sentinel survives if the write
+  # aborts, i.e. memory and disk disagreeing.
   project$.setSection("observedData", observedData)
+  for (name in programmaticNames) {
+    state$.programmaticDataSets[[name]] <- NULL
+  }
   state$.observedDataNamesCache <- NULL
   invisible(project)
 }
@@ -447,7 +488,7 @@ removeObservedData <- function(project, id) {
 # Internal helpers ----
 
 .validateObservedDataEntry <- function(entry, entryIndex) {
-  validTypes <- c("excel", "pkml", "script", "programmatic")
+  validTypes <- .observedDataValidTypes
   if (is.null(entry$type) || !(entry$type %in% validTypes)) {
     cli::cli_abort(
       messages$observedDataInvalidEntryType(
@@ -456,15 +497,12 @@ removeObservedData <- function(project, id) {
       )
     )
   }
-  required <- switch(
-    entry$type,
-    "excel" = c("file", "importerConfiguration", "sheets"),
-    "pkml" = "file",
-    "script" = "file",
-    "programmatic" = character(0)
-  )
-  for (field in required) {
-    if (is.null(entry[[field]])) {
+  # Same required-field spec and same "missing" rule as the project validator
+  # (`.validateObservedData`), so a present-but-empty `sheets` on an Excel
+  # source is rejected here too rather than passing add/load and failing later
+  # under `validateProject()`.
+  for (field in .observedDataRequiredFields(entry$type)) {
+    if (.observedDataFieldMissing(entry, field)) {
       cli::cli_abort(
         messages$observedDataMissingField(entryIndex, entry$type, field)
       )
@@ -518,6 +556,10 @@ removeObservedData <- function(project, id) {
       length(result) > 0 &&
       all(vapply(result, inherits, logical(1), "DataSet"))
   ) {
+    # Re-key by each DataSet's own name so a list return is keyed the same
+    # way as a single-DataSet return (the script's own list names, if any,
+    # are ignored in favour of the authoritative `$name`).
+    names(result) <- vapply(result, function(ds) ds$name, character(1))
     return(result)
   }
   cli::cli_abort(

@@ -20,7 +20,14 @@ same length as \code{id} (one character vector per grid).}
 
 \item{...}{Optional plot-grid fields, e.g. \code{title}, \code{subtitle}. A scalar
 field is recycled to every grid; to set one differently per grid, pass a
-list of the same length as \code{id}.}
+list of the same length as \code{id}.
+
+A length-\code{N} \emph{atomic vector} passed as a \code{...} field is treated as one
+multi-value field and applied \strong{whole} to every grid (collapsed to a
+comma-separated string), not split one-per-grid. So \code{title = c("A", "B")}
+gives every grid the single title \code{"A, B"}, not grid 1 \code{"A"} and grid 2
+\code{"B"}. To vary a \code{...} field per grid, pass a length-\code{N} \strong{list}
+(\code{title = list("A", "B")}).}
 }
 \value{
 The \code{project} object, invisibly.
@@ -32,15 +39,15 @@ are not present in \code{project$plots}.
 }
 \details{
 The id argument sets \code{N}, the number of definitions to act on, and cannot
-itself be recycled: when any scalar-per-entity field has length greater than
+itself be recycled: when any scalar-per-definition field has length greater than
 1, the id vector must have that same length. A length-1 id with all-scalar
 fields is the ordinary single-definition call.
 
-Each scalar-per-entity field is either length 1 (recycled to all \code{N}
+Each scalar-per-definition field is either length 1 (recycled to all \code{N}
 definitions) or length \code{N} (aligned to the ids by position). Any other
 length is an error naming the field and the lengths.
 
-A vector-valued-per-entity field (an individual's or application's
+A vector-valued-per-definition field (an individual's or application's
 \code{parameterSets}, a scenario's \code{outputPaths} and \code{parameterSets}) is
 applied whole to every definition, never split positionally. To give a
 different multi-valued list per definition, pass a list of the same length
@@ -56,7 +63,7 @@ entries (parallel \code{containerPath} / \code{parameterName} / \code{value} / \
 vectors) within a single named set, a different axis than the id-sets-\code{N}
 rule described here. \code{renameScenario()}, \code{duplicateScenario()},
 \code{addObservedData()}, \code{addPITask()}, and the per-task
-parameter-identification sub-entity helpers act on a single definition per
+parameter-identification sub-definition helpers act on a single definition per
 call.
 }
 \seealso{

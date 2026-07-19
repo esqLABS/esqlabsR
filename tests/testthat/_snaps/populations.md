@@ -281,7 +281,23 @@
       setPopulation(project, "testpopulation", numberOfIndividuals = 0)
     Condition
       Error in `setPopulation()`:
-      ! `numberOfIndividuals` must be a positive number
+      ! `numberOfIndividuals` must be a positive whole number
+
+# setPopulation rejects a non-numeric range field
+
+    Code
+      setPopulation(project, "testpopulation", weightMin = "heavy")
+    Condition
+      Error in `setPopulation()`:
+      ! weightMin must be a single finite number
+
+# setPopulation rejects a non-integer numberOfIndividuals
+
+    Code
+      setPopulation(project, "testpopulation", numberOfIndividuals = 2.5)
+    Condition
+      Error in `setPopulation()`:
+      ! `numberOfIndividuals` must be a positive whole number
 
 # addPopulation aborts on a mismatched scalar field length
 
@@ -292,6 +308,14 @@
       Error in `addPopulation()`:
       ! `numberOfIndividuals` must be length 1 or length 3 (the number of ids).
       x It is length 2.
+
+# addPopulation aborts on a duplicate id in the batch
+
+    Code
+      addPopulation(project, c("a", "a"), species = "Human", numberOfIndividuals = 5)
+    Condition
+      Error in `addPopulation()`:
+      ! duplicate population id in the batch: "a"
 
 # removePopulation warns when still referenced by a scenario, removes anyway
 

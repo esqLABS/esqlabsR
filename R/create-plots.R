@@ -8,6 +8,11 @@
 #' Generate plots from a Project
 #'
 #' @description
+#' **Returns plot grids, not standalone plots.** By default `createPlots()`
+#' builds every plot grid declared in `project$plotGrids` and no standalone
+#' plots, and hands back a **named list of plot grids keyed by Plot Grid name**
+#' (the `plots` argument opts individual standalone plots into that same list).
+#'
 #' Reads `project$plots` and `project$plotGrids` (both keyed lists, one entry
 #' per plot / grid) to build the requested plot grids and, optionally,
 #' standalone single plots. DataCombined objects are resolved via
@@ -41,10 +46,12 @@
 #'   to `FALSE` to skip the pre-flight check (e.g. when the caller has
 #'   already validated the project).
 #'
-#' @returns A named list keyed by id: one entry per requested plot grid
-#'   (keyed by `plotGridId`) unioned with one entry per requested standalone
-#'   plot (keyed by `plotId`). An empty list when the project has no plots to
-#'   build.
+#' @returns A named list of **plot grids** keyed by Plot Grid name: one entry
+#'   per requested plot grid (keyed by its `plotGridId`), unioned with one entry
+#'   per requested standalone plot (keyed by its `plotId`) when `plots` is
+#'   given. Note the list holds plot grids, not standalone `Plot` objects,
+#'   unless standalone plots were explicitly requested via `plots`. An empty
+#'   list when the project has no plots to build.
 #'
 #' @import tidyr
 #'
@@ -72,7 +79,7 @@ createPlots <- function(
   # Only default to "all grids" when neither selector is given. A caller that
   # asks only for standalone `plots` should not also get every grid.
   requestSpecified <- !is.null(plotGrids) || !is.null(plots)
-  if (is.null(plotGrids) && !requestSpecified) {
+  if (!requestSpecified) {
     plotGrids <- names(allPlotGrids)
   }
 
@@ -181,15 +188,13 @@ createPlotsFromExcel <- function(...) {
         numericTest <- suppressWarnings(as.numeric(spaceSplit))
         if (!any(is.na(numericTest))) {
           # User likely used spaces instead of commas
-          stop(
-            messages$excelFieldFormatError(
-              fieldName,
-              originalValue,
-              plotID,
-              "comma-separated"
-            ),
-            call. = FALSE
+          msg <- messages$excelFieldFormatError(
+            fieldName,
+            originalValue,
+            plotID,
+            "comma-separated"
           )
+          cli::cli_abort("{msg}")
         }
       }
     }
@@ -200,16 +205,14 @@ createPlotsFromExcel <- function(...) {
     tryCatch(
       ospsuite.utils::validateIsOfLength(parsed, expectedLength),
       error = function(e) {
-        stop(
-          messages$excelFieldLengthError(
-            fieldName,
-            originalValue,
-            plotID,
-            expectedLength,
-            length(parsed)
-          ),
-          call. = FALSE
+        msg <- messages$excelFieldLengthError(
+          fieldName,
+          originalValue,
+          plotID,
+          expectedLength,
+          length(parsed)
         )
+        cli::cli_abort("{msg}")
       }
     )
   }
@@ -220,15 +223,13 @@ createPlotsFromExcel <- function(...) {
     tryCatch(
       ospsuite.utils::validateIsNumeric(numericParsed),
       error = function(e) {
-        stop(
-          messages$excelFieldTypeError(
-            fieldName,
-            originalValue,
-            plotID,
-            "numeric"
-          ),
-          call. = FALSE
+        msg <- messages$excelFieldTypeError(
+          fieldName,
+          originalValue,
+          plotID,
+          "numeric"
         )
+        cli::cli_abort("{msg}")
       }
     )
     return(numericParsed)
@@ -264,11 +265,12 @@ createPlotsFromExcel <- function(...) {
       for (limitsField in check$limits) {
         limitsValue <- plotConfiguration[[limitsField]]
         if (!is.null(limitsValue) && 0 %in% limitsValue) {
-          warning(messages$warningLogScaleWithZeroLimit(
+          msg <- messages$warningLogScaleWithZeroLimit(
             plotID = plotID,
             axisLimitsField = limitsField,
             axis = check$axis
-          ))
+          )
+          cli::cli_warn("{msg}")
         }
       }
     }
@@ -294,10 +296,11 @@ createPlotsFromExcel <- function(...) {
     }
     # Check if the field name is supported by the configuration class
     if (!.validateClassHasField(object = newConfiguration, field = colName)) {
-      stop(messages$invalidConfigurationPropertyFromExcel(
+      msg <- messages$invalidConfigurationPropertyFromExcel(
         propertyName = colName,
         configurationType = class(newConfiguration)[[1]]
-      ))
+      )
+      cli::cli_abort("{msg}")
     }
     # Special treatment for axis limits - parse and validate early with clear errors
     if (
@@ -394,6 +397,16 @@ createPlotsFromExcel <- function(...) {
   dataCombinedIds <- lapply(plotConfigurations, function(p) p$dataCombinedId)
   plotTypes <- lapply(plotConfigurations, function(p) p$plotType)
 
+  # Reject any plot missing its `plotId` up front. The duplicate check below
+  # only catches two-or-more missing ids (`duplicated(c(NA, NA))` flags the
+  # second); a single id-less entry would otherwise slip through and fail
+  # opaquely at `configPlotIds <- vapply(..., function(p) p$plotId, ...)` in
+  # `.createPlotGridsFromEntries()`. Mirrors the `plotGridId` guard in
+  # `.assertPlotGridsBuildable()`.
+  if (any(vapply(plotConfigurations, function(p) is.null(p$plotId), logical(1)))) {
+    msg <- messages$missingPlotId()
+    cli::cli_abort("{msg}")
+  }
   if (any(vapply(dataCombinedIds, is.null, logical(1)))) {
     msg <- messages$missingDataCombinedName()
     cli::cli_abort("{msg}")
@@ -406,6 +419,19 @@ createPlotsFromExcel <- function(...) {
   if (any(vapply(plotTypes, is.null, logical(1)))) {
     msg <- messages$missingPlotType()
     cli::cli_abort("{msg}")
+  }
+  # Reject any plotType that is not one of the supported kinds. The build
+  # `switch()` has no default arm, so an unknown type would otherwise return
+  # NULL invisibly (silently dropped from a grid). Aborting here runs before
+  # the build regardless of `validate`, naming the offending plot and type.
+  invalidTypeIdx <- which(!(unlist(plotTypes) %in% .validPlotTypes))
+  if (length(invalidTypeIdx) > 0) {
+    badId <- ids[[invalidTypeIdx[[1]]]]
+    badType <- plotTypes[[invalidTypeIdx[[1]]]]
+    cli::cli_abort(c(
+      "Invalid {.field plotType} {.val {badType}} for plot {.val {badId}}.",
+      "i" = "Must be one of: {.val {(.validPlotTypes)}}."
+    ))
   }
   missingDataCombined <- setdiff(
     unlist(dataCombinedIds),
@@ -430,6 +456,10 @@ createPlotsFromExcel <- function(...) {
 .assertPlotGridsBuildable <- function(plotGrids, plotIDs) {
   if (any(vapply(plotGrids, function(g) is.null(g$plotIds), logical(1)))) {
     msg <- messages$missingPlotIDs()
+    cli::cli_abort("{msg}")
+  }
+  if (any(vapply(plotGrids, function(g) is.null(g$plotGridId), logical(1)))) {
+    msg <- messages$missingPlotGridId()
     cli::cli_abort("{msg}")
   }
   gridIds <- vapply(
@@ -510,11 +540,21 @@ createPlotsFromExcel <- function(...) {
       defaultConfiguration = defaultPlotConfiguration,
       fields = entry[!(names(entry) %in% styleFields)]
     )
+    # Free-text scalar fields are excluded from `styleFields` and re-applied
+    # here verbatim, not through `.createConfigurationFromEntry`, so a label
+    # containing a comma (e.g. "Concentration, ng/mL") is not shredded into a
+    # character vector by the comma-splitting scan.
     if (!is.null(entry$title)) {
       plotConfiguration$title <- entry$title
     }
     if (!is.null(entry$subtitle)) {
       plotConfiguration$subtitle <- entry$subtitle
+    }
+    if (!is.null(entry$xLabel)) {
+      plotConfiguration$xLabel <- entry$xLabel
+    }
+    if (!is.null(entry$yLabel)) {
+      plotConfiguration$yLabel <- entry$yLabel
     }
     .validateLogScaleAxisLimits(plotConfiguration, entry$plotId)
     plotConfiguration
@@ -576,14 +616,21 @@ createPlotsFromExcel <- function(...) {
   names(plotList) <- configPlotIds
 
   defaultPlotGridConfig <- createEsqlabsPlotGridConfiguration()
-  gridStyleFields <- c("plotGridId", "plotIds", "title")
+  gridStyleFields <- c("plotGridId", "plotIds", "title", "subtitle")
   builtGrids <- lapply(plotGrids, function(entry) {
     plotGridConfiguration <- .createConfigurationFromEntry(
       defaultConfiguration = defaultPlotGridConfig,
       fields = entry[!(names(entry) %in% gridStyleFields)]
     )
+    # Free-text scalar fields are excluded from `gridStyleFields` and re-applied
+    # here verbatim, not through `.createConfigurationFromEntry`, so a value
+    # containing a comma (e.g. "Model A, Model B") is not shredded into a
+    # character vector by the comma-splitting scan.
     if (!is.null(entry$title)) {
       plotGridConfiguration$title <- entry$title
+    }
+    if (!is.null(entry$subtitle)) {
+      plotGridConfiguration$subtitle <- entry$subtitle
     }
     plotsToAdd <- plotList[intersect(
       .splitPlotIDs(entry$plotIds),
@@ -606,5 +653,9 @@ createPlotsFromExcel <- function(...) {
   # also inside a requested grid still gets its own entry here (independent
   # selectors). The grid entries and the standalone entries are unioned.
   standalonePlots <- plotList[intersect(standalonePlotIds, names(plotList))]
+  # Drop any NULL entry for symmetry with the grid path. The plotType-enum
+  # check in `.assertPlotConfigurationsBuildable()` already prevents unknown
+  # types from producing a NULL here, so this is belt-and-suspenders.
+  standalonePlots <- standalonePlots[lengths(standalonePlots) != 0]
   c(builtGrids, standalonePlots)
 }

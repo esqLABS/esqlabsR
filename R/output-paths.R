@@ -10,7 +10,7 @@
 #' Add one or more output paths to a Project
 #'
 #' Add output paths to `project$outputPaths`, vectorizing over a vector of ids
-#' (see the recycling rule under Details). `path` is scalar-per-entity: a
+#' (see the recycling rule under Details). `path` is scalar-per-definition: a
 #' single path is recycled to every id, or a length-`id` vector aligns by
 #' position.
 #'
@@ -27,10 +27,11 @@
 addOutputPath <- function(project, id, path) {
   validateIsOfType(project, "Project")
   # Route the id-vector check through the shared helper every sibling add* uses,
-  # then canonicalize (which aborts on an in-batch collision, so no separate
-  # duplicate guard is needed).
+  # then canonicalize and guard against an in-batch duplicate id (which would
+  # otherwise silently overwrite an earlier entry keyed by the same id).
   .assertIdVector(id)
   id <- .canonicalizeId(id)
+  .assertNoDuplicateIds(id, "outputPath")
 
   if (
     !is.character(path) ||
@@ -42,12 +43,18 @@ addOutputPath <- function(project, id, path) {
       length as id"
     ))
   }
+  if (anyNA(path) || any(nchar(path) == 0)) {
+    cli::cli_abort(c(
+      "Cannot add outputPath:",
+      "x" = "path must contain non-empty strings"
+    ))
+  }
   clash <- intersect(id, names(project$outputPaths))
   if (length(clash) > 0L) {
     cli::cli_abort("outputPath {.val {clash}} already exists")
   }
 
-  # Recycle a single path to every id (the scalar-per-entity rule).
+  # Recycle a single path to every id (the scalar-per-definition rule).
   if (length(path) == 1L) {
     path <- rep(path, length(id))
   }
@@ -101,7 +108,7 @@ removeOutputPath <- function(project, id) {
 #'   every scenario that records these output paths keeps referencing them.
 #'   The `project$outputPaths` accessor is read-only, so this is the way to
 #'   change a path in place. The call vectorizes over a vector of ids (see the
-#'   recycling rule under Details); `path` is scalar-per-entity (one path
+#'   recycling rule under Details); `path` is scalar-per-definition (one path
 #'   recycled to every id, or a length-`id` vector aligned by position).
 #'
 #' @inherit vectorizedAuthoring details

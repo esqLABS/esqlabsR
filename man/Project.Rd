@@ -54,10 +54,21 @@ container for a bound project.}
 container for a bound project.}
 
     \item{\code{definitionsFolder}}{Name of the folder (relative to
-\code{projectDirPath}) that holds the project's authored entity-definition
+\code{projectDirPath}) that holds the project's authored definitions
 tree. Defaults to \code{"definitions"}. Writing persists the container for
 a bound project; changing it moves where future write-through edits
-are read from and written to.}
+are read from and written to.
+
+A change is refused once the project owns a materialized tree on disk:
+silently re-pointing such a project at a new folder would
+re-materialize its sections into that folder and orphan the old tree
+(the old folder survives, unreferenced). Load and construction assign
+the private backing field directly and so are never blocked by this
+guard; a clone does not own the source's tree (its write-through is an
+in-memory no-op), so it may re-point freely; only a deliberate write on
+an already-materialized owning project is refused. To relocate the tree
+on purpose, snapshot the project and reload it into a fresh directory
+under the new folder name (see \code{\link[=saveSnapshot]{saveSnapshot()}} / \code{\link[=loadSnapshot]{loadSnapshot()}}).}
 
     \item{\code{defaultSimulationRunOptions}}{Named list of the project-level
 default simulation run options (the \code{defaultSimulationRunOptions} JSON
@@ -69,7 +80,8 @@ Recognized fields: \code{numberOfCores}, \code{checkForNegativeValues},
     \item{\code{excel}}{Read-only named list of the Excel import/export bridge
 sheet-name fields (\code{configurationsFolder}, \code{modelParamsFile},
 \code{individualsFile}, \code{populationsFile}, \code{scenariosFile},
-\code{applicationsFile}, \code{plotsFile}, \code{parameterIdentificationFile}).
+\code{applicationsFile}, \code{plotsFile}, \code{parameterIdentificationFile},
+\code{initialConditionsFile}).
 Returned verbatim as strings (no resolution). Empty for a from-scratch
 JSON project that has no Excel side-car.}
 
@@ -155,7 +167,7 @@ project: a scenario references the sets it applies through its
 \code{modelParameterSets} field, an individual or application through its
 \code{parameterSets} field; all three resolve against this one map. To
 change it, use \code{\link[=addParameterSet]{addParameterSet()}} / \code{\link[=removeParameterSet]{removeParameterSet()}} /
-\code{\link[=addParameterEntry]{addParameterEntry()}} / \code{\link[=removeParameterEntry]{removeParameterEntry()}} or edit the entity
+\code{\link[=addParameterEntry]{addParameterEntry()}} / \code{\link[=removeParameterEntry]{removeParameterEntry()}} or edit the definition
 files under \verb{definitions/parameter-sets/}.}
 
     \item{\code{initialConditions}}{Read-only named list of initial-condition sets,
@@ -383,7 +395,7 @@ consumed by the Excel import/export bridge.
 \subsection{\code{Project$.getExcelData()}}{
   Internal method to retrieve the raw Excel-bridge metadata
 (the \code{excel} block: a named list of \code{list(value, description)} entries
-for the seven sheet-name fields). Empty when the project has no Excel
+for the sheet-name fields). Empty when the project has no Excel
 side-car. Not intended for end-user use; consumed by the Excel
 import/export bridge.
   \subsection{Usage}{

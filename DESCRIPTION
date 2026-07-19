@@ -51,7 +51,6 @@ Suggests:
     covr,
     devtools,
     knitr,
-    openxlsx,
     reactable,
     rmarkdown,
     rlang,

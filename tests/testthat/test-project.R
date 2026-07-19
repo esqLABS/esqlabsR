@@ -436,18 +436,13 @@ test_that("Project lifecycle fields are read-only", {
   expect_error(project$validatedSinceMutation <- TRUE, "readonly")
 })
 
-test_that("Project$print() summarises section counts", {
+test_that("Project$print() renders the example project through ospPrint*", {
   project <- exampleProject()
 
-  expect_output(print(project), "<Project>")
-  expect_output(print(project), "schema 2.0")
-  expect_output(print(project), "scenarios:\\s+3")
-  expect_output(print(project), "individuals:\\s+1")
-  expect_output(print(project), "populations:\\s+1")
-  # The three plots-related sections each report their entry count.
-  expect_output(print(project), "dataCombined:\\s+1")
-  expect_output(print(project), "plots:\\s+1")
-  expect_output(print(project), "plotGrids:\\s+1")
+  # `print()` shows file locations relative to the project directory, so the
+  # output carries no machine-specific absolute path and needs no redaction or
+  # width override to stay reproducible across operating systems.
+  expect_snapshot(print(project))
 })
 
 # Container rework: metadata, definitionsFolder, the filePaths/excel split,
@@ -563,6 +558,46 @@ test_that("definitionsFolder honors a non-default tree location", {
   expect_length(reloaded$scenarios, 3L)
 })
 
+test_that("changing definitionsFolder on a project whose tree exists is refused", {
+  temp <- with_temp_project()
+  project <- temp$project
+  expect_true(dir.exists(file.path(temp$path, "definitions")))
+  expect_snapshot(
+    error = TRUE,
+    project$definitionsFolder <- "other-defs"
+  )
+  # The refused change did not touch the folder name.
+  expect_identical(project$definitionsFolder, "definitions")
+})
+
+test_that("changing definitionsFolder is allowed before a tree exists", {
+  # An in-memory project (no directory) and a bound project whose tree is not
+  # yet on disk may still re-point the folder freely.
+  inMemory <- Project$new()
+  inMemory$definitionsFolder <- "defs"
+  expect_identical(inMemory$definitionsFolder, "defs")
+
+  # A bound project with an inline-only Project.json (no `definitions/` tree)
+  # can still change the folder.
+  dir <- withr::local_tempdir("inline_only_")
+  jsonlite::write_json(
+    list(
+      schemaVersion = "2.0",
+      esqlabsRVersion = "6.0.0",
+      filePaths = list(modelFolder = "Models/"),
+      scenarios = list(),
+      outputPaths = structure(list(), names = character(0))
+    ),
+    file.path(dir, "Project.json"),
+    auto_unbox = TRUE,
+    null = "null"
+  )
+  bound <- loadProject(file.path(dir, "Project.json"))
+  expect_false(dir.exists(file.path(dir, "definitions")))
+  bound$definitionsFolder <- "defs"
+  expect_identical(bound$definitionsFolder, "defs")
+})
+
 test_that("the tree wins over a conflicting non-empty inline Project.json section", {
   # A tree project never writes an inline copy of a section, so a non-empty
   # inline section that disagrees with the tree can only arise from hand-editing
@@ -577,7 +612,7 @@ test_that("the tree wins over a conflicting non-empty inline Project.json sectio
   expect_length(raw$scenarios, 0L)
 
   # Inject a conflicting inline scenario for an id that also lives in the tree,
-  # giving it a different modelFile than the tree entity carries.
+  # giving it a different modelFile than the tree definition carries.
   treeModelFile <- project$scenarios[["testscenario"]]$modelFile
   raw$scenarios <- list(
     list(
@@ -638,13 +673,24 @@ test_that("a container-field write empties sections in Project.json yet the tree
   expect_identical(reloaded$name, "RenamedX")
 })
 
-test_that("Project$print() shows name and description", {
-  project <- exampleProject()
-  expect_output(print(project), "name:\\s+Example")
-  expect_output(
-    print(project),
-    "description:\\s+Aciclovir IV PK example project"
-  )
+test_that("Project$print() omits zero-count definition sections", {
+  project <- Project$new()
+  addScenario(project, "s1", modelFile = "m.pkml")
+
+  # Only the populated `Scenarios` section prints under `Definitions`; the
+  # eleven empty sections produce no `• Label: 0` line. A from-scratch project
+  # also has no working folders and no Excel side-car, so neither the `Paths`
+  # nor the `Excel` header appears.
+  expect_snapshot(print(project))
+})
+
+test_that("Project$print() hides the Excel section and empty sections", {
+  project <- Project$new()
+
+  # A from-scratch JSON-only project prints just the `<Project>` header: no
+  # metadata bullets, no `Paths`, `Definitions`, or `Excel` headers, and no
+  # stray bullets.
+  expect_snapshot(print(project))
 })
 
 test_that("defaultSimulationRunOptions round-trips and defaults to NULL", {
@@ -864,7 +910,7 @@ test_that("syncStatus() reports NA when there is no Excel side-car", {
   tmp <- saveSnapshot(testProject(), local_projectPath())
   project <- loadProject(tmp)
 
-  # Every section is write-through, so the project and its entity files never
+  # Every section is write-through, so the project and its definition files never
   # diverge; with no Project.xlsx alongside there is nothing to compare.
   status <- project$syncStatus(silent = TRUE)
   expect_identical(status$excel_in_sync, NA)

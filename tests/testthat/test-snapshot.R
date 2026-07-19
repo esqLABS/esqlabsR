@@ -1,4 +1,4 @@
-# Tests for the single-file snapshot artifact (R/entity-files.R):
+# Tests for the single-file snapshot artifact (R/definition-files.R):
 # the `.esqlabsR` extension normalization on saveSnapshot(), and the
 # two-argument loadSnapshot(file, dir) which reads a snapshot and writes a
 # full definitions/<kind>/ tree project at `dir`, returning the Project bound
@@ -223,6 +223,24 @@ test_that("snapshot -> loadSnapshot -> snapshot is a fixed point over .esqlabsR"
   expect_identical(readLines(out1), readLines(out2))
 })
 
+test_that("snapshot byte-identity fixed point holds for the plots trio", {
+  # testProject() carries no plots, so the byte-identity test above never
+  # exercises the three sections reshaped most by the refactor. exampleProject()
+  # populates the data-combined / plots / plot-grids tree, so guard all three
+  # kinds are on disk then assert a byte-stable snapshot round-trip over them.
+  project <- exampleProject()
+  treeDir <- file.path(project$projectDirPath, "definitions")
+  for (kind in c("data-combined", "plots", "plot-grids")) {
+    expect_gt(length(list.files(file.path(treeDir, kind))), 0L)
+  }
+
+  out1 <- saveSnapshot(project, file.path(withr::local_tempdir(), "study"))
+  reloaded <- loadSnapshot(out1, withr::local_tempdir())
+  out2 <- saveSnapshot(reloaded, file.path(withr::local_tempdir(), "study"))
+  # Byte-stable snapshot for a project whose plots trio is populated.
+  expect_identical(readLines(out1), readLines(out2))
+})
+
 test_that("snapshot preserves metadata and the filePaths/excel split", {
   project <- exampleProject()
 
@@ -307,7 +325,7 @@ test_that("loadSnapshot migrates a legacy inlined Project.json end to end", {
 })
 
 # A legacy single-file Project.json may carry non-canonical ids (mixed case),
-# which the entity tree (keyed by canonical id) cannot store. loadSnapshot()
+# which the definition tree (keyed by canonical id) cannot store. loadSnapshot()
 # must canonicalize on the way in, lossless across every section: definitions
 # AND the references that point at them (a scenario id used by a plot's
 # dataCombined row and by a PI task / output mapping) are lowercased together,

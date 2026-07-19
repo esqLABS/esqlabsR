@@ -41,6 +41,11 @@ createDataCombined <- function(
   observedData <- loadObservedData(project)
 
   if (!is.null(plotGrids)) {
+    allGridIds <- names(.unwrapDefinitionList(project$plotGrids) %||% list())
+    missingGrids <- setdiff(plotGrids[!is.na(plotGrids)], allGridIds)
+    if (length(missingGrids) > 0) {
+      cli::cli_abort(messages$stopPlotGridNamesNotFound(missingGrids))
+    }
     dataCombined <- union(
       dataCombined,
       .extractDataCombinedNamesForPlotsFromProject(project, plotGrids)
@@ -129,10 +134,10 @@ createDataCombined <- function(
 # @noRd
 .extractDataCombinedNamesForPlotsFromProject <- function(
   project,
-  plotGridNames
+  plotGrids
 ) {
   grids <- .unwrapDefinitionList(project$plotGrids) %||% list()
-  selectedGrids <- grids[intersect(names(grids), plotGridNames)]
+  selectedGrids <- grids[intersect(names(grids), plotGrids)]
   if (length(selectedGrids) == 0) {
     return(character(0))
   }
@@ -420,9 +425,13 @@ createDataCombinedFromExcel <- function(...) {
   }
   # Identify the names of DataCombined that have been completely removed
   missingDc <- setdiff(dcNames, unique(dfDataCombined$dataCombinedName))
-  # Create empty rows for each missing DataCombined
+  # Create empty rows for each missing DataCombined. Only the
+  # `dataCombinedName` column is populated; the remaining columns stay NA on
+  # purpose so downstream code can build an empty DataCombined carrying just
+  # the name. Assign by column name (not position) so the reconstruction stays
+  # correct even if the column order changes.
   for (name in missingDc) {
-    dfDataCombined[nrow(dfDataCombined) + 1, 1] <- name
+    dfDataCombined[nrow(dfDataCombined) + 1, "dataCombinedName"] <- name
   }
 
   return(dfDataCombined)

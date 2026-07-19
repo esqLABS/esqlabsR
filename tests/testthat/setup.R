@@ -13,7 +13,11 @@ withr::local_envvar(
 # snapshot/restore stubs) don't add noise to the suite. Tests that
 # specifically assert a `lifecycle_warning_deprecated` use
 # `withr::local_options(lifecycle_verbosity = "warning")` to opt back in.
-options(lifecycle_verbosity = "quiet")
+# Scoped to the test session (not a bare `options()`) so it does not leak.
+withr::local_options(
+  lifecycle_verbosity = "quiet",
+  .local_envir = testthat::teardown_env()
+)
 
 
 # Disable showtext for snapshot tests.

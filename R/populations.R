@@ -343,7 +343,7 @@ sampleRandomValue <- function(distribution, mean, sd, n) {
 #'
 #' Add populations to `project$populations`, vectorizing over a vector of ids
 #' (see the recycling rule under Details). `species`, `numberOfIndividuals`,
-#' and the optional `...` fields are all scalar-per-entity (recycle/align).
+#' and the optional `...` fields are all scalar-per-definition (recycle/align).
 #'
 #' @inherit vectorizedAuthoring details
 #'
@@ -374,7 +374,7 @@ addPopulation <- function(
   id <- .canonicalizeId(id)
   n <- length(id)
 
-  perEntity <- .alignAuthoringArgs(
+  perDefinition <- .alignAuthoringArgs(
     id,
     scalarFields = c(
       list(species = species, numberOfIndividuals = numberOfIndividuals),
@@ -382,13 +382,14 @@ addPopulation <- function(
     )
   )
 
+  .assertNoDuplicateIds(id, "population")
   clash <- intersect(id, names(project$populations))
   if (length(clash) > 0L) {
     cli::cli_abort("population {.val {clash}} already exists")
   }
   call <- rlang::current_env()
   entries <- lapply(seq_len(n), function(i) {
-    .buildPopulationEntry(id[[i]], perEntity[[i]], call = call)
+    .buildPopulationEntry(id[[i]], perDefinition[[i]], call = call)
   })
 
   populations <- project$.getSection("populations") %||% list()
@@ -421,7 +422,7 @@ addPopulation <- function(
   "diseaseState"
 )
 
-# Build one classed `Population` entry from its id and per-entity field list,
+# Build one classed `Population` entry from its id and per-definition field list,
 # validating the same way the scalar path always has (`species` non-empty,
 # `numberOfIndividuals` positive). Aborts naming the population on a problem.
 #
@@ -444,9 +445,10 @@ addPopulation <- function(
     !is.numeric(numberOfIndividuals) ||
       length(numberOfIndividuals) != 1L ||
       is.na(numberOfIndividuals) ||
-      numberOfIndividuals <= 0
+      numberOfIndividuals <= 0 ||
+      numberOfIndividuals != round(numberOfIndividuals)
   ) {
-    errors <- c(errors, "numberOfIndividuals must be a positive number")
+    errors <- c(errors, "numberOfIndividuals must be a positive whole number")
   }
 
   allowed <- c(
@@ -469,6 +471,20 @@ addPopulation <- function(
         )
       )
     )
+  }
+
+  # The numeric range fields are stored as doubles. Coerce a numeric-like
+  # value and reject only a value that does not coerce to a single finite
+  # number (e.g. "heavy" -> NA) rather than silently storing NA. This matches
+  # the set path (`.setOnePopulation()`).
+  for (field in .populationNumericFields) {
+    value <- fields[[field]]
+    if (!is.null(value)) {
+      coerced <- suppressWarnings(as.double(value))
+      if (length(value) != 1L || is.na(coerced) || !is.finite(coerced)) {
+        errors <- c(errors, paste0(field, " must be a single finite number"))
+      }
+    }
   }
 
   if (length(errors) > 0L) {
@@ -553,7 +569,7 @@ removePopulation <- function(project, id) {
 #'   `numberOfIndividuals`, `proportionOfFemales`, `weightMin`,
 #'   `weightMax`, `heightMin`, `heightMax`, `ageMin`, `ageMax`, `BMIMin`,
 #'   `BMIMax`, `gender`, `weightUnit`, `heightUnit`, `ageUnit`, `BMIUnit`,
-#'   `population`, `diseaseState`. Scalar-per-entity fields recycle/align
+#'   `population`, `diseaseState`. Scalar-per-definition fields recycle/align
 #'   across `id`. Numeric fields are coerced via `as.double()`. Unknown
 #'   fields trigger an error.
 #'
@@ -574,7 +590,7 @@ setPopulation <- function(project, id, ...) {
   }
 
   dots <- list(...)
-  perEntity <- .alignAuthoringArgs(id, scalarFields = dots)
+  perDefinition <- .alignAuthoringArgs(id, scalarFields = dots)
   suppliedNames <- names(dots)
 
   call <- rlang::current_env()
@@ -582,7 +598,7 @@ setPopulation <- function(project, id, ...) {
     .setOnePopulation(
       project,
       id[[i]],
-      perEntity[[i]][suppliedNames],
+      perDefinition[[i]][suppliedNames],
       call = call
     )
   })
@@ -633,19 +649,39 @@ setPopulation <- function(project, id, ...) {
       !is.numeric(count) ||
         length(count) != 1L ||
         is.na(count) ||
-        count <= 0
+        count <= 0 ||
+        count != round(count)
     ) {
       cli::cli_abort(
-        "{.arg numberOfIndividuals} must be a positive number",
+        "{.arg numberOfIndividuals} must be a positive whole number",
         call = call
       )
+    }
+  }
+  # The numeric range fields are stored as doubles. Coerce a numeric-like
+  # value (including a character such as "75" from Excel) and reject only a
+  # value that does not coerce to a single finite number (e.g. "heavy" -> NA)
+  # rather than silently storing NA. A NULL is allowed: it clears the field
+  # via `.coerceNumericField()` below.
+  for (field in .populationNumericFields) {
+    if (field %in% names(fields)) {
+      value <- fields[[field]]
+      if (!is.null(value)) {
+        coerced <- suppressWarnings(as.double(value))
+        if (length(value) != 1L || is.na(coerced) || !is.finite(coerced)) {
+          cli::cli_abort(
+            "{field} must be a single finite number",
+            call = call
+          )
+        }
+      }
     }
   }
 
   entry <- project$populations[[id]]
   for (field in names(fields)) {
     if (field %in% numericFields) {
-      entry[[field]] <- as.double(fields[[field]])
+      entry[[field]] <- .coerceNumericField(fields[[field]])
     } else {
       entry[[field]] <- fields[[field]]
     }

@@ -14,7 +14,7 @@
 #'   add one to an existing task with [addPIParameter()].
 #'
 #' @param id Character scalar. Identifier for this parameter, unique within
-#'   its task. Used as a free label by the PI run, not as an entity-file id.
+#'   its task. Used as a free label by the PI run, not as a definition-file id.
 #' @param scenarios Character vector of scenario ids the parameter is
 #'   estimated across. Listing several scenarios fits one shared value
 #'   across all of them. The constructor does not check these against the
@@ -958,7 +958,8 @@ runPI <- function(
   # hours-long) optimisations.
   runtimes <- list()
   for (taskName in tasks) {
-    message(messages$messageBuildingPITask(taskName))
+    msg <- messages$messageBuildingPITask(taskName)
+    cli::cli_inform("{msg}")
     runtimes[[taskName]] <- .createSinglePITask(
       project = project,
       piTask = taskMap[[taskName]],
@@ -969,7 +970,8 @@ runPI <- function(
 
   results <- list()
   for (taskName in tasks) {
-    message(messages$messageRunningPITask(taskName))
+    msg <- messages$messageRunningPITask(taskName)
+    cli::cli_inform("{msg}")
     runtime <- runtimes[[taskName]]
     entry <- tryCatch(
       {
@@ -1021,12 +1023,18 @@ runPI <- function(
     return(invisible(NULL))
   }
   # A parameter has no usable uncertainty when SD, CV, and both CI bounds are
-  # all NA. These vectors are parallel to `paramNames` (one entry per
-  # parameter), each defaulting to NA when the CI step yielded nothing.
-  unquantified <- is.na(info$sd) &
-    is.na(info$cv) &
-    is.na(info$lowerCI) &
-    is.na(info$upperCI)
+  # all NA. These vectors are meant to be parallel to `paramNames` (one entry
+  # per parameter), each defaulting to NA when the CI step yielded nothing. Guard
+  # the shape: a NULL or wrong-length vector is treated as all-NA of the right
+  # length, so the elementwise `&` never recycles or indexes out of range.
+  n <- length(paramNames)
+  asParallelNA <- function(x) {
+    if (length(x) == n) is.na(x) else rep(TRUE, n)
+  }
+  unquantified <- asParallelNA(info$sd) &
+    asParallelNA(info$cv) &
+    asParallelNA(info$lowerCI) &
+    asParallelNA(info$upperCI)
   for (i in which(unquantified)) {
     paramName <- paramNames[[i]]
     cli::cli_warn(c(
@@ -1171,9 +1179,9 @@ addPITask <- function(
 #'
 #' `addPITask()` is not vectorized over ids: each task is composed of its own
 #' distinct lists of `PIParameter` / `PIOutputMapping` records, so several
-#' tasks are added with several calls. The per-task sub-entity helpers
+#' tasks are added with several calls. The per-task sub-definition helpers
 #' (`addPIParameter()` / `addPIOutputMapping()` and their removals) act on one
-#' parent task identified by `task`, so they likewise stay single-entity.
+#' parent task identified by `task`, so they likewise stay single-definition.
 #'
 #' @param project A `Project` object.
 #' @param id Character vector of task ids. Each is canonicalized the same way
@@ -1200,7 +1208,7 @@ removePITask <- function(project, id) {
 }
 
 # Canonicalize the scenario references on a PIParameter record (its `id` is a
-# free label the PI run uses, not an entity-file id, so it is left as-is).
+# free label the PI run uses, not a definition-file id, so it is left as-is).
 #
 # @keywords internal
 # @noRd

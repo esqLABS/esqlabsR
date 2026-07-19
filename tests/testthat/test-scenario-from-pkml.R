@@ -682,3 +682,23 @@ test_that(".resolveScenarioOutputPaths reuses, registers, and aborts per precede
     "already maps to a different path"
   )
 })
+
+test_that(".getScenarioCount returns an integer for scalar, vector, and empty input", {
+  # Single pkml, all other args scalar -> exactly one scenario, as integer.
+  single <- esqlabsR:::.getScenarioCount("model.pkml", individual = "indiv1")
+  expect_type(single, "integer")
+  expect_identical(single, 1L)
+
+  # A vector argument of length > 1 sets the count, returned as integer.
+  vectorized <- esqlabsR:::.getScenarioCount(
+    "model.pkml",
+    individual = c("a", "b", "c")
+  )
+  expect_type(vectorized, "integer")
+  expect_identical(vectorized, 3L)
+
+  # Empty pkmlFilePaths -> zero scenarios (a no-op), still integer-typed.
+  empty <- esqlabsR:::.getScenarioCount(character())
+  expect_type(empty, "integer")
+  expect_identical(empty, 0L)
+})

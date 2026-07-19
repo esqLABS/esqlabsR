@@ -15,7 +15,7 @@ already exist in \code{project$individuals}.}
 
 \item{...}{Named fields to change. Accepted: \code{species}, \code{population},
 \code{gender}, \code{weight}, \code{height}, \code{age}, \code{proteinOntogenies},
-\code{parameterSets}. Scalar-per-entity fields recycle/align across \code{id};
+\code{parameterSets}. Scalar-per-definition fields recycle/align across \code{id};
 \code{parameterSets} is applied whole (or one vector per individual via a
 length-\code{id} list). Unknown fields trigger an error.}
 }
@@ -38,15 +38,15 @@ ids that resolve in \code{project$parameterSets}. The required
 }
 \details{
 The id argument sets \code{N}, the number of definitions to act on, and cannot
-itself be recycled: when any scalar-per-entity field has length greater than
+itself be recycled: when any scalar-per-definition field has length greater than
 1, the id vector must have that same length. A length-1 id with all-scalar
 fields is the ordinary single-definition call.
 
-Each scalar-per-entity field is either length 1 (recycled to all \code{N}
+Each scalar-per-definition field is either length 1 (recycled to all \code{N}
 definitions) or length \code{N} (aligned to the ids by position). Any other
 length is an error naming the field and the lengths.
 
-A vector-valued-per-entity field (an individual's or application's
+A vector-valued-per-definition field (an individual's or application's
 \code{parameterSets}, a scenario's \code{outputPaths} and \code{parameterSets}) is
 applied whole to every definition, never split positionally. To give a
 different multi-valued list per definition, pass a list of the same length
@@ -62,13 +62,12 @@ entries (parallel \code{containerPath} / \code{parameterName} / \code{value} / \
 vectors) within a single named set, a different axis than the id-sets-\code{N}
 rule described here. \code{renameScenario()}, \code{duplicateScenario()},
 \code{addObservedData()}, \code{addPITask()}, and the per-task
-parameter-identification sub-entity helpers act on a single definition per
+parameter-identification sub-definition helpers act on a single definition per
 call.
 }
 \seealso{
 Other individual:
 \code{\link[=addIndividual]{addIndividual()}},
-\code{\link[=removeIndividual]{removeIndividual()}},
-\code{\link[=setIndividualParameterSets]{setIndividualParameterSets()}}
+\code{\link[=removeIndividual]{removeIndividual()}}
 }
 \concept{individual}

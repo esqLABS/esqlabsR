@@ -118,7 +118,7 @@ test_that("a scenario's initialConditions round-trips through serialize/parse", 
     modelFile = "m.pkml",
     initialConditions = c("ic1", "ic2")
   )
-  json <- esqlabsR:::.scenarioToJson(sc, outputPaths = list())
+  json <- esqlabsR:::.scenarioToJson(sc)
   expect_identical(json$initialConditions, list("ic1", "ic2"))
 
   reparsed <- esqlabsR:::.parseScenarios(
@@ -586,9 +586,54 @@ test_that("setScenario on a clone leaves the source's on-disk tree untouched", {
   expect_identical(readLines(file.path(dir, "testscenario.json")), sourceFile)
 })
 
+test_that("setScenario unit-only steadyState change relabels without rescaling", {
+  project <- testProject()
+  addScenario(
+    project,
+    id = "ss",
+    modelFile = "Aciclovir.pkml",
+    individual = "indiv1",
+    steadyState = TRUE,
+    steadyStateTime = 10,
+    steadyStateTimeUnit = "h"
+  )
+  # Seeded: 10 h -> 600 base-min.
+  expect_equal(project$scenarios[["ss"]]$steadyStateTime, 600)
+
+  setScenario(project, "ss", steadyStateTimeUnit = "min")
+
+  # Pure relabel: the stored base duration is unchanged, only the unit label
+  # moves to "min".
+  expect_equal(project$scenarios[["ss"]]$steadyStateTime, 600)
+  expect_equal(project$scenarios[["ss"]]$steadyStateTimeUnit, "min")
+})
+
+test_that("setScenario with steadyStateTime still converts under the effective unit", {
+  project <- testProject()
+  addScenario(
+    project,
+    id = "ss",
+    modelFile = "Aciclovir.pkml",
+    individual = "indiv1",
+    steadyState = TRUE,
+    steadyStateTime = 10,
+    steadyStateTimeUnit = "h"
+  )
+
+  # Value + unit supplied together: convert under the new unit (5 h -> 300 min).
+  setScenario(project, "ss", steadyStateTime = 5, steadyStateTimeUnit = "h")
+  expect_equal(project$scenarios[["ss"]]$steadyStateTime, 300)
+  expect_equal(project$scenarios[["ss"]]$steadyStateTimeUnit, "h")
+
+  # Value supplied, unit inherited from the record (still "h"): 5 h -> 300 min.
+  setScenario(project, "ss", steadyStateTime = 5)
+  expect_equal(project$scenarios[["ss"]]$steadyStateTime, 300)
+  expect_equal(project$scenarios[["ss"]]$steadyStateTimeUnit, "h")
+})
+
 # renameScenario ----
 
-test_that("renameScenario moves the entity file and changes the in-memory key", {
+test_that("renameScenario moves the definition file and changes the in-memory key", {
   project <- testProject()
   dir <- file.path(project$projectDirPath, "definitions", "scenarios")
   before <- readLines(file.path(dir, "testscenario.json"))
@@ -663,6 +708,22 @@ test_that("renameScenario on a clone leaves the source's on-disk tree untouched"
   expect_setequal(list.files(dir), sourceFiles)
 })
 
+test_that("renameScenario warns when a dataCombined still references it", {
+  project <- testProject()
+  addDataCombined(
+    project,
+    "dc_ref",
+    simulated = list(
+      list(
+        label = "ref",
+        scenario = "testscenario",
+        path = "Organism|A|Concentration"
+      )
+    )
+  )
+  expect_snapshot(renameScenario(project, "testscenario", "renamed"))
+})
+
 # duplicateScenario ----
 
 test_that("duplicateScenario creates an independent on-disk and in-memory copy", {
@@ -674,7 +735,7 @@ test_that("duplicateScenario creates an independent on-disk and in-memory copy",
   # Both exist in memory; the original is untouched.
   expect_true(all(c("testscenario", "copy") %in% names(project$scenarios)))
   expect_equal(project$scenarios[["copy"]]$scenarioName, "copy")
-  # The copy is a new entity file alongside the original.
+  # The copy is a new definition file alongside the original.
   expect_true(file.exists(file.path(dir, "testscenario.json")))
   expect_true(file.exists(file.path(dir, "copy.json")))
 })
@@ -755,6 +816,20 @@ test_that("addScenario adds N scenarios in one call equal to N scalar adds", {
   expect_identical(
     vectorized$scenarios[c("s1", "s2")],
     scalar$scenarios[c("s1", "s2")]
+  )
+})
+
+test_that("addScenario aborts on a duplicate id in the batch", {
+  project <- testProject()
+  expect_snapshot(
+    error = TRUE,
+    addScenario(
+      project,
+      c("s1", "s1"),
+      modelFile = "Aciclovir.pkml",
+      individual = "indiv1",
+      outputPaths = "aciclovir_pvb"
+    )
   )
 })
 

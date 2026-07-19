@@ -29,6 +29,18 @@ test_that("addOutputPath aborts on a duplicate id", {
   )
 })
 
+test_that("addOutputPath aborts on a duplicate id in the batch", {
+  project <- testProject()
+  expect_snapshot(
+    error = TRUE,
+    addOutputPath(
+      project,
+      c("a", "a"),
+      "Organism|other|Concentration in container"
+    )
+  )
+})
+
 test_that("removeOutputPath warns when the id is referenced by a scenario, removes anyway", {
   project <- testProject()
   referenced <- intersect(
@@ -38,6 +50,23 @@ test_that("removeOutputPath warns when the id is referenced by a scenario, remov
 
   expect_warning(removeOutputPath(project, referenced), "referenced")
   expect_false(referenced %in% names(project$outputPaths))
+})
+
+test_that("removeOutputPath does not over-report when an unreferenced id shares a path", {
+  project <- testProject()
+  # An id that IS referenced by a scenario, plus a second id resolving to the
+  # SAME literal path but referenced by no scenario.
+  referenced <- intersect(
+    names(project$outputPaths),
+    unlist(lapply(project$scenarios, \(sc) names(sc$outputPaths)))
+  )[[1]]
+  addOutputPath(project, "shared_copy", project$outputPaths[[referenced]])
+
+  # The reference check keys on the output-path id, not the resolved path, so
+  # removing `shared_copy` (which no scenario references by id) must not warn,
+  # even though its path value also appears under `referenced`.
+  expect_no_warning(removeOutputPath(project, "shared_copy"))
+  expect_false("shared_copy" %in% names(project$outputPaths))
 })
 
 # setOutputPath ----
@@ -170,4 +199,14 @@ test_that("addOutputPath aborts the whole batch and writes nothing on one bad id
   expect_identical(names(project$outputPaths), before)
   reloaded <- loadProject(project$jsonPath)
   expect_identical(names(reloaded$outputPaths), before)
+})
+
+test_that("addOutputPath rejects an empty or NA path", {
+  project <- testProject()
+  before <- names(project$outputPaths)
+  expect_error(addOutputPath(project, "empty", ""), "non-empty")
+  expect_error(addOutputPath(project, "missing", NA_character_), "non-empty")
+  # A bad path in a batch aborts the whole call and writes nothing.
+  expect_error(addOutputPath(project, c("a", "b"), c("Organism|X", "")))
+  expect_identical(names(project$outputPaths), before)
 })

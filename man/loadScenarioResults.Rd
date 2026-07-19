@@ -4,22 +4,29 @@
 \alias{loadScenarioResults}
 \title{Load simulated scenarios from csv and pkml.}
 \usage{
-loadScenarioResults(scenarios, resultsFolder)
+loadScenarioResults(scenarios, resultsFolder, project = NULL)
 }
 \arguments{
 \item{scenarios}{Names of simulated scenarios}
 
 \item{resultsFolder}{Path to the folder where simulation results as csv and
 the corresponding simulations as pkml are located.}
+
+\item{project}{Optional \code{Project} object (loaded with \code{loadProject()}) whose
+scenarios declare the output paths that were run. When supplied, the reloaded
+\code{outputValues} are restricted to each scenario's declared output paths, so
+the reloaded column set matches what \code{runScenarios()} produced. When \code{NULL}
+(default), all output paths recorded in the csv are extracted.}
 }
 \value{
 A named list keyed by scenario name. Each entry mirrors the record
 produced by \code{runScenarios()}: \code{simulation} (the initialized \code{Simulation}
 object with applied parameters), \code{results} (the \code{SimulationResults} object
 reloaded from csv), \code{outputValues} (the output values extracted for the
-simulation's recorded output paths), and \code{population} (the \code{Population}
-reloaded from \verb{<scenario>_population.csv} for population scenarios, or \code{NULL}
-for individual scenarios).
+scenario's declared output paths when \code{project} is supplied, otherwise for
+all recorded output paths), and \code{population} (the \code{Population} reloaded from
+\verb{<scenario>_population.csv} for population scenarios, or \code{NULL} for individual
+scenarios).
 }
 \description{
 Load simulated scenarios from csv and pkml.
@@ -36,10 +43,11 @@ project <- loadProject("Project.json")
 simulatedScenariosResults <- runScenarios(project)
 resultsFolder <- saveScenarioResults(simulatedScenariosResults, project)
 
-# Now load the results
+# Now load the results, restricting to each scenario's declared output paths
 simulatedScenariosResults <- loadScenarioResults(
   scenarios = names(project$scenarios),
-  resultsFolder = resultsFolder
+  resultsFolder = resultsFolder,
+  project = project
 )
 }
 }

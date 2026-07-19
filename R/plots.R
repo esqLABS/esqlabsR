@@ -12,7 +12,7 @@
 # independent of this file.
 #
 # Called by:
-#   - Project$.read_json() via the three plots entity-tree specs
+#   - Project$.read_json() via the three plots definition-tree specs
 #     (data-combined / plots / plot-grids).
 #   - .runProjectValidation() via .validatePlots()
 #   - .projectToJson() via .dataCombinedSectionToJson() / .plotsSectionToJson()
@@ -297,6 +297,16 @@ print.DataCombined <- function(x, ...) {
             )
           )
         }
+        if (.isMissingField(entry$path)) {
+          result$add_critical_error(
+            "Missing Fields",
+            paste0(
+              "Simulated entry in dataCombined '",
+              dcName,
+              "' is missing 'path'"
+            )
+          )
+        }
       }
       for (entry in dc$observed %||% list()) {
         if (.isMissingField(entry$label)) {
@@ -377,6 +387,13 @@ print.DataCombined <- function(x, ...) {
         )
       )
     }
+
+    # Fields that only take effect for a specific plotType. `quantiles`,
+    # `aggregation`, and `nsd` are consumed only by population plots;
+    # `foldDistance` only by observedVsSimulated plots. Setting one on any
+    # other plotType is silently ignored by the build, so warn (non-blocking)
+    # rather than fail: the plot still renders, just without that field.
+    result <- .warnPlotTypeIrrelevantFields(plotConfig, result)
   }
 
   # plotGrid plot id references are a hard failure in createPlots(), so flag
@@ -408,11 +425,66 @@ print.DataCombined <- function(x, ...) {
   result
 }
 
+#' Warn about plotType-irrelevant fields on a plot configuration
+#'
+#' `quantiles`, `aggregation`, and `nsd` only take effect for `population`
+#' plots; `foldDistance` only for `observedVsSimulated` plots. When one is set
+#' on any other `plotType`, the build path silently ignores it. This adds a
+#' non-blocking warning to `result` for each such field so the mismatch is
+#' surfaced without gating execution.
+#'
+#' @param plotConfig Named list from `project$plots` (keyed by `plotId`).
+#' @param result `validationResult` to mutate.
+#' @return The mutated `validationResult`.
+#' @keywords internal
+#' @noRd
+.warnPlotTypeIrrelevantFields <- function(plotConfig, result) {
+  # Each entry: the fields that only apply to `plotType`.
+  fieldsByPlotType <- list(
+    population = c("quantiles", "aggregation", "nsd"),
+    observedVsSimulated = "foldDistance"
+  )
+
+  for (usedByType in names(fieldsByPlotType)) {
+    typeFields <- fieldsByPlotType[[usedByType]]
+    for (entry in plotConfig) {
+      plotType <- entry$plotType
+      if (is.null(plotType) || identical(plotType, usedByType)) {
+        next
+      }
+      presentFields <- intersect(typeFields, names(entry))
+      # A field present but empty (NULL / NA) is not really "set"; skip it.
+      presentFields <- Filter(
+        function(f) !.isMissingField(entry[[f]]),
+        presentFields
+      )
+      for (field in presentFields) {
+        result$add_warning(
+          "Data",
+          paste0(
+            "Plot '",
+            entry$plotId %||% "<unknown>",
+            "' of plotType '",
+            plotType,
+            "' sets '",
+            field,
+            "', which only applies to plotType '",
+            usedByType,
+            "' and is ignored."
+          )
+        )
+      }
+    }
+  }
+
+  result
+}
+
 # Serialize ----
 #
 # The plots concern serializes as three top-level JSON sections in the inlined
 # snapshot (`dataCombined`, `plots`, `plotGrids`), each the JSON array its own
-# entity tree inlines. `.projectToJson()` emits each via one of these helpers.
+# definition tree inlines. `.projectToJson()` emits each via one of these helpers.
 
 # JSON array of dataCombined records (the inlined `dataCombined` section);
 # `NULL` when the section is empty so the key round-trips as the absent shape.
@@ -517,7 +589,7 @@ print.DataCombined <- function(x, ...) {
   invisible(x)
 }
 
-# Recycle / align a scalar-per-entity argument to N entities. A length-1 value
+# Recycle / align a scalar-per-definition argument to N definitions. A length-1 value
 # is recycled to all N; a length-N value is aligned by position. Any other
 # length aborts naming the argument and the lengths. Used by the vectorized
 # plot mutators so a scalar field follows the same recycling rule as the id
@@ -538,19 +610,19 @@ print.DataCombined <- function(x, ...) {
   ))
 }
 
-# Build the N per-entity `...` field sets for a vectorized plot / grid add. A
+# Build the N per-definition `...` field sets for a vectorized plot / grid add. A
 # `...` field that is a list of length N aligns by position (one element per
-# entity); any other `...` field (a scalar, or an atomic vector, e.g.
-# `quantiles = c(0.05, 0.5, 0.95)`) is a whole-per-entity value applied to
-# every entity. This matches the recycling rule: vector-valued-per-entity
+# definition); any other `...` field (a scalar, or an atomic vector, e.g.
+# `quantiles = c(0.05, 0.5, 0.95)`) is a whole-per-definition value applied to
+# every definition. This matches the recycling rule: vector-valued-per-definition
 # fields are applied whole, never split positionally; to vary a multi-valued
-# field per entity, pass a length-N list. Each per-entity set is normalized
+# field per definition, pass a length-N list. Each per-definition set is normalized
 # via `.namedDotsAsFields` (NULL dropped, atomic vector collapsed to CSV).
 #
 # @keywords internal
 # @noRd
-.dotsToPerEntityFields <- function(dots, n) {
-  perEntity <- vector("list", n)
+.dotsToPerDefinitionFields <- function(dots, n) {
+  perDefinition <- vector("list", n)
   for (i in seq_len(n)) {
     fields <- list()
     for (nm in names(dots)) {
@@ -561,9 +633,9 @@ print.DataCombined <- function(x, ...) {
         value
       }
     }
-    perEntity[[i]] <- do.call(.namedDotsAsFields, fields)
+    perDefinition[[i]] <- do.call(.namedDotsAsFields, fields)
   }
-  perEntity
+  perDefinition
 }
 
 # Normalise `...` into a keyed list of optional plot / grid fields:
@@ -692,6 +764,16 @@ print.DataCombined <- function(x, ...) {
 #'   `quantiles = c(0.05, 0.5, 0.95)`) is applied whole to every plot and
 #'   stored as a comma-separated string; to set a scalar field differently
 #'   per plot, pass a list of the same length as `id`.
+#'
+#'   Note the deliberate asymmetry with the positional scalar args above: a
+#'   length-`N` *vector* passed to `dataCombined` or `plotType` aligns to the
+#'   ids **by position** (one value per plot), whereas a length-`N` *atomic
+#'   vector* passed as a `...` field is treated as one multi-value field and
+#'   applied **whole** to every plot (collapsed to a comma-separated string),
+#'   not split one-per-plot. So `title = c("A", "B")` gives every plot the
+#'   single title `"A, B"`, not plot 1 `"A"` and plot 2 `"B"`. To vary a
+#'   `...` field per plot, pass a length-`N` **list** (`title = list("A",
+#'   "B")`).
 #' @returns The `project` object, invisibly.
 #' @export
 #' @family plots
@@ -704,15 +786,11 @@ addPlot <- function(project, id, dataCombined, plotType, ...) {
     .recycleScalarArg(dataCombined, n, "dataCombined")
   )
   plotType <- .recycleScalarArg(plotType, n, "plotType")
-  perEntityFields <- .dotsToPerEntityFields(list(...), n)
+  perDefinitionFields <- .dotsToPerDefinitionFields(list(...), n)
 
   # Validate the whole batch first (all-or-nothing): no entry is folded in (and
   # so nothing is written through) unless every entry is valid.
-  if (anyDuplicated(id) > 0L) {
-    cli::cli_abort(
-      "duplicate plot id{?s} in the batch: {.val {id[duplicated(id)]}}"
-    )
-  }
+  .assertNoDuplicateIds(id, "plot")
   existing <- names(project$plots)
   clash <- intersect(id, existing)
   if (length(clash) > 0L) {
@@ -738,7 +816,7 @@ addPlot <- function(project, id, dataCombined, plotType, ...) {
       id[[i]],
       dataCombined[[i]],
       plotType[[i]],
-      perEntityFields[[i]]
+      perDefinitionFields[[i]]
     )
   }
   project$.setSection("plots", plotConfig)
@@ -831,6 +909,13 @@ removePlot <- function(project, id) {
 #' @param ... Optional plot-grid fields, e.g. `title`, `subtitle`. A scalar
 #'   field is recycled to every grid; to set one differently per grid, pass a
 #'   list of the same length as `id`.
+#'
+#'   A length-`N` *atomic vector* passed as a `...` field is treated as one
+#'   multi-value field and applied **whole** to every grid (collapsed to a
+#'   comma-separated string), not split one-per-grid. So `title = c("A", "B")`
+#'   gives every grid the single title `"A, B"`, not grid 1 `"A"` and grid 2
+#'   `"B"`. To vary a `...` field per grid, pass a length-`N` **list**
+#'   (`title = list("A", "B")`).
 #' @returns The `project` object, invisibly.
 #' @export
 #' @family plots
@@ -851,14 +936,10 @@ addPlotGrid <- function(project, id, plots, ...) {
   } else {
     rep(list(plots), n)
   }
-  perGridFields <- .dotsToPerEntityFields(list(...), n)
+  perGridFields <- .dotsToPerDefinitionFields(list(...), n)
 
   # Validate the whole batch first (all-or-nothing).
-  if (anyDuplicated(id) > 0L) {
-    cli::cli_abort(
-      "duplicate plot grid id{?s} in the batch: {.val {id[duplicated(id)]}}"
-    )
-  }
+  .assertNoDuplicateIds(id, "plot grid")
   clash <- intersect(id, names(project$plotGrids))
   if (length(clash) > 0L) {
     cli::cli_abort("plot grid {.val {clash}} already exists")
@@ -973,11 +1054,7 @@ addDataCombined <- function(
   perIdObserved <- .perDataCombinedEntries(observed, n)
 
   # Validate the whole batch first (all-or-nothing).
-  if (anyDuplicated(id) > 0L) {
-    cli::cli_abort(
-      "duplicate DataCombined id{?s} in the batch: {.val {id[duplicated(id)]}}"
-    )
-  }
+  .assertNoDuplicateIds(id, "DataCombined")
   clash <- intersect(id, names(project$dataCombined))
   if (length(clash) > 0L) {
     cli::cli_abort("DataCombined {.val {clash}} already exists")

@@ -24,7 +24,6 @@
 #'
 #' @import grDevices
 #' @returns A list of colors as HEX values.
-#' @import grDevices
 #' @export
 esqlabsColors <- function(nrOfColors) {
   # esqLABS colors in HSV model
@@ -52,7 +51,7 @@ esqlabsColors <- function(nrOfColors) {
     min(esqRedHSV[3], esqGreenHSV[3])
 
   if (nrOfColors < 0) {
-    stop(messages$nrOfColorsShouldBePositive(nrOfColors))
+    cli::cli_abort(messages$nrOfColorsShouldBePositive(nrOfColors))
   }
   if (nrOfColors == 0) {
     return(c())
@@ -127,7 +126,6 @@ esqlabsColors <- function(nrOfColors) {
 #'
 #' @examples
 #' col2hsv("yellow")
-#' @export
 col2hsv <- function(color) {
   validateIsString(color)
   rgb <- col2rgb(color)
@@ -237,7 +235,7 @@ createEsqlabsPlotGridConfiguration <- function() {
 
   for (name in names(plotOverrideConfig)) {
     if (!name %in% names(plotConfiguration)) {
-      warning(messages$UnknownPlotConfiguration(name))
+      cli::cli_warn(messages$UnknownPlotConfiguration(name))
       next
     }
 
@@ -246,7 +244,17 @@ createEsqlabsPlotGridConfiguration <- function() {
     } else if (
       !is.null(defaultValues[[name]]) && !is.null(plotConfiguration[[name]])
     ) {
-      if (isTRUE(all(plotConfiguration[[name]] == defaultValues[[name]]))) {
+      # Apply the override only when the current value still equals the
+      # default (the user has not customized it). Use an NA-safe comparison:
+      # a plain `all(x == default)` returns NA when either side holds an NA,
+      # and `isTRUE(NA)` is FALSE, which would silently skip a legit override.
+      if (
+        isTRUE(all.equal(
+          plotConfiguration[[name]],
+          defaultValues[[name]],
+          check.attributes = FALSE
+        ))
+      ) {
         plotConfiguration[[name]] <- plotOverrideConfig[[name]]
       }
     }
@@ -332,15 +340,30 @@ createEsqlabsPlotGridConfiguration <- function() {
 #' @noRd
 .calculateLimits <- function(x, scaling = NULL) {
   if (!is.null(scaling) && scaling == "log") {
+    positive <- x[x > 0]
     limits <- c(
-      min(x[x > 0], na.rm = TRUE) * 0.9,
-      max(x[x > 0], na.rm = TRUE) * 1.1
+      min(positive, na.rm = TRUE) * 0.9,
+      max(positive, na.rm = TRUE) * 1.1
     )
+    # A single distinct value collapses the range; widen multiplicatively so
+    # both bounds stay strictly positive (a log axis cannot include zero).
+    if (limits[[1]] == limits[[2]]) {
+      v <- limits[[1]]
+      limits <- c(v * 0.95, v * 1.05)
+    }
   } else {
     limits <- c(
       (if (min(x, na.rm = TRUE) <= 0) 1.01 else 0.99) * min(x, na.rm = TRUE),
       (if (max(x, na.rm = TRUE) > 0) 1.01 else 0.99) * max(x, na.rm = TRUE)
     )
+    # A single distinct value (e.g. all zeros -> c(0, 0)) collapses the range,
+    # which renders as a blank panel downstream. Widen to a small symmetric pad
+    # around the value.
+    if (limits[[1]] == limits[[2]]) {
+      v <- limits[[1]]
+      pad <- max(abs(v), 1) * 0.05
+      limits <- c(v - pad, v + pad)
+    }
   }
 
   return(limits)

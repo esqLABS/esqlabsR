@@ -253,6 +253,89 @@ validateProject <- function(project) {
   results
 }
 
+#' @title isAnyCriticalErrors
+#'
+#' @description Reports whether any section of a validation run produced a
+#'   critical error, collapsing the per-section results from
+#'   [validateProject()] into a single logical.
+#'
+#' @param validationResults Named list of class `"ValidationResults"`, the
+#'   output of [validateProject()].
+#' @return A single logical: `TRUE` if any section has critical errors,
+#'   otherwise `FALSE`.
+#' @export
+#' @seealso [validateProject()], [validationSummary()].
+#' @examples
+#' \dontrun{
+#' project <- loadProject("Project.json")
+#' results <- validateProject(project)
+#' if (isAnyCriticalErrors(results)) {
+#'   print(validationSummary(results))
+#' }
+#' }
+isAnyCriticalErrors <- function(validationResults) {
+  any(vapply(
+    validationResults,
+    function(r) {
+      if (inherits(r, "validationResult")) {
+        r$has_critical_errors()
+      } else {
+        FALSE
+      }
+    },
+    logical(1)
+  ))
+}
+
+#' @title validationSummary
+#'
+#' @description Aggregates the per-section results from [validateProject()]
+#'   into overall counts of critical errors and warnings, plus the names of
+#'   the sections that produced each.
+#'
+#' @param validationResults Named list of class `"ValidationResults"`, the
+#'   output of [validateProject()].
+#' @return A list with `total_critical_errors`, `total_warnings`,
+#'   `sections_with_errors`, and `sections_with_warnings`.
+#' @export
+#' @seealso [validateProject()], [isAnyCriticalErrors()].
+#' @examples
+#' \dontrun{
+#' project <- loadProject("Project.json")
+#' results <- validateProject(project)
+#' summary <- validationSummary(results)
+#' summary$total_critical_errors
+#' }
+validationSummary <- function(validationResults) {
+  summary <- list(
+    total_critical_errors = 0,
+    total_warnings = 0,
+    sections_with_errors = character(),
+    sections_with_warnings = character()
+  )
+
+  for (name in names(validationResults)) {
+    result <- validationResults[[name]]
+    if (inherits(result, "validationResult")) {
+      if (result$has_critical_errors()) {
+        summary$total_critical_errors <- summary$total_critical_errors +
+          length(result$critical_errors)
+        summary$sections_with_errors <- c(summary$sections_with_errors, name)
+      }
+      if (length(result$warnings) > 0) {
+        summary$total_warnings <- summary$total_warnings +
+          length(result$warnings)
+        summary$sections_with_warnings <- c(
+          summary$sections_with_warnings,
+          name
+        )
+      }
+    }
+  }
+
+  summary
+}
+
 # Section validator dispatch ----
 
 #' Canonical ordered registry of section validator adapters
@@ -394,24 +477,24 @@ validateProject <- function(project) {
 
 # Shared helpers used by section adapters ----
 
-#' Warn if a removed entity is still referenced elsewhere in the project.
+#' Warn if a removed definition is still referenced elsewhere in the project.
 #'
 #' Walks the project to find inbound references to `id` of the given
-#' `entityType` and emits a `cli::cli_warn()` listing them. Used by the
+#' `definitionType` and emits a `cli::cli_warn()` listing them. Used by the
 #' `remove*()` mutators: removal proceeds anyway, leaving the dangling
 #' reference for the next [validateProject()] call to surface. For
 #' `"outputPath"`, both scenario `outputPaths` and parameter identification
 #' output mappings are scanned.
 #'
 #' @param project A `Project` object.
-#' @param entityType One of `"individual"`, `"population"`, `"application"`,
+#' @param definitionType One of `"individual"`, `"population"`, `"application"`,
 #'   `"parameterSet"`, `"initialConditions"`, `"outputPath"`, `"scenario"`.
 #' @param id Character scalar of the id being removed.
 #' @return `invisible(NULL)`.
 #' @keywords internal
 #' @noRd
-.warnIfReferenced <- function(project, entityType, id) {
-  if (entityType == "parameterSet") {
+.warnIfReferenced <- function(project, definitionType, id) {
+  if (definitionType == "parameterSet") {
     # A single parameter set can be referenced from three sides: a scenario's
     # `modelParameterSets`, an individual's `parameterSets`, an application's
     # `parameterSets`. Scan all three since they now share one namespace.
@@ -440,7 +523,7 @@ validateProject <- function(project) {
     }
     if (length(holders) > 0) {
       cli::cli_warn(c(
-        "Removed parameterSet {.val {id}} is still referenced by {length(holders)} entit{?y/ies}:",
+        "Removed parameterSet {.val {id}} is still referenced by {length(holders)} definition{?s}:",
         "*" = "{holders}",
         "i" = "These now have a dangling reference. Update or remove them."
       ))
@@ -448,7 +531,7 @@ validateProject <- function(project) {
     return(invisible(NULL))
   }
 
-  if (entityType == "initialConditions") {
+  if (definitionType == "initialConditions") {
     # An initial-condition set is referenced from a scenario's
     # `initialConditions` field (a character vector of set ids).
     holders <- character()
@@ -470,7 +553,7 @@ validateProject <- function(project) {
     return(invisible(NULL))
   }
 
-  if (entityType == "outputPath") {
+  if (definitionType == "outputPath") {
     piHolders <- character()
     for (taskId in names(project$parameterIdentification %||% list())) {
       task <- project$parameterIdentification[[taskId]]
@@ -490,7 +573,7 @@ validateProject <- function(project) {
     }
   }
 
-  if (entityType == "scenario") {
+  if (definitionType == "scenario") {
     # A scenario is referenced from the other direction: a `dataCombined`
     # entry's `simulated[*]$scenario` names the scenario whose results it
     # plots. Scan every dataCombined simulated entry for the removed id.
@@ -522,13 +605,16 @@ validateProject <- function(project) {
   for (name in names(scenarios)) {
     sc <- scenarios[[name]]
     hit <- switch(
-      entityType,
+      definitionType,
       "individual" = identical(sc$individualId, id),
       "population" = identical(sc$populationId, id),
       "application" = identical(sc$applicationProtocol, id),
       "outputPath" = {
-        pathValue <- project$outputPaths[[id]]
-        isTRUE(pathValue %in% sc$outputPaths)
+        # `sc$outputPaths` is a named vector keyed by output-path id (names are
+        # the ids, values the resolved paths). Match on the id, not the resolved
+        # path value: two ids can share one path (value match over-reports) and
+        # an id may resolve to NA (value match misses it).
+        isTRUE(id %in% names(sc$outputPaths))
       },
       FALSE
     )
@@ -537,7 +623,7 @@ validateProject <- function(project) {
 
   if (length(refs) > 0) {
     cli::cli_warn(c(
-      "Removed {entityType} {.val {id}} is still referenced by {length(refs)} scenario{?s}:",
+      "Removed {definitionType} {.val {id}} is still referenced by {length(refs)} scenario{?s}:",
       "*" = "{refs}",
       "i" = "These scenarios now have a dangling reference. Update or remove them."
     ))
@@ -695,6 +781,118 @@ validateProject <- function(project) {
 
 # Cross-reference validation (monolith) ----
 
+#' Canonicalize ids for a cross-reference membership test
+#'
+#' On-disk section keys are canonicalized (lower-cased, slugified) by the
+#' authoring / load path, but a hand-edited `Project.json` can carry a
+#' non-canonical reference (e.g. `individualId: "Adult"` against a disk key of
+#' `adult`). Cross-reference resolution must compare on the same footing, so
+#' both the reference side and the candidate keys are run through the same
+#' deterministic transform (`.canonicalizeOneId()`) before the `%in%` /
+#' `setdiff()` test. A case-only (or otherwise canonically-equal) mismatch then
+#' resolves instead of being reported as a dangling reference.
+#'
+#' Silent by design: this is a read-only comparison, not an authoring edit, so
+#' it never warns about the canonicalization (unlike `.canonicalizeIdRef()`).
+#' `NA` and `NULL` pass through so the callers' own presence guards still apply,
+#' and the transform is applied element-wise to a vector of references.
+#'
+#' @param ids Character vector (or `NULL`) of ids / references.
+#' @return `ids` with each non-`NA` element canonicalized; `NULL`/`NA` preserved.
+#' @keywords internal
+#' @noRd
+.canonicalizeForCompare <- function(ids) {
+  if (is.null(ids)) {
+    return(ids)
+  }
+  ids <- as.character(ids)
+  keep <- !is.na(ids)
+  if (any(keep)) {
+    ids[keep] <- vapply(
+      ids[keep],
+      .canonicalizeOneId,
+      character(1),
+      USE.NAMES = FALSE
+    )
+  }
+  ids
+}
+
+#' Does a single reference resolve against a set of candidate keys?
+#'
+#' Canonicalizes BOTH the reference and the candidate keys before the `%in%`
+#' test, so a case-only (or otherwise canonically-equal) reference resolves. The
+#' caller keeps the candidate keys in their original spelling for the "did you
+#' mean" suffix; this helper canonicalizes them locally only for the comparison.
+#'
+#' @param ref Character scalar reference (original spelling).
+#' @param candidateKeys Candidate keys in their original spelling.
+#' @return `TRUE` if `ref` canonically matches a candidate key.
+#' @keywords internal
+#' @noRd
+.refResolves <- function(ref, candidateKeys) {
+  .canonicalizeForCompare(ref) %in% .canonicalizeForCompare(candidateKeys)
+}
+
+#' Dangling references in a reference vector, compared canonically
+#'
+#' Returns the subset of `refs` (in their ORIGINAL spelling, so error messages
+#' stay faithful to what the user wrote) whose canonical form is not among the
+#' canonical forms of `candidateKeys`. `NA` and empty-string references are
+#' dropped (they carry no reference). A case-only mismatch canonicalizes onto a
+#' candidate and so is not returned. Candidate keys are passed in their original
+#' spelling (so a caller can reuse the same vector for `.suggestSuffixMulti()`)
+#' and canonicalized here for the comparison.
+#'
+#' @param refs Character vector of references (original spelling).
+#' @param candidateKeys Candidate keys in their original spelling.
+#' @return Character vector of dangling references, original spelling.
+#' @keywords internal
+#' @noRd
+.danglingRefs <- function(refs, candidateKeys) {
+  refs <- as.character(refs)
+  present <- !is.na(refs) & refs != ""
+  refs <- refs[present]
+  if (length(refs) == 0L) {
+    return(character(0))
+  }
+  canonicalCandidates <- .canonicalizeForCompare(candidateKeys)
+  dangling <- !.canonicalizeForCompare(refs) %in% canonicalCandidates
+  refs[dangling]
+}
+
+#' Does any section of the project have a critical error?
+#'
+#' Decides whether `.validateCrossReferences()` should skip itself. Evaluates
+#' the validity of EVERY section adapter against the project so the answer does
+#' not depend on which subset of sections the current run happened to validate.
+#' Results already computed in this run (`collected`) are reused; only the
+#' section adapters not present there are run, so a full `validateProject()`
+#' pays no extra cost and a targeted `.ensureValid()` subset still sees a broken
+#' sibling section it did not itself request.
+#'
+#' `crossReferences` is excluded (it is the caller and is not a section
+#' adapter).
+#'
+#' @param project A loaded `Project` object.
+#' @param collected Named list of `validationResult`s already computed in this
+#'   run (the `validationResults` passed to `.validateCrossReferences()`).
+#' @return A single logical.
+#' @keywords internal
+#' @noRd
+.anyProjectSectionHasErrors <- function(project, collected) {
+  for (section in names(.validationAdapters)) {
+    sectionResult <- collected[[section]]
+    if (!inherits(sectionResult, "validationResult")) {
+      sectionResult <- .validationAdapters[[section]](project)
+    }
+    if (sectionResult$has_critical_errors()) {
+      return(TRUE)
+    }
+  }
+  FALSE
+}
+
 #' Validate cross-references between Project sections
 #'
 #' Hand-rolled monolith that checks references that span sections:
@@ -722,7 +920,15 @@ validateProject <- function(project) {
 .validateCrossReferences <- function(project, validationResults) {
   result <- validationResult$new()
 
-  if (isAnyCriticalErrors(validationResults)) {
+  # Skip-on-prior-errors must consult the PROJECT'S actual section validity, not
+  # just the sections present in this run's `validationResults`. A full
+  # `validateProject()` run collects every section, so a broken sibling is
+  # visible here; a targeted `.ensureValid()` subset collects only the requested
+  # sections, so a broken sibling that the subset did not run would otherwise be
+  # invisible and the cross-reference pass would emit spurious errors built on
+  # it. Evaluating full-project section validity (reusing the results already
+  # computed in this run) makes a full run and a targeted subset behave the same.
+  if (.anyProjectSectionHasErrors(project, validationResults)) {
     skipped <- c(
       "scenario individual / population references",
       "scenario parameterSets references",
@@ -747,6 +953,12 @@ validateProject <- function(project) {
   }
 
   scenarioList <- project$scenarios %||% list()
+  # Keep the section keys in their ORIGINAL spelling: the "did you mean" suffix
+  # (`.suggestSuffix*`) shows them verbatim, and the membership helpers
+  # (`.refResolves`, `.danglingRefs`) canonicalize BOTH sides internally, so a
+  # hand-edited reference that differs from its definition only by case (or
+  # another canonically-equal spelling) resolves instead of being flagged as
+  # dangling.
   individualIds <- names(project$individuals %||% list())
   populationIds <- names(project$populations %||% list())
   parameterSetKeys <- names(project$parameterSets %||% list())
@@ -760,7 +972,7 @@ validateProject <- function(project) {
     if (
       !is.null(sc$individualId) &&
         !is.na(sc$individualId) &&
-        !sc$individualId %in% individualIds
+        !.refResolves(sc$individualId, individualIds)
     ) {
       result$add_critical_error(
         "Invalid Reference",
@@ -778,7 +990,7 @@ validateProject <- function(project) {
     if (
       !is.null(sc$populationId) &&
         !is.na(sc$populationId) &&
-        !sc$populationId %in% populationIds
+        !.refResolves(sc$populationId, populationIds)
     ) {
       result$add_critical_error(
         "Invalid Reference",
@@ -794,8 +1006,7 @@ validateProject <- function(project) {
     }
 
     if (!is.null(sc$modelParameterSets) && length(sc$modelParameterSets) > 0) {
-      invalidSets <- setdiff(sc$modelParameterSets, parameterSetKeys)
-      invalidSets <- invalidSets[!is.na(invalidSets) & invalidSets != ""]
+      invalidSets <- .danglingRefs(sc$modelParameterSets, parameterSetKeys)
       if (length(invalidSets) > 0) {
         result$add_critical_error(
           "Invalid Reference",
@@ -811,8 +1022,7 @@ validateProject <- function(project) {
     }
 
     if (!is.null(sc$initialConditions) && length(sc$initialConditions) > 0) {
-      invalidICs <- setdiff(sc$initialConditions, initialConditionKeys)
-      invalidICs <- invalidICs[!is.na(invalidICs) & invalidICs != ""]
+      invalidICs <- .danglingRefs(sc$initialConditions, initialConditionKeys)
       if (length(invalidICs) > 0) {
         result$add_critical_error(
           "Invalid Reference",
@@ -830,7 +1040,7 @@ validateProject <- function(project) {
     if (
       !is.null(sc$applicationProtocol) &&
         !is.na(sc$applicationProtocol) &&
-        !sc$applicationProtocol %in% applicationKeys
+        !.refResolves(sc$applicationProtocol, applicationKeys)
     ) {
       result$add_critical_error(
         "Invalid Reference",
@@ -850,10 +1060,7 @@ validateProject <- function(project) {
     # into project$outputPaths, mirroring the serializer's reverse map.
     scOutputPathIds <- names(sc$outputPaths)
     if (!is.null(scOutputPathIds)) {
-      invalidOutputPaths <- setdiff(scOutputPathIds, outputPathKeys)
-      invalidOutputPaths <- invalidOutputPaths[
-        !is.na(invalidOutputPaths) & invalidOutputPaths != ""
-      ]
+      invalidOutputPaths <- .danglingRefs(scOutputPathIds, outputPathKeys)
       if (length(invalidOutputPaths) > 0) {
         result$add_critical_error(
           "Invalid Reference",
@@ -874,7 +1081,7 @@ validateProject <- function(project) {
   for (id in names(project$individuals %||% list())) {
     refs <- project$individuals[[id]]$parameterSets %||% character(0)
     refs <- as.character(unlist(refs))
-    invalid <- setdiff(refs, parameterSetKeys)
+    invalid <- .danglingRefs(refs, parameterSetKeys)
     if (length(invalid) > 0) {
       result$add_critical_error(
         "Invalid Reference",
@@ -892,7 +1099,7 @@ validateProject <- function(project) {
   for (id in names(project$applications %||% list())) {
     refs <- project$applications[[id]]$parameterSets %||% character(0)
     refs <- as.character(unlist(refs))
-    invalid <- setdiff(refs, parameterSetKeys)
+    invalid <- .danglingRefs(refs, parameterSetKeys)
     if (length(invalid) > 0) {
       result$add_critical_error(
         "Invalid Reference",
@@ -907,6 +1114,11 @@ validateProject <- function(project) {
     }
   }
 
+  # Scenario keys keep their original spelling; `.danglingRefs()` canonicalizes
+  # both sides for the membership test and `.suggestSuffixMulti()` shows the
+  # original spelling in the "did you mean" hint.
+  scenarioNames <- names(scenarioList)
+
   dataCombined <- .unwrapDefinitionList(project$dataCombined)
   if (!is.null(dataCombined) && length(dataCombined) > 0) {
     referencedScenarios <- unlist(lapply(dataCombined, function(dc) {
@@ -916,29 +1128,30 @@ validateProject <- function(project) {
         character(1)
       )
     }))
-    referencedScenarios <- referencedScenarios[!is.na(referencedScenarios)]
-    invalidScenarios <- setdiff(referencedScenarios, names(scenarioList))
+    invalidScenarios <- .danglingRefs(referencedScenarios, scenarioNames)
     if (length(invalidScenarios) > 0) {
       result$add_critical_error(
         "Invalid Reference",
         paste0(
           "dataCombined references undefined scenarios: ",
           paste(invalidScenarios, collapse = ", "),
-          .suggestSuffixMulti(invalidScenarios, names(scenarioList))
+          .suggestSuffixMulti(invalidScenarios, scenarioNames)
         )
       )
     }
   }
 
   # parameterIdentification cross-references -----------------------
+  # `scenarioNames` / `outputPathIds` keep the original spellings for the
+  # "did you mean" suffix; membership is tested canonically via `.danglingRefs()`
+  # / `.refResolves()`, which canonicalize both sides internally.
   piTasks <- project$parameterIdentification %||% list()
-  scenarioNames <- names(scenarioList)
   outputPathIds <- names(project$outputPaths %||% list())
 
   for (taskId in names(piTasks)) {
     task <- piTasks[[taskId]]
 
-    badTaskScenarios <- setdiff(task$scenarios, scenarioNames)
+    badTaskScenarios <- .danglingRefs(task$scenarios, scenarioNames)
     if (length(badTaskScenarios) > 0L) {
       result$add_critical_error(
         "Invalid Reference",
@@ -953,7 +1166,7 @@ validateProject <- function(project) {
     }
 
     for (p in task$parameters) {
-      bad <- setdiff(p$scenarios, scenarioNames)
+      bad <- .danglingRefs(p$scenarios, scenarioNames)
       if (length(bad) > 0L) {
         result$add_critical_error(
           "Invalid Reference",
@@ -971,7 +1184,7 @@ validateProject <- function(project) {
     }
 
     for (m in task$outputMappings) {
-      badScenarios <- setdiff(m$scenarios, scenarioNames)
+      badScenarios <- .danglingRefs(m$scenarios, scenarioNames)
       if (length(badScenarios) > 0L) {
         result$add_critical_error(
           "Invalid Reference",
@@ -986,7 +1199,18 @@ validateProject <- function(project) {
           )
         )
       }
-      if (!(m$outputPathId %in% outputPathIds)) {
+      if (is.null(m$outputPathId) || is.na(m$outputPathId)) {
+        result$add_critical_error(
+          "Invalid Reference",
+          paste0(
+            "PI task '",
+            taskId,
+            "', outputMapping '",
+            m$id,
+            "' does not define an outputPath"
+          )
+        )
+      } else if (!.refResolves(m$outputPathId, outputPathKeys)) {
         result$add_critical_error(
           "Invalid Reference",
           paste0(
@@ -1005,87 +1229,4 @@ validateProject <- function(project) {
   }
 
   result
-}
-
-#' @title isAnyCriticalErrors
-#'
-#' @description Reports whether any section of a validation run produced a
-#'   critical error, collapsing the per-section results from
-#'   [validateProject()] into a single logical.
-#'
-#' @param validationResults Named list of class `"ValidationResults"`, the
-#'   output of [validateProject()].
-#' @return A single logical: `TRUE` if any section has critical errors,
-#'   otherwise `FALSE`.
-#' @export
-#' @seealso [validateProject()], [validationSummary()].
-#' @examples
-#' \dontrun{
-#' project <- loadProject("Project.json")
-#' results <- validateProject(project)
-#' if (isAnyCriticalErrors(results)) {
-#'   print(validationSummary(results))
-#' }
-#' }
-isAnyCriticalErrors <- function(validationResults) {
-  any(vapply(
-    validationResults,
-    function(r) {
-      if (inherits(r, "validationResult")) {
-        r$has_critical_errors()
-      } else {
-        FALSE
-      }
-    },
-    logical(1)
-  ))
-}
-
-#' @title validationSummary
-#'
-#' @description Aggregates the per-section results from [validateProject()]
-#'   into overall counts of critical errors and warnings, plus the names of
-#'   the sections that produced each.
-#'
-#' @param validationResults Named list of class `"ValidationResults"`, the
-#'   output of [validateProject()].
-#' @return A list with `total_critical_errors`, `total_warnings`,
-#'   `sections_with_errors`, and `sections_with_warnings`.
-#' @export
-#' @seealso [validateProject()], [isAnyCriticalErrors()].
-#' @examples
-#' \dontrun{
-#' project <- loadProject("Project.json")
-#' results <- validateProject(project)
-#' summary <- validationSummary(results)
-#' summary$total_critical_errors
-#' }
-validationSummary <- function(validationResults) {
-  summary <- list(
-    total_critical_errors = 0,
-    total_warnings = 0,
-    sections_with_errors = character(),
-    sections_with_warnings = character()
-  )
-
-  for (name in names(validationResults)) {
-    result <- validationResults[[name]]
-    if (inherits(result, "validationResult")) {
-      if (result$has_critical_errors()) {
-        summary$total_critical_errors <- summary$total_critical_errors +
-          length(result$critical_errors)
-        summary$sections_with_errors <- c(summary$sections_with_errors, name)
-      }
-      if (length(result$warnings) > 0) {
-        summary$total_warnings <- summary$total_warnings +
-          length(result$warnings)
-        summary$sections_with_warnings <- c(
-          summary$sections_with_warnings,
-          name
-        )
-      }
-    }
-  }
-
-  summary
 }

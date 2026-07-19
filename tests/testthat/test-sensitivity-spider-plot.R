@@ -109,12 +109,15 @@ test_that("sensitivitySpiderPlot creates expected default plot", {
 test_that("sensitivitySpiderPlot legend labels are correctly applied", {
   .localSnapshotOptions()
   simulation <- sensFixture()$simulation
-  names(parameterPaths) <- c("Lipophilicity", "Dose", "GFR fraction")
+  # Work on a labelled local copy so the file-scope `parameterPaths` is never
+  # mutated for other tests in this file.
+  namedParameterPaths <- parameterPaths
+  names(namedParameterPaths) <- c("Lipophilicity", "Dose", "GFR fraction")
 
   resultsLab <- sensitivityCalculation(
     simulation = simulation,
     outputPaths = outputPaths,
-    parameterPaths = parameterPaths,
+    parameterPaths = namedParameterPaths,
     variationRange = variationRange
   )
 
@@ -131,7 +134,7 @@ test_that("sensitivitySpiderPlot legend labels are correctly applied", {
   pb <- ggplot2::ggplot_build(p[[n]][[1]])
 
   expect_equal(
-    levels(as.factor(names(parameterPaths))),
+    levels(as.factor(names(namedParameterPaths))),
     as.character(pb$plot$scales$get_scales("colour")$get_labels())
   )
 })

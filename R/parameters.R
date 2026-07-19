@@ -81,6 +81,7 @@ readParametersFromXLS <- function(paramsXLSpath, sheets = NULL) {
 
   pathsValuesVector <- vector(mode = "numeric")
   pathsUnitsVector <- vector(mode = "character")
+  seenPaths <- character(0)
 
   for (sheet in sheets) {
     data <- readExcel(path = paramsXLSpath, sheet = sheet)
@@ -97,12 +98,43 @@ readParametersFromXLS <- function(paramsXLSpath, sheets = NULL) {
       data[["Parameter Name"]],
       sep = "|"
     )
-    pathsValuesVector[fullPaths] <- as.numeric(data[["Value"]])
+
+    # A non-blank `Value` cell that does not coerce to a number is an error,
+    # rather than silently coerced to NA and carried through. A genuinely blank
+    # cell (empty/NA) is left as NA and allowed. Mirrors the initial-conditions
+    # reader's value validation.
+    valuesRaw <- data[["Value"]]
+    parsedValues <- suppressWarnings(as.numeric(valuesRaw))
+    isBlankValue <- is.na(valuesRaw) | trimws(as.character(valuesRaw)) == ""
+    invalidValues <- !isBlankValue & is.na(parsedValues)
+    if (any(invalidValues)) {
+      cli::cli_abort(messages$errorMissingValuesInParameters(
+        filePath = paramsXLSpath,
+        parameterPaths = fullPaths[invalidValues]
+      ))
+    }
+
+    # Warn (rather than silently last-wins) when the same parameter path appears
+    # more than once: either within this sheet, or already defined on a prior
+    # sheet. The last occurrence wins downstream.
+    duplicatePaths <- unique(c(
+      fullPaths[duplicated(fullPaths)],
+      intersect(fullPaths, seenPaths)
+    ))
+    if (length(duplicatePaths) > 0) {
+      cli::cli_warn(messages$warningDuplicateParameters(
+        filePath = paramsXLSpath,
+        parameterPaths = duplicatePaths
+      ))
+    }
+
+    pathsValuesVector[fullPaths] <- parsedValues
 
     pathsUnitsVector[fullPaths] <- tidyr::replace_na(
       data = as.character(data[["Units"]]),
       replace = ""
     )
+    seenPaths <- union(seenPaths, fullPaths)
   }
 
   return(.parametersVectorToList(pathsValuesVector, pathsUnitsVector))
@@ -497,12 +529,16 @@ isTableFormulasEqual <- function(formula1, formula2) {
     return(FALSE)
   }
 
-  for (i in seq_along(allPoints1)) {
-    point1 <- allPoints1[[i]]
-    point2 <- allPoints2[[i]]
-
-    return((point1$x == point2$x) && (point1$y == point2$y))
-  }
+  # Two empty table formulas (no points) are equal. Otherwise every point's x
+  # and y must match; the loop only runs once the lengths are known equal.
+  all(vapply(
+    seq_along(allPoints1),
+    \(i) {
+      allPoints1[[i]]$x == allPoints2[[i]]$x &&
+        allPoints1[[i]]$y == allPoints2[[i]]$y
+    },
+    logical(1)
+  ))
 }
 
 #' Set the values of parameters in the simulation by path, if the `condition` is
@@ -546,6 +582,30 @@ setParameterValuesByPathWithCondition <- function(
   },
   units = NULL
 ) {
+  # Guard the parallel-vector shape before touching the simulation, so a scalar
+  # `values` against multi-element `parameterPaths` fails fast here rather than
+  # aborting mid-loop with an opaque "subscript out of bounds". `values` may be
+  # a scalar (recycled to every path) or match `parameterPaths` length; `units`
+  # is optional and, when given, may be a scalar (recycled) or match.
+  nPaths <- length(parameterPaths)
+  if (length(values) != 1L && length(values) != nPaths) {
+    cli::cli_abort(c(
+      "{.arg values} must be a scalar or have the same length as \\
+      {.arg parameterPaths}.",
+      "x" = "Got lengths {.val {length(values)}} and {.val {nPaths}}."
+    ))
+  }
+  if (!is.null(units) && length(units) != 1L && length(units) != nPaths) {
+    cli::cli_abort(c(
+      "{.arg units} must be {.code NULL}, a scalar, or have the same length \\
+      as {.arg parameterPaths}.",
+      "x" = "Got lengths {.val {length(units)}} and {.val {nPaths}}."
+    ))
+  }
+  values <- rep(values, length.out = nPaths)
+  if (!is.null(units)) {
+    units <- rep(units, length.out = nPaths)
+  }
   for (i in seq_along(parameterPaths)) {
     path <- parameterPaths[[i]]
     if (condition(path)) {
@@ -570,8 +630,19 @@ setParameterValuesByPathWithCondition <- function(
 .splitParameterPathIntoContainerAndName <- function(parameterPath) {
   fullPathParts <- strsplit(parameterPath, split = "|", fixed = TRUE)[[1]]
 
+  # A parameter path must carry both a container path and a parameter name; a
+  # separator-less path has no container and cannot be split. Aborting here
+  # fails fast rather than silently emitting an empty container path (which the
+  # Excel exporter would then write as a blank cell).
+  if (length(fullPathParts) < 2L) {
+    cli::cli_abort(
+      "parameter path {.val {parameterPath}} must contain a container path \\
+      and a parameter name separated by {.val |}."
+    )
+  }
+
   containerPath <- paste(
-    fullPathParts[seq_along(fullPathParts) - 1],
+    utils::head(fullPathParts, -1L),
     collapse = "|"
   )
   paramName <- fullPathParts[[length(fullPathParts)]]
@@ -668,6 +739,7 @@ addParameterSet <- function(project, id) {
   validateIsOfType(project, "Project")
   .assertIdVector(id)
   id <- .canonicalizeId(id)
+  .assertNoDuplicateIds(id, "parameter set")
   clash <- intersect(id, names(project$parameterSets))
   if (length(clash) > 0L) {
     cli::cli_abort("parameter set {.val {clash}} already exists")
@@ -802,8 +874,8 @@ removeParameterEntry <- function(
   parameterName
 ) {
   validateIsOfType(project, "Project")
-  if (!is.character(id) || length(id) != 1L) {
-    cli::cli_abort("{.arg id} must be a string scalar")
+  if (!is.character(id) || length(id) != 1L || is.na(id) || nchar(id) == 0) {
+    cli::cli_abort("{.arg id} must be a non-empty string")
   }
   id <- .canonicalizeId(id)
   if (!(id %in% names(project$parameterSets))) {
@@ -1096,6 +1168,7 @@ addInitialConditions <- function(project, id) {
   validateIsOfType(project, "Project")
   .assertIdVector(id)
   id <- .canonicalizeId(id)
+  .assertNoDuplicateIds(id, "initial-condition set")
   clash <- intersect(id, names(project$initialConditions))
   if (length(clash) > 0L) {
     cli::cli_abort("initial-condition set {.val {clash}} already exists")
@@ -1211,8 +1284,8 @@ addInitialConditionEntry <- function(project, id, path, value, unit) {
 #' @family parameters
 removeInitialConditionEntry <- function(project, id, path) {
   validateIsOfType(project, "Project")
-  if (!is.character(id) || length(id) != 1L) {
-    cli::cli_abort("{.arg id} must be a string scalar")
+  if (!is.character(id) || length(id) != 1L || is.na(id) || nchar(id) == 0) {
+    cli::cli_abort("{.arg id} must be a non-empty string")
   }
   id <- .canonicalizeId(id)
   if (!(id %in% names(project$initialConditions))) {

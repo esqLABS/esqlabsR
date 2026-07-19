@@ -6,8 +6,16 @@ messages <- ospsuite.utils::messages
 # through the `cli` wrappers `cli::cli_abort()` (errors) and `cli::cli_warn()`
 # (warnings); `cli::cli_inform()` surfaces informational text. New user-facing
 # text belongs here as a catalog entry routed through those wrappers, not as a
-# base `stop()`/`warning()`/`message()` on an inline literal string, so all
-# wording lives in one auditable place.
+# base `stop()`/`warning()`/`message()` on an inline literal string.
+#
+# One known exception: the project validation framework (`R/validation.R` and
+# the per-section validators in `R/scenarios.R`, `R/individuals.R`,
+# `R/populations.R`, `R/output-paths.R`, `R/plots.R`,
+# `R/parameter-identification.R`) builds most of its `validationResult`
+# messages inline with `paste0()` rather than through this catalog. The
+# observed-data validator (`R/observed-data.R`) is routed through the catalog
+# (the `validationObservedData*` entries below); the remaining validators are
+# not yet migrated, so not all validation wording lives here.
 
 # Parameters structure####
 messages$errorWrongXLSStructure <- function(
@@ -26,6 +34,24 @@ messages$wrongParametersStructure <- function(argumentName) {
     "Argument {.arg {argumentName}} has wrong structure. Expected is a named list with three vectors `paths`
     representing full parameter paths, `values` with numerical values of the parameters,
     and `units` representing the units the values are in. All three vectors must have the same length"
+  )
+}
+
+messages$errorMissingValuesInParameters <- function(
+  filePath,
+  parameterPaths
+) {
+  cliFormat(
+    "Missing or non-numeric values in parameters file {.file {filePath}} for parameter(s): {.val {paste(parameterPaths, collapse = ', ')}}. A numeric value must be specified for all parameters."
+  )
+}
+
+messages$warningDuplicateParameters <- function(
+  filePath,
+  parameterPaths
+) {
+  cliFormat(
+    "Duplicate parameter path(s) in parameters file {.file {filePath}}: {.val {paste(parameterPaths, collapse = ', ')}}. Only the last value defined for each path is used."
   )
 }
 
@@ -117,12 +143,32 @@ messages$snapshotOntoOwnContainer <- function() {
   )
 }
 
+messages$definitionsFolderChangeOnMaterialized <- function(current, value) {
+  c(
+    "Cannot change {.field definitionsFolder} from {.val {current}} to {.val {value}} while the tree exists on disk.",
+    "x" = "Re-pointing a materialized project would leave the old {.path {current}/} tree orphaned and unreferenced.",
+    "i" = "To relocate the tree deliberately, snapshot the project with {.fn saveSnapshot} and reload it into a fresh directory under the new folder with {.fn loadSnapshot}."
+  )
+}
+
 messages$loadSnapshotDirNotEmpty <- function(dir) {
   c(
     "{.arg dir} already contains an esqlabsR project ({.path {dir}}).",
     "i" = "{.fn loadSnapshot} writes a fresh tree project and will not overwrite \\
     an existing one. Pass an empty or new {.arg dir}."
   )
+}
+
+messages$failedToRemoveStaleDefinitionFiles <- function(paths) {
+  n <- length(paths)
+  # Interpolate eagerly here, where `n` and `paths` are in scope: the
+  # `cli::cli_abort()` call site does not carry these names, so a lazily
+  # interpolated glue vector would fail to evaluate `{n}` / `{paths}` there.
+  cli::format_message(c(
+    "Failed to remove {n} stale definition file{?s} from the definitions tree.",
+    "x" = "{.file {paths}}",
+    "i" = "A stale file that cannot be deleted would reappear as a definition on the next {.fn loadProject}; check the file permissions and remove it manually."
+  ))
 }
 
 messages$pathNotFound <- function(path) {
@@ -133,6 +179,16 @@ messages$pathNotFound <- function(path) {
 
 messages$overwriteDestination <- function(path) {
   cliFormat("Overwriting existing esqlabsR project in {.path {path}} ")
+}
+
+messages$failedToClearProjectArtifacts <- function(path) {
+  # Interpolate eagerly here where `path` is in scope; the `cli::cli_abort()`
+  # call site passes a local whose name is not `path`.
+  cli::format_message(c(
+    "Failed to remove an existing project artifact before overwriting.",
+    "x" = "{.path {path}}",
+    "i" = "Overwriting requires removing the old project's definitions tree and container first; check the path's permissions and remove it manually."
+  ))
 }
 
 messages$inconsistentArgumentLengths <- function(vectorLengths) {
@@ -191,6 +247,17 @@ messages$noModelFolderForRelativeModelFile <- function(
     "x" = "Cannot resolve the model file for scenario {.val {scenarioName}}.",
     "i" = "{.field modelFile} {.val {modelFile}} is relative but the project \\
     has no {.field modelFolder} to resolve it against."
+  ))
+}
+
+messages$noPopulationsFolderForCSVPopulation <- function(
+  scenarioName,
+  populationId
+) {
+  cli::format_message(c(
+    "x" = "Cannot resolve the population csv for scenario {.val {scenarioName}}.",
+    "i" = "{.field populationId} {.val {populationId}} is read from a csv but \\
+    the project has no {.field populationsFolder} to resolve it against."
   ))
 }
 
@@ -366,6 +433,14 @@ messages$errorSavingScenarioResult <- function(scenarioName, conditionMessage) {
     "i" = safe_msg
   )
 }
+
+messages$scenarioResultNameCollision <- function(colliding) {
+  cli::format_message(c(
+    "x" = "Scenario names collide once {.val /} and {.val \\\\} are replaced with {.val _} for file names:",
+    "*" = "{.val {colliding}}",
+    "i" = "Rename the scenarios so their file-safe names differ before saving."
+  ))
+}
 # sensitivity-calculation####
 messages$noPKDataToWrite <- function(saOutputFilePath) {
   cliFormat(
@@ -421,6 +496,14 @@ messages$missingPlotIDs <- function() {
   cliFormat(
     "Missing values found in mandatory column {.val plotIds} of sheet {.field plotGrids}. Fill in values to proceed."
   )
+}
+
+messages$missingPlotGridId <- function() {
+  cliFormat("Every plot grid must declare a `plotGridId`.")
+}
+
+messages$missingPlotId <- function() {
+  cliFormat("Every plot must declare a `plotId`.")
 }
 
 messages$missingLabel <- function() {
@@ -695,29 +778,6 @@ messages$excelNoCompleteRows <- function() {
   ))
 }
 
-messages$excelSheetEmptyOrInvalid <- function() {
-  cli::format_message(c(
-    "Excel sheet name was empty or invalid:",
-    "i" = "Using default name {.val Sheet}"
-  ))
-}
-
-messages$excelSheetSanitized <- function(originalName) {
-  cli::format_message(c(
-    "Excel sheet name became empty after sanitization:",
-    "x" = "Original name: {.val {originalName}}",
-    "i" = "Using default name {.val Sheet}"
-  ))
-}
-
-messages$excelSheetSanitizedInfo <- function(originalName, sanitizedName) {
-  cli::format_message(c(
-    "Excel sheet name was sanitized to comply with naming rules:",
-    "x" = "Original name: {.val {originalName}}",
-    "v" = "Sanitized name: {.val {sanitizedName}}",
-    "i" = "Excel sheet names must be 31 characters or less and cannot contain: / \\\\ * [ ] : ?"
-  ))
-}
 
 messages$excelNotInSync <- function(message = "") {
   cliFormat(
@@ -867,5 +927,52 @@ messages$observedDataScriptWrongReturnType <- function(filePath, klass) {
 messages$observedDataDataFolderNotDeclared <- function(file) {
   cliFormat(
     "{.field dataFolder} is not declared in {.code filePaths}; cannot resolve {.path {file}}."
+  )
+}
+
+messages$observedDataNameCollision <- function(duplicates) {
+  cli::format_message(c(
+    "x" = "Duplicate observed-data set name{?s} across sources: {.val {duplicates}}.",
+    "i" = "Each loaded {.cls DataSet} must have a unique name; rename the source or the data set."
+  ))
+}
+
+# Observed-data messages surfaced by the project validator (`validateProject()`)
+# rather than by the load/add path. These are stored verbatim as the `message`
+# of a `validationResult` entry (a plain string, not a `cli`-tagged vector), so
+# they interpolate the ids as plain text (single-quoted to match the rest of the
+# validator's wording) instead of styling them with `cli` `{.val}` markup.
+messages$validationObservedDataMissingType <- function(entryLabel) {
+  cliFormat("{entryLabel} is missing required field 'type'")
+}
+
+messages$validationObservedDataInvalidType <- function(
+  entryLabel,
+  type,
+  validTypes
+) {
+  cliFormat(
+    "{entryLabel} has invalid type '{type}'. Must be one of: {paste(validTypes, collapse = \", \")}"
+  )
+}
+
+messages$validationObservedDataMissingField <- function(
+  entryLabel,
+  type,
+  field
+) {
+  cliFormat("{entryLabel} ({type}) is missing required field '{field}'")
+}
+
+messages$validationObservedDataFileNotFound <- function(entryLabel, file) {
+  cliFormat("{entryLabel} references non-existent file: {file}")
+}
+
+messages$validationObservedDataImporterNotFound <- function(
+  entryLabel,
+  importerConfiguration
+) {
+  cliFormat(
+    "{entryLabel} references non-existent importer config: {importerConfiguration}"
   )
 }

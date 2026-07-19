@@ -15,6 +15,15 @@
       ! Cannot add individual "newi":
       x gender must be a non-empty string
 
+# addIndividual aborts when gender is not a valid GenderInt token
+
+    Code
+      addIndividual(project, "newi", species = "Human", gender = "banana")
+    Condition
+      Error in `addIndividual()`:
+      ! Cannot add individual "newi":
+      x gender must be one of MALE, FEMALE, UNKNOWN
+
 # setIndividual aborts on a non-existent individual
 
     Code
@@ -35,6 +44,22 @@
       Error in `setIndividual()`:
       ! `gender` must be a non-empty string
 
+# setIndividual rejects a gender that is not a valid GenderInt token
+
+    Code
+      setIndividual(project, "indiv1", gender = "banana")
+    Condition
+      Error in `setIndividual()`:
+      ! `gender` must be one of "MALE", "FEMALE", and "UNKNOWN"
+
+# setIndividual rejects a non-numeric weight like addIndividual
+
+    Code
+      setIndividual(project, "indiv1", weight = "80kg")
+    Condition
+      Error in `setIndividual()`:
+      ! weight must be a single finite number
+
 # setIndividual rejects parameterSets that do not resolve
 
     Code
@@ -47,10 +72,10 @@
       ! `parameterSets` references undefined parameter sets:
       x "ghost"
 
-# setIndividualParameterSets aborts on an undefined parameter set
+# setIndividual aborts on an undefined parameter set
 
     Code
-      setIndividualParameterSets(project, "indiv1", "Ghost")
+      setIndividual(project, "indiv1", parameterSets = "Ghost")
     Condition
       Warning:
       Canonicalized 1 referenced id to a safe form:
@@ -74,10 +99,8 @@
     Code
       addIndividual(project, c("a", "a"), species = "Human", gender = "MALE")
     Condition
-      Error in `.canonicalizeId()`:
-      ! Ids collide after canonicalization:
-      x "a" -> "a"
-      i Two distinct ids that canonicalize to the same id are ambiguous; rename so they differ by more than case or forbidden characters.
+      Error in `addIndividual()`:
+      ! duplicate individual id in the batch: "a"
 
 # print.Individual renders the configured fields
 

@@ -26,7 +26,7 @@ getTestDataFilePath <- function(fileName = "") {
 
 #' Load the canonical test `Project` from a throwaway copy.
 #'
-#' The scenarios section is a write-through entity tree, so mutating a
+#' The scenarios section is a write-through definition tree, so mutating a
 #' loaded project (`addScenario()`, `removeScenario()`, scenario write-back)
 #' writes to its `definitions/scenarios/` directory. To keep the
 #' version-controlled fixture pristine and tests isolated from one another,
@@ -40,9 +40,9 @@ testProject <- function(envir = parent.frame()) {
 #'
 #' Use this as a `saveSnapshot()` target instead of a bare
 #' `withr::local_tempfile()`: a project is a directory (the `Project.json`
-#' container plus a `definitions/` entity tree alongside it), so writing into
+#' container plus a `definitions/` definition tree alongside it), so writing into
 #' the shared session tempdir would scatter a `definitions/` directory there
-#' and leak entities into unrelated `loadProject()` calls.
+#' and leak definitions into unrelated `loadProject()` calls.
 #' The directory is removed when the calling test finishes.
 local_projectPath <- function(envir = parent.frame()) {
   file.path(
@@ -102,15 +102,16 @@ testProjectExcelConfigurationsPath <- function(...) {
 }
 
 executeWithTestFile <- function(actionWithFile) {
-  newFile <- tempfile()
+  # Tie the temp file's lifetime to the calling test's frame so it is removed
+  # even if `actionWithFile()` errors.
+  newFile <- withr::local_tempfile(.local_envir = parent.frame())
   actionWithFile(newFile)
-  file.remove(newFile)
 }
 
 #' Redact the throwaway-project absolute prefix from a quoted path in an error
 #' message so an `expect_snapshot()` is stable across runs, keeping the
 #' project-relative `definitions/...` tail that carries the meaning. Used as the
-#' `transform` of snapshots whose error names an absolute entity-file path in a
+#' `transform` of snapshots whose error names an absolute definition-file path in a
 #' temp directory.
 .redactTmpPath <- function(lines) {
   gsub("'[^']*/(definitions(/[^']*)?)'", "'<project>/\\1'", lines)
@@ -195,13 +196,14 @@ summarizer <- function(data, path) {
 #' temp_project$project
 #' }
 with_temp_project <- function(projectName = NULL, overwrite = TRUE) {
-  if (is.null(projectName)) {
-    temp_dir <- tempfile("esqlabsR_test_")
+  prefix <- if (is.null(projectName)) {
+    "esqlabsR_test_"
   } else {
-    temp_dir <- tempfile(paste0("esqlabsR_", projectName, "_"))
+    paste0("esqlabsR_", projectName, "_")
   }
-  dir.create(temp_dir, recursive = TRUE, showWarnings = FALSE)
-  withr::defer(unlink(temp_dir, recursive = TRUE), envir = parent.frame())
+  # `local_tempdir()` creates the directory and, scoped to the calling test's
+  # frame, removes it when that test exits (even on error).
+  temp_dir <- withr::local_tempdir(prefix, .local_envir = parent.frame())
 
   initProject(
     destination = temp_dir,

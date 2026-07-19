@@ -26,7 +26,6 @@ utils::globalVariables(
     "Unit",
     "Value",
     "dataType",
-    "name",
     "paths",
     "scenario",
     "xOffsets",

@@ -53,6 +53,18 @@ test_that("setApplicationParameterSets aborts on an undefined parameter set", {
   expect_identical(project$applications[["aciclovir_iv_250mg"]], before)
 })
 
+test_that("addApplication and setApplicationParameterSets reject a non-character parameterSets with the same message", {
+  # Both paths route through the shared `.resolveParameterSetRefs()`, so the
+  # "must be a character vector of set ids" type-check message no longer drifts
+  # between them.
+  project <- testProject()
+  expect_snapshot(error = TRUE, addApplication(project, "p", parameterSets = 1))
+  expect_snapshot(
+    error = TRUE,
+    setApplicationParameterSets(project, "aciclovir_iv_250mg", 1)
+  )
+})
+
 # Vectorized authoring ----
 
 test_that("addApplication adds N protocols in one call equal to N scalar adds", {
@@ -95,6 +107,11 @@ test_that("addApplication aborts the whole batch and writes nothing on a bad ref
   expect_identical(names(project$applications), before)
   reloaded <- loadProject(project$jsonPath)
   expect_identical(names(reloaded$applications), before)
+})
+
+test_that("addApplication aborts on a duplicate id in the batch", {
+  project <- testProject()
+  expect_snapshot(error = TRUE, addApplication(project, c("p1", "p1")))
 })
 
 test_that("removeApplication removes a vector of ids in one write-through", {

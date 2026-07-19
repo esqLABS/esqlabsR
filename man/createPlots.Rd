@@ -46,12 +46,19 @@ to \code{FALSE} to skip the pre-flight check (e.g. when the caller has
 already validated the project).}
 }
 \value{
-A named list keyed by id: one entry per requested plot grid
-(keyed by \code{plotGridId}) unioned with one entry per requested standalone
-plot (keyed by \code{plotId}). An empty list when the project has no plots to
-build.
+A named list of \strong{plot grids} keyed by Plot Grid name: one entry
+per requested plot grid (keyed by its \code{plotGridId}), unioned with one entry
+per requested standalone plot (keyed by its \code{plotId}) when \code{plots} is
+given. Note the list holds plot grids, not standalone \code{Plot} objects,
+unless standalone plots were explicitly requested via \code{plots}. An empty
+list when the project has no plots to build.
 }
 \description{
+\strong{Returns plot grids, not standalone plots.} By default \code{createPlots()}
+builds every plot grid declared in \code{project$plotGrids} and no standalone
+plots, and hands back a \strong{named list of plot grids keyed by Plot Grid name}
+(the \code{plots} argument opts individual standalone plots into that same list).
+
 Reads \code{project$plots} and \code{project$plotGrids} (both keyed lists, one entry
 per plot / grid) to build the requested plot grids and, optionally,
 standalone single plots. DataCombined objects are resolved via

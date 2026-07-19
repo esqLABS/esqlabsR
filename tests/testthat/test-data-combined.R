@@ -187,6 +187,16 @@ test_that("createDataCombined errors when requested name not in project", {
   )
 })
 
+test_that("createDataCombined errors when a requested plotGrids name is unknown", {
+  project <- exampleProject()
+  # An unknown plot grid name must abort rather than being silently dropped
+  # (the intersection would otherwise yield an incomplete or empty result).
+  expect_snapshot(
+    error = TRUE,
+    createDataCombined(project, plotGrids = "DoesNotExist")
+  )
+})
+
 test_that("createDataCombined builds DataCombined for Example project", {
   project <- exampleProject()
   simulated <- runScenarios(project, scenarios = "aciclovir_iv")
@@ -298,9 +308,11 @@ test_that("createDataCombined reports a failed scenario run distinctly", {
       group = "g"
     ))
   )
-  # A failed run is present in scenarioResults but carries results = NULL.
+  # A failed run is present in scenarioResults but carries results = NULL. The
+  # key must match the scenario casing so the lookup resolves and the code
+  # reaches the results = NULL failed-run branch (not the missing-scenario one).
   failedRun <- list(
-    TestScenario = list(
+    testscenario = list(
       simulation = NULL,
       results = NULL,
       outputValues = NULL,

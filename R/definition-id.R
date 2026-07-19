@@ -1,8 +1,8 @@
-# Entity id canonicalization + suggestion ----
+# Definition id canonicalization + suggestion ----
 #
 # Every definition in a Project (a scenario, parameter set, individual,
 # population, application, output path, plot, ...) is referenced by its
-# **id**, and for the entity-file tree the id equals its on-disk filename.
+# **id**, and for the definition-file tree the id equals its on-disk filename.
 # Ids therefore have to be safe single path segments on every target
 # filesystem.
 #
@@ -21,7 +21,7 @@
 # into a "did you mean '...'?" hint, surfaced by the cross-reference
 # validator.
 
-# Canonicalize one or more entity ids into safe, lowercase, single
+# Canonicalize one or more definition ids into safe, lowercase, single
 # path-segment ids. Vectorized over `ids`.
 #
 # Rules (intersection of Windows + macOS + Linux filename rules):
@@ -51,23 +51,27 @@
 
   changed <- !is.na(ids) & ids != canonical
   if (any(changed)) {
-    pairs <- paste0(
-      "{.val ",
-      ids[changed],
-      "} -> {.val ",
-      canonical[changed],
-      "}"
+    rendered <- .canonicalizedIdBullets(ids[changed], canonical[changed])
+    cli::cli_warn(
+      c(
+        "Canonicalized {sum(changed)} id{?s} to a safe form:",
+        rendered$bullets
+      ),
+      .envir = rendered$envir
     )
-    cli::cli_warn(c(
-      "Canonicalized {sum(changed)} id{?s} to a safe form:",
-      stats::setNames(pairs, rep("*", length(pairs)))
-    ))
   }
 
-  # Two distinct inputs that collapse to one canonical id are real ambiguity.
-  dup <- canonical[duplicated(canonical)]
-  if (length(dup) > 0L) {
-    clashing <- unique(dup)
+  # Two DISTINCT inputs that collapse to one canonical id are real ambiguity.
+  # A canonical id reached from a single distinct pre-image (the same id
+  # supplied twice) is not a collision, so keep only canonicals with more than
+  # one distinct offender.
+  clashing <- unique(canonical[duplicated(canonical)])
+  clashing <- clashing[vapply(
+    clashing,
+    function(c) length(unique(ids[canonical == c])) > 1L,
+    logical(1)
+  )]
+  if (length(clashing) > 0L) {
     bullets <- vapply(
       clashing,
       function(c) {
@@ -89,6 +93,45 @@
   canonical
 }
 
+# Build one `input -> canonical` bullet template per pair for the changed-id
+# / changed-reference warnings, quoting each value safely rather than
+# inlining raw user text into a cli glue template (which would evaluate
+# `{...}` content in the text as an R expression). Returns the bullet
+# templates (still unglued) together with the environment binding their
+# variables; the caller passes both straight to a single `cli_warn()` /
+# `cli_abort()` call (`.envir = rendered$envir`) so the templates are
+# glue-parsed exactly once. Pre-rendering each bullet with
+# `cli::format_inline()` and handing the *rendered* strings to a second
+# `cli_warn()` call is not actually safe: the rendered text still contains
+# the value's literal `{`/`}` characters, and cli glue-parses that text again
+# when the outer call formats it, evaluating the very content this is meant
+# to guard against. Binding each pair's `input`/`canonical` under
+# bullet-indexed variable names avoids that second pass entirely. The
+# returned environment's parent is the caller of this function, so the
+# caller's own glue expressions elsewhere in the same message (e.g.
+# `{sum(changed)}` in a summary line) still resolve normally.
+#
+# @keywords internal
+# @noRd
+.canonicalizedIdBullets <- function(inputs, canonicals) {
+  envir <- new.env(parent = parent.frame())
+  bullets <- vapply(
+    seq_along(inputs),
+    function(i) {
+      inputVar <- paste0("input", i)
+      canonVar <- paste0("canon", i)
+      assign(inputVar, inputs[i], envir = envir)
+      assign(canonVar, canonicals[i], envir = envir)
+      sprintf("{.val {%s}} -> {.val {%s}}", inputVar, canonVar)
+    },
+    character(1)
+  )
+  list(
+    bullets = stats::setNames(bullets, rep("*", length(bullets))),
+    envir = envir
+  )
+}
+
 # Canonicalize a foreign-key reference argument (e.g. a scenario's
 # `individualId`, or its `modelParameterSets` / `outputPathIds` vector) the
 # same way `.canonicalizeId()` canonicalizes a definition's id, so a
@@ -104,7 +147,12 @@
   if (is.null(ref) || !is.character(ref) || length(ref) == 0L) {
     return(ref)
   }
-  keep <- !is.na(ref) & nzchar(ref)
+  # Canonicalize `""` too, not just non-empty refs: the definition side
+  # (`.canonicalizeOneId("")`) maps `""` to `"_"`, so a reference of `""` must
+  # follow the same transform or it would never resolve to a definition made
+  # from `""`. Only `NA` passes through untouched (the FK validators reject it
+  # with a clearer message).
+  keep <- !is.na(ref)
   if (!any(keep)) {
     return(ref)
   }
@@ -120,7 +168,7 @@
     # When a batch authoring call is collecting reference canonicalizations
     # (`.collectCanonicalizedRefs()`), record each changed pair and stay
     # silent so the caller emits one consolidated warning per call instead of
-    # one per entity. Outside a collector (a standalone call) warn immediately.
+    # one per definition. Outside a collector (a standalone call) warn immediately.
     inputs <- ref[keep][changed]
     canonicals <- canon[changed]
     if (.canonRefSink$depth > 0L) {
@@ -134,10 +182,10 @@
   out
 }
 
-# Sink for collecting reference-canonicalization changes across the per-entity
+# Sink for collecting reference-canonicalization changes across the per-definition
 # builds of one vectorized authoring call, so the whole call emits a single
 # warning naming each `input -> canonical` change rather than one warning per
-# entity. `depth` guards re-entrancy; the inputs/canonicals accumulate the
+# definition. `depth` guards re-entrancy; the inputs/canonicals accumulate the
 # changed pairs.
 #
 # @keywords internal
@@ -153,7 +201,7 @@
 # normal completion and, via a calling handler, before an error propagates, so
 # a batch that aborts partway still surfaces the canonicalizations that
 # happened before the abort (preserving the warning-then-error order the
-# per-entity path had). Re-entrant collectors share the outermost sink; only
+# per-definition path had). Re-entrant collectors share the outermost sink; only
 # the outermost one flushes.
 #
 # @keywords internal
@@ -175,7 +223,7 @@
     canonicals <- .canonRefSink$canonicals
     if (length(inputs) > 0L) {
       # Deduplicate by pair, keeping first-seen order, so a reference repeated
-      # across several entities in the batch is named once.
+      # across several definitions in the batch is named once.
       key <- paste(inputs, canonicals, sep = "\r")
       firstSeen <- !duplicated(key)
       .warnCanonicalizedRefs(inputs[firstSeen], canonicals[firstSeen])
@@ -208,11 +256,17 @@
 # @keywords internal
 # @noRd
 .warnCanonicalizedRefs <- function(inputs, canonicals) {
-  pairs <- paste0("{.val ", inputs, "} -> {.val ", canonicals, "}")
-  cli::cli_warn(c(
-    "Canonicalized {length(inputs)} referenced id{?s} to a safe form:",
-    stats::setNames(pairs, rep("*", length(pairs)))
-  ))
+  # Same fix as `.canonicalizeId()`'s changed-id warning: build the bullet
+  # templates and their binding environment via `.canonicalizedIdBullets()`
+  # and glue-parse them in a single outer `cli_warn()` call.
+  rendered <- .canonicalizedIdBullets(inputs, canonicals)
+  cli::cli_warn(
+    c(
+      "Canonicalized {length(inputs)} referenced id{?s} to a safe form:",
+      rendered$bullets
+    ),
+    .envir = rendered$envir
+  )
 }
 
 # Reserved Windows device basenames (case-insensitive), never allowed as a
@@ -242,11 +296,11 @@
   # opaque `cannot open the connection` the eventual `write_json` would raise.
   # 255 bytes is the common single-component cap (ext4, APFS, NTFS); leave room
   # for the `.json` suffix.
-  limit <- .maxEntityIdBytes
+  limit <- .maxDefinitionIdBytes
   nbytes <- nchar(id, type = "bytes")
   if (nbytes > limit) {
     cli::cli_abort(c(
-      "Entity id is too long to be a safe filename: {nbytes} bytes \\
+      "Definition id is too long to be a safe filename: {nbytes} bytes \\
       (limit {limit}).",
       "x" = "{.val {id}}",
       "i" = "An id becomes the file {.file <id>.json}; shorten it to at most \\
@@ -262,16 +316,20 @@
   if (nchar(out) == 0L) {
     return("_")
   }
-  if (out %in% .windowsReservedBasenames) {
+  # A Windows device name is reserved regardless of any extension, so the
+  # segment before the first dot decides it: `con.txt` is as unwritable as
+  # `con`. Test that base segment, and suffix the whole id so the reserved
+  # base is disarmed while any extension is preserved (`con.txt` -> `con.txt_`).
+  if (sub("\\..*$", "", out) %in% .windowsReservedBasenames) {
     out <- paste0(out, "_")
   }
   out
 }
 
-# Maximum byte length of an entity id, so `<id>.json` fits the common
+# Maximum byte length of a definition id, so `<id>.json` fits the common
 # single-path-component filesystem cap (255 bytes on ext4 / APFS / NTFS) with
 # room for the `.json` suffix.
-.maxEntityIdBytes <- 250L
+.maxDefinitionIdBytes <- 250L
 
 # Find the candidate ids closest to `x` (typo-tolerant). Mirrors ESQmrg's
 # `nearest_match`: `utils::adist(ignore.case = TRUE)`, a distance threshold of

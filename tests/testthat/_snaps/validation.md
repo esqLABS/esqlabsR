@@ -14,6 +14,14 @@
       Error:
       ! validatedSinceMutation is readonly
 
+# .validatePlots warns on plotType-irrelevant fields (non-blocking)
+
+    Code
+      cat(sort(msgs), sep = "\n")
+    Output
+      Plot 'p_ind' of plotType 'individual' sets 'quantiles', which only applies to plotType 'population' and is ignored.
+      Plot 'p_pop' of plotType 'population' sets 'foldDistance', which only applies to plotType 'observedVsSimulated' and is ignored.
+
 # .validateCrossReferences suggests a near match for an individual's parameterSets
 
     Code

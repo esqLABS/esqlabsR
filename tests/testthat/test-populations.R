@@ -1,44 +1,40 @@
-test_that("`sampleRandomValue()` generates needed distribution", {
+test_that("`sampleRandomValue()` rejects an unsupported distribution", {
   expect_error(
     sampleRandomValue("xyz", 5, 2, 10),
     messages$errorDistributionNotSupported("xyz")
   )
+})
 
-  set.seed(123)
-  expect_equal(
-    sampleRandomValue(Distributions$Normal, 5, 2, 10),
-    c(
-      3.87904870689558,
-      4.53964502103344,
-      8.11741662829825,
-      5.14101678284915,
-      5.25857547032189,
-      8.43012997376656,
-      5.9218324119784,
-      2.46987753078693,
-      3.62629429621295,
-      4.10867605980008
-    ),
-    tolerance = 0.001
-  )
+test_that("`sampleRandomValue()` returns the requested number of values", {
+  withr::local_seed(123)
+  expect_length(sampleRandomValue(Distributions$Normal, 5, 2, 10), 10)
+  expect_length(sampleRandomValue(Distributions$LogNormal, 5, 2, 10), 10)
+})
 
-  set.seed(123)
-  expect_equal(
-    sampleRandomValue(Distributions$LogNormal, 5, 2, 10),
-    c(
-      3.74081271106427,
-      4.24843764475839,
-      8.46318202896501,
-      4.77021554349172,
-      4.87946908411847,
-      8.98864517081978,
-      5.54444951200875,
-      2.85153959957418,
-      3.56304555191325,
-      3.90999158989997
-    ),
-    tolerance = 0.001
-  )
+# The exact draws are coupled to R's RNG stream (fragile across R versions), so
+# these assert the sampler's statistical shape instead: over a large sample the
+# mean and sd must match the requested target moments (both distributions are
+# parameterized so their realized mean is `mean` and sd is `sd`), within a
+# generous tolerance that still catches a broken sampler.
+test_that("`sampleRandomValue()` Normal draws match the target mean and sd", {
+  withr::local_seed(123)
+  mean <- 5
+  sd <- 2
+  values <- sampleRandomValue(Distributions$Normal, mean, sd, 1e5)
+
+  expect_equal(base::mean(values), mean, tolerance = 0.05)
+  expect_equal(stats::sd(values), sd, tolerance = 0.05)
+})
+
+test_that("`sampleRandomValue()` LogNormal draws are positive and match target moments", {
+  withr::local_seed(123)
+  mean <- 5
+  sd <- 2
+  values <- sampleRandomValue(Distributions$LogNormal, mean, sd, 1e5)
+
+  expect_true(all(values > 0))
+  expect_equal(base::mean(values), mean, tolerance = 0.05)
+  expect_equal(stats::sd(values), sd, tolerance = 0.05)
 })
 
 test_that("extendPopulationByUserDefinedParams works", {
@@ -263,6 +259,24 @@ test_that("setPopulation partial update leaves other fields untouched", {
   }
 })
 
+test_that("setPopulation clears a numeric field passed NULL", {
+  # A NULL clears (removes) the optional field: the key must be ABSENT, not
+  # present as numeric(0). The testpopulation fixture carries ageMin, so its
+  # removal is observable.
+  project <- testProject()
+  before <- project$populations[["testpopulation"]]
+  setPopulation(project, "testpopulation", ageMin = NULL)
+
+  after <- project$populations[["testpopulation"]]
+  expect_false("ageMin" %in% names(after))
+  expect_null(after$ageMin)
+  # No other field changed, and no unexpected key was added.
+  expect_setequal(names(after), setdiff(names(before), "ageMin"))
+  for (f in setdiff(names(before), "ageMin")) {
+    expect_equal(after[[f]], before[[f]])
+  }
+})
+
 test_that("setPopulation clears validatedSinceMutation", {
   project <- testProject()
   project$.markValidated()
@@ -286,6 +300,44 @@ test_that("setPopulation rejects a non-positive numberOfIndividuals", {
     setPopulation(project, "testpopulation", numberOfIndividuals = 0)
   )
   expect_equal(project$populations[["testpopulation"]], before)
+})
+
+test_that("setPopulation rejects a non-numeric range field", {
+  project <- testProject()
+  before <- project$populations[["testpopulation"]]
+  # "heavy" would silently coerce to NA via as.double(); it must abort instead,
+  # mirroring the numeric-field guard on the individual set path.
+  expect_snapshot(
+    error = TRUE,
+    setPopulation(project, "testpopulation", weightMin = "heavy")
+  )
+  expect_equal(project$populations[["testpopulation"]], before)
+})
+
+test_that("setPopulation rejects a non-integer numberOfIndividuals", {
+  project <- testProject()
+  before <- project$populations[["testpopulation"]]
+  # 2.5 would be stored as-is; the set path must reject it the same way the
+  # add path does.
+  expect_snapshot(
+    error = TRUE,
+    setPopulation(project, "testpopulation", numberOfIndividuals = 2.5)
+  )
+  expect_equal(project$populations[["testpopulation"]], before)
+})
+
+test_that("addPopulation rejects a non-integer numberOfIndividuals", {
+  project <- testProject()
+  expect_error(
+    addPopulation(
+      project,
+      "frac",
+      species = "Human",
+      numberOfIndividuals = 2.5
+    ),
+    "whole number"
+  )
+  expect_false("frac" %in% names(project$populations))
 })
 
 test_that("setPopulation on a clone does not affect the source on disk", {
@@ -389,6 +441,19 @@ test_that("addPopulation aborts on a mismatched scalar field length", {
       c("a", "b", "c"),
       species = "Human",
       numberOfIndividuals = c(5, 7)
+    )
+  )
+})
+
+test_that("addPopulation aborts on a duplicate id in the batch", {
+  project <- testProject()
+  expect_snapshot(
+    error = TRUE,
+    addPopulation(
+      project,
+      c("a", "a"),
+      species = "Human",
+      numberOfIndividuals = 5
     )
   )
 })

@@ -72,6 +72,28 @@ test_that("a bound project's container edit persists immediately", {
   )
 })
 
+test_that("a container edit on an inline-only project keeps its sections", {
+  # An inline snapshot has every section inlined in the container file and no
+  # `definitions/` tree on disk. A container-metadata edit must materialize the
+  # still-inline sections before the container-only write empties their inline
+  # copies, or the next load's inline fallback reads them all empty.
+  tmp <- saveSnapshot(testProject(), local_projectPath())
+  project <- loadProject(tmp)
+  before <- project$scenarios
+
+  project$name <- "Renamed"
+
+  reloaded <- loadProject(tmp)
+  expect_named(reloaded$scenarios, names(before))
+  expect_length(reloaded$scenarios, length(before))
+  expect_identical(
+    reloaded$scenarios$testscenario$modelFile,
+    before$testscenario$modelFile
+  )
+  # The container edit itself still takes effect on reload.
+  expect_identical(reloaded$name, "Renamed")
+})
+
 test_that("exampleProject() succeeds", {
   path <- exampleProjectPath()
   expect_true(file.exists(path))
@@ -115,6 +137,13 @@ test_that("initProject(type = 'minimal', createExcel = FALSE) creates the JSON s
   expect_false(file.exists(file.path(dir, "Project.xlsx")))
   expect_true(dir.exists(file.path(dir, "Models", "Simulations")))
   expect_true(dir.exists(file.path(dir, "Results", "Figures")))
+})
+
+test_that("initProject(type = 'minimal') scaffolds a definitions/ directory", {
+  dir <- withr::local_tempdir()
+  initProject(destination = dir, type = "minimal", createExcel = FALSE)
+
+  expect_true(dir.exists(file.path(dir, "definitions")))
 })
 
 test_that("initProject(createExcel = FALSE) over an existing project does not write Excel", {
@@ -180,6 +209,34 @@ test_that("initProject with overwrite = TRUE doesn't ask for permission", {
     overwrite = TRUE
   )
   expect_true(isProjectInitialized(temp_project$path))
+})
+
+test_that("initProject(overwrite = TRUE) replaces, removing stale definition files but keeping unrelated user files", {
+  dir <- withr::local_tempdir()
+  initProject(destination = dir, type = "example", createExcel = FALSE)
+
+  # A stale definition file the template does not ship (simulating an old project's
+  # definition), and an unrelated user file that must survive the overwrite.
+  staleDefinition <- file.path(dir, "definitions", "scenarios", "staledefinition.json")
+  writeLines("{}", staleDefinition)
+  userFile <- file.path(dir, "my_notes.txt")
+  writeLines("keep me", userFile)
+  expect_true(file.exists(staleDefinition))
+
+  initProject(
+    destination = dir,
+    type = "example",
+    createExcel = FALSE,
+    overwrite = TRUE
+  )
+
+  # Overwrite means replace: the stale definition is gone, the unrelated user
+  # file is untouched, and the fresh project scaffold is present.
+  expect_false(file.exists(staleDefinition))
+  expect_true(file.exists(userFile))
+  expect_identical(readLines(userFile), "keep me")
+  expect_true(file.exists(file.path(dir, "Project.json")))
+  expect_true(dir.exists(file.path(dir, "definitions", "scenarios")))
 })
 
 test_that("initProject creates proper project structure", {

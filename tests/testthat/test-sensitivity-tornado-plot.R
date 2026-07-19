@@ -119,12 +119,15 @@ test_that("sensitivityTornadoPlot creates default plot", {
 
 test_that("sensitivityTornadoPlot creates default plot with custom parameter path labels", {
   simulation <- sensFixture()$simulation
-  names(parameterPaths) <- c("Lipophilicity", "Dose", "GFR fraction")
+  # Work on a labelled local copy so the file-scope `parameterPaths` is never
+  # mutated for other tests in this file.
+  namedParameterPaths <- parameterPaths
+  names(namedParameterPaths) <- c("Lipophilicity", "Dose", "GFR fraction")
 
   resultsLab <- sensitivityCalculation(
     simulation = simulation,
     outputPaths = outputPaths,
-    parameterPaths = parameterPaths,
+    parameterPaths = namedParameterPaths,
     variationRange = variationRange
   )
 
@@ -139,7 +142,7 @@ test_that("sensitivityTornadoPlot creates default plot with custom parameter pat
   pb <- ggplot2::ggplot_build(p[[n]][[1]])
 
   expect_setequal(
-    names(parameterPaths),
+    names(namedParameterPaths),
     pb$layout$panel_params[[1]]$y$get_labels()
   )
 })
@@ -225,4 +228,27 @@ test_that("sensitivityTornadoPlot plots are as expected with filters", {
       fig = plotFiltered
     )
   )
+})
+
+# .splitParameterName ----------------------------------------------------
+
+test_that(".splitParameterName inserts a line break after the third pipe", {
+  split <- esqlabsR:::.splitParameterName
+
+  # NULL passes through unchanged, regardless of `equalLines`.
+  expect_null(split(NULL))
+  expect_null(split(NULL, equalLines = TRUE))
+
+  # Fewer than three pipes: unchanged by default, a trailing "\n" appended
+  # only when `equalLines = TRUE` (to keep multi-line labels vertically even).
+  expect_equal(split("a"), "a")
+  expect_equal(split("a", equalLines = TRUE), "a\n")
+  expect_equal(split("a|b|c"), "a|b|c")
+  expect_equal(split("a|b|c", equalLines = TRUE), "a|b|c\n")
+
+  # Three or more pipes: a newline is inserted after the third pipe. This
+  # branch wins over `equalLines`, so both calls give the same result.
+  expect_equal(split("a|b|c|d"), "a|b|c|\nd")
+  expect_equal(split("a|b|c|d", equalLines = TRUE), "a|b|c|\nd")
+  expect_equal(split("a|b|c|d|e"), "a|b|c|\nd|e")
 })

@@ -22,7 +22,7 @@ print.Application <- function(x, ...) {
 #'
 #' Add protocols to `project$applications`, vectorizing over a vector of ids
 #' (see the recycling rule under Details). `parameterSets` is
-#' vector-valued-per-entity: it is applied whole to every protocol; to give a
+#' vector-valued-per-definition: it is applied whole to every protocol; to give a
 #' different set per protocol, pass a list of the same length as `id` (one
 #' character vector per protocol).
 #'
@@ -45,6 +45,7 @@ addApplication <- function(project, id, parameterSets = NULL) {
   n <- length(id)
   perId <- .wholeField(parameterSets, n)
 
+  .assertNoDuplicateIds(id, "application")
   clash <- intersect(id, names(project$applications))
   if (length(clash) > 0L) {
     cli::cli_abort("application {.val {clash}} already exists")
@@ -127,25 +128,7 @@ setApplicationParameterSets <- function(
 
   call <- rlang::current_env()
   resolved <- .collectCanonicalizedRefs(lapply(seq_len(n), function(i) {
-    sets <- perId[[i]]
-    if (!is.character(sets)) {
-      cli::cli_abort(
-        "{.arg parameterSets} must be a character vector",
-        call = call
-      )
-    }
-    sets <- .canonicalizeIdRef(sets)
-    bad <- setdiff(sets, names(project$parameterSets %||% list()))
-    if (length(bad) > 0L) {
-      cli::cli_abort(
-        c(
-          "{.arg parameterSets} references undefined parameter sets:",
-          "x" = "{.val {bad}}"
-        ),
-        call = call
-      )
-    }
-    sets
+    .resolveParameterSetRefs(project, perId[[i]], call = call)
   }))
 
   applications <- project$.getSection("applications")
@@ -157,6 +140,41 @@ setApplicationParameterSets <- function(
 }
 
 # Internal helpers ----
+
+# Validate and canonicalize a `parameterSets` reference vector for an
+# application, checking it is a character vector of ids that resolve against
+# `project$parameterSets`, and returning the canonicalized ids. The single
+# source of truth for this check, shared by `.buildApplicationEntry()` (the add
+# path) and `setApplicationParameterSets()` (the set path) so their messages
+# cannot drift. `.canonicalizeIdRef()` runs inside, so the caller's
+# `.collectCanonicalizedRefs()` still surfaces any canonicalization warning.
+#
+# @keywords internal
+# @noRd
+.resolveParameterSetRefs <- function(
+  project,
+  sets,
+  call = rlang::caller_env()
+) {
+  if (!is.character(sets)) {
+    cli::cli_abort(
+      "{.arg parameterSets} must be a character vector of set ids",
+      call = call
+    )
+  }
+  sets <- .canonicalizeIdRef(sets)
+  bad <- setdiff(sets, names(project$parameterSets %||% list()))
+  if (length(bad) > 0L) {
+    cli::cli_abort(
+      c(
+        "{.arg parameterSets} references undefined parameter sets:",
+        "x" = "{.val {bad}}"
+      ),
+      call = call
+    )
+  }
+  sets
+}
 
 # Build one classed `Application` entry from its (optional) parameterSets
 # references, validating the references resolve. Aborts on a problem.
@@ -170,24 +188,11 @@ setApplicationParameterSets <- function(
 ) {
   app <- list()
   if (!is.null(parameterSets)) {
-    if (!is.character(parameterSets)) {
-      cli::cli_abort(
-        "{.arg parameterSets} must be a character vector of set ids",
-        call = call
-      )
-    }
-    parameterSets <- .canonicalizeIdRef(parameterSets)
-    bad <- setdiff(parameterSets, names(project$parameterSets %||% list()))
-    if (length(bad) > 0L) {
-      cli::cli_abort(
-        c(
-          "{.arg parameterSets} references undefined parameter sets:",
-          "x" = "{.val {bad}}"
-        ),
-        call = call
-      )
-    }
-    app$parameterSets <- parameterSets
+    app$parameterSets <- .resolveParameterSetRefs(
+      project,
+      parameterSets,
+      call = call
+    )
   }
   class(app) <- c("Application", "list")
   app

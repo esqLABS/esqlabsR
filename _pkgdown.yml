@@ -37,7 +37,6 @@ reference:
       - addIndividual
       - removeIndividual
       - setIndividual
-      - setIndividualParameterSets
       - addPopulation
       - removePopulation
       - setPopulation

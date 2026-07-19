@@ -1,3 +1,27 @@
+# It overwrites the value if the path is present in multiple sheets
+
+    Code
+      params <- readParametersFromXLS(paramsXLSpath = paramsXLSpath, sheets = sheets)
+    Condition
+      Warning:
+      Duplicate parameter path(s) in parameters file 'data/Parameters.xlsx': "Path1|Param1, Applications|Glucose_iv_infusion|Active". Only the last value defined for each path is used.
+
+# `readParametersFromXLS()` errors on a non-numeric Value cell
+
+    Code
+      readParametersFromXLS(paramsXLSpath = paramsXLSpath)
+    Condition
+      Error in `readParametersFromXLS()`:
+      ! Missing or non-numeric values in parameters file 'Parameters.xlsx' for parameter(s): "Path1|Param1". A numeric value must be specified for all parameters.
+
+# `readParametersFromXLS()` warns and keeps the last value for a duplicate path
+
+    Code
+      params <- readParametersFromXLS(paramsXLSpath = paramsXLSpath)
+    Condition
+      Warning:
+      Duplicate parameter path(s) in parameters file 'Parameters.xlsx': "Path1|Param1". Only the last value defined for each path is used.
+
 # addParameterSet canonicalizes its id
 
     Code
@@ -14,6 +38,14 @@
     Condition
       Error in `addParameterSet()`:
       ! parameter set "global" already exists
+
+# addParameterSet aborts on a duplicate id in the batch
+
+    Code
+      addParameterSet(project, c("a", "a"))
+    Condition
+      Error in `addParameterSet()`:
+      ! duplicate parameter set id in the batch: "a"
 
 # addParameterEntry creates the set on demand and appends entries
 
@@ -32,13 +64,45 @@
       ! `containerPath`, `parameterName`, `value`, and `units` must be vectors of the same length.
       x Got lengths 2, 1, 2, and 1.
 
+# removeParameterEntry rejects an empty or NA id
+
+    Code
+      removeParameterEntry(project, "", "Organism|A", "K")
+    Condition
+      Error in `removeParameterEntry()`:
+      ! `id` must be a non-empty string
+
+---
+
+    Code
+      removeParameterEntry(project, NA_character_, "Organism|A", "K")
+    Condition
+      Error in `removeParameterEntry()`:
+      ! `id` must be a non-empty string
+
+# removeInitialConditionEntry rejects an empty or NA id
+
+    Code
+      removeInitialConditionEntry(project, "", "Organism|A")
+    Condition
+      Error in `removeInitialConditionEntry()`:
+      ! `id` must be a non-empty string
+
+---
+
+    Code
+      removeInitialConditionEntry(project, NA_character_, "Organism|A")
+    Condition
+      Error in `removeInitialConditionEntry()`:
+      ! `id` must be a non-empty string
+
 # removeParameterSet warns when still referenced by a scenario, removes anyway
 
     Code
       removeParameterSet(project, "global")
     Condition
       Warning:
-      Removed parameterSet "global" is still referenced by 4 entities:
+      Removed parameterSet "global" is still referenced by 4 definitions:
       * scenario 'populationscenario', scenario 'populationscenariofromcsv', scenario 'testscenario', and scenario 'testscenario_steadystate'
       i These now have a dangling reference. Update or remove them.
 
@@ -48,7 +112,7 @@
       removeParameterSet(project, "indiv1_default")
     Condition
       Warning:
-      Removed parameterSet "indiv1_default" is still referenced by 1 entity:
+      Removed parameterSet "indiv1_default" is still referenced by 1 definition:
       * individual 'indiv1'
       i These now have a dangling reference. Update or remove them.
 
@@ -85,6 +149,14 @@
     Condition
       Error in `addInitialConditions()`:
       ! initial-condition set "dupset" already exists
+
+# addInitialConditions aborts on a duplicate id in the batch
+
+    Code
+      addInitialConditions(project, c("a", "a"))
+    Condition
+      Error in `addInitialConditions()`:
+      ! duplicate initial-condition set id in the batch: "a"
 
 # addInitialConditionEntry creates the set on demand and appends
 
@@ -208,4 +280,33 @@
     Condition
       Error in `readInitialConditionsFromXLS()`:
       x Loading from XLS failed, the file 'data/InitialConditions.xlsx' has wrong structure!  The file should contain columns "Container Path, Molecule Name, Is Present, Value, Units, Scale Divisor, Neg. Values Allowed".
+
+# setParameterValuesByPathWithCondition aborts on a values length mismatch
+
+    Code
+      setParameterValuesByPathWithCondition(parameterPaths = c(
+        "Organism|Liver|Volume", "Organism|Volume"), values = c(1, 2, 3), simulation = NULL)
+    Condition
+      Error in `setParameterValuesByPathWithCondition()`:
+      ! `values` must be a scalar or have the same length as `parameterPaths`.
+      x Got lengths 3 and 2.
+
+# setParameterValuesByPathWithCondition aborts on a units length mismatch
+
+    Code
+      setParameterValuesByPathWithCondition(parameterPaths = c(
+        "Organism|Liver|Volume", "Organism|Volume"), values = c(1, 2), simulation = NULL,
+      units = c("l", "l", "l"))
+    Condition
+      Error in `setParameterValuesByPathWithCondition()`:
+      ! `units` must be `NULL`, a scalar, or have the same length as `parameterPaths`.
+      x Got lengths 3 and 2.
+
+# .splitParameterPathIntoContainerAndName aborts on a separator-less path
+
+    Code
+      esqlabsR:::.splitParameterPathIntoContainerAndName("Volume")
+    Condition
+      Error in `esqlabsR:::.splitParameterPathIntoContainerAndName()`:
+      ! parameter path "Volume" must contain a container path and a parameter name separated by "|".
 

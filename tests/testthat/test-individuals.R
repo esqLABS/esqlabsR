@@ -64,6 +64,37 @@ test_that("addIndividual aborts when gender is missing", {
   expect_false("newi" %in% names(project$individuals))
 })
 
+test_that("addIndividual aborts when gender is not a valid GenderInt token", {
+  project <- testProject()
+  expect_snapshot(
+    error = TRUE,
+    addIndividual(project, "newi", species = "Human", gender = "banana")
+  )
+  expect_false("newi" %in% names(project$individuals))
+})
+
+test_that("addIndividual accepts a valid GenderInt token", {
+  project <- testProject()
+  addIndividual(project, "newi", species = "Human", gender = "FEMALE")
+  expect_identical(project$individuals$newi$gender, "FEMALE")
+})
+
+test_that("addIndividual rejects a non-numeric weight/height/age", {
+  project <- testProject()
+  # "80kg" would silently coerce to NA via as.double(); it must abort instead.
+  expect_error(
+    addIndividual(
+      project,
+      "bad",
+      species = "Human",
+      gender = "MALE",
+      weight = "80kg"
+    ),
+    "weight must be a single finite number"
+  )
+  expect_false("bad" %in% names(project$individuals))
+})
+
 test_that("removeIndividual warns when referenced by a scenario", {
   project <- testProject()
   referenced <- "indiv1"
@@ -101,6 +132,30 @@ test_that("setIndividual partial update leaves other fields untouched", {
   }
 })
 
+test_that("setIndividual clears a numeric field passed NULL", {
+  # A NULL clears (removes) the optional field: the key must be ABSENT, not
+  # present as numeric(0). The indiv1 fixture carries weight/height/age, so
+  # each removal is observable.
+  for (field in c("weight", "height", "age")) {
+    project <- testProject()
+    before <- project$individuals[["indiv1"]]
+
+    do.call(
+      setIndividual,
+      c(list(project, "indiv1"), stats::setNames(list(NULL), field))
+    )
+
+    after <- project$individuals[["indiv1"]]
+    expect_false(field %in% names(after))
+    expect_null(after[[field]])
+    # No other field changed, and no unexpected key was added.
+    expect_setequal(names(after), setdiff(names(before), field))
+    for (f in setdiff(names(before), field)) {
+      expect_equal(after[[f]], before[[f]])
+    }
+  }
+})
+
 test_that("setIndividual clears validatedSinceMutation", {
   project <- testProject()
   project$.markValidated()
@@ -127,6 +182,36 @@ test_that("setIndividual rejects an empty gender like addIndividual", {
   expect_equal(project$individuals[["indiv1"]], before)
 })
 
+test_that("setIndividual rejects a gender that is not a valid GenderInt token", {
+  project <- testProject()
+  before <- project$individuals[["indiv1"]]
+  expect_snapshot(
+    error = TRUE,
+    setIndividual(project, "indiv1", gender = "banana")
+  )
+  # Memory unchanged after the rejected write.
+  expect_equal(project$individuals[["indiv1"]], before)
+})
+
+test_that("setIndividual rejects a non-numeric weight like addIndividual", {
+  project <- testProject()
+  before <- project$individuals[["indiv1"]]
+  # "80kg" would silently coerce to NA via as.double(); it must abort instead,
+  # mirroring the add-path guard.
+  expect_snapshot(
+    error = TRUE,
+    setIndividual(project, "indiv1", weight = "80kg")
+  )
+  # Memory unchanged after the rejected write.
+  expect_equal(project$individuals[["indiv1"]], before)
+})
+
+test_that("setIndividual accepts a valid GenderInt token", {
+  project <- testProject()
+  setIndividual(project, "indiv1", gender = "FEMALE")
+  expect_identical(project$individuals[["indiv1"]]$gender, "FEMALE")
+})
+
 test_that("setIndividual rejects parameterSets that do not resolve", {
   project <- testProject()
   expect_snapshot(
@@ -149,13 +234,13 @@ test_that("setIndividual on a clone does not affect the source on disk", {
   expect_equal(reloaded$individuals[["indiv1"]], before)
 })
 
-# setIndividualParameterSets ----
+# setIndividual parameterSets replacement ----
 
-test_that("setIndividualParameterSets replaces the refs and persists to file", {
+test_that("setIndividual replaces the parameter-set refs and persists to file", {
   project <- testProject()
   # The fixture individual references "indiv1_default"; point it at another
   # existing set instead.
-  setIndividualParameterSets(project, "indiv1", "global")
+  setIndividual(project, "indiv1", parameterSets = "global")
   expect_identical(
     project$individuals[["indiv1"]]$parameterSets,
     "global"
@@ -169,12 +254,12 @@ test_that("setIndividualParameterSets replaces the refs and persists to file", {
   )
 })
 
-test_that("setIndividualParameterSets aborts on an undefined parameter set", {
+test_that("setIndividual aborts on an undefined parameter set", {
   project <- testProject()
   before <- project$individuals[["indiv1"]]
   expect_snapshot(
     error = TRUE,
-    setIndividualParameterSets(project, "indiv1", "Ghost")
+    setIndividual(project, "indiv1", parameterSets = "Ghost")
   )
   expect_identical(project$individuals[["indiv1"]], before)
 })
@@ -322,10 +407,10 @@ test_that("removeIndividual removes a vector of ids in one write-through", {
   expect_false(any(c("a", "b") %in% names(reloaded$individuals)))
 })
 
-test_that("setIndividualParameterSets vectorizes whole across N ids", {
+test_that("setIndividual parameterSets vectorizes whole across N ids", {
   project <- testProject()
   addIndividual(project, c("a", "b"), species = "Human", gender = "MALE")
-  setIndividualParameterSets(project, c("a", "b"), c("global", "aciclovir"))
+  setIndividual(project, c("a", "b"), parameterSets = c("global", "aciclovir"))
   expect_identical(
     project$individuals$a$parameterSets,
     c("global", "aciclovir")

@@ -335,11 +335,26 @@
       ))
     }
     if (scenario$readPopulationFromCSV) {
-      populationPath <- paste0(
-        file.path(project$populationsFolder, scenario$populationId),
-        ".csv"
-      )
-      population <- loadPopulation(populationPath)
+      cached <- cache$populations[[scenario$populationId]]
+      if (!is.null(cached)) {
+        population <- cached
+      } else {
+        # A relative population id is resolved against the project's populations
+        # folder, which must exist for the join to be meaningful
+        # (`file.path(NULL, x)` yields `character(0)`).
+        if (is.null(project$populationsFolder)) {
+          cli::cli_abort(messages$noPopulationsFolderForCSVPopulation(
+            scenarioName = scenario$scenarioName,
+            populationId = scenario$populationId
+          ))
+        }
+        populationPath <- paste0(
+          file.path(project$populationsFolder, scenario$populationId),
+          ".csv"
+        )
+        population <- loadPopulation(populationPath)
+        cache$populations[[scenario$populationId]] <- population
+      }
     } else {
       cached <- cache$populations[[scenario$populationId]]
       if (!is.null(cached)) {
@@ -476,7 +491,8 @@
   scenarioNames = NULL,
   customParams = NULL,
   simulationRunOptions = NULL,
-  validate = TRUE
+  validate = TRUE,
+  stopIfParameterNotFound = TRUE
 ) {
   validateIsOfType(project, "Project")
   .validateParametersStructure(
@@ -532,7 +548,8 @@
       project = project,
       customParams = customParams,
       cache = cache,
-      simulationRunOptions = simulationRunOptions
+      simulationRunOptions = simulationRunOptions,
+      stopIfParameterNotFound = stopIfParameterNotFound
     )
     names(prepared)[[idx]] <- name
   }

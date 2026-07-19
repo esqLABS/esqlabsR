@@ -81,11 +81,11 @@ The \code{project} object, invisibly.
 \description{
 Creates new \code{Scenario} records and adds them to \code{project$scenarios} after
 validating all references. The call vectorizes over a vector of ids (see
-the recycling rule under Details). Scalar-per-entity fields (\code{modelFile},
+the recycling rule under Details). Scalar-per-definition fields (\code{modelFile},
 \code{individual}, \code{population}, \code{application}, \code{simulationTime},
 \code{simulationTimeUnit}, \code{steadyState}, \code{steadyStateTime},
 \code{steadyStateTimeUnit}, \code{overwriteFormulasInSS}, \code{readPopulationFromCSV})
-follow the recycle/align rule. The vector-valued-per-entity fields
+follow the recycle/align rule. The vector-valued-per-definition fields
 \code{parameterSets} and \code{outputPaths} are applied whole to every
 scenario; to give a different set per scenario, pass a list of the same
 length as \code{id} (one character vector per scenario). \code{initialConditions}
@@ -93,15 +93,15 @@ follows the same whole-vector rule.
 }
 \details{
 The id argument sets \code{N}, the number of definitions to act on, and cannot
-itself be recycled: when any scalar-per-entity field has length greater than
+itself be recycled: when any scalar-per-definition field has length greater than
 1, the id vector must have that same length. A length-1 id with all-scalar
 fields is the ordinary single-definition call.
 
-Each scalar-per-entity field is either length 1 (recycled to all \code{N}
+Each scalar-per-definition field is either length 1 (recycled to all \code{N}
 definitions) or length \code{N} (aligned to the ids by position). Any other
 length is an error naming the field and the lengths.
 
-A vector-valued-per-entity field (an individual's or application's
+A vector-valued-per-definition field (an individual's or application's
 \code{parameterSets}, a scenario's \code{outputPaths} and \code{parameterSets}) is
 applied whole to every definition, never split positionally. To give a
 different multi-valued list per definition, pass a list of the same length
@@ -117,7 +117,7 @@ entries (parallel \code{containerPath} / \code{parameterName} / \code{value} / \
 vectors) within a single named set, a different axis than the id-sets-\code{N}
 rule described here. \code{renameScenario()}, \code{duplicateScenario()},
 \code{addObservedData()}, \code{addPITask()}, and the per-task
-parameter-identification sub-entity helpers act on a single definition per
+parameter-identification sub-definition helpers act on a single definition per
 call.
 }
 \seealso{

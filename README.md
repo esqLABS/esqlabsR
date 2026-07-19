@@ -28,7 +28,7 @@ The package provides functions to:
 - Validate and share reproducible project configurations.
 
 To get started with the esqlabsR package, please follow the [Get Started
-tutorial](articles/esqlabsR.html).
+tutorial](https://esqlabs.github.io/esqlabsR/articles/esqlabsR.html).
 
 ## Installation
 

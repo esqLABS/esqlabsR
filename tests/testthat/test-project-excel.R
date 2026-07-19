@@ -408,7 +408,7 @@ test_that("importProjectFromExcel writes a usable definitions/ tree", {
   )
 })
 
-test_that("the imported tree reads the same entities as the inlined import", {
+test_that("the imported tree reads the same definitions as the inlined import", {
   out <- withr::local_tempdir()
   jsonPath <- importProjectFromExcel(
     testProjectExcelPath(),
@@ -418,7 +418,7 @@ test_that("the imported tree reads the same entities as the inlined import", {
 
   # loadProject() of the import reads the tree; comparing against the inlined
   # Project.json the import also wrote (loaded as a standalone snapshot in a
-  # tree-free directory) confirms the tree carries the same entities.
+  # tree-free directory) confirms the tree carries the same definitions.
   fromTree <- suppressWarnings(loadProject(jsonPath))
 
   inlineDir <- withr::local_tempdir()
@@ -509,4 +509,267 @@ test_that("loading the Excel import warns about the dangling applicationProtocol
     loadProject(jsonPath),
     "undefined application"
   )
+})
+
+# The migration canonicalizes every id to a safe, lowercase form. When two
+# distinct source ids collapse to the same canonical id, the migration must
+# abort (matching interactive authoring) rather than silently let a downstream
+# rename drop the second definition.
+test_that("importProjectFromExcel aborts when two ids canonicalize to the same value", {
+  work_dir <- withr::local_tempdir()
+  file.copy(
+    dirname(testProjectExcelPath()),
+    work_dir,
+    recursive = TRUE
+  )
+  projectDir <- file.path(work_dir, "TestProjectExcel")
+  scenariosFile <- file.path(projectDir, "Configurations", "Scenarios.xlsx")
+
+  # Rewrite the OutputPaths sheet so two ids (`Aciclovir_PVB` and its
+  # case variant) canonicalize to the same `aciclovir_pvb`.
+  collidingOutputPaths <- data.frame(
+    OutputPathId = c("Aciclovir_PVB", "aciclovir_pvb"),
+    OutputPath = c(
+      "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)",
+      "Organism|Fat|Intracellular|Aciclovir|Concentration in container"
+    ),
+    stringsAsFactors = FALSE
+  )
+  scenariosSheet <- readExcel(scenariosFile, sheet = "Scenarios")
+  .writeExcel(
+    list(OutputPaths = collidingOutputPaths, Scenarios = scenariosSheet),
+    scenariosFile
+  )
+
+  expect_snapshot(
+    error = TRUE,
+    importProjectFromExcel(
+      file.path(projectDir, "ProjectConfiguration.xlsx"),
+      outputDir = withr::local_tempdir(),
+      silent = TRUE
+    )
+  )
+})
+
+# Two distinct output-path ids may resolve to the same literal path. The export
+# must key the scenario's ids off `names(sc$outputPaths)` (the ids themselves),
+# not a value-based reverse-lookup that would collapse both to one id and drop
+# the other.
+test_that("exportProjectToExcel keeps both ids when two share one output path", {
+  project <- testProject()
+  suppressMessages(suppressWarnings({
+    addOutputPath(
+      project,
+      id = c("op_dup_a", "op_dup_b"),
+      path = "Organism|A|Concentration"
+    )
+    setScenario(
+      project,
+      "testscenario",
+      outputPaths = c("op_dup_a", "op_dup_b")
+    )
+  }))
+
+  excel_out <- withr::local_tempdir()
+  suppressMessages(suppressWarnings(
+    exportProjectToExcel(project, outputDir = excel_out, silent = TRUE)
+  ))
+
+  scenariosFile <- file.path(excel_out, "Configurations", "Scenarios.xlsx")
+  scenariosSheet <- readExcel(scenariosFile, sheet = "Scenarios")
+  row <- scenariosSheet[scenariosSheet$Scenario_name == "testscenario", ]
+  exportedIds <- .parseCommaListToArray(row$OutputPathsIds)
+
+  expect_setequal(exportedIds, c("op_dup_a", "op_dup_b"))
+})
+
+# A non-blank parameter `Value` cell that does not coerce to a number (text, a
+# comma-decimal) must abort naming the sheet and row, rather than silently
+# becoming NA and serialising a value-less parameter into the JSON project.
+test_that(".parseExcelParameterSheets aborts on a non-numeric Value cell", {
+  paramFile <- withr::local_tempfile(fileext = ".xlsx")
+  df <- data.frame(
+    `Container Path` = "Organism|A",
+    `Parameter Name` = "P",
+    Value = "not_a_number",
+    Units = "mg",
+    check.names = FALSE,
+    stringsAsFactors = FALSE
+  )
+  .writeExcel(list(Global = df), paramFile)
+
+  expect_snapshot(error = TRUE, .parseExcelParameterSheets(paramFile))
+})
+
+# A blank `Value` cell stays allowed (NA), so a partially-filled sheet still
+# imports without aborting.
+test_that(".parseExcelParameterSheets allows a blank Value cell", {
+  paramFile <- withr::local_tempfile(fileext = ".xlsx")
+  df <- data.frame(
+    `Container Path` = "Organism|A",
+    `Parameter Name` = "P",
+    Value = NA_real_,
+    Units = "mg",
+    check.names = FALSE,
+    stringsAsFactors = FALSE
+  )
+  .writeExcel(list(Global = df), paramFile)
+
+  parsed <- .parseExcelParameterSheets(paramFile)
+  expect_identical(parsed$Global[[1]]$value, NA_real_)
+})
+
+# The Excel re-import canonicalizes every id, so an original JSON that carries a
+# non-canonical id must not report out-of-sync purely because of that
+# canonicalization: both sides are canonicalized before the comparison.
+test_that(".compareJsonToExcel does not count id canonicalization as drift", {
+  out <- withr::local_tempdir()
+  excelPath <- testProjectExcelPath()
+
+  # A JSON produced by importing the Excel fixture is in-sync with its source.
+  jsonPath <- suppressWarnings(importProjectFromExcel(
+    excelPath,
+    outputDir = out,
+    silent = TRUE
+  ))
+  inSync <- suppressWarnings(.compareJsonToExcel(
+    jsonPath = jsonPath,
+    projectConfigPath = excelPath,
+    silent = TRUE
+  ))
+  expect_true(inSync$excel_in_sync)
+
+  # Rewrite the original JSON with a non-canonical (uppercased) output-path id.
+  # The Excel re-import still canonicalizes to `aciclovir_pvb`, and so now does
+  # the original side, so the comparison must still report in-sync.
+  obj <- jsonlite::fromJSON(jsonPath, simplifyVector = FALSE)
+  names(obj$outputPaths)[names(obj$outputPaths) == "aciclovir_pvb"] <-
+    "Aciclovir_PVB"
+  writeLines(
+    jsonlite::toJSON(
+      obj,
+      pretty = TRUE,
+      auto_unbox = TRUE,
+      digits = NA,
+      null = "null"
+    ),
+    jsonPath
+  )
+
+  stillInSync <- suppressWarnings(.compareJsonToExcel(
+    jsonPath = jsonPath,
+    projectConfigPath = excelPath,
+    silent = TRUE
+  ))
+  expect_true(stillInSync$excel_in_sync)
+})
+
+# A corrupt or unreadable Excel side-car cannot be compared. The sync status
+# must report that honestly as NA (the "cannot compare" state), not silently
+# claim the project is in sync, and must warn when not silent.
+test_that("syncStatus() reports NA (and warns) when the Excel side-car is unreadable", {
+  work_dir <- withr::local_tempdir()
+  file.copy(dirname(exampleProjectPath()), work_dir, recursive = TRUE)
+  jsonPath <- file.path(work_dir, "Example", "Project.json")
+  project <- suppressWarnings(loadProject(jsonPath))
+
+  # A corrupt Project.xlsx side-car next to the container: not a valid workbook,
+  # so the comparison's re-import aborts.
+  writeLines(
+    "this is not a valid xlsx workbook",
+    file.path(work_dir, "Example", "Project.xlsx")
+  )
+
+  # Silent: the status is NA, no warning surfaces.
+  status <- suppressWarnings(project$syncStatus(silent = TRUE))
+  expect_identical(status$excel_in_sync, NA)
+
+  # Non-silent: a warning surfaces naming the comparison failure.
+  expect_warning(
+    project$syncStatus(silent = FALSE),
+    "Cannot compare the Excel side-car"
+  )
+})
+
+# A legacy Scenarios sheet may spell booleans as `1`/`0`, `Yes`/`No`, or
+# `true`/`false`; bare `as.logical()` turns the string forms into NA (silently
+# defaulting to FALSE downstream), so the parser must interpret them tolerantly.
+test_that(".parseExcelScenarios interprets legacy boolean spellings", {
+  scenarioDf <- data.frame(
+    Scenario_name = c("s_yes", "s_no", "s_num"),
+    IndividualId = NA_character_,
+    PopulationId = NA_character_,
+    ReadPopulationFromCSV = c("Yes", "no", "1"),
+    ModelParameterSheets = NA_character_,
+    ApplicationProtocol = NA_character_,
+    SimulationTime = NA_character_,
+    SimulationTimeUnit = NA_character_,
+    SteadyState = c("true", "FALSE", "0"),
+    SteadyStateTime = NA_real_,
+    SteadyStateTimeUnit = NA_character_,
+    OverwriteFormulasInSS = c("y", "n", "1"),
+    ModelFile = "m.pkml",
+    OutputPathsIds = "op1",
+    stringsAsFactors = FALSE
+  )
+  scenarios <- .parseExcelScenarios(scenarioDf)
+
+  expect_identical(scenarios[[1]]$readPopulationFromCSV, TRUE)
+  expect_identical(scenarios[[1]]$steadyState, TRUE)
+  expect_identical(scenarios[[1]]$overwriteFormulasInSS, TRUE)
+
+  expect_identical(scenarios[[2]]$readPopulationFromCSV, FALSE)
+  expect_identical(scenarios[[2]]$steadyState, FALSE)
+  expect_identical(scenarios[[2]]$overwriteFormulasInSS, FALSE)
+
+  expect_identical(scenarios[[3]]$readPopulationFromCSV, TRUE)
+  expect_identical(scenarios[[3]]$steadyState, FALSE)
+  expect_identical(scenarios[[3]]$overwriteFormulasInSS, TRUE)
+})
+
+test_that(".parseExcelScenarios aborts on an unparseable boolean cell", {
+  scenarioDf <- data.frame(
+    Scenario_name = "s1",
+    IndividualId = NA_character_,
+    PopulationId = NA_character_,
+    ReadPopulationFromCSV = NA_character_,
+    ModelParameterSheets = NA_character_,
+    ApplicationProtocol = NA_character_,
+    SimulationTime = NA_character_,
+    SimulationTimeUnit = NA_character_,
+    SteadyState = "maybe",
+    SteadyStateTime = NA_real_,
+    SteadyStateTimeUnit = NA_character_,
+    OverwriteFormulasInSS = NA_character_,
+    ModelFile = "m.pkml",
+    OutputPathsIds = "op1",
+    stringsAsFactors = FALSE
+  )
+  expect_snapshot(error = TRUE, .parseExcelScenarios(scenarioDf))
+})
+
+# A renamed or absent scenario-sheet column (e.g. `OutputPathsId` for
+# `OutputPathsIds`) must abort naming the missing column, rather than silently
+# yielding a scenario with no output paths (the partial-match `$` access
+# previously masked this).
+test_that(".parseExcelScenarios aborts on a renamed required column", {
+  scenarioDf <- data.frame(
+    Scenario_name = "s1",
+    IndividualId = NA_character_,
+    PopulationId = NA_character_,
+    ReadPopulationFromCSV = NA,
+    ModelParameterSheets = NA_character_,
+    ApplicationProtocol = NA_character_,
+    SimulationTime = NA_character_,
+    SimulationTimeUnit = NA_character_,
+    SteadyState = NA,
+    SteadyStateTime = NA_real_,
+    SteadyStateTimeUnit = NA_character_,
+    OverwriteFormulasInSS = NA,
+    ModelFile = "m.pkml",
+    # `OutputPathsIds` misspelled as `OutputPathsId`.
+    OutputPathsId = "op1",
+    stringsAsFactors = FALSE
+  )
+  expect_snapshot(error = TRUE, .parseExcelScenarios(scenarioDf))
 })

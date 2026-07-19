@@ -1,4 +1,4 @@
-# Tests for the scenarios entity-files format layer (R/entity-files.R):
+# Tests for the scenarios definition-files format layer (R/definition-files.R):
 # the per-scenario JSON tree loader, write-through mutators, lazy
 # referential validation, and the derived single-file snapshot.
 
@@ -17,7 +17,7 @@ test_that("loadProject reads scenarios from the definitions/scenarios/ tree", {
   expect_length(raw$scenarios, 0L)
 })
 
-test_that("addScenario writes one entity file; removeScenario deletes it", {
+test_that("addScenario writes one definition file; removeScenario deletes it", {
   project <- testProject()
   dir <- file.path(project$projectDirPath, "definitions", "scenarios")
 
@@ -350,11 +350,11 @@ test_that("a bulk write aborting on one scenario leaves the tree intact", {
 })
 
 # The diff path (a project whose `definitions/scenarios/` already exists on
-# disk) serializes every changed entity before writing any file, so a
+# disk) serializes every changed definition before writing any file, so a
 # whole-section assignment carrying one valid plus one serializer-hostile
-# entity must abort with neither landing on disk and memory unchanged. The
+# definition must abort with neither landing on disk and memory unchanged. The
 # materialize branch is covered above; this covers the common diff branch.
-test_that("a multi-entity diff-path write aborting on one entity is atomic", {
+test_that("a multi-definition diff-path write aborting on one definition is atomic", {
   project <- testProject()
   dir <- file.path(project$projectDirPath, "definitions", "scenarios")
   beforeFiles <- list.files(dir)
@@ -377,7 +377,7 @@ test_that("a multi-entity diff-path write aborting on one entity is atomic", {
     "steadyStateTimeUnit"
   )
 
-  # Neither new entity reached disk, and the in-memory section is unchanged.
+  # Neither new definition reached disk, and the in-memory section is unchanged.
   expect_setequal(list.files(dir), beforeFiles)
   expect_identical(project$scenarios, beforeMem)
 })
@@ -475,7 +475,7 @@ test_that("a non-scalar scalar field fails load naming the scenario and field", 
   expect_snapshot(loadProject(project$jsonPath), error = TRUE)
 })
 
-# Every section is write-through, so after a mutation the entity files are
+# Every section is write-through, so after a mutation the definition files are
 # already on disk and there is nothing for syncStatus() to flag (no Excel
 # side-car here, so it reports NA).
 test_that("a mutation lands on disk immediately; syncStatus has nothing to flag", {
@@ -490,10 +490,36 @@ test_that("a mutation lands on disk immediately; syncStatus has nothing to flag"
   expect_identical(status$excel_in_sync, NA)
 })
 
+test_that("a high-precision numeric value survives a definition write/reload round-trip", {
+  project <- testProject()
+  preciseValue <- 1.234567890123
+
+  addInitialConditionEntry(
+    project,
+    "precise",
+    path = "Organism|A|Concentration",
+    value = preciseValue,
+    unit = "mg/l"
+  )
+
+  reloaded <- loadProject(project$jsonPath)
+  expect_identical(
+    reloaded$initialConditions[["precise"]][[1]]$value,
+    preciseValue
+  )
+
+  snap <- saveSnapshot(reloaded, local_projectPath())
+  snapshotReloaded <- loadProject(snap)
+  expect_identical(
+    snapshotReloaded$initialConditions[["precise"]][[1]]$value,
+    preciseValue
+  )
+})
+
 # initialConditions tree kind ----
 
 test_that("the initialConditions spec serializes and parses a set round-trip", {
-  spec <- .entityTreeSpec("initialConditions")
+  spec <- .definitionTreeSpec("initialConditions")
   section <- list(
     myset = .asInitialConditionSet(list(
       list(path = "Organism|A|Concentration", value = 1.5, unit = "mg/l"),
@@ -521,7 +547,7 @@ test_that("the initialConditions spec serializes and parses a set round-trip", {
 })
 
 test_that("the initialConditions spec keeps the empty-vs-absent distinction", {
-  spec <- .entityTreeSpec("initialConditions")
+  spec <- .definitionTreeSpec("initialConditions")
 
   # A genuinely absent section (NULL) stays a bare list(); a present empty
   # section ({}) becomes a named-empty list.
@@ -537,9 +563,104 @@ test_that("the initialConditions spec keeps the empty-vs-absent distinction", {
 })
 
 test_that("a tree-loaded initialConditions id must match its filename stem", {
-  spec <- .entityTreeSpec("initialConditions")
+  spec <- .definitionTreeSpec("initialConditions")
   rec <- list(id = "myset", initialConditions = list())
-  attr(rec, ".entityFile") <- "somewhere/otherset.json"
+  attr(rec, ".definitionFile") <- "somewhere/otherset.json"
 
   expect_snapshot(spec$parse(list(rec), NULL), error = TRUE)
+})
+
+# observed-data id escape guard ----
+
+# The observed-data id becomes a filename, and a programmatic `name` reaches it
+# verbatim. A name carrying a path separator (or `..`) must be rejected so it
+# cannot escape the observed-data definition directory.
+test_that("a programmatic observedData name that escapes its directory aborts", {
+  entries <- list(
+    list(type = "programmatic", name = "../escape")
+  )
+
+  expect_snapshot(
+    esqlabsR:::.serializeObservedDataSet(entries),
+    error = TRUE
+  )
+})
+
+# Stale-file policy: full-tree writes own the directory, incremental writes
+# preserve orphans ----
+
+# A minimal on-disk tree project with one scenario, loaded without the
+# cross-reference warning pass, so these tests exercise the definition-tree writers
+# directly.
+.stalePolicyProject <- function(envir = parent.frame()) {
+  dir <- withr::local_tempdir("stale_policy_", .local_envir = envir)
+  initProject(dir, type = "example", createExcel = FALSE, overwrite = TRUE)
+  Project$new(file.path(dir, "Project.json"))
+}
+
+test_that("a full-tree write removes a stale definition file", {
+  # A full-tree write owns the `definitions/<kind>/` directory: any `.json`
+  # file not in the freshly-written keep-set is stale and is deleted.
+  project <- .stalePolicyProject()
+  scenariosDir <- file.path(project$projectDirPath, "definitions", "scenarios")
+  # Drop an orphan file that no in-memory scenario corresponds to. Written
+  # after load, so the loader never parses it.
+  orphan <- file.path(scenariosDir, "orphandefinition.json")
+  writeLines("{}", orphan)
+  expect_true(file.exists(orphan))
+
+  esqlabsR:::.writeDefinitionTree(
+    project$scenarios,
+    "scenarios",
+    project,
+    project$projectDirPath
+  )
+  expect_false(file.exists(orphan))
+})
+
+test_that("an incremental write preserves an orphan definition file", {
+  # An incremental write (a single authoring mutation) knows only the definition
+  # it changed, so it must not delete a sibling file it never loaded.
+  project <- .stalePolicyProject()
+  scenariosDir <- file.path(project$projectDirPath, "definitions", "scenarios")
+  orphan <- file.path(scenariosDir, "orphandefinition.json")
+  writeLines("{}", orphan)
+  expect_true(file.exists(orphan))
+
+  # A single write-through mutation on the scenarios section.
+  addScenario(project, "incrementaladd", modelFile = "Aciclovir.pkml")
+  expect_true(file.exists(orphan))
+})
+
+test_that("a full-tree write aborts when a stale file cannot be removed", {
+  # Simulate a delete failure by making the definition directory read-only, so
+  # `file.remove()` on its contents returns FALSE. This relies on POSIX
+  # directory-write permission gating removal, which is not portable to
+  # Windows.
+  skip_on_os("windows")
+  # CI runners execute as root, and root ignores the `0500` permission this test
+  # sets to force the removal to fail, so the expected warning/error never fires
+  # and the snapshot diverges. Skip on CI; it still runs on POSIX dev machines.
+  skip_on_ci()
+
+  project <- .stalePolicyProject()
+  scenariosDir <- file.path(project$projectDirPath, "definitions", "scenarios")
+  orphan <- file.path(scenariosDir, "orphandefinition.json")
+  writeLines("{}", orphan)
+
+  Sys.chmod(scenariosDir, mode = "0500")
+  # Restore write permission on exit so the temp tree can be cleaned up even if
+  # the expectation fails.
+  withr::defer(Sys.chmod(scenariosDir, mode = "0700"))
+
+  expect_snapshot(
+    error = TRUE,
+    esqlabsR:::.writeDefinitionTree(
+      project$scenarios,
+      "scenarios",
+      project,
+      project$projectDirPath
+    ),
+    transform = .redactTmpPath
+  )
 })

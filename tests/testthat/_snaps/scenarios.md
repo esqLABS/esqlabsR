@@ -110,6 +110,16 @@
       Canonicalized 1 id to a safe form:
       * "New Name" -> "new name"
 
+# renameScenario warns when a dataCombined still references it
+
+    Code
+      renameScenario(project, "testscenario", "renamed")
+    Condition
+      Warning:
+      Removed scenario "testscenario" is still referenced by 1 dataCombined definition:
+      * dc_ref
+      i These now have a dangling reference. Update or remove them.
+
 # duplicateScenario errors on a non-existent source id
 
     Code
@@ -129,6 +139,15 @@
     Condition
       Error in `duplicateScenario()`:
       ! Cannot use "populationscenario": a scenario with that id already exists.
+
+# addScenario aborts on a duplicate id in the batch
+
+    Code
+      addScenario(project, c("s1", "s1"), modelFile = "Aciclovir.pkml", individual = "indiv1",
+      outputPaths = "aciclovir_pvb")
+    Condition
+      Error in `addScenario()`:
+      ! duplicate scenario id in the batch: "s1"
 
 # removeScenario warns when a dataCombined still references it
 

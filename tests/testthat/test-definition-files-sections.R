@@ -1,6 +1,6 @@
-# Tests for the entity-files write-through generalization (Phase 2b):
-# every Project section, not only scenarios, is persisted as a per-entity
-# tree under `definitions/<kind>/`. Mirrors test-entity-files.R but exercises
+# Tests for the definition-files write-through generalization (Phase 2b):
+# every Project section, not only scenarios, is persisted as a per-definition
+# tree under `definitions/<kind>/`. Mirrors test-definition-files.R but exercises
 # the other eight sections. The scenarios slice keeps its own dedicated tests.
 
 test_that("loadProject reads every section from its definitions/<kind>/ tree", {
@@ -40,7 +40,7 @@ test_that("loadProject reads every section from its definitions/<kind>/ tree", {
   expect_length(raw$outputPaths, 0L)
 })
 
-test_that("addIndividual writes one entity file; removeIndividual deletes it", {
+test_that("addIndividual writes one definition file; removeIndividual deletes it", {
   project <- exampleProject()
   dir <- file.path(project$projectDirPath, "definitions", "individuals")
 
@@ -57,7 +57,7 @@ test_that("addIndividual writes one entity file; removeIndividual deletes it", {
   expect_false(file.exists(file.path(dir, "newindiv.json")))
 })
 
-test_that("addPopulation / addApplication / addOutputPath write entity files", {
+test_that("addPopulation / addApplication / addOutputPath write definition files", {
   project <- exampleProject()
   defs <- file.path(project$projectDirPath, "definitions")
 
@@ -79,7 +79,7 @@ test_that("addPopulation / addApplication / addOutputPath write entity files", {
   )
 })
 
-test_that("addParameterSet / addParameterEntry write the set's entity file", {
+test_that("addParameterSet / addParameterEntry write the set's definition file", {
   project <- exampleProject()
   dir <- file.path(project$projectDirPath, "definitions", "parameter-sets")
 
@@ -92,12 +92,12 @@ test_that("addParameterSet / addParameterEntry write the set's entity file", {
   expect_identical(reloaded$parameterSets[["newset"]][[1]]$value, 1.5)
 })
 
-# A single mutation must rewrite only the changed entity's file. A full
+# A single mutation must rewrite only the changed definition's file. A full
 # re-serialize of the whole section would rewrite every sibling file too,
 # which is both the O(N^2) cost and a needless churn of unrelated git diffs.
 # Hand-edit a sibling file on disk with content the canonical serializer would
-# never emit, mutate a different entity, then confirm the sibling is untouched.
-test_that("a single mutation rewrites only the changed entity's file", {
+# never emit, mutate a different definition, then confirm the sibling is untouched.
+test_that("a single mutation rewrites only the changed definition's file", {
   project <- exampleProject()
   dir <- file.path(project$projectDirPath, "definitions", "parameter-sets")
 
@@ -114,8 +114,8 @@ test_that("a single mutation rewrites only the changed entity's file", {
 })
 
 # Per-mutation write-through must be ~linear in the number of mutations, not
-# quadratic. Adding N entities one at a time serializes only the one changed
-# entity each time, so the cost of adding the Nth entity is independent of how
+# quadratic. Adding N definitions one at a time serializes only the one changed
+# definition each time, so the cost of adding the Nth definition is independent of how
 # many already exist. The old whole-section-serialize path made each add
 # O(section size), i.e. O(N^2) for N adds (the panel measured ~132x at 10x N).
 test_that("adding many parameter sets one at a time scales linearly", {
@@ -140,7 +140,7 @@ test_that("adding many parameter sets one at a time scales linearly", {
   expect_lt(ratio, 40)
 })
 
-test_that("addPITask writes a per-task entity file; removePITask deletes it", {
+test_that("addPITask writes a per-task definition file; removePITask deletes it", {
   project <- exampleProject()
   dir <- file.path(
     project$projectDirPath,
@@ -185,7 +185,7 @@ test_that("the three plots parts write to data-combined / plots / plot-grids", {
   plotsDir <- file.path(defs, "plots")
   gridsDir <- file.path(defs, "plot-grids")
 
-  # Each part persists one file per entity, keyed by its rationalized id.
+  # Each part persists one file per definition, keyed by its rationalized id.
   addDataCombined(
     project,
     "newdc",
@@ -210,7 +210,7 @@ test_that("the three plots parts write to data-combined / plots / plot-grids", {
   expect_true("newgrid" %in% names(reloaded$plotGrids))
 })
 
-test_that("removing a plot entity deletes only its file, leaving siblings", {
+test_that("removing a plot definition deletes only its file, leaving siblings", {
   project <- exampleProject()
   plotsDir <- file.path(project$projectDirPath, "definitions", "plots")
   dcDir <- file.path(project$projectDirPath, "definitions", "data-combined")
@@ -226,7 +226,7 @@ test_that("removing a plot entity deletes only its file, leaving siblings", {
   expect_true(file.exists(file.path(plotsDir, "p1.json")))
 })
 
-test_that("addObservedData (config) writes an observed-data entity file", {
+test_that("addObservedData (config) writes an observed-data definition file", {
   project <- exampleProject()
   dir <- file.path(project$projectDirPath, "definitions", "observed-data")
 
@@ -314,7 +314,7 @@ test_that("a definitions/ root that is a file aborts the load", {
   )
 })
 
-# A keyed entity file missing its id field used to abort with an opaque base-R
+# A keyed definition file missing its id field used to abort with an opaque base-R
 # `list[[NULL]] <- x` error that named nothing. It must now abort naming the
 # file and the missing field.
 test_that("a keyed file missing its id field aborts naming the file", {
@@ -543,4 +543,28 @@ test_that("snapshot then load is a fixed point over the three plots folders", {
   expect_identical(reloadedJson$dataCombined, sourceJson$dataCombined)
   expect_identical(reloadedJson$plots, sourceJson$plots)
   expect_identical(reloadedJson$plotGrids, sourceJson$plotGrids)
+})
+
+# plots / PI serialize key-alignment guards ----
+
+# The on-disk filename is the map key, but the record carries its own stored id.
+# When they diverge the reload aborts (the load side compares the inner id to
+# the filename), so the write must reject the mismatch up front rather than
+# emit an unreadable file.
+test_that("a plots entry whose stored id differs from its map key aborts", {
+  entries <- list(p1 = list(plotId = "p2"))
+
+  expect_snapshot(
+    esqlabsR:::.serializePlotEntrySet(entries, "plotId", "plot"),
+    error = TRUE
+  )
+})
+
+test_that("a PI task whose $id differs from its map key aborts", {
+  tasks <- list(task1 = list(id = "task2"))
+
+  expect_snapshot(
+    esqlabsR:::.serializePITaskSet(tasks),
+    error = TRUE
+  )
 })

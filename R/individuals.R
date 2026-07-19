@@ -127,10 +127,10 @@ print.Individual <- function(x, ...) {
 #' Add one or more individuals to a Project
 #'
 #' Add individuals to `project$individuals`, vectorizing over a vector of ids
-#' (see the recycling rule under Details). Scalar-per-entity fields (`species`
+#' (see the recycling rule under Details). Scalar-per-definition fields (`species`
 #' and the `...` fields `population`, `gender`, `weight`, `height`, `age`,
 #' `proteinOntogenies`) follow the recycle/align rule; `parameterSets` is
-#' vector-valued-per-entity (applied whole to every individual, or one vector
+#' vector-valued-per-definition (applied whole to every individual, or one vector
 #' per individual via a length-`id` list).
 #'
 #' @inherit vectorizedAuthoring details
@@ -156,25 +156,26 @@ addIndividual <- function(project, id, species, ...) {
   n <- length(id)
 
   dots <- list(...)
-  # `parameterSets` is the one vector-valued-per-entity field; everything else
-  # is scalar-per-entity. `species` is a positional formal, not a `...` field.
+  # `parameterSets` is the one vector-valued-per-definition field; everything else
+  # is scalar-per-definition. `species` is a positional formal, not a `...` field.
   wholeNames <- intersect("parameterSets", names(dots))
   scalarDots <- dots[setdiff(names(dots), wholeNames)]
-  perEntity <- .alignAuthoringArgs(
+  perDefinition <- .alignAuthoringArgs(
     id,
     scalarFields = c(list(species = species), scalarDots),
     wholeFields = dots[wholeNames]
   )
 
   # Validate all N first (all-or-nothing): build every entry before folding any,
-  # so an invalid entity in the batch writes nothing.
+  # so an invalid definition in the batch writes nothing.
+  .assertNoDuplicateIds(id, "individual")
   clash <- intersect(id, names(project$individuals))
   if (length(clash) > 0L) {
     cli::cli_abort("individual {.val {clash}} already exists")
   }
   call <- rlang::current_env()
   entries <- .collectCanonicalizedRefs(lapply(seq_len(n), function(i) {
-    .buildIndividualEntry(project, id[[i]], perEntity[[i]], call = call)
+    .buildIndividualEntry(project, id[[i]], perDefinition[[i]], call = call)
   }))
 
   # Fold all N into the section in memory, then ONE assignment triggers one
@@ -187,7 +188,7 @@ addIndividual <- function(project, id, species, ...) {
   invisible(project)
 }
 
-# Build one classed `Individual` entry from its id and per-entity field list,
+# Build one classed `Individual` entry from its id and per-definition field list,
 # validating the same way the scalar path always has (`species` and `gender`
 # required non-empty, `parameterSets` a resolvable character vector). Aborts
 # naming the individual on the first problem.
@@ -247,6 +248,28 @@ addIndividual <- function(project, id, species, ...) {
       nchar(gender) == 0
   ) {
     errors <- c(errors, "gender must be a non-empty string")
+  } else if (!(gender %in% names(GenderInt))) {
+    errors <- c(
+      errors,
+      paste0(
+        "gender must be one of ",
+        paste(names(GenderInt), collapse = ", ")
+      )
+    )
+  }
+
+  # weight/height/age are stored as doubles. Coerce a numeric-like value
+  # (including a character such as "45") and reject only a value that does not
+  # coerce to a single finite number (e.g. "80kg" -> NA) rather than silently
+  # storing NA. This matches the set path (`.setOneIndividual()`).
+  for (field in c("weight", "height", "age")) {
+    value <- fields[[field]]
+    if (!is.null(value)) {
+      coerced <- suppressWarnings(as.double(value))
+      if (length(value) != 1L || is.na(coerced) || !is.finite(coerced)) {
+        errors <- c(errors, paste0(field, " must be a single finite number"))
+      }
+    }
   }
 
   if (length(errors) > 0L) {
@@ -349,7 +372,7 @@ removeIndividual <- function(project, id) {
 #'   already exist in `project$individuals`.
 #' @param ... Named fields to change. Accepted: `species`, `population`,
 #'   `gender`, `weight`, `height`, `age`, `proteinOntogenies`,
-#'   `parameterSets`. Scalar-per-entity fields recycle/align across `id`;
+#'   `parameterSets`. Scalar-per-definition fields recycle/align across `id`;
 #'   `parameterSets` is applied whole (or one vector per individual via a
 #'   length-`id` list). Unknown fields trigger an error.
 #'
@@ -372,13 +395,13 @@ setIndividual <- function(project, id, ...) {
   dots <- list(...)
   wholeNames <- intersect("parameterSets", names(dots))
   scalarDots <- dots[setdiff(names(dots), wholeNames)]
-  perEntity <- .alignAuthoringArgs(
+  perDefinition <- .alignAuthoringArgs(
     id,
     scalarFields = scalarDots,
     wholeFields = dots[wholeNames]
   )
   # Only the field names the caller actually supplied are applied (partial
-  # update); the engine carries every supplied field for each entity.
+  # update); the engine carries every supplied field for each definition.
   suppliedNames <- names(dots)
 
   call <- rlang::current_env()
@@ -386,7 +409,7 @@ setIndividual <- function(project, id, ...) {
     .setOneIndividual(
       project,
       id[[i]],
-      perEntity[[i]][suppliedNames],
+      perDefinition[[i]][suppliedNames],
       call = call
     )
   }))
@@ -449,6 +472,31 @@ setIndividual <- function(project, id, ...) {
     ) {
       cli::cli_abort("{.arg gender} must be a non-empty string", call = call)
     }
+    if (!(gender %in% names(GenderInt))) {
+      cli::cli_abort(
+        "{.arg gender} must be one of {.val {names(GenderInt)}}",
+        call = call
+      )
+    }
+  }
+  # weight/height/age are stored as doubles. Coerce a numeric-like value
+  # (including a character such as "45" from Excel) and reject only a value
+  # that does not coerce to a single finite number (e.g. "80kg" -> NA) rather
+  # than silently storing NA. A NULL is allowed here: it clears the field via
+  # `.coerceNumericField()` below.
+  for (field in c("weight", "height", "age")) {
+    if (field %in% names(fields)) {
+      value <- fields[[field]]
+      if (!is.null(value)) {
+        coerced <- suppressWarnings(as.double(value))
+        if (length(value) != 1L || is.na(coerced) || !is.finite(coerced)) {
+          cli::cli_abort(
+            "{field} must be a single finite number",
+            call = call
+          )
+        }
+      }
+    }
   }
   if ("parameterSets" %in% names(fields)) {
     if (!is.character(fields$parameterSets)) {
@@ -476,35 +524,11 @@ setIndividual <- function(project, id, ...) {
   entry <- project$individuals[[id]]
   for (field in names(fields)) {
     if (field %in% c("weight", "height", "age")) {
-      entry[[field]] <- as.double(fields[[field]])
+      entry[[field]] <- .coerceNumericField(fields[[field]])
     } else {
       entry[[field]] <- fields[[field]]
     }
   }
   class(entry) <- c("Individual", "list")
   entry
-}
-
-#' Replace the parameter-set references on one or more individuals
-#'
-#' @description A convenience wrapper for
-#'   `setIndividual(project, id, parameterSets = parameterSets)`, which is the
-#'   canonical way to change an individual's parameter-set references.
-#'   Prefer [setIndividual()] directly; this function exists for callers that
-#'   only need to replace the references.
-#'
-#' @inherit vectorizedAuthoring details
-#'
-#' @param project A `Project` object.
-#' @param id Character vector of individual ids. Each is canonicalized the
-#'   same way [addIndividual()] canonicalizes it.
-#' @param parameterSets Character vector of set ids (from
-#'   `project$parameterSets`), applied whole to every individual; use
-#'   `character(0)` to clear. To set a different list per individual, pass a
-#'   list of the same length as `id` (one character vector per individual).
-#' @returns The `project` object, invisibly.
-#' @export
-#' @family individual
-setIndividualParameterSets <- function(project, id, parameterSets) {
-  setIndividual(project, id, parameterSets = parameterSets)
 }

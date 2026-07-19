@@ -46,9 +46,11 @@ test_that("It throws an error when a sheet has wrong structure", {
 test_that("It overwrites the value if the path is present in multiple sheets", {
   paramsXLSpath <- getTestDataFilePath("Parameters.xlsx")
   sheets <- c("ValidSheet", "SecondSheet")
-  params <- readParametersFromXLS(
-    paramsXLSpath = paramsXLSpath,
-    sheets = sheets
+  expect_snapshot(
+    params <- readParametersFromXLS(
+      paramsXLSpath = paramsXLSpath,
+      sheets = sheets
+    )
   )
 
   paramsPaths <- c(
@@ -61,6 +63,73 @@ test_that("It overwrites the value if the path is present in multiple sheets", {
   idx <- match(paramsPaths, params$paths)
   expect_equal(expectedVals, params$values[idx])
   expect_equal(expectedUnits, params$units[idx])
+})
+
+test_that("`readParametersFromXLS()` errors on a non-numeric Value cell", {
+  paramsXLSpath <- file.path(withr::local_tempdir(), "Parameters.xlsx")
+  writexl::write_xlsx(
+    data.frame(
+      "Container Path" = c("Path1", "Path2"),
+      "Parameter Name" = c("Param1", "Param2"),
+      "Value" = c("not a number", "2"),
+      "Units" = c("mg", "mg"),
+      check.names = FALSE,
+      stringsAsFactors = FALSE
+    ),
+    path = paramsXLSpath
+  )
+
+  # The temp directory is non-deterministic, so scrub everything up to the
+  # stable file name from the captured message.
+  expect_snapshot(
+    error = TRUE,
+    readParametersFromXLS(paramsXLSpath = paramsXLSpath),
+    transform = \(lines) gsub("'.*Parameters.xlsx'", "'Parameters.xlsx'", lines)
+  )
+})
+
+test_that("`readParametersFromXLS()` allows a genuinely blank Value cell", {
+  paramsXLSpath <- withr::local_tempfile(fileext = ".xlsx")
+  writexl::write_xlsx(
+    data.frame(
+      "Container Path" = c("Path1", "Path2"),
+      "Parameter Name" = c("Param1", "Param2"),
+      "Value" = c(NA_real_, 2),
+      "Units" = c("mg", "mg"),
+      check.names = FALSE,
+      stringsAsFactors = FALSE
+    ),
+    path = paramsXLSpath
+  )
+
+  params <- readParametersFromXLS(paramsXLSpath = paramsXLSpath)
+  idx <- match("Path1|Param1", params$paths)
+  expect_true(is.na(params$values[idx]))
+})
+
+test_that("`readParametersFromXLS()` warns and keeps the last value for a duplicate path", {
+  paramsXLSpath <- file.path(withr::local_tempdir(), "Parameters.xlsx")
+  writexl::write_xlsx(
+    data.frame(
+      "Container Path" = c("Path1", "Path1"),
+      "Parameter Name" = c("Param1", "Param1"),
+      "Value" = c(1, 2),
+      "Units" = c("mg", "mg"),
+      check.names = FALSE,
+      stringsAsFactors = FALSE
+    ),
+    path = paramsXLSpath
+  )
+
+  # The temp directory is non-deterministic, so scrub everything up to the
+  # stable file name from the captured message.
+  expect_snapshot(
+    params <- readParametersFromXLS(paramsXLSpath = paramsXLSpath),
+    transform = \(lines) gsub("'.*Parameters.xlsx'", "'Parameters.xlsx'", lines)
+  )
+
+  idx <- match("Path1|Param1", params$paths)
+  expect_equal(params$values[idx], 2)
 })
 
 
@@ -202,6 +271,11 @@ test_that("addParameterSet canonicalizes its id", {
 test_that("addParameterSet aborts on a duplicate id", {
   project <- testProject()
   expect_snapshot(error = TRUE, addParameterSet(project, "global"))
+})
+
+test_that("addParameterSet aborts on a duplicate id in the batch", {
+  project <- testProject()
+  expect_snapshot(error = TRUE, addParameterSet(project, c("a", "a")))
 })
 
 test_that("addParameterEntry creates the set on demand and appends entries", {
@@ -381,6 +455,32 @@ test_that("removeParameterEntry accepts parallel vectors", {
   )
 })
 
+test_that("removeParameterEntry rejects an empty or NA id", {
+  project <- testProject()
+
+  expect_snapshot(
+    removeParameterEntry(project, "", "Organism|A", "K"),
+    error = TRUE
+  )
+  expect_snapshot(
+    removeParameterEntry(project, NA_character_, "Organism|A", "K"),
+    error = TRUE
+  )
+})
+
+test_that("removeInitialConditionEntry rejects an empty or NA id", {
+  project <- testProject()
+
+  expect_snapshot(
+    removeInitialConditionEntry(project, "", "Organism|A"),
+    error = TRUE
+  )
+  expect_snapshot(
+    removeInitialConditionEntry(project, NA_character_, "Organism|A"),
+    error = TRUE
+  )
+})
+
 test_that("removeParameterEntry auto-removes an emptied parameter set", {
   project <- testProject()
   suppressMessages(
@@ -394,7 +494,7 @@ test_that("removeParameterEntry auto-removes an emptied parameter set", {
 
 # On-disk delete / nested-record-update write-through ----
 
-test_that("removeParameterSet deletes the entity file and persists to disk", {
+test_that("removeParameterSet deletes the definition file and persists to disk", {
   project <- testProject()
   dir <- file.path(project$projectDirPath, "definitions", "parameter-sets")
   suppressMessages(
@@ -404,7 +504,7 @@ test_that("removeParameterSet deletes the entity file and persists to disk", {
 
   removeParameterSet(project, "tempset")
 
-  # In memory gone, entity file deleted, and absent from a fresh load.
+  # In memory gone, definition file deleted, and absent from a fresh load.
   expect_false("tempset" %in% names(project$parameterSets))
   expect_false(file.exists(file.path(dir, "tempset.json")))
   reloaded <- loadProject(project$jsonPath)
@@ -550,6 +650,11 @@ test_that("addInitialConditions aborts on a duplicate id", {
   expect_snapshot(error = TRUE, addInitialConditions(project, "dupset"))
 })
 
+test_that("addInitialConditions aborts on a duplicate id in the batch", {
+  project <- testProject()
+  expect_snapshot(error = TRUE, addInitialConditions(project, c("a", "a")))
+})
+
 test_that("addInitialConditionEntry creates the set on demand and appends", {
   project <- testProject()
   expect_snapshot(
@@ -682,11 +787,17 @@ test_that("removeInitialConditionEntry no-op on a missing entry warns", {
   suppressMessages(
     addInitialConditionEntry(project, "mset", "Organism|A", 1.5, "mg/l")
   )
+  project$.markValidated()
+  expect_true(project$validatedSinceMutation)
+
   expect_warning(
     removeInitialConditionEntry(project, "mset", "Organism|Ghost"),
     "not found"
   )
+
   expect_length(project$initialConditions$mset, 1L)
+
+  expect_true(project$validatedSinceMutation)
 })
 
 test_that("removeInitialConditions warns when still referenced by a scenario, removes anyway", {
@@ -717,7 +828,7 @@ test_that("print.InitialConditionSet renders the entry count and a compact table
 })
 
 test_that("print.InitialConditionSet renders a unit-less entry", {
-  # A hand-edited entity file can carry a record with no unit; the print method
+  # A hand-edited definition file can carry a record with no unit; the print method
   # must still render it (blank-unit branch). Build the set directly since the
   # authoring API requires a unit.
   set <- esqlabsR:::.asInitialConditionSet(list(
@@ -910,5 +1021,76 @@ test_that("`readInitialConditionsFromXLS()` validates its arguments", {
     ),
     regexp = 'argument "sheets" is of type <numeric>, but expected <character>!',
     fixed = TRUE
+  )
+})
+
+# isTableFormulasEqual ----
+
+# `isTableFormulasEqual()` only reads `$allPoints` and each point's `$x`/`$y`.
+# A real `TableFormula` requires a live PK-Sim/.NET object (no exported
+# constructor), so we exercise the comparison with lightweight stubs that mirror
+# that interface, keeping the test self-contained.
+test_that("isTableFormulasEqual compares every point, not just the first", {
+  tableFormula <- function(...) {
+    list(allPoints = lapply(list(...), \(p) list(x = p[[1]], y = p[[2]])))
+  }
+
+  f1 <- tableFormula(c(0, 1), c(10, 2), c(30, 3))
+  # Differs from f1 only in the last point; the old loop returned after point 1
+  # and wrongly reported these as equal.
+  fLateDiff <- tableFormula(c(0, 1), c(10, 2), c(30, 99))
+
+  expect_false(isTableFormulasEqual(f1, fLateDiff))
+  expect_true(isTableFormulasEqual(f1, f1))
+
+  # Two empty table formulas are equal (old code fell through and returned NULL).
+  expect_true(isTableFormulasEqual(tableFormula(), tableFormula()))
+
+  # Differing lengths are never equal.
+  expect_false(isTableFormulasEqual(f1, tableFormula(c(0, 1))))
+})
+
+# setParameterValuesByPathWithCondition ----
+
+# The length guard fires before any ospsuite/simulation call, so it can be
+# exercised without a live Simulation (passing `simulation = NULL` is safe: the
+# abort happens first).
+test_that("setParameterValuesByPathWithCondition aborts on a values length mismatch", {
+  expect_snapshot(
+    error = TRUE,
+    setParameterValuesByPathWithCondition(
+      parameterPaths = c("Organism|Liver|Volume", "Organism|Volume"),
+      values = c(1, 2, 3),
+      simulation = NULL
+    )
+  )
+})
+
+test_that("setParameterValuesByPathWithCondition aborts on a units length mismatch", {
+  expect_snapshot(
+    error = TRUE,
+    setParameterValuesByPathWithCondition(
+      parameterPaths = c("Organism|Liver|Volume", "Organism|Volume"),
+      values = c(1, 2),
+      simulation = NULL,
+      units = c("l", "l", "l")
+    )
+  )
+})
+
+# .splitParameterPathIntoContainerAndName ----
+
+test_that(".splitParameterPathIntoContainerAndName splits a multi-segment path", {
+  split <- esqlabsR:::.splitParameterPathIntoContainerAndName(
+    "Organism|Liver|Volume"
+  )
+  expect_identical(split$containerPath, "Organism|Liver")
+  expect_identical(split$parameterName, "Volume")
+})
+
+test_that(".splitParameterPathIntoContainerAndName aborts on a separator-less path", {
+  expect_snapshot(
+    error = TRUE,
+    esqlabsR:::.splitParameterPathIntoContainerAndName("Volume")
   )
 })

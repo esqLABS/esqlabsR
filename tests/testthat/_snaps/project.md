@@ -1,3 +1,71 @@
+# Project$print() renders the example project through ospPrint*
+
+    Code
+      print(project)
+    Output
+      <Project>
+        * Name: Example
+        * Description: Aciclovir IV PK example project
+        * Schema Version: 2.0
+        * esqlabsR Version: 6.0.0
+        * JSON File: Project.json
+      
+      -- Paths -----------------------------------------------------------------------
+        * Simulations Folder: Models/Simulations
+        * Data Folder: Data
+        * Populations Folder: Populations
+        * Output Folder: Results
+      
+      -- Definitions -----------------------------------------------------------------
+        * Scenarios: 3
+        * Individuals: 1
+        * Populations: 1
+        * Parameter Sets: 4
+        * Initial Conditions: 1
+        * Applications: 1
+        * Output Paths: 2
+        * Observed Data: 1
+        * Data Combined: 1
+        * Plots: 1
+        * Plot Grids: 1
+        * Parameter Identification: 1
+      
+      -- Excel -----------------------------------------------------------------------
+        * Configurations Folder: Configurations/
+        * Model Parameters File: ModelParameters.xlsx
+        * Individuals File: Individuals.xlsx
+        * Populations File: Populations.xlsx
+        * Scenarios File: Scenarios.xlsx
+        * Applications File: Applications.xlsx
+        * Plots File: Plots.xlsx
+
+# changing definitionsFolder on a project whose tree exists is refused
+
+    Code
+      project$definitionsFolder <- "other-defs"
+    Condition
+      Error:
+      ! Cannot change definitionsFolder from "definitions" to "other-defs" while the tree exists on disk.
+      x Re-pointing a materialized project would leave the old 'definitions/' tree orphaned and unreferenced.
+      i To relocate the tree deliberately, snapshot the project with `saveSnapshot()` and reload it into a fresh directory under the new folder with `loadSnapshot()`.
+
+# Project$print() omits zero-count definition sections
+
+    Code
+      print(project)
+    Output
+      <Project>
+      
+      -- Definitions -----------------------------------------------------------------
+        * Scenarios: 1
+
+# Project$print() hides the Excel section and empty sections
+
+    Code
+      print(project)
+    Output
+      <Project>
+
 # a whole-section assignment through a section accessor is rejected
 
     Code
