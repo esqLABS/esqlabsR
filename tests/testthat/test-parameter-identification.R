@@ -1359,10 +1359,10 @@ test_that("runPI() with the legacy first-arg shape (non-Project) emits a soft-de
   )
 })
 
-test_that("addPITask() adds a task and clears validatedSinceMutation", {
+test_that("addPITask() adds a task and clears the validation flag", {
   project <- testProject()
   validateProject(project)
-  expect_true(project$validatedSinceMutation)
+  expect_true(.isValidated(project))
 
   addPITask(
     project,
@@ -1388,7 +1388,7 @@ test_that("addPITask() adds a task and clears validatedSinceMutation", {
     )
   )
   expect_named(project$parameterIdentification, c("aciclovirsimple", "manual"))
-  expect_false(project$validatedSinceMutation)
+  expect_false(.isValidated(project))
 })
 
 test_that("addPITask() errors on unknown scenario id", {
@@ -1554,7 +1554,7 @@ test_that("addPIParameter() appends a parameter and marks modified", {
     startValue = 1
   )
   expect_length(project$parameterIdentification$t$parameters, 2L)
-  expect_false(project$validatedSinceMutation)
+  expect_false(.isValidated(project))
 })
 
 test_that("addPIParameter() errors on unknown task", {

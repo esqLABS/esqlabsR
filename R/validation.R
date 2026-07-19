@@ -215,10 +215,10 @@ format.ValidationResults <- function(x, ...) {
 #'
 #' Runs every section validator (and a cross-reference pass) against a
 #' parsed `Project` and returns a named list of `validationResult`
-#' objects, one per section, in canonical order. Sets the project's
-#' `validatedSinceMutation` flag when no section produced critical
-#' errors so subsequent `runScenarios()` / `createPlots()` calls can
-#' skip a redundant validation pass.
+#' objects, one per section, in canonical order. On a clean run (no
+#' section produced critical errors) it marks the project validated, so
+#' subsequent `runScenarios()` / `createPlots()` calls can skip a
+#' redundant validation pass until the next edit.
 #'
 #' @param project A `Project` object (typically produced by
 #'   [loadProject()]). Path inputs are not accepted here; load the
@@ -408,40 +408,6 @@ validationSummary <- function(validationResults) {
 
   class(results) <- c("ValidationResults", class(results))
   results
-}
-
-#' Ensure a Project passes validation before an operation
-#'
-#' Runs targeted validation for the sections an operation depends on,
-#' and aborts with a formatted multi-error message if any critical
-#' errors are found. Short-circuits when the project has been fully
-#' validated since its last mutation (the `validatedSinceMutation`
-#' flag).
-#'
-#' This helper does not itself flip the cache flag, because it only
-#' runs a subset of validators. Only `validateProject()` (a full run)
-#' sets the flag.
-#'
-#' @param project A `Project` object.
-#' @param sections Non-empty character vector of section names required
-#'   by the calling operation.
-#' @param opName Short label used in the abort message (e.g.
-#'   `"runScenarios"`).
-#' @return `invisible(NULL)` on success.
-#' @keywords internal
-#' @noRd
-.ensureValid <- function(project, sections, opName) {
-  if (isTRUE(project$validatedSinceMutation)) {
-    return(invisible(NULL))
-  }
-
-  results <- .runProjectValidation(project, sections = sections)
-
-  if (isAnyCriticalErrors(results)) {
-    .abortValidationErrors(results, opName)
-  }
-
-  invisible(NULL)
 }
 
 #' Format and abort with the critical errors found in a validation run

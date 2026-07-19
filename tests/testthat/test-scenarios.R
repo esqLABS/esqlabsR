@@ -428,14 +428,14 @@ test_that("removeScenario uses the id argument matching addScenario", {
 test_that("addScenario and removeScenario clear the validation cache", {
   project <- testProject()
   .markValidated(project)
-  expect_true(project$validatedSinceMutation)
+  expect_true(.isValidated(project))
 
   addScenario(project, id = "x", modelFile = "Aciclovir.pkml")
-  expect_false(project$validatedSinceMutation)
+  expect_false(.isValidated(project))
 
   .markValidated(project)
   removeScenario(project, id = "x")
-  expect_false(project$validatedSinceMutation)
+  expect_false(.isValidated(project))
 })
 
 test_that("addScenario stores steadyStateTime in base units and round-trips the declared unit", {
@@ -507,11 +507,11 @@ test_that("setScenario partial update leaves other fields untouched", {
 test_that("setScenario invalidates the validation cache", {
   project <- testProject()
   .markValidated(project)
-  expect_true(project$validatedSinceMutation)
+  expect_true(.isValidated(project))
 
   setScenario(project, "testscenario", simulationTimeUnit = "min")
 
-  expect_false(project$validatedSinceMutation)
+  expect_false(.isValidated(project))
 })
 
 test_that("setScenario can clear an optional field with NULL", {

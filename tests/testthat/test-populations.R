@@ -278,11 +278,11 @@ test_that("setPopulation clears a numeric field passed NULL", {
   }
 })
 
-test_that("setPopulation clears validatedSinceMutation", {
+test_that("setPopulation clears the validation flag", {
   project <- testProject()
   .markValidated(project)
   setPopulation(project, "testpopulation", numberOfIndividuals = 10)
-  expect_false(project$validatedSinceMutation)
+  expect_false(.isValidated(project))
 })
 
 test_that("setPopulation aborts on a non-existent population", {

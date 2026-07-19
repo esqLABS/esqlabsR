@@ -510,8 +510,7 @@
     )
   }
   if (isTRUE(validate)) {
-    .ensureValid(
-      project,
+    project$ensureValid(
       sections = c(
         "outputPaths",
         "scenarios",

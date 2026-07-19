@@ -544,14 +544,14 @@ test_that("removeParameterEntry no-op on a missing entry does not mark modified"
     addParameterEntry(project, "mset", "Organism|A", "K", 1.5, "1/h")
   )
   .markValidated(project)
-  expect_true(project$validatedSinceMutation)
+  expect_true(.isValidated(project))
 
   expect_warning(
     removeParameterEntry(project, "mset", "Organism|A", "Ghost"),
     "not found"
   )
 
-  expect_true(project$validatedSinceMutation)
+  expect_true(.isValidated(project))
 })
 
 test_that("the three former parameter-set kinds are merged into project$parameterSets", {
@@ -799,7 +799,7 @@ test_that("removeInitialConditionEntry no-op on a missing entry warns", {
     addInitialConditionEntry(project, "mset", "Organism|A", 1.5, "mg/l")
   )
   .markValidated(project)
-  expect_true(project$validatedSinceMutation)
+  expect_true(.isValidated(project))
 
   expect_warning(
     removeInitialConditionEntry(project, "mset", "Organism|Ghost"),
@@ -808,7 +808,7 @@ test_that("removeInitialConditionEntry no-op on a missing entry warns", {
 
   expect_length(project$initialConditions$mset, 1L)
 
-  expect_true(project$validatedSinceMutation)
+  expect_true(.isValidated(project))
 })
 
 test_that("removeInitialConditions warns when still referenced by a scenario, removes anyway", {

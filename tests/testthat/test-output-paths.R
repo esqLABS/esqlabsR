@@ -1,11 +1,11 @@
-test_that("addOutputPath() clears validatedSinceMutation", {
+test_that("addOutputPath() clears the validation flag", {
   project <- testProject()
   .markValidated(project)
-  expect_true(project$validatedSinceMutation)
+  expect_true(.isValidated(project))
 
   addOutputPath(project, "X", "Organism|A|Concentration in container")
 
-  expect_false(project$validatedSinceMutation)
+  expect_false(.isValidated(project))
 })
 
 test_that("removeOutputPath() warns on missing key and is a no-op", {
@@ -13,7 +13,7 @@ test_that("removeOutputPath() warns on missing key and is a no-op", {
   .markValidated(project)
   expect_warning(removeOutputPath(project, "Ghost"), "not found")
   # A no-op must not invalidate the validation cache.
-  expect_true(project$validatedSinceMutation)
+  expect_true(.isValidated(project))
 })
 
 test_that("addOutputPath aborts on a duplicate id", {
@@ -90,12 +90,12 @@ test_that("setOutputPath changes the literal path in memory and persists on save
   )
 })
 
-test_that("setOutputPath clears validatedSinceMutation", {
+test_that("setOutputPath clears the validation flag", {
   project <- testProject()
   .markValidated(project)
   id <- names(project$outputPaths)[[1]]
   setOutputPath(project, id, "Organism|Lung|Concentration in container")
-  expect_false(project$validatedSinceMutation)
+  expect_false(.isValidated(project))
 })
 
 test_that("setOutputPath leaves the other ids untouched", {

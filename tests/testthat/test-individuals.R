@@ -157,11 +157,11 @@ test_that("setIndividual clears a numeric field passed NULL", {
   }
 })
 
-test_that("setIndividual clears validatedSinceMutation", {
+test_that("setIndividual clears the validation flag", {
   project <- testProject()
   .markValidated(project)
   setIndividual(project, "indiv1", weight = 80)
-  expect_false(project$validatedSinceMutation)
+  expect_false(.isValidated(project))
 })
 
 test_that("setIndividual aborts on a non-existent individual", {

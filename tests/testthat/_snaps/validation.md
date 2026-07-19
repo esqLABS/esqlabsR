@@ -6,14 +6,6 @@
       Error in `validateProject()`:
       ! `project` must be a <Project> object; got <character>.
 
-# validatedSinceMutation is read-only
-
-    Code
-      project$validatedSinceMutation <- TRUE
-    Condition
-      Error:
-      ! validatedSinceMutation is readonly
-
 # .validatePlots warns on plotType-irrelevant fields (non-blocking)
 
     Code
@@ -36,10 +28,10 @@
     Output
       Application 'A1' references undefined parameterSets: PresysSet2 (did you mean 'PresysSet1'?)
 
-# .ensureValid aborts with a formatted summary on critical errors
+# ensureValid() aborts with a formatted summary on critical errors
 
     Code
-      esqlabsR:::.ensureValid(project, sections = c("scenarios"), opName = "runScenarios")
+      project$ensureValid(sections = c("scenarios"), opName = "runScenarios")
     Condition
       Error in `.abortValidationErrors()`:
       ! Cannot runScenarios: project has 1 critical validation error.

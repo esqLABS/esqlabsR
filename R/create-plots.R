@@ -67,8 +67,7 @@ createPlots <- function(
 ) {
   validateIsOfType(project, "Project")
   if (isTRUE(validate)) {
-    .ensureValid(
-      project,
+    project$ensureValid(
       sections = c("plots", "scenarios", "observedData", "crossReferences"),
       opName = "createPlots"
     )

@@ -3,7 +3,7 @@ test_that("Project$new() creates an empty in-memory project", {
   expect_s3_class(project, "Project")
   expect_null(project$projectFilePath)
   expect_null(project$projectDirPath)
-  expect_false(project$validatedSinceMutation)
+  expect_false(.isValidated(project))
 })
 
 test_that("Project$new(path) loads a v2.0 JSON file", {
@@ -12,7 +12,7 @@ test_that("Project$new(path) loads a v2.0 JSON file", {
   )
   expect_s3_class(project, "Project")
   expect_equal(project$schemaVersion, "2.0")
-  expect_false(project$validatedSinceMutation)
+  expect_false(.isValidated(project))
 })
 
 test_that("asList round-trips with .projectToJson", {
@@ -429,12 +429,6 @@ test_that("loadProject() defaults missing optional sections to empty lists", {
   expect_identical(.unwrapDefinitionList(project$plotGrids), list())
 })
 
-test_that("Project lifecycle fields are read-only", {
-  project <- exampleProject()
-
-  expect_error(project$validatedSinceMutation <- TRUE, "readonly")
-})
-
 test_that("Project$print() renders the example project through ospPrint*", {
   project <- exampleProject()
 
@@ -704,27 +698,27 @@ test_that("an Excel-bridge file field write targets the excel block", {
 test_that(".markValidated leaves the validation cache set until the next mutation", {
   project <- testProject()
   .markValidated(project)
-  expect_true(project$validatedSinceMutation)
+  expect_true(.isValidated(project))
 
   # A mutation clears the validation cache so runScenarios()/createPlots()
   # re-validate the new shape.
   .markModified(project)
-  expect_false(project$validatedSinceMutation)
+  expect_false(.isValidated(project))
 })
 
 test_that("a fresh project starts unvalidated", {
   project <- testProject()
-  expect_false(project$validatedSinceMutation)
+  expect_false(.isValidated(project))
 })
 
 test_that("addScenario() invalidates the validation cache", {
   project <- testProject()
   .markValidated(project)
-  expect_true(project$validatedSinceMutation)
+  expect_true(.isValidated(project))
 
   addScenario(project, "new", modelFile = "m.pkml")
 
-  expect_false(project$validatedSinceMutation)
+  expect_false(.isValidated(project))
 })
 
 test_that("setScenario() invalidates the validation cache", {
@@ -733,7 +727,7 @@ test_that("setScenario() invalidates the validation cache", {
 
   setScenario(project, "testscenario", modelFile = "Aciclovir.pkml")
 
-  expect_false(project$validatedSinceMutation)
+  expect_false(.isValidated(project))
   expect_s3_class(project$scenarios[["testscenario"]], "Scenario")
 })
 
@@ -742,7 +736,7 @@ test_that("a section-entry authoring write invalidates the validation cache", {
   .markValidated(project)
   setIndividual(project, "indiv1", weight = 81)
 
-  expect_false(project$validatedSinceMutation)
+  expect_false(.isValidated(project))
   expect_identical(project$individuals[["indiv1"]]$weight, 81)
 })
 
@@ -753,7 +747,7 @@ test_that("an extracted Scenario is a copy and cannot mutate the project silentl
   sc$modelFile <- "HIJACKED.pkml"
 
   # Reading and mutating a copy is not a project mutation.
-  expect_true(project$validatedSinceMutation)
+  expect_true(.isValidated(project))
   expect_false(
     identical(project$scenarios[["testscenario"]]$modelFile, "HIJACKED.pkml")
   )

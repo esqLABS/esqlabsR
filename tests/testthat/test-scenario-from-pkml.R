@@ -492,7 +492,7 @@ test_that("a failing addScenario rolls back scenarios and outputPaths", {
   expect_identical(names(project$outputPaths), outputsBefore)
 })
 
-test_that("a failing addScenario rollback preserves validatedSinceMutation", {
+test_that("a failing addScenario rollback preserves the validation flag", {
   project <- .fakeProject(
     parameterSets = list(global = list())
   )
@@ -508,7 +508,7 @@ test_that("a failing addScenario rollback preserves validatedSinceMutation", {
     ))
   )
 
-  expect_true(project$validatedSinceMutation)
+  expect_true(.isValidated(project))
 })
 
 test_that("a failing addScenario rolls back the on-disk scenario tree", {

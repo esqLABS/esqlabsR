@@ -118,18 +118,6 @@ Project <- R6::R6Class(
       private$.projectDirPath
     },
 
-    #' @field validatedSinceMutation Read-only logical. `TRUE` if a full
-    #'   [validateProject()] has succeeded since the project was last changed
-    #'   or loaded. Cleared by any change. Used internally by automatic
-    #'   validation (e.g. in [runScenarios()] and [createPlots()]) to skip
-    #'   redundant re-validation of an unchanged project.
-    validatedSinceMutation = function(value) {
-      if (!missing(value)) {
-        cli::cli_abort("{.field validatedSinceMutation} is readonly")
-      }
-      private$.validatedSinceMutation
-    },
-
     #' @field name Human-readable project name (the `name` JSON field). May be
     #'   `NULL` when the project has no name.
     name = function(value) {
@@ -427,8 +415,8 @@ Project <- R6::R6Class(
     # (`addScenario()` / `setScenario()` / `removeScenario()` and their
     # per-section siblings) or editing the definition's JSON file; those route
     # through the internal `.setSection()` entry point, which updates the
-    # in-memory backing field, sets the dirty bit, and clears
-    # `validatedSinceMutation` so the next run/plot re-validates. Nothing
+    # in-memory backing field, sets the dirty bit, and clears the
+    # validation-cache flag so the next run/plot re-validates. Nothing
     # touches the `definitions/<kind>/` tree until `saveProject()` reconciles
     # it to memory.
 
@@ -1044,6 +1032,20 @@ Project <- R6::R6Class(
       .validateProject_impl(self, private)
     },
 
+    #' @description Package-internal pre-op validation gate. Runs targeted
+    #'   validation for the `sections` an operation depends on and aborts with a
+    #'   formatted multi-error message on any critical errors, short-circuiting
+    #'   when the project is already validated. Called by the run/plot/parameter-
+    #'   identification entry points; not intended for end users.
+    #' @param sections Non-empty character vector of section names the calling
+    #'   operation requires.
+    #' @param opName Short label used in the abort message (e.g.
+    #'   `"runScenarios"`).
+    #' @keywords internal
+    ensureValid = function(sections, opName) {
+      private$.ensureValid(sections, opName)
+    },
+
     #' @description Print a summary of the Project.
     #' @param ... Unused; present for S3 method consistency.
     print = function(...) {
@@ -1221,9 +1223,8 @@ Project <- R6::R6Class(
       paste0(".", kind)
     },
 
-    # Invalidate the validation cache. Any mutation clears
-    # `validatedSinceMutation` so the next `runScenarios()` / `createPlots()`
-    # re-validates the new shape.
+    # Invalidate the validation cache. Any mutation clears the flag so the next
+    # `runScenarios()` / `createPlots()` re-validates the new shape.
     .invalidate = function() {
       private$.validatedSinceMutation <- FALSE
       invisible(self)
@@ -1279,14 +1280,43 @@ Project <- R6::R6Class(
     },
 
     # Record that a full project validation has succeeded with no critical
-    # errors. Sets the `validatedSinceMutation` flag.
+    # errors. Sets the validation-cache flag.
     .markValidated = function() {
       private$.validatedSinceMutation <- TRUE
       invisible(self)
     },
 
+    # Read the validation-cache flag: `TRUE` when a full validation has
+    # succeeded since the last mutation or load, so the pre-op validation gate
+    # (`.ensureValid()`) can skip a redundant re-run. The mirror of
+    # `.isModified()` for the validation axis; a genuinely-private method with
+    # no public binding, so the flag never appears on the object surface.
+    .isValidated = function() {
+      private$.validatedSinceMutation
+    },
+
+    # Pre-op validation gate. Runs targeted validation for the sections an
+    # operation depends on and aborts with a formatted multi-error message if
+    # any critical errors are found, short-circuiting when the project has been
+    # fully validated since its last mutation (`.isValidated()`). Does not flip
+    # the cache flag itself, because it only runs a subset of validators; only a
+    # full `validateProject()` marks the project validated. Lives on the class
+    # (not as a free function) so it can read the private validation-cache flag
+    # without a public binding; the run/plot/PI entry points reach it through
+    # the `ensureValid()` public forwarder.
+    .ensureValid = function(sections, opName) {
+      if (isTRUE(private$.isValidated())) {
+        return(invisible(NULL))
+      }
+      results <- .runProjectValidation(self, sections = sections)
+      if (isAnyCriticalErrors(results)) {
+        .abortValidationErrors(results, opName)
+      }
+      invisible(NULL)
+    },
+
     # Invoked by mutators after a successful programmatic change. Sets the
-    # in-memory dirty bit and clears the `validatedSinceMutation` flag (via
+    # in-memory dirty bit and clears the validation-cache flag (via
     # `.invalidate()`) so the next `runScenarios()` / `createPlots()`
     # re-validates the project. Does not touch disk.
     .markModified = function() {

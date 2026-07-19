@@ -929,8 +929,7 @@ runPI <- function(
     )
   }
 
-  .ensureValid(
-    project,
+  project$ensureValid(
     sections = c(
       "parameterIdentification",
       "scenarios",

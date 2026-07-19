@@ -580,7 +580,7 @@ createScenariosFromPKML <- function(
   # snapshot the section fields and restore them on error.
   oldScenarios <- private$.getSection("scenarios")
   oldOutputPaths <- private$.getSection("outputPaths")
-  wasValidated <- self$validatedSinceMutation
+  wasValidated <- private$.isValidated()
 
   tryCatch(
     {

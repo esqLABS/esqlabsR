@@ -344,6 +344,9 @@ createValidPISheets <- function() {
 .isModified <- function(project) {
   .projectSeam(project)$.isModified()
 }
+.isValidated <- function(project) {
+  .projectSeam(project)$.isValidated()
+}
 
 # Builds a minimal in-memory `Project` for validation/serialization tests:
 # all section fields default to empty, and `...` overrides named fields so a
