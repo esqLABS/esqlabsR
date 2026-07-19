@@ -18,7 +18,7 @@
 #' @export
 #' @family project persistence
 #' @seealso [saveProject()], [reloadProject()], [snapshotProject()],
-#'   [restoreProject()], [syncStatus()].
+#'   [restoreProject()], [projectStatus()].
 #'
 #' @section Editing a loaded project:
 #'   Changes you make to a loaded project — with `addScenario()`,
@@ -34,7 +34,7 @@
 #'   single file you can archive or share with [snapshotProject()], and
 #'   recreate a project folder from such a file (or roll an existing one
 #'   back) with [restoreProject()]. Check for unsaved changes and outdated
-#'   Excel files with [syncStatus()].
+#'   Excel files with [projectStatus()].
 #'
 #' @examples
 #' \dontrun{
@@ -72,7 +72,7 @@ loadProject <- function(path = "Project.json") {
 #'
 #'   Saving does not update the Excel files. If you also work with the Excel
 #'   configuration files, refresh them with [exportProjectToExcel()]. Use
-#'   [syncStatus()] to check whether project files on disk, the Excel files,
+#'   [projectStatus()] to check whether project files on disk, the Excel files,
 #'   and your R session are in sync.
 #'
 #' @param project A `Project` loaded from disk with [loadProject()] (or
@@ -85,7 +85,7 @@ loadProject <- function(path = "Project.json") {
 #' @export
 #' @family project persistence
 #' @seealso [loadProject()], [reloadProject()], [snapshotProject()],
-#'   [restoreProject()], [syncStatus()].
+#'   [restoreProject()], [projectStatus()].
 #' @examples
 #' \dontrun{
 #' project <- loadProject("Project.json")
@@ -135,7 +135,7 @@ saveProject <- function(project) {
 #' @export
 #' @family project persistence
 #' @seealso [loadProject()], [saveProject()], [snapshotProject()],
-#'   [restoreProject()], [syncStatus()].
+#'   [restoreProject()], [projectStatus()].
 #' @examples
 #' \dontrun{
 #' project <- loadProject("Project.json")
@@ -186,17 +186,6 @@ reloadProject <- function(project) {
     "i" = "Run {.code validateProject(project)} for the full report."
   ))
   invisible(NULL)
-}
-
-#' @rdname loadProject
-#' @export
-createProjectConfiguration <- function(path = "Project.json") {
-  lifecycle::deprecate_warn(
-    when = "6.0.0",
-    what = "createProjectConfiguration()",
-    with = "loadProject()"
-  )
-  loadProject(path)
 }
 
 #' Check if a directory contains an esqlabsR project
@@ -437,17 +426,6 @@ initProject <- function(
 #' exampleProjectPath()
 exampleProjectPath <- function() {
   file.path(.projectDirectory("Example"), "Project.json")
-}
-
-#' @rdname exampleProjectPath
-#' @export
-exampleProjectConfigurationPath <- function() {
-  lifecycle::deprecate_soft(
-    what = "exampleProjectConfigurationPath()",
-    with = "exampleProjectPath()",
-    when = "6.0.0"
-  )
-  exampleProjectPath()
 }
 
 #' Get path to esqlabsR project templates

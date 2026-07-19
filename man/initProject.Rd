@@ -44,10 +44,10 @@ Other project persistence:
 \code{\link[=exportProjectToExcel]{exportProjectToExcel()}},
 \code{\link[=importProjectFromExcel]{importProjectFromExcel()}},
 \code{\link[=loadProject]{loadProject()}},
+\code{\link[=projectStatus]{projectStatus()}},
 \code{\link[=reloadProject]{reloadProject()}},
 \code{\link[=restoreProject]{restoreProject()}},
 \code{\link[=saveProject]{saveProject()}},
-\code{\link[=snapshotProject]{snapshotProject()}},
-\code{\link[=syncStatus]{syncStatus()}}
+\code{\link[=snapshotProject]{snapshotProject()}}
 }
 \concept{project persistence}

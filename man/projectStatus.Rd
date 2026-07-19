@@ -2,53 +2,58 @@
 % Please edit documentation in R/project-excel.R
 \name{projectStatus}
 \alias{projectStatus}
-\alias{projectConfigurationStatus}
-\title{Check if Excel configuration files are in sync with JSON}
+\title{Check a loaded project for unsaved changes and outdated Excel files}
 \usage{
-projectStatus(
-  projectConfigPath = "Project.xlsx",
-  jsonPath = NULL,
-  silent = FALSE
-)
-
-projectConfigurationStatus(...)
+projectStatus(project, silent = FALSE)
 }
 \arguments{
-\item{projectConfigPath}{Either the path to the project's \code{Project.xlsx}
-file (defaults to \code{"Project.xlsx"}) or a loaded \link{Project} object. When a
-\code{Project} is passed, its \code{Project.xlsx} and JSON paths are taken from
-the object, so \code{jsonPath} is optional.}
+\item{project}{A \code{Project} object.}
 
-\item{jsonPath}{Path to the JSON project file. If \code{NULL} (default), a JSON
-file with the same base name as the Excel file is used (or, when a
-\code{Project} object is passed as \code{projectConfigPath}, that object's JSON
-path).}
-
-\item{silent}{Logical. If \code{TRUE}, suppresses informational messages.
+\item{silent}{Logical. If \code{TRUE}, suppresses the printed report and only
+returns the structured result (the same shape as \code{project$status}).
 Defaults to \code{FALSE}.}
 }
 \value{
-A list with components: \item{excel_in_sync}{Logical indicating
-whether the Excel files and the JSON are synchronized}
-\item{details}{A list with detailed comparison results}
+Invisibly, a \code{list(tree_in_sync, excel_in_sync, details)} (see
+the \code{status} field of \link{Project}).
 }
 \description{
-Compares the JSON project as saved on disk (\code{Project.json}
-plus its \verb{definitions/} folder) against the Excel configuration files and
-reports whether the two carry the same configuration. Only the files on
-disk are compared: edits made in the current R session but not yet saved
-with \code{\link[=saveProject]{saveProject()}} play no role here.
+Prints a report of how the \code{Project} in your R session
+compares to the files on disk, in two parts:
+\itemize{
+\item project vs. saved files: whether the project carries changes that have
+not been saved with \code{\link[=saveProject]{saveProject()}} yet. Reported as \code{NA} for a project
+that exists only in the R session, without a folder on disk.
+\item project vs. Excel: when the project has a \code{Project.xlsx} Excel file,
+whether that file still matches the current project (one-way: would
+exporting again change it). Reported as \code{NA} when there is no Excel
+file or it cannot be read.
+}
 
-This is related to, but distinct from, the Excel comparison that
-\code{\link[=syncStatus]{syncStatus()}} reports: \code{projectStatus()} compares the JSON files \emph{as saved
-on disk} against Excel, while \code{\link[=syncStatus]{syncStatus()}} compares the project \emph{as
-currently loaded in R} against Excel. The two can disagree while the
-project has unsaved changes, so save the project first if both should
-describe the same state.
+\code{projectStatus()} only reports; it never changes any files. To save your
+changes, call \code{\link[=saveProject]{saveProject()}}; to bring the Excel files up to date, call
+\code{\link[=exportProjectToExcel]{exportProjectToExcel()}} or \code{\link[=importProjectFromExcel]{importProjectFromExcel()}}.
+}
+\examples{
+\dontrun{
+project <- loadProject("Project.json")
+projectStatus(project) # readable report
+project$status # the same information as a structured list
+}
 }
 \seealso{
-\code{\link[=syncStatus]{syncStatus()}} reports a related Excel comparison for a loaded
-\code{Project}, but compares the project as currently loaded in R against the
-project's Excel files, whereas \code{projectStatus()} compares the JSON files
-saved on disk.
+\code{\link[=saveProject]{saveProject()}}, \code{\link[=reloadProject]{reloadProject()}}, \code{\link[=exportProjectToExcel]{exportProjectToExcel()}},
+\code{\link[=importProjectFromExcel]{importProjectFromExcel()}}.
+
+Other project persistence:
+\code{\link[=exampleProjectPath]{exampleProjectPath()}},
+\code{\link[=exportProjectToExcel]{exportProjectToExcel()}},
+\code{\link[=importProjectFromExcel]{importProjectFromExcel()}},
+\code{\link[=initProject]{initProject()}},
+\code{\link[=loadProject]{loadProject()}},
+\code{\link[=reloadProject]{reloadProject()}},
+\code{\link[=restoreProject]{restoreProject()}},
+\code{\link[=saveProject]{saveProject()}},
+\code{\link[=snapshotProject]{snapshotProject()}}
 }
+\concept{project persistence}

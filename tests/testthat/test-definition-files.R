@@ -448,23 +448,23 @@ test_that("a non-scalar scalar field fails load naming the scenario and field", 
   expect_snapshot(loadProject(project$jsonPath), error = TRUE)
 })
 
-# A mutation stays in memory and sets the dirty bit; syncStatus() reports the
+# A mutation stays in memory and sets the dirty bit; projectStatus() reports the
 # unsaved edit on the tree axis (and NA on the Excel axis, no side-car here).
 # After saveProject() the file is on disk and the tree axis is in sync again.
-test_that("a mutation is flagged by syncStatus() until saveProject()", {
+test_that("a mutation is flagged by projectStatus() until saveProject()", {
   project <- testProject()
   dir <- file.path(project$projectDirPath, "definitions", "scenarios")
 
   addScenario(project, "fresh", modelFile = "Aciclovir.pkml")
   # In memory only, and flagged as an unsaved change.
   expect_false(file.exists(file.path(dir, "fresh.json")))
-  status <- syncStatus(project, silent = TRUE)
+  status <- projectStatus(project, silent = TRUE)
   expect_false(status$tree_in_sync)
   expect_identical(status$excel_in_sync, NA)
 
   saveProject(project)
   expect_true(file.exists(file.path(dir, "fresh.json")))
-  expect_true(syncStatus(project, silent = TRUE)$tree_in_sync)
+  expect_true(projectStatus(project, silent = TRUE)$tree_in_sync)
 })
 
 test_that("a high-precision numeric value survives a definition write/reload round-trip", {

@@ -37,7 +37,7 @@ project is already up to date. Saving repeatedly is always safe.
 
 Saving does not update the Excel files. If you also work with the Excel
 configuration files, refresh them with \code{\link[=exportProjectToExcel]{exportProjectToExcel()}}. Use
-\code{\link[=syncStatus]{syncStatus()}} to check whether project files on disk, the Excel files,
+\code{\link[=projectStatus]{projectStatus()}} to check whether project files on disk, the Excel files,
 and your R session are in sync.
 }
 \examples{
@@ -50,7 +50,7 @@ saveProject(project) # clean save: "Project is already up to date; ..."
 }
 \seealso{
 \code{\link[=loadProject]{loadProject()}}, \code{\link[=reloadProject]{reloadProject()}}, \code{\link[=snapshotProject]{snapshotProject()}},
-\code{\link[=restoreProject]{restoreProject()}}, \code{\link[=syncStatus]{syncStatus()}}.
+\code{\link[=restoreProject]{restoreProject()}}, \code{\link[=projectStatus]{projectStatus()}}.
 
 Other project persistence:
 \code{\link[=exampleProjectPath]{exampleProjectPath()}},
@@ -58,9 +58,9 @@ Other project persistence:
 \code{\link[=importProjectFromExcel]{importProjectFromExcel()}},
 \code{\link[=initProject]{initProject()}},
 \code{\link[=loadProject]{loadProject()}},
+\code{\link[=projectStatus]{projectStatus()}},
 \code{\link[=reloadProject]{reloadProject()}},
 \code{\link[=restoreProject]{restoreProject()}},
-\code{\link[=snapshotProject]{snapshotProject()}},
-\code{\link[=syncStatus]{syncStatus()}}
+\code{\link[=snapshotProject]{snapshotProject()}}
 }
 \concept{project persistence}

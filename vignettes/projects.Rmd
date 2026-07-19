@@ -146,7 +146,7 @@ addOutputPath(editable, "pvb", "Organism|PeripheralVenousBlood|Aciclovir|Plasma 
 saveProject(editable)
 ```
 
-`reloadProject()` is the undo: it discards every unsaved edit and re-reads the project from disk, in place. `print(editable)` marks a project with unsaved changes as `<Project 'name'> [unsaved changes]`, and `syncStatus(editable)` reports, on two axes, whether there are unsaved edits and whether a sibling Excel project is a stale export.
+`reloadProject()` is the undo: it discards every unsaved edit and re-reads the project from disk, in place. `print(editable)` marks a project with unsaved changes as `<Project 'name'> [unsaved changes]`, and `projectStatus(editable)` reports, on two axes, whether there are unsaved edits and whether a sibling Excel project is a stale export.
 
 Use `snapshotProject()` to freeze the current in-memory state (unsaved edits included) to a single self-contained `.esqlabsR` file with every section inlined, so the whole project travels as one file rather than a `definitions/` tree. You give it a target `dir` and an optional `name` (the `.esqlabsR` extension is added for you; the default name is timestamped), and it returns the path it wrote.
 

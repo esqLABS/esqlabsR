@@ -896,28 +896,28 @@ test_that("jsonPath is read-only and aliases projectFilePath", {
   expect_snapshot(error = TRUE, project$jsonPath <- "elsewhere.json")
 })
 
-test_that("syncStatus() reports a clean bound project on both axes", {
+test_that("projectStatus() reports a clean bound project on both axes", {
   project <- testProject()
 
   # A freshly loaded, bound project with no Excel side-car: the tree axis is in
   # sync (no unsaved edits), the Excel axis is NA (nothing to compare).
-  status <- syncStatus(project, silent = TRUE)
+  status <- projectStatus(project, silent = TRUE)
   expect_true(status$tree_in_sync)
   expect_identical(status$excel_in_sync, NA)
   expect_identical(status$details, list())
 })
 
-test_that("syncStatus() reports NA on both axes for an in-memory project", {
-  status <- syncStatus(Project$new(), silent = TRUE)
+test_that("projectStatus() reports NA on both axes for an in-memory project", {
+  status <- projectStatus(Project$new(), silent = TRUE)
   expect_identical(status$tree_in_sync, NA)
   expect_identical(status$excel_in_sync, NA)
 })
 
-test_that("syncStatus() reports unsaved edits on the tree axis", {
+test_that("projectStatus() reports unsaved edits on the tree axis", {
   project <- testProject()
   addOutputPath(project, "dirtypath", "Organism|A|Concentration in container")
 
-  status <- syncStatus(project, silent = TRUE)
+  status <- projectStatus(project, silent = TRUE)
   expect_false(status$tree_in_sync)
 })
 

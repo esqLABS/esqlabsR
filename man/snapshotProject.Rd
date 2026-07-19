@@ -58,9 +58,9 @@ Other project persistence:
 \code{\link[=importProjectFromExcel]{importProjectFromExcel()}},
 \code{\link[=initProject]{initProject()}},
 \code{\link[=loadProject]{loadProject()}},
+\code{\link[=projectStatus]{projectStatus()}},
 \code{\link[=reloadProject]{reloadProject()}},
 \code{\link[=restoreProject]{restoreProject()}},
-\code{\link[=saveProject]{saveProject()}},
-\code{\link[=syncStatus]{syncStatus()}}
+\code{\link[=saveProject]{saveProject()}}
 }
 \concept{project persistence}

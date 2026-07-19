@@ -2,17 +2,9 @@
 % Please edit documentation in R/project-excel.R
 \name{exportProjectToExcel}
 \alias{exportProjectToExcel}
-\alias{restoreProjectConfiguration}
 \title{Export a Project to Excel files}
 \usage{
 exportProjectToExcel(project, outputDir = NULL, silent = FALSE)
-
-restoreProjectConfiguration(
-  jsonPath = "Project.json",
-  outputDir = NULL,
-  silent = FALSE,
-  ...
-)
 }
 \arguments{
 \item{project}{A \code{Project} object.}
@@ -22,11 +14,6 @@ to the directory of the source JSON file.}
 
 \item{silent}{Logical. If \code{TRUE}, suppresses informational messages.
 Defaults to \code{FALSE}.}
-
-\item{jsonPath}{Path to the JSON configuration file. Defaults to
-\code{"Project.json"}.}
-
-\item{...}{Additional arguments (unused).}
 }
 \value{
 Invisibly returns the path to the created
@@ -43,10 +30,10 @@ Other project persistence:
 \code{\link[=importProjectFromExcel]{importProjectFromExcel()}},
 \code{\link[=initProject]{initProject()}},
 \code{\link[=loadProject]{loadProject()}},
+\code{\link[=projectStatus]{projectStatus()}},
 \code{\link[=reloadProject]{reloadProject()}},
 \code{\link[=restoreProject]{restoreProject()}},
 \code{\link[=saveProject]{saveProject()}},
-\code{\link[=snapshotProject]{snapshotProject()}},
-\code{\link[=syncStatus]{syncStatus()}}
+\code{\link[=snapshotProject]{snapshotProject()}}
 }
 \concept{project persistence}
