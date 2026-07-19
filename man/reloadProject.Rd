@@ -35,7 +35,7 @@ reloadProject(project) # discard the edit, back to disk
 }
 \seealso{
 \code{\link[=loadProject]{loadProject()}}, \code{\link[=saveProject]{saveProject()}}, \code{\link[=snapshotProject]{snapshotProject()}},
-\code{\link[=restoreProject]{restoreProject()}}, \code{\link[=syncStatus]{syncStatus()}}.
+\code{\link[=restoreProject]{restoreProject()}}, \code{\link[=projectStatus]{projectStatus()}}.
 
 Other project persistence:
 \code{\link[=exampleProjectPath]{exampleProjectPath()}},
@@ -43,9 +43,9 @@ Other project persistence:
 \code{\link[=importProjectFromExcel]{importProjectFromExcel()}},
 \code{\link[=initProject]{initProject()}},
 \code{\link[=loadProject]{loadProject()}},
+\code{\link[=projectStatus]{projectStatus()}},
 \code{\link[=restoreProject]{restoreProject()}},
 \code{\link[=saveProject]{saveProject()}},
-\code{\link[=snapshotProject]{snapshotProject()}},
-\code{\link[=syncStatus]{syncStatus()}}
+\code{\link[=snapshotProject]{snapshotProject()}}
 }
 \concept{project persistence}

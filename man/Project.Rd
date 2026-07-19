@@ -229,7 +229,7 @@ in-memory edits vs. the on-disk tree, \code{NA} for an unbound in-memory
 project), \code{excel_in_sync} (\code{TRUE}/\code{FALSE}, or \code{NA} when no Excel
 side-car is configured or it cannot be read), and \code{details} (per-axis
 differences, empty when both axes are in sync). The same information
-\code{\link[=syncStatus]{syncStatus()}} prints. Read-only; assignment aborts.}
+\code{\link[=projectStatus]{projectStatus()}} prints. Read-only; assignment aborts.}
   }
   \if{html}{\out{</div>}}
 }
@@ -306,7 +306,7 @@ intended for end-user use.
 \subsection{\code{Project$.isModified()}}{
   Internal accessor for the in-memory dirty bit: \code{TRUE} when
 there are edits not yet reconciled to the on-disk tree. Read by
-\code{\link[=saveProject]{saveProject()}} (clean-save short-circuit) and by \code{\link[=syncStatus]{syncStatus()}} (the
+\code{\link[=saveProject]{saveProject()}} (clean-save short-circuit) and by \code{\link[=projectStatus]{projectStatus()}} (the
 memory-vs-tree axis). Not intended for end-user use.
   \subsection{Usage}{
     \if{html}{\out{<div class="r">}}

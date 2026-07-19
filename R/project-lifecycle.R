@@ -18,7 +18,7 @@
 #' @export
 #' @family project persistence
 #' @seealso [saveProject()], [reloadProject()], [snapshotProject()],
-#'   [restoreProject()], [syncStatus()].
+#'   [restoreProject()], [projectStatus()].
 #'
 #' @section Editing a loaded project (explicit save):
 #'   A loaded project holds its definition tree in memory, and memory is the
@@ -34,7 +34,7 @@
 #'   Discard unsaved edits and re-read from disk with [reloadProject()] (the
 #'   undo). Checkpoint the current state to a portable single file with
 #'   [snapshotProject()], and roll a working directory back to one with
-#'   [restoreProject()]. Inspect divergence with [syncStatus()].
+#'   [restoreProject()]. Inspect divergence with [projectStatus()].
 #'
 #' @examples
 #' \dontrun{
@@ -75,7 +75,7 @@ loadProject <- function(path = "Project.json") {
 #'
 #'   `saveProject()` is single-axis: it reconciles memory to the tree only and
 #'   never warns about a stale Excel side-car. Refresh the workbook separately
-#'   with [exportProjectToExcel()]; inspect divergence with [syncStatus()].
+#'   with [exportProjectToExcel()]; inspect divergence with [projectStatus()].
 #'
 #' @param project A `Project` bound to a directory (loaded with [loadProject()]
 #'   or restored with [restoreProject()]). An unbound in-memory project (from
@@ -87,7 +87,7 @@ loadProject <- function(path = "Project.json") {
 #' @export
 #' @family project persistence
 #' @seealso [loadProject()], [reloadProject()], [snapshotProject()],
-#'   [restoreProject()], [syncStatus()].
+#'   [restoreProject()], [projectStatus()].
 #' @examples
 #' \dontrun{
 #' project <- loadProject("Project.json")
@@ -139,7 +139,7 @@ saveProject <- function(project) {
 #' @export
 #' @family project persistence
 #' @seealso [loadProject()], [saveProject()], [snapshotProject()],
-#'   [restoreProject()], [syncStatus()].
+#'   [restoreProject()], [projectStatus()].
 #' @examples
 #' \dontrun{
 #' project <- loadProject("Project.json")
@@ -190,17 +190,6 @@ reloadProject <- function(project) {
     "i" = "Run {.code validateProject(project)} for the full report."
   ))
   invisible(NULL)
-}
-
-#' @rdname loadProject
-#' @export
-createProjectConfiguration <- function(path = "Project.json") {
-  lifecycle::deprecate_warn(
-    when = "6.0.0",
-    what = "createProjectConfiguration()",
-    with = "loadProject()"
-  )
-  loadProject(path)
 }
 
 #' Check if a directory contains an esqlabsR project
@@ -440,17 +429,6 @@ initProject <- function(
 #' exampleProjectPath()
 exampleProjectPath <- function() {
   file.path(.projectDirectory("Example"), "Project.json")
-}
-
-#' @rdname exampleProjectPath
-#' @export
-exampleProjectConfigurationPath <- function() {
-  lifecycle::deprecate_soft(
-    what = "exampleProjectConfigurationPath()",
-    with = "exampleProjectPath()",
-    when = "6.0.0"
-  )
-  exampleProjectPath()
 }
 
 #' Get path to esqlabsR project templates

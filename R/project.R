@@ -574,7 +574,7 @@ Project <- R6::R6Class(
     #'   project), `excel_in_sync` (`TRUE`/`FALSE`, or `NA` when no Excel
     #'   side-car is configured or it cannot be read), and `details` (per-axis
     #'   differences, empty when both axes are in sync). The same information
-    #'   [syncStatus()] prints. Read-only; assignment aborts.
+    #'   [projectStatus()] prints. Read-only; assignment aborts.
     status = function(value) {
       if (!missing(value)) {
         cli::cli_abort("{.field status} is readonly")
@@ -629,7 +629,7 @@ Project <- R6::R6Class(
 
     #' @description Internal accessor for the in-memory dirty bit: `TRUE` when
     #'   there are edits not yet reconciled to the on-disk tree. Read by
-    #'   [saveProject()] (clean-save short-circuit) and by [syncStatus()] (the
+    #'   [saveProject()] (clean-save short-circuit) and by [projectStatus()] (the
     #'   memory-vs-tree axis). Not intended for end-user use.
     #' @keywords internal
     .isModified = function() {
@@ -836,7 +836,7 @@ Project <- R6::R6Class(
     # `.setSection()`, the container-metadata setters, and `.markModified()`;
     # cleared on load / reload / a successful `saveProject()`. It feeds the
     # `print()` marker, the clean-save short-circuit, and the memory-vs-tree
-    # axis of `syncStatus()`. A private field with no active binding keeps it
+    # axis of `projectStatus()`. A private field with no active binding keeps it
     # off the public surface. A freshly constructed in-memory project starts
     # clean (FALSE).
     .modified = FALSE,

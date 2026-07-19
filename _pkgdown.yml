@@ -22,12 +22,11 @@ reference:
       - reloadProject
       - snapshotProject
       - restoreProject
-      - syncStatus
+      - projectStatus
       - initProject
       - exampleProjectPath
       - importProjectFromExcel
       - exportProjectToExcel
-      - projectStatus
       - createScenariosFromPKML
       - contains("Scenario")
   - title: Programmatic Project mutation
@@ -141,11 +140,6 @@ reference:
       deprecation warning. Use the new project-driven API above.
     contents:
       - ProjectConfiguration
-      - createProjectConfiguration
-      - exampleProjectConfigurationPath
-      - snapshotProjectConfiguration
-      - restoreProjectConfiguration
-      - projectConfigurationStatus
       - createDataCombinedFromExcel
       - createPlotsFromExcel
 articles:

@@ -2,12 +2,9 @@
 % Please edit documentation in R/project-lifecycle.R
 \name{loadProject}
 \alias{loadProject}
-\alias{createProjectConfiguration}
 \title{Load a project from a JSON configuration file}
 \usage{
 loadProject(path = "Project.json")
-
-createProjectConfiguration(path = "Project.json")
 }
 \arguments{
 \item{path}{Path to the \code{Project.json} file. Defaults to
@@ -41,7 +38,7 @@ to memory (write-if-different, and orphan-delete for removed entities).
 Discard unsaved edits and re-read from disk with \code{\link[=reloadProject]{reloadProject()}} (the
 undo). Checkpoint the current state to a portable single file with
 \code{\link[=snapshotProject]{snapshotProject()}}, and roll a working directory back to one with
-\code{\link[=restoreProject]{restoreProject()}}. Inspect divergence with \code{\link[=syncStatus]{syncStatus()}}.
+\code{\link[=restoreProject]{restoreProject()}}. Inspect divergence with \code{\link[=projectStatus]{projectStatus()}}.
 }
 
 \examples{
@@ -56,17 +53,17 @@ saveProject(project)
 }
 \seealso{
 \code{\link[=saveProject]{saveProject()}}, \code{\link[=reloadProject]{reloadProject()}}, \code{\link[=snapshotProject]{snapshotProject()}},
-\code{\link[=restoreProject]{restoreProject()}}, \code{\link[=syncStatus]{syncStatus()}}.
+\code{\link[=restoreProject]{restoreProject()}}, \code{\link[=projectStatus]{projectStatus()}}.
 
 Other project persistence:
 \code{\link[=exampleProjectPath]{exampleProjectPath()}},
 \code{\link[=exportProjectToExcel]{exportProjectToExcel()}},
 \code{\link[=importProjectFromExcel]{importProjectFromExcel()}},
 \code{\link[=initProject]{initProject()}},
+\code{\link[=projectStatus]{projectStatus()}},
 \code{\link[=reloadProject]{reloadProject()}},
 \code{\link[=restoreProject]{restoreProject()}},
 \code{\link[=saveProject]{saveProject()}},
-\code{\link[=snapshotProject]{snapshotProject()}},
-\code{\link[=syncStatus]{syncStatus()}}
+\code{\link[=snapshotProject]{snapshotProject()}}
 }
 \concept{project persistence}

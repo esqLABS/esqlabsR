@@ -42,15 +42,13 @@ The canonical 6.0.0 vocabulary (Project, Project file, Excel project, Scenario, 
 
 ## The migration tools
 
-Three functions form the bridge between an Excel project and a JSON project.
+Two functions form the bridge between an Excel project and a JSON project.
 
 * `importProjectFromExcel(projectConfigPath, outputDir, silent)` reads an Excel project and writes a v2.0 JSON project: a `Project.json` file and the `definitions/` tree of one-file-per-definition files alongside it. This is the one-way migration entry point. It returns, invisibly, the path to the `Project.json` it wrote.
 
 * `exportProjectToExcel(project, outputDir, silent)` is the reverse: it writes the Excel workbooks back out from a loaded `Project`. It is mainly useful if you still need to hand a colleague an Excel project, or to compare the two forms.
 
-* `projectStatus(projectConfigPath, jsonPath, silent)` reports whether an Excel project and a JSON project are in sync. It re-imports the Excel side into a temporary JSON and compares it (section by section) against the existing `Project.json`, ignoring the recorded esqlabsR version.
-
-> The older names `snapshotProjectConfiguration()`, `restoreProjectConfiguration()`, and `projectConfigurationStatus()` are deprecated; they warn and forward to the three functions above. Use the new names.
+Once you have loaded the JSON project, `projectStatus(project)` reports whether a `Project.xlsx` side-car next to it is still a faithful export of the current project (see Step 4).
 
 ## Step 1: run the import
 
@@ -115,15 +113,16 @@ The migration is faithful for the common case, but a few things deserve a manual
 
 * **Empty or absent sections are dropped, not preserved as empty.** A configuration workbook that did not exist, or a sheet with no rows, simply does not appear in the JSON project. If a section you expected is missing after import, check that its workbook and sheet actually held data.
 
-* **Keep the Excel project around until you trust the JSON one.** During the transition you can use `projectStatus()` to confirm the two forms agree before you retire the workbooks.
+* **Keep the Excel project around until you trust the JSON one.** During the transition you can use `projectStatus(project)` to confirm the workbooks still match the loaded project before you retire them (see Step 4).
+
+## Step 4: confirm the two forms agree
+
+`projectStatus(project)` reports, for a loaded `Project`, whether it has unsaved in-memory edits (the memory-vs-tree axis) and whether a configured `Project.xlsx` side-car is a stale export of the current project (the memory-vs-Excel axis). During a migration the Excel axis is the one to watch: it tells you whether re-exporting would change the workbooks.
 
 ```{r status}
-status <- projectStatus(
-  projectConfigPath = "MyProject/Project.xlsx",
-  jsonPath = "MyProject/Project.json"
-)
-status$in_sync
+status <- projectStatus(project)
+status$excel_in_sync
 #> TRUE
 ```
 
-When `in_sync` is `FALSE`, `status$details` lists which sections differ, so you can see whether the divergence is something you changed deliberately in one form or a migration gap to investigate.
+When `excel_in_sync` is `FALSE`, `status$details` describes the divergence, so you can see whether it is something you changed deliberately or a migration gap to investigate. Once you trust the JSON project, you can retire the Excel workbooks.

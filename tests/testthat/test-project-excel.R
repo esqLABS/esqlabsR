@@ -1,44 +1,3 @@
-test_that("snapshotProjectConfiguration warns with lifecycle_warning_deprecated", {
-  withr::local_options(lifecycle_verbosity = "warning")
-  expect_warning(
-    tryCatch(
-      snapshotProjectConfiguration(
-        "nonexistent.xlsx",
-        outputDir = withr::local_tempdir(),
-        silent = TRUE
-      ),
-      error = function(e) NULL
-    ),
-    class = "lifecycle_warning_deprecated"
-  )
-})
-
-test_that("restoreProjectConfiguration warns with lifecycle_warning_deprecated", {
-  withr::local_options(lifecycle_verbosity = "warning")
-  expect_warning(
-    tryCatch(
-      restoreProjectConfiguration(
-        "nonexistent.json",
-        outputDir = withr::local_tempdir(),
-        silent = TRUE
-      ),
-      error = function(e) NULL
-    ),
-    class = "lifecycle_warning_deprecated"
-  )
-})
-
-test_that("projectConfigurationStatus warns with lifecycle_warning_deprecated", {
-  withr::local_options(lifecycle_verbosity = "warning")
-  expect_warning(
-    tryCatch(
-      projectConfigurationStatus("nonexistent.xlsx"),
-      error = function(e) NULL
-    ),
-    class = "lifecycle_warning_deprecated"
-  )
-})
-
 test_that("exportProjectToExcel writes OutputPaths sheet with atomic columns", {
   work_dir <- withr::local_tempdir()
   file.copy(dirname(exampleProjectPath()), work_dir, recursive = TRUE)
@@ -665,10 +624,10 @@ test_that(".compareJsonToExcel does not count id canonicalization as drift", {
 })
 
 # A corrupt or unreadable Excel side-car cannot be compared. The Excel axis of
-# syncStatus() must report that honestly as NA (the "cannot compare" state),
+# projectStatus() must report that honestly as NA (the "cannot compare" state),
 # not silently claim the project is in sync, and must warn when not silent. The
 # tree axis is unaffected (a freshly loaded project is in sync).
-test_that("syncStatus() reports the Excel axis as NA (and warns) when the side-car is unreadable", {
+test_that("projectStatus() reports the Excel axis as NA (and warns) when the side-car is unreadable", {
   work_dir <- withr::local_tempdir()
   file.copy(dirname(exampleProjectPath()), work_dir, recursive = TRUE)
   jsonPath <- file.path(work_dir, "Example", "Project.json")
@@ -682,14 +641,14 @@ test_that("syncStatus() reports the Excel axis as NA (and warns) when the side-c
   )
 
   # Silent: the Excel axis is one of two; it is NA, the tree axis is in sync.
-  status <- suppressWarnings(syncStatus(project, silent = TRUE))
+  status <- suppressWarnings(projectStatus(project, silent = TRUE))
   expect_named(status, c("tree_in_sync", "excel_in_sync", "details"))
   expect_identical(status$excel_in_sync, NA)
   expect_true(status$tree_in_sync)
 
   # Non-silent: a warning surfaces naming the comparison failure.
   expect_warning(
-    syncStatus(project, silent = FALSE),
+    projectStatus(project, silent = FALSE),
     "Cannot compare the Excel side-car"
   )
 })

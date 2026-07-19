@@ -298,7 +298,7 @@ messages$restoredProjectConfiguration <- function(inputFile, outputFile) {
   )
 }
 
-# The Excel axis of `syncStatus()`: with no `Project.xlsx` side-car there is
+# The Excel axis of `projectStatus()`: with no `Project.xlsx` side-car there is
 # nothing to compare the in-memory project against.
 messages$syncNoExcel <- function() {
   cli::format_inline(
@@ -306,7 +306,7 @@ messages$syncNoExcel <- function() {
   )
 }
 
-# The tree axis of `syncStatus()`: whether in-memory edits diverge from the
+# The tree axis of `projectStatus()`: whether in-memory edits diverge from the
 # on-disk `definitions/` tree (the dirty bit).
 messages$syncTreeDirty <- function() {
   cli::format_inline(

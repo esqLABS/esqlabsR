@@ -2,53 +2,57 @@
 % Please edit documentation in R/project-excel.R
 \name{projectStatus}
 \alias{projectStatus}
-\alias{projectConfigurationStatus}
-\title{Check if Excel configuration files are in sync with JSON}
+\title{Report a project's two-axis sync status}
 \usage{
-projectStatus(
-  projectConfigPath = "Project.xlsx",
-  jsonPath = NULL,
-  silent = FALSE
-)
-
-projectConfigurationStatus(...)
+projectStatus(project, silent = FALSE)
 }
 \arguments{
-\item{projectConfigPath}{Either a path to a \code{Project.xlsx} file
-(defaults to \code{"Project.xlsx"}) or a loaded \link{Project} object. When a
-\code{Project} is passed, its \code{Project.xlsx} side-car and JSON path are
-derived from the object, so \code{jsonPath} is optional.}
+\item{project}{A \code{Project} object.}
 
-\item{jsonPath}{Path to the JSON configuration file. If \code{NULL} (default),
-the function looks for a JSON file with the same base name (or, when a
-\code{Project} object is passed as \code{projectConfigPath}, uses that object's
-JSON path).}
-
-\item{silent}{Logical indicating whether to suppress informational messages.
+\item{silent}{Logical. If \code{TRUE}, suppresses the printed report and only
+returns the structured result (the same shape as \code{project$status}).
 Defaults to \code{FALSE}.}
 }
 \value{
-A list with components: \item{excel_in_sync}{Logical indicating
-whether the Excel files and the JSON are synchronized}
-\item{details}{A list with detailed comparison results}
+Invisibly, a \code{list(tree_in_sync, excel_in_sync, details)} (see
+the \code{status} field of \link{Project}).
 }
 \description{
-Compares the \strong{persisted} JSON configuration on disk
-(\code{Project.json} plus its \verb{definitions/} tree) against the Excel
-configuration files to determine whether they are synchronized. This is a
-disk-to-disk comparison and does not read a loaded project's in-memory
-state.
+Human-oriented, read-only report of how a \code{Project}'s in-memory
+state diverges from disk, on two axes:
+\itemize{
+\item memory vs. tree: whether there are unsaved in-memory edits (the project
+is dirty). Reported as \code{NA} for an unbound in-memory project.
+\item memory vs. Excel: when a \code{Project.xlsx} side-car is configured, whether
+it is a stale export of the current project (one-way: would re-exporting
+change it). Reported as \code{NA} when no side-car is configured or it cannot
+be read.
+}
 
-This is related to, but distinct from, the Excel axis of \code{\link[=syncStatus]{syncStatus()}}.
-\code{projectStatus()} compares the JSON \emph{as saved on disk} against Excel, while
-\code{\link[=syncStatus]{syncStatus()}}'s Excel axis compares the \emph{current in-memory} project against
-Excel. The two can disagree when the project has unsaved edits (memory
-differs from the saved JSON), so save the project before relying on either
-to reflect the same state.
+\code{projectStatus()} never reconciles either axis. To sync the tree, call
+\code{\link[=saveProject]{saveProject()}}; to sync Excel, call \code{\link[=exportProjectToExcel]{exportProjectToExcel()}} or
+\code{\link[=importProjectFromExcel]{importProjectFromExcel()}}.
+}
+\examples{
+\dontrun{
+project <- loadProject("Project.json")
+projectStatus(project) # human-readable two-axis report
+project$status # the same information as a structured list
+}
 }
 \seealso{
-\code{\link[=syncStatus]{syncStatus()}} reports a related Excel comparison for a loaded
-\code{Project} as one of its two axes (alongside the memory-vs-tree axis), but
-compares the \emph{in-memory} project against the \code{Project.xlsx} side-car,
-whereas \code{projectStatus()} compares the \emph{persisted} JSON against Excel.
+\code{\link[=saveProject]{saveProject()}}, \code{\link[=reloadProject]{reloadProject()}}, \code{\link[=exportProjectToExcel]{exportProjectToExcel()}},
+\code{\link[=importProjectFromExcel]{importProjectFromExcel()}}.
+
+Other project persistence:
+\code{\link[=exampleProjectPath]{exampleProjectPath()}},
+\code{\link[=exportProjectToExcel]{exportProjectToExcel()}},
+\code{\link[=importProjectFromExcel]{importProjectFromExcel()}},
+\code{\link[=initProject]{initProject()}},
+\code{\link[=loadProject]{loadProject()}},
+\code{\link[=reloadProject]{reloadProject()}},
+\code{\link[=restoreProject]{restoreProject()}},
+\code{\link[=saveProject]{saveProject()}},
+\code{\link[=snapshotProject]{snapshotProject()}}
 }
+\concept{project persistence}

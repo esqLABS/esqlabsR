@@ -40,7 +40,7 @@ reports an informational message, never an error.
 
 \code{saveProject()} is single-axis: it reconciles memory to the tree only and
 never warns about a stale Excel side-car. Refresh the workbook separately
-with \code{\link[=exportProjectToExcel]{exportProjectToExcel()}}; inspect divergence with \code{\link[=syncStatus]{syncStatus()}}.
+with \code{\link[=exportProjectToExcel]{exportProjectToExcel()}}; inspect divergence with \code{\link[=projectStatus]{projectStatus()}}.
 }
 \examples{
 \dontrun{
@@ -52,7 +52,7 @@ saveProject(project) # clean save: "Project is already up to date; ..."
 }
 \seealso{
 \code{\link[=loadProject]{loadProject()}}, \code{\link[=reloadProject]{reloadProject()}}, \code{\link[=snapshotProject]{snapshotProject()}},
-\code{\link[=restoreProject]{restoreProject()}}, \code{\link[=syncStatus]{syncStatus()}}.
+\code{\link[=restoreProject]{restoreProject()}}, \code{\link[=projectStatus]{projectStatus()}}.
 
 Other project persistence:
 \code{\link[=exampleProjectPath]{exampleProjectPath()}},
@@ -60,9 +60,9 @@ Other project persistence:
 \code{\link[=importProjectFromExcel]{importProjectFromExcel()}},
 \code{\link[=initProject]{initProject()}},
 \code{\link[=loadProject]{loadProject()}},
+\code{\link[=projectStatus]{projectStatus()}},
 \code{\link[=reloadProject]{reloadProject()}},
 \code{\link[=restoreProject]{restoreProject()}},
-\code{\link[=snapshotProject]{snapshotProject()}},
-\code{\link[=syncStatus]{syncStatus()}}
+\code{\link[=snapshotProject]{snapshotProject()}}
 }
 \concept{project persistence}

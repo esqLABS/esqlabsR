@@ -2,7 +2,6 @@
 % Please edit documentation in R/project-excel.R
 \name{importProjectFromExcel}
 \alias{importProjectFromExcel}
-\alias{snapshotProjectConfiguration}
 \title{Import project configuration from Excel files to v2.0 JSON}
 \usage{
 importProjectFromExcel(
@@ -10,8 +9,6 @@ importProjectFromExcel(
   outputDir = NULL,
   silent = FALSE
 )
-
-snapshotProjectConfiguration(...)
 }
 \arguments{
 \item{projectConfigPath}{Path to the \code{Project.xlsx} file.
@@ -23,8 +20,6 @@ Excel file.}
 
 \item{silent}{Logical. If \code{TRUE}, suppresses informational messages.
 Defaults to \code{FALSE}.}
-
-\item{...}{Arguments passed to \code{importProjectFromExcel()}.}
 }
 \value{
 Invisibly returns the path to the created JSON file.
@@ -40,10 +35,10 @@ Other project persistence:
 \code{\link[=exportProjectToExcel]{exportProjectToExcel()}},
 \code{\link[=initProject]{initProject()}},
 \code{\link[=loadProject]{loadProject()}},
+\code{\link[=projectStatus]{projectStatus()}},
 \code{\link[=reloadProject]{reloadProject()}},
 \code{\link[=restoreProject]{restoreProject()}},
 \code{\link[=saveProject]{saveProject()}},
-\code{\link[=snapshotProject]{snapshotProject()}},
-\code{\link[=syncStatus]{syncStatus()}}
+\code{\link[=snapshotProject]{snapshotProject()}}
 }
 \concept{project persistence}
