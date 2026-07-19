@@ -690,16 +690,24 @@ print.PITask <- function(x, ...) {
       parameters = if (length(paramObjs) == 1L) paramObjs[[1]] else paramObjs
     )
     # Apply the declared display unit first so bounds and start value are
-    # interpreted in it. Then assign startValue before minValue/maxValue: the
-    # upstream setters validate min/max against the current start value, which
-    # would otherwise still be the model default and reject any bounds that do
-    # not bracket it.
+    # interpreted in it, then the start value. The bound setters validate each
+    # new bound against the *other* bound, which still holds its model-default
+    # value until we overwrite it. Assign the bounds in whichever order keeps
+    # every intermediate state valid: if the new minValue would exceed the
+    # stale maxValue, raise maxValue first; otherwise lower minValue first. The
+    # PIParameter() record is already validated as minValue <= startValue <=
+    # maxValue, so one of the two orders always succeeds.
     if (!is.null(p$units) && nchar(p$units) > 0) {
       runtime$unit <- p$units
     }
     runtime$startValue <- p$startValue
-    runtime$minValue <- p$minValue
-    runtime$maxValue <- p$maxValue
+    if (p$minValue >= runtime$maxValue) {
+      runtime$maxValue <- p$maxValue
+      runtime$minValue <- p$minValue
+    } else {
+      runtime$minValue <- p$minValue
+      runtime$maxValue <- p$maxValue
+    }
     runtime
   })
 
