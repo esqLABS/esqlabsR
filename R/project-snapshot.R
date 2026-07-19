@@ -12,46 +12,46 @@
 # (`.writeProjectTree()`, the per-kind serialize/parse specs) lives in
 # `R/definition-files.R`.
 
-#' Freeze a project to a portable single-file snapshot
+#' Save the whole project to a single shareable snapshot file
 #'
-#' @description Write the current in-memory state of a `Project` to a single
-#'   self-contained `.esqlabsR` file with every section inlined. Unsaved edits
-#'   are included, so a snapshot is a faithful freeze of the project as it is
-#'   right now, and a legitimate "stash my experiment, then [reloadProject()]
-#'   back to the saved state" move. The content is JSON; the `.esqlabsR`
-#'   extension marks the file as a portable, shareable freeze-frame,
-#'   distinguishing it at a glance from the `Project.json` container of a live
-#'   tree project.
+#' @description Write a `Project`, exactly as it is in your R session, to a
+#'   single self-contained `.esqlabsR` file. Unsaved changes are included, so
+#'   the snapshot captures the project as it is right now — which also makes
+#'   it a good way to set an experiment aside: snapshot it, then go back to
+#'   the saved state with [reloadProject()]. The file content is JSON; the
+#'   `.esqlabsR` extension simply marks the file as a portable snapshot, so
+#'   it is not confused with the `Project.json` file of a project folder.
 #'
-#'   Materialize a snapshot back into a working tree with [restoreProject()];
-#'   snapshot then restore then snapshot is a fixed point.
+#'   Turn a snapshot back into a full project folder with [restoreProject()];
+#'   nothing is lost in the round trip.
 #'
-#' @param project A `Project` object. It need not be bound to a directory; an
-#'   in-memory project can be snapshotted too.
+#' @param project A `Project` object. It does not need a folder on disk; a
+#'   project that exists only in the R session can be snapshotted too.
 #' @param dir Target folder for the snapshot file (default `"."`). Created if
 #'   it does not exist.
-#' @param name Filename stem for the snapshot (the `.esqlabsR` extension is
-#'   always forced, so any extension you include is replaced: `"exp.zip"` and
-#'   `"study.json"` both become `exp.esqlabsR` / `study.esqlabsR`). When `NULL`
-#'   (default), a colon-free timestamped stem
-#'   `<projectName>-YYYY-MM-DD-HHMMSS` is used (sortable and Windows-safe);
-#'   `<projectName>` falls back to `"project"` when the project has no name.
+#' @param name File name for the snapshot, without extension: the `.esqlabsR`
+#'   extension is always added, and any extension you include is replaced
+#'   (`"exp.zip"` and `"study.json"` both become `exp.esqlabsR` /
+#'   `study.esqlabsR`). When `NULL` (default), a timestamped name
+#'   `<projectName>-YYYY-MM-DD-HHMMSS` is used (it sorts by date and is safe
+#'   as a Windows file name); `<projectName>` falls back to `"project"` when
+#'   the project has no name.
 #' @param overwrite If `FALSE` (default), writing over an existing snapshot
 #'   file aborts. Pass `TRUE` to replace it.
 #'
-#' @returns Invisibly, the (normalized `.esqlabsR`) path the snapshot was
-#'   written to.
+#' @returns Invisibly, the path of the written snapshot file (always with the
+#'   `.esqlabsR` extension).
 #' @export
 #' @family project persistence
 #' @seealso [restoreProject()], [loadProject()], [saveProject()].
 #' @examples
-#' # Scaffold a throwaway example project and snapshot it to a single file.
+#' # Create a temporary example project and snapshot it to a single file.
 #' dir <- file.path(tempdir(), "snapshot-example")
 #' dir.create(dir, showWarnings = FALSE)
 #' initProject(dir, type = "example", createExcel = FALSE)
 #' project <- loadProject(file.path(dir, "Project.json"))
 #' snapshot <- snapshotProject(project, dir = tempdir(), name = "study")
-#' snapshot # the normalized .esqlabsR path
+#' snapshot # the path of the snapshot file
 snapshotProject <- function(
   project,
   dir = ".",
@@ -93,46 +93,46 @@ snapshotProject <- function(
   invisible(path)
 }
 
-#' Restore a project tree from a single-file snapshot
+#' Recreate a project folder from a snapshot file
 #'
-#' @description Read a single self-contained snapshot file (a portable
-#'   freeze-frame with every section inlined) and materialize it into a full
-#'   on-disk tree project at `dir`: a `Project.json` container plus a
-#'   `definitions/<kind>/` tree (one file per definition) for every section.
-#'   Returns a freshly-loaded `Project` bound to `dir`.
+#' @description Read a snapshot file and recreate a full project folder from
+#'   it at `dir`: a `Project.json` file plus the `definitions/` folder with
+#'   one file per definition. Returns a freshly loaded `Project` that works
+#'   from `dir`.
 #'
-#'   Restore is path-based and needs no loaded project: the driving use case is
-#'   sharing, where a colleague hands you a `.esqlabsR` and
-#'   `restoreProject("theirs.esqlabsR", "myproj")` recreates the working tree
-#'   from scratch. It is also the rollback half of the save-point story: with
-#'   `overwrite = TRUE` it rolls a working directory back to a snapshot in
-#'   place.
+#'   You only need the file, not a loaded project. The typical use is
+#'   sharing: a colleague sends you a `.esqlabsR` file, and
+#'   `restoreProject("theirs.esqlabsR", "myproj")` recreates the whole
+#'   project folder from it. It is also the way back to an earlier state:
+#'   with `overwrite = TRUE` it rolls an existing project folder back to the
+#'   snapshot.
 #'
-#'   The canonical snapshot form is a `.esqlabsR` file (as written by
-#'   [snapshotProject()]), but a plain inlined `Project.json` is also accepted
-#'   for back-compatibility (for example, the file [importProjectFromExcel()]
-#'   writes). The result is a normal tree project: [loadProject()] reads it back
-#'   from `dir` identically (section for section).
+#'   Snapshots are usually `.esqlabsR` files written by [snapshotProject()],
+#'   but a `Project.json` in which all sections are written out in the file
+#'   itself, rather than in a `definitions/` folder (a legacy single-file
+#'   project), is accepted too. The result is a normal project:
+#'   [loadProject()] opens it from `dir` with exactly the same content.
 #'
-#' @param snapshot Path to the snapshot file to read (a `.esqlabsR` file, or a
-#'   plain inlined `Project.json`). Must exist.
-#' @param dir Target directory for the materialized tree project (default
-#'   `"."`). Created if it does not exist.
-#' @param overwrite If `FALSE` (default), a non-empty `dir` (any files,
-#'   whether a full esqlabsR project, unrelated files, or a partial tree)
-#'   aborts; unpack into a fresh directory only. If `TRUE`, the contents of
-#'   `dir` are replaced in place (an in-place rollback), and, when `dir` held a
-#'   real esqlabsR project, a warning is raised that any `Project` previously
-#'   loaded from `dir` is now stale. Rebind to the returned object, or
-#'   [reloadProject()] the old handle. The blessed idiom is
+#' @param snapshot Path to the snapshot file to read (a `.esqlabsR` file, or
+#'   a legacy single-file `Project.json`). Must exist.
+#' @param dir Folder in which the project is recreated (default `"."`).
+#'   Created if it does not exist.
+#' @param overwrite If `FALSE` (default), `restoreProject()` aborts when
+#'   `dir` already contains any files — a project, unrelated files, anything;
+#'   restore into a fresh folder only. If `TRUE`, the contents of `dir` are
+#'   replaced with the snapshot. When `dir` held an esqlabsR project, a
+#'   warning reminds you that a `Project` you loaded from `dir` earlier no
+#'   longer matches the files: continue with the returned project, or refresh
+#'   the old one with [reloadProject()]. The recommended form is
 #'   `p <- restoreProject(snap, dir, overwrite = TRUE)`.
 #'
-#' @returns A freshly-loaded `Project`, bound to `dir`, with a clear dirty bit.
+#' @returns A freshly loaded `Project` working from `dir`, with no unsaved
+#'   changes.
 #' @export
 #' @family project persistence
 #' @seealso [snapshotProject()], [loadProject()], [reloadProject()].
 #' @examples
-#' # Write a snapshot, then materialize it into a fresh tree project.
+#' # Write a snapshot, then recreate a project folder from it.
 #' src <- file.path(tempdir(), "restore-src")
 #' dir.create(src, showWarnings = FALSE)
 #' initProject(src, type = "example", createExcel = FALSE)

@@ -1,20 +1,23 @@
 # Excel <-> JSON bridge: public API ----
 
-#' Import project configuration from Excel files to v2.0 JSON
+#' Import project configuration from Excel files
 #'
 #' @description Reads all Excel configuration files in an esqlabsR project and
-#' produces a single v2.0 JSON file. This is the migration path from
-#' Excel-based projects to the JSON-primary workflow.
+#' converts them to the JSON project format: a project file (named after the
+#' Excel file, e.g. `Project.xlsx` becomes `Project.json`) plus one file per
+#' definition in the `definitions/` folder. The result is a ready-to-use
+#' project — [loadProject()] can open it directly. This is the migration path
+#' from Excel-based projects to the JSON-primary workflow.
 #'
 #' @param projectConfigPath Path to the `Project.xlsx` file.
 #'   Defaults to `"Project.xlsx"`.
-#' @param outputDir Directory where the JSON file will be saved. If `NULL`
-#'   (default), the JSON file is created in the same directory as the source
-#'   Excel file.
+#' @param outputDir Directory where the JSON project is created. If `NULL`
+#'   (default), it is created in the same directory as the source Excel file.
 #' @param silent Logical. If `TRUE`, suppresses informational messages.
 #'   Defaults to `FALSE`.
 #'
-#' @return Invisibly returns the path to the created JSON file.
+#' @return Invisibly returns the path to the created project file (the
+#'   `Project.json`).
 #' @export
 #' @family project persistence
 importProjectFromExcel <- function(
@@ -666,21 +669,22 @@ exportProjectToExcel <- function(
 
 # Excel <-> JSON bridge: sync helper ----
 
-#' Report a project's two-axis sync status
+#' Check a loaded project for unsaved changes and outdated Excel files
 #'
-#' @description Human-oriented, read-only report of how a `Project`'s in-memory
-#'   state diverges from disk, on two axes:
+#' @description Prints a report of how the `Project` in your R session
+#'   compares to the files on disk, in two parts:
 #'
-#'   - memory vs. tree: whether there are unsaved in-memory edits (the project
-#'     is dirty). Reported as `NA` for an unbound in-memory project.
-#'   - memory vs. Excel: when a `Project.xlsx` side-car is configured, whether
-#'     it is a stale export of the current project (one-way: would re-exporting
-#'     change it). Reported as `NA` when no side-car is configured or it cannot
-#'     be read.
+#'   - project vs. saved files: whether the project carries changes that have
+#'     not been saved with [saveProject()] yet. Reported as `NA` for a project
+#'     that exists only in the R session, without a folder on disk.
+#'   - project vs. Excel: when the project has a `Project.xlsx` Excel file,
+#'     whether that file still matches the current project (one-way: would
+#'     exporting again change it). Reported as `NA` when there is no Excel
+#'     file or it cannot be read.
 #'
-#'   `projectStatus()` never reconciles either axis. To sync the tree, call
-#'   [saveProject()]; to sync Excel, call [exportProjectToExcel()] or
-#'   [importProjectFromExcel()].
+#'   `projectStatus()` only reports; it never changes any files. To save your
+#'   changes, call [saveProject()]; to bring the Excel files up to date, call
+#'   [exportProjectToExcel()] or [importProjectFromExcel()].
 #'
 #' @param project A `Project` object.
 #' @param silent Logical. If `TRUE`, suppresses the printed report and only
@@ -696,7 +700,7 @@ exportProjectToExcel <- function(
 #' @examples
 #' \dontrun{
 #' project <- loadProject("Project.json")
-#' projectStatus(project) # human-readable two-axis report
+#' projectStatus(project) # readable report
 #' project$status # the same information as a structured list
 #' }
 projectStatus <- function(project, silent = FALSE) {
@@ -791,7 +795,7 @@ projectStatus <- function(project, silent = FALSE) {
     if (!silent) {
       cli::cli_warn(
         c(
-          "Cannot compare the Excel side-car to the project.",
+          "Cannot compare the Excel configuration files to the project.",
           "x" = conditionMessage(compareError),
           "i" = "The {.field excel_in_sync} status is reported as {.val NA}."
         )

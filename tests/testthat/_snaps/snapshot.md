@@ -33,7 +33,7 @@
       rolledBack <- restoreProject(out, dir, overwrite = TRUE)
     Condition
       Warning:
-      Replaced the existing project in '<tmp-path>' with the snapshot.
-      ! Any <Project> previously loaded from `dir` is now stale.
-      i Rebind to the object `restoreProject()` returned, or `reloadProject()` the old handle.
+      Replaced the project in '<tmp-path>' with the snapshot.
+      ! Project objects loaded from this folder before the restore still contain the old project.
+      i Continue with the project returned by `restoreProject()`, or call `reloadProject()` on the old object.
 

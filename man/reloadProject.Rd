@@ -2,29 +2,27 @@
 % Please edit documentation in R/project-lifecycle.R
 \name{reloadProject}
 \alias{reloadProject}
-\title{Discard a project's in-memory edits and re-read it from disk}
+\title{Discard a project's unsaved changes and re-read it from disk}
 \usage{
 reloadProject(project)
 }
 \arguments{
-\item{project}{A \code{Project} bound to a directory. An unbound in-memory
-project has nothing to reload from and aborts.}
+\item{project}{A \code{Project} with a folder on disk. A project that exists
+only in the R session has nothing to reload from and aborts.}
 }
 \value{
-Invisibly, the \code{project}, with in-memory edits discarded and the
-dirty bit cleared.
+Invisibly, the \code{project}, with unsaved changes discarded.
 }
 \description{
-The undo of the explicit-save model: discard every unsaved
-in-memory edit and re-read the project from its on-disk tree, in place.
-The \code{Project} object identity is preserved (edits are reverted by R6
-reference), so existing handles stay valid.
+The undo of saving: discard every unsaved change and re-read
+the project from its files on disk, in place. The \code{Project} stays the
+same object, so every variable that points to it stays valid.
 
-\code{reloadProject()} always re-reads the bound tree from disk and updates the
-project in place, so it also picks up external changes to the files (for
-example after \code{\link[=restoreProject]{restoreProject()}} rolled the tree back). It simply produces
-no announcement when there were no unsaved edits: unlike a clean
-\code{\link[=saveProject]{saveProject()}}, a clean reload prints nothing.
+\code{reloadProject()} always re-reads the project's files and updates the
+project in place, so it also picks up changes made to the files outside
+the R session (for example after \code{\link[=restoreProject]{restoreProject()}} rolled the project
+back). It simply produces no announcement when there was nothing to
+discard: unlike a clean \code{\link[=saveProject]{saveProject()}}, a clean reload prints nothing.
 }
 \examples{
 \dontrun{

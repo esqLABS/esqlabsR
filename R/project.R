@@ -22,23 +22,22 @@
 #' @docType class
 #' @description An R6 class representing an esqlabsR project.
 #'
-#'   Under the explicit-save model, memory is the source of truth for a loaded
-#'   project: every `add*` / `set*` / `remove*` authoring edit mutates memory
-#'   in place and sets an internal dirty bit, but nothing touches the on-disk
-#'   `definitions/` tree until [saveProject()] reconciles it. A loaded project
-#'   is therefore a disk-free scratch space you commit deliberately; use
-#'   [reloadProject()] to discard unsaved edits, and
-#'   [snapshotProject()] / [restoreProject()] to checkpoint and roll back.
+#'   Changes you make to a loaded project — with `addScenario()`,
+#'   `setIndividual()`, `removeParameterSet()`, and the other add/set/remove
+#'   functions — live only in your R session until you write them to the
+#'   project files with [saveProject()]. This makes a loaded project a safe
+#'   place to experiment: discard unsaved changes with [reloadProject()], or
+#'   use [snapshotProject()] / [restoreProject()] to set a save-point and
+#'   return to it later.
 #'
-#'   `Project` is not cloneable (`cloneable = FALSE`): explicit-save already
-#'   makes every loaded project a disk-free scratch space, so the clone-for-
-#'   scratch-work idiom the auto-save model needed is obsolete. All section
-#'   data (`scenarios`, `individuals`, `populations`, `outputPaths`, the
-#'   parameter sets, `plots`, `parameterIdentification`, ...) consists of
-#'   plain-data records with copy semantics, so reading a record hands back an
-#'   independent copy; the exception is programmatic observed data added via
-#'   [addObservedData()] with a `DataSet` object, whose `ospsuite::DataSet`
-#'   wraps an external handle shared by reference.
+#'   A `Project` cannot be copied with `$clone()` — because nothing is
+#'   written to disk until you save, there is no need for a working copy: the
+#'   loaded project itself is one. Reading a definition (for example
+#'   `sc <- project$scenarios[["my_scenario"]]`) hands you an independent
+#'   copy, so changing `sc` does not change the project until you re-submit
+#'   it with the matching set function. The one exception is observed data
+#'   added as a `DataSet` object via [addObservedData()]: the `DataSet` is
+#'   shared, so changes to that object are seen by the project too.
 #' @format NULL
 #' @import fs
 #' @export
@@ -70,10 +69,10 @@ Project <- R6::R6Class(
     },
 
     #' @field validatedSinceMutation Read-only logical. `TRUE` if a full
-    #'   [validateProject()] has succeeded since the last project mutation
-    #'   or load. Cleared by any mutation. Used internally by automatic
-    #'   validation hooks (e.g. in [runScenarios()] and [createPlots()]) to
-    #'   skip redundant re-validation of an unchanged project.
+    #'   [validateProject()] has succeeded since the project was last changed
+    #'   or loaded. Cleared by any change. Used internally by automatic
+    #'   validation (e.g. in [runScenarios()] and [createPlots()]) to skip
+    #'   redundant re-validation of an unchanged project.
     validatedSinceMutation = function(value) {
       if (!missing(value)) {
         cli::cli_abort("{.field validatedSinceMutation} is readonly")
@@ -82,8 +81,7 @@ Project <- R6::R6Class(
     },
 
     #' @field name Human-readable project name (the `name` JSON field). May be
-    #'   `NULL` when the project declares no name. Writing updates memory and
-    #'   sets the dirty bit; it persists on the next [saveProject()].
+    #'   `NULL` when the project has no name.
     name = function(value) {
       if (!missing(value)) {
         private$.name <- value
@@ -94,8 +92,7 @@ Project <- R6::R6Class(
     },
 
     #' @field description Optional free-text project description (the
-    #'   `description` JSON field). May be `NULL`. Writing updates memory and
-    #'   sets the dirty bit; it persists on the next [saveProject()].
+    #'   `description` JSON field). May be `NULL`.
     description = function(value) {
       if (!missing(value)) {
         private$.description <- value
@@ -106,11 +103,10 @@ Project <- R6::R6Class(
     },
 
     #' @field definitionsFolder Name of the folder (relative to
-    #'   `projectDirPath`) that holds the project's authored definitions
-    #'   tree. Defaults to `"definitions"`. Writing updates memory and sets the
-    #'   dirty bit; it changes where the next [saveProject()] writes the tree
-    #'   and where the tree is read from, but nothing moves on disk until the
-    #'   next save.
+    #'   `projectDirPath`) that holds the project's definition files.
+    #'   Defaults to `"definitions"`. Assigning a new value changes where the
+    #'   next [saveProject()] writes the definition files and where they are
+    #'   read from, but nothing moves on disk until the next save.
     definitionsFolder = function(value) {
       if (!missing(value)) {
         private$.definitionsFolder <- value
@@ -125,8 +121,7 @@ Project <- R6::R6Class(
     #'   field), or `NULL` when none are declared. Used by [runScenarios()] as
     #'   the default `simulationRunOptions` when the caller does not pass one.
     #'   Recognized fields: `numberOfCores`, `checkForNegativeValues`,
-    #'   `showProgress`. Writing updates memory and sets the dirty bit; it
-    #'   persists on the next [saveProject()].
+    #'   `showProgress`.
     defaultSimulationRunOptions = function(value) {
       if (!missing(value)) {
         private$.defaultSimulationRunOptions <- value
@@ -141,8 +136,8 @@ Project <- R6::R6Class(
     #'   `individualsFile`, `populationsFile`, `scenariosFile`,
     #'   `applicationsFile`, `plotsFile`, `parameterIdentificationFile`,
     #'   `initialConditionsFile`).
-    #'   Returned verbatim as strings (no resolution). Empty for a from-scratch
-    #'   JSON project that has no Excel side-car.
+    #'   Returned verbatim as strings (no resolution). Empty for a project
+    #'   created directly in the JSON format, without Excel files.
     excel = function(value) {
       if (!missing(value)) {
         cli::cli_abort("{.field excel} is readonly")
@@ -155,8 +150,7 @@ Project <- R6::R6Class(
     },
 
     #' @field schemaVersion Schema version declared in the JSON. Always "2.0"
-    #'   for projects loaded by this parser. Writing updates memory and sets
-    #'   the dirty bit; it persists on the next [saveProject()].
+    #'   for projects this package loads.
     schemaVersion = function(value) {
       if (!missing(value)) {
         private$.schemaVersion <- value
@@ -167,8 +161,6 @@ Project <- R6::R6Class(
     },
 
     #' @field esqlabsRVersion Informational version string from the JSON.
-    #'   Writing updates memory and sets the dirty bit; it persists on the next
-    #'   [saveProject()].
     esqlabsRVersion = function(value) {
       if (!missing(value)) {
         private$.esqlabsRVersion <- value
@@ -394,8 +386,7 @@ Project <- R6::R6Class(
     #'   OSPS-notation path strings (e.g. `list(PVB = "Organism|...")`). To
     #'   change it, use [addOutputPath()] / [setOutputPath()] /
     #'   [removeOutputPath()] or edit the definition files under
-    #'   `definitions/output-paths/`; an authoring edit updates memory and sets
-    #'   the dirty bit, persisting on the next [saveProject()].
+    #'   `definitions/output-paths/`.
     outputPaths = function(value) {
       if (!missing(value)) {
         .definitionListReadOnlyError("outputPaths")
@@ -406,13 +397,11 @@ Project <- R6::R6Class(
     #' @field scenarios Read-only named list of `Scenario` records, keyed by
     #'   scenario name. To change it, use [addScenario()] / [setScenario()] /
     #'   [removeScenario()] (or [renameScenario()] / [duplicateScenario()]), or
-    #'   edit the definition files under `definitions/scenarios/`. The canonical
-    #'   edit loop is read-modify-resubmit: read a record
-    #'   (`sc <- project$scenarios[["id"]]`), change the detached copy
-    #'   (`sc$modelFile <- ...`), then re-submit it
-    #'   (`setScenario(project, "id", ...)`). An authoring edit updates memory
-    #'   and sets the dirty bit; it persists to the tree on the next
-    #'   [saveProject()].
+    #'   edit the definition files under `definitions/scenarios/`. The typical
+    #'   way to edit a scenario: read it
+    #'   (`sc <- project$scenarios[["id"]]`), change your copy
+    #'   (`sc$modelFile <- ...`), then hand it back
+    #'   (`setScenario(project, "id", ...)`).
     scenarios = function(value) {
       if (!missing(value)) {
         .definitionListReadOnlyError("scenarios")
@@ -568,12 +557,12 @@ Project <- R6::R6Class(
       .projectToJson(self)
     },
 
-    #' @field status Read-only, machine-oriented two-axis sync report as a
-    #'   structured list: `tree_in_sync` (`FALSE` when there are unsaved
-    #'   in-memory edits vs. the on-disk tree, `NA` for an unbound in-memory
-    #'   project), `excel_in_sync` (`TRUE`/`FALSE`, or `NA` when no Excel
-    #'   side-car is configured or it cannot be read), and `details` (per-axis
-    #'   differences, empty when both axes are in sync). The same information
+    #' @field status Read-only sync report as a structured list:
+    #'   `tree_in_sync` (`FALSE` when the project carries unsaved changes,
+    #'   `NA` for a project that exists only in the R session, without a
+    #'   folder on disk), `excel_in_sync` (`TRUE`/`FALSE`, or `NA` when the
+    #'   project has no Excel file or it cannot be read), and `details` (the
+    #'   differences, empty when everything is in sync). The same information
     #'   [projectStatus()] prints. Read-only; assignment aborts.
     status = function(value) {
       if (!missing(value)) {

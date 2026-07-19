@@ -8,23 +8,22 @@
 \description{
 An R6 class representing an esqlabsR project.
 
-Under the explicit-save model, memory is the source of truth for a loaded
-project: every \verb{add*} / \verb{set*} / \verb{remove*} authoring edit mutates memory
-in place and sets an internal dirty bit, but nothing touches the on-disk
-\verb{definitions/} tree until \code{\link[=saveProject]{saveProject()}} reconciles it. A loaded project
-is therefore a disk-free scratch space you commit deliberately; use
-\code{\link[=reloadProject]{reloadProject()}} to discard unsaved edits, and
-\code{\link[=snapshotProject]{snapshotProject()}} / \code{\link[=restoreProject]{restoreProject()}} to checkpoint and roll back.
+Changes you make to a loaded project — with \code{addScenario()},
+\code{setIndividual()}, \code{removeParameterSet()}, and the other add/set/remove
+functions — live only in your R session until you write them to the
+project files with \code{\link[=saveProject]{saveProject()}}. This makes a loaded project a safe
+place to experiment: discard unsaved changes with \code{\link[=reloadProject]{reloadProject()}}, or
+use \code{\link[=snapshotProject]{snapshotProject()}} / \code{\link[=restoreProject]{restoreProject()}} to set a save-point and
+return to it later.
 
-\code{Project} is not cloneable (\code{cloneable = FALSE}): explicit-save already
-makes every loaded project a disk-free scratch space, so the clone-for-
-scratch-work idiom the auto-save model needed is obsolete. All section
-data (\code{scenarios}, \code{individuals}, \code{populations}, \code{outputPaths}, the
-parameter sets, \code{plots}, \code{parameterIdentification}, ...) consists of
-plain-data records with copy semantics, so reading a record hands back an
-independent copy; the exception is programmatic observed data added via
-\code{\link[=addObservedData]{addObservedData()}} with a \code{DataSet} object, whose \code{ospsuite::DataSet}
-wraps an external handle shared by reference.
+A \code{Project} cannot be copied with \verb{$clone()} — because nothing is
+written to disk until you save, there is no need for a working copy: the
+loaded project itself is one. Reading a definition (for example
+\code{sc <- project$scenarios[["my_scenario"]]}) hands you an independent
+copy, so changing \code{sc} does not change the project until you re-submit
+it with the matching set function. The one exception is observed data
+added as a \code{DataSet} object via \code{\link[=addObservedData]{addObservedData()}}: the \code{DataSet} is
+shared, so changes to that object are seen by the project too.
 }
 \keyword{internal}
 \section{Active bindings}{
@@ -42,49 +41,42 @@ base for resolving relative paths. \code{NULL} if the project was not
 loaded from a file.}
 
     \item{\code{validatedSinceMutation}}{Read-only logical. \code{TRUE} if a full
-\code{\link[=validateProject]{validateProject()}} has succeeded since the last project mutation
-or load. Cleared by any mutation. Used internally by automatic
-validation hooks (e.g. in \code{\link[=runScenarios]{runScenarios()}} and \code{\link[=createPlots]{createPlots()}}) to
-skip redundant re-validation of an unchanged project.}
+\code{\link[=validateProject]{validateProject()}} has succeeded since the project was last changed
+or loaded. Cleared by any change. Used internally by automatic
+validation (e.g. in \code{\link[=runScenarios]{runScenarios()}} and \code{\link[=createPlots]{createPlots()}}) to skip
+redundant re-validation of an unchanged project.}
 
     \item{\code{name}}{Human-readable project name (the \code{name} JSON field). May be
-\code{NULL} when the project declares no name. Writing updates memory and
-sets the dirty bit; it persists on the next \code{\link[=saveProject]{saveProject()}}.}
+\code{NULL} when the project has no name.}
 
     \item{\code{description}}{Optional free-text project description (the
-\code{description} JSON field). May be \code{NULL}. Writing updates memory and
-sets the dirty bit; it persists on the next \code{\link[=saveProject]{saveProject()}}.}
+\code{description} JSON field). May be \code{NULL}.}
 
     \item{\code{definitionsFolder}}{Name of the folder (relative to
-\code{projectDirPath}) that holds the project's authored definitions
-tree. Defaults to \code{"definitions"}. Writing updates memory and sets the
-dirty bit; it changes where the next \code{\link[=saveProject]{saveProject()}} writes the tree
-and where the tree is read from, but nothing moves on disk until the
-next save.}
+\code{projectDirPath}) that holds the project's definition files.
+Defaults to \code{"definitions"}. Assigning a new value changes where the
+next \code{\link[=saveProject]{saveProject()}} writes the definition files and where they are
+read from, but nothing moves on disk until the next save.}
 
     \item{\code{defaultSimulationRunOptions}}{Named list of the project-level
 default simulation run options (the \code{defaultSimulationRunOptions} JSON
 field), or \code{NULL} when none are declared. Used by \code{\link[=runScenarios]{runScenarios()}} as
 the default \code{simulationRunOptions} when the caller does not pass one.
 Recognized fields: \code{numberOfCores}, \code{checkForNegativeValues},
-\code{showProgress}. Writing updates memory and sets the dirty bit; it
-persists on the next \code{\link[=saveProject]{saveProject()}}.}
+\code{showProgress}.}
 
     \item{\code{excel}}{Read-only named list of the Excel import/export bridge
 sheet-name fields (\code{configurationsFolder}, \code{modelParamsFile},
 \code{individualsFile}, \code{populationsFile}, \code{scenariosFile},
 \code{applicationsFile}, \code{plotsFile}, \code{parameterIdentificationFile},
 \code{initialConditionsFile}).
-Returned verbatim as strings (no resolution). Empty for a from-scratch
-JSON project that has no Excel side-car.}
+Returned verbatim as strings (no resolution). Empty for a project
+created directly in the JSON format, without Excel files.}
 
     \item{\code{schemaVersion}}{Schema version declared in the JSON. Always "2.0"
-for projects loaded by this parser. Writing updates memory and sets
-the dirty bit; it persists on the next \code{\link[=saveProject]{saveProject()}}.}
+for projects this package loads.}
 
-    \item{\code{esqlabsRVersion}}{Informational version string from the JSON.
-Writing updates memory and sets the dirty bit; it persists on the next
-\code{\link[=saveProject]{saveProject()}}.}
+    \item{\code{esqlabsRVersion}}{Informational version string from the JSON.}
 
     \item{\code{jsonPath}}{Read-only. Absolute path the project was loaded from
 (an alias of \code{projectFilePath}), or \code{NULL} for an in-memory project.}
@@ -140,19 +132,16 @@ relative to the "Code" folder}
 OSPS-notation path strings (e.g. \code{list(PVB = "Organism|...")}). To
 change it, use \code{\link[=addOutputPath]{addOutputPath()}} / \code{\link[=setOutputPath]{setOutputPath()}} /
 \code{\link[=removeOutputPath]{removeOutputPath()}} or edit the definition files under
-\verb{definitions/output-paths/}; an authoring edit updates memory and sets
-the dirty bit, persisting on the next \code{\link[=saveProject]{saveProject()}}.}
+\verb{definitions/output-paths/}.}
 
     \item{\code{scenarios}}{Read-only named list of \code{Scenario} records, keyed by
 scenario name. To change it, use \code{\link[=addScenario]{addScenario()}} / \code{\link[=setScenario]{setScenario()}} /
 \code{\link[=removeScenario]{removeScenario()}} (or \code{\link[=renameScenario]{renameScenario()}} / \code{\link[=duplicateScenario]{duplicateScenario()}}), or
-edit the definition files under \verb{definitions/scenarios/}. The canonical
-edit loop is read-modify-resubmit: read a record
-(\code{sc <- project$scenarios[["id"]]}), change the detached copy
-(\code{sc$modelFile <- ...}), then re-submit it
-(\code{setScenario(project, "id", ...)}). An authoring edit updates memory
-and sets the dirty bit; it persists to the tree on the next
-\code{\link[=saveProject]{saveProject()}}.}
+edit the definition files under \verb{definitions/scenarios/}. The typical
+way to edit a scenario: read it
+(\code{sc <- project$scenarios[["id"]]}), change your copy
+(\code{sc$modelFile <- ...}), then hand it back
+(\code{setScenario(project, "id", ...)}).}
 
     \item{\code{parameterSets}}{Read-only named list of parameter structures, keyed
 by set id. This single section holds every parameter set in the
@@ -223,12 +212,12 @@ not here.}
     \item{\code{asList}}{Returns the current project as a list matching the JSON
 schema. Reflects any in-memory modifications. Read-only.}
 
-    \item{\code{status}}{Read-only, machine-oriented two-axis sync report as a
-structured list: \code{tree_in_sync} (\code{FALSE} when there are unsaved
-in-memory edits vs. the on-disk tree, \code{NA} for an unbound in-memory
-project), \code{excel_in_sync} (\code{TRUE}/\code{FALSE}, or \code{NA} when no Excel
-side-car is configured or it cannot be read), and \code{details} (per-axis
-differences, empty when both axes are in sync). The same information
+    \item{\code{status}}{Read-only sync report as a structured list:
+\code{tree_in_sync} (\code{FALSE} when the project carries unsaved changes,
+\code{NA} for a project that exists only in the R session, without a
+folder on disk), \code{excel_in_sync} (\code{TRUE}/\code{FALSE}, or \code{NA} when the
+project has no Excel file or it cannot be read), and \code{details} (the
+differences, empty when everything is in sync). The same information
 \code{\link[=projectStatus]{projectStatus()}} prints. Read-only; assignment aborts.}
   }
   \if{html}{\out{</div>}}

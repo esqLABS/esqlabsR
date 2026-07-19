@@ -649,7 +649,7 @@ test_that("projectStatus() reports the Excel axis as NA (and warns) when the sid
   # Non-silent: a warning surfaces naming the comparison failure.
   expect_warning(
     projectStatus(project, silent = FALSE),
-    "Cannot compare the Excel side-car"
+    "Cannot compare the Excel configuration files"
   )
 })
 

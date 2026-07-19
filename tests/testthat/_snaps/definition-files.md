@@ -137,5 +137,5 @@
       Warning in `file.remove()`:
       cannot remove file '<project>/definitions/scenarios/orphandefinition.json', reason 'Permission denied'
       Error in `esqlabsR:::.writeDefinitionTree()`:
-      ! Failed to remove 1 stale definition file from the definitions tree. x '<project>/definitions/scenarios/orphandefinition.json' i A stale file that cannot be deleted would reappear as a definition on the next `loadProject()`; check the file permissions and remove it manually.
+      ! Failed to delete 1 outdated definition file from the 'definitions' folder. x '<project>/definitions/scenarios/orphandefinition.json' i A file that cannot be deleted comes back as a definition the next time you `loadProject()`; check the file permissions and delete it manually.
 

@@ -5,11 +5,11 @@
 #' @description Load a `Project` from a JSON file. This is the
 #'   primary entry point for working with esqlabsR projects.
 #'
-#'   On load the project is checked for the most common cross-reference
-#'   problems (e.g. a scenario referring to an individual or population
-#'   that is not defined). Any such issues are reported via [cli::cli_warn()]
-#'   so that obvious configuration mistakes surface immediately, but loading
-#'   still succeeds. Use [validateProject()] for a full report.
+#'   On load, the project is checked for the most common reference mistakes
+#'   (for example a scenario referring to an individual or population that is
+#'   not defined). Such issues are reported as warnings so that obvious
+#'   configuration mistakes surface immediately, but loading still succeeds.
+#'   Use [validateProject()] for a full report.
 #'
 #' @param path Path to the `Project.json` file. Defaults to
 #'   `Project.json` in the working directory.
@@ -20,21 +20,21 @@
 #' @seealso [saveProject()], [reloadProject()], [snapshotProject()],
 #'   [restoreProject()], [projectStatus()].
 #'
-#' @section Editing a loaded project (explicit save):
-#'   A loaded project holds its definition tree in memory, and memory is the
-#'   source of truth: every authoring edit (`addOutputPath()`, `addScenario()`,
-#'   `setIndividual()`, `removeParameterSet()`, and the metadata setters)
-#'   mutates memory in place and sets an internal dirty bit, but nothing
-#'   touches the on-disk `definitions/` tree. The `project$<section>` accessors
-#'   are read-only, so a definition only ever changes through an authoring
-#'   function.
+#' @section Editing a loaded project:
+#'   Changes you make to a loaded project — with `addScenario()`,
+#'   `setIndividual()`, `removeParameterSet()`, `addOutputPath()`, and the
+#'   other add/set/remove functions — live only in your R session until you
+#'   save them; the files on disk stay as they are. Reading a section
+#'   directly (for example `project$scenarios`) never changes the project: a
+#'   definition changes only through the add/set/remove functions.
 #'
-#'   Commit the edits to disk with [saveProject()], which reconciles the tree
-#'   to memory (write-if-different, and orphan-delete for removed entities).
-#'   Discard unsaved edits and re-read from disk with [reloadProject()] (the
-#'   undo). Checkpoint the current state to a portable single file with
-#'   [snapshotProject()], and roll a working directory back to one with
-#'   [restoreProject()]. Inspect divergence with [projectStatus()].
+#'   Write your changes to the project files with [saveProject()]. Discard
+#'   unsaved changes and go back to what is saved on disk with
+#'   [reloadProject()]. Save the current state of the whole project to a
+#'   single file you can archive or share with [snapshotProject()], and
+#'   recreate a project folder from such a file (or roll an existing one
+#'   back) with [restoreProject()]. Check for unsaved changes and outdated
+#'   Excel files with [projectStatus()].
 #'
 #' @examples
 #' \dontrun{
@@ -51,37 +51,35 @@ loadProject <- function(path = "Project.json") {
   project
 }
 
-#' Save a project's in-memory edits to its on-disk tree
+#' Save the project to the disk
 #'
-#' @description Reconcile the on-disk `definitions/` tree to the in-memory
-#'   project, in place. This is the commit step of the explicit-save model:
-#'   authoring edits (`addScenario()`, `setIndividual()`,
-#'   `removeParameterSet()`, and the metadata setters) stay in memory until
-#'   `saveProject()` writes them out.
+#' @description Write your changes to the project files on disk. Changes made
+#'   in your R session (e.g. with `addScenario()`, `setIndividual()`,
+#'   `removeParameterSet()`) only live in memory until you call
+#'   `saveProject()`.
 #'
-#'   The save is a full-tree reconciliation, not an incremental write:
+#'   What happens when you save:
 #'
-#'   - Write-if-different: only entity files whose serialized content differs
-#'     from what is already on disk are written, so `git diff` shows exactly
-#'     the entities you changed.
-#'   - Orphan reconciliation: an entity removed in memory has its
-#'     `definitions/<kind>/<id>.json` deleted. Deletion is strictly scoped to
-#'     the definitions tree; nothing outside it is touched.
-#'   - The `Project.json` container is rewritten with its inline sections
-#'     emptied (the tree owns them).
+#'   - Only files with actual changes are re-written, so `git diff` shows
+#'     exactly the definitions you edited.
+#'   - If you removed something from the project (e.g. a scenario), its file
+#'     in the `definitions/` folder is deleted. Files outside the
+#'     `definitions/` folder are never touched.
+#'   - The `Project.json` file is updated.
 #'
-#'   A clean save (nothing diverges from disk) is an idempotent no-op that
-#'   reports an informational message, never an error.
+#'   If there is nothing to save, `saveProject()` simply reports that the
+#'   project is already up to date. Saving repeatedly is always safe.
 #'
-#'   `saveProject()` is single-axis: it reconciles memory to the tree only and
-#'   never warns about a stale Excel side-car. Refresh the workbook separately
-#'   with [exportProjectToExcel()]; inspect divergence with [projectStatus()].
+#'   Saving does not update the Excel files. If you also work with the Excel
+#'   configuration files, refresh them with [exportProjectToExcel()]. Use
+#'   [projectStatus()] to check whether project files on disk, the Excel files,
+#'   and your R session are in sync.
 #'
-#' @param project A `Project` bound to a directory (loaded with [loadProject()]
-#'   or restored with [restoreProject()]). An unbound in-memory project (from
-#'   `Project$new()`) has no tree to save to and aborts; use [snapshotProject()]
-#'   to write a portable file, or [initProject()] plus [loadProject()] to give
-#'   it a home.
+#' @param project A `Project` loaded from disk with [loadProject()] (or
+#'   restored with [restoreProject()]). A project created directly with
+#'   `Project$new()` has no folder on disk to save to; use [snapshotProject()]
+#'   to write it to a single file, or create a project folder first with
+#'   [initProject()].
 #'
 #' @returns Invisibly, the `project`.
 #' @export
@@ -118,24 +116,22 @@ saveProject <- function(project) {
   invisible(project)
 }
 
-#' Discard a project's in-memory edits and re-read it from disk
+#' Discard a project's unsaved changes and re-read it from disk
 #'
-#' @description The undo of the explicit-save model: discard every unsaved
-#'   in-memory edit and re-read the project from its on-disk tree, in place.
-#'   The `Project` object identity is preserved (edits are reverted by R6
-#'   reference), so existing handles stay valid.
+#' @description The undo of saving: discard every unsaved change and re-read
+#'   the project from its files on disk, in place. The `Project` stays the
+#'   same object, so every variable that points to it stays valid.
 #'
-#'   `reloadProject()` always re-reads the bound tree from disk and updates the
-#'   project in place, so it also picks up external changes to the files (for
-#'   example after [restoreProject()] rolled the tree back). It simply produces
-#'   no announcement when there were no unsaved edits: unlike a clean
-#'   [saveProject()], a clean reload prints nothing.
+#'   `reloadProject()` always re-reads the project's files and updates the
+#'   project in place, so it also picks up changes made to the files outside
+#'   the R session (for example after [restoreProject()] rolled the project
+#'   back). It simply produces no announcement when there was nothing to
+#'   discard: unlike a clean [saveProject()], a clean reload prints nothing.
 #'
-#' @param project A `Project` bound to a directory. An unbound in-memory
-#'   project has nothing to reload from and aborts.
+#' @param project A `Project` with a folder on disk. A project that exists
+#'   only in the R session has nothing to reload from and aborts.
 #'
-#' @returns Invisibly, the `project`, with in-memory edits discarded and the
-#'   dirty bit cleared.
+#' @returns Invisibly, the `project`, with unsaved changes discarded.
 #' @export
 #' @family project persistence
 #' @seealso [loadProject()], [saveProject()], [snapshotProject()],
@@ -242,11 +238,12 @@ isProjectInitialized <- function(destination = ".") {
 #'
 #' @description
 #'
-#' Scaffolds a JSON-first esqlabsR project in `destination`: a `Project.json`
-#' container plus a `definitions/` tree of authored definitions, alongside the
-#' working folders (`Models/`, `Data/`, `Populations/`, `Results/`). By default
-#' it also writes optional Excel side-cars from the JSON; set
-#' `createExcel = FALSE` for a JSON-only project.
+#' Creates a new JSON-based esqlabsR project in `destination`: a
+#' `Project.json` file plus a `definitions/` folder holding one file per
+#' definition, alongside the working folders (`Models/`, `Data/`,
+#' `Populations/`, `Results/`). By default it also writes the optional Excel
+#' configuration files from the JSON; set `createExcel = FALSE` for a
+#' JSON-only project.
 #'
 #' @param destination A string defining the path where to initialize the
 #'   project. default to current working directory.

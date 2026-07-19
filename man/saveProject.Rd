@@ -2,45 +2,43 @@
 % Please edit documentation in R/project-lifecycle.R
 \name{saveProject}
 \alias{saveProject}
-\title{Save a project's in-memory edits to its on-disk tree}
+\title{Save the project to the disk}
 \usage{
 saveProject(project)
 }
 \arguments{
-\item{project}{A \code{Project} bound to a directory (loaded with \code{\link[=loadProject]{loadProject()}}
-or restored with \code{\link[=restoreProject]{restoreProject()}}). An unbound in-memory project (from
-\code{Project$new()}) has no tree to save to and aborts; use \code{\link[=snapshotProject]{snapshotProject()}}
-to write a portable file, or \code{\link[=initProject]{initProject()}} plus \code{\link[=loadProject]{loadProject()}} to give
-it a home.}
+\item{project}{A \code{Project} loaded from disk with \code{\link[=loadProject]{loadProject()}} (or
+restored with \code{\link[=restoreProject]{restoreProject()}}). A project created directly with
+\code{Project$new()} has no folder on disk to save to; use \code{\link[=snapshotProject]{snapshotProject()}}
+to write it to a single file, or create a project folder first with
+\code{\link[=initProject]{initProject()}}.}
 }
 \value{
 Invisibly, the \code{project}.
 }
 \description{
-Reconcile the on-disk \verb{definitions/} tree to the in-memory
-project, in place. This is the commit step of the explicit-save model:
-authoring edits (\code{addScenario()}, \code{setIndividual()},
-\code{removeParameterSet()}, and the metadata setters) stay in memory until
-\code{saveProject()} writes them out.
+Write your changes to the project files on disk. Changes made
+in your R session (e.g. with \code{addScenario()}, \code{setIndividual()},
+\code{removeParameterSet()}) only live in memory until you call
+\code{saveProject()}.
 
-The save is a full-tree reconciliation, not an incremental write:
+What happens when you save:
 \itemize{
-\item Write-if-different: only entity files whose serialized content differs
-from what is already on disk are written, so \verb{git diff} shows exactly
-the entities you changed.
-\item Orphan reconciliation: an entity removed in memory has its
-\verb{definitions/<kind>/<id>.json} deleted. Deletion is strictly scoped to
-the definitions tree; nothing outside it is touched.
-\item The \code{Project.json} container is rewritten with its inline sections
-emptied (the tree owns them).
+\item Only files with actual changes are re-written, so \verb{git diff} shows
+exactly the definitions you edited.
+\item If you removed something from the project (e.g. a scenario), its file
+in the \verb{definitions/} folder is deleted. Files outside the
+\verb{definitions/} folder are never touched.
+\item The \code{Project.json} file is updated.
 }
 
-A clean save (nothing diverges from disk) is an idempotent no-op that
-reports an informational message, never an error.
+If there is nothing to save, \code{saveProject()} simply reports that the
+project is already up to date. Saving repeatedly is always safe.
 
-\code{saveProject()} is single-axis: it reconciles memory to the tree only and
-never warns about a stale Excel side-car. Refresh the workbook separately
-with \code{\link[=exportProjectToExcel]{exportProjectToExcel()}}; inspect divergence with \code{\link[=projectStatus]{projectStatus()}}.
+Saving does not update the Excel files. If you also work with the Excel
+configuration files, refresh them with \code{\link[=exportProjectToExcel]{exportProjectToExcel()}}. Use
+\code{\link[=projectStatus]{projectStatus()}} to check whether project files on disk, the Excel files,
+and your R session are in sync.
 }
 \examples{
 \dontrun{

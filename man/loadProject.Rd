@@ -17,28 +17,28 @@ Object of type \code{Project}
 Load a \code{Project} from a JSON file. This is the
 primary entry point for working with esqlabsR projects.
 
-On load the project is checked for the most common cross-reference
-problems (e.g. a scenario referring to an individual or population
-that is not defined). Any such issues are reported via \code{\link[cli:cli_warn]{cli::cli_warn()}}
-so that obvious configuration mistakes surface immediately, but loading
-still succeeds. Use \code{\link[=validateProject]{validateProject()}} for a full report.
+On load, the project is checked for the most common reference mistakes
+(for example a scenario referring to an individual or population that is
+not defined). Such issues are reported as warnings so that obvious
+configuration mistakes surface immediately, but loading still succeeds.
+Use \code{\link[=validateProject]{validateProject()}} for a full report.
 }
-\section{Editing a loaded project (explicit save)}{
+\section{Editing a loaded project}{
 
-A loaded project holds its definition tree in memory, and memory is the
-source of truth: every authoring edit (\code{addOutputPath()}, \code{addScenario()},
-\code{setIndividual()}, \code{removeParameterSet()}, and the metadata setters)
-mutates memory in place and sets an internal dirty bit, but nothing
-touches the on-disk \verb{definitions/} tree. The \verb{project$<section>} accessors
-are read-only, so a definition only ever changes through an authoring
-function.
+Changes you make to a loaded project — with \code{addScenario()},
+\code{setIndividual()}, \code{removeParameterSet()}, \code{addOutputPath()}, and the
+other add/set/remove functions — live only in your R session until you
+save them; the files on disk stay as they are. Reading a section
+directly (for example \code{project$scenarios}) never changes the project: a
+definition changes only through the add/set/remove functions.
 
-Commit the edits to disk with \code{\link[=saveProject]{saveProject()}}, which reconciles the tree
-to memory (write-if-different, and orphan-delete for removed entities).
-Discard unsaved edits and re-read from disk with \code{\link[=reloadProject]{reloadProject()}} (the
-undo). Checkpoint the current state to a portable single file with
-\code{\link[=snapshotProject]{snapshotProject()}}, and roll a working directory back to one with
-\code{\link[=restoreProject]{restoreProject()}}. Inspect divergence with \code{\link[=projectStatus]{projectStatus()}}.
+Write your changes to the project files with \code{\link[=saveProject]{saveProject()}}. Discard
+unsaved changes and go back to what is saved on disk with
+\code{\link[=reloadProject]{reloadProject()}}. Save the current state of the whole project to a
+single file you can archive or share with \code{\link[=snapshotProject]{snapshotProject()}}, and
+recreate a project folder from such a file (or roll an existing one
+back) with \code{\link[=restoreProject]{restoreProject()}}. Check for unsaved changes and outdated
+Excel files with \code{\link[=projectStatus]{projectStatus()}}.
 }
 
 \examples{
