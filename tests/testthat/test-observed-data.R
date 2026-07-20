@@ -300,10 +300,10 @@ test_that("loadObservedData errors when dataFolder is not declared", {
 
 test_that("addObservedData appends a valid config entry", {
   project <- testProject()
-  before <- length(project$observedData)
+  before <- length(project$definitions$observedData)
   addObservedData(project, list(type = "pkml", file = "extra.pkml"))
-  expect_length(project$observedData, before + 1L)
-  added <- project$observedData[[before + 1L]]
+  expect_length(project$definitions$observedData, before + 1L)
+  added <- project$definitions$observedData[[before + 1L]]
   # The entry is classed as an ObservedDataSource (a transparent list wrapper
   # for printing); compare the fields, not the class.
   expect_s3_class(added, "ObservedDataSource")
@@ -316,7 +316,7 @@ test_that("addObservedData rejects an under-specified config entry", {
     error = TRUE,
     addObservedData(project, list(type = "excel", file = "x.xlsx"))
   )
-  expect_length(project$observedData, 1L)
+  expect_length(project$definitions$observedData, 1L)
 })
 
 test_that("addObservedData rejects a duplicate config entry file", {
@@ -333,7 +333,7 @@ test_that("addObservedData rejects a duplicate config entry file", {
       )
     )
   )
-  expect_length(project$observedData, 1L)
+  expect_length(project$definitions$observedData, 1L)
 })
 
 # Two declarations whose `file` differs only by directory derive the same
@@ -344,14 +344,14 @@ test_that("addObservedData rejects a duplicate config entry file", {
 test_that("observedData declarations sharing a basename fail saveProject()", {
   project <- testProject()
   saveProject(project)
-  dir <- file.path(project$projectDirPath, "definitions", "observed-data")
+  dir <- file.path(project$info$projectDirPath, "definitions", "observed-data")
   before <- if (dir.exists(dir)) list.files(dir) else character()
 
   colliding <- list(
     list(type = "pkml", file = "dirA/obs.pkml"),
     list(type = "pkml", file = "dirB/obs.pkml")
   )
-  project$.setSection("observedData", colliding)
+  .setSection(project, "observedData", colliding)
   expect_snapshot(
     saveProject(project),
     error = TRUE
@@ -369,7 +369,7 @@ test_that("observedData declarations sharing a basename fail saveProject()", {
 # is accepted in memory but surfaces as a serializer error at saveProject().
 test_that("addObservedData mutates memory only; a basename collision aborts saveProject()", {
   project <- testProject()
-  state <- .projectPrivate(project)
+  state <- .projectSeam(project)
   # The fixture declares a file-based Excel source filed under this basename.
   ds <- ospsuite::DataSet$new(name = "Aciclovir_TimeValuesData.xlsx")
   ds$setValues(xValues = c(1, 2), yValues = c(3, 4))
@@ -391,7 +391,7 @@ test_that("addObservedData mutates memory only; a basename collision aborts save
 # the discarded runtime dataset.
 test_that("reloadProject clears a session-only programmatic DataSet", {
   project <- testProject()
-  state <- .projectPrivate(project)
+  state <- .projectSeam(project)
   ds <- ospsuite::DataSet$new(name = "SessionOnlySet")
   ds$setValues(xValues = c(1, 2), yValues = c(3, 4))
 
@@ -411,7 +411,7 @@ test_that("reloadProject clears a session-only programmatic DataSet", {
 
 test_that("removeObservedData deletes the definition file on save", {
   project <- testProject()
-  dir <- file.path(project$projectDirPath, "definitions", "observed-data")
+  dir <- file.path(project$info$projectDirPath, "definitions", "observed-data")
   # The fixture declares one Excel source, filed under its basename.
   id <- "Aciclovir_TimeValuesData.xlsx"
   expect_true(file.exists(file.path(dir, paste0(id, ".json"))))
@@ -421,26 +421,26 @@ test_that("removeObservedData deletes the definition file on save", {
   # In memory the declaration is gone; the definition file is deleted on save
   # and a fresh load no longer sees it.
   expect_false(any(vapply(
-    project$observedData,
+    project$definitions$observedData,
     function(e) identical(basename(e[["file"]] %||% ""), id),
     logical(1)
   )))
   saveProject(project)
   expect_false(file.exists(file.path(dir, paste0(id, ".json"))))
-  reloaded <- loadProject(project$jsonPath)
-  expect_length(reloaded$observedData, 0L)
+  reloaded <- loadProject(project$info$projectFilePath)
+  expect_length(reloaded$definitions$observedData, 0L)
 })
 
 test_that("removeObservedData removes a vector of ids in one pass", {
   project <- testProject()
   addObservedData(project, list(type = "pkml", file = "one.pkml"))
   addObservedData(project, list(type = "pkml", file = "two.pkml"))
-  before <- length(project$observedData)
+  before <- length(project$definitions$observedData)
 
   removeObservedData(project, c("one.pkml", "two.pkml"))
-  expect_length(project$observedData, before - 2L)
+  expect_length(project$definitions$observedData, before - 2L)
   files <- vapply(
-    project$observedData,
+    project$definitions$observedData,
     function(e) basename(e[["file"]] %||% NA_character_),
     character(1)
   )
@@ -450,12 +450,12 @@ test_that("removeObservedData removes a vector of ids in one pass", {
 test_that("removeObservedData warns and skips a not-found id in the batch", {
   project <- testProject()
   addObservedData(project, list(type = "pkml", file = "one.pkml"))
-  before <- length(project$observedData)
+  before <- length(project$definitions$observedData)
   expect_warning(
     removeObservedData(project, c("one.pkml", "ghost.pkml")),
     "ghost.pkml"
   )
-  expect_length(project$observedData, before - 1L)
+  expect_length(project$definitions$observedData, before - 1L)
 })
 
 # The remove path writes through to disk BEFORE clearing the runtime store, so a
@@ -468,7 +468,7 @@ test_that("removeObservedData warns and skips a not-found id in the batch", {
 test_that("removeObservedData mutates memory only; a surviving collision aborts saveProject()", {
   project <- testProject()
   saveProject(project)
-  state <- .projectPrivate(project)
+  state <- .projectSeam(project)
   ds <- ospsuite::DataSet$new(name = "myProgSet")
   ds$setValues(xValues = c(1, 2), yValues = c(3, 4))
   addObservedData(project, ds)
@@ -493,5 +493,5 @@ test_that("print.ObservedDataSource renders the source declaration", {
   project <- testProject()
   withr::local_options(cli.unicode = FALSE)
   local_reproducible_output()
-  expect_snapshot(print(project$observedData[[1]]))
+  expect_snapshot(print(project$definitions$observedData[[1]]))
 })

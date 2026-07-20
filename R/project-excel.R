@@ -365,7 +365,7 @@ exportProjectToExcel <- function(
   validateIsOfType(project, "Project")
 
   if (is.null(outputDir)) {
-    outputDir <- project$projectDirPath %||% "."
+    outputDir <- project$info$projectDirPath %||% "."
   }
 
   if (!dir.exists(outputDir)) {
@@ -390,7 +390,7 @@ exportProjectToExcel <- function(
   # fields; writing them here (and reading them back on import) keeps the
   # round trip lossless for the project's human-readable metadata.
   props <- c(props, "name", "description")
-  vals <- c(vals, project$name %||% "", project$description %||% "")
+  vals <- c(vals, project$info$name %||% "", project$info$description %||% "")
   descs <- c(descs, "Project name", "Project description")
 
   # File path property rows. Both container blocks are written into the single
@@ -417,10 +417,10 @@ exportProjectToExcel <- function(
   # one sheet per set. Re-importing reads them all back into the same unified
   # section, so the round trip is lossless under the unified model.
   if (
-    !is.null(project$parameterSets) &&
-      length(project$parameterSets) > 0
+    !is.null(project$definitions$parameterSets) &&
+      length(project$definitions$parameterSets) > 0
   ) {
-    sheets <- .parameterStructuresToExcelSheets(project$parameterSets)
+    sheets <- .parameterStructuresToExcelSheets(project$definitions$parameterSets)
     .writeExcel(sheets, file.path(configDir, "ModelParameters.xlsx"))
   }
 
@@ -429,18 +429,18 @@ exportProjectToExcel <- function(
   # `Scale Divisor`, `Neg. Values Allowed`) are regenerated with defaults, so
   # they are not preserved across an export/import round-trip.
   if (
-    !is.null(project$initialConditions) &&
-      length(project$initialConditions) > 0
+    !is.null(project$definitions$initialConditions) &&
+      length(project$definitions$initialConditions) > 0
   ) {
-    icSheets <- .initialConditionsToExcelSheets(project$initialConditions)
+    icSheets <- .initialConditionsToExcelSheets(project$definitions$initialConditions)
     .writeExcel(icSheets, file.path(configDir, "InitialConditions.xlsx"))
   }
 
   # --- Individuals.xlsx ---
   indivSheets <- list()
-  if (!is.null(project$individuals) && length(project$individuals) > 0) {
+  if (!is.null(project$definitions$individuals) && length(project$definitions$individuals) > 0) {
     indivSheets[["IndividualBiometrics"]] <- .individualsToExcelDf(
-      project$individuals
+      project$definitions$individuals
     )
   }
   if (length(indivSheets) > 0) {
@@ -448,26 +448,26 @@ exportProjectToExcel <- function(
   }
 
   # --- Populations.xlsx ---
-  if (!is.null(project$populations) && length(project$populations) > 0) {
-    popDf <- .populationsToExcelDf(project$populations)
+  if (!is.null(project$definitions$populations) && length(project$definitions$populations) > 0) {
+    popDf <- .populationsToExcelDf(project$definitions$populations)
     .writeExcel(popDf, file.path(configDir, "Populations.xlsx"))
   }
 
   # --- Scenarios.xlsx ---
   scenSheets <- list()
   if (
-    !is.null(project$scenarios) &&
-      length(project$scenarios) > 0
+    !is.null(project$definitions$scenarios) &&
+      length(project$definitions$scenarios) > 0
   ) {
     scenSheets[["Scenarios"]] <- .scenarioConfigurationsToExcelDf(
-      project$scenarios,
-      outputPaths = project$outputPaths
+      project$definitions$scenarios,
+      outputPaths = project$definitions$outputPaths
     )
   }
-  if (!is.null(project$outputPaths) && length(project$outputPaths) > 0) {
+  if (!is.null(project$definitions$outputPaths) && length(project$definitions$outputPaths) > 0) {
     scenSheets[["OutputPaths"]] <- data.frame(
-      OutputPathId = names(project$outputPaths),
-      OutputPath = unlist(project$outputPaths, use.names = FALSE),
+      OutputPathId = names(project$definitions$outputPaths),
+      OutputPath = unlist(project$definitions$outputPaths, use.names = FALSE),
       stringsAsFactors = FALSE
     )
   }
@@ -479,9 +479,9 @@ exportProjectToExcel <- function(
   # Parameter sets all live in ModelParameters.xlsx now (one unified section),
   # so this workbook carries only the application protocols.
   appSheets <- list()
-  if (!is.null(project$applications) && length(project$applications) > 0) {
+  if (!is.null(project$definitions$applications) && length(project$definitions$applications) > 0) {
     appSheets[["ApplicationProtocols"]] <- .applicationsToExcelDf(
-      project$applications
+      project$definitions$applications
     )
   }
   if (length(appSheets) > 0) {
@@ -493,9 +493,9 @@ exportProjectToExcel <- function(
   # sheet shape (`DataCombined` long-format, `plotConfiguration`, `plotGrids`)
   # so the export round-trips through `.parseExcelPlots()`. Empty sections are
   # skipped.
-  dataCombined <- .unwrapDefinitionList(project$dataCombined)
-  plots <- .unwrapDefinitionList(project$plots)
-  plotGrids <- .unwrapDefinitionList(project$plotGrids)
+  dataCombined <- .unwrapDefinitionList(project$definitions$dataCombined)
+  plots <- .unwrapDefinitionList(project$definitions$plots)
+  plotGrids <- .unwrapDefinitionList(project$definitions$plotGrids)
   if (
     length(dataCombined %||% list()) > 0 ||
       length(plots %||% list()) > 0 ||
@@ -522,7 +522,7 @@ exportProjectToExcel <- function(
   # --- ParameterIdentification.xlsx ---
   # The nested PI section becomes three `taskId`-joined sheets, inverted on
   # import by `.parseExcelParameterIdentification()`. Skipped when empty.
-  piTasks <- .unwrapDefinitionList(project$parameterIdentification)
+  piTasks <- .unwrapDefinitionList(project$definitions$parameterIdentification)
   if (length(piTasks %||% list()) > 0) {
     piSheets <- .parameterIdentificationToExcelSheets(piTasks)
     .writeExcel(piSheets, file.path(configDir, "ParameterIdentification.xlsx"))
@@ -531,7 +531,7 @@ exportProjectToExcel <- function(
   if (interactive() && !silent) {
     relPath <- fs::path_rel(projConfigPath, start = getwd())
     msg <- messages$restoredProjectConfiguration(
-      project$jsonPath %||% "Project",
+      project$info$projectFilePath %||% "Project",
       relPath
     )
     cli::cli_inform("{msg}")
@@ -732,11 +732,11 @@ projectStatus <- function(project, silent = FALSE) {
 
   # Axis 1: memory vs. tree. The dirty bit is the divergence signal; an unbound
   # in-memory project has no tree, reported as `NA`.
-  jsonPath <- project$jsonPath
+  jsonPath <- project$info$projectFilePath
   if (is.null(jsonPath)) {
     result$tree_in_sync <- NA
   } else {
-    result$tree_in_sync <- !project$.isModified()
+    result$tree_in_sync <- !project$isModified()
     if (!result$tree_in_sync) {
       result$details$tree <- "unsaved in-memory edits"
     }
@@ -1985,7 +1985,7 @@ projectStatus <- function(project, silent = FALSE) {
 #' @keywords internal
 #' @noRd
 .extractFilePathsData <- function(project) {
-  project$.getFilePathsData()
+  project$rawFilePaths()
 }
 
 #' Extract private .excelData from a Project (the Excel-bridge sheet names)
@@ -1994,7 +1994,7 @@ projectStatus <- function(project, silent = FALSE) {
 #' @keywords internal
 #' @noRd
 .extractExcelData <- function(project) {
-  project$.getExcelData()
+  project$rawExcel()
 }
 
 #' Convert NA to NULL for JSON serialization

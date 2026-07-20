@@ -32,9 +32,9 @@
       Warning:
       Canonicalized 1 referenced id to a safe form:
       * "DoesNotExist" -> "doesnotexist"
-      Error in `addScenario()`:
+      Error in `project$createScenariosFromPKML()`:
       ! Cannot add scenario "seeded":
-      x parameterSets not found in project$parameterSets: doesnotexist
+      x parameterSets not found in project$definitions$parameterSets: doesnotexist
 
 # an unknown application aborts
 
@@ -45,7 +45,7 @@
       Warning:
       Canonicalized 1 referenced id to a safe form:
       * "NoSuchProtocol" -> "nosuchprotocol"
-      Error in `addScenario()`:
+      Error in `project$createScenariosFromPKML()`:
       ! Cannot add scenario "seeded":
       x application 'nosuchprotocol' not found in applications
 

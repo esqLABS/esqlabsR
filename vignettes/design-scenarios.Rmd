@@ -35,10 +35,10 @@ project <- loadProject(file.path(project_dir, "Project.json"))
 project
 ```
 
-In your own work you would point `loadProject()` at your real project instead; everything below operates on this `project` object. Each definition kind is reachable as a named list on the project, keyed by id, so you can inspect what is defined at any time, for example `project$scenarios`:
+In your own work you would point `loadProject()` at your real project instead; everything below operates on this `project` object. Each definition kind is reachable as a named list on the project, keyed by id, so you can inspect what is defined at any time, for example `project$definitions$scenarios`:
 
 ```{r}
-project$scenarios
+project$definitions$scenarios
 ```
 
 ## Building the supporting definitions
@@ -57,7 +57,7 @@ addOutputPath(
   id = "Aciclovir/Liver:Conc",
   path = "Organism|Liver|Intracellular|Aciclovir|Concentration in container"
 )
-project$outputPaths[["aciclovir_liver_conc"]]
+project$definitions$outputPaths[["aciclovir_liver_conc"]]
 ```
 
 The id you typed was stored as `aciclovir_liver_conc`. Where the id is already canonical no warning appears:
@@ -84,7 +84,7 @@ addParameterEntry(
   value = 30,
   units = "ml/min"
 )
-project$parameterSets[["ckd"]]
+project$definitions$parameterSets[["ckd"]]
 ```
 
 Any definition (scenario, individual, or application) references parameter sets from this one collection by id, so you can compose a shared `global` set with disease-specific sets like `ckd` per scenario. `addParameterEntry()` is last-write-wins on a repeated `(containerPath, parameterName)` pair, and creates the set on demand if it does not yet exist.
@@ -104,7 +104,7 @@ addIndividual(
   age = 35,
   parameterSets = "adult_male_default"
 )
-project$individuals[["adult_female"]]
+project$definitions$individuals[["adult_female"]]
 ```
 
 The `parameterSets` argument is a character vector of ids referencing the project's parameter sets; it is validated immediately, so a typo in a set id is caught at add time rather than at run time.
@@ -122,7 +122,7 @@ addIndividual(
   age = 14,
   parameterSets = "adult_male_default"
 )
-names(project$individuals)
+names(project$definitions$individuals)
 ```
 
 ### Populations
@@ -139,7 +139,7 @@ addPopulation(
   ageMax = 12,
   proportionOfFemales = 50
 )
-project$populations[["pediatric"]]
+project$definitions$populations[["pediatric"]]
 ```
 
 ### Applications
@@ -152,7 +152,7 @@ addApplication(
   "aciclovir_iv_500mg",
   parameterSets = "aciclovir_iv_250mg_default"
 )
-project$applications[["aciclovir_iv_500mg"]]
+project$definitions$applications[["aciclovir_iv_500mg"]]
 ```
 
 ## Creating a scenario
@@ -171,7 +171,7 @@ addScenario(
   simulationTime = "0, 24, 60",
   simulationTimeUnit = "h"
 )
-project$scenarios[["aciclovir_iv_ckd"]]
+project$definitions$scenarios[["aciclovir_iv_ckd"]]
 ```
 
 A scenario ties together several pieces, all referenced by id and all optional except the model file:
@@ -210,28 +210,28 @@ setScenario(
   application = "aciclovir_iv_500mg",
   simulationTime = "0, 48, 60"
 )
-project$scenarios[["aciclovir_iv_ckd"]]
+project$definitions$scenarios[["aciclovir_iv_ckd"]]
 ```
 
 And here we detach the individual entirely by passing `NULL`, so the scenario simulates the model's own default individual:
 
 ```{r}
 setScenario(project, "aciclovir_iv_ckd", individual = NULL)
-project$scenarios[["aciclovir_iv_ckd"]]$individualId
+project$definitions$scenarios[["aciclovir_iv_ckd"]]$individualId
 ```
 
 The same partial-update, `NULL`-clears pattern applies to the supporting definitions. `setIndividual()` and `setPopulation()` change named fields on an existing individual or population, and `setOutputPath()` changes the literal path bound to an output-path id (keeping the id, so every scenario that records it keeps working):
 
 ```{r}
 setIndividual(project, "adult_female", weight = 62, age = 36)
-project$individuals[["adult_female"]]
+project$definitions$individuals[["adult_female"]]
 
 setOutputPath(
   project,
   "aciclovir_kidney",
   path = "Organism|Kidney|Urine|Aciclovir|Concentration"
 )
-project$outputPaths[["aciclovir_kidney"]]
+project$definitions$outputPaths[["aciclovir_kidney"]]
 ```
 
 As with `setScenario()`, a reference argument is validated before anything is written, so an invalid edit touches neither memory nor disk. To take a parameter entry back out use `removeParameterEntry()` (the set is auto-removed if it becomes empty), and `removeParameterSet()` drops a whole set.
@@ -242,14 +242,14 @@ A common authoring move is to take a working scenario as a template for a varian
 
 ```{r}
 duplicateScenario(project, "aciclovir_iv", "aciclovir_iv_highdose")
-names(project$scenarios)
+names(project$definitions$scenarios)
 ```
 
 `renameScenario()` changes a scenario's id in memory, keeping the stored name in step with the new key; the next `saveProject()` reconciles the tree, writing the definition under the new id and deleting the old file:
 
 ```{r}
 renameScenario(project, "aciclovir_iv_highdose", "aciclovir_iv_high")
-names(project$scenarios)
+names(project$definitions$scenarios)
 ```
 
 Both take the existing id first and the new id second, and both canonicalize their ids the same way `addScenario()` does. Neither will silently overwrite an existing scenario: a rename or duplicate onto an id already in use aborts.
@@ -258,7 +258,7 @@ When a scenario has served its purpose, `removeScenario()` drops it from the in-
 
 ```{r}
 removeScenario(project, "aciclovir_iv_high")
-names(project$scenarios)
+names(project$definitions$scenarios)
 ```
 
 ## Seeding scenarios from a model file
@@ -272,7 +272,7 @@ createScenariosFromPKML(
   project = project,
   scenarios = "aciclovir_from_pkml"
 )
-project$scenarios[["aciclovir_from_pkml"]]
+project$definitions$scenarios[["aciclovir_from_pkml"]]
 ```
 
 For each model, the call:

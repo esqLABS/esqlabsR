@@ -28,7 +28,7 @@ This article uses the worked example project bundled with the package, so every 
 ```{r load-project}
 project <- loadProject(exampleProjectPath())
 
-project$scenarios
+project$definitions$scenarios
 ```
 
 The example defines three scenarios: an individual scenario, a population scenario, and an individual scenario that runs to steady state first.

@@ -178,17 +178,17 @@ test_that("validateProject() returns sections in canonical order", {
   )
 })
 
-test_that("validateProject() flips validatedSinceMutation when clean", {
+test_that("validateProject() flips the validation flag when clean", {
   project <- testProject()
-  expect_false(project$validatedSinceMutation)
+  expect_false(.isValidated(project))
 
   results <- validateProject(project)
 
   expect_false(isAnyCriticalErrors(results))
-  expect_true(project$validatedSinceMutation)
+  expect_true(.isValidated(project))
 })
 
-test_that("validateProject() leaves validatedSinceMutation FALSE on errors", {
+test_that("validateProject() leaves the validation flag FALSE on errors", {
   project <- .fakeProject(
     scenarios = list(Bad = esqlabsR:::Scenario())
   )
@@ -196,23 +196,18 @@ test_that("validateProject() leaves validatedSinceMutation FALSE on errors", {
   results <- validateProject(project)
 
   expect_true(isAnyCriticalErrors(results))
-  expect_false(project$validatedSinceMutation)
-})
-
-test_that("validatedSinceMutation is read-only", {
-  project <- .fakeProject()
-  expect_snapshot(error = TRUE, project$validatedSinceMutation <- TRUE)
+  expect_false(.isValidated(project))
 })
 
 test_that(".markValidated and .markModified flip the flag", {
   project <- .fakeProject()
-  expect_false(project$validatedSinceMutation)
+  expect_false(.isValidated(project))
 
-  project$.markValidated()
-  expect_true(project$validatedSinceMutation)
+  .markValidated(project)
+  expect_true(.isValidated(project))
 
-  project$.markModified()
-  expect_false(project$validatedSinceMutation)
+  .markModified(project)
+  expect_false(.isValidated(project))
 })
 
 # Section adapter: outputPaths ----
@@ -847,26 +842,24 @@ test_that(".runProjectValidation honors a targeted sections vector", {
   expect_named(results, c("scenarios", "outputPaths"))
 })
 
-# .ensureValid + runtime guards ----
+# ensureValid + runtime guards ----
 
-test_that(".ensureValid short-circuits when validatedSinceMutation is TRUE", {
+test_that("ensureValid() short-circuits when the project is validated", {
   project <- .fakeProject()
-  project$.markValidated()
-  expect_invisible(esqlabsR:::.ensureValid(
-    project,
+  .markValidated(project)
+  expect_invisible(project$ensureValid(
     sections = c("scenarios"),
     opName = "test"
   ))
 })
 
-test_that(".ensureValid aborts with a formatted summary on critical errors", {
+test_that("ensureValid() aborts with a formatted summary on critical errors", {
   sc <- esqlabsR:::Scenario()
   sc$modelFile <- ""
   project <- .fakeProject(scenarios = list(s1 = sc))
   expect_snapshot(
     error = TRUE,
-    esqlabsR:::.ensureValid(
-      project,
+    project$ensureValid(
       sections = c("scenarios"),
       opName = "runScenarios"
     )
@@ -941,9 +934,9 @@ test_that(".validatePlots flags an empty observed dataSet reference", {
   # Project.json that bypassed the addDataCombined() guard. The section
   # accessor is read-only; an in-memory project writes through .setSection()
   # without validating, so the malformed record survives for the validator.
-  dc <- project$.getSection("dataCombined")
+  dc <- .getSection(project, "dataCombined")
   dc$dc1$observed <- list(list(label = "obs", dataSet = ""))
-  project$.setSection("dataCombined", dc)
+  .setSection(project, "dataCombined", dc)
   result <- esqlabsR:::.plotsValidatorAdapter(project)
   msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
   expect_match(msgs, "dataSet", all = FALSE)
@@ -978,7 +971,8 @@ test_that(".validatePlots flags an unknown plotType from JSON", {
   # Inject an unknown plotType directly, bypassing the addPlot() enum guard
   # to mimic a hand-edited Project.json (an in-memory .setSection() does not
   # validate the malformed record).
-  project$.setSection(
+  .setSection(
+    project,
     "plots",
     list(
       p1 = list(plotId = "p1", dataCombinedId = "dc1", plotType = "bogusType")
@@ -1001,7 +995,8 @@ test_that(".validatePlots hard-errors on unknown plotGrid plotIDs", {
     ))
   )
   addPlot(project, "p1", "dc1", "individual")
-  project$.setSection(
+  .setSection(
+    project,
     "plotGrids",
     list(g1 = list(plotGridId = "g1", plotIds = "ghost"))
   )
@@ -1045,7 +1040,7 @@ test_that(".validatePI flags a parameter scenario outside the task's scenarios",
       observedData = "obs"
     ))
   )
-  result <- esqlabsR:::.validatePI(project$parameterIdentification)
+  result <- esqlabsR:::.validatePI(project$definitions$parameterIdentification)
   msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
   expect_match(msgs, "testscenario_steadystate", all = FALSE)
 })
@@ -1071,7 +1066,7 @@ test_that(".validatePI flags a mapping scenario outside the task's scenarios", {
       observedData = "obs"
     ))
   )
-  result <- esqlabsR:::.validatePI(project$parameterIdentification)
+  result <- esqlabsR:::.validatePI(project$definitions$parameterIdentification)
   msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
   expect_match(msgs, "populationscenario", all = FALSE)
 })

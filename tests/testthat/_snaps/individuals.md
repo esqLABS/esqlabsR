@@ -105,7 +105,7 @@
 # print.Individual renders the configured fields
 
     Code
-      print(project$individuals[["indiv1"]])
+      print(project$definitions$individuals[["indiv1"]])
     Output
       <Individual>
         * Species: Human
@@ -119,7 +119,7 @@
 # print.Individual renders a minimal individual
 
     Code
-      print(project$individuals[["minimal"]])
+      print(project$definitions$individuals[["minimal"]])
     Output
       <Individual>
         * Species: Human

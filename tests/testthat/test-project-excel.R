@@ -25,8 +25,8 @@ test_that("Project round-trips through Excel preserving outputPaths", {
   reimported <- loadProject(reimportedJson)
 
   expect_equal(
-    unlist(reimported$outputPaths),
-    unlist(project$outputPaths)
+    unlist(reimported$definitions$outputPaths),
+    unlist(project$definitions$outputPaths)
   )
 })
 
@@ -50,8 +50,8 @@ test_that("Excel round-trip preserves parameter set values, paths, and units", {
   # `.unwrapDefinitionList()` peels the read-only accessor wrapper so the stored
   # plain lists compare cleanly.
   expect_equal(
-    .unwrapDefinitionList(reimported$parameterSets),
-    .unwrapDefinitionList(project$parameterSets)
+    .unwrapDefinitionList(reimported$definitions$parameterSets),
+    .unwrapDefinitionList(project$definitions$parameterSets)
   )
 })
 
@@ -88,15 +88,15 @@ test_that("Excel round-trip preserves initial-condition sets and scenario refs",
   # The IC set round-trips byte-equivalent (records carry path / value / unit).
   # Compare per-set by name: the Excel sheet order need not match the in-memory
   # map order, so assert the same set ids and each set's records, not key order.
-  before <- .unwrapDefinitionList(project$initialConditions)
-  after <- .unwrapDefinitionList(reimported$initialConditions)
+  before <- .unwrapDefinitionList(project$definitions$initialConditions)
+  after <- .unwrapDefinitionList(reimported$definitions$initialConditions)
   expect_setequal(names(after), names(before))
   for (id in names(before)) {
     expect_equal(after[[id]], before[[id]])
   }
   # The scenario's reference to the set survives both directions.
   expect_identical(
-    reimported$scenarios[["testscenario"]]$initialConditions,
+    reimported$definitions$scenarios[["testscenario"]]$initialConditions,
     "icset"
   )
 })
@@ -138,9 +138,9 @@ test_that("Excel round-trip preserves parameter identification tasks", {
     })
   }
   expect_equal(
-    .unwrapDefinitionList(reimported$parameterIdentification),
+    .unwrapDefinitionList(reimported$definitions$parameterIdentification),
     normalizeUnitlessParams(.unwrapDefinitionList(
-      project$parameterIdentification
+      project$definitions$parameterIdentification
     ))
   )
 })
@@ -187,7 +187,7 @@ test_that("Excel round-trip preserves DataCombined numeric offsets and scales", 
     silent = TRUE
   ))
   reimported <- suppressWarnings(loadProject(reimportedJson))
-  dc <- .unwrapDefinitionList(reimported$dataCombined)[["dc_numeric"]]
+  dc <- .unwrapDefinitionList(reimported$definitions$dataCombined)[["dc_numeric"]]
   sim <- dc$simulated[[1]]
   obs <- dc$observed[[1]]
 
@@ -214,8 +214,8 @@ test_that("Excel round-trip does not fabricate a steady-state unit", {
     silent = TRUE
   ))
   reimported <- suppressWarnings(loadProject(reimportedJson))
-  before <- .unwrapDefinitionList(project$scenarios)
-  after <- .unwrapDefinitionList(reimported$scenarios)
+  before <- .unwrapDefinitionList(project$definitions$scenarios)
+  after <- .unwrapDefinitionList(reimported$definitions$scenarios)
 
   # A non-steady-state scenario carries the parser's default steadyStateTime and
   # a null unit; the export must not fabricate a unit for it, so the unit stays
@@ -251,16 +251,16 @@ test_that("Excel round-trip preserves individuals, populations, and applications
   reimported <- suppressWarnings(loadProject(reimportedJson))
 
   expect_equal(
-    .unwrapDefinitionList(reimported$individuals),
-    .unwrapDefinitionList(project$individuals)
+    .unwrapDefinitionList(reimported$definitions$individuals),
+    .unwrapDefinitionList(project$definitions$individuals)
   )
   expect_equal(
-    .unwrapDefinitionList(reimported$populations),
-    .unwrapDefinitionList(project$populations)
+    .unwrapDefinitionList(reimported$definitions$populations),
+    .unwrapDefinitionList(project$definitions$populations)
   )
   expect_equal(
-    .unwrapDefinitionList(reimported$applications),
-    .unwrapDefinitionList(project$applications)
+    .unwrapDefinitionList(reimported$definitions$applications),
+    .unwrapDefinitionList(project$definitions$applications)
   )
 })
 
@@ -288,7 +288,7 @@ test_that("Excel round-trip preserves a comma-bearing plot id inside a grid", {
     silent = TRUE
   ))
   reimported <- suppressWarnings(loadProject(reimportedJson))
-  grid <- .unwrapDefinitionList(reimported$plotGrids)[["grid_comma"]]
+  grid <- .unwrapDefinitionList(reimported$definitions$plotGrids)[["grid_comma"]]
 
   expect_identical(.splitPlotIDs(grid$plotIds), c("p1", "cmax, ss"))
 })
@@ -297,8 +297,8 @@ test_that("Excel round-trip preserves project name and description", {
   work_dir <- withr::local_tempdir()
   file.copy(dirname(exampleProjectPath()), work_dir, recursive = TRUE)
   project <- loadProject(file.path(work_dir, "Example", "Project.json"))
-  project$name <- "RT_Name"
-  project$description <- "RT_Desc"
+  project$info$name <- "RT_Name"
+  project$info$description <- "RT_Desc"
 
   excel_out <- withr::local_tempdir()
   exportProjectToExcel(project, outputDir = excel_out, silent = TRUE)
@@ -309,8 +309,8 @@ test_that("Excel round-trip preserves project name and description", {
   )
   reimported <- suppressWarnings(loadProject(reimportedJson))
 
-  expect_identical(reimported$name, "RT_Name")
-  expect_identical(reimported$description, "RT_Desc")
+  expect_identical(reimported$info$name, "RT_Name")
+  expect_identical(reimported$info$description, "RT_Desc")
 })
 
 test_that("Excel round-trip preserves the filePaths/excel container split", {
@@ -329,12 +329,12 @@ test_that("Excel round-trip preserves the filePaths/excel container split", {
   # The four live folders stay in filePaths; the seven Excel-bridge sheet names
   # re-split back into the excel block (not leaking into filePaths).
   expect_named(
-    reimported$filePaths,
+    reimported$rawFilePaths(),
     c("modelFolder", "populationsFolder", "dataFolder", "outputFolder"),
     ignore.order = TRUE
   )
   expect_named(
-    reimported$excel,
+    reimported$rawExcel(),
     c(
       "configurationsFolder",
       "modelParamsFile",
@@ -386,23 +386,23 @@ test_that("the imported tree reads the same definitions as the inlined import", 
   fromInline <- suppressWarnings(loadProject(inlineJson))
 
   expect_named(
-    fromTree$scenarios,
-    names(fromInline$scenarios),
+    fromTree$definitions$scenarios,
+    names(fromInline$definitions$scenarios),
     ignore.order = TRUE
   )
   expect_named(
-    fromTree$parameterSets,
-    names(fromInline$parameterSets),
+    fromTree$definitions$parameterSets,
+    names(fromInline$definitions$parameterSets),
     ignore.order = TRUE
   )
   expect_named(
-    fromTree$individuals,
-    names(fromInline$individuals),
+    fromTree$definitions$individuals,
+    names(fromInline$definitions$individuals),
     ignore.order = TRUE
   )
   expect_named(
-    fromTree$outputPaths,
-    names(fromInline$outputPaths),
+    fromTree$definitions$outputPaths,
+    names(fromInline$definitions$outputPaths),
     ignore.order = TRUE
   )
 })
@@ -421,29 +421,29 @@ test_that("the Excel import carries the known fixture ids and values", {
 
   # Output paths: both ids and their OSPS-notation literals are pinned.
   expect_setequal(
-    names(project$outputPaths),
+    names(project$definitions$outputPaths),
     c("aciclovir_pvb", "aciclovir_fat_cell")
   )
   expect_identical(
-    project$outputPaths[["aciclovir_pvb"]],
+    project$definitions$outputPaths[["aciclovir_pvb"]],
     "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
   )
   expect_identical(
-    project$outputPaths[["aciclovir_fat_cell"]],
+    project$definitions$outputPaths[["aciclovir_fat_cell"]],
     "Organism|Fat|Intracellular|Aciclovir|Concentration in container"
   )
 
   # The single biometric individual and its two populations are present.
-  expect_identical(names(project$individuals), "indiv1")
+  expect_identical(names(project$definitions$individuals), "indiv1")
   expect_setequal(
-    names(project$populations),
+    names(project$definitions$populations),
     c("testpopulation", "testpopulation_noonto")
   )
 
   # The known scenarios are all imported (canonical, lowercased ids).
   expect_true(all(
     c("testscenario", "pitestscenario", "populationscenario") %in%
-      names(project$scenarios)
+      names(project$definitions$scenarios)
   ))
 })
 

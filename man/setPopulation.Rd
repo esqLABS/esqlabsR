@@ -11,7 +11,7 @@ setPopulation(project, id, ...)
 
 \item{id}{Character vector. Ids of the populations to modify. Each is
 canonicalized the same way \code{\link[=addPopulation]{addPopulation()}} canonicalizes it, and must
-already exist in \code{project$populations}.}
+already exist in \code{populations} definitions.}
 
 \item{...}{Named fields to change. Accepted: \code{species},
 \code{numberOfIndividuals}, \code{proportionOfFemales}, \code{weightMin},
@@ -27,7 +27,7 @@ The \code{project} object, invisibly.
 \description{
 Changes one or more fields of the population identified by
 \code{id} and persists the change immediately to the population definition
-(write-through). The \code{project$populations} accessor is read-only, so this
+(write-through). The \code{populations} definitions accessor is read-only, so this
 is the way to revise an existing population in place.
 
 Only the arguments you pass via \code{...} are changed; every other field

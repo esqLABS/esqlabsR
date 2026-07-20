@@ -7,7 +7,7 @@
 #' @keywords internal
 #' @noRd
 .parameterSetsValidatorAdapter <- function(project) {
-  .validateParameterSets(project$parameterSets, "parameterSets")
+  .validateParameterSets(project$definitions$parameterSets, "parameterSets")
 }
 
 # Merge the parameter-set sections of a parsed `Project.json` into the single
@@ -737,19 +737,30 @@ print.InitialConditionSet <- function(x, ...) {
 #' @family parameters
 addParameterSet <- function(project, id) {
   validateIsOfType(project, "Project")
+  project$addParameterSet(id)
+}
+
+# Implementation behind `project$addParameterSet()` / `addParameterSet()`.
+#
+# @keywords internal
+# @noRd
+.addParameterSet_impl <- function(self, private, id) {
+  # Attribute any abort to the public authoring function the user called
+  # (the free-function forwarder), not this internal `_impl`.
+  rlang::local_error_call(rlang::caller_env(2))
   .assertIdVector(id)
   id <- .canonicalizeId(id)
   .assertNoDuplicateIds(id, "parameter set")
-  clash <- intersect(id, names(project$parameterSets))
+  clash <- intersect(id, names(self$definitions$parameterSets))
   if (length(clash) > 0L) {
     cli::cli_abort("parameter set {.val {clash}} already exists")
   }
-  parameterSets <- project$.getSection("parameterSets") %||% list()
+  parameterSets <- private$.getSection("parameterSets") %||% list()
   for (one in id) {
     parameterSets[[one]] <- .asParameterSet(list())
   }
-  project$.setSection("parameterSets", parameterSets)
-  invisible(project)
+  private$.setSection("parameterSets", parameterSets)
+  invisible(self)
 }
 
 #' Remove one or more parameter sets
@@ -765,28 +776,39 @@ addParameterSet <- function(project, id) {
 #' @family parameters
 removeParameterSet <- function(project, id) {
   validateIsOfType(project, "Project")
+  project$removeParameterSet(id)
+}
+
+# Implementation behind `project$removeParameterSet()` / `removeParameterSet()`.
+#
+# @keywords internal
+# @noRd
+.removeParameterSet_impl <- function(self, private, id) {
+  # Attribute any abort to the public authoring function the user called
+  # (the free-function forwarder), not this internal `_impl`.
+  rlang::local_error_call(rlang::caller_env(2))
   .assertIdVector(id)
   id <- .canonicalizeId(id)
-  missingIds <- setdiff(id, names(project$parameterSets))
+  missingIds <- setdiff(id, names(self$definitions$parameterSets))
   if (length(missingIds) > 0L) {
     cli::cli_warn("parameter set {.val {missingIds}} not found; no-op.")
   }
-  toRemove <- intersect(id, names(project$parameterSets))
+  toRemove <- intersect(id, names(self$definitions$parameterSets))
   if (length(toRemove) == 0L) {
-    return(invisible(project))
+    return(invisible(self))
   }
   for (one in toRemove) {
-    .warnIfReferenced(project, "parameterSet", one)
+    .warnIfReferenced(self, "parameterSet", one)
   }
-  parameterSets <- project$.getSection("parameterSets")
+  parameterSets <- private$.getSection("parameterSets")
   parameterSets[toRemove] <- NULL
-  project$.setSection("parameterSets", parameterSets)
-  invisible(project)
+  private$.setSection("parameterSets", parameterSets)
+  invisible(self)
 }
 
 #' Add one or many parameter entries to a named parameter set
 #'
-#' Adds parameter entries to the named set in `project$parameterSets`.
+#' Adds parameter entries to the named set in `parameterSets` definitions.
 #' `containerPath`, `parameterName`, `value`, and `units` accept parallel
 #' vectors of equal length N to add all N entries in a single call (and a
 #' single write to disk); a scalar call (length-1 vectors) adds one entry.
@@ -816,6 +838,25 @@ addParameterEntry <- function(
   units
 ) {
   validateIsOfType(project, "Project")
+  project$addParameterEntry(id, containerPath, parameterName, value, units)
+}
+
+# Implementation behind `project$addParameterEntry()` / `addParameterEntry()`.
+#
+# @keywords internal
+# @noRd
+.addParameterEntry_impl <- function(
+  self,
+  private,
+  id,
+  containerPath,
+  parameterName,
+  value,
+  units
+) {
+  # Attribute any abort to the public authoring function the user called
+  # (the free-function forwarder), not this internal `_impl`.
+  rlang::local_error_call(rlang::caller_env(2))
   if (!is.character(id) || length(id) != 1L || is.na(id) || nchar(id) == 0) {
     cli::cli_abort("{.arg id} must be a non-empty string")
   }
@@ -828,7 +869,7 @@ addParameterEntry <- function(
     value,
     units
   )
-  current <- project$parameterSets[[id]]
+  current <- self$definitions$parameterSets[[id]]
   # Unlike the other `add*` functions, `addParameterEntry()` creates its parent
   # set on demand rather than aborting on a missing parent. Inform the user when
   # it does, so the on-demand creation is not silent.
@@ -839,7 +880,7 @@ addParameterEntry <- function(
   }
   # Fold all N entries into the set in memory first, so the single write below
   # triggers exactly one write-through (not one per entry).
-  parameterSets <- project$.getSection("parameterSets")
+  parameterSets <- private$.getSection("parameterSets")
   parameterSets[[id]] <- .asParameterSet(.addParameterEntries(
     current,
     containerPath,
@@ -847,8 +888,8 @@ addParameterEntry <- function(
     value,
     units
   ))
-  project$.setSection("parameterSets", parameterSets)
-  invisible(project)
+  private$.setSection("parameterSets", parameterSets)
+  invisible(self)
 }
 
 #' Remove one or many parameter entries from a named parameter set
@@ -857,7 +898,7 @@ addParameterEntry <- function(
 #' `parameterName` accept parallel vectors of equal length N to remove all N
 #' entries in a single call (and a single write to disk); a scalar call
 #' (length-1 vectors) removes one entry. If every entry of the set is removed,
-#' the set itself is auto-removed from `project$parameterSets`. Warns if the
+#' the set itself is auto-removed from `parameterSets` definitions. Warns if the
 #' set or any named entry doesn't exist.
 #'
 #' @param project A `Project` object.
@@ -874,33 +915,51 @@ removeParameterEntry <- function(
   parameterName
 ) {
   validateIsOfType(project, "Project")
+  project$removeParameterEntry(id, containerPath, parameterName)
+}
+
+# Implementation behind `project$removeParameterEntry()` /
+# `removeParameterEntry()`.
+#
+# @keywords internal
+# @noRd
+.removeParameterEntry_impl <- function(
+  self,
+  private,
+  id,
+  containerPath,
+  parameterName
+) {
+  # Attribute any abort to the public authoring function the user called
+  # (the free-function forwarder), not this internal `_impl`.
+  rlang::local_error_call(rlang::caller_env(2))
   if (!is.character(id) || length(id) != 1L || is.na(id) || nchar(id) == 0) {
     cli::cli_abort("{.arg id} must be a non-empty string")
   }
   id <- .canonicalizeId(id)
-  if (!(id %in% names(project$parameterSets))) {
+  if (!(id %in% names(self$definitions$parameterSets))) {
     cli::cli_warn("parameter set {.val {id}} not found; no-op.")
-    return(invisible(project))
+    return(invisible(self))
   }
   # Fold all N removals into the set in memory first, so the single assignment
   # below triggers exactly one write-through (not one per entry).
   result <- .removeParameterEntries(
-    project$parameterSets[[id]],
+    self$definitions$parameterSets[[id]],
     containerPath,
     parameterName
   )
   if (!result$removed) {
-    return(invisible(project))
+    return(invisible(self))
   }
-  parameterSets <- project$.getSection("parameterSets")
+  parameterSets <- private$.getSection("parameterSets")
   if (is.null(result$parameters)) {
-    .warnIfReferenced(project, "parameterSet", id)
+    .warnIfReferenced(self, "parameterSet", id)
     parameterSets[[id]] <- NULL
   } else {
     parameterSets[[id]] <- .asParameterSet(result$parameters)
   }
-  project$.setSection("parameterSets", parameterSets)
-  invisible(project)
+  private$.setSection("parameterSets", parameterSets)
+  invisible(self)
 }
 
 # Validate scalar inputs for an `(containerPath, parameterName, value,
@@ -1166,19 +1225,31 @@ removeParameterEntry <- function(
 #' @family parameters
 addInitialConditions <- function(project, id) {
   validateIsOfType(project, "Project")
+  project$addInitialConditions(id)
+}
+
+# Implementation behind `project$addInitialConditions()` /
+# `addInitialConditions()`.
+#
+# @keywords internal
+# @noRd
+.addInitialConditions_impl <- function(self, private, id) {
+  # Attribute any abort to the public authoring function the user called
+  # (the free-function forwarder), not this internal `_impl`.
+  rlang::local_error_call(rlang::caller_env(2))
   .assertIdVector(id)
   id <- .canonicalizeId(id)
   .assertNoDuplicateIds(id, "initial-condition set")
-  clash <- intersect(id, names(project$initialConditions))
+  clash <- intersect(id, names(self$definitions$initialConditions))
   if (length(clash) > 0L) {
     cli::cli_abort("initial-condition set {.val {clash}} already exists")
   }
-  initialConditions <- project$.getSection("initialConditions") %||% list()
+  initialConditions <- private$.getSection("initialConditions") %||% list()
   for (one in id) {
     initialConditions[[one]] <- .asInitialConditionSet(list())
   }
-  project$.setSection("initialConditions", initialConditions)
-  invisible(project)
+  private$.setSection("initialConditions", initialConditions)
+  invisible(self)
 }
 
 #' Remove one or more initial-condition sets
@@ -1194,29 +1265,41 @@ addInitialConditions <- function(project, id) {
 #' @family parameters
 removeInitialConditions <- function(project, id) {
   validateIsOfType(project, "Project")
+  project$removeInitialConditions(id)
+}
+
+# Implementation behind `project$removeInitialConditions()` /
+# `removeInitialConditions()`.
+#
+# @keywords internal
+# @noRd
+.removeInitialConditions_impl <- function(self, private, id) {
+  # Attribute any abort to the public authoring function the user called
+  # (the free-function forwarder), not this internal `_impl`.
+  rlang::local_error_call(rlang::caller_env(2))
   .assertIdVector(id)
   id <- .canonicalizeId(id)
-  missingIds <- setdiff(id, names(project$initialConditions))
+  missingIds <- setdiff(id, names(self$definitions$initialConditions))
   if (length(missingIds) > 0L) {
     cli::cli_warn("initial-condition set {.val {missingIds}} not found; no-op.")
   }
-  toRemove <- intersect(id, names(project$initialConditions))
+  toRemove <- intersect(id, names(self$definitions$initialConditions))
   if (length(toRemove) == 0L) {
-    return(invisible(project))
+    return(invisible(self))
   }
   for (one in toRemove) {
-    .warnIfReferenced(project, "initialConditions", one)
+    .warnIfReferenced(self, "initialConditions", one)
   }
-  initialConditions <- project$.getSection("initialConditions")
+  initialConditions <- private$.getSection("initialConditions")
   initialConditions[toRemove] <- NULL
-  project$.setSection("initialConditions", initialConditions)
-  invisible(project)
+  private$.setSection("initialConditions", initialConditions)
+  invisible(self)
 }
 
 #' Add one or many entries to a named initial-condition set
 #'
 #' Adds molecule start-value entries to the named set in
-#' `project$initialConditions`. `path`, `value`, and `unit` accept parallel
+#' `initialConditions` definitions. `path`, `value`, and `unit` accept parallel
 #' vectors of equal length N to add all N entries in a single call (and a
 #' single write to disk); a scalar call (length-1 vectors) adds one entry.
 #' Building a large set with one vectorized call is far cheaper than a loop of
@@ -1238,6 +1321,25 @@ removeInitialConditions <- function(project, id) {
 #' @family parameters
 addInitialConditionEntry <- function(project, id, path, value, unit) {
   validateIsOfType(project, "Project")
+  project$addInitialConditionEntry(id, path, value, unit)
+}
+
+# Implementation behind `project$addInitialConditionEntry()` /
+# `addInitialConditionEntry()`.
+#
+# @keywords internal
+# @noRd
+.addInitialConditionEntry_impl <- function(
+  self,
+  private,
+  id,
+  path,
+  value,
+  unit
+) {
+  # Attribute any abort to the public authoring function the user called
+  # (the free-function forwarder), not this internal `_impl`.
+  rlang::local_error_call(rlang::caller_env(2))
   if (!is.character(id) || length(id) != 1L || is.na(id) || nchar(id) == 0) {
     cli::cli_abort("{.arg id} must be a non-empty string")
   }
@@ -1245,7 +1347,7 @@ addInitialConditionEntry <- function(project, id, path, value, unit) {
   # Validate the batch shape up front so a mismatched call fails fast, before
   # any on-demand set creation is reported.
   .assertInitialConditionEntryVectorLengths(path, value, unit)
-  current <- project$initialConditions[[id]]
+  current <- self$definitions$initialConditions[[id]]
   # Unlike the other `add*` functions, this creates its parent set on demand
   # rather than aborting on a missing parent. Inform the user when it does, so
   # the on-demand creation is not silent.
@@ -1256,15 +1358,15 @@ addInitialConditionEntry <- function(project, id, path, value, unit) {
   }
   # Fold all N entries into the set in memory first, so the single write below
   # triggers exactly one write-through (not one per entry).
-  initialConditions <- project$.getSection("initialConditions")
+  initialConditions <- private$.getSection("initialConditions")
   initialConditions[[id]] <- .asInitialConditionSet(.addInitialConditionEntries(
     current,
     path,
     value,
     unit
   ))
-  project$.setSection("initialConditions", initialConditions)
-  invisible(project)
+  private$.setSection("initialConditions", initialConditions)
+  invisible(self)
 }
 
 #' Remove one or many entries from a named initial-condition set
@@ -1273,7 +1375,7 @@ addInitialConditionEntry <- function(project, id, path, value, unit) {
 #' vector of length N to remove all N entries in a single call (and a single
 #' write to disk); a scalar call (length-1 vector) removes one entry. If every
 #' entry of the set is removed, the set itself is auto-removed from
-#' `project$initialConditions`. Warns if the set or any named entry doesn't
+#' `initialConditions` definitions. Warns if the set or any named entry doesn't
 #' exist.
 #'
 #' @param project A `Project` object.
@@ -1284,32 +1386,44 @@ addInitialConditionEntry <- function(project, id, path, value, unit) {
 #' @family parameters
 removeInitialConditionEntry <- function(project, id, path) {
   validateIsOfType(project, "Project")
+  project$removeInitialConditionEntry(id, path)
+}
+
+# Implementation behind `project$removeInitialConditionEntry()` /
+# `removeInitialConditionEntry()`.
+#
+# @keywords internal
+# @noRd
+.removeInitialConditionEntry_impl <- function(self, private, id, path) {
+  # Attribute any abort to the public authoring function the user called
+  # (the free-function forwarder), not this internal `_impl`.
+  rlang::local_error_call(rlang::caller_env(2))
   if (!is.character(id) || length(id) != 1L || is.na(id) || nchar(id) == 0) {
     cli::cli_abort("{.arg id} must be a non-empty string")
   }
   id <- .canonicalizeId(id)
-  if (!(id %in% names(project$initialConditions))) {
+  if (!(id %in% names(self$definitions$initialConditions))) {
     cli::cli_warn("initial-condition set {.val {id}} not found; no-op.")
-    return(invisible(project))
+    return(invisible(self))
   }
   # Fold all N removals into the set in memory first, so the single assignment
   # below triggers exactly one write-through (not one per entry).
   result <- .removeInitialConditionEntries(
-    project$initialConditions[[id]],
+    self$definitions$initialConditions[[id]],
     path
   )
   if (!result$removed) {
-    return(invisible(project))
+    return(invisible(self))
   }
-  initialConditions <- project$.getSection("initialConditions")
+  initialConditions <- private$.getSection("initialConditions")
   if (is.null(result$entries)) {
-    .warnIfReferenced(project, "initialConditions", id)
+    .warnIfReferenced(self, "initialConditions", id)
     initialConditions[[id]] <- NULL
   } else {
     initialConditions[[id]] <- .asInitialConditionSet(result$entries)
   }
-  project$.setSection("initialConditions", initialConditions)
-  invisible(project)
+  private$.setSection("initialConditions", initialConditions)
+  invisible(self)
 }
 
 # Validate scalar inputs for a `(path, value, unit)` initial-condition entry.

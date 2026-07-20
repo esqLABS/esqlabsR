@@ -5,54 +5,54 @@
 
 test_that("loadProject reads every section from its definitions/<kind>/ tree", {
   project <- exampleProject()
-  defs <- file.path(project$projectDirPath, "definitions")
+  defs <- file.path(project$info$projectDirPath, "definitions")
 
   # The example fixture materializes each non-empty section as a tree, and
   # Project.json carries no inline copy of it.
-  raw <- jsonlite::fromJSON(project$jsonPath, simplifyVector = FALSE)
+  raw <- jsonlite::fromJSON(project$info$projectFilePath, simplifyVector = FALSE)
 
   expect_true(dir.exists(file.path(defs, "individuals")))
   expect_setequal(
     list.files(file.path(defs, "individuals"), pattern = "\\.json$"),
-    paste0(names(project$individuals), ".json")
+    paste0(names(project$definitions$individuals), ".json")
   )
   expect_length(raw$individuals, 0L)
 
   expect_true(dir.exists(file.path(defs, "parameter-sets")))
   expect_setequal(
     list.files(file.path(defs, "parameter-sets"), pattern = "\\.json$"),
-    paste0(names(project$parameterSets), ".json")
+    paste0(names(project$definitions$parameterSets), ".json")
   )
   expect_length(raw$parameterSets, 0L)
 
   expect_true(dir.exists(file.path(defs, "initial-conditions")))
   expect_setequal(
     list.files(file.path(defs, "initial-conditions"), pattern = "\\.json$"),
-    paste0(names(project$initialConditions), ".json")
+    paste0(names(project$definitions$initialConditions), ".json")
   )
   expect_length(raw$initialConditions, 0L)
 
   expect_true(dir.exists(file.path(defs, "output-paths")))
   expect_setequal(
     list.files(file.path(defs, "output-paths"), pattern = "\\.json$"),
-    paste0(names(project$outputPaths), ".json")
+    paste0(names(project$definitions$outputPaths), ".json")
   )
   expect_length(raw$outputPaths, 0L)
 })
 
 test_that("saveProject() writes one individual definition file; a removal deletes it", {
   project <- exampleProject()
-  dir <- file.path(project$projectDirPath, "definitions", "individuals")
+  dir <- file.path(project$info$projectDirPath, "definitions", "individuals")
 
   addIndividual(project, "newindiv", species = "Human", gender = "MALE")
   expect_false(file.exists(file.path(dir, "newindiv.json")))
   saveProject(project)
   expect_true(file.exists(file.path(dir, "newindiv.json")))
 
-  reloaded <- loadProject(project$jsonPath)
+  reloaded <- loadProject(project$info$projectFilePath)
   expect_identical(
-    reloaded$individuals[["newindiv"]]$species,
-    project$individuals[["newindiv"]]$species
+    reloaded$definitions$individuals[["newindiv"]]$species,
+    project$definitions$individuals[["newindiv"]]$species
   )
 
   removeIndividual(project, "newindiv")
@@ -62,7 +62,7 @@ test_that("saveProject() writes one individual definition file; a removal delete
 
 test_that("saveProject() writes population / application / output-path definition files", {
   project <- exampleProject()
-  defs <- file.path(project$projectDirPath, "definitions")
+  defs <- file.path(project$info$projectDirPath, "definitions")
 
   addPopulation(project, "newpop", species = "Human", numberOfIndividuals = 5)
   addApplication(project, "newapp")
@@ -72,27 +72,27 @@ test_that("saveProject() writes population / application / output-path definitio
   expect_true(file.exists(file.path(defs, "applications", "newapp.json")))
   expect_true(file.exists(file.path(defs, "output-paths", "newpath.json")))
 
-  reloaded <- loadProject(project$jsonPath)
-  expect_true("newpop" %in% names(reloaded$populations))
-  expect_true("newapp" %in% names(reloaded$applications))
+  reloaded <- loadProject(project$info$projectFilePath)
+  expect_true("newpop" %in% names(reloaded$definitions$populations))
+  expect_true("newapp" %in% names(reloaded$definitions$applications))
   expect_identical(
-    reloaded$outputPaths[["newpath"]],
+    reloaded$definitions$outputPaths[["newpath"]],
     "Organism|Drug|Concentration"
   )
 })
 
 test_that("saveProject() writes the parameter set's definition file", {
   project <- exampleProject()
-  dir <- file.path(project$projectDirPath, "definitions", "parameter-sets")
+  dir <- file.path(project$info$projectDirPath, "definitions", "parameter-sets")
 
   addParameterSet(project, "newset")
   addParameterEntry(project, "newset", "Organism", "Param", 1.5, "mg")
   saveProject(project)
   expect_true(file.exists(file.path(dir, "newset.json")))
 
-  reloaded <- loadProject(project$jsonPath)
-  expect_length(reloaded$parameterSets[["newset"]], 1L)
-  expect_identical(reloaded$parameterSets[["newset"]][[1]]$value, 1.5)
+  reloaded <- loadProject(project$info$projectFilePath)
+  expect_length(reloaded$definitions$parameterSets[["newset"]], 1L)
+  expect_identical(reloaded$definitions$parameterSets[["newset"]][[1]]$value, 1.5)
 })
 
 # saveProject() writes if-different: a save after editing one definition
@@ -101,7 +101,7 @@ test_that("saveProject() writes the parameter set's definition file", {
 # definitions the user changed.
 test_that("saveProject() rewrites only the changed definition's file (write-if-different)", {
   project <- exampleProject()
-  dir <- file.path(project$projectDirPath, "definitions", "parameter-sets")
+  dir <- file.path(project$info$projectDirPath, "definitions", "parameter-sets")
 
   addParameterSet(project, "seta")
   addParameterSet(project, "setb")
@@ -151,7 +151,7 @@ test_that("adding many parameter sets one at a time scales linearly", {
 test_that("addPITask writes a per-task definition file; removePITask deletes it", {
   project <- exampleProject()
   dir <- file.path(
-    project$projectDirPath,
+    project$info$projectDirPath,
     "definitions",
     "parameter-identification"
   )
@@ -180,8 +180,8 @@ test_that("addPITask writes a per-task definition file; removePITask deletes it"
   saveProject(project)
   expect_true(file.exists(file.path(dir, "newtask.json")))
 
-  reloaded <- loadProject(project$jsonPath)
-  expect_true("newtask" %in% names(reloaded$parameterIdentification))
+  reloaded <- loadProject(project$info$projectFilePath)
+  expect_true("newtask" %in% names(reloaded$definitions$parameterIdentification))
 
   removePITask(project, "newtask")
   saveProject(project)
@@ -190,7 +190,7 @@ test_that("addPITask writes a per-task definition file; removePITask deletes it"
 
 test_that("the three plots parts write to data-combined / plots / plot-grids", {
   project <- exampleProject()
-  defs <- file.path(project$projectDirPath, "definitions")
+  defs <- file.path(project$info$projectDirPath, "definitions")
   dcDir <- file.path(defs, "data-combined")
   plotsDir <- file.path(defs, "plots")
   gridsDir <- file.path(defs, "plot-grids")
@@ -214,16 +214,16 @@ test_that("the three plots parts write to data-combined / plots / plot-grids", {
   expect_true(file.exists(file.path(gridsDir, "newgrid.json")))
 
   # A reload reads each of the three plots sections from its own folder.
-  reloaded <- loadProject(project$jsonPath)
-  expect_true("newdc" %in% names(reloaded$dataCombined))
-  expect_true("newplot" %in% names(reloaded$plots))
-  expect_true("newgrid" %in% names(reloaded$plotGrids))
+  reloaded <- loadProject(project$info$projectFilePath)
+  expect_true("newdc" %in% names(reloaded$definitions$dataCombined))
+  expect_true("newplot" %in% names(reloaded$definitions$plots))
+  expect_true("newgrid" %in% names(reloaded$definitions$plotGrids))
 })
 
 test_that("removing a plot definition deletes only its file on save, leaving siblings", {
   project <- exampleProject()
-  plotsDir <- file.path(project$projectDirPath, "definitions", "plots")
-  dcDir <- file.path(project$projectDirPath, "definitions", "data-combined")
+  plotsDir <- file.path(project$info$projectDirPath, "definitions", "plots")
+  dcDir <- file.path(project$info$projectDirPath, "definitions", "data-combined")
 
   addPlot(project, "p_extra", "aciclovir_individual", "individual")
   saveProject(project)
@@ -240,7 +240,7 @@ test_that("removing a plot definition deletes only its file on save, leaving sib
 
 test_that("saveProject() writes an observed-data (config) definition file", {
   project <- exampleProject()
-  dir <- file.path(project$projectDirPath, "definitions", "observed-data")
+  dir <- file.path(project$info$projectDirPath, "definitions", "observed-data")
 
   addObservedData(
     project,
@@ -249,9 +249,9 @@ test_that("saveProject() writes an observed-data (config) definition file", {
   saveProject(project)
   expect_true(file.exists(file.path(dir, "extra.pkml.json")))
 
-  reloaded <- loadProject(project$jsonPath)
+  reloaded <- loadProject(project$info$projectFilePath)
   files <- vapply(
-    reloaded$observedData,
+    reloaded$definitions$observedData,
     function(e) basename(e[["file"]] %||% ""),
     character(1)
   )
@@ -260,30 +260,30 @@ test_that("saveProject() writes an observed-data (config) definition file", {
 
 test_that("a section edit stays in memory until saveProject()", {
   source <- exampleProject()
-  defs <- file.path(source$projectDirPath, "definitions")
+  defs <- file.path(source$info$projectDirPath, "definitions")
   before <- list.files(file.path(defs, "individuals"))
 
   addIndividual(source, "notyetsaved", species = "Human", gender = "MALE")
 
-  expect_true("notyetsaved" %in% names(source$individuals))
+  expect_true("notyetsaved" %in% names(source$definitions$individuals))
   # The edit is in memory only; the on-disk tree is untouched before a save.
   expect_setequal(list.files(file.path(defs, "individuals")), before)
-  reloadedSource <- loadProject(source$jsonPath)
-  expect_false("notyetsaved" %in% names(reloadedSource$individuals))
+  reloadedSource <- loadProject(source$info$projectFilePath)
+  expect_false("notyetsaved" %in% names(reloadedSource$definitions$individuals))
 })
 
 test_that("saveProject() on a restored project materializes the full section tree", {
   snap <- snapshotProject(exampleProject(), dir = withr::local_tempdir())
   dir <- withr::local_tempdir()
   project <- restoreProject(snap, dir)
-  before <- names(project$individuals)
+  before <- names(project$definitions$individuals)
 
   addIndividual(project, "freshindiv", species = "Human", gender = "MALE")
   saveProject(project)
 
   reloaded <- loadProject(file.path(dir, "Project.json"))
   expect_named(
-    reloaded$individuals,
+    reloaded$definitions$individuals,
     c(before, "freshindiv"),
     ignore.order = TRUE
   )
@@ -295,8 +295,8 @@ test_that("saveProject() on a restored project materializes the full section tre
 # load must abort naming the path.
 test_that("a definitions/<kind>/ path that is a file aborts the load", {
   project <- exampleProject()
-  jsonPath <- project$jsonPath
-  kindDir <- file.path(project$projectDirPath, "definitions", "individuals")
+  jsonPath <- project$info$projectFilePath
+  kindDir <- file.path(project$info$projectDirPath, "definitions", "individuals")
 
   unlink(kindDir, recursive = TRUE)
   writeLines("not a directory", kindDir)
@@ -310,8 +310,8 @@ test_that("a definitions/<kind>/ path that is a file aborts the load", {
 
 test_that("a definitions/ root that is a file aborts the load", {
   project <- exampleProject()
-  jsonPath <- project$jsonPath
-  defs <- file.path(project$projectDirPath, "definitions")
+  jsonPath <- project$info$projectFilePath
+  defs <- file.path(project$info$projectDirPath, "definitions")
 
   unlink(defs, recursive = TRUE)
   writeLines("not a directory", defs)
@@ -328,8 +328,8 @@ test_that("a definitions/ root that is a file aborts the load", {
 # file and the missing field.
 test_that("a keyed file missing its id field aborts naming the file", {
   project <- exampleProject()
-  jsonPath <- project$jsonPath
-  dir <- file.path(project$projectDirPath, "definitions", "individuals")
+  jsonPath <- project$info$projectFilePath
+  dir <- file.path(project$info$projectDirPath, "definitions", "individuals")
   f <- list.files(dir, pattern = "\\.json$", full.names = TRUE)[[1]]
 
   obj <- jsonlite::fromJSON(f, simplifyVector = FALSE)
@@ -348,8 +348,8 @@ test_that("a keyed file missing its id field aborts naming the file", {
 # canonicalized references. It must now abort naming the file and the mismatch.
 test_that("a keyed file whose inner id disagrees with its filename aborts", {
   project <- exampleProject()
-  jsonPath <- project$jsonPath
-  dir <- file.path(project$projectDirPath, "definitions", "output-paths")
+  jsonPath <- project$info$projectFilePath
+  dir <- file.path(project$info$projectDirPath, "definitions", "output-paths")
   f <- list.files(dir, pattern = "\\.json$", full.names = TRUE)[[1]]
 
   obj <- jsonlite::fromJSON(f, simplifyVector = FALSE)
@@ -368,8 +368,8 @@ test_that("a keyed file whose inner id disagrees with its filename aborts", {
 # the file whose stem disagrees with its inner id aborts.
 test_that("two files with the same inner id cannot silently collapse", {
   project <- exampleProject()
-  jsonPath <- project$jsonPath
-  dir <- file.path(project$projectDirPath, "definitions", "output-paths")
+  jsonPath <- project$info$projectFilePath
+  dir <- file.path(project$info$projectDirPath, "definitions", "output-paths")
   f <- list.files(dir, pattern = "\\.json$", full.names = TRUE)[[1]]
 
   obj <- jsonlite::fromJSON(f, simplifyVector = FALSE)
@@ -394,8 +394,8 @@ test_that("two files with the same inner id cannot silently collapse", {
 # through with no guard; it must now fail the load with a clear message.
 test_that("an empty-object scalar field on a non-scenario kind aborts the load", {
   project <- exampleProject()
-  jsonPath <- project$jsonPath
-  dir <- file.path(project$projectDirPath, "definitions", "individuals")
+  jsonPath <- project$info$projectFilePath
+  dir <- file.path(project$info$projectDirPath, "definitions", "individuals")
   f <- list.files(dir, pattern = "\\.json$", full.names = TRUE)[[1]]
 
   obj <- jsonlite::fromJSON(f, simplifyVector = FALSE)
@@ -416,23 +416,23 @@ test_that("an inline-section snapshot loads identically to its tree source", {
   reloaded <- restoreProject(snap, withr::local_tempdir())
 
   expect_named(
-    reloaded$individuals,
-    names(source$individuals),
+    reloaded$definitions$individuals,
+    names(source$definitions$individuals),
     ignore.order = TRUE
   )
   expect_named(
-    reloaded$parameterSets,
-    names(source$parameterSets),
+    reloaded$definitions$parameterSets,
+    names(source$definitions$parameterSets),
     ignore.order = TRUE
   )
   expect_named(
-    reloaded$outputPaths,
-    names(source$outputPaths),
+    reloaded$definitions$outputPaths,
+    names(source$definitions$outputPaths),
     ignore.order = TRUE
   )
   expect_named(
-    reloaded$applications,
-    names(source$applications),
+    reloaded$definitions$applications,
+    names(source$definitions$applications),
     ignore.order = TRUE
   )
 })
@@ -447,40 +447,40 @@ test_that("an inline-section snapshot loads identically to its tree source", {
 
 test_that("loadProject reads each plots section from its own folder", {
   project <- exampleProject()
-  defs <- file.path(project$projectDirPath, "definitions")
+  defs <- file.path(project$info$projectDirPath, "definitions")
 
   # The example fixture materializes each plots part as its own keyed tree.
   expect_setequal(
     list.files(file.path(defs, "data-combined"), pattern = "\\.json$"),
-    paste0(names(project$dataCombined), ".json")
+    paste0(names(project$definitions$dataCombined), ".json")
   )
   expect_setequal(
     list.files(file.path(defs, "plots"), pattern = "\\.json$"),
-    paste0(names(project$plots), ".json")
+    paste0(names(project$definitions$plots), ".json")
   )
   expect_setequal(
     list.files(file.path(defs, "plot-grids"), pattern = "\\.json$"),
-    paste0(names(project$plotGrids), ".json")
+    paste0(names(project$definitions$plotGrids), ".json")
   )
   # Project.json carries no inline copy of the plots section.
-  raw <- jsonlite::fromJSON(project$jsonPath, simplifyVector = FALSE)
+  raw <- jsonlite::fromJSON(project$info$projectFilePath, simplifyVector = FALSE)
   expect_null(raw$plots)
 })
 
 test_that("a dangling cross-file plot ref is a lazy error, not a write abort", {
   project <- exampleProject()
-  plotsDir <- file.path(project$projectDirPath, "definitions", "plots")
+  plotsDir <- file.path(project$info$projectDirPath, "definitions", "plots")
 
   # A plot referencing a non-existent dataCombined: the write itself is
   # structural-only (the plot's own shape), so it does not abort. The dangling
   # ref is caught lazily by validateProject(), exactly as before the split.
-  pc <- project$.getSection("plots")
+  pc <- .getSection(project, "plots")
   pc$p1$dataCombinedId <- "ghost_dc"
-  project$.setSection("plots", pc)
+  .setSection(project, "plots", pc)
   saveProject(project)
   expect_true(file.exists(file.path(plotsDir, "p1.json")))
 
-  reloaded <- loadProject(project$jsonPath)
+  reloaded <- loadProject(project$info$projectFilePath)
   results <- suppressWarnings(validateProject(reloaded))
   msgs <- vapply(
     results$plots$critical_errors,
@@ -492,17 +492,17 @@ test_that("a dangling cross-file plot ref is a lazy error, not a write abort", {
 
 test_that("a grid pointing at a missing plot stays a lazy error after reload", {
   project <- exampleProject()
-  gridsDir <- file.path(project$projectDirPath, "definitions", "plot-grids")
+  gridsDir <- file.path(project$info$projectDirPath, "definitions", "plot-grids")
 
   # Repoint the grid at a plot id that does not exist; the grid write succeeds
   # (its own structure is valid), the dangling plotIds ref is lazy.
-  pg <- project$.getSection("plotGrids")
+  pg <- .getSection(project, "plotGrids")
   pg$individual_diagnostics$plotIds <- "ghost_plot"
-  project$.setSection("plotGrids", pg)
+  .setSection(project, "plotGrids", pg)
   saveProject(project)
   expect_true(file.exists(file.path(gridsDir, "individual_diagnostics.json")))
 
-  reloaded <- loadProject(project$jsonPath)
+  reloaded <- loadProject(project$info$projectFilePath)
   results <- suppressWarnings(validateProject(reloaded))
   msgs <- vapply(
     results$plots$critical_errors,
@@ -514,15 +514,15 @@ test_that("a grid pointing at a missing plot stays a lazy error after reload", {
 
 test_that("an emptied plots part clears its folder's files on save", {
   project <- exampleProject()
-  gridsDir <- file.path(project$projectDirPath, "definitions", "plot-grids")
+  gridsDir <- file.path(project$info$projectDirPath, "definitions", "plot-grids")
   expect_true(file.exists(file.path(gridsDir, "individual_diagnostics.json")))
 
   removePlotGrid(project, "individual_diagnostics")
   saveProject(project)
   expect_false(file.exists(file.path(gridsDir, "individual_diagnostics.json")))
 
-  reloaded <- loadProject(project$jsonPath)
-  expect_length(reloaded$plotGrids %||% list(), 0L)
+  reloaded <- loadProject(project$info$projectFilePath)
+  expect_length(reloaded$definitions$plotGrids %||% list(), 0L)
 })
 
 test_that("snapshot then restore is a fixed point over the three plots folders", {
@@ -532,10 +532,10 @@ test_that("snapshot then restore is a fixed point over the three plots folders",
 
   # Each plots section is identical (same ids) and the three folders
   # materialized on the loaded snapshot.
-  defs <- file.path(reloaded$projectDirPath, "definitions")
+  defs <- file.path(reloaded$info$projectDirPath, "definitions")
   expect_setequal(
-    names(reloaded$dataCombined),
-    names(source$dataCombined)
+    names(reloaded$definitions$dataCombined),
+    names(source$definitions$dataCombined)
   )
   expect_true(file.exists(file.path(
     defs,

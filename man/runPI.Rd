@@ -21,7 +21,7 @@ name typed as it was first passed to \code{addPITask()} still resolves.}
 
 \item{observedData}{Optional named list of pre-loaded \code{DataSet}
 objects that overrides automatic resolution from
-\code{project$observedData}.}
+\code{observedData} definitions.}
 
 \item{stopIfParameterNotFound}{Logical. When \code{TRUE} (default), a
 parameter listed in a scenario's parameter sets but absent from the

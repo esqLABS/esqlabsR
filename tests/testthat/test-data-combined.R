@@ -200,7 +200,7 @@ test_that("createDataCombined errors when a requested plotGrids name is unknown"
 test_that("createDataCombined builds DataCombined for Example project", {
   project <- exampleProject()
   simulated <- runScenarios(project, scenarios = "aciclovir_iv")
-  dcName <- names(project$dataCombined)[[1]]
+  dcName <- names(project$definitions$dataCombined)[[1]]
 
   result <- createDataCombined(
     project,
@@ -226,7 +226,7 @@ test_that("createDataCombined errors when dataCombined is not a string", {
 
 test_that("createDataCombined applies declared offsets and scale factors", {
   project <- testProject()
-  path <- project$outputPaths$aciclovir_pvb
+  path <- project$definitions$outputPaths$aciclovir_pvb
   addDataCombined(
     project,
     "dc_plain",
@@ -297,7 +297,7 @@ test_that("createDataCombined(stopIfNotFound = FALSE) drops a wrong-path entry w
 
 test_that("createDataCombined reports a failed scenario run distinctly", {
   project <- testProject()
-  path <- project$outputPaths$aciclovir_pvb
+  path <- project$definitions$outputPaths$aciclovir_pvb
   addDataCombined(
     project,
     "dc_failed",

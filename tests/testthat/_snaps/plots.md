@@ -23,7 +23,7 @@
 # print.Plot renders a single plot configuration
 
     Code
-      print(project$plots[["p1"]])
+      print(project$definitions$plots[["p1"]])
     Output
       <Plot>
         * Plot Id: p1
@@ -34,7 +34,7 @@
 # print.PlotGrid renders a single plot grid
 
     Code
-      print(project$plotGrids[["individual_diagnostics"]])
+      print(project$definitions$plotGrids[["individual_diagnostics"]])
     Output
       <PlotGrid>
         * Plot Grid Id: individual_diagnostics
@@ -44,7 +44,7 @@
 # print.DataCombined renders simulated and observed counts
 
     Code
-      print(project$dataCombined[["aciclovir_individual"]])
+      print(project$definitions$dataCombined[["aciclovir_individual"]])
     Output
       <DataCombined>
         * Simulated Entries: 1

@@ -37,7 +37,7 @@
 #'   [runScenarios()] at execution time.
 #'
 #'   A `Scenario` is a named list with copy semantics: an entry extracted
-#'   from `project$scenarios` is an independent copy. The section accessor is
+#'   from `scenarios` definitions is an independent copy. The section accessor is
 #'   read-only, so to apply a change you pass the record to an authoring
 #'   function (`addScenario()` / `setScenario()`), which validates and writes
 #'   it through to the project.
@@ -48,11 +48,11 @@
 #' @param applicationProtocol Character or `NA`. Name of the application
 #'   protocol; `NA` when absent.
 #' @param individualId Character or `NULL`. ID referencing
-#'   `project$individuals`.
+#'   `individuals` definitions.
 #' @param populationId Character or `NULL`. ID referencing
-#'   `project$populations`.
+#'   `populations` definitions.
 #' @param outputPaths Named character vector of literal output paths.
-#'   Names are the ids referencing `project$outputPaths`; values are the
+#'   Names are the ids referencing `outputPaths` definitions; values are the
 #'   literal paths. `NULL` when the scenario declares no outputs.
 #'   Round-trip serialization reads `names(outputPaths)` to rebuild the
 #'   `outputPaths` id array, so the named-vector invariant must be preserved.
@@ -73,9 +73,9 @@
 #' @param overwriteFormulasInSS Logical. Overwrite formula parameters
 #'   during steady-state.
 #' @param modelParameterSets Character vector. Parameter-set ids
-#'   referencing `project$parameterSets`.
+#'   referencing `parameterSets` definitions.
 #' @param initialConditions Character vector. Initial-condition set ids
-#'   referencing `project$initialConditions`.
+#'   referencing `initialConditions` definitions.
 #'
 #' @returns A `Scenario` object: a named list carrying exactly the fields
 #'   above.
@@ -312,13 +312,13 @@ print.Scenario <- function(x, ...) {
 #' @keywords internal
 #' @noRd
 .scenariosValidatorAdapter <- function(project) {
-  .validateScenarios(project$scenarios, project$modelFolder)
+  .validateScenarios(project$definitions$scenarios, project$paths$modelFolder)
 }
 
 #' @keywords internal
 #' @noRd
 .applicationsValidatorAdapter <- function(project) {
-  .validateApplications(project$applications)
+  .validateApplications(project$definitions$applications)
 }
 
 #' Validate the `scenarios` section of a Project
@@ -331,7 +331,7 @@ print.Scenario <- function(x, ...) {
 #' …) live in `.validateCrossReferences()`.
 #'
 #' @param scenarios Named list of `Scenario` objects from
-#'   `project$scenarios`.
+#'   `scenarios` definitions.
 #' @param modelFolder Character. Absolute path to the project's model folder,
 #'   used to resolve relative `modelFile` paths. May be `NULL`.
 #' @return validationResult.
@@ -579,7 +579,7 @@ print.Scenario <- function(x, ...) {
 #' canonical section list still resolves to a working validator (and so
 #' that future shape checks have an obvious home).
 #'
-#' @param applications Named list from `project$applications`.
+#' @param applications Named list from `applications` definitions.
 #' @return validationResult.
 #' @keywords internal
 #' @noRd
@@ -656,7 +656,7 @@ runScenarios <- function(
 
 #' Add one or more scenarios programmatically to a Project
 #'
-#' Creates new `Scenario` records and adds them to `project$scenarios` after
+#' Creates new `Scenario` records and adds them to `scenarios` definitions after
 #' validating all references. The call vectorizes over a vector of ids (see
 #' the recycling rule under Details). Scalar-per-definition fields (`modelFile`,
 #' `individual`, `population`, `application`, `simulationTime`,
@@ -674,22 +674,22 @@ runScenarios <- function(
 #' @param id Character vector of ids (names) for the new scenarios (the number
 #'   of scenarios to add). Each is canonicalized to a safe, lowercase,
 #'   single-path-segment id (a warning names the result if it changed); each
-#'   canonical id must not already exist in `project$scenarios`.
+#'   canonical id must not already exist in `scenarios` definitions.
 #' @param modelFile Character. Name of the `.pkml` model file (relative
 #'   to model folder).
 #' @param individual Character or `NULL`. Id referencing
-#'   `project$individuals`.
+#'   `individuals` definitions.
 #' @param population Character or `NULL`. Id referencing
-#'   `project$populations`.
+#'   `populations` definitions.
 #' @param application Character or `NULL`. Id of the application protocol
-#'   referencing `project$applications`.
+#'   referencing `applications` definitions.
 #' @param parameterSets Character vector or `NULL`. Parameter-set ids
-#'   referencing `project$parameterSets`. Applied whole to every scenario.
+#'   referencing `parameterSets` definitions. Applied whole to every scenario.
 #' @param initialConditions Character vector or `NULL`. Initial-condition set
-#'   ids referencing `project$initialConditions`. Applied whole to every
+#'   ids referencing `initialConditions` definitions. Applied whole to every
 #'   scenario.
 #' @param outputPaths Character vector or `NULL`. Output-path ids referencing
-#'   `project$outputPaths`. Applied whole to every scenario.
+#'   `outputPaths` definitions. Applied whole to every scenario.
 #' @param simulationTime Character or `NULL`. Format
 #'   `"start, end, resolution"` or
 #'   `"start, end, resolution; start, end, resolution"` for multiple
@@ -728,6 +728,53 @@ addScenario <- function(
   readPopulationFromCSV = FALSE
 ) {
   validateIsOfType(project, "Project")
+  project$addScenario(
+    id,
+    modelFile,
+    individual,
+    population,
+    application,
+    parameterSets,
+    initialConditions,
+    outputPaths,
+    simulationTime,
+    simulationTimeUnit,
+    steadyState,
+    steadyStateTime,
+    steadyStateTimeUnit,
+    overwriteFormulasInSS,
+    readPopulationFromCSV
+  )
+}
+
+# Implementation behind `project$addScenario()` / `addScenario()`. Receives the
+# project's own `self` / `private` from the calling method, so it reaches the
+# section seam directly through `private$` without any accessor.
+#
+# @keywords internal
+# @noRd
+.addScenario_impl <- function(
+  self,
+  private,
+  id,
+  modelFile,
+  individual = NULL,
+  population = NULL,
+  application = NULL,
+  parameterSets = NULL,
+  initialConditions = NULL,
+  outputPaths = NULL,
+  simulationTime = NULL,
+  simulationTimeUnit = "h",
+  steadyState = FALSE,
+  steadyStateTime = 1000,
+  steadyStateTimeUnit = "min",
+  overwriteFormulasInSS = FALSE,
+  readPopulationFromCSV = FALSE
+) {
+  # Attribute any abort to the public authoring function the user called
+  # (the free-function forwarder), not this internal `_impl`.
+  rlang::local_error_call(rlang::caller_env(2))
   .assertIdVector(id)
   id <- .canonicalizeId(id)
   n <- length(id)
@@ -755,21 +802,21 @@ addScenario <- function(
   )
 
   .assertNoDuplicateIds(id, "scenario")
-  clash <- intersect(id, names(project$scenarios))
+  clash <- intersect(id, names(self$definitions$scenarios))
   if (length(clash) > 0L) {
     cli::cli_abort("scenario {.val {clash}} already exists")
   }
-  call <- rlang::current_env()
+  call <- rlang::caller_env(2)
   scenarios <- .collectCanonicalizedRefs(lapply(seq_len(n), function(i) {
-    .buildScenarioEntry(project, id[[i]], perDefinition[[i]], call = call)
+    .buildScenarioEntry(self, id[[i]], perDefinition[[i]], call = call)
   }))
 
-  newScenarios <- project$.getSection("scenarios") %||% list()
+  newScenarios <- private$.getSection("scenarios") %||% list()
   for (i in seq_len(n)) {
     newScenarios[[id[[i]]]] <- scenarios[[i]]
   }
-  project$.setSection("scenarios", newScenarios)
-  invisible(project)
+  private$.setSection("scenarios", newScenarios)
+  invisible(self)
 }
 
 # Build one `Scenario` record from its id and per-definition field list, running
@@ -816,37 +863,37 @@ addScenario <- function(
     .checkScalarScenarioFK(
       individual,
       "individual",
-      project$individuals,
+      project$definitions$individuals,
       "individuals"
     ),
     .checkScalarScenarioFK(
       population,
       "population",
-      project$populations,
+      project$definitions$populations,
       "populations"
     ),
     .checkScalarScenarioFK(
       application,
       "application",
-      project$applications,
+      project$definitions$applications,
       "applications"
     ),
     .checkVectorScenarioFK(
       parameterSets,
       "parameterSets",
-      project$parameterSets,
-      "project$parameterSets"
+      project$definitions$parameterSets,
+      "project$definitions$parameterSets"
     ),
     .checkVectorScenarioFK(
       initialConditions,
       "initialConditions",
-      project$initialConditions,
-      "project$initialConditions"
+      project$definitions$initialConditions,
+      "project$definitions$initialConditions"
     ),
     .checkVectorScenarioFK(
       outputPaths,
       "outputPaths",
-      project$outputPaths,
+      project$definitions$outputPaths,
       "outputPaths"
     )
   )
@@ -870,7 +917,7 @@ addScenario <- function(
     populationId = population,
     outputPaths = if (!is.null(outputPaths)) {
       stats::setNames(
-        unlist(project$outputPaths[outputPaths], use.names = FALSE),
+        unlist(project$definitions$outputPaths[outputPaths], use.names = FALSE),
         outputPaths
       )
     },
@@ -906,24 +953,35 @@ addScenario <- function(
 #' @family scenario
 removeScenario <- function(project, id) {
   validateIsOfType(project, "Project")
+  project$removeScenario(id)
+}
+
+# Implementation behind `project$removeScenario()` / `removeScenario()`.
+#
+# @keywords internal
+# @noRd
+.removeScenario_impl <- function(self, private, id) {
+  # Attribute any abort to the public authoring function the user called
+  # (the free-function forwarder), not this internal `_impl`.
+  rlang::local_error_call(rlang::caller_env(2))
   .assertIdVector(id)
   id <- .canonicalizeId(id)
 
-  missingIds <- setdiff(id, names(project$scenarios))
+  missingIds <- setdiff(id, names(self$definitions$scenarios))
   if (length(missingIds) > 0L) {
     cli::cli_warn("scenario {.val {missingIds}} not found; no-op.")
   }
-  toRemove <- intersect(id, names(project$scenarios))
+  toRemove <- intersect(id, names(self$definitions$scenarios))
   for (one in toRemove) {
-    .warnIfReferenced(project, "scenario", one)
+    .warnIfReferenced(self, "scenario", one)
   }
   if (length(toRemove) == 0L) {
-    return(invisible(project))
+    return(invisible(self))
   }
-  scenarios <- project$.getSection("scenarios")
+  scenarios <- private$.getSection("scenarios")
   scenarios[toRemove] <- NULL
-  project$.setSection("scenarios", scenarios)
-  invisible(project)
+  private$.setSection("scenarios", scenarios)
+  invisible(self)
 }
 
 #' Modify fields of an existing scenario
@@ -931,9 +989,9 @@ removeScenario <- function(project, id) {
 #' @description Changes one or more fields of the scenario identified by
 #'   `id` and persists the change the same way [addScenario()]
 #'   does (write-through to the scenario definition). The section accessor
-#'   `project$scenarios` is read-only, so this is the way to revise an
-#'   existing scenario: read it if you need the current values
-#'   (`sc <- project$scenarios[[name]]`), then pass the changes here
+#'   `project$definitions$scenarios` is read-only, so this is the way to revise
+#'   an existing scenario: read it if you need the current values
+#'   (`sc <- project$definitions$scenarios[[name]]`), then pass the changes here
 #'   (`setScenario(project, name, ...)`).
 #'
 #'   Only the arguments you pass are changed; every other field keeps its
@@ -960,7 +1018,7 @@ removeScenario <- function(project, id) {
 #' @inheritParams addScenario
 #' @param id Character vector. Ids of the scenarios to modify. Each is
 #'   canonicalized the same way [addScenario()] canonicalizes it, and must
-#'   already exist in `project$scenarios`.
+#'   already exist in `scenarios` definitions.
 #' @param simulationTimeUnit Character time-unit string. Omitting the argument
 #'   leaves the current value untouched (there is no default; this is a
 #'   partial update).
@@ -1002,10 +1060,75 @@ setScenario <- function(
   readPopulationFromCSV
 ) {
   validateIsOfType(project, "Project")
+
+  # Capture only the fields the caller actually supplied (partial update). A
+  # supplied `NULL` (e.g. `individual = NULL`) clears the field, distinct
+  # from an unsupplied argument; the `x[name] <- list(value)` form preserves a
+  # NULL-valued supplied field as a present-but-NULL list element (a plain
+  # `x$name <- NULL` would instead drop the name). Forward only the supplied
+  # fields to the method so its `...` carries exactly what the user gave, which
+  # is how the method distinguishes "clear this" from "leave untouched".
+  supplied <- list()
+  if (!missing(modelFile)) {
+    supplied["modelFile"] <- list(modelFile)
+  }
+  if (!missing(individual)) {
+    supplied["individual"] <- list(individual)
+  }
+  if (!missing(population)) {
+    supplied["population"] <- list(population)
+  }
+  if (!missing(application)) {
+    supplied["application"] <- list(application)
+  }
+  if (!missing(parameterSets)) {
+    supplied["parameterSets"] <- list(parameterSets)
+  }
+  if (!missing(initialConditions)) {
+    supplied["initialConditions"] <- list(initialConditions)
+  }
+  if (!missing(outputPaths)) {
+    supplied["outputPaths"] <- list(outputPaths)
+  }
+  if (!missing(simulationTime)) {
+    supplied["simulationTime"] <- list(simulationTime)
+  }
+  if (!missing(simulationTimeUnit)) {
+    supplied["simulationTimeUnit"] <- list(simulationTimeUnit)
+  }
+  if (!missing(steadyState)) {
+    supplied["steadyState"] <- list(steadyState)
+  }
+  if (!missing(steadyStateTime)) {
+    supplied["steadyStateTime"] <- list(steadyStateTime)
+  }
+  if (!missing(steadyStateTimeUnit)) {
+    supplied["steadyStateTimeUnit"] <- list(steadyStateTimeUnit)
+  }
+  if (!missing(overwriteFormulasInSS)) {
+    supplied["overwriteFormulasInSS"] <- list(overwriteFormulasInSS)
+  }
+  if (!missing(readPopulationFromCSV)) {
+    supplied["readPopulationFromCSV"] <- list(readPopulationFromCSV)
+  }
+
+  do.call(project$setScenario, c(list(id), supplied))
+}
+
+# Implementation behind `project$setScenario()` / `setScenario()`. The `...`
+# carries only the fields the caller supplied (partial update); a present but
+# NULL field clears it, an absent field is left untouched.
+#
+# @keywords internal
+# @noRd
+.setScenario_impl <- function(self, private, id, ...) {
+  # Attribute any abort to the public authoring function the user called
+  # (the free-function forwarder), not this internal `_impl`.
+  rlang::local_error_call(rlang::caller_env(2))
   .assertIdVector(id)
   id <- .canonicalizeId(id)
   n <- length(id)
-  missingIds <- setdiff(id, names(project$scenarios))
+  missingIds <- setdiff(id, names(self$definitions$scenarios))
   if (length(missingIds) > 0L) {
     cli::cli_abort(c(
       "Cannot modify scenario {.val {missingIds}}: it does not exist.",
@@ -1013,79 +1136,37 @@ setScenario <- function(
     ))
   }
 
-  # Capture only the fields the caller actually supplied (partial update). A
-  # supplied `NULL` (e.g. `individual = NULL`) clears the field, distinct
-  # from an unsupplied argument; the `x[name] <- list(value)` form preserves a
-  # NULL-valued supplied field as a present-but-NULL list element (a plain
-  # `x$name <- NULL` would instead drop the name).
-  scalarSupplied <- list()
-  wholeSupplied <- list()
-  if (!missing(modelFile)) {
-    scalarSupplied["modelFile"] <- list(modelFile)
-  }
-  if (!missing(individual)) {
-    scalarSupplied["individual"] <- list(individual)
-  }
-  if (!missing(population)) {
-    scalarSupplied["population"] <- list(population)
-  }
-  if (!missing(application)) {
-    scalarSupplied["application"] <- list(application)
-  }
-  if (!missing(simulationTime)) {
-    scalarSupplied["simulationTime"] <- list(simulationTime)
-  }
-  if (!missing(simulationTimeUnit)) {
-    scalarSupplied["simulationTimeUnit"] <- list(simulationTimeUnit)
-  }
-  if (!missing(steadyState)) {
-    scalarSupplied["steadyState"] <- list(steadyState)
-  }
-  if (!missing(steadyStateTime)) {
-    scalarSupplied["steadyStateTime"] <- list(steadyStateTime)
-  }
-  if (!missing(steadyStateTimeUnit)) {
-    scalarSupplied["steadyStateTimeUnit"] <- list(steadyStateTimeUnit)
-  }
-  if (!missing(overwriteFormulasInSS)) {
-    scalarSupplied["overwriteFormulasInSS"] <- list(overwriteFormulasInSS)
-  }
-  if (!missing(readPopulationFromCSV)) {
-    scalarSupplied["readPopulationFromCSV"] <- list(readPopulationFromCSV)
-  }
-  if (!missing(parameterSets)) {
-    wholeSupplied["parameterSets"] <- list(parameterSets)
-  }
-  if (!missing(initialConditions)) {
-    wholeSupplied["initialConditions"] <- list(initialConditions)
-  }
-  if (!missing(outputPaths)) {
-    wholeSupplied["outputPaths"] <- list(outputPaths)
-  }
+  dots <- list(...)
+  wholeNames <- intersect(
+    c("parameterSets", "initialConditions", "outputPaths"),
+    names(dots)
+  )
+  scalarSupplied <- dots[setdiff(names(dots), wholeNames)]
+  wholeSupplied <- dots[wholeNames]
 
   perDefinition <- .alignAuthoringArgs(
     id,
     scalarFields = scalarSupplied,
     wholeFields = wholeSupplied
   )
-  suppliedNames <- c(names(scalarSupplied), names(wholeSupplied))
+  suppliedNames <- names(dots)
 
-  call <- rlang::current_env()
+  call <- rlang::caller_env(2)
   updated <- .collectCanonicalizedRefs(lapply(seq_len(n), function(i) {
     .setOneScenario(
-      project,
+      self,
       id[[i]],
       perDefinition[[i]][suppliedNames],
       call = call
     )
   }))
 
-  scenarios <- project$.getSection("scenarios")
+  scenarios <- private$.getSection("scenarios")
   for (i in seq_len(n)) {
     scenarios[[id[[i]]]] <- updated[[i]]
   }
-  project$.setSection("scenarios", scenarios)
-  invisible(project)
+  private$.setSection("scenarios", scenarios)
+  invisible(self)
 }
 
 # Apply a partial-update field set to one existing scenario, returning the
@@ -1096,7 +1177,7 @@ setScenario <- function(
 # @keywords internal
 # @noRd
 .setOneScenario <- function(project, id, fields, call = rlang::caller_env()) {
-  sc <- project$scenarios[[id]]
+  sc <- project$definitions$scenarios[[id]]
   errors <- character()
   supplied <- names(fields)
 
@@ -1135,7 +1216,7 @@ setScenario <- function(
       .checkScalarScenarioFK(
         fields$individual,
         "individual",
-        project$individuals,
+        project$definitions$individuals,
         "individuals"
       )
     )
@@ -1146,7 +1227,7 @@ setScenario <- function(
       .checkScalarScenarioFK(
         fields$population,
         "population",
-        project$populations,
+        project$definitions$populations,
         "populations"
       )
     )
@@ -1157,7 +1238,7 @@ setScenario <- function(
       .checkScalarScenarioFK(
         fields$application,
         "application",
-        project$applications,
+        project$definitions$applications,
         "applications"
       )
     )
@@ -1168,8 +1249,8 @@ setScenario <- function(
       .checkVectorScenarioFK(
         fields$parameterSets,
         "parameterSets",
-        project$parameterSets,
-        "project$parameterSets"
+        project$definitions$parameterSets,
+        "project$definitions$parameterSets"
       )
     )
   }
@@ -1179,8 +1260,8 @@ setScenario <- function(
       .checkVectorScenarioFK(
         fields$initialConditions,
         "initialConditions",
-        project$initialConditions,
-        "project$initialConditions"
+        project$definitions$initialConditions,
+        "project$definitions$initialConditions"
       )
     )
   }
@@ -1190,7 +1271,7 @@ setScenario <- function(
       .checkVectorScenarioFK(
         fields$outputPaths,
         "outputPaths",
-        project$outputPaths,
+        project$definitions$outputPaths,
         "outputPaths"
       )
     )
@@ -1237,7 +1318,10 @@ setScenario <- function(
       NULL
     } else {
       stats::setNames(
-        unlist(project$outputPaths[fields$outputPaths], use.names = FALSE),
+        unlist(
+          project$definitions$outputPaths[fields$outputPaths],
+          use.names = FALSE
+        ),
         fields$outputPaths
       )
     }
@@ -1305,7 +1389,7 @@ setScenario <- function(
 #'
 #' @param project A `Project` object.
 #' @param id Character. Id of the scenario to rename; must exist in
-#'   `project$scenarios` (after canonicalization).
+#'   `scenarios` definitions (after canonicalization).
 #' @param newId Character. New id for the scenario; its canonical form must
 #'   not already belong to a different scenario.
 #'
@@ -1314,19 +1398,30 @@ setScenario <- function(
 #' @family scenario
 renameScenario <- function(project, id, newId) {
   validateIsOfType(project, "Project")
+  project$renameScenario(id, newId)
+}
+
+# Implementation behind `project$renameScenario()` / `renameScenario()`.
+#
+# @keywords internal
+# @noRd
+.renameScenario_impl <- function(self, private, id, newId) {
+  # Attribute any abort to the public authoring function the user called
+  # (the free-function forwarder), not this internal `_impl`.
+  rlang::local_error_call(rlang::caller_env(2))
   id <- .assertScenarioIdArg(id, "id")
   newId <- .assertScenarioIdArg(newId, "newId")
 
   id <- .canonicalizeId(id)
-  .assertScenarioExists(project, id, "rename")
+  .assertScenarioExists(self, id, "rename")
   newId <- .canonicalizeId(newId)
 
   if (identical(id, newId)) {
-    return(invisible(project))
+    return(invisible(self))
   }
-  .assertScenarioTargetFree(project, newId)
+  .assertScenarioTargetFree(self, newId)
 
-  sc <- project$scenarios[[id]]
+  sc <- self$definitions$scenarios[[id]]
   # Keep the record's stored name in step with its new key so the definition file
   # the write-through emits (`name = sc$scenarioName`) and the key agree, which
   # is what `.validateScenarioStructure()` enforces.
@@ -1334,17 +1429,17 @@ renameScenario <- function(project, id, newId) {
 
   # Renaming de-references the old id just like removing it: warn about any
   # holder still naming the scenario by its old id before the key changes.
-  .warnIfReferenced(project, "scenario", id)
+  .warnIfReferenced(self, "scenario", id)
 
   # Rebuild the whole section in one write so the write-through diff sees the
   # new key (written through to `newId`'s file) and the gone key (its file
   # removed) together.
-  scenarios <- project$.getSection("scenarios")
+  scenarios <- private$.getSection("scenarios")
   scenarios[[id]] <- NULL
   scenarios[[newId]] <- sc
-  project$.setSection("scenarios", scenarios)
+  private$.setSection("scenarios", scenarios)
 
-  invisible(project)
+  invisible(self)
 }
 
 #' Duplicate an existing scenario
@@ -1360,7 +1455,7 @@ renameScenario <- function(project, id, newId) {
 #'
 #' @param project A `Project` object.
 #' @param id Character. Id of the scenario to copy; must exist in
-#'   `project$scenarios` (after canonicalization).
+#'   `scenarios` definitions (after canonicalization).
 #' @param newId Character. Id for the new copy; its canonical form must not
 #'   already belong to an existing scenario.
 #'
@@ -1369,24 +1464,35 @@ renameScenario <- function(project, id, newId) {
 #' @family scenario
 duplicateScenario <- function(project, id, newId) {
   validateIsOfType(project, "Project")
+  project$duplicateScenario(id, newId)
+}
+
+# Implementation behind `project$duplicateScenario()` / `duplicateScenario()`.
+#
+# @keywords internal
+# @noRd
+.duplicateScenario_impl <- function(self, private, id, newId) {
+  # Attribute any abort to the public authoring function the user called
+  # (the free-function forwarder), not this internal `_impl`.
+  rlang::local_error_call(rlang::caller_env(2))
   id <- .assertScenarioIdArg(id, "id")
   newId <- .assertScenarioIdArg(newId, "newId")
 
   id <- .canonicalizeId(id)
-  .assertScenarioExists(project, id, "duplicate")
+  .assertScenarioExists(self, id, "duplicate")
   newId <- .canonicalizeId(newId)
-  .assertScenarioTargetFree(project, newId)
+  .assertScenarioTargetFree(self, newId)
 
   # A `Scenario` is a plain-data list with copy semantics, so this is already a
   # deep, independent copy; only its stored name has to follow the new key.
-  copy <- project$.getSection("scenarios")[[id]]
+  copy <- private$.getSection("scenarios")[[id]]
   copy$scenarioName <- newId
 
-  scenarios <- project$.getSection("scenarios")
+  scenarios <- private$.getSection("scenarios")
   scenarios[[newId]] <- copy
-  project$.setSection("scenarios", scenarios)
+  private$.setSection("scenarios", scenarios)
 
-  invisible(project)
+  invisible(self)
 }
 
 # Validate that a scenario id argument (`id` / `newId` of `renameScenario()` /
@@ -1422,16 +1528,16 @@ duplicateScenario <- function(project, id, newId) {
   action,
   call = rlang::caller_env()
 ) {
-  if (id %in% names(project$scenarios)) {
+  if (id %in% names(project$definitions$scenarios)) {
     return(invisible(NULL))
   }
-  suggestion <- .suggestSuffix(id, names(project$scenarios))
+  suggestion <- .suggestSuffix(id, names(project$definitions$scenarios))
   cli::cli_abort(
     c(
       "Cannot {action} scenario {.val {id}}: it does not exist.",
       "i" = paste0(
         "Available scenarios: ",
-        "{.val {names(project$scenarios)}}",
+        "{.val {names(project$definitions$scenarios)}}",
         suggestion
       )
     ),
@@ -1450,7 +1556,7 @@ duplicateScenario <- function(project, id, newId) {
   newId,
   call = rlang::caller_env()
 ) {
-  if (newId %in% names(project$scenarios)) {
+  if (newId %in% names(project$definitions$scenarios)) {
     cli::cli_abort(
       "Cannot use {.val {newId}}: a scenario with that id already exists.",
       call = call

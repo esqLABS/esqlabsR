@@ -59,13 +59,13 @@ A **definition** is one named piece of the project (a scenario, an individual, a
 Each section is reachable as a named list on the project, keyed by id. Printing one shows a count and the ids it holds, for example the individuals the example already defines:
 
 ```{r}
-project$individuals
+project$definitions$individuals
 ```
 
 A single definition prints its configured fields, so you can inspect one without digging into the raw file:
 
 ```{r}
-project$individuals$adult_male
+project$definitions$individuals$adult_male
 ```
 
 Editing follows an **explicit-save** model: when you add or edit a definition with one of the `add*` / `set*` / `remove*` functions, the change is made in memory, and `saveProject(project)` reconciles it to the `definitions/` tree on disk. That save is why you work against a writable copy rather than the installed example.

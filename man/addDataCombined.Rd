@@ -29,7 +29,7 @@ The \code{project} object, invisibly.
 }
 \description{
 Append new DataCombined entries (each with one or more simulated and/or
-observed rows) to \code{project$dataCombined}. Pass a vector of ids to add
+observed rows) to \code{dataCombined} definitions. Pass a vector of ids to add
 several DataCombined in one call.
 }
 \details{

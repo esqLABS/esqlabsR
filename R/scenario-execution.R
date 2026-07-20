@@ -79,7 +79,7 @@
   conditions <- NULL
   for (setId in scenario$initialConditions) {
     setConditions <- .initialConditionSetToStructure(
-      project$initialConditions[[setId]]
+      project$definitions$initialConditions[[setId]]
     )
     if (!is.null(setConditions)) {
       conditions <- extendParameterStructure(
@@ -105,12 +105,15 @@
 # @noRd
 .mergeScenarioParameters <- function(scenario, project, customParams = NULL) {
   params <- NULL
+  # Read the unified parameter-sets section once; the three loops below all
+  # resolve their set ids against it.
+  parameterSets <- project$definitions$parameterSets
 
   # 1. modelParameterSets
   if (!is.null(scenario$modelParameterSets)) {
     for (setId in scenario$modelParameterSets) {
       setParams <- .parameterSetToStructure(
-        project$parameterSets[[setId]]
+        parameterSets[[setId]]
       )
       if (!is.null(setParams)) {
         params <- extendParameterStructure(
@@ -123,7 +126,7 @@
 
   # 2. + 3. species defaults + individual parameterSets
   if (!is.null(scenario$individualId) && !is.na(scenario$individualId)) {
-    indivData <- project$individuals[[scenario$individualId]]
+    indivData <- project$definitions$individuals[[scenario$individualId]]
     if (!is.null(indivData)) {
       speciesParams <- .getSpeciesParameters(indivData$species)
       if (!is.null(speciesParams)) {
@@ -134,7 +137,7 @@
       }
       for (setId in unlist(indivData$parameterSets)) {
         setParams <- .parameterSetToStructure(
-          project$parameterSets[[setId]]
+          parameterSets[[setId]]
         )
         if (!is.null(setParams)) {
           params <- extendParameterStructure(
@@ -151,7 +154,7 @@
     !is.null(scenario$applicationProtocol) &&
       !is.na(scenario$applicationProtocol)
   ) {
-    appData <- project$applications[[scenario$applicationProtocol]]
+    appData <- project$definitions$applications[[scenario$applicationProtocol]]
     if (is.null(appData)) {
       cli::cli_abort(messages$errorApplicationProtocolNotFound(
         scenarioName = scenario$scenarioName,
@@ -160,7 +163,7 @@
     }
     for (setId in unlist(appData$parameterSets)) {
       setParams <- .parameterSetToStructure(
-        project$parameterSets[[setId]]
+        parameterSets[[setId]]
       )
       if (!is.null(setParams)) {
         params <- extendParameterStructure(
@@ -227,8 +230,8 @@
   # join to be meaningful (`file.path(NULL, x)` yields `character(0)`).
   if (fs::is_absolute_path(scenario$modelFile)) {
     modelFilePath <- scenario$modelFile
-  } else if (!is.null(project$modelFolder)) {
-    modelFilePath <- file.path(project$modelFolder, scenario$modelFile)
+  } else if (!is.null(project$paths$modelFolder)) {
+    modelFilePath <- file.path(project$paths$modelFolder, scenario$modelFile)
   } else {
     cli::cli_abort(messages$noModelFolderForRelativeModelFile(
       scenarioName = scenario$scenarioName,
@@ -250,7 +253,7 @@
   # 2b. IndividualCharacteristics
   individualCharacteristics <- NULL
   if (!is.null(scenario$individualId) && !is.na(scenario$individualId)) {
-    indivData <- project$individuals[[scenario$individualId]]
+    indivData <- project$definitions$individuals[[scenario$individualId]]
     if (is.null(indivData)) {
       cli::cli_warn(messages$warningNoIndividualCharacteristics(
         scenarioName = scenario$scenarioName,
@@ -342,14 +345,14 @@
         # A relative population id is resolved against the project's populations
         # folder, which must exist for the join to be meaningful
         # (`file.path(NULL, x)` yields `character(0)`).
-        if (is.null(project$populationsFolder)) {
+        if (is.null(project$paths$populationsFolder)) {
           cli::cli_abort(messages$noPopulationsFolderForCSVPopulation(
             scenarioName = scenario$scenarioName,
             populationId = scenario$populationId
           ))
         }
         populationPath <- paste0(
-          file.path(project$populationsFolder, scenario$populationId),
+          file.path(project$paths$populationsFolder, scenario$populationId),
           ".csv"
         )
         population <- loadPopulation(populationPath)
@@ -360,7 +363,7 @@
       if (!is.null(cached)) {
         population <- cached
       } else {
-        popData <- project$populations[[scenario$populationId]]
+        popData <- project$definitions$populations[[scenario$populationId]]
         if (is.null(popData)) {
           cli::cli_abort(
             "Population {.val {scenario$populationId}} referenced by scenario {.val {scenario$scenarioName}} not found in project."
@@ -510,8 +513,7 @@
     )
   }
   if (isTRUE(validate)) {
-    .ensureValid(
-      project,
+    project$ensureValid(
       sections = c(
         "outputPaths",
         "scenarios",
@@ -525,7 +527,7 @@
     )
   }
 
-  allScenarios <- project$scenarios
+  allScenarios <- project$definitions$scenarios
   if (is.null(scenarioNames)) {
     scenarioNames <- names(allScenarios)
   }

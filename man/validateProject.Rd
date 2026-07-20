@@ -19,10 +19,10 @@ with \code{crossReferences} last.
 \description{
 Runs every section validator (and a cross-reference pass) against a
 parsed \code{Project} and returns a named list of \code{validationResult}
-objects, one per section, in canonical order. Sets the project's
-\code{validatedSinceMutation} flag when no section produced critical
-errors so subsequent \code{runScenarios()} / \code{createPlots()} calls can
-skip a redundant validation pass.
+objects, one per section, in canonical order. On a clean run (no
+section produced critical errors) it marks the project validated, so
+subsequent \code{runScenarios()} / \code{createPlots()} calls can skip a
+redundant validation pass until the next edit.
 }
 \examples{
 \dontrun{

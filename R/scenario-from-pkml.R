@@ -5,7 +5,7 @@
 #' @description
 #' Reads scenarios from PKML files, extracting output paths and simulation
 #' time settings, and adds them to a `Project` in place. Output paths are
-#' registered in `project$outputPaths` (reusing an existing id when the
+#' registered in `outputPaths` definitions (reusing an existing id when the
 #' literal path is already registered, otherwise generating a readable one),
 #' and scenario names are made unique against the scenarios already on the
 #' project. The function mutates `project` directly and returns it invisibly,
@@ -31,14 +31,14 @@
 #'   (recycled for all scenarios) or a vector with the same length as
 #'   `pkmlFilePaths`.
 #' @param application Character vector. Optional application protocol
-#'   ids to use for scenarios, each referencing `project$applications`. If
+#'   ids to use for scenarios, each referencing `applications` definitions. If
 #'   `NULL` (default), the scenario has no application protocol (the PKML file
 #'   already embeds its own application). Values are used verbatim and are
-#'   validated against `project$applications`. Can be a single string
+#'   validated against `applications` definitions. Can be a single string
 #'   (recycled for all scenarios) or a vector with the same length as
 #'   `pkmlFilePaths`.
 #' @param parameterSets Character vector. Optional parameter set
-#'   ids to apply to scenarios (referencing `project$parameterSets`).
+#'   ids to apply to scenarios (referencing `parameterSets` definitions).
 #'   If `NULL` (default), no parameter sets will be applied. Can be a
 #'   single string (recycled for all scenarios) or a vector with the same
 #'   length as `pkmlFilePaths`. If providing multiple set ids per scenario,
@@ -51,7 +51,7 @@
 #'   with commas in the string. Named vectors are supported where the names
 #'   become the registered output-path ids, e.g.,
 #'   `c("plasma" = "Organism|VenousBlood|Plasma|Drug|Concentration")`. When a
-#'   literal path is already registered in `project$outputPaths`, its existing
+#'   literal path is already registered in `outputPaths` definitions, its existing
 #'   id is reused; unnamed new paths receive a readable generated id.
 #' @param simulationTime Character vector. Optional simulation time to use for
 #'   scenarios as character strings containing one or multiple time intervals
@@ -128,8 +128,8 @@
 #' `"Scenario"`, `"Scenario_2"`).
 #'
 #' @returns The `project`, invisibly, with the new scenarios added to
-#'   `project$scenarios` and any new output paths registered in
-#'   `project$outputPaths`.
+#'   `scenarios` definitions and any new output paths registered in
+#'   `outputPaths` definitions.
 #' @export
 #'
 #' @examples
@@ -184,6 +184,55 @@ createScenariosFromPKML <- function(
   readPopulationFromCSV = FALSE,
   paramSheets = lifecycle::deprecated()
 ) {
+  validateIsOfType(project, "Project")
+  project$createScenariosFromPKML(
+    pkmlFilePaths,
+    scenarios = scenarios,
+    individual = individual,
+    population = population,
+    application = application,
+    parameterSets = parameterSets,
+    outputPaths = outputPaths,
+    simulationTime = simulationTime,
+    simulationTimeUnit = simulationTimeUnit,
+    steadyState = steadyState,
+    steadyStateTime = steadyStateTime,
+    steadyStateTimeUnit = steadyStateTimeUnit,
+    overwriteFormulasInSS = overwriteFormulasInSS,
+    readPopulationFromCSV = readPopulationFromCSV,
+    paramSheets = paramSheets
+  )
+}
+
+# Implementation behind `project$createScenariosFromPKML()` /
+# `createScenariosFromPKML()`. Its happy path composes the public authoring
+# methods (`addOutputPath()` / `addScenario()`); the transactional rollback on
+# failure restores the affected sections through its own `private`.
+#
+# @keywords internal
+# @noRd
+.createScenariosFromPKML_impl <- function(
+  self,
+  private,
+  pkmlFilePaths,
+  scenarios = NULL,
+  individual = NULL,
+  population = NULL,
+  application = NULL,
+  parameterSets = NULL,
+  outputPaths = NULL,
+  simulationTime = NULL,
+  simulationTimeUnit = NULL,
+  steadyState = FALSE,
+  steadyStateTime = NULL,
+  steadyStateTimeUnit = NULL,
+  overwriteFormulasInSS = FALSE,
+  readPopulationFromCSV = FALSE,
+  paramSheets = lifecycle::deprecated()
+) {
+  # Attribute any abort to the public authoring function the user called
+  # (the free-function forwarder), not this internal `_impl`.
+  rlang::local_error_call(rlang::caller_env(2))
   # Handle deprecated paramSheets argument
   if (lifecycle::is_present(paramSheets)) {
     lifecycle::deprecate_soft(
@@ -196,7 +245,6 @@ createScenariosFromPKML <- function(
 
   # Validate inputs
   validateIsCharacter(pkmlFilePaths)
-  validateIsOfType(project, "Project")
   if (!is.null(scenarios)) {
     validateIsCharacter(scenarios)
   }
@@ -396,7 +444,7 @@ createScenariosFromPKML <- function(
   )
   finalNames <- .dedupeScenarioNames(
     requestedNames,
-    names(project$scenarios)
+    names(self$definitions$scenarios)
   )
 
   specs <- vector("list", length(pkmlFilePaths))
@@ -411,13 +459,13 @@ createScenariosFromPKML <- function(
     # Resolve the model file relative to the project's model folder so the
     # stored path is portable. `as.character()` strips the `fs_path` class so
     # the value round-trips identically through save/load.
-    if (is.null(project$modelFolder)) {
+    if (is.null(self$paths$modelFolder)) {
       cli::cli_warn(messages$noModelFolderUsingAbsolutePath(pkmlPath))
       modelFile <- as.character(fs::path_abs(pkmlPath))
     } else {
       modelFile <- as.character(fs::path_rel(
         pkmlPath,
-        start = project$modelFolder
+        start = self$paths$modelFolder
       ))
     }
 
@@ -463,7 +511,7 @@ createScenariosFromPKML <- function(
       }
       resolved <- .resolveScenarioOutputPaths(
         scenarioOutputPaths,
-        project,
+        self,
         pending
       )
       outputPathIds <- resolved$outputPathIds
@@ -530,22 +578,25 @@ createScenariosFromPKML <- function(
   # `addScenario()` (e.g. an unknown individual) on scenario `i` must not
   # leave scenarios 1..i-1 and freshly registered output paths behind, so
   # snapshot the section fields and restore them on error.
-  oldScenarios <- project$.getSection("scenarios")
-  oldOutputPaths <- project$.getSection("outputPaths")
-  wasValidated <- project$validatedSinceMutation
+  oldScenarios <- private$.getSection("scenarios")
+  oldOutputPaths <- private$.getSection("outputPaths")
+  wasValidated <- private$.isValidated()
+  wasModified <- private$.isModified()
 
   tryCatch(
     {
       if (length(pending) > 0) {
-        addOutputPath(
-          project,
+        .addOutputPath_impl(
+          self,
+          private,
           id = names(pending),
           path = unname(pending)
         )
       }
       for (spec in specs) {
-        addScenario(
-          project,
+        .addScenario_impl(
+          self,
+          private,
           id = spec$scenarioName,
           modelFile = spec$modelFile,
           individual = spec$individual,
@@ -564,10 +615,16 @@ createScenariosFromPKML <- function(
       }
     },
     error = function(cnd) {
-      project$.setSection("scenarios", oldScenarios)
-      project$.setSection("outputPaths", oldOutputPaths)
+      private$.setSection("scenarios", oldScenarios)
+      private$.setSection("outputPaths", oldOutputPaths)
+      # `.setSection()` marks the project modified, so restore the pre-call
+      # dirty and validation flags: a rollback must leave an initially-clean
+      # project reporting no unsaved changes.
+      if (!wasModified) {
+        private$.clearModified()
+      }
       if (wasValidated) {
-        project$.markValidated()
+        private$.markValidated()
       }
       stop(cnd)
     }
@@ -578,7 +635,7 @@ createScenariosFromPKML <- function(
     cli::cli_inform(messages$scenariosAddedToProject(addedNames))
   }
 
-  invisible(project)
+  invisible(self)
 }
 
 #' @keywords internal
@@ -721,7 +778,7 @@ createScenariosFromPKML <- function(
 #   3. unnamed new path -> register under a generated readable id.
 # Returns `list(outputPathIds, newEntries)`, both named-by-id where relevant.
 .resolveScenarioOutputPaths <- function(paths, project, pending) {
-  projectPaths <- unlist(project$outputPaths, use.names = TRUE)
+  projectPaths <- unlist(project$definitions$outputPaths, use.names = TRUE)
   userNames <- names(paths)
   outputPathIds <- character(length(paths))
   newEntries <- character()

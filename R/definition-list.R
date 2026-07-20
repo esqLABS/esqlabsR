@@ -1,6 +1,6 @@
 # DefinitionList: a read-only, printable wrapper for a project section accessor.
 #
-# A section accessor (`project$individuals`, `project$scenarios`, ...) returns
+# A section accessor (`individuals` definitions, `scenarios` definitions, ...) returns
 # the stored plain named list keyed by id, wrapped in a lightweight
 # `c("DefinitionList", "list")` (carrying the section's kind name as an
 # attribute) on the way OUT of the active-binding getter. The wrapper does two
@@ -9,9 +9,10 @@
 # accessor's active-binding setter aborts, and the `[[<-` / `$<-` / `[<-`
 # replacement methods below abort too, so neither `project$x <- v` nor
 # `project$x[["id"]] <- v` nor the nested `project$x[["id"]]$f <- v` can mutate
-# the project. The only sanctioned writes are the authoring functions (which go
-# through the internal `Project$.setSection()`); they read the plain backing
-# list via `Project$.getSection()`, never this wrapper.
+# the project. The only sanctioned writes are the authoring methods on
+# `Project` (which the exported authoring functions forward to); they go through
+# the private write seam `private$.setSection()` and read the plain backing list
+# via `private$.getSection()`, never this wrapper.
 #
 # For reads the wrapper is transparent: it is `c("DefinitionList", "list")`, so
 # `length()`, `names()`, `[[`, `[`, `c()`, and iteration all dispatch to the
@@ -87,7 +88,7 @@ format.DefinitionList <- function(x, ...) {
 }
 
 # Abort an assignment into a section accessor. A section accessor
-# (`project$scenarios`, ...) is read-only from the handle: the only sanctioned
+# (`scenarios` definitions, ...) is read-only from the handle: the only sanctioned
 # way to change a definition is an authoring function (`addScenario()` /
 # `setScenario()` / `removeScenario()` and their per-section siblings) or
 # editing the definition's JSON file directly. Every assignment form into the
@@ -114,7 +115,7 @@ format.DefinitionList <- function(x, ...) {
       authoring function (e.g. {.fn addScenario} / {.fn setScenario} / \\
       {.fn removeScenario} and their per-section siblings).",
       "i" = "To edit one record, read it, change the copy, then re-submit it \\
-      with an authoring function: {.code sc <- project$scenarios[[\"id\"]]; \\
+      with an authoring function: {.code sc <- project$definitions$scenarios[[\"id\"]]; \\
       sc$field <- value; setScenario(project, \"id\", ...)}."
     ),
     call = call

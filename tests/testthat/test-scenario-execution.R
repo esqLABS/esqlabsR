@@ -140,7 +140,7 @@ test_that(".parameterSetToStructure returns NULL on empty input", {
 
 test_that(".mergeScenarioParameters returns NULL when no layer contributes", {
   project <- .testProject()
-  scenario <- project$scenarios[["testscenario"]]
+  scenario <- project$definitions$scenarios[["testscenario"]]
   scenario$modelParameterSets <- NULL
   scenario$individualId <- NULL
   scenario$applicationProtocol <- NA
@@ -151,7 +151,7 @@ test_that(".mergeScenarioParameters returns NULL when no layer contributes", {
 
 test_that(".mergeScenarioParameters layer 1 (modelParameterSets) iterates listed groups in order", {
   project <- .testProject()
-  scenario <- project$scenarios[["testscenario_steadystate"]]
+  scenario <- project$definitions$scenarios[["testscenario_steadystate"]]
   scenario$individualId <- NULL
   scenario$applicationProtocol <- NA
   merged <- esqlabsR:::.mergeScenarioParameters(scenario, project, NULL)
@@ -161,8 +161,8 @@ test_that(".mergeScenarioParameters layer 1 (modelParameterSets) iterates listed
 
 test_that(".mergeScenarioParameters layer 4 (application) overrides layer 1 on overlapping path", {
   project <- .testProject()
-  scenario <- project$scenarios[["testscenario"]]
-  parameterSets <- project$.getSection("parameterSets")
+  scenario <- project$definitions$scenarios[["testscenario"]]
+  parameterSets <- .getSection(project, "parameterSets")
   parameterSets$global <- list(
     list(
       containerPath = "OverlapContainer",
@@ -179,10 +179,10 @@ test_that(".mergeScenarioParameters layer 4 (application) overrides layer 1 on o
       units = NULL
     )
   )
-  project$.setSection("parameterSets", parameterSets)
-  apps <- project$.getSection("applications")
+  .setSection(project, "parameterSets", parameterSets)
+  apps <- .getSection(project, "applications")
   apps$aciclovir_iv_250mg$parameterSets <- list("override")
-  project$.setSection("applications", apps)
+  .setSection(project, "applications", apps)
   scenario$individualId <- NULL
   merged <- esqlabsR:::.mergeScenarioParameters(scenario, project, NULL)
   idx <- match("OverlapContainer|OverlapParam", merged$paths)
@@ -191,7 +191,7 @@ test_that(".mergeScenarioParameters layer 4 (application) overrides layer 1 on o
 
 test_that(".mergeScenarioParameters layer 5 (customParams) wins over all earlier layers", {
   project <- .testProject()
-  scenario <- project$scenarios[["testscenario"]]
+  scenario <- project$definitions$scenarios[["testscenario"]]
   customParams <- list(
     paths = "Organism|Liver|EHC continuous fraction",
     values = 42,
@@ -204,7 +204,7 @@ test_that(".mergeScenarioParameters layer 5 (customParams) wins over all earlier
 
 test_that(".mergeScenarioParameters skips application layer when applicationProtocol is NA", {
   project <- .testProject()
-  scenario <- project$scenarios[["testscenario"]]
+  scenario <- project$definitions$scenarios[["testscenario"]]
   scenario$applicationProtocol <- NA
   scenario$modelParameterSets <- NULL
   scenario$individualId <- NULL
@@ -215,7 +215,7 @@ test_that(".mergeScenarioParameters skips application layer when applicationProt
 
 test_that(".mergeScenarioParameters errors when applicationProtocol is set but unknown", {
   project <- .testProject()
-  scenario <- project$scenarios[["testscenario"]]
+  scenario <- project$definitions$scenarios[["testscenario"]]
   scenario$applicationProtocol <- "DoesNotExist"
   expect_error(
     esqlabsR:::.mergeScenarioParameters(scenario, project, NULL),
@@ -225,7 +225,7 @@ test_that(".mergeScenarioParameters errors when applicationProtocol is set but u
 
 test_that(".mergeScenarioParameters silently skips an unknown modelParameterSets group", {
   project <- .testProject()
-  scenario <- project$scenarios[["testscenario"]]
+  scenario <- project$definitions$scenarios[["testscenario"]]
   scenario$modelParameterSets <- c("global", "DoesNotExist")
   scenario$individualId <- NULL
   scenario$applicationProtocol <- NA
@@ -235,13 +235,13 @@ test_that(".mergeScenarioParameters silently skips an unknown modelParameterSets
 
 test_that(".mergeScenarioParameters silently skips an unknown individual parameter-set id", {
   project <- .testProject()
-  scenario <- project$scenarios[["testscenario"]]
-  individuals <- project$.getSection("individuals")
+  scenario <- project$definitions$scenarios[["testscenario"]]
+  individuals <- .getSection(project, "individuals")
   individuals[[1L]]$parameterSets <- list(
     "indiv1_default",
     "DoesNotExist"
   )
-  project$.setSection("individuals", individuals)
+  .setSection(project, "individuals", individuals)
   scenario$modelParameterSets <- NULL
   scenario$applicationProtocol <- NA
   merged <- esqlabsR:::.mergeScenarioParameters(scenario, project, NULL)
@@ -250,13 +250,13 @@ test_that(".mergeScenarioParameters silently skips an unknown individual paramet
 
 test_that(".mergeScenarioParameters silently skips an unknown application parameter-set id", {
   project <- .testProject()
-  scenario <- project$scenarios[["testscenario"]]
-  apps <- project$.getSection("applications")
+  scenario <- project$definitions$scenarios[["testscenario"]]
+  apps <- .getSection(project, "applications")
   apps$aciclovir_iv_250mg$parameterSets <- list(
     "aciclovir_iv_250mg_default",
     "DoesNotExist"
   )
-  project$.setSection("applications", apps)
+  .setSection(project, "applications", apps)
   scenario$modelParameterSets <- NULL
   scenario$individualId <- NULL
   merged <- esqlabsR:::.mergeScenarioParameters(scenario, project, NULL)
@@ -286,7 +286,7 @@ test_that(".initialConditionSetToStructure returns NULL on empty input", {
 
 test_that(".mergeScenarioInitialConditions returns NULL when no set is referenced", {
   project <- .testProject()
-  scenario <- project$scenarios[["testscenario"]]
+  scenario <- project$definitions$scenarios[["testscenario"]]
   scenario$initialConditions <- NULL
   expect_null(
     esqlabsR:::.mergeScenarioInitialConditions(scenario, project)
@@ -305,7 +305,7 @@ test_that(".mergeScenarioInitialConditions folds referenced sets last-write-wins
       unit = c("mg/l", "µmol/l")
     )
   )
-  scenario <- project$scenarios[["testscenario"]]
+  scenario <- project$definitions$scenarios[["testscenario"]]
   scenario$initialConditions <- "icset"
   merged <- esqlabsR:::.mergeScenarioInitialConditions(scenario, project)
   expect_equal(merged$paths, c("Organism|A", "Organism|B"))
@@ -318,7 +318,7 @@ test_that(".mergeScenarioInitialConditions silently skips an unknown set id", {
   suppressMessages(
     addInitialConditionEntry(project, "icset", "Organism|A", 1, "mg/l")
   )
-  scenario <- project$scenarios[["testscenario"]]
+  scenario <- project$definitions$scenarios[["testscenario"]]
   scenario$initialConditions <- c("icset", "DoesNotExist")
   merged <- esqlabsR:::.mergeScenarioInitialConditions(scenario, project)
   expect_equal(merged$paths, "Organism|A")
@@ -406,9 +406,9 @@ test_that(".runScenariosFromProject errors on unknown scenarioNames", {
 test_that("a scenario with an absolute modelFile runs when modelFolder is NULL", {
   withr::local_options(lifecycle_verbosity = "quiet")
   project <- .testProject()
-  absModel <- normalizePath(file.path(project$modelFolder, "Aciclovir.pkml"))
+  absModel <- normalizePath(file.path(project$paths$modelFolder, "Aciclovir.pkml"))
   setScenario(project, "testscenario", modelFile = absModel)
-  project$modelFolder <- NULL
+  project$paths$modelFolder <- NULL
 
   out <- esqlabsR:::.runScenariosFromProject(
     project,
@@ -421,7 +421,7 @@ test_that("a scenario with an absolute modelFile runs when modelFolder is NULL",
 test_that("a relative modelFile with NULL modelFolder aborts with a clear message", {
   withr::local_options(lifecycle_verbosity = "quiet")
   project <- .testProject()
-  project$modelFolder <- NULL
+  project$paths$modelFolder <- NULL
   expect_snapshot(
     error = TRUE,
     esqlabsR:::.runScenariosFromProject(
@@ -437,7 +437,7 @@ test_that("a relative modelFile with NULL modelFolder aborts with a clear messag
 test_that("a CSV-population scenario with NULL populationsFolder aborts with a clear message", {
   withr::local_options(lifecycle_verbosity = "quiet")
   project <- .testProject()
-  project$populationsFolder <- NULL
+  project$paths$populationsFolder <- NULL
   expect_snapshot(
     error = TRUE,
     esqlabsR:::.runScenariosFromProject(

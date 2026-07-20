@@ -33,9 +33,9 @@ gives every grid the single title \code{"A, B"}, not grid 1 \code{"A"} and grid 
 The \code{project} object, invisibly.
 }
 \description{
-Add new entries to \code{project$plotGrids} (a keyed list, one entry per grid).
+Add new entries to \code{plotGrids} definitions (a keyed list, one entry per grid).
 Errors if a \code{plotGridId} already exists or if any of the supplied \code{plots}
-are not present in \code{project$plots}.
+are not present in \code{plots} definitions.
 }
 \details{
 The id argument sets \code{N}, the number of definitions to act on, and cannot

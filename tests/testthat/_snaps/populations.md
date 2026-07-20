@@ -330,7 +330,7 @@
 # print.Population renders the configured fields
 
     Code
-      print(project$populations[["testpopulation"]])
+      print(project$definitions$populations[["testpopulation"]])
     Output
       <Population>
         * Species: Human
@@ -343,7 +343,7 @@
 # print.Population renders a minimal population
 
     Code
-      print(project$populations[["minimal"]])
+      print(project$definitions$populations[["minimal"]])
     Output
       <Population>
         * Species: Human

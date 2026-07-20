@@ -19,44 +19,62 @@ return to it later.
 A \code{Project} cannot be copied with \verb{$clone()} — because nothing is
 written to disk until you save, there is no need for a working copy: the
 loaded project itself is one. Reading a definition (for example
-\code{sc <- project$scenarios[["my_scenario"]]}) hands you an independent
+\code{sc <- project$definitions$scenarios[["my_scenario"]]}) hands you an independent
 copy, so changing \code{sc} does not change the project until you re-submit
 it with the matching set function. The one exception is observed data
 added as a \code{DataSet} object via \code{\link[=addObservedData]{addObservedData()}}: the \code{DataSet} is
 shared, so changes to that object are seen by the project too.
+
+The public authoring methods (\code{project$addScenario(...)},
+\code{project$addOutputPath(...)}, the whole \verb{add*} / \verb{set*} / \verb{remove*} family)
+mirror the exported free functions of the same name; the free function is
+the primary entry point, carries the full per-argument documentation, and
+forwards to the method. The method arguments are summarised once below
+(roxygen2 documents R6 method arguments in the class topic); for the
+authoritative, per-function argument descriptions see the linked free
+function, e.g. \code{\link[=addScenario]{addScenario()}}, \code{\link[=setScenario]{setScenario()}}, \code{\link[=addOutputPath]{addOutputPath()}},
+\code{\link[=addParameterEntry]{addParameterEntry()}}, \code{\link[=addPITask]{addPITask()}}, \code{\link[=createScenariosFromPKML]{createScenariosFromPKML()}}.
 }
 \keyword{internal}
 \section{Active bindings}{
   \if{html}{\out{<div class="r6-active-bindings">}}
   \describe{
-    \item{\code{projectFilePath}}{Read-only. Absolute path to the JSON
-configuration file the project was loaded from. All other relative
-paths in the project are resolved against the file's directory
-(see \code{projectDirPath}). \code{NULL} for an empty in-memory project; in
-that case all path fields must be absolute.}
+    \item{\code{info}}{Project identity and metadata, as a writable field group.
+Read a field with \code{project$info$name}; write one with
+\code{project$info$name <- "..."}. Writable fields: \code{name} (human-readable
+project name), \code{description} (free-text description). Read-only fields:
+\code{schemaVersion} (schema version declared in the JSON, always \code{"2.0"}
+for projects this package loads), \code{esqlabsRVersion} (informational
+version string from the JSON), \code{projectFilePath} (absolute path to the
+JSON file the project was loaded from, \code{NULL} for an in-memory
+project), and \code{projectDirPath} (the directory containing that file, the
+base for resolving relative paths). Assigning a writable field sets the
+dirty bit; assigning a read-only field aborts. The two version fields
+are managed by the load/save machinery, not by users.}
 
-    \item{\code{projectDirPath}}{Read-only. Directory containing the JSON
-configuration file (i.e. \code{dirname(projectFilePath)}). Used as the
-base for resolving relative paths. \code{NULL} if the project was not
-loaded from a file.}
+    \item{\code{paths}}{The project's working-folder paths, as a writable field
+group: \code{modelFolder} (pkml simulation files), \code{dataFolder}
+(experimental data), \code{outputFolder} (results), \code{populationsFolder}
+(population CSVs loaded by \code{\link[=runScenarios]{runScenarios()}}), and \code{definitionsFolder}
+(the folder holding the definition files, default \code{"definitions"}).
+Read a field with \code{project$paths$modelFolder} (returned resolved
+against \code{projectDirPath}); write one with
+\code{project$paths$modelFolder <- "Models"} (stored verbatim, resolved
+on the next read). Assigning any field sets the dirty bit. Changing
+\code{definitionsFolder} redirects where the next \code{\link[=saveProject]{saveProject()}} writes the
+definition files; nothing moves on disk until that save. The
+Excel-bridge sheet-name fields live in the separate \code{excel} group.}
 
-    \item{\code{validatedSinceMutation}}{Read-only logical. \code{TRUE} if a full
-\code{\link[=validateProject]{validateProject()}} has succeeded since the project was last changed
-or loaded. Cleared by any change. Used internally by automatic
-validation (e.g. in \code{\link[=runScenarios]{runScenarios()}} and \code{\link[=createPlots]{createPlots()}}) to skip
-redundant re-validation of an unchanged project.}
-
-    \item{\code{name}}{Human-readable project name (the \code{name} JSON field). May be
-\code{NULL} when the project has no name.}
-
-    \item{\code{description}}{Optional free-text project description (the
-\code{description} JSON field). May be \code{NULL}.}
-
-    \item{\code{definitionsFolder}}{Name of the folder (relative to
-\code{projectDirPath}) that holds the project's definition files.
-Defaults to \code{"definitions"}. Assigning a new value changes where the
-next \code{\link[=saveProject]{saveProject()}} writes the definition files and where they are
-read from, but nothing moves on disk until the next save.}
+    \item{\code{excel}}{The Excel import/export bridge sheet-name fields, as a
+writable field group: \code{configurationsFolder}, \code{modelParamsFile},
+\code{individualsFile}, \code{populationsFile}, \code{scenariosFile},
+\code{applicationsFile}, \code{plotsFile}, \code{parameterIdentificationFile},
+\code{initialConditionsFile}. Read a field with
+\code{project$excel$modelParamsFile} (returned resolved against
+\code{configurationsFolder}, itself resolved against \code{projectDirPath});
+write one with \code{project$excel$modelParamsFile <- "P.xlsx"} (stored
+verbatim). Assigning any field sets the dirty bit. Empty for a project
+created directly in the JSON format, without Excel files.}
 
     \item{\code{defaultSimulationRunOptions}}{Named list of the project-level
 default simulation run options (the \code{defaultSimulationRunOptions} JSON
@@ -65,149 +83,21 @@ the default \code{simulationRunOptions} when the caller does not pass one.
 Recognized fields: \code{numberOfCores}, \code{checkForNegativeValues},
 \code{showProgress}.}
 
-    \item{\code{excel}}{Read-only named list of the Excel import/export bridge
-sheet-name fields (\code{configurationsFolder}, \code{modelParamsFile},
-\code{individualsFile}, \code{populationsFile}, \code{scenariosFile},
-\code{applicationsFile}, \code{plotsFile}, \code{parameterIdentificationFile},
-\code{initialConditionsFile}).
-Returned verbatim as strings (no resolution). Empty for a project
-created directly in the JSON format, without Excel files.}
-
-    \item{\code{schemaVersion}}{Schema version declared in the JSON. Always "2.0"
-for projects this package loads.}
-
-    \item{\code{esqlabsRVersion}}{Informational version string from the JSON.}
-
-    \item{\code{jsonPath}}{Read-only. Absolute path the project was loaded from
-(an alias of \code{projectFilePath}), or \code{NULL} for an in-memory project.}
-
-    \item{\code{modelFolder}}{Path to the folder containing pkml simulation files.}
-
-    \item{\code{configurationsFolder}}{Path to the folder containing configuration
-files. Part of the Excel import/export bridge (the \code{excel} container
-block).}
-
-    \item{\code{modelParamsFile}}{Path to the Excel file with global model
-parameterization. Part of the Excel import/export bridge (the \code{excel}
-container block).}
-
-    \item{\code{individualsFile}}{Path to the Excel file with individual-specific
-model parameterization. Part of the Excel import/export bridge (the
-\code{excel} container block).}
-
-    \item{\code{populationsFile}}{Path to the Excel file with population
-information. Part of the Excel import/export bridge (the \code{excel}
-container block).}
-
-    \item{\code{scenariosFile}}{Path to the Excel file with scenario definitions.
-Part of the Excel import/export bridge (the \code{excel} container block).}
-
-    \item{\code{applicationsFile}}{Path to the Excel file with scenario-specific
-parameters such as application protocol parameters. Part of the Excel
-import/export bridge (the \code{excel} container block).}
-
-    \item{\code{plotsFile}}{Path to the Excel file with plot definitions. Part of
-the Excel import/export bridge (the \code{excel} container block).}
-
-    \item{\code{parameterIdentificationFile}}{Name of the Excel workbook holding
-the parameter-identification sheets (\code{PITasks}, \code{PIParameters},
-\code{PIOutputMappings}). Resolved relative to \code{configurationsFolder}.}
-
-    \item{\code{initialConditionsFile}}{Name of the Excel workbook holding the
-initial-condition (molecule start value) sheets, one sheet per set.
-Part of the Excel import/export bridge (the \code{excel} container block);
-resolved relative to \code{configurationsFolder}.}
-
-    \item{\code{populationsFolder}}{Name of the folder containing population
-definitions as CSV files. Resolved relative to \code{projectDirPath}.
-Used by \code{runScenarios()} to load population CSVs at simulation time.}
-
-    \item{\code{dataFolder}}{Path to the folder where experimental data files are
-located.}
-
-    \item{\code{outputFolder}}{Path to the folder where the results should be saved
-relative to the "Code" folder}
-
-    \item{\code{outputPaths}}{Read-only named list mapping output-path IDs to
-OSPS-notation path strings (e.g. \code{list(PVB = "Organism|...")}). To
-change it, use \code{\link[=addOutputPath]{addOutputPath()}} / \code{\link[=setOutputPath]{setOutputPath()}} /
-\code{\link[=removeOutputPath]{removeOutputPath()}} or edit the definition files under
-\verb{definitions/output-paths/}.}
-
-    \item{\code{scenarios}}{Read-only named list of \code{Scenario} records, keyed by
-scenario name. To change it, use \code{\link[=addScenario]{addScenario()}} / \code{\link[=setScenario]{setScenario()}} /
-\code{\link[=removeScenario]{removeScenario()}} (or \code{\link[=renameScenario]{renameScenario()}} / \code{\link[=duplicateScenario]{duplicateScenario()}}), or
-edit the definition files under \verb{definitions/scenarios/}. The typical
-way to edit a scenario: read it
-(\code{sc <- project$scenarios[["id"]]}), change your copy
-(\code{sc$modelFile <- ...}), then hand it back
-(\code{setScenario(project, "id", ...)}).}
-
-    \item{\code{parameterSets}}{Read-only named list of parameter structures, keyed
-by set id. This single section holds every parameter set in the
-project: a scenario references the sets it applies through its
-\code{modelParameterSets} field, an individual or application through its
-\code{parameterSets} field; all three resolve against this one map. To
-change it, use \code{\link[=addParameterSet]{addParameterSet()}} / \code{\link[=removeParameterSet]{removeParameterSet()}} /
-\code{\link[=addParameterEntry]{addParameterEntry()}} / \code{\link[=removeParameterEntry]{removeParameterEntry()}} or edit the definition
-files under \verb{definitions/parameter-sets/}.}
-
-    \item{\code{initialConditions}}{Read-only named list of initial-condition sets,
-keyed by set id. Each set is a list of molecule start-value records
-(\code{path}, \code{value}, \code{unit}), applied to a scenario's simulation via its
-\code{initialConditions} field. To change it, use \code{\link[=addInitialConditions]{addInitialConditions()}} /
-\code{\link[=removeInitialConditions]{removeInitialConditions()}} / \code{\link[=addInitialConditionEntry]{addInitialConditionEntry()}} /
-\code{\link[=removeInitialConditionEntry]{removeInitialConditionEntry()}} or edit the definition files under
-\verb{definitions/initial-conditions/}.}
-
-    \item{\code{individuals}}{Read-only named list of plain lists, keyed by
-individualId. To change it, use \code{\link[=addIndividual]{addIndividual()}} / \code{\link[=setIndividual]{setIndividual()}} /
-\code{\link[=removeIndividual]{removeIndividual()}} or edit the definition files under
-\verb{definitions/individuals/}.}
-
-    \item{\code{populations}}{Read-only named list of plain lists, keyed by
-populationId. To change it, use \code{\link[=addPopulation]{addPopulation()}} / \code{\link[=setPopulation]{setPopulation()}} /
-\code{\link[=removePopulation]{removePopulation()}} or edit the definition files under
-\verb{definitions/populations/}.}
-
-    \item{\code{applications}}{Read-only named list of parameter structures, keyed
-by protocol name. To change it, use \code{\link[=addApplication]{addApplication()}} /
-\code{\link[=removeApplication]{removeApplication()}} or edit the definition files under
-\verb{definitions/applications/}.}
-
-    \item{\code{observedData}}{Read-only list of observed data source declarations.
-To change it, use \code{\link[=addObservedData]{addObservedData()}} / \code{\link[=removeObservedData]{removeObservedData()}} or edit
-the definition files under \verb{definitions/observed-data/} (one file per
-declaration).}
-
-    \item{\code{dataCombined}}{Read-only named list of \code{DataCombined} definitions,
-keyed by \code{dataCombinedId}. Each entry pairs simulated and/or observed
-curves. To change it, use \code{\link[=addDataCombined]{addDataCombined()}} / \code{\link[=removeDataCombined]{removeDataCombined()}}
-or edit the definition files under \verb{definitions/data-combined/}.}
-
-    \item{\code{plots}}{Read-only named list of plot definitions, keyed by \code{plotId}.
-Each entry is a single plot's configuration (\code{dataCombinedId},
-\code{plotType}, and styling fields). To change it, use \code{\link[=addPlot]{addPlot()}} /
-\code{\link[=removePlot]{removePlot()}} or edit the definition files under \verb{definitions/plots/}.}
-
-    \item{\code{plotGrids}}{Read-only named list of plot-grid definitions, keyed by
-\code{plotGridId}. Each entry lays out one or more plots. To change it, use
-\code{\link[=addPlotGrid]{addPlotGrid()}} / \code{\link[=removePlotGrid]{removePlotGrid()}} or edit the definition files under
-\verb{definitions/plot-grids/}.}
-
-    \item{\code{parameterIdentification}}{Read-only named list keyed by PI task id;
-each entry is a \code{PITask} record. May be \code{NULL} or an empty list when the
-project declares no PI tasks. To change it, use \code{\link[=addPITask]{addPITask()}} /
-\code{\link[=removePITask]{removePITask()}} (and the per-task \code{\link[=addPIParameter]{addPIParameter()}} /
-\code{\link[=addPIOutputMapping]{addPIOutputMapping()}} and their removals) or edit the definition files
-under \verb{definitions/parameter-identification/}.}
-
-    \item{\code{filePaths}}{Read-only named list of the project's working-folder
-paths (the \code{filePaths} JSON block): \code{modelFolder}, \code{dataFolder},
-\code{outputFolder}, and \code{populationsFolder}. Values are returned verbatim
-as strings; no resolution is performed at this stage. The Excel-bridge
-sheet-name fields live in the separate \code{excel} block (\code{project$excel}),
-not here.}
+    \item{\code{definitions}}{The project's definition sections, as a read-only
+field group. Each section is one field: \code{outputPaths}, \code{scenarios},
+\code{parameterSets}, \code{initialConditions}, \code{individuals}, \code{populations},
+\code{applications}, \code{observedData}, \code{dataCombined}, \code{plots}, \code{plotGrids},
+\code{parameterIdentification}. Read a section with
+\code{project$definitions$scenarios} (returned as a printable, read-only
+named list keyed by id). The group is read-only from the handle: every
+assignment form aborts. The only sanctioned way to change a section is
+an authoring function (\code{\link[=addScenario]{addScenario()}} / \code{\link[=setScenario]{setScenario()}} /
+\code{\link[=removeScenario]{removeScenario()}} and their per-section siblings) or editing the
+definition's JSON file; those route through the internal write seam,
+which updates the in-memory backing field, sets the dirty bit, and
+clears the validation-cache flag so the next run/plot re-validates.
+Nothing touches the \verb{definitions/<kind>/} tree until \code{\link[=saveProject]{saveProject()}}
+reconciles it to memory.}
 
     \item{\code{asList}}{Returns the current project as a list matching the JSON
 schema. Reflects any in-memory modifications. Read-only.}
@@ -226,15 +116,55 @@ differences, empty when everything is in sync). The same information
 \subsection{Public methods}{
   \itemize{
     \item \href{#method-Project-initialize}{\code{Project$new()}}
-    \item \href{#method-Project-.markValidated}{\code{Project$.markValidated()}}
-    \item \href{#method-Project-.markModified}{\code{Project$.markModified()}}
-    \item \href{#method-Project-.isModified}{\code{Project$.isModified()}}
-    \item \href{#method-Project-.clearModified}{\code{Project$.clearModified()}}
-    \item \href{#method-Project-.reload}{\code{Project$.reload()}}
-    \item \href{#method-Project-.getSection}{\code{Project$.getSection()}}
-    \item \href{#method-Project-.setSection}{\code{Project$.setSection()}}
-    \item \href{#method-Project-.getFilePathsData}{\code{Project$.getFilePathsData()}}
-    \item \href{#method-Project-.getExcelData}{\code{Project$.getExcelData()}}
+    \item \href{#method-Project-addScenario}{\code{Project$addScenario()}}
+    \item \href{#method-Project-removeScenario}{\code{Project$removeScenario()}}
+    \item \href{#method-Project-setScenario}{\code{Project$setScenario()}}
+    \item \href{#method-Project-renameScenario}{\code{Project$renameScenario()}}
+    \item \href{#method-Project-duplicateScenario}{\code{Project$duplicateScenario()}}
+    \item \href{#method-Project-createScenariosFromPKML}{\code{Project$createScenariosFromPKML()}}
+    \item \href{#method-Project-addIndividual}{\code{Project$addIndividual()}}
+    \item \href{#method-Project-removeIndividual}{\code{Project$removeIndividual()}}
+    \item \href{#method-Project-setIndividual}{\code{Project$setIndividual()}}
+    \item \href{#method-Project-addPopulation}{\code{Project$addPopulation()}}
+    \item \href{#method-Project-removePopulation}{\code{Project$removePopulation()}}
+    \item \href{#method-Project-setPopulation}{\code{Project$setPopulation()}}
+    \item \href{#method-Project-addApplication}{\code{Project$addApplication()}}
+    \item \href{#method-Project-removeApplication}{\code{Project$removeApplication()}}
+    \item \href{#method-Project-setApplicationParameterSets}{\code{Project$setApplicationParameterSets()}}
+    \item \href{#method-Project-addOutputPath}{\code{Project$addOutputPath()}}
+    \item \href{#method-Project-removeOutputPath}{\code{Project$removeOutputPath()}}
+    \item \href{#method-Project-setOutputPath}{\code{Project$setOutputPath()}}
+    \item \href{#method-Project-addParameterSet}{\code{Project$addParameterSet()}}
+    \item \href{#method-Project-removeParameterSet}{\code{Project$removeParameterSet()}}
+    \item \href{#method-Project-addParameterEntry}{\code{Project$addParameterEntry()}}
+    \item \href{#method-Project-removeParameterEntry}{\code{Project$removeParameterEntry()}}
+    \item \href{#method-Project-addInitialConditions}{\code{Project$addInitialConditions()}}
+    \item \href{#method-Project-removeInitialConditions}{\code{Project$removeInitialConditions()}}
+    \item \href{#method-Project-addInitialConditionEntry}{\code{Project$addInitialConditionEntry()}}
+    \item \href{#method-Project-removeInitialConditionEntry}{\code{Project$removeInitialConditionEntry()}}
+    \item \href{#method-Project-addPlot}{\code{Project$addPlot()}}
+    \item \href{#method-Project-removePlot}{\code{Project$removePlot()}}
+    \item \href{#method-Project-addPlotGrid}{\code{Project$addPlotGrid()}}
+    \item \href{#method-Project-removePlotGrid}{\code{Project$removePlotGrid()}}
+    \item \href{#method-Project-addDataCombined}{\code{Project$addDataCombined()}}
+    \item \href{#method-Project-removeDataCombined}{\code{Project$removeDataCombined()}}
+    \item \href{#method-Project-addObservedData}{\code{Project$addObservedData()}}
+    \item \href{#method-Project-removeObservedData}{\code{Project$removeObservedData()}}
+    \item \href{#method-Project-loadObservedData}{\code{Project$loadObservedData()}}
+    \item \href{#method-Project-getObservedDataNames}{\code{Project$getObservedDataNames()}}
+    \item \href{#method-Project-addPITask}{\code{Project$addPITask()}}
+    \item \href{#method-Project-removePITask}{\code{Project$removePITask()}}
+    \item \href{#method-Project-addPIParameter}{\code{Project$addPIParameter()}}
+    \item \href{#method-Project-removePIParameter}{\code{Project$removePIParameter()}}
+    \item \href{#method-Project-addPIOutputMapping}{\code{Project$addPIOutputMapping()}}
+    \item \href{#method-Project-removePIOutputMapping}{\code{Project$removePIOutputMapping()}}
+    \item \href{#method-Project-save}{\code{Project$save()}}
+    \item \href{#method-Project-reload}{\code{Project$reload()}}
+    \item \href{#method-Project-validate}{\code{Project$validate()}}
+    \item \href{#method-Project-ensureValid}{\code{Project$ensureValid()}}
+    \item \href{#method-Project-rawFilePaths}{\code{Project$rawFilePaths()}}
+    \item \href{#method-Project-rawExcel}{\code{Project$rawExcel()}}
+    \item \href{#method-Project-isModified}{\code{Project$isModified()}}
     \item \href{#method-Project-print}{\code{Project$print()}}
   }
 }
@@ -260,160 +190,1038 @@ JSON file.}
 }
 
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-Project-.markValidated"></a>}}
-\if{latex}{\out{\hypertarget{method-Project-.markValidated}{}}}
-\subsection{\code{Project$.markValidated()}}{
-  Internal method to record that a full project
-validation has succeeded with no critical errors. Sets the
-\code{validatedSinceMutation} flag. Not intended for end-user use.
+\if{html}{\out{<a id="method-Project-addScenario"></a>}}
+\if{latex}{\out{\hypertarget{method-Project-addScenario}{}}}
+\subsection{\code{Project$addScenario()}}{
+  Add scenarios. See \code{\link[=addScenario]{addScenario()}}, the primary entry point.
   \subsection{Usage}{
     \if{html}{\out{<div class="r">}}
-    \preformatted{Project$.markValidated()}
-    \if{html}{\out{</div>}}
-  }
-}
-
-\if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-Project-.markModified"></a>}}
-\if{latex}{\out{\hypertarget{method-Project-.markModified}{}}}
-\subsection{\code{Project$.markModified()}}{
-  Internal method invoked by mutators after a successful
-programmatic change. Sets the in-memory dirty bit and clears the
-\code{validatedSinceMutation} flag so the next \code{runScenarios()} /
-\code{createPlots()} re-validates the project. Does not touch disk. Not
-intended for end-user use.
-  \subsection{Usage}{
-    \if{html}{\out{<div class="r">}}
-    \preformatted{Project$.markModified()}
-    \if{html}{\out{</div>}}
-  }
-}
-
-\if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-Project-.isModified"></a>}}
-\if{latex}{\out{\hypertarget{method-Project-.isModified}{}}}
-\subsection{\code{Project$.isModified()}}{
-  Internal accessor for the in-memory dirty bit: \code{TRUE} when
-there are edits not yet reconciled to the on-disk tree. Read by
-\code{\link[=saveProject]{saveProject()}} (clean-save short-circuit) and by \code{\link[=projectStatus]{projectStatus()}} (the
-memory-vs-tree axis). Not intended for end-user use.
-  \subsection{Usage}{
-    \if{html}{\out{<div class="r">}}
-    \preformatted{Project$.isModified()}
-    \if{html}{\out{</div>}}
-  }
-}
-
-\if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-Project-.clearModified"></a>}}
-\if{latex}{\out{\hypertarget{method-Project-.clearModified}{}}}
-\subsection{\code{Project$.clearModified()}}{
-  Internal method to clear the in-memory dirty bit, marking
-memory as in sync with the on-disk tree. Called after a successful
-\code{\link[=saveProject]{saveProject()}}. Not intended for end-user use.
-  \subsection{Usage}{
-    \if{html}{\out{<div class="r">}}
-    \preformatted{Project$.clearModified()}
-    \if{html}{\out{</div>}}
-  }
-}
-
-\if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-Project-.reload"></a>}}
-\if{latex}{\out{\hypertarget{method-Project-.reload}{}}}
-\subsection{\code{Project$.reload()}}{
-  Internal method to re-read the project from its bound file,
-discarding any in-memory edits (the undo). Re-runs the parser against
-\code{projectFilePath}, which overwrites every backing field and clears the
-dirty and validation flags. Object identity is preserved (R6
-reference), so existing handles stay valid. Not intended for end-user
-use; call \code{\link[=reloadProject]{reloadProject()}}.
-  \subsection{Usage}{
-    \if{html}{\out{<div class="r">}}
-    \preformatted{Project$.reload()}
-    \if{html}{\out{</div>}}
-  }
-}
-
-\if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-Project-.getSection"></a>}}
-\if{latex}{\out{\hypertarget{method-Project-.getSection}{}}}
-\subsection{\code{Project$.getSection()}}{
-  Internal read accessor for one definition section. Returns
-the plain backing list (NOT wrapped in the read-only \code{DefinitionList}
-the public \verb{project$<section>} getter returns), so an authoring
-function may bind it to a local copy and subscript-assign that copy
-before re-submitting it via \code{.setSection()}. Not intended for end-user
-use; the public accessor is the read-only end-user surface.
-  \subsection{Usage}{
-    \if{html}{\out{<div class="r">}}
-    \preformatted{Project$.getSection(kind)}
+    \preformatted{Project$addScenario(
+  id,
+  modelFile,
+  individual = NULL,
+  population = NULL,
+  application = NULL,
+  parameterSets = NULL,
+  initialConditions = NULL,
+  outputPaths = NULL,
+  simulationTime = NULL,
+  simulationTimeUnit = "h",
+  steadyState = FALSE,
+  steadyStateTime = 1000,
+  steadyStateTimeUnit = "min",
+  overwriteFormulasInSS = FALSE,
+  readPopulationFromCSV = FALSE
+)}
     \if{html}{\out{</div>}}
   }
   \subsection{Arguments}{
     \if{html}{\out{<div class="arguments">}}
     \describe{
-      \item{\code{kind}}{Character scalar naming the section (e.g. \code{"scenarios"}).}
+      \item{\code{id}}{Character id (name) of the definition to add, modify, or remove.}
+      \item{\code{modelFile}}{Character name of the \code{.pkml} model file. See
+\code{\link[=addScenario]{addScenario()}}.}
+      \item{\code{individual, population, application}}{Character id (or \code{NULL}) of the
+individual / population / application a scenario references. See
+\code{\link[=addScenario]{addScenario()}}.}
+      \item{\code{parameterSets, initialConditions, outputPaths}}{Character vectors (or
+\code{NULL}) of definition ids a scenario references, or the target of an
+\verb{add*}/\verb{set*}/\verb{remove*} call. See \code{\link[=addScenario]{addScenario()}}.}
+      \item{\code{simulationTime, simulationTimeUnit}}{Simulation time specification and
+its unit. See \code{\link[=addScenario]{addScenario()}}.}
+      \item{\code{steadyState, steadyStateTime, steadyStateTimeUnit}}{Steady-state flag,
+time, and unit. See \code{\link[=addScenario]{addScenario()}}.}
+      \item{\code{overwriteFormulasInSS, readPopulationFromCSV}}{Logical scenario options.
+See \code{\link[=addScenario]{addScenario()}}.}
     }
     \if{html}{\out{</div>}}
   }
 }
 
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-Project-.setSection"></a>}}
-\if{latex}{\out{\hypertarget{method-Project-.setSection}{}}}
-\subsection{\code{Project$.setSection()}}{
-  Internal write entry point for one definition section. This
-is the only sanctioned way to change a section: it stores the new list
-in the private backing field, sets the in-memory dirty bit, and
-invalidates the validation cache. It does not touch disk; nothing
-persists until \code{\link[=saveProject]{saveProject()}} reconciles the tree to memory. The
-public \verb{project$<section> <- ...} setter aborts read-only; every
-\verb{add*}/\verb{set*}/\verb{remove*} authoring function routes its write here.
-Accepts a plain list; a \code{DefinitionList} is unwrapped defensively. Not
-intended for end-user use.
+\if{html}{\out{<a id="method-Project-removeScenario"></a>}}
+\if{latex}{\out{\hypertarget{method-Project-removeScenario}{}}}
+\subsection{\code{Project$removeScenario()}}{
+  Remove scenarios. See \code{\link[=removeScenario]{removeScenario()}}.
   \subsection{Usage}{
     \if{html}{\out{<div class="r">}}
-    \preformatted{Project$.setSection(kind, value)}
+    \preformatted{Project$removeScenario(id)}
     \if{html}{\out{</div>}}
   }
   \subsection{Arguments}{
     \if{html}{\out{<div class="arguments">}}
     \describe{
-      \item{\code{kind}}{Character scalar naming the section (e.g. \code{"scenarios"}).}
-      \item{\code{value}}{The new section list.}
+      \item{\code{id}}{Character id (name) of the definition to add, modify, or remove.}
     }
     \if{html}{\out{</div>}}
   }
 }
 
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-Project-.getFilePathsData"></a>}}
-\if{latex}{\out{\hypertarget{method-Project-.getFilePathsData}{}}}
-\subsection{\code{Project$.getFilePathsData()}}{
-  Internal method to retrieve the raw working-folder metadata
-(the \code{filePaths} block: a named list of \code{list(value, description)}
-entries for the four live folders). Not intended for end-user use;
-consumed by the Excel import/export bridge.
+\if{html}{\out{<a id="method-Project-setScenario"></a>}}
+\if{latex}{\out{\hypertarget{method-Project-setScenario}{}}}
+\subsection{\code{Project$setScenario()}}{
+  Modify fields of existing scenarios. See \code{\link[=setScenario]{setScenario()}}.
+The \code{...} carries only the fields to change (partial update); a field
+passed as \code{NULL} is cleared, an omitted field is left untouched.
   \subsection{Usage}{
     \if{html}{\out{<div class="r">}}
-    \preformatted{Project$.getFilePathsData()}
+    \preformatted{Project$setScenario(id, ...)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{id}}{Character id (name) of the definition to add, modify, or remove.}
+      \item{\code{...}}{Passed to the matching authoring free function (e.g. the
+partial-update fields of \code{\link[=setScenario]{setScenario()}} / \code{\link[=setIndividual]{setIndividual()}}, or the
+remaining arguments of \code{\link[=createScenariosFromPKML]{createScenariosFromPKML()}}).}
+    }
     \if{html}{\out{</div>}}
   }
 }
 
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-Project-.getExcelData"></a>}}
-\if{latex}{\out{\hypertarget{method-Project-.getExcelData}{}}}
-\subsection{\code{Project$.getExcelData()}}{
-  Internal method to retrieve the raw Excel-bridge metadata
-(the \code{excel} block: a named list of \code{list(value, description)} entries
-for the sheet-name fields). Empty when the project has no Excel
-side-car. Not intended for end-user use; consumed by the Excel
-import/export bridge.
+\if{html}{\out{<a id="method-Project-renameScenario"></a>}}
+\if{latex}{\out{\hypertarget{method-Project-renameScenario}{}}}
+\subsection{\code{Project$renameScenario()}}{
+  Rename a scenario. See \code{\link[=renameScenario]{renameScenario()}}.
   \subsection{Usage}{
     \if{html}{\out{<div class="r">}}
-    \preformatted{Project$.getExcelData()}
+    \preformatted{Project$renameScenario(id, newId)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{id}}{Character id (name) of the definition to add, modify, or remove.}
+      \item{\code{newId}}{Character new id for \code{\link[=renameScenario]{renameScenario()}} / \code{\link[=duplicateScenario]{duplicateScenario()}}.}
+    }
+    \if{html}{\out{</div>}}
+  }
+}
+
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Project-duplicateScenario"></a>}}
+\if{latex}{\out{\hypertarget{method-Project-duplicateScenario}{}}}
+\subsection{\code{Project$duplicateScenario()}}{
+  Duplicate a scenario. See \code{\link[=duplicateScenario]{duplicateScenario()}}.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{Project$duplicateScenario(id, newId)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{id}}{Character id (name) of the definition to add, modify, or remove.}
+      \item{\code{newId}}{Character new id for \code{\link[=renameScenario]{renameScenario()}} / \code{\link[=duplicateScenario]{duplicateScenario()}}.}
+    }
+    \if{html}{\out{</div>}}
+  }
+}
+
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Project-createScenariosFromPKML"></a>}}
+\if{latex}{\out{\hypertarget{method-Project-createScenariosFromPKML}{}}}
+\subsection{\code{Project$createScenariosFromPKML()}}{
+  Create scenarios from PKML model files. See
+\code{\link[=createScenariosFromPKML]{createScenariosFromPKML()}}.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{Project$createScenariosFromPKML(pkmlFilePaths, ...)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{pkmlFilePaths}}{Character vector of \code{.pkml} file paths. See
+\code{\link[=createScenariosFromPKML]{createScenariosFromPKML()}}.}
+      \item{\code{...}}{Passed to the matching authoring free function (e.g. the
+partial-update fields of \code{\link[=setScenario]{setScenario()}} / \code{\link[=setIndividual]{setIndividual()}}, or the
+remaining arguments of \code{\link[=createScenariosFromPKML]{createScenariosFromPKML()}}).}
+    }
+    \if{html}{\out{</div>}}
+  }
+}
+
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Project-addIndividual"></a>}}
+\if{latex}{\out{\hypertarget{method-Project-addIndividual}{}}}
+\subsection{\code{Project$addIndividual()}}{
+  Add an individual. See \code{\link[=addIndividual]{addIndividual()}}.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{Project$addIndividual(...)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{...}}{Passed to the matching authoring free function (e.g. the
+partial-update fields of \code{\link[=setScenario]{setScenario()}} / \code{\link[=setIndividual]{setIndividual()}}, or the
+remaining arguments of \code{\link[=createScenariosFromPKML]{createScenariosFromPKML()}}).}
+    }
+    \if{html}{\out{</div>}}
+  }
+}
+
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Project-removeIndividual"></a>}}
+\if{latex}{\out{\hypertarget{method-Project-removeIndividual}{}}}
+\subsection{\code{Project$removeIndividual()}}{
+  Remove individuals. See \code{\link[=removeIndividual]{removeIndividual()}}.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{Project$removeIndividual(id)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{id}}{Character id (name) of the definition to add, modify, or remove.}
+    }
+    \if{html}{\out{</div>}}
+  }
+}
+
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Project-setIndividual"></a>}}
+\if{latex}{\out{\hypertarget{method-Project-setIndividual}{}}}
+\subsection{\code{Project$setIndividual()}}{
+  Modify an existing individual. See \code{\link[=setIndividual]{setIndividual()}}.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{Project$setIndividual(...)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{...}}{Passed to the matching authoring free function (e.g. the
+partial-update fields of \code{\link[=setScenario]{setScenario()}} / \code{\link[=setIndividual]{setIndividual()}}, or the
+remaining arguments of \code{\link[=createScenariosFromPKML]{createScenariosFromPKML()}}).}
+    }
+    \if{html}{\out{</div>}}
+  }
+}
+
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Project-addPopulation"></a>}}
+\if{latex}{\out{\hypertarget{method-Project-addPopulation}{}}}
+\subsection{\code{Project$addPopulation()}}{
+  Add a population. See \code{\link[=addPopulation]{addPopulation()}}.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{Project$addPopulation(...)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{...}}{Passed to the matching authoring free function (e.g. the
+partial-update fields of \code{\link[=setScenario]{setScenario()}} / \code{\link[=setIndividual]{setIndividual()}}, or the
+remaining arguments of \code{\link[=createScenariosFromPKML]{createScenariosFromPKML()}}).}
+    }
+    \if{html}{\out{</div>}}
+  }
+}
+
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Project-removePopulation"></a>}}
+\if{latex}{\out{\hypertarget{method-Project-removePopulation}{}}}
+\subsection{\code{Project$removePopulation()}}{
+  Remove populations. See \code{\link[=removePopulation]{removePopulation()}}.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{Project$removePopulation(id)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{id}}{Character id (name) of the definition to add, modify, or remove.}
+    }
+    \if{html}{\out{</div>}}
+  }
+}
+
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Project-setPopulation"></a>}}
+\if{latex}{\out{\hypertarget{method-Project-setPopulation}{}}}
+\subsection{\code{Project$setPopulation()}}{
+  Modify an existing population. See \code{\link[=setPopulation]{setPopulation()}}.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{Project$setPopulation(...)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{...}}{Passed to the matching authoring free function (e.g. the
+partial-update fields of \code{\link[=setScenario]{setScenario()}} / \code{\link[=setIndividual]{setIndividual()}}, or the
+remaining arguments of \code{\link[=createScenariosFromPKML]{createScenariosFromPKML()}}).}
+    }
+    \if{html}{\out{</div>}}
+  }
+}
+
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Project-addApplication"></a>}}
+\if{latex}{\out{\hypertarget{method-Project-addApplication}{}}}
+\subsection{\code{Project$addApplication()}}{
+  Add an application. See \code{\link[=addApplication]{addApplication()}}.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{Project$addApplication(id, parameterSets = NULL)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{id}}{Character id (name) of the definition to add, modify, or remove.}
+      \item{\code{parameterSets, initialConditions, outputPaths}}{Character vectors (or
+\code{NULL}) of definition ids a scenario references, or the target of an
+\verb{add*}/\verb{set*}/\verb{remove*} call. See \code{\link[=addScenario]{addScenario()}}.}
+    }
+    \if{html}{\out{</div>}}
+  }
+}
+
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Project-removeApplication"></a>}}
+\if{latex}{\out{\hypertarget{method-Project-removeApplication}{}}}
+\subsection{\code{Project$removeApplication()}}{
+  Remove applications. See \code{\link[=removeApplication]{removeApplication()}}.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{Project$removeApplication(id)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{id}}{Character id (name) of the definition to add, modify, or remove.}
+    }
+    \if{html}{\out{</div>}}
+  }
+}
+
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Project-setApplicationParameterSets"></a>}}
+\if{latex}{\out{\hypertarget{method-Project-setApplicationParameterSets}{}}}
+\subsection{\code{Project$setApplicationParameterSets()}}{
+  Set an application's parameter sets. See
+\code{\link[=setApplicationParameterSets]{setApplicationParameterSets()}}.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{Project$setApplicationParameterSets(id, parameterSets)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{id}}{Character id (name) of the definition to add, modify, or remove.}
+      \item{\code{parameterSets, initialConditions, outputPaths}}{Character vectors (or
+\code{NULL}) of definition ids a scenario references, or the target of an
+\verb{add*}/\verb{set*}/\verb{remove*} call. See \code{\link[=addScenario]{addScenario()}}.}
+    }
+    \if{html}{\out{</div>}}
+  }
+}
+
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Project-addOutputPath"></a>}}
+\if{latex}{\out{\hypertarget{method-Project-addOutputPath}{}}}
+\subsection{\code{Project$addOutputPath()}}{
+  Add an output path. See \code{\link[=addOutputPath]{addOutputPath()}}.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{Project$addOutputPath(id, path)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{id}}{Character id (name) of the definition to add, modify, or remove.}
+      \item{\code{path}}{Character path: an output-path string (\code{\link[=addOutputPath]{addOutputPath()}}) or a
+parameter/initial-condition path (\code{\link[=addParameterEntry]{addParameterEntry()}} /
+\code{\link[=addInitialConditionEntry]{addInitialConditionEntry()}}).}
+    }
+    \if{html}{\out{</div>}}
+  }
+}
+
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Project-removeOutputPath"></a>}}
+\if{latex}{\out{\hypertarget{method-Project-removeOutputPath}{}}}
+\subsection{\code{Project$removeOutputPath()}}{
+  Remove output paths. See \code{\link[=removeOutputPath]{removeOutputPath()}}.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{Project$removeOutputPath(id)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{id}}{Character id (name) of the definition to add, modify, or remove.}
+    }
+    \if{html}{\out{</div>}}
+  }
+}
+
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Project-setOutputPath"></a>}}
+\if{latex}{\out{\hypertarget{method-Project-setOutputPath}{}}}
+\subsection{\code{Project$setOutputPath()}}{
+  Modify an existing output path. See \code{\link[=setOutputPath]{setOutputPath()}}.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{Project$setOutputPath(id, path)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{id}}{Character id (name) of the definition to add, modify, or remove.}
+      \item{\code{path}}{Character path: an output-path string (\code{\link[=addOutputPath]{addOutputPath()}}) or a
+parameter/initial-condition path (\code{\link[=addParameterEntry]{addParameterEntry()}} /
+\code{\link[=addInitialConditionEntry]{addInitialConditionEntry()}}).}
+    }
+    \if{html}{\out{</div>}}
+  }
+}
+
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Project-addParameterSet"></a>}}
+\if{latex}{\out{\hypertarget{method-Project-addParameterSet}{}}}
+\subsection{\code{Project$addParameterSet()}}{
+  Add a parameter set. See \code{\link[=addParameterSet]{addParameterSet()}}.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{Project$addParameterSet(id)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{id}}{Character id (name) of the definition to add, modify, or remove.}
+    }
+    \if{html}{\out{</div>}}
+  }
+}
+
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Project-removeParameterSet"></a>}}
+\if{latex}{\out{\hypertarget{method-Project-removeParameterSet}{}}}
+\subsection{\code{Project$removeParameterSet()}}{
+  Remove parameter sets. See \code{\link[=removeParameterSet]{removeParameterSet()}}.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{Project$removeParameterSet(id)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{id}}{Character id (name) of the definition to add, modify, or remove.}
+    }
+    \if{html}{\out{</div>}}
+  }
+}
+
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Project-addParameterEntry"></a>}}
+\if{latex}{\out{\hypertarget{method-Project-addParameterEntry}{}}}
+\subsection{\code{Project$addParameterEntry()}}{
+  Add an entry to a parameter set. See \code{\link[=addParameterEntry]{addParameterEntry()}}.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{Project$addParameterEntry(id, containerPath, parameterName, value, units)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{id}}{Character id (name) of the definition to add, modify, or remove.}
+      \item{\code{containerPath, parameterName, value, units, unit}}{Parameter- and
+initial-condition entry fields. See \code{\link[=addParameterEntry]{addParameterEntry()}} /
+\code{\link[=addInitialConditionEntry]{addInitialConditionEntry()}}.}
+    }
+    \if{html}{\out{</div>}}
+  }
+}
+
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Project-removeParameterEntry"></a>}}
+\if{latex}{\out{\hypertarget{method-Project-removeParameterEntry}{}}}
+\subsection{\code{Project$removeParameterEntry()}}{
+  Remove an entry from a parameter set. See
+\code{\link[=removeParameterEntry]{removeParameterEntry()}}.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{Project$removeParameterEntry(id, containerPath, parameterName)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{id}}{Character id (name) of the definition to add, modify, or remove.}
+      \item{\code{containerPath, parameterName, value, units, unit}}{Parameter- and
+initial-condition entry fields. See \code{\link[=addParameterEntry]{addParameterEntry()}} /
+\code{\link[=addInitialConditionEntry]{addInitialConditionEntry()}}.}
+    }
+    \if{html}{\out{</div>}}
+  }
+}
+
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Project-addInitialConditions"></a>}}
+\if{latex}{\out{\hypertarget{method-Project-addInitialConditions}{}}}
+\subsection{\code{Project$addInitialConditions()}}{
+  Add an initial-conditions set. See \code{\link[=addInitialConditions]{addInitialConditions()}}.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{Project$addInitialConditions(id)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{id}}{Character id (name) of the definition to add, modify, or remove.}
+    }
+    \if{html}{\out{</div>}}
+  }
+}
+
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Project-removeInitialConditions"></a>}}
+\if{latex}{\out{\hypertarget{method-Project-removeInitialConditions}{}}}
+\subsection{\code{Project$removeInitialConditions()}}{
+  Remove initial-conditions sets. See
+\code{\link[=removeInitialConditions]{removeInitialConditions()}}.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{Project$removeInitialConditions(id)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{id}}{Character id (name) of the definition to add, modify, or remove.}
+    }
+    \if{html}{\out{</div>}}
+  }
+}
+
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Project-addInitialConditionEntry"></a>}}
+\if{latex}{\out{\hypertarget{method-Project-addInitialConditionEntry}{}}}
+\subsection{\code{Project$addInitialConditionEntry()}}{
+  Add an entry to an initial-conditions set. See
+\code{\link[=addInitialConditionEntry]{addInitialConditionEntry()}}.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{Project$addInitialConditionEntry(id, path, value, unit)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{id}}{Character id (name) of the definition to add, modify, or remove.}
+      \item{\code{path}}{Character path: an output-path string (\code{\link[=addOutputPath]{addOutputPath()}}) or a
+parameter/initial-condition path (\code{\link[=addParameterEntry]{addParameterEntry()}} /
+\code{\link[=addInitialConditionEntry]{addInitialConditionEntry()}}).}
+      \item{\code{containerPath, parameterName, value, units, unit}}{Parameter- and
+initial-condition entry fields. See \code{\link[=addParameterEntry]{addParameterEntry()}} /
+\code{\link[=addInitialConditionEntry]{addInitialConditionEntry()}}.}
+    }
+    \if{html}{\out{</div>}}
+  }
+}
+
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Project-removeInitialConditionEntry"></a>}}
+\if{latex}{\out{\hypertarget{method-Project-removeInitialConditionEntry}{}}}
+\subsection{\code{Project$removeInitialConditionEntry()}}{
+  Remove an entry from an initial-conditions set. See
+\code{\link[=removeInitialConditionEntry]{removeInitialConditionEntry()}}.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{Project$removeInitialConditionEntry(id, path)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{id}}{Character id (name) of the definition to add, modify, or remove.}
+      \item{\code{path}}{Character path: an output-path string (\code{\link[=addOutputPath]{addOutputPath()}}) or a
+parameter/initial-condition path (\code{\link[=addParameterEntry]{addParameterEntry()}} /
+\code{\link[=addInitialConditionEntry]{addInitialConditionEntry()}}).}
+    }
+    \if{html}{\out{</div>}}
+  }
+}
+
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Project-addPlot"></a>}}
+\if{latex}{\out{\hypertarget{method-Project-addPlot}{}}}
+\subsection{\code{Project$addPlot()}}{
+  Add a plot. See \code{\link[=addPlot]{addPlot()}}.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{Project$addPlot(...)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{...}}{Passed to the matching authoring free function (e.g. the
+partial-update fields of \code{\link[=setScenario]{setScenario()}} / \code{\link[=setIndividual]{setIndividual()}}, or the
+remaining arguments of \code{\link[=createScenariosFromPKML]{createScenariosFromPKML()}}).}
+    }
+    \if{html}{\out{</div>}}
+  }
+}
+
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Project-removePlot"></a>}}
+\if{latex}{\out{\hypertarget{method-Project-removePlot}{}}}
+\subsection{\code{Project$removePlot()}}{
+  Remove plots. See \code{\link[=removePlot]{removePlot()}}.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{Project$removePlot(id)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{id}}{Character id (name) of the definition to add, modify, or remove.}
+    }
+    \if{html}{\out{</div>}}
+  }
+}
+
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Project-addPlotGrid"></a>}}
+\if{latex}{\out{\hypertarget{method-Project-addPlotGrid}{}}}
+\subsection{\code{Project$addPlotGrid()}}{
+  Add a plot grid. See \code{\link[=addPlotGrid]{addPlotGrid()}}.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{Project$addPlotGrid(...)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{...}}{Passed to the matching authoring free function (e.g. the
+partial-update fields of \code{\link[=setScenario]{setScenario()}} / \code{\link[=setIndividual]{setIndividual()}}, or the
+remaining arguments of \code{\link[=createScenariosFromPKML]{createScenariosFromPKML()}}).}
+    }
+    \if{html}{\out{</div>}}
+  }
+}
+
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Project-removePlotGrid"></a>}}
+\if{latex}{\out{\hypertarget{method-Project-removePlotGrid}{}}}
+\subsection{\code{Project$removePlotGrid()}}{
+  Remove plot grids. See \code{\link[=removePlotGrid]{removePlotGrid()}}.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{Project$removePlotGrid(id)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{id}}{Character id (name) of the definition to add, modify, or remove.}
+    }
+    \if{html}{\out{</div>}}
+  }
+}
+
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Project-addDataCombined"></a>}}
+\if{latex}{\out{\hypertarget{method-Project-addDataCombined}{}}}
+\subsection{\code{Project$addDataCombined()}}{
+  Add a data-combined entry. See \code{\link[=addDataCombined]{addDataCombined()}}.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{Project$addDataCombined(id, simulated = list(), observed = list())}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{id}}{Character id (name) of the definition to add, modify, or remove.}
+      \item{\code{simulated, observed}}{Simulated / observed inputs to a \code{DataCombined}.
+See \code{\link[=addDataCombined]{addDataCombined()}}.}
+    }
+    \if{html}{\out{</div>}}
+  }
+}
+
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Project-removeDataCombined"></a>}}
+\if{latex}{\out{\hypertarget{method-Project-removeDataCombined}{}}}
+\subsection{\code{Project$removeDataCombined()}}{
+  Remove data-combined entries. See \code{\link[=removeDataCombined]{removeDataCombined()}}.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{Project$removeDataCombined(id)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{id}}{Character id (name) of the definition to add, modify, or remove.}
+    }
+    \if{html}{\out{</div>}}
+  }
+}
+
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Project-addObservedData"></a>}}
+\if{latex}{\out{\hypertarget{method-Project-addObservedData}{}}}
+\subsection{\code{Project$addObservedData()}}{
+  Add observed data. See \code{\link[=addObservedData]{addObservedData()}}.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{Project$addObservedData(entry)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{entry}}{An observed-data source: a \code{DataSet} or a configuration list.
+See \code{\link[=addObservedData]{addObservedData()}}.}
+    }
+    \if{html}{\out{</div>}}
+  }
+}
+
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Project-removeObservedData"></a>}}
+\if{latex}{\out{\hypertarget{method-Project-removeObservedData}{}}}
+\subsection{\code{Project$removeObservedData()}}{
+  Remove observed data. See \code{\link[=removeObservedData]{removeObservedData()}}.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{Project$removeObservedData(id)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{id}}{Character id (name) of the definition to add, modify, or remove.}
+    }
+    \if{html}{\out{</div>}}
+  }
+}
+
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Project-loadObservedData"></a>}}
+\if{latex}{\out{\hypertarget{method-Project-loadObservedData}{}}}
+\subsection{\code{Project$loadObservedData()}}{
+  Load the project's observed data. See \code{\link[=loadObservedData]{loadObservedData()}}.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{Project$loadObservedData()}
+    \if{html}{\out{</div>}}
+  }
+}
+
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Project-getObservedDataNames"></a>}}
+\if{latex}{\out{\hypertarget{method-Project-getObservedDataNames}{}}}
+\subsection{\code{Project$getObservedDataNames()}}{
+  Names of the project's observed data. See
+\code{\link[=getObservedDataNames]{getObservedDataNames()}}.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{Project$getObservedDataNames()}
+    \if{html}{\out{</div>}}
+  }
+}
+
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Project-addPITask"></a>}}
+\if{latex}{\out{\hypertarget{method-Project-addPITask}{}}}
+\subsection{\code{Project$addPITask()}}{
+  Add a parameter-identification task. See \code{\link[=addPITask]{addPITask()}}.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{Project$addPITask(
+  id,
+  scenarios,
+  parameters,
+  outputMappings,
+  configuration = list()
+)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{id}}{Character id (name) of the definition to add, modify, or remove.}
+      \item{\code{scenarios, parameters, outputMappings, configuration}}{Parameter-identification task components. See \code{\link[=addPITask]{addPITask()}}.}
+    }
+    \if{html}{\out{</div>}}
+  }
+}
+
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Project-removePITask"></a>}}
+\if{latex}{\out{\hypertarget{method-Project-removePITask}{}}}
+\subsection{\code{Project$removePITask()}}{
+  Remove parameter-identification tasks. See \code{\link[=removePITask]{removePITask()}}.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{Project$removePITask(id)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{id}}{Character id (name) of the definition to add, modify, or remove.}
+    }
+    \if{html}{\out{</div>}}
+  }
+}
+
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Project-addPIParameter"></a>}}
+\if{latex}{\out{\hypertarget{method-Project-addPIParameter}{}}}
+\subsection{\code{Project$addPIParameter()}}{
+  Add a parameter to a PI task. See \code{\link[=addPIParameter]{addPIParameter()}}.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{Project$addPIParameter(
+  task,
+  path,
+  scenarios,
+  minValue,
+  maxValue,
+  startValue,
+  units = NULL,
+  id = NULL
+)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{task}}{Character id of the parameter-identification task a sub-item
+belongs to. See \code{\link[=addPIParameter]{addPIParameter()}}.}
+      \item{\code{path}}{Character path: an output-path string (\code{\link[=addOutputPath]{addOutputPath()}}) or a
+parameter/initial-condition path (\code{\link[=addParameterEntry]{addParameterEntry()}} /
+\code{\link[=addInitialConditionEntry]{addInitialConditionEntry()}}).}
+      \item{\code{scenarios, parameters, outputMappings, configuration}}{Parameter-identification task components. See \code{\link[=addPITask]{addPITask()}}.}
+      \item{\code{minValue, maxValue, startValue}}{Numeric bounds and start value of a PI
+parameter. See \code{\link[=addPIParameter]{addPIParameter()}}.}
+      \item{\code{id}}{Character id (name) of the definition to add, modify, or remove.}
+      \item{\code{containerPath, parameterName, value, units, unit}}{Parameter- and
+initial-condition entry fields. See \code{\link[=addParameterEntry]{addParameterEntry()}} /
+\code{\link[=addInitialConditionEntry]{addInitialConditionEntry()}}.}
+    }
+    \if{html}{\out{</div>}}
+  }
+}
+
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Project-removePIParameter"></a>}}
+\if{latex}{\out{\hypertarget{method-Project-removePIParameter}{}}}
+\subsection{\code{Project$removePIParameter()}}{
+  Remove a parameter from a PI task. See \code{\link[=removePIParameter]{removePIParameter()}}.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{Project$removePIParameter(task, id)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{task}}{Character id of the parameter-identification task a sub-item
+belongs to. See \code{\link[=addPIParameter]{addPIParameter()}}.}
+      \item{\code{id}}{Character id (name) of the definition to add, modify, or remove.}
+    }
+    \if{html}{\out{</div>}}
+  }
+}
+
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Project-addPIOutputMapping"></a>}}
+\if{latex}{\out{\hypertarget{method-Project-addPIOutputMapping}{}}}
+\subsection{\code{Project$addPIOutputMapping()}}{
+  Add an output mapping to a PI task. See
+\code{\link[=addPIOutputMapping]{addPIOutputMapping()}}.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{Project$addPIOutputMapping(
+  task,
+  outputPath,
+  observedData,
+  scenarios,
+  scaling = NULL,
+  xOffset = 0,
+  yOffset = 0,
+  xFactor = 1,
+  yFactor = 1,
+  weight = NULL,
+  id = NULL
+)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{task}}{Character id of the parameter-identification task a sub-item
+belongs to. See \code{\link[=addPIParameter]{addPIParameter()}}.}
+      \item{\code{outputPath, observedData, scaling, xOffset, yOffset, xFactor, yFactor, weight}}{Fields of a PI output mapping. See \code{\link[=addPIOutputMapping]{addPIOutputMapping()}}.}
+      \item{\code{scenarios, parameters, outputMappings, configuration}}{Parameter-identification task components. See \code{\link[=addPITask]{addPITask()}}.}
+      \item{\code{id}}{Character id (name) of the definition to add, modify, or remove.}
+    }
+    \if{html}{\out{</div>}}
+  }
+}
+
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Project-removePIOutputMapping"></a>}}
+\if{latex}{\out{\hypertarget{method-Project-removePIOutputMapping}{}}}
+\subsection{\code{Project$removePIOutputMapping()}}{
+  Remove an output mapping from a PI task. See
+\code{\link[=removePIOutputMapping]{removePIOutputMapping()}}.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{Project$removePIOutputMapping(task, id)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{task}}{Character id of the parameter-identification task a sub-item
+belongs to. See \code{\link[=addPIParameter]{addPIParameter()}}.}
+      \item{\code{id}}{Character id (name) of the definition to add, modify, or remove.}
+    }
+    \if{html}{\out{</div>}}
+  }
+}
+
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Project-save"></a>}}
+\if{latex}{\out{\hypertarget{method-Project-save}{}}}
+\subsection{\code{Project$save()}}{
+  Save the project's in-memory edits to its on-disk tree. See
+\code{\link[=saveProject]{saveProject()}}.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{Project$save()}
+    \if{html}{\out{</div>}}
+  }
+}
+
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Project-reload"></a>}}
+\if{latex}{\out{\hypertarget{method-Project-reload}{}}}
+\subsection{\code{Project$reload()}}{
+  Discard in-memory edits and re-read from disk. See
+\code{\link[=reloadProject]{reloadProject()}}.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{Project$reload()}
+    \if{html}{\out{</div>}}
+  }
+}
+
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Project-validate"></a>}}
+\if{latex}{\out{\hypertarget{method-Project-validate}{}}}
+\subsection{\code{Project$validate()}}{
+  Validate the project. See \code{\link[=validateProject]{validateProject()}}.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{Project$validate()}
+    \if{html}{\out{</div>}}
+  }
+}
+
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Project-ensureValid"></a>}}
+\if{latex}{\out{\hypertarget{method-Project-ensureValid}{}}}
+\subsection{\code{Project$ensureValid()}}{
+  Package-internal pre-op validation gate. Runs targeted
+validation for the \code{sections} an operation depends on and aborts with a
+formatted multi-error message on any critical errors, short-circuiting
+when the project is already validated. Called by the run/plot/parameter-
+identification entry points; not intended for end users.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{Project$ensureValid(sections, opName)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{sections}}{Non-empty character vector of section names the calling
+operation requires.}
+      \item{\code{opName}}{Short label used in the abort message (e.g.
+\code{"runScenarios"}).}
+    }
+    \if{html}{\out{</div>}}
+  }
+}
+
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Project-rawFilePaths"></a>}}
+\if{latex}{\out{\hypertarget{method-Project-rawFilePaths}{}}}
+\subsection{\code{Project$rawFilePaths()}}{
+  Package-internal reader for the raw \code{filePaths} block: a
+named list of \code{list(value, description)} records for the four live
+working folders. Unlike \code{project$paths$...} (which returns resolved
+values), this keeps the per-folder descriptions the Excel bridge
+round-trips. Consumed by the JSON writer and the Excel exporter; not
+intended for end users.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{Project$rawFilePaths()}
+    \if{html}{\out{</div>}}
+  }
+}
+
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Project-rawExcel"></a>}}
+\if{latex}{\out{\hypertarget{method-Project-rawExcel}{}}}
+\subsection{\code{Project$rawExcel()}}{
+  Package-internal reader for the raw \code{excel} block: a named
+list of \code{list(value, description)} records for the Excel-bridge
+sheet-name fields. Unlike \code{project$excel$...} (which returns resolved
+values), this keeps the descriptions. Empty when the project has no
+Excel side-car. Consumed by the JSON writer and the Excel exporter; not
+intended for end users.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{Project$rawExcel()}
+    \if{html}{\out{</div>}}
+  }
+}
+
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Project-isModified"></a>}}
+\if{latex}{\out{\hypertarget{method-Project-isModified}{}}}
+\subsection{\code{Project$isModified()}}{
+  Package-internal reader for the in-memory dirty bit: \code{TRUE}
+when the project carries edits not yet reconciled to the on-disk
+\verb{definitions/} tree. The same signal \code{projectStatus()} reports on its
+memory-vs-tree axis. Not intended for end users; users read the sync
+state through \code{project$status} or \code{\link[=projectStatus]{projectStatus()}}.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{Project$isModified()}
     \if{html}{\out{</div>}}
   }
 }
@@ -422,7 +1230,10 @@ import/export bridge.
 \if{html}{\out{<a id="method-Project-print"></a>}}
 \if{latex}{\out{\hypertarget{method-Project-print}{}}}
 \subsection{\code{Project$print()}}{
-  Print a summary of the Project.
+  Print a summary of the Project. Each section is rendered by
+the same per-group block method the field groups (\code{project$info},
+\code{project$paths}, \code{project$definitions}, \code{project$excel}) print, so the
+project summary and a group's own print never drift.
   \subsection{Usage}{
     \if{html}{\out{<div class="r">}}
     \preformatted{Project$print(...)}

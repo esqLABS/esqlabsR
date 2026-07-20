@@ -23,7 +23,7 @@ addParameterEntry(project, id, containerPath, parameterName, value, units)
 The \code{project} object, invisibly.
 }
 \description{
-Adds parameter entries to the named set in \code{project$parameterSets}.
+Adds parameter entries to the named set in \code{parameterSets} definitions.
 \code{containerPath}, \code{parameterName}, \code{value}, and \code{units} accept parallel
 vectors of equal length N to add all N entries in a single call (and a
 single write to disk); a scalar call (length-1 vectors) adds one entry.

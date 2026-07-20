@@ -16,7 +16,7 @@ canonicalized the same way \code{\link[=addDataCombined]{addDataCombined()}} can
 The \code{project} object, invisibly.
 }
 \description{
-Drop the named entries from \code{project$dataCombined}. Warns (and skips) any
+Drop the named entries from \code{dataCombined} definitions. Warns (and skips) any
 \code{id} not present, and warns about any plot entries that still reference a
 removed id. All removals are written through in one pass.
 }

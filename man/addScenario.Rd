@@ -29,29 +29,29 @@ addScenario(
 \item{id}{Character vector of ids (names) for the new scenarios (the number
 of scenarios to add). Each is canonicalized to a safe, lowercase,
 single-path-segment id (a warning names the result if it changed); each
-canonical id must not already exist in \code{project$scenarios}.}
+canonical id must not already exist in \code{scenarios} definitions.}
 
 \item{modelFile}{Character. Name of the \code{.pkml} model file (relative
 to model folder).}
 
 \item{individual}{Character or \code{NULL}. Id referencing
-\code{project$individuals}.}
+\code{individuals} definitions.}
 
 \item{population}{Character or \code{NULL}. Id referencing
-\code{project$populations}.}
+\code{populations} definitions.}
 
 \item{application}{Character or \code{NULL}. Id of the application protocol
-referencing \code{project$applications}.}
+referencing \code{applications} definitions.}
 
 \item{parameterSets}{Character vector or \code{NULL}. Parameter-set ids
-referencing \code{project$parameterSets}. Applied whole to every scenario.}
+referencing \code{parameterSets} definitions. Applied whole to every scenario.}
 
 \item{initialConditions}{Character vector or \code{NULL}. Initial-condition set
-ids referencing \code{project$initialConditions}. Applied whole to every
+ids referencing \code{initialConditions} definitions. Applied whole to every
 scenario.}
 
 \item{outputPaths}{Character vector or \code{NULL}. Output-path ids referencing
-\code{project$outputPaths}. Applied whole to every scenario.}
+\code{outputPaths} definitions. Applied whole to every scenario.}
 
 \item{simulationTime}{Character or \code{NULL}. Format
 \code{"start, end, resolution"} or
@@ -79,7 +79,7 @@ Default \code{FALSE}.}
 The \code{project} object, invisibly.
 }
 \description{
-Creates new \code{Scenario} records and adds them to \code{project$scenarios} after
+Creates new \code{Scenario} records and adds them to \code{scenarios} definitions after
 validating all references. The call vectorizes over a vector of ids (see
 the recycling rule under Details). Scalar-per-definition fields (\code{modelFile},
 \code{individual}, \code{population}, \code{application}, \code{simulationTime},

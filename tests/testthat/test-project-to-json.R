@@ -128,18 +128,33 @@ test_that("round-trip is structurally identical for the bundled example", {
   reloaded <- loadProject(out)
 
   # jsonPath / projectDirPath legitimately differ; everything else must match.
-  expect_identical(reloaded$schemaVersion, project$schemaVersion)
-  expect_identical(reloaded$esqlabsRVersion, project$esqlabsRVersion)
-  expect_identical(reloaded$filePaths, project$filePaths)
-  expect_identical(reloaded$outputPaths, project$outputPaths)
+  expect_identical(reloaded$info$schemaVersion, project$info$schemaVersion)
+  expect_identical(reloaded$info$esqlabsRVersion, project$info$esqlabsRVersion)
+  expect_identical(reloaded$rawFilePaths(), project$rawFilePaths())
   expect_identical(
-    reloaded$parameterSets,
-    project$parameterSets
+    reloaded$definitions$outputPaths,
+    project$definitions$outputPaths
   )
-  expect_identical(reloaded$individuals, project$individuals)
-  expect_identical(reloaded$populations, project$populations)
-  expect_identical(reloaded$applications, project$applications)
-  expect_identical(reloaded$observedData, project$observedData)
+  expect_identical(
+    reloaded$definitions$parameterSets,
+    project$definitions$parameterSets
+  )
+  expect_identical(
+    reloaded$definitions$individuals,
+    project$definitions$individuals
+  )
+  expect_identical(
+    reloaded$definitions$populations,
+    project$definitions$populations
+  )
+  expect_identical(
+    reloaded$definitions$applications,
+    project$definitions$applications
+  )
+  expect_identical(
+    reloaded$definitions$observedData,
+    project$definitions$observedData
+  )
 
   # Scenarios are R6 objects; plots has a non-trivial in-memory shape
   # (named list + data.frames with NA padding) where unset fields drop
@@ -250,8 +265,8 @@ test_that("an empty Project saves a file that loadProject can reload", {
 
   # Reload must succeed (the schemaVersion guard would reject a null).
   reloaded <- loadProject(out)
-  expect_identical(reloaded$schemaVersion, "2.0")
-  expect_length(reloaded$scenarios, 0L)
+  expect_identical(reloaded$info$schemaVersion, "2.0")
+  expect_length(reloaded$definitions$scenarios, 0L)
 })
 
 test_that("outputPaths supplied as a named character vector serialize as a JSON object", {
@@ -321,12 +336,22 @@ test_that("empty map sections survive a round-trip as empty named lists", {
   # Section accessors wrap the stored list in a printable DefinitionList; unwrap
   # to assert the underlying named-empty shape.
   empty_named <- structure(list(), names = character(0L))
-  expect_identical(reloaded$filePaths, empty_named)
-  expect_identical(.unwrapDefinitionList(reloaded$outputPaths), empty_named)
-  expect_identical(.unwrapDefinitionList(reloaded$applications), empty_named)
-  expect_identical(.unwrapDefinitionList(reloaded$parameterSets), empty_named)
+  # A project with no `filePaths` block stores an unnamed empty list.
+  expect_identical(reloaded$rawFilePaths(), list())
   expect_identical(
-    .unwrapDefinitionList(reloaded$initialConditions),
+    .unwrapDefinitionList(reloaded$definitions$outputPaths),
+    empty_named
+  )
+  expect_identical(
+    .unwrapDefinitionList(reloaded$definitions$applications),
+    empty_named
+  )
+  expect_identical(
+    .unwrapDefinitionList(reloaded$definitions$parameterSets),
+    empty_named
+  )
+  expect_identical(
+    .unwrapDefinitionList(reloaded$definitions$initialConditions),
     empty_named
   )
 
@@ -335,12 +360,18 @@ test_that("empty map sections survive a round-trip as empty named lists", {
   out2 <- withr::local_tempfile(fileext = ".json")
   esqlabsR:::.saveProjectJson(reloaded, out2)
   reloaded2 <- loadProject(out2)
-  expect_identical(reloaded2$filePaths, reloaded$filePaths)
-  expect_identical(reloaded2$outputPaths, reloaded$outputPaths)
-  expect_identical(reloaded2$applications, reloaded$applications)
+  expect_identical(reloaded2$rawFilePaths(), reloaded$rawFilePaths())
   expect_identical(
-    reloaded2$parameterSets,
-    reloaded$parameterSets
+    reloaded2$definitions$outputPaths,
+    reloaded$definitions$outputPaths
+  )
+  expect_identical(
+    reloaded2$definitions$applications,
+    reloaded$definitions$applications
+  )
+  expect_identical(
+    reloaded2$definitions$parameterSets,
+    reloaded$definitions$parameterSets
   )
 })
 
@@ -363,15 +394,15 @@ test_that("a populated initialConditions section round-trips through a snapshot"
     auto_unbox = TRUE
   )
   project <- loadProject(src)
-  expect_named(project$initialConditions, "testinitialset")
-  expect_length(project$initialConditions$testinitialset, 2L)
+  expect_named(project$definitions$initialConditions, "testinitialset")
+  expect_length(project$definitions$initialConditions$testinitialset, 2L)
 
   out <- withr::local_tempfile(fileext = ".json")
   esqlabsR:::.saveProjectJson(project, out)
   reloaded <- loadProject(out)
   expect_identical(
-    reloaded$initialConditions,
-    project$initialConditions
+    reloaded$definitions$initialConditions,
+    project$definitions$initialConditions
   )
 })
 
@@ -527,9 +558,9 @@ test_that(".scenariosToJson errors when simulateSteadyState is TRUE without a un
 
 test_that("round-trip preserves empty modelParameterSets as a JSON array", {
   project <- exampleProject()
-  scenarios <- project$.getSection("scenarios")
+  scenarios <- .getSection(project, "scenarios")
   scenarios[["aciclovir_iv"]]$modelParameterSets <- character(0)
-  project$.setSection("scenarios", scenarios)
+  .setSection(project, "scenarios", scenarios)
 
   out <- withr::local_tempfile(fileext = ".json")
   esqlabsR:::.saveProjectJson(project, out)
@@ -544,9 +575,9 @@ test_that("round-trip preserves empty modelParameterSets as a JSON array", {
 
 test_that("round-trip preserves empty outputPaths as a JSON array", {
   project <- exampleProject()
-  scenarios <- project$.getSection("scenarios")
+  scenarios <- .getSection(project, "scenarios")
   scenarios[["aciclovir_iv"]]$outputPaths <- NULL
-  project$.setSection("scenarios", scenarios)
+  .setSection(project, "scenarios", scenarios)
 
   out <- withr::local_tempfile(fileext = ".json")
   esqlabsR:::.saveProjectJson(project, out)

@@ -19,7 +19,7 @@ createDataCombinedFromExcel(...)
 \item{project}{A \code{Project} (see \code{\link[=loadProject]{loadProject()}}).}
 
 \item{dataCombined}{Names of the DataCombined entries to build. If
-any name is not declared in \code{project$dataCombined}, an error is
+any name is not declared in \code{dataCombined} definitions, an error is
 thrown.}
 
 \item{plotGrids}{Names of plot grids whose DataCombined dependencies

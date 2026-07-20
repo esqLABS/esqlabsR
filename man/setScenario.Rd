@@ -28,29 +28,29 @@ setScenario(
 
 \item{id}{Character vector. Ids of the scenarios to modify. Each is
 canonicalized the same way \code{\link[=addScenario]{addScenario()}} canonicalizes it, and must
-already exist in \code{project$scenarios}.}
+already exist in \code{scenarios} definitions.}
 
 \item{modelFile}{Character. Name of the \code{.pkml} model file (relative
 to model folder).}
 
 \item{individual}{Character or \code{NULL}. Id referencing
-\code{project$individuals}.}
+\code{individuals} definitions.}
 
 \item{population}{Character or \code{NULL}. Id referencing
-\code{project$populations}.}
+\code{populations} definitions.}
 
 \item{application}{Character or \code{NULL}. Id of the application protocol
-referencing \code{project$applications}.}
+referencing \code{applications} definitions.}
 
 \item{parameterSets}{Character vector or \code{NULL}. Parameter-set ids
-referencing \code{project$parameterSets}. Applied whole to every scenario.}
+referencing \code{parameterSets} definitions. Applied whole to every scenario.}
 
 \item{initialConditions}{Character vector or \code{NULL}. Initial-condition set
-ids referencing \code{project$initialConditions}. Applied whole to every
+ids referencing \code{initialConditions} definitions. Applied whole to every
 scenario.}
 
 \item{outputPaths}{Character vector or \code{NULL}. Output-path ids referencing
-\code{project$outputPaths}. Applied whole to every scenario.}
+\code{outputPaths} definitions. Applied whole to every scenario.}
 
 \item{simulationTime}{Character or \code{NULL}. Format
 \code{"start, end, resolution"} or
@@ -88,9 +88,9 @@ The \code{project} object, invisibly.
 Changes one or more fields of the scenario identified by
 \code{id} and persists the change the same way \code{\link[=addScenario]{addScenario()}}
 does (write-through to the scenario definition). The section accessor
-\code{project$scenarios} is read-only, so this is the way to revise an
-existing scenario: read it if you need the current values
-(\code{sc <- project$scenarios[[name]]}), then pass the changes here
+\code{project$definitions$scenarios} is read-only, so this is the way to revise
+an existing scenario: read it if you need the current values
+(\code{sc <- project$definitions$scenarios[[name]]}), then pass the changes here
 (\code{setScenario(project, name, ...)}).
 
 Only the arguments you pass are changed; every other field keeps its

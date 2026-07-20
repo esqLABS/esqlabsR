@@ -59,14 +59,14 @@ test_that("snapshotProject uses a timestamped default name from the project", {
   # pattern, not the exact timestamp.
   expect_match(
     fs::path_file(out),
-    paste0("^", project$name, "-\\d{4}-\\d{2}-\\d{2}-\\d{6}\\.esqlabsR$")
+    paste0("^", project$info$name, "-\\d{4}-\\d{2}-\\d{2}-\\d{6}\\.esqlabsR$")
   )
   expect_true(file.exists(out))
 })
 
 test_that("snapshotProject default name falls back to 'project' when nameless", {
   project <- Project$new()
-  project$schemaVersion <- "2.0"
+  .setInfoField(project, "schemaVersion", "2.0")
   dir <- withr::local_tempdir()
   out <- snapshotProject(project, dir = dir)
 
@@ -120,13 +120,13 @@ test_that("snapshotProject rejects a name that escapes dir", {
 })
 
 test_that("snapshotProject rejects a default name that escapes dir", {
-  # The default stem is derived from `project$name`; a name carrying a
+  # The default stem is derived from `project$info$name`; a name carrying a
   # separator must abort on the default path too, rather than silently escape
   # `dir`. The default stem embeds a volatile timestamp, so assert the stable
   # message rather than snapshotting the timestamped stem.
   project <- Project$new()
-  project$schemaVersion <- "2.0"
-  project$name <- "sub/evil"
+  .setInfoField(project, "schemaVersion", "2.0")
+  project$info$name <- "sub/evil"
   dir <- withr::local_tempdir()
 
   expect_error(
@@ -142,7 +142,7 @@ test_that("the .esqlabsR snapshot content is the inlined-JSON snapshot", {
 
   # Content is still JSON, with every section inlined and no tree alongside.
   raw <- jsonlite::fromJSON(out, simplifyVector = FALSE)
-  expect_length(raw$scenarios, length(project$scenarios))
+  expect_length(raw$scenarios, length(project$definitions$scenarios))
   expect_false(dir.exists(file.path(dir, "definitions")))
 })
 
@@ -175,12 +175,12 @@ test_that("restoreProject writes a tree and returns the Project bound to dir", {
   expect_true(dir.exists(file.path(dir, "definitions", "scenarios")))
   # The returned project is bound to `dir`, dirty bit clear.
   expect_identical(
-    project$projectDirPath,
+    project$info$projectDirPath,
     dirname(fs::path_abs(
       file.path(dir, "Project.json")
     ))
   )
-  expect_false(project$.isModified())
+  expect_false(.isModified(project))
 })
 
 test_that("restoreProject's tree reloads via loadProject identically", {
@@ -192,23 +192,23 @@ test_that("restoreProject's tree reloads via loadProject identically", {
   reloaded <- loadProject(file.path(dir, "Project.json"))
 
   expect_named(
-    reloaded$scenarios,
-    names(project$scenarios),
+    reloaded$definitions$scenarios,
+    names(project$definitions$scenarios),
     ignore.order = TRUE
   )
   expect_named(
-    reloaded$individuals,
-    names(project$individuals),
+    reloaded$definitions$individuals,
+    names(project$definitions$individuals),
     ignore.order = TRUE
   )
   expect_named(
-    reloaded$parameterSets,
-    names(project$parameterSets),
+    reloaded$definitions$parameterSets,
+    names(project$definitions$parameterSets),
     ignore.order = TRUE
   )
   expect_named(
-    reloaded$dataCombined,
-    names(project$dataCombined),
+    reloaded$definitions$dataCombined,
+    names(project$definitions$dataCombined),
     ignore.order = TRUE
   )
 })
@@ -221,7 +221,7 @@ test_that("a restored project saves edits to dir like any tree", {
   )
   dir <- withr::local_tempdir()
   project <- restoreProject(out, dir)
-  before <- names(project$scenarios)
+  before <- names(project$definitions$scenarios)
   scenarioDir <- file.path(dir, "definitions", "scenarios")
 
   addScenario(project, "freshone", modelFile = "Aciclovir.pkml")
@@ -231,7 +231,7 @@ test_that("a restored project saves edits to dir like any tree", {
   expect_true(file.exists(file.path(scenarioDir, "freshone.json")))
   reloaded <- loadProject(file.path(dir, "Project.json"))
   expect_named(
-    reloaded$scenarios,
+    reloaded$definitions$scenarios,
     c(before, "freshone"),
     ignore.order = TRUE
   )
@@ -251,8 +251,8 @@ test_that("restoreProject reads a .esqlabsR snapshot", {
 
   project <- restoreProject(out, withr::local_tempdir())
   expect_named(
-    project$scenarios,
-    names(testProject()$scenarios),
+    project$definitions$scenarios,
+    names(testProject()$definitions$scenarios),
     ignore.order = TRUE
   )
 })
@@ -270,8 +270,8 @@ test_that("restoreProject still reads a plain inlined Project.json (back-compat)
   project <- restoreProject(legacy, dir)
   expect_true(dir.exists(file.path(dir, "definitions", "scenarios")))
   expect_named(
-    project$scenarios,
-    names(source$scenarios),
+    project$definitions$scenarios,
+    names(source$definitions$scenarios),
     ignore.order = TRUE
   )
 })
@@ -288,7 +288,7 @@ test_that("restoreProject creates dir when absent", {
   project <- restoreProject(out, dir)
   expect_true(dir.exists(file.path(dir, "definitions", "scenarios")))
   expect_identical(
-    project$projectDirPath,
+    project$info$projectDirPath,
     dirname(fs::path_abs(
       file.path(dir, "Project.json")
     ))
@@ -303,7 +303,7 @@ test_that("restoreProject refuses a non-empty dir without overwrite", {
   )
   # `dir` already contains a tree project, so materializing into it would
   # clobber the existing work; refuse rather than silently overwrite.
-  dir <- testProject()$projectDirPath
+  dir <- testProject()$info$projectDirPath
 
   expect_error(restoreProject(out, dir), "is not empty")
 })
@@ -326,8 +326,8 @@ test_that("restoreProject refuses a dir holding unrelated files without overwrit
   project <- restoreProject(out, dir, overwrite = TRUE)
   expect_true(file.exists(file.path(dir, "Project.json")))
   expect_named(
-    project$scenarios,
-    names(testProject()$scenarios),
+    project$definitions$scenarios,
+    names(testProject()$definitions$scenarios),
     ignore.order = TRUE
   )
 })
@@ -346,8 +346,8 @@ test_that("restoreProject with overwrite = TRUE rolls back in place and warns", 
     transform = .redactTmpDir
   )
   expect_named(
-    rolledBack$scenarios,
-    names(source$scenarios),
+    rolledBack$definitions$scenarios,
+    names(source$definitions$scenarios),
     ignore.order = TRUE
   )
 })
@@ -376,7 +376,7 @@ test_that("snapshot byte-identity fixed point holds for the plots trio", {
   # populates the data-combined / plots / plot-grids tree, so guard all three
   # kinds are on disk then assert a byte-stable snapshot round-trip over them.
   project <- exampleProject()
-  treeDir <- file.path(project$projectDirPath, "definitions")
+  treeDir <- file.path(project$info$projectDirPath, "definitions")
   for (kind in c("data-combined", "plots", "plot-grids")) {
     expect_gt(length(list.files(file.path(treeDir, kind))), 0L)
   }
@@ -398,15 +398,15 @@ test_that("snapshot preserves metadata and the filePaths/excel split", {
   out <- snapshotProject(project, dir = withr::local_tempdir(), name = "study")
   restored <- restoreProject(out, withr::local_tempdir())
 
-  expect_identical(restored$name, "Example")
-  expect_identical(restored$description, "Aciclovir IV PK example project")
-  expect_identical(restored$definitionsFolder, "definitions")
+  expect_identical(restored$info$name, "Example")
+  expect_identical(restored$info$description, "Aciclovir IV PK example project")
+  expect_identical(restored$paths$definitionsFolder, "definitions")
   expect_named(
-    restored$filePaths,
+    restored$rawFilePaths(),
     c("modelFolder", "populationsFolder", "dataFolder", "outputFolder"),
     ignore.order = TRUE
   )
-  expect_length(restored$excel, 7L)
+  expect_length(restored$rawExcel(), 7L)
 })
 
 test_that("restoreProject errors on a non-existent snapshot file", {
@@ -434,43 +434,43 @@ test_that("restoreProject migrates a legacy inlined Project.json end to end", {
 
   # Section for section, the migrated tree project matches the original.
   expect_named(
-    migrated$scenarios,
-    names(source$scenarios),
+    migrated$definitions$scenarios,
+    names(source$definitions$scenarios),
     ignore.order = TRUE
   )
   expect_named(
-    migrated$individuals,
-    names(source$individuals),
+    migrated$definitions$individuals,
+    names(source$definitions$individuals),
     ignore.order = TRUE
   )
   expect_named(
-    migrated$populations,
-    names(source$populations),
+    migrated$definitions$populations,
+    names(source$definitions$populations),
     ignore.order = TRUE
   )
   expect_named(
-    migrated$applications,
-    names(source$applications),
+    migrated$definitions$applications,
+    names(source$definitions$applications),
     ignore.order = TRUE
   )
   expect_named(
-    migrated$parameterSets,
-    names(source$parameterSets),
+    migrated$definitions$parameterSets,
+    names(source$definitions$parameterSets),
     ignore.order = TRUE
   )
   expect_named(
-    migrated$outputPaths,
-    names(source$outputPaths),
+    migrated$definitions$outputPaths,
+    names(source$definitions$outputPaths),
     ignore.order = TRUE
   )
   expect_named(
-    migrated$parameterIdentification,
-    names(source$parameterIdentification),
+    migrated$definitions$parameterIdentification,
+    names(source$definitions$parameterIdentification),
     ignore.order = TRUE
   )
   expect_named(
-    migrated$dataCombined,
-    names(source$dataCombined),
+    migrated$definitions$dataCombined,
+    names(source$definitions$dataCombined),
     ignore.order = TRUE
   )
 })
@@ -503,14 +503,14 @@ test_that("restoreProject migrates a non-canonical legacy Project.json losslessl
 
   # The scenario and output-path definitions are filed under their canonical
   # lowercase ids.
-  expect_true("aciclovir_iv" %in% names(migrated$scenarios))
-  expect_true("aciclovir_pvb" %in% names(migrated$outputPaths))
+  expect_true("aciclovir_iv" %in% names(migrated$definitions$scenarios))
+  expect_true("aciclovir_pvb" %in% names(migrated$definitions$outputPaths))
 
   # The references that pointed at them are canonicalized too, so they resolve.
-  piTask <- migrated$parameterIdentification[[1]]
+  piTask <- migrated$definitions$parameterIdentification[[1]]
   expect_identical(as.character(piTask$scenarios), "aciclovir_iv")
   expect_identical(piTask$outputMappings[[1]]$outputPathId, "aciclovir_pvb")
 
-  simScenario <- migrated$dataCombined[[1]]$simulated[[1]]$scenario
+  simScenario <- migrated$definitions$dataCombined[[1]]$simulated[[1]]$scenario
   expect_identical(simScenario, "aciclovir_iv")
 })

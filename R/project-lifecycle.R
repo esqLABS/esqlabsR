@@ -25,7 +25,7 @@
 #'   `setIndividual()`, `removeParameterSet()`, `addOutputPath()`, and the
 #'   other add/set/remove functions — live only in your R session until you
 #'   save them; the files on disk stay as they are. Reading a section
-#'   directly (for example `project$scenarios`) never changes the project: a
+#'   directly (for example `scenarios` definitions) never changes the project: a
 #'   definition changes only through the add/set/remove functions.
 #'
 #'   Write your changes to the project files with [saveProject()]. Discard
@@ -95,25 +95,37 @@ loadProject <- function(path = "Project.json") {
 #' }
 saveProject <- function(project) {
   validateIsOfType(project, "Project")
+  project$save()
+}
 
-  if (is.null(project$projectFilePath)) {
+# Implementation behind `project$save()` / `saveProject()`. Reads and clears the
+# dirty bit through its own `private`; `self` is the `Project` the on-disk
+# reconciler needs.
+#
+# @keywords internal
+# @noRd
+.saveProject_impl <- function(self, private) {
+  # Attribute any abort to the public authoring function the user called
+  # (the free-function forwarder), not this internal `_impl`.
+  rlang::local_error_call(rlang::caller_env(2))
+  if (is.null(self$info$projectFilePath)) {
     cli::cli_abort(messages$saveProjectNoTree())
   }
 
   # The dirty bit is the memory-vs-tree divergence signal. A clean save is a
   # reassuring, idempotent no-op, never an error.
-  if (!project$.isModified()) {
+  if (!private$.isModified()) {
     cli::cli_inform(messages$projectAlreadyUpToDate())
-    return(invisible(project))
+    return(invisible(self))
   }
 
   # Drive the full-tree reconciler: `.writeProjectTree()` writes every kind's
   # write-if-different, orphan-reconciled tree and the `containerOnly = TRUE`
   # `Project.json` in one pass, which is exactly `saveProject()`'s contract.
-  .writeProjectTree(project, project$projectDirPath)
+  .writeProjectTree(self, self$info$projectDirPath)
 
-  project$.clearModified()
-  invisible(project)
+  private$.clearModified()
+  invisible(self)
 }
 
 #' Discard a project's unsaved changes and re-read it from disk
@@ -144,8 +156,18 @@ saveProject <- function(project) {
 #' }
 reloadProject <- function(project) {
   validateIsOfType(project, "Project")
+  project$reload()
+}
 
-  if (is.null(project$projectFilePath)) {
+# Implementation behind `project$reload()` / `reloadProject()`.
+#
+# @keywords internal
+# @noRd
+.reloadProject_impl <- function(self, private) {
+  # Attribute any abort to the public authoring function the user called
+  # (the free-function forwarder), not this internal `_impl`.
+  rlang::local_error_call(rlang::caller_env(2))
+  if (is.null(self$info$projectFilePath)) {
     cli::cli_abort(messages$reloadProjectNoTree())
   }
 
@@ -156,9 +178,9 @@ reloadProject <- function(project) {
   # message only: `.reload()` emits no success announcement, so a clean reload
   # stays quiet; the cross-reference warning re-fires only when there are
   # genuine cross-ref errors, which is correct regardless of the dirty bit.
-  project$.reload()
-  .warnOnCrossReferenceErrors(project)
-  invisible(project)
+  private$.reload()
+  .warnOnCrossReferenceErrors(self)
+  invisible(self)
 }
 
 #' Emit a `cli_warn` listing critical cross-reference errors, if any

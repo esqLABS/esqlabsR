@@ -63,7 +63,7 @@ snapshotProject <- function(
   # Resolve the filename stem. A NULL `name` gets the colon-free timestamped
   # default; a nameless project falls back to the fixed "project" stem.
   if (is.null(name)) {
-    projectName <- project$name %||% "project"
+    projectName <- project$info$name %||% "project"
     stem <- paste0(projectName, "-", format(Sys.time(), "%Y-%m-%d-%H%M%S"))
   } else {
     stem <- name
@@ -72,7 +72,7 @@ snapshotProject <- function(
   # The stem becomes a filename via `file.path(dir, ...)`, so a stem carrying a
   # path separator or a `..` segment could escape `dir` and write over (or
   # delete) an unrelated `.esqlabsR`. Reject it: both an explicit `name` and a
-  # `project$name`-derived default are checked, so a project whose name contains
+  # `project$info$name`-derived default are checked, so a project whose name contains
   # a separator aborts predictably rather than silently escaping.
   .validateSnapshotStem(stem)
 
@@ -212,7 +212,7 @@ restoreProject <- function(snapshot, dir = ".", overwrite = FALSE) {
 # `dir` via `file.path()`, so a stem that is not a single filename segment (it
 # holds a `/` or `\` separator, or is `"."` / `".."`) could write outside `dir`
 # and clobber an unrelated `.esqlabsR`. Both an explicit `name` and the
-# `project$name`-derived default are validated, so a project whose name contains
+# `project$info$name`-derived default are validated, so a project whose name contains
 # a separator aborts predictably rather than silently escaping. A stem must be a
 # single non-empty, non-NA character scalar.
 #

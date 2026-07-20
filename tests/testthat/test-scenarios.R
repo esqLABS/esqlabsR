@@ -82,7 +82,7 @@ test_that(".parseScenarios returns list() for NULL input", {
 
 test_that(".parseScenarios copies basic fields for an individual scenario", {
   project <- exampleProject()
-  sc <- project$scenarios[["aciclovir_iv"]]
+  sc <- project$definitions$scenarios[["aciclovir_iv"]]
 
   expect_s3_class(sc, "Scenario")
   expect_identical(sc$scenarioName, "aciclovir_iv")
@@ -133,7 +133,7 @@ test_that("a scenario's initialConditions round-trips through serialize/parse", 
 
 test_that(".parseScenarios sets simulationType=Population when populationId present", {
   project <- exampleProject()
-  sc <- project$scenarios[["aciclovir_iv_population"]]
+  sc <- project$definitions$scenarios[["aciclovir_iv_population"]]
 
   expect_identical(sc$populationId, "european_adults")
   expect_identical(sc$simulationType, "Population")
@@ -156,7 +156,7 @@ test_that(".parseScenarios defaults applicationProtocol to NA when JSON has null
 
 test_that(".parseScenarios converts steadyStateTime to base units (minutes)", {
   project <- exampleProject()
-  sc <- project$scenarios[["aciclovir_iv_steadystate"]]
+  sc <- project$definitions$scenarios[["aciclovir_iv_steadystate"]]
 
   expect_true(sc$simulateSteadyState)
   # 1 hour -> 60 minutes
@@ -186,7 +186,7 @@ test_that(".parseScenarios coerces a whole-number steadyStateTime to double", {
 
 test_that(".parseScenarios leaves simulateSteadyState=FALSE when JSON omits/sets false", {
   project <- exampleProject()
-  sc <- project$scenarios[["aciclovir_iv"]]
+  sc <- project$definitions$scenarios[["aciclovir_iv"]]
 
   expect_false(sc$simulateSteadyState)
   expect_null(sc$steadyStateTimeUnit)
@@ -212,7 +212,7 @@ test_that(".parseScenarios errors when steadyStateTime set without unit", {
 
 test_that(".parseScenarios parses simulationTime to a list of length-3 numerics", {
   project <- exampleProject()
-  sc <- project$scenarios[["aciclovir_iv"]]
+  sc <- project$definitions$scenarios[["aciclovir_iv"]]
 
   expect_type(sc$simulationTime, "list")
   expect_length(sc$simulationTime, 1L)
@@ -222,7 +222,7 @@ test_that(".parseScenarios parses simulationTime to a list of length-3 numerics"
 
 test_that(".parseScenarios resolves outputPaths ids to literal outputPaths in declared order", {
   project <- exampleProject()
-  sc <- project$scenarios[["aciclovir_iv_steadystate"]]
+  sc <- project$definitions$scenarios[["aciclovir_iv_steadystate"]]
 
   expect_type(sc$outputPaths, "character")
   expect_length(sc$outputPaths, 2L)
@@ -239,7 +239,7 @@ test_that(".parseScenarios resolves outputPaths ids to literal outputPaths in de
 
 test_that(".parseScenarios single outputPaths id resolves to a length-1 named character vector", {
   project <- exampleProject()
-  sc <- project$scenarios[["aciclovir_iv"]]
+  sc <- project$definitions$scenarios[["aciclovir_iv"]]
 
   expect_type(sc$outputPaths, "character")
   expect_length(sc$outputPaths, 1L)
@@ -327,7 +327,7 @@ test_that("addScenario accepts a valid initialConditions reference", {
     modelFile = "Aciclovir.pkml",
     initialConditions = "icset"
   )
-  expect_identical(project$scenarios[["withic"]]$initialConditions, "icset")
+  expect_identical(project$definitions$scenarios[["withic"]]$initialConditions, "icset")
 })
 
 test_that("addScenario aborts eagerly on a dangling initialConditions ref", {
@@ -349,10 +349,10 @@ test_that("setScenario updates and clears the initialConditions reference", {
   addScenario(project, id = "sc", modelFile = "Aciclovir.pkml")
 
   setScenario(project, "sc", initialConditions = "icset")
-  expect_identical(project$scenarios[["sc"]]$initialConditions, "icset")
+  expect_identical(project$definitions$scenarios[["sc"]]$initialConditions, "icset")
 
   setScenario(project, "sc", initialConditions = NULL)
-  expect_null(project$scenarios[["sc"]]$initialConditions)
+  expect_null(project$definitions$scenarios[["sc"]]$initialConditions)
 })
 
 test_that("setScenario aborts eagerly on a dangling initialConditions ref", {
@@ -394,7 +394,7 @@ test_that("addScenario collapses duplicate outputPaths to one (first-seen order)
     modelFile = "Aciclovir.pkml",
     outputPaths = c("aciclovir_pvb", "aciclovir_pvb", "aciclovir_fat_cell")
   )
-  sc <- project$scenarios[["dupout"]]
+  sc <- project$definitions$scenarios[["dupout"]]
   expect_named(sc$outputPaths, c("aciclovir_pvb", "aciclovir_fat_cell"))
 })
 
@@ -409,7 +409,7 @@ test_that("setScenario collapses duplicate outputPaths to one (first-seen order)
       "aciclovir_fat_cell"
     )
   )
-  sc <- project$scenarios[["testscenario"]]
+  sc <- project$definitions$scenarios[["testscenario"]]
   expect_named(sc$outputPaths, c("aciclovir_fat_cell", "aciclovir_pvb"))
 })
 
@@ -420,22 +420,22 @@ test_that("removeScenario uses the id argument matching addScenario", {
     id = "toremove",
     modelFile = "Aciclovir.pkml"
   )
-  expect_true("toremove" %in% names(project$scenarios))
+  expect_true("toremove" %in% names(project$definitions$scenarios))
   removeScenario(project, id = "toremove")
-  expect_false("toremove" %in% names(project$scenarios))
+  expect_false("toremove" %in% names(project$definitions$scenarios))
 })
 
 test_that("addScenario and removeScenario clear the validation cache", {
   project <- testProject()
-  project$.markValidated()
-  expect_true(project$validatedSinceMutation)
+  .markValidated(project)
+  expect_true(.isValidated(project))
 
   addScenario(project, id = "x", modelFile = "Aciclovir.pkml")
-  expect_false(project$validatedSinceMutation)
+  expect_false(.isValidated(project))
 
-  project$.markValidated()
+  .markValidated(project)
   removeScenario(project, id = "x")
-  expect_false(project$validatedSinceMutation)
+  expect_false(.isValidated(project))
 })
 
 test_that("addScenario stores steadyStateTime in base units and round-trips the declared unit", {
@@ -451,8 +451,8 @@ test_that("addScenario stores steadyStateTime in base units and round-trips the 
   )
 
   # Stored value is the base unit (minutes): 10 h -> 600 min.
-  expect_equal(project$scenarios[["ss"]]$steadyStateTime, 600)
-  expect_equal(project$scenarios[["ss"]]$steadyStateTimeUnit, "h")
+  expect_equal(project$definitions$scenarios[["ss"]]$steadyStateTime, 600)
+  expect_equal(project$definitions$scenarios[["ss"]]$steadyStateTimeUnit, "h")
 
   # Saved JSON carries the declared 10 / "h" (the serializer converts the
   # base-unit value back to the declared unit).
@@ -465,26 +465,26 @@ test_that("addScenario stores steadyStateTime in base units and round-trips the 
 
   # Reload round-trips back to the base-unit value.
   reloaded <- loadProject(out)
-  expect_equal(reloaded$scenarios[["ss"]]$steadyStateTime, 600)
-  expect_equal(reloaded$scenarios[["ss"]]$steadyStateTimeUnit, "h")
+  expect_equal(reloaded$definitions$scenarios[["ss"]]$steadyStateTime, 600)
+  expect_equal(reloaded$definitions$scenarios[["ss"]]$steadyStateTimeUnit, "h")
 })
 
 # setScenario ----
 
 test_that("setScenario changes a field in memory and persists on save", {
   project <- testProject()
-  dir <- file.path(project$projectDirPath, "definitions", "scenarios")
+  dir <- file.path(project$info$projectDirPath, "definitions", "scenarios")
 
   setScenario(project, "testscenario", simulationTime = "0, 48, 120")
 
   expect_equal(
-    project$scenarios[["testscenario"]]$simulationTime,
+    project$definitions$scenarios[["testscenario"]]$simulationTime,
     list(c(0, 48, 120))
   )
   saveProject(project)
-  reloaded <- loadProject(project$jsonPath)
+  reloaded <- loadProject(project$info$projectFilePath)
   expect_equal(
-    reloaded$scenarios[["testscenario"]]$simulationTime,
+    reloaded$definitions$scenarios[["testscenario"]]$simulationTime,
     list(c(0, 48, 120))
   )
   expect_true(file.exists(file.path(dir, "testscenario.json")))
@@ -492,10 +492,10 @@ test_that("setScenario changes a field in memory and persists on save", {
 
 test_that("setScenario partial update leaves other fields untouched", {
   project <- testProject()
-  before <- project$scenarios[["testscenario"]]
+  before <- project$definitions$scenarios[["testscenario"]]
 
   setScenario(project, "testscenario", simulationTimeUnit = "min")
-  after <- project$scenarios[["testscenario"]]
+  after <- project$definitions$scenarios[["testscenario"]]
 
   expect_equal(after$simulationTimeUnit, "min")
   # Every other field is unchanged.
@@ -506,29 +506,29 @@ test_that("setScenario partial update leaves other fields untouched", {
 
 test_that("setScenario invalidates the validation cache", {
   project <- testProject()
-  project$.markValidated()
-  expect_true(project$validatedSinceMutation)
+  .markValidated(project)
+  expect_true(.isValidated(project))
 
   setScenario(project, "testscenario", simulationTimeUnit = "min")
 
-  expect_false(project$validatedSinceMutation)
+  expect_false(.isValidated(project))
 })
 
 test_that("setScenario can clear an optional field with NULL", {
   project <- testProject()
-  expect_false(is.null(project$scenarios[["populationscenario"]]$individualId))
+  expect_false(is.null(project$definitions$scenarios[["populationscenario"]]$individualId))
 
   setScenario(project, "populationscenario", individual = NULL)
 
-  expect_null(project$scenarios[["populationscenario"]]$individualId)
+  expect_null(project$definitions$scenarios[["populationscenario"]]$individualId)
   saveProject(project)
-  reloaded <- loadProject(project$jsonPath)
-  expect_null(reloaded$scenarios[["populationscenario"]]$individualId)
+  reloaded <- loadProject(project$info$projectFilePath)
+  expect_null(reloaded$definitions$scenarios[["populationscenario"]]$individualId)
 })
 
 test_that("setScenario aborts on a non-existent scenario, no file written", {
   project <- testProject()
-  dir <- file.path(project$projectDirPath, "definitions", "scenarios")
+  dir <- file.path(project$info$projectDirPath, "definitions", "scenarios")
   before <- list.files(dir)
 
   expect_snapshot(
@@ -541,7 +541,7 @@ test_that("setScenario aborts on a non-existent scenario, no file written", {
 test_that("saveProject() fails fast on a structural violation, disk untouched", {
   project <- testProject()
   saveProject(project)
-  dir <- file.path(project$projectDirPath, "definitions", "scenarios")
+  dir <- file.path(project$info$projectDirPath, "definitions", "scenarios")
   beforeFile <- readLines(file.path(dir, "testscenario.json"))
 
   # Clearing modelFile is a structural violation. The edit is accepted in
@@ -569,22 +569,22 @@ test_that("the write path allows a dangling outputPathId as a lazy referential f
   # write-through entry point (`.setSection()`) is structural-only: an unknown
   # output-path id is allowed at write time (referential checks are lazy); it
   # is the cross-reference validator that flags it later.
-  scenarios <- project$.getSection("scenarios")
+  scenarios <- .getSection(project, "scenarios")
   sc <- scenarios[["testscenario"]]
   sc$outputPaths <- c(sc$outputPaths, Ghost = NA_character_)
   scenarios[["testscenario"]] <- sc
-  expect_no_error(project$.setSection("scenarios", scenarios))
+  expect_no_error(.setSection(project, "scenarios", scenarios))
 })
 
 test_that("setScenario stays in memory until saveProject()", {
   source <- testProject()
-  dir <- file.path(source$projectDirPath, "definitions", "scenarios")
+  dir <- file.path(source$info$projectDirPath, "definitions", "scenarios")
   sourceFile <- readLines(file.path(dir, "testscenario.json"))
 
   setScenario(source, "testscenario", simulationTimeUnit = "min")
 
   # The edit is in memory only; the on-disk file is untouched before a save.
-  expect_equal(source$scenarios[["testscenario"]]$simulationTimeUnit, "min")
+  expect_equal(source$definitions$scenarios[["testscenario"]]$simulationTimeUnit, "min")
   expect_identical(readLines(file.path(dir, "testscenario.json")), sourceFile)
 })
 
@@ -600,14 +600,14 @@ test_that("setScenario unit-only steadyState change relabels without rescaling",
     steadyStateTimeUnit = "h"
   )
   # Seeded: 10 h -> 600 base-min.
-  expect_equal(project$scenarios[["ss"]]$steadyStateTime, 600)
+  expect_equal(project$definitions$scenarios[["ss"]]$steadyStateTime, 600)
 
   setScenario(project, "ss", steadyStateTimeUnit = "min")
 
   # Pure relabel: the stored base duration is unchanged, only the unit label
   # moves to "min".
-  expect_equal(project$scenarios[["ss"]]$steadyStateTime, 600)
-  expect_equal(project$scenarios[["ss"]]$steadyStateTimeUnit, "min")
+  expect_equal(project$definitions$scenarios[["ss"]]$steadyStateTime, 600)
+  expect_equal(project$definitions$scenarios[["ss"]]$steadyStateTimeUnit, "min")
 })
 
 test_that("setScenario with steadyStateTime still converts under the effective unit", {
@@ -624,13 +624,13 @@ test_that("setScenario with steadyStateTime still converts under the effective u
 
   # Value + unit supplied together: convert under the new unit (5 h -> 300 min).
   setScenario(project, "ss", steadyStateTime = 5, steadyStateTimeUnit = "h")
-  expect_equal(project$scenarios[["ss"]]$steadyStateTime, 300)
-  expect_equal(project$scenarios[["ss"]]$steadyStateTimeUnit, "h")
+  expect_equal(project$definitions$scenarios[["ss"]]$steadyStateTime, 300)
+  expect_equal(project$definitions$scenarios[["ss"]]$steadyStateTimeUnit, "h")
 
   # Value supplied, unit inherited from the record (still "h"): 5 h -> 300 min.
   setScenario(project, "ss", steadyStateTime = 5)
-  expect_equal(project$scenarios[["ss"]]$steadyStateTime, 300)
-  expect_equal(project$scenarios[["ss"]]$steadyStateTimeUnit, "h")
+  expect_equal(project$definitions$scenarios[["ss"]]$steadyStateTime, 300)
+  expect_equal(project$definitions$scenarios[["ss"]]$steadyStateTimeUnit, "h")
 })
 
 # renameScenario ----
@@ -638,14 +638,14 @@ test_that("setScenario with steadyStateTime still converts under the effective u
 test_that("renameScenario moves the definition file on save and changes the in-memory key", {
   project <- testProject()
   saveProject(project)
-  dir <- file.path(project$projectDirPath, "definitions", "scenarios")
+  dir <- file.path(project$info$projectDirPath, "definitions", "scenarios")
   before <- readLines(file.path(dir, "testscenario.json"))
 
   renameScenario(project, "testscenario", "renamed")
 
   # In-memory: old key gone, new key present.
-  expect_false("testscenario" %in% names(project$scenarios))
-  expect_true("renamed" %in% names(project$scenarios))
+  expect_false("testscenario" %in% names(project$definitions$scenarios))
+  expect_true("renamed" %in% names(project$definitions$scenarios))
   # On disk after save: old file removed, new file written.
   saveProject(project)
   expect_false(file.exists(file.path(dir, "testscenario.json")))
@@ -665,13 +665,13 @@ test_that("renameScenario updates the record's stored name so a reload round-tri
 
   renameScenario(project, "testscenario", "renamed")
 
-  expect_equal(project$scenarios[["renamed"]]$scenarioName, "renamed")
+  expect_equal(project$definitions$scenarios[["renamed"]]$scenarioName, "renamed")
   # A reload re-derives scenarios from the tree; the new key must validate and
   # round-trip (name == key invariant holds).
   saveProject(project)
-  reloaded <- loadProject(project$jsonPath)
-  expect_true("renamed" %in% names(reloaded$scenarios))
-  expect_equal(reloaded$scenarios[["renamed"]]$scenarioName, "renamed")
+  reloaded <- loadProject(project$info$projectFilePath)
+  expect_true("renamed" %in% names(reloaded$definitions$scenarios))
+  expect_equal(reloaded$definitions$scenarios[["renamed"]]$scenarioName, "renamed")
   expect_no_error(validateProject(reloaded))
 })
 
@@ -696,20 +696,20 @@ test_that("renameScenario canonicalizes newId, warning and landing on the canoni
   expect_snapshot(
     renameScenario(project, "testscenario", "New Name")
   )
-  expect_true("new name" %in% names(project$scenarios))
-  expect_false("testscenario" %in% names(project$scenarios))
+  expect_true("new name" %in% names(project$definitions$scenarios))
+  expect_false("testscenario" %in% names(project$definitions$scenarios))
 })
 
 test_that("renameScenario stays in memory until saveProject()", {
   source <- testProject()
   saveProject(source)
-  dir <- file.path(source$projectDirPath, "definitions", "scenarios")
+  dir <- file.path(source$info$projectDirPath, "definitions", "scenarios")
   sourceFiles <- list.files(dir)
 
   renameScenario(source, "testscenario", "renamed")
 
   # The edit is in memory only; the on-disk tree is untouched before a save.
-  expect_true("renamed" %in% names(source$scenarios))
+  expect_true("renamed" %in% names(source$definitions$scenarios))
   expect_setequal(list.files(dir), sourceFiles)
 })
 
@@ -733,13 +733,13 @@ test_that("renameScenario warns when a dataCombined still references it", {
 
 test_that("duplicateScenario creates an independent copy in memory, persisted on save", {
   project <- testProject()
-  dir <- file.path(project$projectDirPath, "definitions", "scenarios")
+  dir <- file.path(project$info$projectDirPath, "definitions", "scenarios")
 
   duplicateScenario(project, "testscenario", "copy")
 
   # Both exist in memory; the original is untouched.
-  expect_true(all(c("testscenario", "copy") %in% names(project$scenarios)))
-  expect_equal(project$scenarios[["copy"]]$scenarioName, "copy")
+  expect_true(all(c("testscenario", "copy") %in% names(project$definitions$scenarios)))
+  expect_equal(project$definitions$scenarios[["copy"]]$scenarioName, "copy")
   # On save, the copy is a new definition file alongside the original.
   saveProject(project)
   expect_true(file.exists(file.path(dir, "testscenario.json")))
@@ -748,18 +748,18 @@ test_that("duplicateScenario creates an independent copy in memory, persisted on
 
 test_that("duplicateScenario produces an independent copy: mutating it leaves the original", {
   project <- testProject()
-  originalBefore <- project$scenarios[["testscenario"]]
+  originalBefore <- project$definitions$scenarios[["testscenario"]]
 
   duplicateScenario(project, "testscenario", "copy")
   setScenario(project, "copy", simulationTimeUnit = "min")
 
-  expect_equal(project$scenarios[["copy"]]$simulationTimeUnit, "min")
+  expect_equal(project$definitions$scenarios[["copy"]]$simulationTimeUnit, "min")
   # The original record (and its file) is unchanged.
-  expect_equal(project$scenarios[["testscenario"]], originalBefore)
+  expect_equal(project$definitions$scenarios[["testscenario"]], originalBefore)
   saveProject(project)
-  reloaded <- loadProject(project$jsonPath)
+  reloaded <- loadProject(project$info$projectFilePath)
   expect_equal(
-    reloaded$scenarios[["testscenario"]]$simulationTimeUnit,
+    reloaded$definitions$scenarios[["testscenario"]]$simulationTimeUnit,
     originalBefore$simulationTimeUnit
   )
 })
@@ -783,12 +783,12 @@ test_that("duplicateScenario errors when the target id already exists", {
 test_that("duplicateScenario stays in memory until saveProject()", {
   source <- testProject()
   saveProject(source)
-  dir <- file.path(source$projectDirPath, "definitions", "scenarios")
+  dir <- file.path(source$info$projectDirPath, "definitions", "scenarios")
   sourceFiles <- list.files(dir)
 
   duplicateScenario(source, "testscenario", "copy")
 
-  expect_true("copy" %in% names(source$scenarios))
+  expect_true("copy" %in% names(source$definitions$scenarios))
   # The copy is in memory only; the on-disk tree is untouched before a save.
   expect_setequal(list.files(dir), sourceFiles)
 })
@@ -822,8 +822,8 @@ test_that("addScenario adds N scenarios in one call equal to N scalar adds", {
   )
 
   expect_identical(
-    vectorized$scenarios[c("s1", "s2")],
-    scalar$scenarios[c("s1", "s2")]
+    vectorized$definitions$scenarios[c("s1", "s2")],
+    scalar$definitions$scenarios[c("s1", "s2")]
   )
 })
 
@@ -866,15 +866,15 @@ test_that("addScenario recycles a scalar field and applies outputPaths whole", {
     individual = c("indiv1", NULL),
     outputPaths = c("aciclovir_pvb", "aciclovir_fat_cell")
   )
-  expect_identical(project$scenarios$s1$modelFile, "Aciclovir.pkml")
-  expect_identical(project$scenarios$s2$modelFile, "Aciclovir.pkml")
+  expect_identical(project$definitions$scenarios$s1$modelFile, "Aciclovir.pkml")
+  expect_identical(project$definitions$scenarios$s2$modelFile, "Aciclovir.pkml")
   # outputPaths applied whole to both scenarios.
   expect_identical(
-    names(project$scenarios$s1$outputPaths),
+    names(project$definitions$scenarios$s1$outputPaths),
     c("aciclovir_pvb", "aciclovir_fat_cell")
   )
   expect_identical(
-    names(project$scenarios$s2$outputPaths),
+    names(project$definitions$scenarios$s2$outputPaths),
     c("aciclovir_pvb", "aciclovir_fat_cell")
   )
 })
@@ -883,13 +883,13 @@ test_that("addScenario persists all N to disk in one saveProject()", {
   project <- testProject()
   addScenario(project, c("s1", "s2"), modelFile = "Aciclovir.pkml")
   saveProject(project)
-  reloaded <- loadProject(project$jsonPath)
-  expect_true(all(c("s1", "s2") %in% names(reloaded$scenarios)))
+  reloaded <- loadProject(project$info$projectFilePath)
+  expect_true(all(c("s1", "s2") %in% names(reloaded$definitions$scenarios)))
 })
 
 test_that("addScenario aborts the whole batch and writes nothing on a bad reference", {
   project <- testProject()
-  before <- names(project$scenarios)
+  before <- names(project$definitions$scenarios)
   expect_error(
     addScenario(
       project,
@@ -898,9 +898,9 @@ test_that("addScenario aborts the whole batch and writes nothing on a bad refere
       individual = c("indiv1", "ghost")
     )
   )
-  expect_identical(names(project$scenarios), before)
-  reloaded <- loadProject(project$jsonPath)
-  expect_identical(names(reloaded$scenarios), before)
+  expect_identical(names(project$definitions$scenarios), before)
+  reloaded <- loadProject(project$info$projectFilePath)
+  expect_identical(names(reloaded$definitions$scenarios), before)
 })
 
 test_that("addScenario aborts on a mismatched scalar field length", {
@@ -919,18 +919,18 @@ test_that("setScenario vectorizes a partial update across N ids", {
   project <- testProject()
   addScenario(project, c("s1", "s2"), modelFile = "Aciclovir.pkml")
   setScenario(project, c("s1", "s2"), simulationTimeUnit = c("min", "s"))
-  expect_identical(project$scenarios$s1$simulationTimeUnit, "min")
-  expect_identical(project$scenarios$s2$simulationTimeUnit, "s")
-  expect_identical(project$scenarios$s1$modelFile, "Aciclovir.pkml")
+  expect_identical(project$definitions$scenarios$s1$simulationTimeUnit, "min")
+  expect_identical(project$definitions$scenarios$s2$simulationTimeUnit, "s")
+  expect_identical(project$definitions$scenarios$s1$modelFile, "Aciclovir.pkml")
 })
 
 test_that("removeScenario removes a vector of ids in one write-through", {
   project <- testProject()
   addScenario(project, c("s1", "s2"), modelFile = "Aciclovir.pkml")
   removeScenario(project, c("s1", "s2"))
-  expect_false(any(c("s1", "s2") %in% names(project$scenarios)))
-  reloaded <- loadProject(project$jsonPath)
-  expect_false(any(c("s1", "s2") %in% names(reloaded$scenarios)))
+  expect_false(any(c("s1", "s2") %in% names(project$definitions$scenarios)))
+  reloaded <- loadProject(project$info$projectFilePath)
+  expect_false(any(c("s1", "s2") %in% names(reloaded$definitions$scenarios)))
 })
 
 # Print method ----
@@ -939,5 +939,5 @@ test_that("print.Scenario renders the configured fields", {
   project <- testProject()
   withr::local_options(cli.unicode = FALSE)
   local_reproducible_output()
-  expect_snapshot(print(project$scenarios[["testscenario"]]))
+  expect_snapshot(print(project$definitions$scenarios[["testscenario"]]))
 })

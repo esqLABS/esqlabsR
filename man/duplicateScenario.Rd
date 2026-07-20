@@ -10,7 +10,7 @@ duplicateScenario(project, id, newId)
 \item{project}{A \code{Project} object.}
 
 \item{id}{Character. Id of the scenario to copy; must exist in
-\code{project$scenarios} (after canonicalization).}
+\code{scenarios} definitions (after canonicalization).}
 
 \item{newId}{Character. Id for the new copy; its canonical form must not
 already belong to an existing scenario.}

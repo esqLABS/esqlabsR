@@ -10,7 +10,7 @@ renameScenario(project, id, newId)
 \item{project}{A \code{Project} object.}
 
 \item{id}{Character. Id of the scenario to rename; must exist in
-\code{project$scenarios} (after canonicalization).}
+\code{scenarios} definitions (after canonicalization).}
 
 \item{newId}{Character. New id for the scenario; its canonical form must
 not already belong to a different scenario.}

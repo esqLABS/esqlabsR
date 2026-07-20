@@ -8,7 +8,7 @@
 #' the `outputFolder` used to derive the default destination.
 #' @param outputFolder Optional - path to the folder where the results will be
 #' stored. If `NULL` (default), a sub-folder in
-#' `project$outputFolder/SimulationResults/<DateSuffix>`.
+#' `project$paths$outputFolder/SimulationResults/<DateSuffix>`.
 #' @param saveSimulationsToPKML If `TRUE` (default), simulations corresponding to
 #' the results are saved to PKML along with the results.
 #'
@@ -35,7 +35,7 @@ saveScenarioResults <- function(
 
   outputFolder <- outputFolder %||%
     file.path(
-      project$outputFolder,
+      project$paths$outputFolder,
       "SimulationResults",
       format(Sys.time(), "%F %H-%M")
     )
@@ -144,7 +144,7 @@ saveScenarioResults <- function(
 #'
 #' # Now load the results, restricting to each scenario's declared output paths
 #' simulatedScenariosResults <- loadScenarioResults(
-#'   scenarios = names(project$scenarios),
+#'   scenarios = names(project$definitions$scenarios),
 #'   resultsFolder = resultsFolder,
 #'   project = project
 #' )
@@ -185,7 +185,7 @@ loadScenarioResults <- function(scenarios, resultsFolder, project = NULL) {
     # extra series relative to the original run.
     quantitiesOrPaths <- results$allQuantityPaths
     if (!is.null(project)) {
-      scenario <- project$scenarios[[scenarioName]]
+      scenario <- project$definitions$scenarios[[scenarioName]]
       if (!is.null(scenario) && !is.null(scenario$outputPaths)) {
         quantitiesOrPaths <- getAllQuantitiesMatching(
           unname(scenario$outputPaths),

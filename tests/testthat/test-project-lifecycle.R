@@ -1,8 +1,8 @@
 test_that("loadProject() returns a Project from a valid Project.json", {
   project <- testProject()
   expect_s3_class(project, "Project")
-  expect_equal(project$schemaVersion, "2.0")
-  expect_equal(length(project$scenarios), 4)
+  expect_equal(project$info$schemaVersion, "2.0")
+  expect_equal(length(project$definitions$scenarios), 4)
 })
 
 test_that("loadProject() errors when the file does not exist", {
@@ -60,23 +60,23 @@ test_that("loadProject() loads a clean project without a cross-reference warning
 
 test_that("a bound project's container edit stays in memory until saveProject()", {
   project <- testProject()
-  tmp <- project$projectFilePath
-  original <- project$modelFolder
+  tmp <- project$info$projectFilePath
+  original <- project$paths$modelFolder
 
-  project$modelFolder <- "AnotherModels"
+  project$paths$modelFolder <- "AnotherModels"
 
   # The edit is in memory only: a fresh load still reads the old value, and the
   # project is dirty.
-  expect_identical(loadProject(tmp)$modelFolder, original)
-  expect_true(project$.isModified())
+  expect_identical(loadProject(tmp)$paths$modelFolder, original)
+  expect_true(.isModified(project))
 
   # After an explicit save, a fresh load sees the new value.
   saveProject(project)
   expect_identical(
-    loadProject(tmp)$modelFolder,
+    loadProject(tmp)$paths$modelFolder,
     fs::path_abs(file.path(dirname(tmp), "AnotherModels"))
   )
-  expect_false(project$.isModified())
+  expect_false(.isModified(project))
 })
 
 test_that("a container edit followed by saveProject() keeps the sections", {
@@ -84,21 +84,21 @@ test_that("a container edit followed by saveProject() keeps the sections", {
   # full-tree reconciler `.writeProjectTree` (which `saveProject` drives)
   # rewrites every kind's tree plus the container.
   project <- testProject()
-  tmp <- project$projectFilePath
-  before <- project$scenarios
+  tmp <- project$info$projectFilePath
+  before <- project$definitions$scenarios
 
-  project$name <- "Renamed"
+  project$info$name <- "Renamed"
   saveProject(project)
 
   reloaded <- loadProject(tmp)
-  expect_named(reloaded$scenarios, names(before))
-  expect_length(reloaded$scenarios, length(before))
+  expect_named(reloaded$definitions$scenarios, names(before))
+  expect_length(reloaded$definitions$scenarios, length(before))
   expect_identical(
-    reloaded$scenarios$testscenario$modelFile,
+    reloaded$definitions$scenarios$testscenario$modelFile,
     before$testscenario$modelFile
   )
   # The container edit takes effect on reload.
-  expect_identical(reloaded$name, "Renamed")
+  expect_identical(reloaded$info$name, "Renamed")
 })
 
 # --- saveProject() ------------------------------------------------------------
@@ -106,7 +106,7 @@ test_that("a container edit followed by saveProject() keeps the sections", {
 test_that("saveProject() writes only the changed entity's file (write-if-different)", {
   project <- testProject()
   saveProject(project) # settle the tree (byte-stable) so mtimes are a baseline
-  scenarioDir <- file.path(project$projectDirPath, "definitions", "scenarios")
+  scenarioDir <- file.path(project$info$projectDirPath, "definitions", "scenarios")
 
   # Edit exactly one scenario, leaving its siblings untouched.
   setScenario(project, "testscenario", modelFile = "AnotherModel.pkml")
@@ -126,9 +126,9 @@ test_that("saveProject() writes only the changed entity's file (write-if-differe
 test_that("saveProject() deletes an orphan and leaves other kinds untouched", {
   project <- testProject()
   saveProject(project)
-  scenarioDir <- file.path(project$projectDirPath, "definitions", "scenarios")
+  scenarioDir <- file.path(project$info$projectDirPath, "definitions", "scenarios")
   outputPathDir <- file.path(
-    project$projectDirPath,
+    project$info$projectDirPath,
     "definitions",
     "output-paths"
   )
@@ -154,8 +154,8 @@ test_that("a clean saveProject() is a no-op with the up-to-date message", {
 
 test_that("saveProject() on an unbound in-memory project aborts", {
   project <- Project$new()
-  project$schemaVersion <- "2.0"
-  project$.setSection("scenarios", list())
+  .setInfoField(project, "schemaVersion", "2.0")
+  .setSection(project, "scenarios", list())
 
   expect_snapshot(saveProject(project), error = TRUE)
 })
@@ -178,13 +178,13 @@ test_that("reloadProject() discards in-memory edits and clears the dirty bit", {
   project <- testProject()
 
   addScenario(project, "willbediscarded", modelFile = "Aciclovir.pkml")
-  expect_true("willbediscarded" %in% names(project$scenarios))
-  expect_true(project$.isModified())
+  expect_true("willbediscarded" %in% names(project$definitions$scenarios))
+  expect_true(.isModified(project))
 
   reloadProject(project)
 
-  expect_false("willbediscarded" %in% names(project$scenarios))
-  expect_false(project$.isModified())
+  expect_false("willbediscarded" %in% names(project$definitions$scenarios))
+  expect_false(.isModified(project))
   expect_true(project$status$tree_in_sync)
 })
 
@@ -195,7 +195,7 @@ test_that("a clean reloadProject() is silent", {
 
 test_that("reloadProject() on an unbound in-memory project aborts", {
   project <- Project$new()
-  project$schemaVersion <- "2.0"
+  .setInfoField(project, "schemaVersion", "2.0")
 
   expect_snapshot(reloadProject(project), error = TRUE)
 })
@@ -205,7 +205,7 @@ test_that("exampleProject() succeeds", {
   expect_true(file.exists(path))
   project <- loadProject(path)
   expect_s3_class(project, "Project")
-  expect_equal(project$schemaVersion, "2.0")
+  expect_equal(project$info$schemaVersion, "2.0")
 })
 test_that("isProjectInitialized correctly identifies project directories", {
   tempDir <- withr::local_tempdir(pattern = "test_project_check")
@@ -400,21 +400,21 @@ test_that("a mutation after validateProject() forces .ensureValid to re-validate
   # Force the cache flag without having to run a full validation
   # (validateProject() depends on dataFolder existing in the test
   # fixture, which is a separate concern).
-  project$.markValidated()
-  expect_true(project$validatedSinceMutation)
+  .markValidated(project)
+  expect_true(.isValidated(project))
 
   # A mutation must clear the cache so .ensureValid re-runs the
   # validators on the new shape; otherwise downstream callers
   # (runScenarios, createPlots) would skip on a now-invalid project.
   addOutputPath(project, "X", "Organism|A|Concentration in container")
-  expect_false(project$validatedSinceMutation)
+  expect_false(.isValidated(project))
 
   # .ensureValid short-circuits only when the flag is TRUE; re-mark
   # validated, mutate again, and confirm the flag is cleared a second
   # time (i.e. every successful mutator goes through .markModified).
-  project$.markValidated()
+  .markValidated(project)
   removeOutputPath(project, "X")
-  expect_false(project$validatedSinceMutation)
+  expect_false(.isValidated(project))
 })
 
 test_that("mutated project survives a snapshot -> loadProject round-trip", {
@@ -437,9 +437,9 @@ test_that("mutated project survives a snapshot -> loadProject round-trip", {
   reloaded <- loadProject(out)
 
   expect_identical(
-    reloaded$outputPaths$roundtripx,
-    project$outputPaths$roundtripx
+    reloaded$definitions$outputPaths$roundtripx,
+    project$definitions$outputPaths$roundtripx
   )
-  expect_named(reloaded$individuals, names(project$individuals))
-  expect_identical(reloaded$individuals$pediatric_male$weight, 25)
+  expect_named(reloaded$definitions$individuals, names(project$definitions$individuals))
+  expect_identical(reloaded$definitions$individuals$pediatric_male$weight, 25)
 })

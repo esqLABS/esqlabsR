@@ -25,7 +25,7 @@ its task.}
 Must be a subset of the task's own \code{scenarios}.}
 
 \item{outputPath}{Character scalar. Id of the output path to fit,
-referencing an entry in \code{project$outputPaths}.}
+referencing an entry in \code{outputPaths} definitions.}
 
 \item{observedData}{Character scalar. Id of the observed dataset to fit
 against.}

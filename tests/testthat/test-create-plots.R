@@ -86,7 +86,7 @@ test_that("createPlots returns empty list when project has no plots", {
 test_that("createPlots builds plot grids for Example project", {
   project <- exampleProject()
   simulated <- runScenarios(project, scenarios = "aciclovir_iv")
-  gridName <- names(project$plotGrids)[[1]]
+  gridName <- names(project$definitions$plotGrids)[[1]]
 
   result <- createPlots(
     project,
@@ -100,7 +100,7 @@ test_that("createPlots builds plot grids for Example project", {
 
 test_that("createPlots succeeds when a plot belongs to no grid", {
   project <- exampleProject()
-  path <- project$outputPaths$aciclovir_pvb
+  path <- project$definitions$outputPaths$aciclovir_pvb
   addDataCombined(
     project,
     "DC_outside",
@@ -128,7 +128,7 @@ test_that("createPlots succeeds when a plot belongs to no grid", {
 
 test_that("createPlots grid subset ignores plots in other grids", {
   project <- exampleProject()
-  path <- project$outputPaths$aciclovir_pvb
+  path <- project$definitions$outputPaths$aciclovir_pvb
   addDataCombined(
     project,
     "DC_other",
@@ -187,7 +187,7 @@ test_that("createPlots silently drops unknown plotGrids when not stopIfNotFound"
 
 test_that("createPlots builds every plot type end to end", {
   project <- testProject()
-  path <- project$outputPaths$aciclovir_pvb
+  path <- project$definitions$outputPaths$aciclovir_pvb
   dataSet <- names(loadObservedData(project))
 
   addDataCombined(
@@ -246,7 +246,7 @@ test_that("createPlots survives a save/load round trip that drops the title colu
     overwrite = TRUE
   )
   project <- loadProject(file.path(dir, "Project.json"))
-  path <- project$outputPaths$aciclovir_pvb
+  path <- project$definitions$outputPaths$aciclovir_pvb
   addDataCombined(
     project,
     "dc_nt",
@@ -267,7 +267,7 @@ test_that("createPlots survives a save/load round trip that drops the title colu
   saveProject(project)
 
   reloaded <- loadProject(file.path(dir, "Project.json"))
-  expect_false("title" %in% names(reloaded$plots$p_nt))
+  expect_false("title" %in% names(reloaded$definitions$plots$p_nt))
   simulated <- runScenarios(reloaded, scenarios = "aciclovir_iv")
 
   result <- suppressWarnings(createPlots(
@@ -287,7 +287,7 @@ test_that("createPlots observedVsSimulated survives a dropped foldDistance colum
     overwrite = TRUE
   )
   project <- loadProject(file.path(dir, "Project.json"))
-  path <- project$outputPaths$aciclovir_pvb
+  path <- project$definitions$outputPaths$aciclovir_pvb
   dataSet <- names(loadObservedData(project))
   addDataCombined(
     project,
@@ -310,7 +310,7 @@ test_that("createPlots observedVsSimulated survives a dropped foldDistance colum
 
   reloaded <- loadProject(file.path(dir, "Project.json"))
   expect_false(
-    "foldDistance" %in% names(reloaded$plots$p_ovs)
+    "foldDistance" %in% names(reloaded$definitions$plots$p_ovs)
   )
   simulated <- runScenarios(reloaded, scenarios = "aciclovir_iv")
 
@@ -411,7 +411,7 @@ test_that("createPlots NULL/NULL default returns every grid keyed by gridId", {
   # A second grid so "all grids" is not coincidentally the lone example grid;
   # a regression defaulting to an empty or single-grid result would be caught.
   project <- exampleProject()
-  path <- project$outputPaths$aciclovir_pvb
+  path <- project$definitions$outputPaths$aciclovir_pvb
   addDataCombined(
     project,
     "dc_second",
@@ -434,8 +434,8 @@ test_that("createPlots NULL/NULL default returns every grid keyed by gridId", {
     validate = FALSE
   ))
 
-  expect_length(result, length(project$plotGrids))
-  expect_setequal(names(result), names(project$plotGrids))
+  expect_length(result, length(project$definitions$plotGrids))
+  expect_setequal(names(result), names(project$definitions$plotGrids))
   expect_setequal(
     names(result),
     c("individual_diagnostics", "grid_second")
@@ -446,7 +446,7 @@ test_that("createPlots NULL/NULL default returns every grid keyed by gridId", {
 
 test_that("createPlots(plots) builds the DataCombined the standalone plot needs", {
   project <- exampleProject()
-  path <- project$outputPaths$aciclovir_pvb
+  path <- project$definitions$outputPaths$aciclovir_pvb
   # A standalone plot whose DataCombined is referenced by no grid: the build
   # must still construct that DataCombined (the scope extends to plots).
   addDataCombined(
@@ -476,7 +476,7 @@ test_that("createPlots(plots) builds the DataCombined the standalone plot needs"
 
 test_that("createPlots carries xLabel/yLabel onto the built plot", {
   project <- exampleProject()
-  path <- project$outputPaths$aciclovir_pvb
+  path <- project$definitions$outputPaths$aciclovir_pvb
   addDataCombined(
     project,
     "dc_lab",
@@ -513,7 +513,7 @@ test_that("createPlots carries xLabel/yLabel onto the built plot", {
 
 test_that("createPlots keeps a comma-bearing grid subtitle intact", {
   project <- exampleProject()
-  path <- project$outputPaths$aciclovir_pvb
+  path <- project$definitions$outputPaths$aciclovir_pvb
   addDataCombined(
     project,
     "dc_sub",
@@ -549,7 +549,7 @@ test_that("createPlots keeps a comma-bearing grid subtitle intact", {
 
 test_that("createPlots aborts on an unknown plotType even when validate = FALSE", {
   project <- exampleProject()
-  path <- project$outputPaths$aciclovir_pvb
+  path <- project$definitions$outputPaths$aciclovir_pvb
   addDataCombined(
     project,
     "dc_bad",
@@ -564,9 +564,9 @@ test_that("createPlots aborts on an unknown plotType even when validate = FALSE"
   # from a grid). It must abort during the buildability check, naming the
   # offending plot and type, regardless of `validate`.
   addPlot(project, "p_bad", "dc_bad", "individual")
-  plots <- project$.getSection("plots")
+  plots <- .getSection(project, "plots")
   plots[["p_bad"]]$plotType <- "timeprofile"
-  project$.setSection("plots", plots)
+  .setSection(project, "plots", plots)
   simulated <- runScenarios(project, scenarios = "aciclovir_iv")
 
   expect_snapshot(

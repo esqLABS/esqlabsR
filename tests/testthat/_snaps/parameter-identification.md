@@ -204,7 +204,7 @@
       * "Ghost" -> "ghost"
       Error in `addPITask()`:
       ! Cannot add PI task "bad":
-      x scenarios not found in project$scenarios: ghost
+      x scenarios not found in project$definitions$scenarios: ghost
 
 # addPITask() errors on unknown outputPath
 
@@ -222,7 +222,7 @@
       * "DoesNotExist" -> "doesnotexist"
       Error in `addPITask()`:
       ! Cannot add PI task "bad":
-      x outputPath 'doesnotexist' not found in project$outputPaths
+      x outputPath 'doesnotexist' not found in project$definitions$outputPaths
 
 # addPITask() errors on duplicate id
 
@@ -289,7 +289,7 @@
       Canonicalized 1 referenced id to a safe form:
       * "DoesNotExist" -> "doesnotexist"
       Error in `addPIOutputMapping()`:
-      ! outputPath "doesnotexist" not found in project$outputPaths
+      ! outputPath "doesnotexist" not found in project$definitions$outputPaths
 
 # addPIParameter() errors on an explicit duplicate id
 

@@ -20,7 +20,7 @@ print.Application <- function(x, ...) {
 
 #' Add one or more application protocols to a Project
 #'
-#' Add protocols to `project$applications`, vectorizing over a vector of ids
+#' Add protocols to `applications` definitions, vectorizing over a vector of ids
 #' (see the recycling rule under Details). `parameterSets` is
 #' vector-valued-per-definition: it is applied whole to every protocol; to give a
 #' different set per protocol, pass a list of the same length as `id` (one
@@ -33,34 +33,45 @@ print.Application <- function(x, ...) {
 #'   to add). Each is canonicalized to a safe, lowercase id (a warning names
 #'   the result if it changed).
 #' @param parameterSets Optional character vector of set ids referencing
-#'   `project$parameterSets`, applied whole to every protocol. Defaults to
+#'   `parameterSets` definitions, applied whole to every protocol. Defaults to
 #'   `NULL`. Use a list of the same length as `id` for a per-protocol set.
 #' @returns The `project` object, invisibly.
 #' @export
 #' @family application
 addApplication <- function(project, id, parameterSets = NULL) {
   validateIsOfType(project, "Project")
+  project$addApplication(id, parameterSets)
+}
+
+# Implementation behind `project$addApplication()` / `addApplication()`.
+#
+# @keywords internal
+# @noRd
+.addApplication_impl <- function(self, private, id, parameterSets = NULL) {
+  # Attribute any abort to the public authoring function the user called
+  # (the free-function forwarder), not this internal `_impl`.
+  rlang::local_error_call(rlang::caller_env(2))
   .assertIdVector(id)
   id <- .canonicalizeId(id)
   n <- length(id)
   perId <- .wholeField(parameterSets, n)
 
   .assertNoDuplicateIds(id, "application")
-  clash <- intersect(id, names(project$applications))
+  clash <- intersect(id, names(self$definitions$applications))
   if (length(clash) > 0L) {
     cli::cli_abort("application {.val {clash}} already exists")
   }
-  call <- rlang::current_env()
+  call <- rlang::caller_env(2)
   apps <- .collectCanonicalizedRefs(lapply(seq_len(n), function(i) {
-    .buildApplicationEntry(project, perId[[i]], call = call)
+    .buildApplicationEntry(self, perId[[i]], call = call)
   }))
 
-  applications <- project$.getSection("applications") %||% list()
+  applications <- private$.getSection("applications") %||% list()
   for (i in seq_len(n)) {
     applications[[id[[i]]]] <- apps[[i]]
   }
-  project$.setSection("applications", applications)
-  invisible(project)
+  private$.setSection("applications", applications)
+  invisible(self)
 }
 
 #' Remove one or more application protocols from a Project
@@ -77,24 +88,35 @@ addApplication <- function(project, id, parameterSets = NULL) {
 #' @family application
 removeApplication <- function(project, id) {
   validateIsOfType(project, "Project")
+  project$removeApplication(id)
+}
+
+# Implementation behind `project$removeApplication()` / `removeApplication()`.
+#
+# @keywords internal
+# @noRd
+.removeApplication_impl <- function(self, private, id) {
+  # Attribute any abort to the public authoring function the user called
+  # (the free-function forwarder), not this internal `_impl`.
+  rlang::local_error_call(rlang::caller_env(2))
   .assertIdVector(id)
   id <- .canonicalizeId(id)
 
-  missingIds <- setdiff(id, names(project$applications))
+  missingIds <- setdiff(id, names(self$definitions$applications))
   if (length(missingIds) > 0L) {
     cli::cli_warn("application {.val {missingIds}} not found; no-op.")
   }
-  toRemove <- intersect(id, names(project$applications))
+  toRemove <- intersect(id, names(self$definitions$applications))
   if (length(toRemove) == 0L) {
-    return(invisible(project))
+    return(invisible(self))
   }
   for (one in toRemove) {
-    .warnIfReferenced(project, "application", one)
+    .warnIfReferenced(self, "application", one)
   }
-  applications <- project$.getSection("applications")
+  applications <- private$.getSection("applications")
   applications[toRemove] <- NULL
-  project$.setSection("applications", applications)
-  invisible(project)
+  private$.setSection("applications", applications)
+  invisible(self)
 }
 
 #' Replace the parameter-set references on one or more applications
@@ -105,7 +127,7 @@ removeApplication <- function(project, id) {
 #' @param id Character vector of application ids. Each is canonicalized the
 #'   same way [addApplication()] canonicalizes it.
 #' @param parameterSets Character vector of set ids (from
-#'   `project$parameterSets`), applied whole to every application; use
+#'   `parameterSets` definitions), applied whole to every application; use
 #'   `character(0)` to clear. To set a different list per application, pass a
 #'   list of the same length as `id` (one character vector per application).
 #' @returns The `project` object, invisibly.
@@ -117,33 +139,50 @@ setApplicationParameterSets <- function(
   parameterSets
 ) {
   validateIsOfType(project, "Project")
+  project$setApplicationParameterSets(id, parameterSets)
+}
+
+# Implementation behind `project$setApplicationParameterSets()` /
+# `setApplicationParameterSets()`.
+#
+# @keywords internal
+# @noRd
+.setApplicationParameterSets_impl <- function(
+  self,
+  private,
+  id,
+  parameterSets
+) {
+  # Attribute any abort to the public authoring function the user called
+  # (the free-function forwarder), not this internal `_impl`.
+  rlang::local_error_call(rlang::caller_env(2))
   .assertIdVector(id)
   id <- .canonicalizeId(id)
   n <- length(id)
-  missingIds <- setdiff(id, names(project$applications))
+  missingIds <- setdiff(id, names(self$definitions$applications))
   if (length(missingIds) > 0L) {
     cli::cli_abort("application {.val {missingIds}} not found")
   }
   perId <- .wholeField(parameterSets, n)
 
-  call <- rlang::current_env()
+  call <- rlang::caller_env(2)
   resolved <- .collectCanonicalizedRefs(lapply(seq_len(n), function(i) {
-    .resolveParameterSetRefs(project, perId[[i]], call = call)
+    .resolveParameterSetRefs(self, perId[[i]], call = call)
   }))
 
-  applications <- project$.getSection("applications")
+  applications <- private$.getSection("applications")
   for (i in seq_len(n)) {
     applications[[id[[i]]]]$parameterSets <- resolved[[i]]
   }
-  project$.setSection("applications", applications)
-  invisible(project)
+  private$.setSection("applications", applications)
+  invisible(self)
 }
 
 # Internal helpers ----
 
 # Validate and canonicalize a `parameterSets` reference vector for an
 # application, checking it is a character vector of ids that resolve against
-# `project$parameterSets`, and returning the canonicalized ids. The single
+# `parameterSets` definitions, and returning the canonicalized ids. The single
 # source of truth for this check, shared by `.buildApplicationEntry()` (the add
 # path) and `setApplicationParameterSets()` (the set path) so their messages
 # cannot drift. `.canonicalizeIdRef()` runs inside, so the caller's
@@ -163,7 +202,7 @@ setApplicationParameterSets <- function(
     )
   }
   sets <- .canonicalizeIdRef(sets)
-  bad <- setdiff(sets, names(project$parameterSets %||% list()))
+  bad <- setdiff(sets, names(project$definitions$parameterSets %||% list()))
   if (length(bad) > 0L) {
     cli::cli_abort(
       c(

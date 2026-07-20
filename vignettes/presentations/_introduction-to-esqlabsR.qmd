@@ -308,7 +308,7 @@ the parameter sets to apply, a time grid, and the output paths to record.
 . . .
 
 ```{r}
-names(project$scenarios)
+names(project$definitions$scenarios)
 ```
 
 ::: footer
@@ -543,7 +543,7 @@ Quantify how outputs respond to parameter changes:
 ```{r, eval = FALSE}
 sens <- sensitivityCalculation(
   simulation = results$aciclovir_iv$simulation,
-  outputPaths = project$outputPaths[["aciclovir_pvb"]],
+  outputPaths = project$definitions$outputPaths[["aciclovir_pvb"]],
   parameterPaths = "Aciclovir|Lipophilicity"
 )
 ```

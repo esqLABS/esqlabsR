@@ -42,9 +42,9 @@ single title \code{"A, B"}, not plot 1 \code{"A"} and plot 2 \code{"B"}. To vary
 The \code{project} object, invisibly.
 }
 \description{
-Add one or more entries to \code{project$plots} (a keyed list, one entry per
+Add one or more entries to \code{plots} definitions (a keyed list, one entry per
 plot). Errors if a \code{plotId} already exists, if a \code{dataCombined} is not
-present in \code{project$dataCombined}, or if a \code{plotType} is not one of the
+present in \code{dataCombined} definitions, or if a \code{plotType} is not one of the
 supported types.
 }
 \details{

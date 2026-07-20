@@ -9,7 +9,7 @@
 #'
 #' @param project A `Project` (see [loadProject()]).
 #' @param dataCombined Names of the DataCombined entries to build. If
-#'   any name is not declared in `project$dataCombined`, an error is
+#'   any name is not declared in `dataCombined` definitions, an error is
 #'   thrown.
 #' @param plotGrids Names of plot grids whose DataCombined dependencies
 #'   should be built. Combined with `dataCombined` if both are given.
@@ -41,7 +41,7 @@ createDataCombined <- function(
   observedData <- loadObservedData(project)
 
   if (!is.null(plotGrids)) {
-    allGridIds <- names(.unwrapDefinitionList(project$plotGrids) %||% list())
+    allGridIds <- names(.unwrapDefinitionList(project$definitions$plotGrids) %||% list())
     missingGrids <- setdiff(plotGrids[!is.na(plotGrids)], allGridIds)
     if (length(missingGrids) > 0) {
       cli::cli_abort(messages$stopPlotGridNamesNotFound(missingGrids))
@@ -52,7 +52,7 @@ createDataCombined <- function(
     )
   }
 
-  allSpecs <- .unwrapDefinitionList(project$dataCombined) %||% list()
+  allSpecs <- .unwrapDefinitionList(project$definitions$dataCombined) %||% list()
   missingNames <- setdiff(
     dataCombined[!is.na(dataCombined)],
     names(allSpecs)
@@ -89,7 +89,7 @@ createDataCombined <- function(
   dataCombinedList[intersect(names(selectedSpecs), names(dataCombinedList))]
 }
 
-# Convert the named-list `dataCombined` spec from project$plots into the
+# Convert the named-list `dataCombined` spec from the plots definitions into the
 # flat tibble the legacy Excel-driven code path expects. One row per
 # entry (simulated or observed). Caller must pre-filter to specs that
 # actually have entries; empty DCs are handled in `createDataCombined`.
@@ -136,7 +136,7 @@ createDataCombined <- function(
   project,
   plotGrids
 ) {
-  grids <- .unwrapDefinitionList(project$plotGrids) %||% list()
+  grids <- .unwrapDefinitionList(project$definitions$plotGrids) %||% list()
   selectedGrids <- grids[intersect(names(grids), plotGrids)]
   if (length(selectedGrids) == 0) {
     return(character(0))
@@ -145,7 +145,7 @@ createDataCombined <- function(
     selectedGrids,
     function(g) .splitPlotIDs(g$plotIds)
   )))
-  plotConfig <- .unwrapDefinitionList(project$plots) %||% list()
+  plotConfig <- .unwrapDefinitionList(project$definitions$plots) %||% list()
   referenced <- plotConfig[intersect(names(plotConfig), ids)]
   if (length(referenced) == 0) {
     return(character(0))
