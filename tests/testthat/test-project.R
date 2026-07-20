@@ -561,6 +561,85 @@ test_that("a legacy `modelFolder` key loads as `simulationsFolder`", {
   expect_match(project$paths$simulationsFolder, "Models/Simulations$")
 })
 
+test_that("both `modelFolder` and `simulationsFolder` keys warn and use the current name", {
+  # A hand-edited file could carry both keys; the current one wins with a
+  # warning rather than letting iteration order decide silently.
+  tmp <- withr::local_tempfile(fileext = ".json")
+  jsonlite::write_json(
+    list(
+      schemaVersion = "2.0",
+      filePaths = list(
+        modelFolder = "Legacy",
+        simulationsFolder = "Models/Simulations/",
+        dataFolder = "Data/",
+        outputFolder = "Results/"
+      ),
+      outputPaths = structure(list(), names = character(0)),
+      scenarios = list()
+    ),
+    tmp,
+    auto_unbox = TRUE,
+    null = "null"
+  )
+  expect_warning(
+    project <- loadProject(tmp),
+    "both the legacy"
+  )
+  expect_match(project$paths$simulationsFolder, "Models/Simulations$")
+})
+
+test_that("a working folder resolving outside the project directory is rejected", {
+  # The containment fix must also cover the folder roots themselves: an
+  # absolute (or `../`-escaping) folder value from an untrusted `Project.json`
+  # would otherwise be an attacker-chosen "root" that trivially contains any
+  # leaf path.
+  tmp <- withr::local_tempfile(fileext = ".json")
+  jsonlite::write_json(
+    list(
+      schemaVersion = "2.0",
+      filePaths = list(
+        simulationsFolder = "Models/Simulations/",
+        dataFolder = "/etc",
+        outputFolder = "Results/"
+      ),
+      outputPaths = structure(list(), names = character(0)),
+      scenarios = list()
+    ),
+    tmp,
+    auto_unbox = TRUE,
+    null = "null"
+  )
+  project <- loadProject(tmp)
+  # The folder resolves lazily on read; reading the escaping one aborts.
+  expect_error(project$paths$dataFolder, "outside the project folder")
+  # A contained sibling folder still resolves.
+  expect_match(project$paths$simulationsFolder, "Models/Simulations$")
+})
+
+test_that("a working folder set via an environment variable is allowed outside the project", {
+  # `${VAR}` is the sanctioned way to place a folder outside the project tree
+  # (e.g. shared-drive data), so it is exempt from the containment check.
+  withr::local_envvar(ESQLABSR_TEST_DATA = withr::local_tempdir())
+  tmp <- withr::local_tempfile(fileext = ".json")
+  jsonlite::write_json(
+    list(
+      schemaVersion = "2.0",
+      filePaths = list(
+        simulationsFolder = "Models/Simulations/",
+        dataFolder = "${ESQLABSR_TEST_DATA}/Aciclovir",
+        outputFolder = "Results/"
+      ),
+      outputPaths = structure(list(), names = character(0)),
+      scenarios = list()
+    ),
+    tmp,
+    auto_unbox = TRUE,
+    null = "null"
+  )
+  project <- loadProject(tmp)
+  expect_match(project$paths$dataFolder, "Aciclovir$")
+})
+
 test_that("excel exposes the seven Excel-bridge sheet-name fields", {
   project <- exampleProject()
   expect_named(

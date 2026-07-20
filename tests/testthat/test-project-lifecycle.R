@@ -276,6 +276,30 @@ test_that("initProject writes a README into each scaffold folder so it stays tra
   expect_false(file.exists(file.path(dir, "definitions", "README.md")))
 })
 
+test_that("initProject does not overwrite a README a user has edited", {
+  # The scaffold README is a starting placeholder; a rerun (e.g.
+  # `overwrite = TRUE` to refresh the template) must leave a user-edited
+  # working-folder README untouched, matching the "working folders are left
+  # untouched" invariant `.clearProjectArtifacts()` documents.
+  dir <- withr::local_tempdir()
+  initProject(destination = dir, type = "minimal", createExcel = FALSE)
+
+  edited <- file.path(dir, "Data", "README.md")
+  writeLines("My own notes about this project's data.", edited)
+
+  initProject(
+    destination = dir,
+    type = "minimal",
+    createExcel = FALSE,
+    overwrite = TRUE
+  )
+
+  expect_identical(
+    readLines(edited),
+    "My own notes about this project's data."
+  )
+})
+
 test_that("initProject(type = 'minimal') scaffolds a definitions/ directory", {
   dir <- withr::local_tempdir()
   initProject(destination = dir, type = "minimal", createExcel = FALSE)

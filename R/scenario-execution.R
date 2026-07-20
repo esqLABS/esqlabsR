@@ -239,7 +239,7 @@
       "modelFile"
     )
   } else {
-    cli::cli_abort(messages$noModelFolderForRelativeModelFile(
+    cli::cli_abort(messages$noSimulationsFolderForRelativeModelFile(
       scenarioName = scenario$scenarioName,
       modelFile = scenario$modelFile
     ))

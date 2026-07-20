@@ -42,7 +42,10 @@ print.ObservedDataSource <- function(x, ...) {
 #' @keywords internal
 #' @noRd
 .observedDataValidatorAdapter <- function(project) {
-  .validateObservedData(project$definitions$observedData, project$paths$dataFolder)
+  .validateObservedData(
+    project$definitions$observedData,
+    project$paths$dataFolder
+  )
 }
 
 # Single source of truth for observed-data source shape, shared by both
@@ -144,29 +147,52 @@ print.ObservedDataSource <- function(x, ...) {
       }
     }
 
-    # File existence is a warning (a missing source does not block parsing).
+    # A source path that escapes the data folder is a critical error, matching
+    # the abort `.resolveDataPath()` raises at load time, so `validateProject()`
+    # does not report clean on a path the loader would reject. Otherwise file
+    # existence is only a warning (a missing source does not block parsing).
     if (!is.null(dataFolder)) {
       if (!is.null(entry$file)) {
-        filePath <- file.path(dataFolder, entry$file)
-        if (!file.exists(filePath)) {
-          result$add_warning(
-            "File Not Found",
-            messages$validationObservedDataFileNotFound(entryLabel, entry$file)
+        if (.pathEscapesRoot(entry$file, dataFolder)) {
+          result$add_critical_error(
+            "Path Containment",
+            messages$validationObservedDataPathEscapes(entryLabel, entry$file)
           )
+        } else {
+          filePath <- file.path(dataFolder, entry$file)
+          if (!file.exists(filePath)) {
+            result$add_warning(
+              "File Not Found",
+              messages$validationObservedDataFileNotFound(
+                entryLabel,
+                entry$file
+              )
+            )
+          }
         }
       }
       if (
         identical(entry$type, "excel") && !is.null(entry$importerConfiguration)
       ) {
-        importerPath <- file.path(dataFolder, entry$importerConfiguration)
-        if (!file.exists(importerPath)) {
-          result$add_warning(
-            "File Not Found",
-            messages$validationObservedDataImporterNotFound(
+        if (.pathEscapesRoot(entry$importerConfiguration, dataFolder)) {
+          result$add_critical_error(
+            "Path Containment",
+            messages$validationObservedDataPathEscapes(
               entryLabel,
               entry$importerConfiguration
             )
           )
+        } else {
+          importerPath <- file.path(dataFolder, entry$importerConfiguration)
+          if (!file.exists(importerPath)) {
+            result$add_warning(
+              "File Not Found",
+              messages$validationObservedDataImporterNotFound(
+                entryLabel,
+                entry$importerConfiguration
+              )
+            )
+          }
         }
       }
     }
@@ -211,7 +237,10 @@ loadObservedData <- function(project) {
   # Attribute any abort to the public authoring function the user called
   # (the free-function forwarder), not this internal `_impl`.
   rlang::local_error_call(rlang::caller_env(2))
-  if (is.null(self$definitions$observedData) || length(self$definitions$observedData) == 0) {
+  if (
+    is.null(self$definitions$observedData) ||
+      length(self$definitions$observedData) == 0
+  ) {
     return(list())
   }
   allDataSets <- list()
@@ -359,7 +388,10 @@ addObservedData <- function(project, entry) {
     }
     # Validate the full entry shape (per-type required fields), not just the
     # type, so an under-specified config entry is rejected at add time.
-    .validateObservedDataEntry(entry, length(self$definitions$observedData) + 1L)
+    .validateObservedDataEntry(
+      entry,
+      length(self$definitions$observedData) + 1L
+    )
     # Config entries are keyed by `file` basename (see removeObservedData);
     # abort on a duplicate to match the other mutators' convention.
     fileBase <- basename(entry[["file"]])
@@ -497,7 +529,8 @@ removeObservedData <- function(project, id) {
 # @keywords internal
 # @noRd
 .warnIfObservedDataReferenced <- function(project, name) {
-  dataCombined <- .unwrapDefinitionList(project$definitions$dataCombined) %||% list()
+  dataCombined <- .unwrapDefinitionList(project$definitions$dataCombined) %||%
+    list()
   holders <- character()
   for (dcName in names(dataCombined)) {
     observed <- dataCombined[[dcName]]$observed %||% list()

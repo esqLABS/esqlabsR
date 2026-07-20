@@ -863,11 +863,19 @@ Project <- R6::R6Class(
     # sets the dirty bit. `definitionsFolder` is stored separately (it is not a
     # `filePaths` record) and defaults to `"definitions"`.
     .pathsGroup = function() {
+      # Working folders resolve through `.resolveWorkingFolder()` (not the
+      # plain `.recordFieldSpec` resolver) so a folder value read from an
+      # untrusted `Project.json` is contained under the project directory,
+      # unless it opts out with an explicit `${VAR}`. The setter is the same
+      # raw-store-and-invalidate as any record field.
       folderField <- function(name) {
-        private$.recordFieldSpec(
-          ".filePathsData",
-          name,
-          function() private$.projectDirPath
+        force(name)
+        list(
+          get = function() private$.resolveWorkingFolder(name),
+          set = function(value) {
+            private$.filePathsData[[name]]$value <- value
+            private$.invalidateContainer()
+          }
         )
       }
       .projectFieldGroup(
@@ -1235,6 +1243,56 @@ Project <- R6::R6Class(
       }
     },
 
+    # Resolve one working-folder value (`filePaths`) against `projectDirPath`
+    # and require the result to stay under the project directory, so an
+    # untrusted `Project.json` cannot point a working folder at an arbitrary
+    # location (`"dataFolder": "/etc"`, or a `../`-escaping relative folder)
+    # and then reference a plainly-"contained" file inside it. This is the
+    # root-level companion to `.resolveProjectPath()`, which contains the leaf
+    # paths joined onto these folders.
+    #
+    # The `${VAR}` environment-variable form is the sanctioned way to place a
+    # folder outside the project tree (e.g. shared-drive data), so a raw value
+    # that carries a `${VAR}` is exempt from the containment check; only a bare
+    # absolute or `../`-escaping literal is rejected. Containment is judged on
+    # the raw stored value (pre-expansion) for that reason.
+    .resolveWorkingFolder = function(name) {
+      raw <- private$.filePathsData[[name]]$value
+      projectDir <- private$.projectDirPath
+      resolved <- private$.clean_path(raw, projectDir)
+      if (is.null(resolved)) {
+        return(NULL)
+      }
+      # A from-scratch in-memory project has no on-disk directory yet, so there
+      # is no project root to contain the folder against; skip the check (the
+      # containment boundary comes into being only once the project is loaded
+      # from / saved to a directory).
+      hasProjectDir <- !is.null(projectDir) &&
+        length(projectDir) == 1L &&
+        !is.na(projectDir) &&
+        nzchar(projectDir)
+      # An explicit `${VAR}` opts into an out-of-project location; skip the
+      # containment check for it (the variable value is the user's choice).
+      declaresEnvVar <- is.character(raw) &&
+        length(raw) == 1L &&
+        grepl("\\$\\{?[A-Za-z_]", raw)
+      # The resolved folder is already absolute; `.pathEscapesRoot()` compares
+      # an absolute path to the root directly, so this rejects a folder value
+      # that resolves outside the project directory.
+      if (
+        hasProjectDir &&
+          !declaresEnvVar &&
+          .pathEscapesRoot(as.character(resolved), projectDir)
+      ) {
+        cli::cli_abort(messages$projectPathEscapesRoot(
+          name,
+          raw,
+          private$.projectDirPath
+        ))
+      }
+      resolved
+    },
+
     .read_json = function(jsonPath) {
       jsonPath <- fs::path_abs(jsonPath)
       if (!fs::file_exists(jsonPath)) {
@@ -1273,6 +1331,17 @@ Project <- R6::R6Class(
       # `filePaths` (e.g. a hand-edited file) is routed to the Excel store too.
       fp <- jsonData$filePaths %||% list()
       excel <- jsonData$excel %||% list()
+      # A hand-edited `Project.json` could carry both the legacy `modelFolder`
+      # and the current `simulationsFolder` key. They map to the same slot, so
+      # rather than let iteration order decide, warn and drop the legacy key so
+      # the current `simulationsFolder` deterministically wins.
+      hasSimulationsCollision <- all(
+        c("modelFolder", "simulationsFolder") %in% names(fp)
+      )
+      if (hasSimulationsCollision) {
+        cli::cli_warn(messages$duplicateSimulationsFolderKey())
+        fp[["modelFolder"]] <- NULL
+      }
       private$.filePathsData <- list()
       private$.excelData <- list()
       for (n in names(fp)) {

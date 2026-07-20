@@ -91,14 +91,50 @@ readExcel <- function(path, sheet = NULL, ...) {
 #' @returns The resolved absolute path (a string), on success.
 #' @keywords internal
 #' @noRd
+# TRUE when `path`, resolved relative to `root`, lands outside `root`. The
+# non-aborting containment predicate shared by `.resolveProjectPath()` (which
+# aborts on TRUE) and the validators (which record a finding on TRUE). Purely
+# lexical: both sides are made absolute with `fs::path_abs()` (no symlink
+# resolution) so `..` climbing above the root is detected without touching the
+# filesystem and the root need not exist. The contained-child prefix is the
+# root plus a separator, except when the root already ends in one (a filesystem
+# root such as `/` or `D:/`), where appending another would double the
+# separator and wrongly reject every legitimate child.
+# @keywords internal
+# @noRd
+# Resolve `path` to an absolute location for containment testing. An absolute
+# `path` resolves to itself; a relative one is joined onto `root`. Lexical
+# only (`fs::path_abs()` cleans `..`/`.` without touching the filesystem).
+# @keywords internal
+# @noRd
+.absoluteAgainstRoot <- function(path, absRoot) {
+  if (fs::is_absolute_path(path)) {
+    as.character(fs::path_abs(path))
+  } else {
+    as.character(fs::path_abs(fs::path(absRoot, path)))
+  }
+}
+
+.pathEscapesRoot <- function(path, root) {
+  # No root to contain against (an unset / not-yet-known folder): nothing can
+  # "escape" it, so report not-escaping and let the caller's own not-declared
+  # handling fire where a root is actually required.
+  if (is.null(root) || length(root) != 1L || is.na(root) || !nzchar(root)) {
+    return(FALSE)
+  }
+  absRoot <- as.character(fs::path_abs(root))
+  absPath <- .absoluteAgainstRoot(path, absRoot)
+  sep <- .Platform$file.sep
+  rootPrefix <- if (endsWith(absRoot, sep)) absRoot else paste0(absRoot, sep)
+  absPath != absRoot && !startsWith(absPath, rootPrefix)
+}
+
 .resolveProjectPath <- function(path, root, fieldName = "path") {
   absRoot <- as.character(fs::path_abs(root))
-  absPath <- as.character(fs::path_abs(fs::path(absRoot, path)))
-  sep <- .Platform$file.sep
-  if (absPath != absRoot && !startsWith(absPath, paste0(absRoot, sep))) {
+  if (.pathEscapesRoot(path, root)) {
     cli::cli_abort(messages$projectPathEscapesRoot(fieldName, path, root))
   }
-  absPath
+  .absoluteAgainstRoot(path, absRoot)
 }
 
 #' Write data to excel

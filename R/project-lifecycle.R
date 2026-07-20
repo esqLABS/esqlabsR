@@ -357,38 +357,47 @@ initProject <- function(
   invisible(destination)
 }
 
-# The working folders a project ships with, each mapped to the one-line
-# `README.md` written into it. The README keeps the otherwise-empty folder
-# tracked under version control (git does not track empty folders) and tells
-# the reader what belongs there. `definitions/` is created without a
-# placeholder because it holds the authored project content, never empty in a
-# real project. Order is deepest-first only for readability; `dir.create()`
-# with `recursive = TRUE` creates parents regardless.
-.projectScaffoldFolders <- c(
+# The working folders that ship with a `README.md` placeholder, each mapped to
+# its one-line text. The README keeps the otherwise-empty folder tracked under
+# version control (git does not track empty folders) and tells the reader what
+# belongs there.
+.projectReadmeFolders <- c(
   "Models/Simulations" = "Simulations as *.pkml that will be referenced by scenarios.",
   "Models/Snapshots" = "PK-Sim and MoBi snapshots (*.json). Not loaded by the package yet; reserved for a future release.",
   "Data" = "Observed data files referenced by the project.",
   "Populations" = "Population definitions as *.csv files, loaded by scenarios that reference them.",
   "Results/Figures" = "By default, figures will be saved in this folder.",
-  "Results/SimulationResults" = "By default, simulation results will be saved in this folder.",
-  "definitions" = NA_character_
+  "Results/SimulationResults" = "By default, simulation results will be saved in this folder."
 )
 
+# Folders created without a README placeholder. `definitions/` holds the
+# authored project content and is never empty in a real project.
+.projectPlainFolders <- c("definitions")
+
 # Create the working-folder structure under `destination`, writing a short
-# `README.md` placeholder into every folder that carries one (see
-# `.projectScaffoldFolders`).
+# `README.md` placeholder into every README-bearing folder (see
+# `.projectReadmeFolders`). An existing `README.md` is left untouched: a user
+# may have edited it to document their own project, and `initProject(overwrite
+# = TRUE)` must honor the "working folders are left untouched" invariant
+# `.clearProjectArtifacts()` documents.
 # @keywords internal
 # @noRd
 .scaffoldProjectFolders <- function(destination) {
-  for (folder in names(.projectScaffoldFolders)) {
+  createFolder <- function(folder) {
     dir.create(
       file.path(destination, folder),
       recursive = TRUE,
       showWarnings = FALSE
     )
-    readmeText <- .projectScaffoldFolders[[folder]]
-    if (!is.na(readmeText)) {
-      writeLines(readmeText, file.path(destination, folder, "README.md"))
+  }
+  for (folder in .projectPlainFolders) {
+    createFolder(folder)
+  }
+  for (folder in names(.projectReadmeFolders)) {
+    createFolder(folder)
+    readmePath <- file.path(destination, folder, "README.md")
+    if (!file.exists(readmePath)) {
+      writeLines(.projectReadmeFolders[[folder]], readmePath)
     }
   }
   invisible(destination)
