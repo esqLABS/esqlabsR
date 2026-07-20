@@ -586,41 +586,6 @@ Project <- R6::R6Class(
       lapply(data, function(entry) entry$value)
     },
 
-    #' @field rawFilePaths Read-only. The raw `filePaths` block as stored: a
-    #'   named list of `list(value, description)` records for the four live
-    #'   working folders. Unlike `filePaths` (which returns just the values),
-    #'   this keeps the per-folder descriptions the Excel bridge round-trips.
-    #'   Package-internal; consumed by the JSON writer and the Excel exporter.
-    rawFilePaths = function(value) {
-      if (!missing(value)) {
-        cli::cli_abort("{.field rawFilePaths} is readonly")
-      }
-      private$.filePathsData
-    },
-
-    #' @field rawExcel Read-only. The raw `excel` block as stored: a named list
-    #'   of `list(value, description)` records for the Excel-bridge sheet-name
-    #'   fields. Unlike `excel` (which returns just the values), this keeps the
-    #'   descriptions. Empty when the project has no Excel side-car.
-    #'   Package-internal; consumed by the JSON writer and the Excel exporter.
-    rawExcel = function(value) {
-      if (!missing(value)) {
-        cli::cli_abort("{.field rawExcel} is readonly")
-      }
-      private$.excelData
-    },
-
-    #' @field isModified Read-only logical. `TRUE` when the in-memory project
-    #'   carries edits not yet reconciled to the on-disk `definitions/` tree
-    #'   (the dirty bit). The same signal `syncStatus()` reports on its
-    #'   memory-vs-tree axis. Package-internal; consumed by the sync reporter.
-    isModified = function(value) {
-      if (!missing(value)) {
-        cli::cli_abort("{.field isModified} is readonly")
-      }
-      private$.modified
-    },
-
     #' @field asList Returns the current project as a list matching the JSON
     #'   schema. Reflects any in-memory modifications. Read-only.
     asList = function(value) {
@@ -1044,6 +1009,38 @@ Project <- R6::R6Class(
     #' @keywords internal
     ensureValid = function(sections, opName) {
       private$.ensureValid(sections, opName)
+    },
+
+    #' @description Package-internal reader for the raw `filePaths` block: a
+    #'   named list of `list(value, description)` records for the four live
+    #'   working folders. Unlike `project$filePaths$...` (which returns resolved
+    #'   values), this keeps the per-folder descriptions the Excel bridge
+    #'   round-trips. Consumed by the JSON writer and the Excel exporter; not
+    #'   intended for end users.
+    #' @keywords internal
+    rawFilePaths = function() {
+      private$.filePathsData
+    },
+
+    #' @description Package-internal reader for the raw `excel` block: a named
+    #'   list of `list(value, description)` records for the Excel-bridge
+    #'   sheet-name fields. Unlike `project$excel$...` (which returns resolved
+    #'   values), this keeps the descriptions. Empty when the project has no
+    #'   Excel side-car. Consumed by the JSON writer and the Excel exporter; not
+    #'   intended for end users.
+    #' @keywords internal
+    rawExcel = function() {
+      private$.excelData
+    },
+
+    #' @description Package-internal reader for the in-memory dirty bit: `TRUE`
+    #'   when the project carries edits not yet reconciled to the on-disk
+    #'   `definitions/` tree. The same signal `projectStatus()` reports on its
+    #'   memory-vs-tree axis. Not intended for end users; users read the sync
+    #'   state through `project$status` or [projectStatus()].
+    #' @keywords internal
+    isModified = function() {
+      private$.isModified()
     },
 
     #' @description Print a summary of the Project.

@@ -197,11 +197,11 @@
 # dereferencing, unit conversions).
 
 # JSON object (the `filePaths` block). Walks the raw `{value, description}`
-# records in `project$rawFilePaths` (the four live working folders only) and
+# records in `project$rawFilePaths()` (the four live working folders only) and
 # emits a flat `{name: value}` map. The Excel-bridge sheet names are emitted
 # separately by `.excelToJson()`.
 .filePathsToJson <- function(project) {
-  data <- project$rawFilePaths
+  data <- project$rawFilePaths()
   if (length(data) == 0L) {
     return(stats::setNames(list(), character(0)))
   }
@@ -211,12 +211,12 @@
 
 # JSON object (the `excel` block) or an empty list when the project has no
 # Excel side-car. Walks the raw `{value, description}` records in
-# `project$rawExcel` (the Excel-bridge sheet-name fields) and emits a flat
+# `project$rawExcel()` (the Excel-bridge sheet-name fields) and emits a flat
 # `{name: value}` map. Returns `list()` (length 0) when there are no fields, so
 # `.projectToJson()` can omit the `excel` key entirely for a from-scratch JSON
 # project.
 .excelToJson <- function(project) {
-  data <- project$rawExcel
+  data <- project$rawExcel()
   if (length(data) == 0L) {
     return(list())
   }

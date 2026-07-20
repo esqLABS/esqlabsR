@@ -213,23 +213,6 @@ as strings; no resolution is performed at this stage. The Excel-bridge
 sheet-name fields live in the separate \code{excel} block (\code{project$excel}),
 not here.}
 
-    \item{\code{rawFilePaths}}{Read-only. The raw \code{filePaths} block as stored: a
-named list of \code{list(value, description)} records for the four live
-working folders. Unlike \code{filePaths} (which returns just the values),
-this keeps the per-folder descriptions the Excel bridge round-trips.
-Package-internal; consumed by the JSON writer and the Excel exporter.}
-
-    \item{\code{rawExcel}}{Read-only. The raw \code{excel} block as stored: a named list
-of \code{list(value, description)} records for the Excel-bridge sheet-name
-fields. Unlike \code{excel} (which returns just the values), this keeps the
-descriptions. Empty when the project has no Excel side-car.
-Package-internal; consumed by the JSON writer and the Excel exporter.}
-
-    \item{\code{isModified}}{Read-only logical. \code{TRUE} when the in-memory project
-carries edits not yet reconciled to the on-disk \verb{definitions/} tree
-(the dirty bit). The same signal \code{syncStatus()} reports on its
-memory-vs-tree axis. Package-internal; consumed by the sync reporter.}
-
     \item{\code{asList}}{Returns the current project as a list matching the JSON
 schema. Reflects any in-memory modifications. Read-only.}
 
@@ -293,6 +276,9 @@ differences, empty when everything is in sync). The same information
     \item \href{#method-Project-reload}{\code{Project$reload()}}
     \item \href{#method-Project-validate}{\code{Project$validate()}}
     \item \href{#method-Project-ensureValid}{\code{Project$ensureValid()}}
+    \item \href{#method-Project-rawFilePaths}{\code{Project$rawFilePaths()}}
+    \item \href{#method-Project-rawExcel}{\code{Project$rawExcel()}}
+    \item \href{#method-Project-isModified}{\code{Project$isModified()}}
     \item \href{#method-Project-print}{\code{Project$print()}}
   }
 }
@@ -1300,6 +1286,56 @@ operation requires.}
       \item{\code{opName}}{Short label used in the abort message (e.g.
 \code{"runScenarios"}).}
     }
+    \if{html}{\out{</div>}}
+  }
+}
+
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Project-rawFilePaths"></a>}}
+\if{latex}{\out{\hypertarget{method-Project-rawFilePaths}{}}}
+\subsection{\code{Project$rawFilePaths()}}{
+  Package-internal reader for the raw \code{filePaths} block: a
+named list of \code{list(value, description)} records for the four live
+working folders. Unlike \code{project$filePaths$...} (which returns resolved
+values), this keeps the per-folder descriptions the Excel bridge
+round-trips. Consumed by the JSON writer and the Excel exporter; not
+intended for end users.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{Project$rawFilePaths()}
+    \if{html}{\out{</div>}}
+  }
+}
+
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Project-rawExcel"></a>}}
+\if{latex}{\out{\hypertarget{method-Project-rawExcel}{}}}
+\subsection{\code{Project$rawExcel()}}{
+  Package-internal reader for the raw \code{excel} block: a named
+list of \code{list(value, description)} records for the Excel-bridge
+sheet-name fields. Unlike \code{project$excel$...} (which returns resolved
+values), this keeps the descriptions. Empty when the project has no
+Excel side-car. Consumed by the JSON writer and the Excel exporter; not
+intended for end users.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{Project$rawExcel()}
+    \if{html}{\out{</div>}}
+  }
+}
+
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Project-isModified"></a>}}
+\if{latex}{\out{\hypertarget{method-Project-isModified}{}}}
+\subsection{\code{Project$isModified()}}{
+  Package-internal reader for the in-memory dirty bit: \code{TRUE}
+when the project carries edits not yet reconciled to the on-disk
+\verb{definitions/} tree. The same signal \code{projectStatus()} reports on its
+memory-vs-tree axis. Not intended for end users; users read the sync
+state through \code{project$status} or \code{\link[=projectStatus]{projectStatus()}}.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{Project$isModified()}
     \if{html}{\out{</div>}}
   }
 }
