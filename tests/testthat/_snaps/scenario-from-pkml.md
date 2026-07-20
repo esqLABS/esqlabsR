@@ -60,14 +60,14 @@
     Message
       i Added 2 scenarios: "s" and "s_2"
 
-# NULL modelFolder falls back to the absolute pkml path with a warning
+# NULL simulationsFolder falls back to the absolute pkml path with a warning
 
     Code
       suppressMessages(createScenariosFromPKML(pkmlFixture, project = project,
         scenarios = "seeded"))
     Condition
       Warning:
-      ! The project has no modelFolder; storing an absolute model file path. i Set a modelFolder on the project so the scenario stores a portable relative path ('data/TestProject/Models/Simulations/Aciclovir.pkml').
+      ! The project has no simulationsFolder; storing an absolute model file path. i Set a simulationsFolder on the project so the scenario stores a portable relative path ('data/TestProject/Models/Simulations/Aciclovir.pkml').
 
 # inconsistent vector argument lengths abort
 

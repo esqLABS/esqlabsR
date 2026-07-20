@@ -242,10 +242,10 @@ messages$scenariosAddedToProject <- function(scenarioNames) {
 
 messages$noModelFolderUsingAbsolutePath <- function(pkmlPath) {
   cli::format_message(c(
-    "!" = "The project has no {.field modelFolder}; storing an absolute model \\
-    file path.",
-    "i" = "Set a {.field modelFolder} on the project so the scenario stores a \\
-    portable relative path ({.file {pkmlPath}})."
+    "!" = "The project has no {.field simulationsFolder}; storing an absolute \\
+    model file path.",
+    "i" = "Set a {.field simulationsFolder} on the project so the scenario \\
+    stores a portable relative path ({.file {pkmlPath}})."
   ))
 }
 
@@ -271,7 +271,7 @@ messages$noModelFolderForRelativeModelFile <- function(
   cli::format_message(c(
     "x" = "Cannot resolve the model file for scenario {.val {scenarioName}}.",
     "i" = "{.field modelFile} {.val {modelFile}} is relative but the project \\
-    has no {.field modelFolder} to resolve it against."
+    has no {.field simulationsFolder} to resolve it against."
   ))
 }
 
@@ -973,6 +973,15 @@ messages$observedDataDataFolderNotDeclared <- function(file) {
   cliFormat(
     "{.field dataFolder} is not declared in {.code filePaths}; cannot resolve {.path {file}}."
   )
+}
+
+messages$projectPathEscapesRoot <- function(fieldName, path, root) {
+  cli::format_message(c(
+    "x" = "{.field {fieldName}} {.val {path}} resolves outside the project \\
+    folder.",
+    "i" = "It must stay under {.path {root}}. A project file cannot reference \\
+    a path outside the project."
+  ))
 }
 
 messages$observedDataNameCollision <- function(duplicates) {

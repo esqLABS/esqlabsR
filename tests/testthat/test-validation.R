@@ -257,7 +257,7 @@ test_that(".validateScenarios warns when modelFile does not exist on disk", {
   )
   result <- esqlabsR:::.validateScenarios(
     list(s1 = sc),
-    modelFolder = withr::local_tempdir()
+    simulationsFolder = withr::local_tempdir()
   )
   msgs <- vapply(result$warnings, \(w) w$message, character(1))
   expect_match(msgs, "missing\\.pkml", all = FALSE)
@@ -270,7 +270,10 @@ test_that(".validateScenarios passes when modelFile exists on disk", {
     modelFile = "model.pkml",
     simulationType = "Individual"
   )
-  result <- esqlabsR:::.validateScenarios(list(s1 = sc), modelFolder = dir)
+  result <- esqlabsR:::.validateScenarios(
+    list(s1 = sc),
+    simulationsFolder = dir
+  )
   file_not_found_warns <- Filter(
     \(w) w$section == "File Not Found",
     result$warnings

@@ -53,13 +53,15 @@ dirty bit; assigning a read-only field aborts. The two version fields
 are managed by the load/save machinery, not by users.}
 
     \item{\code{paths}}{The project's working-folder paths, as a writable field
-group: \code{modelFolder} (pkml simulation files), \code{dataFolder}
-(experimental data), \code{outputFolder} (results), \code{populationsFolder}
-(population CSVs loaded by \code{\link[=runScenarios]{runScenarios()}}), and \code{definitionsFolder}
-(the folder holding the definition files, default \code{"definitions"}).
-Read a field with \code{project$paths$modelFolder} (returned resolved
+group: \code{simulationsFolder} (pkml simulation files, \code{Models/Simulations},
+sitting under \verb{Models/} alongside the \code{Snapshots} folder for PK-Sim /
+MoBi snapshots), \code{dataFolder} (experimental data), \code{outputFolder}
+(results), \code{populationsFolder} (population CSVs loaded by
+\code{\link[=runScenarios]{runScenarios()}}), and \code{definitionsFolder} (the folder holding the
+definition files, default \code{"definitions"}).
+Read a field with \code{project$paths$simulationsFolder} (returned resolved
 against \code{projectDirPath}); write one with
-\code{project$paths$modelFolder <- "Models"} (stored verbatim, resolved
+\code{project$paths$simulationsFolder <- "Models"} (stored verbatim, resolved
 on the next read). Assigning any field sets the dirty bit. Changing
 \code{definitionsFolder} redirects where the next \code{\link[=saveProject]{saveProject()}} writes the
 definition files; nothing moves on disk until that save. The

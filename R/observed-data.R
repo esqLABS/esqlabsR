@@ -546,11 +546,13 @@ removeObservedData <- function(project, id) {
   invisible(TRUE)
 }
 
-.resolveDataPath <- function(file, dataFolder) {
+.resolveDataPath <- function(file, dataFolder, fieldName = "file") {
   if (is.null(dataFolder)) {
     cli::cli_abort(messages$observedDataDataFolderNotDeclared(file))
   }
-  filePath <- file.path(dataFolder, file)
+  # Reject a path that escapes the data folder before checking existence, so a
+  # traversal attempt aborts clearly instead of as a misleading "not found".
+  filePath <- .resolveProjectPath(file, dataFolder, fieldName)
   if (!file.exists(filePath)) {
     cli::cli_abort(messages$observedDataFileNotFound(filePath))
   }
@@ -558,8 +560,12 @@ removeObservedData <- function(project, id) {
 }
 
 .loadObservedExcel <- function(entry, dataFolder) {
-  filePath <- .resolveDataPath(entry$file, dataFolder)
-  importerPath <- .resolveDataPath(entry$importerConfiguration, dataFolder)
+  filePath <- .resolveDataPath(entry$file, dataFolder, "file")
+  importerPath <- .resolveDataPath(
+    entry$importerConfiguration,
+    dataFolder,
+    "importerConfiguration"
+  )
   importerConfig <- ospsuite::loadDataImporterConfiguration(
     configurationFilePath = importerPath
   )

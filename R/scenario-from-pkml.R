@@ -456,16 +456,16 @@ createScenariosFromPKML <- function(
     simulation <- simulationCache[[pkmlPath]]
     scenarioName <- finalNames[[i]]
 
-    # Resolve the model file relative to the project's model folder so the
-    # stored path is portable. `as.character()` strips the `fs_path` class so
-    # the value round-trips identically through save/load.
-    if (is.null(self$paths$modelFolder)) {
+    # Resolve the model file relative to the project's simulations folder so
+    # the stored path is portable. `as.character()` strips the `fs_path` class
+    # so the value round-trips identically through save/load.
+    if (is.null(self$paths$simulationsFolder)) {
       cli::cli_warn(messages$noModelFolderUsingAbsolutePath(pkmlPath))
       modelFile <- as.character(fs::path_abs(pkmlPath))
     } else {
       modelFile <- as.character(fs::path_rel(
         pkmlPath,
-        start = self$paths$modelFolder
+        start = self$paths$simulationsFolder
       ))
     }
 

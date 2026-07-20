@@ -340,22 +340,13 @@ initProject <- function(
     cli::cli_abort(messages$failedToCopyTemplate(sourceFiles[!copied]))
   }
 
-  # Create empty directory structure
-  dirs_to_create <- c(
-    "Models/Simulations",
-    "Data",
-    "Populations",
-    "Results/Figures",
-    "Results/SimulationResults",
-    "definitions"
-  )
-  for (d in dirs_to_create) {
-    dir.create(
-      file.path(destination, d),
-      recursive = TRUE,
-      showWarnings = FALSE
-    )
-  }
+  # Create the working-folder structure. Each folder gets a short `README.md`
+  # so it stays tracked under version control (git ignores empty folders) and
+  # tells the reader what belongs there. `Models/Snapshots` is scaffolded for
+  # PK-Sim / MoBi snapshots even though the package does not load from it yet;
+  # it is part of every project's structure. The `definitions/` tree carries
+  # the authored project content and needs no placeholder.
+  .scaffoldProjectFolders(destination)
 
   if (createExcel) {
     jsonPath <- file.path(destination, "Project.json")
@@ -363,6 +354,43 @@ initProject <- function(
     exportProjectToExcel(project, outputDir = destination, silent = TRUE)
   }
 
+  invisible(destination)
+}
+
+# The working folders a project ships with, each mapped to the one-line
+# `README.md` written into it. The README keeps the otherwise-empty folder
+# tracked under version control (git does not track empty folders) and tells
+# the reader what belongs there. `definitions/` is created without a
+# placeholder because it holds the authored project content, never empty in a
+# real project. Order is deepest-first only for readability; `dir.create()`
+# with `recursive = TRUE` creates parents regardless.
+.projectScaffoldFolders <- c(
+  "Models/Simulations" = "Simulations as *.pkml that will be referenced by scenarios.",
+  "Models/Snapshots" = "PK-Sim and MoBi snapshots (*.json). Not loaded by the package yet; reserved for a future release.",
+  "Data" = "Observed data files referenced by the project.",
+  "Populations" = "Population definitions as *.csv files, loaded by scenarios that reference them.",
+  "Results/Figures" = "By default, figures will be saved in this folder.",
+  "Results/SimulationResults" = "By default, simulation results will be saved in this folder.",
+  "definitions" = NA_character_
+)
+
+# Create the working-folder structure under `destination`, writing a short
+# `README.md` placeholder into every folder that carries one (see
+# `.projectScaffoldFolders`).
+# @keywords internal
+# @noRd
+.scaffoldProjectFolders <- function(destination) {
+  for (folder in names(.projectScaffoldFolders)) {
+    dir.create(
+      file.path(destination, folder),
+      recursive = TRUE,
+      showWarnings = FALSE
+    )
+    readmeText <- .projectScaffoldFolders[[folder]]
+    if (!is.na(readmeText)) {
+      writeLines(readmeText, file.path(destination, folder, "README.md"))
+    }
+  }
   invisible(destination)
 }
 

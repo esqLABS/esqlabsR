@@ -61,19 +61,19 @@ test_that("loadProject() loads a clean project without a cross-reference warning
 test_that("a bound project's container edit stays in memory until saveProject()", {
   project <- testProject()
   tmp <- project$info$projectFilePath
-  original <- project$paths$modelFolder
+  original <- project$paths$simulationsFolder
 
-  project$paths$modelFolder <- "AnotherModels"
+  project$paths$simulationsFolder <- "AnotherModels"
 
   # The edit is in memory only: a fresh load still reads the old value, and the
   # project is dirty.
-  expect_identical(loadProject(tmp)$paths$modelFolder, original)
+  expect_identical(loadProject(tmp)$paths$simulationsFolder, original)
   expect_true(.isModified(project))
 
   # After an explicit save, a fresh load sees the new value.
   saveProject(project)
   expect_identical(
-    loadProject(tmp)$paths$modelFolder,
+    loadProject(tmp)$paths$simulationsFolder,
     fs::path_abs(file.path(dirname(tmp), "AnotherModels"))
   )
   expect_false(.isModified(project))
@@ -106,7 +106,11 @@ test_that("a container edit followed by saveProject() keeps the sections", {
 test_that("saveProject() writes only the changed entity's file (write-if-different)", {
   project <- testProject()
   saveProject(project) # settle the tree (byte-stable) so mtimes are a baseline
-  scenarioDir <- file.path(project$info$projectDirPath, "definitions", "scenarios")
+  scenarioDir <- file.path(
+    project$info$projectDirPath,
+    "definitions",
+    "scenarios"
+  )
 
   # Edit exactly one scenario, leaving its siblings untouched.
   setScenario(project, "testscenario", modelFile = "AnotherModel.pkml")
@@ -126,7 +130,11 @@ test_that("saveProject() writes only the changed entity's file (write-if-differe
 test_that("saveProject() deletes an orphan and leaves other kinds untouched", {
   project <- testProject()
   saveProject(project)
-  scenarioDir <- file.path(project$info$projectDirPath, "definitions", "scenarios")
+  scenarioDir <- file.path(
+    project$info$projectDirPath,
+    "definitions",
+    "scenarios"
+  )
   outputPathDir <- file.path(
     project$info$projectDirPath,
     "definitions",
@@ -243,6 +251,29 @@ test_that("initProject(type = 'minimal', createExcel = FALSE) creates the JSON s
   expect_false(file.exists(file.path(dir, "Project.xlsx")))
   expect_true(dir.exists(file.path(dir, "Models", "Simulations")))
   expect_true(dir.exists(file.path(dir, "Results", "Figures")))
+  # Snapshots folder ships even though the package does not load from it yet.
+  expect_true(dir.exists(file.path(dir, "Models", "Snapshots")))
+})
+
+test_that("initProject writes a README into each scaffold folder so it stays tracked", {
+  dir <- withr::local_tempdir()
+  initProject(destination = dir, type = "minimal", createExcel = FALSE)
+
+  readmes <- file.path(
+    dir,
+    c(
+      "Models/Simulations",
+      "Models/Snapshots",
+      "Data",
+      "Populations",
+      "Results/Figures",
+      "Results/SimulationResults"
+    ),
+    "README.md"
+  )
+  expect_true(all(file.exists(readmes)))
+  # The definitions tree holds authored content, not a placeholder.
+  expect_false(file.exists(file.path(dir, "definitions", "README.md")))
 })
 
 test_that("initProject(type = 'minimal') scaffolds a definitions/ directory", {
@@ -440,6 +471,9 @@ test_that("mutated project survives a snapshot -> loadProject round-trip", {
     reloaded$definitions$outputPaths$roundtripx,
     project$definitions$outputPaths$roundtripx
   )
-  expect_named(reloaded$definitions$individuals, names(project$definitions$individuals))
+  expect_named(
+    reloaded$definitions$individuals,
+    names(project$definitions$individuals)
+  )
   expect_identical(reloaded$definitions$individuals$pediatric_male$weight, 25)
 })

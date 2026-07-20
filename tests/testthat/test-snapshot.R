@@ -403,7 +403,7 @@ test_that("snapshot preserves metadata and the filePaths/excel split", {
   expect_identical(restored$paths$definitionsFolder, "definitions")
   expect_named(
     restored$rawFilePaths(),
-    c("modelFolder", "populationsFolder", "dataFolder", "outputFolder"),
+    c("simulationsFolder", "populationsFolder", "dataFolder", "outputFolder"),
     ignore.order = TRUE
   )
   expect_length(restored$rawExcel(), 7L)

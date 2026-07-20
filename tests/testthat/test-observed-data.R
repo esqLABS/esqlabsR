@@ -126,6 +126,29 @@ test_that("loadObservedData errors when source file is missing", {
   expect_error(loadObservedData(project), "Observed-data source file not found")
 })
 
+test_that("loadObservedData rejects an observed-data file that escapes the data folder", {
+  # A malicious project points `file` outside its own folder. The traversal is
+  # rejected before the not-found check, so the error names the escape rather
+  # than a misleading "file not found".
+  tmp <- withr::local_tempfile(fileext = ".json")
+  jsonlite::write_json(
+    list(
+      schemaVersion = "2.0",
+      filePaths = list(dataFolder = "Data"),
+      outputPaths = structure(list(), names = character(0)),
+      scenarios = list(),
+      observedData = list(
+        list(type = "pkml", file = "../../../../etc/passwd")
+      )
+    ),
+    tmp,
+    auto_unbox = TRUE,
+    null = "null"
+  )
+  project <- loadProject(tmp)
+  expect_error(loadObservedData(project), "resolves outside the project folder")
+})
+
 test_that("loadObservedData loads pkml observed data", {
   tmpDir <- withr::local_tempdir()
   file.copy(

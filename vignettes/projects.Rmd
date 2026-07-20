@@ -58,13 +58,16 @@ MyProject/
 │   ├── plots/                   # one file per plot configuration
 │   └── plot-grids/              # one file per plot grid
 ├── Models/
-│   └── Simulations/             # model PKML files
+│   ├── Simulations/             # model PKML files
+│   └── Snapshots/               # PK-Sim / MoBi snapshots (reserved for a future release)
 ├── Data/                        # observed-data files and importer configuration
 ├── Populations/                 # population CSV files
 └── Results/                     # simulation outputs and figures
     ├── Figures/
     └── SimulationResults/
 ```
+
+Each working folder ships with a short `README.md` so it stays under version control even while empty (git does not track empty folders), and `initProject()` writes the same placeholders into a project it scaffolds.
 
 The distinction between these two regions matters:
 
@@ -76,10 +79,12 @@ The `Project.json` file records the project metadata and the working-folder layo
 - `name` and optional `description`: a human label and free text, surfaced when you print the project. Editing one (`project$info$name <- "..."`) changes the project in memory; it reaches disk on the next `saveProject()`.
 - the schema and esqlabsR versions that wrote the file.
 - `definitionsFolder`: where the `definitions/` tree lives (`definitions` by default).
-- `filePaths`: the four working folders (model, data, populations, output).
+- `filePaths`: the four working folders (`simulationsFolder`, `dataFolder`, `populationsFolder`, `outputFolder`).
 - `defaultSimulationRunOptions` (optional): run defaults such as the number of cores, which `runScenarios()` falls back on when you pass no run options of your own.
 
 A project that also keeps an Excel project carries a separate `excel` block naming the workbook files; a from-scratch JSON project has none.
+
+A working-folder path may embed an environment variable, so a folder can live outside the project tree without hard-coding a machine-specific location. Write it as `${VAR}` anywhere in the path (for example `"dataFolder": "${PROJECT_DATA_FOLDER}/Aciclovir"` to keep observed data on a shared drive); the variable is substituted when the path is resolved, and an unset variable is left in place rather than blanking the path. This applies to every folder in `filePaths`, so the same project loads on different machines by setting the variable per machine.
 
 ## The in-memory project
 

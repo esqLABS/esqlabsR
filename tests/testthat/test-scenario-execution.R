@@ -403,12 +403,15 @@ test_that(".runScenariosFromProject errors on unknown scenarioNames", {
 
 # Model file resolution ----
 
-test_that("a scenario with an absolute modelFile runs when modelFolder is NULL", {
+test_that("a scenario with an absolute modelFile runs when simulationsFolder is NULL", {
   withr::local_options(lifecycle_verbosity = "quiet")
   project <- .testProject()
-  absModel <- normalizePath(file.path(project$paths$modelFolder, "Aciclovir.pkml"))
+  absModel <- normalizePath(file.path(
+    project$paths$simulationsFolder,
+    "Aciclovir.pkml"
+  ))
   setScenario(project, "testscenario", modelFile = absModel)
-  project$paths$modelFolder <- NULL
+  project$paths$simulationsFolder <- NULL
 
   out <- esqlabsR:::.runScenariosFromProject(
     project,
@@ -418,10 +421,10 @@ test_that("a scenario with an absolute modelFile runs when modelFolder is NULL",
   expect_false(is.null(out$testscenario$outputValues))
 })
 
-test_that("a relative modelFile with NULL modelFolder aborts with a clear message", {
+test_that("a relative modelFile with NULL simulationsFolder aborts with a clear message", {
   withr::local_options(lifecycle_verbosity = "quiet")
   project <- .testProject()
-  project$paths$modelFolder <- NULL
+  project$paths$simulationsFolder <- NULL
   expect_snapshot(
     error = TRUE,
     esqlabsR:::.runScenariosFromProject(
@@ -429,6 +432,20 @@ test_that("a relative modelFile with NULL modelFolder aborts with a clear messag
       scenarioNames = "testscenario",
       validate = FALSE
     )
+  )
+})
+
+test_that("a relative modelFile that escapes the simulations folder is rejected", {
+  withr::local_options(lifecycle_verbosity = "quiet")
+  project <- .testProject()
+  setScenario(project, "testscenario", modelFile = "../../../../etc/passwd")
+  expect_error(
+    esqlabsR:::.runScenariosFromProject(
+      project,
+      scenarioNames = "testscenario",
+      validate = FALSE
+    ),
+    "resolves outside the project folder"
   )
 })
 

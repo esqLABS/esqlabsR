@@ -1,8 +1,9 @@
 # Project R6 class ----
 
 # The container path fields that belong to the Excel import/export bridge
-# (the `excel` block), as opposed to the live working folders (`modelFolder`,
-# `dataFolder`, `outputFolder`, `populationsFolder`) that the runtime reads
+# (the `excel` block), as opposed to the live working folders
+# (`simulationsFolder`, `dataFolder`, `outputFolder`, `populationsFolder`) that
+# the runtime reads
 # (the `filePaths` block). A legacy `Project.json` carries both sets in one
 # flat `filePaths` block; this fixed mapping is what splits them on read and
 # routes each to its own container block on write.
@@ -115,13 +116,15 @@ Project <- R6::R6Class(
     },
 
     #' @field paths The project's working-folder paths, as a writable field
-    #'   group: `modelFolder` (pkml simulation files), `dataFolder`
-    #'   (experimental data), `outputFolder` (results), `populationsFolder`
-    #'   (population CSVs loaded by [runScenarios()]), and `definitionsFolder`
-    #'   (the folder holding the definition files, default `"definitions"`).
-    #'   Read a field with `project$paths$modelFolder` (returned resolved
+    #'   group: `simulationsFolder` (pkml simulation files, `Models/Simulations`,
+    #'   sitting under `Models/` alongside the `Snapshots` folder for PK-Sim /
+    #'   MoBi snapshots), `dataFolder` (experimental data), `outputFolder`
+    #'   (results), `populationsFolder` (population CSVs loaded by
+    #'   [runScenarios()]), and `definitionsFolder` (the folder holding the
+    #'   definition files, default `"definitions"`).
+    #'   Read a field with `project$paths$simulationsFolder` (returned resolved
     #'   against `projectDirPath`); write one with
-    #'   `project$paths$modelFolder <- "Models"` (stored verbatim, resolved
+    #'   `project$paths$simulationsFolder <- "Models"` (stored verbatim, resolved
     #'   on the next read). Assigning any field sets the dirty bit. Changing
     #'   `definitionsFolder` redirects where the next [saveProject()] writes the
     #'   definition files; nothing moves on disk until that save. The
@@ -682,7 +685,7 @@ Project <- R6::R6Class(
     # clean (FALSE).
     .modified = FALSE,
     # Working-folder paths (the `filePaths` block): the four live folders the
-    # runtime reads (`modelFolder`, `dataFolder`, `outputFolder`,
+    # runtime reads (`simulationsFolder`, `dataFolder`, `outputFolder`,
     # `populationsFolder`).
     .filePathsData = list(),
     # Excel import/export bridge sheet names (the `excel` block): the
@@ -869,7 +872,7 @@ Project <- R6::R6Class(
       }
       .projectFieldGroup(
         list(
-          modelFolder = folderField("modelFolder"),
+          simulationsFolder = folderField("simulationsFolder"),
           dataFolder = folderField("dataFolder"),
           outputFolder = folderField("outputFolder"),
           populationsFolder = folderField("populationsFolder"),
@@ -1005,7 +1008,7 @@ Project <- R6::R6Class(
       items <- Filter(
         Negate(is.null),
         list(
-          "Simulations Folder" = relToProject(paths$modelFolder),
+          "Simulations Folder" = relToProject(paths$simulationsFolder),
           "Data Folder" = relToProject(paths$dataFolder),
           "Populations Folder" = relToProject(paths$populationsFolder),
           "Output Folder" = relToProject(paths$outputFolder),
@@ -1273,10 +1276,18 @@ Project <- R6::R6Class(
       private$.filePathsData <- list()
       private$.excelData <- list()
       for (n in names(fp)) {
-        if (n %in% .excelFilePathFields) {
-          private$.excelData[[n]] <- list(value = fp[[n]], description = "")
+        # Accept the pre-6.0.0 key `modelFolder` and store it under the current
+        # name `simulationsFolder`, so a legacy `Project.json` (or an
+        # Excel-imported project whose `Property` column still says
+        # `modelFolder`) resolves without a manual edit.
+        key <- if (identical(n, "modelFolder")) "simulationsFolder" else n
+        if (key %in% .excelFilePathFields) {
+          private$.excelData[[key]] <- list(value = fp[[n]], description = "")
         } else {
-          private$.filePathsData[[n]] <- list(value = fp[[n]], description = "")
+          private$.filePathsData[[key]] <- list(
+            value = fp[[n]],
+            description = ""
+          )
         }
       }
       for (n in names(excel)) {
