@@ -514,7 +514,7 @@ test_that("name and description are writable and persist on saveProject()", {
   # The edit stays in memory until an explicit save.
   expect_true(.isModified(project))
   expect_false(identical(
-    loadProject(project$info$projectFilePath)$name,
+    loadProject(project$info$projectFilePath)$info$name,
     "Renamed"
   ))
 
@@ -964,9 +964,13 @@ test_that("saveProject() rejects an unknown field on a record", {
   )
 })
 
-test_that("jsonPath is read-only and aliases projectFilePath", {
-  project <- testProject()
-  expect_identical(project$info$projectFilePath, project$info$projectFilePath)
+test_that("info$projectFilePath is the loaded path and is read-only", {
+  path <- exampleProjectPath()
+  project <- loadProject(path)
+  expect_identical(
+    normalizePath(project$info$projectFilePath, winslash = "/"),
+    normalizePath(path, winslash = "/")
+  )
   expect_snapshot(
     error = TRUE,
     project$info$projectFilePath <- "elsewhere.json"

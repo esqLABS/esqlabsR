@@ -476,25 +476,24 @@ validationSummary <- function(validationResults) {
     # `modelParameterSets`, an individual's `parameterSets`, an application's
     # `parameterSets`. Scan all three since they now share one namespace.
     holders <- character()
-    for (scName in names(project$definitions$scenarios %||% list())) {
+    scenarios <- project$definitions$scenarios %||% list()
+    for (scName in names(scenarios)) {
       if (
         id %in%
-          (project$definitions$scenarios[[scName]]$modelParameterSets %||% character(0))
+          (scenarios[[scName]]$modelParameterSets %||% character(0))
       ) {
         holders <- c(holders, paste0("scenario '", scName, "'"))
       }
     }
-    for (indId in names(project$definitions$individuals %||% list())) {
-      if (
-        id %in% (project$definitions$individuals[[indId]]$parameterSets %||% character(0))
-      ) {
+    individuals <- project$definitions$individuals %||% list()
+    for (indId in names(individuals)) {
+      if (id %in% (individuals[[indId]]$parameterSets %||% character(0))) {
         holders <- c(holders, paste0("individual '", indId, "'"))
       }
     }
-    for (appId in names(project$definitions$applications %||% list())) {
-      if (
-        id %in% (project$definitions$applications[[appId]]$parameterSets %||% character(0))
-      ) {
+    applications <- project$definitions$applications %||% list()
+    for (appId in names(applications)) {
+      if (id %in% (applications[[appId]]$parameterSets %||% character(0))) {
         holders <- c(holders, paste0("application '", appId, "'"))
       }
     }
@@ -512,10 +511,11 @@ validationSummary <- function(validationResults) {
     # An initial-condition set is referenced from a scenario's
     # `initialConditions` field (a character vector of set ids).
     holders <- character()
-    for (scName in names(project$definitions$scenarios %||% list())) {
+    scenarios <- project$definitions$scenarios %||% list()
+    for (scName in names(scenarios)) {
       if (
         id %in%
-          (project$definitions$scenarios[[scName]]$initialConditions %||% character(0))
+          (scenarios[[scName]]$initialConditions %||% character(0))
       ) {
         holders <- c(holders, paste0("scenario '", scName, "'"))
       }
@@ -532,8 +532,9 @@ validationSummary <- function(validationResults) {
 
   if (definitionType == "outputPath") {
     piHolders <- character()
-    for (taskId in names(project$definitions$parameterIdentification %||% list())) {
-      task <- project$definitions$parameterIdentification[[taskId]]
+    piTasks <- project$definitions$parameterIdentification %||% list()
+    for (taskId in names(piTasks)) {
+      task <- piTasks[[taskId]]
       for (m in task$outputMappings %||% list()) {
         if (identical(m$outputPathId, id)) {
           piHolders <- c(piHolders, taskId)
@@ -555,8 +556,9 @@ validationSummary <- function(validationResults) {
     # entry's `simulated[*]$scenario` names the scenario whose results it
     # plots. Scan every dataCombined simulated entry for the removed id.
     dcHolders <- character()
-    for (dcId in names(project$definitions$dataCombined %||% list())) {
-      for (entry in project$definitions$dataCombined[[dcId]]$simulated %||% list()) {
+    dataCombined <- project$definitions$dataCombined %||% list()
+    for (dcId in names(dataCombined)) {
+      for (entry in dataCombined[[dcId]]$simulated %||% list()) {
         if (identical(entry$scenario, id)) {
           dcHolders <- c(dcHolders, dcId)
         }
@@ -939,7 +941,9 @@ validationSummary <- function(validationResults) {
   individualIds <- names(project$definitions$individuals %||% list())
   populationIds <- names(project$definitions$populations %||% list())
   parameterSetKeys <- names(project$definitions$parameterSets %||% list())
-  initialConditionKeys <- names(project$definitions$initialConditions %||% list())
+  initialConditionKeys <- names(
+    project$definitions$initialConditions %||% list()
+  )
   applicationKeys <- names(project$definitions$applications %||% list())
   outputPathKeys <- names(project$definitions$outputPaths %||% list())
 
@@ -1055,8 +1059,10 @@ validationSummary <- function(validationResults) {
 
   # individuals/applications resolve their parameter-set refs against the same
   # unified section as scenarios.
-  for (id in names(project$definitions$individuals %||% list())) {
-    refs <- project$definitions$individuals[[id]]$parameterSets %||% character(0)
+  individuals <- project$definitions$individuals %||% list()
+  for (id in names(individuals)) {
+    refs <- individuals[[id]]$parameterSets %||%
+      character(0)
     refs <- as.character(unlist(refs))
     invalid <- .danglingRefs(refs, parameterSetKeys)
     if (length(invalid) > 0) {
@@ -1073,8 +1079,10 @@ validationSummary <- function(validationResults) {
     }
   }
 
-  for (id in names(project$definitions$applications %||% list())) {
-    refs <- project$definitions$applications[[id]]$parameterSets %||% character(0)
+  applications <- project$definitions$applications %||% list()
+  for (id in names(applications)) {
+    refs <- applications[[id]]$parameterSets %||%
+      character(0)
     refs <- as.character(unlist(refs))
     invalid <- .danglingRefs(refs, parameterSetKeys)
     if (length(invalid) > 0) {

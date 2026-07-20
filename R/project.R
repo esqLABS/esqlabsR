@@ -33,7 +33,7 @@
 #'   A `Project` cannot be copied with `$clone()` — because nothing is
 #'   written to disk until you save, there is no need for a working copy: the
 #'   loaded project itself is one. Reading a definition (for example
-#'   `sc <- project$scenarios[["my_scenario"]]`) hands you an independent
+#'   `sc <- project$definitions$scenarios[["my_scenario"]]`) hands you an independent
 #'   copy, so changing `sc` does not change the project until you re-submit
 #'   it with the matching set function. The one exception is observed data
 #'   added as a `DataSet` object via [addObservedData()]: the `DataSet` is
@@ -170,7 +170,7 @@ Project <- R6::R6Class(
     #'   `parameterSets`, `initialConditions`, `individuals`, `populations`,
     #'   `applications`, `observedData`, `dataCombined`, `plots`, `plotGrids`,
     #'   `parameterIdentification`. Read a section with
-    #'   `scenarios` definitions (returned as a printable, read-only
+    #'   `project$definitions$scenarios` (returned as a printable, read-only
     #'   named list keyed by id). The group is read-only from the handle: every
     #'   assignment form aborts. The only sanctioned way to change a section is
     #'   an authoring function ([addScenario()] / [setScenario()] /
@@ -614,7 +614,7 @@ Project <- R6::R6Class(
 
     #' @description Package-internal reader for the raw `filePaths` block: a
     #'   named list of `list(value, description)` records for the four live
-    #'   working folders. Unlike `project$filePaths$...` (which returns resolved
+    #'   working folders. Unlike `project$paths$...` (which returns resolved
     #'   values), this keeps the per-folder descriptions the Excel bridge
     #'   round-trips. Consumed by the JSON writer and the Excel exporter; not
     #'   intended for end users.
@@ -752,7 +752,7 @@ Project <- R6::R6Class(
     # Field-group proxy builders ----
     #
     # Each builds a `.projectFieldGroup()` proxy for one surface group
-    # (`project$info`, `project$filePaths`, `project$excel`, `project$definitions`).
+    # (`project$info`, `project$paths`, `project$excel`, `project$definitions`).
     # The proxy's per-field getter/setter closures are created here, inside a
     # method, so they capture the live `self`/`private` of this instance and can
     # read and write the backing state directly. External code holds only the

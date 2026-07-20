@@ -19,7 +19,7 @@ return to it later.
 A \code{Project} cannot be copied with \verb{$clone()} — because nothing is
 written to disk until you save, there is no need for a working copy: the
 loaded project itself is one. Reading a definition (for example
-\code{sc <- project$scenarios[["my_scenario"]]}) hands you an independent
+\code{sc <- project$definitions$scenarios[["my_scenario"]]}) hands you an independent
 copy, so changing \code{sc} does not change the project until you re-submit
 it with the matching set function. The one exception is observed data
 added as a \code{DataSet} object via \code{\link[=addObservedData]{addObservedData()}}: the \code{DataSet} is
@@ -88,7 +88,7 @@ field group. Each section is one field: \code{outputPaths}, \code{scenarios},
 \code{parameterSets}, \code{initialConditions}, \code{individuals}, \code{populations},
 \code{applications}, \code{observedData}, \code{dataCombined}, \code{plots}, \code{plotGrids},
 \code{parameterIdentification}. Read a section with
-\code{scenarios} definitions (returned as a printable, read-only
+\code{project$definitions$scenarios} (returned as a printable, read-only
 named list keyed by id). The group is read-only from the handle: every
 assignment form aborts. The only sanctioned way to change a section is
 an authoring function (\code{\link[=addScenario]{addScenario()}} / \code{\link[=setScenario]{setScenario()}} /
@@ -1182,7 +1182,7 @@ operation requires.}
 \subsection{\code{Project$rawFilePaths()}}{
   Package-internal reader for the raw \code{filePaths} block: a
 named list of \code{list(value, description)} records for the four live
-working folders. Unlike \code{project$filePaths$...} (which returns resolved
+working folders. Unlike \code{project$paths$...} (which returns resolved
 values), this keeps the per-folder descriptions the Excel bridge
 round-trips. Consumed by the JSON writer and the Excel exporter; not
 intended for end users.

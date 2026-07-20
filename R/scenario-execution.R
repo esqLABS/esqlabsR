@@ -105,12 +105,15 @@
 # @noRd
 .mergeScenarioParameters <- function(scenario, project, customParams = NULL) {
   params <- NULL
+  # Read the unified parameter-sets section once; the three loops below all
+  # resolve their set ids against it.
+  parameterSets <- project$definitions$parameterSets
 
   # 1. modelParameterSets
   if (!is.null(scenario$modelParameterSets)) {
     for (setId in scenario$modelParameterSets) {
       setParams <- .parameterSetToStructure(
-        project$definitions$parameterSets[[setId]]
+        parameterSets[[setId]]
       )
       if (!is.null(setParams)) {
         params <- extendParameterStructure(
@@ -134,7 +137,7 @@
       }
       for (setId in unlist(indivData$parameterSets)) {
         setParams <- .parameterSetToStructure(
-          project$definitions$parameterSets[[setId]]
+          parameterSets[[setId]]
         )
         if (!is.null(setParams)) {
           params <- extendParameterStructure(
@@ -160,7 +163,7 @@
     }
     for (setId in unlist(appData$parameterSets)) {
       setParams <- .parameterSetToStructure(
-        project$definitions$parameterSets[[setId]]
+        parameterSets[[setId]]
       )
       if (!is.null(setParams)) {
         params <- extendParameterStructure(
