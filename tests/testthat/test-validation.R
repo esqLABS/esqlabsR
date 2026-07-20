@@ -1040,7 +1040,7 @@ test_that(".validatePI flags a parameter scenario outside the task's scenarios",
       observedData = "obs"
     ))
   )
-  result <- esqlabsR:::.validatePI(project$parameterIdentification)
+  result <- esqlabsR:::.validatePI(project$definitions$parameterIdentification)
   msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
   expect_match(msgs, "testscenario_steadystate", all = FALSE)
 })
@@ -1066,7 +1066,7 @@ test_that(".validatePI flags a mapping scenario outside the task's scenarios", {
       observedData = "obs"
     ))
   )
-  result <- esqlabsR:::.validatePI(project$parameterIdentification)
+  result <- esqlabsR:::.validatePI(project$definitions$parameterIdentification)
   msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
   expect_match(msgs, "populationscenario", all = FALSE)
 })

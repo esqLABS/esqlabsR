@@ -359,7 +359,7 @@ test_that("print(PITask) renders header, scenarios, parameter count, mapping cou
 
 test_that("Project parses parameterIdentification field from JSON", {
   project <- testProject()
-  expect_named(project$parameterIdentification, "aciclovirsimple")
+  expect_named(project$definitions$parameterIdentification, "aciclovirsimple")
 })
 
 test_that(".parsePITasks(NULL) returns an empty list", {
@@ -509,10 +509,7 @@ test_that(".parsePITasks() injects defaults for outputMapping offset/factor fiel
 })
 
 test_that(".parameterIdentificationToJson() emits NULL for empty input", {
-  proj <- structure(
-    list(parameterIdentification = list()),
-    class = "Project"
-  )
+  proj <- .fakeProject(parameterIdentification = list())
   expect_null(esqlabsR:::.parameterIdentificationToJson(proj))
 })
 
@@ -549,10 +546,7 @@ test_that(".parsePITasks |> .parameterIdentificationToJson |> .parsePITasks is i
     )
   )
   parsed <- esqlabsR:::.parsePITasks(raw)
-  proj <- structure(
-    list(parameterIdentification = parsed),
-    class = "Project"
-  )
+  proj <- .fakeProject(parameterIdentification = parsed)
   serialized <- esqlabsR:::.parameterIdentificationToJson(proj)
   reparsed <- esqlabsR:::.parsePITasks(serialized)
   expect_identical(reparsed, parsed)
@@ -1053,7 +1047,10 @@ test_that(".createSinglePITask overwrites scenario output paths with the PI-spec
     function(x) x$path,
     character(1)
   )
-  expect_equal(outputSelections, project$outputPaths[["aciclovir_pvb"]])
+  expect_equal(
+    outputSelections,
+    project$definitions$outputPaths[["aciclovir_pvb"]]
+  )
 })
 
 test_that(".createSinglePITask applies a scalar weight to the runtime dataWeights", {
@@ -1387,7 +1384,10 @@ test_that("addPITask() adds a task and clears the validation flag", {
       )
     )
   )
-  expect_named(project$parameterIdentification, c("aciclovirsimple", "manual"))
+  expect_named(
+    project$definitions$parameterIdentification,
+    c("aciclovirsimple", "manual")
+  )
   expect_false(.isValidated(project))
 })
 
@@ -1512,9 +1512,12 @@ test_that("removePITask() removes the task and marks modified", {
       )
     )
   )
-  expect_named(project$parameterIdentification, c("aciclovirsimple", "x"))
+  expect_named(
+    project$definitions$parameterIdentification,
+    c("aciclovirsimple", "x")
+  )
   removePITask(project, "x")
-  expect_named(project$parameterIdentification, "aciclovirsimple")
+  expect_named(project$definitions$parameterIdentification, "aciclovirsimple")
 })
 
 test_that("addPIParameter() appends a parameter and marks modified", {
@@ -1553,7 +1556,7 @@ test_that("addPIParameter() appends a parameter and marks modified", {
     maxValue = 10,
     startValue = 1
   )
-  expect_length(project$parameterIdentification$t$parameters, 2L)
+  expect_length(project$definitions$parameterIdentification$t$parameters, 2L)
   expect_false(.isValidated(project))
 })
 
@@ -1649,7 +1652,7 @@ test_that("addPIParameter() auto-generates id when absent", {
     startValue = 0.5
   )
   ids <- vapply(
-    project$parameterIdentification$t$parameters,
+    project$definitions$parameterIdentification$t$parameters,
     `[[`,
     character(1),
     "id"
@@ -1721,9 +1724,15 @@ test_that("addPIOutputMapping() / removePIOutputMapping() round-trip", {
     outputPath = "aciclovir_fat_cell",
     observedData = "L"
   )
-  expect_length(project$parameterIdentification$t$outputMappings, 2L)
+  expect_length(
+    project$definitions$parameterIdentification$t$outputMappings,
+    2L
+  )
   removePIOutputMapping(project, task = "t", id = "m1")
-  expect_length(project$parameterIdentification$t$outputMappings, 1L)
+  expect_length(
+    project$definitions$parameterIdentification$t$outputMappings,
+    1L
+  )
 })
 
 # PI sub-mutator write-through (on-disk) ----
@@ -1755,8 +1764,8 @@ test_that("removePIParameter / removePIOutputMapping update the task file on dis
   removePIOutputMapping(project, task = "aciclovirsimple", id = "extramap")
 
   # The task file persists the nested-record edits; a fresh load matches.
-  reloaded <- loadProject(project$jsonPath)
-  task <- reloaded$parameterIdentification$aciclovirsimple
+  reloaded <- loadProject(project$info$projectFilePath)
+  task <- reloaded$definitions$parameterIdentification$aciclovirsimple
   paramIds <- vapply(task$parameters, `[[`, character(1), "id")
   mapIds <- vapply(task$outputMappings, `[[`, character(1), "id")
   expect_false("extra" %in% paramIds)
@@ -1769,7 +1778,7 @@ test_that("removing the last PI parameter and mapping deletes the task file on s
   project <- testProject()
   saveProject(project)
   dir <- file.path(
-    project$projectDirPath,
+    project$info$projectDirPath,
     "definitions",
     "parameter-identification"
   )
@@ -1784,11 +1793,13 @@ test_that("removing the last PI parameter and mapping deletes the task file on s
     removePIParameter(project, task = "aciclovirsimple", id = "ehc")
   )
 
-  expect_false("aciclovirsimple" %in% names(project$parameterIdentification))
+  expect_false(
+    "aciclovirsimple" %in% names(project$definitions$parameterIdentification)
+  )
   saveProject(project)
   expect_false(file.exists(file.path(dir, "aciclovirsimple.json")))
-  reloaded <- loadProject(project$jsonPath)
-  expect_length(reloaded$parameterIdentification, 0L)
+  reloaded <- loadProject(project$info$projectFilePath)
+  expect_length(reloaded$definitions$parameterIdentification, 0L)
 })
 
 test_that("addPIOutputMapping() errors on unknown outputPath", {
@@ -1831,9 +1842,9 @@ test_that("addPIOutputMapping() errors on unknown outputPath", {
 
 test_that("loadProject() parses TestProject's parameterIdentification section", {
   project <- testProject()
-  expect_named(project$parameterIdentification, "aciclovirsimple")
+  expect_named(project$definitions$parameterIdentification, "aciclovirsimple")
   expect_s3_class(
-    project$parameterIdentification[["aciclovirsimple"]],
+    project$definitions$parameterIdentification[["aciclovirsimple"]],
     "PITask"
   )
 })
@@ -1864,12 +1875,15 @@ test_that("removePIParameter() auto-removes the task when it becomes empty", {
     )
   )
   removePIOutputMapping(project, task = "t", id = "m1")
-  expect_length(project$parameterIdentification$t$outputMappings, 0L)
+  expect_length(
+    project$definitions$parameterIdentification$t$outputMappings,
+    0L
+  )
   expect_warning(
     removePIParameter(project, task = "t", id = "p1"),
     "empty"
   )
-  expect_null(project$parameterIdentification[["t"]])
+  expect_null(project$definitions$parameterIdentification[["t"]])
 })
 
 test_that("removePIOutputMapping() auto-removes the task when it becomes empty", {
@@ -1898,12 +1912,12 @@ test_that("removePIOutputMapping() auto-removes the task when it becomes empty",
     )
   )
   removePIParameter(project, task = "t", id = "p1")
-  expect_length(project$parameterIdentification$t$parameters, 0L)
+  expect_length(project$definitions$parameterIdentification$t$parameters, 0L)
   expect_warning(
     removePIOutputMapping(project, task = "t", id = "m1"),
     "empty"
   )
-  expect_null(project$parameterIdentification[["t"]])
+  expect_null(project$definitions$parameterIdentification[["t"]])
 })
 
 test_that("Project save / load round-trip preserves the parameterIdentification section", {
@@ -1913,8 +1927,8 @@ test_that("Project save / load round-trip preserves the parameterIdentification 
   esqlabsR:::.saveProjectJson(project, tmp)
   project2 <- loadProject(tmp)
   expect_identical(
-    project2$parameterIdentification,
-    project$parameterIdentification
+    project2$definitions$parameterIdentification,
+    project$definitions$parameterIdentification
   )
 })
 
@@ -2077,7 +2091,9 @@ test_that("PIOutputMapping weight survives a Project save / load round trip", {
   tmp <- withr::local_tempfile(fileext = ".json")
   esqlabsR:::.saveProjectJson(project, tmp)
   reloaded <- loadProject(tmp)
-  mappings <- reloaded$parameterIdentification[["wt"]]$outputMappings
+  mappings <- reloaded$definitions$parameterIdentification[[
+    "wt"
+  ]]$outputMappings
 
   expect_identical(mappings[[1]]$weight, c(1, 2, 3))
   expect_identical(mappings[[2]]$weight, 5)
@@ -2129,7 +2145,7 @@ test_that("addPIParameter() scans for a free id and does not collide after a rem
     startValue = 0.5
   )
   ids <- vapply(
-    project$parameterIdentification[["t"]]$parameters,
+    project$definitions$parameterIdentification[["t"]]$parameters,
     `[[`,
     character(1),
     "id"
@@ -2179,7 +2195,7 @@ test_that("addPIOutputMapping() scans for a free id and does not collide after a
     scenarios = "testscenario"
   )
   ids <- vapply(
-    project$parameterIdentification[["t"]]$outputMappings,
+    project$definitions$parameterIdentification[["t"]]$outputMappings,
     `[[`,
     character(1),
     "id"
@@ -2267,9 +2283,9 @@ test_that(".validatePI surfaces duplicate output mapping ids within a task", {
 
 test_that("removePITask() warns and no-ops on an unknown task", {
   project <- testProject()
-  before <- names(project$parameterIdentification)
+  before <- names(project$definitions$parameterIdentification)
   expect_warning(removePITask(project, "Ghost"), "not found")
-  expect_identical(names(project$parameterIdentification), before)
+  expect_identical(names(project$definitions$parameterIdentification), before)
 })
 
 test_that("PIOutputMapping() validates scaling and the offset / factor / weight fields", {
@@ -2500,7 +2516,7 @@ test_that("runPI(tasks = ) canonicalizes the referenced task ids", {
     configuration = list(algorithm = "BOBYQA")
   )
   expect_named(
-    project$parameterIdentification,
+    project$definitions$parameterIdentification,
     c("aciclovirsimple", "mixedcase")
   )
   invisible(capture.output(suppressMessages(suppressWarnings(
@@ -2687,7 +2703,7 @@ test_that("a complete PI task can be authored from scratch through exported func
     configuration = task$configuration
   )
   expect_s3_class(
-    project$parameterIdentification[["fromscratch"]],
+    project$definitions$parameterIdentification[["fromscratch"]],
     "PITask"
   )
 
@@ -2718,9 +2734,11 @@ test_that("removePITask removes a vector of task ids in one write-through", {
   addPITask(project, "t2", "testscenario", list(parameter), list(mapping))
 
   removePITask(project, c("t1", "t2"))
-  expect_false(any(c("t1", "t2") %in% names(project$parameterIdentification)))
-  reloaded <- loadProject(project$jsonPath)
+  expect_false(any(
+    c("t1", "t2") %in% names(project$definitions$parameterIdentification)
+  ))
+  reloaded <- loadProject(project$info$projectFilePath)
   expect_false(
-    any(c("t1", "t2") %in% names(reloaded$parameterIdentification))
+    any(c("t1", "t2") %in% names(reloaded$definitions$parameterIdentification))
   )
 })

@@ -1,6 +1,6 @@
 # DefinitionList: a read-only, printable wrapper for a project section accessor.
 #
-# A section accessor (`project$individuals`, `project$scenarios`, ...) returns
+# A section accessor (`individuals` definitions, `scenarios` definitions, ...) returns
 # the stored plain named list keyed by id, wrapped in a lightweight
 # `c("DefinitionList", "list")` (carrying the section's kind name as an
 # attribute) on the way OUT of the active-binding getter. The wrapper does two
@@ -88,7 +88,7 @@ format.DefinitionList <- function(x, ...) {
 }
 
 # Abort an assignment into a section accessor. A section accessor
-# (`project$scenarios`, ...) is read-only from the handle: the only sanctioned
+# (`scenarios` definitions, ...) is read-only from the handle: the only sanctioned
 # way to change a definition is an authoring function (`addScenario()` /
 # `setScenario()` / `removeScenario()` and their per-section siblings) or
 # editing the definition's JSON file directly. Every assignment form into the
@@ -115,7 +115,7 @@ format.DefinitionList <- function(x, ...) {
       authoring function (e.g. {.fn addScenario} / {.fn setScenario} / \\
       {.fn removeScenario} and their per-section siblings).",
       "i" = "To edit one record, read it, change the copy, then re-submit it \\
-      with an authoring function: {.code sc <- project$scenarios[[\"id\"]]; \\
+      with an authoring function: {.code sc <- project$definitions$scenarios[[\"id\"]]; \\
       sc$field <- value; setScenario(project, \"id\", ...)}."
     ),
     call = call

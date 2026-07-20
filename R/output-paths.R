@@ -1,6 +1,6 @@
 # Output paths section ----
 #
-# Parse + validate + mutate `project$outputPaths`. The `outputPaths` JSON
+# Parse + validate + mutate `outputPaths` definitions. The `outputPaths` JSON
 # section is a named list mapping output-path ids to literal paths;
 # parsing is shallow (no helpers needed beyond the parser default), so
 # this file owns validation and mutation.
@@ -9,7 +9,7 @@
 
 #' Add one or more output paths to a Project
 #'
-#' Add output paths to `project$outputPaths`, vectorizing over a vector of ids
+#' Add output paths to `outputPaths` definitions, vectorizing over a vector of ids
 #' (see the recycling rule under Details). `path` is scalar-per-definition: a
 #' single path is recycled to every id, or a length-`id` vector aligns by
 #' position.
@@ -18,7 +18,7 @@
 #'
 #' @param project A `Project` object.
 #' @param id Character vector of output path ids (unique within the call and
-#'   not already present in `project$outputPaths`). Each is canonicalized.
+#'   not already present in `outputPaths` definitions). Each is canonicalized.
 #' @param path Character vector of output paths, length 1 (recycled) or the
 #'   same length as `id`.
 #' @returns The `project` object, invisibly.
@@ -60,7 +60,7 @@ addOutputPath <- function(project, id, path) {
       "x" = "path must contain non-empty strings"
     ))
   }
-  clash <- intersect(id, names(self$outputPaths))
+  clash <- intersect(id, names(self$definitions$outputPaths))
   if (length(clash) > 0L) {
     cli::cli_abort("outputPath {.val {clash}} already exists")
   }
@@ -104,11 +104,11 @@ removeOutputPath <- function(project, id) {
   .assertIdVector(id)
   id <- .canonicalizeId(id)
 
-  missingIds <- setdiff(id, names(self$outputPaths))
+  missingIds <- setdiff(id, names(self$definitions$outputPaths))
   if (length(missingIds) > 0L) {
     cli::cli_warn("outputPath {.val {missingIds}} not found; no-op.")
   }
-  toRemove <- intersect(id, names(self$outputPaths))
+  toRemove <- intersect(id, names(self$definitions$outputPaths))
   if (length(toRemove) == 0L) {
     return(invisible(self))
   }
@@ -128,7 +128,7 @@ removeOutputPath <- function(project, id) {
 #'   definition (write-through). The ids themselves are not changed (use
 #'   [removeOutputPath()] + [addOutputPath()] to rename), so
 #'   every scenario that records these output paths keeps referencing them.
-#'   The `project$outputPaths` accessor is read-only, so this is the way to
+#'   The `outputPaths` definitions accessor is read-only, so this is the way to
 #'   change a path in place. The call vectorizes over a vector of ids (see the
 #'   recycling rule under Details); `path` is scalar-per-definition (one path
 #'   recycled to every id, or a length-`id` vector aligned by position).
@@ -137,7 +137,7 @@ removeOutputPath <- function(project, id) {
 #'
 #' @param project A `Project` object.
 #' @param id Character vector. The output-path ids to modify. Each must
-#'   already exist in `project$outputPaths`.
+#'   already exist in `outputPaths` definitions.
 #' @param path Character vector of new non-empty OSPS-notation path strings,
 #'   length 1 (recycled) or the same length as `id`.
 #'
@@ -160,7 +160,7 @@ setOutputPath <- function(project, id, path) {
   .assertIdVector(id)
   id <- .canonicalizeId(id)
   n <- length(id)
-  missingIds <- setdiff(id, names(self$outputPaths))
+  missingIds <- setdiff(id, names(self$definitions$outputPaths))
   if (length(missingIds) > 0L) {
     cli::cli_abort(c(
       "Cannot modify output path {.val {missingIds}}: it does not exist.",
@@ -193,7 +193,7 @@ setOutputPath <- function(project, id, path) {
 #' @keywords internal
 #' @noRd
 .outputPathsValidatorAdapter <- function(project) {
-  .validateOutputPaths(project$outputPaths)
+  .validateOutputPaths(project$definitions$outputPaths)
 }
 
 #' Validate the `outputPaths` section of a Project
@@ -203,7 +203,7 @@ setOutputPath <- function(project, id, path) {
 #' Chapter 2 PR).
 #'
 #' @param outputPaths Named character vector / list from
-#'   `project$outputPaths`.
+#'   `outputPaths` definitions.
 #' @return validationResult.
 #' @keywords internal
 #' @noRd

@@ -10,7 +10,7 @@ addOutputPath(project, id, path)
 \item{project}{A \code{Project} object.}
 
 \item{id}{Character vector of output path ids (unique within the call and
-not already present in \code{project$outputPaths}). Each is canonicalized.}
+not already present in \code{outputPaths} definitions). Each is canonicalized.}
 
 \item{path}{Character vector of output paths, length 1 (recycled) or the
 same length as \code{id}.}
@@ -19,7 +19,7 @@ same length as \code{id}.}
 The \code{project} object, invisibly.
 }
 \description{
-Add output paths to \code{project$outputPaths}, vectorizing over a vector of ids
+Add output paths to \code{outputPaths} definitions, vectorizing over a vector of ids
 (see the recycling rule under Details). \code{path} is scalar-per-definition: a
 single path is recycled to every id, or a length-\code{id} vector aligns by
 position.

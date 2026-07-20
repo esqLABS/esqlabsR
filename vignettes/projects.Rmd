@@ -73,7 +73,7 @@ The distinction between these two regions matters:
 
 The `Project.json` file records the project metadata and the working-folder layout. Its main fields are:
 
-- `name` and optional `description`: a human label and free text, surfaced when you print the project. Editing one (`project$name <- "..."`) changes the project in memory; it reaches disk on the next `saveProject()`.
+- `name` and optional `description`: a human label and free text, surfaced when you print the project. Editing one (`project$info$name <- "..."`) changes the project in memory; it reaches disk on the next `saveProject()`.
 - the schema and esqlabsR versions that wrote the file.
 - `definitionsFolder`: where the `definitions/` tree lives (`definitions` by default).
 - `filePaths`: the four working folders (model, data, populations, output).
@@ -96,10 +96,10 @@ project
 
 Printing a project shows its name, source path, working folders, and a count of each kind of definition.
 
-The sections are reachable as named lists on the object, keyed by id. Each one prints a count and the ids it holds; `project$individuals`, `project$outputPaths`, and the rest resolve the same way:
+The project's fields are gathered into four groups on the object: `project$info` (name, description, versions, file path), `project$paths` (the working folders), `project$excel` (the Excel workbook names when the project keeps an Excel side-car), and `project$definitions` (the definition sections). The sections live under `project$definitions`, each a named list keyed by id that prints a count and the ids it holds; `project$definitions$individuals`, `project$definitions$outputPaths`, and the rest resolve the same way:
 
 ```{r}
-project$scenarios
+project$definitions$scenarios
 ```
 
 When `loadProject()` notices an obvious cross-reference mistake (for example a scenario pointing at an individual that is not defined) it warns immediately so the problem surfaces at load time, but loading still succeeds. For the full picture, run `validateProject()`, described below.
@@ -136,7 +136,7 @@ Choosing `type = "example"` instead fills the `definitions/` tree shown above, o
 
 ### Editing, saving, and sharing
 
-Editing follows an **explicit-save** model: for a loaded project, memory is the source of truth. When you `addScenario()`, `addIndividual()`, or edit a field with `setScenario()`, the change is made in memory and the project is marked as having unsaved changes; nothing touches the `definitions/` tree yet. The section accessors (`project$scenarios` and the rest) are read-only, so a definition only ever changes through one of these functions (or by editing its file directly); to revise an existing record, read it, edit the copy, and pass it back through the matching authoring function.
+Editing follows an **explicit-save** model: for a loaded project, memory is the source of truth. When you `addScenario()`, `addIndividual()`, or edit a field with `setScenario()`, the change is made in memory and the project is marked as having unsaved changes; nothing touches the `definitions/` tree yet. The section accessors (`project$definitions$scenarios` and the rest) are read-only, so a definition only ever changes through one of these functions (or by editing its file directly); to revise an existing record, read it, edit the copy, and pass it back through the matching authoring function.
 
 `saveProject()` commits the edits: it reconciles the on-disk tree to memory, writing only the entities that changed and deleting the files of entities you removed, so `git diff` shows exactly what you touched. A clean save (nothing to write) is a harmless no-op that says so. Here we work against the writable copy scaffolded above (`example_dir`) rather than the read-only installed example:
 

@@ -347,6 +347,15 @@ createValidPISheets <- function() {
 .isValidated <- function(project) {
   .projectSeam(project)$.isValidated()
 }
+# Seed a read-only info backing field (`.schemaVersion` / `.esqlabsRVersion`)
+# through the private seam, standing in for the load machinery. A local binds
+# the seam environment first: `.projectSeam(project)$.field <- value` would ask
+# R for a `.projectSeam<-` replacement function, which does not exist.
+.setInfoField <- function(project, field, value) {
+  seam <- .projectSeam(project)
+  seam[[paste0(".", field)]] <- value
+  invisible(project)
+}
 
 # Builds a minimal in-memory `Project` for validation/serialization tests:
 # all section fields default to empty, and `...` overrides named fields so a
@@ -356,8 +365,12 @@ createValidPISheets <- function() {
 # (this is test setup standing in for an authoring call, not end-user code).
 .fakeProject <- function(...) {
   project <- Project$new()
-  project$schemaVersion <- "2.0"
-  project$esqlabsRVersion <- NA_character_
+  # `schemaVersion` / `esqlabsRVersion` are read-only on the object surface
+  # (managed by the load/save machinery, not by users), so seed the backing
+  # fields through the private seam the load machinery uses, standing in for a
+  # load here.
+  .setInfoField(project, "schemaVersion", "2.0")
+  .setInfoField(project, "esqlabsRVersion", NA_character_)
   sections <- c(
     "outputPaths",
     "scenarios",

@@ -7,7 +7,7 @@
 #' @keywords internal
 #' @noRd
 .parameterSetsValidatorAdapter <- function(project) {
-  .validateParameterSets(project$parameterSets, "parameterSets")
+  .validateParameterSets(project$definitions$parameterSets, "parameterSets")
 }
 
 # Merge the parameter-set sections of a parsed `Project.json` into the single
@@ -751,7 +751,7 @@ addParameterSet <- function(project, id) {
   .assertIdVector(id)
   id <- .canonicalizeId(id)
   .assertNoDuplicateIds(id, "parameter set")
-  clash <- intersect(id, names(self$parameterSets))
+  clash <- intersect(id, names(self$definitions$parameterSets))
   if (length(clash) > 0L) {
     cli::cli_abort("parameter set {.val {clash}} already exists")
   }
@@ -789,11 +789,11 @@ removeParameterSet <- function(project, id) {
   rlang::local_error_call(rlang::caller_env(2))
   .assertIdVector(id)
   id <- .canonicalizeId(id)
-  missingIds <- setdiff(id, names(self$parameterSets))
+  missingIds <- setdiff(id, names(self$definitions$parameterSets))
   if (length(missingIds) > 0L) {
     cli::cli_warn("parameter set {.val {missingIds}} not found; no-op.")
   }
-  toRemove <- intersect(id, names(self$parameterSets))
+  toRemove <- intersect(id, names(self$definitions$parameterSets))
   if (length(toRemove) == 0L) {
     return(invisible(self))
   }
@@ -808,7 +808,7 @@ removeParameterSet <- function(project, id) {
 
 #' Add one or many parameter entries to a named parameter set
 #'
-#' Adds parameter entries to the named set in `project$parameterSets`.
+#' Adds parameter entries to the named set in `parameterSets` definitions.
 #' `containerPath`, `parameterName`, `value`, and `units` accept parallel
 #' vectors of equal length N to add all N entries in a single call (and a
 #' single write to disk); a scalar call (length-1 vectors) adds one entry.
@@ -869,7 +869,7 @@ addParameterEntry <- function(
     value,
     units
   )
-  current <- self$parameterSets[[id]]
+  current <- self$definitions$parameterSets[[id]]
   # Unlike the other `add*` functions, `addParameterEntry()` creates its parent
   # set on demand rather than aborting on a missing parent. Inform the user when
   # it does, so the on-demand creation is not silent.
@@ -898,7 +898,7 @@ addParameterEntry <- function(
 #' `parameterName` accept parallel vectors of equal length N to remove all N
 #' entries in a single call (and a single write to disk); a scalar call
 #' (length-1 vectors) removes one entry. If every entry of the set is removed,
-#' the set itself is auto-removed from `project$parameterSets`. Warns if the
+#' the set itself is auto-removed from `parameterSets` definitions. Warns if the
 #' set or any named entry doesn't exist.
 #'
 #' @param project A `Project` object.
@@ -937,14 +937,14 @@ removeParameterEntry <- function(
     cli::cli_abort("{.arg id} must be a non-empty string")
   }
   id <- .canonicalizeId(id)
-  if (!(id %in% names(self$parameterSets))) {
+  if (!(id %in% names(self$definitions$parameterSets))) {
     cli::cli_warn("parameter set {.val {id}} not found; no-op.")
     return(invisible(self))
   }
   # Fold all N removals into the set in memory first, so the single assignment
   # below triggers exactly one write-through (not one per entry).
   result <- .removeParameterEntries(
-    self$parameterSets[[id]],
+    self$definitions$parameterSets[[id]],
     containerPath,
     parameterName
   )
@@ -1240,7 +1240,7 @@ addInitialConditions <- function(project, id) {
   .assertIdVector(id)
   id <- .canonicalizeId(id)
   .assertNoDuplicateIds(id, "initial-condition set")
-  clash <- intersect(id, names(self$initialConditions))
+  clash <- intersect(id, names(self$definitions$initialConditions))
   if (length(clash) > 0L) {
     cli::cli_abort("initial-condition set {.val {clash}} already exists")
   }
@@ -1279,11 +1279,11 @@ removeInitialConditions <- function(project, id) {
   rlang::local_error_call(rlang::caller_env(2))
   .assertIdVector(id)
   id <- .canonicalizeId(id)
-  missingIds <- setdiff(id, names(self$initialConditions))
+  missingIds <- setdiff(id, names(self$definitions$initialConditions))
   if (length(missingIds) > 0L) {
     cli::cli_warn("initial-condition set {.val {missingIds}} not found; no-op.")
   }
-  toRemove <- intersect(id, names(self$initialConditions))
+  toRemove <- intersect(id, names(self$definitions$initialConditions))
   if (length(toRemove) == 0L) {
     return(invisible(self))
   }
@@ -1299,7 +1299,7 @@ removeInitialConditions <- function(project, id) {
 #' Add one or many entries to a named initial-condition set
 #'
 #' Adds molecule start-value entries to the named set in
-#' `project$initialConditions`. `path`, `value`, and `unit` accept parallel
+#' `initialConditions` definitions. `path`, `value`, and `unit` accept parallel
 #' vectors of equal length N to add all N entries in a single call (and a
 #' single write to disk); a scalar call (length-1 vectors) adds one entry.
 #' Building a large set with one vectorized call is far cheaper than a loop of
@@ -1347,7 +1347,7 @@ addInitialConditionEntry <- function(project, id, path, value, unit) {
   # Validate the batch shape up front so a mismatched call fails fast, before
   # any on-demand set creation is reported.
   .assertInitialConditionEntryVectorLengths(path, value, unit)
-  current <- self$initialConditions[[id]]
+  current <- self$definitions$initialConditions[[id]]
   # Unlike the other `add*` functions, this creates its parent set on demand
   # rather than aborting on a missing parent. Inform the user when it does, so
   # the on-demand creation is not silent.
@@ -1375,7 +1375,7 @@ addInitialConditionEntry <- function(project, id, path, value, unit) {
 #' vector of length N to remove all N entries in a single call (and a single
 #' write to disk); a scalar call (length-1 vector) removes one entry. If every
 #' entry of the set is removed, the set itself is auto-removed from
-#' `project$initialConditions`. Warns if the set or any named entry doesn't
+#' `initialConditions` definitions. Warns if the set or any named entry doesn't
 #' exist.
 #'
 #' @param project A `Project` object.
@@ -1402,14 +1402,14 @@ removeInitialConditionEntry <- function(project, id, path) {
     cli::cli_abort("{.arg id} must be a non-empty string")
   }
   id <- .canonicalizeId(id)
-  if (!(id %in% names(self$initialConditions))) {
+  if (!(id %in% names(self$definitions$initialConditions))) {
     cli::cli_warn("initial-condition set {.val {id}} not found; no-op.")
     return(invisible(self))
   }
   # Fold all N removals into the set in memory first, so the single assignment
   # below triggers exactly one write-through (not one per entry).
   result <- .removeInitialConditionEntries(
-    self$initialConditions[[id]],
+    self$definitions$initialConditions[[id]],
     path
   )
   if (!result$removed) {

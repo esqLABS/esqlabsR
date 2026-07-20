@@ -42,7 +42,7 @@ print.ObservedDataSource <- function(x, ...) {
 #' @keywords internal
 #' @noRd
 .observedDataValidatorAdapter <- function(project) {
-  .validateObservedData(project$observedData, project$dataFolder)
+  .validateObservedData(project$definitions$observedData, project$paths$dataFolder)
 }
 
 # Single source of truth for observed-data source shape, shared by both
@@ -88,7 +88,7 @@ print.ObservedDataSource <- function(x, ...) {
 #' referenced files exist on disk (warnings only — missing files do
 #' not block parsing).
 #'
-#' @param observedData List from `project$observedData`.
+#' @param observedData List from `observedData` definitions.
 #' @param dataFolder Resolved absolute path to the project's data
 #'   folder, or `NULL` when unset.
 #' @return validationResult.
@@ -189,7 +189,7 @@ print.ObservedDataSource <- function(x, ...) {
 #'
 #' @param project A `Project` object (see [loadProject()]).
 #' @returns A named list of [`ospsuite::DataSet`] objects. Empty list when
-#'   `project$observedData` is empty or `NULL`.
+#'   `observedData` definitions is empty or `NULL`.
 #' @examples
 #' \dontrun{
 #' project <- loadProject("path/to/Project.json")
@@ -211,18 +211,18 @@ loadObservedData <- function(project) {
   # Attribute any abort to the public authoring function the user called
   # (the free-function forwarder), not this internal `_impl`.
   rlang::local_error_call(rlang::caller_env(2))
-  if (is.null(self$observedData) || length(self$observedData) == 0) {
+  if (is.null(self$definitions$observedData) || length(self$definitions$observedData) == 0) {
     return(list())
   }
   allDataSets <- list()
-  for (i in seq_along(self$observedData)) {
-    entry <- self$observedData[[i]]
+  for (i in seq_along(self$definitions$observedData)) {
+    entry <- self$definitions$observedData[[i]]
     .validateObservedDataEntry(entry, i)
     dataSets <- switch(
       entry$type,
-      "excel" = .loadObservedExcel(entry, self$dataFolder),
-      "pkml" = .loadObservedPkml(entry, self$dataFolder),
-      "script" = .loadObservedScript(entry, self$dataFolder),
+      "excel" = .loadObservedExcel(entry, self$paths$dataFolder),
+      "pkml" = .loadObservedPkml(entry, self$paths$dataFolder),
+      "script" = .loadObservedScript(entry, self$paths$dataFolder),
       "programmatic" = NULL
     )
     if (!is.null(dataSets)) {
@@ -359,12 +359,12 @@ addObservedData <- function(project, entry) {
     }
     # Validate the full entry shape (per-type required fields), not just the
     # type, so an under-specified config entry is rejected at add time.
-    .validateObservedDataEntry(entry, length(self$observedData) + 1L)
+    .validateObservedDataEntry(entry, length(self$definitions$observedData) + 1L)
     # Config entries are keyed by `file` basename (see removeObservedData);
     # abort on a duplicate to match the other mutators' convention.
     fileBase <- basename(entry[["file"]])
     existingFiles <- vapply(
-      self$observedData,
+      self$definitions$observedData,
       function(e) {
         if (is.null(e[["file"]])) NA_character_ else basename(e[["file"]])
       },
@@ -497,7 +497,7 @@ removeObservedData <- function(project, id) {
 # @keywords internal
 # @noRd
 .warnIfObservedDataReferenced <- function(project, name) {
-  dataCombined <- .unwrapDefinitionList(project$dataCombined) %||% list()
+  dataCombined <- .unwrapDefinitionList(project$definitions$dataCombined) %||% list()
   holders <- character()
   for (dcName in names(dataCombined)) {
     observed <- dataCombined[[dcName]]$observed %||% list()

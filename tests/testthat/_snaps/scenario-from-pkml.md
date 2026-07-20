@@ -34,7 +34,7 @@
       * "DoesNotExist" -> "doesnotexist"
       Error in `addScenario()`:
       ! Cannot add scenario "seeded":
-      x parameterSets not found in project$parameterSets: doesnotexist
+      x parameterSets not found in project$definitions$parameterSets: doesnotexist
 
 # an unknown application aborts
 

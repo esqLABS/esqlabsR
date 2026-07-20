@@ -24,7 +24,7 @@ addPIParameter(
 \item{path}{Character scalar. Full simulation parameter path.}
 
 \item{scenarios}{Character vector of scenario names; each must
-exist in \code{project$scenarios}.}
+exist in \code{scenarios} definitions.}
 
 \item{minValue, maxValue, startValue}{Numeric scalars.}
 

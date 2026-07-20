@@ -9,17 +9,17 @@
 #'
 #' @description
 #' **Returns plot grids, not standalone plots.** By default `createPlots()`
-#' builds every plot grid declared in `project$plotGrids` and no standalone
+#' builds every plot grid declared in `plotGrids` definitions and no standalone
 #' plots, and hands back a **named list of plot grids keyed by Plot Grid name**
 #' (the `plots` argument opts individual standalone plots into that same list).
 #'
-#' Reads `project$plots` and `project$plotGrids` (both keyed lists, one entry
+#' Reads `plots` definitions and `plotGrids` definitions (both keyed lists, one entry
 #' per plot / grid) to build the requested plot grids and, optionally,
 #' standalone single plots. DataCombined objects are resolved via
 #' [createDataCombined()] internally unless supplied via `dataCombinedList`.
 #'
 #' With neither `plotGrids` nor `plots`, all plot grids declared in
-#' `project$plotGrids` are built (the default). The two arguments are
+#' `plotGrids` definitions are built (the default). The two arguments are
 #' independent selectors: `plotGrids` selects plot grids (keyed by
 #' `plotGridId` in the result), `plots` selects standalone single plots
 #' (keyed by `plotId`). A `plotId` that is also part of a requested grid still
@@ -27,10 +27,10 @@
 #'
 #' @param project A `Project` (see [loadProject()]).
 #' @param plotGrids Names of plot grids to build. If `NULL` (default) and
-#'   `plots` is also `NULL`, all grids declared in `project$plotGrids` are
+#'   `plots` is also `NULL`, all grids declared in `plotGrids` definitions are
 #'   built.
 #' @param plots Ids of standalone single plots to render directly (not laid
-#'   out in a grid), each resolved against `project$plots`. `NULL` (default)
+#'   out in a grid), each resolved against `plots` definitions. `NULL` (default)
 #'   renders no standalone plots; standalone plots are opt-in.
 #' @param scenarioResults Named list of Scenario Results from
 #'   [runScenarios()] (each entry has `simulation`, `results`,
@@ -72,8 +72,8 @@ createPlots <- function(
       opName = "createPlots"
     )
   }
-  allPlotConfig <- .unwrapDefinitionList(project$plots) %||% list()
-  allPlotGrids <- .unwrapDefinitionList(project$plotGrids) %||% list()
+  allPlotConfig <- .unwrapDefinitionList(project$definitions$plots) %||% list()
+  allPlotGrids <- .unwrapDefinitionList(project$definitions$plotGrids) %||% list()
 
   # Only default to "all grids" when neither selector is given. A caller that
   # asks only for standalone `plots` should not also get every grid.

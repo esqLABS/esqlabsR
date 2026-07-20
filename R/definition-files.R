@@ -136,7 +136,7 @@
         .serializeScenarioSet(section)
       },
       parse = function(records, project) {
-        .parseScenarios(records, project$outputPaths)
+        .parseScenarios(records, project$definitions$outputPaths)
       },
       inline = function(jsonData) jsonData$scenarios
     ),
@@ -290,7 +290,7 @@
 # @keywords internal
 # @noRd
 .sectionForKind <- function(project, name) {
-  .unwrapDefinitionList(project[[name]])
+  .unwrapDefinitionList(project$definitions[[name]])
 }
 
 # Path to a single definition's file. The filename is `<id>.json`. Callers pass an
@@ -455,7 +455,7 @@
   dir <- .definitionKindDir(
     projectDirPath,
     spec$kind,
-    project$definitionsFolder
+    project$paths$definitionsFolder
   )
   if (is.null(dir)) {
     return(invisible(NULL))
@@ -587,7 +587,7 @@
 }
 
 # Stamp a parameter set's array-of-entries with `c("ParameterSet", "list")` so
-# a single set read from `project$parameterSets[[id]]` dispatches its print
+# a single set read from `project$definitions$parameterSets[[id]]` dispatches its print
 # method. The class is a transparent list wrapper; the serializers strip it
 # (`.serializeParameterSetSet` / `.parameterSetsToJson`) so it never reaches
 # JSON.
@@ -690,7 +690,7 @@
 
 # Stamp an initial-condition set's array-of-entries with
 # `c("InitialConditionSet", "list")` so a single set read from
-# `project$initialConditions[[id]]` dispatches its print method. The class is a
+# `project$definitions$initialConditions[[id]]` dispatches its print method. The class is a
 # transparent list wrapper; the serializers strip it
 # (`.serializeInitialConditionSet` / `.initialConditionsToJson`) so it never
 # reaches JSON.
@@ -922,7 +922,7 @@
   invisible(NULL)
 }
 
-# plots: three keyed kinds, one part of the `project$plots` trio each.
+# plots: three keyed kinds, one part of the `plots` definitions trio each.
 #
 # The serializers turn a part into an `id -> json-record` map keyed by the
 # part's id field (`dataCombinedId` / `plotId` / `plotGridId`); the parsers

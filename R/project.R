@@ -95,63 +95,59 @@ Project <- R6::R6Class(
   "Project",
   cloneable = FALSE,
   active = list(
-    #' @field projectFilePath Read-only. Absolute path to the JSON
-    #'   configuration file the project was loaded from. All other relative
-    #'   paths in the project are resolved against the file's directory
-    #'   (see `projectDirPath`). `NULL` for an empty in-memory project; in
-    #'   that case all path fields must be absolute.
-    projectFilePath = function(value) {
+    #' @field info Project identity and metadata, as a writable field group.
+    #'   Read a field with `project$info$name`; write one with
+    #'   `project$info$name <- "..."`. Writable fields: `name` (human-readable
+    #'   project name), `description` (free-text description). Read-only fields:
+    #'   `schemaVersion` (schema version declared in the JSON, always `"2.0"`
+    #'   for projects this package loads), `esqlabsRVersion` (informational
+    #'   version string from the JSON), `projectFilePath` (absolute path to the
+    #'   JSON file the project was loaded from, `NULL` for an in-memory
+    #'   project), and `projectDirPath` (the directory containing that file, the
+    #'   base for resolving relative paths). Assigning a writable field sets the
+    #'   dirty bit; assigning a read-only field aborts. The two version fields
+    #'   are managed by the load/save machinery, not by users.
+    info = function(value) {
       if (!missing(value)) {
-        cli::cli_abort("{.field projectFilePath} is readonly")
+        return(private$.acceptGroupWriteback(value, "info"))
       }
-      private$.projectFilePath
+      private$.infoGroup()
     },
 
-    #' @field projectDirPath Read-only. Directory containing the JSON
-    #'   configuration file (i.e. `dirname(projectFilePath)`). Used as the
-    #'   base for resolving relative paths. `NULL` if the project was not
-    #'   loaded from a file.
-    projectDirPath = function(value) {
+    #' @field paths The project's working-folder paths, as a writable field
+    #'   group: `modelFolder` (pkml simulation files), `dataFolder`
+    #'   (experimental data), `outputFolder` (results), `populationsFolder`
+    #'   (population CSVs loaded by [runScenarios()]), and `definitionsFolder`
+    #'   (the folder holding the definition files, default `"definitions"`).
+    #'   Read a field with `project$paths$modelFolder` (returned resolved
+    #'   against `projectDirPath`); write one with
+    #'   `project$paths$modelFolder <- "Models"` (stored verbatim, resolved
+    #'   on the next read). Assigning any field sets the dirty bit. Changing
+    #'   `definitionsFolder` redirects where the next [saveProject()] writes the
+    #'   definition files; nothing moves on disk until that save. The
+    #'   Excel-bridge sheet-name fields live in the separate `excel` group.
+    paths = function(value) {
       if (!missing(value)) {
-        cli::cli_abort("{.field projectDirPath} is readonly")
+        return(private$.acceptGroupWriteback(value, "paths"))
       }
-      private$.projectDirPath
+      private$.pathsGroup()
     },
 
-    #' @field name Human-readable project name (the `name` JSON field). May be
-    #'   `NULL` when the project has no name.
-    name = function(value) {
+    #' @field excel The Excel import/export bridge sheet-name fields, as a
+    #'   writable field group: `configurationsFolder`, `modelParamsFile`,
+    #'   `individualsFile`, `populationsFile`, `scenariosFile`,
+    #'   `applicationsFile`, `plotsFile`, `parameterIdentificationFile`,
+    #'   `initialConditionsFile`. Read a field with
+    #'   `project$excel$modelParamsFile` (returned resolved against
+    #'   `configurationsFolder`, itself resolved against `projectDirPath`);
+    #'   write one with `project$excel$modelParamsFile <- "P.xlsx"` (stored
+    #'   verbatim). Assigning any field sets the dirty bit. Empty for a project
+    #'   created directly in the JSON format, without Excel files.
+    excel = function(value) {
       if (!missing(value)) {
-        private$.name <- value
-        private$.invalidateContainer()
-        return(invisible(value))
+        return(private$.acceptGroupWriteback(value, "excel"))
       }
-      private$.name
-    },
-
-    #' @field description Optional free-text project description (the
-    #'   `description` JSON field). May be `NULL`.
-    description = function(value) {
-      if (!missing(value)) {
-        private$.description <- value
-        private$.invalidateContainer()
-        return(invisible(value))
-      }
-      private$.description
-    },
-
-    #' @field definitionsFolder Name of the folder (relative to
-    #'   `projectDirPath`) that holds the project's definition files.
-    #'   Defaults to `"definitions"`. Assigning a new value changes where the
-    #'   next [saveProject()] writes the definition files and where they are
-    #'   read from, but nothing moves on disk until the next save.
-    definitionsFolder = function(value) {
-      if (!missing(value)) {
-        private$.definitionsFolder <- value
-        private$.invalidateContainer()
-        return(invisible(value))
-      }
-      private$.definitionsFolder %||% "definitions"
+      private$.excelGroup()
     },
 
     #' @field defaultSimulationRunOptions Named list of the project-level
@@ -169,421 +165,26 @@ Project <- R6::R6Class(
       private$.defaultSimulationRunOptions
     },
 
-    #' @field excel Read-only named list of the Excel import/export bridge
-    #'   sheet-name fields (`configurationsFolder`, `modelParamsFile`,
-    #'   `individualsFile`, `populationsFile`, `scenariosFile`,
-    #'   `applicationsFile`, `plotsFile`, `parameterIdentificationFile`,
-    #'   `initialConditionsFile`).
-    #'   Returned verbatim as strings (no resolution). Empty for a project
-    #'   created directly in the JSON format, without Excel files.
-    excel = function(value) {
+    #' @field definitions The project's definition sections, as a read-only
+    #'   field group. Each section is one field: `outputPaths`, `scenarios`,
+    #'   `parameterSets`, `initialConditions`, `individuals`, `populations`,
+    #'   `applications`, `observedData`, `dataCombined`, `plots`, `plotGrids`,
+    #'   `parameterIdentification`. Read a section with
+    #'   `scenarios` definitions (returned as a printable, read-only
+    #'   named list keyed by id). The group is read-only from the handle: every
+    #'   assignment form aborts. The only sanctioned way to change a section is
+    #'   an authoring function ([addScenario()] / [setScenario()] /
+    #'   [removeScenario()] and their per-section siblings) or editing the
+    #'   definition's JSON file; those route through the internal write seam,
+    #'   which updates the in-memory backing field, sets the dirty bit, and
+    #'   clears the validation-cache flag so the next run/plot re-validates.
+    #'   Nothing touches the `definitions/<kind>/` tree until [saveProject()]
+    #'   reconciles it to memory.
+    definitions = function(value) {
       if (!missing(value)) {
-        cli::cli_abort("{.field excel} is readonly")
+        return(private$.acceptGroupWriteback(value, "definitions"))
       }
-      data <- private$.excelData
-      if (length(data) == 0L) {
-        return(structure(list(), names = character(0L)))
-      }
-      lapply(data, function(entry) entry$value)
-    },
-
-    #' @field schemaVersion Schema version declared in the JSON. Always "2.0"
-    #'   for projects this package loads.
-    schemaVersion = function(value) {
-      if (!missing(value)) {
-        private$.schemaVersion <- value
-        private$.invalidateContainer()
-        return(invisible(value))
-      }
-      private$.schemaVersion
-    },
-
-    #' @field esqlabsRVersion Informational version string from the JSON.
-    esqlabsRVersion = function(value) {
-      if (!missing(value)) {
-        private$.esqlabsRVersion <- value
-        private$.invalidateContainer()
-        return(invisible(value))
-      }
-      private$.esqlabsRVersion
-    },
-
-    #' @field jsonPath Read-only. Absolute path the project was loaded from
-    #'   (an alias of `projectFilePath`), or `NULL` for an in-memory project.
-    jsonPath = function(value) {
-      if (!missing(value)) {
-        cli::cli_abort("{.field jsonPath} is readonly")
-      }
-      private$.projectFilePath
-    },
-
-    #' @field modelFolder Path to the folder containing pkml simulation files.
-    modelFolder = function(value) {
-      if (!missing(value)) {
-        private$.filePathsData$modelFolder$value <- value
-        private$.invalidateContainer()
-        return(invisible(value))
-      }
-      private$.clean_path(
-        private$.filePathsData$modelFolder$value,
-        self$projectDirPath
-      )
-    },
-
-    #' @field configurationsFolder Path to the folder containing configuration
-    #'   files. Part of the Excel import/export bridge (the `excel` container
-    #'   block).
-    configurationsFolder = function(value) {
-      if (!missing(value)) {
-        private$.excelData$configurationsFolder$value <- value
-        private$.invalidateContainer()
-        return(invisible(value))
-      }
-      private$.clean_path(
-        private$.excelData$configurationsFolder$value,
-        self$projectDirPath
-      )
-    },
-
-    #' @field modelParamsFile Path to the Excel file with global model
-    #'   parameterization. Part of the Excel import/export bridge (the `excel`
-    #'   container block).
-    modelParamsFile = function(value) {
-      if (!missing(value)) {
-        private$.excelData$modelParamsFile$value <- value
-        private$.invalidateContainer()
-        return(invisible(value))
-      }
-      private$.clean_path(
-        private$.excelData$modelParamsFile$value,
-        self$configurationsFolder
-      )
-    },
-
-    #' @field individualsFile Path to the Excel file with individual-specific
-    #'   model parameterization. Part of the Excel import/export bridge (the
-    #'   `excel` container block).
-    individualsFile = function(value) {
-      if (!missing(value)) {
-        private$.excelData$individualsFile$value <- value
-        private$.invalidateContainer()
-        return(invisible(value))
-      }
-      private$.clean_path(
-        private$.excelData$individualsFile$value,
-        self$configurationsFolder
-      )
-    },
-
-    #' @field populationsFile Path to the Excel file with population
-    #'   information. Part of the Excel import/export bridge (the `excel`
-    #'   container block).
-    populationsFile = function(value) {
-      if (!missing(value)) {
-        private$.excelData$populationsFile$value <- value
-        private$.invalidateContainer()
-        return(invisible(value))
-      }
-      private$.clean_path(
-        private$.excelData$populationsFile$value,
-        self$configurationsFolder
-      )
-    },
-
-    #' @field scenariosFile Path to the Excel file with scenario definitions.
-    #'   Part of the Excel import/export bridge (the `excel` container block).
-    scenariosFile = function(value) {
-      if (!missing(value)) {
-        private$.excelData$scenariosFile$value <- value
-        private$.invalidateContainer()
-        return(invisible(value))
-      }
-      private$.clean_path(
-        private$.excelData$scenariosFile$value,
-        self$configurationsFolder
-      )
-    },
-
-    #' @field applicationsFile Path to the Excel file with scenario-specific
-    #'   parameters such as application protocol parameters. Part of the Excel
-    #'   import/export bridge (the `excel` container block).
-    applicationsFile = function(value) {
-      if (!missing(value)) {
-        private$.excelData$applicationsFile$value <- value
-        private$.invalidateContainer()
-        return(invisible(value))
-      }
-      private$.clean_path(
-        private$.excelData$applicationsFile$value,
-        self$configurationsFolder
-      )
-    },
-
-    #' @field plotsFile Path to the Excel file with plot definitions. Part of
-    #'   the Excel import/export bridge (the `excel` container block).
-    plotsFile = function(value) {
-      if (!missing(value)) {
-        private$.excelData$plotsFile$value <- value
-        private$.invalidateContainer()
-        return(invisible(value))
-      }
-      private$.clean_path(
-        private$.excelData$plotsFile$value,
-        self$configurationsFolder
-      )
-    },
-
-    #' @field parameterIdentificationFile Name of the Excel workbook holding
-    #'   the parameter-identification sheets (`PITasks`, `PIParameters`,
-    #'   `PIOutputMappings`). Resolved relative to `configurationsFolder`.
-    parameterIdentificationFile = function(value) {
-      if (!missing(value)) {
-        private$.excelData$parameterIdentificationFile$value <- value
-        private$.invalidateContainer()
-        return(invisible(value))
-      }
-      private$.clean_path(
-        private$.excelData$parameterIdentificationFile$value,
-        self$configurationsFolder
-      )
-    },
-
-    #' @field initialConditionsFile Name of the Excel workbook holding the
-    #'   initial-condition (molecule start value) sheets, one sheet per set.
-    #'   Part of the Excel import/export bridge (the `excel` container block);
-    #'   resolved relative to `configurationsFolder`.
-    initialConditionsFile = function(value) {
-      if (!missing(value)) {
-        private$.excelData$initialConditionsFile$value <- value
-        private$.invalidateContainer()
-        return(invisible(value))
-      }
-      private$.clean_path(
-        private$.excelData$initialConditionsFile$value,
-        self$configurationsFolder
-      )
-    },
-
-    #' @field populationsFolder Name of the folder containing population
-    #'   definitions as CSV files. Resolved relative to `projectDirPath`.
-    #'   Used by `runScenarios()` to load population CSVs at simulation time.
-    populationsFolder = function(value) {
-      if (!missing(value)) {
-        private$.filePathsData$populationsFolder$value <- value
-        private$.invalidateContainer()
-        return(invisible(value))
-      }
-      private$.clean_path(
-        private$.filePathsData$populationsFolder$value,
-        self$projectDirPath
-      )
-    },
-
-    #' @field dataFolder Path to the folder where experimental data files are
-    #'   located.
-    dataFolder = function(value) {
-      if (!missing(value)) {
-        private$.filePathsData$dataFolder$value <- value
-        private$.invalidateContainer()
-        return(invisible(value))
-      }
-      private$.clean_path(
-        private$.filePathsData$dataFolder$value,
-        self$projectDirPath
-      )
-    },
-
-    #' @field outputFolder Path to the folder where the results should be saved
-    #'   relative to the "Code" folder
-    outputFolder = function(value) {
-      if (!missing(value)) {
-        private$.filePathsData$outputFolder$value <- value
-        private$.invalidateContainer()
-        return(invisible(value))
-      }
-      private$.clean_path(
-        private$.filePathsData$outputFolder$value,
-        self$projectDirPath
-      )
-    },
-
-    # Section data. Each accessor is READ-ONLY from the handle: the getter
-    # returns the section wrapped in a printable, read-only `DefinitionList`,
-    # and every assignment form (`project$x <- v`, `project$x[["id"]] <- v`,
-    # the nested `project$x[["id"]]$f <- v`, `project$x[-i] <- v`) aborts. The
-    # only sanctioned way to change a section is an authoring function
-    # (`addScenario()` / `setScenario()` / `removeScenario()` and their
-    # per-section siblings) or editing the definition's JSON file; those route
-    # through the internal `.setSection()` entry point, which updates the
-    # in-memory backing field, sets the dirty bit, and clears the
-    # validation-cache flag so the next run/plot re-validates. Nothing
-    # touches the `definitions/<kind>/` tree until `saveProject()` reconciles
-    # it to memory.
-
-    #' @field outputPaths Read-only named list mapping output-path IDs to
-    #'   OSPS-notation path strings (e.g. `list(PVB = "Organism|...")`). To
-    #'   change it, use [addOutputPath()] / [setOutputPath()] /
-    #'   [removeOutputPath()] or edit the definition files under
-    #'   `definitions/output-paths/`.
-    outputPaths = function(value) {
-      if (!missing(value)) {
-        .definitionListReadOnlyError("outputPaths")
-      }
-      .asDefinitionList(private$.outputPaths, "outputPaths")
-    },
-
-    #' @field scenarios Read-only named list of `Scenario` records, keyed by
-    #'   scenario name. To change it, use [addScenario()] / [setScenario()] /
-    #'   [removeScenario()] (or [renameScenario()] / [duplicateScenario()]), or
-    #'   edit the definition files under `definitions/scenarios/`. The typical
-    #'   way to edit a scenario: read it
-    #'   (`sc <- project$scenarios[["id"]]`), change your copy
-    #'   (`sc$modelFile <- ...`), then hand it back
-    #'   (`setScenario(project, "id", ...)`).
-    scenarios = function(value) {
-      if (!missing(value)) {
-        .definitionListReadOnlyError("scenarios")
-      }
-      .asDefinitionList(private$.scenarios, "scenarios")
-    },
-
-    #' @field parameterSets Read-only named list of parameter structures, keyed
-    #'   by set id. This single section holds every parameter set in the
-    #'   project: a scenario references the sets it applies through its
-    #'   `modelParameterSets` field, an individual or application through its
-    #'   `parameterSets` field; all three resolve against this one map. To
-    #'   change it, use [addParameterSet()] / [removeParameterSet()] /
-    #'   [addParameterEntry()] / [removeParameterEntry()] or edit the definition
-    #'   files under `definitions/parameter-sets/`.
-    parameterSets = function(value) {
-      if (!missing(value)) {
-        .definitionListReadOnlyError("parameterSets")
-      }
-      .asDefinitionList(private$.parameterSets, "parameterSets")
-    },
-
-    #' @field initialConditions Read-only named list of initial-condition sets,
-    #'   keyed by set id. Each set is a list of molecule start-value records
-    #'   (`path`, `value`, `unit`), applied to a scenario's simulation via its
-    #'   `initialConditions` field. To change it, use [addInitialConditions()] /
-    #'   [removeInitialConditions()] / [addInitialConditionEntry()] /
-    #'   [removeInitialConditionEntry()] or edit the definition files under
-    #'   `definitions/initial-conditions/`.
-    initialConditions = function(value) {
-      if (!missing(value)) {
-        .definitionListReadOnlyError("initialConditions")
-      }
-      .asDefinitionList(private$.initialConditions, "initialConditions")
-    },
-
-    #' @field individuals Read-only named list of plain lists, keyed by
-    #'   individualId. To change it, use [addIndividual()] / [setIndividual()] /
-    #'   [removeIndividual()] or edit the definition files under
-    #'   `definitions/individuals/`.
-    individuals = function(value) {
-      if (!missing(value)) {
-        .definitionListReadOnlyError("individuals")
-      }
-      .asDefinitionList(private$.individuals, "individuals")
-    },
-
-    #' @field populations Read-only named list of plain lists, keyed by
-    #'   populationId. To change it, use [addPopulation()] / [setPopulation()] /
-    #'   [removePopulation()] or edit the definition files under
-    #'   `definitions/populations/`.
-    populations = function(value) {
-      if (!missing(value)) {
-        .definitionListReadOnlyError("populations")
-      }
-      .asDefinitionList(private$.populations, "populations")
-    },
-
-    #' @field applications Read-only named list of parameter structures, keyed
-    #'   by protocol name. To change it, use [addApplication()] /
-    #'   [removeApplication()] or edit the definition files under
-    #'   `definitions/applications/`.
-    applications = function(value) {
-      if (!missing(value)) {
-        .definitionListReadOnlyError("applications")
-      }
-      .asDefinitionList(private$.applications, "applications")
-    },
-
-    #' @field observedData Read-only list of observed data source declarations.
-    #'   To change it, use [addObservedData()] / [removeObservedData()] or edit
-    #'   the definition files under `definitions/observed-data/` (one file per
-    #'   declaration).
-    observedData = function(value) {
-      if (!missing(value)) {
-        .definitionListReadOnlyError("observedData")
-      }
-      .asDefinitionList(private$.observedData, "observedData")
-    },
-
-    #' @field dataCombined Read-only named list of `DataCombined` definitions,
-    #'   keyed by `dataCombinedId`. Each entry pairs simulated and/or observed
-    #'   curves. To change it, use [addDataCombined()] / [removeDataCombined()]
-    #'   or edit the definition files under `definitions/data-combined/`.
-    dataCombined = function(value) {
-      if (!missing(value)) {
-        .definitionListReadOnlyError("dataCombined")
-      }
-      .asDefinitionList(private$.dataCombined, "dataCombined")
-    },
-
-    #' @field plots Read-only named list of plot definitions, keyed by `plotId`.
-    #'   Each entry is a single plot's configuration (`dataCombinedId`,
-    #'   `plotType`, and styling fields). To change it, use [addPlot()] /
-    #'   [removePlot()] or edit the definition files under `definitions/plots/`.
-    plots = function(value) {
-      if (!missing(value)) {
-        .definitionListReadOnlyError("plots")
-      }
-      .asDefinitionList(private$.plots, "plots")
-    },
-
-    #' @field plotGrids Read-only named list of plot-grid definitions, keyed by
-    #'   `plotGridId`. Each entry lays out one or more plots. To change it, use
-    #'   [addPlotGrid()] / [removePlotGrid()] or edit the definition files under
-    #'   `definitions/plot-grids/`.
-    plotGrids = function(value) {
-      if (!missing(value)) {
-        .definitionListReadOnlyError("plotGrids")
-      }
-      .asDefinitionList(private$.plotGrids, "plotGrids")
-    },
-
-    #' @field parameterIdentification Read-only named list keyed by PI task id;
-    #'   each entry is a `PITask` record. May be `NULL` or an empty list when the
-    #'   project declares no PI tasks. To change it, use [addPITask()] /
-    #'   [removePITask()] (and the per-task [addPIParameter()] /
-    #'   [addPIOutputMapping()] and their removals) or edit the definition files
-    #'   under `definitions/parameter-identification/`.
-    parameterIdentification = function(value) {
-      if (!missing(value)) {
-        .definitionListReadOnlyError("parameterIdentification")
-      }
-      .asDefinitionList(
-        private$.parameterIdentification,
-        "parameterIdentification"
-      )
-    },
-
-    #' @field filePaths Read-only named list of the project's working-folder
-    #'   paths (the `filePaths` JSON block): `modelFolder`, `dataFolder`,
-    #'   `outputFolder`, and `populationsFolder`. Values are returned verbatim
-    #'   as strings; no resolution is performed at this stage. The Excel-bridge
-    #'   sheet-name fields live in the separate `excel` block (`project$excel`),
-    #'   not here.
-    filePaths = function(value) {
-      if (!missing(value)) {
-        cli::cli_abort("{.field filePaths} is readonly")
-      }
-      data <- private$.filePathsData
-      if (length(data) == 0L) {
-        return(structure(list(), names = character(0L)))
-      }
-      lapply(data, function(entry) entry$value)
+      private$.definitionsGroup()
     },
 
     #' @field asList Returns the current project as a list matching the JSON
@@ -1043,7 +644,10 @@ Project <- R6::R6Class(
       private$.isModified()
     },
 
-    #' @description Print a summary of the Project.
+    #' @description Print a summary of the Project. Each section is rendered by
+    #'   the same per-group block method the field groups (`project$info`,
+    #'   `project$paths`, `project$definitions`, `project$excel`) print, so the
+    #'   project summary and a group's own print never drift.
     #' @param ... Unused; present for S3 method consistency.
     print = function(...) {
       ospsuite.utils::ospPrintClass(self)
@@ -1056,102 +660,10 @@ Project <- R6::R6Class(
         cli::cli_text("{.emph [unsaved changes]}")
       }
 
-      # Show file locations relative to the project directory rather than as
-      # absolute paths. The absolute prefix is machine-specific (and, for a
-      # project loaded from a temp copy, varies in length by OS), so printing it
-      # is both noisy for the user and a source of non-reproducible output. The
-      # container is shown as its basename (`JSON File`); the working folders are
-      # made relative to `projectDirPath`. Falls back to the raw value when there
-      # is no project directory (an in-memory project), matching the already
-      # project-relative Excel block below.
-      relToProject <- function(path) {
-        dir <- self$projectDirPath
-        if (is.null(path) || is.null(dir)) {
-          return(path)
-        }
-        as.character(fs::path_rel(path, start = dir))
-      }
-
-      # Metadata bullets. `print_empty = FALSE` drops the NULL/empty entries
-      # (e.g. `jsonPath` for an in-memory project), so no explicit filtering
-      # is needed here.
-      ospsuite.utils::ospPrintItems(
-        list(
-          "Name" = self$name,
-          "Description" = self$description,
-          "Schema Version" = self$schemaVersion,
-          "esqlabsR Version" = self$esqlabsRVersion,
-          "JSON File" = if (!is.null(self$jsonPath)) {
-            fs::path_file(self$jsonPath)
-          }
-        )
-      )
-
-      # Paths section: only the four live working folders, shown relative to the
-      # project directory. `configurationsFolder` and the workbook file fields
-      # belong to the Excel block, not here. Drop unset (NULL) folders and omit
-      # the header when none is set.
-      paths <- Filter(
-        Negate(is.null),
-        list(
-          "Simulations Folder" = relToProject(self$modelFolder),
-          "Data Folder" = relToProject(self$dataFolder),
-          "Populations Folder" = relToProject(self$populationsFolder),
-          "Output Folder" = relToProject(self$outputFolder)
-        )
-      )
-      if (length(paths) > 0L) {
-        ospsuite.utils::ospPrintHeader("Paths")
-        ospsuite.utils::ospPrintItems(paths)
-      }
-
-      # Definitions section: the per-section entry counts. `ospPrintItems()`
-      # prints an integer `0`, so zero-count sections are dropped explicitly
-      # (not via `print_empty`). Omit the header when every section is empty.
-      counts <- list(
-        "Scenarios" = length(self$scenarios),
-        "Individuals" = length(self$individuals),
-        "Populations" = length(self$populations),
-        "Parameter Sets" = length(self$parameterSets),
-        "Initial Conditions" = length(self$initialConditions),
-        "Applications" = length(self$applications),
-        "Output Paths" = length(self$outputPaths),
-        "Observed Data" = length(self$observedData),
-        "Data Combined" = length(self$dataCombined),
-        "Plots" = length(self$plots),
-        "Plot Grids" = length(self$plotGrids),
-        "Parameter Identification" = length(self$parameterIdentification)
-      )
-      counts <- Filter(function(n) n > 0L, counts)
-      if (length(counts) > 0L) {
-        ospsuite.utils::ospPrintHeader("Definitions")
-        ospsuite.utils::ospPrintItems(counts)
-      }
-
-      # Excel section: only when the project has an Excel side-car. Relabel the
-      # raw `excel` field names to friendly labels, falling back to the raw name
-      # so a future field is never silently dropped.
-      excel <- self$excel
-      if (length(excel) > 0L) {
-        labels <- c(
-          "configurationsFolder" = "Configurations Folder",
-          "modelParamsFile" = "Model Parameters File",
-          "individualsFile" = "Individuals File",
-          "populationsFile" = "Populations File",
-          "scenariosFile" = "Scenarios File",
-          "applicationsFile" = "Applications File",
-          "plotsFile" = "Plots File",
-          "parameterIdentificationFile" = "Parameter Identification File",
-          "initialConditionsFile" = "Initial Conditions File"
-        )
-        names(excel) <- vapply(
-          names(excel),
-          function(field) labels[[field]] %||% field,
-          character(1L)
-        )
-        ospsuite.utils::ospPrintHeader("Excel")
-        ospsuite.utils::ospPrintItems(excel)
-      }
+      private$.printInfoBlock()
+      private$.printPathsBlock()
+      private$.printDefinitionsBlock()
+      private$.printExcelBlock()
 
       invisible(self)
     }
@@ -1234,6 +746,313 @@ Project <- R6::R6Class(
     .invalidateContainer = function() {
       private$.invalidate()
       private$.modified <- TRUE
+      invisible(self)
+    },
+
+    # Field-group proxy builders ----
+    #
+    # Each builds a `.projectFieldGroup()` proxy for one surface group
+    # (`project$info`, `project$filePaths`, `project$excel`, `project$definitions`).
+    # The proxy's per-field getter/setter closures are created here, inside a
+    # method, so they capture the live `self`/`private` of this instance and can
+    # read and write the backing state directly. External code holds only the
+    # proxy, never `private`; the closures are the only bridge back. A fresh
+    # proxy is built on each group access (the proxy carries no state beyond its
+    # closures, and the closures re-read the live backing fields every call).
+
+    # Handle an assignment into a group active binding (`project$info <- ...`).
+    # A nested field write (`project$info$name <- "x"`) mutates the proxy
+    # environment in place through the field's active binding, then R re-assigns
+    # the (same) proxy back into the group binding; that write-back must be
+    # accepted as a no-op. Any other value is a genuine attempt to replace the
+    # whole group, which is not allowed: the group is a live view, not a slot.
+    .acceptGroupWriteback = function(value, group) {
+      isWriteback <- inherits(value, "ProjectFieldGroup") &&
+        identical(attr(value, "group"), group)
+      if (!isWriteback) {
+        cli::cli_abort(
+          c(
+            "{.field {group}} is a field group and cannot be replaced.",
+            "i" = "Assign an individual field instead, e.g. \\
+            {.code project${group}$<field> <- value}."
+          )
+        )
+      }
+      invisible(value)
+    },
+
+    # `project$info`: identity + metadata. `name`/`description` are writable
+    # (each write sets the dirty bit via `.invalidateContainer()`);
+    # `schemaVersion`/`esqlabsRVersion` are machine-managed and
+    # `projectFilePath`/`projectDirPath` are derived, so all four are read-only.
+    .infoGroup = function() {
+      .projectFieldGroup(
+        list(
+          name = list(
+            get = function() private$.name,
+            set = function(value) {
+              private$.name <- value
+              private$.invalidateContainer()
+            }
+          ),
+          description = list(
+            get = function() private$.description,
+            set = function(value) {
+              private$.description <- value
+              private$.invalidateContainer()
+            }
+          ),
+          schemaVersion = list(
+            get = function() private$.schemaVersion,
+            set = NULL
+          ),
+          esqlabsRVersion = list(
+            get = function() private$.esqlabsRVersion,
+            set = NULL
+          ),
+          projectFilePath = list(
+            get = function() private$.projectFilePath,
+            set = NULL
+          ),
+          projectDirPath = list(
+            get = function() private$.projectDirPath,
+            set = NULL
+          )
+        ),
+        group = "info",
+        printer = function() private$.printInfoBlock()
+      )
+    },
+
+    # `project$paths`: the working-folder paths. Each folder is writable;
+    # reading resolves the stored value against `projectDirPath` (raw on write,
+    # resolved on read), exactly as the former flat getters did. Every write
+    # sets the dirty bit. `definitionsFolder` is stored separately (it is not a
+    # `filePaths` record) and defaults to `"definitions"`.
+    .pathsGroup = function() {
+      folderField <- function(name) {
+        force(name)
+        list(
+          get = function() {
+            private$.clean_path(
+              private$.filePathsData[[name]]$value,
+              private$.projectDirPath
+            )
+          },
+          set = function(value) {
+            private$.filePathsData[[name]]$value <- value
+            private$.invalidateContainer()
+          }
+        )
+      }
+      .projectFieldGroup(
+        list(
+          modelFolder = folderField("modelFolder"),
+          dataFolder = folderField("dataFolder"),
+          outputFolder = folderField("outputFolder"),
+          populationsFolder = folderField("populationsFolder"),
+          definitionsFolder = list(
+            get = function() private$.definitionsFolder %||% "definitions",
+            set = function(value) {
+              private$.definitionsFolder <- value
+              private$.invalidateContainer()
+            }
+          )
+        ),
+        group = "paths",
+        printer = function() private$.printPathsBlock()
+      )
+    },
+
+    # `project$excel`: the Excel-bridge sheet-name fields. `configurationsFolder`
+    # resolves against `projectDirPath`; every other field resolves against the
+    # (resolved) `configurationsFolder`, as the former flat getters did. All are
+    # writable (raw on write, resolved on read); every write sets the dirty bit.
+    .excelGroup = function() {
+      configResolved <- function() {
+        private$.clean_path(
+          private$.excelData$configurationsFolder$value,
+          private$.projectDirPath
+        )
+      }
+      fileField <- function(name) {
+        force(name)
+        list(
+          get = function() {
+            private$.clean_path(
+              private$.excelData[[name]]$value,
+              configResolved()
+            )
+          },
+          set = function(value) {
+            private$.excelData[[name]]$value <- value
+            private$.invalidateContainer()
+          }
+        )
+      }
+      .projectFieldGroup(
+        list(
+          configurationsFolder = list(
+            get = configResolved,
+            set = function(value) {
+              private$.excelData$configurationsFolder$value <- value
+              private$.invalidateContainer()
+            }
+          ),
+          modelParamsFile = fileField("modelParamsFile"),
+          individualsFile = fileField("individualsFile"),
+          populationsFile = fileField("populationsFile"),
+          scenariosFile = fileField("scenariosFile"),
+          applicationsFile = fileField("applicationsFile"),
+          plotsFile = fileField("plotsFile"),
+          parameterIdentificationFile = fileField(
+            "parameterIdentificationFile"
+          ),
+          initialConditionsFile = fileField("initialConditionsFile")
+        ),
+        group = "excel",
+        printer = function() private$.printExcelBlock()
+      )
+    },
+
+    # `project$definitions`: the definition sections. Read-only from the handle;
+    # each field returns the section wrapped in a printable, read-only
+    # `DefinitionList` (so `project$definitions$scenarios[["id"]]` reads and any
+    # nested assignment still aborts). The field set is the single source of
+    # truth `.definitionKindNames()`, so the group always matches the actual
+    # sections. Assignment routes through `.definitionListReadOnlyError()`, whose
+    # message points at the authoring functions.
+    .definitionsGroup = function() {
+      kinds <- .definitionKindNames()
+      spec <- lapply(kinds, function(kind) {
+        force(kind)
+        list(
+          get = function() {
+            .asDefinitionList(private$.getSection(kind), kind)
+          },
+          set = NULL
+        )
+      })
+      names(spec) <- kinds
+      .projectFieldGroup(
+        spec,
+        group = "definitions",
+        onReadOnly = function(field) .definitionListReadOnlyError(field),
+        printer = function() private$.printDefinitionsBlock()
+      )
+    },
+
+    # Per-group print blocks ----
+    #
+    # One method per surface group. Each renders that group's section exactly as
+    # it appears in `Project$print()`. Both the whole-project print and the
+    # group's own `print.ProjectFieldGroup` call these, so the rendering is
+    # defined once and the two prints never drift.
+
+    # `project$info`: the metadata bullets. `print_empty = FALSE` drops the
+    # NULL/empty entries (e.g. the JSON file for an in-memory project). The JSON
+    # file is shown as its basename, not the machine-specific absolute path.
+    .printInfoBlock = function() {
+      ospsuite.utils::ospPrintItems(
+        list(
+          "Name" = private$.name,
+          "Description" = private$.description,
+          "Schema Version" = private$.schemaVersion,
+          "esqlabsR Version" = private$.esqlabsRVersion,
+          "JSON File" = if (!is.null(private$.projectFilePath)) {
+            fs::path_file(private$.projectFilePath)
+          }
+        )
+      )
+      invisible(self)
+    },
+
+    # `project$paths`: the working folders, shown relative to the project
+    # directory. The absolute prefix is machine-specific (and, for a project
+    # loaded from a temp copy, varies in length by OS), so printing it is both
+    # noisy and non-reproducible; the resolved value is kept for an in-memory
+    # project that has no directory to relativize against. `configurationsFolder`
+    # and the workbook file fields belong to the Excel block, not here. Unset
+    # (NULL) folders are dropped and the header is omitted when none is set.
+    .printPathsBlock = function() {
+      relToProject <- function(path) {
+        dir <- private$.projectDirPath
+        if (is.null(path) || is.null(dir)) {
+          return(path)
+        }
+        as.character(fs::path_rel(path, start = dir))
+      }
+      paths <- self$paths
+      items <- Filter(
+        Negate(is.null),
+        list(
+          "Simulations Folder" = relToProject(paths$modelFolder),
+          "Data Folder" = relToProject(paths$dataFolder),
+          "Populations Folder" = relToProject(paths$populationsFolder),
+          "Output Folder" = relToProject(paths$outputFolder),
+          "Definitions Folder" = paths$definitionsFolder
+        )
+      )
+      if (length(items) > 0L) {
+        ospsuite.utils::ospPrintHeader("Paths")
+        ospsuite.utils::ospPrintItems(items)
+      }
+      invisible(self)
+    },
+
+    # `project$definitions`: the per-section entry counts. `ospPrintItems()`
+    # prints an integer `0`, so zero-count sections are dropped explicitly (not
+    # via `print_empty`). The header is omitted when every section is empty.
+    .printDefinitionsBlock = function() {
+      counts <- list(
+        "Scenarios" = length(private$.scenarios),
+        "Individuals" = length(private$.individuals),
+        "Populations" = length(private$.populations),
+        "Parameter Sets" = length(private$.parameterSets),
+        "Initial Conditions" = length(private$.initialConditions),
+        "Applications" = length(private$.applications),
+        "Output Paths" = length(private$.outputPaths),
+        "Observed Data" = length(private$.observedData),
+        "Data Combined" = length(private$.dataCombined),
+        "Plots" = length(private$.plots),
+        "Plot Grids" = length(private$.plotGrids),
+        "Parameter Identification" = length(private$.parameterIdentification)
+      )
+      counts <- Filter(function(n) n > 0L, counts)
+      if (length(counts) > 0L) {
+        ospsuite.utils::ospPrintHeader("Definitions")
+        ospsuite.utils::ospPrintItems(counts)
+      }
+      invisible(self)
+    },
+
+    # `project$excel`: the Excel side-car sheet names, shown only when the
+    # project has one. The raw field names are relabeled to friendly labels,
+    # falling back to the raw name so a future field is never silently dropped.
+    # The stored (raw) sheet-name values are shown, not the resolved paths.
+    .printExcelBlock = function() {
+      excel <- lapply(private$.excelData, function(entry) entry$value)
+      if (length(excel) == 0L) {
+        return(invisible(self))
+      }
+      labels <- c(
+        "configurationsFolder" = "Configurations Folder",
+        "modelParamsFile" = "Model Parameters File",
+        "individualsFile" = "Individuals File",
+        "populationsFile" = "Populations File",
+        "scenariosFile" = "Scenarios File",
+        "applicationsFile" = "Applications File",
+        "plotsFile" = "Plots File",
+        "parameterIdentificationFile" = "Parameter Identification File",
+        "initialConditionsFile" = "Initial Conditions File"
+      )
+      names(excel) <- vapply(
+        names(excel),
+        function(field) labels[[field]] %||% field,
+        character(1L)
+      )
+      ospsuite.utils::ospPrintHeader("Excel")
+      ospsuite.utils::ospPrintItems(excel)
       invisible(self)
     },
 
@@ -1501,7 +1320,7 @@ Project <- R6::R6Class(
         private$.projectDirPath,
         kind,
         spec$inline(jsonData),
-        self$definitionsFolder
+        private$.definitionsFolder %||% "definitions"
       )
       spec$parse(records, self)
     }

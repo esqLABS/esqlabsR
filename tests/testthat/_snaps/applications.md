@@ -47,7 +47,7 @@
 # print.Application renders its parameter-set references
 
     Code
-      print(project$applications[["aciclovir_iv_250mg"]])
+      print(project$definitions$applications[["aciclovir_iv_250mg"]])
     Output
       <Application>
         * Parameter Sets: aciclovir_iv_250mg_default
@@ -55,7 +55,7 @@
 # print.Application renders an empty protocol
 
     Code
-      print(project$applications[["empty"]])
+      print(project$definitions$applications[["empty"]])
     Output
       <Application>
         * Parameter Sets: <empty string>

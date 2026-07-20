@@ -41,7 +41,7 @@ A parameter identification is described by a **PI task**. A task is a plain-data
 - a set of **PI Parameters**, one per quantity to estimate, each giving a model parameter path, the scenarios it applies to, a starting value, and lower and upper bounds, and
 - a set of **PI Output Mappings**, each pairing one model output (an output path of the project) with one Observed Data series (see `vignette("observed-data")`), so the optimizer knows which simulated curve to compare against which measurements.
 
-A task can also carry an optional configuration block (the optimization algorithm, the confidence-interval method, and similar settings). Tasks are stored on the project under `project$parameterIdentification`, keyed by task id.
+A task can also carry an optional configuration block (the optimization algorithm, the confidence-interval method, and similar settings). Tasks are stored on the project under `project$definitions$parameterIdentification`, keyed by task id.
 
 ## Running the predefined task
 
@@ -57,7 +57,7 @@ project_dir <- withr::local_tempdir()
 initProject(destination = project_dir, type = "example", createExcel = FALSE)
 project <- loadProject(file.path(project_dir, "Project.json"))
 
-project$parameterIdentification[["aciclovirsimple"]]
+project$definitions$parameterIdentification[["aciclovirsimple"]]
 ```
 
 Run it with `runPI()`. By default `runPI()` runs every task on the project; pass `tasks` to restrict the run to specific tasks. The first call is slow because it initializes PK-Sim and builds the simulation before optimizing.
@@ -104,7 +104,7 @@ When you see it, treat the estimate with caution and revisit the bounds, the out
 Instead of relying on a task stored in the project, you can author one in memory with the `add*` family. `addPITask()` creates a task and requires at least one PI Parameter and one PI Output Mapping at creation, so you seed it with existing records and grow it afterwards. The records are the same plain-data values the project already holds, so the simplest seed is to reuse the ones from the example task.
 
 ```{r addTask}
-template <- project$parameterIdentification[["aciclovirsimple"]]
+template <- project$definitions$parameterIdentification[["aciclovirsimple"]]
 
 project <- addPITask(
   project,
@@ -158,7 +158,7 @@ project <- removePIParameter(project, "ehc_fit", template$parameters[[1]]$id)
 project <- removePIOutputMapping(project, "ehc_fit", "pvb_alt")
 project <- removePIOutputMapping(project, "ehc_fit", template$outputMappings[[1]]$id)
 
-project$parameterIdentification
+project$definitions$parameterIdentification
 ```
 
 The example task `aciclovirsimple` is untouched, since we only edited the in-memory copy of `ehc_fit`; nothing was written back to disk.

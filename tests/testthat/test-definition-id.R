@@ -125,12 +125,12 @@ test_that(".canonicalizeId still errors when distinct ids collide via characters
 # writing nothing.
 test_that("a public authoring call aborts on a case-differing id collision", {
   project <- testProject()
-  before <- names(project$individuals)
+  before <- names(project$definitions$individuals)
   expect_snapshot(
     error = TRUE,
     addIndividual(project, c("Foo", "foo"), species = "Human", gender = "MALE")
   )
-  expect_identical(names(project$individuals), before)
+  expect_identical(names(project$definitions$individuals), before)
 })
 
 # An id over the filesystem single-component byte limit becomes an unwritable

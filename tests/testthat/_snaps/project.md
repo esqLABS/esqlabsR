@@ -15,6 +15,7 @@
         * Data Folder: Data
         * Populations Folder: Populations
         * Output Folder: Results
+        * Definitions Folder: definitions
       
       -- Definitions -----------------------------------------------------------------
         * Scenarios: 3
@@ -49,6 +50,9 @@
       [unsaved changes]
     Output
       
+      -- Paths -----------------------------------------------------------------------
+        * Definitions Folder: definitions
+      
       -- Definitions -----------------------------------------------------------------
         * Scenarios: 1
 
@@ -58,55 +62,58 @@
       print(project)
     Output
       <Project>
+      
+      -- Paths -----------------------------------------------------------------------
+        * Definitions Folder: definitions
 
 # a whole-section assignment through a section accessor is rejected
 
     Code
-      project$scenarios <- list()
+      project$definitions$scenarios <- list()
     Condition
-      Error:
+      Error in `onReadOnly()`:
       ! scenarios is read-only and cannot be assigned into.
       i To change a definition, edit its '.json' file or use an authoring function (e.g. `addScenario()` / `setScenario()` / `removeScenario()` and their per-section siblings).
-      i To edit one record, read it, change the copy, then re-submit it with an authoring function: `sc <- project$scenarios[["id"]]; sc$field <- value; setScenario(project, "id", ...)`.
+      i To edit one record, read it, change the copy, then re-submit it with an authoring function: `sc <- project$definitions$scenarios[["id"]]; sc$field <- value; setScenario(project, "id", ...)`.
 
 # a subscript assignment through a section accessor is rejected
 
     Code
-      project$scenarios[["aciclovir_iv"]] <- Scenario(scenarioName = "aciclovir_iv",
+      project$definitions$scenarios[["aciclovir_iv"]] <- Scenario(scenarioName = "aciclovir_iv",
         modelFile = "m.pkml")
     Condition
       Error in `[[<-`:
       ! scenarios is read-only and cannot be assigned into.
       i To change a definition, edit its '.json' file or use an authoring function (e.g. `addScenario()` / `setScenario()` / `removeScenario()` and their per-section siblings).
-      i To edit one record, read it, change the copy, then re-submit it with an authoring function: `sc <- project$scenarios[["id"]]; sc$field <- value; setScenario(project, "id", ...)`.
+      i To edit one record, read it, change the copy, then re-submit it with an authoring function: `sc <- project$definitions$scenarios[["id"]]; sc$field <- value; setScenario(project, "id", ...)`.
 
 # a nested field assignment through a section accessor is rejected
 
     Code
-      project$scenarios[["testscenario"]]$individualId <- "indiv1"
+      project$definitions$scenarios[["testscenario"]]$individualId <- "indiv1"
     Condition
       Error in `[[<-`:
       ! scenarios is read-only and cannot be assigned into.
       i To change a definition, edit its '.json' file or use an authoring function (e.g. `addScenario()` / `setScenario()` / `removeScenario()` and their per-section siblings).
-      i To edit one record, read it, change the copy, then re-submit it with an authoring function: `sc <- project$scenarios[["id"]]; sc$field <- value; setScenario(project, "id", ...)`.
+      i To edit one record, read it, change the copy, then re-submit it with an authoring function: `sc <- project$definitions$scenarios[["id"]]; sc$field <- value; setScenario(project, "id", ...)`.
 
 # a negative-index assignment through a section accessor is rejected
 
     Code
-      project$scenarios[-1] <- list()
+      project$definitions$scenarios[-1] <- list()
     Condition
       Error in `[<-`:
       ! scenarios is read-only and cannot be assigned into.
       i To change a definition, edit its '.json' file or use an authoring function (e.g. `addScenario()` / `setScenario()` / `removeScenario()` and their per-section siblings).
-      i To edit one record, read it, change the copy, then re-submit it with an authoring function: `sc <- project$scenarios[["id"]]; sc$field <- value; setScenario(project, "id", ...)`.
+      i To edit one record, read it, change the copy, then re-submit it with an authoring function: `sc <- project$definitions$scenarios[["id"]]; sc$field <- value; setScenario(project, "id", ...)`.
 
 # jsonPath is read-only and aliases projectFilePath
 
     Code
-      project$jsonPath <- "elsewhere.json"
+      project$info$projectFilePath <- "elsewhere.json"
     Condition
-      Error:
-      ! jsonPath is readonly
+      Error in `onReadOnly()`:
+      ! info$projectFilePath is read-only and cannot be assigned into.
 
 # project$status is read-only
 
@@ -135,6 +142,7 @@
         * Data Folder: Data
         * Populations Folder: Populations
         * Output Folder: Results
+        * Definitions Folder: definitions
       
       -- Definitions -----------------------------------------------------------------
         * Scenarios: 4
@@ -172,6 +180,7 @@
         * Data Folder: Data
         * Populations Folder: Populations
         * Output Folder: Results
+        * Definitions Folder: definitions
       
       -- Definitions -----------------------------------------------------------------
         * Scenarios: 4
@@ -209,6 +218,7 @@
         * Data Folder: Data
         * Populations Folder: Populations
         * Output Folder: Results
+        * Definitions Folder: definitions
       
       -- Definitions -----------------------------------------------------------------
         * Scenarios: 4
@@ -233,7 +243,7 @@
 # a section accessor prints a count and the definition names
 
     Code
-      print(project$individuals)
+      print(project$definitions$individuals)
     Output
       <DefinitionList>
       individuals (1 definition):
@@ -242,7 +252,7 @@
 ---
 
     Code
-      print(project$parameterSets)
+      print(project$definitions$parameterSets)
     Output
       <DefinitionList>
       parameterSets (4 definitions):
@@ -254,7 +264,7 @@
 # an empty section accessor prints zero definitions
 
     Code
-      print(project$individuals)
+      print(project$definitions$individuals)
     Output
       <DefinitionList>
       individuals (0 definitions):
@@ -262,7 +272,7 @@
 # the three plots sections each print a count and ids
 
     Code
-      print(project$plots)
+      print(project$definitions$plots)
     Output
       <DefinitionList>
       plots (1 definition):
@@ -271,7 +281,7 @@
 ---
 
     Code
-      print(project$plotGrids)
+      print(project$definitions$plotGrids)
     Output
       <DefinitionList>
       plotGrids (1 definition):
@@ -280,7 +290,7 @@
 ---
 
     Code
-      print(project$dataCombined)
+      print(project$definitions$dataCombined)
     Output
       <DefinitionList>
       dataCombined (1 definition):

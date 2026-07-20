@@ -13,7 +13,7 @@ setApplicationParameterSets(project, id, parameterSets)
 same way \code{\link[=addApplication]{addApplication()}} canonicalizes it.}
 
 \item{parameterSets}{Character vector of set ids (from
-\code{project$parameterSets}), applied whole to every application; use
+\code{parameterSets} definitions), applied whole to every application; use
 \code{character(0)} to clear. To set a different list per application, pass a
 list of the same length as \code{id} (one character vector per application).}
 }

@@ -14,14 +14,14 @@ to add). Each is canonicalized to a safe, lowercase id (a warning names
 the result if it changed).}
 
 \item{parameterSets}{Optional character vector of set ids referencing
-\code{project$parameterSets}, applied whole to every protocol. Defaults to
+\code{parameterSets} definitions, applied whole to every protocol. Defaults to
 \code{NULL}. Use a list of the same length as \code{id} for a per-protocol set.}
 }
 \value{
 The \code{project} object, invisibly.
 }
 \description{
-Add protocols to \code{project$applications}, vectorizing over a vector of ids
+Add protocols to \code{applications} definitions, vectorizing over a vector of ids
 (see the recycling rule under Details). \code{parameterSets} is
 vector-valued-per-definition: it is applied whole to every protocol; to give a
 different set per protocol, pass a list of the same length as \code{id} (one

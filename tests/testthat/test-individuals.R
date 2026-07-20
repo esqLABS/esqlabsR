@@ -38,13 +38,13 @@ test_that("an individual carrying an unknown field round-trips through serializa
 
 test_that("addIndividual + removeIndividual round-trip leaves the section unchanged", {
   project <- testProject()
-  before <- project$individuals
+  before <- project$definitions$individuals
 
   addIndividual(project, "newi", species = "Human", gender = "MALE")
-  expect_true("newi" %in% names(project$individuals))
+  expect_true("newi" %in% names(project$definitions$individuals))
 
   removeIndividual(project, "newi")
-  expect_identical(project$individuals, before)
+  expect_identical(project$definitions$individuals, before)
 })
 
 test_that("addIndividual aborts when individualId already exists", {
@@ -61,7 +61,7 @@ test_that("addIndividual aborts when gender is missing", {
     error = TRUE,
     addIndividual(project, "newi", species = "Human")
   )
-  expect_false("newi" %in% names(project$individuals))
+  expect_false("newi" %in% names(project$definitions$individuals))
 })
 
 test_that("addIndividual aborts when gender is not a valid GenderInt token", {
@@ -70,13 +70,13 @@ test_that("addIndividual aborts when gender is not a valid GenderInt token", {
     error = TRUE,
     addIndividual(project, "newi", species = "Human", gender = "banana")
   )
-  expect_false("newi" %in% names(project$individuals))
+  expect_false("newi" %in% names(project$definitions$individuals))
 })
 
 test_that("addIndividual accepts a valid GenderInt token", {
   project <- testProject()
   addIndividual(project, "newi", species = "Human", gender = "FEMALE")
-  expect_identical(project$individuals$newi$gender, "FEMALE")
+  expect_identical(project$definitions$individuals$newi$gender, "FEMALE")
 })
 
 test_that("addIndividual rejects a non-numeric weight/height/age", {
@@ -92,14 +92,14 @@ test_that("addIndividual rejects a non-numeric weight/height/age", {
     ),
     "weight must be a single finite number"
   )
-  expect_false("bad" %in% names(project$individuals))
+  expect_false("bad" %in% names(project$definitions$individuals))
 })
 
 test_that("removeIndividual warns when referenced by a scenario", {
   project <- testProject()
   referenced <- "indiv1"
   expect_warning(removeIndividual(project, referenced), "referenced")
-  expect_false(referenced %in% names(project$individuals))
+  expect_false(referenced %in% names(project$definitions$individuals))
 })
 
 # setIndividual ----
@@ -107,26 +107,26 @@ test_that("removeIndividual warns when referenced by a scenario", {
 test_that("setIndividual changes a field in memory and persists on save", {
   project <- testProject()
   setIndividual(project, "indiv1", weight = 80)
-  expect_equal(project$individuals[["indiv1"]]$weight, 80)
+  expect_equal(project$definitions$individuals[["indiv1"]]$weight, 80)
 
   # The edit reaches disk on save: a throwaway reload sees the new value.
   saveProject(project)
-  reloaded <- loadProject(project$jsonPath)
-  expect_equal(reloaded$individuals[["indiv1"]]$weight, 80)
+  reloaded <- loadProject(project$info$projectFilePath)
+  expect_equal(reloaded$definitions$individuals[["indiv1"]]$weight, 80)
 })
 
 test_that("setIndividual coerces numeric fields like addIndividual", {
   project <- testProject()
   setIndividual(project, "indiv1", age = "45")
-  expect_identical(project$individuals[["indiv1"]]$age, 45)
+  expect_identical(project$definitions$individuals[["indiv1"]]$age, 45)
 })
 
 test_that("setIndividual partial update leaves other fields untouched", {
   project <- testProject()
-  before <- project$individuals[["indiv1"]]
+  before <- project$definitions$individuals[["indiv1"]]
   setIndividual(project, "indiv1", height = 180)
 
-  after <- project$individuals[["indiv1"]]
+  after <- project$definitions$individuals[["indiv1"]]
   expect_equal(after$height, 180)
   for (f in setdiff(names(before), "height")) {
     expect_equal(after[[f]], before[[f]])
@@ -139,14 +139,14 @@ test_that("setIndividual clears a numeric field passed NULL", {
   # each removal is observable.
   for (field in c("weight", "height", "age")) {
     project <- testProject()
-    before <- project$individuals[["indiv1"]]
+    before <- project$definitions$individuals[["indiv1"]]
 
     do.call(
       setIndividual,
       c(list(project, "indiv1"), stats::setNames(list(NULL), field))
     )
 
-    after <- project$individuals[["indiv1"]]
+    after <- project$definitions$individuals[["indiv1"]]
     expect_false(field %in% names(after))
     expect_null(after[[field]])
     # No other field changed, and no unexpected key was added.
@@ -174,29 +174,29 @@ test_that("setIndividual aborts on a non-existent individual", {
 
 test_that("setIndividual rejects an empty gender like addIndividual", {
   project <- testProject()
-  before <- project$individuals[["indiv1"]]
+  before <- project$definitions$individuals[["indiv1"]]
   expect_snapshot(
     error = TRUE,
     setIndividual(project, "indiv1", gender = "")
   )
   # Memory unchanged after the rejected write.
-  expect_equal(project$individuals[["indiv1"]], before)
+  expect_equal(project$definitions$individuals[["indiv1"]], before)
 })
 
 test_that("setIndividual rejects a gender that is not a valid GenderInt token", {
   project <- testProject()
-  before <- project$individuals[["indiv1"]]
+  before <- project$definitions$individuals[["indiv1"]]
   expect_snapshot(
     error = TRUE,
     setIndividual(project, "indiv1", gender = "banana")
   )
   # Memory unchanged after the rejected write.
-  expect_equal(project$individuals[["indiv1"]], before)
+  expect_equal(project$definitions$individuals[["indiv1"]], before)
 })
 
 test_that("setIndividual rejects a non-numeric weight like addIndividual", {
   project <- testProject()
-  before <- project$individuals[["indiv1"]]
+  before <- project$definitions$individuals[["indiv1"]]
   # "80kg" would silently coerce to NA via as.double(); it must abort instead,
   # mirroring the add-path guard.
   expect_snapshot(
@@ -204,13 +204,13 @@ test_that("setIndividual rejects a non-numeric weight like addIndividual", {
     setIndividual(project, "indiv1", weight = "80kg")
   )
   # Memory unchanged after the rejected write.
-  expect_equal(project$individuals[["indiv1"]], before)
+  expect_equal(project$definitions$individuals[["indiv1"]], before)
 })
 
 test_that("setIndividual accepts a valid GenderInt token", {
   project <- testProject()
   setIndividual(project, "indiv1", gender = "FEMALE")
-  expect_identical(project$individuals[["indiv1"]]$gender, "FEMALE")
+  expect_identical(project$definitions$individuals[["indiv1"]]$gender, "FEMALE")
 })
 
 test_that("setIndividual rejects parameterSets that do not resolve", {
@@ -223,14 +223,14 @@ test_that("setIndividual rejects parameterSets that do not resolve", {
 
 test_that("setIndividual stays in memory until saveProject()", {
   source <- testProject()
-  before <- source$individuals[["indiv1"]]
+  before <- source$definitions$individuals[["indiv1"]]
   setIndividual(source, "indiv1", weight = 99)
 
-  expect_equal(source$individuals[["indiv1"]]$weight, 99)
+  expect_equal(source$definitions$individuals[["indiv1"]]$weight, 99)
   # The edit must not reach the on-disk tree before a save: a fresh load still
   # sees the original value.
-  reloaded <- loadProject(source$jsonPath)
-  expect_equal(reloaded$individuals[["indiv1"]], before)
+  reloaded <- loadProject(source$info$projectFilePath)
+  expect_equal(reloaded$definitions$individuals[["indiv1"]], before)
 })
 
 # setIndividual parameterSets replacement ----
@@ -241,27 +241,27 @@ test_that("setIndividual replaces the parameter-set refs and persists on save", 
   # existing set instead.
   setIndividual(project, "indiv1", parameterSets = "global")
   expect_identical(
-    project$individuals[["indiv1"]]$parameterSets,
+    project$definitions$individuals[["indiv1"]]$parameterSets,
     "global"
   )
 
   # The edit reaches disk on save.
   saveProject(project)
-  reloaded <- loadProject(project$jsonPath)
+  reloaded <- loadProject(project$info$projectFilePath)
   expect_identical(
-    reloaded$individuals[["indiv1"]]$parameterSets,
+    reloaded$definitions$individuals[["indiv1"]]$parameterSets,
     "global"
   )
 })
 
 test_that("setIndividual aborts on an undefined parameter set", {
   project <- testProject()
-  before <- project$individuals[["indiv1"]]
+  before <- project$definitions$individuals[["indiv1"]]
   expect_snapshot(
     error = TRUE,
     setIndividual(project, "indiv1", parameterSets = "Ghost")
   )
-  expect_identical(project$individuals[["indiv1"]], before)
+  expect_identical(project$definitions$individuals[["indiv1"]], before)
 })
 
 # Vectorized authoring ----
@@ -302,8 +302,8 @@ test_that("addIndividual adds N individuals in one call equal to N scalar adds",
   )
 
   expect_identical(
-    vectorized$individuals[c("adult_female", "adult_male")],
-    scalar$individuals[c("adult_female", "adult_male")]
+    vectorized$definitions$individuals[c("adult_female", "adult_male")],
+    scalar$definitions$individuals[c("adult_female", "adult_male")]
   )
 })
 
@@ -318,18 +318,18 @@ test_that("addIndividual recycles scalar fields and applies parameterSets whole"
     parameterSets = c("global", "aciclovir")
   )
 
-  expect_identical(project$individuals$a$species, "Human")
-  expect_identical(project$individuals$a$gender, "FEMALE")
-  expect_identical(project$individuals$b$gender, "MALE")
-  expect_identical(project$individuals$a$weight, 60)
-  expect_identical(project$individuals$b$weight, 60)
+  expect_identical(project$definitions$individuals$a$species, "Human")
+  expect_identical(project$definitions$individuals$a$gender, "FEMALE")
+  expect_identical(project$definitions$individuals$b$gender, "MALE")
+  expect_identical(project$definitions$individuals$a$weight, 60)
+  expect_identical(project$definitions$individuals$b$weight, 60)
   # parameterSets applied whole to both.
   expect_identical(
-    project$individuals$a$parameterSets,
+    project$definitions$individuals$a$parameterSets,
     c("global", "aciclovir")
   )
   expect_identical(
-    project$individuals$b$parameterSets,
+    project$definitions$individuals$b$parameterSets,
     c("global", "aciclovir")
   )
 })
@@ -343,13 +343,13 @@ test_that("addIndividual persists all N to disk in one saveProject()", {
     gender = "MALE"
   )
   saveProject(project)
-  reloaded <- loadProject(project$jsonPath)
-  expect_true(all(c("a", "b") %in% names(reloaded$individuals)))
+  reloaded <- loadProject(project$info$projectFilePath)
+  expect_true(all(c("a", "b") %in% names(reloaded$definitions$individuals)))
 })
 
 test_that("addIndividual aborts the whole batch and writes nothing on one bad entry", {
   project <- testProject()
-  before <- names(project$individuals)
+  before <- names(project$definitions$individuals)
   expect_error(
     addIndividual(
       project,
@@ -360,9 +360,9 @@ test_that("addIndividual aborts the whole batch and writes nothing on one bad en
     )
   )
   # Neither memory nor disk gained any individual.
-  expect_identical(names(project$individuals), before)
-  reloaded <- loadProject(project$jsonPath)
-  expect_identical(names(reloaded$individuals), before)
+  expect_identical(names(project$definitions$individuals), before)
+  reloaded <- loadProject(project$info$projectFilePath)
+  expect_identical(names(reloaded$definitions$individuals), before)
 })
 
 test_that("addIndividual aborts on a mismatched scalar field length", {
@@ -391,21 +391,21 @@ test_that("setIndividual vectorizes a partial update across N ids", {
   addIndividual(project, c("a", "b"), species = "Human", gender = "MALE")
   setIndividual(project, c("a", "b"), weight = c(80, 90), age = 40)
 
-  expect_identical(project$individuals$a$weight, 80)
-  expect_identical(project$individuals$b$weight, 90)
-  expect_identical(project$individuals$a$age, 40)
-  expect_identical(project$individuals$b$age, 40)
+  expect_identical(project$definitions$individuals$a$weight, 80)
+  expect_identical(project$definitions$individuals$b$weight, 90)
+  expect_identical(project$definitions$individuals$a$age, 40)
+  expect_identical(project$definitions$individuals$b$age, 40)
   # An unsupplied field is untouched.
-  expect_identical(project$individuals$a$gender, "MALE")
+  expect_identical(project$definitions$individuals$a$gender, "MALE")
 })
 
 test_that("removeIndividual removes a vector of ids in one write-through", {
   project <- testProject()
   addIndividual(project, c("a", "b"), species = "Human", gender = "MALE")
   removeIndividual(project, c("a", "b"))
-  expect_false(any(c("a", "b") %in% names(project$individuals)))
-  reloaded <- loadProject(project$jsonPath)
-  expect_false(any(c("a", "b") %in% names(reloaded$individuals)))
+  expect_false(any(c("a", "b") %in% names(project$definitions$individuals)))
+  reloaded <- loadProject(project$info$projectFilePath)
+  expect_false(any(c("a", "b") %in% names(reloaded$definitions$individuals)))
 })
 
 test_that("setIndividual parameterSets vectorizes whole across N ids", {
@@ -413,11 +413,11 @@ test_that("setIndividual parameterSets vectorizes whole across N ids", {
   addIndividual(project, c("a", "b"), species = "Human", gender = "MALE")
   setIndividual(project, c("a", "b"), parameterSets = c("global", "aciclovir"))
   expect_identical(
-    project$individuals$a$parameterSets,
+    project$definitions$individuals$a$parameterSets,
     c("global", "aciclovir")
   )
   expect_identical(
-    project$individuals$b$parameterSets,
+    project$definitions$individuals$b$parameterSets,
     c("global", "aciclovir")
   )
 })
@@ -428,7 +428,7 @@ test_that("print.Individual renders the configured fields", {
   project <- testProject()
   withr::local_options(cli.unicode = FALSE)
   local_reproducible_output()
-  expect_snapshot(print(project$individuals[["indiv1"]]))
+  expect_snapshot(print(project$definitions$individuals[["indiv1"]]))
 })
 
 test_that("print.Individual renders a minimal individual", {
@@ -436,12 +436,12 @@ test_that("print.Individual renders a minimal individual", {
   addIndividual(project, "minimal", species = "Human", gender = "MALE")
   withr::local_options(cli.unicode = FALSE)
   local_reproducible_output()
-  expect_snapshot(print(project$individuals[["minimal"]]))
+  expect_snapshot(print(project$definitions$individuals[["minimal"]]))
 })
 
 test_that("a classed Individual still behaves as a list", {
   project <- testProject()
-  indiv <- project$individuals[["indiv1"]]
+  indiv <- project$definitions$individuals[["indiv1"]]
   expect_type(indiv, "list")
   expect_identical(indiv[["species"]], "Human")
   expect_true("gender" %in% names(indiv))

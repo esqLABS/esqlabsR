@@ -29,7 +29,7 @@ Changes you make to a loaded project — with \code{addScenario()},
 \code{setIndividual()}, \code{removeParameterSet()}, \code{addOutputPath()}, and the
 other add/set/remove functions — live only in your R session until you
 save them; the files on disk stay as they are. Reading a section
-directly (for example \code{project$scenarios}) never changes the project: a
+directly (for example \code{scenarios} definitions) never changes the project: a
 definition changes only through the add/set/remove functions.
 
 Write your changes to the project files with \code{\link[=saveProject]{saveProject()}}. Discard

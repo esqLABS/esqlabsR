@@ -11,7 +11,7 @@ loadObservedData(project)
 }
 \value{
 A named list of \code{\link[ospsuite:DataSet]{ospsuite::DataSet}} objects. Empty list when
-\code{project$observedData} is empty or \code{NULL}.
+\code{observedData} definitions is empty or \code{NULL}.
 }
 \description{
 Reads the \code{observedData} declarations from a \link[=loadProject]{Project}

@@ -21,11 +21,11 @@ createPlotsFromExcel(...)
 \item{project}{A \code{Project} (see \code{\link[=loadProject]{loadProject()}}).}
 
 \item{plotGrids}{Names of plot grids to build. If \code{NULL} (default) and
-\code{plots} is also \code{NULL}, all grids declared in \code{project$plotGrids} are
+\code{plots} is also \code{NULL}, all grids declared in \code{plotGrids} definitions are
 built.}
 
 \item{plots}{Ids of standalone single plots to render directly (not laid
-out in a grid), each resolved against \code{project$plots}. \code{NULL} (default)
+out in a grid), each resolved against \code{plots} definitions. \code{NULL} (default)
 renders no standalone plots; standalone plots are opt-in.}
 
 \item{scenarioResults}{Named list of Scenario Results from
@@ -55,17 +55,17 @@ list when the project has no plots to build.
 }
 \description{
 \strong{Returns plot grids, not standalone plots.} By default \code{createPlots()}
-builds every plot grid declared in \code{project$plotGrids} and no standalone
+builds every plot grid declared in \code{plotGrids} definitions and no standalone
 plots, and hands back a \strong{named list of plot grids keyed by Plot Grid name}
 (the \code{plots} argument opts individual standalone plots into that same list).
 
-Reads \code{project$plots} and \code{project$plotGrids} (both keyed lists, one entry
+Reads \code{plots} definitions and \code{plotGrids} definitions (both keyed lists, one entry
 per plot / grid) to build the requested plot grids and, optionally,
 standalone single plots. DataCombined objects are resolved via
 \code{\link[=createDataCombined]{createDataCombined()}} internally unless supplied via \code{dataCombinedList}.
 
 With neither \code{plotGrids} nor \code{plots}, all plot grids declared in
-\code{project$plotGrids} are built (the default). The two arguments are
+\code{plotGrids} definitions are built (the default). The two arguments are
 independent selectors: \code{plotGrids} selects plot grids (keyed by
 \code{plotGridId} in the result), \code{plots} selects standalone single plots
 (keyed by \code{plotId}). A \code{plotId} that is also part of a requested grid still

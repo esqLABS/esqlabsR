@@ -119,7 +119,7 @@
 # print.ParameterSet renders the entry count and a compact table
 
     Code
-      print(project$parameterSets[["global"]])
+      print(project$definitions$parameterSets[["global"]])
     Output
       <ParameterSet>
         * Number of Entries: 1
@@ -128,7 +128,7 @@
 # print.ParameterSet renders an empty set
 
     Code
-      print(project$parameterSets[["emptyset"]])
+      print(project$definitions$parameterSets[["emptyset"]])
     Output
       <ParameterSet>
         * Number of Entries: 0
@@ -199,7 +199,7 @@
 # print.InitialConditionSet renders the entry count and a compact table
 
     Code
-      print(project$initialConditions[["printset"]])
+      print(project$definitions$initialConditions[["printset"]])
     Output
       <InitialConditionSet>
         * Number of Entries: 2
@@ -218,7 +218,7 @@
 # print.InitialConditionSet renders an empty set
 
     Code
-      print(project$initialConditions[["emptyset"]])
+      print(project$definitions$initialConditions[["emptyset"]])
     Output
       <InitialConditionSet>
         * Number of Entries: 0

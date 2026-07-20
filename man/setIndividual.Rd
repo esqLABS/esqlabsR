@@ -11,7 +11,7 @@ setIndividual(project, id, ...)
 
 \item{id}{Character vector. Ids of the individuals to modify. Each is
 canonicalized the same way \code{\link[=addIndividual]{addIndividual()}} canonicalizes it, and must
-already exist in \code{project$individuals}.}
+already exist in \code{individuals} definitions.}
 
 \item{...}{Named fields to change. Accepted: \code{species}, \code{population},
 \code{gender}, \code{weight}, \code{height}, \code{age}, \code{proteinOntogenies},
@@ -25,7 +25,7 @@ The \code{project} object, invisibly.
 \description{
 Changes one or more fields of the individual identified by
 \code{id} and persists the change immediately to the individual definition
-(write-through). The \code{project$individuals} accessor is read-only, so this
+(write-through). The \code{individuals} definitions accessor is read-only, so this
 is the way to revise an existing individual in place.
 
 Only the arguments you pass via \code{...} are changed; every other field
@@ -33,7 +33,7 @@ keeps its current value (partial update). Validation matches
 \code{\link[=addIndividual]{addIndividual()}}: numeric fields (\code{weight}, \code{height}, \code{age}) are
 coerced via \code{as.double()}, \code{gender} (if supplied) must be a non-empty
 string, and \code{parameterSets} (if supplied) must be a character vector of
-ids that resolve in \code{project$parameterSets}. The required
+ids that resolve in \code{parameterSets} definitions. The required
 \code{species} field, if supplied, must be a non-empty string.
 }
 \details{

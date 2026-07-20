@@ -33,13 +33,13 @@ the model folder).}
 protocol; \code{NA} when absent.}
 
 \item{individualId}{Character or \code{NULL}. ID referencing
-\code{project$individuals}.}
+\code{individuals} definitions.}
 
 \item{populationId}{Character or \code{NULL}. ID referencing
-\code{project$populations}.}
+\code{populations} definitions.}
 
 \item{outputPaths}{Named character vector of literal output paths.
-Names are the ids referencing \code{project$outputPaths}; values are the
+Names are the ids referencing \code{outputPaths} definitions; values are the
 literal paths. \code{NULL} when the scenario declares no outputs.
 Round-trip serialization reads \code{names(outputPaths)} to rebuild the
 \code{outputPaths} id array, so the named-vector invariant must be preserved.}
@@ -69,10 +69,10 @@ the main simulation.}
 during steady-state.}
 
 \item{modelParameterSets}{Character vector. Parameter-set ids
-referencing \code{project$parameterSets}.}
+referencing \code{parameterSets} definitions.}
 
 \item{initialConditions}{Character vector. Initial-condition set ids
-referencing \code{project$initialConditions}.}
+referencing \code{initialConditions} definitions.}
 }
 \value{
 A \code{Scenario} object: a named list carrying exactly the fields
@@ -85,7 +85,7 @@ not create or hold ospsuite runtime objects; the runtime is built by
 \code{\link[=runScenarios]{runScenarios()}} at execution time.
 
 A \code{Scenario} is a named list with copy semantics: an entry extracted
-from \code{project$scenarios} is an independent copy. The section accessor is
+from \code{scenarios} definitions is an independent copy. The section accessor is
 read-only, so to apply a change you pass the record to an authoring
 function (\code{addScenario()} / \code{setScenario()}), which validates and writes
 it through to the project.

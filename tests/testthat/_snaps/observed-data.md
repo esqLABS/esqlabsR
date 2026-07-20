@@ -73,7 +73,7 @@
 # print.ObservedDataSource renders the source declaration
 
     Code
-      print(project$observedData[[1]])
+      print(project$definitions$observedData[[1]])
     Output
       <ObservedDataSource>
         * Type: excel

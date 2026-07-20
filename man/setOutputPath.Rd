@@ -10,7 +10,7 @@ setOutputPath(project, id, path)
 \item{project}{A \code{Project} object.}
 
 \item{id}{Character vector. The output-path ids to modify. Each must
-already exist in \code{project$outputPaths}.}
+already exist in \code{outputPaths} definitions.}
 
 \item{path}{Character vector of new non-empty OSPS-notation path strings,
 length 1 (recycled) or the same length as \code{id}.}
@@ -24,7 +24,7 @@ output-path ids and persists the change immediately to the output-path
 definition (write-through). The ids themselves are not changed (use
 \code{\link[=removeOutputPath]{removeOutputPath()}} + \code{\link[=addOutputPath]{addOutputPath()}} to rename), so
 every scenario that records these output paths keeps referencing them.
-The \code{project$outputPaths} accessor is read-only, so this is the way to
+The \code{outputPaths} definitions accessor is read-only, so this is the way to
 change a path in place. The call vectorizes over a vector of ids (see the
 recycling rule under Details); \code{path} is scalar-per-definition (one path
 recycled to every id, or a length-\code{id} vector aligned by position).

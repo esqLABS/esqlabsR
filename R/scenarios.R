@@ -37,7 +37,7 @@
 #'   [runScenarios()] at execution time.
 #'
 #'   A `Scenario` is a named list with copy semantics: an entry extracted
-#'   from `project$scenarios` is an independent copy. The section accessor is
+#'   from `scenarios` definitions is an independent copy. The section accessor is
 #'   read-only, so to apply a change you pass the record to an authoring
 #'   function (`addScenario()` / `setScenario()`), which validates and writes
 #'   it through to the project.
@@ -48,11 +48,11 @@
 #' @param applicationProtocol Character or `NA`. Name of the application
 #'   protocol; `NA` when absent.
 #' @param individualId Character or `NULL`. ID referencing
-#'   `project$individuals`.
+#'   `individuals` definitions.
 #' @param populationId Character or `NULL`. ID referencing
-#'   `project$populations`.
+#'   `populations` definitions.
 #' @param outputPaths Named character vector of literal output paths.
-#'   Names are the ids referencing `project$outputPaths`; values are the
+#'   Names are the ids referencing `outputPaths` definitions; values are the
 #'   literal paths. `NULL` when the scenario declares no outputs.
 #'   Round-trip serialization reads `names(outputPaths)` to rebuild the
 #'   `outputPaths` id array, so the named-vector invariant must be preserved.
@@ -73,9 +73,9 @@
 #' @param overwriteFormulasInSS Logical. Overwrite formula parameters
 #'   during steady-state.
 #' @param modelParameterSets Character vector. Parameter-set ids
-#'   referencing `project$parameterSets`.
+#'   referencing `parameterSets` definitions.
 #' @param initialConditions Character vector. Initial-condition set ids
-#'   referencing `project$initialConditions`.
+#'   referencing `initialConditions` definitions.
 #'
 #' @returns A `Scenario` object: a named list carrying exactly the fields
 #'   above.
@@ -312,13 +312,13 @@ print.Scenario <- function(x, ...) {
 #' @keywords internal
 #' @noRd
 .scenariosValidatorAdapter <- function(project) {
-  .validateScenarios(project$scenarios, project$modelFolder)
+  .validateScenarios(project$definitions$scenarios, project$paths$modelFolder)
 }
 
 #' @keywords internal
 #' @noRd
 .applicationsValidatorAdapter <- function(project) {
-  .validateApplications(project$applications)
+  .validateApplications(project$definitions$applications)
 }
 
 #' Validate the `scenarios` section of a Project
@@ -331,7 +331,7 @@ print.Scenario <- function(x, ...) {
 #' …) live in `.validateCrossReferences()`.
 #'
 #' @param scenarios Named list of `Scenario` objects from
-#'   `project$scenarios`.
+#'   `scenarios` definitions.
 #' @param modelFolder Character. Absolute path to the project's model folder,
 #'   used to resolve relative `modelFile` paths. May be `NULL`.
 #' @return validationResult.
@@ -579,7 +579,7 @@ print.Scenario <- function(x, ...) {
 #' canonical section list still resolves to a working validator (and so
 #' that future shape checks have an obvious home).
 #'
-#' @param applications Named list from `project$applications`.
+#' @param applications Named list from `applications` definitions.
 #' @return validationResult.
 #' @keywords internal
 #' @noRd
@@ -656,7 +656,7 @@ runScenarios <- function(
 
 #' Add one or more scenarios programmatically to a Project
 #'
-#' Creates new `Scenario` records and adds them to `project$scenarios` after
+#' Creates new `Scenario` records and adds them to `scenarios` definitions after
 #' validating all references. The call vectorizes over a vector of ids (see
 #' the recycling rule under Details). Scalar-per-definition fields (`modelFile`,
 #' `individual`, `population`, `application`, `simulationTime`,
@@ -674,22 +674,22 @@ runScenarios <- function(
 #' @param id Character vector of ids (names) for the new scenarios (the number
 #'   of scenarios to add). Each is canonicalized to a safe, lowercase,
 #'   single-path-segment id (a warning names the result if it changed); each
-#'   canonical id must not already exist in `project$scenarios`.
+#'   canonical id must not already exist in `scenarios` definitions.
 #' @param modelFile Character. Name of the `.pkml` model file (relative
 #'   to model folder).
 #' @param individual Character or `NULL`. Id referencing
-#'   `project$individuals`.
+#'   `individuals` definitions.
 #' @param population Character or `NULL`. Id referencing
-#'   `project$populations`.
+#'   `populations` definitions.
 #' @param application Character or `NULL`. Id of the application protocol
-#'   referencing `project$applications`.
+#'   referencing `applications` definitions.
 #' @param parameterSets Character vector or `NULL`. Parameter-set ids
-#'   referencing `project$parameterSets`. Applied whole to every scenario.
+#'   referencing `parameterSets` definitions. Applied whole to every scenario.
 #' @param initialConditions Character vector or `NULL`. Initial-condition set
-#'   ids referencing `project$initialConditions`. Applied whole to every
+#'   ids referencing `initialConditions` definitions. Applied whole to every
 #'   scenario.
 #' @param outputPaths Character vector or `NULL`. Output-path ids referencing
-#'   `project$outputPaths`. Applied whole to every scenario.
+#'   `outputPaths` definitions. Applied whole to every scenario.
 #' @param simulationTime Character or `NULL`. Format
 #'   `"start, end, resolution"` or
 #'   `"start, end, resolution; start, end, resolution"` for multiple
@@ -802,7 +802,7 @@ addScenario <- function(
   )
 
   .assertNoDuplicateIds(id, "scenario")
-  clash <- intersect(id, names(self$scenarios))
+  clash <- intersect(id, names(self$definitions$scenarios))
   if (length(clash) > 0L) {
     cli::cli_abort("scenario {.val {clash}} already exists")
   }
@@ -863,37 +863,37 @@ addScenario <- function(
     .checkScalarScenarioFK(
       individual,
       "individual",
-      project$individuals,
+      project$definitions$individuals,
       "individuals"
     ),
     .checkScalarScenarioFK(
       population,
       "population",
-      project$populations,
+      project$definitions$populations,
       "populations"
     ),
     .checkScalarScenarioFK(
       application,
       "application",
-      project$applications,
+      project$definitions$applications,
       "applications"
     ),
     .checkVectorScenarioFK(
       parameterSets,
       "parameterSets",
-      project$parameterSets,
-      "project$parameterSets"
+      project$definitions$parameterSets,
+      "project$definitions$parameterSets"
     ),
     .checkVectorScenarioFK(
       initialConditions,
       "initialConditions",
-      project$initialConditions,
-      "project$initialConditions"
+      project$definitions$initialConditions,
+      "project$definitions$initialConditions"
     ),
     .checkVectorScenarioFK(
       outputPaths,
       "outputPaths",
-      project$outputPaths,
+      project$definitions$outputPaths,
       "outputPaths"
     )
   )
@@ -917,7 +917,7 @@ addScenario <- function(
     populationId = population,
     outputPaths = if (!is.null(outputPaths)) {
       stats::setNames(
-        unlist(project$outputPaths[outputPaths], use.names = FALSE),
+        unlist(project$definitions$outputPaths[outputPaths], use.names = FALSE),
         outputPaths
       )
     },
@@ -967,11 +967,11 @@ removeScenario <- function(project, id) {
   .assertIdVector(id)
   id <- .canonicalizeId(id)
 
-  missingIds <- setdiff(id, names(self$scenarios))
+  missingIds <- setdiff(id, names(self$definitions$scenarios))
   if (length(missingIds) > 0L) {
     cli::cli_warn("scenario {.val {missingIds}} not found; no-op.")
   }
-  toRemove <- intersect(id, names(self$scenarios))
+  toRemove <- intersect(id, names(self$definitions$scenarios))
   for (one in toRemove) {
     .warnIfReferenced(self, "scenario", one)
   }
@@ -989,9 +989,9 @@ removeScenario <- function(project, id) {
 #' @description Changes one or more fields of the scenario identified by
 #'   `id` and persists the change the same way [addScenario()]
 #'   does (write-through to the scenario definition). The section accessor
-#'   `project$scenarios` is read-only, so this is the way to revise an
+#'   `scenarios` definitions is read-only, so this is the way to revise an
 #'   existing scenario: read it if you need the current values
-#'   (`sc <- project$scenarios[[name]]`), then pass the changes here
+#'   (`sc <- the scenarios definitions[[name]]`), then pass the changes here
 #'   (`setScenario(project, name, ...)`).
 #'
 #'   Only the arguments you pass are changed; every other field keeps its
@@ -1018,7 +1018,7 @@ removeScenario <- function(project, id) {
 #' @inheritParams addScenario
 #' @param id Character vector. Ids of the scenarios to modify. Each is
 #'   canonicalized the same way [addScenario()] canonicalizes it, and must
-#'   already exist in `project$scenarios`.
+#'   already exist in `scenarios` definitions.
 #' @param simulationTimeUnit Character time-unit string. Omitting the argument
 #'   leaves the current value untouched (there is no default; this is a
 #'   partial update).
@@ -1128,7 +1128,7 @@ setScenario <- function(
   .assertIdVector(id)
   id <- .canonicalizeId(id)
   n <- length(id)
-  missingIds <- setdiff(id, names(self$scenarios))
+  missingIds <- setdiff(id, names(self$definitions$scenarios))
   if (length(missingIds) > 0L) {
     cli::cli_abort(c(
       "Cannot modify scenario {.val {missingIds}}: it does not exist.",
@@ -1177,7 +1177,7 @@ setScenario <- function(
 # @keywords internal
 # @noRd
 .setOneScenario <- function(project, id, fields, call = rlang::caller_env()) {
-  sc <- project$scenarios[[id]]
+  sc <- project$definitions$scenarios[[id]]
   errors <- character()
   supplied <- names(fields)
 
@@ -1216,7 +1216,7 @@ setScenario <- function(
       .checkScalarScenarioFK(
         fields$individual,
         "individual",
-        project$individuals,
+        project$definitions$individuals,
         "individuals"
       )
     )
@@ -1227,7 +1227,7 @@ setScenario <- function(
       .checkScalarScenarioFK(
         fields$population,
         "population",
-        project$populations,
+        project$definitions$populations,
         "populations"
       )
     )
@@ -1238,7 +1238,7 @@ setScenario <- function(
       .checkScalarScenarioFK(
         fields$application,
         "application",
-        project$applications,
+        project$definitions$applications,
         "applications"
       )
     )
@@ -1249,8 +1249,8 @@ setScenario <- function(
       .checkVectorScenarioFK(
         fields$parameterSets,
         "parameterSets",
-        project$parameterSets,
-        "project$parameterSets"
+        project$definitions$parameterSets,
+        "project$definitions$parameterSets"
       )
     )
   }
@@ -1260,8 +1260,8 @@ setScenario <- function(
       .checkVectorScenarioFK(
         fields$initialConditions,
         "initialConditions",
-        project$initialConditions,
-        "project$initialConditions"
+        project$definitions$initialConditions,
+        "project$definitions$initialConditions"
       )
     )
   }
@@ -1271,7 +1271,7 @@ setScenario <- function(
       .checkVectorScenarioFK(
         fields$outputPaths,
         "outputPaths",
-        project$outputPaths,
+        project$definitions$outputPaths,
         "outputPaths"
       )
     )
@@ -1318,7 +1318,7 @@ setScenario <- function(
       NULL
     } else {
       stats::setNames(
-        unlist(project$outputPaths[fields$outputPaths], use.names = FALSE),
+        unlist(project$definitions$outputPaths[fields$outputPaths], use.names = FALSE),
         fields$outputPaths
       )
     }
@@ -1386,7 +1386,7 @@ setScenario <- function(
 #'
 #' @param project A `Project` object.
 #' @param id Character. Id of the scenario to rename; must exist in
-#'   `project$scenarios` (after canonicalization).
+#'   `scenarios` definitions (after canonicalization).
 #' @param newId Character. New id for the scenario; its canonical form must
 #'   not already belong to a different scenario.
 #'
@@ -1418,7 +1418,7 @@ renameScenario <- function(project, id, newId) {
   }
   .assertScenarioTargetFree(self, newId)
 
-  sc <- self$scenarios[[id]]
+  sc <- self$definitions$scenarios[[id]]
   # Keep the record's stored name in step with its new key so the definition file
   # the write-through emits (`name = sc$scenarioName`) and the key agree, which
   # is what `.validateScenarioStructure()` enforces.
@@ -1452,7 +1452,7 @@ renameScenario <- function(project, id, newId) {
 #'
 #' @param project A `Project` object.
 #' @param id Character. Id of the scenario to copy; must exist in
-#'   `project$scenarios` (after canonicalization).
+#'   `scenarios` definitions (after canonicalization).
 #' @param newId Character. Id for the new copy; its canonical form must not
 #'   already belong to an existing scenario.
 #'
@@ -1525,16 +1525,16 @@ duplicateScenario <- function(project, id, newId) {
   action,
   call = rlang::caller_env()
 ) {
-  if (id %in% names(project$scenarios)) {
+  if (id %in% names(project$definitions$scenarios)) {
     return(invisible(NULL))
   }
-  suggestion <- .suggestSuffix(id, names(project$scenarios))
+  suggestion <- .suggestSuffix(id, names(project$definitions$scenarios))
   cli::cli_abort(
     c(
       "Cannot {action} scenario {.val {id}}: it does not exist.",
       "i" = paste0(
         "Available scenarios: ",
-        "{.val {names(project$scenarios)}}",
+        "{.val {names(project$definitions$scenarios)}}",
         suggestion
       )
     ),
@@ -1553,7 +1553,7 @@ duplicateScenario <- function(project, id, newId) {
   newId,
   call = rlang::caller_env()
 ) {
-  if (newId %in% names(project$scenarios)) {
+  if (newId %in% names(project$definitions$scenarios)) {
     cli::cli_abort(
       "Cannot use {.val {newId}}: a scenario with that id already exists.",
       call = call

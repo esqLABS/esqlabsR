@@ -25,7 +25,7 @@ addPIOutputMapping(
 \item{task}{Character scalar. Existing PI task id.}
 
 \item{outputPath}{Character scalar. Must exist in
-\code{names(project$outputPaths)}.}
+\verb{names(the outputPaths definitions)}.}
 
 \item{observedData}{Character scalar. Name of the observed dataset.}
 

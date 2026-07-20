@@ -20,7 +20,7 @@ the \code{outputFolder} used to derive the default destination.}
 
 \item{outputFolder}{Optional - path to the folder where the results will be
 stored. If \code{NULL} (default), a sub-folder in
-\verb{project$outputFolder/SimulationResults/<DateSuffix>}.}
+\verb{project$paths$outputFolder/SimulationResults/<DateSuffix>}.}
 
 \item{saveSimulationsToPKML}{If \code{TRUE} (default), simulations corresponding to
 the results are saved to PKML along with the results.}

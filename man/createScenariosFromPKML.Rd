@@ -48,15 +48,15 @@ provided, sets simulation type to "Population". Can be a single string
 \code{pkmlFilePaths}.}
 
 \item{application}{Character vector. Optional application protocol
-ids to use for scenarios, each referencing \code{project$applications}. If
+ids to use for scenarios, each referencing \code{applications} definitions. If
 \code{NULL} (default), the scenario has no application protocol (the PKML file
 already embeds its own application). Values are used verbatim and are
-validated against \code{project$applications}. Can be a single string
+validated against \code{applications} definitions. Can be a single string
 (recycled for all scenarios) or a vector with the same length as
 \code{pkmlFilePaths}.}
 
 \item{parameterSets}{Character vector. Optional parameter set
-ids to apply to scenarios (referencing \code{project$parameterSets}).
+ids to apply to scenarios (referencing \code{parameterSets} definitions).
 If \code{NULL} (default), no parameter sets will be applied. Can be a
 single string (recycled for all scenarios) or a vector with the same
 length as \code{pkmlFilePaths}. If providing multiple set ids per scenario,
@@ -70,7 +70,7 @@ extracted from the PKML files' output selections. Can be a single string
 with commas in the string. Named vectors are supported where the names
 become the registered output-path ids, e.g.,
 \code{c("plasma" = "Organism|VenousBlood|Plasma|Drug|Concentration")}. When a
-literal path is already registered in \code{project$outputPaths}, its existing
+literal path is already registered in \code{outputPaths} definitions, its existing
 id is reused; unnamed new paths receive a readable generated id.}
 
 \item{simulationTime}{Character vector. Optional simulation time to use for
@@ -121,13 +121,13 @@ value (recycled for all scenarios) or a vector with the same length as
 }
 \value{
 The \code{project}, invisibly, with the new scenarios added to
-\code{project$scenarios} and any new output paths registered in
-\code{project$outputPaths}.
+\code{scenarios} definitions and any new output paths registered in
+\code{outputPaths} definitions.
 }
 \description{
 Reads scenarios from PKML files, extracting output paths and simulation
 time settings, and adds them to a \code{Project} in place. Output paths are
-registered in \code{project$outputPaths} (reusing an existing id when the
+registered in \code{outputPaths} definitions (reusing an existing id when the
 literal path is already registered, otherwise generating a readable one),
 and scenario names are made unique against the scenarios already on the
 project. The function mutates \code{project} directly and returns it invisibly,

@@ -54,7 +54,7 @@
 #' @keywords internal
 #' @noRd
 .populationsValidatorAdapter <- function(project) {
-  .validatePopulations(project$populations)
+  .validatePopulations(project$definitions$populations)
 }
 
 #' Validate the `populations` section of a Project
@@ -63,7 +63,7 @@
 #' `proportionOfFemales` or inverted Min/Max ranges (age, weight,
 #' height, BMI).
 #'
-#' @param populations Named list from `project$populations`.
+#' @param populations Named list from `populations` definitions.
 #' @return validationResult.
 #' @keywords internal
 #' @noRd
@@ -341,7 +341,7 @@ sampleRandomValue <- function(distribution, mean, sd, n) {
 
 #' Add one or more populations to a Project
 #'
-#' Add populations to `project$populations`, vectorizing over a vector of ids
+#' Add populations to `populations` definitions, vectorizing over a vector of ids
 #' (see the recycling rule under Details). `species`, `numberOfIndividuals`,
 #' and the optional `...` fields are all scalar-per-definition (recycle/align).
 #'
@@ -401,7 +401,7 @@ addPopulation <- function(
   )
 
   .assertNoDuplicateIds(id, "population")
-  clash <- intersect(id, names(self$populations))
+  clash <- intersect(id, names(self$definitions$populations))
   if (length(clash) > 0L) {
     cli::cli_abort("population {.val {clash}} already exists")
   }
@@ -557,11 +557,11 @@ removePopulation <- function(project, id) {
   .assertIdVector(id)
   id <- .canonicalizeId(id)
 
-  missingIds <- setdiff(id, names(self$populations))
+  missingIds <- setdiff(id, names(self$definitions$populations))
   if (length(missingIds) > 0L) {
     cli::cli_warn("population {.val {missingIds}} not found; no-op.")
   }
-  toRemove <- intersect(id, names(self$populations))
+  toRemove <- intersect(id, names(self$definitions$populations))
   if (length(toRemove) == 0L) {
     return(invisible(self))
   }
@@ -578,7 +578,7 @@ removePopulation <- function(project, id) {
 #'
 #' @description Changes one or more fields of the population identified by
 #'   `id` and persists the change immediately to the population definition
-#'   (write-through). The `project$populations` accessor is read-only, so this
+#'   (write-through). The `populations` definitions accessor is read-only, so this
 #'   is the way to revise an existing population in place.
 #'
 #'   Only the arguments you pass via `...` are changed; every other field
@@ -593,7 +593,7 @@ removePopulation <- function(project, id) {
 #' @param project A `Project` object.
 #' @param id Character vector. Ids of the populations to modify. Each is
 #'   canonicalized the same way [addPopulation()] canonicalizes it, and must
-#'   already exist in `project$populations`.
+#'   already exist in `populations` definitions.
 #' @param ... Named fields to change. Accepted: `species`,
 #'   `numberOfIndividuals`, `proportionOfFemales`, `weightMin`,
 #'   `weightMax`, `heightMin`, `heightMax`, `ageMin`, `ageMax`, `BMIMin`,
@@ -621,7 +621,7 @@ setPopulation <- function(project, id, ...) {
   .assertIdVector(id)
   id <- .canonicalizeId(id)
   n <- length(id)
-  missingIds <- setdiff(id, names(self$populations))
+  missingIds <- setdiff(id, names(self$definitions$populations))
   if (length(missingIds) > 0L) {
     cli::cli_abort(c(
       "Cannot modify population {.val {missingIds}}: it does not exist.",
@@ -718,7 +718,7 @@ setPopulation <- function(project, id, ...) {
     }
   }
 
-  entry <- project$populations[[id]]
+  entry <- project$definitions$populations[[id]]
   for (field in names(fields)) {
     if (field %in% numericFields) {
       entry[[field]] <- .coerceNumericField(fields[[field]])

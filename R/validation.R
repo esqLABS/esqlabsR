@@ -476,24 +476,24 @@ validationSummary <- function(validationResults) {
     # `modelParameterSets`, an individual's `parameterSets`, an application's
     # `parameterSets`. Scan all three since they now share one namespace.
     holders <- character()
-    for (scName in names(project$scenarios %||% list())) {
+    for (scName in names(project$definitions$scenarios %||% list())) {
       if (
         id %in%
-          (project$scenarios[[scName]]$modelParameterSets %||% character(0))
+          (project$definitions$scenarios[[scName]]$modelParameterSets %||% character(0))
       ) {
         holders <- c(holders, paste0("scenario '", scName, "'"))
       }
     }
-    for (indId in names(project$individuals %||% list())) {
+    for (indId in names(project$definitions$individuals %||% list())) {
       if (
-        id %in% (project$individuals[[indId]]$parameterSets %||% character(0))
+        id %in% (project$definitions$individuals[[indId]]$parameterSets %||% character(0))
       ) {
         holders <- c(holders, paste0("individual '", indId, "'"))
       }
     }
-    for (appId in names(project$applications %||% list())) {
+    for (appId in names(project$definitions$applications %||% list())) {
       if (
-        id %in% (project$applications[[appId]]$parameterSets %||% character(0))
+        id %in% (project$definitions$applications[[appId]]$parameterSets %||% character(0))
       ) {
         holders <- c(holders, paste0("application '", appId, "'"))
       }
@@ -512,10 +512,10 @@ validationSummary <- function(validationResults) {
     # An initial-condition set is referenced from a scenario's
     # `initialConditions` field (a character vector of set ids).
     holders <- character()
-    for (scName in names(project$scenarios %||% list())) {
+    for (scName in names(project$definitions$scenarios %||% list())) {
       if (
         id %in%
-          (project$scenarios[[scName]]$initialConditions %||% character(0))
+          (project$definitions$scenarios[[scName]]$initialConditions %||% character(0))
       ) {
         holders <- c(holders, paste0("scenario '", scName, "'"))
       }
@@ -532,8 +532,8 @@ validationSummary <- function(validationResults) {
 
   if (definitionType == "outputPath") {
     piHolders <- character()
-    for (taskId in names(project$parameterIdentification %||% list())) {
-      task <- project$parameterIdentification[[taskId]]
+    for (taskId in names(project$definitions$parameterIdentification %||% list())) {
+      task <- project$definitions$parameterIdentification[[taskId]]
       for (m in task$outputMappings %||% list()) {
         if (identical(m$outputPathId, id)) {
           piHolders <- c(piHolders, taskId)
@@ -555,8 +555,8 @@ validationSummary <- function(validationResults) {
     # entry's `simulated[*]$scenario` names the scenario whose results it
     # plots. Scan every dataCombined simulated entry for the removed id.
     dcHolders <- character()
-    for (dcId in names(project$dataCombined %||% list())) {
-      for (entry in project$dataCombined[[dcId]]$simulated %||% list()) {
+    for (dcId in names(project$definitions$dataCombined %||% list())) {
+      for (entry in project$definitions$dataCombined[[dcId]]$simulated %||% list()) {
         if (identical(entry$scenario, id)) {
           dcHolders <- c(dcHolders, dcId)
         }
@@ -573,7 +573,7 @@ validationSummary <- function(validationResults) {
     return(invisible(NULL))
   }
 
-  scenarios <- project$scenarios %||% list()
+  scenarios <- project$definitions$scenarios %||% list()
   if (length(scenarios) == 0) {
     return(invisible(NULL))
   }
@@ -929,19 +929,19 @@ validationSummary <- function(validationResults) {
     return(result)
   }
 
-  scenarioList <- project$scenarios %||% list()
+  scenarioList <- project$definitions$scenarios %||% list()
   # Keep the section keys in their ORIGINAL spelling: the "did you mean" suffix
   # (`.suggestSuffix*`) shows them verbatim, and the membership helpers
   # (`.refResolves`, `.danglingRefs`) canonicalize BOTH sides internally, so a
   # hand-edited reference that differs from its definition only by case (or
   # another canonically-equal spelling) resolves instead of being flagged as
   # dangling.
-  individualIds <- names(project$individuals %||% list())
-  populationIds <- names(project$populations %||% list())
-  parameterSetKeys <- names(project$parameterSets %||% list())
-  initialConditionKeys <- names(project$initialConditions %||% list())
-  applicationKeys <- names(project$applications %||% list())
-  outputPathKeys <- names(project$outputPaths %||% list())
+  individualIds <- names(project$definitions$individuals %||% list())
+  populationIds <- names(project$definitions$populations %||% list())
+  parameterSetKeys <- names(project$definitions$parameterSets %||% list())
+  initialConditionKeys <- names(project$definitions$initialConditions %||% list())
+  applicationKeys <- names(project$definitions$applications %||% list())
+  outputPathKeys <- names(project$definitions$outputPaths %||% list())
 
   for (scName in names(scenarioList)) {
     sc <- scenarioList[[scName]]
@@ -1034,7 +1034,7 @@ validationSummary <- function(validationResults) {
 
     # The in-memory scenario carries its output paths as a named vector
     # (id-as-name, resolved-path-as-value); the names are the references
-    # into project$outputPaths, mirroring the serializer's reverse map.
+    # into the outputPaths definitions, mirroring the serializer's reverse map.
     scOutputPathIds <- names(sc$outputPaths)
     if (!is.null(scOutputPathIds)) {
       invalidOutputPaths <- .danglingRefs(scOutputPathIds, outputPathKeys)
@@ -1055,8 +1055,8 @@ validationSummary <- function(validationResults) {
 
   # individuals/applications resolve their parameter-set refs against the same
   # unified section as scenarios.
-  for (id in names(project$individuals %||% list())) {
-    refs <- project$individuals[[id]]$parameterSets %||% character(0)
+  for (id in names(project$definitions$individuals %||% list())) {
+    refs <- project$definitions$individuals[[id]]$parameterSets %||% character(0)
     refs <- as.character(unlist(refs))
     invalid <- .danglingRefs(refs, parameterSetKeys)
     if (length(invalid) > 0) {
@@ -1073,8 +1073,8 @@ validationSummary <- function(validationResults) {
     }
   }
 
-  for (id in names(project$applications %||% list())) {
-    refs <- project$applications[[id]]$parameterSets %||% character(0)
+  for (id in names(project$definitions$applications %||% list())) {
+    refs <- project$definitions$applications[[id]]$parameterSets %||% character(0)
     refs <- as.character(unlist(refs))
     invalid <- .danglingRefs(refs, parameterSetKeys)
     if (length(invalid) > 0) {
@@ -1096,7 +1096,7 @@ validationSummary <- function(validationResults) {
   # original spelling in the "did you mean" hint.
   scenarioNames <- names(scenarioList)
 
-  dataCombined <- .unwrapDefinitionList(project$dataCombined)
+  dataCombined <- .unwrapDefinitionList(project$definitions$dataCombined)
   if (!is.null(dataCombined) && length(dataCombined) > 0) {
     referencedScenarios <- unlist(lapply(dataCombined, function(dc) {
       vapply(
@@ -1122,8 +1122,8 @@ validationSummary <- function(validationResults) {
   # `scenarioNames` / `outputPathIds` keep the original spellings for the
   # "did you mean" suffix; membership is tested canonically via `.danglingRefs()`
   # / `.refResolves()`, which canonicalize both sides internally.
-  piTasks <- project$parameterIdentification %||% list()
-  outputPathIds <- names(project$outputPaths %||% list())
+  piTasks <- project$definitions$parameterIdentification %||% list()
+  outputPathIds <- names(project$definitions$outputPaths %||% list())
 
   for (taskId in names(piTasks)) {
     task <- piTasks[[taskId]]

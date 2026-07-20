@@ -46,7 +46,7 @@ project <- loadProject(file.path(project_dir, "Project.json"))
 The example already ships with one observed-data source, an Excel source. You can see it as a definition on the project:
 
 ```{r}
-project$observedData[[1]]
+project$definitions$observedData[[1]]
 ```
 
 ## A note on observed-data ids
@@ -91,14 +91,14 @@ addObservedData(
 )
 ```
 
-The importer configuration is an OSPS data-importer XML that describes how the columns map to time, value, and metadata; the `sheets` field lists which sheets to import. The file paths are relative to the project's data folder (`project$dataFolder`).
+The importer configuration is an OSPS data-importer XML that describes how the columns map to time, value, and metadata; the `sheets` field lists which sheets to import. The file paths are relative to the project's data folder (`project$paths$dataFolder`).
 
 ## Source type 2: PKML
 
 A `pkml` source reads a `DataSet` that was saved to a PKML file. Here we build a small `DataSet`, save it into the project's data folder as PKML, and declare it as a source:
 
 ```{r}
-data_folder <- project$dataFolder
+data_folder <- project$paths$dataFolder
 
 pkml_data <- ospsuite::DataSet$new(name = "Aciclovir extra cohort")
 pkml_data$setValues(xValues = c(0, 1, 2, 4, 8), yValues = c(0, 9, 6, 3, 1))

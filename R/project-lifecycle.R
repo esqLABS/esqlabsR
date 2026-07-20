@@ -25,7 +25,7 @@
 #'   `setIndividual()`, `removeParameterSet()`, `addOutputPath()`, and the
 #'   other add/set/remove functions — live only in your R session until you
 #'   save them; the files on disk stay as they are. Reading a section
-#'   directly (for example `project$scenarios`) never changes the project: a
+#'   directly (for example `scenarios` definitions) never changes the project: a
 #'   definition changes only through the add/set/remove functions.
 #'
 #'   Write your changes to the project files with [saveProject()]. Discard
@@ -108,7 +108,7 @@ saveProject <- function(project) {
   # Attribute any abort to the public authoring function the user called
   # (the free-function forwarder), not this internal `_impl`.
   rlang::local_error_call(rlang::caller_env(2))
-  if (is.null(self$projectFilePath)) {
+  if (is.null(self$info$projectFilePath)) {
     cli::cli_abort(messages$saveProjectNoTree())
   }
 
@@ -122,7 +122,7 @@ saveProject <- function(project) {
   # Drive the full-tree reconciler: `.writeProjectTree()` writes every kind's
   # write-if-different, orphan-reconciled tree and the `containerOnly = TRUE`
   # `Project.json` in one pass, which is exactly `saveProject()`'s contract.
-  .writeProjectTree(self, self$projectDirPath)
+  .writeProjectTree(self, self$info$projectDirPath)
 
   private$.clearModified()
   invisible(self)
@@ -167,7 +167,7 @@ reloadProject <- function(project) {
   # Attribute any abort to the public authoring function the user called
   # (the free-function forwarder), not this internal `_impl`.
   rlang::local_error_call(rlang::caller_env(2))
-  if (is.null(self$projectFilePath)) {
+  if (is.null(self$info$projectFilePath)) {
     cli::cli_abort(messages$reloadProjectNoTree())
   }
 

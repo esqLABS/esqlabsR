@@ -1,9 +1,9 @@
 # Plots sections: parse + validate + serialize + mutation.
 #
 # Owns the three top-level plots-related sections end-to-end:
-#   * project$dataCombined : named list keyed by `dataCombinedId`.
-#   * project$plots        : named list keyed by `plotId` (the plot list).
-#   * project$plotGrids    : named list keyed by `plotGridId`.
+#   * the dataCombined definitions : named list keyed by `dataCombinedId`.
+#   * the plots definitions        : named list keyed by `plotId` (the plot list).
+#   * the plotGrids definitions    : named list keyed by `plotGridId`.
 # Every entry is a named list of its fields, classed `c("DataCombined","list")`
 # / `c("Plot", "list")` / `c("PlotGrid", "list")` so a single definition
 # dispatches a print method. The keyed-list shape IS the per-file JSON shape,
@@ -219,9 +219,9 @@ print.DataCombined <- function(x, ...) {
 #' @noRd
 .plotsValidatorAdapter <- function(project) {
   .validatePlots(
-    .unwrapDefinitionList(project$dataCombined),
-    .unwrapDefinitionList(project$plots),
-    .unwrapDefinitionList(project$plotGrids)
+    .unwrapDefinitionList(project$definitions$dataCombined),
+    .unwrapDefinitionList(project$definitions$plots),
+    .unwrapDefinitionList(project$definitions$plotGrids)
   )
 }
 
@@ -243,10 +243,10 @@ print.DataCombined <- function(x, ...) {
 #' Cross-section references that escape these sections (dataCombined ->
 #' scenarios) are validated in `.validateCrossReferences()`.
 #'
-#' @param dataCombined Named list from `project$dataCombined`.
-#' @param plotConfig Named list from `project$plots` (the plot list, keyed
+#' @param dataCombined Named list from `dataCombined` definitions.
+#' @param plotConfig Named list from `plots` definitions (the plot list, keyed
 #'   by `plotId`).
-#' @param plotGrids Named list from `project$plotGrids`.
+#' @param plotGrids Named list from `plotGrids` definitions.
 #' @return validationResult.
 #' @keywords internal
 #' @noRd
@@ -433,7 +433,7 @@ print.DataCombined <- function(x, ...) {
 #' non-blocking warning to `result` for each such field so the mismatch is
 #' surfaced without gating execution.
 #'
-#' @param plotConfig Named list from `project$plots` (keyed by `plotId`).
+#' @param plotConfig Named list from `plots` definitions (keyed by `plotId`).
 #' @param result `validationResult` to mutate.
 #' @return The mutated `validationResult`.
 #' @keywords internal
@@ -489,7 +489,7 @@ print.DataCombined <- function(x, ...) {
 # JSON array of dataCombined records (the inlined `dataCombined` section);
 # `NULL` when the section is empty so the key round-trips as the absent shape.
 .dataCombinedSectionToJson <- function(project) {
-  dataCombined <- .unwrapDefinitionList(project$dataCombined)
+  dataCombined <- .unwrapDefinitionList(project$definitions$dataCombined)
   if (is.null(dataCombined) || length(dataCombined) == 0) {
     return(NULL)
   }
@@ -499,7 +499,7 @@ print.DataCombined <- function(x, ...) {
 # JSON array of plot records (the inlined `plots` section, the plot list);
 # `NULL` when empty.
 .plotsSectionToJson <- function(project) {
-  plots <- .unwrapDefinitionList(project$plots)
+  plots <- .unwrapDefinitionList(project$definitions$plots)
   if (is.null(plots) || length(plots) == 0) {
     return(NULL)
   }
@@ -509,7 +509,7 @@ print.DataCombined <- function(x, ...) {
 # JSON array of plot-grid records (the inlined `plotGrids` section); `NULL`
 # when empty.
 .plotGridsSectionToJson <- function(project) {
-  plotGrids <- .unwrapDefinitionList(project$plotGrids)
+  plotGrids <- .unwrapDefinitionList(project$definitions$plotGrids)
   if (is.null(plotGrids) || length(plotGrids) == 0) {
     return(NULL)
   }
@@ -740,9 +740,9 @@ print.DataCombined <- function(x, ...) {
 
 #' Add a plot configuration to a Project
 #'
-#' Add one or more entries to `project$plots` (a keyed list, one entry per
+#' Add one or more entries to `plots` definitions (a keyed list, one entry per
 #' plot). Errors if a `plotId` already exists, if a `dataCombined` is not
-#' present in `project$dataCombined`, or if a `plotType` is not one of the
+#' present in `dataCombined` definitions, or if a `plotType` is not one of the
 #' supported types.
 #'
 #' @inherit vectorizedAuthoring details
@@ -802,12 +802,12 @@ addPlot <- function(project, id, dataCombined, plotType, ...) {
   # Validate the whole batch first (all-or-nothing): no entry is folded in (and
   # so nothing is written through) unless every entry is valid.
   .assertNoDuplicateIds(id, "plot")
-  existing <- names(self$plots)
+  existing <- names(self$definitions$plots)
   clash <- intersect(id, existing)
   if (length(clash) > 0L) {
     cli::cli_abort("plot {.val {clash}} already exists")
   }
-  unknownDc <- setdiff(dataCombined, names(self$dataCombined))
+  unknownDc <- setdiff(dataCombined, names(self$definitions$dataCombined))
   if (length(unknownDc) > 0L) {
     cli::cli_abort("dataCombined {.val {unknownDc}} not found in project")
   }
@@ -914,9 +914,9 @@ removePlot <- function(project, id) {
 
 #' Add one or more plot grids to a Project
 #'
-#' Add new entries to `project$plotGrids` (a keyed list, one entry per grid).
+#' Add new entries to `plotGrids` definitions (a keyed list, one entry per grid).
 #' Errors if a `plotGridId` already exists or if any of the supplied `plots`
-#' are not present in `project$plots`.
+#' are not present in `plots` definitions.
 #'
 #' @inherit vectorizedAuthoring details
 #'
@@ -973,11 +973,11 @@ addPlotGrid <- function(project, id, plots, ...) {
 
   # Validate the whole batch first (all-or-nothing).
   .assertNoDuplicateIds(id, "plot grid")
-  clash <- intersect(id, names(self$plotGrids))
+  clash <- intersect(id, names(self$definitions$plotGrids))
   if (length(clash) > 0L) {
     cli::cli_abort("plot grid {.val {clash}} already exists")
   }
-  existingPlotIDs <- names(self$plots)
+  existingPlotIDs <- names(self$definitions$plots)
   if (is.null(existingPlotIDs)) {
     cli::cli_abort(c(
       "no plots are defined; add plots before creating a plot grid.",
@@ -1062,7 +1062,7 @@ removePlotGrid <- function(project, id) {
 #' Add one or more DataCombined to a Project
 #'
 #' Append new DataCombined entries (each with one or more simulated and/or
-#' observed rows) to `project$dataCombined`. Pass a vector of ids to add
+#' observed rows) to `dataCombined` definitions. Pass a vector of ids to add
 #' several DataCombined in one call.
 #'
 #' @inherit vectorizedAuthoring details
@@ -1118,7 +1118,7 @@ addDataCombined <- function(
 
   # Validate the whole batch first (all-or-nothing).
   .assertNoDuplicateIds(id, "DataCombined")
-  clash <- intersect(id, names(self$dataCombined))
+  clash <- intersect(id, names(self$definitions$dataCombined))
   if (length(clash) > 0L) {
     cli::cli_abort("DataCombined {.val {clash}} already exists")
   }
@@ -1180,7 +1180,7 @@ addDataCombined <- function(
 
 #' Remove one or more DataCombined from a Project
 #'
-#' Drop the named entries from `project$dataCombined`. Warns (and skips) any
+#' Drop the named entries from `dataCombined` definitions. Warns (and skips) any
 #' `id` not present, and warns about any plot entries that still reference a
 #' removed id. All removals are written through in one pass.
 #'

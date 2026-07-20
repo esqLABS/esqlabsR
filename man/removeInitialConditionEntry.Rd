@@ -21,7 +21,7 @@ Removes molecule start-value entries from the named set. \code{path} accepts a
 vector of length N to remove all N entries in a single call (and a single
 write to disk); a scalar call (length-1 vector) removes one entry. If every
 entry of the set is removed, the set itself is auto-removed from
-\code{project$initialConditions}. Warns if the set or any named entry doesn't
+\code{initialConditions} definitions. Warns if the set or any named entry doesn't
 exist.
 }
 \seealso{

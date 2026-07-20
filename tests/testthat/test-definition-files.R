@@ -8,19 +8,19 @@ test_that("loadProject reads scenarios from the definitions/scenarios/ tree", {
 
   # The fixture stores scenarios as definitions/scenarios/*.json, and
   # Project.json carries no inline scenarios array.
-  dir <- file.path(project$projectDirPath, "definitions", "scenarios")
+  dir <- file.path(project$info$projectDirPath, "definitions", "scenarios")
   expect_true(dir.exists(dir))
   expect_setequal(
     list.files(dir, pattern = "\\.json$"),
-    paste0(names(project$scenarios), ".json")
+    paste0(names(project$definitions$scenarios), ".json")
   )
-  raw <- jsonlite::fromJSON(project$jsonPath, simplifyVector = FALSE)
+  raw <- jsonlite::fromJSON(project$info$projectFilePath, simplifyVector = FALSE)
   expect_length(raw$scenarios, 0L)
 })
 
 test_that("saveProject() writes one definition file; a removal deletes it", {
   project <- testProject()
-  dir <- file.path(project$projectDirPath, "definitions", "scenarios")
+  dir <- file.path(project$info$projectDirPath, "definitions", "scenarios")
 
   addScenario(project, "added", modelFile = "Aciclovir.pkml")
   # In-memory only until saved.
@@ -29,10 +29,10 @@ test_that("saveProject() writes one definition file; a removal deletes it", {
   expect_true(file.exists(file.path(dir, "added.json")))
 
   # The file on disk reloads to the same scenario record.
-  reloaded <- loadProject(project$jsonPath)
+  reloaded <- loadProject(project$info$projectFilePath)
   expect_identical(
-    reloaded$scenarios[["added"]]$modelFile,
-    project$scenarios[["added"]]$modelFile
+    reloaded$definitions$scenarios[["added"]]$modelFile,
+    project$definitions$scenarios[["added"]]$modelFile
   )
 
   removeScenario(project, "added")
@@ -42,7 +42,7 @@ test_that("saveProject() writes one definition file; a removal deletes it", {
 
 test_that("addScenario canonicalizes its id to a safe, lowercase form", {
   project <- testProject()
-  dir <- file.path(project$projectDirPath, "definitions", "scenarios")
+  dir <- file.path(project$info$projectDirPath, "definitions", "scenarios")
 
   # A mixed-case id with a forbidden character is canonicalized (with a
   # warning) rather than rejected; the canonical id names the key and, on save,
@@ -52,15 +52,15 @@ test_that("addScenario canonicalizes its id to a safe, lowercase form", {
     "My/Scenario",
     modelFile = "Aciclovir.pkml"
   ))
-  expect_true("my_scenario" %in% names(project$scenarios))
+  expect_true("my_scenario" %in% names(project$definitions$scenarios))
   saveProject(project)
   expect_true(file.exists(file.path(dir, "my_scenario.json")))
-  expect_false("My/Scenario" %in% names(project$scenarios))
+  expect_false("My/Scenario" %in% names(project$definitions$scenarios))
 })
 
 test_that("saveProject() structurally fail-fasts and leaves disk unchanged", {
   project <- testProject()
-  dir <- file.path(project$projectDirPath, "definitions", "scenarios")
+  dir <- file.path(project$info$projectDirPath, "definitions", "scenarios")
   saveProject(project) # settle the tree
   before <- list.files(dir)
 
@@ -111,14 +111,14 @@ test_that("snapshotProject writes a self-contained single file with scenarios in
   expect_identical(fs::path_ext(snap), "esqlabsR")
 
   raw <- jsonlite::fromJSON(snap, simplifyVector = FALSE)
-  expect_length(raw$scenarios, length(project$scenarios))
+  expect_length(raw$scenarios, length(project$definitions$scenarios))
   # The snapshot directory has no definitions/ tree; the inline array suffices.
   expect_false(dir.exists(file.path(dirname(snap), "definitions", "scenarios")))
 
   reloaded <- restoreProject(snap, withr::local_tempdir())
   expect_named(
-    reloaded$scenarios,
-    names(project$scenarios),
+    reloaded$definitions$scenarios,
+    names(project$definitions$scenarios),
     ignore.order = TRUE
   )
 })
@@ -142,9 +142,9 @@ test_that("snapshot -> restore -> snapshot is a fixed point for the plots trio",
   # point above never exercises the three sections reshaped most by this
   # refactor. exampleProject() populates all three.
   project <- exampleProject()
-  expect_gt(length(project$dataCombined), 0)
-  expect_gt(length(project$plots), 0)
-  expect_gt(length(project$plotGrids), 0)
+  expect_gt(length(project$definitions$dataCombined), 0)
+  expect_gt(length(project$definitions$plots), 0)
+  expect_gt(length(project$definitions$plotGrids), 0)
 
   snap1 <- snapshotProject(project, dir = withr::local_tempdir())
   reloaded <- restoreProject(snap1, withr::local_tempdir())
@@ -154,16 +154,16 @@ test_that("snapshot -> restore -> snapshot is a fixed point for the plots trio",
   json2 <- jsonlite::fromJSON(snap2, simplifyVector = FALSE)
   expect_identical(json1, json2)
   # The three sections must actually be inlined, not silently dropped to NULL.
-  expect_length(json1$dataCombined, length(project$dataCombined))
-  expect_length(json1$plots, length(project$plots))
-  expect_length(json1$plotGrids, length(project$plotGrids))
+  expect_length(json1$dataCombined, length(project$definitions$dataCombined))
+  expect_length(json1$plots, length(project$definitions$plots))
+  expect_length(json1$plotGrids, length(project$definitions$plotGrids))
 })
 
 test_that("saveProject() on a restored project materializes the whole set", {
   snap <- snapshotProject(testProject(), dir = withr::local_tempdir())
   dir <- withr::local_tempdir()
   project <- restoreProject(snap, dir)
-  before <- names(project$scenarios)
+  before <- names(project$definitions$scenarios)
   scenariosDir <- file.path(dir, "definitions", "scenarios")
 
   # A restored project already has a full on-disk tree; an in-memory add plus a
@@ -173,7 +173,7 @@ test_that("saveProject() on a restored project materializes the whole set", {
   saveProject(project)
   reloaded <- loadProject(file.path(dir, "Project.json"))
   expect_named(
-    reloaded$scenarios,
+    reloaded$definitions$scenarios,
     c(before, "newlyadded"),
     ignore.order = TRUE
   )
@@ -183,19 +183,19 @@ test_that("a write-back plus saveProject() on a restored project preserves sibli
   snap <- snapshotProject(testProject(), dir = withr::local_tempdir())
   dir <- withr::local_tempdir()
   project <- restoreProject(snap, dir)
-  before <- names(project$scenarios)
+  before <- names(project$definitions$scenarios)
 
   existing <- before[[1]]
   setScenario(project, existing, simulationTimeUnit = "min")
   saveProject(project)
 
   reloaded <- loadProject(file.path(dir, "Project.json"))
-  expect_named(reloaded$scenarios, before, ignore.order = TRUE)
+  expect_named(reloaded$definitions$scenarios, before, ignore.order = TRUE)
 })
 
 test_that("a scenarioName that disagrees with its list key aborts saveProject()", {
   project <- testProject()
-  dir <- file.path(project$projectDirPath, "definitions", "scenarios")
+  dir <- file.path(project$info$projectDirPath, "definitions", "scenarios")
   saveProject(project)
   before <- list.files(dir)
 
@@ -215,7 +215,7 @@ test_that("a scenarioName that disagrees with its list key aborts saveProject()"
 
 test_that("a write-back under a non-canonical key aborts saveProject()", {
   project <- testProject()
-  dir <- file.path(project$projectDirPath, "definitions", "scenarios")
+  dir <- file.path(project$info$projectDirPath, "definitions", "scenarios")
   saveProject(project)
   before <- list.files(dir)
 
@@ -239,7 +239,7 @@ test_that("a write-back under a non-canonical key aborts saveProject()", {
 
 test_that("a correctly-keyed rename round-trips through the tree", {
   project <- testProject()
-  dir <- file.path(project$projectDirPath, "definitions", "scenarios")
+  dir <- file.path(project$info$projectDirPath, "definitions", "scenarios")
 
   renameScenario(project, "testscenario", "renamed")
   saveProject(project)
@@ -248,14 +248,14 @@ test_that("a correctly-keyed rename round-trips through the tree", {
   expect_false(file.exists(file.path(dir, "testscenario.json")))
   # Reload warns about cross-references that still point at the old name
   # (lazy referential check); the rename itself round-trips.
-  reloaded <- suppressWarnings(loadProject(project$jsonPath))
-  expect_true("renamed" %in% names(reloaded$scenarios))
-  expect_false("testscenario" %in% names(reloaded$scenarios))
+  reloaded <- suppressWarnings(loadProject(project$info$projectFilePath))
+  expect_true("renamed" %in% names(reloaded$definitions$scenarios))
+  expect_false("testscenario" %in% names(reloaded$definitions$scenarios))
 })
 
 test_that("a scenario id with path separators is canonicalized, not rejected", {
   project <- testProject()
-  parentDir <- project$projectDirPath
+  parentDir <- project$info$projectDirPath
   scenariosDir <- file.path(parentDir, "definitions", "scenarios")
 
   # Forbidden path characters are replaced (with a warning); the canonical id
@@ -266,8 +266,8 @@ test_that("a scenario id with path separators is canonicalized, not rejected", {
   expect_snapshot(
     addScenario(project, "sub/evil", modelFile = "Aciclovir.pkml")
   )
-  expect_true("_escape" %in% names(project$scenarios))
-  expect_true("sub_evil" %in% names(project$scenarios))
+  expect_true("_escape" %in% names(project$definitions$scenarios))
+  expect_true("sub_evil" %in% names(project$definitions$scenarios))
   saveProject(project)
   # Nothing escaped the definitions/scenarios/ directory.
   expect_false(file.exists(file.path(parentDir, "escape.json")))
@@ -301,8 +301,8 @@ test_that("structural validation rejects a serializer-hostile scenario", {
 test_that("saveProject() aborting on one scenario leaves the tree intact", {
   project <- testProject()
   saveProject(project)
-  dir <- file.path(project$projectDirPath, "definitions", "scenarios")
-  before <- names(project$scenarios)
+  dir <- file.path(project$info$projectDirPath, "definitions", "scenarios")
+  before <- names(project$definitions$scenarios)
   beforeFiles <- list.files(dir)
 
   # Make one loaded scenario serializer-hostile in the backing store (bypassing
@@ -321,8 +321,8 @@ test_that("saveProject() aborting on one scenario leaves the tree intact", {
   )
   # The on-disk tree is untouched; a reload still yields the original set.
   expect_setequal(list.files(dir), beforeFiles)
-  reloaded <- loadProject(project$jsonPath)
-  expect_named(reloaded$scenarios, before, ignore.order = TRUE)
+  reloaded <- loadProject(project$info$projectFilePath)
+  expect_named(reloaded$definitions$scenarios, before, ignore.order = TRUE)
 })
 
 # A save carrying one valid plus one serializer-hostile new definition must
@@ -330,7 +330,7 @@ test_that("saveProject() aborting on one scenario leaves the tree intact", {
 test_that("a multi-definition saveProject() aborting on one definition is atomic", {
   project <- testProject()
   saveProject(project)
-  dir <- file.path(project$projectDirPath, "definitions", "scenarios")
+  dir <- file.path(project$info$projectDirPath, "definitions", "scenarios")
   beforeFiles <- list.files(dir)
 
   # Build a whole-section map: the existing scenarios plus one brand-new valid
@@ -359,7 +359,7 @@ test_that("a multi-definition saveProject() aborting on one definition is atomic
 # on the same id and is rejected as a duplicate.
 test_that("an id differing only in case canonicalizes to an existing id", {
   project <- testProject()
-  dir <- file.path(project$projectDirPath, "definitions", "scenarios")
+  dir <- file.path(project$info$projectDirPath, "definitions", "scenarios")
   before <- list.files(dir)
 
   expect_snapshot(addScenario(
@@ -382,17 +382,17 @@ test_that("an id differing only in case canonicalizes to an existing id", {
 # (The accented letter is not a forbidden character, only lowercased.)
 test_that("a non-ASCII scenario name round-trips through the tree", {
   project <- testProject()
-  dir <- file.path(project$projectDirPath, "definitions", "scenarios")
+  dir <- file.path(project$info$projectDirPath, "definitions", "scenarios")
 
   addScenario(project, "scénario", modelFile = "Aciclovir.pkml")
   saveProject(project)
   expect_true(file.exists(file.path(dir, "scénario.json")))
 
-  reloaded <- loadProject(project$jsonPath)
-  expect_true("scénario" %in% names(reloaded$scenarios))
+  reloaded <- loadProject(project$info$projectFilePath)
+  expect_true("scénario" %in% names(reloaded$definitions$scenarios))
   expect_identical(
-    reloaded$scenarios[["scénario"]]$modelFile,
-    project$scenarios[["scénario"]]$modelFile
+    reloaded$definitions$scenarios[["scénario"]]$modelFile,
+    project$definitions$scenarios[["scénario"]]$modelFile
   )
 })
 
@@ -400,15 +400,15 @@ test_that("a non-ASCII scenario name round-trips through the tree", {
 # index error naming nothing; it must now abort naming the file.
 test_that("a scenario file missing its name aborts naming the file", {
   project <- testProject()
-  dir <- file.path(project$projectDirPath, "definitions", "scenarios")
-  f <- file.path(dir, paste0(names(project$scenarios)[[1]], ".json"))
+  dir <- file.path(project$info$projectDirPath, "definitions", "scenarios")
+  f <- file.path(dir, paste0(names(project$definitions$scenarios)[[1]], ".json"))
 
   obj <- jsonlite::fromJSON(f, simplifyVector = FALSE)
   obj$name <- NULL
   jsonlite::write_json(obj, f, auto_unbox = TRUE, null = "null", pretty = TRUE)
 
   expect_snapshot(
-    loadProject(project$jsonPath),
+    loadProject(project$info$projectFilePath),
     error = TRUE,
     transform = .redactTmpPath
   )
@@ -419,15 +419,15 @@ test_that("a scenario file missing its name aborts naming the file", {
 # now abort naming the file and the mismatch.
 test_that("a scenario file whose name disagrees with its filename aborts", {
   project <- testProject()
-  dir <- file.path(project$projectDirPath, "definitions", "scenarios")
-  f <- file.path(dir, paste0(names(project$scenarios)[[1]], ".json"))
+  dir <- file.path(project$info$projectDirPath, "definitions", "scenarios")
+  f <- file.path(dir, paste0(names(project$definitions$scenarios)[[1]], ".json"))
 
   obj <- jsonlite::fromJSON(f, simplifyVector = FALSE)
   obj$name <- "differentname"
   jsonlite::write_json(obj, f, auto_unbox = TRUE, null = "null", pretty = TRUE)
 
   expect_snapshot(
-    loadProject(project$jsonPath),
+    loadProject(project$info$projectFilePath),
     error = TRUE,
     transform = .redactTmpPath
   )
@@ -438,15 +438,15 @@ test_that("a scenario file whose name disagrees with its filename aborts", {
 # message naming the scenario and field, not an opaque internal error.
 test_that("a non-scalar scalar field fails load naming the scenario and field", {
   project <- testProject()
-  dir <- file.path(project$projectDirPath, "definitions", "scenarios")
-  f <- file.path(dir, paste0(names(project$scenarios)[[1]], ".json"))
+  dir <- file.path(project$info$projectDirPath, "definitions", "scenarios")
+  f <- file.path(dir, paste0(names(project$definitions$scenarios)[[1]], ".json"))
 
   obj <- jsonlite::fromJSON(f, simplifyVector = FALSE)
   # `"population": null` round-tripped the standard jsonlite way becomes {}.
   obj$population <- structure(list(), names = character(0))
   jsonlite::write_json(obj, f, auto_unbox = TRUE, null = "null", pretty = TRUE)
 
-  expect_snapshot(loadProject(project$jsonPath), error = TRUE)
+  expect_snapshot(loadProject(project$info$projectFilePath), error = TRUE)
 })
 
 # A mutation stays in memory and sets the dirty bit; projectStatus() reports the
@@ -454,7 +454,7 @@ test_that("a non-scalar scalar field fails load naming the scenario and field", 
 # After saveProject() the file is on disk and the tree axis is in sync again.
 test_that("a mutation is flagged by projectStatus() until saveProject()", {
   project <- testProject()
-  dir <- file.path(project$projectDirPath, "definitions", "scenarios")
+  dir <- file.path(project$info$projectDirPath, "definitions", "scenarios")
 
   addScenario(project, "fresh", modelFile = "Aciclovir.pkml")
   # In memory only, and flagged as an unsaved change.
@@ -481,16 +481,16 @@ test_that("a high-precision numeric value survives a definition write/reload rou
   )
   saveProject(project)
 
-  reloaded <- loadProject(project$jsonPath)
+  reloaded <- loadProject(project$info$projectFilePath)
   expect_identical(
-    reloaded$initialConditions[["precise"]][[1]]$value,
+    reloaded$definitions$initialConditions[["precise"]][[1]]$value,
     preciseValue
   )
 
   snap <- snapshotProject(reloaded, dir = withr::local_tempdir())
   snapshotReloaded <- restoreProject(snap, withr::local_tempdir())
   expect_identical(
-    snapshotReloaded$initialConditions[["precise"]][[1]]$value,
+    snapshotReloaded$definitions$initialConditions[["precise"]][[1]]$value,
     preciseValue
   )
 })
@@ -580,7 +580,7 @@ test_that("a full-tree write removes a stale definition file", {
   # A full-tree write owns the `definitions/<kind>/` directory: any `.json`
   # file not in the freshly-written keep-set is stale and is deleted.
   project <- .stalePolicyProject()
-  scenariosDir <- file.path(project$projectDirPath, "definitions", "scenarios")
+  scenariosDir <- file.path(project$info$projectDirPath, "definitions", "scenarios")
   # Drop an orphan file that no in-memory scenario corresponds to. Written
   # after load, so the loader never parses it.
   orphan <- file.path(scenariosDir, "orphandefinition.json")
@@ -588,10 +588,10 @@ test_that("a full-tree write removes a stale definition file", {
   expect_true(file.exists(orphan))
 
   esqlabsR:::.writeDefinitionTree(
-    project$scenarios,
+    project$definitions$scenarios,
     "scenarios",
     project,
-    project$projectDirPath
+    project$info$projectDirPath
   )
   expect_false(file.exists(orphan))
 })
@@ -601,7 +601,7 @@ test_that("saveProject() reconciles an orphan away (make-disk-look-like-memory)"
   # any `definitions/<kind>/` file with no in-memory definition, so disk mirrors
   # memory exactly after a save.
   project <- .stalePolicyProject()
-  scenariosDir <- file.path(project$projectDirPath, "definitions", "scenarios")
+  scenariosDir <- file.path(project$info$projectDirPath, "definitions", "scenarios")
   orphan <- file.path(scenariosDir, "orphandefinition.json")
   writeLines("{}", orphan)
   expect_true(file.exists(orphan))
@@ -625,7 +625,7 @@ test_that("a full-tree write aborts when a stale file cannot be removed", {
   skip_on_ci()
 
   project <- .stalePolicyProject()
-  scenariosDir <- file.path(project$projectDirPath, "definitions", "scenarios")
+  scenariosDir <- file.path(project$info$projectDirPath, "definitions", "scenarios")
   orphan <- file.path(scenariosDir, "orphandefinition.json")
   writeLines("{}", orphan)
 
@@ -637,10 +637,10 @@ test_that("a full-tree write aborts when a stale file cannot be removed", {
   expect_snapshot(
     error = TRUE,
     esqlabsR:::.writeDefinitionTree(
-      project$scenarios,
+      project$definitions$scenarios,
       "scenarios",
       project,
-      project$projectDirPath
+      project$info$projectDirPath
     ),
     transform = .redactTmpPath
   )

@@ -28,7 +28,7 @@ fields are coerced via \code{as.double()}.}
 The \code{project} object, invisibly.
 }
 \description{
-Add populations to \code{project$populations}, vectorizing over a vector of ids
+Add populations to \code{populations} definitions, vectorizing over a vector of ids
 (see the recycling rule under Details). \code{species}, \code{numberOfIndividuals},
 and the optional \code{...} fields are all scalar-per-definition (recycle/align).
 }

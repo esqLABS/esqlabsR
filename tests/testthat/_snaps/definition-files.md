@@ -81,7 +81,7 @@
 # a scenario file missing its name aborts naming the file
 
     Code
-      loadProject(project$jsonPath)
+      loadProject(project$info$projectFilePath)
     Condition
       Error in `.keyedTreeRecordId()`:
       ! A definition file for kind scenario has no usable name.
@@ -91,7 +91,7 @@
 # a scenario file whose name disagrees with its filename aborts
 
     Code
-      loadProject(project$jsonPath)
+      loadProject(project$info$projectFilePath)
     Condition
       Error in `.keyedTreeRecordId()`:
       ! A definition file for kind scenario has a stored name that disagrees with its filename.
@@ -101,7 +101,7 @@
 # a non-scalar scalar field fails load naming the scenario and field
 
     Code
-      loadProject(project$jsonPath)
+      loadProject(project$info$projectFilePath)
     Condition
       Error in `.assertScalarScenarioField()`:
       ! Scenario "populationscenario" has an invalid population.
@@ -131,8 +131,8 @@
 # a full-tree write aborts when a stale file cannot be removed
 
     Code
-      esqlabsR:::.writeDefinitionTree(project$scenarios, "scenarios", project,
-      project$projectDirPath)
+      esqlabsR:::.writeDefinitionTree(project$definitions$scenarios, "scenarios",
+      project, project$info$projectDirPath)
     Condition
       Warning in `file.remove()`:
       cannot remove file '<project>/definitions/scenarios/orphandefinition.json', reason 'Permission denied'

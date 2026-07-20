@@ -89,11 +89,11 @@
     list(
       # Default the version so an empty `Project$new()` serializes a file that
       # `loadProject()` accepts (mirrors the Excel bridge in project-excel.R).
-      schemaVersion = project$schemaVersion %||% "2.0",
-      esqlabsRVersion = project$esqlabsRVersion,
-      name = project$name,
-      description = project$description,
-      definitionsFolder = project$definitionsFolder,
+      schemaVersion = project$info$schemaVersion %||% "2.0",
+      esqlabsRVersion = project$info$esqlabsRVersion,
+      name = project$info$name,
+      description = project$info$description,
+      definitionsFolder = project$paths$definitionsFolder,
       filePaths = .filePathsToJson(project),
       defaultSimulationRunOptions = project$defaultSimulationRunOptions
     ),
@@ -227,7 +227,7 @@
 # vector to a list so jsonlite emits a JSON object, not an array (which
 # would silently drop every id). Errors on a non-empty unnamed value.
 .outputPathsToJson <- function(project) {
-  outputPaths <- project$outputPaths
+  outputPaths <- project$definitions$outputPaths
   if (length(outputPaths) > 0L) {
     nms <- names(outputPaths)
     if (is.null(nms) || any(nms == "")) {
@@ -248,7 +248,7 @@
 # (`.projectToJson()`). The definition-files writer calls `.scenarioToJson()`
 # directly, one scenario per file.
 .scenariosToJson <- function(project) {
-  scenarios <- project$scenarios
+  scenarios <- project$definitions$scenarios
   if (is.null(scenarios) || length(scenarios) == 0L) {
     return(list())
   }
@@ -356,7 +356,7 @@
 # single unified parameter-set section; a scenario / individual / application
 # all reference into it.
 .parameterSetsToJson <- function(project) {
-  sets <- project$parameterSets
+  sets <- project$definitions$parameterSets
   # Strip the `ParameterSet` class wrapper from each set's array-of-entries so
   # it never reaches JSON (the wrapper exists only for the print method).
   sets <- lapply(sets, unclass)
@@ -367,7 +367,7 @@
 # records). Applied to a scenario's simulation via its `initialConditions`
 # field.
 .initialConditionsToJson <- function(project) {
-  sets <- project$initialConditions
+  sets <- project$definitions$initialConditions
   # Strip the `InitialConditionSet` class wrapper from each set's array-of-
   # entries so it never reaches JSON (the wrapper exists only for the print
   # method).
@@ -381,7 +381,7 @@
 # so unknown fields from a newer schema round-trip. `parameterSets` is
 # emitted as a JSON array.
 .individualsToJson <- function(project) {
-  individuals <- project$individuals
+  individuals <- project$definitions$individuals
   if (is.null(individuals) || length(individuals) == 0L) {
     return(list())
   }
@@ -397,7 +397,7 @@
 # JSON array of population objects. The in-memory shape is a named list
 # keyed by `populationId`; serialization re-attaches that key.
 .populationsToJson <- function(project) {
-  populations <- project$populations
+  populations <- project$definitions$populations
   if (is.null(populations) || length(populations) == 0L) {
     return(list())
   }
@@ -412,7 +412,7 @@
 # parameter-set references (matches the v2.0 schema "object with optional
 # parameterSets" shape).
 .applicationsToJson <- function(project) {
-  applications <- project$applications
+  applications <- project$definitions$applications
   if (is.null(applications) || length(applications) == 0L) {
     return(structure(list(), names = character(0L)))
   }
@@ -432,7 +432,7 @@
 # `ObservedDataSource` class wrapper from each entry (carried only for the
 # print method) so it never reaches JSON.
 .observedDataToJson <- function(project) {
-  lapply(project$observedData, unclass)
+  lapply(project$definitions$observedData, unclass)
 }
 
 # The three plots-section serializers (`.dataCombinedSectionToJson`,
@@ -464,7 +464,7 @@
 # @keywords internal
 # @noRd
 .parameterIdentificationToJson <- function(project) {
-  tasks <- project$parameterIdentification
+  tasks <- project$definitions$parameterIdentification
   if (is.null(tasks) || length(tasks) == 0L) {
     return(NULL)
   }

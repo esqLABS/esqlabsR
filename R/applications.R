@@ -20,7 +20,7 @@ print.Application <- function(x, ...) {
 
 #' Add one or more application protocols to a Project
 #'
-#' Add protocols to `project$applications`, vectorizing over a vector of ids
+#' Add protocols to `applications` definitions, vectorizing over a vector of ids
 #' (see the recycling rule under Details). `parameterSets` is
 #' vector-valued-per-definition: it is applied whole to every protocol; to give a
 #' different set per protocol, pass a list of the same length as `id` (one
@@ -33,7 +33,7 @@ print.Application <- function(x, ...) {
 #'   to add). Each is canonicalized to a safe, lowercase id (a warning names
 #'   the result if it changed).
 #' @param parameterSets Optional character vector of set ids referencing
-#'   `project$parameterSets`, applied whole to every protocol. Defaults to
+#'   `parameterSets` definitions, applied whole to every protocol. Defaults to
 #'   `NULL`. Use a list of the same length as `id` for a per-protocol set.
 #' @returns The `project` object, invisibly.
 #' @export
@@ -57,7 +57,7 @@ addApplication <- function(project, id, parameterSets = NULL) {
   perId <- .wholeField(parameterSets, n)
 
   .assertNoDuplicateIds(id, "application")
-  clash <- intersect(id, names(self$applications))
+  clash <- intersect(id, names(self$definitions$applications))
   if (length(clash) > 0L) {
     cli::cli_abort("application {.val {clash}} already exists")
   }
@@ -102,11 +102,11 @@ removeApplication <- function(project, id) {
   .assertIdVector(id)
   id <- .canonicalizeId(id)
 
-  missingIds <- setdiff(id, names(self$applications))
+  missingIds <- setdiff(id, names(self$definitions$applications))
   if (length(missingIds) > 0L) {
     cli::cli_warn("application {.val {missingIds}} not found; no-op.")
   }
-  toRemove <- intersect(id, names(self$applications))
+  toRemove <- intersect(id, names(self$definitions$applications))
   if (length(toRemove) == 0L) {
     return(invisible(self))
   }
@@ -127,7 +127,7 @@ removeApplication <- function(project, id) {
 #' @param id Character vector of application ids. Each is canonicalized the
 #'   same way [addApplication()] canonicalizes it.
 #' @param parameterSets Character vector of set ids (from
-#'   `project$parameterSets`), applied whole to every application; use
+#'   `parameterSets` definitions), applied whole to every application; use
 #'   `character(0)` to clear. To set a different list per application, pass a
 #'   list of the same length as `id` (one character vector per application).
 #' @returns The `project` object, invisibly.
@@ -159,7 +159,7 @@ setApplicationParameterSets <- function(
   .assertIdVector(id)
   id <- .canonicalizeId(id)
   n <- length(id)
-  missingIds <- setdiff(id, names(self$applications))
+  missingIds <- setdiff(id, names(self$definitions$applications))
   if (length(missingIds) > 0L) {
     cli::cli_abort("application {.val {missingIds}} not found")
   }
@@ -182,7 +182,7 @@ setApplicationParameterSets <- function(
 
 # Validate and canonicalize a `parameterSets` reference vector for an
 # application, checking it is a character vector of ids that resolve against
-# `project$parameterSets`, and returning the canonicalized ids. The single
+# `parameterSets` definitions, and returning the canonicalized ids. The single
 # source of truth for this check, shared by `.buildApplicationEntry()` (the add
 # path) and `setApplicationParameterSets()` (the set path) so their messages
 # cannot drift. `.canonicalizeIdRef()` runs inside, so the caller's
@@ -202,7 +202,7 @@ setApplicationParameterSets <- function(
     )
   }
   sets <- .canonicalizeIdRef(sets)
-  bad <- setdiff(sets, names(project$parameterSets %||% list()))
+  bad <- setdiff(sets, names(project$definitions$parameterSets %||% list()))
   if (length(bad) > 0L) {
     cli::cli_abort(
       c(

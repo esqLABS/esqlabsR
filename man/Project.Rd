@@ -39,28 +39,42 @@ function, e.g. \code{\link[=addScenario]{addScenario()}}, \code{\link[=setScenar
 \section{Active bindings}{
   \if{html}{\out{<div class="r6-active-bindings">}}
   \describe{
-    \item{\code{projectFilePath}}{Read-only. Absolute path to the JSON
-configuration file the project was loaded from. All other relative
-paths in the project are resolved against the file's directory
-(see \code{projectDirPath}). \code{NULL} for an empty in-memory project; in
-that case all path fields must be absolute.}
+    \item{\code{info}}{Project identity and metadata, as a writable field group.
+Read a field with \code{project$info$name}; write one with
+\code{project$info$name <- "..."}. Writable fields: \code{name} (human-readable
+project name), \code{description} (free-text description). Read-only fields:
+\code{schemaVersion} (schema version declared in the JSON, always \code{"2.0"}
+for projects this package loads), \code{esqlabsRVersion} (informational
+version string from the JSON), \code{projectFilePath} (absolute path to the
+JSON file the project was loaded from, \code{NULL} for an in-memory
+project), and \code{projectDirPath} (the directory containing that file, the
+base for resolving relative paths). Assigning a writable field sets the
+dirty bit; assigning a read-only field aborts. The two version fields
+are managed by the load/save machinery, not by users.}
 
-    \item{\code{projectDirPath}}{Read-only. Directory containing the JSON
-configuration file (i.e. \code{dirname(projectFilePath)}). Used as the
-base for resolving relative paths. \code{NULL} if the project was not
-loaded from a file.}
+    \item{\code{paths}}{The project's working-folder paths, as a writable field
+group: \code{modelFolder} (pkml simulation files), \code{dataFolder}
+(experimental data), \code{outputFolder} (results), \code{populationsFolder}
+(population CSVs loaded by \code{\link[=runScenarios]{runScenarios()}}), and \code{definitionsFolder}
+(the folder holding the definition files, default \code{"definitions"}).
+Read a field with \code{project$paths$modelFolder} (returned resolved
+against \code{projectDirPath}); write one with
+\code{project$paths$modelFolder <- "Models"} (stored verbatim, resolved
+on the next read). Assigning any field sets the dirty bit. Changing
+\code{definitionsFolder} redirects where the next \code{\link[=saveProject]{saveProject()}} writes the
+definition files; nothing moves on disk until that save. The
+Excel-bridge sheet-name fields live in the separate \code{excel} group.}
 
-    \item{\code{name}}{Human-readable project name (the \code{name} JSON field). May be
-\code{NULL} when the project has no name.}
-
-    \item{\code{description}}{Optional free-text project description (the
-\code{description} JSON field). May be \code{NULL}.}
-
-    \item{\code{definitionsFolder}}{Name of the folder (relative to
-\code{projectDirPath}) that holds the project's definition files.
-Defaults to \code{"definitions"}. Assigning a new value changes where the
-next \code{\link[=saveProject]{saveProject()}} writes the definition files and where they are
-read from, but nothing moves on disk until the next save.}
+    \item{\code{excel}}{The Excel import/export bridge sheet-name fields, as a
+writable field group: \code{configurationsFolder}, \code{modelParamsFile},
+\code{individualsFile}, \code{populationsFile}, \code{scenariosFile},
+\code{applicationsFile}, \code{plotsFile}, \code{parameterIdentificationFile},
+\code{initialConditionsFile}. Read a field with
+\code{project$excel$modelParamsFile} (returned resolved against
+\code{configurationsFolder}, itself resolved against \code{projectDirPath});
+write one with \code{project$excel$modelParamsFile <- "P.xlsx"} (stored
+verbatim). Assigning any field sets the dirty bit. Empty for a project
+created directly in the JSON format, without Excel files.}
 
     \item{\code{defaultSimulationRunOptions}}{Named list of the project-level
 default simulation run options (the \code{defaultSimulationRunOptions} JSON
@@ -69,149 +83,21 @@ the default \code{simulationRunOptions} when the caller does not pass one.
 Recognized fields: \code{numberOfCores}, \code{checkForNegativeValues},
 \code{showProgress}.}
 
-    \item{\code{excel}}{Read-only named list of the Excel import/export bridge
-sheet-name fields (\code{configurationsFolder}, \code{modelParamsFile},
-\code{individualsFile}, \code{populationsFile}, \code{scenariosFile},
-\code{applicationsFile}, \code{plotsFile}, \code{parameterIdentificationFile},
-\code{initialConditionsFile}).
-Returned verbatim as strings (no resolution). Empty for a project
-created directly in the JSON format, without Excel files.}
-
-    \item{\code{schemaVersion}}{Schema version declared in the JSON. Always "2.0"
-for projects this package loads.}
-
-    \item{\code{esqlabsRVersion}}{Informational version string from the JSON.}
-
-    \item{\code{jsonPath}}{Read-only. Absolute path the project was loaded from
-(an alias of \code{projectFilePath}), or \code{NULL} for an in-memory project.}
-
-    \item{\code{modelFolder}}{Path to the folder containing pkml simulation files.}
-
-    \item{\code{configurationsFolder}}{Path to the folder containing configuration
-files. Part of the Excel import/export bridge (the \code{excel} container
-block).}
-
-    \item{\code{modelParamsFile}}{Path to the Excel file with global model
-parameterization. Part of the Excel import/export bridge (the \code{excel}
-container block).}
-
-    \item{\code{individualsFile}}{Path to the Excel file with individual-specific
-model parameterization. Part of the Excel import/export bridge (the
-\code{excel} container block).}
-
-    \item{\code{populationsFile}}{Path to the Excel file with population
-information. Part of the Excel import/export bridge (the \code{excel}
-container block).}
-
-    \item{\code{scenariosFile}}{Path to the Excel file with scenario definitions.
-Part of the Excel import/export bridge (the \code{excel} container block).}
-
-    \item{\code{applicationsFile}}{Path to the Excel file with scenario-specific
-parameters such as application protocol parameters. Part of the Excel
-import/export bridge (the \code{excel} container block).}
-
-    \item{\code{plotsFile}}{Path to the Excel file with plot definitions. Part of
-the Excel import/export bridge (the \code{excel} container block).}
-
-    \item{\code{parameterIdentificationFile}}{Name of the Excel workbook holding
-the parameter-identification sheets (\code{PITasks}, \code{PIParameters},
-\code{PIOutputMappings}). Resolved relative to \code{configurationsFolder}.}
-
-    \item{\code{initialConditionsFile}}{Name of the Excel workbook holding the
-initial-condition (molecule start value) sheets, one sheet per set.
-Part of the Excel import/export bridge (the \code{excel} container block);
-resolved relative to \code{configurationsFolder}.}
-
-    \item{\code{populationsFolder}}{Name of the folder containing population
-definitions as CSV files. Resolved relative to \code{projectDirPath}.
-Used by \code{runScenarios()} to load population CSVs at simulation time.}
-
-    \item{\code{dataFolder}}{Path to the folder where experimental data files are
-located.}
-
-    \item{\code{outputFolder}}{Path to the folder where the results should be saved
-relative to the "Code" folder}
-
-    \item{\code{outputPaths}}{Read-only named list mapping output-path IDs to
-OSPS-notation path strings (e.g. \code{list(PVB = "Organism|...")}). To
-change it, use \code{\link[=addOutputPath]{addOutputPath()}} / \code{\link[=setOutputPath]{setOutputPath()}} /
-\code{\link[=removeOutputPath]{removeOutputPath()}} or edit the definition files under
-\verb{definitions/output-paths/}.}
-
-    \item{\code{scenarios}}{Read-only named list of \code{Scenario} records, keyed by
-scenario name. To change it, use \code{\link[=addScenario]{addScenario()}} / \code{\link[=setScenario]{setScenario()}} /
-\code{\link[=removeScenario]{removeScenario()}} (or \code{\link[=renameScenario]{renameScenario()}} / \code{\link[=duplicateScenario]{duplicateScenario()}}), or
-edit the definition files under \verb{definitions/scenarios/}. The typical
-way to edit a scenario: read it
-(\code{sc <- project$scenarios[["id"]]}), change your copy
-(\code{sc$modelFile <- ...}), then hand it back
-(\code{setScenario(project, "id", ...)}).}
-
-    \item{\code{parameterSets}}{Read-only named list of parameter structures, keyed
-by set id. This single section holds every parameter set in the
-project: a scenario references the sets it applies through its
-\code{modelParameterSets} field, an individual or application through its
-\code{parameterSets} field; all three resolve against this one map. To
-change it, use \code{\link[=addParameterSet]{addParameterSet()}} / \code{\link[=removeParameterSet]{removeParameterSet()}} /
-\code{\link[=addParameterEntry]{addParameterEntry()}} / \code{\link[=removeParameterEntry]{removeParameterEntry()}} or edit the definition
-files under \verb{definitions/parameter-sets/}.}
-
-    \item{\code{initialConditions}}{Read-only named list of initial-condition sets,
-keyed by set id. Each set is a list of molecule start-value records
-(\code{path}, \code{value}, \code{unit}), applied to a scenario's simulation via its
-\code{initialConditions} field. To change it, use \code{\link[=addInitialConditions]{addInitialConditions()}} /
-\code{\link[=removeInitialConditions]{removeInitialConditions()}} / \code{\link[=addInitialConditionEntry]{addInitialConditionEntry()}} /
-\code{\link[=removeInitialConditionEntry]{removeInitialConditionEntry()}} or edit the definition files under
-\verb{definitions/initial-conditions/}.}
-
-    \item{\code{individuals}}{Read-only named list of plain lists, keyed by
-individualId. To change it, use \code{\link[=addIndividual]{addIndividual()}} / \code{\link[=setIndividual]{setIndividual()}} /
-\code{\link[=removeIndividual]{removeIndividual()}} or edit the definition files under
-\verb{definitions/individuals/}.}
-
-    \item{\code{populations}}{Read-only named list of plain lists, keyed by
-populationId. To change it, use \code{\link[=addPopulation]{addPopulation()}} / \code{\link[=setPopulation]{setPopulation()}} /
-\code{\link[=removePopulation]{removePopulation()}} or edit the definition files under
-\verb{definitions/populations/}.}
-
-    \item{\code{applications}}{Read-only named list of parameter structures, keyed
-by protocol name. To change it, use \code{\link[=addApplication]{addApplication()}} /
-\code{\link[=removeApplication]{removeApplication()}} or edit the definition files under
-\verb{definitions/applications/}.}
-
-    \item{\code{observedData}}{Read-only list of observed data source declarations.
-To change it, use \code{\link[=addObservedData]{addObservedData()}} / \code{\link[=removeObservedData]{removeObservedData()}} or edit
-the definition files under \verb{definitions/observed-data/} (one file per
-declaration).}
-
-    \item{\code{dataCombined}}{Read-only named list of \code{DataCombined} definitions,
-keyed by \code{dataCombinedId}. Each entry pairs simulated and/or observed
-curves. To change it, use \code{\link[=addDataCombined]{addDataCombined()}} / \code{\link[=removeDataCombined]{removeDataCombined()}}
-or edit the definition files under \verb{definitions/data-combined/}.}
-
-    \item{\code{plots}}{Read-only named list of plot definitions, keyed by \code{plotId}.
-Each entry is a single plot's configuration (\code{dataCombinedId},
-\code{plotType}, and styling fields). To change it, use \code{\link[=addPlot]{addPlot()}} /
-\code{\link[=removePlot]{removePlot()}} or edit the definition files under \verb{definitions/plots/}.}
-
-    \item{\code{plotGrids}}{Read-only named list of plot-grid definitions, keyed by
-\code{plotGridId}. Each entry lays out one or more plots. To change it, use
-\code{\link[=addPlotGrid]{addPlotGrid()}} / \code{\link[=removePlotGrid]{removePlotGrid()}} or edit the definition files under
-\verb{definitions/plot-grids/}.}
-
-    \item{\code{parameterIdentification}}{Read-only named list keyed by PI task id;
-each entry is a \code{PITask} record. May be \code{NULL} or an empty list when the
-project declares no PI tasks. To change it, use \code{\link[=addPITask]{addPITask()}} /
-\code{\link[=removePITask]{removePITask()}} (and the per-task \code{\link[=addPIParameter]{addPIParameter()}} /
-\code{\link[=addPIOutputMapping]{addPIOutputMapping()}} and their removals) or edit the definition files
-under \verb{definitions/parameter-identification/}.}
-
-    \item{\code{filePaths}}{Read-only named list of the project's working-folder
-paths (the \code{filePaths} JSON block): \code{modelFolder}, \code{dataFolder},
-\code{outputFolder}, and \code{populationsFolder}. Values are returned verbatim
-as strings; no resolution is performed at this stage. The Excel-bridge
-sheet-name fields live in the separate \code{excel} block (\code{project$excel}),
-not here.}
+    \item{\code{definitions}}{The project's definition sections, as a read-only
+field group. Each section is one field: \code{outputPaths}, \code{scenarios},
+\code{parameterSets}, \code{initialConditions}, \code{individuals}, \code{populations},
+\code{applications}, \code{observedData}, \code{dataCombined}, \code{plots}, \code{plotGrids},
+\code{parameterIdentification}. Read a section with
+\code{scenarios} definitions (returned as a printable, read-only
+named list keyed by id). The group is read-only from the handle: every
+assignment form aborts. The only sanctioned way to change a section is
+an authoring function (\code{\link[=addScenario]{addScenario()}} / \code{\link[=setScenario]{setScenario()}} /
+\code{\link[=removeScenario]{removeScenario()}} and their per-section siblings) or editing the
+definition's JSON file; those route through the internal write seam,
+which updates the in-memory backing field, sets the dirty bit, and
+clears the validation-cache flag so the next run/plot re-validates.
+Nothing touches the \verb{definitions/<kind>/} tree until \code{\link[=saveProject]{saveProject()}}
+reconciles it to memory.}
 
     \item{\code{asList}}{Returns the current project as a list matching the JSON
 schema. Reflects any in-memory modifications. Read-only.}
@@ -1344,7 +1230,10 @@ state through \code{project$status} or \code{\link[=projectStatus]{projectStatus
 \if{html}{\out{<a id="method-Project-print"></a>}}
 \if{latex}{\out{\hypertarget{method-Project-print}{}}}
 \subsection{\code{Project$print()}}{
-  Print a summary of the Project.
+  Print a summary of the Project. Each section is rendered by
+the same per-group block method the field groups (\code{project$info},
+\code{project$paths}, \code{project$definitions}, \code{project$excel}) print, so the
+project summary and a group's own print never drift.
   \subsection{Usage}{
     \if{html}{\out{<div class="r">}}
     \preformatted{Project$print(...)}

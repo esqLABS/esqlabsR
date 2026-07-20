@@ -19,14 +19,14 @@ species name.}
 \item{...}{Optional named fields: \code{population}, \code{gender}, \code{weight},
 \code{height}, \code{age}, \code{proteinOntogenies}, \code{parameterSets}. Numeric
 fields are coerced via \code{as.double()}. \code{parameterSets} is a
-character vector of ids referencing \code{project$parameterSets}.
+character vector of ids referencing \code{parameterSets} definitions.
 Unknown fields trigger an error.}
 }
 \value{
 The \code{project} object, invisibly.
 }
 \description{
-Add individuals to \code{project$individuals}, vectorizing over a vector of ids
+Add individuals to \code{individuals} definitions, vectorizing over a vector of ids
 (see the recycling rule under Details). Scalar-per-definition fields (\code{species}
 and the \code{...} fields \code{population}, \code{gender}, \code{weight}, \code{height}, \code{age},
 \code{proteinOntogenies}) follow the recycle/align rule; \code{parameterSets} is

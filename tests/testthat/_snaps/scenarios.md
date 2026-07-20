@@ -18,7 +18,7 @@
     Condition
       Error in `addScenario()`:
       ! Cannot add scenario "bad":
-      x initialConditions not found in project$initialConditions: ghostset
+      x initialConditions not found in project$definitions$initialConditions: ghostset
 
 # setScenario aborts eagerly on a dangling initialConditions ref
 
@@ -27,7 +27,7 @@
     Condition
       Error in `setScenario()`:
       ! Cannot modify scenario "sc":
-      x initialConditions not found in project$initialConditions: ghostset
+      x initialConditions not found in project$definitions$initialConditions: ghostset
 
 # addScenario rejects NA-valued FK args
 
@@ -171,7 +171,7 @@
 # print.Scenario renders the configured fields
 
     Code
-      print(project$scenarios[["testscenario"]])
+      print(project$definitions$scenarios[["testscenario"]])
     Output
       <Scenario>
         * Name: testscenario
