@@ -456,17 +456,27 @@ createScenariosFromPKML <- function(
     simulation <- simulationCache[[pkmlPath]]
     scenarioName <- finalNames[[i]]
 
-    # Resolve the model file relative to the project's model folder so the
-    # stored path is portable. `as.character()` strips the `fs_path` class so
-    # the value round-trips identically through save/load.
-    if (is.null(self$paths$modelFolder)) {
-      cli::cli_warn(messages$noModelFolderUsingAbsolutePath(pkmlPath))
+    # Resolve the model file relative to the project's simulations folder so
+    # the stored path is portable. `as.character()` strips the `fs_path` class
+    # so the value round-trips identically through save/load.
+    if (is.null(self$paths$simulationsFolder)) {
+      cli::cli_warn(messages$noSimulationsFolderUsingAbsolutePath(pkmlPath))
       modelFile <- as.character(fs::path_abs(pkmlPath))
     } else {
       modelFile <- as.character(fs::path_rel(
         pkmlPath,
-        start = self$paths$modelFolder
+        start = self$paths$simulationsFolder
       ))
+      # A PKML kept outside the simulations folder yields an escaping `../`
+      # relative path. The scenario is still stored, but such a `modelFile`
+      # aborts at run time (containment), so warn now rather than let it fail
+      # silently later.
+      if (startsWith(modelFile, "..")) {
+        cli::cli_warn(messages$pkmlOutsideSimulationsFolder(
+          pkmlPath = pkmlPath,
+          modelFile = modelFile
+        ))
+      }
     }
 
     # Application protocol: user value verbatim (PKML embeds its application,

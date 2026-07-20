@@ -46,7 +46,7 @@ test_that(".projectToJson() splits the container path fields into filePaths and 
   # The four live working folders stay in `filePaths`.
   expect_named(
     tree$filePaths,
-    c("modelFolder", "populationsFolder", "dataFolder", "outputFolder"),
+    c("simulationsFolder", "populationsFolder", "dataFolder", "outputFolder"),
     ignore.order = TRUE
   )
   # The seven Excel-bridge sheet names move to the `excel` block.

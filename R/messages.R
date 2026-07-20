@@ -240,12 +240,12 @@ messages$scenariosAddedToProject <- function(scenarioNames) {
   ))
 }
 
-messages$noModelFolderUsingAbsolutePath <- function(pkmlPath) {
+messages$noSimulationsFolderUsingAbsolutePath <- function(pkmlPath) {
   cli::format_message(c(
-    "!" = "The project has no {.field modelFolder}; storing an absolute model \\
-    file path.",
-    "i" = "Set a {.field modelFolder} on the project so the scenario stores a \\
-    portable relative path ({.file {pkmlPath}})."
+    "!" = "The project has no {.field simulationsFolder}; storing an absolute \\
+    model file path.",
+    "i" = "Set a {.field simulationsFolder} on the project so the scenario \\
+    stores a portable relative path ({.file {pkmlPath}})."
   ))
 }
 
@@ -264,14 +264,14 @@ messages$outputPathAliasIgnored <- function(userAlias, registeredId, path) {
   ))
 }
 
-messages$noModelFolderForRelativeModelFile <- function(
+messages$noSimulationsFolderForRelativeModelFile <- function(
   scenarioName,
   modelFile
 ) {
   cli::format_message(c(
     "x" = "Cannot resolve the model file for scenario {.val {scenarioName}}.",
     "i" = "{.field modelFile} {.val {modelFile}} is relative but the project \\
-    has no {.field modelFolder} to resolve it against."
+    has no {.field simulationsFolder} to resolve it against."
   ))
 }
 
@@ -975,6 +975,34 @@ messages$observedDataDataFolderNotDeclared <- function(file) {
   )
 }
 
+messages$projectPathEscapesRoot <- function(fieldName, path, root) {
+  cli::format_message(c(
+    "x" = "{.field {fieldName}} {.val {path}} resolves outside the project \\
+    folder.",
+    "i" = "It must stay under {.path {root}}. A project file cannot reference \\
+    a path outside the project."
+  ))
+}
+
+messages$pkmlOutsideSimulationsFolder <- function(pkmlPath, modelFile) {
+  cli::format_message(c(
+    "!" = "PKML {.file {pkmlPath}} is outside the project's \\
+    {.field simulationsFolder}; storing an escaping relative path \\
+    {.val {modelFile}}.",
+    "i" = "This scenario will fail at run time because the model file \\
+    resolves outside the project. Move the PKML under the simulations folder, \\
+    or set a {.field simulationsFolder} that contains it."
+  ))
+}
+
+messages$duplicateSimulationsFolderKey <- function() {
+  cli::format_message(c(
+    "!" = "{.code filePaths} carries both the legacy {.field modelFolder} and \\
+    the current {.field simulationsFolder}; using {.field simulationsFolder}.",
+    "i" = "Remove the legacy {.field modelFolder} key to silence this warning."
+  ))
+}
+
 messages$observedDataNameCollision <- function(duplicates) {
   cli::format_message(c(
     "x" = "Duplicate observed-data set name{?s} across sources: {.val {duplicates}}.",
@@ -1019,5 +1047,11 @@ messages$validationObservedDataImporterNotFound <- function(
 ) {
   cliFormat(
     "{entryLabel} references non-existent importer config: {importerConfiguration}"
+  )
+}
+
+messages$validationObservedDataPathEscapes <- function(entryLabel, path) {
+  cliFormat(
+    "{entryLabel} references a file outside the project folder: {path}"
   )
 }

@@ -312,7 +312,10 @@ print.Scenario <- function(x, ...) {
 #' @keywords internal
 #' @noRd
 .scenariosValidatorAdapter <- function(project) {
-  .validateScenarios(project$definitions$scenarios, project$paths$modelFolder)
+  .validateScenarios(
+    project$definitions$scenarios,
+    project$paths$simulationsFolder
+  )
 }
 
 #' @keywords internal
@@ -332,12 +335,13 @@ print.Scenario <- function(x, ...) {
 #'
 #' @param scenarios Named list of `Scenario` objects from
 #'   `scenarios` definitions.
-#' @param modelFolder Character. Absolute path to the project's model folder,
-#'   used to resolve relative `modelFile` paths. May be `NULL`.
+#' @param simulationsFolder Character. Absolute path to the project's
+#'   simulations folder, used to resolve relative `modelFile` paths. May be
+#'   `NULL`.
 #' @return validationResult.
 #' @keywords internal
 #' @noRd
-.validateScenarios <- function(scenarios, modelFolder = NULL) {
+.validateScenarios <- function(scenarios, simulationsFolder = NULL) {
   result <- validationResult$new()
 
   if (is.null(scenarios) || length(scenarios) == 0) {
@@ -353,18 +357,38 @@ print.Scenario <- function(x, ...) {
         "Missing Fields",
         paste0("Scenario '", name, "' has no modelFile")
       )
-    } else if (!is.null(modelFolder)) {
-      modelFilePath <- file.path(modelFolder, sc$modelFile)
-      if (!file.exists(modelFilePath)) {
-        result$add_warning(
-          "File Not Found",
+    } else if (!is.null(simulationsFolder)) {
+      # A relative `modelFile` that escapes the simulations folder is a
+      # critical error here, matching the abort `.prepareScenario()` raises at
+      # run time, so `validateProject()` does not give false assurance on a
+      # path the runtime would reject. An absolute `modelFile` is used verbatim
+      # at run time (no containment), so it is not checked here either.
+      if (
+        !fs::is_absolute_path(sc$modelFile) &&
+          .pathEscapesRoot(sc$modelFile, simulationsFolder)
+      ) {
+        result$add_critical_error(
+          "Path Containment",
           paste0(
             "Scenario '",
             name,
-            "' references non-existent modelFile: ",
+            "' references a modelFile outside the project folder: ",
             sc$modelFile
           )
         )
+      } else {
+        modelFilePath <- file.path(simulationsFolder, sc$modelFile)
+        if (!file.exists(modelFilePath)) {
+          result$add_warning(
+            "File Not Found",
+            paste0(
+              "Scenario '",
+              name,
+              "' references non-existent modelFile: ",
+              sc$modelFile
+            )
+          )
+        }
       }
     }
 

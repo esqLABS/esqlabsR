@@ -30,7 +30,7 @@ test_that("ProjectConfiguration() wrapper emits lifecycle warning and returns Pr
   )
   expect_s3_class(project, "Project")
 })
-test_that("project$paths$modelFolder resolves a relative path against projectDirPath", {
+test_that("project$paths$simulationsFolder resolves a relative path against projectDirPath", {
   project <- loadProject(
     system.file(
       "extdata",
@@ -42,7 +42,7 @@ test_that("project$paths$modelFolder resolves a relative path against projectDir
     )
   )
   expect_equal(
-    project$paths$modelFolder,
+    project$paths$simulationsFolder,
     fs::path_abs(file.path(project$info$projectDirPath, "Models/Simulations"))
   )
 })
@@ -118,8 +118,8 @@ test_that("project$paths$dataFolder is NULL when filePaths.dataFolder is unset",
 test_that("project path fields are writable after the merger", {
   project <- testProject()
 
-  project$paths$modelFolder <- "AnotherModels"
-  expect_match(project$paths$modelFolder, "AnotherModels$")
+  project$paths$simulationsFolder <- "AnotherModels"
+  expect_match(project$paths$simulationsFolder, "AnotherModels$")
 })
 
 test_that(".clean_path expands env vars (other than PATH) and resolves to absolute", {
@@ -197,7 +197,7 @@ test_that("loadProject() resolves the working-folder paths against the project d
   # `project$paths$<folder>` returns the stored value resolved against the
   # project directory (raw on write, resolved on read).
   expect_identical(
-    project$paths$modelFolder,
+    project$paths$simulationsFolder,
     fs::path_abs(file.path(dir, "Models/Simulations/"))
   )
   expect_identical(
@@ -207,7 +207,7 @@ test_that("loadProject() resolves the working-folder paths against the project d
   # The stored (verbatim) values are still reachable through the internal
   # raw reader the JSON writer and Excel exporter use.
   expect_identical(
-    project$rawFilePaths()$modelFolder$value,
+    project$rawFilePaths()$simulationsFolder$value,
     "Models/Simulations/"
   )
 })
@@ -528,9 +528,116 @@ test_that("filePaths holds only the four live working folders", {
   project <- exampleProject()
   expect_named(
     project$rawFilePaths(),
-    c("modelFolder", "populationsFolder", "dataFolder", "outputFolder"),
+    c("simulationsFolder", "populationsFolder", "dataFolder", "outputFolder"),
     ignore.order = TRUE
   )
+})
+
+test_that("a legacy `modelFolder` key loads as `simulationsFolder`", {
+  # A pre-6.0.0 project (or an Excel-imported one) carries the old key
+  # `modelFolder`; the loader accepts it and stores it under the current name
+  # so the project resolves without a manual edit.
+  tmp <- withr::local_tempfile(fileext = ".json")
+  jsonlite::write_json(
+    list(
+      schemaVersion = "2.0",
+      esqlabsRVersion = "6.0.0",
+      filePaths = list(
+        modelFolder = "Models/Simulations/",
+        dataFolder = "Data/",
+        outputFolder = "Results/"
+      ),
+      outputPaths = structure(list(), names = character(0)),
+      scenarios = list()
+    ),
+    tmp,
+    auto_unbox = TRUE,
+    null = "null"
+  )
+  project <- loadProject(tmp)
+
+  expect_true("simulationsFolder" %in% names(project$rawFilePaths()))
+  expect_false("modelFolder" %in% names(project$rawFilePaths()))
+  expect_match(project$paths$simulationsFolder, "Models/Simulations$")
+})
+
+test_that("both `modelFolder` and `simulationsFolder` keys warn and use the current name", {
+  # A hand-edited file could carry both keys; the current one wins with a
+  # warning rather than letting iteration order decide silently.
+  tmp <- withr::local_tempfile(fileext = ".json")
+  jsonlite::write_json(
+    list(
+      schemaVersion = "2.0",
+      filePaths = list(
+        modelFolder = "Legacy",
+        simulationsFolder = "Models/Simulations/",
+        dataFolder = "Data/",
+        outputFolder = "Results/"
+      ),
+      outputPaths = structure(list(), names = character(0)),
+      scenarios = list()
+    ),
+    tmp,
+    auto_unbox = TRUE,
+    null = "null"
+  )
+  expect_warning(
+    project <- loadProject(tmp),
+    "both the legacy"
+  )
+  expect_match(project$paths$simulationsFolder, "Models/Simulations$")
+})
+
+test_that("a working folder resolving outside the project directory is rejected", {
+  # The containment fix must also cover the folder roots themselves: an
+  # absolute (or `../`-escaping) folder value from an untrusted `Project.json`
+  # would otherwise be an attacker-chosen "root" that trivially contains any
+  # leaf path.
+  tmp <- withr::local_tempfile(fileext = ".json")
+  jsonlite::write_json(
+    list(
+      schemaVersion = "2.0",
+      filePaths = list(
+        simulationsFolder = "Models/Simulations/",
+        dataFolder = "/etc",
+        outputFolder = "Results/"
+      ),
+      outputPaths = structure(list(), names = character(0)),
+      scenarios = list()
+    ),
+    tmp,
+    auto_unbox = TRUE,
+    null = "null"
+  )
+  project <- loadProject(tmp)
+  # The folder resolves lazily on read; reading the escaping one aborts.
+  expect_error(project$paths$dataFolder, "outside the project folder")
+  # A contained sibling folder still resolves.
+  expect_match(project$paths$simulationsFolder, "Models/Simulations$")
+})
+
+test_that("a working folder set via an environment variable is allowed outside the project", {
+  # `${VAR}` is the sanctioned way to place a folder outside the project tree
+  # (e.g. shared-drive data), so it is exempt from the containment check.
+  withr::local_envvar(ESQLABSR_TEST_DATA = withr::local_tempdir())
+  tmp <- withr::local_tempfile(fileext = ".json")
+  jsonlite::write_json(
+    list(
+      schemaVersion = "2.0",
+      filePaths = list(
+        simulationsFolder = "Models/Simulations/",
+        dataFolder = "${ESQLABSR_TEST_DATA}/Aciclovir",
+        outputFolder = "Results/"
+      ),
+      outputPaths = structure(list(), names = character(0)),
+      scenarios = list()
+    ),
+    tmp,
+    auto_unbox = TRUE,
+    null = "null"
+  )
+  project <- loadProject(tmp)
+  expect_match(project$paths$dataFolder, "Aciclovir$")
 })
 
 test_that("excel exposes the seven Excel-bridge sheet-name fields", {
@@ -576,7 +683,7 @@ test_that("a legacy flat-filePaths Project.json loads and splits the fields", {
       schemaVersion = "2.0",
       esqlabsRVersion = "6.0.0",
       filePaths = list(
-        modelFolder = "Models/",
+        simulationsFolder = "Models/",
         configurationsFolder = "Configurations/",
         modelParamsFile = "ModelParameters.xlsx",
         dataFolder = "Data/",
@@ -593,7 +700,7 @@ test_that("a legacy flat-filePaths Project.json loads and splits the fields", {
 
   expect_named(
     project$rawFilePaths(),
-    c("modelFolder", "dataFolder", "outputFolder"),
+    c("simulationsFolder", "dataFolder", "outputFolder"),
     ignore.order = TRUE
   )
   expect_named(

@@ -5,7 +5,7 @@
   "description": "Aciclovir IV PK example project",
   "definitionsFolder": "definitions",
   "filePaths": {
-    "modelFolder": "Models/Simulations/",
+    "simulationsFolder": "Models/Simulations/",
     "populationsFolder": "Populations/",
     "dataFolder": "Data/",
     "outputFolder": "Results/"

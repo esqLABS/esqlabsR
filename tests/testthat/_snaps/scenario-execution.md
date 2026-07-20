@@ -1,11 +1,11 @@
-# a relative modelFile with NULL modelFolder aborts with a clear message
+# a relative modelFile with NULL simulationsFolder aborts with a clear message
 
     Code
       esqlabsR:::.runScenariosFromProject(project, scenarioNames = "testscenario",
         validate = FALSE)
     Condition
       Error in `.prepareScenario()`:
-      ! x Cannot resolve the model file for scenario "testscenario". i modelFile "Aciclovir.pkml" is relative but the project has no modelFolder to resolve it against.
+      ! x Cannot resolve the model file for scenario "testscenario". i modelFile "Aciclovir.pkml" is relative but the project has no simulationsFolder to resolve it against.
 
 # a CSV-population scenario with NULL populationsFolder aborts with a clear message
 

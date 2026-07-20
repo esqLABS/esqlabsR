@@ -1,8 +1,9 @@
 # Project R6 class ----
 
 # The container path fields that belong to the Excel import/export bridge
-# (the `excel` block), as opposed to the live working folders (`modelFolder`,
-# `dataFolder`, `outputFolder`, `populationsFolder`) that the runtime reads
+# (the `excel` block), as opposed to the live working folders
+# (`simulationsFolder`, `dataFolder`, `outputFolder`, `populationsFolder`) that
+# the runtime reads
 # (the `filePaths` block). A legacy `Project.json` carries both sets in one
 # flat `filePaths` block; this fixed mapping is what splits them on read and
 # routes each to its own container block on write.
@@ -115,13 +116,15 @@ Project <- R6::R6Class(
     },
 
     #' @field paths The project's working-folder paths, as a writable field
-    #'   group: `modelFolder` (pkml simulation files), `dataFolder`
-    #'   (experimental data), `outputFolder` (results), `populationsFolder`
-    #'   (population CSVs loaded by [runScenarios()]), and `definitionsFolder`
-    #'   (the folder holding the definition files, default `"definitions"`).
-    #'   Read a field with `project$paths$modelFolder` (returned resolved
+    #'   group: `simulationsFolder` (pkml simulation files, `Models/Simulations`,
+    #'   sitting under `Models/` alongside the `Snapshots` folder for PK-Sim /
+    #'   MoBi snapshots), `dataFolder` (experimental data), `outputFolder`
+    #'   (results), `populationsFolder` (population CSVs loaded by
+    #'   [runScenarios()]), and `definitionsFolder` (the folder holding the
+    #'   definition files, default `"definitions"`).
+    #'   Read a field with `project$paths$simulationsFolder` (returned resolved
     #'   against `projectDirPath`); write one with
-    #'   `project$paths$modelFolder <- "Models"` (stored verbatim, resolved
+    #'   `project$paths$simulationsFolder <- "Models"` (stored verbatim, resolved
     #'   on the next read). Assigning any field sets the dirty bit. Changing
     #'   `definitionsFolder` redirects where the next [saveProject()] writes the
     #'   definition files; nothing moves on disk until that save. The
@@ -682,7 +685,7 @@ Project <- R6::R6Class(
     # clean (FALSE).
     .modified = FALSE,
     # Working-folder paths (the `filePaths` block): the four live folders the
-    # runtime reads (`modelFolder`, `dataFolder`, `outputFolder`,
+    # runtime reads (`simulationsFolder`, `dataFolder`, `outputFolder`,
     # `populationsFolder`).
     .filePathsData = list(),
     # Excel import/export bridge sheet names (the `excel` block): the
@@ -860,16 +863,24 @@ Project <- R6::R6Class(
     # sets the dirty bit. `definitionsFolder` is stored separately (it is not a
     # `filePaths` record) and defaults to `"definitions"`.
     .pathsGroup = function() {
+      # Working folders resolve through `.resolveWorkingFolder()` (not the
+      # plain `.recordFieldSpec` resolver) so a folder value read from an
+      # untrusted `Project.json` is contained under the project directory,
+      # unless it opts out with an explicit `${VAR}`. The setter is the same
+      # raw-store-and-invalidate as any record field.
       folderField <- function(name) {
-        private$.recordFieldSpec(
-          ".filePathsData",
-          name,
-          function() private$.projectDirPath
+        force(name)
+        list(
+          get = function() private$.resolveWorkingFolder(name),
+          set = function(value) {
+            private$.filePathsData[[name]]$value <- value
+            private$.invalidateContainer()
+          }
         )
       }
       .projectFieldGroup(
         list(
-          modelFolder = folderField("modelFolder"),
+          simulationsFolder = folderField("simulationsFolder"),
           dataFolder = folderField("dataFolder"),
           outputFolder = folderField("outputFolder"),
           populationsFolder = folderField("populationsFolder"),
@@ -1005,7 +1016,7 @@ Project <- R6::R6Class(
       items <- Filter(
         Negate(is.null),
         list(
-          "Simulations Folder" = relToProject(paths$modelFolder),
+          "Simulations Folder" = relToProject(paths$simulationsFolder),
           "Data Folder" = relToProject(paths$dataFolder),
           "Populations Folder" = relToProject(paths$populationsFolder),
           "Output Folder" = relToProject(paths$outputFolder),
@@ -1232,6 +1243,56 @@ Project <- R6::R6Class(
       }
     },
 
+    # Resolve one working-folder value (`filePaths`) against `projectDirPath`
+    # and require the result to stay under the project directory, so an
+    # untrusted `Project.json` cannot point a working folder at an arbitrary
+    # location (`"dataFolder": "/etc"`, or a `../`-escaping relative folder)
+    # and then reference a plainly-"contained" file inside it. This is the
+    # root-level companion to `.resolveProjectPath()`, which contains the leaf
+    # paths joined onto these folders.
+    #
+    # The `${VAR}` environment-variable form is the sanctioned way to place a
+    # folder outside the project tree (e.g. shared-drive data), so a raw value
+    # that carries a `${VAR}` is exempt from the containment check; only a bare
+    # absolute or `../`-escaping literal is rejected. Containment is judged on
+    # the raw stored value (pre-expansion) for that reason.
+    .resolveWorkingFolder = function(name) {
+      raw <- private$.filePathsData[[name]]$value
+      projectDir <- private$.projectDirPath
+      resolved <- private$.clean_path(raw, projectDir)
+      if (is.null(resolved)) {
+        return(NULL)
+      }
+      # A from-scratch in-memory project has no on-disk directory yet, so there
+      # is no project root to contain the folder against; skip the check (the
+      # containment boundary comes into being only once the project is loaded
+      # from / saved to a directory).
+      hasProjectDir <- !is.null(projectDir) &&
+        length(projectDir) == 1L &&
+        !is.na(projectDir) &&
+        nzchar(projectDir)
+      # An explicit `${VAR}` opts into an out-of-project location; skip the
+      # containment check for it (the variable value is the user's choice).
+      declaresEnvVar <- is.character(raw) &&
+        length(raw) == 1L &&
+        grepl("\\$\\{?[A-Za-z_]", raw)
+      # The resolved folder is already absolute; `.pathEscapesRoot()` compares
+      # an absolute path to the root directly, so this rejects a folder value
+      # that resolves outside the project directory.
+      if (
+        hasProjectDir &&
+          !declaresEnvVar &&
+          .pathEscapesRoot(as.character(resolved), projectDir)
+      ) {
+        cli::cli_abort(messages$projectPathEscapesRoot(
+          name,
+          raw,
+          private$.projectDirPath
+        ))
+      }
+      resolved
+    },
+
     .read_json = function(jsonPath) {
       jsonPath <- fs::path_abs(jsonPath)
       if (!fs::file_exists(jsonPath)) {
@@ -1270,13 +1331,32 @@ Project <- R6::R6Class(
       # `filePaths` (e.g. a hand-edited file) is routed to the Excel store too.
       fp <- jsonData$filePaths %||% list()
       excel <- jsonData$excel %||% list()
+      # A hand-edited `Project.json` could carry both the legacy `modelFolder`
+      # and the current `simulationsFolder` key. They map to the same slot, so
+      # rather than let iteration order decide, warn and drop the legacy key so
+      # the current `simulationsFolder` deterministically wins.
+      hasSimulationsCollision <- all(
+        c("modelFolder", "simulationsFolder") %in% names(fp)
+      )
+      if (hasSimulationsCollision) {
+        cli::cli_warn(messages$duplicateSimulationsFolderKey())
+        fp[["modelFolder"]] <- NULL
+      }
       private$.filePathsData <- list()
       private$.excelData <- list()
       for (n in names(fp)) {
-        if (n %in% .excelFilePathFields) {
-          private$.excelData[[n]] <- list(value = fp[[n]], description = "")
+        # Accept the pre-6.0.0 key `modelFolder` and store it under the current
+        # name `simulationsFolder`, so a legacy `Project.json` (or an
+        # Excel-imported project whose `Property` column still says
+        # `modelFolder`) resolves without a manual edit.
+        key <- if (identical(n, "modelFolder")) "simulationsFolder" else n
+        if (key %in% .excelFilePathFields) {
+          private$.excelData[[key]] <- list(value = fp[[n]], description = "")
         } else {
-          private$.filePathsData[[n]] <- list(value = fp[[n]], description = "")
+          private$.filePathsData[[key]] <- list(
+            value = fp[[n]],
+            description = ""
+          )
         }
       }
       for (n in names(excel)) {

@@ -35,6 +35,15 @@ testProject <- function(envir = parent.frame()) {
   loadProject(file.path(.copyTestProjectDir(envir), "Project.json"))
 }
 
+# The Aciclovir PKML fixture that lives INSIDE a copied test project (under its
+# own `simulationsFolder`). Use this, rather than the source-tree `pkmlFixture`,
+# when a test builds an on-disk `testProject()` and calls
+# `createScenariosFromPKML()`, so the stored `modelFile` stays inside the
+# project and does not trip the out-of-folder warning.
+pkmlInProject <- function(project) {
+  file.path(project$paths$simulationsFolder, "Aciclovir.pkml")
+}
+
 #' A `Project.json` path inside a fresh throwaway directory.
 #'
 #' Use this when a test needs a throwaway project location: a project is a

@@ -187,7 +187,9 @@ test_that("Excel round-trip preserves DataCombined numeric offsets and scales", 
     silent = TRUE
   ))
   reimported <- suppressWarnings(loadProject(reimportedJson))
-  dc <- .unwrapDefinitionList(reimported$definitions$dataCombined)[["dc_numeric"]]
+  dc <- .unwrapDefinitionList(reimported$definitions$dataCombined)[[
+    "dc_numeric"
+  ]]
   sim <- dc$simulated[[1]]
   obs <- dc$observed[[1]]
 
@@ -288,7 +290,9 @@ test_that("Excel round-trip preserves a comma-bearing plot id inside a grid", {
     silent = TRUE
   ))
   reimported <- suppressWarnings(loadProject(reimportedJson))
-  grid <- .unwrapDefinitionList(reimported$definitions$plotGrids)[["grid_comma"]]
+  grid <- .unwrapDefinitionList(reimported$definitions$plotGrids)[[
+    "grid_comma"
+  ]]
 
   expect_identical(.splitPlotIDs(grid$plotIds), c("p1", "cmax, ss"))
 })
@@ -330,7 +334,7 @@ test_that("Excel round-trip preserves the filePaths/excel container split", {
   # re-split back into the excel block (not leaking into filePaths).
   expect_named(
     reimported$rawFilePaths(),
-    c("modelFolder", "populationsFolder", "dataFolder", "outputFolder"),
+    c("simulationsFolder", "populationsFolder", "dataFolder", "outputFolder"),
     ignore.order = TRUE
   )
   expect_named(

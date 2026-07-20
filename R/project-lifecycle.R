@@ -340,22 +340,13 @@ initProject <- function(
     cli::cli_abort(messages$failedToCopyTemplate(sourceFiles[!copied]))
   }
 
-  # Create empty directory structure
-  dirs_to_create <- c(
-    "Models/Simulations",
-    "Data",
-    "Populations",
-    "Results/Figures",
-    "Results/SimulationResults",
-    "definitions"
-  )
-  for (d in dirs_to_create) {
-    dir.create(
-      file.path(destination, d),
-      recursive = TRUE,
-      showWarnings = FALSE
-    )
-  }
+  # Create the working-folder structure. Each folder gets a short `README.md`
+  # so it stays tracked under version control (git ignores empty folders) and
+  # tells the reader what belongs there. `Models/Snapshots` is scaffolded for
+  # PK-Sim / MoBi snapshots even though the package does not load from it yet;
+  # it is part of every project's structure. The `definitions/` tree carries
+  # the authored project content and needs no placeholder.
+  .scaffoldProjectFolders(destination)
 
   if (createExcel) {
     jsonPath <- file.path(destination, "Project.json")
@@ -363,6 +354,52 @@ initProject <- function(
     exportProjectToExcel(project, outputDir = destination, silent = TRUE)
   }
 
+  invisible(destination)
+}
+
+# The working folders that ship with a `README.md` placeholder, each mapped to
+# its one-line text. The README keeps the otherwise-empty folder tracked under
+# version control (git does not track empty folders) and tells the reader what
+# belongs there.
+.projectReadmeFolders <- c(
+  "Models/Simulations" = "Simulations as *.pkml that will be referenced by scenarios.",
+  "Models/Snapshots" = "PK-Sim and MoBi snapshots (*.json). Not loaded by the package yet; reserved for a future release.",
+  "Data" = "Observed data files referenced by the project.",
+  "Populations" = "Population definitions as *.csv files, loaded by scenarios that reference them.",
+  "Results/Figures" = "By default, figures will be saved in this folder.",
+  "Results/SimulationResults" = "By default, simulation results will be saved in this folder."
+)
+
+# Folders created without a README placeholder. `definitions/` holds the
+# authored project content and is never empty in a real project.
+.projectPlainFolders <- c("definitions")
+
+# Create the working-folder structure under `destination`, writing a short
+# `README.md` placeholder into every README-bearing folder (see
+# `.projectReadmeFolders`). An existing `README.md` is left untouched: a user
+# may have edited it to document their own project, and `initProject(overwrite
+# = TRUE)` must honor the "working folders are left untouched" invariant
+# `.clearProjectArtifacts()` documents.
+# @keywords internal
+# @noRd
+.scaffoldProjectFolders <- function(destination) {
+  createFolder <- function(folder) {
+    dir.create(
+      file.path(destination, folder),
+      recursive = TRUE,
+      showWarnings = FALSE
+    )
+  }
+  for (folder in .projectPlainFolders) {
+    createFolder(folder)
+  }
+  for (folder in names(.projectReadmeFolders)) {
+    createFolder(folder)
+    readmePath <- file.path(destination, folder, "README.md")
+    if (!file.exists(readmePath)) {
+      writeLines(.projectReadmeFolders[[folder]], readmePath)
+    }
+  }
   invisible(destination)
 }
 

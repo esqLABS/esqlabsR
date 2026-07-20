@@ -257,7 +257,7 @@ test_that(".validateScenarios warns when modelFile does not exist on disk", {
   )
   result <- esqlabsR:::.validateScenarios(
     list(s1 = sc),
-    modelFolder = withr::local_tempdir()
+    simulationsFolder = withr::local_tempdir()
   )
   msgs <- vapply(result$warnings, \(w) w$message, character(1))
   expect_match(msgs, "missing\\.pkml", all = FALSE)
@@ -270,15 +270,35 @@ test_that(".validateScenarios passes when modelFile exists on disk", {
     modelFile = "model.pkml",
     simulationType = "Individual"
   )
-  result <- esqlabsR:::.validateScenarios(list(s1 = sc), modelFolder = dir)
+  result <- esqlabsR:::.validateScenarios(
+    list(s1 = sc),
+    simulationsFolder = dir
+  )
   file_not_found_warns <- Filter(
-    \(w) w$section == "File Not Found",
+    \(w) w$category == "File Not Found",
     result$warnings
   )
   expect_length(file_not_found_warns, 0)
 })
 
-# Section adapter: individuals ----
+test_that(".validateScenarios flags a modelFile that escapes the simulations folder", {
+  # `validateProject()` must agree with the run-time containment check rather
+  # than give false assurance: an escaping relative `modelFile` is a critical
+  # error here, not a silent pass.
+  sc <- esqlabsR:::Scenario(
+    modelFile = "../../../../etc/passwd",
+    simulationType = "Individual"
+  )
+  result <- esqlabsR:::.validateScenarios(
+    list(s1 = sc),
+    simulationsFolder = withr::local_tempdir()
+  )
+  containment <- Filter(
+    \(e) e$category == "Path Containment",
+    result$critical_errors
+  )
+  expect_length(containment, 1)
+})
 
 test_that(".validateIndividuals warns on empty section", {
   result <- esqlabsR:::.validateIndividuals(list())

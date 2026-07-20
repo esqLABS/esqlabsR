@@ -226,14 +226,20 @@
   stopIfParameterNotFound = TRUE
 ) {
   # 1. Load simulation. An absolute `modelFile` is used as-is; a relative one
-  # is resolved against the project's model folder, which must exist for the
-  # join to be meaningful (`file.path(NULL, x)` yields `character(0)`).
+  # is resolved against the project's simulations folder, which must exist for
+  # the join to be meaningful (`file.path(NULL, x)` yields `character(0)`). A
+  # relative value must stay under the simulations folder, so a shared project
+  # cannot point `modelFile` at a file outside itself via `../`.
   if (fs::is_absolute_path(scenario$modelFile)) {
     modelFilePath <- scenario$modelFile
-  } else if (!is.null(project$paths$modelFolder)) {
-    modelFilePath <- file.path(project$paths$modelFolder, scenario$modelFile)
+  } else if (!is.null(project$paths$simulationsFolder)) {
+    modelFilePath <- .resolveProjectPath(
+      scenario$modelFile,
+      project$paths$simulationsFolder,
+      "modelFile"
+    )
   } else {
-    cli::cli_abort(messages$noModelFolderForRelativeModelFile(
+    cli::cli_abort(messages$noSimulationsFolderForRelativeModelFile(
       scenarioName = scenario$scenarioName,
       modelFile = scenario$modelFile
     ))
@@ -344,16 +350,19 @@
       } else {
         # A relative population id is resolved against the project's populations
         # folder, which must exist for the join to be meaningful
-        # (`file.path(NULL, x)` yields `character(0)`).
+        # (`file.path(NULL, x)` yields `character(0)`). The resolved csv must
+        # stay under the populations folder, so a shared project cannot read a
+        # file outside itself via a `../` population id.
         if (is.null(project$paths$populationsFolder)) {
           cli::cli_abort(messages$noPopulationsFolderForCSVPopulation(
             scenarioName = scenario$scenarioName,
             populationId = scenario$populationId
           ))
         }
-        populationPath <- paste0(
-          file.path(project$paths$populationsFolder, scenario$populationId),
-          ".csv"
+        populationPath <- .resolveProjectPath(
+          paste0(scenario$populationId, ".csv"),
+          project$paths$populationsFolder,
+          "populationId"
         )
         population <- loadPopulation(populationPath)
         cache$populations[[scenario$populationId]] <- population
