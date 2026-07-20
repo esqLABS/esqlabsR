@@ -71,7 +71,7 @@
     Code
       project$definitions$scenarios <- list()
     Condition
-      Error in `onReadOnly()`:
+      Error:
       ! scenarios is read-only and cannot be assigned into.
       i To change a definition, edit its '.json' file or use an authoring function (e.g. `addScenario()` / `setScenario()` / `removeScenario()` and their per-section siblings).
       i To edit one record, read it, change the copy, then re-submit it with an authoring function: `sc <- project$definitions$scenarios[["id"]]; sc$field <- value; setScenario(project, "id", ...)`.
@@ -112,7 +112,7 @@
     Code
       project$info$projectFilePath <- "elsewhere.json"
     Condition
-      Error in `onReadOnly()`:
+      Error:
       ! info$projectFilePath is read-only and cannot be assigned into.
 
 # project$status is read-only

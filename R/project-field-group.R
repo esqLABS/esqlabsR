@@ -94,14 +94,13 @@
 
 # Abort an assignment into a read-only group field. Names the field and its
 # group so the message is specific (e.g. `info$schemaVersion` is read-only).
+# `call = NULL`: the abort fires from inside an active-binding setter, whose
+# call frame is the internal accessor closure, not a user-facing function, so
+# naming it would be misleading; the message stands on its own.
 #
 # @keywords internal
 # @noRd
-.projectFieldReadOnlyError <- function(
-  field,
-  group,
-  call = rlang::caller_env()
-) {
+.projectFieldReadOnlyError <- function(field, group, call = NULL) {
   cli::cli_abort(
     "{.field {group}${field}} is read-only and cannot be assigned into.",
     call = call

@@ -770,12 +770,15 @@ Project <- R6::R6Class(
       isWriteback <- inherits(value, "ProjectFieldGroup") &&
         identical(attr(value, "group"), group)
       if (!isWriteback) {
+        # `call = NULL`: the abort fires from inside the group active-binding
+        # setter, whose frame is this internal helper, not a user function.
         cli::cli_abort(
           c(
             "{.field {group}} is a field group and cannot be replaced.",
             "i" = "Assign an individual field instead, e.g. \\
             {.code project${group}$<field> <- value}."
-          )
+          ),
+          call = NULL
         )
       }
       invisible(value)
@@ -937,7 +940,13 @@ Project <- R6::R6Class(
       .projectFieldGroup(
         spec,
         group = "definitions",
-        onReadOnly = function(field) .definitionListReadOnlyError(field),
+        onReadOnly = function(field) {
+          # The abort fires from inside an active-binding setter, whose call
+          # frame is the internal accessor closure; `call = NULL` keeps that
+          # internal frame out of the message (the `DefinitionList` `[[<-` /
+          # `$<-` methods, which have a real user frame, keep the default).
+          .definitionListReadOnlyError(field, call = NULL)
+        },
         printer = function() private$.printDefinitionsBlock()
       )
     },
