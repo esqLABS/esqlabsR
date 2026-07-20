@@ -31,11 +31,12 @@ Invisibly returns \code{destination}, the path the project was
 initialized in.
 }
 \description{
-Scaffolds a JSON-first esqlabsR project in \code{destination}: a \code{Project.json}
-container plus a \verb{definitions/} tree of authored definitions, alongside the
-working folders (\verb{Models/}, \verb{Data/}, \verb{Populations/}, \verb{Results/}). By default
-it also writes optional Excel side-cars from the JSON; set
-\code{createExcel = FALSE} for a JSON-only project.
+Creates a new JSON-based esqlabsR project in \code{destination}: a
+\code{Project.json} file plus a \verb{definitions/} folder holding one file per
+definition, alongside the working folders (\verb{Models/}, \verb{Data/},
+\verb{Populations/}, \verb{Results/}). By default it also writes the optional Excel
+configuration files from the JSON; set \code{createExcel = FALSE} for a
+JSON-only project.
 }
 \seealso{
 Other project persistence:
@@ -43,7 +44,10 @@ Other project persistence:
 \code{\link[=exportProjectToExcel]{exportProjectToExcel()}},
 \code{\link[=importProjectFromExcel]{importProjectFromExcel()}},
 \code{\link[=loadProject]{loadProject()}},
-\code{\link[=loadSnapshot]{loadSnapshot()}},
-\code{\link[=saveSnapshot]{saveSnapshot()}}
+\code{\link[=projectStatus]{projectStatus()}},
+\code{\link[=reloadProject]{reloadProject()}},
+\code{\link[=restoreProject]{restoreProject()}},
+\code{\link[=saveProject]{saveProject()}},
+\code{\link[=snapshotProject]{snapshotProject()}}
 }
 \concept{project persistence}

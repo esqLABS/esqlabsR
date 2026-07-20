@@ -1,20 +1,23 @@
 # Excel <-> JSON bridge: public API ----
 
-#' Import project configuration from Excel files to v2.0 JSON
+#' Import project configuration from Excel files
 #'
 #' @description Reads all Excel configuration files in an esqlabsR project and
-#' produces a single v2.0 JSON file. This is the migration path from
-#' Excel-based projects to the JSON-primary workflow.
+#' converts them to the JSON project format: a project file (named after the
+#' Excel file, e.g. `Project.xlsx` becomes `Project.json`) plus one file per
+#' definition in the `definitions/` folder. The result is a ready-to-use
+#' project — [loadProject()] can open it directly. This is the migration path
+#' from Excel-based projects to the JSON-primary workflow.
 #'
 #' @param projectConfigPath Path to the `Project.xlsx` file.
 #'   Defaults to `"Project.xlsx"`.
-#' @param outputDir Directory where the JSON file will be saved. If `NULL`
-#'   (default), the JSON file is created in the same directory as the source
-#'   Excel file.
+#' @param outputDir Directory where the JSON project is created. If `NULL`
+#'   (default), it is created in the same directory as the source Excel file.
 #' @param silent Logical. If `TRUE`, suppresses informational messages.
 #'   Defaults to `FALSE`.
 #'
-#' @return Invisibly returns the path to the created JSON file.
+#' @return Invisibly returns the path to the created project file (the
+#'   `Project.json`).
 #' @export
 #' @family project persistence
 importProjectFromExcel <- function(
@@ -296,10 +299,10 @@ importProjectFromExcel <- function(
   jsonData <- .canonicalizeProjectJsonIds(jsonData)
 
   # Write the single inlined `Project.json`. The inlined form is kept (rather
-  # than only the tree) because `projectStatus()` / `Project$syncStatus()`
-  # re-import the Excel into a fresh JSON and compare it section-by-section
-  # against this file's raw content; emptying the inline sections would blind
-  # that comparison.
+  # than only the tree) because the Excel axis of `projectStatus()` re-imports
+  # the Excel into a fresh JSON and compares it section-by-section against this
+  # file's raw content; emptying the inline sections would blind that
+  # comparison.
   jsonText <- jsonlite::toJSON(
     jsonData,
     pretty = TRUE,
@@ -336,18 +339,6 @@ importProjectFromExcel <- function(
   }
 
   invisible(outputPath)
-}
-
-#' @rdname importProjectFromExcel
-#' @param ... Arguments passed to `importProjectFromExcel()`.
-#' @export
-snapshotProjectConfiguration <- function(...) {
-  lifecycle::deprecate_warn(
-    "6.0.0",
-    "snapshotProjectConfiguration()",
-    "importProjectFromExcel()"
-  )
-  importProjectFromExcel(...)
 }
 
 #' Export a Project to Excel files
@@ -549,98 +540,10 @@ exportProjectToExcel <- function(
   invisible(projConfigPath)
 }
 
-#' @rdname exportProjectToExcel
-#' @param jsonPath Path to the JSON configuration file. Defaults to
-#'   `"Project.json"`.
-#' @param ... Additional arguments (unused).
-#' @export
-restoreProjectConfiguration <- function(
-  jsonPath = "Project.json",
-  outputDir = NULL,
-  silent = FALSE,
-  ...
-) {
-  lifecycle::deprecate_warn(
-    "6.0.0",
-    "restoreProjectConfiguration()",
-    "exportProjectToExcel()"
-  )
-  project <- loadProject(jsonPath)
-  exportProjectToExcel(
-    project = project,
-    outputDir = outputDir,
-    silent = silent
-  )
-  invisible(project)
-}
-
-#' Check if Excel configuration files are in sync with JSON
-#'
-#' @description Compares Excel configuration files against their JSON
-#' configuration to determine if they are synchronized.
-#'
-#' @param projectConfigPath Either a path to a `Project.xlsx` file
-#'   (defaults to `"Project.xlsx"`) or a loaded [Project] object. When a
-#'   `Project` is passed, its `Project.xlsx` side-car and JSON path are
-#'   derived from the object, so `jsonPath` is optional.
-#' @param jsonPath Path to the JSON configuration file. If `NULL` (default),
-#'   the function looks for a JSON file with the same base name (or, when a
-#'   `Project` object is passed as `projectConfigPath`, uses that object's
-#'   JSON path).
-#' @param silent Logical indicating whether to suppress informational messages.
-#'   Defaults to `FALSE`.
-#'
-#' @return A list with components: \item{excel_in_sync}{Logical indicating
-#'   whether the Excel files and the JSON are synchronized}
-#'   \item{details}{A list with detailed comparison results}
-#'
-#' @seealso The method `Project$syncStatus()` reports the same comparison for a
-#'   loaded `Project` (against its `Project.xlsx` side-car) and returns the same
-#'   `excel_in_sync` / `details` shape.
-#'
-#' @import cli
-#' @export
-projectStatus <- function(
-  projectConfigPath = "Project.xlsx",
-  jsonPath = NULL,
-  silent = FALSE
-) {
-  # Accept either a path string or a Project object for
-  # backwards compatibility
-  if (inherits(projectConfigPath, "Project")) {
-    pcObj <- projectConfigPath
-    # projectFilePath stores the JSON path; derive the Excel path
-    pcJsonPath <- pcObj$projectFilePath
-    projectConfigPath <- sub("\\.json$", ".xlsx", pcJsonPath)
-    if (is.null(jsonPath)) {
-      jsonPath <- pcJsonPath
-    }
-  }
-
-  if (!file.exists(projectConfigPath)) {
-    cli::cli_abort(messages$fileNotFound(projectConfigPath))
-  }
-
-  # Determine JSON path if not provided
-  if (is.null(jsonPath)) {
-    jsonPath <- sub("\\.xlsx$", ".json", projectConfigPath)
-  }
-
-  if (!file.exists(jsonPath)) {
-    cli::cli_abort("JSON file does not exist: {.path {jsonPath}}")
-  }
-
-  invisible(.compareJsonToExcel(
-    jsonPath = jsonPath,
-    projectConfigPath = projectConfigPath,
-    silent = silent
-  ))
-}
-
 # Compare a project's JSON against its Excel side-car and report whether they
-# are in sync. Shared by the public `projectStatus()` and the
-# `Project$syncStatus()` path (`.projectSyncStatus()`) so both surfaces return
-# the same `list(excel_in_sync = <logical>, details = <list>)` contract.
+# are in sync. Drives the Excel axis of `projectStatus()` (via
+# `.projectSyncStatus()`), returning the
+# `list(excel_in_sync = <logical>, details = <list>)` contract.
 # Re-imports the Excel into a temporary JSON and diffs it section-by-section
 # against the project's `Project.json` (ignoring the volatile `esqlabsRVersion`).
 #
@@ -764,39 +667,92 @@ projectStatus <- function(
   invisible(result)
 }
 
-#' @rdname projectStatus
-#' @export
-projectConfigurationStatus <- function(...) {
-  lifecycle::deprecate_warn(
-    "6.0.0",
-    "projectConfigurationStatus()",
-    "projectStatus()"
-  )
-  projectStatus(...)
-}
-
 # Excel <-> JSON bridge: sync helper ----
 
-#' Sync-status helper called by `Project$syncStatus()`
+#' Check a loaded project for unsaved changes and outdated Excel files
 #'
-#' Reports whether the project's Excel side-car (`Project.xlsx` next to the
-#' project's `Project.json`) is in sync with the project's definition files. Every
-#' section is write-through to its `definitions/<kind>/` tree, so the only drift
-#' that can still occur is between the project and a sibling Excel export.
+#' @description Prints a report of how the `Project` in your R session
+#'   compares to the files on disk, in two parts:
+#'
+#'   - project vs. saved files: whether the project carries changes that have
+#'     not been saved with [saveProject()] yet. Reported as `NA` for a project
+#'     that exists only in the R session, without a folder on disk.
+#'   - project vs. Excel: when the project has a `Project.xlsx` Excel file,
+#'     whether that file still matches the current project (one-way: would
+#'     exporting again change it). Reported as `NA` when there is no Excel
+#'     file or it cannot be read.
+#'
+#'   `projectStatus()` only reports; it never changes any files. To save your
+#'   changes, call [saveProject()]; to bring the Excel files up to date, call
+#'   [exportProjectToExcel()] or [importProjectFromExcel()].
 #'
 #' @param project A `Project` object.
-#' @param silent Logical. If `TRUE`, suppresses informational messages.
-#' @returns Invisibly returns a named list with `excel_in_sync` (logical, or
-#'   `NA` when there is no Excel side-car to compare against, or when the
-#'   side-car cannot be read/compared) and `details` (the per-section
-#'   differences, empty when in sync or when there is nothing to compare). When
-#'   not `silent`, a comparison failure surfaces a warning.
+#' @param silent Logical. If `TRUE`, suppresses the printed report and only
+#'   returns the structured result (the same shape as `project$status`).
+#'   Defaults to `FALSE`.
+#'
+#' @returns Invisibly, a `list(tree_in_sync, excel_in_sync, details)` (see
+#'   the `status` field of [Project]).
+#' @export
+#' @family project persistence
+#' @seealso [saveProject()], [reloadProject()], [exportProjectToExcel()],
+#'   [importProjectFromExcel()].
+#' @examples
+#' \dontrun{
+#' project <- loadProject("Project.json")
+#' projectStatus(project) # readable report
+#' project$status # the same information as a structured list
+#' }
+projectStatus <- function(project, silent = FALSE) {
+  validateIsOfType(project, "Project")
+  invisible(.projectSyncStatus(project, silent = silent))
+}
+
+#' Two-axis sync-status engine behind `projectStatus()` and `project$status`
+#'
+#' Reports both sync axes of an explicit-save project:
+#'   - memory vs. tree: whether there are unsaved in-memory edits, driven by
+#'     the project's internal dirty bit (`NA` for an unbound in-memory project);
+#'   - memory vs. Excel: whether a configured `Project.xlsx` side-car is a stale
+#'     export of the current project, reusing the `.compareJsonToExcel()`
+#'     comparison (`NA` when there is no side-car or it cannot be read).
+#'
+#' @param project A `Project` object.
+#' @param silent Logical. If `TRUE`, suppresses the printed report.
+#' @returns Invisibly a named list with `tree_in_sync` (logical, or `NA` for an
+#'   unbound in-memory project), `excel_in_sync` (logical, or `NA` when there
+#'   is no Excel side-car to compare against, or when it cannot be
+#'   read/compared) and `details` (per-axis differences, empty when both axes
+#'   are in sync). When not `silent`, both axes are reported and a comparison
+#'   failure surfaces a warning.
 #' @keywords internal
 #' @noRd
 .projectSyncStatus <- function(project, silent = FALSE) {
-  result <- list(excel_in_sync = NA, details = list())
+  result <- list(tree_in_sync = NA, excel_in_sync = NA, details = list())
 
+  # Axis 1: memory vs. tree. The dirty bit is the divergence signal; an unbound
+  # in-memory project has no tree, reported as `NA`.
   jsonPath <- project$jsonPath
+  if (is.null(jsonPath)) {
+    result$tree_in_sync <- NA
+  } else {
+    result$tree_in_sync <- !project$.isModified()
+    if (!result$tree_in_sync) {
+      result$details$tree <- "unsaved in-memory edits"
+    }
+  }
+
+  if (!silent) {
+    if (is.na(result$tree_in_sync)) {
+      cli::cli_alert_info(messages$syncNoTree())
+    } else if (isTRUE(result$tree_in_sync)) {
+      cli::cli_alert_success(messages$syncTreeClean())
+    } else {
+      cli::cli_alert_warning(messages$syncTreeDirty())
+    }
+  }
+
+  # Axis 2: memory vs. Excel side-car.
   if (is.null(jsonPath) || !file.exists(jsonPath)) {
     if (!silent) {
       cli::cli_alert_info(messages$syncNoExcel())
@@ -839,7 +795,7 @@ projectConfigurationStatus <- function(...) {
     if (!silent) {
       cli::cli_warn(
         c(
-          "Cannot compare the Excel side-car to the project.",
+          "Cannot compare the Excel configuration files to the project.",
           "x" = conditionMessage(compareError),
           "i" = "The {.field excel_in_sync} status is reported as {.val NA}."
         )

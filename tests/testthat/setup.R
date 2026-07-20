@@ -8,9 +8,8 @@ withr::local_envvar(
   .local_envir = testthat::teardown_env()
 )
 
-# Default to quiet so incidental callsites of the surviving soft-deprecation
-# wrappers (ProjectConfiguration(), createProjectConfiguration(), the
-# snapshot/restore stubs) don't add noise to the suite. Tests that
+# Default to quiet so incidental callsites of the surviving deprecation
+# wrapper (`ProjectConfiguration()`) don't add noise to the suite. Tests that
 # specifically assert a `lifecycle_warning_deprecated` use
 # `withr::local_options(lifecycle_verbosity = "warning")` to opt back in.
 # Scoped to the test session (not a bare `options()`) so it does not leak.

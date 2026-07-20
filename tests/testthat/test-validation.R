@@ -561,7 +561,9 @@ test_that(".validatePlots flags duplicate plotIds and unknown dataCombinedId", {
 
 test_that(".validatePlots warns on plotType-irrelevant fields (non-blocking)", {
   dataCombined <- list(
-    DC1 = list(simulated = list(list(label = "L1", scenario = "S1", path = "P")))
+    DC1 = list(
+      simulated = list(list(label = "L1", scenario = "S1", path = "P"))
+    )
   )
   # An individual plot carrying population-only `quantiles`, and a population
   # plot carrying observedVsSimulated-only `foldDistance`. Both misuses should
@@ -589,7 +591,9 @@ test_that(".validatePlots warns on plotType-irrelevant fields (non-blocking)", {
 
 test_that(".validatePlots does not warn when the field matches its plotType", {
   dataCombined <- list(
-    DC1 = list(simulated = list(list(label = "L1", scenario = "S1", path = "P")))
+    DC1 = list(
+      simulated = list(list(label = "L1", scenario = "S1", path = "P"))
+    )
   )
   # `quantiles`/`aggregation`/`nsd` on a population plot and `foldDistance` on
   # an observedVsSimulated plot are all legitimate: no irrelevant-field warning.

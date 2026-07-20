@@ -19,8 +19,9 @@ The \code{project} object, invisibly.
 \description{
 Removes by DataSet name (for \code{type = "programmatic"} entries) or by
 \code{file} basename (for \code{type} \code{"excel"} / \code{"pkml"} / \code{"script"}
-entries). Vectorizes over a vector of ids, removing each in one
-write-through. Warns and skips any id with no matching entry.
+entries). Vectorizes over a vector of ids, removing each in one in-memory
+update; persist with \code{\link[=saveProject]{saveProject()}}. Warns and skips any id with no
+matching entry.
 }
 \details{
 Unlike the other authoring functions, \code{addObservedData()} is not

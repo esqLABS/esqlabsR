@@ -1,6 +1,7 @@
 # Tests for the scenarios definition-files format layer (R/definition-files.R):
-# the per-scenario JSON tree loader, write-through mutators, lazy
-# referential validation, and the derived single-file snapshot.
+# the per-scenario JSON tree loader, in-memory mutators reconciled to disk by
+# saveProject(), lazy referential validation, and the derived single-file
+# snapshot.
 
 test_that("loadProject reads scenarios from the definitions/scenarios/ tree", {
   project <- testProject()
@@ -17,11 +18,14 @@ test_that("loadProject reads scenarios from the definitions/scenarios/ tree", {
   expect_length(raw$scenarios, 0L)
 })
 
-test_that("addScenario writes one definition file; removeScenario deletes it", {
+test_that("saveProject() writes one definition file; a removal deletes it", {
   project <- testProject()
   dir <- file.path(project$projectDirPath, "definitions", "scenarios")
 
   addScenario(project, "added", modelFile = "Aciclovir.pkml")
+  # In-memory only until saved.
+  expect_false(file.exists(file.path(dir, "added.json")))
+  saveProject(project)
   expect_true(file.exists(file.path(dir, "added.json")))
 
   # The file on disk reloads to the same scenario record.
@@ -32,6 +36,7 @@ test_that("addScenario writes one definition file; removeScenario deletes it", {
   )
 
   removeScenario(project, "added")
+  saveProject(project)
   expect_false(file.exists(file.path(dir, "added.json")))
 })
 
@@ -40,31 +45,36 @@ test_that("addScenario canonicalizes its id to a safe, lowercase form", {
   dir <- file.path(project$projectDirPath, "definitions", "scenarios")
 
   # A mixed-case id with a forbidden character is canonicalized (with a
-  # warning) rather than rejected; the canonical id names the file and key.
+  # warning) rather than rejected; the canonical id names the key and, on save,
+  # the file.
   expect_snapshot(addScenario(
     project,
     "My/Scenario",
     modelFile = "Aciclovir.pkml"
   ))
   expect_true("my_scenario" %in% names(project$scenarios))
+  saveProject(project)
   expect_true(file.exists(file.path(dir, "my_scenario.json")))
   expect_false("My/Scenario" %in% names(project$scenarios))
 })
 
-test_that("write-through structurally fail-fasts and leaves disk unchanged", {
+test_that("saveProject() structurally fail-fasts and leaves disk unchanged", {
   project <- testProject()
   dir <- file.path(project$projectDirPath, "definitions", "scenarios")
+  saveProject(project) # settle the tree
   before <- list.files(dir)
 
-  # A scenario with no modelFile is structurally invalid; the write-through
-  # entry point (`.setSection()`, what the authoring functions call) must abort
-  # and write no file.
+  # A scenario with no modelFile is structurally invalid. `.setSection()` no
+  # longer serializes on write, so the in-memory mutation succeeds; the abort
+  # happens at saveProject() (the serialize-in-memory-first guarantee), before
+  # any file is written.
   scenarios <- c(
     project$.getSection("scenarios"),
     list(bad = Scenario(scenarioName = "bad"))
   )
+  project$.setSection("scenarios", scenarios)
   expect_error(
-    project$.setSection("scenarios", scenarios),
+    saveProject(project),
     "bad.*modelFile"
   )
   expect_false(file.exists(file.path(dir, "bad.json")))
@@ -94,10 +104,10 @@ test_that("an unknown outputPathId is a lazy referential finding, not a load err
   expect_true(any(grepl("Ghost", msgs)))
 })
 
-test_that("saveSnapshot writes a self-contained single file with scenarios inlined", {
+test_that("snapshotProject writes a self-contained single file with scenarios inlined", {
   project <- testProject()
-  # saveSnapshot normalizes the output to a `.esqlabsR` file and returns it.
-  snap <- saveSnapshot(project, local_projectPath())
+  # snapshotProject writes a `.esqlabsR` file and returns its path.
+  snap <- snapshotProject(project, dir = withr::local_tempdir())
   expect_identical(fs::path_ext(snap), "esqlabsR")
 
   raw <- jsonlite::fromJSON(snap, simplifyVector = FALSE)
@@ -105,7 +115,7 @@ test_that("saveSnapshot writes a self-contained single file with scenarios inlin
   # The snapshot directory has no definitions/ tree; the inline array suffices.
   expect_false(dir.exists(file.path(dirname(snap), "definitions", "scenarios")))
 
-  reloaded <- loadProject(snap)
+  reloaded <- restoreProject(snap, withr::local_tempdir())
   expect_named(
     reloaded$scenarios,
     names(project$scenarios),
@@ -113,13 +123,13 @@ test_that("saveSnapshot writes a self-contained single file with scenarios inlin
   )
 })
 
-test_that("snapshot -> load -> snapshot is a fixed point", {
+test_that("snapshot -> restore -> snapshot is a fixed point", {
   project <- testProject()
 
-  snap1 <- saveSnapshot(project, local_projectPath())
-  reloaded <- loadProject(snap1)
+  snap1 <- snapshotProject(project, dir = withr::local_tempdir())
+  reloaded <- restoreProject(snap1, withr::local_tempdir())
 
-  snap2 <- saveSnapshot(reloaded, local_projectPath())
+  snap2 <- snapshotProject(reloaded, dir = withr::local_tempdir())
 
   expect_identical(
     jsonlite::fromJSON(snap1, simplifyVector = FALSE),
@@ -127,7 +137,7 @@ test_that("snapshot -> load -> snapshot is a fixed point", {
   )
 })
 
-test_that("snapshot -> load -> snapshot is a fixed point for the plots trio", {
+test_that("snapshot -> restore -> snapshot is a fixed point for the plots trio", {
   # testProject()'s fixture has no dataCombined/plots/plotGrids, so the fixed
   # point above never exercises the three sections reshaped most by this
   # refactor. exampleProject() populates all three.
@@ -136,9 +146,9 @@ test_that("snapshot -> load -> snapshot is a fixed point for the plots trio", {
   expect_gt(length(project$plots), 0)
   expect_gt(length(project$plotGrids), 0)
 
-  snap1 <- saveSnapshot(project, local_projectPath())
-  reloaded <- loadProject(snap1)
-  snap2 <- saveSnapshot(reloaded, local_projectPath())
+  snap1 <- snapshotProject(project, dir = withr::local_tempdir())
+  reloaded <- restoreProject(snap1, withr::local_tempdir())
+  snap2 <- snapshotProject(reloaded, dir = withr::local_tempdir())
 
   json1 <- jsonlite::fromJSON(snap1, simplifyVector = FALSE)
   json2 <- jsonlite::fromJSON(snap2, simplifyVector = FALSE)
@@ -149,18 +159,19 @@ test_that("snapshot -> load -> snapshot is a fixed point for the plots trio", {
   expect_length(json1$plotGrids, length(project$plotGrids))
 })
 
-test_that("bare mutation of a snapshot-loaded project preserves siblings on reload", {
-  snap <- saveSnapshot(testProject(), local_projectPath())
-
-  # A snapshot has no definitions/ tree; loading falls back to the inline array.
-  expect_false(dir.exists(file.path(dirname(snap), "definitions", "scenarios")))
-  project <- loadProject(snap)
+test_that("saveProject() on a restored project materializes the whole set", {
+  snap <- snapshotProject(testProject(), dir = withr::local_tempdir())
+  dir <- withr::local_tempdir()
+  project <- restoreProject(snap, dir)
   before <- names(project$scenarios)
+  scenariosDir <- file.path(dir, "definitions", "scenarios")
 
-  # The first write-through must materialize the whole set to the tree, not
-  # just the one new scenario, or the inline siblings are lost on reload.
+  # A restored project already has a full on-disk tree; an in-memory add plus a
+  # save reconciles the whole set, so a reload sees every sibling.
   addScenario(project, "newlyadded", modelFile = "Aciclovir.pkml")
-  reloaded <- loadProject(snap)
+  expect_false(file.exists(file.path(scenariosDir, "newlyadded.json")))
+  saveProject(project)
+  reloaded <- loadProject(file.path(dir, "Project.json"))
   expect_named(
     reloaded$scenarios,
     c(before, "newlyadded"),
@@ -168,79 +179,58 @@ test_that("bare mutation of a snapshot-loaded project preserves siblings on relo
   )
 })
 
-test_that("write-back on a snapshot-loaded project preserves siblings on reload", {
-  snap <- saveSnapshot(testProject(), local_projectPath())
-  project <- loadProject(snap)
+test_that("a write-back plus saveProject() on a restored project preserves siblings", {
+  snap <- snapshotProject(testProject(), dir = withr::local_tempdir())
+  dir <- withr::local_tempdir()
+  project <- restoreProject(snap, dir)
   before <- names(project$scenarios)
 
   existing <- before[[1]]
   setScenario(project, existing, simulationTimeUnit = "min")
+  saveProject(project)
 
-  reloaded <- loadProject(snap)
+  reloaded <- loadProject(file.path(dir, "Project.json"))
   expect_named(reloaded$scenarios, before, ignore.order = TRUE)
 })
 
-test_that("mutating a clone leaves the source's on-disk tree untouched", {
-  source <- testProject()
-  sourceDir <- file.path(source$projectDirPath, "definitions", "scenarios")
-  before <- list.files(sourceDir)
-
-  clone <- source$clone()
-  addScenario(clone, "cloneonly", modelFile = "Aciclovir.pkml")
-
-  # The clone holds the new scenario in memory, but its write-through is a
-  # no-op: it does not own the source's tree.
-  expect_true("cloneonly" %in% names(clone$scenarios))
-  expect_setequal(list.files(sourceDir), before)
-  reloadedSource <- loadProject(source$jsonPath)
-  expect_false("cloneonly" %in% names(reloadedSource$scenarios))
-})
-
-test_that("saveSnapshot persists a clone's in-memory edits to a single file", {
-  clone <- testProject()$clone()
-  addScenario(clone, "cloneonly", modelFile = "Aciclovir.pkml")
-
-  newPath <- saveSnapshot(clone, local_projectPath())
-
-  # The snapshot is a single self-contained file (no definitions/ tree), and
-  # reloading it yields the clone's edits including the new scenario.
-  expect_false(dir.exists(file.path(dirname(newPath), "definitions")))
-  expect_true("cloneonly" %in% names(loadProject(newPath)$scenarios))
-})
-
-test_that("a scenarioName that disagrees with its list key aborts the write", {
+test_that("a scenarioName that disagrees with its list key aborts saveProject()", {
   project <- testProject()
   dir <- file.path(project$projectDirPath, "definitions", "scenarios")
+  saveProject(project)
   before <- list.files(dir)
 
   # Store an existing scenario under a different key without updating its
-  # scenarioName. The structural backstop in the write path (`.setSection()`)
-  # rejects the key/name disagreement before any file is written.
+  # scenarioName. The structural backstop at save (the serialize-in-memory-first
+  # guarantee) rejects the key/name disagreement before any file is written.
   scenarios <- project$.getSection("scenarios")
   scenarios[["renamed"]] <- scenarios[["testscenario"]]
+  project$.setSection("scenarios", scenarios)
   expect_snapshot(
-    project$.setSection("scenarios", scenarios),
+    saveProject(project),
     error = TRUE
   )
   expect_false(file.exists(file.path(dir, "renamed.json")))
   expect_setequal(list.files(dir), before)
 })
 
-test_that("a write-back under a non-canonical key aborts the write", {
+test_that("a write-back under a non-canonical key aborts saveProject()", {
   project <- testProject()
   dir <- file.path(project$projectDirPath, "definitions", "scenarios")
+  saveProject(project)
   before <- list.files(dir)
 
   # The section accessor is read-only and addScenario() canonicalizes ids, so a
-  # non-canonical key can only reach the tree through a raw `.setSection()`
-  # write. The structural validator is the backstop: a non-canonical key (mixed
-  # case or a forbidden character) aborts, pointing the user at addScenario().
+  # non-canonical key can only reach the section through a raw `.setSection()`
+  # write. The structural validator at save is the backstop: a non-canonical
+  # key (mixed case or a forbidden character) aborts, pointing the user at
+  # addScenario().
   scenarios <- project$.getSection("scenarios")
   sc <- scenarios[["testscenario"]]
   sc$scenarioName <- "Renamed"
   scenarios[["Renamed"]] <- sc
+  project$.setSection("scenarios", scenarios)
   expect_snapshot(
-    project$.setSection("scenarios", scenarios),
+    saveProject(project),
     error = TRUE
   )
   expect_false(file.exists(file.path(dir, "Renamed.json")))
@@ -252,6 +242,7 @@ test_that("a correctly-keyed rename round-trips through the tree", {
   dir <- file.path(project$projectDirPath, "definitions", "scenarios")
 
   renameScenario(project, "testscenario", "renamed")
+  saveProject(project)
 
   expect_true(file.exists(file.path(dir, "renamed.json")))
   expect_false(file.exists(file.path(dir, "testscenario.json")))
@@ -277,32 +268,11 @@ test_that("a scenario id with path separators is canonicalized, not rejected", {
   )
   expect_true("_escape" %in% names(project$scenarios))
   expect_true("sub_evil" %in% names(project$scenarios))
+  saveProject(project)
   # Nothing escaped the definitions/scenarios/ directory.
   expect_false(file.exists(file.path(parentDir, "escape.json")))
   expect_true(file.exists(file.path(scenariosDir, "_escape.json")))
   expect_true(file.exists(file.path(scenariosDir, "sub_evil.json")))
-})
-
-test_that("saveSnapshot refuses to overwrite the project's own container", {
-  project <- testProject()
-  containerBefore <- jsonlite::fromJSON(
-    project$jsonPath,
-    simplifyVector = FALSE
-  )
-
-  # No path defaults to the container; an explicit container path is the same.
-  expect_snapshot(saveSnapshot(project), error = TRUE)
-  expect_snapshot(saveSnapshot(project, project$jsonPath), error = TRUE)
-
-  # The container is untouched (still scenarios: []) and the tree intact.
-  containerAfter <- jsonlite::fromJSON(project$jsonPath, simplifyVector = FALSE)
-  expect_length(containerAfter$scenarios, 0L)
-  expect_identical(containerAfter, containerBefore)
-  expect_true(dir.exists(file.path(
-    project$projectDirPath,
-    "definitions",
-    "scenarios"
-  )))
 })
 
 # A bulk tree write must be all-or-nothing, and structural
@@ -325,61 +295,62 @@ test_that("structural validation rejects a serializer-hostile scenario", {
   expect_snapshot(.validateScenarioStructure(bad, "op"), error = TRUE)
 })
 
-test_that("a bulk write aborting on one scenario leaves the tree intact", {
-  snap <- saveSnapshot(testProject(), local_projectPath())
-  project <- loadProject(snap)
+# saveProject() serializes the whole set in memory before writing any file, so
+# a section carrying one serializer-hostile entity aborts before touching disk,
+# leaving the tree exactly as it was.
+test_that("saveProject() aborting on one scenario leaves the tree intact", {
+  project <- testProject()
+  saveProject(project)
+  dir <- file.path(project$projectDirPath, "definitions", "scenarios")
   before <- names(project$scenarios)
+  beforeFiles <- list.files(dir)
 
-  # Make one already-loaded scenario serializer-hostile, in the backing store
-  # so it bypasses write-through, then trigger a full materialize by adding a
-  # new scenario. The materialize must abort before writing any file, so the
-  # reload still yields the original full set (no partial tree).
+  # Make one loaded scenario serializer-hostile in the backing store (bypassing
+  # the authoring API), then save. The save must abort before writing any file.
   poke <- project$.__enclos_env__$private
   hostile <- poke$.scenarios[[before[[1]]]]
   hostile$simulateSteadyState <- TRUE
   hostile$steadyStateTimeUnit <- NULL
   poke$.scenarios[[before[[1]]]] <- hostile
+  poke$.modified <- TRUE
 
   expect_error(
-    addScenario(project, "BrandNew", modelFile = "Aciclovir.pkml"),
+    saveProject(project),
     "steadyStateTimeUnit"
   )
-  expect_false(dir.exists(file.path(dirname(snap), "definitions", "scenarios")))
-  reloaded <- loadProject(snap)
+  # The on-disk tree is untouched; a reload still yields the original set.
+  expect_setequal(list.files(dir), beforeFiles)
+  reloaded <- loadProject(project$jsonPath)
   expect_named(reloaded$scenarios, before, ignore.order = TRUE)
 })
 
-# The diff path (a project whose `definitions/scenarios/` already exists on
-# disk) serializes every changed definition before writing any file, so a
-# whole-section assignment carrying one valid plus one serializer-hostile
-# definition must abort with neither landing on disk and memory unchanged. The
-# materialize branch is covered above; this covers the common diff branch.
-test_that("a multi-definition diff-path write aborting on one definition is atomic", {
+# A save carrying one valid plus one serializer-hostile new definition must
+# abort with neither landing on disk (the serialize-in-memory-first guarantee).
+test_that("a multi-definition saveProject() aborting on one definition is atomic", {
   project <- testProject()
+  saveProject(project)
   dir <- file.path(project$projectDirPath, "definitions", "scenarios")
   beforeFiles <- list.files(dir)
-  beforeMem <- project$scenarios
 
-  # Build a whole-section map: one brand-new valid scenario plus one new
-  # serializer-hostile scenario (steadyState without a unit). Assigning the
-  # whole map exercises the diff path (both are "added" keys it must serialize).
+  # Build a whole-section map: the existing scenarios plus one brand-new valid
+  # scenario plus one new serializer-hostile scenario (steadyState, no unit).
   valid <- Scenario(modelFile = "Aciclovir.pkml", scenarioName = "fresh_ok")
   hostile <- Scenario(modelFile = "Aciclovir.pkml", scenarioName = "fresh_bad")
   hostile$simulateSteadyState <- TRUE
   hostile$steadyStateTimeUnit <- NULL
 
   newSection <- c(
-    beforeMem,
+    project$.getSection("scenarios"),
     list(fresh_ok = valid, fresh_bad = hostile)
   )
+  project$.setSection("scenarios", newSection)
   expect_error(
-    project$.setSection("scenarios", newSection),
+    saveProject(project),
     "steadyStateTimeUnit"
   )
 
-  # Neither new definition reached disk, and the in-memory section is unchanged.
+  # Neither new definition reached disk.
   expect_setequal(list.files(dir), beforeFiles)
-  expect_identical(project$scenarios, beforeMem)
 })
 
 # Two ids differing only in case canonicalize to the same lowercase id, so
@@ -400,7 +371,8 @@ test_that("an id differing only in case canonicalizes to an existing id", {
     addScenario(project, "myscenario", modelFile = "Aciclovir.pkml"),
     error = TRUE
   )
-  # Only the one (lowercased) file was written.
+  # Only the one (lowercased) file is written on save.
+  saveProject(project)
   expect_setequal(list.files(dir), c(before, "myscenario.json"))
 })
 
@@ -412,6 +384,7 @@ test_that("a non-ASCII scenario name round-trips through the tree", {
   dir <- file.path(project$projectDirPath, "definitions", "scenarios")
 
   addScenario(project, "scénario", modelFile = "Aciclovir.pkml")
+  saveProject(project)
   expect_true(file.exists(file.path(dir, "scénario.json")))
 
   reloaded <- loadProject(project$jsonPath)
@@ -475,19 +448,23 @@ test_that("a non-scalar scalar field fails load naming the scenario and field", 
   expect_snapshot(loadProject(project$jsonPath), error = TRUE)
 })
 
-# Every section is write-through, so after a mutation the definition files are
-# already on disk and there is nothing for syncStatus() to flag (no Excel
-# side-car here, so it reports NA).
-test_that("a mutation lands on disk immediately; syncStatus has nothing to flag", {
+# A mutation stays in memory and sets the dirty bit; projectStatus() reports the
+# unsaved edit on the tree axis (and NA on the Excel axis, no side-car here).
+# After saveProject() the file is on disk and the tree axis is in sync again.
+test_that("a mutation is flagged by projectStatus() until saveProject()", {
   project <- testProject()
   dir <- file.path(project$projectDirPath, "definitions", "scenarios")
 
   addScenario(project, "fresh", modelFile = "Aciclovir.pkml")
-  # The scenario file is already on disk right after the mutation.
-  expect_true(file.exists(file.path(dir, "fresh.json")))
-
-  status <- project$syncStatus(silent = TRUE)
+  # In memory only, and flagged as an unsaved change.
+  expect_false(file.exists(file.path(dir, "fresh.json")))
+  status <- projectStatus(project, silent = TRUE)
+  expect_false(status$tree_in_sync)
   expect_identical(status$excel_in_sync, NA)
+
+  saveProject(project)
+  expect_true(file.exists(file.path(dir, "fresh.json")))
+  expect_true(projectStatus(project, silent = TRUE)$tree_in_sync)
 })
 
 test_that("a high-precision numeric value survives a definition write/reload round-trip", {
@@ -501,6 +478,7 @@ test_that("a high-precision numeric value survives a definition write/reload rou
     value = preciseValue,
     unit = "mg/l"
   )
+  saveProject(project)
 
   reloaded <- loadProject(project$jsonPath)
   expect_identical(
@@ -508,8 +486,8 @@ test_that("a high-precision numeric value survives a definition write/reload rou
     preciseValue
   )
 
-  snap <- saveSnapshot(reloaded, local_projectPath())
-  snapshotReloaded <- loadProject(snap)
+  snap <- snapshotProject(reloaded, dir = withr::local_tempdir())
+  snapshotReloaded <- restoreProject(snap, withr::local_tempdir())
   expect_identical(
     snapshotReloaded$initialConditions[["precise"]][[1]]$value,
     preciseValue
@@ -586,8 +564,7 @@ test_that("a programmatic observedData name that escapes its directory aborts", 
   )
 })
 
-# Stale-file policy: full-tree writes own the directory, incremental writes
-# preserve orphans ----
+# Stale-file policy: the full-tree reconciler owns the `<kind>/` directory ----
 
 # A minimal on-disk tree project with one scenario, loaded without the
 # cross-reference warning pass, so these tests exercise the definition-tree writers
@@ -618,18 +595,21 @@ test_that("a full-tree write removes a stale definition file", {
   expect_false(file.exists(orphan))
 })
 
-test_that("an incremental write preserves an orphan definition file", {
-  # An incremental write (a single authoring mutation) knows only the definition
-  # it changed, so it must not delete a sibling file it never loaded.
+test_that("saveProject() reconciles an orphan away (make-disk-look-like-memory)", {
+  # Under explicit-save, saveProject() is the full-tree reconciler: it deletes
+  # any `definitions/<kind>/` file with no in-memory definition, so disk mirrors
+  # memory exactly after a save.
   project <- .stalePolicyProject()
   scenariosDir <- file.path(project$projectDirPath, "definitions", "scenarios")
   orphan <- file.path(scenariosDir, "orphandefinition.json")
   writeLines("{}", orphan)
   expect_true(file.exists(orphan))
 
-  # A single write-through mutation on the scenarios section.
-  addScenario(project, "incrementaladd", modelFile = "Aciclovir.pkml")
-  expect_true(file.exists(orphan))
+  # An authoring edit sets the dirty bit; saveProject() then reconciles.
+  addScenario(project, "keptadd", modelFile = "Aciclovir.pkml")
+  saveProject(project)
+  expect_false(file.exists(orphan))
+  expect_true(file.exists(file.path(scenariosDir, "keptadd.json")))
 })
 
 test_that("a full-tree write aborts when a stale file cannot be removed", {

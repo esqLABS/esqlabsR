@@ -5,11 +5,11 @@
 #' @description Load a `Project` from a JSON file. This is the
 #'   primary entry point for working with esqlabsR projects.
 #'
-#'   On load the project is checked for the most common cross-reference
-#'   problems (e.g. a scenario referring to an individual or population
-#'   that is not defined). Any such issues are reported via [cli::cli_warn()]
-#'   so that obvious configuration mistakes surface immediately, but loading
-#'   still succeeds. Use [validateProject()] for a full report.
+#'   On load, the project is checked for the most common reference mistakes
+#'   (for example a scenario referring to an individual or population that is
+#'   not defined). Such issues are reported as warnings so that obvious
+#'   configuration mistakes surface immediately, but loading still succeeds.
+#'   Use [validateProject()] for a full report.
 #'
 #' @param path Path to the `Project.json` file. Defaults to
 #'   `Project.json` in the working directory.
@@ -17,36 +17,148 @@
 #' @returns Object of type `Project`
 #' @export
 #' @family project persistence
+#' @seealso [saveProject()], [reloadProject()], [snapshotProject()],
+#'   [restoreProject()], [projectStatus()].
 #'
-#' @section Editing a loaded project is write-through:
-#'   A loaded project is bound to its directory on disk, and every
-#'   authoring edit is write-through: a single `addOutputPath()`,
-#'   `addScenario()`, `setIndividual()`, or `removeParameterSet()` writes (or
-#'   deletes) the affected definition's file immediately. The `project$<section>`
-#'   accessors are read-only, so a definition only ever changes through an
-#'   authoring function. There is no separate save step, and there is no undo:
-#'   the edit is on disk the moment the call returns.
+#' @section Editing a loaded project:
+#'   Changes you make to a loaded project — with `addScenario()`,
+#'   `setIndividual()`, `removeParameterSet()`, `addOutputPath()`, and the
+#'   other add/set/remove functions — live only in your R session until you
+#'   save them; the files on disk stay as they are. Reading a section
+#'   directly (for example `project$scenarios`) never changes the project: a
+#'   definition changes only through the add/set/remove functions.
 #'
-#'   To experiment without touching the on-disk project, work on a detached
-#'   copy. `project$clone()` returns an in-memory copy whose edits stay in
-#'   memory (they do not write to the source's `definitions/` tree) until it
-#'   is bound to a directory of its own. To capture a shareable freeze-frame
-#'   of the current state, use [saveSnapshot()], and reload it elsewhere
-#'   with [loadSnapshot()].
+#'   Write your changes to the project files with [saveProject()]. Discard
+#'   unsaved changes and go back to what is saved on disk with
+#'   [reloadProject()]. Save the current state of the whole project to a
+#'   single file you can archive or share with [snapshotProject()], and
+#'   recreate a project folder from such a file (or roll an existing one
+#'   back) with [restoreProject()]. Check for unsaved changes and outdated
+#'   Excel files with [projectStatus()].
 #'
 #' @examples
 #' \dontrun{
 #' project <- loadProject("Project.json")
 #' results <- runScenarios(project)
 #'
-#' # Edits are write-through; clone first for scratch work.
-#' scratch <- project$clone()
-#' addOutputPath(scratch, "x", "Organism|A|Concentration in container")
+#' # Edits stay in memory until you save.
+#' addOutputPath(project, "x", "Organism|A|Concentration in container")
+#' saveProject(project)
 #' }
 loadProject <- function(path = "Project.json") {
   project <- Project$new(projectFilePath = path)
   .warnOnCrossReferenceErrors(project)
   project
+}
+
+#' Save the project to the disk
+#'
+#' @description Write your changes to the project files on disk. Changes made
+#'   in your R session (e.g. with `addScenario()`, `setIndividual()`,
+#'   `removeParameterSet()`) only live in memory until you call
+#'   `saveProject()`.
+#'
+#'   What happens when you save:
+#'
+#'   - Only files with actual changes are re-written, so `git diff` shows
+#'     exactly the definitions you edited.
+#'   - If you removed something from the project (e.g. a scenario), its file
+#'     in the `definitions/` folder is deleted. Files outside the
+#'     `definitions/` folder are never touched.
+#'   - The `Project.json` file is updated.
+#'
+#'   If there is nothing to save, `saveProject()` simply reports that the
+#'   project is already up to date. Saving repeatedly is always safe.
+#'
+#'   Saving does not update the Excel files. If you also work with the Excel
+#'   configuration files, refresh them with [exportProjectToExcel()]. Use
+#'   [projectStatus()] to check whether project files on disk, the Excel files,
+#'   and your R session are in sync.
+#'
+#' @param project A `Project` loaded from disk with [loadProject()] (or
+#'   restored with [restoreProject()]). A project created directly with
+#'   `Project$new()` has no folder on disk to save to; use [snapshotProject()]
+#'   to write it to a single file, or create a project folder first with
+#'   [initProject()].
+#'
+#' @returns Invisibly, the `project`.
+#' @export
+#' @family project persistence
+#' @seealso [loadProject()], [reloadProject()], [snapshotProject()],
+#'   [restoreProject()], [projectStatus()].
+#' @examples
+#' \dontrun{
+#' project <- loadProject("Project.json")
+#' addOutputPath(project, "PVB", "Organism|PeripheralVenousBlood|...")
+#' saveProject(project) # tree now mirrors memory
+#' saveProject(project) # clean save: "Project is already up to date; ..."
+#' }
+saveProject <- function(project) {
+  validateIsOfType(project, "Project")
+
+  if (is.null(project$projectFilePath)) {
+    cli::cli_abort(messages$saveProjectNoTree())
+  }
+
+  # The dirty bit is the memory-vs-tree divergence signal. A clean save is a
+  # reassuring, idempotent no-op, never an error.
+  if (!project$.isModified()) {
+    cli::cli_inform(messages$projectAlreadyUpToDate())
+    return(invisible(project))
+  }
+
+  # Drive the full-tree reconciler: `.writeProjectTree()` writes every kind's
+  # write-if-different, orphan-reconciled tree and the `containerOnly = TRUE`
+  # `Project.json` in one pass, which is exactly `saveProject()`'s contract.
+  .writeProjectTree(project, project$projectDirPath)
+
+  project$.clearModified()
+  invisible(project)
+}
+
+#' Discard a project's unsaved changes and re-read it from disk
+#'
+#' @description The undo of saving: discard every unsaved change and re-read
+#'   the project from its files on disk, in place. The `Project` stays the
+#'   same object, so every variable that points to it stays valid.
+#'
+#'   `reloadProject()` always re-reads the project's files and updates the
+#'   project in place, so it also picks up changes made to the files outside
+#'   the R session (for example after [restoreProject()] rolled the project
+#'   back). It simply produces no announcement when there was nothing to
+#'   discard: unlike a clean [saveProject()], a clean reload prints nothing.
+#'
+#' @param project A `Project` with a folder on disk. A project that exists
+#'   only in the R session has nothing to reload from and aborts.
+#'
+#' @returns Invisibly, the `project`, with unsaved changes discarded.
+#' @export
+#' @family project persistence
+#' @seealso [loadProject()], [saveProject()], [snapshotProject()],
+#'   [restoreProject()], [projectStatus()].
+#' @examples
+#' \dontrun{
+#' project <- loadProject("Project.json")
+#' addScenario(project, "oops", modelFile = "model.pkml")
+#' reloadProject(project) # discard the edit, back to disk
+#' }
+reloadProject <- function(project) {
+  validateIsOfType(project, "Project")
+
+  if (is.null(project$projectFilePath)) {
+    cli::cli_abort(messages$reloadProjectNoTree())
+  }
+
+  # Always re-read from disk, even when the handle is clean: a clean handle can
+  # still be stale after `restoreProject(..., overwrite = TRUE)` rolled the tree
+  # back, or after an external edit to the JSON, and the blessed rollback idiom
+  # relies on reload refreshing in place. "Silent when clean" is about the
+  # message only: `.reload()` emits no success announcement, so a clean reload
+  # stays quiet; the cross-reference warning re-fires only when there are
+  # genuine cross-ref errors, which is correct regardless of the dirty bit.
+  project$.reload()
+  .warnOnCrossReferenceErrors(project)
+  invisible(project)
 }
 
 #' Emit a `cli_warn` listing critical cross-reference errors, if any
@@ -74,17 +186,6 @@ loadProject <- function(path = "Project.json") {
     "i" = "Run {.code validateProject(project)} for the full report."
   ))
   invisible(NULL)
-}
-
-#' @rdname loadProject
-#' @export
-createProjectConfiguration <- function(path = "Project.json") {
-  lifecycle::deprecate_warn(
-    when = "6.0.0",
-    what = "createProjectConfiguration()",
-    with = "loadProject()"
-  )
-  loadProject(path)
 }
 
 #' Check if a directory contains an esqlabsR project
@@ -137,11 +238,12 @@ isProjectInitialized <- function(destination = ".") {
 #'
 #' @description
 #'
-#' Scaffolds a JSON-first esqlabsR project in `destination`: a `Project.json`
-#' container plus a `definitions/` tree of authored definitions, alongside the
-#' working folders (`Models/`, `Data/`, `Populations/`, `Results/`). By default
-#' it also writes optional Excel side-cars from the JSON; set
-#' `createExcel = FALSE` for a JSON-only project.
+#' Creates a new JSON-based esqlabsR project in `destination`: a
+#' `Project.json` file plus a `definitions/` folder holding one file per
+#' definition, alongside the working folders (`Models/`, `Data/`,
+#' `Populations/`, `Results/`). By default it also writes the optional Excel
+#' configuration files from the JSON; set `createExcel = FALSE` for a
+#' JSON-only project.
 #'
 #' @param destination A string defining the path where to initialize the
 #'   project. default to current working directory.
@@ -324,17 +426,6 @@ initProject <- function(
 #' exampleProjectPath()
 exampleProjectPath <- function() {
   file.path(.projectDirectory("Example"), "Project.json")
-}
-
-#' @rdname exampleProjectPath
-#' @export
-exampleProjectConfigurationPath <- function() {
-  lifecycle::deprecate_soft(
-    what = "exampleProjectConfigurationPath()",
-    with = "exampleProjectPath()",
-    when = "6.0.0"
-  )
-  exampleProjectPath()
 }
 
 #' Get path to esqlabsR project templates

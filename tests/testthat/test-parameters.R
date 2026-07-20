@@ -311,8 +311,9 @@ test_that("addParameterEntry accepts parallel vectors and writes once", {
     )
   )
 
-  # All N entries land in memory and on disk after one vectorized call.
+  # All N entries land in memory; a save persists them to disk.
   expect_length(project$parameterSets$vecset, n)
+  saveProject(project)
   reloaded <- loadProject(project$jsonPath)
   expect_length(reloaded$parameterSets$vecset, n)
   expect_identical(
@@ -447,6 +448,7 @@ test_that("removeParameterEntry accepts parallel vectors", {
   )
 
   expect_length(project$parameterSets$rset, 1L)
+  saveProject(project)
   reloaded <- loadProject(project$jsonPath)
   expect_length(reloaded$parameterSets$rset, 1L)
   expect_identical(
@@ -494,24 +496,27 @@ test_that("removeParameterEntry auto-removes an emptied parameter set", {
 
 # On-disk delete / nested-record-update write-through ----
 
-test_that("removeParameterSet deletes the definition file and persists to disk", {
+test_that("removeParameterSet deletes the definition file on save", {
   project <- testProject()
   dir <- file.path(project$projectDirPath, "definitions", "parameter-sets")
   suppressMessages(
     addParameterEntry(project, "tempset", "Organism|A", "K", 1.5, "1/h")
   )
+  saveProject(project)
   expect_true(file.exists(file.path(dir, "tempset.json")))
 
   removeParameterSet(project, "tempset")
 
-  # In memory gone, definition file deleted, and absent from a fresh load.
+  # In memory gone; on save the definition file is deleted and it is absent
+  # from a fresh load.
   expect_false("tempset" %in% names(project$parameterSets))
+  saveProject(project)
   expect_false(file.exists(file.path(dir, "tempset.json")))
   reloaded <- loadProject(project$jsonPath)
   expect_false("tempset" %in% names(reloaded$parameterSets))
 })
 
-test_that("removeParameterEntry updates the on-disk set when entries remain", {
+test_that("removeParameterEntry updates the on-disk set on save when entries remain", {
   project <- testProject()
   dir <- file.path(project$projectDirPath, "definitions", "parameter-sets")
   suppressMessages(
@@ -521,9 +526,10 @@ test_that("removeParameterEntry updates the on-disk set when entries remain", {
 
   removeParameterEntry(project, "tempset", "Organism|A", "K")
 
-  # The set survives with one entry; the on-disk file and a fresh load both
-  # reflect the removal of the single entry.
+  # The set survives with one entry; after a save, the on-disk file and a fresh
+  # load both reflect the removal of the single entry.
   expect_length(project$parameterSets$tempset, 1L)
+  saveProject(project)
   reloaded <- loadProject(project$jsonPath)
   expect_length(reloaded$parameterSets$tempset, 1L)
   expect_identical(
@@ -561,10 +567,11 @@ test_that("the three former parameter-set kinds are merged into project$paramete
 
 # Vectorized addParameterSet / removeParameterSet ----
 
-test_that("addParameterSet adds N sets in one write-through", {
+test_that("addParameterSet adds N sets in one saveProject()", {
   project <- testProject()
   addParameterSet(project, c("setA", "setB"))
   expect_true(all(c("seta", "setb") %in% names(project$parameterSets)))
+  saveProject(project)
   reloaded <- loadProject(project$jsonPath)
   expect_true(all(c("seta", "setb") %in% names(reloaded$parameterSets)))
 })
@@ -576,11 +583,12 @@ test_that("addParameterSet aborts the whole batch on a clash and writes nothing"
   expect_identical(names(project$parameterSets), before)
 })
 
-test_that("removeParameterSet removes a vector of ids in one write-through", {
+test_that("removeParameterSet removes a vector of ids in one saveProject()", {
   project <- testProject()
   addParameterSet(project, c("a", "b"))
   removeParameterSet(project, c("a", "b"))
   expect_false(any(c("a", "b") %in% names(project$parameterSets)))
+  saveProject(project)
   reloaded <- loadProject(project$jsonPath)
   expect_false(any(c("a", "b") %in% names(reloaded$parameterSets)))
 })
@@ -731,7 +739,7 @@ test_that("addInitialConditionEntry aborts on a blank unit (units are mandatory)
   )
 })
 
-test_that("addInitialConditionEntry writes the set to disk once", {
+test_that("addInitialConditionEntry writes the set to disk once on save", {
   project <- testProject()
   dir <- file.path(
     project$projectDirPath,
@@ -741,6 +749,7 @@ test_that("addInitialConditionEntry writes the set to disk once", {
   suppressMessages(
     addInitialConditionEntry(project, "diskset", "Organism|A", 1.5, "mg/l")
   )
+  saveProject(project)
   expect_true(file.exists(file.path(dir, "diskset.json")))
   reloaded <- loadProject(project$jsonPath)
   expect_length(reloaded$initialConditions$diskset, 1L)
@@ -766,6 +775,7 @@ test_that("removeInitialConditionEntry updates the on-disk set when entries rema
   removeInitialConditionEntry(project, "tempset", "Organism|A")
 
   expect_length(project$initialConditions$tempset, 1L)
+  saveProject(project)
   reloaded <- loadProject(project$jsonPath)
   expect_length(reloaded$initialConditions$tempset, 1L)
   expect_identical(
@@ -774,10 +784,11 @@ test_that("removeInitialConditionEntry updates the on-disk set when entries rema
   )
 })
 
-test_that("addInitialConditions adds N sets in one write-through", {
+test_that("addInitialConditions adds N sets in one saveProject()", {
   project <- testProject()
   addInitialConditions(project, c("setA", "setB"))
   expect_true(all(c("seta", "setb") %in% names(project$initialConditions)))
+  saveProject(project)
   reloaded <- loadProject(project$jsonPath)
   expect_true(all(c("seta", "setb") %in% names(reloaded$initialConditions)))
 })

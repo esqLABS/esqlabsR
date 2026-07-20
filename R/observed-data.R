@@ -297,11 +297,10 @@ addObservedData <- function(project, entry) {
       )
     }
     sentinel <- .asObservedDataSource(list(type = "programmatic", name = name))
-    # Write through to disk FIRST: `.setSection()` can abort (e.g. an on-disk
-    # id/basename collision surfaced by the serializer), so mutate the runtime
-    # store only after the write succeeds. Committing the store first would
-    # leave a runtime DataSet with no disk sentinel if the write aborts, i.e.
-    # memory and disk disagreeing.
+    # Update the in-memory section and the runtime store together: under
+    # explicit-save `.setSection()` does not touch disk, so both are pure
+    # in-memory mutations. Any on-disk id/basename collision is surfaced later,
+    # by the serializer, when `saveProject()` reconciles the tree.
     project$.setSection(
       "observedData",
       c(project$.getSection("observedData"), list(sentinel))
@@ -370,8 +369,9 @@ addObservedData <- function(project, entry) {
 #'
 #' Removes by DataSet name (for `type = "programmatic"` entries) or by
 #' `file` basename (for `type` `"excel"` / `"pkml"` / `"script"`
-#' entries). Vectorizes over a vector of ids, removing each in one
-#' write-through. Warns and skips any id with no matching entry.
+#' entries). Vectorizes over a vector of ids, removing each in one in-memory
+#' update; persist with [saveProject()]. Warns and skips any id with no
+#' matching entry.
 #'
 #' Unlike the other authoring functions, `addObservedData()` is not
 #' vectorized over ids: its second argument is a `DataSet` or a configuration
@@ -393,8 +393,9 @@ removeObservedData <- function(project, id) {
 
   # Resolve every id to the section index it removes (a programmatic sentinel or
   # a file-based entry) before touching anything, so the whole batch is
-  # validated first and applied in a single write-through, matching the
-  # all-or-nothing invariant every other vectorized remove* upholds.
+  # validated first and applied in a single in-memory update, matching the
+  # all-or-nothing invariant every other vectorized remove* upholds. Nothing
+  # touches disk; persist with saveProject().
   dropIdx <- integer()
   programmaticNames <- character()
   missingIds <- character()
@@ -429,7 +430,7 @@ removeObservedData <- function(project, id) {
     cli::cli_warn("observedData entry {.val {missingIds}} not found; no-op.")
   }
   # Warn once per removed id that is still referenced, then drop everything in a
-  # single write. A not-found id contributes nothing to the write.
+  # single in-memory update. A not-found id contributes nothing to the update.
   for (one in setdiff(id, missingIds)) {
     .warnIfObservedDataReferenced(project, one)
   }
@@ -440,11 +441,9 @@ removeObservedData <- function(project, id) {
   if (length(dropIdx) > 0L) {
     observedData <- observedData[-unique(dropIdx)]
   }
-  # Write through to disk FIRST: `.setSection()` can abort (the serializer can
-  # reject the resulting section on an id/basename collision), so clear the
-  # runtime store only after the write succeeds. Clearing the store first would
-  # drop the in-memory DataSet while the disk sentinel survives if the write
-  # aborts, i.e. memory and disk disagreeing.
+  # Update the in-memory section and the runtime store together (both pure
+  # in-memory mutations under explicit-save; nothing touches disk until
+  # `saveProject()`).
   project$.setSection("observedData", observedData)
   for (name in programmaticNames) {
     state$.programmaticDataSets[[name]] <- NULL

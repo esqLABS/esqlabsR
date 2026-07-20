@@ -277,10 +277,10 @@ A **snapshot** packs a project into a single portable `.esqlabsR` file.
 
 ```{r, eval = FALSE}
 # Freeze the project into one shareable file
-saveSnapshot(project, "aciclovir_study")  # writes aciclovir_study.esqlabsR
+snapshotProject(project, name = "aciclovir_study") # writes aciclovir_study.esqlabsR
 
 # Re-materialize it as a full project directory
-loadSnapshot("aciclovir_study.esqlabsR", dir = "restored_project")
+restoreProject("aciclovir_study.esqlabsR", dir = "restored_project")
 ```
 
 <br>
@@ -386,11 +386,11 @@ addScenario(
 II Authoring scenarios
 :::
 
-## Authoring is write-through
+## Edit in memory, then save
 <br>
 
-Every edit lands in its definition file immediately. There is no separate save
-step.
+Every edit changes the project in memory; `saveProject()` writes the changes to
+the definition files.
 
 ```{r, eval = FALSE}
 # Build a parameter set entry by entry
@@ -406,6 +406,9 @@ addParameterEntry(
 
 # Add an individual
 addIndividual(project, id = "adult_male", species = "Human", gender = "MALE")
+
+# Commit the edits to disk
+saveProject(project)
 ```
 
 . . .

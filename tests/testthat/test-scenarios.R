@@ -471,7 +471,7 @@ test_that("addScenario stores steadyStateTime in base units and round-trips the 
 
 # setScenario ----
 
-test_that("setScenario changes a field and persists to file and memory", {
+test_that("setScenario changes a field in memory and persists on save", {
   project <- testProject()
   dir <- file.path(project$projectDirPath, "definitions", "scenarios")
 
@@ -481,6 +481,7 @@ test_that("setScenario changes a field and persists to file and memory", {
     project$scenarios[["testscenario"]]$simulationTime,
     list(c(0, 48, 120))
   )
+  saveProject(project)
   reloaded <- loadProject(project$jsonPath)
   expect_equal(
     reloaded$scenarios[["testscenario"]]$simulationTime,
@@ -520,6 +521,7 @@ test_that("setScenario can clear an optional field with NULL", {
   setScenario(project, "populationscenario", individual = NULL)
 
   expect_null(project$scenarios[["populationscenario"]]$individualId)
+  saveProject(project)
   reloaded <- loadProject(project$jsonPath)
   expect_null(reloaded$scenarios[["populationscenario"]]$individualId)
 })
@@ -536,19 +538,20 @@ test_that("setScenario aborts on a non-existent scenario, no file written", {
   expect_setequal(list.files(dir), before)
 })
 
-test_that("setScenario fails fast on a structural violation, disk and memory untouched", {
+test_that("saveProject() fails fast on a structural violation, disk untouched", {
   project <- testProject()
+  saveProject(project)
   dir <- file.path(project$projectDirPath, "definitions", "scenarios")
-  before <- project$scenarios[["testscenario"]]
   beforeFile <- readLines(file.path(dir, "testscenario.json"))
 
-  # Clearing modelFile is a structural violation; the write-through must abort.
+  # Clearing modelFile is a structural violation. The edit is accepted in
+  # memory; the abort happens at save (the serialize-in-memory-first guarantee),
+  # leaving disk unchanged.
+  setScenario(project, "testscenario", modelFile = NULL)
   expect_error(
-    setScenario(project, "testscenario", modelFile = NULL),
+    saveProject(project),
     "modelFile"
   )
-  # Neither memory nor disk changed.
-  expect_equal(project$scenarios[["testscenario"]], before)
   expect_identical(readLines(file.path(dir, "testscenario.json")), beforeFile)
 })
 
@@ -573,16 +576,15 @@ test_that("the write path allows a dangling outputPathId as a lazy referential f
   expect_no_error(project$.setSection("scenarios", scenarios))
 })
 
-test_that("setScenario on a clone leaves the source's on-disk tree untouched", {
+test_that("setScenario stays in memory until saveProject()", {
   source <- testProject()
   dir <- file.path(source$projectDirPath, "definitions", "scenarios")
   sourceFile <- readLines(file.path(dir, "testscenario.json"))
 
-  clone <- source$clone()
-  setScenario(clone, "testscenario", simulationTimeUnit = "min")
+  setScenario(source, "testscenario", simulationTimeUnit = "min")
 
-  # The clone changed in memory only; the source's file is untouched.
-  expect_equal(clone$scenarios[["testscenario"]]$simulationTimeUnit, "min")
+  # The edit is in memory only; the on-disk file is untouched before a save.
+  expect_equal(source$scenarios[["testscenario"]]$simulationTimeUnit, "min")
   expect_identical(readLines(file.path(dir, "testscenario.json")), sourceFile)
 })
 
@@ -633,8 +635,9 @@ test_that("setScenario with steadyStateTime still converts under the effective u
 
 # renameScenario ----
 
-test_that("renameScenario moves the definition file and changes the in-memory key", {
+test_that("renameScenario moves the definition file on save and changes the in-memory key", {
   project <- testProject()
+  saveProject(project)
   dir <- file.path(project$projectDirPath, "definitions", "scenarios")
   before <- readLines(file.path(dir, "testscenario.json"))
 
@@ -643,7 +646,8 @@ test_that("renameScenario moves the definition file and changes the in-memory ke
   # In-memory: old key gone, new key present.
   expect_false("testscenario" %in% names(project$scenarios))
   expect_true("renamed" %in% names(project$scenarios))
-  # On disk: old file removed, new file written.
+  # On disk after save: old file removed, new file written.
+  saveProject(project)
   expect_false(file.exists(file.path(dir, "testscenario.json")))
   expect_true(file.exists(file.path(dir, "renamed.json")))
 
@@ -664,6 +668,7 @@ test_that("renameScenario updates the record's stored name so a reload round-tri
   expect_equal(project$scenarios[["renamed"]]$scenarioName, "renamed")
   # A reload re-derives scenarios from the tree; the new key must validate and
   # round-trip (name == key invariant holds).
+  saveProject(project)
   reloaded <- loadProject(project$jsonPath)
   expect_true("renamed" %in% names(reloaded$scenarios))
   expect_equal(reloaded$scenarios[["renamed"]]$scenarioName, "renamed")
@@ -695,16 +700,16 @@ test_that("renameScenario canonicalizes newId, warning and landing on the canoni
   expect_false("testscenario" %in% names(project$scenarios))
 })
 
-test_that("renameScenario on a clone leaves the source's on-disk tree untouched", {
+test_that("renameScenario stays in memory until saveProject()", {
   source <- testProject()
+  saveProject(source)
   dir <- file.path(source$projectDirPath, "definitions", "scenarios")
   sourceFiles <- list.files(dir)
 
-  clone <- source$clone()
-  renameScenario(clone, "testscenario", "renamed")
+  renameScenario(source, "testscenario", "renamed")
 
-  # The clone changed in memory only; the source's tree is untouched.
-  expect_true("renamed" %in% names(clone$scenarios))
+  # The edit is in memory only; the on-disk tree is untouched before a save.
+  expect_true("renamed" %in% names(source$scenarios))
   expect_setequal(list.files(dir), sourceFiles)
 })
 
@@ -726,7 +731,7 @@ test_that("renameScenario warns when a dataCombined still references it", {
 
 # duplicateScenario ----
 
-test_that("duplicateScenario creates an independent on-disk and in-memory copy", {
+test_that("duplicateScenario creates an independent copy in memory, persisted on save", {
   project <- testProject()
   dir <- file.path(project$projectDirPath, "definitions", "scenarios")
 
@@ -735,7 +740,8 @@ test_that("duplicateScenario creates an independent on-disk and in-memory copy",
   # Both exist in memory; the original is untouched.
   expect_true(all(c("testscenario", "copy") %in% names(project$scenarios)))
   expect_equal(project$scenarios[["copy"]]$scenarioName, "copy")
-  # The copy is a new definition file alongside the original.
+  # On save, the copy is a new definition file alongside the original.
+  saveProject(project)
   expect_true(file.exists(file.path(dir, "testscenario.json")))
   expect_true(file.exists(file.path(dir, "copy.json")))
 })
@@ -750,6 +756,7 @@ test_that("duplicateScenario produces an independent copy: mutating it leaves th
   expect_equal(project$scenarios[["copy"]]$simulationTimeUnit, "min")
   # The original record (and its file) is unchanged.
   expect_equal(project$scenarios[["testscenario"]], originalBefore)
+  saveProject(project)
   reloaded <- loadProject(project$jsonPath)
   expect_equal(
     reloaded$scenarios[["testscenario"]]$simulationTimeUnit,
@@ -773,15 +780,16 @@ test_that("duplicateScenario errors when the target id already exists", {
   )
 })
 
-test_that("duplicateScenario on a clone leaves the source's on-disk tree untouched", {
+test_that("duplicateScenario stays in memory until saveProject()", {
   source <- testProject()
+  saveProject(source)
   dir <- file.path(source$projectDirPath, "definitions", "scenarios")
   sourceFiles <- list.files(dir)
 
-  clone <- source$clone()
-  duplicateScenario(clone, "testscenario", "copy")
+  duplicateScenario(source, "testscenario", "copy")
 
-  expect_true("copy" %in% names(clone$scenarios))
+  expect_true("copy" %in% names(source$scenarios))
+  # The copy is in memory only; the on-disk tree is untouched before a save.
   expect_setequal(list.files(dir), sourceFiles)
 })
 
@@ -871,9 +879,10 @@ test_that("addScenario recycles a scalar field and applies outputPaths whole", {
   )
 })
 
-test_that("addScenario persists all N to disk in one write-through", {
+test_that("addScenario persists all N to disk in one saveProject()", {
   project <- testProject()
   addScenario(project, c("s1", "s2"), modelFile = "Aciclovir.pkml")
+  saveProject(project)
   reloaded <- loadProject(project$jsonPath)
   expect_true(all(c("s1", "s2") %in% names(reloaded$scenarios)))
 })

@@ -1765,8 +1765,9 @@ test_that("removePIParameter / removePIOutputMapping update the task file on dis
   expect_setequal(mapIds, "pvb")
 })
 
-test_that("removing the last PI parameter and mapping deletes the task file", {
+test_that("removing the last PI parameter and mapping deletes the task file on save", {
   project <- testProject()
+  saveProject(project)
   dir <- file.path(
     project$projectDirPath,
     "definitions",
@@ -1775,7 +1776,7 @@ test_that("removing the last PI parameter and mapping deletes the task file", {
   expect_true(file.exists(file.path(dir, "aciclovirsimple.json")))
 
   # Removing the last mapping then the last parameter empties the task, which
-  # auto-removes it; the definition file must be deleted.
+  # auto-removes it; on save the definition file is deleted.
   suppressWarnings(
     removePIOutputMapping(project, task = "aciclovirsimple", id = "pvb")
   )
@@ -1784,6 +1785,7 @@ test_that("removing the last PI parameter and mapping deletes the task file", {
   )
 
   expect_false("aciclovirsimple" %in% names(project$parameterIdentification))
+  saveProject(project)
   expect_false(file.exists(file.path(dir, "aciclovirsimple.json")))
   reloaded <- loadProject(project$jsonPath)
   expect_length(reloaded$parameterIdentification, 0L)

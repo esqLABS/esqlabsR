@@ -263,7 +263,8 @@ test_that("createPlots survives a save/load round trip that drops the title colu
   # title column is then dropped on save and absent on reload.
   removePlotGrid(project, "individual_diagnostics")
   removePlot(project, "p1")
-  # The plots section is write-through, so the edits are already on disk.
+  # Save the in-memory edits so the reload sees them.
+  saveProject(project)
 
   reloaded <- loadProject(file.path(dir, "Project.json"))
   expect_false("title" %in% names(reloaded$plots$p_nt))
@@ -304,7 +305,8 @@ test_that("createPlots observedVsSimulated survives a dropped foldDistance colum
   addPlotGrid(project, "grid_ovs", plots = "p_ovs", title = "Grid OvS")
   removePlotGrid(project, "individual_diagnostics")
   removePlot(project, "p1")
-  # The plots section is write-through, so the edits are already on disk.
+  # Save the in-memory edits so the reload sees them.
+  saveProject(project)
 
   reloaded <- loadProject(file.path(dir, "Project.json"))
   expect_false(

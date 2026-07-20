@@ -50,9 +50,9 @@ The bundled example project defines a single PI task, `aciclovirsimple`. It fits
 Load the project and inspect the task:
 
 ```{r loadProject}
-# Work on a writable copy of the bundled example: authoring is write-through,
-# so the PI tasks we add below are written to this project's own files rather
-# than to the read-only example shipped with the package.
+# Work on a writable copy of the bundled example: saving the PI tasks we add
+# below writes to this project's own files rather than to the read-only example
+# shipped with the package.
 project_dir <- withr::local_tempdir()
 initProject(destination = project_dir, type = "example", createExcel = FALSE)
 project <- loadProject(file.path(project_dir, "Project.json"))

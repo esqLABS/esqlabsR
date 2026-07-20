@@ -129,33 +129,58 @@ messages$invalidPathArgument <- function() {
   cliFormat("{.arg path} must be a single non-empty, non-NA string.")
 }
 
-messages$noProjectPath <- function() {
-  cliFormat(
-    "No {.arg path} specified and the project has no {.field jsonPath}. \\
-    Provide a {.arg path} to save the project for the first time."
+messages$saveProjectNoTree <- function() {
+  c(
+    "This project does not have a project folder on disk yet, so it cannot be saved.",
+    "i" = "Use {.fn snapshotProject} to save it to a single file.",
+    "i" = "Or create a project folder with {.fn initProject} and load it with {.fn loadProject}."
   )
 }
 
-messages$snapshotOntoOwnContainer <- function() {
+messages$reloadProjectNoTree <- function() {
   c(
-    "A snapshot is a derived artifact and must be written to a location other than the project's own {.field jsonPath}.",
-    "i" = "Pass a {.arg path} to a different file. The authoritative {.path definitions/} tree and {.file Project.json} container are already write-through, so there is nothing to save in place."
+    "This project does not have a project folder on disk, so there is nothing to reload.",
+    "i" = "{.fn reloadProject} re-reads the project files from disk; this project was not loaded from a folder."
   )
 }
 
-messages$definitionsFolderChangeOnMaterialized <- function(current, value) {
+messages$projectAlreadyUpToDate <- function() {
+  "Project is already up to date; nothing to save."
+}
+
+messages$snapshotFileExists <- function(path) {
   c(
-    "Cannot change {.field definitionsFolder} from {.val {current}} to {.val {value}} while the tree exists on disk.",
-    "x" = "Re-pointing a materialized project would leave the old {.path {current}/} tree orphaned and unreferenced.",
-    "i" = "To relocate the tree deliberately, snapshot the project with {.fn saveSnapshot} and reload it into a fresh directory under the new folder with {.fn loadSnapshot}."
+    "A snapshot file already exists at {.file {path}}.",
+    "i" = "Pass {.code overwrite = TRUE} to replace it, or a different {.arg name}."
   )
 }
 
-messages$loadSnapshotDirNotEmpty <- function(dir) {
+messages$invalidSnapshotName <- function(stem) {
   c(
-    "{.arg dir} already contains an esqlabsR project ({.path {dir}}).",
-    "i" = "{.fn loadSnapshot} writes a fresh tree project and will not overwrite \\
-    an existing one. Pass an empty or new {.arg dir}."
+    "{.arg name} must be a single filename stem without path separators.",
+    "x" = "The stem {.val {stem}} contains a path separator or is {.val .} / \\
+    {.val ..}, so it could write outside {.arg dir}.",
+    "i" = "Pass a single filename segment (no path separator and not {.val .} / \\
+    {.val ..}), or leave {.arg name} as {.code NULL} for a timestamped default."
+  )
+}
+
+messages$restoreDirNotEmpty <- function(dir) {
+  c(
+    "The folder {.path {dir}} is not empty.",
+    "i" = "{.fn restoreProject} needs an empty or new folder. Pass \\
+    {.code overwrite = TRUE} to replace the folder's contents, or choose a \\
+    different folder."
+  )
+}
+
+messages$restoreOverwroteTree <- function(dir) {
+  c(
+    "Replaced the project in {.path {dir}} with the snapshot.",
+    "!" = "Project objects loaded from this folder before the restore still \\
+    contain the old project.",
+    "i" = "Continue with the project returned by {.fn restoreProject}, or \\
+    call {.fn reloadProject} on the old object."
   )
 }
 
@@ -165,9 +190,9 @@ messages$failedToRemoveStaleDefinitionFiles <- function(paths) {
   # `cli::cli_abort()` call site does not carry these names, so a lazily
   # interpolated glue vector would fail to evaluate `{n}` / `{paths}` there.
   cli::format_message(c(
-    "Failed to remove {n} stale definition file{?s} from the definitions tree.",
+    "Failed to delete {n} outdated definition file{?s} from the {.file definitions} folder.",
     "x" = "{.file {paths}}",
-    "i" = "A stale file that cannot be deleted would reappear as a definition on the next {.fn loadProject}; check the file permissions and remove it manually."
+    "i" = "A file that cannot be deleted comes back as a definition the next time you {.fn loadProject}; check the file permissions and delete it manually."
   ))
 }
 
@@ -185,9 +210,9 @@ messages$failedToClearProjectArtifacts <- function(path) {
   # Interpolate eagerly here where `path` is in scope; the `cli::cli_abort()`
   # call site passes a local whose name is not `path`.
   cli::format_message(c(
-    "Failed to remove an existing project artifact before overwriting.",
+    "Failed to remove a file or folder of the existing project before overwriting.",
     "x" = "{.path {path}}",
-    "i" = "Overwriting requires removing the old project's definitions tree and container first; check the path's permissions and remove it manually."
+    "i" = "Overwriting first removes the old project's {.file definitions} folder and {.file Project.json}; check the permissions and remove it manually."
   ))
 }
 
@@ -274,12 +299,31 @@ messages$restoredProjectConfiguration <- function(inputFile, outputFile) {
   )
 }
 
-# Every section is write-through to its `definitions/<kind>/` tree, so the only
-# drift a sync check can still report is between the project and a sibling
-# `Project.xlsx`. With no Excel side-car there is nothing to compare.
+# The Excel axis of `projectStatus()`: with no `Project.xlsx` side-car there is
+# nothing to compare the in-memory project against.
 messages$syncNoExcel <- function() {
   cli::format_inline(
-    "No {.file Project.xlsx} side-car to compare against; nothing to sync."
+    "No Excel configuration file ({.file Project.xlsx}) found; nothing to compare."
+  )
+}
+
+# The tree axis of `projectStatus()`: whether in-memory edits diverge from the
+# on-disk `definitions/` tree (the dirty bit).
+messages$syncTreeDirty <- function() {
+  cli::format_inline(
+    "Unsaved changes: the project has changes that are not saved to disk yet."
+  )
+}
+
+messages$syncTreeClean <- function() {
+  cli::format_inline(
+    "No unsaved changes: the project matches the files on disk."
+  )
+}
+
+messages$syncNoTree <- function() {
+  cli::format_inline(
+    "This project does not have a project folder on disk; there is nothing to compare."
   )
 }
 
@@ -781,13 +825,13 @@ messages$excelNoCompleteRows <- function() {
 
 messages$excelNotInSync <- function(message = "") {
   cliFormat(
-    "The Excel configuration files are NOT in sync with the JSON snapshot. {message}"
+    "The Excel configuration files do not match the project. {message}"
   )
 }
 
 messages$excelInSync <- function() {
   cliFormat(
-    "Excel configuration files are in sync with JSON snapshot."
+    "The Excel configuration files match the project."
   )
 }
 
@@ -799,8 +843,9 @@ messages$abortedByUser <- function() {
 
 messages$cannotPromptNonInteractive <- function() {
   cliFormat(
-    "The destination already contains an esqlabsR project and cannot prompt \\
-    in a non-interactive session. Pass {.code overwrite = TRUE} to overwrite it."
+    "The destination folder already contains an esqlabsR project. R is not \\
+    running interactively, so esqlabsR cannot ask for confirmation; pass \\
+    {.code overwrite = TRUE} to overwrite it."
   )
 }
 
