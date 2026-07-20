@@ -586,15 +586,17 @@ createScenariosFromPKML <- function(
   tryCatch(
     {
       if (length(pending) > 0) {
-        addOutputPath(
+        .addOutputPath_impl(
           self,
+          private,
           id = names(pending),
           path = unname(pending)
         )
       }
       for (spec in specs) {
-        addScenario(
+        .addScenario_impl(
           self,
+          private,
           id = spec$scenarioName,
           modelFile = spec$modelFile,
           individual = spec$individual,

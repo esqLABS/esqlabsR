@@ -767,8 +767,13 @@ Project <- R6::R6Class(
     # accepted as a no-op. Any other value is a genuine attempt to replace the
     # whole group, which is not allowed: the group is a live view, not a slot.
     .acceptGroupWriteback = function(value, group) {
+      # A genuine write-back is *this* instance's own proxy for the same group:
+      # the `owner` attribute must be identical to this instance's `private`
+      # (an environment, compared by reference). A proxy from another `Project`
+      # is not a write-back and must be rejected, not silently swallowed.
       isWriteback <- inherits(value, "ProjectFieldGroup") &&
-        identical(attr(value, "group"), group)
+        identical(attr(value, "group"), group) &&
+        identical(attr(value, "owner"), private)
       if (!isWriteback) {
         # `call = NULL`: the abort fires from inside the group active-binding
         # setter, whose frame is this internal helper, not a user function.
@@ -823,7 +828,29 @@ Project <- R6::R6Class(
           )
         ),
         group = "info",
-        printer = function() private$.printInfoBlock()
+        printer = function() private$.printInfoBlock(),
+        owner = private
+      )
+    },
+
+    # Build one writable get/set spec for a `{value, description}` record field
+    # stored under `private[[store]][[name]]`. The getter resolves the raw value
+    # against `parentFn()` (a resolver returning the base path) via
+    # `.clean_path()`, so a folder/file field reads resolved and writes verbatim;
+    # the setter stores the raw value and invalidates the container. Shared by
+    # the `paths` and `excel` groups, which differ only in `store` and `parentFn`.
+    .recordFieldSpec = function(store, name, parentFn) {
+      force(store)
+      force(name)
+      force(parentFn)
+      list(
+        get = function() {
+          private$.clean_path(private[[store]][[name]]$value, parentFn())
+        },
+        set = function(value) {
+          private[[store]][[name]]$value <- value
+          private$.invalidateContainer()
+        }
       )
     },
 
@@ -834,18 +861,10 @@ Project <- R6::R6Class(
     # `filePaths` record) and defaults to `"definitions"`.
     .pathsGroup = function() {
       folderField <- function(name) {
-        force(name)
-        list(
-          get = function() {
-            private$.clean_path(
-              private$.filePathsData[[name]]$value,
-              private$.projectDirPath
-            )
-          },
-          set = function(value) {
-            private$.filePathsData[[name]]$value <- value
-            private$.invalidateContainer()
-          }
+        private$.recordFieldSpec(
+          ".filePathsData",
+          name,
+          function() private$.projectDirPath
         )
       }
       .projectFieldGroup(
@@ -863,7 +882,8 @@ Project <- R6::R6Class(
           )
         ),
         group = "paths",
-        printer = function() private$.printPathsBlock()
+        printer = function() private$.printPathsBlock(),
+        owner = private
       )
     },
 
@@ -879,19 +899,7 @@ Project <- R6::R6Class(
         )
       }
       fileField <- function(name) {
-        force(name)
-        list(
-          get = function() {
-            private$.clean_path(
-              private$.excelData[[name]]$value,
-              configResolved()
-            )
-          },
-          set = function(value) {
-            private$.excelData[[name]]$value <- value
-            private$.invalidateContainer()
-          }
-        )
+        private$.recordFieldSpec(".excelData", name, configResolved)
       }
       .projectFieldGroup(
         list(
@@ -914,7 +922,8 @@ Project <- R6::R6Class(
           initialConditionsFile = fileField("initialConditionsFile")
         ),
         group = "excel",
-        printer = function() private$.printExcelBlock()
+        printer = function() private$.printExcelBlock(),
+        owner = private
       )
     },
 
@@ -947,7 +956,8 @@ Project <- R6::R6Class(
           # `$<-` methods, which have a real user frame, keep the default).
           .definitionListReadOnlyError(field, call = NULL)
         },
-        printer = function() private$.printDefinitionsBlock()
+        printer = function() private$.printDefinitionsBlock(),
+        owner = private
       )
     },
 

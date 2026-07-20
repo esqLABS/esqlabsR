@@ -20,12 +20,12 @@ addPITask(
 existing task id.}
 
 \item{scenarios}{Character vector of scenario names. Each must exist
-in \verb{names(the scenarios definitions)}.}
+in \code{names(project$definitions$scenarios)}.}
 
 \item{parameters}{Non-empty list of \code{PIParameter} records.}
 
 \item{outputMappings}{Non-empty list of \code{PIOutputMapping} records.
-Each \code{outputPath} must exist in \verb{names(the outputPaths definitions)}.}
+Each \code{outputPath} must exist in \code{names(project$definitions$outputPaths)}.}
 
 \item{configuration}{Named list of solver settings; see the \code{configuration}
 argument of \code{\link[=PITask]{PITask()}} for the supported keys.}

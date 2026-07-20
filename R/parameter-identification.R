@@ -1090,10 +1090,10 @@ createPITasks <- function(...) {
 #' @param id Character scalar. New task id; must not collide with an
 #'   existing task id.
 #' @param scenarios Character vector of scenario names. Each must exist
-#'   in `names(the scenarios definitions)`.
+#'   in `names(project$definitions$scenarios)`.
 #' @param parameters Non-empty list of `PIParameter` records.
 #' @param outputMappings Non-empty list of `PIOutputMapping` records.
-#'   Each `outputPath` must exist in `names(the outputPaths definitions)`.
+#'   Each `outputPath` must exist in `names(project$definitions$outputPaths)`.
 #' @param configuration Named list of solver settings; see the `configuration`
 #'   argument of [PITask()] for the supported keys.
 #' @returns The `project` object, invisibly.
@@ -1424,7 +1424,7 @@ removePIParameter <- function(project, task, id) {
 #' @param project A `Project` object.
 #' @param task Character scalar. Existing PI task id.
 #' @param outputPath Character scalar. Must exist in
-#'   `names(the outputPaths definitions)`.
+#'   `names(project$definitions$outputPaths)`.
 #' @param observedData Character scalar. Name of the observed dataset.
 #' @param scenarios Character vector of scenario names.
 #' @param scaling,xOffset,yOffset,xFactor,yFactor,weight Optional

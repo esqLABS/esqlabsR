@@ -144,7 +144,7 @@ saveScenarioResults <- function(
 #'
 #' # Now load the results, restricting to each scenario's declared output paths
 #' simulatedScenariosResults <- loadScenarioResults(
-#'   scenarios = names(the scenarios definitions),
+#'   scenarios = names(project$definitions$scenarios),
 #'   resultsFolder = resultsFolder,
 #'   project = project
 #' )

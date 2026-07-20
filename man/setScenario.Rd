@@ -88,9 +88,9 @@ The \code{project} object, invisibly.
 Changes one or more fields of the scenario identified by
 \code{id} and persists the change the same way \code{\link[=addScenario]{addScenario()}}
 does (write-through to the scenario definition). The section accessor
-\code{scenarios} definitions is read-only, so this is the way to revise an
-existing scenario: read it if you need the current values
-(\verb{sc <- the scenarios definitions[[name]]}), then pass the changes here
+\code{project$definitions$scenarios} is read-only, so this is the way to revise
+an existing scenario: read it if you need the current values
+(\code{sc <- project$definitions$scenarios[[name]]}), then pass the changes here
 (\code{setScenario(project, name, ...)}).
 
 Only the arguments you pass are changed; every other field keeps its

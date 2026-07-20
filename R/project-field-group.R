@@ -35,9 +35,11 @@
 # `set` marks the field read-only: assignment aborts. `group` is the group name
 # shown in the abort message. `printer` is a zero-argument function that renders
 # the group (the `Project` supplies one that reproduces the group's section of
-# `Project$print()`); it is called by `print.ProjectFieldGroup`. `onReadOnly` is
-# the handler called when a read-only field is assigned; it receives the field
-# name and must abort. The default names the field and its group; the
+# `Project$print()`); it is called by `print.ProjectFieldGroup`. `owner` is the
+# owning project's `private` environment, stored so a write-back can be
+# distinguished from a proxy of a different instance by identity. `onReadOnly`
+# is the handler called when a read-only field is assigned; it receives the
+# field name and must abort. The default names the field and its group; the
 # `definitions` group passes `.definitionListReadOnlyError` so its message
 # points at the authoring functions.
 #
@@ -47,6 +49,7 @@
   spec,
   group,
   printer,
+  owner,
   onReadOnly = function(field) .projectFieldReadOnlyError(field, group)
 ) {
   env <- new.env(parent = emptyenv())
@@ -64,6 +67,10 @@
   }
   attr(env, "group") <- group
   attr(env, "printer") <- printer
+  # The owning project's `private` environment. `.acceptGroupWriteback()`
+  # compares it by identity so a proxy from a *different* project instance is
+  # rejected, not silently swallowed as this instance's own write-back.
+  attr(env, "owner") <- owner
   class(env) <- c("ProjectFieldGroup", "environment")
   env
 }

@@ -989,9 +989,9 @@ removeScenario <- function(project, id) {
 #' @description Changes one or more fields of the scenario identified by
 #'   `id` and persists the change the same way [addScenario()]
 #'   does (write-through to the scenario definition). The section accessor
-#'   `scenarios` definitions is read-only, so this is the way to revise an
-#'   existing scenario: read it if you need the current values
-#'   (`sc <- the scenarios definitions[[name]]`), then pass the changes here
+#'   `project$definitions$scenarios` is read-only, so this is the way to revise
+#'   an existing scenario: read it if you need the current values
+#'   (`sc <- project$definitions$scenarios[[name]]`), then pass the changes here
 #'   (`setScenario(project, name, ...)`).
 #'
 #'   Only the arguments you pass are changed; every other field keeps its
@@ -1318,7 +1318,10 @@ setScenario <- function(
       NULL
     } else {
       stats::setNames(
-        unlist(project$definitions$outputPaths[fields$outputPaths], use.names = FALSE),
+        unlist(
+          project$definitions$outputPaths[fields$outputPaths],
+          use.names = FALSE
+        ),
         fields$outputPaths
       )
     }
