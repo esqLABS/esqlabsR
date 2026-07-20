@@ -307,12 +307,13 @@ test_that("saveProject() aborting on one scenario leaves the tree intact", {
 
   # Make one loaded scenario serializer-hostile in the backing store (bypassing
   # the authoring API), then save. The save must abort before writing any file.
-  poke <- project$.__enclos_env__$private
-  hostile <- poke$.scenarios[[before[[1]]]]
+  # `.setSection()` writes the raw section and marks the project modified.
+  scenarios <- .getSection(project, "scenarios")
+  hostile <- scenarios[[before[[1]]]]
   hostile$simulateSteadyState <- TRUE
   hostile$steadyStateTimeUnit <- NULL
-  poke$.scenarios[[before[[1]]]] <- hostile
-  poke$.modified <- TRUE
+  scenarios[[before[[1]]]] <- hostile
+  .setSection(project, "scenarios", scenarios)
 
   expect_error(
     saveProject(project),

@@ -581,6 +581,7 @@ createScenariosFromPKML <- function(
   oldScenarios <- private$.getSection("scenarios")
   oldOutputPaths <- private$.getSection("outputPaths")
   wasValidated <- private$.isValidated()
+  wasModified <- private$.isModified()
 
   tryCatch(
     {
@@ -614,6 +615,12 @@ createScenariosFromPKML <- function(
     error = function(cnd) {
       private$.setSection("scenarios", oldScenarios)
       private$.setSection("outputPaths", oldOutputPaths)
+      # `.setSection()` marks the project modified, so restore the pre-call
+      # dirty and validation flags: a rollback must leave an initially-clean
+      # project reporting no unsaved changes.
+      if (!wasModified) {
+        private$.clearModified()
+      }
       if (wasValidated) {
         private$.markValidated()
       }

@@ -517,6 +517,10 @@ test_that("a failing addScenario rolls back the on-disk scenario tree", {
   # real on-disk project so the rollback materializes to `definitions/scenarios`.
   project <- testProject()
   project$modelFolder <- dirname(pkmlFixture)
+  # Reach a clean baseline (memory == tree) so the assertion below proves the
+  # rollback restores it, rather than reflecting the `modelFolder` edit above.
+  saveProject(project)
+  expect_false(.isModified(project))
   scenariosDir <- file.path(
     project$projectDirPath,
     project$definitionsFolder,
@@ -535,6 +539,8 @@ test_that("a failing addScenario rolls back the on-disk scenario tree", {
 
   # The successful first scenario must not survive on disk.
   expect_identical(sort(list.files(scenariosDir)), filesBefore)
+  # The rollback restored the pre-call dirty bit: no phantom unsaved changes.
+  expect_false(.isModified(project))
   reloaded <- loadProject(project$projectFilePath)
   expect_named(
     reloaded$scenarios,
