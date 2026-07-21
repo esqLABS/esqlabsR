@@ -46,9 +46,6 @@ executeInParallel <- function(
     {
       parLapply(cl = cl, X = firstArguments, fun = fun, ...)
     },
-    error = function(e) {
-      stop(e)
-    },
     finally = {
       stopCluster(cl)
     }
