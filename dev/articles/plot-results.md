@@ -276,7 +276,7 @@ residuals <- calculateResiduals(
 sumResiduals <- sum(residuals$residualValues)
 
 print(paste0("The sum of linear residuals for is ", sumResiduals))
-#> [1] "The sum of linear residuals for is 10.6279080877344"
+#> [1] "The sum of linear residuals for is 10.6243046214549"
 ```
 
 You can modify the created `DataCombined`, e.g., by changing the

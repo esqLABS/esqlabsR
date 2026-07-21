@@ -47,6 +47,10 @@
   reciprocal factors are no longer rejected due to floating point
   representation
   ([\#1056](https://github.com/esqLABS/esqlabsR/issues/1056)).
+- [`createPITasks()`](https://esqlabs.github.io/esqlabsR/dev/reference/createPITasks.md)
+  no longer rejects parameter bounds that exclude the model’s current
+  value, applying the sheet `StartValue` before validating them
+  ([\#1140](https://github.com/esqLABS/esqlabsR/issues/1140)).
 
 ## esqlabsR 5.7.0
 

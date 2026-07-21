@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">esqlabsR</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.7.0.9005</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.7.0.9006</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -72,6 +72,8 @@
 <code><a href="../reference/sensitivityCalculation.html">sensitivityCalculation()</a></code> no longer errors when all runs for a parameter fail; it now warns and omits that parameter from the results (<a href="https://github.com/esqLABS/esqlabsR/issues/1056" class="external-link">#1056</a>).</li>
 <li>
 <code><a href="../reference/sensitivityTornadoPlot.html">sensitivityTornadoPlot()</a></code> now matches the <code>parameterFactor</code> and its reciprocal against the analysis results with a numerical tolerance, so user supplied reciprocal factors are no longer rejected due to floating point representation (<a href="https://github.com/esqLABS/esqlabsR/issues/1056" class="external-link">#1056</a>).</li>
+<li>
+<code><a href="../reference/createPITasks.html">createPITasks()</a></code> no longer rejects parameter bounds that exclude the model’s current value, applying the sheet <code>StartValue</code> before validating them (<a href="https://github.com/esqLABS/esqlabsR/issues/1140" class="external-link">#1140</a>).</li>
 </ul></div>
 </div>
     <div class="section level2">
