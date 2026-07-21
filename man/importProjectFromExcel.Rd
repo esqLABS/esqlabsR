@@ -7,6 +7,7 @@
 importProjectFromExcel(
   projectConfigPath = "Project.xlsx",
   outputDir = NULL,
+  overwrite = FALSE,
   silent = FALSE
 )
 }
@@ -16,6 +17,14 @@ Defaults to \code{"Project.xlsx"}.}
 
 \item{outputDir}{Directory where the JSON project is created. If \code{NULL}
 (default), it is created in the same directory as the source Excel file.}
+
+\item{overwrite}{Logical. Guards against silently replacing an existing JSON
+project. With \code{overwrite = FALSE} (default), the import aborts when a
+project file or a non-empty \verb{definitions/} tree already exists in
+\code{outputDir}, because re-importing replaces the JSON project with the Excel
+state and deletes any definitions authored only on the JSON side. Pass
+\code{overwrite = TRUE} to replace the existing JSON project with the Excel
+state.}
 
 \item{silent}{Logical. If \code{TRUE}, suppresses informational messages.
 Defaults to \code{FALSE}.}

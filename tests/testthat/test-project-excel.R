@@ -408,6 +408,74 @@ test_that("importProjectFromExcel writes a slim container, definitions in the tr
   expect_length(containerOnly$definitions$parameterSets, 0L)
 })
 
+# Regression (#1126): re-importing over an existing JSON project deletes any
+# definition authored only on the JSON side (the tree reconcile empties every
+# `definitions/<kind>/` not present in the Excel). importProjectFromExcel()
+# aborts by default when a JSON project already exists in `outputDir`, and only
+# replaces it when `overwrite = TRUE`.
+test_that("importProjectFromExcel aborts over an existing JSON project unless overwrite = TRUE", {
+  out <- withr::local_tempdir()
+
+  # First import succeeds: the output directory holds no JSON project yet.
+  suppressWarnings(importProjectFromExcel(
+    testProjectExcelPath(),
+    outputDir = out,
+    silent = TRUE
+  ))
+
+  # A second import over it aborts by default (the JSON project is now present).
+  expect_snapshot(
+    error = TRUE,
+    transform = .redactTmpDir,
+    suppressWarnings(importProjectFromExcel(
+      testProjectExcelPath(),
+      outputDir = out,
+      silent = TRUE
+    ))
+  )
+
+  # With overwrite = TRUE it replaces the existing JSON project.
+  expect_no_error(suppressWarnings(importProjectFromExcel(
+    testProjectExcelPath(),
+    outputDir = out,
+    overwrite = TRUE,
+    silent = TRUE
+  )))
+})
+
+# Regression (#1126): exportProjectToExcel() replaces Project.xlsx and the
+# Configurations workbooks wholesale, defaulting outputDir to the project's own
+# directory, so a bare call would silently overwrite hand-maintained workbooks.
+# It aborts by default when workbooks already exist in `outputDir`, and only
+# overwrites them when `overwrite = TRUE`.
+test_that("exportProjectToExcel aborts over existing workbooks unless overwrite = TRUE", {
+  work_dir <- withr::local_tempdir()
+  file.copy(dirname(exampleProjectPath()), work_dir, recursive = TRUE)
+  project <- loadProject(file.path(work_dir, "Example", "Project.json"))
+
+  excelOut <- withr::local_tempdir()
+
+  # First export succeeds into a fresh directory.
+  exportProjectToExcel(project, outputDir = excelOut, silent = TRUE)
+
+  # A second export over the same directory aborts by default.
+  expect_snapshot(
+    error = TRUE,
+    transform = .redactTmpDir,
+    exportProjectToExcel(project, outputDir = excelOut, silent = TRUE)
+  )
+
+  # With overwrite = TRUE it replaces the existing workbooks.
+  expect_no_error(
+    exportProjectToExcel(
+      project,
+      outputDir = excelOut,
+      overwrite = TRUE,
+      silent = TRUE
+    )
+  )
+})
+
 # Pin the imported content to the known TestProjectExcel fixture rather than
 # only comparing the import against itself. The fixture's canonical ids and the
 # two output-path literals are stable, so they can be asserted directly.
@@ -717,9 +785,12 @@ test_that("projectStatus() does not abort on a dangling-ref canonicalization col
     silent = TRUE
   ))
   project <- suppressWarnings(loadProject(jsonPath))
+  # The fixture already carries Configurations workbooks, so exporting the
+  # side-car over them needs overwrite = TRUE.
   suppressWarnings(exportProjectToExcel(
     project,
     outputDir = work,
+    overwrite = TRUE,
     silent = TRUE
   ))
 

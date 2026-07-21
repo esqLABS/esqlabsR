@@ -359,7 +359,15 @@ initProject <- function(
   if (createExcel) {
     jsonPath <- file.path(destination, "Project.json")
     project <- loadProject(jsonPath)
-    exportProjectToExcel(project, outputDir = destination, silent = TRUE)
+    # `initProject()` owns and controls `destination` (its own `overwrite`
+    # argument already governed whether to replace an existing scaffold), so it
+    # writes the Excel side-cars unconditionally.
+    exportProjectToExcel(
+      project,
+      outputDir = destination,
+      overwrite = TRUE,
+      silent = TRUE
+    )
   }
 
   invisible(destination)

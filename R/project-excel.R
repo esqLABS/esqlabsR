@@ -13,6 +13,13 @@
 #'   Defaults to `"Project.xlsx"`.
 #' @param outputDir Directory where the JSON project is created. If `NULL`
 #'   (default), it is created in the same directory as the source Excel file.
+#' @param overwrite Logical. Guards against silently replacing an existing JSON
+#'   project. With `overwrite = FALSE` (default), the import aborts when a
+#'   project file or a non-empty `definitions/` tree already exists in
+#'   `outputDir`, because re-importing replaces the JSON project with the Excel
+#'   state and deletes any definitions authored only on the JSON side. Pass
+#'   `overwrite = TRUE` to replace the existing JSON project with the Excel
+#'   state.
 #' @param silent Logical. If `TRUE`, suppresses informational messages.
 #'   Defaults to `FALSE`.
 #'
@@ -23,6 +30,7 @@
 importProjectFromExcel <- function(
   projectConfigPath = "Project.xlsx",
   outputDir = NULL,
+  overwrite = FALSE,
   silent = FALSE
 ) {
   validateIsString(projectConfigPath)
@@ -284,6 +292,24 @@ importProjectFromExcel <- function(
   outputFileName <- sub("\\.xlsx$", ".json", basename(projectConfigPath))
   outputPath <- file.path(outputDir, outputFileName)
 
+  # Guard against silently replacing an existing JSON project. The import writes
+  # the container and fully reconciles the `definitions/` tree (deleting any
+  # definition authored only on the JSON side), so re-importing over a JSON
+  # project the user has since edited would erase that work. Abort unless
+  # `overwrite = TRUE` when the target container file already exists, or a
+  # non-empty `definitions/` tree already sits in `outputDir`.
+  definitionsDir <- file.path(outputDir, "definitions")
+  hasDefinitionTree <- dir.exists(definitionsDir) &&
+    length(list.files(
+      definitionsDir,
+      recursive = TRUE,
+      pattern = "\\.json$"
+    )) >
+      0L
+  if (!overwrite && (file.exists(outputPath) || hasDefinitionTree)) {
+    cli::cli_abort(messages$importWouldOverwriteProject(outputDir))
+  }
+
   if (!dir.exists(dirname(outputPath))) {
     dir.create(dirname(outputPath), recursive = TRUE)
   }
@@ -343,6 +369,12 @@ importProjectFromExcel <- function(
 #' @param project A `Project` object.
 #' @param outputDir Directory where the Excel files will be created. Defaults
 #'   to the directory of the source JSON file.
+#' @param overwrite Logical. Guards against silently overwriting existing Excel
+#'   workbooks. With `overwrite = FALSE` (default), the export aborts when
+#'   `Project.xlsx` or any `Configurations/` workbook already exists in
+#'   `outputDir`, because the export replaces each workbook wholesale and would
+#'   discard any hand-edits it carries. Pass `overwrite = TRUE` to replace the
+#'   existing workbooks.
 #' @param silent Logical. If `TRUE`, suppresses informational messages.
 #'   Defaults to `FALSE`.
 #'
@@ -353,6 +385,7 @@ importProjectFromExcel <- function(
 exportProjectToExcel <- function(
   project,
   outputDir = NULL,
+  overwrite = FALSE,
   silent = FALSE
 ) {
   validateIsOfType(project, "Project")
@@ -361,11 +394,29 @@ exportProjectToExcel <- function(
     outputDir <- project$info$projectDirPath %||% "."
   }
 
+  configDir <- file.path(outputDir, "Configurations")
+
+  # Guard against silently overwriting existing workbooks. Every workbook is
+  # written with `writexl::write_xlsx()`, which replaces the target file
+  # wholesale, and the default `outputDir` is the project's own directory, so a
+  # bare `exportProjectToExcel(project)` would overwrite the project's
+  # `Project.xlsx` and `Configurations/*.xlsx` side-cars (hand-edits included).
+  # Abort unless `overwrite = TRUE` when a `Project.xlsx` or any
+  # `Configurations/` workbook already exists in `outputDir`.
+  existingWorkbooks <- c(
+    if (file.exists(file.path(outputDir, "Project.xlsx"))) "Project.xlsx",
+    if (dir.exists(configDir)) {
+      list.files(configDir, pattern = "\\.xlsx$")
+    }
+  )
+  if (!overwrite && length(existingWorkbooks) > 0L) {
+    cli::cli_abort(messages$exportWouldOverwriteWorkbooks(outputDir))
+  }
+
   if (!dir.exists(outputDir)) {
     dir.create(outputDir, recursive = TRUE)
   }
 
-  configDir <- file.path(outputDir, "Configurations")
   if (!dir.exists(configDir)) {
     dir.create(configDir, recursive = TRUE, showWarnings = FALSE)
   }
@@ -679,10 +730,12 @@ exportProjectToExcel <- function(
       cli::cli_text("To resolve these differences, you can:")
       cli::cli_ul()
       cli::cli_li(
-        "{.run importProjectFromExcel()} - Update JSON from Excel files."
+        "{.run importProjectFromExcel(overwrite = TRUE)} - Update JSON from \\
+        Excel files."
       )
       cli::cli_li(
-        "{.run exportProjectToExcel()} - Recreate Excel files from JSON."
+        "{.run exportProjectToExcel(overwrite = TRUE)} - Recreate Excel files \\
+        from JSON."
       )
       cli::cli_end()
     }
