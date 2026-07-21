@@ -1105,6 +1105,12 @@ Project <- R6::R6Class(
     # every `_impl`. An impl that calls a sibling impl directly (the reentrant
     # PKML and observed-data paths) does not route through `.impl()`; it threads
     # its own `.call` on, so its attribution is unchanged.
+    #
+    # `.call` is a reserved formal on every `_impl`: an authoring method that
+    # forwards a user-facing `...` must not let `.call` reach `...` (no public
+    # argument is named `.call`, so this only happens on misuse, e.g.
+    # `do.call(addIndividual, list(.call = x))`); it would match `.call` twice
+    # and R aborts with "matched by multiple actual arguments".
     .impl = function(fn, ...) {
       fn(self, private, ..., .call = rlang::caller_env(2))
     },
