@@ -831,7 +831,6 @@ addPlot <- function(project, id, dataCombined, plotType, ...) {
     )
   }
   private$.setSection("plots", plotConfig)
-  private$.markModified()
   invisible(self)
 }
 
@@ -908,7 +907,6 @@ removePlot <- function(project, id) {
 
   plotConfig[toRemove] <- NULL
   private$.setSection("plots", plotConfig)
-  private$.markModified()
   invisible(self)
 }
 
@@ -1011,7 +1009,6 @@ addPlotGrid <- function(project, id, plots, ...) {
     plotGrids[[id[[i]]]] <- entry
   }
   private$.setSection("plotGrids", plotGrids)
-  private$.markModified()
   invisible(self)
 }
 
@@ -1055,7 +1052,6 @@ removePlotGrid <- function(project, id) {
 
   plotGrids[toRemove] <- NULL
   private$.setSection("plotGrids", plotGrids)
-  private$.markModified()
   invisible(self)
 }
 
@@ -1158,7 +1154,6 @@ addDataCombined <- function(
     dataCombined[[id[[i]]]] <- entry
   }
   private$.setSection("dataCombined", dataCombined)
-  private$.markModified()
   invisible(self)
 }
 
@@ -1236,6 +1231,5 @@ removeDataCombined <- function(project, id) {
 
   dataCombined[toRemove] <- NULL
   private$.setSection("dataCombined", dataCombined)
-  private$.markModified()
   invisible(self)
 }
