@@ -298,11 +298,13 @@ importProjectFromExcel <- function(
   # `aciclovir_pvb`.
   jsonData <- .canonicalizeProjectJsonIds(jsonData)
 
-  # Write the single inlined `Project.json`. The inlined form is kept (rather
-  # than only the tree) because the Excel axis of `projectStatus()` re-imports
-  # the Excel into a fresh JSON and compares it section-by-section against this
-  # file's raw content; emptying the inline sections would blind that
-  # comparison.
+  # Bootstrap an in-memory project from the imported data by writing the inlined
+  # JSON to the container path and parsing it back. This inlined form is only a
+  # transient bootstrap: `.writeProjectTree()` below overwrites the container
+  # with the slim (`containerOnly`) shape, so the inlined file never survives the
+  # call. `Project$new()` (not `loadProject()`) parses it without running the
+  # cross-reference warning pass, so a project with dangling refs imports quietly
+  # under `silent`.
   jsonText <- jsonlite::toJSON(
     jsonData,
     pretty = TRUE,
@@ -311,25 +313,16 @@ importProjectFromExcel <- function(
     null = "null"
   )
   writeLines(jsonText, outputPath)
-
-  # Also explode the imported project into its `definitions/<kind>/` tree next
-  # to the container, so the import yields a ready-to-use tree project: a later
-  # `loadProject(outputPath)` reads the tree (which wins over the inline
-  # sections), and edits are write-through to it, with no separate materialize
-  # step. The container the tree writer leaves in place still carries the
-  # inlined sections above (the tree writer only adds the `definitions/` files),
-  # so the sync comparison keeps working. `Project$new()` (not `loadProject()`)
-  # parses the just-written snapshot without running the cross-reference warning
-  # pass, so a project with dangling refs imports quietly under `silent`.
   importedProject <- Project$new(projectFilePath = outputPath)
-  for (kind in .definitionKindNames()) {
-    .writeDefinitionTree(
-      .sectionForKind(importedProject, kind),
-      kind,
-      importedProject,
-      outputDir
-    )
-  }
+
+  # Write the imported project as a normal tree project: the slim
+  # (`containerOnly`) `Project.json` container plus the `definitions/<kind>/`
+  # tree, exactly what `saveProject()` and `initProject()` produce. There is one
+  # canonical on-disk `Project.json` shape, so an imported project is
+  # indistinguishable from any other tree project. The Excel sync check compares
+  # the in-memory project against the workbook (see `.compareJsonToExcel()`), so
+  # it no longer needs an inlined container to diff against.
+  .writeProjectTree(importedProject, outputDir, containerPath = outputPath)
 
   if (interactive() && !silent) {
     inputFile <- fs::path_rel(projectConfigPath, start = getwd())
@@ -420,7 +413,9 @@ exportProjectToExcel <- function(
     !is.null(project$definitions$parameterSets) &&
       length(project$definitions$parameterSets) > 0
   ) {
-    sheets <- .parameterStructuresToExcelSheets(project$definitions$parameterSets)
+    sheets <- .parameterStructuresToExcelSheets(
+      project$definitions$parameterSets
+    )
     .writeExcel(sheets, file.path(configDir, "ModelParameters.xlsx"))
   }
 
@@ -432,13 +427,18 @@ exportProjectToExcel <- function(
     !is.null(project$definitions$initialConditions) &&
       length(project$definitions$initialConditions) > 0
   ) {
-    icSheets <- .initialConditionsToExcelSheets(project$definitions$initialConditions)
+    icSheets <- .initialConditionsToExcelSheets(
+      project$definitions$initialConditions
+    )
     .writeExcel(icSheets, file.path(configDir, "InitialConditions.xlsx"))
   }
 
   # --- Individuals.xlsx ---
   indivSheets <- list()
-  if (!is.null(project$definitions$individuals) && length(project$definitions$individuals) > 0) {
+  if (
+    !is.null(project$definitions$individuals) &&
+      length(project$definitions$individuals) > 0
+  ) {
     indivSheets[["IndividualBiometrics"]] <- .individualsToExcelDf(
       project$definitions$individuals
     )
@@ -448,7 +448,10 @@ exportProjectToExcel <- function(
   }
 
   # --- Populations.xlsx ---
-  if (!is.null(project$definitions$populations) && length(project$definitions$populations) > 0) {
+  if (
+    !is.null(project$definitions$populations) &&
+      length(project$definitions$populations) > 0
+  ) {
     popDf <- .populationsToExcelDf(project$definitions$populations)
     .writeExcel(popDf, file.path(configDir, "Populations.xlsx"))
   }
@@ -464,7 +467,10 @@ exportProjectToExcel <- function(
       outputPaths = project$definitions$outputPaths
     )
   }
-  if (!is.null(project$definitions$outputPaths) && length(project$definitions$outputPaths) > 0) {
+  if (
+    !is.null(project$definitions$outputPaths) &&
+      length(project$definitions$outputPaths) > 0
+  ) {
     scenSheets[["OutputPaths"]] <- data.frame(
       OutputPathId = names(project$definitions$outputPaths),
       OutputPath = unlist(project$definitions$outputPaths, use.names = FALSE),
@@ -479,7 +485,10 @@ exportProjectToExcel <- function(
   # Parameter sets all live in ModelParameters.xlsx now (one unified section),
   # so this workbook carries only the application protocols.
   appSheets <- list()
-  if (!is.null(project$definitions$applications) && length(project$definitions$applications) > 0) {
+  if (
+    !is.null(project$definitions$applications) &&
+      length(project$definitions$applications) > 0
+  ) {
     appSheets[["ApplicationProtocols"]] <- .applicationsToExcelDf(
       project$definitions$applications
     )
@@ -540,42 +549,57 @@ exportProjectToExcel <- function(
   invisible(projConfigPath)
 }
 
-# Compare a project's JSON against its Excel side-car and report whether they
-# are in sync. Drives the Excel axis of `projectStatus()` (via
+# Compare an in-memory project against its Excel side-car and report whether
+# they are in sync. Drives the Excel axis of `projectStatus()` (via
 # `.projectSyncStatus()`), returning the
 # `list(excel_in_sync = <logical>, details = <list>)` contract.
-# Re-imports the Excel into a temporary JSON and diffs it section-by-section
-# against the project's `Project.json` (ignoring the volatile `esqlabsRVersion`).
+#
+# The comparison is one-way and container-shape-independent: "would re-exporting
+# the current in-memory project change the workbook?". Both sides are the same
+# in-memory serialization (`.projectToJson()`) of a loaded project:
+#   - memory side: the live `project`, so the comparison reflects the project as
+#     it is now (unsaved edits included), not the on-disk container;
+#   - Excel side: a fresh re-import of the side-car workbook, loaded back into a
+#     `Project` and serialized the same way.
+# Serializing both from an in-memory project (rather than reading a container
+# file raw) is what makes the comparison container-shape-independent: a tree
+# project's on-disk container keeps every section emptied (the tree owns them),
+# so reading either container raw would blind the comparison and report false
+# drift on every section. The volatile `esqlabsRVersion` is ignored.
 #
 # @keywords internal
 # @noRd
-.compareJsonToExcel <- function(jsonPath, projectConfigPath, silent = FALSE) {
+.compareJsonToExcel <- function(project, projectConfigPath, silent = FALSE) {
   # Create temporary snapshot from current Excel files
   tempDir <- tempfile("config_snapshot")
   dir.create(tempDir, showWarnings = FALSE, recursive = TRUE)
   on.exit(unlink(tempDir, recursive = TRUE), add = TRUE)
 
-  tempJsonPath <- file.path(tempDir, basename(jsonPath))
-  importProjectFromExcel(
+  tempJsonPath <- importProjectFromExcel(
     projectConfigPath,
     outputDir = tempDir,
     silent = TRUE
   )
 
-  # Load both JSON files as lists so we can strip volatile fields
-  originalJsonObj <- jsonlite::fromJSON(jsonPath, simplifyVector = FALSE)
-  currentJsonObj <- jsonlite::fromJSON(tempJsonPath, simplifyVector = FALSE)
+  # The memory side: serialize the live in-memory project. The Excel side: load
+  # the just-imported temp tree project and serialize it the same way. Both go
+  # through `.projectToJson()`, so the two sides are compared in one shape
+  # regardless of how either container is stored on disk. `Project$new()` (not
+  # `loadProject()`) skips the cross-reference warning pass, so a project with
+  # dangling refs compares quietly.
+  originalJsonObj <- .projectToJson(project)
+  currentJsonObj <- .projectToJson(Project$new(projectFilePath = tempJsonPath))
 
-  # The Excel re-import canonicalizes every id (via
-  # `.canonicalizeProjectJsonIds()`), but the original JSON may carry a
-  # non-canonical id. Canonicalize the original the same way before comparing
-  # so id canonicalization is not itself counted as drift (which would make an
-  # otherwise-in-sync project report out-of-sync). An already-canonical id is
-  # unchanged, so this is a no-op for a canonical original. Warnings are
-  # suppressed (an in-place re-canonicalization of an already-canonical id
-  # emits none anyway).
+  # Both sides canonicalize every id (via `.canonicalizeProjectJsonIds()`) so id
+  # canonicalization is never counted as drift (which would make an otherwise
+  # in-sync project report out-of-sync). An already-canonical id is unchanged,
+  # so this is a no-op for a canonical project. Warnings are suppressed (an
+  # in-place re-canonicalization of an already-canonical id emits none anyway).
   originalJsonObj <- suppressWarnings(
     .canonicalizeProjectJsonIds(originalJsonObj)
+  )
+  currentJsonObj <- suppressWarnings(
+    .canonicalizeProjectJsonIds(currentJsonObj)
   )
 
   # Remove esqlabsRVersion -- it changes with package updates and would cause
@@ -780,7 +804,7 @@ projectStatus <- function(project, silent = FALSE) {
   compareError <- NULL
   excelStatus <- tryCatch(
     .compareJsonToExcel(
-      jsonPath = jsonPath,
+      project = project,
       projectConfigPath = excelPath,
       silent = TRUE
     ),

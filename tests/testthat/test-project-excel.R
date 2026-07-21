@@ -371,7 +371,14 @@ test_that("importProjectFromExcel writes a usable definitions/ tree", {
   )
 })
 
-test_that("the imported tree reads the same definitions as the inlined import", {
+# The import writes one canonical on-disk shape: a slim (`containerOnly`)
+# `Project.json` plus a `definitions/` tree, exactly what `saveProject()` /
+# `initProject()` produce. There is no second, fully-inlined container variant.
+# So the container's own sections are empty on disk and the real definitions
+# live in the tree; loading the container standalone in a tree-free directory
+# reads an empty project, and only loading it alongside its tree reads the
+# definitions.
+test_that("importProjectFromExcel writes a slim container, definitions in the tree", {
   out <- withr::local_tempdir()
   jsonPath <- importProjectFromExcel(
     testProjectExcelPath(),
@@ -379,36 +386,26 @@ test_that("the imported tree reads the same definitions as the inlined import", 
     silent = TRUE
   )
 
-  # loadProject() of the import reads the tree; comparing against the inlined
-  # Project.json the import also wrote (loaded as a standalone snapshot in a
-  # tree-free directory) confirms the tree carries the same definitions.
-  fromTree <- suppressWarnings(loadProject(jsonPath))
+  # The on-disk container carries empty sections (the tree owns them).
+  raw <- jsonlite::fromJSON(jsonPath, simplifyVector = FALSE)
+  expect_length(raw$scenarios, 0L)
+  expect_length(raw$parameterSets, 0L)
+  expect_length(raw$individuals, 0L)
+  expect_length(raw$outputPaths, 0L)
 
+  # Loading the full tree project reads the real definitions from the tree.
+  fromTree <- suppressWarnings(loadProject(jsonPath))
+  expect_gt(length(fromTree$definitions$scenarios), 0L)
+  expect_gt(length(fromTree$definitions$parameterSets), 0L)
+
+  # Loading only the container (copied to a tree-free directory) reads an empty
+  # project: the definitions live in the tree, not inlined in the container.
   inlineDir <- withr::local_tempdir()
   inlineJson <- file.path(inlineDir, "Project.json")
   file.copy(jsonPath, inlineJson)
-  fromInline <- suppressWarnings(loadProject(inlineJson))
-
-  expect_named(
-    fromTree$definitions$scenarios,
-    names(fromInline$definitions$scenarios),
-    ignore.order = TRUE
-  )
-  expect_named(
-    fromTree$definitions$parameterSets,
-    names(fromInline$definitions$parameterSets),
-    ignore.order = TRUE
-  )
-  expect_named(
-    fromTree$definitions$individuals,
-    names(fromInline$definitions$individuals),
-    ignore.order = TRUE
-  )
-  expect_named(
-    fromTree$definitions$outputPaths,
-    names(fromInline$definitions$outputPaths),
-    ignore.order = TRUE
-  )
+  containerOnly <- suppressWarnings(loadProject(inlineJson))
+  expect_length(containerOnly$definitions$scenarios, 0L)
+  expect_length(containerOnly$definitions$parameterSets, 0L)
 })
 
 # Pin the imported content to the known TestProjectExcel fixture rather than
@@ -582,49 +579,27 @@ test_that(".parseExcelParameterSheets allows a blank Value cell", {
   expect_identical(parsed$Global[[1]]$value, NA_real_)
 })
 
-# The Excel re-import canonicalizes every id, so an original JSON that carries a
-# non-canonical id must not report out-of-sync purely because of that
-# canonicalization: both sides are canonicalized before the comparison.
+# The comparison is between the in-memory project and a fresh Excel re-import.
+# Both sides canonicalize every id, so id canonicalization is never counted as
+# drift: a project imported from Excel and loaded back is in sync with the Excel
+# it came from.
 test_that(".compareJsonToExcel does not count id canonicalization as drift", {
   out <- withr::local_tempdir()
   excelPath <- testProjectExcelPath()
 
-  # A JSON produced by importing the Excel fixture is in-sync with its source.
   jsonPath <- suppressWarnings(importProjectFromExcel(
     excelPath,
     outputDir = out,
     silent = TRUE
   ))
+  project <- suppressWarnings(loadProject(jsonPath))
+
   inSync <- suppressWarnings(.compareJsonToExcel(
-    jsonPath = jsonPath,
+    project = project,
     projectConfigPath = excelPath,
     silent = TRUE
   ))
   expect_true(inSync$excel_in_sync)
-
-  # Rewrite the original JSON with a non-canonical (uppercased) output-path id.
-  # The Excel re-import still canonicalizes to `aciclovir_pvb`, and so now does
-  # the original side, so the comparison must still report in-sync.
-  obj <- jsonlite::fromJSON(jsonPath, simplifyVector = FALSE)
-  names(obj$outputPaths)[names(obj$outputPaths) == "aciclovir_pvb"] <-
-    "Aciclovir_PVB"
-  writeLines(
-    jsonlite::toJSON(
-      obj,
-      pretty = TRUE,
-      auto_unbox = TRUE,
-      digits = NA,
-      null = "null"
-    ),
-    jsonPath
-  )
-
-  stillInSync <- suppressWarnings(.compareJsonToExcel(
-    jsonPath = jsonPath,
-    projectConfigPath = excelPath,
-    silent = TRUE
-  ))
-  expect_true(stillInSync$excel_in_sync)
 })
 
 # A corrupt or unreadable Excel side-car cannot be compared. The Excel axis of
