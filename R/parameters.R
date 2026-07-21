@@ -744,10 +744,8 @@ addParameterSet <- function(project, id) {
 #
 # @keywords internal
 # @noRd
-.addParameterSet_impl <- function(self, private, id) {
-  # Attribute any abort to the public authoring function the user called
-  # (the free-function forwarder), not this internal `_impl`.
-  rlang::local_error_call(rlang::caller_env(2))
+.addParameterSet_impl <- function(self, private, id, .call) {
+  rlang::local_error_call(.call)
   .assertIdVector(id)
   id <- .canonicalizeId(id)
   .assertNoDuplicateIds(id, "parameter set")
@@ -783,10 +781,8 @@ removeParameterSet <- function(project, id) {
 #
 # @keywords internal
 # @noRd
-.removeParameterSet_impl <- function(self, private, id) {
-  # Attribute any abort to the public authoring function the user called
-  # (the free-function forwarder), not this internal `_impl`.
-  rlang::local_error_call(rlang::caller_env(2))
+.removeParameterSet_impl <- function(self, private, id, .call) {
+  rlang::local_error_call(.call)
   .assertIdVector(id)
   id <- .canonicalizeId(id)
   missingIds <- setdiff(id, names(self$definitions$parameterSets))
@@ -852,11 +848,10 @@ addParameterEntry <- function(
   containerPath,
   parameterName,
   value,
-  units
+  units,
+  .call
 ) {
-  # Attribute any abort to the public authoring function the user called
-  # (the free-function forwarder), not this internal `_impl`.
-  rlang::local_error_call(rlang::caller_env(2))
+  rlang::local_error_call(.call)
   if (!is.character(id) || length(id) != 1L || is.na(id) || nchar(id) == 0) {
     cli::cli_abort("{.arg id} must be a non-empty string")
   }
@@ -928,11 +923,10 @@ removeParameterEntry <- function(
   private,
   id,
   containerPath,
-  parameterName
+  parameterName,
+  .call
 ) {
-  # Attribute any abort to the public authoring function the user called
-  # (the free-function forwarder), not this internal `_impl`.
-  rlang::local_error_call(rlang::caller_env(2))
+  rlang::local_error_call(.call)
   if (!is.character(id) || length(id) != 1L || is.na(id) || nchar(id) == 0) {
     cli::cli_abort("{.arg id} must be a non-empty string")
   }
@@ -1233,10 +1227,8 @@ addInitialConditions <- function(project, id) {
 #
 # @keywords internal
 # @noRd
-.addInitialConditions_impl <- function(self, private, id) {
-  # Attribute any abort to the public authoring function the user called
-  # (the free-function forwarder), not this internal `_impl`.
-  rlang::local_error_call(rlang::caller_env(2))
+.addInitialConditions_impl <- function(self, private, id, .call) {
+  rlang::local_error_call(.call)
   .assertIdVector(id)
   id <- .canonicalizeId(id)
   .assertNoDuplicateIds(id, "initial-condition set")
@@ -1273,10 +1265,8 @@ removeInitialConditions <- function(project, id) {
 #
 # @keywords internal
 # @noRd
-.removeInitialConditions_impl <- function(self, private, id) {
-  # Attribute any abort to the public authoring function the user called
-  # (the free-function forwarder), not this internal `_impl`.
-  rlang::local_error_call(rlang::caller_env(2))
+.removeInitialConditions_impl <- function(self, private, id, .call) {
+  rlang::local_error_call(.call)
   .assertIdVector(id)
   id <- .canonicalizeId(id)
   missingIds <- setdiff(id, names(self$definitions$initialConditions))
@@ -1335,11 +1325,10 @@ addInitialConditionEntry <- function(project, id, path, value, unit) {
   id,
   path,
   value,
-  unit
+  unit,
+  .call
 ) {
-  # Attribute any abort to the public authoring function the user called
-  # (the free-function forwarder), not this internal `_impl`.
-  rlang::local_error_call(rlang::caller_env(2))
+  rlang::local_error_call(.call)
   if (!is.character(id) || length(id) != 1L || is.na(id) || nchar(id) == 0) {
     cli::cli_abort("{.arg id} must be a non-empty string")
   }
@@ -1394,10 +1383,8 @@ removeInitialConditionEntry <- function(project, id, path) {
 #
 # @keywords internal
 # @noRd
-.removeInitialConditionEntry_impl <- function(self, private, id, path) {
-  # Attribute any abort to the public authoring function the user called
-  # (the free-function forwarder), not this internal `_impl`.
-  rlang::local_error_call(rlang::caller_env(2))
+.removeInitialConditionEntry_impl <- function(self, private, id, path, .call) {
+  rlang::local_error_call(.call)
   if (!is.character(id) || length(id) != 1L || is.na(id) || nchar(id) == 0) {
     cli::cli_abort("{.arg id} must be a non-empty string")
   }

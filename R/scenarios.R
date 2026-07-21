@@ -768,11 +768,10 @@ addScenario <- function(
   steadyStateTime = 1000,
   steadyStateTimeUnit = "min",
   overwriteFormulasInSS = FALSE,
-  readPopulationFromCSV = FALSE
+  readPopulationFromCSV = FALSE,
+  .call
 ) {
-  # Attribute any abort to the public authoring function the user called
-  # (the free-function forwarder), not this internal `_impl`.
-  rlang::local_error_call(rlang::caller_env(2))
+  rlang::local_error_call(.call)
   .assertIdVector(id)
   id <- .canonicalizeId(id)
   n <- length(id)
@@ -804,7 +803,7 @@ addScenario <- function(
   if (length(clash) > 0L) {
     cli::cli_abort("scenario {.val {clash}} already exists")
   }
-  call <- rlang::caller_env(2)
+  call <- .call
   scenarios <- .collectCanonicalizedRefs(lapply(seq_len(n), function(i) {
     .buildScenarioEntry(self, id[[i]], perDefinition[[i]], call = call)
   }))
@@ -958,10 +957,8 @@ removeScenario <- function(project, id) {
 #
 # @keywords internal
 # @noRd
-.removeScenario_impl <- function(self, private, id) {
-  # Attribute any abort to the public authoring function the user called
-  # (the free-function forwarder), not this internal `_impl`.
-  rlang::local_error_call(rlang::caller_env(2))
+.removeScenario_impl <- function(self, private, id, .call) {
+  rlang::local_error_call(.call)
   .assertIdVector(id)
   id <- .canonicalizeId(id)
 
@@ -1119,10 +1116,8 @@ setScenario <- function(
 #
 # @keywords internal
 # @noRd
-.setScenario_impl <- function(self, private, id, ...) {
-  # Attribute any abort to the public authoring function the user called
-  # (the free-function forwarder), not this internal `_impl`.
-  rlang::local_error_call(rlang::caller_env(2))
+.setScenario_impl <- function(self, private, id, ..., .call) {
+  rlang::local_error_call(.call)
   .assertIdVector(id)
   id <- .canonicalizeId(id)
   n <- length(id)
@@ -1149,7 +1144,7 @@ setScenario <- function(
   )
   suppliedNames <- names(dots)
 
-  call <- rlang::caller_env(2)
+  call <- .call
   updated <- .collectCanonicalizedRefs(lapply(seq_len(n), function(i) {
     .setOneScenario(
       self,
@@ -1403,10 +1398,8 @@ renameScenario <- function(project, id, newId) {
 #
 # @keywords internal
 # @noRd
-.renameScenario_impl <- function(self, private, id, newId) {
-  # Attribute any abort to the public authoring function the user called
-  # (the free-function forwarder), not this internal `_impl`.
-  rlang::local_error_call(rlang::caller_env(2))
+.renameScenario_impl <- function(self, private, id, newId, .call) {
+  rlang::local_error_call(.call)
   id <- .assertScenarioIdArg(id, "id")
   newId <- .assertScenarioIdArg(newId, "newId")
 
@@ -1469,10 +1462,8 @@ duplicateScenario <- function(project, id, newId) {
 #
 # @keywords internal
 # @noRd
-.duplicateScenario_impl <- function(self, private, id, newId) {
-  # Attribute any abort to the public authoring function the user called
-  # (the free-function forwarder), not this internal `_impl`.
-  rlang::local_error_call(rlang::caller_env(2))
+.duplicateScenario_impl <- function(self, private, id, newId, .call) {
+  rlang::local_error_call(.call)
   id <- .assertScenarioIdArg(id, "id")
   newId <- .assertScenarioIdArg(newId, "newId")
 

@@ -104,10 +104,8 @@ saveProject <- function(project) {
 #
 # @keywords internal
 # @noRd
-.saveProject_impl <- function(self, private) {
-  # Attribute any abort to the public authoring function the user called
-  # (the free-function forwarder), not this internal `_impl`.
-  rlang::local_error_call(rlang::caller_env(2))
+.saveProject_impl <- function(self, private, .call) {
+  rlang::local_error_call(.call)
   if (is.null(self$info$projectFilePath)) {
     cli::cli_abort(messages$saveProjectNoTree())
   }
@@ -171,10 +169,8 @@ reloadProject <- function(project) {
 #
 # @keywords internal
 # @noRd
-.reloadProject_impl <- function(self, private) {
-  # Attribute any abort to the public authoring function the user called
-  # (the free-function forwarder), not this internal `_impl`.
-  rlang::local_error_call(rlang::caller_env(2))
+.reloadProject_impl <- function(self, private, .call) {
+  rlang::local_error_call(.call)
   if (is.null(self$info$projectFilePath)) {
     cli::cli_abort(messages$reloadProjectNoTree())
   }

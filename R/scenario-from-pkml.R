@@ -228,11 +228,10 @@ createScenariosFromPKML <- function(
   steadyStateTimeUnit = NULL,
   overwriteFormulasInSS = FALSE,
   readPopulationFromCSV = FALSE,
-  paramSheets = lifecycle::deprecated()
+  paramSheets = lifecycle::deprecated(),
+  .call
 ) {
-  # Attribute any abort to the public authoring function the user called
-  # (the free-function forwarder), not this internal `_impl`.
-  rlang::local_error_call(rlang::caller_env(2))
+  rlang::local_error_call(.call)
   # Handle deprecated paramSheets argument
   if (lifecycle::is_present(paramSheets)) {
     lifecycle::deprecate_soft(
@@ -596,11 +595,19 @@ createScenariosFromPKML <- function(
   tryCatch(
     {
       if (length(pending) > 0) {
+        # Reentrant call: this reaches the sibling `_impl` directly, not through
+        # `self$addOutputPath()` / `private$.impl()`, so it threads the
+        # attribution call itself. `caller_env(2)` here is the same frame the
+        # callee's own dispatch would have resolved: one up is this `_impl`'s
+        # caller (`private$.impl`), two up is the `createScenariosFromPKML`
+        # method, so an abort still reads `Error in
+        # \`project$createScenariosFromPKML()\`:`, as before the shared helper.
         .addOutputPath_impl(
           self,
           private,
           id = names(pending),
-          path = unname(pending)
+          path = unname(pending),
+          .call = rlang::caller_env(2)
         )
       }
       for (spec in specs) {
@@ -620,7 +627,8 @@ createScenariosFromPKML <- function(
           steadyStateTime = spec$steadyStateTime,
           steadyStateTimeUnit = spec$steadyStateTimeUnit,
           overwriteFormulasInSS = spec$overwriteFormulasInSS,
-          readPopulationFromCSV = spec$readPopulationFromCSV
+          readPopulationFromCSV = spec$readPopulationFromCSV,
+          .call = rlang::caller_env(2)
         )
       }
     },

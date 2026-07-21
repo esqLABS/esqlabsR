@@ -251,10 +251,8 @@ validateProject <- function(project) {
 #
 # @keywords internal
 # @noRd
-.validateProject_impl <- function(self, private) {
-  # Attribute any abort to the public authoring function the user called
-  # (the free-function forwarder), not this internal `_impl`.
-  rlang::local_error_call(rlang::caller_env(2))
+.validateProject_impl <- function(self, private, .call) {
+  rlang::local_error_call(.call)
   results <- .runProjectValidation(self, sections = NULL)
 
   if (!isAnyCriticalErrors(results)) {

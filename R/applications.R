@@ -47,10 +47,8 @@ addApplication <- function(project, id, parameterSets = NULL) {
 #
 # @keywords internal
 # @noRd
-.addApplication_impl <- function(self, private, id, parameterSets = NULL) {
-  # Attribute any abort to the public authoring function the user called
-  # (the free-function forwarder), not this internal `_impl`.
-  rlang::local_error_call(rlang::caller_env(2))
+.addApplication_impl <- function(self, private, id, parameterSets = NULL, .call) {
+  rlang::local_error_call(.call)
   .assertIdVector(id)
   id <- .canonicalizeId(id)
   n <- length(id)
@@ -61,7 +59,7 @@ addApplication <- function(project, id, parameterSets = NULL) {
   if (length(clash) > 0L) {
     cli::cli_abort("application {.val {clash}} already exists")
   }
-  call <- rlang::caller_env(2)
+  call <- .call
   apps <- .collectCanonicalizedRefs(lapply(seq_len(n), function(i) {
     .buildApplicationEntry(self, perId[[i]], call = call)
   }))
@@ -95,10 +93,8 @@ removeApplication <- function(project, id) {
 #
 # @keywords internal
 # @noRd
-.removeApplication_impl <- function(self, private, id) {
-  # Attribute any abort to the public authoring function the user called
-  # (the free-function forwarder), not this internal `_impl`.
-  rlang::local_error_call(rlang::caller_env(2))
+.removeApplication_impl <- function(self, private, id, .call) {
+  rlang::local_error_call(.call)
   .assertIdVector(id)
   id <- .canonicalizeId(id)
 
@@ -151,11 +147,10 @@ setApplicationParameterSets <- function(
   self,
   private,
   id,
-  parameterSets
+  parameterSets,
+  .call
 ) {
-  # Attribute any abort to the public authoring function the user called
-  # (the free-function forwarder), not this internal `_impl`.
-  rlang::local_error_call(rlang::caller_env(2))
+  rlang::local_error_call(.call)
   .assertIdVector(id)
   id <- .canonicalizeId(id)
   n <- length(id)
@@ -165,7 +160,7 @@ setApplicationParameterSets <- function(
   }
   perId <- .wholeField(parameterSets, n)
 
-  call <- rlang::caller_env(2)
+  call <- .call
   resolved <- .collectCanonicalizedRefs(lapply(seq_len(n), function(i) {
     .resolveParameterSetRefs(self, perId[[i]], call = call)
   }))

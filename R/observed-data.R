@@ -233,10 +233,8 @@ loadObservedData <- function(project) {
 #
 # @keywords internal
 # @noRd
-.loadObservedData_impl <- function(self, private) {
-  # Attribute any abort to the public authoring function the user called
-  # (the free-function forwarder), not this internal `_impl`.
-  rlang::local_error_call(rlang::caller_env(2))
+.loadObservedData_impl <- function(self, private, .call) {
+  rlang::local_error_call(.call)
   if (
     is.null(self$definitions$observedData) ||
       length(self$definitions$observedData) == 0
@@ -304,14 +302,13 @@ getObservedDataNames <- function(project) {
 #
 # @keywords internal
 # @noRd
-.getObservedDataNames_impl <- function(self, private) {
-  # Attribute any abort to the public authoring function the user called
-  # (the free-function forwarder), not this internal `_impl`.
-  rlang::local_error_call(rlang::caller_env(2))
+.getObservedDataNames_impl <- function(self, private, .call) {
+  rlang::local_error_call(.call)
   if (!is.null(private$.observedDataNamesCache)) {
     return(private$.observedDataNamesCache)
   }
-  .loadObservedData_impl(self, private)
+  # Reentrant call: pass the attribution call on rather than re-resolving it.
+  .loadObservedData_impl(self, private, .call = .call)
   private$.observedDataNamesCache %||% character(0)
 }
 
@@ -339,13 +336,12 @@ addObservedData <- function(project, entry) {
 #
 # @keywords internal
 # @noRd
-.addObservedData_impl <- function(self, private, entry) {
-  # Attribute any abort to the public authoring function the user called
-  # (the free-function forwarder), not this internal `_impl`.
-  rlang::local_error_call(rlang::caller_env(2))
+.addObservedData_impl <- function(self, private, entry, .call) {
+  rlang::local_error_call(.call)
   if (inherits(entry, "DataSet")) {
     name <- entry$name
-    existingNames <- .getObservedDataNames_impl(self, private)
+    # Reentrant call: pass the attribution call on rather than re-resolving it.
+    existingNames <- .getObservedDataNames_impl(self, private, .call = .call)
     if (name %in% existingNames) {
       cli::cli_abort(
         "observedData entry with name {.val {name}} already exists"
@@ -452,10 +448,8 @@ removeObservedData <- function(project, id) {
 #
 # @keywords internal
 # @noRd
-.removeObservedData_impl <- function(self, private, id) {
-  # Attribute any abort to the public authoring function the user called
-  # (the free-function forwarder), not this internal `_impl`.
-  rlang::local_error_call(rlang::caller_env(2))
+.removeObservedData_impl <- function(self, private, id, .call) {
+  rlang::local_error_call(.call)
   .assertIdVector(id)
   observedData <- private$.getSection("observedData")
 
