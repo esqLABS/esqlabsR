@@ -295,11 +295,18 @@ runPI <- function(piTasks) {
       }
     )
 
-    # Assign startValue first: the minValue/maxValue setters validate against
-    # the current start value, which the constructor seeds from the model.
+    # The setters validate startValue and each bound against the other,
+    # model-seeded fields. Set startValue first, then the bounds in whichever
+    # order keeps each step valid. The sheet guarantees Min <= Start <= Max,
+    # so one order always works.
     piParam$startValue <- firstRow$StartValue
-    piParam$minValue <- firstRow$MinValue
-    piParam$maxValue <- firstRow$MaxValue
+    if (firstRow$MinValue >= piParam$maxValue) {
+      piParam$maxValue <- firstRow$MaxValue
+      piParam$minValue <- firstRow$MinValue
+    } else {
+      piParam$minValue <- firstRow$MinValue
+      piParam$maxValue <- firstRow$MaxValue
+    }
 
     piParams[[i]] <- piParam
   }
