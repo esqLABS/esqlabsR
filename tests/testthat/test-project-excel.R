@@ -551,22 +551,25 @@ test_that("importProjectFromExcel aborts on a workbook filename that escapes the
   )
 })
 
-test_that("importProjectFromExcel allows a ${VAR} configurationsFolder (escape hatch)", {
-  # A `${VAR}` value opts into an out-of-project location and is not subjected to
-  # the containment check. It resolves against the Excel directory when the
-  # variable is unset, so the import proceeds (the sections simply read from
-  # whichever workbooks exist there).
+test_that("importProjectFromExcel expands a ${VAR} configurationsFolder (escape hatch)", {
+  # A `${VAR}` value opts out of the containment check and is expanded against
+  # the environment. Point it at the fixture's own directory through the
+  # variable and confirm the sections actually import: an unexpanded literal
+  # would resolve to a nonexistent path and silently drop every section.
   work <- .excelFixtureWithProperty(
     "configurationsFolder",
     "${MY_CONFIGS}/Configurations"
   )
-  expect_no_error(
-    suppressWarnings(importProjectFromExcel(
-      file.path(work, "ProjectConfiguration.xlsx"),
-      outputDir = withr::local_tempdir(),
-      silent = TRUE
-    ))
-  )
+  withr::local_envvar(c(MY_CONFIGS = work))
+
+  jsonPath <- suppressWarnings(importProjectFromExcel(
+    file.path(work, "ProjectConfiguration.xlsx"),
+    outputDir = withr::local_tempdir(),
+    silent = TRUE
+  ))
+  project <- suppressWarnings(loadProject(jsonPath))
+  # The scenarios workbook under the env-var folder was read, not dropped.
+  expect_gt(length(project$definitions$scenarios), 0L)
 })
 
 # Pin the imported content to the known TestProjectExcel fixture rather than

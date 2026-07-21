@@ -109,6 +109,10 @@ importProjectFromExcel <- function(
   configsFolderRaw <- prop("configurationsFolder")
   configsFolder <- configsFolderRaw
   if (!is.null(configsFolder)) {
+    # Containment is judged on the raw (pre-expansion) value: a `${VAR}` opts
+    # into an out-of-project location and is exempt, everything else must stay
+    # under `pcDir`. Resolution then expands the variable and joins a relative
+    # value onto `pcDir`, matching `.clean_path()`'s expand-then-resolve order.
     declaresEnvVar <- grepl("\\$\\{?[A-Za-z_]", configsFolderRaw)
     if (!declaresEnvVar) {
       configsFolder <- .resolveProjectPath(
@@ -116,8 +120,11 @@ importProjectFromExcel <- function(
         pcDir,
         "configurationsFolder"
       )
-    } else if (!fs::is_absolute_path(configsFolder)) {
-      configsFolder <- file.path(pcDir, configsFolder)
+    } else {
+      configsFolder <- .replaceEnvVarPath(configsFolder)
+      if (!fs::is_absolute_path(configsFolder)) {
+        configsFolder <- file.path(pcDir, configsFolder)
+      }
     }
     configsFolder <- normalizePath(configsFolder, mustWork = FALSE)
   }

@@ -1229,8 +1229,10 @@
 # `containerPath` names the container file to write. `saveProject()` passes the
 # path the project was loaded from (`project$info$projectFilePath`), so a save
 # updates that file in place rather than writing a stray `Project.json` next to
-# a legacy-named container. `restoreProject()` and the Excel import pass a fresh
-# `file.path(dir, "Project.json")`, the canonical name for a new tree project.
+# a legacy-named container. `restoreProject()` passes a fresh
+# `file.path(dir, "Project.json")` (the canonical name for a new tree project),
+# and the Excel import passes the container it just wrote, named after the
+# source workbook (`<xlsx-stem>.json`).
 #
 # @keywords internal
 # @noRd

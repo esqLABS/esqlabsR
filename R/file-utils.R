@@ -137,6 +137,36 @@ readExcel <- function(path, sheet = NULL, ...) {
   .absoluteAgainstRoot(path, absRoot)
 }
 
+# Expand every `${VAR}` / `$VAR` reference in `path` against the environment,
+# leaving an unset variable's reference in place and never touching `$PATH`.
+# The one place the package's env-var-in-path contract lives; the `Project`
+# working-folder resolver (`.replace_env_var`) and the Excel-import folder
+# resolution both call it so they cannot drift.
+# @keywords internal
+# @noRd
+.replaceEnvVarPath <- function(path) {
+  if (length(path) == 0L) {
+    return(path)
+  }
+  pattern <- "\\$\\{?([A-Za-z_][A-Za-z0-9_]*)\\}?"
+  m <- gregexpr(pattern, path, perl = TRUE)
+  regmatches(path, m) <- lapply(regmatches(path, m), function(matches) {
+    vapply(
+      matches,
+      function(match) {
+        name <- sub(pattern, "\\1", match)
+        if (identical(name, "PATH")) {
+          return(match)
+        }
+        val <- Sys.getenv(name, unset = NA)
+        if (is.na(val)) match else val
+      },
+      character(1)
+    )
+  })
+  path
+}
+
 #' Write data to excel
 #'
 #' @details Uses `writexl::write_xlsx` to write data to excel. If the folder
