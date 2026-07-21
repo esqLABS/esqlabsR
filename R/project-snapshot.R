@@ -195,7 +195,15 @@ restoreProject <- function(snapshot, dir = ".", overwrite = FALSE) {
   # local is named `inMemory` (not `snapshotProject`) so it does not shadow the
   # exported `snapshotProject()` function.
   inMemory <- loadProject(canonFile)
-  containerPath <- .writeProjectTree(inMemory, dir)
+  # A restore materializes a brand-new tree project at `dir`, so it always
+  # writes the canonical `Project.json` container name (the default). Passing
+  # `inMemory`'s own `projectFilePath` would be wrong here: that is the
+  # throwaway `canonFile` this restore loaded from, not the destination.
+  containerPath <- .writeProjectTree(
+    inMemory,
+    dir,
+    containerPath = file.path(dir, "Project.json")
+  )
   restored <- loadProject(containerPath)
 
   # The overwrite replaced a live tree; any `Project` loaded from `dir` before
