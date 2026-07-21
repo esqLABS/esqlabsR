@@ -686,6 +686,56 @@ test_that("projectStatus() reports the Excel axis as NA (and warns) when the sid
   )
 })
 
+# Regression (#1125): a project with dangling references (the TestProjectExcel
+# fixture encodes application protocols as parameter-set sheets, so the imported
+# scenarios carry dangling `application` refs) exported back to Excel must not
+# hard-abort the status check. The dangling refs survive in mixed case and, on
+# the comparison's Excel re-import, collide under id canonicalization. The abort
+# is now caught and reported as the "cannot compare" NA state with a warning,
+# rather than propagating as a hard error out of `projectStatus()`.
+test_that("projectStatus() does not abort on a dangling-ref canonicalization collision", {
+  # Copy the dangling-ref fixture with the entry workbook named Project.xlsx, so
+  # the imported container is Project.json and the exported side-car stem matches
+  # what the status check derives.
+  work <- withr::local_tempdir()
+  file.copy(
+    list.files(
+      testthat::test_path("data", "TestProjectExcel"),
+      full.names = TRUE
+    ),
+    work,
+    recursive = TRUE
+  )
+  file.rename(
+    file.path(work, "ProjectConfiguration.xlsx"),
+    file.path(work, "Project.xlsx")
+  )
+
+  jsonPath <- suppressWarnings(importProjectFromExcel(
+    file.path(work, "Project.xlsx"),
+    outputDir = work,
+    silent = TRUE
+  ))
+  project <- suppressWarnings(loadProject(jsonPath))
+  suppressWarnings(exportProjectToExcel(
+    project,
+    outputDir = work,
+    silent = TRUE
+  ))
+
+  # Silent: no hard error; the collision surfaces as the NA "cannot compare"
+  # state, not an abort.
+  status <- suppressWarnings(projectStatus(project, silent = TRUE))
+  expect_identical(status$excel_in_sync, NA)
+
+  # Non-silent: the collision is reported as a comparison-failure warning, not
+  # thrown as an error.
+  expect_warning(
+    suppressMessages(projectStatus(project, silent = FALSE)),
+    "Cannot compare the Excel configuration files"
+  )
+})
+
 # A legacy Scenarios sheet may spell booleans as `1`/`0`, `Yes`/`No`, or
 # `true`/`false`; bare `as.logical()` turns the string forms into NA (silently
 # defaulting to FALSE downstream), so the parser must interpret them tolerantly.
