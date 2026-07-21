@@ -158,10 +158,8 @@ addIndividual <- function(project, id, species, ...) {
 #
 # @keywords internal
 # @noRd
-.addIndividual_impl <- function(self, private, id, species, ...) {
-  # Attribute any abort to the public authoring function the user called
-  # (the free-function forwarder), not this internal `_impl`.
-  rlang::local_error_call(rlang::caller_env(2))
+.addIndividual_impl <- function(self, private, id, species, ..., .call) {
+  rlang::local_error_call(.call)
   .assertIdVector(id)
   id <- .canonicalizeId(id)
   n <- length(id)
@@ -184,7 +182,7 @@ addIndividual <- function(project, id, species, ...) {
   if (length(clash) > 0L) {
     cli::cli_abort("individual {.val {clash}} already exists")
   }
-  call <- rlang::caller_env(2)
+  call <- .call
   entries <- .collectCanonicalizedRefs(lapply(seq_len(n), function(i) {
     .buildIndividualEntry(self, id[[i]], perDefinition[[i]], call = call)
   }))
@@ -347,10 +345,8 @@ removeIndividual <- function(project, id) {
 #
 # @keywords internal
 # @noRd
-.removeIndividual_impl <- function(self, private, id) {
-  # Attribute any abort to the public authoring function the user called
-  # (the free-function forwarder), not this internal `_impl`.
-  rlang::local_error_call(rlang::caller_env(2))
+.removeIndividual_impl <- function(self, private, id, .call) {
+  rlang::local_error_call(.call)
   .assertIdVector(id)
   id <- .canonicalizeId(id)
 
@@ -410,10 +406,8 @@ setIndividual <- function(project, id, ...) {
 #
 # @keywords internal
 # @noRd
-.setIndividual_impl <- function(self, private, id, ...) {
-  # Attribute any abort to the public authoring function the user called
-  # (the free-function forwarder), not this internal `_impl`.
-  rlang::local_error_call(rlang::caller_env(2))
+.setIndividual_impl <- function(self, private, id, ..., .call) {
+  rlang::local_error_call(.call)
   .assertIdVector(id)
   id <- .canonicalizeId(id)
   n <- length(id)
@@ -437,7 +431,7 @@ setIndividual <- function(project, id, ...) {
   # update); the engine carries every supplied field for each definition.
   suppliedNames <- names(dots)
 
-  call <- rlang::caller_env(2)
+  call <- .call
   entries <- .collectCanonicalizedRefs(lapply(seq_len(n), function(i) {
     .setOneIndividual(
       self,

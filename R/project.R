@@ -267,9 +267,8 @@ Project <- R6::R6Class(
       overwriteFormulasInSS = FALSE,
       readPopulationFromCSV = FALSE
     ) {
-      .addScenario_impl(
-        self,
-        private,
+      private$.impl(
+        .addScenario_impl,
         id,
         modelFile,
         individual,
@@ -290,101 +289,101 @@ Project <- R6::R6Class(
 
     #' @description Remove scenarios. See [removeScenario()].
     removeScenario = function(id) {
-      .removeScenario_impl(self, private, id)
+      private$.impl(.removeScenario_impl, id)
     },
 
     #' @description Modify fields of existing scenarios. See [setScenario()].
     #'   The `...` carries only the fields to change (partial update); a field
     #'   passed as `NULL` is cleared, an omitted field is left untouched.
     setScenario = function(id, ...) {
-      .setScenario_impl(self, private, id, ...)
+      private$.impl(.setScenario_impl, id, ...)
     },
 
     #' @description Rename a scenario. See [renameScenario()].
     renameScenario = function(id, newId) {
-      .renameScenario_impl(self, private, id, newId)
+      private$.impl(.renameScenario_impl, id, newId)
     },
 
     #' @description Duplicate a scenario. See [duplicateScenario()].
     duplicateScenario = function(id, newId) {
-      .duplicateScenario_impl(self, private, id, newId)
+      private$.impl(.duplicateScenario_impl, id, newId)
     },
 
     #' @description Create scenarios from PKML model files. See
     #'   [createScenariosFromPKML()].
     createScenariosFromPKML = function(pkmlFilePaths, ...) {
-      .createScenariosFromPKML_impl(self, private, pkmlFilePaths, ...)
+      private$.impl(.createScenariosFromPKML_impl, pkmlFilePaths, ...)
     },
 
     #' @description Add an individual. See [addIndividual()].
     addIndividual = function(...) {
-      .addIndividual_impl(self, private, ...)
+      private$.impl(.addIndividual_impl, ...)
     },
 
     #' @description Remove individuals. See [removeIndividual()].
     removeIndividual = function(id) {
-      .removeIndividual_impl(self, private, id)
+      private$.impl(.removeIndividual_impl, id)
     },
 
     #' @description Modify an existing individual. See [setIndividual()].
     setIndividual = function(...) {
-      .setIndividual_impl(self, private, ...)
+      private$.impl(.setIndividual_impl, ...)
     },
 
     #' @description Add a population. See [addPopulation()].
     addPopulation = function(...) {
-      .addPopulation_impl(self, private, ...)
+      private$.impl(.addPopulation_impl, ...)
     },
 
     #' @description Remove populations. See [removePopulation()].
     removePopulation = function(id) {
-      .removePopulation_impl(self, private, id)
+      private$.impl(.removePopulation_impl, id)
     },
 
     #' @description Modify an existing population. See [setPopulation()].
     setPopulation = function(...) {
-      .setPopulation_impl(self, private, ...)
+      private$.impl(.setPopulation_impl, ...)
     },
 
     #' @description Add an application. See [addApplication()].
     addApplication = function(id, parameterSets = NULL) {
-      .addApplication_impl(self, private, id, parameterSets)
+      private$.impl(.addApplication_impl, id, parameterSets)
     },
 
     #' @description Remove applications. See [removeApplication()].
     removeApplication = function(id) {
-      .removeApplication_impl(self, private, id)
+      private$.impl(.removeApplication_impl, id)
     },
 
     #' @description Set an application's parameter sets. See
     #'   [setApplicationParameterSets()].
     setApplicationParameterSets = function(id, parameterSets) {
-      .setApplicationParameterSets_impl(self, private, id, parameterSets)
+      private$.impl(.setApplicationParameterSets_impl, id, parameterSets)
     },
 
     #' @description Add an output path. See [addOutputPath()].
     addOutputPath = function(id, path) {
-      .addOutputPath_impl(self, private, id, path)
+      private$.impl(.addOutputPath_impl, id, path)
     },
 
     #' @description Remove output paths. See [removeOutputPath()].
     removeOutputPath = function(id) {
-      .removeOutputPath_impl(self, private, id)
+      private$.impl(.removeOutputPath_impl, id)
     },
 
     #' @description Modify an existing output path. See [setOutputPath()].
     setOutputPath = function(id, path) {
-      .setOutputPath_impl(self, private, id, path)
+      private$.impl(.setOutputPath_impl, id, path)
     },
 
     #' @description Add a parameter set. See [addParameterSet()].
     addParameterSet = function(id) {
-      .addParameterSet_impl(self, private, id)
+      private$.impl(.addParameterSet_impl, id)
     },
 
     #' @description Remove parameter sets. See [removeParameterSet()].
     removeParameterSet = function(id) {
-      .removeParameterSet_impl(self, private, id)
+      private$.impl(.removeParameterSet_impl, id)
     },
 
     #' @description Add an entry to a parameter set. See [addParameterEntry()].
@@ -395,9 +394,8 @@ Project <- R6::R6Class(
       value,
       units
     ) {
-      .addParameterEntry_impl(
-        self,
-        private,
+      private$.impl(
+        .addParameterEntry_impl,
         id,
         containerPath,
         parameterName,
@@ -409,9 +407,8 @@ Project <- R6::R6Class(
     #' @description Remove an entry from a parameter set. See
     #'   [removeParameterEntry()].
     removeParameterEntry = function(id, containerPath, parameterName) {
-      .removeParameterEntry_impl(
-        self,
-        private,
+      private$.impl(
+        .removeParameterEntry_impl,
         id,
         containerPath,
         parameterName
@@ -420,76 +417,76 @@ Project <- R6::R6Class(
 
     #' @description Add an initial-conditions set. See [addInitialConditions()].
     addInitialConditions = function(id) {
-      .addInitialConditions_impl(self, private, id)
+      private$.impl(.addInitialConditions_impl, id)
     },
 
     #' @description Remove initial-conditions sets. See
     #'   [removeInitialConditions()].
     removeInitialConditions = function(id) {
-      .removeInitialConditions_impl(self, private, id)
+      private$.impl(.removeInitialConditions_impl, id)
     },
 
     #' @description Add an entry to an initial-conditions set. See
     #'   [addInitialConditionEntry()].
     addInitialConditionEntry = function(id, path, value, unit) {
-      .addInitialConditionEntry_impl(self, private, id, path, value, unit)
+      private$.impl(.addInitialConditionEntry_impl, id, path, value, unit)
     },
 
     #' @description Remove an entry from an initial-conditions set. See
     #'   [removeInitialConditionEntry()].
     removeInitialConditionEntry = function(id, path) {
-      .removeInitialConditionEntry_impl(self, private, id, path)
+      private$.impl(.removeInitialConditionEntry_impl, id, path)
     },
 
     #' @description Add a plot. See [addPlot()].
     addPlot = function(...) {
-      .addPlot_impl(self, private, ...)
+      private$.impl(.addPlot_impl, ...)
     },
 
     #' @description Remove plots. See [removePlot()].
     removePlot = function(id) {
-      .removePlot_impl(self, private, id)
+      private$.impl(.removePlot_impl, id)
     },
 
     #' @description Add a plot grid. See [addPlotGrid()].
     addPlotGrid = function(...) {
-      .addPlotGrid_impl(self, private, ...)
+      private$.impl(.addPlotGrid_impl, ...)
     },
 
     #' @description Remove plot grids. See [removePlotGrid()].
     removePlotGrid = function(id) {
-      .removePlotGrid_impl(self, private, id)
+      private$.impl(.removePlotGrid_impl, id)
     },
 
     #' @description Add a data-combined entry. See [addDataCombined()].
     addDataCombined = function(id, simulated = list(), observed = list()) {
-      .addDataCombined_impl(self, private, id, simulated, observed)
+      private$.impl(.addDataCombined_impl, id, simulated, observed)
     },
 
     #' @description Remove data-combined entries. See [removeDataCombined()].
     removeDataCombined = function(id) {
-      .removeDataCombined_impl(self, private, id)
+      private$.impl(.removeDataCombined_impl, id)
     },
 
     #' @description Add observed data. See [addObservedData()].
     addObservedData = function(entry) {
-      .addObservedData_impl(self, private, entry)
+      private$.impl(.addObservedData_impl, entry)
     },
 
     #' @description Remove observed data. See [removeObservedData()].
     removeObservedData = function(id) {
-      .removeObservedData_impl(self, private, id)
+      private$.impl(.removeObservedData_impl, id)
     },
 
     #' @description Load the project's observed data. See [loadObservedData()].
     loadObservedData = function() {
-      .loadObservedData_impl(self, private)
+      private$.impl(.loadObservedData_impl)
     },
 
     #' @description Names of the project's observed data. See
     #'   [getObservedDataNames()].
     getObservedDataNames = function() {
-      .getObservedDataNames_impl(self, private)
+      private$.impl(.getObservedDataNames_impl)
     },
 
     #' @description Add a parameter-identification task. See [addPITask()].
@@ -500,9 +497,8 @@ Project <- R6::R6Class(
       outputMappings,
       configuration = list()
     ) {
-      .addPITask_impl(
-        self,
-        private,
+      private$.impl(
+        .addPITask_impl,
         id,
         scenarios,
         parameters,
@@ -513,7 +509,7 @@ Project <- R6::R6Class(
 
     #' @description Remove parameter-identification tasks. See [removePITask()].
     removePITask = function(id) {
-      .removePITask_impl(self, private, id)
+      private$.impl(.removePITask_impl, id)
     },
 
     #' @description Add a parameter to a PI task. See [addPIParameter()].
@@ -527,9 +523,8 @@ Project <- R6::R6Class(
       units = NULL,
       id = NULL
     ) {
-      .addPIParameter_impl(
-        self,
-        private,
+      private$.impl(
+        .addPIParameter_impl,
         task,
         path,
         scenarios,
@@ -543,7 +538,7 @@ Project <- R6::R6Class(
 
     #' @description Remove a parameter from a PI task. See [removePIParameter()].
     removePIParameter = function(task, id) {
-      .removePIParameter_impl(self, private, task, id)
+      private$.impl(.removePIParameter_impl, task, id)
     },
 
     #' @description Add an output mapping to a PI task. See
@@ -561,9 +556,8 @@ Project <- R6::R6Class(
       weight = NULL,
       id = NULL
     ) {
-      .addPIOutputMapping_impl(
-        self,
-        private,
+      private$.impl(
+        .addPIOutputMapping_impl,
         task,
         outputPath,
         observedData,
@@ -581,24 +575,24 @@ Project <- R6::R6Class(
     #' @description Remove an output mapping from a PI task. See
     #'   [removePIOutputMapping()].
     removePIOutputMapping = function(task, id) {
-      .removePIOutputMapping_impl(self, private, task, id)
+      private$.impl(.removePIOutputMapping_impl, task, id)
     },
 
     #' @description Save the project's in-memory edits to its on-disk tree. See
     #'   [saveProject()].
     save = function() {
-      .saveProject_impl(self, private)
+      private$.impl(.saveProject_impl)
     },
 
     #' @description Discard in-memory edits and re-read from disk. See
     #'   [reloadProject()].
     reload = function() {
-      .reloadProject_impl(self, private)
+      private$.impl(.reloadProject_impl)
     },
 
     #' @description Validate the project. See [validateProject()].
     validate = function() {
-      .validateProject_impl(self, private)
+      private$.impl(.validateProject_impl)
     },
 
     #' @description Package-internal pre-op validation gate. Runs targeted
@@ -1096,6 +1090,24 @@ Project <- R6::R6Class(
     # family) route every state change through them; the authoring logic lives
     # in `_impl()` free functions in the domain files, which receive `private`
     # from the calling method and reach the seam through it.
+
+    # Dispatch to a domain `_impl()`, resolving the error-attribution call once.
+    # Every public authoring method forwards here rather than calling its
+    # `_impl()` directly: `private$.impl(.addScenario_impl, id, modelFile, ...)`.
+    # This hands the impl its own `self` / `private`, plus the call env `.call`
+    # that any abort in the impl should be attributed to. `caller_env(2)` is
+    # read from this method's frame: one frame up is the public method that
+    # called `.impl()`, two frames up is the exported free function the user
+    # actually called (`addScenario()` etc.), so an abort reads
+    # `Error in \`addScenario()\`:`, never the internal `_impl`. The impl only
+    # installs the value it is handed (`rlang::local_error_call(.call)`); the
+    # depth arithmetic lives here, in one place, instead of being copied into
+    # every `_impl`. An impl that calls a sibling impl directly (the reentrant
+    # PKML and observed-data paths) does not route through `.impl()`; it threads
+    # its own `.call` on, so its attribution is unchanged.
+    .impl = function(fn, ...) {
+      fn(self, private, ..., .call = rlang::caller_env(2))
+    },
 
     # Read one definition section. Returns the plain backing list (NOT wrapped
     # in the read-only `DefinitionList` the public `project$<section>` getter

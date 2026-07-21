@@ -786,10 +786,8 @@ addPlot <- function(project, id, dataCombined, plotType, ...) {
 #
 # @keywords internal
 # @noRd
-.addPlot_impl <- function(self, private, id, dataCombined, plotType, ...) {
-  # Attribute any abort to the public authoring function the user called
-  # (the free-function forwarder), not this internal `_impl`.
-  rlang::local_error_call(rlang::caller_env(2))
+.addPlot_impl <- function(self, private, id, dataCombined, plotType, ..., .call) {
+  rlang::local_error_call(.call)
   .requireNonEmptyStringVector(id, "id")
   id <- .canonicalizeId(id)
   n <- length(id)
@@ -873,10 +871,8 @@ removePlot <- function(project, id) {
 #
 # @keywords internal
 # @noRd
-.removePlot_impl <- function(self, private, id) {
-  # Attribute any abort to the public authoring function the user called
-  # (the free-function forwarder), not this internal `_impl`.
-  rlang::local_error_call(rlang::caller_env(2))
+.removePlot_impl <- function(self, private, id, .call) {
+  rlang::local_error_call(.call)
   .requireNonEmptyStringVector(id, "id")
   id <- .canonicalizeId(id)
 
@@ -948,10 +944,8 @@ addPlotGrid <- function(project, id, plots, ...) {
 #
 # @keywords internal
 # @noRd
-.addPlotGrid_impl <- function(self, private, id, plots, ...) {
-  # Attribute any abort to the public authoring function the user called
-  # (the free-function forwarder), not this internal `_impl`.
-  rlang::local_error_call(rlang::caller_env(2))
+.addPlotGrid_impl <- function(self, private, id, plots, ..., .call) {
+  rlang::local_error_call(.call)
   .requireNonEmptyStringVector(id, "id")
   id <- .canonicalizeId(id)
   n <- length(id)
@@ -1032,10 +1026,8 @@ removePlotGrid <- function(project, id) {
 #
 # @keywords internal
 # @noRd
-.removePlotGrid_impl <- function(self, private, id) {
-  # Attribute any abort to the public authoring function the user called
-  # (the free-function forwarder), not this internal `_impl`.
-  rlang::local_error_call(rlang::caller_env(2))
+.removePlotGrid_impl <- function(self, private, id, .call) {
+  rlang::local_error_call(.call)
   .requireNonEmptyStringVector(id, "id")
   id <- .canonicalizeId(id)
 
@@ -1098,11 +1090,10 @@ addDataCombined <- function(
   private,
   id,
   simulated = list(),
-  observed = list()
+  observed = list(),
+  .call
 ) {
-  # Attribute any abort to the public authoring function the user called
-  # (the free-function forwarder), not this internal `_impl`.
-  rlang::local_error_call(rlang::caller_env(2))
+  rlang::local_error_call(.call)
   .requireNonEmptyStringVector(id, "id")
   id <- .canonicalizeId(id)
   n <- length(id)
@@ -1194,10 +1185,8 @@ removeDataCombined <- function(project, id) {
 #
 # @keywords internal
 # @noRd
-.removeDataCombined_impl <- function(self, private, id) {
-  # Attribute any abort to the public authoring function the user called
-  # (the free-function forwarder), not this internal `_impl`.
-  rlang::local_error_call(rlang::caller_env(2))
+.removeDataCombined_impl <- function(self, private, id, .call) {
+  rlang::local_error_call(.call)
   .requireNonEmptyStringVector(id, "id")
   id <- .canonicalizeId(id)
 
