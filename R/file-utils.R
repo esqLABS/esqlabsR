@@ -53,7 +53,7 @@ readExcel <- function(path, sheet = NULL, ...) {
   return(readxl::read_excel(
     path,
     sheet,
-    .name_repair = ~ vctrs::vec_as_names(..., repair = "unique", quiet = TRUE),
+    .name_repair = "unique_quiet",
     ...
   ))
 }
