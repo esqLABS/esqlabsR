@@ -602,6 +602,60 @@ test_that(".compareJsonToExcel does not count id canonicalization as drift", {
   expect_true(inSync$excel_in_sync)
 })
 
+# Regression (#1123): a dirty saveProject() on a normal tree project must not
+# flip the Excel axis's per-section verdicts. saveProject() writes the container
+# with the tree-owned sections emptied, and the old Excel comparison read that
+# emptied container raw, so a single unrelated edit made every definition section
+# look "out-of-sync". The reworked comparison serializes the in-memory project
+# instead, so the per-section verdicts are unchanged by a save that touched only
+# an unrelated field (any pre-existing round-trip drift stays exactly as it was,
+# and no new section drift appears). The overall verdict still turns out-of-sync
+# because the edited field genuinely changed.
+test_that("projectStatus() does not report false section drift after a dirty save", {
+  tp <- with_temp_project()
+  project <- tp$project
+
+  # Per-section verdict before the edit: the honest baseline (some sections of
+  # the example project may already differ through Excel round-trip lossiness).
+  before <- suppressWarnings(projectStatus(project, silent = TRUE))
+  statusBefore <- before$details$excel$file_status
+
+  # A single container-metadata edit, then save. No definition section changed.
+  project$info$description <- "edited after import"
+  suppressWarnings(saveProject(project))
+
+  after <- suppressWarnings(projectStatus(project, silent = TRUE))
+  statusAfter <- after$details$excel$file_status
+
+  # The save left every definition section's verdict exactly as it was: an
+  # emptied on-disk container no longer blinds the comparison into flagging
+  # untouched sections.
+  definitionSections <- c(
+    "observedData",
+    "outputPaths",
+    "scenarios",
+    "parameterSets",
+    "initialConditions",
+    "individuals",
+    "populations",
+    "applications",
+    "dataCombined",
+    "plots",
+    "plotGrids",
+    "parameterIdentification"
+  )
+  for (section in definitionSections) {
+    expect_identical(
+      statusAfter[[section]],
+      statusBefore[[section]],
+      info = section
+    )
+  }
+
+  # The edited field is what turns the overall verdict out-of-sync.
+  expect_identical(statusAfter$description, "out-of-sync")
+})
+
 # A corrupt or unreadable Excel side-car cannot be compared. The Excel axis of
 # projectStatus() must report that honestly as NA (the "cannot compare" state),
 # not silently claim the project is in sync, and must warn when not silent. The
