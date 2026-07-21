@@ -157,6 +157,35 @@ test_that("createPITasks throws error when parameter bounds are invalid", {
   )
 })
 
+test_that("createPITasks applies StartValue before validating bounds (#1135)", {
+  temp_project <- with_temp_project()
+  projectConfigurationLocal <- temp_project$config
+
+  # Bounds are internally valid (Min <= Start <= Max) but do NOT bracket the
+  # model's current Lipophilicity value (about -0.1), which is what the
+  # constructor seeds as the provisional start value.
+  sheets <- createValidPISheets()
+  sheets$PIParameters$MinValue <- 5
+  sheets$PIParameters$StartValue <- 7
+  sheets$PIParameters$MaxValue <- 10
+
+  .writeExcel(
+    data = sheets,
+    path = projectConfigurationLocal$parameterIdentificationFile
+  )
+
+  piTaskConfigurations <- readPITaskConfigurationFromExcel(
+    projectConfiguration = projectConfigurationLocal
+  )
+
+  expect_no_error(piTasks <- createPITasks(piTaskConfigurations))
+
+  firstParam <- piTasks[[1]]$parameters[[1]]
+  expect_equal(firstParam$startValue, 7)
+  expect_equal(firstParam$minValue, 5)
+  expect_equal(firstParam$maxValue, 10)
+})
+
 test_that("Same parameter across scenarios with different bounds in same group fails", {
   temp_project <- with_temp_project()
   projectConfigurationLocal <- temp_project$config

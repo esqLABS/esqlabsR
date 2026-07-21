@@ -10,6 +10,7 @@
 - `sensitivityCalculation()` now aligns baseline values by output path when computing percent change and sensitivity, fixing possible misalignment with multiple output paths (#1056).
 - `sensitivityCalculation()` no longer errors when all runs for a parameter fail; it now warns and omits that parameter from the results (#1056).
 - `sensitivityTornadoPlot()` now matches the `parameterFactor` and its reciprocal against the analysis results with a numerical tolerance, so user supplied reciprocal factors are no longer rejected due to floating point representation (#1056).
+- `createPITasks()` no longer rejects parameter bounds that exclude the model's current value, applying the sheet `StartValue` before validating them (#1140).
 
 # esqlabsR 5.7.0
 
