@@ -476,6 +476,99 @@ test_that("exportProjectToExcel aborts over existing workbooks unless overwrite 
   )
 })
 
+# Regression (#1139): the Excel-import paths come from the author-controlled
+# Property column, so they must be contained under the project folder the same
+# way #1034 contained the JSON-side read paths. A `configurationsFolder` or a
+# per-section workbook filename that escapes the project root (`../` climb or an
+# absolute path) aborts naming the field, while the `${VAR}` env-var form stays
+# a sanctioned escape hatch.
+
+# Copy the TestProjectExcel fixture and rewrite one Property in its
+# ProjectConfiguration.xlsx, returning the copied project directory.
+.excelFixtureWithProperty <- function(property, value, envir = parent.frame()) {
+  work <- withr::local_tempdir(.local_envir = envir)
+  file.copy(
+    list.files(
+      testthat::test_path("data", "TestProjectExcel"),
+      full.names = TRUE
+    ),
+    work,
+    recursive = TRUE
+  )
+  xlsx <- file.path(work, "ProjectConfiguration.xlsx")
+  df <- as.data.frame(readxl::read_excel(xlsx))
+  if (property %in% df$Property) {
+    df$Value[df$Property == property] <- value
+  } else {
+    df <- rbind(
+      df,
+      data.frame(Property = property, Value = value, Description = "")
+    )
+  }
+  writexl::write_xlsx(df, xlsx)
+  work
+}
+
+test_that("importProjectFromExcel aborts on a configurationsFolder that escapes the project", {
+  # Absolute escape.
+  workAbs <- .excelFixtureWithProperty("configurationsFolder", "/etc")
+  expect_error(
+    suppressWarnings(importProjectFromExcel(
+      file.path(workAbs, "ProjectConfiguration.xlsx"),
+      outputDir = withr::local_tempdir(),
+      silent = TRUE
+    )),
+    "configurationsFolder"
+  )
+
+  # Relative `../` climb escape.
+  workRel <- .excelFixtureWithProperty(
+    "configurationsFolder",
+    "../../../../etc"
+  )
+  expect_error(
+    suppressWarnings(importProjectFromExcel(
+      file.path(workRel, "ProjectConfiguration.xlsx"),
+      outputDir = withr::local_tempdir(),
+      silent = TRUE
+    )),
+    "configurationsFolder"
+  )
+})
+
+test_that("importProjectFromExcel aborts on a workbook filename that escapes the configurations folder", {
+  work <- .excelFixtureWithProperty(
+    "scenariosFile",
+    "../../../../secret.xlsx"
+  )
+  expect_error(
+    suppressWarnings(importProjectFromExcel(
+      file.path(work, "ProjectConfiguration.xlsx"),
+      outputDir = withr::local_tempdir(),
+      silent = TRUE
+    )),
+    "scenariosFile"
+  )
+})
+
+test_that("importProjectFromExcel allows a ${VAR} configurationsFolder (escape hatch)", {
+  # A `${VAR}` value opts into an out-of-project location and is not subjected to
+  # the containment check. It resolves against the Excel directory when the
+  # variable is unset, so the import proceeds (the sections simply read from
+  # whichever workbooks exist there).
+  work <- .excelFixtureWithProperty(
+    "configurationsFolder",
+    "${MY_CONFIGS}/Configurations"
+  )
+  expect_no_error(
+    suppressWarnings(importProjectFromExcel(
+      file.path(work, "ProjectConfiguration.xlsx"),
+      outputDir = withr::local_tempdir(),
+      silent = TRUE
+    ))
+  )
+})
+
 # Pin the imported content to the known TestProjectExcel fixture rather than
 # only comparing the import against itself. The fixture's canonical ids and the
 # two output-path literals are stable, so they can be asserted directly.

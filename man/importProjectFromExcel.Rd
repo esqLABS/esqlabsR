@@ -40,6 +40,12 @@ Excel file, e.g. \code{Project.xlsx} becomes \code{Project.json}) plus one file 
 definition in the \verb{definitions/} folder. The result is a ready-to-use
 project — \code{\link[=loadProject]{loadProject()}} can open it directly. This is the migration path
 from Excel-based projects to the JSON-primary workflow.
+
+The \code{configurationsFolder} and the per-section workbook filenames are read
+from the Excel file and must stay under the project folder: a value that
+escapes it (a \verb{../} climb or an absolute path) aborts naming the field. A
+folder deliberately placed outside the project with the \verb{$\{VAR\}}
+environment-variable form is still allowed.
 }
 \seealso{
 Other project persistence:

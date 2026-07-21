@@ -9,6 +9,12 @@
 #' project — [loadProject()] can open it directly. This is the migration path
 #' from Excel-based projects to the JSON-primary workflow.
 #'
+#' The `configurationsFolder` and the per-section workbook filenames are read
+#' from the Excel file and must stay under the project folder: a value that
+#' escapes it (a `../` climb or an absolute path) aborts naming the field. A
+#' folder deliberately placed outside the project with the `${VAR}`
+#' environment-variable form is still allowed.
+#'
 #' @param projectConfigPath Path to the `Project.xlsx` file.
 #'   Defaults to `"Project.xlsx"`.
 #' @param outputDir Directory where the JSON project is created. If `NULL`
@@ -91,23 +97,43 @@ importProjectFromExcel <- function(
       c("schemaVersion", "esqlabsRVersion", "name", "description")
   ]
 
-  # Resolve the configurations folder relative to the Excel file
-  configsFolder <- prop("configurationsFolder")
+  # Resolve the configurations folder relative to the Excel file. The
+  # `configurationsFolder` and the per-section workbook filenames come from the
+  # author-controlled Property column, so they are contained under the Excel
+  # project directory (`pcDir`) the same way the JSON-side read paths are
+  # contained under their working folders (see `.resolveWorkingFolder()` /
+  # `.resolveProjectPath()`): a crafted workbook cannot name a folder or file
+  # that escapes the project root via `../` or an absolute path. The `${VAR}`
+  # environment-variable form remains the sanctioned way to point at an
+  # out-of-project location, so a value that declares one is exempt.
+  configsFolderRaw <- prop("configurationsFolder")
+  configsFolder <- configsFolderRaw
   if (!is.null(configsFolder)) {
-    if (!fs::is_absolute_path(configsFolder)) {
+    declaresEnvVar <- grepl("\\$\\{?[A-Za-z_]", configsFolderRaw)
+    if (!declaresEnvVar) {
+      configsFolder <- .resolveProjectPath(
+        configsFolder,
+        pcDir,
+        "configurationsFolder"
+      )
+    } else if (!fs::is_absolute_path(configsFolder)) {
       configsFolder <- file.path(pcDir, configsFolder)
     }
     configsFolder <- normalizePath(configsFolder, mustWork = FALSE)
   }
 
-  # Helper to resolve a config file path
-  resolveConfigFile <- function(fileName) {
+  # Helper to resolve a config file path, contained under `configsFolder`.
+  resolveConfigFile <- function(fileName, fieldName = "configuration file") {
     if (is.null(fileName) || is.na(fileName) || fileName == "") {
       return(NULL)
     }
     if (is.null(configsFolder)) {
       return(NULL)
     }
+    # Abort if the author-controlled filename escapes the configurations folder
+    # (a `../`-climbing or absolute value); a legitimate missing file is left to
+    # the caller's own existence check, so containment must run before that.
+    .resolveProjectPath(fileName, configsFolder, fieldName)
     normalizePath(file.path(configsFolder, fileName), mustWork = FALSE)
   }
 
@@ -278,7 +304,10 @@ importProjectFromExcel <- function(
   )
 
   for (section in sections) {
-    file <- resolveConfigFile(propOrDefault(section$property))
+    file <- resolveConfigFile(
+      propOrDefault(section$property),
+      fieldName = section$property
+    )
     if (!is.null(file) && file.exists(file)) {
       jsonData <- section$parse(file, jsonData)
     }

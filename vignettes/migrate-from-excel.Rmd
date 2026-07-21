@@ -68,6 +68,7 @@ A few details about what the import does:
 * It resolves the configuration workbooks relative to the configurations folder recorded in the Excel file, and reads whichever exist. Missing workbooks are skipped.
 * The three former parameter-set sources are read into the single `parameterSets` collection. A duplicated id across sources is a collision; the import merges them regardless, and the collision later aborts the load (see "Caveats to check by hand").
 * The import replaces any JSON project already in `outputDir`: it rewrites the project file and reconciles the whole `definitions/` tree to the Excel content, which deletes any definition you authored only on the JSON side. To protect that work, the import aborts by default when a JSON project already exists in `outputDir`. Re-run it with `overwrite = TRUE` once you are sure you want the Excel state to win. This matters if you migrated once, then kept authoring in the JSON project: do not casually re-import over it.
+* The `configurationsFolder` and the per-workbook filenames recorded in the Excel file must stay under the project folder. A value that points outside it (a `../` climb or an absolute path) aborts the import naming the offending field, so a shared or downloaded Excel project cannot read a workbook from elsewhere on the machine. A folder deliberately kept outside the project (for example a shared drive) is still reachable through the `${VAR}` environment-variable form.
 
 ## Step 2: load the project
 
