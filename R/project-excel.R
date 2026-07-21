@@ -133,8 +133,8 @@ importProjectFromExcel <- function(
     # Abort if the author-controlled filename escapes the configurations folder
     # (a `../`-climbing or absolute value); a legitimate missing file is left to
     # the caller's own existence check, so containment must run before that.
-    .resolveProjectPath(fileName, configsFolder, fieldName)
-    normalizePath(file.path(configsFolder, fileName), mustWork = FALSE)
+    resolved <- .resolveProjectPath(fileName, configsFolder, fieldName)
+    normalizePath(resolved, mustWork = FALSE)
   }
 
   # Default config filenames for sections whose path property is omitted
@@ -329,12 +329,7 @@ importProjectFromExcel <- function(
   # non-empty `definitions/` tree already sits in `outputDir`.
   definitionsDir <- file.path(outputDir, "definitions")
   hasDefinitionTree <- dir.exists(definitionsDir) &&
-    length(list.files(
-      definitionsDir,
-      recursive = TRUE,
-      pattern = "\\.json$"
-    )) >
-      0L
+    any(grepl("\\.json$", list.files(definitionsDir, recursive = TRUE)))
   if (!overwrite && (file.exists(outputPath) || hasDefinitionTree)) {
     cli::cli_abort(messages$importWouldOverwriteProject(outputDir))
   }
