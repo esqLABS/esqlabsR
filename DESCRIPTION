@@ -43,8 +43,6 @@ Imports:
     tlf (>= 1.6.0),
     ospsuite.utils (>= 1.10.0),
     tools,
-    usethis,
-    vctrs,
     writexl
 Suggests:
     clipr,

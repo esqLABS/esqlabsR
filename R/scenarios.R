@@ -98,26 +98,16 @@ Scenario <- function(
   modelParameterSets = NULL,
   initialConditions = NULL
 ) {
-  rec <- stats::setNames(
-    vector("list", length(.scenarioFieldNames)),
-    .scenarioFieldNames
-  )
-  env <- environment()
-  for (n in .scenarioFieldNames) {
-    # `rec[n] <- list(value)` keeps NULL-valued slots so the record always
-    # carries the full 15-name shape regardless of which arguments are set.
-    rec[n] <- list(env[[n]])
-  }
-  structure(rec, class = c("Scenario", "list"))
+  # `mget()` reads every formal by name (the formals are exactly
+  # `.scenarioFieldNames`, in order), keeping NULL-valued slots so the record
+  # always carries the full shape regardless of which arguments are set.
+  structure(mget(.scenarioFieldNames), class = c("Scenario", "list"))
 }
 
 #' @exportS3Method
 #' @noRd
 as.list.Scenario <- function(x, ...) {
-  stats::setNames(
-    lapply(.scenarioFieldNames, function(n) x[[n]]),
-    .scenarioFieldNames
-  )
+  unclass(x)
 }
 
 #' @exportS3Method
@@ -566,25 +556,9 @@ print.Scenario <- function(x, ...) {
   # fields) or an internal `.setSection()` call. Reject any field the
   # serializer does not know, so a typo'd or stale field cannot be silently
   # dropped on write and then be absent on the next load. `simulationType` is
-  # the derived discriminant validated above; the rest mirror `.scenarioToJson`.
-  knownScenarioFields <- c(
-    "scenarioName",
-    "simulationType",
-    "individualId",
-    "populationId",
-    "readPopulationFromCSV",
-    "modelParameterSets",
-    "initialConditions",
-    "applicationProtocol",
-    "simulationTime",
-    "simulationTimeUnit",
-    "simulateSteadyState",
-    "steadyStateTime",
-    "steadyStateTimeUnit",
-    "overwriteFormulasInSS",
-    "modelFile",
-    "outputPaths"
-  )
+  # the derived discriminant validated above. The allowed set is exactly the
+  # `Scenario` record shape, `.scenarioFieldNames`.
+  knownScenarioFields <- .scenarioFieldNames
   unknown <- setdiff(names(sc), knownScenarioFields)
   if (length(unknown) > 0L) {
     cli::cli_abort(c(

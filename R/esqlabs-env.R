@@ -33,7 +33,7 @@ esqlabsRSettingNames <- enum(names(esqlabsEnv))
 #' getEsqlabsRSetting("packageVersion")
 #' getEsqlabsRSetting("packageName")
 getEsqlabsRSetting <- function(settingName) {
-  if (!(any(names(esqlabsEnv) == settingName))) {
+  if (!(settingName %in% names(esqlabsEnv))) {
     cli::cli_abort(messages$errorPackageSettingNotFound(
       settingName,
       esqlabsEnv
@@ -64,8 +64,8 @@ getEsqlabsRSetting <- function(settingName) {
   unsortedColors <- setdiff(unsortedColors, firstColors)
   # nrOfColors - 3 because the first three colors are already sampled
   nrPerColor <- floor((nrOfColors - 3) / 3)
-  firstColor <- seq(1, by = 3, length.out = floor(nrPerColor))
-  thirdColor <- rev(seq(3, by = 3, length.out = floor(nrPerColor)))
+  firstColor <- seq(1, by = 3, length.out = nrPerColor)
+  thirdColor <- rev(seq(3, by = 3, length.out = nrPerColor))
   secondColor <- setdiff(1:(nrOfColors - 3), c(firstColor, thirdColor))
   idxs <- c(firstColor, secondColor, thirdColor)
   sortedColors <- vector("character", length = nrOfColors - 3)
