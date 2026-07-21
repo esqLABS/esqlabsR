@@ -33,10 +33,8 @@ addOutputPath <- function(project, id, path) {
 #
 # @keywords internal
 # @noRd
-.addOutputPath_impl <- function(self, private, id, path) {
-  # Attribute any abort to the public authoring function the user called
-  # (the free-function forwarder), not this internal `_impl`.
-  rlang::local_error_call(rlang::caller_env(2))
+.addOutputPath_impl <- function(self, private, id, path, .call) {
+  rlang::local_error_call(.call)
   # Route the id-vector check through the shared helper every sibling add* uses,
   # then canonicalize and guard against an in-batch duplicate id (which would
   # otherwise silently overwrite an earlier entry keyed by the same id).
@@ -97,10 +95,8 @@ removeOutputPath <- function(project, id) {
 #
 # @keywords internal
 # @noRd
-.removeOutputPath_impl <- function(self, private, id) {
-  # Attribute any abort to the public authoring function the user called
-  # (the free-function forwarder), not this internal `_impl`.
-  rlang::local_error_call(rlang::caller_env(2))
+.removeOutputPath_impl <- function(self, private, id, .call) {
+  rlang::local_error_call(.call)
   .assertIdVector(id)
   id <- .canonicalizeId(id)
 
@@ -153,10 +149,8 @@ setOutputPath <- function(project, id, path) {
 #
 # @keywords internal
 # @noRd
-.setOutputPath_impl <- function(self, private, id, path) {
-  # Attribute any abort to the public authoring function the user called
-  # (the free-function forwarder), not this internal `_impl`.
-  rlang::local_error_call(rlang::caller_env(2))
+.setOutputPath_impl <- function(self, private, id, path, .call) {
+  rlang::local_error_call(.call)
   .assertIdVector(id)
   id <- .canonicalizeId(id)
   n <- length(id)

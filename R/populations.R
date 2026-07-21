@@ -383,11 +383,10 @@ addPopulation <- function(
   id,
   species,
   numberOfIndividuals,
-  ...
+  ...,
+  .call
 ) {
-  # Attribute any abort to the public authoring function the user called
-  # (the free-function forwarder), not this internal `_impl`.
-  rlang::local_error_call(rlang::caller_env(2))
+  rlang::local_error_call(.call)
   .assertIdVector(id)
   id <- .canonicalizeId(id)
   n <- length(id)
@@ -405,7 +404,7 @@ addPopulation <- function(
   if (length(clash) > 0L) {
     cli::cli_abort("population {.val {clash}} already exists")
   }
-  call <- rlang::caller_env(2)
+  call <- .call
   entries <- lapply(seq_len(n), function(i) {
     .buildPopulationEntry(id[[i]], perDefinition[[i]], call = call)
   })
@@ -550,10 +549,8 @@ removePopulation <- function(project, id) {
 #
 # @keywords internal
 # @noRd
-.removePopulation_impl <- function(self, private, id) {
-  # Attribute any abort to the public authoring function the user called
-  # (the free-function forwarder), not this internal `_impl`.
-  rlang::local_error_call(rlang::caller_env(2))
+.removePopulation_impl <- function(self, private, id, .call) {
+  rlang::local_error_call(.call)
   .assertIdVector(id)
   id <- .canonicalizeId(id)
 
@@ -614,10 +611,8 @@ setPopulation <- function(project, id, ...) {
 #
 # @keywords internal
 # @noRd
-.setPopulation_impl <- function(self, private, id, ...) {
-  # Attribute any abort to the public authoring function the user called
-  # (the free-function forwarder), not this internal `_impl`.
-  rlang::local_error_call(rlang::caller_env(2))
+.setPopulation_impl <- function(self, private, id, ..., .call) {
+  rlang::local_error_call(.call)
   .assertIdVector(id)
   id <- .canonicalizeId(id)
   n <- length(id)
@@ -633,7 +628,7 @@ setPopulation <- function(project, id, ...) {
   perDefinition <- .alignAuthoringArgs(id, scalarFields = dots)
   suppliedNames <- names(dots)
 
-  call <- rlang::caller_env(2)
+  call <- .call
   entries <- lapply(seq_len(n), function(i) {
     .setOnePopulation(
       self,

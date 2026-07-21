@@ -1122,11 +1122,10 @@ addPITask <- function(
   scenarios,
   parameters,
   outputMappings,
-  configuration = list()
+  configuration = list(),
+  .call
 ) {
-  # Attribute any abort to the public authoring function the user called
-  # (the free-function forwarder), not this internal `_impl`.
-  rlang::local_error_call(rlang::caller_env(2))
+  rlang::local_error_call(.call)
   errors <- character()
   if (!is.character(id) || length(id) != 1L || is.na(id) || nchar(id) == 0) {
     errors <- c(errors, "id must be a non-empty string")
@@ -1223,10 +1222,8 @@ removePITask <- function(project, id) {
 #
 # @keywords internal
 # @noRd
-.removePITask_impl <- function(self, private, id) {
-  # Attribute any abort to the public authoring function the user called
-  # (the free-function forwarder), not this internal `_impl`.
-  rlang::local_error_call(rlang::caller_env(2))
+.removePITask_impl <- function(self, private, id, .call) {
+  rlang::local_error_call(.call)
   .assertIdVector(id)
   id <- .canonicalizeId(id)
   missingIds <- setdiff(id, names(self$definitions$parameterIdentification))
@@ -1325,11 +1322,10 @@ addPIParameter <- function(
   maxValue,
   startValue,
   units = NULL,
-  id = NULL
+  id = NULL,
+  .call
 ) {
-  # Attribute any abort to the public authoring function the user called
-  # (the free-function forwarder), not this internal `_impl`.
-  rlang::local_error_call(rlang::caller_env(2))
+  rlang::local_error_call(.call)
   task <- .canonicalizeId(task)
   if (!(task %in% names(self$definitions$parameterIdentification))) {
     cli::cli_abort("PI task {.val {task}} not found")
@@ -1389,10 +1385,8 @@ removePIParameter <- function(project, task, id) {
 #
 # @keywords internal
 # @noRd
-.removePIParameter_impl <- function(self, private, task, id) {
-  # Attribute any abort to the public authoring function the user called
-  # (the free-function forwarder), not this internal `_impl`.
-  rlang::local_error_call(rlang::caller_env(2))
+.removePIParameter_impl <- function(self, private, task, id, .call) {
+  rlang::local_error_call(.call)
   task <- .canonicalizeId(task)
   if (!(task %in% names(self$definitions$parameterIdentification))) {
     cli::cli_abort("PI task {.val {task}} not found")
@@ -1481,11 +1475,10 @@ addPIOutputMapping <- function(
   xFactor = 1,
   yFactor = 1,
   weight = NULL,
-  id = NULL
+  id = NULL,
+  .call
 ) {
-  # Attribute any abort to the public authoring function the user called
-  # (the free-function forwarder), not this internal `_impl`.
-  rlang::local_error_call(rlang::caller_env(2))
+  rlang::local_error_call(.call)
   task <- .canonicalizeId(task)
   if (!(task %in% names(self$definitions$parameterIdentification))) {
     cli::cli_abort("PI task {.val {task}} not found")
@@ -1553,10 +1546,8 @@ removePIOutputMapping <- function(project, task, id) {
 #
 # @keywords internal
 # @noRd
-.removePIOutputMapping_impl <- function(self, private, task, id) {
-  # Attribute any abort to the public authoring function the user called
-  # (the free-function forwarder), not this internal `_impl`.
-  rlang::local_error_call(rlang::caller_env(2))
+.removePIOutputMapping_impl <- function(self, private, task, id, .call) {
+  rlang::local_error_call(.call)
   task <- .canonicalizeId(task)
   if (!(task %in% names(self$definitions$parameterIdentification))) {
     cli::cli_abort("PI task {.val {task}} not found")
