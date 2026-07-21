@@ -295,9 +295,11 @@ runPI <- function(piTasks) {
       }
     )
 
+    # Assign startValue first: the minValue/maxValue setters validate against
+    # the current start value, which the constructor seeds from the model.
+    piParam$startValue <- firstRow$StartValue
     piParam$minValue <- firstRow$MinValue
     piParam$maxValue <- firstRow$MaxValue
-    piParam$startValue <- firstRow$StartValue
 
     piParams[[i]] <- piParam
   }
