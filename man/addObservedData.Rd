@@ -20,6 +20,13 @@ Add an observedData entry. Accepts either a \code{DataSet} (creates a
 configuration list with \code{type} field (\code{"excel"}, \code{"pkml"}, or
 \code{"script"}) plus source-specific fields.
 }
+\details{
+A \code{DataSet} you pass lives in the R session until you save. On
+\code{\link[=saveProject]{saveProject()}} it is written to a PKML file named \verb{<DataSet name>.pkml}
+under the project's data folder and its entry becomes a \code{pkml} source, so
+the data survives a reload. Saving therefore needs a data folder to be
+declared in the project's file paths.
+}
 \seealso{
 Other observedData:
 \code{\link[=getObservedDataNames]{getObservedDataNames()}},

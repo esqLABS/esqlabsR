@@ -32,8 +32,8 @@ There are four source types, distinguished only by where the data comes from:
 
 - **`excel`** reads one or more sheets of an Excel workbook through an OSPS data-importer configuration.
 - **`pkml`** reads a `DataSet` saved to a PKML file.
-- **`script`** sources an R script that builds and returns a `DataSet` (or several). This is the reproducible programmatic path.
-- **`programmatic`** holds a `DataSet` you built in the current session. It lives only in memory and is not reproducible across a reload (see the caveat below).
+- **`script`** sources an R script that builds and returns a `DataSet` (or several), recomputing the data from code each time it is resolved.
+- **`programmatic`** holds a `DataSet` you built in the current session; on save it is written to a PKML file so it survives a reload (see "Source type 4" below).
 
 Throughout, scaffold a writable copy of the bundled example so the sources you add are written to a project you own, not the installed package:
 
@@ -114,7 +114,7 @@ The source definition is written to `definitions/observed-data/extra_cohort.pkml
 
 ## Source type 3: Script
 
-A `script` source names an R script that the package sources at load time. The script must return a `DataSet` or a list of `DataSet` objects. This is the most reproducible programmatic path: the data is regenerated from code every time, so it survives a reload and travels with the project. Write the script into the project (a `scripts/` subfolder of the data folder keeps it tidy), then declare it:
+A `script` source names an R script that the package sources at load time. The script must return a `DataSet` or a list of `DataSet` objects. The data is regenerated from code every time it is resolved, so a `script` source is the right choice when the data is computed (digitized points, a transformation of a raw file, a join across several inputs) rather than fixed: the recipe travels with the project and stays in step with its inputs. Write the script into the project (a `scripts/` subfolder of the data folder keeps it tidy), then declare it:
 
 ```{r}
 script_dir <- file.path(data_folder, "scripts")
@@ -136,9 +136,13 @@ addObservedData(project, list(type = "script", file = "scripts/literature_curve.
 
 The id of this source is the file basename, `literature_curve.R`, while the DataSet it produces is named `Digitized literature curve` (the name a DataCombined references). Because the script runs each time the data is resolved, anything you can compute in R (digitized points, a transformation of a raw file, a join across several inputs) becomes reproducible observed data.
 
+<div class="alert alert-warning">
+**Security.** A `script` source runs the R file it names on your machine, with `source()`, whenever the data is resolved. Any R code in that file executes. Treat a project the way you would treat a script someone sends you: only load and resolve observed data from a project you trust. The first time a session sources a `script` source, the package warns you that this is happening.
+</div>
+
 ## Source type 4: Programmatic
 
-`addObservedData()` also accepts a `DataSet` you have already built in the session. The package keeps that `DataSet` on the in-memory project and writes only a `{type: "programmatic", name}` sentinel to disk, because a live `DataSet` is not JSON-serializable. Build the `DataSet` as in the PKML example, then pass it directly:
+`addObservedData()` also accepts a `DataSet` you have already built in the session. Build it in R and pass it directly:
 
 ```{r}
 scratch <- ospsuite::DataSet$new(name = "Scratch measurement")
@@ -147,7 +151,16 @@ scratch$setValues(xValues = c(0, 1, 3), yValues = c(0, 6, 2))
 addObservedData(project, scratch)
 ```
 
-This is convenient for a quick exploration, but be aware of the trade-off: the sentinel records the name, not the data, so a `programmatic` source is **not reproducible across a reload**. If you load the project in a fresh session, the source is declared but the `DataSet` behind it is gone. `addObservedData()` reminds you of this and recommends the `script` alternative, which is the reproducible way to express the same intent. Prefer a `script` source for anything you want to keep.
+Until you save, that `DataSet` lives on the in-memory project and the entry on disk is a `{type: "programmatic", name}` sentinel. On `saveProject()` the package writes the `DataSet` to a PKML file named after it (`Scratch measurement.pkml`) under the data folder and rewrites the entry to a `pkml` source. From then on it is an ordinary file-backed source: it survives a reload, and its remove id becomes the PKML file basename rather than the DataSet name.
+
+Because saving turns a `programmatic` source into a `pkml` file, the data folder must be declared before you save; a project with no data folder cannot write the PKML and stops with a clear message. A `programmatic` sentinel that reaches a fresh session without its `DataSet` (a hand-authored declaration, or a project opened before it was ever saved) resolves to nothing, and the load warns you by name so it never vanishes silently.
+
+## Choosing between `script` and `programmatic`
+
+Both survive a reload, so the choice is not about persistence:
+
+- Reach for **`programmatic`** (or `pkml`) for fixed measured data you already have. Nothing runs when the data is resolved: the values are read back from a file. This is the safe default.
+- Reach for **`script`** only when the data must be *derived* (recomputed from inputs each time), so the recipe stays in step with its inputs. The cost is that a `script` source executes arbitrary R when it is resolved (see the security note above), so use it only in a project you trust.
 
 ## Removing a source
 

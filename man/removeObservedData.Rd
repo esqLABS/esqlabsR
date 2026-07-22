@@ -10,20 +10,27 @@ removeObservedData(project, id)
 \item{project}{A \code{Project} object.}
 
 \item{id}{Character vector of ids. An observed-data id comes from the data
-source (an OSPS \code{DataSet} name or a file basename) and is matched
-verbatim, not canonicalized.}
+source (the \code{DataSet} name of an unsaved programmatic source, or a file
+basename for a file-based source) and is matched verbatim, not
+canonicalized. A saved programmatic source is matched by its \verb{<name>.pkml}
+basename (see the note above).}
 }
 \value{
 The \code{project} object, invisibly.
 }
 \description{
-Removes by DataSet name (for \code{type = "programmatic"} entries) or by
-\code{file} basename (for \code{type} \code{"excel"} / \code{"pkml"} / \code{"script"}
-entries). Vectorizes over a vector of ids, removing each in one in-memory
-update; persist with \code{\link[=saveProject]{saveProject()}}. Warns and skips any id with no
-matching entry.
+Removes by DataSet name (for a \code{type = "programmatic"} entry that has not
+been saved yet) or by \code{file} basename (for \code{type} \code{"excel"} / \code{"pkml"} /
+\code{"script"} entries). Vectorizes over a vector of ids, removing each in one
+in-memory update; persist with \code{\link[=saveProject]{saveProject()}}. Warns and skips any id with
+no matching entry.
 }
 \details{
+Note a programmatic source changes its id once saved: \code{\link[=saveProject]{saveProject()}} writes
+the \code{DataSet} to \verb{<name>.pkml} and rewrites the entry as a \code{pkml} source, so
+after a save you remove it by that file basename (\code{"<name>.pkml"}), not by the
+original \code{DataSet} name.
+
 Unlike the other authoring functions, \code{addObservedData()} is not
 vectorized over ids: its second argument is a \code{DataSet} or a configuration
 list, not an id, so it adds a single source per call. Add several sources

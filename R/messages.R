@@ -989,10 +989,57 @@ messages$observedDataScriptWrongReturnType <- function(filePath, klass) {
   ))
 }
 
+messages$observedDataScriptSourcing <- function(filePath) {
+  cliFormat("Sourcing observed-data script: {.path {filePath}}")
+}
+
+messages$observedDataScriptSecurityWarn <- function() {
+  cli::format_message(c(
+    "!" = "This project runs an R script to build observed data, executing arbitrary R code on your machine.",
+    "i" = "Only resolve observed data from a project you trust. See {.help esqlabsR::loadObservedData} for details.",
+    "i" = "This warning is shown once per session."
+  ))
+}
+
+messages$observedDataProgrammaticUnresolved <- function(names) {
+  cli::format_message(c(
+    "!" = "{length(names)} programmatic observed-data source{?s} resolved to no data: {.val {names}}.",
+    "i" = "A programmatic source holds its {.cls DataSet} only in the session that added it; it is not saved to disk.",
+    "i" = "Re-add {cli::qty(names)}{?it/them} with {.fn addObservedData} in this session, or declare {?it/them} as a {.code script} or {.code pkml} source to persist across a reload."
+  ))
+}
+
 messages$observedDataDataFolderNotDeclared <- function(file) {
   cliFormat(
     "{.field dataFolder} is not declared in {.code filePaths}; cannot resolve {.path {file}}."
   )
+}
+
+messages$observedDataProgrammaticAdded <- function(name, hasDataFolder = TRUE) {
+  saveNote <- if (hasDataFolder) {
+    "On {.fn saveProject} it is written to {.path {paste0(name, '.pkml')}} under the data folder, so it survives a reload."
+  } else {
+    "Declare a {.field dataFolder} in {.code filePaths} before saving: {.fn saveProject} writes it to a PKML file there so it survives a reload, and aborts if no data folder is declared."
+  }
+  cli::format_message(c(
+    "i" = "Added programmatic observed-data source {.val {name}}. It lives in this session until you save.",
+    "i" = saveNote
+  ))
+}
+
+messages$observedDataPersistNoDataFolder <- function(name) {
+  cli::format_message(c(
+    "x" = "Cannot save the programmatic observed-data source {.val {name}}: {.field dataFolder} is not declared in {.code filePaths}.",
+    "i" = "A programmatic source is written to a PKML file under {.field dataFolder} on save. Declare {.field dataFolder}, then save again."
+  ))
+}
+
+messages$observedDataPersistIdCollision <- function(ids) {
+  cli::format_message(c(
+    "x" = "Saving a programmatic observed-data source would overwrite another source: {.file {ids}}.",
+    "i" = "A programmatic source is written to {.file <name>.pkml}; this clashes with an existing source filed under the same name.",
+    "i" = "Rename the {.cls DataSet} (its {.field name}) so the file names differ."
+  ))
 }
 
 messages$projectPathEscapesRoot <- function(fieldName, path, root) {

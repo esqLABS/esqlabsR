@@ -209,13 +209,24 @@ print.ObservedDataSource <- function(x, ...) {
 #' types: `excel` (via importer configuration), `pkml`, `script`, and
 #' `programmatic`. A `programmatic` declaration is a sentinel for a
 #' `DataSet` added at runtime with [addObservedData()]; its data lives in
-#' the session (not on disk), so it is resolved from the in-memory store
-#' and is not reproducible across a reload. Prefer a `script` source for a
-#' reproducible programmatic data set.
+#' the session until you save, and [saveProject()] persists it to a PKML
+#' file and rewrites the entry as a `pkml` source. A `programmatic` sentinel
+#' read from disk with no matching in-session `DataSet` (a hand-authored
+#' declaration, or a project opened before it was ever saved) resolves to
+#' nothing, and the load warns you by name.
 #'
 #' @param project A `Project` object (see [loadProject()]).
 #' @returns A named list of [`ospsuite::DataSet`] objects. Empty list when
 #'   `observedData` definitions is empty or `NULL`.
+#'
+#' @section Security:
+#'   A `script` observed-data source runs the R file it names, with
+#'   `source()`, on your machine when the data is resolved. Any R code in
+#'   that file executes, so treat a project the same way you would treat a
+#'   script someone sends you: only load and resolve observed data from a
+#'   project you trust. This applies to `loadObservedData()` and to anything
+#'   that resolves observed data for you, such as [createDataCombined()].
+#'
 #' @examples
 #' \dontrun{
 #' project <- loadProject("path/to/Project.json")
@@ -249,7 +260,11 @@ loadObservedData <- function(project) {
       entry$type,
       "excel" = .loadObservedExcel(entry, self$paths$dataFolder),
       "pkml" = .loadObservedPkml(entry, self$paths$dataFolder),
-      "script" = .loadObservedScript(entry, self$paths$dataFolder),
+      "script" = .loadObservedScript(
+        entry,
+        self$paths$dataFolder,
+        projectKey = .projectWarningKey(self)
+      ),
       "programmatic" = NULL
     )
     if (!is.null(dataSets)) {
@@ -261,8 +276,59 @@ loadObservedData <- function(project) {
     allDataSets,
     private$.programmaticDataSets
   )
+  # A `programmatic` sentinel resolves to nothing unless this session added its
+  # DataSet: the data lives only in the runtime store, so a sentinel read from
+  # disk (a reload, or a project opened elsewhere) has no backing DataSet and
+  # would silently vanish from the result. Warn by name so the drop is loud
+  # instead of surfacing later as an obscure dangling DataCombined reference.
+  unresolved <- .unresolvedProgrammaticNames(
+    self$definitions$observedData,
+    names(allDataSets)
+  )
+  if (length(unresolved) > 0) {
+    # `.loadObservedData_impl()` is reentered often (from `getObservedDataNames()`
+    # and `addObservedData()`, and on every `createDataCombined()`/`createPlots()`),
+    # so throttle to once per session per project rather than firing on every call.
+    cli::cli_warn(
+      messages$observedDataProgrammaticUnresolved(unresolved),
+      .frequency = "once",
+      .frequency_id = paste0(
+        "esqlabsR_observed_data_unresolved_programmatic_",
+        .projectWarningKey(self)
+      )
+    )
+  }
   private$.observedDataNamesCache <- names(allDataSets)
   allDataSets
+}
+
+# A stable per-project key for once-per-session warning frequency ids, so a
+# throttled warning fires once per project rather than once globally: two
+# projects in the same session each get their own warning. Falls back to a
+# constant for a session-only project (no file on disk to key on).
+#
+# @keywords internal
+# @noRd
+.projectWarningKey <- function(self) {
+  self$info$projectFilePath %||% "session"
+}
+
+# Names of `programmatic` sentinels with no backing DataSet in the resolved set
+# (their data was never added this session, or was lost across a reload).
+#
+# @keywords internal
+# @noRd
+.unresolvedProgrammaticNames <- function(observedData, resolvedNames) {
+  programmatic <- Filter(
+    function(e) identical(e$type, "programmatic"),
+    observedData
+  )
+  names <- vapply(
+    programmatic,
+    function(e) e$name %||% NA_character_,
+    character(1)
+  )
+  setdiff(names[!is.na(names)], resolvedNames)
 }
 
 # Merge a batch of loaded DataSets into the accumulator, aborting on a name
@@ -321,6 +387,12 @@ getObservedDataNames <- function(project) {
 #' configuration list with `type` field (`"excel"`, `"pkml"`, or
 #' `"script"`) plus source-specific fields.
 #'
+#' A `DataSet` you pass lives in the R session until you save. On
+#' [saveProject()] it is written to a PKML file named `<DataSet name>.pkml`
+#' under the project's data folder and its entry becomes a `pkml` source, so
+#' the data survives a reload. Saving therefore needs a data folder to be
+#' declared in the project's file paths.
+#'
 #' @param project A `Project` object.
 #' @param entry Either a `DataSet` object or a configuration list.
 #' @returns The `project` object, invisibly.
@@ -340,6 +412,11 @@ addObservedData <- function(project, entry) {
   rlang::local_error_call(.call)
   if (inherits(entry, "DataSet")) {
     name <- entry$name
+    # The DataSet name becomes the PKML file basename (`<name>.pkml`) when the
+    # project is saved, so reject a name that is not a safe filename segment now
+    # (a `/` in the name, e.g. from a unit like "mg/kg", would otherwise fail
+    # later with an opaque low-level path error at save).
+    .validateObservedDataId(paste0(name, ".pkml"))
     # Reentrant call: pass the attribution call on rather than re-resolving it.
     existingNames <- .getObservedDataNames_impl(self, private, .call = .call)
     if (name %in% existingNames) {
@@ -360,13 +437,9 @@ addObservedData <- function(project, entry) {
     # The observedData setter resets the names cache, so rebuild it after the
     # write, from the names known before it plus the newly added name.
     private$.observedDataNamesCache <- c(existingNames, name)
-    cli::cli_inform(c(
-      "i" = paste0(
-        "For reproducibility, consider declaring this DataSet via a ",
-        "script in your Project.json using the {.field observedData} ",
-        "field with {.code type = \"script\"} and ",
-        "{.code file = \"scripts/your_script.R\"}."
-      )
+    cli::cli_inform(messages$observedDataProgrammaticAdded(
+      name,
+      hasDataFolder = !is.null(self$paths$dataFolder)
     ))
     return(invisible(self))
   }
@@ -421,11 +494,16 @@ addObservedData <- function(project, entry) {
 
 #' Remove one or more observed-data sources from a Project
 #'
-#' Removes by DataSet name (for `type = "programmatic"` entries) or by
-#' `file` basename (for `type` `"excel"` / `"pkml"` / `"script"`
-#' entries). Vectorizes over a vector of ids, removing each in one in-memory
-#' update; persist with [saveProject()]. Warns and skips any id with no
-#' matching entry.
+#' Removes by DataSet name (for a `type = "programmatic"` entry that has not
+#' been saved yet) or by `file` basename (for `type` `"excel"` / `"pkml"` /
+#' `"script"` entries). Vectorizes over a vector of ids, removing each in one
+#' in-memory update; persist with [saveProject()]. Warns and skips any id with
+#' no matching entry.
+#'
+#' Note a programmatic source changes its id once saved: [saveProject()] writes
+#' the `DataSet` to `<name>.pkml` and rewrites the entry as a `pkml` source, so
+#' after a save you remove it by that file basename (`"<name>.pkml"`), not by the
+#' original `DataSet` name.
 #'
 #' Unlike the other authoring functions, `addObservedData()` is not
 #' vectorized over ids: its second argument is a `DataSet` or a configuration
@@ -434,8 +512,10 @@ addObservedData <- function(project, entry) {
 #'
 #' @param project A `Project` object.
 #' @param id Character vector of ids. An observed-data id comes from the data
-#'   source (an OSPS `DataSet` name or a file basename) and is matched
-#'   verbatim, not canonicalized.
+#'   source (the `DataSet` name of an unsaved programmatic source, or a file
+#'   basename for a file-based source) and is matched verbatim, not
+#'   canonicalized. A saved programmatic source is matched by its `<name>.pkml`
+#'   basename (see the note above).
 #' @returns The `project` object, invisibly.
 #' @export
 #' @family observedData
@@ -610,11 +690,20 @@ removeObservedData <- function(project, id) {
   stats::setNames(list(ds), ds$name)
 }
 
-.loadObservedScript <- function(entry, dataFolder) {
+.loadObservedScript <- function(entry, dataFolder, projectKey = "") {
   filePath <- .resolveDataPath(entry$file, dataFolder)
-  cli::cli_inform(c(
-    "i" = "Sourcing observed-data script: {.path {filePath}}"
-  ))
+  # A script source executes arbitrary R (see the loadObservedData() Security
+  # section). Warn the user that this is happening, once per session per project
+  # so a project with several script sources, or a repeated resolve, stays quiet
+  # after the first. The per-project key means a second, untrusted project in the
+  # same session still gets its own warning rather than being silenced by a
+  # trusted project that already tripped a global gate.
+  cli::cli_warn(
+    messages$observedDataScriptSecurityWarn(),
+    .frequency = "once",
+    .frequency_id = paste0("esqlabsR_observed_data_script_source_", projectKey)
+  )
+  cli::cli_inform(messages$observedDataScriptSourcing(filePath))
   result <- source(filePath, local = TRUE)$value
   if (inherits(result, "DataSet")) {
     return(stats::setNames(list(result), result$name))
@@ -633,4 +722,93 @@ removeObservedData <- function(project, id) {
   cli::cli_abort(
     messages$observedDataScriptWrongReturnType(filePath, class(result)[[1]])
   )
+}
+
+# Persist every session-added programmatic DataSet to a PKML file next to the
+# project, so it survives a reload. Called from the save path before the tree is
+# written: for each `programmatic` entry whose DataSet is in the runtime store,
+# write `<dataFolder>/<name>.pkml` and rewrite the section entry to a `pkml`
+# source pointing at that file. A programmatic entry with no DataSet in the store
+# (an orphan sentinel read from disk) is left untouched.
+#
+# Returns the character vector of persisted DataSet names; the caller drops these
+# from the runtime store only after the whole save commits, so an abort partway
+# through the tree write leaves the DataSet recoverable (worst case is an orphan
+# PKML file, never lost data).
+#
+# @keywords internal
+# @noRd
+.persistProgrammaticObservedData <- function(self, private) {
+  observedData <- private$.getSection("observedData")
+  toPersist <- which(vapply(
+    observedData,
+    function(e) {
+      # A hand-authored `programmatic` sentinel may carry no `name`; guard it
+      # before indexing the store (`store[[NULL]]` aborts). A name-less sentinel
+      # has no backing DataSet, so it is left untouched, matching this function's
+      # orphan-sentinel contract.
+      identical(e$type, "programmatic") &&
+        !is.null(e$name) &&
+        !is.null(private$.programmaticDataSets[[e$name]])
+    },
+    logical(1)
+  ))
+  if (length(toPersist) == 0) {
+    return(character(0))
+  }
+
+  dataFolder <- self$paths$dataFolder
+  if (is.null(dataFolder)) {
+    cli::cli_abort(messages$observedDataPersistNoDataFolder(
+      observedData[[toPersist[[1]]]]$name
+    ))
+  }
+
+  # Rewrite the whole section in memory and validate it clean BEFORE writing any
+  # PKML file, so a save that aborts (an unsafe name, or a basename that collides
+  # with another source's on-disk id) never overwrites an existing file: every
+  # write below is known to land on a fresh, collision-free path. This upholds
+  # the all-or-nothing save contract for the on-disk data files, not just the
+  # definition tree.
+  persistedNames <- vapply(
+    observedData[toPersist],
+    function(e) e$name,
+    character(1)
+  )
+  fileNames <- paste0(persistedNames, ".pkml")
+  for (i in seq_along(toPersist)) {
+    observedData[[toPersist[[i]]]] <- .asObservedDataSource(list(
+      type = "pkml",
+      file = fileNames[[i]]
+    ))
+  }
+  # Same checks the serializer runs, but up front: each id a safe filename
+  # segment, and no two entries sharing an id.
+  ids <- vapply(observedData, .observedDataEntryId, character(1))
+  lapply(ids, .validateObservedDataId)
+  duplicates <- unique(ids[duplicated(ids)])
+  if (length(duplicates) > 0) {
+    cli::cli_abort(messages$observedDataPersistIdCollision(duplicates))
+  }
+
+  # Materialize the folder (a from-scratch project may declare one that has no
+  # directory on disk yet), then write each PKML now that the batch is safe.
+  if (!dir.exists(dataFolder)) {
+    dir.create(dataFolder, recursive = TRUE, showWarnings = FALSE)
+  }
+  for (i in seq_along(toPersist)) {
+    filePath <- .resolveProjectPath(fileNames[[i]], dataFolder, "file")
+    ospsuite::saveDataSetToPKML(
+      private$.programmaticDataSets[[persistedNames[[i]]]],
+      filePath
+    )
+  }
+
+  private$.setSection("observedData", observedData)
+  # `.setSection("observedData", ...)` already reset the names cache; the entries
+  # still resolve to the same DataSet names (now from PKML), so a rebuild on the
+  # next read is correct. The runtime-store entries stay until the whole save
+  # commits (dropped by the caller after the tree write succeeds), so a save that
+  # aborts mid-tree-write leaves the DataSet recoverable rather than lost.
+  persistedNames
 }
