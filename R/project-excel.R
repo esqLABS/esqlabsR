@@ -32,7 +32,7 @@
 #' @return Invisibly returns the path to the created project file (the
 #'   `Project.json`).
 #' @export
-#' @family project persistence
+#' @family projectPersistence
 importProjectFromExcel <- function(
   projectConfigPath = "Project.xlsx",
   outputDir = NULL,
@@ -412,7 +412,7 @@ importProjectFromExcel <- function(
 #' @return Invisibly returns the path to the created
 #'   `Project.xlsx`.
 #' @export
-#' @family project persistence
+#' @family projectPersistence
 exportProjectToExcel <- function(
   project,
   outputDir = NULL,
@@ -802,7 +802,7 @@ exportProjectToExcel <- function(
 #' @returns Invisibly, a `list(tree_in_sync, excel_in_sync, details)` (see
 #'   the `status` field of [Project]).
 #' @export
-#' @family project persistence
+#' @family projectPersistence
 #' @seealso [saveProject()], [reloadProject()], [exportProjectToExcel()],
 #'   [importProjectFromExcel()].
 #' @examples

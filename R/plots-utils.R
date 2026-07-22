@@ -148,7 +148,7 @@ col2hsv <- function(color) {
 #' @examples
 #' createEsqlabsPlotConfiguration()
 #'
-#' @family create-plotting-configurations
+#' @family createPlottingConfigurations
 #'
 #' @export
 createEsqlabsPlotConfiguration <- function() {
@@ -208,7 +208,7 @@ createEsqlabsPlotConfiguration <- function() {
 #' @examples
 #' createEsqlabsPlotGridConfiguration()
 #'
-#' @family create-plotting-configurations
+#' @family createPlottingConfigurations
 #'
 #' @export
 createEsqlabsPlotGridConfiguration <- function() {

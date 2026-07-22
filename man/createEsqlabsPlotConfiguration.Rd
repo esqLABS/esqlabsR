@@ -21,7 +21,7 @@ createEsqlabsPlotConfiguration()
 
 }
 \seealso{
-Other create-plotting-configurations:
+Other createPlottingConfigurations:
 \code{\link[=createEsqlabsPlotGridConfiguration]{createEsqlabsPlotGridConfiguration()}}
 }
-\concept{create-plotting-configurations}
+\concept{createPlottingConfigurations}

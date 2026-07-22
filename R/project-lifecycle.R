@@ -16,7 +16,7 @@
 #'
 #' @returns Object of type `Project`
 #' @export
-#' @family project persistence
+#' @family projectPersistence
 #' @seealso [saveProject()], [reloadProject()], [snapshotProject()],
 #'   [restoreProject()], [projectStatus()].
 #'
@@ -83,7 +83,7 @@ loadProject <- function(path = "Project.json") {
 #'
 #' @returns Invisibly, the `project`.
 #' @export
-#' @family project persistence
+#' @family projectPersistence
 #' @seealso [loadProject()], [reloadProject()], [snapshotProject()],
 #'   [restoreProject()], [projectStatus()].
 #' @examples
@@ -165,7 +165,7 @@ saveProject <- function(project) {
 #'
 #' @returns Invisibly, the `project`, with unsaved changes discarded.
 #' @export
-#' @family project persistence
+#' @family projectPersistence
 #' @seealso [loadProject()], [saveProject()], [snapshotProject()],
 #'   [restoreProject()], [projectStatus()].
 #' @examples
@@ -298,7 +298,7 @@ isProjectInitialized <- function(destination = ".") {
 #' @returns Invisibly returns `destination`, the path the project was
 #'   initialized in.
 #' @export
-#' @family project persistence
+#' @family projectPersistence
 initProject <- function(
   destination = ".",
   type = c("minimal", "example"),
@@ -506,7 +506,7 @@ initProject <- function(
 #' @returns A string representing the path to the example
 #'   `Project.json` file shipped with the package.
 #' @export
-#' @family project persistence
+#' @family projectPersistence
 #' @examples
 #' exampleProjectPath()
 exampleProjectPath <- function() {
