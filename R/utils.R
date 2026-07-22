@@ -55,7 +55,7 @@ getIndexClosestToValue <- function(
   idx <- which(distances == minDist & distances <= thresholdAbs)
 
   if (length(idx) == 0) {
-    msg <- messages$warningValueWithinThresholdNotExisting(value, thresholdAbs)
+    msg <- messages$valueWithinThresholdNotExisting(value, thresholdAbs)
     cli::cli_warn("{msg}")
     return(NULL)
   }
@@ -127,19 +127,19 @@ compareWithNA <- function(v1, v2) {
   simulationTimeIntervals <- lapply(simulationTimeIntervals, as.numeric)
   validateIsNumeric(simulationTimeIntervals)
   if (any(unlist(simulationTimeIntervals) < 0)) {
-    msg <- messages$stopWrongTimeIntervalString(simulationTimeIntervalsString)
+    msg <- messages$wrongTimeIntervalString(simulationTimeIntervalsString)
     cli::cli_abort("{msg}")
   }
   if (any(vapply(simulationTimeIntervals, length, integer(1)) != 3)) {
-    msg <- messages$stopWrongTimeIntervalString(simulationTimeIntervalsString)
+    msg <- messages$wrongTimeIntervalString(simulationTimeIntervalsString)
     cli::cli_abort("{msg}")
   }
   if (any(vapply(simulationTimeIntervals, \(x) x[3] <= 0, logical(1)))) {
-    msg <- messages$stopWrongTimeIntervalString(simulationTimeIntervalsString)
+    msg <- messages$wrongTimeIntervalString(simulationTimeIntervalsString)
     cli::cli_abort("{msg}")
   }
   if (any(vapply(simulationTimeIntervals, \(x) x[1] >= x[2], logical(1)))) {
-    msg <- messages$stopWrongTimeIntervalString(simulationTimeIntervalsString)
+    msg <- messages$wrongTimeIntervalString(simulationTimeIntervalsString)
     cli::cli_abort("{msg}")
   }
   return(simulationTimeIntervals)
@@ -213,7 +213,7 @@ getMoleculeNameFromQuantity <- function(quantity) {
 #' myEnum <- enumPutList("g", list(12, 2, "a"), myEnum, overwrite = TRUE)
 enumPutList <- function(key, values, enum, overwrite = FALSE) {
   if (length(key) > 1) {
-    msg <- messages$errorEnumPutListMultipleKeys()
+    msg <- messages$enumPutListMultipleKeys()
     cli::cli_abort("{msg}")
   }
   if (enumHasKey(key, enum) && !overwrite) {

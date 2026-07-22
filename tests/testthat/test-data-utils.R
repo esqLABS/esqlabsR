@@ -231,7 +231,7 @@ test_that("It throws an error when molWeights of data sets are different and no 
   dataSet2$molWeight <- 2
   expect_error(
     calculateMeanDataSet(list(dataSet1, dataSet2)),
-    regexp = messages$errorOutputMolWeightNeeded(),
+    regexp = messages$outputMolWeightNeeded(),
     fixed = TRUE
   )
 })

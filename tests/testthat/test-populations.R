@@ -1,7 +1,7 @@
 test_that("`sampleRandomValue()` rejects an unsupported distribution", {
   expect_error(
     sampleRandomValue("xyz", 5, 2, 10),
-    messages$errorDistributionNotSupported("xyz")
+    messages$distributionNotSupported("xyz")
   )
 })
 

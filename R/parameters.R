@@ -87,7 +87,7 @@ readParametersFromXLS <- function(paramsXLSpath, sheets = NULL) {
     data <- readExcel(path = paramsXLSpath, sheet = sheet)
 
     if (!all(columnNames %in% names(data))) {
-      cli::cli_abort(messages$errorWrongXLSStructure(
+      cli::cli_abort(messages$wrongXLSStructure(
         filePath = paramsXLSpath,
         expectedColNames = columnNames
       ))
@@ -108,7 +108,7 @@ readParametersFromXLS <- function(paramsXLSpath, sheets = NULL) {
     isBlankValue <- is.na(valuesRaw) | trimws(as.character(valuesRaw)) == ""
     invalidValues <- !isBlankValue & is.na(parsedValues)
     if (any(invalidValues)) {
-      cli::cli_abort(messages$errorMissingValuesInParameters(
+      cli::cli_abort(messages$missingValuesInParameters(
         filePath = paramsXLSpath,
         parameterPaths = fullPaths[invalidValues]
       ))
@@ -122,7 +122,7 @@ readParametersFromXLS <- function(paramsXLSpath, sheets = NULL) {
       intersect(fullPaths, seenPaths)
     ))
     if (length(duplicatePaths) > 0) {
-      cli::cli_warn(messages$warningDuplicateParameters(
+      cli::cli_warn(messages$duplicateParameters(
         filePath = paramsXLSpath,
         parameterPaths = duplicatePaths
       ))
@@ -301,7 +301,7 @@ extendParameterStructure <- function(parameters, newParameters) {
     data <- readExcel(path = filePath, sheet = sheet)
 
     if (!all(columnNames %in% names(data))) {
-      msg <- messages$errorWrongXLSStructure(
+      msg <- messages$wrongXLSStructure(
         filePath = filePath,
         expectedColNames = columnNames
       )
@@ -320,7 +320,7 @@ extendParameterStructure <- function(parameters, newParameters) {
     isPresent[numericFlag] <- isPresentChr[numericFlag] == "1"
     invalidIsPresent <- !isBlank & is.na(isPresent)
     if (any(invalidIsPresent)) {
-      msg <- messages$errorInvalidIsPresentInInitialConditions(
+      msg <- messages$invalidIsPresentInInitialConditions(
         filePath = filePath,
         moleculePaths = paste(
           data[["Container Path"]],
@@ -350,7 +350,7 @@ extendParameterStructure <- function(parameters, newParameters) {
       is.na(moleculeName) |
       trimws(moleculeName) == ""
     if (any(missingPathParts)) {
-      msg <- messages$errorMissingPathInInitialConditions(
+      msg <- messages$missingPathInInitialConditions(
         filePath = filePath,
         sheet = sheet,
         rows = keptRowNumbers[missingPathParts]
@@ -368,7 +368,7 @@ extendParameterStructure <- function(parameters, newParameters) {
       intersect(fullPaths, seenPaths)
     ))
     if (length(duplicatePaths) > 0) {
-      msg <- messages$warningDuplicateInitialConditions(
+      msg <- messages$duplicateInitialConditions(
         filePath = filePath,
         moleculePaths = duplicatePaths
       )
@@ -380,7 +380,7 @@ extendParameterStructure <- function(parameters, newParameters) {
     parsedValues <- suppressWarnings(as.numeric(data[["Value"]]))
     missingValues <- is.na(parsedValues)
     if (any(missingValues)) {
-      msg <- messages$errorMissingValuesInInitialConditions(
+      msg <- messages$missingValuesInInitialConditions(
         filePath = filePath,
         moleculePaths = fullPaths[missingValues]
       )
@@ -390,7 +390,7 @@ extendParameterStructure <- function(parameters, newParameters) {
     unitsRaw <- as.character(data[["Units"]])
     missingUnits <- is.na(data[["Units"]]) | trimws(unitsRaw) == ""
     if (any(missingUnits)) {
-      msg <- messages$errorMissingUnitsInInitialConditions(
+      msg <- messages$missingUnitsInInitialConditions(
         filePath = filePath,
         moleculePaths = fullPaths[missingUnits]
       )

@@ -114,7 +114,7 @@ print.ObservedDataSource <- function(x, ...) {
     if (is.null(entry$type)) {
       result$addCriticalError(
         "Missing Fields",
-        messages$validationObservedDataMissingType(entryLabel)
+        messages$observedDataMissingType(entryLabel)
       )
       next
     }
@@ -122,7 +122,7 @@ print.ObservedDataSource <- function(x, ...) {
     if (!entry$type %in% validTypes) {
       result$addCriticalError(
         "Invalid Value",
-        messages$validationObservedDataInvalidType(
+        messages$observedDataInvalidType(
           entryLabel,
           entry$type,
           validTypes
@@ -138,7 +138,7 @@ print.ObservedDataSource <- function(x, ...) {
       if (.observedDataFieldMissing(entry, field)) {
         result$addCriticalError(
           "Missing Fields",
-          messages$validationObservedDataMissingField(
+          messages$validatorObservedDataMissingField(
             entryLabel,
             entry$type,
             field
@@ -156,14 +156,14 @@ print.ObservedDataSource <- function(x, ...) {
         if (.pathEscapesRoot(entry$file, dataFolder)) {
           result$addCriticalError(
             "Path Containment",
-            messages$validationObservedDataPathEscapes(entryLabel, entry$file)
+            messages$observedDataPathEscapes(entryLabel, entry$file)
           )
         } else {
           filePath <- file.path(dataFolder, entry$file)
           if (!file.exists(filePath)) {
             result$addWarning(
               "File Not Found",
-              messages$validationObservedDataFileNotFound(
+              messages$validatorObservedDataFileNotFound(
                 entryLabel,
                 entry$file
               )
@@ -177,7 +177,7 @@ print.ObservedDataSource <- function(x, ...) {
         if (.pathEscapesRoot(entry$importerConfiguration, dataFolder)) {
           result$addCriticalError(
             "Path Containment",
-            messages$validationObservedDataPathEscapes(
+            messages$observedDataPathEscapes(
               entryLabel,
               entry$importerConfiguration
             )
@@ -187,7 +187,7 @@ print.ObservedDataSource <- function(x, ...) {
           if (!file.exists(importerPath)) {
             result$addWarning(
               "File Not Found",
-              messages$validationObservedDataImporterNotFound(
+              messages$observedDataImporterNotFound(
                 entryLabel,
                 entry$importerConfiguration
               )

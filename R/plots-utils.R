@@ -235,7 +235,7 @@ createEsqlabsPlotGridConfiguration <- function() {
 
   for (name in names(plotOverrideConfig)) {
     if (!name %in% names(plotConfiguration)) {
-      cli::cli_warn(messages$UnknownPlotConfiguration(name))
+      cli::cli_warn(messages$unknownPlotConfiguration(name))
       next
     }
 

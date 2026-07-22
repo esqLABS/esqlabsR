@@ -51,7 +51,7 @@ PIParameter <- function(
   startValue
 ) {
   if (!is.character(id) || length(id) != 1L || is.na(id) || nchar(id) == 0) {
-    cli::cli_abort(messages$errorPIRequiredField(
+    cli::cli_abort(messages$PIRequiredField(
       "id",
       "PIParameter",
       "<unset>"
@@ -63,12 +63,12 @@ PIParameter <- function(
       any(is.na(scenarios)) ||
       any(nchar(scenarios) == 0)
   ) {
-    cli::cli_abort(messages$errorPIScenariosEmpty("PIParameter", id))
+    cli::cli_abort(messages$PIScenariosEmpty("PIParameter", id))
   }
   if (
     !is.character(path) || length(path) != 1L || is.na(path) || nchar(path) == 0
   ) {
-    cli::cli_abort(messages$errorPIRequiredField("path", "PIParameter", id))
+    cli::cli_abort(messages$PIRequiredField("path", "PIParameter", id))
   }
   # `units` is optional: NULL or an empty string both mean "no display unit".
   # A non-empty string is the declared unit. NA or a non-scalar must never
@@ -78,25 +78,25 @@ PIParameter <- function(
     !is.null(units) &&
       (!is.character(units) || length(units) != 1L || is.na(units))
   ) {
-    cli::cli_abort(messages$errorPIRequiredField("units", "PIParameter", id))
+    cli::cli_abort(messages$PIRequiredField("units", "PIParameter", id))
   }
   if (!is.numeric(minValue) || length(minValue) != 1L || is.na(minValue)) {
-    cli::cli_abort(messages$errorPIRequiredField("minValue", "PIParameter", id))
+    cli::cli_abort(messages$PIRequiredField("minValue", "PIParameter", id))
   }
   if (!is.numeric(maxValue) || length(maxValue) != 1L || is.na(maxValue)) {
-    cli::cli_abort(messages$errorPIRequiredField("maxValue", "PIParameter", id))
+    cli::cli_abort(messages$PIRequiredField("maxValue", "PIParameter", id))
   }
   if (
     !is.numeric(startValue) || length(startValue) != 1L || is.na(startValue)
   ) {
-    cli::cli_abort(messages$errorPIRequiredField(
+    cli::cli_abort(messages$PIRequiredField(
       "startValue",
       "PIParameter",
       id
     ))
   }
   if (minValue > maxValue || startValue < minValue || startValue > maxValue) {
-    cli::cli_abort(messages$errorPIInvalidBounds(
+    cli::cli_abort(messages$PIInvalidBounds(
       path,
       minValue,
       startValue,
@@ -169,7 +169,7 @@ PIOutputMapping <- function(
   weight = NULL
 ) {
   if (!is.character(id) || length(id) != 1L || is.na(id) || nchar(id) == 0) {
-    cli::cli_abort(messages$errorPIRequiredField(
+    cli::cli_abort(messages$PIRequiredField(
       "id",
       "PIOutputMapping",
       "<unset>"
@@ -181,7 +181,7 @@ PIOutputMapping <- function(
       any(is.na(scenarios)) ||
       any(nchar(scenarios) == 0)
   ) {
-    cli::cli_abort(messages$errorPIScenariosEmpty("PIOutputMapping", id))
+    cli::cli_abort(messages$PIScenariosEmpty("PIOutputMapping", id))
   }
   if (
     !is.character(outputPath) ||
@@ -189,7 +189,7 @@ PIOutputMapping <- function(
       is.na(outputPath) ||
       nchar(outputPath) == 0
   ) {
-    cli::cli_abort(messages$errorPIRequiredField(
+    cli::cli_abort(messages$PIRequiredField(
       "outputPath",
       "PIOutputMapping",
       id
@@ -201,7 +201,7 @@ PIOutputMapping <- function(
       is.na(observedData) ||
       nchar(observedData) == 0
   ) {
-    cli::cli_abort(messages$errorPIRequiredField(
+    cli::cli_abort(messages$PIRequiredField(
       "observedData",
       "PIOutputMapping",
       id
@@ -214,12 +214,12 @@ PIOutputMapping <- function(
         is.na(scaling) ||
         nchar(scaling) == 0)
   ) {
-    cli::cli_abort(messages$errorPIInvalidScaling(id, scaling))
+    cli::cli_abort(messages$PIInvalidScaling(id, scaling))
   }
   for (field in c("xOffset", "yOffset", "xFactor", "yFactor")) {
     value <- get(field)
     if (!is.numeric(value) || length(value) != 1L || is.na(value)) {
-      cli::cli_abort(messages$errorPIInvalidNumericField(field, id, value))
+      cli::cli_abort(messages$PIInvalidNumericField(field, id, value))
     }
   }
   # `weight` may arrive as a bare list of numbers from a JSON round trip, so
@@ -231,7 +231,7 @@ PIOutputMapping <- function(
         !is.numeric(flatWeight) ||
         any(is.na(flatWeight))
     ) {
-      cli::cli_abort(messages$errorPIInvalidNumericField("weight", id, weight))
+      cli::cli_abort(messages$PIInvalidNumericField("weight", id, weight))
     }
   }
 
@@ -314,7 +314,7 @@ PITask <- function(
   configuration = list()
 ) {
   if (!is.character(id) || length(id) != 1L || is.na(id) || nchar(id) == 0) {
-    cli::cli_abort(messages$errorPIRequiredField("id", "PITask", "<unset>"))
+    cli::cli_abort(messages$PIRequiredField("id", "PITask", "<unset>"))
   }
 
   if (
@@ -323,15 +323,15 @@ PITask <- function(
       any(is.na(scenarios)) ||
       any(nchar(scenarios) == 0)
   ) {
-    cli::cli_abort(messages$errorPIScenariosEmpty("PITask", id))
+    cli::cli_abort(messages$PIScenariosEmpty("PITask", id))
   }
 
   if (!is.list(parameters) || length(parameters) == 0L) {
-    cli::cli_abort(messages$errorPIEmptyList("parameters", id))
+    cli::cli_abort(messages$PIEmptyList("parameters", id))
   }
   for (i in seq_along(parameters)) {
     if (!inherits(parameters[[i]], "PIParameter")) {
-      cli::cli_abort(messages$errorPIWrongElementType(
+      cli::cli_abort(messages$PIWrongElementType(
         "parameters",
         i,
         id,
@@ -341,12 +341,12 @@ PITask <- function(
   }
 
   if (!is.list(outputMappings) || length(outputMappings) == 0L) {
-    cli::cli_abort(messages$errorPIEmptyList("outputMappings", id))
+    cli::cli_abort(messages$PIEmptyList("outputMappings", id))
   }
   for (i in seq_along(outputMappings)) {
     if (!inherits(outputMappings[[i]], "PIOutputMapping")) {
       cli::cli_abort(
-        messages$errorPIWrongElementType(
+        messages$PIWrongElementType(
           "outputMappings",
           i,
           id,
@@ -562,7 +562,7 @@ print.PITask <- function(x, ...) {
       if (!(p$minValue <= p$startValue && p$startValue <= p$maxValue)) {
         result$addCriticalError(
           "Invalid Bounds",
-          messages$errorPIInvalidBounds(
+          messages$PIInvalidBounds(
             p$path,
             p$minValue,
             p$startValue,
@@ -634,7 +634,7 @@ print.PITask <- function(x, ...) {
   for (sName in scenarioNames) {
     sc <- project$definitions$scenarios[[sName]]
     if (is.null(sc)) {
-      cli::cli_abort(messages$errorPIScenarioNotFound(
+      cli::cli_abort(messages$PIScenarioNotFound(
         sName,
         names(project$definitions$scenarios)
       ))
@@ -675,14 +675,14 @@ print.PITask <- function(x, ...) {
     paramObjs <- lapply(p$scenarios, function(sName) {
       sim <- simulations[[sName]]
       if (is.null(sim)) {
-        cli::cli_abort(messages$errorPIScenarioNotFound(
+        cli::cli_abort(messages$PIScenarioNotFound(
           sName,
           names(simulations)
         ))
       }
       param <- ospsuite::getParameter(p$path, container = sim)
       if (is.null(param)) {
-        cli::cli_abort(messages$errorPIParameterNotFound(p$path, sim$name))
+        cli::cli_abort(messages$PIParameterNotFound(p$path, sim$name))
       }
       param
     })
@@ -718,14 +718,14 @@ print.PITask <- function(x, ...) {
     for (sName in m$scenarios) {
       sim <- simulations[[sName]]
       if (is.null(sim)) {
-        cli::cli_abort(messages$errorPIScenarioNotFound(
+        cli::cli_abort(messages$PIScenarioNotFound(
           sName,
           names(simulations)
         ))
       }
       quantity <- ospsuite::getQuantity(fullPath, container = sim)
       if (is.null(quantity)) {
-        cli::cli_abort(messages$errorPIOutputQuantityNotFound(
+        cli::cli_abort(messages$PIOutputQuantityNotFound(
           fullPath,
           sim$name
         ))
@@ -735,7 +735,7 @@ print.PITask <- function(x, ...) {
       )
       ds <- observedData[[m$observedDataId]]
       if (is.null(ds)) {
-        cli::cli_abort(messages$errorPIDatasetNotFound(
+        cli::cli_abort(messages$PIDatasetNotFound(
           m$observedDataId,
           names(observedData)
         ))
@@ -965,7 +965,7 @@ runPI <- function(
   # hours-long) optimisations.
   runtimes <- list()
   for (taskName in tasks) {
-    msg <- messages$messageBuildingPITask(taskName)
+    msg <- messages$buildingPITask(taskName)
     cli::cli_inform("{msg}")
     runtimes[[taskName]] <- .createSinglePITask(
       project = project,
@@ -977,7 +977,7 @@ runPI <- function(
 
   results <- list()
   for (taskName in tasks) {
-    msg <- messages$messageRunningPITask(taskName)
+    msg <- messages$runningPITask(taskName)
     cli::cli_inform("{msg}")
     runtime <- runtimes[[taskName]]
     entry <- tryCatch(
@@ -1156,7 +1156,7 @@ addPITask <- function(
 
   # Only dereference the output-path reference on well-typed records (the kept
   # record field is `outputPathId`). Malformed entries are left for PITask() to
-  # reject with the typed errorPIWrongElementType, instead of dying here on a
+  # reject with the typed PIWrongElementType, instead of dying here on a
   # raw "$ operator is invalid for atomic vectors".
   if (is.list(outputMappings)) {
     for (m in outputMappings) {

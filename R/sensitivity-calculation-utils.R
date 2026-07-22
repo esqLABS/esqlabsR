@@ -219,7 +219,7 @@
     pkParameter <- unique(data$PKParameter)[1]
 
     cli::cli_warn(
-      messages$warningSensitivityPKParameterNotCalculated(
+      messages$sensitivityPKParameterNotCalculated(
         parameterPath,
         pkParameter
       )
@@ -488,7 +488,7 @@
     listNames <- names(object)
     argName <- deparse(substitute(object))
     if (hasEmptyStrings(listNames)) {
-      cli::cli_abort(messages$errorNotNamedList(argName))
+      cli::cli_abort(messages$notNamedList(argName))
     }
   }
 }
@@ -570,7 +570,7 @@ saveSensitivityCalculation <- function(
 
   if (dir.exists(outputDir)) {
     if (!overwrite) {
-      cli::cli_abort(messages$errorOutputDirExists(outputDir))
+      cli::cli_abort(messages$outputDirExists(outputDir))
     }
 
     contents <- list.files(outputDir, all.files = TRUE, no.. = TRUE)
@@ -646,7 +646,7 @@ loadSensitivityCalculation <- function(outputDir, simulation = NULL) {
 
   metaPath <- file.path(outputDir, "sensitivityCalculation.meta")
   if (!file.exists(metaPath)) {
-    cli::cli_abort(messages$errorSensitivityCalculationNotFound(metaPath))
+    cli::cli_abort(messages$sensitivityCalculationNotFound(metaPath))
   }
 
   # Load sensitivityCalculation structure
@@ -661,7 +661,7 @@ loadSensitivityCalculation <- function(outputDir, simulation = NULL) {
       },
       error = function(e) {
         cli::cli_abort(
-          messages$errorFailedToLoadSimulation(simFilePath, e$message)
+          messages$failedToLoadSimulation(simFilePath, e$message)
         )
       }
     )
@@ -679,7 +679,7 @@ loadSensitivityCalculation <- function(outputDir, simulation = NULL) {
 
   expectedCount <- length(parameterPaths) * length(variationRange)
   if (length(simResultFiles) != expectedCount) {
-    cli::cli_abort(messages$errorCorruptSensitivityCalculation(outputDir))
+    cli::cli_abort(messages$corruptSensitivityCalculation(outputDir))
   }
 
   simulationResults <- sensitivityCalculation$simulationResults
@@ -702,7 +702,7 @@ loadSensitivityCalculation <- function(outputDir, simulation = NULL) {
           simulationResult$allQuantityPaths
       )
     ) {
-      cli::cli_abort(messages$errorCorruptSensitivityCalculation(outputDir))
+      cli::cli_abort(messages$corruptSensitivityCalculation(outputDir))
     }
   }
 

@@ -257,7 +257,7 @@ extendPopulationFromXLS <- function(population, XLSpath, sheet = NULL) {
     },
     error = function(e) {
       cli::cli_abort(
-        messages$errorWrongXLSStructure(
+        messages$wrongXLSStructure(
           filePath = XLSpath,
           expectedColNames = columnNames
         )
@@ -267,7 +267,7 @@ extendPopulationFromXLS <- function(population, XLSpath, sheet = NULL) {
 
   if (!all(columnNames %in% names(data))) {
     cli::cli_abort(
-      messages$errorWrongXLSStructure(
+      messages$wrongXLSStructure(
         filePath = XLSpath,
         expectedColNames = columnNames
       )
@@ -321,7 +321,7 @@ Distributions <- enum(list(
 #' @export
 sampleRandomValue <- function(distribution, mean, sd, n) {
   if (!enumHasKey(distribution, Distributions)) {
-    cli::cli_abort(messages$errorDistributionNotSupported(distribution))
+    cli::cli_abort(messages$distributionNotSupported(distribution))
   }
 
   if (distribution == Distributions$Normal) {

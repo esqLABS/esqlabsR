@@ -18,7 +18,7 @@ messages <- ospsuite.utils::messages
 # not yet migrated, so not all validation wording lives here.
 
 # Parameters structure####
-messages$errorWrongXLSStructure <- function(
+messages$wrongXLSStructure <- function(
   filePath,
   expectedColNames,
   optionalMessage = ""
@@ -37,7 +37,7 @@ messages$wrongParametersStructure <- function(argumentName) {
   )
 }
 
-messages$errorMissingValuesInParameters <- function(
+messages$missingValuesInParameters <- function(
   filePath,
   parameterPaths
 ) {
@@ -46,7 +46,7 @@ messages$errorMissingValuesInParameters <- function(
   )
 }
 
-messages$warningDuplicateParameters <- function(
+messages$duplicateParameters <- function(
   filePath,
   parameterPaths
 ) {
@@ -55,7 +55,7 @@ messages$warningDuplicateParameters <- function(
   )
 }
 
-messages$errorMissingUnitsInInitialConditions <- function(
+messages$missingUnitsInInitialConditions <- function(
   filePath,
   moleculePaths
 ) {
@@ -64,7 +64,7 @@ messages$errorMissingUnitsInInitialConditions <- function(
   )
 }
 
-messages$errorMissingValuesInInitialConditions <- function(
+messages$missingValuesInInitialConditions <- function(
   filePath,
   moleculePaths
 ) {
@@ -73,7 +73,7 @@ messages$errorMissingValuesInInitialConditions <- function(
   )
 }
 
-messages$errorInvalidIsPresentInInitialConditions <- function(
+messages$invalidIsPresentInInitialConditions <- function(
   filePath,
   moleculePaths
 ) {
@@ -82,7 +82,7 @@ messages$errorInvalidIsPresentInInitialConditions <- function(
   )
 }
 
-messages$errorMissingPathInInitialConditions <- function(
+messages$missingPathInInitialConditions <- function(
   filePath,
   sheet,
   rows
@@ -92,7 +92,7 @@ messages$errorMissingPathInInitialConditions <- function(
   )
 }
 
-messages$warningDuplicateInitialConditions <- function(
+messages$duplicateInitialConditions <- function(
   filePath,
   moleculePaths
 ) {
@@ -102,18 +102,18 @@ messages$warningDuplicateInitialConditions <- function(
 }
 
 # Enum####
-messages$errorEnumPutListMultipleKeys <- function() {
+messages$enumPutListMultipleKeys <- function() {
   cliFormat("Trying to put multiple keys, but only one key is allowed!")
 }
 
 # populations ####
-messages$errorDistributionNotSupported <- function(string) {
+messages$distributionNotSupported <- function(string) {
   cliFormat(
     "The distribution {.val {string}} is not supported. Supported distributions are listed in {.var Distributions}."
   )
 }
 
-messages$errorWrongOntogenyStructure <- function(entry) {
+messages$wrongOntogenyStructure <- function(entry) {
   cliFormat(
     "Wrong structure provided for the protein ontogeny specification.
     Expected is a pair of {.cls ProteinName:Ontogeny}, but the entry is: {.val {entry}}"
@@ -355,7 +355,7 @@ messages$invalidArgumentLength <- function(noOfOutpaths, noOfScenarios) {
   ))
 }
 
-messages$warningValueWithinThresholdNotExisting <- function(
+messages$valueWithinThresholdNotExisting <- function(
   value,
   threshold,
   optionalMessage = ""
@@ -366,13 +366,13 @@ messages$warningValueWithinThresholdNotExisting <- function(
 }
 
 # data-utils ####
-messages$errorInvalidMeanMethod <- function() {
+messages$invalidMeanMethod <- function() {
   cliFormat(
     "Invalid value for argument {.arg method}, supported values are {.val arithmetic} or {.val geometric}"
   )
 }
 
-messages$errorOutputMolWeightNeeded <- function() {
+messages$outputMolWeightNeeded <- function() {
   cliFormat(
     "{.arg outputMolWeight} can not be {.val NULL} when data sets have different molWeights"
   )
@@ -391,14 +391,14 @@ messages$nrOfColorsShouldBePositive <- function(nrOfColors) {
   )
 }
 
-messages$PlotIDsMustBeUnique <- function(duplicated_plotIDs = "") {
+messages$plotIDsMustBeUnique <- function(duplicated_plotIDs = "") {
   duplicates <- paste(duplicated_plotIDs, collapse = ", ")
   cliFormat(
     "plotId must be unique in plotConfiguration, but the following plotIds are duplicated: {.val {duplicates}}"
   )
 }
 
-messages$PlotGridsNamesMustBeUnique <- function(
+messages$plotGridsNamesMustBeUnique <- function(
   duplicated_plotGridsNames = ""
 ) {
   cliFormat(
@@ -407,12 +407,12 @@ messages$PlotGridsNamesMustBeUnique <- function(
   )
 }
 
-messages$UnknownPlotConfiguration <- function(name) {
+messages$unknownPlotConfiguration <- function(name) {
   cliFormat("Unknown plot configuration option: {.arg {name}}")
 }
 
 # scenario####
-messages$errorApplicationProtocolNotFound <- function(
+messages$applicationProtocolNotFound <- function(
   scenarioName,
   applicationProtocol
 ) {
@@ -421,7 +421,7 @@ messages$errorApplicationProtocolNotFound <- function(
     in the excel file {.file ApplicationProtocols.xlsx}"
   )
 }
-messages$warningInvalidScenarioName <- function(scenarioNames) {
+messages$invalidScenarioName <- function(scenarioNames) {
   cliFormat(
     "The following scenarios are not present in {.arg scenarioResults}:
     {.val {paste(scenarioNames, collapse = \",\n\")}}. Data cannot be added to {.var DataCombined} object."
@@ -440,7 +440,7 @@ messages$invalidArgumentLengthScenarios <- function(
   ))
 }
 
-messages$warningNoIndividualCharacteristics <- function(
+messages$noIndividualCharacteristics <- function(
   scenarioName,
   individualId
 ) {
@@ -456,7 +456,7 @@ messages$noPopulationIdForPopulationScenario <- function(scenarioName) {
   )
 }
 
-messages$stopWrongTimeIntervalString <- function(timeIntervalString) {
+messages$wrongTimeIntervalString <- function(timeIntervalString) {
   cliFormat(
     "The time interval string {.val {timeIntervalString}} is not valid! Please 
     check the format of the string. Following criteria must be 
@@ -467,7 +467,7 @@ messages$stopWrongTimeIntervalString <- function(timeIntervalString) {
   )
 }
 
-messages$stopScenarioMissingTimeUnit <- function(scenarioName) {
+messages$scenarioMissingTimeUnit <- function(scenarioName) {
   cliFormat(
     "Scenario {.val {scenarioName}} has simulation time defined, but no unit is specified! 
     Please specify simulation time unit."
@@ -480,7 +480,7 @@ messages$missingResultsForScenario <- function(scenarioName) {
   )
 }
 
-messages$errorSavingScenarioResult <- function(scenarioName, conditionMessage) {
+messages$savingScenarioResult <- function(scenarioName, conditionMessage) {
   # Escape braces in the condition message so that cli does not try to
   # re-interpret arbitrary error text as glue expressions when cli_warn()
   # processes the returned vector.
@@ -530,7 +530,7 @@ messages$cannotGetMoleculeFromQuantity <- function(
 }
 
 # data sets
-messages$warningInvalidDataSetName <- function(dataSetNames) {
+messages$combineInvalidDataSetName <- function(dataSetNames) {
   cliFormat(
     "The following data sets are not present in {.var observedData}:
     {.val {paste(dataSetNames, collapse =',\n')}}. Data can not be added to {.var DataCombined} object."
@@ -538,7 +538,7 @@ messages$warningInvalidDataSetName <- function(dataSetNames) {
 }
 
 # Plots.xlsx####
-messages$warningLogScaleWithZeroLimit <- function(
+messages$logScaleWithZeroLimit <- function(
   plotID,
   axisLimitsField,
   axis
@@ -549,7 +549,7 @@ messages$warningLogScaleWithZeroLimit <- function(
   )
 }
 
-messages$errorInvalidPlotID <- function(plotIDs) {
+messages$invalidPlotID <- function(plotIDs) {
   cliFormat(
     "The plots with plotIds {.val {paste(plotIDs, collapse = ',\n')}} are used in the sheet
     {.field plotGrids} but are not defined in the sheet {.var plotConfiguration}."
@@ -600,28 +600,28 @@ messages$missingDataCombinedName <- function() {
   )
 }
 
-messages$stopInvalidDataCombinedName <- function(dataCombinedNames) {
+messages$invalidDataCombinedName <- function(dataCombinedNames) {
   cliFormat(
     "The following DataCombined are used in {.var plotConfiguration} sheet but are not present in {.var DataCombined} sheet:
     {.val {paste(dataCombinedNames, collapse = ', ')}}"
   )
 }
 
-messages$stopDataCombinedNamesNotFound <- function(dataCombinedNames) {
+messages$dataCombinedNamesNotFound <- function(dataCombinedNames) {
   cliFormat(
     "The following DataCombined names are not defined in the Excel file:
     {.val {paste(dataCombinedNames, collapse = ', ')}}"
   )
 }
 
-messages$stopNoPathProvided <- function(dataCombinedName) {
+messages$noPathProvided <- function(dataCombinedName) {
   cliFormat(
     "No output path is defined for the DataCombined {.val {paste(dataCombinedName, collapse = \", \")}}
     Each simulation output must have an output path specified."
   )
 }
 
-messages$stopWrongOutputPath <- function(dataCombinedName, scenarioName, path) {
+messages$wrongOutputPath <- function(dataCombinedName, scenarioName, path) {
   cliFormat(
     "Output path {.path {path}} is defined in the DataCombined {.val {paste(dataCombinedName, collapse = \", \")}}
     for scenario {.cls {scenarioName}} but has not been simulated.
@@ -629,7 +629,7 @@ messages$stopWrongOutputPath <- function(dataCombinedName, scenarioName, path) {
   )
 }
 
-messages$stopScenarioRunFailed <- function(
+messages$scenarioRunFailed <- function(
   dataCombinedName,
   scenarioName,
   path
@@ -641,28 +641,28 @@ messages$stopScenarioRunFailed <- function(
   )
 }
 
-messages$stopPlotGridNamesNotFound <- function(plotGridNames) {
+messages$plotGridNamesNotFound <- function(plotGridNames) {
   cliFormat(
     "The following plot grids are not defined in the project:
     {.val {paste(plotGridNames, collapse = ', ')}}"
   )
 }
 
-messages$stopPlotIdsNotFound <- function(plotIds) {
+messages$plotIdsNotFound <- function(plotIds) {
   cliFormat(
     "The following plots are not defined in the project:
     {.val {paste(plotIds, collapse = ', ')}}"
   )
 }
 
-messages$stopNoDataSetProvided <- function(dataCombinedName) {
+messages$noDataSetProvided <- function(dataCombinedName) {
   cliFormat(
     "No data set is defined for the DataCombined {.val {paste(dataCombinedName, collapse = \", \n\")}}.
     Each observed data must have a {.var dataSet} specified."
   )
 }
 
-messages$stopInvalidDataSetName <- function(dataSetNames) {
+messages$invalidDataSetName <- function(dataSetNames) {
   cliFormat(
     "The following data sets are not present in {.var observedData}: {.val {paste0(dataSetNames, collapse = ',\n')}}"
   )
@@ -717,7 +717,7 @@ messages$invalidCustomFunctionParameters <- function(providedParams) {
   )
 }
 
-messages$errorNotNamedList <- function(objectName, optionalMessage = "") {
+messages$notNamedList <- function(objectName, optionalMessage = "") {
   callingFunction <- ospsuite.utils:::.getCallingFunctionName()
   cliFormat(
     "{.fn {callingFunction}}: argument {.arg {objectName}} is not a named list! {optionalMessage}"
@@ -730,18 +730,18 @@ messages$invalidVariationRangeLength <- function() {
   )
 }
 
-messages$errorSensitivityCalculationNotFound <- function(path) {
+messages$sensitivityCalculationNotFound <- function(path) {
   cliFormat("Sensitivity calculation not found at path {.file {path}}.")
 }
 
-messages$errorOutputDirExists <- function(outputDir) {
+messages$outputDirExists <- function(outputDir) {
   cliFormat(
     "Directory {.file {outputDir}} already exists.",
     "Set {.code overwrite = TRUE} to replace it."
   )
 }
 
-messages$errorFailedToLoadSimulation <- function(path, message) {
+messages$failedToLoadSimulation <- function(path, message) {
   cliFormat(
     "Failed to load simulation from saved path {.file {path}}.",
     "Please provide the {.cls Simulation} object explicitly.",
@@ -749,7 +749,7 @@ messages$errorFailedToLoadSimulation <- function(path, message) {
   )
 }
 
-messages$errorCorruptSensitivityCalculation <- function(path) {
+messages$corruptSensitivityCalculation <- function(path) {
   cliFormat(
     "Failed to load sensitivity calculation from {.file {path}}.",
     "The saved files appear to be incomplete or corrupted."
@@ -810,7 +810,7 @@ messages$excelFieldTypeError <- function(
   )
 }
 
-messages$warningSensitivityPKParameterNotCalculated <- function(
+messages$sensitivityPKParameterNotCalculated <- function(
   parameterPath,
   pkParameter
 ) {
@@ -876,53 +876,53 @@ messages$failedToCopyTemplate <- function(paths) {
   )
 }
 
-messages$errorPIDatasetNotFound <- function(datasetName, availableDatasets) {
+messages$PIDatasetNotFound <- function(datasetName, availableDatasets) {
   cli::format_message(c(
     "x" = "Dataset {.val {datasetName}} not found",
     "i" = "Available datasets: {.val {paste(availableDatasets, collapse = ', ')}}"
   ))
 }
 
-messages$errorPIInvalidBounds <- function(paramPath, min, start, max) {
+messages$PIInvalidBounds <- function(paramPath, min, start, max) {
   cliFormat(
     "Parameter {.val {paramPath}} has invalid bounds: Min={.val {min}}, Start={.val {start}}, Max={.val {max}}.
     Expected: Min <= Start <= Max"
   )
 }
 
-messages$errorPIRequiredField <- function(field, recordType, recordId) {
+messages$PIRequiredField <- function(field, recordType, recordId) {
   cliFormat(
     "Required field {.val {field}} is missing or empty on {recordType} {.val {recordId}}."
   )
 }
 
-messages$errorPIEmptyList <- function(field, taskId) {
+messages$PIEmptyList <- function(field, taskId) {
   cliFormat(
     "Field {.val {field}} on PITask {.val {taskId}} must contain at least one entry."
   )
 }
 
-messages$errorPIScenariosEmpty <- function(recordType, recordId) {
+messages$PIScenariosEmpty <- function(recordType, recordId) {
   cliFormat(
     "Field {.code scenarios} on {recordType} {.val {recordId}} must be a non-empty character vector."
   )
 }
 
-messages$errorPIInvalidNumericField <- function(field, recordId, value) {
+messages$PIInvalidNumericField <- function(field, recordId, value) {
   cliFormat(
     "Field {.code {field}} on PIOutputMapping {.val {recordId}} is invalid: \\
     {.val {value}}. Expected a finite numeric value."
   )
 }
 
-messages$errorPIInvalidScaling <- function(recordId, value) {
+messages$PIInvalidScaling <- function(recordId, value) {
   cliFormat(
     "Field {.code scaling} on PIOutputMapping {.val {recordId}} is invalid: \\
     {.val {value}}. Expected a non-empty string."
   )
 }
 
-messages$errorPIWrongElementType <- function(
+messages$PIWrongElementType <- function(
   field,
   index,
   taskId,
@@ -933,32 +933,32 @@ messages$errorPIWrongElementType <- function(
   )
 }
 
-messages$errorPIOutputQuantityNotFound <- function(path, simulationName) {
+messages$PIOutputQuantityNotFound <- function(path, simulationName) {
   cliFormat(
     "Output quantity {.path {path}} not found in simulation {.val {simulationName}}.
     Check that the output path exists in the simulation."
   )
 }
 
-messages$errorPIParameterNotFound <- function(path, simulationName) {
+messages$PIParameterNotFound <- function(path, simulationName) {
   cliFormat(
     "Parameter {.path {path}} not found in simulation {.val {simulationName}}.
     Check that the parameter path is correct and exists in the simulation."
   )
 }
 
-messages$errorPIScenarioNotFound <- function(scenarioName, availableScenarios) {
+messages$PIScenarioNotFound <- function(scenarioName, availableScenarios) {
   cli::format_message(c(
     "x" = "Scenario {.val {scenarioName}} referenced in PI task configuration not found",
     "i" = "Available scenarios: {.val {paste(availableScenarios, collapse = ', ')}}"
   ))
 }
 
-messages$messageBuildingPITask <- function(piTaskName) {
+messages$buildingPITask <- function(piTaskName) {
   cliFormat("Building PI task: {.val {piTaskName}}")
 }
 
-messages$messageRunningPITask <- function(piTaskName) {
+messages$runningPITask <- function(piTaskName) {
   cliFormat("Running PI task: {.val {piTaskName}}")
 }
 
@@ -1082,11 +1082,11 @@ messages$observedDataNameCollision <- function(duplicates) {
 # of a `validationResult` entry (a plain string, not a `cli`-tagged vector), so
 # they interpolate the ids as plain text (single-quoted to match the rest of the
 # validator's wording) instead of styling them with `cli` `{.val}` markup.
-messages$validationObservedDataMissingType <- function(entryLabel) {
+messages$observedDataMissingType <- function(entryLabel) {
   cliFormat("{entryLabel} is missing required field 'type'")
 }
 
-messages$validationObservedDataInvalidType <- function(
+messages$observedDataInvalidType <- function(
   entryLabel,
   type,
   validTypes
@@ -1096,7 +1096,7 @@ messages$validationObservedDataInvalidType <- function(
   )
 }
 
-messages$validationObservedDataMissingField <- function(
+messages$validatorObservedDataMissingField <- function(
   entryLabel,
   type,
   field
@@ -1104,11 +1104,11 @@ messages$validationObservedDataMissingField <- function(
   cliFormat("{entryLabel} ({type}) is missing required field '{field}'")
 }
 
-messages$validationObservedDataFileNotFound <- function(entryLabel, file) {
+messages$validatorObservedDataFileNotFound <- function(entryLabel, file) {
   cliFormat("{entryLabel} references non-existent file: {file}")
 }
 
-messages$validationObservedDataImporterNotFound <- function(
+messages$observedDataImporterNotFound <- function(
   entryLabel,
   importerConfiguration
 ) {
@@ -1117,7 +1117,7 @@ messages$validationObservedDataImporterNotFound <- function(
   )
 }
 
-messages$validationObservedDataPathEscapes <- function(entryLabel, path) {
+messages$observedDataPathEscapes <- function(entryLabel, path) {
   cliFormat(
     "{entryLabel} references a file outside the project folder: {path}"
   )
