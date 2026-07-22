@@ -267,7 +267,8 @@ Project <- R6::R6Class(
       steadyStateTime = 1000,
       steadyStateTimeUnit = "min",
       overwriteFormulasInSS = FALSE,
-      readPopulationFromCSV = FALSE
+      readPopulationFromCSV = FALSE,
+      overwrite = FALSE
     ) {
       private$.impl(
         .addScenario_impl,
@@ -285,7 +286,8 @@ Project <- R6::R6Class(
         steadyStateTime,
         steadyStateTimeUnit,
         overwriteFormulasInSS,
-        readPopulationFromCSV
+        readPopulationFromCSV,
+        overwrite
       )
     },
 

@@ -213,7 +213,8 @@ JSON file.}
   steadyStateTime = 1000,
   steadyStateTimeUnit = "min",
   overwriteFormulasInSS = FALSE,
-  readPopulationFromCSV = FALSE
+  readPopulationFromCSV = FALSE,
+  overwrite = FALSE
 )}
     \if{html}{\out{</div>}}
   }
@@ -235,6 +236,8 @@ its unit. See \code{\link[=addScenario]{addScenario()}}.}
 time, and unit. See \code{\link[=addScenario]{addScenario()}}.}
       \item{\code{overwriteFormulasInSS, readPopulationFromCSV}}{Logical scenario options.
 See \code{\link[=addScenario]{addScenario()}}.}
+      \item{\code{overwrite}}{Logical scalar controlling duplicate-collision behaviour of
+the \verb{add*} authoring methods. See \code{\link[=addParameterEntry]{addParameterEntry()}}, \code{\link[=addPITask]{addPITask()}}.}
     }
     \if{html}{\out{</div>}}
   }

@@ -703,6 +703,10 @@ runScenarios <- function(
 #'   steady state. Default `FALSE`.
 #' @param readPopulationFromCSV Logical. Load population from CSV.
 #'   Default `FALSE`.
+#' @param overwrite Logical. When `FALSE` (default), an id that already exists
+#'   aborts. When `TRUE`, the existing scenario is replaced (last-write-wins).
+#'   Distinct from `overwriteFormulasInSS`, which is a steady-state model
+#'   option unrelated to duplicate handling.
 #'
 #' @returns The `project` object, invisibly.
 #' @export
@@ -723,7 +727,8 @@ addScenario <- function(
   steadyStateTime = 1000,
   steadyStateTimeUnit = "min",
   overwriteFormulasInSS = FALSE,
-  readPopulationFromCSV = FALSE
+  readPopulationFromCSV = FALSE,
+  overwrite = FALSE
 ) {
   validateIsOfType(project, "Project")
   project$addScenario(
@@ -741,7 +746,8 @@ addScenario <- function(
     steadyStateTime,
     steadyStateTimeUnit,
     overwriteFormulasInSS,
-    readPopulationFromCSV
+    readPopulationFromCSV,
+    overwrite
   )
 }
 
@@ -769,6 +775,7 @@ addScenario <- function(
   steadyStateTimeUnit = "min",
   overwriteFormulasInSS = FALSE,
   readPopulationFromCSV = FALSE,
+  overwrite = FALSE,
   .call
 ) {
   rlang::local_error_call(.call)
@@ -798,10 +805,15 @@ addScenario <- function(
     )
   )
 
-  .assertNoDuplicateIds(id, "scenario")
-  clash <- intersect(id, names(self$definitions$scenarios))
-  if (length(clash) > 0L) {
-    cli::cli_abort("scenario {.val {clash}} already exists")
+  if (!overwrite) {
+    .assertNoDuplicateIds(id, "scenario")
+    clash <- intersect(id, names(self$definitions$scenarios))
+    if (length(clash) > 0L) {
+      cli::cli_abort(c(
+        "scenario {.val {clash}} already exists.",
+        "i" = "Pass {.code overwrite = TRUE} to replace it."
+      ))
+    }
   }
   call <- .call
   scenarios <- .collectCanonicalizedRefs(lapply(seq_len(n), function(i) {

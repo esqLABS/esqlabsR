@@ -327,7 +327,10 @@ test_that("addScenario accepts a valid initialConditions reference", {
     modelFile = "Aciclovir.pkml",
     initialConditions = "icset"
   )
-  expect_identical(project$definitions$scenarios[["withic"]]$initialConditions, "icset")
+  expect_identical(
+    project$definitions$scenarios[["withic"]]$initialConditions,
+    "icset"
+  )
 })
 
 test_that("addScenario aborts eagerly on a dangling initialConditions ref", {
@@ -349,7 +352,10 @@ test_that("setScenario updates and clears the initialConditions reference", {
   addScenario(project, id = "sc", modelFile = "Aciclovir.pkml")
 
   setScenario(project, "sc", initialConditions = "icset")
-  expect_identical(project$definitions$scenarios[["sc"]]$initialConditions, "icset")
+  expect_identical(
+    project$definitions$scenarios[["sc"]]$initialConditions,
+    "icset"
+  )
 
   setScenario(project, "sc", initialConditions = NULL)
   expect_null(project$definitions$scenarios[["sc"]]$initialConditions)
@@ -423,6 +429,28 @@ test_that("removeScenario uses the id argument matching addScenario", {
   expect_true("toremove" %in% names(project$definitions$scenarios))
   removeScenario(project, id = "toremove")
   expect_false("toremove" %in% names(project$definitions$scenarios))
+})
+
+test_that("addScenario aborts on an existing id, replaces it with overwrite", {
+  project <- testProject()
+  existing <- names(project$definitions$scenarios)[[1]]
+  expect_snapshot(
+    error = TRUE,
+    addScenario(project, id = existing, modelFile = "Aciclovir.pkml")
+  )
+  before <- length(project$definitions$scenarios)
+  addScenario(
+    project,
+    id = existing,
+    modelFile = "Aciclovir.pkml",
+    simulationTimeUnit = "min",
+    overwrite = TRUE
+  )
+  expect_length(project$definitions$scenarios, before)
+  expect_identical(
+    project$definitions$scenarios[[existing]]$simulationTimeUnit,
+    "min"
+  )
 })
 
 test_that("addScenario and removeScenario clear the validation cache", {
@@ -516,14 +544,20 @@ test_that("setScenario invalidates the validation cache", {
 
 test_that("setScenario can clear an optional field with NULL", {
   project <- testProject()
-  expect_false(is.null(project$definitions$scenarios[["populationscenario"]]$individualId))
+  expect_false(is.null(
+    project$definitions$scenarios[["populationscenario"]]$individualId
+  ))
 
   setScenario(project, "populationscenario", individual = NULL)
 
-  expect_null(project$definitions$scenarios[["populationscenario"]]$individualId)
+  expect_null(
+    project$definitions$scenarios[["populationscenario"]]$individualId
+  )
   saveProject(project)
   reloaded <- loadProject(project$info$projectFilePath)
-  expect_null(reloaded$definitions$scenarios[["populationscenario"]]$individualId)
+  expect_null(
+    reloaded$definitions$scenarios[["populationscenario"]]$individualId
+  )
 })
 
 test_that("setScenario aborts on a non-existent scenario, no file written", {
@@ -584,7 +618,10 @@ test_that("setScenario stays in memory until saveProject()", {
   setScenario(source, "testscenario", simulationTimeUnit = "min")
 
   # The edit is in memory only; the on-disk file is untouched before a save.
-  expect_equal(source$definitions$scenarios[["testscenario"]]$simulationTimeUnit, "min")
+  expect_equal(
+    source$definitions$scenarios[["testscenario"]]$simulationTimeUnit,
+    "min"
+  )
   expect_identical(readLines(file.path(dir, "testscenario.json")), sourceFile)
 })
 
@@ -665,13 +702,19 @@ test_that("renameScenario updates the record's stored name so a reload round-tri
 
   renameScenario(project, "testscenario", "renamed")
 
-  expect_equal(project$definitions$scenarios[["renamed"]]$scenarioName, "renamed")
+  expect_equal(
+    project$definitions$scenarios[["renamed"]]$scenarioName,
+    "renamed"
+  )
   # A reload re-derives scenarios from the tree; the new key must validate and
   # round-trip (name == key invariant holds).
   saveProject(project)
   reloaded <- loadProject(project$info$projectFilePath)
   expect_true("renamed" %in% names(reloaded$definitions$scenarios))
-  expect_equal(reloaded$definitions$scenarios[["renamed"]]$scenarioName, "renamed")
+  expect_equal(
+    reloaded$definitions$scenarios[["renamed"]]$scenarioName,
+    "renamed"
+  )
   expect_no_error(validateProject(reloaded))
 })
 
@@ -738,7 +781,9 @@ test_that("duplicateScenario creates an independent copy in memory, persisted on
   duplicateScenario(project, "testscenario", "copy")
 
   # Both exist in memory; the original is untouched.
-  expect_true(all(c("testscenario", "copy") %in% names(project$definitions$scenarios)))
+  expect_true(all(
+    c("testscenario", "copy") %in% names(project$definitions$scenarios)
+  ))
   expect_equal(project$definitions$scenarios[["copy"]]$scenarioName, "copy")
   # On save, the copy is a new definition file alongside the original.
   saveProject(project)
@@ -753,7 +798,10 @@ test_that("duplicateScenario produces an independent copy: mutating it leaves th
   duplicateScenario(project, "testscenario", "copy")
   setScenario(project, "copy", simulationTimeUnit = "min")
 
-  expect_equal(project$definitions$scenarios[["copy"]]$simulationTimeUnit, "min")
+  expect_equal(
+    project$definitions$scenarios[["copy"]]$simulationTimeUnit,
+    "min"
+  )
   # The original record (and its file) is unchanged.
   expect_equal(project$definitions$scenarios[["testscenario"]], originalBefore)
   saveProject(project)
