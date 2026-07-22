@@ -136,6 +136,10 @@ addObservedData(project, list(type = "script", file = "scripts/literature_curve.
 
 The id of this source is the file basename, `literature_curve.R`, while the DataSet it produces is named `Digitized literature curve` (the name a DataCombined references). Because the script runs each time the data is resolved, anything you can compute in R (digitized points, a transformation of a raw file, a join across several inputs) becomes reproducible observed data.
 
+<div class="alert alert-warning">
+**Security.** A `script` source runs the R file it names on your machine, with `source()`, whenever the data is resolved. Any R code in that file executes. Treat a project the way you would treat a script someone sends you: only load and resolve observed data from a project you trust. The first time a session sources a `script` source, the package warns you that this is happening.
+</div>
+
 ## Source type 4: Programmatic
 
 `addObservedData()` also accepts a `DataSet` you have already built in the session. The package keeps that `DataSet` on the in-memory project and writes only a `{type: "programmatic", name}` sentinel to disk, because a live `DataSet` is not JSON-serializable. Build the `DataSet` as in the PKML example, then pass it directly:

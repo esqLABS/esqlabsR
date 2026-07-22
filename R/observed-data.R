@@ -216,6 +216,15 @@ print.ObservedDataSource <- function(x, ...) {
 #' @param project A `Project` object (see [loadProject()]).
 #' @returns A named list of [`ospsuite::DataSet`] objects. Empty list when
 #'   `observedData` definitions is empty or `NULL`.
+#'
+#' @section Security:
+#'   A `script` observed-data source runs the R file it names, with
+#'   `source()`, on your machine when the data is resolved. Any R code in
+#'   that file executes, so treat a project the same way you would treat a
+#'   script someone sends you: only load and resolve observed data from a
+#'   project you trust. This applies to `loadObservedData()` and to anything
+#'   that resolves observed data for you, such as [createDataCombined()].
+#'
 #' @examples
 #' \dontrun{
 #' project <- loadProject("path/to/Project.json")
