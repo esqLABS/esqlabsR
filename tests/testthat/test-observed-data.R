@@ -382,6 +382,41 @@ test_that("addObservedData rejects a duplicate config entry file", {
   expect_length(project$definitions$observedData, 1L)
 })
 
+test_that("addObservedData aborts on a duplicate DataSet name, replaces with overwrite", {
+  project <- testProject()
+  ds1 <- ospsuite::DataSet$new(name = "prog_ds")
+  ds2 <- ospsuite::DataSet$new(name = "prog_ds")
+  suppressMessages(addObservedData(project, ds1))
+  expect_snapshot(error = TRUE, addObservedData(project, ds2))
+  before <- length(project$definitions$observedData)
+  suppressMessages(addObservedData(project, ds2, overwrite = TRUE))
+  # The section length is unchanged (replaced in place) and the runtime store
+  # now holds the second DataSet under that name.
+  expect_length(project$definitions$observedData, before)
+  expect_identical(loadObservedData(project)[["prog_ds"]], ds2)
+})
+
+test_that("addObservedData overwrite = TRUE replaces a config entry in place", {
+  project <- testProject()
+  addObservedData(project, list(type = "pkml", file = "sub1/obs.pkml"))
+  before <- length(project$definitions$observedData)
+  # A second entry with the same basename replaces the first (same on-disk id),
+  # keeping the section length unchanged and taking the new directory.
+  addObservedData(
+    project,
+    list(type = "pkml", file = "sub2/obs.pkml"),
+    overwrite = TRUE
+  )
+  expect_length(project$definitions$observedData, before)
+  files <- vapply(
+    project$definitions$observedData,
+    function(e) if (is.null(e[["file"]])) NA_character_ else e[["file"]],
+    character(1)
+  )
+  expect_true("sub2/obs.pkml" %in% files)
+  expect_false("sub1/obs.pkml" %in% files)
+})
+
 # Two declarations whose `file` differs only by directory derive the same
 # on-disk id (the basename) and would silently overwrite each other (the second
 # lost on reload). Under explicit-save the section is accepted in memory, but
