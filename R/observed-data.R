@@ -270,8 +270,41 @@ loadObservedData <- function(project) {
     allDataSets,
     private$.programmaticDataSets
   )
+  # A `programmatic` sentinel resolves to nothing unless this session added its
+  # DataSet: the data lives only in the runtime store, so a sentinel read from
+  # disk (a reload, or a project opened elsewhere) has no backing DataSet and
+  # would silently vanish from the result. Warn by name so the drop is loud
+  # instead of surfacing later as an obscure dangling DataCombined reference.
+  unresolved <- .unresolvedProgrammaticNames(
+    self$definitions$observedData,
+    names(allDataSets)
+  )
+  if (length(unresolved) > 0) {
+    cli::cli_warn(messages$observedDataProgrammaticUnresolved(unresolved))
+  }
   private$.observedDataNamesCache <- names(allDataSets)
   allDataSets
+}
+
+# Names of `programmatic` sentinels with no backing DataSet in the resolved set
+# (their data was never added this session, or was lost across a reload).
+#
+# @keywords internal
+# @noRd
+.unresolvedProgrammaticNames <- function(observedData, resolvedNames) {
+  programmaticNames <- vapply(
+    observedData,
+    function(e) {
+      if (identical(e$type, "programmatic")) {
+        e$name %||% NA_character_
+      } else {
+        NA_character_
+      }
+    },
+    character(1)
+  )
+  programmaticNames <- programmaticNames[!is.na(programmaticNames)]
+  setdiff(programmaticNames, resolvedNames)
 }
 
 # Merge a batch of loaded DataSets into the accumulator, aborting on a name

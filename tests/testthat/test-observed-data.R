@@ -68,7 +68,7 @@ test_that("loadObservedData errors when an entry has invalid type", {
   expect_snapshot(error = TRUE, loadObservedData(project))
 })
 
-test_that("loadObservedData skips orphan programmatic sentinels (no in-memory DataSet)", {
+test_that("loadObservedData warns on orphan programmatic sentinels (no in-memory DataSet)", {
   tmp <- withr::local_tempfile(fileext = ".json")
   jsonlite::write_json(
     list(
@@ -83,11 +83,15 @@ test_that("loadObservedData skips orphan programmatic sentinels (no in-memory Da
     null = "null"
   )
   project <- loadProject(tmp)
-  # A reloaded project sees the sentinel entry but has no in-memory
-  # DataSet to back it (DataSets do not survive JSON round-trip).
-  # loadObservedData silently produces an empty result; addObservedData
-  # is the supported path for re-attaching the runtime DataSet.
-  expect_length(loadObservedData(project), 0L)
+  # A reloaded project sees the sentinel entry but has no in-memory DataSet to
+  # back it (DataSets do not survive a JSON round-trip). loadObservedData warns
+  # that the source resolved to nothing and returns an empty result;
+  # addObservedData is the supported path for re-attaching the runtime DataSet.
+  expect_warning(
+    result <- loadObservedData(project),
+    "resolved to no data"
+  )
+  expect_length(result, 0L)
 })
 
 test_that("loadObservedData errors when excel entry is missing required fields", {

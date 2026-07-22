@@ -997,6 +997,14 @@ messages$observedDataScriptSecurityWarn <- function() {
   ))
 }
 
+messages$observedDataProgrammaticUnresolved <- function(names) {
+  cli::format_message(c(
+    "!" = "{length(names)} programmatic observed-data source{?s} resolved to no data: {.val {names}}.",
+    "i" = "A programmatic source holds its {.cls DataSet} only in the session that added it; it is not saved to disk.",
+    "i" = "Re-add {cli::qty(names)}{?it/them} with {.fn addObservedData} in this session, or declare {?it/them} as a {.code script} or {.code pkml} source to persist across a reload."
+  ))
+}
+
 messages$observedDataDataFolderNotDeclared <- function(file) {
   cliFormat(
     "{.field dataFolder} is not declared in {.code filePaths}; cannot resolve {.path {file}}."
