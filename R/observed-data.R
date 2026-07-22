@@ -621,6 +621,15 @@ removeObservedData <- function(project, id) {
 
 .loadObservedScript <- function(entry, dataFolder) {
   filePath <- .resolveDataPath(entry$file, dataFolder)
+  # A script source executes arbitrary R (see the loadObservedData() Security
+  # section). Warn the user that this is happening, once per session so a
+  # project with several script sources, or a repeated resolve, stays quiet
+  # after the first.
+  cli::cli_warn(
+    messages$observedDataScriptSecurityWarn(),
+    .frequency = "once",
+    .frequency_id = "esqlabsR_observed_data_script_source"
+  )
   cli::cli_inform(c(
     "i" = "Sourcing observed-data script: {.path {filePath}}"
   ))

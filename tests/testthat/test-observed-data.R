@@ -205,7 +205,14 @@ test_that("loadObservedData sources script entries", {
     null = "null"
   )
   project <- loadProject(jsonPath)
-  result <- loadObservedData(project)
+  # A script source executes arbitrary R, so the first source in a session
+  # warns. Reset the once-per-session gate so this assertion does not depend on
+  # whether an earlier test already tripped it.
+  rlang::reset_warning_verbosity("esqlabsR_observed_data_script_source")
+  expect_warning(
+    result <- loadObservedData(project),
+    "executing arbitrary R code"
+  )
   expect_named(result, "TestDataSet")
   expect_s3_class(result$TestDataSet, "DataSet")
 })
