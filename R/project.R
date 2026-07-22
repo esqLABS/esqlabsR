@@ -348,8 +348,8 @@ Project <- R6::R6Class(
     },
 
     #' @description Add an application. See [addApplication()].
-    addApplication = function(id, parameterSets = NULL) {
-      private$.impl(.addApplication_impl, id, parameterSets)
+    addApplication = function(id, parameterSets = NULL, overwrite = FALSE) {
+      private$.impl(.addApplication_impl, id, parameterSets, overwrite)
     },
 
     #' @description Remove applications. See [removeApplication()].

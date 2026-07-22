@@ -35,29 +35,49 @@ print.Application <- function(x, ...) {
 #' @param parameterSets Optional character vector of set ids referencing
 #'   `parameterSets` definitions, applied whole to every protocol. Defaults to
 #'   `NULL`. Use a list of the same length as `id` for a per-protocol set.
+#' @param overwrite Logical scalar. When `FALSE` (default), an id that already
+#'   exists aborts. When `TRUE`, the existing protocol is replaced
+#'   (last-write-wins).
 #' @returns The `project` object, invisibly.
 #' @export
 #' @family application
-addApplication <- function(project, id, parameterSets = NULL) {
+addApplication <- function(
+  project,
+  id,
+  parameterSets = NULL,
+  overwrite = FALSE
+) {
   validateIsOfType(project, "Project")
-  project$addApplication(id, parameterSets)
+  project$addApplication(id, parameterSets, overwrite)
 }
 
 # Implementation behind `project$addApplication()` / `addApplication()`.
 #
 # @keywords internal
 # @noRd
-.addApplication_impl <- function(self, private, id, parameterSets = NULL, .call) {
+.addApplication_impl <- function(
+  self,
+  private,
+  id,
+  parameterSets = NULL,
+  overwrite = FALSE,
+  .call
+) {
   rlang::local_error_call(.call)
   .assertIdVector(id)
   id <- .canonicalizeId(id)
   n <- length(id)
   perId <- .wholeField(parameterSets, n)
 
-  .assertNoDuplicateIds(id, "application")
-  clash <- intersect(id, names(self$definitions$applications))
-  if (length(clash) > 0L) {
-    cli::cli_abort("application {.val {clash}} already exists")
+  if (!overwrite) {
+    .assertNoDuplicateIds(id, "application")
+    clash <- intersect(id, names(self$definitions$applications))
+    if (length(clash) > 0L) {
+      cli::cli_abort(c(
+        "application {.val {clash}} already exists.",
+        "i" = "Pass {.code overwrite = TRUE} to replace it."
+      ))
+    }
   }
   call <- .call
   apps <- .collectCanonicalizedRefs(lapply(seq_len(n), function(i) {

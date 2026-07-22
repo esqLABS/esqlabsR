@@ -14,3 +14,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-07-22 14:45: Extended the overwrite policy to `addOutputPath()`: an existing id errors unless `overwrite = TRUE`.
 - 2026-07-22 15:10: Extended the overwrite policy to `addIndividual()`: an existing id errors unless `overwrite = TRUE`.
 - 2026-07-22 15:20: Extended the overwrite policy to `addPopulation()`: an existing id errors unless `overwrite = TRUE`.
+- 2026-07-22 15:30: Extended the overwrite policy to `addApplication()`: an existing id errors unless `overwrite = TRUE`.

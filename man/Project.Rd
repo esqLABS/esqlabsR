@@ -476,7 +476,7 @@ remaining arguments of \code{\link[=createScenariosFromPKML]{createScenariosFrom
   Add an application. See \code{\link[=addApplication]{addApplication()}}.
   \subsection{Usage}{
     \if{html}{\out{<div class="r">}}
-    \preformatted{Project$addApplication(id, parameterSets = NULL)}
+    \preformatted{Project$addApplication(id, parameterSets = NULL, overwrite = FALSE)}
     \if{html}{\out{</div>}}
   }
   \subsection{Arguments}{
@@ -486,6 +486,8 @@ remaining arguments of \code{\link[=createScenariosFromPKML]{createScenariosFrom
       \item{\code{parameterSets, initialConditions, outputPaths}}{Character vectors (or
 \code{NULL}) of definition ids a scenario references, or the target of an
 \verb{add*}/\verb{set*}/\verb{remove*} call. See \code{\link[=addScenario]{addScenario()}}.}
+      \item{\code{overwrite}}{Logical scalar controlling duplicate-collision behaviour of
+the \verb{add*} authoring methods. See \code{\link[=addParameterEntry]{addParameterEntry()}}, \code{\link[=addPITask]{addPITask()}}.}
     }
     \if{html}{\out{</div>}}
   }
