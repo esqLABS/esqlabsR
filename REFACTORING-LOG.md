@@ -17,3 +17,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-07-22 15:30: Extended the overwrite policy to `addApplication()`: an existing id errors unless `overwrite = TRUE`.
 - 2026-07-22 15:45: Extended the overwrite policy to `addParameterSet()` and `addInitialConditions()`: an existing set id errors unless `overwrite = TRUE`.
 - 2026-07-22 16:00: Extended the overwrite policy to `addScenario()`: an existing id errors unless `overwrite = TRUE` (distinct from the `overwriteFormulasInSS` model option).
+- 2026-07-22 16:20: Extended the overwrite policy to `addPlot()`, `addPlotGrid()`, and `addDataCombined()`: an existing id errors unless `overwrite = TRUE`.

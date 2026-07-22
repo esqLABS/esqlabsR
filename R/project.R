@@ -478,8 +478,13 @@ Project <- R6::R6Class(
     },
 
     #' @description Add a data-combined entry. See [addDataCombined()].
-    addDataCombined = function(id, simulated = list(), observed = list()) {
-      private$.impl(.addDataCombined_impl, id, simulated, observed)
+    addDataCombined = function(
+      id,
+      simulated = list(),
+      observed = list(),
+      overwrite = FALSE
+    ) {
+      private$.impl(.addDataCombined_impl, id, simulated, observed, overwrite)
     },
 
     #' @description Remove data-combined entries. See [removeDataCombined()].

@@ -876,7 +876,12 @@ remaining arguments of \code{\link[=createScenariosFromPKML]{createScenariosFrom
   Add a data-combined entry. See \code{\link[=addDataCombined]{addDataCombined()}}.
   \subsection{Usage}{
     \if{html}{\out{<div class="r">}}
-    \preformatted{Project$addDataCombined(id, simulated = list(), observed = list())}
+    \preformatted{Project$addDataCombined(
+  id,
+  simulated = list(),
+  observed = list(),
+  overwrite = FALSE
+)}
     \if{html}{\out{</div>}}
   }
   \subsection{Arguments}{
@@ -885,6 +890,8 @@ remaining arguments of \code{\link[=createScenariosFromPKML]{createScenariosFrom
       \item{\code{id}}{Character id (name) of the definition to add, modify, or remove.}
       \item{\code{simulated, observed}}{Simulated / observed inputs to a \code{DataCombined}.
 See \code{\link[=addDataCombined]{addDataCombined()}}.}
+      \item{\code{overwrite}}{Logical scalar controlling duplicate-collision behaviour of
+the \verb{add*} authoring methods. See \code{\link[=addParameterEntry]{addParameterEntry()}}, \code{\link[=addPITask]{addPITask()}}.}
     }
     \if{html}{\out{</div>}}
   }

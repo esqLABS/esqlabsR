@@ -774,6 +774,10 @@ print.DataCombined <- function(x, ...) {
 #'   single title `"A, B"`, not plot 1 `"A"` and plot 2 `"B"`. To vary a
 #'   `...` field per plot, pass a length-`N` **list** (`title = list("A",
 #'   "B")`).
+#'
+#'   `...` also accepts `overwrite`, a logical scalar (default `FALSE`): a
+#'   plot id that already exists aborts unless `overwrite = TRUE`, which
+#'   replaces it (last-write-wins).
 #' @returns The `project` object, invisibly.
 #' @export
 #' @family plots
@@ -786,7 +790,15 @@ addPlot <- function(project, id, dataCombined, plotType, ...) {
 #
 # @keywords internal
 # @noRd
-.addPlot_impl <- function(self, private, id, dataCombined, plotType, ..., .call) {
+.addPlot_impl <- function(
+  self,
+  private,
+  id,
+  dataCombined,
+  plotType,
+  ...,
+  .call
+) {
   rlang::local_error_call(.call)
   .requireNonEmptyStringVector(id, "id")
   id <- .canonicalizeId(id)
@@ -795,15 +807,26 @@ addPlot <- function(project, id, dataCombined, plotType, ...) {
     .recycleScalarArg(dataCombined, n, "dataCombined")
   )
   plotType <- .recycleScalarArg(plotType, n, "plotType")
-  perDefinitionFields <- .dotsToPerDefinitionFields(list(...), n)
+  dots <- list(...)
+  # `overwrite` arrives through `...`; pull it out before building fields so it
+  # is not stored as a plot field.
+  overwrite <- isTRUE(dots[["overwrite"]])
+  dots[["overwrite"]] <- NULL
+  perDefinitionFields <- .dotsToPerDefinitionFields(dots, n)
 
   # Validate the whole batch first (all-or-nothing): no entry is folded in (and
-  # so nothing is written through) unless every entry is valid.
-  .assertNoDuplicateIds(id, "plot")
-  existing <- names(self$definitions$plots)
-  clash <- intersect(id, existing)
-  if (length(clash) > 0L) {
-    cli::cli_abort("plot {.val {clash}} already exists")
+  # so nothing is written through) unless every entry is valid. A within-batch
+  # duplicate id aborts unless overwriting, in which case the last one wins.
+  if (!overwrite) {
+    .assertNoDuplicateIds(id, "plot")
+    existing <- names(self$definitions$plots)
+    clash <- intersect(id, existing)
+    if (length(clash) > 0L) {
+      cli::cli_abort(c(
+        "plot {.val {clash}} already exists.",
+        "i" = "Pass {.code overwrite = TRUE} to replace it."
+      ))
+    }
   }
   unknownDc <- setdiff(dataCombined, names(self$definitions$dataCombined))
   if (length(unknownDc) > 0L) {
@@ -932,6 +955,10 @@ removePlot <- function(project, id) {
 #'   gives every grid the single title `"A, B"`, not grid 1 `"A"` and grid 2
 #'   `"B"`. To vary a `...` field per grid, pass a length-`N` **list**
 #'   (`title = list("A", "B")`).
+#'
+#'   `...` also accepts `overwrite`, a logical scalar (default `FALSE`): a
+#'   plot-grid id that already exists aborts unless `overwrite = TRUE`, which
+#'   replaces it (last-write-wins).
 #' @returns The `project` object, invisibly.
 #' @export
 #' @family plots
@@ -961,13 +988,24 @@ addPlotGrid <- function(project, id, plots, ...) {
   } else {
     rep(list(plots), n)
   }
-  perGridFields <- .dotsToPerDefinitionFields(list(...), n)
+  dots <- list(...)
+  # `overwrite` arrives through `...`; pull it out before building fields so it
+  # is not stored as a grid field.
+  overwrite <- isTRUE(dots[["overwrite"]])
+  dots[["overwrite"]] <- NULL
+  perGridFields <- .dotsToPerDefinitionFields(dots, n)
 
-  # Validate the whole batch first (all-or-nothing).
-  .assertNoDuplicateIds(id, "plot grid")
-  clash <- intersect(id, names(self$definitions$plotGrids))
-  if (length(clash) > 0L) {
-    cli::cli_abort("plot grid {.val {clash}} already exists")
+  # Validate the whole batch first (all-or-nothing). A within-batch duplicate id
+  # aborts unless overwriting, in which case the last one wins.
+  if (!overwrite) {
+    .assertNoDuplicateIds(id, "plot grid")
+    clash <- intersect(id, names(self$definitions$plotGrids))
+    if (length(clash) > 0L) {
+      cli::cli_abort(c(
+        "plot grid {.val {clash}} already exists.",
+        "i" = "Pass {.code overwrite = TRUE} to replace it."
+      ))
+    }
   }
   existingPlotIDs <- names(self$definitions$plots)
   if (is.null(existingPlotIDs)) {
@@ -1068,6 +1106,9 @@ removePlotGrid <- function(project, id) {
 #'   such simulated list per DataCombined.
 #' @param observed Like `simulated`, but each named list includes `label` and
 #'   `dataSet` (optional fields as `simulated` minus `scenario` and `path`).
+#' @param overwrite Logical scalar. When `FALSE` (default), an id that already
+#'   exists aborts. When `TRUE`, the existing DataCombined is replaced
+#'   (last-write-wins).
 #' @returns The `project` object, invisibly.
 #' @export
 #' @family dataCombined
@@ -1075,10 +1116,11 @@ addDataCombined <- function(
   project,
   id,
   simulated = list(),
-  observed = list()
+  observed = list(),
+  overwrite = FALSE
 ) {
   validateIsOfType(project, "Project")
-  project$addDataCombined(id, simulated, observed)
+  project$addDataCombined(id, simulated, observed, overwrite)
 }
 
 # Implementation behind `project$addDataCombined()` / `addDataCombined()`.
@@ -1091,6 +1133,7 @@ addDataCombined <- function(
   id,
   simulated = list(),
   observed = list(),
+  overwrite = FALSE,
   .call
 ) {
   rlang::local_error_call(.call)
@@ -1103,11 +1146,17 @@ addDataCombined <- function(
   perIdSimulated <- .perDataCombinedEntries(simulated, n)
   perIdObserved <- .perDataCombinedEntries(observed, n)
 
-  # Validate the whole batch first (all-or-nothing).
-  .assertNoDuplicateIds(id, "DataCombined")
-  clash <- intersect(id, names(self$definitions$dataCombined))
-  if (length(clash) > 0L) {
-    cli::cli_abort("DataCombined {.val {clash}} already exists")
+  # Validate the whole batch first (all-or-nothing). A within-batch duplicate id
+  # aborts unless overwriting, in which case the last one wins.
+  if (!overwrite) {
+    .assertNoDuplicateIds(id, "DataCombined")
+    clash <- intersect(id, names(self$definitions$dataCombined))
+    if (length(clash) > 0L) {
+      cli::cli_abort(c(
+        "DataCombined {.val {clash}} already exists.",
+        "i" = "Pass {.code overwrite = TRUE} to replace it."
+      ))
+    }
   }
   for (i in seq_len(n)) {
     if (length(perIdSimulated[[i]]) == 0L && length(perIdObserved[[i]]) == 0L) {
