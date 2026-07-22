@@ -989,6 +989,10 @@ messages$observedDataScriptWrongReturnType <- function(filePath, klass) {
   ))
 }
 
+messages$observedDataScriptSourcing <- function(filePath) {
+  cliFormat("Sourcing observed-data script: {.path {filePath}}")
+}
+
 messages$observedDataScriptSecurityWarn <- function() {
   cli::format_message(c(
     "!" = "This project runs an R script to build observed data, executing arbitrary R code on your machine.",
@@ -1022,6 +1026,14 @@ messages$observedDataPersistNoDataFolder <- function(name) {
   cli::format_message(c(
     "x" = "Cannot save the programmatic observed-data source {.val {name}}: {.field dataFolder} is not declared in {.code filePaths}.",
     "i" = "A programmatic source is written to a PKML file under {.field dataFolder} on save. Declare {.field dataFolder}, then save again."
+  ))
+}
+
+messages$observedDataPersistIdCollision <- function(ids) {
+  cli::format_message(c(
+    "x" = "Saving a programmatic observed-data source would overwrite another source: {.file {ids}}.",
+    "i" = "A programmatic source is written to {.file <name>.pkml}; this clashes with an existing source filed under the same name.",
+    "i" = "Rename the {.cls DataSet} (its {.field name}) so the file names differ."
   ))
 }
 

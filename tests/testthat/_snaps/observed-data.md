@@ -55,10 +55,8 @@
     Code
       saveProject(project)
     Condition
-      Error in `.serializeObservedDataSet()`:
-      ! Two observedData declarations map to the same definition file 'Collide.pkml.json'.
-      x The on-disk id is the file basename (or the programmatic name), so two sources sharing a basename collide.
-      i Rename one source so the basenames differ.
+      Error in `.persistProgrammaticObservedData()`:
+      ! x Saving a programmatic observed-data source would overwrite another source: 'Collide.pkml'. i A programmatic source is written to '<name>.pkml'; this clashes with an existing source filed under the same name. i Rename the <DataSet> (its name) so the file names differ.
 
 # saveProject aborts persisting a programmatic DataSet with no dataFolder
 

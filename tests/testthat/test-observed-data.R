@@ -447,7 +447,8 @@ test_that("saveProject persists a programmatic DataSet to PKML and it round-trip
 
 # The PKML written for a programmatic DataSet is named <name>.pkml, so a
 # programmatic name whose PKML file collides with an existing pkml source's
-# basename aborts at save, before any file is written.
+# basename aborts at save, before any file is written. The abort must come
+# before the write, so the existing file is left intact (no data loss).
 test_that("saveProject aborts on a programmatic-to-PKML basename collision", {
   project <- testProject()
   # An existing pkml source living in the file "Collide.pkml" but producing a
@@ -455,17 +456,23 @@ test_that("saveProject aborts on a programmatic-to-PKML basename collision", {
   # programmatic name at add time. The programmatic DataSet named "Collide"
   # would persist to the same "Collide.pkml", colliding at save.
   existing <- ospsuite::DataSet$new(name = "Other")
-  existing$setValues(xValues = c(0, 1), yValues = c(1, 2))
-  ospsuite::saveDataSetToPKML(
-    existing,
-    file.path(project$paths$dataFolder, "Collide.pkml")
-  )
+  existing$setValues(xValues = c(0, 1), yValues = c(111, 222))
+  collidePath <- file.path(project$paths$dataFolder, "Collide.pkml")
+  ospsuite::saveDataSetToPKML(existing, collidePath)
   addObservedData(project, list(type = "pkml", file = "Collide.pkml"))
   ds <- ospsuite::DataSet$new(name = "Collide")
-  ds$setValues(xValues = c(1, 2), yValues = c(3, 4))
+  ds$setValues(xValues = c(1, 2), yValues = c(333, 444))
   addObservedData(project, ds)
 
   expect_snapshot(saveProject(project), error = TRUE)
+
+  # The abort left the existing "Collide.pkml" untouched: its data is still
+  # "Other"'s, not the programmatic DataSet's.
+  expect_equal(
+    ospsuite::loadDataSetFromPKML(collidePath)$yValues,
+    c(111, 222),
+    tolerance = 1e-6
+  )
 })
 
 # Persisting a programmatic DataSet needs a data folder to write the PKML into;

@@ -294,19 +294,16 @@ loadObservedData <- function(project) {
 # @keywords internal
 # @noRd
 .unresolvedProgrammaticNames <- function(observedData, resolvedNames) {
-  programmaticNames <- vapply(
-    observedData,
-    function(e) {
-      if (identical(e$type, "programmatic")) {
-        e$name %||% NA_character_
-      } else {
-        NA_character_
-      }
-    },
+  programmatic <- Filter(
+    function(e) identical(e$type, "programmatic"),
+    observedData
+  )
+  names <- vapply(
+    programmatic,
+    function(e) e$name %||% NA_character_,
     character(1)
   )
-  programmaticNames <- programmaticNames[!is.na(programmaticNames)]
-  setdiff(programmaticNames, resolvedNames)
+  setdiff(names[!is.na(names)], resolvedNames)
 }
 
 # Merge a batch of loaded DataSets into the accumulator, aborting on a name
@@ -664,9 +661,7 @@ removeObservedData <- function(project, id) {
     .frequency = "once",
     .frequency_id = "esqlabsR_observed_data_script_source"
   )
-  cli::cli_inform(c(
-    "i" = "Sourcing observed-data script: {.path {filePath}}"
-  ))
+  cli::cli_inform(messages$observedDataScriptSourcing(filePath))
   result <- source(filePath, local = TRUE)$value
   if (inherits(result, "DataSet")) {
     return(stats::setNames(list(result), result$name))
@@ -700,44 +695,63 @@ removeObservedData <- function(project, id) {
 # @noRd
 .persistProgrammaticObservedData <- function(self, private) {
   observedData <- private$.getSection("observedData")
-  toPersist <- vapply(
+  toPersist <- which(vapply(
     observedData,
     function(e) {
       identical(e$type, "programmatic") &&
         !is.null(private$.programmaticDataSets[[e$name]])
     },
     logical(1)
-  )
-  if (!any(toPersist)) {
+  ))
+  if (length(toPersist) == 0) {
     return(invisible(NULL))
   }
 
   dataFolder <- self$paths$dataFolder
   if (is.null(dataFolder)) {
     cli::cli_abort(messages$observedDataPersistNoDataFolder(
-      observedData[toPersist][[1]]$name
+      observedData[[toPersist[[1]]]]$name
     ))
   }
-  # Materialize the folder: a from-scratch project may declare a data folder
-  # that has no directory on disk yet.
+
+  # Rewrite the whole section in memory and validate it clean BEFORE writing any
+  # PKML file, so a save that aborts (an unsafe name, or a basename that collides
+  # with another source's on-disk id) never overwrites an existing file: every
+  # write below is known to land on a fresh, collision-free path. This upholds
+  # the all-or-nothing save contract for the on-disk data files, not just the
+  # definition tree.
+  persistedNames <- vapply(
+    observedData[toPersist],
+    function(e) e$name,
+    character(1)
+  )
+  fileNames <- paste0(persistedNames, ".pkml")
+  for (i in seq_along(toPersist)) {
+    observedData[[toPersist[[i]]]] <- .asObservedDataSource(list(
+      type = "pkml",
+      file = fileNames[[i]]
+    ))
+  }
+  # Same checks the serializer runs, but up front: each id a safe filename
+  # segment, and no two entries sharing an id.
+  ids <- vapply(observedData, .observedDataEntryId, character(1))
+  lapply(ids, .validateObservedDataId)
+  duplicates <- unique(ids[duplicated(ids)])
+  if (length(duplicates) > 0) {
+    cli::cli_abort(messages$observedDataPersistIdCollision(duplicates))
+  }
+
+  # Materialize the folder (a from-scratch project may declare one that has no
+  # directory on disk yet), then write each PKML now that the batch is safe.
   if (!dir.exists(dataFolder)) {
     dir.create(dataFolder, recursive = TRUE, showWarnings = FALSE)
   }
-
-  persistedNames <- character()
-  for (i in which(toPersist)) {
-    name <- observedData[[i]]$name
-    fileName <- paste0(name, ".pkml")
-    # The rewritten entry's id becomes this basename; reject an unsafe name
-    # before writing a file, so we never leave a stray PKML behind on abort.
-    .validateObservedDataId(fileName)
-    filePath <- .resolveProjectPath(fileName, dataFolder, "file")
-    ospsuite::saveDataSetToPKML(private$.programmaticDataSets[[name]], filePath)
-    observedData[[i]] <- .asObservedDataSource(list(
-      type = "pkml",
-      file = fileName
-    ))
-    persistedNames <- c(persistedNames, name)
+  for (i in seq_along(toPersist)) {
+    filePath <- .resolveProjectPath(fileNames[[i]], dataFolder, "file")
+    ospsuite::saveDataSetToPKML(
+      private$.programmaticDataSets[[persistedNames[[i]]]],
+      filePath
+    )
   }
 
   private$.setSection("observedData", observedData)
