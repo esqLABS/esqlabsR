@@ -396,6 +396,26 @@ test_that("addObservedData aborts on a duplicate DataSet name, replaces with ove
   expect_identical(loadObservedData(project)[["prog_ds"]], ds2)
 })
 
+test_that("addObservedData overwrite does not grow the observed-data name list", {
+  project <- testProject()
+  suppressMessages(addObservedData(
+    project,
+    ospsuite::DataSet$new(name = "iter")
+  ))
+  # Repeated overwrites of the same name (a plausible iterative-fitting loop)
+  # must not accumulate duplicate names in the cached name list.
+  for (i in seq_len(3)) {
+    suppressMessages(
+      addObservedData(
+        project,
+        ospsuite::DataSet$new(name = "iter"),
+        overwrite = TRUE
+      )
+    )
+  }
+  expect_equal(sum(getObservedDataNames(project) == "iter"), 1L)
+})
+
 test_that("addObservedData overwrite = TRUE replaces a config entry in place", {
   project <- testProject()
   addObservedData(project, list(type = "pkml", file = "sub1/obs.pkml"))

@@ -441,11 +441,8 @@ addObservedData <- function(project, entry, overwrite = FALSE) {
     # by the serializer, when `saveProject()` reconciles the tree.
     observedData <- private$.getSection("observedData")
     # On overwrite, replace the existing programmatic sentinel that carries this
-    # name in place; otherwise append. A DataSet is keyed by its `name` (the
-    # `existingNames` space the abort above guards), so only a programmatic
-    # sentinel of the same name is replaced. A basename clash with a file-based
-    # source lives in a different id space and is surfaced by the serializer at
-    # saveProject(), not here.
+    # name in place. A DataSet is keyed by its `name`, so only a programmatic
+    # sentinel of the same name can be replaced in place.
     replaceIdx <- if (overwrite) {
       which(vapply(
         observedData,
@@ -459,14 +456,26 @@ addObservedData <- function(project, entry, overwrite = FALSE) {
     }
     if (length(replaceIdx) > 0L) {
       observedData[[replaceIdx[[1]]]] <- sentinel
+    } else if (overwrite && name %in% existingNames) {
+      # The name collides with a file-based (pkml/excel/script) source, not a
+      # programmatic one, so there is no programmatic entry to replace. Appending
+      # would leave two sources resolving to the same name and only fail later,
+      # opaquely, at the next load/save. Abort now, naming the fix.
+      cli::cli_abort(c(
+        "observedData entry with name {.val {name}} is a file-based source, \\
+        not a programmatic one, so it cannot be overwritten with a {.cls DataSet}.",
+        "i" = "Remove it first with {.code removeObservedData()} (by its file \\
+        basename), then add the {.cls DataSet}."
+      ))
     } else {
       observedData <- c(observedData, list(sentinel))
     }
     private$.setSection("observedData", observedData)
     private$.programmaticDataSets[[name]] <- entry
     # The observedData setter resets the names cache, so rebuild it after the
-    # write, from the names known before it plus the newly added name.
-    private$.observedDataNamesCache <- c(existingNames, name)
+    # write. On an overwrite the name is already in `existingNames`, so union
+    # rather than append to keep the cache free of duplicates.
+    private$.observedDataNamesCache <- union(existingNames, name)
     cli::cli_inform(messages$observedDataProgrammaticAdded(
       name,
       hasDataFolder = !is.null(self$paths$dataFolder)
