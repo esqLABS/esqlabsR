@@ -309,9 +309,10 @@
 #
 # Write-if-different: serialize the content to a string first and, when the
 # target file already holds byte-identical content, skip the write entirely.
-# This keeps a `saveProject()` from bumping the mtime of an entity the user did
-# not change, so `git diff` (and any file-watcher) sees exactly the entities
-# that actually changed, which is a core reason the entity-files format exists.
+# This keeps a `saveProject()` from bumping the mtime of a definition the user
+# did not change, so `git diff` (and any file-watcher) sees exactly the
+# definitions that actually changed, which is a core reason the definitions
+# format exists.
 #
 # @keywords internal
 # @noRd

@@ -1047,7 +1047,7 @@ test_that("reading a record, editing the copy, and re-submitting it is the suppo
 
 # Under explicit-save, `.setSection()` no longer serializes on write, so a
 # structurally bad record is accepted in memory but must abort the save: the
-# serialize-in-memory-first guarantee in `.writeEntityTree()` (driven by
+# serialize-in-memory-first guarantee in `.writeDefinitionTree()` (driven by
 # `saveProject()`) rejects a wrong-typed reference field and an unknown field.
 test_that("saveProject() rejects a wrong-typed scalar reference field", {
   project <- testProject()

@@ -103,7 +103,7 @@ test_that("a container edit followed by saveProject() keeps the sections", {
 
 # --- saveProject() ------------------------------------------------------------
 
-test_that("saveProject() writes only the changed entity's file (write-if-different)", {
+test_that("saveProject() writes only the changed definition's file (write-if-different)", {
   project <- testProject()
   saveProject(project) # settle the tree (byte-stable) so mtimes are a baseline
   scenarioDir <- file.path(
