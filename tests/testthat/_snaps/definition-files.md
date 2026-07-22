@@ -76,7 +76,8 @@
       addScenario(project, "myscenario", modelFile = "Aciclovir.pkml")
     Condition
       Error in `addScenario()`:
-      ! scenario "myscenario" already exists
+      ! scenario "myscenario" already exists.
+      i Pass `overwrite = TRUE` to replace it.
 
 # a scenario file missing its name aborts naming the file
 
