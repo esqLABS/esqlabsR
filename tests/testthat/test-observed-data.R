@@ -209,10 +209,14 @@ test_that("loadObservedData sources script entries", {
     null = "null"
   )
   project <- loadProject(jsonPath)
-  # A script source executes arbitrary R, so the first source in a session
-  # warns. Reset the once-per-session gate so this assertion does not depend on
-  # whether an earlier test already tripped it.
-  rlang::reset_warning_verbosity("esqlabsR_observed_data_script_source")
+  # A script source executes arbitrary R, so the first source in a session warns.
+  # The warning is gated once per session per project (keyed by the project file
+  # path), so this fresh temp project has its own gate; reset it so the assertion
+  # does not depend on any earlier run of this test.
+  rlang::reset_warning_verbosity(paste0(
+    "esqlabsR_observed_data_script_source_",
+    project$info$projectFilePath
+  ))
   expect_warning(
     result <- loadObservedData(project),
     "executing arbitrary R code"
@@ -250,7 +254,9 @@ test_that("loadObservedData re-keys a script's list of DataSets by each name", {
     null = "null"
   )
   project <- loadProject(jsonPath)
-  result <- loadObservedData(project)
+  # The script-source security warning is covered by its own test; suppress it
+  # here so this list-keying assertion is not tangled up with it.
+  result <- suppressWarnings(loadObservedData(project))
   expect_named(result, c("Alpha", "Beta"))
 })
 
@@ -289,7 +295,10 @@ test_that("loadObservedData aborts on a name collision across sources", {
     null = "null"
   )
   project <- loadProject(jsonPath)
-  expect_error(loadObservedData(project), "Duplicate observed-data set name")
+  expect_error(
+    suppressWarnings(loadObservedData(project)),
+    "Duplicate observed-data set name"
+  )
 })
 
 test_that("loadObservedData errors when script returns wrong type", {
@@ -310,7 +319,10 @@ test_that("loadObservedData errors when script returns wrong type", {
     null = "null"
   )
   project <- loadProject(jsonPath)
-  expect_error(loadObservedData(project), "did not return a")
+  expect_error(
+    suppressWarnings(loadObservedData(project)),
+    "did not return a"
+  )
 })
 
 test_that("loadObservedData errors when dataFolder is not declared", {
@@ -498,6 +510,75 @@ test_that("saveProject aborts persisting a programmatic DataSet with no dataFold
   addObservedData(project, ds)
 
   expect_snapshot(saveProject(project), error = TRUE)
+})
+
+# addObservedData() persists to `<name>.pkml` on save, so a DataSet name that is
+# not a safe filename segment is rejected up front rather than failing later with
+# an opaque low-level path error at save time.
+test_that("addObservedData rejects a DataSet name that is not a safe filename", {
+  project <- testProject()
+  ds <- ospsuite::DataSet$new(name = "Cohort/A")
+  ds$setValues(xValues = c(1, 2), yValues = c(3, 4))
+  expect_error(addObservedData(project, ds), "safe filename segment")
+})
+
+# A hand-authored `programmatic` sentinel with no `name` is schema-legal (a
+# programmatic entry has no required fields). The persist step must not crash on
+# `store[[NULL]]`; a name-less entry has no id to name its definition file, so
+# the save aborts with the serializer's clear "no id" message, not an opaque
+# `subscript out of bounds`.
+test_that("saveProject rejects a name-less programmatic sentinel with a clear error", {
+  project <- testProject()
+  observedData <- .getSection(project, "observedData")
+  observedData <- c(observedData, list(list(type = "programmatic")))
+  .setSection(project, "observedData", observedData)
+
+  expect_error(saveProject(project), "no id to name its definition file")
+})
+
+# A save that aborts partway through the tree write must not lose a session-added
+# DataSet: the persist step writes the PKML but keeps the DataSet in the runtime
+# store until the whole save commits, so the data is recoverable after the abort.
+test_that("a save that aborts mid-tree-write keeps the programmatic DataSet recoverable", {
+  project <- testProject()
+  saveProject(project)
+  state <- .projectSeam(project)
+
+  ds <- ospsuite::DataSet$new(name = "RecoverableSet")
+  ds$setValues(xValues = c(1, 2), yValues = c(3, 4))
+  addObservedData(project, ds)
+
+  # Make one loaded scenario serializer-hostile so the tree write aborts after
+  # the programmatic persist step has already run.
+  scenarios <- .getSection(project, "scenarios")
+  hostileId <- names(scenarios)[[1]]
+  hostile <- scenarios[[hostileId]]
+  hostile$simulateSteadyState <- TRUE
+  hostile$steadyStateTimeUnit <- NULL
+  scenarios[[hostileId]] <- hostile
+  .setSection(project, "scenarios", scenarios)
+
+  expect_error(saveProject(project), "steadyStateTimeUnit")
+  # The DataSet is still in the runtime store, so it is not lost.
+  expect_true("RecoverableSet" %in% names(state$.programmaticDataSets))
+})
+
+# Since a programmatic DataSet persists to `<name>.pkml`, a name that equals an
+# existing file-based source's basename (e.g. an Excel `file`) no longer collides
+# with it: the persisted file is `<name>.pkml`, a distinct id. Lock in that this
+# now saves cleanly (it aborted before this PR).
+test_that("a programmatic name equal to an existing file basename saves cleanly", {
+  project <- testProject()
+  # The fixture declares a file-based Excel source filed under this basename.
+  ds <- ospsuite::DataSet$new(name = "Aciclovir_TimeValuesData.xlsx")
+  ds$setValues(xValues = c(1, 2), yValues = c(3, 4))
+  addObservedData(project, ds)
+
+  expect_no_error(saveProject(project))
+  expect_true(file.exists(file.path(
+    project$paths$dataFolder,
+    "Aciclovir_TimeValuesData.xlsx.pkml"
+  )))
 })
 
 # A programmatic DataSet is session-only runtime state, not part of the on-disk

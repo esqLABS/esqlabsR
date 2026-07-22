@@ -1015,10 +1015,15 @@ messages$observedDataDataFolderNotDeclared <- function(file) {
   )
 }
 
-messages$observedDataProgrammaticAdded <- function(name) {
+messages$observedDataProgrammaticAdded <- function(name, hasDataFolder = TRUE) {
+  saveNote <- if (hasDataFolder) {
+    "On {.fn saveProject} it is written to {.path {paste0(name, '.pkml')}} under the data folder, so it survives a reload."
+  } else {
+    "Declare a {.field dataFolder} in {.code filePaths} before saving: {.fn saveProject} writes it to a PKML file there so it survives a reload, and aborts if no data folder is declared."
+  }
   cli::format_message(c(
     "i" = "Added programmatic observed-data source {.val {name}}. It lives in this session until you save.",
-    "i" = "On {.fn saveProject} it is written to {.path {paste0(name, '.pkml')}} under the data folder, so it survives a reload."
+    "i" = saveNote
   ))
 }
 

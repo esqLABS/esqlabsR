@@ -120,8 +120,10 @@ saveProject <- function(project) {
   # Persist any session-added programmatic DataSet to a PKML file next to the
   # project and rewrite its entry to a `pkml` source, so it survives a reload.
   # This mutates the in-memory `observedData` section before the tree writer
-  # serializes it below.
-  .persistProgrammaticObservedData(self, private)
+  # serializes it below, and returns the names it persisted; those stay in the
+  # runtime store until the whole save commits (below), so a tree write that
+  # aborts leaves the DataSet recoverable rather than lost.
+  persistedProgrammatic <- .persistProgrammaticObservedData(self, private)
 
   # Drive the full-tree reconciler: `.writeProjectTree()` writes every kind's
   # write-if-different, orphan-reconciled tree and the `containerOnly = TRUE`
@@ -135,6 +137,12 @@ saveProject <- function(project) {
     self$info$projectDirPath,
     containerPath = self$info$projectFilePath
   )
+
+  # The tree write succeeded, so the persisted DataSets are now file-backed;
+  # drop them from the session-only runtime store.
+  for (name in persistedProgrammatic) {
+    private$.programmaticDataSets[[name]] <- NULL
+  }
 
   private$.clearModified()
   invisible(self)
