@@ -209,9 +209,11 @@ print.ObservedDataSource <- function(x, ...) {
 #' types: `excel` (via importer configuration), `pkml`, `script`, and
 #' `programmatic`. A `programmatic` declaration is a sentinel for a
 #' `DataSet` added at runtime with [addObservedData()]; its data lives in
-#' the session (not on disk), so it is resolved from the in-memory store
-#' and is not reproducible across a reload. Prefer a `script` source for a
-#' reproducible programmatic data set.
+#' the session until you save, and [saveProject()] persists it to a PKML
+#' file and rewrites the entry as a `pkml` source. A `programmatic` sentinel
+#' read from disk with no matching in-session `DataSet` (a hand-authored
+#' declaration, or a project opened before it was ever saved) resolves to
+#' nothing, and the load warns you by name.
 #'
 #' @param project A `Project` object (see [loadProject()]).
 #' @returns A named list of [`ospsuite::DataSet`] objects. Empty list when
@@ -363,6 +365,12 @@ getObservedDataNames <- function(project) {
 #' configuration list with `type` field (`"excel"`, `"pkml"`, or
 #' `"script"`) plus source-specific fields.
 #'
+#' A `DataSet` you pass lives in the R session until you save. On
+#' [saveProject()] it is written to a PKML file named `<DataSet name>.pkml`
+#' under the project's data folder and its entry becomes a `pkml` source, so
+#' the data survives a reload. Saving therefore needs a data folder to be
+#' declared in the project's file paths.
+#'
 #' @param project A `Project` object.
 #' @param entry Either a `DataSet` object or a configuration list.
 #' @returns The `project` object, invisibly.
@@ -402,14 +410,7 @@ addObservedData <- function(project, entry) {
     # The observedData setter resets the names cache, so rebuild it after the
     # write, from the names known before it plus the newly added name.
     private$.observedDataNamesCache <- c(existingNames, name)
-    cli::cli_inform(c(
-      "i" = paste0(
-        "For reproducibility, consider declaring this DataSet via a ",
-        "script in your Project.json using the {.field observedData} ",
-        "field with {.code type = \"script\"} and ",
-        "{.code file = \"scripts/your_script.R\"}."
-      )
-    ))
+    cli::cli_inform(messages$observedDataProgrammaticAdded(name))
     return(invisible(self))
   }
 
@@ -684,4 +685,67 @@ removeObservedData <- function(project, id) {
   cli::cli_abort(
     messages$observedDataScriptWrongReturnType(filePath, class(result)[[1]])
   )
+}
+
+# Persist every session-added programmatic DataSet to a PKML file next to the
+# project, so it survives a reload. Called from the save path before the tree is
+# written: for each `programmatic` entry whose DataSet is in the runtime store,
+# write `<dataFolder>/<name>.pkml`, rewrite the section entry to a `pkml` source
+# pointing at that file, and drop the entry from the runtime store (it is now
+# file-backed). A programmatic entry with no DataSet in the store (an orphan
+# sentinel read from disk) is left untouched. Returns nothing; mutates the
+# in-memory `observedData` section and the runtime store through `private`.
+#
+# @keywords internal
+# @noRd
+.persistProgrammaticObservedData <- function(self, private) {
+  observedData <- private$.getSection("observedData")
+  toPersist <- vapply(
+    observedData,
+    function(e) {
+      identical(e$type, "programmatic") &&
+        !is.null(private$.programmaticDataSets[[e$name]])
+    },
+    logical(1)
+  )
+  if (!any(toPersist)) {
+    return(invisible(NULL))
+  }
+
+  dataFolder <- self$paths$dataFolder
+  if (is.null(dataFolder)) {
+    cli::cli_abort(messages$observedDataPersistNoDataFolder(
+      observedData[toPersist][[1]]$name
+    ))
+  }
+  # Materialize the folder: a from-scratch project may declare a data folder
+  # that has no directory on disk yet.
+  if (!dir.exists(dataFolder)) {
+    dir.create(dataFolder, recursive = TRUE, showWarnings = FALSE)
+  }
+
+  persistedNames <- character()
+  for (i in which(toPersist)) {
+    name <- observedData[[i]]$name
+    fileName <- paste0(name, ".pkml")
+    # The rewritten entry's id becomes this basename; reject an unsafe name
+    # before writing a file, so we never leave a stray PKML behind on abort.
+    .validateObservedDataId(fileName)
+    filePath <- .resolveProjectPath(fileName, dataFolder, "file")
+    ospsuite::saveDataSetToPKML(private$.programmaticDataSets[[name]], filePath)
+    observedData[[i]] <- .asObservedDataSource(list(
+      type = "pkml",
+      file = fileName
+    ))
+    persistedNames <- c(persistedNames, name)
+  }
+
+  private$.setSection("observedData", observedData)
+  for (name in persistedNames) {
+    private$.programmaticDataSets[[name]] <- NULL
+  }
+  # `.setSection("observedData", ...)` already reset the names cache; the entries
+  # still resolve to the same DataSet names (now from PKML), so a rebuild on the
+  # next read is correct.
+  invisible(NULL)
 }

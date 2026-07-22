@@ -19,9 +19,11 @@ and returns the corresponding \code{\link[ospsuite:DataSet]{ospsuite::DataSet}} 
 types: \code{excel} (via importer configuration), \code{pkml}, \code{script}, and
 \code{programmatic}. A \code{programmatic} declaration is a sentinel for a
 \code{DataSet} added at runtime with \code{\link[=addObservedData]{addObservedData()}}; its data lives in
-the session (not on disk), so it is resolved from the in-memory store
-and is not reproducible across a reload. Prefer a \code{script} source for a
-reproducible programmatic data set.
+the session until you save, and \code{\link[=saveProject]{saveProject()}} persists it to a PKML
+file and rewrites the entry as a \code{pkml} source. A \code{programmatic} sentinel
+read from disk with no matching in-session \code{DataSet} (a hand-authored
+declaration, or a project opened before it was ever saved) resolves to
+nothing, and the load warns you by name.
 }
 \section{Security}{
 

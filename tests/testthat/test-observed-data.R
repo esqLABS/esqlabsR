@@ -398,24 +398,98 @@ test_that("observedData declarations sharing a basename fail saveProject()", {
 })
 
 # Under explicit-save, addObservedData() only mutates memory (the runtime store
-# and the section together); nothing touches disk. A programmatic DataSet whose
-# name collides with an existing file-based entry's on-disk id (its basename)
-# is accepted in memory but surfaces as a serializer error at saveProject().
-test_that("addObservedData mutates memory only; a basename collision aborts saveProject()", {
+# and the section together); nothing touches disk until saveProject().
+test_that("addObservedData mutates memory only", {
   project <- testProject()
   state <- .projectSeam(project)
-  # The fixture declares a file-based Excel source filed under this basename.
-  ds <- ospsuite::DataSet$new(name = "Aciclovir_TimeValuesData.xlsx")
+  ds <- ospsuite::DataSet$new(name = "InMemorySet")
   ds$setValues(xValues = c(1, 2), yValues = c(3, 4))
 
   # The add succeeds in memory: the DataSet is registered in the runtime store.
   addObservedData(project, ds)
-  expect_true(
-    "Aciclovir_TimeValuesData.xlsx" %in% names(state$.programmaticDataSets)
-  )
+  expect_true("InMemorySet" %in% names(state$.programmaticDataSets))
+})
 
-  # The basename collision surfaces at save (the serialize-in-memory-first
-  # guarantee), before any file is written.
+# saveProject() persists a session-added programmatic DataSet to a PKML file
+# named <DataSet name>.pkml under the data folder and rewrites its section entry
+# to a pkml source, so the data survives a reload.
+test_that("saveProject persists a programmatic DataSet to PKML and it round-trips", {
+  project <- testProject()
+  state <- .projectSeam(project)
+  ds <- ospsuite::DataSet$new(name = "RoundTripSet")
+  ds$setValues(xValues = c(0, 1, 2), yValues = c(5, 6, 7))
+  ds$xDimension <- ospsuite::ospDimensions$Time
+
+  addObservedData(project, ds)
+  saveProject(project)
+
+  # The entry is now a pkml source pointing at the written file; the runtime
+  # store no longer holds it (it is file-backed).
+  entry <- project$definitions$observedData[[
+    length(project$definitions$observedData)
+  ]]
+  expect_identical(entry$type, "pkml")
+  expect_identical(entry$file, "RoundTripSet.pkml")
+  expect_false("RoundTripSet" %in% names(state$.programmaticDataSets))
+  expect_true(file.exists(file.path(
+    project$paths$dataFolder,
+    "RoundTripSet.pkml"
+  )))
+
+  # The data survives a reload (fresh session, empty runtime store).
+  reloadProject(project)
+  loaded <- loadObservedData(project)
+  expect_true("RoundTripSet" %in% names(loaded))
+  # A PKML round-trip converts through base units, so values return within
+  # floating-point tolerance rather than bit-identical.
+  expect_equal(loaded[["RoundTripSet"]]$yValues, c(5, 6, 7), tolerance = 1e-6)
+})
+
+# The PKML written for a programmatic DataSet is named <name>.pkml, so a
+# programmatic name whose PKML file collides with an existing pkml source's
+# basename aborts at save, before any file is written.
+test_that("saveProject aborts on a programmatic-to-PKML basename collision", {
+  project <- testProject()
+  # An existing pkml source living in the file "Collide.pkml" but producing a
+  # differently-named DataSet ("Other"), so it does not clash with the
+  # programmatic name at add time. The programmatic DataSet named "Collide"
+  # would persist to the same "Collide.pkml", colliding at save.
+  existing <- ospsuite::DataSet$new(name = "Other")
+  existing$setValues(xValues = c(0, 1), yValues = c(1, 2))
+  ospsuite::saveDataSetToPKML(
+    existing,
+    file.path(project$paths$dataFolder, "Collide.pkml")
+  )
+  addObservedData(project, list(type = "pkml", file = "Collide.pkml"))
+  ds <- ospsuite::DataSet$new(name = "Collide")
+  ds$setValues(xValues = c(1, 2), yValues = c(3, 4))
+  addObservedData(project, ds)
+
+  expect_snapshot(saveProject(project), error = TRUE)
+})
+
+# Persisting a programmatic DataSet needs a data folder to write the PKML into;
+# a project with no dataFolder aborts at save with a clear message.
+test_that("saveProject aborts persisting a programmatic DataSet with no dataFolder", {
+  tmp <- withr::local_tempdir()
+  jsonPath <- file.path(tmp, "Project.json")
+  jsonlite::write_json(
+    list(
+      schemaVersion = "2.0",
+      filePaths = structure(list(), names = character(0)),
+      outputPaths = structure(list(), names = character(0)),
+      scenarios = list(),
+      observedData = list()
+    ),
+    jsonPath,
+    auto_unbox = TRUE,
+    null = "null"
+  )
+  project <- loadProject(jsonPath)
+  ds <- ospsuite::DataSet$new(name = "NoFolderSet")
+  ds$setValues(xValues = c(1, 2), yValues = c(3, 4))
+  addObservedData(project, ds)
+
   expect_snapshot(saveProject(project), error = TRUE)
 })
 

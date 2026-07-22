@@ -50,15 +50,23 @@
       x The on-disk id is the file basename (or the programmatic name), so two sources sharing a basename collide.
       i Rename one source so the basenames differ.
 
-# addObservedData mutates memory only; a basename collision aborts saveProject()
+# saveProject aborts on a programmatic-to-PKML basename collision
 
     Code
       saveProject(project)
     Condition
       Error in `.serializeObservedDataSet()`:
-      ! Two observedData declarations map to the same definition file 'Aciclovir_TimeValuesData.xlsx.json'.
+      ! Two observedData declarations map to the same definition file 'Collide.pkml.json'.
       x The on-disk id is the file basename (or the programmatic name), so two sources sharing a basename collide.
       i Rename one source so the basenames differ.
+
+# saveProject aborts persisting a programmatic DataSet with no dataFolder
+
+    Code
+      saveProject(project)
+    Condition
+      Error in `.persistProgrammaticObservedData()`:
+      ! x Cannot save the programmatic observed-data source "NoFolderSet": dataFolder is not declared in `filePaths`. i A programmatic source is written to a PKML file under dataFolder on save. Declare dataFolder, then save again.
 
 # removeObservedData mutates memory only; a surviving collision aborts saveProject()
 

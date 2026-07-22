@@ -1011,6 +1011,20 @@ messages$observedDataDataFolderNotDeclared <- function(file) {
   )
 }
 
+messages$observedDataProgrammaticAdded <- function(name) {
+  cli::format_message(c(
+    "i" = "Added programmatic observed-data source {.val {name}}. It lives in this session until you save.",
+    "i" = "On {.fn saveProject} it is written to {.path {paste0(name, '.pkml')}} under the data folder, so it survives a reload."
+  ))
+}
+
+messages$observedDataPersistNoDataFolder <- function(name) {
+  cli::format_message(c(
+    "x" = "Cannot save the programmatic observed-data source {.val {name}}: {.field dataFolder} is not declared in {.code filePaths}.",
+    "i" = "A programmatic source is written to a PKML file under {.field dataFolder} on save. Declare {.field dataFolder}, then save again."
+  ))
+}
+
 messages$projectPathEscapesRoot <- function(fieldName, path, root) {
   cli::format_message(c(
     "x" = "{.field {fieldName}} {.val {path}} resolves outside the project \\
