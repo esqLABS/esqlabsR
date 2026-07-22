@@ -537,7 +537,7 @@ print.PITask <- function(x, ...) {
 .validatePI <- function(piTasks) {
   result <- validationResult$new()
   if (is.null(piTasks) || length(piTasks) == 0L) {
-    result$add_warning("Data", "No parameterIdentification tasks defined")
+    result$addWarning("Data", "No parameterIdentification tasks defined")
     return(result)
   }
 
@@ -545,14 +545,14 @@ print.PITask <- function(x, ...) {
     task <- piTasks[[taskId]]
 
     paramIds <- vapply(task$parameters, `[[`, character(1), "id")
-    .check_no_duplicates(
+    .checkNoDuplicates(
       paramIds,
       paste0("PIParameter id within task '", taskId, "'"),
       result
     )
 
     mappingIds <- vapply(task$outputMappings, `[[`, character(1), "id")
-    .check_no_duplicates(
+    .checkNoDuplicates(
       mappingIds,
       paste0("PIOutputMapping id within task '", taskId, "'"),
       result
@@ -560,7 +560,7 @@ print.PITask <- function(x, ...) {
 
     for (p in task$parameters) {
       if (!(p$minValue <= p$startValue && p$startValue <= p$maxValue)) {
-        result$add_critical_error(
+        result$addCriticalError(
           "Invalid Bounds",
           messages$errorPIInvalidBounds(
             p$path,
@@ -572,7 +572,7 @@ print.PITask <- function(x, ...) {
       }
       outsideTask <- setdiff(p$scenarios, task$scenarios)
       if (length(outsideTask) > 0L) {
-        result$add_critical_error(
+        result$addCriticalError(
           "Invalid Reference",
           paste0(
             "PI task '",
@@ -589,7 +589,7 @@ print.PITask <- function(x, ...) {
     for (m in task$outputMappings) {
       outsideTask <- setdiff(m$scenarios, task$scenarios)
       if (length(outsideTask) > 0L) {
-        result$add_critical_error(
+        result$addCriticalError(
           "Invalid Reference",
           paste0(
             "PI task '",

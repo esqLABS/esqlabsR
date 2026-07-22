@@ -101,7 +101,7 @@ print.ObservedDataSource <- function(x, ...) {
   result <- validationResult$new()
 
   if (is.null(observedData) || length(observedData) == 0) {
-    result$add_warning("Data", "No observedData defined")
+    result$addWarning("Data", "No observedData defined")
     return(result)
   }
 
@@ -112,7 +112,7 @@ print.ObservedDataSource <- function(x, ...) {
     entryLabel <- paste0("observedData entry ", i)
 
     if (is.null(entry$type)) {
-      result$add_critical_error(
+      result$addCriticalError(
         "Missing Fields",
         messages$validationObservedDataMissingType(entryLabel)
       )
@@ -120,7 +120,7 @@ print.ObservedDataSource <- function(x, ...) {
     }
 
     if (!entry$type %in% validTypes) {
-      result$add_critical_error(
+      result$addCriticalError(
         "Invalid Value",
         messages$validationObservedDataInvalidType(
           entryLabel,
@@ -136,7 +136,7 @@ print.ObservedDataSource <- function(x, ...) {
     # never disagree about, e.g., whether an Excel source needs `sheets`.
     for (field in .observedDataRequiredFields(entry$type)) {
       if (.observedDataFieldMissing(entry, field)) {
-        result$add_critical_error(
+        result$addCriticalError(
           "Missing Fields",
           messages$validationObservedDataMissingField(
             entryLabel,
@@ -154,14 +154,14 @@ print.ObservedDataSource <- function(x, ...) {
     if (!is.null(dataFolder)) {
       if (!is.null(entry$file)) {
         if (.pathEscapesRoot(entry$file, dataFolder)) {
-          result$add_critical_error(
+          result$addCriticalError(
             "Path Containment",
             messages$validationObservedDataPathEscapes(entryLabel, entry$file)
           )
         } else {
           filePath <- file.path(dataFolder, entry$file)
           if (!file.exists(filePath)) {
-            result$add_warning(
+            result$addWarning(
               "File Not Found",
               messages$validationObservedDataFileNotFound(
                 entryLabel,
@@ -175,7 +175,7 @@ print.ObservedDataSource <- function(x, ...) {
         identical(entry$type, "excel") && !is.null(entry$importerConfiguration)
       ) {
         if (.pathEscapesRoot(entry$importerConfiguration, dataFolder)) {
-          result$add_critical_error(
+          result$addCriticalError(
             "Path Containment",
             messages$validationObservedDataPathEscapes(
               entryLabel,
@@ -185,7 +185,7 @@ print.ObservedDataSource <- function(x, ...) {
         } else {
           importerPath <- file.path(dataFolder, entry$importerConfiguration)
           if (!file.exists(importerPath)) {
-            result$add_warning(
+            result$addWarning(
               "File Not Found",
               messages$validationObservedDataImporterNotFound(
                 entryLabel,

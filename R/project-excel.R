@@ -112,7 +112,7 @@ importProjectFromExcel <- function(
     # Containment is judged on the raw (pre-expansion) value: a `${VAR}` opts
     # into an out-of-project location and is exempt, everything else must stay
     # under `pcDir`. Resolution then expands the variable and joins a relative
-    # value onto `pcDir`, matching `.clean_path()`'s expand-then-resolve order.
+    # value onto `pcDir`, matching `.cleanPath()`'s expand-then-resolve order.
     declaresEnvVar <- grepl("\\$\\{?[A-Za-z_]", configsFolderRaw)
     if (!declaresEnvVar) {
       configsFolder <- .resolveProjectPath(

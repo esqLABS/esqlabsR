@@ -215,7 +215,7 @@ reloadProject <- function(project) {
     sections = c("scenarios", "crossReferences")
   )
   r <- results$crossReferences
-  if (is.null(r) || !r$has_critical_errors()) {
+  if (is.null(r) || !r$hasCriticalErrors()) {
     return(invisible(NULL))
   }
   bullets <- vapply(r$critical_errors, function(e) e$message, character(1))

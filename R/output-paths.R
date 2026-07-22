@@ -205,16 +205,16 @@ setOutputPath <- function(project, id, path) {
   result <- validationResult$new()
 
   if (is.null(outputPaths) || length(outputPaths) == 0) {
-    result$add_warning("Data", "No output paths defined")
+    result$addWarning("Data", "No output paths defined")
     return(result)
   }
 
-  result <- .check_no_duplicates(names(outputPaths), "outputPathId", result)
+  result <- .checkNoDuplicates(names(outputPaths), "outputPathId", result)
 
   values <- unlist(outputPaths, use.names = FALSE)
   emptyIds <- names(outputPaths)[is.na(values) | values == ""]
   if (length(emptyIds) > 0) {
-    result$add_critical_error(
+    result$addCriticalError(
       "Missing Fields",
       paste0(
         "Empty output path values for IDs: ",
@@ -225,7 +225,7 @@ setOutputPath <- function(project, id, path) {
 
   dupeValues <- values[duplicated(values) & !is.na(values)]
   if (length(dupeValues) > 0) {
-    result$add_warning(
+    result$addWarning(
       "Uniqueness",
       paste0(
         "Multiple IDs point to the same output path: ",
