@@ -184,6 +184,26 @@ messages$restoreOverwroteTree <- function(dir) {
   )
 }
 
+messages$importWouldOverwriteProject <- function(outputDir) {
+  c(
+    "A JSON project already exists in {.path {outputDir}}.",
+    "x" = "Re-importing replaces it with the Excel project and deletes any \\
+    definitions that exist only on the JSON side.",
+    "i" = "Pass {.code overwrite = TRUE} to replace the existing JSON project \\
+    with the Excel state, or import into a different {.arg outputDir}."
+  )
+}
+
+messages$exportWouldOverwriteWorkbooks <- function(outputDir) {
+  c(
+    "Excel workbooks already exist in {.path {outputDir}}.",
+    "x" = "Exporting overwrites {.file Project.xlsx} and the \\
+    {.file Configurations} workbooks, discarding any hand-edits they carry.",
+    "i" = "Pass {.code overwrite = TRUE} to replace the existing workbooks, or \\
+    export into a different {.arg outputDir}."
+  )
+}
+
 messages$failedToRemoveStaleDefinitionFiles <- function(paths) {
   n <- length(paths)
   # Interpolate eagerly here, where `n` and `paths` are in scope: the

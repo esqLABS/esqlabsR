@@ -1218,18 +1218,26 @@
 # Whole-tree writer ----
 
 # Explode an in-memory `Project` into a full on-disk tree project at `dir`: a
-# `Project.json` container plus a `definitions/<kind>/` tree (one file per
-# definition) for every section. Returns the container path. This is the
-# full-tree reconciler that `saveProject()` and `restoreProject()` both drive:
-# it serializes every kind and writes each definition write-if-different, and
-# each kind's writer owns its `<kind>/` directory (it deletes any `.json` not in
-# the freshly-written keep-set), so a re-run reconciles the tree to memory
-# exactly, leaving no stale entries. Shared by `saveProject()`,
-# `restoreProject()`, and the Excel import.
+# container file plus a `definitions/<kind>/` tree (one file per definition) for
+# every section. Returns the container path. This is the full-tree reconciler
+# that `saveProject()` and `restoreProject()` both drive: it serializes every
+# kind and writes each definition write-if-different, and each kind's writer
+# owns its `<kind>/` directory (it deletes any `.json` not in the
+# freshly-written keep-set), so a re-run reconciles the tree to memory exactly,
+# leaving no stale entries. Shared by `saveProject()`, `restoreProject()`, and
+# the Excel import.
+#
+# `containerPath` names the container file to write. `saveProject()` passes the
+# path the project was loaded from (`project$info$projectFilePath`), so a save
+# updates that file in place rather than writing a stray `Project.json` next to
+# a legacy-named container. `restoreProject()` passes a fresh
+# `file.path(dir, "Project.json")` (the canonical name for a new tree project),
+# and the Excel import passes the container it just wrote, named after the
+# source workbook (`<xlsx-stem>.json`).
 #
 # @keywords internal
 # @noRd
-.writeProjectTree <- function(project, dir) {
+.writeProjectTree <- function(project, dir, containerPath = NULL) {
   if (!dir.exists(dir)) {
     dir.create(dir, recursive = TRUE, showWarnings = FALSE)
   }
@@ -1238,7 +1246,7 @@
   }
   # Write the container with the inline sections emptied: the tree owns them,
   # matching the on-disk shape `loadProject()` reads for a tree project.
-  containerPath <- file.path(dir, "Project.json")
+  containerPath <- containerPath %||% file.path(dir, "Project.json")
   .saveProjectJson(project, containerPath, containerOnly = TRUE)
   containerPath
 }

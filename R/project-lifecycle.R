@@ -119,8 +119,16 @@ saveProject <- function(project) {
 
   # Drive the full-tree reconciler: `.writeProjectTree()` writes every kind's
   # write-if-different, orphan-reconciled tree and the `containerOnly = TRUE`
-  # `Project.json` in one pass, which is exactly `saveProject()`'s contract.
-  .writeProjectTree(self, self$info$projectDirPath)
+  # container in one pass, which is exactly `saveProject()`'s contract. Pass the
+  # path the project was loaded from so the save updates that container in place;
+  # a project loaded from a legacy-named container (`ProjectConfiguration.json`,
+  # or the `<xlsx-stem>.json` an Excel import produced) must not fork a stray
+  # `Project.json` next to it.
+  .writeProjectTree(
+    self,
+    self$info$projectDirPath,
+    containerPath = self$info$projectFilePath
+  )
 
   private$.clearModified()
   invisible(self)
@@ -347,7 +355,15 @@ initProject <- function(
   if (createExcel) {
     jsonPath <- file.path(destination, "Project.json")
     project <- loadProject(jsonPath)
-    exportProjectToExcel(project, outputDir = destination, silent = TRUE)
+    # `initProject()` owns and controls `destination` (its own `overwrite`
+    # argument already governed whether to replace an existing scaffold), so it
+    # writes the Excel side-cars unconditionally.
+    exportProjectToExcel(
+      project,
+      outputDir = destination,
+      overwrite = TRUE,
+      silent = TRUE
+    )
   }
 
   invisible(destination)

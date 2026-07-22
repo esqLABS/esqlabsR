@@ -168,6 +168,34 @@ test_that("saveProject() on an unbound in-memory project aborts", {
   expect_snapshot(saveProject(project), error = TRUE)
 })
 
+# A project loaded from a container whose name is not the canonical
+# `Project.json` (e.g. `ProjectConfiguration.json` from a legacy Excel import,
+# or a renamed container) must be saved back to that same file, not forked into
+# a stray `Project.json`. Forking would leave the loaded container stale (silent
+# data loss on the next `loadProject()` of it) and fool a status check.
+test_that("saveProject() updates the loaded container, not a stray Project.json", {
+  # Materialize a tree project, then rename its container to a non-default name.
+  dir <- withr::local_tempdir("legacyname_")
+  file.copy(
+    list.files(testthat::test_path("data", "TestProject"), full.names = TRUE),
+    dir,
+    recursive = TRUE
+  )
+  file.rename(
+    file.path(dir, "Project.json"),
+    file.path(dir, "ProjectConfiguration.json")
+  )
+
+  project <- loadProject(file.path(dir, "ProjectConfiguration.json"))
+  project$info$description <- "edited"
+  saveProject(project)
+
+  # The loaded container carries the edit, and no stray `Project.json` appears.
+  reloaded <- loadProject(file.path(dir, "ProjectConfiguration.json"))
+  expect_identical(reloaded$info$description, "edited")
+  expect_false(file.exists(file.path(dir, "Project.json")))
+})
+
 test_that("saveProject() never warns about a stale Excel side-car", {
   # Build a project with an Excel side-car that has drifted, then edit and save.
   temp_project <- with_temp_project()

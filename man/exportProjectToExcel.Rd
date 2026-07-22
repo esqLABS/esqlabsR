@@ -4,13 +4,25 @@
 \alias{exportProjectToExcel}
 \title{Export a Project to Excel files}
 \usage{
-exportProjectToExcel(project, outputDir = NULL, silent = FALSE)
+exportProjectToExcel(
+  project,
+  outputDir = NULL,
+  overwrite = FALSE,
+  silent = FALSE
+)
 }
 \arguments{
 \item{project}{A \code{Project} object.}
 
 \item{outputDir}{Directory where the Excel files will be created. Defaults
 to the directory of the source JSON file.}
+
+\item{overwrite}{Logical. Guards against silently overwriting existing Excel
+workbooks. With \code{overwrite = FALSE} (default), the export aborts when
+\code{Project.xlsx} or any \verb{Configurations/} workbook already exists in
+\code{outputDir}, because the export replaces each workbook wholesale and would
+discard any hand-edits it carries. Pass \code{overwrite = TRUE} to replace the
+existing workbooks.}
 
 \item{silent}{Logical. If \code{TRUE}, suppresses informational messages.
 Defaults to \code{FALSE}.}

@@ -9,10 +9,23 @@
 #' project — [loadProject()] can open it directly. This is the migration path
 #' from Excel-based projects to the JSON-primary workflow.
 #'
+#' The `configurationsFolder` and the per-section workbook filenames are read
+#' from the Excel file and must stay under the project folder: a value that
+#' escapes it (a `../` climb or an absolute path) aborts naming the field. A
+#' folder deliberately placed outside the project with the `${VAR}`
+#' environment-variable form is still allowed.
+#'
 #' @param projectConfigPath Path to the `Project.xlsx` file.
 #'   Defaults to `"Project.xlsx"`.
 #' @param outputDir Directory where the JSON project is created. If `NULL`
 #'   (default), it is created in the same directory as the source Excel file.
+#' @param overwrite Logical. Guards against silently replacing an existing JSON
+#'   project. With `overwrite = FALSE` (default), the import aborts when a
+#'   project file or a non-empty `definitions/` tree already exists in
+#'   `outputDir`, because re-importing replaces the JSON project with the Excel
+#'   state and deletes any definitions authored only on the JSON side. Pass
+#'   `overwrite = TRUE` to replace the existing JSON project with the Excel
+#'   state.
 #' @param silent Logical. If `TRUE`, suppresses informational messages.
 #'   Defaults to `FALSE`.
 #'
@@ -23,6 +36,7 @@
 importProjectFromExcel <- function(
   projectConfigPath = "Project.xlsx",
   outputDir = NULL,
+  overwrite = FALSE,
   silent = FALSE
 ) {
   validateIsString(projectConfigPath)
@@ -83,24 +97,51 @@ importProjectFromExcel <- function(
       c("schemaVersion", "esqlabsRVersion", "name", "description")
   ]
 
-  # Resolve the configurations folder relative to the Excel file
-  configsFolder <- prop("configurationsFolder")
+  # Resolve the configurations folder relative to the Excel file. The
+  # `configurationsFolder` and the per-section workbook filenames come from the
+  # author-controlled Property column, so they are contained under the Excel
+  # project directory (`pcDir`) the same way the JSON-side read paths are
+  # contained under their working folders (see `.resolveWorkingFolder()` /
+  # `.resolveProjectPath()`): a crafted workbook cannot name a folder or file
+  # that escapes the project root via `../` or an absolute path. The `${VAR}`
+  # environment-variable form remains the sanctioned way to point at an
+  # out-of-project location, so a value that declares one is exempt.
+  configsFolderRaw <- prop("configurationsFolder")
+  configsFolder <- configsFolderRaw
   if (!is.null(configsFolder)) {
-    if (!fs::is_absolute_path(configsFolder)) {
-      configsFolder <- file.path(pcDir, configsFolder)
+    # Containment is judged on the raw (pre-expansion) value: a `${VAR}` opts
+    # into an out-of-project location and is exempt, everything else must stay
+    # under `pcDir`. Resolution then expands the variable and joins a relative
+    # value onto `pcDir`, matching `.clean_path()`'s expand-then-resolve order.
+    declaresEnvVar <- grepl("\\$\\{?[A-Za-z_]", configsFolderRaw)
+    if (!declaresEnvVar) {
+      configsFolder <- .resolveProjectPath(
+        configsFolder,
+        pcDir,
+        "configurationsFolder"
+      )
+    } else {
+      configsFolder <- .replaceEnvVarPath(configsFolder)
+      if (!fs::is_absolute_path(configsFolder)) {
+        configsFolder <- file.path(pcDir, configsFolder)
+      }
     }
     configsFolder <- normalizePath(configsFolder, mustWork = FALSE)
   }
 
-  # Helper to resolve a config file path
-  resolveConfigFile <- function(fileName) {
+  # Helper to resolve a config file path, contained under `configsFolder`.
+  resolveConfigFile <- function(fileName, fieldName = "configuration file") {
     if (is.null(fileName) || is.na(fileName) || fileName == "") {
       return(NULL)
     }
     if (is.null(configsFolder)) {
       return(NULL)
     }
-    normalizePath(file.path(configsFolder, fileName), mustWork = FALSE)
+    # Abort if the author-controlled filename escapes the configurations folder
+    # (a `../`-climbing or absolute value); a legitimate missing file is left to
+    # the caller's own existence check, so containment must run before that.
+    resolved <- .resolveProjectPath(fileName, configsFolder, fieldName)
+    normalizePath(resolved, mustWork = FALSE)
   }
 
   # Default config filenames for sections whose path property is omitted
@@ -270,7 +311,10 @@ importProjectFromExcel <- function(
   )
 
   for (section in sections) {
-    file <- resolveConfigFile(propOrDefault(section$property))
+    file <- resolveConfigFile(
+      propOrDefault(section$property),
+      fieldName = section$property
+    )
     if (!is.null(file) && file.exists(file)) {
       jsonData <- section$parse(file, jsonData)
     }
@@ -283,6 +327,19 @@ importProjectFromExcel <- function(
 
   outputFileName <- sub("\\.xlsx$", ".json", basename(projectConfigPath))
   outputPath <- file.path(outputDir, outputFileName)
+
+  # Guard against silently replacing an existing JSON project. The import writes
+  # the container and fully reconciles the `definitions/` tree (deleting any
+  # definition authored only on the JSON side), so re-importing over a JSON
+  # project the user has since edited would erase that work. Abort unless
+  # `overwrite = TRUE` when the target container file already exists, or a
+  # non-empty `definitions/` tree already sits in `outputDir`.
+  definitionsDir <- file.path(outputDir, "definitions")
+  hasDefinitionTree <- dir.exists(definitionsDir) &&
+    any(grepl("\\.json$", list.files(definitionsDir, recursive = TRUE)))
+  if (!overwrite && (file.exists(outputPath) || hasDefinitionTree)) {
+    cli::cli_abort(messages$importWouldOverwriteProject(outputDir))
+  }
 
   if (!dir.exists(dirname(outputPath))) {
     dir.create(dirname(outputPath), recursive = TRUE)
@@ -298,11 +355,13 @@ importProjectFromExcel <- function(
   # `aciclovir_pvb`.
   jsonData <- .canonicalizeProjectJsonIds(jsonData)
 
-  # Write the single inlined `Project.json`. The inlined form is kept (rather
-  # than only the tree) because the Excel axis of `projectStatus()` re-imports
-  # the Excel into a fresh JSON and compares it section-by-section against this
-  # file's raw content; emptying the inline sections would blind that
-  # comparison.
+  # Bootstrap an in-memory project from the imported data by writing the inlined
+  # JSON to the container path and parsing it back. This inlined form is only a
+  # transient bootstrap: `.writeProjectTree()` below overwrites the container
+  # with the slim (`containerOnly`) shape, so the inlined file never survives the
+  # call. `Project$new()` (not `loadProject()`) parses it without running the
+  # cross-reference warning pass, so a project with dangling refs imports quietly
+  # under `silent`.
   jsonText <- jsonlite::toJSON(
     jsonData,
     pretty = TRUE,
@@ -311,25 +370,16 @@ importProjectFromExcel <- function(
     null = "null"
   )
   writeLines(jsonText, outputPath)
-
-  # Also explode the imported project into its `definitions/<kind>/` tree next
-  # to the container, so the import yields a ready-to-use tree project: a later
-  # `loadProject(outputPath)` reads the tree (which wins over the inline
-  # sections), and edits are write-through to it, with no separate materialize
-  # step. The container the tree writer leaves in place still carries the
-  # inlined sections above (the tree writer only adds the `definitions/` files),
-  # so the sync comparison keeps working. `Project$new()` (not `loadProject()`)
-  # parses the just-written snapshot without running the cross-reference warning
-  # pass, so a project with dangling refs imports quietly under `silent`.
   importedProject <- Project$new(projectFilePath = outputPath)
-  for (kind in .definitionKindNames()) {
-    .writeDefinitionTree(
-      .sectionForKind(importedProject, kind),
-      kind,
-      importedProject,
-      outputDir
-    )
-  }
+
+  # Write the imported project as a normal tree project: the slim
+  # (`containerOnly`) `Project.json` container plus the `definitions/<kind>/`
+  # tree, exactly what `saveProject()` and `initProject()` produce. There is one
+  # canonical on-disk `Project.json` shape, so an imported project is
+  # indistinguishable from any other tree project. The Excel sync check compares
+  # the in-memory project against the workbook (see `.compareJsonToExcel()`), so
+  # it no longer needs an inlined container to diff against.
+  .writeProjectTree(importedProject, outputDir, containerPath = outputPath)
 
   if (interactive() && !silent) {
     inputFile <- fs::path_rel(projectConfigPath, start = getwd())
@@ -350,6 +400,12 @@ importProjectFromExcel <- function(
 #' @param project A `Project` object.
 #' @param outputDir Directory where the Excel files will be created. Defaults
 #'   to the directory of the source JSON file.
+#' @param overwrite Logical. Guards against silently overwriting existing Excel
+#'   workbooks. With `overwrite = FALSE` (default), the export aborts when
+#'   `Project.xlsx` or any `Configurations/` workbook already exists in
+#'   `outputDir`, because the export replaces each workbook wholesale and would
+#'   discard any hand-edits it carries. Pass `overwrite = TRUE` to replace the
+#'   existing workbooks.
 #' @param silent Logical. If `TRUE`, suppresses informational messages.
 #'   Defaults to `FALSE`.
 #'
@@ -360,6 +416,7 @@ importProjectFromExcel <- function(
 exportProjectToExcel <- function(
   project,
   outputDir = NULL,
+  overwrite = FALSE,
   silent = FALSE
 ) {
   validateIsOfType(project, "Project")
@@ -368,11 +425,29 @@ exportProjectToExcel <- function(
     outputDir <- project$info$projectDirPath %||% "."
   }
 
+  configDir <- file.path(outputDir, "Configurations")
+
+  # Guard against silently overwriting existing workbooks. Every workbook is
+  # written with `writexl::write_xlsx()`, which replaces the target file
+  # wholesale, and the default `outputDir` is the project's own directory, so a
+  # bare `exportProjectToExcel(project)` would overwrite the project's
+  # `Project.xlsx` and `Configurations/*.xlsx` side-cars (hand-edits included).
+  # Abort unless `overwrite = TRUE` when a `Project.xlsx` or any
+  # `Configurations/` workbook already exists in `outputDir`.
+  existingWorkbooks <- c(
+    if (file.exists(file.path(outputDir, "Project.xlsx"))) "Project.xlsx",
+    if (dir.exists(configDir)) {
+      list.files(configDir, pattern = "\\.xlsx$")
+    }
+  )
+  if (!overwrite && length(existingWorkbooks) > 0L) {
+    cli::cli_abort(messages$exportWouldOverwriteWorkbooks(outputDir))
+  }
+
   if (!dir.exists(outputDir)) {
     dir.create(outputDir, recursive = TRUE)
   }
 
-  configDir <- file.path(outputDir, "Configurations")
   if (!dir.exists(configDir)) {
     dir.create(configDir, recursive = TRUE, showWarnings = FALSE)
   }
@@ -420,7 +495,9 @@ exportProjectToExcel <- function(
     !is.null(project$definitions$parameterSets) &&
       length(project$definitions$parameterSets) > 0
   ) {
-    sheets <- .parameterStructuresToExcelSheets(project$definitions$parameterSets)
+    sheets <- .parameterStructuresToExcelSheets(
+      project$definitions$parameterSets
+    )
     .writeExcel(sheets, file.path(configDir, "ModelParameters.xlsx"))
   }
 
@@ -432,13 +509,18 @@ exportProjectToExcel <- function(
     !is.null(project$definitions$initialConditions) &&
       length(project$definitions$initialConditions) > 0
   ) {
-    icSheets <- .initialConditionsToExcelSheets(project$definitions$initialConditions)
+    icSheets <- .initialConditionsToExcelSheets(
+      project$definitions$initialConditions
+    )
     .writeExcel(icSheets, file.path(configDir, "InitialConditions.xlsx"))
   }
 
   # --- Individuals.xlsx ---
   indivSheets <- list()
-  if (!is.null(project$definitions$individuals) && length(project$definitions$individuals) > 0) {
+  if (
+    !is.null(project$definitions$individuals) &&
+      length(project$definitions$individuals) > 0
+  ) {
     indivSheets[["IndividualBiometrics"]] <- .individualsToExcelDf(
       project$definitions$individuals
     )
@@ -448,7 +530,10 @@ exportProjectToExcel <- function(
   }
 
   # --- Populations.xlsx ---
-  if (!is.null(project$definitions$populations) && length(project$definitions$populations) > 0) {
+  if (
+    !is.null(project$definitions$populations) &&
+      length(project$definitions$populations) > 0
+  ) {
     popDf <- .populationsToExcelDf(project$definitions$populations)
     .writeExcel(popDf, file.path(configDir, "Populations.xlsx"))
   }
@@ -464,7 +549,10 @@ exportProjectToExcel <- function(
       outputPaths = project$definitions$outputPaths
     )
   }
-  if (!is.null(project$definitions$outputPaths) && length(project$definitions$outputPaths) > 0) {
+  if (
+    !is.null(project$definitions$outputPaths) &&
+      length(project$definitions$outputPaths) > 0
+  ) {
     scenSheets[["OutputPaths"]] <- data.frame(
       OutputPathId = names(project$definitions$outputPaths),
       OutputPath = unlist(project$definitions$outputPaths, use.names = FALSE),
@@ -479,7 +567,10 @@ exportProjectToExcel <- function(
   # Parameter sets all live in ModelParameters.xlsx now (one unified section),
   # so this workbook carries only the application protocols.
   appSheets <- list()
-  if (!is.null(project$definitions$applications) && length(project$definitions$applications) > 0) {
+  if (
+    !is.null(project$definitions$applications) &&
+      length(project$definitions$applications) > 0
+  ) {
     appSheets[["ApplicationProtocols"]] <- .applicationsToExcelDf(
       project$definitions$applications
     )
@@ -540,42 +631,57 @@ exportProjectToExcel <- function(
   invisible(projConfigPath)
 }
 
-# Compare a project's JSON against its Excel side-car and report whether they
-# are in sync. Drives the Excel axis of `projectStatus()` (via
+# Compare an in-memory project against its Excel side-car and report whether
+# they are in sync. Drives the Excel axis of `projectStatus()` (via
 # `.projectSyncStatus()`), returning the
 # `list(excel_in_sync = <logical>, details = <list>)` contract.
-# Re-imports the Excel into a temporary JSON and diffs it section-by-section
-# against the project's `Project.json` (ignoring the volatile `esqlabsRVersion`).
+#
+# The comparison is one-way and container-shape-independent: "would re-exporting
+# the current in-memory project change the workbook?". Both sides are the same
+# in-memory serialization (`.projectToJson()`) of a loaded project:
+#   - memory side: the live `project`, so the comparison reflects the project as
+#     it is now (unsaved edits included), not the on-disk container;
+#   - Excel side: a fresh re-import of the side-car workbook, loaded back into a
+#     `Project` and serialized the same way.
+# Serializing both from an in-memory project (rather than reading a container
+# file raw) is what makes the comparison container-shape-independent: a tree
+# project's on-disk container keeps every section emptied (the tree owns them),
+# so reading either container raw would blind the comparison and report false
+# drift on every section. The volatile `esqlabsRVersion` is ignored.
 #
 # @keywords internal
 # @noRd
-.compareJsonToExcel <- function(jsonPath, projectConfigPath, silent = FALSE) {
+.compareJsonToExcel <- function(project, projectConfigPath, silent = FALSE) {
   # Create temporary snapshot from current Excel files
   tempDir <- tempfile("config_snapshot")
   dir.create(tempDir, showWarnings = FALSE, recursive = TRUE)
   on.exit(unlink(tempDir, recursive = TRUE), add = TRUE)
 
-  tempJsonPath <- file.path(tempDir, basename(jsonPath))
-  importProjectFromExcel(
+  tempJsonPath <- importProjectFromExcel(
     projectConfigPath,
     outputDir = tempDir,
     silent = TRUE
   )
 
-  # Load both JSON files as lists so we can strip volatile fields
-  originalJsonObj <- jsonlite::fromJSON(jsonPath, simplifyVector = FALSE)
-  currentJsonObj <- jsonlite::fromJSON(tempJsonPath, simplifyVector = FALSE)
+  # The memory side: serialize the live in-memory project. The Excel side: load
+  # the just-imported temp tree project and serialize it the same way. Both go
+  # through `.projectToJson()`, so the two sides are compared in one shape
+  # regardless of how either container is stored on disk. `Project$new()` (not
+  # `loadProject()`) skips the cross-reference warning pass, so a project with
+  # dangling refs compares quietly.
+  originalJsonObj <- .projectToJson(project)
+  currentJsonObj <- .projectToJson(Project$new(projectFilePath = tempJsonPath))
 
-  # The Excel re-import canonicalizes every id (via
-  # `.canonicalizeProjectJsonIds()`), but the original JSON may carry a
-  # non-canonical id. Canonicalize the original the same way before comparing
-  # so id canonicalization is not itself counted as drift (which would make an
-  # otherwise-in-sync project report out-of-sync). An already-canonical id is
-  # unchanged, so this is a no-op for a canonical original. Warnings are
-  # suppressed (an in-place re-canonicalization of an already-canonical id
-  # emits none anyway).
+  # Both sides canonicalize every id (via `.canonicalizeProjectJsonIds()`) so id
+  # canonicalization is never counted as drift (which would make an otherwise
+  # in-sync project report out-of-sync). An already-canonical id is unchanged,
+  # so this is a no-op for a canonical project. Warnings are suppressed (an
+  # in-place re-canonicalization of an already-canonical id emits none anyway).
   originalJsonObj <- suppressWarnings(
     .canonicalizeProjectJsonIds(originalJsonObj)
+  )
+  currentJsonObj <- suppressWarnings(
+    .canonicalizeProjectJsonIds(currentJsonObj)
   )
 
   # Remove esqlabsRVersion -- it changes with package updates and would cause
@@ -655,10 +761,12 @@ exportProjectToExcel <- function(
       cli::cli_text("To resolve these differences, you can:")
       cli::cli_ul()
       cli::cli_li(
-        "{.run importProjectFromExcel()} - Update JSON from Excel files."
+        "{.run importProjectFromExcel(overwrite = TRUE)} - Update JSON from \\
+        Excel files."
       )
       cli::cli_li(
-        "{.run exportProjectToExcel()} - Recreate Excel files from JSON."
+        "{.run exportProjectToExcel(overwrite = TRUE)} - Recreate Excel files \\
+        from JSON."
       )
       cli::cli_end()
     }
@@ -780,7 +888,7 @@ projectStatus <- function(project, silent = FALSE) {
   compareError <- NULL
   excelStatus <- tryCatch(
     .compareJsonToExcel(
-      jsonPath = jsonPath,
+      project = project,
       projectConfigPath = excelPath,
       silent = TRUE
     ),

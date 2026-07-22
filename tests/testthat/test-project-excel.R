@@ -371,7 +371,14 @@ test_that("importProjectFromExcel writes a usable definitions/ tree", {
   )
 })
 
-test_that("the imported tree reads the same definitions as the inlined import", {
+# The import writes one canonical on-disk shape: a slim (`containerOnly`)
+# `Project.json` plus a `definitions/` tree, exactly what `saveProject()` /
+# `initProject()` produce. There is no second, fully-inlined container variant.
+# So the container's own sections are empty on disk and the real definitions
+# live in the tree; loading the container standalone in a tree-free directory
+# reads an empty project, and only loading it alongside its tree reads the
+# definitions.
+test_that("importProjectFromExcel writes a slim container, definitions in the tree", {
   out <- withr::local_tempdir()
   jsonPath <- importProjectFromExcel(
     testProjectExcelPath(),
@@ -379,36 +386,190 @@ test_that("the imported tree reads the same definitions as the inlined import", 
     silent = TRUE
   )
 
-  # loadProject() of the import reads the tree; comparing against the inlined
-  # Project.json the import also wrote (loaded as a standalone snapshot in a
-  # tree-free directory) confirms the tree carries the same definitions.
-  fromTree <- suppressWarnings(loadProject(jsonPath))
+  # The on-disk container carries empty sections (the tree owns them).
+  raw <- jsonlite::fromJSON(jsonPath, simplifyVector = FALSE)
+  expect_length(raw$scenarios, 0L)
+  expect_length(raw$parameterSets, 0L)
+  expect_length(raw$individuals, 0L)
+  expect_length(raw$outputPaths, 0L)
 
+  # Loading the full tree project reads the real definitions from the tree.
+  fromTree <- suppressWarnings(loadProject(jsonPath))
+  expect_gt(length(fromTree$definitions$scenarios), 0L)
+  expect_gt(length(fromTree$definitions$parameterSets), 0L)
+
+  # Loading only the container (copied to a tree-free directory) reads an empty
+  # project: the definitions live in the tree, not inlined in the container.
   inlineDir <- withr::local_tempdir()
   inlineJson <- file.path(inlineDir, "Project.json")
   file.copy(jsonPath, inlineJson)
-  fromInline <- suppressWarnings(loadProject(inlineJson))
+  containerOnly <- suppressWarnings(loadProject(inlineJson))
+  expect_length(containerOnly$definitions$scenarios, 0L)
+  expect_length(containerOnly$definitions$parameterSets, 0L)
+})
 
-  expect_named(
-    fromTree$definitions$scenarios,
-    names(fromInline$definitions$scenarios),
-    ignore.order = TRUE
+# Regression (#1126): re-importing over an existing JSON project deletes any
+# definition authored only on the JSON side (the tree reconcile empties every
+# `definitions/<kind>/` not present in the Excel). importProjectFromExcel()
+# aborts by default when a JSON project already exists in `outputDir`, and only
+# replaces it when `overwrite = TRUE`.
+test_that("importProjectFromExcel aborts over an existing JSON project unless overwrite = TRUE", {
+  out <- withr::local_tempdir()
+
+  # First import succeeds: the output directory holds no JSON project yet.
+  suppressWarnings(importProjectFromExcel(
+    testProjectExcelPath(),
+    outputDir = out,
+    silent = TRUE
+  ))
+
+  # A second import over it aborts by default (the JSON project is now present).
+  expect_snapshot(
+    error = TRUE,
+    transform = .redactTmpDir,
+    suppressWarnings(importProjectFromExcel(
+      testProjectExcelPath(),
+      outputDir = out,
+      silent = TRUE
+    ))
   )
-  expect_named(
-    fromTree$definitions$parameterSets,
-    names(fromInline$definitions$parameterSets),
-    ignore.order = TRUE
+
+  # With overwrite = TRUE it replaces the existing JSON project.
+  expect_no_error(suppressWarnings(importProjectFromExcel(
+    testProjectExcelPath(),
+    outputDir = out,
+    overwrite = TRUE,
+    silent = TRUE
+  )))
+})
+
+# Regression (#1126): exportProjectToExcel() replaces Project.xlsx and the
+# Configurations workbooks wholesale, defaulting outputDir to the project's own
+# directory, so a bare call would silently overwrite hand-maintained workbooks.
+# It aborts by default when workbooks already exist in `outputDir`, and only
+# overwrites them when `overwrite = TRUE`.
+test_that("exportProjectToExcel aborts over existing workbooks unless overwrite = TRUE", {
+  work_dir <- withr::local_tempdir()
+  file.copy(dirname(exampleProjectPath()), work_dir, recursive = TRUE)
+  project <- loadProject(file.path(work_dir, "Example", "Project.json"))
+
+  excelOut <- withr::local_tempdir()
+
+  # First export succeeds into a fresh directory.
+  exportProjectToExcel(project, outputDir = excelOut, silent = TRUE)
+
+  # A second export over the same directory aborts by default.
+  expect_snapshot(
+    error = TRUE,
+    transform = .redactTmpDir,
+    exportProjectToExcel(project, outputDir = excelOut, silent = TRUE)
   )
-  expect_named(
-    fromTree$definitions$individuals,
-    names(fromInline$definitions$individuals),
-    ignore.order = TRUE
+
+  # With overwrite = TRUE it replaces the existing workbooks.
+  expect_no_error(
+    exportProjectToExcel(
+      project,
+      outputDir = excelOut,
+      overwrite = TRUE,
+      silent = TRUE
+    )
   )
-  expect_named(
-    fromTree$definitions$outputPaths,
-    names(fromInline$definitions$outputPaths),
-    ignore.order = TRUE
+})
+
+# Regression (#1139): the Excel-import paths come from the author-controlled
+# Property column, so they must be contained under the project folder the same
+# way #1034 contained the JSON-side read paths. A `configurationsFolder` or a
+# per-section workbook filename that escapes the project root (`../` climb or an
+# absolute path) aborts naming the field, while the `${VAR}` env-var form stays
+# a sanctioned escape hatch.
+
+# Copy the TestProjectExcel fixture and rewrite one Property in its
+# ProjectConfiguration.xlsx, returning the copied project directory.
+.excelFixtureWithProperty <- function(property, value, envir = parent.frame()) {
+  work <- withr::local_tempdir(.local_envir = envir)
+  file.copy(
+    list.files(
+      testthat::test_path("data", "TestProjectExcel"),
+      full.names = TRUE
+    ),
+    work,
+    recursive = TRUE
   )
+  xlsx <- file.path(work, "ProjectConfiguration.xlsx")
+  df <- as.data.frame(readxl::read_excel(xlsx))
+  if (property %in% df$Property) {
+    df$Value[df$Property == property] <- value
+  } else {
+    df <- rbind(
+      df,
+      data.frame(Property = property, Value = value, Description = "")
+    )
+  }
+  writexl::write_xlsx(df, xlsx)
+  work
+}
+
+test_that("importProjectFromExcel aborts on a configurationsFolder that escapes the project", {
+  # Absolute escape.
+  workAbs <- .excelFixtureWithProperty("configurationsFolder", "/etc")
+  expect_error(
+    suppressWarnings(importProjectFromExcel(
+      file.path(workAbs, "ProjectConfiguration.xlsx"),
+      outputDir = withr::local_tempdir(),
+      silent = TRUE
+    )),
+    "configurationsFolder"
+  )
+
+  # Relative `../` climb escape.
+  workRel <- .excelFixtureWithProperty(
+    "configurationsFolder",
+    "../../../../etc"
+  )
+  expect_error(
+    suppressWarnings(importProjectFromExcel(
+      file.path(workRel, "ProjectConfiguration.xlsx"),
+      outputDir = withr::local_tempdir(),
+      silent = TRUE
+    )),
+    "configurationsFolder"
+  )
+})
+
+test_that("importProjectFromExcel aborts on a workbook filename that escapes the configurations folder", {
+  work <- .excelFixtureWithProperty(
+    "scenariosFile",
+    "../../../../secret.xlsx"
+  )
+  expect_error(
+    suppressWarnings(importProjectFromExcel(
+      file.path(work, "ProjectConfiguration.xlsx"),
+      outputDir = withr::local_tempdir(),
+      silent = TRUE
+    )),
+    "scenariosFile"
+  )
+})
+
+test_that("importProjectFromExcel expands a ${VAR} configurationsFolder (escape hatch)", {
+  # A `${VAR}` value opts out of the containment check and is expanded against
+  # the environment. Point it at the fixture's own directory through the
+  # variable and confirm the sections actually import: an unexpanded literal
+  # would resolve to a nonexistent path and silently drop every section.
+  work <- .excelFixtureWithProperty(
+    "configurationsFolder",
+    "${MY_CONFIGS}/Configurations"
+  )
+  withr::local_envvar(c(MY_CONFIGS = work))
+
+  jsonPath <- suppressWarnings(importProjectFromExcel(
+    file.path(work, "ProjectConfiguration.xlsx"),
+    outputDir = withr::local_tempdir(),
+    silent = TRUE
+  ))
+  project <- suppressWarnings(loadProject(jsonPath))
+  # The scenarios workbook under the env-var folder was read, not dropped.
+  expect_gt(length(project$definitions$scenarios), 0L)
 })
 
 # Pin the imported content to the known TestProjectExcel fixture rather than
@@ -582,49 +743,81 @@ test_that(".parseExcelParameterSheets allows a blank Value cell", {
   expect_identical(parsed$Global[[1]]$value, NA_real_)
 })
 
-# The Excel re-import canonicalizes every id, so an original JSON that carries a
-# non-canonical id must not report out-of-sync purely because of that
-# canonicalization: both sides are canonicalized before the comparison.
+# The comparison is between the in-memory project and a fresh Excel re-import.
+# Both sides canonicalize every id, so id canonicalization is never counted as
+# drift: a project imported from Excel and loaded back is in sync with the Excel
+# it came from.
 test_that(".compareJsonToExcel does not count id canonicalization as drift", {
   out <- withr::local_tempdir()
   excelPath <- testProjectExcelPath()
 
-  # A JSON produced by importing the Excel fixture is in-sync with its source.
   jsonPath <- suppressWarnings(importProjectFromExcel(
     excelPath,
     outputDir = out,
     silent = TRUE
   ))
+  project <- suppressWarnings(loadProject(jsonPath))
+
   inSync <- suppressWarnings(.compareJsonToExcel(
-    jsonPath = jsonPath,
+    project = project,
     projectConfigPath = excelPath,
     silent = TRUE
   ))
   expect_true(inSync$excel_in_sync)
+})
 
-  # Rewrite the original JSON with a non-canonical (uppercased) output-path id.
-  # The Excel re-import still canonicalizes to `aciclovir_pvb`, and so now does
-  # the original side, so the comparison must still report in-sync.
-  obj <- jsonlite::fromJSON(jsonPath, simplifyVector = FALSE)
-  names(obj$outputPaths)[names(obj$outputPaths) == "aciclovir_pvb"] <-
-    "Aciclovir_PVB"
-  writeLines(
-    jsonlite::toJSON(
-      obj,
-      pretty = TRUE,
-      auto_unbox = TRUE,
-      digits = NA,
-      null = "null"
-    ),
-    jsonPath
+# Regression (#1123): a dirty saveProject() on a normal tree project must not
+# flip the Excel axis's per-section verdicts. saveProject() writes the container
+# with the tree-owned sections emptied, and the old Excel comparison read that
+# emptied container raw, so a single unrelated edit made every definition section
+# look "out-of-sync". The reworked comparison serializes the in-memory project
+# instead, so the per-section verdicts are unchanged by a save that touched only
+# an unrelated field (any pre-existing round-trip drift stays exactly as it was,
+# and no new section drift appears). The overall verdict still turns out-of-sync
+# because the edited field genuinely changed.
+test_that("projectStatus() does not report false section drift after a dirty save", {
+  tp <- with_temp_project()
+  project <- tp$project
+
+  # Per-section verdict before the edit: the honest baseline (some sections of
+  # the example project may already differ through Excel round-trip lossiness).
+  before <- suppressWarnings(projectStatus(project, silent = TRUE))
+  statusBefore <- before$details$excel$file_status
+
+  # A single container-metadata edit, then save. No definition section changed.
+  project$info$description <- "edited after import"
+  suppressWarnings(saveProject(project))
+
+  after <- suppressWarnings(projectStatus(project, silent = TRUE))
+  statusAfter <- after$details$excel$file_status
+
+  # The save left every definition section's verdict exactly as it was: an
+  # emptied on-disk container no longer blinds the comparison into flagging
+  # untouched sections.
+  definitionSections <- c(
+    "observedData",
+    "outputPaths",
+    "scenarios",
+    "parameterSets",
+    "initialConditions",
+    "individuals",
+    "populations",
+    "applications",
+    "dataCombined",
+    "plots",
+    "plotGrids",
+    "parameterIdentification"
   )
+  for (section in definitionSections) {
+    expect_identical(
+      statusAfter[[section]],
+      statusBefore[[section]],
+      info = section
+    )
+  }
 
-  stillInSync <- suppressWarnings(.compareJsonToExcel(
-    jsonPath = jsonPath,
-    projectConfigPath = excelPath,
-    silent = TRUE
-  ))
-  expect_true(stillInSync$excel_in_sync)
+  # The edited field is what turns the overall verdict out-of-sync.
+  expect_identical(statusAfter$description, "out-of-sync")
 })
 
 # A corrupt or unreadable Excel side-car cannot be compared. The Excel axis of
@@ -653,6 +846,59 @@ test_that("projectStatus() reports the Excel axis as NA (and warns) when the sid
   # Non-silent: a warning surfaces naming the comparison failure.
   expect_warning(
     projectStatus(project, silent = FALSE),
+    "Cannot compare the Excel configuration files"
+  )
+})
+
+# Regression (#1125): a project with dangling references (the TestProjectExcel
+# fixture encodes application protocols as parameter-set sheets, so the imported
+# scenarios carry dangling `application` refs) exported back to Excel must not
+# hard-abort the status check. The dangling refs survive in mixed case and, on
+# the comparison's Excel re-import, collide under id canonicalization. The abort
+# is now caught and reported as the "cannot compare" NA state with a warning,
+# rather than propagating as a hard error out of `projectStatus()`.
+test_that("projectStatus() does not abort on a dangling-ref canonicalization collision", {
+  # Copy the dangling-ref fixture with the entry workbook named Project.xlsx, so
+  # the imported container is Project.json and the exported side-car stem matches
+  # what the status check derives.
+  work <- withr::local_tempdir()
+  file.copy(
+    list.files(
+      testthat::test_path("data", "TestProjectExcel"),
+      full.names = TRUE
+    ),
+    work,
+    recursive = TRUE
+  )
+  file.rename(
+    file.path(work, "ProjectConfiguration.xlsx"),
+    file.path(work, "Project.xlsx")
+  )
+
+  jsonPath <- suppressWarnings(importProjectFromExcel(
+    file.path(work, "Project.xlsx"),
+    outputDir = work,
+    silent = TRUE
+  ))
+  project <- suppressWarnings(loadProject(jsonPath))
+  # The fixture already carries Configurations workbooks, so exporting the
+  # side-car over them needs overwrite = TRUE.
+  suppressWarnings(exportProjectToExcel(
+    project,
+    outputDir = work,
+    overwrite = TRUE,
+    silent = TRUE
+  ))
+
+  # Silent: no hard error; the collision surfaces as the NA "cannot compare"
+  # state, not an abort.
+  status <- suppressWarnings(projectStatus(project, silent = TRUE))
+  expect_identical(status$excel_in_sync, NA)
+
+  # Non-silent: the collision is reported as a comparison-failure warning, not
+  # thrown as an error.
+  expect_warning(
+    suppressMessages(projectStatus(project, silent = FALSE)),
     "Cannot compare the Excel configuration files"
   )
 })
