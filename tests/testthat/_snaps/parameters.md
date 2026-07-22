@@ -62,7 +62,7 @@
         "Organism|A", "Organism|A"), parameterName = c("K", "K"), value = c(1, 9),
       units = c("1/h", "1/min")))
     Condition
-      Error in `.addParameterEntry()`:
+      Error in `addParameterEntry()`:
       ! parameter "Organism|A|K" already exists in the set.
       i Pass `overwrite = TRUE` to replace it.
 
@@ -184,7 +184,7 @@
       suppressMessages(addInitialConditionEntry(project, "dset", path = c(
         "Organism|A", "Organism|A"), value = c(1, 9), unit = c("mg/l", "mg/l")))
     Condition
-      Error in `.addInitialConditionEntry()`:
+      Error in `addInitialConditionEntry()`:
       ! initial condition "Organism|A" already exists in the set.
       i Pass `overwrite = TRUE` to replace it.
 
@@ -205,7 +205,7 @@
     Message
       Created initial-condition set "set" on demand to hold the new entry.
     Condition
-      Error in `.addInitialConditionEntry()`:
+      Error in `addInitialConditionEntry()`:
       ! Invalid initial-condition entry:
       x unit must be a non-empty string
 

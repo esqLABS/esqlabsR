@@ -751,18 +751,19 @@ addParameterSet <- function(project, id, overwrite = FALSE) {
   rlang::local_error_call(.call)
   .assertIdVector(id)
   id <- .canonicalizeId(id)
-  if (!overwrite) {
-    .assertNoDuplicateIds(id, "parameter set")
-    clash <- intersect(id, names(self$definitions$parameterSets))
-    if (length(clash) > 0L) {
-      cli::cli_abort(c(
-        "parameter set {.val {clash}} already exists.",
-        "i" = "Pass {.code overwrite = TRUE} to replace it."
-      ))
-    }
-  }
+  .assertNoOverwriteClash(
+    id,
+    names(self$definitions$parameterSets),
+    "parameter set",
+    overwrite
+  )
   parameterSets <- private$.getSection("parameterSets") %||% list()
   for (one in id) {
+    # Replacing an existing set with an empty one discards its entries, so warn
+    # if it is still referenced, matching removeParameterSet()'s behaviour.
+    if (overwrite && one %in% names(parameterSets)) {
+      .warnIfReferenced(self, "parameterSet", one)
+    }
     parameterSets[[one]] <- .asParameterSet(list())
   }
   private$.setSection("parameterSets", parameterSets)
@@ -903,7 +904,8 @@ addParameterEntry <- function(
     parameterName,
     value,
     units,
-    overwrite
+    overwrite,
+    call = .call
   ))
   private$.setSection("parameterSets", parameterSets)
   invisible(self)
@@ -1061,7 +1063,8 @@ removeParameterEntry <- function(
   parameterName,
   value,
   units,
-  overwrite = FALSE
+  overwrite = FALSE,
+  call = rlang::caller_env()
 ) {
   n <- .assertParameterEntryVectorLengths(
     containerPath,
@@ -1076,7 +1079,8 @@ removeParameterEntry <- function(
       parameterName[[i]],
       value[[i]],
       units[[i]],
-      overwrite
+      overwrite,
+      call = call
     )
   }
   parameters
@@ -1096,7 +1100,8 @@ removeParameterEntry <- function(
   parameterName,
   value,
   units,
-  overwrite = FALSE
+  overwrite = FALSE,
+  call = rlang::caller_env()
 ) {
   errors <- .validateParameterEntryArgs(
     containerPath,
@@ -1105,10 +1110,13 @@ removeParameterEntry <- function(
     units
   )
   if (length(errors) > 0L) {
-    cli::cli_abort(c(
-      "Invalid parameter entry:",
-      stats::setNames(errors, rep("x", length(errors)))
-    ))
+    cli::cli_abort(
+      c(
+        "Invalid parameter entry:",
+        stats::setNames(errors, rep("x", length(errors)))
+      ),
+      call = call
+    )
   }
 
   if (is.null(parameters)) {
@@ -1128,11 +1136,14 @@ removeParameterEntry <- function(
   )
   if (length(existingIdx) > 0L) {
     if (!overwrite) {
-      cli::cli_abort(c(
-        "parameter {.val {paste(containerPath, parameterName, sep = '|')}} \\
-        already exists in the set.",
-        "i" = "Pass {.code overwrite = TRUE} to replace it."
-      ))
+      cli::cli_abort(
+        c(
+          "parameter {.val {paste(containerPath, parameterName, sep = '|')}} \\
+          already exists in the set.",
+          "i" = "Pass {.code overwrite = TRUE} to replace it."
+        ),
+        call = call
+      )
     }
     parameters[[existingIdx]] <- newEntry
   } else {
@@ -1273,18 +1284,19 @@ addInitialConditions <- function(project, id, overwrite = FALSE) {
   rlang::local_error_call(.call)
   .assertIdVector(id)
   id <- .canonicalizeId(id)
-  if (!overwrite) {
-    .assertNoDuplicateIds(id, "initial-condition set")
-    clash <- intersect(id, names(self$definitions$initialConditions))
-    if (length(clash) > 0L) {
-      cli::cli_abort(c(
-        "initial-condition set {.val {clash}} already exists.",
-        "i" = "Pass {.code overwrite = TRUE} to replace it."
-      ))
-    }
-  }
+  .assertNoOverwriteClash(
+    id,
+    names(self$definitions$initialConditions),
+    "initial-condition set",
+    overwrite
+  )
   initialConditions <- private$.getSection("initialConditions") %||% list()
   for (one in id) {
+    # Replacing an existing set with an empty one discards its entries, so warn
+    # if it is still referenced, matching removeInitialConditions()'s behaviour.
+    if (overwrite && one %in% names(initialConditions)) {
+      .warnIfReferenced(self, "initialConditions", one)
+    }
     initialConditions[[one]] <- .asInitialConditionSet(list())
   }
   private$.setSection("initialConditions", initialConditions)
@@ -1411,7 +1423,8 @@ addInitialConditionEntry <- function(
     path,
     value,
     unit,
-    overwrite
+    overwrite,
+    call = .call
   ))
   private$.setSection("initialConditions", initialConditions)
   invisible(self)
@@ -1541,7 +1554,8 @@ removeInitialConditionEntry <- function(project, id, path) {
   path,
   value,
   unit,
-  overwrite = FALSE
+  overwrite = FALSE,
+  call = rlang::caller_env()
 ) {
   n <- .assertInitialConditionEntryVectorLengths(path, value, unit)
   for (i in seq_len(n)) {
@@ -1550,7 +1564,8 @@ removeInitialConditionEntry <- function(project, id, path) {
       path[[i]],
       value[[i]],
       unit[[i]],
-      overwrite
+      overwrite,
+      call = call
     )
   }
   entries
@@ -1568,14 +1583,18 @@ removeInitialConditionEntry <- function(project, id, path) {
   path,
   value,
   unit,
-  overwrite = FALSE
+  overwrite = FALSE,
+  call = rlang::caller_env()
 ) {
   errors <- .validateInitialConditionEntryArgs(path, value, unit)
   if (length(errors) > 0L) {
-    cli::cli_abort(c(
-      "Invalid initial-condition entry:",
-      stats::setNames(errors, rep("x", length(errors)))
-    ))
+    cli::cli_abort(
+      c(
+        "Invalid initial-condition entry:",
+        stats::setNames(errors, rep("x", length(errors)))
+      ),
+      call = call
+    )
   }
 
   if (is.null(entries)) {
@@ -1592,10 +1611,13 @@ removeInitialConditionEntry <- function(project, id, path) {
   )
   if (length(existingIdx) > 0L) {
     if (!overwrite) {
-      cli::cli_abort(c(
-        "initial condition {.val {path}} already exists in the set.",
-        "i" = "Pass {.code overwrite = TRUE} to replace it."
-      ))
+      cli::cli_abort(
+        c(
+          "initial condition {.val {path}} already exists in the set.",
+          "i" = "Pass {.code overwrite = TRUE} to replace it."
+        ),
+        call = call
+      )
     }
     entries[[existingIdx]] <- newEntry
   } else {

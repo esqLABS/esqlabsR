@@ -284,9 +284,23 @@ test_that("addParameterSet overwrite = TRUE replaces the set with an empty one",
     addParameterEntry(project, "global", "Organism|A", "K", 1, "1/h")
   )
   before <- length(project$definitions$parameterSets)
-  addParameterSet(project, "global", overwrite = TRUE)
+  # "global" is referenced by scenarios in the fixture, so wiping it warns.
+  suppressWarnings(addParameterSet(project, "global", overwrite = TRUE))
   expect_length(project$definitions$parameterSets, before)
   expect_length(project$definitions$parameterSets$global, 0L)
+})
+
+test_that("addParameterSet overwrite warns when the replaced set is referenced", {
+  project <- testProject()
+  # A fresh, unreferenced set overwritten in place must NOT warn.
+  addParameterSet(project, "loose")
+  expect_no_warning(addParameterSet(project, "loose", overwrite = TRUE))
+  # "global" is referenced by a scenario in the fixture; overwriting it (which
+  # discards its entries) warns, matching removeParameterSet().
+  expect_warning(
+    addParameterSet(project, "global", overwrite = TRUE),
+    "referenced"
+  )
 })
 
 test_that("addParameterEntry creates the set on demand and appends entries", {
