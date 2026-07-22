@@ -13,3 +13,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-07-22 14:30: Gave the parameter-set entry and parameter-identification `add*` functions a uniform overwrite policy: a duplicate now errors unless `overwrite = TRUE`.
 - 2026-07-22 14:45: Extended the overwrite policy to `addOutputPath()`: an existing id errors unless `overwrite = TRUE`.
 - 2026-07-22 15:10: Extended the overwrite policy to `addIndividual()`: an existing id errors unless `overwrite = TRUE`.
+- 2026-07-22 15:20: Extended the overwrite policy to `addPopulation()`: an existing id errors unless `overwrite = TRUE`.

@@ -357,8 +357,10 @@ sampleRandomValue <- function(distribution, mean, sd, n) {
 #' @param ... Optional named fields. Accepted: `proportionOfFemales`,
 #'   `weightMin`, `weightMax`, `heightMin`, `heightMax`, `ageMin`,
 #'   `ageMax`, `BMIMin`, `BMIMax`, `gender`, `weightUnit`, `heightUnit`,
-#'   `ageUnit`, `BMIUnit`, `population`, `diseaseState`. Numeric range
-#'   fields are coerced via `as.double()`.
+#'   `ageUnit`, `BMIUnit`, `population`, `diseaseState`, and `overwrite`.
+#'   Numeric range fields are coerced via `as.double()`. `overwrite` is a
+#'   logical scalar (default `FALSE`): an id that already exists aborts unless
+#'   `overwrite = TRUE`, which replaces it (last-write-wins).
 #' @returns The `project` object, invisibly.
 #' @export
 #' @family population
@@ -391,18 +393,28 @@ addPopulation <- function(
   id <- .canonicalizeId(id)
   n <- length(id)
 
+  dots <- list(...)
+  # `overwrite` arrives through `...`; pull it out before aligning so it is not
+  # mistaken for a per-definition field.
+  overwrite <- isTRUE(dots[["overwrite"]])
+  dots[["overwrite"]] <- NULL
   perDefinition <- .alignAuthoringArgs(
     id,
     scalarFields = c(
       list(species = species, numberOfIndividuals = numberOfIndividuals),
-      list(...)
+      dots
     )
   )
 
-  .assertNoDuplicateIds(id, "population")
-  clash <- intersect(id, names(self$definitions$populations))
-  if (length(clash) > 0L) {
-    cli::cli_abort("population {.val {clash}} already exists")
+  if (!overwrite) {
+    .assertNoDuplicateIds(id, "population")
+    clash <- intersect(id, names(self$definitions$populations))
+    if (length(clash) > 0L) {
+      cli::cli_abort(c(
+        "population {.val {clash}} already exists.",
+        "i" = "Pass {.code overwrite = TRUE} to replace it."
+      ))
+    }
   }
   call <- .call
   entries <- lapply(seq_len(n), function(i) {
