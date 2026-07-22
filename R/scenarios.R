@@ -805,16 +805,12 @@ addScenario <- function(
     )
   )
 
-  if (!overwrite) {
-    .assertNoDuplicateIds(id, "scenario")
-    clash <- intersect(id, names(self$definitions$scenarios))
-    if (length(clash) > 0L) {
-      cli::cli_abort(c(
-        "scenario {.val {clash}} already exists.",
-        "i" = "Pass {.code overwrite = TRUE} to replace it."
-      ))
-    }
-  }
+  .assertNoOverwriteClash(
+    id,
+    names(self$definitions$scenarios),
+    "scenario",
+    overwrite
+  )
   call <- .call
   scenarios <- .collectCanonicalizedRefs(lapply(seq_len(n), function(i) {
     .buildScenarioEntry(self, id[[i]], perDefinition[[i]], call = call)

@@ -45,14 +45,8 @@ addOutputPath <- function(project, id, path, overwrite = FALSE) {
   .call
 ) {
   rlang::local_error_call(.call)
-  # Route the id-vector check through the shared helper every sibling add* uses,
-  # then canonicalize. A within-batch duplicate id aborts unless overwriting, in
-  # which case the last entry for that id wins.
   .assertIdVector(id)
   id <- .canonicalizeId(id)
-  if (!overwrite) {
-    .assertNoDuplicateIds(id, "outputPath")
-  }
 
   if (
     !is.character(path) ||
@@ -70,15 +64,14 @@ addOutputPath <- function(project, id, path, overwrite = FALSE) {
       "x" = "path must contain non-empty strings"
     ))
   }
-  if (!overwrite) {
-    clash <- intersect(id, names(self$definitions$outputPaths))
-    if (length(clash) > 0L) {
-      cli::cli_abort(c(
-        "outputPath {.val {clash}} already exists.",
-        "i" = "Pass {.code overwrite = TRUE} to replace it."
-      ))
-    }
-  }
+  # A within-batch duplicate id or an existing id aborts unless overwriting, in
+  # which case the last entry for that id wins.
+  .assertNoOverwriteClash(
+    id,
+    names(self$definitions$outputPaths),
+    "outputPath",
+    overwrite
+  )
 
   # Recycle a single path to every id (the scalar-per-definition rule).
   if (length(path) == 1L) {

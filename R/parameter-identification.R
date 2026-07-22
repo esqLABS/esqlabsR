@@ -1143,6 +1143,12 @@ addPITask <- function(
   } else {
     id <- .canonicalizeId(id)
     if (!overwrite && id %in% names(self$definitions$parameterIdentification)) {
+      # addPITask aggregates all field errors into one abort (a task carries its
+      # own parameter / output-mapping / scenario references, each separately
+      # validated), so the duplicate-id error is one entry in that vector rather
+      # than the standalone two-line `messages$definitionAlreadyExists()` the
+      # single-id add* functions raise. The wording still matches: "<thing>
+      # already exists" plus the overwrite hint.
       errors <- c(
         errors,
         paste0(

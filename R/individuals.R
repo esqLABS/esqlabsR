@@ -167,9 +167,9 @@ addIndividual <- function(project, id, species, ...) {
   n <- length(id)
 
   dots <- list(...)
-  # `overwrite` arrives through `...`; pull it out before aligning so it is not
-  # mistaken for a per-definition field.
-  overwrite <- isTRUE(dots[["overwrite"]])
+  # `overwrite` arrives through `...`; pull it out (validated) before aligning
+  # so it is not mistaken for a per-definition field.
+  overwrite <- .validateOverwriteFlag(dots[["overwrite"]])
   dots[["overwrite"]] <- NULL
   # `parameterSets` is the one vector-valued-per-definition field; everything else
   # is scalar-per-definition. `species` is a positional formal, not a `...` field.
@@ -184,16 +184,12 @@ addIndividual <- function(project, id, species, ...) {
   # Validate all N first (all-or-nothing): build every entry before folding any,
   # so an invalid definition in the batch writes nothing. A within-batch
   # duplicate id aborts unless overwriting, in which case the last one wins.
-  if (!overwrite) {
-    .assertNoDuplicateIds(id, "individual")
-    clash <- intersect(id, names(self$definitions$individuals))
-    if (length(clash) > 0L) {
-      cli::cli_abort(c(
-        "individual {.val {clash}} already exists.",
-        "i" = "Pass {.code overwrite = TRUE} to replace it."
-      ))
-    }
-  }
+  .assertNoOverwriteClash(
+    id,
+    names(self$definitions$individuals),
+    "individual",
+    overwrite
+  )
   call <- .call
   entries <- .collectCanonicalizedRefs(lapply(seq_len(n), function(i) {
     .buildIndividualEntry(self, id[[i]], perDefinition[[i]], call = call)

@@ -69,16 +69,12 @@ addApplication <- function(
   n <- length(id)
   perId <- .wholeField(parameterSets, n)
 
-  if (!overwrite) {
-    .assertNoDuplicateIds(id, "application")
-    clash <- intersect(id, names(self$definitions$applications))
-    if (length(clash) > 0L) {
-      cli::cli_abort(c(
-        "application {.val {clash}} already exists.",
-        "i" = "Pass {.code overwrite = TRUE} to replace it."
-      ))
-    }
-  }
+  .assertNoOverwriteClash(
+    id,
+    names(self$definitions$applications),
+    "application",
+    overwrite
+  )
   call <- .call
   apps <- .collectCanonicalizedRefs(lapply(seq_len(n), function(i) {
     .buildApplicationEntry(self, perId[[i]], call = call)

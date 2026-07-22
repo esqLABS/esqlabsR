@@ -69,6 +69,14 @@ test_that("addIndividual overwrite = TRUE replaces an existing individual", {
   expect_identical(project$definitions$individuals[["indiv1"]]$gender, "FEMALE")
 })
 
+test_that("addIndividual rejects a non-logical overwrite passed through ...", {
+  project <- testProject()
+  expect_snapshot(
+    error = TRUE,
+    addIndividual(project, "newi", species = "Human", overwrite = "TRUE")
+  )
+})
+
 test_that("addIndividual aborts when gender is missing", {
   project <- testProject()
   expect_snapshot(

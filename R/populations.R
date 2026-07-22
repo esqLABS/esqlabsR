@@ -394,9 +394,9 @@ addPopulation <- function(
   n <- length(id)
 
   dots <- list(...)
-  # `overwrite` arrives through `...`; pull it out before aligning so it is not
-  # mistaken for a per-definition field.
-  overwrite <- isTRUE(dots[["overwrite"]])
+  # `overwrite` arrives through `...`; pull it out (validated) before aligning
+  # so it is not mistaken for a per-definition field.
+  overwrite <- .validateOverwriteFlag(dots[["overwrite"]])
   dots[["overwrite"]] <- NULL
   perDefinition <- .alignAuthoringArgs(
     id,
@@ -406,16 +406,12 @@ addPopulation <- function(
     )
   )
 
-  if (!overwrite) {
-    .assertNoDuplicateIds(id, "population")
-    clash <- intersect(id, names(self$definitions$populations))
-    if (length(clash) > 0L) {
-      cli::cli_abort(c(
-        "population {.val {clash}} already exists.",
-        "i" = "Pass {.code overwrite = TRUE} to replace it."
-      ))
-    }
-  }
+  .assertNoOverwriteClash(
+    id,
+    names(self$definitions$populations),
+    "population",
+    overwrite
+  )
   call <- .call
   entries <- lapply(seq_len(n), function(i) {
     .buildPopulationEntry(id[[i]], perDefinition[[i]], call = call)

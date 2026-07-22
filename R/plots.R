@@ -810,24 +810,15 @@ addPlot <- function(project, id, dataCombined, plotType, ...) {
   dots <- list(...)
   # `overwrite` arrives through `...`; pull it out before building fields so it
   # is not stored as a plot field.
-  overwrite <- isTRUE(dots[["overwrite"]])
+  overwrite <- .validateOverwriteFlag(dots[["overwrite"]])
   dots[["overwrite"]] <- NULL
   perDefinitionFields <- .dotsToPerDefinitionFields(dots, n)
 
   # Validate the whole batch first (all-or-nothing): no entry is folded in (and
   # so nothing is written through) unless every entry is valid. A within-batch
-  # duplicate id aborts unless overwriting, in which case the last one wins.
-  if (!overwrite) {
-    .assertNoDuplicateIds(id, "plot")
-    existing <- names(self$definitions$plots)
-    clash <- intersect(id, existing)
-    if (length(clash) > 0L) {
-      cli::cli_abort(c(
-        "plot {.val {clash}} already exists.",
-        "i" = "Pass {.code overwrite = TRUE} to replace it."
-      ))
-    }
-  }
+  # duplicate id or an existing id aborts unless overwriting, in which case the
+  # last one wins.
+  .assertNoOverwriteClash(id, names(self$definitions$plots), "plot", overwrite)
   unknownDc <- setdiff(dataCombined, names(self$definitions$dataCombined))
   if (length(unknownDc) > 0L) {
     cli::cli_abort("dataCombined {.val {unknownDc}} not found in project")
@@ -991,22 +982,18 @@ addPlotGrid <- function(project, id, plots, ...) {
   dots <- list(...)
   # `overwrite` arrives through `...`; pull it out before building fields so it
   # is not stored as a grid field.
-  overwrite <- isTRUE(dots[["overwrite"]])
+  overwrite <- .validateOverwriteFlag(dots[["overwrite"]])
   dots[["overwrite"]] <- NULL
   perGridFields <- .dotsToPerDefinitionFields(dots, n)
 
   # Validate the whole batch first (all-or-nothing). A within-batch duplicate id
   # aborts unless overwriting, in which case the last one wins.
-  if (!overwrite) {
-    .assertNoDuplicateIds(id, "plot grid")
-    clash <- intersect(id, names(self$definitions$plotGrids))
-    if (length(clash) > 0L) {
-      cli::cli_abort(c(
-        "plot grid {.val {clash}} already exists.",
-        "i" = "Pass {.code overwrite = TRUE} to replace it."
-      ))
-    }
-  }
+  .assertNoOverwriteClash(
+    id,
+    names(self$definitions$plotGrids),
+    "plot grid",
+    overwrite
+  )
   existingPlotIDs <- names(self$definitions$plots)
   if (is.null(existingPlotIDs)) {
     cli::cli_abort(c(
@@ -1148,16 +1135,12 @@ addDataCombined <- function(
 
   # Validate the whole batch first (all-or-nothing). A within-batch duplicate id
   # aborts unless overwriting, in which case the last one wins.
-  if (!overwrite) {
-    .assertNoDuplicateIds(id, "DataCombined")
-    clash <- intersect(id, names(self$definitions$dataCombined))
-    if (length(clash) > 0L) {
-      cli::cli_abort(c(
-        "DataCombined {.val {clash}} already exists.",
-        "i" = "Pass {.code overwrite = TRUE} to replace it."
-      ))
-    }
-  }
+  .assertNoOverwriteClash(
+    id,
+    names(self$definitions$dataCombined),
+    "DataCombined",
+    overwrite
+  )
   for (i in seq_len(n)) {
     if (length(perIdSimulated[[i]]) == 0L && length(perIdObserved[[i]]) == 0L) {
       cli::cli_abort(
