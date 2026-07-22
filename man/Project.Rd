@@ -641,7 +641,14 @@ parameter/initial-condition path (\code{\link[=addParameterEntry]{addParameterEn
   Add an entry to a parameter set. See \code{\link[=addParameterEntry]{addParameterEntry()}}.
   \subsection{Usage}{
     \if{html}{\out{<div class="r">}}
-    \preformatted{Project$addParameterEntry(id, containerPath, parameterName, value, units)}
+    \preformatted{Project$addParameterEntry(
+  id,
+  containerPath,
+  parameterName,
+  value,
+  units,
+  overwrite = FALSE
+)}
     \if{html}{\out{</div>}}
   }
   \subsection{Arguments}{
@@ -651,6 +658,8 @@ parameter/initial-condition path (\code{\link[=addParameterEntry]{addParameterEn
       \item{\code{containerPath, parameterName, value, units, unit}}{Parameter- and
 initial-condition entry fields. See \code{\link[=addParameterEntry]{addParameterEntry()}} /
 \code{\link[=addInitialConditionEntry]{addInitialConditionEntry()}}.}
+      \item{\code{overwrite}}{Logical scalar controlling duplicate-collision behaviour of
+the \verb{add*} authoring methods. See \code{\link[=addParameterEntry]{addParameterEntry()}}, \code{\link[=addPITask]{addPITask()}}.}
     }
     \if{html}{\out{</div>}}
   }
@@ -726,7 +735,7 @@ initial-condition entry fields. See \code{\link[=addParameterEntry]{addParameter
 \code{\link[=addInitialConditionEntry]{addInitialConditionEntry()}}.
   \subsection{Usage}{
     \if{html}{\out{<div class="r">}}
-    \preformatted{Project$addInitialConditionEntry(id, path, value, unit)}
+    \preformatted{Project$addInitialConditionEntry(id, path, value, unit, overwrite = FALSE)}
     \if{html}{\out{</div>}}
   }
   \subsection{Arguments}{
@@ -736,6 +745,8 @@ initial-condition entry fields. See \code{\link[=addParameterEntry]{addParameter
       \item{\code{path}}{Character path: an output-path string (\code{\link[=addOutputPath]{addOutputPath()}}) or a
 parameter/initial-condition path (\code{\link[=addParameterEntry]{addParameterEntry()}} /
 \code{\link[=addInitialConditionEntry]{addInitialConditionEntry()}}).}
+      \item{\code{overwrite}}{Logical scalar controlling duplicate-collision behaviour of
+the \verb{add*} authoring methods. See \code{\link[=addParameterEntry]{addParameterEntry()}}, \code{\link[=addPITask]{addPITask()}}.}
       \item{\code{containerPath, parameterName, value, units, unit}}{Parameter- and
 initial-condition entry fields. See \code{\link[=addParameterEntry]{addParameterEntry()}} /
 \code{\link[=addInitialConditionEntry]{addInitialConditionEntry()}}.}
@@ -963,7 +974,8 @@ See \code{\link[=addObservedData]{addObservedData()}}.}
   scenarios,
   parameters,
   outputMappings,
-  configuration = list()
+  configuration = list(),
+  overwrite = FALSE
 )}
     \if{html}{\out{</div>}}
   }
@@ -972,6 +984,8 @@ See \code{\link[=addObservedData]{addObservedData()}}.}
     \describe{
       \item{\code{id}}{Character id (name) of the definition to add, modify, or remove.}
       \item{\code{scenarios, parameters, outputMappings, configuration}}{Parameter-identification task components. See \code{\link[=addPITask]{addPITask()}}.}
+      \item{\code{overwrite}}{Logical scalar controlling duplicate-collision behaviour of
+the \verb{add*} authoring methods. See \code{\link[=addParameterEntry]{addParameterEntry()}}, \code{\link[=addPITask]{addPITask()}}.}
     }
     \if{html}{\out{</div>}}
   }
@@ -1011,7 +1025,8 @@ See \code{\link[=addObservedData]{addObservedData()}}.}
   maxValue,
   startValue,
   units = NULL,
-  id = NULL
+  id = NULL,
+  overwrite = FALSE
 )}
     \if{html}{\out{</div>}}
   }
@@ -1027,6 +1042,8 @@ parameter/initial-condition path (\code{\link[=addParameterEntry]{addParameterEn
       \item{\code{minValue, maxValue, startValue}}{Numeric bounds and start value of a PI
 parameter. See \code{\link[=addPIParameter]{addPIParameter()}}.}
       \item{\code{id}}{Character id (name) of the definition to add, modify, or remove.}
+      \item{\code{overwrite}}{Logical scalar controlling duplicate-collision behaviour of
+the \verb{add*} authoring methods. See \code{\link[=addParameterEntry]{addParameterEntry()}}, \code{\link[=addPITask]{addPITask()}}.}
       \item{\code{containerPath, parameterName, value, units, unit}}{Parameter- and
 initial-condition entry fields. See \code{\link[=addParameterEntry]{addParameterEntry()}} /
 \code{\link[=addInitialConditionEntry]{addInitialConditionEntry()}}.}
@@ -1075,7 +1092,8 @@ belongs to. See \code{\link[=addPIParameter]{addPIParameter()}}.}
   xFactor = 1,
   yFactor = 1,
   weight = NULL,
-  id = NULL
+  id = NULL,
+  overwrite = FALSE
 )}
     \if{html}{\out{</div>}}
   }
@@ -1087,6 +1105,8 @@ belongs to. See \code{\link[=addPIParameter]{addPIParameter()}}.}
       \item{\code{outputPath, observedData, scaling, xOffset, yOffset, xFactor, yFactor, weight}}{Fields of a PI output mapping. See \code{\link[=addPIOutputMapping]{addPIOutputMapping()}}.}
       \item{\code{scenarios, parameters, outputMappings, configuration}}{Parameter-identification task components. See \code{\link[=addPITask]{addPITask()}}.}
       \item{\code{id}}{Character id (name) of the definition to add, modify, or remove.}
+      \item{\code{overwrite}}{Logical scalar controlling duplicate-collision behaviour of
+the \verb{add*} authoring methods. See \code{\link[=addParameterEntry]{addParameterEntry()}}, \code{\link[=addPITask]{addPITask()}}.}
     }
     \if{html}{\out{</div>}}
   }

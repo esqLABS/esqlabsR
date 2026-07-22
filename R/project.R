@@ -86,6 +86,8 @@
 #'   Fields of a PI output mapping. See [addPIOutputMapping()].
 #' @param pkmlFilePaths Character vector of `.pkml` file paths. See
 #'   [createScenariosFromPKML()].
+#' @param overwrite Logical scalar controlling duplicate-collision behaviour of
+#'   the `add*` authoring methods. See [addParameterEntry()], [addPITask()].
 #' @param ... Passed to the matching authoring free function (e.g. the
 #'   partial-update fields of [setScenario()] / [setIndividual()], or the
 #'   remaining arguments of [createScenariosFromPKML()]).
@@ -392,7 +394,8 @@ Project <- R6::R6Class(
       containerPath,
       parameterName,
       value,
-      units
+      units,
+      overwrite = FALSE
     ) {
       private$.impl(
         .addParameterEntry_impl,
@@ -400,7 +403,8 @@ Project <- R6::R6Class(
         containerPath,
         parameterName,
         value,
-        units
+        units,
+        overwrite
       )
     },
 
@@ -428,8 +432,21 @@ Project <- R6::R6Class(
 
     #' @description Add an entry to an initial-conditions set. See
     #'   [addInitialConditionEntry()].
-    addInitialConditionEntry = function(id, path, value, unit) {
-      private$.impl(.addInitialConditionEntry_impl, id, path, value, unit)
+    addInitialConditionEntry = function(
+      id,
+      path,
+      value,
+      unit,
+      overwrite = FALSE
+    ) {
+      private$.impl(
+        .addInitialConditionEntry_impl,
+        id,
+        path,
+        value,
+        unit,
+        overwrite
+      )
     },
 
     #' @description Remove an entry from an initial-conditions set. See
@@ -495,7 +512,8 @@ Project <- R6::R6Class(
       scenarios,
       parameters,
       outputMappings,
-      configuration = list()
+      configuration = list(),
+      overwrite = FALSE
     ) {
       private$.impl(
         .addPITask_impl,
@@ -503,7 +521,8 @@ Project <- R6::R6Class(
         scenarios,
         parameters,
         outputMappings,
-        configuration
+        configuration,
+        overwrite
       )
     },
 
@@ -521,7 +540,8 @@ Project <- R6::R6Class(
       maxValue,
       startValue,
       units = NULL,
-      id = NULL
+      id = NULL,
+      overwrite = FALSE
     ) {
       private$.impl(
         .addPIParameter_impl,
@@ -532,7 +552,8 @@ Project <- R6::R6Class(
         maxValue,
         startValue,
         units,
-        id
+        id,
+        overwrite
       )
     },
 
@@ -554,7 +575,8 @@ Project <- R6::R6Class(
       xFactor = 1,
       yFactor = 1,
       weight = NULL,
-      id = NULL
+      id = NULL,
+      overwrite = FALSE
     ) {
       private$.impl(
         .addPIOutputMapping_impl,
@@ -568,7 +590,8 @@ Project <- R6::R6Class(
         xFactor,
         yFactor,
         weight,
-        id
+        id,
+        overwrite
       )
     },
 

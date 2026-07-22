@@ -16,7 +16,8 @@ addPIOutputMapping(
   xFactor = 1,
   yFactor = 1,
   weight = NULL,
-  id = NULL
+  id = NULL,
+  overwrite = FALSE
 )
 }
 \arguments{
@@ -36,6 +37,11 @@ per-mapping fitting metadata. Defaults match \code{PIOutputMapping()}.}
 
 \item{id}{Optional character scalar; auto-generated as
 \verb{<task>_mapping_<N>} when absent.}
+
+\item{overwrite}{Logical scalar. When \code{FALSE} (default), an explicit \code{id}
+that already exists in the task aborts. When \code{TRUE}, the existing mapping
+is replaced (last-write-wins). Ignored for an auto-generated \code{id}, which
+never collides.}
 }
 \value{
 The \code{project} object, invisibly.

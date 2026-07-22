@@ -10,7 +10,8 @@ addPITask(
   scenarios,
   parameters,
   outputMappings,
-  configuration = list()
+  configuration = list(),
+  overwrite = FALSE
 )
 }
 \arguments{
@@ -29,6 +30,9 @@ Each \code{outputPath} must exist in \code{names(project$definitions$outputPaths
 
 \item{configuration}{Named list of solver settings; see the \code{configuration}
 argument of \code{\link[=PITask]{PITask()}} for the supported keys.}
+
+\item{overwrite}{Logical scalar. When \code{FALSE} (default), an existing task id
+aborts. When \code{TRUE}, the existing task is replaced (last-write-wins).}
 }
 \value{
 The \code{project} object, invisibly.

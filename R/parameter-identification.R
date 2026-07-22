@@ -1096,6 +1096,8 @@ createPITasks <- function(...) {
 #'   Each `outputPath` must exist in `names(project$definitions$outputPaths)`.
 #' @param configuration Named list of solver settings; see the `configuration`
 #'   argument of [PITask()] for the supported keys.
+#' @param overwrite Logical scalar. When `FALSE` (default), an existing task id
+#'   aborts. When `TRUE`, the existing task is replaced (last-write-wins).
 #' @returns The `project` object, invisibly.
 #' @export
 #' @family parameterIdentification
@@ -1105,10 +1107,18 @@ addPITask <- function(
   scenarios,
   parameters,
   outputMappings,
-  configuration = list()
+  configuration = list(),
+  overwrite = FALSE
 ) {
   validateIsOfType(project, "Project")
-  project$addPITask(id, scenarios, parameters, outputMappings, configuration)
+  project$addPITask(
+    id,
+    scenarios,
+    parameters,
+    outputMappings,
+    configuration,
+    overwrite
+  )
 }
 
 # Implementation behind `project$addPITask()` / `addPITask()`.
@@ -1123,6 +1133,7 @@ addPITask <- function(
   parameters,
   outputMappings,
   configuration = list(),
+  overwrite = FALSE,
   .call
 ) {
   rlang::local_error_call(.call)
@@ -1131,8 +1142,15 @@ addPITask <- function(
     errors <- c(errors, "id must be a non-empty string")
   } else {
     id <- .canonicalizeId(id)
-    if (id %in% names(self$definitions$parameterIdentification)) {
-      errors <- c(errors, paste0("PI task '", id, "' already exists"))
+    if (!overwrite && id %in% names(self$definitions$parameterIdentification)) {
+      errors <- c(
+        errors,
+        paste0(
+          "PI task '",
+          id,
+          "' already exists; pass overwrite = TRUE to replace it"
+        )
+      )
     }
   }
 
@@ -1281,6 +1299,10 @@ removePITask <- function(project, id) {
 #' @param units Optional character scalar.
 #' @param id Optional character scalar; auto-generated as
 #'   `<task>_param_<N>` when absent.
+#' @param overwrite Logical scalar. When `FALSE` (default), an explicit `id`
+#'   that already exists in the task aborts. When `TRUE`, the existing
+#'   parameter is replaced (last-write-wins). Ignored for an auto-generated
+#'   `id`, which never collides.
 #' @returns The `project` object, invisibly.
 #' @export
 #' @family parameterIdentification
@@ -1293,7 +1315,8 @@ addPIParameter <- function(
   maxValue,
   startValue,
   units = NULL,
-  id = NULL
+  id = NULL,
+  overwrite = FALSE
 ) {
   validateIsOfType(project, "Project")
   project$addPIParameter(
@@ -1304,7 +1327,8 @@ addPIParameter <- function(
     maxValue,
     startValue,
     units,
-    id
+    id,
+    overwrite
   )
 }
 
@@ -1323,6 +1347,7 @@ addPIParameter <- function(
   startValue,
   units = NULL,
   id = NULL,
+  overwrite = FALSE,
   .call
 ) {
   rlang::local_error_call(.call)
@@ -1342,10 +1367,12 @@ addPIParameter <- function(
   if (is.null(id)) {
     id <- .nextFreeId(paste0(task, "_param_"), existingIds)
   }
-  if (id %in% existingIds) {
-    cli::cli_abort(
-      "Parameter {.val {id}} already exists in task {.val {task}}"
-    )
+  existingIdx <- which(existingIds == id)
+  if (length(existingIdx) > 0L && !overwrite) {
+    cli::cli_abort(c(
+      "Parameter {.val {id}} already exists in task {.val {task}}.",
+      "i" = "Pass {.code overwrite = TRUE} to replace it."
+    ))
   }
   newParam <- PIParameter(
     id = id,
@@ -1356,7 +1383,11 @@ addPIParameter <- function(
     maxValue = maxValue,
     startValue = startValue
   )
-  piTask$parameters[[length(piTask$parameters) + 1L]] <- newParam
+  if (length(existingIdx) > 0L) {
+    piTask$parameters[[existingIdx]] <- newParam
+  } else {
+    piTask$parameters[[length(piTask$parameters) + 1L]] <- newParam
+  }
   tasks <- private$.getSection("parameterIdentification")
   tasks[[task]] <- piTask
   private$.setSection("parameterIdentification", tasks)
@@ -1425,6 +1456,10 @@ removePIParameter <- function(project, task, id) {
 #'   per-mapping fitting metadata. Defaults match `PIOutputMapping()`.
 #' @param id Optional character scalar; auto-generated as
 #'   `<task>_mapping_<N>` when absent.
+#' @param overwrite Logical scalar. When `FALSE` (default), an explicit `id`
+#'   that already exists in the task aborts. When `TRUE`, the existing mapping
+#'   is replaced (last-write-wins). Ignored for an auto-generated `id`, which
+#'   never collides.
 #' @returns The `project` object, invisibly.
 #' @export
 #' @family parameterIdentification
@@ -1440,7 +1475,8 @@ addPIOutputMapping <- function(
   xFactor = 1,
   yFactor = 1,
   weight = NULL,
-  id = NULL
+  id = NULL,
+  overwrite = FALSE
 ) {
   validateIsOfType(project, "Project")
   project$addPIOutputMapping(
@@ -1454,7 +1490,8 @@ addPIOutputMapping <- function(
     xFactor,
     yFactor,
     weight,
-    id
+    id,
+    overwrite
   )
 }
 
@@ -1476,6 +1513,7 @@ addPIOutputMapping <- function(
   yFactor = 1,
   weight = NULL,
   id = NULL,
+  overwrite = FALSE,
   .call
 ) {
   rlang::local_error_call(.call)
@@ -1499,10 +1537,12 @@ addPIOutputMapping <- function(
   if (is.null(id)) {
     id <- .nextFreeId(paste0(task, "_mapping_"), existingIds)
   }
-  if (id %in% existingIds) {
-    cli::cli_abort(
-      "Output mapping {.val {id}} already exists in task {.val {task}}"
-    )
+  existingIdx <- which(existingIds == id)
+  if (length(existingIdx) > 0L && !overwrite) {
+    cli::cli_abort(c(
+      "Output mapping {.val {id}} already exists in task {.val {task}}.",
+      "i" = "Pass {.code overwrite = TRUE} to replace it."
+    ))
   }
   newMapping <- PIOutputMapping(
     id = id,
@@ -1516,7 +1556,11 @@ addPIOutputMapping <- function(
     yFactor = yFactor,
     weight = weight
   )
-  piTask$outputMappings[[length(piTask$outputMappings) + 1L]] <- newMapping
+  if (length(existingIdx) > 0L) {
+    piTask$outputMappings[[existingIdx]] <- newMapping
+  } else {
+    piTask$outputMappings[[length(piTask$outputMappings) + 1L]] <- newMapping
+  }
   tasks <- private$.getSection("parameterIdentification")
   tasks[[task]] <- piTask
   private$.setSection("parameterIdentification", tasks)

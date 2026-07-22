@@ -54,6 +54,17 @@
     Message
       Created parameter set "tempset" on demand to hold the new entry.
 
+# addParameterEntry aborts on an in-batch duplicate by default
+
+    Code
+      suppressMessages(addParameterEntry(project, "dupset", containerPath = c(
+        "Organism|A", "Organism|A"), parameterName = c("K", "K"), value = c(1, 9),
+      units = c("1/h", "1/min")))
+    Condition
+      Error in `.addParameterEntry()`:
+      ! parameter "Organism|A|K" already exists in the set.
+      i Pass `overwrite = TRUE` to replace it.
+
 # addParameterEntry aborts on mismatched vector lengths
 
     Code
@@ -164,6 +175,16 @@
       addInitialConditionEntry(project, "tempset", "Organism|A", 1.5, "mg/l")
     Message
       Created initial-condition set "tempset" on demand to hold the new entry.
+
+# addInitialConditionEntry aborts on an in-batch duplicate by default
+
+    Code
+      suppressMessages(addInitialConditionEntry(project, "dset", path = c(
+        "Organism|A", "Organism|A"), value = c(1, 9), unit = c("mg/l", "mg/l")))
+    Condition
+      Error in `.addInitialConditionEntry()`:
+      ! initial condition "Organism|A" already exists in the set.
+      i Pass `overwrite = TRUE` to replace it.
 
 # addInitialConditionEntry aborts on mismatched vector lengths
 
