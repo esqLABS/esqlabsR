@@ -17,10 +17,12 @@ warning names the result if it changed).}
 species name.}
 
 \item{...}{Optional named fields: \code{population}, \code{gender}, \code{weight},
-\code{height}, \code{age}, \code{proteinOntogenies}, \code{parameterSets}. Numeric
-fields are coerced via \code{as.double()}. \code{parameterSets} is a
+\code{height}, \code{age}, \code{proteinOntogenies}, \code{parameterSets}, and \code{overwrite}.
+Numeric fields are coerced via \code{as.double()}. \code{parameterSets} is a
 character vector of ids referencing \code{parameterSets} definitions.
-Unknown fields trigger an error.}
+\code{overwrite} is a logical scalar (default \code{FALSE}): an id that already
+exists aborts unless \code{overwrite = TRUE}, which replaces it
+(last-write-wins). Unknown fields trigger an error.}
 }
 \value{
 The \code{project} object, invisibly.

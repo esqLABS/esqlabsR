@@ -55,6 +55,20 @@ test_that("addIndividual aborts when individualId already exists", {
   )
 })
 
+test_that("addIndividual overwrite = TRUE replaces an existing individual", {
+  project <- testProject()
+  before <- length(project$definitions$individuals)
+  addIndividual(
+    project,
+    "indiv1",
+    species = "Human",
+    gender = "FEMALE",
+    overwrite = TRUE
+  )
+  expect_length(project$definitions$individuals, before)
+  expect_identical(project$definitions$individuals[["indiv1"]]$gender, "FEMALE")
+})
+
 test_that("addIndividual aborts when gender is missing", {
   project <- testProject()
   expect_snapshot(

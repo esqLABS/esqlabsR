@@ -4,7 +4,8 @@
       addIndividual(project, "indiv1", species = "Human", gender = "MALE")
     Condition
       Error in `addIndividual()`:
-      ! individual "indiv1" already exists
+      ! individual "indiv1" already exists.
+      i Pass `overwrite = TRUE` to replace it.
 
 # addIndividual aborts when gender is missing
 
