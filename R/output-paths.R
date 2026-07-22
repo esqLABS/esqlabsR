@@ -21,26 +21,38 @@
 #'   not already present in `outputPaths` definitions). Each is canonicalized.
 #' @param path Character vector of output paths, length 1 (recycled) or the
 #'   same length as `id`.
+#' @param overwrite Logical scalar. When `FALSE` (default), an id that already
+#'   exists aborts. When `TRUE`, the existing output path is replaced
+#'   (last-write-wins).
 #' @returns The `project` object, invisibly.
 #' @export
 #' @family output path
-addOutputPath <- function(project, id, path) {
+addOutputPath <- function(project, id, path, overwrite = FALSE) {
   validateIsOfType(project, "Project")
-  project$addOutputPath(id, path)
+  project$addOutputPath(id, path, overwrite)
 }
 
 # Implementation behind `project$addOutputPath()` / `addOutputPath()`.
 #
 # @keywords internal
 # @noRd
-.addOutputPath_impl <- function(self, private, id, path, .call) {
+.addOutputPath_impl <- function(
+  self,
+  private,
+  id,
+  path,
+  overwrite = FALSE,
+  .call
+) {
   rlang::local_error_call(.call)
   # Route the id-vector check through the shared helper every sibling add* uses,
-  # then canonicalize and guard against an in-batch duplicate id (which would
-  # otherwise silently overwrite an earlier entry keyed by the same id).
+  # then canonicalize. A within-batch duplicate id aborts unless overwriting, in
+  # which case the last entry for that id wins.
   .assertIdVector(id)
   id <- .canonicalizeId(id)
-  .assertNoDuplicateIds(id, "outputPath")
+  if (!overwrite) {
+    .assertNoDuplicateIds(id, "outputPath")
+  }
 
   if (
     !is.character(path) ||
@@ -58,18 +70,26 @@ addOutputPath <- function(project, id, path) {
       "x" = "path must contain non-empty strings"
     ))
   }
-  clash <- intersect(id, names(self$definitions$outputPaths))
-  if (length(clash) > 0L) {
-    cli::cli_abort("outputPath {.val {clash}} already exists")
+  if (!overwrite) {
+    clash <- intersect(id, names(self$definitions$outputPaths))
+    if (length(clash) > 0L) {
+      cli::cli_abort(c(
+        "outputPath {.val {clash}} already exists.",
+        "i" = "Pass {.code overwrite = TRUE} to replace it."
+      ))
+    }
   }
 
   # Recycle a single path to every id (the scalar-per-definition rule).
   if (length(path) == 1L) {
     path <- rep(path, length(id))
   }
-  newPaths <- as.list(path)
-  names(newPaths) <- id
-  outputPaths <- c(private$.getSection("outputPaths"), newPaths)
+  # Assign each id's path by key so an existing id is replaced in place and an
+  # in-batch repeat keeps the last value (both only reachable when overwriting).
+  outputPaths <- private$.getSection("outputPaths") %||% list()
+  for (i in seq_along(id)) {
+    outputPaths[[id[[i]]]] <- path[[i]]
+  }
   private$.setSection("outputPaths", outputPaths)
   invisible(self)
 }

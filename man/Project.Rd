@@ -540,7 +540,7 @@ remaining arguments of \code{\link[=createScenariosFromPKML]{createScenariosFrom
   Add an output path. See \code{\link[=addOutputPath]{addOutputPath()}}.
   \subsection{Usage}{
     \if{html}{\out{<div class="r">}}
-    \preformatted{Project$addOutputPath(id, path)}
+    \preformatted{Project$addOutputPath(id, path, overwrite = FALSE)}
     \if{html}{\out{</div>}}
   }
   \subsection{Arguments}{
@@ -550,6 +550,8 @@ remaining arguments of \code{\link[=createScenariosFromPKML]{createScenariosFrom
       \item{\code{path}}{Character path: an output-path string (\code{\link[=addOutputPath]{addOutputPath()}}) or a
 parameter/initial-condition path (\code{\link[=addParameterEntry]{addParameterEntry()}} /
 \code{\link[=addInitialConditionEntry]{addInitialConditionEntry()}}).}
+      \item{\code{overwrite}}{Logical scalar controlling duplicate-collision behaviour of
+the \verb{add*} authoring methods. See \code{\link[=addParameterEntry]{addParameterEntry()}}, \code{\link[=addPITask]{addPITask()}}.}
     }
     \if{html}{\out{</div>}}
   }

@@ -4,7 +4,7 @@
 \alias{addOutputPath}
 \title{Add one or more output paths to a Project}
 \usage{
-addOutputPath(project, id, path)
+addOutputPath(project, id, path, overwrite = FALSE)
 }
 \arguments{
 \item{project}{A \code{Project} object.}
@@ -14,6 +14,10 @@ not already present in \code{outputPaths} definitions). Each is canonicalized.}
 
 \item{path}{Character vector of output paths, length 1 (recycled) or the
 same length as \code{id}.}
+
+\item{overwrite}{Logical scalar. When \code{FALSE} (default), an id that already
+exists aborts. When \code{TRUE}, the existing output path is replaced
+(last-write-wins).}
 }
 \value{
 The \code{project} object, invisibly.

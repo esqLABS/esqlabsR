@@ -364,8 +364,8 @@ Project <- R6::R6Class(
     },
 
     #' @description Add an output path. See [addOutputPath()].
-    addOutputPath = function(id, path) {
-      private$.impl(.addOutputPath_impl, id, path)
+    addOutputPath = function(id, path, overwrite = FALSE) {
+      private$.impl(.addOutputPath_impl, id, path, overwrite)
     },
 
     #' @description Remove output paths. See [removeOutputPath()].
