@@ -54,3 +54,5 @@ _\.new\.png$
 ^\.vscode$
 ^AGENTS\.md$
 ^.cursor/.
+^REFACTORING*$
+^CLAUDE\.md$

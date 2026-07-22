@@ -14,7 +14,10 @@ test_that("loadProject reads scenarios from the definitions/scenarios/ tree", {
     list.files(dir, pattern = "\\.json$"),
     paste0(names(project$definitions$scenarios), ".json")
   )
-  raw <- jsonlite::fromJSON(project$info$projectFilePath, simplifyVector = FALSE)
+  raw <- jsonlite::fromJSON(
+    project$info$projectFilePath,
+    simplifyVector = FALSE
+  )
   expect_length(raw$scenarios, 0L)
 })
 
@@ -296,7 +299,7 @@ test_that("structural validation rejects a serializer-hostile scenario", {
 })
 
 # saveProject() serializes the whole set in memory before writing any file, so
-# a section carrying one serializer-hostile entity aborts before touching disk,
+# a section carrying one serializer-hostile definition aborts before touching disk,
 # leaving the tree exactly as it was.
 test_that("saveProject() aborting on one scenario leaves the tree intact", {
   project <- testProject()
@@ -401,7 +404,10 @@ test_that("a non-ASCII scenario name round-trips through the tree", {
 test_that("a scenario file missing its name aborts naming the file", {
   project <- testProject()
   dir <- file.path(project$info$projectDirPath, "definitions", "scenarios")
-  f <- file.path(dir, paste0(names(project$definitions$scenarios)[[1]], ".json"))
+  f <- file.path(
+    dir,
+    paste0(names(project$definitions$scenarios)[[1]], ".json")
+  )
 
   obj <- jsonlite::fromJSON(f, simplifyVector = FALSE)
   obj$name <- NULL
@@ -420,7 +426,10 @@ test_that("a scenario file missing its name aborts naming the file", {
 test_that("a scenario file whose name disagrees with its filename aborts", {
   project <- testProject()
   dir <- file.path(project$info$projectDirPath, "definitions", "scenarios")
-  f <- file.path(dir, paste0(names(project$definitions$scenarios)[[1]], ".json"))
+  f <- file.path(
+    dir,
+    paste0(names(project$definitions$scenarios)[[1]], ".json")
+  )
 
   obj <- jsonlite::fromJSON(f, simplifyVector = FALSE)
   obj$name <- "differentname"
@@ -439,7 +448,10 @@ test_that("a scenario file whose name disagrees with its filename aborts", {
 test_that("a non-scalar scalar field fails load naming the scenario and field", {
   project <- testProject()
   dir <- file.path(project$info$projectDirPath, "definitions", "scenarios")
-  f <- file.path(dir, paste0(names(project$definitions$scenarios)[[1]], ".json"))
+  f <- file.path(
+    dir,
+    paste0(names(project$definitions$scenarios)[[1]], ".json")
+  )
 
   obj <- jsonlite::fromJSON(f, simplifyVector = FALSE)
   # `"population": null` round-tripped the standard jsonlite way becomes {}.
@@ -580,7 +592,11 @@ test_that("a full-tree write removes a stale definition file", {
   # A full-tree write owns the `definitions/<kind>/` directory: any `.json`
   # file not in the freshly-written keep-set is stale and is deleted.
   project <- .stalePolicyProject()
-  scenariosDir <- file.path(project$info$projectDirPath, "definitions", "scenarios")
+  scenariosDir <- file.path(
+    project$info$projectDirPath,
+    "definitions",
+    "scenarios"
+  )
   # Drop an orphan file that no in-memory scenario corresponds to. Written
   # after load, so the loader never parses it.
   orphan <- file.path(scenariosDir, "orphandefinition.json")
@@ -601,7 +617,11 @@ test_that("saveProject() reconciles an orphan away (make-disk-look-like-memory)"
   # any `definitions/<kind>/` file with no in-memory definition, so disk mirrors
   # memory exactly after a save.
   project <- .stalePolicyProject()
-  scenariosDir <- file.path(project$info$projectDirPath, "definitions", "scenarios")
+  scenariosDir <- file.path(
+    project$info$projectDirPath,
+    "definitions",
+    "scenarios"
+  )
   orphan <- file.path(scenariosDir, "orphandefinition.json")
   writeLines("{}", orphan)
   expect_true(file.exists(orphan))
@@ -625,7 +645,11 @@ test_that("a full-tree write aborts when a stale file cannot be removed", {
   skip_on_ci()
 
   project <- .stalePolicyProject()
-  scenariosDir <- file.path(project$info$projectDirPath, "definitions", "scenarios")
+  scenariosDir <- file.path(
+    project$info$projectDirPath,
+    "definitions",
+    "scenarios"
+  )
   orphan <- file.path(scenariosDir, "orphandefinition.json")
   writeLines("{}", orphan)
 
