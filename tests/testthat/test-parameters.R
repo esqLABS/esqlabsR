@@ -278,6 +278,17 @@ test_that("addParameterSet aborts on a duplicate id in the batch", {
   expect_snapshot(error = TRUE, addParameterSet(project, c("a", "a")))
 })
 
+test_that("addParameterSet overwrite = TRUE replaces the set with an empty one", {
+  project <- testProject()
+  suppressMessages(
+    addParameterEntry(project, "global", "Organism|A", "K", 1, "1/h")
+  )
+  before <- length(project$definitions$parameterSets)
+  addParameterSet(project, "global", overwrite = TRUE)
+  expect_length(project$definitions$parameterSets, before)
+  expect_length(project$definitions$parameterSets$global, 0L)
+})
+
 test_that("addParameterEntry creates the set on demand and appends entries", {
   project <- testProject()
   # Creating a set on demand is divergent from the other add* functions, so it
@@ -704,6 +715,17 @@ test_that("addInitialConditions aborts on a duplicate id", {
 test_that("addInitialConditions aborts on a duplicate id in the batch", {
   project <- testProject()
   expect_snapshot(error = TRUE, addInitialConditions(project, c("a", "a")))
+})
+
+test_that("addInitialConditions overwrite = TRUE replaces the set with an empty one", {
+  project <- testProject()
+  suppressMessages(
+    addInitialConditionEntry(project, "dupset", "Organism|A", 1, "mg/l")
+  )
+  before <- length(project$definitions$initialConditions)
+  addInitialConditions(project, "dupset", overwrite = TRUE)
+  expect_length(project$definitions$initialConditions, before)
+  expect_length(project$definitions$initialConditions$dupset, 0L)
 })
 
 test_that("addInitialConditionEntry creates the set on demand and appends", {

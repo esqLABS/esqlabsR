@@ -607,13 +607,15 @@ parameter/initial-condition path (\code{\link[=addParameterEntry]{addParameterEn
   Add a parameter set. See \code{\link[=addParameterSet]{addParameterSet()}}.
   \subsection{Usage}{
     \if{html}{\out{<div class="r">}}
-    \preformatted{Project$addParameterSet(id)}
+    \preformatted{Project$addParameterSet(id, overwrite = FALSE)}
     \if{html}{\out{</div>}}
   }
   \subsection{Arguments}{
     \if{html}{\out{<div class="arguments">}}
     \describe{
       \item{\code{id}}{Character id (name) of the definition to add, modify, or remove.}
+      \item{\code{overwrite}}{Logical scalar controlling duplicate-collision behaviour of
+the \verb{add*} authoring methods. See \code{\link[=addParameterEntry]{addParameterEntry()}}, \code{\link[=addPITask]{addPITask()}}.}
     }
     \if{html}{\out{</div>}}
   }
@@ -699,13 +701,15 @@ initial-condition entry fields. See \code{\link[=addParameterEntry]{addParameter
   Add an initial-conditions set. See \code{\link[=addInitialConditions]{addInitialConditions()}}.
   \subsection{Usage}{
     \if{html}{\out{<div class="r">}}
-    \preformatted{Project$addInitialConditions(id)}
+    \preformatted{Project$addInitialConditions(id, overwrite = FALSE)}
     \if{html}{\out{</div>}}
   }
   \subsection{Arguments}{
     \if{html}{\out{<div class="arguments">}}
     \describe{
       \item{\code{id}}{Character id (name) of the definition to add, modify, or remove.}
+      \item{\code{overwrite}}{Logical scalar controlling duplicate-collision behaviour of
+the \verb{add*} authoring methods. See \code{\link[=addParameterEntry]{addParameterEntry()}}, \code{\link[=addPITask]{addPITask()}}.}
     }
     \if{html}{\out{</div>}}
   }

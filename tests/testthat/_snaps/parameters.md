@@ -37,7 +37,8 @@
       addParameterSet(project, "global")
     Condition
       Error in `addParameterSet()`:
-      ! parameter set "global" already exists
+      ! parameter set "global" already exists.
+      i Pass `overwrite = TRUE` to replace it.
 
 # addParameterSet aborts on a duplicate id in the batch
 
@@ -159,7 +160,8 @@
       addInitialConditions(project, "dupset")
     Condition
       Error in `addInitialConditions()`:
-      ! initial-condition set "dupset" already exists
+      ! initial-condition set "dupset" already exists.
+      i Pass `overwrite = TRUE` to replace it.
 
 # addInitialConditions aborts on a duplicate id in the batch
 

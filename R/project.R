@@ -379,8 +379,8 @@ Project <- R6::R6Class(
     },
 
     #' @description Add a parameter set. See [addParameterSet()].
-    addParameterSet = function(id) {
-      private$.impl(.addParameterSet_impl, id)
+    addParameterSet = function(id, overwrite = FALSE) {
+      private$.impl(.addParameterSet_impl, id, overwrite)
     },
 
     #' @description Remove parameter sets. See [removeParameterSet()].
@@ -420,8 +420,8 @@ Project <- R6::R6Class(
     },
 
     #' @description Add an initial-conditions set. See [addInitialConditions()].
-    addInitialConditions = function(id) {
-      private$.impl(.addInitialConditions_impl, id)
+    addInitialConditions = function(id, overwrite = FALSE) {
+      private$.impl(.addInitialConditions_impl, id, overwrite)
     },
 
     #' @description Remove initial-conditions sets. See

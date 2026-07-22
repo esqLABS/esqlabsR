@@ -732,26 +732,34 @@ print.InitialConditionSet <- function(x, ...) {
 #' @param id Character vector of set ids. Each is canonicalized to a safe,
 #'   lowercase id (a warning names the result if it changed); each canonical
 #'   id must not already exist.
+#' @param overwrite Logical scalar. When `FALSE` (default), an id that already
+#'   exists aborts. When `TRUE`, the existing set is replaced with a new empty
+#'   set (last-write-wins).
 #' @returns The `project` object, invisibly.
 #' @export
 #' @family parameters
-addParameterSet <- function(project, id) {
+addParameterSet <- function(project, id, overwrite = FALSE) {
   validateIsOfType(project, "Project")
-  project$addParameterSet(id)
+  project$addParameterSet(id, overwrite)
 }
 
 # Implementation behind `project$addParameterSet()` / `addParameterSet()`.
 #
 # @keywords internal
 # @noRd
-.addParameterSet_impl <- function(self, private, id, .call) {
+.addParameterSet_impl <- function(self, private, id, overwrite = FALSE, .call) {
   rlang::local_error_call(.call)
   .assertIdVector(id)
   id <- .canonicalizeId(id)
-  .assertNoDuplicateIds(id, "parameter set")
-  clash <- intersect(id, names(self$definitions$parameterSets))
-  if (length(clash) > 0L) {
-    cli::cli_abort("parameter set {.val {clash}} already exists")
+  if (!overwrite) {
+    .assertNoDuplicateIds(id, "parameter set")
+    clash <- intersect(id, names(self$definitions$parameterSets))
+    if (length(clash) > 0L) {
+      cli::cli_abort(c(
+        "parameter set {.val {clash}} already exists.",
+        "i" = "Pass {.code overwrite = TRUE} to replace it."
+      ))
+    }
   }
   parameterSets <- private$.getSection("parameterSets") %||% list()
   for (one in id) {
@@ -1239,12 +1247,15 @@ removeParameterEntry <- function(
 #' @param id Character vector of set ids. Each is canonicalized to a safe,
 #'   lowercase id (a warning names the result if it changed); each canonical
 #'   id must not already exist.
+#' @param overwrite Logical scalar. When `FALSE` (default), an id that already
+#'   exists aborts. When `TRUE`, the existing set is replaced with a new empty
+#'   set (last-write-wins).
 #' @returns The `project` object, invisibly.
 #' @export
 #' @family parameters
-addInitialConditions <- function(project, id) {
+addInitialConditions <- function(project, id, overwrite = FALSE) {
   validateIsOfType(project, "Project")
-  project$addInitialConditions(id)
+  project$addInitialConditions(id, overwrite)
 }
 
 # Implementation behind `project$addInitialConditions()` /
@@ -1252,14 +1263,25 @@ addInitialConditions <- function(project, id) {
 #
 # @keywords internal
 # @noRd
-.addInitialConditions_impl <- function(self, private, id, .call) {
+.addInitialConditions_impl <- function(
+  self,
+  private,
+  id,
+  overwrite = FALSE,
+  .call
+) {
   rlang::local_error_call(.call)
   .assertIdVector(id)
   id <- .canonicalizeId(id)
-  .assertNoDuplicateIds(id, "initial-condition set")
-  clash <- intersect(id, names(self$definitions$initialConditions))
-  if (length(clash) > 0L) {
-    cli::cli_abort("initial-condition set {.val {clash}} already exists")
+  if (!overwrite) {
+    .assertNoDuplicateIds(id, "initial-condition set")
+    clash <- intersect(id, names(self$definitions$initialConditions))
+    if (length(clash) > 0L) {
+      cli::cli_abort(c(
+        "initial-condition set {.val {clash}} already exists.",
+        "i" = "Pass {.code overwrite = TRUE} to replace it."
+      ))
+    }
   }
   initialConditions <- private$.getSection("initialConditions") %||% list()
   for (one in id) {
