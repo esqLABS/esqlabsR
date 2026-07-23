@@ -343,8 +343,14 @@ importProjectFromExcel <- function(
     list(
       property = "parameterIdentificationFile",
       parse = function(file, jsonData) {
-        jsonData$parameterIdentification <-
-          .parseExcelParameterIdentification(file)
+        tasks <- .parseExcelParameterIdentification(file)
+        # A 5.x output mapping may name its output path by full OSPS path rather
+        # than by an output-path id. Rewrite such a full path to the id of the
+        # matching `outputPaths` definition so the reference resolves.
+        jsonData$parameterIdentification <- .resolvePIOutputPathRefs(
+          tasks,
+          jsonData$outputPaths
+        )
         jsonData
       }
     )
@@ -1775,8 +1781,13 @@ projectStatus <- function(project, silent = FALSE) {
 # @noRd
 .parseExcelParameterIdentification <- function(piFile) {
   sheets <- readxl::excel_sheets(piFile)
+  # Two layouts. The newer one has a single `PITasks` sheet (one row per task,
+  # config inline in `config.*` columns). The 5.x layout has no `PITasks` sheet
+  # and instead keys every sheet by a `PITaskName` column, with the
+  # configuration split across `PIConfiguration` / `AlgorithmOptions` /
+  # `CIOptions`. Dispatch on which is present.
   if (!("PITasks" %in% sheets)) {
-    return(list())
+    return(.parseExcelPI5x(piFile, sheets))
   }
   taskDf <- readExcel(piFile, sheet = "PITasks")
   paramDf <- if ("PIParameters" %in% sheets) {
@@ -1839,6 +1850,290 @@ projectStatus <- function(project, silent = FALSE) {
       }
     }
     record
+  })
+}
+
+# Parse the legacy 5.x parameter-identification layout: no `PITasks` sheet, but
+# `PIParameters` / `PIOutputMappings` / `PIConfiguration` / `AlgorithmOptions` /
+# `CIOptions` sheets each keyed by a `PITaskName` column. One task is built per
+# distinct `PITaskName`, gathering its parameters, output mappings, and
+# configuration from those sheets, producing the same
+# `{id, scenarios[], parameters[], outputMappings[], configuration}` shape the
+# newer layout does. Returns an unnamed list of PITask JSON objects (empty when
+# no `PITaskName`-keyed sheet is present).
+#
+# @keywords internal
+# @noRd
+.parseExcelPI5x <- function(piFile, sheets) {
+  read5xSheet <- function(name) {
+    if (name %in% sheets) readExcel(piFile, sheet = name) else NULL
+  }
+  paramDf <- read5xSheet("PIParameters")
+  mappingDf <- read5xSheet("PIOutputMappings")
+  configDf <- read5xSheet("PIConfiguration")
+  algDf <- read5xSheet("AlgorithmOptions")
+  ciDf <- read5xSheet("CIOptions")
+
+  taskNames <- unique(unlist(lapply(
+    list(mappingDf, paramDf, configDf, algDf, ciDf),
+    function(df) {
+      if (!is.null(df) && "PITaskName" %in% names(df)) {
+        as.character(df$PITaskName)
+      }
+    }
+  )))
+  taskNames <- taskNames[!is.na(taskNames)]
+  if (length(taskNames) == 0L) {
+    return(list())
+  }
+
+  lapply(taskNames, function(task) {
+    params <- .parseExcelPI5xParams(paramDf, task)
+    mappings <- .parseExcelPI5xMappings(mappingDf, task)
+    # A task's scenarios are the union of the scenarios its parameters and
+    # mappings reference (the 5.x layout has no separate task-scenario list).
+    scenarios <- unique(unlist(lapply(
+      c(params, mappings),
+      function(x) unlist(x$scenarios)
+    )))
+    list(
+      id = task,
+      scenarios = as.list(scenarios),
+      parameters = params,
+      outputMappings = mappings,
+      configuration = .parseExcelPI5xConfig(configDf, algDf, ciDf, task)
+    )
+  })
+}
+
+# Build one task's `parameters` from the 5.x `PIParameters` rows. Maps the
+# `Container Path` + `Parameter Name` columns to the flat `path`, and coins a
+# per-parameter `id` from the parameter name (de-duplicated within the task).
+#
+# @keywords internal
+# @noRd
+.parseExcelPI5xParams <- function(df, task) {
+  rows <- .pi5xTaskRows(df, task)
+  ids <- character()
+  lapply(seq_len(nrow(rows)), function(i) {
+    row <- rows[i, ]
+    id <- .pi5xUniqueId(as.character(row[["Parameter Name"]]), ids)
+    ids[[length(ids) + 1L]] <<- id
+    .dropNulls(list(
+      id = id,
+      scenarios = as.list(.parseCommaListToArray(row[["Scenarios"]])),
+      path = .pi5xPath(row[["Container Path"]], row[["Parameter Name"]]),
+      units = .naToNull(as.character(row[["Units"]])),
+      minValue = .naToNull(as.numeric(row[["MinValue"]])),
+      maxValue = .naToNull(as.numeric(row[["MaxValue"]])),
+      startValue = .naToNull(as.numeric(row[["StartValue"]]))
+    ))
+  })
+}
+
+# Build one task's `outputMappings` from the 5.x `PIOutputMappings` rows. Coins
+# a per-mapping `id` from the output path's last segment (de-duplicated within
+# the task) and maps the offset/factor/weight columns.
+#
+# @keywords internal
+# @noRd
+.parseExcelPI5xMappings <- function(df, task) {
+  rows <- .pi5xTaskRows(df, task)
+  ids <- character()
+  lapply(seq_len(nrow(rows)), function(i) {
+    row <- rows[i, ]
+    outputPath <- as.character(row[["OutputPath"]])
+    id <- .pi5xUniqueId(sub(".*\\|", "", outputPath), ids)
+    ids[[length(ids) + 1L]] <<- id
+    .dropNulls(list(
+      id = id,
+      scenarios = as.list(.parseCommaListToArray(row[["Scenarios"]])),
+      outputPath = .naToNull(outputPath),
+      observedData = .naToNull(as.character(row[["DataSet"]])),
+      scaling = .naToNull(as.character(row[["Scaling"]])),
+      xOffset = .naToNull(as.numeric(row[["xOffset"]])),
+      yOffset = .naToNull(as.numeric(row[["yOffset"]])),
+      xFactor = .naToNull(as.numeric(row[["xFactor"]])),
+      yFactor = .naToNull(as.numeric(row[["yFactor"]])),
+      weight = .naToNull(as.numeric(row[["Weight"]]))
+    ))
+  })
+}
+
+# Build one task's nested `configuration` from the 5.x `PIConfiguration` row and
+# the `AlgorithmOptions` / `CIOptions` option rows. Column-to-field mapping
+# mirrors `.buildPIConfiguration()`'s accepted keys; absent values are omitted.
+#
+# @keywords internal
+# @noRd
+.parseExcelPI5xConfig <- function(configDf, algDf, ciDf, task) {
+  configuration <- list()
+  configRows <- .pi5xTaskRows(configDf, task)
+  if (nrow(configRows) > 0L) {
+    row <- configRows[1, ]
+    scalar <- list(
+      algorithm = .naToNull(as.character(row[["Algorithm"]])),
+      ciMethod = .naToNull(as.character(row[["CIMethod"]])),
+      autoEstimateCI = .naToNull(
+        .toLogical(row[["AutoEstimateCI"]], "AutoEstimateCI")
+      ),
+      printEvaluationFeedback = .naToNull(
+        .toLogical(row[["PrintEvaluationFeedback"]], "PrintEvaluationFeedback")
+      )
+    )
+    for (nm in names(scalar)) {
+      if (!is.null(scalar[[nm]])) configuration[[nm]] <- scalar[[nm]]
+    }
+
+    objective <- .dropNulls(list(
+      type = .naToNull(as.character(row[["ObjectiveFunctionType"]])),
+      residualWeightingMethod = .naToNull(
+        as.character(row[["ResidualWeightingMethod"]])
+      ),
+      robustMethod = .naToNull(as.character(row[["RobustMethod"]])),
+      scaleVar = .naToNull(as.character(row[["ScaleVar"]])),
+      linScaleCV = .naToNull(as.numeric(row[["LinScaleCV"]])),
+      logScaleSD = .naToNull(as.numeric(row[["LogScaleSD"]]))
+    ))
+    if (length(objective) > 0L) {
+      configuration$objectiveFunction <- objective
+    }
+
+    runOptions <- .dropNulls(list(
+      numberOfCores = .naToNull(as.numeric(row[["numberOfCores"]])),
+      checkForNegativeValues = .naToNull(
+        .toLogical(row[["checkForNegativeValues"]], "checkForNegativeValues")
+      )
+    ))
+    if (length(runOptions) > 0L) {
+      configuration$simulationRunOptions <- runOptions
+    }
+  }
+
+  algorithmOptions <- .pi5xOptionRows(algDf, task)
+  if (length(algorithmOptions) > 0L) {
+    configuration$algorithmOptions <- algorithmOptions
+  }
+  ciOptions <- .pi5xOptionRows(ciDf, task)
+  if (length(ciOptions) > 0L) {
+    configuration$ciOptions <- ciOptions
+  }
+  configuration
+}
+
+# The rows of a 5.x PI sheet belonging to one task (empty data frame when the
+# sheet is absent or has no matching rows).
+#
+# @keywords internal
+# @noRd
+.pi5xTaskRows <- function(df, task) {
+  if (is.null(df) || !("PITaskName" %in% names(df)) || nrow(df) == 0L) {
+    return(df[0, , drop = FALSE] %||% data.frame())
+  }
+  df[
+    !is.na(df$PITaskName) & as.character(df$PITaskName) == task,
+    ,
+    drop = FALSE
+  ]
+}
+
+# The `OptionName` -> `OptionValue` rows of an AlgorithmOptions / CIOptions sheet
+# for one task, as a named list (empty when none). A numeric-looking value is
+# stored as a number, else as its string.
+#
+# @keywords internal
+# @noRd
+.pi5xOptionRows <- function(df, task) {
+  rows <- .pi5xTaskRows(df, task)
+  if (nrow(rows) == 0L) {
+    return(list())
+  }
+  options <- list()
+  for (i in seq_len(nrow(rows))) {
+    name <- as.character(rows[["OptionName"]][[i]])
+    if (is.na(name) || name == "") {
+      next
+    }
+    raw <- rows[["OptionValue"]][[i]]
+    numeric <- suppressWarnings(as.numeric(raw))
+    options[[name]] <- if (!is.na(numeric)) numeric else as.character(raw)
+  }
+  options
+}
+
+# Join a container path and parameter name into the flat `path` the PI
+# definition uses (`<container>|<parameter>`); a blank container yields just the
+# parameter name.
+#
+# @keywords internal
+# @noRd
+.pi5xPath <- function(containerPath, parameterName) {
+  container <- as.character(containerPath)
+  parameter <- as.character(parameterName)
+  if (is.na(container) || container == "") {
+    return(parameter)
+  }
+  paste(container, parameter, sep = "|")
+}
+
+# Coin an id unique within `existing` by suffixing `_2`, `_3`, ... on a clash.
+# The 5.x PI sheets carry no id column, so parameters and mappings need a
+# synthesised id. It is canonicalized here (the sheets derive it from a
+# parameter name or a path segment, which carry spaces and mixed case) so the
+# coined id is a clean, stable single segment.
+#
+# @keywords internal
+# @noRd
+.pi5xUniqueId <- function(base, existing) {
+  base <- as.character(base)
+  if (is.na(base) || base == "") {
+    base <- "item"
+  }
+  base <- .canonicalizeOneId(base)
+  candidate <- base
+  n <- 1L
+  while (candidate %in% existing) {
+    n <- n + 1L
+    candidate <- paste0(base, "_", n)
+  }
+  candidate
+}
+
+# Drop the NULL elements of a list, so an optional field left NULL stays absent
+# from the JSON rather than serialising as null.
+#
+# @keywords internal
+# @noRd
+.dropNulls <- function(x) {
+  x[!vapply(x, is.null, logical(1))]
+}
+
+# Rewrite each PI output mapping whose `outputPath` is a full OSPS path (rather
+# than an output-path id) to the id of the `outputPaths` definition with that
+# value, so the reference resolves. A value with no matching definition is left
+# as-is (the cross-reference validator then reports it, which is the honest
+# signal that the legacy sheet names a path no output-path defines).
+#
+# @keywords internal
+# @noRd
+.resolvePIOutputPathRefs <- function(tasks, outputPaths) {
+  if (length(tasks) == 0L || length(outputPaths) == 0L) {
+    return(tasks)
+  }
+  # value -> id, so a full path can be looked up back to its output-path id.
+  valueToId <- stats::setNames(
+    names(outputPaths),
+    vapply(outputPaths, as.character, character(1))
+  )
+  lapply(tasks, function(task) {
+    task$outputMappings <- lapply(task$outputMappings, function(mapping) {
+      path <- mapping$outputPath
+      if (!is.null(path) && path %in% names(valueToId)) {
+        mapping$outputPath <- valueToId[[path]]
+      }
+      mapping
+    })
+    task
   })
 }
 

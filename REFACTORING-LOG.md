@@ -48,3 +48,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-07-23 16:51: `addPopulation()` / `setPopulation()` accept `proteinOntogenies`, matching individuals and the Excel importer, so an imported population can be re-authored. (#1158)
 - 2026-07-23 16:51: Excel import defaults a blank steady-state time/unit to `1000` / `"min"` (matching the authoring API), so a round-tripped project has no steady-state diff. (#1158)
 - 2026-07-23 16:55: Excel import reifies the configured `dataFile` as an `excel` observed-data definition (with its sheets and importer config), warning if the file is missing. (#1158)
+- 2026-07-23 17:03: Excel import parses the legacy 5.x parameter-identification layout (PITaskName-keyed sheets, no PITasks sheet), reassembling each task and resolving full-path output-mapping refs to output-path ids. (#1158)

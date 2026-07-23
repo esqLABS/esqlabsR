@@ -615,6 +615,81 @@ test_that("the Excel import carries the known fixture ids and values", {
     c("testscenario", "pitestscenario", "populationscenario") %in%
       names(project$definitions$scenarios)
   ))
+
+  # The 5.x PITaskName-keyed layout imports all three tasks.
+  expect_setequal(
+    names(project$definitions$parameterIdentification),
+    c("aciclovirsimple", "aciclovirsimplepathid", "aciclovirmultiscenario")
+  )
+})
+
+# The 5.x parameter-identification layout has no `PITasks` sheet; each sheet is
+# keyed by a `PITaskName` column, with the configuration split across
+# `PIConfiguration` / `AlgorithmOptions` / `CIOptions`. The importer reassembles
+# each task's parameters, output mappings, and nested configuration into the
+# same shape the newer single-sheet layout produces (#1158).
+test_that(".parseExcelParameterIdentification parses the 5.x PITaskName layout", {
+  piFile <- testthat::test_path(
+    "data",
+    "TestProjectExcel",
+    "Configurations",
+    "ParameterIdentification.xlsx"
+  )
+  tasks <- .parseExcelParameterIdentification(piFile)
+  expect_setequal(
+    vapply(tasks, function(t) t$id, character(1)),
+    c("AciclovirSimple", "AciclovirSimplePathId", "AciclovirMultiScenario")
+  )
+
+  simple <- tasks[[which(
+    vapply(tasks, function(t) t$id == "AciclovirSimple", logical(1))
+  )]]
+
+  # A parameter joins `Container Path` and `Parameter Name` into the flat path
+  # and coins a canonical id from the parameter name.
+  expect_length(simple$parameters, 1L)
+  param <- simple$parameters[[1]]
+  expect_identical(param$id, "lipophilicity")
+  expect_identical(param$path, "Aciclovir|Lipophilicity")
+  expect_identical(param$units, "Log Units")
+  expect_identical(param$minValue, -10)
+
+  # The configuration gathers the scalar fields, the algorithm options, and the
+  # CI options from their separate sheets.
+  expect_identical(simple$configuration$algorithm, "BOBYQA")
+  expect_identical(simple$configuration$ciMethod, "hessian")
+  expect_identical(simple$configuration$algorithmOptions$maxeval, 100)
+  expect_identical(simple$configuration$ciOptions$confLevel, 0.95)
+
+  # An output mapping keyed by a full OSPS path resolves to the output-path id
+  # when the value matches an `outputPaths` definition; the observed-data DataSet
+  # name is kept verbatim.
+  mapping <- simple$outputMappings[[1]]
+  expect_true(startsWith(mapping$observedData, "Laskin 1982.Group A"))
+})
+
+# An output mapping that names its output path by full OSPS path (not by id) is
+# rewritten to the id of the matching `outputPaths` definition, so the reference
+# resolves rather than dangling (#1158).
+test_that(".resolvePIOutputPathRefs rewrites a full-path mapping to the output-path id", {
+  outputPaths <- list(aciclovir_pvb = "Organism|PVB|Aciclovir|Plasma")
+  tasks <- list(list(
+    id = "t1",
+    outputMappings = list(
+      list(id = "m1", outputPath = "Organism|PVB|Aciclovir|Plasma"),
+      list(id = "m2", outputPath = "already_an_id")
+    )
+  ))
+  resolved <- .resolvePIOutputPathRefs(tasks, outputPaths)
+  expect_identical(
+    resolved[[1]]$outputMappings[[1]]$outputPath,
+    "aciclovir_pvb"
+  )
+  # A value with no matching definition is left as-is.
+  expect_identical(
+    resolved[[1]]$outputMappings[[2]]$outputPath,
+    "already_an_id"
+  )
 })
 
 # The project records a single experimental-data workbook under `dataFolder`.
