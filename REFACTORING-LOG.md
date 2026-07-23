@@ -43,3 +43,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-07-23 16:17: runScenarios()/buildSimulations() now match the `scenarios` argument case-insensitively, so a scenario runs under the mixed-case name it was authored with. (#1157)
 - 2026-07-23 16:22: addPITask()/PITask() can now create a task with no parameters or output mappings, so addPIParameter()/addPIOutputMapping() can seed the first one; a task left empty is flagged as a critical error by validateProject(). (#1157)
 - 2026-07-23 16:33: PIOutputMapping()/addPITask()/addPIOutputMapping() now accept either an output-path id or the literal model path of a defined output path for `outputPath`, resolving both to the id; the two divergent not-found aborts are unified into one message-catalog entry with a did-you-mean hint. (#1157)
+- 2026-07-23 16:37: NEWS entries for the three #1157 authoring-API ergonomics fixes. (#1157)
