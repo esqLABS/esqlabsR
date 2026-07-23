@@ -581,6 +581,73 @@ test_that(".validatePopulations flags an unrecognized type", {
   expect_true(any(grepl("invalid type", unlist(result$critical_errors))))
 })
 
+# Programmatic Population injection ----
+
+# Build a small real ospsuite::Population object for injection tests.
+.injectablePopulation <- function() {
+  pc <- ospsuite::createPopulationCharacteristics(
+    species = ospsuite::Species$Human,
+    population = ospsuite::HumanPopulation$Asian_Tanaka_1996,
+    numberOfIndividuals = 2L,
+    proportionOfFemales = 50
+  )
+  ospsuite::createPopulation(pc)$population
+}
+
+test_that("addPopulation stores an injected Population and writes a programmatic sentinel", {
+  project <- testProject()
+  pop <- .injectablePopulation()
+  suppressMessages(addPopulation(project, "injected", pop))
+
+  entry <- project$definitions$populations[["injected"]]
+  expect_s3_class(entry, "PopulationSource")
+  expect_identical(entry$type, "programmatic")
+  expect_identical(project$getProgrammaticPopulation("injected"), pop)
+})
+
+test_that("addPopulation rejects extra fields when injecting a Population", {
+  project <- testProject()
+  pop <- .injectablePopulation()
+  expect_error(
+    addPopulation(project, "injected", pop, numberOfIndividuals = 5),
+    regexp = "Extra fields"
+  )
+})
+
+test_that("addPopulation rejects a vector of ids when injecting a Population", {
+  project <- testProject()
+  pop <- .injectablePopulation()
+  expect_error(
+    addPopulation(project, c("a", "b"), pop),
+    regexp = "one id at a time"
+  )
+})
+
+test_that("addPopulation still requires numberOfIndividuals for a demographics spec", {
+  project <- testProject()
+  expect_error(
+    addPopulation(project, "spec", species = "Human"),
+    regexp = "numberOfIndividuals.*required"
+  )
+})
+
+test_that("removePopulation drops the injected object from the runtime store", {
+  project <- testProject()
+  pop <- .injectablePopulation()
+  suppressMessages(addPopulation(project, "injected", pop))
+  suppressWarnings(removePopulation(project, "injected"))
+  expect_null(project$getProgrammaticPopulation("injected"))
+  expect_false("injected" %in% names(project$definitions$populations))
+})
+
+test_that("reloadProject drops a session-injected Population", {
+  project <- testProject()
+  pop <- .injectablePopulation()
+  suppressMessages(addPopulation(project, "injected", pop))
+  suppressMessages(reloadProject(project))
+  expect_null(project$getProgrammaticPopulation("injected"))
+})
+
 test_that("print.PopulationSource renders a csv and a programmatic source", {
   withr::local_options(cli.unicode = FALSE)
   local_reproducible_output()

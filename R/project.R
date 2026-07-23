@@ -349,6 +349,15 @@ Project <- R6::R6Class(
       private$.impl(.setPopulation_impl, ...)
     },
 
+    #' @description Internal: fetch a session-added programmatic population by
+    #'   id, or `NULL` if none was injected under that id. Used by the run path
+    #'   to resolve a `{type: "programmatic"}` sentinel from the runtime store.
+    #' @param id Population id.
+    #' @keywords internal
+    getProgrammaticPopulation = function(id) {
+      private$.programmaticPopulations[[id]]
+    },
+
     #' @description Add an application. See [addApplication()].
     addApplication = function(id, parameterSets = NULL, overwrite = FALSE) {
       private$.impl(.addApplication_impl, id, parameterSets, overwrite)
@@ -719,6 +728,11 @@ Project <- R6::R6Class(
     .excelData = list(),
     .programmaticDataSets = list(),
     .observedDataNamesCache = NULL,
+    # Session-only store for `Population` objects injected via
+    # `addPopulation(project, id, <Population>)`. Keyed by population id; the
+    # section carries only a `{type: "programmatic"}` sentinel. Frozen to CSV on
+    # save and dropped on reload, exactly like `.programmaticDataSets`.
+    .programmaticPopulations = list(),
 
     # Backing stores for the container metadata + the section-data active
     # bindings. The parser writes these directly so loading does not invalidate
@@ -1433,6 +1447,9 @@ Project <- R6::R6Class(
       # returns the object to the on-disk state.
       private$.programmaticDataSets <- list()
       private$.observedDataNamesCache <- NULL
+      # Same rationale for a session-injected `Population`: it lives only in the
+      # runtime store, so a re-read must drop it to fully return to on-disk state.
+      private$.programmaticPopulations <- list()
 
       private$.validatedSinceMutation <- FALSE
       # A freshly loaded project has no unsaved changes: memory equals the tree.

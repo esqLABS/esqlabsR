@@ -433,19 +433,31 @@ sampleRandomValue <- function(distribution, mean, sd, n) {
 
 #' Add one or more populations to a Project
 #'
-#' Add populations to `populations` definitions, vectorizing over a vector of ids
-#' (see the recycling rule under Details). `species`, `numberOfIndividuals`,
-#' and the optional `...` fields are all scalar-per-definition (recycle/align).
+#' @description Add populations to `populations` definitions. Two forms:
+#'
+#' - A **demographics spec**: pass `species` and `numberOfIndividuals` (plus
+#'   optional `...` fields). This vectorizes over a vector of ids (see the
+#'   recycling rule under Details); `species`, `numberOfIndividuals`, and the
+#'   `...` fields are scalar-per-definition (recycle/align).
+#' - An **injected object**: pass a single id and an [ospsuite::Population]
+#'   object in the `species` position. The object is stored in the R session
+#'   and the scenario runs against it directly (a mutated or programmatically
+#'   built population). `numberOfIndividuals` and `...` fields are not accepted
+#'   for this form. It survives to disk only after [saveProject()], which
+#'   freezes the sampled population to a `<id>.csv` file under the populations
+#'   folder; rerun the code that built it to reproduce it in a new session.
 #'
 #' @inherit vectorizedAuthoring details
 #'
 #' @param project A `Project` object.
 #' @param id Character vector of unique ids (the number of populations to add).
 #'   Each is canonicalized to a safe, lowercase id (a warning names the result
-#'   if it changed).
-#' @param species Character scalar (recycled) or the same length as `id`.
+#'   if it changed). For an injected [ospsuite::Population] object the id must
+#'   be a single value.
+#' @param species Character scalar (recycled) or the same length as `id`; or an
+#'   [ospsuite::Population] object to inject (single id only).
 #' @param numberOfIndividuals Positive number, scalar (recycled) or the same
-#'   length as `id`.
+#'   length as `id`. Omit when injecting a `Population` object.
 #' @param ... Optional named fields. Accepted: `proportionOfFemales`,
 #'   `weightMin`, `weightMax`, `heightMin`, `heightMax`, `ageMin`,
 #'   `ageMax`, `BMIMin`, `BMIMax`, `gender`, `weightUnit`, `heightUnit`,
@@ -460,7 +472,7 @@ addPopulation <- function(
   project,
   id,
   species,
-  numberOfIndividuals,
+  numberOfIndividuals = NULL,
   ...
 ) {
   validateIsOfType(project, "Project")
@@ -476,7 +488,7 @@ addPopulation <- function(
   private,
   id,
   species,
-  numberOfIndividuals,
+  numberOfIndividuals = NULL,
   ...,
   .call
 ) {
@@ -490,6 +502,28 @@ addPopulation <- function(
   # so it is not mistaken for a per-definition field.
   overwrite <- .validateOverwriteFlag(dots[["overwrite"]])
   dots[["overwrite"]] <- NULL
+
+  # Injected-object form: an `ospsuite::Population` (a DotNetWrapper) in the
+  # `species` position. A demographics-spec entry is a plain list also classed
+  # "Population", so dispatch on DotNetWrapper, not on class "Population".
+  if (inherits(species, "DotNetWrapper")) {
+    return(.addProgrammaticPopulation_impl(
+      self,
+      private,
+      id,
+      population = species,
+      numberOfIndividuals = numberOfIndividuals,
+      dots = dots,
+      overwrite = overwrite,
+      .call = .call
+    ))
+  }
+  if (is.null(numberOfIndividuals)) {
+    cli::cli_abort(
+      "{.arg numberOfIndividuals} is required when adding a demographics-spec \
+       population."
+    )
+  }
   perDefinition <- .alignAuthoringArgs(
     id,
     scalarFields = c(
@@ -514,6 +548,60 @@ addPopulation <- function(
     populations[[id[[i]]]] <- entries[[i]]
   }
   private$.setSection("populations", populations)
+  invisible(self)
+}
+
+# Add a session-injected `ospsuite::Population`, keyed by a single id. Writes a
+# `{type: "programmatic"}` sentinel into the `populations` section and stores
+# the live object in the runtime store; the two are updated together (in-memory
+# only). Aborts on stray demographics fields, which have no meaning for an
+# already-built population object.
+#
+# @keywords internal
+# @noRd
+.addProgrammaticPopulation_impl <- function(
+  self,
+  private,
+  id,
+  population,
+  numberOfIndividuals,
+  dots,
+  overwrite,
+  .call
+) {
+  rlang::local_error_call(.call)
+  if (length(id) != 1L) {
+    cli::cli_abort(
+      "A programmatic population is added one id at a time; {.arg id} must be \
+       a single value."
+    )
+  }
+  stray <- names(dots)
+  if (!is.null(numberOfIndividuals) || length(stray) > 0L) {
+    cli::cli_abort(c(
+      "Extra fields are not accepted when injecting a {.cls Population} object.",
+      "i" = "An injected population already carries its own individuals; drop \
+             {.arg numberOfIndividuals}{if (length(stray)) ' and the other \
+             fields' else ''}."
+    ))
+  }
+
+  .assertNoOverwriteClash(
+    id,
+    names(self$definitions$populations),
+    "population",
+    overwrite
+  )
+
+  sentinel <- .asPopulationSource(list(type = "programmatic"))
+  populations <- private$.getSection("populations") %||% list()
+  populations[[id]] <- sentinel
+  private$.setSection("populations", populations)
+  private$.programmaticPopulations[[id]] <- population
+  cli::cli_inform(messages$populationProgrammaticAdded(
+    id,
+    hasPopulationsFolder = !is.null(self$paths$populationsFolder)
+  ))
   invisible(self)
 }
 
@@ -668,6 +756,11 @@ removePopulation <- function(project, id) {
   populations <- private$.getSection("populations")
   populations[toRemove] <- NULL
   private$.setSection("populations", populations)
+  # Drop any injected object under a removed id (a no-op for a non-programmatic
+  # id), so the runtime store never outlives its section sentinel.
+  for (one in toRemove) {
+    private$.programmaticPopulations[[one]] <- NULL
+  }
   invisible(self)
 }
 
