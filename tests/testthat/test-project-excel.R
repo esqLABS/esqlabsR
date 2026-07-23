@@ -617,6 +617,24 @@ test_that("the Excel import carries the known fixture ids and values", {
   ))
 })
 
+# A sheet named after an individual (the `Indiv1` sheet in the fixture) is that
+# individual's own parameter override. The importer creates it as a parameter
+# set AND links it on the individual, so the override is applied rather than
+# orphaned (#1158).
+test_that("the Excel import links an individual to its own override parameter set", {
+  out <- withr::local_tempdir()
+  jsonPath <- suppressWarnings(importProjectFromExcel(
+    testProjectExcelPath(),
+    outputDir = out,
+    silent = TRUE
+  ))
+  project <- suppressWarnings(loadProject(jsonPath))
+
+  expect_true("indiv1" %in% names(project$definitions$parameterSets))
+  indiv <- .unwrapDefinitionList(project$definitions$individuals)[["indiv1"]]
+  expect_true("indiv1" %in% unlist(indiv$parameterSets))
+})
+
 # The TestProjectExcel fixture uses the 5.x one-sheet-per-protocol layout (no
 # `ApplicationProtocols` sheet). The importer builds one `Application` per
 # protocol sheet, each wrapping the same-named parameter set, so a scenario that

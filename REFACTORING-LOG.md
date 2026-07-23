@@ -44,3 +44,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-07-23 16:39: Excel import builds one application per protocol sheet for the 5.x one-sheet-per-protocol layout, so scenario application refs resolve. (#1158)
 - 2026-07-23 16:39: Excel multi-value cells parse the legacy quoted-CSV convention (strip quotes, keep a quoted comma in one token) alongside backslash escaping. (#1158)
 - 2026-07-23 16:42: Excel import defaults `OverwriteFormulasInSS` to FALSE when the Scenarios sheet omits the column, instead of aborting; a pre-6.0 sheet now imports. (#1158)
+- 2026-07-23 16:43: Excel import links an individual to its own override parameter-set sheet (matched by canonical id), so the override is applied instead of orphaned. (#1158)

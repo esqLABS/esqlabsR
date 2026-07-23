@@ -251,6 +251,25 @@ importProjectFromExcel <- function(
             jsonData$parameterSets,
             .parseExcelParameterSheets(file, sheetNames = paramSheetNames)
           )
+          # A sheet named after an individual is that individual's own parameter
+          # override; link it so the override is applied. The match is on the
+          # canonical id, so `Indiv1` sheet links to the `Indiv1` individual
+          # regardless of case, and the sheet's set id is added to the
+          # individual's `parameterSets` (deduplicated, keeping any set the
+          # `ParameterSets` column already named).
+          jsonData$individuals <- lapply(jsonData$individuals, function(indiv) {
+            match <- paramSheetNames[
+              .canonicalizeOneId(indiv$individualId) ==
+                vapply(paramSheetNames, .canonicalizeOneId, character(1))
+            ]
+            if (length(match) > 0L) {
+              indiv$parameterSets <- as.list(unique(c(
+                unlist(indiv$parameterSets),
+                match
+              )))
+            }
+            indiv
+          })
         }
         jsonData
       }
