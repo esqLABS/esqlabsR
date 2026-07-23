@@ -40,10 +40,31 @@
       }
       popData[[field]] <- val
     }
-    class(popData) <- c("Population", "list")
+    # A `type` field marks a non-demographics source (a `programmatic` runtime
+    # sentinel or a `csv` file reference); those carry no species/age/weight, so
+    # stamp them a source class that prints their source instead of empty
+    # demographics. An entry with no `type` is the demographics spec, unchanged.
+    popData <- if (is.null(popData$type)) {
+      class(popData) <- c("Population", "list")
+      popData
+    } else {
+      .asPopulationSource(popData)
+    }
     result[[id]] <- popData
   }
   result
+}
+
+# Stamp a non-demographics population entry (a `programmatic` sentinel or a
+# `csv` file reference) with `c("PopulationSource", "Population", "list")`.
+# `"Population"` stays in the chain so `inherits(x, "Population")` still holds,
+# while the leading `"PopulationSource"` selects the source-aware print method.
+#
+# @keywords internal
+# @noRd
+.asPopulationSource <- function(entry) {
+  class(entry) <- c("PopulationSource", "Population", "list")
+  entry
 }
 
 # Section validation adapter ----
@@ -57,11 +78,36 @@
   .validatePopulations(project$definitions$populations)
 }
 
+# The optional `type` a population entry may carry. Absent means a demographics
+# spec (the default, unchanged shape). `programmatic` is a runtime sentinel for
+# an injected `ospsuite::Population`; `csv` references a population table file.
+#
+# @keywords internal
+# @noRd
+.populationSourceTypes <- c("programmatic", "csv")
+
+# Required fields for a population entry, keyed by its `type`. A demographics
+# spec (no `type`) needs `species`; a `csv` source needs `file`; a
+# `programmatic` sentinel needs nothing (its object lives in the runtime store).
+#
+# @keywords internal
+# @noRd
+.populationEntryRequiredFields <- function(type) {
+  switch(
+    type %||% "spec",
+    "spec" = "species",
+    "csv" = "file",
+    character(0)
+  )
+}
+
 #' Validate the `populations` section of a Project
 #'
-#' Checks `species` is set and warns on out-of-range
-#' `proportionOfFemales` or inverted Min/Max ranges (age, weight,
-#' height, BMI).
+#' Per-entry checks: an optional `type` (`programmatic` / `csv`) must be
+#' recognized; the type's required fields are present (`species` for a
+#' demographics spec, `file` for a `csv` source); warns on out-of-range
+#' `proportionOfFemales` or inverted Min/Max ranges (age, weight, height,
+#' BMI) for demographics specs.
 #'
 #' @param populations Named list from `populations` definitions.
 #' @return validationResult.
@@ -78,9 +124,25 @@
   for (id in names(populations)) {
     pop <- populations[[id]]
 
+    if (!is.null(pop$type) && !pop$type %in% .populationSourceTypes) {
+      result$addCriticalError(
+        "Data",
+        paste0(
+          "population '",
+          id,
+          "' has invalid type '",
+          pop$type,
+          "'. Must be one of: ",
+          paste(.populationSourceTypes, collapse = ", "),
+          " (or omitted for a demographics spec)."
+        )
+      )
+      next
+    }
+
     result <- .checkRequiredFields(
       pop,
-      c("species"),
+      .populationEntryRequiredFields(pop$type),
       paste0("population '", id, "'"),
       result
     )
@@ -140,6 +202,25 @@ print.Population <- function(x, ...) {
       "Age Range" = .formatRange(x$ageMin, x$ageMax),
       "Weight Range" = .formatRange(x$weightMin, x$weightMax),
       "Height Range" = .formatRange(x$heightMin, x$heightMax)
+    ),
+    print_empty = TRUE
+  )
+  invisible(x)
+}
+
+#' @exportS3Method
+#' @noRd
+print.PopulationSource <- function(x, ...) {
+  ospsuite.utils::ospPrintClass(x)
+  ospsuite.utils::ospPrintItems(
+    list(
+      "Type" = x$type %||% "",
+      "File" = x$file %||%
+        (if (identical(x$type, "programmatic")) {
+          "resolved from the runtime store at run time"
+        } else {
+          ""
+        })
     ),
     print_empty = TRUE
   )
@@ -341,19 +422,31 @@ sampleRandomValue <- function(distribution, mean, sd, n) {
 
 #' Add one or more populations to a Project
 #'
-#' Add populations to `populations` definitions, vectorizing over a vector of ids
-#' (see the recycling rule under Details). `species`, `numberOfIndividuals`,
-#' and the optional `...` fields are all scalar-per-definition (recycle/align).
+#' @description Add populations to `populations` definitions. Two forms:
+#'
+#' - A **demographics spec**: pass `species` and `numberOfIndividuals` (plus
+#'   optional `...` fields). This vectorizes over a vector of ids (see the
+#'   recycling rule under Details); `species`, `numberOfIndividuals`, and the
+#'   `...` fields are scalar-per-definition (recycle/align).
+#' - An **injected object**: pass a single id and an [ospsuite::Population]
+#'   object in the `species` position. The object is stored in the R session
+#'   and the scenario runs against it directly (a mutated or programmatically
+#'   built population). `numberOfIndividuals` and `...` fields are not accepted
+#'   for this form. It survives to disk only after [saveProject()], which
+#'   freezes the sampled population to a `<id>.csv` file under the populations
+#'   folder; rerun the code that built it to reproduce it in a new session.
 #'
 #' @inherit vectorizedAuthoring details
 #'
 #' @param project A `Project` object.
 #' @param id Character vector of unique ids (the number of populations to add).
 #'   Each is canonicalized to a safe, lowercase id (a warning names the result
-#'   if it changed).
-#' @param species Character scalar (recycled) or the same length as `id`.
+#'   if it changed). For an injected [ospsuite::Population] object the id must
+#'   be a single value.
+#' @param species Character scalar (recycled) or the same length as `id`; or an
+#'   [ospsuite::Population] object to inject (single id only).
 #' @param numberOfIndividuals Positive number, scalar (recycled) or the same
-#'   length as `id`.
+#'   length as `id`. Omit when injecting a `Population` object.
 #' @param ... Optional named fields. Accepted: `proportionOfFemales`,
 #'   `weightMin`, `weightMax`, `heightMin`, `heightMax`, `ageMin`,
 #'   `ageMax`, `BMIMin`, `BMIMax`, `gender`, `weightUnit`, `heightUnit`,
@@ -368,7 +461,7 @@ addPopulation <- function(
   project,
   id,
   species,
-  numberOfIndividuals,
+  numberOfIndividuals = NULL,
   ...
 ) {
   validateIsOfType(project, "Project")
@@ -384,7 +477,7 @@ addPopulation <- function(
   private,
   id,
   species,
-  numberOfIndividuals,
+  numberOfIndividuals = NULL,
   ...,
   .call
 ) {
@@ -398,6 +491,28 @@ addPopulation <- function(
   # so it is not mistaken for a per-definition field.
   overwrite <- .validateOverwriteFlag(dots[["overwrite"]])
   dots[["overwrite"]] <- NULL
+
+  # Injected-object form: an `ospsuite::Population` in the `species` position.
+  # A real Population object is classed both "Population" and "DotNetWrapper";
+  # require both so a plain demographics-spec list (also classed "Population")
+  # and any other .NET object (a Simulation, an Individual) are excluded.
+  if (inherits(species, "Population") && inherits(species, "DotNetWrapper")) {
+    return(.addProgrammaticPopulation_impl(
+      self,
+      private,
+      id,
+      population = species,
+      numberOfIndividuals = numberOfIndividuals,
+      dots = dots,
+      overwrite = overwrite,
+      .call = .call
+    ))
+  }
+  if (is.null(numberOfIndividuals)) {
+    cli::cli_abort(
+      "{.arg numberOfIndividuals} is required when adding a demographics-spec population."
+    )
+  }
   perDefinition <- .alignAuthoringArgs(
     id,
     scalarFields = c(
@@ -422,6 +537,66 @@ addPopulation <- function(
     populations[[id[[i]]]] <- entries[[i]]
   }
   private$.setSection("populations", populations)
+  invisible(self)
+}
+
+# Add a session-injected `ospsuite::Population`, keyed by a single id. Writes a
+# `{type: "programmatic"}` sentinel into the `populations` section and stores
+# the live object in the runtime store; the two are updated together (in-memory
+# only). Aborts on stray demographics fields, which have no meaning for an
+# already-built population object.
+#
+# @keywords internal
+# @noRd
+.addProgrammaticPopulation_impl <- function(
+  self,
+  private,
+  id,
+  population,
+  numberOfIndividuals,
+  dots,
+  overwrite,
+  .call
+) {
+  rlang::local_error_call(.call)
+  if (length(id) != 1L) {
+    cli::cli_abort(
+      "A programmatic population is added one id at a time; {.arg id} must be a single value."
+    )
+  }
+  stray <- names(dots)
+  if (!is.null(numberOfIndividuals) || length(stray) > 0L) {
+    drop <- if (length(stray)) {
+      "{.arg numberOfIndividuals} and the other fields"
+    } else {
+      "{.arg numberOfIndividuals}"
+    }
+    cli::cli_abort(c(
+      "Extra fields are not accepted when injecting a {.cls Population} object.",
+      "i" = paste0(
+        "An injected population already carries its own individuals; drop ",
+        drop,
+        "."
+      )
+    ))
+  }
+
+  .assertNoOverwriteClash(
+    id,
+    names(self$definitions$populations),
+    "population",
+    overwrite
+  )
+
+  sentinel <- .asPopulationSource(list(type = "programmatic"))
+  populations <- private$.getSection("populations") %||% list()
+  populations[[id]] <- sentinel
+  private$.setSection("populations", populations)
+  private$.programmaticPopulations[[id]] <- population
+  cli::cli_inform(messages$populationProgrammaticAdded(
+    id,
+    hasPopulationsFolder = !is.null(self$paths$populationsFolder)
+  ))
   invisible(self)
 }
 
@@ -576,6 +751,11 @@ removePopulation <- function(project, id) {
   populations <- private$.getSection("populations")
   populations[toRemove] <- NULL
   private$.setSection("populations", populations)
+  # Drop any injected object under a removed id (a no-op for a non-programmatic
+  # id), so the runtime store never outlives its section sentinel.
+  for (one in toRemove) {
+    private$.programmaticPopulations[[one]] <- NULL
+  }
   invisible(self)
 }
 
@@ -731,4 +911,84 @@ setPopulation <- function(project, id, ...) {
   }
   class(entry) <- c("Population", "list")
   entry
+}
+
+# Persist every session-injected `Population` to a CSV file next to the project,
+# so it survives a reload. Called from the save path before the tree is written:
+# for each `programmatic` entry whose object is in the runtime store, write
+# `<populationsFolder>/<id>.csv` and rewrite the section entry to a `csv` source
+# pointing at that file. A programmatic sentinel with no object in the store (an
+# orphan read from disk) is left untouched.
+#
+# Returns the character vector of persisted ids; the caller drops these from the
+# runtime store only after the whole save commits, so an abort partway through
+# the tree write leaves the injected population recoverable (worst case is an
+# orphan CSV file, never lost data). Mirrors `.persistProgrammaticObservedData`.
+#
+# @keywords internal
+# @noRd
+.persistProgrammaticPopulations <- function(self, private) {
+  populations <- private$.getSection("populations")
+  toPersist <- names(which(vapply(
+    populations,
+    function(e) {
+      identical(e$type, "programmatic")
+    },
+    logical(1)
+  )))
+  # Keep only sentinels that actually have a backing object in the runtime store.
+  toPersist <- Filter(
+    function(id) !is.null(private$.programmaticPopulations[[id]]),
+    toPersist
+  )
+  if (length(toPersist) == 0) {
+    return(character(0))
+  }
+
+  populationsFolder <- self$paths$populationsFolder
+  if (is.null(populationsFolder)) {
+    cli::cli_abort(messages$populationPersistNoPopulationsFolder(toPersist[[
+      1
+    ]]))
+  }
+
+  # Rewrite the section in memory BEFORE writing any CSV, so a save that aborts
+  # (an unsafe id, or a file basename that collides with an existing population
+  # file) never overwrites a file: every write below lands on a known-safe path.
+  fileNames <- stats::setNames(paste0(toPersist, ".csv"), toPersist)
+  for (id in toPersist) {
+    populations[[id]] <- .asPopulationSource(list(
+      type = "csv",
+      file = fileNames[[id]]
+    ))
+  }
+  # Same checks the serializer runs, up front: each id a safe filename segment,
+  # and no `<id>.csv` colliding with an existing population file's basename.
+  lapply(names(populations), .validateDefinitionTreeKey, "population")
+  existingFiles <- vapply(
+    populations,
+    function(e) if (is.null(e$file)) NA_character_ else basename(e$file),
+    character(1)
+  )
+  collisions <- intersect(
+    fileNames,
+    existingFiles[setdiff(names(populations), toPersist)]
+  )
+  if (length(collisions) > 0) {
+    cli::cli_abort(messages$populationPersistIdCollision(collisions))
+  }
+
+  if (!dir.exists(populationsFolder)) {
+    dir.create(populationsFolder, recursive = TRUE, showWarnings = FALSE)
+  }
+  for (id in toPersist) {
+    filePath <- .resolveProjectPath(fileNames[[id]], populationsFolder, "file")
+    ospsuite::exportPopulationToCSV(
+      population = private$.programmaticPopulations[[id]],
+      filePath = filePath
+    )
+  }
+
+  private$.setSection("populations", populations)
+  toPersist
 }

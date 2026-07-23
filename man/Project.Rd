@@ -130,6 +130,7 @@ differences, empty when everything is in sync). The same information
     \item \href{#method-Project-addPopulation}{\code{Project$addPopulation()}}
     \item \href{#method-Project-removePopulation}{\code{Project$removePopulation()}}
     \item \href{#method-Project-setPopulation}{\code{Project$setPopulation()}}
+    \item \href{#method-Project-getProgrammaticPopulation}{\code{Project$getProgrammaticPopulation()}}
     \item \href{#method-Project-addApplication}{\code{Project$addApplication()}}
     \item \href{#method-Project-removeApplication}{\code{Project$removeApplication()}}
     \item \href{#method-Project-setApplicationParameterSets}{\code{Project$setApplicationParameterSets()}}
@@ -467,6 +468,27 @@ remaining arguments of \code{\link[=createScenariosFromPKML]{createScenariosFrom
       \item{\code{...}}{Passed to the matching authoring free function (e.g. the
 partial-update fields of \code{\link[=setScenario]{setScenario()}} / \code{\link[=setIndividual]{setIndividual()}}, or the
 remaining arguments of \code{\link[=createScenariosFromPKML]{createScenariosFromPKML()}}).}
+    }
+    \if{html}{\out{</div>}}
+  }
+}
+
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Project-getProgrammaticPopulation"></a>}}
+\if{latex}{\out{\hypertarget{method-Project-getProgrammaticPopulation}{}}}
+\subsection{\code{Project$getProgrammaticPopulation()}}{
+  Internal: fetch a session-added programmatic population by
+id, or \code{NULL} if none was injected under that id. Used by the run path
+to resolve a \code{{type: "programmatic"}} sentinel from the runtime store.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{Project$getProgrammaticPopulation(id)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{id}}{Population id.}
     }
     \if{html}{\out{</div>}}
   }

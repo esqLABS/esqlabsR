@@ -456,6 +456,18 @@ messages$noPopulationIdForPopulationScenario <- function(scenarioName) {
   )
 }
 
+messages$populationNotFoundForScenario <- function(populationId, scenarioName) {
+  cliFormat(
+    "Population {.val {populationId}} referenced by scenario {.val {scenarioName}} not found in project."
+  )
+}
+
+messages$unknownScenarioNames <- function(unknownNames) {
+  cliFormat(
+    "Unknown scenario names: {.val {unknownNames}}."
+  )
+}
+
 messages$wrongTimeIntervalString <- function(timeIntervalString) {
   cliFormat(
     "The time interval string {.val {timeIntervalString}} is not valid! Please 
@@ -1039,6 +1051,44 @@ messages$observedDataPersistIdCollision <- function(ids) {
     "x" = "Saving a programmatic observed-data source would overwrite another source: {.file {ids}}.",
     "i" = "A programmatic source is written to {.file <name>.pkml}; this clashes with an existing source filed under the same name.",
     "i" = "Rename the {.cls DataSet} (its {.field name}) so the file names differ."
+  ))
+}
+
+messages$populationProgrammaticAdded <- function(
+  id,
+  hasPopulationsFolder = TRUE
+) {
+  saveNote <- if (hasPopulationsFolder) {
+    "On {.fn saveProject} it is written to {.path {paste0(id, '.csv')}} under the populations folder, so it survives a reload."
+  } else {
+    "Declare a {.field populationsFolder} in {.code filePaths} before saving: {.fn saveProject} writes it to a CSV file there so it survives a reload, and aborts if no populations folder is declared."
+  }
+  cli::format_message(c(
+    "i" = "Added programmatic population {.val {id}}. It lives in this session until you save.",
+    "i" = saveNote
+  ))
+}
+
+messages$populationProgrammaticUnresolved <- function(id, scenarioName) {
+  cli::format_message(c(
+    "x" = "Population {.val {id}} referenced by scenario {.val {scenarioName}} was injected in a previous session and holds no data now.",
+    "i" = "A programmatic population holds its {.cls Population} only in the session that added it.",
+    "i" = "Re-add it with {.fn addPopulation} in this session, or run {.fn saveProject} once to freeze it to a CSV file that survives a reload."
+  ))
+}
+
+messages$populationPersistNoPopulationsFolder <- function(id) {
+  cli::format_message(c(
+    "x" = "Cannot save the programmatic population {.val {id}}: {.field populationsFolder} is not declared in {.code filePaths}.",
+    "i" = "A programmatic population is written to a CSV file under {.field populationsFolder} on save. Declare {.field populationsFolder}, then save again."
+  ))
+}
+
+messages$populationPersistIdCollision <- function(ids) {
+  cli::format_message(c(
+    "x" = "Saving a programmatic population would overwrite an existing population file: {.file {ids}}.",
+    "i" = "A programmatic population is written to {.file <id>.csv}; this clashes with a file already filed under the same id.",
+    "i" = "Rename the population (its {.field id}) so the file names differ."
   ))
 }
 

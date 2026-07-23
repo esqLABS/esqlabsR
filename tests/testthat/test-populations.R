@@ -535,3 +535,207 @@ test_that("print.Population renders a minimal population", {
   local_reproducible_output()
   expect_snapshot(print(project$definitions$populations[["minimal"]]))
 })
+
+# Source-typed populations (type discriminator) ----
+
+test_that(".parsePopulations stamps a demographics spec as Population, a source entry as PopulationSource", {
+  parsed <- esqlabsR:::.parsePopulations(list(
+    list(populationId = "spec", species = "Human", numberOfIndividuals = 10),
+    list(populationId = "prog", type = "programmatic"),
+    list(populationId = "fromcsv", type = "csv", file = "fromcsv.csv")
+  ))
+  expect_s3_class(parsed$spec, "Population")
+  expect_false(inherits(parsed$spec, "PopulationSource"))
+  expect_s3_class(parsed$prog, "PopulationSource")
+  expect_s3_class(parsed$prog, "Population")
+  expect_identical(parsed$prog$type, "programmatic")
+  expect_identical(parsed$fromcsv$type, "csv")
+  expect_identical(parsed$fromcsv$file, "fromcsv.csv")
+})
+
+test_that(".validatePopulations does not require species for a csv or programmatic entry", {
+  populations <- list(
+    prog = esqlabsR:::.asPopulationSource(list(type = "programmatic")),
+    fromcsv = esqlabsR:::.asPopulationSource(list(
+      type = "csv",
+      file = "p.csv"
+    ))
+  )
+  result <- esqlabsR:::.validatePopulations(populations)
+  expect_length(result$critical_errors, 0)
+})
+
+test_that(".validatePopulations requires file for a csv entry", {
+  populations <- list(
+    fromcsv = esqlabsR:::.asPopulationSource(list(type = "csv"))
+  )
+  result <- esqlabsR:::.validatePopulations(populations)
+  expect_true(any(grepl("file", unlist(result$critical_errors))))
+})
+
+test_that(".validatePopulations flags an unrecognized type", {
+  populations <- list(
+    bad = esqlabsR:::.asPopulationSource(list(type = "nonsense"))
+  )
+  result <- esqlabsR:::.validatePopulations(populations)
+  expect_true(any(grepl("invalid type", unlist(result$critical_errors))))
+})
+
+# Programmatic Population injection ----
+
+# Build a small real ospsuite::Population object for injection tests.
+.injectablePopulation <- function() {
+  pc <- ospsuite::createPopulationCharacteristics(
+    species = ospsuite::Species$Human,
+    population = ospsuite::HumanPopulation$Asian_Tanaka_1996,
+    numberOfIndividuals = 2L,
+    proportionOfFemales = 50
+  )
+  ospsuite::createPopulation(pc)$population
+}
+
+test_that("addPopulation stores an injected Population and writes a programmatic sentinel", {
+  project <- testProject()
+  pop <- .injectablePopulation()
+  suppressMessages(addPopulation(project, "injected", pop))
+
+  entry <- project$definitions$populations[["injected"]]
+  expect_s3_class(entry, "PopulationSource")
+  expect_identical(entry$type, "programmatic")
+  expect_identical(project$getProgrammaticPopulation("injected"), pop)
+})
+
+test_that("addPopulation rejects extra fields when injecting a Population", {
+  project <- testProject()
+  pop <- .injectablePopulation()
+  expect_error(
+    addPopulation(project, "injected", pop, numberOfIndividuals = 5),
+    regexp = "Extra fields"
+  )
+})
+
+test_that("addPopulation rejects a vector of ids when injecting a Population", {
+  project <- testProject()
+  pop <- .injectablePopulation()
+  expect_error(
+    addPopulation(project, c("a", "b"), pop),
+    regexp = "one id at a time"
+  )
+})
+
+test_that("addPopulation does not treat a non-Population .NET object as an injection", {
+  # A Simulation is a DotNetWrapper but not a Population; it must not be stored
+  # as a programmatic population. It falls through to the demographics path and
+  # is rejected there (species is not a string) rather than silently accepted.
+  project <- testProject()
+  sim <- ospsuite::loadSimulation(
+    system.file("extdata", "simple.pkml", package = "ospsuite")
+  )
+  expect_error(addPopulation(project, "wrong", sim))
+  expect_null(project$getProgrammaticPopulation("wrong"))
+})
+
+test_that("addPopulation still requires numberOfIndividuals for a demographics spec", {
+  project <- testProject()
+  expect_error(
+    addPopulation(project, "spec", species = "Human"),
+    regexp = "numberOfIndividuals.*required"
+  )
+})
+
+test_that("removePopulation drops the injected object from the runtime store", {
+  project <- testProject()
+  pop <- .injectablePopulation()
+  suppressMessages(addPopulation(project, "injected", pop))
+  suppressWarnings(removePopulation(project, "injected"))
+  expect_null(project$getProgrammaticPopulation("injected"))
+  expect_false("injected" %in% names(project$definitions$populations))
+})
+
+test_that("reloadProject drops a session-injected Population", {
+  project <- testProject()
+  pop <- .injectablePopulation()
+  suppressMessages(addPopulation(project, "injected", pop))
+  suppressMessages(reloadProject(project))
+  expect_null(project$getProgrammaticPopulation("injected"))
+})
+
+test_that("saveProject freezes an injected Population to CSV and rewrites the entry", {
+  project <- testProject()
+  pop <- .injectablePopulation()
+  suppressMessages(addPopulation(project, "injected", pop))
+  suppressMessages(saveProject(project))
+
+  csvPath <- file.path(project$paths$populationsFolder, "injected.csv")
+  expect_true(file.exists(csvPath))
+
+  entry <- project$definitions$populations[["injected"]]
+  expect_identical(entry$type, "csv")
+  expect_identical(entry$file, "injected.csv")
+  # Runtime store drained after the save committed.
+  expect_null(project$getProgrammaticPopulation("injected"))
+
+  # The frozen population reloads from CSV without re-injecting.
+  reloaded <- loadProject(project$info$projectFilePath)
+  reEntry <- reloaded$definitions$populations[["injected"]]
+  expect_identical(reEntry$type, "csv")
+})
+
+test_that("saveProject serializes an orphan programmatic sentinel verbatim instead of aborting", {
+  # A programmatic entry with no backing object (e.g. hand-authored JSON, a
+  # restored snapshot, or a reloaded session) must not break an unrelated save.
+  project <- testProject()
+  populations <- .getSection(project, "populations")
+  populations[["orphan"]] <- esqlabsR:::.asPopulationSource(list(
+    type = "programmatic"
+  ))
+  .setSection(project, "populations", populations)
+
+  expect_no_error(suppressMessages(saveProject(project)))
+  reloaded <- loadProject(project$info$projectFilePath)
+  expect_identical(
+    reloaded$definitions$populations[["orphan"]]$type,
+    "programmatic"
+  )
+})
+
+test_that("saveProject aborts freezing an injected Population without a populations folder", {
+  project <- testProject()
+  project$paths$populationsFolder <- NULL
+  pop <- .injectablePopulation()
+  suppressMessages(addPopulation(project, "injected", pop))
+  expect_error(
+    saveProject(project),
+    regexp = "populationsFolder"
+  )
+})
+
+test_that("saveProject aborts when a frozen population CSV would collide with an existing file", {
+  # An injected population "injected" freezes to "injected.csv"; a separate csv
+  # entry already pointing at that basename makes the freeze collide.
+  project <- testProject()
+  populations <- .getSection(project, "populations")
+  populations[["other"]] <- esqlabsR:::.asPopulationSource(list(
+    type = "csv",
+    file = "injected.csv"
+  ))
+  .setSection(project, "populations", populations)
+
+  pop <- .injectablePopulation()
+  suppressMessages(addPopulation(project, "injected", pop))
+  expect_error(
+    saveProject(project),
+    regexp = "would overwrite an existing population file"
+  )
+})
+
+test_that("print.PopulationSource renders a csv and a programmatic source", {
+  withr::local_options(cli.unicode = FALSE)
+  local_reproducible_output()
+  csv <- esqlabsR:::.asPopulationSource(list(type = "csv", file = "p.csv"))
+  prog <- esqlabsR:::.asPopulationSource(list(type = "programmatic"))
+  expect_snapshot({
+    print(csv)
+    print(prog)
+  })
+})

@@ -10,7 +10,8 @@ runScenarios(
   customParams = NULL,
   simulationRunOptions = NULL,
   validate = TRUE,
-  stopIfParameterNotFound = TRUE
+  stopIfParameterNotFound = TRUE,
+  stopIfFails = TRUE
 )
 }
 \arguments{
@@ -37,6 +38,11 @@ already validated the project).}
 \code{customParams} path that matches no parameter in a scenario's
 simulation aborts the run. Set to \code{FALSE} to skip such paths with a
 warning instead.}
+
+\item{stopIfFails}{Logical. If \code{TRUE} (default), a scenario whose
+simulation produced no results aborts the run with an error. Set to
+\code{FALSE} to instead warn and leave that scenario's \code{outputValues}
+\code{NULL} while the other scenarios are still returned.}
 }
 \value{
 A named list keyed by scenario name. Each entry is a list
@@ -53,6 +59,11 @@ defined on a parsed \link{Project}. The project must already have been
 loaded with \code{\link[=loadProject]{loadProject()}}.
 }
 \details{
-If a scenario's simulation fails, a warning is produced
-and \code{outputValues} for that scenario is \code{NULL}.
+If a scenario's simulation fails, \code{runScenarios()} aborts by
+default (\code{stopIfFails = TRUE}). Set \code{stopIfFails = FALSE} to instead
+produce a warning and leave that scenario's \code{outputValues} \code{NULL}.
+}
+\seealso{
+\code{\link[=buildSimulations]{buildSimulations()}} to obtain the parameterized simulations
+without running them.
 }

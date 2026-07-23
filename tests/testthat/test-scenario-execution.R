@@ -117,6 +117,81 @@ test_that("runScenarios threads stopIfParameterNotFound through to .prepareScena
   expect_false(captured)
 })
 
+test_that(".collectScenarioResult aborts on a failed scenario when stopIfFails is TRUE", {
+  scenario <- list(scenarioName = "s1", outputPaths = NULL)
+  expect_error(
+    esqlabsR:::.collectScenarioResult(
+      scenario = scenario,
+      simulation = NULL,
+      results = NULL,
+      population = NULL,
+      stopIfFails = TRUE
+    ),
+    regexp = "No simulation results could be computed"
+  )
+})
+
+test_that(".collectScenarioResult warns and returns NULL outputValues when stopIfFails is FALSE", {
+  scenario <- list(scenarioName = "s1", outputPaths = NULL)
+  expect_warning(
+    out <- esqlabsR:::.collectScenarioResult(
+      scenario = scenario,
+      simulation = NULL,
+      results = NULL,
+      population = NULL,
+      stopIfFails = FALSE
+    ),
+    regexp = "No simulation results could be computed"
+  )
+  expect_null(out$outputValues)
+  expect_null(out$results)
+})
+
+test_that("runScenarios aborts by default when a scenario simulation produces no results", {
+  # Force a failed run without native infra: mock the runner to return a NULL
+  # result for every simulation id it is handed.
+  withr::local_options(lifecycle_verbosity = "quiet")
+  project <- .testProject()
+  local_mocked_bindings(
+    runSimulations = function(simulations, ...) {
+      ids <- if (inherits(simulations, "Simulation")) {
+        simulations$id
+      } else {
+        vapply(simulations, function(s) s$id, character(1))
+      }
+      stats::setNames(vector("list", length(ids)), ids)
+    }
+  )
+  expect_error(
+    runScenarios(project, scenarios = "testscenario"),
+    regexp = "No simulation results could be computed"
+  )
+})
+
+test_that("runScenarios with stopIfFails = FALSE warns and returns NULL outputValues", {
+  withr::local_options(lifecycle_verbosity = "quiet")
+  project <- .testProject()
+  local_mocked_bindings(
+    runSimulations = function(simulations, ...) {
+      ids <- if (inherits(simulations, "Simulation")) {
+        simulations$id
+      } else {
+        vapply(simulations, function(s) s$id, character(1))
+      }
+      stats::setNames(vector("list", length(ids)), ids)
+    }
+  )
+  expect_warning(
+    out <- runScenarios(
+      project,
+      scenarios = "testscenario",
+      stopIfFails = FALSE
+    ),
+    regexp = "No simulation results could be computed"
+  )
+  expect_null(out$testscenario$outputValues)
+})
+
 test_that(".parameterSetToStructure flattens record-shape into paths/values/units", {
   records <- list(
     list(
@@ -399,6 +474,122 @@ test_that(".runScenariosFromProject errors on unknown scenarioNames", {
     esqlabsR:::.runScenariosFromProject(project, scenarioNames = "NopeNope"),
     regexp = "NopeNope"
   )
+})
+
+# .buildScenarioSimulations ----
+
+test_that(".buildScenarioSimulations resolves NULL to every scenario and returns the prep shape", {
+  withr::local_options(lifecycle_verbosity = "quiet")
+  project <- .testProject()
+  built <- esqlabsR:::.buildScenarioSimulations(project)
+  expect_setequal(built$scenarioNames, names(project$definitions$scenarios))
+  expect_named(built$prepared, built$scenarioNames)
+  first <- built$prepared[[1]]
+  expect_named(first, c("simulation", "population"))
+  expect_s3_class(first$simulation, "Simulation")
+})
+
+test_that(".buildScenarioSimulations errors on an unknown scenario name", {
+  withr::local_options(lifecycle_verbosity = "quiet")
+  project <- .testProject()
+  expect_error(
+    esqlabsR:::.buildScenarioSimulations(project, scenarioNames = "NopeNope"),
+    regexp = "NopeNope"
+  )
+})
+
+test_that(".buildScenarioSimulations shares one build cache across scenarios in a call", {
+  # Two scenarios referencing the same individual must build its
+  # IndividualCharacteristics once, not once per scenario.
+  withr::local_options(lifecycle_verbosity = "quiet")
+  project <- .testProject()
+  duplicateScenario(project, "testscenario", "testscenario_twin")
+
+  built <- 0L
+  realCreateIC <- ospsuite::createIndividualCharacteristics
+  local_mocked_bindings(
+    createIndividualCharacteristics = function(...) {
+      built <<- built + 1L
+      realCreateIC(...)
+    },
+    .package = "ospsuite"
+  )
+  esqlabsR:::.buildScenarioSimulations(
+    project,
+    scenarioNames = c("testscenario", "testscenario_twin")
+  )
+  expect_identical(built, 1L)
+})
+
+# Population source resolution ----
+
+test_that(".resolveScenarioPopulation resolves a programmatic entry from the runtime store", {
+  withr::local_options(lifecycle_verbosity = "quiet")
+  project <- .testProject()
+  pc <- ospsuite::createPopulationCharacteristics(
+    species = ospsuite::Species$Human,
+    population = ospsuite::HumanPopulation$Asian_Tanaka_1996,
+    numberOfIndividuals = 2L,
+    proportionOfFemales = 50
+  )
+  pop <- ospsuite::createPopulation(pc)$population
+
+  suppressWarnings(removePopulation(project, "testpopulation"))
+  suppressMessages(addPopulation(project, "testpopulation", pop))
+
+  out <- esqlabsR:::.runScenariosFromProject(
+    project,
+    scenarioNames = "populationscenario"
+  )
+  expect_identical(out$populationscenario$population, pop)
+})
+
+test_that(".resolveScenarioPopulation aborts on an unresolved programmatic entry", {
+  withr::local_options(lifecycle_verbosity = "quiet")
+  project <- .testProject()
+  # A programmatic sentinel with no backing object (as after a reload):
+  # replace the existing spec entry so the lookup hits the sentinel.
+  populations <- .getSection(project, "populations")
+  populations[["testpopulation"]] <- esqlabsR:::.asPopulationSource(list(
+    type = "programmatic"
+  ))
+  .setSection(project, "populations", populations)
+  scenario <- project$definitions$scenarios[["populationscenario"]]
+  cache <- new.env(parent = emptyenv())
+  cache$populations <- list()
+  expect_error(
+    esqlabsR:::.resolveScenarioPopulation(scenario, project, cache),
+    regexp = "injected in a previous session"
+  )
+})
+
+test_that(".resolveScenarioPopulation loads a csv entry from its own file", {
+  withr::local_options(lifecycle_verbosity = "quiet")
+  project <- .testProject()
+  loaded <- structure(list(), class = "Population")
+  entry <- esqlabsR:::.asPopulationSource(list(
+    type = "csv",
+    file = "custom.csv"
+  ))
+  .setSection(
+    project,
+    "populations",
+    list(testpopulation = entry)
+  )
+  scenario <- project$definitions$scenarios[["populationscenario"]]
+  cache <- new.env(parent = emptyenv())
+  cache$populations <- list()
+
+  seen <- NULL
+  local_mocked_bindings(
+    loadPopulation = function(path) {
+      seen <<- path
+      loaded
+    }
+  )
+  result <- esqlabsR:::.resolveScenarioPopulation(scenario, project, cache)
+  expect_identical(result, loaded)
+  expect_match(seen, "custom\\.csv$")
 })
 
 # Model file resolution ----

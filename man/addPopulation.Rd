@@ -4,19 +4,21 @@
 \alias{addPopulation}
 \title{Add one or more populations to a Project}
 \usage{
-addPopulation(project, id, species, numberOfIndividuals, ...)
+addPopulation(project, id, species, numberOfIndividuals = NULL, ...)
 }
 \arguments{
 \item{project}{A \code{Project} object.}
 
 \item{id}{Character vector of unique ids (the number of populations to add).
 Each is canonicalized to a safe, lowercase id (a warning names the result
-if it changed).}
+if it changed). For an injected \link[ospsuite:Population]{ospsuite::Population} object the id must
+be a single value.}
 
-\item{species}{Character scalar (recycled) or the same length as \code{id}.}
+\item{species}{Character scalar (recycled) or the same length as \code{id}; or an
+\link[ospsuite:Population]{ospsuite::Population} object to inject (single id only).}
 
 \item{numberOfIndividuals}{Positive number, scalar (recycled) or the same
-length as \code{id}.}
+length as \code{id}. Omit when injecting a \code{Population} object.}
 
 \item{...}{Optional named fields. Accepted: \code{proportionOfFemales},
 \code{weightMin}, \code{weightMax}, \code{heightMin}, \code{heightMax}, \code{ageMin},
@@ -30,9 +32,20 @@ logical scalar (default \code{FALSE}): an id that already exists aborts unless
 The \code{project} object, invisibly.
 }
 \description{
-Add populations to \code{populations} definitions, vectorizing over a vector of ids
-(see the recycling rule under Details). \code{species}, \code{numberOfIndividuals},
-and the optional \code{...} fields are all scalar-per-definition (recycle/align).
+Add populations to \code{populations} definitions. Two forms:
+\itemize{
+\item A \strong{demographics spec}: pass \code{species} and \code{numberOfIndividuals} (plus
+optional \code{...} fields). This vectorizes over a vector of ids (see the
+recycling rule under Details); \code{species}, \code{numberOfIndividuals}, and the
+\code{...} fields are scalar-per-definition (recycle/align).
+\item An \strong{injected object}: pass a single id and an \link[ospsuite:Population]{ospsuite::Population}
+object in the \code{species} position. The object is stored in the R session
+and the scenario runs against it directly (a mutated or programmatically
+built population). \code{numberOfIndividuals} and \code{...} fields are not accepted
+for this form. It survives to disk only after \code{\link[=saveProject]{saveProject()}}, which
+freezes the sampled population to a \verb{<id>.csv} file under the populations
+folder; rerun the code that built it to reproduce it in a new session.
+}
 }
 \details{
 The id argument sets \code{N}, the number of definitions to act on, and cannot

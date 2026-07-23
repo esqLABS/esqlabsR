@@ -208,6 +208,116 @@
   readParametersFromXLS(paramsXLSpath = filePath, sheets = species)
 }
 
+# Population resolution ----
+
+# Resolve the `ospsuite::Population` for a population scenario, dispatching on
+# the population *entry's* `type`, not the scenario flag. A `programmatic` entry
+# comes from the runtime store; a `csv` entry loads its `file`; an entry with no
+# `type` is a demographics spec built via `createPopulationCharacteristics`,
+# unless the scenario's `readPopulationFromCSV` flag is set (back-compat: that
+# still loads `<populationId>.csv`). Resolved objects are cached per run so a
+# population shared by two scenarios is built or loaded once.
+# @keywords internal
+# @noRd
+.resolveScenarioPopulation <- function(scenario, project, cache) {
+  if (is.null(scenario$populationId)) {
+    cli::cli_abort(messages$noPopulationIdForPopulationScenario(
+      scenario$scenarioName
+    ))
+  }
+  cached <- cache$populations[[scenario$populationId]]
+  if (!is.null(cached)) {
+    return(cached)
+  }
+
+  popData <- project$definitions$populations[[scenario$populationId]]
+  # The entry type wins over the scenario flag; a spec entry falls back to the
+  # scenario's `readPopulationFromCSV` for the legacy CSV path.
+  effectiveType <- popData$type %||%
+    (if (isTRUE(scenario$readPopulationFromCSV)) "csv" else "spec")
+
+  population <- switch(
+    effectiveType,
+    # A `programmatic` sentinel with no backing object (a project reloaded
+    # without re-injecting) is fatal: a population scenario cannot run without
+    # one.
+    "programmatic" = project$getProgrammaticPopulation(
+      scenario$populationId
+    ) %||%
+      cli::cli_abort(messages$populationProgrammaticUnresolved(
+        id = scenario$populationId,
+        scenarioName = scenario$scenarioName
+      )),
+    "csv" = .resolveCsvPopulation(scenario, project, popData),
+    "spec" = .resolveSpecPopulation(scenario, popData)
+  )
+  cache$populations[[scenario$populationId]] <- population
+  population
+}
+
+# Load a population table from CSV. A `csv` entry names its own `file`; the
+# legacy scenario-flag path (no `file`) derives `<populationId>.csv`. Either way
+# the resolved path must stay under the populations folder (a shared project
+# cannot escape itself via a `../` id), which must be declared.
+# @keywords internal
+# @noRd
+.resolveCsvPopulation <- function(scenario, project, popData) {
+  if (is.null(project$paths$populationsFolder)) {
+    cli::cli_abort(messages$noPopulationsFolderForCSVPopulation(
+      scenarioName = scenario$scenarioName,
+      populationId = scenario$populationId
+    ))
+  }
+  fileName <- popData$file %||% paste0(scenario$populationId, ".csv")
+  populationPath <- .resolveProjectPath(
+    fileName,
+    project$paths$populationsFolder,
+    "populationId"
+  )
+  loadPopulation(populationPath)
+}
+
+# Build a population from a demographics spec via
+# `createPopulationCharacteristics`.
+# @keywords internal
+# @noRd
+.resolveSpecPopulation <- function(scenario, popData) {
+  if (is.null(popData)) {
+    cli::cli_abort(messages$populationNotFoundForScenario(
+      populationId = scenario$populationId,
+      scenarioName = scenario$scenarioName
+    ))
+  }
+  moleculeOntogenies <- .readOntogeniesFromList(popData$proteinOntogenies)
+  popArgs <- unclass(popData)
+  popArgs$proteinOntogenies <- NULL
+  popArgs$moleculeOntogenies <- moleculeOntogenies
+  # JSON integers (e.g. ageMin: 18) must be coerced to double because
+  # createPopulationCharacteristics passes them to ParameterRange which
+  # expects Nullable<Double>, not Int32.
+  numericFields <- c(
+    "numberOfIndividuals",
+    "proportionOfFemales",
+    "weightMin",
+    "weightMax",
+    "heightMin",
+    "heightMax",
+    "ageMin",
+    "ageMax",
+    "BMIMin",
+    "BMIMax",
+    "gestationalAgeMin",
+    "gestationalAgeMax"
+  )
+  for (field in numericFields) {
+    if (!is.null(popArgs[[field]])) {
+      popArgs[[field]] <- as.double(popArgs[[field]])
+    }
+  }
+  popResult <- do.call(ospsuite::createPopulationCharacteristics, popArgs)
+  createPopulation(populationCharacteristics = popResult)$population
+}
+
 # .prepareScenario ----
 
 # Prepare a single scenario for simulation: load Simulation, build
@@ -338,80 +448,7 @@
   # 6. Population
   population <- NULL
   if (scenario$simulationType == "Population") {
-    if (is.null(scenario$populationId)) {
-      cli::cli_abort(messages$noPopulationIdForPopulationScenario(
-        scenario$scenarioName
-      ))
-    }
-    if (scenario$readPopulationFromCSV) {
-      cached <- cache$populations[[scenario$populationId]]
-      if (!is.null(cached)) {
-        population <- cached
-      } else {
-        # A relative population id is resolved against the project's populations
-        # folder, which must exist for the join to be meaningful
-        # (`file.path(NULL, x)` yields `character(0)`). The resolved csv must
-        # stay under the populations folder, so a shared project cannot read a
-        # file outside itself via a `../` population id.
-        if (is.null(project$paths$populationsFolder)) {
-          cli::cli_abort(messages$noPopulationsFolderForCSVPopulation(
-            scenarioName = scenario$scenarioName,
-            populationId = scenario$populationId
-          ))
-        }
-        populationPath <- .resolveProjectPath(
-          paste0(scenario$populationId, ".csv"),
-          project$paths$populationsFolder,
-          "populationId"
-        )
-        population <- loadPopulation(populationPath)
-        cache$populations[[scenario$populationId]] <- population
-      }
-    } else {
-      cached <- cache$populations[[scenario$populationId]]
-      if (!is.null(cached)) {
-        population <- cached
-      } else {
-        popData <- project$definitions$populations[[scenario$populationId]]
-        if (is.null(popData)) {
-          cli::cli_abort(
-            "Population {.val {scenario$populationId}} referenced by scenario {.val {scenario$scenarioName}} not found in project."
-          )
-        }
-        moleculeOntogenies <- .readOntogeniesFromList(
-          popData$proteinOntogenies
-        )
-        popArgs <- unclass(popData)
-        popArgs$proteinOntogenies <- NULL
-        popArgs$moleculeOntogenies <- moleculeOntogenies
-        # JSON integers (e.g. ageMin: 18) must be coerced to double because
-        # createPopulationCharacteristics passes them to ParameterRange which
-        # expects Nullable<Double>, not Int32.
-        numericFields <- c(
-          "numberOfIndividuals",
-          "proportionOfFemales",
-          "weightMin",
-          "weightMax",
-          "heightMin",
-          "heightMax",
-          "ageMin",
-          "ageMax",
-          "BMIMin",
-          "BMIMax",
-          "gestationalAgeMin",
-          "gestationalAgeMax"
-        )
-        for (field in numericFields) {
-          if (!is.null(popArgs[[field]])) {
-            popArgs[[field]] <- as.double(popArgs[[field]])
-          }
-        }
-        popResult <- do.call(ospsuite::createPopulationCharacteristics, popArgs)
-        popObj <- createPopulation(populationCharacteristics = popResult)
-        population <- popObj$population
-        cache$populations[[scenario$populationId]] <- population
-      }
-    }
+    population <- .resolveScenarioPopulation(scenario, project, cache)
   }
 
   # 7. Steady state
@@ -433,13 +470,114 @@
   list(simulation = simulation, population = population)
 }
 
+# .scenarioBuildPreflight ----
+
+# Shared entry guard for `.runScenariosFromProject` / `.buildSimulationsFromProject`:
+# validate `project` and `customParams`, resolve `simulationRunOptions` (an
+# explicit argument wins; otherwise fall back to the project-level
+# `defaultSimulationRunOptions`, leaving NULL = package defaults), and, when
+# `validate`, run the section validators the scenario build depends on. Returns
+# the resolved `simulationRunOptions`. `opName` names the calling entrypoint in
+# any validation abort.
+# @keywords internal
+# @noRd
+.scenarioBuildPreflight <- function(
+  project,
+  customParams,
+  simulationRunOptions,
+  validate,
+  opName
+) {
+  validateIsOfType(project, "Project")
+  .validateParametersStructure(
+    parameterStructure = customParams,
+    argumentName = "customParams",
+    nullAllowed = TRUE
+  )
+  if (is.null(simulationRunOptions)) {
+    simulationRunOptions <- .buildSimulationRunOptions(
+      project$defaultSimulationRunOptions
+    )
+  }
+  if (isTRUE(validate)) {
+    project$ensureValid(
+      sections = c(
+        "outputPaths",
+        "scenarios",
+        "individuals",
+        "populations",
+        "applications",
+        "parameterSets",
+        "crossReferences"
+      ),
+      opName = opName
+    )
+  }
+  simulationRunOptions
+}
+
+# .buildScenarioSimulations ----
+
+# Resolve the requested scenario names and build (but do not run) each one's
+# simulation. One run-scoped cache of `IndividualCharacteristics` / `Population`
+# objects is shared across the batch, so two scenarios that reference the same
+# individual or population build it once. `scenarioNames = NULL` selects every
+# scenario; an unknown name aborts. Returns `list(scenarioNames, prepared)`
+# where `prepared` is a named list (keyed by scenario name) of
+# `.prepareScenario()`'s `list(simulation, population)` return.
+# @keywords internal
+# @noRd
+.buildScenarioSimulations <- function(
+  project,
+  scenarioNames = NULL,
+  customParams = NULL,
+  simulationRunOptions = NULL,
+  stopIfParameterNotFound = TRUE
+) {
+  allScenarios <- project$definitions$scenarios
+  if (is.null(scenarioNames)) {
+    scenarioNames <- names(allScenarios)
+  }
+  unknownNames <- setdiff(scenarioNames, names(allScenarios))
+  if (length(unknownNames) > 0) {
+    cli::cli_abort(messages$unknownScenarioNames(unknownNames))
+  }
+
+  cache <- new.env(parent = emptyenv())
+  cache$individuals <- list()
+  cache$populations <- list()
+
+  prepared <- vector("list", length(scenarioNames))
+  for (idx in seq_along(scenarioNames)) {
+    name <- scenarioNames[[idx]]
+    prepared[[idx]] <- .prepareScenario(
+      scenario = allScenarios[[name]],
+      project = project,
+      customParams = customParams,
+      cache = cache,
+      simulationRunOptions = simulationRunOptions,
+      stopIfParameterNotFound = stopIfParameterNotFound
+    )
+    names(prepared)[[idx]] <- name
+  }
+  list(scenarioNames = scenarioNames, prepared = prepared)
+}
+
 # .collectScenarioResult ----
 
 # Resolve output quantities and build the standard return list for one
-# scenario.
+# scenario. When a scenario produced no results, `stopIfFails` decides whether
+# that aborts the run (the default) or only warns and leaves `outputValues`
+# NULL.
 # @keywords internal
 # @noRd
-.collectScenarioResult <- function(scenario, simulation, results, population) {
+.collectScenarioResult <- function(
+  scenario,
+  simulation,
+  results,
+  population,
+  stopIfFails = TRUE
+) {
   outputQuantities <- NULL
   if (!is.null(scenario$outputPaths)) {
     outputQuantities <- getAllQuantitiesMatching(
@@ -449,6 +587,9 @@
   }
   outputValues <- NULL
   if (is.null(results)) {
+    if (isTRUE(stopIfFails)) {
+      cli::cli_abort(messages$missingResultsForScenario(scenario$scenarioName))
+    }
     cli::cli_warn(messages$missingResultsForScenario(scenario$scenarioName))
   } else {
     outputValues <- getOutputValues(
@@ -504,66 +645,28 @@
   customParams = NULL,
   simulationRunOptions = NULL,
   validate = TRUE,
-  stopIfParameterNotFound = TRUE
+  stopIfParameterNotFound = TRUE,
+  stopIfFails = TRUE
 ) {
-  validateIsOfType(project, "Project")
-  .validateParametersStructure(
-    parameterStructure = customParams,
-    argumentName = "customParams",
-    nullAllowed = TRUE
+  simulationRunOptions <- .scenarioBuildPreflight(
+    project = project,
+    customParams = customParams,
+    simulationRunOptions = simulationRunOptions,
+    validate = validate,
+    opName = "runScenarios"
   )
-  # When the caller does not pass run options, fall back to the project-level
-  # `defaultSimulationRunOptions` (a reproducible run from the shared artifact).
-  # An explicit caller argument always wins; an absent project default leaves
-  # `simulationRunOptions` NULL, i.e. exactly the package defaults as before.
-  if (is.null(simulationRunOptions)) {
-    simulationRunOptions <- .buildSimulationRunOptions(
-      project$defaultSimulationRunOptions
-    )
-  }
-  if (isTRUE(validate)) {
-    project$ensureValid(
-      sections = c(
-        "outputPaths",
-        "scenarios",
-        "individuals",
-        "populations",
-        "applications",
-        "parameterSets",
-        "crossReferences"
-      ),
-      opName = "runScenarios"
-    )
-  }
 
+  built <- .buildScenarioSimulations(
+    project = project,
+    scenarioNames = scenarioNames,
+    customParams = customParams,
+    simulationRunOptions = simulationRunOptions,
+    stopIfParameterNotFound = stopIfParameterNotFound
+  )
+  scenarioNames <- built$scenarioNames
+  prepared <- built$prepared
+  # Still needed below to hand each scenario record to `.collectScenarioResult`.
   allScenarios <- project$definitions$scenarios
-  if (is.null(scenarioNames)) {
-    scenarioNames <- names(allScenarios)
-  }
-  unknownNames <- setdiff(scenarioNames, names(allScenarios))
-  if (length(unknownNames) > 0) {
-    cli::cli_abort(
-      "Unknown scenario names: {.val {unknownNames}}."
-    )
-  }
-
-  cache <- new.env(parent = emptyenv())
-  cache$individuals <- list()
-  cache$populations <- list()
-
-  prepared <- vector("list", length(scenarioNames))
-  for (idx in seq_along(scenarioNames)) {
-    name <- scenarioNames[[idx]]
-    prepared[[idx]] <- .prepareScenario(
-      scenario = allScenarios[[name]],
-      project = project,
-      customParams = customParams,
-      cache = cache,
-      simulationRunOptions = simulationRunOptions,
-      stopIfParameterNotFound = stopIfParameterNotFound
-    )
-    names(prepared)[[idx]] <- name
-  }
 
   individualSimulations <- list()
   for (idx in seq_along(scenarioNames)) {
@@ -602,9 +705,45 @@
       scenario = allScenarios[[name]],
       simulation = p$simulation,
       results = simulationResults[[p$simulation$id]],
-      population = p$population
+      population = p$population,
+      stopIfFails = stopIfFails
     )
     names(out)[[idx]] <- name
   }
   out
+}
+
+# .buildSimulationsFromProject ----
+
+# Build (but do not run) the simulations for the requested scenarios. Runs the
+# same validation preflight and run-option fallback as `.runScenariosFromProject`
+# so a built simulation resolves exactly the same project state a run would, then
+# returns `.buildScenarioSimulations()`'s per-scenario `list(simulation,
+# population)` map directly. Nothing is simulated, so there is no `stopIfFails`.
+# @keywords internal
+# @noRd
+.buildSimulationsFromProject <- function(
+  project,
+  scenarioNames = NULL,
+  customParams = NULL,
+  simulationRunOptions = NULL,
+  validate = TRUE,
+  stopIfParameterNotFound = TRUE
+) {
+  simulationRunOptions <- .scenarioBuildPreflight(
+    project = project,
+    customParams = customParams,
+    simulationRunOptions = simulationRunOptions,
+    validate = validate,
+    opName = "buildSimulations"
+  )
+
+  built <- .buildScenarioSimulations(
+    project = project,
+    scenarioNames = scenarioNames,
+    customParams = customParams,
+    simulationRunOptions = simulationRunOptions,
+    stopIfParameterNotFound = stopIfParameterNotFound
+  )
+  built$prepared
 }

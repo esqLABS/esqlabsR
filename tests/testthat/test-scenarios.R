@@ -981,6 +981,57 @@ test_that("removeScenario removes a vector of ids in one write-through", {
   expect_false(any(c("s1", "s2") %in% names(reloaded$definitions$scenarios)))
 })
 
+# buildSimulations ----
+
+test_that("buildSimulations returns simulation + population without running", {
+  withr::local_options(lifecycle_verbosity = "quiet")
+  project <- testProject()
+  built <- buildSimulations(project, scenarios = "testscenario")
+  expect_named(built, "testscenario")
+  expect_named(built$testscenario, c("simulation", "population"))
+  expect_s3_class(built$testscenario$simulation, "Simulation")
+  expect_null(built$testscenario$population)
+})
+
+test_that("buildSimulations attaches a Population for a population scenario", {
+  withr::local_options(lifecycle_verbosity = "quiet")
+  project <- testProject()
+  built <- buildSimulations(project, scenarios = "populationscenario")
+  expect_s3_class(built$populationscenario$population, "Population")
+})
+
+test_that("buildSimulations applies customParams to the built simulation", {
+  withr::local_options(lifecycle_verbosity = "quiet")
+  project <- testProject()
+  path <- "Organism|Liver|EHC continuous fraction"
+  built <- buildSimulations(
+    project,
+    scenarios = "testscenario",
+    customParams = list(paths = path, values = 0.42, units = "")
+  )
+  applied <- ospsuite::getQuantityValuesByPath(
+    quantityPaths = path,
+    simulation = built$testscenario$simulation
+  )
+  expect_equal(applied, 0.42)
+})
+
+test_that("buildSimulations errors on an unknown scenario name", {
+  withr::local_options(lifecycle_verbosity = "quiet")
+  project <- testProject()
+  expect_error(
+    buildSimulations(project, scenarios = "NopeNope"),
+    regexp = "NopeNope"
+  )
+})
+
+test_that("buildSimulations rejects a non-Project", {
+  expect_error(
+    buildSimulations("not a project"),
+    regexp = "must be a"
+  )
+})
+
 # Print method ----
 
 test_that("print.Scenario renders the configured fields", {

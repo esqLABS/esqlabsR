@@ -362,3 +362,18 @@
         * Weight Range: <empty string>
         * Height Range: <empty string>
 
+# print.PopulationSource renders a csv and a programmatic source
+
+    Code
+      print(csv)
+    Output
+      <PopulationSource>
+        * Type: csv
+        * File: p.csv
+    Code
+      print(prog)
+    Output
+      <PopulationSource>
+        * Type: programmatic
+        * File: resolved from the runtime store at run time
+
