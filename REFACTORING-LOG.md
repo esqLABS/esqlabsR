@@ -31,3 +31,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-07-23 12:16: The run path resolves a population by its entry `type` (programmatic from the store, csv from its file, else demographics spec), scenario CSV flag kept for back-compat (#1024).
 - 2026-07-23 12:19: `saveProject()` freezes an injected `Population` to `<id>.csv` and rewrites its entry to a csv source, so it survives reload (#1024).
 - 2026-07-23 12:29: Addressed review: orphan programmatic population sentinel now serializes verbatim (no save-blocking abort); moved two run-path aborts to the messages catalog; shared the scenario build preflight (#1130).
+- 2026-07-23 14:31: ponytail cleanup: inline single-use `.asPopulation`, shrink `.populationEntryRequiredFields`, fold `.resolveProgrammaticPopulation` into its switch arm (#1130).

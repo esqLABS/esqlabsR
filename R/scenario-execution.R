@@ -238,27 +238,20 @@
 
   population <- switch(
     effectiveType,
-    "programmatic" = .resolveProgrammaticPopulation(scenario, project),
+    # A `programmatic` sentinel with no backing object (a project reloaded
+    # without re-injecting) is fatal: a population scenario cannot run without
+    # one.
+    "programmatic" = project$getProgrammaticPopulation(
+      scenario$populationId
+    ) %||%
+      cli::cli_abort(messages$populationProgrammaticUnresolved(
+        id = scenario$populationId,
+        scenarioName = scenario$scenarioName
+      )),
     "csv" = .resolveCsvPopulation(scenario, project, popData),
     "spec" = .resolveSpecPopulation(scenario, popData)
   )
   cache$populations[[scenario$populationId]] <- population
-  population
-}
-
-# Pull a session-injected `Population` from the runtime store. Fatal if the
-# sentinel has no backing object (a project reloaded without re-injecting),
-# since a population scenario cannot run without one.
-# @keywords internal
-# @noRd
-.resolveProgrammaticPopulation <- function(scenario, project) {
-  population <- project$getProgrammaticPopulation(scenario$populationId)
-  if (is.null(population)) {
-    cli::cli_abort(messages$populationProgrammaticUnresolved(
-      id = scenario$populationId,
-      scenarioName = scenario$scenarioName
-    ))
-  }
   population
 }
 

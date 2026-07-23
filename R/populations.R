@@ -45,22 +45,14 @@
     # stamp them a source class that prints their source instead of empty
     # demographics. An entry with no `type` is the demographics spec, unchanged.
     popData <- if (is.null(popData$type)) {
-      .asPopulation(popData)
+      class(popData) <- c("Population", "list")
+      popData
     } else {
       .asPopulationSource(popData)
     }
     result[[id]] <- popData
   }
   result
-}
-
-# Stamp a demographics-spec population entry with `c("Population", "list")`.
-#
-# @keywords internal
-# @noRd
-.asPopulation <- function(entry) {
-  class(entry) <- c("Population", "list")
-  entry
 }
 
 # Stamp a non-demographics population entry (a `programmatic` sentinel or a
@@ -101,13 +93,10 @@
 # @keywords internal
 # @noRd
 .populationEntryRequiredFields <- function(type) {
-  if (is.null(type)) {
-    return("species")
-  }
   switch(
-    type,
+    type %||% "spec",
+    "spec" = "species",
     "csv" = "file",
-    "programmatic" = character(0),
     character(0)
   )
 }
