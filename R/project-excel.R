@@ -257,11 +257,21 @@ importProjectFromExcel <- function(
           # regardless of case, and the sheet's set id is added to the
           # individual's `parameterSets` (deduplicated, keeping any set the
           # `ParameterSets` column already named).
+          sheetCanonical <- vapply(
+            paramSheetNames,
+            .canonicalizeOneId,
+            character(1)
+          )
           jsonData$individuals <- lapply(jsonData$individuals, function(indiv) {
-            match <- paramSheetNames[
-              .canonicalizeOneId(indiv$individualId) ==
-                vapply(paramSheetNames, .canonicalizeOneId, character(1))
-            ]
+            indivCanonical <- .canonicalizeOneId(indiv$individualId)
+            # A blank/NA individual id (e.g. a trailing blank row) matches
+            # nothing: an `NA ==` comparison yields all-NA, and indexing by an
+            # all-NA logical returns a vector of NAs, not an empty one, so guard
+            # it explicitly rather than injecting NA into `parameterSets`.
+            if (is.na(indivCanonical)) {
+              return(indiv)
+            }
+            match <- paramSheetNames[indivCanonical == sheetCanonical]
             if (length(match) > 0L) {
               indiv$parameterSets <- as.list(unique(c(
                 unlist(indiv$parameterSets),
@@ -1403,15 +1413,21 @@ projectStatus <- function(project, silent = FALSE) {
   }
 
   importerConfig <- prop("dataImporterConfigurationFile")
+  # `file` / `importerConfiguration` are stored as given (relative to
+  # `dataFolder`), not truncated to a basename: the loader resolves them under
+  # `dataFolder` (`.resolveDataPath()`), so a file in a subfolder would be lost
+  # if only its basename were kept. Only the section key is reduced to a
+  # basename, since an id becomes a single filename segment and cannot hold a
+  # path separator.
   entry <- list(
     type = "excel",
-    file = basename(dataFile),
+    file = dataFile,
     sheets = as.list(readxl::excel_sheets(dataFilePath))
   )
   if (
     !is.null(importerConfig) && !is.na(importerConfig) && importerConfig != ""
   ) {
-    entry$importerConfiguration <- basename(importerConfig)
+    entry$importerConfiguration <- importerConfig
   }
   jsonData$observedData <- stats::setNames(
     list(entry),
@@ -2056,20 +2072,36 @@ projectStatus <- function(project, silent = FALSE) {
     }
     raw <- rows[["OptionValue"]][[i]]
     numeric <- suppressWarnings(as.numeric(raw))
-    options[[name]] <- if (!is.na(numeric)) numeric else as.character(raw)
+    token <- tolower(trimws(as.character(raw)))
+    options[[name]] <- if (!is.na(numeric)) {
+      # A numeric value stays numeric, so a `1`/`0` option is not misread as a
+      # boolean.
+      numeric
+    } else if (token %in% c("true", "false")) {
+      # An explicit boolean-string flag (a common 5.x option encoding) becomes a
+      # real logical, not the literal string a downstream consumer would reject.
+      token == "true"
+    } else {
+      as.character(raw)
+    }
   }
   options
 }
 
 # Join a container path and parameter name into the flat `path` the PI
 # definition uses (`<container>|<parameter>`); a blank container yields just the
-# parameter name.
+# parameter name. A blank/NA parameter name yields NULL (no meaningful path),
+# so the caller drops the field and validation flags the incomplete parameter
+# rather than a `"<container>|NA"` path that looks valid but references nothing.
 #
 # @keywords internal
 # @noRd
 .pi5xPath <- function(containerPath, parameterName) {
   container <- as.character(containerPath)
   parameter <- as.character(parameterName)
+  if (is.na(parameter) || parameter == "") {
+    return(NULL)
+  }
   if (is.na(container) || container == "") {
     return(parameter)
   }

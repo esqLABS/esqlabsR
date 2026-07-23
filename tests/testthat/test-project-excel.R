@@ -692,6 +692,92 @@ test_that(".resolvePIOutputPathRefs rewrites a full-path mapping to the output-p
   )
 })
 
+# Blank/NA-cell guards in the 5.x parsers (PR #1160 review). A real legacy
+# workbook can carry a trailing blank row or an empty cell; these must be
+# skipped or dropped, not turned into an injected `NA`, a `"...|NA"` path, or a
+# stringified boolean.
+
+test_that(".pi5xPath drops a blank parameter name instead of building a `|NA` path", {
+  expect_null(.pi5xPath("Aciclovir", NA))
+  expect_null(.pi5xPath("Aciclovir", ""))
+  expect_identical(
+    .pi5xPath("Aciclovir", "Lipophilicity"),
+    "Aciclovir|Lipophilicity"
+  )
+  # A blank container with a real parameter still yields the parameter alone.
+  expect_identical(.pi5xPath(NA, "Lipophilicity"), "Lipophilicity")
+})
+
+test_that(".pi5xOptionRows coerces a boolean-string option but keeps numbers numeric", {
+  df <- data.frame(
+    PITaskName = c("t", "t", "t", "t"),
+    OptionName = c("flag_true", "flag_false", "count", "method"),
+    OptionValue = c("TRUE", "false", "5", "hessian"),
+    stringsAsFactors = FALSE
+  )
+  o <- .pi5xOptionRows(df, "t")
+  expect_identical(o$flag_true, TRUE)
+  expect_identical(o$flag_false, FALSE)
+  # A numeric value stays numeric (not misread as a boolean).
+  expect_identical(o$count, 5)
+  expect_identical(o$method, "hessian")
+})
+
+test_that("the individuals import skips a blank IndividualId row rather than injecting NA", {
+  # A trailing blank-id biometrics row plus a parameter-set sheet used to inject
+  # NA into every individual's parameterSets (an all-NA logical index returns a
+  # vector of NAs, not an empty one).
+  indivDf <- data.frame(
+    IndividualId = c("Indiv1", NA),
+    Species = c("Human", NA),
+    Population = c("European_ICRP_2002", NA),
+    Gender = c("MALE", NA),
+    `Weight [kg]` = c(73, NA),
+    `Height [cm]` = c(176, NA),
+    `Age [year(s)]` = c(30, NA),
+    check.names = FALSE,
+    stringsAsFactors = FALSE
+  )
+  individuals <- .parseExcelIndividuals(indivDf)
+  paramSheetNames <- "Indiv1"
+  sheetCanonical <- vapply(paramSheetNames, .canonicalizeOneId, character(1))
+  linked <- lapply(individuals, function(indiv) {
+    indivCanonical <- .canonicalizeOneId(indiv$individualId)
+    if (is.na(indivCanonical)) {
+      return(indiv)
+    }
+    match <- paramSheetNames[indivCanonical == sheetCanonical]
+    if (length(match) > 0L) {
+      indiv$parameterSets <- as.list(unique(c(
+        unlist(indiv$parameterSets),
+        match
+      )))
+    }
+    indiv
+  })
+  expect_identical(unlist(linked[[1]]$parameterSets), "Indiv1")
+  # The blank-id row gains no parameterSets (no injected NA).
+  expect_null(linked[[2]]$parameterSets)
+})
+
+test_that(".parseExcelObservedData keeps a subfolder path rather than truncating to basename", {
+  # The loader resolves `file` under `dataFolder`, so a file named in a subfolder
+  # must keep its relative path; truncating to the basename would make it
+  # unresolvable on load.
+  work <- withr::local_tempdir()
+  dir.create(file.path(work, "Data", "Sub"), recursive = TRUE)
+  dataPath <- file.path(work, "Data", "Sub", "Values.xlsx")
+  .writeExcel(list(Sheet1 = data.frame(x = 1)), dataPath)
+  prop <- function(name) {
+    switch(name, dataFile = "Sub/Values.xlsx", dataFolder = "Data", NULL)
+  }
+  result <- .parseExcelObservedData(list(), prop, work)
+  entry <- result$observedData[[1]]
+  expect_identical(entry$file, "Sub/Values.xlsx")
+  # The section key is the basename (an id cannot hold a path separator).
+  expect_identical(names(result$observedData), "Values.xlsx")
+})
+
 # The project records a single experimental-data workbook under `dataFolder`.
 # The importer reifies it as one `excel` observed-data definition listing the
 # workbook's sheets, so a plot or PI mapping that references observed data has
