@@ -86,6 +86,8 @@
 #'   Fields of a PI output mapping. See [addPIOutputMapping()].
 #' @param pkmlFilePaths Character vector of `.pkml` file paths. See
 #'   [createScenariosFromPKML()].
+#' @param overwrite Logical scalar controlling duplicate-collision behaviour of
+#'   the `add*` authoring methods. See [addParameterEntry()], [addPITask()].
 #' @param ... Passed to the matching authoring free function (e.g. the
 #'   partial-update fields of [setScenario()] / [setIndividual()], or the
 #'   remaining arguments of [createScenariosFromPKML()]).
@@ -265,7 +267,8 @@ Project <- R6::R6Class(
       steadyStateTime = 1000,
       steadyStateTimeUnit = "min",
       overwriteFormulasInSS = FALSE,
-      readPopulationFromCSV = FALSE
+      readPopulationFromCSV = FALSE,
+      overwrite = FALSE
     ) {
       private$.impl(
         .addScenario_impl,
@@ -283,7 +286,8 @@ Project <- R6::R6Class(
         steadyStateTime,
         steadyStateTimeUnit,
         overwriteFormulasInSS,
-        readPopulationFromCSV
+        readPopulationFromCSV,
+        overwrite
       )
     },
 
@@ -346,8 +350,8 @@ Project <- R6::R6Class(
     },
 
     #' @description Add an application. See [addApplication()].
-    addApplication = function(id, parameterSets = NULL) {
-      private$.impl(.addApplication_impl, id, parameterSets)
+    addApplication = function(id, parameterSets = NULL, overwrite = FALSE) {
+      private$.impl(.addApplication_impl, id, parameterSets, overwrite)
     },
 
     #' @description Remove applications. See [removeApplication()].
@@ -362,8 +366,8 @@ Project <- R6::R6Class(
     },
 
     #' @description Add an output path. See [addOutputPath()].
-    addOutputPath = function(id, path) {
-      private$.impl(.addOutputPath_impl, id, path)
+    addOutputPath = function(id, path, overwrite = FALSE) {
+      private$.impl(.addOutputPath_impl, id, path, overwrite)
     },
 
     #' @description Remove output paths. See [removeOutputPath()].
@@ -377,8 +381,8 @@ Project <- R6::R6Class(
     },
 
     #' @description Add a parameter set. See [addParameterSet()].
-    addParameterSet = function(id) {
-      private$.impl(.addParameterSet_impl, id)
+    addParameterSet = function(id, overwrite = FALSE) {
+      private$.impl(.addParameterSet_impl, id, overwrite)
     },
 
     #' @description Remove parameter sets. See [removeParameterSet()].
@@ -392,7 +396,8 @@ Project <- R6::R6Class(
       containerPath,
       parameterName,
       value,
-      units
+      units,
+      overwrite = FALSE
     ) {
       private$.impl(
         .addParameterEntry_impl,
@@ -400,7 +405,8 @@ Project <- R6::R6Class(
         containerPath,
         parameterName,
         value,
-        units
+        units,
+        overwrite
       )
     },
 
@@ -416,8 +422,8 @@ Project <- R6::R6Class(
     },
 
     #' @description Add an initial-conditions set. See [addInitialConditions()].
-    addInitialConditions = function(id) {
-      private$.impl(.addInitialConditions_impl, id)
+    addInitialConditions = function(id, overwrite = FALSE) {
+      private$.impl(.addInitialConditions_impl, id, overwrite)
     },
 
     #' @description Remove initial-conditions sets. See
@@ -428,8 +434,21 @@ Project <- R6::R6Class(
 
     #' @description Add an entry to an initial-conditions set. See
     #'   [addInitialConditionEntry()].
-    addInitialConditionEntry = function(id, path, value, unit) {
-      private$.impl(.addInitialConditionEntry_impl, id, path, value, unit)
+    addInitialConditionEntry = function(
+      id,
+      path,
+      value,
+      unit,
+      overwrite = FALSE
+    ) {
+      private$.impl(
+        .addInitialConditionEntry_impl,
+        id,
+        path,
+        value,
+        unit,
+        overwrite
+      )
     },
 
     #' @description Remove an entry from an initial-conditions set. See
@@ -459,8 +478,13 @@ Project <- R6::R6Class(
     },
 
     #' @description Add a data-combined entry. See [addDataCombined()].
-    addDataCombined = function(id, simulated = list(), observed = list()) {
-      private$.impl(.addDataCombined_impl, id, simulated, observed)
+    addDataCombined = function(
+      id,
+      simulated = list(),
+      observed = list(),
+      overwrite = FALSE
+    ) {
+      private$.impl(.addDataCombined_impl, id, simulated, observed, overwrite)
     },
 
     #' @description Remove data-combined entries. See [removeDataCombined()].
@@ -469,8 +493,8 @@ Project <- R6::R6Class(
     },
 
     #' @description Add observed data. See [addObservedData()].
-    addObservedData = function(entry) {
-      private$.impl(.addObservedData_impl, entry)
+    addObservedData = function(entry, overwrite = FALSE) {
+      private$.impl(.addObservedData_impl, entry, overwrite)
     },
 
     #' @description Remove observed data. See [removeObservedData()].
@@ -495,7 +519,8 @@ Project <- R6::R6Class(
       scenarios,
       parameters,
       outputMappings,
-      configuration = list()
+      configuration = list(),
+      overwrite = FALSE
     ) {
       private$.impl(
         .addPITask_impl,
@@ -503,7 +528,8 @@ Project <- R6::R6Class(
         scenarios,
         parameters,
         outputMappings,
-        configuration
+        configuration,
+        overwrite
       )
     },
 
@@ -521,7 +547,8 @@ Project <- R6::R6Class(
       maxValue,
       startValue,
       units = NULL,
-      id = NULL
+      id = NULL,
+      overwrite = FALSE
     ) {
       private$.impl(
         .addPIParameter_impl,
@@ -532,7 +559,8 @@ Project <- R6::R6Class(
         maxValue,
         startValue,
         units,
-        id
+        id,
+        overwrite
       )
     },
 
@@ -554,7 +582,8 @@ Project <- R6::R6Class(
       xFactor = 1,
       yFactor = 1,
       weight = NULL,
-      id = NULL
+      id = NULL,
+      overwrite = FALSE
     ) {
       private$.impl(
         .addPIOutputMapping_impl,
@@ -568,7 +597,8 @@ Project <- R6::R6Class(
         xFactor,
         yFactor,
         weight,
-        id
+        id,
+        overwrite
       )
     },
 

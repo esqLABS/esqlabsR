@@ -115,6 +115,61 @@ NULL
   invisible(id)
 }
 
+# Validate and normalise the `overwrite` flag pulled out of `...` by the
+# authoring functions that take their per-definition fields through `...`
+# (addIndividual / addPopulation / addPlot / addPlotGrid). The functions that
+# take `overwrite` as a direct formal get R's own type error on a malformed
+# value; this gives the `...`-based ones the same strictness (a non-scalar or
+# non-logical `overwrite` aborts) rather than silently coercing to `FALSE`.
+# Returns the validated logical scalar; an absent flag defaults to `FALSE`.
+#
+# @keywords internal
+# @noRd
+.validateOverwriteFlag <- function(value, call = rlang::caller_env()) {
+  if (is.null(value)) {
+    return(FALSE)
+  }
+  if (!is.logical(value) || length(value) != 1L || is.na(value)) {
+    cli::cli_abort(
+      "{.arg overwrite} must be a single {.code TRUE} or {.code FALSE}.",
+      call = call
+    )
+  }
+  value
+}
+
+# The shared duplicate-collision guard for the overwrite-aware `add*` functions.
+# When not overwriting, aborts on a within-batch duplicate id (via
+# `.assertNoDuplicateIds()`) and then on any id that already exists in the
+# section, raising the shared `messages$definitionAlreadyExists()` hint so the
+# wording stays identical across every `add*` site. When overwriting, both
+# checks are skipped (an existing id is replaced, an in-batch repeat resolves
+# last-write-wins). `definition` is the singular label for the kind (e.g.
+# "scenario", "parameter set"); `existingIds` is the section's current ids.
+#
+# @keywords internal
+# @noRd
+.assertNoOverwriteClash <- function(
+  id,
+  existingIds,
+  definition,
+  overwrite,
+  call = rlang::caller_env()
+) {
+  if (overwrite) {
+    return(invisible(id))
+  }
+  .assertNoDuplicateIds(id, definition, call = call)
+  clash <- intersect(id, existingIds)
+  if (length(clash) > 0L) {
+    cli::cli_abort(
+      messages$definitionAlreadyExists("{definition} {.val {clash}}"),
+      call = call
+    )
+  }
+  invisible(id)
+}
+
 # Recycle / align one scalar-per-definition field to N definitions. A length-1 value
 # is recycled to all N; a length-N value is aligned by position; any other
 # length aborts naming the field and the lengths. `NULL` passes through as

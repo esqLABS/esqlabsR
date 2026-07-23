@@ -37,7 +37,8 @@
       addParameterSet(project, "global")
     Condition
       Error in `addParameterSet()`:
-      ! parameter set "global" already exists
+      ! parameter set "global" already exists.
+      i Pass `overwrite = TRUE` to replace it.
 
 # addParameterSet aborts on a duplicate id in the batch
 
@@ -53,6 +54,17 @@
       addParameterEntry(project, "tempset", "Organism|A", "K", 1.5, "1/h")
     Message
       Created parameter set "tempset" on demand to hold the new entry.
+
+# addParameterEntry aborts on an in-batch duplicate by default
+
+    Code
+      suppressMessages(addParameterEntry(project, "dupset", containerPath = c(
+        "Organism|A", "Organism|A"), parameterName = c("K", "K"), value = c(1, 9),
+      units = c("1/h", "1/min")))
+    Condition
+      Error in `addParameterEntry()`:
+      ! parameter "Organism|A|K" already exists in the set.
+      i Pass `overwrite = TRUE` to replace it.
 
 # addParameterEntry aborts on mismatched vector lengths
 
@@ -148,7 +160,8 @@
       addInitialConditions(project, "dupset")
     Condition
       Error in `addInitialConditions()`:
-      ! initial-condition set "dupset" already exists
+      ! initial-condition set "dupset" already exists.
+      i Pass `overwrite = TRUE` to replace it.
 
 # addInitialConditions aborts on a duplicate id in the batch
 
@@ -164,6 +177,16 @@
       addInitialConditionEntry(project, "tempset", "Organism|A", 1.5, "mg/l")
     Message
       Created initial-condition set "tempset" on demand to hold the new entry.
+
+# addInitialConditionEntry aborts on an in-batch duplicate by default
+
+    Code
+      suppressMessages(addInitialConditionEntry(project, "dset", path = c(
+        "Organism|A", "Organism|A"), value = c(1, 9), unit = c("mg/l", "mg/l")))
+    Condition
+      Error in `addInitialConditionEntry()`:
+      ! initial condition "Organism|A" already exists in the set.
+      i Pass `overwrite = TRUE` to replace it.
 
 # addInitialConditionEntry aborts on mismatched vector lengths
 
@@ -182,7 +205,7 @@
     Message
       Created initial-condition set "set" on demand to hold the new entry.
     Condition
-      Error in `.addInitialConditionEntry()`:
+      Error in `addInitialConditionEntry()`:
       ! Invalid initial-condition entry:
       x unit must be a non-empty string
 

@@ -27,7 +27,11 @@ multi-value field and applied \strong{whole} to every grid (collapsed to a
 comma-separated string), not split one-per-grid. So \code{title = c("A", "B")}
 gives every grid the single title \code{"A, B"}, not grid 1 \code{"A"} and grid 2
 \code{"B"}. To vary a \code{...} field per grid, pass a length-\code{N} \strong{list}
-(\code{title = list("A", "B")}).}
+(\code{title = list("A", "B")}).
+
+\code{...} also accepts \code{overwrite}, a logical scalar (default \code{FALSE}): a
+plot-grid id that already exists aborts unless \code{overwrite = TRUE}, which
+replaces it (last-write-wins).}
 }
 \value{
 The \code{project} object, invisibly.

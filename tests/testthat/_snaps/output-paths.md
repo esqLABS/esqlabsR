@@ -4,7 +4,8 @@
       addOutputPath(project, existing, "Organism|other|Concentration in container")
     Condition
       Error in `addOutputPath()`:
-      ! outputPath "aciclovir_fat_cell" already exists
+      ! outputPath "aciclovir_fat_cell" already exists.
+      i Pass `overwrite = TRUE` to replace it.
 
 # addOutputPath aborts on a duplicate id in the batch
 

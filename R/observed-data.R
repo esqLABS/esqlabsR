@@ -395,12 +395,15 @@ getObservedDataNames <- function(project) {
 #'
 #' @param project A `Project` object.
 #' @param entry Either a `DataSet` object or a configuration list.
+#' @param overwrite Logical scalar. When `FALSE` (default), a source whose id
+#'   already exists (a `DataSet` name, or a config `file` basename) aborts.
+#'   When `TRUE`, the existing source with that id is replaced (last-write-wins).
 #' @returns The `project` object, invisibly.
 #' @export
 #' @family observedData
-addObservedData <- function(project, entry) {
+addObservedData <- function(project, entry, overwrite = FALSE) {
   validateIsOfType(project, "Project")
-  project$addObservedData(entry)
+  project$addObservedData(entry, overwrite)
 }
 
 # Implementation behind `project$addObservedData()` / `addObservedData()`.
@@ -408,7 +411,13 @@ addObservedData <- function(project, entry) {
 #
 # @keywords internal
 # @noRd
-.addObservedData_impl <- function(self, private, entry, .call) {
+.addObservedData_impl <- function(
+  self,
+  private,
+  entry,
+  overwrite = FALSE,
+  .call
+) {
   rlang::local_error_call(.call)
   if (inherits(entry, "DataSet")) {
     name <- entry$name
@@ -419,24 +428,54 @@ addObservedData <- function(project, entry) {
     .validateObservedDataId(paste0(name, ".pkml"))
     # Reentrant call: pass the attribution call on rather than re-resolving it.
     existingNames <- .getObservedDataNames_impl(self, private, .call = .call)
-    if (name %in% existingNames) {
-      cli::cli_abort(
-        "observedData entry with name {.val {name}} already exists"
-      )
+    if (name %in% existingNames && !overwrite) {
+      cli::cli_abort(c(
+        "observedData entry with name {.val {name}} already exists.",
+        "i" = "Pass {.code overwrite = TRUE} to replace it."
+      ))
     }
     sentinel <- .asObservedDataSource(list(type = "programmatic", name = name))
     # Update the in-memory section and the runtime store together: under
     # explicit-save `.setSection()` does not touch disk, so both are pure
     # in-memory mutations. Any on-disk id/basename collision is surfaced later,
     # by the serializer, when `saveProject()` reconciles the tree.
-    private$.setSection(
-      "observedData",
-      c(private$.getSection("observedData"), list(sentinel))
-    )
+    observedData <- private$.getSection("observedData")
+    # On overwrite, replace the existing programmatic sentinel that carries this
+    # name in place. A DataSet is keyed by its `name`, so only a programmatic
+    # sentinel of the same name can be replaced in place.
+    replaceIdx <- if (overwrite) {
+      which(vapply(
+        observedData,
+        function(e) {
+          identical(e$type, "programmatic") && identical(e$name, name)
+        },
+        logical(1)
+      ))
+    } else {
+      integer()
+    }
+    if (length(replaceIdx) > 0L) {
+      observedData[[replaceIdx[[1]]]] <- sentinel
+    } else if (overwrite && name %in% existingNames) {
+      # The name collides with a file-based (pkml/excel/script) source, not a
+      # programmatic one, so there is no programmatic entry to replace. Appending
+      # would leave two sources resolving to the same name and only fail later,
+      # opaquely, at the next load/save. Abort now, naming the fix.
+      cli::cli_abort(c(
+        "observedData entry with name {.val {name}} is a file-based source, \\
+        not a programmatic one, so it cannot be overwritten with a {.cls DataSet}.",
+        "i" = "Remove it first with {.code removeObservedData()} (by its file \\
+        basename), then add the {.cls DataSet}."
+      ))
+    } else {
+      observedData <- c(observedData, list(sentinel))
+    }
+    private$.setSection("observedData", observedData)
     private$.programmaticDataSets[[name]] <- entry
     # The observedData setter resets the names cache, so rebuild it after the
-    # write, from the names known before it plus the newly added name.
-    private$.observedDataNamesCache <- c(existingNames, name)
+    # write. On an overwrite the name is already in `existingNames`, so union
+    # rather than append to keep the cache free of duplicates.
+    private$.observedDataNamesCache <- union(existingNames, name)
     cli::cli_inform(messages$observedDataProgrammaticAdded(
       name,
       hasDataFolder = !is.null(self$paths$dataFolder)
@@ -462,7 +501,8 @@ addObservedData <- function(project, entry) {
       length(self$definitions$observedData) + 1L
     )
     # Config entries are keyed by `file` basename (see removeObservedData);
-    # abort on a duplicate to match the other mutators' convention.
+    # abort on a duplicate to match the other mutators' convention, unless
+    # overwriting.
     fileBase <- basename(entry[["file"]])
     existingFiles <- vapply(
       self$definitions$observedData,
@@ -471,19 +511,23 @@ addObservedData <- function(project, entry) {
       },
       character(1)
     )
-    if (fileBase %in% existingFiles) {
-      cli::cli_abort(
-        "observedData entry with file {.val {fileBase}} already exists"
-      )
+    if (fileBase %in% existingFiles && !overwrite) {
+      cli::cli_abort(c(
+        "observedData entry with file {.val {fileBase}} already exists.",
+        "i" = "Pass {.code overwrite = TRUE} to replace it."
+      ))
     }
     private$.observedDataNamesCache <- NULL
-    private$.setSection(
-      "observedData",
-      c(
-        private$.getSection("observedData"),
-        list(.asObservedDataSource(entry))
-      )
-    )
+    observedData <- private$.getSection("observedData")
+    # On overwrite, replace the existing entry sharing this basename in place;
+    # otherwise append (a non-overwrite basename clash aborted above).
+    replaceIdx <- if (overwrite) which(existingFiles == fileBase) else integer()
+    if (length(replaceIdx) > 0L) {
+      observedData[[replaceIdx[[1]]]] <- .asObservedDataSource(entry)
+    } else {
+      observedData <- c(observedData, list(.asObservedDataSource(entry)))
+    }
+    private$.setSection("observedData", observedData)
     return(invisible(self))
   }
 

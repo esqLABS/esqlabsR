@@ -4,7 +4,7 @@
 \alias{addApplication}
 \title{Add one or more application protocols to a Project}
 \usage{
-addApplication(project, id, parameterSets = NULL)
+addApplication(project, id, parameterSets = NULL, overwrite = FALSE)
 }
 \arguments{
 \item{project}{A \code{Project} object.}
@@ -16,6 +16,10 @@ the result if it changed).}
 \item{parameterSets}{Optional character vector of set ids referencing
 \code{parameterSets} definitions, applied whole to every protocol. Defaults to
 \code{NULL}. Use a list of the same length as \code{id} for a per-protocol set.}
+
+\item{overwrite}{Logical scalar. When \code{FALSE} (default), an id that already
+exists aborts. When \code{TRUE}, the existing protocol is replaced
+(last-write-wins).}
 }
 \value{
 The \code{project} object, invisibly.

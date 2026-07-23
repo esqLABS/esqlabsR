@@ -36,7 +36,11 @@ vector} passed as a \code{...} field is treated as one multi-value field and
 applied \strong{whole} to every plot (collapsed to a comma-separated string),
 not split one-per-plot. So \code{title = c("A", "B")} gives every plot the
 single title \code{"A, B"}, not plot 1 \code{"A"} and plot 2 \code{"B"}. To vary a
-\code{...} field per plot, pass a length-\code{N} \strong{list} (\code{title = list("A", "B")}).}
+\code{...} field per plot, pass a length-\code{N} \strong{list} (\code{title = list("A", "B")}).
+
+\code{...} also accepts \code{overwrite}, a logical scalar (default \code{FALSE}): a
+plot id that already exists aborts unless \code{overwrite = TRUE}, which
+replaces it (last-write-wins).}
 }
 \value{
 The \code{project} object, invisibly.

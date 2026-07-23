@@ -1482,6 +1482,47 @@ test_that("addPITask() errors on duplicate id", {
   )
 })
 
+test_that("addPITask() overwrite = TRUE replaces an existing task", {
+  project <- testProject()
+  args <- list(
+    id = "dup",
+    scenarios = "testscenario",
+    parameters = list(
+      PIParameter(
+        id = "k",
+        scenarios = "testscenario",
+        path = "x|y",
+        minValue = 0,
+        maxValue = 1,
+        startValue = 0.5
+      )
+    ),
+    outputMappings = list(
+      PIOutputMapping(
+        id = "m",
+        scenarios = "testscenario",
+        outputPath = "aciclovir_pvb",
+        observedData = "Laskin"
+      )
+    )
+  )
+  do.call(addPITask, c(list(project = project), args))
+  before <- length(project$definitions$parameterIdentification)
+  # A second call with overwrite = TRUE and a different parameter path replaces
+  # the task rather than aborting: the task count is unchanged and the stored
+  # task carries the new path.
+  args$parameters[[1]]$path <- "x|z"
+  do.call(
+    addPITask,
+    c(list(project = project), args, list(overwrite = TRUE))
+  )
+  expect_length(project$definitions$parameterIdentification, before)
+  expect_identical(
+    project$definitions$parameterIdentification$dup$parameters[[1]]$path,
+    "x|z"
+  )
+})
+
 test_that("removePITask() warns and no-ops on missing id", {
   project <- testProject()
   expect_snapshot(removePITask(project, "NotThere"))
@@ -2242,6 +2283,48 @@ test_that("addPIParameter() errors on an explicit duplicate id", {
       startValue = 0.5
     )
   )
+})
+
+test_that("addPIParameter() overwrite = TRUE replaces the existing parameter", {
+  project <- testProject()
+  addPITask(
+    project,
+    id = "t",
+    scenarios = "testscenario",
+    parameters = list(
+      PIParameter(
+        id = "dup",
+        scenarios = "testscenario",
+        path = "x|y",
+        minValue = 0,
+        maxValue = 1,
+        startValue = 0.5
+      )
+    ),
+    outputMappings = list(
+      PIOutputMapping(
+        id = "m",
+        scenarios = "testscenario",
+        outputPath = "aciclovir_pvb",
+        observedData = "D"
+      )
+    )
+  )
+  addPIParameter(
+    project,
+    task = "t",
+    id = "dup",
+    path = "a|b",
+    scenarios = "testscenario",
+    minValue = 0,
+    maxValue = 1,
+    startValue = 0.5,
+    overwrite = TRUE
+  )
+  params <- project$definitions$parameterIdentification$t$parameters
+  expect_length(params, 1L)
+  expect_identical(params[[1]]$id, "dup")
+  expect_identical(params[[1]]$path, "a|b")
 })
 
 test_that(".validatePI surfaces duplicate output mapping ids within a task", {

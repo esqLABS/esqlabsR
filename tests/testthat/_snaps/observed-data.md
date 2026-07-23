@@ -38,7 +38,17 @@
           "Laskin 1982.Group A")))
     Condition
       Error in `addObservedData()`:
-      ! observedData entry with file "Aciclovir_TimeValuesData.xlsx" already exists
+      ! observedData entry with file "Aciclovir_TimeValuesData.xlsx" already exists.
+      i Pass `overwrite = TRUE` to replace it.
+
+# addObservedData aborts on a duplicate DataSet name, replaces with overwrite
+
+    Code
+      addObservedData(project, ds2)
+    Condition
+      Error in `addObservedData()`:
+      ! observedData entry with name "prog_ds" already exists.
+      i Pass `overwrite = TRUE` to replace it.
 
 # observedData declarations sharing a basename fail saveProject()
 

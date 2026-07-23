@@ -10,6 +10,33 @@
       ! no plots are defined; add plots before creating a plot grid.
       i use `addPlot()` to add plots referenced by `plots`.
 
+# addDataCombined aborts on an existing id, replaces it with overwrite
+
+    Code
+      addDataCombined(project, "dc", simulated = mk("second"))
+    Condition
+      Error in `addDataCombined()`:
+      ! DataCombined "dc" already exists.
+      i Pass `overwrite = TRUE` to replace it.
+
+# addPlot aborts on an existing id, replaces it with overwrite
+
+    Code
+      addPlot(project, "p", "dc", "population", title = "second")
+    Condition
+      Error in `addPlot()`:
+      ! plot "p" already exists.
+      i Pass `overwrite = TRUE` to replace it.
+
+# addPlotGrid aborts on an existing id, replaces it with overwrite
+
+    Code
+      addPlotGrid(project, "g", plots = "p", title = "second")
+    Condition
+      Error in `addPlotGrid()`:
+      ! plot grid "g" already exists.
+      i Pass `overwrite = TRUE` to replace it.
+
 # addPlot aborts on a mismatched scalar-field length
 
     Code

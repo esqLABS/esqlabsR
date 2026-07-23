@@ -732,29 +732,38 @@ print.InitialConditionSet <- function(x, ...) {
 #' @param id Character vector of set ids. Each is canonicalized to a safe,
 #'   lowercase id (a warning names the result if it changed); each canonical
 #'   id must not already exist.
+#' @param overwrite Logical scalar. When `FALSE` (default), an id that already
+#'   exists aborts. When `TRUE`, the existing set is replaced with a new empty
+#'   set (last-write-wins).
 #' @returns The `project` object, invisibly.
 #' @export
 #' @family parameters
-addParameterSet <- function(project, id) {
+addParameterSet <- function(project, id, overwrite = FALSE) {
   validateIsOfType(project, "Project")
-  project$addParameterSet(id)
+  project$addParameterSet(id, overwrite)
 }
 
 # Implementation behind `project$addParameterSet()` / `addParameterSet()`.
 #
 # @keywords internal
 # @noRd
-.addParameterSet_impl <- function(self, private, id, .call) {
+.addParameterSet_impl <- function(self, private, id, overwrite = FALSE, .call) {
   rlang::local_error_call(.call)
   .assertIdVector(id)
   id <- .canonicalizeId(id)
-  .assertNoDuplicateIds(id, "parameter set")
-  clash <- intersect(id, names(self$definitions$parameterSets))
-  if (length(clash) > 0L) {
-    cli::cli_abort("parameter set {.val {clash}} already exists")
-  }
+  .assertNoOverwriteClash(
+    id,
+    names(self$definitions$parameterSets),
+    "parameter set",
+    overwrite
+  )
   parameterSets <- private$.getSection("parameterSets") %||% list()
   for (one in id) {
+    # Replacing an existing set with an empty one discards its entries, so warn
+    # if it is still referenced, matching removeParameterSet()'s behaviour.
+    if (overwrite && one %in% names(parameterSets)) {
+      .warnIfReferenced(self, "parameterSet", one)
+    }
     parameterSets[[one]] <- .asParameterSet(list())
   }
   private$.setSection("parameterSets", parameterSets)
@@ -813,8 +822,9 @@ removeParameterSet <- function(project, id) {
 #'
 #' Unlike the other `add*` functions, which abort on a missing parent, this
 #' creates the parent set on demand if it does not yet exist (informing you
-#' when it does). Last-write-wins on duplicate `(containerPath, parameterName)`
-#' pairs, including duplicates within a single vectorized call.
+#' when it does). A duplicate `(containerPath, parameterName)` pair (already in
+#' the set, or repeated within a single vectorized call) aborts unless
+#' `overwrite = TRUE`, in which case the last value wins.
 #'
 #' @param project A `Project` object.
 #' @param id Character scalar, set id. Canonicalized; created if not present.
@@ -822,6 +832,9 @@ removeParameterSet <- function(project, id) {
 #' @param parameterName Character vector of parameter names (length N).
 #' @param value Numeric vector of values (length N).
 #' @param units Character vector of units (length N; use `""` for none).
+#' @param overwrite Logical scalar. When `FALSE` (default), a duplicate
+#'   `(containerPath, parameterName)` pair aborts. When `TRUE`, it overwrites
+#'   the existing entry (last-write-wins).
 #' @returns The `project` object, invisibly.
 #' @export
 #' @family parameters
@@ -831,10 +844,18 @@ addParameterEntry <- function(
   containerPath,
   parameterName,
   value,
-  units
+  units,
+  overwrite = FALSE
 ) {
   validateIsOfType(project, "Project")
-  project$addParameterEntry(id, containerPath, parameterName, value, units)
+  project$addParameterEntry(
+    id,
+    containerPath,
+    parameterName,
+    value,
+    units,
+    overwrite
+  )
 }
 
 # Implementation behind `project$addParameterEntry()` / `addParameterEntry()`.
@@ -849,6 +870,7 @@ addParameterEntry <- function(
   parameterName,
   value,
   units,
+  overwrite = FALSE,
   .call
 ) {
   rlang::local_error_call(.call)
@@ -881,7 +903,9 @@ addParameterEntry <- function(
     containerPath,
     parameterName,
     value,
-    units
+    units,
+    overwrite,
+    call = .call
   ))
   private$.setSection("parameterSets", parameterSets)
   invisible(self)
@@ -1025,11 +1049,11 @@ removeParameterEntry <- function(
 }
 
 # Fold N parameter entries (parallel vectors) into a parameter set in one
-# pass, returning the updated list. Each entry is validated and appended (or
-# replaced, last-write-wins) via `.addParameterEntry`, so an in-batch duplicate
-# `(containerPath, parameterName)` resolves to the last value, matching the
-# scalar semantics. N=1 is the scalar case. Folding in memory first lets the
-# caller persist the whole set in a single write-through.
+# pass, returning the updated list. Each entry is validated and appended via
+# `.addParameterEntry`. A duplicate `(containerPath, parameterName)` (already in
+# the set, or repeated earlier in this batch) aborts unless `overwrite = TRUE`,
+# in which case the last value wins. N=1 is the scalar case. Folding in memory
+# first lets the caller persist the whole set in a single write-through.
 #
 # @keywords internal
 # @noRd
@@ -1038,7 +1062,9 @@ removeParameterEntry <- function(
   containerPath,
   parameterName,
   value,
-  units
+  units,
+  overwrite = FALSE,
+  call = rlang::caller_env()
 ) {
   n <- .assertParameterEntryVectorLengths(
     containerPath,
@@ -1052,16 +1078,19 @@ removeParameterEntry <- function(
       containerPath[[i]],
       parameterName[[i]],
       value[[i]],
-      units[[i]]
+      units[[i]],
+      overwrite,
+      call = call
     )
   }
   parameters
 }
 
-# Append (or replace, last-write-wins) one parameter entry to a
-# JSON-faithful array-of-records parameter set. `parameters` is a list
-# of `list(containerPath, parameterName, value, units)` entries (or
-# `NULL`); returns the updated list.
+# Append one parameter entry to a JSON-faithful array-of-records parameter set.
+# `parameters` is a list of `list(containerPath, parameterName, value, units)`
+# entries (or `NULL`); returns the updated list. A duplicate
+# `(containerPath, parameterName)` aborts unless `overwrite = TRUE`, in which
+# case it replaces the existing entry (last-write-wins).
 #
 # @keywords internal
 # @noRd
@@ -1070,7 +1099,9 @@ removeParameterEntry <- function(
   containerPath,
   parameterName,
   value,
-  units
+  units,
+  overwrite = FALSE,
+  call = rlang::caller_env()
 ) {
   errors <- .validateParameterEntryArgs(
     containerPath,
@@ -1079,10 +1110,13 @@ removeParameterEntry <- function(
     units
   )
   if (length(errors) > 0L) {
-    cli::cli_abort(c(
-      "Invalid parameter entry:",
-      stats::setNames(errors, rep("x", length(errors)))
-    ))
+    cli::cli_abort(
+      c(
+        "Invalid parameter entry:",
+        stats::setNames(errors, rep("x", length(errors)))
+      ),
+      call = call
+    )
   }
 
   if (is.null(parameters)) {
@@ -1101,6 +1135,16 @@ removeParameterEntry <- function(
     units = if (nchar(units) == 0L) NULL else units
   )
   if (length(existingIdx) > 0L) {
+    if (!overwrite) {
+      cli::cli_abort(
+        c(
+          "parameter {.val {paste(containerPath, parameterName, sep = '|')}} \\
+          already exists in the set.",
+          "i" = "Pass {.code overwrite = TRUE} to replace it."
+        ),
+        call = call
+      )
+    }
     parameters[[existingIdx]] <- newEntry
   } else {
     parameters[[length(parameters) + 1L]] <- newEntry
@@ -1214,12 +1258,15 @@ removeParameterEntry <- function(
 #' @param id Character vector of set ids. Each is canonicalized to a safe,
 #'   lowercase id (a warning names the result if it changed); each canonical
 #'   id must not already exist.
+#' @param overwrite Logical scalar. When `FALSE` (default), an id that already
+#'   exists aborts. When `TRUE`, the existing set is replaced with a new empty
+#'   set (last-write-wins).
 #' @returns The `project` object, invisibly.
 #' @export
 #' @family parameters
-addInitialConditions <- function(project, id) {
+addInitialConditions <- function(project, id, overwrite = FALSE) {
   validateIsOfType(project, "Project")
-  project$addInitialConditions(id)
+  project$addInitialConditions(id, overwrite)
 }
 
 # Implementation behind `project$addInitialConditions()` /
@@ -1227,17 +1274,29 @@ addInitialConditions <- function(project, id) {
 #
 # @keywords internal
 # @noRd
-.addInitialConditions_impl <- function(self, private, id, .call) {
+.addInitialConditions_impl <- function(
+  self,
+  private,
+  id,
+  overwrite = FALSE,
+  .call
+) {
   rlang::local_error_call(.call)
   .assertIdVector(id)
   id <- .canonicalizeId(id)
-  .assertNoDuplicateIds(id, "initial-condition set")
-  clash <- intersect(id, names(self$definitions$initialConditions))
-  if (length(clash) > 0L) {
-    cli::cli_abort("initial-condition set {.val {clash}} already exists")
-  }
+  .assertNoOverwriteClash(
+    id,
+    names(self$definitions$initialConditions),
+    "initial-condition set",
+    overwrite
+  )
   initialConditions <- private$.getSection("initialConditions") %||% list()
   for (one in id) {
+    # Replacing an existing set with an empty one discards its entries, so warn
+    # if it is still referenced, matching removeInitialConditions()'s behaviour.
+    if (overwrite && one %in% names(initialConditions)) {
+      .warnIfReferenced(self, "initialConditions", one)
+    }
     initialConditions[[one]] <- .asInitialConditionSet(list())
   }
   private$.setSection("initialConditions", initialConditions)
@@ -1297,8 +1356,9 @@ removeInitialConditions <- function(project, id) {
 #'
 #' Unlike the other `add*` functions, which abort on a missing parent, this
 #' creates the parent set on demand if it does not yet exist (informing you
-#' when it does). Last-write-wins on a duplicate `path`, including duplicates
-#' within a single vectorized call.
+#' when it does). A duplicate `path` (already in the set, or repeated within a
+#' single vectorized call) aborts unless `overwrite = TRUE`, in which case the
+#' last value wins.
 #'
 #' @param project A `Project` object.
 #' @param id Character scalar, set id. Canonicalized; created if not present.
@@ -1306,12 +1366,21 @@ removeInitialConditions <- function(project, id) {
 #' @param value Numeric vector of start values (length N).
 #' @param unit Character vector of units (length N). A unit is mandatory for a
 #'   molecule start value; a blank unit is rejected.
+#' @param overwrite Logical scalar. When `FALSE` (default), a duplicate `path`
+#'   aborts. When `TRUE`, it overwrites the existing entry (last-write-wins).
 #' @returns The `project` object, invisibly.
 #' @export
 #' @family parameters
-addInitialConditionEntry <- function(project, id, path, value, unit) {
+addInitialConditionEntry <- function(
+  project,
+  id,
+  path,
+  value,
+  unit,
+  overwrite = FALSE
+) {
   validateIsOfType(project, "Project")
-  project$addInitialConditionEntry(id, path, value, unit)
+  project$addInitialConditionEntry(id, path, value, unit, overwrite)
 }
 
 # Implementation behind `project$addInitialConditionEntry()` /
@@ -1326,6 +1395,7 @@ addInitialConditionEntry <- function(project, id, path, value, unit) {
   path,
   value,
   unit,
+  overwrite = FALSE,
   .call
 ) {
   rlang::local_error_call(.call)
@@ -1352,7 +1422,9 @@ addInitialConditionEntry <- function(project, id, path, value, unit) {
     current,
     path,
     value,
-    unit
+    unit,
+    overwrite,
+    call = .call
   ))
   private$.setSection("initialConditions", initialConditions)
   invisible(self)
@@ -1469,40 +1541,60 @@ removeInitialConditionEntry <- function(project, id, path) {
 }
 
 # Fold N initial-condition entries (parallel vectors) into a set in one pass,
-# returning the updated list. Each entry is validated and appended (or replaced,
-# last-write-wins) via `.addInitialConditionEntry`, so an in-batch duplicate
-# `path` resolves to the last value, matching the scalar semantics. N=1 is the
-# scalar case. Folding in memory first lets the caller persist the whole set in
-# a single write-through.
+# returning the updated list. Each entry is validated and appended via
+# `.addInitialConditionEntry`. A duplicate `path` (already in the set, or
+# repeated earlier in this batch) aborts unless `overwrite = TRUE`, in which
+# case the last value wins. N=1 is the scalar case. Folding in memory first
+# lets the caller persist the whole set in a single write-through.
 #
 # @keywords internal
 # @noRd
-.addInitialConditionEntries <- function(entries, path, value, unit) {
+.addInitialConditionEntries <- function(
+  entries,
+  path,
+  value,
+  unit,
+  overwrite = FALSE,
+  call = rlang::caller_env()
+) {
   n <- .assertInitialConditionEntryVectorLengths(path, value, unit)
   for (i in seq_len(n)) {
     entries <- .addInitialConditionEntry(
       entries,
       path[[i]],
       value[[i]],
-      unit[[i]]
+      unit[[i]],
+      overwrite,
+      call = call
     )
   }
   entries
 }
 
-# Append (or replace, last-write-wins) one initial-condition entry to a
-# JSON-faithful array-of-records set. `entries` is a list of
-# `list(path, value, unit)` entries (or `NULL`); returns the updated list.
+# Append one initial-condition entry to a JSON-faithful array-of-records set.
+# `entries` is a list of `list(path, value, unit)` entries (or `NULL`); returns
+# the updated list. A duplicate `path` aborts unless `overwrite = TRUE`, in
+# which case it replaces the existing entry (last-write-wins).
 #
 # @keywords internal
 # @noRd
-.addInitialConditionEntry <- function(entries, path, value, unit) {
+.addInitialConditionEntry <- function(
+  entries,
+  path,
+  value,
+  unit,
+  overwrite = FALSE,
+  call = rlang::caller_env()
+) {
   errors <- .validateInitialConditionEntryArgs(path, value, unit)
   if (length(errors) > 0L) {
-    cli::cli_abort(c(
-      "Invalid initial-condition entry:",
-      stats::setNames(errors, rep("x", length(errors)))
-    ))
+    cli::cli_abort(
+      c(
+        "Invalid initial-condition entry:",
+        stats::setNames(errors, rep("x", length(errors)))
+      ),
+      call = call
+    )
   }
 
   if (is.null(entries)) {
@@ -1518,6 +1610,15 @@ removeInitialConditionEntry <- function(project, id, path) {
     unit = unit
   )
   if (length(existingIdx) > 0L) {
+    if (!overwrite) {
+      cli::cli_abort(
+        c(
+          "initial condition {.val {path}} already exists in the set.",
+          "i" = "Pass {.code overwrite = TRUE} to replace it."
+        ),
+        call = call
+      )
+    }
     entries[[existingIdx]] <- newEntry
   } else {
     entries[[length(entries) + 1L]] <- newEntry

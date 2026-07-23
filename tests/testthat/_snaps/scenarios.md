@@ -57,6 +57,15 @@
       ! Cannot add scenario "s":
       x outputPaths must be a non-empty character vector with no NA or empty entries
 
+# addScenario aborts on an existing id, replaces it with overwrite
+
+    Code
+      addScenario(project, id = existing, modelFile = "Aciclovir.pkml")
+    Condition
+      Error in `addScenario()`:
+      ! scenario "populationscenario" already exists.
+      i Pass `overwrite = TRUE` to replace it.
+
 # setScenario aborts on a non-existent scenario, no file written
 
     Code

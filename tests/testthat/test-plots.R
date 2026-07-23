@@ -82,6 +82,76 @@ test_that("addPlot stores a vector-valued field as one comma-separated string", 
   expect_equal(cfg$p_vec$quantiles, "0.05, 0.5, 0.95")
 })
 
+# Overwrite policy ----
+
+test_that("addDataCombined aborts on an existing id, replaces it with overwrite", {
+  project <- exampleProject()
+  mk <- function(lbl) {
+    list(list(
+      label = lbl,
+      scenario = "aciclovir_iv_population",
+      path = project$definitions$outputPaths$aciclovir_pvb
+    ))
+  }
+  addDataCombined(project, "dc", simulated = mk("first"))
+  expect_snapshot(
+    error = TRUE,
+    addDataCombined(project, "dc", simulated = mk("second"))
+  )
+  before <- length(project$definitions$dataCombined)
+  addDataCombined(project, "dc", simulated = mk("second"), overwrite = TRUE)
+  expect_length(project$definitions$dataCombined, before)
+  expect_identical(
+    project$definitions$dataCombined$dc$simulated[[1]]$label,
+    "second"
+  )
+})
+
+test_that("addPlot aborts on an existing id, replaces it with overwrite", {
+  project <- exampleProject()
+  addDataCombined(
+    project,
+    "dc",
+    simulated = list(list(
+      label = "s",
+      scenario = "aciclovir_iv_population",
+      path = project$definitions$outputPaths$aciclovir_pvb
+    ))
+  )
+  addPlot(project, "p", "dc", "population", title = "first")
+  expect_snapshot(
+    error = TRUE,
+    addPlot(project, "p", "dc", "population", title = "second")
+  )
+  before <- length(project$definitions$plots)
+  addPlot(project, "p", "dc", "population", title = "second", overwrite = TRUE)
+  expect_length(project$definitions$plots, before)
+  expect_identical(project$definitions$plots$p$title, "second")
+})
+
+test_that("addPlotGrid aborts on an existing id, replaces it with overwrite", {
+  project <- exampleProject()
+  addDataCombined(
+    project,
+    "dc",
+    simulated = list(list(
+      label = "s",
+      scenario = "aciclovir_iv_population",
+      path = project$definitions$outputPaths$aciclovir_pvb
+    ))
+  )
+  addPlot(project, "p", "dc", "population")
+  addPlotGrid(project, "g", plots = "p", title = "first")
+  expect_snapshot(
+    error = TRUE,
+    addPlotGrid(project, "g", plots = "p", title = "second")
+  )
+  before <- length(project$definitions$plotGrids)
+  addPlotGrid(project, "g", plots = "p", title = "second", overwrite = TRUE)
+  expect_length(project$definitions$plotGrids, before)
+  expect_identical(project$definitions$plotGrids$g$title, "second")
+})
+
 # Vectorized plot mutators ----
 
 test_that("addPlot adds N plots in one call (recycle + align + whole-vector)", {
@@ -228,7 +298,10 @@ test_that("addPlotGrid vectorizes with per-grid plots and one write-through", {
     c("grid_one", "grid_two") %in% names(reloaded$definitions$plotGrids)
   ))
   expect_identical(reloaded$definitions$plotGrids$grid_one$plotIds, "g_p1")
-  expect_identical(reloaded$definitions$plotGrids$grid_two$plotIds, "g_p1, g_p2")
+  expect_identical(
+    reloaded$definitions$plotGrids$grid_two$plotIds,
+    "g_p1, g_p2"
+  )
 })
 
 test_that("addPlotGrid accepts a plain list of plot ids for a single grid", {
@@ -249,7 +322,9 @@ test_that("addPlotGrid accepts a plain list of plot ids for a single grid", {
   saveProject(project)
   reloaded <- loadProject(project$info$projectFilePath)
   expect_identical(
-    esqlabsR:::.splitPlotIDs(reloaded$definitions$plotGrids$single_grid$plotIds),
+    esqlabsR:::.splitPlotIDs(
+      reloaded$definitions$plotGrids$single_grid$plotIds
+    ),
     c("sp1", "sp2")
   )
 })
@@ -329,7 +404,9 @@ test_that("addDataCombined vectorizes with per-id entry lists", {
 
   saveProject(project)
   reloaded <- loadProject(project$info$projectFilePath)
-  expect_true(all(c("dcm1", "dcm2") %in% names(reloaded$definitions$dataCombined)))
+  expect_true(all(
+    c("dcm1", "dcm2") %in% names(reloaded$definitions$dataCombined)
+  ))
   expect_identical(
     reloaded$definitions$dataCombined$dcm2$simulated[[1]]$scenario,
     "aciclovir_iv_population"
@@ -347,13 +424,17 @@ test_that("removeDataCombined drops the entry and deletes its definition file", 
     "aciclovir_individual.json"
   )
   # The example defines the "aciclovir_individual" dataCombined.
-  expect_true("aciclovir_individual" %in% names(project$definitions$dataCombined))
+  expect_true(
+    "aciclovir_individual" %in% names(project$definitions$dataCombined)
+  )
   expect_true(file.exists(dcFile))
 
   # It is still referenced by plot p1, so removal warns about the dangling
   # reference but removes the dataCombined record itself.
   suppressWarnings(removeDataCombined(project, "aciclovir_individual"))
-  expect_false("aciclovir_individual" %in% names(project$definitions$dataCombined))
+  expect_false(
+    "aciclovir_individual" %in% names(project$definitions$dataCombined)
+  )
 
   # The data-combined kind is one-file-per-entry: on save, removing the entry
   # deletes its file (the plotConfiguration row that referenced it is left
@@ -389,14 +470,18 @@ test_that("print.PlotGrid renders a single plot grid", {
   project <- exampleProject()
   withr::local_options(cli.unicode = FALSE)
   local_reproducible_output()
-  expect_snapshot(print(project$definitions$plotGrids[["individual_diagnostics"]]))
+  expect_snapshot(print(project$definitions$plotGrids[[
+    "individual_diagnostics"
+  ]]))
 })
 
 test_that("print.DataCombined renders simulated and observed counts", {
   project <- exampleProject()
   withr::local_options(cli.unicode = FALSE)
   local_reproducible_output()
-  expect_snapshot(print(project$definitions$dataCombined[["aciclovir_individual"]]))
+  expect_snapshot(print(project$definitions$dataCombined[[
+    "aciclovir_individual"
+  ]]))
 })
 
 test_that("classed plot definitions still behave as lists", {

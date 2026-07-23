@@ -20,7 +20,9 @@ test_that("removeApplication warns when still referenced by a scenario, removes 
   # `aciclovir_iv_250mg` is the application referenced by every scenario in
   # the fixture, so removing it leaves those scenarios with a dangling ref.
   expect_snapshot(removeApplication(project, "aciclovir_iv_250mg"))
-  expect_false("aciclovir_iv_250mg" %in% names(project$definitions$applications))
+  expect_false(
+    "aciclovir_iv_250mg" %in% names(project$definitions$applications)
+  )
 })
 
 # setApplicationParameterSets ----
@@ -51,7 +53,10 @@ test_that("setApplicationParameterSets aborts on an undefined parameter set", {
     error = TRUE,
     setApplicationParameterSets(project, "aciclovir_iv_250mg", "Ghost")
   )
-  expect_identical(project$definitions$applications[["aciclovir_iv_250mg"]], before)
+  expect_identical(
+    project$definitions$applications[["aciclovir_iv_250mg"]],
+    before
+  )
 })
 
 test_that("addApplication and setApplicationParameterSets reject a non-character parameterSets with the same message", {
@@ -115,6 +120,26 @@ test_that("addApplication aborts on a duplicate id in the batch", {
   expect_snapshot(error = TRUE, addApplication(project, c("p1", "p1")))
 })
 
+test_that("addApplication aborts on an existing id, replaces it with overwrite", {
+  project <- testProject()
+  expect_snapshot(
+    error = TRUE,
+    addApplication(project, "aciclovir_iv_250mg")
+  )
+  before <- length(project$definitions$applications)
+  addApplication(
+    project,
+    "aciclovir_iv_250mg",
+    parameterSets = "global",
+    overwrite = TRUE
+  )
+  expect_length(project$definitions$applications, before)
+  expect_identical(
+    project$definitions$applications[["aciclovir_iv_250mg"]]$parameterSets,
+    "global"
+  )
+})
+
 test_that("removeApplication removes a vector of ids in one write-through", {
   project <- testProject()
   addApplication(project, c("p1", "p2"))
@@ -144,7 +169,9 @@ test_that("print.Application renders its parameter-set references", {
   project <- testProject()
   withr::local_options(cli.unicode = FALSE)
   local_reproducible_output()
-  expect_snapshot(print(project$definitions$applications[["aciclovir_iv_250mg"]]))
+  expect_snapshot(print(project$definitions$applications[[
+    "aciclovir_iv_250mg"
+  ]]))
 })
 
 test_that("print.Application renders an empty protocol", {

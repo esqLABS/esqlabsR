@@ -278,6 +278,31 @@ test_that("addParameterSet aborts on a duplicate id in the batch", {
   expect_snapshot(error = TRUE, addParameterSet(project, c("a", "a")))
 })
 
+test_that("addParameterSet overwrite = TRUE replaces the set with an empty one", {
+  project <- testProject()
+  suppressMessages(
+    addParameterEntry(project, "global", "Organism|A", "K", 1, "1/h")
+  )
+  before <- length(project$definitions$parameterSets)
+  # "global" is referenced by scenarios in the fixture, so wiping it warns.
+  suppressWarnings(addParameterSet(project, "global", overwrite = TRUE))
+  expect_length(project$definitions$parameterSets, before)
+  expect_length(project$definitions$parameterSets$global, 0L)
+})
+
+test_that("addParameterSet overwrite warns when the replaced set is referenced", {
+  project <- testProject()
+  # A fresh, unreferenced set overwritten in place must NOT warn.
+  addParameterSet(project, "loose")
+  expect_no_warning(addParameterSet(project, "loose", overwrite = TRUE))
+  # "global" is referenced by a scenario in the fixture; overwriting it (which
+  # discards its entries) warns, matching removeParameterSet().
+  expect_warning(
+    addParameterSet(project, "global", overwrite = TRUE),
+    "referenced"
+  )
+})
+
 test_that("addParameterEntry creates the set on demand and appends entries", {
   project <- testProject()
   # Creating a set on demand is divergent from the other add* functions, so it
@@ -317,7 +342,11 @@ test_that("addParameterEntry accepts parallel vectors and writes once", {
   reloaded <- loadProject(project$info$projectFilePath)
   expect_length(reloaded$definitions$parameterSets$vecset, n)
   expect_identical(
-    vapply(reloaded$definitions$parameterSets$vecset, \(e) e$parameterName, character(1)),
+    vapply(
+      reloaded$definitions$parameterSets$vecset,
+      \(e) e$parameterName,
+      character(1)
+    ),
     paste0("P", seq_len(n))
   )
 })
@@ -348,24 +377,59 @@ test_that("a vectorized addParameterEntry equals three scalar adds", {
   )
 })
 
-test_that("addParameterEntry last-write-wins on an in-batch duplicate", {
+test_that("addParameterEntry aborts on an in-batch duplicate by default", {
   project <- testProject()
+  expect_snapshot(
+    error = TRUE,
+    suppressMessages(
+      addParameterEntry(
+        project,
+        "dupset",
+        containerPath = c("Organism|A", "Organism|A"),
+        parameterName = c("K", "K"),
+        value = c(1, 9),
+        units = c("1/h", "1/min")
+      )
+    )
+  )
+})
+
+test_that("addParameterEntry overwrite = TRUE last-write-wins on a duplicate", {
+  project <- testProject()
+  # A duplicate against an entry already in the set overwrites it.
+  suppressMessages(
+    addParameterEntry(project, "dupset", "Organism|A", "K", 1, "1/h")
+  )
   suppressMessages(
     addParameterEntry(
       project,
       "dupset",
-      containerPath = c("Organism|A", "Organism|A"),
-      parameterName = c("K", "K"),
-      value = c(1, 9),
-      units = c("1/h", "1/min")
+      "Organism|A",
+      "K",
+      9,
+      "1/min",
+      overwrite = TRUE
     )
   )
-
-  # The duplicate (containerPath, parameterName) collapses to one entry, last
-  # value winning, matching the scalar last-write-wins semantics.
   expect_length(project$definitions$parameterSets$dupset, 1L)
   expect_identical(project$definitions$parameterSets$dupset[[1]]$value, 9)
   expect_identical(project$definitions$parameterSets$dupset[[1]]$units, "1/min")
+
+  # An in-batch duplicate likewise collapses to the last value.
+  project2 <- testProject()
+  suppressMessages(
+    addParameterEntry(
+      project2,
+      "dupset",
+      containerPath = c("Organism|A", "Organism|A"),
+      parameterName = c("K", "K"),
+      value = c(1, 9),
+      units = c("1/h", "1/min"),
+      overwrite = TRUE
+    )
+  )
+  expect_length(project2$definitions$parameterSets$dupset, 1L)
+  expect_identical(project2$definitions$parameterSets$dupset[[1]]$value, 9)
 })
 
 test_that("addParameterEntry aborts on mismatched vector lengths", {
@@ -570,10 +634,14 @@ test_that("the three former parameter-set kinds are merged into project$definiti
 test_that("addParameterSet adds N sets in one saveProject()", {
   project <- testProject()
   addParameterSet(project, c("setA", "setB"))
-  expect_true(all(c("seta", "setb") %in% names(project$definitions$parameterSets)))
+  expect_true(all(
+    c("seta", "setb") %in% names(project$definitions$parameterSets)
+  ))
   saveProject(project)
   reloaded <- loadProject(project$info$projectFilePath)
-  expect_true(all(c("seta", "setb") %in% names(reloaded$definitions$parameterSets)))
+  expect_true(all(
+    c("seta", "setb") %in% names(reloaded$definitions$parameterSets)
+  ))
 })
 
 test_that("addParameterSet aborts the whole batch on a clash and writes nothing", {
@@ -663,6 +731,17 @@ test_that("addInitialConditions aborts on a duplicate id in the batch", {
   expect_snapshot(error = TRUE, addInitialConditions(project, c("a", "a")))
 })
 
+test_that("addInitialConditions overwrite = TRUE replaces the set with an empty one", {
+  project <- testProject()
+  suppressMessages(
+    addInitialConditionEntry(project, "dupset", "Organism|A", 1, "mg/l")
+  )
+  before <- length(project$definitions$initialConditions)
+  addInitialConditions(project, "dupset", overwrite = TRUE)
+  expect_length(project$definitions$initialConditions, before)
+  expect_length(project$definitions$initialConditions$dupset, 0L)
+})
+
 test_that("addInitialConditionEntry creates the set on demand and appends", {
   project <- testProject()
   expect_snapshot(
@@ -702,15 +781,35 @@ test_that("a vectorized addInitialConditionEntry equals three scalar adds", {
   )
 })
 
-test_that("addInitialConditionEntry last-write-wins on an in-batch duplicate", {
+test_that("addInitialConditionEntry aborts on an in-batch duplicate by default", {
   project <- testProject()
+  expect_snapshot(
+    error = TRUE,
+    suppressMessages(
+      addInitialConditionEntry(
+        project,
+        "dset",
+        path = c("Organism|A", "Organism|A"),
+        value = c(1, 9),
+        unit = c("mg/l", "mg/l")
+      )
+    )
+  )
+})
+
+test_that("addInitialConditionEntry overwrite = TRUE last-write-wins", {
+  project <- testProject()
+  suppressMessages(
+    addInitialConditionEntry(project, "dset", "Organism|A", 1, "mg/l")
+  )
   suppressMessages(
     addInitialConditionEntry(
       project,
       "dset",
-      path = c("Organism|A", "Organism|A"),
-      value = c(1, 9),
-      unit = c("mg/l", "mg/l")
+      "Organism|A",
+      9,
+      "mg/l",
+      overwrite = TRUE
     )
   )
   expect_length(project$definitions$initialConditions$dset, 1L)
@@ -753,7 +852,10 @@ test_that("addInitialConditionEntry writes the set to disk once on save", {
   expect_true(file.exists(file.path(dir, "diskset.json")))
   reloaded <- loadProject(project$info$projectFilePath)
   expect_length(reloaded$definitions$initialConditions$diskset, 1L)
-  expect_identical(reloaded$definitions$initialConditions$diskset[[1]]$path, "Organism|A")
+  expect_identical(
+    reloaded$definitions$initialConditions$diskset[[1]]$path,
+    "Organism|A"
+  )
 })
 
 test_that("removeInitialConditionEntry auto-removes an emptied set", {
@@ -787,10 +889,14 @@ test_that("removeInitialConditionEntry updates the on-disk set when entries rema
 test_that("addInitialConditions adds N sets in one saveProject()", {
   project <- testProject()
   addInitialConditions(project, c("setA", "setB"))
-  expect_true(all(c("seta", "setb") %in% names(project$definitions$initialConditions)))
+  expect_true(all(
+    c("seta", "setb") %in% names(project$definitions$initialConditions)
+  ))
   saveProject(project)
   reloaded <- loadProject(project$info$projectFilePath)
-  expect_true(all(c("seta", "setb") %in% names(reloaded$definitions$initialConditions)))
+  expect_true(all(
+    c("seta", "setb") %in% names(reloaded$definitions$initialConditions)
+  ))
 })
 
 test_that("removeInitialConditionEntry no-op on a missing entry warns", {

@@ -4,7 +4,13 @@
 \alias{addDataCombined}
 \title{Add one or more DataCombined to a Project}
 \usage{
-addDataCombined(project, id, simulated = list(), observed = list())
+addDataCombined(
+  project,
+  id,
+  simulated = list(),
+  observed = list(),
+  overwrite = FALSE
+)
 }
 \arguments{
 \item{project}{A \code{Project} object.}
@@ -23,6 +29,10 @@ such simulated list per DataCombined.}
 
 \item{observed}{Like \code{simulated}, but each named list includes \code{label} and
 \code{dataSet} (optional fields as \code{simulated} minus \code{scenario} and \code{path}).}
+
+\item{overwrite}{Logical scalar. When \code{FALSE} (default), an id that already
+exists aborts. When \code{TRUE}, the existing DataCombined is replaced
+(last-write-wins).}
 }
 \value{
 The \code{project} object, invisibly.

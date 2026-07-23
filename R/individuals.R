@@ -142,10 +142,12 @@ print.Individual <- function(x, ...) {
 #' @param species Character scalar (recycled) or the same length as `id`,
 #'   species name.
 #' @param ... Optional named fields: `population`, `gender`, `weight`,
-#'   `height`, `age`, `proteinOntogenies`, `parameterSets`. Numeric
-#'   fields are coerced via `as.double()`. `parameterSets` is a
+#'   `height`, `age`, `proteinOntogenies`, `parameterSets`, and `overwrite`.
+#'   Numeric fields are coerced via `as.double()`. `parameterSets` is a
 #'   character vector of ids referencing `parameterSets` definitions.
-#'   Unknown fields trigger an error.
+#'   `overwrite` is a logical scalar (default `FALSE`): an id that already
+#'   exists aborts unless `overwrite = TRUE`, which replaces it
+#'   (last-write-wins). Unknown fields trigger an error.
 #' @returns The `project` object, invisibly.
 #' @export
 #' @family individual
@@ -165,6 +167,10 @@ addIndividual <- function(project, id, species, ...) {
   n <- length(id)
 
   dots <- list(...)
+  # `overwrite` arrives through `...`; pull it out (validated) before aligning
+  # so it is not mistaken for a per-definition field.
+  overwrite <- .validateOverwriteFlag(dots[["overwrite"]])
+  dots[["overwrite"]] <- NULL
   # `parameterSets` is the one vector-valued-per-definition field; everything else
   # is scalar-per-definition. `species` is a positional formal, not a `...` field.
   wholeNames <- intersect("parameterSets", names(dots))
@@ -176,12 +182,14 @@ addIndividual <- function(project, id, species, ...) {
   )
 
   # Validate all N first (all-or-nothing): build every entry before folding any,
-  # so an invalid definition in the batch writes nothing.
-  .assertNoDuplicateIds(id, "individual")
-  clash <- intersect(id, names(self$definitions$individuals))
-  if (length(clash) > 0L) {
-    cli::cli_abort("individual {.val {clash}} already exists")
-  }
+  # so an invalid definition in the batch writes nothing. A within-batch
+  # duplicate id aborts unless overwriting, in which case the last one wins.
+  .assertNoOverwriteClash(
+    id,
+    names(self$definitions$individuals),
+    "individual",
+    overwrite
+  )
   call <- .call
   entries <- .collectCanonicalizedRefs(lapply(seq_len(n), function(i) {
     .buildIndividualEntry(self, id[[i]], perDefinition[[i]], call = call)
