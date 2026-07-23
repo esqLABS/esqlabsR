@@ -456,6 +456,18 @@ messages$noPopulationIdForPopulationScenario <- function(scenarioName) {
   )
 }
 
+messages$populationNotFoundForScenario <- function(populationId, scenarioName) {
+  cliFormat(
+    "Population {.val {populationId}} referenced by scenario {.val {scenarioName}} not found in project."
+  )
+}
+
+messages$unknownScenarioNames <- function(unknownNames) {
+  cliFormat(
+    "Unknown scenario names: {.val {unknownNames}}."
+  )
+}
+
 messages$wrongTimeIntervalString <- function(timeIntervalString) {
   cliFormat(
     "The time interval string {.val {timeIntervalString}} is not valid! Please 

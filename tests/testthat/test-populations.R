@@ -669,6 +669,24 @@ test_that("saveProject freezes an injected Population to CSV and rewrites the en
   expect_identical(reEntry$type, "csv")
 })
 
+test_that("saveProject serializes an orphan programmatic sentinel verbatim instead of aborting", {
+  # A programmatic entry with no backing object (e.g. hand-authored JSON, a
+  # restored snapshot, or a reloaded session) must not break an unrelated save.
+  project <- testProject()
+  populations <- .getSection(project, "populations")
+  populations[["orphan"]] <- esqlabsR:::.asPopulationSource(list(
+    type = "programmatic"
+  ))
+  .setSection(project, "populations", populations)
+
+  expect_no_error(suppressMessages(saveProject(project)))
+  reloaded <- loadProject(project$info$projectFilePath)
+  expect_identical(
+    reloaded$definitions$populations[["orphan"]]$type,
+    "programmatic"
+  )
+})
+
 test_that("saveProject aborts freezing an injected Population without a populations folder", {
   project <- testProject()
   project$paths$populationsFolder <- NULL

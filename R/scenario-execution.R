@@ -290,9 +290,10 @@
 # @noRd
 .resolveSpecPopulation <- function(scenario, popData) {
   if (is.null(popData)) {
-    cli::cli_abort(
-      "Population {.val {scenario$populationId}} referenced by scenario {.val {scenario$scenarioName}} not found in project."
-    )
+    cli::cli_abort(messages$populationNotFoundForScenario(
+      populationId = scenario$populationId,
+      scenarioName = scenario$scenarioName
+    ))
   }
   moleculeOntogenies <- .readOntogeniesFromList(popData$proteinOntogenies)
   popArgs <- unclass(popData)
@@ -476,6 +477,52 @@
   list(simulation = simulation, population = population)
 }
 
+# .scenarioBuildPreflight ----
+
+# Shared entry guard for `.runScenariosFromProject` / `.buildSimulationsFromProject`:
+# validate `project` and `customParams`, resolve `simulationRunOptions` (an
+# explicit argument wins; otherwise fall back to the project-level
+# `defaultSimulationRunOptions`, leaving NULL = package defaults), and, when
+# `validate`, run the section validators the scenario build depends on. Returns
+# the resolved `simulationRunOptions`. `opName` names the calling entrypoint in
+# any validation abort.
+# @keywords internal
+# @noRd
+.scenarioBuildPreflight <- function(
+  project,
+  customParams,
+  simulationRunOptions,
+  validate,
+  opName
+) {
+  validateIsOfType(project, "Project")
+  .validateParametersStructure(
+    parameterStructure = customParams,
+    argumentName = "customParams",
+    nullAllowed = TRUE
+  )
+  if (is.null(simulationRunOptions)) {
+    simulationRunOptions <- .buildSimulationRunOptions(
+      project$defaultSimulationRunOptions
+    )
+  }
+  if (isTRUE(validate)) {
+    project$ensureValid(
+      sections = c(
+        "outputPaths",
+        "scenarios",
+        "individuals",
+        "populations",
+        "applications",
+        "parameterSets",
+        "crossReferences"
+      ),
+      opName = opName
+    )
+  }
+  simulationRunOptions
+}
+
 # .buildScenarioSimulations ----
 
 # Resolve the requested scenario names and build (but do not run) each one's
@@ -500,9 +547,7 @@
   }
   unknownNames <- setdiff(scenarioNames, names(allScenarios))
   if (length(unknownNames) > 0) {
-    cli::cli_abort(
-      "Unknown scenario names: {.val {unknownNames}}."
-    )
+    cli::cli_abort(messages$unknownScenarioNames(unknownNames))
   }
 
   cache <- new.env(parent = emptyenv())
@@ -610,35 +655,13 @@
   stopIfParameterNotFound = TRUE,
   stopIfFails = TRUE
 ) {
-  validateIsOfType(project, "Project")
-  .validateParametersStructure(
-    parameterStructure = customParams,
-    argumentName = "customParams",
-    nullAllowed = TRUE
+  simulationRunOptions <- .scenarioBuildPreflight(
+    project = project,
+    customParams = customParams,
+    simulationRunOptions = simulationRunOptions,
+    validate = validate,
+    opName = "runScenarios"
   )
-  # When the caller does not pass run options, fall back to the project-level
-  # `defaultSimulationRunOptions` (a reproducible run from the shared artifact).
-  # An explicit caller argument always wins; an absent project default leaves
-  # `simulationRunOptions` NULL, i.e. exactly the package defaults as before.
-  if (is.null(simulationRunOptions)) {
-    simulationRunOptions <- .buildSimulationRunOptions(
-      project$defaultSimulationRunOptions
-    )
-  }
-  if (isTRUE(validate)) {
-    project$ensureValid(
-      sections = c(
-        "outputPaths",
-        "scenarios",
-        "individuals",
-        "populations",
-        "applications",
-        "parameterSets",
-        "crossReferences"
-      ),
-      opName = "runScenarios"
-    )
-  }
 
   built <- .buildScenarioSimulations(
     project = project,
@@ -714,33 +737,13 @@
   validate = TRUE,
   stopIfParameterNotFound = TRUE
 ) {
-  validateIsOfType(project, "Project")
-  .validateParametersStructure(
-    parameterStructure = customParams,
-    argumentName = "customParams",
-    nullAllowed = TRUE
+  simulationRunOptions <- .scenarioBuildPreflight(
+    project = project,
+    customParams = customParams,
+    simulationRunOptions = simulationRunOptions,
+    validate = validate,
+    opName = "buildSimulations"
   )
-  # A steady-state pre-solve inside `.prepareScenario` still consults these, so
-  # apply the same project-default fallback the run path uses.
-  if (is.null(simulationRunOptions)) {
-    simulationRunOptions <- .buildSimulationRunOptions(
-      project$defaultSimulationRunOptions
-    )
-  }
-  if (isTRUE(validate)) {
-    project$ensureValid(
-      sections = c(
-        "outputPaths",
-        "scenarios",
-        "individuals",
-        "populations",
-        "applications",
-        "parameterSets",
-        "crossReferences"
-      ),
-      opName = "buildSimulations"
-    )
-  }
 
   built <- .buildScenarioSimulations(
     project = project,
