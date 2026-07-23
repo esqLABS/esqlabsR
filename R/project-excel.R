@@ -1262,7 +1262,6 @@ projectStatus <- function(project, silent = FALSE) {
   "SteadyState",
   "SteadyStateTime",
   "SteadyStateTimeUnit",
-  "OverwriteFormulasInSS",
   "ModelFile",
   "OutputPathsIds"
 )
@@ -1311,8 +1310,18 @@ projectStatus <- function(project, silent = FALSE) {
       steadyStateTimeUnit = .naToNull(
         as.character(row[["SteadyStateTimeUnit"]])
       ),
+      # `OverwriteFormulasInSS` is a newer column; a pre-6.0 Scenarios sheet
+      # omits it, so guard the lookup rather than abort on its absence (matching
+      # `InitialConditions` above). An absent or blank value defaults to FALSE.
       overwriteFormulasInSS = .naToNull(
-        .toLogical(row[["OverwriteFormulasInSS"]], "OverwriteFormulasInSS")
+        .toLogical(
+          if ("OverwriteFormulasInSS" %in% names(row)) {
+            row[["OverwriteFormulasInSS"]]
+          } else {
+            NA
+          },
+          "OverwriteFormulasInSS"
+        )
       ),
       modelFile = as.character(row[["ModelFile"]]),
       outputPaths = .parseCommaListToArray(row[["OutputPathsIds"]])

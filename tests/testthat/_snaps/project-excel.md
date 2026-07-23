@@ -56,5 +56,5 @@
     Condition
       Error in `.parseExcelScenarios()`:
       ! The Scenarios sheet is missing required column: "OutputPathsIds".
-      i Expected columns: "Scenario_name", "IndividualId", "PopulationId", "ReadPopulationFromCSV", "ModelParameterSheets", "ApplicationProtocol", "SimulationTime", "SimulationTimeUnit", "SteadyState", "SteadyStateTime", "SteadyStateTimeUnit", "OverwriteFormulasInSS", "ModelFile", and "OutputPathsIds".
+      i Expected columns: "Scenario_name", "IndividualId", "PopulationId", "ReadPopulationFromCSV", "ModelParameterSheets", "ApplicationProtocol", "SimulationTime", "SimulationTimeUnit", "SteadyState", "SteadyStateTime", "SteadyStateTimeUnit", "ModelFile", and "OutputPathsIds".
 

@@ -1027,6 +1027,33 @@ test_that(".parseExcelScenarios aborts on a renamed required column", {
   expect_snapshot(error = TRUE, .parseExcelScenarios(scenarioDf))
 })
 
+# `OverwriteFormulasInSS` is newer than the 5.x layout, so a pre-6.0 Scenarios
+# sheet omits it. Its absence must default to FALSE rather than abort, matching
+# the sibling `InitialConditions` column (#1158).
+test_that(".parseExcelScenarios defaults OverwriteFormulasInSS when the column is absent", {
+  scenarioDf <- data.frame(
+    Scenario_name = "s1",
+    IndividualId = NA_character_,
+    PopulationId = NA_character_,
+    ReadPopulationFromCSV = NA,
+    ModelParameterSheets = NA_character_,
+    ApplicationProtocol = NA_character_,
+    SimulationTime = NA_character_,
+    SimulationTimeUnit = NA_character_,
+    SteadyState = NA,
+    SteadyStateTime = NA_real_,
+    SteadyStateTimeUnit = NA_character_,
+    # No `OverwriteFormulasInSS` column, as in a pre-6.0 sheet.
+    ModelFile = "m.pkml",
+    OutputPathsIds = "op1",
+    stringsAsFactors = FALSE
+  )
+  scenarios <- .parseExcelScenarios(scenarioDf)
+  # The parser drops the absent value to NULL; the JSON serializer defaults it
+  # to FALSE (`%||% FALSE`), so a round-trip through the tree reads FALSE.
+  expect_null(scenarios[[1]]$overwriteFormulasInSS)
+})
+
 # A multi-value cell may protect a comma with either backslash escaping (this
 # package's own writer) or double-quote wrapping (the legacy 5.x convention).
 # Both must parse, and the quoted form must strip the quotes and keep a quoted
