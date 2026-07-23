@@ -1121,7 +1121,9 @@ createPITasks <- function(...) {
 #'   to create a task seeded later with [addPIParameter()].
 #' @param outputMappings List of `PIOutputMapping` records. May be empty
 #'   (`list()`) to create a task seeded later with [addPIOutputMapping()].
-#'   Each `outputPath` must exist in `names(project$definitions$outputPaths)`.
+#'   Each `outputPath` must identify a defined output path, either by its id
+#'   (a key in `names(project$definitions$outputPaths)`) or by its literal
+#'   model path.
 #' @param configuration Named list of solver settings; see the `configuration`
 #'   argument of [PITask()] for the supported keys.
 #' @param overwrite Logical scalar. When `FALSE` (default), an existing task id
@@ -1209,29 +1211,32 @@ addPITask <- function(
   # Resolve each well-typed mapping's output-path reference (an id, or a
   # literal model path) to the canonical id, rewriting the record so the task
   # stores the id. A reference that resolves to no defined output path is
-  # collected as an aggregated error rather than aborting here. Malformed
-  # entries are left for PITask() to reject with the typed PIWrongElementType,
-  # instead of dying here on a raw "$ operator is invalid for atomic vectors".
-  if (is.list(outputMappings)) {
-    for (i in seq_along(outputMappings)) {
-      m <- outputMappings[[i]]
-      if (!inherits(m, "PIOutputMapping")) {
-        next
-      }
-      resolved <- .matchOutputPathRef(m$outputPathId, self)
-      if (is.null(resolved)) {
-        errors <- c(
-          errors,
-          paste0(
-            "outputPath '",
-            m$outputPathId,
-            "' is neither a defined output-path id nor the model path of one",
-            .suggestSuffix(m$outputPathId, names(self$definitions$outputPaths))
-          )
+  # collected as an aggregated error rather than aborting here (this call
+  # aggregates every field's error into one abort). Malformed entries are left
+  # for PITask() to reject with the typed PIWrongElementType, instead of dying
+  # here on a raw "$ operator is invalid for atomic vectors". lapply() above
+  # already made outputMappings a list, so no is.list() guard is needed.
+  for (i in seq_along(outputMappings)) {
+    m <- outputMappings[[i]]
+    if (!inherits(m, "PIOutputMapping")) {
+      next
+    }
+    resolved <- .matchOutputPathRef(m$outputPathId, self)
+    if (is.null(resolved)) {
+      errors <- c(
+        errors,
+        paste0(
+          "outputPath '",
+          m$outputPathId,
+          "' is neither a defined output-path id nor the model path of one. ",
+          "Pass an output-path id (a key in project$definitions$outputPaths) ",
+          "or the literal model path of a defined output path; define new ",
+          "ones with addOutputPath().",
+          .suggestSuffix(m$outputPathId, names(self$definitions$outputPaths))
         )
-      } else {
-        outputMappings[[i]]$outputPathId <- resolved
-      }
+      )
+    } else {
+      outputMappings[[i]]$outputPathId <- resolved
     }
   }
 
@@ -1327,15 +1332,19 @@ removePITask <- function(project, id) {
 }
 
 # Match a user-supplied output-path reference to the canonical output-path id
-# it names, or `NULL` when it names no defined output path. Accepts either the
-# id itself, or the literal model path that is the value of an existing
-# `outputPaths` entry (the form legacy PI configurations used). `value` must
-# already be a non-empty scalar string (the PIOutputMapping constructor
-# guarantees this).
+# it names, or `NULL` when it is not a non-empty scalar string or names no
+# defined output path. Accepts either the id itself, or the literal model path
+# that is the value of an existing `outputPaths` entry (the form legacy PI
+# configurations used). Returning `NULL` for a malformed value lets the caller
+# raise the typed `outputPathRefNotFound` abort rather than a raw R error on a
+# zero- or multi-length condition.
 #
 # @keywords internal
 # @noRd
 .matchOutputPathRef <- function(value, project) {
+  if (!is.character(value) || length(value) != 1L || is.na(value)) {
+    return(NULL)
+  }
   outputPaths <- project$definitions$outputPaths
   ids <- names(outputPaths)
   # A literal model path (OSPS notation, e.g. "Organism|...|Plasma (...)") is

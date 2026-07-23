@@ -340,7 +340,12 @@
 # @keywords internal
 # @noRd
 .nearestMatch <- function(x, candidates, n = 3L) {
-  if (length(candidates) == 0L) {
+  # A non-scalar or NA `x` (e.g. a NULL / length-2 reference that reached an
+  # error message builder) has no single nearest match; suggest nothing rather
+  # than indexing an empty or multi-row distance matrix.
+  if (
+    length(candidates) == 0L || !is.character(x) || length(x) != 1L || is.na(x)
+  ) {
     return(character(0))
   }
   d <- utils::adist(x, candidates, ignore.case = TRUE)[1, ]

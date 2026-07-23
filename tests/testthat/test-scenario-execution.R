@@ -498,15 +498,20 @@ test_that(".buildScenarioSimulations errors on an unknown scenario name", {
   )
 })
 
-test_that(".buildScenarioSimulations matches a scenario name case-insensitively", {
+test_that(".buildScenarioSimulations matches a scenario name case-insensitively and warns on the rewrite", {
   # A caller passing the mixed-case name they authored with resolves to the
-  # canonical (lowercased) id the scenario is filed under.
+  # canonical (lowercased) id the scenario is filed under; the rewrite warns,
+  # naming the id it resolved to, so a mistyped label is surfaced.
   withr::local_options(lifecycle_verbosity = "quiet")
   project <- .testProject()
   canonical <- names(project$definitions$scenarios)[[1]]
-  built <- esqlabsR:::.buildScenarioSimulations(
-    project,
-    scenarioNames = toupper(canonical)
+  built <- NULL
+  expect_warning(
+    built <- esqlabsR:::.buildScenarioSimulations(
+      project,
+      scenarioNames = toupper(canonical)
+    ),
+    regexp = canonical
   )
   expect_identical(built$scenarioNames, canonical)
 })

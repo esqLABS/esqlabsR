@@ -598,9 +598,11 @@ print.Scenario <- function(x, ...) {
 #'
 #' @param project A [Project] object loaded from a `Project.json` file.
 #' @param scenarios Optional character vector of scenario names to
-#'   run. `NULL` (default) runs all scenarios in the project. Names are
-#'   matched case-insensitively against the canonical ids scenarios were
-#'   authored under, so the name you passed to [addScenario()] resolves.
+#'   run. `NULL` (default) runs all scenarios in the project. Each name is
+#'   canonicalized (the same lowercasing and character-substitution ids get)
+#'   and matched against the canonical ids scenarios were authored under, so
+#'   the name you passed to [addScenario()] resolves; a name that canonicalizes
+#'   to a different form warns, naming the id it resolved to.
 #' @param customParams A list with vectors `paths`, `values`, and
 #'   `units` — applied to every selected scenario as the final
 #'   parameter layer.
@@ -674,9 +676,11 @@ runScenarios <- function(
 #'
 #' @param project A [Project] object loaded from a `Project.json` file.
 #' @param scenarios Optional character vector of scenario names to
-#'   build. `NULL` (default) builds all scenarios in the project. Names are
-#'   matched case-insensitively against the canonical ids scenarios were
-#'   authored under, so the name you passed to [addScenario()] resolves.
+#'   build. `NULL` (default) builds all scenarios in the project. Each name is
+#'   canonicalized (the same lowercasing and character-substitution ids get)
+#'   and matched against the canonical ids scenarios were authored under, so
+#'   the name you passed to [addScenario()] resolves; a name that canonicalizes
+#'   to a different form warns, naming the id it resolved to.
 #' @param customParams A list with vectors `paths`, `values`, and
 #'   `units` — applied to every selected scenario as the final
 #'   parameter layer.

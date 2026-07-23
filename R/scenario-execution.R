@@ -539,10 +539,14 @@
     scenarioNames <- names(allScenarios)
   } else {
     # Match against the canonical ids scenarios were filed under, so a caller
-    # can pass the (possibly mixed-case) name they authored with. Silent
-    # because this only resolves a lookup; nothing is stored, so the
-    # "canonicalized to a safe form" heads-up would be noise on every run.
-    scenarioNames <- suppressWarnings(.canonicalizeIdRef(scenarioNames))
+    # can pass the name they authored with. This is the full id
+    # canonicalization (case-folding, character substitution, trimming), the
+    # same transform the scenario was filed under, so the reference resolves to
+    # it. The "canonicalized to a safe form" warning is left in place on
+    # purpose: when the passed name is rewritten it names the resolved id, so a
+    # mistyped label that lands on a different real scenario is surfaced rather
+    # than run silently.
+    scenarioNames <- .canonicalizeIdRef(scenarioNames)
   }
   unknownNames <- setdiff(scenarioNames, names(allScenarios))
   if (length(unknownNames) > 0) {

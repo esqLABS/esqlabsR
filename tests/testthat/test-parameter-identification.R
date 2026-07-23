@@ -1890,6 +1890,39 @@ test_that("addPIOutputMapping() errors with a did-you-mean hint on an undefined 
   )
 })
 
+test_that("addPIOutputMapping() aborts cleanly on a NULL / non-scalar outputPath", {
+  # A malformed outputPath resolves to no output path and raises the typed
+  # outputPathRefNotFound abort, not a raw zero/multi-length condition error.
+  project <- testProject()
+  addPITask(
+    project,
+    id = "t",
+    scenarios = "testscenario",
+    parameters = list(),
+    outputMappings = list()
+  )
+  expect_error(
+    addPIOutputMapping(
+      project,
+      task = "t",
+      scenarios = "testscenario",
+      outputPath = NULL,
+      observedData = "L"
+    ),
+    regexp = "neither a defined output-path id nor the model path"
+  )
+  expect_error(
+    addPIOutputMapping(
+      project,
+      task = "t",
+      scenarios = "testscenario",
+      outputPath = c("aciclovir_pvb", "aciclovir_fat_cell"),
+      observedData = "L"
+    ),
+    regexp = "neither a defined output-path id nor the model path"
+  )
+})
+
 # PI sub-mutator write-through (on-disk) ----
 
 test_that("removePIParameter / removePIOutputMapping update the task file on disk", {

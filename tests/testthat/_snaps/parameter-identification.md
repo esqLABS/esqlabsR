@@ -216,7 +216,7 @@
       * "Bad" -> "bad"
       Error in `addPITask()`:
       ! Cannot add PI task "bad":
-      x outputPath 'DoesNotExist' is neither a defined output-path id nor the model path of one
+      x outputPath 'DoesNotExist' is neither a defined output-path id nor the model path of one. Pass an output-path id (a key in project$definitions$outputPaths) or the literal model path of a defined output path; define new ones with addOutputPath().
 
 # addPITask() errors on duplicate id
 
