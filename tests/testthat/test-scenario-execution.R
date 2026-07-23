@@ -476,6 +476,51 @@ test_that(".runScenariosFromProject errors on unknown scenarioNames", {
   )
 })
 
+# .buildScenarioSimulations ----
+
+test_that(".buildScenarioSimulations resolves NULL to every scenario and returns the prep shape", {
+  withr::local_options(lifecycle_verbosity = "quiet")
+  project <- .testProject()
+  built <- esqlabsR:::.buildScenarioSimulations(project)
+  expect_setequal(built$scenarioNames, names(project$definitions$scenarios))
+  expect_named(built$prepared, built$scenarioNames)
+  first <- built$prepared[[1]]
+  expect_named(first, c("simulation", "population"))
+  expect_s3_class(first$simulation, "Simulation")
+})
+
+test_that(".buildScenarioSimulations errors on an unknown scenario name", {
+  withr::local_options(lifecycle_verbosity = "quiet")
+  project <- .testProject()
+  expect_error(
+    esqlabsR:::.buildScenarioSimulations(project, scenarioNames = "NopeNope"),
+    regexp = "NopeNope"
+  )
+})
+
+test_that(".buildScenarioSimulations shares one build cache across scenarios in a call", {
+  # Two scenarios referencing the same individual must build its
+  # IndividualCharacteristics once, not once per scenario.
+  withr::local_options(lifecycle_verbosity = "quiet")
+  project <- .testProject()
+  duplicateScenario(project, "testscenario", "testscenario_twin")
+
+  built <- 0L
+  realCreateIC <- ospsuite::createIndividualCharacteristics
+  local_mocked_bindings(
+    createIndividualCharacteristics = function(...) {
+      built <<- built + 1L
+      realCreateIC(...)
+    },
+    .package = "ospsuite"
+  )
+  esqlabsR:::.buildScenarioSimulations(
+    project,
+    scenarioNames = c("testscenario", "testscenario_twin")
+  )
+  expect_identical(built, 1L)
+})
+
 # Model file resolution ----
 
 test_that("a scenario with an absolute modelFile runs when simulationsFolder is NULL", {

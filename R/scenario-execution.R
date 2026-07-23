@@ -433,6 +433,55 @@
   list(simulation = simulation, population = population)
 }
 
+# .buildScenarioSimulations ----
+
+# Resolve the requested scenario names and build (but do not run) each one's
+# simulation. One run-scoped cache of `IndividualCharacteristics` / `Population`
+# objects is shared across the batch, so two scenarios that reference the same
+# individual or population build it once. `scenarioNames = NULL` selects every
+# scenario; an unknown name aborts. Returns `list(scenarioNames, prepared)`
+# where `prepared` is a named list (keyed by scenario name) of
+# `.prepareScenario()`'s `list(simulation, population)` return.
+# @keywords internal
+# @noRd
+.buildScenarioSimulations <- function(
+  project,
+  scenarioNames = NULL,
+  customParams = NULL,
+  simulationRunOptions = NULL,
+  stopIfParameterNotFound = TRUE
+) {
+  allScenarios <- project$definitions$scenarios
+  if (is.null(scenarioNames)) {
+    scenarioNames <- names(allScenarios)
+  }
+  unknownNames <- setdiff(scenarioNames, names(allScenarios))
+  if (length(unknownNames) > 0) {
+    cli::cli_abort(
+      "Unknown scenario names: {.val {unknownNames}}."
+    )
+  }
+
+  cache <- new.env(parent = emptyenv())
+  cache$individuals <- list()
+  cache$populations <- list()
+
+  prepared <- vector("list", length(scenarioNames))
+  for (idx in seq_along(scenarioNames)) {
+    name <- scenarioNames[[idx]]
+    prepared[[idx]] <- .prepareScenario(
+      scenario = allScenarios[[name]],
+      project = project,
+      customParams = customParams,
+      cache = cache,
+      simulationRunOptions = simulationRunOptions,
+      stopIfParameterNotFound = stopIfParameterNotFound
+    )
+    names(prepared)[[idx]] <- name
+  }
+  list(scenarioNames = scenarioNames, prepared = prepared)
+}
+
 # .collectScenarioResult ----
 
 # Resolve output quantities and build the standard return list for one
@@ -548,34 +597,17 @@
     )
   }
 
+  built <- .buildScenarioSimulations(
+    project = project,
+    scenarioNames = scenarioNames,
+    customParams = customParams,
+    simulationRunOptions = simulationRunOptions,
+    stopIfParameterNotFound = stopIfParameterNotFound
+  )
+  scenarioNames <- built$scenarioNames
+  prepared <- built$prepared
+  # Still needed below to hand each scenario record to `.collectScenarioResult`.
   allScenarios <- project$definitions$scenarios
-  if (is.null(scenarioNames)) {
-    scenarioNames <- names(allScenarios)
-  }
-  unknownNames <- setdiff(scenarioNames, names(allScenarios))
-  if (length(unknownNames) > 0) {
-    cli::cli_abort(
-      "Unknown scenario names: {.val {unknownNames}}."
-    )
-  }
-
-  cache <- new.env(parent = emptyenv())
-  cache$individuals <- list()
-  cache$populations <- list()
-
-  prepared <- vector("list", length(scenarioNames))
-  for (idx in seq_along(scenarioNames)) {
-    name <- scenarioNames[[idx]]
-    prepared[[idx]] <- .prepareScenario(
-      scenario = allScenarios[[name]],
-      project = project,
-      customParams = customParams,
-      cache = cache,
-      simulationRunOptions = simulationRunOptions,
-      stopIfParameterNotFound = stopIfParameterNotFound
-    )
-    names(prepared)[[idx]] <- name
-  }
 
   individualSimulations <- list()
   for (idx in seq_along(scenarioNames)) {

@@ -24,3 +24,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-07-22 15:30: Dropped the severity/kind prefixes from messages catalog entry names (error/stop/warning/validation/message), naming each by what it describes; kept a short context qualifier where two entries would otherwise collide.
 - 2026-07-22 16:00: Normalized @family roxygen values to camelCase (spaced and kebab-case ones), leaving singular/plural as-is; updated the matching has_concept() entry in _pkgdown.yml.
 - 2026-07-23 11:59: Added `stopIfFails` to `runScenarios()`, defaulting to abort when a scenario produces no results (#1036).
+- 2026-07-23 12:01: Extracted the shared scenario build loop into `.buildScenarioSimulations()`; `runScenarios()` now builds through it (prep for `buildSimulations()`, #1074).
