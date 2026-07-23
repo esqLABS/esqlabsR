@@ -37,7 +37,7 @@ object (typically loaded from JSON). This is the reverse of
 \code{importProjectFromExcel()}.
 }
 \seealso{
-Other project persistence:
+Other projectPersistence:
 \code{\link[=exampleProjectPath]{exampleProjectPath()}},
 \code{\link[=importProjectFromExcel]{importProjectFromExcel()}},
 \code{\link[=initProject]{initProject()}},
@@ -48,4 +48,4 @@ Other project persistence:
 \code{\link[=saveProject]{saveProject()}},
 \code{\link[=snapshotProject]{snapshotProject()}}
 }
-\concept{project persistence}
+\concept{projectPersistence}

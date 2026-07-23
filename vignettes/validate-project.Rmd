@@ -42,8 +42,8 @@ project <- loadProject(file.path(project_dir, "Project.json"))
 
 Validation has exactly **two** levels, not three:
 
-- A **Critical Error** is a blocking problem: a duplicate id, a required field left empty, or a reference to a definition that does not exist. A section carrying one has no valid result (its `is_valid()` method returns `FALSE`), and the project will not run scenarios or build plots until it is resolved.
-- A **Warning** is a non-blocking note: surfaced so you see it, but it does not stop execution. A section with warnings and no critical errors is still valid (its `is_valid()` method returns `TRUE`).
+- A **Critical Error** is a blocking problem: a duplicate id, a required field left empty, or a reference to a definition that does not exist. A section carrying one has no valid result (its `isValid()` method returns `FALSE`), and the project will not run scenarios or build plots until it is resolved.
+- A **Warning** is a non-blocking note: surfaced so you see it, but it does not stop execution. A section with warnings and no critical errors is still valid (its `isValid()` method returns `TRUE`).
 
 There is no separate "valid data" tier. A section that simply passed is just a result with no critical errors. The quickest single question, "is anything blocking?", is answered by `isAnyCriticalErrors()`.
 

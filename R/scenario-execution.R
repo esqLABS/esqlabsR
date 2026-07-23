@@ -156,7 +156,7 @@
   ) {
     appData <- project$definitions$applications[[scenario$applicationProtocol]]
     if (is.null(appData)) {
-      cli::cli_abort(messages$errorApplicationProtocolNotFound(
+      cli::cli_abort(messages$applicationProtocolNotFound(
         scenarioName = scenario$scenarioName,
         applicationProtocol = scenario$applicationProtocol
       ))
@@ -261,7 +261,7 @@
   if (!is.null(scenario$individualId) && !is.na(scenario$individualId)) {
     indivData <- project$definitions$individuals[[scenario$individualId]]
     if (is.null(indivData)) {
-      cli::cli_warn(messages$warningNoIndividualCharacteristics(
+      cli::cli_warn(messages$noIndividualCharacteristics(
         scenarioName = scenario$scenarioName,
         individualId = scenario$individualId
       ))
@@ -298,7 +298,7 @@
   # 4. Set simulation time intervals
   if (!is.null(scenario$simulationTime)) {
     if (is.null(scenario$simulationTimeUnit)) {
-      cli::cli_abort(messages$stopScenarioMissingTimeUnit(
+      cli::cli_abort(messages$scenarioMissingTimeUnit(
         scenario$scenarioName
       ))
     }
@@ -483,7 +483,7 @@
   for (i in seq_along(parts)) {
     pair <- unlist(strsplit(parts[[i]], ":", fixed = TRUE))
     if (length(pair) != 2L) {
-      cli::cli_abort(messages$errorWrongOntogenyStructure(parts[[i]]))
+      cli::cli_abort(messages$wrongOntogenyStructure(parts[[i]]))
     }
     validateEnumValue(value = pair[[2]], enum = ospsuite::StandardOntogeny)
     out[[i]] <- ospsuite::MoleculeOntogeny$new(

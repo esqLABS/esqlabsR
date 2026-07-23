@@ -54,8 +54,8 @@ parameter-identification sub-definition helpers act on a single definition per
 call.
 }
 \seealso{
-Other output path:
+Other outputPath:
 \code{\link[=removeOutputPath]{removeOutputPath()}},
 \code{\link[=setOutputPath]{setOutputPath()}}
 }
-\concept{output path}
+\concept{outputPath}

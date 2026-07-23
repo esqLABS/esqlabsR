@@ -127,9 +127,9 @@ sensitivitySpiderPlot(resultsNamed)
 }
 }
 \seealso{
-Other sensitivity-calculation:
+Other sensitivityCalculation:
 \code{\link[=sensitivityCalculation]{sensitivityCalculation()}},
 \code{\link[=sensitivitySpiderPlot]{sensitivitySpiderPlot()}},
 \code{\link[=sensitivityTornadoPlot]{sensitivityTornadoPlot()}}
 }
-\concept{sensitivity-calculation}
+\concept{sensitivityCalculation}

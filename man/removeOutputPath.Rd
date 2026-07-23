@@ -21,8 +21,8 @@ skips) any id not present, and warns when a removed output path is still
 referenced.
 }
 \seealso{
-Other output path:
+Other outputPath:
 \code{\link[=addOutputPath]{addOutputPath()}},
 \code{\link[=setOutputPath]{setOutputPath()}}
 }
-\concept{output path}
+\concept{outputPath}

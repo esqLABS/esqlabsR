@@ -38,7 +38,7 @@ validationResult <- R6::R6Class(
     #' @param category Error category (e.g., "Structure", "Missing Fields", "Uniqueness")
     #' @param message Error message
     #' @param details Optional list with additional details (sheet, row, column)
-    add_critical_error = function(category, message, details = NULL) {
+    addCriticalError = function(category, message, details = NULL) {
       error_entry <- list(
         category = category,
         message = message,
@@ -52,7 +52,7 @@ validationResult <- R6::R6Class(
     #' @param category Warning category (e.g., "Data", "Structure")
     #' @param message Warning message
     #' @param details Optional list with additional details (sheet, row, column)
-    add_warning = function(category, message, details = NULL) {
+    addWarning = function(category, message, details = NULL) {
       warning_entry <- list(
         category = category,
         message = message,
@@ -63,17 +63,17 @@ validationResult <- R6::R6Class(
     },
 
     #' @description Check if validation passed (no critical errors)
-    is_valid = function() {
+    isValid = function() {
       length(self$critical_errors) == 0
     },
 
     #' @description Check if there are critical errors
-    has_critical_errors = function() {
+    hasCriticalErrors = function() {
       length(self$critical_errors) > 0
     },
 
     #' @description Get formatted messages for display
-    get_formatted_messages = function() {
+    getFormattedMessages = function() {
       list(
         critical = lapply(self$critical_errors, function(e) {
           paste0("[", e$category, "] ", e$message)
@@ -85,9 +85,9 @@ validationResult <- R6::R6Class(
     },
 
     #' @description Get validation summary
-    get_summary = function() {
+    getSummary = function() {
       list(
-        has_critical_errors = self$has_critical_errors(),
+        has_critical_errors = self$hasCriticalErrors(),
         critical_error_count = length(self$critical_errors),
         warning_count = length(self$warnings)
       )
@@ -287,7 +287,7 @@ isAnyCriticalErrors <- function(validationResults) {
     validationResults,
     function(r) {
       if (inherits(r, "validationResult")) {
-        r$has_critical_errors()
+        r$hasCriticalErrors()
       } else {
         FALSE
       }
@@ -326,7 +326,7 @@ validationSummary <- function(validationResults) {
   for (name in names(validationResults)) {
     result <- validationResults[[name]]
     if (inherits(result, "validationResult")) {
-      if (result$has_critical_errors()) {
+      if (result$hasCriticalErrors()) {
         summary$total_critical_errors <- summary$total_critical_errors +
           length(result$critical_errors)
         summary$sections_with_errors <- c(summary$sections_with_errors, name)
@@ -416,7 +416,7 @@ validationSummary <- function(validationResults) {
   lines <- character()
   for (section in names(results)) {
     r <- results[[section]]
-    if (!inherits(r, "validationResult") || !r$has_critical_errors()) {
+    if (!inherits(r, "validationResult") || !r$hasCriticalErrors()) {
       next
     }
     for (e in r$critical_errors) {
@@ -616,10 +616,10 @@ validationSummary <- function(validationResults) {
 #' @return The (mutated) `result`, returned for fluent chaining.
 #' @keywords internal
 #' @noRd
-.check_no_duplicates <- function(ids, fieldName, result) {
+.checkNoDuplicates <- function(ids, fieldName, result) {
   dupes <- ids[duplicated(ids) & !is.na(ids)]
   if (length(dupes) > 0) {
-    result$add_critical_error(
+    result$addCriticalError(
       "Uniqueness",
       paste0(
         "Duplicate ",
@@ -641,7 +641,7 @@ validationSummary <- function(validationResults) {
 #' @return The (mutated) `result`.
 #' @keywords internal
 #' @noRd
-.check_required_fields <- function(
+.checkRequiredFields <- function(
   entry,
   requiredFields,
   entryName,
@@ -650,7 +650,7 @@ validationSummary <- function(validationResults) {
   for (field in requiredFields) {
     val <- entry[[field]]
     if (is.null(val) || (length(val) == 1 && (is.na(val) || val == ""))) {
-      result$add_critical_error(
+      result$addCriticalError(
         "Missing Fields",
         paste0(
           "Required field '",
@@ -678,7 +678,7 @@ validationSummary <- function(validationResults) {
   result <- validationResult$new()
 
   if (is.null(parameterSets) || length(parameterSets) == 0) {
-    result$add_warning("Data", paste0("No ", sectionName, " defined"))
+    result$addWarning("Data", paste0("No ", sectionName, " defined"))
     return(result)
   }
 
@@ -708,7 +708,7 @@ validationSummary <- function(validationResults) {
           parameterNames == ""
       )
     ) {
-      result$add_critical_error(
+      result$addCriticalError(
         "Missing Fields",
         paste0(
           "Set '",
@@ -726,7 +726,7 @@ validationSummary <- function(validationResults) {
       logical(1)
     )
     if (any(nonNumeric)) {
-      result$add_warning(
+      result$addWarning(
         "Data Type",
         paste0(
           "Set '",
@@ -741,7 +741,7 @@ validationSummary <- function(validationResults) {
     fullPaths <- paste(containerPaths, parameterNames, sep = "|")
     dupes <- fullPaths[duplicated(fullPaths)]
     if (length(dupes) > 0) {
-      result$add_warning(
+      result$addWarning(
         "Uniqueness",
         paste0(
           "Duplicate parameter paths in set '",
@@ -863,7 +863,7 @@ validationSummary <- function(validationResults) {
     if (!inherits(sectionResult, "validationResult")) {
       sectionResult <- .validationAdapters[[section]](project)
     }
-    if (sectionResult$has_critical_errors()) {
+    if (sectionResult$hasCriticalErrors()) {
       return(TRUE)
     }
   }
@@ -917,7 +917,7 @@ validationSummary <- function(validationResults) {
       "plot dataCombined scenario references",
       "PI scenarios / outputPath references"
     )
-    result$add_warning(
+    result$addWarning(
       "Skipped",
       paste0(
         "Cross-reference validation skipped due to critical errors. ",
@@ -953,7 +953,7 @@ validationSummary <- function(validationResults) {
         !is.na(sc$individualId) &&
         !.refResolves(sc$individualId, individualIds)
     ) {
-      result$add_critical_error(
+      result$addCriticalError(
         "Invalid Reference",
         paste0(
           "Scenario '",
@@ -971,7 +971,7 @@ validationSummary <- function(validationResults) {
         !is.na(sc$populationId) &&
         !.refResolves(sc$populationId, populationIds)
     ) {
-      result$add_critical_error(
+      result$addCriticalError(
         "Invalid Reference",
         paste0(
           "Scenario '",
@@ -987,7 +987,7 @@ validationSummary <- function(validationResults) {
     if (!is.null(sc$modelParameterSets) && length(sc$modelParameterSets) > 0) {
       invalidSets <- .danglingRefs(sc$modelParameterSets, parameterSetKeys)
       if (length(invalidSets) > 0) {
-        result$add_critical_error(
+        result$addCriticalError(
           "Invalid Reference",
           paste0(
             "Scenario '",
@@ -1003,7 +1003,7 @@ validationSummary <- function(validationResults) {
     if (!is.null(sc$initialConditions) && length(sc$initialConditions) > 0) {
       invalidICs <- .danglingRefs(sc$initialConditions, initialConditionKeys)
       if (length(invalidICs) > 0) {
-        result$add_critical_error(
+        result$addCriticalError(
           "Invalid Reference",
           paste0(
             "Scenario '",
@@ -1021,7 +1021,7 @@ validationSummary <- function(validationResults) {
         !is.na(sc$applicationProtocol) &&
         !.refResolves(sc$applicationProtocol, applicationKeys)
     ) {
-      result$add_critical_error(
+      result$addCriticalError(
         "Invalid Reference",
         paste0(
           "Scenario '",
@@ -1041,7 +1041,7 @@ validationSummary <- function(validationResults) {
     if (!is.null(scOutputPathIds)) {
       invalidOutputPaths <- .danglingRefs(scOutputPathIds, outputPathKeys)
       if (length(invalidOutputPaths) > 0) {
-        result$add_critical_error(
+        result$addCriticalError(
           "Invalid Reference",
           paste0(
             "Scenario '",
@@ -1064,7 +1064,7 @@ validationSummary <- function(validationResults) {
     refs <- as.character(unlist(refs))
     invalid <- .danglingRefs(refs, parameterSetKeys)
     if (length(invalid) > 0) {
-      result$add_critical_error(
+      result$addCriticalError(
         "Invalid Reference",
         paste0(
           "Individual '",
@@ -1084,7 +1084,7 @@ validationSummary <- function(validationResults) {
     refs <- as.character(unlist(refs))
     invalid <- .danglingRefs(refs, parameterSetKeys)
     if (length(invalid) > 0) {
-      result$add_critical_error(
+      result$addCriticalError(
         "Invalid Reference",
         paste0(
           "Application '",
@@ -1113,7 +1113,7 @@ validationSummary <- function(validationResults) {
     }))
     invalidScenarios <- .danglingRefs(referencedScenarios, scenarioNames)
     if (length(invalidScenarios) > 0) {
-      result$add_critical_error(
+      result$addCriticalError(
         "Invalid Reference",
         paste0(
           "dataCombined references undefined scenarios: ",
@@ -1136,7 +1136,7 @@ validationSummary <- function(validationResults) {
 
     badTaskScenarios <- .danglingRefs(task$scenarios, scenarioNames)
     if (length(badTaskScenarios) > 0L) {
-      result$add_critical_error(
+      result$addCriticalError(
         "Invalid Reference",
         paste0(
           "PI task '",
@@ -1151,7 +1151,7 @@ validationSummary <- function(validationResults) {
     for (p in task$parameters) {
       bad <- .danglingRefs(p$scenarios, scenarioNames)
       if (length(bad) > 0L) {
-        result$add_critical_error(
+        result$addCriticalError(
           "Invalid Reference",
           paste0(
             "PI task '",
@@ -1169,7 +1169,7 @@ validationSummary <- function(validationResults) {
     for (m in task$outputMappings) {
       badScenarios <- .danglingRefs(m$scenarios, scenarioNames)
       if (length(badScenarios) > 0L) {
-        result$add_critical_error(
+        result$addCriticalError(
           "Invalid Reference",
           paste0(
             "PI task '",
@@ -1183,7 +1183,7 @@ validationSummary <- function(validationResults) {
         )
       }
       if (is.null(m$outputPathId) || is.na(m$outputPathId)) {
-        result$add_critical_error(
+        result$addCriticalError(
           "Invalid Reference",
           paste0(
             "PI task '",
@@ -1194,7 +1194,7 @@ validationSummary <- function(validationResults) {
           )
         )
       } else if (!.refResolves(m$outputPathId, outputPathKeys)) {
-        result$add_critical_error(
+        result$addCriticalError(
           "Invalid Reference",
           paste0(
             "PI task '",

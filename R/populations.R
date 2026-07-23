@@ -71,14 +71,14 @@
   result <- validationResult$new()
 
   if (is.null(populations) || length(populations) == 0) {
-    result$add_warning("Data", "No populations defined")
+    result$addWarning("Data", "No populations defined")
     return(result)
   }
 
   for (id in names(populations)) {
     pop <- populations[[id]]
 
-    result <- .check_required_fields(
+    result <- .checkRequiredFields(
       pop,
       c("species"),
       paste0("population '", id, "'"),
@@ -88,7 +88,7 @@
     if (!is.null(pop$proportionOfFemales)) {
       pof <- as.numeric(pop$proportionOfFemales)
       if (!is.na(pof) && (pof < 0 || pof > 100)) {
-        result$add_warning(
+        result$addWarning(
           "Data Range",
           paste0(
             "proportionOfFemales in population '",
@@ -115,7 +115,7 @@
           !is.na(hi) &&
           lo > hi
       ) {
-        result$add_warning(
+        result$addWarning(
           "Data Range",
           paste0(pair[1], " > ", pair[2], " in population '", id, "'")
         )
@@ -257,7 +257,7 @@ extendPopulationFromXLS <- function(population, XLSpath, sheet = NULL) {
     },
     error = function(e) {
       cli::cli_abort(
-        messages$errorWrongXLSStructure(
+        messages$wrongXLSStructure(
           filePath = XLSpath,
           expectedColNames = columnNames
         )
@@ -267,7 +267,7 @@ extendPopulationFromXLS <- function(population, XLSpath, sheet = NULL) {
 
   if (!all(columnNames %in% names(data))) {
     cli::cli_abort(
-      messages$errorWrongXLSStructure(
+      messages$wrongXLSStructure(
         filePath = XLSpath,
         expectedColNames = columnNames
       )
@@ -321,7 +321,7 @@ Distributions <- enum(list(
 #' @export
 sampleRandomValue <- function(distribution, mean, sd, n) {
   if (!enumHasKey(distribution, Distributions)) {
-    cli::cli_abort(messages$errorDistributionNotSupported(distribution))
+    cli::cli_abort(messages$distributionNotSupported(distribution))
   }
 
   if (distribution == Distributions$Normal) {

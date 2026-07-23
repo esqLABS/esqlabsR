@@ -140,7 +140,7 @@ readExcel <- function(path, sheet = NULL, ...) {
 # Expand every `${VAR}` / `$VAR` reference in `path` against the environment,
 # leaving an unset variable's reference in place and never touching `$PATH`.
 # The one place the package's env-var-in-path contract lives; the `Project`
-# working-folder resolver (`.replace_env_var`) and the Excel-import folder
+# working-folder resolver (`.replaceEnvVar`) and the Excel-import folder
 # resolution both call it so they cannot drift.
 # @keywords internal
 # @noRd

@@ -1,17 +1,17 @@
 test_that("validationResult class works correctly", {
   result <- validationResult$new()
 
-  expect_true(result$is_valid())
-  expect_false(result$has_critical_errors())
+  expect_true(result$isValid())
+  expect_false(result$hasCriticalErrors())
 
-  result$add_critical_error("Test", "Test error")
-  expect_false(result$is_valid())
-  expect_true(result$has_critical_errors())
+  result$addCriticalError("Test", "Test error")
+  expect_false(result$isValid())
+  expect_true(result$hasCriticalErrors())
 
-  result$add_warning("Test", "Test warning")
+  result$addWarning("Test", "Test warning")
   expect_equal(length(result$warnings), 1)
 
-  summary <- result$get_summary()
+  summary <- result$getSummary()
   expect_named(
     summary,
     c("has_critical_errors", "critical_error_count", "warning_count")
@@ -28,12 +28,12 @@ test_that("validationResult exposes no dead `data` surface", {
   # separate one.
   expect_null(result$data)
   expect_null(result$set_data)
-  expect_false("has_data" %in% names(result$get_summary()))
+  expect_false("has_data" %in% names(result$getSummary()))
 })
 
 test_that("isAnyCriticalErrors detects errors in validation results", {
   result_with_error <- validationResult$new()
-  result_with_error$add_critical_error("Test", "Error message")
+  result_with_error$addCriticalError("Test", "Error message")
 
   result_no_error <- validationResult$new()
 
@@ -59,7 +59,7 @@ test_that("isAnyCriticalErrors returns FALSE when no errors", {
 
 test_that("isAnyCriticalErrors handles non-validationResult objects", {
   result_with_error <- validationResult$new()
-  result_with_error$add_critical_error("Test", "Error message")
+  result_with_error$addCriticalError("Test", "Error message")
 
   validationResults <- list(
     file1 = result_with_error,
@@ -72,12 +72,12 @@ test_that("isAnyCriticalErrors handles non-validationResult objects", {
 
 test_that("validationSummary correctly counts errors and warnings", {
   result1 <- validationResult$new()
-  result1$add_critical_error("Test", "Error 1")
-  result1$add_critical_error("Test", "Error 2")
-  result1$add_warning("Test", "Warning 1")
+  result1$addCriticalError("Test", "Error 1")
+  result1$addCriticalError("Test", "Error 2")
+  result1$addWarning("Test", "Warning 1")
 
   result2 <- validationResult$new()
-  result2$add_warning("Test", "Warning 2")
+  result2$addWarning("Test", "Warning 2")
 
   validationResults <- list(
     scenarios = result1,
@@ -114,12 +114,12 @@ test_that("validationSummary handles empty validation results", {
   expect_equal(summary$sections_with_warnings, character())
 })
 
-test_that("validationResult get_formatted_messages works correctly", {
+test_that("validationResult getFormattedMessages works correctly", {
   result <- validationResult$new()
-  result$add_critical_error("Structure", "Missing required field")
-  result$add_warning("Data", "Value out of range")
+  result$addCriticalError("Structure", "Missing required field")
+  result$addWarning("Data", "Value out of range")
 
-  formatted <- result$get_formatted_messages()
+  formatted <- result$getFormattedMessages()
 
   expect_true(is.list(formatted))
   expect_true("critical" %in% names(formatted))
@@ -130,9 +130,9 @@ test_that("validationResult get_formatted_messages works correctly", {
   expect_true(grepl("Data", formatted$warnings[[1]]))
 })
 
-test_that("validationResult add_critical_error with details works", {
+test_that("validationResult addCriticalError with details works", {
   result <- validationResult$new()
-  result$add_critical_error(
+  result$addCriticalError(
     "Structure",
     "Missing field",
     details = list(sheet = "Sheet1", row = 5)
@@ -143,9 +143,9 @@ test_that("validationResult add_critical_error with details works", {
   expect_equal(result$critical_errors[[1]]$details$row, 5)
 })
 
-test_that("validationResult add_warning with details works", {
+test_that("validationResult addWarning with details works", {
   result <- validationResult$new()
-  result$add_warning(
+  result$addWarning(
     "Data",
     "Value warning",
     details = list(column = "Age", value = -5)
@@ -547,7 +547,7 @@ test_that(".validatePlots flags a missing label in a dataCombined entry", {
     )
   )
   result <- esqlabsR:::.validatePlots(dataCombined, list(), list())
-  expect_false(result$is_valid())
+  expect_false(result$isValid())
   msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
   expect_match(msgs, "Simulated entry.*missing 'label'", all = FALSE)
   expect_match(msgs, "Observed entry.*missing 'label'", all = FALSE)
@@ -782,7 +782,7 @@ test_that(".validateCrossReferences resolves individuals/populations as named li
 
 test_that(".validateCrossReferences skips and warns when prior section had critical errors", {
   prior <- list(scenarios = validationResult$new())
-  prior$scenarios$add_critical_error("X", "broken")
+  prior$scenarios$addCriticalError("X", "broken")
   project <- .fakeProject()
   result <- esqlabsR:::.validateCrossReferences(project, prior)
   expect_length(result$critical_errors, 0)
@@ -912,8 +912,8 @@ test_that("createPlots(validate = TRUE) aborts on a clearly broken project", {
 
 test_that(".abortValidationErrors escapes glue metacharacters in messages", {
   result <- validationResult$new()
-  result$add_critical_error("Structure", "Scenario \"Dose {mg}\" is broken")
-  result$add_critical_error("Structure", "Scenario S{1} also broken")
+  result$addCriticalError("Structure", "Scenario \"Dose {mg}\" is broken")
+  result$addCriticalError("Structure", "Scenario S{1} also broken")
   results <- list(scenarios = result)
   expect_snapshot(
     error = TRUE,
@@ -1204,17 +1204,17 @@ test_that("validateProject() flags a PI outputMapping with no outputPath", {
 # stable (no fixture paths, no timestamps in the rendered output).
 .fakeValidationResults <- function() {
   scenarios <- validationResult$new()
-  scenarios$add_critical_error(
+  scenarios$addCriticalError(
     "Invalid Reference",
     "Scenario 'S1' references undefined individual 'ghost'"
   )
-  scenarios$add_warning("Data", "Scenario 'S1' modelFile not found on disk")
+  scenarios$addWarning("Data", "Scenario 'S1' modelFile not found on disk")
 
   parameterSets <- validationResult$new()
-  parameterSets$add_warning("Data", "No parameter sets defined")
+  parameterSets$addWarning("Data", "No parameter sets defined")
 
   crossReferences <- validationResult$new()
-  crossReferences$add_critical_error(
+  crossReferences$addCriticalError(
     "Invalid Reference",
     "dataCombined references undefined scenarios: ghost"
   )

@@ -42,7 +42,7 @@
 #' @returns Invisibly, the path of the written snapshot file (always with the
 #'   `.esqlabsR` extension).
 #' @export
-#' @family project persistence
+#' @family projectPersistence
 #' @seealso [restoreProject()], [loadProject()], [saveProject()].
 #' @examples
 #' # Create a temporary example project and snapshot it to a single file.
@@ -129,7 +129,7 @@ snapshotProject <- function(
 #' @returns A freshly loaded `Project` working from `dir`, with no unsaved
 #'   changes.
 #' @export
-#' @family project persistence
+#' @family projectPersistence
 #' @seealso [snapshotProject()], [loadProject()], [reloadProject()].
 #' @examples
 #' # Write a snapshot, then recreate a project folder from it.

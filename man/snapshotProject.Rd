@@ -52,7 +52,7 @@ snapshot # the path of the snapshot file
 \seealso{
 \code{\link[=restoreProject]{restoreProject()}}, \code{\link[=loadProject]{loadProject()}}, \code{\link[=saveProject]{saveProject()}}.
 
-Other project persistence:
+Other projectPersistence:
 \code{\link[=exampleProjectPath]{exampleProjectPath()}},
 \code{\link[=exportProjectToExcel]{exportProjectToExcel()}},
 \code{\link[=importProjectFromExcel]{importProjectFromExcel()}},
@@ -63,4 +63,4 @@ Other project persistence:
 \code{\link[=restoreProject]{restoreProject()}},
 \code{\link[=saveProject]{saveProject()}}
 }
-\concept{project persistence}
+\concept{projectPersistence}

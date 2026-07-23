@@ -273,7 +273,7 @@
 # is a one-place edit (the spec) rather than three lists kept in lockstep. Used
 # by the whole-tree writers, where write order does not matter (each kind writes
 # into its own folder independently); the load order that must resolve
-# `outputPaths` before scenarios is fixed separately in `Project$.read_json()`.
+# `outputPaths` before scenarios is fixed separately in `Project$.readJson()`.
 #
 # @keywords internal
 # @noRd

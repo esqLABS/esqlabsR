@@ -17,7 +17,7 @@ Get the path to the example Project.json
 exampleProjectPath()
 }
 \seealso{
-Other project persistence:
+Other projectPersistence:
 \code{\link[=exportProjectToExcel]{exportProjectToExcel()}},
 \code{\link[=importProjectFromExcel]{importProjectFromExcel()}},
 \code{\link[=initProject]{initProject()}},
@@ -28,4 +28,4 @@ Other project persistence:
 \code{\link[=saveProject]{saveProject()}},
 \code{\link[=snapshotProject]{snapshotProject()}}
 }
-\concept{project persistence}
+\concept{projectPersistence}

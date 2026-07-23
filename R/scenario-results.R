@@ -97,7 +97,7 @@ saveScenarioResults <- function(
         ospsuite::exportResultsToCSV(results = results, filePath = outputPath)
       },
       error = function(cond) {
-        cli::cli_warn(messages$errorSavingScenarioResult(
+        cli::cli_warn(messages$savingScenarioResult(
           scenarioName = scenarioName,
           conditionMessage = conditionMessage(cond)
         ))
