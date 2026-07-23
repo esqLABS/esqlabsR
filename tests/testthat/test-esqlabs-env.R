@@ -1,11 +1,15 @@
 test_that("esqlabsRSettingNames lists the expected settings", {
+  # `esqlabsRSettingNames` derives its order from `names(esqlabsEnv)`, an
+  # environment whose name order is not guaranteed, so assert the set of names
+  # rather than a fixed order.
+  expect_setequal(
+    names(esqlabsRSettingNames),
+    c("packageVersion", "packageName", "colorPalette")
+  )
+  # It is an enum: each value equals its own name.
   expect_equal(
-    esqlabsRSettingNames,
-    list(
-      packageVersion = "packageVersion",
-      packageName = "packageName",
-      colorPalette = "colorPalette"
-    )
+    unname(unlist(esqlabsRSettingNames)),
+    names(esqlabsRSettingNames)
   )
 })
 
