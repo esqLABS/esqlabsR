@@ -93,7 +93,7 @@ test_that("createEsqlabsPlotConfiguration() works with ospsuite::plotIndividualT
   oneObsSimDC <- readRDS(getTestDataFilePath("oneObsSimDC"))
   esqlabsConfig <- createEsqlabsPlotConfiguration()
 
-  set.seed(123)
+  withr::local_seed(123)
   vdiffr::expect_doppelganger(
     title = "time profile - esqlabsPlotConfiguration",
     fig = plotIndividualTimeProfile(oneObsSimDC, esqlabsConfig)

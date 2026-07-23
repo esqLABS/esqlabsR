@@ -35,7 +35,7 @@ sensFixture <- local({
   function() {
     if (is.null(cache)) {
       simulation <- loadSimulation(simPath)
-      set.seed(123)
+      withr::local_seed(123)
       results <- sensitivityCalculation(
         simulation = simulation,
         outputPaths = outputPaths,
@@ -144,10 +144,10 @@ test_that("sensitivityTimeProfiles fails with invalid input", {
 test_that("sensitivityTimeProfiles creates expected default plot", {
   .localSnapshotOptions()
   results <- sensFixture()$results
-  set.seed(123)
+  withr::local_seed(123)
   p <- sensitivityTimeProfiles(results)
 
-  set.seed(123)
+  withr::local_seed(123)
   suppressWarnings(
     vdiffr::expect_doppelganger(
       title = "sensitivityTimeProfiles works as expected",
@@ -194,10 +194,10 @@ n <- "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
 test_that("sensitivityTimeProfiles applies linear y-axis scaling correctly", {
   .localSnapshotOptions()
   results <- sensFixture()$results
-  set.seed(123)
+  withr::local_seed(123)
   p <- sensitivityTimeProfiles(results, yAxisScale = "lin")
 
-  set.seed(123)
+  withr::local_seed(123)
   suppressWarnings(
     vdiffr::expect_doppelganger(
       title = "sensitivityTimeProfiles linear y-axis",
@@ -211,10 +211,10 @@ test_that("sensitivityTimeProfiles applies linear y-axis scaling correctly", {
 test_that("sensitivityTimeProfiles works with observed data", {
   results <- sensFixture()$results
   obsData <- obsDataFixture()
-  set.seed(123)
+  withr::local_seed(123)
   p <- sensitivityTimeProfiles(results, observedData = obsData[[1]])
 
-  set.seed(123)
+  withr::local_seed(123)
   suppressWarnings(
     vdiffr::expect_doppelganger(
       title = "sensitivityTimeProfiles works with observed data",
@@ -228,9 +228,9 @@ test_that("sensitivityTimeProfiles works with observed data", {
 test_that("sensitivityTimeProfiles accepts non-list units", {
   results <- sensFixture()$results
   # x-axis units: scalar vs list should result in the same axis range
-  set.seed(123)
+  withr::local_seed(123)
   p_x_list <- sensitivityTimeProfiles(results, xUnits = list("h"))
-  set.seed(123)
+  withr::local_seed(123)
   p_x_scalar <- sensitivityTimeProfiles(results, xUnits = "h")
 
   x_range_list <- extractAxisRange(p_x_list)$x
@@ -238,9 +238,9 @@ test_that("sensitivityTimeProfiles accepts non-list units", {
   expect_equal(x_range_scalar, x_range_list)
 
   # y-axis units: scalar vs list should result in the same axis range
-  set.seed(123)
+  withr::local_seed(123)
   p_y_list <- sensitivityTimeProfiles(results, yUnits = list("mol/l"))
-  set.seed(123)
+  withr::local_seed(123)
   p_y_scalar <- sensitivityTimeProfiles(results, yUnits = "mol/l")
 
   y_range_list <- extractAxisRange(p_y_list)$y
@@ -284,14 +284,14 @@ test_that("sensitivityTimeProfiles errors on invalid units", {
 
 test_that("sensitivityTimeProfiles applies unit conversion", {
   results <- sensFixture()$results
-  set.seed(123)
+  withr::local_seed(123)
   p <- sensitivityTimeProfiles(
     results,
     xUnits = list("h"),
     yUnits = list("mol/l")
   )
 
-  set.seed(123)
+  withr::local_seed(123)
   suppressWarnings(
     vdiffr::expect_doppelganger(
       title = "sensitivityTimeProfiles unit conversion",
@@ -315,10 +315,10 @@ test_that("sensitivityTimeProfiles handles non-convertible y-units", {
 
 test_that("sensitivityTimeProfiles plots are correct for multiple output paths", {
   resultsMultiple <- sensFixtureMultiple()$resultsMultiple
-  set.seed(123)
+  withr::local_seed(123)
   plotsMultiple <- sensitivityTimeProfiles(resultsMultiple)
 
-  set.seed(123)
+  withr::local_seed(123)
   suppressWarnings(
     vdiffr::expect_doppelganger(
       title = "multiple output path profiles",
@@ -330,13 +330,13 @@ test_that("sensitivityTimeProfiles plots are correct for multiple output paths",
 test_that("sensitivityTimeProfiles works with multiple outputs and observed data", {
   resultsMultiple <- sensFixtureMultiple()$resultsMultiple
   obsData <- obsDataFixture()
-  set.seed(123)
+  withr::local_seed(123)
   plotsMultiple <- sensitivityTimeProfiles(
     resultsMultiple,
     observedData = obsData
   )
 
-  set.seed(123)
+  withr::local_seed(123)
   suppressWarnings(
     vdiffr::expect_doppelganger(
       title = "multiple output path profiles with observed data",
@@ -409,13 +409,13 @@ test_that("sensitivityTimeProfiles handles non-convertible y-units for multiple 
 test_that("sensitivityTimeProfiles works with multiple observed data with same dimension", {
   resultsMultiple <- sensFixtureMultiple()$resultsMultiple
   obsDataMultiple <- buildObsDataMultiple()
-  set.seed(123)
+  withr::local_seed(123)
   plotsMultiple <- sensitivityTimeProfiles(
     resultsMultiple,
     observedData = obsDataMultiple
   )
 
-  set.seed(123)
+  withr::local_seed(123)
   suppressWarnings(
     vdiffr::expect_doppelganger(
       title = "multiple output path profiles with 2 observed data same dimension - concentration",
@@ -431,20 +431,20 @@ test_that("sensitivityTimeProfiles works with multiple observed data with differ
   obsDataMultiple[[2]]$yDimension <- "Amount"
   obsDataMultiple[[2]]$yUnit <- ospUnits$Amount$µmol
 
-  set.seed(123)
+  withr::local_seed(123)
   plotsMultiple <- sensitivityTimeProfiles(
     resultsMultiple,
     observedData = obsDataMultiple
   )
 
-  set.seed(123)
+  withr::local_seed(123)
   suppressWarnings(
     vdiffr::expect_doppelganger(
       title = "multiple output path profiles with 2 observed data - amount",
       fig = plotsMultiple[[2]]
     )
   )
-  set.seed(123)
+  withr::local_seed(123)
   suppressWarnings(
     vdiffr::expect_doppelganger(
       title = "multiple output path profiles with 2 observed data - concentration",
@@ -460,14 +460,14 @@ parameterPathsFilter <- "Aciclovir|Lipophilicity"
 
 test_that("sensitivityTimeProfiles plots are as expected with filters", {
   resultsMultiple <- sensFixtureMultiple()$resultsMultiple
-  set.seed(123)
+  withr::local_seed(123)
   plotFiltered <- sensitivityTimeProfiles(
     resultsMultiple,
     outputPaths = outputPathsFilter,
     parameterPaths = parameterPathsFilter
   )
 
-  set.seed(123)
+  withr::local_seed(123)
   suppressWarnings(
     vdiffr::expect_doppelganger(
       title = "filtered profile",

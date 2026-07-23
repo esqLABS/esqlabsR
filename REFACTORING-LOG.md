@@ -23,6 +23,11 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-07-22 15:00: Unified R6 method and helper casing to camelCase: validationResult methods, Project's parsing-era private methods, and the shared validation check helpers.
 - 2026-07-22 15:30: Dropped the severity/kind prefixes from messages catalog entry names (error/stop/warning/validation/message), naming each by what it describes; kept a short context qualifier where two entries would otherwise collide.
 - 2026-07-22 16:00: Normalized @family roxygen values to camelCase (spaced and kebab-case ones), leaving singular/plural as-is; updated the matching has_concept() entry in _pkgdown.yml.
+- 2026-07-23 11:34: Removed three unused test helpers (testProjectExcelConfigurationsPath, executeWithTestFile, createValidPISheets) from tests/testthat/helpers.R. (#1059)
+- 2026-07-23 11:35: Removed orphan test fixtures unreferenced by any test (ObsDataAciclovir_1/2/3.pkml, ProjectConfiguration-V5.xlsx). (#1059)
+- 2026-07-23 11:40: Merged the duplicated settings test file into test-esqlabs-env.R, keeping the exact esqlabsRSettingNames list check and the snapshot error test; removed test-esqlabsr-settings.R. (#1059)
+- 2026-07-23 11:45: Switched the two sensitivity xlsx-write tests to withr::local_tempfile() so nothing is written into the package test directory and an early failure cannot orphan the file. (#1059)
+- 2026-07-23 11:50: Converted all bare set.seed() calls in the sensitivity and plot/population test files to withr::local_seed(), so a test no longer leaks the session RNG state past its own block. (#1059)
 - 2026-07-23 11:59: Added `stopIfFails` to `runScenarios()`, defaulting to abort when a scenario produces no results (#1036).
 - 2026-07-23 12:01: Extracted the shared scenario build loop into `.buildScenarioSimulations()`; `runScenarios()` now builds through it (prep for `buildSimulations()`, #1074).
 - 2026-07-23 12:05: Added exported `buildSimulations()` returning parameterized-but-unrun simulations per scenario (#1074).
@@ -31,5 +36,7 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-07-23 12:16: The run path resolves a population by its entry `type` (programmatic from the store, csv from its file, else demographics spec), scenario CSV flag kept for back-compat (#1024).
 - 2026-07-23 12:19: `saveProject()` freezes an injected `Population` to `<id>.csv` and rewrites its entry to a csv source, so it survives reload (#1024).
 - 2026-07-23 12:29: Addressed review: orphan programmatic population sentinel now serializes verbatim (no save-blocking abort); moved two run-path aborts to the messages catalog; shared the scenario build preflight (#1130).
+- 2026-07-23 14:20: Dropped three no-op local_seed() calls before summarizer() in the PK-parameter tidy-dataframe test; summarizer() is pure dplyr and consumes no RNG. (#1059)
 - 2026-07-23 14:31: ponytail cleanup: inline single-use `.asPopulation`, shrink `.populationEntryRequiredFields`, fold `.resolveProgrammaticPopulation` into its switch arm (#1130).
+- 2026-07-23 14:45: Made the esqlabsRSettingNames test order-insensitive (set-equality on the names plus an enum-shape check) instead of asserting a fixed list order, since the names derive from an environment whose order is not guaranteed. (#1059)
 - 2026-07-23 15:06: PR review: narrow injected-population dispatch to a real `Population` object; clean up inline abort strings (#1024).
