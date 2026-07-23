@@ -951,6 +951,17 @@ messages$PIWrongElementType <- function(
   )
 }
 
+messages$outputPathRefNotFound <- function(value, outputPathIds) {
+  hint <- .suggestSuffix(value, outputPathIds)
+  cli::format_message(c(
+    "x" = "outputPath {.val {value}} is neither a defined output-path id nor \\
+    the model path of one.",
+    "i" = "Pass an output-path id (a key in \\
+    {.code project$definitions$outputPaths}) or the literal model path of a \\
+    defined output path; define new ones with {.fn addOutputPath}.{hint}"
+  ))
+}
+
 messages$PIOutputQuantityNotFound <- function(path, simulationName) {
   cliFormat(
     "Output quantity {.path {path}} not found in simulation {.val {simulationName}}.

@@ -1817,6 +1817,79 @@ test_that("addPIOutputMapping() / removePIOutputMapping() round-trip", {
   )
 })
 
+test_that("outputPath accepts either an id or the literal model path of a defined output path", {
+  project <- testProject()
+  literalPath <- project$definitions$outputPaths[["aciclovir_pvb"]]
+
+  # Inline in addPITask(): a literal model path resolves to the id.
+  addPITask(
+    project,
+    id = "bypath",
+    scenarios = "testscenario",
+    parameters = list(
+      PIParameter(
+        id = "p",
+        scenarios = "testscenario",
+        path = "x|y",
+        minValue = 0,
+        maxValue = 1,
+        startValue = 0.5
+      )
+    ),
+    outputMappings = list(
+      PIOutputMapping(
+        id = "m",
+        scenarios = "testscenario",
+        outputPath = literalPath,
+        observedData = "L"
+      )
+    )
+  )
+  expect_identical(
+    project$definitions$parameterIdentification$bypath$outputMappings[[
+      1
+    ]]$outputPathId,
+    "aciclovir_pvb"
+  )
+
+  # Via addPIOutputMapping(): a literal model path also resolves to the id.
+  addPIOutputMapping(
+    project,
+    task = "bypath",
+    id = "m2",
+    scenarios = "testscenario",
+    outputPath = literalPath,
+    observedData = "L"
+  )
+  expect_identical(
+    project$definitions$parameterIdentification$bypath$outputMappings[[
+      2
+    ]]$outputPathId,
+    "aciclovir_pvb"
+  )
+})
+
+test_that("addPIOutputMapping() errors with a did-you-mean hint on an undefined output path", {
+  project <- testProject()
+  addPITask(
+    project,
+    id = "t",
+    scenarios = "testscenario",
+    parameters = list(),
+    outputMappings = list()
+  )
+  expect_error(
+    addPIOutputMapping(
+      project,
+      task = "t",
+      scenarios = "testscenario",
+      outputPath = "aciclovir_pv",
+      observedData = "L"
+    ),
+    regexp = "aciclovir_pvb"
+  )
+})
+
 # PI sub-mutator write-through (on-disk) ----
 
 test_that("removePIParameter / removePIOutputMapping update the task file on disk", {

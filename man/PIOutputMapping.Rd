@@ -24,8 +24,10 @@ its task.}
 \item{scenarios}{Character vector of scenario ids the mapping applies to.
 Must be a subset of the task's own \code{scenarios}.}
 
-\item{outputPath}{Character scalar. Id of the output path to fit,
-referencing an entry in \code{outputPaths} definitions.}
+\item{outputPath}{Character scalar identifying an output path defined in
+\code{outputPaths}: either its id (a key of \code{outputPaths}) or the literal
+model path it maps to (its value). Both resolve to the same defined
+output path; it must already exist (add one with \code{\link[=addOutputPath]{addOutputPath()}}).}
 
 \item{observedData}{Character scalar. Id of the observed dataset to fit
 against.}

@@ -132,8 +132,10 @@ PIParameter <- function(
 #'   its task.
 #' @param scenarios Character vector of scenario ids the mapping applies to.
 #'   Must be a subset of the task's own `scenarios`.
-#' @param outputPath Character scalar. Id of the output path to fit,
-#'   referencing an entry in `outputPaths` definitions.
+#' @param outputPath Character scalar identifying an output path defined in
+#'   `outputPaths`: either its id (a key of `outputPaths`) or the literal
+#'   model path it maps to (its value). Both resolve to the same defined
+#'   output path; it must already exist (add one with [addOutputPath()]).
 #' @param observedData Character scalar. Id of the observed dataset to fit
 #'   against.
 #' @param scaling Optional character scalar. Residual scaling (e.g. `"lin"`
@@ -1198,30 +1200,37 @@ addPITask <- function(
     )
   }
 
-  # Canonicalize the scenario / outputPath references carried on the inline
-  # records so they resolve against the canonical ids their definitions were
-  # filed under (observedData is OSPS-owned and left untouched).
+  # Canonicalize the scenario references carried on the inline records so they
+  # resolve against the canonical ids their definitions were filed under
+  # (observedData is OSPS-owned and left untouched).
   parameters <- lapply(parameters, .canonicalizePIParameterRefs)
   outputMappings <- lapply(outputMappings, .canonicalizePIOutputMappingRefs)
 
-  # Only dereference the output-path reference on well-typed records (the kept
-  # record field is `outputPathId`). Malformed entries are left for PITask() to
-  # reject with the typed PIWrongElementType, instead of dying here on a
-  # raw "$ operator is invalid for atomic vectors".
+  # Resolve each well-typed mapping's output-path reference (an id, or a
+  # literal model path) to the canonical id, rewriting the record so the task
+  # stores the id. A reference that resolves to no defined output path is
+  # collected as an aggregated error rather than aborting here. Malformed
+  # entries are left for PITask() to reject with the typed PIWrongElementType,
+  # instead of dying here on a raw "$ operator is invalid for atomic vectors".
   if (is.list(outputMappings)) {
-    for (m in outputMappings) {
-      if (
-        inherits(m, "PIOutputMapping") &&
-          !(m$outputPathId %in% names(self$definitions$outputPaths))
-      ) {
+    for (i in seq_along(outputMappings)) {
+      m <- outputMappings[[i]]
+      if (!inherits(m, "PIOutputMapping")) {
+        next
+      }
+      resolved <- .matchOutputPathRef(m$outputPathId, self)
+      if (is.null(resolved)) {
         errors <- c(
           errors,
           paste0(
             "outputPath '",
             m$outputPathId,
-            "' not found in project$definitions$outputPaths"
+            "' is neither a defined output-path id nor the model path of one",
+            .suggestSuffix(m$outputPathId, names(self$definitions$outputPaths))
           )
         )
+      } else {
+        outputMappings[[i]]$outputPathId <- resolved
       }
     }
   }
@@ -1302,22 +1311,66 @@ removePITask <- function(project, id) {
   p
 }
 
-# Canonicalize the scenario and output-path references on a PIOutputMapping
-# record (the output-path id is held in the kept `outputPathId` record field;
-# the observed-data reference is OSPS-owned and left as-is).
+# Canonicalize the scenario references on a PIOutputMapping record (the
+# observed-data reference is OSPS-owned and left as-is). The output-path
+# reference is resolved separately, against the project, by
+# `.resolveOutputPathRef()`, because a caller may supply a literal model path
+# that canonicalization would mangle.
 #
 # @keywords internal
 # @noRd
 .canonicalizePIOutputMappingRefs <- function(m) {
-  if (inherits(m, "PIOutputMapping")) {
-    if (!is.null(m$scenarios)) {
-      m$scenarios <- .canonicalizeIdRef(m$scenarios)
-    }
-    if (!is.null(m$outputPathId)) {
-      m$outputPathId <- .canonicalizeIdRef(m$outputPathId)
-    }
+  if (inherits(m, "PIOutputMapping") && !is.null(m$scenarios)) {
+    m$scenarios <- .canonicalizeIdRef(m$scenarios)
   }
   m
+}
+
+# Match a user-supplied output-path reference to the canonical output-path id
+# it names, or `NULL` when it names no defined output path. Accepts either the
+# id itself, or the literal model path that is the value of an existing
+# `outputPaths` entry (the form legacy PI configurations used). `value` must
+# already be a non-empty scalar string (the PIOutputMapping constructor
+# guarantees this).
+#
+# @keywords internal
+# @noRd
+.matchOutputPathRef <- function(value, project) {
+  outputPaths <- project$definitions$outputPaths
+  ids <- names(outputPaths)
+  # A literal model path (OSPS notation, e.g. "Organism|...|Plasma (...)") is
+  # the value of an entry; resolve it back to that entry's id.
+  literalHit <- ids[vapply(outputPaths, identical, logical(1), value)]
+  if (length(literalHit) > 0L) {
+    return(literalHit[[1L]])
+  }
+  # Otherwise treat it as an id, canonicalized the same way the definition was
+  # filed (silent: a literal path would already have matched above).
+  canonical <- suppressWarnings(.canonicalizeIdRef(value))
+  if (canonical %in% ids) {
+    return(canonical)
+  }
+  NULL
+}
+
+# Resolve an output-path reference to its canonical id, aborting with a "did
+# you mean" hint when it names no defined output path. Wraps
+# `.matchOutputPathRef()` for callers that fail fast on a single reference.
+#
+# @keywords internal
+# @noRd
+.resolveOutputPathRef <- function(value, project, .call = rlang::caller_env()) {
+  id <- .matchOutputPathRef(value, project)
+  if (is.null(id)) {
+    cli::cli_abort(
+      messages$outputPathRefNotFound(
+        value,
+        names(project$definitions$outputPaths)
+      ),
+      call = .call
+    )
+  }
+  id
 }
 
 #' Add a parameter to an existing PI task
@@ -1480,8 +1533,9 @@ removePIParameter <- function(project, task, id) {
 #'
 #' @param project A `Project` object.
 #' @param task Character scalar. Existing PI task id.
-#' @param outputPath Character scalar. Must exist in
-#'   `names(project$definitions$outputPaths)`.
+#' @param outputPath Character scalar identifying a defined output path:
+#'   either its id (a key in `names(project$definitions$outputPaths)`) or the
+#'   literal model path it maps to. Both resolve to the same output path.
 #' @param observedData Character scalar. Name of the observed dataset.
 #' @param scenarios Character vector of scenario names.
 #' @param scaling,xOffset,yOffset,xFactor,yFactor,weight Optional
@@ -1553,12 +1607,9 @@ addPIOutputMapping <- function(
   if (!(task %in% names(self$definitions$parameterIdentification))) {
     cli::cli_abort("PI task {.val {task}} not found")
   }
-  outputPath <- .canonicalizeIdRef(outputPath)
-  if (!(outputPath %in% names(self$definitions$outputPaths))) {
-    cli::cli_abort(
-      "outputPath {.val {outputPath}} not found in project$definitions$outputPaths"
-    )
-  }
+  # Accept either an output-path id or the literal model path of a defined
+  # output path; store the resolved id.
+  outputPath <- .resolveOutputPathRef(outputPath, self)
   scenarios <- .canonicalizeIdRef(scenarios)
   unknownScenarios <- setdiff(scenarios, names(self$definitions$scenarios))
   if (length(unknownScenarios) > 0L) {

@@ -214,12 +214,9 @@
       Warning:
       Canonicalized 1 id to a safe form:
       * "Bad" -> "bad"
-      Warning:
-      Canonicalized 1 referenced id to a safe form:
-      * "DoesNotExist" -> "doesnotexist"
       Error in `addPITask()`:
       ! Cannot add PI task "bad":
-      x outputPath 'doesnotexist' not found in project$definitions$outputPaths
+      x outputPath 'DoesNotExist' is neither a defined output-path id nor the model path of one
 
 # addPITask() errors on duplicate id
 
@@ -282,11 +279,8 @@
       addPIOutputMapping(project, task = "t", id = "m2", scenarios = "testscenario",
         outputPath = "DoesNotExist", observedData = "L")
     Condition
-      Warning:
-      Canonicalized 1 referenced id to a safe form:
-      * "DoesNotExist" -> "doesnotexist"
       Error in `addPIOutputMapping()`:
-      ! outputPath "doesnotexist" not found in project$definitions$outputPaths
+      ! x outputPath "DoesNotExist" is neither a defined output-path id nor the model path of one. i Pass an output-path id (a key in `project$definitions$outputPaths`) or the literal model path of a defined output path; define new ones with `addOutputPath()`.
 
 # addPIParameter() errors on an explicit duplicate id
 
