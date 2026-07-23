@@ -492,10 +492,11 @@ addPopulation <- function(
   overwrite <- .validateOverwriteFlag(dots[["overwrite"]])
   dots[["overwrite"]] <- NULL
 
-  # Injected-object form: an `ospsuite::Population` (a DotNetWrapper) in the
-  # `species` position. A demographics-spec entry is a plain list also classed
-  # "Population", so dispatch on DotNetWrapper, not on class "Population".
-  if (inherits(species, "DotNetWrapper")) {
+  # Injected-object form: an `ospsuite::Population` in the `species` position.
+  # A real Population object is classed both "Population" and "DotNetWrapper";
+  # require both so a plain demographics-spec list (also classed "Population")
+  # and any other .NET object (a Simulation, an Individual) are excluded.
+  if (inherits(species, "Population") && inherits(species, "DotNetWrapper")) {
     return(.addProgrammaticPopulation_impl(
       self,
       private,
@@ -509,8 +510,7 @@ addPopulation <- function(
   }
   if (is.null(numberOfIndividuals)) {
     cli::cli_abort(
-      "{.arg numberOfIndividuals} is required when adding a demographics-spec \
-       population."
+      "{.arg numberOfIndividuals} is required when adding a demographics-spec population."
     )
   }
   perDefinition <- .alignAuthoringArgs(
@@ -561,17 +561,23 @@ addPopulation <- function(
   rlang::local_error_call(.call)
   if (length(id) != 1L) {
     cli::cli_abort(
-      "A programmatic population is added one id at a time; {.arg id} must be \
-       a single value."
+      "A programmatic population is added one id at a time; {.arg id} must be a single value."
     )
   }
   stray <- names(dots)
   if (!is.null(numberOfIndividuals) || length(stray) > 0L) {
+    drop <- if (length(stray)) {
+      "{.arg numberOfIndividuals} and the other fields"
+    } else {
+      "{.arg numberOfIndividuals}"
+    }
     cli::cli_abort(c(
       "Extra fields are not accepted when injecting a {.cls Population} object.",
-      "i" = "An injected population already carries its own individuals; drop \
-             {.arg numberOfIndividuals}{if (length(stray)) ' and the other \
-             fields' else ''}."
+      "i" = paste0(
+        "An injected population already carries its own individuals; drop ",
+        drop,
+        "."
+      )
     ))
   }
 

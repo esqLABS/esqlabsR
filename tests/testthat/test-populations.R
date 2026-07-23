@@ -623,6 +623,18 @@ test_that("addPopulation rejects a vector of ids when injecting a Population", {
   )
 })
 
+test_that("addPopulation does not treat a non-Population .NET object as an injection", {
+  # A Simulation is a DotNetWrapper but not a Population; it must not be stored
+  # as a programmatic population. It falls through to the demographics path and
+  # is rejected there (species is not a string) rather than silently accepted.
+  project <- testProject()
+  sim <- ospsuite::loadSimulation(
+    system.file("extdata", "simple.pkml", package = "ospsuite")
+  )
+  expect_error(addPopulation(project, "wrong", sim))
+  expect_null(project$getProgrammaticPopulation("wrong"))
+})
+
 test_that("addPopulation still requires numberOfIndividuals for a demographics spec", {
   project <- testProject()
   expect_error(
@@ -695,6 +707,25 @@ test_that("saveProject aborts freezing an injected Population without a populati
   expect_error(
     saveProject(project),
     regexp = "populationsFolder"
+  )
+})
+
+test_that("saveProject aborts when a frozen population CSV would collide with an existing file", {
+  # An injected population "injected" freezes to "injected.csv"; a separate csv
+  # entry already pointing at that basename makes the freeze collide.
+  project <- testProject()
+  populations <- .getSection(project, "populations")
+  populations[["other"]] <- esqlabsR:::.asPopulationSource(list(
+    type = "csv",
+    file = "injected.csv"
+  ))
+  .setSection(project, "populations", populations)
+
+  pop <- .injectablePopulation()
+  suppressMessages(addPopulation(project, "injected", pop))
+  expect_error(
+    saveProject(project),
+    regexp = "would overwrite an existing population file"
   )
 })
 
