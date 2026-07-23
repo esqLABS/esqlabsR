@@ -653,3 +653,58 @@
   }
   out
 }
+
+# .buildSimulationsFromProject ----
+
+# Build (but do not run) the simulations for the requested scenarios. Runs the
+# same validation preflight and run-option fallback as `.runScenariosFromProject`
+# so a built simulation resolves exactly the same project state a run would, then
+# returns `.buildScenarioSimulations()`'s per-scenario `list(simulation,
+# population)` map directly. Nothing is simulated, so there is no `stopIfFails`.
+# @keywords internal
+# @noRd
+.buildSimulationsFromProject <- function(
+  project,
+  scenarioNames = NULL,
+  customParams = NULL,
+  simulationRunOptions = NULL,
+  validate = TRUE,
+  stopIfParameterNotFound = TRUE
+) {
+  validateIsOfType(project, "Project")
+  .validateParametersStructure(
+    parameterStructure = customParams,
+    argumentName = "customParams",
+    nullAllowed = TRUE
+  )
+  # A steady-state pre-solve inside `.prepareScenario` still consults these, so
+  # apply the same project-default fallback the run path uses.
+  if (is.null(simulationRunOptions)) {
+    simulationRunOptions <- .buildSimulationRunOptions(
+      project$defaultSimulationRunOptions
+    )
+  }
+  if (isTRUE(validate)) {
+    project$ensureValid(
+      sections = c(
+        "outputPaths",
+        "scenarios",
+        "individuals",
+        "populations",
+        "applications",
+        "parameterSets",
+        "crossReferences"
+      ),
+      opName = "buildSimulations"
+    )
+  }
+
+  built <- .buildScenarioSimulations(
+    project = project,
+    scenarioNames = scenarioNames,
+    customParams = customParams,
+    simulationRunOptions = simulationRunOptions,
+    stopIfParameterNotFound = stopIfParameterNotFound
+  )
+  built$prepared
+}

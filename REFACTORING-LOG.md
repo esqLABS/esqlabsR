@@ -25,3 +25,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-07-22 16:00: Normalized @family roxygen values to camelCase (spaced and kebab-case ones), leaving singular/plural as-is; updated the matching has_concept() entry in _pkgdown.yml.
 - 2026-07-23 11:59: Added `stopIfFails` to `runScenarios()`, defaulting to abort when a scenario produces no results (#1036).
 - 2026-07-23 12:01: Extracted the shared scenario build loop into `.buildScenarioSimulations()`; `runScenarios()` now builds through it (prep for `buildSimulations()`, #1074).
+- 2026-07-23 12:05: Added exported `buildSimulations()` returning parameterized-but-unrun simulations per scenario (#1074).

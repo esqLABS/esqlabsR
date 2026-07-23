@@ -63,3 +63,7 @@ If a scenario's simulation fails, \code{runScenarios()} aborts by
 default (\code{stopIfFails = TRUE}). Set \code{stopIfFails = FALSE} to instead
 produce a warning and leave that scenario's \code{outputValues} \code{NULL}.
 }
+\seealso{
+\code{\link[=buildSimulations]{buildSimulations()}} to obtain the parameterized simulations
+without running them.
+}

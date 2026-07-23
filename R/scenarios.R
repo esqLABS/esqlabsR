@@ -630,6 +630,9 @@ print.Scenario <- function(x, ...) {
 #'   default (`stopIfFails = TRUE`). Set `stopIfFails = FALSE` to instead
 #'   produce a warning and leave that scenario's `outputValues` `NULL`.
 #'
+#' @seealso [buildSimulations()] to obtain the parameterized simulations
+#'   without running them.
+#'
 #' @export
 runScenarios <- function(
   project,
@@ -654,6 +657,71 @@ runScenarios <- function(
     validate,
     stopIfParameterNotFound,
     stopIfFails
+  )
+}
+
+#' Build the simulations for a set of scenarios without running them
+#'
+#' @description Loads and fully parameterizes (but does not run) the
+#'   [ospsuite::Simulation] (and, for a population scenario, the
+#'   [ospsuite::Population]) for one or more scenarios defined on a parsed
+#'   [Project]. Use this to inspect or modify a simulation before running
+#'   it yourself, to save the configured simulation to PKML, or to hand it
+#'   to another OSP-suite routine. To simulate and collect results in one
+#'   step, use [runScenarios()].
+#'
+#' @param project A [Project] object loaded from a `Project.json` file.
+#' @param scenarios Optional character vector of scenario names to
+#'   build. `NULL` (default) builds all scenarios in the project.
+#' @param customParams A list with vectors `paths`, `values`, and
+#'   `units` — applied to every selected scenario as the final
+#'   parameter layer.
+#' @param simulationRunOptions Optional [ospsuite::SimulationRunOptions].
+#'   Consulted only for a scenario with `simulateSteadyState` set (the
+#'   steady-state pre-solve still runs); it is not applied to the returned
+#'   simulations, since they are not run here. `NULL` (default) falls back
+#'   to the project's `defaultSimulationRunOptions`.
+#' @param validate Logical. If `TRUE` (default), runs the relevant
+#'   section validators via [validateProject()] before building and
+#'   aborts with a formatted summary on critical errors. Set to
+#'   `FALSE` to skip the pre-flight check.
+#' @param stopIfParameterNotFound Logical. If `TRUE` (default), a
+#'   `customParams` path that matches no parameter in a scenario's
+#'   simulation aborts the build. Set to `FALSE` to skip such paths with
+#'   a warning instead.
+#'
+#' @returns A named list keyed by scenario name. Each entry is a list
+#'   with `simulation` (the initialized, not-yet-run
+#'   [ospsuite::Simulation]) and `population` (an [ospsuite::Population]
+#'   for population scenarios, or `NULL` for individual scenarios). Pass
+#'   the result to [ospsuite::runSimulations()], or inspect and edit the
+#'   `Simulation` first. This is not the shape [saveScenarioResults()]
+#'   expects; use [runScenarios()] for that.
+#'
+#' @seealso [runScenarios()] to build and run in one step.
+#'
+#' @export
+buildSimulations <- function(
+  project,
+  scenarios = NULL,
+  customParams = NULL,
+  simulationRunOptions = NULL,
+  validate = TRUE,
+  stopIfParameterNotFound = TRUE
+) {
+  if (!inherits(project, "Project")) {
+    cli::cli_abort(
+      "{.arg project} must be a {.cls Project} \
+                    (see {.fn loadProject})."
+    )
+  }
+  .buildSimulationsFromProject(
+    project,
+    scenarios,
+    customParams,
+    simulationRunOptions,
+    validate,
+    stopIfParameterNotFound
   )
 }
 
