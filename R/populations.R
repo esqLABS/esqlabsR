@@ -917,3 +917,83 @@ setPopulation <- function(project, id, ...) {
   class(entry) <- c("Population", "list")
   entry
 }
+
+# Persist every session-injected `Population` to a CSV file next to the project,
+# so it survives a reload. Called from the save path before the tree is written:
+# for each `programmatic` entry whose object is in the runtime store, write
+# `<populationsFolder>/<id>.csv` and rewrite the section entry to a `csv` source
+# pointing at that file. A programmatic sentinel with no object in the store (an
+# orphan read from disk) is left untouched.
+#
+# Returns the character vector of persisted ids; the caller drops these from the
+# runtime store only after the whole save commits, so an abort partway through
+# the tree write leaves the injected population recoverable (worst case is an
+# orphan CSV file, never lost data). Mirrors `.persistProgrammaticObservedData`.
+#
+# @keywords internal
+# @noRd
+.persistProgrammaticPopulations <- function(self, private) {
+  populations <- private$.getSection("populations")
+  toPersist <- names(which(vapply(
+    populations,
+    function(e) {
+      identical(e$type, "programmatic")
+    },
+    logical(1)
+  )))
+  # Keep only sentinels that actually have a backing object in the runtime store.
+  toPersist <- Filter(
+    function(id) !is.null(private$.programmaticPopulations[[id]]),
+    toPersist
+  )
+  if (length(toPersist) == 0) {
+    return(character(0))
+  }
+
+  populationsFolder <- self$paths$populationsFolder
+  if (is.null(populationsFolder)) {
+    cli::cli_abort(messages$populationPersistNoPopulationsFolder(toPersist[[
+      1
+    ]]))
+  }
+
+  # Rewrite the section in memory BEFORE writing any CSV, so a save that aborts
+  # (an unsafe id, or a file basename that collides with an existing population
+  # file) never overwrites a file: every write below lands on a known-safe path.
+  fileNames <- stats::setNames(paste0(toPersist, ".csv"), toPersist)
+  for (id in toPersist) {
+    populations[[id]] <- .asPopulationSource(list(
+      type = "csv",
+      file = fileNames[[id]]
+    ))
+  }
+  # Same checks the serializer runs, up front: each id a safe filename segment,
+  # and no `<id>.csv` colliding with an existing population file's basename.
+  lapply(names(populations), .validateDefinitionTreeKey, "population")
+  existingFiles <- vapply(
+    populations,
+    function(e) if (is.null(e$file)) NA_character_ else basename(e$file),
+    character(1)
+  )
+  collisions <- intersect(
+    fileNames,
+    existingFiles[setdiff(names(populations), toPersist)]
+  )
+  if (length(collisions) > 0) {
+    cli::cli_abort(messages$populationPersistIdCollision(collisions))
+  }
+
+  if (!dir.exists(populationsFolder)) {
+    dir.create(populationsFolder, recursive = TRUE, showWarnings = FALSE)
+  }
+  for (id in toPersist) {
+    filePath <- .resolveProjectPath(fileNames[[id]], populationsFolder, "file")
+    ospsuite::exportPopulationToCSV(
+      population = private$.programmaticPopulations[[id]],
+      filePath = filePath
+    )
+  }
+
+  private$.setSection("populations", populations)
+  toPersist
+}

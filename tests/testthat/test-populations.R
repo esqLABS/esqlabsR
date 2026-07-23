@@ -648,6 +648,38 @@ test_that("reloadProject drops a session-injected Population", {
   expect_null(project$getProgrammaticPopulation("injected"))
 })
 
+test_that("saveProject freezes an injected Population to CSV and rewrites the entry", {
+  project <- testProject()
+  pop <- .injectablePopulation()
+  suppressMessages(addPopulation(project, "injected", pop))
+  suppressMessages(saveProject(project))
+
+  csvPath <- file.path(project$paths$populationsFolder, "injected.csv")
+  expect_true(file.exists(csvPath))
+
+  entry <- project$definitions$populations[["injected"]]
+  expect_identical(entry$type, "csv")
+  expect_identical(entry$file, "injected.csv")
+  # Runtime store drained after the save committed.
+  expect_null(project$getProgrammaticPopulation("injected"))
+
+  # The frozen population reloads from CSV without re-injecting.
+  reloaded <- loadProject(project$info$projectFilePath)
+  reEntry <- reloaded$definitions$populations[["injected"]]
+  expect_identical(reEntry$type, "csv")
+})
+
+test_that("saveProject aborts freezing an injected Population without a populations folder", {
+  project <- testProject()
+  project$paths$populationsFolder <- NULL
+  pop <- .injectablePopulation()
+  suppressMessages(addPopulation(project, "injected", pop))
+  expect_error(
+    saveProject(project),
+    regexp = "populationsFolder"
+  )
+})
+
 test_that("print.PopulationSource renders a csv and a programmatic source", {
   withr::local_options(cli.unicode = FALSE)
   local_reproducible_output()

@@ -125,6 +125,11 @@ saveProject <- function(project) {
   # aborts leaves the DataSet recoverable rather than lost.
   persistedProgrammatic <- .persistProgrammaticObservedData(self, private)
 
+  # Same for a session-injected `Population`: freeze it to `<id>.csv` under the
+  # populations folder and rewrite its sentinel to a `csv` source, so it survives
+  # a reload. The ids stay in the runtime store until the whole save commits.
+  persistedPopulations <- .persistProgrammaticPopulations(self, private)
+
   # Drive the full-tree reconciler: `.writeProjectTree()` writes every kind's
   # write-if-different, orphan-reconciled tree and the `containerOnly = TRUE`
   # container in one pass, which is exactly `saveProject()`'s contract. Pass the
@@ -142,6 +147,10 @@ saveProject <- function(project) {
   # drop them from the session-only runtime store.
   for (name in persistedProgrammatic) {
     private$.programmaticDataSets[[name]] <- NULL
+  }
+  # Same for the frozen populations, now file-backed.
+  for (id in persistedPopulations) {
+    private$.programmaticPopulations[[id]] <- NULL
   }
 
   private$.clearModified()
