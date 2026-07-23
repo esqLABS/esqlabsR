@@ -908,6 +908,12 @@ messages$PIRequiredField <- function(field, recordType, recordId) {
   )
 }
 
+messages$PIMustBeList <- function(field, taskId) {
+  cliFormat(
+    "Field {.val {field}} on PITask {.val {taskId}} must be a list."
+  )
+}
+
 messages$PIEmptyList <- function(field, taskId) {
   cliFormat(
     "Field {.val {field}} on PITask {.val {taskId}} must contain at least one entry."

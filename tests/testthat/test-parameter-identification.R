@@ -194,42 +194,35 @@ test_that("PITask() builds a plain-data record with the expected shape", {
   expect_length(t$outputMappings, 1L)
 })
 
-test_that("PITask() errors when parameters is empty", {
+test_that("PITask() allows empty parameters and outputMappings so a task can be seeded", {
+  t <- PITask(
+    id = "x",
+    scenarios = "S1",
+    parameters = list(),
+    outputMappings = list()
+  )
+  expect_s3_class(t, "PITask")
+  expect_length(t$parameters, 0L)
+  expect_length(t$outputMappings, 0L)
+})
+
+test_that("PITask() errors when parameters or outputMappings is not a list", {
+  expect_snapshot(
+    error = TRUE,
+    PITask(
+      id = "x",
+      scenarios = "S1",
+      parameters = "nope",
+      outputMappings = list()
+    )
+  )
   expect_snapshot(
     error = TRUE,
     PITask(
       id = "x",
       scenarios = "S1",
       parameters = list(),
-      outputMappings = list(
-        PIOutputMapping(
-          id = "m",
-          scenarios = "S1",
-          outputPath = "PVB",
-          observedData = "Laskin"
-        )
-      )
-    )
-  )
-})
-
-test_that("PITask() errors when outputMappings is empty", {
-  expect_snapshot(
-    error = TRUE,
-    PITask(
-      id = "x",
-      scenarios = "S1",
-      parameters = list(
-        PIParameter(
-          id = "k",
-          scenarios = "S1",
-          path = "x|y",
-          minValue = 0,
-          maxValue = 1,
-          startValue = 0.5
-        )
-      ),
-      outputMappings = list()
+      outputMappings = "nope"
     )
   )
 })
@@ -617,6 +610,19 @@ test_that(".validatePI surfaces duplicate parameter ids within a task", {
 test_that(".validatePI is empty-section-friendly", {
   result <- esqlabsR:::.validatePI(list())
   expect_false(result$hasCriticalErrors())
+})
+
+test_that(".validatePI flags a task left with no parameters or output mappings", {
+  # A task may be created empty and seeded later, but one still empty at
+  # validation time cannot run and is a critical error.
+  task <- PITask(
+    id = "t",
+    scenarios = "S1",
+    parameters = list(),
+    outputMappings = list()
+  )
+  result <- esqlabsR:::.validatePI(list(t = task))
+  expect_true(result$hasCriticalErrors())
 })
 
 test_that("validateProject() flags PI parameters that reference unknown scenarios", {
@@ -1389,6 +1395,41 @@ test_that("addPITask() adds a task and clears the validation flag", {
     c("aciclovirsimple", "manual")
   )
   expect_false(.isValidated(project))
+})
+
+test_that("addPITask() can create an empty task that addPIParameter()/addPIOutputMapping() then seed", {
+  project <- testProject()
+  addPITask(
+    project,
+    id = "seeded",
+    scenarios = "testscenario",
+    parameters = list(),
+    outputMappings = list()
+  )
+  task <- project$definitions$parameterIdentification$seeded
+  expect_length(task$parameters, 0L)
+  expect_length(task$outputMappings, 0L)
+
+  addPIParameter(
+    project,
+    task = "seeded",
+    path = "x|y",
+    scenarios = "testscenario",
+    minValue = 0,
+    maxValue = 1,
+    startValue = 0.5
+  )
+  addPIOutputMapping(
+    project,
+    task = "seeded",
+    outputPath = "aciclovir_pvb",
+    observedData = "Laskin",
+    scenarios = "testscenario"
+  )
+
+  seeded <- project$definitions$parameterIdentification$seeded
+  expect_length(seeded$parameters, 1L)
+  expect_length(seeded$outputMappings, 1L)
 })
 
 test_that("addPITask() errors on unknown scenario id", {

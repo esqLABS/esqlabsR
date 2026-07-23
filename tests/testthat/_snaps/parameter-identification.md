@@ -51,24 +51,21 @@
       Error in `PIOutputMapping()`:
       ! Required field "outputPath" is missing or empty on PIOutputMapping "x".
 
-# PITask() errors when parameters is empty
+# PITask() errors when parameters or outputMappings is not a list
 
     Code
-      PITask(id = "x", scenarios = "S1", parameters = list(), outputMappings = list(
-        PIOutputMapping(id = "m", scenarios = "S1", outputPath = "PVB", observedData = "Laskin")))
+      PITask(id = "x", scenarios = "S1", parameters = "nope", outputMappings = list())
     Condition
       Error in `PITask()`:
-      ! Field "parameters" on PITask "x" must contain at least one entry.
+      ! Field "parameters" on PITask "x" must be a list.
 
-# PITask() errors when outputMappings is empty
+---
 
     Code
-      PITask(id = "x", scenarios = "S1", parameters = list(PIParameter(id = "k",
-        scenarios = "S1", path = "x|y", minValue = 0, maxValue = 1, startValue = 0.5)),
-      outputMappings = list())
+      PITask(id = "x", scenarios = "S1", parameters = list(), outputMappings = "nope")
     Condition
       Error in `PITask()`:
-      ! Field "outputMappings" on PITask "x" must contain at least one entry.
+      ! Field "outputMappings" on PITask "x" must be a list.
 
 # PITask() errors on empty scenarios
 

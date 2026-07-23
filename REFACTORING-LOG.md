@@ -41,3 +41,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-07-23 14:45: Made the esqlabsRSettingNames test order-insensitive (set-equality on the names plus an enum-shape check) instead of asserting a fixed list order, since the names derive from an environment whose order is not guaranteed. (#1059)
 - 2026-07-23 15:06: PR review: narrow injected-population dispatch to a real `Population` object; clean up inline abort strings (#1024).
 - 2026-07-23 16:17: runScenarios()/buildSimulations() now match the `scenarios` argument case-insensitively, so a scenario runs under the mixed-case name it was authored with. (#1157)
+- 2026-07-23 16:22: addPITask()/PITask() can now create a task with no parameters or output mappings, so addPIParameter()/addPIOutputMapping() can seed the first one; a task left empty is flagged as a critical error by validateProject(). (#1157)

@@ -277,8 +277,13 @@ PIOutputMapping <- function(
 #' @param scenarios Character vector of scenario ids the task runs against.
 #'   Every scenario referenced by a parameter or output mapping must be in
 #'   this set.
-#' @param parameters Non-empty list of [PIParameter()] records.
-#' @param outputMappings Non-empty list of [PIOutputMapping()] records.
+#' @param parameters List of [PIParameter()] records. May be empty to create
+#'   a task that is seeded later with [addPIParameter()]; a task must have at
+#'   least one parameter to run, which [validateProject()] enforces.
+#' @param outputMappings List of [PIOutputMapping()] records. May be empty to
+#'   create a task that is seeded later with [addPIOutputMapping()]; a task
+#'   must have at least one output mapping to run, which [validateProject()]
+#'   enforces.
 #' @param configuration Named list of solver settings (e.g. `algorithm`,
 #'   `ciMethod`, `objectiveFunction`, `simulationRunOptions`). Defaults to
 #'   an empty list, leaving every runtime default in place.
@@ -326,8 +331,12 @@ PITask <- function(
     cli::cli_abort(messages$PIScenariosEmpty("PITask", id))
   }
 
-  if (!is.list(parameters) || length(parameters) == 0L) {
-    cli::cli_abort(messages$PIEmptyList("parameters", id))
+  # An empty list is allowed here so a task can be created first and seeded
+  # with addPIParameter() / addPIOutputMapping(), matching the create-then-add
+  # shape of the rest of the authoring API. A task left empty is caught at
+  # validation time (.validatePI), not construction.
+  if (!is.list(parameters)) {
+    cli::cli_abort(messages$PIMustBeList("parameters", id))
   }
   for (i in seq_along(parameters)) {
     if (!inherits(parameters[[i]], "PIParameter")) {
@@ -340,8 +349,8 @@ PITask <- function(
     }
   }
 
-  if (!is.list(outputMappings) || length(outputMappings) == 0L) {
-    cli::cli_abort(messages$PIEmptyList("outputMappings", id))
+  if (!is.list(outputMappings)) {
+    cli::cli_abort(messages$PIMustBeList("outputMappings", id))
   }
   for (i in seq_along(outputMappings)) {
     if (!inherits(outputMappings[[i]], "PIOutputMapping")) {
@@ -543,6 +552,21 @@ print.PITask <- function(x, ...) {
 
   for (taskId in names(piTasks)) {
     task <- piTasks[[taskId]]
+
+    # A task may be created empty and seeded incrementally, but an empty task
+    # cannot run, so validation (which the run gates on) rejects one left empty.
+    if (length(task$parameters) == 0L) {
+      result$addCriticalError(
+        "Empty PI Task",
+        messages$PIEmptyList("parameters", taskId)
+      )
+    }
+    if (length(task$outputMappings) == 0L) {
+      result$addCriticalError(
+        "Empty PI Task",
+        messages$PIEmptyList("outputMappings", taskId)
+      )
+    }
 
     paramIds <- vapply(task$parameters, `[[`, character(1), "id")
     .checkNoDuplicates(
@@ -1091,8 +1115,10 @@ createPITasks <- function(...) {
 #'   existing task id.
 #' @param scenarios Character vector of scenario names. Each must exist
 #'   in `names(project$definitions$scenarios)`.
-#' @param parameters Non-empty list of `PIParameter` records.
-#' @param outputMappings Non-empty list of `PIOutputMapping` records.
+#' @param parameters List of `PIParameter` records. May be empty (`list()`)
+#'   to create a task seeded later with [addPIParameter()].
+#' @param outputMappings List of `PIOutputMapping` records. May be empty
+#'   (`list()`) to create a task seeded later with [addPIOutputMapping()].
 #'   Each `outputPath` must exist in `names(project$definitions$outputPaths)`.
 #' @param configuration Named list of solver settings; see the `configuration`
 #'   argument of [PITask()] for the supported keys.

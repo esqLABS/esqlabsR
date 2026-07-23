@@ -23,9 +23,11 @@ existing task id.}
 \item{scenarios}{Character vector of scenario names. Each must exist
 in \code{names(project$definitions$scenarios)}.}
 
-\item{parameters}{Non-empty list of \code{PIParameter} records.}
+\item{parameters}{List of \code{PIParameter} records. May be empty (\code{list()})
+to create a task seeded later with \code{\link[=addPIParameter]{addPIParameter()}}.}
 
-\item{outputMappings}{Non-empty list of \code{PIOutputMapping} records.
+\item{outputMappings}{List of \code{PIOutputMapping} records. May be empty
+(\code{list()}) to create a task seeded later with \code{\link[=addPIOutputMapping]{addPIOutputMapping()}}.
 Each \code{outputPath} must exist in \code{names(project$definitions$outputPaths)}.}
 
 \item{configuration}{Named list of solver settings; see the \code{configuration}
