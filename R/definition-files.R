@@ -550,6 +550,16 @@
   for (id in names(populations)) {
     .validateDefinitionTreeKey(id, "population")
     pop <- unclass(populations[[id]])
+    # A `programmatic` sentinel has no serializable form (its object lives only
+    # in the runtime store); `saveProject()` must freeze it to CSV and rewrite
+    # the entry before this runs. Reaching here unresolved is an internal bug.
+    if (identical(pop$type, "programmatic")) {
+      cli::cli_abort(
+        "Internal error: a programmatic population sentinel ({.val {id}}) \
+         reached serialization unresolved.",
+        .internal = TRUE
+      )
+    }
     out[[id]] <- c(list(populationId = id), pop)
   }
   out

@@ -40,10 +40,39 @@
       }
       popData[[field]] <- val
     }
-    class(popData) <- c("Population", "list")
+    # A `type` field marks a non-demographics source (a `programmatic` runtime
+    # sentinel or a `csv` file reference); those carry no species/age/weight, so
+    # stamp them a source class that prints their source instead of empty
+    # demographics. An entry with no `type` is the demographics spec, unchanged.
+    popData <- if (is.null(popData$type)) {
+      .asPopulation(popData)
+    } else {
+      .asPopulationSource(popData)
+    }
     result[[id]] <- popData
   }
   result
+}
+
+# Stamp a demographics-spec population entry with `c("Population", "list")`.
+#
+# @keywords internal
+# @noRd
+.asPopulation <- function(entry) {
+  class(entry) <- c("Population", "list")
+  entry
+}
+
+# Stamp a non-demographics population entry (a `programmatic` sentinel or a
+# `csv` file reference) with `c("PopulationSource", "Population", "list")`.
+# `"Population"` stays in the chain so `inherits(x, "Population")` still holds,
+# while the leading `"PopulationSource"` selects the source-aware print method.
+#
+# @keywords internal
+# @noRd
+.asPopulationSource <- function(entry) {
+  class(entry) <- c("PopulationSource", "Population", "list")
+  entry
 }
 
 # Section validation adapter ----
@@ -57,11 +86,39 @@
   .validatePopulations(project$definitions$populations)
 }
 
+# The optional `type` a population entry may carry. Absent means a demographics
+# spec (the default, unchanged shape). `programmatic` is a runtime sentinel for
+# an injected `ospsuite::Population`; `csv` references a population table file.
+#
+# @keywords internal
+# @noRd
+.populationSourceTypes <- c("programmatic", "csv")
+
+# Required fields for a population entry, keyed by its `type`. A demographics
+# spec (no `type`) needs `species`; a `csv` source needs `file`; a
+# `programmatic` sentinel needs nothing (its object lives in the runtime store).
+#
+# @keywords internal
+# @noRd
+.populationEntryRequiredFields <- function(type) {
+  if (is.null(type)) {
+    return("species")
+  }
+  switch(
+    type,
+    "csv" = "file",
+    "programmatic" = character(0),
+    character(0)
+  )
+}
+
 #' Validate the `populations` section of a Project
 #'
-#' Checks `species` is set and warns on out-of-range
-#' `proportionOfFemales` or inverted Min/Max ranges (age, weight,
-#' height, BMI).
+#' Per-entry checks: an optional `type` (`programmatic` / `csv`) must be
+#' recognized; the type's required fields are present (`species` for a
+#' demographics spec, `file` for a `csv` source); warns on out-of-range
+#' `proportionOfFemales` or inverted Min/Max ranges (age, weight, height,
+#' BMI) for demographics specs.
 #'
 #' @param populations Named list from `populations` definitions.
 #' @return validationResult.
@@ -78,9 +135,25 @@
   for (id in names(populations)) {
     pop <- populations[[id]]
 
+    if (!is.null(pop$type) && !pop$type %in% .populationSourceTypes) {
+      result$addCriticalError(
+        "Data",
+        paste0(
+          "population '",
+          id,
+          "' has invalid type '",
+          pop$type,
+          "'. Must be one of: ",
+          paste(.populationSourceTypes, collapse = ", "),
+          " (or omitted for a demographics spec)."
+        )
+      )
+      next
+    }
+
     result <- .checkRequiredFields(
       pop,
-      c("species"),
+      .populationEntryRequiredFields(pop$type),
       paste0("population '", id, "'"),
       result
     )
@@ -140,6 +213,25 @@ print.Population <- function(x, ...) {
       "Age Range" = .formatRange(x$ageMin, x$ageMax),
       "Weight Range" = .formatRange(x$weightMin, x$weightMax),
       "Height Range" = .formatRange(x$heightMin, x$heightMax)
+    ),
+    print_empty = TRUE
+  )
+  invisible(x)
+}
+
+#' @exportS3Method
+#' @noRd
+print.PopulationSource <- function(x, ...) {
+  ospsuite.utils::ospPrintClass(x)
+  ospsuite.utils::ospPrintItems(
+    list(
+      "Type" = x$type %||% "",
+      "File" = x$file %||%
+        (if (identical(x$type, "programmatic")) {
+          "resolved from the runtime store at run time"
+        } else {
+          ""
+        })
     ),
     print_empty = TRUE
   )

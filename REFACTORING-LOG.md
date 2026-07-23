@@ -26,3 +26,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-07-23 11:59: Added `stopIfFails` to `runScenarios()`, defaulting to abort when a scenario produces no results (#1036).
 - 2026-07-23 12:01: Extracted the shared scenario build loop into `.buildScenarioSimulations()`; `runScenarios()` now builds through it (prep for `buildSimulations()`, #1074).
 - 2026-07-23 12:05: Added exported `buildSimulations()` returning parameterized-but-unrun simulations per scenario (#1074).
+- 2026-07-23 12:08: Gave population entries an optional `type` (`programmatic`/`csv`): type-aware parse, validation, and a source-aware print (#1024).

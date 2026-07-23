@@ -535,3 +535,59 @@ test_that("print.Population renders a minimal population", {
   local_reproducible_output()
   expect_snapshot(print(project$definitions$populations[["minimal"]]))
 })
+
+# Source-typed populations (type discriminator) ----
+
+test_that(".parsePopulations stamps a demographics spec as Population, a source entry as PopulationSource", {
+  parsed <- esqlabsR:::.parsePopulations(list(
+    list(populationId = "spec", species = "Human", numberOfIndividuals = 10),
+    list(populationId = "prog", type = "programmatic"),
+    list(populationId = "fromcsv", type = "csv", file = "fromcsv.csv")
+  ))
+  expect_s3_class(parsed$spec, "Population")
+  expect_false(inherits(parsed$spec, "PopulationSource"))
+  expect_s3_class(parsed$prog, "PopulationSource")
+  expect_s3_class(parsed$prog, "Population")
+  expect_identical(parsed$prog$type, "programmatic")
+  expect_identical(parsed$fromcsv$type, "csv")
+  expect_identical(parsed$fromcsv$file, "fromcsv.csv")
+})
+
+test_that(".validatePopulations does not require species for a csv or programmatic entry", {
+  populations <- list(
+    prog = esqlabsR:::.asPopulationSource(list(type = "programmatic")),
+    fromcsv = esqlabsR:::.asPopulationSource(list(
+      type = "csv",
+      file = "p.csv"
+    ))
+  )
+  result <- esqlabsR:::.validatePopulations(populations)
+  expect_length(result$critical_errors, 0)
+})
+
+test_that(".validatePopulations requires file for a csv entry", {
+  populations <- list(
+    fromcsv = esqlabsR:::.asPopulationSource(list(type = "csv"))
+  )
+  result <- esqlabsR:::.validatePopulations(populations)
+  expect_true(any(grepl("file", unlist(result$critical_errors))))
+})
+
+test_that(".validatePopulations flags an unrecognized type", {
+  populations <- list(
+    bad = esqlabsR:::.asPopulationSource(list(type = "nonsense"))
+  )
+  result <- esqlabsR:::.validatePopulations(populations)
+  expect_true(any(grepl("invalid type", unlist(result$critical_errors))))
+})
+
+test_that("print.PopulationSource renders a csv and a programmatic source", {
+  withr::local_options(cli.unicode = FALSE)
+  local_reproducible_output()
+  csv <- esqlabsR:::.asPopulationSource(list(type = "csv", file = "p.csv"))
+  prog <- esqlabsR:::.asPopulationSource(list(type = "programmatic"))
+  expect_snapshot({
+    print(csv)
+    print(prog)
+  })
+})
