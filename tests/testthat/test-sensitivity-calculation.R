@@ -619,7 +619,7 @@ test_that("sensitivityCalculation returns expected results with multiple custom 
 
 test_that("sensitivityCalculation saves PK data to xlsx file", {
   simulation <- sensFixture()$simulation
-  path <- "mydata.xlsx"
+  path <- withr::local_tempfile(fileext = ".xlsx")
 
   set.seed(123)
   results <- sensitivityCalculation(
@@ -631,8 +631,6 @@ test_that("sensitivityCalculation saves PK data to xlsx file", {
   )
 
   expect_true(file.exists(path))
-
-  on.exit(unlink(path))
 })
 
 test_that("sensitivityCalculation errors if file extension is incorrect", {
@@ -877,7 +875,7 @@ test_that("sensitivityCalculation saves PK data to xlsx for multiple output path
   simulation <- fixture$simulation
   outputPaths <- fixture$outputPaths
   parameterPaths <- fixture$parameterPaths
-  path <- "mydata.xlsx"
+  path <- withr::local_tempfile(fileext = ".xlsx")
 
   set.seed(123)
   resultsMultiple <- sensitivityCalculation(
@@ -889,8 +887,6 @@ test_that("sensitivityCalculation saves PK data to xlsx for multiple output path
   )
 
   expect_true(file.exists(path))
-
-  on.exit(unlink(path))
 })
 
 test_that("sensitivityCalculation handles simulation failure for multiple output paths", {
