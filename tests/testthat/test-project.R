@@ -122,7 +122,7 @@ test_that("project path fields are writable after the merger", {
   expect_match(project$paths$simulationsFolder, "AnotherModels$")
 })
 
-test_that(".clean_path expands env vars (other than PATH) and resolves to absolute", {
+test_that(".cleanPath expands env vars (other than PATH) and resolves to absolute", {
   project <- loadProject(
     system.file(
       "extdata",
@@ -134,7 +134,7 @@ test_that(".clean_path expands env vars (other than PATH) and resolves to absolu
     )
   )
   withr::local_envvar(MY_TEST_ROOT = tempdir())
-  resolved <- project$.__enclos_env__$private$.clean_path(
+  resolved <- project$.__enclos_env__$private$.cleanPath(
     "$MY_TEST_ROOT/sub",
     parent = NULL
   )
@@ -144,7 +144,7 @@ test_that(".clean_path expands env vars (other than PATH) and resolves to absolu
   )
 })
 
-test_that(".clean_path returns NULL on NULL/NA/zero-length input", {
+test_that(".cleanPath returns NULL on NULL/NA/zero-length input", {
   project <- loadProject(
     system.file(
       "extdata",
@@ -155,7 +155,7 @@ test_that(".clean_path returns NULL on NULL/NA/zero-length input", {
       mustWork = TRUE
     )
   )
-  cp <- project$.__enclos_env__$private$.clean_path
+  cp <- project$.__enclos_env__$private$.cleanPath
   expect_null(cp(NULL, parent = NULL))
   expect_null(cp(NA_character_, parent = NULL))
   expect_null(cp(character(0), parent = NULL))

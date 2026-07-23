@@ -44,7 +44,7 @@ createDataCombined <- function(
     allGridIds <- names(.unwrapDefinitionList(project$definitions$plotGrids) %||% list())
     missingGrids <- setdiff(plotGrids[!is.na(plotGrids)], allGridIds)
     if (length(missingGrids) > 0) {
-      cli::cli_abort(messages$stopPlotGridNamesNotFound(missingGrids))
+      cli::cli_abort(messages$plotGridNamesNotFound(missingGrids))
     }
     dataCombined <- union(
       dataCombined,
@@ -58,7 +58,7 @@ createDataCombined <- function(
     names(allSpecs)
   )
   if (length(missingNames) > 0) {
-    cli::cli_abort(messages$stopDataCombinedNamesNotFound(missingNames))
+    cli::cli_abort(messages$dataCombinedNamesNotFound(missingNames))
   }
 
   selectedSpecs <- allSpecs[intersect(names(allSpecs), dataCombined)]
@@ -214,13 +214,13 @@ createDataCombinedFromExcel <- function(...) {
           # A scenario that is present but whose run failed carries
           # `results = NULL`; distinguish it from a genuinely wrong path.
           msg <- if (!is.null(scenarioResult) && is.null(results)) {
-            messages$stopScenarioRunFailed(
+            messages$scenarioRunFailed(
               dataCombinedName = name,
               scenarioName = scenarioName,
               path = simulated[j, ]$path
             )
           } else {
-            messages$stopWrongOutputPath(
+            messages$wrongOutputPath(
               dataCombinedName = name,
               scenarioName = scenarioName,
               path = simulated[j, ]$path
@@ -373,7 +373,7 @@ createDataCombinedFromExcel <- function(...) {
     dfDataCombined[dfDataCombined$dataType == "simulated", ]$path
   )
   if (sum(missingLabel) > 0) {
-    cli::cli_abort(messages$stopNoPathProvided(dfDataCombined[
+    cli::cli_abort(messages$noPathProvided(dfDataCombined[
       dfDataCombined$dataType == "simulated",
     ]$dataCombinedName[missingLabel]))
   }
@@ -383,7 +383,7 @@ createDataCombinedFromExcel <- function(...) {
     dfDataCombined[dfDataCombined$dataType == "observed", ]$dataSet
   )
   if (sum(missingLabel) > 0) {
-    cli::cli_abort(messages$stopNoDataSetProvided(dfDataCombined[
+    cli::cli_abort(messages$noDataSetProvided(dfDataCombined[
       dfDataCombined$dataType == "observed",
     ]$dataCombinedName[missingLabel]))
   }
@@ -401,9 +401,9 @@ createDataCombinedFromExcel <- function(...) {
   )
   if (length(missingScenarios) != 0) {
     if (stopIfNotFound) {
-      cli::cli_abort(messages$warningInvalidScenarioName(missingScenarios))
+      cli::cli_abort(messages$invalidScenarioName(missingScenarios))
     }
-    cli::cli_warn(messages$warningInvalidScenarioName(missingScenarios))
+    cli::cli_warn(messages$invalidScenarioName(missingScenarios))
     dfDataCombined <- dplyr::filter(
       dfDataCombined,
       (dataType == "observed") | !(scenario %in% missingScenarios)
@@ -416,9 +416,9 @@ createDataCombinedFromExcel <- function(...) {
   )
   if (length(missingDataSets) != 0) {
     if (stopIfNotFound) {
-      cli::cli_abort(messages$stopInvalidDataSetName(missingDataSets))
+      cli::cli_abort(messages$invalidDataSetName(missingDataSets))
     }
-    cli::cli_warn(messages$warningInvalidDataSetName(missingDataSets))
+    cli::cli_warn(messages$combineInvalidDataSetName(missingDataSets))
     dfDataCombined <- dfDataCombined[
       !(dfDataCombined$dataSet %in% missingDataSets),
     ]

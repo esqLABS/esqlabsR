@@ -52,7 +52,7 @@ saveProject(project) # clean save: "Project is already up to date; ..."
 \code{\link[=loadProject]{loadProject()}}, \code{\link[=reloadProject]{reloadProject()}}, \code{\link[=snapshotProject]{snapshotProject()}},
 \code{\link[=restoreProject]{restoreProject()}}, \code{\link[=projectStatus]{projectStatus()}}.
 
-Other project persistence:
+Other projectPersistence:
 \code{\link[=exampleProjectPath]{exampleProjectPath()}},
 \code{\link[=exportProjectToExcel]{exportProjectToExcel()}},
 \code{\link[=importProjectFromExcel]{importProjectFromExcel()}},
@@ -63,4 +63,4 @@ Other project persistence:
 \code{\link[=restoreProject]{restoreProject()}},
 \code{\link[=snapshotProject]{snapshotProject()}}
 }
-\concept{project persistence}
+\concept{projectPersistence}

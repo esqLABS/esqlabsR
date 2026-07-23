@@ -12,7 +12,7 @@
 # independent of this file.
 #
 # Called by:
-#   - Project$.read_json() via the three plots definition-tree specs
+#   - Project$.readJson() via the three plots definition-tree specs
 #     (data-combined / plots / plot-grids).
 #   - .runProjectValidation() via .validatePlots()
 #   - .projectToJson() via .dataCombinedSectionToJson() / .plotsSectionToJson()
@@ -264,7 +264,7 @@ print.DataCombined <- function(x, ...) {
       length(plotConfig %||% list()) == 0 &&
       length(plotGrids %||% list()) == 0
   ) {
-    result$add_warning("Data", "No plots defined")
+    result$addWarning("Data", "No plots defined")
     return(result)
   }
 
@@ -272,13 +272,13 @@ print.DataCombined <- function(x, ...) {
   plotGrids <- plotGrids %||% list()
 
   if (is.null(dataCombined) || length(dataCombined) == 0) {
-    result$add_warning("Data", "dataCombined is empty")
+    result$addWarning("Data", "dataCombined is empty")
   } else {
     for (dcName in names(dataCombined)) {
       dc <- dataCombined[[dcName]]
       for (entry in dc$simulated %||% list()) {
         if (.isMissingField(entry$label)) {
-          result$add_critical_error(
+          result$addCriticalError(
             "Missing Fields",
             paste0(
               "Simulated entry in dataCombined '",
@@ -288,7 +288,7 @@ print.DataCombined <- function(x, ...) {
           )
         }
         if (.isMissingField(entry$scenario)) {
-          result$add_critical_error(
+          result$addCriticalError(
             "Missing Fields",
             paste0(
               "Simulated entry in dataCombined '",
@@ -298,7 +298,7 @@ print.DataCombined <- function(x, ...) {
           )
         }
         if (.isMissingField(entry$path)) {
-          result$add_critical_error(
+          result$addCriticalError(
             "Missing Fields",
             paste0(
               "Simulated entry in dataCombined '",
@@ -310,7 +310,7 @@ print.DataCombined <- function(x, ...) {
       }
       for (entry in dc$observed %||% list()) {
         if (.isMissingField(entry$label)) {
-          result$add_critical_error(
+          result$addCriticalError(
             "Missing Fields",
             paste0(
               "Observed entry in dataCombined '",
@@ -320,7 +320,7 @@ print.DataCombined <- function(x, ...) {
           )
         }
         if (.isMissingField(entry$dataSet)) {
-          result$add_critical_error(
+          result$addCriticalError(
             "Missing Fields",
             paste0(
               "Observed entry in dataCombined '",
@@ -334,7 +334,7 @@ print.DataCombined <- function(x, ...) {
   }
 
   if (length(plotConfig) == 0) {
-    result$add_warning("Data", "plotConfiguration is empty")
+    result$addWarning("Data", "plotConfiguration is empty")
   } else {
     for (field in c("plotId", "dataCombinedId", "plotType")) {
       missingField <- Filter(
@@ -342,7 +342,7 @@ print.DataCombined <- function(x, ...) {
         plotConfig
       )
       if (length(missingField) > 0) {
-        result$add_critical_error(
+        result$addCriticalError(
           "Missing Fields",
           paste0("plotConfiguration is missing required field '", field, "'")
         )
@@ -354,12 +354,12 @@ print.DataCombined <- function(x, ...) {
       function(p) p$plotId %||% NA_character_,
       character(1)
     )
-    result <- .check_no_duplicates(plotIds, "plotId", result)
+    result <- .checkNoDuplicates(plotIds, "plotId", result)
 
     plotTypes <- unlist(lapply(plotConfig, function(p) p$plotType))
     invalidTypes <- setdiff(plotTypes, .validPlotTypes)
     if (length(invalidTypes) > 0) {
-      result$add_critical_error(
+      result$addCriticalError(
         "Invalid Reference",
         paste0(
           "plotConfiguration has unknown plotType(s): ",
@@ -379,7 +379,7 @@ print.DataCombined <- function(x, ...) {
       names(dataCombined %||% list())
     )
     if (length(invalidDataCombinedRefs) > 0) {
-      result$add_critical_error(
+      result$addCriticalError(
         "Invalid Reference",
         paste0(
           "plotConfiguration references unknown dataCombinedId: ",
@@ -412,7 +412,7 @@ print.DataCombined <- function(x, ...) {
     )))
     invalidGridRefs <- setdiff(allGridIds, knownPlotIds)
     if (length(invalidGridRefs) > 0) {
-      result$add_critical_error(
+      result$addCriticalError(
         "Invalid Reference",
         paste0(
           "plotGrids references unknown plotIds: ",
@@ -459,7 +459,7 @@ print.DataCombined <- function(x, ...) {
         presentFields
       )
       for (field in presentFields) {
-        result$add_warning(
+        result$addWarning(
           "Data",
           paste0(
             "Plot '",

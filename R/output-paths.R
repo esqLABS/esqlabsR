@@ -26,7 +26,7 @@
 #'   (last-write-wins).
 #' @returns The `project` object, invisibly.
 #' @export
-#' @family output path
+#' @family outputPath
 addOutputPath <- function(project, id, path, overwrite = FALSE) {
   validateIsOfType(project, "Project")
   project$addOutputPath(id, path, overwrite)
@@ -98,7 +98,7 @@ addOutputPath <- function(project, id, path, overwrite = FALSE) {
 #'   canonicalized the same way [addOutputPath()] canonicalizes it.
 #' @returns The `project` object, invisibly.
 #' @export
-#' @family output path
+#' @family outputPath
 removeOutputPath <- function(project, id) {
   validateIsOfType(project, "Project")
   project$removeOutputPath(id)
@@ -152,7 +152,7 @@ removeOutputPath <- function(project, id) {
 #'
 #' @returns The `project` object, invisibly.
 #' @export
-#' @family output path
+#' @family outputPath
 setOutputPath <- function(project, id, path) {
   validateIsOfType(project, "Project")
   project$setOutputPath(id, path)
@@ -218,16 +218,16 @@ setOutputPath <- function(project, id, path) {
   result <- validationResult$new()
 
   if (is.null(outputPaths) || length(outputPaths) == 0) {
-    result$add_warning("Data", "No output paths defined")
+    result$addWarning("Data", "No output paths defined")
     return(result)
   }
 
-  result <- .check_no_duplicates(names(outputPaths), "outputPathId", result)
+  result <- .checkNoDuplicates(names(outputPaths), "outputPathId", result)
 
   values <- unlist(outputPaths, use.names = FALSE)
   emptyIds <- names(outputPaths)[is.na(values) | values == ""]
   if (length(emptyIds) > 0) {
-    result$add_critical_error(
+    result$addCriticalError(
       "Missing Fields",
       paste0(
         "Empty output path values for IDs: ",
@@ -238,7 +238,7 @@ setOutputPath <- function(project, id, path) {
 
   dupeValues <- values[duplicated(values) & !is.na(values)]
   if (length(dupeValues) > 0) {
-    result$add_warning(
+    result$addWarning(
       "Uniqueness",
       paste0(
         "Multiple IDs point to the same output path: ",

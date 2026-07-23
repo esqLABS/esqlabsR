@@ -576,7 +576,7 @@ test_that(".validatePI returns no errors on a well-formed task", {
     )
   )
   result <- esqlabsR:::.validatePI(list(T1 = task))
-  expect_false(result$has_critical_errors())
+  expect_false(result$hasCriticalErrors())
 })
 
 test_that(".validatePI surfaces duplicate parameter ids within a task", {
@@ -611,12 +611,12 @@ test_that(".validatePI surfaces duplicate parameter ids within a task", {
     )
   )
   result <- esqlabsR:::.validatePI(list(t = task))
-  expect_true(result$has_critical_errors())
+  expect_true(result$hasCriticalErrors())
 })
 
 test_that(".validatePI is empty-section-friendly", {
   result <- esqlabsR:::.validatePI(list())
-  expect_false(result$has_critical_errors())
+  expect_false(result$hasCriticalErrors())
 })
 
 test_that("validateProject() flags PI parameters that reference unknown scenarios", {
@@ -2357,7 +2357,7 @@ test_that(".validatePI surfaces duplicate output mapping ids within a task", {
     )
   )
   result <- esqlabsR:::.validatePI(list(T1 = task))
-  expect_false(result$is_valid())
+  expect_false(result$isValid())
   expect_match(
     paste(result$critical_errors, collapse = " "),
     "Duplicate PIOutputMapping id within task 'T1'"

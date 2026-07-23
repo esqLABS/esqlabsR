@@ -66,7 +66,7 @@
   result <- validationResult$new()
 
   if (is.null(individuals) || length(individuals) == 0) {
-    result$add_warning("Data", "No individuals defined")
+    result$addWarning("Data", "No individuals defined")
     return(result)
   }
 
@@ -74,7 +74,7 @@
   for (id in names(individuals)) {
     indiv <- individuals[[id]]
 
-    result <- .check_required_fields(
+    result <- .checkRequiredFields(
       indiv,
       requiredFields,
       paste0("individual '", id, "'"),
@@ -84,7 +84,7 @@
     for (numField in c("weight", "height", "age")) {
       val <- indiv[[numField]]
       if (!is.null(val) && !is.na(val) && !is.numeric(val)) {
-        result$add_warning(
+        result$addWarning(
           "Data Type",
           paste0(
             "Field '",

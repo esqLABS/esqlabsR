@@ -38,7 +38,7 @@
 #' @param simulationRunOptions Optional instance of a `SimulationRunOptions`
 #'   used during the simulation run
 #'
-#' @family sensitivity-calculation
+#' @family sensitivityCalculation
 #'
 #' @returns
 #'

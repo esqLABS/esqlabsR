@@ -60,7 +60,7 @@ project <- restoreProject(snapshot, file.path(tempdir(), "restored"))
 \seealso{
 \code{\link[=snapshotProject]{snapshotProject()}}, \code{\link[=loadProject]{loadProject()}}, \code{\link[=reloadProject]{reloadProject()}}.
 
-Other project persistence:
+Other projectPersistence:
 \code{\link[=exampleProjectPath]{exampleProjectPath()}},
 \code{\link[=exportProjectToExcel]{exportProjectToExcel()}},
 \code{\link[=importProjectFromExcel]{importProjectFromExcel()}},
@@ -71,4 +71,4 @@ Other project persistence:
 \code{\link[=saveProject]{saveProject()}},
 \code{\link[=snapshotProject]{snapshotProject()}}
 }
-\concept{project persistence}
+\concept{projectPersistence}

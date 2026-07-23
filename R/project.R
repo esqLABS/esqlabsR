@@ -235,7 +235,7 @@ Project <- R6::R6Class(
       ) {
         cli::cli_abort(messages$invalidPathArgument())
       }
-      private$.read_json(projectFilePath)
+      private$.readJson(projectFilePath)
       invisible(self)
     },
 
@@ -863,7 +863,7 @@ Project <- R6::R6Class(
     # Build one writable get/set spec for a `{value, description}` record field
     # stored under `private[[store]][[name]]`. The getter resolves the raw value
     # against `parentFn()` (a resolver returning the base path) via
-    # `.clean_path()`, so a folder/file field reads resolved and writes verbatim;
+    # `.cleanPath()`, so a folder/file field reads resolved and writes verbatim;
     # the setter stores the raw value and invalidates the container. Shared by
     # the `paths` and `excel` groups, which differ only in `store` and `parentFn`.
     .recordFieldSpec = function(store, name, parentFn) {
@@ -872,7 +872,7 @@ Project <- R6::R6Class(
       force(parentFn)
       list(
         get = function() {
-          private$.clean_path(private[[store]][[name]]$value, parentFn())
+          private$.cleanPath(private[[store]][[name]]$value, parentFn())
         },
         set = function(value) {
           private[[store]][[name]]$value <- value
@@ -928,7 +928,7 @@ Project <- R6::R6Class(
     # writable (raw on write, resolved on read); every write sets the dirty bit.
     .excelGroup = function() {
       configResolved <- function() {
-        private$.clean_path(
+        private$.cleanPath(
           private$.excelData$configurationsFolder$value,
           private$.projectDirPath
         )
@@ -1238,18 +1238,18 @@ Project <- R6::R6Class(
     # identity is preserved (the same R6 instance is mutated), so existing
     # handles stay valid.
     .reload = function() {
-      private$.read_json(private$.projectFilePath)
+      private$.readJson(private$.projectFilePath)
       invisible(self)
     },
 
-    .replace_env_var = function(path) {
+    .replaceEnvVar = function(path) {
       .replaceEnvVarPath(path)
     },
 
-    .clean_path = function(
+    .cleanPath = function(
       path,
       parent = NULL,
-      replace_env_vars = TRUE
+      replaceEnvVars = TRUE
     ) {
       if (
         is.null(path) ||
@@ -1258,8 +1258,8 @@ Project <- R6::R6Class(
       ) {
         return(NULL)
       }
-      if (replace_env_vars) {
-        path <- private$.replace_env_var(path)
+      if (replaceEnvVars) {
+        path <- private$.replaceEnvVar(path)
       }
       if (
         is.null(parent) ||
@@ -1288,7 +1288,7 @@ Project <- R6::R6Class(
     .resolveWorkingFolder = function(name) {
       raw <- private$.filePathsData[[name]]$value
       projectDir <- private$.projectDirPath
-      resolved <- private$.clean_path(raw, projectDir)
+      resolved <- private$.cleanPath(raw, projectDir)
       if (is.null(resolved)) {
         return(NULL)
       }
@@ -1322,7 +1322,7 @@ Project <- R6::R6Class(
       resolved
     },
 
-    .read_json = function(jsonPath) {
+    .readJson = function(jsonPath) {
       jsonPath <- fs::path_abs(jsonPath)
       if (!fs::file_exists(jsonPath)) {
         cli::cli_abort(messages$fileNotFound(jsonPath))

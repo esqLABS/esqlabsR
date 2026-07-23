@@ -335,7 +335,7 @@ print.Scenario <- function(x, ...) {
   result <- validationResult$new()
 
   if (is.null(scenarios) || length(scenarios) == 0) {
-    result$add_warning("Data", "No scenarios defined")
+    result$addWarning("Data", "No scenarios defined")
     return(result)
   }
 
@@ -343,7 +343,7 @@ print.Scenario <- function(x, ...) {
     sc <- scenarios[[name]]
 
     if (is.null(sc$modelFile) || sc$modelFile == "") {
-      result$add_critical_error(
+      result$addCriticalError(
         "Missing Fields",
         paste0("Scenario '", name, "' has no modelFile")
       )
@@ -357,7 +357,7 @@ print.Scenario <- function(x, ...) {
         !fs::is_absolute_path(sc$modelFile) &&
           .pathEscapesRoot(sc$modelFile, simulationsFolder)
       ) {
-        result$add_critical_error(
+        result$addCriticalError(
           "Path Containment",
           paste0(
             "Scenario '",
@@ -369,7 +369,7 @@ print.Scenario <- function(x, ...) {
       } else {
         modelFilePath <- file.path(simulationsFolder, sc$modelFile)
         if (!file.exists(modelFilePath)) {
-          result$add_warning(
+          result$addWarning(
             "File Not Found",
             paste0(
               "Scenario '",
@@ -384,7 +384,7 @@ print.Scenario <- function(x, ...) {
 
     simType <- sc$simulationType %||% ""
     if (!simType %in% c("Individual", "Population")) {
-      result$add_critical_error(
+      result$addCriticalError(
         "Validation",
         paste0(
           "Scenario '",
@@ -406,14 +406,14 @@ print.Scenario <- function(x, ...) {
       nzchar(sc$populationId)
 
     if (simType == "Population" && !hasPopulationId) {
-      result$add_critical_error(
+      result$addCriticalError(
         "Missing Fields",
         paste0("Population scenario '", name, "' has no populationId")
       )
     }
 
     if (simType != "Population" && hasPopulationId) {
-      result$add_warning(
+      result$addWarning(
         "Validation",
         paste0(
           "Scenario '",
@@ -584,7 +584,7 @@ print.Scenario <- function(x, ...) {
 .validateApplications <- function(applications) {
   result <- validationResult$new()
   if (is.null(applications) || length(applications) == 0) {
-    result$add_warning("Data", "No applications defined")
+    result$addWarning("Data", "No applications defined")
   }
   result
 }

@@ -87,11 +87,11 @@ createPlots <- function(
   if (isTRUE(stopIfNotFound)) {
     unknownGrids <- setdiff(plotGrids, names(allPlotGrids))
     if (length(unknownGrids) > 0) {
-      cli::cli_abort(messages$stopPlotGridNamesNotFound(unknownGrids))
+      cli::cli_abort(messages$plotGridNamesNotFound(unknownGrids))
     }
     unknownPlots <- setdiff(plots, names(allPlotConfig))
     if (length(unknownPlots) > 0) {
-      cli::cli_abort(messages$stopPlotIdsNotFound(unknownPlots))
+      cli::cli_abort(messages$plotIdsNotFound(unknownPlots))
     }
   }
 
@@ -264,7 +264,7 @@ createPlotsFromExcel <- function(...) {
       for (limitsField in check$limits) {
         limitsValue <- plotConfiguration[[limitsField]]
         if (!is.null(limitsValue) && 0 %in% limitsValue) {
-          msg <- messages$warningLogScaleWithZeroLimit(
+          msg <- messages$logScaleWithZeroLimit(
             plotID = plotID,
             axisLimitsField = limitsField,
             axis = check$axis
@@ -414,7 +414,7 @@ createPlotsFromExcel <- function(...) {
   }
   duplicatedPlotIds <- ids[duplicated(ids)]
   if (length(duplicatedPlotIds) > 0) {
-    msg <- messages$PlotIDsMustBeUnique(duplicatedPlotIds)
+    msg <- messages$plotIDsMustBeUnique(duplicatedPlotIds)
     cli::cli_abort("{msg}")
   }
   if (any(vapply(plotTypes, is.null, logical(1)))) {
@@ -439,7 +439,7 @@ createPlotsFromExcel <- function(...) {
     dataCombinedNames
   )
   if (length(missingDataCombined) != 0) {
-    msg <- messages$stopInvalidDataCombinedName(missingDataCombined)
+    msg <- messages$invalidDataCombinedName(missingDataCombined)
     cli::cli_abort("{msg}")
   }
   invisible(plotConfigurations)
@@ -470,7 +470,7 @@ createPlotsFromExcel <- function(...) {
   )
   duplicatedGridIds <- gridIds[duplicated(gridIds)]
   if (length(duplicatedGridIds) > 0) {
-    msg <- messages$PlotGridsNamesMustBeUnique(duplicatedGridIds)
+    msg <- messages$plotGridsNamesMustBeUnique(duplicatedGridIds)
     cli::cli_abort("{msg}")
   }
   referencedPlotIds <- unique(unlist(lapply(
@@ -479,7 +479,7 @@ createPlotsFromExcel <- function(...) {
   )))
   missingPlots <- setdiff(referencedPlotIds, plotIDs)
   if (length(missingPlots) != 0) {
-    msg <- messages$errorInvalidPlotID(missingPlots)
+    msg <- messages$invalidPlotID(missingPlots)
     cli::cli_abort("{msg}")
   }
   invisible(plotGrids)

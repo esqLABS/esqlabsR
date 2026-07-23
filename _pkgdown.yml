@@ -109,7 +109,7 @@ reference:
       - matches("^plot")
       - matches("^col")
       - matches("[Cc]olor")
-      - has_concept("create-plotting-configurations")
+      - has_concept("createPlottingConfigurations")
       - createDataCombined
       - createPlots
   - title: Input validation
