@@ -117,6 +117,81 @@ test_that("runScenarios threads stopIfParameterNotFound through to .prepareScena
   expect_false(captured)
 })
 
+test_that(".collectScenarioResult aborts on a failed scenario when stopIfFails is TRUE", {
+  scenario <- list(scenarioName = "s1", outputPaths = NULL)
+  expect_error(
+    esqlabsR:::.collectScenarioResult(
+      scenario = scenario,
+      simulation = NULL,
+      results = NULL,
+      population = NULL,
+      stopIfFails = TRUE
+    ),
+    regexp = "No simulation results could be computed"
+  )
+})
+
+test_that(".collectScenarioResult warns and returns NULL outputValues when stopIfFails is FALSE", {
+  scenario <- list(scenarioName = "s1", outputPaths = NULL)
+  expect_warning(
+    out <- esqlabsR:::.collectScenarioResult(
+      scenario = scenario,
+      simulation = NULL,
+      results = NULL,
+      population = NULL,
+      stopIfFails = FALSE
+    ),
+    regexp = "No simulation results could be computed"
+  )
+  expect_null(out$outputValues)
+  expect_null(out$results)
+})
+
+test_that("runScenarios aborts by default when a scenario simulation produces no results", {
+  # Force a failed run without native infra: mock the runner to return a NULL
+  # result for every simulation id it is handed.
+  withr::local_options(lifecycle_verbosity = "quiet")
+  project <- .testProject()
+  local_mocked_bindings(
+    runSimulations = function(simulations, ...) {
+      ids <- if (inherits(simulations, "Simulation")) {
+        simulations$id
+      } else {
+        vapply(simulations, function(s) s$id, character(1))
+      }
+      stats::setNames(vector("list", length(ids)), ids)
+    }
+  )
+  expect_error(
+    runScenarios(project, scenarios = "testscenario"),
+    regexp = "No simulation results could be computed"
+  )
+})
+
+test_that("runScenarios with stopIfFails = FALSE warns and returns NULL outputValues", {
+  withr::local_options(lifecycle_verbosity = "quiet")
+  project <- .testProject()
+  local_mocked_bindings(
+    runSimulations = function(simulations, ...) {
+      ids <- if (inherits(simulations, "Simulation")) {
+        simulations$id
+      } else {
+        vapply(simulations, function(s) s$id, character(1))
+      }
+      stats::setNames(vector("list", length(ids)), ids)
+    }
+  )
+  expect_warning(
+    out <- runScenarios(
+      project,
+      scenarios = "testscenario",
+      stopIfFails = FALSE
+    ),
+    regexp = "No simulation results could be computed"
+  )
+  expect_null(out$testscenario$outputValues)
+})
+
 test_that(".parameterSetToStructure flattens record-shape into paths/values/units", {
   records <- list(
     list(

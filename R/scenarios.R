@@ -614,6 +614,10 @@ print.Scenario <- function(x, ...) {
 #'   `customParams` path that matches no parameter in a scenario's
 #'   simulation aborts the run. Set to `FALSE` to skip such paths with a
 #'   warning instead.
+#' @param stopIfFails Logical. If `TRUE` (default), a scenario whose
+#'   simulation produced no results aborts the run with an error. Set to
+#'   `FALSE` to instead warn and leave that scenario's `outputValues`
+#'   `NULL` while the other scenarios are still returned.
 #'
 #' @returns A named list keyed by scenario name. Each entry is a list
 #'   with `simulation` (the initialized [ospsuite::Simulation]),
@@ -622,8 +626,9 @@ print.Scenario <- function(x, ...) {
 #'   `population` (an [ospsuite::Population] for population
 #'   scenarios, or `NULL` for individual scenarios).
 #'
-#' @details If a scenario's simulation fails, a warning is produced
-#'   and `outputValues` for that scenario is `NULL`.
+#' @details If a scenario's simulation fails, `runScenarios()` aborts by
+#'   default (`stopIfFails = TRUE`). Set `stopIfFails = FALSE` to instead
+#'   produce a warning and leave that scenario's `outputValues` `NULL`.
 #'
 #' @export
 runScenarios <- function(
@@ -632,7 +637,8 @@ runScenarios <- function(
   customParams = NULL,
   simulationRunOptions = NULL,
   validate = TRUE,
-  stopIfParameterNotFound = TRUE
+  stopIfParameterNotFound = TRUE,
+  stopIfFails = TRUE
 ) {
   if (!inherits(project, "Project")) {
     cli::cli_abort(
@@ -646,7 +652,8 @@ runScenarios <- function(
     customParams,
     simulationRunOptions,
     validate,
-    stopIfParameterNotFound
+    stopIfParameterNotFound,
+    stopIfFails
   )
 }
 

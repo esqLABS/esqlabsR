@@ -436,10 +436,18 @@
 # .collectScenarioResult ----
 
 # Resolve output quantities and build the standard return list for one
-# scenario.
+# scenario. When a scenario produced no results, `stopIfFails` decides whether
+# that aborts the run (the default) or only warns and leaves `outputValues`
+# NULL.
 # @keywords internal
 # @noRd
-.collectScenarioResult <- function(scenario, simulation, results, population) {
+.collectScenarioResult <- function(
+  scenario,
+  simulation,
+  results,
+  population,
+  stopIfFails = TRUE
+) {
   outputQuantities <- NULL
   if (!is.null(scenario$outputPaths)) {
     outputQuantities <- getAllQuantitiesMatching(
@@ -449,6 +457,9 @@
   }
   outputValues <- NULL
   if (is.null(results)) {
+    if (isTRUE(stopIfFails)) {
+      cli::cli_abort(messages$missingResultsForScenario(scenario$scenarioName))
+    }
     cli::cli_warn(messages$missingResultsForScenario(scenario$scenarioName))
   } else {
     outputValues <- getOutputValues(
@@ -504,7 +515,8 @@
   customParams = NULL,
   simulationRunOptions = NULL,
   validate = TRUE,
-  stopIfParameterNotFound = TRUE
+  stopIfParameterNotFound = TRUE,
+  stopIfFails = TRUE
 ) {
   validateIsOfType(project, "Project")
   .validateParametersStructure(
@@ -602,7 +614,8 @@
       scenario = allScenarios[[name]],
       simulation = p$simulation,
       results = simulationResults[[p$simulation$id]],
-      population = p$population
+      population = p$population,
+      stopIfFails = stopIfFails
     )
     names(out)[[idx]] <- name
   }
