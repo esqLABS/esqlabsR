@@ -20,7 +20,7 @@ sensFixture <- local({
   function() {
     if (is.null(cache)) {
       simulation <- loadSimulation(simPath)
-      set.seed(123)
+      withr::local_seed(123)
       results <- sensitivityCalculation(
         simulation = simulation,
         outputPaths = outputPaths,
@@ -105,10 +105,10 @@ test_that("sensitivityTornadoPlot errors if parameterFactor is missing in sensit
 
 test_that("sensitivityTornadoPlot creates default plot", {
   results <- sensFixture()$results
-  set.seed(123)
+  withr::local_seed(123)
   p <- sensitivityTornadoPlot(results)
 
-  set.seed(123)
+  withr::local_seed(123)
   suppressWarnings(
     vdiffr::expect_doppelganger(
       title = "sensitivityTornadoPlot works as expected",
@@ -161,10 +161,10 @@ test_that("sensitivityTornadoPlot works with custom PK parameter", {
     variationRange = variationRange
   )
 
-  set.seed(123)
+  withr::local_seed(123)
   p <- sensitivityTornadoPlot(resultsCustomPK)
 
-  set.seed(123)
+  withr::local_seed(123)
   vdiffr::expect_doppelganger(
     title = "sensitivityTornadoPlot custom PK Parameter",
     fig = suppressWarnings(p)
@@ -176,10 +176,10 @@ test_that("sensitivityTornadoPlot works with custom PK parameter", {
 
 test_that("sensitivityTornadoPlot applies x-axis zoom range correctly", {
   results <- sensFixture()$results
-  set.seed(123)
+  withr::local_seed(123)
   p <- sensitivityTornadoPlot(results, xAxisZoomRange = c(-100, 100))
 
-  set.seed(123)
+  withr::local_seed(123)
   suppressWarnings(
     vdiffr::expect_doppelganger(
       title = "sensitivityTornadoPlot zoomed",
@@ -193,10 +193,10 @@ test_that("sensitivityTornadoPlot applies x-axis zoom range correctly", {
 
 test_that("sensitivityTornadoPlot handles multiple output paths", {
   resultsMultiple <- sensFixtureMultiple()$resultsMultiple
-  set.seed(123)
+  withr::local_seed(123)
   plotsMultiple <- sensitivityTornadoPlot(resultsMultiple)
 
-  set.seed(123)
+  withr::local_seed(123)
   suppressWarnings(
     vdiffr::expect_doppelganger(
       title = "multiple output path tornado",
@@ -213,7 +213,7 @@ pkParametersFilter <- c("AUC_inf", "C_max")
 
 test_that("sensitivityTornadoPlot plots are as expected with filters", {
   resultsMultiple <- sensFixtureMultiple()$resultsMultiple
-  set.seed(123)
+  withr::local_seed(123)
   plotFiltered <- sensitivityTornadoPlot(
     resultsMultiple,
     outputPaths = outputPathsFilter,
@@ -221,7 +221,7 @@ test_that("sensitivityTornadoPlot plots are as expected with filters", {
     pkParameters = pkParametersFilter
   )
 
-  set.seed(123)
+  withr::local_seed(123)
   suppressWarnings(
     vdiffr::expect_doppelganger(
       title = "filtered tornado",

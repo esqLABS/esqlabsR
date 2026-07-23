@@ -18,7 +18,7 @@ sensFixture <- local({
   function() {
     if (is.null(cache)) {
       simulation <- loadSimulation(simPath)
-      set.seed(123)
+      withr::local_seed(123)
       results <- sensitivityCalculation(
         simulation = simulation,
         outputPaths = outputPaths,

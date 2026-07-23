@@ -37,7 +37,7 @@ sensFixture <- local({
   function() {
     if (is.null(cache)) {
       simulation <- loadSimulation(simPath)
-      set.seed(123)
+      withr::local_seed(123)
       results <- sensitivityCalculation(
         simulation = simulation,
         outputPaths = outputPaths,
@@ -497,7 +497,7 @@ test_that("sensitivityCalculation works with absolute values of `variationRange`
     1 * variationRange
   )
 
-  set.seed(123)
+  withr::local_seed(123)
   resultsAbs <- sensitivityCalculation(
     simulation = simulation,
     outputPaths = outputPaths,
@@ -537,15 +537,15 @@ test_that("sensitivityCalculation PK parameters tidy dataframe is as expected", 
   # base scaling should be present
   expect_equal(unique(results$pkData$ParameterFactor), c(0.1, 1, 2, 20))
 
-  set.seed(123)
+  withr::local_seed(123)
   df1_pk <- summarizer(results$pkData, parameterPaths[1])
   expect_snapshot(df1_pk)
 
-  set.seed(123)
+  withr::local_seed(123)
   df2_pk <- summarizer(results$pkData, parameterPaths[2])
   expect_snapshot(df2_pk)
 
-  set.seed(123)
+  withr::local_seed(123)
   df3_pk <- summarizer(results$pkData, parameterPaths[3])
   expect_snapshot(df3_pk)
 })
@@ -621,7 +621,7 @@ test_that("sensitivityCalculation saves PK data to xlsx file", {
   simulation <- sensFixture()$simulation
   path <- withr::local_tempfile(fileext = ".xlsx")
 
-  set.seed(123)
+  withr::local_seed(123)
   results <- sensitivityCalculation(
     simulation = simulation,
     outputPaths = outputPaths,
@@ -637,7 +637,7 @@ test_that("sensitivityCalculation errors if file extension is incorrect", {
   simulation <- sensFixture()$simulation
   path <- "mydata.csv"
 
-  set.seed(123)
+  withr::local_seed(123)
   expect_error(
     sensitivityCalculation(
       simulation = simulation,
@@ -715,7 +715,7 @@ pkDataWideColumns <- c(
 
 test_that("sensitivityCalculation converts output to wide format as expected", {
   simulation <- sensFixture()$simulation
-  set.seed(123)
+  withr::local_seed(123)
   results2 <- sensitivityCalculation(
     simulation = simulation,
     outputPaths = outputPaths,
@@ -752,7 +752,7 @@ test_that("sensitivityCalculation converts output to wide format as expected wit
     "max_slope_Sensitivity"
   )
 
-  set.seed(123)
+  withr::local_seed(123)
   results2 <- sensitivityCalculation(
     simulation = simulation,
     outputPaths = outputPaths,
@@ -834,7 +834,7 @@ test_that("sensitivityCalculation applies absolute `variationRange` for multiple
     1 * variationRange
   )
 
-  set.seed(123)
+  withr::local_seed(123)
   resultsMultipleAbs <- sensitivityCalculation(
     simulation = simulation,
     outputPaths = outputPaths,
@@ -877,7 +877,7 @@ test_that("sensitivityCalculation saves PK data to xlsx for multiple output path
   parameterPaths <- fixture$parameterPaths
   path <- withr::local_tempfile(fileext = ".xlsx")
 
-  set.seed(123)
+  withr::local_seed(123)
   resultsMultiple <- sensitivityCalculation(
     simulation = simulation,
     outputPaths = outputPaths,

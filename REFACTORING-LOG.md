@@ -17,3 +17,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-07-23 11:35: Removed orphan test fixtures unreferenced by any test (ObsDataAciclovir_1/2/3.pkml, ProjectConfiguration-V5.xlsx).
 - 2026-07-23 11:40: Merged the duplicated settings test file into test-esqlabs-env.R, keeping the exact esqlabsRSettingNames list check and the snapshot error test; removed test-esqlabsr-settings.R.
 - 2026-07-23 11:45: Switched the two sensitivity xlsx-write tests to withr::local_tempfile() so nothing is written into the package test directory and an early failure cannot orphan the file.
+- 2026-07-23 11:50: Converted all bare set.seed() calls in the sensitivity and plot/population test files to withr::local_seed(), so a test no longer leaks the session RNG state past its own block.
