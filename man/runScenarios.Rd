@@ -18,7 +18,9 @@ runScenarios(
 \item{project}{A \link{Project} object loaded from a \code{Project.json} file.}
 
 \item{scenarios}{Optional character vector of scenario names to
-run. \code{NULL} (default) runs all scenarios in the project.}
+run. \code{NULL} (default) runs all scenarios in the project. Names are
+matched case-insensitively against the canonical ids scenarios were
+authored under, so the name you passed to \code{\link[=addScenario]{addScenario()}} resolves.}
 
 \item{customParams}{A list with vectors \code{paths}, \code{values}, and
 \code{units} — applied to every selected scenario as the final

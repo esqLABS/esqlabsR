@@ -472,7 +472,7 @@ test_that(".runScenariosFromProject errors on unknown scenarioNames", {
   project <- .testProject()
   expect_error(
     esqlabsR:::.runScenariosFromProject(project, scenarioNames = "NopeNope"),
-    regexp = "NopeNope"
+    regexp = "nopenope"
   )
 })
 
@@ -494,8 +494,21 @@ test_that(".buildScenarioSimulations errors on an unknown scenario name", {
   project <- .testProject()
   expect_error(
     esqlabsR:::.buildScenarioSimulations(project, scenarioNames = "NopeNope"),
-    regexp = "NopeNope"
+    regexp = "nopenope"
   )
+})
+
+test_that(".buildScenarioSimulations matches a scenario name case-insensitively", {
+  # A caller passing the mixed-case name they authored with resolves to the
+  # canonical (lowercased) id the scenario is filed under.
+  withr::local_options(lifecycle_verbosity = "quiet")
+  project <- .testProject()
+  canonical <- names(project$definitions$scenarios)[[1]]
+  built <- esqlabsR:::.buildScenarioSimulations(
+    project,
+    scenarioNames = toupper(canonical)
+  )
+  expect_identical(built$scenarioNames, canonical)
 })
 
 test_that(".buildScenarioSimulations shares one build cache across scenarios in a call", {

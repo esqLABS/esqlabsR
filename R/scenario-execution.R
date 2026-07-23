@@ -537,6 +537,12 @@
   allScenarios <- project$definitions$scenarios
   if (is.null(scenarioNames)) {
     scenarioNames <- names(allScenarios)
+  } else {
+    # Match against the canonical ids scenarios were filed under, so a caller
+    # can pass the (possibly mixed-case) name they authored with. Silent
+    # because this only resolves a lookup; nothing is stored, so the
+    # "canonicalized to a safe form" heads-up would be noise on every run.
+    scenarioNames <- suppressWarnings(.canonicalizeIdRef(scenarioNames))
   }
   unknownNames <- setdiff(scenarioNames, names(allScenarios))
   if (length(unknownNames) > 0) {
