@@ -194,6 +194,15 @@ messages$importWouldOverwriteProject <- function(outputDir) {
   )
 }
 
+messages$importSkippedObservedData <- function(dataFile) {
+  c(
+    "!" = "The configured data file {.file {dataFile}} was not found, so no \\
+    observed data was imported.",
+    "i" = "Any plot or parameter-identification mapping that references \\
+    observed data will not resolve until the data file is present."
+  )
+}
+
 messages$exportWouldOverwriteWorkbooks <- function(outputDir) {
   c(
     "Excel workbooks already exist in {.path {outputDir}}.",

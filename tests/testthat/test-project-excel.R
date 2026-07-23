@@ -617,6 +617,48 @@ test_that("the Excel import carries the known fixture ids and values", {
   ))
 })
 
+# The project records a single experimental-data workbook under `dataFolder`.
+# The importer reifies it as one `excel` observed-data definition listing the
+# workbook's sheets, so a plot or PI mapping that references observed data has
+# something to resolve against (#1158).
+test_that("the Excel import reifies the configured data file as observed data", {
+  out <- withr::local_tempdir()
+  jsonPath <- suppressWarnings(importProjectFromExcel(
+    testProjectExcelPath(),
+    outputDir = out,
+    silent = TRUE
+  ))
+  project <- suppressWarnings(loadProject(jsonPath))
+
+  expect_length(project$definitions$observedData, 1L)
+  entry <- .unwrapDefinitionList(project$definitions$observedData)[[1]]
+  expect_identical(entry$type, "excel")
+  expect_identical(entry$file, "TestProject_TimeValuesData.xlsx")
+  expect_identical(
+    entry$importerConfiguration,
+    "esqlabs_dataImporter_configuration.xml"
+  )
+  expect_true("Laskin 1982.Group A" %in% unlist(entry$sheets))
+})
+
+# A configured `dataFile` that is not on disk is a migration gap the user should
+# see: the importer warns and imports no observed data rather than aborting or
+# silently proceeding (#1158).
+test_that(".parseExcelObservedData warns and skips when the data file is absent", {
+  prop <- function(name) {
+    switch(name, dataFile = "Missing.xlsx", dataFolder = "Data/", NULL)
+  }
+  expect_warning(
+    result <- .parseExcelObservedData(
+      list(),
+      prop,
+      testthat::test_path("data", "TestProjectExcel")
+    ),
+    "was not found"
+  )
+  expect_null(result$observedData)
+})
+
 # A sheet named after an individual (the `Indiv1` sheet in the fixture) is that
 # individual's own parameter override. The importer creates it as a parameter
 # set AND links it on the individual, so the override is applied rather than

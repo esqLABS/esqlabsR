@@ -47,3 +47,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-07-23 16:43: Excel import links an individual to its own override parameter-set sheet (matched by canonical id), so the override is applied instead of orphaned. (#1158)
 - 2026-07-23 16:51: `addPopulation()` / `setPopulation()` accept `proteinOntogenies`, matching individuals and the Excel importer, so an imported population can be re-authored. (#1158)
 - 2026-07-23 16:51: Excel import defaults a blank steady-state time/unit to `1000` / `"min"` (matching the authoring API), so a round-tripped project has no steady-state diff. (#1158)
+- 2026-07-23 16:55: Excel import reifies the configured `dataFile` as an `excel` observed-data definition (with its sheets and importer config), warning if the file is missing. (#1158)

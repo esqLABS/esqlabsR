@@ -360,6 +360,14 @@ importProjectFromExcel <- function(
     }
   }
 
+  # Observed data. The project records a single `dataFile` (an experimental-data
+  # workbook) and a `dataImporterConfigurationFile` under `dataFolder`, not a
+  # per-section workbook, so it is parsed outside the `sections` loop. The
+  # importer reifies it as one `excel` observed-data definition keyed by the
+  # data-file basename, listing the workbook's sheets; the loader resolves the
+  # `file` / `importerConfiguration` basenames against `dataFolder`.
+  jsonData <- .parseExcelObservedData(jsonData, prop, pcDir)
+
   # --- Determine output path ---
   if (is.null(outputDir)) {
     outputDir <- pcDir
@@ -1356,6 +1364,54 @@ projectStatus <- function(project, silent = FALSE) {
     scenarios[[i]] <- scenario
   }
   scenarios
+}
+
+#' Reify the project's experimental-data file as an observed-data definition
+#'
+#' The project configuration records a single `dataFile` under `dataFolder`
+#' (optionally with a `dataImporterConfigurationFile`). This builds one `excel`
+#' observed-data entry from it, keyed by the data-file basename and listing the
+#' workbook's sheets, so a plot or PI mapping that references observed data has
+#' something to resolve against. `file` and `importerConfiguration` are stored as
+#' basenames; the loader resolves them under `dataFolder`. A no-op when no
+#' `dataFile` is configured, or its workbook is absent (with a warning, since a
+#' configured-but-missing file is a migration gap the user should see).
+#'
+#' @param jsonData The accumulating project JSON list.
+#' @param prop The `Property -> Value` lookup closure from the importer.
+#' @param pcDir Absolute path to the project-configuration directory.
+#' @returns `jsonData` with an `observedData` section added when applicable.
+#' @keywords internal
+#' @noRd
+.parseExcelObservedData <- function(jsonData, prop, pcDir) {
+  dataFile <- prop("dataFile")
+  if (is.null(dataFile) || is.na(dataFile) || dataFile == "") {
+    return(jsonData)
+  }
+  dataFolderRaw <- prop("dataFolder") %||% "."
+  dataFolder <- .resolveProjectPath(dataFolderRaw, pcDir, "dataFolder")
+  dataFilePath <- .resolveProjectPath(dataFile, dataFolder, "dataFile")
+  if (!file.exists(dataFilePath)) {
+    cli::cli_warn(messages$importSkippedObservedData(dataFile))
+    return(jsonData)
+  }
+
+  importerConfig <- prop("dataImporterConfigurationFile")
+  entry <- list(
+    type = "excel",
+    file = basename(dataFile),
+    sheets = as.list(readxl::excel_sheets(dataFilePath))
+  )
+  if (
+    !is.null(importerConfig) && !is.na(importerConfig) && importerConfig != ""
+  ) {
+    entry$importerConfiguration <- basename(importerConfig)
+  }
+  jsonData$observedData <- stats::setNames(
+    list(entry),
+    basename(dataFile)
+  )
+  jsonData
 }
 
 #' Parse the ApplicationProtocols Excel sheet into JSON structure
