@@ -537,15 +537,12 @@ test_that("sensitivityCalculation PK parameters tidy dataframe is as expected", 
   # base scaling should be present
   expect_equal(unique(results$pkData$ParameterFactor), c(0.1, 1, 2, 20))
 
-  withr::local_seed(123)
   df1_pk <- summarizer(results$pkData, parameterPaths[1])
   expect_snapshot(df1_pk)
 
-  withr::local_seed(123)
   df2_pk <- summarizer(results$pkData, parameterPaths[2])
   expect_snapshot(df2_pk)
 
-  withr::local_seed(123)
   df3_pk <- summarizer(results$pkData, parameterPaths[3])
   expect_snapshot(df3_pk)
 })

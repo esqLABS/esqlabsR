@@ -28,3 +28,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-07-23 11:40: Merged the duplicated settings test file into test-esqlabs-env.R, keeping the exact esqlabsRSettingNames list check and the snapshot error test; removed test-esqlabsr-settings.R. (#1059)
 - 2026-07-23 11:45: Switched the two sensitivity xlsx-write tests to withr::local_tempfile() so nothing is written into the package test directory and an early failure cannot orphan the file. (#1059)
 - 2026-07-23 11:50: Converted all bare set.seed() calls in the sensitivity and plot/population test files to withr::local_seed(), so a test no longer leaks the session RNG state past its own block. (#1059)
+- 2026-07-23 14:20: Dropped three no-op local_seed() calls before summarizer() in the PK-parameter tidy-dataframe test; summarizer() is pure dplyr and consumes no RNG. (#1059)
