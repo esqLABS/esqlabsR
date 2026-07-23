@@ -203,6 +203,24 @@ messages$importSkippedObservedData <- function(dataFile) {
   )
 }
 
+messages$legacySnapshotMalformedSheet <- function() {
+  c(
+    "x" = "This previous-version project snapshot is malformed and cannot be \\
+    upgraded.",
+    "i" = "A sheet in the snapshot is not a {.code {{column_names, rows}}} \\
+    object; the file may be truncated or hand-edited."
+  )
+}
+
+messages$upgradedLegacySnapshot <- function() {
+  c(
+    "i" = "Detected a previous-version project snapshot and upgraded it to the \\
+    current project format.",
+    "!" = "Observed data does not travel in a snapshot; add it with \\
+    {.fn addObservedData} if a plot or parameter identification needs it."
+  )
+}
+
 messages$exportWouldOverwriteWorkbooks <- function(outputDir) {
   c(
     "Excel workbooks already exist in {.path {outputDir}}.",

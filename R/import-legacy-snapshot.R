@@ -121,20 +121,32 @@
     dir.create(csvDir, recursive = TRUE, showWarnings = FALSE)
     for (fileName in names(jsonData$populationsCSV)) {
       csvDf <- .legacySheetToDf(jsonData$populationsCSV[[fileName]])
-      utils::write.csv(csvDf, file.path(csvDir, fileName), row.names = FALSE)
+      # Reduce the snapshot-supplied name to a bare filename: a snapshot is
+      # read from a caller-supplied path, so a name carrying a path separator
+      # or a `../` climb must not steer the write out of `csvDir`.
+      utils::write.csv(
+        csvDf,
+        file.path(csvDir, basename(fileName)),
+        row.names = FALSE
+      )
     }
   }
 
   pcPath
 }
 
-# Rebuild one mirrored sheet (`{column_names, rows}`, each row a list of cell
-# strings) into a data frame with the sheet's columns and per-column types
-# restored. An empty sheet yields a zero-row frame with the right columns.
+# Rebuild one mirrored sheet (`{column_names, rows}`, each row a named list of
+# cell strings) into a data frame with the sheet's columns and per-column types
+# restored. An empty sheet yields a zero-row frame with the right columns. A
+# value that is not a `{column_names, rows}` object (a corrupt or hand-edited
+# snapshot) aborts with a clear message rather than a cryptic downstream error.
 #
 # @keywords internal
 # @noRd
 .legacySheetToDf <- function(sheet) {
+  if (!is.list(sheet) || is.null(sheet$column_names)) {
+    cli::cli_abort(messages$legacySnapshotMalformedSheet())
+  }
   columnNames <- unlist(sheet$column_names)
   rows <- sheet$rows
   df <- data.frame(
@@ -144,10 +156,13 @@
   colnames(df) <- columnNames
   for (i in seq_along(rows)) {
     rowData <- rows[[i]]
-    for (j in seq_along(columnNames)) {
-      if (j <= length(rowData)) {
-        df[i, j] <- rowData[[j]] %||% ""
-      }
+    for (colName in columnNames) {
+      # Read each cell by column name, not position: the exporter writes a row
+      # as a named list, so name-keyed access is robust to any key reordering a
+      # JSON round-trip might introduce. A null or absent cell becomes `""` (as
+      # the previous version's own reader did), so a blank round-trips as blank
+      # rather than the string "NA".
+      df[i, colName] <- rowData[[colName]] %||% ""
     }
   }
   .restoreColumnTypes(df)
