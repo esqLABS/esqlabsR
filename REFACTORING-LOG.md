@@ -28,3 +28,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-07-23 12:05: Added exported `buildSimulations()` returning parameterized-but-unrun simulations per scenario (#1074).
 - 2026-07-23 12:08: Gave population entries an optional `type` (`programmatic`/`csv`): type-aware parse, validation, and a source-aware print (#1024).
 - 2026-07-23 12:11: `addPopulation()` now accepts an `ospsuite::Population` object (session injection), with a runtime store, accessor, and reload reset (#1024).
+- 2026-07-23 12:16: The run path resolves a population by its entry `type` (programmatic from the store, csv from its file, else demographics spec), scenario CSV flag kept for back-compat (#1024).

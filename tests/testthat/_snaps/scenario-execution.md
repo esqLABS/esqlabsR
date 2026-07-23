@@ -13,6 +13,6 @@
       esqlabsR:::.runScenariosFromProject(project, scenarioNames = "populationscenariofromcsv",
         validate = FALSE)
     Condition
-      Error in `.prepareScenario()`:
+      Error in `.resolveCsvPopulation()`:
       ! x Cannot resolve the population csv for scenario "populationscenariofromcsv". i populationId "testpopulation" is read from a csv but the project has no populationsFolder to resolve it against.
 

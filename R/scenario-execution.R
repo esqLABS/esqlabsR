@@ -208,6 +208,122 @@
   readParametersFromXLS(paramsXLSpath = filePath, sheets = species)
 }
 
+# Population resolution ----
+
+# Resolve the `ospsuite::Population` for a population scenario, dispatching on
+# the population *entry's* `type`, not the scenario flag. A `programmatic` entry
+# comes from the runtime store; a `csv` entry loads its `file`; an entry with no
+# `type` is a demographics spec built via `createPopulationCharacteristics`,
+# unless the scenario's `readPopulationFromCSV` flag is set (back-compat: that
+# still loads `<populationId>.csv`). Resolved objects are cached per run so a
+# population shared by two scenarios is built or loaded once.
+# @keywords internal
+# @noRd
+.resolveScenarioPopulation <- function(scenario, project, cache) {
+  if (is.null(scenario$populationId)) {
+    cli::cli_abort(messages$noPopulationIdForPopulationScenario(
+      scenario$scenarioName
+    ))
+  }
+  cached <- cache$populations[[scenario$populationId]]
+  if (!is.null(cached)) {
+    return(cached)
+  }
+
+  popData <- project$definitions$populations[[scenario$populationId]]
+  # The entry type wins over the scenario flag; a spec entry falls back to the
+  # scenario's `readPopulationFromCSV` for the legacy CSV path.
+  effectiveType <- popData$type %||%
+    (if (isTRUE(scenario$readPopulationFromCSV)) "csv" else "spec")
+
+  population <- switch(
+    effectiveType,
+    "programmatic" = .resolveProgrammaticPopulation(scenario, project),
+    "csv" = .resolveCsvPopulation(scenario, project, popData),
+    "spec" = .resolveSpecPopulation(scenario, popData)
+  )
+  cache$populations[[scenario$populationId]] <- population
+  population
+}
+
+# Pull a session-injected `Population` from the runtime store. Fatal if the
+# sentinel has no backing object (a project reloaded without re-injecting),
+# since a population scenario cannot run without one.
+# @keywords internal
+# @noRd
+.resolveProgrammaticPopulation <- function(scenario, project) {
+  population <- project$getProgrammaticPopulation(scenario$populationId)
+  if (is.null(population)) {
+    cli::cli_abort(messages$populationProgrammaticUnresolved(
+      id = scenario$populationId,
+      scenarioName = scenario$scenarioName
+    ))
+  }
+  population
+}
+
+# Load a population table from CSV. A `csv` entry names its own `file`; the
+# legacy scenario-flag path (no `file`) derives `<populationId>.csv`. Either way
+# the resolved path must stay under the populations folder (a shared project
+# cannot escape itself via a `../` id), which must be declared.
+# @keywords internal
+# @noRd
+.resolveCsvPopulation <- function(scenario, project, popData) {
+  if (is.null(project$paths$populationsFolder)) {
+    cli::cli_abort(messages$noPopulationsFolderForCSVPopulation(
+      scenarioName = scenario$scenarioName,
+      populationId = scenario$populationId
+    ))
+  }
+  fileName <- popData$file %||% paste0(scenario$populationId, ".csv")
+  populationPath <- .resolveProjectPath(
+    fileName,
+    project$paths$populationsFolder,
+    "populationId"
+  )
+  loadPopulation(populationPath)
+}
+
+# Build a population from a demographics spec via
+# `createPopulationCharacteristics`.
+# @keywords internal
+# @noRd
+.resolveSpecPopulation <- function(scenario, popData) {
+  if (is.null(popData)) {
+    cli::cli_abort(
+      "Population {.val {scenario$populationId}} referenced by scenario {.val {scenario$scenarioName}} not found in project."
+    )
+  }
+  moleculeOntogenies <- .readOntogeniesFromList(popData$proteinOntogenies)
+  popArgs <- unclass(popData)
+  popArgs$proteinOntogenies <- NULL
+  popArgs$moleculeOntogenies <- moleculeOntogenies
+  # JSON integers (e.g. ageMin: 18) must be coerced to double because
+  # createPopulationCharacteristics passes them to ParameterRange which
+  # expects Nullable<Double>, not Int32.
+  numericFields <- c(
+    "numberOfIndividuals",
+    "proportionOfFemales",
+    "weightMin",
+    "weightMax",
+    "heightMin",
+    "heightMax",
+    "ageMin",
+    "ageMax",
+    "BMIMin",
+    "BMIMax",
+    "gestationalAgeMin",
+    "gestationalAgeMax"
+  )
+  for (field in numericFields) {
+    if (!is.null(popArgs[[field]])) {
+      popArgs[[field]] <- as.double(popArgs[[field]])
+    }
+  }
+  popResult <- do.call(ospsuite::createPopulationCharacteristics, popArgs)
+  createPopulation(populationCharacteristics = popResult)$population
+}
+
 # .prepareScenario ----
 
 # Prepare a single scenario for simulation: load Simulation, build
@@ -338,80 +454,7 @@
   # 6. Population
   population <- NULL
   if (scenario$simulationType == "Population") {
-    if (is.null(scenario$populationId)) {
-      cli::cli_abort(messages$noPopulationIdForPopulationScenario(
-        scenario$scenarioName
-      ))
-    }
-    if (scenario$readPopulationFromCSV) {
-      cached <- cache$populations[[scenario$populationId]]
-      if (!is.null(cached)) {
-        population <- cached
-      } else {
-        # A relative population id is resolved against the project's populations
-        # folder, which must exist for the join to be meaningful
-        # (`file.path(NULL, x)` yields `character(0)`). The resolved csv must
-        # stay under the populations folder, so a shared project cannot read a
-        # file outside itself via a `../` population id.
-        if (is.null(project$paths$populationsFolder)) {
-          cli::cli_abort(messages$noPopulationsFolderForCSVPopulation(
-            scenarioName = scenario$scenarioName,
-            populationId = scenario$populationId
-          ))
-        }
-        populationPath <- .resolveProjectPath(
-          paste0(scenario$populationId, ".csv"),
-          project$paths$populationsFolder,
-          "populationId"
-        )
-        population <- loadPopulation(populationPath)
-        cache$populations[[scenario$populationId]] <- population
-      }
-    } else {
-      cached <- cache$populations[[scenario$populationId]]
-      if (!is.null(cached)) {
-        population <- cached
-      } else {
-        popData <- project$definitions$populations[[scenario$populationId]]
-        if (is.null(popData)) {
-          cli::cli_abort(
-            "Population {.val {scenario$populationId}} referenced by scenario {.val {scenario$scenarioName}} not found in project."
-          )
-        }
-        moleculeOntogenies <- .readOntogeniesFromList(
-          popData$proteinOntogenies
-        )
-        popArgs <- unclass(popData)
-        popArgs$proteinOntogenies <- NULL
-        popArgs$moleculeOntogenies <- moleculeOntogenies
-        # JSON integers (e.g. ageMin: 18) must be coerced to double because
-        # createPopulationCharacteristics passes them to ParameterRange which
-        # expects Nullable<Double>, not Int32.
-        numericFields <- c(
-          "numberOfIndividuals",
-          "proportionOfFemales",
-          "weightMin",
-          "weightMax",
-          "heightMin",
-          "heightMax",
-          "ageMin",
-          "ageMax",
-          "BMIMin",
-          "BMIMax",
-          "gestationalAgeMin",
-          "gestationalAgeMax"
-        )
-        for (field in numericFields) {
-          if (!is.null(popArgs[[field]])) {
-            popArgs[[field]] <- as.double(popArgs[[field]])
-          }
-        }
-        popResult <- do.call(ospsuite::createPopulationCharacteristics, popArgs)
-        popObj <- createPopulation(populationCharacteristics = popResult)
-        population <- popObj$population
-        cache$populations[[scenario$populationId]] <- population
-      }
-    }
+    population <- .resolveScenarioPopulation(scenario, project, cache)
   }
 
   # 7. Steady state

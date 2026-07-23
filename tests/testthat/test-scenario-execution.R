@@ -521,6 +521,77 @@ test_that(".buildScenarioSimulations shares one build cache across scenarios in 
   expect_identical(built, 1L)
 })
 
+# Population source resolution ----
+
+test_that(".resolveScenarioPopulation resolves a programmatic entry from the runtime store", {
+  withr::local_options(lifecycle_verbosity = "quiet")
+  project <- .testProject()
+  pc <- ospsuite::createPopulationCharacteristics(
+    species = ospsuite::Species$Human,
+    population = ospsuite::HumanPopulation$Asian_Tanaka_1996,
+    numberOfIndividuals = 2L,
+    proportionOfFemales = 50
+  )
+  pop <- ospsuite::createPopulation(pc)$population
+
+  suppressWarnings(removePopulation(project, "testpopulation"))
+  suppressMessages(addPopulation(project, "testpopulation", pop))
+
+  out <- esqlabsR:::.runScenariosFromProject(
+    project,
+    scenarioNames = "populationscenario"
+  )
+  expect_identical(out$populationscenario$population, pop)
+})
+
+test_that(".resolveScenarioPopulation aborts on an unresolved programmatic entry", {
+  withr::local_options(lifecycle_verbosity = "quiet")
+  project <- .testProject()
+  # A programmatic sentinel with no backing object (as after a reload):
+  # replace the existing spec entry so the lookup hits the sentinel.
+  populations <- .getSection(project, "populations")
+  populations[["testpopulation"]] <- esqlabsR:::.asPopulationSource(list(
+    type = "programmatic"
+  ))
+  .setSection(project, "populations", populations)
+  scenario <- project$definitions$scenarios[["populationscenario"]]
+  cache <- new.env(parent = emptyenv())
+  cache$populations <- list()
+  expect_error(
+    esqlabsR:::.resolveScenarioPopulation(scenario, project, cache),
+    regexp = "injected in a previous session"
+  )
+})
+
+test_that(".resolveScenarioPopulation loads a csv entry from its own file", {
+  withr::local_options(lifecycle_verbosity = "quiet")
+  project <- .testProject()
+  loaded <- structure(list(), class = "Population")
+  entry <- esqlabsR:::.asPopulationSource(list(
+    type = "csv",
+    file = "custom.csv"
+  ))
+  .setSection(
+    project,
+    "populations",
+    list(testpopulation = entry)
+  )
+  scenario <- project$definitions$scenarios[["populationscenario"]]
+  cache <- new.env(parent = emptyenv())
+  cache$populations <- list()
+
+  seen <- NULL
+  local_mocked_bindings(
+    loadPopulation = function(path) {
+      seen <<- path
+      loaded
+    }
+  )
+  result <- esqlabsR:::.resolveScenarioPopulation(scenario, project, cache)
+  expect_identical(result, loaded)
+  expect_match(seen, "custom\\.csv$")
+})
+
 # Model file resolution ----
 
 test_that("a scenario with an absolute modelFile runs when simulationsFolder is NULL", {
