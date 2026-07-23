@@ -1021,7 +1021,7 @@ test_that("buildSimulations errors on an unknown scenario name", {
   project <- testProject()
   expect_error(
     buildSimulations(project, scenarios = "NopeNope"),
-    regexp = "NopeNope"
+    regexp = "nopenope"
   )
 })
 
