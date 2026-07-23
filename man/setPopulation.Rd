@@ -17,9 +17,9 @@ already exist in \code{populations} definitions.}
 \code{numberOfIndividuals}, \code{proportionOfFemales}, \code{weightMin},
 \code{weightMax}, \code{heightMin}, \code{heightMax}, \code{ageMin}, \code{ageMax}, \code{BMIMin},
 \code{BMIMax}, \code{gender}, \code{weightUnit}, \code{heightUnit}, \code{ageUnit}, \code{BMIUnit},
-\code{population}, \code{diseaseState}. Scalar-per-definition fields recycle/align
-across \code{id}. Numeric fields are coerced via \code{as.double()}. Unknown
-fields trigger an error.}
+\code{population}, \code{diseaseState}, \code{proteinOntogenies}. Scalar-per-definition
+fields recycle/align across \code{id}. Numeric fields are coerced via
+\code{as.double()}. Unknown fields trigger an error.}
 }
 \value{
 The \code{project} object, invisibly.

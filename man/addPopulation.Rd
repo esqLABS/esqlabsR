@@ -23,10 +23,11 @@ length as \code{id}. Omit when injecting a \code{Population} object.}
 \item{...}{Optional named fields. Accepted: \code{proportionOfFemales},
 \code{weightMin}, \code{weightMax}, \code{heightMin}, \code{heightMax}, \code{ageMin},
 \code{ageMax}, \code{BMIMin}, \code{BMIMax}, \code{gender}, \code{weightUnit}, \code{heightUnit},
-\code{ageUnit}, \code{BMIUnit}, \code{population}, \code{diseaseState}, and \code{overwrite}.
-Numeric range fields are coerced via \code{as.double()}. \code{overwrite} is a
-logical scalar (default \code{FALSE}): an id that already exists aborts unless
-\code{overwrite = TRUE}, which replaces it (last-write-wins).}
+\code{ageUnit}, \code{BMIUnit}, \code{population}, \code{diseaseState}, \code{proteinOntogenies},
+and \code{overwrite}. Numeric range fields are coerced via \code{as.double()}.
+\code{overwrite} is a logical scalar (default \code{FALSE}): an id that already
+exists aborts unless \code{overwrite = TRUE}, which replaces it
+(last-write-wins).}
 }
 \value{
 The \code{project} object, invisibly.

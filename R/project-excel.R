@@ -1325,9 +1325,17 @@ projectStatus <- function(project, silent = FALSE) {
       simulationTime = .naToNull(as.character(row[["SimulationTime"]])),
       simulationTimeUnit = .naToNull(as.character(row[["SimulationTimeUnit"]])),
       steadyState = .naToNull(.toLogical(row[["SteadyState"]], "SteadyState")),
-      steadyStateTime = .naToNull(as.numeric(row[["SteadyStateTime"]])),
-      steadyStateTimeUnit = .naToNull(
-        as.character(row[["SteadyStateTimeUnit"]])
+      # A blank steady-state time/unit defaults to the same values the authoring
+      # API and the legacy 5.x reader use (`1000` / `"min"`), rather than null, so
+      # a project round-tripped through the authoring API is byte-identical to
+      # the imported one. The value is only used when `steadyState` is TRUE.
+      steadyStateTime = .naToDefault(
+        as.numeric(row[["SteadyStateTime"]]),
+        1000
+      ),
+      steadyStateTimeUnit = .naToDefault(
+        as.character(row[["SteadyStateTimeUnit"]]),
+        "min"
       ),
       # `OverwriteFormulasInSS` is a newer column; a pre-6.0 Scenarios sheet
       # omits it, so guard the lookup rather than abort on its absence (matching
@@ -2163,6 +2171,16 @@ projectStatus <- function(project, silent = FALSE) {
   }
   if (length(x) == 1L && is.na(x)) {
     return(NULL)
+  }
+  x
+}
+
+#' Replace an absent/`NA` single cell with a default, else keep the value
+#' @keywords internal
+#' @noRd
+.naToDefault <- function(x, default) {
+  if (is.null(x) || length(x) == 0 || (length(x) == 1L && is.na(x))) {
+    return(default)
   }
   x
 }

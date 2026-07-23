@@ -203,7 +203,7 @@ test_that("Excel round-trip preserves DataCombined numeric offsets and scales", 
   expect_identical(obs$xScaleFactors, 4.5)
 })
 
-test_that("Excel round-trip does not fabricate a steady-state unit", {
+test_that("Excel round-trip defaults a non-steady-state scenario's steady-state time and unit", {
   work_dir <- withr::local_tempdir()
   file.copy(dirname(exampleProjectPath()), work_dir, recursive = TRUE)
   project <- loadProject(file.path(work_dir, "Example", "Project.json"))
@@ -219,15 +219,15 @@ test_that("Excel round-trip does not fabricate a steady-state unit", {
   before <- .unwrapDefinitionList(project$definitions$scenarios)
   after <- .unwrapDefinitionList(reimported$definitions$scenarios)
 
-  # A non-steady-state scenario carries the parser's default steadyStateTime and
-  # a null unit; the export must not fabricate a unit for it, so the unit stays
-  # null across the round trip. (The steadyStateTime value's int-vs-double type
-  # for a whole-number steady-state time is a separate JSON-layer concern owned
-  # elsewhere, so this asserts the unit, the part the Excel bridge controls.)
+  # A non-steady-state scenario has no meaningful steady-state time, so the
+  # import defaults it to the same `1000` / `"min"` the authoring API writes,
+  # rather than null. This keeps an imported project byte-identical to the same
+  # project re-authored through `addScenario()`, so no round-trip diff (#1158).
+  # The value is only used when steady-state is on.
   nonSteady <- "aciclovir_iv"
   expect_false(isTRUE(before[[nonSteady]]$simulateSteadyState))
-  expect_null(before[[nonSteady]]$steadyStateTimeUnit)
-  expect_null(after[[nonSteady]]$steadyStateTimeUnit)
+  expect_identical(after[[nonSteady]]$steadyStateTime, 1000)
+  expect_identical(after[[nonSteady]]$steadyStateTimeUnit, "min")
 
   # A genuine steady-state scenario keeps its declared unit.
   steady <- "aciclovir_iv_steadystate"
@@ -1070,6 +1070,32 @@ test_that(".parseExcelScenarios defaults OverwriteFormulasInSS when the column i
   # The parser drops the absent value to NULL; the JSON serializer defaults it
   # to FALSE (`%||% FALSE`), so a round-trip through the tree reads FALSE.
   expect_null(scenarios[[1]]$overwriteFormulasInSS)
+})
+
+# A blank steady-state time/unit defaults to the same values the authoring API
+# writes (`1000` / `"min"`), not null, so an imported project is byte-identical
+# to the same project re-authored through `addScenario()` (#1158).
+test_that(".parseExcelScenarios defaults a blank steady-state time and unit", {
+  scenarioDf <- data.frame(
+    Scenario_name = "s1",
+    IndividualId = NA_character_,
+    PopulationId = NA_character_,
+    ReadPopulationFromCSV = NA,
+    ModelParameterSheets = NA_character_,
+    ApplicationProtocol = NA_character_,
+    SimulationTime = NA_character_,
+    SimulationTimeUnit = NA_character_,
+    SteadyState = FALSE,
+    SteadyStateTime = NA_real_,
+    SteadyStateTimeUnit = NA_character_,
+    OverwriteFormulasInSS = NA,
+    ModelFile = "m.pkml",
+    OutputPathsIds = "op1",
+    stringsAsFactors = FALSE
+  )
+  scenarios <- .parseExcelScenarios(scenarioDf)
+  expect_identical(scenarios[[1]]$steadyStateTime, 1000)
+  expect_identical(scenarios[[1]]$steadyStateTimeUnit, "min")
 })
 
 # A multi-value cell may protect a comma with either backslash escaping (this
