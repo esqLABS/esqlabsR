@@ -617,14 +617,11 @@ test_that("the Excel import carries the known fixture ids and values", {
   ))
 })
 
-# Loading the imported project emits the expected cross-reference warnings,
-# they are asserted rather than suppressed. The TestProjectExcel fixture has a
-# known legacy gap: the per-sheet Excel project encodes application protocols as
-# parameter-set sheets, so the Excel->JSON bridge does not populate an
-# `applications` section, leaving each scenario's `applicationProtocol`
-# reference dangling. This is the documented Excel round-trip lossiness, not a
-# regression, so the dangling-applicationProtocol warning is the expected signal.
-test_that("loading the Excel import warns about the dangling applicationProtocol refs", {
+# The TestProjectExcel fixture uses the 5.x one-sheet-per-protocol layout (no
+# `ApplicationProtocols` sheet). The importer builds one `Application` per
+# protocol sheet, each wrapping the same-named parameter set, so a scenario that
+# names a protocol by id resolves on load rather than dangling (#1158).
+test_that("the per-protocol-sheet import populates applications and resolves the scenario refs", {
   out <- withr::local_tempdir()
   jsonPath <- suppressWarnings(importProjectFromExcel(
     testProjectExcelPath(),
@@ -632,12 +629,31 @@ test_that("loading the Excel import warns about the dangling applicationProtocol
     silent = TRUE
   ))
 
-  # No `applications` section is produced by the per-sheet Excel project, so the
-  # scenarios' applicationProtocol references cannot resolve on load.
-  expect_warning(
-    loadProject(jsonPath),
-    "undefined application"
+  project <- suppressWarnings(loadProject(jsonPath))
+  expect_setequal(
+    names(project$definitions$applications),
+    c("aciclovir_iv_250mg", "protocol_250mg", "protocol_500mg")
   )
+  # Each application wraps the same-named parameter set.
+  expect_identical(
+    .unwrapDefinitionList(project$definitions$applications)[[
+      "aciclovir_iv_250mg"
+    ]]$parameterSets,
+    "aciclovir_iv_250mg"
+  )
+
+  # The scenarios' `application` references now resolve: loading emits no
+  # "undefined application" warning (other cross-reference warnings may remain
+  # until the rest of the legacy layout is migrated).
+  w <- character()
+  withCallingHandlers(
+    loadProject(jsonPath),
+    warning = function(cnd) {
+      w <<- c(w, conditionMessage(cnd))
+      invokeRestart("muffleWarning")
+    }
+  )
+  expect_false(any(grepl("undefined application", w)))
 })
 
 # The migration canonicalizes every id to a safe, lowercase form. When two
@@ -855,17 +871,17 @@ test_that("projectStatus() reports the Excel axis as NA (and warns) when the sid
   )
 })
 
-# Regression (#1125): a project with dangling references (the TestProjectExcel
-# fixture encodes application protocols as parameter-set sheets, so the imported
-# scenarios carry dangling `application` refs) exported back to Excel must not
-# hard-abort the status check. The dangling refs survive in mixed case and, on
-# the comparison's Excel re-import, collide under id canonicalization. The abort
-# is now caught and reported as the "cannot compare" NA state with a warning,
-# rather than propagating as a hard error out of `projectStatus()`.
-test_that("projectStatus() does not abort on a dangling-ref canonicalization collision", {
-  # Copy the dangling-ref fixture with the entry workbook named Project.xlsx, so
-  # the imported container is Project.json and the exported side-car stem matches
-  # what the status check derives.
+# Regression (#1125): when the Excel side-car cannot be re-imported for the
+# comparison (here because two output-path ids in it collapse to one canonical
+# id), the status check must catch that abort and report the Excel axis as the
+# NA "cannot compare" state with a warning, rather than propagating a hard error
+# out of `projectStatus()`. The collision is injected into the exported side-car
+# (not the source), so the project itself loads cleanly and only the comparison
+# re-import hits the collision.
+test_that("projectStatus() does not abort on a side-car canonicalization collision", {
+  # Copy the fixture with the entry workbook named Project.xlsx, so the imported
+  # container is Project.json and the exported side-car stem matches what the
+  # status check derives.
   work <- withr::local_tempdir()
   file.copy(
     list.files(
@@ -894,6 +910,26 @@ test_that("projectStatus() does not abort on a dangling-ref canonicalization col
     overwrite = TRUE,
     silent = TRUE
   ))
+
+  # Rewrite the exported Scenarios workbook's OutputPaths sheet so two ids differ
+  # only by case and collapse to one canonical id. The comparison's re-import of
+  # this side-car then aborts, which the status check must catch.
+  scenariosFile <- file.path(work, "Configurations", "Scenarios.xlsx")
+  scenariosSheet <- readExcel(scenariosFile, sheet = "Scenarios")
+  .writeExcel(
+    list(
+      OutputPaths = data.frame(
+        OutputPathId = c("Aciclovir_PVB", "aciclovir_pvb"),
+        OutputPath = c(
+          "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)",
+          "Organism|Fat|Intracellular|Aciclovir|Concentration in container"
+        ),
+        stringsAsFactors = FALSE
+      ),
+      Scenarios = scenariosSheet
+    ),
+    scenariosFile
+  )
 
   # Silent: no hard error; the collision surfaces as the NA "cannot compare"
   # state, not an abort.
@@ -989,4 +1025,23 @@ test_that(".parseExcelScenarios aborts on a renamed required column", {
     stringsAsFactors = FALSE
   )
   expect_snapshot(error = TRUE, .parseExcelScenarios(scenarioDf))
+})
+
+# A multi-value cell may protect a comma with either backslash escaping (this
+# package's own writer) or double-quote wrapping (the legacy 5.x convention).
+# Both must parse, and the quoted form must strip the quotes and keep a quoted
+# comma inside a single token rather than splitting on it (#1158).
+test_that(".parseCommaListToArray parses the quoted-CSV and backslash conventions", {
+  # Quoted-CSV: quotes stripped, the comma inside the quoted run kept.
+  expect_identical(
+    .parseCommaListToArray('"Global", "Aciclovir", "Sheet, with comma"'),
+    c("Global", "Aciclovir", "Sheet, with comma")
+  )
+  # Backslash convention (the writer's output): `\,` is a literal comma.
+  expect_identical(
+    .parseCommaListToArray("global, aciclovir, sheet\\, with comma"),
+    c("global", "aciclovir", "sheet, with comma")
+  )
+  # A plain unquoted list is unaffected.
+  expect_identical(.parseCommaListToArray("a, b, c"), c("a", "b", "c"))
 })

@@ -263,8 +263,13 @@ importProjectFromExcel <- function(
         jsonData
       }
     ),
-    # Applications: the protocols sheet is the applications section; every other
-    # sheet is a parameter set keyed by sheet name.
+    # Applications. Two workbook layouts are supported. The newer layout carries
+    # a single `ApplicationProtocols` sheet listing the applications, with every
+    # other sheet a parameter set it references. The 5.x layout has no
+    # `ApplicationProtocols` sheet: it stores one sheet per protocol, each a
+    # parameter-set-shaped sheet, so each such sheet becomes both a parameter set
+    # (keyed by sheet name) and an `Application` wrapping it, so a scenario that
+    # names the protocol by id resolves.
     list(
       property = "applicationsFile",
       parse = function(file, jsonData) {
@@ -275,12 +280,28 @@ importProjectFromExcel <- function(
           if (length(appsObj) > 0) {
             jsonData$applications <- appsObj
           }
-        }
-        paramSheetNames <- setdiff(sheets, "ApplicationProtocols")
-        if (length(paramSheetNames) > 0) {
+          paramSheetNames <- setdiff(sheets, "ApplicationProtocols")
+          if (length(paramSheetNames) > 0) {
+            jsonData$parameterSets <- c(
+              jsonData$parameterSets,
+              .parseExcelParameterSheets(file, sheetNames = paramSheetNames)
+            )
+          }
+        } else if (length(sheets) > 0) {
           jsonData$parameterSets <- c(
             jsonData$parameterSets,
-            .parseExcelParameterSheets(file, sheetNames = paramSheetNames)
+            .parseExcelParameterSheets(file, sheetNames = sheets)
+          )
+          # One application per protocol sheet, keyed by sheet name and wrapping
+          # the same-named parameter set (both ids canonicalize identically, so
+          # the reference resolves). The record carries no inner `id`; the key is
+          # the id, matching `.parseExcelApplications()`.
+          jsonData$applications <- c(
+            jsonData$applications,
+            stats::setNames(
+              lapply(sheets, function(sheet) list(parameterSets = list(sheet))),
+              sheets
+            )
           )
         }
         jsonData
@@ -2219,9 +2240,13 @@ projectStatus <- function(project, silent = FALSE) {
 
 #' Parse a comma-separated string into a character vector, or NULL
 #'
-#' Honors `\\` as a literal backslash and `\,` as a literal comma so
-#' that ids written via `.formatArrayToCommaList()` round-trip even
-#' when they contain commas.
+#' Two conventions for protecting a comma inside a value are honored, so both
+#' the values this package writes and legacy 5.x cells parse:
+#'   - backslash escaping (`.formatArrayToCommaList()`'s output): `\\` is a
+#'     literal backslash and `\,` a literal comma.
+#'   - double-quote wrapping (the 5.x `"A", "B", "C, with comma"` cell): a
+#'     comma inside a quoted run is literal, and the wrapping quotes are
+#'     stripped from the token.
 #'
 #' @keywords internal
 #' @noRd
@@ -2230,20 +2255,24 @@ projectStatus <- function(project, silent = FALSE) {
     return(NULL)
   }
   raw <- as.character(x)
-  # Walk the string character by character: track whether the previous
-  # character was an unescaped backslash (escape state). Split on
-  # unescaped commas; collapse `\\` to `\` and `\,` to `,`.
+  # Walk the string character by character, tracking escape state (previous
+  # character was an unescaped backslash) and quote state (inside a `"..."`
+  # run). Split on a comma only when it is neither escaped nor quoted; collapse
+  # `\\` to `\` and `\,` to `,`; drop the wrapping quotes.
   chars <- strsplit(raw, "", fixed = TRUE)[[1]]
   parts <- character()
   current <- ""
   escape <- FALSE
+  inQuote <- FALSE
   for (ch in chars) {
     if (escape) {
       current <- paste0(current, ch)
       escape <- FALSE
     } else if (ch == "\\") {
       escape <- TRUE
-    } else if (ch == ",") {
+    } else if (ch == "\"") {
+      inQuote <- !inQuote
+    } else if (ch == "," && !inQuote) {
       parts <- c(parts, current)
       current <- ""
     } else {

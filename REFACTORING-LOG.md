@@ -41,3 +41,5 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-07-23 14:45: Made the esqlabsRSettingNames test order-insensitive (set-equality on the names plus an enum-shape check) instead of asserting a fixed list order, since the names derive from an environment whose order is not guaranteed. (#1059)
 - 2026-07-23 15:06: PR review: narrow injected-population dispatch to a real `Population` object; clean up inline abort strings (#1024).
 - 2026-07-23 16:19: Canonicalize commas and interior spaces out of definition ids (filename-safe), fixing literal-comma parameter-set filenames on Excel import. (#1158)
+- 2026-07-23 16:39: Excel import builds one application per protocol sheet for the 5.x one-sheet-per-protocol layout, so scenario application refs resolve. (#1158)
+- 2026-07-23 16:39: Excel multi-value cells parse the legacy quoted-CSV convention (strip quotes, keep a quoted comma in one token) alongside backslash escaping. (#1158)
