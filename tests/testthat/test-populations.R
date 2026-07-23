@@ -228,7 +228,10 @@ test_that("extendPopulationFromXLS throws an error if specified sheet is empty o
 test_that("setPopulation changes a field in memory and persists on save", {
   project <- testProject()
   setPopulation(project, "testpopulation", numberOfIndividuals = 50)
-  expect_equal(project$definitions$populations[["testpopulation"]]$numberOfIndividuals, 50)
+  expect_equal(
+    project$definitions$populations[["testpopulation"]]$numberOfIndividuals,
+    50
+  )
 
   # The edit reaches disk on save: a throwaway reload sees the new value.
   saveProject(project)
@@ -346,7 +349,10 @@ test_that("setPopulation stays in memory until saveProject()", {
   before <- source$definitions$populations[["testpopulation"]]
   setPopulation(source, "testpopulation", numberOfIndividuals = 7)
 
-  expect_equal(source$definitions$populations[["testpopulation"]]$numberOfIndividuals, 7)
+  expect_equal(
+    source$definitions$populations[["testpopulation"]]$numberOfIndividuals,
+    7
+  )
   # The edit must not reach the on-disk tree before a save.
   reloaded <- loadProject(source$info$projectFilePath)
   expect_equal(reloaded$definitions$populations[["testpopulation"]], before)
@@ -456,6 +462,25 @@ test_that("addPopulation aborts on a duplicate id in the batch", {
       numberOfIndividuals = 5
     )
   )
+})
+
+test_that("addPopulation aborts on an existing id, replaces it with overwrite", {
+  project <- testProject()
+  addPopulation(project, "pop", species = "Human", numberOfIndividuals = 5)
+  expect_snapshot(
+    error = TRUE,
+    addPopulation(project, "pop", species = "Human", numberOfIndividuals = 9)
+  )
+  before <- length(project$definitions$populations)
+  addPopulation(
+    project,
+    "pop",
+    species = "Human",
+    numberOfIndividuals = 9,
+    overwrite = TRUE
+  )
+  expect_length(project$definitions$populations, before)
+  expect_identical(project$definitions$populations$pop$numberOfIndividuals, 9)
 })
 
 test_that("setPopulation vectorizes a partial update across N ids", {

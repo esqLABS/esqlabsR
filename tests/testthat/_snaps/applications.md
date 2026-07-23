@@ -44,6 +44,15 @@
       Error in `addApplication()`:
       ! duplicate application id in the batch: "p1"
 
+# addApplication aborts on an existing id, replaces it with overwrite
+
+    Code
+      addApplication(project, "aciclovir_iv_250mg")
+    Condition
+      Error in `addApplication()`:
+      ! application "aciclovir_iv_250mg" already exists.
+      i Pass `overwrite = TRUE` to replace it.
+
 # print.Application renders its parameter-set references
 
     Code

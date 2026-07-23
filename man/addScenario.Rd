@@ -20,7 +20,8 @@ addScenario(
   steadyStateTime = 1000,
   steadyStateTimeUnit = "min",
   overwriteFormulasInSS = FALSE,
-  readPopulationFromCSV = FALSE
+  readPopulationFromCSV = FALSE,
+  overwrite = FALSE
 )
 }
 \arguments{
@@ -74,6 +75,11 @@ steady state. Default \code{FALSE}.}
 
 \item{readPopulationFromCSV}{Logical. Load population from CSV.
 Default \code{FALSE}.}
+
+\item{overwrite}{Logical. When \code{FALSE} (default), an id that already exists
+aborts. When \code{TRUE}, the existing scenario is replaced (last-write-wins).
+Distinct from \code{overwriteFormulasInSS}, which is a steady-state model
+option unrelated to duplicate handling.}
 }
 \value{
 The \code{project} object, invisibly.

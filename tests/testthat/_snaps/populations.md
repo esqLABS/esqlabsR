@@ -317,6 +317,15 @@
       Error in `addPopulation()`:
       ! duplicate population id in the batch: "a"
 
+# addPopulation aborts on an existing id, replaces it with overwrite
+
+    Code
+      addPopulation(project, "pop", species = "Human", numberOfIndividuals = 9)
+    Condition
+      Error in `addPopulation()`:
+      ! population "pop" already exists.
+      i Pass `overwrite = TRUE` to replace it.
+
 # removePopulation warns when still referenced by a scenario, removes anyway
 
     Code

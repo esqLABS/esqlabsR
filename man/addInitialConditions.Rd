@@ -4,7 +4,7 @@
 \alias{addInitialConditions}
 \title{Create one or more initial-condition sets}
 \usage{
-addInitialConditions(project, id)
+addInitialConditions(project, id, overwrite = FALSE)
 }
 \arguments{
 \item{project}{A \code{Project} object.}
@@ -12,6 +12,10 @@ addInitialConditions(project, id)
 \item{id}{Character vector of set ids. Each is canonicalized to a safe,
 lowercase id (a warning names the result if it changed); each canonical
 id must not already exist.}
+
+\item{overwrite}{Logical scalar. When \code{FALSE} (default), an id that already
+exists aborts. When \code{TRUE}, the existing set is replaced with a new empty
+set (last-write-wins).}
 }
 \value{
 The \code{project} object, invisibly.

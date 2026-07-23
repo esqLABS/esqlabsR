@@ -4,7 +4,15 @@
 \alias{addParameterEntry}
 \title{Add one or many parameter entries to a named parameter set}
 \usage{
-addParameterEntry(project, id, containerPath, parameterName, value, units)
+addParameterEntry(
+  project,
+  id,
+  containerPath,
+  parameterName,
+  value,
+  units,
+  overwrite = FALSE
+)
 }
 \arguments{
 \item{project}{A \code{Project} object.}
@@ -18,6 +26,10 @@ addParameterEntry(project, id, containerPath, parameterName, value, units)
 \item{value}{Numeric vector of values (length N).}
 
 \item{units}{Character vector of units (length N; use \code{""} for none).}
+
+\item{overwrite}{Logical scalar. When \code{FALSE} (default), a duplicate
+\verb{(containerPath, parameterName)} pair aborts. When \code{TRUE}, it overwrites
+the existing entry (last-write-wins).}
 }
 \value{
 The \code{project} object, invisibly.
@@ -33,8 +45,9 @@ scalar calls, since each call rewrites the whole set file.
 \details{
 Unlike the other \verb{add*} functions, which abort on a missing parent, this
 creates the parent set on demand if it does not yet exist (informing you
-when it does). Last-write-wins on duplicate \verb{(containerPath, parameterName)}
-pairs, including duplicates within a single vectorized call.
+when it does). A duplicate \verb{(containerPath, parameterName)} pair (already in
+the set, or repeated within a single vectorized call) aborts unless
+\code{overwrite = TRUE}, in which case the last value wins.
 }
 \seealso{
 Other parameters:

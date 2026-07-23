@@ -4,7 +4,16 @@
       addIndividual(project, "indiv1", species = "Human", gender = "MALE")
     Condition
       Error in `addIndividual()`:
-      ! individual "indiv1" already exists
+      ! individual "indiv1" already exists.
+      i Pass `overwrite = TRUE` to replace it.
+
+# addIndividual rejects a non-logical overwrite passed through ...
+
+    Code
+      addIndividual(project, "newi", species = "Human", overwrite = "TRUE")
+    Condition
+      Error in `addIndividual()`:
+      ! `overwrite` must be a single `TRUE` or `FALSE`.
 
 # addIndividual aborts when gender is missing
 

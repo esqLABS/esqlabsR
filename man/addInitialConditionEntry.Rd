@@ -4,7 +4,7 @@
 \alias{addInitialConditionEntry}
 \title{Add one or many entries to a named initial-condition set}
 \usage{
-addInitialConditionEntry(project, id, path, value, unit)
+addInitialConditionEntry(project, id, path, value, unit, overwrite = FALSE)
 }
 \arguments{
 \item{project}{A \code{Project} object.}
@@ -17,6 +17,9 @@ addInitialConditionEntry(project, id, path, value, unit)
 
 \item{unit}{Character vector of units (length N). A unit is mandatory for a
 molecule start value; a blank unit is rejected.}
+
+\item{overwrite}{Logical scalar. When \code{FALSE} (default), a duplicate \code{path}
+aborts. When \code{TRUE}, it overwrites the existing entry (last-write-wins).}
 }
 \value{
 The \code{project} object, invisibly.
@@ -32,8 +35,9 @@ scalar calls, since each call rewrites the whole set file.
 \details{
 Unlike the other \verb{add*} functions, which abort on a missing parent, this
 creates the parent set on demand if it does not yet exist (informing you
-when it does). Last-write-wins on a duplicate \code{path}, including duplicates
-within a single vectorized call.
+when it does). A duplicate \code{path} (already in the set, or repeated within a
+single vectorized call) aborts unless \code{overwrite = TRUE}, in which case the
+last value wins.
 }
 \seealso{
 Other parameters:

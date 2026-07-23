@@ -41,6 +41,30 @@ test_that("addOutputPath aborts on a duplicate id in the batch", {
   )
 })
 
+test_that("addOutputPath overwrite = TRUE replaces an existing id", {
+  project <- testProject()
+  existing <- names(project$definitions$outputPaths)[[1]]
+  before <- length(project$definitions$outputPaths)
+  newPath <- "Organism|other|Concentration in container"
+  addOutputPath(project, existing, newPath, overwrite = TRUE)
+  expect_length(project$definitions$outputPaths, before)
+  expect_identical(project$definitions$outputPaths[[existing]], newPath)
+})
+
+test_that("addOutputPath overwrite = TRUE keeps the last value on an in-batch duplicate", {
+  project <- testProject()
+  addOutputPath(
+    project,
+    c("dup", "dup"),
+    c("Organism|A|Concentration", "Organism|B|Concentration"),
+    overwrite = TRUE
+  )
+  expect_identical(
+    project$definitions$outputPaths[["dup"]],
+    "Organism|B|Concentration"
+  )
+})
+
 test_that("removeOutputPath warns when the id is referenced by a scenario, removes anyway", {
   project <- testProject()
   referenced <- intersect(
@@ -60,7 +84,11 @@ test_that("removeOutputPath does not over-report when an unreferenced id shares 
     names(project$definitions$outputPaths),
     unlist(lapply(project$definitions$scenarios, \(sc) names(sc$outputPaths)))
   )[[1]]
-  addOutputPath(project, "shared_copy", project$definitions$outputPaths[[referenced]])
+  addOutputPath(
+    project,
+    "shared_copy",
+    project$definitions$outputPaths[[referenced]]
+  )
 
   # The reference check keys on the output-path id, not the resolved path, so
   # removing `shared_copy` (which no scenario references by id) must not warn,

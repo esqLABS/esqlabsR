@@ -1122,3 +1122,15 @@ messages$observedDataPathEscapes <- function(entryLabel, path) {
     "{entryLabel} references a file outside the project folder: {path}"
   )
 }
+
+# Duplicate-collision abort shared by every `add*` authoring function: adding a
+# definition whose id already exists aborts with this two-line message unless
+# the caller passes `overwrite = TRUE`. `label` is the already-quoted subject
+# (e.g. `"scenario {.val {clash}}"`), so callers keep their own wording for what
+# collided while the overwrite hint stays identical everywhere.
+messages$definitionAlreadyExists <- function(label) {
+  c(
+    paste0(label, " already exists."),
+    "i" = "Pass {.code overwrite = TRUE} to replace it."
+  )
+}

@@ -4,12 +4,16 @@
 \alias{addObservedData}
 \title{Add observed data to a Project}
 \usage{
-addObservedData(project, entry)
+addObservedData(project, entry, overwrite = FALSE)
 }
 \arguments{
 \item{project}{A \code{Project} object.}
 
 \item{entry}{Either a \code{DataSet} object or a configuration list.}
+
+\item{overwrite}{Logical scalar. When \code{FALSE} (default), a source whose id
+already exists (a \code{DataSet} name, or a config \code{file} basename) aborts.
+When \code{TRUE}, the existing source with that id is replaced (last-write-wins).}
 }
 \value{
 The \code{project} object, invisibly.

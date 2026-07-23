@@ -234,7 +234,7 @@
       * "Dup" -> "dup"
       Error:
       ! Cannot add PI task "dup":
-      x PI task 'dup' already exists
+      x PI task 'dup' already exists; pass overwrite = TRUE to replace it
 
 # removePITask() warns and no-ops on missing id
 
@@ -298,7 +298,8 @@
         minValue = 0, maxValue = 1, startValue = 0.5)
     Condition
       Error in `addPIParameter()`:
-      ! Parameter "dup" already exists in task "t"
+      ! Parameter "dup" already exists in task "t".
+      i Pass `overwrite = TRUE` to replace it.
 
 # PIOutputMapping() validates scaling and the offset / factor / weight fields
 
