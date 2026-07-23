@@ -5,7 +5,7 @@
     Condition
       Warning:
       Canonicalized 1 id to a safe form:
-      * "My ID*" -> "my id_"
+      * "My ID*" -> "my_id_"
 
 # .canonicalizeId canonicalizes and warns on an id containing braces instead of aborting
 

@@ -117,7 +117,7 @@
     Condition
       Warning:
       Canonicalized 1 id to a safe form:
-      * "New Name" -> "new name"
+      * "New Name" -> "new_name"
 
 # renameScenario warns when a dataCombined still references it
 

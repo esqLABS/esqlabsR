@@ -266,21 +266,26 @@ test_that("Excel round-trip preserves individuals, populations, and applications
   )
 })
 
-test_that("Excel round-trip preserves a comma-bearing plot id inside a grid", {
+test_that("Excel round-trip preserves a grid whose plot id had a comma canonicalized out", {
   work_dir <- withr::local_tempdir()
   file.copy(dirname(exampleProjectPath()), work_dir, recursive = TRUE)
   project <- loadProject(file.path(work_dir, "Example", "Project.json"))
 
-  # A comma is a legal plot-id character; a grid stores its membership as one
-  # comma-separated string, so a comma-bearing id must be escaped or it is
-  # shredded into several at the Excel boundary.
-  addPlot(
+  # A comma is canonicalized to `_` in every id (#1158), so no plot id ever
+  # reaches the Excel boundary with a comma to be shredded. The grid membership
+  # still round-trips because the canonical `cmax__ss` survives the comma-
+  # escaping join/split the grid uses to store its members.
+  suppressWarnings(addPlot(
     project,
     id = "cmax, ss",
     dataCombined = "aciclovir_individual",
     plotType = "individual"
-  )
-  addPlotGrid(project, id = "grid_comma", plots = c("p1", "cmax, ss"))
+  ))
+  suppressWarnings(addPlotGrid(
+    project,
+    id = "grid_comma",
+    plots = c("p1", "cmax, ss")
+  ))
 
   excel_out <- withr::local_tempdir()
   exportProjectToExcel(project, outputDir = excel_out, silent = TRUE)
@@ -294,7 +299,7 @@ test_that("Excel round-trip preserves a comma-bearing plot id inside a grid", {
     "grid_comma"
   ]]
 
-  expect_identical(.splitPlotIDs(grid$plotIds), c("p1", "cmax, ss"))
+  expect_identical(.splitPlotIDs(grid$plotIds), c("p1", "cmax__ss"))
 })
 
 test_that("Excel round-trip preserves project name and description", {

@@ -265,7 +265,7 @@ test_that("addParameterSet creates a set; removeParameterSet drops it", {
 test_that("addParameterSet canonicalizes its id", {
   project <- testProject()
   expect_snapshot(addParameterSet(project, "New Set"))
-  expect_true("new set" %in% names(project$definitions$parameterSets))
+  expect_true("new_set" %in% names(project$definitions$parameterSets))
 })
 
 test_that("addParameterSet aborts on a duplicate id", {
@@ -717,7 +717,7 @@ test_that("addInitialConditions creates a set; removeInitialConditions drops it"
 test_that("addInitialConditions canonicalizes its id", {
   project <- testProject()
   expect_snapshot(addInitialConditions(project, "New Set"))
-  expect_true("new set" %in% names(project$definitions$initialConditions))
+  expect_true("new_set" %in% names(project$definitions$initialConditions))
 })
 
 test_that("addInitialConditions aborts on a duplicate id", {

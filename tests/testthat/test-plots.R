@@ -329,7 +329,7 @@ test_that("addPlotGrid accepts a plain list of plot ids for a single grid", {
   )
 })
 
-test_that("addPlotGrid round-trips a plot id containing a comma", {
+test_that("addPlotGrid canonicalizes a comma out of a plot id and still resolves it", {
   project <- exampleProject()
   addDataCombined(
     project,
@@ -340,15 +340,18 @@ test_that("addPlotGrid round-trips a plot id containing a comma", {
       path = project$definitions$outputPaths$aciclovir_pvb
     ))
   )
-  # A comma is a legal id character (canonicalization keeps it).
-  addPlot(project, "p,evil", "dc_c", "individual")
-  addPlotGrid(project, "comma_grid", plots = c("p,evil"))
+  # A comma is canonicalized to `_` (#1158): the plot's id and the grid's
+  # membership reference are canonicalized identically, so the grid still
+  # resolves to the plot after both drop the comma.
+  suppressWarnings(addPlot(project, "p,evil", "dc_c", "individual"))
+  suppressWarnings(addPlotGrid(project, "comma_grid", plots = c("p,evil")))
+  expect_true("p_evil" %in% names(project$definitions$plots))
 
   saveProject(project)
   reloaded <- loadProject(project$info$projectFilePath)
   expect_identical(
     esqlabsR:::.splitPlotIDs(reloaded$definitions$plotGrids$comma_grid$plotIds),
-    "p,evil"
+    "p_evil"
   )
 })
 
