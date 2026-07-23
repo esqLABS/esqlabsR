@@ -14,3 +14,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-07-22 15:30: Dropped the severity/kind prefixes from messages catalog entry names (error/stop/warning/validation/message), naming each by what it describes; kept a short context qualifier where two entries would otherwise collide.
 - 2026-07-22 16:00: Normalized @family roxygen values to camelCase (spaced and kebab-case ones), leaving singular/plural as-is; updated the matching has_concept() entry in _pkgdown.yml.
 - 2026-07-23 11:34: Removed three unused test helpers (testProjectExcelConfigurationsPath, executeWithTestFile, createValidPISheets) from tests/testthat/helpers.R.
+- 2026-07-23 11:35: Removed orphan test fixtures unreferenced by any test (ObsDataAciclovir_1/2/3.pkml, ProjectConfiguration-V5.xlsx).
