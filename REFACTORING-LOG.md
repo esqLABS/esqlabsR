@@ -23,3 +23,10 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-07-22 15:00: Unified R6 method and helper casing to camelCase: validationResult methods, Project's parsing-era private methods, and the shared validation check helpers.
 - 2026-07-22 15:30: Dropped the severity/kind prefixes from messages catalog entry names (error/stop/warning/validation/message), naming each by what it describes; kept a short context qualifier where two entries would otherwise collide.
 - 2026-07-22 16:00: Normalized @family roxygen values to camelCase (spaced and kebab-case ones), leaving singular/plural as-is; updated the matching has_concept() entry in _pkgdown.yml.
+- 2026-07-23 11:34: Removed three unused test helpers (testProjectExcelConfigurationsPath, executeWithTestFile, createValidPISheets) from tests/testthat/helpers.R. (#1059)
+- 2026-07-23 11:35: Removed orphan test fixtures unreferenced by any test (ObsDataAciclovir_1/2/3.pkml, ProjectConfiguration-V5.xlsx). (#1059)
+- 2026-07-23 11:40: Merged the duplicated settings test file into test-esqlabs-env.R, keeping the exact esqlabsRSettingNames list check and the snapshot error test; removed test-esqlabsr-settings.R. (#1059)
+- 2026-07-23 11:45: Switched the two sensitivity xlsx-write tests to withr::local_tempfile() so nothing is written into the package test directory and an early failure cannot orphan the file. (#1059)
+- 2026-07-23 11:50: Converted all bare set.seed() calls in the sensitivity and plot/population test files to withr::local_seed(), so a test no longer leaks the session RNG state past its own block. (#1059)
+- 2026-07-23 14:20: Dropped three no-op local_seed() calls before summarizer() in the PK-parameter tidy-dataframe test; summarizer() is pure dplyr and consumes no RNG. (#1059)
+- 2026-07-23 14:45: Made the esqlabsRSettingNames test order-insensitive (set-equality on the names plus an enum-shape check) instead of asserting a fixed list order, since the names derive from an environment whose order is not guaranteed. (#1059)

@@ -12,9 +12,7 @@
 #
 #   - TestProjectExcel/   legacy Excel-shape project kept for round-trip
 #                         tests of the Excel import / export bridge.
-#                         Reached via testProjectExcelPath() (the entry
-#                         .xlsx) and testProjectExcelConfigurationsPath()
-#                         (its Configurations/ folder).
+#                         Reached via testProjectExcelPath() (the entry .xlsx).
 #
 # For a writable, throwaway project use with_temp_project(), which calls
 # initProject(type = "example", createExcel = TRUE) in a temp dir.
@@ -93,27 +91,6 @@ testProjectExcelPath <- function() {
     "TestProjectExcel",
     "ProjectConfiguration.xlsx"
   )
-}
-
-#' Path to an Excel side-car in the legacy Excel fixture's
-#' `Configurations/` folder.
-testProjectExcelConfigurationsPath <- function(...) {
-  normalizePath(
-    testthat::test_path(
-      "data",
-      "TestProjectExcel",
-      "Configurations",
-      ...
-    ),
-    mustWork = TRUE
-  )
-}
-
-executeWithTestFile <- function(actionWithFile) {
-  # Tie the temp file's lifetime to the calling test's frame so it is removed
-  # even if `actionWithFile()` errors.
-  newFile <- withr::local_tempfile(.local_envir = parent.frame())
-  actionWithFile(newFile)
 }
 
 #' Redact the throwaway-project absolute prefix from a quoted path in an error
@@ -265,63 +242,6 @@ with_temp_project <- function(projectName = NULL, overwrite = TRUE) {
   list(
     path = temp_dir,
     project = project
-  )
-}
-
-# Creates a minimal valid set of PI Excel sheets (all 5 sheets) for a single
-# task, suitable as a base for tests that manipulate specific fields.
-createValidPISheets <- function() {
-  list(
-    PIOutputMappings = data.frame(
-      PITaskName = "Task1",
-      Scenarios = "PITestScenario",
-      OutputPath = "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)",
-      ObservedDataSheet = "Laskin 1982.Group A",
-      DataSet = "Laskin 1982.Group A_Aciclovir_1_Human_MALE_PeripheralVenousBlood_Plasma_2.5 mg/kg_iv_",
-      Scaling = "log",
-      xOffset = NA,
-      yOffset = NA,
-      xFactor = NA,
-      yFactor = NA,
-      Weight = NA
-    ),
-    PIParameters = data.frame(
-      PITaskName = "Task1",
-      Scenarios = "PITestScenario",
-      `Container Path` = "Aciclovir",
-      `Parameter Name` = "Lipophilicity",
-      Units = "Log Units",
-      MinValue = -2,
-      MaxValue = 2,
-      StartValue = -0.1,
-      Group = NA,
-      check.names = FALSE
-    ),
-    PIConfiguration = data.frame(
-      PITaskName = "Task1",
-      Algorithm = "BOBYQA",
-      CIMethod = "hessian",
-      PrintEvaluationFeedback = TRUE,
-      AutoEstimateCI = FALSE,
-      numberOfCores = NA_real_,
-      checkForNegativeValues = NA,
-      ObjectiveFunctionType = NA,
-      ResidualWeightingMethod = NA,
-      RobustMethod = NA,
-      ScaleVar = NA,
-      LinScaleCV = NA,
-      LogScaleSD = NA
-    ),
-    AlgorithmOptions = data.frame(
-      PITaskName = character(0),
-      OptionName = character(0),
-      OptionValue = character(0)
-    ),
-    CIOptions = data.frame(
-      PITaskName = character(0),
-      OptionName = character(0),
-      OptionValue = character(0)
-    )
   )
 }
 

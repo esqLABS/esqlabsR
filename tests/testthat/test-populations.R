@@ -38,7 +38,7 @@ test_that("`sampleRandomValue()` LogNormal draws are positive and match target m
 })
 
 test_that("extendPopulationByUserDefinedParams works", {
-  set.seed(42)
+  withr::local_seed(42)
 
   population <- ospsuite::loadPopulation(system.file(
     "extdata",
@@ -86,7 +86,7 @@ test_that("extendPopulationFromXLS works", {
         )
       )
 
-      set.seed(42)
+      withr::local_seed(42)
       extendPopulationFromXLS(
         population,
         PopulationParameters,
