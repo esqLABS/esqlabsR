@@ -13,9 +13,14 @@ PITask(id, scenarios, parameters, outputMappings, configuration = list())
 Every scenario referenced by a parameter or output mapping must be in
 this set.}
 
-\item{parameters}{Non-empty list of \code{\link[=PIParameter]{PIParameter()}} records.}
+\item{parameters}{List of \code{\link[=PIParameter]{PIParameter()}} records. May be empty to create
+a task that is seeded later with \code{\link[=addPIParameter]{addPIParameter()}}; a task must have at
+least one parameter to run, which \code{\link[=validateProject]{validateProject()}} enforces.}
 
-\item{outputMappings}{Non-empty list of \code{\link[=PIOutputMapping]{PIOutputMapping()}} records.}
+\item{outputMappings}{List of \code{\link[=PIOutputMapping]{PIOutputMapping()}} records. May be empty to
+create a task that is seeded later with \code{\link[=addPIOutputMapping]{addPIOutputMapping()}}; a task
+must have at least one output mapping to run, which \code{\link[=validateProject]{validateProject()}}
+enforces.}
 
 \item{configuration}{Named list of solver settings (e.g. \code{algorithm},
 \code{ciMethod}, \code{objectiveFunction}, \code{simulationRunOptions}). Defaults to

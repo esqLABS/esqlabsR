@@ -51,24 +51,21 @@
       Error in `PIOutputMapping()`:
       ! Required field "outputPath" is missing or empty on PIOutputMapping "x".
 
-# PITask() errors when parameters is empty
+# PITask() errors when parameters or outputMappings is not a list
 
     Code
-      PITask(id = "x", scenarios = "S1", parameters = list(), outputMappings = list(
-        PIOutputMapping(id = "m", scenarios = "S1", outputPath = "PVB", observedData = "Laskin")))
+      PITask(id = "x", scenarios = "S1", parameters = "nope", outputMappings = list())
     Condition
       Error in `PITask()`:
-      ! Field "parameters" on PITask "x" must contain at least one entry.
+      ! Field "parameters" on PITask "x" must be a list.
 
-# PITask() errors when outputMappings is empty
+---
 
     Code
-      PITask(id = "x", scenarios = "S1", parameters = list(PIParameter(id = "k",
-        scenarios = "S1", path = "x|y", minValue = 0, maxValue = 1, startValue = 0.5)),
-      outputMappings = list())
+      PITask(id = "x", scenarios = "S1", parameters = list(), outputMappings = "nope")
     Condition
       Error in `PITask()`:
-      ! Field "outputMappings" on PITask "x" must contain at least one entry.
+      ! Field "outputMappings" on PITask "x" must be a list.
 
 # PITask() errors on empty scenarios
 
@@ -217,12 +214,9 @@
       Warning:
       Canonicalized 1 id to a safe form:
       * "Bad" -> "bad"
-      Warning:
-      Canonicalized 1 referenced id to a safe form:
-      * "DoesNotExist" -> "doesnotexist"
       Error in `addPITask()`:
       ! Cannot add PI task "bad":
-      x outputPath 'doesnotexist' not found in project$definitions$outputPaths
+      x outputPath 'DoesNotExist' is neither a defined output-path id nor the model path of one. Pass an output-path id (a key in project$definitions$outputPaths) or the literal model path of a defined output path; define new ones with addOutputPath().
 
 # addPITask() errors on duplicate id
 
@@ -285,11 +279,8 @@
       addPIOutputMapping(project, task = "t", id = "m2", scenarios = "testscenario",
         outputPath = "DoesNotExist", observedData = "L")
     Condition
-      Warning:
-      Canonicalized 1 referenced id to a safe form:
-      * "DoesNotExist" -> "doesnotexist"
       Error in `addPIOutputMapping()`:
-      ! outputPath "doesnotexist" not found in project$definitions$outputPaths
+      ! x outputPath "DoesNotExist" is neither a defined output-path id nor the model path of one. i Pass an output-path id (a key in `project$definitions$outputPaths`) or the literal model path of a defined output path; define new ones with `addOutputPath()`.
 
 # addPIParameter() errors on an explicit duplicate id
 
