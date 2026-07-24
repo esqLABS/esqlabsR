@@ -51,3 +51,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-07-23 17:03: Excel import parses the legacy 5.x parameter-identification layout (PITaskName-keyed sheets, no PITasks sheet), reassembling each task and resolving full-path output-mapping refs to output-path ids. (#1158)
 - 2026-07-23 17:08: Reconcile NEWS.md dev section for the Excel legacy-migration work (canonicalization char list, individual-sheet auto-link, new importer bullet). (#1158)
 - 2026-07-23 18:01: PR #1160 review: guard blank/NA cells in the 5.x Excel parsers (blank IndividualId, blank Parameter Name, boolean OptionValue) and keep an observed-data subfolder path. (#1158)
+- 2026-07-24 07:30: PR #1160 review: guard `NULL` before subsetting in `.pi5xTaskRows()`, so importing a legacy 5.x workbook missing optional PI sheets returns an empty frame instead of aborting. (#1158)
