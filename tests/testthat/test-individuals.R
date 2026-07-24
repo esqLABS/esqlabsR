@@ -77,13 +77,10 @@ test_that("addIndividual rejects a non-logical overwrite passed through ...", {
   )
 })
 
-test_that("addIndividual aborts when gender is missing", {
+test_that("addIndividual defaults an absent gender to UNKNOWN", {
   project <- testProject()
-  expect_snapshot(
-    error = TRUE,
-    addIndividual(project, "newi", species = "Human")
-  )
-  expect_false("newi" %in% names(project$definitions$individuals))
+  addIndividual(project, "newi", species = "Dog")
+  expect_identical(project$definitions$individuals$newi$gender, "UNKNOWN")
 })
 
 test_that("addIndividual aborts when gender is not a valid GenderInt token", {

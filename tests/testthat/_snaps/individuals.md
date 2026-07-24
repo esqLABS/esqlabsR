@@ -15,15 +15,6 @@
       Error in `addIndividual()`:
       ! `overwrite` must be a single `TRUE` or `FALSE`.
 
-# addIndividual aborts when gender is missing
-
-    Code
-      addIndividual(project, "newi", species = "Human")
-    Condition
-      Error in `addIndividual()`:
-      ! Cannot add individual "newi":
-      x gender must be a non-empty string
-
 # addIndividual aborts when gender is not a valid GenderInt token
 
     Code

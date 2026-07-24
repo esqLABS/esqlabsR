@@ -1485,7 +1485,9 @@ projectStatus <- function(project, silent = FALSE) {
       individualId = as.character(row$IndividualId),
       species = as.character(row$Species),
       population = as.character(row$Population),
-      gender = as.character(row$Gender),
+      # An empty Gender cell defaults to UNKNOWN (the only valid PK-Sim gender
+      # for some animal species), rather than an NA the validator would flag.
+      gender = .naToDefault(as.character(row$Gender), "UNKNOWN"),
       weight = .naToNull(as.numeric(row$`Weight [kg]`)),
       height = .naToNull(as.numeric(row$`Height [cm]`)),
       age = .naToNull(as.numeric(row$`Age [year(s)]`)),
