@@ -168,6 +168,37 @@ test_that("runScenarios aborts by default when a scenario simulation produces no
   )
 })
 
+test_that("runScenarios builds an individual that carries no age or height", {
+  # An animal individual legitimately carries only a weight. Passing an absent
+  # age/height through `as.double()` would yield `numeric(0)` and crash
+  # `createIndividualCharacteristics()`. Clearing age/height here and reaching
+  # the "no results" path (the run is short-circuited by the mocked runner)
+  # proves the individual-characteristics build succeeded.
+  withr::local_options(lifecycle_verbosity = "quiet")
+  project <- .testProject()
+  setIndividual(project, "indiv1", age = NULL, height = NULL)
+  local_mocked_bindings(
+    runSimulations = function(simulations, ...) {
+      ids <- if (inherits(simulations, "Simulation")) {
+        simulations$id
+      } else {
+        vapply(simulations, function(s) s$id, character(1))
+      }
+      stats::setNames(vector("list", length(ids)), ids)
+    }
+  )
+  expect_warning(
+    out <- runScenarios(
+      project,
+      scenarios = "testscenario",
+      stopIfFails = FALSE
+    ),
+    regexp = "No simulation results could be computed"
+  )
+  # Reaching the collection step at all means the build did not crash.
+  expect_true("testscenario" %in% names(out))
+})
+
 test_that("runScenarios with stopIfFails = FALSE warns and returns NULL outputValues", {
   withr::local_options(lifecycle_verbosity = "quiet")
   project <- .testProject()

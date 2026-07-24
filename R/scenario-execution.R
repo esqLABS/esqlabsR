@@ -383,13 +383,19 @@
         moleculeOntogenies <- .readOntogeniesFromList(
           indivData$proteinOntogenies
         )
+        # weight/height/age are stored as doubles (or absent). Pass them through
+        # as-is: an absent biometric stays NULL, which
+        # `createIndividualCharacteristics()` defaults. Coercing with
+        # `as.double()` would turn a NULL into `numeric(0)`, which defeats
+        # ospsuite's own `is.null()` guard and crashes an animal individual that
+        # legitimately carries only a weight.
         individualCharacteristics <- ospsuite::createIndividualCharacteristics(
           species = indivData$species,
           population = indivData$population,
           gender = indivData$gender,
-          weight = as.double(indivData$weight),
-          height = as.double(indivData$height),
-          age = as.double(indivData$age),
+          weight = indivData$weight,
+          height = indivData$height,
+          age = indivData$age,
           moleculeOntogenies = moleculeOntogenies
         )
         cache$individuals[[scenario$individualId]] <- individualCharacteristics
