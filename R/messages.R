@@ -908,6 +908,12 @@ messages$PIRequiredField <- function(field, recordType, recordId) {
   )
 }
 
+messages$PIMustBeList <- function(field, taskId) {
+  cliFormat(
+    "Field {.val {field}} on PITask {.val {taskId}} must be a list."
+  )
+}
+
 messages$PIEmptyList <- function(field, taskId) {
   cliFormat(
     "Field {.val {field}} on PITask {.val {taskId}} must contain at least one entry."
@@ -943,6 +949,17 @@ messages$PIWrongElementType <- function(
   cliFormat(
     "Element {field}[[{index}]] on PITask {.val {taskId}} must be a {expectedClass}."
   )
+}
+
+messages$outputPathRefNotFound <- function(value, outputPathIds) {
+  hint <- .suggestSuffix(value, outputPathIds)
+  cli::format_message(c(
+    "x" = "outputPath {.val {value}} is neither a defined output-path id nor \\
+    the model path of one.",
+    "i" = "Pass an output-path id (a key in \\
+    {.code project$definitions$outputPaths}) or the literal model path of a \\
+    defined output path; define new ones with {.fn addOutputPath}.{hint}"
+  ))
 }
 
 messages$PIOutputQuantityNotFound <- function(path, simulationName) {
