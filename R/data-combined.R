@@ -185,9 +185,16 @@ createDataCombinedFromExcel <- function(...) {
         names = entry$label
       )
     } else {
-      # A scenario present but whose run failed carries `results = NULL`;
-      # distinguish it from a genuinely wrong path.
-      msg <- if (!is.null(scenarioResult) && is.null(results)) {
+      # Three distinct reasons the simulated data can't be resolved, each with
+      # its own message: the scenario is absent from `scenarioResults`
+      # (typo, or not part of the run); it is present but its run produced no
+      # results; or the run is fine but the output path was not simulated.
+      msg <- if (is.null(scenarioResult)) {
+        messages$scenarioNotInResults(
+          dataCombinedName = name,
+          scenarioName = scenarioName
+        )
+      } else if (is.null(results)) {
         messages$scenarioRunFailed(
           dataCombinedName = name,
           scenarioName = scenarioName,

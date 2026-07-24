@@ -648,6 +648,17 @@ messages$scenarioRunFailed <- function(
   )
 }
 
+messages$scenarioNotInResults <- function(
+  dataCombinedName,
+  scenarioName
+) {
+  cliFormat(
+    "The DataCombined {.val {paste(dataCombinedName, collapse = \", \")}} references scenario
+    {.cls {scenarioName}}, but that scenario is not present in {.arg scenarioResults}.
+    Check the scenario name and that it was included in the {.fn runScenarios} call."
+  )
+}
+
 messages$plotGridNamesNotFound <- function(plotGridNames) {
   cliFormat(
     "The following plot grids are not defined in the project:

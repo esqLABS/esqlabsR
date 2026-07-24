@@ -322,6 +322,31 @@ test_that("createDataCombined(stopIfNotFound = FALSE) drops a missing-dataSet ob
   expect_null(result$dc_obs_wrong$toDataFrame())
 })
 
+test_that("createDataCombined reports a scenario absent from results distinctly", {
+  project <- testProject()
+  path <- project$definitions$outputPaths$aciclovir_pvb
+  addDataCombined(
+    project,
+    "dc_missing_scenario",
+    simulated = list(list(
+      label = "sim",
+      scenario = "testscenario",
+      path = path,
+      group = "g"
+    ))
+  )
+  # The scenario was never run, so it is absent from scenarioResults: the error
+  # must name the scenario reference, not blame the output path.
+  expect_error(
+    createDataCombined(
+      project,
+      dataCombined = "dc_missing_scenario",
+      scenarioResults = list()
+    ),
+    "not present in"
+  )
+})
+
 test_that("createDataCombined reports a failed scenario run distinctly", {
   project <- testProject()
   path <- project$definitions$outputPaths$aciclovir_pvb
