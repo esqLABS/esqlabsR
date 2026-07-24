@@ -5,6 +5,18 @@
   testProject(envir = envir)
 }
 
+# A `runSimulations` stand-in that returns a NULL result for every simulation
+# id it is handed, forcing the "no results" collection path without native
+# infra. Passed to `local_mocked_bindings(runSimulations = ...)`.
+.mockNoResults <- function(simulations, ...) {
+  ids <- if (inherits(simulations, "Simulation")) {
+    simulations$id
+  } else {
+    vapply(simulations, function(s) s$id, character(1))
+  }
+  stats::setNames(vector("list", length(ids)), ids)
+}
+
 test_that(".buildSimulationRunOptions returns NULL when no defaults are declared", {
   expect_null(esqlabsR:::.buildSimulationRunOptions(NULL))
   expect_null(esqlabsR:::.buildSimulationRunOptions(list()))
@@ -153,14 +165,7 @@ test_that("runScenarios aborts by default when a scenario simulation produces no
   withr::local_options(lifecycle_verbosity = "quiet")
   project <- .testProject()
   local_mocked_bindings(
-    runSimulations = function(simulations, ...) {
-      ids <- if (inherits(simulations, "Simulation")) {
-        simulations$id
-      } else {
-        vapply(simulations, function(s) s$id, character(1))
-      }
-      stats::setNames(vector("list", length(ids)), ids)
-    }
+    runSimulations = .mockNoResults
   )
   expect_error(
     runScenarios(project, scenarios = "testscenario"),
@@ -209,19 +214,20 @@ test_that("runScenarios(stopIfFails = FALSE) skips a build-time failure and coll
   # A scenario failing at build time is surfaced-and-skipped, not fatal: the
   # run reaches result collection, where the skipped scenario records no
   # results. `testscenario` builds for real (native infra) and the mocked
-  # runner returns NULL for it, so both scenarios collect as no-results.
+  # runner returns NULL for it, so both scenarios collect as no-results. The
+  # broken scenario carries `outputPaths` so collection would call
+  # getAllQuantitiesMatching() on its (NULL) simulation; a skipped scenario
+  # must not crash there.
   withr::local_options(lifecycle_verbosity = "quiet")
   project <- .testProject()
-  addScenario(project, "second", modelFile = "does-not-exist.pkml")
+  addScenario(
+    project,
+    "second",
+    modelFile = "does-not-exist.pkml",
+    outputPaths = "aciclovir_pvb"
+  )
   local_mocked_bindings(
-    runSimulations = function(simulations, ...) {
-      ids <- if (inherits(simulations, "Simulation")) {
-        simulations$id
-      } else {
-        vapply(simulations, function(s) s$id, character(1))
-      }
-      stats::setNames(vector("list", length(ids)), ids)
-    }
+    runSimulations = .mockNoResults
   )
   out <- suppressWarnings(
     runScenarios(project, stopIfFails = FALSE)
@@ -240,14 +246,7 @@ test_that("runScenarios builds an individual that carries no age or height", {
   project <- .testProject()
   setIndividual(project, "indiv1", age = NULL, height = NULL)
   local_mocked_bindings(
-    runSimulations = function(simulations, ...) {
-      ids <- if (inherits(simulations, "Simulation")) {
-        simulations$id
-      } else {
-        vapply(simulations, function(s) s$id, character(1))
-      }
-      stats::setNames(vector("list", length(ids)), ids)
-    }
+    runSimulations = .mockNoResults
   )
   expect_warning(
     out <- runScenarios(
@@ -265,14 +264,7 @@ test_that("runScenarios with stopIfFails = FALSE warns and returns NULL outputVa
   withr::local_options(lifecycle_verbosity = "quiet")
   project <- .testProject()
   local_mocked_bindings(
-    runSimulations = function(simulations, ...) {
-      ids <- if (inherits(simulations, "Simulation")) {
-        simulations$id
-      } else {
-        vapply(simulations, function(s) s$id, character(1))
-      }
-      stats::setNames(vector("list", length(ids)), ids)
-    }
+    runSimulations = .mockNoResults
   )
   expect_warning(
     out <- runScenarios(

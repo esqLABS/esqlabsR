@@ -618,10 +618,11 @@ print.Scenario <- function(x, ...) {
 #'   `customParams` path that matches no parameter in a scenario's
 #'   simulation aborts the run. Set to `FALSE` to skip such paths with a
 #'   warning instead.
-#' @param stopIfFails Logical. If `TRUE` (default), a scenario whose
-#'   simulation produced no results aborts the run with an error. Set to
-#'   `FALSE` to instead warn and leave that scenario's `outputValues`
-#'   `NULL` while the other scenarios are still returned.
+#' @param stopIfFails Logical. If `TRUE` (default), a scenario that fails to
+#'   build (e.g. a missing model parameter path) or whose simulation produced
+#'   no results aborts the run with an error. Set to `FALSE` to instead warn
+#'   and leave that scenario's `outputValues` `NULL` while the other scenarios
+#'   are still built, run, and returned.
 #'
 #' @returns A named list keyed by scenario name. Each entry is a list
 #'   with `simulation` (the initialized [ospsuite::Simulation]),
@@ -630,9 +631,10 @@ print.Scenario <- function(x, ...) {
 #'   `population` (an [ospsuite::Population] for population
 #'   scenarios, or `NULL` for individual scenarios).
 #'
-#' @details If a scenario's simulation fails, `runScenarios()` aborts by
-#'   default (`stopIfFails = TRUE`). Set `stopIfFails = FALSE` to instead
-#'   produce a warning and leave that scenario's `outputValues` `NULL`.
+#' @details If a scenario fails, either at build time or because its
+#'   simulation produced no results, `runScenarios()` aborts by default
+#'   (`stopIfFails = TRUE`). Set `stopIfFails = FALSE` to instead produce a
+#'   warning, skip the failing scenario, and leave its `outputValues` `NULL`.
 #'
 #' @seealso [buildSimulations()] to obtain the parameterized simulations
 #'   without running them.

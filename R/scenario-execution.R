@@ -573,7 +573,7 @@
     # as a warning and leave this scenario's entry NULL so the run continues
     # with the scenarios that built; the run loops below skip a NULL entry and
     # `.collectScenarioResult()` records it as producing no results.
-    prepared[[idx]] <- tryCatch(
+    result <- tryCatch(
       .prepareScenario(
         scenario = allScenarios[[name]],
         project = project,
@@ -593,6 +593,10 @@
         NULL
       }
     )
+    # Single-bracket assignment keeps a skipped scenario's slot as an explicit
+    # NULL; `prepared[[idx]] <- NULL` would instead delete the element and
+    # shorten the list, breaking the positional loops below.
+    prepared[idx] <- list(result)
   }
   list(scenarioNames = scenarioNames, prepared = prepared)
 }
@@ -613,7 +617,10 @@
   stopIfFails = TRUE
 ) {
   outputQuantities <- NULL
-  if (!is.null(scenario$outputPaths)) {
+  # `simulation` is NULL for a scenario skipped at build time (stopIfFails =
+  # FALSE); there is nothing to resolve output quantities against, so leave
+  # them NULL and let the no-results branch below record the skip.
+  if (!is.null(simulation) && !is.null(scenario$outputPaths)) {
     outputQuantities <- getAllQuantitiesMatching(
       unname(scenario$outputPaths),
       simulation
