@@ -512,46 +512,9 @@ test_that(".validatePlots warns when project has no plots sections", {
   expect_length(result$critical_errors, 0)
 })
 
-test_that(".validatePlots flags missing scenario in dataCombined", {
-  dataCombined <- list(
-    DC1 = list(
-      simulated = list(list(scenario = ""))
-    )
-  )
-  result <- esqlabsR:::.validatePlots(dataCombined, list(), list())
-  msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
-  expect_match(msgs, "missing 'scenario'", all = FALSE)
-})
-
-test_that(".validatePlots flags a simulated entry missing its path", {
-  # `path` is required to build a simulated dataCombined entry (the write-gate
-  # `.checkDataCombinedEntry()` rejects its absence). A dataCombined loaded from
-  # JSON can bypass that gate, so the lazy validator must flag the same gap.
-  dataCombined <- list(
-    DC1 = list(
-      simulated = list(list(label = "L1", scenario = "S1"))
-    )
-  )
-  result <- esqlabsR:::.validatePlots(dataCombined, list(), list())
-  msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
-  expect_match(msgs, "Simulated entry.*missing 'path'", all = FALSE)
-})
-
-test_that(".validatePlots flags a missing label in a dataCombined entry", {
-  dataCombined <- list(
-    DC1 = list(
-      # A simulated entry with a scenario but no label, and an observed entry
-      # with a dataSet but no label: both are structurally incomplete.
-      simulated = list(list(scenario = "S1", path = "P")),
-      observed = list(list(dataSet = "obs1"))
-    )
-  )
-  result <- esqlabsR:::.validatePlots(dataCombined, list(), list())
-  expect_false(result$isValid())
-  msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
-  expect_match(msgs, "Simulated entry.*missing 'label'", all = FALSE)
-  expect_match(msgs, "Observed entry.*missing 'label'", all = FALSE)
-})
+# dataCombined entry-shape validation moved to the `dataCombined` adapter
+# (`.validateDataCombined()`); its tests live in test-data-combined.R. The
+# `plots` adapter now only validates the plot list and plot grids.
 
 test_that(".validatePlots flags duplicate plotIds and unknown dataCombinedId", {
   dataCombined <- list(
@@ -935,31 +898,6 @@ test_that("validateProject() flags a scenario referencing a removed outputPath",
     character(1)
   )
   expect_match(msgs, "aciclovir_fat_cell", all = FALSE)
-})
-
-# Cross-reference: dataCombined -> observed dataSet ----
-
-test_that(".validatePlots flags an empty observed dataSet reference", {
-  project <- .fakeProject()
-  addDataCombined(
-    project,
-    id = "dc1",
-    simulated = list(list(
-      label = "sim",
-      scenario = "testscenario",
-      path = "Organism|A"
-    ))
-  )
-  # Inject an empty observed dataSet directly, mimicking a hand-edited
-  # Project.json that bypassed the addDataCombined() guard. The section
-  # accessor is read-only; an in-memory project writes through .setSection()
-  # without validating, so the malformed record survives for the validator.
-  dc <- .getSection(project, "dataCombined")
-  dc$dc1$observed <- list(list(label = "obs", dataSet = ""))
-  .setSection(project, "dataCombined", dc)
-  result <- esqlabsR:::.plotsValidatorAdapter(project)
-  msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
-  expect_match(msgs, "dataSet", all = FALSE)
 })
 
 test_that("removeObservedData warns when a dataCombined still references it", {

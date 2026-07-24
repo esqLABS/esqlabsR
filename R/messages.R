@@ -448,13 +448,6 @@ messages$applicationProtocolNotFound <- function(
     in the excel file {.file ApplicationProtocols.xlsx}"
   )
 }
-messages$invalidScenarioName <- function(scenarioNames) {
-  cliFormat(
-    "The following scenarios are not present in {.arg scenarioResults}:
-    {.val {paste(scenarioNames, collapse = \",\n\")}}. Data cannot be added to {.var DataCombined} object."
-  )
-}
-
 messages$invalidArgumentLengthScenarios <- function(
   argName,
   arg,
@@ -609,27 +602,9 @@ messages$missingPlotId <- function() {
   cliFormat("Every plot must declare a `plotId`.")
 }
 
-messages$missingLabel <- function() {
-  cliFormat(
-    "Missing values found in mandatory column {.val label} of sheet {.var DataCombined}. Fill in values to proceed."
-  )
-}
-
 messages$missingPlotType <- function() {
   cliFormat(
     "Missing values found in mandatory column {.val plotType} of sheet {.var plotConfiguration}. Fill in values to proceed."
-  )
-}
-
-messages$missingDataType <- function() {
-  cliFormat(
-    "Missing values found in mandatory column {.val dataType} of sheet {.var DataCombined}. Fill in values to proceed."
-  )
-}
-
-messages$missingScenarioName <- function() {
-  cliFormat(
-    "Missing values found in mandatory column {.val scenario} of sheet {.var DataCombined} when {.arg dataType} is {.val simulated}. Fill in values to proceed."
   )
 }
 
@@ -648,15 +623,8 @@ messages$invalidDataCombinedName <- function(dataCombinedNames) {
 
 messages$dataCombinedNamesNotFound <- function(dataCombinedNames) {
   cliFormat(
-    "The following DataCombined names are not defined in the Excel file:
+    "The following DataCombined names are not defined in the project:
     {.val {paste(dataCombinedNames, collapse = ', ')}}"
-  )
-}
-
-messages$noPathProvided <- function(dataCombinedName) {
-  cliFormat(
-    "No output path is defined for the DataCombined {.val {paste(dataCombinedName, collapse = \", \")}}
-    Each simulation output must have an output path specified."
   )
 }
 
@@ -680,6 +648,17 @@ messages$scenarioRunFailed <- function(
   )
 }
 
+messages$scenarioNotInResults <- function(
+  dataCombinedName,
+  scenarioName
+) {
+  cliFormat(
+    "The DataCombined {.val {paste(dataCombinedName, collapse = \", \")}} references scenario
+    {.cls {scenarioName}}, but that scenario is not present in {.arg scenarioResults}.
+    Check the scenario name and that it was included in the {.fn runScenarios} call."
+  )
+}
+
 messages$plotGridNamesNotFound <- function(plotGridNames) {
   cliFormat(
     "The following plot grids are not defined in the project:
@@ -691,13 +670,6 @@ messages$plotIdsNotFound <- function(plotIds) {
   cliFormat(
     "The following plots are not defined in the project:
     {.val {paste(plotIds, collapse = ', ')}}"
-  )
-}
-
-messages$noDataSetProvided <- function(dataCombinedName) {
-  cliFormat(
-    "No data set is defined for the DataCombined {.val {paste(dataCombinedName, collapse = \", \n\")}}.
-    Each observed data must have a {.var dataSet} specified."
   )
 }
 

@@ -22,7 +22,10 @@ warning names the result if it changed).}
 \item{simulated}{For a single DataCombined (\code{id} length 1), a list of
 named lists, each including \code{label}, \code{scenario}, and \code{path} (optional
 \code{group}, \code{xOffsets}, \code{xOffsetsUnits}, \code{yOffsets}, \code{yOffsetsUnits},
-\code{xScaleFactors}, \code{yScaleFactors}). The \code{scenario} reference is
+\code{xScaleFactors}, \code{yScaleFactors}). \code{path} may be either a literal model
+quantity path or an output-path id (a key of the project's \code{outputPaths}
+definitions); an id is resolved to its literal path when the DataCombined
+is built by \code{\link[=createDataCombined]{createDataCombined()}}. The \code{scenario} reference is
 canonicalized to match its scenario definition. To add several
 DataCombined in one call, pass a list of the same length as \code{id}, one
 such simulated list per DataCombined.}
