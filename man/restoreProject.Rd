@@ -7,8 +7,9 @@
 restoreProject(snapshot, dir = ".", overwrite = FALSE)
 }
 \arguments{
-\item{snapshot}{Path to the snapshot file to read (a \code{.esqlabsR} file, or
-a legacy single-file \code{Project.json}). Must exist.}
+\item{snapshot}{Path to the snapshot file to read (a \code{.esqlabsR} file, a
+legacy single-file \code{Project.json}, or a monolithic snapshot written by a
+previous esqlabsR version). Must exist.}
 
 \item{dir}{Folder in which the project is recreated (default \code{"."}).
 Created if it does not exist.}
@@ -42,8 +43,13 @@ snapshot.
 Snapshots are usually \code{.esqlabsR} files written by \code{\link[=snapshotProject]{snapshotProject()}},
 but a \code{Project.json} in which all sections are written out in the file
 itself, rather than in a \verb{definitions/} folder (a legacy single-file
-project), is accepted too. The result is a normal project:
-\code{\link[=loadProject]{loadProject()}} opens it from \code{dir} with exactly the same content.
+project), is accepted too. A monolithic snapshot written by a
+previous esqlabsR version (\code{snapshotProjectConfiguration()}) is also
+accepted and upgraded to the current project format on read, through the
+Excel bridge; observed data is not carried in such a snapshot, so add it
+with \code{\link[=addObservedData]{addObservedData()}} if a plot or parameter identification needs it.
+The result is a normal project: \code{\link[=loadProject]{loadProject()}} opens it from \code{dir} with
+exactly the same content.
 }
 \examples{
 # Write a snapshot, then recreate a project folder from it.

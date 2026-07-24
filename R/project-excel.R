@@ -1408,7 +1408,13 @@ projectStatus <- function(project, silent = FALSE) {
   dataFolder <- .resolveProjectPath(dataFolderRaw, pcDir, "dataFolder")
   dataFilePath <- .resolveProjectPath(dataFile, dataFolder, "dataFile")
   if (!file.exists(dataFilePath)) {
-    cli::cli_warn(messages$importSkippedObservedData(dataFile))
+    # Classed so a caller that expects a missing data file (the legacy-snapshot
+    # upgrade, which never carries the data workbook) can muffle just this
+    # warning without swallowing others.
+    cli::cli_warn(
+      messages$importSkippedObservedData(dataFile),
+      class = "esqlabsR_importSkippedObservedData"
+    )
     return(jsonData)
   }
 

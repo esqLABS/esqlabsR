@@ -110,11 +110,17 @@ snapshotProject <- function(
 #'   Snapshots are usually `.esqlabsR` files written by [snapshotProject()],
 #'   but a `Project.json` in which all sections are written out in the file
 #'   itself, rather than in a `definitions/` folder (a legacy single-file
-#'   project), is accepted too. The result is a normal project:
-#'   [loadProject()] opens it from `dir` with exactly the same content.
+#'   project), is accepted too. A monolithic snapshot written by a
+#'   previous esqlabsR version (`snapshotProjectConfiguration()`) is also
+#'   accepted and upgraded to the current project format on read, through the
+#'   Excel bridge; observed data is not carried in such a snapshot, so add it
+#'   with [addObservedData()] if a plot or parameter identification needs it.
+#'   The result is a normal project: [loadProject()] opens it from `dir` with
+#'   exactly the same content.
 #'
-#' @param snapshot Path to the snapshot file to read (a `.esqlabsR` file, or
-#'   a legacy single-file `Project.json`). Must exist.
+#' @param snapshot Path to the snapshot file to read (a `.esqlabsR` file, a
+#'   legacy single-file `Project.json`, or a monolithic snapshot written by a
+#'   previous esqlabsR version). Must exist.
 #' @param dir Folder in which the project is recreated (default `"."`).
 #'   Created if it does not exist.
 #' @param overwrite If `FALSE` (default), `restoreProject()` aborts when
@@ -167,6 +173,20 @@ restoreProject <- function(snapshot, dir = ".", overwrite = FALSE) {
     dir.create(dir, recursive = TRUE, showWarnings = FALSE)
   }
 
+  jsonData <- jsonlite::fromJSON(snapshot, simplifyVector = FALSE)
+
+  # A previous-version monolithic snapshot (Excel workbooks dumped to one JSON by
+  # an older `snapshotProjectConfiguration()`) is not a v6 `Project.json`; upgrade
+  # it through the Excel bridge rather than trying to parse it as a v6 snapshot.
+  if (.isLegacySnapshot(jsonData)) {
+    return(.upgradeLegacySnapshot(
+      jsonData,
+      dir,
+      overwrite,
+      replacedExistingTree
+    ))
+  }
+
   # A legacy or hand-authored snapshot may carry non-canonical ids (e.g.
   # `Sim_A`, `Aciclovir_PVB`), but the definition tree keys files by canonical id,
   # so the tree writer requires them. Canonicalize every id and every reference
@@ -176,7 +196,6 @@ restoreProject <- function(snapshot, dir = ".", overwrite = FALSE) {
   # still resolve). The canonicalized JSON is written to a throwaway file and
   # loaded from there, so the in-memory project the tree is exploded from is
   # already canonical.
-  jsonData <- jsonlite::fromJSON(snapshot, simplifyVector = FALSE)
   jsonData <- .canonicalizeProjectJsonIds(jsonData)
   canonFile <- tempfile(fileext = ".json")
   on.exit(unlink(canonFile), add = TRUE)
