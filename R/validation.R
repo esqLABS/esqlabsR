@@ -369,6 +369,7 @@ validationSummary <- function(validationResults) {
   parameterSets = .parameterSetsValidatorAdapter,
   applications = .applicationsValidatorAdapter,
   plots = .plotsValidatorAdapter,
+  dataCombined = .dataCombinedValidatorAdapter,
   observedData = .observedDataValidatorAdapter,
   parameterIdentification = .parameterIdentificationValidatorAdapter
 )

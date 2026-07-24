@@ -42,4 +42,9 @@ Builds \code{\link[ospsuite:DataCombined]{ospsuite::DataCombined}} objects from 
 simulated/observed entries; \code{loadObservedData(project)} resolves observed
 sources internally. Either \code{dataCombined} or \code{plotGrids} (or both)
 selects which DataCombined to build.
+
+A simulated entry's \code{path} may be either a literal model quantity path or an
+output-path id (a key of the project's \code{outputPaths} definitions). An id is
+resolved to its literal path before the entry is built; any value that is not
+a known id is used as a literal path.
 }
