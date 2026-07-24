@@ -450,10 +450,11 @@ sampleRandomValue <- function(distribution, mean, sd, n) {
 #' @param ... Optional named fields. Accepted: `proportionOfFemales`,
 #'   `weightMin`, `weightMax`, `heightMin`, `heightMax`, `ageMin`,
 #'   `ageMax`, `BMIMin`, `BMIMax`, `gender`, `weightUnit`, `heightUnit`,
-#'   `ageUnit`, `BMIUnit`, `population`, `diseaseState`, and `overwrite`.
-#'   Numeric range fields are coerced via `as.double()`. `overwrite` is a
-#'   logical scalar (default `FALSE`): an id that already exists aborts unless
-#'   `overwrite = TRUE`, which replaces it (last-write-wins).
+#'   `ageUnit`, `BMIUnit`, `population`, `diseaseState`, `proteinOntogenies`,
+#'   and `overwrite`. Numeric range fields are coerced via `as.double()`.
+#'   `overwrite` is a logical scalar (default `FALSE`): an id that already
+#'   exists aborts unless `overwrite = TRUE`, which replaces it
+#'   (last-write-wins).
 #' @returns The `project` object, invisibly.
 #' @export
 #' @family population
@@ -619,7 +620,11 @@ addPopulation <- function(
   "ageUnit",
   "BMIUnit",
   "population",
-  "diseaseState"
+  "diseaseState",
+  # The Excel importer writes `proteinOntogenies` on a population the same way
+  # it does on an individual, so the authoring API must accept it too, else an
+  # imported population cannot be re-authored or edited (#1158).
+  "proteinOntogenies"
 )
 
 # Build one classed `Population` entry from its id and per-definition field list,
@@ -783,9 +788,9 @@ removePopulation <- function(project, id) {
 #'   `numberOfIndividuals`, `proportionOfFemales`, `weightMin`,
 #'   `weightMax`, `heightMin`, `heightMax`, `ageMin`, `ageMax`, `BMIMin`,
 #'   `BMIMax`, `gender`, `weightUnit`, `heightUnit`, `ageUnit`, `BMIUnit`,
-#'   `population`, `diseaseState`. Scalar-per-definition fields recycle/align
-#'   across `id`. Numeric fields are coerced via `as.double()`. Unknown
-#'   fields trigger an error.
+#'   `population`, `diseaseState`, `proteinOntogenies`. Scalar-per-definition
+#'   fields recycle/align across `id`. Numeric fields are coerced via
+#'   `as.double()`. Unknown fields trigger an error.
 #'
 #' @returns The `project` object, invisibly.
 #' @export

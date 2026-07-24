@@ -29,7 +29,7 @@
     Condition
       Warning:
       Canonicalized 1 id to a safe form:
-      * "New Set" -> "new set"
+      * "New Set" -> "new_set"
 
 # addParameterSet aborts on a duplicate id
 
@@ -152,7 +152,7 @@
     Condition
       Warning:
       Canonicalized 1 id to a safe form:
-      * "New Set" -> "new set"
+      * "New Set" -> "new_set"
 
 # addInitialConditions aborts on a duplicate id
 

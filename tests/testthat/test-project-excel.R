@@ -203,7 +203,7 @@ test_that("Excel round-trip preserves DataCombined numeric offsets and scales", 
   expect_identical(obs$xScaleFactors, 4.5)
 })
 
-test_that("Excel round-trip does not fabricate a steady-state unit", {
+test_that("Excel round-trip defaults a non-steady-state scenario's steady-state time and unit", {
   work_dir <- withr::local_tempdir()
   file.copy(dirname(exampleProjectPath()), work_dir, recursive = TRUE)
   project <- loadProject(file.path(work_dir, "Example", "Project.json"))
@@ -219,15 +219,15 @@ test_that("Excel round-trip does not fabricate a steady-state unit", {
   before <- .unwrapDefinitionList(project$definitions$scenarios)
   after <- .unwrapDefinitionList(reimported$definitions$scenarios)
 
-  # A non-steady-state scenario carries the parser's default steadyStateTime and
-  # a null unit; the export must not fabricate a unit for it, so the unit stays
-  # null across the round trip. (The steadyStateTime value's int-vs-double type
-  # for a whole-number steady-state time is a separate JSON-layer concern owned
-  # elsewhere, so this asserts the unit, the part the Excel bridge controls.)
+  # A non-steady-state scenario has no meaningful steady-state time, so the
+  # import defaults it to the same `1000` / `"min"` the authoring API writes,
+  # rather than null. This keeps an imported project byte-identical to the same
+  # project re-authored through `addScenario()`, so no round-trip diff (#1158).
+  # The value is only used when steady-state is on.
   nonSteady <- "aciclovir_iv"
   expect_false(isTRUE(before[[nonSteady]]$simulateSteadyState))
-  expect_null(before[[nonSteady]]$steadyStateTimeUnit)
-  expect_null(after[[nonSteady]]$steadyStateTimeUnit)
+  expect_identical(after[[nonSteady]]$steadyStateTime, 1000)
+  expect_identical(after[[nonSteady]]$steadyStateTimeUnit, "min")
 
   # A genuine steady-state scenario keeps its declared unit.
   steady <- "aciclovir_iv_steadystate"
@@ -266,21 +266,26 @@ test_that("Excel round-trip preserves individuals, populations, and applications
   )
 })
 
-test_that("Excel round-trip preserves a comma-bearing plot id inside a grid", {
+test_that("Excel round-trip preserves a grid whose plot id had a comma canonicalized out", {
   work_dir <- withr::local_tempdir()
   file.copy(dirname(exampleProjectPath()), work_dir, recursive = TRUE)
   project <- loadProject(file.path(work_dir, "Example", "Project.json"))
 
-  # A comma is a legal plot-id character; a grid stores its membership as one
-  # comma-separated string, so a comma-bearing id must be escaped or it is
-  # shredded into several at the Excel boundary.
-  addPlot(
+  # A comma is canonicalized to `_` in every id (#1158), so no plot id ever
+  # reaches the Excel boundary with a comma to be shredded. The grid membership
+  # still round-trips because the canonical `cmax__ss` survives the comma-
+  # escaping join/split the grid uses to store its members.
+  suppressWarnings(addPlot(
     project,
     id = "cmax, ss",
     dataCombined = "aciclovir_individual",
     plotType = "individual"
-  )
-  addPlotGrid(project, id = "grid_comma", plots = c("p1", "cmax, ss"))
+  ))
+  suppressWarnings(addPlotGrid(
+    project,
+    id = "grid_comma",
+    plots = c("p1", "cmax, ss")
+  ))
 
   excel_out <- withr::local_tempdir()
   exportProjectToExcel(project, outputDir = excel_out, silent = TRUE)
@@ -294,7 +299,7 @@ test_that("Excel round-trip preserves a comma-bearing plot id inside a grid", {
     "grid_comma"
   ]]
 
-  expect_identical(.splitPlotIDs(grid$plotIds), c("p1", "cmax, ss"))
+  expect_identical(.splitPlotIDs(grid$plotIds), c("p1", "cmax__ss"))
 })
 
 test_that("Excel round-trip preserves project name and description", {
@@ -610,16 +615,234 @@ test_that("the Excel import carries the known fixture ids and values", {
     c("testscenario", "pitestscenario", "populationscenario") %in%
       names(project$definitions$scenarios)
   ))
+
+  # The 5.x PITaskName-keyed layout imports all three tasks.
+  expect_setequal(
+    names(project$definitions$parameterIdentification),
+    c("aciclovirsimple", "aciclovirsimplepathid", "aciclovirmultiscenario")
+  )
 })
 
-# Loading the imported project emits the expected cross-reference warnings,
-# they are asserted rather than suppressed. The TestProjectExcel fixture has a
-# known legacy gap: the per-sheet Excel project encodes application protocols as
-# parameter-set sheets, so the Excel->JSON bridge does not populate an
-# `applications` section, leaving each scenario's `applicationProtocol`
-# reference dangling. This is the documented Excel round-trip lossiness, not a
-# regression, so the dangling-applicationProtocol warning is the expected signal.
-test_that("loading the Excel import warns about the dangling applicationProtocol refs", {
+# The 5.x parameter-identification layout has no `PITasks` sheet; each sheet is
+# keyed by a `PITaskName` column, with the configuration split across
+# `PIConfiguration` / `AlgorithmOptions` / `CIOptions`. The importer reassembles
+# each task's parameters, output mappings, and nested configuration into the
+# same shape the newer single-sheet layout produces (#1158).
+test_that(".parseExcelParameterIdentification parses the 5.x PITaskName layout", {
+  piFile <- testthat::test_path(
+    "data",
+    "TestProjectExcel",
+    "Configurations",
+    "ParameterIdentification.xlsx"
+  )
+  tasks <- .parseExcelParameterIdentification(piFile)
+  expect_setequal(
+    vapply(tasks, function(t) t$id, character(1)),
+    c("AciclovirSimple", "AciclovirSimplePathId", "AciclovirMultiScenario")
+  )
+
+  simple <- tasks[[which(
+    vapply(tasks, function(t) t$id == "AciclovirSimple", logical(1))
+  )]]
+
+  # A parameter joins `Container Path` and `Parameter Name` into the flat path
+  # and coins a canonical id from the parameter name.
+  expect_length(simple$parameters, 1L)
+  param <- simple$parameters[[1]]
+  expect_identical(param$id, "lipophilicity")
+  expect_identical(param$path, "Aciclovir|Lipophilicity")
+  expect_identical(param$units, "Log Units")
+  expect_identical(param$minValue, -10)
+
+  # The configuration gathers the scalar fields, the algorithm options, and the
+  # CI options from their separate sheets.
+  expect_identical(simple$configuration$algorithm, "BOBYQA")
+  expect_identical(simple$configuration$ciMethod, "hessian")
+  expect_identical(simple$configuration$algorithmOptions$maxeval, 100)
+  expect_identical(simple$configuration$ciOptions$confLevel, 0.95)
+
+  # An output mapping keyed by a full OSPS path resolves to the output-path id
+  # when the value matches an `outputPaths` definition; the observed-data DataSet
+  # name is kept verbatim.
+  mapping <- simple$outputMappings[[1]]
+  expect_true(startsWith(mapping$observedData, "Laskin 1982.Group A"))
+})
+
+# An output mapping that names its output path by full OSPS path (not by id) is
+# rewritten to the id of the matching `outputPaths` definition, so the reference
+# resolves rather than dangling (#1158).
+test_that(".resolvePIOutputPathRefs rewrites a full-path mapping to the output-path id", {
+  outputPaths <- list(aciclovir_pvb = "Organism|PVB|Aciclovir|Plasma")
+  tasks <- list(list(
+    id = "t1",
+    outputMappings = list(
+      list(id = "m1", outputPath = "Organism|PVB|Aciclovir|Plasma"),
+      list(id = "m2", outputPath = "already_an_id")
+    )
+  ))
+  resolved <- .resolvePIOutputPathRefs(tasks, outputPaths)
+  expect_identical(
+    resolved[[1]]$outputMappings[[1]]$outputPath,
+    "aciclovir_pvb"
+  )
+  # A value with no matching definition is left as-is.
+  expect_identical(
+    resolved[[1]]$outputMappings[[2]]$outputPath,
+    "already_an_id"
+  )
+})
+
+# Blank/NA-cell guards in the 5.x parsers (PR #1160 review). A real legacy
+# workbook can carry a trailing blank row or an empty cell; these must be
+# skipped or dropped, not turned into an injected `NA`, a `"...|NA"` path, or a
+# stringified boolean.
+
+test_that(".pi5xPath drops a blank parameter name instead of building a `|NA` path", {
+  expect_null(.pi5xPath("Aciclovir", NA))
+  expect_null(.pi5xPath("Aciclovir", ""))
+  expect_identical(
+    .pi5xPath("Aciclovir", "Lipophilicity"),
+    "Aciclovir|Lipophilicity"
+  )
+  # A blank container with a real parameter still yields the parameter alone.
+  expect_identical(.pi5xPath(NA, "Lipophilicity"), "Lipophilicity")
+})
+
+test_that(".pi5xOptionRows coerces a boolean-string option but keeps numbers numeric", {
+  df <- data.frame(
+    PITaskName = c("t", "t", "t", "t"),
+    OptionName = c("flag_true", "flag_false", "count", "method"),
+    OptionValue = c("TRUE", "false", "5", "hessian"),
+    stringsAsFactors = FALSE
+  )
+  o <- .pi5xOptionRows(df, "t")
+  expect_identical(o$flag_true, TRUE)
+  expect_identical(o$flag_false, FALSE)
+  # A numeric value stays numeric (not misread as a boolean).
+  expect_identical(o$count, 5)
+  expect_identical(o$method, "hessian")
+})
+
+test_that("the individuals import skips a blank IndividualId row rather than injecting NA", {
+  # A trailing blank-id biometrics row plus a parameter-set sheet used to inject
+  # NA into every individual's parameterSets (an all-NA logical index returns a
+  # vector of NAs, not an empty one).
+  indivDf <- data.frame(
+    IndividualId = c("Indiv1", NA),
+    Species = c("Human", NA),
+    Population = c("European_ICRP_2002", NA),
+    Gender = c("MALE", NA),
+    `Weight [kg]` = c(73, NA),
+    `Height [cm]` = c(176, NA),
+    `Age [year(s)]` = c(30, NA),
+    check.names = FALSE,
+    stringsAsFactors = FALSE
+  )
+  individuals <- .parseExcelIndividuals(indivDf)
+  paramSheetNames <- "Indiv1"
+  sheetCanonical <- vapply(paramSheetNames, .canonicalizeOneId, character(1))
+  linked <- lapply(individuals, function(indiv) {
+    indivCanonical <- .canonicalizeOneId(indiv$individualId)
+    if (is.na(indivCanonical)) {
+      return(indiv)
+    }
+    match <- paramSheetNames[indivCanonical == sheetCanonical]
+    if (length(match) > 0L) {
+      indiv$parameterSets <- as.list(unique(c(
+        unlist(indiv$parameterSets),
+        match
+      )))
+    }
+    indiv
+  })
+  expect_identical(unlist(linked[[1]]$parameterSets), "Indiv1")
+  # The blank-id row gains no parameterSets (no injected NA).
+  expect_null(linked[[2]]$parameterSets)
+})
+
+test_that(".parseExcelObservedData keeps a subfolder path rather than truncating to basename", {
+  # The loader resolves `file` under `dataFolder`, so a file named in a subfolder
+  # must keep its relative path; truncating to the basename would make it
+  # unresolvable on load.
+  work <- withr::local_tempdir()
+  dir.create(file.path(work, "Data", "Sub"), recursive = TRUE)
+  dataPath <- file.path(work, "Data", "Sub", "Values.xlsx")
+  .writeExcel(list(Sheet1 = data.frame(x = 1)), dataPath)
+  prop <- function(name) {
+    switch(name, dataFile = "Sub/Values.xlsx", dataFolder = "Data", NULL)
+  }
+  result <- .parseExcelObservedData(list(), prop, work)
+  entry <- result$observedData[[1]]
+  expect_identical(entry$file, "Sub/Values.xlsx")
+  # The section key is the basename (an id cannot hold a path separator).
+  expect_identical(names(result$observedData), "Values.xlsx")
+})
+
+# The project records a single experimental-data workbook under `dataFolder`.
+# The importer reifies it as one `excel` observed-data definition listing the
+# workbook's sheets, so a plot or PI mapping that references observed data has
+# something to resolve against (#1158).
+test_that("the Excel import reifies the configured data file as observed data", {
+  out <- withr::local_tempdir()
+  jsonPath <- suppressWarnings(importProjectFromExcel(
+    testProjectExcelPath(),
+    outputDir = out,
+    silent = TRUE
+  ))
+  project <- suppressWarnings(loadProject(jsonPath))
+
+  expect_length(project$definitions$observedData, 1L)
+  entry <- .unwrapDefinitionList(project$definitions$observedData)[[1]]
+  expect_identical(entry$type, "excel")
+  expect_identical(entry$file, "TestProject_TimeValuesData.xlsx")
+  expect_identical(
+    entry$importerConfiguration,
+    "esqlabs_dataImporter_configuration.xml"
+  )
+  expect_true("Laskin 1982.Group A" %in% unlist(entry$sheets))
+})
+
+# A configured `dataFile` that is not on disk is a migration gap the user should
+# see: the importer warns and imports no observed data rather than aborting or
+# silently proceeding (#1158).
+test_that(".parseExcelObservedData warns and skips when the data file is absent", {
+  prop <- function(name) {
+    switch(name, dataFile = "Missing.xlsx", dataFolder = "Data/", NULL)
+  }
+  expect_warning(
+    result <- .parseExcelObservedData(
+      list(),
+      prop,
+      testthat::test_path("data", "TestProjectExcel")
+    ),
+    "was not found"
+  )
+  expect_null(result$observedData)
+})
+
+# A sheet named after an individual (the `Indiv1` sheet in the fixture) is that
+# individual's own parameter override. The importer creates it as a parameter
+# set AND links it on the individual, so the override is applied rather than
+# orphaned (#1158).
+test_that("the Excel import links an individual to its own override parameter set", {
+  out <- withr::local_tempdir()
+  jsonPath <- suppressWarnings(importProjectFromExcel(
+    testProjectExcelPath(),
+    outputDir = out,
+    silent = TRUE
+  ))
+  project <- suppressWarnings(loadProject(jsonPath))
+
+  expect_true("indiv1" %in% names(project$definitions$parameterSets))
+  indiv <- .unwrapDefinitionList(project$definitions$individuals)[["indiv1"]]
+  expect_true("indiv1" %in% unlist(indiv$parameterSets))
+})
+
+# The TestProjectExcel fixture uses the 5.x one-sheet-per-protocol layout (no
+# `ApplicationProtocols` sheet). The importer builds one `Application` per
+# protocol sheet, each wrapping the same-named parameter set, so a scenario that
+# names a protocol by id resolves on load rather than dangling (#1158).
+test_that("the per-protocol-sheet import populates applications and resolves the scenario refs", {
   out <- withr::local_tempdir()
   jsonPath <- suppressWarnings(importProjectFromExcel(
     testProjectExcelPath(),
@@ -627,12 +850,31 @@ test_that("loading the Excel import warns about the dangling applicationProtocol
     silent = TRUE
   ))
 
-  # No `applications` section is produced by the per-sheet Excel project, so the
-  # scenarios' applicationProtocol references cannot resolve on load.
-  expect_warning(
-    loadProject(jsonPath),
-    "undefined application"
+  project <- suppressWarnings(loadProject(jsonPath))
+  expect_setequal(
+    names(project$definitions$applications),
+    c("aciclovir_iv_250mg", "protocol_250mg", "protocol_500mg")
   )
+  # Each application wraps the same-named parameter set.
+  expect_identical(
+    .unwrapDefinitionList(project$definitions$applications)[[
+      "aciclovir_iv_250mg"
+    ]]$parameterSets,
+    "aciclovir_iv_250mg"
+  )
+
+  # The scenarios' `application` references now resolve: loading emits no
+  # "undefined application" warning (other cross-reference warnings may remain
+  # until the rest of the legacy layout is migrated).
+  w <- character()
+  withCallingHandlers(
+    loadProject(jsonPath),
+    warning = function(cnd) {
+      w <<- c(w, conditionMessage(cnd))
+      invokeRestart("muffleWarning")
+    }
+  )
+  expect_false(any(grepl("undefined application", w)))
 })
 
 # The migration canonicalizes every id to a safe, lowercase form. When two
@@ -850,17 +1092,17 @@ test_that("projectStatus() reports the Excel axis as NA (and warns) when the sid
   )
 })
 
-# Regression (#1125): a project with dangling references (the TestProjectExcel
-# fixture encodes application protocols as parameter-set sheets, so the imported
-# scenarios carry dangling `application` refs) exported back to Excel must not
-# hard-abort the status check. The dangling refs survive in mixed case and, on
-# the comparison's Excel re-import, collide under id canonicalization. The abort
-# is now caught and reported as the "cannot compare" NA state with a warning,
-# rather than propagating as a hard error out of `projectStatus()`.
-test_that("projectStatus() does not abort on a dangling-ref canonicalization collision", {
-  # Copy the dangling-ref fixture with the entry workbook named Project.xlsx, so
-  # the imported container is Project.json and the exported side-car stem matches
-  # what the status check derives.
+# Regression (#1125): when the Excel side-car cannot be re-imported for the
+# comparison (here because two output-path ids in it collapse to one canonical
+# id), the status check must catch that abort and report the Excel axis as the
+# NA "cannot compare" state with a warning, rather than propagating a hard error
+# out of `projectStatus()`. The collision is injected into the exported side-car
+# (not the source), so the project itself loads cleanly and only the comparison
+# re-import hits the collision.
+test_that("projectStatus() does not abort on a side-car canonicalization collision", {
+  # Copy the fixture with the entry workbook named Project.xlsx, so the imported
+  # container is Project.json and the exported side-car stem matches what the
+  # status check derives.
   work <- withr::local_tempdir()
   file.copy(
     list.files(
@@ -889,6 +1131,26 @@ test_that("projectStatus() does not abort on a dangling-ref canonicalization col
     overwrite = TRUE,
     silent = TRUE
   ))
+
+  # Rewrite the exported Scenarios workbook's OutputPaths sheet so two ids differ
+  # only by case and collapse to one canonical id. The comparison's re-import of
+  # this side-car then aborts, which the status check must catch.
+  scenariosFile <- file.path(work, "Configurations", "Scenarios.xlsx")
+  scenariosSheet <- readExcel(scenariosFile, sheet = "Scenarios")
+  .writeExcel(
+    list(
+      OutputPaths = data.frame(
+        OutputPathId = c("Aciclovir_PVB", "aciclovir_pvb"),
+        OutputPath = c(
+          "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)",
+          "Organism|Fat|Intracellular|Aciclovir|Concentration in container"
+        ),
+        stringsAsFactors = FALSE
+      ),
+      Scenarios = scenariosSheet
+    ),
+    scenariosFile
+  )
 
   # Silent: no hard error; the collision surfaces as the NA "cannot compare"
   # state, not an abort.
@@ -984,4 +1246,76 @@ test_that(".parseExcelScenarios aborts on a renamed required column", {
     stringsAsFactors = FALSE
   )
   expect_snapshot(error = TRUE, .parseExcelScenarios(scenarioDf))
+})
+
+# `OverwriteFormulasInSS` is newer than the 5.x layout, so a pre-6.0 Scenarios
+# sheet omits it. Its absence must default to FALSE rather than abort, matching
+# the sibling `InitialConditions` column (#1158).
+test_that(".parseExcelScenarios defaults OverwriteFormulasInSS when the column is absent", {
+  scenarioDf <- data.frame(
+    Scenario_name = "s1",
+    IndividualId = NA_character_,
+    PopulationId = NA_character_,
+    ReadPopulationFromCSV = NA,
+    ModelParameterSheets = NA_character_,
+    ApplicationProtocol = NA_character_,
+    SimulationTime = NA_character_,
+    SimulationTimeUnit = NA_character_,
+    SteadyState = NA,
+    SteadyStateTime = NA_real_,
+    SteadyStateTimeUnit = NA_character_,
+    # No `OverwriteFormulasInSS` column, as in a pre-6.0 sheet.
+    ModelFile = "m.pkml",
+    OutputPathsIds = "op1",
+    stringsAsFactors = FALSE
+  )
+  scenarios <- .parseExcelScenarios(scenarioDf)
+  # The parser drops the absent value to NULL; the JSON serializer defaults it
+  # to FALSE (`%||% FALSE`), so a round-trip through the tree reads FALSE.
+  expect_null(scenarios[[1]]$overwriteFormulasInSS)
+})
+
+# A blank steady-state time/unit defaults to the same values the authoring API
+# writes (`1000` / `"min"`), not null, so an imported project is byte-identical
+# to the same project re-authored through `addScenario()` (#1158).
+test_that(".parseExcelScenarios defaults a blank steady-state time and unit", {
+  scenarioDf <- data.frame(
+    Scenario_name = "s1",
+    IndividualId = NA_character_,
+    PopulationId = NA_character_,
+    ReadPopulationFromCSV = NA,
+    ModelParameterSheets = NA_character_,
+    ApplicationProtocol = NA_character_,
+    SimulationTime = NA_character_,
+    SimulationTimeUnit = NA_character_,
+    SteadyState = FALSE,
+    SteadyStateTime = NA_real_,
+    SteadyStateTimeUnit = NA_character_,
+    OverwriteFormulasInSS = NA,
+    ModelFile = "m.pkml",
+    OutputPathsIds = "op1",
+    stringsAsFactors = FALSE
+  )
+  scenarios <- .parseExcelScenarios(scenarioDf)
+  expect_identical(scenarios[[1]]$steadyStateTime, 1000)
+  expect_identical(scenarios[[1]]$steadyStateTimeUnit, "min")
+})
+
+# A multi-value cell may protect a comma with either backslash escaping (this
+# package's own writer) or double-quote wrapping (the legacy 5.x convention).
+# Both must parse, and the quoted form must strip the quotes and keep a quoted
+# comma inside a single token rather than splitting on it (#1158).
+test_that(".parseCommaListToArray parses the quoted-CSV and backslash conventions", {
+  # Quoted-CSV: quotes stripped, the comma inside the quoted run kept.
+  expect_identical(
+    .parseCommaListToArray('"Global", "Aciclovir", "Sheet, with comma"'),
+    c("Global", "Aciclovir", "Sheet, with comma")
+  )
+  # Backslash convention (the writer's output): `\,` is a literal comma.
+  expect_identical(
+    .parseCommaListToArray("global, aciclovir, sheet\\, with comma"),
+    c("global", "aciclovir", "sheet, with comma")
+  )
+  # A plain unquoted list is unaffected.
+  expect_identical(.parseCommaListToArray("a, b, c"), c("a", "b", "c"))
 })

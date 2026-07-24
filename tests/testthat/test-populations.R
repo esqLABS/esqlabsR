@@ -251,6 +251,30 @@ test_that("setPopulation coerces numeric fields like addPopulation", {
   )
 })
 
+test_that("addPopulation and setPopulation accept proteinOntogenies", {
+  # The Excel importer writes `proteinOntogenies` on a population the same way it
+  # does on an individual, so the authoring API must accept it too; otherwise an
+  # imported population could not be re-authored or edited (#1158).
+  project <- testProject()
+  addPopulation(
+    project,
+    "onto_pop",
+    species = "Human",
+    numberOfIndividuals = 5,
+    proteinOntogenies = "CYP3A4"
+  )
+  expect_identical(
+    project$definitions$populations[["onto_pop"]]$proteinOntogenies,
+    "CYP3A4"
+  )
+
+  setPopulation(project, "onto_pop", proteinOntogenies = "CYP2D6")
+  expect_identical(
+    project$definitions$populations[["onto_pop"]]$proteinOntogenies,
+    "CYP2D6"
+  )
+})
+
 test_that("setPopulation partial update leaves other fields untouched", {
   project <- testProject()
   before <- project$definitions$populations[["testpopulation"]]

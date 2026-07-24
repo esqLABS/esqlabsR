@@ -29,6 +29,21 @@ test_that(".canonicalizeId strips control characters", {
   expect_identical(suppressWarnings(.canonicalizeId("a\tb\nc")), "a_b_c")
 })
 
+test_that(".canonicalizeId replaces interior commas and spaces with underscore", {
+  # A comma or an interior space is legal on disk but makes a fragile id and
+  # breaks the comma-separated reference lists the Excel bridge parses, so both
+  # are canonicalized out (#1158). One character maps to one underscore.
+  expect_identical(suppressWarnings(.canonicalizeId("a,b")), "a_b")
+  expect_identical(suppressWarnings(.canonicalizeId("mg kg")), "mg_kg")
+  expect_identical(
+    suppressWarnings(.canonicalizeId("Sheet, with comma")),
+    "sheet__with_comma"
+  )
+  # A leading/trailing space is still trimmed away, not turned into an
+  # underscore (the trim runs before the replacement).
+  expect_identical(suppressWarnings(.canonicalizeId(" id ")), "id")
+})
+
 test_that(".canonicalizeId trims leading and trailing dots and spaces", {
   expect_identical(suppressWarnings(.canonicalizeId(" id ")), "id")
   expect_identical(suppressWarnings(.canonicalizeId(".id.")), "id")
@@ -74,7 +89,7 @@ test_that(".canonicalizeId is vectorized", {
 
 test_that(".canonicalizeId warns naming each changed id", {
   expect_snapshot(out <- .canonicalizeId("My ID*"))
-  expect_identical(out, "my id_")
+  expect_identical(out, "my_id_")
 })
 
 test_that(".canonicalizeId canonicalizes and warns on an id containing braces instead of aborting", {

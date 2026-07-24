@@ -26,8 +26,9 @@
 #
 # Rules (intersection of Windows + macOS + Linux filename rules):
 #   - lowercase
-#   - replace each of `/ \ : * ? " < > |` and control characters with `_`
 #   - trim leading/trailing dots and spaces
+#   - replace each of `/ \ : * ? " < > |`, commas, whitespace (spaces, tabs),
+#     and control characters with `_`
 #   - an id that is empty or trims to nothing becomes `_`
 #   - a Windows reserved basename (CON, PRN, AUX, NUL, COM1-9, LPT1-9,
 #     case-insensitive) gets a `_` suffix so it is never a bare reserved name
@@ -308,11 +309,15 @@
     ))
   }
   out <- tolower(id)
-  # Forbidden characters and control characters -> underscore.
-  out <- gsub("[/\\:*?\"<>|[:cntrl:]]", "_", out)
-  # Trim leading/trailing dots and spaces (illegal as a trailing segment on
-  # Windows, and a leading dot hides the file on Unix).
+  # Trim leading/trailing dots and spaces first (illegal as a trailing segment
+  # on Windows, and a leading dot hides the file on Unix), so an edge space is
+  # dropped rather than turned into an underscore by the replacement below.
   out <- gsub("^[. ]+|[. ]+$", "", out)
+  # Forbidden characters, control characters, and any interior comma or space
+  # -> underscore. A comma or space is legal on disk but not a safe id: it makes
+  # a fragile filename and breaks the comma-separated reference lists the Excel
+  # bridge parses, so canonicalize them out here at the single shared chokepoint.
+  out <- gsub("[/\\:*?\"<>|,[:space:][:cntrl:]]", "_", out)
   if (nchar(out) == 0L) {
     return("_")
   }

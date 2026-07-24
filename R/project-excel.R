@@ -251,6 +251,35 @@ importProjectFromExcel <- function(
             jsonData$parameterSets,
             .parseExcelParameterSheets(file, sheetNames = paramSheetNames)
           )
+          # A sheet named after an individual is that individual's own parameter
+          # override; link it so the override is applied. The match is on the
+          # canonical id, so `Indiv1` sheet links to the `Indiv1` individual
+          # regardless of case, and the sheet's set id is added to the
+          # individual's `parameterSets` (deduplicated, keeping any set the
+          # `ParameterSets` column already named).
+          sheetCanonical <- vapply(
+            paramSheetNames,
+            .canonicalizeOneId,
+            character(1)
+          )
+          jsonData$individuals <- lapply(jsonData$individuals, function(indiv) {
+            indivCanonical <- .canonicalizeOneId(indiv$individualId)
+            # A blank/NA individual id (e.g. a trailing blank row) matches
+            # nothing: an `NA ==` comparison yields all-NA, and indexing by an
+            # all-NA logical returns a vector of NAs, not an empty one, so guard
+            # it explicitly rather than injecting NA into `parameterSets`.
+            if (is.na(indivCanonical)) {
+              return(indiv)
+            }
+            match <- paramSheetNames[indivCanonical == sheetCanonical]
+            if (length(match) > 0L) {
+              indiv$parameterSets <- as.list(unique(c(
+                unlist(indiv$parameterSets),
+                match
+              )))
+            }
+            indiv
+          })
         }
         jsonData
       }
@@ -263,8 +292,13 @@ importProjectFromExcel <- function(
         jsonData
       }
     ),
-    # Applications: the protocols sheet is the applications section; every other
-    # sheet is a parameter set keyed by sheet name.
+    # Applications. Two workbook layouts are supported. The newer layout carries
+    # a single `ApplicationProtocols` sheet listing the applications, with every
+    # other sheet a parameter set it references. The 5.x layout has no
+    # `ApplicationProtocols` sheet: it stores one sheet per protocol, each a
+    # parameter-set-shaped sheet, so each such sheet becomes both a parameter set
+    # (keyed by sheet name) and an `Application` wrapping it, so a scenario that
+    # names the protocol by id resolves.
     list(
       property = "applicationsFile",
       parse = function(file, jsonData) {
@@ -275,12 +309,28 @@ importProjectFromExcel <- function(
           if (length(appsObj) > 0) {
             jsonData$applications <- appsObj
           }
-        }
-        paramSheetNames <- setdiff(sheets, "ApplicationProtocols")
-        if (length(paramSheetNames) > 0) {
+          paramSheetNames <- setdiff(sheets, "ApplicationProtocols")
+          if (length(paramSheetNames) > 0) {
+            jsonData$parameterSets <- c(
+              jsonData$parameterSets,
+              .parseExcelParameterSheets(file, sheetNames = paramSheetNames)
+            )
+          }
+        } else if (length(sheets) > 0) {
           jsonData$parameterSets <- c(
             jsonData$parameterSets,
-            .parseExcelParameterSheets(file, sheetNames = paramSheetNames)
+            .parseExcelParameterSheets(file, sheetNames = sheets)
+          )
+          # One application per protocol sheet, keyed by sheet name and wrapping
+          # the same-named parameter set (both ids canonicalize identically, so
+          # the reference resolves). The record carries no inner `id`; the key is
+          # the id, matching `.parseExcelApplications()`.
+          jsonData$applications <- c(
+            jsonData$applications,
+            stats::setNames(
+              lapply(sheets, function(sheet) list(parameterSets = list(sheet))),
+              sheets
+            )
           )
         }
         jsonData
@@ -303,8 +353,14 @@ importProjectFromExcel <- function(
     list(
       property = "parameterIdentificationFile",
       parse = function(file, jsonData) {
-        jsonData$parameterIdentification <-
-          .parseExcelParameterIdentification(file)
+        tasks <- .parseExcelParameterIdentification(file)
+        # A 5.x output mapping may name its output path by full OSPS path rather
+        # than by an output-path id. Rewrite such a full path to the id of the
+        # matching `outputPaths` definition so the reference resolves.
+        jsonData$parameterIdentification <- .resolvePIOutputPathRefs(
+          tasks,
+          jsonData$outputPaths
+        )
         jsonData
       }
     )
@@ -319,6 +375,14 @@ importProjectFromExcel <- function(
       jsonData <- section$parse(file, jsonData)
     }
   }
+
+  # Observed data. The project records a single `dataFile` (an experimental-data
+  # workbook) and a `dataImporterConfigurationFile` under `dataFolder`, not a
+  # per-section workbook, so it is parsed outside the `sections` loop. The
+  # importer reifies it as one `excel` observed-data definition keyed by the
+  # data-file basename, listing the workbook's sheets; the loader resolves the
+  # `file` / `importerConfiguration` basenames against `dataFolder`.
+  jsonData <- .parseExcelObservedData(jsonData, prop, pcDir)
 
   # --- Determine output path ---
   if (is.null(outputDir)) {
@@ -1241,7 +1305,6 @@ projectStatus <- function(project, silent = FALSE) {
   "SteadyState",
   "SteadyStateTime",
   "SteadyStateTimeUnit",
-  "OverwriteFormulasInSS",
   "ModelFile",
   "OutputPathsIds"
 )
@@ -1286,12 +1349,30 @@ projectStatus <- function(project, silent = FALSE) {
       simulationTime = .naToNull(as.character(row[["SimulationTime"]])),
       simulationTimeUnit = .naToNull(as.character(row[["SimulationTimeUnit"]])),
       steadyState = .naToNull(.toLogical(row[["SteadyState"]], "SteadyState")),
-      steadyStateTime = .naToNull(as.numeric(row[["SteadyStateTime"]])),
-      steadyStateTimeUnit = .naToNull(
-        as.character(row[["SteadyStateTimeUnit"]])
+      # A blank steady-state time/unit defaults to the same values the authoring
+      # API and the legacy 5.x reader use (`1000` / `"min"`), rather than null, so
+      # a project round-tripped through the authoring API is byte-identical to
+      # the imported one. The value is only used when `steadyState` is TRUE.
+      steadyStateTime = .naToDefault(
+        as.numeric(row[["SteadyStateTime"]]),
+        1000
       ),
+      steadyStateTimeUnit = .naToDefault(
+        as.character(row[["SteadyStateTimeUnit"]]),
+        "min"
+      ),
+      # `OverwriteFormulasInSS` is a newer column; a pre-6.0 Scenarios sheet
+      # omits it, so guard the lookup rather than abort on its absence (matching
+      # `InitialConditions` above). An absent or blank value defaults to FALSE.
       overwriteFormulasInSS = .naToNull(
-        .toLogical(row[["OverwriteFormulasInSS"]], "OverwriteFormulasInSS")
+        .toLogical(
+          if ("OverwriteFormulasInSS" %in% names(row)) {
+            row[["OverwriteFormulasInSS"]]
+          } else {
+            NA
+          },
+          "OverwriteFormulasInSS"
+        )
       ),
       modelFile = as.character(row[["ModelFile"]]),
       outputPaths = .parseCommaListToArray(row[["OutputPathsIds"]])
@@ -1299,6 +1380,66 @@ projectStatus <- function(project, silent = FALSE) {
     scenarios[[i]] <- scenario
   }
   scenarios
+}
+
+#' Reify the project's experimental-data file as an observed-data definition
+#'
+#' The project configuration records a single `dataFile` under `dataFolder`
+#' (optionally with a `dataImporterConfigurationFile`). This builds one `excel`
+#' observed-data entry from it, keyed by the data-file basename and listing the
+#' workbook's sheets, so a plot or PI mapping that references observed data has
+#' something to resolve against. `file` and `importerConfiguration` are stored as
+#' basenames; the loader resolves them under `dataFolder`. A no-op when no
+#' `dataFile` is configured, or its workbook is absent (with a warning, since a
+#' configured-but-missing file is a migration gap the user should see).
+#'
+#' @param jsonData The accumulating project JSON list.
+#' @param prop The `Property -> Value` lookup closure from the importer.
+#' @param pcDir Absolute path to the project-configuration directory.
+#' @returns `jsonData` with an `observedData` section added when applicable.
+#' @keywords internal
+#' @noRd
+.parseExcelObservedData <- function(jsonData, prop, pcDir) {
+  dataFile <- prop("dataFile")
+  if (is.null(dataFile) || is.na(dataFile) || dataFile == "") {
+    return(jsonData)
+  }
+  dataFolderRaw <- prop("dataFolder") %||% "."
+  dataFolder <- .resolveProjectPath(dataFolderRaw, pcDir, "dataFolder")
+  dataFilePath <- .resolveProjectPath(dataFile, dataFolder, "dataFile")
+  if (!file.exists(dataFilePath)) {
+    # Classed so a caller that expects a missing data file (the legacy-snapshot
+    # upgrade, which never carries the data workbook) can muffle just this
+    # warning without swallowing others.
+    cli::cli_warn(
+      messages$importSkippedObservedData(dataFile),
+      class = "esqlabsR_importSkippedObservedData"
+    )
+    return(jsonData)
+  }
+
+  importerConfig <- prop("dataImporterConfigurationFile")
+  # `file` / `importerConfiguration` are stored as given (relative to
+  # `dataFolder`), not truncated to a basename: the loader resolves them under
+  # `dataFolder` (`.resolveDataPath()`), so a file in a subfolder would be lost
+  # if only its basename were kept. Only the section key is reduced to a
+  # basename, since an id becomes a single filename segment and cannot hold a
+  # path separator.
+  entry <- list(
+    type = "excel",
+    file = dataFile,
+    sheets = as.list(readxl::excel_sheets(dataFilePath))
+  )
+  if (
+    !is.null(importerConfig) && !is.na(importerConfig) && importerConfig != ""
+  ) {
+    entry$importerConfiguration <- importerConfig
+  }
+  jsonData$observedData <- stats::setNames(
+    list(entry),
+    basename(dataFile)
+  )
+  jsonData
 }
 
 #' Parse the ApplicationProtocols Excel sheet into JSON structure
@@ -1662,8 +1803,13 @@ projectStatus <- function(project, silent = FALSE) {
 # @noRd
 .parseExcelParameterIdentification <- function(piFile) {
   sheets <- readxl::excel_sheets(piFile)
+  # Two layouts. The newer one has a single `PITasks` sheet (one row per task,
+  # config inline in `config.*` columns). The 5.x layout has no `PITasks` sheet
+  # and instead keys every sheet by a `PITaskName` column, with the
+  # configuration split across `PIConfiguration` / `AlgorithmOptions` /
+  # `CIOptions`. Dispatch on which is present.
   if (!("PITasks" %in% sheets)) {
-    return(list())
+    return(.parseExcelPI5x(piFile, sheets))
   }
   taskDf <- readExcel(piFile, sheet = "PITasks")
   paramDf <- if ("PIParameters" %in% sheets) {
@@ -1726,6 +1872,309 @@ projectStatus <- function(project, silent = FALSE) {
       }
     }
     record
+  })
+}
+
+# Parse the legacy 5.x parameter-identification layout: no `PITasks` sheet, but
+# `PIParameters` / `PIOutputMappings` / `PIConfiguration` / `AlgorithmOptions` /
+# `CIOptions` sheets each keyed by a `PITaskName` column. One task is built per
+# distinct `PITaskName`, gathering its parameters, output mappings, and
+# configuration from those sheets, producing the same
+# `{id, scenarios[], parameters[], outputMappings[], configuration}` shape the
+# newer layout does. Returns an unnamed list of PITask JSON objects (empty when
+# no `PITaskName`-keyed sheet is present).
+#
+# @keywords internal
+# @noRd
+.parseExcelPI5x <- function(piFile, sheets) {
+  read5xSheet <- function(name) {
+    if (name %in% sheets) readExcel(piFile, sheet = name) else NULL
+  }
+  paramDf <- read5xSheet("PIParameters")
+  mappingDf <- read5xSheet("PIOutputMappings")
+  configDf <- read5xSheet("PIConfiguration")
+  algDf <- read5xSheet("AlgorithmOptions")
+  ciDf <- read5xSheet("CIOptions")
+
+  taskNames <- unique(unlist(lapply(
+    list(mappingDf, paramDf, configDf, algDf, ciDf),
+    function(df) {
+      if (!is.null(df) && "PITaskName" %in% names(df)) {
+        as.character(df$PITaskName)
+      }
+    }
+  )))
+  taskNames <- taskNames[!is.na(taskNames)]
+  if (length(taskNames) == 0L) {
+    return(list())
+  }
+
+  lapply(taskNames, function(task) {
+    params <- .parseExcelPI5xParams(paramDf, task)
+    mappings <- .parseExcelPI5xMappings(mappingDf, task)
+    # A task's scenarios are the union of the scenarios its parameters and
+    # mappings reference (the 5.x layout has no separate task-scenario list).
+    scenarios <- unique(unlist(lapply(
+      c(params, mappings),
+      function(x) unlist(x$scenarios)
+    )))
+    list(
+      id = task,
+      scenarios = as.list(scenarios),
+      parameters = params,
+      outputMappings = mappings,
+      configuration = .parseExcelPI5xConfig(configDf, algDf, ciDf, task)
+    )
+  })
+}
+
+# Build one task's `parameters` from the 5.x `PIParameters` rows. Maps the
+# `Container Path` + `Parameter Name` columns to the flat `path`, and coins a
+# per-parameter `id` from the parameter name (de-duplicated within the task).
+#
+# @keywords internal
+# @noRd
+.parseExcelPI5xParams <- function(df, task) {
+  rows <- .pi5xTaskRows(df, task)
+  ids <- character()
+  lapply(seq_len(nrow(rows)), function(i) {
+    row <- rows[i, ]
+    id <- .pi5xUniqueId(as.character(row[["Parameter Name"]]), ids)
+    ids[[length(ids) + 1L]] <<- id
+    .dropNulls(list(
+      id = id,
+      scenarios = as.list(.parseCommaListToArray(row[["Scenarios"]])),
+      path = .pi5xPath(row[["Container Path"]], row[["Parameter Name"]]),
+      units = .naToNull(as.character(row[["Units"]])),
+      minValue = .naToNull(as.numeric(row[["MinValue"]])),
+      maxValue = .naToNull(as.numeric(row[["MaxValue"]])),
+      startValue = .naToNull(as.numeric(row[["StartValue"]]))
+    ))
+  })
+}
+
+# Build one task's `outputMappings` from the 5.x `PIOutputMappings` rows. Coins
+# a per-mapping `id` from the output path's last segment (de-duplicated within
+# the task) and maps the offset/factor/weight columns.
+#
+# @keywords internal
+# @noRd
+.parseExcelPI5xMappings <- function(df, task) {
+  rows <- .pi5xTaskRows(df, task)
+  ids <- character()
+  lapply(seq_len(nrow(rows)), function(i) {
+    row <- rows[i, ]
+    outputPath <- as.character(row[["OutputPath"]])
+    id <- .pi5xUniqueId(sub(".*\\|", "", outputPath), ids)
+    ids[[length(ids) + 1L]] <<- id
+    .dropNulls(list(
+      id = id,
+      scenarios = as.list(.parseCommaListToArray(row[["Scenarios"]])),
+      outputPath = .naToNull(outputPath),
+      observedData = .naToNull(as.character(row[["DataSet"]])),
+      scaling = .naToNull(as.character(row[["Scaling"]])),
+      xOffset = .naToNull(as.numeric(row[["xOffset"]])),
+      yOffset = .naToNull(as.numeric(row[["yOffset"]])),
+      xFactor = .naToNull(as.numeric(row[["xFactor"]])),
+      yFactor = .naToNull(as.numeric(row[["yFactor"]])),
+      weight = .naToNull(as.numeric(row[["Weight"]]))
+    ))
+  })
+}
+
+# Build one task's nested `configuration` from the 5.x `PIConfiguration` row and
+# the `AlgorithmOptions` / `CIOptions` option rows. Column-to-field mapping
+# mirrors `.buildPIConfiguration()`'s accepted keys; absent values are omitted.
+#
+# @keywords internal
+# @noRd
+.parseExcelPI5xConfig <- function(configDf, algDf, ciDf, task) {
+  configuration <- list()
+  configRows <- .pi5xTaskRows(configDf, task)
+  if (nrow(configRows) > 0L) {
+    row <- configRows[1, ]
+    scalar <- list(
+      algorithm = .naToNull(as.character(row[["Algorithm"]])),
+      ciMethod = .naToNull(as.character(row[["CIMethod"]])),
+      autoEstimateCI = .naToNull(
+        .toLogical(row[["AutoEstimateCI"]], "AutoEstimateCI")
+      ),
+      printEvaluationFeedback = .naToNull(
+        .toLogical(row[["PrintEvaluationFeedback"]], "PrintEvaluationFeedback")
+      )
+    )
+    for (nm in names(scalar)) {
+      if (!is.null(scalar[[nm]])) configuration[[nm]] <- scalar[[nm]]
+    }
+
+    objective <- .dropNulls(list(
+      type = .naToNull(as.character(row[["ObjectiveFunctionType"]])),
+      residualWeightingMethod = .naToNull(
+        as.character(row[["ResidualWeightingMethod"]])
+      ),
+      robustMethod = .naToNull(as.character(row[["RobustMethod"]])),
+      scaleVar = .naToNull(as.character(row[["ScaleVar"]])),
+      linScaleCV = .naToNull(as.numeric(row[["LinScaleCV"]])),
+      logScaleSD = .naToNull(as.numeric(row[["LogScaleSD"]]))
+    ))
+    if (length(objective) > 0L) {
+      configuration$objectiveFunction <- objective
+    }
+
+    runOptions <- .dropNulls(list(
+      numberOfCores = .naToNull(as.numeric(row[["numberOfCores"]])),
+      checkForNegativeValues = .naToNull(
+        .toLogical(row[["checkForNegativeValues"]], "checkForNegativeValues")
+      )
+    ))
+    if (length(runOptions) > 0L) {
+      configuration$simulationRunOptions <- runOptions
+    }
+  }
+
+  algorithmOptions <- .pi5xOptionRows(algDf, task)
+  if (length(algorithmOptions) > 0L) {
+    configuration$algorithmOptions <- algorithmOptions
+  }
+  ciOptions <- .pi5xOptionRows(ciDf, task)
+  if (length(ciOptions) > 0L) {
+    configuration$ciOptions <- ciOptions
+  }
+  configuration
+}
+
+# The rows of a 5.x PI sheet belonging to one task (empty data frame when the
+# sheet is absent or has no matching rows).
+#
+# @keywords internal
+# @noRd
+.pi5xTaskRows <- function(df, task) {
+  if (is.null(df)) {
+    return(data.frame())
+  }
+  if (!("PITaskName" %in% names(df)) || nrow(df) == 0L) {
+    return(df[0, , drop = FALSE])
+  }
+  df[
+    !is.na(df$PITaskName) & as.character(df$PITaskName) == task,
+    ,
+    drop = FALSE
+  ]
+}
+
+# The `OptionName` -> `OptionValue` rows of an AlgorithmOptions / CIOptions sheet
+# for one task, as a named list (empty when none). A numeric-looking value is
+# stored as a number, else as its string.
+#
+# @keywords internal
+# @noRd
+.pi5xOptionRows <- function(df, task) {
+  rows <- .pi5xTaskRows(df, task)
+  if (nrow(rows) == 0L) {
+    return(list())
+  }
+  options <- list()
+  for (i in seq_len(nrow(rows))) {
+    name <- as.character(rows[["OptionName"]][[i]])
+    if (is.na(name) || name == "") {
+      next
+    }
+    raw <- rows[["OptionValue"]][[i]]
+    numeric <- suppressWarnings(as.numeric(raw))
+    token <- tolower(trimws(as.character(raw)))
+    options[[name]] <- if (!is.na(numeric)) {
+      # A numeric value stays numeric, so a `1`/`0` option is not misread as a
+      # boolean.
+      numeric
+    } else if (token %in% c("true", "false")) {
+      # An explicit boolean-string flag (a common 5.x option encoding) becomes a
+      # real logical, not the literal string a downstream consumer would reject.
+      token == "true"
+    } else {
+      as.character(raw)
+    }
+  }
+  options
+}
+
+# Join a container path and parameter name into the flat `path` the PI
+# definition uses (`<container>|<parameter>`); a blank container yields just the
+# parameter name. A blank/NA parameter name yields NULL (no meaningful path),
+# so the caller drops the field and validation flags the incomplete parameter
+# rather than a `"<container>|NA"` path that looks valid but references nothing.
+#
+# @keywords internal
+# @noRd
+.pi5xPath <- function(containerPath, parameterName) {
+  container <- as.character(containerPath)
+  parameter <- as.character(parameterName)
+  if (is.na(parameter) || parameter == "") {
+    return(NULL)
+  }
+  if (is.na(container) || container == "") {
+    return(parameter)
+  }
+  paste(container, parameter, sep = "|")
+}
+
+# Coin an id unique within `existing` by suffixing `_2`, `_3`, ... on a clash.
+# The 5.x PI sheets carry no id column, so parameters and mappings need a
+# synthesised id. It is canonicalized here (the sheets derive it from a
+# parameter name or a path segment, which carry spaces and mixed case) so the
+# coined id is a clean, stable single segment.
+#
+# @keywords internal
+# @noRd
+.pi5xUniqueId <- function(base, existing) {
+  base <- as.character(base)
+  if (is.na(base) || base == "") {
+    base <- "item"
+  }
+  base <- .canonicalizeOneId(base)
+  candidate <- base
+  n <- 1L
+  while (candidate %in% existing) {
+    n <- n + 1L
+    candidate <- paste0(base, "_", n)
+  }
+  candidate
+}
+
+# Drop the NULL elements of a list, so an optional field left NULL stays absent
+# from the JSON rather than serialising as null.
+#
+# @keywords internal
+# @noRd
+.dropNulls <- function(x) {
+  x[!vapply(x, is.null, logical(1))]
+}
+
+# Rewrite each PI output mapping whose `outputPath` is a full OSPS path (rather
+# than an output-path id) to the id of the `outputPaths` definition with that
+# value, so the reference resolves. A value with no matching definition is left
+# as-is (the cross-reference validator then reports it, which is the honest
+# signal that the legacy sheet names a path no output-path defines).
+#
+# @keywords internal
+# @noRd
+.resolvePIOutputPathRefs <- function(tasks, outputPaths) {
+  if (length(tasks) == 0L || length(outputPaths) == 0L) {
+    return(tasks)
+  }
+  # value -> id, so a full path can be looked up back to its output-path id.
+  valueToId <- stats::setNames(
+    names(outputPaths),
+    vapply(outputPaths, as.character, character(1))
+  )
+  lapply(tasks, function(task) {
+    task$outputMappings <- lapply(task$outputMappings, function(mapping) {
+      path <- mapping$outputPath
+      if (!is.null(path) && path %in% names(valueToId)) {
+        mapping$outputPath <- valueToId[[path]]
+      }
+      mapping
+    })
+    task
   })
 }
 
@@ -2118,6 +2567,16 @@ projectStatus <- function(project, silent = FALSE) {
   x
 }
 
+#' Replace an absent/`NA` single cell with a default, else keep the value
+#' @keywords internal
+#' @noRd
+.naToDefault <- function(x, default) {
+  if (is.null(x) || length(x) == 0 || (length(x) == 1L && is.na(x))) {
+    return(default)
+  }
+  x
+}
+
 #' Coerce a single Excel logical cell tolerantly to `TRUE`/`FALSE`/`NA`
 #'
 #' Bare `as.logical()` only recognises `"TRUE"`/`"FALSE"`/`"T"`/`"F"`; a legacy
@@ -2219,9 +2678,13 @@ projectStatus <- function(project, silent = FALSE) {
 
 #' Parse a comma-separated string into a character vector, or NULL
 #'
-#' Honors `\\` as a literal backslash and `\,` as a literal comma so
-#' that ids written via `.formatArrayToCommaList()` round-trip even
-#' when they contain commas.
+#' Two conventions for protecting a comma inside a value are honored, so both
+#' the values this package writes and legacy 5.x cells parse:
+#'   - backslash escaping (`.formatArrayToCommaList()`'s output): `\\` is a
+#'     literal backslash and `\,` a literal comma.
+#'   - double-quote wrapping (the 5.x `"A", "B", "C, with comma"` cell): a
+#'     comma inside a quoted run is literal, and the wrapping quotes are
+#'     stripped from the token.
 #'
 #' @keywords internal
 #' @noRd
@@ -2230,20 +2693,24 @@ projectStatus <- function(project, silent = FALSE) {
     return(NULL)
   }
   raw <- as.character(x)
-  # Walk the string character by character: track whether the previous
-  # character was an unescaped backslash (escape state). Split on
-  # unescaped commas; collapse `\\` to `\` and `\,` to `,`.
+  # Walk the string character by character, tracking escape state (previous
+  # character was an unescaped backslash) and quote state (inside a `"..."`
+  # run). Split on a comma only when it is neither escaped nor quoted; collapse
+  # `\\` to `\` and `\,` to `,`; drop the wrapping quotes.
   chars <- strsplit(raw, "", fixed = TRUE)[[1]]
   parts <- character()
   current <- ""
   escape <- FALSE
+  inQuote <- FALSE
   for (ch in chars) {
     if (escape) {
       current <- paste0(current, ch)
       escape <- FALSE
     } else if (ch == "\\") {
       escape <- TRUE
-    } else if (ch == ",") {
+    } else if (ch == "\"") {
+      inQuote <- !inQuote
+    } else if (ch == "," && !inQuote) {
       parts <- c(parts, current)
       current <- ""
     } else {

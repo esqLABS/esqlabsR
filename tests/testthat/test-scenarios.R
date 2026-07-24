@@ -739,7 +739,7 @@ test_that("renameScenario canonicalizes newId, warning and landing on the canoni
   expect_snapshot(
     renameScenario(project, "testscenario", "New Name")
   )
-  expect_true("new name" %in% names(project$definitions$scenarios))
+  expect_true("new_name" %in% names(project$definitions$scenarios))
   expect_false("testscenario" %in% names(project$definitions$scenarios))
 })
 
