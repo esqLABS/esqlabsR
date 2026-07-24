@@ -23,6 +23,9 @@
 #' @param stopIfNotFound If `TRUE` (default), the function errors when a
 #'   referenced simulated path or observed dataSet cannot be resolved. If
 #'   `FALSE`, a warning is emitted and the entry is skipped.
+#' @param validate If `TRUE` (default), the `dataCombined` section is validated
+#'   before any DataCombined is built, so a definition missing a required field
+#'   aborts with a clear message instead of failing mid-build.
 #'
 #' @returns A named list of `DataCombined` objects, one per requested name.
 #'   Empty list when no names are requested.
@@ -33,7 +36,8 @@ createDataCombined <- function(
   dataCombined = NULL,
   plotGrids = NULL,
   scenarioResults = NULL,
-  stopIfNotFound = TRUE
+  stopIfNotFound = TRUE,
+  validate = TRUE
 ) {
   validateIsOfType(project, "Project")
   validateIsString(dataCombined, nullAllowed = TRUE)
@@ -41,6 +45,16 @@ createDataCombined <- function(
 
   if (is.null(dataCombined) && is.null(plotGrids)) {
     return(list())
+  }
+
+  # Pre-flight the dataCombined shape so a hand-edited definition file with a
+  # missing required field (`label` / `scenario` / `path` / `dataSet`) aborts
+  # with a clean message here, rather than crashing mid-build on a NULL field.
+  if (isTRUE(validate)) {
+    project$ensureValid(
+      sections = "dataCombined",
+      opName = "createDataCombined"
+    )
   }
 
   observedData <- loadObservedData(project)
@@ -337,7 +351,7 @@ createDataCombinedFromExcel <- function(...) {
 #'
 #' @param dataCombined Named list of DataCombined specs (from `dataCombined`
 #'   definitions), each with nested `simulated` / `observed` entry lists.
-#' @return validationResult.
+#' @returns validationResult.
 #' @keywords internal
 #' @noRd
 .validateDataCombined <- function(dataCombined) {

@@ -85,6 +85,29 @@ test_that("validateProject runs the dataCombined adapter", {
   expect_true(results$dataCombined$hasCriticalErrors())
 })
 
+test_that(".validateDataCombined flags an empty observed dataSet reference", {
+  project <- .fakeProject()
+  addDataCombined(
+    project,
+    id = "dc1",
+    simulated = list(list(
+      label = "sim",
+      scenario = "testscenario",
+      path = "Organism|A"
+    ))
+  )
+  # Inject an empty observed dataSet directly, mimicking a hand-edited
+  # Project.json that bypassed the addDataCombined() guard. The section
+  # accessor is read-only; an in-memory project writes through .setSection()
+  # without validating, so the malformed record survives for the validator.
+  dc <- .getSection(project, "dataCombined")
+  dc$dc1$observed <- list(list(label = "obs", dataSet = ""))
+  .setSection(project, "dataCombined", dc)
+  result <- .dataCombinedValidatorAdapter(project)
+  msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
+  expect_match(msgs, "dataSet", all = FALSE)
+})
+
 
 # createDataCombined(project, ...) tests ----
 
@@ -131,6 +154,31 @@ test_that("createDataCombined builds DataCombined for Example project", {
   expect_s3_class(result[[dcName]], "DataCombined")
   df <- result[[dcName]]$toDataFrame()
   expect_setequal(unique(df$dataType), c("simulated", "observed"))
+})
+
+test_that("createDataCombined aborts cleanly on a dataCombined missing a required field", {
+  project <- .fakeProject()
+  addDataCombined(
+    project,
+    id = "dc1",
+    simulated = list(list(
+      label = "sim",
+      scenario = "testscenario",
+      path = "Organism|A"
+    ))
+  )
+  # Corrupt the stored entry (dropping its scenario), mimicking a hand-edited
+  # definition file that bypassed the addDataCombined() write-gate.
+  dc <- .getSection(project, "dataCombined")
+  dc$dc1$simulated[[1]]$scenario <- NULL
+  .setSection(project, "dataCombined", dc)
+
+  # The validate pre-flight must abort with a clean message, not crash mid-build
+  # on the NULL field.
+  expect_error(
+    createDataCombined(project, dataCombined = "dc1"),
+    "scenario"
+  )
 })
 
 test_that("createDataCombined errors when dataCombined is not a string", {

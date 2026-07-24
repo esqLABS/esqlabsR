@@ -10,7 +10,8 @@ createDataCombined(
   dataCombined = NULL,
   plotGrids = NULL,
   scenarioResults = NULL,
-  stopIfNotFound = TRUE
+  stopIfNotFound = TRUE,
+  validate = TRUE
 )
 
 createDataCombinedFromExcel(...)
@@ -31,6 +32,10 @@ returned by \code{\link[=runScenarios]{runScenarios()}}). Not the OSPS \code{Sim
 \item{stopIfNotFound}{If \code{TRUE} (default), the function errors when a
 referenced simulated path or observed dataSet cannot be resolved. If
 \code{FALSE}, a warning is emitted and the entry is skipped.}
+
+\item{validate}{If \code{TRUE} (default), the \code{dataCombined} section is validated
+before any DataCombined is built, so a definition missing a required field
+aborts with a clear message instead of failing mid-build.}
 }
 \value{
 A named list of \code{DataCombined} objects, one per requested name.

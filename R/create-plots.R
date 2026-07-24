@@ -68,12 +68,19 @@ createPlots <- function(
   validateIsOfType(project, "Project")
   if (isTRUE(validate)) {
     project$ensureValid(
-      sections = c("plots", "scenarios", "observedData", "crossReferences"),
+      sections = c(
+        "plots",
+        "dataCombined",
+        "scenarios",
+        "observedData",
+        "crossReferences"
+      ),
       opName = "createPlots"
     )
   }
   allPlotConfig <- .unwrapDefinitionList(project$definitions$plots) %||% list()
-  allPlotGrids <- .unwrapDefinitionList(project$definitions$plotGrids) %||% list()
+  allPlotGrids <- .unwrapDefinitionList(project$definitions$plotGrids) %||%
+    list()
 
   # Only default to "all grids" when neither selector is given. A caller that
   # asks only for standalone `plots` should not also get every grid.
