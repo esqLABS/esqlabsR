@@ -209,7 +209,14 @@
 # @keywords internal
 # @noRd
 .legacySheetToDf <- function(sheet) {
-  if (!is.list(sheet) || is.null(sheet$column_names)) {
+  # `rows` may be absent (an empty sheet), but a present `rows` must be a list
+  # of list-shaped records; a scalar or otherwise malformed value is rejected
+  # here rather than failing later with a cryptic indexing error.
+  if (
+    !is.list(sheet) ||
+      is.null(sheet$column_names) ||
+      (!is.null(sheet$rows) && !is.list(sheet$rows))
+  ) {
     cli::cli_abort(messages$legacySnapshotMalformedSheet())
   }
   columnNames <- unlist(sheet$column_names)
@@ -221,6 +228,9 @@
   colnames(df) <- columnNames
   for (i in seq_along(rows)) {
     rowData <- rows[[i]]
+    if (!is.list(rowData)) {
+      cli::cli_abort(messages$legacySnapshotMalformedSheet())
+    }
     for (colName in columnNames) {
       # Read each cell by column name, not position: the exporter writes a row
       # as a named list, so name-keyed access is robust to any key reordering a

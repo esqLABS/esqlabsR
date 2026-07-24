@@ -50,6 +50,21 @@ test_that(".legacySheetToDf reads cells by name and rejects a malformed sheet", 
 
   # A value that is not a {column_names, rows} object aborts clearly.
   expect_error(.legacySheetToDf("oops"), "malformed")
+
+  # An absent `rows` is a valid empty sheet; a malformed `rows` (a scalar, or a
+  # non-list row record) aborts with the same clear message.
+  expect_equal(
+    nrow(.legacySheetToDf(list(column_names = list("A")))),
+    0
+  )
+  expect_error(
+    .legacySheetToDf(list(column_names = list("A"), rows = "oops")),
+    "malformed"
+  )
+  expect_error(
+    .legacySheetToDf(list(column_names = list("A"), rows = list("oops"))),
+    "malformed"
+  )
 })
 
 test_that("restoreProject upgrades a previous-version snapshot to a v6 tree", {
