@@ -179,7 +179,12 @@ restoreProject <- function(snapshot, dir = ".", overwrite = FALSE) {
   # an older `snapshotProjectConfiguration()`) is not a v6 `Project.json`; upgrade
   # it through the Excel bridge rather than trying to parse it as a v6 snapshot.
   if (.isLegacySnapshot(jsonData)) {
-    return(.upgradeLegacySnapshot(jsonData, dir, overwrite))
+    return(.upgradeLegacySnapshot(
+      jsonData,
+      dir,
+      overwrite,
+      replacedExistingTree
+    ))
   }
 
   # A legacy or hand-authored snapshot may carry non-canonical ids (e.g.

@@ -76,6 +76,73 @@ test_that("restoreProject upgrades a previous-version snapshot to a v6 tree", {
   expect_length(reloaded$definitions$scenarios, 8)
 })
 
+test_that("upgrading a snapshot with a configured data file emits no warning", {
+  # The fixture configures a `dataFile` that no snapshot carries, so the bridge
+  # would warn "data file not found"; the upgrade muffles that redundant
+  # warning (it is covered by the upgrade's own observed-data notice), which
+  # matters under testthat 3e where an uncaught warning fails the test.
+  dir <- withr::local_tempdir()
+  expect_no_warning(
+    suppressMessages(restoreProject(.legacySnapshotFixture(), dir))
+  )
+})
+
+test_that("materializer writes each workbook under its recorded filename", {
+  # A snapshot that renamed a workbook (here Scenarios) must have the workbook
+  # written under that custom name, since the copied projectConfiguration sheet
+  # points the bridge at it; a hardcoded name would silently drop the section.
+  fixture <- jsonlite::fromJSON(
+    .legacySnapshotFixture(),
+    simplifyVector = FALSE
+  )
+  pc <- fixture$projectConfiguration
+  for (i in seq_along(pc$rows)) {
+    if (identical(pc$rows[[i]][["Property"]], "scenariosFile")) {
+      pc$rows[[i]][["Value"]] <- "MyScenarios.xlsx"
+    }
+  }
+  fixture$projectConfiguration <- pc
+
+  scratch <- withr::local_tempdir()
+  esqlabsR:::.materializeLegacySnapshot(fixture, scratch)
+  expect_true(file.exists(file.path(
+    scratch,
+    "Configurations",
+    "MyScenarios.xlsx"
+  )))
+  expect_false(file.exists(file.path(
+    scratch,
+    "Configurations",
+    "Scenarios.xlsx"
+  )))
+})
+
+test_that(".restoreColumnTypes keeps a zero-padded id column as text", {
+  df <- data.frame(
+    id = c("01", "02", "010"),
+    n = c("1", "2", "3"),
+    stringsAsFactors = FALSE
+  )
+  out <- esqlabsR:::.restoreColumnTypes(df)
+  expect_type(out$id, "character")
+  expect_equal(out$id, c("01", "02", "010"))
+  # A genuine numeric column is still coerced.
+  expect_type(out$n, "double")
+})
+
+test_that("restoreProject warns of a stale handle when it overwrites a tree", {
+  # First restore creates a tree; the second, with overwrite, must warn that a
+  # Project loaded from `dir` before is now stale, matching the v6 path.
+  dir <- withr::local_tempdir()
+  suppressMessages(restoreProject(.legacySnapshotFixture(), dir))
+  expect_warning(
+    suppressMessages(
+      restoreProject(.legacySnapshotFixture(), dir, overwrite = TRUE)
+    ),
+    "still contain the old project"
+  )
+})
+
 test_that("restoreProject still restores a v6 snapshot (regression)", {
   src <- withr::local_tempdir()
   initProject(src, type = "example", createExcel = FALSE)
