@@ -519,6 +519,23 @@ messages$missingResultsForScenario <- function(scenarioName) {
   )
 }
 
+messages$scenarioBuildFailed <- function(scenarioName, conditionMessage) {
+  # Escape braces in the underlying error text so cli does not re-interpret it
+  # as glue expressions when the returned vector is passed to cli_warn().
+  safe_msg <- gsub(
+    "}",
+    "}}",
+    gsub("{", "{{", conditionMessage, fixed = TRUE),
+    fixed = TRUE
+  )
+  c(
+    "x" = cli::format_inline(
+      "Could not build scenario {.val {scenarioName}}; skipping it."
+    ),
+    "i" = safe_msg
+  )
+}
+
 messages$savingScenarioResult <- function(scenarioName, conditionMessage) {
   # Escape braces in the condition message so that cli does not try to
   # re-interpret arbitrary error text as glue expressions when cli_warn()

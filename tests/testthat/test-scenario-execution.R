@@ -168,6 +168,68 @@ test_that("runScenarios aborts by default when a scenario simulation produces no
   )
 })
 
+test_that(".buildScenarioSimulations aborts on a build-time failure by default", {
+  project <- .testProject()
+  addScenario(project, "second", modelFile = "Aciclovir.pkml")
+  local_mocked_bindings(
+    .prepareScenario = function(scenario, ...) {
+      if (scenario$scenarioName == "second") {
+        cli::cli_abort("boom: missing model parameter path")
+      }
+      list(simulation = NULL, population = NULL)
+    }
+  )
+  expect_error(
+    esqlabsR:::.buildScenarioSimulations(project, stopIfFails = TRUE),
+    regexp = "boom: missing model parameter path"
+  )
+})
+
+test_that(".buildScenarioSimulations skips a build-time failure when stopIfFails is FALSE", {
+  project <- .testProject()
+  addScenario(project, "second", modelFile = "Aciclovir.pkml")
+  local_mocked_bindings(
+    .prepareScenario = function(scenario, ...) {
+      if (scenario$scenarioName == "second") {
+        cli::cli_abort("boom: missing model parameter path")
+      }
+      list(simulation = NULL, population = NULL)
+    }
+  )
+  expect_warning(
+    built <- esqlabsR:::.buildScenarioSimulations(project, stopIfFails = FALSE),
+    regexp = "Could not build .*second.*skipping"
+  )
+  # The good scenario built; the broken one is a NULL entry, not an abort.
+  expect_false(is.null(built$prepared$testscenario))
+  expect_null(built$prepared$second)
+})
+
+test_that("runScenarios(stopIfFails = FALSE) skips a build-time failure and collects it as no-results", {
+  # A scenario failing at build time is surfaced-and-skipped, not fatal: the
+  # run reaches result collection, where the skipped scenario records no
+  # results. `testscenario` builds for real (native infra) and the mocked
+  # runner returns NULL for it, so both scenarios collect as no-results.
+  withr::local_options(lifecycle_verbosity = "quiet")
+  project <- .testProject()
+  addScenario(project, "second", modelFile = "does-not-exist.pkml")
+  local_mocked_bindings(
+    runSimulations = function(simulations, ...) {
+      ids <- if (inherits(simulations, "Simulation")) {
+        simulations$id
+      } else {
+        vapply(simulations, function(s) s$id, character(1))
+      }
+      stats::setNames(vector("list", length(ids)), ids)
+    }
+  )
+  out <- suppressWarnings(
+    runScenarios(project, stopIfFails = FALSE)
+  )
+  expect_true(all(c("testscenario", "second") %in% names(out)))
+  expect_null(out$second$outputValues)
+})
+
 test_that("runScenarios builds an individual that carries no age or height", {
   # An animal individual legitimately carries only a weight. Passing an absent
   # age/height through `as.double()` would yield `numeric(0)` and crash

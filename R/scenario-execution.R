@@ -538,7 +538,8 @@
   scenarioNames = NULL,
   customParams = NULL,
   simulationRunOptions = NULL,
-  stopIfParameterNotFound = TRUE
+  stopIfParameterNotFound = TRUE,
+  stopIfFails = TRUE
 ) {
   allScenarios <- project$definitions$scenarios
   if (is.null(scenarioNames)) {
@@ -566,15 +567,32 @@
   prepared <- vector("list", length(scenarioNames))
   for (idx in seq_along(scenarioNames)) {
     name <- scenarioNames[[idx]]
-    prepared[[idx]] <- .prepareScenario(
-      scenario = allScenarios[[name]],
-      project = project,
-      customParams = customParams,
-      cache = cache,
-      simulationRunOptions = simulationRunOptions,
-      stopIfParameterNotFound = stopIfParameterNotFound
-    )
     names(prepared)[[idx]] <- name
+    # A build-time failure of one scenario (e.g. a missing model parameter path)
+    # aborts the whole batch by default. When `stopIfFails = FALSE`, surface it
+    # as a warning and leave this scenario's entry NULL so the run continues
+    # with the scenarios that built; the run loops below skip a NULL entry and
+    # `.collectScenarioResult()` records it as producing no results.
+    prepared[[idx]] <- tryCatch(
+      .prepareScenario(
+        scenario = allScenarios[[name]],
+        project = project,
+        customParams = customParams,
+        cache = cache,
+        simulationRunOptions = simulationRunOptions,
+        stopIfParameterNotFound = stopIfParameterNotFound
+      ),
+      error = function(e) {
+        if (isTRUE(stopIfFails)) {
+          stop(e)
+        }
+        cli::cli_warn(messages$scenarioBuildFailed(
+          scenarioName = name,
+          conditionMessage = conditionMessage(e)
+        ))
+        NULL
+      }
+    )
   }
   list(scenarioNames = scenarioNames, prepared = prepared)
 }
@@ -677,20 +695,22 @@
     scenarioNames = scenarioNames,
     customParams = customParams,
     simulationRunOptions = simulationRunOptions,
-    stopIfParameterNotFound = stopIfParameterNotFound
+    stopIfParameterNotFound = stopIfParameterNotFound,
+    stopIfFails = stopIfFails
   )
   scenarioNames <- built$scenarioNames
   prepared <- built$prepared
   # Still needed below to hand each scenario record to `.collectScenarioResult`.
   allScenarios <- project$definitions$scenarios
 
+  # A NULL `prepared` entry is a scenario skipped at build time (only reachable
+  # under `stopIfFails = FALSE`); it has no simulation to run and is collected
+  # below as producing no results.
   individualSimulations <- list()
   for (idx in seq_along(scenarioNames)) {
-    if (is.null(prepared[[idx]]$population)) {
-      individualSimulations <- c(
-        individualSimulations,
-        prepared[[idx]]$simulation
-      )
+    p <- prepared[[idx]]
+    if (!is.null(p) && is.null(p$population)) {
+      individualSimulations <- c(individualSimulations, p$simulation)
     }
   }
   simulationResults <- list()
@@ -703,7 +723,7 @@
 
   for (idx in seq_along(scenarioNames)) {
     p <- prepared[[idx]]
-    if (!is.null(p$population)) {
+    if (!is.null(p) && !is.null(p$population)) {
       populationResults <- runSimulations(
         simulations = p$simulation,
         population = p$population,
@@ -720,7 +740,7 @@
     out[[idx]] <- .collectScenarioResult(
       scenario = allScenarios[[name]],
       simulation = p$simulation,
-      results = simulationResults[[p$simulation$id]],
+      results = if (is.null(p)) NULL else simulationResults[[p$simulation$id]],
       population = p$population,
       stopIfFails = stopIfFails
     )
