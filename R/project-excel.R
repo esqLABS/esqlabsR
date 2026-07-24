@@ -2049,8 +2049,11 @@ projectStatus <- function(project, silent = FALSE) {
 # @keywords internal
 # @noRd
 .pi5xTaskRows <- function(df, task) {
-  if (is.null(df) || !("PITaskName" %in% names(df)) || nrow(df) == 0L) {
-    return(df[0, , drop = FALSE] %||% data.frame())
+  if (is.null(df)) {
+    return(data.frame())
+  }
+  if (!("PITaskName" %in% names(df)) || nrow(df) == 0L) {
+    return(df[0, , drop = FALSE])
   }
   df[
     !is.na(df$PITaskName) & as.character(df$PITaskName) == task,
