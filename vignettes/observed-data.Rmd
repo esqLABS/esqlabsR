@@ -53,10 +53,24 @@ project$definitions$observedData[[1]]
 
 Two strings attach to every source, and they are not always equal, so keep them distinct:
 
-- **The source id** is the remove handle that `removeObservedData()` matches. It is taken verbatim from the source (not canonicalized like other definitions): the file basename for an `excel`, `pkml`, or `script` source (for example `Aciclovir_TimeValuesData.xlsx`), or the `DataSet` name for a `programmatic` source.
+- **The source id** is the remove handle that `removeObservedData()` matches. It is taken verbatim (not canonicalized like other definitions): the declaration's own `id` field when it sets one, and otherwise the file basename for an `excel`, `pkml`, or `script` source (for example `Aciclovir_TimeValuesData.xlsx`), or the `DataSet` name for a `programmatic` source.
 - **The DataSet name** is the reference handle that a DataCombined uses and `getObservedDataNames()` lists. It comes from the data itself: the Excel importer expands a sheet into a long, fully qualified name; a `pkml` or `script` source uses the `DataSet$name`.
 
 Because the two can differ, read the DataSet name from `getObservedDataNames()` rather than typing it by hand.
+
+Give a source an `id` when you want to choose that handle yourself instead of inheriting it from the file. The id also names the definition file, so the declaration below is stored as `definitions/observed-data/laskin_iv.json` rather than under the data file's name:
+
+```{r, eval = FALSE}
+addObservedData(
+  project,
+  list(
+    id = "laskin_iv",
+    type = "pkml",
+    file = "laskin_1982_iv.pkml"
+  )
+)
+removeObservedData(project, "laskin_iv")
+```
 
 ```{r}
 getObservedDataNames(project)
