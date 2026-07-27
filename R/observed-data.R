@@ -500,28 +500,29 @@ addObservedData <- function(project, entry, overwrite = FALSE) {
       entry,
       length(self$definitions$observedData) + 1L
     )
-    # Config entries are keyed by `file` basename (see removeObservedData);
-    # abort on a duplicate to match the other mutators' convention, unless
-    # overwriting.
-    fileBase <- basename(entry[["file"]])
-    existingFiles <- vapply(
+    # Config entries are keyed by the id `removeObservedData()` matches on: the
+    # entry's own `id` when it declares one, else its `file` basename. That id
+    # also names the definition file, so reject an unsafe one here rather than
+    # at save. Abort on a duplicate to match the other mutators' convention,
+    # unless overwriting.
+    entryId <- .observedDataEntryId(entry)
+    .validateObservedDataId(entryId)
+    existingIds <- vapply(
       self$definitions$observedData,
-      function(e) {
-        if (is.null(e[["file"]])) NA_character_ else basename(e[["file"]])
-      },
+      .observedDataEntryIdOrNA,
       character(1)
     )
-    if (fileBase %in% existingFiles && !overwrite) {
+    if (entryId %in% existingIds && !overwrite) {
       cli::cli_abort(c(
-        "observedData entry with file {.val {fileBase}} already exists.",
+        "observedData entry with id {.val {entryId}} already exists.",
         "i" = "Pass {.code overwrite = TRUE} to replace it."
       ))
     }
     private$.observedDataNamesCache <- NULL
     observedData <- private$.getSection("observedData")
-    # On overwrite, replace the existing entry sharing this basename in place;
-    # otherwise append (a non-overwrite basename clash aborted above).
-    replaceIdx <- if (overwrite) which(existingFiles == fileBase) else integer()
+    # On overwrite, replace the existing entry carrying this id in place;
+    # otherwise append (a non-overwrite id clash aborted above).
+    replaceIdx <- if (overwrite) which(existingIds == entryId) else integer()
     if (length(replaceIdx) > 0L) {
       observedData[[replaceIdx[[1]]]] <- .asObservedDataSource(entry)
     } else {
@@ -538,8 +539,9 @@ addObservedData <- function(project, entry, overwrite = FALSE) {
 
 #' Remove one or more observed-data sources from a Project
 #'
-#' Removes by DataSet name (for a `type = "programmatic"` entry that has not
-#' been saved yet) or by `file` basename (for `type` `"excel"` / `"pkml"` /
+#' Removes by the source's id: its `id` field when the declaration carries one,
+#' else the DataSet name (for a `type = "programmatic"` entry that has not been
+#' saved yet) or the `file` basename (for `type` `"excel"` / `"pkml"` /
 #' `"script"` entries). Vectorizes over a vector of ids, removing each in one
 #' in-memory update; persist with [saveProject()]. Warns and skips any id with
 #' no matching entry.
@@ -555,11 +557,12 @@ addObservedData <- function(project, entry, overwrite = FALSE) {
 #' with several calls.
 #'
 #' @param project A `Project` object.
-#' @param id Character vector of ids. An observed-data id comes from the data
-#'   source (the `DataSet` name of an unsaved programmatic source, or a file
-#'   basename for a file-based source) and is matched verbatim, not
-#'   canonicalized. A saved programmatic source is matched by its `<name>.pkml`
-#'   basename (see the note above).
+#' @param id Character vector of ids. An observed-data id is the declaration's
+#'   `id` field, or, when it declares none, comes from the data source itself
+#'   (the `DataSet` name of an unsaved programmatic source, or a file basename
+#'   for a file-based source). Either way it is matched verbatim, not
+#'   canonicalized. A saved programmatic source that declares no `id` is matched
+#'   by its `<name>.pkml` basename (see the note above).
 #' @returns The `project` object, invisibly.
 #' @export
 #' @family observedData
@@ -600,9 +603,7 @@ removeObservedData <- function(project, id) {
     }
     matchIdx <- which(vapply(
       observedData,
-      function(e) {
-        !is.null(e[["file"]]) && identical(basename(e[["file"]]), one)
-      },
+      function(e) identical(.observedDataEntryIdOrNA(e), one),
       logical(1)
     ))
     if (length(matchIdx) == 0L) {

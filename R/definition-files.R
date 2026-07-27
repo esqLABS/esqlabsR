@@ -825,7 +825,8 @@
 }
 
 # observedData: one file per declaration, keyed by the id `removeObservedData()`
-# matches on (file basename, or the programmatic DataSet name).
+# matches on (a declared `id`, else the file basename or the programmatic
+# DataSet name).
 #
 # @keywords internal
 # @noRd
@@ -835,7 +836,6 @@
   for (entry in observedData) {
     id <- .observedDataEntryId(entry)
     .validateObservedDataId(id)
-    # The on-disk id is the file basename (or the programmatic DataSet name).
     # Two declarations whose `file` differs only by directory derive the same
     # basename and would silently overwrite each other (one file on disk, the
     # second declaration lost on reload). Fail fast naming the collision rather
@@ -843,9 +843,11 @@
     if (!is.null(out[[id]])) {
       cli::cli_abort(c(
         "Two observedData declarations map to the same definition file {.file {id}.json}.",
-        "x" = "The on-disk id is the file basename (or the programmatic name), \\
-        so two sources sharing a basename collide.",
-        "i" = "Rename one source so the basenames differ."
+        "x" = "The on-disk id is the declaration's {.field id}, or the file \\
+        basename (the programmatic name) when it declares none, so two \\
+        declarations sharing one collide.",
+        "i" = "Give them distinct {.field id}s, or rename one so the basenames \\
+        differ."
       ))
     }
     out[[id]] <- unclass(entry)
@@ -885,34 +887,53 @@
   entry
 }
 
-# The on-disk id of an observed-data declaration: the file basename for
-# `excel`/`pkml`/`script`, the DataSet name for `programmatic`. This is the id
-# `removeObservedData()` matches on, so the filename and that id agree.
+# The on-disk id of an observed-data declaration: its own `id` field when it
+# declares one, else the file basename for `excel`/`pkml`/`script` and the
+# DataSet name for `programmatic`. This is the id `removeObservedData()` matches
+# on, so the filename and that id agree.
 #
 # @keywords internal
 # @noRd
 .observedDataEntryId <- function(entry) {
-  if (identical(entry$type, "programmatic")) {
-    id <- entry$name
-  } else {
-    id <- basename(entry[["file"]] %||% "")
-  }
-  if (is.null(id) || !nzchar(id)) {
+  id <- .observedDataEntryIdOrNA(entry)
+  if (is.na(id)) {
     cli::cli_abort(c(
       "An observedData declaration has no id to name its definition file.",
-      "i" = "A file-based entry needs a {.field file}; a programmatic entry \\
-      needs a {.field name}."
+      "i" = "Give it an {.field id}, or let it derive one: a file-based entry \\
+      from its {.field file}, a programmatic entry from its {.field name}."
     ))
+  }
+  id
+}
+
+# The same id, `NA` when the declaration carries nothing to derive one from.
+# Used where a declaration without an id is a normal case to skip past (matching
+# an id against the section) rather than a failure.
+#
+# @keywords internal
+# @noRd
+.observedDataEntryIdOrNA <- function(entry) {
+  id <- entry[["id"]]
+  if (is.null(id)) {
+    id <- if (identical(entry$type, "programmatic")) {
+      entry[["name"]]
+    } else {
+      basename(entry[["file"]] %||% "")
+    }
+  }
+  if (is.null(id) || !nzchar(id)) {
+    return(NA_character_)
   }
   id
 }
 
 # The observed-data id becomes a filename via `.definitionFilePath(dir, id)`, so it
 # must be a single safe path segment or it could escape the kind directory. A
-# programmatic `name` reaches this verbatim (unlike the other keyed kinds, whose
-# key is validated by `.validateDefinitionTreeKey`). Reject rather than rewrite: the
-# id doubles as the match key for `removeObservedData()`, so canonicalizing it
-# would desync the on-disk filename from the match key.
+# declared `id`, and a programmatic `name`, reach this verbatim (unlike the other
+# keyed kinds, whose key is validated by `.validateDefinitionTreeKey`). Reject
+# rather than rewrite: the id doubles as the match key for
+# `removeObservedData()`, so canonicalizing it would desync the on-disk filename
+# from the match key.
 #
 # @keywords internal
 # @noRd
@@ -922,8 +943,9 @@
       "observedData id {.val {id}} is not a single safe filename segment.",
       "x" = "It must not contain a path separator or be {.val .} / {.val ..}, \\
       so it cannot escape the observed-data definition directory.",
-      "i" = "Rename the source (its {.field file} basename or programmatic \\
-      {.field name}) to a single safe filename segment."
+      "i" = "Give the declaration an {.field id} that is a single safe filename \\
+      segment, or rename what it derives one from: a {.field file} basename, or \\
+      a programmatic {.field name}."
     ))
   }
   invisible(NULL)

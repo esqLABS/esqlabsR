@@ -127,7 +127,7 @@
       Error in `.validateObservedDataId()`:
       ! observedData id "../escape" is not a single safe filename segment.
       x It must not contain a path separator or be "." / "..", so it cannot escape the observed-data definition directory.
-      i Rename the source (its file basename or programmatic name) to a single safe filename segment.
+      i Give the declaration an id that is a single safe filename segment, or rename what it derives one from: a file basename, or a programmatic name.
 
 # a full-tree write aborts when a stale file cannot be removed
 
