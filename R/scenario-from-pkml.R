@@ -53,14 +53,15 @@
 #'   `c("plasma" = "Organism|VenousBlood|Plasma|Drug|Concentration")`. When a
 #'   literal path is already registered in `outputPaths` definitions, its existing
 #'   id is reused; unnamed new paths receive a readable generated id.
-#' @param simulationTime Character vector. Optional simulation time to use for
-#'   scenarios as character strings containing one or multiple time intervals
-#'   separated by a `';'`. Each time interval is a triplet of values
-#'   `<StartTime, EndTime, Resolution>`, where `Resolution` is the number of
-#'   simulated points per time unit defined in the `simulationTimeUnit`. If
-#'   `NULL` (default), simulation time will be extracted from the PKML files'
-#'   output schema intervals. Can be a single string (recycled for all
-#'   scenarios) or a vector with the same length as `pkmlFilePaths`.
+#' @param simulationTime Optional simulation time to use for scenarios. One
+#'   interval is a length-3 numeric vector `c(start, end, resolution)` or the
+#'   same triplet as a string `"start, end, resolution"`, where `resolution` is
+#'   the number of simulated points per time unit defined in the
+#'   `simulationTimeUnit`; several intervals go in one string separated by
+#'   `';'`. If `NULL` (default), simulation time will be extracted from the PKML
+#'   files' output schema intervals. Can be a single value (recycled for all
+#'   scenarios) or, as a list or character vector, one value per entry of
+#'   `pkmlFilePaths`.
 #' @param simulationTimeUnit Character vector. Optional simulation time units.
 #'   Only used when `simulationTime` is provided. If `NULL` (default), will
 #'   be extracted from the PKML file's output schema intervals, or set to
@@ -273,6 +274,10 @@ createScenariosFromPKML <- function(
   if (!is.null(outputPaths)) {
     validateIsCharacter(outputPaths)
   }
+  # Take the numeric time grid too, as `addScenario()` does. Converting before
+  # the count below matters: a length-3 numeric left as-is would be read there
+  # as three scenarios.
+  simulationTime <- .asSimulationTimeString(simulationTime)
   if (!is.null(simulationTime)) {
     validateIsCharacter(simulationTime)
   }
