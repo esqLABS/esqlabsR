@@ -62,11 +62,13 @@
 #'   files' output schema intervals. Can be a single value (recycled for all
 #'   scenarios) or, as a list or character vector, one value per entry of
 #'   `pkmlFilePaths`.
-#' @param simulationTimeUnit Character vector. Optional simulation time units.
-#'   Only used when `simulationTime` is provided. If `NULL` (default), will
-#'   be extracted from the PKML file's output schema intervals, or set to
-#'   `"min"` (minutes) if not available. Can be a single string (recycled
-#'   for all scenarios) or a vector with the same length as `pkmlFilePaths`.
+#' @param simulationTimeUnit Character vector. Optional simulation time unit.
+#'   It is the unit `simulationTime` is given in, and, when `simulationTime` is
+#'   left to PKML extraction, the unit the extracted interval bounds are
+#'   converted to. If `NULL` (default), it is taken from the PKML file's output
+#'   schema intervals, or set to `"min"` (minutes) if not available. Can be a
+#'   single string (recycled for all scenarios) or a vector with the same length
+#'   as `pkmlFilePaths`.
 #' @param steadyState Logical vector. Whether to simulate steady-state for
 #'   each scenario. Default is `FALSE`. Can be a single logical value
 #'   (recycled for all scenarios) or a vector with the same length as

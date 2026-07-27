@@ -85,6 +85,16 @@
       ! observedData entry with id "obs" already exists.
       i Pass `overwrite = TRUE` to replace it.
 
+# a config entry cannot overwrite a live programmatic source
+
+    Code
+      addObservedData(project, list(id = "prog_src", type = "pkml", file = "x.pkml"),
+      overwrite = TRUE)
+    Condition
+      Error in `addObservedData()`:
+      ! observedData entry with id "prog_src" is a programmatic source holding a <DataSet> in this session, so it cannot be overwritten with a configuration entry.
+      i Remove it first with `removeObservedData()`, then add the configuration entry.
+
 # removeObservedData mutates memory only; a surviving collision aborts saveProject()
 
     Code

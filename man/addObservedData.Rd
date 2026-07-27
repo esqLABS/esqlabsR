@@ -16,7 +16,11 @@ fields, as described above.}
 \item{overwrite}{Logical scalar. When \code{FALSE} (default), a source whose id
 already exists (a \code{DataSet} name, or a configuration list's \code{id} or \code{file}
 basename) aborts. When \code{TRUE}, the existing source with that id is replaced
-(last-write-wins).}
+(last-write-wins) as long as both are the same kind. A cross-kind
+replacement is refused in either direction, because it would either strand
+the session's \code{DataSet} or leave two sources resolving to one name: remove
+the existing source with \code{\link[=removeObservedData]{removeObservedData()}} first, then add the new
+one.}
 }
 \value{
 The \code{project} object, invisibly.
@@ -42,9 +46,10 @@ is \code{"observed.xlsx"}, not \code{"Data/observed.xlsx"}; one in a subfolder o
 A \code{script} source runs the R file it names (see the Security section of
 \code{\link[=loadObservedData]{loadObservedData()}}).
 
-\code{id} names the declaration itself: it becomes the declaration's file in
-\verb{definitions/observed-data/} and is the id \code{\link[=removeObservedData]{removeObservedData()}} matches on.
-Left out, the \code{file} basename serves as both. It is not the name the data is
+\code{id} names the declaration itself: it becomes the declaration's file under
+the project's definitions folder (\verb{definitions/observed-data/<id>.json} in
+the default layout) and is the id \code{\link[=removeObservedData]{removeObservedData()}} matches on. Left
+out, the \code{file} basename serves as both. It is not the name the data is
 known by: each imported \code{\link[ospsuite:DataSet]{ospsuite::DataSet}} carries the name its source
 gives it (the data-set name in an Excel sheet, the name inside a PKML file),
 and that name, not the declaration's id, is what a \code{dataCombined} entry

@@ -748,6 +748,56 @@ test_that("addObservedData rejects a duplicate declared id", {
   expect_identical(entry[[1]][["file"]], "b.pkml")
 })
 
+test_that("addObservedData rejects an id that is not a single non-empty string", {
+  project <- testProject()
+  # An id names the declaration's file and is its remove handle, so a blank, NA,
+  # or non-string one is a mistake to report, not a value to quietly ignore in
+  # favour of the file basename.
+  for (bad in list("", NA_character_, 42)) {
+    expect_error(
+      addObservedData(project, list(id = bad, type = "pkml", file = "a.pkml")),
+      "single non-empty string"
+    )
+  }
+})
+
+test_that("a config entry cannot overwrite a live programmatic source", {
+  # Replacing the sentinel in place would strand its DataSet in the runtime
+  # store: nothing writes it at save, and the usual unresolved-sentinel warning
+  # cannot fire because the sentinel is gone.
+  project <- testProject()
+  ds <- ospsuite::DataSet$new(name = "prog_src")
+  ds$setValues(xValues = c(1, 2), yValues = c(3, 4))
+  addObservedData(project, ds)
+
+  expect_snapshot(
+    error = TRUE,
+    addObservedData(
+      project,
+      list(id = "prog_src", type = "pkml", file = "x.pkml"),
+      overwrite = TRUE
+    )
+  )
+  # The DataSet is untouched, so it still resolves and still saves.
+  expect_true("prog_src" %in% getObservedDataNames(project))
+})
+
+test_that("a DataSet clashes with an existing declaration's declared id", {
+  # The DataSet branch keys on resolved data-set names, which never see a
+  # declaration whose `id` was chosen by hand; without the id check the section
+  # would hold two entries filed under one id and only fail at save.
+  project <- testProject()
+  dataFolder <- project$paths$dataFolder
+  src <- ospsuite::DataSet$new(name = "from_file")
+  src$setValues(xValues = c(1, 2), yValues = c(3, 4))
+  ospsuite::saveDataSetToPKML(src, file.path(dataFolder, "src.pkml"))
+  addObservedData(project, list(id = "obs", type = "pkml", file = "src.pkml"))
+
+  ds <- ospsuite::DataSet$new(name = "obs")
+  ds$setValues(xValues = c(1, 2), yValues = c(3, 4))
+  expect_error(addObservedData(project, ds), "already exists")
+})
+
 test_that("removeObservedData warns and skips a not-found id in the batch", {
   project <- testProject()
   addObservedData(project, list(type = "pkml", file = "one.pkml"))

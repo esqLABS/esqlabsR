@@ -442,6 +442,63 @@ test_that("a scenario file whose name disagrees with its filename aborts", {
   )
 })
 
+# observedData is keyed like every other section, except its id may be derived
+# rather than stored. Both forms must still agree with the filename, or the next
+# save files the declaration elsewhere and reconciles the loaded file away.
+test_that("an observedData file whose id disagrees with its filename aborts", {
+  project <- testProject()
+  dir <- file.path(project$info$projectDirPath, "definitions", "observed-data")
+  f <- file.path(dir, "mismatch.json")
+  jsonlite::write_json(
+    list(type = "pkml", file = "obs.pkml", id = "elsewhere"),
+    f,
+    auto_unbox = TRUE
+  )
+
+  expect_snapshot(
+    loadProject(project$info$projectFilePath),
+    error = TRUE,
+    transform = .redactTmpPath
+  )
+})
+
+# A hand-edited id of the wrong type would otherwise reach `basename()` and a
+# `character(1)` vapply as a number, failing far from the file that caused it.
+test_that("an observedData file whose id is not a string aborts", {
+  project <- testProject()
+  dir <- file.path(project$info$projectDirPath, "definitions", "observed-data")
+  f <- file.path(dir, "obs.pkml.json")
+  jsonlite::write_json(
+    list(type = "pkml", file = "obs.pkml", id = 2024),
+    f,
+    auto_unbox = TRUE
+  )
+
+  expect_snapshot(
+    loadProject(project$info$projectFilePath),
+    error = TRUE,
+    transform = .redactTmpPath
+  )
+})
+
+test_that("an observedData file whose declared id matches its filename loads", {
+  project <- testProject()
+  dir <- file.path(project$info$projectDirPath, "definitions", "observed-data")
+  jsonlite::write_json(
+    list(type = "pkml", file = "sub/obs.pkml", id = "named"),
+    file.path(dir, "named.json"),
+    auto_unbox = TRUE
+  )
+
+  reloaded <- loadProject(project$info$projectFilePath)
+  ids <- vapply(
+    reloaded$definitions$observedData,
+    function(e) e[["id"]] %||% NA_character_,
+    character(1)
+  )
+  expect_true("named" %in% ids)
+})
+
 # A hand-edited scenario file whose scalar field became an empty
 # object (the standard jsonlite round-trip of `null`) must fail load with a
 # message naming the scenario and field, not an opaque internal error.
