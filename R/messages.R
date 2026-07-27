@@ -482,6 +482,15 @@ messages$unknownScenarioNames <- function(unknownNames) {
   )
 }
 
+messages$invalidSimulationTimeArgument <- function() {
+  cliFormat(
+    "{.arg simulationTime} must be a length-3 numeric vector \\
+    {.code c(start, end, resolution)}, or the same grid as a string \\
+    {.val 0, 42, 48} (several intervals separated by {.val ;}). To give a \\
+    different grid per id, pass a list with one element per id."
+  )
+}
+
 messages$wrongTimeIntervalString <- function(timeIntervalString) {
   cliFormat(
     "The time interval string {.val {timeIntervalString}} is not valid! Please 

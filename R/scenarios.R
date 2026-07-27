@@ -63,8 +63,11 @@
 #'   CSV.
 #' @param simulateSteadyState Logical. If `TRUE`, run steady-state before
 #'   the main simulation.
-#' @param simulationTime List of length-3 numeric vectors
-#'   `c(start, end, resolution)`.
+#' @param simulationTime The parsed time grid: a list of length-3 numeric
+#'   vectors `c(start, end, resolution)`, one per interval. This is the stored
+#'   form; [addScenario()] and [setScenario()] also take a single interval as
+#'   `c(start, end, resolution)` or a `"start, end, resolution"` string and
+#'   parse it to this shape.
 #' @param simulationTimeUnit Character. Time unit for `simulationTime`.
 #' @param steadyStateTime Numeric. Steady-state time **in base unit
 #'   (minutes)**.
@@ -775,10 +778,12 @@ buildSimulations <- function(
 #'   scenario.
 #' @param outputPaths Character vector or `NULL`. Output-path ids referencing
 #'   `outputPaths` definitions. Applied whole to every scenario.
-#' @param simulationTime Character or `NULL`. Format
-#'   `"start, end, resolution"` or
-#'   `"start, end, resolution; start, end, resolution"` for multiple
-#'   intervals.
+#' @param simulationTime The simulation time grid, or `NULL` (default) to keep
+#'   the one the model file carries. One interval is a length-3 numeric vector
+#'   `c(start, end, resolution)` or the same grid written as a string,
+#'   `"start, end, resolution"`. Several intervals go in one string,
+#'   `"start, end, resolution; start, end, resolution"`. To give a different
+#'   grid per scenario, pass a list with one element (in either form) per id.
 #' @param simulationTimeUnit Character. Time unit string. Default `"h"`.
 #' @param steadyState Logical. Whether to simulate steady state. Default
 #'   `FALSE`.
@@ -869,6 +874,7 @@ addScenario <- function(
   .assertIdVector(id)
   id <- .canonicalizeId(id)
   n <- length(id)
+  simulationTime <- .asSimulationTimeString(simulationTime)
 
   perDefinition <- .alignAuthoringArgs(
     id,
@@ -1225,6 +1231,12 @@ setScenario <- function(
   }
 
   dots <- list(...)
+  if ("simulationTime" %in% names(dots)) {
+    # `x[name] <- list(value)` keeps a supplied NULL (which clears the field) as
+    # a present-but-NULL element, where `x$name <- NULL` would drop the name and
+    # turn "clear it" into "leave it untouched".
+    dots["simulationTime"] <- list(.asSimulationTimeString(dots$simulationTime))
+  }
   wholeNames <- intersect(
     c("parameterSets", "initialConditions", "outputPaths"),
     names(dots)
@@ -1415,11 +1427,17 @@ setScenario <- function(
     }
   }
   if ("simulationTime" %in% supplied) {
-    sc$simulationTime <- if (is.null(fields$simulationTime)) {
-      NULL
-    } else {
-      .parseSimulationTimeIntervals(fields$simulationTime)
-    }
+    # `sc[name] <- list(value)`, not `sc$name <- value`: clearing the field with
+    # the `$` form would drop the slot from the record, and a later
+    # `sc$simulationTime` would then partial-match `simulationTimeUnit` and hand
+    # back the unit string instead of NULL.
+    sc["simulationTime"] <- list(
+      if (is.null(fields$simulationTime)) {
+        NULL
+      } else {
+        .parseSimulationTimeIntervals(fields$simulationTime)
+      }
+    )
   }
   if ("simulationTimeUnit" %in% supplied) {
     sc$simulationTimeUnit <- fields$simulationTimeUnit
@@ -1647,6 +1665,52 @@ duplicateScenario <- function(project, id, newId) {
     )
   }
   invisible(NULL)
+}
+
+# Bring a `simulationTime` authoring argument to the one string form the rest of
+# the pipeline reads, so `addScenario()` and `setScenario()` accept the numeric
+# time grid as readily as the string. A length-3 numeric vector
+# `c(start, end, resolution)` is one interval; a list holds one such value per
+# id; a character value passes through untouched, which is how several intervals
+# stay expressible ("0, 42, 48; 48, 96, 24"). Converting here, ahead of
+# `.alignAuthoringArgs()`, is what keeps a length-3 numeric from being read as
+# three per-definition values.
+#
+# @keywords internal
+# @noRd
+.asSimulationTimeString <- function(
+  simulationTime,
+  call = rlang::caller_env()
+) {
+  if (is.null(simulationTime) || is.character(simulationTime)) {
+    return(simulationTime)
+  }
+  if (is.list(simulationTime)) {
+    return(vapply(
+      simulationTime,
+      .simulationTimeIntervalString,
+      character(1),
+      call = call
+    ))
+  }
+  .simulationTimeIntervalString(simulationTime, call = call)
+}
+
+# One scenario's time grid as a string. Accepts the string form verbatim and
+# turns `c(start, end, resolution)` into "start, end, resolution"; anything else
+# aborts naming both accepted forms. The interval itself (positive resolution,
+# start before end) is checked later, by `.parseSimulationTimeIntervals()`.
+#
+# @keywords internal
+# @noRd
+.simulationTimeIntervalString <- function(value, call = rlang::caller_env()) {
+  if (is.character(value) && length(value) == 1L && !is.na(value)) {
+    return(value)
+  }
+  if (!is.numeric(value) || length(value) != 3L || anyNA(value)) {
+    cli::cli_abort(messages$invalidSimulationTimeArgument(), call = call)
+  }
+  paste(value, collapse = ", ")
 }
 
 # Foreign-key validation helpers shared by `addScenario()` and
