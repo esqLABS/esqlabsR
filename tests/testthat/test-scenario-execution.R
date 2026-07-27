@@ -145,10 +145,12 @@ test_that(".collectScenarioResult aborts on a failed scenario when stopIfFails i
 
 test_that(".collectScenarioResult warns and returns NULL outputValues when stopIfFails is FALSE", {
   scenario <- list(scenarioName = "s1", outputPaths = NULL)
+  # A scenario that built (non-NULL simulation) but produced no results. A
+  # NULL simulation instead means a build-time skip, which already warned.
   expect_warning(
     out <- esqlabsR:::.collectScenarioResult(
       scenario = scenario,
-      simulation = NULL,
+      simulation = structure(list(id = "sim1"), class = "Simulation"),
       results = NULL,
       population = NULL,
       stopIfFails = FALSE
@@ -157,6 +159,23 @@ test_that(".collectScenarioResult warns and returns NULL outputValues when stopI
   )
   expect_null(out$outputValues)
   expect_null(out$results)
+})
+
+test_that(".collectScenarioResult does not warn again for a build-time skip", {
+  # A NULL simulation means the scenario never built; `.buildScenarioSimulations()`
+  # already warned, so collection records it silently.
+  scenario <- list(scenarioName = "s1", outputPaths = NULL)
+  expect_no_warning(
+    out <- esqlabsR:::.collectScenarioResult(
+      scenario = scenario,
+      simulation = NULL,
+      results = NULL,
+      population = NULL,
+      stopIfFails = FALSE
+    )
+  )
+  expect_null(out$simulation)
+  expect_null(out$outputValues)
 })
 
 test_that("runScenarios aborts by default when a scenario simulation produces no results", {
@@ -233,7 +252,29 @@ test_that("runScenarios(stopIfFails = FALSE) skips a build-time failure and coll
     runScenarios(project, stopIfFails = FALSE)
   )
   expect_true(all(c("testscenario", "second") %in% names(out)))
+  # The unaffected scenario really built (not skipped into the same NULL shape).
+  expect_s3_class(out$testscenario$simulation, "Simulation")
+  expect_null(out$second$simulation)
   expect_null(out$second$outputValues)
+})
+
+test_that("a scenario skipped at build time warns once, not twice", {
+  # The build-time warning already names the scenario; the no-results
+  # collection must not warn a second time for the same event.
+  withr::local_options(lifecycle_verbosity = "quiet")
+  project <- .testProject()
+  addScenario(project, "second", modelFile = "does-not-exist.pkml")
+  local_mocked_bindings(runSimulations = .mockNoResults)
+  warnings <- character()
+  withCallingHandlers(
+    runScenarios(project, scenarios = "second", stopIfFails = FALSE),
+    warning = function(w) {
+      warnings <<- c(warnings, conditionMessage(w))
+      invokeRestart("muffleWarning")
+    }
+  )
+  expect_length(grep("Could not build", warnings), 1)
+  expect_length(grep("No simulation results could be computed", warnings), 0)
 })
 
 test_that("runScenarios builds an individual that carries no age or height", {
@@ -256,8 +297,9 @@ test_that("runScenarios builds an individual that carries no age or height", {
     ),
     regexp = "No simulation results could be computed"
   )
-  # Reaching the collection step at all means the build did not crash.
-  expect_true("testscenario" %in% names(out))
+  # A built simulation (not a build-time skip) proves the age/height-less
+  # individual made it through `createIndividualCharacteristics()`.
+  expect_s3_class(out$testscenario$simulation, "Simulation")
 })
 
 test_that("runScenarios with stopIfFails = FALSE warns and returns NULL outputValues", {

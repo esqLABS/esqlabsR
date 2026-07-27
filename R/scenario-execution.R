@@ -606,7 +606,8 @@
 # Resolve output quantities and build the standard return list for one
 # scenario. When a scenario produced no results, `stopIfFails` decides whether
 # that aborts the run (the default) or only warns and leaves `outputValues`
-# NULL.
+# NULL. A scenario skipped at build time arrives with a NULL `simulation` and
+# has already warned, so it is recorded without a second warning.
 # @keywords internal
 # @noRd
 .collectScenarioResult <- function(
@@ -631,7 +632,12 @@
     if (isTRUE(stopIfFails)) {
       cli::cli_abort(messages$missingResultsForScenario(scenario$scenarioName))
     }
-    cli::cli_warn(messages$missingResultsForScenario(scenario$scenarioName))
+    # A scenario skipped at build time (NULL simulation) already warned via
+    # `scenarioBuildFailed()`; don't warn a second time for the same event. A
+    # scenario that built but produced no results still warns here.
+    if (!is.null(simulation)) {
+      cli::cli_warn(messages$missingResultsForScenario(scenario$scenarioName))
+    }
   } else {
     outputValues <- getOutputValues(
       results,

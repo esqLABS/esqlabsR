@@ -34,6 +34,13 @@
       }
       indiv[[field]] <- val
     }
+    # A gender-less individual (an animal species whose only valid PK-Sim
+    # gender is UNKNOWN) defaults to UNKNOWN, mirroring `.buildIndividualEntry()`
+    # and the Excel importer, so every stored individual carries a concrete
+    # gender regardless of which entrypoint created it.
+    if (is.null(indiv$gender)) {
+      indiv$gender <- "UNKNOWN"
+    }
     class(indiv) <- c("Individual", "list")
     result[[id]] <- indiv
   }
@@ -81,6 +88,28 @@
       paste0("individual '", id, "'"),
       result
     )
+
+    # `gender` is optional (an absent gender defaults to UNKNOWN), but a
+    # present gender must be a valid `GenderInt` token. This mirrors the
+    # authoring check in `.buildIndividualEntry()` so a hand-authored JSON file
+    # with an invalid gender (e.g. "" or "foo") is caught here rather than
+    # deferring to an opaque PK-Sim error at run time.
+    gender <- indiv[["gender"]]
+    if (
+      !is.null(gender) &&
+        !(length(gender) == 1 && !is.na(gender) && gender %in% names(GenderInt))
+    ) {
+      result$addCriticalError(
+        "Data",
+        paste0(
+          "Field 'gender' in individual '",
+          id,
+          "' must be one of ",
+          paste(names(GenderInt), collapse = ", "),
+          " (or omitted)"
+        )
+      )
+    }
 
     for (numField in c("weight", "height", "age")) {
       val <- indiv[[numField]]

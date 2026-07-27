@@ -325,6 +325,19 @@ test_that(".validateIndividuals does not flag an absent gender", {
   expect_length(result$critical_errors, 0)
 })
 
+test_that(".validateIndividuals flags a present but invalid gender", {
+  # A hand-authored JSON file can carry any string; an invalid token must be
+  # caught here rather than deferring to an opaque PK-Sim error at run time.
+  individuals <- list(
+    Bad = list(species = "Human", gender = "banana"),
+    Blank = list(species = "Human", gender = "")
+  )
+  result <- esqlabsR:::.validateIndividuals(individuals)
+  msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
+  expect_length(result$critical_errors, 2)
+  expect_match(msgs, "gender", all = TRUE)
+})
+
 # Section adapter: populations ----
 
 test_that(".validatePopulations warns on inverted ranges", {

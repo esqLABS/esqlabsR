@@ -629,7 +629,9 @@ print.Scenario <- function(x, ...) {
 #'   `results` ([ospsuite::SimulationResults]), `outputValues` (the
 #'   computed output values, or `NULL` if simulation failed), and
 #'   `population` (an [ospsuite::Population] for population
-#'   scenarios, or `NULL` for individual scenarios).
+#'   scenarios, or `NULL` for individual scenarios). With
+#'   `stopIfFails = FALSE`, a scenario skipped at build time is still returned,
+#'   with `simulation`, `results`, and `outputValues` all `NULL`.
 #'
 #' @details If a scenario fails, either at build time or because its
 #'   simulation produced no results, `runScenarios()` aborts by default

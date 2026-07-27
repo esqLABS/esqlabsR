@@ -55,7 +55,9 @@ with \code{simulation} (the initialized \link[ospsuite:Simulation]{ospsuite::Sim
 \code{results} (\link[ospsuite:SimulationResults]{ospsuite::SimulationResults}), \code{outputValues} (the
 computed output values, or \code{NULL} if simulation failed), and
 \code{population} (an \link[ospsuite:Population]{ospsuite::Population} for population
-scenarios, or \code{NULL} for individual scenarios).
+scenarios, or \code{NULL} for individual scenarios). With
+\code{stopIfFails = FALSE}, a scenario skipped at build time is still returned,
+with \code{simulation}, \code{results}, and \code{outputValues} all \code{NULL}.
 }
 \description{
 Loads simulations, applies parameters, runs the

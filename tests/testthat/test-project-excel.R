@@ -780,6 +780,25 @@ test_that("the individuals import defaults a blank Gender cell to UNKNOWN", {
   expect_identical(individuals[[2]]$gender, "UNKNOWN")
 })
 
+test_that("the individuals import treats a blank-string Gender cell as absent", {
+  # A cell holding "" or only whitespace is blank, not a gender; it must
+  # default to UNKNOWN rather than import as an invalid empty gender.
+  indivDf <- data.frame(
+    IndividualId = c("Empty1", "Spaces1"),
+    Species = c("Dog", "Dog"),
+    Population = c("Beagle", "Beagle"),
+    Gender = c("", "   "),
+    `Weight [kg]` = c(10, 10),
+    `Height [cm]` = c(NA, NA),
+    `Age [year(s)]` = c(NA, NA),
+    check.names = FALSE,
+    stringsAsFactors = FALSE
+  )
+  individuals <- .parseExcelIndividuals(indivDf)
+  expect_identical(individuals[[1]]$gender, "UNKNOWN")
+  expect_identical(individuals[[2]]$gender, "UNKNOWN")
+})
+
 test_that(".parseExcelObservedData keeps a subfolder path rather than truncating to basename", {
   # The loader resolves `file` under `dataFolder`, so a file named in a subfolder
   # must keep its relative path; truncating to the basename would make it
