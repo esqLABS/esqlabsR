@@ -405,7 +405,7 @@ Project <- R6::R6Class(
       containerPath,
       parameterName,
       value,
-      units,
+      units = NULL,
       overwrite = FALSE
     ) {
       private$.impl(
