@@ -382,10 +382,35 @@ getObservedDataNames <- function(project) {
 
 #' Add observed data to a Project
 #'
-#' Add an observedData entry. Accepts either a `DataSet` (creates a
-#' `type = "programmatic"` entry keyed by `dataSet$name`) or a
-#' configuration list with `type` field (`"excel"`, `"pkml"`, or
-#' `"script"`) plus source-specific fields.
+#' @description
+#' Adds one observed-data declaration. `entry` is either an
+#' [`ospsuite::DataSet`] object (which becomes a `type = "programmatic"`
+#' declaration keyed by `dataSet$name`) or a list describing where the data is
+#' read from.
+#'
+#' Such a list always carries a `type`, plus the fields that type needs:
+#'
+#' | `type` | required fields | optional fields |
+#' | --- | --- | --- |
+#' | `"excel"` | `file`, `importerConfiguration`, `sheets` | `id` |
+#' | `"pkml"` | `file` | `id` |
+#' | `"script"` | `file` | `id` |
+#'
+#' `file` and `importerConfiguration` are paths *relative to the project's data
+#' folder* (`project$paths$dataFolder`). A file sitting directly in that folder
+#' is `"observed.xlsx"`, not `"Data/observed.xlsx"`; one in a subfolder of it is
+#' `"subfolder/observed.xlsx"`. `sheets` lists the Excel sheet names to import.
+#' A `script` source runs the R file it names (see the Security section of
+#' [loadObservedData()]).
+#'
+#' `id` names the declaration itself: it becomes the declaration's file under
+#' the project's definitions folder (`definitions/observed-data/<id>.json` in
+#' the default layout) and is the id [removeObservedData()] matches on. Left
+#' out, the `file` basename serves as both. It is not the name the data is
+#' known by: each imported [`ospsuite::DataSet`] carries the name its source
+#' gives it (the data-set name in an Excel sheet, the name inside a PKML file),
+#' and that name, not the declaration's id, is what a `dataCombined` entry
+#' references.
 #'
 #' A `DataSet` you pass lives in the R session until you save. On
 #' [saveProject()] it is written to a PKML file named `<DataSet name>.pkml`
@@ -394,10 +419,17 @@ getObservedDataNames <- function(project) {
 #' declared in the project's file paths.
 #'
 #' @param project A `Project` object.
-#' @param entry Either a `DataSet` object or a configuration list.
+#' @param entry An [`ospsuite::DataSet`] object, or a configuration list
+#'   carrying a `type` (`"excel"`, `"pkml"`, or `"script"`) and that type's
+#'   fields, as described above.
 #' @param overwrite Logical scalar. When `FALSE` (default), a source whose id
-#'   already exists (a `DataSet` name, or a config `file` basename) aborts.
-#'   When `TRUE`, the existing source with that id is replaced (last-write-wins).
+#'   already exists (a `DataSet` name, or a configuration list's `id` or `file`
+#'   basename) aborts. When `TRUE`, the existing source with that id is replaced
+#'   (last-write-wins) as long as both are the same kind. A cross-kind
+#'   replacement is refused in either direction, because it would either strand
+#'   the session's `DataSet` or leave two sources resolving to one name: remove
+#'   the existing source with [removeObservedData()] first, then add the new
+#'   one.
 #' @returns The `project` object, invisibly.
 #' @export
 #' @family observedData
@@ -425,10 +457,18 @@ addObservedData <- function(project, entry, overwrite = FALSE) {
     # project is saved, so reject a name that is not a safe filename segment now
     # (a `/` in the name, e.g. from a unit like "mg/kg", would otherwise fail
     # later with an opaque low-level path error at save).
-    .validateObservedDataId(paste0(name, ".pkml"))
+    .validateObservedDataId(paste0(name, ".pkml"), call = .call)
     # Reentrant call: pass the attribution call on rather than re-resolving it.
     existingNames <- .getObservedDataNames_impl(self, private, .call = .call)
-    if (name %in% existingNames && !overwrite) {
+    # A DataSet collides on two axes, and both have to be checked: on the name
+    # its data resolves under (`existingNames`), and on a declared `id`, which a
+    # config entry can carry without ever resolving a data set of that name.
+    # Only a *declared* id counts here. An id derived from a `file` basename is
+    # not a clash: the sentinel is rewritten to `<name>.pkml` at save, so the
+    # two never share a definition file on disk.
+    declaredIds <- .observedDataDeclaredIds(self$definitions$observedData)
+    clashes <- name %in% existingNames || name %in% declaredIds
+    if (clashes && !overwrite) {
       cli::cli_abort(c(
         "observedData entry with name {.val {name}} already exists.",
         "i" = "Pass {.code overwrite = TRUE} to replace it."
@@ -456,7 +496,7 @@ addObservedData <- function(project, entry, overwrite = FALSE) {
     }
     if (length(replaceIdx) > 0L) {
       observedData[[replaceIdx[[1]]]] <- sentinel
-    } else if (overwrite && name %in% existingNames) {
+    } else if (overwrite && clashes) {
       # The name collides with a file-based (pkml/excel/script) source, not a
       # programmatic one, so there is no programmatic entry to replace. Appending
       # would leave two sources resolving to the same name and only fail later,
@@ -464,8 +504,8 @@ addObservedData <- function(project, entry, overwrite = FALSE) {
       cli::cli_abort(c(
         "observedData entry with name {.val {name}} is a file-based source, \\
         not a programmatic one, so it cannot be overwritten with a {.cls DataSet}.",
-        "i" = "Remove it first with {.code removeObservedData()} (by its file \\
-        basename), then add the {.cls DataSet}."
+        "i" = "Remove it first with {.code removeObservedData()} (by its \\
+        {.field id}, or its file basename), then add the {.cls DataSet}."
       ))
     } else {
       observedData <- c(observedData, list(sentinel))
@@ -500,28 +540,51 @@ addObservedData <- function(project, entry, overwrite = FALSE) {
       entry,
       length(self$definitions$observedData) + 1L
     )
-    # Config entries are keyed by `file` basename (see removeObservedData);
-    # abort on a duplicate to match the other mutators' convention, unless
-    # overwriting.
-    fileBase <- basename(entry[["file"]])
-    existingFiles <- vapply(
-      self$definitions$observedData,
-      function(e) {
-        if (is.null(e[["file"]])) NA_character_ else basename(e[["file"]])
-      },
-      character(1)
-    )
-    if (fileBase %in% existingFiles && !overwrite) {
+    # A declared `id` names the entry everywhere (its definition file, and the
+    # key `removeObservedData()` matches), so it has to be a usable string
+    # before anything derives a filename from it.
+    if (
+      !is.null(entry[["id"]]) && is.null(.usableObservedDataId(entry[["id"]]))
+    ) {
+      cli::cli_abort(
+        "An observedData entry's {.field id} must be a single non-empty string."
+      )
+    }
+    # Config entries are keyed by the id `removeObservedData()` matches on: the
+    # entry's own `id` when it declares one, else its `file` basename. That id
+    # also names the definition file, so reject an unsafe one here rather than
+    # at save. Abort on a duplicate to match the other mutators' convention,
+    # unless overwriting.
+    entryId <- .observedDataEntryId(entry, call = .call)
+    .validateObservedDataId(entryId, call = .call)
+    existingIds <- .observedDataSectionIds(self$definitions$observedData)
+    if (entryId %in% existingIds && !overwrite) {
       cli::cli_abort(c(
-        "observedData entry with file {.val {fileBase}} already exists.",
+        "observedData entry with id {.val {entryId}} already exists.",
         "i" = "Pass {.code overwrite = TRUE} to replace it."
       ))
     }
     private$.observedDataNamesCache <- NULL
     observedData <- private$.getSection("observedData")
-    # On overwrite, replace the existing entry sharing this basename in place;
-    # otherwise append (a non-overwrite basename clash aborted above).
-    replaceIdx <- if (overwrite) which(existingFiles == fileBase) else integer()
+    # On overwrite, replace the existing entry carrying this id in place;
+    # otherwise append (a non-overwrite id clash aborted above).
+    replaceIdx <- if (overwrite) which(existingIds == entryId) else integer()
+    if (
+      length(replaceIdx) > 0L &&
+        identical(observedData[[replaceIdx[[1]]]]$type, "programmatic")
+    ) {
+      # Replacing a programmatic sentinel in place would strand its `DataSet` in
+      # the runtime store: nothing would write it at save and nothing would warn
+      # that it vanished. Refuse, as the mirror case (a `DataSet` overwriting a
+      # file-based source) already does.
+      cli::cli_abort(c(
+        "observedData entry with id {.val {entryId}} is a programmatic source \\
+        holding a {.cls DataSet} in this session, so it cannot be overwritten \\
+        with a configuration entry.",
+        "i" = "Remove it first with {.code removeObservedData()}, then add the \\
+        configuration entry."
+      ))
+    }
     if (length(replaceIdx) > 0L) {
       observedData[[replaceIdx[[1]]]] <- .asObservedDataSource(entry)
     } else {
@@ -538,8 +601,9 @@ addObservedData <- function(project, entry, overwrite = FALSE) {
 
 #' Remove one or more observed-data sources from a Project
 #'
-#' Removes by DataSet name (for a `type = "programmatic"` entry that has not
-#' been saved yet) or by `file` basename (for `type` `"excel"` / `"pkml"` /
+#' Removes by the source's id: its `id` field when the declaration carries one,
+#' else the DataSet name (for a `type = "programmatic"` entry that has not been
+#' saved yet) or the `file` basename (for `type` `"excel"` / `"pkml"` /
 #' `"script"` entries). Vectorizes over a vector of ids, removing each in one
 #' in-memory update; persist with [saveProject()]. Warns and skips any id with
 #' no matching entry.
@@ -555,11 +619,12 @@ addObservedData <- function(project, entry, overwrite = FALSE) {
 #' with several calls.
 #'
 #' @param project A `Project` object.
-#' @param id Character vector of ids. An observed-data id comes from the data
-#'   source (the `DataSet` name of an unsaved programmatic source, or a file
-#'   basename for a file-based source) and is matched verbatim, not
-#'   canonicalized. A saved programmatic source is matched by its `<name>.pkml`
-#'   basename (see the note above).
+#' @param id Character vector of ids. An observed-data id is the declaration's
+#'   `id` field, or, when it declares none, comes from the data source itself
+#'   (the `DataSet` name of an unsaved programmatic source, or a file basename
+#'   for a file-based source). Either way it is matched verbatim, not
+#'   canonicalized. A saved programmatic source that declares no `id` is matched
+#'   by its `<name>.pkml` basename (see the note above).
 #' @returns The `project` object, invisibly.
 #' @export
 #' @family observedData
@@ -600,9 +665,7 @@ removeObservedData <- function(project, id) {
     }
     matchIdx <- which(vapply(
       observedData,
-      function(e) {
-        !is.null(e[["file"]]) && identical(basename(e[["file"]]), one)
-      },
+      function(e) identical(.observedDataEntryIdOrNA(e), one),
       logical(1)
     ))
     if (length(matchIdx) == 0L) {
@@ -672,6 +735,32 @@ removeObservedData <- function(project, id) {
 }
 
 # Internal helpers ----
+
+# The declaration id of every entry in the section, `NA` for one that carries
+# nothing usable to derive an id from. One resolver for both kinds, so the
+# add-time collision check, the overwrite match, and the removal match all agree
+# on what an entry is called.
+#
+# @keywords internal
+# @noRd
+.observedDataSectionIds <- function(observedData) {
+  vapply(observedData %||% list(), .observedDataEntryIdOrNA, character(1))
+}
+
+# Only the ids the declarations state outright. Distinct from
+# `.observedDataSectionIds()`, which also derives one for a declaration that
+# states none: a derived id can change under the declaration (a programmatic
+# sentinel is rewritten to `<name>.pkml` at save), while a declared one never
+# does.
+#
+# @keywords internal
+# @noRd
+.observedDataDeclaredIds <- function(observedData) {
+  ids <- lapply(observedData %||% list(), function(e) {
+    .usableObservedDataId(e[["id"]])
+  })
+  unlist(ids) %||% character()
+}
 
 .validateObservedDataEntry <- function(entry, entryIndex) {
   validTypes <- .observedDataValidTypes

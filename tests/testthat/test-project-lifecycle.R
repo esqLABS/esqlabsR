@@ -283,6 +283,18 @@ test_that("initProject(type = 'minimal', createExcel = FALSE) creates the JSON s
   expect_true(dir.exists(file.path(dir, "Models", "Snapshots")))
 })
 
+test_that("initProject creates a destination folder that does not exist yet", {
+  # `initProject("myProject")` is the first call of the authoring workflow, so
+  # the folder it is about to fill is created rather than demanded up front.
+  parent <- withr::local_tempdir()
+  dir <- file.path(parent, "nested", "myProject")
+
+  initProject(destination = dir, type = "minimal", createExcel = FALSE)
+
+  expect_true(dir.exists(dir))
+  expect_true(file.exists(file.path(dir, "Project.json")))
+})
+
 test_that("initProject writes a README into each scaffold folder so it stays tracked", {
   dir <- withr::local_tempdir()
   initProject(destination = dir, type = "minimal", createExcel = FALSE)

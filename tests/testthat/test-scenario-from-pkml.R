@@ -389,6 +389,22 @@ test_that("user simulationTime overrides PKML extraction", {
   expect_identical(sc$simulationTime, list(c(0, 24, 60)))
 })
 
+test_that("createScenariosFromPKML accepts the numeric simulation-time grid", {
+  project <- testProject()
+  # The numeric triple is one interval, not three scenarios, so it must not
+  # inflate the scenario count derived from the vector arguments either.
+  suppressMessages(createScenariosFromPKML(
+    pkmlInProject(project),
+    project = project,
+    scenarios = "seeded",
+    simulationTime = c(0, 24, 60),
+    simulationTimeUnit = "h"
+  ))
+  sc <- project$definitions$scenarios[["seeded"]]
+  expect_identical(sc$simulationTime, list(c(0, 24, 60)))
+  expect_identical(sc$simulationTimeUnit, "h")
+})
+
 test_that("a user simulationTimeUnit is recorded on the extracted scenario", {
   # When simulationTime is left to PKML extraction, a user-supplied
   # simulationTimeUnit overrides the schema's own unit.

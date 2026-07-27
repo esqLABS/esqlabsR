@@ -677,7 +677,7 @@ the \verb{add*} authoring methods. See \code{\link[=addParameterEntry]{addParame
   containerPath,
   parameterName,
   value,
-  units,
+  units = NULL,
   overwrite = FALSE
 )}
     \if{html}{\out{</div>}}

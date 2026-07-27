@@ -20,6 +20,15 @@
       ! Cannot add scenario "bad":
       x initialConditions not found in project$definitions$initialConditions: ghostset
 
+# addScenario names both simulation-time forms on a bad value
+
+    Code
+      addScenario(project, id = "bad", modelFile = "Aciclovir.pkml", simulationTime = c(
+        0, 42))
+    Condition
+      Error in `addScenario()`:
+      ! `simulationTime` must be a length-3 numeric vector `c(start, end, resolution)`, or the same grid as a string "0, 42, 48" (several intervals separated by ";"). To give a different grid per id, pass a list with one element per id.
+
 # setScenario aborts eagerly on a dangling initialConditions ref
 
     Code

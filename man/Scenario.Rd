@@ -54,8 +54,11 @@ CSV.}
 \item{simulateSteadyState}{Logical. If \code{TRUE}, run steady-state before
 the main simulation.}
 
-\item{simulationTime}{List of length-3 numeric vectors
-\code{c(start, end, resolution)}.}
+\item{simulationTime}{The parsed time grid: a list of length-3 numeric
+vectors \code{c(start, end, resolution)}, one per interval. This is the stored
+form; \code{\link[=addScenario]{addScenario()}} and \code{\link[=setScenario]{setScenario()}} also take a single interval as
+\code{c(start, end, resolution)} or a \code{"start, end, resolution"} string and
+parse it to this shape.}
 
 \item{simulationTimeUnit}{Character. Time unit for \code{simulationTime}.}
 

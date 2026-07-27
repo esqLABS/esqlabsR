@@ -831,7 +831,10 @@ removeParameterSet <- function(project, id) {
 #' @param containerPath Character vector of container paths (length N).
 #' @param parameterName Character vector of parameter names (length N).
 #' @param value Numeric vector of values (length N).
-#' @param units Character vector of units (length N; use `""` for none).
+#' @param units Character vector of units (length N). An entry in a base unit
+#'   carries no unit: write it as `""` or `NA` (what an empty Units cell read
+#'   from Excel gives you). `NULL` (the default) means no unit on any of the N
+#'   entries.
 #' @param overwrite Logical scalar. When `FALSE` (default), a duplicate
 #'   `(containerPath, parameterName)` pair aborts. When `TRUE`, it overwrites
 #'   the existing entry (last-write-wins).
@@ -844,7 +847,7 @@ addParameterEntry <- function(
   containerPath,
   parameterName,
   value,
-  units,
+  units = NULL,
   overwrite = FALSE
 ) {
   validateIsOfType(project, "Project")
@@ -869,7 +872,7 @@ addParameterEntry <- function(
   containerPath,
   parameterName,
   value,
-  units,
+  units = NULL,
   overwrite = FALSE,
   .call
 ) {
@@ -878,6 +881,7 @@ addParameterEntry <- function(
     cli::cli_abort("{.arg id} must be a non-empty string")
   }
   id <- .canonicalizeId(id)
+  units <- .normalizeParameterUnits(units, length(containerPath))
   # Validate the batch shape up front so a mismatched call fails fast, before
   # any on-demand set creation is reported.
   .assertParameterEntryVectorLengths(
@@ -978,6 +982,23 @@ removeParameterEntry <- function(
   }
   private$.setSection("parameterSets", parameterSets)
   invisible(self)
+}
+
+# Spell "no unit" the one way the stored record does (`""`), whatever form the
+# caller expressed it in: `NULL` for the whole batch (recycled to the `n` entries
+# the parallel vectors carry), or an `NA` element, which is what an empty Units
+# cell read from Excel gives you. Runs before the parallel-vector length check so
+# a `NULL` does not first fail as a length-0 vector. A value that is neither
+# leaves untouched, for `.validateParameterEntryArgs()` to reject by type.
+#
+# @keywords internal
+# @noRd
+.normalizeParameterUnits <- function(units, n) {
+  if (is.null(units)) {
+    return(rep("", n))
+  }
+  units[is.na(units)] <- ""
+  units
 }
 
 # Validate scalar inputs for an `(containerPath, parameterName, value,

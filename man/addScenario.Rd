@@ -54,10 +54,12 @@ scenario.}
 \item{outputPaths}{Character vector or \code{NULL}. Output-path ids referencing
 \code{outputPaths} definitions. Applied whole to every scenario.}
 
-\item{simulationTime}{Character or \code{NULL}. Format
-\code{"start, end, resolution"} or
-\code{"start, end, resolution; start, end, resolution"} for multiple
-intervals.}
+\item{simulationTime}{The simulation time grid, or \code{NULL} (default) to keep
+the one the model file carries. One interval is a length-3 numeric vector
+\code{c(start, end, resolution)} or the same grid written as a string,
+\code{"start, end, resolution"}. Several intervals go in one string,
+\code{"start, end, resolution; start, end, resolution"}. To give a different
+grid per scenario, pass a list with one element (in either form) per id.}
 
 \item{simulationTimeUnit}{Character. Time unit string. Default \code{"h"}.}
 

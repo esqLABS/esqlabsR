@@ -295,7 +295,8 @@ isProjectInitialized <- function(destination = ".") {
 #' JSON-only project.
 #'
 #' @param destination A string defining the path where to initialize the
-#'   project. default to current working directory.
+#'   project. Defaults to the current working directory. The folder is created
+#'   if it does not exist yet.
 #' @param type Type of project to create: `"minimal"` (default) creates an empty
 #'   project with just the directory structure, `"example"` creates a project
 #'   with example data, models, and configurations.
@@ -317,11 +318,11 @@ initProject <- function(
   destination <- fs::path_abs(destination)
   type <- match.arg(type)
 
-  if (!fs::dir_exists(destination)) {
-    cli::cli_abort(
-      messages$pathNotFound(destination)
-    )
-  }
+  # The destination is about to be filled with the project scaffold, so an
+  # absent folder is created rather than rejected: `initProject("myProject")`
+  # in an empty parent folder is the first call of the authoring workflow. A
+  # no-op when the folder already exists.
+  fs::dir_create(destination)
 
   source_folder <- switch(
     type,

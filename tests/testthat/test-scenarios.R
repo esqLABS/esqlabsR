@@ -346,6 +346,76 @@ test_that("addScenario aborts eagerly on a dangling initialConditions ref", {
   )
 })
 
+test_that("addScenario accepts the numeric simulation-time grid", {
+  project <- testProject()
+  # The numeric triple and the string spell the same grid, so both must land as
+  # the parsed list-of-intervals the record stores.
+  addScenario(
+    project,
+    id = "numeric",
+    modelFile = "Aciclovir.pkml",
+    simulationTime = c(0, 42, 48)
+  )
+  addScenario(
+    project,
+    id = "string",
+    modelFile = "Aciclovir.pkml",
+    simulationTime = "0, 42, 48"
+  )
+  expect_equal(
+    project$definitions$scenarios[["numeric"]]$simulationTime,
+    list(c(0, 42, 48))
+  )
+  expect_identical(
+    project$definitions$scenarios[["numeric"]]$simulationTime,
+    project$definitions$scenarios[["string"]]$simulationTime
+  )
+})
+
+test_that("addScenario takes one simulation-time grid per id from a list", {
+  project <- testProject()
+  addScenario(
+    project,
+    id = c("first", "second"),
+    modelFile = "Aciclovir.pkml",
+    simulationTime = list(c(0, 42, 48), "0, 24, 60")
+  )
+  expect_equal(
+    project$definitions$scenarios[["first"]]$simulationTime,
+    list(c(0, 42, 48))
+  )
+  expect_equal(
+    project$definitions$scenarios[["second"]]$simulationTime,
+    list(c(0, 24, 60))
+  )
+})
+
+test_that("setScenario accepts the numeric simulation-time grid", {
+  project <- testProject()
+  setScenario(project, "testscenario", simulationTime = c(0, 48, 120))
+  expect_equal(
+    project$definitions$scenarios[["testscenario"]]$simulationTime,
+    list(c(0, 48, 120))
+  )
+
+  # A supplied NULL still clears the field rather than leaving it untouched.
+  setScenario(project, "testscenario", simulationTime = NULL)
+  expect_null(project$definitions$scenarios[["testscenario"]]$simulationTime)
+})
+
+test_that("addScenario names both simulation-time forms on a bad value", {
+  project <- testProject()
+  expect_snapshot(
+    error = TRUE,
+    addScenario(
+      project,
+      id = "bad",
+      modelFile = "Aciclovir.pkml",
+      simulationTime = c(0, 42)
+    )
+  )
+})
+
 test_that("setScenario updates and clears the initialConditions reference", {
   project <- testProject()
   addInitialConditions(project, "icset")

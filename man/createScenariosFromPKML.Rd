@@ -73,20 +73,23 @@ become the registered output-path ids, e.g.,
 literal path is already registered in \code{outputPaths} definitions, its existing
 id is reused; unnamed new paths receive a readable generated id.}
 
-\item{simulationTime}{Character vector. Optional simulation time to use for
-scenarios as character strings containing one or multiple time intervals
-separated by a \code{';'}. Each time interval is a triplet of values
-\verb{<StartTime, EndTime, Resolution>}, where \code{Resolution} is the number of
-simulated points per time unit defined in the \code{simulationTimeUnit}. If
-\code{NULL} (default), simulation time will be extracted from the PKML files'
-output schema intervals. Can be a single string (recycled for all
-scenarios) or a vector with the same length as \code{pkmlFilePaths}.}
+\item{simulationTime}{Optional simulation time to use for scenarios. One
+interval is a length-3 numeric vector \code{c(start, end, resolution)} or the
+same triplet as a string \code{"start, end, resolution"}, where \code{resolution} is
+the number of simulated points per time unit defined in the
+\code{simulationTimeUnit}; several intervals go in one string separated by
+\code{';'}. If \code{NULL} (default), simulation time will be extracted from the PKML
+files' output schema intervals. Can be a single value (recycled for all
+scenarios) or, as a list or character vector, one value per entry of
+\code{pkmlFilePaths}.}
 
-\item{simulationTimeUnit}{Character vector. Optional simulation time units.
-Only used when \code{simulationTime} is provided. If \code{NULL} (default), will
-be extracted from the PKML file's output schema intervals, or set to
-\code{"min"} (minutes) if not available. Can be a single string (recycled
-for all scenarios) or a vector with the same length as \code{pkmlFilePaths}.}
+\item{simulationTimeUnit}{Character vector. Optional simulation time unit.
+It is the unit \code{simulationTime} is given in, and, when \code{simulationTime} is
+left to PKML extraction, the unit the extracted interval bounds are
+converted to. If \code{NULL} (default), it is taken from the PKML file's output
+schema intervals, or set to \code{"min"} (minutes) if not available. Can be a
+single string (recycled for all scenarios) or a vector with the same length
+as \code{pkmlFilePaths}.}
 
 \item{steadyState}{Logical vector. Whether to simulate steady-state for
 each scenario. Default is \code{FALSE}. Can be a single logical value

@@ -191,7 +191,11 @@ NULL
   }
   cli::cli_abort(
     c(
-      "{.arg {field}} must be length 1 or length {n} (the number of ids).",
+      if (n == 1L) {
+        "{.arg {field}} must be length 1 (one id was given)."
+      } else {
+        "{.arg {field}} must be length 1 or length {n} (the number of ids)."
+      },
       "x" = "It is length {len}."
     ),
     call = call

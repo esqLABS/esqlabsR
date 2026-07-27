@@ -99,6 +99,26 @@
       x name is "differentname" but the file is "populationscenario".json.
       i The filename stem is the definition's id; rename the file or the name so they match. Check '<project>/definitions/scenarios/populationscenario.json'.
 
+# an observedData file whose id disagrees with its filename aborts
+
+    Code
+      loadProject(project$info$projectFilePath)
+    Condition
+      Error in `.assertObservedDataTreeRecordId()`:
+      ! An observedData definition file has an id that disagrees with its filename.
+      x The declaration's id is "elsewhere" but the file is "mismatch".json.
+      i The filename stem is the declaration's id; rename the file, or the id it declares (or the file it derives one from), so they match. Check '<project>/definitions/observed-data/mismatch.json'.
+
+# an observedData file whose id is not a string aborts
+
+    Code
+      loadProject(project$info$projectFilePath)
+    Condition
+      Error in `.assertObservedDataTreeRecordId()`:
+      ! An observedData definition file has an unusable id.
+      x id must be a single non-empty string (it names the declaration and its file).
+      i Check '<project>/definitions/observed-data/obs.pkml.json'.
+
 # a non-scalar scalar field fails load naming the scenario and field
 
     Code
@@ -124,10 +144,10 @@
     Code
       esqlabsR:::.serializeObservedDataSet(entries)
     Condition
-      Error in `.validateObservedDataId()`:
+      Error in `esqlabsR:::.serializeObservedDataSet()`:
       ! observedData id "../escape" is not a single safe filename segment.
       x It must not contain a path separator or be "." / "..", so it cannot escape the observed-data definition directory.
-      i Rename the source (its file basename or programmatic name) to a single safe filename segment.
+      i Give the declaration an id that is a single safe filename segment, or rename what it derives one from: a file basename, or a programmatic name.
 
 # a full-tree write aborts when a stale file cannot be removed
 

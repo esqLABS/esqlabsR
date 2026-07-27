@@ -10,7 +10,7 @@ addParameterEntry(
   containerPath,
   parameterName,
   value,
-  units,
+  units = NULL,
   overwrite = FALSE
 )
 }
@@ -25,7 +25,10 @@ addParameterEntry(
 
 \item{value}{Numeric vector of values (length N).}
 
-\item{units}{Character vector of units (length N; use \code{""} for none).}
+\item{units}{Character vector of units (length N). An entry in a base unit
+carries no unit: write it as \code{""} or \code{NA} (what an empty Units cell read
+from Excel gives you). \code{NULL} (the default) means no unit on any of the N
+entries.}
 
 \item{overwrite}{Logical scalar. When \code{FALSE} (default), a duplicate
 \verb{(containerPath, parameterName)} pair aborts. When \code{TRUE}, it overwrites

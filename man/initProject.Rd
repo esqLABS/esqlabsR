@@ -13,7 +13,8 @@ initProject(
 }
 \arguments{
 \item{destination}{A string defining the path where to initialize the
-project. default to current working directory.}
+project. Defaults to the current working directory. The folder is created
+if it does not exist yet.}
 
 \item{type}{Type of project to create: \code{"minimal"} (default) creates an empty
 project with just the directory structure, \code{"example"} creates a project

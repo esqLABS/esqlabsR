@@ -283,12 +283,6 @@ messages$failedToRemoveStaleDefinitionFiles <- function(paths) {
   ))
 }
 
-messages$pathNotFound <- function(path) {
-  cliFormat(
-    "The specified destination folder does not exist. ({.path {path}}) "
-  )
-}
-
 messages$overwriteDestination <- function(path) {
   cliFormat("Overwriting existing esqlabsR project in {.path {path}} ")
 }
@@ -525,6 +519,15 @@ messages$populationNotFoundForScenario <- function(populationId, scenarioName) {
 messages$unknownScenarioNames <- function(unknownNames) {
   cliFormat(
     "Unknown scenario names: {.val {unknownNames}}."
+  )
+}
+
+messages$invalidSimulationTimeArgument <- function() {
+  cliFormat(
+    "{.arg simulationTime} must be a length-3 numeric vector \\
+    {.code c(start, end, resolution)}, or the same grid as a string \\
+    {.val 0, 42, 48} (several intervals separated by {.val ;}). To give a \\
+    different grid per id, pass a list with one element per id."
   )
 }
 

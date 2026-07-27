@@ -459,6 +459,41 @@ test_that("a single scalar addParameterEntry still works (regression)", {
   )
 })
 
+test_that("addParameterEntry reads NA and NULL units as no unit", {
+  project <- testProject()
+  # An empty Units cell read from Excel arrives as NA; both it and "" mean the
+  # entry is in a base unit, which the stored record spells as no `units` key.
+  suppressMessages(
+    addParameterEntry(
+      project,
+      "unitless",
+      containerPath = c("Organism|A", "Organism|B", "Organism|C"),
+      parameterName = c("Ka", "Kb", "Kc"),
+      value = c(1, 2, 3),
+      units = c("1/h", NA, "")
+    )
+  )
+  entries <- project$definitions$parameterSets$unitless
+  expect_identical(entries[[1]]$units, "1/h")
+  expect_null(entries[[2]]$units)
+  expect_null(entries[[3]]$units)
+
+  # Omitting `units` altogether is "no unit" on every entry of the batch.
+  omitted <- testProject()
+  suppressMessages(
+    addParameterEntry(
+      omitted,
+      "unitless",
+      containerPath = c("Organism|A", "Organism|B"),
+      parameterName = c("Ka", "Kb"),
+      value = c(1, 2)
+    )
+  )
+  expect_length(omitted$definitions$parameterSets$unitless, 2L)
+  expect_null(omitted$definitions$parameterSets$unitless[[1]]$units)
+  expect_null(omitted$definitions$parameterSets$unitless[[2]]$units)
+})
+
 # A parameter set with many entries built in ONE vectorized call writes the set
 # file exactly once. The per-call write-through re-encodes the whole growing
 # set file, so an N-call buildup loop is O(N^2); the vectorized call collapses
