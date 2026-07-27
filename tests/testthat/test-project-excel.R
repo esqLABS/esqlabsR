@@ -956,6 +956,51 @@ test_that("importProjectFromExcel aborts when two ids canonicalize to the same v
   )
 })
 
+# An observed DataCombined row may name a scenario just as a simulated row does.
+# Both are the same kind of reference, so both must land on the canonical id;
+# leaving the observed one at its Excel spelling puts two casings of one scenario
+# in a single definition file and hides the observed block from any check keyed on
+# the canonical id.
+test_that("importProjectFromExcel canonicalizes an observed dataCombined entry's scenario reference", {
+  work_dir <- withr::local_tempdir()
+  file.copy(dirname(testProjectExcelPath()), work_dir, recursive = TRUE)
+  projectDir <- file.path(work_dir, "TestProjectExcel")
+  plotsFile <- file.path(projectDir, "Configurations", "Plots.xlsx")
+
+  # Name a scenario on the observed rows, with the mixed-case spelling the
+  # Scenarios sheet uses.
+  sheets <- readxl::excel_sheets(plotsFile)
+  contents <- stats::setNames(
+    lapply(sheets, function(s) readExcel(plotsFile, sheet = s)),
+    sheets
+  )
+  observedRows <- contents$DataCombined$dataType == "observed"
+  contents$DataCombined$scenario[observedRows] <- "TestScenario"
+  .writeExcel(contents, plotsFile)
+
+  jsonPath <- suppressWarnings(importProjectFromExcel(
+    file.path(projectDir, "ProjectConfiguration.xlsx"),
+    outputDir = withr::local_tempdir(),
+    silent = TRUE
+  ))
+  project <- suppressWarnings(loadProject(jsonPath))
+
+  dataCombined <- .unwrapDefinitionList(project$definitions$dataCombined)
+  observedScenarios <- unlist(lapply(
+    dataCombined,
+    function(dc) vapply(dc$observed, function(e) e$scenario, character(1))
+  ))
+  expect_setequal(observedScenarios, "testscenario")
+  # The simulated block was already canonical; both blocks now agree.
+  expect_true(
+    "testscenario" %in%
+      unlist(lapply(
+        dataCombined,
+        function(dc) vapply(dc$simulated, function(e) e$scenario, character(1))
+      ))
+  )
+})
+
 # Before 6.0.0 the model-parameters, individuals, and applications workbooks were
 # three separate parameter-set namespaces, so a legacy project may legitimately
 # use one sheet name in two of them. They now share a single namespace: the

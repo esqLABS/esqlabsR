@@ -1166,15 +1166,24 @@ projectStatus <- function(project, silent = FALSE) {
   # data, whose ids are file basenames / DataSet names matched verbatim and
   # never canonicalized, so they are deliberately left untouched.
   if (!is.null(jsonData$dataCombined)) {
+    canonEntryScenario <- function(entry) {
+      entry$scenario <- canonScalar(entry$scenario)
+      entry
+    }
     jsonData$dataCombined <- lapply(
       jsonData$dataCombined,
       function(dc) {
         dc$dataCombinedId <- canonScalar(dc$dataCombinedId)
+        # Both entry blocks may name a scenario, and an observed row's `scenario`
+        # is the same kind of reference as a simulated row's, so it gets the same
+        # transform: leaving it at the Excel spelling would put two casings of one
+        # scenario in a single definition file, and any check keyed on the
+        # canonical id would miss the observed block.
         if (!is.null(dc$simulated)) {
-          dc$simulated <- lapply(dc$simulated, function(sim) {
-            sim$scenario <- canonScalar(sim$scenario)
-            sim
-          })
+          dc$simulated <- lapply(dc$simulated, canonEntryScenario)
+        }
+        if (!is.null(dc$observed)) {
+          dc$observed <- lapply(dc$observed, canonEntryScenario)
         }
         dc
       }
