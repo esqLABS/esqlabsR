@@ -200,9 +200,9 @@ messages$importCopiedAssetFolders <- function(folders) {
   )
 }
 
-messages$importAbsentAssetFolders <- function(folders) {
+messages$importUncopiedAssetFolders <- function(folders) {
   cliFormat(
-    "{length(folders)} folder{?s} named by the project configuration {?does/do} not exist in the Excel project, so nothing was copied for {?it/them}: {.file {folders}}.",
+    "{length(folders)} folder{?s} named by the project configuration could not be copied, being absent from the Excel project or outside it: {.file {folders}}.",
     "A definition pointing into one will not resolve until you place the folder in the new project."
   )
 }

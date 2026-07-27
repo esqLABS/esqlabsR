@@ -956,8 +956,9 @@ test_that("importProjectFromExcel aborts when two ids canonicalize to the same v
   )
 })
 
-# The import used to report only in an interactive session, so a scripted import
-# finished with no sign of what was written, or that it had succeeded at all.
+# An import run from a script has no other sign of what was written, or that it
+# succeeded, so the summary is gated on `silent` alone, never on the session
+# being interactive.
 test_that("importProjectFromExcel reports what it produced, and stays quiet under silent", {
   work_dir <- withr::local_tempdir()
   file.copy(dirname(testProjectExcelPath()), work_dir, recursive = TRUE)
@@ -988,10 +989,9 @@ test_that("importProjectFromExcel reports what it produced, and stays quiet unde
 })
 
 # A definition references a model or a data file by a path relative to the
-# project folder, so an import into a different folder used to leave every one of
-# those references dangling: the output was a definitions tree pointing at files
-# that were not there, and the user had to hand-copy them before the project could
-# run.
+# project folder, so those folders have to travel with the definitions for an
+# import into a different folder to resolve. Otherwise the output is a
+# definitions tree pointing at files that are not there.
 test_that("importProjectFromExcel copies the referenced input folders into a separate outputDir", {
   work_dir <- withr::local_tempdir()
   file.copy(dirname(testProjectExcelPath()), work_dir, recursive = TRUE)
@@ -1050,6 +1050,67 @@ test_that("importProjectFromExcel does not copy the results folder or the Excel 
   expect_false(dir.exists(file.path(outputDir, "Results")))
   # The Excel side is the source, not an asset of the JSON project.
   expect_false(dir.exists(file.path(outputDir, "Configurations")))
+})
+
+# A `../`-climbing folder value names something the project does not own.
+# Copying it would read outside the source project and write outside outputDir,
+# overwriting whatever sits beside it.
+test_that("importProjectFromExcel refuses to copy a folder that escapes the project", {
+  work_dir <- withr::local_tempdir()
+  file.copy(dirname(testProjectExcelPath()), work_dir, recursive = TRUE)
+  projectDir <- file.path(work_dir, "TestProjectExcel")
+
+  # A sibling of the project, which must not be touched.
+  bystander <- file.path(work_dir, "Bystander")
+  dir.create(bystander)
+  writeLines("keep me", file.path(bystander, "keep.txt"))
+
+  configPath <- file.path(projectDir, "ProjectConfiguration.xlsx")
+  config <- readExcel(configPath)
+  config$Value[config$Property == "modelFolder"] <- "../Bystander"
+  .writeExcel(config, configPath)
+
+  outputDir <- withr::local_tempdir()
+  expect_warning(
+    withCallingHandlers(
+      importProjectFromExcel(configPath, outputDir = outputDir),
+      esqlabsR_importSkippedObservedData = function(cnd) {
+        invokeRestart("muffleWarning")
+      }
+    ),
+    "could not be copied"
+  )
+
+  # Nothing was written outside outputDir, and the escaping folder did not
+  # travel into it either.
+  expect_false(dir.exists(file.path(dirname(outputDir), "Bystander")))
+  expect_false(dir.exists(file.path(outputDir, "Bystander")))
+  expect_true(file.exists(file.path(bystander, "keep.txt")))
+})
+
+test_that("importProjectFromExcel names a referenced folder the Excel project does not have", {
+  work_dir <- withr::local_tempdir()
+  file.copy(dirname(testProjectExcelPath()), work_dir, recursive = TRUE)
+  projectDir <- file.path(work_dir, "TestProjectExcel")
+
+  # The configuration keeps naming `Data/`, but the folder is gone: there is
+  # nothing to copy, and the user has to be told which folder to place.
+  unlink(file.path(projectDir, "Data"), recursive = TRUE)
+
+  expect_warning(
+    withCallingHandlers(
+      importProjectFromExcel(
+        file.path(projectDir, "ProjectConfiguration.xlsx"),
+        outputDir = withr::local_tempdir()
+      ),
+      # The absent data file also warns from the observed-data parse; muffle it
+      # so the assertion is on the asset report alone.
+      esqlabsR_importSkippedObservedData = function(cnd) {
+        invokeRestart("muffleWarning")
+      }
+    ),
+    "Data/"
+  )
 })
 
 test_that("importProjectFromExcel in place leaves the referenced folders untouched", {

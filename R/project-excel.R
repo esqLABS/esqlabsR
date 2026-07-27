@@ -521,8 +521,8 @@ importProjectFromExcel <- function(
       msg <- messages$importCopiedAssetFolders(assets$copied)
       cli::cli_inform("{msg}")
     }
-    if (length(assets$absent) > 0L) {
-      msg <- messages$importAbsentAssetFolders(assets$absent)
+    if (length(assets$notCopied) > 0L) {
+      msg <- messages$importUncopiedAssetFolders(assets$notCopied)
       cli::cli_warn("{msg}")
     }
   }
@@ -1332,13 +1332,14 @@ projectStatus <- function(project, silent = FALSE) {
 #'   exactly as the Excel file spells them).
 #' @param sourceDir Absolute path to the Excel project's folder.
 #' @param outputDir Directory the JSON project was written to.
-#' @returns `list(copied, absent)`: the folder values copied, and those a
-#'   definition may reference but which do not exist in the source project.
-#'   Both empty when the project was imported in place (nothing to copy).
+#' @returns `list(copied, notCopied)`: the folder values copied, and those a
+#'   definition may reference but that could not be copied (absent from the
+#'   source project, or naming a location outside it). Both empty when the
+#'   project was imported in place (nothing to copy).
 #' @keywords internal
 #' @noRd
 .copyExcelProjectAssets <- function(filePathProps, sourceDir, outputDir) {
-  result <- list(copied = character(), absent = character())
+  result <- list(copied = character(), notCopied = character())
   # Imported in place: the folders are already where the definitions expect them.
   if (fs::path_norm(sourceDir) == fs::path_norm(fs::path_abs(outputDir))) {
     return(result)
@@ -1355,6 +1356,15 @@ projectStatus <- function(project, silent = FALSE) {
     if (fs::is_absolute_path(value) || grepl("\\$\\{?[A-Za-z_]", value)) {
       next
     }
+    # A `../`-climbing value names something the project does not own. Copying it
+    # would read outside the source project and, worse, write outside
+    # `outputDir`, so it is contained the same way every other author-controlled
+    # path in this file is (`.resolveProjectPath()`) and reported rather than
+    # copied.
+    if (.pathEscapesRoot(value, sourceDir)) {
+      result$notCopied <- c(result$notCopied, value)
+      next
+    }
     from <- fs::path_norm(fs::path(sourceDir, value))
     # A folder value of `"."` resolves to the project folder itself; copying that
     # would drag the whole Excel project (workbooks included) into the output.
@@ -1362,7 +1372,7 @@ projectStatus <- function(project, silent = FALSE) {
       next
     }
     if (!fs::dir_exists(from)) {
-      result$absent <- c(result$absent, value)
+      result$notCopied <- c(result$notCopied, value)
       next
     }
     to <- fs::path(outputDir, value)
@@ -1373,7 +1383,7 @@ projectStatus <- function(project, silent = FALSE) {
   # `simulationsFolder` and `modelFolder` are two spellings of one folder, so a
   # project carrying both would report it twice.
   result$copied <- unique(result$copied)
-  result$absent <- unique(result$absent)
+  result$notCopied <- unique(result$notCopied)
   result
 }
 
