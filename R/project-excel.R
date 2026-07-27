@@ -493,11 +493,25 @@ importProjectFromExcel <- function(
   # it no longer needs an inlined container to diff against.
   .writeProjectTree(importedProject, outputDir, containerPath = outputPath)
 
+  # The definitions reference models, data, and population files by a path
+  # relative to the project folder, so importing into a different folder would
+  # leave every one of those references dangling. Bring the referenced input
+  # folders along, so the imported project runs where it was written.
+  assets <- .copyExcelProjectAssets(filePathProps, pcDir, outputDir)
+
   if (interactive() && !silent) {
     inputFile <- fs::path_rel(projectConfigPath, start = getwd())
     outputFile <- fs::path_rel(outputPath, start = getwd())
     msg <- messages$createdFileSnapshot(inputFile, outputFile)
     cli::cli_inform("{msg}")
+    if (length(assets$copied) > 0L) {
+      msg <- messages$importCopiedAssetFolders(assets$copied)
+      cli::cli_inform("{msg}")
+    }
+    if (length(assets$absent) > 0L) {
+      msg <- messages$importAbsentAssetFolders(assets$absent)
+      cli::cli_warn("{msg}")
+    }
   }
 
   invisible(outputPath)
@@ -1252,6 +1266,85 @@ projectStatus <- function(project, silent = FALSE) {
   }
 
   jsonData
+}
+
+#' The working folders whose contents an imported project needs to run
+#'
+#' The input folders a definition can reference: models (under either the current
+#' `simulationsFolder` key or the pre-6.0.0 `modelFolder` an Excel project still
+#' spells it with), observed data, and csv populations. `outputFolder` is
+#' deliberately absent: it holds results the project writes, not inputs it reads.
+#'
+#' @keywords internal
+#' @noRd
+.excelProjectAssetFolders <- c(
+  "simulationsFolder",
+  "modelFolder",
+  "dataFolder",
+  "populationsFolder"
+)
+
+#' Copy an Excel project's referenced input folders next to the imported project
+#'
+#' A definition references a model, a data file, or a csv population by a path
+#' relative to the project folder, so importing into a folder other than the
+#' Excel project's own leaves every such reference dangling. Copying the
+#' referenced folders to the same relative location under `outputDir` makes those
+#' paths resolve again, which is what makes the imported project runnable rather
+#' than a definitions tree pointing at files that are not there.
+#'
+#' Whole folders are copied rather than only the individually referenced files,
+#' because a folder also holds assets nothing names statically (an importer
+#' configuration, a population csv chosen at run time, a model a scenario is
+#' added for later).
+#'
+#' @param filePathProps The project's raw `filePaths` properties (folder values
+#'   exactly as the Excel file spells them).
+#' @param sourceDir Absolute path to the Excel project's folder.
+#' @param outputDir Directory the JSON project was written to.
+#' @returns `list(copied, absent)`: the folder values copied, and those a
+#'   definition may reference but which do not exist in the source project.
+#'   Both empty when the project was imported in place (nothing to copy).
+#' @keywords internal
+#' @noRd
+.copyExcelProjectAssets <- function(filePathProps, sourceDir, outputDir) {
+  result <- list(copied = character(), absent = character())
+  # Imported in place: the folders are already where the definitions expect them.
+  if (fs::path_norm(sourceDir) == fs::path_norm(fs::path_abs(outputDir))) {
+    return(result)
+  }
+
+  for (field in .excelProjectAssetFolders) {
+    value <- filePathProps[[field]]
+    if (is.null(value) || is.na(value) || !nzchar(value)) {
+      next
+    }
+    # An absolute folder, or one naming an environment variable, deliberately
+    # points outside the project: it resolves the same from the new location, so
+    # copying it would duplicate data the author chose to keep in one place.
+    if (fs::is_absolute_path(value) || grepl("\\$\\{?[A-Za-z_]", value)) {
+      next
+    }
+    from <- fs::path_norm(fs::path(sourceDir, value))
+    # A folder value of `"."` resolves to the project folder itself; copying that
+    # would drag the whole Excel project (workbooks included) into the output.
+    if (from == fs::path_norm(sourceDir)) {
+      next
+    }
+    if (!fs::dir_exists(from)) {
+      result$absent <- c(result$absent, value)
+      next
+    }
+    to <- fs::path(outputDir, value)
+    fs::dir_create(fs::path_dir(to))
+    fs::dir_copy(from, to, overwrite = TRUE)
+    result$copied <- c(result$copied, value)
+  }
+  # `simulationsFolder` and `modelFolder` are two spellings of one folder, so a
+  # project carrying both would report it twice.
+  result$copied <- unique(result$copied)
+  result$absent <- unique(result$absent)
+  result
 }
 
 #' Append parsed parameter sheets to the accumulating `parameterSets` section

@@ -194,6 +194,19 @@ messages$importWouldOverwriteProject <- function(outputDir) {
   )
 }
 
+messages$importCopiedAssetFolders <- function(folders) {
+  cliFormat(
+    "Copied {length(folders)} referenced folder{?s} into the new project: {.file {folders}}."
+  )
+}
+
+messages$importAbsentAssetFolders <- function(folders) {
+  cliFormat(
+    "{length(folders)} folder{?s} named by the project configuration {?does/do} not exist in the Excel project, so nothing was copied for {?it/them}: {.file {folders}}.",
+    "A definition pointing into one will not resolve until you place the folder in the new project."
+  )
+}
+
 # Raised by `.appendParameterSets()` when a workbook's sheet reuses a
 # parameter-set id an earlier workbook already took. `bullets` are the
 # pre-bound `old -> new` templates from `.canonicalizedIdBullets()`; the caller

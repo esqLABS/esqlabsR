@@ -956,6 +956,89 @@ test_that("importProjectFromExcel aborts when two ids canonicalize to the same v
   )
 })
 
+# A definition references a model or a data file by a path relative to the
+# project folder, so an import into a different folder used to leave every one of
+# those references dangling: the output was a definitions tree pointing at files
+# that were not there, and the user had to hand-copy them before the project could
+# run.
+test_that("importProjectFromExcel copies the referenced input folders into a separate outputDir", {
+  work_dir <- withr::local_tempdir()
+  file.copy(dirname(testProjectExcelPath()), work_dir, recursive = TRUE)
+  projectDir <- file.path(work_dir, "TestProjectExcel")
+
+  outputDir <- withr::local_tempdir()
+  jsonPath <- suppressWarnings(importProjectFromExcel(
+    file.path(projectDir, "ProjectConfiguration.xlsx"),
+    outputDir = outputDir,
+    silent = TRUE
+  ))
+
+  # The models and the observed data travelled with the definitions.
+  expect_true(file.exists(file.path(
+    outputDir,
+    "Models",
+    "Simulations",
+    "Aciclovir.pkml"
+  )))
+  expect_true(file.exists(file.path(
+    outputDir,
+    "Data",
+    "TestProject_TimeValuesData.xlsx"
+  )))
+  # Including an asset nothing references statically (the importer config).
+  expect_true(file.exists(file.path(
+    outputDir,
+    "Data",
+    "esqlabs_dataImporter_configuration.xml"
+  )))
+
+  # So the imported project no longer validates with File-Not-Found warnings for
+  # its own models and data.
+  report <- suppressWarnings(validateProject(suppressWarnings(loadProject(
+    jsonPath
+  ))))
+  fileWarnings <- unlist(lapply(report, function(section) {
+    vapply(section$warnings, function(w) w$category, character(1))
+  }))
+  expect_false("File Not Found" %in% fileWarnings)
+})
+
+test_that("importProjectFromExcel does not copy the results folder or the Excel workbooks", {
+  work_dir <- withr::local_tempdir()
+  file.copy(dirname(testProjectExcelPath()), work_dir, recursive = TRUE)
+  projectDir <- file.path(work_dir, "TestProjectExcel")
+
+  outputDir <- withr::local_tempdir()
+  suppressWarnings(importProjectFromExcel(
+    file.path(projectDir, "ProjectConfiguration.xlsx"),
+    outputDir = outputDir,
+    silent = TRUE
+  ))
+
+  # `outputFolder` holds what the project writes, not what it reads.
+  expect_false(dir.exists(file.path(outputDir, "Results")))
+  # The Excel side is the source, not an asset of the JSON project.
+  expect_false(dir.exists(file.path(outputDir, "Configurations")))
+})
+
+test_that("importProjectFromExcel in place leaves the referenced folders untouched", {
+  work_dir <- withr::local_tempdir()
+  file.copy(dirname(testProjectExcelPath()), work_dir, recursive = TRUE)
+  projectDir <- file.path(work_dir, "TestProjectExcel")
+
+  before <- sort(list.files(projectDir, recursive = TRUE))
+  suppressWarnings(importProjectFromExcel(
+    file.path(projectDir, "ProjectConfiguration.xlsx"),
+    silent = TRUE,
+    overwrite = TRUE
+  ))
+  after <- sort(list.files(projectDir, recursive = TRUE))
+
+  # Everything the import added is a definition file; no folder was copied onto
+  # itself, which would have duplicated the models and data into subfolders.
+  expect_true(all(grepl("^definitions/", setdiff(after, before))))
+})
+
 # An observed DataCombined row may name a scenario just as a simulated row does.
 # Both are the same kind of reference, so both must land on the canonical id;
 # leaving the observed one at its Excel spelling puts two casings of one scenario
