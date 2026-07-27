@@ -66,7 +66,7 @@
       <PlotGrid>
         * Plot Grid Id: individual_diagnostics
         * Plot Ids: p1
-        * Title: Aciclovir — Individual Diagnostics
+        * Title: Aciclovir - Individual Diagnostics
 
 # print.DataCombined renders simulated and observed counts
 

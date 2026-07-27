@@ -227,10 +227,10 @@ print.DataCombined <- function(x, ...) {
 
 #' Validate the plots-related sections of a Project
 #'
-#' Covers `dataCombined`, `plots` (the plot list), and `plotGrids`:
-#'   * dataCombined entries must declare a non-empty `scenario` on
-#'     each simulated row and a non-empty `dataSet` on each observed
-#'     row.
+#' Covers `plots` (the plot list) and `plotGrids`. The shape of the
+#' `dataCombined` section is validated separately by `.validateDataCombined()`;
+#' `dataCombined` is passed here only so a plot's `dataCombinedId` can be
+#' checked against the set of known dataCombined ids.
 #'   * plot entries must declare `plotId`, `dataCombinedId`,
 #'     and `plotType`; `plotId` must be unique; `dataCombinedId` must
 #'     reference a known dataCombined entry; `plotType` must be one of
@@ -243,7 +243,8 @@ print.DataCombined <- function(x, ...) {
 #' Cross-section references that escape these sections (dataCombined ->
 #' scenarios) are validated in `.validateCrossReferences()`.
 #'
-#' @param dataCombined Named list from `dataCombined` definitions.
+#' @param dataCombined Named list from `dataCombined` definitions, used only as
+#'   the set of known ids a plot's `dataCombinedId` may reference.
 #' @param plotConfig Named list from `plots` definitions (the plot list, keyed
 #'   by `plotId`).
 #' @param plotGrids Named list from `plotGrids` definitions.
@@ -271,67 +272,11 @@ print.DataCombined <- function(x, ...) {
   plotConfig <- plotConfig %||% list()
   plotGrids <- plotGrids %||% list()
 
-  if (is.null(dataCombined) || length(dataCombined) == 0) {
-    result$addWarning("Data", "dataCombined is empty")
-  } else {
-    for (dcName in names(dataCombined)) {
-      dc <- dataCombined[[dcName]]
-      for (entry in dc$simulated %||% list()) {
-        if (.isMissingField(entry$label)) {
-          result$addCriticalError(
-            "Missing Fields",
-            paste0(
-              "Simulated entry in dataCombined '",
-              dcName,
-              "' is missing 'label'"
-            )
-          )
-        }
-        if (.isMissingField(entry$scenario)) {
-          result$addCriticalError(
-            "Missing Fields",
-            paste0(
-              "Simulated entry in dataCombined '",
-              dcName,
-              "' is missing 'scenario'"
-            )
-          )
-        }
-        if (.isMissingField(entry$path)) {
-          result$addCriticalError(
-            "Missing Fields",
-            paste0(
-              "Simulated entry in dataCombined '",
-              dcName,
-              "' is missing 'path'"
-            )
-          )
-        }
-      }
-      for (entry in dc$observed %||% list()) {
-        if (.isMissingField(entry$label)) {
-          result$addCriticalError(
-            "Missing Fields",
-            paste0(
-              "Observed entry in dataCombined '",
-              dcName,
-              "' is missing 'label'"
-            )
-          )
-        }
-        if (.isMissingField(entry$dataSet)) {
-          result$addCriticalError(
-            "Missing Fields",
-            paste0(
-              "Observed entry in dataCombined '",
-              dcName,
-              "' is missing 'dataSet'"
-            )
-          )
-        }
-      }
-    }
-  }
+  # The shape of each `dataCombined` entry (required `label`/`scenario`/`path`
+  # on simulated, `label`/`dataSet` on observed) is validated by the
+  # `dataCombined` adapter (`.validateDataCombined()`, `R/data-combined.R`).
+  # Here `dataCombined` is used only as the set of known ids the plot list may
+  # reference (see the `dataCombinedId` check below).
 
   if (length(plotConfig) == 0) {
     result$addWarning("Data", "plotConfiguration is empty")
@@ -673,12 +618,23 @@ print.DataCombined <- function(x, ...) {
     (length(val) == 1L && (is.na(val) || identical(as.character(val), "")))
 }
 
-.checkDataCombinedEntry <- function(entry, dataType) {
-  required <- if (dataType == "simulated") {
+# The required fields of a DataCombined entry, by data type. One definition
+# shared by the write-time gate (`.checkDataCombinedEntry()`) and the load-time
+# validator (`.checkDataCombinedEntryFields()` in `R/data-combined.R`) so the
+# two can never disagree on what a well-formed entry must carry.
+#
+# @keywords internal
+# @noRd
+.requiredDataCombinedFields <- function(dataType) {
+  if (dataType == "simulated") {
     c("label", "scenario", "path")
   } else {
     c("label", "dataSet")
   }
+}
+
+.checkDataCombinedEntry <- function(entry, dataType) {
+  required <- .requiredDataCombinedFields(dataType)
   for (field in required) {
     if (.isMissingField(entry[[field]])) {
       cli::cli_abort(
@@ -1087,7 +1043,10 @@ removePlotGrid <- function(project, id) {
 #' @param simulated For a single DataCombined (`id` length 1), a list of
 #'   named lists, each including `label`, `scenario`, and `path` (optional
 #'   `group`, `xOffsets`, `xOffsetsUnits`, `yOffsets`, `yOffsetsUnits`,
-#'   `xScaleFactors`, `yScaleFactors`). The `scenario` reference is
+#'   `xScaleFactors`, `yScaleFactors`). `path` may be either a literal model
+#'   quantity path or an output-path id (a key of the project's `outputPaths`
+#'   definitions); an id is resolved to its literal path when the DataCombined
+#'   is built by [createDataCombined()]. The `scenario` reference is
 #'   canonicalized to match its scenario definition. To add several
 #'   DataCombined in one call, pass a list of the same length as `id`, one
 #'   such simulated list per DataCombined.
