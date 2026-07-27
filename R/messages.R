@@ -243,12 +243,6 @@ messages$failedToRemoveStaleDefinitionFiles <- function(paths) {
   ))
 }
 
-messages$pathNotFound <- function(path) {
-  cliFormat(
-    "The specified destination folder does not exist. ({.path {path}}) "
-  )
-}
-
 messages$overwriteDestination <- function(path) {
   cliFormat("Overwriting existing esqlabsR project in {.path {path}} ")
 }
