@@ -194,6 +194,24 @@ messages$importWouldOverwriteProject <- function(outputDir) {
   )
 }
 
+# Raised by `.appendParameterSets()` when a workbook's sheet reuses a
+# parameter-set id an earlier workbook already took. `bullets` are the
+# pre-bound `old -> new` templates from `.canonicalizedIdBullets()`; the caller
+# binds `sourceLabel` and `renamedCount` into the same environment and passes it
+# as `.envir`, so the whole message is glue-parsed exactly once and a sheet name
+# containing `{` is never evaluated.
+messages$importRenamedDuplicateParameterSets <- function(bullets) {
+  c(
+    "!" = "{renamedCount} parameter set{?s} in {.file {sourceLabel}} reuse{?s/} \\
+    an id an earlier workbook already defined, so {?it was/they were} renamed:",
+    bullets,
+    "i" = "The three former parameter-set kinds now share one \\
+    {.field parameterSets} namespace, so one sheet name cannot serve two sets. \\
+    References made in {.file {sourceLabel}} point at the renamed set{?s}; \\
+    rename the sheet in Excel to choose the id yourself."
+  )
+}
+
 messages$importSkippedObservedData <- function(dataFile) {
   c(
     "!" = "The configured data file {.file {dataFile}} was not found, so no \\

@@ -956,6 +956,114 @@ test_that("importProjectFromExcel aborts when two ids canonicalize to the same v
   )
 })
 
+# Before 6.0.0 the model-parameters, individuals, and applications workbooks were
+# three separate parameter-set namespaces, so a legacy project may legitimately
+# use one sheet name in two of them. They now share a single namespace: the
+# workbook parsed first keeps the plain id, the later sheet is renamed, and the
+# references that later workbook makes follow the rename. Without the re-pointing
+# the renamed set is orphaned and the referrer silently resolves to the *other*
+# workbook's set.
+test_that("importProjectFromExcel renames a duplicate parameter-set id and re-points its own workbook's references", {
+  work_dir <- withr::local_tempdir()
+  file.copy(dirname(testProjectExcelPath()), work_dir, recursive = TRUE)
+  projectDir <- file.path(work_dir, "TestProjectExcel")
+  modelParamsFile <- file.path(
+    projectDir,
+    "Configurations",
+    "ModelParameters.xlsx"
+  )
+
+  # Add model-parameter sheets clashing with the individuals workbook's `Indiv1`
+  # sheet and the applications workbook's `Protocol_250mg` sheet. Model
+  # parameters are parsed first, so both of those get renamed.
+  clashing <- data.frame(
+    "Container Path" = "Organism|Liver",
+    "Parameter Name" = "Volume",
+    Value = 1,
+    Units = "l",
+    check.names = FALSE,
+    stringsAsFactors = FALSE
+  )
+  sheets <- readxl::excel_sheets(modelParamsFile)
+  .writeExcel(
+    c(
+      stats::setNames(
+        lapply(sheets, function(s) readExcel(modelParamsFile, sheet = s)),
+        sheets
+      ),
+      list(Indiv1 = clashing, Protocol_250mg = clashing)
+    ),
+    modelParamsFile
+  )
+
+  jsonPath <- suppressWarnings(importProjectFromExcel(
+    file.path(projectDir, "ProjectConfiguration.xlsx"),
+    outputDir = withr::local_tempdir(),
+    silent = TRUE
+  ))
+  project <- suppressWarnings(loadProject(jsonPath))
+
+  # Both sets survive: the model-parameters sheet keeps the plain id, the later
+  # workbook's sheet gets the suffixed one.
+  sets <- .unwrapDefinitionList(project$definitions$parameterSets)
+  expect_true(all(
+    c("indiv1", "indiv1_1", "protocol_250mg", "protocol_250mg_1") %in%
+      names(sets)
+  ))
+
+  # The individual still carries its OWN parameter set, not the model-parameters
+  # sheet that took the id.
+  expect_identical(
+    unlist(project$definitions$individuals[["indiv1"]]$parameterSets),
+    "indiv1_1"
+  )
+  # Same for the 5.x application wrapper built around its protocol sheet.
+  expect_identical(
+    unlist(project$definitions$applications[["protocol_250mg"]]$parameterSets),
+    "protocol_250mg_1"
+  )
+})
+
+test_that("importProjectFromExcel warns naming each renamed duplicate parameter set", {
+  work_dir <- withr::local_tempdir()
+  file.copy(dirname(testProjectExcelPath()), work_dir, recursive = TRUE)
+  projectDir <- file.path(work_dir, "TestProjectExcel")
+  individualsFile <- file.path(
+    projectDir,
+    "Configurations",
+    "Individuals.xlsx"
+  )
+
+  # Rename the individuals workbook's parameter sheet onto a model-parameters
+  # sheet name (`Global`), so the individuals workbook is the one that loses the
+  # id and the warning names it.
+  sheets <- readxl::excel_sheets(individualsFile)
+  contents <- stats::setNames(
+    lapply(sheets, function(s) readExcel(individualsFile, sheet = s)),
+    sheets
+  )
+  names(contents)[names(contents) == "Indiv1"] <- "Global"
+  .writeExcel(contents, individualsFile)
+
+  # Snapshot the rename warning alone, caught by its own condition class: the
+  # import also raises locale-dependent unit-encoding warnings that would make a
+  # whole-call snapshot machine-specific.
+  renameWarning <- NULL
+  suppressWarnings(withCallingHandlers(
+    importProjectFromExcel(
+      file.path(projectDir, "ProjectConfiguration.xlsx"),
+      outputDir = withr::local_tempdir(),
+      silent = TRUE
+    ),
+    esqlabsR_importRenamedParameterSets = function(cnd) {
+      renameWarning <<- conditionMessage(cnd)
+      invokeRestart("muffleWarning")
+    }
+  ))
+
+  expect_snapshot(cat(renameWarning))
+})
+
 # Two distinct output-path ids may resolve to the same literal path. The export
 # must key the scenario's ids off `names(sc$outputPaths)` (the ids themselves),
 # not a value-based reverse-lookup that would collapse both to one id and drop

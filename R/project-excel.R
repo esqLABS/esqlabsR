@@ -224,14 +224,19 @@ importProjectFromExcel <- function(
         jsonData
       }
     ),
-    # Model parameters: every sheet is a parameter set.
+    # Model parameters: every sheet is a parameter set. This is the first
+    # workbook to contribute to `parameterSets`, so nothing here is ever renamed;
+    # it goes through the shared appender all the same, so every contributor
+    # reaches the section the one way.
     list(
       property = "modelParamsFile",
       parse = function(file, jsonData) {
-        jsonData$parameterSets <- c(
+        appended <- .appendParameterSets(
           jsonData$parameterSets,
-          .parseExcelParameterSheets(file)
+          .parseExcelParameterSheets(file),
+          file
         )
+        jsonData$parameterSets <- appended$sets
         jsonData
       }
     ),
@@ -247,10 +252,12 @@ importProjectFromExcel <- function(
         }
         paramSheetNames <- setdiff(sheets, "IndividualBiometrics")
         if (length(paramSheetNames) > 0) {
-          jsonData$parameterSets <- c(
+          appended <- .appendParameterSets(
             jsonData$parameterSets,
-            .parseExcelParameterSheets(file, sheetNames = paramSheetNames)
+            .parseExcelParameterSheets(file, sheetNames = paramSheetNames),
+            file
           )
+          jsonData$parameterSets <- appended$sets
           # A sheet named after an individual is that individual's own parameter
           # override; link it so the override is applied. The match is on the
           # canonical id, so `Indiv1` sheet links to the `Indiv1` individual
@@ -263,6 +270,21 @@ importProjectFromExcel <- function(
             character(1)
           )
           jsonData$individuals <- lapply(jsonData$individuals, function(indiv) {
+            # Both references an individual carries name sheets of *this*
+            # workbook (its own same-named sheet, and the `Individual Parameter
+            # Sets` column), so a sheet the appender had to rename is followed to
+            # its new id rather than left pointing at the earlier workbook's set
+            # that took the plain id. Guarded on a rename having happened, so an
+            # individual that declares no sets keeps the field absent rather than
+            # gaining an empty one.
+            if (
+              length(appended$renames) > 0L && !is.null(indiv$parameterSets)
+            ) {
+              indiv$parameterSets <- as.list(.applyIdRenames(
+                unlist(indiv$parameterSets),
+                appended$renames
+              ))
+            }
             indivCanonical <- .canonicalizeOneId(indiv$individualId)
             # A blank/NA individual id (e.g. a trailing blank row) matches
             # nothing: an `NA ==` comparison yields all-NA, and indexing by an
@@ -275,7 +297,7 @@ importProjectFromExcel <- function(
             if (length(match) > 0L) {
               indiv$parameterSets <- as.list(unique(c(
                 unlist(indiv$parameterSets),
-                match
+                .applyIdRenames(match, appended$renames)
               )))
             }
             indiv
@@ -311,24 +333,50 @@ importProjectFromExcel <- function(
           }
           paramSheetNames <- setdiff(sheets, "ApplicationProtocols")
           if (length(paramSheetNames) > 0) {
-            jsonData$parameterSets <- c(
+            appended <- .appendParameterSets(
               jsonData$parameterSets,
-              .parseExcelParameterSheets(file, sheetNames = paramSheetNames)
+              .parseExcelParameterSheets(file, sheetNames = paramSheetNames),
+              file
             )
+            jsonData$parameterSets <- appended$sets
+            # The `ParameterSets` column names sheets of this workbook, so follow
+            # a renamed sheet to its new id. Guarded on a rename having happened,
+            # so a protocol that declares no sets keeps the field absent.
+            if (length(appended$renames) > 0L) {
+              jsonData$applications <- lapply(
+                jsonData$applications,
+                function(app) {
+                  if (!is.null(app$parameterSets)) {
+                    app$parameterSets <- as.list(.applyIdRenames(
+                      unlist(app$parameterSets),
+                      appended$renames
+                    ))
+                  }
+                  app
+                }
+              )
+            }
           }
         } else if (length(sheets) > 0) {
-          jsonData$parameterSets <- c(
+          appended <- .appendParameterSets(
             jsonData$parameterSets,
-            .parseExcelParameterSheets(file, sheetNames = sheets)
+            .parseExcelParameterSheets(file, sheetNames = sheets),
+            file
           )
+          jsonData$parameterSets <- appended$sets
           # One application per protocol sheet, keyed by sheet name and wrapping
-          # the same-named parameter set (both ids canonicalize identically, so
-          # the reference resolves). The record carries no inner `id`; the key is
-          # the id, matching `.parseExcelApplications()`.
+          # its own parameter set: normally the same-named one (both ids
+          # canonicalize identically, so the reference resolves), or the renamed
+          # id when an earlier workbook already held that name. The record carries
+          # no inner `id`; the key is the id, matching
+          # `.parseExcelApplications()`.
+          setIds <- .applyIdRenames(sheets, appended$renames)
           jsonData$applications <- c(
             jsonData$applications,
             stats::setNames(
-              lapply(sheets, function(sheet) list(parameterSets = list(sheet))),
+              lapply(setIds, function(setId) {
+                list(parameterSets = list(setId))
+              }),
               sheets
             )
           )
@@ -1195,6 +1243,94 @@ projectStatus <- function(project, silent = FALSE) {
   }
 
   jsonData
+}
+
+#' Append parsed parameter sheets to the accumulating `parameterSets` section
+#'
+#' The Excel layout spreads parameter sets over three workbooks (model
+#' parameters, individuals, applications) that were three separate namespaces
+#' before 6.0.0; they now share the single `parameterSets` namespace, so the same
+#' sheet name in two workbooks would land on one id. The earlier workbook keeps
+#' the plain id and the later sheet is renamed, since a definition tree keys one
+#' file per id and cannot hold both.
+#'
+#' The uniquifying runs on the *canonical* id, not the raw sheet name: `Rat` and
+#' `rat` in two workbooks are as much of a clash as `Rat` twice, because both
+#' canonicalize to the same definition filename. The suffix `make.unique()` picks
+#' is carried back onto the raw sheet name, so the renamed set keeps its readable
+#' spelling (`Indiv1` -> `Indiv1_1`).
+#'
+#' @param existing The `parameterSets` accumulated so far.
+#' @param incoming Newly parsed sets, keyed by sheet name.
+#' @param source Path to the workbook `incoming` was read from, named in the
+#'   rename warning.
+#' @returns `list(sets, renames)`: the merged section, and a named character
+#'   vector mapping each renamed sheet name to its new id (empty when nothing
+#'   clashed). The caller re-points the references that workbook itself makes
+#'   with [.applyIdRenames()].
+#' @keywords internal
+#' @noRd
+.appendParameterSets <- function(existing, incoming, source) {
+  if (length(incoming) == 0L) {
+    return(list(sets = existing, renames = character()))
+  }
+  ids <- c(names(existing), names(incoming))
+  canonical <- vapply(ids, .canonicalizeOneId, character(1), USE.NAMES = FALSE)
+  # `make.unique()` leaves each first occurrence untouched and suffixes the
+  # later ones, and `existing` comes first, so an already-accumulated id is
+  # never renamed out from under a reference that resolved to it.
+  uniqued <- make.unique(canonical, sep = "_")
+  isIncoming <- seq_along(ids) > length(existing)
+  suffix <- substring(
+    uniqued[isIncoming],
+    nchar(canonical[isIncoming]) + 1L
+  )
+  newIds <- paste0(names(incoming), suffix)
+  renames <- stats::setNames(newIds, names(incoming))[nzchar(suffix)]
+
+  if (length(renames) > 0L) {
+    # Same safe-glue handling as the canonicalization warnings: the pairs are
+    # bound as variables and the whole message is glue-parsed once, so a sheet
+    # name containing `{` is never evaluated as a cli expression.
+    rendered <- .canonicalizedIdBullets(names(renames), unname(renames))
+    rendered$envir$sourceLabel <- basename(source)
+    rendered$envir$renamedCount <- length(renames)
+    # Classed so a caller that expects the rename (a test, or a migration script
+    # that has already reported it) can muffle just this warning without
+    # swallowing others.
+    cli::cli_warn(
+      messages$importRenamedDuplicateParameterSets(rendered$bullets),
+      .envir = rendered$envir,
+      class = "esqlabsR_importRenamedParameterSets"
+    )
+  }
+
+  list(
+    sets = c(existing, stats::setNames(incoming, newIds)),
+    renames = renames
+  )
+}
+
+#' Re-point parameter-set references through a rename map
+#'
+#' Applies the `renames` map [.appendParameterSets()] returned to a vector of
+#' referenced ids, leaving an id that was not renamed untouched. Used on the
+#' references a workbook makes into its *own* former namespace (an individual's
+#' sheet link, an application's `ParameterSets` column), so a set that had to be
+#' renamed is still reached by the workbook that owns it.
+#'
+#' @param ids Referenced parameter-set ids (character vector).
+#' @param renames Named character vector, old id -> new id.
+#' @returns `ids` with every renamed entry replaced.
+#' @keywords internal
+#' @noRd
+.applyIdRenames <- function(ids, renames) {
+  if (length(renames) == 0L || length(ids) == 0L) {
+    return(ids)
+  }
+  ids <- as.character(ids)
+  mapped <- unname(renames[ids])
+  ifelse(is.na(mapped), ids, mapped)
 }
 
 #' Parse parameter sheets from an Excel file into JSON structure

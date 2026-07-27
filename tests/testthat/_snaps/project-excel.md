@@ -30,6 +30,15 @@
       x "Aciclovir_PVB" and "aciclovir_pvb" -> "aciclovir_pvb"
       i Two distinct ids that canonicalize to the same id are ambiguous; rename so they differ by more than case or forbidden characters.
 
+# importProjectFromExcel warns naming each renamed duplicate parameter set
+
+    Code
+      cat(renameWarning)
+    Output
+      ! 1 parameter set in 'Individuals.xlsx' reuses an id an earlier workbook already defined, so it was renamed:
+      * "Global" -> "Global_1"
+      i The three former parameter-set kinds now share one parameterSets namespace, so one sheet name cannot serve two sets. References made in 'Individuals.xlsx' point at the renamed set; rename the sheet in Excel to choose the id yourself.
+
 # .parseExcelParameterSheets aborts on a non-numeric Value cell
 
     Code
