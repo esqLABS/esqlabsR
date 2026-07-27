@@ -202,26 +202,35 @@ messages$importCopiedAssetFolders <- function(folders) {
 
 messages$importUncopiedAssetFolders <- function(folders) {
   cliFormat(
-    "{length(folders)} folder{?s} named by the project configuration could not be copied, being absent from the Excel project or outside it: {.file {folders}}.",
+    "{length(folders)} folder{?s} named by the project configuration {cli::qty(length(folders))}{?was/were} not copied: {.file {folders}}.",
+    "Each is absent from the Excel project, points outside it, or already holds files in the new project (pass {.code overwrite = TRUE} to replace those).",
     "A definition pointing into one will not resolve until you place the folder in the new project."
   )
 }
 
 # Raised by `.appendParameterSets()` when a workbook's sheet reuses a
-# parameter-set id an earlier workbook already took. `bullets` are the
+# parameter-set id already taken, whether by an earlier workbook or by another
+# sheet of the same workbook, so the wording names neither. `bullets` are the
 # pre-bound `old -> new` templates from `.canonicalizedIdBullets()`; the caller
 # binds `sourceLabel` and `renamedCount` into the same environment and passes it
 # as `.envir`, so the whole message is glue-parsed exactly once and a sheet name
 # containing `{` is never evaluated.
+#
+# `cli::qty()` re-arms the plural quantity after each interpolation: cli binds a
+# `{?}` marker to the nearest preceding substitution, so the length-1
+# `{.file {sourceLabel}}` would otherwise force every later marker in its bullet
+# to the singular no matter how many sets were renamed.
 messages$importRenamedDuplicateParameterSets <- function(bullets) {
   c(
-    "!" = "{renamedCount} parameter set{?s} in {.file {sourceLabel}} reuse{?s/} \\
-    an id an earlier workbook already defined, so {?it was/they were} renamed:",
+    "!" = "{renamedCount} parameter set{?s} in {.file {sourceLabel}} \\
+    {cli::qty(renamedCount)}reuse{?s/} an id that is already taken, so \\
+    {?it was/they were} renamed:",
     bullets,
     "i" = "The three former parameter-set kinds now share one \\
     {.field parameterSets} namespace, so one sheet name cannot serve two sets. \\
-    References made in {.file {sourceLabel}} point at the renamed set{?s}; \\
-    rename the sheet in Excel to choose the id yourself."
+    References made in {.file {sourceLabel}} point at the \\
+    {cli::qty(renamedCount)}renamed set{?s}; rename the sheet in Excel to \\
+    choose the id yourself."
   )
 }
 
