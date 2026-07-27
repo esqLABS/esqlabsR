@@ -26,8 +26,15 @@
 #'   state and deletes any definitions authored only on the JSON side. Pass
 #'   `overwrite = TRUE` to replace the existing JSON project with the Excel
 #'   state.
-#' @param silent Logical. If `TRUE`, suppresses informational messages.
-#'   Defaults to `FALSE`.
+#' @param silent Logical. If `TRUE`, suppresses the import summary (the project
+#'   written, its per-section definition counts, and the folders copied or
+#'   missing). Defaults to `FALSE`.
+#' @param copyAssets Logical. Whether to copy the input folders the project
+#'   references (models, data, csv populations) into `outputDir`, which is what
+#'   makes the imported project runnable where it was written. Defaults to
+#'   `TRUE`. Set it to `FALSE` when only the definitions are wanted and the
+#'   assets would be wasted work, as when the import feeds a throwaway
+#'   comparison snapshot.
 #'
 #' @return Invisibly returns the path to the created project file (the
 #'   `Project.json`).
@@ -37,9 +44,11 @@ importProjectFromExcel <- function(
   projectConfigPath = "Project.xlsx",
   outputDir = NULL,
   overwrite = FALSE,
-  silent = FALSE
+  silent = FALSE,
+  copyAssets = TRUE
 ) {
   validateIsString(projectConfigPath)
+  validateIsLogical(copyAssets)
 
   if (!file.exists(projectConfigPath)) {
     cli::cli_abort(messages$fileNotFound(projectConfigPath))
@@ -224,14 +233,19 @@ importProjectFromExcel <- function(
         jsonData
       }
     ),
-    # Model parameters: every sheet is a parameter set.
+    # Model parameters: every sheet is a parameter set. This is the first
+    # workbook to contribute to `parameterSets`, so nothing here is ever renamed;
+    # it goes through the shared appender all the same, so every contributor
+    # reaches the section the one way.
     list(
       property = "modelParamsFile",
       parse = function(file, jsonData) {
-        jsonData$parameterSets <- c(
+        appended <- .appendParameterSets(
           jsonData$parameterSets,
-          .parseExcelParameterSheets(file)
+          .parseExcelParameterSheets(file),
+          file
         )
+        jsonData$parameterSets <- appended$sets
         jsonData
       }
     ),
@@ -247,10 +261,12 @@ importProjectFromExcel <- function(
         }
         paramSheetNames <- setdiff(sheets, "IndividualBiometrics")
         if (length(paramSheetNames) > 0) {
-          jsonData$parameterSets <- c(
+          appended <- .appendParameterSets(
             jsonData$parameterSets,
-            .parseExcelParameterSheets(file, sheetNames = paramSheetNames)
+            .parseExcelParameterSheets(file, sheetNames = paramSheetNames),
+            file
           )
+          jsonData$parameterSets <- appended$sets
           # A sheet named after an individual is that individual's own parameter
           # override; link it so the override is applied. The match is on the
           # canonical id, so `Indiv1` sheet links to the `Indiv1` individual
@@ -263,6 +279,21 @@ importProjectFromExcel <- function(
             character(1)
           )
           jsonData$individuals <- lapply(jsonData$individuals, function(indiv) {
+            # Both references an individual carries name sheets of *this*
+            # workbook (its own same-named sheet, and the `Individual Parameter
+            # Sets` column), so a sheet the appender had to rename is followed to
+            # its new id rather than left pointing at the earlier workbook's set
+            # that took the plain id. Guarded on a rename having happened, so an
+            # individual that declares no sets keeps the field absent rather than
+            # gaining an empty one.
+            if (
+              length(appended$renames) > 0L && !is.null(indiv$parameterSets)
+            ) {
+              indiv$parameterSets <- as.list(.applyIdRenames(
+                unlist(indiv$parameterSets),
+                appended$renames
+              ))
+            }
             indivCanonical <- .canonicalizeOneId(indiv$individualId)
             # A blank/NA individual id (e.g. a trailing blank row) matches
             # nothing: an `NA ==` comparison yields all-NA, and indexing by an
@@ -275,7 +306,7 @@ importProjectFromExcel <- function(
             if (length(match) > 0L) {
               indiv$parameterSets <- as.list(unique(c(
                 unlist(indiv$parameterSets),
-                match
+                .applyIdRenames(match, appended$renames)
               )))
             }
             indiv
@@ -311,24 +342,50 @@ importProjectFromExcel <- function(
           }
           paramSheetNames <- setdiff(sheets, "ApplicationProtocols")
           if (length(paramSheetNames) > 0) {
-            jsonData$parameterSets <- c(
+            appended <- .appendParameterSets(
               jsonData$parameterSets,
-              .parseExcelParameterSheets(file, sheetNames = paramSheetNames)
+              .parseExcelParameterSheets(file, sheetNames = paramSheetNames),
+              file
             )
+            jsonData$parameterSets <- appended$sets
+            # The `ParameterSets` column names sheets of this workbook, so follow
+            # a renamed sheet to its new id. Guarded on a rename having happened,
+            # so a protocol that declares no sets keeps the field absent.
+            if (length(appended$renames) > 0L) {
+              jsonData$applications <- lapply(
+                jsonData$applications,
+                function(app) {
+                  if (!is.null(app$parameterSets)) {
+                    app$parameterSets <- as.list(.applyIdRenames(
+                      unlist(app$parameterSets),
+                      appended$renames
+                    ))
+                  }
+                  app
+                }
+              )
+            }
           }
         } else if (length(sheets) > 0) {
-          jsonData$parameterSets <- c(
+          appended <- .appendParameterSets(
             jsonData$parameterSets,
-            .parseExcelParameterSheets(file, sheetNames = sheets)
+            .parseExcelParameterSheets(file, sheetNames = sheets),
+            file
           )
+          jsonData$parameterSets <- appended$sets
           # One application per protocol sheet, keyed by sheet name and wrapping
-          # the same-named parameter set (both ids canonicalize identically, so
-          # the reference resolves). The record carries no inner `id`; the key is
-          # the id, matching `.parseExcelApplications()`.
+          # its own parameter set: normally the same-named one (both ids
+          # canonicalize identically, so the reference resolves), or the renamed
+          # id when an earlier workbook already held that name. The record carries
+          # no inner `id`; the key is the id, matching
+          # `.parseExcelApplications()`.
+          setIds <- .applyIdRenames(sheets, appended$renames)
           jsonData$applications <- c(
             jsonData$applications,
             stats::setNames(
-              lapply(sheets, function(sheet) list(parameterSets = list(sheet))),
+              lapply(setIds, function(setId) {
+                list(parameterSets = list(setId))
+              }),
               sheets
             )
           )
@@ -445,11 +502,41 @@ importProjectFromExcel <- function(
   # it no longer needs an inlined container to diff against.
   .writeProjectTree(importedProject, outputDir, containerPath = outputPath)
 
-  if (interactive() && !silent) {
-    inputFile <- fs::path_rel(projectConfigPath, start = getwd())
-    outputFile <- fs::path_rel(outputPath, start = getwd())
-    msg <- messages$createdFileSnapshot(inputFile, outputFile)
+  # The definitions reference models, data, and population files by a path
+  # relative to the project folder, so importing into a different folder would
+  # leave every one of those references dangling. Bring the referenced input
+  # folders along, so the imported project runs where it was written.
+  assets <- if (copyAssets) {
+    .copyExcelProjectAssets(filePathProps, pcDir, outputDir, overwrite)
+  } else {
+    list(copied = character(), notCopied = character())
+  }
+
+  # Report what the import produced. Not gated on an interactive session: an
+  # import run from a script is exactly the case where the call would otherwise
+  # finish with no sign of what (or whether) anything was written. `silent` is
+  # the way to turn it off.
+  if (!silent) {
+    inputFile <- .readablePath(projectConfigPath)
+    outputFile <- .readablePath(outputPath)
+    msg <- messages$importedProject(inputFile, outputFile)
     cli::cli_inform("{msg}")
+    # The per-section counts, rendered by the project's own definitions block so
+    # the summary and `print(project)` can never disagree about the labels. That
+    # block prints to stdout, so it is captured and re-emitted verbatim on the
+    # message stream, keeping the whole summary on one stream (and out of the way
+    # of anything capturing the function's own output).
+    cli::cli_verbatim(utils::capture.output(print(
+      importedProject$definitions
+    )))
+    if (length(assets$copied) > 0L) {
+      msg <- messages$importCopiedAssetFolders(assets$copied)
+      cli::cli_inform("{msg}")
+    }
+    if (length(assets$notCopied) > 0L) {
+      msg <- messages$importUncopiedAssetFolders(assets$notCopied)
+      cli::cli_warn("{msg}")
+    }
   }
 
   invisible(outputPath)
@@ -721,10 +808,16 @@ exportProjectToExcel <- function(
   dir.create(tempDir, showWarnings = FALSE, recursive = TRUE)
   on.exit(unlink(tempDir, recursive = TRUE), add = TRUE)
 
+  # `copyAssets = FALSE`: this snapshot exists only to be serialized and compared,
+  # then deleted with `tempDir`. Copying the referenced models, data, and
+  # population folders into it would turn every `projectStatus()` read into a
+  # recursive copy of the whole asset tree, and a copy failure (a locked file, a
+  # full disk) would surface as "cannot compare the Excel files".
   tempJsonPath <- importProjectFromExcel(
     projectConfigPath,
     outputDir = tempDir,
-    silent = TRUE
+    silent = TRUE,
+    copyAssets = FALSE
   )
 
   # The memory side: serialize the live in-memory project. The Excel side: load
@@ -1118,15 +1211,24 @@ projectStatus <- function(project, silent = FALSE) {
   # data, whose ids are file basenames / DataSet names matched verbatim and
   # never canonicalized, so they are deliberately left untouched.
   if (!is.null(jsonData$dataCombined)) {
+    canonEntryScenario <- function(entry) {
+      entry$scenario <- canonScalar(entry$scenario)
+      entry
+    }
     jsonData$dataCombined <- lapply(
       jsonData$dataCombined,
       function(dc) {
         dc$dataCombinedId <- canonScalar(dc$dataCombinedId)
+        # Both entry blocks may name a scenario, and an observed row's `scenario`
+        # is the same kind of reference as a simulated row's, so it gets the same
+        # transform: leaving it at the Excel spelling would put two casings of one
+        # scenario in a single definition file, and any check keyed on the
+        # canonical id would miss the observed block.
         if (!is.null(dc$simulated)) {
-          dc$simulated <- lapply(dc$simulated, function(sim) {
-            sim$scenario <- canonScalar(sim$scenario)
-            sim
-          })
+          dc$simulated <- lapply(dc$simulated, canonEntryScenario)
+        }
+        if (!is.null(dc$observed)) {
+          dc$observed <- lapply(dc$observed, canonEntryScenario)
         }
         dc
       }
@@ -1195,6 +1297,249 @@ projectStatus <- function(project, silent = FALSE) {
   }
 
   jsonData
+}
+
+#' Spell a path the way it reads best from the working directory
+#'
+#' A path under the working directory is clearest relative to it. A path
+#' somewhere else (a temp folder, another drive) relativizes into a long
+#' `../../..` climb that is harder to read than the absolute path, so take
+#' whichever spelling is shorter.
+#'
+#' @param path A file or directory path.
+#' @returns The path as a single string.
+#' @keywords internal
+#' @noRd
+.readablePath <- function(path) {
+  relative <- as.character(fs::path_rel(path, start = getwd()))
+  absolute <- as.character(fs::path_abs(path))
+  if (nchar(relative) <= nchar(absolute)) relative else absolute
+}
+
+#' The working folders whose contents an imported project needs to run
+#'
+#' The input folders a definition can reference: models (under either the current
+#' `simulationsFolder` key or the pre-6.0.0 `modelFolder` an Excel project still
+#' spells it with), observed data, and csv populations. `outputFolder` is
+#' deliberately absent: it holds results the project writes, not inputs it reads.
+#'
+#' @keywords internal
+#' @noRd
+.excelProjectAssetFolders <- c(
+  "simulationsFolder",
+  "modelFolder",
+  "dataFolder",
+  "populationsFolder"
+)
+
+#' Copy an Excel project's referenced input folders next to the imported project
+#'
+#' A definition references a model, a data file, or a csv population by a path
+#' relative to the project folder, so importing into a folder other than the
+#' Excel project's own leaves every such reference dangling. Copying the
+#' referenced folders to the same relative location under `outputDir` makes those
+#' paths resolve again, which is what makes the imported project runnable rather
+#' than a definitions tree pointing at files that are not there.
+#'
+#' Whole folders are copied rather than only the individually referenced files,
+#' because a folder also holds assets nothing names statically (an importer
+#' configuration, a population csv chosen at run time, a model a scenario is
+#' added for later).
+#'
+#' @param filePathProps The project's raw `filePaths` properties (folder values
+#'   exactly as the Excel file spells them).
+#' @param sourceDir Absolute path to the Excel project's folder.
+#' @param outputDir Directory the JSON project was written to.
+#' @param overwrite Whether the import was allowed to replace existing content.
+#'   With `FALSE`, a target folder that already holds files is left as it is and
+#'   reported, so the flag governs the assets as well as the definition tree.
+#' @returns `list(copied, notCopied)`: the folder values copied, and those a
+#'   definition may reference but that could not be copied (absent from the
+#'   source project, naming a location outside it, or already present in the
+#'   output when `overwrite` is `FALSE`). Both empty when the project was
+#'   imported in place (nothing to copy).
+#' @keywords internal
+#' @noRd
+.copyExcelProjectAssets <- function(
+  filePathProps,
+  sourceDir,
+  outputDir,
+  overwrite = FALSE
+) {
+  result <- list(copied = character(), notCopied = character())
+  # Imported in place: the folders are already where the definitions expect them.
+  # Compared with `normalizePath()` rather than the lexical `fs::path_norm()`,
+  # matching the containment code above, so the same directory reached by two
+  # spellings (a symlinked root, a case-different drive letter) is recognized as
+  # one and no folder is copied onto itself.
+  sourceNorm <- normalizePath(sourceDir, mustWork = FALSE)
+  if (sourceNorm == normalizePath(outputDir, mustWork = FALSE)) {
+    return(result)
+  }
+
+  for (field in .excelProjectAssetFolders) {
+    value <- filePathProps[[field]]
+    if (is.null(value) || is.na(value) || !nzchar(value)) {
+      next
+    }
+    # An absolute folder, or one naming an environment variable, deliberately
+    # points outside the project: it resolves the same from the new location, so
+    # copying it would duplicate data the author chose to keep in one place.
+    if (fs::is_absolute_path(value) || grepl("\\$\\{?[A-Za-z_]", value)) {
+      next
+    }
+    # A `../`-climbing value names something the project does not own. Copying it
+    # would read outside the source project and, worse, write outside
+    # `outputDir`, so it is contained the same way every other author-controlled
+    # path in this file is (`.resolveProjectPath()`) and reported rather than
+    # copied.
+    if (.pathEscapesRoot(value, sourceDir)) {
+      result$notCopied <- c(result$notCopied, value)
+      next
+    }
+    from <- fs::path_norm(fs::path(sourceDir, value))
+    # A folder value of `"."` resolves to the project folder itself; copying that
+    # would drag the whole Excel project (workbooks included) into the output.
+    if (normalizePath(from, mustWork = FALSE) == sourceNorm) {
+      next
+    }
+    if (!fs::dir_exists(from)) {
+      result$notCopied <- c(result$notCopied, value)
+      next
+    }
+    to <- fs::path(outputDir, value)
+    # A target folder the user already put files in is theirs, not the import's
+    # to replace: `overwrite = FALSE` means it here too, so a curated model or
+    # data file placed in the output beforehand survives and is reported instead
+    # of being silently replaced.
+    if (
+      !overwrite &&
+        fs::dir_exists(to) &&
+        length(fs::dir_ls(to, all = TRUE)) > 0L
+    ) {
+      result$notCopied <- c(result$notCopied, value)
+      next
+    }
+    fs::dir_create(fs::path_dir(to))
+    fs::dir_copy(from, to, overwrite = TRUE)
+    result$copied <- c(result$copied, value)
+  }
+  # `simulationsFolder` and `modelFolder` are two spellings of one folder, so a
+  # project carrying both would report it twice.
+  result$copied <- unique(result$copied)
+  result$notCopied <- unique(result$notCopied)
+  result
+}
+
+#' Append parsed parameter sheets to the accumulating `parameterSets` section
+#'
+#' The Excel layout spreads parameter sets over three workbooks (model
+#' parameters, individuals, applications) that were three separate namespaces
+#' before 6.0.0; they now share the single `parameterSets` namespace, so the same
+#' sheet name in two workbooks would land on one id. The earlier workbook keeps
+#' the plain id and the later sheet is renamed, since a definition tree keys one
+#' file per id and cannot hold both.
+#'
+#' The uniquifying runs on the *canonical* id, not the raw sheet name: `Rat` and
+#' `rat` in two workbooks are as much of a clash as `Rat` twice, because both
+#' canonicalize to the same definition filename. The suffix `make.unique()` picks
+#' is carried back onto the raw sheet name, so the renamed set keeps its readable
+#' spelling (`Indiv1` -> `Indiv1_1`).
+#'
+#' Two sheets of the *same* workbook that canonicalize to one id are renamed the
+#' same way. That is a deliberate divergence from `.canonicalizeId()`, which
+#' treats one such pair as ambiguity and aborts: a legacy workbook cannot be
+#' hand-edited retroactively, so an import renames and says so rather than
+#' refusing the whole migration. The warning names neither an earlier workbook
+#' nor a later one, since either sheet may be the one that lost the plain id.
+#'
+#' @param existing The `parameterSets` accumulated so far.
+#' @param incoming Newly parsed sets, keyed by sheet name.
+#' @param source Path to the workbook `incoming` was read from, named in the
+#'   rename warning.
+#' @returns `list(sets, renames)`: the merged section, and a named character
+#'   vector mapping each renamed set's *canonical* id to its new raw id (empty
+#'   when nothing clashed). The caller re-points the references that workbook
+#'   itself makes with [.applyIdRenames()].
+#' @keywords internal
+#' @noRd
+.appendParameterSets <- function(existing, incoming, source) {
+  if (length(incoming) == 0L) {
+    return(list(sets = existing, renames = character()))
+  }
+  ids <- c(names(existing), names(incoming))
+  canonical <- vapply(ids, .canonicalizeOneId, character(1), USE.NAMES = FALSE)
+  # `make.unique()` leaves each first occurrence untouched and suffixes the
+  # later ones, and `existing` comes first, so an already-accumulated id is
+  # never renamed out from under a reference that resolved to it.
+  uniqued <- make.unique(canonical, sep = "_")
+  isIncoming <- seq_along(ids) > length(existing)
+  suffix <- substring(
+    uniqued[isIncoming],
+    nchar(canonical[isIncoming]) + 1L
+  )
+  newIds <- paste0(names(incoming), suffix)
+  # Keyed by the canonical id, not the raw sheet name, because a reference is
+  # only required to canonicalize onto its definition, not to match its
+  # spelling: a cell naming `rat` for a sheet called `Rat` still points at that
+  # sheet. `.applyIdRenames()` canonicalizes its lookups to match.
+  renames <- stats::setNames(newIds, canonical[isIncoming])[nzchar(suffix)]
+
+  if (length(renames) > 0L) {
+    # Same safe-glue handling as the canonicalization warnings: the pairs are
+    # bound as variables and the whole message is glue-parsed once, so a sheet
+    # name containing `{` is never evaluated as a cli expression. The bullets
+    # name the sheet as the workbook spells it, so the user can find it, rather
+    # than the canonical id the map is keyed by.
+    rendered <- .canonicalizedIdBullets(
+      names(incoming)[nzchar(suffix)],
+      unname(renames)
+    )
+    rendered$envir$sourceLabel <- basename(source)
+    rendered$envir$renamedCount <- length(renames)
+    # Classed so a caller that expects the rename (a test, or a migration script
+    # that has already reported it) can muffle just this warning without
+    # swallowing others.
+    cli::cli_warn(
+      messages$importRenamedDuplicateParameterSets(rendered$bullets),
+      .envir = rendered$envir,
+      class = "esqlabsR_importRenamedParameterSets"
+    )
+  }
+
+  list(
+    sets = c(existing, stats::setNames(incoming, newIds)),
+    renames = renames
+  )
+}
+
+#' Re-point parameter-set references through a rename map
+#'
+#' Applies the `renames` map [.appendParameterSets()] returned to a vector of
+#' referenced ids, leaving an id that was not renamed untouched. Used on the
+#' references a workbook makes into its *own* former namespace (an individual's
+#' sheet link, an application's `ParameterSets` column), so a set that had to be
+#' renamed is still reached by the workbook that owns it.
+#'
+#' The lookup is canonical on both sides, matching how the clash was detected in
+#' the first place: a reference only has to canonicalize onto its definition, so a
+#' cell spelling `indiv1` for a sheet named `Indiv1` is re-pointed too. Matching
+#' the raw spellings instead would leave such a reference resolving to the
+#' earlier workbook's set, which is the mis-resolution this whole path prevents.
+#'
+#' @param ids Referenced parameter-set ids (character vector).
+#' @param renames Named character vector, canonical old id -> new raw id.
+#' @returns `ids` with every renamed entry replaced.
+#' @keywords internal
+#' @noRd
+.applyIdRenames <- function(ids, renames) {
+  if (length(renames) == 0L || length(ids) == 0L) {
+    return(ids)
+  }
+  ids <- as.character(ids)
+  canonical <- vapply(ids, .canonicalizeOneId, character(1), USE.NAMES = FALSE)
+  mapped <- unname(renames[canonical])
+  ifelse(is.na(mapped), ids, mapped)
 }
 
 #' Parse parameter sheets from an Excel file into JSON structure

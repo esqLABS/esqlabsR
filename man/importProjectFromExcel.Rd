@@ -8,7 +8,8 @@ importProjectFromExcel(
   projectConfigPath = "Project.xlsx",
   outputDir = NULL,
   overwrite = FALSE,
-  silent = FALSE
+  silent = FALSE,
+  copyAssets = TRUE
 )
 }
 \arguments{
@@ -26,8 +27,16 @@ state and deletes any definitions authored only on the JSON side. Pass
 \code{overwrite = TRUE} to replace the existing JSON project with the Excel
 state.}
 
-\item{silent}{Logical. If \code{TRUE}, suppresses informational messages.
-Defaults to \code{FALSE}.}
+\item{silent}{Logical. If \code{TRUE}, suppresses the import summary (the project
+written, its per-section definition counts, and the folders copied or
+missing). Defaults to \code{FALSE}.}
+
+\item{copyAssets}{Logical. Whether to copy the input folders the project
+references (models, data, csv populations) into \code{outputDir}, which is what
+makes the imported project runnable where it was written. Defaults to
+\code{TRUE}. Set it to \code{FALSE} when only the definitions are wanted and the
+assets would be wasted work, as when the import feeds a throwaway
+comparison snapshot.}
 }
 \value{
 Invisibly returns the path to the created project file (the

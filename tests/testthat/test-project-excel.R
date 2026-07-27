@@ -956,6 +956,516 @@ test_that("importProjectFromExcel aborts when two ids canonicalize to the same v
   )
 })
 
+# An import run from a script has no other sign of what was written, or that it
+# succeeded, so the summary is gated on `silent` alone, never on the session
+# being interactive.
+test_that("importProjectFromExcel reports what it produced, and stays quiet under silent", {
+  work_dir <- withr::local_tempdir()
+  file.copy(dirname(testProjectExcelPath()), work_dir, recursive = TRUE)
+  projectDir <- file.path(work_dir, "TestProjectExcel")
+  configPath <- file.path(projectDir, "ProjectConfiguration.xlsx")
+
+  summaryText <- paste(
+    utils::capture.output(
+      suppressWarnings(importProjectFromExcel(
+        configPath,
+        outputDir = withr::local_tempdir()
+      )),
+      type = "message"
+    ),
+    collapse = "\n"
+  )
+
+  # The output path, the per-section counts, and the assets that travelled.
+  expect_match(summaryText, "ProjectConfiguration.json", fixed = TRUE)
+  expect_match(summaryText, "Scenarios: 8", fixed = TRUE)
+  expect_match(summaryText, "Copied 2 referenced folders", fixed = TRUE)
+
+  expect_silent(suppressWarnings(importProjectFromExcel(
+    configPath,
+    outputDir = withr::local_tempdir(),
+    silent = TRUE
+  )))
+})
+
+# A definition references a model or a data file by a path relative to the
+# project folder, so those folders have to travel with the definitions for an
+# import into a different folder to resolve. Otherwise the output is a
+# definitions tree pointing at files that are not there.
+test_that("importProjectFromExcel copies the referenced input folders into a separate outputDir", {
+  work_dir <- withr::local_tempdir()
+  file.copy(dirname(testProjectExcelPath()), work_dir, recursive = TRUE)
+  projectDir <- file.path(work_dir, "TestProjectExcel")
+
+  outputDir <- withr::local_tempdir()
+  jsonPath <- suppressWarnings(importProjectFromExcel(
+    file.path(projectDir, "ProjectConfiguration.xlsx"),
+    outputDir = outputDir,
+    silent = TRUE
+  ))
+
+  # The models and the observed data travelled with the definitions.
+  expect_true(file.exists(file.path(
+    outputDir,
+    "Models",
+    "Simulations",
+    "Aciclovir.pkml"
+  )))
+  expect_true(file.exists(file.path(
+    outputDir,
+    "Data",
+    "TestProject_TimeValuesData.xlsx"
+  )))
+  # Including an asset nothing references statically (the importer config).
+  expect_true(file.exists(file.path(
+    outputDir,
+    "Data",
+    "esqlabs_dataImporter_configuration.xml"
+  )))
+
+  # So the imported project no longer validates with File-Not-Found warnings for
+  # its own models and data.
+  report <- suppressWarnings(validateProject(suppressWarnings(loadProject(
+    jsonPath
+  ))))
+  fileWarnings <- unlist(lapply(report, function(section) {
+    vapply(section$warnings, function(w) w$category, character(1))
+  }))
+  expect_false("File Not Found" %in% fileWarnings)
+})
+
+test_that("importProjectFromExcel does not copy the results folder or the Excel workbooks", {
+  work_dir <- withr::local_tempdir()
+  file.copy(dirname(testProjectExcelPath()), work_dir, recursive = TRUE)
+  projectDir <- file.path(work_dir, "TestProjectExcel")
+
+  outputDir <- withr::local_tempdir()
+  suppressWarnings(importProjectFromExcel(
+    file.path(projectDir, "ProjectConfiguration.xlsx"),
+    outputDir = outputDir,
+    silent = TRUE
+  ))
+
+  # `outputFolder` holds what the project writes, not what it reads.
+  expect_false(dir.exists(file.path(outputDir, "Results")))
+  # The Excel side is the source, not an asset of the JSON project.
+  expect_false(dir.exists(file.path(outputDir, "Configurations")))
+})
+
+# A `../`-climbing folder value names something the project does not own.
+# Copying it would read outside the source project and write outside outputDir,
+# overwriting whatever sits beside it.
+test_that("importProjectFromExcel refuses to copy a folder that escapes the project", {
+  work_dir <- withr::local_tempdir()
+  file.copy(dirname(testProjectExcelPath()), work_dir, recursive = TRUE)
+  projectDir <- file.path(work_dir, "TestProjectExcel")
+
+  # A sibling of the project, which must not be touched.
+  bystander <- file.path(work_dir, "Bystander")
+  dir.create(bystander)
+  writeLines("keep me", file.path(bystander, "keep.txt"))
+
+  configPath <- file.path(projectDir, "ProjectConfiguration.xlsx")
+  config <- readExcel(configPath)
+  config$Value[config$Property == "modelFolder"] <- "../Bystander"
+  .writeExcel(config, configPath)
+
+  outputDir <- withr::local_tempdir()
+  expect_warning(
+    withCallingHandlers(
+      importProjectFromExcel(configPath, outputDir = outputDir),
+      esqlabsR_importSkippedObservedData = function(cnd) {
+        invokeRestart("muffleWarning")
+      }
+    ),
+    "not copied"
+  )
+
+  # Nothing was written outside outputDir, and the escaping folder did not
+  # travel into it either.
+  expect_false(dir.exists(file.path(dirname(outputDir), "Bystander")))
+  expect_false(dir.exists(file.path(outputDir, "Bystander")))
+  expect_true(file.exists(file.path(bystander, "keep.txt")))
+})
+
+# The asset copy makes a *user-facing* import runnable. `.compareJsonToExcel()`
+# imports into a throwaway folder purely to serialize and diff it, and that runs
+# on every `projectStatus()` read, so copying the whole asset tree there would
+# turn a cheap status query into a recursive tree copy.
+test_that("importProjectFromExcel skips the asset copy under copyAssets = FALSE", {
+  work_dir <- withr::local_tempdir()
+  file.copy(dirname(testProjectExcelPath()), work_dir, recursive = TRUE)
+  projectDir <- file.path(work_dir, "TestProjectExcel")
+
+  outputDir <- withr::local_tempdir()
+  suppressWarnings(importProjectFromExcel(
+    file.path(projectDir, "ProjectConfiguration.xlsx"),
+    outputDir = outputDir,
+    silent = TRUE,
+    copyAssets = FALSE
+  ))
+
+  # The definitions are written; none of the referenced folders travelled.
+  expect_true(dir.exists(file.path(outputDir, "definitions")))
+  expect_false(dir.exists(file.path(outputDir, "Models")))
+  expect_false(dir.exists(file.path(outputDir, "Data")))
+})
+
+test_that("projectStatus() does not copy the asset tree into its comparison snapshot", {
+  work_dir <- withr::local_tempdir()
+  file.copy(dirname(testProjectExcelPath()), work_dir, recursive = TRUE)
+  projectDir <- file.path(work_dir, "TestProjectExcel")
+
+  outputDir <- withr::local_tempdir()
+  jsonPath <- suppressWarnings(importProjectFromExcel(
+    file.path(projectDir, "ProjectConfiguration.xlsx"),
+    outputDir = outputDir,
+    silent = TRUE
+  ))
+  project <- suppressWarnings(loadProject(jsonPath))
+
+  # Count the copies the status read performs by watching `fs::dir_copy()`.
+  copies <- 0L
+  local_mocked_bindings(
+    dir_copy = function(...) {
+      copies <<- copies + 1L
+      invisible(NULL)
+    },
+    .package = "fs"
+  )
+  suppressWarnings(projectStatus(project, silent = TRUE))
+
+  expect_identical(copies, 0L)
+})
+
+# `overwrite` governs the definition tree; it has to govern the assets too, or a
+# user who curates a model or data file in the output folder and then imports the
+# legacy workbook beside it loses that file with no warning and no way to decline.
+test_that("importProjectFromExcel leaves a non-empty asset folder alone unless overwrite = TRUE", {
+  work_dir <- withr::local_tempdir()
+  file.copy(dirname(testProjectExcelPath()), work_dir, recursive = TRUE)
+  projectDir <- file.path(work_dir, "TestProjectExcel")
+  configPath <- file.path(projectDir, "ProjectConfiguration.xlsx")
+
+  outputDir <- withr::local_tempdir()
+  curated <- file.path(outputDir, "Data", "curated.txt")
+  dir.create(dirname(curated), recursive = TRUE)
+  writeLines("hand-curated", curated)
+
+  expect_warning(
+    withCallingHandlers(
+      importProjectFromExcel(configPath, outputDir = outputDir),
+      esqlabsR_importSkippedObservedData = function(cnd) {
+        invokeRestart("muffleWarning")
+      }
+    ),
+    "not copied"
+  )
+  # The curated file survives, and the workbook's own data did not land on it.
+  expect_identical(readLines(curated), "hand-curated")
+  expect_false(file.exists(file.path(
+    outputDir,
+    "Data",
+    "TestProject_TimeValuesData.xlsx"
+  )))
+
+  # With overwrite = TRUE the assets do travel.
+  suppressWarnings(importProjectFromExcel(
+    configPath,
+    outputDir = outputDir,
+    overwrite = TRUE,
+    silent = TRUE
+  ))
+  expect_true(file.exists(file.path(
+    outputDir,
+    "Data",
+    "TestProject_TimeValuesData.xlsx"
+  )))
+})
+
+# `fs::path_norm()` is lexical: it never resolves a symlink, so the same folder
+# reached by two spellings compared unequal and every asset folder was copied
+# onto itself.
+test_that("importProjectFromExcel detects an in-place import through a symlinked path", {
+  skip_on_os("windows")
+  work_dir <- withr::local_tempdir()
+  file.copy(dirname(testProjectExcelPath()), work_dir, recursive = TRUE)
+  projectDir <- file.path(work_dir, "TestProjectExcel")
+
+  # Reach the very same directory by a symlink, and hand that spelling to
+  # outputDir while the workbook is named by its real path.
+  linked <- file.path(work_dir, "linked")
+  file.symlink(projectDir, linked)
+
+  before <- sort(list.files(projectDir, recursive = TRUE))
+  suppressWarnings(importProjectFromExcel(
+    file.path(projectDir, "ProjectConfiguration.xlsx"),
+    outputDir = linked,
+    overwrite = TRUE,
+    silent = TRUE
+  ))
+  after <- sort(list.files(projectDir, recursive = TRUE))
+
+  # Recognized as in place: only definition files were added, no folder was
+  # duplicated into its own subtree.
+  expect_match(setdiff(after, before), "^definitions/", all = TRUE)
+  expect_false(dir.exists(file.path(projectDir, "Models", "Models")))
+  expect_false(dir.exists(file.path(projectDir, "Data", "Data")))
+})
+
+# The clash is detected on the canonical id, so the rename map has to be looked
+# up canonically too: a cell spelling the sheet in a different case must follow
+# the rename, not keep resolving to the earlier workbook's set.
+test_that("importProjectFromExcel re-points a case-differing parameter-set reference", {
+  work_dir <- withr::local_tempdir()
+  file.copy(dirname(testProjectExcelPath()), work_dir, recursive = TRUE)
+  projectDir <- file.path(work_dir, "TestProjectExcel")
+  individualsFile <- file.path(projectDir, "Configurations", "Individuals.xlsx")
+
+  # The individuals workbook's sheet is `Indiv1`; its own `ParameterSets` cell
+  # names it in lower case. Give the model-parameters workbook a clashing sheet
+  # so the individuals one is the one that gets renamed.
+  modelParamsFile <- file.path(
+    projectDir,
+    "Configurations",
+    "ModelParameters.xlsx"
+  )
+  mpSheets <- readxl::excel_sheets(modelParamsFile)
+  clashing <- data.frame(
+    "Container Path" = "Organism|Liver",
+    "Parameter Name" = "Volume",
+    Value = 1,
+    Units = "l",
+    check.names = FALSE
+  )
+  .writeExcel(
+    c(
+      stats::setNames(
+        lapply(mpSheets, function(s) readExcel(modelParamsFile, sheet = s)),
+        mpSheets
+      ),
+      list(Indiv1 = clashing)
+    ),
+    modelParamsFile
+  )
+
+  indivSheets <- readxl::excel_sheets(individualsFile)
+  contents <- stats::setNames(
+    lapply(indivSheets, function(s) readExcel(individualsFile, sheet = s)),
+    indivSheets
+  )
+  contents$IndividualBiometrics$`Individual Parameter Sets` <- "indiv1"
+  .writeExcel(contents, individualsFile)
+
+  jsonPath <- suppressWarnings(importProjectFromExcel(
+    file.path(projectDir, "ProjectConfiguration.xlsx"),
+    outputDir = withr::local_tempdir(),
+    silent = TRUE
+  ))
+  project <- suppressWarnings(loadProject(jsonPath))
+
+  # The lower-case cell followed the rename instead of resolving to the
+  # model-parameters sheet that took the plain id.
+  expect_identical(
+    unlist(project$definitions$individuals[["indiv1"]]$parameterSets),
+    "indiv1_1"
+  )
+})
+
+test_that("importProjectFromExcel names a referenced folder the Excel project does not have", {
+  work_dir <- withr::local_tempdir()
+  file.copy(dirname(testProjectExcelPath()), work_dir, recursive = TRUE)
+  projectDir <- file.path(work_dir, "TestProjectExcel")
+
+  # The configuration keeps naming `Data/`, but the folder is gone: there is
+  # nothing to copy, and the user has to be told which folder to place.
+  unlink(file.path(projectDir, "Data"), recursive = TRUE)
+
+  expect_warning(
+    withCallingHandlers(
+      importProjectFromExcel(
+        file.path(projectDir, "ProjectConfiguration.xlsx"),
+        outputDir = withr::local_tempdir()
+      ),
+      # The absent data file also warns from the observed-data parse; muffle it
+      # so the assertion is on the asset report alone.
+      esqlabsR_importSkippedObservedData = function(cnd) {
+        invokeRestart("muffleWarning")
+      }
+    ),
+    "Data/"
+  )
+})
+
+test_that("importProjectFromExcel in place leaves the referenced folders untouched", {
+  work_dir <- withr::local_tempdir()
+  file.copy(dirname(testProjectExcelPath()), work_dir, recursive = TRUE)
+  projectDir <- file.path(work_dir, "TestProjectExcel")
+
+  before <- sort(list.files(projectDir, recursive = TRUE))
+  suppressWarnings(importProjectFromExcel(
+    file.path(projectDir, "ProjectConfiguration.xlsx"),
+    silent = TRUE,
+    overwrite = TRUE
+  ))
+  after <- sort(list.files(projectDir, recursive = TRUE))
+
+  # Everything the import added is a definition file; no folder was copied onto
+  # itself, which would have duplicated the models and data into subfolders.
+  expect_match(setdiff(after, before), "^definitions/", all = TRUE)
+})
+
+# An observed DataCombined row may name a scenario just as a simulated row does.
+# Both are the same kind of reference, so both must land on the canonical id;
+# leaving the observed one at its Excel spelling puts two casings of one scenario
+# in a single definition file and hides the observed block from any check keyed on
+# the canonical id.
+test_that("importProjectFromExcel canonicalizes an observed dataCombined entry's scenario reference", {
+  work_dir <- withr::local_tempdir()
+  file.copy(dirname(testProjectExcelPath()), work_dir, recursive = TRUE)
+  projectDir <- file.path(work_dir, "TestProjectExcel")
+  plotsFile <- file.path(projectDir, "Configurations", "Plots.xlsx")
+
+  # Name a scenario on the observed rows, with the mixed-case spelling the
+  # Scenarios sheet uses.
+  sheets <- readxl::excel_sheets(plotsFile)
+  contents <- stats::setNames(
+    lapply(sheets, function(s) readExcel(plotsFile, sheet = s)),
+    sheets
+  )
+  observedRows <- contents$DataCombined$dataType == "observed"
+  contents$DataCombined$scenario[observedRows] <- "TestScenario"
+  .writeExcel(contents, plotsFile)
+
+  jsonPath <- suppressWarnings(importProjectFromExcel(
+    file.path(projectDir, "ProjectConfiguration.xlsx"),
+    outputDir = withr::local_tempdir(),
+    silent = TRUE
+  ))
+  project <- suppressWarnings(loadProject(jsonPath))
+
+  dataCombined <- .unwrapDefinitionList(project$definitions$dataCombined)
+  observedScenarios <- unlist(lapply(
+    dataCombined,
+    function(dc) vapply(dc$observed, function(e) e$scenario, character(1))
+  ))
+  expect_setequal(observedScenarios, "testscenario")
+  # The simulated block was already canonical; both blocks now agree.
+  simulatedScenarios <- unlist(lapply(
+    dataCombined,
+    function(dc) vapply(dc$simulated, function(e) e$scenario, character(1))
+  ))
+  expect_contains(simulatedScenarios, "testscenario")
+})
+
+# Before 6.0.0 the model-parameters, individuals, and applications workbooks were
+# three separate parameter-set namespaces, so a legacy project may legitimately
+# use one sheet name in two of them. They now share a single namespace: the
+# workbook parsed first keeps the plain id, the later sheet is renamed, and the
+# references that later workbook makes follow the rename. Without the re-pointing
+# the renamed set is orphaned and the referrer silently resolves to the *other*
+# workbook's set.
+test_that("importProjectFromExcel renames a duplicate parameter-set id and re-points its own workbook's references", {
+  work_dir <- withr::local_tempdir()
+  file.copy(dirname(testProjectExcelPath()), work_dir, recursive = TRUE)
+  projectDir <- file.path(work_dir, "TestProjectExcel")
+  modelParamsFile <- file.path(
+    projectDir,
+    "Configurations",
+    "ModelParameters.xlsx"
+  )
+
+  # Add model-parameter sheets clashing with the individuals workbook's `Indiv1`
+  # sheet and the applications workbook's `Protocol_250mg` sheet. Model
+  # parameters are parsed first, so both of those get renamed.
+  clashing <- data.frame(
+    "Container Path" = "Organism|Liver",
+    "Parameter Name" = "Volume",
+    Value = 1,
+    Units = "l",
+    check.names = FALSE,
+    stringsAsFactors = FALSE
+  )
+  sheets <- readxl::excel_sheets(modelParamsFile)
+  .writeExcel(
+    c(
+      stats::setNames(
+        lapply(sheets, function(s) readExcel(modelParamsFile, sheet = s)),
+        sheets
+      ),
+      list(Indiv1 = clashing, Protocol_250mg = clashing)
+    ),
+    modelParamsFile
+  )
+
+  jsonPath <- suppressWarnings(importProjectFromExcel(
+    file.path(projectDir, "ProjectConfiguration.xlsx"),
+    outputDir = withr::local_tempdir(),
+    silent = TRUE
+  ))
+  project <- suppressWarnings(loadProject(jsonPath))
+
+  # Both sets survive: the model-parameters sheet keeps the plain id, the later
+  # workbook's sheet gets the suffixed one.
+  sets <- .unwrapDefinitionList(project$definitions$parameterSets)
+  expect_contains(
+    names(sets),
+    c("indiv1", "indiv1_1", "protocol_250mg", "protocol_250mg_1")
+  )
+
+  # The individual still carries its OWN parameter set, not the model-parameters
+  # sheet that took the id.
+  expect_identical(
+    unlist(project$definitions$individuals[["indiv1"]]$parameterSets),
+    "indiv1_1"
+  )
+  # Same for the 5.x application wrapper built around its protocol sheet.
+  expect_identical(
+    unlist(project$definitions$applications[["protocol_250mg"]]$parameterSets),
+    "protocol_250mg_1"
+  )
+})
+
+test_that("importProjectFromExcel warns naming each renamed duplicate parameter set", {
+  work_dir <- withr::local_tempdir()
+  file.copy(dirname(testProjectExcelPath()), work_dir, recursive = TRUE)
+  projectDir <- file.path(work_dir, "TestProjectExcel")
+  individualsFile <- file.path(
+    projectDir,
+    "Configurations",
+    "Individuals.xlsx"
+  )
+
+  # Rename the individuals workbook's parameter sheet onto a model-parameters
+  # sheet name (`Global`), so the individuals workbook is the one that loses the
+  # id and the warning names it.
+  sheets <- readxl::excel_sheets(individualsFile)
+  contents <- stats::setNames(
+    lapply(sheets, function(s) readExcel(individualsFile, sheet = s)),
+    sheets
+  )
+  names(contents)[names(contents) == "Indiv1"] <- "Global"
+  .writeExcel(contents, individualsFile)
+
+  # Snapshot the rename warning alone, caught by its own condition class: the
+  # import also raises locale-dependent unit-encoding warnings that would make a
+  # whole-call snapshot machine-specific.
+  renameWarning <- NULL
+  suppressWarnings(withCallingHandlers(
+    importProjectFromExcel(
+      file.path(projectDir, "ProjectConfiguration.xlsx"),
+      outputDir = withr::local_tempdir(),
+      silent = TRUE
+    ),
+    esqlabsR_importRenamedParameterSets = function(cnd) {
+      renameWarning <<- conditionMessage(cnd)
+      invokeRestart("muffleWarning")
+    }
+  ))
+
+  expect_snapshot(cat(renameWarning))
+})
+
 # Two distinct output-path ids may resolve to the same literal path. The export
 # must key the scenario's ids off `names(sc$outputPaths)` (the ids themselves),
 # not a value-based reverse-lookup that would collapse both to one id and drop
