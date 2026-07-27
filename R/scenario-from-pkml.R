@@ -185,6 +185,20 @@ createScenariosFromPKML <- function(
   paramSheets = lifecycle::deprecated()
 ) {
   validateIsOfType(project, "Project")
+  # The deprecation is signalled here, not in the `_impl`: `deprecate_soft()`
+  # identifies the user through `caller_env(2)`, which only reaches the calling
+  # code from this layer. Raised any deeper (through the method and
+  # `private$.impl()`) it resolves to an esqlabsR frame, is judged indirect, and
+  # stays silent. The `_impl` still accepts and translates `paramSheets` so the
+  # matching `Project` method keeps working.
+  if (lifecycle::is_present(paramSheets)) {
+    lifecycle::deprecate_soft(
+      what = "createScenariosFromPKML(paramSheets)",
+      with = "createScenariosFromPKML(parameterSets)",
+      when = "6.0.0"
+    )
+    parameterSets <- parameterSets %||% paramSheets
+  }
   project$createScenariosFromPKML(
     pkmlFilePaths,
     scenarios = scenarios,
@@ -199,8 +213,7 @@ createScenariosFromPKML <- function(
     steadyStateTime = steadyStateTime,
     steadyStateTimeUnit = steadyStateTimeUnit,
     overwriteFormulasInSS = overwriteFormulasInSS,
-    readPopulationFromCSV = readPopulationFromCSV,
-    paramSheets = paramSheets
+    readPopulationFromCSV = readPopulationFromCSV
   )
 }
 
@@ -232,13 +245,11 @@ createScenariosFromPKML <- function(
   .call
 ) {
   rlang::local_error_call(.call)
-  # Handle deprecated paramSheets argument
+  # `createScenariosFromPKML()` translates a deprecated `paramSheets` before it
+  # forwards, so this only fires for the `Project` method called directly. The
+  # deprecation warning itself is raised at that free-function layer, which is
+  # the only depth from which lifecycle can identify the calling user.
   if (lifecycle::is_present(paramSheets)) {
-    lifecycle::deprecate_soft(
-      what = "createScenariosFromPKML(paramSheets)",
-      with = "createScenariosFromPKML(parameterSets)",
-      when = "6.0.0"
-    )
     parameterSets <- parameterSets %||% paramSheets
   }
 
