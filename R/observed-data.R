@@ -382,10 +382,34 @@ getObservedDataNames <- function(project) {
 
 #' Add observed data to a Project
 #'
-#' Add an observedData entry. Accepts either a `DataSet` (creates a
-#' `type = "programmatic"` entry keyed by `dataSet$name`) or a
-#' configuration list with `type` field (`"excel"`, `"pkml"`, or
-#' `"script"`) plus source-specific fields.
+#' @description
+#' Adds one observed-data declaration. `entry` is either an
+#' [`ospsuite::DataSet`] object (which becomes a `type = "programmatic"`
+#' declaration keyed by `dataSet$name`) or a list describing where the data is
+#' read from.
+#'
+#' Such a list always carries a `type`, plus the fields that type needs:
+#'
+#' | `type` | required fields | optional fields |
+#' | --- | --- | --- |
+#' | `"excel"` | `file`, `importerConfiguration`, `sheets` | `id` |
+#' | `"pkml"` | `file` | `id` |
+#' | `"script"` | `file` | `id` |
+#'
+#' `file` and `importerConfiguration` are paths *relative to the project's data
+#' folder* (`project$paths$dataFolder`). A file sitting directly in that folder
+#' is `"observed.xlsx"`, not `"Data/observed.xlsx"`; one in a subfolder of it is
+#' `"subfolder/observed.xlsx"`. `sheets` lists the Excel sheet names to import.
+#' A `script` source runs the R file it names (see the Security section of
+#' [loadObservedData()]).
+#'
+#' `id` names the declaration itself: it becomes the declaration's file in
+#' `definitions/observed-data/` and is the id [removeObservedData()] matches on.
+#' Left out, the `file` basename serves as both. It is not the name the data is
+#' known by: each imported [`ospsuite::DataSet`] carries the name its source
+#' gives it (the data-set name in an Excel sheet, the name inside a PKML file),
+#' and that name, not the declaration's id, is what a `dataCombined` entry
+#' references.
 #'
 #' A `DataSet` you pass lives in the R session until you save. On
 #' [saveProject()] it is written to a PKML file named `<DataSet name>.pkml`
@@ -394,10 +418,13 @@ getObservedDataNames <- function(project) {
 #' declared in the project's file paths.
 #'
 #' @param project A `Project` object.
-#' @param entry Either a `DataSet` object or a configuration list.
+#' @param entry An [`ospsuite::DataSet`] object, or a configuration list
+#'   carrying a `type` (`"excel"`, `"pkml"`, or `"script"`) and that type's
+#'   fields, as described above.
 #' @param overwrite Logical scalar. When `FALSE` (default), a source whose id
-#'   already exists (a `DataSet` name, or a config `file` basename) aborts.
-#'   When `TRUE`, the existing source with that id is replaced (last-write-wins).
+#'   already exists (a `DataSet` name, or a configuration list's `id` or `file`
+#'   basename) aborts. When `TRUE`, the existing source with that id is replaced
+#'   (last-write-wins).
 #' @returns The `project` object, invisibly.
 #' @export
 #' @family observedData

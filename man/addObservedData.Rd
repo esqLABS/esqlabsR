@@ -9,22 +9,47 @@ addObservedData(project, entry, overwrite = FALSE)
 \arguments{
 \item{project}{A \code{Project} object.}
 
-\item{entry}{Either a \code{DataSet} object or a configuration list.}
+\item{entry}{An \code{\link[ospsuite:DataSet]{ospsuite::DataSet}} object, or a configuration list
+carrying a \code{type} (\code{"excel"}, \code{"pkml"}, or \code{"script"}) and that type's
+fields, as described above.}
 
 \item{overwrite}{Logical scalar. When \code{FALSE} (default), a source whose id
-already exists (a \code{DataSet} name, or a config \code{file} basename) aborts.
-When \code{TRUE}, the existing source with that id is replaced (last-write-wins).}
+already exists (a \code{DataSet} name, or a configuration list's \code{id} or \code{file}
+basename) aborts. When \code{TRUE}, the existing source with that id is replaced
+(last-write-wins).}
 }
 \value{
 The \code{project} object, invisibly.
 }
 \description{
-Add an observedData entry. Accepts either a \code{DataSet} (creates a
-\code{type = "programmatic"} entry keyed by \code{dataSet$name}) or a
-configuration list with \code{type} field (\code{"excel"}, \code{"pkml"}, or
-\code{"script"}) plus source-specific fields.
+Adds one observed-data declaration. \code{entry} is either an
+\code{\link[ospsuite:DataSet]{ospsuite::DataSet}} object (which becomes a \code{type = "programmatic"}
+declaration keyed by \code{dataSet$name}) or a list describing where the data is
+read from.
+
+Such a list always carries a \code{type}, plus the fields that type needs:\tabular{lll}{
+   \code{type} \tab required fields \tab optional fields \cr
+   \code{"excel"} \tab \code{file}, \code{importerConfiguration}, \code{sheets} \tab \code{id} \cr
+   \code{"pkml"} \tab \code{file} \tab \code{id} \cr
+   \code{"script"} \tab \code{file} \tab \code{id} \cr
 }
-\details{
+
+
+\code{file} and \code{importerConfiguration} are paths \emph{relative to the project's data
+folder} (\code{project$paths$dataFolder}). A file sitting directly in that folder
+is \code{"observed.xlsx"}, not \code{"Data/observed.xlsx"}; one in a subfolder of it is
+\code{"subfolder/observed.xlsx"}. \code{sheets} lists the Excel sheet names to import.
+A \code{script} source runs the R file it names (see the Security section of
+\code{\link[=loadObservedData]{loadObservedData()}}).
+
+\code{id} names the declaration itself: it becomes the declaration's file in
+\verb{definitions/observed-data/} and is the id \code{\link[=removeObservedData]{removeObservedData()}} matches on.
+Left out, the \code{file} basename serves as both. It is not the name the data is
+known by: each imported \code{\link[ospsuite:DataSet]{ospsuite::DataSet}} carries the name its source
+gives it (the data-set name in an Excel sheet, the name inside a PKML file),
+and that name, not the declaration's id, is what a \code{dataCombined} entry
+references.
+
 A \code{DataSet} you pass lives in the R session until you save. On
 \code{\link[=saveProject]{saveProject()}} it is written to a PKML file named \verb{<DataSet name>.pkml}
 under the project's data folder and its entry becomes a \code{pkml} source, so
