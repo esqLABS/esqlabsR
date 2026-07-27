@@ -43,10 +43,11 @@ already validated the project).}
 simulation aborts the run. Set to \code{FALSE} to skip such paths with a
 warning instead.}
 
-\item{stopIfFails}{Logical. If \code{TRUE} (default), a scenario whose
-simulation produced no results aborts the run with an error. Set to
-\code{FALSE} to instead warn and leave that scenario's \code{outputValues}
-\code{NULL} while the other scenarios are still returned.}
+\item{stopIfFails}{Logical. If \code{TRUE} (default), a scenario that fails to
+build (e.g. a missing model parameter path) or whose simulation produced
+no results aborts the run with an error. Set to \code{FALSE} to instead warn
+and leave that scenario's \code{outputValues} \code{NULL} while the other scenarios
+are still built, run, and returned.}
 }
 \value{
 A named list keyed by scenario name. Each entry is a list
@@ -54,7 +55,9 @@ with \code{simulation} (the initialized \link[ospsuite:Simulation]{ospsuite::Sim
 \code{results} (\link[ospsuite:SimulationResults]{ospsuite::SimulationResults}), \code{outputValues} (the
 computed output values, or \code{NULL} if simulation failed), and
 \code{population} (an \link[ospsuite:Population]{ospsuite::Population} for population
-scenarios, or \code{NULL} for individual scenarios).
+scenarios, or \code{NULL} for individual scenarios). With
+\code{stopIfFails = FALSE}, a scenario skipped at build time is still returned,
+with \code{simulation}, \code{results}, and \code{outputValues} all \code{NULL}.
 }
 \description{
 Loads simulations, applies parameters, runs the
@@ -63,9 +66,10 @@ defined on a parsed \link{Project}. The project must already have been
 loaded with \code{\link[=loadProject]{loadProject()}}.
 }
 \details{
-If a scenario's simulation fails, \code{runScenarios()} aborts by
-default (\code{stopIfFails = TRUE}). Set \code{stopIfFails = FALSE} to instead
-produce a warning and leave that scenario's \code{outputValues} \code{NULL}.
+If a scenario fails, either at build time or because its
+simulation produced no results, \code{runScenarios()} aborts by default
+(\code{stopIfFails = TRUE}). Set \code{stopIfFails = FALSE} to instead produce a
+warning, skip the failing scenario, and leave its \code{outputValues} \code{NULL}.
 }
 \seealso{
 \code{\link[=buildSimulations]{buildSimulations()}} to obtain the parameterized simulations

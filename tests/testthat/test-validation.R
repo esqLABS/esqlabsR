@@ -306,15 +306,36 @@ test_that(".validateIndividuals warns on empty section", {
   expect_length(result$critical_errors, 0)
 })
 
-test_that(".validateIndividuals catches missing required fields", {
+test_that(".validateIndividuals catches a missing required field", {
   individuals <- list(
-    Adult = list(species = "Human"),
     Bad = list()
   )
   result <- esqlabsR:::.validateIndividuals(individuals)
   msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
-  expect_match(msgs, "gender", all = FALSE)
   expect_match(msgs, "species", all = FALSE)
+})
+
+test_that(".validateIndividuals does not flag an absent gender", {
+  # An animal individual whose only valid PK-Sim gender is UNKNOWN carries no
+  # gender field; that is not a critical error.
+  individuals <- list(
+    Dog = list(species = "Dog", weight = 10)
+  )
+  result <- esqlabsR:::.validateIndividuals(individuals)
+  expect_length(result$critical_errors, 0)
+})
+
+test_that(".validateIndividuals flags a present but invalid gender", {
+  # A hand-authored JSON file can carry any string; an invalid token must be
+  # caught here rather than deferring to an opaque PK-Sim error at run time.
+  individuals <- list(
+    Bad = list(species = "Human", gender = "banana"),
+    Blank = list(species = "Human", gender = "")
+  )
+  result <- esqlabsR:::.validateIndividuals(individuals)
+  msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
+  expect_length(result$critical_errors, 2)
+  expect_match(msgs, "gender", all = TRUE)
 })
 
 # Section adapter: populations ----

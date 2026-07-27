@@ -5,6 +5,18 @@
   testProject(envir = envir)
 }
 
+# A `runSimulations` stand-in that returns a NULL result for every simulation
+# id it is handed, forcing the "no results" collection path without native
+# infra. Passed to `local_mocked_bindings(runSimulations = ...)`.
+.mockNoResults <- function(simulations, ...) {
+  ids <- if (inherits(simulations, "Simulation")) {
+    simulations$id
+  } else {
+    vapply(simulations, function(s) s$id, character(1))
+  }
+  stats::setNames(vector("list", length(ids)), ids)
+}
+
 test_that(".buildSimulationRunOptions returns NULL when no defaults are declared", {
   expect_null(esqlabsR:::.buildSimulationRunOptions(NULL))
   expect_null(esqlabsR:::.buildSimulationRunOptions(list()))
@@ -133,10 +145,12 @@ test_that(".collectScenarioResult aborts on a failed scenario when stopIfFails i
 
 test_that(".collectScenarioResult warns and returns NULL outputValues when stopIfFails is FALSE", {
   scenario <- list(scenarioName = "s1", outputPaths = NULL)
+  # A scenario that built (non-NULL simulation) but produced no results. A
+  # NULL simulation instead means a build-time skip, which already warned.
   expect_warning(
     out <- esqlabsR:::.collectScenarioResult(
       scenario = scenario,
-      simulation = NULL,
+      simulation = structure(list(id = "sim1"), class = "Simulation"),
       results = NULL,
       population = NULL,
       stopIfFails = FALSE
@@ -147,20 +161,30 @@ test_that(".collectScenarioResult warns and returns NULL outputValues when stopI
   expect_null(out$results)
 })
 
+test_that(".collectScenarioResult does not warn again for a build-time skip", {
+  # A NULL simulation means the scenario never built; `.buildScenarioSimulations()`
+  # already warned, so collection records it silently.
+  scenario <- list(scenarioName = "s1", outputPaths = NULL)
+  expect_no_warning(
+    out <- esqlabsR:::.collectScenarioResult(
+      scenario = scenario,
+      simulation = NULL,
+      results = NULL,
+      population = NULL,
+      stopIfFails = FALSE
+    )
+  )
+  expect_null(out$simulation)
+  expect_null(out$outputValues)
+})
+
 test_that("runScenarios aborts by default when a scenario simulation produces no results", {
   # Force a failed run without native infra: mock the runner to return a NULL
   # result for every simulation id it is handed.
   withr::local_options(lifecycle_verbosity = "quiet")
   project <- .testProject()
   local_mocked_bindings(
-    runSimulations = function(simulations, ...) {
-      ids <- if (inherits(simulations, "Simulation")) {
-        simulations$id
-      } else {
-        vapply(simulations, function(s) s$id, character(1))
-      }
-      stats::setNames(vector("list", length(ids)), ids)
-    }
+    runSimulations = .mockNoResults
   )
   expect_error(
     runScenarios(project, scenarios = "testscenario"),
@@ -168,18 +192,121 @@ test_that("runScenarios aborts by default when a scenario simulation produces no
   )
 })
 
+test_that(".buildScenarioSimulations aborts on a build-time failure by default", {
+  project <- .testProject()
+  addScenario(project, "second", modelFile = "Aciclovir.pkml")
+  local_mocked_bindings(
+    .prepareScenario = function(scenario, ...) {
+      if (scenario$scenarioName == "second") {
+        cli::cli_abort("boom: missing model parameter path")
+      }
+      list(simulation = NULL, population = NULL)
+    }
+  )
+  expect_error(
+    esqlabsR:::.buildScenarioSimulations(project, stopIfFails = TRUE),
+    regexp = "boom: missing model parameter path"
+  )
+})
+
+test_that(".buildScenarioSimulations skips a build-time failure when stopIfFails is FALSE", {
+  project <- .testProject()
+  addScenario(project, "second", modelFile = "Aciclovir.pkml")
+  local_mocked_bindings(
+    .prepareScenario = function(scenario, ...) {
+      if (scenario$scenarioName == "second") {
+        cli::cli_abort("boom: missing model parameter path")
+      }
+      list(simulation = NULL, population = NULL)
+    }
+  )
+  expect_warning(
+    built <- esqlabsR:::.buildScenarioSimulations(project, stopIfFails = FALSE),
+    regexp = "Could not build .*second.*skipping"
+  )
+  # The good scenario built; the broken one is a NULL entry, not an abort.
+  expect_false(is.null(built$prepared$testscenario))
+  expect_null(built$prepared$second)
+})
+
+test_that("runScenarios(stopIfFails = FALSE) skips a build-time failure and collects it as no-results", {
+  # A scenario failing at build time is surfaced-and-skipped, not fatal: the
+  # run reaches result collection, where the skipped scenario records no
+  # results. `testscenario` builds for real (native infra) and the mocked
+  # runner returns NULL for it, so both scenarios collect as no-results. The
+  # broken scenario carries `outputPaths` so collection would call
+  # getAllQuantitiesMatching() on its (NULL) simulation; a skipped scenario
+  # must not crash there.
+  withr::local_options(lifecycle_verbosity = "quiet")
+  project <- .testProject()
+  addScenario(
+    project,
+    "second",
+    modelFile = "does-not-exist.pkml",
+    outputPaths = "aciclovir_pvb"
+  )
+  local_mocked_bindings(
+    runSimulations = .mockNoResults
+  )
+  out <- suppressWarnings(
+    runScenarios(project, stopIfFails = FALSE)
+  )
+  expect_true(all(c("testscenario", "second") %in% names(out)))
+  # The unaffected scenario really built (not skipped into the same NULL shape).
+  expect_s3_class(out$testscenario$simulation, "Simulation")
+  expect_null(out$second$simulation)
+  expect_null(out$second$outputValues)
+})
+
+test_that("a scenario skipped at build time warns once, not twice", {
+  # The build-time warning already names the scenario; the no-results
+  # collection must not warn a second time for the same event.
+  withr::local_options(lifecycle_verbosity = "quiet")
+  project <- .testProject()
+  addScenario(project, "second", modelFile = "does-not-exist.pkml")
+  local_mocked_bindings(runSimulations = .mockNoResults)
+  warnings <- character()
+  withCallingHandlers(
+    runScenarios(project, scenarios = "second", stopIfFails = FALSE),
+    warning = function(w) {
+      warnings <<- c(warnings, conditionMessage(w))
+      invokeRestart("muffleWarning")
+    }
+  )
+  expect_length(grep("Could not build", warnings), 1)
+  expect_length(grep("No simulation results could be computed", warnings), 0)
+})
+
+test_that("runScenarios builds an individual that carries no age or height", {
+  # An animal individual legitimately carries only a weight. Passing an absent
+  # age/height through `as.double()` would yield `numeric(0)` and crash
+  # `createIndividualCharacteristics()`. Clearing age/height here and reaching
+  # the "no results" path (the run is short-circuited by the mocked runner)
+  # proves the individual-characteristics build succeeded.
+  withr::local_options(lifecycle_verbosity = "quiet")
+  project <- .testProject()
+  setIndividual(project, "indiv1", age = NULL, height = NULL)
+  local_mocked_bindings(
+    runSimulations = .mockNoResults
+  )
+  expect_warning(
+    out <- runScenarios(
+      project,
+      scenarios = "testscenario",
+      stopIfFails = FALSE
+    ),
+    regexp = "No simulation results could be computed"
+  )
+  # A built simulation (not a build-time skip) proves the age/height-less
+  # individual made it through `createIndividualCharacteristics()`.
+  expect_s3_class(out$testscenario$simulation, "Simulation")
+})
+
 test_that("runScenarios with stopIfFails = FALSE warns and returns NULL outputValues", {
   withr::local_options(lifecycle_verbosity = "quiet")
   project <- .testProject()
   local_mocked_bindings(
-    runSimulations = function(simulations, ...) {
-      ids <- if (inherits(simulations, "Simulation")) {
-        simulations$id
-      } else {
-        vapply(simulations, function(s) s$id, character(1))
-      }
-      stats::setNames(vector("list", length(ids)), ids)
-    }
+    runSimulations = .mockNoResults
   )
   expect_warning(
     out <- runScenarios(

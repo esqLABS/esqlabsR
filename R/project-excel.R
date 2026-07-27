@@ -1485,7 +1485,10 @@ projectStatus <- function(project, silent = FALSE) {
       individualId = as.character(row$IndividualId),
       species = as.character(row$Species),
       population = as.character(row$Population),
-      gender = as.character(row$Gender),
+      # A blank Gender cell defaults to UNKNOWN (the only valid PK-Sim gender
+      # for some animal species). A whitespace-only or empty-string cell counts
+      # as blank too, not just an NA.
+      gender = .blankToDefault(as.character(row$Gender), "UNKNOWN"),
       weight = .naToNull(as.numeric(row$`Weight [kg]`)),
       height = .naToNull(as.numeric(row$`Height [cm]`)),
       age = .naToNull(as.numeric(row$`Age [year(s)]`)),
@@ -2572,6 +2575,21 @@ projectStatus <- function(project, silent = FALSE) {
 #' @noRd
 .naToDefault <- function(x, default) {
   if (is.null(x) || length(x) == 0 || (length(x) == 1L && is.na(x))) {
+    return(default)
+  }
+  x
+}
+
+#' Replace an absent/`NA`/blank single cell with a default, else keep the value
+#'
+#' Like `.naToDefault()`, but a cell holding only whitespace (or an empty
+#' string) counts as blank too. Use it where an empty cell must become a real
+#' value rather than an invalid empty string.
+#' @keywords internal
+#' @noRd
+.blankToDefault <- function(x, default) {
+  x <- .naToDefault(x, default)
+  if (length(x) == 1L && !is.na(x) && nchar(trimws(x)) == 0) {
     return(default)
   }
   x

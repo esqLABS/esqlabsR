@@ -760,6 +760,45 @@ test_that("the individuals import skips a blank IndividualId row rather than inj
   expect_null(linked[[2]]$parameterSets)
 })
 
+test_that("the individuals import defaults a blank Gender cell to UNKNOWN", {
+  # An animal individual whose only valid PK-Sim gender is UNKNOWN carries no
+  # Gender in the sheet; the importer must default it rather than write NA,
+  # which the validator would flag as a critical error.
+  indivDf <- data.frame(
+    IndividualId = c("Human1", "Dog1"),
+    Species = c("Human", "Dog"),
+    Population = c("European_ICRP_2002", "Beagle"),
+    Gender = c("MALE", NA),
+    `Weight [kg]` = c(73, 10),
+    `Height [cm]` = c(176, NA),
+    `Age [year(s)]` = c(30, NA),
+    check.names = FALSE,
+    stringsAsFactors = FALSE
+  )
+  individuals <- .parseExcelIndividuals(indivDf)
+  expect_identical(individuals[[1]]$gender, "MALE")
+  expect_identical(individuals[[2]]$gender, "UNKNOWN")
+})
+
+test_that("the individuals import treats a blank-string Gender cell as absent", {
+  # A cell holding "" or only whitespace is blank, not a gender; it must
+  # default to UNKNOWN rather than import as an invalid empty gender.
+  indivDf <- data.frame(
+    IndividualId = c("Empty1", "Spaces1"),
+    Species = c("Dog", "Dog"),
+    Population = c("Beagle", "Beagle"),
+    Gender = c("", "   "),
+    `Weight [kg]` = c(10, 10),
+    `Height [cm]` = c(NA, NA),
+    `Age [year(s)]` = c(NA, NA),
+    check.names = FALSE,
+    stringsAsFactors = FALSE
+  )
+  individuals <- .parseExcelIndividuals(indivDf)
+  expect_identical(individuals[[1]]$gender, "UNKNOWN")
+  expect_identical(individuals[[2]]$gender, "UNKNOWN")
+})
+
 test_that(".parseExcelObservedData keeps a subfolder path rather than truncating to basename", {
   # The loader resolves `file` under `dataFolder`, so a file named in a subfolder
   # must keep its relative path; truncating to the basename would make it

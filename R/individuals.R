@@ -34,6 +34,13 @@
       }
       indiv[[field]] <- val
     }
+    # A gender-less individual (an animal species whose only valid PK-Sim
+    # gender is UNKNOWN) defaults to UNKNOWN, mirroring `.buildIndividualEntry()`
+    # and the Excel importer, so every stored individual carries a concrete
+    # gender regardless of which entrypoint created it.
+    if (is.null(indiv$gender)) {
+      indiv$gender <- "UNKNOWN"
+    }
     class(indiv) <- c("Individual", "list")
     result[[id]] <- indiv
   }
@@ -53,9 +60,10 @@
 
 #' Validate the `individuals` section of a Project
 #'
-#' Checks `species` and `gender` are present and warns when numeric
-#' fields (`weight`, `height`, `age`) are non-numeric. Cross-references
-#' to `parameterSets` are validated in
+#' Checks `species` is present and warns when numeric fields (`weight`,
+#' `height`, `age`) are non-numeric. `gender` is optional (an absent gender
+#' means the PK-Sim `UNKNOWN` gender, the only valid one for some animal
+#' species). Cross-references to `parameterSets` are validated in
 #' `.validateCrossReferences()`.
 #'
 #' @param individuals Named list from `individuals` definitions.
@@ -70,7 +78,7 @@
     return(result)
   }
 
-  requiredFields <- c("species", "gender")
+  requiredFields <- c("species")
   for (id in names(individuals)) {
     indiv <- individuals[[id]]
 
@@ -80,6 +88,28 @@
       paste0("individual '", id, "'"),
       result
     )
+
+    # `gender` is optional (an absent gender defaults to UNKNOWN), but a
+    # present gender must be a valid `GenderInt` token. This mirrors the
+    # authoring check in `.buildIndividualEntry()` so a hand-authored JSON file
+    # with an invalid gender (e.g. "" or "foo") is caught here rather than
+    # deferring to an opaque PK-Sim error at run time.
+    gender <- indiv[["gender"]]
+    if (
+      !is.null(gender) &&
+        !(length(gender) == 1 && !is.na(gender) && gender %in% names(GenderInt))
+    ) {
+      result$addCriticalError(
+        "Data",
+        paste0(
+          "Field 'gender' in individual '",
+          id,
+          "' must be one of ",
+          paste(names(GenderInt), collapse = ", "),
+          " (or omitted)"
+        )
+      )
+    }
 
     for (numField in c("weight", "height", "age")) {
       val <- indiv[[numField]]
@@ -143,7 +173,9 @@ print.Individual <- function(x, ...) {
 #'   species name.
 #' @param ... Optional named fields: `population`, `gender`, `weight`,
 #'   `height`, `age`, `proteinOntogenies`, `parameterSets`, and `overwrite`.
-#'   Numeric fields are coerced via `as.double()`. `parameterSets` is a
+#'   `gender` defaults to `UNKNOWN` when omitted (the only valid PK-Sim gender
+#'   for some animal species); when supplied it must be a valid `GenderInt`
+#'   token. Numeric fields are coerced via `as.double()`. `parameterSets` is a
 #'   character vector of ids referencing `parameterSets` definitions.
 #'   `overwrite` is a logical scalar (default `FALSE`): an id that already
 #'   exists aborts unless `overwrite = TRUE`, which replaces it
@@ -206,9 +238,10 @@ addIndividual <- function(project, id, species, ...) {
 }
 
 # Build one classed `Individual` entry from its id and per-definition field list,
-# validating the same way the scalar path always has (`species` and `gender`
-# required non-empty, `parameterSets` a resolvable character vector). Aborts
-# naming the individual on the first problem.
+# validating the same way the scalar path always has (`species` required
+# non-empty; `gender` optional, defaulting to `UNKNOWN`; `parameterSets` a
+# resolvable character vector). Aborts naming the individual on the first
+# problem.
 #
 # @keywords internal
 # @noRd
@@ -252,14 +285,14 @@ addIndividual <- function(project, id, species, ...) {
     errors <- c(errors, "species must be a non-empty string")
   }
 
-  # `gender` is a required field per `.validateIndividuals()`; reject it at
-  # add time so a gender-less individual cannot enter the project only to be
-  # flagged as a Critical Error later (mirrors the validator's contract:
-  # missing, NA, or empty are all invalid).
+  # `gender` is optional: an absent gender defaults to `UNKNOWN` (the only
+  # valid PK-Sim gender for some animal species). A supplied gender must still
+  # be a valid `GenderInt` token.
   gender <- fields$gender
-  if (
-    is.null(gender) ||
-      !is.character(gender) ||
+  if (is.null(gender)) {
+    gender <- "UNKNOWN"
+  } else if (
+    !is.character(gender) ||
       length(gender) != 1L ||
       is.na(gender) ||
       nchar(gender) == 0
@@ -299,8 +332,8 @@ addIndividual <- function(project, id, species, ...) {
     )
   }
 
-  entry <- list(species = species)
-  for (field in c("population", "gender", "proteinOntogenies")) {
+  entry <- list(species = species, gender = gender)
+  for (field in c("population", "proteinOntogenies")) {
     if (!is.null(fields[[field]])) entry[[field]] <- fields[[field]]
   }
   for (field in c("weight", "height", "age")) {

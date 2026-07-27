@@ -77,13 +77,22 @@ test_that("addIndividual rejects a non-logical overwrite passed through ...", {
   )
 })
 
-test_that("addIndividual aborts when gender is missing", {
+test_that("addIndividual defaults an absent gender to UNKNOWN", {
   project <- testProject()
-  expect_snapshot(
-    error = TRUE,
-    addIndividual(project, "newi", species = "Human")
-  )
-  expect_false("newi" %in% names(project$definitions$individuals))
+  addIndividual(project, "newi", species = "Dog")
+  expect_identical(project$definitions$individuals$newi$gender, "UNKNOWN")
+})
+
+test_that(".parseIndividuals defaults an absent gender to UNKNOWN", {
+  # JSON is the primary authoring path: an individual hand-authored in
+  # definitions/individuals/*.json without a gender key must get the same
+  # UNKNOWN default the authoring API and the Excel importer apply.
+  parsed <- esqlabsR:::.parseIndividuals(list(
+    list(individualId = "beagle", species = "Dog", weight = 10),
+    list(individualId = "adult", species = "Human", gender = "FEMALE")
+  ))
+  expect_identical(parsed$beagle$gender, "UNKNOWN")
+  expect_identical(parsed$adult$gender, "FEMALE")
 })
 
 test_that("addIndividual aborts when gender is not a valid GenderInt token", {

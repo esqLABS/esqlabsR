@@ -383,13 +383,19 @@
         moleculeOntogenies <- .readOntogeniesFromList(
           indivData$proteinOntogenies
         )
+        # weight/height/age are stored as doubles (or absent). Pass them through
+        # as-is: an absent biometric stays NULL, which
+        # `createIndividualCharacteristics()` defaults. Coercing with
+        # `as.double()` would turn a NULL into `numeric(0)`, which defeats
+        # ospsuite's own `is.null()` guard and crashes an animal individual that
+        # legitimately carries only a weight.
         individualCharacteristics <- ospsuite::createIndividualCharacteristics(
           species = indivData$species,
           population = indivData$population,
           gender = indivData$gender,
-          weight = as.double(indivData$weight),
-          height = as.double(indivData$height),
-          age = as.double(indivData$age),
+          weight = indivData$weight,
+          height = indivData$height,
+          age = indivData$age,
           moleculeOntogenies = moleculeOntogenies
         )
         cache$individuals[[scenario$individualId]] <- individualCharacteristics
@@ -532,7 +538,8 @@
   scenarioNames = NULL,
   customParams = NULL,
   simulationRunOptions = NULL,
-  stopIfParameterNotFound = TRUE
+  stopIfParameterNotFound = TRUE,
+  stopIfFails = TRUE
 ) {
   allScenarios <- project$definitions$scenarios
   if (is.null(scenarioNames)) {
@@ -560,15 +567,36 @@
   prepared <- vector("list", length(scenarioNames))
   for (idx in seq_along(scenarioNames)) {
     name <- scenarioNames[[idx]]
-    prepared[[idx]] <- .prepareScenario(
-      scenario = allScenarios[[name]],
-      project = project,
-      customParams = customParams,
-      cache = cache,
-      simulationRunOptions = simulationRunOptions,
-      stopIfParameterNotFound = stopIfParameterNotFound
-    )
     names(prepared)[[idx]] <- name
+    # A build-time failure of one scenario (e.g. a missing model parameter path)
+    # aborts the whole batch by default. When `stopIfFails = FALSE`, surface it
+    # as a warning and leave this scenario's entry NULL so the run continues
+    # with the scenarios that built; the run loops below skip a NULL entry and
+    # `.collectScenarioResult()` records it as producing no results.
+    result <- tryCatch(
+      .prepareScenario(
+        scenario = allScenarios[[name]],
+        project = project,
+        customParams = customParams,
+        cache = cache,
+        simulationRunOptions = simulationRunOptions,
+        stopIfParameterNotFound = stopIfParameterNotFound
+      ),
+      error = function(e) {
+        if (isTRUE(stopIfFails)) {
+          stop(e)
+        }
+        cli::cli_warn(messages$scenarioBuildFailed(
+          scenarioName = name,
+          conditionMessage = conditionMessage(e)
+        ))
+        NULL
+      }
+    )
+    # Single-bracket assignment keeps a skipped scenario's slot as an explicit
+    # NULL; `prepared[[idx]] <- NULL` would instead delete the element and
+    # shorten the list, breaking the positional loops below.
+    prepared[idx] <- list(result)
   }
   list(scenarioNames = scenarioNames, prepared = prepared)
 }
@@ -578,7 +606,8 @@
 # Resolve output quantities and build the standard return list for one
 # scenario. When a scenario produced no results, `stopIfFails` decides whether
 # that aborts the run (the default) or only warns and leaves `outputValues`
-# NULL.
+# NULL. A scenario skipped at build time arrives with a NULL `simulation` and
+# has already warned, so it is recorded without a second warning.
 # @keywords internal
 # @noRd
 .collectScenarioResult <- function(
@@ -589,7 +618,10 @@
   stopIfFails = TRUE
 ) {
   outputQuantities <- NULL
-  if (!is.null(scenario$outputPaths)) {
+  # `simulation` is NULL for a scenario skipped at build time (stopIfFails =
+  # FALSE); there is nothing to resolve output quantities against, so leave
+  # them NULL and let the no-results branch below record the skip.
+  if (!is.null(simulation) && !is.null(scenario$outputPaths)) {
     outputQuantities <- getAllQuantitiesMatching(
       unname(scenario$outputPaths),
       simulation
@@ -600,7 +632,12 @@
     if (isTRUE(stopIfFails)) {
       cli::cli_abort(messages$missingResultsForScenario(scenario$scenarioName))
     }
-    cli::cli_warn(messages$missingResultsForScenario(scenario$scenarioName))
+    # A scenario skipped at build time (NULL simulation) already warned via
+    # `scenarioBuildFailed()`; don't warn a second time for the same event. A
+    # scenario that built but produced no results still warns here.
+    if (!is.null(simulation)) {
+      cli::cli_warn(messages$missingResultsForScenario(scenario$scenarioName))
+    }
   } else {
     outputValues <- getOutputValues(
       results,
@@ -671,20 +708,22 @@
     scenarioNames = scenarioNames,
     customParams = customParams,
     simulationRunOptions = simulationRunOptions,
-    stopIfParameterNotFound = stopIfParameterNotFound
+    stopIfParameterNotFound = stopIfParameterNotFound,
+    stopIfFails = stopIfFails
   )
   scenarioNames <- built$scenarioNames
   prepared <- built$prepared
   # Still needed below to hand each scenario record to `.collectScenarioResult`.
   allScenarios <- project$definitions$scenarios
 
+  # A NULL `prepared` entry is a scenario skipped at build time (only reachable
+  # under `stopIfFails = FALSE`); it has no simulation to run and is collected
+  # below as producing no results.
   individualSimulations <- list()
   for (idx in seq_along(scenarioNames)) {
-    if (is.null(prepared[[idx]]$population)) {
-      individualSimulations <- c(
-        individualSimulations,
-        prepared[[idx]]$simulation
-      )
+    p <- prepared[[idx]]
+    if (!is.null(p) && is.null(p$population)) {
+      individualSimulations <- c(individualSimulations, p$simulation)
     }
   }
   simulationResults <- list()
@@ -697,7 +736,7 @@
 
   for (idx in seq_along(scenarioNames)) {
     p <- prepared[[idx]]
-    if (!is.null(p$population)) {
+    if (!is.null(p) && !is.null(p$population)) {
       populationResults <- runSimulations(
         simulations = p$simulation,
         population = p$population,
@@ -714,7 +753,7 @@
     out[[idx]] <- .collectScenarioResult(
       scenario = allScenarios[[name]],
       simulation = p$simulation,
-      results = simulationResults[[p$simulation$id]],
+      results = if (is.null(p)) NULL else simulationResults[[p$simulation$id]],
       population = p$population,
       stopIfFails = stopIfFails
     )
