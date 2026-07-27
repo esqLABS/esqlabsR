@@ -26,8 +26,9 @@ state and deletes any definitions authored only on the JSON side. Pass
 \code{overwrite = TRUE} to replace the existing JSON project with the Excel
 state.}
 
-\item{silent}{Logical. If \code{TRUE}, suppresses informational messages.
-Defaults to \code{FALSE}.}
+\item{silent}{Logical. If \code{TRUE}, suppresses the import summary (the project
+written, its per-section definition counts, and the folders copied or
+missing). Defaults to \code{FALSE}.}
 }
 \value{
 Invisibly returns the path to the created project file (the

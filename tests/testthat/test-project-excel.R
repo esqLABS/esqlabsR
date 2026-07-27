@@ -956,6 +956,37 @@ test_that("importProjectFromExcel aborts when two ids canonicalize to the same v
   )
 })
 
+# The import used to report only in an interactive session, so a scripted import
+# finished with no sign of what was written, or that it had succeeded at all.
+test_that("importProjectFromExcel reports what it produced, and stays quiet under silent", {
+  work_dir <- withr::local_tempdir()
+  file.copy(dirname(testProjectExcelPath()), work_dir, recursive = TRUE)
+  projectDir <- file.path(work_dir, "TestProjectExcel")
+  configPath <- file.path(projectDir, "ProjectConfiguration.xlsx")
+
+  summaryText <- paste(
+    utils::capture.output(
+      suppressWarnings(importProjectFromExcel(
+        configPath,
+        outputDir = withr::local_tempdir()
+      )),
+      type = "message"
+    ),
+    collapse = "\n"
+  )
+
+  # The output path, the per-section counts, and the assets that travelled.
+  expect_match(summaryText, "ProjectConfiguration.json", fixed = TRUE)
+  expect_match(summaryText, "Scenarios: 8", fixed = TRUE)
+  expect_match(summaryText, "Copied 2 referenced folders", fixed = TRUE)
+
+  expect_silent(suppressWarnings(importProjectFromExcel(
+    configPath,
+    outputDir = withr::local_tempdir(),
+    silent = TRUE
+  )))
+})
+
 # A definition references a model or a data file by a path relative to the
 # project folder, so an import into a different folder used to leave every one of
 # those references dangling: the output was a definitions tree pointing at files
@@ -1036,7 +1067,7 @@ test_that("importProjectFromExcel in place leaves the referenced folders untouch
 
   # Everything the import added is a definition file; no folder was copied onto
   # itself, which would have duplicated the models and data into subfolders.
-  expect_true(all(grepl("^definitions/", setdiff(after, before))))
+  expect_match(setdiff(after, before), "^definitions/", all = TRUE)
 })
 
 # An observed DataCombined row may name a scenario just as a simulated row does.
@@ -1075,13 +1106,11 @@ test_that("importProjectFromExcel canonicalizes an observed dataCombined entry's
   ))
   expect_setequal(observedScenarios, "testscenario")
   # The simulated block was already canonical; both blocks now agree.
-  expect_true(
-    "testscenario" %in%
-      unlist(lapply(
-        dataCombined,
-        function(dc) vapply(dc$simulated, function(e) e$scenario, character(1))
-      ))
-  )
+  simulatedScenarios <- unlist(lapply(
+    dataCombined,
+    function(dc) vapply(dc$simulated, function(e) e$scenario, character(1))
+  ))
+  expect_contains(simulatedScenarios, "testscenario")
 })
 
 # Before 6.0.0 the model-parameters, individuals, and applications workbooks were
@@ -1134,10 +1163,10 @@ test_that("importProjectFromExcel renames a duplicate parameter-set id and re-po
   # Both sets survive: the model-parameters sheet keeps the plain id, the later
   # workbook's sheet gets the suffixed one.
   sets <- .unwrapDefinitionList(project$definitions$parameterSets)
-  expect_true(all(
-    c("indiv1", "indiv1_1", "protocol_250mg", "protocol_250mg_1") %in%
-      names(sets)
-  ))
+  expect_contains(
+    names(sets),
+    c("indiv1", "indiv1_1", "protocol_250mg", "protocol_250mg_1")
+  )
 
   # The individual still carries its OWN parameter set, not the model-parameters
   # sheet that took the id.

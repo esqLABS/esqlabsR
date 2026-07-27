@@ -365,9 +365,9 @@ messages$noPopulationsFolderForCSVPopulation <- function(
 }
 
 
-messages$createdFileSnapshot <- function(inputFile, outputFile) {
+messages$importedProject <- function(inputFile, outputFile) {
   cliFormat(
-    "Snapshot of {.file {inputFile}} created at {.file {outputFile}}"
+    "Imported {.file {inputFile}} into the JSON project {.file {outputFile}}."
   )
 }
 

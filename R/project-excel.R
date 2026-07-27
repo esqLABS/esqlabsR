@@ -26,8 +26,9 @@
 #'   state and deletes any definitions authored only on the JSON side. Pass
 #'   `overwrite = TRUE` to replace the existing JSON project with the Excel
 #'   state.
-#' @param silent Logical. If `TRUE`, suppresses informational messages.
-#'   Defaults to `FALSE`.
+#' @param silent Logical. If `TRUE`, suppresses the import summary (the project
+#'   written, its per-section definition counts, and the folders copied or
+#'   missing). Defaults to `FALSE`.
 #'
 #' @return Invisibly returns the path to the created project file (the
 #'   `Project.json`).
@@ -499,11 +500,23 @@ importProjectFromExcel <- function(
   # folders along, so the imported project runs where it was written.
   assets <- .copyExcelProjectAssets(filePathProps, pcDir, outputDir)
 
-  if (interactive() && !silent) {
-    inputFile <- fs::path_rel(projectConfigPath, start = getwd())
-    outputFile <- fs::path_rel(outputPath, start = getwd())
-    msg <- messages$createdFileSnapshot(inputFile, outputFile)
+  # Report what the import produced. Not gated on an interactive session: an
+  # import run from a script is exactly the case where the call would otherwise
+  # finish with no sign of what (or whether) anything was written. `silent` is
+  # the way to turn it off.
+  if (!silent) {
+    inputFile <- .readablePath(projectConfigPath)
+    outputFile <- .readablePath(outputPath)
+    msg <- messages$importedProject(inputFile, outputFile)
     cli::cli_inform("{msg}")
+    # The per-section counts, rendered by the project's own definitions block so
+    # the summary and `print(project)` can never disagree about the labels. That
+    # block prints to stdout, so it is captured and re-emitted verbatim on the
+    # message stream, keeping the whole summary on one stream (and out of the way
+    # of anything capturing the function's own output).
+    cli::cli_verbatim(utils::capture.output(print(
+      importedProject$definitions
+    )))
     if (length(assets$copied) > 0L) {
       msg <- messages$importCopiedAssetFolders(assets$copied)
       cli::cli_inform("{msg}")
@@ -1266,6 +1279,23 @@ projectStatus <- function(project, silent = FALSE) {
   }
 
   jsonData
+}
+
+#' Spell a path the way it reads best from the working directory
+#'
+#' A path under the working directory is clearest relative to it. A path
+#' somewhere else (a temp folder, another drive) relativizes into a long
+#' `../../..` climb that is harder to read than the absolute path, so take
+#' whichever spelling is shorter.
+#'
+#' @param path A file or directory path.
+#' @returns The path as a single string.
+#' @keywords internal
+#' @noRd
+.readablePath <- function(path) {
+  relative <- as.character(fs::path_rel(path, start = getwd()))
+  absolute <- as.character(fs::path_abs(path))
+  if (nchar(relative) <= nchar(absolute)) relative else absolute
 }
 
 #' The working folders whose contents an imported project needs to run
