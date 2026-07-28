@@ -3031,12 +3031,58 @@ test_that(".parseExcelPI5xMappings parses a row with no output path", {
   expect_null(mappings[[2]]$outputPath)
   # Still gets a usable, unique id.
   expect_identical(mappings[[2]]$id, "item")
+})
 
+# The sheet's oldest revision has no `OutputPath` column at all: it predates the
+# column and identified a mapping's output through the scenario, one mapping per
+# output path the scenario declares. Reproducing that lets such a workbook
+# restore instead of failing on every one of its mappings (#1192).
+test_that(".parseExcelPI5xMappings derives a missing OutputPath column", {
+  noColumn <- data.frame(
+    PITaskName = "t1",
+    Scenarios = "s1, s2",
+    DataSet = "d1",
+    Scaling = "log",
+    stringsAsFactors = FALSE
+  )
+  scenarios <- list(
+    list(name = "s1", outputPaths = list("pvb", "urine")),
+    list(name = "s2", outputPaths = list("pvb"))
+  )
+
+  mappings <- .parseExcelPI5xMappings(noColumn, "t1", scenarios)
+
+  # One mapping per output path, not per scenario: a path both scenarios declare
+  # becomes one mapping naming both.
+  expect_length(mappings, 2L)
+  expect_identical(mappings[[1]]$outputPath, "pvb")
+  expect_identical(unlist(mappings[[1]]$scenarios), c("s1", "s2"))
+  expect_identical(mappings[[2]]$outputPath, "urine")
+  expect_identical(unlist(mappings[[2]]$scenarios), "s1")
+  # Every other cell of the original row rides along.
+  expect_identical(mappings[[1]]$observedData, "d1")
+  expect_identical(mappings[[1]]$scaling, "log")
+})
+
+test_that(".parseExcelPI5xMappings warns when no output path can be derived", {
   noColumn <- data.frame(
     PITaskName = "t1",
     Scenarios = "s1",
     DataSet = "d1",
     stringsAsFactors = FALSE
   )
-  expect_length(.parseExcelPI5xMappings(noColumn, "t1"), 1L)
+
+  # A scenario that declares no output path, an undefined scenario, and no
+  # scenarios section at all all leave the mapping unidentifiable.
+  expect_warning(
+    expect_length(
+      .parseExcelPI5xMappings(noColumn, "t1", list(list(name = "s1"))),
+      0L
+    ),
+    class = "esqlabsR_importSkippedPIOutputMappings"
+  )
+  expect_warning(
+    expect_length(.parseExcelPI5xMappings(noColumn, "t1", NULL), 0L),
+    class = "esqlabsR_importSkippedPIOutputMappings"
+  )
 })

@@ -439,7 +439,9 @@ importProjectFromExcel <- function(
     list(
       property = "parameterIdentificationFile",
       parse = function(file, jsonData) {
-        tasks <- .parseExcelParameterIdentification(file)
+        # The scenarios section is parsed above, so the oldest 5.x mapping layout
+        # can reach the output paths its rows identify their outputs through.
+        tasks <- .parseExcelParameterIdentification(file, jsonData$scenarios)
         # A 5.x output mapping may name its output path by full OSPS path rather
         # than by an output-path id. Rewrite such a full path to the id of the
         # matching `outputPaths` definition so the reference resolves.
@@ -2333,9 +2335,13 @@ projectStatus <- function(project, silent = FALSE) {
 # `{id, scenarios[], parameters[], outputMappings[], configuration}` shape
 # `.parsePITasks()` consumes. Returns an unnamed list of PITask JSON objects.
 #
+# @param scenarios The already-parsed `scenarios` section, needed only by the
+#   5.x layout, whose oldest revision identifies a mapping's output through the
+#   scenario rather than in the mapping row.
+#
 # @keywords internal
 # @noRd
-.parseExcelParameterIdentification <- function(piFile) {
+.parseExcelParameterIdentification <- function(piFile, scenarios = NULL) {
   sheets <- readxl::excel_sheets(piFile)
   # Two layouts. The newer one has a single `PITasks` sheet (one row per task,
   # config inline in `config.*` columns). The 5.x layout has no `PITasks` sheet
@@ -2343,7 +2349,7 @@ projectStatus <- function(project, silent = FALSE) {
   # configuration split across `PIConfiguration` / `AlgorithmOptions` /
   # `CIOptions`. Dispatch on which is present.
   if (!("PITasks" %in% sheets)) {
-    return(.parseExcelPI5x(piFile, sheets))
+    return(.parseExcelPI5x(piFile, sheets, scenarios))
   }
   taskDf <- readExcel(piFile, sheet = "PITasks")
   paramDf <- if ("PIParameters" %in% sheets) {
@@ -2420,7 +2426,7 @@ projectStatus <- function(project, silent = FALSE) {
 #
 # @keywords internal
 # @noRd
-.parseExcelPI5x <- function(piFile, sheets) {
+.parseExcelPI5x <- function(piFile, sheets, scenarios = NULL) {
   read5xSheet <- function(name) {
     if (name %in% sheets) readExcel(piFile, sheet = name) else NULL
   }
@@ -2445,7 +2451,7 @@ projectStatus <- function(project, silent = FALSE) {
 
   lapply(taskNames, function(task) {
     params <- .parseExcelPI5xParams(paramDf, task)
-    mappings <- .parseExcelPI5xMappings(mappingDf, task)
+    mappings <- .parseExcelPI5xMappings(mappingDf, task, scenarios)
     # A task's scenarios are the union of the scenarios its parameters and
     # mappings reference (the 5.x layout has no separate task-scenario list).
     scenarios <- unique(unlist(lapply(
@@ -2491,10 +2497,21 @@ projectStatus <- function(project, silent = FALSE) {
 # a per-mapping `id` from the output path's last segment (de-duplicated within
 # the task) and maps the offset/factor/weight columns.
 #
+# The sheet's oldest revision has no `OutputPath` column at all: it predates the
+# column, and identified a mapping's output through the scenario, one mapping per
+# output path the scenario declares. `.pi5xDerivedMappingRows()` reproduces that,
+# so such a workbook restores instead of failing on every mapping. A blank cell
+# in a column that IS present is a different thing (an authoring gap in the newer
+# layout) and still yields a mapping with no `outputPath` for validation to
+# report, so the two cases are told apart by the column, not the cell.
+#
 # @keywords internal
 # @noRd
-.parseExcelPI5xMappings <- function(df, task) {
+.parseExcelPI5xMappings <- function(df, task, scenarios = NULL) {
   rows <- .pi5xTaskRows(df, task)
+  if (nrow(rows) > 0L && !("OutputPath" %in% names(rows))) {
+    rows <- .pi5xDerivedMappingRows(rows, task, scenarios)
+  }
   ids <- character()
   lapply(seq_len(nrow(rows)), function(i) {
     row <- rows[i, ]
@@ -2514,6 +2531,77 @@ projectStatus <- function(project, silent = FALSE) {
       weight = .naToNull(as.numeric(row[["Weight"]]))
     ))
   })
+}
+
+# Give the rows of an `OutputPath`-less `PIOutputMappings` sheet the column they
+# lack, by taking each row's outputs from the scenarios it names.
+#
+# One row becomes one row per output path its scenarios declare, carrying the
+# scenarios that declare that path and every other cell of the original row. A
+# row is dropped when it names no scenario, when none of its scenarios is
+# defined, or when those scenarios declare no output path: there is then nothing
+# to identify the output with, and a mapping with no output is rejected when the
+# task is built. Every drop is named in one warning per task, since it costs the
+# task a mapping.
+#
+# @param rows One task's rows of the sheet.
+# @param task The task id, for the warning.
+# @param scenarios The parsed `scenarios` section (an unnamed list of records
+#   carrying `name` and `outputPaths`), or NULL when the project has none.
+# @returns A data frame with the same columns plus `OutputPath`, one row per
+#   (row, output path) pair. Zero rows when nothing could be derived.
+# @keywords internal
+# @noRd
+.pi5xDerivedMappingRows <- function(rows, task, scenarios) {
+  outputPathsOf <- function(name) {
+    for (scenario in scenarios %||% list()) {
+      if (identical(as.character(scenario$name), name)) {
+        return(unlist(scenario$outputPaths))
+      }
+    }
+    NULL
+  }
+
+  derived <- list()
+  unresolved <- character()
+  for (i in seq_len(nrow(rows))) {
+    named <- .parseCommaListToArray(rows[i, ][["Scenarios"]])
+    # Which of this row's scenarios declare each output path, so a path shared by
+    # two of them becomes one mapping naming both rather than two mappings.
+    byPath <- list()
+    for (name in named %||% character()) {
+      for (path in outputPathsOf(name)) {
+        byPath[[path]] <- c(byPath[[path]], name)
+      }
+    }
+    if (length(byPath) == 0L) {
+      # The row's own scenario cell, read back for the warning: it is what the
+      # user has to look at to fix this, whether it is empty or names scenarios
+      # that define no output.
+      unresolved <- c(
+        unresolved,
+        if (length(named) == 0L) "" else paste(named, collapse = ", ")
+      )
+      next
+    }
+    for (path in names(byPath)) {
+      row <- rows[i, , drop = FALSE]
+      row[["OutputPath"]] <- path
+      row[["Scenarios"]] <- .formatArrayToCommaList(byPath[[path]])
+      derived[[length(derived) + 1L]] <- row
+    }
+  }
+
+  if (length(unresolved) > 0L) {
+    .warnFormatted(
+      messages$importSkippedPIOutputMappings(task, unresolved),
+      "esqlabsR_importSkippedPIOutputMappings"
+    )
+  }
+  if (length(derived) == 0L) {
+    return(rows[0, , drop = FALSE])
+  }
+  as.data.frame(dplyr::bind_rows(derived))
 }
 
 # Build one task's nested `configuration` from the 5.x `PIConfiguration` row and

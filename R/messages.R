@@ -276,6 +276,35 @@ messages$importSkippedOutOfProjectDataFile <- function() {
   )
 }
 
+messages$importSkippedPIOutputMappings <- function(taskId, scenarios) {
+  # Unglued, like the two below: a task id and a scenario name are both free text.
+  envir <- new.env(parent = parent.frame())
+  assign("taskId", taskId, envir = envir)
+  assign("scenarios", scenarios, envir = envir)
+  assign("n", length(scenarios), envir = envir)
+  list(
+    bullets = c(
+      "!" = "{cli::qty(n)}Skipped {n} output {?mapping/mappings} of \\
+      parameter-identification task {.val {taskId}}: no output path could be \\
+      determined.",
+      stats::setNames(
+        sprintf(
+          "Scenarios cell {.val {scenarios[[%1$d]]}}.",
+          seq_along(scenarios)
+        ),
+        rep("x", length(scenarios))
+      ),
+      "i" = "This {.field PIOutputMappings} sheet has no {.field OutputPath} \\
+      column, so each mapping takes its outputs from the {.field OutputPathsIds} \\
+      of the scenarios it names. Give those scenarios an output path, or add an \\
+      {.field OutputPath} column, then import again.",
+      "i" = "The task keeps its other mappings; add the missing ones with \\
+      {.fn addPIOutputMapping}."
+    ),
+    envir = envir
+  )
+}
+
 messages$importSkippedNonNumericRows <- function(
   filePath,
   sheets,

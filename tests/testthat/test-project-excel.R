@@ -2399,3 +2399,72 @@ test_that("a non-numeric Value skips the row, not the import", {
   expect_identical(set[[1]]$parameterName, "Kd")
   expect_identical(set[[1]]$value, 2.5)
 })
+
+# The reported case: a `PIOutputMappings` sheet from the layout that predates the
+# `OutputPath` column. Every mapping came out with no output path and the restore
+# stopped on the first one. The column's absence is now read as that older
+# layout, whose outputs come from the scenario (#1192).
+test_that("a PIOutputMappings sheet with no OutputPath column imports", {
+  work_dir <- withr::local_tempdir()
+  file.copy(dirname(testProjectExcelPath()), work_dir, recursive = TRUE)
+  projectDir <- file.path(work_dir, "TestProjectExcel")
+  configDir <- file.path(projectDir, "Configurations")
+
+  rewriteSheet <- function(file, sheet, edit) {
+    sheetNames <- readxl::excel_sheets(file)
+    sheets <- stats::setNames(
+      lapply(sheetNames, function(s) readExcel(file, sheet = s)),
+      sheetNames
+    )
+    sheets[[sheet]] <- edit(sheets[[sheet]])
+    .writeExcel(sheets, file)
+  }
+
+  # The fixture's PI scenarios declare no output path, so give the one this task
+  # uses two of them: the derivation has to fan a single row out over both.
+  rewriteSheet(
+    file.path(configDir, "Scenarios.xlsx"),
+    "Scenarios",
+    function(df) {
+      df$OutputPathsIds[df$Scenario_name == "PITestScenario"] <-
+        "Aciclovir_PVB, Aciclovir_fat_cell"
+      df
+    }
+  )
+  # Reproduce the older layout: no `OutputPath` column at all.
+  rewriteSheet(
+    file.path(configDir, "ParameterIdentification.xlsx"),
+    "PIOutputMappings",
+    function(df) df[, setdiff(names(df), "OutputPath"), drop = FALSE]
+  )
+
+  jsonPath <- suppressWarnings(importProjectFromExcel(
+    file.path(projectDir, "ProjectConfiguration.xlsx"),
+    outputDir = withr::local_tempdir(),
+    silent = TRUE
+  ))
+  project <- suppressWarnings(loadProject(jsonPath))
+
+  task <- .unwrapDefinitionList(project$definitions$parameterIdentification)[[
+    "aciclovirsimple"
+  ]]
+  # One mapping per output path the scenario declares, each carrying the row's
+  # observed data set.
+  expect_setequal(
+    vapply(task$outputMappings, function(m) m$outputPath, character(1)),
+    c("aciclovir_pvb", "aciclovir_fat_cell")
+  )
+  expect_true(all(vapply(
+    task$outputMappings,
+    function(m) grepl("^Laskin 1982", m$observedData),
+    logical(1)
+  )))
+
+  # The whole point: the project the import produced is loadable and reports no
+  # critical error about a mapping with no output path.
+  results <- suppressWarnings(validateProject(project))
+  errors <- unlist(lapply(results, function(section) {
+    vapply(section$critical_errors %||% list(), \(e) e$message, character(1))
+  }))
+  expect_false(any(grepl("outputPath", errors %||% character())))
+})
