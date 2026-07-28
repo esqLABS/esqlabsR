@@ -271,8 +271,14 @@ importProjectFromExcel <- function(
           )
           jsonData$parameterSets <- appended$sets
           # Only a sheet that parsed as a parameter set can be linked; a skipped
-          # non-parameter sheet has no set for the individual to point at.
+          # non-parameter sheet has no set for the individual to point at, from
+          # either direction: not as its own same-named override below, and not
+          # through the `Individual Parameter Sets` column here.
           setSheetNames <- names(parsedSets)
+          jsonData$individuals <- .dropSkippedSheetRefs(
+            jsonData$individuals,
+            setdiff(paramSheetNames, setSheetNames)
+          )
           # A sheet named after an individual is that individual's own parameter
           # override; link it so the override is applied. The match is on the
           # canonical id, so `Indiv1` sheet links to the `Indiv1` individual
@@ -348,12 +354,23 @@ importProjectFromExcel <- function(
           }
           paramSheetNames <- setdiff(sheets, "ApplicationProtocols")
           if (length(paramSheetNames) > 0) {
+            parsedSets <- .parseExcelParameterSheets(
+              file,
+              sheetNames = paramSheetNames
+            )
             appended <- .appendParameterSets(
               jsonData$parameterSets,
-              .parseExcelParameterSheets(file, sheetNames = paramSheetNames),
+              parsedSets,
               file
             )
             jsonData$parameterSets <- appended$sets
+            # A `ParameterSets` cell naming a skipped sheet points at a set that
+            # was never created, so drop that reference before following any
+            # rename (a skipped sheet is never renamed, so the order is free).
+            jsonData$applications <- .dropSkippedSheetRefs(
+              jsonData$applications,
+              setdiff(paramSheetNames, names(parsedSets))
+            )
             # The `ParameterSets` column names sheets of this workbook, so follow
             # a renamed sheet to its new id. Guarded on a rename having happened,
             # so a protocol that declares no sets keeps the field absent.
@@ -1563,20 +1580,38 @@ projectStatus <- function(project, silent = FALSE) {
   ifelse(is.na(mapped), ids, mapped)
 }
 
-#' The columns that make a sheet a parameter sheet
+#' Drop references to sheets of this workbook that were not parameter sheets
 #'
-#' The same four columns [readParametersFromXLS()] requires and
-#' `.parameterStructuresToExcelSheets()` writes, so what the export produces is
-#' exactly what the import recognizes.
+#' A definition's `parameterSets` cell names sheets of its own workbook, so a
+#' sheet [.parseExcelParameterSheets()] skipped leaves a reference to a set that
+#' was never created. Only those references are dropped: the same cell may name
+#' a set defined in another workbook, which is a separate question answered
+#' elsewhere. Matching is on the canonical id, since that is what both the
+#' definition and the reference become.
 #'
+#' @param definitions Named list of records that may carry `parameterSets`.
+#' @param skippedSheets Sheet names the parser skipped.
+#' @returns `definitions`, each dangling reference removed and the field dropped
+#'   entirely where nothing is left, so a definition that referenced only
+#'   skipped sheets ends up without the field rather than with an empty one.
 #' @keywords internal
 #' @noRd
-.parameterSheetColumns <- c(
-  "Container Path",
-  "Parameter Name",
-  "Value",
-  "Units"
-)
+.dropSkippedSheetRefs <- function(definitions, skippedSheets) {
+  if (length(definitions) == 0L || length(skippedSheets) == 0L) {
+    return(definitions)
+  }
+  skipped <- vapply(skippedSheets, .canonicalizeOneId, character(1))
+  lapply(definitions, function(definition) {
+    refs <- unlist(definition$parameterSets)
+    if (is.null(refs)) {
+      return(definition)
+    }
+    dangling <- vapply(refs, .canonicalizeOneId, character(1)) %in% skipped
+    kept <- refs[!dangling]
+    definition$parameterSets <- if (length(kept) > 0L) as.list(kept) else NULL
+    definition
+  })
+}
 
 #' Parse parameter sheets from an Excel file into JSON structure
 #'

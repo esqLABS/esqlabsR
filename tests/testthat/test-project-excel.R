@@ -2241,3 +2241,66 @@ test_that(".parseExcelObservedData anchors a relative ${VAR} at the project file
   )
   expect_named(result$observedData, "Values.xlsx")
 })
+
+# A `ParameterSets` / `Individual Parameter Sets` cell names sheets of its own
+# workbook. When one of those sheets is skipped it defines no set, so the
+# reference has to go too, or the import writes a definition pointing at a set
+# that was never created (#1181).
+test_that(".dropSkippedSheetRefs removes only references to skipped sheets", {
+  definitions <- list(
+    a = list(parameterSets = list("Kept", "Skipped")),
+    b = list(parameterSets = list("Skipped")),
+    c = list(parameterSets = list("Kept")),
+    d = list(other = "field")
+  )
+
+  result <- .dropSkippedSheetRefs(definitions, "Skipped")
+
+  expect_identical(unlist(result$a$parameterSets), "Kept")
+  # Nothing left: the field goes rather than becoming an empty list.
+  expect_null(result$b$parameterSets)
+  expect_identical(unlist(result$c$parameterSets), "Kept")
+  expect_identical(result$d, definitions$d)
+  # A reference matching on canonical id alone is still dropped.
+  expect_null(
+    .dropSkippedSheetRefs(list(a = list(parameterSets = list("skipped"))), "Skipped")$a$parameterSets
+  )
+})
+
+# The `ApplicationProtocols` layout takes its references from a column rather
+# than from the sheet list, so it needs the same treatment as the 5.x layout
+# (#1181).
+test_that("an application referencing a skipped sheet loses the reference", {
+  work_dir <- withr::local_tempdir()
+  file.copy(dirname(testProjectExcelPath()), work_dir, recursive = TRUE)
+  projectDir <- file.path(work_dir, "TestProjectExcel")
+  appsFile <- file.path(projectDir, "Configurations", "Applications.xlsx")
+
+  # Rebuild the workbook in the newer layout: a protocol naming two sheets, one
+  # a real parameter sheet and one a notes sheet.
+  .writeExcel(
+    list(
+      ApplicationProtocols = data.frame(
+        ApplicationId = "Protocol_250mg",
+        ParameterSets = "RealSheet, Scratch notes",
+        stringsAsFactors = FALSE
+      ),
+      RealSheet = readExcel(appsFile, sheet = "Protocol_250mg"),
+      `Scratch notes` = data.frame(Note = "not a parameter sheet")
+    ),
+    appsFile
+  )
+
+  jsonPath <- suppressWarnings(importProjectFromExcel(
+    file.path(projectDir, "ProjectConfiguration.xlsx"),
+    outputDir = withr::local_tempdir(),
+    silent = TRUE
+  ))
+  project <- suppressWarnings(loadProject(jsonPath))
+
+  application <- .unwrapDefinitionList(project$definitions$applications)[[
+    "protocol_250mg"
+  ]]
+  expect_identical(unlist(application$parameterSets), "realsheet")
+  expect_false("scratch_notes" %in% names(project$definitions$parameterSets))
+})
