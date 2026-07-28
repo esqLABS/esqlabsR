@@ -122,8 +122,7 @@ importProjectFromExcel <- function(
     # into an out-of-project location and is exempt, everything else must stay
     # under `pcDir`. Resolution then expands the variable and joins a relative
     # value onto `pcDir`, matching `.cleanPath()`'s expand-then-resolve order.
-    declaresEnvVar <- grepl("\\$\\{?[A-Za-z_]", configsFolderRaw)
-    if (!declaresEnvVar) {
+    if (!.declaresEnvVarPath(configsFolderRaw)) {
       configsFolder <- .resolveProjectPath(
         configsFolder,
         pcDir,
@@ -1398,7 +1397,7 @@ projectStatus <- function(project, silent = FALSE) {
     # An absolute folder, or one naming an environment variable, deliberately
     # points outside the project: it resolves the same from the new location, so
     # copying it would duplicate data the author chose to keep in one place.
-    if (fs::is_absolute_path(value) || grepl("\\$\\{?[A-Za-z_]", value)) {
+    if (fs::is_absolute_path(value) || .declaresEnvVarPath(value)) {
       next
     }
     # A `../`-climbing value names something the project does not own. Copying it

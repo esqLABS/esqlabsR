@@ -1314,17 +1314,13 @@ Project <- R6::R6Class(
         length(projectDir) == 1L &&
         !is.na(projectDir) &&
         nzchar(projectDir)
-      # An explicit `${VAR}` opts into an out-of-project location; skip the
-      # containment check for it (the variable value is the user's choice).
-      declaresEnvVar <- is.character(raw) &&
-        length(raw) == 1L &&
-        grepl("\\$\\{?[A-Za-z_]", raw)
       # The resolved folder is already absolute; `.pathEscapesRoot()` compares
       # an absolute path to the root directly, so this rejects a folder value
-      # that resolves outside the project directory.
+      # that resolves outside the project directory. An explicit `${VAR}` opts
+      # into an out-of-project location and is exempt.
       if (
         hasProjectDir &&
-          !declaresEnvVar &&
+          !.declaresEnvVarPath(raw) &&
           .pathEscapesRoot(as.character(resolved), projectDir)
       ) {
         cli::cli_abort(messages$projectPathEscapesRoot(

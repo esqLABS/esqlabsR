@@ -137,6 +137,21 @@ readExcel <- function(path, sheet = NULL, ...) {
   .absoluteAgainstRoot(path, absRoot)
 }
 
+# TRUE when `path` embeds a `${VAR}` / `$VAR` reference. A path that does is the
+# sanctioned way to name a location outside the project (shared-drive data, a
+# models folder several projects share), so every containment check exempts it
+# and judges the raw, pre-expansion value. One predicate rather than the regex
+# repeated at each check, so the exemption cannot come to mean different things
+# in different places.
+# @keywords internal
+# @noRd
+.declaresEnvVarPath <- function(path) {
+  is.character(path) &&
+    length(path) == 1L &&
+    !is.na(path) &&
+    grepl("\\$\\{?[A-Za-z_]", path)
+}
+
 # Expand every `${VAR}` / `$VAR` reference in `path` against the environment,
 # leaving an unset variable's reference in place and never touching `$PATH`.
 # The one place the package's env-var-in-path contract lives; the `Project`
