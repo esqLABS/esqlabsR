@@ -1219,3 +1219,54 @@ test_that("the three plots sections each print a count and ids", {
   expect_snapshot(print(project$definitions$plotGrids))
   expect_snapshot(print(project$definitions$dataCombined))
 })
+
+# Printing reads no files, so a working folder the loader refuses is still worth
+# showing. A project whose data sits on a synced drive outside the project
+# carries such a folder, and aborting here made an imported project impossible
+# to inspect even though the import itself had succeeded (#1182).
+test_that("print() shows an out-of-project working folder instead of aborting", {
+  dir <- withr::local_tempdir()
+  outside <- withr::local_tempdir()
+  jsonPath <- file.path(dir, "Project.json")
+  writeLines(
+    jsonlite::toJSON(
+      list(
+        schemaVersion = "2.0",
+        filePaths = list(dataFolder = outside)
+      ),
+      auto_unbox = TRUE,
+      pretty = TRUE
+    ),
+    jsonPath
+  )
+  project <- suppressWarnings(loadProject(jsonPath))
+
+  printed <- paste(utils::capture.output(print(project)), collapse = "")
+  expect_match(printed, outside, fixed = TRUE)
+
+  # Reaching the folder is what still refuses: printing is not a way around the
+  # containment guard, only a way to see what the project declares.
+  expect_error(project$paths$dataFolder, "resolves outside the project folder")
+})
+
+# A `${VAR}` survives expansion untouched when the variable is unset, so the
+# variable itself is what gets printed rather than a path invented around it.
+test_that("print() shows an unset ${VAR} working folder as the variable", {
+  dir <- withr::local_tempdir()
+  jsonPath <- file.path(dir, "Project.json")
+  writeLines(
+    jsonlite::toJSON(
+      list(
+        schemaVersion = "2.0",
+        filePaths = list(dataFolder = "${ESQLABSR_UNSET_IN_TESTS}/Data")
+      ),
+      auto_unbox = TRUE,
+      pretty = TRUE
+    ),
+    jsonPath
+  )
+  project <- suppressWarnings(loadProject(jsonPath))
+
+  printed <- paste(utils::capture.output(print(project)), collapse = "")
+  expect_match(printed, "${ESQLABSR_UNSET_IN_TESTS}", fixed = TRUE)
+})
