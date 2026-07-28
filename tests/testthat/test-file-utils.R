@@ -66,3 +66,35 @@ test_that(".resolveProjectPath rejects a path that escapes the root", {
     "outside the project"
   )
 })
+
+# The containment exemption is granted to a path naming an environment
+# variable, on the grounds that the variable is expanded and its value is the
+# user's own choice. `$PATH` is deliberately never expanded, so exempting it
+# would let a literal token bypass the check: `$PATH/../../etc` would stay
+# literal and still resolve two levels above the root.
+test_that(".declaresEnvVarPath exempts only references that are expanded", {
+  expect_true(.declaresEnvVarPath("${MYDATA}/Data"))
+  expect_true(.declaresEnvVarPath("$MYDATA"))
+  # A real variable alongside `$PATH` still expands, so it keeps the exemption.
+  expect_true(.declaresEnvVarPath("${MYDATA}/$PATH"))
+
+  expect_false(.declaresEnvVarPath("$PATH/../../etc"))
+  expect_false(.declaresEnvVarPath("${PATH}/x"))
+  expect_false(.declaresEnvVarPath("Data/"))
+  expect_false(.declaresEnvVarPath("../Data"))
+
+  # Not a usable value: never exempt (and never a `logical(0)` / `NA` condition).
+  expect_false(.declaresEnvVarPath(NULL))
+  expect_false(.declaresEnvVarPath(NA_character_))
+  expect_false(.declaresEnvVarPath(c("a", "b")))
+})
+
+# A `$PATH`-only value is not expanded, so it must be contained like any other
+# literal rather than slipping past on the exemption.
+test_that("a $PATH-only working folder is still contained", {
+  root <- withr::local_tempdir()
+  expect_error(
+    .resolveProjectPath("$PATH/../../etc", root, "dataFolder"),
+    "resolves outside the project folder"
+  )
+})

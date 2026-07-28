@@ -137,19 +137,43 @@ readExcel <- function(path, sheet = NULL, ...) {
   .absoluteAgainstRoot(path, absRoot)
 }
 
-# TRUE when `path` embeds a `${VAR}` / `$VAR` reference. A path that does is the
-# sanctioned way to name a location outside the project (shared-drive data, a
-# models folder several projects share), so every containment check exempts it
-# and judges the raw, pre-expansion value. One predicate rather than the regex
-# repeated at each check, so the exemption cannot come to mean different things
-# in different places.
+# The one pattern for a `${VAR}` / `$VAR` reference in a path, shared by the
+# expander and by the predicate that grants the containment exemption, so a
+# reference one of them recognizes is always one the other acts on.
+# @keywords internal
+# @noRd
+.envVarPathPattern <- "\\$\\{?([A-Za-z_][A-Za-z0-9_]*)\\}?"
+
+# The variable names `path` references, in order (empty when it references
+# none).
+# @keywords internal
+# @noRd
+.envVarNamesInPath <- function(path) {
+  matches <- regmatches(
+    path,
+    gregexpr(.envVarPathPattern, path, perl = TRUE)
+  )[[1]]
+  sub(.envVarPathPattern, "\\1", matches)
+}
+
+# TRUE when `path` embeds a `${VAR}` / `$VAR` reference that `.replaceEnvVarPath()`
+# will actually expand. A path that does is the sanctioned way to name a
+# location outside the project (shared-drive data, a models folder several
+# projects share), so every containment check exempts it and judges the raw,
+# pre-expansion value. One predicate rather than the regex repeated at each
+# check, so the exemption cannot come to mean different things in different
+# places.
+#
+# `$PATH` is deliberately never expanded, so it does not earn the exemption:
+# granting it would let `$PATH/../../etc` stay literal and then resolve outside
+# the root with no containment check having run on the result.
 # @keywords internal
 # @noRd
 .declaresEnvVarPath <- function(path) {
-  is.character(path) &&
-    length(path) == 1L &&
-    !is.na(path) &&
-    grepl("\\$\\{?[A-Za-z_]", path)
+  if (!is.character(path) || length(path) != 1L || is.na(path)) {
+    return(FALSE)
+  }
+  any(.envVarNamesInPath(path) != "PATH")
 }
 
 # Expand every `${VAR}` / `$VAR` reference in `path` against the environment,
@@ -163,13 +187,12 @@ readExcel <- function(path, sheet = NULL, ...) {
   if (length(path) == 0L) {
     return(path)
   }
-  pattern <- "\\$\\{?([A-Za-z_][A-Za-z0-9_]*)\\}?"
-  m <- gregexpr(pattern, path, perl = TRUE)
+  m <- gregexpr(.envVarPathPattern, path, perl = TRUE)
   regmatches(path, m) <- lapply(regmatches(path, m), function(matches) {
     vapply(
       matches,
       function(match) {
-        name <- sub(pattern, "\\1", match)
+        name <- sub(.envVarPathPattern, "\\1", match)
         if (identical(name, "PATH")) {
           return(match)
         }
