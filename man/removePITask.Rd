@@ -2,23 +2,35 @@
 % Please edit documentation in R/parameter-identification.R
 \name{removePITask}
 \alias{removePITask}
-\title{Remove a Parameter Identification task from a Project}
+\title{Remove one or more Parameter Identification tasks from a Project}
 \usage{
 removePITask(project, id)
 }
 \arguments{
 \item{project}{A \code{Project} object.}
 
-\item{id}{Character scalar.}
+\item{id}{Character vector of task ids. Each is canonicalized the same way
+\code{\link[=addPITask]{addPITask()}} canonicalizes it.}
 }
 \value{
 The \code{project} object, invisibly.
 }
 \description{
-Warns and is a no-op when the task id does not exist.
+Drop the tasks with matching ids in one write-through. Warns (and skips)
+any id not present.
+}
+\details{
+\code{addPITask()} is not vectorized over ids: each task is composed of its own
+distinct lists of \code{PIParameter} / \code{PIOutputMapping} records, so several
+tasks are added with several calls. The per-task sub-definition helpers
+(\code{addPIParameter()} / \code{addPIOutputMapping()} and their removals) act on one
+parent task identified by \code{task}, so they likewise stay single-definition.
 }
 \seealso{
 Other parameterIdentification:
+\code{\link[=PIOutputMapping]{PIOutputMapping()}},
+\code{\link[=PIParameter]{PIParameter()}},
+\code{\link[=PITask]{PITask()}},
 \code{\link[=addPIOutputMapping]{addPIOutputMapping()}},
 \code{\link[=addPIParameter]{addPIParameter()}},
 \code{\link[=addPITask]{addPITask()}},

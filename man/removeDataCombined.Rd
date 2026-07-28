@@ -2,22 +2,23 @@
 % Please edit documentation in R/plots.R
 \name{removeDataCombined}
 \alias{removeDataCombined}
-\title{Remove a DataCombined from a Project}
+\title{Remove one or more DataCombined from a Project}
 \usage{
-removeDataCombined(project, name)
+removeDataCombined(project, id)
 }
 \arguments{
 \item{project}{A \code{Project} object.}
 
-\item{name}{Character scalar. DataCombined name to remove.}
+\item{id}{Character vector of DataCombined ids to remove. Each is
+canonicalized the same way \code{\link[=addDataCombined]{addDataCombined()}} canonicalizes it.}
 }
 \value{
 The \code{project} object, invisibly.
 }
 \description{
-Drop the named entry from \code{project$plots$dataCombined}. Warns (and
-is a no-op) if \code{name} is not present, and warns about any
-\code{plotConfiguration} rows that still reference it.
+Drop the named entries from \code{dataCombined} definitions. Warns (and skips) any
+\code{id} not present, and warns about any plot entries that still reference a
+removed id. All removals are written through in one pass.
 }
 \seealso{
 Other dataCombined:

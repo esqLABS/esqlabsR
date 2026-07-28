@@ -6,32 +6,38 @@
 \usage{
 addPIParameter(
   project,
-  taskId,
+  task,
   path,
   scenarios,
   minValue,
   maxValue,
   startValue,
   units = NULL,
-  id = NULL
+  id = NULL,
+  overwrite = FALSE
 )
 }
 \arguments{
 \item{project}{A \code{Project} object.}
 
-\item{taskId}{Character scalar. Existing PI task id.}
+\item{task}{Character scalar. Existing PI task id.}
 
 \item{path}{Character scalar. Full simulation parameter path.}
 
 \item{scenarios}{Character vector of scenario names; each must
-exist in \code{project$scenarios}.}
+exist in \code{scenarios} definitions.}
 
 \item{minValue, maxValue, startValue}{Numeric scalars.}
 
 \item{units}{Optional character scalar.}
 
 \item{id}{Optional character scalar; auto-generated as
-\verb{<taskId>_param_<N>} when absent.}
+\verb{<task>_param_<N>} when absent.}
+
+\item{overwrite}{Logical scalar. When \code{FALSE} (default), an explicit \code{id}
+that already exists in the task aborts. When \code{TRUE}, the existing
+parameter is replaced (last-write-wins). Ignored for an auto-generated
+\code{id}, which never collides.}
 }
 \value{
 The \code{project} object, invisibly.
@@ -41,6 +47,9 @@ Add a parameter to an existing PI task
 }
 \seealso{
 Other parameterIdentification:
+\code{\link[=PIOutputMapping]{PIOutputMapping()}},
+\code{\link[=PIParameter]{PIParameter()}},
+\code{\link[=PITask]{PITask()}},
 \code{\link[=addPIOutputMapping]{addPIOutputMapping()}},
 \code{\link[=addPITask]{addPITask()}},
 \code{\link[=removePIOutputMapping]{removePIOutputMapping()}},

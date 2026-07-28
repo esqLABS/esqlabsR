@@ -2,28 +2,64 @@
 % Please edit documentation in R/output-paths.R
 \name{addOutputPath}
 \alias{addOutputPath}
-\title{Add output paths to a Project}
+\title{Add one or more output paths to a Project}
 \usage{
-addOutputPath(project, id, path)
+addOutputPath(project, id, path, overwrite = FALSE)
 }
 \arguments{
 \item{project}{A \code{Project} object.}
 
-\item{id}{Character vector of output path IDs (unique within the call
-and not already present in \code{project$outputPaths}).}
+\item{id}{Character vector of output path ids (unique within the call and
+not already present in \code{outputPaths} definitions). Each is canonicalized.}
 
-\item{path}{Character vector of output paths, same length as \code{id}.}
+\item{path}{Character vector of output paths, length 1 (recycled) or the
+same length as \code{id}.}
+
+\item{overwrite}{Logical scalar. When \code{FALSE} (default), an id that already
+exists aborts. When \code{TRUE}, the existing output path is replaced
+(last-write-wins).}
 }
 \value{
 The \code{project} object, invisibly.
 }
 \description{
-Add output paths to a Project
+Add output paths to \code{outputPaths} definitions, vectorizing over a vector of ids
+(see the recycling rule under Details). \code{path} is scalar-per-definition: a
+single path is recycled to every id, or a length-\code{id} vector aligns by
+position.
+}
+\details{
+The id argument sets \code{N}, the number of definitions to act on, and cannot
+itself be recycled: when any scalar-per-definition field has length greater than
+1, the id vector must have that same length. A length-1 id with all-scalar
+fields is the ordinary single-definition call.
+
+Each scalar-per-definition field is either length 1 (recycled to all \code{N}
+definitions) or length \code{N} (aligned to the ids by position). Any other
+length is an error naming the field and the lengths.
+
+A vector-valued-per-definition field (an individual's or application's
+\code{parameterSets}, a scenario's \code{outputPaths} and \code{parameterSets}) is
+applied whole to every definition, never split positionally. To give a
+different multi-valued list per definition, pass a list of the same length
+as the id vector (one vector per definition).
+
+The call is all-or-nothing: every definition is validated first, and if any
+fails the whole call aborts and writes nothing. On success all definitions
+are folded into the section and persisted in a single write-through.
+
+Two families of authoring functions sit outside this id-sets-\code{N} rule.
+\code{addParameterEntry()} and \code{removeParameterEntry()} vectorize over parameter
+entries (parallel \code{containerPath} / \code{parameterName} / \code{value} / \code{units}
+vectors) within a single named set, a different axis than the id-sets-\code{N}
+rule described here. \code{renameScenario()}, \code{duplicateScenario()},
+\code{addObservedData()}, \code{addPITask()}, and the per-task
+parameter-identification sub-definition helpers act on a single definition per
+call.
 }
 \seealso{
-Other scenario:
-\code{\link[=addScenario]{addScenario()}},
+Other outputPath:
 \code{\link[=removeOutputPath]{removeOutputPath()}},
-\code{\link[=removeScenario]{removeScenario()}}
+\code{\link[=setOutputPath]{setOutputPath()}}
 }
-\concept{scenario}
+\concept{outputPath}

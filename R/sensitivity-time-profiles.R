@@ -53,7 +53,7 @@
 #'
 #' @import ggplot2
 #'
-#' @family sensitivity-calculation
+#' @family sensitivityCalculation
 #'
 #' @returns A `patchwork` object containing the combined ggplot objects if a
 #'   single output path is specified, or a list of `patchwork` objects for
@@ -197,8 +197,6 @@ sensitivityTimeProfiles <- function(
 
   # create plot for each output path
   for (outputPath in names(splitData)) {
-    subsetData <- splitData[[outputPath]]
-
     lsPlots[[outputPath]] <- .createTimeProfiles(
       splitData[[outputPath]],
       defaultPlotConfiguration = customPlotConfiguration
@@ -455,7 +453,7 @@ sensitivityTimeProfiles <- function(
   yUnits
 ) {
   if (!identical(names(simulationResults), unname(parameterPaths))) {
-    stop(messages$invalidSimulationResultNames(
+    cli::cli_abort(messages$invalidSimulationResultNames(
       names(simulationResults),
       parameterPaths
     ))
@@ -590,7 +588,7 @@ sensitivityTimeProfiles <- function(
       convertUnits(dataCombined, xUnit = xUnit, yUnit = yUnit)
       TRUE
     },
-    error = function(e) FALSE
+    error = \(e) FALSE
   ))
 }
 

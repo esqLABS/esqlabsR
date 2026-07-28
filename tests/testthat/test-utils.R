@@ -97,7 +97,7 @@ test_that("It returns multiple indeces for multiple lowest values with a relativ
   )
 })
 
-test_that("It returns NULL if the distance is higher than the absolute threshold", {
+test_that("It returns NULL if the distance is higher than the relative threshold", {
   array <- c(-1, 0, 1, 2, 3)
   value <- -0.5
 
@@ -166,6 +166,36 @@ test_that("It finds a 0 with relative threshold", {
   )
 })
 
+test_that("It finds an exact match when the array contains NA", {
+  array <- c(1, NA, 3)
+  value <- 3
+
+  expect_equal(getIndexClosestToValue(value = value, array = array), 3)
+})
+
+test_that("It returns NULL when every array entry is NA", {
+  array <- c(NA, NA)
+  value <- 3
+
+  suppressWarnings(expect_null(
+    getIndexClosestToValue(value = value, array = array)
+  ))
+})
+
+test_that("It aborts when `value` has more than one element", {
+  array <- c(1, 2, 3)
+  value <- c(1, 2)
+
+  # `validateIsOfLength()` prefixes the message with the outermost calling
+  # function, which differs between test runners (test_file() vs test()). Scrub
+  # it so the snapshot is stable regardless of how the suite is invoked.
+  expect_snapshot(
+    getIndexClosestToValue(value = value, array = array, thresholdRel = 0.1),
+    error = TRUE,
+    transform = \(lines) gsub("`[^`]*\\(\\)`: Object", "Object", lines)
+  )
+})
+
 test_that("`compareWithNA()` works as expected", {
   res <- compareWithNA(
     c(NA, "a", "b", NA),
@@ -187,8 +217,8 @@ test_that("It throws an error if the quantity does not come from a molecule", {
 
   expect_error(
     getMoleculeNameFromQuantity(quantity),
-    regexp = messages$cannotGetMoleculeFromQuantity(path),
-    fixed = TRUE
+    regexp = "Could not retrieve molecule name",
+    class = "rlang_error"
   )
 })
 
@@ -247,4 +277,3 @@ test_that("Check key-value mappings work", {
     overwrite = TRUE
   ))
 })
-

@@ -1,0 +1,24 @@
+{
+  "name": "aciclovir_iv",
+  "individual": "adult_male",
+  "population": null,
+  "readPopulationFromCSV": false,
+  "parameterSets": [
+    "global",
+    "aciclovir"
+  ],
+  "initialConditions": [
+    "testinitialset"
+  ],
+  "application": "aciclovir_iv_250mg",
+  "simulationTime": "0, 24, 60",
+  "simulationTimeUnit": "h",
+  "steadyState": false,
+  "steadyStateTime": null,
+  "steadyStateTimeUnit": null,
+  "overwriteFormulasInSS": false,
+  "modelFile": "Aciclovir.pkml",
+  "outputPaths": [
+    "aciclovir_pvb"
+  ]
+}

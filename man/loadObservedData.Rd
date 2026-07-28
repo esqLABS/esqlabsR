@@ -11,15 +11,30 @@ loadObservedData(project)
 }
 \value{
 A named list of \code{\link[ospsuite:DataSet]{ospsuite::DataSet}} objects. Empty list when
-\code{project$observedData} is empty or \code{NULL}.
+\code{observedData} definitions is empty or \code{NULL}.
 }
 \description{
 Reads the \code{observedData} declarations from a \link[=loadProject]{Project}
 and returns the corresponding \code{\link[ospsuite:DataSet]{ospsuite::DataSet}} objects. Source
-types: \code{excel} (via importer configuration), \code{pkml}, \code{script}. The
-\code{programmatic} type is reserved for a later milestone and currently
-errors fast.
+types: \code{excel} (via importer configuration), \code{pkml}, \code{script}, and
+\code{programmatic}. A \code{programmatic} declaration is a sentinel for a
+\code{DataSet} added at runtime with \code{\link[=addObservedData]{addObservedData()}}; its data lives in
+the session until you save, and \code{\link[=saveProject]{saveProject()}} persists it to a PKML
+file and rewrites the entry as a \code{pkml} source. A \code{programmatic} sentinel
+read from disk with no matching in-session \code{DataSet} (a hand-authored
+declaration, or a project opened before it was ever saved) resolves to
+nothing, and the load warns you by name.
 }
+\section{Security}{
+
+A \code{script} observed-data source runs the R file it names, with
+\code{source()}, on your machine when the data is resolved. Any R code in
+that file executes, so treat a project the same way you would treat a
+script someone sends you: only load and resolve observed data from a
+project you trust. This applies to \code{loadObservedData()} and to anything
+that resolves observed data for you, such as \code{\link[=createDataCombined]{createDataCombined()}}.
+}
+
 \examples{
 \dontrun{
 project <- loadProject("path/to/Project.json")

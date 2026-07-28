@@ -1,5 +1,5 @@
 ---
-output: 
+output:
   github_document:
     df_print: "kable"
 ---
@@ -14,9 +14,6 @@ knitr::opts_chunk$set(
   message = FALSE,
   warning = FALSE
 )
-
-library(tidyr)
-library(dplyr)
 ```
 
 # esqlabsR <a href="https://esqlabs.github.io/esqlabsR/"><img src="man/figures/logo.png" align="right" height="139" alt="esqlabsR website" /></a>
@@ -28,7 +25,7 @@ library(dplyr)
 <!-- badges: end -->
 
 
-The `{esqlabsR}` package facilitates and standardizes the modeling and simulation of physiologically based kinetic (PBK) and quantitative systems pharmacology/toxicology (QSP/T) models implemented in the [Open Systems Pharmacology Software](https://www.open-systems-pharmacology.org/) (OSPS).  
+The `{esqlabsR}` package facilitates and standardizes the modeling and simulation of physiologically based kinetic (PBK) and quantitative systems pharmacology/toxicology (QSP/T) models implemented in the [Open Systems Pharmacology Software](https://www.open-systems-pharmacology.org/) (OSPS).
 
 The `{esqlabsR}` package is designed for PBK modelers who use the OSPS suite. By using this package, you can streamline your modeling and simulation (M&S) workflow and ensure standardized and reproducible practices.
 
@@ -36,10 +33,10 @@ The package provides functions to:
 
   - Design, import and run Simulations,
   - Generate standardized plots and other reporting materials,
-  - Interact with the OSPS features using simple Excel files.
+  - Validate and share reproducible project configurations.
 
 
-To get started with the esqlabsR package, please follow the [Get Started tutorial](articles/esqlabsR.html).
+To get started with the esqlabsR package, please follow the [Get Started tutorial](https://esqlabs.github.io/esqlabsR/articles/esqlabsR.html).
 
 
 ## Installation
@@ -73,119 +70,46 @@ Note: For projects created for version 3 of `esqlabsR` package, refer to [`esqla
 
 ## Usage
 
-```{r, include=FALSE}
-showtext::showtext_opts(dpi = 300)
+A `{esqlabsR}` project is a directory. At its root sits a `Project.json` container alongside a `definitions/` folder that holds your authored definition files, one file per definition, with the scenarios living under `definitions/scenarios/`. The package ships a complete worked example project that you can load and run directly.
+
+The quickest way to see the workflow end to end is to load the example project, run one of its scenarios, and plot the result:
+
+```{r quick-start, eval=FALSE}
+library(esqlabsR)
+
+# Load the worked example project shipped with the package.
+project <- loadProject(exampleProjectPath())
+
+# Run a single scenario. The first run initializes PK-Sim and is slow.
+results <- runScenarios(project, scenarios = "aciclovir_iv")
+
+# Build the project's plots from the scenario results.
+# `createPlots()` returns a named list of Plot Grids.
+plots <- createPlots(project, scenarioResults = results)
+
+plots$individual_diagnostics
 ```
 
-You can start with the "Get Started" vignette: `vignette("esqlabsR")`.
+`runScenarios()` returns a named list keyed by scenario name. Each entry bundles the prepared simulation, its results, the extracted output values, and the population (or `NULL` for individual scenarios).
 
-`{esqlabsR}` workflows require a specific project structure. You can initialize a new project by running:
+To start your own project from scratch, scaffold the required folder structure and files in the current working directory with:
 
 ```{r, eval=FALSE}
 esqlabsR::initProject()
 ```
 
-This will create the required folder structure and files for your project in the 
-working directory from where you run the command.
+You then author and edit the project's definitions, scenarios, individuals, populations, parameter sets, output paths, observed data, and plots, with the `add*()`, `set*()`, and `remove*()` functions. Each of these takes the definition `id` first, for example `addScenario(project, id = "aciclovir_iv", ...)`. These edits are write-through: each one persists to its definition file immediately, so there is no separate save step. Once your project is configured, you run it with `runScenarios()`, plot it with `createPlots()`, and check it for configuration problems with `validateProject()`.
 
-Below is a simple example of how to work with the package:
+To share or archive a project, render a single self-contained `.esqlabsR` snapshot with `saveSnapshot()` and read it back with `loadSnapshot()`.
 
-```{r, out.width="80%", fig.align="center", fig.width=5, fig.asp=0.618, dpi=300}
-# load esqlabsR
-library(esqlabsR)
+## Learn more
 
-# Load excel-based configuration
-# The function `exampleProjectConfigurationPath()` returns the path to the example project
-# configuration included in the package. Replace the variable `configurationPath`
-# with the path to you project configuration file.
-configurationPath <- exampleProjectConfigurationPath()
-
-myProjectConfiguration <-
-  createProjectConfiguration(configurationPath)
-
-# Define which scenarios to run
-scenarioNames <- c("TestScenario")
-# Set scenario names to NULL if you want to simulate all scenarios defined in the
-# excel file
-# scenarioNames <- NULL
-
-# Create `ScenarioConfiguration` objects from excel files
-scenarioConfigurations <- readScenarioConfigurationFromExcel(
-  scenarioNames = scenarioNames,
-  projectConfiguration = myProjectConfiguration
-)
-
-# Define custom parameters for the scenarios. These parameter will be applied
-# additionally to the paremetrization specified in the Excel files.
-customParam <- list(
-  paths = c(
-    "Aciclovir|Lipophilicity"
-  ),
-  values = c(
-    -0.1
-  ),
-  units = c(
-    "Log Units"
-  )
-)
-
-# Create simulation scenarios defined in the excel files and apply the custom parameters
-myScenarios <- createScenarios(
-  scenarioConfigurations = scenarioConfigurations,
-  customParams = customParam
-)
-
-# Adjust simulation run options, if necessary.
-# E.g. disable check for negative values if required
-simulationRunOptions <- ospsuite::SimulationRunOptions$new()
-simulationRunOptions$checkForNegativeValues <- FALSE
-
-# Run simulations
-simulatedScenariosResults <- runScenarios(
-  scenarios = myScenarios,
-  simulationRunOptions = simulationRunOptions
-)
-
-# Save results and store the path to the results for later re-use
-outputFolder <- saveScenarioResults(simulatedScenariosResults, myProjectConfiguration)
-
-# Load observed data using the default importer configuration provided with the package. Alternatively, you can load a custom data importer configuration.
-dataSheets <- c("Laskin 1982.Group A")
-observedData <- esqlabsR::loadObservedData(
-  projectConfiguration = myProjectConfiguration,
-  sheets = dataSheets
-)
-
-########## Create figures defined in the Plots.xlsx file########
-plots <- createPlotsFromExcel(
-  plotGridNames = c(
-    "Aciclovir",
-    "Aciclovir2"
-  ),
-  simulatedScenarios = simulatedScenariosResults,
-  observedData = observedData,
-  projectConfiguration = myProjectConfiguration,
-  outputFolder = outputFolder,
-  stopIfNotFound = TRUE
-)
-
-plots$Aciclovir
-```
-
-## Learn More
-
-You can find more information on specific topics in dedicated vignettes:
-
-  - Start with `vignette("workflow-overview")` to learn about the esqlabsR's streamlined workflow.
-- `vignette("project-structure")` details the structure and purpose of each component file and directory of an esqlabsR project.
-- `vignette("design-scenarios")` explains how you can design your own simulations only using excel files.
-- `vignette("run-simulations")` describes all you need to know to run your customized simulations.
-- `vignette("plot-results")` explains how to generate visualizations from simulations.
+You can find more information on specific topics in the dedicated articles on the [package website](https://esqlabs.github.io/esqlabsR/), covering the project structure, designing scenarios, running simulations, and plotting results. The "Get Started" article walks through the full workflow.
 
 ## Related Work
 
 `{esqlabsR}` relies on the following Open Systems Pharmacology R packages:
-  
+
   - [rSharp](https://github.com/Open-Systems-Pharmacology/rSharp/)
   - [ospsuite.utils](https://github.com/Open-Systems-Pharmacology/OSPSuite.RUtils)
   - [tlf](https://github.com/Open-Systems-Pharmacology/TLF-Library)

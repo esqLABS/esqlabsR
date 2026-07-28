@@ -263,3 +263,117 @@
       Error in `extendPopulationFromXLS()`:
       ! x The specified excel sheet does not contain any complete row * Please fill all the columns and try again.
 
+# setPopulation aborts on a non-existent population
+
+    Code
+      setPopulation(project, "Ghost", numberOfIndividuals = 10)
+    Condition
+      Warning:
+      Canonicalized 1 id to a safe form:
+      * "Ghost" -> "ghost"
+      Error in `setPopulation()`:
+      ! Cannot modify population "ghost": it does not exist.
+      i Use `addPopulation()` to create it first.
+
+# setPopulation rejects a non-positive numberOfIndividuals
+
+    Code
+      setPopulation(project, "testpopulation", numberOfIndividuals = 0)
+    Condition
+      Error in `setPopulation()`:
+      ! `numberOfIndividuals` must be a positive whole number
+
+# setPopulation rejects a non-numeric range field
+
+    Code
+      setPopulation(project, "testpopulation", weightMin = "heavy")
+    Condition
+      Error in `setPopulation()`:
+      ! weightMin must be a single finite number
+
+# setPopulation rejects a non-integer numberOfIndividuals
+
+    Code
+      setPopulation(project, "testpopulation", numberOfIndividuals = 2.5)
+    Condition
+      Error in `setPopulation()`:
+      ! `numberOfIndividuals` must be a positive whole number
+
+# addPopulation aborts on a mismatched scalar field length
+
+    Code
+      addPopulation(project, c("a", "b", "c"), species = "Human",
+      numberOfIndividuals = c(5, 7))
+    Condition
+      Error in `addPopulation()`:
+      ! `numberOfIndividuals` must be length 1 or length 3 (the number of ids).
+      x It is length 2.
+
+# addPopulation aborts on a duplicate id in the batch
+
+    Code
+      addPopulation(project, c("a", "a"), species = "Human", numberOfIndividuals = 5)
+    Condition
+      Error in `addPopulation()`:
+      ! duplicate population id in the batch: "a"
+
+# addPopulation aborts on an existing id, replaces it with overwrite
+
+    Code
+      addPopulation(project, "pop", species = "Human", numberOfIndividuals = 9)
+    Condition
+      Error in `addPopulation()`:
+      ! population "pop" already exists.
+      i Pass `overwrite = TRUE` to replace it.
+
+# removePopulation warns when still referenced by a scenario, removes anyway
+
+    Code
+      removePopulation(project, "testpopulation")
+    Condition
+      Warning:
+      Removed population "testpopulation" is still referenced by 2 scenarios:
+      * populationscenario and populationscenariofromcsv
+      i These scenarios now have a dangling reference. Update or remove them.
+
+# print.Population renders the configured fields
+
+    Code
+      print(project$definitions$populations[["testpopulation"]])
+    Output
+      <Population>
+        * Species: Human
+        * Number of Individuals: 2
+        * Proportion of Females: 0
+        * Age Range: 18 - 65
+        * Weight Range: <empty string>
+        * Height Range: <empty string>
+
+# print.Population renders a minimal population
+
+    Code
+      print(project$definitions$populations[["minimal"]])
+    Output
+      <Population>
+        * Species: Human
+        * Number of Individuals: 10
+        * Proportion of Females: <empty string>
+        * Age Range: <empty string>
+        * Weight Range: <empty string>
+        * Height Range: <empty string>
+
+# print.PopulationSource renders a csv and a programmatic source
+
+    Code
+      print(csv)
+    Output
+      <PopulationSource>
+        * Type: csv
+        * File: p.csv
+    Code
+      print(prog)
+    Output
+      <PopulationSource>
+        * Type: programmatic
+        * File: resolved from the runtime store at run time
+

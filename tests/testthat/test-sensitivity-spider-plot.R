@@ -1,18 +1,21 @@
-# Save old options
-old_opts <- options()
-
-options(
-  tibble.width = Inf,
-  pillar.min_title_chars = Inf,
-  pillar.sigfig = 4,
-  digits = 4,
-  scipen = 999
-)
+# The numeric-snapshot blocks below capture axis ranges whose formatting depends
+# on print/precision options. Each such block sets them locally with
+# `withr::local_options()` (see `.localSnapshotOptions()`), so the state is
+# scoped to the test rather than leaked at file scope.
+.localSnapshotOptions <- function(.local_envir = parent.frame()) {
+  withr::local_options(
+    tibble.width = Inf,
+    pillar.min_title_chars = Inf,
+    pillar.sigfig = 4,
+    digits = 4,
+    scipen = 999,
+    .local_envir = .local_envir
+  )
+}
 
 # Single output path ------------------------------------------------------
 
 simPath <- system.file("extdata", "Aciclovir.pkml", package = "ospsuite")
-simulation <- loadSimulation(simPath)
 outputPaths <- "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
 parameterPaths <- c(
   "Aciclovir|Lipophilicity",
@@ -21,13 +24,55 @@ parameterPaths <- c(
 )
 variationRange <- c(0.1, 2, 20) # 1.0 is deliberately left out for testing
 
-set.seed(123)
-results <- sensitivityCalculation(
-  simulation = simulation,
-  outputPaths = outputPaths,
-  parameterPaths = parameterPaths,
-  variationRange = variationRange
-)
+# `loadSimulation()` initializes a PK-Sim native session; running it at file
+# source time (as `test_dir()` sources every test file up front) bleeds native
+# state across files. Defer it behind memoized accessors so the native load and
+# the baseline `sensitivityCalculation()` happen inside a `test_that()` block on
+# first use, computed once and cached for the rest of the file.
+sensFixture <- local({
+  cache <- NULL
+  function() {
+    if (is.null(cache)) {
+      simulation <- loadSimulation(simPath)
+      withr::local_seed(123)
+      results <- sensitivityCalculation(
+        simulation = simulation,
+        outputPaths = outputPaths,
+        parameterPaths = parameterPaths,
+        variationRange = variationRange
+      )
+      cache <<- list(simulation = simulation, results = results)
+    }
+    cache
+  }
+})
+
+sensFixtureMultiple <- local({
+  cache <- NULL
+  function() {
+    if (is.null(cache)) {
+      simulation <- loadSimulation(simPath)
+      outputPathsMultiple <- c(
+        "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)",
+        "Organism|Age",
+        "Organism|ArterialBlood|Plasma|Aciclovir"
+      )
+      parameterPathsMultiple <- c(
+        "Aciclovir|Lipophilicity",
+        "Events|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose",
+        "Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Glomerular Filtration-GFR-Aciclovir|GFR fraction"
+      )
+      resultsMultiple <- sensitivityCalculation(
+        simulation = simulation,
+        outputPaths = outputPathsMultiple,
+        parameterPaths = parameterPathsMultiple,
+        variationRange = c(1, 5, 10)
+      )
+      cache <<- list(resultsMultiple = resultsMultiple)
+    }
+    cache
+  }
+})
 
 
 # Validate plotting arguments ---------------------------------------------
@@ -47,10 +92,12 @@ test_that("sensitivitySpiderPlot fails with invalid input", {
 # Default plot ------------------------------------------------------------
 
 test_that("sensitivitySpiderPlot creates expected default plot", {
-  set.seed(123)
+  .localSnapshotOptions()
+  results <- sensFixture()$results
+  withr::local_seed(123)
   p <- sensitivitySpiderPlot(results)
 
-  set.seed(123)
+  withr::local_seed(123)
   suppressWarnings(
     vdiffr::expect_doppelganger(
       title = "sensitivitySpiderPlot works as expected",
@@ -60,12 +107,17 @@ test_that("sensitivitySpiderPlot creates expected default plot", {
 })
 
 test_that("sensitivitySpiderPlot legend labels are correctly applied", {
-  names(parameterPaths) <- c("Lipophilicity", "Dose", "GFR fraction")
+  .localSnapshotOptions()
+  simulation <- sensFixture()$simulation
+  # Work on a labelled local copy so the file-scope `parameterPaths` is never
+  # mutated for other tests in this file.
+  namedParameterPaths <- parameterPaths
+  names(namedParameterPaths) <- c("Lipophilicity", "Dose", "GFR fraction")
 
   resultsLab <- sensitivityCalculation(
     simulation = simulation,
     outputPaths = outputPaths,
-    parameterPaths = parameterPaths,
+    parameterPaths = namedParameterPaths,
     variationRange = variationRange
   )
 
@@ -82,7 +134,7 @@ test_that("sensitivitySpiderPlot legend labels are correctly applied", {
   pb <- ggplot2::ggplot_build(p[[n]][[1]])
 
   expect_equal(
-    levels(as.factor(names(parameterPaths))),
+    levels(as.factor(names(namedParameterPaths))),
     as.character(pb$plot$scales$get_scales("colour")$get_labels())
   )
 })
@@ -90,6 +142,8 @@ test_that("sensitivitySpiderPlot legend labels are correctly applied", {
 # Default plot with custom PK parameter -----------------------------------
 
 test_that("sensitivitySpiderPlot handles custom PK parameters", {
+  .localSnapshotOptions()
+  simulation <- sensFixture()$simulation
   customFun <- list("minmax" = function(y) max(y) / min(y[y != 0]))
 
   resultsCustomPK <- sensitivityCalculation(
@@ -100,10 +154,10 @@ test_that("sensitivitySpiderPlot handles custom PK parameters", {
     variationRange = variationRange
   )
 
-  set.seed(123)
+  withr::local_seed(123)
   p <- sensitivitySpiderPlot(resultsCustomPK)
 
-  set.seed(123)
+  withr::local_seed(123)
   vdiffr::expect_doppelganger(
     title = "sensitivitySpiderPlot custom PK Parameter",
     fig = suppressWarnings(p)
@@ -115,7 +169,9 @@ test_that("sensitivitySpiderPlot handles custom PK parameters", {
 n <- "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
 
 test_that("sensitivitySpiderPlot applies free y-axis scaling correctly", {
-  set.seed(123)
+  .localSnapshotOptions()
+  results <- sensFixture()$results
+  withr::local_seed(123)
   p <- sensitivitySpiderPlot(results, yAxisFacetScales = "free")
   pbs <- purrr::map(seq_along(p[[n]]), ~ ggplot2::ggplot_build(p[[n]][[.x]]))
   plotParams <- purrr::map(pbs, ~ .x$layout$panel_params[[1]]$y.range)
@@ -124,10 +180,12 @@ test_that("sensitivitySpiderPlot applies free y-axis scaling correctly", {
 })
 
 test_that("sensitivitySpiderPlot correctly applies absolute y-axis values correctly", {
-  set.seed(123)
+  .localSnapshotOptions()
+  results <- sensFixture()$results
+  withr::local_seed(123)
   p <- sensitivitySpiderPlot(results, yAxisType = "absolute")
 
-  set.seed(123)
+  withr::local_seed(123)
   suppressWarnings(
     vdiffr::expect_doppelganger(
       title = "sensitivitySpiderPlot works as expected with absolute y-values",
@@ -142,7 +200,9 @@ test_that("sensitivitySpiderPlot correctly applies absolute y-axis values correc
 })
 
 test_that("sensitivitySpiderPlot applies absolute x-axis values correctly", {
-  set.seed(123)
+  .localSnapshotOptions()
+  results <- sensFixture()$results
+  withr::local_seed(123)
   p <- sensitivitySpiderPlot(
     results,
     xAxisType = "absolute",
@@ -150,7 +210,7 @@ test_that("sensitivitySpiderPlot applies absolute x-axis values correctly", {
     parameterPaths = parameterPaths[2:3]
   )
 
-  set.seed(123)
+  withr::local_seed(123)
   suppressWarnings(
     vdiffr::expect_doppelganger(
       title = "sensitivitySpiderPlot works as expected with absolute x-values",
@@ -160,7 +220,9 @@ test_that("sensitivitySpiderPlot applies absolute x-axis values correctly", {
 })
 
 test_that("sensitivitySpiderPlot applies absolute x- and y-axis values correctly", {
-  set.seed(123)
+  .localSnapshotOptions()
+  results <- sensFixture()$results
+  withr::local_seed(123)
   p1 <- sensitivitySpiderPlot(
     results,
     xAxisType = "absolute",
@@ -181,7 +243,9 @@ test_that("sensitivitySpiderPlot applies absolute x- and y-axis values correctly
 })
 
 test_that("sensitivitySpiderPlot applies free scaling with absolute y-values", {
-  set.seed(123)
+  .localSnapshotOptions()
+  results <- sensFixture()$results
+  withr::local_seed(123)
   p <- sensitivitySpiderPlot(
     results,
     yAxisType = "absolute",
@@ -203,6 +267,7 @@ test_that("sensitivitySpiderPlot applies free scaling with absolute y-values", {
 n <- "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
 
 test_that("sensitivitySpiderPlot uses defaultPlotConfiguration scales", {
+  results <- sensFixture()$results
   myPlotConfiguration <- createEsqlabsPlotConfiguration()
   myPlotConfiguration$xAxisScale <- "lin"
   myPlotConfiguration$yAxisScale <- "log"
@@ -218,6 +283,7 @@ test_that("sensitivitySpiderPlot uses defaultPlotConfiguration scales", {
 })
 
 test_that("sensitivitySpiderPlot signature overrides defaultPlotConfiguration", {
+  results <- sensFixture()$results
   myPlotConfiguration <- createEsqlabsPlotConfiguration()
   myPlotConfiguration$xAxisScale <- "lin" # to be overridden
   myPlotConfiguration$yAxisScale <- "log" # to be overridden
@@ -236,31 +302,13 @@ test_that("sensitivitySpiderPlot signature overrides defaultPlotConfiguration", 
 
 # Multiple output paths ---------------------------------------------------
 
-simPath <- system.file("extdata", "Aciclovir.pkml", package = "ospsuite")
-simulation <- loadSimulation(simPath)
-outputPaths <- c(
-  "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)",
-  "Organism|Age",
-  "Organism|ArterialBlood|Plasma|Aciclovir"
-)
-parameterPaths <- c(
-  "Aciclovir|Lipophilicity",
-  "Events|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose",
-  "Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Glomerular Filtration-GFR-Aciclovir|GFR fraction"
-)
-
-resultsMultiple <- sensitivityCalculation(
-  simulation = simulation,
-  outputPaths = outputPaths,
-  parameterPaths = parameterPaths,
-  variationRange = c(1, 5, 10)
-)
-
 test_that("sensitivitySpiderPlot handles multiple output paths correctly", {
-  set.seed(123)
+  .localSnapshotOptions()
+  resultsMultiple <- sensFixtureMultiple()$resultsMultiple
+  withr::local_seed(123)
   plotsMultiple <- sensitivitySpiderPlot(resultsMultiple)
 
-  set.seed(123)
+  withr::local_seed(123)
   suppressWarnings(
     vdiffr::expect_doppelganger(
       title = "multiple output path spiders",
@@ -276,7 +324,9 @@ parameterPathsFilter <- "Aciclovir|Lipophilicity"
 pkParametersFilter <- c("C_max", "t_max")
 
 test_that("sensitivitySpiderPlot plots as expected with filters", {
-  set.seed(123)
+  .localSnapshotOptions()
+  resultsMultiple <- sensFixtureMultiple()$resultsMultiple
+  withr::local_seed(123)
   plotFiltered <- sensitivitySpiderPlot(
     resultsMultiple,
     outputPaths = outputPathsFilter,
@@ -284,7 +334,7 @@ test_that("sensitivitySpiderPlot plots as expected with filters", {
     pkParameters = pkParametersFilter
   )
 
-  set.seed(123)
+  withr::local_seed(123)
   suppressWarnings(
     vdiffr::expect_doppelganger(
       title = "filtered spider",
@@ -292,6 +342,3 @@ test_that("sensitivitySpiderPlot plots as expected with filters", {
     )
   )
 })
-
-# Restore old options
-on.exit(options(old_opts), add = TRUE)

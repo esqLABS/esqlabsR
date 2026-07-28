@@ -8,7 +8,16 @@ esqlabsEnv$packageName <- "esqlabsR"
 # Version of the package
 esqlabsEnv$packageVersion <- getNamespaceVersion("esqlabsR")
 
-#' Names of the settings stored in esqlabsEnv Can be used with `getEsqlabsRSetting()`
+# Declared here (as an empty placeholder) so its name is present when
+# `esqlabsRSettingNames` is built at package-namespace load. `.onLoad()` then
+# fills it with the real color palette; without this declaration the exported
+# enum would omit `colorPalette` even though it is a valid working setting.
+esqlabsEnv$colorPalette <- NULL
+
+#' Names of the settings stored in esqlabsEnv
+#'
+#' The returned names can be used with `getEsqlabsRSetting()` to look up the
+#' value of a global esqlabsR setting.
 #' @export
 esqlabsRSettingNames <- enum(names(esqlabsEnv))
 
@@ -24,21 +33,14 @@ esqlabsRSettingNames <- enum(names(esqlabsEnv))
 #' getEsqlabsRSetting("packageVersion")
 #' getEsqlabsRSetting("packageName")
 getEsqlabsRSetting <- function(settingName) {
-  if (!(any(names(esqlabsEnv) == settingName))) {
+  if (!(settingName %in% names(esqlabsEnv))) {
     cli::cli_abort(messages$errorPackageSettingNotFound(
       settingName,
       esqlabsEnv
     ))
   }
 
-  obj <- esqlabsEnv[[settingName]]
-  # Evaluate if the object is a function. This is required since some properties
-  # are defined as function reference
-  if (is.function(obj)) {
-    return(obj())
-  }
-
-  return(obj)
+  esqlabsEnv[[settingName]]
 }
 
 .getEsqlabsColors <- function() {
@@ -62,8 +64,8 @@ getEsqlabsRSetting <- function(settingName) {
   unsortedColors <- setdiff(unsortedColors, firstColors)
   # nrOfColors - 3 because the first three colors are already sampled
   nrPerColor <- floor((nrOfColors - 3) / 3)
-  firstColor <- seq(1, by = 3, length.out = floor(nrPerColor))
-  thirdColor <- rev(seq(3, by = 3, length.out = floor(nrPerColor)))
+  firstColor <- seq(1, by = 3, length.out = nrPerColor)
+  thirdColor <- rev(seq(3, by = 3, length.out = nrPerColor))
   secondColor <- setdiff(1:(nrOfColors - 3), c(firstColor, thirdColor))
   idxs <- c(firstColor, secondColor, thirdColor)
   sortedColors <- vector("character", length = nrOfColors - 3)

@@ -34,7 +34,7 @@ that differ:
 \itemize{
 \item \code{Parameters}: a named list with a list of all \code{Parameter} entities that are:
 \item in simulation1 but not in simulation 2 (\code{In1NotIn2})
-\item in simulation 2 but not in simulation 1 (\code{I21NotIn1})
+\item in simulation 2 but not in simulation 1 (\code{In2NotIn1})
 \item a list \code{Different} with all parameters which values differ between the simulations.
 Two parameters are considered different if their formulas or values differ.
 }
@@ -43,7 +43,7 @@ Two parameters are considered different if their formulas or values differ.
 \dontrun{
 humanSim <- loadSimulation(file.path(modelFolder, "DefaultHuman.pkml"))
 ratSim <- loadSimulation(file.path(modelFolder, "DefaultRat.pkml"))
-diffParams <- compareSimulationParameters(humanSim, ratSim)
+diffParams <- compareSimulations(humanSim, ratSim)
 }
 }
 \seealso{

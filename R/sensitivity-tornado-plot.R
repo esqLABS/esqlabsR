@@ -43,7 +43,7 @@
 #'
 #' @import ggplot2
 #'
-#' @family sensitivity-calculation
+#' @family sensitivityCalculation
 #'
 #' @returns A `patchwork` object containing the combined ggplot objects if a
 #'   single output path is specified, or a list of `patchwork` objects for
@@ -126,7 +126,7 @@ sensitivityTornadoPlot <- function(
   # validate data contains required parameterFactor results
   parameterFactors <- c(parameterFactor, 1 / parameterFactor)
   if (!all(parameterFactors %in% data$ParameterFactor)) {
-    stop(messages$noParameterFactor(data, parameterFactor))
+    cli::cli_abort(messages$noParameterFactor(data, parameterFactor))
   }
 
   # Plot configuration setup -----------------------------

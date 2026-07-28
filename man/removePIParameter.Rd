@@ -4,12 +4,12 @@
 \alias{removePIParameter}
 \title{Remove a parameter from a PI task}
 \usage{
-removePIParameter(project, taskId, id)
+removePIParameter(project, task, id)
 }
 \arguments{
 \item{project}{A \code{Project} object.}
 
-\item{taskId}{Character scalar. Existing PI task id.}
+\item{task}{Character scalar. Existing PI task id.}
 
 \item{id}{Character scalar. Parameter id to remove.}
 }
@@ -17,10 +17,16 @@ removePIParameter(project, taskId, id)
 The \code{project} object, invisibly.
 }
 \description{
-Warns and is a no-op when the parameter id does not exist.
+Warns and is a no-op when the parameter id does not exist. If removing
+the parameter leaves the task with no parameters AND no output mappings,
+the task is auto-removed from \code{parameterIdentification} definitions and a
+warning is emitted.
 }
 \seealso{
 Other parameterIdentification:
+\code{\link[=PIOutputMapping]{PIOutputMapping()}},
+\code{\link[=PIParameter]{PIParameter()}},
+\code{\link[=PITask]{PITask()}},
 \code{\link[=addPIOutputMapping]{addPIOutputMapping()}},
 \code{\link[=addPIParameter]{addPIParameter()}},
 \code{\link[=addPITask]{addPITask()}},

@@ -28,6 +28,6 @@ Parsed and validated vector
 }
 \description{
 Parses comma-separated values from Excel and validates using ospsuite.utils.
-Provides Excel-specific error context (plotID, field name) for common issues.
+Provides Excel-specific error context (plotId, field name) for common issues.
 }
 \keyword{internal}

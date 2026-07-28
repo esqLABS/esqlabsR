@@ -1,8 +1,253 @@
 # Applications: parse + mutation API for the `applications` and
-# `applicationParameterSets` sections.
+# `parameterSets` references on applications.
 
-# Parse ----
+# Print ----
+
+#' @exportS3Method
+#' @noRd
+print.Application <- function(x, ...) {
+  ospsuite.utils::ospPrintClass(x)
+  ospsuite.utils::ospPrintItems(
+    list(
+      "Parameter Sets" = paste(x$parameterSets, collapse = ", ")
+    ),
+    print_empty = TRUE
+  )
+  invisible(x)
+}
+
+# Public CRUD: applications ----
+
+#' Add one or more application protocols to a Project
+#'
+#' Add protocols to `applications` definitions, vectorizing over a vector of ids
+#' (see the recycling rule under Details). `parameterSets` is
+#' vector-valued-per-definition: it is applied whole to every protocol; to give a
+#' different set per protocol, pass a list of the same length as `id` (one
+#' character vector per protocol).
+#'
+#' @inherit vectorizedAuthoring details
+#'
+#' @param project A `Project` object.
+#' @param id Character vector of unique protocol ids (the number of protocols
+#'   to add). Each is canonicalized to a safe, lowercase id (a warning names
+#'   the result if it changed).
+#' @param parameterSets Optional character vector of set ids referencing
+#'   `parameterSets` definitions, applied whole to every protocol. Defaults to
+#'   `NULL`. Use a list of the same length as `id` for a per-protocol set.
+#' @param overwrite Logical scalar. When `FALSE` (default), an id that already
+#'   exists aborts. When `TRUE`, the existing protocol is replaced
+#'   (last-write-wins).
+#' @returns The `project` object, invisibly.
+#' @export
+#' @family application
+addApplication <- function(
+  project,
+  id,
+  parameterSets = NULL,
+  overwrite = FALSE
+) {
+  validateIsOfType(project, "Project")
+  project$addApplication(id, parameterSets, overwrite)
+}
+
+# Implementation behind `project$addApplication()` / `addApplication()`.
 #
+# @keywords internal
+# @noRd
+.addApplication_impl <- function(
+  self,
+  private,
+  id,
+  parameterSets = NULL,
+  overwrite = FALSE,
+  .call
+) {
+  rlang::local_error_call(.call)
+  .assertIdVector(id)
+  id <- .canonicalizeId(id)
+  n <- length(id)
+  perId <- .wholeField(parameterSets, n)
+
+  .assertNoOverwriteClash(
+    id,
+    names(self$definitions$applications),
+    "application",
+    overwrite
+  )
+  call <- .call
+  apps <- .collectCanonicalizedRefs(lapply(seq_len(n), function(i) {
+    .buildApplicationEntry(self, perId[[i]], call = call)
+  }))
+
+  applications <- private$.getSection("applications") %||% list()
+  for (i in seq_len(n)) {
+    applications[[id[[i]]]] <- apps[[i]]
+  }
+  private$.setSection("applications", applications)
+  invisible(self)
+}
+
+#' Remove one or more application protocols from a Project
+#'
+#' Drop the protocols with matching ids in one write-through. Warns (and
+#' skips) any id not present, and warns when a removed protocol is still
+#' referenced.
+#'
+#' @param project A `Project` object.
+#' @param id Character vector of application ids to remove. Each is
+#'   canonicalized the same way [addApplication()] canonicalizes it.
+#' @returns The `project` object, invisibly.
+#' @export
+#' @family application
+removeApplication <- function(project, id) {
+  validateIsOfType(project, "Project")
+  project$removeApplication(id)
+}
+
+# Implementation behind `project$removeApplication()` / `removeApplication()`.
+#
+# @keywords internal
+# @noRd
+.removeApplication_impl <- function(self, private, id, .call) {
+  rlang::local_error_call(.call)
+  .assertIdVector(id)
+  id <- .canonicalizeId(id)
+
+  missingIds <- setdiff(id, names(self$definitions$applications))
+  if (length(missingIds) > 0L) {
+    cli::cli_warn("application {.val {missingIds}} not found; no-op.")
+  }
+  toRemove <- intersect(id, names(self$definitions$applications))
+  if (length(toRemove) == 0L) {
+    return(invisible(self))
+  }
+  for (one in toRemove) {
+    .warnIfReferenced(self, "application", one)
+  }
+  applications <- private$.getSection("applications")
+  applications[toRemove] <- NULL
+  private$.setSection("applications", applications)
+  invisible(self)
+}
+
+#' Replace the parameter-set references on one or more applications
+#'
+#' @inherit vectorizedAuthoring details
+#'
+#' @param project A `Project` object.
+#' @param id Character vector of application ids. Each is canonicalized the
+#'   same way [addApplication()] canonicalizes it.
+#' @param parameterSets Character vector of set ids (from
+#'   `parameterSets` definitions), applied whole to every application; use
+#'   `character(0)` to clear. To set a different list per application, pass a
+#'   list of the same length as `id` (one character vector per application).
+#' @returns The `project` object, invisibly.
+#' @export
+#' @family application
+setApplicationParameterSets <- function(
+  project,
+  id,
+  parameterSets
+) {
+  validateIsOfType(project, "Project")
+  project$setApplicationParameterSets(id, parameterSets)
+}
+
+# Implementation behind `project$setApplicationParameterSets()` /
+# `setApplicationParameterSets()`.
+#
+# @keywords internal
+# @noRd
+.setApplicationParameterSets_impl <- function(
+  self,
+  private,
+  id,
+  parameterSets,
+  .call
+) {
+  rlang::local_error_call(.call)
+  .assertIdVector(id)
+  id <- .canonicalizeId(id)
+  n <- length(id)
+  missingIds <- setdiff(id, names(self$definitions$applications))
+  if (length(missingIds) > 0L) {
+    cli::cli_abort("application {.val {missingIds}} not found")
+  }
+  perId <- .wholeField(parameterSets, n)
+
+  call <- .call
+  resolved <- .collectCanonicalizedRefs(lapply(seq_len(n), function(i) {
+    .resolveParameterSetRefs(self, perId[[i]], call = call)
+  }))
+
+  applications <- private$.getSection("applications")
+  for (i in seq_len(n)) {
+    applications[[id[[i]]]]$parameterSets <- resolved[[i]]
+  }
+  private$.setSection("applications", applications)
+  invisible(self)
+}
+
+# Internal helpers ----
+
+# Validate and canonicalize a `parameterSets` reference vector for an
+# application, checking it is a character vector of ids that resolve against
+# `parameterSets` definitions, and returning the canonicalized ids. The single
+# source of truth for this check, shared by `.buildApplicationEntry()` (the add
+# path) and `setApplicationParameterSets()` (the set path) so their messages
+# cannot drift. `.canonicalizeIdRef()` runs inside, so the caller's
+# `.collectCanonicalizedRefs()` still surfaces any canonicalization warning.
+#
+# @keywords internal
+# @noRd
+.resolveParameterSetRefs <- function(
+  project,
+  sets,
+  call = rlang::caller_env()
+) {
+  if (!is.character(sets)) {
+    cli::cli_abort(
+      "{.arg parameterSets} must be a character vector of set ids",
+      call = call
+    )
+  }
+  sets <- .canonicalizeIdRef(sets)
+  bad <- setdiff(sets, names(project$definitions$parameterSets %||% list()))
+  if (length(bad) > 0L) {
+    cli::cli_abort(
+      c(
+        "{.arg parameterSets} references undefined parameter sets:",
+        "x" = "{.val {bad}}"
+      ),
+      call = call
+    )
+  }
+  sets
+}
+
+# Build one classed `Application` entry from its (optional) parameterSets
+# references, validating the references resolve. Aborts on a problem.
+#
+# @keywords internal
+# @noRd
+.buildApplicationEntry <- function(
+  project,
+  parameterSets,
+  call = rlang::caller_env()
+) {
+  app <- list()
+  if (!is.null(parameterSets)) {
+    app$parameterSets <- .resolveParameterSetRefs(
+      project,
+      parameterSets,
+      call = call
+    )
+  }
+  class(app) <- c("Application", "list")
+  app
+}
+
 # Parse the `applications` JSON object. Each entry is stamped with
 # `class = c("Application", "list")`. The current schema stores
 # applications as a map of name -> object containing only
@@ -26,237 +271,4 @@
     result[[id]] <- app
   }
   result
-}
-
-# Public CRUD: applications ----
-
-#' Add an application protocol to a Project
-#'
-#' @param project A `Project` object.
-#' @param applicationId Character scalar, unique protocol id.
-#' @param parameterSets Optional character vector of set ids referencing
-#'   `project$applicationParameterSets`. Defaults to `NULL`.
-#' @returns The `project` object, invisibly.
-#' @export
-#' @family application
-addApplication <- function(project, applicationId, parameterSets = NULL) {
-  validateIsOfType(project, "Project")
-  if (
-    !is.character(applicationId) ||
-      length(applicationId) != 1L ||
-      is.na(applicationId) ||
-      nchar(applicationId) == 0
-  ) {
-    cli::cli_abort("{.arg applicationId} must be a non-empty string")
-  }
-  if (applicationId %in% names(project$applications)) {
-    cli::cli_abort("application {.val {applicationId}} already exists")
-  }
-  app <- list()
-  if (!is.null(parameterSets)) {
-    if (!is.character(parameterSets)) {
-      cli::cli_abort(
-        "{.arg parameterSets} must be a character vector of set ids"
-      )
-    }
-    bad <- setdiff(
-      parameterSets,
-      names(project$applicationParameterSets %||% list())
-    )
-    if (length(bad) > 0L) {
-      cli::cli_abort(c(
-        "{.arg parameterSets} references undefined application parameter sets:",
-        "x" = "{.val {bad}}"
-      ))
-    }
-    app$parameterSets <- parameterSets
-  }
-  class(app) <- c("Application", "list")
-  project$applications[[applicationId]] <- app
-  project$.markModified()
-  invisible(project)
-}
-
-#' Remove an application protocol from a Project
-#'
-#' @param project A `Project` object.
-#' @param applicationId Character scalar.
-#' @returns The `project` object, invisibly.
-#' @export
-#' @family application
-removeApplication <- function(project, applicationId) {
-  validateIsOfType(project, "Project")
-  if (
-    !is.character(applicationId) ||
-      length(applicationId) != 1L ||
-      is.na(applicationId) ||
-      nchar(applicationId) == 0
-  ) {
-    cli::cli_abort("{.arg applicationId} must be a non-empty string")
-  }
-  if (!(applicationId %in% names(project$applications))) {
-    cli::cli_warn("application {.val {applicationId}} not found; no-op.")
-    return(invisible(project))
-  }
-  .warnIfReferenced(project, "application", applicationId)
-  project$applications[[applicationId]] <- NULL
-  project$.markModified()
-  invisible(project)
-}
-
-#' Replace the parameter-set references on an application
-#'
-#' @param project A `Project` object.
-#' @param applicationId Character scalar.
-#' @param parameterSets Character vector of set ids (from
-#'   `project$applicationParameterSets`). Use `character(0)` to clear.
-#' @returns The `project` object, invisibly.
-#' @export
-#' @family application
-setApplicationParameterSets <- function(
-  project,
-  applicationId,
-  parameterSets
-) {
-  validateIsOfType(project, "Project")
-  if (!(applicationId %in% names(project$applications))) {
-    cli::cli_abort("application {.val {applicationId}} not found")
-  }
-  if (!is.character(parameterSets)) {
-    cli::cli_abort("{.arg parameterSets} must be a character vector")
-  }
-  bad <- setdiff(
-    parameterSets,
-    names(project$applicationParameterSets %||% list())
-  )
-  if (length(bad) > 0L) {
-    cli::cli_abort(c(
-      "{.arg parameterSets} references undefined application parameter sets:",
-      "x" = "{.val {bad}}"
-    ))
-  }
-  project$applications[[applicationId]]$parameterSets <- parameterSets
-  project$.markModified()
-  invisible(project)
-}
-
-# Public CRUD: applicationParameterSets ----
-
-#' Create an application parameter set
-#' @param project A `Project` object.
-#' @param id Character scalar, set name. Must not already exist.
-#' @returns The `project` object, invisibly.
-#' @export
-#' @family parameters
-addApplicationParameterSet <- function(project, id) {
-  validateIsOfType(project, "Project")
-  if (!is.character(id) || length(id) != 1L || is.na(id) || nchar(id) == 0) {
-    cli::cli_abort("{.arg id} must be a non-empty string")
-  }
-  if (id %in% names(project$applicationParameterSets)) {
-    cli::cli_abort("application parameter set {.val {id}} already exists")
-  }
-  project$applicationParameterSets[[id]] <- list()
-  project$.markModified()
-  invisible(project)
-}
-
-#' Remove an application parameter set
-#' @inheritParams addApplicationParameterSet
-#' @returns The `project` object, invisibly.
-#' @export
-#' @family parameters
-removeApplicationParameterSet <- function(project, id) {
-  validateIsOfType(project, "Project")
-  if (!(id %in% names(project$applicationParameterSets))) {
-    cli::cli_warn("application parameter set {.val {id}} not found; no-op.")
-    return(invisible(project))
-  }
-  .warnIfReferenced(project, "applicationParameterSet", id)
-  project$applicationParameterSets[[id]] <- NULL
-  project$.markModified()
-  invisible(project)
-}
-
-#' Add a parameter entry to a named application parameter set
-#'
-#' Adds one parameter entry to the named set in
-#' `project$applicationParameterSets`. The set is created on demand if
-#' it does not yet exist. Last-write-wins on duplicate `(containerPath,
-#' parameterName)` pairs.
-#'
-#' @param project A `Project` object.
-#' @param id Character scalar, set name. Created if not present.
-#' @param containerPath Character scalar.
-#' @param parameterName Character scalar.
-#' @param value Numeric scalar.
-#' @param units Character scalar.
-#' @returns The `project` object, invisibly.
-#' @export
-#' @family parameters
-addApplicationParameterSetEntry <- function(
-  project,
-  id,
-  containerPath,
-  parameterName,
-  value,
-  units
-) {
-  validateIsOfType(project, "Project")
-  if (!is.character(id) || length(id) != 1L || is.na(id) || nchar(id) == 0) {
-    cli::cli_abort("{.arg id} must be a non-empty string")
-  }
-  current <- project$applicationParameterSets[[id]]
-  project$applicationParameterSets[[id]] <- .addParameterEntry(
-    current,
-    containerPath,
-    parameterName,
-    value,
-    units
-  )
-  project$.markModified()
-  invisible(project)
-}
-
-#' Remove a parameter entry from a named application parameter set
-#'
-#' Removes one parameter entry from the named set. If the removed entry
-#' was the last in the set, the set itself is auto-removed from
-#' `project$applicationParameterSets`. Warns if the set or entry doesn't
-#' exist.
-#'
-#' @inheritParams addApplicationParameterSetEntry
-#' @returns The `project` object, invisibly.
-#' @export
-#' @family parameters
-removeApplicationParameterSetEntry <- function(
-  project,
-  id,
-  containerPath,
-  parameterName
-) {
-  validateIsOfType(project, "Project")
-  if (!is.character(id) || length(id) != 1L) {
-    cli::cli_abort("{.arg id} must be a string scalar")
-  }
-  if (!(id %in% names(project$applicationParameterSets))) {
-    cli::cli_warn("application parameter set {.val {id}} not found; no-op.")
-    return(invisible(project))
-  }
-  result <- .removeParameterEntry(
-    project$applicationParameterSets[[id]],
-    containerPath,
-    parameterName
-  )
-  if (!result$removed) {
-    return(invisible(project))
-  }
-  if (is.null(result$parameters)) {
-    .warnIfReferenced(project, "applicationParameterSet", id)
-    project$applicationParameterSets[[id]] <- NULL
-  } else {
-    project$applicationParameterSets[[id]] <- result$parameters
-  }
-  project$.markModified()
-  invisible(project)
 }

@@ -2,23 +2,55 @@
 % Please edit documentation in R/applications.R
 \name{setApplicationParameterSets}
 \alias{setApplicationParameterSets}
-\title{Replace the parameter-set references on an application}
+\title{Replace the parameter-set references on one or more applications}
 \usage{
-setApplicationParameterSets(project, applicationId, parameterSets)
+setApplicationParameterSets(project, id, parameterSets)
 }
 \arguments{
 \item{project}{A \code{Project} object.}
 
-\item{applicationId}{Character scalar.}
+\item{id}{Character vector of application ids. Each is canonicalized the
+same way \code{\link[=addApplication]{addApplication()}} canonicalizes it.}
 
 \item{parameterSets}{Character vector of set ids (from
-\code{project$applicationParameterSets}). Use \code{character(0)} to clear.}
+\code{parameterSets} definitions), applied whole to every application; use
+\code{character(0)} to clear. To set a different list per application, pass a
+list of the same length as \code{id} (one character vector per application).}
 }
 \value{
 The \code{project} object, invisibly.
 }
 \description{
-Replace the parameter-set references on an application
+Replace the parameter-set references on one or more applications
+}
+\details{
+The id argument sets \code{N}, the number of definitions to act on, and cannot
+itself be recycled: when any scalar-per-definition field has length greater than
+1, the id vector must have that same length. A length-1 id with all-scalar
+fields is the ordinary single-definition call.
+
+Each scalar-per-definition field is either length 1 (recycled to all \code{N}
+definitions) or length \code{N} (aligned to the ids by position). Any other
+length is an error naming the field and the lengths.
+
+A vector-valued-per-definition field (an individual's or application's
+\code{parameterSets}, a scenario's \code{outputPaths} and \code{parameterSets}) is
+applied whole to every definition, never split positionally. To give a
+different multi-valued list per definition, pass a list of the same length
+as the id vector (one vector per definition).
+
+The call is all-or-nothing: every definition is validated first, and if any
+fails the whole call aborts and writes nothing. On success all definitions
+are folded into the section and persisted in a single write-through.
+
+Two families of authoring functions sit outside this id-sets-\code{N} rule.
+\code{addParameterEntry()} and \code{removeParameterEntry()} vectorize over parameter
+entries (parallel \code{containerPath} / \code{parameterName} / \code{value} / \code{units}
+vectors) within a single named set, a different axis than the id-sets-\code{N}
+rule described here. \code{renameScenario()}, \code{duplicateScenario()},
+\code{addObservedData()}, \code{addPITask()}, and the per-task
+parameter-identification sub-definition helpers act on a single definition per
+call.
 }
 \seealso{
 Other application:

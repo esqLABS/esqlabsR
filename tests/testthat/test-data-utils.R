@@ -57,20 +57,16 @@ test_that("It converts a ULOQ values", {
 })
 
 
-dataSet1 <- ospsuite::DataSet$new(name = "data1")
-dataSet2 <- ospsuite::DataSet$new(name = "data2")
-
-
 test_that("It returns an empty DataSet if calculating for empty DataSets", {
+  dataSet1 <- ospsuite::DataSet$new(name = "data1")
   meanDataSet <- calculateMeanDataSet(dataSet1)
   expect_equal(meanDataSet$xValues, numeric())
   expect_equal(meanDataSet$yValues, numeric())
 })
 
-dataSet1$setValues(xValues = 1:5, yValues = 1:5)
-dataSet2$setValues(xValues = 2:6, yValues = 4:8)
-
 test_that("It can calculate the mean data set for a single data set", {
+  dataSet1 <- ospsuite::DataSet$new(name = "data1")
+  dataSet1$setValues(xValues = 1:5, yValues = 1:5)
   dataSet1$addMetaData(name = "meta1", value = "a")
   meanDataSet <- calculateMeanDataSet(dataSet1)
   expect_equal(meanDataSet$xValues, dataSet1$xValues)
@@ -81,6 +77,10 @@ test_that("It can calculate the mean data set for a single data set", {
 })
 
 test_that("It can calculate the arithmetic mean and standard deviation (default)", {
+  dataSet1 <- ospsuite::DataSet$new(name = "data1")
+  dataSet2 <- ospsuite::DataSet$new(name = "data2")
+  dataSet1$setValues(xValues = 1:5, yValues = 1:5)
+  dataSet2$setValues(xValues = 2:6, yValues = 4:8)
   meanDataSet <- calculateMeanDataSet(list(dataSet1, dataSet2))
   expect_equal(meanDataSet$xValues, 1:6)
   expect_equal(meanDataSet$yValues, c(1, 3:6, 8), tolerance = 1e-06)
@@ -92,6 +92,10 @@ test_that("It can calculate the arithmetic mean and standard deviation (default)
 })
 
 test_that("It can calculate the geometric mean and standard deviation", {
+  dataSet1 <- ospsuite::DataSet$new(name = "data1")
+  dataSet2 <- ospsuite::DataSet$new(name = "data2")
+  dataSet1$setValues(xValues = 1:5, yValues = 1:5)
+  dataSet2$setValues(xValues = 2:6, yValues = 4:8)
   meanDataSet <- calculateMeanDataSet(
     list(dataSet1, dataSet2),
     method = "geometric"
@@ -123,6 +127,10 @@ test_that("It can calculate the geometric mean and standard deviation", {
 })
 
 test_that("It can convert values to outputXunit and outputYunit", {
+  dataSet1 <- ospsuite::DataSet$new(name = "data1")
+  dataSet2 <- ospsuite::DataSet$new(name = "data2")
+  dataSet1$setValues(xValues = 1:5, yValues = 1:5)
+  dataSet2$setValues(xValues = 2:6, yValues = 4:8)
   # input units are "h" and "mg/l"
   meanDataSet <- calculateMeanDataSet(
     list(dataSet1, dataSet2),
@@ -139,6 +147,10 @@ test_that("It can convert values to outputXunit and outputYunit", {
 })
 
 test_that("It can convert values to xUnit and yUnit of first data set, with given molWeights", {
+  dataSet1 <- ospsuite::DataSet$new(name = "data1")
+  dataSet2 <- ospsuite::DataSet$new(name = "data2")
+  dataSet1$setValues(xValues = 1:5, yValues = 1:5)
+  dataSet2$setValues(xValues = 2:6, yValues = 4:8)
   dataSet1$yDimension <- ospsuite::ospDimensions$`Concentration (molar)`
   dataSet1$yUnit <- ospsuite::ospUnits$`Concentration [molar]`$`mmol/l`
   dataSet1$molWeight <- 2
@@ -211,11 +223,15 @@ test_that("Only meta data entries that are equal in all inital data sets are set
 })
 
 test_that("It throws an error when molWeights of data sets are different and no outputMolWeight is given", {
+  dataSet1 <- ospsuite::DataSet$new(name = "data1")
+  dataSet2 <- ospsuite::DataSet$new(name = "data2")
+  dataSet1$setValues(xValues = 1:5, yValues = 1:5)
+  dataSet2$setValues(xValues = 2:6, yValues = 4:8)
   dataSet1$molWeight <- 1
   dataSet2$molWeight <- 2
   expect_error(
     calculateMeanDataSet(list(dataSet1, dataSet2)),
-    regexp = messages$errorOutputMolWeightNeeded(),
+    regexp = messages$outputMolWeightNeeded(),
     fixed = TRUE
   )
 })

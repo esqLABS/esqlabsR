@@ -93,9 +93,67 @@ test_that("createEsqlabsPlotConfiguration() works with ospsuite::plotIndividualT
   oneObsSimDC <- readRDS(getTestDataFilePath("oneObsSimDC"))
   esqlabsConfig <- createEsqlabsPlotConfiguration()
 
-  set.seed(123)
+  withr::local_seed(123)
   vdiffr::expect_doppelganger(
     title = "time profile - esqlabsPlotConfiguration",
     fig = plotIndividualTimeProfile(oneObsSimDC, esqlabsConfig)
   )
+})
+
+test_that(".updatePlotConfiguration keeps a user-customized field over the override", {
+  # The field differs from the default (the user set it), so the override is
+  # NOT applied even though the current value carries an NA. A plain `==`
+  # comparison also yields NA here, so this case passed before and after.
+  plotConfiguration <- createEsqlabsPlotConfiguration()
+  plotConfiguration$titleSize <- NA_real_
+
+  result <- .updatePlotConfiguration(
+    plotConfiguration,
+    list(titleSize = 99)
+  )
+
+  expect_identical(result$titleSize, NA_real_)
+})
+
+test_that(".updatePlotConfiguration applies the override when a default value carries an NA", {
+  # Regression for the NA-unsafe default comparison: when the current value
+  # still equals the default AND that value contains an NA, `all(x == x)`
+  # returns NA and `isTRUE(NA)` is FALSE, so a legit override was silently
+  # skipped. Build a config whose default `titleMargin` carries a matching NA
+  # (capture the real default first to avoid recursing into the mock).
+  realConfig <- createEsqlabsPlotConfiguration()
+  withNA <- realConfig$titleMargin
+  withNA[[2]] <- NA_real_
+  naDefaultConfig <- realConfig
+  naDefaultConfig$titleMargin <- withNA
+
+  local_mocked_bindings(
+    createEsqlabsPlotConfiguration = function(...) naDefaultConfig
+  )
+  # Current value equals the (NA-carrying) default, so the override must apply.
+  plotConfiguration <- naDefaultConfig
+  result <- .updatePlotConfiguration(
+    plotConfiguration,
+    list(titleMargin = c(5, 5, 5, 5))
+  )
+
+  expect_identical(result$titleMargin, c(5, 5, 5, 5))
+})
+
+test_that(".calculateLimits widens a zero-width range to a finite interval", {
+  # All-equal nonzero input on a linear axis.
+  linNonzero <- esqlabsR:::.calculateLimits(c(5, 5, 5))
+  expect_true(all(is.finite(linNonzero)))
+  expect_gt(linNonzero[[2]], linNonzero[[1]])
+
+  # All-zero input on a linear axis previously collapsed to c(0, 0).
+  linZero <- esqlabsR:::.calculateLimits(c(0, 0, 0))
+  expect_true(all(is.finite(linZero)))
+  expect_gt(linZero[[2]], linZero[[1]])
+
+  # All-equal positive input on a log axis stays strictly positive.
+  logNonzero <- esqlabsR:::.calculateLimits(c(5, 5, 5), scaling = "log")
+  expect_true(all(is.finite(logNonzero)))
+  expect_gt(logNonzero[[1]], 0)
+  expect_gt(logNonzero[[2]], logNonzero[[1]])
 })

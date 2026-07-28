@@ -2,22 +2,30 @@
 #'
 #' @description
 #' Builds [`ospsuite::DataCombined`] objects from a JSON-driven
-#' [Project][loadProject()]. The project's `plots$dataCombined` section
-#' declares the simulated/observed entries; `loadObservedData(project)`
-#' resolves observed sources internally. Either `dataCombinedNames` or
-#' `plotGridNames` (or both) selects which DataCombined to build.
+#' [Project][loadProject()]. The project's `dataCombined` section declares the
+#' simulated/observed entries; `loadObservedData(project)` resolves observed
+#' sources internally. Either `dataCombined` or `plotGrids` (or both)
+#' selects which DataCombined to build.
+#'
+#' A simulated entry's `path` may be either a literal model quantity path or an
+#' output-path id (a key of the project's `outputPaths` definitions). An id is
+#' resolved to its literal path before the entry is built; any value that is not
+#' a known id is used as a literal path.
 #'
 #' @param project A `Project` (see [loadProject()]).
-#' @param dataCombinedNames Names of the DataCombined entries to build. If
-#'   any name is not declared in `project$plots$dataCombined`, an error is
+#' @param dataCombined Names of the DataCombined entries to build. If
+#'   any name is not declared in `dataCombined` definitions, an error is
 #'   thrown.
-#' @param plotGridNames Names of plot grids whose DataCombined dependencies
-#'   should be built. Combined with `dataCombinedNames` if both are given.
-#' @param simulatedScenarios A named list of simulated scenarios (as
-#'   returned by [runScenarios()]).
+#' @param plotGrids Names of plot grids whose DataCombined dependencies
+#'   should be built. Combined with `dataCombined` if both are given.
+#' @param scenarioResults A named list of Scenario Results (as
+#'   returned by [runScenarios()]). Not the OSPS `SimulationResults`.
 #' @param stopIfNotFound If `TRUE` (default), the function errors when a
 #'   referenced simulated path or observed dataSet cannot be resolved. If
 #'   `FALSE`, a warning is emitted and the entry is skipped.
+#' @param validate If `TRUE` (default), the `dataCombined` section is validated
+#'   before any DataCombined is built, so a definition missing a required field
+#'   aborts with a clear message instead of failing mid-build.
 #'
 #' @returns A named list of `DataCombined` objects, one per requested name.
 #'   Empty list when no names are requested.
@@ -25,100 +33,79 @@
 #' @export
 createDataCombined <- function(
   project,
-  dataCombinedNames = NULL,
-  plotGridNames = NULL,
-  simulatedScenarios = NULL,
-  stopIfNotFound = TRUE
+  dataCombined = NULL,
+  plotGrids = NULL,
+  scenarioResults = NULL,
+  stopIfNotFound = TRUE,
+  validate = TRUE
 ) {
   validateIsOfType(project, "Project")
-  validateIsString(plotGridNames, nullAllowed = TRUE)
+  validateIsString(dataCombined, nullAllowed = TRUE)
+  validateIsString(plotGrids, nullAllowed = TRUE)
 
-  if (is.null(dataCombinedNames) && is.null(plotGridNames)) {
+  if (is.null(dataCombined) && is.null(plotGrids)) {
     return(list())
+  }
+
+  # Pre-flight the dataCombined shape so a hand-edited definition file with a
+  # missing required field (`label` / `scenario` / `path` / `dataSet`) aborts
+  # with a clean message here, rather than crashing mid-build on a NULL field.
+  if (isTRUE(validate)) {
+    project$ensureValid(
+      sections = "dataCombined",
+      opName = "createDataCombined"
+    )
   }
 
   observedData <- loadObservedData(project)
 
-  if (!is.null(plotGridNames)) {
-    dataCombinedNames <- union(
-      dataCombinedNames,
-      .extractDataCombinedNamesForPlotsFromProject(project, plotGridNames)
+  if (!is.null(plotGrids)) {
+    allGridIds <- names(
+      .unwrapDefinitionList(project$definitions$plotGrids) %||% list()
+    )
+    missingGrids <- setdiff(plotGrids[!is.na(plotGrids)], allGridIds)
+    if (length(missingGrids) > 0) {
+      cli::cli_abort(messages$plotGridNamesNotFound(missingGrids))
+    }
+    dataCombined <- union(
+      dataCombined,
+      .extractDataCombinedNamesForPlotsFromProject(project, plotGrids)
     )
   }
 
-  allSpecs <- project$plots$dataCombined %||% list()
+  allSpecs <- .unwrapDefinitionList(project$definitions$dataCombined) %||%
+    list()
   missingNames <- setdiff(
-    dataCombinedNames[!is.na(dataCombinedNames)],
+    dataCombined[!is.na(dataCombined)],
     names(allSpecs)
   )
   if (length(missingNames) > 0) {
-    cli::cli_abort(messages$stopDataCombinedNamesNotFound(missingNames))
+    cli::cli_abort(messages$dataCombinedNamesNotFound(missingNames))
   }
 
-  selectedSpecs <- allSpecs[intersect(names(allSpecs), dataCombinedNames)]
-  hasEntries <- vapply(
-    selectedSpecs,
-    \(s) length(s$simulated %||% list()) + length(s$observed %||% list()) > 0,
-    logical(1)
-  )
-  emptyNames <- names(selectedSpecs)[!hasEntries]
+  # An output-path id used in a simulated entry's `path` resolves to its literal
+  # model path via this map; a `path` that is not a known id is a literal path.
+  outputPaths <- .unwrapDefinitionList(project$definitions$outputPaths) %||%
+    list()
 
-  if (any(hasEntries)) {
-    dfDataCombined <- .specsToDataCombinedDataFrame(selectedSpecs[hasEntries])
-    dataCombinedList <- .createDataCombinedFromProcessedDF(
-      dfDataCombined = dfDataCombined,
-      simulatedScenarios = simulatedScenarios,
+  selectedSpecs <- allSpecs[intersect(names(allSpecs), dataCombined)]
+
+  # Capture this frame before the loop so a build-time abort attributes to
+  # `createDataCombined()`, not the anonymous `lapply()` closure.
+  call <- rlang::current_env()
+  dataCombinedList <- lapply(names(selectedSpecs), function(name) {
+    .buildDataCombined(
+      name = name,
+      spec = selectedSpecs[[name]],
+      outputPaths = outputPaths,
+      scenarioResults = scenarioResults,
       observedData = observedData,
-      stopIfNotFound = stopIfNotFound
+      stopIfNotFound = stopIfNotFound,
+      call = call
     )
-  } else {
-    dataCombinedList <- list()
-  }
-
-  for (name in emptyNames) {
-    dataCombinedList[[name]] <- DataCombined$new()
-  }
-
-  dataCombinedList[intersect(names(selectedSpecs), names(dataCombinedList))]
-}
-
-# Convert the named-list `dataCombined` spec from project$plots into the
-# flat tibble the legacy Excel-driven code path expects. One row per
-# entry (simulated or observed). Caller must pre-filter to specs that
-# actually have entries; empty DCs are handled in `createDataCombined`.
-#
-# @keywords internal
-# @noRd
-.specsToDataCombinedDataFrame <- function(specs) {
-  rows <- list()
-  for (name in names(specs)) {
-    spec <- specs[[name]]
-    for (entry in spec$simulated %||% list()) {
-      rows[[length(rows) + 1L]] <- .specEntryToRow(name, "simulated", entry)
-    }
-    for (entry in spec$observed %||% list()) {
-      rows[[length(rows) + 1L]] <- .specEntryToRow(name, "observed", entry)
-    }
-  }
-  dplyr::bind_rows(rows)
-}
-
-.specEntryToRow <- function(dataCombinedName, dataType, entry) {
-  list(
-    DataCombinedName = dataCombinedName,
-    dataType = dataType,
-    label = entry$label %||% NA_character_,
-    scenario = entry$scenario %||% NA_character_,
-    path = entry$path %||% NA_character_,
-    dataSet = entry$dataSet %||% NA_character_,
-    group = entry$group %||% NA_character_,
-    xOffsets = entry$xOffsets %||% NA_real_,
-    xOffsetsUnits = entry$xOffsetsUnits %||% NA_character_,
-    yOffsets = entry$yOffsets %||% NA_real_,
-    yOffsetsUnits = entry$yOffsetsUnits %||% NA_character_,
-    xScaleFactors = entry$xScaleFactors %||% NA_real_,
-    yScaleFactors = entry$yScaleFactors %||% NA_real_
-  )
+  })
+  names(dataCombinedList) <- names(selectedSpecs)
+  dataCombinedList
 }
 
 # Find DataCombined names referenced by the requested plot grids.
@@ -127,16 +114,23 @@ createDataCombined <- function(
 # @noRd
 .extractDataCombinedNamesForPlotsFromProject <- function(
   project,
-  plotGridNames
+  plotGrids
 ) {
-  gridDf <- project$plots$plotGrids %||% data.frame()
-  if (nrow(gridDf) == 0) return(character(0))
-  selectedGrids <- gridDf[gridDf$name %in% plotGridNames, , drop = FALSE]
-  if (nrow(selectedGrids) == 0) return(character(0))
-  ids <- unique(unlist(strsplit(selectedGrids$plotIDs, "\\s*,\\s*")))
-  cfgDf <- project$plots$plotConfiguration %||% data.frame()
-  if (nrow(cfgDf) == 0) return(character(0))
-  unique(cfgDf$DataCombinedName[cfgDf$plotID %in% ids])
+  grids <- .unwrapDefinitionList(project$definitions$plotGrids) %||% list()
+  selectedGrids <- grids[intersect(names(grids), plotGrids)]
+  if (length(selectedGrids) == 0) {
+    return(character(0))
+  }
+  ids <- unique(unlist(lapply(
+    selectedGrids,
+    function(g) .splitPlotIDs(g$plotIds)
+  )))
+  plotConfig <- .unwrapDefinitionList(project$definitions$plots) %||% list()
+  referenced <- plotConfig[intersect(names(plotConfig), ids)]
+  if (length(referenced) == 0) {
+    return(character(0))
+  }
+  unique(unlist(lapply(referenced, function(p) p$dataCombinedId)))
 }
 
 #' @rdname createDataCombined
@@ -150,246 +144,268 @@ createDataCombinedFromExcel <- function(...) {
   createDataCombined(...)
 }
 
-# Build named list of DataCombined objects from a flat data.frame whose
-# rows describe simulated/observed entries. Used by createDataCombined().
+# Build a single DataCombined from one JSON spec (its nested `simulated` /
+# `observed` entry lists). An empty spec (no entries) yields an empty
+# DataCombined carrying just the name. Runtime resolution against
+# `scenarioResults` / `observedData` happens here, so it can only run once the
+# scenarios have been run; the static shape of the spec is checked at load time
+# by `.validateDataCombined()`.
 #
 # @keywords internal
 # @noRd
-.createDataCombinedFromProcessedDF <- function(
-  dfDataCombined,
-  simulatedScenarios,
+.buildDataCombined <- function(
+  name,
+  spec,
+  outputPaths,
+  scenarioResults,
   observedData,
-  stopIfNotFound
+  stopIfNotFound,
+  call = rlang::caller_env()
 ) {
-  dfDataCombined <- .validateDataCombinedFromExcel(
-    dfDataCombined,
-    simulatedScenarios,
-    observedData,
-    stopIfNotFound
-  )
+  dataCombined <- DataCombined$new()
 
-  dataCombinedList <- lapply(unique(dfDataCombined$DataCombinedName), \(name) {
-    dataCombined <- DataCombined$new()
-    simulated <- dplyr::filter(
-      dfDataCombined,
-      DataCombinedName == name,
-      dataType == "simulated"
-    )
-    if (nrow(simulated) > 0) {
-      for (j in seq_len(nrow(simulated))) {
-        if (
-          any(
-            simulatedScenarios[[
-              simulated[j, ]$scenario
-            ]]$results$allQuantityPaths ==
-              simulated[j, ]$path
-          )
-        ) {
-          dataCombined$addSimulationResults(
-            simulationResults = simulatedScenarios[[
-              simulated[j, ]$scenario
-            ]]$results,
-            quantitiesOrPaths = simulated[j, ]$path,
-            groups = simulated[j, ]$group,
-            names = simulated[j, ]$label
-          )
-        } else {
-          if (stopIfNotFound) {
-            cli::cli_abort(messages$stopWrongOutputPath(
-              dataCombinedName = name,
-              scenarioName = simulated[j, ]$scenario,
-              path = simulated[j, ]$path
-            ))
-          }
-          cli::cli_warn(messages$stopWrongOutputPath(
-            dataCombinedName = name,
-            scenarioName = simulated[j, ]$scenario,
-            path = simulated[j, ]$path
-          ))
-        }
+  # Collects entries whose simulated result could not be resolved (only reachable
+  # when `stopIfNotFound = FALSE`). Their labels are dropped from the transform
+  # step below, which would otherwise operate on a label that was never added.
+  skippedLabels <- character(0)
+
+  for (entry in spec$simulated %||% list()) {
+    scenarioName <- entry$scenario
+    scenarioResult <- scenarioResults[[scenarioName]]
+    results <- scenarioResult$results
+    # Resolve an output-path id to its literal path; a value that is not a known
+    # id is used verbatim as a literal model path.
+    path <- outputPaths[[entry$path]] %||% entry$path
+
+    if (!is.null(results) && any(results$allQuantityPaths == path)) {
+      dataCombined$addSimulationResults(
+        simulationResults = results,
+        quantitiesOrPaths = path,
+        groups = entry$group %||% NA_character_,
+        names = entry$label
+      )
+    } else {
+      # Three distinct reasons the simulated data can't be resolved, each with
+      # its own message: the scenario is absent from `scenarioResults`
+      # (typo, or not part of the run); it is present but its run produced no
+      # results; or the run is fine but the output path was not simulated.
+      msg <- if (is.null(scenarioResult)) {
+        messages$scenarioNotInResults(
+          dataCombinedName = name,
+          scenarioName = scenarioName
+        )
+      } else if (is.null(results)) {
+        messages$scenarioRunFailed(
+          dataCombinedName = name,
+          scenarioName = scenarioName,
+          path = path
+        )
+      } else {
+        messages$wrongOutputPath(
+          dataCombinedName = name,
+          scenarioName = scenarioName,
+          path = path
+        )
       }
+      if (stopIfNotFound) {
+        cli::cli_abort(msg, call = call)
+      }
+      cli::cli_warn(msg)
+      skippedLabels <- c(skippedLabels, entry$label)
     }
+  }
 
-    observed <- dplyr::filter(
-      dfDataCombined,
-      DataCombinedName == name,
-      dataType == "observed"
-    )
-    if (nrow(observed) > 0) {
-      dataSets <- observedData[observed$dataSet]
+  observedEntries <- spec$observed %||% list()
+  if (length(observedEntries) > 0) {
+    dataSetIds <- vapply(observedEntries, function(e) e$dataSet, character(1))
+    missingDataSets <- setdiff(dataSetIds, names(observedData))
+    if (length(missingDataSets) > 0) {
+      if (stopIfNotFound) {
+        cli::cli_abort(
+          messages$invalidDataSetName(missingDataSets),
+          call = call
+        )
+      }
+      cli::cli_warn(messages$combineInvalidDataSetName(missingDataSets))
+      keep <- !(dataSetIds %in% missingDataSets)
+      # Record the dropped labels so the transform step below skips them too:
+      # their data was never added, so a transform would run against an absent
+      # (all-NA) row.
+      skippedLabels <- c(
+        skippedLabels,
+        vapply(observedEntries[!keep], function(e) e$label, character(1))
+      )
+      observedEntries <- observedEntries[keep]
+      dataSetIds <- dataSetIds[keep]
+    }
+    if (length(observedEntries) > 0) {
       dataCombined$addDataSets(
-        dataSets,
-        names = observed$label,
-        groups = observed$group
+        observedData[dataSetIds],
+        names = vapply(observedEntries, function(e) e$label, character(1)),
+        groups = vapply(
+          observedEntries,
+          function(e) e$group %||% NA_character_,
+          character(1)
+        )
       )
     }
-    return(dataCombined)
-  })
-  names(dataCombinedList) <- unique(dfDataCombined$DataCombinedName)
+  }
 
-  dfTransform <- dplyr::filter(
-    dfDataCombined,
-    !is.na(xOffsets) |
-      !is.na(yOffsets) |
-      !is.na(xScaleFactors) |
-      !is.na(yScaleFactors)
+  .applyDataCombinedTransformations(
+    dataCombined,
+    name = name,
+    entries = c(spec$simulated %||% list(), spec$observed %||% list()),
+    skippedLabels = skippedLabels
   )
-  if (dim(dfTransform)[[1]] != 0) {
-    apply(dfTransform, 1, \(row) {
-      dataCombinedDf <- dataCombinedList[[row[[
-        "DataCombinedName"
-      ]]]]$toDataFrame()
-      singleRow <- dataCombinedDf[dataCombinedDf$name == row[["label"]], ][1, ]
 
-      if (
-        (!is.na(row[["xOffsets"]]) & is.na(row[["xOffsetsUnits"]])) |
-          (!is.na(row[["yOffsets"]]) & is.na(row[["yOffsetsUnits"]]))
-      ) {
-        cli::cli_abort(messages$offsetUnitsNotDefined(row[[
-          "DataCombinedName"
-        ]]))
-      }
+  dataCombined
+}
 
-      xDimension <- singleRow$xDimension
-      xBaseUnit <- row[["xOffsetsUnits"]]
+# Apply the per-entry x/y offsets and scale factors declared on a DataCombined
+# spec. Only entries carrying at least one transform are touched, and any label
+# that was skipped during the build (its data was never added) is left out so
+# the unit conversion never runs against an absent row.
+#
+# @keywords internal
+# @noRd
+.applyDataCombinedTransformations <- function(
+  dataCombined,
+  name,
+  entries,
+  skippedLabels
+) {
+  df <- dataCombined$toDataFrame()
+  for (entry in entries) {
+    if (entry$label %in% skippedLabels) {
+      next
+    }
+    hasTransform <- !is.null(entry$xOffsets) ||
+      !is.null(entry$yOffsets) ||
+      !is.null(entry$xScaleFactors) ||
+      !is.null(entry$yScaleFactors)
+    if (!hasTransform) {
+      next
+    }
+
+    if (
+      (!is.null(entry$xOffsets) && is.null(entry$xOffsetsUnits)) ||
+        (!is.null(entry$yOffsets) && is.null(entry$yOffsetsUnits))
+    ) {
+      cli::cli_abort(messages$offsetUnitsNotDefined(name))
+    }
+
+    singleRow <- df[df$name == entry$label, ][1, ]
+
+    xOffset <- NA_real_
+    if (!is.null(entry$xOffsets)) {
       xTargetUnit <- singleRow$xUnit
       if (is.na(xTargetUnit)) {
         xTargetUnit <- ""
       }
-      row[["xOffsets"]] <- toUnit(
-        quantityOrDimension = xDimension,
-        values = as.numeric(row[["xOffsets"]]),
+      xOffset <- toUnit(
+        quantityOrDimension = singleRow$xDimension,
+        values = as.numeric(entry$xOffsets),
         targetUnit = xTargetUnit,
-        sourceUnit = xBaseUnit
+        sourceUnit = entry$xOffsetsUnits
       )
+    }
 
-      yDimension <- singleRow$yDimension
-      yBaseUnit <- row[["yOffsetsUnits"]]
+    yOffset <- NA_real_
+    if (!is.null(entry$yOffsets)) {
       yTargetUnit <- singleRow$yUnit
-      yMW <- singleRow$molWeight
       if (is.na(yTargetUnit)) {
         yTargetUnit <- ""
       }
-      row[["yOffsets"]] <- toUnit(
-        quantityOrDimension = yDimension,
-        values = as.numeric(row[["yOffsets"]]),
+      yOffset <- toUnit(
+        quantityOrDimension = singleRow$yDimension,
+        values = as.numeric(entry$yOffsets),
         targetUnit = yTargetUnit,
-        sourceUnit = yBaseUnit,
-        molWeight = yMW,
+        sourceUnit = entry$yOffsetsUnits,
+        molWeight = singleRow$molWeight,
         molWeightUnit = ospUnits$`Molecular weight`$`g/mol`
       )
-
-      dataCombinedList[[row[["DataCombinedName"]]]]$setDataTransformations(
-        forNames = row[["label"]],
-        xOffsets = as.numeric(row[["xOffsets"]]),
-        yOffsets = as.numeric(row[["yOffsets"]]),
-        xScaleFactors = as.numeric(row[["xScaleFactors"]]),
-        yScaleFactors = as.numeric(row[["yScaleFactors"]])
-      )
-    })
-  }
-
-  return(dataCombinedList)
-}
-
-#' Validate and process the 'DataCombined' sheet
-#'
-#' @param dfDataCombined Data frame created by reading the ' DataCombined' sheet
-#' @param simulatedScenarios List of simulated scenarios as created by
-#'   `runScenarios()`
-#' @param observedData Observed data objects
-#' @param stopIfNotFound if `TRUE`, throw an error if a simulated result of an
-#'   observed data are not found
-#'
-#' @returns Processed `dfDataCombined`
-#' @keywords internal
-.validateDataCombinedFromExcel <- function(
-  dfDataCombined,
-  simulatedScenarios,
-  observedData,
-  stopIfNotFound
-) {
-  # mandatory column label is empty - throw error
-  missingLabel <- sum(is.na(dfDataCombined$label))
-  if (missingLabel > 0) {
-    cli::cli_abort(messages$missingLabel())
-  }
-
-  # mandatory column dataType is empty - throw error
-  missingLabel <- sum(is.na(dfDataCombined$dataType))
-  if (missingLabel > 0) {
-    cli::cli_abort(messages$missingDataType())
-  }
-
-  # dataType == simulated, but no scenario defined - throw error
-  missingLabel <- sum(is.na(
-    dfDataCombined[dfDataCombined$dataType == "simulated", ]$scenario
-  ))
-  if (missingLabel > 0) {
-    cli::cli_abort(messages$missingScenarioName())
-  }
-
-  # dataType == simulated, but no path defined - throw error
-  missingLabel <- is.na(
-    dfDataCombined[dfDataCombined$dataType == "simulated", ]$path
-  )
-  if (sum(missingLabel) > 0) {
-    cli::cli_abort(messages$stopNoPathProvided(dfDataCombined[
-      dfDataCombined$dataType == "simulated",
-    ]$DataCombinedName[missingLabel]))
-  }
-
-  # dataType == observed, but no data set defined - throw error
-  missingLabel <- is.na(
-    dfDataCombined[dfDataCombined$dataType == "observed", ]$dataSet
-  )
-  if (sum(missingLabel) > 0) {
-    cli::cli_abort(messages$stopNoDataSetProvided(dfDataCombined[
-      dfDataCombined$dataType == "observed",
-    ]$DataCombinedName[missingLabel]))
-  }
-
-  # Store the names of all DataCombined before filtering. This is required
-  # to create empty rows for DataCombined for which no data exists. This way,
-  # empty data combined can still be created.
-  dcNames <- unique(dfDataCombined$DataCombinedName)
-
-  # warnings for invalid data in plot definitions from excel
-  # scenario not present in simulatedScenarios
-  missingScenarios <- setdiff(
-    setdiff(dfDataCombined$scenario, names(simulatedScenarios)),
-    NA
-  )
-  if (length(missingScenarios) != 0) {
-    if (stopIfNotFound) {
-      cli::cli_abort(messages$warningInvalidScenarioName(missingScenarios))
     }
-    cli::cli_warn(messages$warningInvalidScenarioName(missingScenarios))
-    dfDataCombined <- dplyr::filter(
-      dfDataCombined,
-      (dataType == "observed") | !(scenario %in% missingScenarios)
+
+    dataCombined$setDataTransformations(
+      forNames = entry$label,
+      xOffsets = xOffset,
+      yOffsets = yOffset,
+      xScaleFactors = as.numeric(entry$xScaleFactors %||% NA_real_),
+      yScaleFactors = as.numeric(entry$yScaleFactors %||% NA_real_)
     )
   }
-  # data set name not present in observedData
-  missingDataSets <- setdiff(
-    setdiff(dfDataCombined$dataSet, names(observedData)),
-    NA
+}
+
+# Section validation adapter ----
+
+#' @keywords internal
+#' @noRd
+.dataCombinedValidatorAdapter <- function(project) {
+  .validateDataCombined(
+    .unwrapDefinitionList(project$definitions$dataCombined)
   )
-  if (length(missingDataSets) != 0) {
-    if (stopIfNotFound) {
-      cli::cli_abort(messages$stopInvalidDataSetName(missingDataSets))
-    }
-    cli::cli_warn(messages$warningInvalidDataSetName(missingDataSets))
-    dfDataCombined <- dfDataCombined[
-      !(dfDataCombined$dataSet %in% missingDataSets),
-    ]
-  }
-  # Identify the names of DataCombined that have been completely removed
-  missingDc <- setdiff(dcNames, unique(dfDataCombined$DataCombinedName))
-  # Create empty rows for each missing DataCombined
-  for (name in missingDc) {
-    dfDataCombined[nrow(dfDataCombined) + 1, 1] <- name
+}
+
+#' Validate the `dataCombined` section of a Project
+#'
+#' Static, spec-only checks on the JSON `dataCombined` section: every simulated
+#' entry must declare `label`, `scenario`, and `path`; every observed entry must
+#' declare `label` and `dataSet`. An empty section is valid. Cross-section
+#' reference resolution (a simulated entry's `scenario` against defined
+#' scenarios) is handled by the `crossReferences` phase, not here; runtime
+#' resolution against scenario results and observed data happens in
+#' [createDataCombined()].
+#'
+#' @param dataCombined Named list of DataCombined specs (from `dataCombined`
+#'   definitions), each with nested `simulated` / `observed` entry lists.
+#' @returns validationResult.
+#' @keywords internal
+#' @noRd
+.validateDataCombined <- function(dataCombined) {
+  result <- validationResult$new()
+
+  if (is.null(dataCombined) || length(dataCombined) == 0) {
+    result$addWarning("Data", "No dataCombined defined")
+    return(result)
   }
 
-  return(dfDataCombined)
+  result <- .checkNoDuplicates(names(dataCombined), "dataCombinedId", result)
+
+  for (id in names(dataCombined)) {
+    dc <- dataCombined[[id]]
+    for (entry in dc$simulated %||% list()) {
+      .checkDataCombinedEntryFields(entry, "simulated", id, result)
+    }
+    for (entry in dc$observed %||% list()) {
+      .checkDataCombinedEntryFields(entry, "observed", id, result)
+    }
+  }
+
+  result
+}
+
+# Record a critical error on `result` for every required field an entry is
+# missing. `.isMissingField()` (shared with the write-time gate
+# `.checkDataCombinedEntry()`) defines "missing" identically at load time.
+#
+# @keywords internal
+# @noRd
+.checkDataCombinedEntryFields <- function(entry, dataType, id, result) {
+  required <- .requiredDataCombinedFields(dataType)
+  for (field in required) {
+    if (.isMissingField(entry[[field]])) {
+      result$addCriticalError(
+        "Missing Fields",
+        paste0(
+          "DataCombined '",
+          id,
+          "' has a ",
+          dataType,
+          " entry missing required field: ",
+          field
+        )
+      )
+    }
+  }
+  result
 }

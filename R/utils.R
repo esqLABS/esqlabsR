@@ -30,6 +30,10 @@ getIndexClosestToValue <- function(
   thresholdAbs = NULL,
   thresholdRel = NULL
 ) {
+  # `value` must be a single scalar; a vector would silently recycle through the
+  # threshold and distance arithmetic below and return garbage.
+  ospsuite.utils::validateIsOfLength(value, 1)
+
   # If no absolute threshold is set, calculate if from relative threshold
   if (is.null(thresholdAbs)) {
     # If no relative threshold is set also, no threshold is applied
@@ -44,13 +48,15 @@ getIndexClosestToValue <- function(
 
   # Calculate distances
   distances <- abs(array - value)
-  idx <- which(distances == min(distances) & distances <= thresholdAbs)
+  # Compute the minimum distance ignoring NA entries so an exact match is not
+  # lost when the array contains NA. If every distance is NA (or the array is
+  # empty), `minDist` is not finite and no index qualifies below.
+  minDist <- suppressWarnings(min(distances, na.rm = TRUE))
+  idx <- which(distances == minDist & distances <= thresholdAbs)
 
   if (length(idx) == 0) {
-    warning(messages$warningValueWithinThresholdNotExisting(
-      value,
-      thresholdAbs
-    ))
+    msg <- messages$valueWithinThresholdNotExisting(value, thresholdAbs)
+    cli::cli_warn("{msg}")
     return(NULL)
   }
 
@@ -121,18 +127,20 @@ compareWithNA <- function(v1, v2) {
   simulationTimeIntervals <- lapply(simulationTimeIntervals, as.numeric)
   validateIsNumeric(simulationTimeIntervals)
   if (any(unlist(simulationTimeIntervals) < 0)) {
-    stop(messages$stopWrongTimeIntervalString(simulationTimeIntervalsString))
+    msg <- messages$wrongTimeIntervalString(simulationTimeIntervalsString)
+    cli::cli_abort("{msg}")
   }
   if (any(vapply(simulationTimeIntervals, length, integer(1)) != 3)) {
-    stop(messages$stopWrongTimeIntervalString(simulationTimeIntervalsString))
+    msg <- messages$wrongTimeIntervalString(simulationTimeIntervalsString)
+    cli::cli_abort("{msg}")
   }
-  if (any(vapply(simulationTimeIntervals, function(x) x[3] <= 0, logical(1)))) {
-    stop(messages$stopWrongTimeIntervalString(simulationTimeIntervalsString))
+  if (any(vapply(simulationTimeIntervals, \(x) x[3] <= 0, logical(1)))) {
+    msg <- messages$wrongTimeIntervalString(simulationTimeIntervalsString)
+    cli::cli_abort("{msg}")
   }
-  if (
-    any(vapply(simulationTimeIntervals, function(x) x[1] >= x[2], logical(1)))
-  ) {
-    stop(messages$stopWrongTimeIntervalString(simulationTimeIntervalsString))
+  if (any(vapply(simulationTimeIntervals, \(x) x[1] >= x[2], logical(1)))) {
+    msg <- messages$wrongTimeIntervalString(simulationTimeIntervalsString)
+    cli::cli_abort("{msg}")
   }
   return(simulationTimeIntervals)
 }
@@ -168,7 +176,7 @@ getMoleculeNameFromQuantity <- function(quantity) {
   quantityType <- quantity$quantityType
 
   # If the passed quantitiy is a molecule, return its name
-  if (any(c("Drug", "Molecule") == quantityType)) {
+  if (quantityType %in% c("Drug", "Molecule")) {
     return(quantity$name)
   }
 
@@ -177,8 +185,9 @@ getMoleculeNameFromQuantity <- function(quantity) {
   parentContainerType <- parentContainer$containerType
 
   # If parent container is not a molecule, stop with an error
-  if (!(any(c("Drug", "Molecule") == parentContainerType))) {
-    stop(messages$cannotGetMoleculeFromQuantity(quantity$path))
+  if (!(parentContainerType %in% c("Drug", "Molecule"))) {
+    msg <- messages$cannotGetMoleculeFromQuantity(quantity$path)
+    cli::cli_abort("{msg}")
   }
 
   return(parentContainer$name)
@@ -204,10 +213,12 @@ getMoleculeNameFromQuantity <- function(quantity) {
 #' myEnum <- enumPutList("g", list(12, 2, "a"), myEnum, overwrite = TRUE)
 enumPutList <- function(key, values, enum, overwrite = FALSE) {
   if (length(key) > 1) {
-    stop(messages$errorEnumPutListMultipleKeys())
+    msg <- messages$enumPutListMultipleKeys()
+    cli::cli_abort("{msg}")
   }
   if (enumHasKey(key, enum) && !overwrite) {
-    stop(messages$errorKeyInEnumPresent(key))
+    msg <- messages$errorKeyInEnumPresent(key)
+    cli::cli_abort("{msg}")
   }
   enum[[key]] <- values
 

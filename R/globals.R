@@ -5,7 +5,7 @@
 
 utils::globalVariables(
   names = c(
-    "DataCombinedName",
+    "dataCombinedName",
     "IndividualId",
     "OutputPath",
     "OutputPathId",
@@ -26,11 +26,7 @@ utils::globalVariables(
     "Unit",
     "Value",
     "dataType",
-    "name",
-    "outputName",
     "paths",
-    "plotGridName",
-    "plotID",
     "scenario",
     "xOffsets",
     "xScaleFactors",

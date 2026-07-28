@@ -1,19 +1,22 @@
-# Save old options
-old_opts <- options()
-
-options(
-  tibble.width = Inf,
-  pillar.min_title_chars = Inf,
-  pillar.sigfig = 4,
-  digits = 4,
-  scipen = 999
-)
+# The numeric-snapshot blocks below capture tabular output whose formatting
+# depends on print/precision options. Each such block sets them locally with
+# `withr::local_options()` (see `.localSnapshotOptions()`), so the state is
+# scoped to the test rather than leaked at file scope.
+.localSnapshotOptions <- function(.local_envir = parent.frame()) {
+  withr::local_options(
+    tibble.width = Inf,
+    pillar.min_title_chars = Inf,
+    pillar.sigfig = 4,
+    digits = 4,
+    scipen = 999,
+    .local_envir = .local_envir
+  )
+}
 
 # Single output path ------------------------------------------------------
 
-# Load simulation and set paths for tests
+# Paths shared by the single-output-path tests below.
 simPath <- system.file("extdata", "Aciclovir.pkml", package = "ospsuite")
-simulation <- loadSimulation(simPath)
 outputPaths <- "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
 parameterPaths <- c(
   "Aciclovir|Lipophilicity",
@@ -22,25 +25,76 @@ parameterPaths <- c(
 )
 variationRange <- c(0.1, 2, 20) # 1.0 is deliberately left out for testing
 
-set.seed(123)
-results <- sensitivityCalculation(
-  simulation = simulation,
-  outputPaths = outputPaths,
-  parameterPaths = parameterPaths,
-  variationRange = variationRange
-)
+# `loadSimulation()` initializes a PK-Sim native session; running it at file
+# source time (as `test_dir()` sources every test file up front) bleeds native
+# state across files. Defer it behind memoized accessors so the native load and
+# the baseline `sensitivityCalculation()` happen inside a `test_that()` block on
+# first use, computed once and cached for the rest of the file. The multiple
+# output paths fixture additionally exposes its own paths/variationRange because
+# the tests in that section reference them directly.
+sensFixture <- local({
+  cache <- NULL
+  function() {
+    if (is.null(cache)) {
+      simulation <- loadSimulation(simPath)
+      withr::local_seed(123)
+      results <- sensitivityCalculation(
+        simulation = simulation,
+        outputPaths = outputPaths,
+        parameterPaths = parameterPaths,
+        variationRange = variationRange
+      )
+      cache <<- list(simulation = simulation, results = results)
+    }
+    cache
+  }
+})
+
+sensFixtureMultiple <- local({
+  cache <- NULL
+  function() {
+    if (is.null(cache)) {
+      simulation <- loadSimulation(simPath)
+      outputPaths <- c(
+        "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)",
+        "Organism|Age",
+        "Organism|ArterialBlood|Plasma|Aciclovir"
+      )
+      parameterPaths <- c(
+        "Aciclovir|Lipophilicity",
+        "Events|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose",
+        "Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Glomerular Filtration-GFR-Aciclovir|GFR fraction"
+      )
+      variationRange <- c(0.1, 5, 10)
+      resultsMultiple <- sensitivityCalculation(
+        simulation = simulation,
+        outputPaths = outputPaths,
+        parameterPaths = parameterPaths,
+        variationRange = variationRange
+      )
+      cache <<- list(
+        simulation = simulation,
+        outputPaths = outputPaths,
+        parameterPaths = parameterPaths,
+        variationRange = variationRange,
+        resultsMultiple = resultsMultiple
+      )
+    }
+    cache
+  }
+})
 
 # Validate outputPaths ----------------------------------------------------
 
 test_that("sensitivityCalculation fails with invalid `outputPaths`", {
+  simulation <- sensFixture()$simulation
   expect_error(
     sensitivityCalculation(
       simulation = simulation,
       outputPaths = NULL,
       parameterPaths = parameterPaths
     ),
-    messages$errorWrongType("outputPaths", class(NULL), "character"),
-    fixed = TRUE
+    'argument "outputPaths" is of type.*but expected <character>'
   )
 
   expect_error(
@@ -49,8 +103,7 @@ test_that("sensitivityCalculation fails with invalid `outputPaths`", {
       outputPaths = c(1, 2, 3),
       parameterPaths = parameterPaths
     ),
-    messages$errorWrongType("outputPaths", "numeric", "character"),
-    fixed = TRUE
+    'argument "outputPaths" is of type <numeric>.*but expected <character>'
   )
 
   expect_error(
@@ -59,8 +112,7 @@ test_that("sensitivityCalculation fails with invalid `outputPaths`", {
       outputPaths = list("pathNameA" = "pathA"),
       parameterPaths = parameterPaths
     ),
-    messages$errorWrongType("outputPaths", "list", "character"),
-    fixed = TRUE
+    'argument "outputPaths" is of type <list>.*but expected <character>'
   )
 
   expect_error(
@@ -69,48 +121,52 @@ test_that("sensitivityCalculation fails with invalid `outputPaths`", {
       outputPaths = "",
       parameterPaths = parameterPaths
     ),
-    messages$errorEmptyString("outputPaths"),
-    fixed = TRUE
+    'argument "outputPaths" has empty strings'
   )
 
-  expect_error(
+  # The validator prefixes the message with the enclosing function name, which
+  # differs across run contexts (`test_that()`, `test_file()`, `test_dir()`);
+  # scrub it so the snapshot only pins the validation message itself.
+  scrubCaller <- \(lines) gsub("`[^`]+\\(\\)`: ", "", lines)
+
+  expect_snapshot(
+    error = TRUE,
     sensitivityCalculation(
       simulation = simulation,
       outputPaths = c(
         "",
         "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
       ),
-      parameterPaths = parameterPath
+      parameterPaths = parameterPaths
     ),
-    messages$errorEmptyString("outputPaths"),
-    fixed = TRUE
+    transform = scrubCaller
   )
 
-  expect_error(
+  expect_snapshot(
+    error = TRUE,
     sensitivityCalculation(
       simulation = simulation,
       outputPaths = rep(
         "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)",
         2
       ),
-      parameterPaths = parameterPath
+      parameterPaths = parameterPaths
     ),
-    messages$errorDuplicatedValues(),
-    fixed = TRUE
+    transform = scrubCaller
   )
 })
 
 # Validate parameterPaths -------------------------------------------------
 
 test_that("sensitivityCalculation fails with invalid `parameterPaths`", {
+  simulation <- sensFixture()$simulation
   expect_error(
     sensitivityCalculation(
       simulation = simulation,
       outputPaths = "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)",
       parameterPaths = NULL
     ),
-    messages$errorWrongType("parameterPaths", class(NULL), "character"),
-    fixed = TRUE
+    'argument "parameterPaths" is of type.*but expected <character>'
   )
 
   expect_error(
@@ -119,8 +175,7 @@ test_that("sensitivityCalculation fails with invalid `parameterPaths`", {
       outputPaths = "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)",
       parameterPaths = c(1, 2, 3)
     ),
-    messages$errorWrongType("parameterPaths", "numeric", "character"),
-    fixed = TRUE
+    'argument "parameterPaths" is of type <numeric>.*but expected <character>'
   )
 
   expect_error(
@@ -129,8 +184,7 @@ test_that("sensitivityCalculation fails with invalid `parameterPaths`", {
       outputPaths = "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)",
       parameterPaths = ""
     ),
-    messages$errorEmptyString("parameterPaths"),
-    fixed = TRUE
+    'argument "parameterPaths" has empty strings'
   )
 
   expect_error(
@@ -143,8 +197,7 @@ test_that("sensitivityCalculation fails with invalid `parameterPaths`", {
         "Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Glomerular Filtration-GFR-Aciclovir|GFR fraction"
       )
     ),
-    messages$errorEmptyString("parameterPaths"),
-    fixed = TRUE
+    'argument "parameterPaths" has empty strings'
   )
 
   expect_error(
@@ -153,14 +206,14 @@ test_that("sensitivityCalculation fails with invalid `parameterPaths`", {
       outputPaths = "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)",
       parameterPaths = c(parameterPaths, parameterPaths[1])
     ),
-    messages$errorDuplicatedValues(),
-    fixed = TRUE
+    "duplicated values"
   )
 })
 
 # Validate pkParameters ---------------------------------------------------
 
 test_that("sensitivityCalculation fails with invalid `pkParameters`", {
+  simulation <- sensFixture()$simulation
   expect_error(
     sensitivityCalculation(
       simulation = simulation,
@@ -168,8 +221,7 @@ test_that("sensitivityCalculation fails with invalid `pkParameters`", {
       outputPaths = outputPaths,
       parameterPaths = parameterPaths
     ),
-    messages$errorWrongType("pkParameters", "numeric", "character"),
-    fixed = TRUE
+    'argument "pkParameters" is of type <numeric>.*but expected <character>'
   )
 
   expect_error(
@@ -179,8 +231,7 @@ test_that("sensitivityCalculation fails with invalid `pkParameters`", {
       outputPaths = outputPaths,
       parameterPaths = parameterPaths
     ),
-    messages$errorEmptyString("pkParameters"),
-    fixed = TRUE
+    'argument "pkParameters" has empty strings'
   )
 
   expect_error(
@@ -190,8 +241,7 @@ test_that("sensitivityCalculation fails with invalid `pkParameters`", {
       outputPaths = outputPaths,
       parameterPaths = parameterPaths
     ),
-    messages$errorEmptyString("pkParameters"),
-    fixed = TRUE
+    'argument "pkParameters" has empty strings'
   )
 
   expect_error(
@@ -201,8 +251,7 @@ test_that("sensitivityCalculation fails with invalid `pkParameters`", {
       outputPaths = "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)",
       parameterPaths = parameterPaths
     ),
-    messages$errorDuplicatedValues(),
-    fixed = TRUE
+    "duplicated values"
   )
 
   expect_message(
@@ -212,12 +261,12 @@ test_that("sensitivityCalculation fails with invalid `pkParameters`", {
       outputPaths = "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)",
       parameterPaths = parameterPaths
     ),
-    "Following PK parameters are specified but were not calculated:\nabc\nxyz\n",
-    fixed = TRUE
+    "PK parameters are specified but were not calculated"
   )
 })
 
 test_that("sensitivityCalculation works with user-defined `pkParameters`", {
+  simulation <- sensFixture()$simulation
   # Create a new parameter based on the standard AUC parameter
   myAUC <- addUserDefinedPKParameter(
     name = "MyAUC",
@@ -239,6 +288,7 @@ test_that("sensitivityCalculation works with user-defined `pkParameters`", {
 # Validate variationRange -------------------------------------------------
 
 test_that("sensitivityCalculation fails with invalid `variationRange`", {
+  simulation <- sensFixture()$simulation
   expect_error(
     sensitivityCalculation(
       simulation = simulation,
@@ -276,14 +326,42 @@ test_that("sensitivityCalculation fails with invalid `variationRange`", {
       parameterPaths = parameterPaths,
       variationRange = list(c(0.1, 1, 10), c(0.1, 1, 10)),
     ),
-    regexp = messages$invalidVariationRangeLength(),
-    fixed = TRUE
+    "must be either a vector or a list equal to the length"
   )
+})
+
+# Simulation output-selection restore -------------------------------------
+
+test_that("sensitivityCalculation restores the caller's output selections", {
+  simulation <- loadSimulation(simPath)
+  callerOutputs <- c(
+    "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)",
+    "Organism|ArterialBlood|Plasma|Aciclovir"
+  )
+  ospsuite::setOutputs(
+    quantitiesOrPaths = callerOutputs,
+    simulation = simulation
+  )
+
+  sensitivityCalculation(
+    simulation = simulation,
+    outputPaths = "Organism|Age",
+    parameterPaths = "Aciclovir|Lipophilicity",
+    variationRange = variationRange
+  )
+
+  restored <- vapply(
+    simulation$outputSelections$allOutputs,
+    function(sel) sel$path,
+    character(1)
+  )
+  expect_setequal(restored, callerOutputs)
 })
 
 # Validate customOutputFunctions ------------------------------------------
 
 test_that("sensitivityCalculation fails with invalid `customOutputFunctions`", {
+  simulation <- sensFixture()$simulation
   expect_error(
     sensitivityCalculation(
       simulation = simulation,
@@ -327,8 +405,7 @@ test_that("sensitivityCalculation fails with invalid `customOutputFunctions`", {
         function(y) y
       )
     ),
-    regexp = messages$errorNotNamedList("customOutputFunctions"),
-    fixed = TRUE
+    "`customOutputFunctions` is not a named list"
   )
 
   expect_error(
@@ -343,8 +420,7 @@ test_that("sensitivityCalculation fails with invalid `customOutputFunctions`", {
         "funC" = function(x) x^2
       )
     ),
-    regexp = messages$errorNotNamedList("customOutputFunctions"),
-    fixed = TRUE
+    "`customOutputFunctions` is not a named list"
   )
 
   expect_error(
@@ -357,8 +433,7 @@ test_that("sensitivityCalculation fails with invalid `customOutputFunctions`", {
         x / y * z
       })
     ),
-    regexp = messages$invalidCustomFunctionParameters(c("x", "y", "z")),
-    fixed = TRUE
+    "The user-defined function must have either"
   )
 
   expect_error(
@@ -369,14 +444,14 @@ test_that("sensitivityCalculation fails with invalid `customOutputFunctions`", {
       variationRange = c(0.1, 2, 20),
       customOutputFunctions = list("invalid" = \(x, y, z) x / y * z)
     ),
-    regexp = messages$invalidCustomFunctionParameters(c("x", "y", "z")),
-    fixed = TRUE
+    "The user-defined function must have either"
   )
 })
 
 # Validate variationType
 
 test_that("sensitivityCalculation fails with invalid `variationType`", {
+  simulation <- sensFixture()$simulation
   expect_error(
     sensitivityCalculation(
       simulation = simulation,
@@ -391,6 +466,7 @@ test_that("sensitivityCalculation fails with invalid `variationType`", {
 # Check SensitivityCalculation object -------------------------------------
 
 test_that("sensitivityCalculation returns a valid `SensitivityCalculation` object", {
+  results <- sensFixture()$results
   expect_true(isOfType(results, "SensitivityCalculation"))
 
   expect_equal(
@@ -412,13 +488,16 @@ test_that("sensitivityCalculation returns a valid `SensitivityCalculation` objec
 # Test variationRange -----------------------------------------------------
 
 test_that("sensitivityCalculation works with absolute values of `variationRange`", {
+  fixture <- sensFixture()
+  simulation <- fixture$simulation
+  results <- fixture$results
   variationRangeAbs <- list(
     -0.097 * variationRange,
     0.00025 * variationRange,
     1 * variationRange
   )
 
-  set.seed(123)
+  withr::local_seed(123)
   resultsAbs <- sensitivityCalculation(
     simulation = simulation,
     outputPaths = outputPaths,
@@ -433,6 +512,7 @@ test_that("sensitivityCalculation works with absolute values of `variationRange`
 # Check PK tidy data ------------------------------------------------------
 
 test_that("sensitivityCalculation returns correct PK parameters dataframe", {
+  results <- sensFixture()$results
   expect_equal(
     colnames(results$pkData),
     c(
@@ -452,18 +532,17 @@ test_that("sensitivityCalculation returns correct PK parameters dataframe", {
 })
 
 test_that("sensitivityCalculation PK parameters tidy dataframe is as expected", {
+  .localSnapshotOptions()
+  results <- sensFixture()$results
   # base scaling should be present
   expect_equal(unique(results$pkData$ParameterFactor), c(0.1, 1, 2, 20))
 
-  set.seed(123)
   df1_pk <- summarizer(results$pkData, parameterPaths[1])
   expect_snapshot(df1_pk)
 
-  set.seed(123)
   df2_pk <- summarizer(results$pkData, parameterPaths[2])
   expect_snapshot(df2_pk)
 
-  set.seed(123)
   df3_pk <- summarizer(results$pkData, parameterPaths[3])
   expect_snapshot(df3_pk)
 })
@@ -471,6 +550,8 @@ test_that("sensitivityCalculation PK parameters tidy dataframe is as expected", 
 # Test customOutputFunctions ----------------------------------------------
 
 test_that("sensitivityCalculation returns expected results with single custom function", {
+  .localSnapshotOptions()
+  simulation <- sensFixture()$simulation
   # list with custom function using only `y` parameter
   customFunctions <- list("minmax" = function(y) min(y[y != 0]) / max(y))
   customFunctionsLambda <- list("minmax" = \(y) min(y[y != 0]) / max(y))
@@ -501,6 +582,8 @@ test_that("sensitivityCalculation returns expected results with single custom fu
 })
 
 test_that("sensitivityCalculation returns expected results with multiple custom functions", {
+  .localSnapshotOptions()
+  simulation <- sensFixture()$simulation
   # List with multiple custom functions using `x` and `y` parameter
   customFunctions <- list(
     "minmax" = function(y) {
@@ -532,9 +615,10 @@ test_that("sensitivityCalculation returns expected results with multiple custom 
 # Test saving to xlsx file ------------------------------------------------
 
 test_that("sensitivityCalculation saves PK data to xlsx file", {
-  path <- "mydata.xlsx"
+  simulation <- sensFixture()$simulation
+  path <- withr::local_tempfile(fileext = ".xlsx")
 
-  set.seed(123)
+  withr::local_seed(123)
   results <- sensitivityCalculation(
     simulation = simulation,
     outputPaths = outputPaths,
@@ -544,14 +628,13 @@ test_that("sensitivityCalculation saves PK data to xlsx file", {
   )
 
   expect_true(file.exists(path))
-
-  on.exit(unlink(path))
 })
 
 test_that("sensitivityCalculation errors if file extension is incorrect", {
+  simulation <- sensFixture()$simulation
   path <- "mydata.csv"
 
-  set.seed(123)
+  withr::local_seed(123)
   expect_error(
     sensitivityCalculation(
       simulation = simulation,
@@ -628,7 +711,8 @@ pkDataWideColumns <- c(
 )
 
 test_that("sensitivityCalculation converts output to wide format as expected", {
-  set.seed(123)
+  simulation <- sensFixture()$simulation
+  withr::local_seed(123)
   results2 <- sensitivityCalculation(
     simulation = simulation,
     outputPaths = outputPaths,
@@ -643,6 +727,7 @@ test_that("sensitivityCalculation converts output to wide format as expected", {
 })
 
 test_that("sensitivityCalculation converts output to wide format as expected with `customOutputFunctions`", {
+  simulation <- sensFixture()$simulation
   customFunctions <- list(
     "minmax" = function(y) {
       max(y) / min(y[y != 0])
@@ -664,7 +749,7 @@ test_that("sensitivityCalculation converts output to wide format as expected wit
     "max_slope_Sensitivity"
   )
 
-  set.seed(123)
+  withr::local_seed(123)
   results2 <- sensitivityCalculation(
     simulation = simulation,
     outputPaths = outputPaths,
@@ -686,6 +771,7 @@ test_that("sensitivityCalculation converts output to wide format as expected wit
 # Test sensitivityCalculation when simulation fails -----------------------
 
 test_that("sensitivityCalculation handles simulation failure", {
+  simulation <- sensFixture()$simulation
   expect_warning(
     expect_warning(
       resultsSimFailure <- sensitivityCalculation(
@@ -724,40 +810,28 @@ test_that("sensitivityCalculation handles simulation failure", {
 
 # Multiple output paths ---------------------------------------------------
 
-simPath <- system.file("extdata", "Aciclovir.pkml", package = "ospsuite")
-simulation <- loadSimulation(simPath)
-outputPaths <- c(
-  "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)",
-  "Organism|Age",
-  "Organism|ArterialBlood|Plasma|Aciclovir"
-)
-parameterPaths <- c(
-  "Aciclovir|Lipophilicity",
-  "Events|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose",
-  "Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Glomerular Filtration-GFR-Aciclovir|GFR fraction"
-)
-variationRange <- c(0.1, 5, 10)
-
-resultsMultiple <- sensitivityCalculation(
-  simulation = simulation,
-  outputPaths = outputPaths,
-  parameterPaths = parameterPaths,
-  variationRange = variationRange
-)
-
 test_that("sensitivityCalculation extracts data for multiple output paths", {
+  fixture <- sensFixtureMultiple()
+  resultsMultiple <- fixture$resultsMultiple
+  outputPaths <- fixture$outputPaths
   expect_identical(nrow(resultsMultiple$pkData), 108L)
   expect_equal(unique(resultsMultiple$pkData$OutputPath), outputPaths)
 })
 
 test_that("sensitivityCalculation applies absolute `variationRange` for multiple paths", {
+  fixture <- sensFixtureMultiple()
+  simulation <- fixture$simulation
+  outputPaths <- fixture$outputPaths
+  parameterPaths <- fixture$parameterPaths
+  variationRange <- fixture$variationRange
+  resultsMultiple <- fixture$resultsMultiple
   variationRangeAbs <- list(
     -0.097 * variationRange,
     0.00025 * variationRange,
     1 * variationRange
   )
 
-  set.seed(123)
+  withr::local_seed(123)
   resultsMultipleAbs <- sensitivityCalculation(
     simulation = simulation,
     outputPaths = outputPaths,
@@ -770,6 +844,11 @@ test_that("sensitivityCalculation applies absolute `variationRange` for multiple
 })
 
 test_that("sensitivityCalculation applies custom PK function with multiple output paths", {
+  .localSnapshotOptions()
+  fixture <- sensFixtureMultiple()
+  simulation <- fixture$simulation
+  outputPaths <- fixture$outputPaths
+  parameterPaths <- fixture$parameterPaths
   # list with custom function using only `y` parameter
   customFunctions <- list("minmax" = function(y) min(y[y != 0]) / max(y))
 
@@ -789,9 +868,13 @@ test_that("sensitivityCalculation applies custom PK function with multiple outpu
 })
 
 test_that("sensitivityCalculation saves PK data to xlsx for multiple output paths", {
-  path <- "mydata.xlsx"
+  fixture <- sensFixtureMultiple()
+  simulation <- fixture$simulation
+  outputPaths <- fixture$outputPaths
+  parameterPaths <- fixture$parameterPaths
+  path <- withr::local_tempfile(fileext = ".xlsx")
 
-  set.seed(123)
+  withr::local_seed(123)
   resultsMultiple <- sensitivityCalculation(
     simulation = simulation,
     outputPaths = outputPaths,
@@ -801,11 +884,14 @@ test_that("sensitivityCalculation saves PK data to xlsx for multiple output path
   )
 
   expect_true(file.exists(path))
-
-  on.exit(unlink(path))
 })
 
 test_that("sensitivityCalculation handles simulation failure for multiple output paths", {
+  fixture <- sensFixtureMultiple()
+  simulation <- fixture$simulation
+  outputPaths <- fixture$outputPaths
+  parameterPaths <- fixture$parameterPaths
+  resultsMultiple <- fixture$resultsMultiple
   expect_warning(
     expect_warning(
       resultsMultipleSimFailure <- sensitivityCalculation(
@@ -821,6 +907,3 @@ test_that("sensitivityCalculation handles simulation failure for multiple output
   expect_identical(nrow(resultsMultipleSimFailure$pkData), 99L)
   expect_equal(unique(resultsMultiple$pkData$OutputPath), outputPaths)
 })
-
-# Restore old options
-on.exit(options(old_opts), add = TRUE)

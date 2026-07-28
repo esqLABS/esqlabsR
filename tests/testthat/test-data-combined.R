@@ -1,155 +1,111 @@
-withr::local_options(lifecycle_verbosity = "quiet")
+# .validateDataCombined() tests ----
+#
+# The validator is static and spec-only: it reads the nested `simulated` /
+# `observed` entry lists of the `dataCombined` section and reports missing
+# required fields. It does not resolve references against scenario results or
+# observed data (that is runtime work done in createDataCombined()) nor against
+# other sections (the crossReferences phase owns that).
 
-# Define which scenarios to run
-scenarioNames <- c("TestScenario", "PopulationScenario")
-outputPaths <- "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
-
-# Run scenarios from the JSON-based project
-.testProjectForDC <- testProject()
-simulatedScenarios <- runScenarios(
-  .testProjectForDC,
-  scenarioNames = scenarioNames
-)
-
-observedData <- loadObservedData(.testProjectForDC)
-
-# Create a proper data frame with paths for all entries
-dataCombinedDf <- data.frame(list(
-  "DataCombinedName" = c(
-    "AciclovirPVB",
-    "AciclovirPVB",
-    "DC_missingPath",
-    "DC_missingPath"
-  ),
-  "dataType" = c("simulated", "observed", "simulated", "observed"),
-  "label" = c(
-    "Aciclovir simulated",
-    "Aciclovir observed",
-    "Aciclovir simulated",
-    "Aciclovir observed"
-  ),
-  "scenario" = c(scenarioNames[1], NA, scenarioNames[1], NA),
-  "path" = c(outputPaths, NA, outputPaths, NA),
-  "dataSet" = c(NA, names(observedData), NA, names(observedData)),
-  "group" = c(
-    "Aciclovir PVB",
-    "Aciclovir PVB",
-    "Aciclovir PVB",
-    "Aciclovir PVB"
-  ),
-  "xOffsets" = c(NA, NA, NA, NA),
-  "xOffsetsUnits" = c(NA, NA, NA, NA),
-  "yOffsets" = c(NA, NA, NA, NA),
-  "yOffsetsUnits" = c(NA, NA, NA, NA),
-  "xScaleFactors" = c(NA, NA, NA, NA),
-  "yScaleFactors" = c(NA, NA, NA, NA)
-))
-
-test_that("It returns correct names of data combined when a path is not specified for one simulated scenario", {
-  # Create a specific data frame with a missing path for testing
-  df_missing_path <- dataCombinedDf
-  df_missing_path$path[3] <- NA
-
-  expect_error(
-    .validateDataCombinedFromExcel(df_missing_path, list(), observedData),
-    "No output path is defined"
-  )
+test_that(".validateDataCombined is empty-section-friendly", {
+  expect_false(.validateDataCombined(NULL)$hasCriticalErrors())
+  expect_false(.validateDataCombined(list())$hasCriticalErrors())
 })
 
-test_that("It errors when label is missing", {
-  df_missing_label <- dataCombinedDf
-  df_missing_label$label[1] <- NA
-  expect_error(
-    .validateDataCombinedFromExcel(df_missing_label, list(), observedData),
-    regexp = messages$missingLabel()
+test_that(".validateDataCombined accepts a well-formed section", {
+  dc <- list(
+    DC = list(
+      simulated = list(list(
+        label = "sim",
+        scenario = "s",
+        path = "Organism|A|B"
+      )),
+      observed = list(list(label = "obs", dataSet = "d"))
+    )
   )
+  expect_false(.validateDataCombined(dc)$hasCriticalErrors())
 })
 
-test_that("It errors when dataType is missing", {
-  df_missing_dataType <- dataCombinedDf
-  df_missing_dataType$dataType[1] <- NA
-  expect_error(
-    .validateDataCombinedFromExcel(df_missing_dataType, list(), observedData),
-    regexp = messages$missingDataType()
-  )
+test_that(".validateDataCombined flags a simulated entry missing label", {
+  dc <- list(DC = list(simulated = list(list(scenario = "s", path = "p"))))
+  result <- .validateDataCombined(dc)
+  expect_true(result$hasCriticalErrors())
 })
 
-test_that("It errors when scenario is missing for simulated dataType", {
-  df_missing_scenario <- dataCombinedDf
-  df_missing_scenario$scenario[1] <- NA
-  expect_error(
-    .validateDataCombinedFromExcel(df_missing_scenario, list(), observedData),
-    regexp = messages$missingScenarioName()
-  )
+test_that(".validateDataCombined flags a simulated entry missing scenario", {
+  dc <- list(DC = list(simulated = list(list(label = "l", path = "p"))))
+  expect_true(.validateDataCombined(dc)$hasCriticalErrors())
 })
 
-test_that("It errors when dataSet is missing for observed dataType", {
-  df_missing_dataSet <- dataCombinedDf
-  df_missing_dataSet$dataSet[2] <- NA
-  expect_error(
-    .validateDataCombinedFromExcel(df_missing_dataSet, list(), observedData),
-    "No data set is defined"
-  )
+test_that(".validateDataCombined flags a simulated entry missing path", {
+  dc <- list(DC = list(simulated = list(list(label = "l", scenario = "s"))))
+  expect_true(.validateDataCombined(dc)$hasCriticalErrors())
 })
 
-test_that("It warns when scenario is not found in simulatedScenarios", {
-  df_invalid_scenario <- dataCombinedDf
-  df_invalid_scenario$scenario[1] <- "NonExistentScenario"
+test_that(".validateDataCombined flags an observed entry missing dataSet", {
+  dc <- list(DC = list(observed = list(list(label = "l"))))
+  expect_true(.validateDataCombined(dc)$hasCriticalErrors())
+})
 
-  # First test with stopIfNotFound = TRUE
-  expect_error(
-    .validateDataCombinedFromExcel(
-      df_invalid_scenario,
-      list(),
-      observedData,
-      stopIfNotFound = TRUE
+test_that(".validateDataCombined treats an empty string as missing", {
+  dc <- list(
+    DC = list(
+      simulated = list(list(
+        label = "",
+        scenario = "s",
+        path = "p"
+      ))
+    )
+  )
+  expect_true(.validateDataCombined(dc)$hasCriticalErrors())
+})
+
+test_that(".validateDataCombined flags duplicate dataCombined ids", {
+  # A duplicate key is only reachable by constructing the list by hand; the
+  # authoring API canonicalizes and de-duplicates ids.
+  dc <- stats::setNames(
+    list(
+      list(simulated = list(list(label = "l", scenario = "s", path = "p"))),
+      list(simulated = list(list(label = "l", scenario = "s", path = "p")))
     ),
-    "The following scenarios are not present"
+    c("DC", "DC")
   )
-
-  # Then test with stopIfNotFound = FALSE
-  expect_warning(
-    .validateDataCombinedFromExcel(
-      df_invalid_scenario,
-      list(),
-      observedData,
-      stopIfNotFound = FALSE
-    ),
-    "The following scenarios are not present"
-  )
+  expect_true(.validateDataCombined(dc)$hasCriticalErrors())
 })
 
-test_that("It warns when dataSet is not found in observedData", {
-  # Create mock simulatedScenarios to avoid the scenario not found error
-  mock_scenario <- list()
-  mock_scenario[[scenarioNames[1]]] <- list(
-    results = list(allQuantityPaths = outputPaths)
+test_that("validateProject runs the dataCombined adapter", {
+  project <- .fakeProject(
+    dataCombined = list(
+      Bad = list(simulated = list(list(scenario = "s", path = "p")))
+    )
   )
-
-  df_invalid_dataSet <- dataCombinedDf
-  df_invalid_dataSet$dataSet[2] <- "NonExistentDataSet"
-
-  # First test with stopIfNotFound = TRUE
-  expect_error(
-    .validateDataCombinedFromExcel(
-      df_invalid_dataSet,
-      mock_scenario,
-      list(),
-      stopIfNotFound = TRUE
-    ),
-    regexp = "The following data sets are not present in `observedData`"
+  results <- .runProjectValidation(
+    project,
+    sections = "dataCombined"
   )
+  expect_true(results$dataCombined$hasCriticalErrors())
+})
 
-  # Then test with stopIfNotFound = FALSE
-  expect_warning(
-    .validateDataCombinedFromExcel(
-      df_invalid_dataSet,
-      mock_scenario,
-      list(),
-      stopIfNotFound = FALSE
-    ),
-    regexp = "The following data sets are not present in `observedData`"
+test_that(".validateDataCombined flags an empty observed dataSet reference", {
+  project <- .fakeProject()
+  addDataCombined(
+    project,
+    id = "dc1",
+    simulated = list(list(
+      label = "sim",
+      scenario = "testscenario",
+      path = "Organism|A"
+    ))
   )
+  # Inject an empty observed dataSet directly, mimicking a hand-edited
+  # Project.json that bypassed the addDataCombined() guard. The section
+  # accessor is read-only; an in-memory project writes through .setSection()
+  # without validating, so the malformed record survives for the validator.
+  dc <- .getSection(project, "dataCombined")
+  dc$dc1$observed <- list(list(label = "obs", dataSet = ""))
+  .setSection(project, "dataCombined", dc)
+  result <- .dataCombinedValidatorAdapter(project)
+  msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
+  expect_match(msgs, "dataSet", all = FALSE)
 })
 
 
@@ -168,20 +124,30 @@ test_that("createDataCombined errors when requested name not in project", {
   project <- testProject()
   # TestProject has plots = NULL, so any requested name is missing
   expect_error(
-    createDataCombined(project, dataCombinedNames = "Nonexistent"),
+    createDataCombined(project, dataCombined = "Nonexistent"),
     "The following DataCombined names are not defined"
+  )
+})
+
+test_that("createDataCombined errors when a requested plotGrids name is unknown", {
+  project <- exampleProject()
+  # An unknown plot grid name must abort rather than being silently dropped
+  # (the intersection would otherwise yield an incomplete or empty result).
+  expect_snapshot(
+    error = TRUE,
+    createDataCombined(project, plotGrids = "DoesNotExist")
   )
 })
 
 test_that("createDataCombined builds DataCombined for Example project", {
   project <- exampleProject()
-  simulated <- runScenarios(project, scenarioNames = "Aciclovir_iv")
-  dcName <- names(project$plots$dataCombined)[[1]]
+  simulated <- runScenarios(project, scenarios = "aciclovir_iv")
+  dcName <- names(project$definitions$dataCombined)[[1]]
 
   result <- createDataCombined(
     project,
-    dataCombinedNames = dcName,
-    simulatedScenarios = simulated
+    dataCombined = dcName,
+    scenarioResults = simulated
   )
 
   expect_named(result, dcName)
@@ -190,25 +156,240 @@ test_that("createDataCombined builds DataCombined for Example project", {
   expect_setequal(unique(df$dataType), c("simulated", "observed"))
 })
 
+test_that("createDataCombined aborts cleanly on a dataCombined missing a required field", {
+  project <- .fakeProject()
+  addDataCombined(
+    project,
+    id = "dc1",
+    simulated = list(list(
+      label = "sim",
+      scenario = "testscenario",
+      path = "Organism|A"
+    ))
+  )
+  # Corrupt the stored entry (dropping its scenario), mimicking a hand-edited
+  # definition file that bypassed the addDataCombined() write-gate.
+  dc <- .getSection(project, "dataCombined")
+  dc$dc1$simulated[[1]]$scenario <- NULL
+  .setSection(project, "dataCombined", dc)
+
+  # The validate pre-flight must abort with a clean message, not crash mid-build
+  # on the NULL field.
+  expect_error(
+    createDataCombined(project, dataCombined = "dc1"),
+    "scenario"
+  )
+})
+
+test_that("createDataCombined errors when dataCombined is not a string", {
+  project <- testProject()
+  # The leading call-context in the validator message is context-dependent,
+  # so match only the stable type-mismatch portion.
+  expect_error(
+    createDataCombined(project, dataCombined = 123),
+    "is of type <numeric>, but expected <character>"
+  )
+})
+
+test_that("createDataCombined resolves an output-path id in a simulated path", {
+  project <- testProject()
+  # `aciclovir_pvb` is an outputPaths id; passing it as `path` must resolve to
+  # the literal model path when the DataCombined is built.
+  addDataCombined(
+    project,
+    "dc_byid",
+    simulated = list(list(
+      label = "sim",
+      scenario = "testscenario",
+      path = "aciclovir_pvb",
+      group = "g"
+    ))
+  )
+  simulated <- runScenarios(project, scenarios = "testscenario")
+
+  result <- createDataCombined(
+    project,
+    dataCombined = "dc_byid",
+    scenarioResults = simulated
+  )
+
+  # The id is stored verbatim in the spec, not expanded to the literal path.
+  storedPath <- project$definitions$dataCombined$dc_byid$simulated[[1]]$path
+  expect_identical(storedPath, "aciclovir_pvb")
+  # The built DataCombined nonetheless carries the resolved simulated data.
+  df <- result$dc_byid$toDataFrame()
+  expect_true("simulated" %in% df$dataType)
+})
+
+test_that("createDataCombined applies declared offsets and scale factors", {
+  project <- testProject()
+  path <- project$definitions$outputPaths$aciclovir_pvb
+  addDataCombined(
+    project,
+    "dc_plain",
+    simulated = list(list(
+      label = "sim",
+      scenario = "testscenario",
+      path = path,
+      group = "g"
+    ))
+  )
+  addDataCombined(
+    project,
+    "dc_offset",
+    simulated = list(list(
+      label = "sim",
+      scenario = "testscenario",
+      path = path,
+      group = "g",
+      xOffsets = 1,
+      xOffsetsUnits = "h",
+      yScaleFactors = 2
+    ))
+  )
+  simulated <- runScenarios(project, scenarios = "testscenario")
+
+  result <- createDataCombined(
+    project,
+    dataCombined = c("dc_plain", "dc_offset"),
+    scenarioResults = simulated
+  )
+  plain <- result$dc_plain$toDataFrame()
+  offset <- result$dc_offset$toDataFrame()
+
+  # 1 h x-offset shifts time by 60 (base unit minutes); yScaleFactor doubles y.
+  expect_equal(min(offset$xValues), min(plain$xValues) + 60)
+  expect_equal(offset$yValues, plain$yValues * 2)
+})
+
+test_that("createDataCombined(stopIfNotFound = FALSE) drops a wrong-path entry with offsets", {
+  project <- testProject()
+  addDataCombined(
+    project,
+    "dc_wrong",
+    simulated = list(list(
+      label = "sim",
+      scenario = "testscenario",
+      path = "Organism|NotAReal|Path",
+      group = "g",
+      xOffsets = 1,
+      xOffsetsUnits = "h"
+    ))
+  )
+  simulated <- runScenarios(project, scenarios = "testscenario")
+
+  expect_warning(
+    result <- createDataCombined(
+      project,
+      dataCombined = "dc_wrong",
+      scenarioResults = simulated,
+      stopIfNotFound = FALSE
+    ),
+    "has not been simulated"
+  )
+  expect_s3_class(result$dc_wrong, "DataCombined")
+  # The skipped row must not reach the transform block.
+  expect_null(result$dc_wrong$toDataFrame())
+})
+
+test_that("createDataCombined(stopIfNotFound = FALSE) drops a missing-dataSet observed entry with offsets", {
+  project <- testProject()
+  addDataCombined(
+    project,
+    "dc_obs_wrong",
+    observed = list(list(
+      label = "obs",
+      dataSet = "NotARealDataSet",
+      group = "g",
+      xOffsets = 1,
+      xOffsetsUnits = "h"
+    ))
+  )
+  simulated <- runScenarios(project, scenarios = "testscenario")
+
+  # The missing dataSet is dropped (warn), and its label must not reach the
+  # transform step, which would otherwise convert offsets against an absent row.
+  expect_warning(
+    result <- createDataCombined(
+      project,
+      dataCombined = "dc_obs_wrong",
+      scenarioResults = simulated,
+      stopIfNotFound = FALSE
+    ),
+    "not present in"
+  )
+  expect_s3_class(result$dc_obs_wrong, "DataCombined")
+  expect_null(result$dc_obs_wrong$toDataFrame())
+})
+
+test_that("createDataCombined reports a scenario absent from results distinctly", {
+  project <- testProject()
+  path <- project$definitions$outputPaths$aciclovir_pvb
+  addDataCombined(
+    project,
+    "dc_missing_scenario",
+    simulated = list(list(
+      label = "sim",
+      scenario = "testscenario",
+      path = path,
+      group = "g"
+    ))
+  )
+  # The scenario was never run, so it is absent from scenarioResults: the error
+  # must name the scenario reference, not blame the output path.
+  expect_error(
+    createDataCombined(
+      project,
+      dataCombined = "dc_missing_scenario",
+      scenarioResults = list()
+    ),
+    "not present in"
+  )
+})
+
+test_that("createDataCombined reports a failed scenario run distinctly", {
+  project <- testProject()
+  path <- project$definitions$outputPaths$aciclovir_pvb
+  addDataCombined(
+    project,
+    "dc_failed",
+    simulated = list(list(
+      label = "sim",
+      scenario = "testscenario",
+      path = path,
+      group = "g"
+    ))
+  )
+  # A failed run is present in scenarioResults but carries results = NULL. The
+  # key must match the scenario casing so the lookup resolves and the code
+  # reaches the results = NULL failed-run branch (not the missing-scenario one).
+  failedRun <- list(
+    testscenario = list(
+      simulation = NULL,
+      results = NULL,
+      outputValues = NULL,
+      population = NULL
+    )
+  )
+
+  expect_snapshot(
+    error = TRUE,
+    createDataCombined(
+      project,
+      dataCombined = "dc_failed",
+      scenarioResults = failedRun
+    )
+  )
+})
+
 test_that("createDataCombined returns empty DataCombined when spec has no entries", {
-  project <- Project$new()
-  project$schemaVersion <- "2.0"
-  project$scenarios <- list()
-  project$modelParameterSets <- list()
-  project$individualParameterSets <- list()
-  project$applicationParameterSets <- list()
-  project$individuals <- list()
-  project$populations <- list()
-  project$applications <- list()
-  project$observedData <- list()
-  project$outputPaths <- list()
-  project$plots <- list(
+  project <- .fakeProject(
     dataCombined = list(
       EmptyDC = list(name = "EmptyDC", simulated = list(), observed = list())
     )
   )
 
-  result <- createDataCombined(project, dataCombinedNames = "EmptyDC")
+  result <- createDataCombined(project, dataCombined = "EmptyDC")
 
   expect_named(result, "EmptyDC")
   expect_s3_class(result$EmptyDC, "DataCombined")

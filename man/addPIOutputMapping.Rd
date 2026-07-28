@@ -6,9 +6,9 @@
 \usage{
 addPIOutputMapping(
   project,
-  taskId,
-  outputPathId,
-  observedDataId,
+  task,
+  outputPath,
+  observedData,
   scenarios,
   scaling = NULL,
   xOffset = 0,
@@ -16,18 +16,20 @@ addPIOutputMapping(
   xFactor = 1,
   yFactor = 1,
   weight = NULL,
-  id = NULL
+  id = NULL,
+  overwrite = FALSE
 )
 }
 \arguments{
 \item{project}{A \code{Project} object.}
 
-\item{taskId}{Character scalar. Existing PI task id.}
+\item{task}{Character scalar. Existing PI task id.}
 
-\item{outputPathId}{Character scalar. Must exist in
-\code{names(project$outputPaths)}.}
+\item{outputPath}{Character scalar identifying a defined output path:
+either its id (a key in \code{names(project$definitions$outputPaths)}) or the
+literal model path it maps to. Both resolve to the same output path.}
 
-\item{observedDataId}{Character scalar. Name of the observed dataset.}
+\item{observedData}{Character scalar. Name of the observed dataset.}
 
 \item{scenarios}{Character vector of scenario names.}
 
@@ -35,7 +37,12 @@ addPIOutputMapping(
 per-mapping fitting metadata. Defaults match \code{PIOutputMapping()}.}
 
 \item{id}{Optional character scalar; auto-generated as
-\verb{<taskId>_mapping_<N>} when absent.}
+\verb{<task>_mapping_<N>} when absent.}
+
+\item{overwrite}{Logical scalar. When \code{FALSE} (default), an explicit \code{id}
+that already exists in the task aborts. When \code{TRUE}, the existing mapping
+is replaced (last-write-wins). Ignored for an auto-generated \code{id}, which
+never collides.}
 }
 \value{
 The \code{project} object, invisibly.
@@ -45,6 +52,9 @@ Add an output mapping to an existing PI task
 }
 \seealso{
 Other parameterIdentification:
+\code{\link[=PIOutputMapping]{PIOutputMapping()}},
+\code{\link[=PIParameter]{PIParameter()}},
+\code{\link[=PITask]{PITask()}},
 \code{\link[=addPIParameter]{addPIParameter()}},
 \code{\link[=addPITask]{addPITask()}},
 \code{\link[=removePIOutputMapping]{removePIOutputMapping()}},

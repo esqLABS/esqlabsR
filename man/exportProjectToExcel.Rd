@@ -2,16 +2,13 @@
 % Please edit documentation in R/project-excel.R
 \name{exportProjectToExcel}
 \alias{exportProjectToExcel}
-\alias{restoreProjectConfiguration}
 \title{Export a Project to Excel files}
 \usage{
-exportProjectToExcel(project, outputDir = NULL, silent = FALSE)
-
-restoreProjectConfiguration(
-  jsonPath = "Project.json",
+exportProjectToExcel(
+  project,
   outputDir = NULL,
-  silent = FALSE,
-  ...
+  overwrite = FALSE,
+  silent = FALSE
 )
 }
 \arguments{
@@ -20,13 +17,15 @@ restoreProjectConfiguration(
 \item{outputDir}{Directory where the Excel files will be created. Defaults
 to the directory of the source JSON file.}
 
+\item{overwrite}{Logical. Guards against silently overwriting existing Excel
+workbooks. With \code{overwrite = FALSE} (default), the export aborts when
+\code{Project.xlsx} or any \verb{Configurations/} workbook already exists in
+\code{outputDir}, because the export replaces each workbook wholesale and would
+discard any hand-edits it carries. Pass \code{overwrite = TRUE} to replace the
+existing workbooks.}
+
 \item{silent}{Logical. If \code{TRUE}, suppresses informational messages.
 Defaults to \code{FALSE}.}
-
-\item{jsonPath}{Path to the JSON configuration file. Defaults to
-\code{"Project.json"}.}
-
-\item{...}{Additional arguments (unused).}
 }
 \value{
 Invisibly returns the path to the created
@@ -37,3 +36,16 @@ Writes Excel configuration files from a \code{Project}
 object (typically loaded from JSON). This is the reverse of
 \code{importProjectFromExcel()}.
 }
+\seealso{
+Other projectPersistence:
+\code{\link[=exampleProjectPath]{exampleProjectPath()}},
+\code{\link[=importProjectFromExcel]{importProjectFromExcel()}},
+\code{\link[=initProject]{initProject()}},
+\code{\link[=loadProject]{loadProject()}},
+\code{\link[=projectStatus]{projectStatus()}},
+\code{\link[=reloadProject]{reloadProject()}},
+\code{\link[=restoreProject]{restoreProject()}},
+\code{\link[=saveProject]{saveProject()}},
+\code{\link[=snapshotProject]{snapshotProject()}}
+}
+\concept{projectPersistence}

@@ -4,19 +4,29 @@
 \alias{loadScenarioResults}
 \title{Load simulated scenarios from csv and pkml.}
 \usage{
-loadScenarioResults(scenarioNames, resultsFolder)
+loadScenarioResults(scenarios, resultsFolder, project = NULL)
 }
 \arguments{
-\item{scenarioNames}{Names of simulated scenarios}
+\item{scenarios}{Names of simulated scenarios}
 
 \item{resultsFolder}{Path to the folder where simulation results as csv and
 the corresponding simulations as pkml are located.}
+
+\item{project}{Optional \code{Project} object (loaded with \code{loadProject()}) whose
+scenarios declare the output paths that were run. When supplied, the reloaded
+\code{outputValues} are restricted to each scenario's declared output paths, so
+the reloaded column set matches what \code{runScenarios()} produced. When \code{NULL}
+(default), all output paths recorded in the csv are extracted.}
 }
 \value{
-A named list, where the names are scenario names, and the values are
-lists with the entries \code{simulation} being the initialized \code{Simulation} object with applied parameters,
-\code{results} being \code{SimulatioResults} object produced by running the simulation,
-and \code{outputValues} the output values of the \code{SimulationResults}.
+A named list keyed by scenario name. Each entry mirrors the record
+produced by \code{runScenarios()}: \code{simulation} (the initialized \code{Simulation}
+object with applied parameters), \code{results} (the \code{SimulationResults} object
+reloaded from csv), \code{outputValues} (the output values extracted for the
+scenario's declared output paths when \code{project} is supplied, otherwise for
+all recorded output paths), and \code{population} (the \code{Population} reloaded from
+\verb{<scenario>_population.csv} for population scenarios, or \code{NULL} for individual
+scenarios).
 }
 \description{
 Load simulated scenarios from csv and pkml.
@@ -33,10 +43,11 @@ project <- loadProject("Project.json")
 simulatedScenariosResults <- runScenarios(project)
 resultsFolder <- saveScenarioResults(simulatedScenariosResults, project)
 
-# Now load the results
+# Now load the results, restricting to each scenario's declared output paths
 simulatedScenariosResults <- loadScenarioResults(
-  scenarioNames = names(project$scenarios),
-  resultsFolder = resultsFolder
+  scenarios = names(project$definitions$scenarios),
+  resultsFolder = resultsFolder,
+  project = project
 )
 }
 }

@@ -2,12 +2,9 @@
 % Please edit documentation in R/project-lifecycle.R
 \name{exampleProjectPath}
 \alias{exampleProjectPath}
-\alias{exampleProjectConfigurationPath}
 \title{Get the path to the example Project.json}
 \usage{
 exampleProjectPath()
-
-exampleProjectConfigurationPath()
 }
 \value{
 A string representing the path to the example
@@ -19,3 +16,16 @@ Get the path to the example Project.json
 \examples{
 exampleProjectPath()
 }
+\seealso{
+Other projectPersistence:
+\code{\link[=exportProjectToExcel]{exportProjectToExcel()}},
+\code{\link[=importProjectFromExcel]{importProjectFromExcel()}},
+\code{\link[=initProject]{initProject()}},
+\code{\link[=loadProject]{loadProject()}},
+\code{\link[=projectStatus]{projectStatus()}},
+\code{\link[=reloadProject]{reloadProject()}},
+\code{\link[=restoreProject]{restoreProject()}},
+\code{\link[=saveProject]{saveProject()}},
+\code{\link[=snapshotProject]{snapshotProject()}}
+}
+\concept{projectPersistence}

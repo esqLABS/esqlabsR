@@ -2,12 +2,9 @@
 % Please edit documentation in R/project-lifecycle.R
 \name{loadProject}
 \alias{loadProject}
-\alias{createProjectConfiguration}
 \title{Load a project from a JSON configuration file}
 \usage{
 loadProject(path = "Project.json")
-
-createProjectConfiguration(path = "Project.json")
 }
 \arguments{
 \item{path}{Path to the \code{Project.json} file. Defaults to
@@ -20,15 +17,53 @@ Object of type \code{Project}
 Load a \code{Project} from a JSON file. This is the
 primary entry point for working with esqlabsR projects.
 
-On load the project is checked for the most common cross-reference
-problems (e.g. a scenario referring to an individual or population
-that is not defined). Any such issues are reported via \code{\link[cli:cli_warn]{cli::cli_warn()}}
-so that obvious configuration mistakes surface immediately, but loading
-still succeeds. Use \code{\link[=validateProject]{validateProject()}} for a full report.
+On load, the project is checked for the most common reference mistakes
+(for example a scenario referring to an individual or population that is
+not defined). Such issues are reported as warnings so that obvious
+configuration mistakes surface immediately, but loading still succeeds.
+Use \code{\link[=validateProject]{validateProject()}} for a full report.
 }
+\section{Editing a loaded project}{
+
+Changes you make to a loaded project — with \code{addScenario()},
+\code{setIndividual()}, \code{removeParameterSet()}, \code{addOutputPath()}, and the
+other add/set/remove functions — live only in your R session until you
+save them; the files on disk stay as they are. Reading a section
+directly (for example \code{scenarios} definitions) never changes the project: a
+definition changes only through the add/set/remove functions.
+
+Write your changes to the project files with \code{\link[=saveProject]{saveProject()}}. Discard
+unsaved changes and go back to what is saved on disk with
+\code{\link[=reloadProject]{reloadProject()}}. Save the current state of the whole project to a
+single file you can archive or share with \code{\link[=snapshotProject]{snapshotProject()}}, and
+recreate a project folder from such a file (or roll an existing one
+back) with \code{\link[=restoreProject]{restoreProject()}}. Check for unsaved changes and outdated
+Excel files with \code{\link[=projectStatus]{projectStatus()}}.
+}
+
 \examples{
 \dontrun{
 project <- loadProject("Project.json")
 results <- runScenarios(project)
+
+# Edits stay in memory until you save.
+addOutputPath(project, "x", "Organism|A|Concentration in container")
+saveProject(project)
 }
 }
+\seealso{
+\code{\link[=saveProject]{saveProject()}}, \code{\link[=reloadProject]{reloadProject()}}, \code{\link[=snapshotProject]{snapshotProject()}},
+\code{\link[=restoreProject]{restoreProject()}}, \code{\link[=projectStatus]{projectStatus()}}.
+
+Other projectPersistence:
+\code{\link[=exampleProjectPath]{exampleProjectPath()}},
+\code{\link[=exportProjectToExcel]{exportProjectToExcel()}},
+\code{\link[=importProjectFromExcel]{importProjectFromExcel()}},
+\code{\link[=initProject]{initProject()}},
+\code{\link[=projectStatus]{projectStatus()}},
+\code{\link[=reloadProject]{reloadProject()}},
+\code{\link[=restoreProject]{restoreProject()}},
+\code{\link[=saveProject]{saveProject()}},
+\code{\link[=snapshotProject]{snapshotProject()}}
+}
+\concept{projectPersistence}

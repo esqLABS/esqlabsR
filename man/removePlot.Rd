@@ -2,22 +2,23 @@
 % Please edit documentation in R/plots.R
 \name{removePlot}
 \alias{removePlot}
-\title{Remove a plot configuration from a Project}
+\title{Remove one or more plot configurations from a Project}
 \usage{
-removePlot(project, plotID)
+removePlot(project, id)
 }
 \arguments{
 \item{project}{A \code{Project} object.}
 
-\item{plotID}{Character scalar.}
+\item{id}{Character vector of plot ids. Each is canonicalized the same way
+\code{\link[=addPlot]{addPlot()}} canonicalizes it.}
 }
 \value{
 The \code{project} object, invisibly.
 }
 \description{
-Drop the row with matching \code{plotID}. Warns (no-op) if \code{plotID} is
-not found, and warns when the plot is referenced by any \code{plotGrids}
-entry.
+Drop the entries with matching \code{plotId}s. Warns (and skips) any \code{id} not
+found, and warns when a removed plot is still referenced by any \code{plotGrids}
+entry. All removals are written through in a single pass.
 }
 \seealso{
 Other plots:

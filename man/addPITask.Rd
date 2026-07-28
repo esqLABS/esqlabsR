@@ -10,7 +10,8 @@ addPITask(
   scenarios,
   parameters,
   outputMappings,
-  configuration = list()
+  configuration = list(),
+  overwrite = FALSE
 )
 }
 \arguments{
@@ -20,14 +21,22 @@ addPITask(
 existing task id.}
 
 \item{scenarios}{Character vector of scenario names. Each must exist
-in \code{names(project$scenarios)}.}
+in \code{names(project$definitions$scenarios)}.}
 
-\item{parameters}{Non-empty list of \code{PIParameter} records.}
+\item{parameters}{List of \code{PIParameter} records. May be empty (\code{list()})
+to create a task seeded later with \code{\link[=addPIParameter]{addPIParameter()}}.}
 
-\item{outputMappings}{Non-empty list of \code{PIOutputMapping} records.
-Each \code{outputPathId} must exist in \code{names(project$outputPaths)}.}
+\item{outputMappings}{List of \code{PIOutputMapping} records. May be empty
+(\code{list()}) to create a task seeded later with \code{\link[=addPIOutputMapping]{addPIOutputMapping()}}.
+Each \code{outputPath} must identify a defined output path, either by its id
+(a key in \code{names(project$definitions$outputPaths)}) or by its literal
+model path.}
 
-\item{configuration}{Named list. See PRD for the nested-block shape.}
+\item{configuration}{Named list of solver settings; see the \code{configuration}
+argument of \code{\link[=PITask]{PITask()}} for the supported keys.}
+
+\item{overwrite}{Logical scalar. When \code{FALSE} (default), an existing task id
+aborts. When \code{TRUE}, the existing task is replaced (last-write-wins).}
 }
 \value{
 The \code{project} object, invisibly.
@@ -37,6 +46,9 @@ Add a Parameter Identification task to a Project
 }
 \seealso{
 Other parameterIdentification:
+\code{\link[=PIOutputMapping]{PIOutputMapping()}},
+\code{\link[=PIParameter]{PIParameter()}},
+\code{\link[=PITask]{PITask()}},
 \code{\link[=addPIOutputMapping]{addPIOutputMapping()}},
 \code{\link[=addPIParameter]{addPIParameter()}},
 \code{\link[=removePIOutputMapping]{removePIOutputMapping()}},

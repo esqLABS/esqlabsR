@@ -7,8 +7,9 @@
 \usage{
 createPlots(
   project,
-  plotGridNames = NULL,
-  simulatedScenarios = NULL,
+  plotGrids = NULL,
+  plots = NULL,
+  scenarioResults = NULL,
   dataCombinedList = NULL,
   stopIfNotFound = TRUE,
   validate = TRUE
@@ -19,17 +20,24 @@ createPlotsFromExcel(...)
 \arguments{
 \item{project}{A \code{Project} (see \code{\link[=loadProject]{loadProject()}}).}
 
-\item{plotGridNames}{Names of plot grids to build. If \code{NULL} (default),
-all grids declared in \code{project$plots$plotGrids} are built.}
+\item{plotGrids}{Names of plot grids to build. If \code{NULL} (default) and
+\code{plots} is also \code{NULL}, all grids declared in \code{plotGrids} definitions are
+built.}
 
-\item{simulatedScenarios}{Named list of simulated scenarios from
-\code{\link[=runScenarios]{runScenarios()}}.}
+\item{plots}{Ids of standalone single plots to render directly (not laid
+out in a grid), each resolved against \code{plots} definitions. \code{NULL} (default)
+renders no standalone plots; standalone plots are opt-in.}
+
+\item{scenarioResults}{Named list of Scenario Results from
+\code{\link[=runScenarios]{runScenarios()}} (each entry has \code{simulation}, \code{results},
+\code{outputValues}, \code{population}). Not the OSPS \code{SimulationResults}.}
 
 \item{dataCombinedList}{Optional pre-built named list of \code{DataCombined}
 objects. If \code{NULL}, the function builds them via \code{\link[=createDataCombined]{createDataCombined()}}.}
 
 \item{stopIfNotFound}{If \code{TRUE}, errors when a referenced DataCombined or
-simulated/observed entry cannot be resolved.}
+simulated/observed entry cannot be resolved, or when a requested
+\code{plotGrids} / \code{plots} id is not defined in the project.}
 
 \item{validate}{Logical. If \code{TRUE} (default), runs the relevant
 section validators via \code{\link[=validateProject]{validateProject()}} before building the
@@ -38,12 +46,28 @@ to \code{FALSE} to skip the pre-flight check (e.g. when the caller has
 already validated the project).}
 }
 \value{
-A named list of plot-grid objects (one per \code{plotGridName}), or
-an empty list when the project has no plots section.
+A named list of \strong{plot grids} keyed by Plot Grid name: one entry
+per requested plot grid (keyed by its \code{plotGridId}), unioned with one entry
+per requested standalone plot (keyed by its \code{plotId}) when \code{plots} is
+given. Note the list holds plot grids, not standalone \code{Plot} objects,
+unless standalone plots were explicitly requested via \code{plots}. An empty
+list when the project has no plots to build.
 }
 \description{
-Reads \code{project$plots$plotConfiguration} and \code{project$plots$plotGrids}
-(both data.frames) to build the requested plot grids. DataCombined
-objects are resolved via \code{\link[=createDataCombined]{createDataCombined()}} internally unless
-supplied via \code{dataCombinedList}.
+\strong{Returns plot grids, not standalone plots.} By default \code{createPlots()}
+builds every plot grid declared in \code{plotGrids} definitions and no standalone
+plots, and hands back a \strong{named list of plot grids keyed by Plot Grid name}
+(the \code{plots} argument opts individual standalone plots into that same list).
+
+Reads \code{plots} definitions and \code{plotGrids} definitions (both keyed lists, one entry
+per plot / grid) to build the requested plot grids and, optionally,
+standalone single plots. DataCombined objects are resolved via
+\code{\link[=createDataCombined]{createDataCombined()}} internally unless supplied via \code{dataCombinedList}.
+
+With neither \code{plotGrids} nor \code{plots}, all plot grids declared in
+\code{plotGrids} definitions are built (the default). The two arguments are
+independent selectors: \code{plotGrids} selects plot grids (keyed by
+\code{plotGridId} in the result), \code{plots} selects standalone single plots
+(keyed by \code{plotId}). A \code{plotId} that is also part of a requested grid still
+gets its own standalone entry.
 }

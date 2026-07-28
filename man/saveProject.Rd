@@ -2,28 +2,65 @@
 % Please edit documentation in R/project-lifecycle.R
 \name{saveProject}
 \alias{saveProject}
-\title{Save a project to a JSON file}
+\title{Save the project to the disk}
 \usage{
-saveProject(project, path = NULL)
+saveProject(project)
 }
 \arguments{
-\item{project}{A \code{Project} object.}
-
-\item{path}{Path where the JSON file should be written. If \code{NULL} (default),
-uses \code{project$jsonPath} (the path the project was loaded from).}
+\item{project}{A \code{Project} loaded from disk with \code{\link[=loadProject]{loadProject()}} (or
+restored with \code{\link[=restoreProject]{restoreProject()}}). A project created directly with
+\code{Project$new()} has no folder on disk to save to; use \code{\link[=snapshotProject]{snapshotProject()}}
+to write it to a single file, or create a project folder first with
+\code{\link[=initProject]{initProject()}}.}
 }
 \value{
-Invisibly returns the path where the file was written.
+Invisibly, the \code{project}.
 }
 \description{
-Serializes the in-memory \code{Project} object back to JSON with
-round-trip fidelity. This allows persisting changes made programmatically
-(e.g., via \code{\link[=addScenario]{addScenario()}}).
+Write your changes to the project files on disk. Changes made
+in your R session (e.g. with \code{addScenario()}, \code{setIndividual()},
+\code{removeParameterSet()}) only live in memory until you call
+\code{saveProject()}.
+
+What happens when you save:
+\itemize{
+\item Only files with actual changes are re-written, so \verb{git diff} shows
+exactly the definitions you edited.
+\item If you removed something from the project (e.g. a scenario), its file
+in the \verb{definitions/} folder is deleted. Files outside the
+\verb{definitions/} folder are never touched.
+\item The \code{Project.json} file is updated.
+}
+
+If there is nothing to save, \code{saveProject()} simply reports that the
+project is already up to date. Saving repeatedly is always safe.
+
+Saving does not update the Excel files. If you also work with the Excel
+configuration files, refresh them with \code{\link[=exportProjectToExcel]{exportProjectToExcel()}}. Use
+\code{\link[=projectStatus]{projectStatus()}} to check whether project files on disk, the Excel files,
+and your R session are in sync.
 }
 \examples{
 \dontrun{
 project <- loadProject("Project.json")
-addScenario(project, "NewScenario", "Model.pkml", individualId = "Indiv1")
-saveProject(project)
+addOutputPath(project, "PVB", "Organism|PeripheralVenousBlood|...")
+saveProject(project) # tree now mirrors memory
+saveProject(project) # clean save: "Project is already up to date; ..."
 }
 }
+\seealso{
+\code{\link[=loadProject]{loadProject()}}, \code{\link[=reloadProject]{reloadProject()}}, \code{\link[=snapshotProject]{snapshotProject()}},
+\code{\link[=restoreProject]{restoreProject()}}, \code{\link[=projectStatus]{projectStatus()}}.
+
+Other projectPersistence:
+\code{\link[=exampleProjectPath]{exampleProjectPath()}},
+\code{\link[=exportProjectToExcel]{exportProjectToExcel()}},
+\code{\link[=importProjectFromExcel]{importProjectFromExcel()}},
+\code{\link[=initProject]{initProject()}},
+\code{\link[=loadProject]{loadProject()}},
+\code{\link[=projectStatus]{projectStatus()}},
+\code{\link[=reloadProject]{reloadProject()}},
+\code{\link[=restoreProject]{restoreProject()}},
+\code{\link[=snapshotProject]{snapshotProject()}}
+}
+\concept{projectPersistence}

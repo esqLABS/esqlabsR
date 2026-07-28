@@ -2,22 +2,41 @@
 % Please edit documentation in R/observed-data.R
 \name{removeObservedData}
 \alias{removeObservedData}
-\title{Remove observed data from a Project}
+\title{Remove one or more observed-data sources from a Project}
 \usage{
-removeObservedData(project, name)
+removeObservedData(project, id)
 }
 \arguments{
 \item{project}{A \code{Project} object.}
 
-\item{name}{DataSet name or config entry file basename.}
+\item{id}{Character vector of ids. An observed-data id is the declaration's
+\code{id} field, or, when it declares none, comes from the data source itself
+(the \code{DataSet} name of an unsaved programmatic source, or a file basename
+for a file-based source). Either way it is matched verbatim, not
+canonicalized. A saved programmatic source that declares no \code{id} is matched
+by its \verb{<name>.pkml} basename (see the note above).}
 }
 \value{
 The \code{project} object, invisibly.
 }
 \description{
-Removes by DataSet name (for \code{type = "programmatic"} entries) or by
-\code{file} basename (for \code{type} \code{"excel"} / \code{"pkml"} / \code{"script"}
-entries). Warns and is a no-op if no matching entry is found.
+Removes by the source's id: its \code{id} field when the declaration carries one,
+else the DataSet name (for a \code{type = "programmatic"} entry that has not been
+saved yet) or the \code{file} basename (for \code{type} \code{"excel"} / \code{"pkml"} /
+\code{"script"} entries). Vectorizes over a vector of ids, removing each in one
+in-memory update; persist with \code{\link[=saveProject]{saveProject()}}. Warns and skips any id with
+no matching entry.
+}
+\details{
+Note a programmatic source changes its id once saved: \code{\link[=saveProject]{saveProject()}} writes
+the \code{DataSet} to \verb{<name>.pkml} and rewrites the entry as a \code{pkml} source, so
+after a save you remove it by that file basename (\code{"<name>.pkml"}), not by the
+original \code{DataSet} name.
+
+Unlike the other authoring functions, \code{addObservedData()} is not
+vectorized over ids: its second argument is a \code{DataSet} or a configuration
+list, not an id, so it adds a single source per call. Add several sources
+with several calls.
 }
 \seealso{
 Other observedData:

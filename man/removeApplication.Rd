@@ -2,20 +2,23 @@
 % Please edit documentation in R/applications.R
 \name{removeApplication}
 \alias{removeApplication}
-\title{Remove an application protocol from a Project}
+\title{Remove one or more application protocols from a Project}
 \usage{
-removeApplication(project, applicationId)
+removeApplication(project, id)
 }
 \arguments{
 \item{project}{A \code{Project} object.}
 
-\item{applicationId}{Character scalar.}
+\item{id}{Character vector of application ids to remove. Each is
+canonicalized the same way \code{\link[=addApplication]{addApplication()}} canonicalizes it.}
 }
 \value{
 The \code{project} object, invisibly.
 }
 \description{
-Remove an application protocol from a Project
+Drop the protocols with matching ids in one write-through. Warns (and
+skips) any id not present, and warns when a removed protocol is still
+referenced.
 }
 \seealso{
 Other application:

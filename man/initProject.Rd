@@ -13,7 +13,8 @@ initProject(
 }
 \arguments{
 \item{destination}{A string defining the path where to initialize the
-project. default to current working directory.}
+project. Defaults to the current working directory. The folder is created
+if it does not exist yet.}
 
 \item{type}{Type of project to create: \code{"minimal"} (default) creates an empty
 project with just the directory structure, \code{"example"} creates a project
@@ -26,7 +27,28 @@ from the JSON. Set to \code{FALSE} for a JSON-only workflow.}
 permission. If FALSE and a project already exists, asks user for permission
 to overwrite.}
 }
-\description{
-Creates the default project folder structure with Excel file templates in the
-working directory.
+\value{
+Invisibly returns \code{destination}, the path the project was
+initialized in.
 }
+\description{
+Creates a new JSON-based esqlabsR project in \code{destination}: a
+\code{Project.json} file plus a \verb{definitions/} folder holding one file per
+definition, alongside the working folders (\verb{Models/}, \verb{Data/},
+\verb{Populations/}, \verb{Results/}). By default it also writes the optional Excel
+configuration files from the JSON; set \code{createExcel = FALSE} for a
+JSON-only project.
+}
+\seealso{
+Other projectPersistence:
+\code{\link[=exampleProjectPath]{exampleProjectPath()}},
+\code{\link[=exportProjectToExcel]{exportProjectToExcel()}},
+\code{\link[=importProjectFromExcel]{importProjectFromExcel()}},
+\code{\link[=loadProject]{loadProject()}},
+\code{\link[=projectStatus]{projectStatus()}},
+\code{\link[=reloadProject]{reloadProject()}},
+\code{\link[=restoreProject]{restoreProject()}},
+\code{\link[=saveProject]{saveProject()}},
+\code{\link[=snapshotProject]{snapshotProject()}}
+}
+\concept{projectPersistence}

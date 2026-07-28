@@ -2,80 +2,144 @@
 #
 # Public createPlots / createPlotsFromExcel plus the parsing, validation,
 # and configuration helpers they use. Stateless: pulls a Project's
-# dataCombined / plotConfiguration / plotGrids and returns a named list of
-# plot-grid objects.
+# dataCombined / plots / plotGrids sections and returns a named list of
+# rendered plot-grid (and optionally standalone plot) objects keyed by id.
 
 #' Generate plots from a Project
 #'
 #' @description
-#' Reads `project$plots$plotConfiguration` and `project$plots$plotGrids`
-#' (both data.frames) to build the requested plot grids. DataCombined
-#' objects are resolved via [createDataCombined()] internally unless
-#' supplied via `dataCombinedList`.
+#' **Returns plot grids, not standalone plots.** By default `createPlots()`
+#' builds every plot grid declared in `plotGrids` definitions and no standalone
+#' plots, and hands back a **named list of plot grids keyed by Plot Grid name**
+#' (the `plots` argument opts individual standalone plots into that same list).
+#'
+#' Reads `plots` definitions and `plotGrids` definitions (both keyed lists, one entry
+#' per plot / grid) to build the requested plot grids and, optionally,
+#' standalone single plots. DataCombined objects are resolved via
+#' [createDataCombined()] internally unless supplied via `dataCombinedList`.
+#'
+#' With neither `plotGrids` nor `plots`, all plot grids declared in
+#' `plotGrids` definitions are built (the default). The two arguments are
+#' independent selectors: `plotGrids` selects plot grids (keyed by
+#' `plotGridId` in the result), `plots` selects standalone single plots
+#' (keyed by `plotId`). A `plotId` that is also part of a requested grid still
+#' gets its own standalone entry.
 #'
 #' @param project A `Project` (see [loadProject()]).
-#' @param plotGridNames Names of plot grids to build. If `NULL` (default),
-#'   all grids declared in `project$plots$plotGrids` are built.
-#' @param simulatedScenarios Named list of simulated scenarios from
-#'   [runScenarios()].
+#' @param plotGrids Names of plot grids to build. If `NULL` (default) and
+#'   `plots` is also `NULL`, all grids declared in `plotGrids` definitions are
+#'   built.
+#' @param plots Ids of standalone single plots to render directly (not laid
+#'   out in a grid), each resolved against `plots` definitions. `NULL` (default)
+#'   renders no standalone plots; standalone plots are opt-in.
+#' @param scenarioResults Named list of Scenario Results from
+#'   [runScenarios()] (each entry has `simulation`, `results`,
+#'   `outputValues`, `population`). Not the OSPS `SimulationResults`.
 #' @param dataCombinedList Optional pre-built named list of `DataCombined`
 #'   objects. If `NULL`, the function builds them via [createDataCombined()].
 #' @param stopIfNotFound If `TRUE`, errors when a referenced DataCombined or
-#'   simulated/observed entry cannot be resolved.
+#'   simulated/observed entry cannot be resolved, or when a requested
+#'   `plotGrids` / `plots` id is not defined in the project.
 #' @param validate Logical. If `TRUE` (default), runs the relevant
 #'   section validators via [validateProject()] before building the
 #'   plots and aborts with a formatted summary on critical errors. Set
 #'   to `FALSE` to skip the pre-flight check (e.g. when the caller has
 #'   already validated the project).
 #'
-#' @returns A named list of plot-grid objects (one per `plotGridName`), or
-#'   an empty list when the project has no plots section.
+#' @returns A named list of **plot grids** keyed by Plot Grid name: one entry
+#'   per requested plot grid (keyed by its `plotGridId`), unioned with one entry
+#'   per requested standalone plot (keyed by its `plotId`) when `plots` is
+#'   given. Note the list holds plot grids, not standalone `Plot` objects,
+#'   unless standalone plots were explicitly requested via `plots`. An empty
+#'   list when the project has no plots to build.
 #'
 #' @import tidyr
 #'
 #' @export
 createPlots <- function(
   project,
-  plotGridNames = NULL,
-  simulatedScenarios = NULL,
+  plotGrids = NULL,
+  plots = NULL,
+  scenarioResults = NULL,
   dataCombinedList = NULL,
   stopIfNotFound = TRUE,
   validate = TRUE
 ) {
   validateIsOfType(project, "Project")
   if (isTRUE(validate)) {
-    .ensureValid(
-      project,
-      sections = c("plots", "scenarios", "observedData", "crossReferences"),
+    project$ensureValid(
+      sections = c(
+        "plots",
+        "dataCombined",
+        "scenarios",
+        "observedData",
+        "crossReferences"
+      ),
       opName = "createPlots"
     )
   }
-  if (is.null(project$plots)) {
+  allPlotConfig <- .unwrapDefinitionList(project$definitions$plots) %||% list()
+  allPlotGrids <- .unwrapDefinitionList(project$definitions$plotGrids) %||%
+    list()
+
+  # Only default to "all grids" when neither selector is given. A caller that
+  # asks only for standalone `plots` should not also get every grid.
+  requestSpecified <- !is.null(plotGrids) || !is.null(plots)
+  if (!requestSpecified) {
+    plotGrids <- names(allPlotGrids)
+  }
+
+  # Surface unknown requested ids when the caller asked us to stop on
+  # unresolved references (mirrors the per-kind lookups below).
+  if (isTRUE(stopIfNotFound)) {
+    unknownGrids <- setdiff(plotGrids, names(allPlotGrids))
+    if (length(unknownGrids) > 0) {
+      cli::cli_abort(messages$plotGridNamesNotFound(unknownGrids))
+    }
+    unknownPlots <- setdiff(plots, names(allPlotConfig))
+    if (length(unknownPlots) > 0) {
+      cli::cli_abort(messages$plotIdsNotFound(unknownPlots))
+    }
+  }
+
+  # Filter to only the requested grids and the plot configs they reference,
+  # plus the explicitly requested standalone plots. Scoping the build to what
+  # is asked for keeps validation and DataCombined building from touching plots
+  # whose DataCombined is not built (which would abort).
+  selectedGrids <- allPlotGrids[intersect(names(allPlotGrids), plotGrids)]
+  selectedPlotIds <- intersect(plots, names(allPlotConfig))
+
+  gridReferencedPlotIds <- unique(unlist(lapply(
+    selectedGrids,
+    function(g) .splitPlotIDs(g$plotIds)
+  )))
+  neededPlotIds <- union(gridReferencedPlotIds, selectedPlotIds)
+  plotConfig <- allPlotConfig[intersect(names(allPlotConfig), neededPlotIds)]
+
+  if (length(selectedGrids) == 0 && length(selectedPlotIds) == 0) {
     return(list())
   }
-  cfgDf <- project$plots$plotConfiguration %||% data.frame()
-  gridDf <- project$plots$plotGrids %||% data.frame()
-  if (nrow(gridDf) == 0) return(list())
-  if (is.null(plotGridNames)) {
-    plotGridNames <- gridDf$name
-  }
-  # Filter to only requested grids and any plot configs they reference.
-  gridDf <- gridDf[gridDf$name %in% plotGridNames, , drop = FALSE]
-  if (nrow(gridDf) == 0) return(list())
 
-  # Build DataCombined for the configs referenced by the requested grids.
+  # Build DataCombined for the configs referenced by both selectors: the
+  # requested grids and the explicitly requested standalone plots.
   if (is.null(dataCombinedList)) {
+    standaloneDataCombinedNames <- unique(unlist(lapply(
+      plotConfig[selectedPlotIds],
+      function(p) p$dataCombinedId
+    )))
     dataCombinedList <- createDataCombined(
       project,
-      plotGridNames = plotGridNames,
-      simulatedScenarios = simulatedScenarios,
+      dataCombined = standaloneDataCombinedNames,
+      plotGrids = plotGrids,
+      scenarioResults = scenarioResults,
       stopIfNotFound = stopIfNotFound
     )
   }
 
-  .createPlotGridsFromDataFrames(
-    dfPlotConfigurations = cfgDf,
-    dfPlotGrids = gridDf,
+  .createPlotGridsFromEntries(
+    plotConfigurations = plotConfig,
+    plotGrids = selectedGrids,
+    standalonePlotIds = selectedPlotIds,
     dataCombinedList = dataCombinedList
   )
 }
@@ -94,7 +158,7 @@ createPlotsFromExcel <- function(...) {
 #' Parse and validate comma-separated Excel field
 #'
 #' Parses comma-separated values from Excel and validates using ospsuite.utils.
-#' Provides Excel-specific error context (plotID, field name) for common issues.
+#' Provides Excel-specific error context (plotId, field name) for common issues.
 #'
 #' @param value Raw value from Excel cell
 #' @param fieldName Name of the field for error messages
@@ -130,15 +194,13 @@ createPlotsFromExcel <- function(...) {
         numericTest <- suppressWarnings(as.numeric(spaceSplit))
         if (!any(is.na(numericTest))) {
           # User likely used spaces instead of commas
-          stop(
-            messages$excelFieldFormatError(
-              fieldName,
-              originalValue,
-              plotID,
-              "comma-separated"
-            ),
-            call. = FALSE
+          msg <- messages$excelFieldFormatError(
+            fieldName,
+            originalValue,
+            plotID,
+            "comma-separated"
           )
+          cli::cli_abort("{msg}")
         }
       }
     }
@@ -149,16 +211,14 @@ createPlotsFromExcel <- function(...) {
     tryCatch(
       ospsuite.utils::validateIsOfLength(parsed, expectedLength),
       error = function(e) {
-        stop(
-          messages$excelFieldLengthError(
-            fieldName,
-            originalValue,
-            plotID,
-            expectedLength,
-            length(parsed)
-          ),
-          call. = FALSE
+        msg <- messages$excelFieldLengthError(
+          fieldName,
+          originalValue,
+          plotID,
+          expectedLength,
+          length(parsed)
         )
+        cli::cli_abort("{msg}")
       }
     )
   }
@@ -169,15 +229,13 @@ createPlotsFromExcel <- function(...) {
     tryCatch(
       ospsuite.utils::validateIsNumeric(numericParsed),
       error = function(e) {
-        stop(
-          messages$excelFieldTypeError(
-            fieldName,
-            originalValue,
-            plotID,
-            "numeric"
-          ),
-          call. = FALSE
+        msg <- messages$excelFieldTypeError(
+          fieldName,
+          originalValue,
+          plotID,
+          "numeric"
         )
+        cli::cli_abort("{msg}")
       }
     )
     return(numericParsed)
@@ -213,97 +271,97 @@ createPlotsFromExcel <- function(...) {
       for (limitsField in check$limits) {
         limitsValue <- plotConfiguration[[limitsField]]
         if (!is.null(limitsValue) && 0 %in% limitsValue) {
-          warning(messages$warningLogScaleWithZeroLimit(
+          msg <- messages$logScaleWithZeroLimit(
             plotID = plotID,
             axisLimitsField = limitsField,
             axis = check$axis
-          ))
+          )
+          cli::cli_warn("{msg}")
         }
       }
     }
   }
 }
 
-#' Create a plotConfiguration or exportConfiguration objects from a row of sheet
-#' 'plotConfiguration' or 'exportConfiguration'
+#' Create a plotConfiguration or plotGridConfiguration object from a keyed
+#' list of plot / grid fields
 #'
-#' @param defaultConfiguration default plotConfiguration or exportConfiguration
-#' @param ... row with configuration properties
-#' @returns A customized plot- or exportConfiguration object
+#' @param defaultConfiguration default plotConfiguration or
+#'   plotGridConfiguration to clone and customize.
+#' @param fields Named list of configuration properties (one per field). An
+#'   absent optional field is simply absent from the list (no NA cell).
+#' @returns A customized plot- or plotGridConfiguration object.
 #' @keywords internal
-.createConfigurationFromRow <- function(defaultConfiguration, ...) {
-  columns <- c(...)
+#' @noRd
+.createConfigurationFromEntry <- function(defaultConfiguration, fields) {
   newConfiguration <- defaultConfiguration$clone()
-  lapply(seq_along(columns), function(i) {
-    value <- columns[[i]]
-    colName <- names(columns)[[i]]
-    if (!is.na(value)) {
-      # Check if the field name is supported by the configuration class
-      if (!.validateClassHasField(object = newConfiguration, field = colName)) {
-        stop(messages$invalidConfigurationPropertyFromExcel(
-          propertyName = colName,
-          configurationType = class(newConfiguration)[[1]]
-        ))
-      }
-      # Special treatment for axis limits - parse and validate early with clear errors
-      if (
-        colName %in%
-          c(
-            "xAxisLimits",
-            "yAxisLimits",
-            "xValuesLimits",
-            "yValuesLimits"
-          )
-      ) {
-        # Use wrapper function with ospsuite.utils validation
-        value <- .parseExcelMultiValueField(
-          value = value,
-          fieldName = colName,
-          plotID = if ("plotID" %in% names(columns)) {
-            columns[["plotID"]]
-          } else {
-            NULL
-          },
-          expectedLength = 2,
-          expectedType = "numeric"
-        )
-        # Set directly (already validated and converted)
-        newConfiguration[[colName]] <- value
-      } else {
-        # For other fields, use existing logic
-        # For fields that require multiple values, values are separated by a ','.
-        # Alternatively, the values can be enclosed in "" in case the title should contain a ','.
-        # Split the input string by ',' but do not split within ""
-        value <- unlist(trimws(scan(
-          text = as.character(value),
-          what = "character",
-          sep = ",",
-          quiet = TRUE
-        )))
-
-        # Expected type of the field to cast the value to the
-        # correct type. For fields that do not have a default value (NULL), we have
-        # to assume character until a better solution is found
-        expectedType <- "character"
-        # Try to get the expected type of the field from the default value
-        defVal <- newConfiguration[[colName]]
-        if (!is.null(defVal)) {
-          expectedType <- typeof(defVal)
-        }
-
-        # Caste the value and set it
-        newConfiguration[[colName]] <- methods::as(
-          object = value,
-          Class = expectedType
-        )
-      }
+  for (colName in names(fields)) {
+    value <- fields[[colName]]
+    if (is.null(value) || (length(value) == 1L && is.na(value))) {
+      next
     }
-  })
+    # Check if the field name is supported by the configuration class
+    if (!.validateClassHasField(object = newConfiguration, field = colName)) {
+      msg <- messages$invalidConfigurationPropertyFromExcel(
+        propertyName = colName,
+        configurationType = class(newConfiguration)[[1]]
+      )
+      cli::cli_abort("{msg}")
+    }
+    # Special treatment for axis limits - parse and validate early with clear errors
+    if (
+      colName %in%
+        c(
+          "xAxisLimits",
+          "yAxisLimits",
+          "xValuesLimits",
+          "yValuesLimits"
+        )
+    ) {
+      # Use wrapper function with ospsuite.utils validation
+      value <- .parseExcelMultiValueField(
+        value = value,
+        fieldName = colName,
+        plotID = fields[["plotId"]],
+        expectedLength = 2,
+        expectedType = "numeric"
+      )
+      # Set directly (already validated and converted)
+      newConfiguration[[colName]] <- value
+    } else {
+      # For other fields, use existing logic
+      # For fields that require multiple values, values are separated by a ','.
+      # Alternatively, the values can be enclosed in "" in case the title should contain a ','.
+      # Split the input string by ',' but do not split within ""
+      value <- unlist(trimws(scan(
+        text = as.character(value),
+        what = "character",
+        sep = ",",
+        quiet = TRUE
+      )))
+
+      # Expected type of the field to cast the value to the
+      # correct type. For fields that do not have a default value (NULL), we have
+      # to assume character until a better solution is found
+      expectedType <- "character"
+      # Try to get the expected type of the field from the default value
+      defVal <- newConfiguration[[colName]]
+      if (!is.null(defVal)) {
+        expectedType <- typeof(defVal)
+      }
+
+      # Caste the value and set it
+      newConfiguration[[colName]] <- methods::as(
+        object = value,
+        Class = expectedType
+      )
+    }
+  }
 
   return(newConfiguration)
 }
 
-#' Validate and process the 'plotConfiguration' sheet
+#' Check that an object has a named field
 #'
 #' Check if the `object` contains an active binding with the name `field`
 #'
@@ -314,206 +372,231 @@ createPlotsFromExcel <- function(...) {
 #'   otherwise.
 #' @keywords internal
 .validateClassHasField <- function(object, field) {
-  if (!any(names(object) == field)) {
+  if (!(field %in% names(object))) {
     return(FALSE)
   }
   return(TRUE)
 }
 
 #' Validate the plotConfiguration sheet read from Excel
+#' Validate the keyed-list plot configurations before building.
 #'
-#' @param dfPlotConfigurations Data frame created by reading the
-#'   plotConfiguration sheet.
-#' @param dataCombinedNames Names of the DataCombined that are referenced in
-#'   the plot configurations.
+#' Mirrors the checks the lazy `.validatePlots()` runs (and so is redundant
+#' when `createPlots(validate = TRUE)`), but guards the build path itself:
+#' every plot must declare `dataCombinedId` and `plotType`, `plotId` must be
+#' unique, and every referenced `dataCombinedId` must be in the built list.
 #'
-#' @returns Processed `dfPlotConfigurations`.
+#' @param plotConfigurations Keyed list (one entry per plot).
+#' @param dataCombinedNames Ids of the DataCombined that are built and
+#'   available to reference.
 #' @keywords internal
 #' @noRd
-.validatePlotConfigurationFromExcel <- function(
-  dfPlotConfigurations,
+.assertPlotConfigurationsBuildable <- function(
+  plotConfigurations,
   dataCombinedNames
 ) {
-  # mandatory column DataCombinedName is empty - throw error
-  missingLabel <- sum(is.na(dfPlotConfigurations$DataCombinedName))
-  if (missingLabel > 0) {
-    stop(messages$missingDataCombinedName())
-  }
+  ids <- vapply(
+    plotConfigurations,
+    function(p) p$plotId %||% NA_character_,
+    character(1)
+  )
+  dataCombinedIds <- lapply(plotConfigurations, function(p) p$dataCombinedId)
+  plotTypes <- lapply(plotConfigurations, function(p) p$plotType)
 
-  # plotIDs must be unique
-  duplicated_plotIDs <- dfPlotConfigurations$plotID[duplicated(
-    dfPlotConfigurations$plotID
-  )]
-  if (length(duplicated_plotIDs) > 0) {
-    stop(messages$PlotIDsMustBeUnique(duplicated_plotIDs))
+  # Reject any plot missing its `plotId` up front. The duplicate check below
+  # only catches two-or-more missing ids (`duplicated(c(NA, NA))` flags the
+  # second); a single id-less entry would otherwise slip through and fail
+  # opaquely at `configPlotIds <- vapply(..., function(p) p$plotId, ...)` in
+  # `.createPlotGridsFromEntries()`. Mirrors the `plotGridId` guard in
+  # `.assertPlotGridsBuildable()`.
+  if (
+    any(vapply(plotConfigurations, function(p) is.null(p$plotId), logical(1)))
+  ) {
+    msg <- messages$missingPlotId()
+    cli::cli_abort("{msg}")
   }
-
-  # mandatory column plotType is empty - throw error
-  missingLabel <- sum(is.na(dfPlotConfigurations$plotType))
-  if (missingLabel > 0) {
-    stop(messages$missingPlotType())
+  if (any(vapply(dataCombinedIds, is.null, logical(1)))) {
+    msg <- messages$missingDataCombinedName()
+    cli::cli_abort("{msg}")
   }
-
-  # DataCombined that are not defined in the DataCombined sheet. Stop if any.
+  duplicatedPlotIds <- ids[duplicated(ids)]
+  if (length(duplicatedPlotIds) > 0) {
+    msg <- messages$plotIDsMustBeUnique(duplicatedPlotIds)
+    cli::cli_abort("{msg}")
+  }
+  if (any(vapply(plotTypes, is.null, logical(1)))) {
+    msg <- messages$missingPlotType()
+    cli::cli_abort("{msg}")
+  }
+  # Reject any plotType that is not one of the supported kinds. The build
+  # `switch()` has no default arm, so an unknown type would otherwise return
+  # NULL invisibly (silently dropped from a grid). Aborting here runs before
+  # the build regardless of `validate`, naming the offending plot and type.
+  invalidTypeIdx <- which(!(unlist(plotTypes) %in% .validPlotTypes))
+  if (length(invalidTypeIdx) > 0) {
+    badId <- ids[[invalidTypeIdx[[1]]]]
+    badType <- plotTypes[[invalidTypeIdx[[1]]]]
+    cli::cli_abort(c(
+      "Invalid {.field plotType} {.val {badType}} for plot {.val {badId}}.",
+      "i" = "Must be one of: {.val {(.validPlotTypes)}}."
+    ))
+  }
   missingDataCombined <- setdiff(
-    setdiff(dfPlotConfigurations$DataCombinedName, dataCombinedNames),
-    NA
+    unlist(dataCombinedIds),
+    dataCombinedNames
   )
   if (length(missingDataCombined) != 0) {
-    stop(messages$stopInvalidDataCombinedName(missingDataCombined))
+    msg <- messages$invalidDataCombinedName(missingDataCombined)
+    cli::cli_abort("{msg}")
   }
-
-  return(dfPlotConfigurations)
+  invisible(plotConfigurations)
 }
 
-#' Validate and process the 'plotGrids' sheet
+#' Validate the keyed-list plot grids before building.
 #'
-#' @param dfPlotGrids Data frame created by reading the ' plotGrids' sheet
-#' @param plotIDs IDs of the plots that are referenced in the plot grids
+#' Every grid must declare `plotIds`, `plotGridId` must be unique, and every
+#' referenced plot id must be defined.
 #'
-#' @returns Processed `dfPlotGrids`
+#' @param plotGrids Keyed list (one entry per grid).
+#' @param plotIDs Ids of the plots that are referenced in the plot grids.
 #' @keywords internal
-.validatePlotGridsFromExcel <- function(dfPlotGrids, plotIDs) {
-  # mandatory column plotIDs is empty - throw error
-  missingLabel <- sum(is.na(dfPlotGrids$plotIDs))
-  if (missingLabel > 0) {
-    stop(messages$missingPlotIDs())
+#' @noRd
+.assertPlotGridsBuildable <- function(plotGrids, plotIDs) {
+  if (any(vapply(plotGrids, function(g) is.null(g$plotIds), logical(1)))) {
+    msg <- messages$missingPlotIDs()
+    cli::cli_abort("{msg}")
   }
-
-  # plotGrids names must be unique
-  duplicated_PlotGridsNames <- dfPlotGrids$name[duplicated(dfPlotGrids$name)]
-  if (length(duplicated_PlotGridsNames) > 0) {
-    stop(messages$PlotGridsNamesMustBeUnique(duplicated_PlotGridsNames))
+  if (any(vapply(plotGrids, function(g) is.null(g$plotGridId), logical(1)))) {
+    msg <- messages$missingPlotGridId()
+    cli::cli_abort("{msg}")
   }
-
-  # The values can be enclosed in "" in case the title should contain a ','.
-  # Split the input string by ',' but do not split within "" Have to do it one
-  # row at a time, otherwise it returns one separate list entry for each plot it
-  # (and not lists of plot ids). Skipped when plotIDs is already a list-column
-  # (e.g. when this validator runs a second time inside the shared helper).
-  if (!is.list(dfPlotGrids$plotIDs)) {
-    dfPlotGrids$plotIDs <- lapply(dfPlotGrids$plotIDs, \(plotId) {
-      unlist(trimws(scan(
-        text = as.character(plotId),
-        what = "character",
-        sep = ",",
-        quiet = TRUE
-      )))
-    })
-  }
-
-  # plotIDs that are not defined in the plotConfiguration sheet. Stop if any.
-  missingPlots <- setdiff(
-    setdiff(unique(unlist(dfPlotGrids$plotIDs)), plotIDs),
-    NA
+  gridIds <- vapply(
+    plotGrids,
+    function(g) g$plotGridId %||% NA_character_,
+    character(1)
   )
-  if (length(missingPlots) != 0) {
-    stop(messages$errorInvalidPlotID(missingPlots))
+  duplicatedGridIds <- gridIds[duplicated(gridIds)]
+  if (length(duplicatedGridIds) > 0) {
+    msg <- messages$plotGridsNamesMustBeUnique(duplicatedGridIds)
+    cli::cli_abort("{msg}")
   }
-
-  return(dfPlotGrids)
+  referencedPlotIds <- unique(unlist(lapply(
+    plotGrids,
+    function(g) .splitPlotIDs(g$plotIds)
+  )))
+  missingPlots <- setdiff(referencedPlotIds, plotIDs)
+  if (length(missingPlots) != 0) {
+    msg <- messages$invalidPlotID(missingPlots)
+    cli::cli_abort("{msg}")
+  }
+  invisible(plotGrids)
 }
 
-#' Build named list of plot-grid objects from data.frame configurations.
+#' Build named list of plot-grid (and optionally standalone plot) objects from
+#' keyed-list configurations.
 #'
 #' Used by `createPlots(project, ...)`.
 #'
-#' @param dfPlotConfigurations data.frame with one row per plot, columns
-#'   include plotID, DataCombinedName, plotType, title, subtitle, plus
-#'   axis/styling fields. Rows whose DataCombinedName is not present in
-#'   `dataCombinedList` are pruned by `.validatePlotConfigurationFromExcel()`.
-#' @param dfPlotGrids data.frame with one row per grid, columns include name,
-#'   plotIDs, title.
+#' @param plotConfigurations keyed list (one entry per plot), each entry a
+#'   named list with `plotId`, `dataCombinedId`, `plotType`, `title`,
+#'   `subtitle`, plus axis/styling fields. Callers must pass only plots whose
+#'   `dataCombinedId` is built in `dataCombinedList`;
+#'   `.assertPlotConfigurationsBuildable()` aborts on any `dataCombinedId`
+#'   missing from the list.
+#' @param plotGrids keyed list (one entry per grid), each entry a named list
+#'   with `plotGridId`, `plotIds` (comma-separated string), `title`.
+#' @param standalonePlotIds Character vector of plot ids to additionally
+#'   return as standalone single plots (each keyed by its `plotId` in the
+#'   result).
 #' @param dataCombinedList named list of DataCombined objects keyed by name.
 #'
 #' @noRd
-.createPlotGridsFromDataFrames <- function(
-  dfPlotConfigurations,
-  dfPlotGrids,
+.createPlotGridsFromEntries <- function(
+  plotConfigurations,
+  plotGrids,
+  standalonePlotIds = character(),
   dataCombinedList
 ) {
-  dfPlotConfigurations <- .validatePlotConfigurationFromExcel(
-    dfPlotConfigurations,
+  .assertPlotConfigurationsBuildable(
+    plotConfigurations,
     names(dataCombinedList)
   )
-  dfPlotGrids <- .validatePlotGridsFromExcel(
-    dfPlotGrids,
-    unique(dfPlotConfigurations$plotID)
+  configPlotIds <- vapply(
+    plotConfigurations,
+    function(p) p$plotId,
+    character(1)
+  )
+  .assertPlotGridsBuildable(plotGrids, unique(configPlotIds))
+
+  styleFields <- c(
+    "plotId",
+    "dataCombinedId",
+    "plotType",
+    "title",
+    "subtitle",
+    "xLabel",
+    "yLabel",
+    "aggregation",
+    "quantiles",
+    "nsd",
+    "foldDistance"
   )
 
   defaultPlotConfiguration <- createEsqlabsPlotConfiguration()
-  plotConfigurationList <- apply(dfPlotConfigurations, 1, \(row) {
-    plotConfiguration <- .createConfigurationFromRow(
+  plotConfigurationList <- lapply(plotConfigurations, function(entry) {
+    plotConfiguration <- .createConfigurationFromEntry(
       defaultConfiguration = defaultPlotConfiguration,
-      row[
-        !(names(row) %in%
-          c(
-            "plotID",
-            "DataCombinedName",
-            "plotType",
-            "title",
-            "subtitle",
-            "xLabel",
-            "yLabel",
-            "aggregation",
-            "quantiles",
-            "nsd",
-            "foldDistance"
-          ))
-      ]
+      fields = entry[!(names(entry) %in% styleFields)]
     )
-    if (!is.na(row[["title"]])) {
-      plotConfiguration$title <- row[["title"]]
+    # Free-text scalar fields are excluded from `styleFields` and re-applied
+    # here verbatim, not through `.createConfigurationFromEntry`, so a label
+    # containing a comma (e.g. "Concentration, ng/mL") is not shredded into a
+    # character vector by the comma-splitting scan.
+    if (!is.null(entry$title)) {
+      plotConfiguration$title <- entry$title
     }
-    if ("subtitle" %in% names(row) && !is.na(row[["subtitle"]])) {
-      plotConfiguration$subtitle <- row[["subtitle"]]
+    if (!is.null(entry$subtitle)) {
+      plotConfiguration$subtitle <- entry$subtitle
     }
-    .validateLogScaleAxisLimits(plotConfiguration, row[["plotID"]])
-    return(plotConfiguration)
+    if (!is.null(entry$xLabel)) {
+      plotConfiguration$xLabel <- entry$xLabel
+    }
+    if (!is.null(entry$yLabel)) {
+      plotConfiguration$yLabel <- entry$yLabel
+    }
+    .validateLogScaleAxisLimits(plotConfiguration, entry$plotId)
+    plotConfiguration
   })
-  names(plotConfigurationList) <- dfPlotConfigurations$plotID
+  names(plotConfigurationList) <- configPlotIds
 
-  plotList <- lapply(dfPlotConfigurations$plotID, \(plotId) {
-    dataCombined <- dataCombinedList[[
-      dfPlotConfigurations[
-        dfPlotConfigurations$plotID == plotId,
-      ]$DataCombinedName
-    ]]
+  plotList <- lapply(plotConfigurations, function(entry) {
+    plotId <- entry$plotId
+    dataCombined <- dataCombinedList[[entry$dataCombinedId]]
     switch(
-      dfPlotConfigurations[dfPlotConfigurations$plotID == plotId, ]$plotType,
+      entry$plotType,
       individual = plotIndividualTimeProfile(
         dataCombined,
         plotConfigurationList[[plotId]]
       ),
       population = {
-        aggregation <- dfPlotConfigurations[
-          dfPlotConfigurations$plotID == plotId,
-        ]$aggregation
-        quantiles <- dfPlotConfigurations[
-          dfPlotConfigurations$plotID == plotId,
-        ]$quantiles
-        nsd <- dfPlotConfigurations[
-          dfPlotConfigurations$plotID == plotId,
-        ]$nsd
         args <- list()
         args$dataCombined <- dataCombined
         args$defaultPlotConfiguration <- plotConfigurationList[[plotId]]
-        if (!is.null(aggregation) && !is.na(aggregation)) {
-          args$aggregation <- aggregation
+        if (!is.null(entry$aggregation)) {
+          args$aggregation <- entry$aggregation
         }
-        if (!is.null(quantiles) && !is.na(quantiles)) {
-          args$quantiles <- as.numeric(unlist(strsplit(quantiles, split = ",")))
+        if (!is.null(entry$quantiles)) {
+          args$quantiles <- as.numeric(unlist(
+            strsplit(entry$quantiles, split = ",")
+          ))
         }
-        if (!is.null(nsd) && !is.na(nsd)) {
-          args$nsd <- as.numeric(nsd)
+        if (!is.null(entry$nsd)) {
+          args$nsd <- as.numeric(entry$nsd)
         }
         do.call(plotPopulationTimeProfile, args)
       },
       observedVsSimulated = {
-        foldDist <- dfPlotConfigurations[
-          dfPlotConfigurations$plotID == plotId,
-        ]$foldDistance
-        if (is.na(foldDist)) {
+        if (is.null(entry$foldDistance)) {
           plotObservedVsSimulated(
             dataCombined,
             plotConfigurationList[[plotId]]
@@ -522,7 +605,9 @@ createPlotsFromExcel <- function(...) {
           plotObservedVsSimulated(
             dataCombined,
             plotConfigurationList[[plotId]],
-            foldDistance = as.numeric(unlist(strsplit(foldDist, split = ",")))
+            foldDistance = as.numeric(unlist(
+              strsplit(entry$foldDistance, split = ",")
+            ))
           )
         }
       },
@@ -536,20 +621,28 @@ createPlotsFromExcel <- function(...) {
       )
     )
   })
-  names(plotList) <- dfPlotConfigurations$plotID
+  names(plotList) <- configPlotIds
 
   defaultPlotGridConfig <- createEsqlabsPlotGridConfiguration()
-  plotGrids <- apply(dfPlotGrids, 1, \(row) {
-    plotGridConfiguration <- .createConfigurationFromRow(
+  gridStyleFields <- c("plotGridId", "plotIds", "title", "subtitle")
+  builtGrids <- lapply(plotGrids, function(entry) {
+    plotGridConfiguration <- .createConfigurationFromEntry(
       defaultConfiguration = defaultPlotGridConfig,
-      row[!(names(row) %in% c("name", "plotIDs", "title"))]
+      fields = entry[!(names(entry) %in% gridStyleFields)]
     )
-    if (!is.na(row$title) && !is.null(row$title)) {
-      plotGridConfiguration$title <- row$title
+    # Free-text scalar fields are excluded from `gridStyleFields` and re-applied
+    # here verbatim, not through `.createConfigurationFromEntry`, so a value
+    # containing a comma (e.g. "Model A, Model B") is not shredded into a
+    # character vector by the comma-splitting scan.
+    if (!is.null(entry$title)) {
+      plotGridConfiguration$title <- entry$title
+    }
+    if (!is.null(entry$subtitle)) {
+      plotGridConfiguration$subtitle <- entry$subtitle
     }
     plotsToAdd <- plotList[intersect(
-      unlist(row$plotIDs),
-      dfPlotConfigurations$plotID
+      .splitPlotIDs(entry$plotIds),
+      configPlotIds
     )]
     plotsToAdd <- plotsToAdd[lengths(plotsToAdd) != 0]
     if (length(plotsToAdd) == 0) {
@@ -559,19 +652,18 @@ createPlotsFromExcel <- function(...) {
       plotGridConfiguration$tagLevels <- NULL
     }
     plotGridConfiguration$addPlots(plots = plotsToAdd)
-    if (
-      length(
-        invalidPlotIDs <- setdiff(
-          unlist(row$plotIDs),
-          dfPlotConfigurations$plotID
-        )
-      ) !=
-        0
-    ) {
-      warning(messages$warningInvalidPlotID(invalidPlotIDs, row$title))
-    }
     plotGrid(plotGridConfiguration)
   })
-  names(plotGrids) <- dfPlotGrids$name
-  plotGrids
+  names(builtGrids) <- vapply(plotGrids, function(g) g$plotGridId, character(1))
+
+  # Standalone single plots: return the rendered plot for each requested id
+  # (the same render a grid cell gets), keyed by `plotId`. A `plotId` that is
+  # also inside a requested grid still gets its own entry here (independent
+  # selectors). The grid entries and the standalone entries are unioned.
+  standalonePlots <- plotList[intersect(standalonePlotIds, names(plotList))]
+  # Drop any NULL entry for symmetry with the grid path. The plotType-enum
+  # check in `.assertPlotConfigurationsBuildable()` already prevents unknown
+  # types from producing a NULL here, so this is belt-and-suspenders.
+  standalonePlots <- standalonePlots[lengths(standalonePlots) != 0]
+  c(builtGrids, standalonePlots)
 }

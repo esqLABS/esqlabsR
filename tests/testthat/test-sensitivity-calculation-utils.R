@@ -1,6 +1,5 @@
-# Load simulation and set paths for tests
+# Paths shared by the tests below.
 simPath <- system.file("extdata", "Aciclovir.pkml", package = "ospsuite")
-simulation <- loadSimulation(simPath)
 outputPaths <- "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
 parameterPaths <- c(
   "Aciclovir|Lipophilicity",
@@ -9,16 +8,32 @@ parameterPaths <- c(
 )
 variationRange <- c(0.1, 2, 20) # 1.0 is deliberately left out for testing
 
-set.seed(123)
-results <- sensitivityCalculation(
-  simulation = simulation,
-  outputPaths = outputPaths,
-  parameterPaths = parameterPaths,
-  variationRange = variationRange
-)
+# `loadSimulation()` initializes a PK-Sim native session; running it at file
+# source time (as `test_dir()` sources every test file up front) bleeds native
+# state across files. Defer it behind a memoized accessor so the native load and
+# the shared baseline `sensitivityCalculation()` happen inside a `test_that()`
+# block on first use, computed once and cached for the rest of the file.
+sensFixture <- local({
+  cache <- NULL
+  function() {
+    if (is.null(cache)) {
+      simulation <- loadSimulation(simPath)
+      withr::local_seed(123)
+      results <- sensitivityCalculation(
+        simulation = simulation,
+        outputPaths = outputPaths,
+        parameterPaths = parameterPaths,
+        variationRange = variationRange
+      )
+      cache <<- list(simulation = simulation, results = results)
+    }
+    cache
+  }
+})
 
 
 test_that("saveSensitivityCalculation() writes files and respects overwrite flag", {
+  results <- sensFixture()$results
   tempDir <- withr::local_tempdir()
 
   expect_no_error(
@@ -33,12 +48,12 @@ test_that("saveSensitivityCalculation() writes files and respects overwrite flag
   # Save again without overwrite should fail
   expect_error(
     saveSensitivityCalculation(results, outputDir = tempDir, overwrite = FALSE),
-    messages$errorOutputDirExists(tempDir),
-    fixed = TRUE
+    "already exists"
   )
 })
 
 test_that("loadSensitivityCalculation() restores functional results", {
+  results <- sensFixture()$results
   tempDir <- withr::local_tempdir()
 
   saveSensitivityCalculation(results, outputDir = tempDir, overwrite = TRUE)
@@ -56,6 +71,7 @@ test_that("loadSensitivityCalculation() restores functional results", {
 })
 
 test_that("loadSensitivityCalculation() fails when simulation result file is missing", {
+  results <- sensFixture()$results
   tempDir <- withr::local_tempdir()
 
   saveSensitivityCalculation(results, outputDir = tempDir, overwrite = TRUE)
@@ -69,12 +85,12 @@ test_that("loadSensitivityCalculation() fails when simulation result file is mis
 
   expect_error(
     loadSensitivityCalculation(tempDir),
-    messages$errorCorruptSensitivityCalculation(tempDir),
-    fixed = TRUE
+    "Failed to load sensitivity calculation from"
   )
 })
 
 test_that("loadSensitivityCalculation() fails when simulation can't be retrieved", {
+  results <- sensFixture()$results
   tempDir <- withr::local_tempdir()
 
   saveSensitivityCalculation(results, outputDir = tempDir, overwrite = TRUE)
@@ -84,15 +100,10 @@ test_that("loadSensitivityCalculation() fails when simulation can't be retrieved
   meta$simFilePath <- tempfile(fileext = ".pkml")
   saveRDS(meta, metaPath)
 
-  err <- expect_error(
+  expect_error(
     loadSensitivityCalculation(tempDir),
-    class = "error"
+    "Failed to load simulation from saved path"
   )
-
-  expect_true(startsWith(
-    conditionMessage(err),
-    messages$errorFailedToLoadSimulation(meta$simFilePath, "")
-  ))
 })
 
 test_that(".computePercentChange() handles missing baseline simulation data", {
@@ -117,8 +128,7 @@ test_that(".computePercentChange() handles missing baseline simulation data", {
   resultSuccess <- .computePercentChange(successData)
   expect_warning(
     resultFailure <- .computePercentChange(failureData),
-    messages$warningSensitivityPKParameterNotCalculated("TestPath", "C_max"),
-    fixed = TRUE
+    "SensitivityPKParameter could not be calculated"
   )
 
   expect_equal(colnames(resultSuccess), colnames(resultFailure))

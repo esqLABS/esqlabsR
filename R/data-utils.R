@@ -148,7 +148,8 @@ calculateMeanDataSet <- function(
 ) {
   validateIsOfType(dataSets, "DataSet")
   if (!any(c("arithmetic", "geometric") == method)) {
-    stop(messages$errorInvalidMeanMethod())
+    msg <- messages$invalidMeanMethod()
+    cli::cli_abort("{msg}")
   }
   validateEnumValue(lloqMode, LLOQMode)
 
@@ -167,7 +168,8 @@ calculateMeanDataSet <- function(
   } else if (length(molWeights) > 1) {
     # molWeight is not specified by user and molWeights of data sets differ -
     # error
-    stop(messages$errorOutputMolWeightNeeded())
+    msg <- messages$outputMolWeightNeeded()
+    cli::cli_abort("{msg}")
   } else if (!is.na(molWeights)) {
     # molWeight is not specified by user and all molWeights are equal and not NULL -
     # take this value
@@ -197,8 +199,7 @@ calculateMeanDataSet <- function(
   switch(
     lloqMode,
     # nothing to do for LLOQ/2
-    "LLOQ/2" = {
-    },
+    "LLOQ/2" = {},
     # set all data points with lloq that are smaller than it to value of lloq
     "LLOQ" = df[ind, "yValues"] <- df[ind, "lloq"],
     # set all data points with lloq to 0

@@ -1,0 +1,124 @@
+---
+title: "Validate a project"
+output:
+  rmarkdown::html_vignette:
+    toc: true
+vignette: >
+  %\VignetteIndexEntry{Validate a project}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  warning = FALSE,
+  message = FALSE,
+  fig.showtext = TRUE
+)
+library(esqlabsR)
+```
+
+Once you have authored scenarios and their supporting definitions, the natural next step, before you run anything, is to check that the project hangs together: that every reference resolves, no required field is missing, and no id is duplicated. `validateProject()` does this and prints a readable report.
+
+It assumes you know what a Project is and how to author one (see `vignette("projects")` and `vignette("design-scenarios")`).
+
+## Why and when to validate
+
+`runScenarios()` and `createPlots()` both validate the relevant parts of the project automatically before they run, so a broken project never silently produces wrong results; it stops with the validation problem. So why validate explicitly?
+
+Because an explicit `validateProject()` gives you the **full, readable report** for the whole project at once, at the moment you choose, rather than the first blocking error a run happens to hit. The natural moment is right after authoring and before running: it is the cheap check that saves a slow simulation from failing partway through.
+
+Throughout, work on a writable copy of the bundled example:
+
+```{r}
+project_dir <- withr::local_tempdir()
+initProject(destination = project_dir, type = "example", createExcel = FALSE)
+project <- loadProject(file.path(project_dir, "Project.json"))
+```
+
+## Two diagnostic levels
+
+Validation has exactly **two** levels, not three:
+
+- A **Critical Error** is a blocking problem: a duplicate id, a required field left empty, or a reference to a definition that does not exist. A section carrying one has no valid result (its `isValid()` method returns `FALSE`), and the project will not run scenarios or build plots until it is resolved.
+- A **Warning** is a non-blocking note: surfaced so you see it, but it does not stop execution. A section with warnings and no critical errors is still valid (its `isValid()` method returns `TRUE`).
+
+There is no separate "valid data" tier. A section that simply passed is just a result with no critical errors. The quickest single question, "is anything blocking?", is answered by `isAnyCriticalErrors()`.
+
+## The clean case
+
+The bundled example is well formed, so its report is short. `validateProject()` runs every section validator plus a cross-reference pass and returns a structured object that prints a summary:
+
+```{r}
+results <- validateProject(project)
+results
+```
+
+`isAnyCriticalErrors()` agrees:
+
+```{r}
+isAnyCriticalErrors(results)
+```
+
+## A worked example: a dangling reference
+
+The most common authoring slip is a dangling reference: a definition that points at an id that does not exist, usually a small misspelling. To see what the report looks like, suppose one scenario file in our copy mistypes the individual id `adult_male` as `adlt_male`. Reloading the project catches the dangling reference at load time, and `validateProject()` then reports it in full:
+
+```{r, echo = FALSE}
+scenario_file <- file.path(
+  project_dir, "definitions", "scenarios", "aciclovir_iv.json"
+)
+text <- readLines(scenario_file)
+text <- gsub('"adult_male"', '"adlt_male"', text, fixed = TRUE)
+writeLines(text, scenario_file)
+
+broken <- suppressWarnings(loadProject(file.path(project_dir, "Project.json")))
+```
+
+The report is grouped by definition type: a cross (`✖`) marks each critical error, an exclamation mark (`!`) marks each warning, and the sections with nothing to report collapse into a single tail line.
+
+```{r}
+broken_results <- validateProject(broken)
+broken_results
+```
+
+Notice the message does not just say the reference is missing; it offers a **"did you mean"** suggestion built from the ids that actually exist (`did you mean 'adult_male'?`), the validator catching the most common mistake, a small misspelling of an existing id.
+
+## Read the result in code
+
+The printed report is for you; the object `validateProject()` returns is for your code. It is a named list with one entry per definition type, and each entry is a Validation Result you can index into. So a script can gate on a specific section without parsing any text:
+
+```{r}
+names(broken_results)
+broken_results$crossReferences$critical_errors[[1]]$message
+```
+
+`validationSummary()` rolls the per-section results into aggregate counts and the names of the sections that produced errors or warnings, which is handy for a one-line status in a report or a log:
+
+```{r}
+validationSummary(broken_results)
+```
+
+## Resolve and re-validate
+
+Fixing the problem is the same authoring you already know. Here the scenario simply needs to point at the correct individual id; `setScenario()` updates it in memory (call `saveProject()` when you want the fix on disk):
+
+```{r}
+setScenario(broken, "aciclovir_iv", individual = "adult_male")
+```
+
+Re-validate to confirm the project is clean again:
+
+```{r}
+fixed_results <- validateProject(broken)
+fixed_results
+isAnyCriticalErrors(fixed_results)
+```
+
+Both the report and `isAnyCriticalErrors()` are clean, so the project is ready to run.
+
+## Where to go next
+
+With a clean project in hand, see `vignette("run-simulations")` to execute the scenarios and `vignette("plot-results")` to turn the results into figures. To author or repair the definitions a validation problem points at, see `vignette("design-scenarios")`.

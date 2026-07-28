@@ -2,33 +2,84 @@
 % Please edit documentation in R/populations.R
 \name{addPopulation}
 \alias{addPopulation}
-\title{Add a population to a Project}
+\title{Add one or more populations to a Project}
 \usage{
-addPopulation(project, populationId, species, numberOfIndividuals, ...)
+addPopulation(project, id, species, numberOfIndividuals = NULL, ...)
 }
 \arguments{
 \item{project}{A \code{Project} object.}
 
-\item{populationId}{Character scalar, unique ID.}
+\item{id}{Character vector of unique ids (the number of populations to add).
+Each is canonicalized to a safe, lowercase id (a warning names the result
+if it changed). For an injected \link[ospsuite:Population]{ospsuite::Population} object the id must
+be a single value.}
 
-\item{species}{Character scalar.}
+\item{species}{Character scalar (recycled) or the same length as \code{id}; or an
+\link[ospsuite:Population]{ospsuite::Population} object to inject (single id only).}
 
-\item{numberOfIndividuals}{Integer, positive.}
+\item{numberOfIndividuals}{Positive number, scalar (recycled) or the same
+length as \code{id}. Omit when injecting a \code{Population} object.}
 
 \item{...}{Optional named fields. Accepted: \code{proportionOfFemales},
 \code{weightMin}, \code{weightMax}, \code{heightMin}, \code{heightMax}, \code{ageMin},
 \code{ageMax}, \code{BMIMin}, \code{BMIMax}, \code{gender}, \code{weightUnit}, \code{heightUnit},
-\code{ageUnit}, \code{BMIUnit}, \code{population}, \code{diseaseState}. Numeric range
-fields are coerced via \code{as.double()}.}
+\code{ageUnit}, \code{BMIUnit}, \code{population}, \code{diseaseState}, \code{proteinOntogenies},
+and \code{overwrite}. Numeric range fields are coerced via \code{as.double()}.
+\code{overwrite} is a logical scalar (default \code{FALSE}): an id that already
+exists aborts unless \code{overwrite = TRUE}, which replaces it
+(last-write-wins).}
 }
 \value{
 The \code{project} object, invisibly.
 }
 \description{
-Add a population to a Project
+Add populations to \code{populations} definitions. Two forms:
+\itemize{
+\item A \strong{demographics spec}: pass \code{species} and \code{numberOfIndividuals} (plus
+optional \code{...} fields). This vectorizes over a vector of ids (see the
+recycling rule under Details); \code{species}, \code{numberOfIndividuals}, and the
+\code{...} fields are scalar-per-definition (recycle/align).
+\item An \strong{injected object}: pass a single id and an \link[ospsuite:Population]{ospsuite::Population}
+object in the \code{species} position. The object is stored in the R session
+and the scenario runs against it directly (a mutated or programmatically
+built population). \code{numberOfIndividuals} and \code{...} fields are not accepted
+for this form. It survives to disk only after \code{\link[=saveProject]{saveProject()}}, which
+freezes the sampled population to a \verb{<id>.csv} file under the populations
+folder; rerun the code that built it to reproduce it in a new session.
+}
+}
+\details{
+The id argument sets \code{N}, the number of definitions to act on, and cannot
+itself be recycled: when any scalar-per-definition field has length greater than
+1, the id vector must have that same length. A length-1 id with all-scalar
+fields is the ordinary single-definition call.
+
+Each scalar-per-definition field is either length 1 (recycled to all \code{N}
+definitions) or length \code{N} (aligned to the ids by position). Any other
+length is an error naming the field and the lengths.
+
+A vector-valued-per-definition field (an individual's or application's
+\code{parameterSets}, a scenario's \code{outputPaths} and \code{parameterSets}) is
+applied whole to every definition, never split positionally. To give a
+different multi-valued list per definition, pass a list of the same length
+as the id vector (one vector per definition).
+
+The call is all-or-nothing: every definition is validated first, and if any
+fails the whole call aborts and writes nothing. On success all definitions
+are folded into the section and persisted in a single write-through.
+
+Two families of authoring functions sit outside this id-sets-\code{N} rule.
+\code{addParameterEntry()} and \code{removeParameterEntry()} vectorize over parameter
+entries (parallel \code{containerPath} / \code{parameterName} / \code{value} / \code{units}
+vectors) within a single named set, a different axis than the id-sets-\code{N}
+rule described here. \code{renameScenario()}, \code{duplicateScenario()},
+\code{addObservedData()}, \code{addPITask()}, and the per-task
+parameter-identification sub-definition helpers act on a single definition per
+call.
 }
 \seealso{
 Other population:
-\code{\link[=removePopulation]{removePopulation()}}
+\code{\link[=removePopulation]{removePopulation()}},
+\code{\link[=setPopulation]{setPopulation()}}
 }
 \concept{population}

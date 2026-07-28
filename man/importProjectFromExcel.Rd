@@ -2,35 +2,70 @@
 % Please edit documentation in R/project-excel.R
 \name{importProjectFromExcel}
 \alias{importProjectFromExcel}
-\alias{snapshotProjectConfiguration}
-\title{Import project configuration from Excel files to v2.0 JSON}
+\title{Import project configuration from Excel files}
 \usage{
 importProjectFromExcel(
   projectConfigPath = "Project.xlsx",
   outputDir = NULL,
-  silent = FALSE
+  overwrite = FALSE,
+  silent = FALSE,
+  copyAssets = TRUE
 )
-
-snapshotProjectConfiguration(...)
 }
 \arguments{
 \item{projectConfigPath}{Path to the \code{Project.xlsx} file.
 Defaults to \code{"Project.xlsx"}.}
 
-\item{outputDir}{Directory where the JSON file will be saved. If \code{NULL}
-(default), the JSON file is created in the same directory as the source
-Excel file.}
+\item{outputDir}{Directory where the JSON project is created. If \code{NULL}
+(default), it is created in the same directory as the source Excel file.}
 
-\item{silent}{Logical. If \code{TRUE}, suppresses informational messages.
-Defaults to \code{FALSE}.}
+\item{overwrite}{Logical. Guards against silently replacing an existing JSON
+project. With \code{overwrite = FALSE} (default), the import aborts when a
+project file or a non-empty \verb{definitions/} tree already exists in
+\code{outputDir}, because re-importing replaces the JSON project with the Excel
+state and deletes any definitions authored only on the JSON side. Pass
+\code{overwrite = TRUE} to replace the existing JSON project with the Excel
+state.}
 
-\item{...}{Arguments passed to \code{importProjectFromExcel()}.}
+\item{silent}{Logical. If \code{TRUE}, suppresses the import summary (the project
+written, its per-section definition counts, and the folders copied or
+missing). Defaults to \code{FALSE}.}
+
+\item{copyAssets}{Logical. Whether to copy the input folders the project
+references (models, data, csv populations) into \code{outputDir}, which is what
+makes the imported project runnable where it was written. Defaults to
+\code{TRUE}. Set it to \code{FALSE} when only the definitions are wanted and the
+assets would be wasted work, as when the import feeds a throwaway
+comparison snapshot.}
 }
 \value{
-Invisibly returns the path to the created JSON file.
+Invisibly returns the path to the created project file (the
+\code{Project.json}).
 }
 \description{
 Reads all Excel configuration files in an esqlabsR project and
-produces a single v2.0 JSON file. This is the migration path from
-Excel-based projects to the JSON-primary workflow.
+converts them to the JSON project format: a project file (named after the
+Excel file, e.g. \code{Project.xlsx} becomes \code{Project.json}) plus one file per
+definition in the \verb{definitions/} folder. The result is a ready-to-use
+project — \code{\link[=loadProject]{loadProject()}} can open it directly. This is the migration path
+from Excel-based projects to the JSON-primary workflow.
+
+The \code{configurationsFolder} and the per-section workbook filenames are read
+from the Excel file and must stay under the project folder: a value that
+escapes it (a \verb{../} climb or an absolute path) aborts naming the field. A
+folder deliberately placed outside the project with the \verb{$\{VAR\}}
+environment-variable form is still allowed.
 }
+\seealso{
+Other projectPersistence:
+\code{\link[=exampleProjectPath]{exampleProjectPath()}},
+\code{\link[=exportProjectToExcel]{exportProjectToExcel()}},
+\code{\link[=initProject]{initProject()}},
+\code{\link[=loadProject]{loadProject()}},
+\code{\link[=projectStatus]{projectStatus()}},
+\code{\link[=reloadProject]{reloadProject()}},
+\code{\link[=restoreProject]{restoreProject()}},
+\code{\link[=saveProject]{saveProject()}},
+\code{\link[=snapshotProject]{snapshotProject()}}
+}
+\concept{projectPersistence}

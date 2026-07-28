@@ -9,8 +9,6 @@ R6 class for storing validation results
 \section{Public fields}{
   \if{html}{\out{<div class="r6-fields">}}
   \describe{
-    \item{\code{data}}{Successfully validated/processed data}
-
     \item{\code{critical_errors}}{List of critical errors (blocking issues)}
 
     \item{\code{warnings}}{List of warnings (non-blocking issues)}
@@ -21,13 +19,12 @@ R6 class for storing validation results
 \subsection{Public methods}{
   \itemize{
     \item \href{#method-validationResult-initialize}{\code{validationResult$new()}}
-    \item \href{#method-validationResult-add_critical_error}{\code{validationResult$add_critical_error()}}
-    \item \href{#method-validationResult-add_warning}{\code{validationResult$add_warning()}}
-    \item \href{#method-validationResult-set_data}{\code{validationResult$set_data()}}
-    \item \href{#method-validationResult-is_valid}{\code{validationResult$is_valid()}}
-    \item \href{#method-validationResult-has_critical_errors}{\code{validationResult$has_critical_errors()}}
-    \item \href{#method-validationResult-get_formatted_messages}{\code{validationResult$get_formatted_messages()}}
-    \item \href{#method-validationResult-get_summary}{\code{validationResult$get_summary()}}
+    \item \href{#method-validationResult-addCriticalError}{\code{validationResult$addCriticalError()}}
+    \item \href{#method-validationResult-addWarning}{\code{validationResult$addWarning()}}
+    \item \href{#method-validationResult-isValid}{\code{validationResult$isValid()}}
+    \item \href{#method-validationResult-hasCriticalErrors}{\code{validationResult$hasCriticalErrors()}}
+    \item \href{#method-validationResult-getFormattedMessages}{\code{validationResult$getFormattedMessages()}}
+    \item \href{#method-validationResult-getSummary}{\code{validationResult$getSummary()}}
     \item \href{#method-validationResult-clone}{\code{validationResult$clone()}}
   }
 }
@@ -44,13 +41,13 @@ R6 class for storing validation results
 }
 
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-validationResult-add_critical_error"></a>}}
-\if{latex}{\out{\hypertarget{method-validationResult-add_critical_error}{}}}
-\subsection{\code{validationResult$add_critical_error()}}{
+\if{html}{\out{<a id="method-validationResult-addCriticalError"></a>}}
+\if{latex}{\out{\hypertarget{method-validationResult-addCriticalError}{}}}
+\subsection{\code{validationResult$addCriticalError()}}{
   Add a critical error
   \subsection{Usage}{
     \if{html}{\out{<div class="r">}}
-    \preformatted{validationResult$add_critical_error(category, message, details = NULL)}
+    \preformatted{validationResult$addCriticalError(category, message, details = NULL)}
     \if{html}{\out{</div>}}
   }
   \subsection{Arguments}{
@@ -65,13 +62,13 @@ R6 class for storing validation results
 }
 
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-validationResult-add_warning"></a>}}
-\if{latex}{\out{\hypertarget{method-validationResult-add_warning}{}}}
-\subsection{\code{validationResult$add_warning()}}{
+\if{html}{\out{<a id="method-validationResult-addWarning"></a>}}
+\if{latex}{\out{\hypertarget{method-validationResult-addWarning}{}}}
+\subsection{\code{validationResult$addWarning()}}{
   Add a warning
   \subsection{Usage}{
     \if{html}{\out{<div class="r">}}
-    \preformatted{validationResult$add_warning(category, message, details = NULL)}
+    \preformatted{validationResult$addWarning(category, message, details = NULL)}
     \if{html}{\out{</div>}}
   }
   \subsection{Arguments}{
@@ -86,68 +83,49 @@ R6 class for storing validation results
 }
 
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-validationResult-set_data"></a>}}
-\if{latex}{\out{\hypertarget{method-validationResult-set_data}{}}}
-\subsection{\code{validationResult$set_data()}}{
-  Set validated data
-  \subsection{Usage}{
-    \if{html}{\out{<div class="r">}}
-    \preformatted{validationResult$set_data(data)}
-    \if{html}{\out{</div>}}
-  }
-  \subsection{Arguments}{
-    \if{html}{\out{<div class="arguments">}}
-    \describe{
-      \item{\code{data}}{The validated/processed data to store}
-    }
-    \if{html}{\out{</div>}}
-  }
-}
-
-\if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-validationResult-is_valid"></a>}}
-\if{latex}{\out{\hypertarget{method-validationResult-is_valid}{}}}
-\subsection{\code{validationResult$is_valid()}}{
+\if{html}{\out{<a id="method-validationResult-isValid"></a>}}
+\if{latex}{\out{\hypertarget{method-validationResult-isValid}{}}}
+\subsection{\code{validationResult$isValid()}}{
   Check if validation passed (no critical errors)
   \subsection{Usage}{
     \if{html}{\out{<div class="r">}}
-    \preformatted{validationResult$is_valid()}
+    \preformatted{validationResult$isValid()}
     \if{html}{\out{</div>}}
   }
 }
 
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-validationResult-has_critical_errors"></a>}}
-\if{latex}{\out{\hypertarget{method-validationResult-has_critical_errors}{}}}
-\subsection{\code{validationResult$has_critical_errors()}}{
+\if{html}{\out{<a id="method-validationResult-hasCriticalErrors"></a>}}
+\if{latex}{\out{\hypertarget{method-validationResult-hasCriticalErrors}{}}}
+\subsection{\code{validationResult$hasCriticalErrors()}}{
   Check if there are critical errors
   \subsection{Usage}{
     \if{html}{\out{<div class="r">}}
-    \preformatted{validationResult$has_critical_errors()}
+    \preformatted{validationResult$hasCriticalErrors()}
     \if{html}{\out{</div>}}
   }
 }
 
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-validationResult-get_formatted_messages"></a>}}
-\if{latex}{\out{\hypertarget{method-validationResult-get_formatted_messages}{}}}
-\subsection{\code{validationResult$get_formatted_messages()}}{
+\if{html}{\out{<a id="method-validationResult-getFormattedMessages"></a>}}
+\if{latex}{\out{\hypertarget{method-validationResult-getFormattedMessages}{}}}
+\subsection{\code{validationResult$getFormattedMessages()}}{
   Get formatted messages for display
   \subsection{Usage}{
     \if{html}{\out{<div class="r">}}
-    \preformatted{validationResult$get_formatted_messages()}
+    \preformatted{validationResult$getFormattedMessages()}
     \if{html}{\out{</div>}}
   }
 }
 
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-validationResult-get_summary"></a>}}
-\if{latex}{\out{\hypertarget{method-validationResult-get_summary}{}}}
-\subsection{\code{validationResult$get_summary()}}{
+\if{html}{\out{<a id="method-validationResult-getSummary"></a>}}
+\if{latex}{\out{\hypertarget{method-validationResult-getSummary}{}}}
+\subsection{\code{validationResult$getSummary()}}{
   Get validation summary
   \subsection{Usage}{
     \if{html}{\out{<div class="r">}}
-    \preformatted{validationResult$get_summary()}
+    \preformatted{validationResult$getSummary()}
     \if{html}{\out{</div>}}
   }
 }
