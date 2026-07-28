@@ -57,3 +57,16 @@
       ! The Scenarios sheet is missing required column: "OutputPathsIds".
       i Expected columns: "Scenario_name", "IndividualId", "PopulationId", "ReadPopulationFromCSV", "ModelParameterSheets", "ApplicationProtocol", "SimulationTime", "SimulationTimeUnit", "SteadyState", "SteadyStateTime", "SteadyStateTimeUnit", "ModelFile", and "OutputPathsIds".
 
+# .warnIncompleteObservedCurves names the affected combinations
+
+    Code
+      .warnIncompleteObservedCurves(list(list(dataCombinedId = "plasma", simulated = list(
+        list(label = "sim")), observed = list(list(label = "obs"))), list(
+        dataCombinedId = "urine", observed = list(list(label = "obs", dataSet = "d1"))),
+      list(dataCombinedId = "fat", observed = list(list(label = "obs", dataSet = "")))))
+    Condition
+      Warning:
+      ! 2 imported data combinations have an observed curve that names no data set: "plasma" and "fat".
+      i The DataCombined sheet marked the row "observed" but left its dataSet cell empty, so there is nothing to resolve against. The row is kept as it was authored, not dropped.
+      i `validateProject()` reports each one as a critical error until the cell is filled in Excel and the project imported again, or the curve is completed with `addDataCombined()`.
+

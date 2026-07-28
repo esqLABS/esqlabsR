@@ -507,6 +507,14 @@ importProjectFromExcel <- function(
   # `aciclovir_pvb`.
   jsonData <- .canonicalizeProjectJsonIds(jsonData)
 
+  # An observed curve that names no data set is kept as authored, so a user who
+  # can still supply the missing piece is not silently robbed of the row. But
+  # nothing else would tell them why the freshly imported project is invalid, so
+  # say it here rather than leaving it to be discovered at the next call. After
+  # canonicalization, so the ids named are the ids the tree and
+  # `validateProject()` use.
+  .warnIncompleteObservedCurves(jsonData$dataCombined)
+
   # Bootstrap an in-memory project from the imported data by writing the inlined
   # JSON to the container path and parsing it back. This inlined form is only a
   # transient bootstrap: `.writeProjectTree()` below overwrites the container
@@ -1852,6 +1860,46 @@ projectStatus <- function(project, silent = FALSE) {
     scenarios[[i]] <- scenario
   }
   scenarios
+}
+
+#' Report the imported data combinations whose observed curve names no data set
+#'
+#' `.parseExcelDataCombinedSheet()` builds an observed entry for every row the
+#' sheet marked `observed`, whatever its other cells hold, so a blank (or absent)
+#' `dataSet` column yields an entry with nothing to resolve against. The entry is
+#' left as authored, since the user may still be able to fill the cell, and the
+#' one thing this owes them is saying so: `validateProject()` reports each such
+#' entry as a critical error, and without this the first sign of it is that error
+#' on a project they have not touched yet.
+#'
+#' @param dataCombined The parsed `dataCombined` section (an unnamed list).
+#' @returns Nothing, called for its warning.
+#' @keywords internal
+#' @noRd
+.warnIncompleteObservedCurves <- function(dataCombined) {
+  incomplete <- vapply(
+    dataCombined %||% list(),
+    function(dc) {
+      any(vapply(
+        dc$observed %||% list(),
+        function(entry) .isBlankCell(entry$dataSet),
+        logical(1)
+      ))
+    },
+    logical(1)
+  )
+  if (!any(incomplete)) {
+    return(invisible(NULL))
+  }
+  ids <- vapply(
+    dataCombined[incomplete],
+    function(dc) as.character(dc$dataCombinedId),
+    character(1)
+  )
+  .warnFormatted(
+    messages$importIncompleteObservedCurves(ids),
+    "esqlabsR_importIncompleteObservedCurves"
+  )
 }
 
 #' Report an unreachable observed-data path and import no observed data

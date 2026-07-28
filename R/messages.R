@@ -239,7 +239,28 @@ messages$importSkippedObservedData <- function(dataFile) {
     "!" = "The configured data file {.file {dataFile}} was not found, so no \\
     observed data was imported.",
     "i" = "Any plot or parameter-identification mapping that references \\
-    observed data will not resolve until the data file is present."
+    observed data will not resolve, and {.fn validateProject} will report it, \\
+    until the data file is present."
+  )
+}
+
+messages$importIncompleteObservedCurves <- function(dataCombinedIds) {
+  # Unglued, like the sheet-skip warnings below: a definition id is free text.
+  envir <- new.env(parent = parent.frame())
+  assign("ids", dataCombinedIds, envir = envir)
+  assign("n", length(dataCombinedIds), envir = envir)
+  list(
+    bullets = c(
+      "!" = "{cli::qty(n)}{n} imported data {?combination/combinations} \\
+      {?has/have} an observed curve that names no data set: {.val {ids}}.",
+      "i" = "The {.field DataCombined} sheet marked the row {.val observed} but \\
+      left its {.field dataSet} cell empty, so there is nothing to resolve \\
+      against. The row is kept as it was authored, not dropped.",
+      "i" = "{.fn validateProject} reports each one as a critical error until \\
+      the cell is filled in Excel and the project imported again, or the curve \\
+      is completed with {.fn addDataCombined}."
+    ),
+    envir = envir
   )
 }
 
@@ -260,7 +281,8 @@ messages$importSkippedOutOfProjectDataFolder <- function() {
     resolves from wherever the project is opened. Set one, or copy the data \\
     under the project folder, then import again.",
     "i" = "Any plot or parameter-identification mapping that references \\
-    observed data will not resolve until then."
+    observed data will not resolve, and {.fn validateProject} will report it, \\
+    until then."
   )
 }
 
@@ -272,7 +294,8 @@ messages$importSkippedOutOfProjectDataFile <- function() {
     Move the file under that folder, or point {.field dataFolder} at the \\
     folder that holds it, then import again.",
     "i" = "Any plot or parameter-identification mapping that references \\
-    observed data will not resolve until then."
+    observed data will not resolve, and {.fn validateProject} will report it, \\
+    until then."
   )
 }
 

@@ -2468,3 +2468,90 @@ test_that("a PIOutputMappings sheet with no OutputPath column imports", {
   }))
   expect_false(any(grepl("outputPath", errors %||% character())))
 })
+
+# The reported case: a fresh, never-edited import came back invalid with one
+# critical error per observed curve, and nothing in the import said why. The
+# curve is kept (the user may still be able to fill the cell), so the import
+# names the affected data combinations and states the consequence (#1183).
+test_that("an observed curve with no dataSet is kept and reported", {
+  work_dir <- withr::local_tempdir()
+  file.copy(dirname(testProjectExcelPath()), work_dir, recursive = TRUE)
+  projectDir <- file.path(work_dir, "TestProjectExcel")
+  plotsFile <- file.path(projectDir, "Configurations", "Plots.xlsx")
+
+  sheetNames <- readxl::excel_sheets(plotsFile)
+  sheets <- stats::setNames(
+    lapply(sheetNames, function(s) readExcel(plotsFile, sheet = s)),
+    sheetNames
+  )
+  observed <- sheets$DataCombined$dataType == "observed"
+  sheets$DataCombined$dataSet[observed] <- NA
+  .writeExcel(sheets, plotsFile)
+
+  expect_warning(
+    jsonPath <- importProjectFromExcel(
+      file.path(projectDir, "ProjectConfiguration.xlsx"),
+      outputDir = withr::local_tempdir(),
+      silent = TRUE
+    ),
+    class = "esqlabsR_importIncompleteObservedCurves"
+  )
+  project <- suppressWarnings(loadProject(jsonPath))
+
+  # Nothing dropped: the observed curve is still there, and so is the simulated
+  # one beside it.
+  dc <- .unwrapDefinitionList(project$definitions$dataCombined)[["aciclovirpvb"]]
+  expect_length(dc$observed, 1L)
+  expect_length(dc$simulated, 1L)
+  expect_null(dc$observed[[1]]$dataSet)
+
+  # And the consequence the warning states is the one that actually happens.
+  results <- suppressWarnings(validateProject(project))
+  errors <- unlist(lapply(results, function(section) {
+    vapply(section$critical_errors %||% list(), \(e) e$message, character(1))
+  }))
+  expect_true(any(grepl("observed entry missing required field: dataSet", errors)))
+})
+
+test_that("a missing data file says the project will not validate", {
+  work_dir <- withr::local_tempdir()
+  file.copy(dirname(testProjectExcelPath()), work_dir, recursive = TRUE)
+  projectDir <- file.path(work_dir, "TestProjectExcel")
+  unlink(list.files(file.path(projectDir, "Data"), full.names = TRUE))
+
+  expect_warning(
+    importProjectFromExcel(
+      file.path(projectDir, "ProjectConfiguration.xlsx"),
+      outputDir = withr::local_tempdir(),
+      silent = TRUE
+    ),
+    "validateProject"
+  )
+})
+
+# The warning's wording is the whole of the fix for #1183, so it is snapshotted
+# rather than only matched on its class. Called directly, not through an import,
+# so no temp path lands in the snapshot.
+test_that(".warnIncompleteObservedCurves names the affected combinations", {
+  expect_snapshot(.warnIncompleteObservedCurves(list(
+    list(
+      dataCombinedId = "plasma",
+      simulated = list(list(label = "sim")),
+      observed = list(list(label = "obs"))
+    ),
+    list(
+      dataCombinedId = "urine",
+      observed = list(list(label = "obs", dataSet = "d1"))
+    ),
+    list(
+      dataCombinedId = "fat",
+      observed = list(list(label = "obs", dataSet = ""))
+    )
+  )))
+
+  # Nothing to say when every observed curve names a data set.
+  expect_silent(.warnIncompleteObservedCurves(list(
+    list(dataCombinedId = "urine", observed = list(list(dataSet = "d1")))
+  )))
+  expect_silent(.warnIncompleteObservedCurves(NULL))
+})
