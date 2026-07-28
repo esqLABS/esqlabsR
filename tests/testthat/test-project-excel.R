@@ -2162,3 +2162,82 @@ test_that(".parseCommaListToArray parses the quoted-CSV and backslash convention
   # A plain unquoted list is unaffected.
   expect_identical(.parseCommaListToArray("a, b, c"), c("a", "b", "c"))
 })
+
+# Only the raw `${VAR}` is stored, so it is expanded afresh on every load and a
+# relative expansion is resolved against the project file. The import therefore
+# has to anchor it the same way, and the folder has to travel with the project,
+# or the folder found at import is not the folder found afterwards (#1182).
+test_that("a ${VAR} folder expanding to a relative path travels with the project", {
+  src <- withr::local_tempdir()
+  out <- withr::local_tempdir()
+  dir.create(file.path(src, "Inner", "Data"), recursive = TRUE)
+  writeLines("x", file.path(src, "Inner", "Data", "values.csv"))
+  withr::local_envvar(ESQLABSR_TEST_REL = "Inner/Data")
+
+  result <- .copyExcelProjectAssets(
+    list(dataFolder = "${ESQLABSR_TEST_REL}"),
+    src,
+    out,
+    overwrite = TRUE
+  )
+
+  # Copied under the expanded name, which is where the loader will look, and
+  # reported under the raw one, which is what the project spells.
+  expect_identical(result$copied, "${ESQLABSR_TEST_REL}")
+  expect_true(file.exists(file.path(out, "Inner", "Data", "values.csv")))
+})
+
+# An absolute expansion resolves identically from anywhere, so it is left where
+# it is; an unset variable matches nothing and is reported rather than skipped
+# without a word.
+test_that("a ${VAR} folder is skipped when absolute and reported when unset", {
+  src <- withr::local_tempdir()
+  out <- withr::local_tempdir()
+  elsewhere <- withr::local_tempdir()
+
+  withr::local_envvar(ESQLABSR_TEST_ABS = elsewhere)
+  absolute <- .copyExcelProjectAssets(
+    list(dataFolder = "${ESQLABSR_TEST_ABS}"),
+    src,
+    out,
+    overwrite = TRUE
+  )
+  expect_length(absolute$copied, 0L)
+  expect_length(absolute$notCopied, 0L)
+
+  unset <- .copyExcelProjectAssets(
+    list(dataFolder = "${ESQLABSR_TEST_NEVER_SET}"),
+    src,
+    out,
+    overwrite = TRUE
+  )
+  expect_identical(unset$notCopied, "${ESQLABSR_TEST_NEVER_SET}")
+})
+
+# The observed-data parser anchors a relative expansion at the project file it
+# is writing, not at the Excel source it is reading, so import and load agree
+# on which folder the stored `${VAR}` names (#1182).
+test_that(".parseExcelObservedData anchors a relative ${VAR} at the project file", {
+  source <- withr::local_tempdir()
+  project <- withr::local_tempdir()
+  dir.create(file.path(project, "Shared"))
+  .writeExcel(
+    list(Sheet1 = data.frame(x = 1)),
+    file.path(project, "Shared", "Values.xlsx")
+  )
+  withr::local_envvar(ESQLABSR_TEST_REL = "Shared")
+
+  prop <- function(name) {
+    switch(
+      name,
+      dataFile = "Values.xlsx",
+      dataFolder = "${ESQLABSR_TEST_REL}",
+      NULL
+    )
+  }
+  # Found under the project directory, though the Excel source is elsewhere.
+  expect_silent(
+    result <- .parseExcelObservedData(list(), prop, source, project)
+  )
+  expect_named(result$observedData, "Values.xlsx")
+})

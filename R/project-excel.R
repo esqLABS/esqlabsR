@@ -445,18 +445,18 @@ importProjectFromExcel <- function(
     }
   }
 
+  # --- Determine output path ---
+  if (is.null(outputDir)) {
+    outputDir <- pcDir
+  }
+
   # Observed data. The project records a single `dataFile` (an experimental-data
   # workbook) and a `dataImporterConfigurationFile` under `dataFolder`, not a
   # per-section workbook, so it is parsed outside the `sections` loop. The
   # importer reifies it as one `excel` observed-data definition keyed by the
   # data-file basename, listing the workbook's sheets; the loader resolves the
   # `file` / `importerConfiguration` basenames against `dataFolder`.
-  jsonData <- .parseExcelObservedData(jsonData, prop, pcDir)
-
-  # --- Determine output path ---
-  if (is.null(outputDir)) {
-    outputDir <- pcDir
-  }
+  jsonData <- .parseExcelObservedData(jsonData, prop, pcDir, outputDir)
 
   outputFileName <- sub("\\.xlsx$", ".json", basename(projectConfigPath))
   outputPath <- file.path(outputDir, outputFileName)
@@ -1394,10 +1394,19 @@ projectStatus <- function(project, silent = FALSE) {
     if (is.null(value) || is.na(value) || !nzchar(value)) {
       next
     }
-    # An absolute folder, or one naming an environment variable, deliberately
-    # points outside the project: it resolves the same from the new location, so
-    # copying it would duplicate data the author chose to keep in one place.
-    if (fs::is_absolute_path(value) || .declaresEnvVarPath(value)) {
+    # An absolute folder deliberately points outside the project: it resolves the
+    # same from the new location, so copying it would duplicate data the author
+    # chose to keep in one place. A `${VAR}` that expands to an absolute path is
+    # the same case. One that expands to a relative path is not: a relative path
+    # is resolved against the project file, so it names a folder inside the
+    # project and has to travel with it, under the expanded name the loader will
+    # look for. An unset variable expands to itself, matches no folder, and is
+    # reported below rather than skipped in silence.
+    copyAs <- value
+    if (.declaresEnvVarPath(value)) {
+      copyAs <- .replaceEnvVarPath(value)
+    }
+    if (fs::is_absolute_path(copyAs)) {
       next
     }
     # A `../`-climbing value names something the project does not own. Copying it
@@ -1405,11 +1414,11 @@ projectStatus <- function(project, silent = FALSE) {
     # `outputDir`, so it is contained the same way every other author-controlled
     # path in this file is (`.resolveProjectPath()`) and reported rather than
     # copied.
-    if (.pathEscapesRoot(value, sourceDir)) {
+    if (.pathEscapesRoot(copyAs, sourceDir)) {
       result$notCopied <- c(result$notCopied, value)
       next
     }
-    from <- fs::path_norm(fs::path(sourceDir, value))
+    from <- fs::path_norm(fs::path(sourceDir, copyAs))
     # A folder value of `"."` resolves to the project folder itself; copying that
     # would drag the whole Excel project (workbooks included) into the output.
     if (normalizePath(from, mustWork = FALSE) == sourceNorm) {
@@ -1419,7 +1428,7 @@ projectStatus <- function(project, silent = FALSE) {
       result$notCopied <- c(result$notCopied, value)
       next
     }
-    to <- fs::path(outputDir, value)
+    to <- fs::path(outputDir, copyAs)
     # A target folder the user already put files in is theirs, not the import's
     # to replace: `overwrite = FALSE` means it here too, so a curated model or
     # data file placed in the output beforehand survives and is reported instead
@@ -1825,10 +1834,15 @@ projectStatus <- function(project, silent = FALSE) {
 #' @param jsonData The accumulating project JSON list.
 #' @param prop The `Property -> Value` lookup closure from the importer.
 #' @param pcDir Absolute path to the project-configuration directory.
+#' @param projectDir Directory the imported `Project.json` is written to. A
+#'   relative path is resolved against the project file, so a `${VAR}` that
+#'   expands to one is anchored here rather than at the Excel source, matching
+#'   how the loader (`Project$.resolveWorkingFolder()`) will resolve the very
+#'   same stored value.
 #' @returns `jsonData` with an `observedData` section added when applicable.
 #' @keywords internal
 #' @noRd
-.parseExcelObservedData <- function(jsonData, prop, pcDir) {
+.parseExcelObservedData <- function(jsonData, prop, pcDir, projectDir = pcDir) {
   dataFile <- prop("dataFile")
   if (is.null(dataFile) || is.na(dataFile) || dataFile == "") {
     return(jsonData)
@@ -1837,12 +1851,15 @@ projectStatus <- function(project, silent = FALSE) {
   dataFolder <- if (.declaresEnvVarPath(dataFolderRaw)) {
     # A `${VAR}` is the sanctioned way to keep the data outside the project (a
     # synced drive shared between projects), so it is expanded and exempt from
-    # containment, the same order `configurationsFolder` above uses.
+    # containment. Only the raw `${VAR}` is stored, so the same value is
+    # expanded again on every load: a relative expansion must therefore be
+    # anchored to the project file, not to the Excel source it was read from, or
+    # the folder found here would not be the folder found after the import.
     expanded <- .replaceEnvVarPath(dataFolderRaw)
     if (fs::is_absolute_path(expanded)) {
       expanded
     } else {
-      file.path(pcDir, expanded)
+      file.path(projectDir, expanded)
     }
   } else if (.pathEscapesRoot(dataFolderRaw, pcDir)) {
     # An out-of-project `dataFolder` (typically a 5.x project whose observed
