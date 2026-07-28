@@ -1793,21 +1793,38 @@ test_that("exportProjectToExcel keeps both ids when two share one output path", 
 })
 
 # A non-blank parameter `Value` cell that does not coerce to a number (text, a
-# comma-decimal) must abort naming the sheet and row, rather than silently
-# becoming NA and serialising a value-less parameter into the JSON project.
-test_that(".parseExcelParameterSheets aborts on a non-numeric Value cell", {
+# comma-decimal) skips its row, naming the sheet, row and cell, rather than
+# silently becoming NA and serialising a value-less parameter into the JSON
+# project. Skipping the row rather than aborting the import is what lets a
+# project carrying a fit-bounds sheet migrate at all (#1189).
+test_that(".parseExcelParameterSheets skips a non-numeric Value cell", {
   paramFile <- withr::local_tempfile(fileext = ".xlsx")
   df <- data.frame(
     `Container Path` = "Organism|A",
-    `Parameter Name` = "P",
-    Value = "not_a_number",
+    `Parameter Name` = c("P", "Q", "R"),
+    Value = c("not_a_number", "1,5", "2"),
     Units = "mg",
     check.names = FALSE,
     stringsAsFactors = FALSE
   )
   .writeExcel(list(Global = df), paramFile)
 
-  expect_snapshot(error = TRUE, .parseExcelParameterSheets(paramFile))
+  # Not a snapshot: the warning names the workbook, whose path is a temp file
+  # here, so a snapshot would record a machine-specific string.
+  expect_warning(
+    parsed <- .parseExcelParameterSheets(paramFile),
+    class = "esqlabsR_importSkippedNonNumericRows"
+  )
+  # Each skipped row is named with its sheet, row and cell.
+  expect_warning(
+    .parseExcelParameterSheets(paramFile),
+    'row 1: "not_a_number"'
+  )
+  expect_warning(.parseExcelParameterSheets(paramFile), 'row 2: "1,5"')
+  # Only the numeric row survives; a comma-decimal is text, so it is skipped
+  # rather than silently read as 1.
+  expect_length(parsed$Global, 1L)
+  expect_identical(parsed$Global[[1]]$value, 2)
 })
 
 # A blank `Value` cell stays allowed (NA), so a partially-filled sheet still
@@ -2263,7 +2280,10 @@ test_that(".dropSkippedSheetRefs removes only references to skipped sheets", {
   expect_identical(result$d, definitions$d)
   # A reference matching on canonical id alone is still dropped.
   expect_null(
-    .dropSkippedSheetRefs(list(a = list(parameterSets = list("skipped"))), "Skipped")$a$parameterSets
+    .dropSkippedSheetRefs(
+      list(a = list(parameterSets = list("skipped"))),
+      "Skipped"
+    )$a$parameterSets
   )
 })
 
@@ -2335,4 +2355,47 @@ test_that("blank rows in a populations sheet do not become definitions", {
   project <- suppressWarnings(loadProject(jsonPath))
 
   expect_length(project$definitions$populations, realRows)
+})
+
+# The reported case: a fit-bounds sheet authored by copying a real parameter
+# sheet carries all four parameter columns, so it is a parameter sheet and its
+# rows are read, and a `Value` of "lower" aborted the whole import (#1189).
+test_that("a non-numeric Value skips the row, not the import", {
+  work_dir <- withr::local_tempdir()
+  file.copy(dirname(testProjectExcelPath()), work_dir, recursive = TRUE)
+  projectDir <- file.path(work_dir, "TestProjectExcel")
+  paramFile <- file.path(projectDir, "Configurations", "ModelParameters.xlsx")
+
+  sheetNames <- readxl::excel_sheets(paramFile)
+  sheets <- stats::setNames(
+    lapply(sheetNames, function(s) readExcel(paramFile, sheet = s)),
+    sheetNames
+  )
+  sheets[["RefConc_fit"]] <- data.frame(
+    `Container Path` = c("Target", "Target", "Target"),
+    `Parameter Name` = c("Reference concentration", "Kd", "koff"),
+    Value = c("lower", "2.5", "upper"),
+    Units = c("nmol/l", "nmol/l", "1/min"),
+    check.names = FALSE,
+    stringsAsFactors = FALSE
+  )
+  .writeExcel(sheets, paramFile)
+
+  expect_warning(
+    jsonPath <- importProjectFromExcel(
+      file.path(projectDir, "ProjectConfiguration.xlsx"),
+      outputDir = withr::local_tempdir(),
+      silent = TRUE
+    ),
+    class = "esqlabsR_importSkippedNonNumericRows"
+  )
+  project <- suppressWarnings(loadProject(jsonPath))
+
+  # The two unparseable rows are gone; the numeric one survives with its value.
+  set <- .unwrapDefinitionList(project$definitions$parameterSets)[[
+    "refconc_fit"
+  ]]
+  expect_length(set, 1L)
+  expect_identical(set[[1]]$parameterName, "Kd")
+  expect_identical(set[[1]]$value, 2.5)
 })

@@ -39,16 +39,6 @@
       * "Global" -> "Global_1"
       i The three former parameter-set kinds now share one parameterSets namespace, so one sheet name cannot serve two sets. References made in 'Individuals.xlsx' point at the renamed set; rename the sheet in Excel to choose the id yourself.
 
-# .parseExcelParameterSheets aborts on a non-numeric Value cell
-
-    Code
-      .parseExcelParameterSheets(paramFile)
-    Condition
-      Error in `.parseNumericCell()`:
-      ! Cannot interpret the Value cell as a number.
-      x Sheet "Global", row 1: "not_a_number".
-      i A blank cell is allowed; a non-blank cell must be numeric (use "." as the decimal separator).
-
 # .parseExcelScenarios aborts on an unparseable boolean cell
 
     Code

@@ -1619,6 +1619,13 @@ projectStatus <- function(project, silent = FALSE) {
 #' sheet beside its parameter sheets. Such a sheet is recognized by its columns
 #' and skipped with a warning, so one of them does not stop a migration.
 #'
+#' A fit-bounds sheet authored by copying a real parameter sheet carries all four
+#' columns, so it is a parameter sheet by the test above and its rows are read.
+#' A row whose `Value` is text rather than a number (`lower`, `upper`) is skipped
+#' with a warning naming the sheet, row and cell. Skipping the row rather than
+#' the workbook is deliberate: nothing here can tell a deliberate note from a
+#' typo in a real parameter, and the row is the smallest unit that can be lost.
+#'
 #' @param filePath Path to the Excel file
 #' @param sheetNames Sheets to read. If NULL, reads all sheets.
 #' @returns Named list of parameter arrays, keyed by sheet name and holding only
@@ -1637,6 +1644,11 @@ projectStatus <- function(project, silent = FALSE) {
   }
   result <- list()
   skipped <- character()
+  # Parallel accumulators for the skipped rows, so one warning covers the whole
+  # workbook rather than one per row.
+  badSheets <- character()
+  badRows <- integer()
+  badValues <- character()
   for (sheet in sheetNames) {
     df <- readExcel(filePath, sheet = sheet)
     # The check belongs to the sheet, not the cell: a missing column reads as
@@ -1650,22 +1662,25 @@ projectStatus <- function(project, silent = FALSE) {
     entries <- list()
     if (nrow(df) > 0) {
       for (i in seq_len(nrow(df))) {
+        value <- df[["Value"]][[i]]
+        if (.isUnusableNumericCell(value)) {
+          badSheets <- c(badSheets, sheet)
+          badRows <- c(badRows, i)
+          badValues <- c(badValues, as.character(value))
+          next
+        }
         entry <- list(
           containerPath = as.character(df[["Container Path"]][[i]]),
           parameterName = as.character(df[["Parameter Name"]][[i]]),
-          value = .parseNumericCell(
-            df[["Value"]][[i]],
-            sheet = sheet,
-            row = i,
-            column = "Value"
-          ),
+          # A blank cell stays an absent value, as it was before the check above.
+          value = if (.isBlankCell(value)) NA_real_ else as.numeric(value),
           units = if (is.na(df[["Units"]][[i]]) || df[["Units"]][[i]] == "") {
             NULL
           } else {
             as.character(df[["Units"]][[i]])
           }
         )
-        entries[[i]] <- entry
+        entries[[length(entries) + 1L]] <- entry
       }
     }
     result[[sheet]] <- entries
@@ -1678,6 +1693,17 @@ projectStatus <- function(project, silent = FALSE) {
         .parameterSheetColumns
       ),
       "esqlabsR_importSkippedNonParameterSheets"
+    )
+  }
+  if (length(badRows) > 0L) {
+    .warnFormatted(
+      messages$importSkippedNonNumericRows(
+        filePath,
+        badSheets,
+        badRows,
+        badValues
+      ),
+      "esqlabsR_importSkippedNonNumericRows"
     )
   }
   result
@@ -3219,37 +3245,6 @@ projectStatus <- function(project, silent = FALSE) {
     "i" = "Use a boolean-like value \\
     ({.val TRUE}/{.val FALSE}, {.val 1}/{.val 0}, {.val Yes}/{.val No})."
   ))
-}
-
-#' Coerce a single Excel numeric cell, aborting on a non-blank unparseable value
-#'
-#' A blank cell (`NA` / empty string) yields `NA` (an absent value is allowed).
-#' A non-blank cell that does not coerce to a number (text, or a comma-decimal
-#' such as `1,5`) aborts naming the sheet, row, and column, rather than silently
-#' becoming `NA` and serialising a value-less parameter into the JSON project.
-#'
-#' @param x A length-1 cell value.
-#' @param sheet,row,column The cell's location, used in the abort message.
-#' @returns A length-1 numeric (`NA` for a blank cell).
-#' @keywords internal
-#' @noRd
-.parseNumericCell <- function(x, sheet, row, column) {
-  if (is.null(x) || length(x) == 0L) {
-    return(NA_real_)
-  }
-  if (is.na(x) || (is.character(x) && trimws(x) == "")) {
-    return(NA_real_)
-  }
-  value <- suppressWarnings(as.numeric(x))
-  if (is.na(value)) {
-    cli::cli_abort(c(
-      "Cannot interpret the {.field {column}} cell as a number.",
-      "x" = "Sheet {.val {sheet}}, row {row}: {.val {x}}.",
-      "i" = "A blank cell is allowed; a non-blank cell must be numeric \\
-      (use {.val .} as the decimal separator)."
-    ))
-  }
-  value
 }
 
 #' Format a character vector as a comma-separated Excel-bridge cell

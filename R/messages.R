@@ -276,6 +276,44 @@ messages$importSkippedOutOfProjectDataFile <- function() {
   )
 }
 
+messages$importSkippedNonNumericRows <- function(
+  filePath,
+  sheets,
+  rows,
+  values
+) {
+  # Same unglued `bullets`/`envir` contract, and for the same reason, as
+  # `importSkippedNonParameterSheets()` below: a sheet name and a cell's own
+  # text are both free text that can contain `{`/`}`.
+  envir <- new.env(parent = parent.frame())
+  assign("filePath", filePath, envir = envir)
+  assign("sheets", sheets, envir = envir)
+  assign("rows", rows, envir = envir)
+  assign("values", values, envir = envir)
+  assign("n", length(rows), envir = envir)
+  list(
+    bullets = c(
+      "!" = "{cli::qty(n)}Skipped {n} {?row/rows} in {.file {filePath}}: \\
+      the {.field Value} cell is not a number.",
+      # One bullet per skipped row rather than one summary line: a row has to be
+      # findable in the workbook to be fixed. Each bullet indexes the vectors in
+      # `envir` rather than embedding the cell's text, the same way
+      # `.canonicalizedIdBullets()` keeps user text behind a variable.
+      stats::setNames(
+        sprintf(
+          "Sheet {.val {sheets[[%1$d]]}}, row {rows[[%1$d]]}: \\
+          {.val {values[[%1$d]]}}.",
+          seq_along(rows)
+        ),
+        rep("x", length(rows))
+      ),
+      "i" = "A blank cell is allowed; a non-blank cell must be numeric \\
+      (use {.val .} as the decimal separator)."
+    ),
+    envir = envir
+  )
+}
+
 messages$importSkippedNonParameterSheets <- function(
   filePath,
   sheets,
