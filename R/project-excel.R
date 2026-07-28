@@ -1627,13 +1627,15 @@ projectStatus <- function(project, silent = FALSE) {
     result[[sheet]] <- entries
   }
   if (length(skipped) > 0L) {
+    warning <- messages$importSkippedNonParameterSheets(
+      filePath,
+      skipped,
+      .parameterSheetColumns
+    )
     cli::cli_warn(
-      messages$importSkippedNonParameterSheets(
-        filePath,
-        skipped,
-        .parameterSheetColumns
-      ),
-      class = "esqlabsR_importSkippedNonParameterSheets"
+      warning$bullets,
+      class = "esqlabsR_importSkippedNonParameterSheets",
+      .envir = warning$envir
     )
   }
   result
@@ -1782,22 +1784,25 @@ projectStatus <- function(project, silent = FALSE) {
   scenarios
 }
 
-#' Report an out-of-project observed-data path and import no observed data
+#' Report an unreachable observed-data path and import no observed data
 #'
 #' Carries the same condition class as the missing-data-file warning, so the
 #' caller that expects no observed data (the legacy-snapshot upgrade, which
-#' never ships the data workbook) muffles both with one handler. The path itself
-#' is not echoed: it is absolute by definition here, so quoting it would put the
-#' user's account name in the message.
+#' never ships the data workbook) muffles both with one handler.
 #'
-#' @param fieldName The project field that names the unreachable path.
+#' @param fieldName Which boundary was crossed: `"dataFolder"` (outside the
+#'   project) or `"dataFile"` (outside the data folder).
 #' @param jsonData The accumulating project JSON list, returned unchanged.
 #' @returns `jsonData`.
 #' @keywords internal
 #' @noRd
 .skipOutOfProjectObservedData <- function(fieldName, jsonData) {
   cli::cli_warn(
-    messages$importSkippedOutOfProjectData(fieldName),
+    switch(
+      fieldName,
+      dataFolder = messages$importSkippedOutOfProjectDataFolder(),
+      dataFile = messages$importSkippedOutOfProjectDataFile()
+    ),
     class = "esqlabsR_importSkippedObservedData"
   )
   jsonData

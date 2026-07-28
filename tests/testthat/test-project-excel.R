@@ -920,7 +920,9 @@ test_that(".parseExcelObservedData expands a ${VAR} dataFolder", {
 })
 
 # A `dataFile` that climbs out of its `dataFolder` is the same situation one
-# level down, and gets the same warn-and-skip (#1182).
+# level down, and gets the same warn-and-skip (#1182). It names the boundary it
+# actually crossed: such a file is usually still inside the project, so saying
+# "outside the project folder" would be untrue and its remedy a no-op.
 test_that(".parseExcelObservedData warns and skips a dataFile outside dataFolder", {
   prop <- function(name) {
     switch(name, dataFile = "../Values.xlsx", dataFolder = "Data", NULL)
@@ -931,9 +933,19 @@ test_that(".parseExcelObservedData warns and skips a dataFile outside dataFolder
       prop,
       testthat::test_path("data", "TestProjectExcel")
     ),
-    "points outside the project folder"
+    "dataFile.+points outside.+dataFolder"
   )
   expect_null(result$observedData)
+
+  warning <- tryCatch(
+    .parseExcelObservedData(
+      list(),
+      prop,
+      testthat::test_path("data", "TestProjectExcel")
+    ),
+    warning = function(w) conditionMessage(w)
+  )
+  expect_false(grepl("outside the project folder", warning, fixed = TRUE))
 })
 
 # The whole point of the downgrade: a project whose data sits on a synced drive
@@ -1058,6 +1070,25 @@ test_that(".parseExcelParameterSheets skips a sheet without the parameter column
   )
   expect_named(result, "Global")
   expect_length(result$Global, 1L)
+})
+
+# A sheet name is free text, so it can hold `{}` (`Fit {old}`, `PK {2019}`). The
+# warning must quote it, not evaluate it: rendering the value into the message
+# text and letting the emitting `cli_warn()` glue-parse that text again would
+# abort the import on exactly the kind of scratch sheet this skip exists to
+# tolerate.
+test_that("the skipped-sheet warning quotes a sheet name containing braces", {
+  path <- file.path(withr::local_tempdir(), "ModelParameters.xlsx")
+  .writeExcel(
+    list(`Notes {draft}` = data.frame(Organ = "Liver", Comment = "x")),
+    path
+  )
+
+  expect_warning(
+    result <- .parseExcelParameterSheets(path),
+    "Notes \\{draft\\}"
+  )
+  expect_length(result, 0L)
 })
 
 # An exported parameter set with no entries is written as a header-only sheet.

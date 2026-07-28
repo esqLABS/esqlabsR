@@ -243,16 +243,34 @@ messages$importSkippedObservedData <- function(dataFile) {
   )
 }
 
-messages$importSkippedOutOfProjectData <- function(fieldName) {
-  # Left for `cli_warn` to glue in `.skipOutOfProjectObservedData()`, whose
-  # `fieldName` argument is this one: pre-formatting here would put a literal
-  # `${VAR}` in the result, which the emitting `cli_warn` would then read as an
-  # expression to evaluate.
+# The two boundaries are different sizes and take different remedies, so each
+# gets its own message rather than one wording stretched over both: a `dataFile`
+# that escapes `dataFolder` is very often still inside the project, where
+# "outside the project folder" would be plainly untrue and "copy it under the
+# project folder" would describe a state that already holds. Neither message
+# names the offending path: it is absolute in the `dataFolder` case, so quoting
+# it would put the user's account name in the output.
+
+messages$importSkippedOutOfProjectDataFolder <- function() {
   c(
-    "!" = "{.field {fieldName}} points outside the project folder, so no \\
+    "!" = "{.field dataFolder} points outside the project folder, so no \\
     observed data was imported.",
-    "i" = "Copy the data under the project folder, or name it with a \\
-    {.code ${{VAR}}} environment variable, then import again.",
+    "i" = "Data kept outside the project (a synced drive shared between \\
+    projects) is named with a {.code ${{VAR}}} environment variable, which \\
+    resolves from wherever the project is opened. Set one, or copy the data \\
+    under the project folder, then import again.",
+    "i" = "Any plot or parameter-identification mapping that references \\
+    observed data will not resolve until then."
+  )
+}
+
+messages$importSkippedOutOfProjectDataFile <- function() {
+  c(
+    "!" = "{.field dataFile} points outside {.field dataFolder}, so no \\
+    observed data was imported.",
+    "i" = "The loader resolves {.field dataFile} under {.field dataFolder}. \\
+    Move the file under that folder, or point {.field dataFolder} at the \\
+    folder that holds it, then import again.",
     "i" = "Any plot or parameter-identification mapping that references \\
     observed data will not resolve until then."
   )
@@ -263,17 +281,26 @@ messages$importSkippedNonParameterSheets <- function(
   sheets,
   columns
 ) {
-  # Interpolated here rather than left for `cli_warn` to glue, because the
-  # values live in this function's frame and not in the caller's.
-  c(
-    "!" = cli::format_inline(paste0(
-      "{cli::qty(length(sheets))}Skipped {?sheet/sheets} {.val {sheets}} ",
-      "in {.file {filePath}}: {cli::qty(length(sheets))}",
-      "not {?a parameter sheet/parameter sheets}."
-    )),
-    "i" = cli::format_inline(
-      "A parameter sheet carries the columns {.field {columns}}."
-    )
+  # A sheet name is free text, so it can contain `{`/`}` (`Fit {old}`, `PK
+  # {2019}`). Returns the templates still unglued together with an environment
+  # binding their variables, the shape `.canonicalizedIdBullets()` uses and for
+  # the same reason: the caller hands both to one `cli_warn()`, so each template
+  # is glue-parsed exactly once and a value is only ever reached through a
+  # variable, never parsed. Pre-rendering with `cli::format_inline()` instead
+  # would leave the value's braces in the rendered text for the emitting
+  # `cli_warn()` to evaluate.
+  envir <- new.env(parent = parent.frame())
+  assign("filePath", filePath, envir = envir)
+  assign("sheets", sheets, envir = envir)
+  assign("columns", columns, envir = envir)
+  list(
+    bullets = c(
+      "!" = "{cli::qty(length(sheets))}Skipped {?sheet/sheets} {.val {sheets}} \\
+      in {.file {filePath}}: {cli::qty(length(sheets))}not \\
+      {?a parameter sheet/parameter sheets}.",
+      "i" = "A parameter sheet carries the columns {.field {columns}}."
+    ),
+    envir = envir
   )
 }
 
