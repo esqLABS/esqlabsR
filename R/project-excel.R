@@ -1782,6 +1782,27 @@ projectStatus <- function(project, silent = FALSE) {
   scenarios
 }
 
+#' Report an out-of-project observed-data path and import no observed data
+#'
+#' Carries the same condition class as the missing-data-file warning, so the
+#' caller that expects no observed data (the legacy-snapshot upgrade, which
+#' never ships the data workbook) muffles both with one handler. The path itself
+#' is not echoed: it is absolute by definition here, so quoting it would put the
+#' user's account name in the message.
+#'
+#' @param fieldName The project field that names the unreachable path.
+#' @param jsonData The accumulating project JSON list, returned unchanged.
+#' @returns `jsonData`.
+#' @keywords internal
+#' @noRd
+.skipOutOfProjectObservedData <- function(fieldName, jsonData) {
+  cli::cli_warn(
+    messages$importSkippedOutOfProjectData(fieldName),
+    class = "esqlabsR_importSkippedObservedData"
+  )
+  jsonData
+}
+
 #' Reify the project's experimental-data file as an observed-data definition
 #'
 #' The project configuration records a single `dataFile` under `dataFolder`
@@ -1790,8 +1811,11 @@ projectStatus <- function(project, silent = FALSE) {
 #' workbook's sheets, so a plot or PI mapping that references observed data has
 #' something to resolve against. `file` and `importerConfiguration` are stored as
 #' basenames; the loader resolves them under `dataFolder`. A no-op when no
-#' `dataFile` is configured, or its workbook is absent (with a warning, since a
-#' configured-but-missing file is a migration gap the user should see).
+#' `dataFile` is configured, or its workbook is absent, or `dataFolder` /
+#' `dataFile` points outside the project (with a warning in the latter two
+#' cases, since data the imported project cannot reach is a migration gap the
+#' user should see). A `dataFolder` naming a `${VAR}` is the sanctioned way to
+#' keep the data outside the project, so it is expanded and imported normally.
 #'
 #' @param jsonData The accumulating project JSON list.
 #' @param prop The `Property -> Value` lookup closure from the importer.
@@ -1805,8 +1829,34 @@ projectStatus <- function(project, silent = FALSE) {
     return(jsonData)
   }
   dataFolderRaw <- prop("dataFolder") %||% "."
-  dataFolder <- .resolveProjectPath(dataFolderRaw, pcDir, "dataFolder")
-  dataFilePath <- .resolveProjectPath(dataFile, dataFolder, "dataFile")
+  dataFolder <- if (.declaresEnvVarPath(dataFolderRaw)) {
+    # A `${VAR}` is the sanctioned way to keep the data outside the project (a
+    # synced drive shared between projects), so it is expanded and exempt from
+    # containment, the same order `configurationsFolder` above uses.
+    expanded <- .replaceEnvVarPath(dataFolderRaw)
+    if (fs::is_absolute_path(expanded)) {
+      expanded
+    } else {
+      file.path(pcDir, expanded)
+    }
+  } else if (.pathEscapesRoot(dataFolderRaw, pcDir)) {
+    # An out-of-project `dataFolder` (typically a 5.x project whose observed
+    # data was shared through a synced drive) leaves the data unavailable to the
+    # new project, which is the missing-data-file situation from the user's
+    # point of view, so it is reported and skipped rather than aborting a
+    # migration that has nothing else wrong with it. This is a read path only;
+    # a path the project writes to is still contained.
+    return(.skipOutOfProjectObservedData("dataFolder", jsonData))
+  } else {
+    .resolveProjectPath(dataFolderRaw, pcDir, "dataFolder")
+  }
+  if (.pathEscapesRoot(dataFile, dataFolder)) {
+    return(.skipOutOfProjectObservedData("dataFile", jsonData))
+  }
+  dataFilePath <- .absoluteAgainstRoot(
+    dataFile,
+    as.character(fs::path_abs(dataFolder))
+  )
   if (!file.exists(dataFilePath)) {
     # Classed so a caller that expects a missing data file (the legacy-snapshot
     # upgrade, which never carries the data workbook) can muffle just this

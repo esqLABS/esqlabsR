@@ -859,6 +859,116 @@ test_that(".parseExcelObservedData warns and skips when the data file is absent"
   expect_null(result$observedData)
 })
 
+# An absolute `dataFolder` pointing at a synced drive is common in real 5.x
+# projects. It leaves the data unavailable to the imported project, which is the
+# missing-data-file situation from the user's point of view, so it is reported
+# and skipped rather than aborting the whole migration (#1182).
+test_that(".parseExcelObservedData warns and skips an out-of-project dataFolder", {
+  work <- withr::local_tempdir()
+  shared <- withr::local_tempdir()
+  .writeExcel(
+    list(Sheet1 = data.frame(x = 1)),
+    file.path(shared, "Values.xlsx")
+  )
+
+  for (folder in c(shared, "../elsewhere")) {
+    prop <- function(name) {
+      switch(name, dataFile = "Values.xlsx", dataFolder = folder, NULL)
+    }
+    expect_warning(
+      result <- .parseExcelObservedData(list(), prop, work),
+      "points outside the project folder"
+    )
+    expect_null(result$observedData)
+  }
+
+  # The path is absolute by definition here, so echoing it would put the user's
+  # account name in the message.
+  prop <- function(name) {
+    switch(name, dataFile = "Values.xlsx", dataFolder = shared, NULL)
+  }
+  warning <- tryCatch(
+    .parseExcelObservedData(list(), prop, work),
+    warning = function(w) conditionMessage(w)
+  )
+  expect_false(grepl(shared, warning, fixed = TRUE))
+})
+
+# `${VAR}` is the sanctioned way to keep the data outside the project, so it is
+# expanded and exempt from containment rather than read as a literal folder name
+# (which resolved to nothing and lost the data with a misleading "not found").
+test_that(".parseExcelObservedData expands a ${VAR} dataFolder", {
+  work <- withr::local_tempdir()
+  shared <- withr::local_tempdir()
+  .writeExcel(
+    list(Sheet1 = data.frame(x = 1)),
+    file.path(shared, "Values.xlsx")
+  )
+  withr::local_envvar(ESQLABSR_TEST_DATA = shared)
+
+  prop <- function(name) {
+    switch(
+      name,
+      dataFile = "Values.xlsx",
+      dataFolder = "${ESQLABSR_TEST_DATA}",
+      NULL
+    )
+  }
+  expect_silent(result <- .parseExcelObservedData(list(), prop, work))
+  expect_named(result$observedData, "Values.xlsx")
+  expect_identical(result$observedData[[1]]$sheets, list("Sheet1"))
+})
+
+# A `dataFile` that climbs out of its `dataFolder` is the same situation one
+# level down, and gets the same warn-and-skip (#1182).
+test_that(".parseExcelObservedData warns and skips a dataFile outside dataFolder", {
+  prop <- function(name) {
+    switch(name, dataFile = "../Values.xlsx", dataFolder = "Data", NULL)
+  }
+  expect_warning(
+    result <- .parseExcelObservedData(
+      list(),
+      prop,
+      testthat::test_path("data", "TestProjectExcel")
+    ),
+    "points outside the project folder"
+  )
+  expect_null(result$observedData)
+})
+
+# The whole point of the downgrade: a project whose data sits on a synced drive
+# migrates unattended. The value stays in `filePaths` as the workbook spells it,
+# and the imported project loads, because nothing reads the folder once no
+# observed data was imported (#1182).
+test_that("an absolute dataFolder no longer blocks the import", {
+  work_dir <- withr::local_tempdir()
+  file.copy(dirname(testProjectExcelPath()), work_dir, recursive = TRUE)
+  projectDir <- file.path(work_dir, "TestProjectExcel")
+  configPath <- file.path(projectDir, "ProjectConfiguration.xlsx")
+
+  shared <- withr::local_tempdir()
+  file.copy(
+    list.files(file.path(projectDir, "Data"), full.names = TRUE),
+    shared
+  )
+  props <- readExcel(configPath)
+  props$Value[props$Property == "dataFolder"] <- shared
+  .writeExcel(props, configPath)
+
+  jsonPath <- suppressWarnings(importProjectFromExcel(
+    configPath,
+    outputDir = withr::local_tempdir(),
+    silent = TRUE
+  ))
+  project <- suppressWarnings(loadProject(jsonPath))
+
+  expect_length(project$definitions$observedData, 0L)
+  expect_identical(
+    jsonlite::fromJSON(jsonPath, simplifyVector = FALSE)$filePaths$dataFolder,
+    shared
+  )
+})
+
 # A sheet named after an individual (the `Indiv1` sheet in the fixture) is that
 # individual's own parameter override. The importer creates it as a parameter
 # set AND links it on the individual, so the override is applied rather than

@@ -243,6 +243,21 @@ messages$importSkippedObservedData <- function(dataFile) {
   )
 }
 
+messages$importSkippedOutOfProjectData <- function(fieldName) {
+  # Left for `cli_warn` to glue in `.skipOutOfProjectObservedData()`, whose
+  # `fieldName` argument is this one: pre-formatting here would put a literal
+  # `${VAR}` in the result, which the emitting `cli_warn` would then read as an
+  # expression to evaluate.
+  c(
+    "!" = "{.field {fieldName}} points outside the project folder, so no \\
+    observed data was imported.",
+    "i" = "Copy the data under the project folder, or name it with a \\
+    {.code ${{VAR}}} environment variable, then import again.",
+    "i" = "Any plot or parameter-identification mapping that references \\
+    observed data will not resolve until then."
+  )
+}
+
 messages$importSkippedNonParameterSheets <- function(
   filePath,
   sheets,
