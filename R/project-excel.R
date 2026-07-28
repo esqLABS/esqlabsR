@@ -1671,15 +1671,13 @@ projectStatus <- function(project, silent = FALSE) {
     result[[sheet]] <- entries
   }
   if (length(skipped) > 0L) {
-    warning <- messages$importSkippedNonParameterSheets(
-      filePath,
-      skipped,
-      .parameterSheetColumns
-    )
-    cli::cli_warn(
-      warning$bullets,
-      class = "esqlabsR_importSkippedNonParameterSheets",
-      .envir = warning$envir
+    .warnFormatted(
+      messages$importSkippedNonParameterSheets(
+        filePath,
+        skipped,
+        .parameterSheetColumns
+      ),
+      "esqlabsR_importSkippedNonParameterSheets"
     )
   }
   result
@@ -3083,6 +3081,39 @@ projectStatus <- function(project, silent = FALSE) {
     return(TRUE)
   }
   trimws(as.character(x)) == ""
+}
+
+#' Does a cell that must hold a number hold something else?
+#'
+#' The rule for every numeric Excel cell in one place: a blank cell is allowed
+#' (an absent value), and a non-blank cell must coerce to a number. Text, and a
+#' comma-decimal such as `1,5`, do not.
+#'
+#' @param x A single cell value.
+#' @returns `TRUE` only for a non-blank cell that is not a number.
+#' @keywords internal
+#' @noRd
+.isUnusableNumericCell <- function(x) {
+  !.isBlankCell(x) && is.na(suppressWarnings(as.numeric(x)))
+}
+
+#' Emit a pre-built, still-unglued warning
+#'
+#' Every import warning that names something a modeller wrote (a sheet name, a
+#' definition id, a task name) has to survive a `{`/`}` in that text, so its
+#' message builder returns the templates unglued together with an environment
+#' binding their variables and the emitting call hands both to one `cli_warn()`:
+#' each template is then glue-parsed exactly once, and a value is only ever
+#' reached through a variable, never parsed. This owns that emit so the contract
+#' is honored the same way by every such warning.
+#'
+#' @param warning A `list(bullets =, envir =)` from the `messages` catalog.
+#' @param class Condition class for the emitted warning.
+#' @returns Nothing, called for its warning.
+#' @keywords internal
+#' @noRd
+.warnFormatted <- function(warning, class) {
+  cli::cli_warn(warning$bullets, class = class, .envir = warning$envir)
 }
 
 #' One cell of a parsed sheet, `NA` where the sheet has no such column
