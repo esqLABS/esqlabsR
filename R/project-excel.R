@@ -261,12 +261,19 @@ importProjectFromExcel <- function(
         }
         paramSheetNames <- setdiff(sheets, "IndividualBiometrics")
         if (length(paramSheetNames) > 0) {
+          parsedSets <- .parseExcelParameterSheets(
+            file,
+            sheetNames = paramSheetNames
+          )
           appended <- .appendParameterSets(
             jsonData$parameterSets,
-            .parseExcelParameterSheets(file, sheetNames = paramSheetNames),
+            parsedSets,
             file
           )
           jsonData$parameterSets <- appended$sets
+          # Only a sheet that parsed as a parameter set can be linked; a skipped
+          # non-parameter sheet has no set for the individual to point at.
+          setSheetNames <- names(parsedSets)
           # A sheet named after an individual is that individual's own parameter
           # override; link it so the override is applied. The match is on the
           # canonical id, so `Indiv1` sheet links to the `Indiv1` individual
@@ -274,7 +281,7 @@ importProjectFromExcel <- function(
           # individual's `parameterSets` (deduplicated, keeping any set the
           # `ParameterSets` column already named).
           sheetCanonical <- vapply(
-            paramSheetNames,
+            setSheetNames,
             .canonicalizeOneId,
             character(1)
           )
@@ -302,7 +309,7 @@ importProjectFromExcel <- function(
             if (is.na(indivCanonical)) {
               return(indiv)
             }
-            match <- paramSheetNames[indivCanonical == sheetCanonical]
+            match <- setSheetNames[indivCanonical == sheetCanonical]
             if (length(match) > 0L) {
               indiv$parameterSets <- as.list(unique(c(
                 unlist(indiv$parameterSets),
@@ -367,9 +374,10 @@ importProjectFromExcel <- function(
             }
           }
         } else if (length(sheets) > 0) {
+          parsedSets <- .parseExcelParameterSheets(file, sheetNames = sheets)
           appended <- .appendParameterSets(
             jsonData$parameterSets,
-            .parseExcelParameterSheets(file, sheetNames = sheets),
+            parsedSets,
             file
           )
           jsonData$parameterSets <- appended$sets
@@ -378,17 +386,22 @@ importProjectFromExcel <- function(
           # canonicalize identically, so the reference resolves), or the renamed
           # id when an earlier workbook already held that name. The record carries
           # no inner `id`; the key is the id, matching
-          # `.parseExcelApplications()`.
-          setIds <- .applyIdRenames(sheets, appended$renames)
-          jsonData$applications <- c(
-            jsonData$applications,
-            stats::setNames(
-              lapply(setIds, function(setId) {
-                list(parameterSets = list(setId))
-              }),
-              sheets
+          # `.parseExcelApplications()`. Only a sheet that parsed as a parameter
+          # set becomes a protocol, so no application wraps a set that was
+          # skipped.
+          protocolSheets <- names(parsedSets)
+          if (length(protocolSheets) > 0) {
+            setIds <- .applyIdRenames(protocolSheets, appended$renames)
+            jsonData$applications <- c(
+              jsonData$applications,
+              stats::setNames(
+                lapply(setIds, function(setId) {
+                  list(parameterSets = list(setId))
+                }),
+                protocolSheets
+              )
             )
-          )
+          }
         }
         jsonData
       }
@@ -1542,10 +1555,34 @@ projectStatus <- function(project, silent = FALSE) {
   ifelse(is.na(mapped), ids, mapped)
 }
 
+#' The columns that make a sheet a parameter sheet
+#'
+#' The same four columns [readParametersFromXLS()] requires and
+#' `.parameterStructuresToExcelSheets()` writes, so what the export produces is
+#' exactly what the import recognizes.
+#'
+#' @keywords internal
+#' @noRd
+.parameterSheetColumns <- c(
+  "Container Path",
+  "Parameter Name",
+  "Value",
+  "Units"
+)
+
 #' Parse parameter sheets from an Excel file into JSON structure
+#'
+#' A parameter workbook routinely carries a notes, organ-list, or fit-bounds
+#' sheet beside its parameter sheets. Such a sheet is recognized by its columns
+#' and skipped with a warning, so one of them does not stop a migration.
+#'
 #' @param filePath Path to the Excel file
 #' @param sheetNames Sheets to read. If NULL, reads all sheets.
-#' @returns Named list of parameter arrays
+#' @returns Named list of parameter arrays, keyed by sheet name and holding only
+#'   the sheets that are parameter sheets. A caller that derives other
+#'   definitions from these sheets (an application per protocol sheet, an
+#'   individual's own override) must key them off these names rather than the
+#'   workbook's, so nothing references a set that was skipped.
 #' @keywords internal
 #' @noRd
 .parseExcelParameterSheets <- function(
@@ -1556,8 +1593,17 @@ projectStatus <- function(project, silent = FALSE) {
     sheetNames <- readxl::excel_sheets(filePath)
   }
   result <- list()
+  skipped <- character()
   for (sheet in sheetNames) {
     df <- readExcel(filePath, sheet = sheet)
+    # The check belongs to the sheet, not the cell: a missing column reads as
+    # `NULL`, which the row loop below would turn into an empty `containerPath`
+    # / `parameterName` and a value-less entry rather than an error, so guarding
+    # per cell would trade a loud abort for a silently corrupted section.
+    if (!all(.parameterSheetColumns %in% names(df))) {
+      skipped <- c(skipped, sheet)
+      next
+    }
     entries <- list()
     if (nrow(df) > 0) {
       for (i in seq_len(nrow(df))) {
@@ -1580,6 +1626,16 @@ projectStatus <- function(project, silent = FALSE) {
       }
     }
     result[[sheet]] <- entries
+  }
+  if (length(skipped) > 0L) {
+    cli::cli_warn(
+      messages$importSkippedNonParameterSheets(
+        filePath,
+        skipped,
+        .parameterSheetColumns
+      ),
+      class = "esqlabsR_importSkippedNonParameterSheets"
+    )
   }
   result
 }

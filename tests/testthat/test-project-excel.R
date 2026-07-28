@@ -916,6 +916,159 @@ test_that("the per-protocol-sheet import populates applications and resolves the
   expect_false(any(grepl("undefined application", w)))
 })
 
+# A parameter workbook routinely carries a notes, organ-list, or fit-bounds
+# sheet beside its parameter sheets. Recognizing it by its columns and skipping
+# it keeps one such sheet from stopping the whole migration, and keeps the row
+# loop from emitting entries with empty paths and value-less parameters, which
+# is what a per-cell guard would have produced (#1181).
+test_that(".parseExcelParameterSheets skips a sheet without the parameter columns", {
+  path <- file.path(withr::local_tempdir(), "ModelParameters.xlsx")
+  .writeExcel(
+    list(
+      Global = data.frame(
+        `Container Path` = "Organism",
+        `Parameter Name` = "Age",
+        Value = 30,
+        Units = "year(s)",
+        check.names = FALSE,
+        stringsAsFactors = FALSE
+      ),
+      `Organ notes` = data.frame(
+        Organ = c("Liver", "Kidney"),
+        Comment = c("see ref", "TBD"),
+        stringsAsFactors = FALSE
+      )
+    ),
+    path
+  )
+
+  expect_warning(
+    result <- .parseExcelParameterSheets(path),
+    "Organ notes"
+  )
+  expect_named(result, "Global")
+  expect_length(result$Global, 1L)
+})
+
+# An exported parameter set with no entries is written as a header-only sheet.
+# It carries the four columns, so it is a parameter sheet and must survive the
+# round trip as an empty set rather than being mistaken for a notes sheet.
+test_that(".parseExcelParameterSheets keeps a header-only parameter sheet", {
+  path <- file.path(withr::local_tempdir(), "ModelParameters.xlsx")
+  .writeExcel(
+    list(Empty = .parameterStructuresToExcelSheets(list(Empty = list()))$Empty),
+    path
+  )
+
+  expect_silent(result <- .parseExcelParameterSheets(path))
+  expect_named(result, "Empty")
+  expect_length(result$Empty, 0L)
+})
+
+# The issue's reproducer: a notes sheet in the model-parameters workbook used to
+# abort the whole import with a bare `missing value where TRUE/FALSE needed`
+# naming neither the file nor the sheet (#1181).
+test_that("a non-parameter sheet in a parameter workbook no longer aborts the import", {
+  work_dir <- withr::local_tempdir()
+  file.copy(dirname(testProjectExcelPath()), work_dir, recursive = TRUE)
+  projectDir <- file.path(work_dir, "TestProjectExcel")
+  paramsFile <- file.path(projectDir, "Configurations", "ModelParameters.xlsx")
+
+  sheetNames <- readxl::excel_sheets(paramsFile)
+  sheets <- stats::setNames(
+    lapply(sheetNames, function(s) readExcel(paramsFile, sheet = s)),
+    sheetNames
+  )
+  sheets[["Organ notes"]] <- data.frame(
+    Organ = c("Liver", "Kidney"),
+    Comment = c("see ref", "TBD"),
+    stringsAsFactors = FALSE
+  )
+  .writeExcel(sheets, paramsFile)
+
+  jsonPath <- suppressWarnings(importProjectFromExcel(
+    file.path(projectDir, "ProjectConfiguration.xlsx"),
+    outputDir = withr::local_tempdir(),
+    silent = TRUE
+  ))
+  project <- suppressWarnings(loadProject(jsonPath))
+
+  # The notes sheet contributes no set; the real parameter sheets still do.
+  expect_false("organ_notes" %in% names(project$definitions$parameterSets))
+  expect_true("global" %in% names(project$definitions$parameterSets))
+})
+
+# In the 5.x applications layout every sheet is a protocol, so a skipped sheet
+# must not become an `Application` either: it would wrap a parameter set that
+# was never created and dangle on load (#1181).
+test_that("a non-parameter sheet in the applications workbook becomes neither a set nor an application", {
+  work_dir <- withr::local_tempdir()
+  file.copy(dirname(testProjectExcelPath()), work_dir, recursive = TRUE)
+  projectDir <- file.path(work_dir, "TestProjectExcel")
+  appsFile <- file.path(projectDir, "Configurations", "Applications.xlsx")
+
+  sheetNames <- readxl::excel_sheets(appsFile)
+  sheets <- stats::setNames(
+    lapply(sheetNames, function(s) readExcel(appsFile, sheet = s)),
+    sheetNames
+  )
+  sheets[["Fit bounds"]] <- data.frame(
+    Bound = c("lower", "upper"),
+    Value = c(0.1, 10),
+    stringsAsFactors = FALSE
+  )
+  .writeExcel(sheets, appsFile)
+
+  jsonPath <- suppressWarnings(importProjectFromExcel(
+    file.path(projectDir, "ProjectConfiguration.xlsx"),
+    outputDir = withr::local_tempdir(),
+    silent = TRUE
+  ))
+  project <- suppressWarnings(loadProject(jsonPath))
+
+  expect_false("fit_bounds" %in% names(project$definitions$applications))
+  expect_false("fit_bounds" %in% names(project$definitions$parameterSets))
+  expect_setequal(
+    names(project$definitions$applications),
+    c("aciclovir_iv_250mg", "protocol_250mg", "protocol_500mg")
+  )
+})
+
+# A sheet named after an individual is normally that individual's own override.
+# When such a sheet is not a parameter sheet it is skipped, so the individual
+# must not gain a `parameterSets` reference to a set that does not exist (#1181).
+test_that("a skipped sheet named after an individual is not linked to that individual", {
+  work_dir <- withr::local_tempdir()
+  file.copy(dirname(testProjectExcelPath()), work_dir, recursive = TRUE)
+  projectDir <- file.path(work_dir, "TestProjectExcel")
+  indivFile <- file.path(projectDir, "Configurations", "Individuals.xlsx")
+
+  .writeExcel(
+    list(
+      IndividualBiometrics = readExcel(
+        indivFile,
+        sheet = "IndividualBiometrics"
+      ),
+      Indiv1 = data.frame(
+        Note = "scratch, not a parameter sheet",
+        stringsAsFactors = FALSE
+      )
+    ),
+    indivFile
+  )
+
+  jsonPath <- suppressWarnings(importProjectFromExcel(
+    file.path(projectDir, "ProjectConfiguration.xlsx"),
+    outputDir = withr::local_tempdir(),
+    silent = TRUE
+  ))
+  project <- suppressWarnings(loadProject(jsonPath))
+
+  expect_false("indiv1" %in% names(project$definitions$parameterSets))
+  indiv <- .unwrapDefinitionList(project$definitions$individuals)[["indiv1"]]
+  expect_false("indiv1" %in% unlist(indiv$parameterSets))
+})
+
 # The migration canonicalizes every id to a safe, lowercase form. When two
 # distinct source ids collapse to the same canonical id, the migration must
 # abort (matching interactive authoring) rather than silently let a downstream

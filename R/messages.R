@@ -243,6 +243,25 @@ messages$importSkippedObservedData <- function(dataFile) {
   )
 }
 
+messages$importSkippedNonParameterSheets <- function(
+  filePath,
+  sheets,
+  columns
+) {
+  # Interpolated here rather than left for `cli_warn` to glue, because the
+  # values live in this function's frame and not in the caller's.
+  c(
+    "!" = cli::format_inline(paste0(
+      "{cli::qty(length(sheets))}Skipped {?sheet/sheets} {.val {sheets}} ",
+      "in {.file {filePath}}: {cli::qty(length(sheets))}",
+      "not {?a parameter sheet/parameter sheets}."
+    )),
+    "i" = cli::format_inline(
+      "A parameter sheet carries the columns {.field {columns}}."
+    )
+  )
+}
+
 messages$legacySnapshotMalformedSheet <- function() {
   c(
     "x" = "This previous-version project snapshot is malformed and cannot be \\
