@@ -3086,3 +3086,43 @@ test_that(".parseExcelPI5xMappings warns when no output path can be derived", {
     class = "esqlabsR_importSkippedPIOutputMappings"
   )
 })
+
+# The two sheets are hand-maintained separately, so they routinely spell one
+# scenario differently. Every other cross-sheet reference in the import resolves
+# on the canonical id, and this one has to as well, or the mapping is dropped and
+# the warning blames a scenario that does have an output path.
+test_that(".parseExcelPI5xMappings matches a scenario on its canonical id", {
+  noColumn <- data.frame(
+    PITaskName = "t1",
+    Scenarios = "aciclovir iv",
+    DataSet = "d1",
+    stringsAsFactors = FALSE
+  )
+  scenarios <- list(list(name = "Aciclovir_IV", outputPaths = list("pvb")))
+
+  mappings <- .parseExcelPI5xMappings(noColumn, "t1", scenarios)
+
+  expect_length(mappings, 1L)
+  expect_identical(mappings[[1]]$outputPath, "pvb")
+})
+
+# `observedData` is as required as `outputPath` on a built mapping, and the
+# derivation supplies only the path, so a row with no DataSet would have been
+# handed on to abort a moment later.
+test_that(".parseExcelPI5xMappings skips a derived row with no DataSet", {
+  noColumn <- data.frame(
+    PITaskName = "t1",
+    Scenarios = c("s1", "s1"),
+    DataSet = c(NA, "d1"),
+    stringsAsFactors = FALSE
+  )
+  scenarios <- list(list(name = "s1", outputPaths = list("pvb")))
+
+  expect_warning(
+    mappings <- .parseExcelPI5xMappings(noColumn, "t1", scenarios),
+    "no data set named"
+  )
+  # Only the complete row survives, and it is complete enough to build.
+  expect_length(mappings, 1L)
+  expect_identical(mappings[[1]]$observedData, "d1")
+})

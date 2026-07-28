@@ -1669,13 +1669,18 @@ projectStatus <- function(project, silent = FALSE) {
       skipped <- c(skipped, sheet)
       next
     }
+    # Where each kept row sits in the workbook, so a row reported to the user can
+    # be found there. Blank rows were dropped on read, which makes `i` untrue as a
+    # workbook coordinate; the fallback covers a frame with no such record.
+    sheetRow <- attr(df, "sheetRow") %||% seq_len(nrow(df))
     entries <- list()
     if (nrow(df) > 0) {
       for (i in seq_len(nrow(df))) {
         value <- df[["Value"]][[i]]
         if (.isUnusableNumericCell(value)) {
           badSheets <- c(badSheets, sheet)
-          badRows <- c(badRows, i)
+          # +1 for the header, so the number is the row Excel shows.
+          badRows <- c(badRows, sheetRow[[i]] + 1L)
           badValues <- c(badValues, as.character(value))
           next
         }
@@ -1692,6 +1697,15 @@ projectStatus <- function(project, silent = FALSE) {
         )
         entries[[length(entries) + 1L]] <- entry
       }
+    }
+    # A sheet that had rows but kept none describes no parameter at all, so it is
+    # left out rather than becoming an empty parameter set (and, in the 5.x
+    # applications layout, an application wrapping one). Both callers derive the
+    # sheets they may reference from the names of what this returns, so omitting
+    # it also unlinks the references to it. A header-only sheet is a different
+    # thing, a real set that happens to be empty, and still comes through.
+    if (nrow(df) > 0 && length(entries) == 0L) {
+      next
     }
     result[[sheet]] <- entries
   }
@@ -2502,13 +2516,16 @@ projectStatus <- function(project, silent = FALSE) {
     mappings <- .parseExcelPI5xMappings(mappingDf, task, scenarios)
     # A task's scenarios are the union of the scenarios its parameters and
     # mappings reference (the 5.x layout has no separate task-scenario list).
-    scenarios <- unique(unlist(lapply(
+    # Named apart from the `scenarios` formal, which holds the project's scenario
+    # records: one name for both would resolve correctly only as long as nobody
+    # moves the line above.
+    taskScenarios <- unique(unlist(lapply(
       c(params, mappings),
       function(x) unlist(x$scenarios)
     )))
     list(
       id = task,
-      scenarios = as.list(scenarios),
+      scenarios = as.list(taskScenarios),
       parameters = params,
       outputMappings = mappings,
       configuration = .parseExcelPI5xConfig(configDf, algDf, ciDf, task)
@@ -2548,10 +2565,13 @@ projectStatus <- function(project, silent = FALSE) {
 # The sheet's oldest revision has no `OutputPath` column at all: it predates the
 # column, and identified a mapping's output through the scenario, one mapping per
 # output path the scenario declares. `.pi5xDerivedMappingRows()` reproduces that,
-# so such a workbook restores instead of failing on every mapping. A blank cell
-# in a column that IS present is a different thing (an authoring gap in the newer
-# layout) and still yields a mapping with no `outputPath` for validation to
-# report, so the two cases are told apart by the column, not the cell.
+# so such a workbook restores instead of failing on every mapping.
+#
+# A blank cell in a column that IS present is a different thing, an authoring gap
+# in the newer layout, and is left alone here: the mapping keeps no `outputPath`,
+# and `PIOutputMapping()` then aborts on it when the imported project is built.
+# So the two cases are told apart by the column, not the cell, and only the
+# column-less one is recovered.
 #
 # @keywords internal
 # @noRd
@@ -2601,19 +2621,41 @@ projectStatus <- function(project, silent = FALSE) {
 # @keywords internal
 # @noRd
 .pi5xDerivedMappingRows <- function(rows, task, scenarios) {
+  # Matched on the canonical id, as every other cross-sheet reference in this
+  # import is: the two sheets are hand-maintained separately, so one spelling a
+  # scenario `aciclovir_iv` and the other `Aciclovir_IV` is ordinary. Comparing
+  # the raw text would resolve nothing and then blame the scenario for having no
+  # output path, which is the one wrong thing to tell the user.
+  canonical <- vapply(
+    scenarios %||% list(),
+    function(scenario) .canonicalizeOneId(as.character(scenario$name)),
+    character(1)
+  )
   outputPathsOf <- function(name) {
-    for (scenario in scenarios %||% list()) {
-      if (identical(as.character(scenario$name), name)) {
-        return(unlist(scenario$outputPaths))
-      }
+    match <- which(canonical == .canonicalizeOneId(name))
+    if (length(match) == 0L) {
+      return(NULL)
     }
-    NULL
+    unlist(scenarios[[match[[1]]]]$outputPaths)
   }
 
   derived <- list()
+  # The row's own scenario cell and why the row was dropped, in parallel: the cell
+  # is what the user has to look at to fix it, and the reason differs per row.
   unresolved <- character()
+  reasons <- character()
   for (i in seq_len(nrow(rows))) {
     named <- .parseCommaListToArray(rows[i, ][["Scenarios"]])
+    cell <- if (length(named) == 0L) "" else paste(named, collapse = ", ")
+    # `observedData` is as required as `outputPath` on a built mapping, and the
+    # derivation supplies only the path, so a row with no data set has to be
+    # dropped here too. Checking just the column that errored loudly would have
+    # traded one hard failure for a slightly later one.
+    if (.isBlankCell(rows[i, ][["DataSet"]])) {
+      unresolved <- c(unresolved, cell)
+      reasons <- c(reasons, "no data set named")
+      next
+    }
     # Which of this row's scenarios declare each output path, so a path shared by
     # two of them becomes one mapping naming both rather than two mappings.
     byPath <- list()
@@ -2623,13 +2665,8 @@ projectStatus <- function(project, silent = FALSE) {
       }
     }
     if (length(byPath) == 0L) {
-      # The row's own scenario cell, read back for the warning: it is what the
-      # user has to look at to fix this, whether it is empty or names scenarios
-      # that define no output.
-      unresolved <- c(
-        unresolved,
-        if (length(named) == 0L) "" else paste(named, collapse = ", ")
-      )
+      unresolved <- c(unresolved, cell)
+      reasons <- c(reasons, "no output path could be determined")
       next
     }
     for (path in names(byPath)) {
@@ -2642,7 +2679,7 @@ projectStatus <- function(project, silent = FALSE) {
 
   if (length(unresolved) > 0L) {
     .warnFormatted(
-      messages$importSkippedPIOutputMappings(task, unresolved),
+      messages$importSkippedPIOutputMappings(task, unresolved, reasons),
       "esqlabsR_importSkippedPIOutputMappings"
     )
   }

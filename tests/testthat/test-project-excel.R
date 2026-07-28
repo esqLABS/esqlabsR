@@ -1815,12 +1815,13 @@ test_that(".parseExcelParameterSheets skips a non-numeric Value cell", {
     parsed <- .parseExcelParameterSheets(paramFile),
     class = "esqlabsR_importSkippedNonNumericRows"
   )
-  # Each skipped row is named with its sheet, row and cell.
+  # Each skipped row is named with its sheet, row and cell. The rows are the
+  # workbook's, so the first data row is row 2, below the header.
   expect_warning(
     .parseExcelParameterSheets(paramFile),
-    'row 1: "not_a_number"'
+    'row 2: "not_a_number"'
   )
-  expect_warning(.parseExcelParameterSheets(paramFile), 'row 2: "1,5"')
+  expect_warning(.parseExcelParameterSheets(paramFile), 'row 3: "1,5"')
   # Only the numeric row survives; a comma-decimal is text, so it is skipped
   # rather than silently read as 1.
   expect_length(parsed$Global, 1L)
@@ -2500,7 +2501,9 @@ test_that("an observed curve with no dataSet is kept and reported", {
 
   # Nothing dropped: the observed curve is still there, and so is the simulated
   # one beside it.
-  dc <- .unwrapDefinitionList(project$definitions$dataCombined)[["aciclovirpvb"]]
+  dc <- .unwrapDefinitionList(project$definitions$dataCombined)[[
+    "aciclovirpvb"
+  ]]
   expect_length(dc$observed, 1L)
   expect_length(dc$simulated, 1L)
   expect_null(dc$observed[[1]]$dataSet)
@@ -2510,7 +2513,10 @@ test_that("an observed curve with no dataSet is kept and reported", {
   errors <- unlist(lapply(results, function(section) {
     vapply(section$critical_errors %||% list(), \(e) e$message, character(1))
   }))
-  expect_true(any(grepl("observed entry missing required field: dataSet", errors)))
+  expect_true(any(grepl(
+    "observed entry missing required field: dataSet",
+    errors
+  )))
 })
 
 test_that("a missing data file says the project will not validate", {
@@ -2554,4 +2560,55 @@ test_that(".warnIncompleteObservedCurves names the affected combinations", {
     list(dataCombinedId = "urine", observed = list(list(dataSet = "d1")))
   )))
   expect_silent(.warnIncompleteObservedCurves(NULL))
+})
+
+# Blank rows are dropped on read, so the parsed-frame index is not the row Excel
+# shows. Findability is the whole purpose of the reported number, so it is the
+# workbook row: blank rows above the offender counted, header included.
+test_that("a skipped row is reported at its workbook row", {
+  paramFile <- withr::local_tempfile(fileext = ".xlsx")
+  df <- data.frame(
+    `Container Path` = c("Organism|A", NA, NA, "Organism|A"),
+    `Parameter Name` = c("P", NA, NA, "Q"),
+    Value = c("1", NA, NA, "lower"),
+    Units = c("mg", NA, NA, "mg"),
+    check.names = FALSE,
+    stringsAsFactors = FALSE
+  )
+  .writeExcel(list(Global = df), paramFile)
+
+  # The offending cell is on sheet row 5: header, one data row, two blank rows.
+  expect_warning(.parseExcelParameterSheets(paramFile), "row 5")
+})
+
+# A sheet that had rows but kept none describes no parameter, so it becomes no
+# definition. A header-only sheet is a real (empty) set and is unaffected; the
+# test above covers that case.
+test_that("a sheet whose every row is skipped becomes no parameter set", {
+  paramFile <- withr::local_tempfile(fileext = ".xlsx")
+  .writeExcel(
+    list(
+      Global = data.frame(
+        `Container Path` = "Organism|A",
+        `Parameter Name` = "P",
+        Value = "1",
+        Units = "mg",
+        check.names = FALSE
+      ),
+      RefConc_fit = data.frame(
+        `Container Path` = "Target",
+        `Parameter Name` = c("Reference concentration", "Kd"),
+        Value = c("lower", "upper"),
+        Units = "nmol/l",
+        check.names = FALSE
+      )
+    ),
+    paramFile
+  )
+
+  expect_warning(
+    parsed <- .parseExcelParameterSheets(paramFile),
+    class = "esqlabsR_importSkippedNonNumericRows"
+  )
+  expect_named(parsed, "Global")
 })
