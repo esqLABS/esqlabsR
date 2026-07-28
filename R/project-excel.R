@@ -2585,11 +2585,12 @@ projectStatus <- function(project, silent = FALSE) {
   }
   options <- list()
   for (i in seq_len(nrow(rows))) {
-    name <- as.character(rows[["OptionName"]][[i]])
-    if (is.na(name) || name == "") {
+    name <- .cellValue(rows, "OptionName", i)
+    if (.isBlankCell(name)) {
       next
     }
-    raw <- rows[["OptionValue"]][[i]]
+    name <- as.character(name)
+    raw <- .cellValue(rows, "OptionValue", i)
     numeric <- suppressWarnings(as.numeric(raw))
     token <- tolower(trimws(as.character(raw)))
     options[[name]] <- if (!is.na(numeric)) {
@@ -2616,15 +2617,14 @@ projectStatus <- function(project, silent = FALSE) {
 # @keywords internal
 # @noRd
 .pi5xPath <- function(containerPath, parameterName) {
-  container <- as.character(containerPath)
-  parameter <- as.character(parameterName)
-  if (is.na(parameter) || parameter == "") {
+  if (.isBlankCell(parameterName)) {
     return(NULL)
   }
-  if (is.na(container) || container == "") {
+  parameter <- as.character(parameterName)
+  if (.isBlankCell(containerPath)) {
     return(parameter)
   }
-  paste(container, parameter, sep = "|")
+  paste(as.character(containerPath), parameter, sep = "|")
 }
 
 # Coin an id unique within `existing` by suffixing `_2`, `_3`, ... on a clash.
@@ -2636,10 +2636,7 @@ projectStatus <- function(project, silent = FALSE) {
 # @keywords internal
 # @noRd
 .pi5xUniqueId <- function(base, existing) {
-  base <- as.character(base)
-  if (is.na(base) || base == "") {
-    base <- "item"
-  }
+  base <- if (.isBlankCell(base)) "item" else as.character(base)
   base <- .canonicalizeOneId(base)
   candidate <- base
   n <- 1L
@@ -3062,6 +3059,49 @@ projectStatus <- function(project, silent = FALSE) {
 #' @noRd
 .extractExcelData <- function(project) {
   project$rawExcel()
+}
+
+#' Is a single Excel cell empty?
+#'
+#' Empty means any of: the sheet has no such column (which reads as `NULL` or a
+#' zero-length value), the cell is `NA`, or it holds only whitespace.
+#'
+#' The bare `is.na(x) || x == ""` this replaces is only safe on a cell that
+#' exists. On an absent column it evaluates to `NA`, and `if (NA)` aborts the
+#' whole parse with `missing value where TRUE/FALSE needed`, a message that
+#' names neither the sheet nor the column. A hand-maintained 5.x sheet routinely
+#' lacks a column the parser reads, so the test lives here once rather than
+#' being re-derived per cell.
+#'
+#' @param x A single cell value.
+#' @returns `TRUE` when the cell carries no usable value. A value of length
+#'   other than one is empty too: it is not a cell.
+#' @keywords internal
+#' @noRd
+.isBlankCell <- function(x) {
+  if (is.null(x) || length(x) != 1L || is.na(x)) {
+    return(TRUE)
+  }
+  trimws(as.character(x)) == ""
+}
+
+#' One cell of a parsed sheet, `NA` where the sheet has no such column
+#'
+#' `df[["Missing"]][[i]]` aborts with a subscript error rather than yielding an
+#' absent value, so an optional column is read through here.
+#'
+#' @param df A parsed sheet.
+#' @param column Column name.
+#' @param i Row index.
+#' @returns The cell value, or `NA` when the column or the row is absent.
+#' @keywords internal
+#' @noRd
+.cellValue <- function(df, column, i = 1L) {
+  values <- df[[column]]
+  if (is.null(values) || length(values) < i) {
+    return(NA)
+  }
+  values[[i]]
 }
 
 #' Convert NA to NULL for JSON serialization
