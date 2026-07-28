@@ -2304,3 +2304,35 @@ test_that("an application referencing a skipped sheet loses the reference", {
   expect_identical(unlist(application$parameterSets), "realsheet")
   expect_false("scratch_notes" %in% names(project$definitions$parameterSets))
 })
+
+# The reported case: a populations sheet whose real rows are followed by rows
+# that hold nothing. Each was taken for a population definition and the import
+# aborted on the first of them for having no id (#1191).
+test_that("blank rows in a populations sheet do not become definitions", {
+  work_dir <- withr::local_tempdir()
+  file.copy(dirname(testProjectExcelPath()), work_dir, recursive = TRUE)
+  projectDir <- file.path(work_dir, "TestProjectExcel")
+  popFile <- file.path(projectDir, "Configurations", "Populations.xlsx")
+
+  sheetNames <- readxl::excel_sheets(popFile)
+  sheets <- stats::setNames(
+    lapply(sheetNames, function(s) readExcel(popFile, sheet = s)),
+    sheetNames
+  )
+  populations <- sheets[[1]]
+  realRows <- nrow(populations)
+  # Blank rows between the real ones, so the sheet reports them rather than
+  # trimming them as it would trailing blanks written by `writexl`.
+  blank <- populations[rep(NA_integer_, 3), ]
+  sheets[[1]] <- rbind(populations[1, ], blank, populations[-1, ])
+  .writeExcel(sheets, popFile)
+
+  jsonPath <- suppressWarnings(importProjectFromExcel(
+    file.path(projectDir, "ProjectConfiguration.xlsx"),
+    outputDir = withr::local_tempdir(),
+    silent = TRUE
+  ))
+  project <- suppressWarnings(loadProject(jsonPath))
+
+  expect_length(project$definitions$populations, realRows)
+})

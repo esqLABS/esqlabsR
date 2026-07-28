@@ -42,6 +42,15 @@ pathFromClipboard <- function(path = "clipboard") {
 
 #' Read XLSX files using `readxl::read_excel` with suppressed warnings
 #'
+#' @details Rows that are blank in every column are dropped. Stray cell
+#'   formatting extends a sheet's used range past its last real row, so a
+#'   workbook edited over time routinely reports trailing rows that hold
+#'   nothing; `readxl` returns them as all-`NA` records. They carry no
+#'   information a project could use, and a parser that takes each row for a
+#'   definition would abort on the first of them for having no id. Dropping them
+#'   at the one place every sheet is read keeps every parser out of the
+#'   business of recognizing them.
+#'
 #' @param path Full path of an XLS/XLSX file
 #' @param sheet Name or number of the sheet. If `NULL` (default), the first
 #'   sheet of the file is used.
@@ -50,12 +59,35 @@ pathFromClipboard <- function(path = "clipboard") {
 #' @returns A tibble with the contents of the excel sheet
 #' @export
 readExcel <- function(path, sheet = NULL, ...) {
-  return(readxl::read_excel(
+  .dropBlankRows(readxl::read_excel(
     path,
     sheet,
     .name_repair = "unique_quiet",
     ...
   ))
+}
+
+# TRUE for each element of one parsed sheet column that holds no value. A
+# `col_types = "list"` column comes back as a list, whose elements are tested
+# one at a time.
+# @keywords internal
+# @noRd
+.blankColumnCells <- function(x) {
+  if (is.list(x)) {
+    return(vapply(x, .isBlankCell, logical(1)))
+  }
+  is.na(x) | trimws(as.character(x)) == ""
+}
+
+# Drop the rows of a parsed sheet that are blank in every column.
+# @keywords internal
+# @noRd
+.dropBlankRows <- function(data) {
+  if (nrow(data) == 0L || ncol(data) == 0L) {
+    return(data)
+  }
+  blank <- Reduce(`&`, lapply(data, .blankColumnCells))
+  data[!blank, , drop = FALSE]
 }
 
 #' Resolve a project-controlled path and require it to stay under its root

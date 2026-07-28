@@ -1583,7 +1583,7 @@ projectStatus <- function(project, silent = FALSE) {
 #' Drop references to sheets of this workbook that were not parameter sheets
 #'
 #' A definition's `parameterSets` cell names sheets of its own workbook, so a
-#' sheet [.parseExcelParameterSheets()] skipped leaves a reference to a set that
+#' sheet `.parseExcelParameterSheets()` skipped leaves a reference to a set that
 #' was never created. Only those references are dropped: the same cell may name
 #' a set defined in another workbook, which is a separate question answered
 #' elsewhere. Matching is on the canonical id, since that is what both the
