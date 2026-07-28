@@ -42,6 +42,15 @@ pathFromClipboard <- function(path = "clipboard") {
 
 #' Read XLSX files using `readxl::read_excel` with suppressed warnings
 #'
+#' @details Rows that are blank in every column are dropped. Stray cell
+#'   formatting extends a sheet's used range past its last real row, so a
+#'   workbook edited over time routinely reports trailing rows that hold
+#'   nothing; `readxl` returns them as all-`NA` records. They carry no
+#'   information a project could use, and a parser that takes each row for a
+#'   definition would abort on the first of them for having no id. Dropping them
+#'   at the one place every sheet is read keeps every parser out of the
+#'   business of recognizing them.
+#'
 #' @param path Full path of an XLS/XLSX file
 #' @param sheet Name or number of the sheet. If `NULL` (default), the first
 #'   sheet of the file is used.
@@ -50,12 +59,35 @@ pathFromClipboard <- function(path = "clipboard") {
 #' @returns A tibble with the contents of the excel sheet
 #' @export
 readExcel <- function(path, sheet = NULL, ...) {
-  return(readxl::read_excel(
+  .dropBlankRows(readxl::read_excel(
     path,
     sheet,
     .name_repair = "unique_quiet",
     ...
   ))
+}
+
+# TRUE for each element of one parsed sheet column that holds no value. A
+# `col_types = "list"` column comes back as a list, whose elements are tested
+# one at a time.
+# @keywords internal
+# @noRd
+.blankColumnCells <- function(x) {
+  if (is.list(x)) {
+    return(vapply(x, .isBlankCell, logical(1)))
+  }
+  is.na(x) | trimws(as.character(x)) == ""
+}
+
+# Drop the rows of a parsed sheet that are blank in every column.
+# @keywords internal
+# @noRd
+.dropBlankRows <- function(data) {
+  if (nrow(data) == 0L || ncol(data) == 0L) {
+    return(data)
+  }
+  blank <- Reduce(`&`, lapply(data, .blankColumnCells))
+  data[!blank, , drop = FALSE]
 }
 
 #' Resolve a project-controlled path and require it to stay under its root
@@ -137,6 +169,45 @@ readExcel <- function(path, sheet = NULL, ...) {
   .absoluteAgainstRoot(path, absRoot)
 }
 
+# The one pattern for a `${VAR}` / `$VAR` reference in a path, shared by the
+# expander and by the predicate that grants the containment exemption, so a
+# reference one of them recognizes is always one the other acts on.
+# @keywords internal
+# @noRd
+.envVarPathPattern <- "\\$\\{?([A-Za-z_][A-Za-z0-9_]*)\\}?"
+
+# The variable names `path` references, in order (empty when it references
+# none).
+# @keywords internal
+# @noRd
+.envVarNamesInPath <- function(path) {
+  matches <- regmatches(
+    path,
+    gregexpr(.envVarPathPattern, path, perl = TRUE)
+  )[[1]]
+  sub(.envVarPathPattern, "\\1", matches)
+}
+
+# TRUE when `path` embeds a `${VAR}` / `$VAR` reference that `.replaceEnvVarPath()`
+# will actually expand. A path that does is the sanctioned way to name a
+# location outside the project (shared-drive data, a models folder several
+# projects share), so every containment check exempts it and judges the raw,
+# pre-expansion value. One predicate rather than the regex repeated at each
+# check, so the exemption cannot come to mean different things in different
+# places.
+#
+# `$PATH` is deliberately never expanded, so it does not earn the exemption:
+# granting it would let `$PATH/../../etc` stay literal and then resolve outside
+# the root with no containment check having run on the result.
+# @keywords internal
+# @noRd
+.declaresEnvVarPath <- function(path) {
+  if (!is.character(path) || length(path) != 1L || is.na(path)) {
+    return(FALSE)
+  }
+  any(.envVarNamesInPath(path) != "PATH")
+}
+
 # Expand every `${VAR}` / `$VAR` reference in `path` against the environment,
 # leaving an unset variable's reference in place and never touching `$PATH`.
 # The one place the package's env-var-in-path contract lives; the `Project`
@@ -148,13 +219,12 @@ readExcel <- function(path, sheet = NULL, ...) {
   if (length(path) == 0L) {
     return(path)
   }
-  pattern <- "\\$\\{?([A-Za-z_][A-Za-z0-9_]*)\\}?"
-  m <- gregexpr(pattern, path, perl = TRUE)
+  m <- gregexpr(.envVarPathPattern, path, perl = TRUE)
   regmatches(path, m) <- lapply(regmatches(path, m), function(matches) {
     vapply(
       matches,
       function(match) {
-        name <- sub(pattern, "\\1", match)
+        name <- sub(.envVarPathPattern, "\\1", match)
         if (identical(name, "PATH")) {
           return(match)
         }

@@ -20,3 +20,13 @@ A tibble with the contents of the excel sheet
 \description{
 Read XLSX files using \code{readxl::read_excel} with suppressed warnings
 }
+\details{
+Rows that are blank in every column are dropped. Stray cell
+formatting extends a sheet's used range past its last real row, so a
+workbook edited over time routinely reports trailing rows that hold
+nothing; \code{readxl} returns them as all-\code{NA} records. They carry no
+information a project could use, and a parser that takes each row for a
+definition would abort on the first of them for having no id. Dropping them
+at the one place every sheet is read keeps every parser out of the
+business of recognizing them.
+}

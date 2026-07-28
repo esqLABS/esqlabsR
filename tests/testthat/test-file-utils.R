@@ -66,3 +66,112 @@ test_that(".resolveProjectPath rejects a path that escapes the root", {
     "outside the project"
   )
 })
+
+# The containment exemption is granted to a path naming an environment
+# variable, on the grounds that the variable is expanded and its value is the
+# user's own choice. `$PATH` is deliberately never expanded, so exempting it
+# would let a literal token bypass the check: `$PATH/../../etc` would stay
+# literal and still resolve two levels above the root.
+test_that(".declaresEnvVarPath exempts only references that are expanded", {
+  expect_true(.declaresEnvVarPath("${MYDATA}/Data"))
+  expect_true(.declaresEnvVarPath("$MYDATA"))
+  # A real variable alongside `$PATH` still expands, so it keeps the exemption.
+  expect_true(.declaresEnvVarPath("${MYDATA}/$PATH"))
+
+  expect_false(.declaresEnvVarPath("$PATH/../../etc"))
+  expect_false(.declaresEnvVarPath("${PATH}/x"))
+  expect_false(.declaresEnvVarPath("Data/"))
+  expect_false(.declaresEnvVarPath("../Data"))
+
+  # Not a usable value: never exempt (and never a `logical(0)` / `NA` condition).
+  expect_false(.declaresEnvVarPath(NULL))
+  expect_false(.declaresEnvVarPath(NA_character_))
+  expect_false(.declaresEnvVarPath(c("a", "b")))
+})
+
+# A `$PATH`-only value is not expanded, so it must be contained like any other
+# literal rather than slipping past on the exemption.
+test_that("a $PATH-only working folder is still contained", {
+  root <- withr::local_tempdir()
+  expect_error(
+    .resolveProjectPath("$PATH/../../etc", root, "dataFolder"),
+    "resolves outside the project folder"
+  )
+})
+
+# Stray cell formatting extends a sheet's used range past its last real row, so
+# a workbook edited over time reports trailing rows that hold nothing. A parser
+# that takes each row for a definition aborts on the first of them for having no
+# id, which blocked one legacy project's import outright (#1191). Dropping them
+# at the one place every sheet is read keeps every parser out of it.
+test_that("readExcel drops rows that are blank in every column", {
+  path <- file.path(withr::local_tempdir(), "sheet.xlsx")
+  .writeExcel(
+    list(
+      S = data.frame(
+        A = c("a1", NA, NA, "a2"),
+        B = c("b1", NA, NA, "b2"),
+        stringsAsFactors = FALSE
+      )
+    ),
+    path
+  )
+
+  # readxl reports the blank rows; readExcel does not pass them on.
+  expect_identical(nrow(readxl::read_excel(path, sheet = "S")), 4L)
+  data <- readExcel(path, sheet = "S")
+  expect_identical(nrow(data), 2L)
+  expect_identical(data$A, c("a1", "a2"))
+})
+
+# Only an entirely blank row goes. A row with a value in any column is a record
+# with gaps, which is the parser's business to accept or report, not this one's.
+test_that("readExcel keeps a row that is blank in only some columns", {
+  path <- file.path(withr::local_tempdir(), "sheet.xlsx")
+  .writeExcel(
+    list(
+      S = data.frame(
+        A = c("a1", NA),
+        B = c("b1", "b2"),
+        stringsAsFactors = FALSE
+      )
+    ),
+    path
+  )
+
+  data <- readExcel(path, sheet = "S")
+  expect_identical(nrow(data), 2L)
+  expect_identical(data$B, c("b1", "b2"))
+})
+
+# A whitespace-only cell is as empty as an absent one: a row of them is still a
+# blank row.
+test_that("readExcel treats a whitespace-only row as blank", {
+  path <- file.path(withr::local_tempdir(), "sheet.xlsx")
+  .writeExcel(
+    list(
+      S = data.frame(
+        A = c("a1", "   "),
+        B = c("b1", ""),
+        stringsAsFactors = FALSE
+      )
+    ),
+    path
+  )
+
+  expect_identical(nrow(readExcel(path, sheet = "S")), 1L)
+})
+
+# A header-only sheet has no rows to drop and must survive as itself: the
+# importer reads such a sheet as an empty parameter set.
+test_that("readExcel leaves a header-only sheet alone", {
+  path <- file.path(withr::local_tempdir(), "sheet.xlsx")
+  .writeExcel(
+    list(S = data.frame(A = character(0), B = character(0))),
+    path
+  )
+
+  data <- readExcel(path, sheet = "S")
+  expect_identical(nrow(data), 0L)
+  expect_named(data, c("A", "B"))
+})

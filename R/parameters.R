@@ -58,6 +58,22 @@
   merged
 }
 
+#' The columns that make an Excel sheet a parameter sheet
+#'
+#' What [readParametersFromXLS()] requires, what `exportProjectToExcel()`
+#' writes, and what the importer tests a sheet against to tell a parameter sheet
+#' from the notes or fit-bounds sheet beside it. One list, so the reader, the
+#' writer and the test cannot come to disagree about the shape.
+#'
+#' @keywords internal
+#' @noRd
+.parameterSheetColumns <- c(
+  "Container Path",
+  "Parameter Name",
+  "Value",
+  "Units"
+)
+
 #' Read parameter values from a structured Excel file. Each excel sheet must
 #' consist of columns 'Container Path', 'Parameter Name', 'Value', and 'Units'
 #'
@@ -71,7 +87,7 @@
 #'   units the values are in.
 #' @export
 readParametersFromXLS <- function(paramsXLSpath, sheets = NULL) {
-  columnNames <- c("Container Path", "Parameter Name", "Value", "Units")
+  columnNames <- .parameterSheetColumns
   validateIsString(paramsXLSpath)
   validateIsString(sheets, nullAllowed = TRUE)
 

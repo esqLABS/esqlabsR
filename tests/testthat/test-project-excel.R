@@ -859,6 +859,128 @@ test_that(".parseExcelObservedData warns and skips when the data file is absent"
   expect_null(result$observedData)
 })
 
+# An absolute `dataFolder` pointing at a synced drive is common in real 5.x
+# projects. It leaves the data unavailable to the imported project, which is the
+# missing-data-file situation from the user's point of view, so it is reported
+# and skipped rather than aborting the whole migration (#1182).
+test_that(".parseExcelObservedData warns and skips an out-of-project dataFolder", {
+  work <- withr::local_tempdir()
+  shared <- withr::local_tempdir()
+  .writeExcel(
+    list(Sheet1 = data.frame(x = 1)),
+    file.path(shared, "Values.xlsx")
+  )
+
+  for (folder in c(shared, "../elsewhere")) {
+    prop <- function(name) {
+      switch(name, dataFile = "Values.xlsx", dataFolder = folder, NULL)
+    }
+    expect_warning(
+      result <- .parseExcelObservedData(list(), prop, work),
+      "points outside the project folder"
+    )
+    expect_null(result$observedData)
+  }
+
+  # The path is absolute by definition here, so echoing it would put the user's
+  # account name in the message.
+  prop <- function(name) {
+    switch(name, dataFile = "Values.xlsx", dataFolder = shared, NULL)
+  }
+  warning <- tryCatch(
+    .parseExcelObservedData(list(), prop, work),
+    warning = function(w) conditionMessage(w)
+  )
+  expect_false(grepl(shared, warning, fixed = TRUE))
+})
+
+# `${VAR}` is the sanctioned way to keep the data outside the project, so it is
+# expanded and exempt from containment rather than read as a literal folder name
+# (which resolved to nothing and lost the data with a misleading "not found").
+test_that(".parseExcelObservedData expands a ${VAR} dataFolder", {
+  work <- withr::local_tempdir()
+  shared <- withr::local_tempdir()
+  .writeExcel(
+    list(Sheet1 = data.frame(x = 1)),
+    file.path(shared, "Values.xlsx")
+  )
+  withr::local_envvar(ESQLABSR_TEST_DATA = shared)
+
+  prop <- function(name) {
+    switch(
+      name,
+      dataFile = "Values.xlsx",
+      dataFolder = "${ESQLABSR_TEST_DATA}",
+      NULL
+    )
+  }
+  expect_silent(result <- .parseExcelObservedData(list(), prop, work))
+  expect_named(result$observedData, "Values.xlsx")
+  expect_identical(result$observedData[[1]]$sheets, list("Sheet1"))
+})
+
+# A `dataFile` that climbs out of its `dataFolder` is the same situation one
+# level down, and gets the same warn-and-skip (#1182). It names the boundary it
+# actually crossed: such a file is usually still inside the project, so saying
+# "outside the project folder" would be untrue and its remedy a no-op.
+test_that(".parseExcelObservedData warns and skips a dataFile outside dataFolder", {
+  prop <- function(name) {
+    switch(name, dataFile = "../Values.xlsx", dataFolder = "Data", NULL)
+  }
+  expect_warning(
+    result <- .parseExcelObservedData(
+      list(),
+      prop,
+      testthat::test_path("data", "TestProjectExcel")
+    ),
+    "dataFile.+points outside.+dataFolder"
+  )
+  expect_null(result$observedData)
+
+  warning <- tryCatch(
+    .parseExcelObservedData(
+      list(),
+      prop,
+      testthat::test_path("data", "TestProjectExcel")
+    ),
+    warning = function(w) conditionMessage(w)
+  )
+  expect_false(grepl("outside the project folder", warning, fixed = TRUE))
+})
+
+# The whole point of the downgrade: a project whose data sits on a synced drive
+# migrates unattended. The value stays in `filePaths` as the workbook spells it,
+# and the imported project loads, because nothing reads the folder once no
+# observed data was imported (#1182).
+test_that("an absolute dataFolder no longer blocks the import", {
+  work_dir <- withr::local_tempdir()
+  file.copy(dirname(testProjectExcelPath()), work_dir, recursive = TRUE)
+  projectDir <- file.path(work_dir, "TestProjectExcel")
+  configPath <- file.path(projectDir, "ProjectConfiguration.xlsx")
+
+  shared <- withr::local_tempdir()
+  file.copy(
+    list.files(file.path(projectDir, "Data"), full.names = TRUE),
+    shared
+  )
+  props <- readExcel(configPath)
+  props$Value[props$Property == "dataFolder"] <- shared
+  .writeExcel(props, configPath)
+
+  jsonPath <- suppressWarnings(importProjectFromExcel(
+    configPath,
+    outputDir = withr::local_tempdir(),
+    silent = TRUE
+  ))
+  project <- suppressWarnings(loadProject(jsonPath))
+
+  expect_length(project$definitions$observedData, 0L)
+  expect_identical(
+    jsonlite::fromJSON(jsonPath, simplifyVector = FALSE)$filePaths$dataFolder,
+    shared
+  )
+})
+
 # A sheet named after an individual (the `Indiv1` sheet in the fixture) is that
 # individual's own parameter override. The importer creates it as a parameter
 # set AND links it on the individual, so the override is applied rather than
@@ -914,6 +1036,178 @@ test_that("the per-protocol-sheet import populates applications and resolves the
     }
   )
   expect_false(any(grepl("undefined application", w)))
+})
+
+# A parameter workbook routinely carries a notes, organ-list, or fit-bounds
+# sheet beside its parameter sheets. Recognizing it by its columns and skipping
+# it keeps one such sheet from stopping the whole migration, and keeps the row
+# loop from emitting entries with empty paths and value-less parameters, which
+# is what a per-cell guard would have produced (#1181).
+test_that(".parseExcelParameterSheets skips a sheet without the parameter columns", {
+  path <- file.path(withr::local_tempdir(), "ModelParameters.xlsx")
+  .writeExcel(
+    list(
+      Global = data.frame(
+        `Container Path` = "Organism",
+        `Parameter Name` = "Age",
+        Value = 30,
+        Units = "year(s)",
+        check.names = FALSE,
+        stringsAsFactors = FALSE
+      ),
+      `Organ notes` = data.frame(
+        Organ = c("Liver", "Kidney"),
+        Comment = c("see ref", "TBD"),
+        stringsAsFactors = FALSE
+      )
+    ),
+    path
+  )
+
+  expect_warning(
+    result <- .parseExcelParameterSheets(path),
+    "Organ notes"
+  )
+  expect_named(result, "Global")
+  expect_length(result$Global, 1L)
+})
+
+# A sheet name is free text, so it can hold `{}` (`Fit {old}`, `PK {2019}`). The
+# warning must quote it, not evaluate it: rendering the value into the message
+# text and letting the emitting `cli_warn()` glue-parse that text again would
+# abort the import on exactly the kind of scratch sheet this skip exists to
+# tolerate.
+test_that("the skipped-sheet warning quotes a sheet name containing braces", {
+  path <- file.path(withr::local_tempdir(), "ModelParameters.xlsx")
+  .writeExcel(
+    list(`Notes {draft}` = data.frame(Organ = "Liver", Comment = "x")),
+    path
+  )
+
+  expect_warning(
+    result <- .parseExcelParameterSheets(path),
+    "Notes \\{draft\\}"
+  )
+  expect_length(result, 0L)
+})
+
+# An exported parameter set with no entries is written as a header-only sheet.
+# It carries the four columns, so it is a parameter sheet and must survive the
+# round trip as an empty set rather than being mistaken for a notes sheet.
+test_that(".parseExcelParameterSheets keeps a header-only parameter sheet", {
+  path <- file.path(withr::local_tempdir(), "ModelParameters.xlsx")
+  .writeExcel(
+    list(Empty = .parameterStructuresToExcelSheets(list(Empty = list()))$Empty),
+    path
+  )
+
+  expect_silent(result <- .parseExcelParameterSheets(path))
+  expect_named(result, "Empty")
+  expect_length(result$Empty, 0L)
+})
+
+# The issue's reproducer: a notes sheet in the model-parameters workbook used to
+# abort the whole import with a bare `missing value where TRUE/FALSE needed`
+# naming neither the file nor the sheet (#1181).
+test_that("a non-parameter sheet in a parameter workbook no longer aborts the import", {
+  work_dir <- withr::local_tempdir()
+  file.copy(dirname(testProjectExcelPath()), work_dir, recursive = TRUE)
+  projectDir <- file.path(work_dir, "TestProjectExcel")
+  paramsFile <- file.path(projectDir, "Configurations", "ModelParameters.xlsx")
+
+  sheetNames <- readxl::excel_sheets(paramsFile)
+  sheets <- stats::setNames(
+    lapply(sheetNames, function(s) readExcel(paramsFile, sheet = s)),
+    sheetNames
+  )
+  sheets[["Organ notes"]] <- data.frame(
+    Organ = c("Liver", "Kidney"),
+    Comment = c("see ref", "TBD"),
+    stringsAsFactors = FALSE
+  )
+  .writeExcel(sheets, paramsFile)
+
+  jsonPath <- suppressWarnings(importProjectFromExcel(
+    file.path(projectDir, "ProjectConfiguration.xlsx"),
+    outputDir = withr::local_tempdir(),
+    silent = TRUE
+  ))
+  project <- suppressWarnings(loadProject(jsonPath))
+
+  # The notes sheet contributes no set; the real parameter sheets still do.
+  expect_false("organ_notes" %in% names(project$definitions$parameterSets))
+  expect_true("global" %in% names(project$definitions$parameterSets))
+})
+
+# In the 5.x applications layout every sheet is a protocol, so a skipped sheet
+# must not become an `Application` either: it would wrap a parameter set that
+# was never created and dangle on load (#1181).
+test_that("a non-parameter sheet in the applications workbook becomes neither a set nor an application", {
+  work_dir <- withr::local_tempdir()
+  file.copy(dirname(testProjectExcelPath()), work_dir, recursive = TRUE)
+  projectDir <- file.path(work_dir, "TestProjectExcel")
+  appsFile <- file.path(projectDir, "Configurations", "Applications.xlsx")
+
+  sheetNames <- readxl::excel_sheets(appsFile)
+  sheets <- stats::setNames(
+    lapply(sheetNames, function(s) readExcel(appsFile, sheet = s)),
+    sheetNames
+  )
+  sheets[["Fit bounds"]] <- data.frame(
+    Bound = c("lower", "upper"),
+    Value = c(0.1, 10),
+    stringsAsFactors = FALSE
+  )
+  .writeExcel(sheets, appsFile)
+
+  jsonPath <- suppressWarnings(importProjectFromExcel(
+    file.path(projectDir, "ProjectConfiguration.xlsx"),
+    outputDir = withr::local_tempdir(),
+    silent = TRUE
+  ))
+  project <- suppressWarnings(loadProject(jsonPath))
+
+  expect_false("fit_bounds" %in% names(project$definitions$applications))
+  expect_false("fit_bounds" %in% names(project$definitions$parameterSets))
+  expect_setequal(
+    names(project$definitions$applications),
+    c("aciclovir_iv_250mg", "protocol_250mg", "protocol_500mg")
+  )
+})
+
+# A sheet named after an individual is normally that individual's own override.
+# When such a sheet is not a parameter sheet it is skipped, so the individual
+# must not gain a `parameterSets` reference to a set that does not exist (#1181).
+test_that("a skipped sheet named after an individual is not linked to that individual", {
+  work_dir <- withr::local_tempdir()
+  file.copy(dirname(testProjectExcelPath()), work_dir, recursive = TRUE)
+  projectDir <- file.path(work_dir, "TestProjectExcel")
+  indivFile <- file.path(projectDir, "Configurations", "Individuals.xlsx")
+
+  .writeExcel(
+    list(
+      IndividualBiometrics = readExcel(
+        indivFile,
+        sheet = "IndividualBiometrics"
+      ),
+      Indiv1 = data.frame(
+        Note = "scratch, not a parameter sheet",
+        stringsAsFactors = FALSE
+      )
+    ),
+    indivFile
+  )
+
+  jsonPath <- suppressWarnings(importProjectFromExcel(
+    file.path(projectDir, "ProjectConfiguration.xlsx"),
+    outputDir = withr::local_tempdir(),
+    silent = TRUE
+  ))
+  project <- suppressWarnings(loadProject(jsonPath))
+
+  expect_false("indiv1" %in% names(project$definitions$parameterSets))
+  indiv <- .unwrapDefinitionList(project$definitions$individuals)[["indiv1"]]
+  expect_false("indiv1" %in% unlist(indiv$parameterSets))
 })
 
 # The migration canonicalizes every id to a safe, lowercase form. When two
@@ -1867,4 +2161,178 @@ test_that(".parseCommaListToArray parses the quoted-CSV and backslash convention
   )
   # A plain unquoted list is unaffected.
   expect_identical(.parseCommaListToArray("a, b, c"), c("a", "b", "c"))
+})
+
+# Only the raw `${VAR}` is stored, so it is expanded afresh on every load and a
+# relative expansion is resolved against the project file. The import therefore
+# has to anchor it the same way, and the folder has to travel with the project,
+# or the folder found at import is not the folder found afterwards (#1182).
+test_that("a ${VAR} folder expanding to a relative path travels with the project", {
+  src <- withr::local_tempdir()
+  out <- withr::local_tempdir()
+  dir.create(file.path(src, "Inner", "Data"), recursive = TRUE)
+  writeLines("x", file.path(src, "Inner", "Data", "values.csv"))
+  withr::local_envvar(ESQLABSR_TEST_REL = "Inner/Data")
+
+  result <- .copyExcelProjectAssets(
+    list(dataFolder = "${ESQLABSR_TEST_REL}"),
+    src,
+    out,
+    overwrite = TRUE
+  )
+
+  # Copied under the expanded name, which is where the loader will look, and
+  # reported under the raw one, which is what the project spells.
+  expect_identical(result$copied, "${ESQLABSR_TEST_REL}")
+  expect_true(file.exists(file.path(out, "Inner", "Data", "values.csv")))
+})
+
+# An absolute expansion resolves identically from anywhere, so it is left where
+# it is; an unset variable matches nothing and is reported rather than skipped
+# without a word.
+test_that("a ${VAR} folder is skipped when absolute and reported when unset", {
+  src <- withr::local_tempdir()
+  out <- withr::local_tempdir()
+  elsewhere <- withr::local_tempdir()
+
+  withr::local_envvar(ESQLABSR_TEST_ABS = elsewhere)
+  absolute <- .copyExcelProjectAssets(
+    list(dataFolder = "${ESQLABSR_TEST_ABS}"),
+    src,
+    out,
+    overwrite = TRUE
+  )
+  expect_length(absolute$copied, 0L)
+  expect_length(absolute$notCopied, 0L)
+
+  unset <- .copyExcelProjectAssets(
+    list(dataFolder = "${ESQLABSR_TEST_NEVER_SET}"),
+    src,
+    out,
+    overwrite = TRUE
+  )
+  expect_identical(unset$notCopied, "${ESQLABSR_TEST_NEVER_SET}")
+})
+
+# The observed-data parser anchors a relative expansion at the project file it
+# is writing, not at the Excel source it is reading, so import and load agree
+# on which folder the stored `${VAR}` names (#1182).
+test_that(".parseExcelObservedData anchors a relative ${VAR} at the project file", {
+  source <- withr::local_tempdir()
+  project <- withr::local_tempdir()
+  dir.create(file.path(project, "Shared"))
+  .writeExcel(
+    list(Sheet1 = data.frame(x = 1)),
+    file.path(project, "Shared", "Values.xlsx")
+  )
+  withr::local_envvar(ESQLABSR_TEST_REL = "Shared")
+
+  prop <- function(name) {
+    switch(
+      name,
+      dataFile = "Values.xlsx",
+      dataFolder = "${ESQLABSR_TEST_REL}",
+      NULL
+    )
+  }
+  # Found under the project directory, though the Excel source is elsewhere.
+  expect_silent(
+    result <- .parseExcelObservedData(list(), prop, source, project)
+  )
+  expect_named(result$observedData, "Values.xlsx")
+})
+
+# A `ParameterSets` / `Individual Parameter Sets` cell names sheets of its own
+# workbook. When one of those sheets is skipped it defines no set, so the
+# reference has to go too, or the import writes a definition pointing at a set
+# that was never created (#1181).
+test_that(".dropSkippedSheetRefs removes only references to skipped sheets", {
+  definitions <- list(
+    a = list(parameterSets = list("Kept", "Skipped")),
+    b = list(parameterSets = list("Skipped")),
+    c = list(parameterSets = list("Kept")),
+    d = list(other = "field")
+  )
+
+  result <- .dropSkippedSheetRefs(definitions, "Skipped")
+
+  expect_identical(unlist(result$a$parameterSets), "Kept")
+  # Nothing left: the field goes rather than becoming an empty list.
+  expect_null(result$b$parameterSets)
+  expect_identical(unlist(result$c$parameterSets), "Kept")
+  expect_identical(result$d, definitions$d)
+  # A reference matching on canonical id alone is still dropped.
+  expect_null(
+    .dropSkippedSheetRefs(list(a = list(parameterSets = list("skipped"))), "Skipped")$a$parameterSets
+  )
+})
+
+# The `ApplicationProtocols` layout takes its references from a column rather
+# than from the sheet list, so it needs the same treatment as the 5.x layout
+# (#1181).
+test_that("an application referencing a skipped sheet loses the reference", {
+  work_dir <- withr::local_tempdir()
+  file.copy(dirname(testProjectExcelPath()), work_dir, recursive = TRUE)
+  projectDir <- file.path(work_dir, "TestProjectExcel")
+  appsFile <- file.path(projectDir, "Configurations", "Applications.xlsx")
+
+  # Rebuild the workbook in the newer layout: a protocol naming two sheets, one
+  # a real parameter sheet and one a notes sheet.
+  .writeExcel(
+    list(
+      ApplicationProtocols = data.frame(
+        ApplicationId = "Protocol_250mg",
+        ParameterSets = "RealSheet, Scratch notes",
+        stringsAsFactors = FALSE
+      ),
+      RealSheet = readExcel(appsFile, sheet = "Protocol_250mg"),
+      `Scratch notes` = data.frame(Note = "not a parameter sheet")
+    ),
+    appsFile
+  )
+
+  jsonPath <- suppressWarnings(importProjectFromExcel(
+    file.path(projectDir, "ProjectConfiguration.xlsx"),
+    outputDir = withr::local_tempdir(),
+    silent = TRUE
+  ))
+  project <- suppressWarnings(loadProject(jsonPath))
+
+  application <- .unwrapDefinitionList(project$definitions$applications)[[
+    "protocol_250mg"
+  ]]
+  expect_identical(unlist(application$parameterSets), "realsheet")
+  expect_false("scratch_notes" %in% names(project$definitions$parameterSets))
+})
+
+# The reported case: a populations sheet whose real rows are followed by rows
+# that hold nothing. Each was taken for a population definition and the import
+# aborted on the first of them for having no id (#1191).
+test_that("blank rows in a populations sheet do not become definitions", {
+  work_dir <- withr::local_tempdir()
+  file.copy(dirname(testProjectExcelPath()), work_dir, recursive = TRUE)
+  projectDir <- file.path(work_dir, "TestProjectExcel")
+  popFile <- file.path(projectDir, "Configurations", "Populations.xlsx")
+
+  sheetNames <- readxl::excel_sheets(popFile)
+  sheets <- stats::setNames(
+    lapply(sheetNames, function(s) readExcel(popFile, sheet = s)),
+    sheetNames
+  )
+  populations <- sheets[[1]]
+  realRows <- nrow(populations)
+  # Blank rows between the real ones, so the sheet reports them rather than
+  # trimming them as it would trailing blanks written by `writexl`.
+  blank <- populations[rep(NA_integer_, 3), ]
+  sheets[[1]] <- rbind(populations[1, ], blank, populations[-1, ])
+  .writeExcel(sheets, popFile)
+
+  jsonPath <- suppressWarnings(importProjectFromExcel(
+    file.path(projectDir, "ProjectConfiguration.xlsx"),
+    outputDir = withr::local_tempdir(),
+    silent = TRUE
+  ))
+  project <- suppressWarnings(loadProject(jsonPath))
+
+  expect_length(project$definitions$populations, realRows)
 })

@@ -1050,15 +1050,31 @@ Project <- R6::R6Class(
         }
         as.character(fs::path_rel(path, start = dir))
       }
-      paths <- self$paths
+      # Printing reads no files, so it is not the place to enforce containment.
+      # A folder the loader refuses (an out-of-project literal, which a project
+      # whose data sits on a synced drive really does carry) is shown as the
+      # project spells it, so the project stays inspectable; reaching the folder
+      # through `project$paths` is what still aborts. An unset `${VAR}` needs no
+      # special case: it survives expansion untouched, so the variable is what
+      # gets printed.
+      displayFolder <- function(name) {
+        resolved <- tryCatch(
+          private$.resolveWorkingFolder(name),
+          error = function(e) NULL
+        )
+        if (is.null(resolved)) {
+          return(private$.filePathsData[[name]]$value)
+        }
+        relToProject(resolved)
+      }
       items <- Filter(
         Negate(is.null),
         list(
-          "Simulations Folder" = relToProject(paths$simulationsFolder),
-          "Data Folder" = relToProject(paths$dataFolder),
-          "Populations Folder" = relToProject(paths$populationsFolder),
-          "Output Folder" = relToProject(paths$outputFolder),
-          "Definitions Folder" = paths$definitionsFolder
+          "Simulations Folder" = displayFolder("simulationsFolder"),
+          "Data Folder" = displayFolder("dataFolder"),
+          "Populations Folder" = displayFolder("populationsFolder"),
+          "Output Folder" = displayFolder("outputFolder"),
+          "Definitions Folder" = self$paths$definitionsFolder
         )
       )
       if (length(items) > 0L) {
@@ -1314,17 +1330,13 @@ Project <- R6::R6Class(
         length(projectDir) == 1L &&
         !is.na(projectDir) &&
         nzchar(projectDir)
-      # An explicit `${VAR}` opts into an out-of-project location; skip the
-      # containment check for it (the variable value is the user's choice).
-      declaresEnvVar <- is.character(raw) &&
-        length(raw) == 1L &&
-        grepl("\\$\\{?[A-Za-z_]", raw)
       # The resolved folder is already absolute; `.pathEscapesRoot()` compares
       # an absolute path to the root directly, so this rejects a folder value
-      # that resolves outside the project directory.
+      # that resolves outside the project directory. An explicit `${VAR}` opts
+      # into an out-of-project location and is exempt.
       if (
         hasProjectDir &&
-          !declaresEnvVar &&
+          !.declaresEnvVarPath(raw) &&
           .pathEscapesRoot(as.character(resolved), projectDir)
       ) {
         cli::cli_abort(messages$projectPathEscapesRoot(

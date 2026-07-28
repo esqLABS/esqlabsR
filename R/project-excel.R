@@ -122,8 +122,7 @@ importProjectFromExcel <- function(
     # into an out-of-project location and is exempt, everything else must stay
     # under `pcDir`. Resolution then expands the variable and joins a relative
     # value onto `pcDir`, matching `.cleanPath()`'s expand-then-resolve order.
-    declaresEnvVar <- grepl("\\$\\{?[A-Za-z_]", configsFolderRaw)
-    if (!declaresEnvVar) {
+    if (!.declaresEnvVarPath(configsFolderRaw)) {
       configsFolder <- .resolveProjectPath(
         configsFolder,
         pcDir,
@@ -261,12 +260,25 @@ importProjectFromExcel <- function(
         }
         paramSheetNames <- setdiff(sheets, "IndividualBiometrics")
         if (length(paramSheetNames) > 0) {
+          parsedSets <- .parseExcelParameterSheets(
+            file,
+            sheetNames = paramSheetNames
+          )
           appended <- .appendParameterSets(
             jsonData$parameterSets,
-            .parseExcelParameterSheets(file, sheetNames = paramSheetNames),
+            parsedSets,
             file
           )
           jsonData$parameterSets <- appended$sets
+          # Only a sheet that parsed as a parameter set can be linked; a skipped
+          # non-parameter sheet has no set for the individual to point at, from
+          # either direction: not as its own same-named override below, and not
+          # through the `Individual Parameter Sets` column here.
+          setSheetNames <- names(parsedSets)
+          jsonData$individuals <- .dropSkippedSheetRefs(
+            jsonData$individuals,
+            setdiff(paramSheetNames, setSheetNames)
+          )
           # A sheet named after an individual is that individual's own parameter
           # override; link it so the override is applied. The match is on the
           # canonical id, so `Indiv1` sheet links to the `Indiv1` individual
@@ -274,7 +286,7 @@ importProjectFromExcel <- function(
           # individual's `parameterSets` (deduplicated, keeping any set the
           # `ParameterSets` column already named).
           sheetCanonical <- vapply(
-            paramSheetNames,
+            setSheetNames,
             .canonicalizeOneId,
             character(1)
           )
@@ -302,7 +314,7 @@ importProjectFromExcel <- function(
             if (is.na(indivCanonical)) {
               return(indiv)
             }
-            match <- paramSheetNames[indivCanonical == sheetCanonical]
+            match <- setSheetNames[indivCanonical == sheetCanonical]
             if (length(match) > 0L) {
               indiv$parameterSets <- as.list(unique(c(
                 unlist(indiv$parameterSets),
@@ -342,12 +354,23 @@ importProjectFromExcel <- function(
           }
           paramSheetNames <- setdiff(sheets, "ApplicationProtocols")
           if (length(paramSheetNames) > 0) {
+            parsedSets <- .parseExcelParameterSheets(
+              file,
+              sheetNames = paramSheetNames
+            )
             appended <- .appendParameterSets(
               jsonData$parameterSets,
-              .parseExcelParameterSheets(file, sheetNames = paramSheetNames),
+              parsedSets,
               file
             )
             jsonData$parameterSets <- appended$sets
+            # A `ParameterSets` cell naming a skipped sheet points at a set that
+            # was never created, so drop that reference before following any
+            # rename (a skipped sheet is never renamed, so the order is free).
+            jsonData$applications <- .dropSkippedSheetRefs(
+              jsonData$applications,
+              setdiff(paramSheetNames, names(parsedSets))
+            )
             # The `ParameterSets` column names sheets of this workbook, so follow
             # a renamed sheet to its new id. Guarded on a rename having happened,
             # so a protocol that declares no sets keeps the field absent.
@@ -367,9 +390,10 @@ importProjectFromExcel <- function(
             }
           }
         } else if (length(sheets) > 0) {
+          parsedSets <- .parseExcelParameterSheets(file, sheetNames = sheets)
           appended <- .appendParameterSets(
             jsonData$parameterSets,
-            .parseExcelParameterSheets(file, sheetNames = sheets),
+            parsedSets,
             file
           )
           jsonData$parameterSets <- appended$sets
@@ -378,17 +402,22 @@ importProjectFromExcel <- function(
           # canonicalize identically, so the reference resolves), or the renamed
           # id when an earlier workbook already held that name. The record carries
           # no inner `id`; the key is the id, matching
-          # `.parseExcelApplications()`.
-          setIds <- .applyIdRenames(sheets, appended$renames)
-          jsonData$applications <- c(
-            jsonData$applications,
-            stats::setNames(
-              lapply(setIds, function(setId) {
-                list(parameterSets = list(setId))
-              }),
-              sheets
+          # `.parseExcelApplications()`. Only a sheet that parsed as a parameter
+          # set becomes a protocol, so no application wraps a set that was
+          # skipped.
+          protocolSheets <- names(parsedSets)
+          if (length(protocolSheets) > 0) {
+            setIds <- .applyIdRenames(protocolSheets, appended$renames)
+            jsonData$applications <- c(
+              jsonData$applications,
+              stats::setNames(
+                lapply(setIds, function(setId) {
+                  list(parameterSets = list(setId))
+                }),
+                protocolSheets
+              )
             )
-          )
+          }
         }
         jsonData
       }
@@ -433,18 +462,18 @@ importProjectFromExcel <- function(
     }
   }
 
+  # --- Determine output path ---
+  if (is.null(outputDir)) {
+    outputDir <- pcDir
+  }
+
   # Observed data. The project records a single `dataFile` (an experimental-data
   # workbook) and a `dataImporterConfigurationFile` under `dataFolder`, not a
   # per-section workbook, so it is parsed outside the `sections` loop. The
   # importer reifies it as one `excel` observed-data definition keyed by the
   # data-file basename, listing the workbook's sheets; the loader resolves the
   # `file` / `importerConfiguration` basenames against `dataFolder`.
-  jsonData <- .parseExcelObservedData(jsonData, prop, pcDir)
-
-  # --- Determine output path ---
-  if (is.null(outputDir)) {
-    outputDir <- pcDir
-  }
+  jsonData <- .parseExcelObservedData(jsonData, prop, pcDir, outputDir)
 
   outputFileName <- sub("\\.xlsx$", ".json", basename(projectConfigPath))
   outputPath <- file.path(outputDir, outputFileName)
@@ -1382,10 +1411,19 @@ projectStatus <- function(project, silent = FALSE) {
     if (is.null(value) || is.na(value) || !nzchar(value)) {
       next
     }
-    # An absolute folder, or one naming an environment variable, deliberately
-    # points outside the project: it resolves the same from the new location, so
-    # copying it would duplicate data the author chose to keep in one place.
-    if (fs::is_absolute_path(value) || grepl("\\$\\{?[A-Za-z_]", value)) {
+    # An absolute folder deliberately points outside the project: it resolves the
+    # same from the new location, so copying it would duplicate data the author
+    # chose to keep in one place. A `${VAR}` that expands to an absolute path is
+    # the same case. One that expands to a relative path is not: a relative path
+    # is resolved against the project file, so it names a folder inside the
+    # project and has to travel with it, under the expanded name the loader will
+    # look for. An unset variable expands to itself, matches no folder, and is
+    # reported below rather than skipped in silence.
+    copyAs <- value
+    if (.declaresEnvVarPath(value)) {
+      copyAs <- .replaceEnvVarPath(value)
+    }
+    if (fs::is_absolute_path(copyAs)) {
       next
     }
     # A `../`-climbing value names something the project does not own. Copying it
@@ -1393,11 +1431,11 @@ projectStatus <- function(project, silent = FALSE) {
     # `outputDir`, so it is contained the same way every other author-controlled
     # path in this file is (`.resolveProjectPath()`) and reported rather than
     # copied.
-    if (.pathEscapesRoot(value, sourceDir)) {
+    if (.pathEscapesRoot(copyAs, sourceDir)) {
       result$notCopied <- c(result$notCopied, value)
       next
     }
-    from <- fs::path_norm(fs::path(sourceDir, value))
+    from <- fs::path_norm(fs::path(sourceDir, copyAs))
     # A folder value of `"."` resolves to the project folder itself; copying that
     # would drag the whole Excel project (workbooks included) into the output.
     if (normalizePath(from, mustWork = FALSE) == sourceNorm) {
@@ -1407,7 +1445,7 @@ projectStatus <- function(project, silent = FALSE) {
       result$notCopied <- c(result$notCopied, value)
       next
     }
-    to <- fs::path(outputDir, value)
+    to <- fs::path(outputDir, copyAs)
     # A target folder the user already put files in is theirs, not the import's
     # to replace: `overwrite = FALSE` means it here too, so a curated model or
     # data file placed in the output beforehand survives and is reported instead
@@ -1542,10 +1580,52 @@ projectStatus <- function(project, silent = FALSE) {
   ifelse(is.na(mapped), ids, mapped)
 }
 
+#' Drop references to sheets of this workbook that were not parameter sheets
+#'
+#' A definition's `parameterSets` cell names sheets of its own workbook, so a
+#' sheet `.parseExcelParameterSheets()` skipped leaves a reference to a set that
+#' was never created. Only those references are dropped: the same cell may name
+#' a set defined in another workbook, which is a separate question answered
+#' elsewhere. Matching is on the canonical id, since that is what both the
+#' definition and the reference become.
+#'
+#' @param definitions Named list of records that may carry `parameterSets`.
+#' @param skippedSheets Sheet names the parser skipped.
+#' @returns `definitions`, each dangling reference removed and the field dropped
+#'   entirely where nothing is left, so a definition that referenced only
+#'   skipped sheets ends up without the field rather than with an empty one.
+#' @keywords internal
+#' @noRd
+.dropSkippedSheetRefs <- function(definitions, skippedSheets) {
+  if (length(definitions) == 0L || length(skippedSheets) == 0L) {
+    return(definitions)
+  }
+  skipped <- vapply(skippedSheets, .canonicalizeOneId, character(1))
+  lapply(definitions, function(definition) {
+    refs <- unlist(definition$parameterSets)
+    if (is.null(refs)) {
+      return(definition)
+    }
+    dangling <- vapply(refs, .canonicalizeOneId, character(1)) %in% skipped
+    kept <- refs[!dangling]
+    definition$parameterSets <- if (length(kept) > 0L) as.list(kept) else NULL
+    definition
+  })
+}
+
 #' Parse parameter sheets from an Excel file into JSON structure
+#'
+#' A parameter workbook routinely carries a notes, organ-list, or fit-bounds
+#' sheet beside its parameter sheets. Such a sheet is recognized by its columns
+#' and skipped with a warning, so one of them does not stop a migration.
+#'
 #' @param filePath Path to the Excel file
 #' @param sheetNames Sheets to read. If NULL, reads all sheets.
-#' @returns Named list of parameter arrays
+#' @returns Named list of parameter arrays, keyed by sheet name and holding only
+#'   the sheets that are parameter sheets. A caller that derives other
+#'   definitions from these sheets (an application per protocol sheet, an
+#'   individual's own override) must key them off these names rather than the
+#'   workbook's, so nothing references a set that was skipped.
 #' @keywords internal
 #' @noRd
 .parseExcelParameterSheets <- function(
@@ -1556,8 +1636,17 @@ projectStatus <- function(project, silent = FALSE) {
     sheetNames <- readxl::excel_sheets(filePath)
   }
   result <- list()
+  skipped <- character()
   for (sheet in sheetNames) {
     df <- readExcel(filePath, sheet = sheet)
+    # The check belongs to the sheet, not the cell: a missing column reads as
+    # `NULL`, which the row loop below would turn into an empty `containerPath`
+    # / `parameterName` and a value-less entry rather than an error, so guarding
+    # per cell would trade a loud abort for a silently corrupted section.
+    if (!all(.parameterSheetColumns %in% names(df))) {
+      skipped <- c(skipped, sheet)
+      next
+    }
     entries <- list()
     if (nrow(df) > 0) {
       for (i in seq_len(nrow(df))) {
@@ -1580,6 +1669,18 @@ projectStatus <- function(project, silent = FALSE) {
       }
     }
     result[[sheet]] <- entries
+  }
+  if (length(skipped) > 0L) {
+    warning <- messages$importSkippedNonParameterSheets(
+      filePath,
+      skipped,
+      .parameterSheetColumns
+    )
+    cli::cli_warn(
+      warning$bullets,
+      class = "esqlabsR_importSkippedNonParameterSheets",
+      .envir = warning$envir
+    )
   }
   result
 }
@@ -1727,6 +1828,30 @@ projectStatus <- function(project, silent = FALSE) {
   scenarios
 }
 
+#' Report an unreachable observed-data path and import no observed data
+#'
+#' Carries the same condition class as the missing-data-file warning, so the
+#' caller that expects no observed data (the legacy-snapshot upgrade, which
+#' never ships the data workbook) muffles both with one handler.
+#'
+#' @param fieldName Which boundary was crossed: `"dataFolder"` (outside the
+#'   project) or `"dataFile"` (outside the data folder).
+#' @param jsonData The accumulating project JSON list, returned unchanged.
+#' @returns `jsonData`.
+#' @keywords internal
+#' @noRd
+.skipOutOfProjectObservedData <- function(fieldName, jsonData) {
+  cli::cli_warn(
+    switch(
+      fieldName,
+      dataFolder = messages$importSkippedOutOfProjectDataFolder(),
+      dataFile = messages$importSkippedOutOfProjectDataFile()
+    ),
+    class = "esqlabsR_importSkippedObservedData"
+  )
+  jsonData
+}
+
 #' Reify the project's experimental-data file as an observed-data definition
 #'
 #' The project configuration records a single `dataFile` under `dataFolder`
@@ -1735,23 +1860,60 @@ projectStatus <- function(project, silent = FALSE) {
 #' workbook's sheets, so a plot or PI mapping that references observed data has
 #' something to resolve against. `file` and `importerConfiguration` are stored as
 #' basenames; the loader resolves them under `dataFolder`. A no-op when no
-#' `dataFile` is configured, or its workbook is absent (with a warning, since a
-#' configured-but-missing file is a migration gap the user should see).
+#' `dataFile` is configured, or its workbook is absent, or `dataFolder` /
+#' `dataFile` points outside the project (with a warning in the latter two
+#' cases, since data the imported project cannot reach is a migration gap the
+#' user should see). A `dataFolder` naming a `${VAR}` is the sanctioned way to
+#' keep the data outside the project, so it is expanded and imported normally.
 #'
 #' @param jsonData The accumulating project JSON list.
 #' @param prop The `Property -> Value` lookup closure from the importer.
 #' @param pcDir Absolute path to the project-configuration directory.
+#' @param projectDir Directory the imported `Project.json` is written to. A
+#'   relative path is resolved against the project file, so a `${VAR}` that
+#'   expands to one is anchored here rather than at the Excel source, matching
+#'   how the loader (`Project$.resolveWorkingFolder()`) will resolve the very
+#'   same stored value.
 #' @returns `jsonData` with an `observedData` section added when applicable.
 #' @keywords internal
 #' @noRd
-.parseExcelObservedData <- function(jsonData, prop, pcDir) {
+.parseExcelObservedData <- function(jsonData, prop, pcDir, projectDir = pcDir) {
   dataFile <- prop("dataFile")
   if (is.null(dataFile) || is.na(dataFile) || dataFile == "") {
     return(jsonData)
   }
   dataFolderRaw <- prop("dataFolder") %||% "."
-  dataFolder <- .resolveProjectPath(dataFolderRaw, pcDir, "dataFolder")
-  dataFilePath <- .resolveProjectPath(dataFile, dataFolder, "dataFile")
+  dataFolder <- if (.declaresEnvVarPath(dataFolderRaw)) {
+    # A `${VAR}` is the sanctioned way to keep the data outside the project (a
+    # synced drive shared between projects), so it is expanded and exempt from
+    # containment. Only the raw `${VAR}` is stored, so the same value is
+    # expanded again on every load: a relative expansion must therefore be
+    # anchored to the project file, not to the Excel source it was read from, or
+    # the folder found here would not be the folder found after the import.
+    expanded <- .replaceEnvVarPath(dataFolderRaw)
+    if (fs::is_absolute_path(expanded)) {
+      expanded
+    } else {
+      file.path(projectDir, expanded)
+    }
+  } else if (.pathEscapesRoot(dataFolderRaw, pcDir)) {
+    # An out-of-project `dataFolder` (typically a 5.x project whose observed
+    # data was shared through a synced drive) leaves the data unavailable to the
+    # new project, which is the missing-data-file situation from the user's
+    # point of view, so it is reported and skipped rather than aborting a
+    # migration that has nothing else wrong with it. This is a read path only;
+    # a path the project writes to is still contained.
+    return(.skipOutOfProjectObservedData("dataFolder", jsonData))
+  } else {
+    .resolveProjectPath(dataFolderRaw, pcDir, "dataFolder")
+  }
+  if (.pathEscapesRoot(dataFile, dataFolder)) {
+    return(.skipOutOfProjectObservedData("dataFile", jsonData))
+  }
+  dataFilePath <- .absoluteAgainstRoot(
+    dataFile,
+    as.character(fs::path_abs(dataFolder))
+  )
   if (!file.exists(dataFilePath)) {
     # Classed so a caller that expects a missing data file (the legacy-snapshot
     # upgrade, which never carries the data workbook) can muffle just this
@@ -2423,11 +2585,12 @@ projectStatus <- function(project, silent = FALSE) {
   }
   options <- list()
   for (i in seq_len(nrow(rows))) {
-    name <- as.character(rows[["OptionName"]][[i]])
-    if (is.na(name) || name == "") {
+    name <- .cellValue(rows, "OptionName", i)
+    if (.isBlankCell(name)) {
       next
     }
-    raw <- rows[["OptionValue"]][[i]]
+    name <- as.character(name)
+    raw <- .cellValue(rows, "OptionValue", i)
     numeric <- suppressWarnings(as.numeric(raw))
     token <- tolower(trimws(as.character(raw)))
     options[[name]] <- if (!is.na(numeric)) {
@@ -2454,15 +2617,14 @@ projectStatus <- function(project, silent = FALSE) {
 # @keywords internal
 # @noRd
 .pi5xPath <- function(containerPath, parameterName) {
-  container <- as.character(containerPath)
-  parameter <- as.character(parameterName)
-  if (is.na(parameter) || parameter == "") {
+  if (.isBlankCell(parameterName)) {
     return(NULL)
   }
-  if (is.na(container) || container == "") {
+  parameter <- as.character(parameterName)
+  if (.isBlankCell(containerPath)) {
     return(parameter)
   }
-  paste(container, parameter, sep = "|")
+  paste(as.character(containerPath), parameter, sep = "|")
 }
 
 # Coin an id unique within `existing` by suffixing `_2`, `_3`, ... on a clash.
@@ -2474,10 +2636,7 @@ projectStatus <- function(project, silent = FALSE) {
 # @keywords internal
 # @noRd
 .pi5xUniqueId <- function(base, existing) {
-  base <- as.character(base)
-  if (is.na(base) || base == "") {
-    base <- "item"
-  }
+  base <- if (.isBlankCell(base)) "item" else as.character(base)
   base <- .canonicalizeOneId(base)
   candidate <- base
   n <- 1L
@@ -2900,6 +3059,49 @@ projectStatus <- function(project, silent = FALSE) {
 #' @noRd
 .extractExcelData <- function(project) {
   project$rawExcel()
+}
+
+#' Is a single Excel cell empty?
+#'
+#' Empty means any of: the sheet has no such column (which reads as `NULL` or a
+#' zero-length value), the cell is `NA`, or it holds only whitespace.
+#'
+#' The bare `is.na(x) || x == ""` this replaces is only safe on a cell that
+#' exists. On an absent column it evaluates to `NA`, and `if (NA)` aborts the
+#' whole parse with `missing value where TRUE/FALSE needed`, a message that
+#' names neither the sheet nor the column. A hand-maintained 5.x sheet routinely
+#' lacks a column the parser reads, so the test lives here once rather than
+#' being re-derived per cell.
+#'
+#' @param x A single cell value.
+#' @returns `TRUE` when the cell carries no usable value. A value of length
+#'   other than one is empty too: it is not a cell.
+#' @keywords internal
+#' @noRd
+.isBlankCell <- function(x) {
+  if (is.null(x) || length(x) != 1L || is.na(x)) {
+    return(TRUE)
+  }
+  trimws(as.character(x)) == ""
+}
+
+#' One cell of a parsed sheet, `NA` where the sheet has no such column
+#'
+#' `df[["Missing"]][[i]]` aborts with a subscript error rather than yielding an
+#' absent value, so an optional column is read through here.
+#'
+#' @param df A parsed sheet.
+#' @param column Column name.
+#' @param i Row index.
+#' @returns The cell value, or `NA` when the column or the row is absent.
+#' @keywords internal
+#' @noRd
+.cellValue <- function(df, column, i = 1L) {
+  values <- df[[column]]
+  if (is.null(values) || length(values) < i) {
+    return(NA)
+  }
+  values[[i]]
 }
 
 #' Convert NA to NULL for JSON serialization

@@ -2972,3 +2972,71 @@ test_that("removePITask removes a vector of task ids in one write-through", {
     any(c("t1", "t2") %in% names(reloaded$definitions$parameterIdentification))
   )
 })
+
+# A hand-maintained 5.x PI sheet routinely lacks a column the parser reads, or
+# leaves a cell blank. `is.na(x) || x == ""` is only safe on a cell that exists:
+# on an absent one it evaluates to `NA` and `if (NA)` aborted the whole restore
+# with `missing value where TRUE/FALSE needed`, naming neither sheet nor column
+# (#1190).
+test_that(".pi5xUniqueId falls back instead of aborting on an empty cell", {
+  expect_identical(.pi5xUniqueId(character(0), character()), "item")
+  expect_identical(.pi5xUniqueId(NULL, character()), "item")
+  expect_identical(.pi5xUniqueId(NA, character()), "item")
+  expect_identical(.pi5xUniqueId("   ", character()), "item")
+  # A usable cell is unaffected, and a clash still gets a suffix.
+  expect_identical(.pi5xUniqueId("Conc", character()), "conc")
+  expect_identical(.pi5xUniqueId("Conc", "conc"), "conc_2")
+})
+
+test_that(".pi5xPath tolerates an absent container or parameter cell", {
+  expect_null(.pi5xPath(NULL, NULL))
+  expect_null(.pi5xPath(character(0), character(0)))
+  expect_null(.pi5xPath("Organism", NA))
+  # A blank container yields the bare parameter name.
+  expect_identical(.pi5xPath(NA, "Param"), "Param")
+  expect_identical(.pi5xPath("   ", "Param"), "Param")
+  expect_identical(.pi5xPath("Organism", "Param"), "Organism|Param")
+})
+
+test_that(".pi5xOptionRows tolerates a sheet without the option columns", {
+  # `df[["Missing"]][[i]]` would abort on the index rather than yield an absent
+  # value, so the columns are read through `.cellValue()`.
+  noColumns <- data.frame(PITaskName = "t1", stringsAsFactors = FALSE)
+  expect_identical(.pi5xOptionRows(noColumns, "t1"), list())
+
+  blankName <- data.frame(
+    PITaskName = c("t1", "t1"),
+    OptionName = c("MaxIterations", NA),
+    OptionValue = c("50", "ignored"),
+    stringsAsFactors = FALSE
+  )
+  expect_identical(.pi5xOptionRows(blankName, "t1"), list(MaxIterations = 50))
+})
+
+# The reported failure: a mapping sheet whose `OutputPath` cell is blank, or
+# whose column is missing entirely, parses instead of aborting. The mapping
+# keeps no `outputPath`, so validation reports the incomplete mapping rather
+# than the parse dying with an unattributable error (#1190).
+test_that(".parseExcelPI5xMappings parses a row with no output path", {
+  blankCell <- data.frame(
+    PITaskName = c("t1", "t1"),
+    OutputPath = c("Organism|A|Conc", NA),
+    Scenarios = c("s1", "s1"),
+    DataSet = c("d1", "d2"),
+    stringsAsFactors = FALSE
+  )
+  mappings <- .parseExcelPI5xMappings(blankCell, "t1")
+  expect_length(mappings, 2L)
+  expect_identical(mappings[[1]]$outputPath, "Organism|A|Conc")
+  expect_null(mappings[[2]]$outputPath)
+  # Still gets a usable, unique id.
+  expect_identical(mappings[[2]]$id, "item")
+
+  noColumn <- data.frame(
+    PITaskName = "t1",
+    Scenarios = "s1",
+    DataSet = "d1",
+    stringsAsFactors = FALSE
+  )
+  expect_length(.parseExcelPI5xMappings(noColumn, "t1"), 1L)
+})
