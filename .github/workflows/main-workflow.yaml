@@ -23,6 +23,10 @@ jobs:
     uses: Open-Systems-Pharmacology/Workflows/.github/workflows/R-CMD-check-build.yaml@main
     with:
       setup-quarto: true # plot-results.qmd is a Quarto vignette
+      # Quarto renders the vignette in its own R session, which resolves
+      # esqlabsR from the library rather than from the package under check.
+      # Without installing the local source it picks up a stale installed copy.
+      extra-packages: local::.
 
   test-coverage:
     if: ${{ !cancelled() }}
