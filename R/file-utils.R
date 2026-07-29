@@ -80,6 +80,14 @@ readExcel <- function(path, sheet = NULL, ...) {
 }
 
 # Drop the rows of a parsed sheet that are blank in every column.
+#
+# The kept rows' original positions are recorded in a `sheetRow` attribute (1 for
+# the first row below the header), because dropping rows here is what makes a
+# parsed-frame index untrue as a workbook coordinate: a parser that reports a row
+# to the user reads the attribute rather than guessing at a header offset. It is
+# an attribute rather than a column so no parser that loops over `names(data)`
+# sees it, and it therefore does not survive subsetting the frame: read it
+# straight off the value `readExcel()` returned.
 # @keywords internal
 # @noRd
 .dropBlankRows <- function(data) {
@@ -87,7 +95,9 @@ readExcel <- function(path, sheet = NULL, ...) {
     return(data)
   }
   blank <- Reduce(`&`, lapply(data, .blankColumnCells))
-  data[!blank, , drop = FALSE]
+  kept <- data[!blank, , drop = FALSE]
+  attr(kept, "sheetRow") <- which(!blank)
+  kept
 }
 
 #' Resolve a project-controlled path and require it to stay under its root

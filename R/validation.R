@@ -1183,18 +1183,15 @@ validationSummary <- function(validationResults) {
           )
         )
       }
-      if (is.null(m$outputPathId) || is.na(m$outputPathId)) {
-        result$addCriticalError(
-          "Invalid Reference",
-          paste0(
-            "PI task '",
-            taskId,
-            "', outputMapping '",
-            m$id,
-            "' does not define an outputPath"
-          )
-        )
-      } else if (!.refResolves(m$outputPathId, outputPathKeys)) {
+      # An absent `outputPathId` is a missing required field, which `.validatePI()`
+      # reports as a section-local concern; this phase only resolves a reference
+      # that is there. Skipping it silently here rather than reporting it too
+      # matters because this phase skips itself entirely once any section has a
+      # critical error, so the two would never be seen together.
+      if (
+        !.isMissingField(m$outputPathId) &&
+          !.refResolves(m$outputPathId, outputPathKeys)
+      ) {
         result$addCriticalError(
           "Invalid Reference",
           paste0(

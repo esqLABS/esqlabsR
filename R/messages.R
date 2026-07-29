@@ -239,7 +239,28 @@ messages$importSkippedObservedData <- function(dataFile) {
     "!" = "The configured data file {.file {dataFile}} was not found, so no \\
     observed data was imported.",
     "i" = "Any plot or parameter-identification mapping that references \\
-    observed data will not resolve until the data file is present."
+    observed data will not resolve, and {.fn validateProject} will report it, \\
+    until the data file is present."
+  )
+}
+
+messages$importIncompleteObservedCurves <- function(dataCombinedIds) {
+  # Unglued, like the sheet-skip warnings below: a definition id is free text.
+  envir <- new.env(parent = parent.frame())
+  assign("ids", dataCombinedIds, envir = envir)
+  assign("n", length(dataCombinedIds), envir = envir)
+  list(
+    bullets = c(
+      "!" = "{cli::qty(n)}{n} imported data {?combination/combinations} \\
+      {?has/have} an observed curve that names no data set: {.val {ids}}.",
+      "i" = "The {.field DataCombined} sheet marked the row {.val observed} but \\
+      left its {.field dataSet} cell empty, so there is nothing to resolve \\
+      against. The row is kept as it was authored, not dropped.",
+      "i" = "{.fn validateProject} reports each one as a critical error until \\
+      the cell is filled in Excel and the project imported again, or the curve \\
+      is completed with {.fn addDataCombined}."
+    ),
+    envir = envir
   )
 }
 
@@ -260,7 +281,8 @@ messages$importSkippedOutOfProjectDataFolder <- function() {
     resolves from wherever the project is opened. Set one, or copy the data \\
     under the project folder, then import again.",
     "i" = "Any plot or parameter-identification mapping that references \\
-    observed data will not resolve until then."
+    observed data will not resolve, and {.fn validateProject} will report it, \\
+    until then."
   )
 }
 
@@ -272,7 +294,75 @@ messages$importSkippedOutOfProjectDataFile <- function() {
     Move the file under that folder, or point {.field dataFolder} at the \\
     folder that holds it, then import again.",
     "i" = "Any plot or parameter-identification mapping that references \\
-    observed data will not resolve until then."
+    observed data will not resolve, and {.fn validateProject} will report it, \\
+    until then."
+  )
+}
+
+messages$importIncompletePIOutputMappings <- function(taskId, scenarios) {
+  # Unglued, like the two below: a task id and a scenario name are both free text.
+  envir <- new.env(parent = parent.frame())
+  assign("taskId", taskId, envir = envir)
+  assign("scenarios", scenarios, envir = envir)
+  assign("n", length(scenarios), envir = envir)
+  list(
+    bullets = c(
+      "!" = "{cli::qty(n)}{n} output {?mapping/mappings} of \\
+      parameter-identification task {.val {taskId}} {?has/have} no output path.",
+      stats::setNames(
+        sprintf(
+          "Scenarios cell {.val {scenarios[[%1$d]]}}.",
+          seq_along(scenarios)
+        ),
+        rep("x", length(scenarios))
+      ),
+      "i" = "This {.field PIOutputMappings} sheet has no {.field OutputPath} \\
+      column, so each mapping takes its outputs from the {.field OutputPathsIds} \\
+      of the scenarios it names. Give those scenarios an output path, or add an \\
+      {.field OutputPath} column, then import again.",
+      "i" = "The mappings are kept as they were authored, so {.fn validateProject} \\
+      reports each one until then; {.fn addPIOutputMapping} with \\
+      {.code overwrite = TRUE} completes one in place."
+    ),
+    envir = envir
+  )
+}
+
+messages$importSkippedNonNumericRows <- function(
+  filePath,
+  sheets,
+  rows,
+  values
+) {
+  # Same unglued `bullets`/`envir` contract, and for the same reason, as
+  # `importSkippedNonParameterSheets()` below: a sheet name and a cell's own
+  # text are both free text that can contain `{`/`}`.
+  envir <- new.env(parent = parent.frame())
+  assign("filePath", filePath, envir = envir)
+  assign("sheets", sheets, envir = envir)
+  assign("rows", rows, envir = envir)
+  assign("values", values, envir = envir)
+  assign("n", length(rows), envir = envir)
+  list(
+    bullets = c(
+      "!" = "{cli::qty(n)}Skipped {n} {?row/rows} in {.file {filePath}}: \\
+      the {.field Value} cell is not a number.",
+      # One bullet per skipped row rather than one summary line: a row has to be
+      # findable in the workbook to be fixed. Each bullet indexes the vectors in
+      # `envir` rather than embedding the cell's text, the same way
+      # `.canonicalizedIdBullets()` keeps user text behind a variable.
+      stats::setNames(
+        sprintf(
+          "Sheet {.val {sheets[[%1$d]]}}, row {rows[[%1$d]]}: \\
+          {.val {values[[%1$d]]}}.",
+          seq_along(rows)
+        ),
+        rep("x", length(rows))
+      ),
+      "i" = "A blank cell is allowed; a non-blank cell must be numeric \\
+      (use {.val .} as the decimal separator)."
+    ),
+    envir = envir
   )
 }
 

@@ -340,3 +340,20 @@
       Error in `runPI()`:
       ! Unknown `tasks`: "ghost". Available: "aciclovirsimple".
 
+# .parsePIOutputMappings loads a mapping the constructor would reject
+
+    Code
+      PIOutputMapping(id = "m1", scenarios = "s1", observedData = "d1")
+    Condition
+      Error in `PIOutputMapping()`:
+      ! argument "outputPath" is missing, with no default
+
+# .parsePIParameters loads a parameter the constructor would reject
+
+    Code
+      PIParameter(id = "p1", scenarios = "s1", path = "Aciclovir|Lipophilicity",
+        maxValue = 2, startValue = 0)
+    Condition
+      Error in `PIParameter()`:
+      ! argument "minValue" is missing, with no default
+

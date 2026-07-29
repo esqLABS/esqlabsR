@@ -1793,21 +1793,39 @@ test_that("exportProjectToExcel keeps both ids when two share one output path", 
 })
 
 # A non-blank parameter `Value` cell that does not coerce to a number (text, a
-# comma-decimal) must abort naming the sheet and row, rather than silently
-# becoming NA and serialising a value-less parameter into the JSON project.
-test_that(".parseExcelParameterSheets aborts on a non-numeric Value cell", {
+# comma-decimal) skips its row, naming the sheet, row and cell, rather than
+# silently becoming NA and serialising a value-less parameter into the JSON
+# project. Skipping the row rather than aborting the import is what lets a
+# project carrying a fit-bounds sheet migrate at all (#1189).
+test_that(".parseExcelParameterSheets skips a non-numeric Value cell", {
   paramFile <- withr::local_tempfile(fileext = ".xlsx")
   df <- data.frame(
     `Container Path` = "Organism|A",
-    `Parameter Name` = "P",
-    Value = "not_a_number",
+    `Parameter Name` = c("P", "Q", "R"),
+    Value = c("not_a_number", "1,5", "2"),
     Units = "mg",
     check.names = FALSE,
     stringsAsFactors = FALSE
   )
   .writeExcel(list(Global = df), paramFile)
 
-  expect_snapshot(error = TRUE, .parseExcelParameterSheets(paramFile))
+  # Not a snapshot: the warning names the workbook, whose path is a temp file
+  # here, so a snapshot would record a machine-specific string.
+  expect_warning(
+    parsed <- .parseExcelParameterSheets(paramFile),
+    class = "esqlabsR_importSkippedNonNumericRows"
+  )
+  # Each skipped row is named with its sheet, row and cell. The rows are the
+  # workbook's, so the first data row is row 2, below the header.
+  expect_warning(
+    .parseExcelParameterSheets(paramFile),
+    'row 2: "not_a_number"'
+  )
+  expect_warning(.parseExcelParameterSheets(paramFile), 'row 3: "1,5"')
+  # Only the numeric row survives; a comma-decimal is text, so it is skipped
+  # rather than silently read as 1.
+  expect_length(parsed$Global, 1L)
+  expect_identical(parsed$Global[[1]]$value, 2)
 })
 
 # A blank `Value` cell stays allowed (NA), so a partially-filled sheet still
@@ -2263,7 +2281,10 @@ test_that(".dropSkippedSheetRefs removes only references to skipped sheets", {
   expect_identical(result$d, definitions$d)
   # A reference matching on canonical id alone is still dropped.
   expect_null(
-    .dropSkippedSheetRefs(list(a = list(parameterSets = list("skipped"))), "Skipped")$a$parameterSets
+    .dropSkippedSheetRefs(
+      list(a = list(parameterSets = list("skipped"))),
+      "Skipped"
+    )$a$parameterSets
   )
 })
 
@@ -2335,4 +2356,272 @@ test_that("blank rows in a populations sheet do not become definitions", {
   project <- suppressWarnings(loadProject(jsonPath))
 
   expect_length(project$definitions$populations, realRows)
+})
+
+# The reported case: a fit-bounds sheet authored by copying a real parameter
+# sheet carries all four parameter columns, so it is a parameter sheet and its
+# rows are read, and a `Value` of "lower" aborted the whole import (#1189).
+test_that("a non-numeric Value skips the row, not the import", {
+  work_dir <- withr::local_tempdir()
+  file.copy(dirname(testProjectExcelPath()), work_dir, recursive = TRUE)
+  projectDir <- file.path(work_dir, "TestProjectExcel")
+  paramFile <- file.path(projectDir, "Configurations", "ModelParameters.xlsx")
+
+  sheetNames <- readxl::excel_sheets(paramFile)
+  sheets <- stats::setNames(
+    lapply(sheetNames, function(s) readExcel(paramFile, sheet = s)),
+    sheetNames
+  )
+  sheets[["RefConc_fit"]] <- data.frame(
+    `Container Path` = c("Target", "Target", "Target"),
+    `Parameter Name` = c("Reference concentration", "Kd", "koff"),
+    Value = c("lower", "2.5", "upper"),
+    Units = c("nmol/l", "nmol/l", "1/min"),
+    check.names = FALSE,
+    stringsAsFactors = FALSE
+  )
+  .writeExcel(sheets, paramFile)
+
+  expect_warning(
+    jsonPath <- importProjectFromExcel(
+      file.path(projectDir, "ProjectConfiguration.xlsx"),
+      outputDir = withr::local_tempdir(),
+      silent = TRUE
+    ),
+    class = "esqlabsR_importSkippedNonNumericRows"
+  )
+  project <- suppressWarnings(loadProject(jsonPath))
+
+  # The two unparseable rows are gone; the numeric one survives with its value.
+  set <- .unwrapDefinitionList(project$definitions$parameterSets)[[
+    "refconc_fit"
+  ]]
+  expect_length(set, 1L)
+  expect_identical(set[[1]]$parameterName, "Kd")
+  expect_identical(set[[1]]$value, 2.5)
+})
+
+# The reported case: a `PIOutputMappings` sheet from the layout that predates the
+# `OutputPath` column. Every mapping came out with no output path and the restore
+# stopped on the first one. The column's absence is now read as that older
+# layout, whose outputs come from the scenario (#1192).
+test_that("a PIOutputMappings sheet with no OutputPath column imports", {
+  work_dir <- withr::local_tempdir()
+  file.copy(dirname(testProjectExcelPath()), work_dir, recursive = TRUE)
+  projectDir <- file.path(work_dir, "TestProjectExcel")
+  configDir <- file.path(projectDir, "Configurations")
+
+  rewriteSheet <- function(file, sheet, edit) {
+    sheetNames <- readxl::excel_sheets(file)
+    sheets <- stats::setNames(
+      lapply(sheetNames, function(s) readExcel(file, sheet = s)),
+      sheetNames
+    )
+    sheets[[sheet]] <- edit(sheets[[sheet]])
+    .writeExcel(sheets, file)
+  }
+
+  # The fixture's PI scenarios declare no output path, so give the one this task
+  # uses two of them: the derivation has to fan a single row out over both.
+  rewriteSheet(
+    file.path(configDir, "Scenarios.xlsx"),
+    "Scenarios",
+    function(df) {
+      df$OutputPathsIds[df$Scenario_name == "PITestScenario"] <-
+        "Aciclovir_PVB, Aciclovir_fat_cell"
+      df
+    }
+  )
+  # Reproduce the older layout: no `OutputPath` column at all.
+  rewriteSheet(
+    file.path(configDir, "ParameterIdentification.xlsx"),
+    "PIOutputMappings",
+    function(df) df[, setdiff(names(df), "OutputPath"), drop = FALSE]
+  )
+
+  jsonPath <- suppressWarnings(importProjectFromExcel(
+    file.path(projectDir, "ProjectConfiguration.xlsx"),
+    outputDir = withr::local_tempdir(),
+    silent = TRUE
+  ))
+  project <- suppressWarnings(loadProject(jsonPath))
+
+  task <- .unwrapDefinitionList(project$definitions$parameterIdentification)[[
+    "aciclovirsimple"
+  ]]
+  # One mapping per output path the scenario declares, each carrying the row's
+  # observed data set.
+  expect_setequal(
+    vapply(task$outputMappings, function(m) m$outputPath, character(1)),
+    c("aciclovir_pvb", "aciclovir_fat_cell")
+  )
+  expect_true(all(vapply(
+    task$outputMappings,
+    function(m) grepl("^Laskin 1982", m$observedData),
+    logical(1)
+  )))
+
+  # The whole point: the project the import produced is loadable, and the task
+  # whose scenario declares output paths has no complaint against it.
+  results <- suppressWarnings(validateProject(project))
+  errors <- unlist(lapply(results, function(section) {
+    vapply(section$critical_errors %||% list(), \(e) e$message, character(1))
+  })) %||%
+    character()
+  expect_false(any(grepl("aciclovirsimple'.*outputPath", errors)))
+
+  # The fixture's other task runs against scenarios that declare no output path,
+  # so its mappings cannot be derived. They load anyway and validation names them,
+  # rather than vanishing from the task.
+  other <- .unwrapDefinitionList(project$definitions$parameterIdentification)[[
+    "aciclovirmultiscenario"
+  ]]
+  expect_length(other$outputMappings, 2L)
+  expect_true(any(grepl(
+    "aciclovirmultiscenario'.*does not define an outputPath",
+    errors
+  )))
+})
+
+# The reported case: a fresh, never-edited import came back invalid with one
+# critical error per observed curve, and nothing in the import said why. The
+# curve is kept (the user may still be able to fill the cell), so the import
+# names the affected data combinations and states the consequence (#1183).
+test_that("an observed curve with no dataSet is kept and reported", {
+  work_dir <- withr::local_tempdir()
+  file.copy(dirname(testProjectExcelPath()), work_dir, recursive = TRUE)
+  projectDir <- file.path(work_dir, "TestProjectExcel")
+  plotsFile <- file.path(projectDir, "Configurations", "Plots.xlsx")
+
+  sheetNames <- readxl::excel_sheets(plotsFile)
+  sheets <- stats::setNames(
+    lapply(sheetNames, function(s) readExcel(plotsFile, sheet = s)),
+    sheetNames
+  )
+  observed <- sheets$DataCombined$dataType == "observed"
+  sheets$DataCombined$dataSet[observed] <- NA
+  .writeExcel(sheets, plotsFile)
+
+  expect_warning(
+    jsonPath <- importProjectFromExcel(
+      file.path(projectDir, "ProjectConfiguration.xlsx"),
+      outputDir = withr::local_tempdir(),
+      silent = TRUE
+    ),
+    class = "esqlabsR_importIncompleteObservedCurves"
+  )
+  project <- suppressWarnings(loadProject(jsonPath))
+
+  # Nothing dropped: the observed curve is still there, and so is the simulated
+  # one beside it.
+  dc <- .unwrapDefinitionList(project$definitions$dataCombined)[[
+    "aciclovirpvb"
+  ]]
+  expect_length(dc$observed, 1L)
+  expect_length(dc$simulated, 1L)
+  expect_null(dc$observed[[1]]$dataSet)
+
+  # And the consequence the warning states is the one that actually happens.
+  results <- suppressWarnings(validateProject(project))
+  errors <- unlist(lapply(results, function(section) {
+    vapply(section$critical_errors %||% list(), \(e) e$message, character(1))
+  }))
+  expect_true(any(grepl(
+    "observed entry missing required field: dataSet",
+    errors
+  )))
+})
+
+test_that("a missing data file says the project will not validate", {
+  work_dir <- withr::local_tempdir()
+  file.copy(dirname(testProjectExcelPath()), work_dir, recursive = TRUE)
+  projectDir <- file.path(work_dir, "TestProjectExcel")
+  unlink(list.files(file.path(projectDir, "Data"), full.names = TRUE))
+
+  expect_warning(
+    importProjectFromExcel(
+      file.path(projectDir, "ProjectConfiguration.xlsx"),
+      outputDir = withr::local_tempdir(),
+      silent = TRUE
+    ),
+    "validateProject"
+  )
+})
+
+# The warning's wording is the whole of the fix for #1183, so it is snapshotted
+# rather than only matched on its class. Called directly, not through an import,
+# so no temp path lands in the snapshot.
+test_that(".warnIncompleteObservedCurves names the affected combinations", {
+  expect_snapshot(.warnIncompleteObservedCurves(list(
+    list(
+      dataCombinedId = "plasma",
+      simulated = list(list(label = "sim")),
+      observed = list(list(label = "obs"))
+    ),
+    list(
+      dataCombinedId = "urine",
+      observed = list(list(label = "obs", dataSet = "d1"))
+    ),
+    list(
+      dataCombinedId = "fat",
+      observed = list(list(label = "obs", dataSet = ""))
+    )
+  )))
+
+  # Nothing to say when every observed curve names a data set.
+  expect_silent(.warnIncompleteObservedCurves(list(
+    list(dataCombinedId = "urine", observed = list(list(dataSet = "d1")))
+  )))
+  expect_silent(.warnIncompleteObservedCurves(NULL))
+})
+
+# Blank rows are dropped on read, so the parsed-frame index is not the row Excel
+# shows. Findability is the whole purpose of the reported number, so it is the
+# workbook row: blank rows above the offender counted, header included.
+test_that("a skipped row is reported at its workbook row", {
+  paramFile <- withr::local_tempfile(fileext = ".xlsx")
+  df <- data.frame(
+    `Container Path` = c("Organism|A", NA, NA, "Organism|A"),
+    `Parameter Name` = c("P", NA, NA, "Q"),
+    Value = c("1", NA, NA, "lower"),
+    Units = c("mg", NA, NA, "mg"),
+    check.names = FALSE,
+    stringsAsFactors = FALSE
+  )
+  .writeExcel(list(Global = df), paramFile)
+
+  # The offending cell is on sheet row 5: header, one data row, two blank rows.
+  expect_warning(.parseExcelParameterSheets(paramFile), "row 5")
+})
+
+# A sheet that had rows but kept none describes no parameter, so it becomes no
+# definition. A header-only sheet is a real (empty) set and is unaffected; the
+# test above covers that case.
+test_that("a sheet whose every row is skipped becomes no parameter set", {
+  paramFile <- withr::local_tempfile(fileext = ".xlsx")
+  .writeExcel(
+    list(
+      Global = data.frame(
+        `Container Path` = "Organism|A",
+        `Parameter Name` = "P",
+        Value = "1",
+        Units = "mg",
+        check.names = FALSE
+      ),
+      RefConc_fit = data.frame(
+        `Container Path` = "Target",
+        `Parameter Name` = c("Reference concentration", "Kd"),
+        Value = c("lower", "upper"),
+        Units = "nmol/l",
+        check.names = FALSE
+      )
+    ),
+    paramFile
+  )
+
+  expect_warning(
+    parsed <- .parseExcelParameterSheets(paramFile),
+    class = "esqlabsR_importSkippedNonNumericRows"
+  )
+  expect_named(parsed, "Global")
 })
