@@ -61,6 +61,7 @@ Other projectPersistence:
 \code{\link[=exampleProjectPath]{exampleProjectPath()}},
 \code{\link[=exportProjectToExcel]{exportProjectToExcel()}},
 \code{\link[=initProject]{initProject()}},
+\code{\link[=isProjectInitialized]{isProjectInitialized()}},
 \code{\link[=loadProject]{loadProject()}},
 \code{\link[=projectStatus]{projectStatus()}},
 \code{\link[=reloadProject]{reloadProject()}},

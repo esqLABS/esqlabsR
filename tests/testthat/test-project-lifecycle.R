@@ -251,8 +251,11 @@ test_that("isProjectInitialized correctly identifies project directories", {
   initProject(destination = tempDir, overwrite = TRUE)
   expect_true(isProjectInitialized(tempDir))
 
+  # The Excel files are an interchange format, not the project: with the
+  # `Project.json` gone, the exported `Project.xlsx` and `Configurations/`
+  # left behind do not make this a project any more.
   unlink(file.path(tempDir, "Project.json"))
-  expect_true(isProjectInitialized(tempDir))
+  expect_false(isProjectInitialized(tempDir))
 })
 
 test_that("isProjectInitialized handles non-existent directories", {
@@ -260,7 +263,31 @@ test_that("isProjectInitialized handles non-existent directories", {
   expect_false(isProjectInitialized("non_existent_directory"))
 })
 
-test_that("isProjectInitialized does not false-positive on a dir whose path contains 'Project'", {
+test_that("isProjectInitialized finds a container that is not named Project.json", {
+  # An Excel import names the container after the workbook it read, so
+  # `MyStudy.xlsx` produces `MyStudy.json`. The declared schema version, not
+  # the file name, makes it a project.
+  dir <- withr::local_tempdir()
+  initProject(destination = dir, type = "minimal", createExcel = FALSE)
+  file.rename(file.path(dir, "Project.json"), file.path(dir, "MyStudy.json"))
+
+  expect_true(isProjectInitialized(dir))
+})
+
+test_that("isProjectInitialized ignores a JSON file that is not a project container", {
+  dir <- withr::local_tempdir()
+  # A plausible neighbour: some other tool's JSON, and a pre-6.0.0 monolithic
+  # snapshot, neither of which declares a project schema version.
+  jsonlite::write_json(
+    list(name = "not a project"),
+    file.path(dir, "data.json")
+  )
+  writeLines("{ not json at all", file.path(dir, "broken.json"))
+
+  expect_false(isProjectInitialized(dir))
+})
+
+test_that(".hasLegacyExcelProject does not false-positive on a dir whose path contains 'Project'", {
   parent <- withr::local_tempdir()
   # The directory's own path contains "Project"; an unrelated .xlsx inside
   # it must not be mistaken for a project config file.
@@ -268,7 +295,22 @@ test_that("isProjectInitialized does not false-positive on a dir whose path cont
   dir.create(dir)
   writeLines("x", file.path(dir, "data.xlsx"))
 
+  expect_false(.hasLegacyExcelProject(dir))
   expect_false(isProjectInitialized(dir))
+})
+
+test_that("initProject does not scaffold over an unmigrated legacy Excel project", {
+  dir <- withr::local_tempdir()
+  writeLines("x", file.path(dir, "Project.xlsx"))
+  dir.create(file.path(dir, "Configurations"))
+
+  # Not a project, since there is no `Project.json` ...
+  expect_false(isProjectInitialized(dir))
+  # ... but not a folder that is free to fill either.
+  expect_snapshot(
+    error = TRUE,
+    initProject(destination = dir, type = "minimal", createExcel = FALSE)
+  )
 })
 
 test_that("initProject(type = 'minimal', createExcel = FALSE) creates the JSON skeleton", {
@@ -443,6 +485,26 @@ test_that("initProject(overwrite = TRUE) replaces, removing stale definition fil
   expect_identical(readLines(userFile), "keep me")
   expect_true(file.exists(file.path(dir, "Project.json")))
   expect_true(dir.exists(file.path(dir, "definitions", "scenarios")))
+})
+
+test_that("initProject(overwrite = TRUE) removes a container that is not named Project.json", {
+  # The scaffold writes `Project.json`, so an overwritten project whose
+  # container carried the name of the workbook it was imported from would
+  # otherwise survive as a second, stale container beside it.
+  dir <- withr::local_tempdir()
+  initProject(destination = dir, type = "minimal", createExcel = FALSE)
+  imported <- file.path(dir, "MyStudy.json")
+  file.rename(file.path(dir, "Project.json"), imported)
+
+  initProject(
+    destination = dir,
+    type = "minimal",
+    createExcel = FALSE,
+    overwrite = TRUE
+  )
+
+  expect_false(file.exists(imported))
+  expect_true(file.exists(file.path(dir, "Project.json")))
 })
 
 test_that("initProject creates proper project structure", {

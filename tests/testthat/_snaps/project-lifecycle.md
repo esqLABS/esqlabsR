@@ -24,6 +24,14 @@
       ! This project does not have a project folder on disk, so there is nothing to reload.
       i `reloadProject()` re-reads the project files from disk; this project was not loaded from a folder.
 
+# initProject does not scaffold over an unmigrated legacy Excel project
+
+    Code
+      initProject(destination = dir, type = "minimal", createExcel = FALSE)
+    Condition
+      Error in `initProject()`:
+      ! The destination folder already contains an esqlabsR project. R is not running interactively, so esqlabsR cannot ask for confirmation; pass `overwrite = TRUE` to overwrite it.
+
 # initProject aborts non-interactively when a project exists and overwrite = FALSE
 
     Code
