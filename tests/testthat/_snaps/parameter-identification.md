@@ -340,3 +340,11 @@
       Error in `runPI()`:
       ! Unknown `tasks`: "ghost". Available: "aciclovirsimple".
 
+# .parsePIOutputMappings loads a mapping the constructor would reject
+
+    Code
+      PIOutputMapping(id = "m1", scenarios = "s1", observedData = "d1")
+    Condition
+      Error in `PIOutputMapping()`:
+      ! argument "outputPath" is missing, with no default
+

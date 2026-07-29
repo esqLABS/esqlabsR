@@ -1183,7 +1183,22 @@ validationSummary <- function(validationResults) {
           )
         )
       }
-      if (is.null(m$outputPathId) || is.na(m$outputPathId)) {
+      # `observedData` is as required on a mapping as `outputPath`, and the load
+      # path is lenient about both (`.parsePIOutputMappings()`), so both absences
+      # are reported here rather than only the one.
+      if (.isMissingField(m$observedDataId)) {
+        result$addCriticalError(
+          "Invalid Reference",
+          paste0(
+            "PI task '",
+            taskId,
+            "', outputMapping '",
+            m$id,
+            "' does not define an observedData"
+          )
+        )
+      }
+      if (.isMissingField(m$outputPathId)) {
         result$addCriticalError(
           "Invalid Reference",
           paste0(

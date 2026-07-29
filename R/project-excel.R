@@ -2568,10 +2568,9 @@ projectStatus <- function(project, silent = FALSE) {
 # so such a workbook restores instead of failing on every mapping.
 #
 # A blank cell in a column that IS present is a different thing, an authoring gap
-# in the newer layout, and is left alone here: the mapping keeps no `outputPath`,
-# and `PIOutputMapping()` then aborts on it when the imported project is built.
-# So the two cases are told apart by the column, not the cell, and only the
-# column-less one is recovered.
+# in the newer layout rather than an older schema, so it is left alone: the mapping
+# keeps no `outputPath` and `validateProject()` reports it. The two cases are told
+# apart by the column, not the cell, and only the column-less one is recovered.
 #
 # @keywords internal
 # @noRd
@@ -2605,19 +2604,20 @@ projectStatus <- function(project, silent = FALSE) {
 # lack, by taking each row's outputs from the scenarios it names.
 #
 # One row becomes one row per output path its scenarios declare, carrying the
-# scenarios that declare that path and every other cell of the original row. A
-# row is dropped when it names no scenario, when none of its scenarios is
-# defined, or when those scenarios declare no output path: there is then nothing
-# to identify the output with, and a mapping with no output is rejected when the
-# task is built. Every drop is named in one warning per task, since it costs the
-# task a mapping.
+# scenarios that declare that path and every other cell of the original row. A row
+# that names no scenario, or whose scenarios declare no output path, still yields
+# one row, with no path: nothing here can identify its output, and the mapping is
+# better kept for `validateProject()` to report than dropped from a task the user
+# may be able to complete. Those rows are named in one warning per task, which can
+# say which cell to fill and where, as validation cannot.
 #
 # @param rows One task's rows of the sheet.
 # @param task The task id, for the warning.
 # @param scenarios The parsed `scenarios` section (an unnamed list of records
 #   carrying `name` and `outputPaths`), or NULL when the project has none.
 # @returns A data frame with the same columns plus `OutputPath`, one row per
-#   (row, output path) pair. Zero rows when nothing could be derived.
+#   (row, output path) pair, plus one `NA`-path row per input row no path could be
+#   derived for.
 # @keywords internal
 # @noRd
 .pi5xDerivedMappingRows <- function(rows, task, scenarios) {
@@ -2640,22 +2640,11 @@ projectStatus <- function(project, silent = FALSE) {
   }
 
   derived <- list()
-  # The row's own scenario cell and why the row was dropped, in parallel: the cell
-  # is what the user has to look at to fix it, and the reason differs per row.
+  # The scenario cells of the rows no path could be derived for: that cell is what
+  # the user has to look at to fix it.
   unresolved <- character()
-  reasons <- character()
   for (i in seq_len(nrow(rows))) {
     named <- .parseCommaListToArray(rows[i, ][["Scenarios"]])
-    cell <- if (length(named) == 0L) "" else paste(named, collapse = ", ")
-    # `observedData` is as required as `outputPath` on a built mapping, and the
-    # derivation supplies only the path, so a row with no data set has to be
-    # dropped here too. Checking just the column that errored loudly would have
-    # traded one hard failure for a slightly later one.
-    if (.isBlankCell(rows[i, ][["DataSet"]])) {
-      unresolved <- c(unresolved, cell)
-      reasons <- c(reasons, "no data set named")
-      next
-    }
     # Which of this row's scenarios declare each output path, so a path shared by
     # two of them becomes one mapping naming both rather than two mappings.
     byPath <- list()
@@ -2665,9 +2654,15 @@ projectStatus <- function(project, silent = FALSE) {
       }
     }
     if (length(byPath) == 0L) {
-      unresolved <- c(unresolved, cell)
-      reasons <- c(reasons, "no output path could be determined")
-      next
+      # Reported but kept, as `NA`: the mapping loads without an output path and
+      # `validateProject()` names it, rather than the row disappearing from a task
+      # the user may well be able to complete. The warning is here all the same,
+      # because it can say what to fill in and where, which validation cannot.
+      unresolved <- c(
+        unresolved,
+        if (length(named) == 0L) "" else paste(named, collapse = ", ")
+      )
+      byPath <- stats::setNames(list(named), NA_character_)
     }
     for (path in names(byPath)) {
       row <- rows[i, , drop = FALSE]
@@ -2679,8 +2674,8 @@ projectStatus <- function(project, silent = FALSE) {
 
   if (length(unresolved) > 0L) {
     .warnFormatted(
-      messages$importSkippedPIOutputMappings(task, unresolved, reasons),
-      "esqlabsR_importSkippedPIOutputMappings"
+      messages$importIncompletePIOutputMappings(task, unresolved),
+      "esqlabsR_importIncompletePIOutputMappings"
     )
   }
   if (length(derived) == 0L) {

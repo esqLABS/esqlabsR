@@ -237,13 +237,51 @@ PIOutputMapping <- function(
     }
   }
 
-  # The user-facing args and on-disk JSON keys are suffixless (`outputPath` /
-  # `observedData`), while the in-memory record keeps its id-suffixed field
-  # names (`outputPathId` / `observedDataId`), which the runtime build,
-  # validation, and serializer all read. This constructor is the mapping seam:
-  # the new arg feeds the kept record field. The parser (`.parsePIOutputMappings`)
-  # reads the new JSON key into the new arg; the serializer
-  # (`.piOutputMappingToJson`) mirrors it back to the new key.
+  .piOutputMappingRecord(
+    id = id,
+    scenarios = scenarios,
+    outputPath = outputPath,
+    observedData = observedData,
+    scaling = scaling,
+    xOffset = xOffset,
+    yOffset = yOffset,
+    xFactor = xFactor,
+    yFactor = yFactor,
+    weight = weight
+  )
+}
+
+# Assemble a `PIOutputMapping` record, without the guards above.
+#
+# The user-facing args and on-disk JSON keys are suffixless (`outputPath` /
+# `observedData`), while the in-memory record keeps its id-suffixed field names
+# (`outputPathId` / `observedDataId`), which the runtime build, validation, and
+# serializer all read. This is the mapping seam: the arg feeds the kept record
+# field. The parser (`.parsePIOutputMappings`) reads the JSON key into the arg;
+# the serializer (`.piOutputMappingToJson`) mirrors it back to the key.
+#
+# Split out from `PIOutputMapping()` so authoring and loading can differ in
+# strictness while producing one record shape: authoring a mapping with no output
+# or no observed data is a mistake to reject at the call, whereas a project file
+# (or a legacy workbook) carrying one has to load so `validateProject()` can
+# report it, which is the same parse-leniently-then-validate contract the
+# `dataCombined` section keeps. `runPI()` gates on that validation, so an
+# incomplete mapping never reaches the build.
+#
+# @keywords internal
+# @noRd
+.piOutputMappingRecord <- function(
+  id,
+  scenarios,
+  outputPath,
+  observedData,
+  scaling = NULL,
+  xOffset = 0,
+  yOffset = 0,
+  xFactor = 1,
+  yFactor = 1,
+  weight = NULL
+) {
   rec <- list(
     id = id,
     scenarios = as.character(scenarios),
@@ -505,11 +543,17 @@ print.PITask <- function(x, ...) {
   for (i in seq_along(rawList)) {
     raw <- rawList[[i]]
     id <- raw$id %||% paste0(taskId, "_mapping_", i)
-    out[[i]] <- PIOutputMapping(
+    # Built without `PIOutputMapping()`'s required-field guards, so a mapping
+    # that names no output or no observed data loads and is reported by
+    # `validateProject()` (which `runPI()` gates on) instead of aborting the load
+    # of the whole project. A hand-maintained legacy workbook routinely leaves one
+    # such cell blank, and a project that cannot be opened cannot be fixed. The
+    # guards still apply to authoring a mapping through the constructor.
+    out[[i]] <- .piOutputMappingRecord(
       id = id,
       scenarios = as.character(unlist(raw$scenarios %||% list())),
       # Read the suffixless on-disk JSON keys (`outputPath` / `observedData`);
-      # the constructor maps them to the kept record fields.
+      # the record keeps them under their id-suffixed field names.
       outputPath = raw[["outputPath"]],
       observedData = raw[["observedData"]],
       scaling = raw$scaling,

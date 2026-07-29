@@ -2461,13 +2461,26 @@ test_that("a PIOutputMappings sheet with no OutputPath column imports", {
     logical(1)
   )))
 
-  # The whole point: the project the import produced is loadable and reports no
-  # critical error about a mapping with no output path.
+  # The whole point: the project the import produced is loadable, and the task
+  # whose scenario declares output paths has no complaint against it.
   results <- suppressWarnings(validateProject(project))
   errors <- unlist(lapply(results, function(section) {
     vapply(section$critical_errors %||% list(), \(e) e$message, character(1))
-  }))
-  expect_false(any(grepl("outputPath", errors %||% character())))
+  })) %||%
+    character()
+  expect_false(any(grepl("aciclovirsimple'.*outputPath", errors)))
+
+  # The fixture's other task runs against scenarios that declare no output path,
+  # so its mappings cannot be derived. They load anyway and validation names them,
+  # rather than vanishing from the task.
+  other <- .unwrapDefinitionList(project$definitions$parameterIdentification)[[
+    "aciclovirmultiscenario"
+  ]]
+  expect_length(other$outputMappings, 2L)
+  expect_true(any(grepl(
+    "aciclovirmultiscenario'.*does not define an outputPath",
+    errors
+  )))
 })
 
 # The reported case: a fresh, never-edited import came back invalid with one

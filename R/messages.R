@@ -299,33 +299,30 @@ messages$importSkippedOutOfProjectDataFile <- function() {
   )
 }
 
-messages$importSkippedPIOutputMappings <- function(taskId, scenarios, reasons) {
+messages$importIncompletePIOutputMappings <- function(taskId, scenarios) {
   # Unglued, like the two below: a task id and a scenario name are both free text.
   envir <- new.env(parent = parent.frame())
   assign("taskId", taskId, envir = envir)
   assign("scenarios", scenarios, envir = envir)
-  assign("reasons", reasons, envir = envir)
   assign("n", length(scenarios), envir = envir)
   list(
     bullets = c(
-      "!" = "{cli::qty(n)}Skipped {n} output {?mapping/mappings} of \\
-      parameter-identification task {.val {taskId}}: {?it could/they could} not \\
-      be completed.",
-      # The reason belongs on the row, not in the headline: one sheet can hold
-      # both an unresolvable output and a missing data set.
+      "!" = "{cli::qty(n)}{n} output {?mapping/mappings} of \\
+      parameter-identification task {.val {taskId}} {?has/have} no output path.",
       stats::setNames(
         sprintf(
-          "Scenarios cell {.val {scenarios[[%1$d]]}}: {reasons[[%1$d]]}.",
+          "Scenarios cell {.val {scenarios[[%1$d]]}}.",
           seq_along(scenarios)
         ),
         rep("x", length(scenarios))
       ),
       "i" = "This {.field PIOutputMappings} sheet has no {.field OutputPath} \\
       column, so each mapping takes its outputs from the {.field OutputPathsIds} \\
-      of the scenarios it names, and its observed data from {.field DataSet}. \\
-      Fill those in, or add an {.field OutputPath} column, then import again.",
-      "i" = "The task keeps its other mappings; add the missing ones with \\
-      {.fn addPIOutputMapping}."
+      of the scenarios it names. Give those scenarios an output path, or add an \\
+      {.field OutputPath} column, then import again.",
+      "i" = "The mappings are kept as they were authored, so {.fn validateProject} \\
+      reports each one until then; {.fn addPIOutputMapping} with \\
+      {.code overwrite = TRUE} completes one in place."
     ),
     envir = envir
   )

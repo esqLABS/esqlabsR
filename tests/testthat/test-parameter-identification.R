@@ -3064,7 +3064,7 @@ test_that(".parseExcelPI5xMappings derives a missing OutputPath column", {
   expect_identical(mappings[[1]]$scaling, "log")
 })
 
-test_that(".parseExcelPI5xMappings warns when no output path can be derived", {
+test_that(".parseExcelPI5xMappings keeps and reports an underivable path", {
   noColumn <- data.frame(
     PITaskName = "t1",
     Scenarios = "s1",
@@ -3072,18 +3072,24 @@ test_that(".parseExcelPI5xMappings warns when no output path can be derived", {
     stringsAsFactors = FALSE
   )
 
-  # A scenario that declares no output path, an undefined scenario, and no
-  # scenarios section at all all leave the mapping unidentifiable.
+  # A scenario that declares no output path, and no scenarios section at all,
+  # both leave the mapping unidentifiable. The mapping is kept without a path
+  # (validation reports it) rather than dropped from the task.
   expect_warning(
-    expect_length(
-      .parseExcelPI5xMappings(noColumn, "t1", list(list(name = "s1"))),
-      0L
+    mappings <- .parseExcelPI5xMappings(
+      noColumn,
+      "t1",
+      list(list(name = "s1"))
     ),
-    class = "esqlabsR_importSkippedPIOutputMappings"
+    class = "esqlabsR_importIncompletePIOutputMappings"
   )
+  expect_length(mappings, 1L)
+  expect_null(mappings[[1]]$outputPath)
+  expect_identical(mappings[[1]]$observedData, "d1")
+
   expect_warning(
-    expect_length(.parseExcelPI5xMappings(noColumn, "t1", NULL), 0L),
-    class = "esqlabsR_importSkippedPIOutputMappings"
+    expect_length(.parseExcelPI5xMappings(noColumn, "t1", NULL), 1L),
+    class = "esqlabsR_importIncompletePIOutputMappings"
   )
 })
 
@@ -3106,10 +3112,10 @@ test_that(".parseExcelPI5xMappings matches a scenario on its canonical id", {
   expect_identical(mappings[[1]]$outputPath, "pvb")
 })
 
-# `observedData` is as required as `outputPath` on a built mapping, and the
-# derivation supplies only the path, so a row with no DataSet would have been
-# handed on to abort a moment later.
-test_that(".parseExcelPI5xMappings skips a derived row with no DataSet", {
+# `observedData` is as required as `outputPath` on a built mapping, so a row with
+# no DataSet is incomplete too. It is kept and reported, not dropped: the load
+# path is lenient about both fields and validation names them.
+test_that(".parseExcelPI5xMappings keeps a derived row with no DataSet", {
   noColumn <- data.frame(
     PITaskName = "t1",
     Scenarios = c("s1", "s1"),
@@ -3118,11 +3124,30 @@ test_that(".parseExcelPI5xMappings skips a derived row with no DataSet", {
   )
   scenarios <- list(list(name = "s1", outputPaths = list("pvb")))
 
-  expect_warning(
-    mappings <- .parseExcelPI5xMappings(noColumn, "t1", scenarios),
-    "no data set named"
+  mappings <- .parseExcelPI5xMappings(noColumn, "t1", scenarios)
+
+  expect_length(mappings, 2L)
+  expect_null(mappings[[1]]$observedData)
+  expect_identical(mappings[[1]]$outputPath, "pvb")
+  expect_identical(mappings[[2]]$observedData, "d1")
+})
+
+# The load path is deliberately more tolerant than the constructor: a project
+# file carrying an incomplete mapping has to open so validateProject() can report
+# it, while authoring one through PIOutputMapping() is still rejected at the call.
+test_that(".parsePIOutputMappings loads a mapping the constructor would reject", {
+  mappings <- .parsePIOutputMappings(
+    list(list(id = "m1", scenarios = list("s1"), observedData = "d1")),
+    "t1"
   )
-  # Only the complete row survives, and it is complete enough to build.
+
   expect_length(mappings, 1L)
-  expect_identical(mappings[[1]]$observedData, "d1")
+  expect_s3_class(mappings[[1]], "PIOutputMapping")
+  expect_null(mappings[[1]]$outputPathId)
+  expect_identical(mappings[[1]]$observedDataId, "d1")
+
+  expect_snapshot(
+    error = TRUE,
+    PIOutputMapping(id = "m1", scenarios = "s1", observedData = "d1")
+  )
 })
