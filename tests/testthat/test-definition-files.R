@@ -629,7 +629,7 @@ test_that("a programmatic observedData name that escapes its directory aborts", 
   )
 
   expect_snapshot(
-    esqlabsR:::.serializeObservedDataSet(entries),
+    .serializeObservedDataSet(entries),
     error = TRUE
   )
 })
@@ -660,7 +660,7 @@ test_that("a full-tree write removes a stale definition file", {
   writeLines("{}", orphan)
   expect_true(file.exists(orphan))
 
-  esqlabsR:::.writeDefinitionTree(
+  .writeDefinitionTree(
     project$definitions$scenarios,
     "scenarios",
     project,
@@ -717,7 +717,7 @@ test_that("a full-tree write aborts when a stale file cannot be removed", {
 
   expect_snapshot(
     error = TRUE,
-    esqlabsR:::.writeDefinitionTree(
+    .writeDefinitionTree(
       project$definitions$scenarios,
       "scenarios",
       project,

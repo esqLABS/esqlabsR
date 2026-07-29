@@ -51,9 +51,9 @@
 # .abortValidationErrors escapes glue metacharacters in messages
 
     Code
-      esqlabsR:::.abortValidationErrors(results, "runScenarios")
+      .abortValidationErrors(results, "runScenarios")
     Condition
-      Error in `esqlabsR:::.abortValidationErrors()`:
+      Error in `.abortValidationErrors()`:
       ! Cannot runScenarios: project has 2 critical validation errors.
       x [scenarios] Scenario "Dose {mg}" is broken
       x [scenarios] Scenario S{1} also broken

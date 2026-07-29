@@ -356,11 +356,11 @@ test_that("Project parses parameterIdentification field from JSON", {
 })
 
 test_that(".parsePITasks(NULL) returns an empty list", {
-  expect_identical(esqlabsR:::.parsePITasks(NULL), list())
+  expect_identical(.parsePITasks(NULL), list())
 })
 
 test_that(".parsePITasks(list()) returns an empty list", {
-  expect_identical(esqlabsR:::.parsePITasks(list()), list())
+  expect_identical(.parsePITasks(list()), list())
 })
 
 test_that(".parsePITasks() builds PITask records keyed by id", {
@@ -390,7 +390,7 @@ test_that(".parsePITasks() builds PITask records keyed by id", {
       configuration = list(algorithm = "Monte-Carlo")
     )
   )
-  parsed <- esqlabsR:::.parsePITasks(raw)
+  parsed <- .parsePITasks(raw)
   expect_named(parsed, "aciclovirsimple")
   expect_s3_class(parsed[["aciclovirsimple"]], "PITask")
   expect_s3_class(parsed[["aciclovirsimple"]]$parameters[[1]], "PIParameter")
@@ -434,7 +434,7 @@ test_that(".parsePITasks() auto-generates parameter and outputMapping ids when a
       )
     )
   )
-  parsed <- esqlabsR:::.parsePITasks(raw)
+  parsed <- .parsePITasks(raw)
   paramIds <- vapply(parsed[["T1"]]$parameters, `[[`, character(1), "id")
   expect_identical(paramIds, c("T1_param_1", "T1_param_2"))
 
@@ -465,7 +465,7 @@ test_that(".parsePITasks() preserves length-1 vector fields as length-1", {
       )
     )
   )
-  parsed <- esqlabsR:::.parsePITasks(raw)
+  parsed <- .parsePITasks(raw)
   expect_length(parsed[["T1"]]$scenarios, 1L)
   expect_length(parsed[["T1"]]$parameters[[1]]$scenarios, 1L)
 })
@@ -493,7 +493,7 @@ test_that(".parsePITasks() injects defaults for outputMapping offset/factor fiel
       )
     )
   )
-  parsed <- esqlabsR:::.parsePITasks(raw)
+  parsed <- .parsePITasks(raw)
   m <- parsed[["T1"]]$outputMappings[[1]]
   expect_identical(m$xOffset, 0)
   expect_identical(m$yOffset, 0)
@@ -503,7 +503,7 @@ test_that(".parsePITasks() injects defaults for outputMapping offset/factor fiel
 
 test_that(".parameterIdentificationToJson() emits NULL for empty input", {
   proj <- .fakeProject(parameterIdentification = list())
-  expect_null(esqlabsR:::.parameterIdentificationToJson(proj))
+  expect_null(.parameterIdentificationToJson(proj))
 })
 
 test_that(".parsePITasks |> .parameterIdentificationToJson |> .parsePITasks is identity", {
@@ -538,10 +538,10 @@ test_that(".parsePITasks |> .parameterIdentificationToJson |> .parsePITasks is i
       configuration = list(algorithm = "Monte-Carlo")
     )
   )
-  parsed <- esqlabsR:::.parsePITasks(raw)
+  parsed <- .parsePITasks(raw)
   proj <- .fakeProject(parameterIdentification = parsed)
-  serialized <- esqlabsR:::.parameterIdentificationToJson(proj)
-  reparsed <- esqlabsR:::.parsePITasks(serialized)
+  serialized <- .parameterIdentificationToJson(proj)
+  reparsed <- .parsePITasks(serialized)
   expect_identical(reparsed, parsed)
 })
 
@@ -568,7 +568,7 @@ test_that(".validatePI returns no errors on a well-formed task", {
       )
     )
   )
-  result <- esqlabsR:::.validatePI(list(T1 = task))
+  result <- .validatePI(list(T1 = task))
   expect_false(result$hasCriticalErrors())
 })
 
@@ -603,12 +603,12 @@ test_that(".validatePI surfaces duplicate parameter ids within a task", {
       )
     )
   )
-  result <- esqlabsR:::.validatePI(list(t = task))
+  result <- .validatePI(list(t = task))
   expect_true(result$hasCriticalErrors())
 })
 
 test_that(".validatePI is empty-section-friendly", {
-  result <- esqlabsR:::.validatePI(list())
+  result <- .validatePI(list())
   expect_false(result$hasCriticalErrors())
 })
 
@@ -621,7 +621,7 @@ test_that(".validatePI flags a task left with no parameters or output mappings",
     parameters = list(),
     outputMappings = list()
   )
-  result <- esqlabsR:::.validatePI(list(t = task))
+  result <- .validatePI(list(t = task))
   expect_true(result$hasCriticalErrors())
 })
 
@@ -711,7 +711,7 @@ test_that(".createSinglePITask builds a ParameterIdentification with the expecte
 
   observedData <- loadObservedData(project)
 
-  pi <- esqlabsR:::.createSinglePITask(
+  pi <- .createSinglePITask(
     project = project,
     piTask = task,
     observedData = observedData
@@ -752,7 +752,7 @@ test_that(".createSinglePITask shares one optimisation variable across scenarios
     configuration = list(algorithm = "BOBYQA")
   )
 
-  pi <- esqlabsR:::.createSinglePITask(
+  pi <- .createSinglePITask(
     project = project,
     piTask = task,
     observedData = loadObservedData(project)
@@ -802,7 +802,7 @@ test_that(".createSinglePITask keeps the same path independent across scenarios 
     configuration = list(algorithm = "BOBYQA")
   )
 
-  pi <- esqlabsR:::.createSinglePITask(
+  pi <- .createSinglePITask(
     project = project,
     piTask = task,
     observedData = loadObservedData(project)
@@ -841,7 +841,7 @@ test_that(".createSinglePITask errors when observedData is not in observedData",
   )
 
   expect_error(
-    esqlabsR:::.createSinglePITask(
+    .createSinglePITask(
       project = project,
       piTask = task,
       observedData = loadObservedData(project)
@@ -877,7 +877,7 @@ test_that(".createSinglePITask errors when a parameter path is not in the simula
   )
 
   expect_error(
-    esqlabsR:::.createSinglePITask(
+    .createSinglePITask(
       project = project,
       piTask = task,
       observedData = loadObservedData(project)
@@ -916,14 +916,14 @@ test_that(".createSinglePITask applies objectiveFunctionOptions from the configu
   }
 
   # Empty configuration: runtime defaults are preserved.
-  pi <- esqlabsR:::.createSinglePITask(project, mkTask(list()), observedData)
+  pi <- .createSinglePITask(project, mkTask(list()), observedData)
   ofo <- pi$configuration$objectiveFunctionOptions
   expect_equal(ofo$objectiveFunctionType, "lsq")
   expect_equal(ofo$residualWeightingMethod, "none")
   expect_equal(ofo$robustMethod, "none")
 
   # String fields land.
-  pi <- esqlabsR:::.createSinglePITask(
+  pi <- .createSinglePITask(
     project,
     mkTask(list(
       objectiveFunction = list(
@@ -939,7 +939,7 @@ test_that(".createSinglePITask applies objectiveFunctionOptions from the configu
   expect_equal(ofo$robustMethod, "none")
 
   # Numeric fields land.
-  pi <- esqlabsR:::.createSinglePITask(
+  pi <- .createSinglePITask(
     project,
     mkTask(list(objectiveFunction = list(linScaleCV = 0.3, logScaleSD = 0.1))),
     observedData
@@ -979,11 +979,11 @@ test_that(".createSinglePITask applies simulationRunOptions from the configurati
   }
 
   # No block: simulationRunOptions stays NULL.
-  pi <- esqlabsR:::.createSinglePITask(project, mkTask(list()), observedData)
+  pi <- .createSinglePITask(project, mkTask(list()), observedData)
   expect_null(pi$configuration$simulationRunOptions)
 
   # numberOfCores only.
-  pi <- esqlabsR:::.createSinglePITask(
+  pi <- .createSinglePITask(
     project,
     mkTask(list(simulationRunOptions = list(numberOfCores = 2))),
     observedData
@@ -993,7 +993,7 @@ test_that(".createSinglePITask applies simulationRunOptions from the configurati
   expect_equal(opts$numberOfCores, 2L)
 
   # checkForNegativeValues only.
-  pi <- esqlabsR:::.createSinglePITask(
+  pi <- .createSinglePITask(
     project,
     mkTask(list(simulationRunOptions = list(checkForNegativeValues = FALSE))),
     observedData
@@ -1001,7 +1001,7 @@ test_that(".createSinglePITask applies simulationRunOptions from the configurati
   expect_false(pi$configuration$simulationRunOptions$checkForNegativeValues)
 
   # Both set.
-  pi <- esqlabsR:::.createSinglePITask(
+  pi <- .createSinglePITask(
     project,
     mkTask(list(
       simulationRunOptions = list(
@@ -1042,7 +1042,7 @@ test_that(".createSinglePITask overwrites scenario output paths with the PI-spec
     configuration = list(algorithm = "BOBYQA")
   )
 
-  pi <- esqlabsR:::.createSinglePITask(
+  pi <- .createSinglePITask(
     project = project,
     piTask = task,
     observedData = loadObservedData(project)
@@ -1087,7 +1087,7 @@ test_that(".createSinglePITask applies a scalar weight to the runtime dataWeight
     configuration = list(algorithm = "BOBYQA")
   )
 
-  pi <- esqlabsR:::.createSinglePITask(
+  pi <- .createSinglePITask(
     project = project,
     piTask = task,
     observedData = loadObservedData(project)
@@ -1127,7 +1127,7 @@ test_that(".createSinglePITask applies xOffset/yOffset/xFactor/yFactor to the ru
     configuration = list(algorithm = "BOBYQA")
   )
 
-  pi <- esqlabsR:::.createSinglePITask(
+  pi <- .createSinglePITask(
     project = project,
     piTask = task,
     observedData = loadObservedData(project)
@@ -1215,7 +1215,7 @@ test_that(".warnUnquantifiedUncertainty fires once per NA-uncertainty parameter"
     }
   )
   expect_snapshot(
-    esqlabsR:::.warnUnquantifiedUncertainty("myTask", fakeResult)
+    .warnUnquantifiedUncertainty("myTask", fakeResult)
   )
 })
 
@@ -1233,7 +1233,7 @@ test_that(".warnUnquantifiedUncertainty is silent when uncertainty is quantified
       )
     }
   )
-  expect_no_warning(esqlabsR:::.warnUnquantifiedUncertainty(
+  expect_no_warning(.warnUnquantifiedUncertainty(
     "myTask",
     fakeResult
   ))
@@ -1261,7 +1261,7 @@ test_that(".warnUnquantifiedUncertainty tolerates short or absent uncertainty ve
 
   warnings <- character()
   withCallingHandlers(
-    esqlabsR:::.warnUnquantifiedUncertainty("myTask", fakeResult),
+    .warnUnquantifiedUncertainty("myTask", fakeResult),
     warning = function(cnd) {
       warnings <<- c(warnings, conditionMessage(cnd))
       invokeRestart("muffleWarning")
@@ -2112,7 +2112,7 @@ test_that("Project save / load round-trip preserves the parameterIdentification 
   tmp <- withr::local_tempfile(fileext = ".json")
   source <- test_path("data", "TestProject", "Project.json")
   project <- loadProject(source)
-  esqlabsR:::.saveProjectJson(project, tmp)
+  .saveProjectJson(project, tmp)
   project2 <- loadProject(tmp)
   expect_identical(
     project2$definitions$parameterIdentification,
@@ -2151,7 +2151,7 @@ test_that(".createSinglePITask builds when declared bounds do not bracket the mo
     ),
     configuration = list(algorithm = "BOBYQA")
   )
-  pi <- esqlabsR:::.createSinglePITask(
+  pi <- .createSinglePITask(
     project = project,
     piTask = task,
     observedData = loadObservedData(project)
@@ -2190,7 +2190,7 @@ test_that(".createSinglePITask applies the declared PIParameter units to the run
     ),
     configuration = list(algorithm = "BOBYQA")
   )
-  pi <- esqlabsR:::.createSinglePITask(
+  pi <- .createSinglePITask(
     project = project,
     piTask = task,
     observedData = loadObservedData(project)
@@ -2230,7 +2230,7 @@ test_that(".createSinglePITask leaves the model default unit for an unitless PIP
     ),
     configuration = list(algorithm = "BOBYQA")
   )
-  pi <- esqlabsR:::.createSinglePITask(
+  pi <- .createSinglePITask(
     project = project,
     piTask = task,
     observedData = loadObservedData(project)
@@ -2277,7 +2277,7 @@ test_that("PIOutputMapping weight survives a Project save / load round trip", {
   )
 
   tmp <- withr::local_tempfile(fileext = ".json")
-  esqlabsR:::.saveProjectJson(project, tmp)
+  .saveProjectJson(project, tmp)
   reloaded <- loadProject(tmp)
   mappings <- reloaded$definitions$parameterIdentification[[
     "wt"
@@ -2503,7 +2503,7 @@ test_that(".validatePI surfaces duplicate output mapping ids within a task", {
       )
     )
   )
-  result <- esqlabsR:::.validatePI(list(T1 = task))
+  result <- .validatePI(list(T1 = task))
   expect_false(result$isValid())
   expect_match(
     paste(result$critical_errors, collapse = " "),
@@ -2584,7 +2584,7 @@ test_that(".buildPIConfiguration() maps type to objectiveFunctionType and builds
       checkForNegativeValues = FALSE
     )
   )
-  piConfig <- esqlabsR:::.buildPIConfiguration(cfg)
+  piConfig <- .buildPIConfiguration(cfg)
   expect_identical(piConfig$algorithm, "BOBYQA")
   expect_identical(
     piConfig$objectiveFunctionOptions$objectiveFunctionType,
@@ -2603,7 +2603,7 @@ test_that(".buildPIConfiguration() merges partial algorithmOptions and ciOptions
     ciMethod = "PL",
     ciOptions = list(confLevel = 0.9)
   )
-  piConfig <- esqlabsR:::.buildPIConfiguration(cfg)
+  piConfig <- .buildPIConfiguration(cfg)
   # User-supplied value overrides the default.
   expect_identical(piConfig$algorithmOptions$maxeval, 500L)
   # Remaining BOBYQA defaults are still filled in.
@@ -2623,7 +2623,7 @@ test_that(".buildPIConfiguration() merges partial algorithmOptions and ciOptions
 test_that(".buildPIConfiguration() fills all algorithm defaults when algorithmOptions is absent", {
   skip_if_not_installed("ospsuite.parameteridentification")
   cfg <- list(algorithm = "HJKB")
-  piConfig <- esqlabsR:::.buildPIConfiguration(cfg)
+  piConfig <- .buildPIConfiguration(cfg)
   expect_equal(
     piConfig$algorithmOptions,
     ospsuite.parameteridentification::AlgorithmDefaults$HJKB
@@ -2658,7 +2658,7 @@ test_that(".createSinglePITask honours non-default transforms and weights", {
       )
     )
   )
-  pi <- esqlabsR:::.createSinglePITask(
+  pi <- .createSinglePITask(
     project = project,
     piTask = task,
     observedData = loadObservedData(project)

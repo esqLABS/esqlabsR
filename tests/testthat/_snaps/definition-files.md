@@ -142,9 +142,9 @@
 # a programmatic observedData name that escapes its directory aborts
 
     Code
-      esqlabsR:::.serializeObservedDataSet(entries)
+      .serializeObservedDataSet(entries)
     Condition
-      Error in `esqlabsR:::.serializeObservedDataSet()`:
+      Error in `.serializeObservedDataSet()`:
       ! observedData id "../escape" is not a single safe filename segment.
       x It must not contain a path separator or be "." / "..", so it cannot escape the observed-data definition directory.
       i Give the declaration an id that is a single safe filename segment, or rename what it derives one from: a file basename, or a programmatic name.
@@ -152,11 +152,11 @@
 # a full-tree write aborts when a stale file cannot be removed
 
     Code
-      esqlabsR:::.writeDefinitionTree(project$definitions$scenarios, "scenarios",
-      project, project$info$projectDirPath)
+      .writeDefinitionTree(project$definitions$scenarios, "scenarios", project,
+      project$info$projectDirPath)
     Condition
       Warning in `file.remove()`:
       cannot remove file '<project>/definitions/scenarios/orphandefinition.json', reason 'Permission denied'
-      Error in `esqlabsR:::.writeDefinitionTree()`:
+      Error in `.writeDefinitionTree()`:
       ! Failed to delete 1 outdated definition file from the 'definitions' folder. x '<project>/definitions/scenarios/orphandefinition.json' i A file that cannot be deleted comes back as a definition the next time you `loadProject()`; check the file permissions and delete it manually.
 

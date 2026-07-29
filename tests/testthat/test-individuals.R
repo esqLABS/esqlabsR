@@ -7,7 +7,7 @@ test_that(".parseIndividuals passes through unknown fields", {
       futureField = "kept"
     )
   )
-  result <- esqlabsR:::.parseIndividuals(raw)
+  result <- .parseIndividuals(raw)
 
   expect_identical(result[["I1"]]$species, "Human")
   expect_identical(result[["I1"]]$weight, 70)
@@ -23,10 +23,10 @@ test_that("an individual carrying an unknown field round-trips through serializa
       futureField = "kept"
     )
   )
-  individuals <- esqlabsR:::.parseIndividuals(raw)
+  individuals <- .parseIndividuals(raw)
   project <- .fakeProject(individuals = individuals)
 
-  out <- esqlabsR:::.individualsToJson(project)[[1L]]
+  out <- .individualsToJson(project)[[1L]]
   expect_identical(out$individualId, "I1")
   expect_identical(out$futureField, "kept")
   # individualId leads; the remaining fields pass through in record order.
@@ -87,7 +87,7 @@ test_that(".parseIndividuals defaults an absent gender to UNKNOWN", {
   # JSON is the primary authoring path: an individual hand-authored in
   # definitions/individuals/*.json without a gender key must get the same
   # UNKNOWN default the authoring API and the Excel importer apply.
-  parsed <- esqlabsR:::.parseIndividuals(list(
+  parsed <- .parseIndividuals(list(
     list(individualId = "beagle", species = "Dog", weight = 10),
     list(individualId = "adult", species = "Human", gender = "FEMALE")
   ))

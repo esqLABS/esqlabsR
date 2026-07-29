@@ -550,8 +550,8 @@ test_that("snapshot then restore is a fixed point over the three plots folders",
   )))
   # The inlined plots JSON (all three top-level sections) is a fixed point
   # across the round-trip.
-  reloadedJson <- esqlabsR:::.projectToJson(reloaded)
-  sourceJson <- esqlabsR:::.projectToJson(source)
+  reloadedJson <- .projectToJson(reloaded)
+  sourceJson <- .projectToJson(source)
   expect_identical(reloadedJson$dataCombined, sourceJson$dataCombined)
   expect_identical(reloadedJson$plots, sourceJson$plots)
   expect_identical(reloadedJson$plotGrids, sourceJson$plotGrids)
@@ -567,7 +567,7 @@ test_that("a plots entry whose stored id differs from its map key aborts", {
   entries <- list(p1 = list(plotId = "p2"))
 
   expect_snapshot(
-    esqlabsR:::.serializePlotEntrySet(entries, "plotId", "plot"),
+    .serializePlotEntrySet(entries, "plotId", "plot"),
     error = TRUE
   )
 })
@@ -576,7 +576,7 @@ test_that("a PI task whose $id differs from its map key aborts", {
   tasks <- list(task1 = list(id = "task2"))
 
   expect_snapshot(
-    esqlabsR:::.serializePITaskSet(tasks),
+    .serializePITaskSet(tasks),
     error = TRUE
   )
 })

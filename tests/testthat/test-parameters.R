@@ -983,7 +983,7 @@ test_that("print.InitialConditionSet renders a unit-less entry", {
   # A hand-edited definition file can carry a record with no unit; the print method
   # must still render it (blank-unit branch). Build the set directly since the
   # authoring API requires a unit.
-  set <- esqlabsR:::.asInitialConditionSet(list(
+  set <- .asInitialConditionSet(list(
     list(path = "Organism|A", value = 1.5, unit = NULL)
   ))
   withr::local_options(cli.unicode = FALSE)
@@ -1233,7 +1233,7 @@ test_that("setParameterValuesByPathWithCondition aborts on a units length mismat
 # .splitParameterPathIntoContainerAndName ----
 
 test_that(".splitParameterPathIntoContainerAndName splits a multi-segment path", {
-  split <- esqlabsR:::.splitParameterPathIntoContainerAndName(
+  split <- .splitParameterPathIntoContainerAndName(
     "Organism|Liver|Volume"
   )
   expect_identical(split$containerPath, "Organism|Liver")
@@ -1243,6 +1243,6 @@ test_that(".splitParameterPathIntoContainerAndName splits a multi-segment path",
 test_that(".splitParameterPathIntoContainerAndName aborts on a separator-less path", {
   expect_snapshot(
     error = TRUE,
-    esqlabsR:::.splitParameterPathIntoContainerAndName("Volume")
+    .splitParameterPathIntoContainerAndName("Volume")
   )
 })

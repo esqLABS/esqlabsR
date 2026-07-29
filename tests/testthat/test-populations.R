@@ -563,7 +563,7 @@ test_that("print.Population renders a minimal population", {
 # Source-typed populations (type discriminator) ----
 
 test_that(".parsePopulations stamps a demographics spec as Population, a source entry as PopulationSource", {
-  parsed <- esqlabsR:::.parsePopulations(list(
+  parsed <- .parsePopulations(list(
     list(populationId = "spec", species = "Human", numberOfIndividuals = 10),
     list(populationId = "prog", type = "programmatic"),
     list(populationId = "fromcsv", type = "csv", file = "fromcsv.csv")
@@ -579,29 +579,29 @@ test_that(".parsePopulations stamps a demographics spec as Population, a source 
 
 test_that(".validatePopulations does not require species for a csv or programmatic entry", {
   populations <- list(
-    prog = esqlabsR:::.asPopulationSource(list(type = "programmatic")),
-    fromcsv = esqlabsR:::.asPopulationSource(list(
+    prog = .asPopulationSource(list(type = "programmatic")),
+    fromcsv = .asPopulationSource(list(
       type = "csv",
       file = "p.csv"
     ))
   )
-  result <- esqlabsR:::.validatePopulations(populations)
+  result <- .validatePopulations(populations)
   expect_length(result$critical_errors, 0)
 })
 
 test_that(".validatePopulations requires file for a csv entry", {
   populations <- list(
-    fromcsv = esqlabsR:::.asPopulationSource(list(type = "csv"))
+    fromcsv = .asPopulationSource(list(type = "csv"))
   )
-  result <- esqlabsR:::.validatePopulations(populations)
+  result <- .validatePopulations(populations)
   expect_true(any(grepl("file", unlist(result$critical_errors))))
 })
 
 test_that(".validatePopulations flags an unrecognized type", {
   populations <- list(
-    bad = esqlabsR:::.asPopulationSource(list(type = "nonsense"))
+    bad = .asPopulationSource(list(type = "nonsense"))
   )
-  result <- esqlabsR:::.validatePopulations(populations)
+  result <- .validatePopulations(populations)
   expect_true(any(grepl("invalid type", unlist(result$critical_errors))))
 })
 
@@ -710,7 +710,7 @@ test_that("saveProject serializes an orphan programmatic sentinel verbatim inste
   # restored snapshot, or a reloaded session) must not break an unrelated save.
   project <- testProject()
   populations <- .getSection(project, "populations")
-  populations[["orphan"]] <- esqlabsR:::.asPopulationSource(list(
+  populations[["orphan"]] <- .asPopulationSource(list(
     type = "programmatic"
   ))
   .setSection(project, "populations", populations)
@@ -739,7 +739,7 @@ test_that("saveProject aborts when a frozen population CSV would collide with an
   # entry already pointing at that basename makes the freeze collide.
   project <- testProject()
   populations <- .getSection(project, "populations")
-  populations[["other"]] <- esqlabsR:::.asPopulationSource(list(
+  populations[["other"]] <- .asPopulationSource(list(
     type = "csv",
     file = "injected.csv"
   ))
@@ -756,8 +756,8 @@ test_that("saveProject aborts when a frozen population CSV would collide with an
 test_that("print.PopulationSource renders a csv and a programmatic source", {
   withr::local_options(cli.unicode = FALSE)
   local_reproducible_output()
-  csv <- esqlabsR:::.asPopulationSource(list(type = "csv", file = "p.csv"))
-  prog <- esqlabsR:::.asPopulationSource(list(type = "programmatic"))
+  csv <- .asPopulationSource(list(type = "csv", file = "p.csv"))
+  prog <- .asPopulationSource(list(type = "programmatic"))
   expect_snapshot({
     print(csv)
     print(prog)

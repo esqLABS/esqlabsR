@@ -606,7 +606,7 @@ test_that("mutated project survives a snapshot -> loadProject round-trip", {
   )
 
   out <- withr::local_tempfile(fileext = ".json")
-  esqlabsR:::.saveProjectJson(project, out)
+  .saveProjectJson(project, out)
   reloaded <- loadProject(out)
 
   expect_identical(

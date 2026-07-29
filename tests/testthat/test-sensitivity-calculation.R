@@ -740,7 +740,7 @@ test_that("sensitivityCalculation converts output to wide format as expected", {
     variationRange = c(0.1, 2, 20),
     pkParameters = NULL
   )
-  pkDataWide <- esqlabsR:::.convertToWide(results2$pkData)
+  pkDataWide <- .convertToWide(results2$pkData)
 
   expect_equal(dim(pkDataWide), c(12L, 58L))
   expect_equal(colnames(pkDataWide), pkDataWideColumns)
@@ -782,7 +782,7 @@ test_that("sensitivityCalculation converts output to wide format as expected wit
     names(ospsuite::StandardPKParameter),
     names(customFunctions)
   )
-  pkDataWide <- esqlabsR:::.convertToWide(results2$pkData, pkParameterNames)
+  pkDataWide <- .convertToWide(results2$pkData, pkParameterNames)
 
   expect_equal(dim(pkDataWide), c(12L, 66L))
   expect_equal(colnames(pkDataWide), pkDataWideColumns)
