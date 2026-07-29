@@ -58,6 +58,15 @@
   parameterPath,
   customOutputFunctions = NULL
 ) {
+  # When every run for this parameter failed, the nesting step in
+  # `sensitivityCalculation()` dropped all results and `simulationResults` is an
+  # empty list. There is nothing to extract, so warn and return an empty frame
+  # with the expected columns rather than erroring downstream in `rename()`.
+  if (length(simulationResults) == 0) {
+    cli::cli_warn(messages$sensitivityAllRunsFailed(parameterPath))
+    return(.emptyPKDataFrame())
+  }
+
   # calculate standard pkAnalyses
   pkDataList <- userPKDataList <-
     stats::setNames(
@@ -101,7 +110,7 @@
 
   pkData <- .addParameterColumns(pkData, simulationResults, parameterPath)
   pkData <- dplyr::group_by(pkData, ParameterPath, PKParameter) |>
-    dplyr::group_modify(.f = ~ .computePercentChange(.)) |>
+    dplyr::group_modify(.f = ~ .computePercentChange(.x, .y)) |>
     dplyr::ungroup()
 
   pkData <- dplyr::select(pkData, -dplyr::any_of("IndividualId"))
@@ -115,6 +124,31 @@
     dplyr::arrange(ParameterPath, PKParameter, ParameterFactor)
 
   return(pkData)
+}
+
+#' Empty PK parameter data frame
+#'
+#' Returns a zero-row data frame with the columns produced by
+#' `.simulationResultsToPKDataFrame()`, used when every run for a parameter
+#' failed and no PK data can be extracted.
+#'
+#' @keywords internal
+#' @noRd
+.emptyPKDataFrame <- function() {
+  data.frame(
+    OutputPath = character(0),
+    ParameterPath = character(0),
+    ParameterFactor = numeric(0),
+    ParameterValue = numeric(0),
+    ParameterUnit = character(0),
+    ParameterPathUserName = character(0),
+    PKParameter = character(0),
+    PKParameterValue = numeric(0),
+    PKPercentChange = numeric(0),
+    Unit = character(0),
+    SensitivityPKParameter = numeric(0),
+    stringsAsFactors = FALSE
+  )
 }
 
 # dataframe modification helpers ------------------------------
@@ -206,22 +240,27 @@
 #'
 #' @param data A dataframe returned by `pkAnalysesAsDataFrame()` and with
 #'   columns renamed to follow `UpperCamel` case.
+#' @param groupKeys Optional one-row data frame of grouping keys as supplied by
+#'   `dplyr::group_modify()`. `group_modify()` strips the grouping columns
+#'   (`ParameterPath`, `PKParameter`) from `data`, so the keys are read from here
+#'   to give the missing-baseline warning meaningful context. When called
+#'   directly (outside `group_modify()`) the keys are taken from `data` instead.
 #'
 #' @keywords internal
 #' @noRd
-.computePercentChange <- function(data) {
+.computePercentChange <- function(data, groupKeys = NULL) {
   # baseline values with a scaling of 1, i.e. no scaling
   baseDataFrame <- dplyr::filter(data, ParameterFactor == 1.0)
 
   # Handle case where no baseline data (ParameterFactor == 1.0) exists
   if (nrow(baseDataFrame) == 0) {
-    parameterPath <- unique(data$ParameterPath)[1]
-    pkParameter <- unique(data$PKParameter)[1]
+    parameterPath <- groupKeys$ParameterPath %||% unique(data$ParameterPath)
+    pkParameter <- groupKeys$PKParameter %||% unique(data$PKParameter)
 
     cli::cli_warn(
       messages$sensitivityPKParameterNotCalculated(
-        parameterPath,
-        pkParameter
+        parameterPath[1],
+        pkParameter[1]
       )
     )
 
@@ -234,13 +273,20 @@
     )
   }
 
-  # baseline values for parameters of interest
-  ParameterBaseValue <- baseDataFrame |> dplyr::pull(ParameterValue)
-  PKParameterBaseValue <- baseDataFrame |> dplyr::pull(PKParameterValue)
+  # Join the per-OutputPath baseline values back onto every row so that values
+  # align by OutputPath instead of relying on silent vector recycling, which is
+  # only correct when rows happen to be ordered output-major.
+  baseValues <- baseDataFrame |>
+    dplyr::select(
+      OutputPath,
+      ParameterBaseValue = ParameterValue,
+      PKParameterBaseValue = PKParameterValue
+    )
 
   # add columns with %change and sensitivity
   # reference: https://docs.open-systems-pharmacology.org/shared-tools-and-example-workflows/sensitivity-analysis#mathematical-background
   data |>
+    dplyr::left_join(baseValues, by = "OutputPath") |>
     dplyr::mutate(
       PKPercentChange = ((PKParameterValue - PKParameterBaseValue) /
         PKParameterBaseValue) *
@@ -250,7 +296,8 @@
         PKParameterBaseValue) *
         # p / delta p
         (ParameterBaseValue / (ParameterValue - ParameterBaseValue))
-    )
+    ) |>
+    dplyr::select(-ParameterBaseValue, -PKParameterBaseValue)
 }
 
 #' @keywords internal
@@ -317,6 +364,19 @@
       ParameterPathUserName = names(parameterPath) %||% NA_character_,
     ) |>
     dplyr::mutate(ParameterValue = ParameterValue * ParameterFactor)
+}
+
+#' Match parameter factors within a relative tolerance
+#'
+#' Compares `x` against each value in `y`, returning a logical vector the same
+#' length as `y`. Uses a relative tolerance so that a user-typed reciprocal
+#' (e.g. `3.333333`) matches a computed one (e.g. `1 / 0.3`), which
+#' `dplyr::near()`'s much tighter absolute tolerance would reject.
+#'
+#' @keywords internal
+#' @noRd
+.factorsMatch <- function(x, y, tol = 1e-4) {
+  abs(x - y) <= tol * pmax(abs(x), abs(y), 1)
 }
 
 # variationRange handlers -------------------------------------------------
@@ -402,6 +462,14 @@
   variationType
 ) {
   if (variationType == "absolute") {
+    # Absolute targets are converted to relative scaling factors by dividing by
+    # the initial value. A parameter with an initial value of 0 has no
+    # multiplicative scaling that reaches a non-zero target, so dividing would
+    # silently produce Inf/NaN factors and undiagnosed batch failures. Guard it.
+    zeroInitial <- names(initialValues)[initialValues == 0]
+    if (length(zeroInitial) > 0) {
+      cli::cli_abort(messages$absoluteVariationZeroInitialValue(zeroInitial))
+    }
     variationRange <- purrr::map2(variationRange, initialValues, ~ .x / .y)
   }
 
@@ -674,10 +742,12 @@ loadSensitivityCalculation <- function(outputDir, simulation = NULL) {
     full.names = TRUE
   )
 
-  variationRange <- unique(sensitivityCalculation$pkData$ParameterFactor)
-  parameterPaths <- sensitivityCalculation$parameterPaths
-
-  expectedCount <- length(parameterPaths) * length(variationRange)
+  # One CSV was written per stored `SimulationResults` object, i.e. one per
+  # (parameter, retained factor) entry in the nested `simulationResults`
+  # structure. This count is robust to per-parameter variation ranges, absolute
+  # variation (factors differ per parameter), and dropped failed runs, all of
+  # which break the naive `parameters * factors` assumption.
+  expectedCount <- sum(lengths(sensitivityCalculation$simulationResults))
   if (length(simResultFiles) != expectedCount) {
     cli::cli_abort(messages$corruptSensitivityCalculation(outputDir))
   }
