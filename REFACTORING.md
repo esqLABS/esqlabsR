@@ -19,6 +19,7 @@ Design record/remaining issues: issue #1088. Live status/project branch: PR #101
 - **Account for other pending PRs and issues.** Before changing or reviewing code, check both open PRs against this branch (`gh pr list --base json-based-project`) and the open issues tied to the #1088 umbrella. Take in-flight PRs into account so work doesn't collide or duplicate. Read the related open issues so you don't implement something a planned issue will contradict, and so you can spot when one change can close several issues at once.
 - **Comments explain, and describe now.** A comment earns its place only by explaining what the code cannot say itself: the why, a non-obvious constraint, a subtle edge case. Don't restate self-explanatory code. And describe how the code works currently, never its history (no "previously", "used to", "was write-through, now explicit-save"); that belongs in commits and PRs, not the source.
 - **Log every commit.** Each time a commit is made, append one bullet to `REFACTORING-LOG.md`: `- YYYY-MM-DD HH:MM: <plain-language one-liner of what changed>. (#<issue number>)`. End the description with the associated issue number in that format when there is one; omit the `. (#N)` when the change has no issue. Newest at the bottom. Keep it a short human phrase, not the raw commit subject.
+- **Use GitHub stacked Pull Request Framework**: use gh-stack skill to manage stacked PR that targets json-based-project branch
 
 ## Conventions (established in the codebase)
 
