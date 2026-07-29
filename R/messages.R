@@ -969,6 +969,13 @@ messages$sensitivityCalculationNotFound <- function(path) {
   cliFormat("Sensitivity calculation not found at path {.file {path}}.")
 }
 
+messages$noRetainedSimulationResults <- function() {
+  cliFormat(
+    "The sensitivity calculation contains no simulation results to save.",
+    "All simulation runs appear to have failed."
+  )
+}
+
 messages$outputDirExists <- function(outputDir) {
   cliFormat(
     "Directory {.file {outputDir}} already exists.",
