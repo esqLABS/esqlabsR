@@ -39,16 +39,6 @@
       * "Global" -> "Global_1"
       i The three former parameter-set kinds now share one parameterSets namespace, so one sheet name cannot serve two sets. References made in 'Individuals.xlsx' point at the renamed set; rename the sheet in Excel to choose the id yourself.
 
-# .parseExcelParameterSheets aborts on a non-numeric Value cell
-
-    Code
-      .parseExcelParameterSheets(paramFile)
-    Condition
-      Error in `.parseNumericCell()`:
-      ! Cannot interpret the Value cell as a number.
-      x Sheet "Global", row 1: "not_a_number".
-      i A blank cell is allowed; a non-blank cell must be numeric (use "." as the decimal separator).
-
 # .parseExcelScenarios aborts on an unparseable boolean cell
 
     Code
@@ -66,4 +56,17 @@
       Error in `.parseExcelScenarios()`:
       ! The Scenarios sheet is missing required column: "OutputPathsIds".
       i Expected columns: "Scenario_name", "IndividualId", "PopulationId", "ReadPopulationFromCSV", "ModelParameterSheets", "ApplicationProtocol", "SimulationTime", "SimulationTimeUnit", "SteadyState", "SteadyStateTime", "SteadyStateTimeUnit", "ModelFile", and "OutputPathsIds".
+
+# .warnIncompleteObservedCurves names the affected combinations
+
+    Code
+      .warnIncompleteObservedCurves(list(list(dataCombinedId = "plasma", simulated = list(
+        list(label = "sim")), observed = list(list(label = "obs"))), list(
+        dataCombinedId = "urine", observed = list(list(label = "obs", dataSet = "d1"))),
+      list(dataCombinedId = "fat", observed = list(list(label = "obs", dataSet = "")))))
+    Condition
+      Warning:
+      ! 2 imported data combinations have an observed curve that names no data set: "plasma" and "fat".
+      i The DataCombined sheet marked the row "observed" but left its dataSet cell empty, so there is nothing to resolve against. The row is kept as it was authored, not dropped.
+      i `validateProject()` reports each one as a critical error until the cell is filled in Excel and the project imported again, or the curve is completed with `addDataCombined()`.
 

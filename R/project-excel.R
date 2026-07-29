@@ -439,7 +439,9 @@ importProjectFromExcel <- function(
     list(
       property = "parameterIdentificationFile",
       parse = function(file, jsonData) {
-        tasks <- .parseExcelParameterIdentification(file)
+        # The scenarios section is parsed above, so the oldest 5.x mapping layout
+        # can reach the output paths its rows identify their outputs through.
+        tasks <- .parseExcelParameterIdentification(file, jsonData$scenarios)
         # A 5.x output mapping may name its output path by full OSPS path rather
         # than by an output-path id. Rewrite such a full path to the id of the
         # matching `outputPaths` definition so the reference resolves.
@@ -504,6 +506,14 @@ importProjectFromExcel <- function(
   # not already canonical (e.g. `Global`, `Aciclovir_PVB`) become `global`,
   # `aciclovir_pvb`.
   jsonData <- .canonicalizeProjectJsonIds(jsonData)
+
+  # An observed curve that names no data set is kept as authored, so a user who
+  # can still supply the missing piece is not silently robbed of the row. But
+  # nothing else would tell them why the freshly imported project is invalid, so
+  # say it here rather than leaving it to be discovered at the next call. After
+  # canonicalization, so the ids named are the ids the tree and
+  # `validateProject()` use.
+  .warnIncompleteObservedCurves(jsonData$dataCombined)
 
   # Bootstrap an in-memory project from the imported data by writing the inlined
   # JSON to the container path and parsing it back. This inlined form is only a
@@ -1619,6 +1629,13 @@ projectStatus <- function(project, silent = FALSE) {
 #' sheet beside its parameter sheets. Such a sheet is recognized by its columns
 #' and skipped with a warning, so one of them does not stop a migration.
 #'
+#' A fit-bounds sheet authored by copying a real parameter sheet carries all four
+#' columns, so it is a parameter sheet by the test above and its rows are read.
+#' A row whose `Value` is text rather than a number (`lower`, `upper`) is skipped
+#' with a warning naming the sheet, row and cell. Skipping the row rather than
+#' the workbook is deliberate: nothing here can tell a deliberate note from a
+#' typo in a real parameter, and the row is the smallest unit that can be lost.
+#'
 #' @param filePath Path to the Excel file
 #' @param sheetNames Sheets to read. If NULL, reads all sheets.
 #' @returns Named list of parameter arrays, keyed by sheet name and holding only
@@ -1637,6 +1654,11 @@ projectStatus <- function(project, silent = FALSE) {
   }
   result <- list()
   skipped <- character()
+  # Parallel accumulators for the skipped rows, so one warning covers the whole
+  # workbook rather than one per row.
+  badSheets <- character()
+  badRows <- integer()
+  badValues <- character()
   for (sheet in sheetNames) {
     df <- readExcel(filePath, sheet = sheet)
     # The check belongs to the sheet, not the cell: a missing column reads as
@@ -1647,39 +1669,65 @@ projectStatus <- function(project, silent = FALSE) {
       skipped <- c(skipped, sheet)
       next
     }
+    # Where each kept row sits in the workbook, so a row reported to the user can
+    # be found there. Blank rows were dropped on read, which makes `i` untrue as a
+    # workbook coordinate; the fallback covers a frame with no such record.
+    sheetRow <- attr(df, "sheetRow") %||% seq_len(nrow(df))
     entries <- list()
     if (nrow(df) > 0) {
       for (i in seq_len(nrow(df))) {
+        value <- df[["Value"]][[i]]
+        if (.isUnusableNumericCell(value)) {
+          badSheets <- c(badSheets, sheet)
+          # +1 for the header, so the number is the row Excel shows.
+          badRows <- c(badRows, sheetRow[[i]] + 1L)
+          badValues <- c(badValues, as.character(value))
+          next
+        }
         entry <- list(
           containerPath = as.character(df[["Container Path"]][[i]]),
           parameterName = as.character(df[["Parameter Name"]][[i]]),
-          value = .parseNumericCell(
-            df[["Value"]][[i]],
-            sheet = sheet,
-            row = i,
-            column = "Value"
-          ),
+          # A blank cell stays an absent value, as it was before the check above.
+          value = if (.isBlankCell(value)) NA_real_ else as.numeric(value),
           units = if (is.na(df[["Units"]][[i]]) || df[["Units"]][[i]] == "") {
             NULL
           } else {
             as.character(df[["Units"]][[i]])
           }
         )
-        entries[[i]] <- entry
+        entries[[length(entries) + 1L]] <- entry
       }
+    }
+    # A sheet that had rows but kept none describes no parameter at all, so it is
+    # left out rather than becoming an empty parameter set (and, in the 5.x
+    # applications layout, an application wrapping one). Both callers derive the
+    # sheets they may reference from the names of what this returns, so omitting
+    # it also unlinks the references to it. A header-only sheet is a different
+    # thing, a real set that happens to be empty, and still comes through.
+    if (nrow(df) > 0 && length(entries) == 0L) {
+      next
     }
     result[[sheet]] <- entries
   }
   if (length(skipped) > 0L) {
-    warning <- messages$importSkippedNonParameterSheets(
-      filePath,
-      skipped,
-      .parameterSheetColumns
+    .warnFormatted(
+      messages$importSkippedNonParameterSheets(
+        filePath,
+        skipped,
+        .parameterSheetColumns
+      ),
+      "esqlabsR_importSkippedNonParameterSheets"
     )
-    cli::cli_warn(
-      warning$bullets,
-      class = "esqlabsR_importSkippedNonParameterSheets",
-      .envir = warning$envir
+  }
+  if (length(badRows) > 0L) {
+    .warnFormatted(
+      messages$importSkippedNonNumericRows(
+        filePath,
+        badSheets,
+        badRows,
+        badValues
+      ),
+      "esqlabsR_importSkippedNonNumericRows"
     )
   }
   result
@@ -1826,6 +1874,46 @@ projectStatus <- function(project, silent = FALSE) {
     scenarios[[i]] <- scenario
   }
   scenarios
+}
+
+#' Report the imported data combinations whose observed curve names no data set
+#'
+#' `.parseExcelDataCombinedSheet()` builds an observed entry for every row the
+#' sheet marked `observed`, whatever its other cells hold, so a blank (or absent)
+#' `dataSet` column yields an entry with nothing to resolve against. The entry is
+#' left as authored, since the user may still be able to fill the cell, and the
+#' one thing this owes them is saying so: `validateProject()` reports each such
+#' entry as a critical error, and without this the first sign of it is that error
+#' on a project they have not touched yet.
+#'
+#' @param dataCombined The parsed `dataCombined` section (an unnamed list).
+#' @returns Nothing, called for its warning.
+#' @keywords internal
+#' @noRd
+.warnIncompleteObservedCurves <- function(dataCombined) {
+  incomplete <- vapply(
+    dataCombined %||% list(),
+    function(dc) {
+      any(vapply(
+        dc$observed %||% list(),
+        function(entry) .isBlankCell(entry$dataSet),
+        logical(1)
+      ))
+    },
+    logical(1)
+  )
+  if (!any(incomplete)) {
+    return(invisible(NULL))
+  }
+  ids <- vapply(
+    dataCombined[incomplete],
+    function(dc) as.character(dc$dataCombinedId),
+    character(1)
+  )
+  .warnFormatted(
+    messages$importIncompleteObservedCurves(ids),
+    "esqlabsR_importIncompleteObservedCurves"
+  )
 }
 
 #' Report an unreachable observed-data path and import no observed data
@@ -2309,9 +2397,13 @@ projectStatus <- function(project, silent = FALSE) {
 # `{id, scenarios[], parameters[], outputMappings[], configuration}` shape
 # `.parsePITasks()` consumes. Returns an unnamed list of PITask JSON objects.
 #
+# @param scenarios The already-parsed `scenarios` section, needed only by the
+#   5.x layout, whose oldest revision identifies a mapping's output through the
+#   scenario rather than in the mapping row.
+#
 # @keywords internal
 # @noRd
-.parseExcelParameterIdentification <- function(piFile) {
+.parseExcelParameterIdentification <- function(piFile, scenarios = NULL) {
   sheets <- readxl::excel_sheets(piFile)
   # Two layouts. The newer one has a single `PITasks` sheet (one row per task,
   # config inline in `config.*` columns). The 5.x layout has no `PITasks` sheet
@@ -2319,7 +2411,7 @@ projectStatus <- function(project, silent = FALSE) {
   # configuration split across `PIConfiguration` / `AlgorithmOptions` /
   # `CIOptions`. Dispatch on which is present.
   if (!("PITasks" %in% sheets)) {
-    return(.parseExcelPI5x(piFile, sheets))
+    return(.parseExcelPI5x(piFile, sheets, scenarios))
   }
   taskDf <- readExcel(piFile, sheet = "PITasks")
   paramDf <- if ("PIParameters" %in% sheets) {
@@ -2396,7 +2488,7 @@ projectStatus <- function(project, silent = FALSE) {
 #
 # @keywords internal
 # @noRd
-.parseExcelPI5x <- function(piFile, sheets) {
+.parseExcelPI5x <- function(piFile, sheets, scenarios = NULL) {
   read5xSheet <- function(name) {
     if (name %in% sheets) readExcel(piFile, sheet = name) else NULL
   }
@@ -2421,16 +2513,19 @@ projectStatus <- function(project, silent = FALSE) {
 
   lapply(taskNames, function(task) {
     params <- .parseExcelPI5xParams(paramDf, task)
-    mappings <- .parseExcelPI5xMappings(mappingDf, task)
+    mappings <- .parseExcelPI5xMappings(mappingDf, task, scenarios)
     # A task's scenarios are the union of the scenarios its parameters and
     # mappings reference (the 5.x layout has no separate task-scenario list).
-    scenarios <- unique(unlist(lapply(
+    # Named apart from the `scenarios` formal, which holds the project's scenario
+    # records: one name for both would resolve correctly only as long as nobody
+    # moves the line above.
+    taskScenarios <- unique(unlist(lapply(
       c(params, mappings),
       function(x) unlist(x$scenarios)
     )))
     list(
       id = task,
-      scenarios = as.list(scenarios),
+      scenarios = as.list(taskScenarios),
       parameters = params,
       outputMappings = mappings,
       configuration = .parseExcelPI5xConfig(configDf, algDf, ciDf, task)
@@ -2467,10 +2562,23 @@ projectStatus <- function(project, silent = FALSE) {
 # a per-mapping `id` from the output path's last segment (de-duplicated within
 # the task) and maps the offset/factor/weight columns.
 #
+# The sheet's oldest revision has no `OutputPath` column at all: it predates the
+# column, and identified a mapping's output through the scenario, one mapping per
+# output path the scenario declares. `.pi5xDerivedMappingRows()` reproduces that,
+# so such a workbook restores instead of failing on every mapping.
+#
+# A blank cell in a column that IS present is a different thing, an authoring gap
+# in the newer layout rather than an older schema, so it is left alone: the mapping
+# keeps no `outputPath` and `validateProject()` reports it. The two cases are told
+# apart by the column, not the cell, and only the column-less one is recovered.
+#
 # @keywords internal
 # @noRd
-.parseExcelPI5xMappings <- function(df, task) {
+.parseExcelPI5xMappings <- function(df, task, scenarios = NULL) {
   rows <- .pi5xTaskRows(df, task)
+  if (nrow(rows) > 0L && !("OutputPath" %in% names(rows))) {
+    rows <- .pi5xDerivedMappingRows(rows, task, scenarios)
+  }
   ids <- character()
   lapply(seq_len(nrow(rows)), function(i) {
     row <- rows[i, ]
@@ -2490,6 +2598,90 @@ projectStatus <- function(project, silent = FALSE) {
       weight = .naToNull(as.numeric(row[["Weight"]]))
     ))
   })
+}
+
+# Give the rows of an `OutputPath`-less `PIOutputMappings` sheet the column they
+# lack, by taking each row's outputs from the scenarios it names.
+#
+# One row becomes one row per output path its scenarios declare, carrying the
+# scenarios that declare that path and every other cell of the original row. A row
+# that names no scenario, or whose scenarios declare no output path, still yields
+# one row, with no path: nothing here can identify its output, and the mapping is
+# better kept for `validateProject()` to report than dropped from a task the user
+# may be able to complete. Those rows are named in one warning per task, which can
+# say which cell to fill and where, as validation cannot.
+#
+# @param rows One task's rows of the sheet.
+# @param task The task id, for the warning.
+# @param scenarios The parsed `scenarios` section (an unnamed list of records
+#   carrying `name` and `outputPaths`), or NULL when the project has none.
+# @returns A data frame with the same columns plus `OutputPath`, one row per
+#   (row, output path) pair, plus one `NA`-path row per input row no path could be
+#   derived for.
+# @keywords internal
+# @noRd
+.pi5xDerivedMappingRows <- function(rows, task, scenarios) {
+  # Matched on the canonical id, as every other cross-sheet reference in this
+  # import is: the two sheets are hand-maintained separately, so one spelling a
+  # scenario `aciclovir_iv` and the other `Aciclovir_IV` is ordinary. Comparing
+  # the raw text would resolve nothing and then blame the scenario for having no
+  # output path, which is the one wrong thing to tell the user.
+  canonical <- vapply(
+    scenarios %||% list(),
+    function(scenario) .canonicalizeOneId(as.character(scenario$name)),
+    character(1)
+  )
+  outputPathsOf <- function(name) {
+    match <- which(canonical == .canonicalizeOneId(name))
+    if (length(match) == 0L) {
+      return(NULL)
+    }
+    unlist(scenarios[[match[[1]]]]$outputPaths)
+  }
+
+  derived <- list()
+  # The scenario cells of the rows no path could be derived for: that cell is what
+  # the user has to look at to fix it.
+  unresolved <- character()
+  for (i in seq_len(nrow(rows))) {
+    named <- .parseCommaListToArray(rows[i, ][["Scenarios"]])
+    # Which of this row's scenarios declare each output path, so a path shared by
+    # two of them becomes one mapping naming both rather than two mappings.
+    byPath <- list()
+    for (name in named %||% character()) {
+      for (path in outputPathsOf(name)) {
+        byPath[[path]] <- c(byPath[[path]], name)
+      }
+    }
+    if (length(byPath) == 0L) {
+      # Reported but kept, as `NA`: the mapping loads without an output path and
+      # `validateProject()` names it, rather than the row disappearing from a task
+      # the user may well be able to complete. The warning is here all the same,
+      # because it can say what to fill in and where, which validation cannot.
+      unresolved <- c(
+        unresolved,
+        if (length(named) == 0L) "" else paste(named, collapse = ", ")
+      )
+      byPath <- stats::setNames(list(named), NA_character_)
+    }
+    for (path in names(byPath)) {
+      row <- rows[i, , drop = FALSE]
+      row[["OutputPath"]] <- path
+      row[["Scenarios"]] <- .formatArrayToCommaList(byPath[[path]])
+      derived[[length(derived) + 1L]] <- row
+    }
+  }
+
+  if (length(unresolved) > 0L) {
+    .warnFormatted(
+      messages$importIncompletePIOutputMappings(task, unresolved),
+      "esqlabsR_importIncompletePIOutputMappings"
+    )
+  }
+  if (length(derived) == 0L) {
+    return(rows[0, , drop = FALSE])
+  }
+  as.data.frame(dplyr::bind_rows(derived))
 }
 
 # Build one task's nested `configuration` from the 5.x `PIConfiguration` row and
@@ -3085,6 +3277,39 @@ projectStatus <- function(project, silent = FALSE) {
   trimws(as.character(x)) == ""
 }
 
+#' Does a cell that must hold a number hold something else?
+#'
+#' The rule for every numeric Excel cell in one place: a blank cell is allowed
+#' (an absent value), and a non-blank cell must coerce to a number. Text, and a
+#' comma-decimal such as `1,5`, do not.
+#'
+#' @param x A single cell value.
+#' @returns `TRUE` only for a non-blank cell that is not a number.
+#' @keywords internal
+#' @noRd
+.isUnusableNumericCell <- function(x) {
+  !.isBlankCell(x) && is.na(suppressWarnings(as.numeric(x)))
+}
+
+#' Emit a pre-built, still-unglued warning
+#'
+#' Every import warning that names something a modeller wrote (a sheet name, a
+#' definition id, a task name) has to survive a `{`/`}` in that text, so its
+#' message builder returns the templates unglued together with an environment
+#' binding their variables and the emitting call hands both to one `cli_warn()`:
+#' each template is then glue-parsed exactly once, and a value is only ever
+#' reached through a variable, never parsed. This owns that emit so the contract
+#' is honored the same way by every such warning.
+#'
+#' @param warning A `list(bullets =, envir =)` from the `messages` catalog.
+#' @param class Condition class for the emitted warning.
+#' @returns Nothing, called for its warning.
+#' @keywords internal
+#' @noRd
+.warnFormatted <- function(warning, class) {
+  cli::cli_warn(warning$bullets, class = class, .envir = warning$envir)
+}
+
 #' One cell of a parsed sheet, `NA` where the sheet has no such column
 #'
 #' `df[["Missing"]][[i]]` aborts with a subscript error rather than yielding an
@@ -3188,37 +3413,6 @@ projectStatus <- function(project, silent = FALSE) {
     "i" = "Use a boolean-like value \\
     ({.val TRUE}/{.val FALSE}, {.val 1}/{.val 0}, {.val Yes}/{.val No})."
   ))
-}
-
-#' Coerce a single Excel numeric cell, aborting on a non-blank unparseable value
-#'
-#' A blank cell (`NA` / empty string) yields `NA` (an absent value is allowed).
-#' A non-blank cell that does not coerce to a number (text, or a comma-decimal
-#' such as `1,5`) aborts naming the sheet, row, and column, rather than silently
-#' becoming `NA` and serialising a value-less parameter into the JSON project.
-#'
-#' @param x A length-1 cell value.
-#' @param sheet,row,column The cell's location, used in the abort message.
-#' @returns A length-1 numeric (`NA` for a blank cell).
-#' @keywords internal
-#' @noRd
-.parseNumericCell <- function(x, sheet, row, column) {
-  if (is.null(x) || length(x) == 0L) {
-    return(NA_real_)
-  }
-  if (is.na(x) || (is.character(x) && trimws(x) == "")) {
-    return(NA_real_)
-  }
-  value <- suppressWarnings(as.numeric(x))
-  if (is.na(value)) {
-    cli::cli_abort(c(
-      "Cannot interpret the {.field {column}} cell as a number.",
-      "x" = "Sheet {.val {sheet}}, row {row}: {.val {x}}.",
-      "i" = "A blank cell is allowed; a non-blank cell must be numeric \\
-      (use {.val .} as the decimal separator)."
-    ))
-  }
-  value
 }
 
 #' Format a character vector as a comma-separated Excel-bridge cell

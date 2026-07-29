@@ -3031,12 +3031,195 @@ test_that(".parseExcelPI5xMappings parses a row with no output path", {
   expect_null(mappings[[2]]$outputPath)
   # Still gets a usable, unique id.
   expect_identical(mappings[[2]]$id, "item")
+})
 
+# The sheet's oldest revision has no `OutputPath` column at all: it predates the
+# column and identified a mapping's output through the scenario, one mapping per
+# output path the scenario declares. Reproducing that lets such a workbook
+# restore instead of failing on every one of its mappings (#1192).
+test_that(".parseExcelPI5xMappings derives a missing OutputPath column", {
+  noColumn <- data.frame(
+    PITaskName = "t1",
+    Scenarios = "s1, s2",
+    DataSet = "d1",
+    Scaling = "log",
+    stringsAsFactors = FALSE
+  )
+  scenarios <- list(
+    list(name = "s1", outputPaths = list("pvb", "urine")),
+    list(name = "s2", outputPaths = list("pvb"))
+  )
+
+  mappings <- .parseExcelPI5xMappings(noColumn, "t1", scenarios)
+
+  # One mapping per output path, not per scenario: a path both scenarios declare
+  # becomes one mapping naming both.
+  expect_length(mappings, 2L)
+  expect_identical(mappings[[1]]$outputPath, "pvb")
+  expect_identical(unlist(mappings[[1]]$scenarios), c("s1", "s2"))
+  expect_identical(mappings[[2]]$outputPath, "urine")
+  expect_identical(unlist(mappings[[2]]$scenarios), "s1")
+  # Every other cell of the original row rides along.
+  expect_identical(mappings[[1]]$observedData, "d1")
+  expect_identical(mappings[[1]]$scaling, "log")
+})
+
+test_that(".parseExcelPI5xMappings keeps and reports an underivable path", {
   noColumn <- data.frame(
     PITaskName = "t1",
     Scenarios = "s1",
     DataSet = "d1",
     stringsAsFactors = FALSE
   )
-  expect_length(.parseExcelPI5xMappings(noColumn, "t1"), 1L)
+
+  # A scenario that declares no output path, and no scenarios section at all,
+  # both leave the mapping unidentifiable. The mapping is kept without a path
+  # (validation reports it) rather than dropped from the task.
+  expect_warning(
+    mappings <- .parseExcelPI5xMappings(
+      noColumn,
+      "t1",
+      list(list(name = "s1"))
+    ),
+    class = "esqlabsR_importIncompletePIOutputMappings"
+  )
+  expect_length(mappings, 1L)
+  expect_null(mappings[[1]]$outputPath)
+  expect_identical(mappings[[1]]$observedData, "d1")
+
+  expect_warning(
+    expect_length(.parseExcelPI5xMappings(noColumn, "t1", NULL), 1L),
+    class = "esqlabsR_importIncompletePIOutputMappings"
+  )
+})
+
+# The two sheets are hand-maintained separately, so they routinely spell one
+# scenario differently. Every other cross-sheet reference in the import resolves
+# on the canonical id, and this one has to as well, or the mapping is dropped and
+# the warning blames a scenario that does have an output path.
+test_that(".parseExcelPI5xMappings matches a scenario on its canonical id", {
+  noColumn <- data.frame(
+    PITaskName = "t1",
+    Scenarios = "aciclovir iv",
+    DataSet = "d1",
+    stringsAsFactors = FALSE
+  )
+  scenarios <- list(list(name = "Aciclovir_IV", outputPaths = list("pvb")))
+
+  mappings <- .parseExcelPI5xMappings(noColumn, "t1", scenarios)
+
+  expect_length(mappings, 1L)
+  expect_identical(mappings[[1]]$outputPath, "pvb")
+})
+
+# `observedData` is as required as `outputPath` on a built mapping, so a row with
+# no DataSet is incomplete too. It is kept and reported, not dropped: the load
+# path is lenient about both fields and validation names them.
+test_that(".parseExcelPI5xMappings keeps a derived row with no DataSet", {
+  noColumn <- data.frame(
+    PITaskName = "t1",
+    Scenarios = c("s1", "s1"),
+    DataSet = c(NA, "d1"),
+    stringsAsFactors = FALSE
+  )
+  scenarios <- list(list(name = "s1", outputPaths = list("pvb")))
+
+  mappings <- .parseExcelPI5xMappings(noColumn, "t1", scenarios)
+
+  expect_length(mappings, 2L)
+  expect_null(mappings[[1]]$observedData)
+  expect_identical(mappings[[1]]$outputPath, "pvb")
+  expect_identical(mappings[[2]]$observedData, "d1")
+})
+
+# The load path is deliberately more tolerant than the constructor: a project
+# file carrying an incomplete mapping has to open so validateProject() can report
+# it, while authoring one through PIOutputMapping() is still rejected at the call.
+test_that(".parsePIOutputMappings loads a mapping the constructor would reject", {
+  mappings <- .parsePIOutputMappings(
+    list(list(id = "m1", scenarios = list("s1"), observedData = "d1")),
+    "t1"
+  )
+
+  expect_length(mappings, 1L)
+  expect_s3_class(mappings[[1]], "PIOutputMapping")
+  expect_null(mappings[[1]]$outputPathId)
+  expect_identical(mappings[[1]]$observedDataId, "d1")
+
+  expect_snapshot(
+    error = TRUE,
+    PIOutputMapping(id = "m1", scenarios = "s1", observedData = "d1")
+  )
+})
+
+# A hand-maintained 5.x `PIParameters` sheet routinely leaves a bounds cell
+# blank. The parameter loads and validation names the gap, rather than the whole
+# project failing to open, which is what made such a workbook unfixable.
+test_that(".parsePIParameters loads a parameter the constructor would reject", {
+  parameters <- .parsePIParameters(
+    list(list(
+      id = "p1",
+      scenarios = list("s1"),
+      path = "Aciclovir|Lipophilicity",
+      maxValue = 2,
+      startValue = 0
+    )),
+    "t1"
+  )
+
+  expect_length(parameters, 1L)
+  expect_s3_class(parameters[[1]], "PIParameter")
+  # Absent, not NA: the validator tells "no value" from "an unusable one".
+  expect_null(parameters[[1]]$minValue)
+  expect_identical(parameters[[1]]$maxValue, 2)
+
+  expect_snapshot(
+    error = TRUE,
+    PIParameter(
+      id = "p1",
+      scenarios = "s1",
+      path = "Aciclovir|Lipophilicity",
+      maxValue = 2,
+      startValue = 0
+    )
+  )
+})
+
+# Every gap in one report. The cross-reference phase skips itself once a section
+# has a critical error, so a mapping's missing field is reported by the section
+# validator; otherwise a user fixing a parameter would only then discover the
+# mapping. The bounds comparison must also not run against an absent bound.
+test_that(".validatePI reports every incomplete PI record at once", {
+  task <- PITask(
+    id = "t1",
+    scenarios = "s1",
+    parameters = list(PIParameter(
+      id = "p1",
+      scenarios = "s1",
+      path = "A|B",
+      minValue = 0,
+      maxValue = 2,
+      startValue = 1
+    )),
+    outputMappings = list(PIOutputMapping(
+      id = "m1",
+      scenarios = "s1",
+      outputPath = "pvb",
+      observedData = "d1"
+    ))
+  )
+  # Hollow out one field of each record, as a blank workbook cell would.
+  task$parameters[[1]]$minValue <- NULL
+  task$outputMappings[[1]]$observedDataId <- NULL
+
+  msgs <- vapply(
+    .validatePI(list(t1 = task))$critical_errors,
+    \(e) e$message,
+    character(1)
+  )
+
+  expect_match(msgs, "missing required field: minValue", all = FALSE)
+  expect_match(msgs, "does not define an observedData", all = FALSE)
+  # No spurious bounds complaint: the comparison is skipped, not run on NULL.
+  expect_false(any(grepl("invalid bounds", msgs, ignore.case = TRUE)))
 })

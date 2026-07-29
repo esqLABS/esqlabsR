@@ -104,14 +104,49 @@ PIParameter <- function(
     ))
   }
 
+  .piParameterRecord(
+    id = id,
+    scenarios = scenarios,
+    path = path,
+    units = units,
+    minValue = minValue,
+    maxValue = maxValue,
+    startValue = startValue
+  )
+}
+
+# Assemble a `PIParameter` record, without the guards above.
+#
+# Split out of `PIParameter()` for the same reason as `.piOutputMappingRecord()`:
+# authoring a parameter with no path or no bounds is a mistake to reject at the
+# call, whereas a project file (or a legacy workbook with a blank `MinValue`
+# cell) carrying one has to load so `validateProject()` can report it. A project
+# that cannot be opened cannot be fixed. `runPI()` gates on that validation, so
+# an incomplete parameter never reaches an optimisation.
+#
+# An absent bound stays absent rather than becoming `NA`: `.validatePI()`
+# distinguishes "no value" from "an unusable one" only if the field is missing.
+#
+# @keywords internal
+# @noRd
+.piParameterRecord <- function(
+  id,
+  scenarios,
+  path,
+  units = NULL,
+  minValue = NULL,
+  maxValue = NULL,
+  startValue = NULL
+) {
+  asBound <- function(x) if (is.null(x)) NULL else as.double(x)
   rec <- list(
     id = id,
     scenarios = as.character(scenarios),
     path = path,
     units = units,
-    minValue = as.double(minValue),
-    maxValue = as.double(maxValue),
-    startValue = as.double(startValue)
+    minValue = asBound(minValue),
+    maxValue = asBound(maxValue),
+    startValue = asBound(startValue)
   )
   class(rec) <- c("PIParameter", "list")
   rec
@@ -237,13 +272,51 @@ PIOutputMapping <- function(
     }
   }
 
-  # The user-facing args and on-disk JSON keys are suffixless (`outputPath` /
-  # `observedData`), while the in-memory record keeps its id-suffixed field
-  # names (`outputPathId` / `observedDataId`), which the runtime build,
-  # validation, and serializer all read. This constructor is the mapping seam:
-  # the new arg feeds the kept record field. The parser (`.parsePIOutputMappings`)
-  # reads the new JSON key into the new arg; the serializer
-  # (`.piOutputMappingToJson`) mirrors it back to the new key.
+  .piOutputMappingRecord(
+    id = id,
+    scenarios = scenarios,
+    outputPath = outputPath,
+    observedData = observedData,
+    scaling = scaling,
+    xOffset = xOffset,
+    yOffset = yOffset,
+    xFactor = xFactor,
+    yFactor = yFactor,
+    weight = weight
+  )
+}
+
+# Assemble a `PIOutputMapping` record, without the guards above.
+#
+# The user-facing args and on-disk JSON keys are suffixless (`outputPath` /
+# `observedData`), while the in-memory record keeps its id-suffixed field names
+# (`outputPathId` / `observedDataId`), which the runtime build, validation, and
+# serializer all read. This is the mapping seam: the arg feeds the kept record
+# field. The parser (`.parsePIOutputMappings`) reads the JSON key into the arg;
+# the serializer (`.piOutputMappingToJson`) mirrors it back to the key.
+#
+# Split out from `PIOutputMapping()` so authoring and loading can differ in
+# strictness while producing one record shape: authoring a mapping with no output
+# or no observed data is a mistake to reject at the call, whereas a project file
+# (or a legacy workbook) carrying one has to load so `validateProject()` can
+# report it, which is the same parse-leniently-then-validate contract the
+# `dataCombined` section keeps. `runPI()` gates on that validation, so an
+# incomplete mapping never reaches the build.
+#
+# @keywords internal
+# @noRd
+.piOutputMappingRecord <- function(
+  id,
+  scenarios,
+  outputPath,
+  observedData,
+  scaling = NULL,
+  xOffset = 0,
+  yOffset = 0,
+  xFactor = 1,
+  yFactor = 1,
+  weight = NULL
+) {
   rec <- list(
     id = id,
     scenarios = as.character(scenarios),
@@ -485,7 +558,11 @@ print.PITask <- function(x, ...) {
   for (i in seq_along(rawList)) {
     raw <- rawList[[i]]
     id <- raw$id %||% paste0(taskId, "_param_", i)
-    out[[i]] <- PIParameter(
+    # Built without `PIParameter()`'s guards, so a parameter with no path or an
+    # incomplete set of bounds loads and is reported by `validateProject()`
+    # instead of aborting the load of the whole project. The guards still apply
+    # to authoring a parameter through the constructor.
+    out[[i]] <- .piParameterRecord(
       id = id,
       scenarios = as.character(unlist(raw$scenarios %||% list())),
       path = raw$path,
@@ -505,11 +582,17 @@ print.PITask <- function(x, ...) {
   for (i in seq_along(rawList)) {
     raw <- rawList[[i]]
     id <- raw$id %||% paste0(taskId, "_mapping_", i)
-    out[[i]] <- PIOutputMapping(
+    # Built without `PIOutputMapping()`'s required-field guards, so a mapping
+    # that names no output or no observed data loads and is reported by
+    # `validateProject()` (which `runPI()` gates on) instead of aborting the load
+    # of the whole project. A hand-maintained legacy workbook routinely leaves one
+    # such cell blank, and a project that cannot be opened cannot be fixed. The
+    # guards still apply to authoring a mapping through the constructor.
+    out[[i]] <- .piOutputMappingRecord(
       id = id,
       scenarios = as.character(unlist(raw$scenarios %||% list())),
       # Read the suffixless on-disk JSON keys (`outputPath` / `observedData`);
-      # the constructor maps them to the kept record fields.
+      # the record keeps them under their id-suffixed field names.
       outputPath = raw[["outputPath"]],
       observedData = raw[["observedData"]],
       scaling = raw$scaling,
@@ -585,7 +668,33 @@ print.PITask <- function(x, ...) {
     )
 
     for (p in task$parameters) {
-      if (!(p$minValue <= p$startValue && p$startValue <= p$maxValue)) {
+      # The load path is lenient about a parameter's required fields
+      # (`.parsePIParameters()`), so their absence is reported here. The bounds
+      # comparison below reads all three, and `NULL <= NULL` is `logical(0)`,
+      # which `if` cannot branch on, so it only runs once all three are present.
+      missingFields <- c("path", "minValue", "maxValue", "startValue")
+      missingFields <- missingFields[vapply(
+        missingFields,
+        function(field) .isMissingField(p[[field]]),
+        logical(1)
+      )]
+      for (field in missingFields) {
+        result$addCriticalError(
+          "Missing Fields",
+          paste0(
+            "PI task '",
+            taskId,
+            "', parameter '",
+            p$id,
+            "' is missing required field: ",
+            field
+          )
+        )
+      }
+      if (
+        !any(c("minValue", "maxValue", "startValue") %in% missingFields) &&
+          !(p$minValue <= p$startValue && p$startValue <= p$maxValue)
+      ) {
         result$addCriticalError(
           "Invalid Bounds",
           messages$PIInvalidBounds(
@@ -613,6 +722,27 @@ print.PITask <- function(x, ...) {
     }
 
     for (m in task$outputMappings) {
+      # Both are required on a mapping and the load path is lenient about both
+      # (`.parsePIOutputMappings()`). Reported here rather than in the
+      # cross-reference phase, which skips itself once any section has a critical
+      # error and so would not be reached alongside a parameter's own gap. The
+      # record keeps the id-suffixed field names; the message uses the names the
+      # user wrote in the file.
+      for (field in c("outputPath", "observedData")) {
+        if (.isMissingField(m[[paste0(field, "Id")]])) {
+          result$addCriticalError(
+            "Missing Fields",
+            paste0(
+              "PI task '",
+              taskId,
+              "', outputMapping '",
+              m$id,
+              "' does not define an ",
+              field
+            )
+          )
+        }
+      }
       outsideTask <- setdiff(m$scenarios, task$scenarios)
       if (length(outsideTask) > 0L) {
         result$addCriticalError(
