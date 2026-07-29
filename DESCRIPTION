@@ -1,7 +1,7 @@
 Type: Package
 Package: esqlabsR
 Title: ESQlabs utilities package
-Version: 6.0.0.9001
+Version: 5.7.0.9999
 Authors@R: c(
     person("ESQlabs GmbH", role = c("cph", "fnd")),
     person("Pavel", "Balazki", , "pavel.balazki@esqlabs.com", role = c("cre", "aut"),
@@ -62,6 +62,7 @@ VignetteBuilder:
     knitr,
     quarto
 Config/testthat/edition: 3
+Config/testthat/parallel: true
 Config/rcmdcheck/ignore-inconsequential-notes: true
 Encoding: UTF-8
 Language: en-US
