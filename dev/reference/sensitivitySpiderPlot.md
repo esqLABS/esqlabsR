@@ -131,7 +131,7 @@ output paths.
 
 ## See also
 
-Other sensitivity-calculation:
+Other sensitivityCalculation:
 [`sensitivityCalculation()`](https://esqlabs.github.io/esqlabsR/dev/reference/sensitivityCalculation.md),
 [`sensitivityTimeProfiles()`](https://esqlabs.github.io/esqlabsR/dev/reference/sensitivityTimeProfiles.md),
 [`sensitivityTornadoPlot()`](https://esqlabs.github.io/esqlabsR/dev/reference/sensitivityTornadoPlot.md)

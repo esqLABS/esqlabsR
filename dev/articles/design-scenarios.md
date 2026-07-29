@@ -1,574 +1,581 @@
-# 2. Design Scenarios
+# Design scenarios
 
-Within the `esqlabsR` framework, the simulations are run by defining and
-executing multiple *scenarios*. A scenario is defined by the simulation
-file containing the model structure, parametrization of the model,
-application protocol, and (optionally) the physiology of the simulated
-individual or population. To simplify scenarios set up, all this
-information is stored in Excel files with a defined structure.
+A **Scenario** is the unit of work in `esqlabsR`: one runnable
+simulation, described declaratively. It names the model to run, the
+subject to run it on, the dosing, the parameters to apply, the outputs
+to record, and the time grid. You author scenarios (and the definitions
+they reference) into a Project, then hand the Project to
+[`runScenarios()`](https://esqlabs.github.io/esqlabsR/dev/reference/runScenarios.md)
+to execute them. This article shows how to build scenarios and their
+supporting definitions from R, and how to edit, rename, duplicate, and
+remove them.
 
-The step-wise approach of setting up a new simulation scenario is shown
-in Figure 1; a detailed description of the Excel file structures and `R`
-code are given in the [Configuration files structure](#files-structure)
-section.
+This article assumes you know what a Project is and how to load one; see
+[`vignette("projects")`](https://esqlabs.github.io/esqlabsR/dev/articles/projects.md)
+if not.
 
-![Figure 1: Workflow of scenario setup](Figures/ScenarioWorkflow.png)
+## Working against a writable copy
 
-Figure 1: Workflow of scenario setup
+Every authoring function in this article mutates a Project in memory,
+and
+[`saveProject()`](https://esqlabs.github.io/esqlabsR/dev/reference/saveProject.md)
+reconciles those edits to the `definitions/scenarios/` tree on disk. So
+you never want to author against (and save over) the package’s own
+bundled example. Instead, scaffold a fresh, writable copy of the worked
+example into a temporary directory and load that:
 
-## Add a new scenario
+``` r
 
-### 1. Add the model file
+project_dir <- withr::local_tempdir()
+initProject(destination = project_dir, type = "example", createExcel = FALSE)
+project <- loadProject(file.path(project_dir, "Project.json"))
+project
+#> <Project>
+#>   • Name: Example
+#>   • Description: Aciclovir IV PK example project
+#>   • Schema Version: 2.0
+#>   • esqlabsR Version: 6.0.0
+#>   • JSON File: Project.json
+#> 
+#> ── Paths ───────────────────────────────────────────────────────────────────────
+#>   • Simulations Folder: Models/Simulations
+#>   • Data Folder: Data
+#>   • Populations Folder: Populations
+#>   • Output Folder: Results
+#>   • Definitions Folder: definitions
+#> 
+#> ── Definitions ─────────────────────────────────────────────────────────────────
+#>   • Scenarios: 3
+#>   • Individuals: 1
+#>   • Populations: 1
+#>   • Parameter Sets: 4
+#>   • Initial Conditions: 1
+#>   • Applications: 1
+#>   • Output Paths: 2
+#>   • Observed Data: 1
+#>   • Data Combined: 1
+#>   • Plots: 1
+#>   • Plot Grids: 1
+#>   • Parameter Identification: 1
+#> 
+#> ── Excel ───────────────────────────────────────────────────────────────────────
+#>   • Configurations Folder: Configurations/
+#>   • Model Parameters File: ModelParameters.xlsx
+#>   • Individuals File: Individuals.xlsx
+#>   • Populations File: Populations.xlsx
+#>   • Scenarios File: Scenarios.xlsx
+#>   • Applications File: Applications.xlsx
+#>   • Plots File: Plots.xlsx
+```
 
-After the model has been developed in PK-Sim and/or MoBi, a simulation
-must be stored as a *.pkml* file in the `Models/Simulations` folder.
+In your own work you would point
+[`loadProject()`](https://esqlabs.github.io/esqlabsR/dev/reference/loadProject.md)
+at your real project instead; everything below operates on this
+`project` object. Each definition kind is reachable as a named list on
+the project, keyed by id, so you can inspect what is defined at any
+time, for example `project$definitions$scenarios`:
 
-### 2. Name the new scenario
+``` r
 
-To set up a simulation/scenario in `R`, open the file `Scenarios.xlsx`
-located in the folder `Parameters`. Start defining a scenario by giving
-it a *name* in the `Scenario_name` column. The scenario name will be
-used later to retrieve simulation results, e.g., in figure definitions.
+project$definitions$scenarios
+#> <DefinitionList>
+#> scenarios (3 definitions):
+#>   • aciclovir_iv
+#>   • aciclovir_iv_population
+#>   • aciclovir_iv_steadystate
+```
 
-### 3. Link to the model file
+## Building the supporting definitions
 
-Specify the simulation `*.pkml` file to use in the column `ModelFile`.
+A scenario can only reference definitions that already exist, so before
+you create the scenario you typically define the pieces it will use. The
+authoring API is uniform: every function takes the project first, then
+the definition’s `id`, then its fields.
 
-If you want to run the simulation with the settings as it has been
-exported from PK-Sim or MoBi, you can proceed to
-[`vignette("run-simulations")`](https://esqlabs.github.io/esqlabsR/dev/articles/run-simulations.md).
+Because an id can become a filename in the `definitions/` tree, ids are
+**canonicalized** the moment they enter the project: lowercased and made
+filename-safe. When canonicalization changes the id you typed, the
+authoring function warns you and stores the canonical form, as the
+[`addOutputPath()`](https://esqlabs.github.io/esqlabsR/dev/reference/addOutputPath.md)
+call below shows. See
+[`vignette("projects")`](https://esqlabs.github.io/esqlabsR/dev/articles/projects.md)
+for the full treatment.
 
-## Customize a scenario
+### Output paths
 
-### 4. Simulation Parameters
+An Output Path maps a short id to a full model path in OSPS notation.
+Recording results by id keeps scenario definitions readable and lets
+several scenarios share the same output:
 
-You can define simulation parameters in the `ModelParameters.xlsx` file.
-To apply them to the simulation, you need to specify which sheets to
-load in the `ModelParameterSheets` column of the `Scenarios.xlsx` file.
+``` r
 
-### 5. Individuals
+addOutputPath(
+  project,
+  id = "Aciclovir/Liver:Conc",
+  path = "Organism|Liver|Intracellular|Aciclovir|Concentration in container"
+)
+#> Warning: Canonicalized 1 id to a safe form:
+#> • "Aciclovir/Liver:Conc" -> "aciclovir_liver_conc"
+project$definitions$outputPaths[["aciclovir_liver_conc"]]
+#> [1] "Organism|Liver|Intracellular|Aciclovir|Concentration in container"
+```
 
-If you want to simulate a specific individual with individual
-characteristics (age, weight, etc.) or apply individual model parameter
-values to the simulation, define the individual in the `IndividualId`
-column. Then create a new individual entry in the `Individuals.xlsx`
-file.
+The id you typed was stored as `aciclovir_liver_conc`. Where the id is
+already canonical no warning appears:
 
-1.  To create a new individual with specific biometrics, create a new
-    row in the `IndividualBiometrics` sheet.
-2.  To define an individual-specific parametrization, create a new sheet
-    and name it as the individual’s ID.
+``` r
 
-If your model contains proteins (e.g., enzymes or transporters), you
-have to specify their ontogenies in the column ‘Protein Ontogenies’ as a
-list (separated by a `,`) of `<Protein>:<Ontogeny>` values. The value of
-`<Ontogeny>` must be one of the standard ontogenies implemented in the
-PK-Sim database (call
-[`ospsuite::StandardOntogeny`](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/StandardOntogeny.html)
-to see the list of supported ontogenies). For example, if your model
-contains proteins with names `CYP3A4_alternative` and
-`CYP2D6_alternative`, you can specify their ontogenies by entering
-`CYP3A4_alternative:CYP3A4, CYP2D6_alternative:CYP2D6` in the ‘Protein
-Ontogenies’ column. If not specified, age-dependent protein expression
-will not be considered.
+addOutputPath(
+  project,
+  id = "aciclovir_kidney",
+  path = "Organism|Kidney|Intracellular|Aciclovir|Concentration in container"
+)
+```
 
-### 6. Population
+### Parameter sets
 
-To run a *population simulation*, specify a population in the column
-`PopulationId`. If you want to create a new population each time you run
-the scenario, define population demographics in the `Demographics` sheet
-of the `PopulationParameters.xlsx` file. Remember that simulation
-results might differ each time you run the scenario, as a new population
-will be generated each time!
+Model parameters are organized into named **Parameter Sets**. A set is a
+group of parameter entries that you apply together. You create an empty
+set with
+[`addParameterSet()`](https://esqlabs.github.io/esqlabsR/dev/reference/addParameterSet.md)
+and fill it with
+[`addParameterEntry()`](https://esqlabs.github.io/esqlabsR/dev/reference/addParameterEntry.md),
+one entry at a time. Each entry is a
+`(containerPath, parameterName, value, units)` quadruple:
 
-If you want to import a population from an existing CSV file, set the
-value of the `ReadPopulationFromCSV` column to `TRUE`. The population
-CSV file must be located in the `Parameters/Populations` folder.
+``` r
 
-To apply ontogenies of proteins implemented in PK-Sim data base, you
-have to specify the ontogenies for the proteins in the model. See
-Section [5. Individuals](#individuals) for more information.
+addParameterSet(project, "ckd")
+addParameterEntry(
+  project,
+  "ckd",
+  containerPath = "Organism|Kidney",
+  parameterName = "GFR",
+  value = 30,
+  units = "ml/min"
+)
+project$definitions$parameterSets[["ckd"]]
+#> <ParameterSet>
+#>   • Number of Entries: 1
+#>   • Organism|Kidney|GFR = 30 [ml/min]
+```
 
-### 7. Time
+Any definition (scenario, individual, or application) references
+parameter sets from this one collection by id, so you can compose a
+shared `global` set with disease-specific sets like `ckd` per scenario.
+[`addParameterEntry()`](https://esqlabs.github.io/esqlabsR/dev/reference/addParameterEntry.md)
+is last-write-wins on a repeated `(containerPath, parameterName)` pair,
+and creates the set on demand if it does not yet exist.
 
-Simulation time can also be changed with the `SimulationTime` and
-`SimulationTimeUnit` columns.
+### Individuals
 
-### 8. OutputPath
+An **Individual** carries the biometrics of a single simulated subject
+plus any individual-specific parameter sets. `species` and `gender` are
+required; the rest are optional named fields:
 
-You can define the outputs of the simulation in the `OutputPathsIds`
-column. For convenience, not the full paths to the outputs must be
-listed, but their acronyms. The full path for each acronym must be
-defined in the sheet `OutputPaths`.
+``` r
 
-### 9. Administration Protocols
+addIndividual(
+  project,
+  "adult_female",
+  species = "Human",
+  gender = "FEMALE",
+  weight = 60,
+  height = 165,
+  age = 35,
+  parameterSets = "adult_male_default"
+)
+project$definitions$individuals[["adult_female"]]
+#> <Individual>
+#>   • Species: Human
+#>   • Population: <empty string>
+#>   • Gender: FEMALE
+#>   • Weight: 60
+#>   • Height: 165
+#>   • Age: 35
+#>   • Parameter Sets: adult_male_default
+```
 
-Finally, you can simulate different administration protocols from the
-same simulation file by defining an application protocol in the column
-`ApplicationProtocol`. See the description below.
+The `parameterSets` argument is a character vector of ids referencing
+the project’s parameter sets; it is validated immediately, so a typo in
+a set id is caught at add time rather than at run time.
 
-Now that you designed your own simulation, read
+The authoring functions are **vectorized over the id**: pass a vector of
+ids to add several definitions in one call. The id sets the count, a
+scalar field is recycled to all of them, a length-matched vector is
+aligned by position, and a field that is itself a vector for one
+definition (such as `parameterSets`) is applied whole to each. The call
+is all-or-nothing: if any one definition fails validation, none is
+applied.
+
+``` r
+
+addIndividual(
+  project,
+  c("teen_male", "teen_female"),
+  species = "Human",
+  gender = c("MALE", "FEMALE"),
+  weight = c(50, 48),
+  height = 160,
+  age = 14,
+  parameterSets = "adult_male_default"
+)
+names(project$definitions$individuals)
+#> [1] "adult_male"   "adult_female" "teen_male"    "teen_female"
+```
+
+### Populations
+
+A **Population** describes a virtual population to sample: a species, a
+number of individuals, and optional demographic ranges (age, weight,
+height, BMI) and their units. A scenario that references a population
+becomes a population simulation:
+
+``` r
+
+addPopulation(
+  project,
+  "pediatric",
+  species = "Human",
+  numberOfIndividuals = 25,
+  ageMin = 2,
+  ageMax = 12,
+  proportionOfFemales = 50
+)
+project$definitions$populations[["pediatric"]]
+#> <Population>
+#>   • Species: Human
+#>   • Number of Individuals: 25
+#>   • Proportion of Females: 50
+#>   • Age Range: 2 - 12
+#>   • Weight Range: <empty string>
+#>   • Height Range: <empty string>
+```
+
+### Applications
+
+An **Application** describes how the substance is administered, stored
+as a reference to the parameter set that holds its dose, start time, and
+other parameters:
+
+``` r
+
+addApplication(
+  project,
+  "aciclovir_iv_500mg",
+  parameterSets = "aciclovir_iv_250mg_default"
+)
+project$definitions$applications[["aciclovir_iv_500mg"]]
+#> <Application>
+#>   • Parameter Sets: aciclovir_iv_250mg_default
+```
+
+## Creating a scenario
+
+With the supporting definitions in place,
+[`addScenario()`](https://esqlabs.github.io/esqlabsR/dev/reference/addScenario.md)
+assembles them into a runnable scenario. The id comes first, right after
+the project, and `modelFile` is the only other required argument;
+everything else is an optional reference or setting:
+
+``` r
+
+addScenario(
+  project,
+  "aciclovir_iv_ckd",
+  modelFile = "Aciclovir.pkml",
+  individual = "adult_male",
+  application = "aciclovir_iv_250mg",
+  parameterSets = c("global", "aciclovir", "ckd"),
+  outputPaths = c("aciclovir_pvb", "aciclovir_kidney"),
+  simulationTime = "0, 24, 60",
+  simulationTimeUnit = "h"
+)
+project$definitions$scenarios[["aciclovir_iv_ckd"]]
+#> <Scenario>
+#>   • Name: aciclovir_iv_ckd
+#>   • Model: Aciclovir.pkml
+#>   • Type: Individual
+#>   • Individual: adult_male
+#>   • Population: <empty string>
+#>   • Protocol: aciclovir_iv_250mg
+#>   • Parameter Sets: global, aciclovir, ckd
+#>   • Initial Conditions: <empty string>
+#>   • Output Paths: 2
+#>   • Steady State: FALSE
+```
+
+A scenario ties together several pieces, all referenced by id and all
+optional except the model file:
+
+- **`modelFile`** (required): the `.pkml` file holding the model
+  structure, named relative to the project’s model folder.
+- **`individual`**: a named Individual applied before simulating. Omit
+  it to simulate the subject as exported from PK-Sim or MoBi.
+- **`population`**: a Population to sample. Supplying one makes the
+  scenario a population simulation.
+- **`application`**: an Application describing how the substance is
+  administered.
+- **`parameterSets`**: Parameter Sets layered onto the model, in the
+  order you list them (later sets override earlier ones).
+- **`outputPaths`**: the Output Paths to record.
+- **`simulationTime`** / **`simulationTimeUnit`**: the simulated time
+  grid and its unit.
+- **`steadyState`**: whether to pre-run the model to a steady state
+  first.
+
+Two behaviors matter here:
+
+- Every reference is checked as the scenario is added. If `individual`,
+  `application`, or any entry in `parameterSets` does not resolve to
+  something defined in the project,
+  [`addScenario()`](https://esqlabs.github.io/esqlabsR/dev/reference/addScenario.md)
+  aborts and the scenario is not created. This is why you build the
+  supporting definitions first.
+- `parameterSets` is applied in order: `global` first, then `aciclovir`,
+  then `ckd`, with later sets overriding earlier ones where they touch
+  the same parameter.
+
+The `simulationTime` argument is a string of one or more intervals. A
+single interval is `"start, end, resolution"`, where resolution is the
+number of points per unit of `simulationTimeUnit`. Several intervals are
+separated by `;`, for example `"0, 20, 60; 20, 504, 1"` to simulate the
+first 20 hours densely and a longer tail coarsely.
+
+To make it a population scenario, pass a `population` instead of (or
+alongside) an `individual`; the scenario’s type switches to a population
+simulation automatically. For a steady-state run, set
+`steadyState = TRUE` and give `steadyStateTime` and
+`steadyStateTimeUnit`. As with every authoring call, the scenario is
+staged in memory; it lands in
+`definitions/scenarios/aciclovir_iv_ckd.json` when you call
+[`saveProject()`](https://esqlabs.github.io/esqlabsR/dev/reference/saveProject.md).
+
+## Editing a scenario in place
+
+You will rarely get a scenario right on the first try. Rather than
+removing and re-adding it, edit it in place with
+[`setScenario()`](https://esqlabs.github.io/esqlabsR/dev/reference/setScenario.md).
+It mirrors
+[`addScenario()`](https://esqlabs.github.io/esqlabsR/dev/reference/addScenario.md)
+exactly, but with two important behaviors:
+
+- **Only the fields you pass change.** Every argument you omit keeps its
+  current value (a partial update).
+- **Passing `NULL` clears an optional field**, whereas omitting the
+  argument leaves it untouched. (The required `modelFile` cannot be
+  cleared.)
+
+Here we widen the time grid and swap the dose, leaving everything else
+as it was:
+
+``` r
+
+setScenario(
+  project,
+  "aciclovir_iv_ckd",
+  application = "aciclovir_iv_500mg",
+  simulationTime = "0, 48, 60"
+)
+project$definitions$scenarios[["aciclovir_iv_ckd"]]
+#> <Scenario>
+#>   • Name: aciclovir_iv_ckd
+#>   • Model: Aciclovir.pkml
+#>   • Type: Individual
+#>   • Individual: adult_male
+#>   • Population: <empty string>
+#>   • Protocol: aciclovir_iv_500mg
+#>   • Parameter Sets: global, aciclovir, ckd
+#>   • Initial Conditions: <empty string>
+#>   • Output Paths: 2
+#>   • Steady State: FALSE
+```
+
+And here we detach the individual entirely by passing `NULL`, so the
+scenario simulates the model’s own default individual:
+
+``` r
+
+setScenario(project, "aciclovir_iv_ckd", individual = NULL)
+project$definitions$scenarios[["aciclovir_iv_ckd"]]$individualId
+#> NULL
+```
+
+The same partial-update, `NULL`-clears pattern applies to the supporting
+definitions.
+[`setIndividual()`](https://esqlabs.github.io/esqlabsR/dev/reference/setIndividual.md)
+and
+[`setPopulation()`](https://esqlabs.github.io/esqlabsR/dev/reference/setPopulation.md)
+change named fields on an existing individual or population, and
+[`setOutputPath()`](https://esqlabs.github.io/esqlabsR/dev/reference/setOutputPath.md)
+changes the literal path bound to an output-path id (keeping the id, so
+every scenario that records it keeps working):
+
+``` r
+
+setIndividual(project, "adult_female", weight = 62, age = 36)
+project$definitions$individuals[["adult_female"]]
+#> <Individual>
+#>   • Species: Human
+#>   • Population: <empty string>
+#>   • Gender: FEMALE
+#>   • Weight: 62
+#>   • Height: 165
+#>   • Age: 36
+#>   • Parameter Sets: adult_male_default
+
+setOutputPath(
+  project,
+  "aciclovir_kidney",
+  path = "Organism|Kidney|Urine|Aciclovir|Concentration"
+)
+project$definitions$outputPaths[["aciclovir_kidney"]]
+#> [1] "Organism|Kidney|Urine|Aciclovir|Concentration"
+```
+
+As with
+[`setScenario()`](https://esqlabs.github.io/esqlabsR/dev/reference/setScenario.md),
+a reference argument is validated before anything is written, so an
+invalid edit touches neither memory nor disk. To take a parameter entry
+back out use
+[`removeParameterEntry()`](https://esqlabs.github.io/esqlabsR/dev/reference/removeParameterEntry.md)
+(the set is auto-removed if it becomes empty), and
+[`removeParameterSet()`](https://esqlabs.github.io/esqlabsR/dev/reference/removeParameterSet.md)
+drops a whole set.
+
+## Renaming, duplicating, and removing scenarios
+
+A common authoring move is to take a working scenario as a template for
+a variant.
+[`duplicateScenario()`](https://esqlabs.github.io/esqlabsR/dev/reference/duplicateScenario.md)
+makes an independent copy under a new id, leaving the original
+untouched:
+
+``` r
+
+duplicateScenario(project, "aciclovir_iv", "aciclovir_iv_highdose")
+names(project$definitions$scenarios)
+#> [1] "aciclovir_iv"             "aciclovir_iv_population" 
+#> [3] "aciclovir_iv_steadystate" "aciclovir_iv_ckd"        
+#> [5] "aciclovir_iv_highdose"
+```
+
+[`renameScenario()`](https://esqlabs.github.io/esqlabsR/dev/reference/renameScenario.md)
+changes a scenario’s id in memory, keeping the stored name in step with
+the new key; the next
+[`saveProject()`](https://esqlabs.github.io/esqlabsR/dev/reference/saveProject.md)
+reconciles the tree, writing the definition under the new id and
+deleting the old file:
+
+``` r
+
+renameScenario(project, "aciclovir_iv_highdose", "aciclovir_iv_high")
+names(project$definitions$scenarios)
+#> [1] "aciclovir_iv"             "aciclovir_iv_population" 
+#> [3] "aciclovir_iv_steadystate" "aciclovir_iv_ckd"        
+#> [5] "aciclovir_iv_high"
+```
+
+Both take the existing id first and the new id second, and both
+canonicalize their ids the same way
+[`addScenario()`](https://esqlabs.github.io/esqlabsR/dev/reference/addScenario.md)
+does. Neither will silently overwrite an existing scenario: a rename or
+duplicate onto an id already in use aborts.
+
+When a scenario has served its purpose,
+[`removeScenario()`](https://esqlabs.github.io/esqlabsR/dev/reference/removeScenario.md)
+drops it from the in-memory project; the next
+[`saveProject()`](https://esqlabs.github.io/esqlabsR/dev/reference/saveProject.md)
+reconciles the tree and deletes its definition file:
+
+``` r
+
+removeScenario(project, "aciclovir_iv_high")
+names(project$definitions$scenarios)
+#> [1] "aciclovir_iv"             "aciclovir_iv_population" 
+#> [3] "aciclovir_iv_steadystate" "aciclovir_iv_ckd"
+```
+
+## Seeding scenarios from a model file
+
+When you already have one or more `.pkml` files and want a scenario per
+file,
+[`createScenariosFromPKML()`](https://esqlabs.github.io/esqlabsR/dev/reference/createScenariosFromPKML.md)
+saves you from writing each
+[`addScenario()`](https://esqlabs.github.io/esqlabsR/dev/reference/addScenario.md)
+call by hand. It reads each model file, extracts the output selections
+and the simulation time grid embedded in it, and adds a scenario to the
+project for each one:
+
+``` r
+
+pkml_path <- file.path(project_dir, "Models", "Simulations", "Aciclovir.pkml")
+createScenariosFromPKML(
+  pkmlFilePaths = pkml_path,
+  project = project,
+  scenarios = "aciclovir_from_pkml"
+)
+project$definitions$scenarios[["aciclovir_from_pkml"]]
+#> <Scenario>
+#>   • Name: aciclovir_from_pkml
+#>   • Model: Aciclovir.pkml
+#>   • Type: Individual
+#>   • Individual: <empty string>
+#>   • Population: <empty string>
+#>   • Protocol: <empty string>
+#>   • Parameter Sets: <empty string>
+#>   • Initial Conditions: <empty string>
+#>   • Output Paths: 2
+#>   • Steady State: FALSE
+```
+
+For each model, the call:
+
+- Registers the output paths found in the model, reusing an existing id
+  when the literal path is already known and generating a readable id
+  otherwise.
+- Makes the new scenario names unique against the scenarios already
+  present.
+- Recycles a single per-scenario setting (individual, population,
+  application, parameter sets) to every scenario, or aligns a longer
+  vector by position.
+
+Pass a vector of `pkmlFilePaths` to create several scenarios at once.
+Pass `scenarios` to name them yourself; otherwise the simulation names
+stored inside the models are used.
+
+This is a starting point, not the finished article: the scenarios it
+creates are ordinary scenarios, so you refine them afterward with
+[`setScenario()`](https://esqlabs.github.io/esqlabsR/dev/reference/setScenario.md),
+attach an individual or parameter sets, and adjust the time grid,
+exactly as in the sections above.
+
+## Where to go next
+
+You now have the full authoring loop: build the supporting definitions
+(output paths, parameter sets, individuals, populations, applications),
+assemble them into scenarios with
+[`addScenario()`](https://esqlabs.github.io/esqlabsR/dev/reference/addScenario.md),
+refine them with
+[`setScenario()`](https://esqlabs.github.io/esqlabsR/dev/reference/setScenario.md)
+and the other field setters, and reshape the set with
+[`duplicateScenario()`](https://esqlabs.github.io/esqlabsR/dev/reference/duplicateScenario.md),
+[`renameScenario()`](https://esqlabs.github.io/esqlabsR/dev/reference/renameScenario.md),
+and
+[`removeScenario()`](https://esqlabs.github.io/esqlabsR/dev/reference/removeScenario.md).
+Every edit is staged in memory; call `saveProject(project)` to reconcile
+the `definitions/` tree to the current in-memory state, or
+`reloadProject(project)` to discard the unsaved edits and re-read from
+disk.
+
+From here, validate what you have built with
+[`validateProject()`](https://esqlabs.github.io/esqlabsR/dev/reference/validateProject.md)
+(see
+[`vignette("validate-project")`](https://esqlabs.github.io/esqlabsR/dev/articles/validate-project.md)),
+then run it:
 [`vignette("run-simulations")`](https://esqlabs.github.io/esqlabsR/dev/articles/run-simulations.md)
-to continue the process. To learn more about simulation design, read the
-following sections.
-
-## Alternative: Creating scenarios directly from PKML files
-
-For more advanced users or when working programmatically, `esqlabsR`
-provides functions to create scenario configurations directly from PKML
-files, bypassing the need to manually fill in Excel files:
-
-- [`createScenarioConfigurationsFromPKML()`](https://esqlabs.github.io/esqlabsR/dev/reference/createScenarioConfigurationsFromPKML.md):
-  Creates scenario configurations from PKML files by automatically
-  extracting simulation settings, applications, and output paths.
-- [`addScenarioConfigurationsToExcel()`](https://esqlabs.github.io/esqlabsR/dev/reference/addScenarioConfigurationsToExcel.md):
-  Writes those configurations to the project’s Excel files
-  (`Scenarios.xlsx` and `Applications.xlsx`) so they can be used in the
-  standard `esqlabsR` workflow.
-
-This approach is particularly useful when:
-
-- You have multiple PKML files to convert into scenarios at once.
-- You want to automate or script scenario creation.
-- Your simulation files already contain the settings you need
-  (applications, output paths, simulation time).
-
-### What is automatically extracted from the PKML file
-
-When you call
-[`createScenarioConfigurationsFromPKML()`](https://esqlabs.github.io/esqlabsR/dev/reference/createScenarioConfigurationsFromPKML.md)
-without providing an argument for a particular setting, the function
-reads it directly from the PKML file:
-
-| Extracted from PKML | Corresponding argument | Fallback |
-|----|----|----|
-| Application protocol names | `applicationProtocols` | Scenario name |
-| Output paths (`outputSelections`) | `outputPaths` | Simulation outputs defined in the PKML/simulation |
-| Simulation time intervals | `simulationTime` | (none) |
-| Simulation time unit | `simulationTimeUnit` | `"min"` |
-
-You can override any of these by supplying the corresponding argument
-explicitly.
-
-### Basic workflow
-
-The typical workflow for this approach consists of two steps:
-
-**Step 1 — Create scenario configurations from PKML:**
-
-``` r
-
-projectConfiguration <- createProjectConfiguration("path/to/project/ProjectConfiguration.xlsx")
-
-scenarios <- createScenarioConfigurationsFromPKML(
-  pkmlFilePaths = "Models/Simulations/simulation.pkml",
-  projectConfiguration = projectConfiguration
-)
-```
-
-**Step 2 — Write them to the project Excel files:**
-
-``` r
-
-addScenarioConfigurationsToExcel(
-  scenarioConfigurations = scenarios,
-  projectConfiguration = projectConfiguration
-)
-```
-
-That’s all. After calling
-[`addScenarioConfigurationsToExcel()`](https://esqlabs.github.io/esqlabsR/dev/reference/addScenarioConfigurationsToExcel.md),
-the scenario appears in `Scenarios.xlsx` and any application protocol
-parameters are written to `Applications.xlsx`, ready to be used with
-[`createScenarios()`](https://esqlabs.github.io/esqlabsR/dev/reference/createScenarios.md).
-
-### Working with multiple PKML files
-
-Pass a character vector of paths to create one scenario per file. Use
-`scenarioNames` to give each scenario a meaningful name (otherwise the
-simulation name stored inside the PKML is used):
-
-``` r
-
-scenarios <- createScenarioConfigurationsFromPKML(
-  pkmlFilePaths = c(
-    "Models/Simulations/adult.pkml",
-    "Models/Simulations/pediatric.pkml"
-  ),
-  projectConfiguration = projectConfiguration,
-  scenarioNames = c("Adult", "Pediatric")
-)
-
-addScenarioConfigurationsToExcel(
-  scenarioConfigurations = scenarios,
-  projectConfiguration = projectConfiguration
-)
-```
-
-### Vector recycling — same PKML, different settings
-
-All arguments support vectorization. A **length-1** value is recycled to
-every scenario, and **longer vectors** must match the total number of
-scenarios. This makes it easy to create many scenarios from a single
-base model:
-
-``` r
-
-# Three scenarios from the same PKML file, each with a different protocol
-scenarios <- createScenarioConfigurationsFromPKML(
-  pkmlFilePaths = "Models/Simulations/base_model.pkml",  # recycled to all 3
-  projectConfiguration = projectConfiguration,
-  scenarioNames = c("LowDose", "MediumDose", "HighDose"),
-  applicationProtocols = c("Low_Protocol", "Med_Protocol", "High_Protocol")
-)
-```
-
-### Different settings per scenario
-
-You can fully control every setting for each scenario individually:
-
-``` r
-
-scenarios <- createScenarioConfigurationsFromPKML(
-  pkmlFilePaths = c(
-    "Models/Simulations/pediatric.pkml",
-    "Models/Simulations/adult.pkml",
-    "Models/Simulations/elderly.pkml"
-  ),
-  projectConfiguration = projectConfiguration,
-  scenarioNames = c("Pediatric", "Adult", "Elderly"),
-  individualId = c("Child_001", "Adult_001", "Elderly_001"),
-  applicationProtocols = c("Pediatric_Dose", "Standard_Dose", "Reduced_Dose"),
-  steadyState = c(FALSE, TRUE, TRUE),
-  steadyStateTime = c(NA, 2000, 1500)
-)
-```
-
-### Custom output paths
-
-Supply a **named vector**, wrapped in a list, for `outputPaths` to
-assign short aliases to the full model paths. The names become the
-`OutputPathId` values in the `OutputPaths` sheet of `Scenarios.xlsx`:
-
-``` r
-
-scenarios <- createScenarioConfigurationsFromPKML(
-  pkmlFilePaths = "Models/Simulations/simulation.pkml",
-  projectConfiguration = projectConfiguration,
-  outputPaths = list(c(
-    "plasma" = "Organism|PeripheralVenousBlood|Drug|Plasma (Peripheral Venous Blood)",
-    "liver"  = "Organism|Liver|Intracellular|Drug|Concentration in container"
-  ))
-)
-```
-
-### Appending vs. replacing scenarios
-
-By default,
-[`addScenarioConfigurationsToExcel()`](https://esqlabs.github.io/esqlabsR/dev/reference/addScenarioConfigurationsToExcel.md)
-**appends** new scenarios to the existing content of `Scenarios.xlsx`.
-Set `appendToExisting = FALSE` to overwrite the file completely with
-only the new scenarios:
-
-``` r
-
-# Replace all existing scenarios with the new ones
-addScenarioConfigurationsToExcel(
-  scenarioConfigurations = scenarios,
-  projectConfiguration = projectConfiguration,
-  appendToExisting = FALSE
-)
-```
-
-## Details
-
-### Configuration files structure
-
-The relevant Excel files for the definition of the scenarios are:
-
-- `ApplicationParameters.xlsx`
-- `Individuals.xlsx`
-- `ModelParameters.xlsx`
-- `PopulationParameters.xlsx`
-- `Scenarios.xlsx`
-
-The `Scenarios` sheet of the `Scenarios.xlsx` file has the following
-structure:
-
-#### Scenario_name
-
-Unique name of the scenario. The name must be a [valid R variables
-name](https://cran.r-project.org/doc/FAQ/R-FAQ.html#What-are-valid-names_003f).
-
-#### IndividualId
-
-Name (ID) of an individual. This name refers to the name of the
-individual as used in Excel file `Individuals.xlsx` for the definition
-of the biometric properties (sheet `IndividualBiometrics`) of the
-simulated individual individual-specific model parameters. For the
-latter, create a separate sheet in the `Individuals.xlsx` files with the
-sheet name being the `IndividualId`. The structure of these sheets is
-the same as the structure of the sheets in the `ModelParameter.xlsx`
-file, see description below. **IndividualId** may be empty. In this
-case, the individual as defined in the `pkml` simulation without any
-individual-specific model parameters will be simulated. The same
-individual can be used in multiple scenarios. It is possible to scale
-from a human model to the species **Beagle**, **Dog**, **Minipig**,
-**Mouse**, **Rat**, **Rabbit**, and **Monkey** by applying the
-respective individual to the simulation. Other species scalings are
-technically possible but the correctness of the results is not
-guaranteed as there exist some structural differences between the
-species.
-
-#### PopulationId
-
-Name (ID) of a population. If empty, the scenario is simulated as an
-individual simulation. Otherwise, population simulation is performed. If
-the column **ReadPopulationFromCSV** is set to `FALSE`, **PopulationId**
-refers to the name of the population as defined in the sheet
-`Demographics` of the file `PopulationParameters.xlsx`. To create a
-population with specific demographic characteristics, define an entry
-with the same population id in the `Demographics`. The same population
-can be used in multiple scenarios. If the column
-**ReadPopulationFromCSV** is set to `TRUE`, the population will be
-imported from the CSV file located in the folder
-`Parameters/Populations`, the name of the file must be the id of the
-population. **Note**: You can define both an **IndividualId** and a
-**PopulationId**. In this case, individual-specific parameters from the
-`IndividualParameters.xlsx` will be applied to the simulation before
-applying the population parameters. Keep in mind, that any physiological
-parameters defined for an individual that are also part of the parameter
-set of a population will be overwritten by the population! If, e.g., you
-specify the GFR of the individual in the `IndividualParameters.xlsx`, it
-will be overwritten by the GFR values sampled in the simulation.
-
-#### ModelParameterSheets
-
-A list of sheet names from the `ModelParameter.xlsx` file, separated by
-a `,`. Each sheet must contain `Container Path`, `Parameter Name`,
-`Value`, and `Units`. Parameter values from specified sheets will be
-applied to the model according to the order of their definition. E.g.,
-if we define `Global, Aciclovir`, then parameters from the `Aciclovir`
-sheet will be applied after the `Global` parameters.
-**ModelParameterSheets** may be empty or specify as many sheets as
-required. Note that the specified sheets must be present in the
-`ModelParameter.xlsx` file. This approach aims to have *global*
-parameters that can be applied to most scenarios and a separate set of
-parameters for, e.g., different *disease states* (parameter sheets
-`Healthy` and `CKD`) or separate parametrization of different
-*compounds* (sheet `Aciclovir`).  
-You can further refine the parametrization of the scenario by specifying
-the individual parameters in the `IndividualParameters.xlsx` file.
-Create a sheet with the name as the *IndividualId* specified for the
-respective scenario with the same structure as the
-`ModelParameters.xlsx` file. This way, you can define, e.g.,
-individual-specific clearance values or, as in the example case, the
-glomerular filtration rate. Individual-specific parameters are applied
-after the parameters defined in the *ModelParameterSheets*. You can use
-an individual in multiple scenarios. This step is ignored if an
-individual is specified in the scenario definition, but no sheet with
-this name exists in the IndividualParameters.xlsx file.
-
-#### ApplicationProtocol
-
-Name of the application protocol that will be applied. Applications are
-defined as parameters that will be applied to the model in the file
-`ApplicationParameters.xlsx`. For each application, create a sheet with
-the name as specified in the **ApplicationProtocol** entry and populate
-it with the same structure as the `ModelParameter.xlsx` file.
-Configuring application protocols this way requires that the loaded
-simulation includes all possible applications that can be turned on and
-off by setting parameters, e.g., the `Dose` or `Start time` parameters.
-As it might be cumbersome to create entries for all administration
-parameters manually, we can use the getAllApplicationParameters()
-function to get a list of all (constant) parameters in the
-`Applications` container. In the following example, we will extract
-application parameters for the molecule `Aciclovir` from the example
-simulation:
-
-``` r
-
-sim <- loadSimulation(system.file(
-  "extdata",
-  "Aciclovir.pkml",
-  package = "ospsuite"
-))
-applicationParams <- getAllApplicationParameters(sim)
-print(applicationParams)
-#> [[1]]
-#> <Parameter>
-#>   • Quantity Type: Parameter
-#>   • Path: Events|IV 250mg 10min|Application_1|ProtocolSchemaItem|Start time
-#>   • Value: 0.00e+00 [min]
-#> 
-#> ── Formula ──
-#> 
-#>   • isConstant: TRUE
-#> 
-#> [[2]]
-#> <Parameter>
-#>   • Quantity Type: Parameter
-#>   • Path: Events|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose
-#>   • Value: 2.50e-04 [kg]
-#> 
-#> ── Formula ──
-#> 
-#>   • isConstant: TRUE
-#> 
-#> [[3]]
-#> <Parameter>
-#>   • Quantity Type: Parameter
-#>   • Path: Events|IV 250mg
-#>   10min|Application_1|ProtocolSchemaItem|DosePerBodySurfaceArea
-#>   • Value: 0.00e+00 [kg/dm²]
-#> 
-#> ── Formula ──
-#> 
-#>   • isConstant: TRUE
-#> 
-#> [[4]]
-#> <Parameter>
-#>   • Quantity Type: Parameter
-#>   • Path: Events|IV 250mg
-#>   10min|Application_1|ProtocolSchemaItem|DosePerBodyWeight
-#>   • Value: 0.00e+00 [kg/kg]
-#> 
-#> ── Formula ──
-#> 
-#>   • isConstant: TRUE
-#> 
-#> [[5]]
-#> <Parameter>
-#>   • Quantity Type: Parameter
-#>   • Path: Events|IV 250mg 10min|Application_1|ProtocolSchemaItem|Infusion time
-#>   • Value: 10.00 [min]
-#> 
-#> ── Formula ──
-#> 
-#>   • isConstant: TRUE
-```
-
-And export the parameters to an Excel file using the
-[`exportParametersToXLS()`](https://esqlabs.github.io/esqlabsR/dev/reference/exportParametersToXLS.md)
-function:
-
-``` r
-
-exportParametersToXLS(
-  parameters = applicationParams,
-  paramsXLSpath = "../Applications.xlsx"
-)
-```
-
-If you need to add more parameters to an existing Excel file without
-overwriting it, you can use the `append` parameter:
-
-``` r
-
-# Add more parameters to existing file
-exportParametersToXLS(
-  parameters = additionalParams,
-  paramsXLSpath = "../Applications.xlsx",
-  sheet = "AdditionalProtocol",
-  append = TRUE
-)
-```
-
-The created Excel file will have the same structure as all
-Parameter-files and can be directly loaded in MoBi or R using the
-[`readParametersFromXLS()`](https://esqlabs.github.io/esqlabsR/dev/reference/readParametersFromXLS.md)
-function.
-
-#### SimulationTime
-
-Time of the simulation. Multiple simulation time intervals can be
-defined, each being a triplet of \<StartTime, EndTime, Resolution\>
-values. Resolution is the number of simulated points per time unit
-defined in the column `TimeUnit`. Simulation intervals are separated by
-a `;`.
-
-For example, to simulate the model for 10 minutes with a resolution of 1
-point per minute, the value of the column `SimulationTime` should be
-`0, 10, 1`, and that of the column `SimulationTimeUnit` should be `min`.
-To simulate the model for
-
-- 20 hours with a resolution of 1 point per minute, then
-- for three weeks (equals to 3*7*24 = 504 hours) with a resolution of 1
-  point per hour, and finally
-- for two days (equals to 504 + 2\*24 = 552 hours) with a resolution of
-  10 points per hour,
-
-the value of the column `SimulationTime` should be
-`0, 20, 60; 20, 504, 1; 504, 552, 10`, and that of the column
-`SimulationTimeUnit` should be `h`.
-
-#### SimulationTimeUnit
-
-Unit for `SimulationTime`. For supported units, see
-[`ospsuite::ospUnits`](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/ospUnits.html).
-
-#### SteadyState
-
-If `TRUE`, the model will be simulated for a “sufficiently long” time
-(1000 minutes by default).
-
-#### SteadyStateTime
-
-Time for the steady state.
-
-#### SteadyStateTimeUnit
-
-Unit for `SteadyStateTime`. For supported units, see
-[`ospsuite::ospUnits`](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/ospUnits.html).
-
-#### ModelFile
-
-Name of the `pkml` file with the simulation. It must be located in the
-folder defined in `ProjectConfiguration$modelFolder`.
-
-#### OutputPathsIds
-
-Paths of model outputs (i.e., paths to the molecules/ parameters for
-which outputs will be simulated) can be defined in the sheet
-`OutputPaths`. Create an entry for each output path by entering the full
-path into the column `OutputPath` and defining a unique identifier for
-this path in the column `OutputPathId`. The content of the sheet could
-look like this:
-
-| OutputPathId | OutputPath |
-|----|----|
-| Aciclovir_PVB | Organism\|PeripheralVenousBlood\|Aciclovir\|Plasma (Peripheral Venous Blood) |
-| Aciclovir_fat_cell | Organism\|Fat\|Intracellular\|Aciclovir\|Concentration in container |
-
-In the `Scenarios` sheet, enter the IDs of all paths the outputs should
-be generated for, separated by a comma, e.g.,
-`Aciclovir_PVB, Aciclovir_fat_cell`.
-
-When creating scenarios programmatically with
-[`createScenarioConfigurationsFromPKML()`](https://esqlabs.github.io/esqlabsR/dev/reference/createScenarioConfigurationsFromPKML.md),
-you can provide `outputPaths` as a list of named vectors (one element
-per scenario), where the element names become the `OutputPathId` values
-automatically — see [Custom output paths](#custom-output-paths) above.
-Avoid passing a bare named vector, which would be recycled across
-scenarios.
-
-### Scenario parameterization hierarchy
-
-The final parameterization combines the different parameterization steps
-defined at various levels, as described in the section above. The
-following figure summarizes the hierarchy of the parameterization.
-
-![Parametrization sequence](Figures/ParametrizationHierarchy.png)
-
-Parametrization sequence
-
-If a parameter path is defined in multiple steps, its value will be
-overwritten by the subsequent steps. That means individual parameter
-values will overwrite the values defined in the “ModelParameters.xlsx”
-file, and parameters specified in the `customParams` argument of the
-[`createScenarios()`](https://esqlabs.github.io/esqlabsR/dev/reference/createScenarios.md)
-function will overwrite everything else.
-
-The order of parameter sheets of the “ModelParameters.xlsx” file defined
-in the **ModelParameterSheets** column defines the order in which the
-parameters are applied.
+covers passing the project to
+[`runScenarios()`](https://esqlabs.github.io/esqlabsR/dev/reference/runScenarios.md)
+and collecting results, and
+[`vignette("plot-results")`](https://esqlabs.github.io/esqlabsR/dev/articles/plot-results.md)
+covers turning those results into figures.

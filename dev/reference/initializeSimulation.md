@@ -13,6 +13,7 @@ initializeSimulation(
   simulation,
   individualCharacteristics = NULL,
   additionalParams = NULL,
+  additionalInitialConditions = NULL,
   stopIfParameterNotFound = TRUE
 )
 ```
@@ -30,6 +31,13 @@ initializeSimulation(
 - additionalParams:
 
   Optional named list with lists 'paths', 'values', and 'units'.
+
+- additionalInitialConditions:
+
+  Optional named list with lists 'paths', 'values', and 'units', giving
+  molecule start values to apply via
+  [`ospsuite::setQuantityValuesByPath()`](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/setQuantityValuesByPath.html)
+  after the parameters.
 
 - stopIfParameterNotFound:
 

@@ -2,86 +2,1299 @@
 
 ## esqlabsR (development version)
 
-### Minor improvements and bug fixes
-
-- [`saveSensitivityCalculation()`](https://esqlabs.github.io/esqlabsR/dev/reference/saveSensitivityCalculation.md)
-  now writes the simulation as `simulation.pkml` into the output
-  directory, and
-  [`loadSensitivityCalculation()`](https://esqlabs.github.io/esqlabsR/dev/reference/loadSensitivityCalculation.md)
-  loads it from there, so a saved sensitivity calculation is
-  self-contained and can be reloaded even when the original simulation
-  file is unavailable
-  ([\#878](https://github.com/esqLABS/esqlabsR/issues/878)).
-- [`isTableFormulasEqual()`](https://esqlabs.github.io/esqlabsR/dev/reference/isTableFormulasEqual.md)
-  now compares every point pair of the two table formulas instead of
-  only the first, and treats two empty tables as equal (previously
-  returned `NULL`)
-  ([\#1056](https://github.com/esqLABS/esqlabsR/issues/1056)).
-- [`loadSensitivityCalculation()`](https://esqlabs.github.io/esqlabsR/dev/reference/loadSensitivityCalculation.md)
-  no longer rejects valid saved results that use per-parameter variation
-  ranges, absolute variation, or that dropped failed runs; the integrity
-  check now counts the actually saved result files
-  ([\#1056](https://github.com/esqLABS/esqlabsR/issues/1056)).
-- [`sensitivityCalculation()`](https://esqlabs.github.io/esqlabsR/dev/reference/sensitivityCalculation.md)
-  now restores the simulation’s original output selections after the
-  analysis, including when an error occurs, so the supplied simulation
-  is left unchanged
-  ([\#1056](https://github.com/esqLABS/esqlabsR/issues/1056)).
-- [`sensitivityCalculation()`](https://esqlabs.github.io/esqlabsR/dev/reference/sensitivityCalculation.md)
-  now errors clearly when `variationType = "absolute"` is used with a
-  parameter whose initial value is 0, instead of silently producing
-  invalid scaling factors
-  ([\#1056](https://github.com/esqLABS/esqlabsR/issues/1056)).
-- [`sensitivityCalculation()`](https://esqlabs.github.io/esqlabsR/dev/reference/sensitivityCalculation.md)
-  now aligns baseline values by output path when computing percent
-  change and sensitivity, fixing possible misalignment with multiple
-  output paths
-  ([\#1056](https://github.com/esqLABS/esqlabsR/issues/1056)).
-- [`sensitivityCalculation()`](https://esqlabs.github.io/esqlabsR/dev/reference/sensitivityCalculation.md)
-  no longer errors when all runs for a parameter fail; it now warns and
-  omits that parameter from the results
-  ([\#1056](https://github.com/esqLABS/esqlabsR/issues/1056)).
-- [`sensitivityTornadoPlot()`](https://esqlabs.github.io/esqlabsR/dev/reference/sensitivityTornadoPlot.md)
-  now matches the `parameterFactor` and its reciprocal against the
-  analysis results with a numerical tolerance, so user supplied
-  reciprocal factors are no longer rejected due to floating point
-  representation
-  ([\#1056](https://github.com/esqLABS/esqlabsR/issues/1056)).
-- [`createPITasks()`](https://esqlabs.github.io/esqlabsR/dev/reference/createPITasks.md)
-  no longer rejects parameter bounds that exclude the model’s current
-  value, applying the sheet `StartValue` before validating them
-  ([\#1140](https://github.com/esqLABS/esqlabsR/issues/1140)).
-
-## esqlabsR 5.7.0
-
-### New features
-
-- Added Excel-based parameter identification (PI) workflow:
-  [`readPITaskConfigurationFromExcel()`](https://esqlabs.github.io/esqlabsR/dev/reference/readPITaskConfigurationFromExcel.md),
-  [`createPITasks()`](https://esqlabs.github.io/esqlabsR/dev/reference/createPITasks.md),
-  and
-  [`runPI()`](https://esqlabs.github.io/esqlabsR/dev/reference/runPI.md)
-  enable defining and running PI tasks from
-  `ParameterIdentification.xlsx`. Supports multi-scenario fitting,
-  parameter grouping, residual scaling, and optional confidence interval
-  estimation. See
-  [`vignette("pi-workflow")`](https://esqlabs.github.io/esqlabsR/dev/articles/pi-workflow.md)
-  ([\#928](https://github.com/esqLABS/esqlabsR/issues/928)).
-
 ### Breaking changes
 
-- Bumped minimum required `ospsuite` version to 12.4.2; earlier versions
-  fail to load data correctly
-  ([\#1000](https://github.com/esqLABS/esqlabsR/issues/1000)).
+- The project model is now JSON-first. A project is a `Project` (R6
+  class) loaded with
+  [`loadProject()`](https://esqlabs.github.io/esqlabsR/dev/reference/loadProject.md);
+  `Project` replaces `ProjectConfiguration` as the canonical in-memory
+  representation, merging the project sections (scenarios, individuals,
+  populations, applications, observed data, plots, parameter
+  identification) with the file paths previously held by
+  `ProjectConfiguration`. Editing follows an explicit-save model: for a
+  loaded project memory is the source of truth, so every `add*` /
+  `remove*` / `set*` edit mutates memory only, and
+  `saveProject(project)` reconciles the on-disk `definitions/` tree to
+  memory (writing only the definitions that changed and deleting the
+  ones removed). `reloadProject(project)` discards unsaved edits,
+  `snapshotProject(project)` freezes the current state to a portable
+  single-file `.esqlabsR`, and `restoreProject(snapshot, dir)`
+  materializes one back into a working tree; `projectStatus(project)`
+  reports, on two axes, whether there are unsaved edits and whether a
+  configured Excel side-car is a stale export. Excel becomes a secondary
+  I/O bridge through
+  [`importProjectFromExcel()`](https://esqlabs.github.io/esqlabsR/dev/reference/importProjectFromExcel.md)
+  and
+  [`exportProjectToExcel()`](https://esqlabs.github.io/esqlabsR/dev/reference/exportProjectToExcel.md).
+  ([\#908](https://github.com/esqLABS/esqlabsR/issues/908),
+  [\#1110](https://github.com/esqLABS/esqlabsR/issues/1110))
+- Every project section is stored as a per-definition tree, not inside
+  `Project.json`. A project on disk is now a directory: each section is
+  a subfolder under a `definitions/` directory next to `Project.json`,
+  with one JSON file per definition (`definitions/scenarios/`,
+  `definitions/individuals/`, `definitions/populations/`,
+  `definitions/parameter-sets/`, `definitions/applications/`,
+  `definitions/output-paths/`, `definitions/observed-data/`,
+  `definitions/parameter-identification/`, and the plots section split
+  across `definitions/data-combined/`, `definitions/plots/`, and
+  `definitions/plot-grids/`, one file per data combination, plot, and
+  plot grid). The `definitions/` folder holds the project’s authored
+  definition files, separated from the referenced working files
+  (`Models/`, `Data/`, `Populations/`, `Results/`).
+  [`loadProject()`](https://esqlabs.github.io/esqlabsR/dev/reference/loadProject.md)
+  reads the tree into memory;
+  [`saveProject()`](https://esqlabs.github.io/esqlabsR/dev/reference/saveProject.md)
+  reconciles the tree back to memory, writing only the definitions whose
+  content changed (so an unchanged definition’s file, and its
+  `git diff`, stays untouched) and deleting the
+  `definitions/<kind>/<id>.json` of any definition removed in memory. A
+  save is all-or-nothing: the whole project is serialized in memory
+  first, so if any definition is serializer-hostile (a structurally
+  invalid record) no file is written and a partial tree never lands on
+  disk. A definition’s id is canonicalized to a safe, lowercase
+  single-path-segment id so it maps to a file inside its
+  `definitions/<kind>/` subfolder, and a scenario’s `scenarioName` must
+  match the key it is stored under; a non-ASCII id round-trips
+  correctly. A single-file `Project.json` with every section inlined
+  still loads (treated as a self-contained snapshot), so existing
+  single-file projects keep working. The load path enforces the same id
+  discipline the write path does: a `definitions/` (or
+  `definitions/<kind>/`) path that exists as a regular file rather than
+  a directory aborts the load (a corrupted or mis-synced tree is no
+  longer read as an empty project), a definition file missing its id
+  field or whose id disagrees with its filename aborts naming the file
+  (so two files can never silently collapse onto one id), and a scalar
+  field corrupted into an empty object
+  [`{}`](https://rdrr.io/r/base/Paren.html) (the usual `jsonlite` `null`
+  round-trip) on any kind aborts naming the field and file. Two
+  `observedData` declarations whose sources share a basename now fail
+  fast rather than silently dropping one.
+  ([\#908](https://github.com/esqLABS/esqlabsR/issues/908))
+- `ScenarioConfiguration`, `addScenarioConfigurationsToExcel()`,
+  `createScenarioConfigurationsFromPKML()`,
+  `readScenarioConfigurationFromExcel()`, `setApplications()`,
+  `LegacyScenario`, and `createScenarios()` are removed.
+  [`runScenarios()`](https://esqlabs.github.io/esqlabsR/dev/reference/runScenarios.md)
+  now accepts only a `Project`, and scenarios are constructed from PKML
+  via `createScenariosFromPKML(pkmlFilePaths, project, ...)`.
+  ([\#908](https://github.com/esqLABS/esqlabsR/issues/908))
+- `Scenario` is now a plain-data record built with
+  [`Scenario()`](https://esqlabs.github.io/esqlabsR/dev/reference/Scenario.md).
+  Reading an entry from `project$definitions$scenarios` returns an
+  independent copy; the section accessor is read-only, so to apply a
+  change you read the copy, edit it, and re-submit it through an
+  authoring function
+  (`sc <- project$definitions$scenarios[["X"]]; sc$modelFile <- "..."; setScenario(project, "X", ...)`).
+  ([\#908](https://github.com/esqLABS/esqlabsR/issues/908),
+  [\#1048](https://github.com/esqLABS/esqlabsR/issues/1048))
+- The `project$definitions` sections are read-only from the project
+  handle: assigning through one (`project$definitions$scenarios <- ...`,
+  `project$definitions$scenarios[["X"]] <- sc`, the nested
+  `project$definitions$scenarios[["X"]]$field <- v`, or
+  `project$definitions$scenarios[-i] <- ...`) aborts with a message
+  pointing at the authoring functions. The only sanctioned ways to
+  change a definition are an authoring function
+  ([`addScenario()`](https://esqlabs.github.io/esqlabsR/dev/reference/addScenario.md)
+  /
+  [`setScenario()`](https://esqlabs.github.io/esqlabsR/dev/reference/setScenario.md)
+  /
+  [`removeScenario()`](https://esqlabs.github.io/esqlabsR/dev/reference/removeScenario.md)
+  and their per-section siblings) or editing the definition’s JSON file
+  directly; an authoring edit mutates memory and a structurally invalid
+  record (a wrong-typed or unknown field) is rejected when
+  [`saveProject()`](https://esqlabs.github.io/esqlabsR/dev/reference/saveProject.md)
+  serializes it, not silently persisted. `Project` tracks an internal
+  unsaved-edits flag (not public API) that drives a `[unsaved changes]`
+  marker in `print(project)`; `projectStatus(project)` is a two-axis
+  report of whether there are unsaved edits (memory vs. the tree) and
+  whether a configured Excel side-car (`Project.xlsx`) is a stale
+  export, and `project$status` returns the same as
+  `list(tree_in_sync, excel_in_sync, details)`.
+  ([\#1048](https://github.com/esqLABS/esqlabsR/issues/1048),
+  [\#1110](https://github.com/esqLABS/esqlabsR/issues/1110))
+- Project mutation is done through standalone functions:
+  `addScenario(project, ...)`, `removeScenario(project, ...)`, and the
+  matching `add*` / `remove*` / `set*` helpers for every section. These
+  free functions are the primary, documented entry point. Each also has
+  a matching `Project` method (`project$addScenario(...)`, and the
+  lifecycle methods `project$save()` / `project$reload()` /
+  `project$validate()`) that the free function forwards to, so both
+  forms work and behave identically; the free-function form is the
+  recommended one.
+  ([\#908](https://github.com/esqLABS/esqlabsR/issues/908),
+  [\#1112](https://github.com/esqLABS/esqlabsR/issues/1112))
+- `validateAllConfigurations()` is removed; use
+  `validateProject(project)`.
+  ([\#908](https://github.com/esqLABS/esqlabsR/issues/908))
+- Parameter identification is JSON-first. PI tasks live as a
+  `parameterIdentification` section on `Project` and run via
+  `runPI(project, tasks = NULL, observedData = NULL, stopIfParameterNotFound = TRUE)`,
+  built from the plain-data records `PITask`, `PIParameter`, and
+  `PIOutputMapping` (one entry per optimisation variable, one per
+  output/dataset pair). The Excel `PITaskConfiguration`,
+  `readPITaskConfigurationFromExcel()`, and
+  [`createPITasks()`](https://esqlabs.github.io/esqlabsR/dev/reference/createPITasks.md)
+  are removed.
+  [`runPI()`](https://esqlabs.github.io/esqlabsR/dev/reference/runPI.md)
+  hard-fails on build errors (bad parameter paths, unknown outputs,
+  missing observed data) and only soft-fails on numerical optimisation
+  failures. ([\#928](https://github.com/esqLABS/esqlabsR/issues/928))
+- `createDefaultProjectConfiguration()` is removed; use
+  [`loadProject()`](https://esqlabs.github.io/esqlabsR/dev/reference/loadProject.md).
+  ([\#908](https://github.com/esqLABS/esqlabsR/issues/908))
+- `loadObservedDataFromExcel()` and `loadObservedDataFromPKML()` are
+  removed; use `loadObservedData(project)` on a JSON-first `Project`.
+  ([\#908](https://github.com/esqLABS/esqlabsR/issues/908))
+- `readPopulationCharacteristicsFromXLS()`,
+  `readIndividualCharacteristicsFromXLS()`, `writeIndividualToXLS()`,
+  `writeParameterStructureToXLS()`, and `exportParametersToXLS()` are
+  removed. The supported Excel surface is restricted to Excel \<-\> JSON
+  interop via
+  [`importProjectFromExcel()`](https://esqlabs.github.io/esqlabsR/dev/reference/importProjectFromExcel.md)
+  and
+  [`exportProjectToExcel()`](https://esqlabs.github.io/esqlabsR/dev/reference/exportProjectToExcel.md).
+  ([\#908](https://github.com/esqLABS/esqlabsR/issues/908))
+- `ExportConfiguration` (R6 class) and
+  `createEsqlabsExportConfiguration()` are removed. Save the plot
+  objects returned by
+  [`createPlots()`](https://esqlabs.github.io/esqlabsR/dev/reference/createPlots.md)
+  directly via
+  [`ggplot2::ggsave()`](https://ggplot2.tidyverse.org/reference/ggsave.html).
+  ([\#908](https://github.com/esqLABS/esqlabsR/issues/908))
+- Individual parameter sets in `Individuals.xlsx` must now be specified
+  explicitly via the required `Individual Parameter Sets` column in the
+  `IndividualBiometrics` sheet, a comma-separated list of sheet names
+  applied in order. The previous fallback that applied a sheet named
+  after the `IndividualId` is removed for hand-authored files; on Excel
+  import, though, a sheet named after an individual is still linked to
+  that individual as a convenience, so a legacy project migrates without
+  hand-editing the column.
+  ([\#970](https://github.com/esqLABS/esqlabsR/issues/970),
+  [\#1158](https://github.com/esqLABS/esqlabsR/issues/1158))
+- The leading identifier argument is now uniformly named `id` across
+  every `add*` / `set*` / `remove*` function, so the same argument names
+  a definition everywhere: `addScenario(project, id, ...)`,
+  `setScenario(project, id, ...)`, `removeScenario(project, id)`,
+  [`addIndividual()`](https://esqlabs.github.io/esqlabsR/dev/reference/addIndividual.md)
+  /
+  [`setIndividual()`](https://esqlabs.github.io/esqlabsR/dev/reference/setIndividual.md)
+  /
+  [`removeIndividual()`](https://esqlabs.github.io/esqlabsR/dev/reference/removeIndividual.md),
+  [`addPopulation()`](https://esqlabs.github.io/esqlabsR/dev/reference/addPopulation.md)
+  /
+  [`setPopulation()`](https://esqlabs.github.io/esqlabsR/dev/reference/setPopulation.md)
+  /
+  [`removePopulation()`](https://esqlabs.github.io/esqlabsR/dev/reference/removePopulation.md),
+  [`addApplication()`](https://esqlabs.github.io/esqlabsR/dev/reference/addApplication.md)
+  /
+  [`removeApplication()`](https://esqlabs.github.io/esqlabsR/dev/reference/removeApplication.md)
+  /
+  [`setApplicationParameterSets()`](https://esqlabs.github.io/esqlabsR/dev/reference/setApplicationParameterSets.md),
+  [`addPlot()`](https://esqlabs.github.io/esqlabsR/dev/reference/addPlot.md)
+  /
+  [`removePlot()`](https://esqlabs.github.io/esqlabsR/dev/reference/removePlot.md),
+  [`addPlotGrid()`](https://esqlabs.github.io/esqlabsR/dev/reference/addPlotGrid.md)
+  /
+  [`removePlotGrid()`](https://esqlabs.github.io/esqlabsR/dev/reference/removePlotGrid.md),
+  [`addDataCombined()`](https://esqlabs.github.io/esqlabsR/dev/reference/addDataCombined.md)
+  /
+  [`removeDataCombined()`](https://esqlabs.github.io/esqlabsR/dev/reference/removeDataCombined.md),
+  and
+  [`removeObservedData()`](https://esqlabs.github.io/esqlabsR/dev/reference/removeObservedData.md)
+  (previously `scenarioName`, `individualId`, `populationId`,
+  `applicationId`, `plotId`, or `name`).
+  [`addOutputPath()`](https://esqlabs.github.io/esqlabsR/dev/reference/addOutputPath.md)
+  /
+  [`removeOutputPath()`](https://esqlabs.github.io/esqlabsR/dev/reference/removeOutputPath.md)
+  /
+  [`setOutputPath()`](https://esqlabs.github.io/esqlabsR/dev/reference/setOutputPath.md)
+  and the parameter-set and PI-task functions already used `id`.
+  Positional calls are unaffected; update calls that pass the leading
+  identifier by name.
+  ([\#908](https://github.com/esqLABS/esqlabsR/issues/908))
+- Reference arguments are suffixless, named after the definition kind
+  they point at rather than carrying an `Id` / `Ids` / `Name` / `Names`
+  suffix.
+  [`addScenario()`](https://esqlabs.github.io/esqlabsR/dev/reference/addScenario.md)
+  /
+  [`setScenario()`](https://esqlabs.github.io/esqlabsR/dev/reference/setScenario.md)
+  now take `individual`, `population`, `application`, `parameterSets`,
+  and `outputPaths` (were `individualId`, `populationId`,
+  `applicationProtocol`, `modelParameterSets`, `outputPathIds`);
+  [`runScenarios()`](https://esqlabs.github.io/esqlabsR/dev/reference/runScenarios.md),
+  [`loadScenarioResults()`](https://esqlabs.github.io/esqlabsR/dev/reference/loadScenarioResults.md),
+  and
+  [`createScenariosFromPKML()`](https://esqlabs.github.io/esqlabsR/dev/reference/createScenariosFromPKML.md)
+  take `scenarios` (was `scenarioNames`);
+  [`createPlots()`](https://esqlabs.github.io/esqlabsR/dev/reference/createPlots.md)
+  takes `plotGrids` and `plots` (were `plotGridNames` and `plotIds`);
+  [`createDataCombined()`](https://esqlabs.github.io/esqlabsR/dev/reference/createDataCombined.md)
+  takes `dataCombined` and `plotGrids`;
+  [`addPlot()`](https://esqlabs.github.io/esqlabsR/dev/reference/addPlot.md)
+  takes `dataCombined` (was `dataCombinedId`);
+  [`addPlotGrid()`](https://esqlabs.github.io/esqlabsR/dev/reference/addPlotGrid.md)
+  takes `plots` (was `plotIds`);
+  [`runPI()`](https://esqlabs.github.io/esqlabsR/dev/reference/runPI.md)
+  takes `tasks` (was `piTaskNames`); and
+  [`addPIParameter()`](https://esqlabs.github.io/esqlabsR/dev/reference/addPIParameter.md),
+  [`addPIOutputMapping()`](https://esqlabs.github.io/esqlabsR/dev/reference/addPIOutputMapping.md),
+  [`removePIParameter()`](https://esqlabs.github.io/esqlabsR/dev/reference/removePIParameter.md),
+  [`removePIOutputMapping()`](https://esqlabs.github.io/esqlabsR/dev/reference/removePIOutputMapping.md)
+  take `task` (was `taskId`), with
+  [`addPIOutputMapping()`](https://esqlabs.github.io/esqlabsR/dev/reference/addPIOutputMapping.md)
+  also taking `outputPath` and `observedData` (were `outputPathId`,
+  `observedDataId`). The on-disk definition JSON keys match the new
+  argument names (a scenario file now uses `individual` / `population` /
+  `application` / `parameterSets` / `outputPaths`, a plot file
+  `dataCombined`, a plot grid `plots`, a PI output mapping `outputPath`
+  / `observedData`). Update calls that pass these by name and any
+  hand-edited definition files.
+  ([\#908](https://github.com/esqLABS/esqlabsR/issues/908))
+- Definition ids are canonicalized rather than rejected. When an id is
+  supplied to an `add*` / `set*` / `remove*` function, or referenced
+  through a foreign-key argument (a scenario’s `individual` /
+  `population` / `application` / `parameterSets` / `outputPaths`, an
+  individual’s or application’s `parameterSets`, a PI task’s scenario /
+  output-path references), it is lowercased and made a safe
+  single-path-segment id (forbidden characters `/ \ : * ? " < > |`,
+  commas, interior whitespace, and control characters are replaced with
+  `_`, leading/trailing dots or spaces are trimmed, and a Windows
+  reserved basename such as `CON` is suffixed). The same transform is
+  applied to both a definition and a reference, so a definition and a
+  reference made from the same typed string always resolve to each
+  other. A warning names the canonical id whenever it differs from the
+  input, safely quoting an id or reference that itself contains `{` or
+  `}` rather than mishandling it; two distinct ids that canonicalize to
+  the same id error. A scenario name that previously had to be a valid
+  path segment is now canonicalized to one instead of being rejected,
+  and two ids differing only in case no longer collide on a
+  case-insensitive filesystem (they canonicalize to one id, so the
+  second is a duplicate). An id too long to be a safe filename (over 250
+  bytes) is rejected up front with a message naming the id and the
+  limit, rather than failing later with an opaque file-connection error.
+  ([\#908](https://github.com/esqLABS/esqlabsR/issues/908))
+- The three parameter-set kinds are unified into one.
+  `modelParameterSets`, `individualParameterSets`, and
+  `applicationParameterSets` (separate `Project` sections and separate
+  JSON sections) are merged into a single `parameterSets` map keyed by
+  set id; a scenario, an individual, and an application all reference
+  their sets through a `parameterSets` argument, and all three resolve
+  against the one map. The per-kind authoring functions
+  (`addModelParameterSet()` / `addIndividualParameterSet()` /
+  `addApplicationParameterSet()`, their `*Entry` variants, and the
+  matching `remove*`) are replaced by one family:
+  [`addParameterSet()`](https://esqlabs.github.io/esqlabsR/dev/reference/addParameterSet.md),
+  [`removeParameterSet()`](https://esqlabs.github.io/esqlabsR/dev/reference/removeParameterSet.md),
+  [`addParameterEntry()`](https://esqlabs.github.io/esqlabsR/dev/reference/addParameterEntry.md),
+  [`removeParameterEntry()`](https://esqlabs.github.io/esqlabsR/dev/reference/removeParameterEntry.md).
+  [`addParameterEntry()`](https://esqlabs.github.io/esqlabsR/dev/reference/addParameterEntry.md)
+  and
+  [`removeParameterEntry()`](https://esqlabs.github.io/esqlabsR/dev/reference/removeParameterEntry.md)
+  accept parallel vectors for `containerPath` / `parameterName` /
+  `value` / `units`, so a whole set is built (or trimmed) in one call
+  and written to disk once; a per-entry loop, which rewrites the whole
+  set file on every call, is no longer needed for bulk authoring. Set
+  ids must be unique across what were the three namespaces; a
+  `Project.json` (or Excel import) that defines the same id in more than
+  one section fails the load. A legacy `Project.json` that still carries
+  the three separate sections is migrated into the single
+  `parameterSets` map on load.
+  ([\#1077](https://github.com/esqLABS/esqlabsR/issues/1077))
+- [`removePIParameter()`](https://esqlabs.github.io/esqlabsR/dev/reference/removePIParameter.md)
+  and
+  [`removePIOutputMapping()`](https://esqlabs.github.io/esqlabsR/dev/reference/removePIOutputMapping.md)
+  now auto-remove the parent PI task from the project when it becomes
+  empty (no parameters and no output mappings), emitting a warning. This
+  aligns with the behavior of
+  [`removeParameterEntry()`](https://esqlabs.github.io/esqlabsR/dev/reference/removeParameterEntry.md)
+  for empty parameter sets.
+  ([\#1079](https://github.com/esqLABS/esqlabsR/issues/1079))
+- Every `add*` authoring function now shares one duplicate-collision
+  policy and takes an `overwrite` argument (default `FALSE`): adding a
+  definition whose id (or, for a parameter/initial-condition entry,
+  whose `(containerPath, parameterName)` / `path`) already exists
+  aborts, and `overwrite = TRUE` replaces the existing definition
+  (last-write-wins). This flips the previous silent last-write-wins
+  default of
+  [`addParameterEntry()`](https://esqlabs.github.io/esqlabsR/dev/reference/addParameterEntry.md)
+  and
+  [`addInitialConditionEntry()`](https://esqlabs.github.io/esqlabsR/dev/reference/addInitialConditionEntry.md),
+  and adds the `overwrite` opt-in to the previously abort-only
+  [`addScenario()`](https://esqlabs.github.io/esqlabsR/dev/reference/addScenario.md),
+  [`addIndividual()`](https://esqlabs.github.io/esqlabsR/dev/reference/addIndividual.md),
+  [`addPopulation()`](https://esqlabs.github.io/esqlabsR/dev/reference/addPopulation.md),
+  [`addApplication()`](https://esqlabs.github.io/esqlabsR/dev/reference/addApplication.md),
+  [`addOutputPath()`](https://esqlabs.github.io/esqlabsR/dev/reference/addOutputPath.md),
+  [`addParameterSet()`](https://esqlabs.github.io/esqlabsR/dev/reference/addParameterSet.md),
+  [`addInitialConditions()`](https://esqlabs.github.io/esqlabsR/dev/reference/addInitialConditions.md),
+  [`addPlot()`](https://esqlabs.github.io/esqlabsR/dev/reference/addPlot.md),
+  [`addPlotGrid()`](https://esqlabs.github.io/esqlabsR/dev/reference/addPlotGrid.md),
+  [`addDataCombined()`](https://esqlabs.github.io/esqlabsR/dev/reference/addDataCombined.md),
+  [`addObservedData()`](https://esqlabs.github.io/esqlabsR/dev/reference/addObservedData.md),
+  [`addPITask()`](https://esqlabs.github.io/esqlabsR/dev/reference/addPITask.md),
+  [`addPIParameter()`](https://esqlabs.github.io/esqlabsR/dev/reference/addPIParameter.md),
+  and
+  [`addPIOutputMapping()`](https://esqlabs.github.io/esqlabsR/dev/reference/addPIOutputMapping.md).
+  The authoring surface now behaves the same regardless of which section
+  is edited: a duplicate is an error unless you opt into overwriting it.
+  ([\#1079](https://github.com/esqLABS/esqlabsR/issues/1079),
+  [\#1148](https://github.com/esqLABS/esqlabsR/issues/1148))
+- [`saveScenarioResults()`](https://esqlabs.github.io/esqlabsR/dev/reference/saveScenarioResults.md)
+  renames its second argument from `projectConfiguration` to `project`
+  to match the v6 naming convention. Update any calls that pass the
+  argument by name.
+  ([\#1062](https://github.com/esqLABS/esqlabsR/issues/1062))
+- [`runScenarios()`](https://esqlabs.github.io/esqlabsR/dev/reference/runScenarios.md)
+  gains a `stopIfFails` argument that defaults to `TRUE`, so a scenario
+  that fails (at build time, e.g. a missing model parameter path, or
+  because its simulation produces no results) now aborts the run by
+  default instead of warning and returning the other scenarios. Set
+  `stopIfFails = FALSE` to restore the previous warn-and-continue
+  behaviour, which skips the failing scenario and still runs the rest.
+  ([\#1036](https://github.com/esqLABS/esqlabsR/issues/1036),
+  [\#1170](https://github.com/esqLABS/esqlabsR/issues/1170))
+
+### Major changes
+
+- `addPopulation(project, id, population)` accepts an
+  \[ospsuite::Population\] object in the `species` position, injecting a
+  programmatically built or mutated population that a scenario runs
+  against directly (the JSON entry becomes a `programmatic` sentinel).
+  The object lives in the session; \[saveProject()\] freezes it to a
+  `<id>.csv` file under the populations folder and rewrites the entry to
+  a `csv` source, so it survives a reload. A population definition may
+  now carry an optional `type` (`programmatic` or `csv`); an entry with
+  no `type` stays a demographics spec as before.
+  ([\#1024](https://github.com/esqLABS/esqlabsR/issues/1024))
+- `buildSimulations(project, scenarios = NULL, ...)` builds the
+  fully-parameterized \[ospsuite::Simulation\] (and, for a population
+  scenario, the \[ospsuite::Population\]) for one or more scenarios
+  without running them, returning a named list of
+  `list(simulation, population)`. Use it to inspect or edit the
+  configured simulation, save it to PKML, or hand it to another
+  OSP-suite routine before simulating.
+  [`runScenarios()`](https://esqlabs.github.io/esqlabsR/dev/reference/runScenarios.md)
+  is the build-and-run counterpart.
+  ([\#1074](https://github.com/esqLABS/esqlabsR/issues/1074))
+- `loadProject(path)` loads a `Project` from a `Project.json` and is the
+  primary entry point for the workflow.
+  ([\#908](https://github.com/esqLABS/esqlabsR/issues/908))
+- The `Project.json` container separates the project’s two path concerns
+  and gains metadata. The four live working folders the runtime reads
+  (`simulationsFolder`, `dataFolder`, `outputFolder`,
+  `populationsFolder`) stay in the `filePaths` block (read as
+  `project$paths`); `simulationsFolder` points at the PKML simulations
+  folder (`Models/Simulations`), and a legacy `Project.json` that still
+  names it `modelFolder` loads unchanged (the old key is accepted and
+  stored under the new name). A working-folder path may embed an
+  environment variable as `${VAR}` anywhere in the path, resolved on
+  load, with an unset variable left in place. The Excel import/export
+  sheet-name fields (`configurationsFolder`, `modelParamsFile`,
+  `individualsFile`, `populationsFile`, `scenariosFile`,
+  `applicationsFile`, `plotsFile`, `parameterIdentificationFile`,
+  `initialConditionsFile`) move to a separate `excel` block (read as
+  `project$excel`), written only when the project has an Excel side-car.
+  The container also carries an optional human `name` and `description`
+  (surfaced in `print(project)`, writable via `project$info$name` /
+  `project$info$description`, and preserved through an
+  [`exportProjectToExcel()`](https://esqlabs.github.io/esqlabsR/dev/reference/exportProjectToExcel.md)
+  /
+  [`importProjectFromExcel()`](https://esqlabs.github.io/esqlabsR/dev/reference/importProjectFromExcel.md)
+  round-trip), an optional `definitionsFolder` (default `"definitions"`,
+  read as `project$paths$definitionsFolder`) that makes the
+  definition-tree location configurable, and an optional
+  `defaultSimulationRunOptions`. A legacy `Project.json` that still
+  lists all eleven path fields in one flat `filePaths` block loads
+  unchanged (the fields are split into the two blocks on read).
+  ([\#908](https://github.com/esqLABS/esqlabsR/issues/908),
+  [\#1129](https://github.com/esqLABS/esqlabsR/issues/1129))
+- [`runScenarios()`](https://esqlabs.github.io/esqlabsR/dev/reference/runScenarios.md)
+  falls back to the project’s `defaultSimulationRunOptions` (a
+  `{numberOfCores, checkForNegativeValues, showProgress}` block in
+  `Project.json`) when the caller passes no `simulationRunOptions`, so a
+  run is reproducible from the shared project artifact; an explicit
+  `simulationRunOptions` argument still wins, and an absent project
+  default keeps the previous behaviour.
+  ([\#908](https://github.com/esqLABS/esqlabsR/issues/908))
+- `snapshotProject(project, dir = ".", name = NULL, overwrite = FALSE)`
+  freezes the current in-memory project (unsaved edits included) to a
+  portable single-file `.esqlabsR` with every section inlined, for
+  sharing or archiving, and
+  `restoreProject(snapshot, dir = ".", overwrite = FALSE)` materializes
+  one back into a full on-disk tree project at `dir` (a `Project.json`
+  container plus a `definitions/<kind>/` tree for every section),
+  returning a freshly-loaded `Project` bound to `dir`. The `.esqlabsR`
+  extension is always forced
+  ([`snapshotProject()`](https://esqlabs.github.io/esqlabsR/dev/reference/snapshotProject.md)
+  replaces any extension the `name` carries); the default `name` is a
+  colon-free timestamped `<projectName>-YYYY-MM-DD-HHMMSS` (sortable and
+  Windows-safe). Writing over an existing snapshot file errors unless
+  `overwrite = TRUE`.
+  [`restoreProject()`](https://esqlabs.github.io/esqlabsR/dev/reference/restoreProject.md)
+  unpacks into a fresh directory by default; `overwrite = TRUE` rolls a
+  working directory back to the snapshot in place (the rollback half of
+  the save-point story) and warns that any `Project` already loaded from
+  that directory is now stale. It still accepts a plain inlined
+  `Project.json` for back-compatibility, canonicalizing every id and
+  every reference to one (across scenarios, output paths, parameter
+  sets, individuals, applications, plot `dataCombined` rows, and
+  parameter-identification tasks) as it migrates, so a legacy
+  single-file project with non-canonical ids explodes losslessly into
+  the tree with its foreign keys intact, and snapshot then restore then
+  snapshot is a fixed point.
+  ([\#908](https://github.com/esqLABS/esqlabsR/issues/908),
+  [\#1110](https://github.com/esqLABS/esqlabsR/issues/1110))
+- `validateProject(project)` validates a parsed project and reports
+  per-section critical errors and warnings. A dangling cross-reference
+  (a scenario, individual, application, plot, or PI task pointing at an
+  id with no matching definition) now suggests the closest existing ids
+  (“did you mean ‘…’?”) in its message. A DataCombined entry that is
+  missing its required `label` is now reported here, so a label-less
+  record is caught up front instead of passing validation and then
+  failing later at plotting with a misleading message. Removing a
+  definition that is still referenced warns at removal time as well;
+  [`removeScenario()`](https://esqlabs.github.io/esqlabsR/dev/reference/removeScenario.md)
+  now warns when a `dataCombined` definition still points at the removed
+  scenario, matching the existing warnings from
+  [`removeIndividual()`](https://esqlabs.github.io/esqlabsR/dev/reference/removeIndividual.md)
+  and the other removers. The returned results object now prints a
+  readable summary grouped by definition type (a cross marks each
+  critical error, a `!` marks each warning, with overall counts in the
+  header), while the structured object stays fully indexable
+  (`results$scenarios$critical_errors`).
+  ([\#908](https://github.com/esqLABS/esqlabsR/issues/908))
+- `createDataCombined(project, ...)` and `createPlots(project, ...)`
+  accept a `Project` directly and resolve their inputs from the JSON,
+  with `loadObservedData(project)` dispatching across `excel` / `pkml` /
+  `script` observed-data sources. Both take the run output (the named
+  list of Scenario Results from
+  [`runScenarios()`](https://esqlabs.github.io/esqlabsR/dev/reference/runScenarios.md))
+  through an argument named `scenarioResults`.
+  [`createPlots()`](https://esqlabs.github.io/esqlabsR/dev/reference/createPlots.md)
+  gains a `plots` argument that renders standalone single plots (each
+  the same render a grid cell gets, keyed by `plotId` in the returned
+  list) alongside the plot grids selected by `plotGrids`; the two
+  arguments are independent selectors (a plot that is also inside a
+  requested grid still gets its own standalone entry), and with neither
+  argument the default is still all plot grids.
+  ([\#908](https://github.com/esqLABS/esqlabsR/issues/908))
+- The plots concern is three top-level project sections, each a keyed
+  list like every other section: `project$definitions$dataCombined`
+  (keyed by `dataCombinedId`), `project$definitions$plots` (the plot
+  list, keyed by `plotId`), and `project$definitions$plotGrids` (keyed
+  by `plotGridId`). `project$definitions$plots` is the plot list itself
+  (it no longer nests a `dataCombined` / `plotConfiguration` /
+  `plotGrids` trio); a single plot is
+  `project$definitions$plots[["id"]]`, a single grid
+  `project$definitions$plotGrids[["id"]]`, and a single data combination
+  `project$definitions$dataCombined[["id"]]`, each a named list of its
+  fields. On disk each section is still its own one-file-per-definition
+  tree (`definitions/data-combined/`, `definitions/plots/`,
+  `definitions/plot-grids/`).
+  ([\#908](https://github.com/esqLABS/esqlabsR/issues/908))
+- The whole programmatic authoring API now accepts a vector of ids and
+  acts on all of them in one in-memory edit:
+  [`addScenario()`](https://esqlabs.github.io/esqlabsR/dev/reference/addScenario.md)
+  /
+  [`setScenario()`](https://esqlabs.github.io/esqlabsR/dev/reference/setScenario.md)
+  /
+  [`removeScenario()`](https://esqlabs.github.io/esqlabsR/dev/reference/removeScenario.md),
+  [`addIndividual()`](https://esqlabs.github.io/esqlabsR/dev/reference/addIndividual.md)
+  /
+  [`setIndividual()`](https://esqlabs.github.io/esqlabsR/dev/reference/setIndividual.md)
+  /
+  [`removeIndividual()`](https://esqlabs.github.io/esqlabsR/dev/reference/removeIndividual.md),
+  [`addPopulation()`](https://esqlabs.github.io/esqlabsR/dev/reference/addPopulation.md)
+  /
+  [`setPopulation()`](https://esqlabs.github.io/esqlabsR/dev/reference/setPopulation.md)
+  /
+  [`removePopulation()`](https://esqlabs.github.io/esqlabsR/dev/reference/removePopulation.md),
+  [`addApplication()`](https://esqlabs.github.io/esqlabsR/dev/reference/addApplication.md)
+  /
+  [`removeApplication()`](https://esqlabs.github.io/esqlabsR/dev/reference/removeApplication.md)
+  /
+  [`setApplicationParameterSets()`](https://esqlabs.github.io/esqlabsR/dev/reference/setApplicationParameterSets.md),
+  [`addOutputPath()`](https://esqlabs.github.io/esqlabsR/dev/reference/addOutputPath.md)
+  /
+  [`setOutputPath()`](https://esqlabs.github.io/esqlabsR/dev/reference/setOutputPath.md)
+  /
+  [`removeOutputPath()`](https://esqlabs.github.io/esqlabsR/dev/reference/removeOutputPath.md),
+  [`addParameterSet()`](https://esqlabs.github.io/esqlabsR/dev/reference/addParameterSet.md)
+  /
+  [`removeParameterSet()`](https://esqlabs.github.io/esqlabsR/dev/reference/removeParameterSet.md)
+  (and the already-vectorized
+  [`addParameterEntry()`](https://esqlabs.github.io/esqlabsR/dev/reference/addParameterEntry.md)
+  /
+  [`removeParameterEntry()`](https://esqlabs.github.io/esqlabsR/dev/reference/removeParameterEntry.md)),
+  [`removeObservedData()`](https://esqlabs.github.io/esqlabsR/dev/reference/removeObservedData.md),
+  [`removePITask()`](https://esqlabs.github.io/esqlabsR/dev/reference/removePITask.md),
+  and the plot helpers
+  [`addPlot()`](https://esqlabs.github.io/esqlabsR/dev/reference/addPlot.md)
+  /
+  [`removePlot()`](https://esqlabs.github.io/esqlabsR/dev/reference/removePlot.md)
+  /
+  [`addPlotGrid()`](https://esqlabs.github.io/esqlabsR/dev/reference/addPlotGrid.md)
+  /
+  [`removePlotGrid()`](https://esqlabs.github.io/esqlabsR/dev/reference/removePlotGrid.md)
+  /
+  [`addDataCombined()`](https://esqlabs.github.io/esqlabsR/dev/reference/addDataCombined.md)
+  /
+  [`removeDataCombined()`](https://esqlabs.github.io/esqlabsR/dev/reference/removeDataCombined.md).
+  For the `add*` / `set*` functions the id vector sets the count; a
+  scalar-per-definition field is length 1 (recycled to every definition)
+  or the same length as `id` (aligned by position), and a
+  vector-valued-per-definition field (an individual’s or application’s
+  `parameterSets`, a scenario’s `parameterSets` / `outputPaths`, a
+  plot’s `quantiles`, a grid’s `plots`) is applied whole to every
+  definition (pass a list as long as `id` to vary it per definition).
+  The batch is all-or-nothing (if any definition is invalid, none is
+  applied), and `remove*` takes a vector of ids (a not-found id warns
+  and is skipped).
+  [`addObservedData()`](https://esqlabs.github.io/esqlabsR/dev/reference/addObservedData.md),
+  [`renameScenario()`](https://esqlabs.github.io/esqlabsR/dev/reference/renameScenario.md),
+  [`duplicateScenario()`](https://esqlabs.github.io/esqlabsR/dev/reference/duplicateScenario.md),
+  [`addPITask()`](https://esqlabs.github.io/esqlabsR/dev/reference/addPITask.md),
+  and the per-task PI sub-definition helpers stay single-definition.
+  ([\#908](https://github.com/esqLABS/esqlabsR/issues/908))
+- A single project definition now prints a readable summary of its
+  configuration instead of a raw list. The structured definition types
+  (a scenario, individual, population, application, parameter set,
+  observed-data source, plot, plot grid, DataCombined, and the
+  parameter-identification records) print in the OSP house style,
+  showing the id and configured fields;
+  e.g. `project$definitions$individuals[["adult_male"]]`,
+  `project$definitions$parameterSets[["global"]]`, or
+  `project$definitions$plots[["p1"]]`. An output path stays a bare
+  OSPS-notation string (`project$definitions$outputPaths[["id"]]`) and
+  prints as that string.
+  ([\#908](https://github.com/esqLABS/esqlabsR/issues/908))
+- A section accessor now prints a count and the definition ids instead
+  of dumping the raw list. `project$definitions$individuals`,
+  `project$definitions$scenarios`, `project$definitions$populations`,
+  `project$definitions$applications`, `project$definitions$outputPaths`,
+  `project$definitions$parameterSets`,
+  `project$definitions$observedData`,
+  `project$definitions$parameterIdentification`,
+  `project$definitions$dataCombined`, `project$definitions$plots`, and
+  `project$definitions$plotGrids` print as `<section>: N definitions`
+  followed by the ids. The accessor still behaves exactly as the
+  underlying named list
+  ([`length()`](https://rdrr.io/r/base/length.html),
+  [`names()`](https://rdrr.io/r/base/names.html), `[[`, `[`,
+  [`c()`](https://rdrr.io/r/base/c.html)), so existing code that indexes
+  a section is unaffected.
+  ([\#908](https://github.com/esqLABS/esqlabsR/issues/908))
+- `Project`’s [`print()`](https://rdrr.io/r/base/print.html) now renders
+  through the shared `ospsuite.utils` print styling, grouping the
+  console summary into a `Paths` section (the working folders), a
+  `Definitions` section (per-section entry counts, with zero-count
+  sections omitted), and, only when the project has an Excel side-car,
+  an `Excel` section, matching the house style of the other print
+  methods. ([\#1109](https://github.com/esqLABS/esqlabsR/issues/1109))
+- The full programmatic mutation API:
+  [`addScenario()`](https://esqlabs.github.io/esqlabsR/dev/reference/addScenario.md)
+  /
+  [`removeScenario()`](https://esqlabs.github.io/esqlabsR/dev/reference/removeScenario.md),
+  [`addIndividual()`](https://esqlabs.github.io/esqlabsR/dev/reference/addIndividual.md)
+  /
+  [`removeIndividual()`](https://esqlabs.github.io/esqlabsR/dev/reference/removeIndividual.md),
+  [`addPopulation()`](https://esqlabs.github.io/esqlabsR/dev/reference/addPopulation.md)
+  /
+  [`removePopulation()`](https://esqlabs.github.io/esqlabsR/dev/reference/removePopulation.md),
+  [`addApplication()`](https://esqlabs.github.io/esqlabsR/dev/reference/addApplication.md)
+  /
+  [`removeApplication()`](https://esqlabs.github.io/esqlabsR/dev/reference/removeApplication.md),
+  [`addOutputPath()`](https://esqlabs.github.io/esqlabsR/dev/reference/addOutputPath.md)
+  /
+  [`removeOutputPath()`](https://esqlabs.github.io/esqlabsR/dev/reference/removeOutputPath.md),
+  the unified parameter-set helpers
+  ([`addParameterSet()`](https://esqlabs.github.io/esqlabsR/dev/reference/addParameterSet.md),
+  [`removeParameterSet()`](https://esqlabs.github.io/esqlabsR/dev/reference/removeParameterSet.md),
+  [`addParameterEntry()`](https://esqlabs.github.io/esqlabsR/dev/reference/addParameterEntry.md),
+  [`removeParameterEntry()`](https://esqlabs.github.io/esqlabsR/dev/reference/removeParameterEntry.md)),
+  [`addObservedData()`](https://esqlabs.github.io/esqlabsR/dev/reference/addObservedData.md)
+  /
+  [`removeObservedData()`](https://esqlabs.github.io/esqlabsR/dev/reference/removeObservedData.md),
+  the plot helpers, and the PI helpers
+  [`addPITask()`](https://esqlabs.github.io/esqlabsR/dev/reference/addPITask.md)
+  /
+  [`removePITask()`](https://esqlabs.github.io/esqlabsR/dev/reference/removePITask.md)
+  (plus inline
+  [`addPIParameter()`](https://esqlabs.github.io/esqlabsR/dev/reference/addPIParameter.md)
+  /
+  [`addPIOutputMapping()`](https://esqlabs.github.io/esqlabsR/dev/reference/addPIOutputMapping.md)
+  and their removals).
+  ([\#908](https://github.com/esqLABS/esqlabsR/issues/908),
+  [\#1076](https://github.com/esqLABS/esqlabsR/issues/1076),
+  [\#1077](https://github.com/esqLABS/esqlabsR/issues/1077))
+- `setIndividual(project, id, ...)` modifies one or more fields of an
+  existing individual in place (partial update: only the fields you pass
+  change), with the same validation as
+  [`addIndividual()`](https://esqlabs.github.io/esqlabsR/dev/reference/addIndividual.md),
+  instead of the read-copy-mutate-write-back idiom.
+  ([\#908](https://github.com/esqLABS/esqlabsR/issues/908))
+- `setOutputPath(project, id, path)` changes the OSPS-notation path
+  string bound to an existing output-path id in place, leaving every
+  scenario reference to that id intact.
+  ([\#908](https://github.com/esqLABS/esqlabsR/issues/908))
+- `setPopulation(project, id, ...)` modifies one or more fields of an
+  existing population in place (partial update: only the fields you pass
+  change), with the same validation as
+  [`addPopulation()`](https://esqlabs.github.io/esqlabsR/dev/reference/addPopulation.md).
+  ([\#908](https://github.com/esqLABS/esqlabsR/issues/908))
+- `setScenario(project, id, ...)` modifies one or more fields of an
+  existing scenario in place (partial update: only the fields you pass
+  change; passing `NULL` clears an optional field), with the same
+  foreign-key validation as
+  [`addScenario()`](https://esqlabs.github.io/esqlabsR/dev/reference/addScenario.md);
+  the change is in memory and persists on the next
+  [`saveProject()`](https://esqlabs.github.io/esqlabsR/dev/reference/saveProject.md).
+  ([\#908](https://github.com/esqLABS/esqlabsR/issues/908))
+- `duplicateScenario(project, id, newId)` creates an independent deep
+  copy of an existing scenario under a new id, leaving the original
+  untouched; the copy persists as a new definition file on the next
+  [`saveProject()`](https://esqlabs.github.io/esqlabsR/dev/reference/saveProject.md).
+  The new id is canonicalized like
+  [`addScenario()`](https://esqlabs.github.io/esqlabsR/dev/reference/addScenario.md)’s,
+  and an id that already belongs to a scenario errors.
+  ([\#908](https://github.com/esqLABS/esqlabsR/issues/908))
+- `renameScenario(project, id, newId)` renames an existing scenario,
+  moving its definition file (the old file is removed and a new one
+  written), updating the in-memory key, and keeping the stored name
+  equal to the new key so a reload round-trips. Both ids are
+  canonicalized like
+  [`addScenario()`](https://esqlabs.github.io/esqlabsR/dev/reference/addScenario.md)’s;
+  a non-existent source id or an already-taken target id errors.
+  ([\#908](https://github.com/esqLABS/esqlabsR/issues/908))
+- [`PITask()`](https://esqlabs.github.io/esqlabsR/dev/reference/PITask.md),
+  [`PIParameter()`](https://esqlabs.github.io/esqlabsR/dev/reference/PIParameter.md),
+  and
+  [`PIOutputMapping()`](https://esqlabs.github.io/esqlabsR/dev/reference/PIOutputMapping.md)
+  are exported, so a parameter identification task can be authored from
+  scratch with only
+  [`library(esqlabsR)`](https://github.com/esqLABS/esqlabsR): compose
+  the records, pass them to `addPITask(project, ...)`, then run with
+  `runPI(project)`. A hand-built record is identical to one parsed from
+  a `Project.json`.
+  ([\#928](https://github.com/esqLABS/esqlabsR/issues/928))
+- `runPI(project)` now warns when a parameter identification run reports
+  convergence but the uncertainty for a parameter could not be
+  quantified (standard deviation, CV, and confidence interval all `NA`),
+  naming the task and the parameter and listing the likely causes (a
+  singular or ill-conditioned Hessian, the estimate at a bound, or an
+  objective insensitive to the parameter), so an estimate with no usable
+  uncertainty is no longer silently reported as converged.
+  ([\#928](https://github.com/esqLABS/esqlabsR/issues/928))
+- [`addInitialConditions()`](https://esqlabs.github.io/esqlabsR/dev/reference/addInitialConditions.md),
+  [`removeInitialConditions()`](https://esqlabs.github.io/esqlabsR/dev/reference/removeInitialConditions.md),
+  [`addInitialConditionEntry()`](https://esqlabs.github.io/esqlabsR/dev/reference/addInitialConditionEntry.md),
+  and
+  [`removeInitialConditionEntry()`](https://esqlabs.github.io/esqlabsR/dev/reference/removeInitialConditionEntry.md)
+  author molecule start values (initial conditions). Initial conditions
+  are their own project section
+  (`project$definitions$initialConditions`), a map of set id to a list
+  of `{path, value, unit}` records, stored on disk as a per-definition
+  tree under `definitions/initial-conditions/`. A set is applied to a
+  scenario through the scenario’s `initialConditions` argument
+  ([`addScenario()`](https://esqlabs.github.io/esqlabsR/dev/reference/addScenario.md)
+  /
+  [`setScenario()`](https://esqlabs.github.io/esqlabsR/dev/reference/setScenario.md)),
+  a whole-vector reference validated eagerly at add time and again by
+  [`validateProject()`](https://esqlabs.github.io/esqlabsR/dev/reference/validateProject.md);
+  at run time the referenced sets are applied via
+  [`ospsuite::setQuantityValuesByPath()`](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/setQuantityValuesByPath.html)
+  after the parameters.
+  [`addInitialConditionEntry()`](https://esqlabs.github.io/esqlabsR/dev/reference/addInitialConditionEntry.md)
+  /
+  [`removeInitialConditionEntry()`](https://esqlabs.github.io/esqlabsR/dev/reference/removeInitialConditionEntry.md)
+  accept parallel vectors for `path` / `value` / `unit`, so a whole set
+  is built (or trimmed) in one write. Initial conditions round-trip
+  through Excel via a per-set-sheet `InitialConditions.xlsx` workbook
+  (the `Is Present`, `Scale Divisor`, and `Neg. Values Allowed` columns
+  are regenerated with defaults on export), and
+  [`readInitialConditionsFromXLS()`](https://esqlabs.github.io/esqlabsR/dev/reference/readInitialConditionsFromXLS.md)
+  reads such a workbook into a `{paths, values, units}` structure
+  directly. ([\#973](https://github.com/esqLABS/esqlabsR/issues/973))
+- [`initializeSimulation()`](https://esqlabs.github.io/esqlabsR/dev/reference/initializeSimulation.md)
+  gains an `additionalInitialConditions` argument (a
+  `{paths, values, units}` structure) that sets molecule start values
+  via
+  [`ospsuite::setQuantityValuesByPath()`](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/setQuantityValuesByPath.html)
+  after the parameters are applied.
+  ([\#973](https://github.com/esqLABS/esqlabsR/issues/973))
+- `initProject(destination, type, createExcel, overwrite)` scaffolds a
+  project. `type` is `"minimal"` (default) or `"example"`; with
+  `createExcel = TRUE` (default) Excel side-cars are also produced. The
+  scaffold includes a `Models/Snapshots` folder (for PK-Sim / MoBi
+  snapshots, reserved for a future release) and writes a short
+  `README.md` into each working folder so the otherwise-empty folders
+  stay tracked under version control.
+  ([\#908](https://github.com/esqLABS/esqlabsR/issues/908),
+  [\#1108](https://github.com/esqLABS/esqlabsR/issues/1108))
+- `createScenariosFromPKML(pkmlFilePaths, project, ...)` reads scenarios
+  from PKML files and adds them to a `Project` in place, returning the
+  project invisibly. Output paths are registered in
+  `project$definitions$outputPaths` (reusing an existing id when the
+  literal path is already registered, otherwise generating a readable
+  one), scenario names are made unique against the project, and a
+  scenario has no application protocol by default since the PKML embeds
+  its own. Steady-state overwrite of formula-defined parameters is
+  controlled by the `overwriteFormulasInSS` field on a `Scenario`
+  (corresponding to `ignoreIfFormula = FALSE` in
+  [`ospsuite::getSteadyState()`](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/getSteadyState.html)),
+  defaulting to `FALSE`.
+  ([\#908](https://github.com/esqLABS/esqlabsR/issues/908),
+  [\#1050](https://github.com/esqLABS/esqlabsR/issues/1050))
+- `importProjectFromExcel(projectConfigPath, outputDir, overwrite, silent)`
+  reads an Excel-based project and writes a v2.0 `Project.json`;
+  `exportProjectToExcel(project, outputDir, overwrite, silent)` writes
+  the reverse. The Excel round-trip covers every project section except
+  observed data: observed data is loaded from its own source (a PKML
+  file or an importer configuration), not from an Excel sheet, so it is
+  not written to or read back from the Excel side-cars. Parameter
+  identification is bridged through a `ParameterIdentification.xlsx`
+  workbook with three `taskId`-joined sheets (`PITasks`, with each
+  task’s `configuration` flattened to `config.*` columns,
+  `PIParameters`, and `PIOutputMappings`), so a project’s PI tasks
+  survive an export then import; a parameter’s empty-string `units`
+  reimports as the equivalent unitless (`NULL`) value, since Excel
+  cannot store an empty string distinctly from an empty cell.
+  ([\#908](https://github.com/esqLABS/esqlabsR/issues/908))
+- [`exampleProjectPath()`](https://esqlabs.github.io/esqlabsR/dev/reference/exampleProjectPath.md)
+  returns the path to the bundled example `Project.json`.
+  ([\#908](https://github.com/esqLABS/esqlabsR/issues/908))
+
+### Deprecations
+
+Deprecation intensity follows the lifecycle policy: forwarding shims
+that still work and have a direct replacement are soft-deprecated (a
+quiet, once-per-session note); shims that will be removed next cycle are
+deprecated with a warning on every call; hard removals are defunct and
+abort.
+
+#### Soft-deprecated (quiet forwarding shims)
+
+- [`createDataCombinedFromExcel()`](https://esqlabs.github.io/esqlabsR/dev/reference/createDataCombined.md)
+  and
+  [`createPlotsFromExcel()`](https://esqlabs.github.io/esqlabsR/dev/reference/createPlots.md)
+  forward to
+  [`createDataCombined()`](https://esqlabs.github.io/esqlabsR/dev/reference/createDataCombined.md)
+  /
+  [`createPlots()`](https://esqlabs.github.io/esqlabsR/dev/reference/createPlots.md);
+  pass a `Project` from
+  [`loadProject()`](https://esqlabs.github.io/esqlabsR/dev/reference/loadProject.md).
+  ([\#908](https://github.com/esqLABS/esqlabsR/issues/908))
+
+#### Deprecated with a warning (removed next cycle)
+
+- [`ProjectConfiguration()`](https://esqlabs.github.io/esqlabsR/dev/reference/Project.md)
+  warns and forwards to `Project$new()`.
+  ([\#908](https://github.com/esqLABS/esqlabsR/issues/908))
 
 ### Minor improvements and bug fixes
 
-- [`snapshotProjectConfiguration()`](https://esqlabs.github.io/esqlabsR/dev/reference/snapshotProjectConfiguration.md)
+- [`addIndividual()`](https://esqlabs.github.io/esqlabsR/dev/reference/addIndividual.md)
+  now rejects a non-numeric `weight` / `height` / `age` with a clear
+  error instead of silently coercing it to `NA`
+  (e.g. `weight = "80kg"`).
+  ([\#1055](https://github.com/esqLABS/esqlabsR/issues/1055))
+- An individual’s `gender` is now optional, defaulting to `UNKNOWN` when
+  absent, so an animal (non-human) species whose only valid PK-Sim
+  gender is `UNKNOWN` can be represented and run.
+  [`addIndividual()`](https://esqlabs.github.io/esqlabsR/dev/reference/addIndividual.md)
+  no longer requires `gender` (a supplied gender must still be a valid
+  `Gender` token),
+  [`validateProject()`](https://esqlabs.github.io/esqlabsR/dev/reference/validateProject.md)
+  no longer flags a gender-less individual as a critical error, and the
+  Excel importer defaults a blank Gender cell to `UNKNOWN`.
+  ([\#1162](https://github.com/esqLABS/esqlabsR/issues/1162))
+- [`runScenarios()`](https://esqlabs.github.io/esqlabsR/dev/reference/runScenarios.md)
+  no longer crashes on an individual that carries no `age` / `height`
+  (the normal shape for a PK-Sim animal individual, which has only a
+  weight). A missing biometric is now passed through to the simulation
+  build as absent instead of being coerced to a length-zero value, which
+  previously aborted the run with
+  `missing value where TRUE/FALSE needed`.
+  ([\#1162](https://github.com/esqLABS/esqlabsR/issues/1162))
+- [`addObservedData()`](https://esqlabs.github.io/esqlabsR/dev/reference/addObservedData.md)
+  documents the shape of the `entry` list it takes: which fields each
+  source type (`excel` / `pkml` / `script`) requires, and that `file`
+  and `importerConfiguration` are resolved relative to the project’s
+  data folder (so they carry no `Data/` prefix).
+  ([\#1171](https://github.com/esqLABS/esqlabsR/issues/1171))
+- An `observedData` declaration can now carry an `id`, which names its
+  definition file (`definitions/observed-data/<id>.json` in the default
+  layout) and is the key
+  [`removeObservedData()`](https://esqlabs.github.io/esqlabsR/dev/reference/removeObservedData.md)
+  matches it by, so observed data is filed by id like every other
+  section. A declaration without an `id` keeps deriving one from its
+  source as before (the `file` basename, or the `DataSet` name of a
+  programmatic source), so existing projects are unaffected. As for
+  every other section, a definition file whose id disagrees with its
+  filename now aborts the load instead of being silently re-filed on the
+  next save. ([\#1172](https://github.com/esqLABS/esqlabsR/issues/1172))
+- `addObservedData(project, dataSet)` now persists the `DataSet` across
+  a save and reload. On
+  [`saveProject()`](https://esqlabs.github.io/esqlabsR/dev/reference/saveProject.md)
+  a session-added `DataSet` is written to a PKML file named
+  `<DataSet name>.pkml` under the data folder and its entry becomes a
+  `pkml` source, so it survives a reload instead of being lost with the
+  session; saving therefore requires a data folder and aborts with a
+  clear message when none is declared. Prefer a `programmatic` (or
+  `pkml`) source for fixed measured data and a `script` source only for
+  data that must be recomputed from code, since a `script` source runs
+  arbitrary R on load.
+  ([\#1081](https://github.com/esqLABS/esqlabsR/issues/1081))
+- [`addDataCombined()`](https://esqlabs.github.io/esqlabsR/dev/reference/addDataCombined.md)
+  now accepts either an output-path id (a key of the project’s
+  `outputPaths`) or a literal model path for a simulated entry’s `path`.
+  An id is resolved to its literal path when the DataCombined is built
+  by
+  [`createDataCombined()`](https://esqlabs.github.io/esqlabsR/dev/reference/createDataCombined.md),
+  so a single output path declared once with
+  [`addOutputPath()`](https://esqlabs.github.io/esqlabsR/dev/reference/addOutputPath.md)
+  can be referenced by id from scenarios and plots alike; a value
+  matching no output-path id is treated as a literal path, as before.
+  ([\#1042](https://github.com/esqLABS/esqlabsR/issues/1042))
+- [`addOutputPath()`](https://esqlabs.github.io/esqlabsR/dev/reference/addOutputPath.md)
+  now rejects an empty or `NA` path, matching
+  [`setOutputPath()`](https://esqlabs.github.io/esqlabsR/dev/reference/setOutputPath.md);
+  previously an empty path was accepted and stored.
+  ([\#1055](https://github.com/esqLABS/esqlabsR/issues/1055))
+- [`addScenario()`](https://esqlabs.github.io/esqlabsR/dev/reference/addScenario.md),
+  [`setScenario()`](https://esqlabs.github.io/esqlabsR/dev/reference/setScenario.md),
   and
-  [`projectConfigurationStatus()`](https://esqlabs.github.io/esqlabsR/dev/reference/projectConfigurationStatus.md)
-  no longer fail on projects that have no PI configuration
-  (i.e. `parameterIdentificationFile` is not set)
-  ([\#1007](https://github.com/esqLABS/esqlabsR/issues/1007)).
+  [`createScenariosFromPKML()`](https://esqlabs.github.io/esqlabsR/dev/reference/createScenariosFromPKML.md)
+  now accept a scenario’s `simulationTime` as the numeric grid
+  `c(start, end, resolution)`, not only as the
+  `"start, end, resolution"` string; a list gives one grid per id.
+  Several intervals are still written as one string. Previously the
+  numeric form was rejected as a length-3 value for a single id.
+  Clearing the field with
+  `setScenario(project, id, simulationTime = NULL)` also no longer
+  leaves the record reporting the simulation *unit* when the time grid
+  is read back.
+  ([\#1168](https://github.com/esqLABS/esqlabsR/issues/1168))
+- [`addParameterEntry()`](https://esqlabs.github.io/esqlabsR/dev/reference/addParameterEntry.md)
+  now reads `NA` and `NULL` as “no unit”, so a parameter table read from
+  Excel (where an empty Units cell arrives as `NA`) can be handed
+  straight to it, and `units` can be left out entirely for a set of
+  base-unit entries. Previously an `NA` unit was rejected and a `NULL`
+  one failed as a length mismatch against the other vectors.
+  ([\#1167](https://github.com/esqLABS/esqlabsR/issues/1167))
+- [`addPITask()`](https://esqlabs.github.io/esqlabsR/dev/reference/addPITask.md)
+  can now create a task with empty `parameters` and `outputMappings`, so
+  a task can be created first and its first entries seeded with
+  [`addPIParameter()`](https://esqlabs.github.io/esqlabsR/dev/reference/addPIParameter.md)
+  /
+  [`addPIOutputMapping()`](https://esqlabs.github.io/esqlabsR/dev/reference/addPIOutputMapping.md);
+  a task left with no parameters or no output mappings is reported by
+  [`validateProject()`](https://esqlabs.github.io/esqlabsR/dev/reference/validateProject.md)
+  (and so blocks
+  [`runPI()`](https://esqlabs.github.io/esqlabsR/dev/reference/runPI.md)).
+  ([\#1157](https://github.com/esqLABS/esqlabsR/issues/1157))
+- [`addPIOutputMapping()`](https://esqlabs.github.io/esqlabsR/dev/reference/addPIOutputMapping.md)
+  (and a
+  [`PIOutputMapping()`](https://esqlabs.github.io/esqlabsR/dev/reference/PIOutputMapping.md)
+  supplied inline to
+  [`addPITask()`](https://esqlabs.github.io/esqlabsR/dev/reference/addPITask.md))
+  now accepts either an output-path id or the literal model path of a
+  defined output path for `outputPath`, resolving both to the canonical
+  id when the mapping is added; an `outputPath` matching no defined
+  output path aborts with a “did you mean” hint.
+  [`PIOutputMapping()`](https://esqlabs.github.io/esqlabsR/dev/reference/PIOutputMapping.md)
+  on its own stores the supplied `outputPath` value unchanged
+  (resolution happens at add time).
+  ([\#1157](https://github.com/esqLABS/esqlabsR/issues/1157))
+- [`addPopulation()`](https://esqlabs.github.io/esqlabsR/dev/reference/addPopulation.md)
+  now rejects a non-integer `numberOfIndividuals` (e.g. `2.5`); it must
+  be a positive whole number.
+  ([\#1055](https://github.com/esqLABS/esqlabsR/issues/1055))
+- [`createDataCombined()`](https://esqlabs.github.io/esqlabsR/dev/reference/createDataCombined.md)
+  now aborts when a requested `plotGrids` name is not defined in the
+  project, naming the unknown grids, instead of silently dropping it and
+  returning an incomplete or empty result.
+  ([\#1094](https://github.com/esqLABS/esqlabsR/issues/1094))
+- [`createPlots()`](https://esqlabs.github.io/esqlabsR/dev/reference/createPlots.md)
+  now aborts when a plot grid is missing its `plotGridId`, instead of
+  failing later with an opaque error or misreporting two id-less grids
+  as a duplicate-id violation.
+  ([\#1094](https://github.com/esqLABS/esqlabsR/issues/1094))
+- [`exportProjectToExcel()`](https://esqlabs.github.io/esqlabsR/dev/reference/exportProjectToExcel.md)
+  gains an `overwrite` argument (default `FALSE`). Because it replaces
+  `Project.xlsx` and the `Configurations/` workbooks wholesale and
+  defaults its `outputDir` to the project’s own directory, a bare call
+  would silently overwrite hand-maintained workbooks; it now aborts when
+  workbooks already exist in `outputDir`, and `overwrite = TRUE`
+  restores the previous replace-in-place behavior.
+  ([\#1126](https://github.com/esqLABS/esqlabsR/issues/1126))
+- [`importProjectFromExcel()`](https://esqlabs.github.io/esqlabsR/dev/reference/importProjectFromExcel.md)
+  now writes the same canonical on-disk project shape as
+  [`saveProject()`](https://esqlabs.github.io/esqlabsR/dev/reference/saveProject.md)
+  and
+  [`initProject()`](https://esqlabs.github.io/esqlabsR/dev/reference/initProject.md):
+  a slim `Project.json` container (with the sections held in the
+  `definitions/` tree) rather than a second, fully-inlined container
+  variant. The imported project is now indistinguishable from any other
+  tree project. It also gains an `overwrite` argument (default `FALSE`):
+  because a re-import reconciles the whole `definitions/` tree to the
+  Excel content and deletes any definition authored only on the JSON
+  side, it now aborts when a JSON project already exists in `outputDir`,
+  and `overwrite = TRUE` restores the previous replace behavior.
+  ([\#1126](https://github.com/esqLABS/esqlabsR/issues/1126),
+  [\#1128](https://github.com/esqLABS/esqlabsR/issues/1128))
+- [`importProjectFromExcel()`](https://esqlabs.github.io/esqlabsR/dev/reference/importProjectFromExcel.md)
+  now migrates a legacy 5.x Excel project written in the standard
+  pre-6.0 layout, where it previously dropped whole sections or aborted.
+  It builds one application per protocol sheet from a
+  one-sheet-per-protocol `Applications.xlsx` (not only from an
+  `ApplicationProtocols` sheet), so scenario application references
+  resolve; parses the multi-sheet `PITaskName`-keyed
+  parameter-identification layout (not only a `PITasks` sheet); defaults
+  `OverwriteFormulasInSS` when a `Scenarios.xlsx` omits the column
+  instead of aborting; reifies the configured `dataFile` as an `excel`
+  observed-data definition (warning if the file is absent); links an
+  individual to a parameter-set sheet named after it; and parses a
+  quoted multi-value cell (`"A", "B", "C, with comma"`) correctly.
+  Definition ids are canonicalized to filename-safe (commas and interior
+  spaces become `_`), and an imported project round-trips through the
+  authoring API without diff noise: a population accepts
+  `proteinOntogenies`, and a non-steady-state scenario’s steady-state
+  time/unit default to the same `1000` / `"min"` the authoring API
+  writes. ([\#1158](https://github.com/esqLABS/esqlabsR/issues/1158))
+- [`initProject()`](https://esqlabs.github.io/esqlabsR/dev/reference/initProject.md)
+  now creates the `destination` folder when it does not exist yet,
+  instead of aborting with “The specified destination folder does not
+  exist”. Initializing a project is the first call of the authoring
+  workflow, so `initProject("myProject")` in an empty parent folder now
+  works without a preceding
+  [`dir.create()`](https://rdrr.io/r/base/files2.html).
+  ([\#1173](https://github.com/esqLABS/esqlabsR/issues/1173))
+- [`initProject()`](https://esqlabs.github.io/esqlabsR/dev/reference/initProject.md)
+  now creates a `definitions/` directory in the project scaffold,
+  matching its documented contract that the scaffold includes a
+  `definitions/` tree.
+  ([\#1088](https://github.com/esqLABS/esqlabsR/issues/1088))
+- A project-controlled file path that resolves outside the project
+  folder is now rejected. A scenario’s `modelFile`, a population id
+  (`.csv`), and an observed-data source’s `file` /
+  `importerConfiguration` are each required to stay under their working
+  folder, and the working folders themselves (`simulationsFolder`,
+  `dataFolder`, `populationsFolder`, `outputFolder`) are required to
+  stay under the project directory, so a shared or downloaded project
+  can no longer point a path at a file elsewhere on the machine via a
+  `../` or an absolute path. The loader aborts naming the offending
+  field instead of failing later with a misleading “file not found”, and
+  [`validateProject()`](https://esqlabs.github.io/esqlabsR/dev/reference/validateProject.md)
+  reports the same escape as a critical error. Containment is a lexical
+  check on `..` and absolute paths; a folder deliberately placed outside
+  the tree with the `${VAR}` environment-variable form is still allowed,
+  and a symlink inside the project tree is resolved by the file loader
+  as before.
+  [`createScenariosFromPKML()`](https://esqlabs.github.io/esqlabsR/dev/reference/createScenariosFromPKML.md)
+  now warns when a PKML kept outside `simulationsFolder` would be stored
+  as an escaping relative `modelFile`. The same containment now covers
+  the Excel-import entry point:
+  [`importProjectFromExcel()`](https://esqlabs.github.io/esqlabsR/dev/reference/importProjectFromExcel.md)
+  requires the `configurationsFolder` and every per-section workbook
+  filename read from the Excel file to stay under the project folder,
+  aborting on an escaping value (with the `${VAR}` escape hatch
+  preserved).
+  ([\#1034](https://github.com/esqLABS/esqlabsR/issues/1034),
+  [\#1139](https://github.com/esqLABS/esqlabsR/issues/1139))
+- [`loadObservedData()`](https://esqlabs.github.io/esqlabsR/dev/reference/loadObservedData.md)
+  now aborts when two observed-data sources resolve to the same data-set
+  name (previously the later source silently shadowed the earlier), and
+  a `script` source that returns a list of data sets is keyed by each
+  data set’s own name.
+  ([\#1055](https://github.com/esqLABS/esqlabsR/issues/1055)) It also
+  warns once per session that a `script` source executes arbitrary R
+  when it is resolved (only resolve observed data from a project you
+  trust), and warns by name when a `programmatic` source resolves to no
+  data (a sentinel read from disk with no matching in-session `DataSet`)
+  instead of dropping it silently.
+  ([\#1033](https://github.com/esqLABS/esqlabsR/issues/1033),
+  [\#1081](https://github.com/esqLABS/esqlabsR/issues/1081))
+- [`projectStatus()`](https://esqlabs.github.io/esqlabsR/dev/reference/projectStatus.md)
+  now computes its Excel axis from the current in-memory project,
+  honouring its documented “would re-exporting change the workbook?”
+  contract, instead of re-reading the on-disk `Project.json` container.
+  A tree project whose container the previous save left section-emptied
+  no longer reports false drift on every section after a dirty
+  [`saveProject()`](https://esqlabs.github.io/esqlabsR/dev/reference/saveProject.md)
+  (only the fields that actually changed are flagged), and a project
+  with dangling references no longer aborts the status check on an
+  id-canonicalization collision.
+  ([\#1123](https://github.com/esqLABS/esqlabsR/issues/1123),
+  [\#1125](https://github.com/esqLABS/esqlabsR/issues/1125),
+  [\#1128](https://github.com/esqLABS/esqlabsR/issues/1128))
+- [`loadScenarioResults()`](https://esqlabs.github.io/esqlabsR/dev/reference/loadScenarioResults.md)
+  now restores the full four-field record produced by
+  [`runScenarios()`](https://esqlabs.github.io/esqlabsR/dev/reference/runScenarios.md):
+  it reloads the `population` from `<scenario>_population.csv` for
+  population scenarios (previously dropped) and extracts `outputValues`
+  for the simulation’s recorded output paths with the population
+  attached, so a reloaded result matches the original run.
+  ([\#1054](https://github.com/esqLABS/esqlabsR/issues/1054))
+- [`saveProject()`](https://esqlabs.github.io/esqlabsR/dev/reference/saveProject.md)
+  now writes back to the container file the project was loaded from,
+  instead of always writing `Project.json`. A project loaded from a
+  differently-named container (`ProjectConfiguration.json` from a legacy
+  Excel import, or a renamed container) is saved in place rather than
+  forking a stray `Project.json` that left the loaded container stale.
+  ([\#1124](https://github.com/esqLABS/esqlabsR/issues/1124))
+- [`restoreProject()`](https://esqlabs.github.io/esqlabsR/dev/reference/restoreProject.md)
+  now accepts a monolithic project snapshot written by a previous
+  esqlabsR version (the single JSON that
+  `snapshotProjectConfiguration()` produced) and upgrades it to the
+  current project format on read, through the Excel bridge, so a
+  previous-version project opens without a separate manual import step.
+  Observed data is not carried in such a snapshot; add it with
+  [`addObservedData()`](https://esqlabs.github.io/esqlabsR/dev/reference/addObservedData.md)
+  if a plot or parameter identification needs it.
+  ([\#1156](https://github.com/esqLABS/esqlabsR/issues/1156))
+- [`saveScenarioResults()`](https://esqlabs.github.io/esqlabsR/dev/reference/saveScenarioResults.md)
+  now reports a failed save with a cli warning that names the affected
+  scenario and carries the underlying error message, instead of a
+  generic base warning, and continues saving the remaining scenarios. It
+  also aborts up front when two scenario names collapse to the same
+  file-safe name (e.g. `"A/B"` and `"A_B"`), which previously overwrote
+  each other silently.
+  ([\#1054](https://github.com/esqLABS/esqlabsR/issues/1054),
+  [\#1084](https://github.com/esqLABS/esqlabsR/issues/1084))
+- `runPI(project, tasks = ...)` now canonicalizes the requested task
+  ids, so a task referenced by the name it was first passed to
+  [`addPITask()`](https://esqlabs.github.io/esqlabsR/dev/reference/addPITask.md)
+  resolves even though the task was filed under its canonicalized id.
+  ([\#928](https://github.com/esqLABS/esqlabsR/issues/928))
+- [`runScenarios()`](https://esqlabs.github.io/esqlabsR/dev/reference/runScenarios.md)
+  gains a `stopIfParameterNotFound` argument (default `TRUE`): set it to
+  `FALSE` to skip a `customParams` path that matches no parameter in a
+  scenario’s simulation with a warning instead of aborting the run.
+  ([\#1073](https://github.com/esqLABS/esqlabsR/issues/1073))
+- `runScenarios(stopIfFails = FALSE)` now also skips a scenario that
+  fails at *build* time (e.g. a missing model parameter path), warning
+  and continuing with the scenarios that built, instead of aborting the
+  whole batch. Previously only a run-time no-results failure was
+  skipped; a build failure escaped the `stopIfFails` handling.
+  [`buildSimulations()`](https://esqlabs.github.io/esqlabsR/dev/reference/buildSimulations.md)
+  keeps aborting on a build failure.
+  ([\#1170](https://github.com/esqLABS/esqlabsR/issues/1170))
+- [`runScenarios()`](https://esqlabs.github.io/esqlabsR/dev/reference/runScenarios.md)
+  and
+  [`buildSimulations()`](https://esqlabs.github.io/esqlabsR/dev/reference/buildSimulations.md)
+  now canonicalize the `scenarios` argument (the same lowercasing and
+  character-substitution scenario ids get) before matching, so the name
+  you authored a scenario with resolves to its canonical id; a name
+  rewritten in the process warns, naming the id it resolved to.
+  ([\#1157](https://github.com/esqLABS/esqlabsR/issues/1157))
+- [`importProjectFromExcel()`](https://esqlabs.github.io/esqlabsR/dev/reference/importProjectFromExcel.md)
+  no longer silently drops a parameter set when the same sheet name
+  appears in two workbooks. Because the three former parameter-set kinds
+  now share one `parameterSets` namespace, a legacy project that used
+  one name in, say, both `ModelParameters.xlsx` and `Individuals.xlsx`
+  had the second set renamed by the JSON writer and left referenced by
+  nobody, so the individual’s own parametrization vanished from every
+  scenario using it. The importer now detects the clash itself: the
+  workbook parsed first keeps the plain id, the later sheet is renamed
+  (`Indiv1` -\> `Indiv1_1`), the references that workbook makes (an
+  individual’s own sheet and its `Individual Parameter Sets` column, an
+  application’s protocol sheet and its `ParameterSets` column) are
+  re-pointed at the renamed set, and a warning names each `old -> new`
+  pair and the workbook it came from. Two sheet names that differ only
+  by case or by a forbidden character are treated as the same clash,
+  since they canonicalize to one id.
+  ([\#1163](https://github.com/esqLABS/esqlabsR/issues/1163))
+- [`importProjectFromExcel()`](https://esqlabs.github.io/esqlabsR/dev/reference/importProjectFromExcel.md)
+  now canonicalizes an observed `dataCombined` entry’s `scenario`
+  reference, as it already did for a simulated entry’s. An imported data
+  combination previously carried two spellings of the same scenario, the
+  canonical id in its simulated block and the original Excel casing in
+  its observed block, so any check keyed on the canonical id missed the
+  observed block.
+  ([\#1165](https://github.com/esqLABS/esqlabsR/issues/1165))
+- `importProjectFromExcel(outputDir = ...)` now copies the folders the
+  project references (the simulations folder, the data folder, and the
+  populations folder) into the new project, so the imported project is
+  runnable where it was written. Previously only the definition tree was
+  written, and because a definition references a model or data file by a
+  path relative to the project folder, every such reference dangled: the
+  import ended in File-Not-Found warnings until the models and data were
+  hand-copied. Whole folders travel, so an asset nothing names
+  statically (a data-importer configuration, a population csv) comes
+  along too. Not copied: the output folder (results the project writes,
+  not inputs it reads), a folder given as an absolute path or through a
+  `${VAR}` (it deliberately sits outside the project and resolves from
+  anywhere), a `../`-climbing folder value naming a location the project
+  does not own, a target folder that already holds files unless
+  `overwrite = TRUE` (so a model or data file you curated in the output
+  beforehand is never silently replaced), and nothing at all when the
+  project is imported in place. A folder that was not copied is
+  reported. The new `copyAssets` argument (default `TRUE`) turns the
+  copy off when only the definitions are wanted.
+  ([\#1164](https://github.com/esqLABS/esqlabsR/issues/1164))
+- [`importProjectFromExcel()`](https://esqlabs.github.io/esqlabsR/dev/reference/importProjectFromExcel.md)
+  now reports what it produced: the project it wrote, its per-section
+  definition counts, and the folders it copied or could not find. The
+  summary previously appeared only in an interactive session, so an
+  import run from a script finished with no sign of what had been
+  written, or whether the call had succeeded at all. Pass
+  `silent = TRUE` to turn it off.
+  ([\#1166](https://github.com/esqLABS/esqlabsR/issues/1166))
+- [`importProjectFromExcel()`](https://esqlabs.github.io/esqlabsR/dev/reference/importProjectFromExcel.md)
+  no longer aborts on a sheet that is not a parameter sheet. Legacy
+  projects routinely keep a notes, scratch, organ-list, or fit-bounds
+  sheet beside the parameter sheets of a parameter workbook, and any one
+  of them stopped the whole migration with a bare
+  `missing value where TRUE/FALSE needed` naming neither the file nor
+  the sheet. A sheet is now recognized as a parameter sheet by its
+  columns (`Container Path`, `Parameter Name`, `Value`, `Units`, the
+  same four
+  [`readParametersFromXLS()`](https://esqlabs.github.io/esqlabsR/dev/reference/readParametersFromXLS.md)
+  requires and
+  [`exportProjectToExcel()`](https://esqlabs.github.io/esqlabsR/dev/reference/exportProjectToExcel.md)
+  writes); one that lacks them is skipped with a warning naming the
+  workbook and the sheets. A skipped sheet contributes nothing else
+  either: it does not become an `Application` in the 5.x
+  one-sheet-per-protocol applications layout, it is not linked as an
+  individual’s own parameter override, and a `ParameterSets` or
+  `Individual Parameter Sets` cell that names it has that reference
+  dropped, so no definition is left pointing at a set that was never
+  created. A header-only sheet with the four columns is still imported
+  as an empty parameter set.
+  ([\#1181](https://github.com/esqLABS/esqlabsR/issues/1181))
+- [`readExcel()`](https://esqlabs.github.io/esqlabsR/dev/reference/readExcel.md)
+  drops rows that are blank in every column, so
+  [`importProjectFromExcel()`](https://esqlabs.github.io/esqlabsR/dev/reference/importProjectFromExcel.md)
+  no longer takes one for a definition. Stray cell formatting extends a
+  sheet’s used range past its last real row, so a workbook edited over
+  time reports trailing rows that hold nothing: one legacy project’s
+  populations sheet carried 6 real rows and 18 empty ones, and the
+  import aborted on the first empty one with “A definition file for kind
+  population has no usable populationId”. The drop happens at the single
+  point every sheet is read, so it covers every parser rather than the
+  populations one alone. A row with a value in any column is untouched
+  (a record with gaps is still the parser’s business), as is a
+  header-only sheet.
+  ([\#1191](https://github.com/esqLABS/esqlabsR/issues/1191))
+- [`importProjectFromExcel()`](https://esqlabs.github.io/esqlabsR/dev/reference/importProjectFromExcel.md)
+  and
+  [`restoreProject()`](https://esqlabs.github.io/esqlabsR/dev/reference/restoreProject.md)
+  no longer abort on a blank cell in a legacy 5.x
+  parameter-identification sheet. A `PIOutputMappings` sheet with an
+  empty `OutputPath`, or one missing that column altogether, failed with
+  a bare `missing value where TRUE/FALSE needed` that named neither the
+  sheet nor the column; the same latent failure sat in the
+  `PIParameters` path builder and the `AlgorithmOptions` / `CIOptions`
+  readers, waiting on a different blank cell. A single blank-cell test
+  now covers all four, so an unusable cell yields an absent field (and a
+  coined mapping id) that validation reports, instead of stopping the
+  migration. ([\#1190](https://github.com/esqLABS/esqlabsR/issues/1190))
+- [`importProjectFromExcel()`](https://esqlabs.github.io/esqlabsR/dev/reference/importProjectFromExcel.md)
+  no longer aborts when the project’s `dataFolder` points outside the
+  project folder. An absolute `dataFolder` on a synced drive is common
+  in real 5.x projects (the observed data was shared through the drive
+  rather than committed), and the containment check applied as a hard
+  abort meant such a project could not be migrated without hand-editing
+  the source workbook first. The import now warns and brings in no
+  observed data, the same as when the configured data file is simply
+  missing, and the warning names the field rather than echoing the
+  absolute path. The same applies to a `dataFile` that climbs out of its
+  `dataFolder`. Paths the project *writes* to are still contained. A
+  `dataFolder` that names a `${VAR}` environment variable, the
+  sanctioned way to keep data outside the project, is now expanded and
+  its data imported normally; previously the variable was left
+  unexpanded here, so the folder was read as a literal name and the data
+  was lost with a misleading “file not found”.
+  ([\#1182](https://github.com/esqLABS/esqlabsR/issues/1182))
+- [`importProjectFromExcel()`](https://esqlabs.github.io/esqlabsR/dev/reference/importProjectFromExcel.md)
+  skips a parameter row whose `Value` cell is not a number, instead of
+  aborting the whole import. A fit-bounds or scratch sheet authored by
+  copying a real parameter sheet carries all four parameter columns, so
+  it is a parameter sheet and its rows are read; a `Value` of `lower` or
+  `upper` then stopped the migration of a project with nothing else
+  wrong with it. Each skipped row is named with its sheet, row and cell
+  in one warning per workbook, so a genuine typo in a real parameter is
+  still visible. A blank `Value` is unchanged: it remains an allowed
+  absent value rather than a skipped row.
+  ([\#1189](https://github.com/esqLABS/esqlabsR/issues/1189))
+- [`importProjectFromExcel()`](https://esqlabs.github.io/esqlabsR/dev/reference/importProjectFromExcel.md)
+  and
+  [`restoreProject()`](https://esqlabs.github.io/esqlabsR/dev/reference/restoreProject.md)
+  handle a `PIOutputMappings` sheet that has no `OutputPath` column.
+  That is the layout from before the column existed, which identified a
+  mapping’s output through the scenario rather than in the mapping row,
+  so every mapping in such a workbook came out with no output path and
+  the restore stopped on the first one. The column’s absence is now read
+  as that older layout: each row becomes one mapping per output path the
+  scenarios it names declare (in their `OutputPathsIds`), carrying the
+  row’s data set, scaling, offsets, factors and weight, and a path two
+  scenarios share becomes one mapping naming both. A row whose scenarios
+  declare no output path still yields a mapping, without one, and is
+  named in a warning saying which cell to fill, so nothing disappears
+  from a task the user may be able to complete. Only the column’s
+  absence is read as the older layout; a blank cell in a column that IS
+  present is an authoring gap and is left as it is.
+  ([\#1192](https://github.com/esqLABS/esqlabsR/issues/1192))
+- [`loadProject()`](https://esqlabs.github.io/esqlabsR/dev/reference/loadProject.md)
+  and
+  [`restoreProject()`](https://esqlabs.github.io/esqlabsR/dev/reference/restoreProject.md)
+  open a project whose PI output mapping names no `outputPath` or no
+  `observedData`, and
+  [`validateProject()`](https://esqlabs.github.io/esqlabsR/dev/reference/validateProject.md)
+  reports it, rather than the load aborting. Both fields are required on
+  a mapping, and a hand-maintained legacy workbook routinely leaves one
+  such cell blank, which made the project impossible to open and
+  therefore impossible to fix; the abort also arrived from
+  [`PIOutputMapping()`](https://esqlabs.github.io/esqlabsR/dev/reference/PIOutputMapping.md)
+  naming a coined mapping id, with nothing pointing back at the sheet.
+  [`validateProject()`](https://esqlabs.github.io/esqlabsR/dev/reference/validateProject.md)
+  already reported an absent `outputPath` and now reports an absent
+  `observedData` alongside it, and
+  [`runPI()`](https://esqlabs.github.io/esqlabsR/dev/reference/runPI.md)
+  gates on that validation, so an incomplete mapping still cannot reach
+  a run. Authoring one through
+  [`PIOutputMapping()`](https://esqlabs.github.io/esqlabsR/dev/reference/PIOutputMapping.md)
+  or
+  [`addPIOutputMapping()`](https://esqlabs.github.io/esqlabsR/dev/reference/addPIOutputMapping.md)
+  is unchanged: both still reject a mapping missing either field.
+  ([\#1192](https://github.com/esqLABS/esqlabsR/issues/1192))
+- [`loadProject()`](https://esqlabs.github.io/esqlabsR/dev/reference/loadProject.md)
+  and
+  [`restoreProject()`](https://esqlabs.github.io/esqlabsR/dev/reference/restoreProject.md)
+  likewise open a project whose PI parameter names no `path` or is
+  missing a bound, which a hand-maintained 5.x `PIParameters` sheet with
+  a blank `MinValue` or `StartValue` cell produces.
+  [`validateProject()`](https://esqlabs.github.io/esqlabsR/dev/reference/validateProject.md)
+  names each missing field, and no longer reports spurious invalid
+  bounds by comparing values that are not there. Authoring a parameter
+  through
+  [`PIParameter()`](https://esqlabs.github.io/esqlabsR/dev/reference/PIParameter.md)
+  or
+  [`addPIParameter()`](https://esqlabs.github.io/esqlabsR/dev/reference/addPIParameter.md)
+  still requires all of them. Both records’ missing-field reports come
+  from the `parameterIdentification` section validator rather than the
+  cross-reference phase, which skips itself once any section has a
+  critical error, so every gap in a task is now listed in one report
+  instead of one per re-run.
+  ([\#1192](https://github.com/esqLABS/esqlabsR/issues/1192))
+- [`importProjectFromExcel()`](https://esqlabs.github.io/esqlabsR/dev/reference/importProjectFromExcel.md)
+  reports the data combinations whose observed curve names no data set,
+  instead of leaving a freshly imported project to fail
+  [`validateProject()`](https://esqlabs.github.io/esqlabsR/dev/reference/validateProject.md)
+  with no explanation. A `DataCombined` row marked `observed` whose
+  `dataSet` cell is empty yields an entry with nothing to resolve
+  against, which validation counts as a critical error; in one legacy
+  project that was 12 critical errors on a tree the user had not
+  touched. The rows are kept exactly as authored, so the missing cell
+  can still be filled and the project re-imported, and the import now
+  names the affected data combinations and says plainly that
+  [`validateProject()`](https://esqlabs.github.io/esqlabsR/dev/reference/validateProject.md)
+  will report them until then. The three warnings about observed data
+  that could not be imported at all (a missing data file, a `dataFolder`
+  outside the project, a `dataFile` outside its `dataFolder`) state the
+  same consequence.
+  ([\#1183](https://github.com/esqLABS/esqlabsR/issues/1183))
 
 ## esqlabsR 5.6.0
 
@@ -95,16 +1308,13 @@
   should always consult the [package
   NEWS](https://esqlabs.github.io/esqlabsR/news/index.html) for breaking
   changes before confirming the update.
-- Added `ignoreVersionCheck` parameter to
-  [`createProjectConfiguration()`](https://esqlabs.github.io/esqlabsR/dev/reference/createProjectConfiguration.md)
-  and
-  [`createDefaultProjectConfiguration()`](https://esqlabs.github.io/esqlabsR/dev/reference/createDefaultProjectConfiguration.md).
-  When `TRUE`, the version check is skipped. This is intended for
-  non-interactive contexts such as automated tests or scripts run from
-  the console where user input cannot be assured. When using this
-  option, it is the responsibility of the user to ensure that the
-  project is compatible with the currently installed version of
-  `esqlabsR`.
+- Added `ignoreVersionCheck` parameter to `createProjectConfiguration()`
+  and `createDefaultProjectConfiguration()`. When `TRUE`, the version
+  check is skipped. This is intended for non-interactive contexts such
+  as automated tests or scripts run from the console where user input
+  cannot be assured. When using this option, it is the responsibility of
+  the user to ensure that the project is compatible with the currently
+  installed version of `esqlabsR`.
 
 ### Minor improvements and bug fixes
 
@@ -117,22 +1327,19 @@
   to `NULL` before loading, so the passed configuration object is
   mutated as a side effect
   ([\#982](https://github.com/esqLABS/esqlabsR/issues/982)).
-- Refactored
-  [`exportParametersToXLS()`](https://esqlabs.github.io/esqlabsR/dev/reference/exportParametersToXLS.md)
-  to eliminate code duplication by delegating to
-  [`writeParameterStructureToXLS()`](https://esqlabs.github.io/esqlabsR/dev/reference/writeParameterStructureToXLS.md).
-  The function now extracts parameter data into a structure and passes
-  it to
-  [`writeParameterStructureToXLS()`](https://esqlabs.github.io/esqlabsR/dev/reference/writeParameterStructureToXLS.md)
-  for writing. No changes to functionality or API.
-- [`createDataCombinedFromExcel()`](https://esqlabs.github.io/esqlabsR/dev/reference/createDataCombinedFromExcel.md)
-  now throws an error listing all DataCombined IDs that cannot be found
-  in the Excel file
-  ([\#740](https://github.com/esqLABS/esqlabsR/issues/740)).
+- Refactored `exportParametersToXLS()` to eliminate code duplication by
+  delegating to `writeParameterStructureToXLS()`. The function now
+  extracts parameter data into a structure and passes it to
+  `writeParameterStructureToXLS()` for writing. No changes to
+  functionality or API.
 - Added a warning when axis limits contain zero while the corresponding
   axis scale is set to `log` in `Plots.xlsx`. Previously, this
   combination silently produced empty plots
   ([\#967](https://github.com/esqLABS/esqlabsR/issues/967)).
+- [`createDataCombinedFromExcel()`](https://esqlabs.github.io/esqlabsR/dev/reference/createDataCombined.md)
+  now throws an error listing all DataCombined IDs that cannot be found
+  in the Excel file
+  ([\#740](https://github.com/esqLABS/esqlabsR/issues/740)).
 - [`extendParameterStructure()`](https://esqlabs.github.io/esqlabsR/dev/reference/extendParameterStructure.md)
   now supports `NULL` for `parameters` and `newParameters` arguments.
   When `NULL` is provided, a valid empty structure is returned or
@@ -143,9 +1350,8 @@
   `yUnits = "nmol/l"`) in addition to lists. Single string values are
   automatically coerced to a list
   ([\#822](https://github.com/esqLABS/esqlabsR/issues/822)).
-- [`snapshotProjectConfiguration()`](https://esqlabs.github.io/esqlabsR/dev/reference/snapshotProjectConfiguration.md)
-  no longer fails when population files are PK-Sim exported CSVs that do
-  not have sheet names
+- `snapshotProjectConfiguration()` no longer fails when population files
+  are PK-Sim exported CSVs that do not have sheet names
   ([\#980](https://github.com/esqLABS/esqlabsR/issues/980)).
 - Remove false warnings whenever a `ProjectConfiguration` is created
   ([\#964](https://github.com/esqLABS/esqlabsR/issues/964)).
@@ -161,8 +1367,8 @@
 
 - Added comprehensive three-tier validation system for Excel
   configuration files. New exported functions:
-  - [`validateAllConfigurations()`](https://esqlabs.github.io/esqlabsR/dev/reference/validateAllConfigurations.md):
-    Validates all project configuration files
+  - `validateAllConfigurations()`: Validates all project configuration
+    files
   - [`validationSummary()`](https://esqlabs.github.io/esqlabsR/dev/reference/validationSummary.md):
     Returns summary of validation results
   - [`isAnyCriticalErrors()`](https://esqlabs.github.io/esqlabsR/dev/reference/isAnyCriticalErrors.md):
@@ -188,19 +1394,17 @@
   80” instead of comma-separated “72, 80”), users now receive specific
   error messages indicating the field name, plot ID, and correct format.
   Uses ospsuite.utils validation functions internally.
-- Enhanced
-  [`createScenarioConfigurationsFromPKML()`](https://esqlabs.github.io/esqlabsR/dev/reference/createScenarioConfigurationsFromPKML.md)
-  with vector argument support - all parameters now support named
-  vectors and vector recycling for flexible scenario creation.
+- Enhanced `createScenarioConfigurationsFromPKML()` with vector argument
+  support - all parameters now support named vectors and vector
+  recycling for flexible scenario creation.
   ([\#890](https://github.com/esqLABS/esqlabsR/issues/890))
 - Added support for named vectors in `outputPaths` parameter across
   scenario functions - names serve as aliases for output paths, e.g.,
   `c("plasma" = "Organism|VenousBlood|Plasma|Drug|Concentration in container")`.
   ([\#890](https://github.com/esqLABS/esqlabsR/issues/890))
-- Added Excel append functionality to
-  [`exportParametersToXLS()`](https://esqlabs.github.io/esqlabsR/dev/reference/exportParametersToXLS.md) -
-  new `append` parameter allows adding parameters to existing Excel
-  files without overwriting.
+- Added Excel append functionality to `exportParametersToXLS()` - new
+  `append` parameter allows adding parameters to existing Excel files
+  without overwriting.
   ([\#890](https://github.com/esqLABS/esqlabsR/issues/890))
 - Added Excel sheet name sanitization for application protocols -
   protocol names are automatically sanitized to comply with Excel naming
@@ -232,53 +1436,50 @@
   ([\#825](https://github.com/esqLABS/esqlabsR/issues/825))
 
 - The function
-  [`createDataCombinedFromExcel()`](https://esqlabs.github.io/esqlabsR/dev/reference/createDataCombinedFromExcel.md)
+  [`createDataCombinedFromExcel()`](https://esqlabs.github.io/esqlabsR/dev/reference/createDataCombined.md)
   gets a new signature. The arguments `file` and `sheet` are removed.
   The file from which the `DataCombined` objects are created is now
   passed as part of the `ProjectConfiguration` passed as
   `projectConfiguration` argument, the sheet is always `DataCombined`.
 
 - The function
-  [`createDataCombinedFromExcel()`](https://esqlabs.github.io/esqlabsR/dev/reference/createDataCombinedFromExcel.md)
+  [`createDataCombinedFromExcel()`](https://esqlabs.github.io/esqlabsR/dev/reference/createDataCombined.md)
   gets a new argument `plotGridNames`. The `plotGridNames` argument is a
   character vector of names of the plots specified in the sheet
   `plotGrids`. The function will then create and return `DataCombined`
   used in the specified plots. The new argument can be combined with
   `dataCombinedNames`.Useful in combination with the new argument
   `dataCombinedList` of the function
-  [`createPlotsFromExcel()`](https://esqlabs.github.io/esqlabsR/dev/reference/createPlotsFromExcel.md).
+  [`createPlotsFromExcel()`](https://esqlabs.github.io/esqlabsR/dev/reference/createPlots.md).
 
 - Argument `dataCombinedNames = NULL` of the function
-  [`createDataCombinedFromExcel()`](https://esqlabs.github.io/esqlabsR/dev/reference/createDataCombinedFromExcel.md)
+  [`createDataCombinedFromExcel()`](https://esqlabs.github.io/esqlabsR/dev/reference/createDataCombined.md)
   does not create `DataCombined` for all entries in the excel file any
   more. If `dataCombinedNames = NULL`, `plotGridNames` must be
   specified. If both arguments are `NULL`, an empty list is returned.
 
 ### Major changes
 
-- User-defined parameters passed to the
-  [`createScenarios()`](https://esqlabs.github.io/esqlabsR/dev/reference/createScenarios.md)
-  or `Scenario$new()` in the `customParams` argument are applied last.
-  Up to this version, they were overwritten by the administration
-  protocol ([\#817](https://github.com/esqLABS/esqlabsR/issues/817)).
+- User-defined parameters passed to the `createScenarios()` or
+  `Scenario$new()` in the `customParams` argument are applied last. Up
+  to this version, they were overwritten by the administration protocol
+  ([\#817](https://github.com/esqLABS/esqlabsR/issues/817)).
 
 - Project Configuration Version Control - Added comprehensive snapshot
   and restore functionality for project configurations:
 
-  - [`snapshotProjectConfiguration()`](https://esqlabs.github.io/esqlabsR/dev/reference/snapshotProjectConfiguration.md)
-    exports all Excel configuration files to a single JSON file for
-    version control
-  - [`restoreProjectConfiguration()`](https://esqlabs.github.io/esqlabsR/dev/reference/restoreProjectConfiguration.md)
-    recreates Excel files from JSON snapshots for easy project sharing
-  - [`projectConfigurationStatus()`](https://esqlabs.github.io/esqlabsR/dev/reference/projectConfigurationStatus.md)
-    checks synchronization between Excel files and JSON snapshots
+  - `snapshotProjectConfiguration()` exports all Excel configuration
+    files to a single JSON file for version control
+  - `restoreProjectConfiguration()` recreates Excel files from JSON
+    snapshots for easy project sharing
+  - `projectConfigurationStatus()` checks synchronization between Excel
+    files and JSON snapshots
   - Perfect for team collaboration, Git version control, and project
     backup strategies
   - Comprehensive documentation for version control features is now
-    included in
-    [`vignette("project-structure")`](https://esqlabs.github.io/esqlabsR/dev/articles/project-structure.md).
+    included in `vignette("project-structure")`.
 
-- [`createPlotsFromExcel()`](https://esqlabs.github.io/esqlabsR/dev/reference/createPlotsFromExcel.md)
+- [`createPlotsFromExcel()`](https://esqlabs.github.io/esqlabsR/dev/reference/createPlots.md)
   now accepts a (named) list of `DataCombined` objects as input to
   create plots defined in the `plotGridNames` argument. Missing
   `DataCombined` will be created from the Excel file (default behavior).
@@ -290,12 +1491,10 @@
   functions to save and restore sensitivity analysis results
   ([\#862](https://github.com/esqLABS/esqlabsR/issues/862)).
 
-- Add
-  [`createScenarioConfigurationsFromPKML()`](https://esqlabs.github.io/esqlabsR/dev/reference/createScenarioConfigurationsFromPKML.md)
-  and
-  [`addScenarioConfigurationsToExcel()`](https://esqlabs.github.io/esqlabsR/dev/reference/addScenarioConfigurationsToExcel.md)
-  functions that automate scenario creation and writing to Excel from
-  PKML files ([\#853](https://github.com/esqLABS/esqlabsR/issues/853)).
+- Add `createScenarioConfigurationsFromPKML()` and
+  `addScenarioConfigurationsToExcel()` functions that automate scenario
+  creation and writing to Excel from PKML files
+  ([\#853](https://github.com/esqLABS/esqlabsR/issues/853)).
 
 - Added species-specific parameter sheets for the species Beagle, Dog,
   Minipig, and Mouse. It is now possible to create scenarios for each
@@ -304,8 +1503,8 @@
 
 ### Minor improvements and bug fixes
 
-- [`readScenarioConfigurationFromExcel()`](https://esqlabs.github.io/esqlabsR/dev/reference/readScenarioConfigurationFromExcel.md)
-  ignores rows where `Scenario_name` is empty.
+- `readScenarioConfigurationFromExcel()` ignores rows where
+  `Scenario_name` is empty.
 - Fixed a bug when the dimension in the y-axis label of
   [`sensitivityTimeProfiles()`](https://esqlabs.github.io/esqlabsR/dev/reference/sensitivityTimeProfiles.md)
   did not match the unit
@@ -321,7 +1520,7 @@
   of the simulation. This way, when saving the simulation to PKML and
   loading in MoBi, the loaded simulation will have the updated name.
 - Fixed a bug in
-  [`createPlotsFromExcel()`](https://esqlabs.github.io/esqlabsR/dev/reference/createPlotsFromExcel.md)
+  [`createPlotsFromExcel()`](https://esqlabs.github.io/esqlabsR/dev/reference/createPlots.md)
   when subtitle of PlotConfiguration was not applied
   ([\#845](https://github.com/esqLABS/esqlabsR/issues/845)).
 - Added example usage of
@@ -337,7 +1536,7 @@
 - Better error message when `SteadyState = TRUE` and `SteadyStateTime`
   but not `SteadyStateTimeUnit` is defined in the scenario configuration
   ([\#863](https://github.com/esqLABS/esqlabsR/issues/863)).
-- [`createPlotsFromExcel()`](https://esqlabs.github.io/esqlabsR/dev/reference/createPlotsFromExcel.md)
+- [`createPlotsFromExcel()`](https://esqlabs.github.io/esqlabsR/dev/reference/createPlots.md)
   does not fail when `plotGrids` has no `title` column.
   ([\#860](https://github.com/esqLABS/esqlabsR/issues/860))
 - The package `ospsuite.utils` is imported but not the direct
@@ -380,11 +1579,10 @@
 
 - `ProjectConfiguration.xslx` configuration file now support environment
   variables. When creating project configuration using
-  [`createProjectConfiguration()`](https://esqlabs.github.io/esqlabsR/dev/reference/createProjectConfiguration.md)
-  or when modifying the projectConfiguration object directly, the
-  package will look for matching environment variables and build the
-  paths accordingly. A message is shown to the user to make this
-  transparent.
+  `createProjectConfiguration()` or when modifying the
+  projectConfiguration object directly, the package will look for
+  matching environment variables and build the paths accordingly. A
+  message is shown to the user to make this transparent.
 
 - Complete `sensitivitySpiderPlot` documentation
   ([\#799](https://github.com/esqLABS/esqlabsR/issues/799))
@@ -562,8 +1760,7 @@
 - New function `writeParameterStructureToXLS` to write a list of
   parameter paths, values, and units (e.g., imported using the
   [`readParametersFromXLS()`](https://esqlabs.github.io/esqlabsR/dev/reference/readParametersFromXLS.md)
-  function) to an Excel file. In contrast to
-  [`exportParametersToXLS()`](https://esqlabs.github.io/esqlabsR/dev/reference/exportParametersToXLS.md),
+  function) to an Excel file. In contrast to `exportParametersToXLS()`,
   which writes an excel file for a list of `Parameter` objects, this
   function expects the parameter structure as used throughout the
   package.
@@ -741,10 +1938,9 @@
 - `Scenarios` excel file gets additional columns `SteadyStateTime`,
   `SteadyStateTimeUnit`, `PopulationId`, `OutputPathsIds`.
 
-- [`readScenarioConfigurationFromExcel()`](https://esqlabs.github.io/esqlabsR/dev/reference/readScenarioConfigurationFromExcel.md)
-  has a new signature and requires a list of `scenarioNames` and a
-  `ProjectConfiguration`. The output is a named list of
-  `ScenarioConfiguration` objects.
+- `readScenarioConfigurationFromExcel()` has a new signature and
+  requires a list of `scenarioNames` and a `ProjectConfiguration`. The
+  output is a named list of `ScenarioConfiguration` objects.
 
 - Output paths are not set from global variable `OutputPaths` any more
   but from the respective field of `ScenarioConfgiruation`
@@ -811,14 +2007,14 @@
 - The workflow for running scenarios changed to:
 
   - Create a `ProjectConfiguration` with
-    [`createDefaultProjectConfiguration()`](https://esqlabs.github.io/esqlabsR/dev/reference/createDefaultProjectConfiguration.md)
+    `createDefaultProjectConfiguration()`
   - Create `ScenarioConfigurations`, e.g. with
     readScenarioConfigurationFromExcel(scenarioNames,
     projectConfiguration)\`
   - Run scenarios with `runScenarios(scenarioConfigurations)`
     Alternatively:
   - Create a `ProjectConfiguration` with
-    [`createDefaultProjectConfiguration()`](https://esqlabs.github.io/esqlabsR/dev/reference/createDefaultProjectConfiguration.md)
+    `createDefaultProjectConfiguration()`
   - Create `ScenarioConfigurations`, e.g. with
 
 `readScenarioConfigurationFromExcel(scenarioNames, projectConfiguration)`
@@ -836,22 +2032,19 @@
   the
   [`runScenarios()`](https://esqlabs.github.io/esqlabsR/dev/reference/runScenarios.md)
   function.
-- New function
-  [`loadObservedDataFromPKML()`](https://esqlabs.github.io/esqlabsR/dev/reference/loadObservedDataFromPKML.md)
-  to load data from `*.pkml` located in the “PKML” sub-folder of the
-  “Data” folder.
-- New function
-  [`createScenarios()`](https://esqlabs.github.io/esqlabsR/dev/reference/createScenarios.md)
-  to create `Scenario` objects from `ScenarioConfiguration` objects.
+- New function `loadObservedDataFromPKML()` to load data from `*.pkml`
+  located in the “PKML” sub-folder of the “Data” folder.
+- New function `createScenarios()` to create `Scenario` objects from
+  `ScenarioConfiguration` objects.
 - Plots can be created by calling the new function
-  [`createPlotsFromExcel()`](https://esqlabs.github.io/esqlabsR/dev/reference/createPlotsFromExcel.md).
+  [`createPlotsFromExcel()`](https://esqlabs.github.io/esqlabsR/dev/reference/createPlots.md).
   It requires as input parameters `simulatedScenarios` (a list of
   simulated scenarios as returned by
   [`runScenarios()`](https://esqlabs.github.io/esqlabsR/dev/reference/runScenarios.md)),
   `observedData` (a list of `DataSet` objects) and a
   `ProjectConfiguration` object `projectConfiguration`.
 - New function
-  [`createDataCombinedFromExcel()`](https://esqlabs.github.io/esqlabsR/dev/reference/createDataCombinedFromExcel.md)
+  [`createDataCombinedFromExcel()`](https://esqlabs.github.io/esqlabsR/dev/reference/createDataCombined.md)
   creates `DataCombined` objects as defined in the `Plots.xlsx` file.
 - New function
   [`saveScenarioResults()`](https://esqlabs.github.io/esqlabsR/dev/reference/saveScenarioResults.md)
@@ -881,13 +2074,11 @@
   gets additional arguments `lloqMode` and `uloqMode` that determine how
   entries of type “\<number” and “\>number” will be treated.
 
-- [`readScenarioConfigurationFromExcel()`](https://esqlabs.github.io/esqlabsR/dev/reference/readScenarioConfigurationFromExcel.md)
-  will read all scenarios defined in the `Scenarios.xlsx` file if no
-  scenario names are specified (argument `scenarioNames = NULL`).
+- `readScenarioConfigurationFromExcel()` will read all scenarios defined
+  in the `Scenarios.xlsx` file if no scenario names are specified
+  (argument `scenarioNames = NULL`).
 
-- Function
-  [`setApplications()`](https://esqlabs.github.io/esqlabsR/dev/reference/setApplications.md)
-  is deprecated.
+- Function `setApplications()` is deprecated.
 
 - Dark gray frame around legends by default.
 
@@ -923,14 +2114,12 @@
   visualization workflows:
   - [`createEsqlabsPlotConfiguration()`](https://esqlabs.github.io/esqlabsR/dev/reference/createEsqlabsPlotConfiguration.md)
   - [`createEsqlabsPlotGridConfiguration()`](https://esqlabs.github.io/esqlabsR/dev/reference/createEsqlabsPlotGridConfiguration.md)
-  - [`createEsqlabsExportConfiguration()`](https://esqlabs.github.io/esqlabsR/dev/reference/createEsqlabsExportConfiguration.md)
+  - `createEsqlabsExportConfiguration()`
 - New function
   [`getAllApplicationParameters()`](https://esqlabs.github.io/esqlabsR/dev/reference/getAllApplicationParameters.md)
   that returns all parameters of applications in a simulation
-- New function
-  [`exportParametersToXLS()`](https://esqlabs.github.io/esqlabsR/dev/reference/exportParametersToXLS.md)
-  to write parameter information into an excel file that can be loaded
-  in MoBi or R using the
+- New function `exportParametersToXLS()` to write parameter information
+  into an excel file that can be loaded in MoBi or R using the
   [`readParametersFromXLS()`](https://esqlabs.github.io/esqlabsR/dev/reference/readParametersFromXLS.md)
   function.
 - New function `writeExcel()` that is a wrapper for creating a directory
@@ -951,9 +2140,9 @@
 
   - `ProjectConfiguration`
   - `ScenarioConfiguration`
-  - [`createDefaultProjectConfiguration()`](https://esqlabs.github.io/esqlabsR/dev/reference/createDefaultProjectConfiguration.md)
-  - [`readScenarioConfigurationFromExcel()`](https://esqlabs.github.io/esqlabsR/dev/reference/readScenarioConfigurationFromExcel.md)
-  - [`setApplications()`](https://esqlabs.github.io/esqlabsR/dev/reference/setApplications.md)
+  - `createDefaultProjectConfiguration()`
+  - `readScenarioConfigurationFromExcel()`
+  - `setApplications()`
   - `initializeScenario()`
 
 - Maintenance and bug fixes.

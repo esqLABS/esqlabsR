@@ -30,4 +30,4 @@ extendPopulationFromXLS(population, XLSpath, sheet = NULL)
 ## Details
 
 The method reads the information from the specified excel sheet(s) and
-calls `extendPopulationByUserDefinedParams`
+calls `extendPopulationByUserDefinedParams`.

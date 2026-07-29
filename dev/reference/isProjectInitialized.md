@@ -1,8 +1,8 @@
 # Check if a directory contains an esqlabsR project
 
 Checks if a directory already contains an esqlabsR project by looking
-for the presence of ProjectConfiguration.xlsx file or Configurations
-folder.
+for the presence of a `Project.json` file, a `ProjectConfiguration`
+Excel file, or a `Configurations` folder.
 
 ## Usage
 

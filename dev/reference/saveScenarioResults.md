@@ -7,7 +7,7 @@ Save results of scenario simulations to csv.
 ``` r
 saveScenarioResults(
   simulatedScenariosResults,
-  projectConfiguration,
+  project,
   outputFolder = NULL,
   saveSimulationsToPKML = TRUE
 )
@@ -21,15 +21,17 @@ saveScenarioResults(
   `population` as produced by
   [`runScenarios()`](https://esqlabs.github.io/esqlabsR/dev/reference/runScenarios.md).
 
-- projectConfiguration:
+- project:
 
-  An instance of `ProjectConfiguration`
+  A `Project` object (loaded with
+  [`loadProject()`](https://esqlabs.github.io/esqlabsR/dev/reference/loadProject.md))
+  providing the `outputFolder` used to derive the default destination.
 
 - outputFolder:
 
   Optional - path to the folder where the results will be stored. If
   `NULL` (default), a sub-folder in
-  `ProjectConfiguration$outputFolder/SimulationResults/<DateSuffix>`.
+  `project$paths$outputFolder/SimulationResults/<DateSuffix>`.
 
 - saveSimulationsToPKML:
 
@@ -54,14 +56,8 @@ function.
 
 ``` r
 if (FALSE) { # \dontrun{
-projectConfiguration <- esqlabsR::createProjectConfiguration()
-scenarioConfigurations <- readScenarioConfigurationFromExcel(
-  projectConfiguration = projectConfiguration
-)
-scenarios <- createScenarios(scenarioConfigurations = scenarioConfigurations)
-simulatedScenariosResults <- runScenarios(
-  scenarios = scenarios
-)
-saveScenarioResults(simulatedScenariosResults, projectConfiguration)
+project <- loadProject("Project.json")
+simulatedScenariosResults <- runScenarios(project)
+saveScenarioResults(simulatedScenariosResults, project)
 } # }
 ```

@@ -24,7 +24,7 @@
 
     <a class="navbar-brand me-2" href="index.html">esqlabsR</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.7.0.9006</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">6.0.0.9001</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -39,22 +39,24 @@
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
 <li><hr class="dropdown-divider"></li>
-    <li><h6 class="dropdown-header" data-toc-skip>esqlabsR Workflow</h6></li>
-    <li><a class="dropdown-item" href="articles/workflow-overview.html">Overview</a></li>
-    <li><a class="dropdown-item" href="articles/project-structure.html">Project configuration</a></li>
-    <li><a class="dropdown-item" href="articles/design-scenarios.html">2. Design Scenarios</a></li>
-    <li><a class="dropdown-item" href="articles/run-simulations.html">3. Run Simulations</a></li>
-    <li><a class="dropdown-item" href="articles/plot-results.html">4. Plot Results</a></li>
-    <li><a class="dropdown-item" href="articles/sensitivity.html">Sensitivity Analysis</a></li>
-    <li><a class="dropdown-item" href="articles/sensitivity-plots.html">Sensitivity Analysis – Plot Customization</a></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Workflow</h6></li>
+    <li><a class="dropdown-item" href="articles/projects.html">Projects and the project structure</a></li>
+    <li><a class="dropdown-item" href="articles/design-scenarios.html">Design scenarios</a></li>
+    <li><a class="dropdown-item" href="articles/validate-project.html">Validate a project</a></li>
+    <li><a class="dropdown-item" href="articles/run-simulations.html">Run simulations</a></li>
+    <li><a class="dropdown-item" href="articles/plot-results.html">Plot results</a></li>
+    <li><a class="dropdown-item" href="articles/observed-data.html">Observed data</a></li>
     <li><hr class="dropdown-divider"></li>
-    <li><h6 class="dropdown-header" data-toc-skip>Parameter Identification</h6></li>
-    <li><a class="dropdown-item" href="articles/pi-workflow.html">Parameter Identification</a></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Parameter identification</h6></li>
+    <li><a class="dropdown-item" href="articles/pi-workflow.html">Parameter identification</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Sensitivity analysis</h6></li>
+    <li><a class="dropdown-item" href="articles/sensitivity.html">Sensitivity analysis</a></li>
+    <li><a class="dropdown-item" href="articles/sensitivity-plots.html">Sensitivity analysis: plot customization</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Miscellaneous</h6></li>
-    <li><a class="dropdown-item" href="articles/presentations.html">Slide Decks</a></li>
-    <li><a class="dropdown-item" href="articles/advanced.html">Advanced Topics</a></li>
-    <li><a class="dropdown-item" href="articles/project-migration-guide.html">Migrating Project Structure Versions</a></li>
+    <li><a class="dropdown-item" href="articles/migrate-from-excel.html">Migrating an Excel project to 6.0.0</a></li>
+    <li><a class="dropdown-item" href="articles/presentations.html">Slide decks</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="news/index.html">Changelog</a></li>
@@ -79,14 +81,13 @@
 </div>
 <!-- badges: start -->
 
-<!-- badges: end -->
 <p>The <a href="https://github.com/esqLABS/esqlabsR" class="external-link">esqlabsR</a> package facilitates and standardizes the modeling and simulation of physiologically based kinetic (PBK) and quantitative systems pharmacology/toxicology (QSP/T) models implemented in the <a href="https://www.open-systems-pharmacology.org/" class="external-link">Open Systems Pharmacology Software</a> (OSPS).</p>
 <p>The <a href="https://github.com/esqLABS/esqlabsR" class="external-link">esqlabsR</a> package is designed for PBK modelers who use the OSPS suite. By using this package, you can streamline your modeling and simulation (M&amp;S) workflow and ensure standardized and reproducible practices.</p>
 <p>The package provides functions to:</p>
 <ul>
 <li>Design, import and run Simulations,</li>
 <li>Generate standardized plots and other reporting materials,</li>
-<li>Interact with the OSPS features using simple Excel files.</li>
+<li>Validate and share reproducible project configurations.</li>
 </ul>
 <p>To get started with the esqlabsR package, please follow the <a href="https://esqlabs.github.io/esqlabsR/articles/esqlabsR.html">Get Started tutorial</a>.</p>
 <div class="section level2">
@@ -117,107 +118,33 @@
 <div class="section level2">
 <h2 id="usage">Usage<a class="anchor" aria-label="anchor" href="#usage"></a>
 </h2>
-<p>You can start with the “Get Started” vignette: <code><a href="articles/esqlabsR.html">vignette("esqlabsR")</a></code>.</p>
-<p><a href="https://github.com/esqLABS/esqlabsR" class="external-link">esqlabsR</a> workflows require a specific project structure. You can initialize a new project by running:</p>
+<p>A <a href="https://github.com/esqLABS/esqlabsR" class="external-link">esqlabsR</a> project is a directory. At its root sits a <code>Project.json</code> container alongside a <code>definitions/</code> folder that holds your authored definition files, one file per definition, with the scenarios living under <code>definitions/scenarios/</code>. The package ships a complete worked example project that you can load and run directly.</p>
+<p>The quickest way to see the workflow end to end is to load the example project, run one of its scenarios, and plot the result:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">esqlabsR</span><span class="fu">::</span><span class="fu"><a href="reference/initProject.html">initProject</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
-<p>This will create the required folder structure and files for your project in the working directory from where you run the command.</p>
-<p>Below is a simple example of how to work with the package:</p>
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/esqLABS/esqlabsR" class="external-link">esqlabsR</a></span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Load the worked example project shipped with the package.</span></span>
+<span><span class="va">project</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/loadProject.html">loadProject</a></span><span class="op">(</span><span class="fu"><a href="reference/exampleProjectPath.html">exampleProjectPath</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Run a single scenario. The first run initializes PK-Sim and is slow.</span></span>
+<span><span class="va">results</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/runScenarios.html">runScenarios</a></span><span class="op">(</span><span class="va">project</span>, scenarios <span class="op">=</span> <span class="st">"aciclovir_iv"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Build the project's plots from the scenario results.</span></span>
+<span><span class="co"># `createPlots()` returns a named list of Plot Grids.</span></span>
+<span><span class="va">plots</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/createPlots.html">createPlots</a></span><span class="op">(</span><span class="va">project</span>, scenarioResults <span class="op">=</span> <span class="va">results</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">plots</span><span class="op">$</span><span class="va">individual_diagnostics</span></span></code></pre></div>
+<p><code><a href="reference/runScenarios.html">runScenarios()</a></code> returns a named list keyed by scenario name. Each entry bundles the prepared simulation, its results, the extracted output values, and the population (or <code>NULL</code> for individual scenarios).</p>
+<p>To start your own project from scratch, scaffold the required folder structure and files in the current working directory with:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># load esqlabsR</span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/esqLABS/esqlabsR" class="external-link">esqlabsR</a></span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Load excel-based configuration</span></span>
-<span><span class="co"># The function `exampleProjectConfigurationPath()` returns the path to the example project</span></span>
-<span><span class="co"># configuration included in the package. Replace the variable `configurationPath`</span></span>
-<span><span class="co"># with the path to you project configuration file.</span></span>
-<span><span class="va">configurationPath</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/exampleProjectConfigurationPath.html">exampleProjectConfigurationPath</a></span><span class="op">(</span><span class="op">)</span></span>
-<span></span>
-<span><span class="va">myProjectConfiguration</span> <span class="op">&lt;-</span></span>
-<span>  <span class="fu"><a href="reference/createProjectConfiguration.html">createProjectConfiguration</a></span><span class="op">(</span><span class="va">configurationPath</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Define which scenarios to run</span></span>
-<span><span class="va">scenarioNames</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"TestScenario"</span><span class="op">)</span></span>
-<span><span class="co"># Set scenario names to NULL if you want to simulate all scenarios defined in the</span></span>
-<span><span class="co"># excel file</span></span>
-<span><span class="co"># scenarioNames &lt;- NULL</span></span>
-<span></span>
-<span><span class="co"># Create `ScenarioConfiguration` objects from excel files</span></span>
-<span><span class="va">scenarioConfigurations</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/readScenarioConfigurationFromExcel.html">readScenarioConfigurationFromExcel</a></span><span class="op">(</span></span>
-<span>  scenarioNames <span class="op">=</span> <span class="va">scenarioNames</span>,</span>
-<span>  projectConfiguration <span class="op">=</span> <span class="va">myProjectConfiguration</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Define custom parameters for the scenarios. These parameter will be applied</span></span>
-<span><span class="co"># additionally to the paremetrization specified in the Excel files.</span></span>
-<span><span class="va">customParam</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
-<span>  paths <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
-<span>    <span class="st">"Aciclovir|Lipophilicity"</span></span>
-<span>  <span class="op">)</span>,</span>
-<span>  values <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
-<span>    <span class="op">-</span><span class="fl">0.1</span></span>
-<span>  <span class="op">)</span>,</span>
-<span>  units <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
-<span>    <span class="st">"Log Units"</span></span>
-<span>  <span class="op">)</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Create simulation scenarios defined in the excel files and apply the custom parameters</span></span>
-<span><span class="va">myScenarios</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/createScenarios.html">createScenarios</a></span><span class="op">(</span></span>
-<span>  scenarioConfigurations <span class="op">=</span> <span class="va">scenarioConfigurations</span>,</span>
-<span>  customParams <span class="op">=</span> <span class="va">customParam</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Adjust simulation run options, if necessary.</span></span>
-<span><span class="co"># E.g. disable check for negative values if required</span></span>
-<span><span class="va">simulationRunOptions</span> <span class="op">&lt;-</span> <span class="fu">ospsuite</span><span class="fu">::</span><span class="va"><a href="https://www.open-systems-pharmacology.org/OSPSuite-R/reference/SimulationRunOptions.html" class="external-link">SimulationRunOptions</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="va">simulationRunOptions</span><span class="op">$</span><span class="va">checkForNegativeValues</span> <span class="op">&lt;-</span> <span class="cn">FALSE</span></span>
-<span></span>
-<span><span class="co"># Run simulations</span></span>
-<span><span class="va">simulatedScenariosResults</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/runScenarios.html">runScenarios</a></span><span class="op">(</span></span>
-<span>  scenarios <span class="op">=</span> <span class="va">myScenarios</span>,</span>
-<span>  simulationRunOptions <span class="op">=</span> <span class="va">simulationRunOptions</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span>    <span class="co"># Save results and store the path to the results for later re-use</span></span>
-<span>    <span class="va">outputFolder</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/saveScenarioResults.html">saveScenarioResults</a></span><span class="op">(</span><span class="va">simulatedScenariosResults</span>, <span class="va">myProjectConfiguration</span><span class="op">)</span></span>
-<span></span>
-<span>    <span class="co"># Load observed data using the default importer configuration provided with the package. Alternatively, you can load a custom data importer configuration.</span></span>
-<span>  <span class="va">dataSheets</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Laskin 1982.Group A"</span><span class="op">)</span></span>
-<span>  <span class="va">observedData</span> <span class="op">&lt;-</span> <span class="fu">esqlabsR</span><span class="fu">::</span><span class="fu"><a href="reference/loadObservedData.html">loadObservedData</a></span><span class="op">(</span></span>
-<span>    projectConfiguration <span class="op">=</span> <span class="va">myProjectConfiguration</span>,</span>
-<span>    sheets <span class="op">=</span> <span class="va">dataSheets</span></span>
-<span>  <span class="op">)</span></span>
-<span></span>
-<span>  <span class="co">########## Create figures defined in the Plots.xlsx file########</span></span>
-<span>  <span class="va">plots</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/createPlotsFromExcel.html">createPlotsFromExcel</a></span><span class="op">(</span></span>
-<span>    plotGridNames <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Aciclovir"</span>,</span>
-<span>                      <span class="st">"Aciclovir2"</span><span class="op">)</span>,</span>
-<span>    simulatedScenarios <span class="op">=</span> <span class="va">simulatedScenariosResults</span>,</span>
-<span>    observedData <span class="op">=</span> <span class="va">observedData</span>,</span>
-<span>    projectConfiguration <span class="op">=</span> <span class="va">myProjectConfiguration</span>,</span>
-<span>    outputFolder <span class="op">=</span> <span class="va">outputFolder</span>,</span>
-<span>    stopIfNotFound <span class="op">=</span> <span class="cn">TRUE</span></span>
-<span>  <span class="op">)</span></span>
-<span></span>
-<span>  <span class="va">plots</span><span class="op">$</span><span class="va">Aciclovir</span></span></code></pre></div>
-<p><img src="reference/figures/README-unnamed-chunk-6-1.png" width="80%" style="display: block; margin: auto;"></p>
+<code class="sourceCode R"><span><span class="fu">esqlabsR</span><span class="fu">::</span><span class="fu"><a href="reference/initProject.html">initProject</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+<p>You then author and edit the project’s definitions, scenarios, individuals, populations, parameter sets, output paths, observed data, and plots, with the <code>add*()</code>, <code>set*()</code>, and <code>remove*()</code> functions. Each of these takes the definition <code>id</code> first, for example <code>addScenario(project, id = "aciclovir_iv", ...)</code>. These edits are write-through: each one persists to its definition file immediately, so there is no separate save step. Once your project is configured, you run it with <code><a href="reference/runScenarios.html">runScenarios()</a></code>, plot it with <code><a href="reference/createPlots.html">createPlots()</a></code>, and check it for configuration problems with <code><a href="reference/validateProject.html">validateProject()</a></code>.</p>
+<p>To share or archive a project, render a single self-contained <code>.esqlabsR</code> snapshot with <code>saveSnapshot()</code> and read it back with <code>loadSnapshot()</code>.</p>
 </div>
 <div class="section level2">
-<h2 id="learn-more">Learn More<a class="anchor" aria-label="anchor" href="#learn-more"></a>
+<h2 id="learn-more">Learn more<a class="anchor" aria-label="anchor" href="#learn-more"></a>
 </h2>
-<p>You can find more information on specific topics in dedicated vignettes:</p>
-<ul>
-<li>Start with <code>vignette("esqlabsR-workflow-overview")</code> to learn about the esqlabsR’s streamlined workflow.</li>
-<li>
-<code>vignette("esqlabsR-project-structure")</code> details the structure and purpose of each component file and directory of an esqlabsR project.</li>
-<li>
-<code>vignette("esqlabsR-design-scenarios")</code> explains how you can design your own simulations only using excel files.</li>
-<li>
-<code>vignette("esqlabsR-run-simulations")</code> describes all you need to know to run your customized simulations.</li>
-<li>
-<code>vignette("esqlabsR-plot-results")</code> explains how to generate visualizations from simulations.</li>
-</ul>
+<p>You can find more information on specific topics in the dedicated articles on the <a href="https://esqlabs.github.io/esqlabsR/">package website</a>, covering the project structure, designing scenarios, running simulations, and plotting results. The “Get Started” article walks through the full workflow.</p>
 </div>
 <div class="section level2">
 <h2 id="related-work">Related Work<a class="anchor" aria-label="anchor" href="#related-work"></a>
@@ -293,7 +220,7 @@
 <div class="dev-status">
 <h2 data-toc-skip>Dev status</h2>
 <ul class="list-unstyled">
-<li><a href="https://github.com/esqlabs/esqlabsR/actions/workflows/merge-to-main.yaml" class="external-link"><img src="https://img.shields.io/github/actions/workflow/status/esqlabs/esqlabsR/merge-to-main.yaml?branch=main&amp;label=Build" alt="Build status"></a></li>
+<li><a href="https://github.com/esqlabs/esqlabsR/actions/workflows/main-workflow.yaml" class="external-link"><img src="https://img.shields.io/github/actions/workflow/status/esqlabs/esqlabsR/main-workflow.yaml?branch=main&amp;label=Build"></a></li>
 <li><a href="https://app.codecov.io/gh/esqlabs/esqlabsR?branch=main" class="external-link"><img src="https://codecov.io/gh/esqlabs/esqlabsR/branch/main/graph/badge.svg" alt="Codecov test coverage"></a></li>
 </ul>
 </div>

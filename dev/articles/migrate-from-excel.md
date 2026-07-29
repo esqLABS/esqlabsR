@@ -1,0 +1,255 @@
+# Migrating an Excel project to 6.0.0
+
+## Who this guide is for
+
+This guide is for modelers who have an existing pre-6.0.0 esqlabsR
+project driven by Excel workbooks and want to move it to the 6.0.0
+model, where a project is a single `Project.json` file backed by a tree
+of one-file-per-definition files. If you are starting a new project from
+scratch in 6.0.0, you do not need this guide; create the project
+directly in the new format instead.
+
+The code below is shown but not run; the commands are correct against a
+real Excel project, so substitute your own paths.
+
+## What changes conceptually
+
+A pre-6.0.0 project is an *Excel project*: a `ProjectConfiguration.xlsx`
+(called `Project.xlsx` in later 5.x releases) that points at a folder of
+configuration workbooks, one workbook per concern (`Scenarios.xlsx`,
+`ModelParameters.xlsx`, `Individuals.xlsx`, `Populations.xlsx`,
+`Applications.xlsx`, `Plots.xlsx`). The 6.0.0 model keeps the same
+information but reshapes how it is stored.
+
+- **One JSON project instead of many workbooks.** The configuration
+  workbooks collapse into a `Project.json` file plus a `definitions/`
+  tree of authored definition files alongside it. Each scenario becomes
+  its own file under `definitions/scenarios/` (one JSON file per
+  scenario), so scenarios are edited and versioned independently rather
+  than living as rows in a shared sheet. To hand the whole project to a
+  colleague as one file, freeze a self-contained `.esqlabsR` snapshot
+  with
+  [`snapshotProject()`](https://esqlabs.github.io/esqlabsR/dev/reference/snapshotProject.md)
+  (see
+  [`vignette("projects")`](https://esqlabs.github.io/esqlabsR/dev/articles/projects.md)
+  for the snapshot workflow).
+
+- **One unified parameter-set collection.** The Excel format kept
+  parameter sets in three separate places: the model parameters
+  workbook, the non-biometrics sheets of the individuals workbook, and
+  the non-protocol sheets of the applications workbook. In 6.0.0 these
+  merge into a single `parameterSets` collection. A scenario, an
+  individual, and an application all reference parameter sets from this
+  one collection, by id.
+
+- **Plots and parameter identification live inside the project.** What
+  used to be separate Excel sheets (the plots workbook, and parameter
+  identification configuration) are now sections of the project itself
+  rather than separate spreadsheets.
+
+- **Definition ids are canonicalized.** Every definition (a scenario, a
+  parameter set, an individual, a population, an application, an output
+  path) is referenced by an **id**, and that id doubles as its on-disk
+  filename in the `definitions/` tree. So ids are lowercased and made
+  filename-safe on import, and every reference is rewritten the same
+  way, so it still resolves even if it was typed in a different case.
+  Watch for this when reading the imported project: an id you spelled
+  `MyScenario` in Excel becomes `myscenario`. See
+  [`vignette("projects")`](https://esqlabs.github.io/esqlabsR/dev/articles/projects.md)
+  for the full treatment.
+
+The canonical 6.0.0 vocabulary (Project, Project file, Excel project,
+Scenario, Parameter Set, Output Path, and so on) is the same vocabulary
+used throughout the other articles; this guide uses those terms.
+
+## The migration tools
+
+Two functions form the bridge between an Excel project and a JSON
+project.
+
+- `importProjectFromExcel(projectConfigPath, outputDir, silent)` reads
+  an Excel project and writes a v2.0 JSON project: a `Project.json` file
+  and the `definitions/` tree of one-file-per-definition files alongside
+  it. This is the one-way migration entry point. It returns, invisibly,
+  the path to the `Project.json` it wrote.
+
+- `exportProjectToExcel(project, outputDir, silent)` is the reverse: it
+  writes the Excel workbooks back out from a loaded `Project`. It is
+  mainly useful if you still need to hand a colleague an Excel project,
+  or to compare the two forms.
+
+Once you have loaded the JSON project, `projectStatus(project)` reports
+whether a `Project.xlsx` side-car next to it is still a faithful export
+of the current project (see Step 4).
+
+## Step 1: run the import
+
+Point
+[`importProjectFromExcel()`](https://esqlabs.github.io/esqlabsR/dev/reference/importProjectFromExcel.md)
+at your project’s top-level Excel file. If your project predates the
+`Project.xlsx` rename, that file is named `ProjectConfiguration.xlsx`;
+pass whichever name your project uses.
+
+``` r
+
+jsonPath <- importProjectFromExcel(
+  projectConfigPath = "MyProject/Project.xlsx",
+  outputDir = "MyProject"
+)
+jsonPath
+#> "MyProject/Project.json"
+```
+
+A few details about what the import does:
+
+- It resolves the configuration workbooks relative to the configurations
+  folder recorded in the Excel file, and reads whichever exist. Missing
+  workbooks are skipped.
+- The three former parameter-set sources are read into the single
+  `parameterSets` collection. A duplicated id across sources is a
+  collision; the import merges them regardless, and the collision later
+  aborts the load (see “Caveats to check by hand”).
+- The import replaces any JSON project already in `outputDir`: it
+  rewrites the project file and reconciles the whole `definitions/` tree
+  to the Excel content, which deletes any definition you authored only
+  on the JSON side. To protect that work, the import aborts by default
+  when a JSON project already exists in `outputDir`. Re-run it with
+  `overwrite = TRUE` once you are sure you want the Excel state to win.
+  This matters if you migrated once, then kept authoring in the JSON
+  project: do not casually re-import over it.
+- The `configurationsFolder` and the per-workbook filenames recorded in
+  the Excel file must stay under the project folder. A value that points
+  outside it (a `../` climb or an absolute path) aborts the import
+  naming the offending field, so a shared or downloaded Excel project
+  cannot read a workbook from elsewhere on the machine. A folder
+  deliberately kept outside the project (for example a shared drive) is
+  still reachable through the `${VAR}` environment-variable form.
+
+## Step 2: load the project
+
+Load the JSON into an in-memory `Project`.
+
+``` r
+
+project <- loadProject(jsonPath)
+```
+
+[`loadProject()`](https://esqlabs.github.io/esqlabsR/dev/reference/loadProject.md)
+already runs a quick check for the most common cross-reference problems
+(for example a scenario that points at an individual or population that
+no longer exists) and warns about them, but it still returns the project
+so you can inspect it. For the full picture, validate explicitly.
+
+The imported project is a normal tree project: every authoring function
+([`addScenario()`](https://esqlabs.github.io/esqlabsR/dev/reference/addScenario.md),
+[`setIndividual()`](https://esqlabs.github.io/esqlabsR/dev/reference/setIndividual.md),
+and so on) edits the project in memory, and `saveProject(project)`
+reconciles those edits to the definition files under `definitions/`. If
+your project kept the legacy `ProjectConfiguration.xlsx` name, the
+import writes `ProjectConfiguration.json` and
+[`saveProject()`](https://esqlabs.github.io/esqlabsR/dev/reference/saveProject.md)
+updates that same file; the container keeps the name you imported under.
+
+## Step 3: validate what carried over
+
+Run
+[`validateProject()`](https://esqlabs.github.io/esqlabsR/dev/reference/validateProject.md)
+to get a complete report. This is the step that catches references that
+did not survive the reshape, most often because an id was canonicalized
+on one side of a reference but you expected the original spelling, or
+because a parameter set the import expected was absent.
+
+``` r
+
+results <- validateProject(project)
+
+if (isAnyCriticalErrors(results)) {
+  print(validationSummary(results))
+}
+```
+
+[`validateProject()`](https://esqlabs.github.io/esqlabsR/dev/reference/validateProject.md)
+prints a report grouped by section and separates blocking **critical
+errors** from non-blocking **warnings**; the article on validating a
+project
+([`vignette("validate-project")`](https://esqlabs.github.io/esqlabsR/dev/articles/validate-project.md))
+covers reading that report in full. After a migration the most useful
+part is the **“did you mean”** suggestion the validator attaches to an
+unresolved reference, which is exactly the clue you need after
+canonicalization. For instance, if a scenario references a parameter set
+written as `Global` in Excel but the canonical id is `global`, the
+report reads something like:
+
+    [crossReferences] Scenario 'myscenario' references undefined model parameter
+    sets: Global (did you mean 'global'?)
+
+[`isAnyCriticalErrors()`](https://esqlabs.github.io/esqlabsR/dev/reference/isAnyCriticalErrors.md)
+gives a single pass/fail check. Once the project validates with no
+critical errors, the migration is complete and you can run scenarios
+([`vignette("run-simulations")`](https://esqlabs.github.io/esqlabsR/dev/articles/run-simulations.md))
+and create plots
+([`vignette("plot-results")`](https://esqlabs.github.io/esqlabsR/dev/articles/plot-results.md))
+from the JSON project as normal.
+
+## Caveats to check by hand
+
+The migration is faithful for the common case, but a few things deserve
+a manual look.
+
+- **Parameter-set id collisions abort the load.** Because model,
+  individual, and application parameter sets now share one
+  `parameterSets` namespace, two sets that had the same id in different
+  Excel workbooks now collide, and the collision aborts
+  [`loadProject()`](https://esqlabs.github.io/esqlabsR/dev/reference/loadProject.md).
+  If a load fails this way, rename the clashing set in the source Excel
+  and re-import. Even with no collision, skim the merged `parameterSets`
+  after import to confirm each set landed where you expect.
+
+- **Update external scripts to the canonical ids.** Import rewrites any
+  id that was not already lowercase and filename-safe (a warning names
+  each `original -> canonical` change), so the ids in the JSON project
+  and in the `definitions/scenarios/` filenames differ from the Excel
+  spellings. If you have scripts that refer to scenarios or parameter
+  sets by their old Excel names, change them to the canonical ids.
+
+- **Round-tripping is not a faithful identity on the old shape.**
+  [`exportProjectToExcel()`](https://esqlabs.github.io/esqlabsR/dev/reference/exportProjectToExcel.md)
+  writes the unified `parameterSets` collection back out as a single
+  model-parameters workbook, one sheet per set. It does not reconstruct
+  the original three-workbook split, so exporting a migrated project and
+  re-importing it is stable under the *new* unified model but does not
+  reproduce the exact original Excel layout. Treat the export as a
+  convenience for sharing, not as a way to get your old workbooks back
+  verbatim.
+
+- **Empty or absent sections are dropped, not preserved as empty.** A
+  configuration workbook that did not exist, or a sheet with no rows,
+  simply does not appear in the JSON project. If a section you expected
+  is missing after import, check that its workbook and sheet actually
+  held data.
+
+- **Keep the Excel project around until you trust the JSON one.** During
+  the transition you can use `projectStatus(project)` to confirm the
+  workbooks still match the loaded project before you retire them (see
+  Step 4).
+
+## Step 4: confirm the two forms agree
+
+`projectStatus(project)` reports, for a loaded `Project`, whether it has
+unsaved in-memory edits (the memory-vs-tree axis) and whether a
+configured `Project.xlsx` side-car is a stale export of the current
+project (the memory-vs-Excel axis). During a migration the Excel axis is
+the one to watch: it tells you whether re-exporting would change the
+workbooks.
+
+``` r
+
+status <- projectStatus(project)
+status$excel_in_sync
+#> TRUE
+```
+
+When `excel_in_sync` is `FALSE`, `status$details` describes the
+divergence, so you can see whether it is something you changed
+deliberately or a migration gap to investigate. Once you trust the JSON
+project, you can retire the Excel workbooks.

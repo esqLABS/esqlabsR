@@ -1,58 +1,42 @@
-# Sensitivity Analysis – Plot Customization
+# Sensitivity analysis: plot customization
 
-## Customizing Sensitivity Analysis Plots
+The three sensitivity plotting functions
+([`sensitivitySpiderPlot()`](https://esqlabs.github.io/esqlabsR/dev/reference/sensitivitySpiderPlot.md),
+[`sensitivityTimeProfiles()`](https://esqlabs.github.io/esqlabsR/dev/reference/sensitivityTimeProfiles.md),
+and
+[`sensitivityTornadoPlot()`](https://esqlabs.github.io/esqlabsR/dev/reference/sensitivityTornadoPlot.md))
+produce publication-ready figures by default. This article shows how to
+adjust their appearance: first with a `defaultPlotConfiguration` object,
+then with direct function arguments for one-off overrides, and finally
+with [ggplot2](https://ggplot2.tidyverse.org) and
+[patchwork](https://patchwork.data-imaginist.com) for anything the
+configuration cannot express.
 
-### Introduction
+The examples reuse the aciclovir sensitivity analysis from
+[`vignette("sensitivity")`](https://esqlabs.github.io/esqlabsR/dev/articles/sensitivity.md).
+See that article for the analysis setup; here we assume the resulting
+`analysis` object is in scope.
 
-This vignette builds on the **aciclovir** example presented in the
-[Sensitivity
-Analysis](https://esqlabs.github.io/esqlabsR/dev/articles/esqlabsR-sensitivity.md)
-vignette, which demonstrated the standard workflow and default plotting
-functions available in [esqlabsR](https://github.com/esqLABS/esqlabsR).
-
-Here, the focus shifts to **customizing plot appearance**, using the
-`defaultPlotConfiguration` object. This allows you to adjust plot
-aesthetics such as titles, axis scaling, colors, and more—without
-modifying the core plotting functions.
-
-In cases where the default options are insufficient or do not meet your
-specific needs, we also show how to further customize the output using
-standard [ggplot2](https://ggplot2.tidyverse.org) or
-[patchwork](https://patchwork.data-imaginist.com) operations.
-
-### Setup and Running the Sensitivity Analysis
-
-Before applying this configuration, let’s first run a sensitivity
-analysis using the aciclovir example:
+Reusing the analysis from
+[`vignette("sensitivity")`](https://esqlabs.github.io/esqlabsR/dev/articles/sensitivity.md):
 
 ``` r
 
-library(esqlabsR)
+project <- loadProject(exampleProjectPath())
+simulation <- runScenarios(project, scenarios = "aciclovir_iv")[["aciclovir_iv"]]$simulation
 
-simulationFilePath <- system.file(
-  "extdata/examples/TestProject/Models/Simulations/Aciclovir.pkml",
-  package = "esqlabsR"
-)
-
-simulation <- loadSimulation(simulationFilePath)
 outputPaths <- c(
   Aciclovir_PVB = "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
 )
-
-# Use named parameter paths to customize facet labels
-namedParameterPaths <- c(
+parameterPaths <- c(
   "Lipophilicity" = "Aciclovir|Lipophilicity",
   "GFR fraction" = "Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Glomerular Filtration-GFR-Aciclovir|GFR fraction"
 )
 
-analysis <- sensitivityCalculation(
-  simulation, 
-  outputPaths, 
-  namedParameterPaths
-)
+analysis <- sensitivityCalculation(simulation, outputPaths, parameterPaths)
 ```
 
-### Available Plot Types
+## Available plot types
 
 The [esqlabsR](https://github.com/esqLABS/esqlabsR) package provides
 three plotting functions to visualize sensitivity analysis results:
@@ -81,24 +65,24 @@ found in:
 - [`sensitivityTimeProfiles()`](https://esqlabs.github.io/esqlabsR/reference/sensitivityTimeProfiles.html)
 - [`sensitivityTornadoPlot()`](https://esqlabs.github.io/esqlabsR/reference/sensitivityTornadoPlot.html)
 
-### Customizing Plots with `defaultPlotConfiguration`
+## Customizing plots with `defaultPlotConfiguration`
 
 The `defaultPlotConfiguration` object provides a centralized way to
 control the appearance of sensitivity analysis plots. If no
-configuration is provided (`NULL`), each plotting function will
-automatically create one using
+configuration is provided (`NULL`), each plotting function creates one
+using
 [`createEsqlabsPlotConfiguration()`](https://esqlabs.github.io/esqlabsR/dev/reference/createEsqlabsPlotConfiguration.md)
 with default settings.
 
-These defaults ensure a consistent and clean appearance across plot
-types, but they can be fully customized to match specific presentation
-or publication requirements. Each plotting function recognizes only a
-subset of options depending on the visual structure of the plot.
+These defaults give a consistent, clean appearance across plot types,
+and you can fully customize them to match specific presentation or
+publication requirements. Each plotting function recognizes only a
+subset of options, depending on the visual structure of the plot.
 
 The table below summarizes which configuration options are supported by
 each plot type:
 
-| Configuration Option | Spider Plot | Time Profiles | Tornado Plot | Description |
+| Configuration option | Spider Plot | Time Profiles | Tornado Plot | Description |
 |----|----|----|----|----|
 | `legendPosition` | ✔️ | ✔️ | ✔️ | Position of the legend on the plot |
 | `legendTitle` | ✔️ | ✔️ | ✔️ | Title displayed for the legend |
@@ -128,10 +112,9 @@ have no effect here. For a broader catalog and default values, see the
 and the
 [vignette](https://www.open-systems-pharmacology.org/TLF-Library/articles/plot-configuration.html).
 
-#### Example - create and apply configuration
+### Create and apply a configuration
 
-To explicitly control the appearance of your plots, create and modify a
-configuration object as shown below:
+Create a configuration object and set the fields you want to control:
 
 ``` r
 
@@ -143,12 +126,12 @@ myConfiguration$subtitle <- "Customized Plot"
 myConfiguration$legendPosition <- "right"
 ```
 
-You can then pass this object to any sensitivity plotting function:
+Pass this object to any sensitivity plotting function:
 
 ``` r
 
 sensitivitySpiderPlot(
-  sensitivityCalculation = analysis, 
+  sensitivityCalculation = analysis,
   defaultPlotConfiguration = myConfiguration
 )
 #> $`Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)`
@@ -156,31 +139,24 @@ sensitivitySpiderPlot(
 
 ![](sensitivity-plots_files/figure-html/spider-plot-config-1.png)
 
-Note that when a named vector is used for `parameterPaths`, those names
-will also be used as labels in the plots.
+When a named vector is used for `parameterPaths`, those names are also
+used as labels in the plots.
 
-#### Direct Arguments vs. Configuration Object
+### Direct arguments vs. configuration object
 
-Some plot-specific settings—such as axis scaling—are available as direct
-arguments to the plotting functions. These options control core aspects
-of the plot’s structure and behavior and are therefore exposed
-explicitly.
-
-Examples include:
-
-- `xAxisScale` and `yAxisScale` in
-  [`sensitivityTimeProfiles()`](https://esqlabs.github.io/esqlabsR/dev/reference/sensitivityTimeProfiles.md)  
-- `xAxisType` and `yAxisType` in
-  [`sensitivitySpiderPlot()`](https://esqlabs.github.io/esqlabsR/dev/reference/sensitivitySpiderPlot.md)
+Some plot-specific settings, such as axis scaling, are available as
+direct arguments to the plotting functions. These options control core
+aspects of the plot’s structure and behavior, so they are exposed
+explicitly. Examples include `xAxisScale` and `yAxisScale` in
+[`sensitivityTimeProfiles()`](https://esqlabs.github.io/esqlabsR/dev/reference/sensitivityTimeProfiles.md),
+and `xAxisType` and `yAxisType` in
+[`sensitivitySpiderPlot()`](https://esqlabs.github.io/esqlabsR/dev/reference/sensitivitySpiderPlot.md).
 
 When specified, these arguments **override** the corresponding values in
-the `defaultPlotConfiguration` object. This provides a convenient way to
-apply one-off changes without modifying the configuration globally.
-
-The example below demonstrates this behavior: although the configuration
-sets the y-axis to a logarithmic scale, passing `yAxisScale = "lin"`
-directly to the function takes precedence and applies a linear scale
-instead.
+the `defaultPlotConfiguration` object, a convenient way to apply one-off
+changes without modifying the configuration globally. Here the
+configuration requests a log y-axis, but `yAxisScale = "lin"` passed to
+the function wins:
 
 ``` r
 
@@ -188,12 +164,11 @@ myConfiguration <- createEsqlabsPlotConfiguration()
 
 myConfiguration$linesColor <- c("#d8b365", "#5ab4ac")
 myConfiguration$subtitle <- "Customized Plot"
-
-myConfiguration$yAxisScale <- "log" 
+myConfiguration$yAxisScale <- "log"
 
 sensitivityTimeProfiles(
-  sensitivityCalculation = analysis, 
-  yAxisScale = "lin", 
+  sensitivityCalculation = analysis,
+  yAxisScale = "lin",
   defaultPlotConfiguration = myConfiguration
 )
 #> $`Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)`
@@ -201,25 +176,16 @@ sensitivityTimeProfiles(
 
 ![](sensitivity-plots_files/figure-html/time-profile-override-1.png)
 
-#### Modifying plots after creation
+### Modifying plots after creation
 
-The sensitivity plotting functions in
-[esqlabsR](https://github.com/esqLABS/esqlabsR) are designed to generate
-clean, publication-ready visuals by default. However, when additional
-customization is needed—beyond what is offered through
-`defaultPlotConfiguration` you can manually modify the output using
-standard [ggplot2](https://ggplot2.tidyverse.org) and
-[patchwork](https://patchwork.data-imaginist.com) tools.
-
-Each plotting function returns a **list of `patchwork` objects**, with
-one entry per output path. A `patchwork` object is a composite layout of
-individual `ggplot2` plots, allowing you to:
-
-- Apply global changes to all subplots using the `&` operator
-- Access and modify individual subplots
-
-This flexibility makes post-processing straightforward. For example,
-modifying a spider plot after creation:
+When you need customization beyond what `defaultPlotConfiguration`
+offers, you can modify the output using standard
+[ggplot2](https://ggplot2.tidyverse.org) and
+[patchwork](https://patchwork.data-imaginist.com) tools. Each plotting
+function returns a **list of `patchwork` objects**, with one entry per
+output path. A `patchwork` object is a composite layout of individual
+`ggplot2` plots, which lets you apply global changes to all subplots
+with the `&` operator, or access and modify individual subplots.
 
 ``` r
 
@@ -227,7 +193,7 @@ library(ggplot2)
 library(patchwork)
 
 spiderPlots <- sensitivitySpiderPlot(
-  sensitivityCalculation = analysis, 
+  sensitivityCalculation = analysis,
   pkParameters = c("AUC_inf", "C_max")
 )
 
@@ -235,41 +201,18 @@ spiderPlots <- sensitivitySpiderPlot(
 spiderPlot <- spiderPlots[[outputPaths["Aciclovir_PVB"]]]
 
 # Modify plot using `patchwork` and `ggplot2` functions
-spiderPlot & 
-  theme(legend.position = "top") &                      # Place legend above the plot
-  guides(col = guide_legend(ncol = 2)) &                # Display legend entries in two columns
-  scale_color_manual(values = c("#66a61e", "#d95f02")) &# Use custom colors for lines
-  coord_cartesian(ylim = c(80, 125))                    # Zoom in on the y-axis range
+spiderPlot &
+  theme(legend.position = "top") & # Place legend above the plot
+  guides(col = guide_legend(ncol = 2)) & # Display legend entries in two columns
+  scale_color_manual(values = c("#66a61e", "#d95f02")) & # Use custom colors for lines
+  coord_cartesian(ylim = c(80, 125)) # Zoom in on the y-axis range
 ```
 
-![](sensitivity-plots_files/figure-html/tornado-plot-process-1.png)
+![](sensitivity-plots_files/figure-html/spider-plot-process-1.png)
 
-### Summary and Best Practices
+## Where to go next
 
-This vignette demonstrated how to customize and refine sensitivity
-analysis plots in [esqlabsR](https://github.com/esqLABS/esqlabsR) using
-the Aciclovir example.
-
-Key takeaways:
-
-- Use
-  [`createEsqlabsPlotConfiguration()`](https://esqlabs.github.io/esqlabsR/dev/reference/createEsqlabsPlotConfiguration.md)
-  to define and reuse plot styling across spider, tornado, and time
-  profile plots.
-- Apply direct function arguments (e.g., `yAxisScale`) to override
-  configuration values for one-off adjustments.
-- Access and post-process plots using standard
-  [ggplot2](https://ggplot2.tidyverse.org) and
-  [patchwork](https://patchwork.data-imaginist.com) methods for full
-  flexibility.
-- Named `parameterPaths` automatically control facet labels in plots,
-  improving clarity.
-
-For consistent, high-quality plots: - Keep a reusable
-`defaultPlotConfiguration` object with your preferred style. - Use
-`patchwork::&` to apply global tweaks (e.g., layout, limits, themes). -
-Extract and modify subplots as needed for custom presentations or
-publications.
-
-With these tools, you can quickly move from simulation to high-quality
-visualizations tailored to your specific audience and goals.
+For the analysis that produces these results, see
+[`vignette("sensitivity")`](https://esqlabs.github.io/esqlabsR/dev/articles/sensitivity.md).
+For the full catalog of `PlotConfiguration` fields, see the [TLF-Library
+reference](https://www.open-systems-pharmacology.org/TLF-Library/reference/PlotConfiguration.html).

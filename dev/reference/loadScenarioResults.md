@@ -5,12 +5,12 @@ Load simulated scenarios from csv and pkml.
 ## Usage
 
 ``` r
-loadScenarioResults(scenarioNames, resultsFolder)
+loadScenarioResults(scenarios, resultsFolder, project = NULL)
 ```
 
 ## Arguments
 
-- scenarioNames:
+- scenarios:
 
   Names of simulated scenarios
 
@@ -19,13 +19,29 @@ loadScenarioResults(scenarioNames, resultsFolder)
   Path to the folder where simulation results as csv and the
   corresponding simulations as pkml are located.
 
+- project:
+
+  Optional `Project` object (loaded with
+  [`loadProject()`](https://esqlabs.github.io/esqlabsR/dev/reference/loadProject.md))
+  whose scenarios declare the output paths that were run. When supplied,
+  the reloaded `outputValues` are restricted to each scenario's declared
+  output paths, so the reloaded column set matches what
+  [`runScenarios()`](https://esqlabs.github.io/esqlabsR/dev/reference/runScenarios.md)
+  produced. When `NULL` (default), all output paths recorded in the csv
+  are extracted.
+
 ## Value
 
-A named list, where the names are scenario names, and the values are
-lists with the entries `simulation` being the initialized `Simulation`
-object with applied parameters, `results` being `SimulatioResults`
-object produced by running the simulation, and `outputValues` the output
-values of the `SimulationResults`.
+A named list keyed by scenario name. Each entry mirrors the record
+produced by
+[`runScenarios()`](https://esqlabs.github.io/esqlabsR/dev/reference/runScenarios.md):
+`simulation` (the initialized `Simulation` object with applied
+parameters), `results` (the `SimulationResults` object reloaded from
+csv), `outputValues` (the output values extracted for the scenario's
+declared output paths when `project` is supplied, otherwise for all
+recorded output paths), and `population` (the `Population` reloaded from
+`<scenario>_population.csv` for population scenarios, or `NULL` for
+individual scenarios).
 
 ## Details
 
@@ -38,21 +54,15 @@ have the names of the scenarios.
 ``` r
 if (FALSE) { # \dontrun{
 # First simulate scenarios and save the results
-projectConfiguration <- esqlabsR::createProjectConfiguration()
-scenarioConfigurations <- readScenarioConfigurationFromExcel(
-  projectConfiguration = projectConfiguration
-)
-scenarios <- createScenarios(scenarioConfigurations = scenarioConfigurations)
-simulatedScenariosResults <- runScenarios(
-  scenarios = scenarios
-)
-saveResults(simulatedScenariosResults, projectConfiguration)
+project <- loadProject("Project.json")
+simulatedScenariosResults <- runScenarios(project)
+resultsFolder <- saveScenarioResults(simulatedScenariosResults, project)
 
-# Now load the results
-scnarioNames <- names(scenarios)
+# Now load the results, restricting to each scenario's declared output paths
 simulatedScenariosResults <- loadScenarioResults(
-  scnarioNames = scnarioNames,
-  resultsFolder = pathToTheFolder
+  scenarios = names(project$definitions$scenarios),
+  resultsFolder = resultsFolder,
+  project = project
 )
 } # }
 ```

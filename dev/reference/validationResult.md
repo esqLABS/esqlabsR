@@ -1,12 +1,8 @@
 # validationResult
 
-R6 class for storing validation results from Excel configuration files
+R6 class for storing validation results
 
 ## Public fields
-
-- `data`:
-
-  Successfully validated/processed data
 
 - `critical_errors`:
 
@@ -22,19 +18,17 @@ R6 class for storing validation results from Excel configuration files
 
 - [`validationResult$new()`](#method-validationResult-initialize)
 
-- [`validationResult$add_critical_error()`](#method-validationResult-add_critical_error)
+- [`validationResult$addCriticalError()`](#method-validationResult-addCriticalError)
 
-- [`validationResult$add_warning()`](#method-validationResult-add_warning)
+- [`validationResult$addWarning()`](#method-validationResult-addWarning)
 
-- [`validationResult$set_data()`](#method-validationResult-set_data)
+- [`validationResult$isValid()`](#method-validationResult-isValid)
 
-- [`validationResult$is_valid()`](#method-validationResult-is_valid)
+- [`validationResult$hasCriticalErrors()`](#method-validationResult-hasCriticalErrors)
 
-- [`validationResult$has_critical_errors()`](#method-validationResult-has_critical_errors)
+- [`validationResult$getFormattedMessages()`](#method-validationResult-getFormattedMessages)
 
-- [`validationResult$get_formatted_messages()`](#method-validationResult-get_formatted_messages)
-
-- [`validationResult$get_summary()`](#method-validationResult-get_summary)
+- [`validationResult$getSummary()`](#method-validationResult-getSummary)
 
 - [`validationResult$clone()`](#method-validationResult-clone)
 
@@ -50,13 +44,13 @@ Initialize a new ValidationResult
 
 ------------------------------------------------------------------------
 
-### `validationResult$add_critical_error()`
+### `validationResult$addCriticalError()`
 
 Add a critical error
 
 #### Usage
 
-    validationResult$add_critical_error(category, message, details = NULL)
+    validationResult$addCriticalError(category, message, details = NULL)
 
 #### Arguments
 
@@ -74,13 +68,13 @@ Add a critical error
 
 ------------------------------------------------------------------------
 
-### `validationResult$add_warning()`
+### `validationResult$addWarning()`
 
 Add a warning
 
 #### Usage
 
-    validationResult$add_warning(category, message, details = NULL)
+    validationResult$addWarning(category, message, details = NULL)
 
 #### Arguments
 
@@ -98,59 +92,43 @@ Add a warning
 
 ------------------------------------------------------------------------
 
-### `validationResult$set_data()`
-
-Set validated data
-
-#### Usage
-
-    validationResult$set_data(data)
-
-#### Arguments
-
-- `data`:
-
-  The validated/processed data to store
-
-------------------------------------------------------------------------
-
-### `validationResult$is_valid()`
+### `validationResult$isValid()`
 
 Check if validation passed (no critical errors)
 
 #### Usage
 
-    validationResult$is_valid()
+    validationResult$isValid()
 
 ------------------------------------------------------------------------
 
-### `validationResult$has_critical_errors()`
+### `validationResult$hasCriticalErrors()`
 
 Check if there are critical errors
 
 #### Usage
 
-    validationResult$has_critical_errors()
+    validationResult$hasCriticalErrors()
 
 ------------------------------------------------------------------------
 
-### `validationResult$get_formatted_messages()`
+### `validationResult$getFormattedMessages()`
 
 Get formatted messages for display
 
 #### Usage
 
-    validationResult$get_formatted_messages()
+    validationResult$getFormattedMessages()
 
 ------------------------------------------------------------------------
 
-### `validationResult$get_summary()`
+### `validationResult$getSummary()`
 
 Get validation summary
 
 #### Usage
 
-    validationResult$get_summary()
+    validationResult$getSummary()
 
 ------------------------------------------------------------------------
 

@@ -2,19 +2,19 @@ pandoc: 3.8.3
 pkgdown: 2.2.1
 pkgdown_sha: ~
 articles:
-  advanced: advanced.html
   design-scenarios: design-scenarios.html
   esqlabsR: esqlabsR.html
+  migrate-from-excel: migrate-from-excel.html
+  observed-data: observed-data.html
   pi-workflow: pi-workflow.html
   plot-results: plot-results.html
   presentations: presentations.html
-  project-migration-guide: project-migration-guide.html
-  project-structure: project-structure.html
+  projects: projects.html
   run-simulations: run-simulations.html
   sensitivity-plots: sensitivity-plots.html
   sensitivity: sensitivity.html
-  workflow-overview: workflow-overview.html
-last_built: 2026-07-21T12:50Z
+  validate-project: validate-project.html
+last_built: 2026-07-29T08:22Z
 urls:
   reference: https://esqlabs.github.io/esqlabsR/reference
   article: https://esqlabs.github.io/esqlabsR/articles

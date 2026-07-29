@@ -52,9 +52,7 @@ sensitivityCalculation(
   as `"absolute"` or `"relative"` scaling. When set to `"absolute"`, the
   values are interpreted as absolute parameter values. When set to
   `"relative"`, the values are interpreted as scaling factors relative
-  to the initial parameter values. Default is `"relative"`. When
-  `"absolute"`, every parameter must have a non-zero initial value; an
-  error is thrown otherwise.
+  to the initial parameter values. Default is `"relative"`.
 
 - pkParameters:
 
@@ -99,7 +97,7 @@ A list containing following objects:
 
 ## See also
 
-Other sensitivity-calculation:
+Other sensitivityCalculation:
 [`sensitivitySpiderPlot()`](https://esqlabs.github.io/esqlabsR/dev/reference/sensitivitySpiderPlot.md),
 [`sensitivityTimeProfiles()`](https://esqlabs.github.io/esqlabsR/dev/reference/sensitivityTimeProfiles.md),
 [`sensitivityTornadoPlot()`](https://esqlabs.github.io/esqlabsR/dev/reference/sensitivityTornadoPlot.md)

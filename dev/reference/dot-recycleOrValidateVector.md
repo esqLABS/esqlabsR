@@ -24,11 +24,13 @@ Recycle or validate vector arguments for scenario creation
 
 ## Value
 
-Vector with the correct length for all scenarios, or NULL if input was
-NULL.
+Vector with the correct length for all scenarios, or `NULL` if input was
+`NULL`.
 
 ## Details
 
-Handles vector recycling for scenario parameters. Single values are
+Handles vector recycling for
+[`createScenariosFromPKML()`](https://esqlabs.github.io/esqlabsR/dev/reference/createScenariosFromPKML.md)'s
+per-scenario arguments (not simulation parameters). Single values are
 recycled to all scenarios, vectors with the correct length are used
 as-is, and invalid lengths throw an error.

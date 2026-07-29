@@ -1,31 +1,37 @@
 # Articles
 
-### esqlabsR Workflow
+### Workflow
 
-- [Overview](https://esqlabs.github.io/esqlabsR/dev/articles/workflow-overview.md):
-- [Project
-  configuration](https://esqlabs.github.io/esqlabsR/dev/articles/project-structure.md):
-- [2. Design
-  Scenarios](https://esqlabs.github.io/esqlabsR/dev/articles/design-scenarios.md):
-- [3. Run
-  Simulations](https://esqlabs.github.io/esqlabsR/dev/articles/run-simulations.md):
-- [4. Plot
-  Results](https://esqlabs.github.io/esqlabsR/dev/articles/plot-results.md):
-- [Sensitivity
-  Analysis](https://esqlabs.github.io/esqlabsR/dev/articles/sensitivity.md):
-- [Sensitivity Analysis – Plot
-  Customization](https://esqlabs.github.io/esqlabsR/dev/articles/sensitivity-plots.md):
+- [Get
+  started](https://esqlabs.github.io/esqlabsR/dev/articles/esqlabsR.md):
+- [Projects and the project
+  structure](https://esqlabs.github.io/esqlabsR/dev/articles/projects.md):
+- [Design
+  scenarios](https://esqlabs.github.io/esqlabsR/dev/articles/design-scenarios.md):
+- [Validate a
+  project](https://esqlabs.github.io/esqlabsR/dev/articles/validate-project.md):
+- [Run
+  simulations](https://esqlabs.github.io/esqlabsR/dev/articles/run-simulations.md):
+- [Plot
+  results](https://esqlabs.github.io/esqlabsR/dev/articles/plot-results.md):
+- [Observed
+  data](https://esqlabs.github.io/esqlabsR/dev/articles/observed-data.md):
 
-### Parameter Identification
+### Parameter identification
 
 - [Parameter
-  Identification](https://esqlabs.github.io/esqlabsR/dev/articles/pi-workflow.md):
+  identification](https://esqlabs.github.io/esqlabsR/dev/articles/pi-workflow.md):
+
+### Sensitivity analysis
+
+- [Sensitivity
+  analysis](https://esqlabs.github.io/esqlabsR/dev/articles/sensitivity.md):
+- [Sensitivity analysis: plot
+  customization](https://esqlabs.github.io/esqlabsR/dev/articles/sensitivity-plots.md):
 
 ### Miscellaneous
 
+- [Migrating an Excel project to
+  6.0.0](https://esqlabs.github.io/esqlabsR/dev/articles/migrate-from-excel.md):
 - [Slide
-  Decks](https://esqlabs.github.io/esqlabsR/dev/articles/presentations.md):
-- [Advanced
-  Topics](https://esqlabs.github.io/esqlabsR/dev/articles/advanced.md):
-- [Migrating Project Structure
-  Versions](https://esqlabs.github.io/esqlabsR/dev/articles/project-migration-guide.md):
+  decks](https://esqlabs.github.io/esqlabsR/dev/articles/presentations.md):

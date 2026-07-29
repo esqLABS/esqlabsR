@@ -1,52 +1,40 @@
-# Sensitivity Analysis
+# Sensitivity analysis
 
-### Overview
+Sensitivity analysis varies model parameters and measures the effect on
+PK outcomes, which helps you judge model robustness when input values
+are uncertain. This vignette walks through a complete workflow with
+[`sensitivityCalculation()`](https://esqlabs.github.io/esqlabsR/dev/reference/sensitivityCalculation.md)
+and its plot functions, using **aciclovir** as the example: run a base
+simulation, vary selected parameters, calculate sensitivities, and
+visualize the impact. For the mathematical background, see the OSPS
+documentation on [sensitivity
+analysis](https://docs.open-systems-pharmacology.org/shared-tools-and-example-workflows/sensitivity-analysis).
 
-Sensitivity analysis helps to understand how variations in key
-simulation parameters affect pharmacokinetic (PK) outcomes. It is a
-critical step in evaluating model robustness, particularly when
-parameter values are uncertain. For details on sensitivity analysis and
-its mathematical background, see the OSPS documentation on [Sensitivity
-Analysis](https://docs.open-systems-pharmacology.org/shared-tools-and-example-workflows/sensitivity-analysis).
+## Running the sensitivity analysis
 
-This vignette demonstrates a complete sensitivity analysis workflow in
-[esqlabsR](https://github.com/esqLABS/esqlabsR) using **aciclovir** as
-an example. We run a base simulation, define and vary selected
-parameters, calculate sensitivities, and visualize the impact on PK
-metrics.
-
-### Running the sensitivity analysis
-
-We begin by loading a simulation of aciclovir from the package example
-data:
+[`sensitivityCalculation()`](https://esqlabs.github.io/esqlabsR/dev/reference/sensitivityCalculation.md)
+operates on an OSPS `Simulation` object, not on a project. You obtain
+one by loading the worked example project and running its `aciclovir_iv`
+scenario; the resulting Scenario Result carries the prepared
+`Simulation` in its `simulation` field:
 
 ``` r
 
-library(esqlabsR)
-
-simulationFilePath <- system.file(
-  "extdata/examples/TestProject/Models/Simulations/Aciclovir.pkml",
-  package = "esqlabsR"
-)
-
-simulation <- loadSimulation(simulationFilePath)
+project <- loadProject(exampleProjectPath())
+results <- runScenarios(project, scenarios = "aciclovir_iv")
+simulation <- results[["aciclovir_iv"]]$simulation
 ```
 
-The
+By default
 [`sensitivityCalculation()`](https://esqlabs.github.io/esqlabsR/dev/reference/sensitivityCalculation.md)
-function in [esqlabsR](https://github.com/esqLABS/esqlabsR) automates
-the analysis process by re-running the simulation with scaled input
-parameters. By default, each parameter is varied from 0.1× to 10× its
-original value, which can be customized using the `variationRange`
-argument.
+re-runs the simulation with each parameter scaled from 0.1x to 10x its
+original value; pass `variationRange` to change this. It returns the
+varied parameters, the simulation results, and a data frame of PK
+metrics per variation.
 
-The function returns a structured list containing the varied parameters,
-simulation results, and a data frame of calculated PK metrics for each
-variation.
-
-In the following example, we analyze how changes in *lipophilicity*,
-*dose*, and *glomerular filtration rate (GFR fraction)* affect the
-pharmacokinetics of aciclovir:
+Here you analyze how changes in *lipophilicity*, *dose*, and *glomerular
+filtration rate (GFR fraction)* affect the pharmacokinetics of
+aciclovir:
 
 ``` r
 
@@ -60,22 +48,10 @@ parameterPaths <- c(
 )
 
 analysis <- sensitivityCalculation(simulation, outputPaths, parameterPaths)
-head(analysis$pkData)
-#> # A tibble: 6 × 11
-#>   OutputPath          ParameterPath ParameterFactor ParameterValue ParameterUnit
-#>   <chr>               <chr>                   <dbl>          <dbl> <chr>        
-#> 1 Organism|Periphera… Aciclovir|Li…             0.1        -0.0097 Log Units    
-#> 2 Organism|Periphera… Aciclovir|Li…             0.2        -0.0194 Log Units    
-#> 3 Organism|Periphera… Aciclovir|Li…             0.3        -0.0291 Log Units    
-#> 4 Organism|Periphera… Aciclovir|Li…             0.4        -0.0388 Log Units    
-#> 5 Organism|Periphera… Aciclovir|Li…             0.5        -0.0485 Log Units    
-#> 6 Organism|Periphera… Aciclovir|Li…             0.6        -0.0582 Log Units    
-#> # ℹ 6 more variables: ParameterPathUserName <chr>, PKParameter <chr>,
-#> #   PKParameterValue <dbl>, PKPercentChange <dbl>, Unit <chr>,
-#> #   SensitivityPKParameter <dbl>
 ```
 
-To illustrate interpretation we will focus on *lipophilicity* only.
+To interpret the results, focus on *lipophilicity*. Isolate that
+parameter and the columns that drive the sensitivity calculation:
 
 ``` r
 
@@ -88,37 +64,33 @@ analysis$pkData |>
   dplyr::select(
     ParameterFactor, PKParameterValue,
     PKPercentChange, SensitivityPKParameter
-  ) |>
-  dplyr::mutate(
-    PKPercentChange = round(PKPercentChange, 2),
-    SensitivityPKParameter = round(SensitivityPKParameter, 4)
   )
 #> # A tibble: 3 × 4
 #>   ParameterFactor PKParameterValue PKPercentChange SensitivityPKParameter
 #>             <dbl>            <dbl>           <dbl>                  <dbl>
-#> 1             0.1            4055.           -0.44                 0.0049
-#> 2             1              4073.            0                  NaN     
-#> 3            10              4160.            2.13                 0.0024
+#> 1             0.1            3897.          -0.522                0.00580
+#> 2             1              3917.           0                  NaN      
+#> 3            10              4017.           2.55                 0.00283
 ```
 
-In our example the default lipophilicity (−0.097 log units) yields an
-AUC of 4072.6 µmol·min/L. Ten-fold higher (−0.0097) reduces AUC by 0.44
-%, whereas ten-fold lower (−0.97) increases it by 2.13 %. The
-sensitivity of AUC to a 10-fold increase in lipophilicity is calculated
-as:
+In this example the default lipophilicity (−0.1 log units) yields an AUC
+of 3916.4 µmol·min/L. A ten-fold higher value (−0.01) reduces AUC by
+0.52 %, whereas a ten-fold lower value (−1.0) increases it by 2.55 %.
+The sensitivity of AUC to a 10-fold decrease in lipophilicity is
+calculated as:
 ``` math
- \text{Sensitivity}= \frac{\Delta \text{AUC}}{\Delta \text{lipophilicity}}\times\frac{\text{lipophilicity}}{\text{AUC}} = \frac{4159.5-4072.6}{-0.97--0.097} \times \frac{-0.097}{4072.6} = 0.0028 
+ \text{Sensitivity}= \frac{\Delta \text{AUC}}{\Delta \text{lipophilicity}}\times\frac{\text{lipophilicity}}{\text{AUC}} = \frac{4016.3-3916.4}{-1.0--0.1} \times \frac{-0.1}{3916.4} = 0.0028 
 ```
 
-### Saving and Loading Sensitivity Results
+## Saving and loading sensitivity results
 
-The results of a sensitivity analysis can be saved using
+Save the results of a sensitivity analysis with
 [`saveSensitivityCalculation()`](https://esqlabs.github.io/esqlabsR/dev/reference/saveSensitivityCalculation.md)
-and restored with
+and restore them with
 [`loadSensitivityCalculation()`](https://esqlabs.github.io/esqlabsR/dev/reference/loadSensitivityCalculation.md).
 The `simulation` argument in
 [`loadSensitivityCalculation()`](https://esqlabs.github.io/esqlabsR/dev/reference/loadSensitivityCalculation.md)
-is optional. If the original `Simulation` object is provided, reloading
+is optional: if the original `Simulation` object is provided, reloading
 from disk is avoided. Otherwise, the function attempts to load the
 `.pkml` file from the path recorded during the original analysis, which
 must still be accessible.
@@ -133,21 +105,18 @@ saveSensitivityCalculation(analysis, outputDir)
 analysis <- loadSensitivityCalculation(outputDir, simulation)
 ```
 
-### Visualizing Sensitivity Results
+## Visualizing sensitivity results
 
-The results of the sensitivity analysis can be visualized using the
-following functions:
+Visualize the results of the sensitivity analysis with the following
+functions.
 
-#### Sensitivity Spider Plot
+### Sensitivity spider plot
 
 [`sensitivitySpiderPlot()`](https://esqlabs.github.io/esqlabsR/dev/reference/sensitivitySpiderPlot.md)
 visualizes how PK parameters respond as model input parameters are
 scaled. Each panel represents one PK metric (default: `C_max`, `t_max`,
-`AUC_inf`), making it easy to identify nonlinear trends and compare the
-direction and magnitude of effects.
-
-By default, the plot includes all PK parameters in `analysis$pkData`. To
-restrict the output, use the `pkParameters` argument.
+`AUC_inf`), making it straightforward to identify nonlinear trends and
+compare the direction and magnitude of effects.
 
 ``` r
 
@@ -162,14 +131,13 @@ In this example, *Dose* shows a strong and nonlinear effect on both
 fraction* and *lipophilicity* have more modest but still visible
 effects.
 
-#### Sensitivity time profiles
+### Sensitivity time profiles
 
-The
 [`sensitivityTimeProfiles()`](https://esqlabs.github.io/esqlabsR/dev/reference/sensitivityTimeProfiles.md)
-function displays full concentration–time curves for each input
-parameter variation. This plot is ideal for understanding how parameter
-changes affect the shape and timing of the drug profile, rather than
-summary PK metrics.
+displays full concentration-time curves for each input parameter
+variation. This plot is suited to understanding how parameter changes
+affect the shape and timing of the drug profile, rather than summary PK
+metrics.
 
 Each panel corresponds to one input parameter, with a color gradient
 representing the scaling factor: 0.1 = blue, 1.0 = black, 10 = red.
@@ -187,16 +155,15 @@ in *GFR fraction* affect the rate of decline, indicating faster or
 slower elimination. *Lipophilicity* causes only minor shifts in the
 curve.
 
-#### Sensitivity tornado plot
+### Sensitivity tornado plot
 
-The
 [`sensitivityTornadoPlot()`](https://esqlabs.github.io/esqlabsR/dev/reference/sensitivityTornadoPlot.md)
-function provides a compact, side-by-side comparison of how each input
-parameter influences different PK outputs at a fixed scaling factor. The
-plot is best used to **rank parameters by influence** and identify those
-with the strongest impact.
+provides a compact, side-by-side comparison of how each input parameter
+influences different PK outputs at a fixed scaling factor. The plot is
+best used to **rank parameters by influence** and identify those with
+the strongest impact.
 
-By default, the plot compares the results at 0.1× and 10× the original
+By default, the plot compares the results at 0.1x and 10x the original
 parameter value. Other scaling factors can also be used, but they must
 be included in the `variationRange` passed to
 [`sensitivityCalculation()`](https://esqlabs.github.io/esqlabsR/dev/reference/sensitivityCalculation.md).
@@ -209,32 +176,32 @@ sensitivityTornadoPlot(analysis)
 
 ![](sensitivity_files/figure-html/tornado-plot-1.png)
 
-The tornado plot confirms the trends seen in previous plots, but makes
-it easier to compare the relative impact of each parameter across PK
-metrics.
+The tornado plot confirms the trends seen in the previous plots, but
+makes it easier to compare the relative impact of each parameter across
+PK metrics.
 
-### Sensitivity calculation for user-defined (non-PK parameters) outputs
+To change colors, scales, titles, or which PK parameters appear in any
+of these plots, see
+[`vignette("sensitivity-plots")`](https://esqlabs.github.io/esqlabsR/dev/articles/sensitivity-plots.md).
 
-Though the typical workflows for sensitivity analysis are focused on PK
-parameters, it is also possible to calculate the sensitivities for any
-numerical model outputs using user-defined functions. As for the PK
-parameters, the provided function(s) will be applied to each output
-defined in the argument `outputPaths` of the
-[`sensitivityCalculation()`](https://esqlabs.github.io/esqlabsR/dev/reference/sensitivityCalculation.md)
-function.
+## Sensitivity calculation for user-defined (non-PK) outputs
 
-The custom functions are provided as a named list of functions in the
-`customOutputFunctions` argument. Each function must have the arguments
-`x` and `y`, through which it accesses the simulated time values (`x`)
-or the output values (`y`). The function should return a single numeric
-value.
+Though the typical sensitivity-analysis workflows focus on PK
+parameters, you can also calculate sensitivities for any numerical model
+output using user-defined functions. As for the PK parameters, the
+provided function(s) are applied to each output defined in the
+`outputPaths` argument of
+[`sensitivityCalculation()`](https://esqlabs.github.io/esqlabsR/dev/reference/sensitivityCalculation.md).
 
-In the following example, we calculate the sensitivity of the average
+The custom functions are provided as a named list in the
+`customOutputFunctions` argument. Each function must take arguments `x`
+and `y`, through which it accesses the simulated time values (`x`) and
+the output values (`y`), and must return a single numeric value.
+
+In the following example, you calculate the sensitivity of the average
 concentration of aciclovir in the peripheral venous blood to the
-lipophilicity of aciclovir.
-
-We first define a function that calculates the mean of a given numerical
-vector:
+lipophilicity of aciclovir. First, define a function that calculates the
+mean of a numeric vector:
 
 ``` r
 
@@ -243,16 +210,14 @@ meanFunction <- function(x, y) {
 }
 ```
 
-Next, we run the sensitivity analysis for the average concentration of
-aciclovir in the peripheral venous blood:
-
-To define custom labels for the parameters in the resulting plots, you
-can pass a *named vector* to the `parameterPaths` argument, where the
-names will be used as labels instead of full paths.
+Next, run the sensitivity analysis for the average concentration,
+reusing the `simulation` from the base run. To define custom labels for
+the parameters in the resulting plots, pass a *named vector* to
+`parameterPaths`, where the names are used as labels instead of full
+paths:
 
 ``` r
 
-simulation <- loadSimulation(simulationFilePath)
 customOutputPaths <- c(
   Aciclovir_PVB = "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
 )
@@ -265,28 +230,13 @@ customAnalysis <- sensitivityCalculation(
   parameterPaths = customParameterPaths,
   customOutputFunctions = list(AverageConcentration = meanFunction)
 )
-head(customAnalysis$pkData)
-#> # A tibble: 6 × 11
-#>   OutputPath          ParameterPath ParameterFactor ParameterValue ParameterUnit
-#>   <chr>               <chr>                   <dbl>          <dbl> <chr>        
-#> 1 Organism|Periphera… Aciclovir|Li…             0.1        -0.0097 Log Units    
-#> 2 Organism|Periphera… Aciclovir|Li…             0.2        -0.0194 Log Units    
-#> 3 Organism|Periphera… Aciclovir|Li…             0.3        -0.0291 Log Units    
-#> 4 Organism|Periphera… Aciclovir|Li…             0.4        -0.0388 Log Units    
-#> 5 Organism|Periphera… Aciclovir|Li…             0.5        -0.0485 Log Units    
-#> 6 Organism|Periphera… Aciclovir|Li…             0.6        -0.0582 Log Units    
-#> # ℹ 6 more variables: ParameterPathUserName <chr>, PKParameter <chr>,
-#> #   PKParameterValue <dbl>, PKPercentChange <dbl>, Unit <chr>,
-#> #   SensitivityPKParameter <dbl>
 ```
 
-***Note***: If we want to calculate the sensitivity of the custom
-function only without the default PK-parameters, we need to set the
-`pkParameters` value to an empty list.
+***Note***: To calculate the sensitivity of the custom function only,
+without the default PK parameters, set `pkParameters` to an empty list.
 
-Finally, we plot the sensitivity of the average concentration of
-aciclovir in the peripheral venous blood to the lipophilicity of
-aciclovir.
+Finally, plot the sensitivity of the average concentration of aciclovir
+in the peripheral venous blood to its lipophilicity:
 
 ``` r
 
@@ -296,16 +246,14 @@ sensitivitySpiderPlot(customAnalysis)
 
 ![](sensitivity_files/figure-html/custom-plot-1.png)
 
-### Troubleshooting
+## Troubleshooting
 
-- The `SensitivityPKParameter` column in the output of `analysis$pkData`
-  will be `NA` in the rows corresponding to the initial parameter values
-  (i.e., where the multiplication factor is 1).
+- The `SensitivityPKParameter` column in `analysis$pkData` is `NA` in
+  the rows corresponding to the initial parameter values (that is, where
+  the multiplication factor is 1).
 
-More detailed information on function signatures can be found in:
+## Where to go next
 
-- `esqlabsR` documentation on:
-  - [sensitivityCalculation()](https://esqlabs.github.io/esqlabsR/reference/sensitivityCalculation.html)
-  - [sensitivitySpiderPlot()](https://esqlabs.github.io/esqlabsR/reference/sensitivitySpiderPlot.html)
-  - [sensitivityTimeProfiles()](https://esqlabs.github.io/esqlabsR/reference/sensitivityTimeProfiles.html)
-  - [sensitivityTornadoPlot()](https://esqlabs.github.io/esqlabsR/reference/sensitivityTornadoPlot.html)
+To customize the appearance of these plots (colors, scales, titles, and
+which PK parameters appear), see
+[`vignette("sensitivity-plots")`](https://esqlabs.github.io/esqlabsR/dev/articles/sensitivity-plots.md).

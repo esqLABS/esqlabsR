@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">esqlabsR</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.7.0.9006</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">6.0.0.9001</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -20,22 +20,24 @@
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><hr class="dropdown-divider"></li>
-    <li><h6 class="dropdown-header" data-toc-skip>esqlabsR Workflow</h6></li>
-    <li><a class="dropdown-item" href="../articles/workflow-overview.html">Overview</a></li>
-    <li><a class="dropdown-item" href="../articles/project-structure.html">Project configuration</a></li>
-    <li><a class="dropdown-item" href="../articles/design-scenarios.html">2. Design Scenarios</a></li>
-    <li><a class="dropdown-item" href="../articles/run-simulations.html">3. Run Simulations</a></li>
-    <li><a class="dropdown-item" href="../articles/plot-results.html">4. Plot Results</a></li>
-    <li><a class="dropdown-item" href="../articles/sensitivity.html">Sensitivity Analysis</a></li>
-    <li><a class="dropdown-item" href="../articles/sensitivity-plots.html">Sensitivity Analysis – Plot Customization</a></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Workflow</h6></li>
+    <li><a class="dropdown-item" href="../articles/projects.html">Projects and the project structure</a></li>
+    <li><a class="dropdown-item" href="../articles/design-scenarios.html">Design scenarios</a></li>
+    <li><a class="dropdown-item" href="../articles/validate-project.html">Validate a project</a></li>
+    <li><a class="dropdown-item" href="../articles/run-simulations.html">Run simulations</a></li>
+    <li><a class="dropdown-item" href="../articles/plot-results.html">Plot results</a></li>
+    <li><a class="dropdown-item" href="../articles/observed-data.html">Observed data</a></li>
     <li><hr class="dropdown-divider"></li>
-    <li><h6 class="dropdown-header" data-toc-skip>Parameter Identification</h6></li>
-    <li><a class="dropdown-item" href="../articles/pi-workflow.html">Parameter Identification</a></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Parameter identification</h6></li>
+    <li><a class="dropdown-item" href="../articles/pi-workflow.html">Parameter identification</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Sensitivity analysis</h6></li>
+    <li><a class="dropdown-item" href="../articles/sensitivity.html">Sensitivity analysis</a></li>
+    <li><a class="dropdown-item" href="../articles/sensitivity-plots.html">Sensitivity analysis: plot customization</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Miscellaneous</h6></li>
-    <li><a class="dropdown-item" href="../articles/presentations.html">Slide Decks</a></li>
-    <li><a class="dropdown-item" href="../articles/advanced.html">Advanced Topics</a></li>
-    <li><a class="dropdown-item" href="../articles/project-migration-guide.html">Migrating Project Structure Versions</a></li>
+    <li><a class="dropdown-item" href="../articles/migrate-from-excel.html">Migrating an Excel project to 6.0.0</a></li>
+    <li><a class="dropdown-item" href="../articles/presentations.html">Slide decks</a></li>
   </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
@@ -63,31 +65,52 @@
 
       <dl><dt>
 
-          <code><a href="ProjectConfiguration.html">ProjectConfiguration</a></code>
+          <code><a href="Project.html">Project</a></code> <code><a href="Project.html">ProjectConfiguration</a></code>
 
         </dt>
-        <dd>ProjectConfiguration</dd>
+        <dd>Project</dd>
 
         <dt>
 
-          <code><a href="createDefaultProjectConfiguration.html">createDefaultProjectConfiguration()</a></code>
+          <code><a href="loadProject.html">loadProject()</a></code>
 
         </dt>
-        <dd>Create a default <code>ProjectConfiguration</code></dd>
+        <dd>Load a project from a JSON configuration file</dd>
 
         <dt>
 
-          <code><a href="createProjectConfiguration.html">createProjectConfiguration()</a></code>
+          <code><a href="saveProject.html">saveProject()</a></code>
 
         </dt>
-        <dd>Create a <code>ProjectConfiguration</code></dd>
+        <dd>Save the project to the disk</dd>
 
         <dt>
 
-          <code><a href="exampleProjectConfigurationPath.html">exampleProjectConfigurationPath()</a></code>
+          <code><a href="reloadProject.html">reloadProject()</a></code>
 
         </dt>
-        <dd>Get the path to example ProjectConfiguration.xlsx</dd>
+        <dd>Discard a project's unsaved changes and re-read it from disk</dd>
+
+        <dt>
+
+          <code><a href="snapshotProject.html">snapshotProject()</a></code>
+
+        </dt>
+        <dd>Save the whole project to a single shareable snapshot file</dd>
+
+        <dt>
+
+          <code><a href="restoreProject.html">restoreProject()</a></code>
+
+        </dt>
+        <dd>Recreate a project folder from a snapshot file</dd>
+
+        <dt>
+
+          <code><a href="projectStatus.html">projectStatus()</a></code>
+
+        </dt>
+        <dd>Check a loaded project for unsaved changes and outdated Excel files</dd>
 
         <dt>
 
@@ -98,59 +121,52 @@
 
         <dt>
 
-          <code><a href="isProjectInitialized.html">isProjectInitialized()</a></code>
+          <code><a href="exampleProjectPath.html">exampleProjectPath()</a></code>
 
         </dt>
-        <dd>Check if a directory contains an esqlabsR project</dd>
+        <dd>Get the path to the example Project.json</dd>
 
         <dt>
 
-          <code><a href="restoreProjectConfiguration.html">restoreProjectConfiguration()</a></code>
+          <code><a href="importProjectFromExcel.html">importProjectFromExcel()</a></code>
 
         </dt>
-        <dd>Import project configuration from JSON to Excel files</dd>
+        <dd>Import project configuration from Excel files</dd>
 
         <dt>
 
-          <code><a href="snapshotProjectConfiguration.html">snapshotProjectConfiguration()</a></code>
+          <code><a href="exportProjectToExcel.html">exportProjectToExcel()</a></code>
 
         </dt>
-        <dd>Export project configuration Excel files to JSON</dd>
+        <dd>Export a Project to Excel files</dd>
 
         <dt>
 
-          <code><a href="Scenario.html">Scenario</a></code>
+          <code><a href="createScenariosFromPKML.html">createScenariosFromPKML()</a></code>
 
         </dt>
-        <dd>Scenario</dd>
+        <dd>Create scenarios from PKML files</dd>
 
         <dt>
 
-          <code><a href="ScenarioConfiguration.html">ScenarioConfiguration</a></code>
+          <code><a href="Scenario.html">Scenario()</a></code>
 
         </dt>
-        <dd>ScenarioConfiguration</dd>
+        <dd>Create a Scenario</dd>
 
         <dt>
 
-          <code><a href="addScenarioConfigurationsToExcel.html">addScenarioConfigurationsToExcel()</a></code>
+          <code><a href="addScenario.html">addScenario()</a></code>
 
         </dt>
-        <dd>Add scenario configurations to project Excel files</dd>
+        <dd>Add one or more scenarios programmatically to a Project</dd>
 
         <dt>
 
-          <code><a href="createScenarioConfigurationsFromPKML.html">createScenarioConfigurationsFromPKML()</a></code>
+          <code><a href="duplicateScenario.html">duplicateScenario()</a></code>
 
         </dt>
-        <dd>Create scenario configurations from PKML files</dd>
-
-        <dt>
-
-          <code><a href="createScenarios.html">createScenarios()</a></code>
-
-        </dt>
-        <dd>Create <code>Scenario</code> objects from <code>ScenarioConfiguration</code> objects</dd>
+        <dd>Duplicate an existing scenario</dd>
 
         <dt>
 
@@ -161,17 +177,24 @@
 
         <dt>
 
-          <code><a href="readScenarioConfigurationFromExcel.html">readScenarioConfigurationFromExcel()</a></code>
+          <code><a href="removeScenario.html">removeScenario()</a></code>
 
         </dt>
-        <dd>Read scenario definition(s) from Excel file</dd>
+        <dd>Remove one or more scenarios from a Project</dd>
+
+        <dt>
+
+          <code><a href="renameScenario.html">renameScenario()</a></code>
+
+        </dt>
+        <dd>Rename an existing scenario</dd>
 
         <dt>
 
           <code><a href="runScenarios.html">runScenarios()</a></code>
 
         </dt>
-        <dd>Run a set of scenarios.</dd>
+        <dd>Run a set of scenarios from a <code>Project</code>.</dd>
 
         <dt>
 
@@ -182,17 +205,257 @@
 
         <dt>
 
-          <code><a href="projectConfigurationStatus.html">projectConfigurationStatus()</a></code>
+          <code><a href="setScenario.html">setScenario()</a></code>
 
         </dt>
-        <dd>Check if Excel configuration files are in sync with JSON snapshot</dd>
+        <dd>Modify fields of an existing scenario</dd>
+      </dl></div><div class="section level2">
+      <h2 id="programmatic-project-mutation">Programmatic Project mutation<a class="anchor" aria-label="anchor" href="#programmatic-project-mutation"></a></h2>
+
+
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="addScenario.html">addScenario()</a></code>
+
+        </dt>
+        <dd>Add one or more scenarios programmatically to a Project</dd>
 
         <dt>
 
-          <code><a href="createPlotsFromExcel.html">createPlotsFromExcel()</a></code>
+          <code><a href="removeScenario.html">removeScenario()</a></code>
 
         </dt>
-        <dd>Generate plots as defined in excel file <code>projectConfiguration$plotsFile</code></dd>
+        <dd>Remove one or more scenarios from a Project</dd>
+
+        <dt>
+
+          <code><a href="setScenario.html">setScenario()</a></code>
+
+        </dt>
+        <dd>Modify fields of an existing scenario</dd>
+
+        <dt>
+
+          <code><a href="renameScenario.html">renameScenario()</a></code>
+
+        </dt>
+        <dd>Rename an existing scenario</dd>
+
+        <dt>
+
+          <code><a href="duplicateScenario.html">duplicateScenario()</a></code>
+
+        </dt>
+        <dd>Duplicate an existing scenario</dd>
+
+        <dt>
+
+          <code><a href="addIndividual.html">addIndividual()</a></code>
+
+        </dt>
+        <dd>Add one or more individuals to a Project</dd>
+
+        <dt>
+
+          <code><a href="removeIndividual.html">removeIndividual()</a></code>
+
+        </dt>
+        <dd>Remove one or more individuals from a Project</dd>
+
+        <dt>
+
+          <code><a href="setIndividual.html">setIndividual()</a></code>
+
+        </dt>
+        <dd>Modify fields of an existing individual</dd>
+
+        <dt>
+
+          <code><a href="addPopulation.html">addPopulation()</a></code>
+
+        </dt>
+        <dd>Add one or more populations to a Project</dd>
+
+        <dt>
+
+          <code><a href="removePopulation.html">removePopulation()</a></code>
+
+        </dt>
+        <dd>Remove one or more populations from a Project</dd>
+
+        <dt>
+
+          <code><a href="setPopulation.html">setPopulation()</a></code>
+
+        </dt>
+        <dd>Modify fields of an existing population</dd>
+
+        <dt>
+
+          <code><a href="addApplication.html">addApplication()</a></code>
+
+        </dt>
+        <dd>Add one or more application protocols to a Project</dd>
+
+        <dt>
+
+          <code><a href="removeApplication.html">removeApplication()</a></code>
+
+        </dt>
+        <dd>Remove one or more application protocols from a Project</dd>
+
+        <dt>
+
+          <code><a href="setApplicationParameterSets.html">setApplicationParameterSets()</a></code>
+
+        </dt>
+        <dd>Replace the parameter-set references on one or more applications</dd>
+
+        <dt>
+
+          <code><a href="addOutputPath.html">addOutputPath()</a></code>
+
+        </dt>
+        <dd>Add one or more output paths to a Project</dd>
+
+        <dt>
+
+          <code><a href="removeOutputPath.html">removeOutputPath()</a></code>
+
+        </dt>
+        <dd>Remove one or more output paths from a Project</dd>
+
+        <dt>
+
+          <code><a href="setOutputPath.html">setOutputPath()</a></code>
+
+        </dt>
+        <dd>Change the literal path of one or more existing output paths</dd>
+
+        <dt>
+
+          <code><a href="addObservedData.html">addObservedData()</a></code>
+
+        </dt>
+        <dd>Add observed data to a Project</dd>
+
+        <dt>
+
+          <code><a href="removeObservedData.html">removeObservedData()</a></code>
+
+        </dt>
+        <dd>Remove one or more observed-data sources from a Project</dd>
+
+        <dt>
+
+          <code><a href="getObservedDataNames.html">getObservedDataNames()</a></code>
+
+        </dt>
+        <dd>Get names of all observed data in a Project</dd>
+
+        <dt>
+
+          <code><a href="addDataCombined.html">addDataCombined()</a></code>
+
+        </dt>
+        <dd>Add one or more DataCombined to a Project</dd>
+
+        <dt>
+
+          <code><a href="removeDataCombined.html">removeDataCombined()</a></code>
+
+        </dt>
+        <dd>Remove one or more DataCombined from a Project</dd>
+
+        <dt>
+
+          <code><a href="addPlot.html">addPlot()</a></code>
+
+        </dt>
+        <dd>Add a plot configuration to a Project</dd>
+
+        <dt>
+
+          <code><a href="removePlot.html">removePlot()</a></code>
+
+        </dt>
+        <dd>Remove one or more plot configurations from a Project</dd>
+
+        <dt>
+
+          <code><a href="addPlotGrid.html">addPlotGrid()</a></code>
+
+        </dt>
+        <dd>Add one or more plot grids to a Project</dd>
+
+        <dt>
+
+          <code><a href="removePlotGrid.html">removePlotGrid()</a></code>
+
+        </dt>
+        <dd>Remove one or more plot grids from a Project</dd>
+
+        <dt>
+
+          <code><a href="addParameterSet.html">addParameterSet()</a></code>
+
+        </dt>
+        <dd>Create one or more parameter sets</dd>
+
+        <dt>
+
+          <code><a href="removeParameterSet.html">removeParameterSet()</a></code>
+
+        </dt>
+        <dd>Remove one or more parameter sets</dd>
+
+        <dt>
+
+          <code><a href="addParameterEntry.html">addParameterEntry()</a></code>
+
+        </dt>
+        <dd>Add one or many parameter entries to a named parameter set</dd>
+
+        <dt>
+
+          <code><a href="removeParameterEntry.html">removeParameterEntry()</a></code>
+
+        </dt>
+        <dd>Remove one or many parameter entries from a named parameter set</dd>
+
+        <dt>
+
+          <code><a href="addInitialConditions.html">addInitialConditions()</a></code>
+
+        </dt>
+        <dd>Create one or more initial-condition sets</dd>
+
+        <dt>
+
+          <code><a href="removeInitialConditions.html">removeInitialConditions()</a></code>
+
+        </dt>
+        <dd>Remove one or more initial-condition sets</dd>
+
+        <dt>
+
+          <code><a href="addInitialConditionEntry.html">addInitialConditionEntry()</a></code>
+
+        </dt>
+        <dd>Add one or many entries to a named initial-condition set</dd>
+
+        <dt>
+
+          <code><a href="removeInitialConditionEntry.html">removeInitialConditionEntry()</a></code>
+
+        </dt>
+        <dd>Remove one or many entries from a named initial-condition set</dd>
       </dl></div><div class="section level2">
       <h2 id="parameter-identification-workflow">Parameter identification workflow<a class="anchor" aria-label="anchor" href="#parameter-identification-workflow"></a></h2>
 
@@ -205,24 +468,89 @@
 
       <dl><dt>
 
-          <code><a href="PITaskConfiguration.html">PITaskConfiguration</a></code>
+          <code><a href="PITask.html">PITask()</a></code>
 
         </dt>
-        <dd>PITaskConfiguration</dd>
+        <dd>Create a Parameter Identification task</dd>
 
         <dt>
 
-          <code><a href="createPITasks.html">createPITasks()</a></code>
+          <code><a href="PIParameter.html">PIParameter()</a></code>
 
         </dt>
-        <dd>Create Parameter Identification tasks</dd>
+        <dd>Create a Parameter Identification parameter</dd>
+
+        <dt>
+
+          <code><a href="PIOutputMapping.html">PIOutputMapping()</a></code>
+
+        </dt>
+        <dd>Create a Parameter Identification output mapping</dd>
 
         <dt>
 
           <code><a href="runPI.html">runPI()</a></code>
 
         </dt>
-        <dd>Run Parameter Identification tasks</dd>
+        <dd>Run Parameter Identification tasks defined in a Project</dd>
+
+        <dt>
+
+          <code><a href="addPITask.html">addPITask()</a></code>
+
+        </dt>
+        <dd>Add a Parameter Identification task to a Project</dd>
+
+        <dt>
+
+          <code><a href="removePITask.html">removePITask()</a></code>
+
+        </dt>
+        <dd>Remove one or more Parameter Identification tasks from a Project</dd>
+
+        <dt>
+
+          <code><a href="addPIParameter.html">addPIParameter()</a></code>
+
+        </dt>
+        <dd>Add a parameter to an existing PI task</dd>
+
+        <dt>
+
+          <code><a href="removePIParameter.html">removePIParameter()</a></code>
+
+        </dt>
+        <dd>Remove a parameter from a PI task</dd>
+
+        <dt>
+
+          <code><a href="addPIOutputMapping.html">addPIOutputMapping()</a></code>
+
+        </dt>
+        <dd>Add an output mapping to an existing PI task</dd>
+
+        <dt>
+
+          <code><a href="removePIOutputMapping.html">removePIOutputMapping()</a></code>
+
+        </dt>
+        <dd>Remove an output mapping from a PI task</dd>
+      </dl></div><div class="section level2">
+      <h2 id="deprecated-parameter-identification-api">Deprecated parameter identification API<a class="anchor" aria-label="anchor" href="#deprecated-parameter-identification-api"></a></h2>
+
+      <div class="section-desc"><p>Legacy entry points retained for migration only. They emit a deprecation warning and abort. Use the project-driven API above.</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="createPITasks.html">createPITasks()</a></code>
+          <span class="badge lifecycle lifecycle-defunct">defunct</span>
+        </dt>
+        <dd>Build Parameter Identification tasks (defunct)</dd>
       </dl></div><div class="section level2">
       <h2 id="helpers-for-data-import-wrangling-and-export">Helpers for data import, wrangling, and export<a class="anchor" aria-label="anchor" href="#helpers-for-data-import-wrangling-and-export"></a></h2>
 
@@ -242,17 +570,10 @@
 
         <dt>
 
-          <code><a href="readIndividualCharacteristicsFromXLS.html">readIndividualCharacteristicsFromXLS()</a></code>
+          <code><a href="readInitialConditionsFromXLS.html">readInitialConditionsFromXLS()</a></code>
 
         </dt>
-        <dd>Read individual characteristics from file</dd>
-
-        <dt>
-
-          <code><a href="readPITaskConfigurationFromExcel.html">readPITaskConfigurationFromExcel()</a></code>
-
-        </dt>
-        <dd>Read Parameter Identification configurations from Excel</dd>
+        <dd>Read initial values (molecule start values) from a structured Excel file.</dd>
 
         <dt>
 
@@ -260,20 +581,6 @@
 
         </dt>
         <dd>Read parameter values from a structured Excel file. Each excel sheet must consist of columns 'Container Path', 'Parameter Name', 'Value', and 'Units'</dd>
-
-        <dt>
-
-          <code><a href="readPopulationCharacteristicsFromXLS.html">readPopulationCharacteristicsFromXLS()</a></code>
-
-        </dt>
-        <dd>Read an excel file containing information about population and create a <code>PopulationCharacteristics</code> object</dd>
-
-        <dt>
-
-          <code><a href="readScenarioConfigurationFromExcel.html">readScenarioConfigurationFromExcel()</a></code>
-
-        </dt>
-        <dd>Read scenario definition(s) from Excel file</dd>
 
         <dt>
 
@@ -298,10 +605,24 @@
 
         <dt>
 
-          <code><a href="setApplications.html">setApplications()</a></code>
+          <code><a href="setApplicationParameterSets.html">setApplicationParameterSets()</a></code>
 
         </dt>
-        <dd>Set an application protocol in a <code>Simulation</code> from the Excel file</dd>
+        <dd>Replace the parameter-set references on one or more applications</dd>
+
+        <dt>
+
+          <code><a href="setIndividual.html">setIndividual()</a></code>
+
+        </dt>
+        <dd>Modify fields of an existing individual</dd>
+
+        <dt>
+
+          <code><a href="setOutputPath.html">setOutputPath()</a></code>
+
+        </dt>
+        <dd>Change the literal path of one or more existing output paths</dd>
 
         <dt>
 
@@ -312,31 +633,24 @@
 
         <dt>
 
-          <code><a href="writeIndividualToXLS.html">writeIndividualToXLS()</a></code>
+          <code><a href="setPopulation.html">setPopulation()</a></code>
 
         </dt>
-        <dd>Create a parameter set describing an individual and write it to the Excel file</dd>
+        <dd>Modify fields of an existing population</dd>
 
         <dt>
 
-          <code><a href="writeParameterStructureToXLS.html">writeParameterStructureToXLS()</a></code>
+          <code><a href="setScenario.html">setScenario()</a></code>
 
         </dt>
-        <dd>Write parameter structure to excel that can be loaded in MoBi</dd>
+        <dd>Modify fields of an existing scenario</dd>
 
         <dt>
 
-          <code><a href="exportParametersToXLS.html">exportParametersToXLS()</a></code>
+          <code><a href="exportProjectToExcel.html">exportProjectToExcel()</a></code>
 
         </dt>
-        <dd>Export simulation parameters to excel</dd>
-
-        <dt>
-
-          <code><a href="createDataCombinedFromExcel.html">createDataCombinedFromExcel()</a></code>
-
-        </dt>
-        <dd>Generate DataCombined objects as defined in excel file</dd>
+        <dd>Export a Project to Excel files</dd>
       </dl></div><div class="section level2">
       <h2 id="helpers-for-modeling-and-simulation">Helpers for modeling and simulation<a class="anchor" aria-label="anchor" href="#helpers-for-modeling-and-simulation"></a></h2>
 
@@ -367,6 +681,13 @@
 
         </dt>
         <dd>Calculate mean and standard deviation for the yValues of the given <code>DataSet</code> objects</dd>
+
+        <dt>
+
+          <code><a href="buildSimulations.html">buildSimulations()</a></code>
+
+        </dt>
+        <dd>Build the simulations for a set of scenarios without running them</dd>
 
         <dt>
 
@@ -429,14 +750,7 @@
           <code><a href="loadObservedData.html">loadObservedData()</a></code>
 
         </dt>
-        <dd>Load data from excel</dd>
-
-        <dt>
-
-          <code><a href="loadObservedDataFromPKML.html">loadObservedDataFromPKML()</a></code>
-
-        </dt>
-        <dd>Load data from pkml</dd>
+        <dd>Load observed data declared in a Project</dd>
       </dl></div><div class="section level2">
       <h2 id="helpers-for-plotting">Helpers for plotting<a class="anchor" aria-label="anchor" href="#helpers-for-plotting"></a></h2>
 
@@ -463,13 +777,6 @@
 
         <dt>
 
-          <code><a href="createEsqlabsExportConfiguration.html">createEsqlabsExportConfiguration()</a></code>
-
-        </dt>
-        <dd>Create an instance of <code>ExportConfiguration</code> R6 class</dd>
-
-        <dt>
-
           <code><a href="createEsqlabsPlotConfiguration.html">createEsqlabsPlotConfiguration()</a></code>
 
         </dt>
@@ -484,10 +791,17 @@
 
         <dt>
 
-          <code><a href="createDataCombinedFromExcel.html">createDataCombinedFromExcel()</a></code>
+          <code><a href="createDataCombined.html">createDataCombined()</a></code> <code><a href="createDataCombined.html">createDataCombinedFromExcel()</a></code>
 
         </dt>
-        <dd>Generate DataCombined objects as defined in excel file</dd>
+        <dd>Generate DataCombined objects from a Project</dd>
+
+        <dt>
+
+          <code><a href="createPlots.html">createPlots()</a></code> <code><a href="createPlots.html">createPlotsFromExcel()</a></code>
+
+        </dt>
+        <dd>Generate plots from a Project</dd>
       </dl></div><div class="section level2">
       <h2 id="input-validation">Input validation<a class="anchor" aria-label="anchor" href="#input-validation"></a></h2>
 
@@ -500,10 +814,10 @@
 
       <dl><dt>
 
-          <code><a href="validateAllConfigurations.html">validateAllConfigurations()</a></code>
+          <code><a href="validateProject.html">validateProject()</a></code>
 
         </dt>
-        <dd>Validate all configuration files in a project</dd>
+        <dd>Validate a Project</dd>
 
         <dt>
 
@@ -517,14 +831,14 @@
           <code><a href="validationSummary.html">validationSummary()</a></code>
 
         </dt>
-        <dd>Get summary of all validation results</dd>
+        <dd>validationSummary</dd>
 
         <dt>
 
           <code><a href="isAnyCriticalErrors.html">isAnyCriticalErrors()</a></code>
 
         </dt>
-        <dd>Check if validation results contain any critical errors</dd>
+        <dd>isAnyCriticalErrors</dd>
 
         <dt>
 
@@ -546,6 +860,20 @@
 
         </dt>
         <dd>Check if two table formulas are equal.</dd>
+
+        <dt>
+
+          <code><a href="print.ValidationResults.html">print(<i>&lt;ValidationResults&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Print a project validation report</dd>
+
+        <dt>
+
+          <code><a href="format.ValidationResults.html">format(<i>&lt;ValidationResults&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Format a project validation report</dd>
 
         <dt>
 
@@ -668,6 +996,13 @@
 
         <dt>
 
+          <code><a href="getObservedDataNames.html">getObservedDataNames()</a></code>
+
+        </dt>
+        <dd>Get names of all observed data in a Project</dd>
+
+        <dt>
+
           <code><a href="executeInParallel.html">executeInParallel()</a></code>
 
         </dt>
@@ -699,11 +1034,11 @@
           <code><a href="esqlabsRSettingNames.html">esqlabsRSettingNames</a></code>
 
         </dt>
-        <dd>Names of the settings stored in esqlabsEnv Can be used with <code><a href="../reference/getEsqlabsRSetting.html">getEsqlabsRSetting()</a></code></dd>
+        <dd>Names of the settings stored in esqlabsEnv</dd>
       </dl></div><div class="section level2">
-      <h2 id="inherited-classes">Inherited classes<a class="anchor" aria-label="anchor" href="#inherited-classes"></a></h2>
+      <h2 id="deprecated">Deprecated<a class="anchor" aria-label="anchor" href="#deprecated"></a></h2>
 
-
+      <div class="section-desc"><p>Legacy entry points retained for migration only. They emit a deprecation warning. Use the new project-driven API above.</p></div>
 
       <dl></dl></div><div class="section level2">
 
@@ -712,10 +1047,24 @@
 
       <dl><dt>
 
-          <code><a href="ExportConfiguration.html">ExportConfiguration</a></code>
+          <code><a href="Project.html">Project</a></code> <code><a href="Project.html">ProjectConfiguration</a></code>
 
         </dt>
-        <dd>ExportConfiguration</dd>
+        <dd>Project</dd>
+
+        <dt>
+
+          <code><a href="createDataCombined.html">createDataCombined()</a></code> <code><a href="createDataCombined.html">createDataCombinedFromExcel()</a></code>
+
+        </dt>
+        <dd>Generate DataCombined objects from a Project</dd>
+
+        <dt>
+
+          <code><a href="createPlots.html">createPlots()</a></code> <code><a href="createPlots.html">createPlotsFromExcel()</a></code>
+
+        </dt>
+        <dd>Generate plots from a Project</dd>
       </dl></div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
