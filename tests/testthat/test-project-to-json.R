@@ -39,6 +39,22 @@ test_that(".projectToJson() returns a JSON-shaped list with the canonical top-le
   expect_identical(tree$schemaVersion, "2.0")
 })
 
+test_that(".projectToJson() stamps the versions of the file it writes", {
+  # Both version fields describe the write, not the read: a project loaded from
+  # a container authored by an earlier version serializes with the current
+  # package version, so a saved project records what last wrote it.
+  project <- exampleProject()
+  .setInfoField(project, "esqlabsRVersion", "1.2.3")
+
+  tree <- esqlabsR:::.projectToJson(project)
+
+  expect_identical(tree$schemaVersion, "2.0")
+  expect_identical(
+    tree$esqlabsRVersion,
+    as.character(utils::packageVersion("esqlabsR"))
+  )
+})
+
 test_that(".projectToJson() splits the container path fields into filePaths and excel", {
   project <- exampleProject()
   tree <- esqlabsR:::.projectToJson(project)
@@ -128,8 +144,14 @@ test_that("round-trip is structurally identical for the bundled example", {
   reloaded <- loadProject(out)
 
   # jsonPath / projectDirPath legitimately differ; everything else must match.
+  # `esqlabsRVersion` is not round-tripped but stamped by the writer, so the
+  # reloaded project reports the version that wrote the file, not the version
+  # the bundled example was authored under.
   expect_identical(reloaded$info$schemaVersion, project$info$schemaVersion)
-  expect_identical(reloaded$info$esqlabsRVersion, project$info$esqlabsRVersion)
+  expect_identical(
+    reloaded$info$esqlabsRVersion,
+    as.character(utils::packageVersion("esqlabsR"))
+  )
   expect_identical(reloaded$rawFilePaths(), project$rawFilePaths())
   expect_identical(
     reloaded$definitions$outputPaths,

@@ -87,10 +87,15 @@
   }
   out <- c(
     list(
-      # Default the version so an empty `Project$new()` serializes a file that
-      # `loadProject()` accepts (mirrors the Excel bridge in project-excel.R).
-      schemaVersion = project$info$schemaVersion %||% "2.0",
-      esqlabsRVersion = project$info$esqlabsRVersion,
+      # Both version fields describe the file being written, not the file the
+      # project was read from: `schemaVersion` is the format this serializer
+      # produces, and `esqlabsRVersion` the package version producing it. So a
+      # project authored under an earlier version reports the version that last
+      # wrote it, and an empty `Project$new()` serializes a file `loadProject()`
+      # accepts. This mirrors the Excel bridge in project-excel.R, the other
+      # writer of these two fields.
+      schemaVersion = "2.0",
+      esqlabsRVersion = as.character(utils::packageVersion("esqlabsR")),
       name = project$info$name,
       description = project$info$description,
       definitionsFolder = project$paths$definitionsFolder,

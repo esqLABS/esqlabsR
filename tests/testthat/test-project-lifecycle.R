@@ -196,6 +196,22 @@ test_that("saveProject() updates the loaded container, not a stray Project.json"
   expect_false(file.exists(file.path(dir, "Project.json")))
 })
 
+test_that("saveProject() stamps the writing version into the file and the handle", {
+  # A project loaded from a container an earlier version wrote reports that
+  # version until it is saved; the save records the version that wrote the file,
+  # and the handle adopts it, so memory and tree agree after a save.
+  project <- testProject()
+  .setInfoField(project, "esqlabsRVersion", "1.2.3")
+  current <- as.character(utils::packageVersion("esqlabsR"))
+
+  project$info$name <- "Renamed"
+  saveProject(project)
+
+  container <- jsonlite::fromJSON(project$info$projectFilePath)
+  expect_identical(container$esqlabsRVersion, current)
+  expect_identical(project$info$esqlabsRVersion, current)
+})
+
 test_that("saveProject() never warns about a stale Excel side-car", {
   # Build a project with an Excel side-car that has drifted, then edit and save.
   temp_project <- with_temp_project()
