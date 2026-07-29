@@ -1,0 +1,5 @@
+/.quarto/
+**/*.quarto_ipynb
+# Quarto writes rendered figures and JS/CSS libs here when the article is
+# rendered in place (e.g. a local `quarto render` or `pkgdown::build_article()`).
+/plot-results_files/

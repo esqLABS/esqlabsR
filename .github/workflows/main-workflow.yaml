@@ -21,6 +21,8 @@ jobs:
     if: ${{ !cancelled() }}
     needs: [bump-dev-version]
     uses: Open-Systems-Pharmacology/Workflows/.github/workflows/R-CMD-check-build.yaml@main
+    with:
+      setup-quarto: true # plot-results.qmd is a Quarto vignette
 
   test-coverage:
     if: ${{ !cancelled() }}

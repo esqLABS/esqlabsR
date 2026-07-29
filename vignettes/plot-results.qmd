@@ -1,11 +1,11 @@
 ---
 title: "Plot results"
-output:
-  rmarkdown::html_vignette:
+format:
+  html:
     toc: true
 vignette: >
   %\VignetteIndexEntry{Plot results}
-  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEngine{quarto::html}
   %\VignetteEncoding{UTF-8}
 ---
 
@@ -36,6 +36,36 @@ Every figure below runs against the example project bundled with the package; lo
 - A **Plot Grid** composes one or more **Plots** into one laid-out figure (a multi-panel arrangement). A **Plot** is usually rendered as a panel inside a **Plot Grid**, but can also be rendered on its own (see below).
 
 A project stores all three as definitions under `definitions/data-combined/`, `definitions/plots/`, and `definitions/plot-grids/`, so the figures travel with the project. You can also assemble them yourself in R, which is covered below.
+
+```{mermaid}
+classDiagram
+    direction LR
+    class DataCombined {
+        dataCombinedId
+        simulated: label, scenario, path
+        observed: label, dataSet
+        ...
+    }
+    class Plot {
+        plotId
+        dataCombined
+        plotType
+        title
+        ...
+    }
+    class PlotGrid {
+        plotGridId
+        plots
+        title
+        ...
+    }
+    DataCombined --> Plot
+    Plot --> PlotGrid
+
+    note for DataCombined "Simulation results paired with observed data"
+    note for Plot "The data and type of a single chart"
+    note for PlotGrid "Plots composed into one laid-out figure"
+```
 
 ## Load the example and run a scenario
 
