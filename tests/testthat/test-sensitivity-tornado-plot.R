@@ -101,6 +101,44 @@ test_that("sensitivityTornadoPlot errors if parameterFactor is missing in sensit
   )
 })
 
+test_that("sensitivityTornadoPlot matches user-typed reciprocal factors with a tolerance", {
+  # The user typed 0.3 and its (truncated) reciprocal 3.333333 into the
+  # variation range. The requested reciprocal 1 / 0.3 = 3.33333... differs from
+  # the stored 3.333333 by ~3e-7, which exceeds dplyr::near()'s absolute
+  # tolerance: exact and near-equality matching both reject it, but the relative
+  # tolerance in .factorsMatch() resolves it.
+  syntheticCalculation <- structure(
+    list(
+      outputPaths = "OutA",
+      parameterPaths = "P",
+      pkData = data.frame(
+        OutputPath = "OutA",
+        ParameterPath = "P",
+        ParameterFactor = c(0.3, 1.0, 3.333333),
+        ParameterValue = c(1, 2, 3),
+        ParameterUnit = "",
+        ParameterPathUserName = NA_character_,
+        PKParameter = "C_max",
+        PKParameterValue = c(1, 2, 3),
+        PKPercentChange = c(-50, 0, 50),
+        Unit = "",
+        SensitivityPKParameter = c(1, 1, 1),
+        stringsAsFactors = FALSE
+      )
+    ),
+    class = c("SensitivityCalculation", "list")
+  )
+
+  # neither exact nor dplyr::near() matching would resolve the reciprocal
+  expect_false(any(dplyr::near(
+    syntheticCalculation$pkData$ParameterFactor,
+    1 / 0.3
+  )))
+  expect_no_error(
+    sensitivityTornadoPlot(syntheticCalculation, parameterFactor = 0.3)
+  )
+})
+
 # Default plot ------------------------------------------------------------
 
 test_that("sensitivityTornadoPlot creates default plot", {

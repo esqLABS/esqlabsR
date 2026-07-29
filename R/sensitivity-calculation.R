@@ -20,6 +20,8 @@
 #'   set to `"absolute"`, the values are interpreted as absolute parameter
 #'   values. When set to `"relative"`, the values are interpreted as scaling
 #'   factors relative to the initial parameter values. Default is `"relative"`.
+#'   When `"absolute"`, every parameter must have a non-zero initial value; an
+#'   error is thrown otherwise.
 #' @param pkParameters A vector of names of PK parameters for which the
 #'   sensitivities will be calculated. For a full set of available standard PK
 #'   parameters, run `names(ospsuite::StandardPKParameter)`. By default, the

@@ -123,9 +123,21 @@ sensitivityTornadoPlot <- function(
 
   data <- sensitivityCalculation$pkData
 
-  # validate data contains required parameterFactor results
-  parameterFactors <- c(parameterFactor, 1 / parameterFactor)
-  if (!all(parameterFactors %in% data$ParameterFactor)) {
+  # validate data contains required parameterFactor results. Match tolerantly:
+  # a user-typed reciprocal (e.g. 0.3 and 3.333333) is not bit-identical to the
+  # computed 1 / parameterFactor, so resolve the requested factors to the stored
+  # values within a relative tolerance rather than comparing for exact equality.
+  storedFactors <- unique(data$ParameterFactor)
+  requestedFactors <- c(parameterFactor, 1 / parameterFactor)
+  matchedFactors <- storedFactors[purrr::map_lgl(
+    storedFactors,
+    ~ any(.factorsMatch(.x, requestedFactors))
+  )]
+  requestedFound <- purrr::map_lgl(
+    requestedFactors,
+    ~ any(.factorsMatch(.x, storedFactors))
+  )
+  if (!all(requestedFound)) {
     cli::cli_abort(messages$noParameterFactor(data, parameterFactor))
   }
 
@@ -181,10 +193,7 @@ sensitivityTornadoPlot <- function(
     levels = rev(unique(data$ParameterPathLabel))
   )
 
-  data <- dplyr::filter(
-    data,
-    ParameterFactor %in% c(parameterFactor, 1 / parameterFactor)
-  )
+  data <- dplyr::filter(data, ParameterFactor %in% matchedFactors)
 
   # Create list of plots ---------------------------------
 

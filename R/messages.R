@@ -932,6 +932,19 @@ messages$sensitivityAnalysisSimulationFailure <- function(
   )
 }
 
+messages$absoluteVariationZeroInitialValue <- function(parameterPaths) {
+  cliFormat(
+    "{.code variationType = \"absolute\"} requires a non-zero initial value for every parameter, but the following parameter(s) have an initial value of 0: {.val {paste(parameterPaths, collapse = ', ')}}. Use {.code variationType = \"relative\"} or provide parameters with non-zero initial values."
+  )
+}
+
+messages$sensitivityAllRunsFailed <- function(parameterPath) {
+  cliFormat(
+    "All simulation runs failed for {.var {parameterPath}}.
+    No PK parameters could be calculated for this parameter and it will not be included in the sensitivity calculation."
+  )
+}
+
 messages$invalidCustomFunctionParameters <- function(providedParams) {
   cliFormat(
     "The user-defined function must have either {.var x}, {.var y}, or both {.var x} and {.var y} as parameters.
