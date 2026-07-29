@@ -239,16 +239,23 @@ reloadProject <- function(project) {
 
 #' Check if a directory contains an esqlabsR project
 #'
-#' @description Checks if a directory already contains an esqlabsR project by
-#' looking for the presence of a `Project.json` file, a `ProjectConfiguration`
-#' Excel file, or a `Configurations` folder.
+#' @description Checks whether a directory already contains an esqlabsR
+#'   project, by looking for a `Project.json` file. The `Project.json` and the
+#'   `definitions/` tree beside it are the project; the Excel files are an
+#'   interchange format, not a source of truth.
+#'
+#'   A folder holding only Excel configuration files (a `Project.xlsx` and a
+#'   `Configurations/` folder, i.e. a pre-6.0.0 project that has not been
+#'   migrated yet) is therefore reported as *not* initialized. Turn it into a
+#'   project with [importProjectFromExcel()].
 #'
 #' @param destination A string defining the path to check for an existing
 #'   project. Defaults to current working directory.
 #'
-#' @returns TRUE if an esqlabsR project exists in the directory, FALSE
+#' @returns `TRUE` if an esqlabsR project exists in the directory, `FALSE`
 #'   otherwise.
 #' @export
+#' @family projectPersistence
 #' @examples
 #' \dontrun{
 #' # Check if current directory has a project
@@ -258,29 +265,36 @@ reloadProject <- function(project) {
 #' hasProject <- isProjectInitialized("path/to/project")
 #' }
 isProjectInitialized <- function(destination = ".") {
-  destination <- fs::path_abs(destination)
+  file.exists(file.path(fs::path_abs(destination), "Project.json"))
+}
 
+# TRUE when `destination` holds Excel project configuration files: a
+# `*Project*.xlsx` workbook, or a `Configurations/` folder. On its own (without a
+# `Project.json`) that is a pre-6.0.0 Excel project nobody has migrated yet:
+# not a project as `isProjectInitialized()` defines one, but not a free folder
+# either, so `initProject()` must not scaffold over it unasked. The markers
+# cannot tell such a project apart from the Excel side-cars a migrated project
+# exports, which is why this is not the public predicate: where both exist, the
+# `Project.json` already answers the question.
+#
+# @keywords internal
+# @noRd
+.hasLegacyExcelProject <- function(destination) {
   if (!fs::dir_exists(destination)) {
     return(FALSE)
   }
 
-  # Check for Project.json file
-  hasJsonFile <- file.exists(file.path(destination, "Project.json"))
-
-  # Check for a *Project*.xlsx file. Match on the basename: fs::dir_ls()
-  # globs the full path, so a destination directory whose own path contains
-  # "Project" would otherwise match any .xlsx inside it.
+  # Match on the basename: fs::dir_ls() globs the full path, so a destination
+  # directory whose own path contains "Project" would otherwise match any
+  # .xlsx inside it.
   xlsxFiles <- fs::path_file(fs::dir_ls(
     destination,
     glob = "*.xlsx",
     fail = FALSE
   ))
-  hasConfigFile <- any(grepl("Project", xlsxFiles, fixed = TRUE))
 
-  # Check for Configurations folder
-  hasConfigFolder <- fs::dir_exists(file.path(destination, "Configurations"))
-
-  return(hasJsonFile || hasConfigFile || hasConfigFolder)
+  any(grepl("Project", xlsxFiles, fixed = TRUE)) ||
+    fs::dir_exists(file.path(destination, "Configurations"))
 }
 
 #' Initialize esqlabsR Project Folders and required Files
@@ -330,8 +344,12 @@ initProject <- function(
     "example" = .projectDirectory("Example")
   )
 
-  # Check if project already exists
-  if (isProjectInitialized(destination)) {
+  # Is the destination safe to fill? That is a broader question than the public
+  # "is there a project here?": an unmigrated legacy Excel project is not a
+  # project, but scaffolding over it would bury it, so it asks for consent too.
+  if (
+    isProjectInitialized(destination) || .hasLegacyExcelProject(destination)
+  ) {
     if (overwrite) {
       # Overwrite without asking
       msg <- messages$overwriteDestination(destination)

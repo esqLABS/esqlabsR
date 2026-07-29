@@ -251,8 +251,11 @@ test_that("isProjectInitialized correctly identifies project directories", {
   initProject(destination = tempDir, overwrite = TRUE)
   expect_true(isProjectInitialized(tempDir))
 
+  # The Excel files are an interchange format, not the project: with the
+  # `Project.json` gone, the exported `Project.xlsx` and `Configurations/`
+  # left behind do not make this a project any more.
   unlink(file.path(tempDir, "Project.json"))
-  expect_true(isProjectInitialized(tempDir))
+  expect_false(isProjectInitialized(tempDir))
 })
 
 test_that("isProjectInitialized handles non-existent directories", {
@@ -260,7 +263,7 @@ test_that("isProjectInitialized handles non-existent directories", {
   expect_false(isProjectInitialized("non_existent_directory"))
 })
 
-test_that("isProjectInitialized does not false-positive on a dir whose path contains 'Project'", {
+test_that(".hasLegacyExcelProject does not false-positive on a dir whose path contains 'Project'", {
   parent <- withr::local_tempdir()
   # The directory's own path contains "Project"; an unrelated .xlsx inside
   # it must not be mistaken for a project config file.
@@ -268,7 +271,22 @@ test_that("isProjectInitialized does not false-positive on a dir whose path cont
   dir.create(dir)
   writeLines("x", file.path(dir, "data.xlsx"))
 
+  expect_false(.hasLegacyExcelProject(dir))
   expect_false(isProjectInitialized(dir))
+})
+
+test_that("initProject does not scaffold over an unmigrated legacy Excel project", {
+  dir <- withr::local_tempdir()
+  writeLines("x", file.path(dir, "Project.xlsx"))
+  dir.create(file.path(dir, "Configurations"))
+
+  # Not a project, since there is no `Project.json` ...
+  expect_false(isProjectInitialized(dir))
+  # ... but not a folder that is free to fill either.
+  expect_snapshot(
+    error = TRUE,
+    initProject(destination = dir, type = "minimal", createExcel = FALSE)
+  )
 })
 
 test_that("initProject(type = 'minimal', createExcel = FALSE) creates the JSON skeleton", {

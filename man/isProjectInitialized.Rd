@@ -11,13 +11,19 @@ isProjectInitialized(destination = ".")
 project. Defaults to current working directory.}
 }
 \value{
-TRUE if an esqlabsR project exists in the directory, FALSE
+\code{TRUE} if an esqlabsR project exists in the directory, \code{FALSE}
 otherwise.
 }
 \description{
-Checks if a directory already contains an esqlabsR project by
-looking for the presence of a \code{Project.json} file, a \code{ProjectConfiguration}
-Excel file, or a \code{Configurations} folder.
+Checks whether a directory already contains an esqlabsR
+project, by looking for a \code{Project.json} file. The \code{Project.json} and the
+\verb{definitions/} tree beside it are the project; the Excel files are an
+interchange format, not a source of truth.
+
+A folder holding only Excel configuration files (a \code{Project.xlsx} and a
+\verb{Configurations/} folder, i.e. a pre-6.0.0 project that has not been
+migrated yet) is therefore reported as \emph{not} initialized. Turn it into a
+project with \code{\link[=importProjectFromExcel]{importProjectFromExcel()}}.
 }
 \examples{
 \dontrun{
@@ -28,3 +34,17 @@ hasProject <- isProjectInitialized()
 hasProject <- isProjectInitialized("path/to/project")
 }
 }
+\seealso{
+Other projectPersistence:
+\code{\link[=exampleProjectPath]{exampleProjectPath()}},
+\code{\link[=exportProjectToExcel]{exportProjectToExcel()}},
+\code{\link[=importProjectFromExcel]{importProjectFromExcel()}},
+\code{\link[=initProject]{initProject()}},
+\code{\link[=loadProject]{loadProject()}},
+\code{\link[=projectStatus]{projectStatus()}},
+\code{\link[=reloadProject]{reloadProject()}},
+\code{\link[=restoreProject]{restoreProject()}},
+\code{\link[=saveProject]{saveProject()}},
+\code{\link[=snapshotProject]{snapshotProject()}}
+}
+\concept{projectPersistence}
