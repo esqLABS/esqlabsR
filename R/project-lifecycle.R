@@ -240,7 +240,8 @@ reloadProject <- function(project) {
 #' Check if a directory contains an esqlabsR project
 #'
 #' @description Checks whether a directory already contains an esqlabsR
-#'   project, by looking for a `Project.json` file. The `Project.json` and the
+#'   project, by looking for a project container: a JSON file declaring the
+#'   project schema version, usually `Project.json`. That container and the
 #'   `definitions/` tree beside it are the project; the Excel files are an
 #'   interchange format, not a source of truth.
 #'
@@ -265,7 +266,68 @@ reloadProject <- function(project) {
 #' hasProject <- isProjectInitialized("path/to/project")
 #' }
 isProjectInitialized <- function(destination = ".") {
-  file.exists(file.path(fs::path_abs(destination), "Project.json"))
+  destination <- fs::path_abs(destination)
+
+  # The canonical container name first, so the common case costs one existence
+  # check instead of parsing every JSON file in the folder.
+  if (file.exists(file.path(destination, "Project.json"))) {
+    return(TRUE)
+  }
+
+  length(.projectContainerPaths(destination)) > 0L
+}
+
+# The paths of every project container directly inside `destination`: a `.json`
+# file declaring `schemaVersion` `"2.0"`. The file name is not the
+# discriminator, because a container is not always called `Project.json`: an
+# Excel import names it after the workbook it read (`MyStudy.xlsx` becomes
+# `MyStudy.json`), and a project written by an earlier version carries
+# `ProjectConfiguration.json`. The declared schema version is what `Project`
+# accepts when loading, so it is what decides here too. A `.json` that does not
+# parse, or that declares no schema version (a data file, a PK-Sim snapshot, a
+# pre-6.0.0 monolithic snapshot), is not a container.
+#
+# The container's other machine-managed field, `esqlabsRVersion`, deliberately
+# plays no part: saving a project passes through whatever version its container
+# declared, so a genuine container can carry none at all, and requiring it here
+# would miss those projects.
+#
+# @keywords internal
+# @noRd
+.projectContainerPaths <- function(destination) {
+  if (!fs::dir_exists(destination)) {
+    return(character(0))
+  }
+
+  jsonFiles <- as.character(fs::dir_ls(
+    destination,
+    glob = "*.json",
+    type = "file",
+    fail = FALSE
+  ))
+
+  isContainer <- vapply(
+    jsonFiles,
+    function(path) identical(.readContainerField(path, "schemaVersion"), "2.0"),
+    logical(1)
+  )
+
+  jsonFiles[isContainer]
+}
+
+# One top-level field of a project container, or `NULL` when the file does not
+# parse as JSON or does not carry the field. Reading a candidate container is
+# always a "maybe this is one" question, so an unparseable file is an answer,
+# not an error.
+#
+# @keywords internal
+# @noRd
+.readContainerField <- function(path, field) {
+  parsed <- tryCatch(
+    jsonlite::fromJSON(path, simplifyVector = FALSE),
+    error = function(e) NULL
+  )
+  parsed[[field]]
 }
 
 # TRUE when `destination` holds Excel project configuration files: a
@@ -464,9 +526,11 @@ initProject <- function(
 #     source of the stale-definition leak, because a per-definition file the old tree
 #     carried and the template does not would otherwise survive the copy and
 #     re-load as a stale definition. The existing project's `definitionsFolder`
-#     is read from its `Project.json` (default `"definitions"`) so a custom
+#     is read from its container (default `"definitions"`) so a custom
 #     tree location is cleared too;
-#   - the `Project.json` container.
+#   - every project container in `destination`, whatever it is named, so an
+#     imported project's `<workbook-stem>.json` does not survive as a second,
+#     stale container beside the `Project.json` the scaffold writes.
 # Everything else in `destination` (working folders, and any unrelated user
 # file) is left untouched. `unlink()`/`file.remove()` return values are checked
 # so a failed removal aborts loudly rather than leaving a half-cleared project.
@@ -474,31 +538,38 @@ initProject <- function(
 # @keywords internal
 # @noRd
 .clearProjectArtifacts <- function(destination) {
-  jsonPath <- file.path(destination, "Project.json")
+  containers <- .projectContainerPaths(destination)
 
-  # The definitions folder name is configurable; read it from the existing
-  # container so a non-default tree is cleared. A missing or unreadable
-  # container falls back to the default folder name.
-  definitionsFolder <- "definitions"
-  if (file.exists(jsonPath)) {
-    existing <- tryCatch(
-      jsonlite::fromJSON(jsonPath, simplifyVector = FALSE),
-      error = function(e) NULL
-    )
-    definitionsFolder <- existing$definitionsFolder %||% "definitions"
+  # The definitions folder name is configurable; read it from each container so
+  # a non-default tree location is cleared too. With no container to read (the
+  # destination held an unmigrated Excel project), fall back to the default
+  # folder name, and clear only that one: a folder no container names is not
+  # known to be a definitions tree.
+  definitionsFolders <- if (length(containers) == 0L) {
+    "definitions"
+  } else {
+    unique(vapply(
+      containers,
+      function(path) {
+        .readContainerField(path, "definitionsFolder") %||% "definitions"
+      },
+      character(1)
+    ))
   }
 
-  definitionsDir <- file.path(destination, definitionsFolder)
-  if (dir.exists(definitionsDir)) {
-    failed <- unlink(definitionsDir, recursive = TRUE, force = TRUE)
-    if (failed != 0L || dir.exists(definitionsDir)) {
-      cli::cli_abort(messages$failedToClearProjectArtifacts(definitionsDir))
+  for (folder in definitionsFolders) {
+    definitionsDir <- file.path(destination, folder)
+    if (dir.exists(definitionsDir)) {
+      failed <- unlink(definitionsDir, recursive = TRUE, force = TRUE)
+      if (failed != 0L || dir.exists(definitionsDir)) {
+        cli::cli_abort(messages$failedToClearProjectArtifacts(definitionsDir))
+      }
     }
   }
 
-  if (file.exists(jsonPath)) {
-    if (!file.remove(jsonPath)) {
-      cli::cli_abort(messages$failedToClearProjectArtifacts(jsonPath))
+  for (containerPath in containers) {
+    if (!file.remove(containerPath)) {
+      cli::cli_abort(messages$failedToClearProjectArtifacts(containerPath))
     }
   }
 

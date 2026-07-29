@@ -16,7 +16,8 @@ otherwise.
 }
 \description{
 Checks whether a directory already contains an esqlabsR
-project, by looking for a \code{Project.json} file. The \code{Project.json} and the
+project, by looking for a project container: a JSON file declaring the
+project schema version, usually \code{Project.json}. That container and the
 \verb{definitions/} tree beside it are the project; the Excel files are an
 interchange format, not a source of truth.
 
