@@ -210,7 +210,7 @@
       <Project>
         * Name: TestProject
         * Schema Version: 2.0
-        * esqlabsR Version: 6.0.0
+        * esqlabsR Version: <version>
         * JSON File: Project.json
       
       -- Paths -----------------------------------------------------------------------

@@ -153,6 +153,12 @@ saveProject <- function(project) {
     private$.programmaticPopulations[[id]] <- NULL
   }
 
+  # The container just written declares the format this version writes and the
+  # version that wrote it, so the handle adopts both: after a save, what the
+  # project reports is what its files say.
+  private$.schemaVersion <- "2.0"
+  private$.esqlabsRVersion <- as.character(utils::packageVersion("esqlabsR"))
+
   private$.clearModified()
   invisible(self)
 }

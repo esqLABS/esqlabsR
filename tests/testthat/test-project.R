@@ -1139,6 +1139,18 @@ test_that("project$status is read-only", {
   gsub(".*(TestProject_[^/]+)", "<tmp>", lines)
 }
 
+# A save stamps the running package version into the project, so the version
+# line of a saved project's print output tracks `DESCRIPTION` rather than the
+# fixture. Redact it on top of the path redaction, so the snapshot survives a
+# version bump.
+.redactVersionAndJsonPathLine <- function(lines) {
+  gsub(
+    "(\\* esqlabsR Version: ).*",
+    "\\1<version>",
+    .redactJsonPathLine(lines)
+  )
+}
+
 test_that("print() shows the unsaved-changes marker after an edit", {
   project <- testProject()
   addOutputPath(project, "markerpath", "Organism|A|Concentration in container")
@@ -1153,7 +1165,7 @@ test_that("print() shows no marker on a freshly loaded or saved project", {
   addOutputPath(project, "markerpath", "Organism|A|Concentration in container")
   saveProject(project)
   # After saving: clean again.
-  expect_snapshot(print(project), transform = .redactJsonPathLine)
+  expect_snapshot(print(project), transform = .redactVersionAndJsonPathLine)
 })
 
 # DefinitionList section-accessor printing ----
