@@ -3151,3 +3151,75 @@ test_that(".parsePIOutputMappings loads a mapping the constructor would reject",
     PIOutputMapping(id = "m1", scenarios = "s1", observedData = "d1")
   )
 })
+
+# A hand-maintained 5.x `PIParameters` sheet routinely leaves a bounds cell
+# blank. The parameter loads and validation names the gap, rather than the whole
+# project failing to open, which is what made such a workbook unfixable.
+test_that(".parsePIParameters loads a parameter the constructor would reject", {
+  parameters <- .parsePIParameters(
+    list(list(
+      id = "p1",
+      scenarios = list("s1"),
+      path = "Aciclovir|Lipophilicity",
+      maxValue = 2,
+      startValue = 0
+    )),
+    "t1"
+  )
+
+  expect_length(parameters, 1L)
+  expect_s3_class(parameters[[1]], "PIParameter")
+  # Absent, not NA: the validator tells "no value" from "an unusable one".
+  expect_null(parameters[[1]]$minValue)
+  expect_identical(parameters[[1]]$maxValue, 2)
+
+  expect_snapshot(
+    error = TRUE,
+    PIParameter(
+      id = "p1",
+      scenarios = "s1",
+      path = "Aciclovir|Lipophilicity",
+      maxValue = 2,
+      startValue = 0
+    )
+  )
+})
+
+# Every gap in one report. The cross-reference phase skips itself once a section
+# has a critical error, so a mapping's missing field is reported by the section
+# validator; otherwise a user fixing a parameter would only then discover the
+# mapping. The bounds comparison must also not run against an absent bound.
+test_that(".validatePI reports every incomplete PI record at once", {
+  task <- PITask(
+    id = "t1",
+    scenarios = "s1",
+    parameters = list(PIParameter(
+      id = "p1",
+      scenarios = "s1",
+      path = "A|B",
+      minValue = 0,
+      maxValue = 2,
+      startValue = 1
+    )),
+    outputMappings = list(PIOutputMapping(
+      id = "m1",
+      scenarios = "s1",
+      outputPath = "pvb",
+      observedData = "d1"
+    ))
+  )
+  # Hollow out one field of each record, as a blank workbook cell would.
+  task$parameters[[1]]$minValue <- NULL
+  task$outputMappings[[1]]$observedDataId <- NULL
+
+  msgs <- vapply(
+    .validatePI(list(t1 = task))$critical_errors,
+    \(e) e$message,
+    character(1)
+  )
+
+  expect_match(msgs, "missing required field: minValue", all = FALSE)
+  expect_match(msgs, "does not define an observedData", all = FALSE)
+  # No spurious bounds complaint: the comparison is skipped, not run on NULL.
+  expect_false(any(grepl("invalid bounds", msgs, ignore.case = TRUE)))
+})

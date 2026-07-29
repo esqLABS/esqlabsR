@@ -1139,21 +1139,25 @@ test_that("validateProject() flags a PI outputMapping referencing a removed outp
 test_that("validateProject() flags a PI outputMapping with no outputPath", {
   project <- testProject()
   # Mimic a hand-edited Project.json whose PI outputMapping lost its
-  # `outputPath`: the record reaches cross-reference validation with a NULL
-  # `outputPathId`. This must be reported as a critical error, not crash the
-  # cross-reference pass with "argument is of length zero".
+  # `outputPath`: the record carries a NULL `outputPathId`. This must be reported
+  # as a critical error, not crash the cross-reference pass with "argument is of
+  # length zero".
   private <- project$.__enclos_env__$private
   tasks <- private$.parameterIdentification
   tasks[["aciclovirsimple"]]$outputMappings[[1]]$outputPathId <- NULL
   private$.parameterIdentification <- tasks
 
   results <- suppressWarnings(validateProject(project))
+  # Reported by the section validator, not the cross-reference phase: an absent
+  # field is not a reference to resolve, and that phase skips itself once any
+  # section has a critical error, so a project with two gaps would show only one.
   msgs <- vapply(
-    results$crossReferences$critical_errors,
+    results$parameterIdentification$critical_errors,
     \(e) e$message,
     character(1)
   )
   expect_match(msgs, "does not define an outputPath", all = FALSE)
+  expect_length(results$crossReferences$critical_errors, 0L)
 })
 
 # print.ValidationResults ----
