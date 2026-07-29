@@ -24,10 +24,6 @@ test_that("esqlabsColors returns ten colors", {
   expect_length(esqlabsColors(10), 10)
 })
 
-test_that("esqlabsColors returns ten colors", {
-  expect_length(esqlabsColors(10), 10)
-})
-
 # col2hsv -----------------------------------------------------------------
 
 test_that("col2hsv returns expected HSV values for a given R color name", {
