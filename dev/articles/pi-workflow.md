@@ -105,11 +105,11 @@ fit$result
 #>   • Algorithm: BOBYQA
 #>   • CI Method: hessian
 #>   • Convergence: TRUE
-#>   • Objective value: 698.7
+#>   • Objective value: 698.8
 #>   • Iterations: 12
 #>   • Function evaluations: 12
-#>   • Elapsed (optimization): 2.822 s
-#>   • Elapsed (CI): 1.699 s
+#>   • Elapsed (optimization): 3.340 s
+#>   • Elapsed (CI): 1.985 s
 #> Parameter Estimates:
 #>   • EHC continuous fraction: Estimate = 0.8000, SD = NA, CV = NA, CI = [NA, NA]
 ```

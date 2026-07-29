@@ -117,11 +117,11 @@ head(scenarioResult$outputValues$data)
 #> 6            0    5
 #>   Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)
 #> 1                                                                  0.000000
-#> 2                                                                  2.734434
-#> 3                                                                  7.854866
-#> 4                                                                 13.133364
-#> 5                                                                 18.282331
-#> 6                                                                 23.266077
+#> 2                                                                  2.734356
+#> 3                                                                  7.854644
+#> 4                                                                 13.132996
+#> 5                                                                 18.281834
+#> 6                                                                 23.265469
 ```
 
 ## Individual versus population scenarios
@@ -163,7 +163,7 @@ saveScenarioResults(
   project,
   outputFolder = resultsFolder
 )
-#> [1] "/tmp/RtmpQly0Hj/file28f770a84d03"
+#> [1] "/tmp/RtmpLWvkLy/file28e63edf6c"
 ```
 
 [`loadScenarioResults()`](https://esqlabs.github.io/esqlabsR/dev/reference/loadScenarioResults.md)

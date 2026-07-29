@@ -79,5 +79,5 @@ initProject(dir, type = "example", createExcel = FALSE)
 project <- loadProject(file.path(dir, "Project.json"))
 snapshot <- snapshotProject(project, dir = tempdir(), name = "study")
 snapshot # the path of the snapshot file
-#> [1] "/tmp/Rtmpn8yG4H/study.esqlabsR"
+#> [1] "/tmp/RtmpnGTvlq/study.esqlabsR"
 ```

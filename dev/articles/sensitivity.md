@@ -68,9 +68,9 @@ analysis$pkData |>
 #> # A tibble: 3 × 4
 #>   ParameterFactor PKParameterValue PKPercentChange SensitivityPKParameter
 #>             <dbl>            <dbl>           <dbl>                  <dbl>
-#> 1             0.1            3897.          -0.522                0.00580
-#> 2             1              3917.           0                  NaN      
-#> 3            10              4017.           2.55                 0.00283
+#> 1             0.1            3898.          -0.523                0.00581
+#> 2             1              3919.           0                  NaN      
+#> 3            10              4019.           2.55                 0.00283
 ```
 
 In this example the default lipophilicity (−0.1 log units) yields an AUC
