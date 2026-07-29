@@ -50,6 +50,7 @@ Other projectPersistence:
 \code{\link[=exportProjectToExcel]{exportProjectToExcel()}},
 \code{\link[=importProjectFromExcel]{importProjectFromExcel()}},
 \code{\link[=initProject]{initProject()}},
+\code{\link[=isProjectInitialized]{isProjectInitialized()}},
 \code{\link[=loadProject]{loadProject()}},
 \code{\link[=reloadProject]{reloadProject()}},
 \code{\link[=restoreProject]{restoreProject()}},
