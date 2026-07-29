@@ -50,6 +50,7 @@ Suggests:
     covr,
     devtools,
     knitr,
+    quarto,
     reactable,
     rmarkdown,
     showtext,
@@ -58,7 +59,8 @@ Suggests:
     withr,
     emoji
 VignetteBuilder:
-    knitr
+    knitr,
+    quarto
 Config/testthat/edition: 3
 Config/rcmdcheck/ignore-inconsequential-notes: true
 Encoding: UTF-8
