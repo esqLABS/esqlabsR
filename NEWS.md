@@ -24,6 +24,8 @@
 - `saveScenarioResults()` renames its second argument from `projectConfiguration` to `project` to match the v6 naming convention. Update any calls that pass the argument by name. (#1062)
 - `runScenarios()` gains a `stopIfFails` argument that defaults to `TRUE`, so a scenario that fails (at build time, e.g. a missing model parameter path, or because its simulation produces no results) now aborts the run by default instead of warning and returning the other scenarios. Set `stopIfFails = FALSE` to restore the previous warn-and-continue behaviour, which skips the failing scenario and still runs the rest. (#1036, #1170)
 
+- Bumped minimum required `ospsuite` version to 12.4.2; earlier versions fail to load data correctly (#1000).
+
 ## Major changes
 
 - `addPopulation(project, id, population)` accepts an [ospsuite::Population] object in the `species` position, injecting a programmatically built or mutated population that a scenario runs against directly (the JSON entry becomes a `programmatic` sentinel). The object lives in the session; [saveProject()] freezes it to a `<id>.csv` file under the populations folder and rewrites the entry to a `csv` source, so it survives a reload. A population definition may now carry an optional `type` (`programmatic` or `csv`); an entry with no `type` stays a demographics spec as before. (#1024)
@@ -121,6 +123,29 @@ Deprecation intensity follows the lifecycle policy: forwarding shims that still 
 - `sensitivityCalculation()` now errors clearly when `variationType = "absolute"` is used with a parameter whose initial value is 0, instead of silently producing invalid scaling factors. (#1056)
 - `sensitivityCalculation()` no longer errors when all runs for a parameter fail; it now warns and omits that parameter from the results. (#1056)
 - `sensitivityTornadoPlot()` now matches the `parameterFactor` and its reciprocal against the analysis results with a numerical tolerance, so user-supplied reciprocal factors are no longer rejected due to floating point representation. (#1056)
+- `isTableFormulasEqual()` now compares every point pair of the two table formulas instead of only the first, and treats two empty tables as equal (previously returned `NULL`) (#1056).
+
+# esqlabsR 5.7.0
+
+## Breaking changes
+
+- Individual parameter sets in `Individuals.xlsx` must now be specified
+  explicitly via the new required column `Individual Parameter Sets` in the
+  `IndividualBiometrics` sheet. The column must contain a comma-separated list
+  of sheet names (in the same file) whose parameters will be applied to the
+  simulation in order. Previously, a sheet named after the `IndividualId` was
+  applied automatically; this fallback is removed. Existing `Individuals.xlsx`
+  files must be updated to add the `Individual Parameter Sets` column and
+  populate it with the relevant sheet names. (#970)
+
+## New features
+
+- Added `overwriteFormulasInSS` property to `ScenarioConfiguration`. When set to `TRUE`, formula-defined parameters will be overwritten with their steady-state values (corresponds to `ignoreIfFormula = FALSE` in `ospsuite::getSteadyState()`). Default is `FALSE` (formula-defined parameters are kept, i.e. `ignoreIfFormula = TRUE`). The property can be set via a new `OverwriteFormulasInSS` column in the `Scenarios` sheet of `Scenarios.xlsx` (placed after `SteadyStateTimeUnit`). Also available as a parameter in `createScenarioConfigurationsFromPKML()`.
+- Added Excel-based parameter identification (PI) workflow: `readPITaskConfigurationFromExcel()`, `createPITasks()`, and `runPI()` enable defining and running PI tasks from `ParameterIdentification.xlsx`. Supports multi-scenario fitting, parameter grouping, residual scaling, and optional confidence interval estimation. See `vignette("pi-workflow")` (\#928).
+
+## Minor improvements and bug fixes
+
+- `snapshotProjectConfiguration()` and `projectConfigurationStatus()` no longer fail on projects that have no PI configuration (i.e. `parameterIdentificationFile` is not set) (#1007).
 
 # esqlabsR 5.6.0
 
