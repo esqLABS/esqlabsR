@@ -1739,7 +1739,17 @@ duplicateScenario <- function(project, id, newId) {
     return(paste0(argName, " must be a non-empty string or NULL"))
   }
   if (!(value %in% names(lookup))) {
-    return(paste0(argName, " '", value, "' not found in ", lookupLabel))
+    return(paste0(
+      argName,
+      " '",
+      value,
+      "' not found in ",
+      lookupLabel,
+      # The same "did you mean" hint the cross-reference validator gives, so a
+      # dangling reference reads alike whether it is caught here at authoring
+      # time or later by `validateProject()`.
+      .suggestSuffix(value, names(lookup))
+    ))
   }
   character()
 }
@@ -1772,7 +1782,8 @@ duplicateScenario <- function(project, id, newId) {
       " not found in ",
       lookupLabel,
       ": ",
-      paste(bad, collapse = ", ")
+      paste(bad, collapse = ", "),
+      .suggestSuffixMulti(bad, names(lookup))
     ))
   }
   character()

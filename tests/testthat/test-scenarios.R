@@ -318,6 +318,44 @@ test_that("addScenario aborts when a referenced individual is unknown", {
   )
 })
 
+test_that("addScenario suggests the closest existing id for a dangling reference", {
+  # Authoring catches a dangling reference eagerly and `validateProject()`
+  # catches it later; both name the near miss, so the same typo reads the same
+  # way whichever path finds it.
+  project <- testProject()
+  expect_snapshot(
+    error = TRUE,
+    addScenario(
+      project,
+      id = "bad",
+      modelFile = "Aciclovir.pkml",
+      individual = "indiv2"
+    )
+  )
+  expect_snapshot(
+    error = TRUE,
+    addScenario(
+      project,
+      id = "bad",
+      modelFile = "Aciclovir.pkml",
+      outputPaths = "aciclovir_pv"
+    )
+  )
+})
+
+test_that("addScenario leaves the reference error bare when no id is close", {
+  project <- testProject()
+  expect_snapshot(
+    error = TRUE,
+    addScenario(
+      project,
+      id = "bad",
+      modelFile = "Aciclovir.pkml",
+      outputPaths = "somethingentirelyunrelated"
+    )
+  )
+})
+
 test_that("addScenario accepts a valid initialConditions reference", {
   project <- testProject()
   addInitialConditions(project, "icset")
