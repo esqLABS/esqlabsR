@@ -61,10 +61,14 @@ applied whole to every definition, never split positionally. To give a
 different multi-valued list per definition, pass a list of the same length
 as the id vector (one vector per definition).
 
-A zero-length reference list means "there are none", the same as \code{NULL}. A
-definition file writes \verb{[]} for a reference list a definition has none of, so
-\code{character(0)} (or the empty list \code{jsonlite::fromJSON()} yields for \verb{[]})
-reads a definition's own written fields straight back into an authoring call.
+For a scenario's \code{parameterSets}, \code{initialConditions}, and \code{outputPaths}, a
+zero-length reference list means "there are none", the same as \code{NULL}. A
+definition file writes \verb{[]} for a reference list a scenario has none of, so
+\code{\link[=addScenario]{addScenario()}} and \code{\link[=setScenario]{setScenario()}} take a scenario's own written fields
+straight back, whether they were read as a character vector or as the list
+\code{jsonlite::fromJSON(simplifyVector = FALSE)} yields. The reference list of a
+plot grid (\code{plots}) must still be non-empty: a grid with no plots has nothing
+to render.
 
 The call is all-or-nothing: every definition is validated first, and if any
 fails the whole call aborts and writes nothing. On success all definitions
@@ -72,10 +76,11 @@ are folded into the section and persisted in a single write-through.
 
 An authoring function resolves every reference at the call that makes it: an
 \code{individual} or \code{parameterSets} id with no matching definition aborts naming
-the missing id (and the closest existing one), so a mistyped reference
-surfaces where it was typed rather than at the next run. Add the definitions
-in dependency order, \code{addIndividual()} before the \code{addScenario()} that
-references it.
+the missing id, so a mistyped reference surfaces where it was typed rather
+than at the next run. Add the definitions in dependency order,
+\code{addIndividual()} before the \code{addScenario()} that references it. A scenario's
+reference errors also name the closest existing id, as \code{\link[=validateProject]{validateProject()}}
+does; the other sections name only the missing one.
 
 Reading a project instead defers: \code{\link[=loadProject]{loadProject()}} and
 \code{\link[=importProjectFromExcel]{importProjectFromExcel()}} accept a project whose references do not all

@@ -55,7 +55,7 @@ An authoring function checks immediately: `addScenario(project, "s", modelFile =
 
 Reading a project defers to `validateProject()`. `loadProject()` and `importProjectFromExcel()` accept a project whose references do not all resolve: each section is read on its own, so a legacy project with a real gap still loads and imports, and the full report tells you about every gap at once instead of stopping at the first. That is what the worked example below shows.
 
-So a project can hold a dangling reference that `addScenario()` would have refused. That is the deferred half doing its job, not an inconsistency: nothing runs until the reference resolves either way, since `runScenarios()` and `createPlots()` validate before they run.
+So a project can hold a dangling reference that `addScenario()` would have refused. That is the deferred half doing its job, not an inconsistency: `runScenarios()` and `createPlots()` validate before they run, so the gap still stops you before any simulation. The one way past it is `validate = FALSE` on either function, which skips the check and lets a scenario build on whatever the model file already carries.
 
 ## The clean case
 
