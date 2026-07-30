@@ -112,10 +112,6 @@
   configDir <- file.path(dir, "Configurations")
   dir.create(configDir, recursive = TRUE, showWarnings = FALSE)
 
-  # Name the rebuilt workbook `Project.xlsx` so the bridge produces a
-  # `Project.json` container, the canonical name a restored project carries
-  # (matching the v6-snapshot restore path), rather than one named after the
-  # previous version's `ProjectConfiguration` workbook.
   pcPath <- file.path(dir, "Project.xlsx")
   .writeExcel(.legacySheetToDf(jsonData$projectConfiguration), pcPath)
 

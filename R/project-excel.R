@@ -42,7 +42,7 @@
 #'   projects side by side in one folder; the `.json` extension is added when it
 #'   is missing. It must be a plain filename, not a path.
 #'
-#' @return Invisibly returns the path to the created project file.
+#' @returns Invisibly returns the path to the created project file.
 #' @export
 #' @family projectPersistence
 importProjectFromExcel <- function(
