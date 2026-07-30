@@ -47,6 +47,16 @@ Validation has exactly **two** levels, not three:
 
 There is no separate "valid data" tier. A section that simply passed is just a result with no critical errors. The quickest single question, "is anything blocking?", is answered by `isAnyCriticalErrors()`.
 
+## When a reference is checked
+
+Authoring and reading check references at different moments, on purpose.
+
+An authoring function checks immediately: `addScenario(project, "s", modelFile = "m.pkml", individual = "adlt_male")` aborts on the spot, naming the missing id and the closest existing one, because at that moment you are writing one reference by hand and the typo is right in front of you.
+
+Reading a project defers to `validateProject()`. `loadProject()` and `importProjectFromExcel()` accept a project whose references do not all resolve: each section is read on its own, so a legacy project with a real gap still loads and imports, and the full report tells you about every gap at once instead of stopping at the first. That is what the worked example below shows.
+
+So a project can hold a dangling reference that `addScenario()` would have refused. That is the deferred half doing its job, not an inconsistency: nothing runs until the reference resolves either way, since `runScenarios()` and `createPlots()` validate before they run.
+
 ## The clean case
 
 The bundled example is well formed, so its report is short. `validateProject()` runs every section validator plus a cross-reference pass and returns a structured object that prints a summary:
