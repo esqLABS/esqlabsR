@@ -386,23 +386,24 @@ test_that(".validatePlots names the closest existing id for a dangling reference
   ))
 })
 
-test_that(".validatePlots resolves a reference that matches its definition canonically", {
-  # A hand-edited file may spell a reference the way the user typed it rather
-  # than the way it was canonicalized; both sides are compared canonically, so
-  # `P1` still resolves to the plot `p1`.
+test_that(".validatePlots reports an empty reference, which the missing-field loop lets through", {
+  # `""` is not `NULL`, so the required-field loop accepts it. It must still be
+  # reported here: `createPlots()` aborts on it, and nothing else flags it.
   result <- .validatePlots(
     dataCombined = list(aciclovir_pvb = list()),
     plotConfig = list(
-      p1 = list(
-        plotId = "p1",
-        dataCombinedId = "Aciclovir_PVB",
-        plotType = "individual"
-      )
+      p1 = list(plotId = "p1", dataCombinedId = "", plotType = "individual")
     ),
-    plotGrids = list(grid = list(plotGridId = "grid", plotIds = "P1"))
+    plotGrids = list(grid = list(plotGridId = "grid", plotIds = "p1, "))
   )
 
-  expect_true(result$isValid())
+  messages <- vapply(
+    result$critical_errors,
+    function(e) e$message,
+    character(1)
+  )
+  expect_true(any(grepl("unknown dataCombinedId", messages)))
+  expect_true(any(grepl("unknown plotIds", messages)))
 })
 
 test_that("removePlot removes a vector of ids in one pass and warns on misses", {

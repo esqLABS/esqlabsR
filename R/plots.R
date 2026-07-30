@@ -240,10 +240,9 @@ print.DataCombined <- function(x, ...) {
 #'     in `createPlots()`. This check also runs when the plot list is empty
 #'     (every referenced id is then unknown).
 #'
-#' Both reference checks compare canonically (`.danglingRefs()`), so a
-#' hand-edited reference differing from its definition only by case still
-#' resolves; a reference that does not resolve is reported with the closest
-#' existing id.
+#' Both reference checks match a reference to its definition exactly, the same
+#' way `createPlots()` resolves it, and report an unresolved reference with the
+#' closest existing id.
 #'
 #' Cross-section references that escape these sections (dataCombined ->
 #' scenarios) are validated in `.validateCrossReferences()`.
@@ -325,7 +324,12 @@ print.DataCombined <- function(x, ...) {
       function(p) p$dataCombinedId
     ))
     dataCombinedKeys <- names(dataCombined %||% list())
-    invalidDataCombinedRefs <- .danglingRefs(
+    # `setdiff()` rather than `.danglingRefs()`: `createPlots()` resolves a
+    # plot's `dataCombinedId` by exact lookup, so a reference this reports as
+    # resolved has to be one the build can actually find. It also keeps an
+    # empty-string reference reportable, which the missing-field loop above
+    # does not catch (`""` is not `NULL`).
+    invalidDataCombinedRefs <- setdiff(
       referencedDataCombined,
       dataCombinedKeys
     )
@@ -365,7 +369,7 @@ print.DataCombined <- function(x, ...) {
       plotGrids,
       function(g) .splitPlotIDs(g$plotIds)
     )))
-    invalidGridRefs <- .danglingRefs(allGridIds, knownPlotIds)
+    invalidGridRefs <- setdiff(allGridIds, knownPlotIds)
     if (length(invalidGridRefs) > 0) {
       result$addCriticalError(
         "Invalid Reference",
