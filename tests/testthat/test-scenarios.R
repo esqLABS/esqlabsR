@@ -544,29 +544,71 @@ test_that("setScenario clears a reference field given a zero-length vector", {
 
 test_that("a scenario's own written reference fields are accepted back by addScenario", {
   # The round trip an imported project needs: read a scenario's fields straight
-  # out of its definition file and hand them to `addScenario()`. The file
-  # carries `[]` for the references it has none of, so authoring must accept it.
+  # out of its definition file and hand them to `addScenario()`. Read the file
+  # the way the package reads it (`simplifyVector = FALSE`), so an absent
+  # reference list arrives as `list()` and a populated one as a list of strings.
   project <- testProject()
   addScenario(project, id = "written", modelFile = "Aciclovir.pkml")
-  saveProject(project)
-
-  raw <- jsonlite::fromJSON(file.path(
-    project$info$projectDirPath,
-    project$paths$definitionsFolder,
-    "scenarios",
-    "written.json"
-  ))
-  expect_length(raw$outputPaths, 0L)
-
   addScenario(
     project,
-    id = "rebuilt",
-    modelFile = raw$modelFile,
-    outputPaths = raw$outputPaths,
-    parameterSets = raw$parameterSets,
-    initialConditions = raw$initialConditions
+    id = "writtenrefs",
+    modelFile = "Aciclovir.pkml",
+    outputPaths = c("aciclovir_pvb", "aciclovir_fat_cell")
   )
-  expect_null(project$definitions$scenarios[["rebuilt"]]$outputPaths)
+  saveProject(project)
+
+  readDefinition <- function(id) {
+    jsonlite::fromJSON(
+      file.path(
+        project$info$projectDirPath,
+        project$paths$definitionsFolder,
+        "scenarios",
+        paste0(id, ".json")
+      ),
+      simplifyVector = FALSE
+    )
+  }
+
+  bare <- readDefinition("written")
+  expect_length(bare$outputPaths, 0L)
+  addScenario(
+    project,
+    id = "rebuiltbare",
+    modelFile = bare$modelFile,
+    outputPaths = bare$outputPaths,
+    parameterSets = bare$parameterSets,
+    initialConditions = bare$initialConditions
+  )
+  expect_null(project$definitions$scenarios[["rebuiltbare"]]$outputPaths)
+
+  withRefs <- readDefinition("writtenrefs")
+  expect_type(withRefs$outputPaths, "list")
+  expect_length(withRefs$outputPaths, 2L)
+  addScenario(
+    project,
+    id = "rebuiltrefs",
+    modelFile = withRefs$modelFile,
+    outputPaths = withRefs$outputPaths
+  )
+  expect_named(
+    project$definitions$scenarios[["rebuiltrefs"]]$outputPaths,
+    c("aciclovir_pvb", "aciclovir_fat_cell")
+  )
+})
+
+test_that("addScenario keeps rejecting a reference list holding a non-string", {
+  # Only an all-strings list flattens to a reference vector; anything else is
+  # still a malformed argument, not a list of ids.
+  project <- testProject()
+  expect_snapshot(
+    error = TRUE,
+    addScenario(
+      project,
+      id = "badlist",
+      modelFile = "Aciclovir.pkml",
+      outputPaths = list("aciclovir_pvb", 1)
+    )
+  )
 })
 
 test_that("addScenario collapses duplicate outputPaths to one (first-seen order)", {

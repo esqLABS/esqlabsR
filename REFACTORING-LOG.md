@@ -115,3 +115,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-07-30 10:28: `addScenario()` and `setScenario()` now read a zero-length reference list (the `[]` a definition file carries) as "there are none" instead of aborting. (#1187)
 - 2026-07-30 10:33: The reference error `addScenario()` and `setScenario()` raise for an id that does not exist now names the closest existing id, the same "did you mean" hint the project validator already gives. (#1169)
 - 2026-07-30 10:35: Documented that authoring checks a reference the moment it is written while loading and importing leave it to the project validator, and that an empty reference list means "there are none". (#1169)
+- 2026-07-30 11:12: A scenario reference list read the way the package reads its definition files (a list of id strings) is now accepted by `addScenario()` and `setScenario()`, so a scenario with references can also be rebuilt from its own written fields. (#1187)

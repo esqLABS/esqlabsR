@@ -93,6 +93,16 @@
       ! Cannot add scenario "s":
       x outputPaths must be a non-empty character vector with no NA or empty entries
 
+# addScenario keeps rejecting a reference list holding a non-string
+
+    Code
+      addScenario(project, id = "badlist", modelFile = "Aciclovir.pkml", outputPaths = list(
+        "aciclovir_pvb", 1))
+    Condition
+      Error in `addScenario()`:
+      ! Cannot add scenario "badlist":
+      x outputPaths must be a non-empty character vector with no NA or empty entries
+
 # addScenario aborts on an existing id, replaces it with overwrite
 
     Code
