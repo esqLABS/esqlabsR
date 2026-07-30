@@ -165,6 +165,17 @@ messages$invalidSnapshotName <- function(stem) {
   )
 }
 
+messages$invalidProjectFileName <- function(name) {
+  c(
+    "{.arg projectFileName} must be a single filename without path separators.",
+    "x" = "The name {.val {name}} contains a path separator or is {.val .} / \\
+    {.val ..}, so it could write outside {.arg outputDir}.",
+    "i" = "Pass a single filename segment, for example {.val Project.json} \\
+    (the default) or {.val MyStudy}; the {.field .json} extension is added \\
+    when it is missing."
+  )
+}
+
 messages$restoreDirNotEmpty <- function(dir) {
   c(
     "The folder {.path {dir}} is not empty.",
@@ -531,11 +542,20 @@ messages$restoredProjectConfiguration <- function(inputFile, outputFile) {
   )
 }
 
-# The Excel axis of `projectStatus()`: with no `Project.xlsx` side-car there is
-# nothing to compare the in-memory project against.
-messages$syncNoExcel <- function() {
+# The Excel axis of `projectStatus()`: with no Excel side-car there is nothing
+# to compare the in-memory project against. The side-car is derived from the
+# project file's name, so name the file that was looked for; a project with no
+# folder on disk has no name to derive one from, hence the pathless variant.
+messages$syncNoExcel <- function(excelPath = NULL) {
+  if (is.null(excelPath)) {
+    return(cli::format_inline(
+      "No Excel configuration file found; nothing to compare."
+    ))
+  }
   cli::format_inline(
-    "No Excel configuration file ({.file Project.xlsx}) found; nothing to compare."
+    "No Excel configuration file ({.file {fs::path_file(excelPath)}}) found \\
+    next to the project; nothing to compare. Write one with \\
+    {.fn exportProjectToExcel}."
   )
 }
 

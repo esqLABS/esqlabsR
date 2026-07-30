@@ -3,11 +3,11 @@
 #' Import project configuration from Excel files
 #'
 #' @description Reads all Excel configuration files in an esqlabsR project and
-#' converts them to the JSON project format: a project file (named after the
-#' Excel file, e.g. `Project.xlsx` becomes `Project.json`) plus one file per
-#' definition in the `definitions/` folder. The result is a ready-to-use
-#' project — [loadProject()] can open it directly. This is the migration path
-#' from Excel-based projects to the JSON-primary workflow.
+#' converts them to the JSON project format: a `Project.json` project file plus
+#' one file per definition in the `definitions/` folder. The result is a
+#' ready-to-use project — `loadProject("<outputDir>/Project.json")` can open it
+#' directly. This is the migration path from Excel-based projects to the
+#' JSON-primary workflow.
 #'
 #' The `configurationsFolder` and the per-section workbook filenames are read
 #' from the Excel file and must stay under the project folder: a value that
@@ -35,9 +35,14 @@
 #'   `TRUE`. Set it to `FALSE` when only the definitions are wanted and the
 #'   assets would be wasted work, as when the import feeds a throwaway
 #'   comparison snapshot.
+#' @param projectFileName Name of the project file the import writes in
+#'   `outputDir`. Defaults to `"Project.json"`, the same name [initProject()]
+#'   and [loadProject()] use, so an imported project opens like any other. Pass
+#'   another name (for example `"MyStudy"`, or `"MyStudy.json"`) to keep several
+#'   projects side by side in one folder; the `.json` extension is added when it
+#'   is missing. It must be a plain filename, not a path.
 #'
-#' @return Invisibly returns the path to the created project file (the
-#'   `Project.json`).
+#' @return Invisibly returns the path to the created project file.
 #' @export
 #' @family projectPersistence
 importProjectFromExcel <- function(
@@ -45,10 +50,12 @@ importProjectFromExcel <- function(
   outputDir = NULL,
   overwrite = FALSE,
   silent = FALSE,
-  copyAssets = TRUE
+  copyAssets = TRUE,
+  projectFileName = "Project.json"
 ) {
   validateIsString(projectConfigPath)
   validateIsLogical(copyAssets)
+  .validateProjectFileName(projectFileName)
 
   if (!file.exists(projectConfigPath)) {
     cli::cli_abort(messages$fileNotFound(projectConfigPath))
@@ -477,8 +484,10 @@ importProjectFromExcel <- function(
   # `file` / `importerConfiguration` basenames against `dataFolder`.
   jsonData <- .parseExcelObservedData(jsonData, prop, pcDir, outputDir)
 
-  outputFileName <- sub("\\.xlsx$", ".json", basename(projectConfigPath))
-  outputPath <- file.path(outputDir, outputFileName)
+  outputPath <- file.path(
+    outputDir,
+    fs::path_ext_set(projectFileName, "json")
+  )
 
   # Guard against silently replacing an existing JSON project. The import writes
   # the container and fully reconciles the `definitions/` tree (deleting any
@@ -1072,7 +1081,7 @@ projectStatus <- function(project, silent = FALSE) {
   excelPath <- as.character(fs::path_ext_set(jsonPath, "xlsx"))
   if (!file.exists(excelPath)) {
     if (!silent) {
-      cli::cli_alert_info(messages$syncNoExcel())
+      cli::cli_alert_info(messages$syncNoExcel(excelPath))
     }
     return(invisible(result))
   }
@@ -1336,6 +1345,30 @@ projectStatus <- function(project, silent = FALSE) {
   }
 
   jsonData
+}
+
+#' Guard the name the import writes its project file under
+#'
+#' The name becomes a path via `file.path(outputDir, ...)`, so one carrying a
+#' path separator or a `..` segment would write the project file outside the
+#' folder the caller named, over whatever sits there.
+#'
+#' @param name The `projectFileName` the caller passed.
+#' @returns `NULL`, invisibly; called for the abort.
+#' @keywords internal
+#' @noRd
+.validateProjectFileName <- function(name) {
+  if (
+    !is.character(name) ||
+      length(name) != 1L ||
+      is.na(name) ||
+      !nzchar(name) ||
+      grepl("[/\\]", name) ||
+      name %in% c(".", "..")
+  ) {
+    cli::cli_abort(messages$invalidProjectFileName(name))
+  }
+  invisible(NULL)
 }
 
 #' Spell a path the way it reads best from the working directory

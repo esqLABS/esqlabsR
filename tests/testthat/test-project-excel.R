@@ -1302,6 +1302,79 @@ test_that("importProjectFromExcel aborts when two ids canonicalize to the same v
 # An import run from a script has no other sign of what was written, or that it
 # succeeded, so the summary is gated on `silent` alone, never on the session
 # being interactive.
+# Regression (#1174): the import used to name the project file after the
+# workbook it read, so a legacy `ProjectConfiguration.xlsx` produced a
+# `ProjectConfiguration.json` that the `Project.json` default of `loadProject()`
+# and `initProject()` did not match. The name is now canonical whatever the
+# workbook is called, so the obvious next call after an import works.
+test_that("importProjectFromExcel writes Project.json whatever the workbook is called", {
+  outputDir <- withr::local_tempdir()
+
+  jsonPath <- suppressWarnings(importProjectFromExcel(
+    testProjectExcelPath(),
+    outputDir = outputDir,
+    silent = TRUE
+  ))
+
+  expect_identical(fs::path_file(jsonPath), "Project.json")
+  expect_false(file.exists(file.path(outputDir, "ProjectConfiguration.json")))
+  expect_s3_class(
+    suppressWarnings(loadProject(file.path(outputDir, "Project.json"))),
+    "Project"
+  )
+})
+
+test_that("importProjectFromExcel honours projectFileName, and saving keeps it", {
+  outputDir <- withr::local_tempdir()
+
+  jsonPath <- suppressWarnings(importProjectFromExcel(
+    testProjectExcelPath(),
+    outputDir = outputDir,
+    silent = TRUE,
+    projectFileName = "MyStudy.json"
+  ))
+
+  expect_identical(fs::path_file(jsonPath), "MyStudy.json")
+  expect_false(file.exists(file.path(outputDir, "Project.json")))
+
+  # A project saves back to the file it was loaded from, so the chosen name
+  # survives an edit rather than forking a stray `Project.json`.
+  project <- suppressWarnings(loadProject(jsonPath))
+  project$info$description <- "edited"
+  saveProject(project)
+
+  expect_false(file.exists(file.path(outputDir, "Project.json")))
+  expect_identical(
+    suppressWarnings(loadProject(jsonPath))$info$description,
+    "edited"
+  )
+})
+
+test_that("importProjectFromExcel adds the .json extension to projectFileName", {
+  outputDir <- withr::local_tempdir()
+
+  jsonPath <- suppressWarnings(importProjectFromExcel(
+    testProjectExcelPath(),
+    outputDir = outputDir,
+    silent = TRUE,
+    projectFileName = "MyStudy"
+  ))
+
+  expect_identical(fs::path_file(jsonPath), "MyStudy.json")
+})
+
+test_that("importProjectFromExcel rejects a projectFileName that is a path", {
+  expect_snapshot(
+    error = TRUE,
+    importProjectFromExcel(
+      testProjectExcelPath(),
+      outputDir = withr::local_tempdir(),
+      silent = TRUE,
+      projectFileName = "../Project.json"
+    )
+  )
+})
+
 test_that("importProjectFromExcel reports what it produced, and stays quiet under silent", {
   work_dir <- withr::local_tempdir()
   file.copy(dirname(testProjectExcelPath()), work_dir, recursive = TRUE)
@@ -1320,7 +1393,7 @@ test_that("importProjectFromExcel reports what it produced, and stays quiet unde
   )
 
   # The output path, the per-section counts, and the assets that travelled.
-  expect_match(summaryText, "ProjectConfiguration.json", fixed = TRUE)
+  expect_match(summaryText, "Project.json", fixed = TRUE)
   expect_match(summaryText, "Scenarios: 8", fixed = TRUE)
   expect_match(summaryText, "Copied 2 referenced folders", fixed = TRUE)
 
@@ -1549,9 +1622,10 @@ test_that("importProjectFromExcel detects an in-place import through a symlinked
   ))
   after <- sort(list.files(projectDir, recursive = TRUE))
 
-  # Recognized as in place: only definition files were added, no folder was
-  # duplicated into its own subtree.
-  expect_match(setdiff(after, before), "^definitions/", all = TRUE)
+  # Recognized as in place: the project file and its definition files were
+  # added, no folder was duplicated into its own subtree.
+  added <- setdiff(after, before)
+  expect_match(added[added != "Project.json"], "^definitions/", all = TRUE)
   expect_false(dir.exists(file.path(projectDir, "Models", "Models")))
   expect_false(dir.exists(file.path(projectDir, "Data", "Data")))
 })
@@ -1653,9 +1727,11 @@ test_that("importProjectFromExcel in place leaves the referenced folders untouch
   ))
   after <- sort(list.files(projectDir, recursive = TRUE))
 
-  # Everything the import added is a definition file; no folder was copied onto
-  # itself, which would have duplicated the models and data into subfolders.
-  expect_match(setdiff(after, before), "^definitions/", all = TRUE)
+  # Everything the import added is the project file or a definition file; no
+  # folder was copied onto itself, which would have duplicated the models and
+  # data into subfolders.
+  added <- setdiff(after, before)
+  expect_match(added[added != "Project.json"], "^definitions/", all = TRUE)
 })
 
 # An observed DataCombined row may name a scenario just as a simulated row does.
@@ -1976,6 +2052,29 @@ test_that("projectStatus() does not report false section drift after a dirty sav
 # projectStatus() must report that honestly as NA (the "cannot compare" state),
 # not silently claim the project is in sync, and must warn when not silent. The
 # tree axis is unaffected (a freshly loaded project is in sync).
+# The side-car is derived from the project file's name, so a project whose
+# folder holds no matching workbook must say which file was looked for and how
+# to produce it, rather than naming a fixed `Project.xlsx` it never checked.
+test_that("projectStatus() names the missing Excel side-car it looked for", {
+  outputDir <- withr::local_tempdir()
+  jsonPath <- suppressWarnings(importProjectFromExcel(
+    testProjectExcelPath(),
+    outputDir = outputDir,
+    silent = TRUE,
+    projectFileName = "MyStudy"
+  ))
+  project <- suppressWarnings(loadProject(jsonPath))
+
+  expect_message(
+    suppressWarnings(projectStatus(project)),
+    "MyStudy\\.xlsx.*exportProjectToExcel"
+  )
+  expect_identical(
+    suppressWarnings(projectStatus(project, silent = TRUE))$excel_in_sync,
+    NA
+  )
+})
+
 test_that("projectStatus() reports the Excel axis as NA (and warns) when the side-car is unreadable", {
   work_dir <- withr::local_tempdir()
   file.copy(dirname(exampleProjectPath()), work_dir, recursive = TRUE)
@@ -2010,9 +2109,6 @@ test_that("projectStatus() reports the Excel axis as NA (and warns) when the sid
 # (not the source), so the project itself loads cleanly and only the comparison
 # re-import hits the collision.
 test_that("projectStatus() does not abort on a side-car canonicalization collision", {
-  # Copy the fixture with the entry workbook named Project.xlsx, so the imported
-  # container is Project.json and the exported side-car stem matches what the
-  # status check derives.
   work <- withr::local_tempdir()
   file.copy(
     list.files(
@@ -2022,13 +2118,9 @@ test_that("projectStatus() does not abort on a side-car canonicalization collisi
     work,
     recursive = TRUE
   )
-  file.rename(
-    file.path(work, "ProjectConfiguration.xlsx"),
-    file.path(work, "Project.xlsx")
-  )
 
   jsonPath <- suppressWarnings(importProjectFromExcel(
-    file.path(work, "Project.xlsx"),
+    file.path(work, "ProjectConfiguration.xlsx"),
     outputDir = work,
     silent = TRUE
   ))
