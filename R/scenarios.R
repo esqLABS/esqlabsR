@@ -947,9 +947,9 @@ addScenario <- function(
   individual <- .canonicalizeIdRef(fields$individual)
   population <- .canonicalizeIdRef(fields$population)
   application <- .canonicalizeIdRef(fields$application)
-  parameterSets <- .canonicalizeIdRef(fields$parameterSets)
-  initialConditions <- .canonicalizeIdRef(fields$initialConditions)
-  outputPaths <- .canonicalizeIdRef(fields$outputPaths)
+  parameterSets <- .canonicalizeVectorIdRef(fields$parameterSets)
+  initialConditions <- .canonicalizeVectorIdRef(fields$initialConditions)
+  outputPaths <- .canonicalizeVectorIdRef(fields$outputPaths)
   # Collapse a repeated id (first-seen order) so the same output path is never
   # resolved, run, or plotted twice. A repeat is not an error, just redundant.
   if (!is.null(outputPaths)) {
@@ -1293,13 +1293,15 @@ setScenario <- function(
     fields$application <- .canonicalizeIdRef(fields$application)
   }
   if ("parameterSets" %in% supplied) {
-    fields$parameterSets <- .canonicalizeIdRef(fields$parameterSets)
+    fields$parameterSets <- .canonicalizeVectorIdRef(fields$parameterSets)
   }
   if ("initialConditions" %in% supplied) {
-    fields$initialConditions <- .canonicalizeIdRef(fields$initialConditions)
+    fields$initialConditions <- .canonicalizeVectorIdRef(
+      fields$initialConditions
+    )
   }
   if ("outputPaths" %in% supplied) {
-    fields$outputPaths <- .canonicalizeIdRef(fields$outputPaths)
+    fields$outputPaths <- .canonicalizeVectorIdRef(fields$outputPaths)
     # Collapse a repeated id (first-seen order) so the same output path is
     # never resolved, run, or plotted twice; a repeat is redundant, not an
     # error.

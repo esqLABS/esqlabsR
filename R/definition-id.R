@@ -183,6 +183,25 @@
   out
 }
 
+# Canonicalize a vector-valued foreign-key argument (a scenario's
+# `parameterSets` / `initialConditions` / `outputPaths`), treating a zero-length
+# value as `NULL`. A definition file carries `[]` for a scenario that references
+# none, so reading that field back out and handing it to an authoring function
+# arrives as `character(0)` (or the `list()` `jsonlite` yields), which means
+# exactly what `NULL` means here: there are none. Normalizing before validation
+# keeps the record shape identical to the one `.parseScenarios()` builds from
+# the same `[]`, so the file -> authoring -> file round trip closes.
+#
+# @keywords internal
+# @noRd
+.canonicalizeVectorIdRef <- function(ref) {
+  ref <- .canonicalizeIdRef(ref)
+  if (length(ref) == 0L) {
+    return(NULL)
+  }
+  ref
+}
+
 # Sink for collecting reference-canonicalization changes across the per-definition
 # builds of one vectorized authoring call, so the whole call emits a single
 # warning naming each `input -> canonical` change rather than one warning per

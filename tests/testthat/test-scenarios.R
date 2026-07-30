@@ -462,6 +462,75 @@ test_that("addScenario rejects NA-valued FK args", {
   )
 })
 
+test_that("addScenario treats a zero-length reference vector as none", {
+  # A definition file carries `[]` for a scenario that references no output
+  # paths, parameter sets, or initial conditions, so `character(0)` means what
+  # `NULL` means here: there are none. Rejecting it would make a value the
+  # write path produces unusable as authoring input.
+  project <- testProject()
+  addScenario(
+    project,
+    id = "nonerefs",
+    modelFile = "Aciclovir.pkml",
+    outputPaths = character(0),
+    parameterSets = character(0),
+    initialConditions = character(0)
+  )
+  sc <- project$definitions$scenarios[["nonerefs"]]
+  expect_null(sc$outputPaths)
+  expect_null(sc$modelParameterSets)
+  expect_null(sc$initialConditions)
+})
+
+test_that("addScenario treats the empty list jsonlite yields for [] as none", {
+  # Reading a definition file with `jsonlite::fromJSON()` turns `[]` into
+  # `list()`, not `character(0)`, so the zero-length rule has to cover both.
+  project <- testProject()
+  addScenario(
+    project,
+    id = "emptylist",
+    modelFile = "Aciclovir.pkml",
+    outputPaths = list(),
+    parameterSets = list()
+  )
+  sc <- project$definitions$scenarios[["emptylist"]]
+  expect_null(sc$outputPaths)
+  expect_null(sc$modelParameterSets)
+})
+
+test_that("setScenario clears a reference field given a zero-length vector", {
+  project <- testProject()
+  setScenario(project, "testscenario", outputPaths = character(0))
+  expect_null(project$definitions$scenarios[["testscenario"]]$outputPaths)
+})
+
+test_that("a scenario's own written reference fields are accepted back by addScenario", {
+  # The round trip an imported project needs: read a scenario's fields straight
+  # out of its definition file and hand them to `addScenario()`. The file
+  # carries `[]` for the references it has none of, so authoring must accept it.
+  project <- testProject()
+  addScenario(project, id = "written", modelFile = "Aciclovir.pkml")
+  saveProject(project)
+
+  raw <- jsonlite::fromJSON(file.path(
+    project$info$projectDirPath,
+    project$paths$definitionsFolder,
+    "scenarios",
+    "written.json"
+  ))
+  expect_length(raw$outputPaths, 0L)
+
+  addScenario(
+    project,
+    id = "rebuilt",
+    modelFile = raw$modelFile,
+    outputPaths = raw$outputPaths,
+    parameterSets = raw$parameterSets,
+    initialConditions = raw$initialConditions
+  )
+  expect_null(project$definitions$scenarios[["rebuilt"]]$outputPaths)
+})
+
 test_that("addScenario collapses duplicate outputPaths to one (first-seen order)", {
   project <- testProject()
   addScenario(
