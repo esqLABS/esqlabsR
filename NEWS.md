@@ -125,6 +125,7 @@ Deprecation intensity follows the lifecycle policy: forwarding shims that still 
 - `sensitivityCalculation()` no longer errors when all runs for a parameter fail; it now warns and omits that parameter from the results. (#1056)
 - `sensitivityTornadoPlot()` now matches the `parameterFactor` and its reciprocal against the analysis results with a numerical tolerance, so user-supplied reciprocal factors are no longer rejected due to floating point representation. (#1056)
 - `isTableFormulasEqual()` now compares every point pair of the two table formulas instead of only the first, and treats two empty tables as equal (previously returned `NULL`) (#1056).
+- `validateProject()` compares a plot's `dataCombined` reference and a plot grid's member plot ids canonically, so a reference that differs from its definition only by case resolves instead of being reported as unknown, and names the closest existing id when one genuinely does not resolve, the same "did you mean" hint the scenario and parameter-set reference errors already give. (#1184)
 
 # esqlabsR 5.7.0
 

@@ -365,6 +365,46 @@ test_that(".joinPlotIDs / .splitPlotIDs round-trip delimiter-bearing ids", {
   expect_identical(.splitPlotIDs(""), character())
 })
 
+# Validation ----
+
+test_that(".validatePlots names the closest existing id for a dangling reference", {
+  result <- .validatePlots(
+    dataCombined = list(aciclovir_pvb = list()),
+    plotConfig = list(
+      p1 = list(
+        plotId = "p1",
+        dataCombinedId = "aciclovir_pbv",
+        plotType = "individual"
+      )
+    ),
+    plotGrids = list(grid = list(plotGridId = "grid", plotIds = "p2"))
+  )
+
+  expect_snapshot(cat(
+    vapply(result$critical_errors, function(e) e$message, character(1)),
+    sep = "\n"
+  ))
+})
+
+test_that(".validatePlots resolves a reference that matches its definition canonically", {
+  # A hand-edited file may spell a reference the way the user typed it rather
+  # than the way it was canonicalized; both sides are compared canonically, so
+  # `P1` still resolves to the plot `p1`.
+  result <- .validatePlots(
+    dataCombined = list(aciclovir_pvb = list()),
+    plotConfig = list(
+      p1 = list(
+        plotId = "p1",
+        dataCombinedId = "Aciclovir_PVB",
+        plotType = "individual"
+      )
+    ),
+    plotGrids = list(grid = list(plotGridId = "grid", plotIds = "P1"))
+  )
+
+  expect_true(result$isValid())
+})
+
 test_that("removePlot removes a vector of ids in one pass and warns on misses", {
   project <- exampleProject()
   addDataCombined(

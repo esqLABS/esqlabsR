@@ -240,6 +240,11 @@ print.DataCombined <- function(x, ...) {
 #'     in `createPlots()`. This check also runs when the plot list is empty
 #'     (every referenced id is then unknown).
 #'
+#' Both reference checks compare canonically (`.danglingRefs()`), so a
+#' hand-edited reference differing from its definition only by case still
+#' resolves; a reference that does not resolve is reported with the closest
+#' existing id.
+#'
 #' Cross-section references that escape these sections (dataCombined ->
 #' scenarios) are validated in `.validateCrossReferences()`.
 #'
@@ -319,16 +324,18 @@ print.DataCombined <- function(x, ...) {
       plotConfig,
       function(p) p$dataCombinedId
     ))
-    invalidDataCombinedRefs <- setdiff(
+    dataCombinedKeys <- names(dataCombined %||% list())
+    invalidDataCombinedRefs <- .danglingRefs(
       referencedDataCombined,
-      names(dataCombined %||% list())
+      dataCombinedKeys
     )
     if (length(invalidDataCombinedRefs) > 0) {
       result$addCriticalError(
         "Invalid Reference",
         paste0(
           "plotConfiguration references unknown dataCombinedId: ",
-          paste(invalidDataCombinedRefs, collapse = ", ")
+          paste(invalidDataCombinedRefs, collapse = ", "),
+          .suggestSuffixMulti(invalidDataCombinedRefs, dataCombinedKeys)
         )
       )
     }
@@ -346,22 +353,26 @@ print.DataCombined <- function(x, ...) {
   # is empty (the state after removing the last plot): every referenced id is
   # then unknown.
   if (length(plotGrids) > 0) {
+    # A plot with no `plotId` already raised its own critical error above; drop
+    # it here so it cannot be offered as a `did you mean 'NA'` suggestion.
     knownPlotIds <- vapply(
       plotConfig,
       function(p) p$plotId %||% NA_character_,
       character(1)
     )
+    knownPlotIds <- knownPlotIds[!is.na(knownPlotIds)]
     allGridIds <- unique(unlist(lapply(
       plotGrids,
       function(g) .splitPlotIDs(g$plotIds)
     )))
-    invalidGridRefs <- setdiff(allGridIds, knownPlotIds)
+    invalidGridRefs <- .danglingRefs(allGridIds, knownPlotIds)
     if (length(invalidGridRefs) > 0) {
       result$addCriticalError(
         "Invalid Reference",
         paste0(
           "plotGrids references unknown plotIds: ",
-          paste(invalidGridRefs, collapse = ", ")
+          paste(invalidGridRefs, collapse = ", "),
+          .suggestSuffixMulti(invalidGridRefs, knownPlotIds)
         )
       )
     }
