@@ -75,7 +75,7 @@ test_that("Scenario derives simulationType from populationId", {
 
 test_that(".parseScenarios returns list() for NULL input", {
   expect_identical(
-    esqlabsR:::.parseScenarios(NULL, list()),
+    .parseScenarios(NULL, list()),
     list()
   )
 })
@@ -102,13 +102,13 @@ test_that(".parseScenarios reads a scenario's initialConditions references", {
     parameterSets = list("ps1"),
     initialConditions = list("ic1", "ic2")
   ))
-  sc <- esqlabsR:::.parseScenarios(raw, list())[["WithIC"]]
+  sc <- .parseScenarios(raw, list())[["WithIC"]]
   expect_identical(sc$initialConditions, c("ic1", "ic2"))
 })
 
 test_that(".parseScenarios leaves initialConditions NULL when JSON omits it", {
   raw <- list(list(name = "NoIC", modelFile = "m.pkml"))
-  sc <- esqlabsR:::.parseScenarios(raw, list())[["NoIC"]]
+  sc <- .parseScenarios(raw, list())[["NoIC"]]
   expect_null(sc$initialConditions)
 })
 
@@ -118,10 +118,10 @@ test_that("a scenario's initialConditions round-trips through serialize/parse", 
     modelFile = "m.pkml",
     initialConditions = c("ic1", "ic2")
   )
-  json <- esqlabsR:::.scenarioToJson(sc)
+  json <- .scenarioToJson(sc)
   expect_identical(json$initialConditions, list("ic1", "ic2"))
 
-  reparsed <- esqlabsR:::.parseScenarios(
+  reparsed <- .parseScenarios(
     list(stats::setNames(
       list(json$name, json$modelFile, json$initialConditions),
       c("name", "modelFile", "initialConditions")
@@ -148,7 +148,7 @@ test_that(".parseScenarios defaults applicationProtocol to NA when JSON has null
       application = NULL
     )
   )
-  result <- esqlabsR:::.parseScenarios(raw, list())
+  result <- .parseScenarios(raw, list())
 
   expect_length(result, 1L)
   expect_true(is.na(result[["X"]]$applicationProtocol))
@@ -178,7 +178,7 @@ test_that(".parseScenarios coerces a whole-number steadyStateTime to double", {
       steadyStateTimeUnit = "min"
     )
   )
-  sc <- esqlabsR:::.parseScenarios(raw, list())[["WholeSS"]]
+  sc <- .parseScenarios(raw, list())[["WholeSS"]]
 
   expect_type(sc$steadyStateTime, "double")
   expect_identical(sc$steadyStateTime, 1000)
@@ -205,7 +205,7 @@ test_that(".parseScenarios errors when steadyStateTime set without unit", {
     )
   )
   expect_error(
-    esqlabsR:::.parseScenarios(raw, list()),
+    .parseScenarios(raw, list()),
     "BadSS.*steadyStateTime.*steadyStateTimeUnit"
   )
 })
@@ -264,7 +264,7 @@ test_that(".parseScenarios keeps unknown outputPaths ids as dangling refs (lazy)
   )
   outputPaths <- list(Aciclovir_PVB = "Organism|PVB|...")
 
-  sc <- esqlabsR:::.parseScenarios(raw, outputPaths)[["BadRefs"]]
+  sc <- .parseScenarios(raw, outputPaths)[["BadRefs"]]
   expect_named(sc$outputPaths, c("Aciclovir_PVB", "Nope", "AlsoNope"))
   expect_identical(
     unname(sc$outputPaths[["Aciclovir_PVB"]]),
@@ -287,7 +287,7 @@ test_that(".parseScenarios collapses duplicate outputPaths ids to one (first-see
   )
   outputPaths <- list(a = "PATH_A", b = "PATH_B")
 
-  sc <- esqlabsR:::.parseScenarios(raw, outputPaths)[["Dups"]]
+  sc <- .parseScenarios(raw, outputPaths)[["Dups"]]
   expect_named(sc$outputPaths, c("a", "b"))
   expect_identical(unname(sc$outputPaths), c("PATH_A", "PATH_B"))
 })
@@ -300,7 +300,7 @@ test_that(".parseScenarios leaves outputPaths NULL when JSON omits outputPaths",
       modelFile = "m.pkml"
     )
   )
-  result <- esqlabsR:::.parseScenarios(raw, list())
+  result <- .parseScenarios(raw, list())
 
   expect_null(result[["NoOutputs"]]$outputPaths)
 })
@@ -555,7 +555,7 @@ test_that("addScenario stores steadyStateTime in base units and round-trips the 
   # Saved JSON carries the declared 10 / "h" (the serializer converts the
   # base-unit value back to the declared unit).
   out <- withr::local_tempfile(fileext = ".json")
-  esqlabsR:::.saveProjectJson(project, out)
+  .saveProjectJson(project, out)
   raw <- jsonlite::fromJSON(out, simplifyVector = FALSE)
   savedSS <- Filter(\(s) identical(s[["name"]], "ss"), raw$scenarios)[[1]]
   expect_equal(savedSS$steadyStateTime, 10)

@@ -62,9 +62,9 @@
 # a plots entry whose stored id differs from its map key aborts
 
     Code
-      esqlabsR:::.serializePlotEntrySet(entries, "plotId", "plot")
+      .serializePlotEntrySet(entries, "plotId", "plot")
     Condition
-      Error in `esqlabsR:::.serializePlotEntrySet()`:
+      Error in `.serializePlotEntrySet()`:
       ! A plot entry's plotId disagrees with its map key.
       x The map key is "p1" but plotId is "p2".
       i They must agree so the on-disk filename stays the authoritative key; store the entry under its plotId.
@@ -72,9 +72,9 @@
 # a PI task whose $id differs from its map key aborts
 
     Code
-      esqlabsR:::.serializePITaskSet(tasks)
+      .serializePITaskSet(tasks)
     Condition
-      Error in `esqlabsR:::.serializePITaskSet()`:
+      Error in `.serializePITaskSet()`:
       ! A parameterIdentification task's id disagrees with its map key.
       x The map key is "task1" but id is "task2".
       i They must agree so the on-disk filename stays the authoritative key; store the task under its id.

@@ -17,7 +17,7 @@ test_that("Project$new(path) loads a v2.0 JSON file", {
 
 test_that("asList round-trips with .projectToJson", {
   project <- testProject()
-  expect_identical(project$asList, esqlabsR:::.projectToJson(project))
+  expect_identical(project$asList, .projectToJson(project))
 })
 
 test_that("ProjectConfiguration() wrapper emits lifecycle warning and returns Project", {
@@ -160,12 +160,6 @@ test_that(".cleanPath returns NULL on NULL/NA/zero-length input", {
   expect_null(cp(NA_character_, parent = NULL))
   expect_null(cp(character(0), parent = NULL))
 })
-
-
-# Tests for the v2.0 Project.json parser. These tests cover only the parser
-# and the internal `Project` class — the parser is not wired into runScenarios,
-# validators, or plotting on this branch. Tests use `:::` because both are
-# intentionally unexported.
 
 test_that("loadProject() returns an internal Project from the bundled example", {
   project <- exampleProject()
@@ -717,7 +711,7 @@ test_that("definitionsFolder honors a non-default tree location", {
   src <- exampleProject()
   src$paths$definitionsFolder <- "defs"
   dir <- withr::local_tempdir("custom_defs_")
-  esqlabsR:::.writeProjectTree(src, dir)
+  .writeProjectTree(src, dir)
 
   expect_true(dir.exists(file.path(dir, "defs", "scenarios")))
   expect_false(dir.exists(file.path(dir, "definitions")))

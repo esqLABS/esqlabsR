@@ -271,7 +271,7 @@ test_that("sensitivityTornadoPlot plots are as expected with filters", {
 # .splitParameterName ----------------------------------------------------
 
 test_that(".splitParameterName inserts a line break after the third pipe", {
-  split <- esqlabsR:::.splitParameterName
+  split <- .splitParameterName
 
   # NULL passes through unchanged, regardless of `equalLines`.
   expect_null(split(NULL))

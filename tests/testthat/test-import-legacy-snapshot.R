@@ -119,7 +119,7 @@ test_that("materializer writes each workbook under its recorded filename", {
   fixture$projectConfiguration <- pc
 
   scratch <- withr::local_tempdir()
-  esqlabsR:::.materializeLegacySnapshot(fixture, scratch)
+  .materializeLegacySnapshot(fixture, scratch)
   expect_true(file.exists(file.path(
     scratch,
     "Configurations",
@@ -138,7 +138,7 @@ test_that(".restoreColumnTypes keeps a zero-padded id column as text", {
     n = c("1", "2", "3"),
     stringsAsFactors = FALSE
   )
-  out <- esqlabsR:::.restoreColumnTypes(df)
+  out <- .restoreColumnTypes(df)
   expect_type(out$id, "character")
   expect_equal(out$id, c("01", "02", "010"))
   # A genuine numeric column is still coerced.

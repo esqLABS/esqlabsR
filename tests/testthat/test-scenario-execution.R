@@ -18,12 +18,12 @@
 }
 
 test_that(".buildSimulationRunOptions returns NULL when no defaults are declared", {
-  expect_null(esqlabsR:::.buildSimulationRunOptions(NULL))
-  expect_null(esqlabsR:::.buildSimulationRunOptions(list()))
+  expect_null(.buildSimulationRunOptions(NULL))
+  expect_null(.buildSimulationRunOptions(list()))
 })
 
 test_that(".buildSimulationRunOptions maps the three settable fields", {
-  opts <- esqlabsR:::.buildSimulationRunOptions(list(
+  opts <- .buildSimulationRunOptions(list(
     numberOfCores = 3,
     checkForNegativeValues = TRUE,
     showProgress = FALSE
@@ -36,7 +36,7 @@ test_that(".buildSimulationRunOptions maps the three settable fields", {
 
 test_that(".buildSimulationRunOptions leaves an unset field at its default", {
   baseline <- ospsuite::SimulationRunOptions$new()$checkForNegativeValues
-  opts <- esqlabsR:::.buildSimulationRunOptions(list(numberOfCores = 1))
+  opts <- .buildSimulationRunOptions(list(numberOfCores = 1))
   expect_identical(opts$numberOfCores, 1L)
   expect_identical(opts$checkForNegativeValues, baseline)
 })
@@ -56,7 +56,7 @@ test_that("runScenarios falls back to the project default run options when the c
     }
   )
   expect_error(
-    esqlabsR:::.runScenariosFromProject(
+    .runScenariosFromProject(
       project,
       scenarioNames = "testscenario"
     ),
@@ -82,7 +82,7 @@ test_that("runScenarios lets an explicit simulationRunOptions argument win over 
     }
   )
   expect_error(
-    esqlabsR:::.runScenariosFromProject(
+    .runScenariosFromProject(
       project,
       scenarioNames = "testscenario",
       simulationRunOptions = callerOptions
@@ -132,7 +132,7 @@ test_that("runScenarios threads stopIfParameterNotFound through to .prepareScena
 test_that(".collectScenarioResult aborts on a failed scenario when stopIfFails is TRUE", {
   scenario <- list(scenarioName = "s1", outputPaths = NULL)
   expect_error(
-    esqlabsR:::.collectScenarioResult(
+    .collectScenarioResult(
       scenario = scenario,
       simulation = NULL,
       results = NULL,
@@ -148,7 +148,7 @@ test_that(".collectScenarioResult warns and returns NULL outputValues when stopI
   # A scenario that built (non-NULL simulation) but produced no results. A
   # NULL simulation instead means a build-time skip, which already warned.
   expect_warning(
-    out <- esqlabsR:::.collectScenarioResult(
+    out <- .collectScenarioResult(
       scenario = scenario,
       simulation = structure(list(id = "sim1"), class = "Simulation"),
       results = NULL,
@@ -166,7 +166,7 @@ test_that(".collectScenarioResult does not warn again for a build-time skip", {
   # already warned, so collection records it silently.
   scenario <- list(scenarioName = "s1", outputPaths = NULL)
   expect_no_warning(
-    out <- esqlabsR:::.collectScenarioResult(
+    out <- .collectScenarioResult(
       scenario = scenario,
       simulation = NULL,
       results = NULL,
@@ -204,7 +204,7 @@ test_that(".buildScenarioSimulations aborts on a build-time failure by default",
     }
   )
   expect_error(
-    esqlabsR:::.buildScenarioSimulations(project, stopIfFails = TRUE),
+    .buildScenarioSimulations(project, stopIfFails = TRUE),
     regexp = "boom: missing model parameter path"
   )
 })
@@ -221,7 +221,7 @@ test_that(".buildScenarioSimulations skips a build-time failure when stopIfFails
     }
   )
   expect_warning(
-    built <- esqlabsR:::.buildScenarioSimulations(project, stopIfFails = FALSE),
+    built <- .buildScenarioSimulations(project, stopIfFails = FALSE),
     regexp = "Could not build .*second.*skipping"
   )
   # The good scenario built; the broken one is a NULL entry, not an abort.
@@ -329,15 +329,15 @@ test_that(".parameterSetToStructure flattens record-shape into paths/values/unit
     ),
     list(containerPath = "A|C", parameterName = "P2", value = 2, units = NULL)
   )
-  out <- esqlabsR:::.parameterSetToStructure(records)
+  out <- .parameterSetToStructure(records)
   expect_equal(out$paths, c("A|B|P1", "A|C|P2"))
   expect_equal(out$values, c(1.5, 2))
   expect_equal(out$units, c("mg", ""))
 })
 
 test_that(".parameterSetToStructure returns NULL on empty input", {
-  expect_null(esqlabsR:::.parameterSetToStructure(NULL))
-  expect_null(esqlabsR:::.parameterSetToStructure(list()))
+  expect_null(.parameterSetToStructure(NULL))
+  expect_null(.parameterSetToStructure(list()))
 })
 
 test_that(".mergeScenarioParameters returns NULL when no layer contributes", {
@@ -347,7 +347,7 @@ test_that(".mergeScenarioParameters returns NULL when no layer contributes", {
   scenario$individualId <- NULL
   scenario$applicationProtocol <- NA
   expect_null(
-    esqlabsR:::.mergeScenarioParameters(scenario, project, customParams = NULL)
+    .mergeScenarioParameters(scenario, project, customParams = NULL)
   )
 })
 
@@ -356,7 +356,7 @@ test_that(".mergeScenarioParameters layer 1 (modelParameterSets) iterates listed
   scenario <- project$definitions$scenarios[["testscenario_steadystate"]]
   scenario$individualId <- NULL
   scenario$applicationProtocol <- NA
-  merged <- esqlabsR:::.mergeScenarioParameters(scenario, project, NULL)
+  merged <- .mergeScenarioParameters(scenario, project, NULL)
   expect_true("Organism|Liver|EHC continuous fraction" %in% merged$paths)
   expect_true("Aciclovir|Lipophilicity" %in% merged$paths)
 })
@@ -386,7 +386,7 @@ test_that(".mergeScenarioParameters layer 4 (application) overrides layer 1 on o
   apps$aciclovir_iv_250mg$parameterSets <- list("override")
   .setSection(project, "applications", apps)
   scenario$individualId <- NULL
-  merged <- esqlabsR:::.mergeScenarioParameters(scenario, project, NULL)
+  merged <- .mergeScenarioParameters(scenario, project, NULL)
   idx <- match("OverlapContainer|OverlapParam", merged$paths)
   expect_equal(merged$values[idx], 99)
 })
@@ -399,7 +399,7 @@ test_that(".mergeScenarioParameters layer 5 (customParams) wins over all earlier
     values = 42,
     units = ""
   )
-  merged <- esqlabsR:::.mergeScenarioParameters(scenario, project, customParams)
+  merged <- .mergeScenarioParameters(scenario, project, customParams)
   idx <- match("Organism|Liver|EHC continuous fraction", merged$paths)
   expect_equal(merged$values[idx], 42)
 })
@@ -411,7 +411,7 @@ test_that(".mergeScenarioParameters skips application layer when applicationProt
   scenario$modelParameterSets <- NULL
   scenario$individualId <- NULL
   expect_null(
-    esqlabsR:::.mergeScenarioParameters(scenario, project, NULL)
+    .mergeScenarioParameters(scenario, project, NULL)
   )
 })
 
@@ -420,7 +420,7 @@ test_that(".mergeScenarioParameters errors when applicationProtocol is set but u
   scenario <- project$definitions$scenarios[["testscenario"]]
   scenario$applicationProtocol <- "DoesNotExist"
   expect_error(
-    esqlabsR:::.mergeScenarioParameters(scenario, project, NULL),
+    .mergeScenarioParameters(scenario, project, NULL),
     regexp = "DoesNotExist"
   )
 })
@@ -431,7 +431,7 @@ test_that(".mergeScenarioParameters silently skips an unknown modelParameterSets
   scenario$modelParameterSets <- c("global", "DoesNotExist")
   scenario$individualId <- NULL
   scenario$applicationProtocol <- NA
-  merged <- esqlabsR:::.mergeScenarioParameters(scenario, project, NULL)
+  merged <- .mergeScenarioParameters(scenario, project, NULL)
   expect_true("Organism|Liver|EHC continuous fraction" %in% merged$paths)
 })
 
@@ -446,7 +446,7 @@ test_that(".mergeScenarioParameters silently skips an unknown individual paramet
   .setSection(project, "individuals", individuals)
   scenario$modelParameterSets <- NULL
   scenario$applicationProtocol <- NA
-  merged <- esqlabsR:::.mergeScenarioParameters(scenario, project, NULL)
+  merged <- .mergeScenarioParameters(scenario, project, NULL)
   expect_true("Organism|Kidney|GFR" %in% merged$paths)
 })
 
@@ -461,7 +461,7 @@ test_that(".mergeScenarioParameters silently skips an unknown application parame
   .setSection(project, "applications", apps)
   scenario$modelParameterSets <- NULL
   scenario$individualId <- NULL
-  merged <- esqlabsR:::.mergeScenarioParameters(scenario, project, NULL)
+  merged <- .mergeScenarioParameters(scenario, project, NULL)
   expect_true(
     "Events|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose" %in%
       merged$paths
@@ -475,15 +475,15 @@ test_that(".initialConditionSetToStructure flattens records into paths/values/un
     list(path = "Organism|A", value = 1.5, unit = "mg/l"),
     list(path = "Organism|B", value = 2, unit = NULL)
   )
-  out <- esqlabsR:::.initialConditionSetToStructure(records)
+  out <- .initialConditionSetToStructure(records)
   expect_equal(out$paths, c("Organism|A", "Organism|B"))
   expect_equal(out$values, c(1.5, 2))
   expect_equal(out$units, c("mg/l", ""))
 })
 
 test_that(".initialConditionSetToStructure returns NULL on empty input", {
-  expect_null(esqlabsR:::.initialConditionSetToStructure(NULL))
-  expect_null(esqlabsR:::.initialConditionSetToStructure(list()))
+  expect_null(.initialConditionSetToStructure(NULL))
+  expect_null(.initialConditionSetToStructure(list()))
 })
 
 test_that(".mergeScenarioInitialConditions returns NULL when no set is referenced", {
@@ -491,7 +491,7 @@ test_that(".mergeScenarioInitialConditions returns NULL when no set is reference
   scenario <- project$definitions$scenarios[["testscenario"]]
   scenario$initialConditions <- NULL
   expect_null(
-    esqlabsR:::.mergeScenarioInitialConditions(scenario, project)
+    .mergeScenarioInitialConditions(scenario, project)
   )
 })
 
@@ -509,7 +509,7 @@ test_that(".mergeScenarioInitialConditions folds referenced sets last-write-wins
   )
   scenario <- project$definitions$scenarios[["testscenario"]]
   scenario$initialConditions <- "icset"
-  merged <- esqlabsR:::.mergeScenarioInitialConditions(scenario, project)
+  merged <- .mergeScenarioInitialConditions(scenario, project)
   expect_equal(merged$paths, c("Organism|A", "Organism|B"))
   expect_equal(merged$values, c(1, 2))
 })
@@ -522,14 +522,14 @@ test_that(".mergeScenarioInitialConditions silently skips an unknown set id", {
   )
   scenario <- project$definitions$scenarios[["testscenario"]]
   scenario$initialConditions <- c("icset", "DoesNotExist")
-  merged <- esqlabsR:::.mergeScenarioInitialConditions(scenario, project)
+  merged <- .mergeScenarioInitialConditions(scenario, project)
   expect_equal(merged$paths, "Organism|A")
 })
 
 test_that(".runScenariosFromProject returns the documented per-scenario list shape (individual)", {
   withr::local_options(lifecycle_verbosity = "quiet")
   project <- .testProject()
-  out <- esqlabsR:::.runScenariosFromProject(
+  out <- .runScenariosFromProject(
     project,
     scenarioNames = "testscenario"
   )
@@ -545,7 +545,7 @@ test_that(".runScenariosFromProject returns the documented per-scenario list sha
 test_that(".runScenariosFromProject runs a steady-state scenario without error", {
   withr::local_options(lifecycle_verbosity = "quiet")
   project <- .testProject()
-  out <- esqlabsR:::.runScenariosFromProject(
+  out <- .runScenariosFromProject(
     project,
     scenarioNames = "testscenario_steadystate"
   )
@@ -562,7 +562,7 @@ test_that(".runScenariosFromProject applies a scenario's initialConditions", {
   )
   setScenario(project, "testscenario", initialConditions = "icset")
 
-  out <- esqlabsR:::.runScenariosFromProject(
+  out <- .runScenariosFromProject(
     project,
     scenarioNames = "testscenario"
   )
@@ -577,7 +577,7 @@ test_that(".runScenariosFromProject applies a scenario's initialConditions", {
 test_that(".runScenariosFromProject runs a population scenario and attaches a Population", {
   withr::local_options(lifecycle_verbosity = "quiet")
   project <- .testProject()
-  out <- esqlabsR:::.runScenariosFromProject(
+  out <- .runScenariosFromProject(
     project,
     scenarioNames = "populationscenario"
   )
@@ -587,7 +587,7 @@ test_that(".runScenariosFromProject runs a population scenario and attaches a Po
 test_that(".runScenariosFromProject runs a CSV-population scenario and attaches a Population", {
   withr::local_options(lifecycle_verbosity = "quiet")
   project <- .testProject()
-  out <- esqlabsR:::.runScenariosFromProject(
+  out <- .runScenariosFromProject(
     project,
     scenarioNames = "populationscenariofromcsv"
   )
@@ -598,7 +598,7 @@ test_that(".runScenariosFromProject errors on unknown scenarioNames", {
   withr::local_options(lifecycle_verbosity = "quiet")
   project <- .testProject()
   expect_error(
-    esqlabsR:::.runScenariosFromProject(project, scenarioNames = "NopeNope"),
+    .runScenariosFromProject(project, scenarioNames = "NopeNope"),
     regexp = "nopenope"
   )
 })
@@ -608,7 +608,7 @@ test_that(".runScenariosFromProject errors on unknown scenarioNames", {
 test_that(".buildScenarioSimulations resolves NULL to every scenario and returns the prep shape", {
   withr::local_options(lifecycle_verbosity = "quiet")
   project <- .testProject()
-  built <- esqlabsR:::.buildScenarioSimulations(project)
+  built <- .buildScenarioSimulations(project)
   expect_setequal(built$scenarioNames, names(project$definitions$scenarios))
   expect_named(built$prepared, built$scenarioNames)
   first <- built$prepared[[1]]
@@ -620,7 +620,7 @@ test_that(".buildScenarioSimulations errors on an unknown scenario name", {
   withr::local_options(lifecycle_verbosity = "quiet")
   project <- .testProject()
   expect_error(
-    esqlabsR:::.buildScenarioSimulations(project, scenarioNames = "NopeNope"),
+    .buildScenarioSimulations(project, scenarioNames = "NopeNope"),
     regexp = "nopenope"
   )
 })
@@ -634,7 +634,7 @@ test_that(".buildScenarioSimulations matches a scenario name case-insensitively 
   canonical <- names(project$definitions$scenarios)[[1]]
   built <- NULL
   expect_warning(
-    built <- esqlabsR:::.buildScenarioSimulations(
+    built <- .buildScenarioSimulations(
       project,
       scenarioNames = toupper(canonical)
     ),
@@ -659,7 +659,7 @@ test_that(".buildScenarioSimulations shares one build cache across scenarios in 
     },
     .package = "ospsuite"
   )
-  esqlabsR:::.buildScenarioSimulations(
+  .buildScenarioSimulations(
     project,
     scenarioNames = c("testscenario", "testscenario_twin")
   )
@@ -682,7 +682,7 @@ test_that(".resolveScenarioPopulation resolves a programmatic entry from the run
   suppressWarnings(removePopulation(project, "testpopulation"))
   suppressMessages(addPopulation(project, "testpopulation", pop))
 
-  out <- esqlabsR:::.runScenariosFromProject(
+  out <- .runScenariosFromProject(
     project,
     scenarioNames = "populationscenario"
   )
@@ -695,7 +695,7 @@ test_that(".resolveScenarioPopulation aborts on an unresolved programmatic entry
   # A programmatic sentinel with no backing object (as after a reload):
   # replace the existing spec entry so the lookup hits the sentinel.
   populations <- .getSection(project, "populations")
-  populations[["testpopulation"]] <- esqlabsR:::.asPopulationSource(list(
+  populations[["testpopulation"]] <- .asPopulationSource(list(
     type = "programmatic"
   ))
   .setSection(project, "populations", populations)
@@ -703,7 +703,7 @@ test_that(".resolveScenarioPopulation aborts on an unresolved programmatic entry
   cache <- new.env(parent = emptyenv())
   cache$populations <- list()
   expect_error(
-    esqlabsR:::.resolveScenarioPopulation(scenario, project, cache),
+    .resolveScenarioPopulation(scenario, project, cache),
     regexp = "injected in a previous session"
   )
 })
@@ -712,7 +712,7 @@ test_that(".resolveScenarioPopulation loads a csv entry from its own file", {
   withr::local_options(lifecycle_verbosity = "quiet")
   project <- .testProject()
   loaded <- structure(list(), class = "Population")
-  entry <- esqlabsR:::.asPopulationSource(list(
+  entry <- .asPopulationSource(list(
     type = "csv",
     file = "custom.csv"
   ))
@@ -732,7 +732,7 @@ test_that(".resolveScenarioPopulation loads a csv entry from its own file", {
       loaded
     }
   )
-  result <- esqlabsR:::.resolveScenarioPopulation(scenario, project, cache)
+  result <- .resolveScenarioPopulation(scenario, project, cache)
   expect_identical(result, loaded)
   expect_match(seen, "custom\\.csv$")
 })
@@ -749,7 +749,7 @@ test_that("a scenario with an absolute modelFile runs when simulationsFolder is 
   setScenario(project, "testscenario", modelFile = absModel)
   project$paths$simulationsFolder <- NULL
 
-  out <- esqlabsR:::.runScenariosFromProject(
+  out <- .runScenariosFromProject(
     project,
     scenarioNames = "testscenario",
     validate = FALSE
@@ -763,7 +763,7 @@ test_that("a relative modelFile with NULL simulationsFolder aborts with a clear 
   project$paths$simulationsFolder <- NULL
   expect_snapshot(
     error = TRUE,
-    esqlabsR:::.runScenariosFromProject(
+    .runScenariosFromProject(
       project,
       scenarioNames = "testscenario",
       validate = FALSE
@@ -776,7 +776,7 @@ test_that("a relative modelFile that escapes the simulations folder is rejected"
   project <- .testProject()
   setScenario(project, "testscenario", modelFile = "../../../../etc/passwd")
   expect_error(
-    esqlabsR:::.runScenariosFromProject(
+    .runScenariosFromProject(
       project,
       scenarioNames = "testscenario",
       validate = FALSE
@@ -793,7 +793,7 @@ test_that("a CSV-population scenario with NULL populationsFolder aborts with a c
   project$paths$populationsFolder <- NULL
   expect_snapshot(
     error = TRUE,
-    esqlabsR:::.runScenariosFromProject(
+    .runScenariosFromProject(
       project,
       scenarioNames = "populationscenariofromcsv",
       validate = FALSE
