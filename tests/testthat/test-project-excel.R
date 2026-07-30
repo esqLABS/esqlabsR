@@ -302,6 +302,55 @@ test_that("Excel round-trip preserves a grid whose plot id had a comma canonical
   expect_identical(.splitPlotIDs(grid$plotIds), c("p1", "cmax__ss"))
 })
 
+# Regression (#1184): a grid's `plotIDs` cell is a multi-value Excel cell, and
+# the 5.x convention wraps each value in `""` so it may itself contain a comma.
+# Decoding that cell with the in-memory codec kept the quotes, which
+# canonicalization then turned into underscores (`"P1"` -> `_p1_`), so every
+# member of a quoted grid dangled and the freshly imported project failed its
+# own validateProject().
+test_that("a quoted 5.x plotIDs cell imports with the grid's members intact", {
+  work_dir <- withr::local_tempdir()
+  file.copy(dirname(testProjectExcelPath()), work_dir, recursive = TRUE)
+  projectDir <- file.path(work_dir, "TestProjectExcel")
+  plotsFile <- file.path(projectDir, "Configurations", "Plots.xlsx")
+
+  sheetNames <- readxl::excel_sheets(plotsFile)
+  sheets <- stats::setNames(
+    lapply(sheetNames, function(s) readExcel(plotsFile, sheet = s)),
+    sheetNames
+  )
+  # Rewrite `P1, P2, P3` as `"P1", "P2", "P3"`, the quoted form v5 accepted.
+  sheets$plotGrids$plotIDs <- vapply(
+    strsplit(sheets$plotGrids$plotIDs, ",[[:space:]]*"),
+    function(ids) paste0("\"", ids, "\"", collapse = ", "),
+    character(1)
+  )
+  .writeExcel(sheets, plotsFile)
+
+  jsonPath <- suppressWarnings(importProjectFromExcel(
+    file.path(projectDir, "ProjectConfiguration.xlsx"),
+    outputDir = withr::local_tempdir(),
+    silent = TRUE
+  ))
+  project <- suppressWarnings(loadProject(jsonPath))
+
+  grids <- .unwrapDefinitionList(project$definitions$plotGrids)
+  expect_identical(
+    .splitPlotIDs(grids[["aciclovir"]]$plotIds),
+    c("p1", "p2", "p3")
+  )
+  expect_identical(.splitPlotIDs(grids[["aciclovir2"]]$plotIds), "p2")
+
+  # The whole point: the imported project no longer reports the grid members as
+  # unknown plot ids.
+  plotErrors <- vapply(
+    suppressWarnings(validateProject(project))$plots$critical_errors,
+    function(e) e$message,
+    character(1)
+  )
+  expect_false(any(grepl("references unknown plotIds", plotErrors)))
+})
+
 test_that("Excel round-trip preserves project name and description", {
   work_dir <- withr::local_tempdir()
   file.copy(dirname(exampleProjectPath()), work_dir, recursive = TRUE)

@@ -2298,12 +2298,23 @@ projectStatus <- function(project, silent = FALSE) {
       drop = "plotIDs"
     )
     # Map the legacy `plotIDs` column onto the canonical `plots` JSON key; a
-    # sheet that already uses `plots` passes that column through verbatim.
+    # sheet that already uses `plots` supplies that column instead.
     if ("plotIDs" %in% names(df)) {
       plotIds <- .naToNull(df$plotIDs[[i]])
       if (!is.null(plotIds)) {
         fields$plots <- plotIds
       }
+    }
+    # A grid's membership is a multi-value cell, so decode it with the Excel
+    # comma-list convention (`"A", "B, with comma"` as well as the backslash
+    # escaping this package writes) and re-encode it into the single escaped
+    # string the `plots` JSON key holds. Reading it with `.splitPlotIDs()`
+    # instead would keep a quoted cell's `"` characters, which canonicalization
+    # then turns into `_`, so every member of a quoted grid dangles.
+    if (!is.null(fields$plots)) {
+      fields$plots <- .joinPlotIDs(
+        .parseCommaListToArray(as.character(fields$plots))
+      )
     }
     if (is.null(fields$plotGridId)) {
       next
