@@ -269,3 +269,31 @@ readExcel <- function(path, sheet = NULL, ...) {
 
   writexl::write_xlsx(data, path = path, col_names = col_names)
 }
+
+#' Guard a name that will be joined onto a directory
+#'
+#' A name that becomes a path via `file.path(dir, name)` must be a single plain
+#' filename. One carrying a path separator, or `.` / `..`, would resolve outside
+#' `dir` and write over whatever sits there.
+#'
+#' @param name The name to check.
+#' @param message A `messages` entry taking `name` and returning the abort text,
+#'   so each caller names its own argument.
+#' @param call The frame the abort is attributed to; defaults to the caller, so
+#'   the error reads as the public function the user actually called.
+#' @returns `NULL`, invisibly; called for the abort.
+#' @keywords internal
+#' @noRd
+.validateFilenameSegment <- function(name, message, call = rlang::caller_env()) {
+  if (
+    !is.character(name) ||
+      length(name) != 1L ||
+      is.na(name) ||
+      !nzchar(name) ||
+      grepl("[/\\]", name) ||
+      name %in% c(".", "..")
+  ) {
+    cli::cli_abort(message(name), call = call)
+  }
+  invisible(NULL)
+}

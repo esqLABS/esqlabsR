@@ -1363,6 +1363,30 @@ test_that("importProjectFromExcel adds the .json extension to projectFileName", 
   expect_identical(fs::path_file(jsonPath), "MyStudy.json")
 })
 
+# The extension is appended, not set: `fs::path_ext_set()` would read the `.v1`
+# of a dotted stem as an extension and replace it, silently collapsing
+# `trial.v1` and `trial.v2` onto one project file.
+test_that("importProjectFromExcel keeps a dotted projectFileName stem intact", {
+  outputDir <- withr::local_tempdir()
+
+  first <- suppressWarnings(importProjectFromExcel(
+    testProjectExcelPath(),
+    outputDir = outputDir,
+    silent = TRUE,
+    projectFileName = "trial.v1"
+  ))
+  second <- suppressWarnings(importProjectFromExcel(
+    testProjectExcelPath(),
+    outputDir = outputDir,
+    silent = TRUE,
+    overwrite = TRUE,
+    projectFileName = "trial.v2"
+  ))
+
+  expect_identical(fs::path_file(first), "trial.v1.json")
+  expect_identical(fs::path_file(second), "trial.v2.json")
+})
+
 test_that("importProjectFromExcel rejects a projectFileName that is a path", {
   expect_snapshot(
     error = TRUE,
@@ -2073,6 +2097,18 @@ test_that("projectStatus() names the missing Excel side-car it looked for", {
     suppressWarnings(projectStatus(project, silent = TRUE))$excel_in_sync,
     NA
   )
+
+  # The advice has to be followable: exporting writes the very workbook the
+  # status check looked for, so the Excel axis stops reporting "cannot compare".
+  suppressWarnings(exportProjectToExcel(
+    project,
+    outputDir = outputDir,
+    silent = TRUE
+  ))
+  expect_true(file.exists(file.path(outputDir, "MyStudy.xlsx")))
+  expect_false(is.na(
+    suppressWarnings(projectStatus(project, silent = TRUE))$excel_in_sync
+  ))
 })
 
 test_that("projectStatus() reports the Excel axis as NA (and warns) when the side-car is unreadable", {

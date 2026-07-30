@@ -155,10 +155,14 @@ messages$snapshotFileExists <- function(path) {
   )
 }
 
-messages$invalidSnapshotName <- function(stem) {
+# The `{name}` placeholder is the validated value, not `snapshotProject()`'s
+# `name` argument (`{.arg name}` above renders that literally). It is spelled
+# `name` because `.validateFilenameSegment()` raises this from a frame where the
+# value is bound under that name.
+messages$invalidSnapshotName <- function(name) {
   c(
     "{.arg name} must be a single filename stem without path separators.",
-    "x" = "The stem {.val {stem}} contains a path separator or is {.val .} / \\
+    "x" = "The stem {.val {name}} contains a path separator or is {.val .} / \\
     {.val ..}, so it could write outside {.arg dir}.",
     "i" = "Pass a single filename segment (no path separator and not {.val .} / \\
     {.val ..}), or leave {.arg name} as {.code NULL} for a timestamped default."
@@ -171,8 +175,8 @@ messages$invalidProjectFileName <- function(name) {
     "x" = "The name {.val {name}} contains a path separator or is {.val .} / \\
     {.val ..}, so it could write outside {.arg outputDir}.",
     "i" = "Pass a single filename segment, for example {.val Project.json} \\
-    (the default) or {.val MyStudy}; the {.field .json} extension is added \\
-    when it is missing."
+    (the default) or {.val MyStudy}; a {.field .json} extension is appended \\
+    when the name does not already end in one."
   )
 }
 

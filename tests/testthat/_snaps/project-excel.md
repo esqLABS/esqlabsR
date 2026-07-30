@@ -36,10 +36,10 @@
       importProjectFromExcel(testProjectExcelPath(), outputDir = withr::local_tempdir(),
       silent = TRUE, projectFileName = "../Project.json")
     Condition
-      Error in `.validateProjectFileName()`:
+      Error in `importProjectFromExcel()`:
       ! `projectFileName` must be a single filename without path separators.
       x The name "../Project.json" contains a path separator or is "." / "..", so it could write outside `outputDir`.
-      i Pass a single filename segment, for example "Project.json" (the default) or "MyStudy"; the .json extension is added when it is missing.
+      i Pass a single filename segment, for example "Project.json" (the default) or "MyStudy"; a .json extension is appended when the name does not already end in one.
 
 # importProjectFromExcel warns naming each renamed duplicate parameter set
 

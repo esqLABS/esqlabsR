@@ -38,9 +38,16 @@
 #' @param projectFileName Name of the project file the import writes in
 #'   `outputDir`. Defaults to `"Project.json"`, the same name [initProject()]
 #'   and [loadProject()] use, so an imported project opens like any other. Pass
-#'   another name (for example `"MyStudy"`, or `"MyStudy.json"`) to keep several
-#'   projects side by side in one folder; the `.json` extension is added when it
-#'   is missing. It must be a plain filename, not a path.
+#'   another name (for example `"MyStudy"`, or `"MyStudy.json"`) to label the
+#'   project file after the study rather than by the generic name; a `.json`
+#'   extension is appended when the name does not already end in one. It must be
+#'   a plain filename, not a path.
+#'
+#'   This names the project file only. The `definitions/` tree beside it, and
+#'   the copied `Models/` and `Data/` folders, are shared by whatever is in
+#'   `outputDir`, so a second import into the same folder still replaces the
+#'   first project rather than sitting alongside it. Give each project its own
+#'   `outputDir`.
 #'
 #' @returns Invisibly returns the path to the created project file.
 #' @export
@@ -55,7 +62,7 @@ importProjectFromExcel <- function(
 ) {
   validateIsString(projectConfigPath)
   validateIsLogical(copyAssets)
-  .validateProjectFileName(projectFileName)
+  .validateFilenameSegment(projectFileName, messages$invalidProjectFileName)
 
   if (!file.exists(projectConfigPath)) {
     cli::cli_abort(messages$fileNotFound(projectConfigPath))
@@ -484,10 +491,11 @@ importProjectFromExcel <- function(
   # `file` / `importerConfiguration` basenames against `dataFolder`.
   jsonData <- .parseExcelObservedData(jsonData, prop, pcDir, outputDir)
 
-  outputPath <- file.path(
-    outputDir,
-    fs::path_ext_set(projectFileName, "json")
-  )
+  # Append `.json` rather than `fs::path_ext_set()`, which would *replace* an
+  # existing extension: a dotted stem like `trial.v1` reads as an extension, so
+  # setting it would strip the `.v1` and collapse `trial.v1` and `trial.v2` onto
+  # one container.
+  outputPath <- file.path(outputDir, .withJsonExtension(projectFileName))
 
   # Guard against silently replacing an existing JSON project. The import writes
   # the container and fully reconciles the `definitions/` tree (deleting any
@@ -596,20 +604,25 @@ importProjectFromExcel <- function(
 #' object (typically loaded from JSON). This is the reverse of
 #' `importProjectFromExcel()`.
 #'
+#' The top-level workbook is named after the project file, so a project loaded
+#' from `MyStudy.json` exports `MyStudy.xlsx` (and one loaded from the
+#' canonical `Project.json` exports `Project.xlsx`). That is the pairing
+#' [projectStatus()] reads back, so the workbook this writes is the one the
+#' status check then compares the project against.
+#'
 #' @param project A `Project` object.
 #' @param outputDir Directory where the Excel files will be created. Defaults
 #'   to the directory of the source JSON file.
 #' @param overwrite Logical. Guards against silently overwriting existing Excel
-#'   workbooks. With `overwrite = FALSE` (default), the export aborts when
-#'   `Project.xlsx` or any `Configurations/` workbook already exists in
+#'   workbooks. With `overwrite = FALSE` (default), the export aborts when the
+#'   project's own workbook or any `Configurations/` workbook already exists in
 #'   `outputDir`, because the export replaces each workbook wholesale and would
 #'   discard any hand-edits it carries. Pass `overwrite = TRUE` to replace the
 #'   existing workbooks.
 #' @param silent Logical. If `TRUE`, suppresses informational messages.
 #'   Defaults to `FALSE`.
 #'
-#' @return Invisibly returns the path to the created
-#'   `Project.xlsx`.
+#' @returns Invisibly returns the path to the created workbook.
 #' @export
 #' @family projectPersistence
 exportProjectToExcel <- function(
@@ -626,15 +639,21 @@ exportProjectToExcel <- function(
 
   configDir <- file.path(outputDir, "Configurations")
 
+  # The side-car is named after the project file, so a project loaded from
+  # `MyStudy.json` exports `MyStudy.xlsx`. That is the pairing `projectStatus()`
+  # reads back, so exporting produces the workbook the status check then
+  # compares against.
+  workbookName <- .excelSideCarName(project$info$projectFilePath)
+
   # Guard against silently overwriting existing workbooks. Every workbook is
   # written with `writexl::write_xlsx()`, which replaces the target file
   # wholesale, and the default `outputDir` is the project's own directory, so a
-  # bare `exportProjectToExcel(project)` would overwrite the project's
-  # `Project.xlsx` and `Configurations/*.xlsx` side-cars (hand-edits included).
-  # Abort unless `overwrite = TRUE` when a `Project.xlsx` or any
-  # `Configurations/` workbook already exists in `outputDir`.
+  # bare `exportProjectToExcel(project)` would overwrite the project's own
+  # workbook and `Configurations/*.xlsx` side-cars (hand-edits included).
+  # Abort unless `overwrite = TRUE` when that workbook or any `Configurations/`
+  # workbook already exists in `outputDir`.
   existingWorkbooks <- c(
-    if (file.exists(file.path(outputDir, "Project.xlsx"))) "Project.xlsx",
+    if (file.exists(file.path(outputDir, workbookName))) workbookName,
     if (dir.exists(configDir)) {
       list.files(configDir, pattern = "\\.xlsx$")
     }
@@ -683,7 +702,7 @@ exportProjectToExcel <- function(
     Description = descs,
     stringsAsFactors = FALSE
   )
-  projConfigPath <- file.path(outputDir, "Project.xlsx")
+  projConfigPath <- file.path(outputDir, workbookName)
   .writeExcel(projConfigDf, projConfigPath)
 
   # --- ModelParameters.xlsx ---
@@ -1078,7 +1097,7 @@ projectStatus <- function(project, silent = FALSE) {
   # derivation correct for any container extension, including a `.esqlabsR`
   # snapshot, so a snapshot-loaded project does not mistake itself for its own
   # Excel side-car.
-  excelPath <- as.character(fs::path_ext_set(jsonPath, "xlsx"))
+  excelPath <- file.path(dirname(jsonPath), .excelSideCarName(jsonPath))
   if (!file.exists(excelPath)) {
     if (!silent) {
       cli::cli_alert_info(messages$syncNoExcel(excelPath))
@@ -1347,28 +1366,40 @@ projectStatus <- function(project, silent = FALSE) {
   jsonData
 }
 
-#' Guard the name the import writes its project file under
+#' The name of the Excel side-car that pairs with a project file
 #'
-#' The name becomes a path via `file.path(outputDir, ...)`, so one carrying a
-#' path separator or a `..` segment would write the project file outside the
-#' folder the caller named, over whatever sits there.
+#' A project and its Excel side-car are paired by name: `MyStudy.json` pairs
+#' with `MyStudy.xlsx`. Both halves derive it here, so
+#' [exportProjectToExcel()] writes the workbook [projectStatus()] then looks
+#' for. A project with no file on disk has no name to derive one from, so it
+#' falls back to the canonical `Project.xlsx`.
 #'
-#' @param name The `projectFileName` the caller passed.
-#' @returns `NULL`, invisibly; called for the abort.
+#' @param projectFilePath The project's `info$projectFilePath`, possibly `NULL`.
+#' @returns The side-car's file name, as a single string.
 #' @keywords internal
 #' @noRd
-.validateProjectFileName <- function(name) {
-  if (
-    !is.character(name) ||
-      length(name) != 1L ||
-      is.na(name) ||
-      !nzchar(name) ||
-      grepl("[/\\]", name) ||
-      name %in% c(".", "..")
-  ) {
-    cli::cli_abort(messages$invalidProjectFileName(name))
+.excelSideCarName <- function(projectFilePath) {
+  if (is.null(projectFilePath)) {
+    return("Project.xlsx")
   }
-  invisible(NULL)
+  as.character(fs::path_ext_set(fs::path_file(projectFilePath), "xlsx"))
+}
+
+#' The project file name with a `.json` extension
+#'
+#' Adds the extension when it is missing, and leaves a name that already ends in
+#' `.json` alone. Everything before it is kept verbatim, so a dotted stem
+#' (`trial.v1`) stays distinct from its siblings.
+#'
+#' @param name A project file name.
+#' @returns The name, ending in `.json`.
+#' @keywords internal
+#' @noRd
+.withJsonExtension <- function(name) {
+  if (identical(tolower(fs::path_ext(name)), "json")) {
+    return(name)
+  }
+  paste0(name, ".json")
 }
 
 #' Spell a path the way it reads best from the working directory

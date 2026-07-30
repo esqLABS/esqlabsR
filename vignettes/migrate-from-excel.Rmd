@@ -80,7 +80,7 @@ project <- loadProject(jsonPath)
 
 `loadProject()` already runs a quick check for the most common cross-reference problems (for example a scenario that points at an individual or population that no longer exists) and warns about them, but it still returns the project so you can inspect it. For the full picture, validate explicitly.
 
-The imported project is a normal tree project: every authoring function (`addScenario()`, `setIndividual()`, and so on) edits the project in memory, and `saveProject(project)` reconciles those edits to the definition files under `definitions/`. To migrate several Excel projects into one folder, give each import its own `projectFileName` (`importProjectFromExcel(..., projectFileName = "MyStudy")` writes `MyStudy.json`); `saveProject()` then updates that same file, since a project always saves back to the file it was loaded from.
+The imported project is a normal tree project: every authoring function (`addScenario()`, `setIndividual()`, and so on) edits the project in memory, and `saveProject(project)` reconciles those edits to the definition files under `definitions/`. To label the project file after the study rather than by the generic name, pass `projectFileName` (`importProjectFromExcel(..., projectFileName = "MyStudy")` writes `MyStudy.json`); `saveProject()` then updates that same file, since a project always saves back to the file it was loaded from. Note that this names the project file only: the `definitions/` tree and the copied `Models/` and `Data/` folders beside it are shared by whatever sits in `outputDir`, so migrating several Excel projects means giving each one its own `outputDir`, not just its own project file name.
 
 ## Step 3: validate what carried over
 

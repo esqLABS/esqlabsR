@@ -42,9 +42,16 @@ comparison snapshot.}
 \item{projectFileName}{Name of the project file the import writes in
 \code{outputDir}. Defaults to \code{"Project.json"}, the same name \code{\link[=initProject]{initProject()}}
 and \code{\link[=loadProject]{loadProject()}} use, so an imported project opens like any other. Pass
-another name (for example \code{"MyStudy"}, or \code{"MyStudy.json"}) to keep several
-projects side by side in one folder; the \code{.json} extension is added when it
-is missing. It must be a plain filename, not a path.}
+another name (for example \code{"MyStudy"}, or \code{"MyStudy.json"}) to label the
+project file after the study rather than by the generic name; a \code{.json}
+extension is appended when the name does not already end in one. It must be
+a plain filename, not a path.
+
+This names the project file only. The \verb{definitions/} tree beside it, and
+the copied \verb{Models/} and \verb{Data/} folders, are shared by whatever is in
+\code{outputDir}, so a second import into the same folder still replaces the
+first project rather than sitting alongside it. Give each project its own
+\code{outputDir}.}
 }
 \value{
 Invisibly returns the path to the created project file.
