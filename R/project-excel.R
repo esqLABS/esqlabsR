@@ -2140,18 +2140,24 @@ projectStatus <- function(project, silent = FALSE) {
   hasParameterSets <- "ParameterSets" %in% names(indivDf)
   for (i in seq_len(nrow(indivDf))) {
     row <- indivDf[i, ]
+    # Cells are read with `[[`, not `$`: a sheet parsed by `readExcel()` is a
+    # tibble, whose `$` warns about an unknown column, so a workbook omitting an
+    # optional column (`Protein Ontogenies` on an individual with no ontogenies,
+    # a biometric a legacy sheet never carried) would leak a raw tibble warning
+    # to the user. `[[` yields `NULL` for an absent column, which `.naToNull()`
+    # turns into an absent field. Matches `.parseExcelScenarios()` below.
     indiv <- list(
-      individualId = as.character(row$IndividualId),
-      species = as.character(row$Species),
-      population = as.character(row$Population),
+      individualId = as.character(row[["IndividualId"]]),
+      species = as.character(row[["Species"]]),
+      population = as.character(row[["Population"]]),
       # A blank Gender cell defaults to UNKNOWN (the only valid PK-Sim gender
       # for some animal species). A whitespace-only or empty-string cell counts
       # as blank too, not just an NA.
-      gender = .blankToDefault(as.character(row$Gender), "UNKNOWN"),
-      weight = .naToNull(as.numeric(row$`Weight [kg]`)),
-      height = .naToNull(as.numeric(row$`Height [cm]`)),
-      age = .naToNull(as.numeric(row$`Age [year(s)]`)),
-      proteinOntogenies = .naToNull(as.character(row$`Protein Ontogenies`))
+      gender = .blankToDefault(as.character(row[["Gender"]]), "UNKNOWN"),
+      weight = .naToNull(as.numeric(row[["Weight [kg]"]])),
+      height = .naToNull(as.numeric(row[["Height [cm]"]])),
+      age = .naToNull(as.numeric(row[["Age [year(s)]"]])),
+      proteinOntogenies = .naToNull(as.character(row[["Protein Ontogenies"]]))
     )
     if (hasParameterSets) {
       raw <- row$ParameterSets
@@ -2175,24 +2181,27 @@ projectStatus <- function(project, silent = FALSE) {
   populations <- list()
   for (i in seq_len(nrow(popDf))) {
     row <- popDf[i, ]
+    # Cells are read with `[[` rather than `$`, for the reason given in
+    # `.parseExcelIndividuals()` above: every demographic here is optional, and
+    # `$` on a parsed sheet warns about a column the workbook omits.
     pop <- list(
-      populationId = as.character(row$PopulationName),
-      species = as.character(row$species),
-      population = as.character(row$population),
-      numberOfIndividuals = .naToNull(as.numeric(row$numberOfIndividuals)),
-      proportionOfFemales = .naToNull(as.numeric(row$proportionOfFemales)),
-      weightMin = .naToNull(as.numeric(row$weightMin)),
-      weightMax = .naToNull(as.numeric(row$weightMax)),
-      weightUnit = .naToNull(as.character(row$weightUnit)),
-      heightMin = .naToNull(as.numeric(row$heightMin)),
-      heightMax = .naToNull(as.numeric(row$heightMax)),
-      heightUnit = .naToNull(as.character(row$heightUnit)),
-      ageMin = .naToNull(as.numeric(row$ageMin)),
-      ageMax = .naToNull(as.numeric(row$ageMax)),
-      BMIMin = .naToNull(as.numeric(row$BMIMin)),
-      BMIMax = .naToNull(as.numeric(row$BMIMax)),
-      BMIUnit = .naToNull(as.character(row$BMIUnit)),
-      proteinOntogenies = .naToNull(as.character(row$`Protein Ontogenies`))
+      populationId = as.character(row[["PopulationName"]]),
+      species = as.character(row[["species"]]),
+      population = as.character(row[["population"]]),
+      numberOfIndividuals = .naToNull(as.numeric(row[["numberOfIndividuals"]])),
+      proportionOfFemales = .naToNull(as.numeric(row[["proportionOfFemales"]])),
+      weightMin = .naToNull(as.numeric(row[["weightMin"]])),
+      weightMax = .naToNull(as.numeric(row[["weightMax"]])),
+      weightUnit = .naToNull(as.character(row[["weightUnit"]])),
+      heightMin = .naToNull(as.numeric(row[["heightMin"]])),
+      heightMax = .naToNull(as.numeric(row[["heightMax"]])),
+      heightUnit = .naToNull(as.character(row[["heightUnit"]])),
+      ageMin = .naToNull(as.numeric(row[["ageMin"]])),
+      ageMax = .naToNull(as.numeric(row[["ageMax"]])),
+      BMIMin = .naToNull(as.numeric(row[["BMIMin"]])),
+      BMIMax = .naToNull(as.numeric(row[["BMIMax"]])),
+      BMIUnit = .naToNull(as.character(row[["BMIUnit"]])),
+      proteinOntogenies = .naToNull(as.character(row[["Protein Ontogenies"]]))
     )
     populations[[i]] <- pop
   }
