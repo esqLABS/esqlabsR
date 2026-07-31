@@ -961,7 +961,7 @@ print.PITask <- function(x, ...) {
     NULL
   }
   if (!is.null(algDefaults) || !is.null(cfg$algorithmOptions)) {
-    piConfig$algorithmOptions <- modifyList(
+    piConfig$algorithmOptions <- utils::modifyList(
       algDefaults %||% list(),
       cfg$algorithmOptions %||% list()
     )
@@ -974,7 +974,7 @@ print.PITask <- function(x, ...) {
     NULL
   }
   if (!is.null(ciDefaults) || !is.null(cfg$ciOptions)) {
-    piConfig$ciOptions <- modifyList(
+    piConfig$ciOptions <- utils::modifyList(
       ciDefaults %||% list(),
       cfg$ciOptions %||% list()
     )

@@ -145,6 +145,7 @@ createPlots <- function(
 }
 
 #' @rdname createPlots
+#' @param ... Passed on to [createPlots()].
 #' @export
 createPlotsFromExcel <- function(...) {
   lifecycle::deprecate_soft(

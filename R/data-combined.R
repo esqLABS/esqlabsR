@@ -134,6 +134,7 @@ createDataCombined <- function(
 }
 
 #' @rdname createDataCombined
+#' @param ... Passed on to [createDataCombined()].
 #' @export
 createDataCombinedFromExcel <- function(...) {
   lifecycle::deprecate_soft(
