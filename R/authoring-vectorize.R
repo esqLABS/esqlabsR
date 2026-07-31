@@ -55,9 +55,34 @@
 #' different multi-valued list per definition, pass a list of the same length
 #' as the id vector (one vector per definition).
 #'
+#' For a scenario's `parameterSets`, `initialConditions`, and `outputPaths`, a
+#' zero-length reference list means "there are none", the same as `NULL`. A
+#' definition file writes `[]` for a reference list a scenario has none of, so
+#' [addScenario()] and [setScenario()] take a scenario's own written fields
+#' straight back, whether they were read as a character vector or as the list
+#' `jsonlite::fromJSON(simplifyVector = FALSE)` yields. The reference list of a
+#' plot grid (`plots`) must still be non-empty: a grid with no plots has nothing
+#' to render.
+#'
 #' The call is all-or-nothing: every definition is validated first, and if any
 #' fails the whole call aborts and writes nothing. On success all definitions
 #' are folded into the section and persisted in a single write-through.
+#'
+#' An authoring function resolves every reference at the call that makes it: an
+#' `individual` or `parameterSets` id with no matching definition aborts naming
+#' the missing id, so a mistyped reference surfaces where it was typed rather
+#' than at the next run. Add the definitions in dependency order,
+#' `addIndividual()` before the `addScenario()` that references it. A scenario's
+#' reference errors also name the closest existing id, as [validateProject()]
+#' does; the other sections name only the missing one.
+#'
+#' Reading a project instead defers: [loadProject()] and
+#' [importProjectFromExcel()] accept a project whose references do not all
+#' resolve (each section is parsed on its own, so a legacy project with a
+#' genuine gap still imports) and leave [validateProject()] to report every gap
+#' at once. The two timings are deliberate, not an inconsistency: eager where a
+#' single reference is being written by hand, deferred where a whole project is
+#' being read.
 #'
 #' Two families of authoring functions sit outside this id-sets-`N` rule.
 #' `addParameterEntry()` and `removeParameterEntry()` vectorize over parameter

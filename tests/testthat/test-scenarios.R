@@ -318,6 +318,44 @@ test_that("addScenario aborts when a referenced individual is unknown", {
   )
 })
 
+test_that("addScenario suggests the closest existing id for a dangling reference", {
+  # Authoring catches a dangling reference eagerly and `validateProject()`
+  # catches it later; both name the near miss, so the same typo reads the same
+  # way whichever path finds it.
+  project <- testProject()
+  expect_snapshot(
+    error = TRUE,
+    addScenario(
+      project,
+      id = "bad",
+      modelFile = "Aciclovir.pkml",
+      individual = "indiv2"
+    )
+  )
+  expect_snapshot(
+    error = TRUE,
+    addScenario(
+      project,
+      id = "bad",
+      modelFile = "Aciclovir.pkml",
+      outputPaths = "aciclovir_pv"
+    )
+  )
+})
+
+test_that("addScenario leaves the reference error bare when no id is close", {
+  project <- testProject()
+  expect_snapshot(
+    error = TRUE,
+    addScenario(
+      project,
+      id = "bad",
+      modelFile = "Aciclovir.pkml",
+      outputPaths = "somethingentirelyunrelated"
+    )
+  )
+})
+
 test_that("addScenario accepts a valid initialConditions reference", {
   project <- testProject()
   addInitialConditions(project, "icset")
@@ -458,6 +496,117 @@ test_that("addScenario rejects NA-valued FK args", {
       id = "S",
       modelFile = "Aciclovir.pkml",
       outputPaths = c("Output1", NA_character_)
+    )
+  )
+})
+
+test_that("addScenario treats a zero-length reference vector as none", {
+  # A definition file carries `[]` for a scenario that references no output
+  # paths, parameter sets, or initial conditions, so `character(0)` means what
+  # `NULL` means here: there are none. Rejecting it would make a value the
+  # write path produces unusable as authoring input.
+  project <- testProject()
+  addScenario(
+    project,
+    id = "nonerefs",
+    modelFile = "Aciclovir.pkml",
+    outputPaths = character(0),
+    parameterSets = character(0),
+    initialConditions = character(0)
+  )
+  sc <- project$definitions$scenarios[["nonerefs"]]
+  expect_null(sc$outputPaths)
+  expect_null(sc$modelParameterSets)
+  expect_null(sc$initialConditions)
+})
+
+test_that("addScenario treats the empty list jsonlite yields for [] as none", {
+  # Reading a definition file with `jsonlite::fromJSON()` turns `[]` into
+  # `list()`, not `character(0)`, so the zero-length rule has to cover both.
+  project <- testProject()
+  addScenario(
+    project,
+    id = "emptylist",
+    modelFile = "Aciclovir.pkml",
+    outputPaths = list(),
+    parameterSets = list()
+  )
+  sc <- project$definitions$scenarios[["emptylist"]]
+  expect_null(sc$outputPaths)
+  expect_null(sc$modelParameterSets)
+})
+
+test_that("setScenario clears a reference field given a zero-length vector", {
+  project <- testProject()
+  setScenario(project, "testscenario", outputPaths = character(0))
+  expect_null(project$definitions$scenarios[["testscenario"]]$outputPaths)
+})
+
+test_that("a scenario's own written reference fields are accepted back by addScenario", {
+  # The round trip an imported project needs: read a scenario's fields straight
+  # out of its definition file and hand them to `addScenario()`. Read the file
+  # the way the package reads it (`simplifyVector = FALSE`), so an absent
+  # reference list arrives as `list()` and a populated one as a list of strings.
+  project <- testProject()
+  addScenario(project, id = "written", modelFile = "Aciclovir.pkml")
+  addScenario(
+    project,
+    id = "writtenrefs",
+    modelFile = "Aciclovir.pkml",
+    outputPaths = c("aciclovir_pvb", "aciclovir_fat_cell")
+  )
+  saveProject(project)
+
+  readDefinition <- function(id) {
+    jsonlite::fromJSON(
+      file.path(
+        project$info$projectDirPath,
+        project$paths$definitionsFolder,
+        "scenarios",
+        paste0(id, ".json")
+      ),
+      simplifyVector = FALSE
+    )
+  }
+
+  bare <- readDefinition("written")
+  expect_length(bare$outputPaths, 0L)
+  addScenario(
+    project,
+    id = "rebuiltbare",
+    modelFile = bare$modelFile,
+    outputPaths = bare$outputPaths,
+    parameterSets = bare$parameterSets,
+    initialConditions = bare$initialConditions
+  )
+  expect_null(project$definitions$scenarios[["rebuiltbare"]]$outputPaths)
+
+  withRefs <- readDefinition("writtenrefs")
+  expect_type(withRefs$outputPaths, "list")
+  expect_length(withRefs$outputPaths, 2L)
+  addScenario(
+    project,
+    id = "rebuiltrefs",
+    modelFile = withRefs$modelFile,
+    outputPaths = withRefs$outputPaths
+  )
+  expect_named(
+    project$definitions$scenarios[["rebuiltrefs"]]$outputPaths,
+    c("aciclovir_pvb", "aciclovir_fat_cell")
+  )
+})
+
+test_that("addScenario keeps rejecting a reference list holding a non-string", {
+  # Only an all-strings list flattens to a reference vector; anything else is
+  # still a malformed argument, not a list of ids.
+  project <- testProject()
+  expect_snapshot(
+    error = TRUE,
+    addScenario(
+      project,
+      id = "badlist",
+      modelFile = "Aciclovir.pkml",
+      outputPaths = list("aciclovir_pvb", 1)
     )
   )
 })

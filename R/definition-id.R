@@ -183,6 +183,43 @@
   out
 }
 
+# Canonicalize a vector-valued foreign-key argument (a scenario's
+# `parameterSets` / `initialConditions` / `outputPaths`) as it comes out of a
+# definition file, so a scenario's own written fields can be handed straight back
+# to an authoring function. Two normalizations get it there:
+#
+#   * A list of one-element strings flattens to the character vector the
+#     reference list is. The package reads a definition file with
+#     `jsonlite::fromJSON(simplifyVector = FALSE)`, which turns a JSON array of
+#     ids into `list("a", "b")`; the FK validators want the character vector.
+#     A list holding anything else is left alone for them to reject.
+#   * A zero-length value becomes `NULL`. A definition file carries `[]` for a
+#     scenario that references none, and `character(0)` (or `list()`) means
+#     exactly what `NULL` means here: there are none. That also keeps the record
+#     shape identical to the one `.parseScenarios()` builds from the same `[]`.
+#
+# @keywords internal
+# @noRd
+.canonicalizeVectorIdRef <- function(ref) {
+  if (is.list(ref) && all(vapply(ref, .isScalarString, logical(1)))) {
+    ref <- unlist(ref)
+  }
+  ref <- .canonicalizeIdRef(ref)
+  if (length(ref) == 0L) {
+    return(NULL)
+  }
+  ref
+}
+
+# Is `x` a single string? Used to decide whether a list of reference ids can be
+# flattened to a character vector.
+#
+# @keywords internal
+# @noRd
+.isScalarString <- function(x) {
+  is.character(x) && length(x) == 1L
+}
+
 # Sink for collecting reference-canonicalization changes across the per-definition
 # builds of one vectorized authoring call, so the whole call emits a single
 # warning naming each `input -> canonical` change rather than one warning per

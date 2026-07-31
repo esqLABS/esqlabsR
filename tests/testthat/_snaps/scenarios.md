@@ -10,6 +10,33 @@
       ! Cannot add scenario "bad":
       x individual 'ghost' not found in individuals
 
+# addScenario suggests the closest existing id for a dangling reference
+
+    Code
+      addScenario(project, id = "bad", modelFile = "Aciclovir.pkml", individual = "indiv2")
+    Condition
+      Error in `addScenario()`:
+      ! Cannot add scenario "bad":
+      x individual 'indiv2' not found in individuals (did you mean 'indiv1'?)
+
+---
+
+    Code
+      addScenario(project, id = "bad", modelFile = "Aciclovir.pkml", outputPaths = "aciclovir_pv")
+    Condition
+      Error in `addScenario()`:
+      ! Cannot add scenario "bad":
+      x outputPaths not found in outputPaths: aciclovir_pv (did you mean 'aciclovir_pvb'?)
+
+# addScenario leaves the reference error bare when no id is close
+
+    Code
+      addScenario(project, id = "bad", modelFile = "Aciclovir.pkml", outputPaths = "somethingentirelyunrelated")
+    Condition
+      Error in `addScenario()`:
+      ! Cannot add scenario "bad":
+      x outputPaths not found in outputPaths: somethingentirelyunrelated
+
 # addScenario aborts eagerly on a dangling initialConditions ref
 
     Code
@@ -64,6 +91,16 @@
       * "Output1" -> "output1"
       Error in `addScenario()`:
       ! Cannot add scenario "s":
+      x outputPaths must be a non-empty character vector with no NA or empty entries
+
+# addScenario keeps rejecting a reference list holding a non-string
+
+    Code
+      addScenario(project, id = "badlist", modelFile = "Aciclovir.pkml", outputPaths = list(
+        "aciclovir_pvb", 1))
+    Condition
+      Error in `addScenario()`:
+      ! Cannot add scenario "badlist":
       x outputPaths must be a non-empty character vector with no NA or empty entries
 
 # addScenario aborts on an existing id, replaces it with overwrite
