@@ -125,6 +125,10 @@ messages$fileNotFound <- function(filePath) {
   cliFormat("File not found: {.file {filePath}}")
 }
 
+messages$unsupportedSchemaVersion <- function(version) {
+  cliFormat("Unsupported schemaVersion: {.val {version}}. Expected {.val 2.0}.")
+}
+
 messages$invalidPathArgument <- function() {
   cliFormat("{.arg path} must be a single non-empty, non-NA string.")
 }
@@ -406,6 +410,25 @@ messages$importSkippedNonParameterSheets <- function(
       "i" = "A parameter sheet carries the columns {.field {columns}}."
     ),
     envir = envir
+  )
+}
+
+# Raised from `Project$.readJson()`, whose schema-version check fails on every
+# file `.isLegacySnapshot()` recognizes: a previous-version snapshot carries no
+# `schemaVersion` at all. The `{jsonPath}` placeholder stays unglued so
+# `cli_abort()` interpolates it once, in that frame, where the value is bound
+# under that name (as with `restoreDirNotEmpty()`'s `dir`); pre-gluing it here
+# would leave a path containing `{` or `}` to be glue-parsed a second time by
+# the raising call.
+messages$legacySnapshotNotLoadable <- function(jsonPath) {
+  c(
+    "x" = "{.file {jsonPath}} is a previous-version project snapshot, not a \\
+    project of the current format.",
+    "i" = "A previous-version snapshot has to be upgraded before it can be \\
+    opened.",
+    "i" = "Upgrade it into a new folder with \\
+    {.code restoreProject(<snapshot>, dir = <newFolder>)}, which returns the \\
+    upgraded project."
   )
 }
 
