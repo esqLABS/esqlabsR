@@ -8,6 +8,18 @@ messages <- ospsuite.utils::messages
 # text belongs here as a catalog entry routed through those wrappers, not as a
 # base `stop()`/`warning()`/`message()` on an inline literal string.
 #
+# Two helpers build the text, and the rule between them is capability, not
+# taste: use `cliFormat()` by default, and `cli::format_message()` only where
+# `cliFormat()` cannot express the message. `cliFormat()` is
+# `cli::format_inline(paste(..., sep = "\n"))`, so it formats one inline string:
+# it handles interpolation, the inline classes (`{.file}`, `{.fn}`, `{.val}`,
+# ...), pluralization (`{?s}`, `{cli::qty()}`) and collapsing (`{.or}`), but it
+# drops the names of a `cli` bullet vector and glues the elements into one
+# run-on line, and it does not process the `\\` end-of-line continuation. So a
+# message carrying `"i"` / `"x"` / `"!"` / `"*"` bullets needs
+# `cli::format_message()`; a single-line message uses `cliFormat()` and, when
+# long, keeps its template on one physical line.
+#
 # One known exception: the project validation framework (`R/validation.R` and
 # the per-section validators in `R/scenarios.R`, `R/individuals.R`,
 # `R/populations.R`, `R/output-paths.R`, `R/plots.R`,
@@ -505,9 +517,9 @@ messages$autocorrectDuplicateScenarioNames <- function(
 }
 
 messages$scenariosAddedToProject <- function(scenarioNames) {
-  cli::format_message(c(
-    "i" = "Added {length(scenarioNames)} scenario{?s}: {.val {scenarioNames}}"
-  ))
+  cliFormat(
+    "Added {length(scenarioNames)} scenario{?s}: {.val {scenarioNames}}"
+  )
 }
 
 messages$noSimulationsFolderUsingAbsolutePath <- function(pkmlPath) {
@@ -528,10 +540,9 @@ messages$outputPathIdCollision <- function(id, existingPath, newPath) {
 }
 
 messages$outputPathAliasIgnored <- function(userAlias, registeredId, path) {
-  cli::format_message(c(
-    "i" = "Output path alias {.val {userAlias}} ignored: \\
-    path {.val {path}} is already registered as {.val {registeredId}}."
-  ))
+  cliFormat(
+    "Output path alias {.val {userAlias}} ignored: path {.val {path}} is already registered as {.val {registeredId}}."
+  )
 }
 
 messages$noSimulationsFolderForRelativeModelFile <- function(
@@ -638,9 +649,9 @@ messages$outputMolWeightNeeded <- function() {
 }
 
 messages$offsetUnitsNotDefined <- function(rows) {
-  cli::format_message(c(
-    "x" = "Error in DataCombined {.arg {rows}}: If x/yOffsets is set, then x/yOffsetsUnits must be defined as well. "
-  ))
+  cliFormat(
+    "Error in DataCombined {.arg {rows}}: If x/yOffsets is set, then x/yOffsetsUnits must be defined as well. "
+  )
 }
 
 # plots ####
@@ -1277,15 +1288,13 @@ messages$observedDataInvalidEntryType <- function(badType, validTypes) {
 }
 
 messages$observedDataMissingField <- function(entryIndex, type, field) {
-  cli::format_message(c(
-    "x" = "{.code observedData} entry {entryIndex} (type {.val {type}}) is missing required field {.field {field}}."
-  ))
+  cliFormat(
+    "{.code observedData} entry {entryIndex} (type {.val {type}}) is missing required field {.field {field}}."
+  )
 }
 
 messages$observedDataFileNotFound <- function(filePath) {
-  cli::format_message(c(
-    "x" = "Observed-data source file not found: {.path {filePath}}."
-  ))
+  cliFormat("Observed-data source file not found: {.path {filePath}}.")
 }
 
 messages$observedDataScriptWrongReturnType <- function(filePath, klass) {
