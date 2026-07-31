@@ -5,7 +5,8 @@
 
 <!-- badges: start -->
 
-[![Build status](https://img.shields.io/github/actions/workflow/status/esqlabs/esqlabsR/merge-to-main.yaml?branch=main&label=Build)](https://github.com/esqlabs/esqlabsR/actions/workflows/merge-to-main.yaml)
+[![Build
+status](https://img.shields.io/github/actions/workflow/status/esqlabs/esqlabsR/merge-to-main.yaml?branch=main&label=Build)](https://github.com/esqlabs/esqlabsR/actions/workflows/merge-to-main.yaml)
 [![Codecov test
 coverage](https://codecov.io/gh/esqlabs/esqlabsR/branch/main/graph/badge.svg)](https://app.codecov.io/gh/esqlabs/esqlabsR?branch=main)
 <!-- badges: end -->
@@ -43,7 +44,19 @@ tutorial](https://esqlabs.github.io/esqlabsR/articles/esqlabsR.html).
 
 ### Install the package
 
-You can install the package by running:
+`{esqlabsR}` depends on OSP packages that are not on CRAN. They are
+published on the [OSP
+R-universe](https://open-systems-pharmacology.r-universe.dev), so add it
+to your repositories first:
+
+``` r
+options(repos = c(
+  OSP = "https://open-systems-pharmacology.r-universe.dev",
+  getOption("repos")
+))
+```
+
+You can then install the package by running:
 
 ``` r
 install.packages("pak")
