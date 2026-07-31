@@ -9,6 +9,15 @@
 #' directly. This is the migration path from Excel-based projects to the
 #' JSON-primary workflow.
 #'
+#' The imported project has the same structure [initProject()] creates, whatever
+#' layout the Excel project used: the standard working folders are scaffolded,
+#' `filePaths` names them, and the content the Excel project referenced is copied
+#' into them (population csvs kept in `Configurations/PopulationsCSV/`, as 5.x
+#' projects keep them, land in `Populations/`). Nothing is moved or deleted, so
+#' the Excel project keeps working beside the imported one. A folder the project
+#' deliberately places outside itself, as an absolute path or a `${VAR}`, keeps
+#' its value and is left where it is.
+#'
 #' The `configurationsFolder` and the per-section workbook filenames are read
 #' from the Excel file and must stay under the project folder: a value that
 #' escapes it (a `../` climb or an absolute path) aborts naming the field. A
@@ -34,7 +43,8 @@
 #'   makes the imported project runnable where it was written. Defaults to
 #'   `TRUE`. Set it to `FALSE` when only the definitions are wanted and the
 #'   assets would be wasted work, as when the import feeds a throwaway
-#'   comparison snapshot.
+#'   comparison snapshot. This governs the content only: the project is given
+#'   its standard folder structure either way.
 #' @param projectFileName Name of the project file the import writes in
 #'   `outputDir`. Defaults to `"Project.json"`, the same name [initProject()]
 #'   and [loadProject()] use, so an imported project opens like any other. Pass
@@ -201,12 +211,38 @@ importProjectFromExcel <- function(
   }
 
   # Path properties from Project.xlsx split into the two container blocks: the
-  # four live working folders (`filePaths`) and the seven Excel-bridge sheet
-  # names (`excel`). Any other property is treated as a live working folder.
+  # four live working folders (`filePaths`) and the Excel-bridge sheet names
+  # (`excel`).
+  #
+  # The working folders are not carried over as the Excel file spells them. An
+  # imported project is given the same layout the package makes itself, so
+  # `filePaths` holds the nominal folders and the referenced content is copied
+  # into them below (`.nominalFolderPlan()` decides both, together). The one
+  # exception is a folder the project deliberately places outside itself, which
+  # keeps its value.
+  #
+  # `dataFile` and `dataImporterConfigurationFile` are dropped rather than
+  # carried into `filePaths`: they are not folders, and nothing reads them back.
+  # The observed-data parse below consumes them and reifies them as an
+  # `observedData` definition, which is where the loader looks for them. Any
+  # property the package does not know is still carried over verbatim, so an
+  # import never quietly loses something an author put in the Property column.
   pathProps <- as.list(pcProps)
   excelProps <- pathProps[names(pathProps) %in% .excelFilePathFields]
   filePathProps <- pathProps[!(names(pathProps) %in% .excelFilePathFields)]
-  jsonData$filePaths <- filePathProps
+  folderPlan <- .nominalFolderPlan(filePathProps, pcDir, configsFolder)
+  carriedOver <- filePathProps[
+    !names(filePathProps) %in%
+      c(
+        names(.nominalProjectFolders),
+        "modelFolder",
+        .excelObservedDataFields
+      )
+  ]
+  jsonData$filePaths <- c(
+    lapply(folderPlan, function(row) row$value),
+    carriedOver
+  )
   if (length(excelProps) > 0L) {
     jsonData$excel <- excelProps
   }
@@ -559,14 +595,27 @@ importProjectFromExcel <- function(
   .writeProjectTree(importedProject, outputDir, containerPath = outputPath)
 
   # The definitions reference models, data, and population files by a path
-  # relative to the project folder, so importing into a different folder would
-  # leave every one of those references dangling. Bring the referenced input
-  # folders along, so the imported project runs where it was written.
+  # relative to the project folder, so an imported project whose folders stayed
+  # behind leaves every one of those references dangling. Bring the referenced
+  # input folders along, into the nominal folders the container now names, so the
+  # imported project runs where it was written.
   assets <- if (copyAssets) {
-    .copyExcelProjectAssets(filePathProps, pcDir, outputDir, overwrite)
+    .copyExcelProjectAssets(folderPlan, outputDir, overwrite)
   } else {
-    list(copied = character(), notCopied = character())
+    list(
+      copied = character(),
+      notCopied = character(),
+      renamed = list(legacy = character(), nominal = character())
+    )
   }
+
+  # Give the imported project the same working-folder scaffold `initProject()`
+  # creates, so a project has one structure however it was made. After the copy,
+  # not before: a folder scaffolded first would hold its `README.md`, and the
+  # non-empty-target guard above would then refuse to copy the content into it.
+  # Run whether or not the assets travelled, because `copyAssets = FALSE` asks
+  # for the content to be skipped, not for a differently shaped project.
+  .scaffoldProjectFolders(outputDir)
 
   # Report what the import produced. Not gated on an interactive session: an
   # import run from a script is exactly the case where the call would otherwise
@@ -586,8 +635,12 @@ importProjectFromExcel <- function(
       importedProject$definitions
     )))
     if (length(assets$copied) > 0L) {
-      msg <- messages$importCopiedAssetFolders(assets$copied)
-      cli::cli_inform("{msg}")
+      rendered <- messages$importCopiedAssetFolders(
+        assets$copied,
+        assets$renamed$legacy,
+        assets$renamed$nominal
+      )
+      cli::cli_inform(rendered$bullets, .envir = rendered$envir)
     }
     if (length(assets$notCopied) > 0L) {
       msg <- messages$importUncopiedAssetFolders(assets$notCopied)
@@ -1419,107 +1472,257 @@ projectStatus <- function(project, silent = FALSE) {
   if (nchar(relative) <= nchar(absolute)) relative else absolute
 }
 
+#' The nominal working folders of an esqlabsR project
+#'
+#' Where each `filePaths` field points in a project the package makes itself:
+#' the values the `Blank` template carries and [initProject()] scaffolds. An
+#' imported project is given the same ones, so a project has one layout however
+#' it was created, and a reader who knows one esqlabsR project knows them all.
+#'
+#' @keywords internal
+#' @noRd
+.nominalProjectFolders <- c(
+  simulationsFolder = "Models/Simulations/",
+  populationsFolder = "Populations/",
+  dataFolder = "Data/",
+  outputFolder = "Results/"
+)
+
 #' The working folders whose contents an imported project needs to run
 #'
-#' The input folders a definition can reference: models (under either the current
-#' `simulationsFolder` key or the pre-6.0.0 `modelFolder` an Excel project still
-#' spells it with), observed data, and csv populations. `outputFolder` is
-#' deliberately absent: it holds results the project writes, not inputs it reads.
+#' The input folders a definition can reference: models, csv populations and
+#' observed data. `outputFolder` is deliberately absent: it holds results the
+#' project writes, not inputs it reads, so the folder is created but nothing
+#' the old project produced is dragged into it.
 #'
 #' @keywords internal
 #' @noRd
 .excelProjectAssetFolders <- c(
   "simulationsFolder",
-  "modelFolder",
-  "dataFolder",
-  "populationsFolder"
+  "populationsFolder",
+  "dataFolder"
 )
 
-#' Copy an Excel project's referenced input folders next to the imported project
+#' The Excel path properties that name the observed-data source
+#'
+#' Filenames, not folders, and read only at import time: the observed-data parse
+#' consumes them and reifies them as an `observedData` definition, which is where
+#' the loader looks for them afterwards. They are dropped rather than carried
+#' into the imported project's `filePaths`, which holds working folders.
+#'
+#' @keywords internal
+#' @noRd
+.excelObservedDataFields <- c("dataFile", "dataImporterConfigurationFile")
+
+#' The value an Excel project gives a working folder
+#'
+#' Reads the field under every spelling an Excel project may use for it: an
+#' unmigrated workbook still calls the simulations folder `modelFolder`. An
+#' absent, `NA` or empty cell reads as "not named".
+#'
+#' @param filePathProps The project's raw path properties.
+#' @param field A canonical field name from [.nominalProjectFolders].
+#' @returns The value as the Excel file spells it, or `NULL`.
+#' @keywords internal
+#' @noRd
+.rawFolderValue <- function(filePathProps, field) {
+  spellings <- if (identical(field, "simulationsFolder")) {
+    c("simulationsFolder", "modelFolder")
+  } else {
+    field
+  }
+  for (spelling in spellings) {
+    value <- filePathProps[[spelling]]
+    if (!is.null(value) && !is.na(value) && nzchar(value)) {
+      return(value)
+    }
+  }
+  NULL
+}
+
+#' Where an Excel project keeps the contents of a working folder
+#'
+#' Before 6.0.0 the population csvs were resolved against `configurationsFolder`,
+#' not the project root: the old `ProjectConfiguration` class required them to be
+#' "located in the configurationsFolder", and that is where real projects put
+#' them (`Configurations/PopulationsCSV/`). Every other folder was always
+#' resolved against the project root. So the populations folder is looked for
+#' under the configurations folder first and under the project root second, which
+#' finds both spellings; the imported project then names it the one nominal way
+#' regardless, so the ambiguity does not travel.
+#'
+#' @param field A canonical field name from [.nominalProjectFolders].
+#' @param value The folder value, with any `${VAR}` already expanded.
+#' @param sourceDir Absolute path to the Excel project's folder.
+#' @param configsFolder Absolute path to its configurations folder, or `NULL`.
+#' @returns The absolute path the folder's contents are read from.
+#' @keywords internal
+#' @noRd
+.legacyFolderSource <- function(field, value, sourceDir, configsFolder) {
+  if (identical(field, "populationsFolder") && !is.null(configsFolder)) {
+    underConfigs <- fs::path_norm(fs::path(configsFolder, value))
+    if (fs::dir_exists(underConfigs)) {
+      return(underConfigs)
+    }
+  }
+  fs::path_norm(fs::path(sourceDir, value))
+}
+
+#' Decide each working folder's imported value and where its contents come from
+#'
+#' The one place the layout of an imported project is decided. Per folder field
+#' it settles both the value written into `Project.json` and the folder the
+#' contents are copied to, so the stored path and the copied files can never name
+#' different places.
+#'
+#' A folder the Excel project names with a relative in-project path becomes the
+#' nominal folder. A folder it deliberately places outside the project keeps its
+#' value: a bare absolute path resolves the same from the new location, and a
+#' `${VAR}` is the sanctioned way to point at a shared drive, so rewriting either
+#' to the nominal folder would throw away exactly what the author chose. A
+#' `${VAR}` that expands to a relative path still names something inside the
+#' project, so its contents travel, under the expanded name the loader will look
+#' for.
+#'
+#' @param filePathProps The project's raw path properties (folder values exactly
+#'   as the Excel file spells them).
+#' @param sourceDir Absolute path to the Excel project's folder.
+#' @param configsFolder Absolute path to its configurations folder, or `NULL`.
+#' @returns One row per field of [.nominalProjectFolders], each a list of
+#'   `field`, `raw` (the Excel spelling, `NULL` when the project does not name
+#'   it), `value` (what `Project.json` gets), `from` / `to` (the copy, when there
+#'   is one) and `status`: `"copy"`, `"skip"` (nothing to copy), or `"escapes"`
+#'   (a `../` climb, reported rather than copied).
+#' @keywords internal
+#' @noRd
+.nominalFolderPlan <- function(filePathProps, sourceDir, configsFolder = NULL) {
+  sourceNorm <- normalizePath(sourceDir, mustWork = FALSE)
+
+  buildRow <- function(field) {
+    nominal <- unname(.nominalProjectFolders[[field]])
+    raw <- .rawFolderValue(filePathProps, field)
+    row <- list(
+      field = field,
+      raw = raw,
+      value = nominal,
+      from = NULL,
+      to = NULL,
+      status = "skip"
+    )
+    # A folder the Excel project never named: the imported project still gets it
+    # at its nominal place, because every esqlabsR project has all four.
+    if (is.null(raw)) {
+      return(row)
+    }
+
+    expanded <- if (.declaresEnvVarPath(raw)) .replaceEnvVarPath(raw) else raw
+    # Placed outside the project on purpose (see above): value kept, nothing
+    # copied. An unset `${VAR}` expands to itself, stays relative, and so falls
+    # through to be reported as a folder that could not be copied.
+    if (fs::is_absolute_path(expanded)) {
+      row$value <- raw
+      return(row)
+    }
+    # A `../`-climbing value names something the project does not own. Copying it
+    # would read outside the source project and, worse, write outside the output
+    # directory, so it is contained the way every other author-controlled path in
+    # this file is and reported rather than copied. Its value is left alone: the
+    # nominal folder would be a promise the import did not keep.
+    if (.pathEscapesRoot(expanded, sourceDir)) {
+      row$value <- raw
+      row$status <- "escapes"
+      return(row)
+    }
+    if (!field %in% .excelProjectAssetFolders) {
+      return(row)
+    }
+
+    from <- .legacyFolderSource(field, expanded, sourceDir, configsFolder)
+    # A folder value of `"."` resolves to the project folder itself; copying that
+    # would drag the whole Excel project, workbooks included, into the output. It
+    # keeps its value too, since the imported project's own root is the folder
+    # the old one meant.
+    if (normalizePath(from, mustWork = FALSE) == sourceNorm) {
+      row$value <- raw
+      return(row)
+    }
+
+    usesEnvVar <- .declaresEnvVarPath(raw)
+    row$value <- if (usesEnvVar) raw else nominal
+    row$from <- as.character(from)
+    row$to <- if (usesEnvVar) expanded else nominal
+    row$status <- "copy"
+    row
+  }
+
+  fields <- names(.nominalProjectFolders)
+  stats::setNames(lapply(fields, buildRow), fields)
+}
+
+#' Copy an Excel project's referenced input folders into the imported project
 #'
 #' A definition references a model, a data file, or a csv population by a path
-#' relative to the project folder, so importing into a folder other than the
-#' Excel project's own leaves every such reference dangling. Copying the
-#' referenced folders to the same relative location under `outputDir` makes those
-#' paths resolve again, which is what makes the imported project runnable rather
-#' than a definitions tree pointing at files that are not there.
+#' relative to the project folder, so an imported project whose folders stayed
+#' behind is a definitions tree pointing at files that are not there. Copying
+#' each referenced folder to the nominal place the imported project names makes
+#' those paths resolve again, which is what makes the import runnable.
 #'
 #' Whole folders are copied rather than only the individually referenced files,
 #' because a folder also holds assets nothing names statically (an importer
 #' configuration, a population csv chosen at run time, a model a scenario is
 #' added for later).
 #'
-#' @param filePathProps The project's raw `filePaths` properties (folder values
-#'   exactly as the Excel file spells them).
-#' @param sourceDir Absolute path to the Excel project's folder.
+#' Nothing is ever moved or deleted. A folder the old project keeps under a
+#' legacy name is copied to the nominal one, so the Excel project still works
+#' beside the imported one.
+#'
+#' @param plan The folder plan from [.nominalFolderPlan()].
 #' @param outputDir Directory the JSON project was written to.
 #' @param overwrite Whether the import was allowed to replace existing content.
 #'   With `FALSE`, a target folder that already holds files is left as it is and
 #'   reported, so the flag governs the assets as well as the definition tree.
-#' @returns `list(copied, notCopied)`: the folder values copied, and those a
-#'   definition may reference but that could not be copied (absent from the
-#'   source project, naming a location outside it, or already present in the
-#'   output when `overwrite` is `FALSE`). Both empty when the project was
-#'   imported in place (nothing to copy).
+#' @returns `list(copied, notCopied, renamed)`: the nominal folders content was
+#'   copied into; the folder values a definition may reference but that could not
+#'   be copied (absent from the source project, naming a location outside it, or
+#'   already present in the output when `overwrite` is `FALSE`); and the
+#'   `legacy` / `nominal` pair for each folder the copy renamed.
 #' @keywords internal
 #' @noRd
-.copyExcelProjectAssets <- function(
-  filePathProps,
-  sourceDir,
-  outputDir,
-  overwrite = FALSE
-) {
-  result <- list(copied = character(), notCopied = character())
-  # Imported in place: the folders are already where the definitions expect them.
-  # Compared with `normalizePath()` rather than the lexical `fs::path_norm()`,
-  # matching the containment code above, so the same directory reached by two
-  # spellings (a symlinked root, a case-different drive letter) is recognized as
-  # one and no folder is copied onto itself.
-  sourceNorm <- normalizePath(sourceDir, mustWork = FALSE)
-  if (sourceNorm == normalizePath(outputDir, mustWork = FALSE)) {
-    return(result)
-  }
+.copyExcelProjectAssets <- function(plan, outputDir, overwrite = FALSE) {
+  result <- list(
+    copied = character(),
+    notCopied = character(),
+    renamed = list(legacy = character(), nominal = character())
+  )
+  # Every destination is built from the output directory resolved once, rather
+  # than by joining onto the raw argument. `normalizePath()` cannot resolve a
+  # symlinked prefix on a path that does not exist yet, so a folder about to be
+  # created would otherwise compare unequal to the very folder it is already in
+  # and be copied onto itself.
+  outputNorm <- normalizePath(outputDir, mustWork = FALSE)
 
-  for (field in .excelProjectAssetFolders) {
-    value <- filePathProps[[field]]
-    if (is.null(value) || is.na(value) || !nzchar(value)) {
+  for (row in plan) {
+    if (identical(row$status, "escapes")) {
+      result$notCopied <- c(result$notCopied, row$raw)
       next
     }
-    # An absolute folder deliberately points outside the project: it resolves the
-    # same from the new location, so copying it would duplicate data the author
-    # chose to keep in one place. A `${VAR}` that expands to an absolute path is
-    # the same case. One that expands to a relative path is not: a relative path
-    # is resolved against the project file, so it names a folder inside the
-    # project and has to travel with it, under the expanded name the loader will
-    # look for. An unset variable expands to itself, matches no folder, and is
-    # reported below rather than skipped in silence.
-    copyAs <- value
-    if (.declaresEnvVarPath(value)) {
-      copyAs <- .replaceEnvVarPath(value)
-    }
-    if (fs::is_absolute_path(copyAs)) {
+    if (!identical(row$status, "copy")) {
       next
     }
-    # A `../`-climbing value names something the project does not own. Copying it
-    # would read outside the source project and, worse, write outside
-    # `outputDir`, so it is contained the same way every other author-controlled
-    # path in this file is (`.resolveProjectPath()`) and reported rather than
-    # copied.
-    if (.pathEscapesRoot(copyAs, sourceDir)) {
-      result$notCopied <- c(result$notCopied, value)
+    if (!fs::dir_exists(row$from)) {
+      result$notCopied <- c(result$notCopied, row$raw)
       next
     }
-    from <- fs::path_norm(fs::path(sourceDir, copyAs))
-    # A folder value of `"."` resolves to the project folder itself; copying that
-    # would drag the whole Excel project (workbooks included) into the output.
-    if (normalizePath(from, mustWork = FALSE) == sourceNorm) {
+    to <- fs::path(outputNorm, row$to)
+    # Imported in place, into a folder already at its nominal name: source and
+    # destination are one folder, so there is nothing to copy and copying would
+    # duplicate it into its own subtree.
+    if (
+      normalizePath(to, mustWork = FALSE) ==
+        normalizePath(row$from, mustWork = FALSE)
+    ) {
       next
     }
-    if (!fs::dir_exists(from)) {
-      result$notCopied <- c(result$notCopied, value)
-      next
-    }
-    to <- fs::path(outputDir, copyAs)
     # A target folder the user already put files in is theirs, not the import's
     # to replace: `overwrite = FALSE` means it here too, so a curated model or
     # data file placed in the output beforehand survives and is reported instead
@@ -1529,18 +1732,35 @@ projectStatus <- function(project, silent = FALSE) {
         fs::dir_exists(to) &&
         length(fs::dir_ls(to, all = TRUE)) > 0L
     ) {
-      result$notCopied <- c(result$notCopied, value)
+      result$notCopied <- c(result$notCopied, row$raw)
       next
     }
     fs::dir_create(fs::path_dir(to))
-    fs::dir_copy(from, to, overwrite = TRUE)
-    result$copied <- c(result$copied, value)
+    fs::dir_copy(row$from, to, overwrite = TRUE)
+    result$copied <- c(result$copied, row$to)
+    # Compared normalized, so a legacy value that differs only in a trailing
+    # slash is not announced as a rename.
+    if (
+      !identical(
+        .normalizedFolderValue(row$raw),
+        .normalizedFolderValue(row$to)
+      )
+    ) {
+      result$renamed$legacy <- c(result$renamed$legacy, row$raw)
+      result$renamed$nominal <- c(result$renamed$nominal, row$to)
+    }
   }
-  # `simulationsFolder` and `modelFolder` are two spellings of one folder, so a
-  # project carrying both would report it twice.
   result$copied <- unique(result$copied)
   result$notCopied <- unique(result$notCopied)
   result
+}
+
+#' A folder value reduced to the form two spellings of one folder share
+#'
+#' @keywords internal
+#' @noRd
+.normalizedFolderValue <- function(value) {
+  as.character(fs::path_norm(value))
 }
 
 #' Append parsed parameter sheets to the accumulating `parameterSets` section

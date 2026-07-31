@@ -12,6 +12,33 @@ test_that("loadProject() errors when the file does not exist", {
   )
 })
 
+# A project folder is what the user has in hand after an import or a restore,
+# so naming the folder is the natural way to ask for the project in it. Without
+# this the directory reached `jsonlite::fromJSON()` and failed with a parse
+# error that named nothing actionable (#1174).
+test_that("loadProject() opens a project named by its folder", {
+  dir <- withr::local_tempdir()
+  initProject(dir, createExcel = FALSE, overwrite = TRUE)
+
+  byFolder <- loadProject(dir)
+  expect_s3_class(byFolder, "Project")
+  expect_identical(
+    byFolder$info$projectFilePath,
+    loadProject(file.path(dir, "Project.json"))$info$projectFilePath
+  )
+})
+
+test_that("loadProject() on a folder with no project file says what is missing", {
+  dir <- withr::local_tempdir()
+  # Only the absolute path is redacted (it differs per machine); the quoted
+  # `Project.json` the message names carries no separator and stays readable.
+  expect_snapshot(
+    loadProject(dir),
+    error = TRUE,
+    transform = \(lines) sub("'[^']*/[^']*'", "'<path>'", lines)
+  )
+})
+
 test_that("loadProject() errors on an unsupported schemaVersion", {
   badPath <- withr::local_tempfile(fileext = ".json")
   writeLines(

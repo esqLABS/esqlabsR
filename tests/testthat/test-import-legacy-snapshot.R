@@ -111,6 +111,20 @@ test_that("restoreProject upgrades a previous-version snapshot to a v6 tree", {
   expect_true(file.exists(file.path(dir, "Project.json")))
   reloaded <- loadProject(file.path(dir, "Project.json"))
   expect_length(reloaded$definitions$scenarios, 8)
+
+  # An upgraded project has the same structure as a project the package makes
+  # itself, so the user is not left to guess where the models go.
+  for (folder in names(.projectReadmeFolders)) {
+    expect_true(file.exists(file.path(dir, folder, "README.md")))
+  }
+  # A snapshot carries its population csvs inline. They are materialized into
+  # the legacy `Configurations/PopulationsCSV/` the bridge reads, and land in the
+  # folder every esqlabsR project keeps them in.
+  expect_true(file.exists(file.path(dir, "Populations", "TestPopulation.csv")))
+  expect_identical(
+    reloaded$rawFilePaths()$populationsFolder$value,
+    "Populations/"
+  )
 })
 
 test_that("upgrading a snapshot with a configured data file emits no warning", {

@@ -1364,6 +1364,19 @@ Project <- R6::R6Class(
       # than to this private method, whose name means nothing to the reader.
       rlang::local_error_call(NULL)
       jsonPath <- fs::path_abs(jsonPath)
+      # A project folder is what the user has in hand after an import or a
+      # restore, and naming the folder is the natural way to ask for the project
+      # in it, so resolve the container inside it rather than failing on a
+      # directory. `fs::file_exists()` is `TRUE` for a directory, so without this
+      # the path would reach `jsonlite::fromJSON()` and abort with a parse error
+      # that names nothing the user can act on.
+      if (fs::dir_exists(jsonPath)) {
+        containerPath <- fs::path(jsonPath, "Project.json")
+        if (!fs::file_exists(containerPath)) {
+          cli::cli_abort(messages$noProjectFileInDirectory(jsonPath))
+        }
+        jsonPath <- containerPath
+      }
       if (!fs::file_exists(jsonPath)) {
         cli::cli_abort(messages$fileNotFound(jsonPath))
       }

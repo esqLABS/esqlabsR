@@ -1,3 +1,13 @@
+# loadProject() on a folder with no project file says what is missing
+
+    Code
+      loadProject(dir)
+    Condition
+      Error:
+      x '<path>' holds no 'Project.json'.
+      i A project is opened by naming its folder or its 'Project.json'; a project file saved under another name has to be named in full.
+      i Create a project there with `initProject()`, or migrate an Excel project into it with `importProjectFromExcel()`.
+
 # a clean saveProject() is a no-op with the up-to-date message
 
     Code

@@ -11,8 +11,9 @@
 #'   configuration mistakes surface immediately, but loading still succeeds.
 #'   Use [validateProject()] for a full report.
 #'
-#' @param path Path to the `Project.json` file. Defaults to
-#'   `Project.json` in the working directory.
+#' @param path Path to the project. Either the `Project.json` file itself, or
+#'   the project folder holding it. Defaults to `Project.json` in the working
+#'   directory. A project file saved under another name has to be named in full.
 #'
 #' @returns Object of type `Project`
 #' @export
@@ -39,6 +40,9 @@
 #' @examples
 #' \dontrun{
 #' project <- loadProject("Project.json")
+#'
+#' # A project folder opens the same way.
+#' project <- loadProject("myProject")
 #' results <- runScenarios(project)
 #'
 #' # Edits stay in memory until you save.

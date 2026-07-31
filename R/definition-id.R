@@ -105,9 +105,12 @@
 # caller's own glue expressions elsewhere in the same message (e.g.
 # `{sum(changed)}` in a summary line) still resolve normally.
 #
+# `style` is the cli inline class each side of the pair is marked up with:
+# `"val"` for an id, `"file"` for the folder renames the Excel import reports.
+#
 # @keywords internal
 # @noRd
-.canonicalizedIdBullets <- function(inputs, canonicals) {
+.canonicalizedIdBullets <- function(inputs, canonicals, style = "val") {
   envir <- new.env(parent = parent.frame())
   bullets <- vapply(
     seq_along(inputs),
@@ -116,7 +119,7 @@
       canonVar <- paste0("canon", i)
       assign(inputVar, inputs[i], envir = envir)
       assign(canonVar, canonicals[i], envir = envir)
-      sprintf("{.val {%s}} -> {.val {%s}}", inputVar, canonVar)
+      sprintf("{.%s {%s}} -> {.%s {%s}}", style, inputVar, style, canonVar)
     },
     character(1)
   )

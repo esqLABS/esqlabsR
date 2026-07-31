@@ -1475,7 +1475,10 @@ test_that("importProjectFromExcel reports what it produced, and stays quiet unde
   # The output path, the per-section counts, and the assets that travelled.
   expect_match(summaryText, "Project.json", fixed = TRUE)
   expect_match(summaryText, "Scenarios: 8", fixed = TRUE)
-  expect_match(summaryText, "Copied 2 referenced folders", fixed = TRUE)
+  expect_match(summaryText, "Copied 3 referenced folders", fixed = TRUE)
+  # A folder the Excel project kept under a legacy name is named on both sides,
+  # so the user can find the content that moved.
+  expect_match(summaryText, "'PopulationsCSV' -> 'Populations/'", fixed = TRUE)
 
   expect_silent(suppressWarnings(importProjectFromExcel(
     configPath,
@@ -1518,6 +1521,14 @@ test_that("importProjectFromExcel copies the referenced input folders into a sep
     "Data",
     "esqlabs_dataImporter_configuration.xml"
   )))
+  # The population csvs travelled too, from where the Excel project keeps them
+  # (`Configurations/PopulationsCSV/`) into the folder every esqlabsR project
+  # keeps them in.
+  expect_true(file.exists(file.path(
+    outputDir,
+    "Populations",
+    "TestPopulation.csv"
+  )))
 
   # So the imported project no longer validates with File-Not-Found warnings for
   # its own models and data.
@@ -1542,10 +1553,117 @@ test_that("importProjectFromExcel does not copy the results folder or the Excel 
     silent = TRUE
   ))
 
-  # `outputFolder` holds what the project writes, not what it reads.
-  expect_false(dir.exists(file.path(outputDir, "Results")))
+  # `outputFolder` holds what the project writes, not what it reads: the folder
+  # is scaffolded like any other, but nothing the Excel project produced is
+  # dragged into it.
+  expect_setequal(
+    list.files(file.path(outputDir, "Results"), recursive = TRUE),
+    c("Figures/README.md", "SimulationResults/README.md")
+  )
   # The Excel side is the source, not an asset of the JSON project.
   expect_false(dir.exists(file.path(outputDir, "Configurations")))
+})
+
+# An imported project is a project like any other, so it gets the working-folder
+# scaffold `initProject()` creates rather than only the folders the Excel
+# project happened to name. A user who knows one esqlabsR project then knows
+# this one.
+test_that("importProjectFromExcel gives the imported project the nominal folder structure", {
+  work_dir <- withr::local_tempdir()
+  file.copy(dirname(testProjectExcelPath()), work_dir, recursive = TRUE)
+  projectDir <- file.path(work_dir, "TestProjectExcel")
+
+  outputDir <- withr::local_tempdir()
+  jsonPath <- suppressWarnings(importProjectFromExcel(
+    file.path(projectDir, "ProjectConfiguration.xlsx"),
+    outputDir = outputDir,
+    silent = TRUE
+  ))
+
+  for (folder in names(.projectReadmeFolders)) {
+    expect_true(file.exists(file.path(outputDir, folder, "README.md")))
+  }
+
+  # And the container names those folders, rather than carrying the Excel
+  # project's own spellings (`modelFolder`, `PopulationsCSV`) into 6.0.0. The
+  # non-folder `dataFile` / `dataImporterConfigurationFile` properties do not
+  # leak into the block either.
+  raw <- suppressWarnings(loadProject(jsonPath))$rawFilePaths()
+  expect_identical(
+    vapply(raw, function(entry) entry$value, character(1)),
+    c(
+      simulationsFolder = "Models/Simulations/",
+      populationsFolder = "Populations/",
+      dataFolder = "Data/",
+      outputFolder = "Results/"
+    )
+  )
+})
+
+# A legacy project that already keeps its population csvs at the project root
+# rather than under the configurations folder is the other spelling in the wild.
+# Both have to be found, or the folder is reported as absent and the csvs are
+# left behind.
+test_that("importProjectFromExcel finds population csvs at the project root too", {
+  work_dir <- withr::local_tempdir()
+  file.copy(dirname(testProjectExcelPath()), work_dir, recursive = TRUE)
+  projectDir <- file.path(work_dir, "TestProjectExcel")
+
+  # Move the csvs from `Configurations/PopulationsCSV/` to `<root>/RootPops/`
+  # and point the configuration at them.
+  file.rename(
+    file.path(projectDir, "Configurations", "PopulationsCSV"),
+    file.path(projectDir, "RootPops")
+  )
+  configPath <- file.path(projectDir, "ProjectConfiguration.xlsx")
+  config <- readExcel(configPath)
+  config$Value[config$Property == "populationsFolder"] <- "RootPops"
+  .writeExcel(config, configPath)
+
+  outputDir <- withr::local_tempdir()
+  suppressWarnings(importProjectFromExcel(
+    configPath,
+    outputDir = outputDir,
+    silent = TRUE
+  ))
+
+  expect_true(file.exists(file.path(
+    outputDir,
+    "Populations",
+    "TestPopulation.csv"
+  )))
+  expect_false(dir.exists(file.path(outputDir, "RootPops")))
+})
+
+# A folder deliberately placed outside the project is the sanctioned way to
+# share data between projects. Rewriting it to the nominal folder would throw
+# away the very thing the author reached for it to do.
+test_that("importProjectFromExcel keeps an out-of-project folder value as it is", {
+  work_dir <- withr::local_tempdir()
+  file.copy(dirname(testProjectExcelPath()), work_dir, recursive = TRUE)
+  projectDir <- file.path(work_dir, "TestProjectExcel")
+
+  shared <- withr::local_tempdir()
+  configPath <- file.path(projectDir, "ProjectConfiguration.xlsx")
+  config <- readExcel(configPath)
+  config$Value[config$Property == "dataFolder"] <- shared
+  .writeExcel(config, configPath)
+
+  outputDir <- withr::local_tempdir()
+  jsonPath <- suppressWarnings(importProjectFromExcel(
+    configPath,
+    outputDir = outputDir,
+    silent = TRUE
+  ))
+
+  raw <- suppressWarnings(loadProject(jsonPath))$rawFilePaths()
+  expect_identical(raw$dataFolder$value, shared)
+  # The scaffold still gives the project its `Data/` folder, but nothing was
+  # copied into it: the shared folder resolves the same from the new location.
+  expect_setequal(
+    list.files(file.path(outputDir, "Data"), recursive = TRUE),
+    "README.md"
+  )
 })
 
 # A `../`-climbing folder value names something the project does not own.
@@ -1601,10 +1719,17 @@ test_that("importProjectFromExcel skips the asset copy under copyAssets = FALSE"
     copyAssets = FALSE
   ))
 
-  # The definitions are written; none of the referenced folders travelled.
+  # The definitions are written and the project still has its nominal shape;
+  # what `copyAssets = FALSE` skips is the content, so the folders are empty.
   expect_true(dir.exists(file.path(outputDir, "definitions")))
-  expect_false(dir.exists(file.path(outputDir, "Models")))
-  expect_false(dir.exists(file.path(outputDir, "Data")))
+  expect_setequal(
+    list.files(file.path(outputDir, "Models"), recursive = TRUE),
+    c("Simulations/README.md", "Snapshots/README.md")
+  )
+  expect_setequal(
+    list.files(file.path(outputDir, "Data"), recursive = TRUE),
+    "README.md"
+  )
 })
 
 test_that("projectStatus() does not copy the asset tree into its comparison snapshot", {
@@ -1702,12 +1827,25 @@ test_that("importProjectFromExcel detects an in-place import through a symlinked
   ))
   after <- sort(list.files(projectDir, recursive = TRUE))
 
-  # Recognized as in place: the project file and its definition files were
-  # added, no folder was duplicated into its own subtree.
-  added <- setdiff(after, before)
-  expect_match(added[added != "Project.json"], "^definitions/", all = TRUE)
+  # Recognized as in place: a folder already at its nominal name was left alone
+  # rather than duplicated into its own subtree.
   expect_false(dir.exists(file.path(projectDir, "Models", "Models")))
   expect_false(dir.exists(file.path(projectDir, "Data", "Data")))
+  expect_false(dir.exists(file.path(
+    projectDir,
+    "Models",
+    "Simulations",
+    "Simulations"
+  )))
+  # Nothing was taken away, and everything added is the project itself or the
+  # nominal structure the import gives it.
+  expect_setequal(setdiff(before, after), character())
+  added <- setdiff(after, before)
+  expect_match(
+    added[added != "Project.json"],
+    "^(definitions/|Models/|Data/|Populations/|Results/)",
+    all = TRUE
+  )
 })
 
 # The clash is detected on the canonical id, so the rename map has to be looked
@@ -1794,7 +1932,11 @@ test_that("importProjectFromExcel names a referenced folder the Excel project do
   )
 })
 
-test_that("importProjectFromExcel in place leaves the referenced folders untouched", {
+# An import in place still gives the project the nominal structure, because the
+# container it writes names the nominal folders: leaving the content behind
+# under a legacy name would point the new project at nothing. Nothing is moved
+# or deleted, so the Excel project keeps working beside the imported one.
+test_that("importProjectFromExcel in place adds the nominal structure without disturbing the Excel project", {
   work_dir <- withr::local_tempdir()
   file.copy(dirname(testProjectExcelPath()), work_dir, recursive = TRUE)
   projectDir <- file.path(work_dir, "TestProjectExcel")
@@ -1807,11 +1949,25 @@ test_that("importProjectFromExcel in place leaves the referenced folders untouch
   ))
   after <- sort(list.files(projectDir, recursive = TRUE))
 
-  # Everything the import added is the project file or a definition file; no
-  # folder was copied onto itself, which would have duplicated the models and
-  # data into subfolders.
-  added <- setdiff(after, before)
-  expect_match(added[added != "Project.json"], "^definitions/", all = TRUE)
+  # Nothing was removed or moved: the Excel project's own layout survives whole,
+  # population csvs included.
+  expect_setequal(setdiff(before, after), character())
+  expect_true(file.exists(file.path(
+    projectDir,
+    "Configurations",
+    "PopulationsCSV",
+    "TestPopulation.csv"
+  )))
+  # A folder already at its nominal name was not copied onto itself, which would
+  # have duplicated the models and data into subfolders.
+  expect_false(dir.exists(file.path(projectDir, "Models", "Models")))
+  expect_false(dir.exists(file.path(projectDir, "Data", "Data")))
+  # And the csvs the new container names are now where it names them.
+  expect_true(file.exists(file.path(
+    projectDir,
+    "Populations",
+    "TestPopulation.csv"
+  )))
 })
 
 # An observed DataCombined row may name a scenario just as a simulated row does.
@@ -2425,16 +2581,14 @@ test_that("a ${VAR} folder expanding to a relative path travels with the project
   writeLines("x", file.path(src, "Inner", "Data", "values.csv"))
   withr::local_envvar(ESQLABSR_TEST_REL = "Inner/Data")
 
-  result <- .copyExcelProjectAssets(
-    list(dataFolder = "${ESQLABSR_TEST_REL}"),
-    src,
-    out,
-    overwrite = TRUE
-  )
+  plan <- .nominalFolderPlan(list(dataFolder = "${ESQLABSR_TEST_REL}"), src)
+  result <- .copyExcelProjectAssets(plan, out, overwrite = TRUE)
 
-  # Copied under the expanded name, which is where the loader will look, and
-  # reported under the raw one, which is what the project spells.
-  expect_identical(result$copied, "${ESQLABSR_TEST_REL}")
+  # Copied under the expanded name, which is where the loader will look, not
+  # under the nominal folder: the project keeps its `${VAR}`, so the loader
+  # keeps expanding it.
+  expect_identical(plan$dataFolder$value, "${ESQLABSR_TEST_REL}")
+  expect_identical(result$copied, "Inner/Data")
   expect_true(file.exists(file.path(out, "Inner", "Data", "values.csv")))
 })
 
@@ -2447,21 +2601,21 @@ test_that("a ${VAR} folder is skipped when absolute and reported when unset", {
   elsewhere <- withr::local_tempdir()
 
   withr::local_envvar(ESQLABSR_TEST_ABS = elsewhere)
-  absolute <- .copyExcelProjectAssets(
+  absolutePlan <- .nominalFolderPlan(
     list(dataFolder = "${ESQLABSR_TEST_ABS}"),
-    src,
-    out,
-    overwrite = TRUE
+    src
   )
+  absolute <- .copyExcelProjectAssets(absolutePlan, out, overwrite = TRUE)
   expect_length(absolute$copied, 0L)
   expect_length(absolute$notCopied, 0L)
+  # The project keeps naming the shared folder it deliberately points at.
+  expect_identical(absolutePlan$dataFolder$value, "${ESQLABSR_TEST_ABS}")
 
-  unset <- .copyExcelProjectAssets(
+  unsetPlan <- .nominalFolderPlan(
     list(dataFolder = "${ESQLABSR_TEST_NEVER_SET}"),
-    src,
-    out,
-    overwrite = TRUE
+    src
   )
+  unset <- .copyExcelProjectAssets(unsetPlan, out, overwrite = TRUE)
   expect_identical(unset$notCopied, "${ESQLABSR_TEST_NEVER_SET}")
 })
 

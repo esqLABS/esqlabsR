@@ -239,9 +239,41 @@ messages$importWouldOverwriteProject <- function(outputDir) {
   )
 }
 
-messages$importCopiedAssetFolders <- function(folders) {
-  cliFormat(
-    "Copied {length(folders)} referenced folder{?s} into the new project: {.file {folders}}."
+# Multi-bullet whenever the import renamed a folder, so `format_message()` (not
+# `cliFormat()`) per the rule in this file's header. The renames are rendered as
+# pre-bound `legacy -> nominal` bullets by `.canonicalizedIdBullets()`, the same
+# helper the id canonicalization uses, so a folder value containing `{` is
+# substituted rather than evaluated. The caller passes the returned `envir`.
+messages$importCopiedAssetFolders <- function(
+  folders,
+  renamedLegacy = character(),
+  renamedNominal = character()
+) {
+  if (length(renamedLegacy) == 0L) {
+    envir <- new.env(parent = parent.frame())
+    assign("folders", folders, envir = envir)
+    return(list(
+      bullets = "Copied {length(folders)} referenced folder{?s} into the new \\
+      project: {.file {folders}}.",
+      envir = envir
+    ))
+  }
+  rendered <- .canonicalizedIdBullets(
+    renamedLegacy,
+    renamedNominal,
+    style = "file"
+  )
+  assign("folders", folders, envir = rendered$envir)
+  assign("renamedCount", length(renamedLegacy), envir = rendered$envir)
+  list(
+    bullets = c(
+      "Copied {length(folders)} referenced folder{?s} into the new project: \\
+      {.file {folders}}.",
+      "i" = "The Excel project kept {renamedCount} of them under another \\
+      name, so the content moved to where every esqlabsR project keeps it:",
+      rendered$bullets
+    ),
+    envir = rendered$envir
   )
 }
 
@@ -249,7 +281,7 @@ messages$importUncopiedAssetFolders <- function(folders) {
   cliFormat(
     "{length(folders)} folder{?s} named by the project configuration {cli::qty(length(folders))}{?was/were} not copied: {.file {folders}}.",
     "Each is absent from the Excel project, points outside it, or already holds files in the new project (pass {.code overwrite = TRUE} to replace those).",
-    "A definition pointing into one will not resolve until you place the folder in the new project."
+    "A definition pointing into one will not resolve until you place its contents in the matching folder of the new project."
   )
 }
 
@@ -455,6 +487,20 @@ messages$legacySnapshotNotLoadable <- function(jsonPath) {
     "i" = "Upgrade it into a new folder with \\
     {.code restoreProject(<snapshot>, dir = <newFolder>)}, which returns the \\
     upgraded project."
+  )
+}
+
+# Raised when a project is asked for by its folder and the folder holds no
+# `Project.json`. `{jsonPath}` stays unglued for the same reason as
+# `legacySnapshotNotLoadable()` above.
+messages$noProjectFileInDirectory <- function(jsonPath) {
+  c(
+    "x" = "{.path {jsonPath}} holds no {.file Project.json}.",
+    "i" = "A project is opened by naming its folder or its \\
+    {.file Project.json}; a project file saved under another name has to be \\
+    named in full.",
+    "i" = "Create a project there with {.fn initProject}, or migrate an \\
+    Excel project into it with {.fn importProjectFromExcel}."
   )
 }
 

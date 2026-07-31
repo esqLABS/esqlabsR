@@ -223,6 +223,11 @@ restoreProject <- function(snapshot, dir = ".", overwrite = FALSE) {
     dir,
     containerPath = file.path(dir, "Project.json")
   )
+  # A snapshot carries the definitions, not the working folders, so the restored
+  # project needs the same scaffold `initProject()` creates for the models, data
+  # and populations the user is about to put back. The legacy-snapshot branch
+  # above gets it from the Excel import it routes through.
+  .scaffoldProjectFolders(dir)
   restored <- loadProject(containerPath)
 
   # The overwrite replaced a live tree; any `Project` loaded from `dir` before

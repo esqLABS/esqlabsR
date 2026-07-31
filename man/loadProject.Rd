@@ -7,8 +7,9 @@
 loadProject(path = "Project.json")
 }
 \arguments{
-\item{path}{Path to the \code{Project.json} file. Defaults to
-\code{Project.json} in the working directory.}
+\item{path}{Path to the project. Either the \code{Project.json} file itself, or
+the project folder holding it. Defaults to \code{Project.json} in the working
+directory. A project file saved under another name has to be named in full.}
 }
 \value{
 Object of type \code{Project}
@@ -44,6 +45,9 @@ Excel files with \code{\link[=projectStatus]{projectStatus()}}.
 \examples{
 \dontrun{
 project <- loadProject("Project.json")
+
+# A project folder opens the same way.
+project <- loadProject("myProject")
 results <- runScenarios(project)
 
 # Edits stay in memory until you save.

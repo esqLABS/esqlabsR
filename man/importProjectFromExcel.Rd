@@ -37,7 +37,8 @@ references (models, data, csv populations) into \code{outputDir}, which is what
 makes the imported project runnable where it was written. Defaults to
 \code{TRUE}. Set it to \code{FALSE} when only the definitions are wanted and the
 assets would be wasted work, as when the import feeds a throwaway
-comparison snapshot.}
+comparison snapshot. This governs the content only: the project is given
+its standard folder structure either way.}
 
 \item{projectFileName}{Name of the project file the import writes in
 \code{outputDir}. Defaults to \code{"Project.json"}, the same name \code{\link[=initProject]{initProject()}}
@@ -63,6 +64,15 @@ one file per definition in the \verb{definitions/} folder. The result is a
 ready-to-use project — \code{loadProject("<outputDir>/Project.json")} can open it
 directly. This is the migration path from Excel-based projects to the
 JSON-primary workflow.
+
+The imported project has the same structure \code{\link[=initProject]{initProject()}} creates, whatever
+layout the Excel project used: the standard working folders are scaffolded,
+\code{filePaths} names them, and the content the Excel project referenced is copied
+into them (population csvs kept in \verb{Configurations/PopulationsCSV/}, as 5.x
+projects keep them, land in \verb{Populations/}). Nothing is moved or deleted, so
+the Excel project keeps working beside the imported one. A folder the project
+deliberately places outside itself, as an absolute path or a \verb{$\{VAR\}}, keeps
+its value and is left where it is.
 
 The \code{configurationsFolder} and the per-section workbook filenames are read
 from the Excel file and must stay under the project folder: a value that
