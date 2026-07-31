@@ -1388,11 +1388,10 @@ Project <- R6::R6Class(
         if (.isLegacySnapshot(jsonData)) {
           cli::cli_abort(messages$legacySnapshotNotLoadable(jsonPath))
         }
-        cli::cli_abort(
-          messages$unsupportedSchemaVersion(
-            jsonData$schemaVersion %||% "<missing>"
-          )
-        )
+        # `version` is bound here because the catalog entry leaves its
+        # placeholder unglued, so this call interpolates it exactly once.
+        version <- jsonData$schemaVersion %||% "<missing>"
+        cli::cli_abort(messages$unsupportedSchemaVersion(version))
       }
       private$.schemaVersion <- jsonData$schemaVersion
       private$.esqlabsRVersion <- jsonData$esqlabsRVersion

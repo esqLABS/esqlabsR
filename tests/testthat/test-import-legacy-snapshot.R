@@ -77,12 +77,14 @@ test_that("loadProject on a previous-version snapshot points at restoreProject",
   file.copy(.legacySnapshotFixture(), snapshot)
 
   # The message names the absolute path it was handed, which differs per
-  # machine; only the shape of the message is under test.
+  # machine; only the shape of the message is under test. Anchored on the
+  # filename rather than a leading `/`, so a Windows drive-prefixed path
+  # (`C:/Users/...`) is redacted too.
   expect_snapshot(
     loadProject(snapshot),
     error = TRUE,
     transform = \(lines) {
-      sub("'/[^']*/ProjectConfiguration\\.json'", "'<path>'", lines)
+      sub("'[^']*ProjectConfiguration\\.json'", "'<path>'", lines)
     }
   )
 })

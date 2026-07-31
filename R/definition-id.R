@@ -221,9 +221,9 @@
 # Canonicalize without reporting the change. Some callers canonicalize only to
 # compare or to re-key, where the transform is an internal detail the user did
 # not ask for: re-keying a section read off disk, matching a reference against
-# the id it was filed under. `suppressWarnings()` alone does not cover those any
-# more, because inside a collector the pair is recorded rather than warned and
-# would surface later, from the flush, outside the suppressing frame.
+# the id it was filed under. `suppressWarnings()` does not cover those: inside a
+# collector the pair is recorded rather than warned, and would surface later,
+# from the flush, outside the suppressing frame.
 #
 # @keywords internal
 # @noRd

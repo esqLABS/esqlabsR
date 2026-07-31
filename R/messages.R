@@ -8,17 +8,26 @@ messages <- ospsuite.utils::messages
 # text belongs here as a catalog entry routed through those wrappers, not as a
 # base `stop()`/`warning()`/`message()` on an inline literal string.
 #
-# Two helpers build the text, and the rule between them is capability, not
-# taste: use `cliFormat()` by default, and `cli::format_message()` only where
-# `cliFormat()` cannot express the message. `cliFormat()` is
-# `cli::format_inline(paste(..., sep = "\n"))`, so it formats one inline string:
-# it handles interpolation, the inline classes (`{.file}`, `{.fn}`, `{.val}`,
-# ...), pluralization (`{?s}`, `{cli::qty()}`) and collapsing (`{.or}`), but it
-# drops the names of a `cli` bullet vector and glues the elements into one
-# run-on line, and it does not process the `\\` end-of-line continuation. So a
-# message carrying `"i"` / `"x"` / `"!"` / `"*"` bullets needs
-# `cli::format_message()`; a single-line message uses `cliFormat()` and, when
-# long, keeps its template on one physical line.
+# An entry is built one of three ways, and the choice is capability, not taste.
+#
+#   * `cliFormat()` by default, for a single-line message. It is
+#     `cli::format_inline(paste(..., sep = "\n"))`, so it formats one inline
+#     string: interpolation, the inline classes (`{.file}`, `{.fn}`, `{.val}`,
+#     ...), pluralization (`{?s}`, `{cli::qty()}`) and collapsing (`{.or}`) all
+#     work. A long template still wraps across physical lines with a trailing
+#     `\\`; `cliFormat()` leaves that continuation in the string it returns, and
+#     the raising `cli_abort()` / `cli_warn()` resolves it on its own pass.
+#   * `cli::format_message()` when the message carries `"i"` / `"x"` / `"!"` /
+#     `"*"` bullets. This is the one thing `cliFormat()` cannot express: it drops
+#     the names of a `cli` vector and glues the elements into one run-on line.
+#   * The raw templated vector, returned unglued, when a value interpolated into
+#     it may itself contain `{` or `}`. Both helpers above glue eagerly, and the
+#     raising call then glue-parses the finished string a second time, so such a
+#     value would be evaluated as an R expression. Returning the template
+#     instead means the raising call interpolates exactly once, from its own
+#     frame, which is why those entries name their parameters after the
+#     variables bound at the raising site (`restoreDirNotEmpty()`'s `dir`,
+#     `unsupportedSchemaVersion()`'s `version`).
 #
 # One known exception: the project validation framework (`R/validation.R` and
 # the per-section validators in `R/scenarios.R`, `R/individuals.R`,
@@ -137,8 +146,13 @@ messages$fileNotFound <- function(filePath) {
   cliFormat("File not found: {.file {filePath}}")
 }
 
+# Raised from `Project$.readJson()`. Unglued for the same reason as
+# `legacySnapshotNotLoadable()` below: a hand-edited `schemaVersion` containing
+# `{` or `}` would be glue-parsed a second time by the raising `cli_abort()` and
+# fail with a glue error instead of this message. The value is bound under
+# `version` in the raising frame.
 messages$unsupportedSchemaVersion <- function(version) {
-  cliFormat("Unsupported schemaVersion: {.val {version}}. Expected {.val 2.0}.")
+  "Unsupported schemaVersion: {.val {version}}. Expected {.val 2.0}."
 }
 
 messages$invalidPathArgument <- function() {
@@ -444,6 +458,20 @@ messages$legacySnapshotNotLoadable <- function(jsonPath) {
   )
 }
 
+# Unglued, so `cli_abort()` renders these as real bullets rather than re-wrapping
+# one pre-formatted string with the glyphs inline. `sheet` and `columns` are bound
+# in `.requireExcelColumns()`, the raising frame.
+messages$excelSheetMissingRequiredColumns <- function(sheet, columns) {
+  c(
+    "x" = "The {.val {sheet}} sheet is missing \\
+    {cli::qty(columns)}{?a required column/required columns}: \\
+    {.field {columns}}.",
+    "i" = "Add {cli::qty(columns)}{?it/them} to the workbook, or re-export the \\
+    project with {.fn exportProjectToExcel} to get a sheet with the columns \\
+    this version reads."
+  )
+}
+
 messages$legacySnapshotMalformedSheet <- function() {
   c(
     "x" = "This previous-version project snapshot is malformed and cannot be \\
@@ -541,7 +569,8 @@ messages$outputPathIdCollision <- function(id, existingPath, newPath) {
 
 messages$outputPathAliasIgnored <- function(userAlias, registeredId, path) {
   cliFormat(
-    "Output path alias {.val {userAlias}} ignored: path {.val {path}} is already registered as {.val {registeredId}}."
+    "Output path alias {.val {userAlias}} ignored: \\
+    path {.val {path}} is already registered as {.val {registeredId}}."
   )
 }
 

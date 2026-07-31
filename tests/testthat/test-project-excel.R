@@ -875,6 +875,18 @@ test_that("the individuals and populations import stay quiet on a sheet with no 
   expect_no_warning(populations <- .parseExcelPopulations(popDf))
   expect_null(populations[[1]]$proteinOntogenies)
 
+  # A missing *required* column is a different case: it has no silent reading,
+  # and staying quiet about it would surface later as a zero-length value that
+  # names nothing.
+  expect_snapshot(
+    error = TRUE,
+    .parseExcelIndividuals(dplyr::tibble(Species = "Human", Gender = "MALE"))
+  )
+  expect_snapshot(
+    error = TRUE,
+    .parseExcelPopulations(dplyr::tibble(species = "Human"))
+  )
+
   # A sheet that does carry the column still reads its value.
   withOntogenies <- dplyr::tibble(
     IndividualId = "Indiv2",

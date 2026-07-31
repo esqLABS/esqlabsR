@@ -2136,6 +2136,11 @@ projectStatus <- function(project, silent = FALSE) {
 #' @keywords internal
 #' @noRd
 .parseExcelIndividuals <- function(indivDf) {
+  .requireExcelColumns(
+    indivDf,
+    c("IndividualId", "Species", "Population"),
+    "IndividualBiometrics"
+  )
   individuals <- list()
   hasParameterSets <- "ParameterSets" %in% names(indivDf)
   for (i in seq_len(nrow(indivDf))) {
@@ -2160,7 +2165,7 @@ projectStatus <- function(project, silent = FALSE) {
       proteinOntogenies = .naToNull(as.character(row[["Protein Ontogenies"]]))
     )
     if (hasParameterSets) {
-      raw <- row$ParameterSets
+      raw <- row[["ParameterSets"]]
       if (!is.null(raw) && !is.na(raw) && nchar(as.character(raw)) > 0) {
         indiv$parameterSets <- as.list(
           .parseCommaListToArray(as.character(raw))
@@ -2178,6 +2183,11 @@ projectStatus <- function(project, silent = FALSE) {
 #' @keywords internal
 #' @noRd
 .parseExcelPopulations <- function(popDf) {
+  .requireExcelColumns(
+    popDf,
+    c("PopulationName", "species", "population"),
+    "Demographics"
+  )
   populations <- list()
   for (i in seq_len(nrow(popDf))) {
     row <- popDf[i, ]
@@ -3411,6 +3421,29 @@ projectStatus <- function(project, silent = FALSE) {
     return(NA)
   }
   values[[i]]
+}
+
+#' Abort when a parsed sheet lacks a column the parser requires
+#'
+#' An absent optional column is normal and read as `NULL`. An absent *required*
+#' one has no such reading: the field would come out zero-length and fail later
+#' on a value that names nothing, so name the sheet and the columns here instead.
+#'
+#' @param df A parsed sheet.
+#' @param required Column names the parser requires.
+#' @param sheet Sheet name, for the message.
+#' @returns `df`, invisibly.
+#' @keywords internal
+#' @noRd
+.requireExcelColumns <- function(df, required, sheet) {
+  # The workbook is at fault, not the function that read it, and this helper's
+  # name means nothing to the reader; attribute the abort to no function.
+  rlang::local_error_call(NULL)
+  columns <- setdiff(required, names(df))
+  if (length(columns) > 0L) {
+    cli::cli_abort(messages$excelSheetMissingRequiredColumns(sheet, columns))
+  }
+  invisible(df)
 }
 
 #' Convert NA to NULL for JSON serialization
