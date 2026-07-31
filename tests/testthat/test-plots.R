@@ -365,6 +365,47 @@ test_that(".joinPlotIDs / .splitPlotIDs round-trip delimiter-bearing ids", {
   expect_identical(.splitPlotIDs(""), character())
 })
 
+# Validation ----
+
+test_that(".validatePlots names the closest existing id for a dangling reference", {
+  result <- .validatePlots(
+    dataCombined = list(aciclovir_pvb = list()),
+    plotConfig = list(
+      p1 = list(
+        plotId = "p1",
+        dataCombinedId = "aciclovir_pbv",
+        plotType = "individual"
+      )
+    ),
+    plotGrids = list(grid = list(plotGridId = "grid", plotIds = "p2"))
+  )
+
+  expect_snapshot(cat(
+    vapply(result$critical_errors, function(e) e$message, character(1)),
+    sep = "\n"
+  ))
+})
+
+test_that(".validatePlots reports an empty reference, which the missing-field loop lets through", {
+  # `""` is not `NULL`, so the required-field loop accepts it. It must still be
+  # reported here: `createPlots()` aborts on it, and nothing else flags it.
+  result <- .validatePlots(
+    dataCombined = list(aciclovir_pvb = list()),
+    plotConfig = list(
+      p1 = list(plotId = "p1", dataCombinedId = "", plotType = "individual")
+    ),
+    plotGrids = list(grid = list(plotGridId = "grid", plotIds = "p1, "))
+  )
+
+  messages <- vapply(
+    result$critical_errors,
+    function(e) e$message,
+    character(1)
+  )
+  expect_true(any(grepl("unknown dataCombinedId", messages)))
+  expect_true(any(grepl("unknown plotIds", messages)))
+})
+
 test_that("removePlot removes a vector of ids in one pass and warns on misses", {
   project <- exampleProject()
   addDataCombined(

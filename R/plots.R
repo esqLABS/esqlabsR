@@ -240,6 +240,10 @@ print.DataCombined <- function(x, ...) {
 #'     in `createPlots()`. This check also runs when the plot list is empty
 #'     (every referenced id is then unknown).
 #'
+#' Both reference checks match a reference to its definition exactly, the same
+#' way `createPlots()` resolves it, and report an unresolved reference with the
+#' closest existing id.
+#'
 #' Cross-section references that escape these sections (dataCombined ->
 #' scenarios) are validated in `.validateCrossReferences()`.
 #'
@@ -319,16 +323,23 @@ print.DataCombined <- function(x, ...) {
       plotConfig,
       function(p) p$dataCombinedId
     ))
+    dataCombinedKeys <- names(dataCombined %||% list())
+    # `setdiff()` rather than `.danglingRefs()`: `createPlots()` resolves a
+    # plot's `dataCombinedId` by exact lookup, so a reference this reports as
+    # resolved has to be one the build can actually find. It also keeps an
+    # empty-string reference reportable, which the missing-field loop above
+    # does not catch (`""` is not `NULL`).
     invalidDataCombinedRefs <- setdiff(
       referencedDataCombined,
-      names(dataCombined %||% list())
+      dataCombinedKeys
     )
     if (length(invalidDataCombinedRefs) > 0) {
       result$addCriticalError(
         "Invalid Reference",
         paste0(
           "plotConfiguration references unknown dataCombinedId: ",
-          paste(invalidDataCombinedRefs, collapse = ", ")
+          paste(invalidDataCombinedRefs, collapse = ", "),
+          .suggestSuffixMulti(invalidDataCombinedRefs, dataCombinedKeys)
         )
       )
     }
@@ -346,11 +357,14 @@ print.DataCombined <- function(x, ...) {
   # is empty (the state after removing the last plot): every referenced id is
   # then unknown.
   if (length(plotGrids) > 0) {
+    # A plot with no `plotId` already raised its own critical error above; drop
+    # it here so it cannot be offered as a `did you mean 'NA'` suggestion.
     knownPlotIds <- vapply(
       plotConfig,
       function(p) p$plotId %||% NA_character_,
       character(1)
     )
+    knownPlotIds <- knownPlotIds[!is.na(knownPlotIds)]
     allGridIds <- unique(unlist(lapply(
       plotGrids,
       function(g) .splitPlotIDs(g$plotIds)
@@ -361,7 +375,8 @@ print.DataCombined <- function(x, ...) {
         "Invalid Reference",
         paste0(
           "plotGrids references unknown plotIds: ",
-          paste(invalidGridRefs, collapse = ", ")
+          paste(invalidGridRefs, collapse = ", "),
+          .suggestSuffixMulti(invalidGridRefs, knownPlotIds)
         )
       )
     }
