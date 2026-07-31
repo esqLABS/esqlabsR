@@ -134,9 +134,10 @@ saveProject <- function(project) {
   # write-if-different, orphan-reconciled tree and the `containerOnly = TRUE`
   # container in one pass, which is exactly `saveProject()`'s contract. Pass the
   # path the project was loaded from so the save updates that container in place;
-  # a project loaded from a legacy-named container (`ProjectConfiguration.json`,
-  # or the `<xlsx-stem>.json` an Excel import produced) must not fork a stray
-  # `Project.json` next to it.
+  # a project loaded from a container that is not called `Project.json` (one an
+  # earlier version wrote as `ProjectConfiguration.json`, or one named through
+  # the Excel import's `projectFileName`) must not fork a stray `Project.json`
+  # next to it.
   .writeProjectTree(
     self,
     self$info$projectDirPath,
@@ -286,12 +287,12 @@ isProjectInitialized <- function(destination = ".") {
 # The paths of every project container directly inside `destination`: a `.json`
 # file declaring `schemaVersion` `"2.0"`. The file name is not the
 # discriminator, because a container is not always called `Project.json`: an
-# Excel import names it after the workbook it read (`MyStudy.xlsx` becomes
-# `MyStudy.json`), and a project written by an earlier version carries
-# `ProjectConfiguration.json`. The declared schema version is what `Project`
-# accepts when loading, so it is what decides here too. A `.json` that does not
-# parse, or that declares no schema version (a data file, a PK-Sim snapshot, a
-# pre-6.0.0 monolithic snapshot), is not a container.
+# Excel import can be told to name it something else
+# (`projectFileName = "MyStudy"`), and a project written by an earlier version
+# carries `ProjectConfiguration.json`. The declared schema version is what
+# `Project` accepts when loading, so it is what decides here too. A `.json` that
+# does not parse, or that declares no schema version (a data file, a PK-Sim
+# snapshot, a pre-6.0.0 monolithic snapshot), is not a container.
 #
 # The container's other machine-managed field, `esqlabsRVersion`, deliberately
 # plays no part: saving a project passes through whatever version its container

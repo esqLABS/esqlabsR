@@ -30,6 +30,17 @@
       x "Aciclovir_PVB" and "aciclovir_pvb" -> "aciclovir_pvb"
       i Two distinct ids that canonicalize to the same id are ambiguous; rename so they differ by more than case or forbidden characters.
 
+# importProjectFromExcel rejects a projectFileName that is a path
+
+    Code
+      importProjectFromExcel(testProjectExcelPath(), outputDir = withr::local_tempdir(),
+      silent = TRUE, projectFileName = "../Project.json")
+    Condition
+      Error in `importProjectFromExcel()`:
+      ! `projectFileName` must be a single filename without path separators.
+      x The name "../Project.json" contains a path separator or is "." / "..", so it could write outside `outputDir`.
+      i Pass a single filename segment, for example "Project.json" (the default) or "MyStudy"; a .json extension is appended when the name does not already end in one.
+
 # importProjectFromExcel warns naming each renamed duplicate parameter set
 
     Code

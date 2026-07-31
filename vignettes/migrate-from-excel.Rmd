@@ -44,7 +44,7 @@ The canonical 6.0.0 vocabulary (Project, Project file, Excel project, Scenario, 
 
 Two functions form the bridge between an Excel project and a JSON project.
 
-* `importProjectFromExcel(projectConfigPath, outputDir, silent)` reads an Excel project and writes a v2.0 JSON project: a `Project.json` file and the `definitions/` tree of one-file-per-definition files alongside it. This is the one-way migration entry point. It returns, invisibly, the path to the `Project.json` it wrote.
+* `importProjectFromExcel(projectConfigPath, outputDir, silent)` reads an Excel project and writes a v2.0 JSON project: a `Project.json` file and the `definitions/` tree of one-file-per-definition files alongside it. This is the one-way migration entry point. It returns, invisibly, the path to the `Project.json` it wrote. The project file is named `Project.json` whatever the Excel file was called; pass `projectFileName` to choose another name.
 
 * `exportProjectToExcel(project, outputDir, silent)` is the reverse: it writes the Excel workbooks back out from a loaded `Project`. It is mainly useful if you still need to hand a colleague an Excel project, or to compare the two forms.
 
@@ -52,7 +52,7 @@ Once you have loaded the JSON project, `projectStatus(project)` reports whether 
 
 ## Step 1: run the import
 
-Point `importProjectFromExcel()` at your project's top-level Excel file. If your project predates the `Project.xlsx` rename, that file is named `ProjectConfiguration.xlsx`; pass whichever name your project uses.
+Point `importProjectFromExcel()` at your project's top-level Excel file. If your project predates the `Project.xlsx` rename, that file is named `ProjectConfiguration.xlsx`; pass whichever name your project uses. Either way the import writes a `Project.json`, the same name a project created from scratch carries.
 
 ```{r import}
 jsonPath <- importProjectFromExcel(
@@ -80,7 +80,7 @@ project <- loadProject(jsonPath)
 
 `loadProject()` already runs a quick check for the most common cross-reference problems (for example a scenario that points at an individual or population that no longer exists) and warns about them, but it still returns the project so you can inspect it. For the full picture, validate explicitly.
 
-The imported project is a normal tree project: every authoring function (`addScenario()`, `setIndividual()`, and so on) edits the project in memory, and `saveProject(project)` reconciles those edits to the definition files under `definitions/`. If your project kept the legacy `ProjectConfiguration.xlsx` name, the import writes `ProjectConfiguration.json` and `saveProject()` updates that same file; the container keeps the name you imported under.
+The imported project is a normal tree project: every authoring function (`addScenario()`, `setIndividual()`, and so on) edits the project in memory, and `saveProject(project)` reconciles those edits to the definition files under `definitions/`. To label the project file after the study rather than by the generic name, pass `projectFileName` (`importProjectFromExcel(..., projectFileName = "MyStudy")` writes `MyStudy.json`); `saveProject()` then updates that same file, since a project always saves back to the file it was loaded from. Note that this names the project file only: the `definitions/` tree and the copied `Models/` and `Data/` folders beside it are shared by whatever sits in `outputDir`, so migrating several Excel projects means giving each one its own `outputDir`, not just its own project file name.
 
 ## Step 3: validate what carried over
 

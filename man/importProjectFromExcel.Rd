@@ -9,7 +9,8 @@ importProjectFromExcel(
   outputDir = NULL,
   overwrite = FALSE,
   silent = FALSE,
-  copyAssets = TRUE
+  copyAssets = TRUE,
+  projectFileName = "Project.json"
 )
 }
 \arguments{
@@ -37,18 +38,31 @@ makes the imported project runnable where it was written. Defaults to
 \code{TRUE}. Set it to \code{FALSE} when only the definitions are wanted and the
 assets would be wasted work, as when the import feeds a throwaway
 comparison snapshot.}
+
+\item{projectFileName}{Name of the project file the import writes in
+\code{outputDir}. Defaults to \code{"Project.json"}, the same name \code{\link[=initProject]{initProject()}}
+and \code{\link[=loadProject]{loadProject()}} use, so an imported project opens like any other. Pass
+another name (for example \code{"MyStudy"}, or \code{"MyStudy.json"}) to label the
+project file after the study rather than by the generic name; a \code{.json}
+extension is appended when the name does not already end in one. It must be
+a plain filename, not a path.
+
+This names the project file only. The \verb{definitions/} tree beside it, and
+the copied \verb{Models/} and \verb{Data/} folders, are shared by whatever is in
+\code{outputDir}, so a second import into the same folder still replaces the
+first project rather than sitting alongside it. Give each project its own
+\code{outputDir}.}
 }
 \value{
-Invisibly returns the path to the created project file (the
-\code{Project.json}).
+Invisibly returns the path to the created project file.
 }
 \description{
 Reads all Excel configuration files in an esqlabsR project and
-converts them to the JSON project format: a project file (named after the
-Excel file, e.g. \code{Project.xlsx} becomes \code{Project.json}) plus one file per
-definition in the \verb{definitions/} folder. The result is a ready-to-use
-project — \code{\link[=loadProject]{loadProject()}} can open it directly. This is the migration path
-from Excel-based projects to the JSON-primary workflow.
+converts them to the JSON project format: a \code{Project.json} project file plus
+one file per definition in the \verb{definitions/} folder. The result is a
+ready-to-use project — \code{loadProject("<outputDir>/Project.json")} can open it
+directly. This is the migration path from Excel-based projects to the
+JSON-primary workflow.
 
 The \code{configurationsFolder} and the per-section workbook filenames are read
 from the Excel file and must stay under the project folder: a value that

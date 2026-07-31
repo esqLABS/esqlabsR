@@ -74,7 +74,7 @@ snapshotProject <- function(
   # delete) an unrelated `.esqlabsR`. Reject it: both an explicit `name` and a
   # `project$info$name`-derived default are checked, so a project whose name contains
   # a separator aborts predictably rather than silently escaping.
-  .validateSnapshotStem(stem)
+  .validateFilenameSegment(stem, messages$invalidSnapshotName)
 
   # A snapshot IS a `.esqlabsR`; force the extension regardless of what the
   # caller included (idempotent for a `.esqlabsR` stem).
@@ -233,28 +233,4 @@ restoreProject <- function(snapshot, dir = ".", overwrite = FALSE) {
   }
 
   restored
-}
-
-# Reject a snapshot filename stem that could escape `dir`. The stem is joined to
-# `dir` via `file.path()`, so a stem that is not a single filename segment (it
-# holds a `/` or `\` separator, or is `"."` / `".."`) could write outside `dir`
-# and clobber an unrelated `.esqlabsR`. Both an explicit `name` and the
-# `project$info$name`-derived default are validated, so a project whose name contains
-# a separator aborts predictably rather than silently escaping. A stem must be a
-# single non-empty, non-NA character scalar.
-#
-# @keywords internal
-# @noRd
-.validateSnapshotStem <- function(stem) {
-  if (
-    !is.character(stem) ||
-      length(stem) != 1L ||
-      is.na(stem) ||
-      !nzchar(stem) ||
-      grepl("[/\\]", stem) ||
-      stem %in% c(".", "..")
-  ) {
-    cli::cli_abort(messages$invalidSnapshotName(stem))
-  }
-  invisible(NULL)
 }

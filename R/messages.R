@@ -155,13 +155,28 @@ messages$snapshotFileExists <- function(path) {
   )
 }
 
-messages$invalidSnapshotName <- function(stem) {
+# The `{name}` placeholder is the validated value, not `snapshotProject()`'s
+# `name` argument (`{.arg name}` above renders that literally). It is spelled
+# `name` because `.validateFilenameSegment()` raises this from a frame where the
+# value is bound under that name.
+messages$invalidSnapshotName <- function(name) {
   c(
     "{.arg name} must be a single filename stem without path separators.",
-    "x" = "The stem {.val {stem}} contains a path separator or is {.val .} / \\
+    "x" = "The stem {.val {name}} contains a path separator or is {.val .} / \\
     {.val ..}, so it could write outside {.arg dir}.",
     "i" = "Pass a single filename segment (no path separator and not {.val .} / \\
     {.val ..}), or leave {.arg name} as {.code NULL} for a timestamped default."
+  )
+}
+
+messages$invalidProjectFileName <- function(name) {
+  c(
+    "{.arg projectFileName} must be a single filename without path separators.",
+    "x" = "The name {.val {name}} contains a path separator or is {.val .} / \\
+    {.val ..}, so it could write outside {.arg outputDir}.",
+    "i" = "Pass a single filename segment, for example {.val Project.json} \\
+    (the default) or {.val MyStudy}; a {.field .json} extension is appended \\
+    when the name does not already end in one."
   )
 }
 
@@ -531,11 +546,20 @@ messages$restoredProjectConfiguration <- function(inputFile, outputFile) {
   )
 }
 
-# The Excel axis of `projectStatus()`: with no `Project.xlsx` side-car there is
-# nothing to compare the in-memory project against.
-messages$syncNoExcel <- function() {
+# The Excel axis of `projectStatus()`: with no Excel side-car there is nothing
+# to compare the in-memory project against. The side-car is derived from the
+# project file's name, so name the file that was looked for; a project with no
+# folder on disk has no name to derive one from, hence the pathless variant.
+messages$syncNoExcel <- function(excelPath = NULL) {
+  if (is.null(excelPath)) {
+    return(cli::format_inline(
+      "No Excel configuration file found; nothing to compare."
+    ))
+  }
   cli::format_inline(
-    "No Excel configuration file ({.file Project.xlsx}) found; nothing to compare."
+    "No Excel configuration file ({.file {fs::path_file(excelPath)}}) found \\
+    next to the project; nothing to compare. Write one with \\
+    {.fn exportProjectToExcel}."
   )
 }
 
