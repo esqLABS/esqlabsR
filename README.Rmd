@@ -51,7 +51,16 @@ To get started with the esqlabsR package, please follow the [Get Started tutoria
 
 ### Install the package
 
-You can install the package by running:
+`{esqlabsR}` depends on OSP packages that are not on CRAN. They are published on the [OSP R-universe](https://open-systems-pharmacology.r-universe.dev), so add it to your repositories first:
+
+```{r, eval=FALSE}
+options(repos = c(
+  OSP = "https://open-systems-pharmacology.r-universe.dev",
+  getOption("repos")
+))
+```
+
+You can then install the package by running:
 
 
 ```{r, eval=FALSE}
