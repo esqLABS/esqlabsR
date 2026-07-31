@@ -468,7 +468,7 @@ print.Scenario <- function(x, ...) {
   # This subsumes the old case-insensitive-collision guard: two keys differing
   # only in case cannot both be canonical, so they can never both reach the
   # tree.
-  canonical <- suppressWarnings(.canonicalizeId(name))
+  canonical <- .silentlyCanonicalized(.canonicalizeId(name))
   if (!identical(name, canonical)) {
     cli::cli_abort(c(
       "Scenario id {.val {name}} is not a canonical definition-file id.",

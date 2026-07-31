@@ -85,6 +85,6 @@
       out <- .canonicalizeIdRef("Ind{Organ}")
     Condition
       Warning:
-      Canonicalized 1 referenced id to a safe form:
+      Canonicalized 1 id to a safe form:
       * "Ind{Organ}" -> "ind{organ}"
 

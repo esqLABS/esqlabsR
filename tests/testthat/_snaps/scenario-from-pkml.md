@@ -31,7 +31,7 @@
       parameterSets = "DoesNotExist")
     Condition
       Warning:
-      Canonicalized 1 referenced id to a safe form:
+      Canonicalized 1 id to a safe form:
       * "DoesNotExist" -> "doesnotexist"
       Error in `project$createScenariosFromPKML()`:
       ! Cannot add scenario "seeded":
@@ -44,7 +44,7 @@
       application = "NoSuchProtocol")
     Condition
       Warning:
-      Canonicalized 1 referenced id to a safe form:
+      Canonicalized 1 id to a safe form:
       * "NoSuchProtocol" -> "nosuchprotocol"
       Error in `project$createScenariosFromPKML()`:
       ! Cannot add scenario "seeded":

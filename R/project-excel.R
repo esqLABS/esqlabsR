@@ -1197,7 +1197,7 @@ projectStatus <- function(project, silent = FALSE) {
       # per changed id; an Excel import renames in bulk and the migrate guide
       # documents that, so the per-id warning is suppressed while the
       # collision abort is allowed to propagate.
-      names(section) <- suppressWarnings(.canonicalizeId(nms))
+      names(section) <- .silentlyCanonicalized(.canonicalizeId(nms))
     }
     section
   }

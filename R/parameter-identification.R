@@ -1485,7 +1485,7 @@ removePITask <- function(project, id) {
   }
   # Otherwise treat it as an id, canonicalized the same way the definition was
   # filed (silent: a literal path would already have matched above).
-  canonical <- suppressWarnings(.canonicalizeIdRef(value))
+  canonical <- .silentlyCanonicalized(.canonicalizeIdRef(value))
   if (canonical %in% ids) {
     return(canonical)
   }

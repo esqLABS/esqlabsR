@@ -148,6 +148,45 @@ test_that("a public authoring call aborts on a case-differing id collision", {
   expect_identical(names(project$definitions$individuals), before)
 })
 
+# The point of the collector: however many ids one authoring call rewrites, the
+# user hears about it once. Without it an `add*()` over a project of
+# non-canonical ids emitted one warning for the definition's own id and another
+# for each batch of references, which is the warning storm authoring over a
+# migrated project used to produce.
+test_that("an authoring call reports every id it canonicalizes in one warning", {
+  project <- testProject()
+  warnings <- character()
+  withCallingHandlers(
+    addScenario(
+      project,
+      id = "New Scenario",
+      modelFile = "Aciclovir.pkml",
+      individual = "Indiv1",
+      outputPaths = "Aciclovir PVB"
+    ),
+    warning = function(w) {
+      warnings <<- c(warnings, conditionMessage(w))
+      invokeRestart("muffleWarning")
+    }
+  )
+
+  expect_length(warnings, 1L)
+  # Precision is kept: the one warning names each rewritten value, the
+  # definition's own id and both references alike.
+  for (rewritten in c("New Scenario", "Indiv1", "Aciclovir PVB")) {
+    expect_match(warnings[[1L]], rewritten, fixed = TRUE)
+  }
+})
+
+test_that("a canonicalization done only to compare or re-key stays silent", {
+  # `.silentlyCanonicalized()` covers the callers that canonicalize as an
+  # internal step; the sink must drop those pairs rather than hold them for a
+  # later flush, which is what plain `suppressWarnings()` fails to do.
+  expect_no_warning(
+    .collectCanonicalizedRefs(.silentlyCanonicalized(.canonicalizeId("Quiet")))
+  )
+})
+
 # An id over the filesystem single-component byte limit becomes an unwritable
 # filename; bound it up front with a clear message rather than letting the
 # eventual file write fail with an opaque `cannot open the connection`.

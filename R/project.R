@@ -1172,7 +1172,15 @@ Project <- R6::R6Class(
     # `do.call(addIndividual, list(.call = x))`); it would match `.call` twice
     # and R aborts with "matched by multiple actual arguments".
     .impl = function(fn, ...) {
-      fn(self, private, ..., .call = rlang::caller_env(2))
+      # Resolve the attribution call as its own statement, before the collector
+      # wraps the dispatch: `caller_env(2)` is read from this method's frame
+      # either way, and naming it here keeps that independent of when the wrapped
+      # expression is forced.
+      call <- rlang::caller_env(2)
+      # One canonicalization collector per authoring call, so a call over
+      # non-canonical ids reports the definition's own id and every reference it
+      # names in a single warning instead of one per id.
+      .collectCanonicalizedRefs(fn(self, private, ..., .call = call))
     },
 
     # Read one definition section. Returns the plain backing list (NOT wrapped

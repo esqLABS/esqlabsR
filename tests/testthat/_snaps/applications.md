@@ -14,7 +14,7 @@
       setApplicationParameterSets(project, "aciclovir_iv_250mg", "Ghost")
     Condition
       Warning:
-      Canonicalized 1 referenced id to a safe form:
+      Canonicalized 1 id to a safe form:
       * "Ghost" -> "ghost"
       Error in `setApplicationParameterSets()`:
       ! `parameterSets` references undefined parameter sets:

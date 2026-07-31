@@ -66,7 +66,7 @@
       setIndividual(project, "indiv1", parameterSets = "Ghost")
     Condition
       Warning:
-      Canonicalized 1 referenced id to a safe form:
+      Canonicalized 1 id to a safe form:
       * "Ghost" -> "ghost"
       Error in `setIndividual()`:
       ! `parameterSets` references undefined parameter sets:
@@ -78,7 +78,7 @@
       setIndividual(project, "indiv1", parameterSets = "Ghost")
     Condition
       Warning:
-      Canonicalized 1 referenced id to a safe form:
+      Canonicalized 1 id to a safe form:
       * "Ghost" -> "ghost"
       Error in `setIndividual()`:
       ! `parameterSets` references undefined parameter sets:
