@@ -488,6 +488,34 @@ messages$legacySnapshotNotLoadable <- function(jsonPath) {
   )
 }
 
+# Raised from `Project$.readJson()` when it is handed a folder that holds no
+# project container. Naming the mistake is the point: a folder is the natural
+# second guess after a file, and letting it through produced a raw JSON parse
+# error about the folder itself. Unglued so a folder path containing `{` or `}`
+# is interpolated exactly once, by the raising call, where `folder` is bound.
+messages$noProjectContainerInFolder <- function(folder) {
+  c(
+    "x" = "No esqlabsR project found in the folder {.file {folder}}.",
+    "i" = "A project is a JSON container file (usually {.file Project.json}) \\
+    with a {.file definitions/} folder beside it.",
+    "i" = "Turn a pre-6.0.0 Excel project into one with \\
+    {.fn importProjectFromExcel}, or create a new project with \\
+    {.fn initProject}."
+  )
+}
+
+# Raised from `Project$.readJson()` when a folder holds several project
+# containers, so there is no single project to open. `folder` and `names` are
+# bound in the raising frame; unglued for the same reason as above.
+messages$multipleProjectContainersInFolder <- function(folder, names) {
+  c(
+    "x" = "The folder {.file {folder}} holds {length(names)} project files: \\
+    {.file {names}}.",
+    "i" = "Name the one to open, for example \\
+    {.code loadProject(file.path(folder, \"{names[[1]]}\"))}."
+  )
+}
+
 # Unglued, so `cli_abort()` renders these as real bullets rather than re-wrapping
 # one pre-formatted string with the glyphs inline. `sheet` and `columns` are bound
 # in `.requireExcelColumns()`, the raising frame.

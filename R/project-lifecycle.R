@@ -11,8 +11,11 @@
 #'   configuration mistakes surface immediately, but loading still succeeds.
 #'   Use [validateProject()] for a full report.
 #'
-#' @param path Path to the `Project.json` file. Defaults to
-#'   `Project.json` in the working directory.
+#' @param path Path to the project's JSON file, or to the folder holding it.
+#'   Given a folder, the project file inside it is opened: `Project.json` when
+#'   it is there, otherwise the single project file the folder carries, so a
+#'   project named through `importProjectFromExcel(projectFileName = )` opens
+#'   too. Defaults to the working directory.
 #'
 #' @returns Object of type `Project`
 #' @export
@@ -41,11 +44,14 @@
 #' project <- loadProject("Project.json")
 #' results <- runScenarios(project)
 #'
+#' # A project folder works too, whatever its project file is called.
+#' project <- loadProject("path/to/myProject")
+#'
 #' # Edits stay in memory until you save.
 #' addOutputPath(project, "x", "Organism|A|Concentration in container")
 #' saveProject(project)
 #' }
-loadProject <- function(path = "Project.json") {
+loadProject <- function(path = ".") {
   project <- Project$new(projectFilePath = path)
   .warnOnCrossReferenceErrors(project)
   project
@@ -282,6 +288,56 @@ isProjectInitialized <- function(destination = ".") {
   }
 
   length(.projectContainerPaths(destination)) > 0L
+}
+
+# Resolve what a caller handed to `loadProject()` / `Project$new()` to the
+# absolute path of one project container file.
+#
+# A path to a file is returned as given (absolute), so naming a container
+# directly always works. A path to a FOLDER is resolved to the container inside
+# it, which is what makes both `loadProject()` with no argument and
+# `loadProject("<projectFolder>")` open a project: `fs::file_exists()` is true
+# for a directory, so without this a folder would reach the JSON reader and fail
+# as unparseable JSON.
+#
+# A container is not always called `Project.json` (an Excel import can be told
+# to name it, and an earlier version wrote `ProjectConfiguration.json`), so the
+# folder is scanned with the same `.projectContainerPaths()` predicate
+# `isProjectInitialized()` uses. `Project.json` still wins when it is there, so
+# a project that also carries a differently-named container (a leftover, or a
+# second study file) opens the canonical one rather than a guess.
+#
+# @keywords internal
+# @noRd
+.resolveProjectContainerPath <- function(path) {
+  # What this aborts on is a property of the path, not of the call that passed
+  # it, and the path arrives from several entrypoints (`loadProject()`,
+  # `Project$new()`, `ProjectConfiguration()`). Attribute the abort to no
+  # function at all rather than to this helper, whose name means nothing to the
+  # reader, exactly as `.readJson()` does.
+  rlang::local_error_call(NULL)
+  path <- fs::path_abs(path)
+  if (!fs::dir_exists(path)) {
+    return(path)
+  }
+
+  canonical <- file.path(path, "Project.json")
+  if (fs::file_exists(canonical)) {
+    return(fs::path_abs(canonical))
+  }
+
+  containers <- .projectContainerPaths(path)
+  if (length(containers) == 1L) {
+    return(fs::path_abs(containers[[1]]))
+  }
+  # `folder` / `names` are bound here because both catalog entries leave their
+  # placeholders unglued, so the raising call interpolates them exactly once.
+  folder <- path
+  if (length(containers) == 0L) {
+    cli::cli_abort(messages$noProjectContainerInFolder(folder))
+  }
+  names <- fs::path_file(containers)
+  cli::cli_abort(messages$multipleProjectContainersInFolder(folder, names))
 }
 
 # The paths of every project container directly inside `destination`: a `.json`

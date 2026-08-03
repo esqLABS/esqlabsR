@@ -186,7 +186,8 @@ empty in-memory project when called with no arguments.
     \if{html}{\out{<div class="arguments">}}
     \describe{
       \item{\code{projectFilePath}}{A string representing the path to the project
-JSON file.}
+JSON file, or to the folder holding it (see \code{\link[=loadProject]{loadProject()}} for how a
+folder is resolved).}
     }
     \if{html}{\out{</div>}}
   }

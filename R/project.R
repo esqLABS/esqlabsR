@@ -235,7 +235,8 @@ Project <- R6::R6Class(
     #'   empty in-memory project when called with no arguments.
     #'
     #' @param projectFilePath A string representing the path to the project
-    #'   JSON file.
+    #'   JSON file, or to the folder holding it (see [loadProject()] for how a
+    #'   folder is resolved).
     initialize = function(projectFilePath = character()) {
       private$.validatedSinceMutation <- FALSE
       if (is.character(projectFilePath) && length(projectFilePath) == 0L) {
@@ -1378,7 +1379,7 @@ Project <- R6::R6Class(
       # `reloadProject()`). Attribute those aborts to no function at all rather
       # than to this private method, whose name means nothing to the reader.
       rlang::local_error_call(NULL)
-      jsonPath <- fs::path_abs(jsonPath)
+      jsonPath <- .resolveProjectContainerPath(jsonPath)
       if (!fs::file_exists(jsonPath)) {
         cli::cli_abort(messages$fileNotFound(jsonPath))
       }

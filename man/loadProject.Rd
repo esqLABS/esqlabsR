@@ -4,11 +4,14 @@
 \alias{loadProject}
 \title{Load a project from a JSON configuration file}
 \usage{
-loadProject(path = "Project.json")
+loadProject(path = ".")
 }
 \arguments{
-\item{path}{Path to the \code{Project.json} file. Defaults to
-\code{Project.json} in the working directory.}
+\item{path}{Path to the project's JSON file, or to the folder holding it.
+Given a folder, the project file inside it is opened: \code{Project.json} when
+it is there, otherwise the single project file the folder carries, so a
+project named through \code{importProjectFromExcel(projectFileName = )} opens
+too. Defaults to the working directory.}
 }
 \value{
 Object of type \code{Project}
@@ -45,6 +48,9 @@ Excel files with \code{\link[=projectStatus]{projectStatus()}}.
 \dontrun{
 project <- loadProject("Project.json")
 results <- runScenarios(project)
+
+# A project folder works too, whatever its project file is called.
+project <- loadProject("path/to/myProject")
 
 # Edits stay in memory until you save.
 addOutputPath(project, "x", "Organism|A|Concentration in container")
