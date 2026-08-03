@@ -7,6 +7,15 @@
       Error in `.validateEntitiesExist()`:
       ! `<caller>`: no entity exists for path "Organism|NoSuchContainer|NoSuchParameter" located under container <testscenario>!
 
+# .resolveScenarioPopulation warns when one id resolves two ways in a run
+
+    Code
+      invisible(.resolveScenarioPopulation(project$definitions$scenarios[[
+        "populationscenariofromcsv"]], project, cache))
+    Condition
+      Warning:
+      ! Population "testpopulation" resolves to more than one population in this run. i Scenario "populationscenariofromcsv" resolves it as "csv", another scenario in the same run resolves it differently. i Each scenario gets the population it asks for. Check readPopulationFromCSV on the scenarios sharing this population.
+
 # a relative modelFile with NULL simulationsFolder aborts with a clear message
 
     Code
