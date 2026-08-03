@@ -5,6 +5,26 @@
   testProject(envir = envir)
 }
 
+# Repoint the fixture's individual at a non-human species, so the bundled
+# `SpeciesParameters.xlsx` actually contributes: it ships a sheet per animal
+# species and none for `Human`. `Rat` carries ~245 paths, of which the human
+# Aciclovir fixture model has no `Organism|EndogenousIgG|...` container, which
+# is what makes it the species-defaults regression case. Biometrics are cleared
+# down to a weight, all an animal individual needs.
+.useRatIndividual <- function(project) {
+  setIndividual(
+    project,
+    "indiv1",
+    species = "Rat",
+    population = NULL,
+    gender = "UNKNOWN",
+    weight = 0.25,
+    height = NULL,
+    age = NULL
+  )
+  project
+}
+
 # A `runSimulations` stand-in that returns a NULL result for every simulation
 # id it is handed, forcing the "no results" collection path without native
 # infra. Passed to `local_mocked_bindings(runSimulations = ...)`.
@@ -419,7 +439,7 @@ test_that(".mergeScenarioParameters layer 1 (modelParameterSets) iterates listed
   expect_true("Aciclovir|Lipophilicity" %in% merged$paths)
 })
 
-test_that(".mergeScenarioParameters layer 4 (application) overrides layer 1 on overlapping path", {
+test_that(".mergeScenarioParameters layer 3 (application) overrides layer 1 on overlapping path", {
   project <- .testProject()
   scenario <- project$definitions$scenarios[["testscenario"]]
   parameterSets <- .getSection(project, "parameterSets")
@@ -449,7 +469,7 @@ test_that(".mergeScenarioParameters layer 4 (application) overrides layer 1 on o
   expect_equal(merged$values[idx], 99)
 })
 
-test_that(".mergeScenarioParameters layer 5 (customParams) wins over all earlier layers", {
+test_that(".mergeScenarioParameters layer 4 (customParams) wins over all earlier layers", {
   project <- .testProject()
   scenario <- project$definitions$scenarios[["testscenario"]]
   customParams <- list(
@@ -523,6 +543,70 @@ test_that(".mergeScenarioParameters silently skips an unknown application parame
   expect_true(
     "Events|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose" %in%
       merged$paths
+  )
+})
+
+# Species defaults vs. user parameters ----
+#
+# The bundled species sheet and the user's own parameters are applied
+# separately, with opposite strictness. Both halves are asserted on the same
+# Rat scenario, since the point is that one run treats the two differently.
+
+test_that("a bundled species path the model lacks does not stop the build", {
+  # The Rat sheet carries `Organism|EndogenousIgG|...`, which the human
+  # Aciclovir fixture has no container for. Building under the default
+  # `stopIfParameterNotFound = TRUE` must still succeed: the sheet is
+  # package-shipped and covers every model of the species, so a path this model
+  # lacks is normal. Needing `stopIfParameterNotFound = FALSE` here would be
+  # the regression.
+  withr::local_options(lifecycle_verbosity = "quiet")
+  project <- .useRatIndividual(.testProject())
+  built <- buildSimulations(project, scenarios = "testscenario")
+  expect_s3_class(built$testscenario$simulation, "Simulation")
+})
+
+test_that("the species sheet is applied once, not once per layer", {
+  # Each application of a sheet path the model lacks emits one native
+  # "Could not find quantity" warning, so a duplicated application shows up as
+  # a doubled count for the single missing Rat path.
+  withr::local_options(lifecycle_verbosity = "quiet")
+  project <- .useRatIndividual(.testProject())
+  applied <- 0L
+  local_mocked_bindings(
+    .getSpeciesParameters = function(species) {
+      applied <<- applied + 1L
+      NULL
+    }
+  )
+  buildSimulations(project, scenarios = "testscenario")
+  expect_identical(applied, 1L)
+})
+
+test_that("a user parameter path the model lacks still stops the build", {
+  # The other half: silently ignoring a path the user wrote themselves would
+  # hide a real mistake in their project, so the merged user layers stay strict
+  # even though the species sheet above does not.
+  withr::local_options(lifecycle_verbosity = "quiet")
+  project <- .useRatIndividual(.testProject())
+  # ospsuite's message carries the name of the outermost calling function, which
+  # is the test runner and so differs between `testthat::test_file()`,
+  # `devtools::test()` and `R CMD check`. Scrub only that bullet's call name,
+  # leaving the `.validateEntitiesExist()` attribution and the offending path
+  # asserted.
+  expect_snapshot(
+    buildSimulations(
+      project,
+      scenarios = "testscenario",
+      customParams = list(
+        paths = "Organism|NoSuchContainer|NoSuchParameter",
+        values = 1,
+        units = ""
+      )
+    ),
+    error = TRUE,
+    transform = \(lines) {
+      gsub("^(\\s*! )`[^`]+\\(\\)`:", "\\1`<caller>`:", lines)
+    }
   )
 })
 
@@ -666,7 +750,10 @@ test_that(".runScenariosFromProject errors on unknown scenarioNames", {
 test_that(".buildScenarioSimulations resolves NULL to every scenario and returns the prep shape", {
   withr::local_options(lifecycle_verbosity = "quiet")
   project <- .testProject()
-  built <- .buildScenarioSimulations(project)
+  # Building every scenario includes the fixture's two population scenarios,
+  # which share one population id and resolve it two ways; that warning is
+  # asserted on its own below.
+  built <- suppressWarnings(.buildScenarioSimulations(project))
   expect_setequal(built$scenarioNames, names(project$definitions$scenarios))
   expect_named(built$prepared, built$scenarioNames)
   first <- built$prepared[[1]]
@@ -764,6 +851,74 @@ test_that(".resolveScenarioPopulation aborts on an unresolved programmatic entry
     .resolveScenarioPopulation(scenario, project, cache),
     regexp = "injected in a previous session"
   )
+})
+
+test_that(".resolveScenarioPopulation keeps a spec and a csv population apart under one id, in either order", {
+  # `populationscenario` and `populationscenariofromcsv` share the population id
+  # `testpopulation`, and only the second sets `readPopulationFromCSV`, so one id
+  # resolves two ways in one batch. Cached on the id alone, whichever scenario
+  # ran first won and both got its population. The spec is set to 7 individuals
+  # against the fixture csv's 2 so a crossover is visible in the counts.
+  withr::local_options(lifecycle_verbosity = "quiet")
+  counts <- function(scenarioNames) {
+    project <- .testProject()
+    setPopulation(project, "testpopulation", numberOfIndividuals = 7)
+    built <- suppressWarnings(
+      .buildScenarioSimulations(project, scenarioNames = scenarioNames)
+    )
+    vapply(built$prepared, function(p) p$population$count, integer(1))
+  }
+
+  specFirst <- counts(c("populationscenario", "populationscenariofromcsv"))
+  csvFirst <- counts(c("populationscenariofromcsv", "populationscenario"))
+
+  expect_identical(specFirst[["populationscenario"]], 7L)
+  expect_identical(specFirst[["populationscenariofromcsv"]], 2L)
+  expect_identical(csvFirst[["populationscenario"]], 7L)
+  expect_identical(csvFirst[["populationscenariofromcsv"]], 2L)
+})
+
+test_that(".resolveScenarioPopulation warns when one id resolves two ways in a run", {
+  withr::local_options(lifecycle_verbosity = "quiet")
+  project <- .testProject()
+  cache <- new.env(parent = emptyenv())
+  cache$populations <- list()
+
+  .resolveScenarioPopulation(
+    project$definitions$scenarios[["populationscenario"]],
+    project,
+    cache
+  )
+  expect_snapshot(
+    invisible(.resolveScenarioPopulation(
+      project$definitions$scenarios[["populationscenariofromcsv"]],
+      project,
+      cache
+    ))
+  )
+})
+
+test_that(".resolveScenarioPopulation gives an injected population to a readPopulationFromCSV scenario", {
+  # A `programmatic` entry carries an explicit `type`, so the scenario flag
+  # cannot turn it into a csv read, and its cache key cannot collide with a spec
+  # or csv population of the same id.
+  withr::local_options(lifecycle_verbosity = "quiet")
+  project <- .testProject()
+  pop <- ospsuite::createPopulation(ospsuite::createPopulationCharacteristics(
+    species = ospsuite::Species$Human,
+    population = ospsuite::HumanPopulation$European_ICRP_2002,
+    numberOfIndividuals = 3L,
+    proportionOfFemales = 50
+  ))$population
+  suppressWarnings(removePopulation(project, "testpopulation"))
+  suppressMessages(addPopulation(project, "testpopulation", pop))
+
+  built <- .buildScenarioSimulations(
+    project,
+    scenarioNames = c("populationscenario", "populationscenariofromcsv")
+  )
+  expect_identical(built$prepared$populationscenario$population, pop)
+  expect_identical(built$prepared$populationscenariofromcsv$population, pop)
 })
 
 test_that(".resolveScenarioPopulation loads a csv entry from its own file", {
