@@ -3573,17 +3573,64 @@ test_that("two plot rows sharing an id silently lose one plot", {
   expect_false(any(grepl("duplicate", imported$warnings, ignore.case = TRUE)))
 })
 
-# #1213 item 16: `.canonicalizeId()` replaces whitespace through `[[:space:]]`,
-# which matches neither U+00A0 (no-break space) nor U+200B (zero-width space). So
-# an invisible character survives canonicalization into the id and from there into
-# the definition filename. Two ids differing only by a zero-width space become two
-# distinct definition files whose names render identically, and the project
-# validates clean, so nothing tells the author their two ids are not one typo.
+# #1213 item 16: `.canonicalizeId()` folds Unicode compatibility variants and drops
+# the invisible formatting characters, so no invisible reaches a definition
+# filename from either entrypoint. A no-break space (U+00A0) folds onto the plain
+# space it renders as and becomes the same `_`; a zero-width space (U+200B) is
+# dropped, so an id carrying one is the id without it.
 #
 # This is live data rather than a synthetic probe: one tested project carried 12
 # real ids containing U+00A0.
-test_that("an id containing an invisible character survives into the definition filename", {
+test_that("an id containing a no-break space canonicalizes into a plain filename", {
   nbsp <- "\u00a0"
+  projectDir <- localLegacyExcelProject()
+  editWorkbookSheets(
+    file.path(projectDir, "Configurations", "Scenarios.xlsx"),
+    function(sheets) {
+      sheets$OutputPaths <- rbind(
+        sheets$OutputPaths,
+        data.frame(
+          OutputPathId = paste0("Renal", nbsp, "Clearance"),
+          OutputPath = "Organism|Kidney|Aciclovir|Concentration in container"
+        )
+      )
+      # Reference it with the same invisible the definition carries, so what is
+      # under test is only whether both sides land on one id.
+      sheets$Scenarios$OutputPathsIds[[2]] <- paste0(
+        "Aciclovir_PVB, Aciclovir_Fat, Renal",
+        nbsp,
+        "Clearance"
+      )
+      sheets
+    }
+  )
+  imported <- importLegacyExcelProject(projectDir)
+  ids <- names(imported$project$definitions$outputPaths)
+
+  # The no-break space became the `_` an ordinary space becomes.
+  expect_true("renal_clearance" %in% ids)
+
+  # So the definition filenames carry no invisible at all.
+  files <- list.files(file.path(
+    imported$outputDir,
+    "definitions",
+    "output-paths"
+  ))
+  expect_true("renal_clearance.json" %in% files)
+  expect_false(any(grepl("[^ -~]", files)))
+
+  # And the reference resolves onto it, so validation is clean.
+  summary <- validationSummary(suppressWarnings(validateProject(
+    imported$project
+  )))
+  expect_equal(summary$total_critical_errors, 0)
+})
+
+# The other half of item 16: two ids differing only by a zero-width space used to
+# become two definition files whose names render identically, with nothing said.
+# Dropping the invisible makes them one id, so the import aborts on the collision
+# the same way interactive authoring does, naming both spellings.
+test_that("two ids differing only by a zero-width space abort the import as a collision", {
   zwsp <- "\u200b"
   projectDir <- localLegacyExcelProject()
   editWorkbookSheets(
@@ -3593,51 +3640,15 @@ test_that("an id containing an invisible character survives into the definition 
         "OutPath",
         paste0("Out", zwsp, "Path")
       )
-      sheets$OutputPaths <- rbind(
-        sheets$OutputPaths,
-        data.frame(
-          OutputPathId = paste0("Renal", nbsp, "Clearance"),
-          OutputPath = "Organism|Kidney|Aciclovir|Concentration in container"
-        )
-      )
-      # Reference them consistently, so nothing dangles and the invisible
-      # characters are the only thing under test.
-      sheets$Scenarios$OutputPathsIds <- c(
-        "OutPath",
-        paste0("OutPath, Out", zwsp, "Path"),
-        NA,
-        NA,
-        "OutPath",
-        "OutPath"
-      )
       sheets
     }
   )
-  imported <- importLegacyExcelProject(projectDir)
-  ids <- names(imported$project$definitions$outputPaths)
-
-  # Three distinct ids, two of which render identically.
-  expect_length(ids, 3L)
-  expect_true(paste0("out", zwsp, "path") %in% ids)
-  expect_true(paste0("renal", nbsp, "clearance") %in% ids)
-
-  # The invisible characters reach the filenames too.
-  files <- list.files(file.path(
-    imported$outputDir,
-    "definitions",
-    "output-paths"
-  ))
-  expect_true(paste0("out", zwsp, "path.json") %in% files)
-  expect_true(paste0("renal", nbsp, "clearance.json") %in% files)
-
-  # `outpath.json` and `out<U+200B>path.json` are two files that look like one.
-  expect_length(unique(files), 3L)
-  expect_length(unique(gsub(zwsp, "", files, fixed = TRUE)), 2L)
-
-  # The import says nothing at all, and validation is clean.
-  expect_length(imported$warnings, 0L)
-  summary <- validationSummary(suppressWarnings(validateProject(
-    imported$project
-  )))
-  expect_equal(summary$total_critical_errors, 0)
+  expect_error(
+    suppressWarnings(importProjectFromExcel(
+      legacyExcelProjectPath(projectDir),
+      outputDir = withr::local_tempdir("LegacyOut_"),
+      silent = TRUE
+    )),
+    "collide after canonicalization"
+  )
 })
