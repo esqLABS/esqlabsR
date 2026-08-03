@@ -206,6 +206,11 @@ importProjectFromExcel <- function(
   pathProps <- as.list(pcProps)
   excelProps <- pathProps[names(pathProps) %in% .excelFilePathFields]
   filePathProps <- pathProps[!(names(pathProps) %in% .excelFilePathFields)]
+  filePathProps <- .resolveExcelPopulationsFolder(
+    filePathProps,
+    pcDir,
+    configsFolder
+  )
   jsonData$filePaths <- filePathProps
   if (length(excelProps) > 0L) {
     jsonData$excel <- excelProps
@@ -1417,6 +1422,72 @@ projectStatus <- function(project, silent = FALSE) {
   relative <- as.character(fs::path_rel(path, start = getwd()))
   absolute <- as.character(fs::path_abs(path))
   if (nchar(relative) <= nchar(absolute)) relative else absolute
+}
+
+#' Point `populationsFolder` at the folder that actually holds the csv files
+#'
+#' An Excel project spells `populationsFolder` as a folder *name* under the
+#' configurations folder (`PopulationsCSV`, resolved against
+#' `configurationsFolder`), while a project resolves every working folder against
+#' the project root. Read literally, the value then names a root-level folder
+#' that does not exist: the imported project resolves the populations folder
+#' nowhere, and `.copyExcelProjectAssets()` finds nothing to copy, so a
+#' csv-population scenario fails at run time with the folder left behind.
+#'
+#' Both layouts are accepted, resolved in the order the value itself suggests: a
+#' folder present at the project root is taken as authored (a project already
+#' following the root-level layout keeps working), otherwise the folder under the
+#' configurations folder is adopted and the value rewritten to its
+#' project-root-relative path. That one rewritten value then means the same thing
+#' in the source project and in the imported one, which is the invariant the
+#' asset copy relies on, so the copy needs no special case.
+#'
+#' @param filePathProps The project's raw `filePaths` properties.
+#' @param pcDir Absolute path to the Excel project's folder.
+#' @param configsFolder Absolute path to the resolved configurations folder, or
+#'   `NULL` when the project declares none.
+#' @returns `filePathProps`, with `populationsFolder` rewritten when the folder
+#'   was found under the configurations folder rather than at the project root.
+#' @keywords internal
+#' @noRd
+.resolveExcelPopulationsFolder <- function(
+  filePathProps,
+  pcDir,
+  configsFolder
+) {
+  value <- filePathProps[["populationsFolder"]]
+  if (
+    is.null(value) ||
+      is.na(value) ||
+      !nzchar(value) ||
+      is.null(configsFolder) ||
+      # A `${VAR}` or an absolute value names a location the author placed
+      # deliberately, and is resolved (or exempted) as spelled.
+      .declaresEnvVarPath(value) ||
+      fs::is_absolute_path(value)
+  ) {
+    return(filePathProps)
+  }
+  root <- normalizePath(pcDir, mustWork = FALSE)
+  if (fs::dir_exists(fs::path(root, value))) {
+    return(filePathProps)
+  }
+  underConfigs <- fs::path(
+    normalizePath(configsFolder, mustWork = FALSE),
+    value
+  )
+  if (!fs::dir_exists(underConfigs)) {
+    return(filePathProps)
+  }
+  relative <- as.character(fs::path_rel(underConfigs, root))
+  # A configurations folder placed outside the project (the `${VAR}` form) puts
+  # the csv folder outside it too, which a working folder may not name. Leave the
+  # value as authored and let the folder be reported as not copied.
+  if (.pathEscapesRoot(relative, root)) {
+    return(filePathProps)
+  }
+  filePathProps[["populationsFolder"]] <- relative
+  filePathProps
 }
 
 #' The working folders whose contents an imported project needs to run

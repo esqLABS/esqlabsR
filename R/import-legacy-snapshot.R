@@ -52,6 +52,8 @@
 # the import so it governs replacing an existing project in `dir` the same way a
 # v6 restore does. `replacedExistingTree` (whether `dir` already held a project)
 # drives the same stale-handle warning the v6 restore path emits on overwrite.
+# `snapshotDir` is the folder holding the snapshot file, where the asset folders
+# it references are looked for (see below).
 #
 # @keywords internal
 # @noRd
@@ -59,13 +61,39 @@
   jsonData,
   dir,
   overwrite,
-  replacedExistingTree = FALSE
+  replacedExistingTree = FALSE,
+  snapshotDir = NULL
 ) {
+  props <- .legacyConfigProperties(jsonData$projectConfiguration)
+
+  # Refuse a working folder the finished project could not resolve, before
+  # anything is written. An upgrade has to hand back a *loaded* project, so such a
+  # value is a guaranteed failure a few lines below, and letting it get that far
+  # would leave a complete but unopenable project behind. (A plain Excel import is
+  # deliberately more permissive: it hands back a tree the user can still fix, and
+  # a folder placed outside the project on purpose is a supported migration.)
+  .assertLegacySnapshotFoldersContained(props, dir)
+
   scratch <- tempfile("legacy-snapshot")
   dir.create(scratch)
   on.exit(unlink(scratch, recursive = TRUE), add = TRUE)
 
   pcPath <- .materializeLegacySnapshot(jsonData, scratch)
+
+  # A snapshot mirrors only the configuration workbooks, so the models, data and
+  # population folders its definitions reference exist only beside the snapshot
+  # file. Bring them into the scratch project, which is otherwise only the
+  # workbooks: reconstructing the Excel project the snapshot describes is what
+  # lets the bridge's own asset copy carry them into `dir`, exactly as it does
+  # for an Excel project imported into another folder. Folders the snapshot
+  # carries itself (the population csv files) are already in `scratch` and win,
+  # since `overwrite = FALSE` leaves a target that already holds files alone.
+  # An asset folder is therefore copied twice on its way to `dir`, which is the
+  # price of reusing the one asset copy rather than teaching it a second source
+  # directory to resolve every folder against.
+  if (!is.null(snapshotDir)) {
+    .copyExcelProjectAssets(props, snapshotDir, scratch, overwrite = FALSE)
+  }
 
   # `silent = TRUE`: the bridge's per-step chatter is an implementation detail
   # of the upgrade; the single `cli_inform` below is the user-facing signal.
@@ -88,7 +116,16 @@
     }
   )
 
-  cli::cli_inform(messages$upgradedLegacySnapshot())
+  project <- loadProject(containerPath)
+
+  # Name the folders that did not travel. This is the case the report always
+  # applies to (a snapshot is a single file, and whether its assets were kept
+  # beside it is up to whoever shared it), and it is the whole reason a scenario
+  # would otherwise fail with nothing but a File Not Found. Bound here, and named
+  # as the catalog entry's parameter, because the entry leaves its placeholders
+  # unglued for the raising call to interpolate.
+  missingFolders <- .missingUpgradedAssetFolders(project, dir)
+  cli::cli_inform(messages$upgradedLegacySnapshot(missingFolders))
 
   # The overwrite replaced a live tree; any `Project` loaded from `dir` before
   # this call now points at stale in-memory state. Same warning the v6 restore
@@ -97,7 +134,27 @@
     cli::cli_warn(messages$restoreOverwroteTree(dir))
   }
 
-  loadProject(containerPath)
+  project
+}
+
+# The input folders an upgraded project declares but that are not on disk under
+# `dir`, as paths relative to the project folder (what the user has to place
+# there). `outputFolder` is deliberately absent: the project writes results
+# there, it does not read them, and the runtime creates it on demand.
+#
+# @keywords internal
+# @noRd
+.missingUpgradedAssetFolders <- function(project, dir) {
+  folders <- c(
+    project$paths$simulationsFolder,
+    project$paths$dataFolder,
+    project$paths$populationsFolder
+  )
+  missing <- folders[!dir.exists(folders)]
+  if (length(missing) == 0L) {
+    return(character())
+  }
+  as.character(fs::path_rel(missing, fs::path_abs(dir)))
 }
 
 # Rebuild the Excel workbooks a monolithic snapshot mirrors, into `dir`. Writes
@@ -156,7 +213,15 @@
   if (
     !is.null(jsonData$populationsCSV) && length(jsonData$populationsCSV) > 0L
   ) {
-    csvDir <- file.path(configDir, "PopulationsCSV")
+    # Under the folder name the snapshot's own property sheet records, for the
+    # same reason each workbook is written under its recorded filename: the name
+    # is user-customizable, and a hardcoded one would leave the csv files where
+    # the bridge does not look. Basenamed so a property value carrying a path
+    # cannot steer the write out of `configDir`.
+    csvDir <- file.path(
+      configDir,
+      basename(props[["populationsFolder"]] %||% "PopulationsCSV")
+    )
     dir.create(csvDir, recursive = TRUE, showWarnings = FALSE)
     for (fileName in names(jsonData$populationsCSV)) {
       csvDf <- .legacySheetToDf(jsonData$populationsCSV[[fileName]])
@@ -174,26 +239,58 @@
   pcPath
 }
 
+# Abort when a working folder the snapshot records would resolve outside the
+# project directory `dir`. This is the same rule (and the same message) the
+# loaded project applies in `.resolveWorkingFolder()`, checked up front: a bare
+# absolute or `../`-climbing folder is rejected, while the `${VAR}` form opts
+# into an out-of-project location and is exempt. `props` is the snapshot's
+# property sheet as a list, so the pre-6.0.0 `modelFolder` spelling is read under
+# the `simulationsFolder` name it is stored as.
+#
+# @keywords internal
+# @noRd
+.assertLegacySnapshotFoldersContained <- function(props, dir) {
+  for (field in names(props)) {
+    key <- if (identical(field, "modelFolder")) "simulationsFolder" else field
+    if (!key %in% .containedWorkingFolders) {
+      next
+    }
+    value <- props[[field]]
+    if (
+      is.null(value) ||
+        is.na(value) ||
+        !nzchar(value) ||
+        .declaresEnvVarPath(value)
+    ) {
+      next
+    }
+    if (.pathEscapesRoot(value, dir)) {
+      cli::cli_abort(messages$projectPathEscapesRoot(key, value, dir))
+    }
+  }
+  invisible(NULL)
+}
+
 # Extract the `Property -> Value` map from the mirrored `projectConfiguration`
-# sheet, so the materializer can read a workbook's recorded filename rather than
-# assume the conventional one. Returns a named character vector (empty when the
-# sheet is absent or carries no `Property`/`Value` columns). A blank value is
-# dropped so the caller's `%||%` default applies.
+# sheet, so a caller can read a recorded filename or folder rather than assume
+# the conventional one. Returns a named list (empty when the sheet is absent or
+# carries no `Property`/`Value` columns). A blank value is dropped, and a list
+# (rather than a named vector) is returned so an absent property reads as `NULL`
+# and every caller's `%||%` default applies instead of `[[` erroring on it.
 #
 # @keywords internal
 # @noRd
 .legacyConfigProperties <- function(projectConfiguration) {
   if (is.null(projectConfiguration)) {
-    return(character())
+    return(list())
   }
   df <- .legacySheetToDf(projectConfiguration)
   if (!all(c("Property", "Value") %in% names(df)) || nrow(df) == 0L) {
-    return(character())
+    return(list())
   }
   values <- as.character(df$Value)
   names(values) <- as.character(df$Property)
-  values <- values[!is.na(values) & values != ""]
-  values
+  as.list(values[!is.na(values) & values != ""])
 }
 
 # Rebuild one mirrored sheet (`{column_names, rows}`, each row a named list of

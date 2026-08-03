@@ -183,7 +183,8 @@ restoreProject <- function(snapshot, dir = ".", overwrite = FALSE) {
       jsonData,
       dir,
       overwrite,
-      replacedExistingTree
+      replacedExistingTree,
+      snapshotDir = dirname(fs::path_abs(snapshot))
     ))
   }
 
