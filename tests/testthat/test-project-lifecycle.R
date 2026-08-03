@@ -249,6 +249,24 @@ test_that("saveProject() stamps the writing version into the file and the handle
   expect_identical(project$info$esqlabsRVersion, current)
 })
 
+# #1213 item 26: the scaffold template ships a fixed `esqlabsRVersion`, so a
+# freshly initialized project claimed one version and the first `saveProject()`
+# rewrote it to the running one, which read as the project downgrading itself.
+# `initProject()` stamps the running version too, so all the writers agree.
+test_that("initProject() stamps the writing version, so a later save does not change it", {
+  destination <- withr::local_tempdir()
+  initProject(destination, type = "minimal", createExcel = FALSE, overwrite = TRUE)
+  current <- as.character(utils::packageVersion("esqlabsR"))
+
+  project <- loadProject(file.path(destination, "Project.json"))
+  expect_identical(project$info$esqlabsRVersion, current)
+
+  addOutputPath(project, "op", "Organism|Liver|Volume")
+  saveProject(project)
+  container <- jsonlite::fromJSON(project$info$projectFilePath)
+  expect_identical(container$esqlabsRVersion, current)
+})
+
 test_that("saveProject() never warns about a stale Excel side-car", {
   # Build a project with an Excel side-car that has drifted, then edit and save.
   temp_project <- with_temp_project()

@@ -168,7 +168,9 @@ importProjectFromExcel <- function(
 
   # Default config filenames for sections whose path property is omitted
   # from Project.xlsx (e.g. exports of programmatic projects that never
-  # set a custom path).
+  # set a custom path). A workbook read under one of these rather than under a
+  # name the property sheet gives is reported in the import summary, since the
+  # project itself does not declare it.
   defaultConfigFile <- list(
     modelParamsFile = "ModelParameters.xlsx",
     individualsFile = "Individuals.xlsx",
@@ -179,11 +181,6 @@ importProjectFromExcel <- function(
     parameterIdentificationFile = "ParameterIdentification.xlsx",
     initialConditionsFile = "InitialConditions.xlsx"
   )
-  # Property lookup with default-filename fallback.
-  propOrDefault <- function(name) {
-    prop(name) %||% defaultConfigFile[[name]]
-  }
-
   # Build the JSON structure -- schemaVersion comes from the Excel source;
   # if the Excel predates versioning, default to "2.0".
   jsonData <- list(
@@ -294,6 +291,21 @@ importProjectFromExcel <- function(
           # either direction: not as its own same-named override below, and not
           # through the `Individual Parameter Sets` column here.
           setSheetNames <- names(parsedSets)
+          # Which individuals that costs, and which individual a sheet describes
+          # without the biometrics sheet defining it. Reported before the
+          # references are dropped below, while it is still visible which
+          # individual pointed at what.
+          .warnUnparametrizedIndividuals(
+            jsonData$individuals,
+            setdiff(paramSheetNames, setSheetNames),
+            file
+          )
+          .warnUndefinedIndividualSheets(
+            jsonData$individuals,
+            setSheetNames,
+            jsonData$scenarios,
+            file
+          )
           jsonData$individuals <- .dropSkippedSheetRefs(
             jsonData$individuals,
             setdiff(paramSheetNames, setSheetNames)
@@ -458,6 +470,7 @@ importProjectFromExcel <- function(
     list(
       property = "parameterIdentificationFile",
       parse = function(file, jsonData) {
+        declaredObservedSheets <<- .excelPIObservedDataSheets(file)
         # The scenarios section is parsed above, so the oldest 5.x mapping layout
         # can reach the output paths its rows identify their outputs through.
         tasks <- .parseExcelParameterIdentification(file, jsonData$scenarios)
@@ -473,14 +486,54 @@ importProjectFromExcel <- function(
     )
   )
 
+  # What the loop below read, and what it could not: a workbook the property sheet
+  # names but that is not on disk is a section silently imported as empty, and a
+  # workbook read under its conventional name that the property sheet never
+  # mentions is content the project does not declare. Both are reported after the
+  # loop, together with any workbook in the configurations folder nothing read.
+  missingWorkbooks <- character()
+  conventionWorkbooks <- character()
+  readWorkbooks <- character()
+  # The observed-data sheets a legacy parameter-identification workbook names.
+  # Checked against the observed data actually imported, which is parsed after
+  # this loop, so the names are collected here and reported there.
+  declaredObservedSheets <- character()
   for (section in sections) {
+    named <- prop(section$property)
     file <- resolveConfigFile(
-      propOrDefault(section$property),
+      named %||% defaultConfigFile[[section$property]],
       fieldName = section$property
     )
-    if (!is.null(file) && file.exists(file)) {
-      jsonData <- section$parse(file, jsonData)
+    if (is.null(file)) {
+      next
     }
+    if (!file.exists(file)) {
+      # Only a workbook the property sheet actually names: the conventional
+      # filename is a fallback tried for every section, so most projects are
+      # missing several of those by design.
+      if (!is.null(named)) {
+        missingWorkbooks <- c(missingWorkbooks, named)
+      }
+      next
+    }
+    readWorkbooks <- c(readWorkbooks, file)
+    if (is.null(named)) {
+      conventionWorkbooks <- c(conventionWorkbooks, basename(file))
+    }
+    jsonData <- section$parse(file, jsonData)
+  }
+  if (length(missingWorkbooks) > 0L) {
+    .warnFormatted(
+      messages$importMissingWorkbooks(missingWorkbooks),
+      "esqlabsR_importMissingWorkbooks"
+    )
+  }
+  unconsumedWorkbooks <- .unconsumedExcelWorkbooks(configsFolder, readWorkbooks)
+  if (length(unconsumedWorkbooks) > 0L) {
+    .warnFormatted(
+      messages$importUnconsumedWorkbooks(unconsumedWorkbooks),
+      "esqlabsR_importUnconsumedWorkbooks"
+    )
   }
 
   # --- Determine output path ---
@@ -495,6 +548,17 @@ importProjectFromExcel <- function(
   # data-file basename, listing the workbook's sheets; the loader resolves the
   # `file` / `importerConfiguration` basenames against `dataFolder`.
   jsonData <- .parseExcelObservedData(jsonData, prop, pcDir, outputDir)
+
+  # A 5.x `PIOutputMappings` sheet names the sheet of the data workbook each
+  # mapping's data set comes from. There is no per-mapping counterpart in a
+  # project (an observed-data definition lists the sheets it imports, and the
+  # import lists every sheet of the workbook), so the column is not carried; it is
+  # only worth a word when a sheet it names is not among the imported ones, since
+  # then the mapping's data set is not in the project at all.
+  .warnUnimportedPIObservedDataSheets(
+    declaredObservedSheets,
+    jsonData$observedData
+  )
 
   # Append `.json` rather than `fs::path_ext_set()`, which would *replace* an
   # existing extension: a dotted stem like `trial.v1` reads as an extension, so
@@ -590,6 +654,21 @@ importProjectFromExcel <- function(
     cli::cli_verbatim(utils::capture.output(print(
       importedProject$definitions
     )))
+    # The counts block lists only the sections that hold something, so the
+    # sections that imported nothing are named here: a section that came out
+    # empty is exactly what a reader has to see to notice that a workbook did
+    # not arrive.
+    empty <- .emptyProjectSections(importedProject)
+    if (length(empty) > 0L) {
+      msg <- messages$importEmptySections(empty)
+      cli::cli_inform("{msg}")
+    }
+    # A workbook read under its conventional filename is content the project
+    # does not declare, so a reader would otherwise have no way to know it was
+    # imported.
+    if (length(conventionWorkbooks) > 0L) {
+      .informFormatted(messages$importUndeclaredWorkbooks(conventionWorkbooks))
+    }
     if (length(assets$copied) > 0L) {
       msg <- messages$importCopiedAssetFolders(assets$copied)
       cli::cli_inform("{msg}")
@@ -913,6 +992,15 @@ exportProjectToExcel <- function(
     .canonicalizeProjectJsonIds(currentJsonObj)
   )
 
+  # Both sides are compared with their object keys in one order, because the
+  # order a record's fields sit in carries no meaning and the round trip does not
+  # preserve it: a sheet has one column order (the union of every record's
+  # fields), so a record whose own fields are ordered differently comes back
+  # reordered. Only named lists are sorted; an array's order is meaningful (a
+  # task's parameter list) and is left as it is.
+  originalJsonObj <- .sortJsonKeys(originalJsonObj)
+  currentJsonObj <- .sortJsonKeys(currentJsonObj)
+
   # Remove esqlabsRVersion -- it changes with package updates and would cause
   # false out-of-sync reports
   originalJsonObj[["esqlabsRVersion"]] <- NULL
@@ -1002,6 +1090,25 @@ exportProjectToExcel <- function(
   }
 
   invisible(result)
+}
+
+# Sort the keys of every named list in a JSON-shaped structure, recursively, so
+# two structures that differ only in field order compare equal. An unnamed list
+# is an array, whose order is part of its meaning, so it is recursed into but not
+# reordered. Sorted in the C locale so the order does not depend on the session's.
+#
+# @keywords internal
+# @noRd
+.sortJsonKeys <- function(x) {
+  if (!is.list(x)) {
+    return(x)
+  }
+  x <- lapply(x, .sortJsonKeys)
+  names <- names(x)
+  if (is.null(names) || anyNA(names) || !all(nzchar(names))) {
+    return(x)
+  }
+  x[order(names, method = "radix")]
 }
 
 # Excel <-> JSON bridge: sync helper ----
@@ -1625,9 +1732,10 @@ projectStatus <- function(project, silent = FALSE) {
 #'
 #' The uniquifying runs on the *canonical* id, not the raw sheet name: `Rat` and
 #' `rat` in two workbooks are as much of a clash as `Rat` twice, because both
-#' canonicalize to the same definition filename. The suffix `make.unique()` picks
-#' is carried back onto the raw sheet name, so the renamed set keeps its readable
-#' spelling (`Indiv1` -> `Indiv1_1`).
+#' canonicalize to the same definition filename. The suffix comes from
+#' [.uniqueImportedId()], the one coiner the import uses for every id it has to
+#' invent, and is carried back onto the raw sheet name, so the renamed set keeps
+#' its readable spelling (`Indiv1` -> `Indiv1_2`).
 #'
 #' Two sheets of the *same* workbook that canonicalize to one id are renamed the
 #' same way. That is a deliberate divergence from `.canonicalizeId()`, which
@@ -1650,23 +1758,35 @@ projectStatus <- function(project, silent = FALSE) {
   if (length(incoming) == 0L) {
     return(list(sets = existing, renames = character()))
   }
-  ids <- c(names(existing), names(incoming))
-  canonical <- vapply(ids, .canonicalizeOneId, character(1), USE.NAMES = FALSE)
-  # `make.unique()` leaves each first occurrence untouched and suffixes the
-  # later ones, and `existing` comes first, so an already-accumulated id is
-  # never renamed out from under a reference that resolved to it.
-  uniqued <- make.unique(canonical, sep = "_")
-  isIncoming <- seq_along(ids) > length(existing)
-  suffix <- substring(
-    uniqued[isIncoming],
-    nchar(canonical[isIncoming]) + 1L
+  # Each incoming sheet is uniquified against the ids accumulated so far, which
+  # start with `existing`, so an already-accumulated id is never renamed out from
+  # under a reference that resolved to it. The suffix is the one
+  # `.uniqueImportedId()` coins everywhere (`Indiv1` -> `Indiv1_2`), and it is
+  # carried back onto the raw sheet name so the renamed set keeps its readable
+  # spelling.
+  taken <- vapply(
+    names(existing),
+    .canonicalizeOneId,
+    character(1),
+    USE.NAMES = FALSE
   )
-  newIds <- paste0(names(incoming), suffix)
+  newIds <- character(length(incoming))
   # Keyed by the canonical id, not the raw sheet name, because a reference is
   # only required to canonicalize onto its definition, not to match its
   # spelling: a cell naming `rat` for a sheet called `Rat` still points at that
   # sheet. `.applyIdRenames()` canonicalizes its lookups to match.
-  renames <- stats::setNames(newIds, canonical[isIncoming])[nzchar(suffix)]
+  renames <- character()
+  for (i in seq_along(incoming)) {
+    raw <- names(incoming)[[i]]
+    canonical <- .canonicalizeOneId(raw)
+    unique <- .uniqueImportedId(canonical, taken)
+    taken <- c(taken, unique)
+    suffix <- substring(unique, nchar(canonical) + 1L)
+    newIds[[i]] <- paste0(raw, suffix)
+    if (nzchar(suffix)) {
+      renames <- c(renames, stats::setNames(newIds[[i]], canonical))
+    }
+  }
 
   if (length(renames) > 0L) {
     # Same safe-glue handling as the canonicalization warnings: the pairs are
@@ -1675,7 +1795,7 @@ projectStatus <- function(project, silent = FALSE) {
     # name the sheet as the workbook spells it, so the user can find it, rather
     # than the canonical id the map is keyed by.
     rendered <- .canonicalizedIdBullets(
-      names(incoming)[nzchar(suffix)],
+      names(incoming)[newIds != names(incoming)],
       unname(renames)
     )
     rendered$envir$sourceLabel <- basename(source)
@@ -1756,6 +1876,162 @@ projectStatus <- function(project, silent = FALSE) {
     definition$parameterSets <- if (length(kept) > 0L) as.list(kept) else NULL
     definition
   })
+}
+
+#' The `.xlsx` workbooks under the configurations folder that nothing read
+#'
+#' Workbook resolution is driven entirely by the property sheet, so a workbook the
+#' sheet does not name is never opened, however much content it holds: one tested
+#' project kept a complete second, nested set of six workbooks (21 scenarios, 7
+#' plots, 2 populations, ...) that imported as nothing at all, and the summary,
+#' counting only what the root set produced, read as complete.
+#'
+#' @param configsFolder The resolved configurations folder, or NULL.
+#' @param readWorkbooks The absolute paths of the workbooks the import read.
+#' @returns The unread workbooks as paths relative to `configsFolder`.
+#' @keywords internal
+#' @noRd
+.unconsumedExcelWorkbooks <- function(configsFolder, readWorkbooks) {
+  if (is.null(configsFolder) || !dir.exists(configsFolder)) {
+    return(character())
+  }
+  present <- list.files(
+    configsFolder,
+    pattern = "\\.xlsx$",
+    recursive = TRUE,
+    full.names = TRUE
+  )
+  # An Excel lock file (`~$Book.xlsx`) is not a workbook anyone authored.
+  present <- present[!grepl("^~\\$", basename(present))]
+  if (length(present) == 0L) {
+    return(character())
+  }
+  normalize <- function(paths) normalizePath(paths, mustWork = FALSE)
+  unread <- present[!(normalize(present) %in% normalize(readWorkbooks))]
+  as.character(fs::path_rel(unread, configsFolder))
+}
+
+#' The sections of an imported project that hold no definition
+#'
+#' @param project The imported `Project`.
+#' @returns The section names that are empty, in the container's order.
+#' @keywords internal
+#' @noRd
+.emptyProjectSections <- function(project) {
+  sections <- names(project$definitions)
+  empty <- vapply(
+    sections,
+    function(section) length(project$definitions[[section]]) == 0L,
+    logical(1)
+  )
+  sort(sections[empty])
+}
+
+#' Report the individuals a skipped sheet leaves unparametrized
+#'
+#' A sheet of the individuals workbook that did not parse as a parameter sheet is
+#' reported on its own (`.parseExcelParameterSheets()`), but that report is about
+#' the sheet. What it costs is not visible from there: an individual parametrized
+#' only through that sheet, whether by name or through its `ParameterSets` cell,
+#' imports with no parametrization at all while its siblings keep theirs, and the
+#' project then validates clean. So the individual is named here, next to the sheet
+#' it lost.
+#'
+#' @param individuals The parsed individuals, before their skipped-sheet
+#'   references are dropped.
+#' @param skippedSheets The sheets of this workbook that produced no parameter set.
+#' @param file The workbook, named in the warning.
+#' @returns Nothing, called for its warning.
+#' @keywords internal
+#' @noRd
+.warnUnparametrizedIndividuals <- function(individuals, skippedSheets, file) {
+  if (length(individuals) == 0L || length(skippedSheets) == 0L) {
+    return(invisible(NULL))
+  }
+  skipped <- vapply(skippedSheets, .canonicalizeOneId, character(1))
+  ids <- character()
+  sheets <- character()
+  for (individual in individuals) {
+    id <- .canonicalizeOneId(as.character(individual$individualId))
+    if (is.na(id)) {
+      next
+    }
+    # Both ways an individual reaches a sheet of this workbook: its own
+    # same-named sheet, and the sheets its `ParameterSets` cell names.
+    declared <- unlist(individual$parameterSets)
+    referenced <- c(
+      id,
+      if (length(declared) > 0L) {
+        vapply(as.character(declared), .canonicalizeOneId, character(1))
+      }
+    )
+    lost <- skippedSheets[skipped %in% referenced]
+    if (length(lost) == 0L) {
+      next
+    }
+    ids <- c(ids, rep(as.character(individual$individualId), length(lost)))
+    sheets <- c(sheets, lost)
+  }
+  if (length(ids) == 0L) {
+    return(invisible(NULL))
+  }
+  .warnFormatted(
+    messages$importUnparametrizedIndividuals(file, ids, sheets),
+    "esqlabsR_importUnparametrizedIndividuals"
+  )
+}
+
+#' Report a parameter sheet that describes an individual nothing defines
+#'
+#' Individuals come from the `IndividualBiometrics` rows, so an individual that
+#' has a parameter sheet but no biometrics row is not imported at all: its sheet
+#' becomes a parameter set owned by nobody, and a scenario naming the individual is
+#' left pointing at nothing. Validation reports the dangling reference, which names
+#' the symptom; this names the cause, and the row to add.
+#'
+#' Only a sheet whose name is an individual a scenario asks for is reported, so a
+#' set that simply happens to live in this workbook (one a scenario or another
+#' individual references by name) is not mistaken for a dropped individual.
+#'
+#' @param individuals The parsed individuals.
+#' @param setSheetNames The sheets of this workbook that became parameter sets.
+#' @param scenarios The already-parsed scenarios section.
+#' @param file The workbook, named in the warning.
+#' @returns Nothing, called for its warning.
+#' @keywords internal
+#' @noRd
+.warnUndefinedIndividualSheets <- function(
+  individuals,
+  setSheetNames,
+  scenarios,
+  file
+) {
+  if (length(setSheetNames) == 0L) {
+    return(invisible(NULL))
+  }
+  defined <- vapply(
+    individuals %||% list(),
+    function(individual) {
+      .canonicalizeOneId(as.character(individual$individualId))
+    },
+    character(1)
+  )
+  wanted <- unique(vapply(
+    scenarios %||% list(),
+    function(scenario) {
+      .canonicalizeOneId(as.character(scenario$individual %||% NA_character_))
+    },
+    character(1)
+  ))
+  sheetIds <- vapply(setSheetNames, .canonicalizeOneId, character(1))
+  dropped <- setSheetNames[sheetIds %in% setdiff(wanted, defined)]
+  if (length(dropped) == 0L) {
+    return(invisible(NULL))
+  }
+  .warnFormatted(
+    messages$importUndefinedIndividualSheets(file, dropped),
+    "esqlabsR_importUndefinedIndividualSheets"
+  )
 }
 
 #' Parse parameter sheets from an Excel file into JSON structure
@@ -1976,7 +2252,14 @@ projectStatus <- function(project, silent = FALSE) {
       ),
       application = .naToNull(as.character(row[["ApplicationProtocol"]])),
       simulationTime = .naToNull(as.character(row[["SimulationTime"]])),
-      simulationTimeUnit = .naToNull(as.character(row[["SimulationTimeUnit"]])),
+      # A blank unit cell defaults to the hour `addScenario()` also defaults to,
+      # rather than null, so the same blank cell means one unit whichever
+      # entrypoint wrote the project (and an imported scenario is byte-identical
+      # to the same scenario authored through the API).
+      simulationTimeUnit = .naToDefault(
+        as.character(row[["SimulationTimeUnit"]]),
+        "h"
+      ),
       steadyState = .naToNull(.toLogical(row[["SteadyState"]], "SteadyState")),
       # A blank steady-state time/unit defaults to the same values the authoring
       # API and the legacy 5.x reader use (`1000` / `"min"`), rather than null, so
@@ -2149,13 +2432,22 @@ projectStatus <- function(project, silent = FALSE) {
   }
 
   importerConfig <- prop("dataImporterConfigurationFile")
+  # The declaration states its own `id`, the canonicalized basename of the data
+  # file with its extension dropped, rather than leaving one to be derived: a
+  # derived id is the basename verbatim, which makes the definition file
+  # `<name>.xlsx.json` and keeps whatever spaces, commas and casing the data
+  # file's name carried, so the declaration is not addressable by a
+  # `removeObservedData()` id the authoring API could ever produce.
+  #
   # `file` / `importerConfiguration` are stored as given (relative to
   # `dataFolder`), not truncated to a basename: the loader resolves them under
   # `dataFolder` (`.resolveDataPath()`), so a file in a subfolder would be lost
-  # if only its basename were kept. Only the section key is reduced to a
-  # basename, since an id becomes a single filename segment and cannot hold a
-  # path separator.
+  # if only its basename were kept.
+  id <- .canonicalizeOneId(
+    tools::file_path_sans_ext(basename(dataFile))
+  )
   entry <- list(
+    id = id,
     type = "excel",
     file = dataFile,
     sheets = as.list(readxl::excel_sheets(dataFilePath))
@@ -2165,10 +2457,7 @@ projectStatus <- function(project, silent = FALSE) {
   ) {
     entry$importerConfiguration <- importerConfig
   }
-  jsonData$observedData <- stats::setNames(
-    list(entry),
-    basename(dataFile)
-  )
+  jsonData$observedData <- stats::setNames(list(entry), id)
   jsonData
 }
 
@@ -2337,18 +2626,99 @@ projectStatus <- function(project, silent = FALSE) {
         next
       }
       field <- if (identical(col, idColumn)) idField else col
-      fields[[field]] <- val
+      fields[[field]] <- .plotFieldValue(field, val)
     }
     fields
   }
 
+  .warnSkippedPlotExportConfiguration(
+    readSheet("exportConfiguration"),
+    plotsFile
+  )
+  plotConfiguration <- .parseExcelPlotSheet(
+    readSheet("plotConfiguration"),
+    rowToFields
+  )
+  plotGrids <- .parseExcelPlotGridSheet(readSheet("plotGrids"), rowToFields)
+  .warnDuplicatePlotIds(plotConfiguration, "plotId", "plotConfiguration")
+  .warnDuplicatePlotIds(plotGrids, "plotGridId", "plotGrids")
+
   list(
     dataCombined = .parseExcelDataCombinedSheet(readSheet("DataCombined")),
-    plotConfiguration = .parseExcelPlotSheet(
-      readSheet("plotConfiguration"),
-      rowToFields
+    plotConfiguration = plotConfiguration,
+    plotGrids = plotGrids
+  )
+}
+
+# Report a legacy `exportConfiguration` sheet that carries rows.
+#
+# The sheet is the 5.x way of saying where each grid's figure is written and at
+# what size (`outputName`, `width`, `height`). A v6 project has no field for any
+# of that: figures are saved by the caller, from the plot objects `createPlots()`
+# returns, so the rows cannot be imported and an export cannot write them back
+# either. Which is a decision the user has to know about, since it is their
+# figure layout: a header-only sheet (what a workbook carries whether or not it
+# was ever filled in) says nothing and is silent.
+#
+# @param exportDf The `exportConfiguration` sheet, or NULL when absent or empty.
+# @param plotsFile The workbook, named in the warning.
+# @returns Nothing, called for its warning.
+# @keywords internal
+# @noRd
+.warnSkippedPlotExportConfiguration <- function(exportDf, plotsFile) {
+  if (is.null(exportDf) || nrow(exportDf) == 0L) {
+    return(invisible(NULL))
+  }
+  grids <- if ("plotGridName" %in% names(exportDf)) {
+    unique(as.character(exportDf$plotGridName))
+  } else {
+    character()
+  }
+  .warnFormatted(
+    messages$importSkippedPlotExportConfiguration(
+      plotsFile,
+      nrow(exportDf),
+      grids[!is.na(grids)]
     ),
-    plotGrids = .parseExcelPlotGridSheet(readSheet("plotGrids"), rowToFields)
+    "esqlabsR_importSkippedPlotExportConfiguration"
+  )
+}
+
+# Report the rows of a plots sheet that reuse an id an earlier row already used.
+#
+# Each plot and each grid is one definition keyed by its id, so a repeated id is
+# one definition, built from the last row that carries it: the earlier row's whole
+# plot is gone, and the reported count is the count of what survived, so nothing
+# says a row went missing unless the workbook is counted by hand. The rows are not
+# renamed apart, because a grid naming the id would then reach only one of them
+# and the other plot would belong to no grid.
+#
+# Compared on the canonical id, since that is the id the definitions end up keyed
+# by: two rows spelling one id differently are as much of a collision as two
+# spelling it the same.
+#
+# @param records The parsed records of the sheet (an unnamed list).
+# @param idField The record field holding the id (`plotId` / `plotGridId`).
+# @param sheet The sheet name, for the warning.
+# @returns Nothing, called for its warning.
+# @keywords internal
+# @noRd
+.warnDuplicatePlotIds <- function(records, idField, sheet) {
+  if (length(records) == 0L) {
+    return(invisible(NULL))
+  }
+  ids <- vapply(
+    records,
+    function(record) .canonicalizeOneId(as.character(record[[idField]])),
+    character(1)
+  )
+  duplicated <- unique(ids[duplicated(ids)])
+  if (length(duplicated) == 0L) {
+    return(invisible(NULL))
+  }
+  .warnFormatted(
+    messages$importDuplicatePlotIds(sheet, idField, duplicated),
+    "esqlabsR_importDuplicatePlotIds"
   )
 }
 
@@ -2360,6 +2730,39 @@ projectStatus <- function(project, silent = FALSE) {
   "xScaleFactors",
   "yScaleFactors"
 )
+
+# The plot / plot-grid fields that carry numbers rather than text, the field-type
+# contract `.dataCombinedNumericFields` gives the sibling section. A
+# hand-maintained workbook routinely stores one of these as text (`nsd` typed as
+# `"1.96"`), which readxl reads as a string, so the imported definition would hold
+# a string where the same field authored with `addPlot()` holds a number.
+#
+# Several of them are multi-value fields both entrypoints keep as one
+# comma-separated string, so the coercion is conditional on the cell holding a
+# single number (`.plotFieldValue()`): `"0, 24"` stays the string it is.
+.plotNumericFields <- c(
+  "nsd",
+  "quantiles",
+  "foldDistance",
+  "xValuesLimits",
+  "yValuesLimits",
+  "xAxisLimits",
+  "yAxisLimits"
+)
+
+# One plots cell, coerced to a number when the field is a numeric one and the
+# cell holds a single number. Anything else (text, a multi-value cell, a value
+# already numeric) is returned as read.
+#
+# @keywords internal
+# @noRd
+.plotFieldValue <- function(field, value) {
+  if (!(field %in% .plotNumericFields) || is.numeric(value)) {
+    return(value)
+  }
+  numeric <- suppressWarnings(as.numeric(value))
+  if (length(numeric) == 1L && !is.na(numeric)) numeric else value
+}
 
 # Group the long-format DataCombined sheet (one row per simulated/observed
 # curve, distinguished by the `dataType` column) into nested dataCombined
@@ -2505,8 +2908,9 @@ projectStatus <- function(project, silent = FALSE) {
       taskId = task$id,
       scenarios = .formatArrayToCommaList(unlist(task$scenarios))
     )
-    for (key in names(task$configuration %||% list())) {
-      taskRow[[paste0("config.", key)]] <- task$configuration[[key]] %||% NA
+    flatConfig <- .flattenPIConfiguration(task$configuration)
+    for (key in names(flatConfig)) {
+      taskRow[[paste0("config.", key)]] <- flatConfig[[key]] %||% NA
     }
     taskRows[[length(taskRows) + 1]] <- as.data.frame(
       taskRow,
@@ -2600,13 +3004,14 @@ projectStatus <- function(project, silent = FALSE) {
   lapply(seq_len(nrow(taskDf)), function(i) {
     taskId <- as.character(taskDf$taskId[[i]])
     configCols <- grep("^config\\.", names(taskDf), value = TRUE)
-    configuration <- list()
+    flatConfig <- list()
     for (col in configCols) {
       val <- .naToNull(taskDf[[col]][[i]])
       if (!is.null(val)) {
-        configuration[[sub("^config\\.", "", col)]] <- val
+        flatConfig[[sub("^config\\.", "", col)]] <- val
       }
     }
+    configuration <- .nestPIConfiguration(flatConfig)
     list(
       id = taskId,
       scenarios = as.list(.parseCommaListToArray(taskDf$scenarios[[i]])),
@@ -2615,6 +3020,62 @@ projectStatus <- function(project, silent = FALSE) {
       configuration = configuration
     )
   })
+}
+
+# The nested groups of a PI task's `configuration`: each holds its own option
+# dict rather than a scalar, so flattening the configuration onto sheet columns
+# has to carry the group name along and importing has to put it back.
+#
+# @keywords internal
+# @noRd
+.piConfigurationGroups <- c(
+  "objectiveFunction",
+  "algorithmOptions",
+  "ciOptions",
+  "simulationRunOptions"
+)
+
+# Flatten a PI task's `configuration` to the one-scalar-per-column shape a sheet
+# can hold: a scalar setting keeps its name, an option inside a nested group
+# becomes `<group>.<option>`. `.nestPIConfiguration()` inverts it, so a
+# configuration survives an export and re-import as the nested object it is.
+#
+# @keywords internal
+# @noRd
+.flattenPIConfiguration <- function(configuration) {
+  flat <- list()
+  for (key in names(configuration %||% list())) {
+    value <- configuration[[key]]
+    if (is.list(value)) {
+      for (option in names(value)) {
+        flat[[paste0(key, ".", option)]] <- value[[option]]
+      }
+    } else {
+      flat[[key]] <- value
+    }
+  }
+  flat
+}
+
+# Rebuild the nested `configuration` object from the flat `config.*` cells
+# `.flattenPIConfiguration()` wrote. Only a name whose first segment is one of the
+# nested groups is split, and only on its first dot, so an option name that
+# itself contains a dot stays one name.
+#
+# @keywords internal
+# @noRd
+.nestPIConfiguration <- function(flat) {
+  configuration <- list()
+  for (name in names(flat)) {
+    group <- sub("\\..*$", "", name)
+    if (group %in% .piConfigurationGroups && grepl(".", name, fixed = TRUE)) {
+      option <- sub("^[^.]*\\.", "", name)
+      configuration[[group]][[option]] <- flat[[name]]
+    } else {
+      configuration[[name]] <- flat[[name]]
+    }
+  }
+  configuration
 }
 
 # Parse the PIParameters / PIOutputMappings rows for one task. Filters `df` to
@@ -2648,6 +3109,54 @@ projectStatus <- function(project, silent = FALSE) {
     }
     record
   })
+}
+
+# The distinct `ObservedDataSheet` cells of a legacy `PIOutputMappings` sheet.
+#
+# The column exists only in the 5.x layout, where it names the sheet of the data
+# workbook a mapping's data set is read from. Empty for the newer layout, which
+# has no such column, and for a workbook with no mappings sheet.
+#
+# @keywords internal
+# @noRd
+.excelPIObservedDataSheets <- function(piFile) {
+  sheets <- readxl::excel_sheets(piFile)
+  if (!("PIOutputMappings" %in% sheets)) {
+    return(character())
+  }
+  df <- readExcel(piFile, sheet = "PIOutputMappings")
+  if (!("ObservedDataSheet" %in% names(df)) || nrow(df) == 0L) {
+    return(character())
+  }
+  declared <- unique(as.character(df$ObservedDataSheet))
+  declared[!is.na(declared) & nzchar(declared)]
+}
+
+# Report a data-workbook sheet a legacy PI workbook names that is not among the
+# imported observed data, and so holds data sets the project does not have.
+#
+# Silent when no observed data was imported at all: that is reported on its own
+# (`.parseExcelObservedData()`), and repeating it once per named sheet would say
+# nothing new.
+#
+# @param declared The sheets the `ObservedDataSheet` column names.
+# @param observedData The imported `observedData` section.
+# @returns Nothing, called for its warning.
+# @keywords internal
+# @noRd
+.warnUnimportedPIObservedDataSheets <- function(declared, observedData) {
+  if (length(declared) == 0L || length(observedData %||% list()) == 0L) {
+    return(invisible(NULL))
+  }
+  imported <- unlist(lapply(observedData, function(entry) unlist(entry$sheets)))
+  missing <- setdiff(declared, as.character(imported %||% character()))
+  if (length(missing) == 0L) {
+    return(invisible(NULL))
+  }
+  .warnFormatted(
+    messages$importUnimportedPIObservedDataSheets(missing),
+    "esqlabsR_importUnimportedPIObservedDataSheets"
+  )
 }
 
 # Parse the legacy 5.x parameter-identification layout: no `PITasks` sheet, but
@@ -2710,18 +3219,25 @@ projectStatus <- function(project, silent = FALSE) {
 # `Container Path` + `Parameter Name` columns to the flat `path`, and coins a
 # per-parameter `id` from the parameter name (de-duplicated within the task).
 #
+# The rows sharing a `Group` describe ONE free parameter estimated across several
+# scenarios, not one parameter each (see `.pi5xParameterGroups()`), so such rows
+# become a single record whose `scenarios` is the union of theirs.
+#
 # @keywords internal
 # @noRd
 .parseExcelPI5xParams <- function(df, task) {
   rows <- .pi5xTaskRows(df, task)
   ids <- character()
-  lapply(seq_len(nrow(rows)), function(i) {
-    row <- rows[i, ]
-    id <- .pi5xUniqueId(as.character(row[["Parameter Name"]]), ids)
+  lapply(.pi5xParameterGroups(rows, task), function(group) {
+    row <- rows[group[[1]], ]
+    id <- .uniqueImportedId(as.character(row[["Parameter Name"]]), ids)
     ids[[length(ids) + 1L]] <<- id
+    scenarios <- unique(unlist(lapply(group, function(i) {
+      .parseCommaListToArray(rows[i, ][["Scenarios"]])
+    })))
     .dropNulls(list(
       id = id,
-      scenarios = as.list(.parseCommaListToArray(row[["Scenarios"]])),
+      scenarios = as.list(scenarios),
       path = .pi5xPath(row[["Container Path"]], row[["Parameter Name"]]),
       units = .naToNull(as.character(row[["Units"]])),
       minValue = .naToNull(as.numeric(row[["MinValue"]])),
@@ -2729,6 +3245,94 @@ projectStatus <- function(project, silent = FALSE) {
       startValue = .naToNull(as.numeric(row[["StartValue"]]))
     ))
   })
+}
+
+# Which rows of a task's 5.x `PIParameters` sheet describe one free parameter.
+#
+# The sheet's `Group` column is what makes several rows one optimisation variable:
+# rows sharing a group, a container path and a parameter name are the same
+# parameter estimated across the scenarios they name between them, which is how
+# the identification was set up and therefore what it estimates. A blank `Group`
+# is its own parameter, and two rows in one group at different paths are
+# different parameters, matching how esqlabsR 5.x read the sheet.
+#
+# The bounds have to agree inside a group, since one parameter has one set of
+# them. 5.x refused to build such a task at all; here the rows are left
+# unmerged (one parameter each, so nothing is invented and nothing is lost) and
+# named in a warning, so the rest of a project with one bad group still migrates.
+#
+# @param rows One task's rows of the sheet.
+# @param task The task id, for the warning.
+# @returns A list of integer vectors of row indices, one per parameter.
+# @keywords internal
+# @noRd
+.pi5xParameterGroups <- function(rows, task) {
+  if (nrow(rows) == 0L) {
+    return(list())
+  }
+  cell <- function(column, i) as.character(.cellValue(rows, column, i))
+  # `\r` cannot occur in an Excel cell, so it separates the key parts without a
+  # path or a name that contains the separator merging two distinct parameters.
+  keys <- vapply(
+    seq_len(nrow(rows)),
+    function(i) {
+      group <- .cellValue(rows, "Group", i)
+      if (.isBlankCell(group)) {
+        return(paste0("\r", i))
+      }
+      paste(
+        as.character(group),
+        cell("Container Path", i),
+        cell("Parameter Name", i),
+        sep = "\r"
+      )
+    },
+    character(1)
+  )
+  boundsOf <- function(i) {
+    vapply(
+      c("MinValue", "MaxValue", "StartValue"),
+      function(column) {
+        suppressWarnings(as.numeric(.cellValue(rows, column, i)))
+      },
+      numeric(1)
+    )
+  }
+
+  groups <- list()
+  mismatched <- character()
+  for (key in unique(keys)) {
+    members <- which(keys == key)
+    bounds <- boundsOf(members[[1]])
+    agree <- all(vapply(
+      members,
+      function(i) isTRUE(all.equal(bounds, boundsOf(i))),
+      logical(1)
+    ))
+    if (agree) {
+      groups[[length(groups) + 1L]] <- members
+      next
+    }
+    mismatched <- c(
+      mismatched,
+      .pi5xPath(
+        cell("Container Path", members[[1]]),
+        cell("Parameter Name", members[[1]])
+      ) %||%
+        cell("Parameter Name", members[[1]])
+    )
+    for (i in members) {
+      groups[[length(groups) + 1L]] <- i
+    }
+  }
+
+  if (length(mismatched) > 0L) {
+    .warnFormatted(
+      messages$importUnmergedPIParameterGroups(task, mismatched),
+      "esqlabsR_importUnmergedPIParameterGroups"
+    )
+  }
+  groups
 }
 
 # Build one task's `outputMappings` from the 5.x `PIOutputMappings` rows. Coins
@@ -2756,7 +3360,7 @@ projectStatus <- function(project, silent = FALSE) {
   lapply(seq_len(nrow(rows)), function(i) {
     row <- rows[i, ]
     outputPath <- as.character(row[["OutputPath"]])
-    id <- .pi5xUniqueId(sub(".*\\|", "", outputPath), ids)
+    id <- .uniqueImportedId(sub(".*\\|", "", outputPath), ids)
     ids[[length(ids) + 1L]] <<- id
     .dropNulls(list(
       id = id,
@@ -2993,14 +3597,20 @@ projectStatus <- function(project, silent = FALSE) {
 }
 
 # Coin an id unique within `existing` by suffixing `_2`, `_3`, ... on a clash.
-# The 5.x PI sheets carry no id column, so parameters and mappings need a
-# synthesised id. It is canonicalized here (the sheets derive it from a
-# parameter name or a path segment, which carry spaces and mixed case) so the
-# coined id is a clean, stable single segment.
+#
+# The one place the import invents an id, so everything it has to name itself
+# counts the same way and a migrated tree can be described in one sentence: the
+# second thing called `x` is `x_2`. Used for the ids the 5.x PI sheets do not
+# carry a column for (a parameter, an output mapping) and for a parameter-set
+# sheet whose name is already taken.
+#
+# The base is canonicalized here (a parameter name, a path segment, or a sheet
+# name carries spaces and mixed case) so the coined id is a clean, stable single
+# segment.
 #
 # @keywords internal
 # @noRd
-.pi5xUniqueId <- function(base, existing) {
+.uniqueImportedId <- function(base, existing) {
   base <- if (.isBlankCell(base)) "item" else as.character(base)
   base <- .canonicalizeOneId(base)
   candidate <- base
@@ -3106,10 +3716,38 @@ projectStatus <- function(project, silent = FALSE) {
     return(NULL)
   }
   allCols <- unique(unlist(lapply(records, names)))
+  # A column every record holds a single number in is written as numbers, so a
+  # number survives the round trip as a number: collapsing it to text would make
+  # the field come back as a string on the next import and report the project as
+  # out of sync with its own workbook. A column mixing text and numbers is
+  # written as text, both because a single Excel column has one type and because
+  # binding a character cell to a numeric one below would abort the export.
+  numericCols <- allCols[vapply(
+    allCols,
+    function(col) {
+      values <- Filter(
+        Negate(is.null),
+        lapply(records, function(rec) rec[[col]])
+      )
+      length(values) > 0L &&
+        all(vapply(
+          values,
+          function(v) is.numeric(v) && length(v) == 1L,
+          logical(1)
+        ))
+    },
+    logical(1)
+  )]
   rowDfs <- lapply(records, function(rec) {
     cells <- lapply(allCols, function(col) {
       val <- rec[[col]]
-      if (is.null(val)) NA else paste(val, collapse = ", ")
+      if (col %in% numericCols) {
+        val %||% NA_real_
+      } else if (is.null(val)) {
+        NA
+      } else {
+        paste(val, collapse = ", ")
+      }
     })
     names(cells) <- allCols
     as.data.frame(cells, stringsAsFactors = FALSE, check.names = FALSE)
@@ -3481,6 +4119,20 @@ projectStatus <- function(project, silent = FALSE) {
 #' @noRd
 .warnFormatted <- function(warning, class) {
   cli::cli_warn(warning$bullets, class = class, .envir = warning$envir)
+}
+
+#' Emit an unglued catalog message as an informational message
+#'
+#' The `cli_inform()` sibling of [.warnFormatted()], for a catalog entry that
+#' returns its templates unglued for the same reason (a filename it names is free
+#' text that can contain `{`/`}`).
+#'
+#' @param message A `list(bullets =, envir =)` from the `messages` catalog.
+#' @returns Nothing, called for its message.
+#' @keywords internal
+#' @noRd
+.informFormatted <- function(message) {
+  cli::cli_inform(message$bullets, .envir = message$envir)
 }
 
 #' One cell of a parsed sheet, `NA` where the sheet has no such column

@@ -17,7 +17,6 @@ test_that(".projectToJson() returns a JSON-shaped list with the canonical top-le
       "description",
       "definitionsFolder",
       "filePaths",
-      "defaultSimulationRunOptions",
       "observedData",
       "outputPaths",
       "scenarios",
@@ -31,7 +30,10 @@ test_that(".projectToJson() returns a JSON-shaped list with the canonical top-le
       "plotGrids",
       "parameterIdentification",
       # The Excel-bridge block is emitted only when the project carries
-      # Excel-bridge fields (the bundled example does).
+      # Excel-bridge fields (the bundled example does). The optional metadata
+      # (`name`, `description`, `defaultSimulationRunOptions`) is likewise
+      # emitted only when set, and the example carries a name and a description
+      # but no run options.
       "excel"
     ),
     ignore.order = TRUE
@@ -81,14 +83,17 @@ test_that(".projectToJson() splits the container path fields into filePaths and 
   )
 })
 
-test_that(".projectToJson() omits the excel block for a from-scratch project", {
+# #1213 item 26: an unset field is left out of the container rather than written
+# as `null`, which reads as metadata someone emptied. An upgraded project used to
+# carry `"name": null` and `"description": null`.
+test_that(".projectToJson() omits the excel block and the unset metadata for a from-scratch project", {
   project <- Project$new()
   tree <- .projectToJson(project)
 
   expect_false("excel" %in% names(tree))
-  expect_null(tree$name)
-  expect_null(tree$description)
-  expect_null(tree$defaultSimulationRunOptions)
+  expect_false("name" %in% names(tree))
+  expect_false("description" %in% names(tree))
+  expect_false("defaultSimulationRunOptions" %in% names(tree))
 })
 
 test_that(".projectToJson() rejects non-Project input", {

@@ -25,10 +25,13 @@
 # path-segment ids. Vectorized over `ids`.
 #
 # Rules (intersection of Windows + macOS + Linux filename rules):
+#   - fold Unicode compatibility variants (NFKC), so one character has one
+#     spelling
+#   - drop invisible formatting characters (zero-width space and friends)
 #   - lowercase
 #   - trim leading/trailing dots and spaces
-#   - replace each of `/ \ : * ? " < > |`, commas, whitespace (spaces, tabs),
-#     and control characters with `_`
+#   - replace each of `/ \ : * ? " < > |`, commas, any space, and control
+#     characters with `_`
 #   - an id that is empty or trims to nothing becomes `_`
 #   - a Windows reserved basename (CON, PRN, AUX, NUL, COM1-9, LPT1-9,
 #     case-insensitive) gets a `_` suffix so it is never a bare reserved name
@@ -370,16 +373,32 @@
       {limit} bytes."
     ))
   }
-  out <- tolower(id)
+  # Fold compatibility variants onto their canonical twin (NFKC) before anything
+  # else, so two spellings of one character are one id: the micro sign U+00B5 and
+  # the Greek mu U+03BC, a full-width letter and its ASCII form, and every
+  # compatibility space (the no-break space U+00A0, the U+2000 block) which lands
+  # on a plain space the replacement below turns into `_`.
+  out <- stringi::stri_trans_nfkc(id)
+  # Drop the invisible formatting characters NFKC keeps: the zero-width space
+  # U+200B, zero-width joiner U+200D, word joiner U+2060, byte-order mark U+FEFF
+  # and soft hyphen U+00AD. They carry nothing in an id, and left in they make
+  # two ids that render identically into two definition files whose names render
+  # identically. Removed rather than replaced, so `Out<U+200B>Path` and
+  # `OutPath` become the same id and the collision check can speak up.
+  out <- gsub("\\p{Cf}", "", out, perl = TRUE)
+  out <- tolower(out)
   # Trim leading/trailing dots and spaces first (illegal as a trailing segment
   # on Windows, and a leading dot hides the file on Unix), so an edge space is
   # dropped rather than turned into an underscore by the replacement below.
   out <- gsub("^[. ]+|[. ]+$", "", out)
-  # Forbidden characters, control characters, and any interior comma or space
-  # -> underscore. A comma or space is legal on disk but not a safe id: it makes
-  # a fragile filename and breaks the comma-separated reference lists the Excel
-  # bridge parses, so canonicalize them out here at the single shared chokepoint.
-  out <- gsub("[/\\:*?\"<>|,[:space:][:cntrl:]]", "_", out)
+  # Forbidden characters, every separator (`\p{Z}`, i.e. any space) and every
+  # remaining control/unassigned character (`\p{C}`) -> underscore. A comma or
+  # space is legal on disk but not a safe id: it makes a fragile filename and
+  # breaks the comma-separated reference lists the Excel bridge parses, so
+  # canonicalize them out here at the single shared chokepoint. The Unicode
+  # property classes are what make this hold beyond ASCII, where `[[:space:]]`
+  # stops.
+  out <- gsub("[/\\\\:*?\"<>|,\\p{Z}\\p{C}]", "_", out, perl = TRUE)
   if (nchar(out) == 0L) {
     return("_")
   }
@@ -398,11 +417,17 @@
 # room for the `.json` suffix.
 .maxDefinitionIdBytes <- 250L
 
-# Find the candidate ids closest to `x` (typo-tolerant). Mirrors ESQmrg's
-# `nearest_match`: `utils::adist(ignore.case = TRUE)`, a distance threshold of
-# `max(1, min(3, ceiling(nchar(x) / 3)))`, returning at most the `n` closest.
+# Find the candidate ids closest to `x` (typo-tolerant): `utils::adist(ignore.case
+# = TRUE)` against a distance threshold, returning at most the `n` closest.
 # Returns `character(0)` when there are no candidates or nothing is within
 # threshold.
+#
+# The threshold is `max(1, ceiling(nchar(x) / 3))`: a third of the id may differ,
+# and nothing caps it. The cap is what the shapes that actually dangle ran into.
+# A dataCombined id and its `_mean` sibling differ by 5 characters and a
+# per-analyte variant by a 4-character suffix, so a fixed ceiling of 3 went
+# silent on exactly the references the hint exists for, while the proportional
+# rule reaches both (an 18-character id tolerates 6).
 #
 # @keywords internal
 # @noRd
@@ -417,7 +442,7 @@
   }
   d <- utils::adist(x, candidates, ignore.case = TRUE)[1, ]
   ord <- order(d)
-  thr <- max(1L, min(3L, ceiling(nchar(x) / 3)))
+  thr <- max(1L, ceiling(nchar(x) / 3))
   keep <- ord[d[ord] <= thr]
   candidates[utils::head(keep, n)]
 }

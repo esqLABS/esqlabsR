@@ -183,6 +183,29 @@ test_that("restoreProject writes a tree and returns the Project bound to dir", {
   expect_false(.isModified(project))
 })
 
+# #1213 item 26: a restored project was identified only by the folder it landed
+# in, and a snapshot written by a previous esqlabsR version carries no name at all,
+# so there was no way to give one. `name` names the project the restore produces.
+test_that("restoreProject names the project it writes", {
+  out <- snapshotProject(
+    testProject(),
+    dir = withr::local_tempdir(),
+    name = "study"
+  )
+  dir <- withr::local_tempdir()
+
+  project <- restoreProject(out, dir, name = "Renal study")
+
+  expect_identical(project$info$name, "Renal study")
+  # In the container the restore wrote, so it survives a reload, and the restore
+  # still leaves nothing unsaved.
+  expect_identical(
+    loadProject(file.path(dir, "Project.json"))$info$name,
+    "Renal study"
+  )
+  expect_false(.isModified(project))
+})
+
 test_that("restoreProject's tree reloads via loadProject identically", {
   source <- exampleProject()
   out <- snapshotProject(source, dir = withr::local_tempdir(), name = "study")
