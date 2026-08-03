@@ -2858,3 +2858,235 @@ test_that("a sheet whose every row is skipped becomes no parameter set", {
   )
   expect_named(parsed, "Global")
 })
+
+# Legacy Excel fixture: characterization of the #1213 migration findings ----
+#
+# These tests pin what the importer does *today* with the workbook shapes real
+# pre-5.6 projects carry, using the `TestProjectExcelLegacy/` fixture. Several of
+# the behaviours pinned here are the defects reported in #1213: each such test
+# passes against the current behaviour and names the finding it covers, so it
+# flips visibly when that finding is fixed rather than quietly keeping a green
+# suite over a silent data loss.
+#
+# The sibling `TestProjectExcel/` fixture uses the modern spelling of every one
+# of these shapes, which is why none of them has been reproducible until now.
+
+# #1213 item 1: a two-column `Protein` + `Ontogeny` pair is the pre-5.6 way to
+# declare ontogenies, and the only spelling any workbook older than 5.6 has. The
+# importer reads a single `Protein Ontogenies` column, so it finds nothing and
+# every ontogeny is discarded. Nothing in the output says so, which is what makes
+# this worse than an error: two individuals or populations differing only in their
+# ontogenies import identically.
+test_that("a legacy two-column ontogeny pair imports with no ontogenies at all", {
+  imported <- importLegacyExcelProject(localLegacyExcelProject())
+
+  # `adult` declares one ontogeny in the workbook, `child` two, `adultpop` two.
+  expect_null(
+    imported$project$definitions$individuals[["adult"]]$proteinOntogenies
+  )
+  expect_null(
+    imported$project$definitions$individuals[["child"]]$proteinOntogenies
+  )
+  expect_null(
+    imported$project$definitions$populations[["adultpop"]]$proteinOntogenies
+  )
+
+  # And the loss is silent: no warning mentions ontogenies.
+  expect_false(any(grepl("ontogen", imported$warnings, ignore.case = TRUE)))
+})
+
+# #1213 item 1, the other half of the same silence: the individual that declares
+# two ontogenies and the one that declares one are indistinguishable after
+# import, and so is a population that declares two from one that declares none.
+# So nothing in the imported project can be used to detect the loss either.
+test_that("declaring ontogenies leaves no trace the import can be checked against", {
+  imported <- importLegacyExcelProject(localLegacyExcelProject())
+  populations <- imported$project$definitions$populations
+
+  # `adultpop` declares two ontogenies and `csvpop` none; they differ only in
+  # fields unrelated to ontogenies.
+  expect_identical(
+    populations[["adultpop"]]$proteinOntogenies,
+    populations[["csvpop"]]$proteinOntogenies
+  )
+})
+
+# #1213 item 8: v5 merged `PIParameters` rows by
+# `(Group, Container Path, Parameter Name)`, so the two rows sharing group 2 here
+# were ONE free parameter estimated across both scenarios. The importer never
+# reads `Group`, so they become two independent free parameters with independent
+# estimates. That changes what the identification computes, not just how the
+# project is laid out.
+test_that("a repeated parameter-identification Group becomes independent parameters", {
+  imported <- importLegacyExcelProject(localLegacyExcelProject())
+  task <- imported$project$definitions$parameterIdentification[["aciclovirfit"]]
+
+  # The workbook's three rows are group 1 (Lipophilicity) and group 2 twice
+  # (TSspec, once per scenario), so v5 estimated two free parameters. v6
+  # estimates three.
+  expect_length(task$parameters, 3L)
+  expect_identical(
+    vapply(task$parameters, function(p) p$id, character(1)),
+    c("lipophilicity", "tsspec", "tsspec_2")
+  )
+
+  # Nothing reports the split.
+  expect_false(any(grepl("group", imported$warnings, ignore.case = TRUE)))
+})
+
+# #1213 item 14: the legacy `Units` cell was ignored by v5 and is now assigned as
+# the parameter's display unit, so a cell v5 read past can abort `runPI()` (a
+# `mg` unit on a parameter whose dimension is an inversed time). The import side
+# is what carries it through, so that is what is pinned here.
+test_that("a legacy parameter-identification Units cell is carried through", {
+  imported <- importLegacyExcelProject(localLegacyExcelProject())
+  task <- imported$project$definitions$parameterIdentification[["aciclovirfit"]]
+
+  expect_identical(
+    vapply(
+      task$parameters,
+      function(p) p$units %||% NA_character_,
+      character(1)
+    ),
+    c("Log Units", "mg", "mg")
+  )
+})
+
+# #1213 item 13: the `crossReferences` phase resolves a mapping's `outputPathId`
+# but never its `observedData`, so a mapping naming an observed data set the
+# project does not define is reported as no error at all. `runPI()` then aborts at
+# build time on a project `validateProject()` called clean.
+test_that("a dangling parameter-identification observedData reference is not reported", {
+  imported <- importLegacyExcelProject(localLegacyExcelProject())
+  task <- imported$project$definitions$parameterIdentification[["aciclovirfit"]]
+
+  # The reference is carried through and resolves to nothing: the observed-data
+  # section holds one positional entry with no id to match against.
+  expect_type(task$outputMappings[[1]]$observedDataId, "character")
+  expect_null(names(imported$project$definitions$observedData))
+
+  # And validation grades the whole project clean regardless.
+  summary <- validationSummary(suppressWarnings(validateProject(
+    imported$project
+  )))
+  expect_equal(summary$total_critical_errors, 0)
+})
+
+# #1213 item 19: a blank `SimulationTimeUnit` cell imports as `null`, while
+# `addScenario()` defaults the same absent value to `"h"`. So the same blank cell
+# means a different unit depending on which entrypoint wrote the project.
+#
+# #1213 item 9 in the same fixture: the scenarios sheet has no
+# `OverwriteFormulasInSS` column at all, and the absent column imports as `FALSE`
+# rather than as an absent field.
+test_that("a blank simulationTime unit and an absent OverwriteFormulasInSS column import as null and FALSE", {
+  imported <- importLegacyExcelProject(localLegacyExcelProject())
+  scenario <- imported$project$definitions$scenarios[["adultscenario"]]
+
+  # The workbook leaves the cell blank; authoring the same scenario would give it
+  # `"h"`.
+  expect_null(scenario$simulationTimeUnit)
+  expect_identical(formals(addScenario)$simulationTimeUnit, "h")
+
+  # A scenario whose cell IS filled keeps its unit, so the above is the blank
+  # cell and not the whole column being dropped.
+  expect_identical(
+    imported$project$definitions$scenarios[[
+      "childscenario"
+    ]]$simulationTimeUnit,
+    "h"
+  )
+
+  expect_false(scenario$overwriteFormulasInSS)
+})
+
+# #1213 item 18: `rowToFields()` copies whatever type readxl guessed for a plots
+# column, with no numeric-coercion list of the kind `dataCombined` has. A workbook
+# storing `nsd` as text therefore yields the string `"1.96"` where the same field
+# authored programmatically is a number, which is the root cause behind every
+# `excel_in_sync = FALSE` report on a freshly imported tree.
+test_that("a plots field stored as text imports as a string, not a number", {
+  imported <- importLegacyExcelProject(localLegacyExcelProject())
+
+  expect_identical(imported$project$definitions$plots[["p3"]]$nsd, "1.96")
+})
+
+# #1213 item 10 / the residue #1207 recorded: a 5.x multi-value cell is quoted,
+# and a value may itself contain a comma, which is exactly what the quoting is
+# for. That half works. A quoted *single*-value reference cell is read raw on both
+# the defining and the referencing side, so a consistently quoted workbook
+# resolves but its ids carry the quote characters as underscores: the id is
+# `_name_` rather than the name the modeller wrote.
+test_that("quoted legacy cells resolve, and a quoted single-value id keeps its quotes as underscores", {
+  imported <- importLegacyExcelProject(localLegacyExcelProject())
+
+  # The quoted multi-value cell splits on the separating commas only, so the
+  # sheet name containing a comma survives as one reference.
+  expect_identical(
+    imported$project$definitions$scenarios[[
+      "adultscenario"
+    ]]$modelParameterSets,
+    c("global", "aciclovir", "sheet__with_comma")
+  )
+
+  # The quoted single-value `DataCombinedName` becomes `_name_` on both sides, so
+  # nothing dangles and nothing reads as the authored name either.
+  expect_setequal(
+    names(imported$project$definitions$dataCombined),
+    c("_aciclovirpvb_", "_aciclovirpop_")
+  )
+  expect_identical(
+    imported$project$definitions$plots[["p1"]]$dataCombined,
+    "_aciclovirpvb_"
+  )
+
+  # Consistently quoted, so the project validates: only inconsistent quoting
+  # dangles (#1207).
+  summary <- validationSummary(suppressWarnings(validateProject(
+    imported$project
+  )))
+  expect_equal(summary$total_critical_errors, 0)
+})
+
+# #1213 item 5: `populationsFolder` is resolved against the project root, while
+# the convention (this fixture, the bundled one, and the legacy-snapshot
+# materializer's own output) places it under the configurations folder. So the
+# folder is never found and never copied, and the report that would say so is
+# gated on `!silent`, which is off on the path where this always applies.
+#
+# The result is the worst available shape: `validateProject()` reports no error,
+# because it checks `modelFile` and observed-data existence but has no check for
+# the population CSV, and the scenario then dies at run time on a raw .NET error.
+test_that("the populations CSV folder does not travel with an imported project", {
+  projectDir <- localLegacyExcelProject()
+  imported <- importLegacyExcelProject(projectDir)
+
+  # It is there in the Excel project, under the configurations folder.
+  expect_true(dir.exists(
+    file.path(projectDir, "Configurations", "PopulationsCSV")
+  ))
+
+  # The sibling asset folders travelled.
+  expect_true(dir.exists(file.path(
+    imported$outputDir,
+    "Models",
+    "Simulations"
+  )))
+  expect_true(dir.exists(file.path(imported$outputDir, "Data")))
+
+  # The populations folder did not, under either spelling.
+  expect_false(dir.exists(file.path(imported$outputDir, "PopulationsCSV")))
+  expect_false(dir.exists(
+    file.path(imported$outputDir, "Configurations", "PopulationsCSV")
+  ))
+
+  # And `silent = TRUE` suppresses the one report that would have said so.
+  expect_false(any(grepl("not copied", imported$warnings, fixed = TRUE)))
+
+  # Validation still calls the project clean, so nothing warns the user before
+  # the scenario reaches the solver.
+  summary <- validationSummary(suppressWarnings(validateProject(
+    imported$project
+  )))
+  expect_equal(summary$total_critical_errors, 0)
+})
