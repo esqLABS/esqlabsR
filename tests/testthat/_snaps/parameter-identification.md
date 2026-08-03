@@ -67,16 +67,29 @@
       Error in `PITask()`:
       ! Field "outputMappings" on PITask "x" must be a list.
 
-# PITask() errors on empty scenarios
+# PITask() errors on a malformed scenarios entry
 
     Code
-      PITask(id = "x", scenarios = character(0), parameters = list(PIParameter(id = "k",
-        scenarios = "S1", path = "x|y", minValue = 0, maxValue = 1, startValue = 0.5)),
-      outputMappings = list(PIOutputMapping(id = "m", scenarios = "S1", outputPath = "PVB",
-        observedData = "Laskin")))
+      PITask(id = "x", scenarios = c("S1", NA))
     Condition
       Error in `PITask()`:
-      ! Field `scenarios` on PITask "x" must be a non-empty character vector.
+      ! Field `scenarios` on PITask "x" must be a character vector of scenario ids with no NA or empty entries, or empty for none.
+
+---
+
+    Code
+      PITask(id = "x", scenarios = "")
+    Condition
+      Error in `PITask()`:
+      ! Field `scenarios` on PITask "x" must be a character vector of scenario ids with no NA or empty entries, or empty for none.
+
+---
+
+    Code
+      PITask(id = "x", scenarios = 1)
+    Condition
+      Error in `PITask()`:
+      ! Field `scenarios` on PITask "x" must be a character vector of scenario ids with no NA or empty entries, or empty for none.
 
 # PITask() errors when parameters contains non-PIParameter elements
 
@@ -178,6 +191,33 @@
       i Pass a Project object loaded with loadProject() instead of a pre-built list of ParameterIdentification objects.
       Error in `runPI()`:
       ! `runPI()` now requires a <Project> object as its first argument. Migrate via `loadProject()` and a parameterIdentification section in your Project.json.
+
+# setPITask() errors on an unknown task, an unknown scenario, and a field it cannot set
+
+    Code
+      setPITask(project, "ghost", scenarios = "x")
+    Condition
+      Error in `setPITask()`:
+      ! Cannot modify PI task "ghost": it does not exist.
+      i Use `addPITask()` to create it first.
+
+---
+
+    Code
+      setPITask(project, "cfg", scenarios = "ghost")
+    Condition
+      Error in `setPITask()`:
+      ! Cannot modify PI task "cfg":
+      x scenarios not found in `project$definitions$scenarios`: "ghost"
+
+---
+
+    Code
+      project$setPITask("cfg", parameters = list())
+    Condition
+      Error:
+      ! `setPITask()` cannot set parameters.
+      i It sets scenarios and configuration; use `addPIParameter()` / `addPIOutputMapping()` for a task's parameters and output mappings.
 
 # addPITask() errors on unknown scenario id
 

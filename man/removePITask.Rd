@@ -35,6 +35,7 @@ Other parameterIdentification:
 \code{\link[=addPIParameter]{addPIParameter()}},
 \code{\link[=addPITask]{addPITask()}},
 \code{\link[=removePIOutputMapping]{removePIOutputMapping()}},
-\code{\link[=removePIParameter]{removePIParameter()}}
+\code{\link[=removePIParameter]{removePIParameter()}},
+\code{\link[=setPITask]{setPITask()}}
 }
 \concept{parameterIdentification}

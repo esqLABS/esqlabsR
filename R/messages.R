@@ -1345,6 +1345,16 @@ messages$PIScenariosEmpty <- function(recordType, recordId) {
   )
 }
 
+# A PITask's `scenarios`, unlike a PIParameter's or a PIOutputMapping's, may be
+# empty: it is a reference list, and an empty reference list means "there are
+# none", so the message describes the shape rather than demanding a value.
+messages$PITaskScenariosInvalid <- function(recordId) {
+  cliFormat(
+    "Field {.code scenarios} on PITask {.val {recordId}} must be a character \\
+    vector of scenario ids with no NA or empty entries, or empty for none."
+  )
+}
+
 messages$PIInvalidNumericField <- function(field, recordId, value) {
   cliFormat(
     "Field {.code {field}} on PIOutputMapping {.val {recordId}} is invalid: \\

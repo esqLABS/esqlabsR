@@ -55,11 +55,12 @@
 #' different multi-valued list per definition, pass a list of the same length
 #' as the id vector (one vector per definition).
 #'
-#' For a scenario's `parameterSets`, `initialConditions`, and `outputPaths`, a
-#' zero-length reference list means "there are none", the same as `NULL`. A
-#' definition file writes `[]` for a reference list a scenario has none of, so
-#' [addScenario()] and [setScenario()] take a scenario's own written fields
-#' straight back, whether they were read as a character vector or as the list
+#' A zero-length reference list means "there are none", the same as `NULL`: a
+#' scenario's `parameterSets` / `initialConditions` / `outputPaths`, an
+#' application's `parameterSets`, and a PI task's `scenarios` all read it that
+#' way. A definition file writes `[]` for a reference list a definition has none
+#' of, so the authoring functions take a definition's own written fields straight
+#' back, whether they were read as a character vector or as the list
 #' `jsonlite::fromJSON(simplifyVector = FALSE)` yields. The reference list of a
 #' plot grid (`plots`) must still be non-empty: a grid with no plots has nothing
 #' to render.
@@ -89,7 +90,7 @@
 #' entries (parallel `containerPath` / `parameterName` / `value` / `units`
 #' vectors) within a single named set, a different axis than the id-sets-`N`
 #' rule described here. `renameScenario()`, `duplicateScenario()`,
-#' `addObservedData()`, `addPITask()`, and the per-task
+#' `addObservedData()`, `addPITask()`, `setPITask()`, and the per-task
 #' parameter-identification sub-definition helpers act on a single definition per
 #' call.
 #'

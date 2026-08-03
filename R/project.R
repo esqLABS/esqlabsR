@@ -541,9 +541,9 @@ Project <- R6::R6Class(
     #' @description Add a parameter-identification task. See [addPITask()].
     addPITask = function(
       id,
-      scenarios,
-      parameters,
-      outputMappings,
+      scenarios = character(0),
+      parameters = list(),
+      outputMappings = list(),
       configuration = list(),
       overwrite = FALSE
     ) {
@@ -556,6 +556,13 @@ Project <- R6::R6Class(
         configuration,
         overwrite
       )
+    },
+
+    #' @description Modify a parameter-identification task's task-level fields.
+    #'   See [setPITask()], the primary entry point.
+    #' @param ... The supplied task-level fields, forwarded by [setPITask()].
+    setPITask = function(id, ...) {
+      private$.impl(.setPITask_impl, id, ...)
     },
 
     #' @description Remove parameter-identification tasks. See [removePITask()].

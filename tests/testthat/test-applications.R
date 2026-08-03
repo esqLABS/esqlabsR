@@ -9,6 +9,30 @@ test_that("addApplication + removeApplication round-trip leaves the section unch
   expect_identical(project$definitions$applications, before)
 })
 
+test_that("addApplication takes the empty reference list a definition file writes", {
+  # A definition file carries `[]` for an application with no parameter sets, and
+  # a JSON reader hands that back as `list()`; both mean "there are none", the
+  # same as `character(0)` and `NULL`, so an application's own written field goes
+  # straight back in.
+  project <- testProject()
+  for (empty in list(list(), character(0), NULL)) {
+    addApplication(project, "emptyapp", parameterSets = empty, overwrite = TRUE)
+    expect_null(project$definitions$applications[["emptyapp"]]$parameterSets)
+  }
+
+  # And a JSON array read as a list of strings flattens to the ids it is.
+  addApplication(
+    project,
+    "listedapp",
+    parameterSets = list("global"),
+    overwrite = TRUE
+  )
+  expect_equal(
+    project$definitions$applications[["listedapp"]]$parameterSets,
+    "global"
+  )
+})
+
 test_that("removeApplication warns on missing key and is a no-op", {
   project <- testProject()
   expect_warning(removeApplication(project, "Ghost"), "not found")

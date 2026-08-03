@@ -34,7 +34,9 @@ print.Application <- function(x, ...) {
 #'   the result if it changed).
 #' @param parameterSets Optional character vector of set ids referencing
 #'   `parameterSets` definitions, applied whole to every protocol. Defaults to
-#'   `NULL`. Use a list of the same length as `id` for a per-protocol set.
+#'   `NULL`; `character(0)` and the empty list a definition file's `[]` reads as
+#'   mean the same thing (there are none). Use a list of the same length as `id`
+#'   for a per-protocol set.
 #' @param overwrite Logical scalar. When `FALSE` (default), an id that already
 #'   exists aborts. When `TRUE`, the existing protocol is replaced
 #'   (last-write-wins).
@@ -140,8 +142,9 @@ removeApplication <- function(project, id) {
 #'   same way [addApplication()] canonicalizes it.
 #' @param parameterSets Character vector of set ids (from
 #'   `parameterSets` definitions), applied whole to every application; use
-#'   `character(0)` to clear. To set a different list per application, pass a
-#'   list of the same length as `id` (one character vector per application).
+#'   `character(0)`, `list()` or `NULL` to clear. To set a different list per
+#'   application, pass a list of the same length as `id` (one character vector
+#'   per application).
 #' @returns The `project` object, invisibly.
 #' @export
 #' @family application
@@ -193,10 +196,11 @@ setApplicationParameterSets <- function(
 
 # Validate and canonicalize a `parameterSets` reference vector for an
 # application, checking it is a character vector of ids that resolve against
-# `parameterSets` definitions, and returning the canonicalized ids. The single
-# source of truth for this check, shared by `.buildApplicationEntry()` (the add
-# path) and `setApplicationParameterSets()` (the set path) so their messages
-# cannot drift. `.canonicalizeIdRef()` runs inside, so the caller's
+# `parameterSets` definitions, and returning the canonicalized ids (`NULL` when
+# there are none). The single source of truth for this check, shared by
+# `.buildApplicationEntry()` (the add path) and `setApplicationParameterSets()`
+# (the set path) so their messages cannot drift. `.canonicalizeIdRef()` runs
+# inside `.canonicalizeVectorIdRef()`, so the caller's
 # `.collectCanonicalizedRefs()` still surfaces any canonicalization warning.
 #
 # @keywords internal
@@ -206,13 +210,21 @@ setApplicationParameterSets <- function(
   sets,
   call = rlang::caller_env()
 ) {
+  # `.canonicalizeVectorIdRef()` is the shared reference-list normalizer: it
+  # flattens the list a JSON reader yields for an id array and reads a
+  # zero-length value as "there are none" (returning `NULL`), so an
+  # application's own written `parameterSets` field goes straight back in,
+  # whether the project has one set, several, or none.
+  sets <- .canonicalizeVectorIdRef(sets)
+  if (is.null(sets)) {
+    return(NULL)
+  }
   if (!is.character(sets)) {
     cli::cli_abort(
       "{.arg parameterSets} must be a character vector of set ids",
       call = call
     )
   }
-  sets <- .canonicalizeIdRef(sets)
   bad <- setdiff(sets, names(project$definitions$parameterSets %||% list()))
   if (length(bad) > 0L) {
     cli::cli_abort(
