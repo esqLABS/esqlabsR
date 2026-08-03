@@ -1052,3 +1052,47 @@ test_that("a CSV-population scenario with NULL populationsFolder aborts with a c
     )
   )
 })
+
+# Legacy Excel projects (#1213) ----
+
+# #1213 item 2: the ontogenies the legacy fixture declares are what the runner
+# actually receives once the importer reads them, one pair or two, in the
+# comma-joined spelling the import folds them into.
+test_that("one ontogeny, and a comma-joined pair of them, read fine", {
+  expect_length(.readOntogeniesFromList("CYP3A4:CYP3A4"), 1L)
+  expect_length(.readOntogeniesFromList("CYP3A4:CYP3A4,CYP2D6:CYP2C8"), 2L)
+})
+
+# #1213 item 6: a CSV population entry that names no `file` has its filename
+# derived as `<populationId>.csv`, and the id is canonicalized, which lowercases
+# it, while the copied file keeps the mixed case the workbook's author gave it.
+# The derived name is matched against the folder listing case-insensitively, so
+# the two spellings meet on a case-sensitive filesystem as well.
+#
+# Asserted on the strings and then on the resolved name, so the test states the
+# case mismatch on every platform instead of passing on one and failing on
+# another.
+test_that("the derived population CSV filename resolves to the mixed-case file on disk", {
+  projectDir <- localLegacyExcelProject()
+  imported <- importLegacyExcelProject(projectDir)
+  scenario <- imported$project$definitions$scenarios[["csvpopscenario"]]
+
+  # The scenario reads its population from CSV, and the entry names no file, so
+  # the runner derives one from the id.
+  expect_true(scenario$readPopulationFromCSV)
+  expect_null(imported$project$definitions$populations[["csvpop"]]$file)
+
+  populationsFolder <- imported$project$paths$populationsFolder
+  present <- list.files(populationsFolder)
+  derived <- paste0(scenario$populationId, ".csv")
+
+  expect_identical(present, "CsvPop.csv")
+  expect_identical(derived, "csvpop.csv")
+
+  # The two differ in case, and the file the run opens is the one on disk.
+  expect_false(derived %in% present)
+  expect_identical(
+    .populationCsvFileName(scenario$populationId, populationsFolder),
+    "CsvPop.csv"
+  )
+})

@@ -14,6 +14,12 @@
 #                         tests of the Excel import / export bridge.
 #                         Reached via testProjectExcelPath() (the entry .xlsx).
 #
+#   - TestProjectExcelLegacy/
+#                         pre-5.6 Excel project, carrying the workbook shapes
+#                         real legacy projects have rather than the modern
+#                         spelling of each. Reached via
+#                         localLegacyExcelProject().
+#
 # For a writable, throwaway project use with_temp_project(), which calls
 # initProject(type = "example", createExcel = TRUE) in a temp dir.
 
@@ -91,6 +97,113 @@ testProjectExcelPath <- function() {
     "TestProjectExcel",
     "ProjectConfiguration.xlsx"
   )
+}
+
+# Legacy Excel fixture (issue #1213) ----
+#
+# `TestProjectExcelLegacy/` is a pre-5.6 project: two-column `Protein` +
+# `Ontogeny` ontogenies, no `OverwriteFormulasInSS` column, quoted multi-value
+# cells, a populations CSV folder under the configurations folder, and the 5.x
+# parameter-identification sheet layout. The sibling `TestProjectExcel/` fixture
+# has the modern spelling of every one of those, so it cannot reproduce what the
+# importer does with the legacy ones.
+#
+# `data-raw/TestProjectExcelLegacy.R` regenerates the workbooks and documents
+# each legacy trait.
+
+#' Copy the legacy Excel fixture to a throwaway directory and return it.
+#'
+#' The committed fixture holds no `.pkml`: the 7 MB public Aciclovir model the
+#' sibling `TestProjectExcel/` fixture already carries is copied into the throwaway
+#' project's `Models/Simulations/` here, so the copy is a complete, runnable
+#' project without a second copy of that binary in the repository.
+#'
+#' The copy is removed when the calling test finishes. Mutate one workbook of it
+#' with [editWorkbookSheets()] to derive a per-defect variant.
+localLegacyExcelProject <- function(envir = parent.frame()) {
+  src <- testthat::test_path("data", "TestProjectExcelLegacy")
+  dest <- withr::local_tempdir("LegacyExcel_", .local_envir = envir)
+  file.copy(list.files(src, full.names = TRUE), dest, recursive = TRUE)
+  file.copy(
+    testthat::test_path(
+      "data",
+      "TestProjectExcel",
+      "Models",
+      "Simulations",
+      "Aciclovir.pkml"
+    ),
+    file.path(dest, "Models", "Simulations", "Aciclovir.pkml")
+  )
+  dest
+}
+
+#' Path to the legacy fixture's entry workbook inside a copied project.
+legacyExcelProjectPath <- function(projectDir) {
+  file.path(projectDir, "ProjectConfiguration.xlsx")
+}
+
+#' Rewrite one workbook in place, through a function of all its sheets.
+#'
+#' Reads every sheet of `path` into a named list of data frames, passes that list
+#' to `edit`, and writes the result back. Keeping the whole workbook in the round
+#' trip is what makes a variant a *single* change: writing only the edited sheet
+#' would silently drop the workbook's other sheets, so the variant would differ
+#' from the base in more than the one dimension it means to.
+#'
+#' Note that this loses the original cell formatting (it is a `readxl` read
+#' followed by a `writexl` write), which no importer behaviour depends on. A
+#' column's *type* does survive, so an edit that replaces a numeric column with a
+#' character one does store text cells.
+editWorkbookSheets <- function(path, edit) {
+  sheetNames <- readxl::excel_sheets(path)
+  sheets <- lapply(sheetNames, function(sheet) {
+    as.data.frame(
+      readxl::read_excel(path, sheet = sheet, .name_repair = "minimal"),
+      check.names = FALSE
+    )
+  })
+  writexl::write_xlsx(edit(stats::setNames(sheets, sheetNames)), path)
+  invisible(path)
+}
+
+#' Import a copied legacy Excel project and load the result.
+#'
+#' @returns A list of
+#'   - `project`: the loaded `Project`.
+#'   - `outputDir`: where the JSON project was written (removed when the calling
+#'     test finishes), for assertions about which asset folders travelled.
+#'   - `warnings`: every warning message the import raised.
+#'
+#' The warnings are collected rather than suppressed because most of what these
+#' tests pin is *silence*: an import that drops something without a word. A test
+#' asserts that no collected warning mentions its own subject, which starts
+#' failing as soon as a fix adds one. Gating on the subject rather than using a
+#' bare `expect_no_warning()` keeps each test's assertion about its own defect,
+#' since a variant may legitimately raise an unrelated warning (a skipped sheet,
+#' an unresolved cross-reference) that has nothing to do with what it pins.
+importLegacyExcelProject <- function(
+  projectDir,
+  silent = TRUE,
+  ...,
+  envir = parent.frame()
+) {
+  outputDir <- withr::local_tempdir("LegacyOut_", .local_envir = envir)
+  warnings <- character()
+  collect <- function(w) {
+    warnings <<- c(warnings, conditionMessage(w))
+    invokeRestart("muffleWarning")
+  }
+  jsonPath <- withCallingHandlers(
+    importProjectFromExcel(
+      legacyExcelProjectPath(projectDir),
+      outputDir = outputDir,
+      silent = silent,
+      ...
+    ),
+    warning = collect
+  )
+  project <- withCallingHandlers(loadProject(jsonPath), warning = collect)
+  list(project = project, outputDir = outputDir, warnings = warnings)
 }
 
 #' Redact the throwaway-project absolute prefix from a quoted path in an error
