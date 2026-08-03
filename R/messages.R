@@ -533,6 +533,28 @@ messages$importUndefinedIndividualSheets <- function(filePath, sheets) {
   )
 }
 
+messages$importUnimportedPIObservedDataSheets <- function(sheets) {
+  # Unglued: a sheet name is free text.
+  envir <- new.env(parent = parent.frame())
+  assign("sheets", sheets, envir = envir)
+  assign("n", length(sheets), envir = envir)
+  list(
+    bullets = c(
+      "!" = "{cli::qty(n)}{n} {.field ObservedDataSheet} {?sheet/sheets} named \\
+      by the {.field PIOutputMappings} sheet {?is/are} not among the imported \\
+      observed data: {.val {sheets}}.",
+      "i" = "Observed data is imported from the project's data file, one \\
+      definition listing that workbook's sheets, so a sheet that is not in it \\
+      holds no data set the project can resolve; the mapping's \\
+      {.field DataSet} will not resolve either, and {.fn validateProject} \\
+      reports it.",
+      "i" = "Point {.field dataFile} at the workbook that holds \\
+      {cli::qty(n)}{?it/them} and import again."
+    ),
+    envir = envir
+  )
+}
+
 messages$importSkippedPlotExportConfiguration <- function(
   filePath,
   rows,

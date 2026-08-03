@@ -470,6 +470,7 @@ importProjectFromExcel <- function(
     list(
       property = "parameterIdentificationFile",
       parse = function(file, jsonData) {
+        declaredObservedSheets <<- .excelPIObservedDataSheets(file)
         # The scenarios section is parsed above, so the oldest 5.x mapping layout
         # can reach the output paths its rows identify their outputs through.
         tasks <- .parseExcelParameterIdentification(file, jsonData$scenarios)
@@ -493,6 +494,10 @@ importProjectFromExcel <- function(
   missingWorkbooks <- character()
   conventionWorkbooks <- character()
   readWorkbooks <- character()
+  # The observed-data sheets a legacy parameter-identification workbook names.
+  # Checked against the observed data actually imported, which is parsed after
+  # this loop, so the names are collected here and reported there.
+  declaredObservedSheets <- character()
   for (section in sections) {
     named <- prop(section$property)
     file <- resolveConfigFile(
@@ -543,6 +548,17 @@ importProjectFromExcel <- function(
   # data-file basename, listing the workbook's sheets; the loader resolves the
   # `file` / `importerConfiguration` basenames against `dataFolder`.
   jsonData <- .parseExcelObservedData(jsonData, prop, pcDir, outputDir)
+
+  # A 5.x `PIOutputMappings` sheet names the sheet of the data workbook each
+  # mapping's data set comes from. There is no per-mapping counterpart in a
+  # project (an observed-data definition lists the sheets it imports, and the
+  # import lists every sheet of the workbook), so the column is not carried; it is
+  # only worth a word when a sheet it names is not among the imported ones, since
+  # then the mapping's data set is not in the project at all.
+  .warnUnimportedPIObservedDataSheets(
+    declaredObservedSheets,
+    jsonData$observedData
+  )
 
   # Append `.json` rather than `fs::path_ext_set()`, which would *replace* an
   # existing extension: a dotted stem like `trial.v1` reads as an extension, so
@@ -3087,6 +3103,54 @@ projectStatus <- function(project, silent = FALSE) {
     }
     record
   })
+}
+
+# The distinct `ObservedDataSheet` cells of a legacy `PIOutputMappings` sheet.
+#
+# The column exists only in the 5.x layout, where it names the sheet of the data
+# workbook a mapping's data set is read from. Empty for the newer layout, which
+# has no such column, and for a workbook with no mappings sheet.
+#
+# @keywords internal
+# @noRd
+.excelPIObservedDataSheets <- function(piFile) {
+  sheets <- readxl::excel_sheets(piFile)
+  if (!("PIOutputMappings" %in% sheets)) {
+    return(character())
+  }
+  df <- readExcel(piFile, sheet = "PIOutputMappings")
+  if (!("ObservedDataSheet" %in% names(df)) || nrow(df) == 0L) {
+    return(character())
+  }
+  declared <- unique(as.character(df$ObservedDataSheet))
+  declared[!is.na(declared) & nzchar(declared)]
+}
+
+# Report a data-workbook sheet a legacy PI workbook names that is not among the
+# imported observed data, and so holds data sets the project does not have.
+#
+# Silent when no observed data was imported at all: that is reported on its own
+# (`.parseExcelObservedData()`), and repeating it once per named sheet would say
+# nothing new.
+#
+# @param declared The sheets the `ObservedDataSheet` column names.
+# @param observedData The imported `observedData` section.
+# @returns Nothing, called for its warning.
+# @keywords internal
+# @noRd
+.warnUnimportedPIObservedDataSheets <- function(declared, observedData) {
+  if (length(declared) == 0L || length(observedData %||% list()) == 0L) {
+    return(invisible(NULL))
+  }
+  imported <- unlist(lapply(observedData, function(entry) unlist(entry$sheets)))
+  missing <- setdiff(declared, as.character(imported %||% character()))
+  if (length(missing) == 0L) {
+    return(invisible(NULL))
+  }
+  .warnFormatted(
+    messages$importUnimportedPIObservedDataSheets(missing),
+    "esqlabsR_importUnimportedPIObservedDataSheets"
+  )
 }
 
 # Parse the legacy 5.x parameter-identification layout: no `PITasks` sheet, but

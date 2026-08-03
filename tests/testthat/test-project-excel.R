@@ -3686,6 +3686,38 @@ test_that("two plot rows sharing an id lose one plot, and it is reported", {
   expect_true(any(grepl("plotId", imported$warnings, fixed = TRUE)))
 })
 
+# #1213 item 15: the 5.x `PIOutputMappings` sheet names the sheet of the data
+# workbook each mapping's data set comes from. A project has no per-mapping
+# counterpart for it (an observed-data definition lists the sheets it imports, and
+# the import lists every sheet of the workbook), so the column is not carried and
+# the base fixture, whose sheet is in the workbook, says nothing. A named sheet
+# that is NOT imported is a mapping whose data set the project does not hold, and
+# that is reported.
+test_that("an ObservedDataSheet naming a sheet outside the data workbook is reported", {
+  expect_false(any(grepl(
+    "ObservedDataSheet",
+    importLegacyExcelProject(localLegacyExcelProject())$warnings,
+    fixed = TRUE
+  )))
+
+  projectDir <- localLegacyExcelProject()
+  editWorkbookSheets(
+    file.path(projectDir, "Configurations", "ParameterIdentification.xlsx"),
+    function(sheets) {
+      sheets$PIOutputMappings$ObservedDataSheet <- "Laskin 1982.Group B"
+      sheets
+    }
+  )
+  imported <- importLegacyExcelProject(projectDir)
+
+  expect_true(any(grepl(
+    "ObservedDataSheet",
+    imported$warnings,
+    fixed = TRUE
+  )))
+  expect_true(any(grepl("Group B", imported$warnings, fixed = TRUE)))
+})
+
 # #1213 item 26: the 5.x `exportConfiguration` sheet says where each grid's figure
 # is written and at what size, and a project has no field for any of it, so the
 # rows cannot be imported and an export cannot write them back. That decision is
