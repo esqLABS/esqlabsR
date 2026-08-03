@@ -904,6 +904,215 @@ test_that("the individuals and populations import stay quiet on a sheet with no 
   )
 })
 
+# Regression (#1213): a real 5.x workbook spells the ontogenies as a `Protein` +
+# `Ontogeny` column pair, not as the single `Protein Ontogenies` cell this
+# fixture set uses. Reading only the single column returned nothing for every
+# legacy workbook, so every ontogeny was discarded, and because two definitions
+# differing only in their ontogenies then imported identically nothing in the
+# output revealed the loss.
+
+# One legacy-spelling row: the comma-separated `Protein` and `Ontogeny` cells
+# pair up positionally.
+.legacyOntogenyIndividual <- function(id, proteins, ontogenies) {
+  dplyr::tibble(
+    IndividualId = id,
+    Species = "Human",
+    Population = "European_ICRP_2002",
+    Gender = "MALE",
+    `Weight [kg]` = 73,
+    `Height [cm]` = 176,
+    `Age [year(s)]` = 30,
+    Protein = proteins,
+    Ontogeny = ontogenies
+  )
+}
+
+.legacyOntogenyPopulation <- function(id, proteins, ontogenies) {
+  dplyr::tibble(
+    PopulationName = id,
+    species = "Human",
+    population = "European_ICRP_2002",
+    numberOfIndividuals = 10,
+    Protein = proteins,
+    Ontogeny = ontogenies
+  )
+}
+
+test_that("a legacy two-column Protein + Ontogeny sheet imports its ontogenies", {
+  indiv <- .parseExcelIndividuals(.legacyOntogenyIndividual(
+    "Indiv1",
+    "CYP3A4,CYP2D6",
+    "CYP3A4,CYP2C8"
+  ))
+  expect_identical(
+    indiv[[1]]$proteinOntogenies,
+    "CYP3A4:CYP3A4,CYP2D6:CYP2C8"
+  )
+
+  pop <- .parseExcelPopulations(.legacyOntogenyPopulation(
+    "Pop1",
+    "CYP3A4",
+    "CYP3A4"
+  ))
+  expect_identical(pop[[1]]$proteinOntogenies, "CYP3A4:CYP3A4")
+
+  # Whitespace around a value is workbook noise, not part of the protein name.
+  spaced <- .parseExcelIndividuals(.legacyOntogenyIndividual(
+    "Indiv2",
+    "CYP3A4, CYP2D6",
+    "CYP3A4 ,CYP2C8"
+  ))
+  expect_identical(
+    spaced[[1]]$proteinOntogenies,
+    "CYP3A4:CYP3A4,CYP2D6:CYP2C8"
+  )
+})
+
+test_that("two populations differing only in their ontogenies do not import identically", {
+  # The assertion the single-column fixture could never make: with the pair
+  # columns unread, both rows imported byte-identically apart from the id.
+  populations <- .parseExcelPopulations(rbind(
+    .legacyOntogenyPopulation("Pop1", "CYP3A4", "CYP3A4"),
+    .legacyOntogenyPopulation("Pop2", "CYP2D6", "CYP2C8")
+  ))
+  expect_identical(populations[[1]]$proteinOntogenies, "CYP3A4:CYP3A4")
+  expect_identical(populations[[2]]$proteinOntogenies, "CYP2D6:CYP2C8")
+  expect_false(identical(
+    populations[[1]]$proteinOntogenies,
+    populations[[2]]$proteinOntogenies
+  ))
+})
+
+test_that("the current single-column spelling wins over the pair columns", {
+  both <- .legacyOntogenyIndividual("Indiv1", "CYP2D6", "CYP2C8")
+  both[["Protein Ontogenies"]] <- "CYP3A4:CYP3A4"
+  expect_identical(
+    .parseExcelIndividuals(both)[[1]]$proteinOntogenies,
+    "CYP3A4:CYP3A4"
+  )
+})
+
+test_that("an unpairable ontogeny declaration warns instead of dropping it in silence", {
+  # Each protein needs its own ontogeny: with an unmatched count the positional
+  # pairing has no answer, and the value would otherwise leave the project with
+  # no message at all.
+  expect_snapshot(
+    indiv <- .parseExcelIndividuals(.legacyOntogenyIndividual(
+      "Indiv1",
+      "CYP3A4,CYP2D6",
+      "CYP3A4"
+    ))
+  )
+  expect_null(indiv[[1]]$proteinOntogenies)
+
+  # A protein named with no ontogeny at all is the same failure.
+  expect_snapshot(
+    pop <- .parseExcelPopulations(.legacyOntogenyPopulation(
+      "Pop1",
+      "CYP3A4",
+      NA
+    ))
+  )
+  expect_null(pop[[1]]$proteinOntogenies)
+
+  # Neither column filled is not a declaration, so it stays quiet.
+  expect_no_warning(
+    quiet <- .parseExcelPopulations(.legacyOntogenyPopulation("Pop2", NA, NA))
+  )
+  expect_null(quiet[[1]]$proteinOntogenies)
+})
+
+# Copy the TestProjectExcel fixture and rewrite its individuals and populations
+# workbooks into the legacy `Protein` + `Ontogeny` spelling, returning the copied
+# project directory. The fixture itself keeps the current single-column spelling
+# (which is why it never caught the drop), so the legacy layout is produced here
+# rather than checked in as a second binary workbook.
+.excelFixtureWithLegacyOntogenies <- function(envir = parent.frame()) {
+  work <- withr::local_tempdir(.local_envir = envir)
+  file.copy(
+    list.files(
+      testthat::test_path("data", "TestProjectExcel"),
+      full.names = TRUE
+    ),
+    work,
+    recursive = TRUE
+  )
+  rewrite <- function(workbook, sheet, proteins, ontogenies) {
+    path <- file.path(work, "Configurations", workbook)
+    names <- readxl::excel_sheets(path)
+    sheets <- stats::setNames(
+      lapply(names, function(s) readExcel(path, sheet = s)),
+      names
+    )
+    df <- sheets[[sheet]]
+    df[["Protein Ontogenies"]] <- NULL
+    df[["Protein"]] <- proteins
+    df[["Ontogeny"]] <- ontogenies
+    sheets[[sheet]] <- df
+    .writeExcel(sheets, path)
+  }
+  # The fixture's individual and its first population both carry
+  # `CYP3A4:CYP3A4,CYP2D6:CYP2C8`; its second population carries none.
+  rewrite(
+    "Individuals.xlsx",
+    "IndividualBiometrics",
+    "CYP3A4,CYP2D6",
+    "CYP3A4,CYP2C8"
+  )
+  rewrite(
+    "Populations.xlsx",
+    "Demographics",
+    c("CYP3A4,CYP2D6", NA),
+    c("CYP3A4,CYP2C8", NA)
+  )
+  work
+}
+
+test_that("a legacy-spelling workbook imports its ontogenies, and round-trips through Excel", {
+  work <- .excelFixtureWithLegacyOntogenies()
+  jsonPath <- suppressWarnings(importProjectFromExcel(
+    file.path(work, "ProjectConfiguration.xlsx"),
+    outputDir = withr::local_tempdir(),
+    silent = TRUE
+  ))
+  project <- suppressWarnings(loadProject(jsonPath))
+
+  expected <- "CYP3A4:CYP3A4,CYP2D6:CYP2C8"
+  expect_identical(
+    project$definitions$individuals[["indiv1"]]$proteinOntogenies,
+    expected
+  )
+  expect_identical(
+    project$definitions$populations[["testpopulation"]]$proteinOntogenies,
+    expected
+  )
+  # The population authored without ontogenies keeps none, so the two are
+  # distinguishable in the imported tree.
+  expect_null(
+    project$definitions$populations[[
+      "testpopulation_noonto"
+    ]]$proteinOntogenies
+  )
+
+  # Exporting writes the single-cell spelling, and re-importing that reads the
+  # same pairs back: the ontogenies are a fixed point of the round trip.
+  excelOut <- withr::local_tempdir()
+  exportProjectToExcel(project, outputDir = excelOut, silent = TRUE)
+  reimported <- suppressWarnings(loadProject(importProjectFromExcel(
+    file.path(excelOut, "Project.xlsx"),
+    outputDir = withr::local_tempdir(),
+    silent = TRUE
+  )))
+  expect_identical(
+    reimported$definitions$individuals[["indiv1"]]$proteinOntogenies,
+    expected
+  )
+  expect_identical(
+    reimported$definitions$populations[["testpopulation"]]$proteinOntogenies,
+    expected
+  )
+})
+
 test_that(".parseExcelObservedData keeps a subfolder path rather than truncating to basename", {
   # The loader resolves `file` under `dataFolder`, so a file named in a subfolder
   # must keep its relative path; truncating to the basename would make it

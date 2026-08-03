@@ -2233,7 +2233,11 @@ projectStatus <- function(project, silent = FALSE) {
       weight = .naToNull(as.numeric(row[["Weight [kg]"]])),
       height = .naToNull(as.numeric(row[["Height [cm]"]])),
       age = .naToNull(as.numeric(row[["Age [year(s)]"]])),
-      proteinOntogenies = .naToNull(as.character(row[["Protein Ontogenies"]]))
+      proteinOntogenies = .excelProteinOntogenies(
+        row,
+        "individual",
+        as.character(row[["IndividualId"]])
+      )
     )
     if (hasParameterSets) {
       raw <- row[["ParameterSets"]]
@@ -2282,7 +2286,11 @@ projectStatus <- function(project, silent = FALSE) {
       BMIMin = .naToNull(as.numeric(row[["BMIMin"]])),
       BMIMax = .naToNull(as.numeric(row[["BMIMax"]])),
       BMIUnit = .naToNull(as.character(row[["BMIUnit"]])),
-      proteinOntogenies = .naToNull(as.character(row[["Protein Ontogenies"]]))
+      proteinOntogenies = .excelProteinOntogenies(
+        row,
+        "population",
+        as.character(row[["PopulationName"]])
+      )
     )
     populations[[i]] <- pop
   }
@@ -3233,7 +3241,7 @@ projectStatus <- function(project, silent = FALSE) {
   rows <- list()
   for (indivId in names(individuals)) {
     ic <- individuals[[indivId]]
-    ontoStr <- ic$proteinOntogenies %||% NA
+    ontoStr <- .formatOntogeniesToCell(ic$proteinOntogenies)
     pSetsStr <- .formatArrayToCommaList(ic$parameterSets)
 
     rows[[length(rows) + 1]] <- data.frame(
@@ -3282,7 +3290,7 @@ projectStatus <- function(project, silent = FALSE) {
   rows <- list()
   for (popId in names(populations)) {
     popData <- populations[[popId]]
-    ontoStr <- popData$proteinOntogenies %||% NA
+    ontoStr <- .formatOntogeniesToCell(popData$proteinOntogenies)
 
     rows[[length(rows) + 1]] <- data.frame(
       PopulationName = popId,
@@ -3530,6 +3538,56 @@ projectStatus <- function(project, silent = FALSE) {
   x
 }
 
+#' Read one row's protein-ontogeny declaration, in either workbook spelling
+#'
+#' Two spellings are in circulation, and a real 5.x workbook uses the second:
+#'
+#'   - a single `Protein Ontogenies` cell holding
+#'     `Protein:Ontogeny,Protein:Ontogeny`, which is also what
+#'     [exportProjectToExcel()] writes;
+#'   - a `Protein` + `Ontogeny` column pair, each holding a comma-separated list,
+#'     paired up positionally (`Protein` cell `A,B` with `Ontogeny` cell `X,Y`
+#'     means `A:X` and `B:Y`).
+#'
+#' The pair is folded into the single-cell spelling, so both layouts import to
+#' the same definition and an import -> export -> import round trip is a fixed
+#' point. A declaration that cannot be paired (only one of the two columns
+#' filled, or a differing number of proteins and ontogenies) warns naming the
+#' record, because the alternative is ontogenies leaving the project in silence.
+#' The single cell wins when both spellings carry a value.
+#'
+#' @param row One row of the sheet.
+#' @param recordType `"individual"` or `"population"`, for the warning.
+#' @param recordId The row's id, for the warning.
+#' @returns A single `Protein:Ontogeny,...` string, or `NULL` when the row
+#'   declares no ontogenies (or none that can be read).
+#' @keywords internal
+#' @noRd
+.excelProteinOntogenies <- function(row, recordType, recordId) {
+  # A filled single cell is stored verbatim, exactly as it was before the pair
+  # spelling was read at all, so a workbook in the current spelling imports
+  # byte-identically.
+  single <- .naToNull(as.character(row[["Protein Ontogenies"]]))
+  if (!is.null(single) && length(.splitProteinOntogenies(single)) > 0L) {
+    return(single)
+  }
+  proteins <- .splitProteinOntogenies(row[["Protein"]])
+  ontogenies <- .splitProteinOntogenies(row[["Ontogeny"]])
+  if (length(proteins) == 0L && length(ontogenies) == 0L) {
+    return(NULL)
+  }
+  if (length(proteins) != length(ontogenies)) {
+    cli::cli_warn(messages$excelOntogeniesNotReadable(
+      recordType,
+      recordId,
+      proteins,
+      ontogenies
+    ))
+    return(NULL)
+  }
+  paste(paste0(proteins, ":", ontogenies), collapse = ",")
+}
+
 #' Replace an absent/`NA` single cell with a default, else keep the value
 #' @keywords internal
 #' @noRd
@@ -3621,6 +3679,26 @@ projectStatus <- function(project, silent = FALSE) {
   escaped <- gsub("\\", "\\\\", x, fixed = TRUE)
   escaped <- gsub(",", "\\,", escaped, fixed = TRUE)
   paste(escaped, collapse = ", ")
+}
+
+#' Format a protein-ontogeny field as a single `Protein Ontogenies` cell
+#'
+#' Deliberately not `.formatArrayToCommaList()`: the ontogeny reader splits the
+#' cell on plain commas and joins with none, so escaping a comma or padding the
+#' separator would make the cell unreadable on the way back in. An entry cannot
+#' contain a comma (it is a `Protein:Ontogeny` pair), so nothing needs escaping.
+#'
+#' @param x The field's value: a character vector of entries, a single
+#'   comma-joined string, a list, or `NULL`.
+#' @returns A length-1 string, or `NA_character_` when no ontogenies are set.
+#' @keywords internal
+#' @noRd
+.formatOntogeniesToCell <- function(x) {
+  entries <- .splitProteinOntogenies(x)
+  if (length(entries) == 0L) {
+    return(NA_character_)
+  }
+  paste(entries, collapse = ",")
 }
 
 #' Parse a comma-separated string into a character vector, or NULL

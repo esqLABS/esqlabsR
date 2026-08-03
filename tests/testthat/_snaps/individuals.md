@@ -84,6 +84,15 @@
       ! `parameterSets` references undefined parameter sets:
       x "ghost"
 
+# setIndividual refuses an ontogeny value it cannot store
+
+    Code
+      setIndividual(project, "indiv1", proteinOntogenies = ospsuite::MoleculeOntogeny$
+        new(molecule = "CYP3A4", ontogeny = ospsuite::StandardOntogeny$CYP3A4))
+    Condition
+      Error in `setIndividual()`:
+      ! `proteinOntogenies` must be a character vector of "Protein:Ontogeny" entries. x It is a <MoleculeOntogeny> object. i One entry per ontogeny, e.g. `c("CYP3A4:CYP3A4", "CYP2D6:CYP2C8")`, or the same pairs as one comma-joined string.
+
 # addIndividual aborts on a mismatched scalar field length
 
     Code

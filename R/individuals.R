@@ -4,8 +4,9 @@
 # `individualId`. Like `.parsePopulations()`, every field except the key
 # is passed through (unknown fields are preserved so newer-schema files
 # round-trip); the known numeric fields are coerced via `as.double` and
-# `parameterSets` to a character vector. Each entry is stamped with
-# `class = c("Individual", "list")` to enable S3 dispatch.
+# `parameterSets` / `proteinOntogenies` to a character vector (a JSON array is
+# read as a list, and both are authored as character vectors). Each entry is
+# stamped with `class = c("Individual", "list")` to enable S3 dispatch.
 #
 # @keywords internal
 # @noRd
@@ -29,7 +30,7 @@
       }
       if (field %in% numericFields) {
         val <- as.double(val)
-      } else if (field == "parameterSets") {
+      } else if (field %in% c("parameterSets", "proteinOntogenies")) {
         val <- as.character(unlist(val))
       }
       indiv[[field]] <- val
@@ -158,8 +159,8 @@ print.Individual <- function(x, ...) {
 #'
 #' Add individuals to `individuals` definitions, vectorizing over a vector of ids
 #' (see the recycling rule under Details). Scalar-per-definition fields (`species`
-#' and the `...` fields `population`, `gender`, `weight`, `height`, `age`,
-#' `proteinOntogenies`) follow the recycle/align rule; `parameterSets` is
+#' and the `...` fields `population`, `gender`, `weight`, `height`, `age`) follow
+#' the recycle/align rule; `parameterSets` and `proteinOntogenies` are
 #' vector-valued-per-definition (applied whole to every individual, or one vector
 #' per individual via a length-`id` list).
 #'
@@ -177,6 +178,11 @@ print.Individual <- function(x, ...) {
 #'   for some animal species); when supplied it must be a valid `GenderInt`
 #'   token. Numeric fields are coerced via `as.double()`. `parameterSets` is a
 #'   character vector of ids referencing `parameterSets` definitions.
+#'   `proteinOntogenies` is a character vector of `"Protein:Ontogeny"` entries,
+#'   one per ontogeny (e.g. `c("CYP3A4:CYP3A4", "CYP2D6:CYP2C8")`), or the same
+#'   pairs as one comma-joined string as the Excel sheets spell it; the ontogeny
+#'   name must be a key of [ospsuite::StandardOntogeny], checked when the
+#'   scenario runs.
 #'   `overwrite` is a logical scalar (default `FALSE`): an id that already
 #'   exists aborts unless `overwrite = TRUE`, which replaces it
 #'   (last-write-wins). Unknown fields trigger an error.
@@ -203,9 +209,14 @@ addIndividual <- function(project, id, species, ...) {
   # so it is not mistaken for a per-definition field.
   overwrite <- .validateOverwriteFlag(dots[["overwrite"]])
   dots[["overwrite"]] <- NULL
-  # `parameterSets` is the one vector-valued-per-definition field; everything else
-  # is scalar-per-definition. `species` is a positional formal, not a `...` field.
-  wholeNames <- intersect("parameterSets", names(dots))
+  # `parameterSets` and `proteinOntogenies` are the vector-valued-per-definition
+  # fields (a whole vector belongs to one individual, never split across ids);
+  # everything else is scalar-per-definition. `species` is a positional formal,
+  # not a `...` field.
+  wholeNames <- intersect(
+    c("parameterSets", "proteinOntogenies"),
+    names(dots)
+  )
   scalarDots <- dots[setdiff(names(dots), wholeNames)]
   perDefinition <- .alignAuthoringArgs(
     id,
@@ -332,6 +343,8 @@ addIndividual <- function(project, id, species, ...) {
     )
   }
 
+  .assertProteinOntogenies(fields$proteinOntogenies, call = call)
+
   entry <- list(species = species, gender = gender)
   for (field in c("population", "proteinOntogenies")) {
     if (!is.null(fields[[field]])) entry[[field]] <- fields[[field]]
@@ -432,8 +445,10 @@ removeIndividual <- function(project, id) {
 #' @param ... Named fields to change. Accepted: `species`, `population`,
 #'   `gender`, `weight`, `height`, `age`, `proteinOntogenies`,
 #'   `parameterSets`. Scalar-per-definition fields recycle/align across `id`;
-#'   `parameterSets` is applied whole (or one vector per individual via a
-#'   length-`id` list). Unknown fields trigger an error.
+#'   `parameterSets` and `proteinOntogenies` are applied whole (or one vector per
+#'   individual via a length-`id` list). `proteinOntogenies` takes the same
+#'   `"Protein:Ontogeny"` entries as [addIndividual()]. Unknown fields trigger an
+#'   error.
 #'
 #' @returns The `project` object, invisibly.
 #' @export
@@ -461,7 +476,10 @@ setIndividual <- function(project, id, ...) {
   }
 
   dots <- list(...)
-  wholeNames <- intersect("parameterSets", names(dots))
+  wholeNames <- intersect(
+    c("parameterSets", "proteinOntogenies"),
+    names(dots)
+  )
   scalarDots <- dots[setdiff(names(dots), wholeNames)]
   perDefinition <- .alignAuthoringArgs(
     id,
@@ -565,6 +583,9 @@ setIndividual <- function(project, id, ...) {
         }
       }
     }
+  }
+  if ("proteinOntogenies" %in% names(fields)) {
+    .assertProteinOntogenies(fields$proteinOntogenies, call = call)
   }
   if ("parameterSets" %in% names(fields)) {
     if (!is.character(fields$parameterSets)) {

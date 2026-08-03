@@ -365,6 +365,54 @@ test_that("addIndividual recycles scalar fields and applies parameterSets whole"
   )
 })
 
+test_that("addIndividual applies an ontogeny vector whole and stores it as a vector", {
+  # One entry per ontogeny: the vector belongs to the individual as a whole and
+  # is never split across ids, and it survives the trip through JSON (where an
+  # array would otherwise read back as a list).
+  project <- testProject()
+  ontogenies <- c("CYP3A4:CYP3A4", "CYP2D6:CYP2C8")
+  addIndividual(
+    project,
+    c("a", "b"),
+    species = "Human",
+    proteinOntogenies = ontogenies
+  )
+  expect_identical(
+    project$definitions$individuals$a$proteinOntogenies,
+    ontogenies
+  )
+  expect_identical(
+    project$definitions$individuals$b$proteinOntogenies,
+    ontogenies
+  )
+
+  saveProject(project)
+  reloaded <- loadProject(project$info$projectFilePath)
+  expect_identical(
+    reloaded$definitions$individuals$a$proteinOntogenies,
+    ontogenies
+  )
+})
+
+test_that("setIndividual refuses an ontogeny value it cannot store", {
+  # An `ospsuite::MoleculeOntogeny` object stored unchecked reached
+  # `saveProject()` as an R6 object the JSON writer cannot serialize, which left
+  # the whole project unsaved.
+  project <- testProject()
+  expect_snapshot(
+    error = TRUE,
+    setIndividual(
+      project,
+      "indiv1",
+      proteinOntogenies = ospsuite::MoleculeOntogeny$new(
+        molecule = "CYP3A4",
+        ontogeny = ospsuite::StandardOntogeny$CYP3A4
+      )
+    )
+  )
+  expect_no_error(saveProject(project))
+})
+
 test_that("addIndividual persists all N to disk in one saveProject()", {
   project <- testProject()
   addIndividual(
