@@ -44,6 +44,8 @@ section validators via \code{\link[=validateProject]{validateProject()}} before 
 plots and aborts with a formatted summary on critical errors. Set
 to \code{FALSE} to skip the pre-flight check (e.g. when the caller has
 already validated the project).}
+
+\item{...}{Passed on to \code{\link[=createPlots]{createPlots()}}.}
 }
 \value{
 A named list of \strong{plot grids} keyed by Plot Grid name: one entry

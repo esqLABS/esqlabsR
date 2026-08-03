@@ -52,14 +52,7 @@
 
   changed <- !is.na(ids) & ids != canonical
   if (any(changed)) {
-    rendered <- .canonicalizedIdBullets(ids[changed], canonical[changed])
-    cli::cli_warn(
-      c(
-        "Canonicalized {sum(changed)} id{?s} to a safe form:",
-        rendered$bullets
-      ),
-      .envir = rendered$envir
-    )
+    .reportCanonicalizedIds(ids[changed], canonical[changed])
   }
 
   # Two DISTINCT inputs that collapse to one canonical id are real ambiguity.
@@ -166,18 +159,7 @@
   )
   changed <- ref[keep] != canon
   if (any(changed)) {
-    # When a batch authoring call is collecting reference canonicalizations
-    # (`.collectCanonicalizedRefs()`), record each changed pair and stay
-    # silent so the caller emits one consolidated warning per call instead of
-    # one per definition. Outside a collector (a standalone call) warn immediately.
-    inputs <- ref[keep][changed]
-    canonicals <- canon[changed]
-    if (.canonRefSink$depth > 0L) {
-      .canonRefSink$inputs <- c(.canonRefSink$inputs, inputs)
-      .canonRefSink$canonicals <- c(.canonRefSink$canonicals, canonicals)
-    } else {
-      .warnCanonicalizedRefs(inputs, canonicals)
-    }
+    .reportCanonicalizedIds(ref[keep][changed], canon[changed])
   }
   out[keep] <- canon
   out
@@ -220,18 +202,36 @@
   is.character(x) && length(x) == 1L
 }
 
-# Sink for collecting reference-canonicalization changes across the per-definition
-# builds of one vectorized authoring call, so the whole call emits a single
-# warning naming each `input -> canonical` change rather than one warning per
-# definition. `depth` guards re-entrancy; the inputs/canonicals accumulate the
-# changed pairs.
+# Sink for collecting id-canonicalization changes across one authoring call, so
+# the whole call emits a single warning naming each `input -> canonical` change
+# rather than one warning per `.canonicalizeId()` / `.canonicalizeIdRef()` call
+# it makes. Both sides feed it: a definition's own id and every reference the
+# definition names, so authoring over a project full of non-canonical ids emits
+# one warning per `add*()` rather than one per id. `depth` guards re-entrancy;
+# the inputs/canonicals accumulate the changed pairs.
 #
 # @keywords internal
 # @noRd
 .canonRefSink <- new.env(parent = emptyenv())
 .canonRefSink$depth <- 0L
+.canonRefSink$silent <- 0L
 .canonRefSink$inputs <- character()
 .canonRefSink$canonicals <- character()
+
+# Canonicalize without reporting the change. Some callers canonicalize only to
+# compare or to re-key, where the transform is an internal detail the user did
+# not ask for: re-keying a section read off disk, matching a reference against
+# the id it was filed under. `suppressWarnings()` does not cover those: inside a
+# collector the pair is recorded rather than warned, and would surface later,
+# from the flush, outside the suppressing frame.
+#
+# @keywords internal
+# @noRd
+.silentlyCanonicalized <- function(expr) {
+  .canonRefSink$silent <- .canonRefSink$silent + 1L
+  on.exit(.canonRefSink$silent <- .canonRefSink$silent - 1L, add = TRUE)
+  expr
+}
 
 # Run `expr` while collecting every reference canonicalization it triggers
 # (via `.canonicalizeIdRef()`), then emit ONE consolidated warning naming each
@@ -275,9 +275,12 @@
   )
   withCallingHandlers(
     {
-      result <- force(expr)
+      # Carry `expr`'s visibility through: the collector wraps whole authoring
+      # dispatches, which return the project invisibly, and returning the value
+      # plainly here would make every `add*()` / `remove*()` print it.
+      result <- withVisible(force(expr))
       flush()
-      result
+      if (result$visible) result$value else invisible(result$value)
     },
     error = function(cnd) {
       # Flush the collected canonicalizations before the error unwinds the
@@ -287,20 +290,42 @@
   )
 }
 
-# Render the consolidated reference-canonicalization warning. Shared by the
-# standalone `.canonicalizeIdRef()` path and the batch collector so both emit
-# byte-identical text.
+# Report a batch of `input -> canonical` changes. Inside a collector
+# (`.collectCanonicalizedRefs()`), record the pairs and stay silent so the whole
+# authoring call emits one consolidated warning; outside one (a standalone
+# `.canonicalizeId()` / `.canonicalizeIdRef()` call) warn immediately.
+#
+# @keywords internal
+# @noRd
+.reportCanonicalizedIds <- function(inputs, canonicals) {
+  if (.canonRefSink$silent > 0L) {
+    return(invisible(NULL))
+  }
+  if (.canonRefSink$depth > 0L) {
+    .canonRefSink$inputs <- c(.canonRefSink$inputs, inputs)
+    .canonRefSink$canonicals <- c(.canonRefSink$canonicals, canonicals)
+  } else {
+    .warnCanonicalizedRefs(inputs, canonicals)
+  }
+  invisible(NULL)
+}
+
+# Render the consolidated canonicalization warning. Shared by the standalone
+# paths and the batch collector so every route emits byte-identical text. The
+# wording says "id" for both a definition's own id and a reference, because one
+# consolidated warning can carry either kind and each bullet names the value it
+# rewrote.
 #
 # @keywords internal
 # @noRd
 .warnCanonicalizedRefs <- function(inputs, canonicals) {
-  # Same fix as `.canonicalizeId()`'s changed-id warning: build the bullet
-  # templates and their binding environment via `.canonicalizedIdBullets()`
-  # and glue-parse them in a single outer `cli_warn()` call.
+  # Build the bullet templates and their binding environment via
+  # `.canonicalizedIdBullets()` and glue-parse them in a single outer
+  # `cli_warn()` call, so an id containing `{` or `}` is never evaluated.
   rendered <- .canonicalizedIdBullets(inputs, canonicals)
   cli::cli_warn(
     c(
-      "Canonicalized {length(inputs)} referenced id{?s} to a safe form:",
+      "Canonicalized {length(inputs)} id{?s} to a safe form:",
       rendered$bullets
     ),
     .envir = rendered$envir

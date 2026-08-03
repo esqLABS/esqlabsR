@@ -1172,7 +1172,15 @@ Project <- R6::R6Class(
     # `do.call(addIndividual, list(.call = x))`); it would match `.call` twice
     # and R aborts with "matched by multiple actual arguments".
     .impl = function(fn, ...) {
-      fn(self, private, ..., .call = rlang::caller_env(2))
+      # Resolve the attribution call as its own statement, before the collector
+      # wraps the dispatch: `caller_env(2)` is read from this method's frame
+      # either way, and naming it here keeps that independent of when the wrapped
+      # expression is forced.
+      call <- rlang::caller_env(2)
+      # One canonicalization collector per authoring call, so a call over
+      # non-canonical ids reports the definition's own id and every reference it
+      # names in a single warning instead of one per id.
+      .collectCanonicalizedRefs(fn(self, private, ..., .call = call))
     },
 
     # Read one definition section. Returns the plain backing list (NOT wrapped
@@ -1349,6 +1357,12 @@ Project <- R6::R6Class(
     },
 
     .readJson = function(jsonPath) {
+      # Everything this method aborts on is a property of the file, not of the
+      # call that opened it, and the file is reached from several entrypoints
+      # (`loadProject()`, `Project$new()`, `ProjectConfiguration()`,
+      # `reloadProject()`). Attribute those aborts to no function at all rather
+      # than to this private method, whose name means nothing to the reader.
+      rlang::local_error_call(NULL)
       jsonPath <- fs::path_abs(jsonPath)
       if (!fs::file_exists(jsonPath)) {
         cli::cli_abort(messages$fileNotFound(jsonPath))
@@ -1363,9 +1377,21 @@ Project <- R6::R6Class(
         }
       )
       if (!identical(jsonData$schemaVersion, "2.0")) {
-        cli::cli_abort(
-          "Unsupported schemaVersion: {.val {jsonData$schemaVersion %||% '<missing>'}}. Expected {.val 2.0}."
-        )
+        # A previous-version monolithic snapshot has no `schemaVersion`, so it
+        # fails this check for a reason the version number cannot express: it is
+        # not a malformed project of the current format, it is an older project
+        # that `restoreProject()` upgrades. Name that call rather than reporting
+        # a missing schema version. Every entrypoint that opens a project file
+        # (`loadProject()`, `Project$new()`, the deprecated
+        # `ProjectConfiguration()`, `reloadProject()`) reads it through here, so
+        # the one guard covers all of them.
+        if (.isLegacySnapshot(jsonData)) {
+          cli::cli_abort(messages$legacySnapshotNotLoadable(jsonPath))
+        }
+        # `version` is bound here because the catalog entry leaves its
+        # placeholder unglued, so this call interpolates it exactly once.
+        version <- jsonData$schemaVersion %||% "<missing>"
+        cli::cli_abort(messages$unsupportedSchemaVersion(version))
       }
       private$.schemaVersion <- jsonData$schemaVersion
       private$.esqlabsRVersion <- jsonData$esqlabsRVersion

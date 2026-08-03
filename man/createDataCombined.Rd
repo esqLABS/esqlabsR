@@ -36,6 +36,8 @@ referenced simulated path or observed dataSet cannot be resolved. If
 \item{validate}{If \code{TRUE} (default), the \code{dataCombined} section is validated
 before any DataCombined is built, so a definition missing a required field
 aborts with a clear message instead of failing mid-build.}
+
+\item{...}{Passed on to \code{\link[=createDataCombined]{createDataCombined()}}.}
 }
 \value{
 A named list of \code{DataCombined} objects, one per requested name.

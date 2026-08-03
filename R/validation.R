@@ -109,8 +109,8 @@ validationResult <- R6::R6Class(
 #' [validationSummary()]), then lists each definition type that has at
 #' least one issue: a cross marks each critical error, a `!` marks each
 #' warning, and the `category` of each entry is shown as a sub-label.
-#' Definition types with no issues are folded into a compact "N
-#' section{?s} OK" tail. A fully valid result prints a single "no issues"
+#' Definition types with no issues are folded into a compact
+#' "N sections OK" tail. A fully valid result prints a single "no issues"
 #' line. Glyphs and styling come from `cli`, so the output degrades
 #' gracefully to plain ASCII when unicode or colour is unavailable.
 #'

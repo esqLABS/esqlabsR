@@ -4,7 +4,7 @@
       addScenario(project, id = "bad", modelFile = "Aciclovir.pkml", individual = "Ghost")
     Condition
       Warning:
-      Canonicalized 1 referenced id to a safe form:
+      Canonicalized 1 id to a safe form:
       * "Ghost" -> "ghost"
       Error in `addScenario()`:
       ! Cannot add scenario "bad":
@@ -84,10 +84,8 @@
         "Output1", NA_character_))
     Condition
       Warning:
-      Canonicalized 1 id to a safe form:
+      Canonicalized 2 ids to a safe form:
       * "S" -> "s"
-      Warning:
-      Canonicalized 1 referenced id to a safe form:
       * "Output1" -> "output1"
       Error in `addScenario()`:
       ! Cannot add scenario "s":
@@ -130,7 +128,7 @@
       setScenario(project, "testscenario", individual = "Ghost")
     Condition
       Warning:
-      Canonicalized 1 referenced id to a safe form:
+      Canonicalized 1 id to a safe form:
       * "Ghost" -> "ghost"
       Error in `setScenario()`:
       ! Cannot modify scenario "testscenario":

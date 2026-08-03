@@ -8,6 +8,27 @@ messages <- ospsuite.utils::messages
 # text belongs here as a catalog entry routed through those wrappers, not as a
 # base `stop()`/`warning()`/`message()` on an inline literal string.
 #
+# An entry is built one of three ways, and the choice is capability, not taste.
+#
+#   * `cliFormat()` by default, for a single-line message. It is
+#     `cli::format_inline(paste(..., sep = "\n"))`, so it formats one inline
+#     string: interpolation, the inline classes (`{.file}`, `{.fn}`, `{.val}`,
+#     ...), pluralization (`{?s}`, `{cli::qty()}`) and collapsing (`{.or}`) all
+#     work. A long template still wraps across physical lines with a trailing
+#     `\\`; `cliFormat()` leaves that continuation in the string it returns, and
+#     the raising `cli_abort()` / `cli_warn()` resolves it on its own pass.
+#   * `cli::format_message()` when the message carries `"i"` / `"x"` / `"!"` /
+#     `"*"` bullets. This is the one thing `cliFormat()` cannot express: it drops
+#     the names of a `cli` vector and glues the elements into one run-on line.
+#   * The raw templated vector, returned unglued, when a value interpolated into
+#     it may itself contain `{` or `}`. Both helpers above glue eagerly, and the
+#     raising call then glue-parses the finished string a second time, so such a
+#     value would be evaluated as an R expression. Returning the template
+#     instead means the raising call interpolates exactly once, from its own
+#     frame, which is why those entries name their parameters after the
+#     variables bound at the raising site (`restoreDirNotEmpty()`'s `dir`,
+#     `unsupportedSchemaVersion()`'s `version`).
+#
 # One known exception: the project validation framework (`R/validation.R` and
 # the per-section validators in `R/scenarios.R`, `R/individuals.R`,
 # `R/populations.R`, `R/output-paths.R`, `R/plots.R`,
@@ -123,6 +144,15 @@ messages$wrongOntogenyStructure <- function(entry) {
 # utilities####
 messages$fileNotFound <- function(filePath) {
   cliFormat("File not found: {.file {filePath}}")
+}
+
+# Raised from `Project$.readJson()`. Unglued for the same reason as
+# `legacySnapshotNotLoadable()` below: a hand-edited `schemaVersion` containing
+# `{` or `}` would be glue-parsed a second time by the raising `cli_abort()` and
+# fail with a glue error instead of this message. The value is bound under
+# `version` in the raising frame.
+messages$unsupportedSchemaVersion <- function(version) {
+  "Unsupported schemaVersion: {.val {version}}. Expected {.val 2.0}."
 }
 
 messages$invalidPathArgument <- function() {
@@ -409,6 +439,39 @@ messages$importSkippedNonParameterSheets <- function(
   )
 }
 
+# Raised from `Project$.readJson()`, whose schema-version check fails on every
+# file `.isLegacySnapshot()` recognizes: a previous-version snapshot carries no
+# `schemaVersion` at all. The `{jsonPath}` placeholder stays unglued so
+# `cli_abort()` interpolates it once, in that frame, where the value is bound
+# under that name (as with `restoreDirNotEmpty()`'s `dir`); pre-gluing it here
+# would leave a path containing `{` or `}` to be glue-parsed a second time by
+# the raising call.
+messages$legacySnapshotNotLoadable <- function(jsonPath) {
+  c(
+    "x" = "{.file {jsonPath}} is a previous-version project snapshot, not a \\
+    project of the current format.",
+    "i" = "A previous-version snapshot has to be upgraded before it can be \\
+    opened.",
+    "i" = "Upgrade it into a new folder with \\
+    {.code restoreProject(<snapshot>, dir = <newFolder>)}, which returns the \\
+    upgraded project."
+  )
+}
+
+# Unglued, so `cli_abort()` renders these as real bullets rather than re-wrapping
+# one pre-formatted string with the glyphs inline. `sheet` and `columns` are bound
+# in `.requireExcelColumns()`, the raising frame.
+messages$excelSheetMissingRequiredColumns <- function(sheet, columns) {
+  c(
+    "x" = "The {.val {sheet}} sheet is missing \\
+    {cli::qty(columns)}{?a required column/required columns}: \\
+    {.field {columns}}.",
+    "i" = "Add {cli::qty(columns)}{?it/them} to the workbook, or re-export the \\
+    project with {.fn exportProjectToExcel} to get a sheet with the columns \\
+    this version reads."
+  )
+}
+
 messages$legacySnapshotMalformedSheet <- function() {
   c(
     "x" = "This previous-version project snapshot is malformed and cannot be \\
@@ -482,9 +545,9 @@ messages$autocorrectDuplicateScenarioNames <- function(
 }
 
 messages$scenariosAddedToProject <- function(scenarioNames) {
-  cli::format_message(c(
-    "i" = "Added {length(scenarioNames)} scenario{?s}: {.val {scenarioNames}}"
-  ))
+  cliFormat(
+    "Added {length(scenarioNames)} scenario{?s}: {.val {scenarioNames}}"
+  )
 }
 
 messages$noSimulationsFolderUsingAbsolutePath <- function(pkmlPath) {
@@ -505,10 +568,10 @@ messages$outputPathIdCollision <- function(id, existingPath, newPath) {
 }
 
 messages$outputPathAliasIgnored <- function(userAlias, registeredId, path) {
-  cli::format_message(c(
-    "i" = "Output path alias {.val {userAlias}} ignored: \\
+  cliFormat(
+    "Output path alias {.val {userAlias}} ignored: \\
     path {.val {path}} is already registered as {.val {registeredId}}."
-  ))
+  )
 }
 
 messages$noSimulationsFolderForRelativeModelFile <- function(
@@ -615,9 +678,9 @@ messages$outputMolWeightNeeded <- function() {
 }
 
 messages$offsetUnitsNotDefined <- function(rows) {
-  cli::format_message(c(
-    "x" = "Error in DataCombined {.arg {rows}}: If x/yOffsets is set, then x/yOffsetsUnits must be defined as well. "
-  ))
+  cliFormat(
+    "Error in DataCombined {.arg {rows}}: If x/yOffsets is set, then x/yOffsetsUnits must be defined as well. "
+  )
 }
 
 # plots ####
@@ -1254,15 +1317,13 @@ messages$observedDataInvalidEntryType <- function(badType, validTypes) {
 }
 
 messages$observedDataMissingField <- function(entryIndex, type, field) {
-  cli::format_message(c(
-    "x" = "{.code observedData} entry {entryIndex} (type {.val {type}}) is missing required field {.field {field}}."
-  ))
+  cliFormat(
+    "{.code observedData} entry {entryIndex} (type {.val {type}}) is missing required field {.field {field}}."
+  )
 }
 
 messages$observedDataFileNotFound <- function(filePath) {
-  cli::format_message(c(
-    "x" = "Observed-data source file not found: {.path {filePath}}."
-  ))
+  cliFormat("Observed-data source file not found: {.path {filePath}}.")
 }
 
 messages$observedDataScriptWrongReturnType <- function(filePath, klass) {

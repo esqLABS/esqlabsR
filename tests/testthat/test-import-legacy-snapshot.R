@@ -67,6 +67,28 @@ test_that(".legacySheetToDf reads cells by name and rejects a malformed sheet", 
   )
 })
 
+test_that("loadProject on a previous-version snapshot points at restoreProject", {
+  # `loadProject()` is the name a migrating user reaches for first, so the
+  # snapshot's absent `schemaVersion` must not be reported to them as an
+  # unsupported version: the file is an older project, and `restoreProject()`
+  # is what opens it.
+  dir <- withr::local_tempdir()
+  snapshot <- file.path(dir, "ProjectConfiguration.json")
+  file.copy(.legacySnapshotFixture(), snapshot)
+
+  # The message names the absolute path it was handed, which differs per
+  # machine; only the shape of the message is under test. Anchored on the
+  # filename rather than a leading `/`, so a Windows drive-prefixed path
+  # (`C:/Users/...`) is redacted too.
+  expect_snapshot(
+    loadProject(snapshot),
+    error = TRUE,
+    transform = \(lines) {
+      sub("'[^']*ProjectConfiguration\\.json'", "'<path>'", lines)
+    }
+  )
+})
+
 test_that("restoreProject upgrades a previous-version snapshot to a v6 tree", {
   dir <- withr::local_tempdir()
 

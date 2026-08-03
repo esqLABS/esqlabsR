@@ -26,8 +26,8 @@ The summary opens with overall counts (the same aggregation as
 \code{\link[=validationSummary]{validationSummary()}}), then lists each definition type that has at
 least one issue: a cross marks each critical error, a \code{!} marks each
 warning, and the \code{category} of each entry is shown as a sub-label.
-Definition types with no issues are folded into a compact "N
-section{?s} OK" tail. A fully valid result prints a single "no issues"
+Definition types with no issues are folded into a compact
+"N sections OK" tail. A fully valid result prints a single "no issues"
 line. Glyphs and styling come from \code{cli}, so the output degrades
 gracefully to plain ASCII when unicode or colour is unavailable.
 }

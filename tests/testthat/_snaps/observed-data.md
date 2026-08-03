@@ -12,7 +12,7 @@
       loadObservedData(project)
     Condition
       Error in `.validateObservedDataEntry()`:
-      ! x `observedData` entry 1 (type "excel") is missing required field importerConfiguration.
+      ! `observedData` entry 1 (type "excel") is missing required field importerConfiguration.
 
 # loadObservedData errors when dataFolder is not declared
 
@@ -28,7 +28,7 @@
       addObservedData(project, list(type = "excel", file = "x.xlsx"))
     Condition
       Error in `.validateObservedDataEntry()`:
-      ! x `observedData` entry 2 (type "excel") is missing required field importerConfiguration.
+      ! `observedData` entry 2 (type "excel") is missing required field importerConfiguration.
 
 # addObservedData rejects a duplicate config entry file
 

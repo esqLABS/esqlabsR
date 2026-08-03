@@ -961,7 +961,7 @@ print.PITask <- function(x, ...) {
     NULL
   }
   if (!is.null(algDefaults) || !is.null(cfg$algorithmOptions)) {
-    piConfig$algorithmOptions <- modifyList(
+    piConfig$algorithmOptions <- utils::modifyList(
       algDefaults %||% list(),
       cfg$algorithmOptions %||% list()
     )
@@ -974,7 +974,7 @@ print.PITask <- function(x, ...) {
     NULL
   }
   if (!is.null(ciDefaults) || !is.null(cfg$ciOptions)) {
-    piConfig$ciOptions <- modifyList(
+    piConfig$ciOptions <- utils::modifyList(
       ciDefaults %||% list(),
       cfg$ciOptions %||% list()
     )
@@ -1485,7 +1485,7 @@ removePITask <- function(project, id) {
   }
   # Otherwise treat it as an id, canonicalized the same way the definition was
   # filed (silent: a literal path would already have matched above).
-  canonical <- suppressWarnings(.canonicalizeIdRef(value))
+  canonical <- .silentlyCanonicalized(.canonicalizeIdRef(value))
   if (canonical %in% ids) {
     return(canonical)
   }

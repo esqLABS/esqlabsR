@@ -1211,7 +1211,7 @@
 # @keywords internal
 # @noRd
 .validateDefinitionTreeKey <- function(key, definitionLabel) {
-  canonical <- suppressWarnings(.canonicalizeId(key))
+  canonical <- .silentlyCanonicalized(.canonicalizeId(key))
   if (!identical(key, canonical)) {
     cli::cli_abort(c(
       "{definitionLabel} id {.val {key}} is not a canonical definition-file id.",

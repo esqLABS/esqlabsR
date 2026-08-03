@@ -848,6 +848,62 @@ test_that("the individuals import treats a blank-string Gender cell as absent", 
   expect_identical(individuals[[2]]$gender, "UNKNOWN")
 })
 
+test_that("the individuals and populations import stay quiet on a sheet with no Protein Ontogenies column", {
+  # `readExcel()` hands the parsers a tibble, and a tibble's `$` warns about an
+  # unknown column, so a workbook omitting the optional `Protein Ontogenies`
+  # column used to leak a raw "Unknown or uninitialised column" warning to the
+  # user. The sheets are built as tibbles here on purpose: a data.frame does not
+  # warn, which is why the tests above never caught this.
+  indivDf <- dplyr::tibble(
+    IndividualId = "Indiv1",
+    Species = "Human",
+    Population = "European_ICRP_2002",
+    Gender = "MALE",
+    `Weight [kg]` = 73,
+    `Height [cm]` = 176,
+    `Age [year(s)]` = 30
+  )
+  expect_no_warning(individuals <- .parseExcelIndividuals(indivDf))
+  expect_null(individuals[[1]]$proteinOntogenies)
+
+  popDf <- dplyr::tibble(
+    PopulationName = "Pop1",
+    species = "Human",
+    population = "European_ICRP_2002",
+    numberOfIndividuals = 10
+  )
+  expect_no_warning(populations <- .parseExcelPopulations(popDf))
+  expect_null(populations[[1]]$proteinOntogenies)
+
+  # A missing *required* column is a different case: it has no silent reading,
+  # and staying quiet about it would surface later as a zero-length value that
+  # names nothing.
+  expect_snapshot(
+    error = TRUE,
+    .parseExcelIndividuals(dplyr::tibble(Species = "Human", Gender = "MALE"))
+  )
+  expect_snapshot(
+    error = TRUE,
+    .parseExcelPopulations(dplyr::tibble(species = "Human"))
+  )
+
+  # A sheet that does carry the column still reads its value.
+  withOntogenies <- dplyr::tibble(
+    IndividualId = "Indiv2",
+    Species = "Human",
+    Population = "European_ICRP_2002",
+    Gender = "MALE",
+    `Weight [kg]` = 73,
+    `Height [cm]` = 176,
+    `Age [year(s)]` = 30,
+    `Protein Ontogenies` = "CYP3A4"
+  )
+  expect_identical(
+    .parseExcelIndividuals(withOntogenies)[[1]]$proteinOntogenies,
+    "CYP3A4"
+  )
+})
+
 test_that(".parseExcelObservedData keeps a subfolder path rather than truncating to basename", {
   # The loader resolves `file` under `dataFolder`, so a file named in a subfolder
   # must keep its relative path; truncating to the basename would make it

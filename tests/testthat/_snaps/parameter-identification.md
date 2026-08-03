@@ -188,16 +188,8 @@
         scenarios = "Ghost", outputPath = "aciclovir_pvb", observedData = "Laskin")))
     Condition
       Warning:
-      Canonicalized 1 id to a safe form:
+      Canonicalized 2 ids to a safe form:
       * "Bad" -> "bad"
-      Warning:
-      Canonicalized 1 referenced id to a safe form:
-      * "Ghost" -> "ghost"
-      Warning:
-      Canonicalized 1 referenced id to a safe form:
-      * "Ghost" -> "ghost"
-      Warning:
-      Canonicalized 1 referenced id to a safe form:
       * "Ghost" -> "ghost"
       Error in `addPITask()`:
       ! Cannot add PI task "bad":
@@ -236,10 +228,10 @@
       removePITask(project, "NotThere")
     Condition
       Warning:
+      PI task "notthere" not found; no-op.
+      Warning:
       Canonicalized 1 id to a safe form:
       * "NotThere" -> "notthere"
-      Warning:
-      PI task "notthere" not found; no-op.
 
 # addPIParameter() errors on unknown task
 
@@ -260,7 +252,7 @@
         path = "a|b", minValue = 0, maxValue = 1, startValue = 0.5)
     Condition
       Warning:
-      Canonicalized 1 referenced id to a safe form:
+      Canonicalized 1 id to a safe form:
       * "Ghost" -> "ghost"
       Error in `addPIParameter()`:
       ! scenarios not found: "ghost"
@@ -335,7 +327,7 @@
       runPI(project, tasks = "Ghost")
     Condition
       Warning:
-      Canonicalized 1 referenced id to a safe form:
+      Canonicalized 1 id to a safe form:
       * "Ghost" -> "ghost"
       Error in `runPI()`:
       ! Unknown `tasks`: "ghost". Available: "aciclovirsimple".

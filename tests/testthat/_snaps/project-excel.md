@@ -19,6 +19,24 @@
       x Exporting overwrites 'Project.xlsx' and the 'Configurations' workbooks, discarding any hand-edits they carry.
       i Pass `overwrite = TRUE` to replace the existing workbooks, or export into a different `outputDir`.
 
+# the individuals and populations import stay quiet on a sheet with no Protein Ontogenies column
+
+    Code
+      .parseExcelIndividuals(dplyr::tibble(Species = "Human", Gender = "MALE"))
+    Condition
+      Error:
+      x The "IndividualBiometrics" sheet is missing required columns: IndividualId and Population.
+      i Add them to the workbook, or re-export the project with `exportProjectToExcel()` to get a sheet with the columns this version reads.
+
+---
+
+    Code
+      .parseExcelPopulations(dplyr::tibble(species = "Human"))
+    Condition
+      Error:
+      x The "Demographics" sheet is missing required columns: PopulationName and population.
+      i Add them to the workbook, or re-export the project with `exportProjectToExcel()` to get a sheet with the columns this version reads.
+
 # importProjectFromExcel aborts when two ids canonicalize to the same value
 
     Code

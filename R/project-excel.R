@@ -1197,7 +1197,7 @@ projectStatus <- function(project, silent = FALSE) {
       # per changed id; an Excel import renames in bulk and the migrate guide
       # documents that, so the per-id warning is suppressed while the
       # collision abort is allowed to propagate.
-      names(section) <- suppressWarnings(.canonicalizeId(nms))
+      names(section) <- .silentlyCanonicalized(.canonicalizeId(nms))
     }
     section
   }
@@ -2136,25 +2136,36 @@ projectStatus <- function(project, silent = FALSE) {
 #' @keywords internal
 #' @noRd
 .parseExcelIndividuals <- function(indivDf) {
+  .requireExcelColumns(
+    indivDf,
+    c("IndividualId", "Species", "Population"),
+    "IndividualBiometrics"
+  )
   individuals <- list()
   hasParameterSets <- "ParameterSets" %in% names(indivDf)
   for (i in seq_len(nrow(indivDf))) {
     row <- indivDf[i, ]
+    # Cells are read with `[[`, not `$`: a sheet parsed by `readExcel()` is a
+    # tibble, whose `$` warns about an unknown column, so a workbook omitting an
+    # optional column (`Protein Ontogenies` on an individual with no ontogenies,
+    # a biometric a legacy sheet never carried) would leak a raw tibble warning
+    # to the user. `[[` yields `NULL` for an absent column, which `.naToNull()`
+    # turns into an absent field. Matches `.parseExcelScenarios()` below.
     indiv <- list(
-      individualId = as.character(row$IndividualId),
-      species = as.character(row$Species),
-      population = as.character(row$Population),
+      individualId = as.character(row[["IndividualId"]]),
+      species = as.character(row[["Species"]]),
+      population = as.character(row[["Population"]]),
       # A blank Gender cell defaults to UNKNOWN (the only valid PK-Sim gender
       # for some animal species). A whitespace-only or empty-string cell counts
       # as blank too, not just an NA.
-      gender = .blankToDefault(as.character(row$Gender), "UNKNOWN"),
-      weight = .naToNull(as.numeric(row$`Weight [kg]`)),
-      height = .naToNull(as.numeric(row$`Height [cm]`)),
-      age = .naToNull(as.numeric(row$`Age [year(s)]`)),
-      proteinOntogenies = .naToNull(as.character(row$`Protein Ontogenies`))
+      gender = .blankToDefault(as.character(row[["Gender"]]), "UNKNOWN"),
+      weight = .naToNull(as.numeric(row[["Weight [kg]"]])),
+      height = .naToNull(as.numeric(row[["Height [cm]"]])),
+      age = .naToNull(as.numeric(row[["Age [year(s)]"]])),
+      proteinOntogenies = .naToNull(as.character(row[["Protein Ontogenies"]]))
     )
     if (hasParameterSets) {
-      raw <- row$ParameterSets
+      raw <- row[["ParameterSets"]]
       if (!is.null(raw) && !is.na(raw) && nchar(as.character(raw)) > 0) {
         indiv$parameterSets <- as.list(
           .parseCommaListToArray(as.character(raw))
@@ -2172,27 +2183,35 @@ projectStatus <- function(project, silent = FALSE) {
 #' @keywords internal
 #' @noRd
 .parseExcelPopulations <- function(popDf) {
+  .requireExcelColumns(
+    popDf,
+    c("PopulationName", "species", "population"),
+    "Demographics"
+  )
   populations <- list()
   for (i in seq_len(nrow(popDf))) {
     row <- popDf[i, ]
+    # Cells are read with `[[` rather than `$`, for the reason given in
+    # `.parseExcelIndividuals()` above: every demographic here is optional, and
+    # `$` on a parsed sheet warns about a column the workbook omits.
     pop <- list(
-      populationId = as.character(row$PopulationName),
-      species = as.character(row$species),
-      population = as.character(row$population),
-      numberOfIndividuals = .naToNull(as.numeric(row$numberOfIndividuals)),
-      proportionOfFemales = .naToNull(as.numeric(row$proportionOfFemales)),
-      weightMin = .naToNull(as.numeric(row$weightMin)),
-      weightMax = .naToNull(as.numeric(row$weightMax)),
-      weightUnit = .naToNull(as.character(row$weightUnit)),
-      heightMin = .naToNull(as.numeric(row$heightMin)),
-      heightMax = .naToNull(as.numeric(row$heightMax)),
-      heightUnit = .naToNull(as.character(row$heightUnit)),
-      ageMin = .naToNull(as.numeric(row$ageMin)),
-      ageMax = .naToNull(as.numeric(row$ageMax)),
-      BMIMin = .naToNull(as.numeric(row$BMIMin)),
-      BMIMax = .naToNull(as.numeric(row$BMIMax)),
-      BMIUnit = .naToNull(as.character(row$BMIUnit)),
-      proteinOntogenies = .naToNull(as.character(row$`Protein Ontogenies`))
+      populationId = as.character(row[["PopulationName"]]),
+      species = as.character(row[["species"]]),
+      population = as.character(row[["population"]]),
+      numberOfIndividuals = .naToNull(as.numeric(row[["numberOfIndividuals"]])),
+      proportionOfFemales = .naToNull(as.numeric(row[["proportionOfFemales"]])),
+      weightMin = .naToNull(as.numeric(row[["weightMin"]])),
+      weightMax = .naToNull(as.numeric(row[["weightMax"]])),
+      weightUnit = .naToNull(as.character(row[["weightUnit"]])),
+      heightMin = .naToNull(as.numeric(row[["heightMin"]])),
+      heightMax = .naToNull(as.numeric(row[["heightMax"]])),
+      heightUnit = .naToNull(as.character(row[["heightUnit"]])),
+      ageMin = .naToNull(as.numeric(row[["ageMin"]])),
+      ageMax = .naToNull(as.numeric(row[["ageMax"]])),
+      BMIMin = .naToNull(as.numeric(row[["BMIMin"]])),
+      BMIMax = .naToNull(as.numeric(row[["BMIMax"]])),
+      BMIUnit = .naToNull(as.character(row[["BMIUnit"]])),
+      proteinOntogenies = .naToNull(as.character(row[["Protein Ontogenies"]]))
     )
     populations[[i]] <- pop
   }
@@ -3402,6 +3421,29 @@ projectStatus <- function(project, silent = FALSE) {
     return(NA)
   }
   values[[i]]
+}
+
+#' Abort when a parsed sheet lacks a column the parser requires
+#'
+#' An absent optional column is normal and read as `NULL`. An absent *required*
+#' one has no such reading: the field would come out zero-length and fail later
+#' on a value that names nothing, so name the sheet and the columns here instead.
+#'
+#' @param df A parsed sheet.
+#' @param required Column names the parser requires.
+#' @param sheet Sheet name, for the message.
+#' @returns `df`, invisibly.
+#' @keywords internal
+#' @noRd
+.requireExcelColumns <- function(df, required, sheet) {
+  # The workbook is at fault, not the function that read it, and this helper's
+  # name means nothing to the reader; attribute the abort to no function.
+  rlang::local_error_call(NULL)
+  columns <- setdiff(required, names(df))
+  if (length(columns) > 0L) {
+    cli::cli_abort(messages$excelSheetMissingRequiredColumns(sheet, columns))
+  }
+  invisible(df)
 }
 
 #' Convert NA to NULL for JSON serialization
