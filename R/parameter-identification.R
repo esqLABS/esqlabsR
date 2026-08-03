@@ -451,6 +451,22 @@ PITask <- function(
   rec
 }
 
+# A PI task's `configuration` as it is serialized: an empty one becomes the empty
+# JSON object `{}`, the shape a populated configuration has. An empty unnamed list
+# serializes as `[]`, so a task with no solver settings would describe its
+# configuration as an array where every other task has an object. Shared by the
+# container serializer and the definition-tree serializer, so the two agree.
+#
+# @keywords internal
+# @noRd
+.piConfigurationToJson <- function(configuration) {
+  configuration <- configuration %||% list()
+  if (length(configuration) == 0L) {
+    return(structure(list(), names = character(0L)))
+  }
+  configuration
+}
+
 #' @exportS3Method
 #' @noRd
 print.PIParameter <- function(x, ...) {

@@ -506,6 +506,48 @@ test_that(".parameterIdentificationToJson() emits NULL for empty input", {
   expect_null(.parameterIdentificationToJson(proj))
 })
 
+# #1213 item 26: a task with no solver settings has to describe its configuration
+# the way a task with them does. An empty unnamed list serializes as `[]`, so such
+# a task read as having an array where every other task has an object.
+test_that("a PI task with no configuration serializes as an empty object", {
+  raw <- list(
+    list(
+      id = "t",
+      scenarios = list("S1"),
+      parameters = list(
+        list(
+          id = "k",
+          scenarios = list("S1"),
+          path = "x|y",
+          minValue = 0,
+          maxValue = 1,
+          startValue = 0.5
+        )
+      ),
+      outputMappings = list(
+        list(
+          id = "m",
+          scenarios = list("S1"),
+          outputPath = "P",
+          observedData = "D"
+        )
+      )
+    )
+  )
+  proj <- .fakeProject(parameterIdentification = .parsePITasks(raw))
+  serialized <- .parameterIdentificationToJson(proj)
+
+  expect_identical(
+    serialized[[1]]$configuration,
+    structure(list(), names = character(0L))
+  )
+  expect_match(
+    jsonlite::toJSON(serialized[[1]]$configuration, auto_unbox = TRUE),
+    "{}",
+    fixed = TRUE
+  )
+})
+
 test_that(".parsePITasks |> .parameterIdentificationToJson |> .parsePITasks is identity", {
   raw <- list(
     list(

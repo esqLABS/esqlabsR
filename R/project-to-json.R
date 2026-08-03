@@ -479,7 +479,7 @@
       scenarios = as.list(task$scenarios),
       parameters = lapply(task$parameters, .piParameterToJson),
       outputMappings = lapply(task$outputMappings, .piOutputMappingToJson),
-      configuration = task$configuration
+      configuration = .piConfigurationToJson(task$configuration)
     )
   }) |>
     unname()
