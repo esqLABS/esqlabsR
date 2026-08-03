@@ -3239,8 +3239,8 @@ test_that("two plot rows sharing an id silently lose one plot", {
 # This is live data rather than a synthetic probe: one tested project carried 12
 # real ids containing U+00A0.
 test_that("an id containing an invisible character survives into the definition filename", {
-  nbsp <- " "
-  zwsp <- "​"
+  nbsp <- "\u00a0"
+  zwsp <- "\u200b"
   projectDir <- localLegacyExcelProject()
   editWorkbookSheets(
     file.path(projectDir, "Configurations", "Scenarios.xlsx"),

@@ -181,7 +181,7 @@ write_xlsx(
       ageMax = c(41, 41),
       BMIMin = NA_real_,
       BMIMax = NA_real_,
-      BMIUnit = "kg/m²",
+      BMIUnit = "kg/m\u00b2",
       Protein = c("CYP3A4,CYP2D6", NA),
       Ontogeny = c("CYP3A4,CYP2C8", NA),
       check.names = FALSE,

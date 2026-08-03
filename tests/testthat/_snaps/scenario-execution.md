@@ -15,3 +15,11 @@
       Error in `.resolveCsvPopulation()`:
       ! x Cannot resolve the population csv for scenario "populationscenariofromcsv". i populationId "testpopulation" is read from a csv but the project has no populationsFolder to resolve it against.
 
+# more than one ontogeny cannot be read
+
+    Code
+      .readOntogeniesFromList(c("CYP3A4:CYP3A4", "CYP2D6:CYP2C8"))
+    Condition
+      Error in `is.null(ontogenyString) || is.na(ontogenyString)`:
+      ! 'length = 2' in coercion to 'logical(1)'
+

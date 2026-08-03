@@ -800,3 +800,56 @@ test_that("a CSV-population scenario with NULL populationsFolder aborts with a c
     )
   )
 })
+
+# Legacy Excel projects (#1213) ----
+
+# #1213 item 2: `.readOntogeniesFromList()` tests its argument inside `||`, which
+# takes a length-1 value only. Nothing reaches it with more today, because the
+# importer drops every legacy ontogeny (#1213 item 1) and `addPopulation()` refuses
+# a length-2 value up front, so this is unreachable through any supported path.
+#
+# Repairing the importer is what exposes it: the fixture's `child` individual and
+# `adultpop` population each declare two ontogenies, so the first project to have
+# its ontogenies read will hand a length-2 value straight to this function.
+test_that("more than one ontogeny cannot be read", {
+  expect_snapshot(
+    error = TRUE,
+    .readOntogeniesFromList(c("CYP3A4:CYP3A4", "CYP2D6:CYP2C8"))
+  )
+})
+
+# One ontogeny works, whether given as a single pair or as the comma-joined string
+# the importer writes, which is what confines the abort above to the multi-value
+# case rather than to the function as a whole.
+test_that("one ontogeny, and a comma-joined pair of them, read fine", {
+  expect_length(.readOntogeniesFromList("CYP3A4:CYP3A4"), 1L)
+  expect_length(.readOntogeniesFromList("CYP3A4:CYP3A4,CYP2D6:CYP2C8"), 2L)
+})
+
+# #1213 item 6: a CSV population entry that names no `file` has its filename
+# derived as `<populationId>.csv`, and the id is canonicalized, which lowercases
+# it. The copy preserves the workbook's own mixed-case filename, so the derived
+# name and the real name differ in case and only a case-insensitive filesystem
+# joins them. That is why this works on macOS and Windows and fails on Linux.
+#
+# Pinned on the strings rather than on a file lookup, so the test states the
+# mismatch on every platform instead of passing on one and failing on another.
+test_that("the derived population CSV filename is lowercased, so it cannot match a mixed-case file", {
+  projectDir <- localLegacyExcelProject()
+  imported <- importLegacyExcelProject(projectDir)
+  scenario <- imported$project$definitions$scenarios[["csvpopscenario"]]
+
+  # The scenario reads its population from CSV, and the entry names no file, so
+  # the runner derives one from the id.
+  expect_true(scenario$readPopulationFromCSV)
+  expect_null(imported$project$definitions$populations[["csvpop"]]$file)
+
+  present <- list.files(file.path(projectDir, "Configurations", "PopulationsCSV"))
+  derived <- paste0(scenario$populationId, ".csv")
+
+  expect_identical(present, "CsvPop.csv")
+  expect_identical(derived, "csvpop.csv")
+
+  # No file of that exact name exists in the project.
+  expect_false(derived %in% present)
+})
