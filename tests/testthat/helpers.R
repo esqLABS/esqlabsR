@@ -155,14 +155,14 @@ legacyExcelProjectPath <- function(projectDir) {
 #' column's *type* does survive, so an edit that replaces a numeric column with a
 #' character one does store text cells.
 editWorkbookSheets <- function(path, edit) {
-  names <- readxl::excel_sheets(path)
-  sheets <- lapply(names, function(sheet) {
+  sheetNames <- readxl::excel_sheets(path)
+  sheets <- lapply(sheetNames, function(sheet) {
     as.data.frame(
       readxl::read_excel(path, sheet = sheet, .name_repair = "minimal"),
       check.names = FALSE
     )
   })
-  writexl::write_xlsx(edit(stats::setNames(sheets, names)), path)
+  writexl::write_xlsx(edit(stats::setNames(sheets, sheetNames)), path)
   invisible(path)
 }
 

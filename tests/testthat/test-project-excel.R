@@ -2895,20 +2895,50 @@ test_that("a legacy two-column ontogeny pair imports with no ontogenies at all",
   expect_false(any(grepl("ontogen", imported$warnings, ignore.case = TRUE)))
 })
 
-# #1213 item 1, the other half of the same silence: the individual that declares
-# two ontogenies and the one that declares one are indistinguishable after
-# import, and so is a population that declares two from one that declares none.
-# So nothing in the imported project can be used to detect the loss either.
-test_that("declaring ontogenies leaves no trace the import can be checked against", {
-  imported <- importLegacyExcelProject(localLegacyExcelProject())
-  populations <- imported$project$definitions$populations
-
-  # `adultpop` declares two ontogenies and `csvpop` none; they differ only in
-  # fields unrelated to ontogenies.
-  expect_identical(
-    populations[["adultpop"]]$proteinOntogenies,
-    populations[["csvpop"]]$proteinOntogenies
+# #1213 item 1, the other half of the same silence, and the sharpest statement of
+# it: two populations authored to differ in NOTHING but their ontogenies import to
+# byte-identical definition files apart from the id. So the imported project holds
+# no evidence of the loss either, and no amount of inspecting it can recover what
+# the workbook said.
+test_that("two populations differing only in their ontogenies import identically", {
+  projectDir <- localLegacyExcelProject()
+  editWorkbookSheets(
+    file.path(projectDir, "Configurations", "Populations.xlsx"),
+    function(sheets) {
+      demographics <- sheets$Demographics
+      # A copy of `AdultPop` whose only difference is that it declares no
+      # ontogenies.
+      twin <- demographics[demographics$PopulationName == "AdultPop", ]
+      twin$PopulationName <- "AdultPopNoOnto"
+      twin$Protein <- NA
+      twin$Ontogeny <- NA
+      sheets$Demographics <- rbind(demographics, twin)
+      sheets
+    }
   )
+  imported <- importLegacyExcelProject(projectDir)
+
+  definitionsDir <- file.path(
+    imported$outputDir,
+    "definitions",
+    "populations"
+  )
+  withOntogenies <- readLines(file.path(definitionsDir, "adultpop.json"))
+  withoutOntogenies <- readLines(file.path(
+    definitionsDir,
+    "adultpopnoonto.json"
+  ))
+
+  # Identical once the one line that carries the id is set aside.
+  dropId <- function(lines) {
+    grep("populationId", lines, fixed = TRUE, invert = TRUE, value = TRUE)
+  }
+  expect_identical(dropId(withOntogenies), dropId(withoutOntogenies))
+
+  # The id line is where they do differ, so the comparison above is not passing
+  # because both files failed to be written.
+  expect_true(any(grepl("adultpop", withOntogenies, fixed = TRUE)))
+  expect_true(any(grepl("adultpopnoonto", withoutOntogenies, fixed = TRUE)))
 })
 
 # #1213 item 8: v5 merged `PIParameters` rows by
