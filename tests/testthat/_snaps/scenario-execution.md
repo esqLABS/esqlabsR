@@ -1,3 +1,12 @@
+# a user parameter path the model lacks still stops the build
+
+    Code
+      buildSimulations(project, scenarios = "testscenario", customParams = list(
+        paths = "Organism|NoSuchContainer|NoSuchParameter", values = 1, units = ""))
+    Condition
+      Error in `.validateEntitiesExist()`:
+      ! `<caller>`: no entity exists for path "Organism|NoSuchContainer|NoSuchParameter" located under container <testscenario>!
+
 # a relative modelFile with NULL simulationsFolder aborts with a clear message
 
     Code

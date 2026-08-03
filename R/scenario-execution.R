@@ -91,16 +91,25 @@
   conditions
 }
 
-# Five-layer merge ----
+# Four-layer merge ----
 
 # Pure function. Builds a `list(paths, values, units)` parameter
 # structure (or `NULL`) for one scenario. Layers, in order
-# (last-write-wins): scenario `modelParameterSets` -> species defaults
-# -> individual `parameterSets` -> application `parameterSets` ->
-# caller-supplied `customParams`. Each of those reference fields is a
+# (last-write-wins): scenario `modelParameterSets` -> individual
+# `parameterSets` -> application `parameterSets` -> caller-supplied
+# `customParams`. Each of those reference fields is a
 # list of set ids, iterated in listed order; every id is looked up in
 # the project's single `parameterSets` section. Unknown ids are silently
 # skipped (consistent across all three layers).
+#
+# Every layer here is authored by the user, which is what lets
+# `initializeSimulation()` apply the merged result strictly: a path the user
+# wrote that the model does not have is a mistake in their project and must
+# abort. The bundled species defaults are deliberately NOT a layer: they are a
+# package-shipped superset covering every model of a species, so a path they
+# carry that this particular model lacks is normal, not a user error.
+# `initializeSimulation()` therefore applies them separately and tolerantly,
+# before the merged user layers, which also keeps them overridable by all four.
 # @keywords internal
 # @noRd
 .mergeScenarioParameters <- function(scenario, project, customParams = NULL) {
@@ -124,17 +133,10 @@
     }
   }
 
-  # 2. + 3. species defaults + individual parameterSets
+  # 2. individual parameterSets
   if (!is.null(scenario$individualId) && !is.na(scenario$individualId)) {
     indivData <- project$definitions$individuals[[scenario$individualId]]
     if (!is.null(indivData)) {
-      speciesParams <- .getSpeciesParameters(indivData$species)
-      if (!is.null(speciesParams)) {
-        params <- extendParameterStructure(
-          parameters = params,
-          newParameters = speciesParams
-        )
-      }
       for (setId in unlist(indivData$parameterSets)) {
         setParams <- .parameterSetToStructure(
           parameterSets[[setId]]
@@ -149,7 +151,7 @@
     }
   }
 
-  # 4. application parameterSets
+  # 3. application parameterSets
   if (
     !is.null(scenario$applicationProtocol) &&
       !is.na(scenario$applicationProtocol)
@@ -174,7 +176,7 @@
     }
   }
 
-  # 5. customParams
+  # 4. customParams
   if (!is.null(customParams)) {
     params <- extendParameterStructure(
       parameters = params,
@@ -183,29 +185,6 @@
   }
 
   params
-}
-
-# Read species defaults from the bundled SpeciesParameters.xlsx if a
-# matching sheet exists. `NULL` when the file or sheet is missing.
-# @keywords internal
-# @noRd
-.getSpeciesParameters <- function(species) {
-  if (is.null(species) || is.na(species)) {
-    return(NULL)
-  }
-  filePath <- system.file(
-    "extdata",
-    "SpeciesParameters.xlsx",
-    package = "esqlabsR"
-  )
-  if (!nzchar(filePath) || !file.exists(filePath)) {
-    return(NULL)
-  }
-  sheets <- readxl::excel_sheets(filePath)
-  if (!any(sheets == species)) {
-    return(NULL)
-  }
-  readParametersFromXLS(paramsXLSpath = filePath, sheets = species)
 }
 
 # Population resolution ----
