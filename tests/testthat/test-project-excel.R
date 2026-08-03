@@ -2070,7 +2070,7 @@ test_that("importProjectFromExcel re-points a case-differing parameter-set refer
   # model-parameters sheet that took the plain id.
   expect_identical(
     unlist(project$definitions$individuals[["indiv1"]]$parameterSets),
-    "indiv1_1"
+    "indiv1_2"
   )
 })
 
@@ -2214,19 +2214,19 @@ test_that("importProjectFromExcel renames a duplicate parameter-set id and re-po
   sets <- .unwrapDefinitionList(project$definitions$parameterSets)
   expect_contains(
     names(sets),
-    c("indiv1", "indiv1_1", "protocol_250mg", "protocol_250mg_1")
+    c("indiv1", "indiv1_2", "protocol_250mg", "protocol_250mg_2")
   )
 
   # The individual still carries its OWN parameter set, not the model-parameters
   # sheet that took the id.
   expect_identical(
     unlist(project$definitions$individuals[["indiv1"]]$parameterSets),
-    "indiv1_1"
+    "indiv1_2"
   )
   # Same for the 5.x application wrapper built around its protocol sheet.
   expect_identical(
     unlist(project$definitions$applications[["protocol_250mg"]]$parameterSets),
-    "protocol_250mg_1"
+    "protocol_250mg_2"
   )
 })
 

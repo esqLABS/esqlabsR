@@ -82,7 +82,7 @@
       cat(renameWarning)
     Output
       ! 1 parameter set in 'Individuals.xlsx' reuses an id that is already taken, so it was renamed:
-      * "Global" -> "Global_1"
+      * "Global" -> "Global_2"
       i The three former parameter-set kinds now share one parameterSets namespace, so one sheet name cannot serve two sets. References made in 'Individuals.xlsx' point at the renamed set; rename the sheet in Excel to choose the id yourself.
 
 # .parseExcelScenarios aborts on an unparseable boolean cell

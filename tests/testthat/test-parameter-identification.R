@@ -3068,14 +3068,14 @@ test_that("removePITask removes a vector of task ids in one write-through", {
 # on an absent one it evaluates to `NA` and `if (NA)` aborted the whole restore
 # with `missing value where TRUE/FALSE needed`, naming neither sheet nor column
 # (#1190).
-test_that(".pi5xUniqueId falls back instead of aborting on an empty cell", {
-  expect_identical(.pi5xUniqueId(character(0), character()), "item")
-  expect_identical(.pi5xUniqueId(NULL, character()), "item")
-  expect_identical(.pi5xUniqueId(NA, character()), "item")
-  expect_identical(.pi5xUniqueId("   ", character()), "item")
+test_that(".uniqueImportedId falls back instead of aborting on an empty cell", {
+  expect_identical(.uniqueImportedId(character(0), character()), "item")
+  expect_identical(.uniqueImportedId(NULL, character()), "item")
+  expect_identical(.uniqueImportedId(NA, character()), "item")
+  expect_identical(.uniqueImportedId("   ", character()), "item")
   # A usable cell is unaffected, and a clash still gets a suffix.
-  expect_identical(.pi5xUniqueId("Conc", character()), "conc")
-  expect_identical(.pi5xUniqueId("Conc", "conc"), "conc_2")
+  expect_identical(.uniqueImportedId("Conc", character()), "conc")
+  expect_identical(.uniqueImportedId("Conc", "conc"), "conc_2")
 })
 
 test_that(".pi5xPath tolerates an absent container or parameter cell", {

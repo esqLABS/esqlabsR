@@ -1716,9 +1716,10 @@ projectStatus <- function(project, silent = FALSE) {
 #'
 #' The uniquifying runs on the *canonical* id, not the raw sheet name: `Rat` and
 #' `rat` in two workbooks are as much of a clash as `Rat` twice, because both
-#' canonicalize to the same definition filename. The suffix `make.unique()` picks
-#' is carried back onto the raw sheet name, so the renamed set keeps its readable
-#' spelling (`Indiv1` -> `Indiv1_1`).
+#' canonicalize to the same definition filename. The suffix comes from
+#' [.uniqueImportedId()], the one coiner the import uses for every id it has to
+#' invent, and is carried back onto the raw sheet name, so the renamed set keeps
+#' its readable spelling (`Indiv1` -> `Indiv1_2`).
 #'
 #' Two sheets of the *same* workbook that canonicalize to one id are renamed the
 #' same way. That is a deliberate divergence from `.canonicalizeId()`, which
@@ -1741,23 +1742,35 @@ projectStatus <- function(project, silent = FALSE) {
   if (length(incoming) == 0L) {
     return(list(sets = existing, renames = character()))
   }
-  ids <- c(names(existing), names(incoming))
-  canonical <- vapply(ids, .canonicalizeOneId, character(1), USE.NAMES = FALSE)
-  # `make.unique()` leaves each first occurrence untouched and suffixes the
-  # later ones, and `existing` comes first, so an already-accumulated id is
-  # never renamed out from under a reference that resolved to it.
-  uniqued <- make.unique(canonical, sep = "_")
-  isIncoming <- seq_along(ids) > length(existing)
-  suffix <- substring(
-    uniqued[isIncoming],
-    nchar(canonical[isIncoming]) + 1L
+  # Each incoming sheet is uniquified against the ids accumulated so far, which
+  # start with `existing`, so an already-accumulated id is never renamed out from
+  # under a reference that resolved to it. The suffix is the one
+  # `.uniqueImportedId()` coins everywhere (`Indiv1` -> `Indiv1_2`), and it is
+  # carried back onto the raw sheet name so the renamed set keeps its readable
+  # spelling.
+  taken <- vapply(
+    names(existing),
+    .canonicalizeOneId,
+    character(1),
+    USE.NAMES = FALSE
   )
-  newIds <- paste0(names(incoming), suffix)
+  newIds <- character(length(incoming))
   # Keyed by the canonical id, not the raw sheet name, because a reference is
   # only required to canonicalize onto its definition, not to match its
   # spelling: a cell naming `rat` for a sheet called `Rat` still points at that
   # sheet. `.applyIdRenames()` canonicalizes its lookups to match.
-  renames <- stats::setNames(newIds, canonical[isIncoming])[nzchar(suffix)]
+  renames <- character()
+  for (i in seq_along(incoming)) {
+    raw <- names(incoming)[[i]]
+    canonical <- .canonicalizeOneId(raw)
+    unique <- .uniqueImportedId(canonical, taken)
+    taken <- c(taken, unique)
+    suffix <- substring(unique, nchar(canonical) + 1L)
+    newIds[[i]] <- paste0(raw, suffix)
+    if (nzchar(suffix)) {
+      renames <- c(renames, stats::setNames(newIds[[i]], canonical))
+    }
+  }
 
   if (length(renames) > 0L) {
     # Same safe-glue handling as the canonicalization warnings: the pairs are
@@ -1766,7 +1779,7 @@ projectStatus <- function(project, silent = FALSE) {
     # name the sheet as the workbook spells it, so the user can find it, rather
     # than the canonical id the map is keyed by.
     rendered <- .canonicalizedIdBullets(
-      names(incoming)[nzchar(suffix)],
+      names(incoming)[newIds != names(incoming)],
       unname(renames)
     )
     rendered$envir$sourceLabel <- basename(source)
@@ -3147,7 +3160,7 @@ projectStatus <- function(project, silent = FALSE) {
   ids <- character()
   lapply(.pi5xParameterGroups(rows, task), function(group) {
     row <- rows[group[[1]], ]
-    id <- .pi5xUniqueId(as.character(row[["Parameter Name"]]), ids)
+    id <- .uniqueImportedId(as.character(row[["Parameter Name"]]), ids)
     ids[[length(ids) + 1L]] <<- id
     scenarios <- unique(unlist(lapply(group, function(i) {
       .parseCommaListToArray(rows[i, ][["Scenarios"]])
@@ -3277,7 +3290,7 @@ projectStatus <- function(project, silent = FALSE) {
   lapply(seq_len(nrow(rows)), function(i) {
     row <- rows[i, ]
     outputPath <- as.character(row[["OutputPath"]])
-    id <- .pi5xUniqueId(sub(".*\\|", "", outputPath), ids)
+    id <- .uniqueImportedId(sub(".*\\|", "", outputPath), ids)
     ids[[length(ids) + 1L]] <<- id
     .dropNulls(list(
       id = id,
@@ -3514,14 +3527,20 @@ projectStatus <- function(project, silent = FALSE) {
 }
 
 # Coin an id unique within `existing` by suffixing `_2`, `_3`, ... on a clash.
-# The 5.x PI sheets carry no id column, so parameters and mappings need a
-# synthesised id. It is canonicalized here (the sheets derive it from a
-# parameter name or a path segment, which carry spaces and mixed case) so the
-# coined id is a clean, stable single segment.
+#
+# The one place the import invents an id, so everything it has to name itself
+# counts the same way and a migrated tree can be described in one sentence: the
+# second thing called `x` is `x_2`. Used for the ids the 5.x PI sheets do not
+# carry a column for (a parameter, an output mapping) and for a parameter-set
+# sheet whose name is already taken.
+#
+# The base is canonicalized here (a parameter name, a path segment, or a sheet
+# name carries spaces and mixed case) so the coined id is a clean, stable single
+# segment.
 #
 # @keywords internal
 # @noRd
-.pi5xUniqueId <- function(base, existing) {
+.uniqueImportedId <- function(base, existing) {
   base <- if (.isBlankCell(base)) "item" else as.character(base)
   base <- .canonicalizeOneId(base)
   candidate <- base
