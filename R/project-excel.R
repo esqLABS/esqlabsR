@@ -294,6 +294,21 @@ importProjectFromExcel <- function(
           # either direction: not as its own same-named override below, and not
           # through the `Individual Parameter Sets` column here.
           setSheetNames <- names(parsedSets)
+          # Which individuals that costs, and which individual a sheet describes
+          # without the biometrics sheet defining it. Reported before the
+          # references are dropped below, while it is still visible which
+          # individual pointed at what.
+          .warnUnparametrizedIndividuals(
+            jsonData$individuals,
+            setdiff(paramSheetNames, setSheetNames),
+            file
+          )
+          .warnUndefinedIndividualSheets(
+            jsonData$individuals,
+            setSheetNames,
+            jsonData$scenarios,
+            file
+          )
           jsonData$individuals <- .dropSkippedSheetRefs(
             jsonData$individuals,
             setdiff(paramSheetNames, setSheetNames)
@@ -1784,6 +1799,113 @@ projectStatus <- function(project, silent = FALSE) {
     definition$parameterSets <- if (length(kept) > 0L) as.list(kept) else NULL
     definition
   })
+}
+
+#' Report the individuals a skipped sheet leaves unparametrized
+#'
+#' A sheet of the individuals workbook that did not parse as a parameter sheet is
+#' reported on its own (`.parseExcelParameterSheets()`), but that report is about
+#' the sheet. What it costs is not visible from there: an individual parametrized
+#' only through that sheet, whether by name or through its `ParameterSets` cell,
+#' imports with no parametrization at all while its siblings keep theirs, and the
+#' project then validates clean. So the individual is named here, next to the sheet
+#' it lost.
+#'
+#' @param individuals The parsed individuals, before their skipped-sheet
+#'   references are dropped.
+#' @param skippedSheets The sheets of this workbook that produced no parameter set.
+#' @param file The workbook, named in the warning.
+#' @returns Nothing, called for its warning.
+#' @keywords internal
+#' @noRd
+.warnUnparametrizedIndividuals <- function(individuals, skippedSheets, file) {
+  if (length(individuals) == 0L || length(skippedSheets) == 0L) {
+    return(invisible(NULL))
+  }
+  skipped <- vapply(skippedSheets, .canonicalizeOneId, character(1))
+  ids <- character()
+  sheets <- character()
+  for (individual in individuals) {
+    id <- .canonicalizeOneId(as.character(individual$individualId))
+    if (is.na(id)) {
+      next
+    }
+    # Both ways an individual reaches a sheet of this workbook: its own
+    # same-named sheet, and the sheets its `ParameterSets` cell names.
+    declared <- unlist(individual$parameterSets)
+    referenced <- c(
+      id,
+      if (length(declared) > 0L) {
+        vapply(as.character(declared), .canonicalizeOneId, character(1))
+      }
+    )
+    lost <- skippedSheets[skipped %in% referenced]
+    if (length(lost) == 0L) {
+      next
+    }
+    ids <- c(ids, rep(as.character(individual$individualId), length(lost)))
+    sheets <- c(sheets, lost)
+  }
+  if (length(ids) == 0L) {
+    return(invisible(NULL))
+  }
+  .warnFormatted(
+    messages$importUnparametrizedIndividuals(file, ids, sheets),
+    "esqlabsR_importUnparametrizedIndividuals"
+  )
+}
+
+#' Report a parameter sheet that describes an individual nothing defines
+#'
+#' Individuals come from the `IndividualBiometrics` rows, so an individual that
+#' has a parameter sheet but no biometrics row is not imported at all: its sheet
+#' becomes a parameter set owned by nobody, and a scenario naming the individual is
+#' left pointing at nothing. Validation reports the dangling reference, which names
+#' the symptom; this names the cause, and the row to add.
+#'
+#' Only a sheet whose name is an individual a scenario asks for is reported, so a
+#' set that simply happens to live in this workbook (one a scenario or another
+#' individual references by name) is not mistaken for a dropped individual.
+#'
+#' @param individuals The parsed individuals.
+#' @param setSheetNames The sheets of this workbook that became parameter sets.
+#' @param scenarios The already-parsed scenarios section.
+#' @param file The workbook, named in the warning.
+#' @returns Nothing, called for its warning.
+#' @keywords internal
+#' @noRd
+.warnUndefinedIndividualSheets <- function(
+  individuals,
+  setSheetNames,
+  scenarios,
+  file
+) {
+  if (length(setSheetNames) == 0L) {
+    return(invisible(NULL))
+  }
+  defined <- vapply(
+    individuals %||% list(),
+    function(individual) {
+      .canonicalizeOneId(as.character(individual$individualId))
+    },
+    character(1)
+  )
+  wanted <- unique(vapply(
+    scenarios %||% list(),
+    function(scenario) {
+      .canonicalizeOneId(as.character(scenario$individual %||% NA_character_))
+    },
+    character(1)
+  ))
+  sheetIds <- vapply(setSheetNames, .canonicalizeOneId, character(1))
+  dropped <- setSheetNames[sheetIds %in% setdiff(wanted, defined)]
+  if (length(dropped) == 0L) {
+    return(invisible(NULL))
+  }
+  .warnFormatted(
+    messages$importUndefinedIndividualSheets(file, dropped),
+    "esqlabsR_importUndefinedIndividualSheets"
+  )
 }
 
 #' Parse parameter sheets from an Excel file into JSON structure

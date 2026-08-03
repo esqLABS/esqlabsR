@@ -425,6 +425,55 @@ messages$importUnmergedPIParameterGroups <- function(taskId, paths) {
   )
 }
 
+messages$importUnparametrizedIndividuals <- function(filePath, ids, sheets) {
+  # Unglued, like its neighbours: an individual id and a sheet name are free text.
+  envir <- new.env(parent = parent.frame())
+  assign("filePath", filePath, envir = envir)
+  assign("ids", ids, envir = envir)
+  assign("sheets", sheets, envir = envir)
+  assign("n", length(ids), envir = envir)
+  list(
+    bullets = c(
+      "!" = "{cli::qty(n)}{n} individual{?s} in {.file {filePath}} {?is/are} \\
+      imported without the parameter set {?it/they} declare{?s/}, because the \\
+      sheet did not parse as a parameter sheet:",
+      stats::setNames(
+        sprintf(
+          "Individual {.val {ids[[%1$d]]}}: sheet {.val {sheets[[%1$d]]}}.",
+          seq_along(ids)
+        ),
+        rep("x", length(ids))
+      ),
+      "i" = "Nothing else reports this: the individual imports without the \\
+      parametrization and the project still validates, so every scenario using \\
+      it runs on the unmodified model. Fix the sheet's columns in Excel and \\
+      import again."
+    ),
+    envir = envir
+  )
+}
+
+messages$importUndefinedIndividualSheets <- function(filePath, sheets) {
+  # Unglued, like its neighbours: a sheet name is free text.
+  envir <- new.env(parent = parent.frame())
+  assign("filePath", filePath, envir = envir)
+  assign("sheets", sheets, envir = envir)
+  assign("n", length(sheets), envir = envir)
+  list(
+    bullets = c(
+      "!" = "{cli::qty(n)}{n} parameter {?sheet/sheets} of {.file {filePath}} \\
+      {?names/name} an individual that {.field IndividualBiometrics} does not \\
+      define, so that individual is not imported: {.val {sheets}}.",
+      "i" = "An individual comes from its {.field IndividualBiometrics} row, so \\
+      the sheet is imported as a parameter set that no individual uses, and the \\
+      {cli::qty(n)}scenario{?s} naming the individual {?has/have} nothing to \\
+      resolve to.",
+      "i" = "Add a biometrics row for it in Excel and import again."
+    ),
+    envir = envir
+  )
+}
+
 messages$importDuplicatePlotIds <- function(sheet, idField, ids) {
   # Unglued, like its neighbours: a plot id is free text.
   envir <- new.env(parent = parent.frame())

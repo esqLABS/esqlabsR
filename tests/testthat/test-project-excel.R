@@ -3527,10 +3527,11 @@ test_that("a named but absent workbook imports as an empty section, unreported",
 })
 
 # #1213 item 9, first route: a parameter sheet whose column headers are duplicated
-# is correctly rejected as not a parameter sheet, and the rejection is reported.
-# What is not reported is the consequence: the individual named after that sheet
-# silently loses its whole parametrization, while its siblings keep theirs.
-test_that("a parameter sheet with duplicated headers costs its individual the parametrization", {
+# is correctly rejected as not a parameter sheet. The rejection names the sheet,
+# and a second warning now names the consequence: the individual that sheet
+# parametrized imports with no parametrization at all, while its siblings keep
+# theirs and the project still validates clean.
+test_that("a parameter sheet with duplicated headers names the individual it costs the parametrization", {
   projectDir <- localLegacyExcelProject()
   editWorkbookSheets(
     file.path(projectDir, "Configurations", "Individuals.xlsx"),
@@ -3554,20 +3555,21 @@ test_that("a parameter sheet with duplicated headers costs its individual the pa
   expect_null(imported$project$definitions$individuals[["child"]]$parameterSets)
   expect_false("child" %in% names(imported$project$definitions$parameterSets))
 
-  # The sheet is reported, and that is the whole of what the import says: one
-  # warning, about the sheet. Nothing follows it to say which individual just
-  # lost its parametrization.
-  expect_length(imported$warnings, 1L)
-  expect_match(imported$warnings, "Skipped sheet")
+  # Two warnings: the sheet that was skipped, and the individual it left
+  # unparametrized.
+  expect_length(imported$warnings, 2L)
+  expect_match(imported$warnings[[1]], "Skipped sheet")
+  expect_match(imported$warnings[[2]], "Child")
+  expect_match(imported$warnings[[2]], "without the parameter set")
 })
 
 # #1213 item 9, second route: individuals are keyed off the biometrics rows, so an
-# individual that has a parameter sheet but no biometrics row is dropped entirely.
-# Its sheet still becomes a parameter set, now owned by nobody, and the scenario
-# that names the individual is left dangling. Nothing reconciles the two at import
-# time; the only report comes later, from validation, and it describes the dangling
-# reference rather than the dropped individual.
-test_that("an individual with a parameter sheet but no biometrics row is dropped", {
+# individual that has a parameter sheet but no biometrics row is not imported. Its
+# sheet still becomes a parameter set owned by nobody, and the scenario naming the
+# individual is left dangling. Validation reports that dangling reference, which is
+# the symptom; the import now names the cause, the sheet whose individual has no
+# biometrics row, and the row to add.
+test_that("an individual with a parameter sheet but no biometrics row is dropped, and the sheet is named", {
   projectDir <- localLegacyExcelProject()
   editWorkbookSheets(
     file.path(projectDir, "Configurations", "Individuals.xlsx"),
@@ -3591,9 +3593,10 @@ test_that("an individual with a parameter sheet but no biometrics row is dropped
     "child"
   )
 
-  # Nothing at import time says an individual was dropped; the report that does
-  # arrive names the reference, not the cause.
-  expect_false(any(grepl("dropped|discarded", imported$warnings)))
+  # The import names the sheet whose individual is not defined, and validation
+  # still reports the reference the scenario is left with.
+  expect_true(any(grepl("does not", imported$warnings, fixed = TRUE)))
+  expect_true(any(grepl("Child", imported$warnings, fixed = TRUE)))
   expect_true(any(grepl("undefined individual", imported$warnings)))
 })
 
