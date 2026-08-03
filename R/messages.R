@@ -596,6 +596,21 @@ messages$noPopulationsFolderForCSVPopulation <- function(
   ))
 }
 
+messages$populationCsvNotFound <- function(
+  scenarioName,
+  populationId,
+  fileName,
+  populationsFolder
+) {
+  cli::format_message(c(
+    "x" = "Cannot read population {.val {populationId}} for scenario \\
+    {.val {scenarioName}}: {.file {fileName}} is not in the populations folder.",
+    "i" = "Expected it under {.path {populationsFolder}}.",
+    "i" = "Place the csv file there, or point {.field populationsFolder} at the \\
+    folder that holds it."
+  ))
+}
+
 
 messages$importedProject <- function(inputFile, outputFile) {
   cliFormat(

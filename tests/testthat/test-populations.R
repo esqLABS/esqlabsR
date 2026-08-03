@@ -684,6 +684,27 @@ test_that("reloadProject drops a session-injected Population", {
   expect_null(project$getProgrammaticPopulation("injected"))
 })
 
+# An id is canonicalized to lowercase while the csv file keeps the case its
+# author gave it, so deriving a literal `<id>.csv` resolved only on a
+# case-insensitive filesystem and failed on Linux (#1213).
+test_that(".populationCsvFileName keeps the case of the file on disk", {
+  folder <- withr::local_tempdir()
+  file.create(file.path(folder, "TestPopulation.csv"))
+
+  expect_identical(
+    .populationCsvFileName("testpopulation", folder),
+    "TestPopulation.csv"
+  )
+  # An entry that names its own file is authoritative, matched or not.
+  expect_identical(
+    .populationCsvFileName("testpopulation", folder, "Frozen.csv"),
+    "Frozen.csv"
+  )
+  # Nothing on disk: the derived name is returned, so the caller reports the
+  # name the author would look for.
+  expect_identical(.populationCsvFileName("absent", folder), "absent.csv")
+})
+
 test_that("saveProject freezes an injected Population to CSV and rewrites the entry", {
   project <- testProject()
   pop <- .injectablePopulation()

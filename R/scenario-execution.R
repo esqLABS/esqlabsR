@@ -268,12 +268,27 @@
       populationId = scenario$populationId
     ))
   }
-  fileName <- popData$file %||% paste0(scenario$populationId, ".csv")
+  fileName <- .populationCsvFileName(
+    scenario$populationId,
+    project$paths$populationsFolder,
+    popData$file
+  )
   populationPath <- .resolveProjectPath(
     fileName,
     project$paths$populationsFolder,
     "populationId"
   )
+  # Report an absent file here rather than handing a nonexistent path to the
+  # backend, which fails with a raw .NET exception naming neither the scenario
+  # nor the folder the file is expected in.
+  if (!file.exists(populationPath)) {
+    cli::cli_abort(messages$populationCsvNotFound(
+      scenarioName = scenario$scenarioName,
+      populationId = scenario$populationId,
+      fileName = fileName,
+      populationsFolder = project$paths$populationsFolder
+    ))
+  }
   loadPopulation(populationPath)
 }
 

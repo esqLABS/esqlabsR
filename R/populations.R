@@ -101,6 +101,41 @@
   )
 }
 
+# The CSV file a population is read from: the entry's own `file` when it names
+# one, otherwise the `<id>.csv` the legacy scenario-flag path derives. Shared by
+# the runtime and by the scenarios validator, so the file the validator checks is
+# the file the run opens.
+#
+# The derived name is matched against the folder listing case-insensitively: an
+# id is canonicalized to lowercase while the CSV file keeps the case its author
+# gave it (`TestPopulation.csv`), so a literal `<id>.csv` would resolve only on a
+# case-insensitive filesystem and fail on Linux. An exact match wins, so a folder
+# holding both spellings resolves to the one named. With nothing matching, the
+# derived name is returned unchanged, so the caller reports the name the author
+# would look for.
+#
+# @keywords internal
+# @noRd
+.populationCsvFileName <- function(id, populationsFolder, file = NULL) {
+  if (!is.null(file)) {
+    return(file)
+  }
+  derived <- paste0(id, ".csv")
+  if (is.null(populationsFolder) || !dir.exists(populationsFolder)) {
+    return(derived)
+  }
+  present <- list.files(
+    populationsFolder,
+    pattern = "\\.csv$",
+    ignore.case = TRUE
+  )
+  if (derived %in% present) {
+    return(derived)
+  }
+  matched <- present[tolower(present) == tolower(derived)]
+  if (length(matched) > 0L) matched[[1]] else derived
+}
+
 #' Validate the `populations` section of a Project
 #'
 #' Per-entry checks: an optional `type` (`programmatic` / `csv`) must be

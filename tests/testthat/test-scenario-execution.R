@@ -716,6 +716,7 @@ test_that(".resolveScenarioPopulation loads a csv entry from its own file", {
     type = "csv",
     file = "custom.csv"
   ))
+  file.create(file.path(project$paths$populationsFolder, "custom.csv"))
   .setSection(
     project,
     "populations",
@@ -786,6 +787,44 @@ test_that("a relative modelFile that escapes the simulations folder is rejected"
 })
 
 # Population file resolution ----
+
+test_that("a CSV-population scenario names the missing csv file rather than failing in the backend", {
+  # An absent file used to reach the backend, which aborts with a raw .NET
+  # exception naming neither the scenario nor the folder (#1213).
+  withr::local_options(lifecycle_verbosity = "quiet")
+  project <- .testProject()
+  file.remove(file.path(
+    project$paths$populationsFolder,
+    "testpopulation.csv"
+  ))
+  expect_error(
+    .runScenariosFromProject(
+      project,
+      scenarioNames = "populationscenariofromcsv",
+      validate = FALSE
+    ),
+    "testpopulation\\.csv"
+  )
+})
+
+test_that("a CSV population resolves under the case its file is spelled with", {
+  # The id is canonical (lowercase) and the file keeps the author's spelling, so
+  # reading it must not depend on a case-insensitive filesystem (#1213).
+  withr::local_options(lifecycle_verbosity = "quiet")
+  project <- .testProject()
+  folder <- project$paths$populationsFolder
+  file.rename(
+    file.path(folder, "testpopulation.csv"),
+    file.path(folder, "TestPopulation.csv")
+  )
+  expect_no_error(
+    .runScenariosFromProject(
+      project,
+      scenarioNames = "populationscenariofromcsv",
+      validate = FALSE
+    )
+  )
+})
 
 test_that("a CSV-population scenario with NULL populationsFolder aborts with a clear message", {
   withr::local_options(lifecycle_verbosity = "quiet")
