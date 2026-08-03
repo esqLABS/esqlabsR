@@ -913,6 +913,15 @@ exportProjectToExcel <- function(
     .canonicalizeProjectJsonIds(currentJsonObj)
   )
 
+  # Both sides are compared with their object keys in one order, because the
+  # order a record's fields sit in carries no meaning and the round trip does not
+  # preserve it: a sheet has one column order (the union of every record's
+  # fields), so a record whose own fields are ordered differently comes back
+  # reordered. Only named lists are sorted; an array's order is meaningful (a
+  # task's parameter list) and is left as it is.
+  originalJsonObj <- .sortJsonKeys(originalJsonObj)
+  currentJsonObj <- .sortJsonKeys(currentJsonObj)
+
   # Remove esqlabsRVersion -- it changes with package updates and would cause
   # false out-of-sync reports
   originalJsonObj[["esqlabsRVersion"]] <- NULL
@@ -1002,6 +1011,25 @@ exportProjectToExcel <- function(
   }
 
   invisible(result)
+}
+
+# Sort the keys of every named list in a JSON-shaped structure, recursively, so
+# two structures that differ only in field order compare equal. An unnamed list
+# is an array, whose order is part of its meaning, so it is recursed into but not
+# reordered. Sorted in the C locale so the order does not depend on the session's.
+#
+# @keywords internal
+# @noRd
+.sortJsonKeys <- function(x) {
+  if (!is.list(x)) {
+    return(x)
+  }
+  x <- lapply(x, .sortJsonKeys)
+  names <- names(x)
+  if (is.null(names) || anyNA(names) || !all(nzchar(names))) {
+    return(x)
+  }
+  x[order(names, method = "radix")]
 }
 
 # Excel <-> JSON bridge: sync helper ----
@@ -2344,7 +2372,7 @@ projectStatus <- function(project, silent = FALSE) {
         next
       }
       field <- if (identical(col, idColumn)) idField else col
-      fields[[field]] <- val
+      fields[[field]] <- .plotFieldValue(field, val)
     }
     fields
   }
@@ -2367,6 +2395,39 @@ projectStatus <- function(project, silent = FALSE) {
   "xScaleFactors",
   "yScaleFactors"
 )
+
+# The plot / plot-grid fields that carry numbers rather than text, the field-type
+# contract `.dataCombinedNumericFields` gives the sibling section. A
+# hand-maintained workbook routinely stores one of these as text (`nsd` typed as
+# `"1.96"`), which readxl reads as a string, so the imported definition would hold
+# a string where the same field authored with `addPlot()` holds a number.
+#
+# Several of them are multi-value fields both entrypoints keep as one
+# comma-separated string, so the coercion is conditional on the cell holding a
+# single number (`.plotFieldValue()`): `"0, 24"` stays the string it is.
+.plotNumericFields <- c(
+  "nsd",
+  "quantiles",
+  "foldDistance",
+  "xValuesLimits",
+  "yValuesLimits",
+  "xAxisLimits",
+  "yAxisLimits"
+)
+
+# One plots cell, coerced to a number when the field is a numeric one and the
+# cell holds a single number. Anything else (text, a multi-value cell, a value
+# already numeric) is returned as read.
+#
+# @keywords internal
+# @noRd
+.plotFieldValue <- function(field, value) {
+  if (!(field %in% .plotNumericFields) || is.numeric(value)) {
+    return(value)
+  }
+  numeric <- suppressWarnings(as.numeric(value))
+  if (length(numeric) == 1L && !is.na(numeric)) numeric else value
+}
 
 # Group the long-format DataCombined sheet (one row per simulated/observed
 # curve, distinguished by the `dataType` column) into nested dataCombined
@@ -2512,8 +2573,9 @@ projectStatus <- function(project, silent = FALSE) {
       taskId = task$id,
       scenarios = .formatArrayToCommaList(unlist(task$scenarios))
     )
-    for (key in names(task$configuration %||% list())) {
-      taskRow[[paste0("config.", key)]] <- task$configuration[[key]] %||% NA
+    flatConfig <- .flattenPIConfiguration(task$configuration)
+    for (key in names(flatConfig)) {
+      taskRow[[paste0("config.", key)]] <- flatConfig[[key]] %||% NA
     }
     taskRows[[length(taskRows) + 1]] <- as.data.frame(
       taskRow,
@@ -2607,13 +2669,14 @@ projectStatus <- function(project, silent = FALSE) {
   lapply(seq_len(nrow(taskDf)), function(i) {
     taskId <- as.character(taskDf$taskId[[i]])
     configCols <- grep("^config\\.", names(taskDf), value = TRUE)
-    configuration <- list()
+    flatConfig <- list()
     for (col in configCols) {
       val <- .naToNull(taskDf[[col]][[i]])
       if (!is.null(val)) {
-        configuration[[sub("^config\\.", "", col)]] <- val
+        flatConfig[[sub("^config\\.", "", col)]] <- val
       }
     }
+    configuration <- .nestPIConfiguration(flatConfig)
     list(
       id = taskId,
       scenarios = as.list(.parseCommaListToArray(taskDf$scenarios[[i]])),
@@ -2622,6 +2685,62 @@ projectStatus <- function(project, silent = FALSE) {
       configuration = configuration
     )
   })
+}
+
+# The nested groups of a PI task's `configuration`: each holds its own option
+# dict rather than a scalar, so flattening the configuration onto sheet columns
+# has to carry the group name along and importing has to put it back.
+#
+# @keywords internal
+# @noRd
+.piConfigurationGroups <- c(
+  "objectiveFunction",
+  "algorithmOptions",
+  "ciOptions",
+  "simulationRunOptions"
+)
+
+# Flatten a PI task's `configuration` to the one-scalar-per-column shape a sheet
+# can hold: a scalar setting keeps its name, an option inside a nested group
+# becomes `<group>.<option>`. `.nestPIConfiguration()` inverts it, so a
+# configuration survives an export and re-import as the nested object it is.
+#
+# @keywords internal
+# @noRd
+.flattenPIConfiguration <- function(configuration) {
+  flat <- list()
+  for (key in names(configuration %||% list())) {
+    value <- configuration[[key]]
+    if (is.list(value)) {
+      for (option in names(value)) {
+        flat[[paste0(key, ".", option)]] <- value[[option]]
+      }
+    } else {
+      flat[[key]] <- value
+    }
+  }
+  flat
+}
+
+# Rebuild the nested `configuration` object from the flat `config.*` cells
+# `.flattenPIConfiguration()` wrote. Only a name whose first segment is one of the
+# nested groups is split, and only on its first dot, so an option name that
+# itself contains a dot stays one name.
+#
+# @keywords internal
+# @noRd
+.nestPIConfiguration <- function(flat) {
+  configuration <- list()
+  for (name in names(flat)) {
+    group <- sub("\\..*$", "", name)
+    if (group %in% .piConfigurationGroups && grepl(".", name, fixed = TRUE)) {
+      option <- sub("^[^.]*\\.", "", name)
+      configuration[[group]][[option]] <- flat[[name]]
+    } else {
+      configuration[[name]] <- flat[[name]]
+    }
+  }
+  configuration
 }
 
 # Parse the PIParameters / PIOutputMappings rows for one task. Filters `df` to
@@ -3113,10 +3232,38 @@ projectStatus <- function(project, silent = FALSE) {
     return(NULL)
   }
   allCols <- unique(unlist(lapply(records, names)))
+  # A column every record holds a single number in is written as numbers, so a
+  # number survives the round trip as a number: collapsing it to text would make
+  # the field come back as a string on the next import and report the project as
+  # out of sync with its own workbook. A column mixing text and numbers is
+  # written as text, both because a single Excel column has one type and because
+  # binding a character cell to a numeric one below would abort the export.
+  numericCols <- allCols[vapply(
+    allCols,
+    function(col) {
+      values <- Filter(
+        Negate(is.null),
+        lapply(records, function(rec) rec[[col]])
+      )
+      length(values) > 0L &&
+        all(vapply(
+          values,
+          function(v) is.numeric(v) && length(v) == 1L,
+          logical(1)
+        ))
+    },
+    logical(1)
+  )]
   rowDfs <- lapply(records, function(rec) {
     cells <- lapply(allCols, function(col) {
       val <- rec[[col]]
-      if (is.null(val)) NA else paste(val, collapse = ", ")
+      if (col %in% numericCols) {
+        val %||% NA_real_
+      } else if (is.null(val)) {
+        NA
+      } else {
+        paste(val, collapse = ", ")
+      }
     })
     names(cells) <- allCols
     as.data.frame(cells, stringsAsFactors = FALSE, check.names = FALSE)

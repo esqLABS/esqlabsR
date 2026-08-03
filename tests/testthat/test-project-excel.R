@@ -3341,15 +3341,35 @@ test_that("a blank simulationTime unit imports as the authoring default, and an 
   expect_false(scenario$overwriteFormulasInSS)
 })
 
-# #1213 item 18: `rowToFields()` copies whatever type readxl guessed for a plots
-# column, with no numeric-coercion list of the kind `dataCombined` has. A workbook
-# storing `nsd` as text therefore yields the string `"1.96"` where the same field
-# authored programmatically is a number, which is the root cause behind every
-# `excel_in_sync = FALSE` report on a freshly imported tree.
-test_that("a plots field stored as text imports as a string, not a number", {
+# #1213 item 18: the plots section has the same field-type contract
+# `dataCombined` has, so a workbook storing `nsd` as text yields the number the
+# same field authored with `addPlot()` holds. A multi-value cell stays the
+# comma-separated string both entrypoints keep it in.
+test_that("a plots field stored as text imports as a number", {
   imported <- importLegacyExcelProject(localLegacyExcelProject())
+  plots <- imported$project$definitions$plots
 
-  expect_identical(imported$project$definitions$plots[["p3"]]$nsd, "1.96")
+  expect_identical(plots[["p3"]]$nsd, 1.96)
+  expect_identical(plots[["p3"]]$xValuesLimits, "0, 24")
+  expect_identical(plots[["p2"]]$foldDistance, "2, 3")
+})
+
+# #1213 item 18, what the field types were costing: a freshly exported workbook
+# read back had to describe the same project, and it did not, so `projectStatus()`
+# reported every imported project as out of sync with the Excel side-car it had
+# just written.
+test_that("a freshly exported workbook reports an imported project as in sync", {
+  projectDir <- localLegacyExcelProject()
+  imported <- importLegacyExcelProject(projectDir)
+  suppressMessages(exportProjectToExcel(
+    imported$project,
+    outputDir = imported$outputDir,
+    overwrite = TRUE,
+    silent = TRUE
+  ))
+
+  status <- suppressWarnings(suppressMessages(projectStatus(imported$project)))
+  expect_true(status$excel_in_sync)
 })
 
 # #1213 item 10 / the residue #1207 recorded: a 5.x multi-value cell is quoted,
