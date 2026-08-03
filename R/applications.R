@@ -92,7 +92,7 @@ addApplication <- function(
 
 #' Remove one or more application protocols from a Project
 #'
-#' Drop the protocols with matching ids in one write-through. Warns (and
+#' Drop the protocols with matching ids in one in-memory edit. Warns (and
 #' skips) any id not present, and warns when a removed protocol is still
 #' referenced.
 #'

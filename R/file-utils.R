@@ -306,9 +306,17 @@ readExcel <- function(path, sheet = NULL, ...) {
 #' filename. One carrying a path separator, or `.` / `..`, would resolve outside
 #' `dir` and write over whatever sits there.
 #'
+#' A value that is not a single non-empty string is a different mistake from one
+#' that is a name but would escape `dir`, so the two are told apart: saying
+#' "contains a path separator" of an empty string, an `NA`, or a number says
+#' something untrue about it. What the value actually is is rendered here, once,
+#' and handed to the message entry as `given`.
+#'
 #' @param name The name to check.
-#' @param message A `messages` entry taking `name` and returning the abort text,
-#'   so each caller names its own argument.
+#' @param message A `messages` entry taking `(name, given)` and returning the
+#'   abort text, so each caller names its own argument. `given` describes a value
+#'   that is no name at all, and is `NULL` when the name is well-formed but
+#'   would escape the directory.
 #' @param call The frame the abort is attributed to; defaults to the caller, so
 #'   the error reads as the public function the user actually called.
 #' @returns `NULL`, invisibly; called for the abort.
@@ -319,15 +327,20 @@ readExcel <- function(path, sheet = NULL, ...) {
   message,
   call = rlang::caller_env()
 ) {
-  if (
-    !is.character(name) ||
-      length(name) != 1L ||
-      is.na(name) ||
-      !nzchar(name) ||
-      grepl("[/\\]", name) ||
-      name %in% c(".", "..")
-  ) {
-    cli::cli_abort(message(name), call = call)
+  given <- if (!is.character(name)) {
+    cli::format_inline("{.obj_type_friendly {name}}")
+  } else if (length(name) != 1L) {
+    cli::format_inline("a character vector of length {length(name)}")
+  } else if (is.na(name)) {
+    "NA"
+  } else if (!nzchar(name)) {
+    "an empty string"
+  }
+  if (!is.null(given)) {
+    cli::cli_abort(message(name, given), call = call)
+  }
+  if (grepl("[/\\]", name) || name %in% c(".", "..")) {
+    cli::cli_abort(message(name, NULL), call = call)
   }
   invisible(NULL)
 }

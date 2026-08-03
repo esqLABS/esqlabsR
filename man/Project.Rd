@@ -59,10 +59,14 @@ MoBi snapshots), \code{dataFolder} (experimental data), \code{outputFolder}
 (results), \code{populationsFolder} (population CSVs loaded by
 \code{\link[=runScenarios]{runScenarios()}}), and \code{definitionsFolder} (the folder holding the
 definition files, default \code{"definitions"}).
-Read a field with \code{project$paths$simulationsFolder} (returned resolved
-against \code{projectDirPath}); write one with
-\code{project$paths$simulationsFolder <- "Models"} (stored verbatim, resolved
-on the next read). Assigning any field sets the dirty bit. Changing
+Read a field with \code{project$paths$simulationsFolder}: that returns the
+\strong{absolute} path, already resolved against \code{projectDirPath}, so it is
+ready to use as-is and must not be joined onto \code{projectDirPath} again
+(\code{project$print()} shows these folders relative to the project folder,
+which is a display choice, not the field's value). Write one with
+\code{project$paths$simulationsFolder <- "Models"} (stored verbatim, and
+relative to the project folder, resolved on the next read). Assigning any
+field sets the dirty bit. Changing
 \code{definitionsFolder} redirects where the next \code{\link[=saveProject]{saveProject()}} writes the
 definition files; nothing moves on disk until that save. The
 Excel-bridge sheet-name fields live in the separate \code{excel} group.}

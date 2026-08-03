@@ -1546,7 +1546,7 @@ setPITask <- function(project, id, scenarios, configuration) {
 
 #' Remove one or more Parameter Identification tasks from a Project
 #'
-#' Drop the tasks with matching ids in one write-through. Warns (and skips)
+#' Drop the tasks with matching ids in one in-memory edit. Warns (and skips)
 #' any id not present.
 #'
 #' `addPITask()` is not vectorized over ids: each task is composed of its own

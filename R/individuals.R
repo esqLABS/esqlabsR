@@ -380,7 +380,7 @@ addIndividual <- function(project, id, species, ...) {
 
 #' Remove one or more individuals from a Project
 #'
-#' Drop the individuals with matching ids in one write-through. Warns (and
+#' Drop the individuals with matching ids in one in-memory edit. Warns (and
 #' skips) any id not present, and warns when a removed individual is still
 #' referenced.
 #'
@@ -424,8 +424,8 @@ removeIndividual <- function(project, id) {
 #' Modify fields of an existing individual
 #'
 #' @description Changes one or more fields of the individual identified by
-#'   `id` and persists the change immediately to the individual definition
-#'   (write-through). The `individuals` definitions accessor is read-only, so this
+#'   `id`, in memory; write the change to the individual's definition file with
+#'   [saveProject()]. The `individuals` definitions accessor is read-only, so this
 #'   is the way to revise an existing individual in place.
 #'
 #'   Only the arguments you pass via `...` are changed; every other field

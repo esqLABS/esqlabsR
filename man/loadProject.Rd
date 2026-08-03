@@ -35,6 +35,14 @@ save them; the files on disk stay as they are. Reading a section
 directly (for example \code{scenarios} definitions) never changes the project: a
 definition changes only through the add/set/remove functions.
 
+The project's own fields are not definitions and have no add/set/remove
+function: assign them on the project instead, \code{project$info$name <- "..."}
+for the name and description, and \code{project$paths$populationsFolder <- "..."}
+for a working folder (see \link{Project} for the full field list). An
+observed-data source's \code{file} and \code{importerConfiguration} are fields of the
+declaration, so they are authored with \code{\link[=addObservedData]{addObservedData()}}. Every such
+assignment is an in-memory edit like any other, saved by \code{\link[=saveProject]{saveProject()}}.
+
 Write your changes to the project files with \code{\link[=saveProject]{saveProject()}}. Discard
 unsaved changes and go back to what is saved on disk with
 \code{\link[=reloadProject]{reloadProject()}}. Save the current state of the whole project to a

@@ -91,8 +91,8 @@ The \code{project} object, invisibly.
 }
 \description{
 Changes one or more fields of the scenario identified by
-\code{id} and persists the change the same way \code{\link[=addScenario]{addScenario()}}
-does (write-through to the scenario definition). The section accessor
+\code{id}, in memory, the same way \code{\link[=addScenario]{addScenario()}} does; write the change to the
+scenario's definition file with \code{\link[=saveProject]{saveProject()}}. The section accessor
 \code{project$definitions$scenarios} is read-only, so this is the way to revise
 an existing scenario: read it if you need the current values
 (\code{sc <- project$definitions$scenarios[[name]]}), then pass the changes here
@@ -145,8 +145,9 @@ plot grid (\code{plots}) must still be non-empty: a grid with no plots has nothi
 to render.
 
 The call is all-or-nothing: every definition is validated first, and if any
-fails the whole call aborts and writes nothing. On success all definitions
-are folded into the section and persisted in a single write-through.
+fails the whole call aborts and changes nothing. On success all definitions
+are folded into the section in one in-memory edit. Like every other edit, it
+reaches the project's files only when you call \code{\link[=saveProject]{saveProject()}}.
 
 An authoring function resolves every reference at the call that makes it: an
 \code{individual} or \code{parameterSets} id with no matching definition aborts naming

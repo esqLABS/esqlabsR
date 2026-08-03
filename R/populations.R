@@ -771,7 +771,7 @@ addPopulation <- function(
 
 #' Remove one or more populations from a Project
 #'
-#' Drop the populations with matching ids in one write-through. Warns (and
+#' Drop the populations with matching ids in one in-memory edit. Warns (and
 #' skips) any id not present, and warns when a removed population is still
 #' referenced.
 #'
@@ -820,8 +820,8 @@ removePopulation <- function(project, id) {
 #' Modify fields of an existing population
 #'
 #' @description Changes one or more fields of the population identified by
-#'   `id` and persists the change immediately to the population definition
-#'   (write-through). The `populations` definitions accessor is read-only, so this
+#'   `id`, in memory; write the change to the population's definition file with
+#'   [saveProject()]. The `populations` definitions accessor is read-only, so this
 #'   is the way to revise an existing population in place.
 #'
 #'   Only the arguments you pass via `...` are changed; every other field

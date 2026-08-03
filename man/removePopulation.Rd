@@ -16,7 +16,7 @@ canonicalized the same way \code{\link[=addPopulation]{addPopulation()}} canonic
 The \code{project} object, invisibly.
 }
 \description{
-Drop the populations with matching ids in one write-through. Warns (and
+Drop the populations with matching ids in one in-memory edit. Warns (and
 skips) any id not present, and warns when a removed population is still
 referenced.
 }

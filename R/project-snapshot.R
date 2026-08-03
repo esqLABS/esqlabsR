@@ -214,7 +214,11 @@ restoreProject <- function(snapshot, dir = ".", overwrite = FALSE) {
   # container back returns a fresh tree-backed `Project` bound to `dir`. The
   # local is named `inMemory` (not `snapshotProject`) so it does not shadow the
   # exported `snapshotProject()` function.
-  inMemory <- loadProject(canonFile)
+  # `Project$new()` rather than `loadProject()`: this load is an internal step
+  # towards the tree, and `loadProject()` warns about unresolved
+  # cross-references, which the caller would hear twice for one restore (once
+  # here, once from the returned project loaded below).
+  inMemory <- Project$new(projectFilePath = canonFile)
   # A restore materializes a brand-new tree project at `dir`, so it always
   # writes the canonical `Project.json` container name (the default). Passing
   # `inMemory`'s own `projectFilePath` would be wrong here: that is the

@@ -17,7 +17,7 @@ id must not already exist.}
 The \code{project} object, invisibly.
 }
 \description{
-Drop the parameter sets with matching ids in one write-through. Warns (and
+Drop the parameter sets with matching ids in one in-memory edit. Warns (and
 skips) any id not present, and warns when a removed set is still
 referenced.
 }
@@ -48,8 +48,9 @@ plot grid (\code{plots}) must still be non-empty: a grid with no plots has nothi
 to render.
 
 The call is all-or-nothing: every definition is validated first, and if any
-fails the whole call aborts and writes nothing. On success all definitions
-are folded into the section and persisted in a single write-through.
+fails the whole call aborts and changes nothing. On success all definitions
+are folded into the section in one in-memory edit. Like every other edit, it
+reaches the project's files only when you call \code{\link[=saveProject]{saveProject()}}.
 
 An authoring function resolves every reference at the call that makes it: an
 \code{individual} or \code{parameterSets} id with no matching definition aborts naming

@@ -139,10 +139,14 @@ Project <- R6::R6Class(
     #'   (results), `populationsFolder` (population CSVs loaded by
     #'   [runScenarios()]), and `definitionsFolder` (the folder holding the
     #'   definition files, default `"definitions"`).
-    #'   Read a field with `project$paths$simulationsFolder` (returned resolved
-    #'   against `projectDirPath`); write one with
-    #'   `project$paths$simulationsFolder <- "Models"` (stored verbatim, resolved
-    #'   on the next read). Assigning any field sets the dirty bit. Changing
+    #'   Read a field with `project$paths$simulationsFolder`: that returns the
+    #'   **absolute** path, already resolved against `projectDirPath`, so it is
+    #'   ready to use as-is and must not be joined onto `projectDirPath` again
+    #'   (`project$print()` shows these folders relative to the project folder,
+    #'   which is a display choice, not the field's value). Write one with
+    #'   `project$paths$simulationsFolder <- "Models"` (stored verbatim, and
+    #'   relative to the project folder, resolved on the next read). Assigning any
+    #'   field sets the dirty bit. Changing
     #'   `definitionsFolder` redirects where the next [saveProject()] writes the
     #'   definition files; nothing moves on disk until that save. The
     #'   Excel-bridge sheet-name fields live in the separate `excel` group.
@@ -1101,7 +1105,11 @@ Project <- R6::R6Class(
         )
       )
       if (length(items) > 0L) {
-        ospsuite.utils::ospPrintHeader("Paths")
+        # Say that the values are shown relative. Reading a folder through
+        # `project$paths` gives the absolute path, so without the label the print
+        # reads as the field's value and invites joining it onto
+        # `projectDirPath` a second time.
+        ospsuite.utils::ospPrintHeader("Paths (relative to the project folder)")
         ospsuite.utils::ospPrintItems(items)
       }
       invisible(self)

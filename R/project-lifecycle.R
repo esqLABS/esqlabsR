@@ -31,6 +31,14 @@
 #'   directly (for example `scenarios` definitions) never changes the project: a
 #'   definition changes only through the add/set/remove functions.
 #'
+#'   The project's own fields are not definitions and have no add/set/remove
+#'   function: assign them on the project instead, `project$info$name <- "..."`
+#'   for the name and description, and `project$paths$populationsFolder <- "..."`
+#'   for a working folder (see [Project] for the full field list). An
+#'   observed-data source's `file` and `importerConfiguration` are fields of the
+#'   declaration, so they are authored with [addObservedData()]. Every such
+#'   assignment is an in-memory edit like any other, saved by [saveProject()].
+#'
 #'   Write your changes to the project files with [saveProject()]. Discard
 #'   unsaved changes and go back to what is saved on disk with
 #'   [reloadProject()]. Save the current state of the whole project to a

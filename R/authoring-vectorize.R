@@ -16,9 +16,9 @@
 #      different multi-valued list per definition, the caller passes a length-N
 #      list (one vector per definition); anything else is the one value applied to
 #      every definition. Whole fields are exempt from the length check.
-#   4. All-or-nothing: the caller validates all N definitions first and writes
-#      nothing on any failure, then folds all N into the section and triggers
-#      exactly one write-through.
+#   4. All-or-nothing: the caller validates all N definitions first and changes
+#      nothing on any failure, then folds all N into the section in one
+#      in-memory edit (which `saveProject()` later reconciles to the tree).
 #
 # Two families of authoring functions sit outside this id-sets-N rule.
 # `addParameterEntry()` / `removeParameterEntry()` vectorize over parameter
@@ -37,7 +37,7 @@
 #'
 #' @description Every `add*` / `set*` / `remove*` function in the authoring
 #'   API accepts a vector of ids and vectorizes over them in one call (and one
-#'   write to disk).
+#'   in-memory edit).
 #'
 #' @details
 #' The id argument sets `N`, the number of definitions to act on, and cannot
@@ -66,8 +66,9 @@
 #' to render.
 #'
 #' The call is all-or-nothing: every definition is validated first, and if any
-#' fails the whole call aborts and writes nothing. On success all definitions
-#' are folded into the section and persisted in a single write-through.
+#' fails the whole call aborts and changes nothing. On success all definitions
+#' are folded into the section in one in-memory edit. Like every other edit, it
+#' reaches the project's files only when you call [saveProject()].
 #'
 #' An authoring function resolves every reference at the call that makes it: an
 #' `individual` or `parameterSets` id with no matching definition aborts naming

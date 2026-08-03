@@ -1664,6 +1664,23 @@ test_that("importProjectFromExcel rejects a projectFileName that is a path", {
   )
 })
 
+test_that("importProjectFromExcel says what is wrong with a projectFileName that is no name at all", {
+  # An empty string, an `NA` and a number are not names that "contain a path
+  # separator", so the rejection describes the value it got instead (#1213).
+  for (bad in list("", NA_character_, 42, c("a", "b"))) {
+    err <- expect_error(
+      importProjectFromExcel(
+        testProjectExcelPath(),
+        outputDir = withr::local_tempdir(),
+        silent = TRUE,
+        projectFileName = bad
+      )
+    )
+    expect_match(conditionMessage(err), "not a single non-empty string")
+    expect_no_match(conditionMessage(err), "contains a path separator")
+  }
+})
+
 test_that("importProjectFromExcel reports what it produced, and stays quiet under silent", {
   work_dir <- withr::local_tempdir()
   file.copy(dirname(testProjectExcelPath()), work_dir, recursive = TRUE)

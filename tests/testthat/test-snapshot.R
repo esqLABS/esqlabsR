@@ -257,6 +257,34 @@ test_that("restoreProject reads a .esqlabsR snapshot", {
   )
 })
 
+test_that("restoreProject warns about a dangling cross-reference once, not twice", {
+  # A restore loads twice (the snapshot on the way in, the materialized tree on
+  # the way out), and only the returned project's load is the user's, so the
+  # warning is theirs to hear once (#1213).
+  project <- testProject()
+  addScenario(project, "dangler", modelFile = "Aciclovir.pkml")
+  # Point the new scenario at an individual that is not defined, by editing the
+  # snapshot the restore reads (the authoring API refuses a dangling reference).
+  out <- snapshotProject(project, dir = withr::local_tempdir(), name = "study")
+  raw <- jsonlite::fromJSON(out, simplifyVector = FALSE)
+  for (i in seq_along(raw$scenarios)) {
+    if (identical(raw$scenarios[[i]]$name, "dangler")) {
+      raw$scenarios[[i]]$individual <- "ghost"
+    }
+  }
+  jsonlite::write_json(raw, out, auto_unbox = TRUE, null = "null", digits = NA)
+
+  warnings <- character()
+  withCallingHandlers(
+    restoreProject(out, withr::local_tempdir()),
+    warning = function(w) {
+      warnings <<- c(warnings, conditionMessage(w))
+      invokeRestart("muffleWarning")
+    }
+  )
+  expect_length(grep("unresolved cross-reference", warnings), 1)
+})
+
 test_that("restoreProject still reads a plain inlined Project.json (back-compat)", {
   # importProjectFromExcel() writes a single inlined Project.json;
   # restoreProject() must still accept that legacy form as the snapshot to

@@ -22,7 +22,7 @@ The \code{project} object, invisibly.
 }
 \description{
 Adds empty parameter sets to the project's single \code{parameterSets} section,
-vectorizing over a vector of ids (all N added in one write-through). A
+vectorizing over a vector of ids (all N added in one in-memory edit). A
 scenario references the sets it applies through its \code{modelParameterSets}
 field, an individual or application through its \code{parameterSets} field; all
 three resolve against this one section.
@@ -54,8 +54,9 @@ plot grid (\code{plots}) must still be non-empty: a grid with no plots has nothi
 to render.
 
 The call is all-or-nothing: every definition is validated first, and if any
-fails the whole call aborts and writes nothing. On success all definitions
-are folded into the section and persisted in a single write-through.
+fails the whole call aborts and changes nothing. On success all definitions
+are folded into the section in one in-memory edit. Like every other edit, it
+reaches the project's files only when you call \code{\link[=saveProject]{saveProject()}}.
 
 An authoring function resolves every reference at the call that makes it: an
 \code{individual} or \code{parameterSets} id with no matching definition aborts naming

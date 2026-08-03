@@ -6,7 +6,7 @@
 \description{
 Every \verb{add*} / \verb{set*} / \verb{remove*} function in the authoring
 API accepts a vector of ids and vectorizes over them in one call (and one
-write to disk).
+in-memory edit).
 }
 \details{
 The id argument sets \code{N}, the number of definitions to act on, and cannot
@@ -35,8 +35,9 @@ plot grid (\code{plots}) must still be non-empty: a grid with no plots has nothi
 to render.
 
 The call is all-or-nothing: every definition is validated first, and if any
-fails the whole call aborts and writes nothing. On success all definitions
-are folded into the section and persisted in a single write-through.
+fails the whole call aborts and changes nothing. On success all definitions
+are folded into the section in one in-memory edit. Like every other edit, it
+reaches the project's files only when you call \code{\link[=saveProject]{saveProject()}}.
 
 An authoring function resolves every reference at the call that makes it: an
 \code{individual} or \code{parameterSets} id with no matching definition aborts naming

@@ -16,7 +16,7 @@ canonicalized the same way \code{\link[=addOutputPath]{addOutputPath()}} canonic
 The \code{project} object, invisibly.
 }
 \description{
-Drop the output paths with matching ids in one write-through. Warns (and
+Drop the output paths with matching ids in one in-memory edit. Warns (and
 skips) any id not present, and warns when a removed output path is still
 referenced.
 }

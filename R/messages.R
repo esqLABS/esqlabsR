@@ -229,22 +229,35 @@ messages$snapshotFileExists <- function(path) {
 # The `{name}` placeholder is the validated value, not `snapshotProject()`'s
 # `name` argument (`{.arg name}` above renders that literally). It is spelled
 # `name` because `.validateFilenameSegment()` raises this from a frame where the
-# value is bound under that name.
-messages$invalidSnapshotName <- function(name) {
+# value is bound under that name. `given` is that helper's description of a value
+# that is no name at all (and `NULL` for a well-formed name that would escape the
+# directory), because quoting an empty string, an `NA` or a number as if it
+# "contained a path separator" says something untrue about it. Both placeholders
+# stay unglued, so the raising call interpolates each exactly once, from the frame
+# that binds them.
+messages$invalidSnapshotName <- function(name, given) {
   c(
     "{.arg name} must be a single filename stem without path separators.",
-    "x" = "The stem {.val {name}} contains a path separator or is {.val .} / \\
-    {.val ..}, so it could write outside {.arg dir}.",
+    "x" = if (is.null(given)) {
+      "The stem {.val {name}} contains a path separator or is {.val .} / \\
+      {.val ..}, so it could write outside {.arg dir}."
+    } else {
+      "It is {given}, not a single non-empty string."
+    },
     "i" = "Pass a single filename segment (no path separator and not {.val .} / \\
     {.val ..}), or leave {.arg name} as {.code NULL} for a timestamped default."
   )
 }
 
-messages$invalidProjectFileName <- function(name) {
+messages$invalidProjectFileName <- function(name, given) {
   c(
     "{.arg projectFileName} must be a single filename without path separators.",
-    "x" = "The name {.val {name}} contains a path separator or is {.val .} / \\
-    {.val ..}, so it could write outside {.arg outputDir}.",
+    "x" = if (is.null(given)) {
+      "The name {.val {name}} contains a path separator or is {.val .} / \\
+      {.val ..}, so it could write outside {.arg outputDir}."
+    } else {
+      "It is {given}, not a single non-empty string."
+    },
     "i" = "Pass a single filename segment, for example {.val Project.json} \\
     (the default) or {.val MyStudy}; a {.field .json} extension is appended \\
     when the name does not already end in one."

@@ -26,8 +26,8 @@ The \code{project} object, invisibly.
 }
 \description{
 Changes one or more fields of the individual identified by
-\code{id} and persists the change immediately to the individual definition
-(write-through). The \code{individuals} definitions accessor is read-only, so this
+\code{id}, in memory; write the change to the individual's definition file with
+\code{\link[=saveProject]{saveProject()}}. The \code{individuals} definitions accessor is read-only, so this
 is the way to revise an existing individual in place.
 
 Only the arguments you pass via \code{...} are changed; every other field
@@ -65,8 +65,9 @@ plot grid (\code{plots}) must still be non-empty: a grid with no plots has nothi
 to render.
 
 The call is all-or-nothing: every definition is validated first, and if any
-fails the whole call aborts and writes nothing. On success all definitions
-are folded into the section and persisted in a single write-through.
+fails the whole call aborts and changes nothing. On success all definitions
+are folded into the section in one in-memory edit. Like every other edit, it
+reaches the project's files only when you call \code{\link[=saveProject]{saveProject()}}.
 
 An authoring function resolves every reference at the call that makes it: an
 \code{individual} or \code{parameterSets} id with no matching definition aborts naming

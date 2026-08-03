@@ -16,7 +16,7 @@ canonicalized the same way \code{\link[=addApplication]{addApplication()}} canon
 The \code{project} object, invisibly.
 }
 \description{
-Drop the protocols with matching ids in one write-through. Warns (and
+Drop the protocols with matching ids in one in-memory edit. Warns (and
 skips) any id not present, and warns when a removed protocol is still
 referenced.
 }

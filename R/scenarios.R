@@ -38,9 +38,9 @@
 #'
 #'   A `Scenario` is a named list with copy semantics: an entry extracted
 #'   from `scenarios` definitions is an independent copy. The section accessor is
-#'   read-only, so to apply a change you pass the record to an authoring
-#'   function (`addScenario()` / `setScenario()`), which validates and writes
-#'   it through to the project.
+#'   read-only, so to apply a change you edit the record and pass it to an
+#'   authoring function (`addScenario()` / `setScenario()`), which validates it
+#'   and puts it back into the project; [saveProject()] then writes it to disk.
 #'
 #' @param scenarioName Character. Name of the scenario.
 #' @param modelFile Character. Name of the `.pkml` model file (relative to
@@ -494,10 +494,10 @@ print.Scenario <- function(x, ...) {
   result
 }
 
-#' Structural fail-fast validation for one scenario, run on write-through
+#' Structural fail-fast validation for one scenario, run on every edit
 #'
 #' Checks a single scenario's own shape (independent of cross-references)
-#' before it is persisted to its definition file: it must be a `Scenario`
+#' before it enters the section: it must be a `Scenario`
 #' record, carry a name that is a safe single path segment and matches the
 #' list key it is stored under, carry a non-empty `modelFile`, and declare
 #' a supported `simulationType`. Referential checks (does `individual` /
@@ -1137,7 +1137,7 @@ addScenario <- function(
 
 #' Remove one or more scenarios from a Project
 #' @param project A `Project` object.
-#' @param id Character vector of scenario ids to remove in one write-through.
+#' @param id Character vector of scenario ids to remove in one in-memory edit.
 #'   Each is canonicalized the same way [addScenario()] canonicalizes it, so
 #'   the same typed id removes what it created. A not-found id warns and is
 #'   skipped.
@@ -1178,8 +1178,8 @@ removeScenario <- function(project, id) {
 #' Modify fields of an existing scenario
 #'
 #' @description Changes one or more fields of the scenario identified by
-#'   `id` and persists the change the same way [addScenario()]
-#'   does (write-through to the scenario definition). The section accessor
+#'   `id`, in memory, the same way [addScenario()] does; write the change to the
+#'   scenario's definition file with [saveProject()]. The section accessor
 #'   `project$definitions$scenarios` is read-only, so this is the way to revise
 #'   an existing scenario: read it if you need the current values
 #'   (`sc <- project$definitions$scenarios[[name]]`), then pass the changes here
@@ -1587,11 +1587,10 @@ setScenario <- function(
 #' Rename an existing scenario
 #'
 #' @description Renames the scenario currently keyed `id` to `newId`,
-#'   preserving its configuration. The change is write-through: the scenario's
-#'   old definition is removed and a new one written under `newId`, the
-#'   in-memory key changes, and the record's stored name is updated to match
-#'   the new key so a reload round-trips (the name-equals-key invariant the
-#'   project relies on).
+#'   preserving its configuration. The in-memory key changes and the record's
+#'   stored name is updated to match it, so a reload round-trips (the
+#'   name-equals-key invariant the project relies on); the next [saveProject()]
+#'   writes the definition under `newId` and removes the old file.
 #'
 #'   Both `id` and `newId` are canonicalized the same way [addScenario()]
 #'   canonicalizes an id (lowercased, made a safe single-path-segment id, with

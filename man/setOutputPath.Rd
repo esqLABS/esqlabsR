@@ -20,8 +20,8 @@ The \code{project} object, invisibly.
 }
 \description{
 Updates the OSPS-notation path string bound to existing
-output-path ids and persists the change immediately to the output-path
-definition (write-through). The ids themselves are not changed (use
+output-path ids, in memory; write the change to the output-path definition
+files with \code{\link[=saveProject]{saveProject()}}. The ids themselves are not changed (use
 \code{\link[=removeOutputPath]{removeOutputPath()}} + \code{\link[=addOutputPath]{addOutputPath()}} to rename), so
 every scenario that records these output paths keeps referencing them.
 The \code{outputPaths} definitions accessor is read-only, so this is the way to
@@ -56,8 +56,9 @@ plot grid (\code{plots}) must still be non-empty: a grid with no plots has nothi
 to render.
 
 The call is all-or-nothing: every definition is validated first, and if any
-fails the whole call aborts and writes nothing. On success all definitions
-are folded into the section and persisted in a single write-through.
+fails the whole call aborts and changes nothing. On success all definitions
+are folded into the section in one in-memory edit. Like every other edit, it
+reaches the project's files only when you call \code{\link[=saveProject]{saveProject()}}.
 
 An authoring function resolves every reference at the call that makes it: an
 \code{individual} or \code{parameterSets} id with no matching definition aborts naming

@@ -16,7 +16,7 @@ removePITask(project, id)
 The \code{project} object, invisibly.
 }
 \description{
-Drop the tasks with matching ids in one write-through. Warns (and skips)
+Drop the tasks with matching ids in one in-memory edit. Warns (and skips)
 any id not present.
 }
 \details{

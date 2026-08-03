@@ -89,7 +89,7 @@ not create or hold ospsuite runtime objects; the runtime is built by
 
 A \code{Scenario} is a named list with copy semantics: an entry extracted
 from \code{scenarios} definitions is an independent copy. The section accessor is
-read-only, so to apply a change you pass the record to an authoring
-function (\code{addScenario()} / \code{setScenario()}), which validates and writes
-it through to the project.
+read-only, so to apply a change you edit the record and pass it to an
+authoring function (\code{addScenario()} / \code{setScenario()}), which validates it
+and puts it back into the project; \code{\link[=saveProject]{saveProject()}} then writes it to disk.
 }
