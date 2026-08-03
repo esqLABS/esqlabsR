@@ -596,6 +596,21 @@ messages$noPopulationsFolderForCSVPopulation <- function(
   ))
 }
 
+messages$populationIdResolvedTwoWays <- function(
+  populationId,
+  scenarioName,
+  effectiveType
+) {
+  cli::format_message(c(
+    "!" = "Population {.val {populationId}} resolves to more than one \\
+    population in this run.",
+    "i" = "Scenario {.val {scenarioName}} resolves it as {.val {effectiveType}}, \\
+    another scenario in the same run resolves it differently.",
+    "i" = "Each scenario gets the population it asks for. Check \\
+    {.field readPopulationFromCSV} on the scenarios sharing this population."
+  ))
+}
+
 
 messages$importedProject <- function(inputFile, outputFile) {
   cliFormat(

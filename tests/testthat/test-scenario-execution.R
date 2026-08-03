@@ -608,7 +608,10 @@ test_that(".runScenariosFromProject errors on unknown scenarioNames", {
 test_that(".buildScenarioSimulations resolves NULL to every scenario and returns the prep shape", {
   withr::local_options(lifecycle_verbosity = "quiet")
   project <- .testProject()
-  built <- .buildScenarioSimulations(project)
+  # Building every scenario includes the fixture's two population scenarios,
+  # which share one population id and resolve it two ways; that warning is
+  # asserted on its own below.
+  built <- suppressWarnings(.buildScenarioSimulations(project))
   expect_setequal(built$scenarioNames, names(project$definitions$scenarios))
   expect_named(built$prepared, built$scenarioNames)
   first <- built$prepared[[1]]
@@ -706,6 +709,74 @@ test_that(".resolveScenarioPopulation aborts on an unresolved programmatic entry
     .resolveScenarioPopulation(scenario, project, cache),
     regexp = "injected in a previous session"
   )
+})
+
+test_that(".resolveScenarioPopulation keeps a spec and a csv population apart under one id, in either order", {
+  # `populationscenario` and `populationscenariofromcsv` share the population id
+  # `testpopulation`, and only the second sets `readPopulationFromCSV`, so one id
+  # resolves two ways in one batch. Cached on the id alone, whichever scenario
+  # ran first won and both got its population. The spec is set to 7 individuals
+  # against the fixture csv's 2 so a crossover is visible in the counts.
+  withr::local_options(lifecycle_verbosity = "quiet")
+  counts <- function(scenarioNames) {
+    project <- .testProject()
+    setPopulation(project, "testpopulation", numberOfIndividuals = 7)
+    built <- suppressWarnings(
+      .buildScenarioSimulations(project, scenarioNames = scenarioNames)
+    )
+    vapply(built$prepared, function(p) p$population$count, integer(1))
+  }
+
+  specFirst <- counts(c("populationscenario", "populationscenariofromcsv"))
+  csvFirst <- counts(c("populationscenariofromcsv", "populationscenario"))
+
+  expect_identical(specFirst[["populationscenario"]], 7L)
+  expect_identical(specFirst[["populationscenariofromcsv"]], 2L)
+  expect_identical(csvFirst[["populationscenario"]], 7L)
+  expect_identical(csvFirst[["populationscenariofromcsv"]], 2L)
+})
+
+test_that(".resolveScenarioPopulation warns when one id resolves two ways in a run", {
+  withr::local_options(lifecycle_verbosity = "quiet")
+  project <- .testProject()
+  cache <- new.env(parent = emptyenv())
+  cache$populations <- list()
+
+  .resolveScenarioPopulation(
+    project$definitions$scenarios[["populationscenario"]],
+    project,
+    cache
+  )
+  expect_snapshot(
+    invisible(.resolveScenarioPopulation(
+      project$definitions$scenarios[["populationscenariofromcsv"]],
+      project,
+      cache
+    ))
+  )
+})
+
+test_that(".resolveScenarioPopulation gives an injected population to a readPopulationFromCSV scenario", {
+  # A `programmatic` entry carries an explicit `type`, so the scenario flag
+  # cannot turn it into a csv read, and its cache key cannot collide with a spec
+  # or csv population of the same id.
+  withr::local_options(lifecycle_verbosity = "quiet")
+  project <- .testProject()
+  pop <- ospsuite::createPopulation(ospsuite::createPopulationCharacteristics(
+    species = ospsuite::Species$Human,
+    population = ospsuite::HumanPopulation$European_ICRP_2002,
+    numberOfIndividuals = 3L,
+    proportionOfFemales = 50
+  ))$population
+  suppressWarnings(removePopulation(project, "testpopulation"))
+  suppressMessages(addPopulation(project, "testpopulation", pop))
+
+  built <- .buildScenarioSimulations(
+    project,
+    scenarioNames = c("populationscenario", "populationscenariofromcsv")
+  )
+  expect_identical(built$prepared$populationscenario$population, pop)
+  expect_identical(built$prepared$populationscenariofromcsv$population, pop)
 })
 
 test_that(".resolveScenarioPopulation loads a csv entry from its own file", {

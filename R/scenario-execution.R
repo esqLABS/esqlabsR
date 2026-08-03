@@ -215,8 +215,9 @@
 # comes from the runtime store; a `csv` entry loads its `file`; an entry with no
 # `type` is a demographics spec built via `createPopulationCharacteristics`,
 # unless the scenario's `readPopulationFromCSV` flag is set (back-compat: that
-# still loads `<populationId>.csv`). Resolved objects are cached per run so a
-# population shared by two scenarios is built or loaded once.
+# still loads `<populationId>.csv`). Resolved objects are cached per run, keyed
+# on the source they were resolved from, so a population two scenarios resolve
+# the same way is built or loaded once.
 # @keywords internal
 # @noRd
 .resolveScenarioPopulation <- function(scenario, project, cache) {
@@ -225,16 +226,41 @@
       scenario$scenarioName
     ))
   }
-  cached <- cache$populations[[scenario$populationId]]
-  if (!is.null(cached)) {
-    return(cached)
-  }
 
   popData <- project$definitions$populations[[scenario$populationId]]
   # The entry type wins over the scenario flag; a spec entry falls back to the
   # scenario's `readPopulationFromCSV` for the legacy CSV path.
   effectiveType <- popData$type %||%
     (if (isTRUE(scenario$readPopulationFromCSV)) "csv" else "spec")
+
+  # The key holds everything that decides which population an id resolves to,
+  # not the id alone: the effective type can come from the *scenario*, so one id
+  # resolves to a spec-built population for a scenario without
+  # `readPopulationFromCSV` and to the csv table for a scenario with it, and both
+  # have to coexist in one batch. `\r` cannot occur in a canonicalized id, which
+  # substitutes every control and space character.
+  key <- paste(
+    scenario$populationId,
+    effectiveType,
+    popData$file %||% "",
+    sep = "\r"
+  )
+  cached <- cache$populations[[key]]
+  if (!is.null(cached)) {
+    return(cached)
+  }
+  # This id already stands for another population in this batch. Each scenario
+  # still gets the source it names, but one id meaning two populations is almost
+  # always a project mistake (typically `readPopulationFromCSV` set on one
+  # scenario and not on another that shares the population), so say so.
+  seenKeys <- names(cache$populations) %||% character()
+  if (any(startsWith(seenKeys, paste0(scenario$populationId, "\r")))) {
+    cli::cli_warn(messages$populationIdResolvedTwoWays(
+      populationId = scenario$populationId,
+      scenarioName = scenario$scenarioName,
+      effectiveType = effectiveType
+    ))
+  }
 
   population <- switch(
     effectiveType,
@@ -251,7 +277,7 @@
     "csv" = .resolveCsvPopulation(scenario, project, popData),
     "spec" = .resolveSpecPopulation(scenario, popData)
   )
-  cache$populations[[scenario$populationId]] <- population
+  cache$populations[[key]] <- population
   population
 }
 
