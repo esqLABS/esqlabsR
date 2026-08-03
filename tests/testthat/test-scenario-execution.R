@@ -5,6 +5,26 @@
   testProject(envir = envir)
 }
 
+# Repoint the fixture's individual at a non-human species, so the bundled
+# `SpeciesParameters.xlsx` actually contributes: it ships a sheet per animal
+# species and none for `Human`. `Rat` carries ~245 paths, of which the human
+# Aciclovir fixture model has no `Organism|EndogenousIgG|...` container, which
+# is what makes it the species-defaults regression case. Biometrics are cleared
+# down to a weight, all an animal individual needs.
+.useRatIndividual <- function(project) {
+  setIndividual(
+    project,
+    "indiv1",
+    species = "Rat",
+    population = NULL,
+    gender = "UNKNOWN",
+    weight = 0.25,
+    height = NULL,
+    age = NULL
+  )
+  project
+}
+
 # A `runSimulations` stand-in that returns a NULL result for every simulation
 # id it is handed, forcing the "no results" collection path without native
 # infra. Passed to `local_mocked_bindings(runSimulations = ...)`.
@@ -361,7 +381,7 @@ test_that(".mergeScenarioParameters layer 1 (modelParameterSets) iterates listed
   expect_true("Aciclovir|Lipophilicity" %in% merged$paths)
 })
 
-test_that(".mergeScenarioParameters layer 4 (application) overrides layer 1 on overlapping path", {
+test_that(".mergeScenarioParameters layer 3 (application) overrides layer 1 on overlapping path", {
   project <- .testProject()
   scenario <- project$definitions$scenarios[["testscenario"]]
   parameterSets <- .getSection(project, "parameterSets")
@@ -391,7 +411,7 @@ test_that(".mergeScenarioParameters layer 4 (application) overrides layer 1 on o
   expect_equal(merged$values[idx], 99)
 })
 
-test_that(".mergeScenarioParameters layer 5 (customParams) wins over all earlier layers", {
+test_that(".mergeScenarioParameters layer 4 (customParams) wins over all earlier layers", {
   project <- .testProject()
   scenario <- project$definitions$scenarios[["testscenario"]]
   customParams <- list(
@@ -465,6 +485,70 @@ test_that(".mergeScenarioParameters silently skips an unknown application parame
   expect_true(
     "Events|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose" %in%
       merged$paths
+  )
+})
+
+# Species defaults vs. user parameters ----
+#
+# The bundled species sheet and the user's own parameters are applied
+# separately, with opposite strictness. Both halves are asserted on the same
+# Rat scenario, since the point is that one run treats the two differently.
+
+test_that("a bundled species path the model lacks does not stop the build", {
+  # The Rat sheet carries `Organism|EndogenousIgG|...`, which the human
+  # Aciclovir fixture has no container for. Building under the default
+  # `stopIfParameterNotFound = TRUE` must still succeed: the sheet is
+  # package-shipped and covers every model of the species, so a path this model
+  # lacks is normal. Needing `stopIfParameterNotFound = FALSE` here would be
+  # the regression.
+  withr::local_options(lifecycle_verbosity = "quiet")
+  project <- .useRatIndividual(.testProject())
+  built <- buildSimulations(project, scenarios = "testscenario")
+  expect_s3_class(built$testscenario$simulation, "Simulation")
+})
+
+test_that("the species sheet is applied once, not once per layer", {
+  # Each application of a sheet path the model lacks emits one native
+  # "Could not find quantity" warning, so a duplicated application shows up as
+  # a doubled count for the single missing Rat path.
+  withr::local_options(lifecycle_verbosity = "quiet")
+  project <- .useRatIndividual(.testProject())
+  applied <- 0L
+  local_mocked_bindings(
+    .getSpeciesParameters = function(species) {
+      applied <<- applied + 1L
+      NULL
+    }
+  )
+  buildSimulations(project, scenarios = "testscenario")
+  expect_identical(applied, 1L)
+})
+
+test_that("a user parameter path the model lacks still stops the build", {
+  # The other half: silently ignoring a path the user wrote themselves would
+  # hide a real mistake in their project, so the merged user layers stay strict
+  # even though the species sheet above does not.
+  withr::local_options(lifecycle_verbosity = "quiet")
+  project <- .useRatIndividual(.testProject())
+  # ospsuite's message carries the name of the outermost calling function, which
+  # is the test runner and so differs between `testthat::test_file()`,
+  # `devtools::test()` and `R CMD check`. Scrub only that bullet's call name,
+  # leaving the `.validateEntitiesExist()` attribution and the offending path
+  # asserted.
+  expect_snapshot(
+    buildSimulations(
+      project,
+      scenarios = "testscenario",
+      customParams = list(
+        paths = "Organism|NoSuchContainer|NoSuchParameter",
+        values = 1,
+        units = ""
+      )
+    ),
+    error = TRUE,
+    transform = \(lines) {
+      gsub("^(\\s*! )`[^`]+\\(\\)`:", "\\1`<caller>`:", lines)
+    }
   )
 })
 
