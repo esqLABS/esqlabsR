@@ -110,6 +110,24 @@
       ! scenario "populationscenario" already exists.
       i Pass `overwrite = TRUE` to replace it.
 
+# setScenario rejects `overwrite` instead of quietly setting a different field
+
+    Code
+      setScenario(project, "testscenario", overwrite = TRUE)
+    Condition
+      Error in `setScenario()`:
+      ! `setScenario()` has no `overwrite` argument.
+      i It always updates the scenario named by `id`; `addScenario()` is the one with `overwrite`.
+      i For the steady-state model option, pass `overwriteFormulasInSS` in full.
+
+# setScenario names a field it cannot set rather than dropping it
+
+    Code
+      project$setScenario("testscenario", simulationType = "Population")
+    Condition
+      Error:
+      ! `setScenario()` cannot set simulationType. i The settable fields are modelFile, individual, population, application, parameterSets, initialConditions, outputPaths, simulationTime, simulationTimeUnit, steadyState, steadyStateTime, steadyStateTimeUnit, overwriteFormulasInSS, and readPopulationFromCSV.
+
 # a scenario record passed with field arguments alongside it aborts
 
     Code

@@ -20,7 +20,8 @@ setScenario(
   steadyStateTime,
   steadyStateTimeUnit,
   overwriteFormulasInSS,
-  readPopulationFromCSV
+  readPopulationFromCSV,
+  overwrite
 )
 }
 \arguments{
@@ -85,6 +86,12 @@ steady state. Omitting the argument leaves the current value untouched
 \item{readPopulationFromCSV}{Logical, whether to load the population from
 CSV. Omitting the argument leaves the current value untouched (there is no
 default; this is a partial update).}
+
+\item{overwrite}{Not an argument of \code{setScenario()}, which always updates the
+scenario named by \code{id}. It is declared only to reject the name, which R's
+partial matching would otherwise resolve to \code{overwriteFormulasInSS}. Pass
+that name in full for the steady-state model option, or use \code{\link[=addScenario]{addScenario()}}
+for the \code{overwrite} that replaces a definition.}
 }
 \value{
 The \code{project} object, invisibly.

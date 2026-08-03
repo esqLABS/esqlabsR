@@ -899,6 +899,30 @@ messages$scenarioRecordWithFields <- function(fields) {
   ))
 }
 
+# `setScenario()` declares `overwrite` only to intercept it: without the formal,
+# R's partial matching would resolve the name to `overwriteFormulasInSS` and
+# quietly set a steady-state model option instead.
+messages$setScenarioNoOverwrite <- function() {
+  c(
+    "{.fn setScenario} has no {.arg overwrite} argument.",
+    "i" = "It always updates the scenario named by {.arg id}; \\
+    {.fn addScenario} is the one with {.arg overwrite}.",
+    "i" = "For the steady-state model option, pass \\
+    {.arg overwriteFormulasInSS} in full."
+  )
+}
+
+# Raised when a name reaching `setScenario()`'s field set is not a scenario
+# field. Only the R6 method can be called with one (the exported function's
+# formals reject it), and without the guard the value would be aligned as a
+# per-definition field and then dropped in silence.
+messages$setScenarioUnknownFields <- function(fields, settable) {
+  cli::format_message(c(
+    "{.fn setScenario} cannot set {.field {fields}}.",
+    "i" = "The settable fields are {.field {settable}}."
+  ))
+}
+
 messages$invalidSimulationTimeArgument <- function() {
   cliFormat(
     "{.arg simulationTime} must be a length-3 numeric vector \\
@@ -1494,9 +1518,13 @@ messages$observedDataInvalidEntryType <- function(badType, validTypes) {
   ))
 }
 
-messages$observedDataMissingField <- function(entryIndex, type, field) {
+# Every missing field at once: the required set for each type is fixed, so
+# reporting one field per call made an under-specified entry take as many calls
+# to fix as it had gaps.
+messages$observedDataMissingFields <- function(entryIndex, type, fields) {
   cliFormat(
-    "{.code observedData} entry {entryIndex} (type {.val {type}}) is missing required field {.field {field}}."
+    "{.code observedData} entry {entryIndex} (type {.val {type}}) is missing \\
+    {cli::qty(length(fields))}required field{?s} {.field {fields}}."
   )
 }
 

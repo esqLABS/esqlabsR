@@ -324,19 +324,31 @@ NULL
   value[[i]]
 }
 
-# Coerce a numeric authoring field for the set path, preserving the NULL-clears
-# contract. A supplied `NULL` returns `NULL` so `entry[[field]] <- NULL` deletes
-# the key (clearing the optional field); any other value coerces with
-# `as.double()`. This mirrors the add-path builders' `if (!is.null(...))` guard
-# so both set-path loops (`.setOneIndividual()`, `.setOnePopulation()`) treat a
-# `NULL` numeric field as "clear it", not "store numeric(0)". Purely a coercion:
+# Does a numeric authoring field mean "not set"? A length-1 `NA` of any type
+# does: an empty cell read from a workbook arrives as `NA`, and the Excel import
+# already reads such a cell as an absent field, so hand-authoring the same value
+# has to agree with it. A value that is not `NA` but merely coerces to one
+# (`"heavy"`) is a mistake, and the callers still abort on it.
+#
+# @keywords internal
+# @noRd
+.isUnsetNumericField <- function(value) {
+  length(value) == 1L && is.na(value)
+}
+
+# Coerce a numeric authoring field for the set path, preserving the clears
+# contract. A supplied `NULL`, and a supplied `NA` (see `.isUnsetNumericField()`),
+# return `NULL` so `entry[[field]] <- NULL` deletes the key, clearing the optional
+# field; any other value coerces with `as.double()`. This mirrors the add-path
+# builders so both set-path loops (`.setOneIndividual()`, `.setOnePopulation()`)
+# treat an unset numeric field as "clear it", not "store NA". Purely a coercion:
 # it does not validate; validation happens in the `.setOne*` guards above the
 # assignment loop.
 #
 # @keywords internal
 # @noRd
 .coerceNumericField <- function(value) {
-  if (is.null(value)) {
+  if (is.null(value) || .isUnsetNumericField(value)) {
     return(NULL)
   }
   as.double(value)

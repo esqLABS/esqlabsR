@@ -3,7 +3,7 @@
     Code
       loadObservedData(project)
     Condition
-      Error in `.validateObservedDataEntry()`:
+      Error in `loadObservedData()`:
       ! x Invalid type "invalid_type" in `observedData` entry. i Must be one of: "excel", "pkml", "script", and "programmatic".
 
 # loadObservedData errors when excel entry is missing required fields
@@ -11,8 +11,8 @@
     Code
       loadObservedData(project)
     Condition
-      Error in `.validateObservedDataEntry()`:
-      ! `observedData` entry 1 (type "excel") is missing required field importerConfiguration.
+      Error in `loadObservedData()`:
+      ! `observedData` entry 1 (type "excel") is missing required fields importerConfiguration and sheets.
 
 # loadObservedData errors when dataFolder is not declared
 
@@ -22,13 +22,21 @@
       Error in `.resolveDataPath()`:
       ! dataFolder is not declared in `filePaths`; cannot resolve 'x.pkml'.
 
-# addObservedData rejects an under-specified config entry
+# addObservedData rejects an under-specified config entry, naming every gap at once
 
     Code
       addObservedData(project, list(type = "excel", file = "x.xlsx"))
     Condition
-      Error in `.validateObservedDataEntry()`:
-      ! `observedData` entry 2 (type "excel") is missing required field importerConfiguration.
+      Error in `addObservedData()`:
+      ! `observedData` entry 2 (type "excel") is missing required fields importerConfiguration and sheets.
+
+---
+
+    Code
+      addObservedData(project, list(type = "excel"))
+    Condition
+      Error in `addObservedData()`:
+      ! `observedData` entry 2 (type "excel") is missing required fields file, importerConfiguration, and sheets.
 
 # addObservedData rejects a duplicate config entry file
 

@@ -716,6 +716,34 @@ test_that("addScenario stores steadyStateTime in base units and round-trips the 
   expect_equal(reloaded$definitions$scenarios[["ss"]]$steadyStateTimeUnit, "h")
 })
 
+test_that("setScenario rejects `overwrite` instead of quietly setting a different field", {
+  # `overwrite` is a unique prefix of `overwriteFormulasInSS`, so R's partial
+  # matching turned the habit picked up from `addScenario()` into a silent change
+  # to a steady-state model option (#1213).
+  project <- testProject()
+  before <- project$definitions$scenarios[["testscenario"]]$overwriteFormulasInSS
+
+  expect_snapshot(error = TRUE, setScenario(project, "testscenario", overwrite = TRUE))
+  expect_equal(
+    project$definitions$scenarios[["testscenario"]]$overwriteFormulasInSS,
+    before
+  )
+
+  # And the field itself still sets, under its full name.
+  setScenario(project, "testscenario", overwriteFormulasInSS = TRUE)
+  expect_true(
+    project$definitions$scenarios[["testscenario"]]$overwriteFormulasInSS
+  )
+})
+
+test_that("setScenario names a field it cannot set rather than dropping it", {
+  project <- testProject()
+  expect_snapshot(
+    error = TRUE,
+    project$setScenario("testscenario", simulationType = "Population")
+  )
+})
+
 # Passing a parsed Scenario record back ----
 
 test_that("a parsed scenario is accepted back by addScenario() unchanged", {

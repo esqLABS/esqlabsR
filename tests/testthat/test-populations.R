@@ -1,3 +1,41 @@
+test_that("addPopulation and setPopulation read NA as an unset numeric field", {
+  # An empty workbook cell arrives as `NA`, and the Excel import already reads it
+  # as an absent field, so hand-authoring the same value has to agree (#1213).
+  project <- testProject()
+  addPopulation(
+    project,
+    "nafields",
+    species = "Human",
+    numberOfIndividuals = 3,
+    proportionOfFemales = NA,
+    weightMin = NA_real_
+  )
+  entry <- project$definitions$populations[["nafields"]]
+  expect_null(entry$proportionOfFemales)
+  expect_null(entry$weightMin)
+
+  # On the set path an `NA` clears a field that is set, as `NULL` does.
+  setPopulation(project, "nafields", proportionOfFemales = 0.5)
+  expect_equal(
+    project$definitions$populations[["nafields"]]$proportionOfFemales,
+    0.5
+  )
+  setPopulation(project, "nafields", proportionOfFemales = NA)
+  expect_null(project$definitions$populations[["nafields"]]$proportionOfFemales)
+
+  # A value that is not NA but does not coerce to a number is still a mistake.
+  expect_error(
+    addPopulation(
+      project,
+      "bad",
+      species = "Human",
+      numberOfIndividuals = 3,
+      proportionOfFemales = "many"
+    ),
+    "single finite number"
+  )
+})
+
 test_that("`sampleRandomValue()` rejects an unsupported distribution", {
   expect_error(
     sampleRandomValue("xyz", 5, 2, 10),

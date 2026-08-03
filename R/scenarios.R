@@ -1230,6 +1230,11 @@ removeScenario <- function(project, id) {
 #' @param readPopulationFromCSV Logical, whether to load the population from
 #'   CSV. Omitting the argument leaves the current value untouched (there is no
 #'   default; this is a partial update).
+#' @param overwrite Not an argument of `setScenario()`, which always updates the
+#'   scenario named by `id`. It is declared only to reject the name, which R's
+#'   partial matching would otherwise resolve to `overwriteFormulasInSS`. Pass
+#'   that name in full for the steady-state model option, or use [addScenario()]
+#'   for the `overwrite` that replaces a definition.
 #'
 #' @returns The `project` object, invisibly.
 #' @export
@@ -1250,9 +1255,17 @@ setScenario <- function(
   steadyStateTime,
   steadyStateTimeUnit,
   overwriteFormulasInSS,
-  readPopulationFromCSV
+  readPopulationFromCSV,
+  overwrite
 ) {
   validateIsOfType(project, "Project")
+  # `overwrite` is a formal only so it cannot be partial-matched:
+  # `setScenario(project, id, overwrite = TRUE)`, written out of habit from
+  # `addScenario()`, would otherwise match `overwriteFormulasInSS` and silently
+  # turn on a steady-state model option.
+  if (!missing(overwrite)) {
+    cli::cli_abort(messages$setScenarioNoOverwrite())
+  }
   if (inherits(id, "Scenario")) {
     .assertScenarioRecordAlone(match.call(), missing(modelFile))
     return(do.call(project$setScenario, .scenarioRecordArgs(id)))
@@ -1312,6 +1325,28 @@ setScenario <- function(
   do.call(project$setScenario, c(list(id), supplied))
 }
 
+# The scenario fields `setScenario()` can change, in the spelling its arguments
+# use (`id` names the scenario and is not one of them).
+#
+# @keywords internal
+# @noRd
+.settableScenarioFields <- c(
+  "modelFile",
+  "individual",
+  "population",
+  "application",
+  "parameterSets",
+  "initialConditions",
+  "outputPaths",
+  "simulationTime",
+  "simulationTimeUnit",
+  "steadyState",
+  "steadyStateTime",
+  "steadyStateTimeUnit",
+  "overwriteFormulasInSS",
+  "readPopulationFromCSV"
+)
+
 # Implementation behind `project$setScenario()` / `setScenario()`. The `...`
 # carries only the fields the caller supplied (partial update); a present but
 # NULL field clears it, an absent field is left untouched.
@@ -1332,6 +1367,15 @@ setScenario <- function(
   }
 
   dots <- list(...)
+  # A name that is not a scenario field would otherwise be aligned as a
+  # per-definition field and then quietly dropped when nothing applies it.
+  unknownFields <- setdiff(names(dots), .settableScenarioFields)
+  if (length(unknownFields) > 0L) {
+    cli::cli_abort(messages$setScenarioUnknownFields(
+      unknownFields,
+      .settableScenarioFields
+    ))
+  }
   if ("simulationTime" %in% names(dots)) {
     # `x[name] <- list(value)` keeps a supplied NULL (which clears the field) as
     # a present-but-NULL element, where `x$name <- NULL` would drop the name and
