@@ -3491,12 +3491,13 @@ test_that("the populations CSV folder travels with an imported project", {
 # one workbook of a throwaway copy, so a variant differs from the base in one
 # dimension and cannot interfere with another test's subject.
 
-# #1213 item 8: workbook resolution is purely property-driven. The section loop
-# has no `else` branch for a workbook the property sheet names but that is not on
-# disk, so the section imports as zero in complete silence. The one cue that could
-# have caught it is suppressed too, because a zero-count section is left out of
-# the import summary altogether.
-test_that("a named but absent workbook imports as an empty section, unreported", {
+# #1213 item 8: workbook resolution is property-driven, so a workbook the property
+# sheet names but that is not on disk leaves its section empty. That used to happen
+# in complete silence, with the one cue suppressed as well, because the summary's
+# count block lists only the sections that hold something. The import now names the
+# workbook that is not there, and the summary names the sections that came out
+# empty.
+test_that("a named but absent workbook is reported, and its empty section named", {
   projectDir <- localLegacyExcelProject()
   file.remove(file.path(projectDir, "Configurations", "Populations.xlsx"))
 
@@ -3509,21 +3510,74 @@ test_that("a named but absent workbook imports as an empty section, unreported",
     }
   )
 
-  # Both populations are gone, and nothing names the workbook that is missing.
+  # Both populations are gone, and the workbook that is missing is named.
   expect_length(imported$project$definitions$populations, 0L)
-  expect_false(any(grepl("Populations.xlsx", imported$warnings, fixed = TRUE)))
+  expect_true(any(grepl("Populations.xlsx", imported$warnings, fixed = TRUE)))
 
-  # The summary lists the sections that imported something and omits the one that
-  # imported nothing, so the zero is not visible there either. Matched on the
-  # section line, since the folder the import copies is named after the section
-  # too.
+  # The count block still lists only what imported something, so the summary names
+  # the empty sections separately. Matched on the section line, since the folder
+  # the import copies is named after the section too.
   summary <- paste(messages, collapse = "")
   expect_match(summary, "* Individuals:", fixed = TRUE)
   expect_no_match(summary, "* Populations:", fixed = TRUE)
+  expect_match(summary, "imported no definitions", fixed = TRUE)
+  expect_match(summary, "populations", fixed = TRUE)
 
-  # The only trace is downstream, at load: the two scenarios that name a
-  # population now dangle, which describes the symptom rather than the cause.
+  # And the downstream trace is unchanged: the two scenarios that name a
+  # population dangle at load.
   expect_true(any(grepl("undefined population", imported$warnings)))
+})
+
+# #1213 item 8, the mirror failures of the same property-driven resolution: a
+# workbook nothing names is never opened however much it holds, and one read under
+# its conventional name is content the project does not declare. Both are now
+# reported.
+test_that("an unread workbook is reported, and one read by convention is named", {
+  projectDir <- localLegacyExcelProject()
+  configDir <- file.path(projectDir, "Configurations")
+  # A second, nested set of workbooks the property sheet does not mention, the
+  # shape three of the tested projects had.
+  dir.create(file.path(configDir, "v2"))
+  file.copy(
+    file.path(configDir, "Scenarios.xlsx"),
+    file.path(configDir, "v2", "Scenarios.xlsx")
+  )
+  # And an initial-conditions workbook, whose property row the sheet never
+  # carried, sitting under the conventional filename.
+  writexl::write_xlsx(
+    list(Global = data.frame(
+      `Container Path` = "Organism|Liver",
+      `Molecule Name` = "Aciclovir",
+      `Is Present` = TRUE,
+      Value = 1,
+      Units = "\u00b5mol/l",
+      `Scale Divisor` = 1,
+      `Neg. Values Allowed` = FALSE,
+      check.names = FALSE
+    )),
+    file.path(configDir, "InitialConditions.xlsx")
+  )
+
+  messages <- character()
+  imported <- withCallingHandlers(
+    importLegacyExcelProject(projectDir, silent = FALSE),
+    message = function(m) {
+      messages <<- c(messages, conditionMessage(m))
+      invokeRestart("muffleMessage")
+    }
+  )
+
+  # The nested copy contributed nothing and is named.
+  expect_length(imported$project$definitions$scenarios, 6L)
+  expect_true(any(grepl("not read", imported$warnings, fixed = TRUE)))
+  expect_true(any(grepl("Scenarios.xlsx", imported$warnings, fixed = TRUE)))
+
+  # The conventional workbook was imported, and the summary says the project does
+  # not name it.
+  expect_length(imported$project$definitions$initialConditions, 1L)
+  summary <- paste(messages, collapse = "")
+  expect_match(summary, "InitialConditions.xlsx", fixed = TRUE)
+  expect_match(summary, "conventional name", fixed = TRUE)
 })
 
 # #1213 item 9, first route: a parameter sheet whose column headers are duplicated

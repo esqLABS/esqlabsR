@@ -425,6 +425,65 @@ messages$importUnmergedPIParameterGroups <- function(taskId, paths) {
   )
 }
 
+messages$importMissingWorkbooks <- function(files) {
+  # Unglued: a workbook filename comes from the property sheet, so it is free text.
+  envir <- new.env(parent = parent.frame())
+  assign("files", files, envir = envir)
+  assign("n", length(files), envir = envir)
+  list(
+    bullets = c(
+      "!" = "{cli::qty(n)}{n} workbook{?s} named by the project configuration \\
+      {?is/are} not in the configurations folder, so {?its/their} section{?s} \\
+      {?was/were} imported as empty: {.file {files}}.",
+      "i" = "{cli::qty(n)}Place the workbook{?s} beside the others and import \\
+      again, or clear the property row{?s} if the section is deliberately empty."
+    ),
+    envir = envir
+  )
+}
+
+messages$importUnconsumedWorkbooks <- function(files) {
+  # Unglued: a workbook filename found on disk is free text.
+  envir <- new.env(parent = parent.frame())
+  assign("files", files, envir = envir)
+  assign("n", length(files), envir = envir)
+  list(
+    bullets = c(
+      "!" = "{cli::qty(n)}{n} workbook{?s} in the configurations folder \\
+      {?was/were} not read: {.file {files}}.",
+      "i" = "Only the workbooks the project configuration names are imported, \\
+      whatever else the folder holds, so nothing in {cli::qty(n)}{?it/them} is \\
+      in the project.",
+      "i" = "Point the matching property row at one to import it, or leave it \\
+      where it is if it is a spare copy."
+    ),
+    envir = envir
+  )
+}
+
+messages$importEmptySections <- function(sections) {
+  cliFormat(
+    "{length(sections)} section{?s} imported no definitions: {.field {sections}}."
+  )
+}
+
+messages$importUndeclaredWorkbooks <- function(files) {
+  # Unglued: a workbook filename is free text.
+  envir <- new.env(parent = parent.frame())
+  assign("files", files, envir = envir)
+  assign("n", length(files), envir = envir)
+  list(
+    bullets = c(
+      "i" = "{cli::qty(n)}{n} workbook{?s} {?was/were} read under {?its/their} \\
+      conventional name, which the project configuration does not name: \\
+      {.file {files}}.",
+      "i" = "Rename or remove {cli::qty(n)}{?it/them} to keep \\
+      {cli::qty(n)}{?it/them} out of the project."
+    ),
+    envir = envir
+  )
+}
+
 messages$importUnparametrizedIndividuals <- function(filePath, ids, sheets) {
   # Unglued, like its neighbours: an individual id and a sheet name are free text.
   envir <- new.env(parent = parent.frame())

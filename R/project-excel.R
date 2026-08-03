@@ -168,7 +168,9 @@ importProjectFromExcel <- function(
 
   # Default config filenames for sections whose path property is omitted
   # from Project.xlsx (e.g. exports of programmatic projects that never
-  # set a custom path).
+  # set a custom path). A workbook read under one of these rather than under a
+  # name the property sheet gives is reported in the import summary, since the
+  # project itself does not declare it.
   defaultConfigFile <- list(
     modelParamsFile = "ModelParameters.xlsx",
     individualsFile = "Individuals.xlsx",
@@ -179,11 +181,6 @@ importProjectFromExcel <- function(
     parameterIdentificationFile = "ParameterIdentification.xlsx",
     initialConditionsFile = "InitialConditions.xlsx"
   )
-  # Property lookup with default-filename fallback.
-  propOrDefault <- function(name) {
-    prop(name) %||% defaultConfigFile[[name]]
-  }
-
   # Build the JSON structure -- schemaVersion comes from the Excel source;
   # if the Excel predates versioning, default to "2.0".
   jsonData <- list(
@@ -488,14 +485,50 @@ importProjectFromExcel <- function(
     )
   )
 
+  # What the loop below read, and what it could not: a workbook the property sheet
+  # names but that is not on disk is a section silently imported as empty, and a
+  # workbook read under its conventional name that the property sheet never
+  # mentions is content the project does not declare. Both are reported after the
+  # loop, together with any workbook in the configurations folder nothing read.
+  missingWorkbooks <- character()
+  conventionWorkbooks <- character()
+  readWorkbooks <- character()
   for (section in sections) {
+    named <- prop(section$property)
     file <- resolveConfigFile(
-      propOrDefault(section$property),
+      named %||% defaultConfigFile[[section$property]],
       fieldName = section$property
     )
-    if (!is.null(file) && file.exists(file)) {
-      jsonData <- section$parse(file, jsonData)
+    if (is.null(file)) {
+      next
     }
+    if (!file.exists(file)) {
+      # Only a workbook the property sheet actually names: the conventional
+      # filename is a fallback tried for every section, so most projects are
+      # missing several of those by design.
+      if (!is.null(named)) {
+        missingWorkbooks <- c(missingWorkbooks, named)
+      }
+      next
+    }
+    readWorkbooks <- c(readWorkbooks, file)
+    if (is.null(named)) {
+      conventionWorkbooks <- c(conventionWorkbooks, basename(file))
+    }
+    jsonData <- section$parse(file, jsonData)
+  }
+  if (length(missingWorkbooks) > 0L) {
+    .warnFormatted(
+      messages$importMissingWorkbooks(missingWorkbooks),
+      "esqlabsR_importMissingWorkbooks"
+    )
+  }
+  unconsumedWorkbooks <- .unconsumedExcelWorkbooks(configsFolder, readWorkbooks)
+  if (length(unconsumedWorkbooks) > 0L) {
+    .warnFormatted(
+      messages$importUnconsumedWorkbooks(unconsumedWorkbooks),
+      "esqlabsR_importUnconsumedWorkbooks"
+    )
   }
 
   # --- Determine output path ---
@@ -605,6 +638,21 @@ importProjectFromExcel <- function(
     cli::cli_verbatim(utils::capture.output(print(
       importedProject$definitions
     )))
+    # The counts block lists only the sections that hold something, so the
+    # sections that imported nothing are named here: a section that came out
+    # empty is exactly what a reader has to see to notice that a workbook did
+    # not arrive.
+    empty <- .emptyProjectSections(importedProject)
+    if (length(empty) > 0L) {
+      msg <- messages$importEmptySections(empty)
+      cli::cli_inform("{msg}")
+    }
+    # A workbook read under its conventional filename is content the project
+    # does not declare, so a reader would otherwise have no way to know it was
+    # imported.
+    if (length(conventionWorkbooks) > 0L) {
+      .informFormatted(messages$importUndeclaredWorkbooks(conventionWorkbooks))
+    }
     if (length(assets$copied) > 0L) {
       msg <- messages$importCopiedAssetFolders(assets$copied)
       cli::cli_inform("{msg}")
@@ -1799,6 +1847,55 @@ projectStatus <- function(project, silent = FALSE) {
     definition$parameterSets <- if (length(kept) > 0L) as.list(kept) else NULL
     definition
   })
+}
+
+#' The `.xlsx` workbooks under the configurations folder that nothing read
+#'
+#' Workbook resolution is driven entirely by the property sheet, so a workbook the
+#' sheet does not name is never opened, however much content it holds: one tested
+#' project kept a complete second, nested set of six workbooks (21 scenarios, 7
+#' plots, 2 populations, ...) that imported as nothing at all, and the summary,
+#' counting only what the root set produced, read as complete.
+#'
+#' @param configsFolder The resolved configurations folder, or NULL.
+#' @param readWorkbooks The absolute paths of the workbooks the import read.
+#' @returns The unread workbooks as paths relative to `configsFolder`.
+#' @keywords internal
+#' @noRd
+.unconsumedExcelWorkbooks <- function(configsFolder, readWorkbooks) {
+  if (is.null(configsFolder) || !dir.exists(configsFolder)) {
+    return(character())
+  }
+  present <- list.files(
+    configsFolder,
+    pattern = "\\.xlsx$",
+    recursive = TRUE,
+    full.names = TRUE
+  )
+  # An Excel lock file (`~$Book.xlsx`) is not a workbook anyone authored.
+  present <- present[!grepl("^~\\$", basename(present))]
+  if (length(present) == 0L) {
+    return(character())
+  }
+  normalize <- function(paths) normalizePath(paths, mustWork = FALSE)
+  unread <- present[!(normalize(present) %in% normalize(readWorkbooks))]
+  as.character(fs::path_rel(unread, configsFolder))
+}
+
+#' The sections of an imported project that hold no definition
+#'
+#' @param project The imported `Project`.
+#' @returns The section names that are empty, in the container's order.
+#' @keywords internal
+#' @noRd
+.emptyProjectSections <- function(project) {
+  sections <- names(project$definitions)
+  empty <- vapply(
+    sections,
+    function(section) length(project$definitions[[section]]) == 0L,
+    logical(1)
+  )
+  sort(sections[empty])
 }
 
 #' Report the individuals a skipped sheet leaves unparametrized
@@ -3895,6 +3992,20 @@ projectStatus <- function(project, silent = FALSE) {
 #' @noRd
 .warnFormatted <- function(warning, class) {
   cli::cli_warn(warning$bullets, class = class, .envir = warning$envir)
+}
+
+#' Emit an unglued catalog message as an informational message
+#'
+#' The `cli_inform()` sibling of [.warnFormatted()], for a catalog entry that
+#' returns its templates unglued for the same reason (a filename it names is free
+#' text that can contain `{`/`}`).
+#'
+#' @param message A `list(bullets =, envir =)` from the `messages` catalog.
+#' @returns Nothing, called for its message.
+#' @keywords internal
+#' @noRd
+.informFormatted <- function(message) {
+  cli::cli_inform(message$bullets, .envir = message$envir)
 }
 
 #' One cell of a parsed sheet, `NA` where the sheet has no such column
