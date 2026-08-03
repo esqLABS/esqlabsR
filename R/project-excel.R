@@ -1976,7 +1976,14 @@ projectStatus <- function(project, silent = FALSE) {
       ),
       application = .naToNull(as.character(row[["ApplicationProtocol"]])),
       simulationTime = .naToNull(as.character(row[["SimulationTime"]])),
-      simulationTimeUnit = .naToNull(as.character(row[["SimulationTimeUnit"]])),
+      # A blank unit cell defaults to the hour `addScenario()` also defaults to,
+      # rather than null, so the same blank cell means one unit whichever
+      # entrypoint wrote the project (and an imported scenario is byte-identical
+      # to the same scenario authored through the API).
+      simulationTimeUnit = .naToDefault(
+        as.character(row[["SimulationTimeUnit"]]),
+        "h"
+      ),
       steadyState = .naToNull(.toLogical(row[["SteadyState"]], "SteadyState")),
       # A blank steady-state time/unit defaults to the same values the authoring
       # API and the legacy 5.x reader use (`1000` / `"min"`), rather than null, so

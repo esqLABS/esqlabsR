@@ -3314,20 +3314,19 @@ test_that("a dangling parameter-identification observedData reference is not rep
   expect_equal(summary$total_critical_errors, 0)
 })
 
-# #1213 item 19: a blank `SimulationTimeUnit` cell imports as `null`, while
-# `addScenario()` defaults the same absent value to `"h"`. So the same blank cell
-# means a different unit depending on which entrypoint wrote the project.
+# #1213 item 19: a blank `SimulationTimeUnit` cell imports as the same `"h"`
+# `addScenario()` defaults the absent value to, so the blank cell means one unit
+# whichever entrypoint wrote the project.
 #
-# #1213 item 9 in the same fixture: the scenarios sheet has no
-# `OverwriteFormulasInSS` column at all, and the absent column imports as `FALSE`
-# rather than as an absent field.
-test_that("a blank simulationTime unit and an absent OverwriteFormulasInSS column import as null and FALSE", {
+# The scenarios sheet also has no `OverwriteFormulasInSS` column at all, and the
+# absent column imports as `FALSE` rather than as an absent field.
+test_that("a blank simulationTime unit imports as the authoring default, and an absent OverwriteFormulasInSS column as FALSE", {
   imported <- importLegacyExcelProject(localLegacyExcelProject())
   scenario <- imported$project$definitions$scenarios[["adultscenario"]]
 
-  # The workbook leaves the cell blank; authoring the same scenario would give it
-  # `"h"`.
-  expect_null(scenario$simulationTimeUnit)
+  # The workbook leaves the cell blank, and authoring the same scenario gives it
+  # the same unit.
+  expect_identical(scenario$simulationTimeUnit, "h")
   expect_identical(formals(addScenario)$simulationTimeUnit, "h")
 
   # A scenario whose cell IS filled keeps its unit, so the above is the blank
