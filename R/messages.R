@@ -1389,6 +1389,18 @@ messages$PIParameterNotFound <- function(path, simulationName) {
   )
 }
 
+# Warned when a PI parameter declares a display unit that belongs to another
+# dimension. Not an abort: a legacy 5.x sheet's `Units` cell was never applied by
+# the version that wrote it, so such a cell is normal in a workbook that ran, and
+# the identification is still well defined without it.
+messages$PIParameterUnitNotApplied <- function(id, unit, dimension) {
+  cli::format_message(c(
+    "!" = "The unit {.val {unit}} of PI parameter {.val {id}} is not applied: it is not a unit of the parameter's dimension {.val {dimension}}.",
+    "i" = "Its {.field minValue}, {.field maxValue} and {.field startValue} are read in the parameter's own unit instead.",
+    "i" = "A legacy 5.x {.field PIParameters} sheet carries a {.field Units} column that esqlabsR 5.x never applied, which is where such a unit usually comes from; set the field with {.fn PIParameter} to fit in a different unit."
+  ))
+}
+
 messages$PIScenarioNotFound <- function(scenarioName, availableScenarios) {
   cli::format_message(c(
     "x" = "Scenario {.val {scenarioName}} referenced in PI task configuration not found",

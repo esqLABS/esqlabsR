@@ -3308,10 +3308,13 @@ test_that("a parameter-identification Group whose bounds disagree is reported an
   expect_true(any(grepl("Group", imported$warnings, fixed = TRUE)))
 })
 
-# #1213 item 14: the legacy `Units` cell was ignored by v5 and is now assigned as
-# the parameter's display unit, so a cell v5 read past can abort `runPI()` (a
-# `mg` unit on a parameter whose dimension is an inversed time). The import side
-# is what carries it through, so that is what is pinned here.
+# #1213 item 14: the legacy `Units` cell is carried through as the parameter's
+# declared display unit, which is lossless. What used to make that a problem was
+# the runtime enforcing it: v5 read past the cell, so a workbook that ran under v5
+# routinely names a unit of another dimension (`mg` against an inversed time), and
+# `runPI()` aborted on it. The runtime now reports such a unit and leaves the
+# bounds in the parameter's own unit (see test-parameter-identification.R), so the
+# cell can be imported as authored.
 test_that("a legacy parameter-identification Units cell is carried through", {
   imported <- importLegacyExcelProject(localLegacyExcelProject())
   task <- imported$project$definitions$parameterIdentification[["aciclovirfit"]]

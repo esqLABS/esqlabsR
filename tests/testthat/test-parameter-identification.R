@@ -721,6 +721,54 @@ test_that(".createSinglePITask builds a ParameterIdentification with the expecte
   expect_length(pi$outputMappings, 1L)
 })
 
+# #1213 item 14: a legacy 5.x `PIParameters` sheet carries a `Units` column that
+# esqlabsR 5.x never applied, so a workbook that ran under 5.x routinely names a
+# unit of another dimension. Enforcing it as the display unit aborted such a task
+# (`Unit "mg" is not supported by dimension Inversed time!`) over a cell that has
+# never had any effect, so it is reported and left unapplied instead, and the
+# bounds stay in the parameter's own unit.
+test_that(".createSinglePITask reports a unit of another dimension instead of aborting", {
+  project <- testProject()
+  task <- PITask(
+    id = "WrongUnit",
+    scenarios = "testscenario",
+    parameters = list(
+      PIParameter(
+        id = "EHC",
+        scenarios = "testscenario",
+        path = "Organism|Liver|EHC continuous fraction",
+        units = "mg",
+        minValue = 0.5,
+        maxValue = 1.0,
+        startValue = 0.8
+      )
+    ),
+    outputMappings = list(
+      PIOutputMapping(
+        id = "PVB",
+        scenarios = "testscenario",
+        outputPath = "aciclovir_pvb",
+        observedData = "Laskin 1982.Group A_Aciclovir_1_Human_MALE_PeripheralVenousBlood_Plasma_2.5 mg/kg_iv_"
+      )
+    ),
+    configuration = list(algorithm = "BOBYQA")
+  )
+
+  expect_warning(
+    pi <- .createSinglePITask(
+      project = project,
+      piTask = task,
+      observedData = loadObservedData(project)
+    ),
+    "is not applied"
+  )
+
+  # The bounds are the ones the record declares, read in the parameter's own unit.
+  expect_equal(pi$parameters[[1]]$minValue, 0.5)
+  expect_equal(pi$parameters[[1]]$maxValue, 1.0)
+  expect_equal(pi$parameters[[1]]$startValue, 0.8)
+})
+
 test_that(".createSinglePITask shares one optimisation variable across scenarios for a multi-scenario PIParameter", {
   # Replaces the Excel "Group" column: a single PIParameter whose `scenarios`
   # lists several scenarios is built into one PIParameters runtime holding one
