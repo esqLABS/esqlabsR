@@ -19,6 +19,21 @@
   "initialConditionsFile"
 )
 
+# The `filePaths` values `.pathsGroup()` reads through `.resolveWorkingFolder()`,
+# which requires each to stay under the project directory unless it opts out with
+# a `${VAR}`. Any other property sits in `filePaths` unread, so it cannot fail a
+# load. Named here so code that writes a project can judge a folder value by the
+# same set the loader will.
+#
+# @keywords internal
+# @noRd
+.containedWorkingFolders <- c(
+  "simulationsFolder",
+  "dataFolder",
+  "outputFolder",
+  "populationsFolder"
+)
+
 #' @title Project
 #' @docType class
 #' @description An R6 class representing an esqlabsR project.

@@ -124,6 +124,104 @@ test_that("upgrading a snapshot with a configured data file emits no warning", {
   )
 })
 
+# A snapshot is a single file: the models, data and population folders its
+# definitions reference live beside it. Nothing travelled at all before, because
+# the upgrade handed the bridge a scratch directory holding only the rebuilt
+# workbooks, so every scenario validated as File Not Found (#1213).
+test_that("restoreProject carries the asset folders beside the snapshot into the project", {
+  dir <- withr::local_tempdir()
+  suppressMessages(restoreProject(.legacySnapshotFixture(), dir))
+
+  expect_true(file.exists(file.path(
+    dir,
+    "Models",
+    "Simulations",
+    "Aciclovir.pkml"
+  )))
+  expect_true(file.exists(file.path(
+    dir,
+    "Data",
+    "TestProject_TimeValuesData.xlsx"
+  )))
+  # The population csv files the snapshot carries itself land where the upgraded
+  # project resolves them.
+  project <- loadProject(file.path(dir, "Project.json"))
+  expect_true(file.exists(file.path(
+    project$paths$populationsFolder,
+    "TestPopulation.csv"
+  )))
+})
+
+test_that("restoreProject names the asset folders a lone snapshot could not bring", {
+  # The one case the report always applies to, and the one where it used to be
+  # suppressed: nothing sits beside the snapshot, so the user has to be told why
+  # the upgraded project cannot run.
+  lone <- withr::local_tempdir()
+  snapshot <- file.path(lone, "shared.json")
+  file.copy(.legacySnapshotFixture(), snapshot)
+
+  dir <- withr::local_tempdir()
+  expect_message(
+    suppressWarnings(restoreProject(snapshot, dir)),
+    "missing from the upgraded project"
+  )
+  expect_false(dir.exists(file.path(dir, "Models", "Simulations")))
+})
+
+test_that("restoreProject refuses an out-of-project folder before writing anything", {
+  # The value makes the finished project unopenable, and the upgrade has to
+  # return a loaded project, so it is refused up front rather than after a
+  # complete definitions tree is on disk (#1213).
+  fixture <- jsonlite::fromJSON(
+    .legacySnapshotFixture(),
+    simplifyVector = FALSE
+  )
+  elsewhere <- withr::local_tempdir()
+  pc <- fixture$projectConfiguration
+  for (i in seq_along(pc$rows)) {
+    if (identical(pc$rows[[i]][["Property"]], "modelFolder")) {
+      pc$rows[[i]][["Value"]] <- elsewhere
+    }
+  }
+  fixture$projectConfiguration <- pc
+
+  snapshot <- file.path(withr::local_tempdir(), "absolute.json")
+  jsonlite::write_json(fixture, snapshot, auto_unbox = TRUE, null = "null")
+
+  dir <- withr::local_tempdir()
+  expect_error(
+    restoreProject(snapshot, dir),
+    "resolves outside the project folder"
+  )
+  expect_length(list.files(dir, all.files = TRUE, no.. = TRUE), 0L)
+})
+
+test_that("materializer writes the population csvs under the recorded folder name", {
+  # Same reason each workbook is written under its recorded filename: the folder
+  # name is user-customizable, and a hardcoded one leaves the csv files where the
+  # bridge does not look.
+  fixture <- jsonlite::fromJSON(
+    .legacySnapshotFixture(),
+    simplifyVector = FALSE
+  )
+  pc <- fixture$projectConfiguration
+  for (i in seq_along(pc$rows)) {
+    if (identical(pc$rows[[i]][["Property"]], "populationsFolder")) {
+      pc$rows[[i]][["Value"]] <- "MyPops"
+    }
+  }
+  fixture$projectConfiguration <- pc
+
+  scratch <- withr::local_tempdir()
+  .materializeLegacySnapshot(fixture, scratch)
+  expect_true(file.exists(file.path(
+    scratch,
+    "Configurations",
+    "MyPops",
+    "TestPopulation.csv"
+  )))
+})
+
 test_that("materializer writes each workbook under its recorded filename", {
   # A snapshot that renamed a workbook (here Scenarios) must have the workbook
   # written under that custom name, since the copied projectConfiguration sheet

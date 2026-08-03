@@ -481,12 +481,26 @@ messages$legacySnapshotMalformedSheet <- function() {
   )
 }
 
-messages$upgradedLegacySnapshot <- function() {
-  c(
+messages$upgradedLegacySnapshot <- function(missingFolders = character()) {
+  notice <- c(
     "i" = "Detected a previous-version project snapshot and upgraded it to the \\
     current project format.",
     "!" = "Observed data does not travel in a snapshot; add it with \\
     {.fn addObservedData} if a plot or parameter identification needs it."
+  )
+  if (length(missingFolders) == 0L) {
+    return(notice)
+  }
+  c(
+    notice,
+    "!" = "{length(missingFolders)} referenced folder{?s} \\
+    {cli::qty(length(missingFolders))}{?is/are} missing from the upgraded \\
+    project: {.file {missingFolders}}.",
+    "i" = "A snapshot carries only the configuration workbooks, so a model, \\
+    data or population folder travels with it only when it sits beside the \\
+    snapshot file at that relative path.",
+    "i" = "Nothing that reads from one of them will resolve until you place the \\
+    folder in the project."
   )
 }
 
