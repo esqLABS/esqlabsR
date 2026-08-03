@@ -5,6 +5,26 @@
   testProject(envir = envir)
 }
 
+# Repoint the fixture's individual at a non-human species, so the bundled
+# `SpeciesParameters.xlsx` actually contributes: it ships a sheet per animal
+# species and none for `Human`. `Rat` carries ~245 paths, of which the human
+# Aciclovir fixture model has no `Organism|EndogenousIgG|...` container, which
+# is what makes it the species-defaults regression case. Biometrics are cleared
+# down to a weight, all an animal individual needs.
+.useRatIndividual <- function(project) {
+  setIndividual(
+    project,
+    "indiv1",
+    species = "Rat",
+    population = NULL,
+    gender = "UNKNOWN",
+    weight = 0.25,
+    height = NULL,
+    age = NULL
+  )
+  project
+}
+
 # A `runSimulations` stand-in that returns a NULL result for every simulation
 # id it is handed, forcing the "no results" collection path without native
 # infra. Passed to `local_mocked_bindings(runSimulations = ...)`.
@@ -302,6 +322,64 @@ test_that("runScenarios builds an individual that carries no age or height", {
   expect_s3_class(out$testscenario$simulation, "Simulation")
 })
 
+test_that(".readOntogeniesFromList reads two ontogenies in every stored shape", {
+  # The field reaches the runner in three shapes: one entry per ontogeny as a
+  # character vector (the authoring shape), a single comma-joined cell (the
+  # Excel spelling), and a list (what a JSON array parses to). All three must
+  # yield the same two `MoleculeOntogeny` objects; testing the vector for
+  # NA-ness first aborted on the vector length before reading any ontogeny.
+  expected <- list(
+    c(molecule = "CYP3A4", ontogeny = "CYP3A4"),
+    c(molecule = "CYP2D6", ontogeny = "CYP2C8")
+  )
+  asPairs <- function(ontogenies) {
+    lapply(ontogenies, function(o) {
+      c(molecule = o$molecule, ontogeny = o$ontogeny)
+    })
+  }
+  for (stored in list(
+    c("CYP3A4:CYP3A4", "CYP2D6:CYP2C8"),
+    "CYP3A4:CYP3A4,CYP2D6:CYP2C8",
+    "CYP3A4:CYP3A4, CYP2D6:CYP2C8",
+    list("CYP3A4:CYP3A4", "CYP2D6:CYP2C8")
+  )) {
+    expect_identical(asPairs(.readOntogeniesFromList(stored)), expected)
+  }
+})
+
+test_that(".readOntogeniesFromList treats an unspecified field as no ontogenies", {
+  expect_null(.readOntogeniesFromList(NULL))
+  expect_null(.readOntogeniesFromList(NA))
+  expect_null(.readOntogeniesFromList(""))
+  expect_null(.readOntogeniesFromList(character(0)))
+  # A trailing separator leaves a blank entry, which is nothing rather than a
+  # malformed pair.
+  expect_length(.readOntogeniesFromList("CYP3A4:CYP3A4,"), 1)
+})
+
+test_that("runScenarios builds an individual carrying two protein ontogenies", {
+  # Two ontogenies on one individual, stored one entry per ontogeny. Reaching
+  # the "no results" path (the run is short-circuited by the mocked runner)
+  # proves both were read and `createIndividualCharacteristics()` accepted them.
+  withr::local_options(lifecycle_verbosity = "quiet")
+  project <- .testProject()
+  setIndividual(
+    project,
+    "indiv1",
+    proteinOntogenies = c("CYP3A4:CYP3A4", "CYP2D6:CYP2C8")
+  )
+  local_mocked_bindings(runSimulations = .mockNoResults)
+  expect_warning(
+    out <- runScenarios(
+      project,
+      scenarios = "testscenario",
+      stopIfFails = FALSE
+    ),
+    regexp = "No simulation results could be computed"
+  )
+  expect_s3_class(out$testscenario$simulation, "Simulation")
+})
+
 test_that("runScenarios with stopIfFails = FALSE warns and returns NULL outputValues", {
   withr::local_options(lifecycle_verbosity = "quiet")
   project <- .testProject()
@@ -361,7 +439,7 @@ test_that(".mergeScenarioParameters layer 1 (modelParameterSets) iterates listed
   expect_true("Aciclovir|Lipophilicity" %in% merged$paths)
 })
 
-test_that(".mergeScenarioParameters layer 4 (application) overrides layer 1 on overlapping path", {
+test_that(".mergeScenarioParameters layer 3 (application) overrides layer 1 on overlapping path", {
   project <- .testProject()
   scenario <- project$definitions$scenarios[["testscenario"]]
   parameterSets <- .getSection(project, "parameterSets")
@@ -391,7 +469,7 @@ test_that(".mergeScenarioParameters layer 4 (application) overrides layer 1 on o
   expect_equal(merged$values[idx], 99)
 })
 
-test_that(".mergeScenarioParameters layer 5 (customParams) wins over all earlier layers", {
+test_that(".mergeScenarioParameters layer 4 (customParams) wins over all earlier layers", {
   project <- .testProject()
   scenario <- project$definitions$scenarios[["testscenario"]]
   customParams <- list(
@@ -465,6 +543,70 @@ test_that(".mergeScenarioParameters silently skips an unknown application parame
   expect_true(
     "Events|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose" %in%
       merged$paths
+  )
+})
+
+# Species defaults vs. user parameters ----
+#
+# The bundled species sheet and the user's own parameters are applied
+# separately, with opposite strictness. Both halves are asserted on the same
+# Rat scenario, since the point is that one run treats the two differently.
+
+test_that("a bundled species path the model lacks does not stop the build", {
+  # The Rat sheet carries `Organism|EndogenousIgG|...`, which the human
+  # Aciclovir fixture has no container for. Building under the default
+  # `stopIfParameterNotFound = TRUE` must still succeed: the sheet is
+  # package-shipped and covers every model of the species, so a path this model
+  # lacks is normal. Needing `stopIfParameterNotFound = FALSE` here would be
+  # the regression.
+  withr::local_options(lifecycle_verbosity = "quiet")
+  project <- .useRatIndividual(.testProject())
+  built <- buildSimulations(project, scenarios = "testscenario")
+  expect_s3_class(built$testscenario$simulation, "Simulation")
+})
+
+test_that("the species sheet is applied once, not once per layer", {
+  # Each application of a sheet path the model lacks emits one native
+  # "Could not find quantity" warning, so a duplicated application shows up as
+  # a doubled count for the single missing Rat path.
+  withr::local_options(lifecycle_verbosity = "quiet")
+  project <- .useRatIndividual(.testProject())
+  applied <- 0L
+  local_mocked_bindings(
+    .getSpeciesParameters = function(species) {
+      applied <<- applied + 1L
+      NULL
+    }
+  )
+  buildSimulations(project, scenarios = "testscenario")
+  expect_identical(applied, 1L)
+})
+
+test_that("a user parameter path the model lacks still stops the build", {
+  # The other half: silently ignoring a path the user wrote themselves would
+  # hide a real mistake in their project, so the merged user layers stay strict
+  # even though the species sheet above does not.
+  withr::local_options(lifecycle_verbosity = "quiet")
+  project <- .useRatIndividual(.testProject())
+  # ospsuite's message carries the name of the outermost calling function, which
+  # is the test runner and so differs between `testthat::test_file()`,
+  # `devtools::test()` and `R CMD check`. Scrub only that bullet's call name,
+  # leaving the `.validateEntitiesExist()` attribution and the offending path
+  # asserted.
+  expect_snapshot(
+    buildSimulations(
+      project,
+      scenarios = "testscenario",
+      customParams = list(
+        paths = "Organism|NoSuchContainer|NoSuchParameter",
+        values = 1,
+        units = ""
+      )
+    ),
+    error = TRUE,
+    transform = \(lines) {
+      gsub("^(\\s*! )`[^`]+\\(\\)`:", "\\1`<caller>`:", lines)
+    }
   )
 })
 
@@ -608,7 +750,10 @@ test_that(".runScenariosFromProject errors on unknown scenarioNames", {
 test_that(".buildScenarioSimulations resolves NULL to every scenario and returns the prep shape", {
   withr::local_options(lifecycle_verbosity = "quiet")
   project <- .testProject()
-  built <- .buildScenarioSimulations(project)
+  # Building every scenario includes the fixture's two population scenarios,
+  # which share one population id and resolve it two ways; that warning is
+  # asserted on its own below.
+  built <- suppressWarnings(.buildScenarioSimulations(project))
   expect_setequal(built$scenarioNames, names(project$definitions$scenarios))
   expect_named(built$prepared, built$scenarioNames)
   first <- built$prepared[[1]]
@@ -708,6 +853,74 @@ test_that(".resolveScenarioPopulation aborts on an unresolved programmatic entry
   )
 })
 
+test_that(".resolveScenarioPopulation keeps a spec and a csv population apart under one id, in either order", {
+  # `populationscenario` and `populationscenariofromcsv` share the population id
+  # `testpopulation`, and only the second sets `readPopulationFromCSV`, so one id
+  # resolves two ways in one batch. Cached on the id alone, whichever scenario
+  # ran first won and both got its population. The spec is set to 7 individuals
+  # against the fixture csv's 2 so a crossover is visible in the counts.
+  withr::local_options(lifecycle_verbosity = "quiet")
+  counts <- function(scenarioNames) {
+    project <- .testProject()
+    setPopulation(project, "testpopulation", numberOfIndividuals = 7)
+    built <- suppressWarnings(
+      .buildScenarioSimulations(project, scenarioNames = scenarioNames)
+    )
+    vapply(built$prepared, function(p) p$population$count, integer(1))
+  }
+
+  specFirst <- counts(c("populationscenario", "populationscenariofromcsv"))
+  csvFirst <- counts(c("populationscenariofromcsv", "populationscenario"))
+
+  expect_identical(specFirst[["populationscenario"]], 7L)
+  expect_identical(specFirst[["populationscenariofromcsv"]], 2L)
+  expect_identical(csvFirst[["populationscenario"]], 7L)
+  expect_identical(csvFirst[["populationscenariofromcsv"]], 2L)
+})
+
+test_that(".resolveScenarioPopulation warns when one id resolves two ways in a run", {
+  withr::local_options(lifecycle_verbosity = "quiet")
+  project <- .testProject()
+  cache <- new.env(parent = emptyenv())
+  cache$populations <- list()
+
+  .resolveScenarioPopulation(
+    project$definitions$scenarios[["populationscenario"]],
+    project,
+    cache
+  )
+  expect_snapshot(
+    invisible(.resolveScenarioPopulation(
+      project$definitions$scenarios[["populationscenariofromcsv"]],
+      project,
+      cache
+    ))
+  )
+})
+
+test_that(".resolveScenarioPopulation gives an injected population to a readPopulationFromCSV scenario", {
+  # A `programmatic` entry carries an explicit `type`, so the scenario flag
+  # cannot turn it into a csv read, and its cache key cannot collide with a spec
+  # or csv population of the same id.
+  withr::local_options(lifecycle_verbosity = "quiet")
+  project <- .testProject()
+  pop <- ospsuite::createPopulation(ospsuite::createPopulationCharacteristics(
+    species = ospsuite::Species$Human,
+    population = ospsuite::HumanPopulation$European_ICRP_2002,
+    numberOfIndividuals = 3L,
+    proportionOfFemales = 50
+  ))$population
+  suppressWarnings(removePopulation(project, "testpopulation"))
+  suppressMessages(addPopulation(project, "testpopulation", pop))
+
+  built <- .buildScenarioSimulations(
+    project,
+    scenarioNames = c("populationscenario", "populationscenariofromcsv")
+  )
+  expect_identical(built$prepared$populationscenario$population, pop)
+  expect_identical(built$prepared$populationscenariofromcsv$population, pop)
+})
+
 test_that(".resolveScenarioPopulation loads a csv entry from its own file", {
   withr::local_options(lifecycle_verbosity = "quiet")
   project <- .testProject()
@@ -716,6 +929,7 @@ test_that(".resolveScenarioPopulation loads a csv entry from its own file", {
     type = "csv",
     file = "custom.csv"
   ))
+  file.create(file.path(project$paths$populationsFolder, "custom.csv"))
   .setSection(
     project,
     "populations",
@@ -787,6 +1001,44 @@ test_that("a relative modelFile that escapes the simulations folder is rejected"
 
 # Population file resolution ----
 
+test_that("a CSV-population scenario names the missing csv file rather than failing in the backend", {
+  # An absent file used to reach the backend, which aborts with a raw .NET
+  # exception naming neither the scenario nor the folder (#1213).
+  withr::local_options(lifecycle_verbosity = "quiet")
+  project <- .testProject()
+  file.remove(file.path(
+    project$paths$populationsFolder,
+    "testpopulation.csv"
+  ))
+  expect_error(
+    .runScenariosFromProject(
+      project,
+      scenarioNames = "populationscenariofromcsv",
+      validate = FALSE
+    ),
+    "testpopulation\\.csv"
+  )
+})
+
+test_that("a CSV population resolves under the case its file is spelled with", {
+  # The id is canonical (lowercase) and the file keeps the author's spelling, so
+  # reading it must not depend on a case-insensitive filesystem (#1213).
+  withr::local_options(lifecycle_verbosity = "quiet")
+  project <- .testProject()
+  folder <- project$paths$populationsFolder
+  file.rename(
+    file.path(folder, "testpopulation.csv"),
+    file.path(folder, "TestPopulation.csv")
+  )
+  expect_no_error(
+    .runScenariosFromProject(
+      project,
+      scenarioNames = "populationscenariofromcsv",
+      validate = FALSE
+    )
+  )
+})
+
 test_that("a CSV-population scenario with NULL populationsFolder aborts with a clear message", {
   withr::local_options(lifecycle_verbosity = "quiet")
   project <- .testProject()
@@ -803,24 +1055,9 @@ test_that("a CSV-population scenario with NULL populationsFolder aborts with a c
 
 # Legacy Excel projects (#1213) ----
 
-# #1213 item 2: `.readOntogeniesFromList()` tests its argument inside `||`, which
-# takes a length-1 value only. Nothing reaches it with more today, because the
-# importer drops every legacy ontogeny (#1213 item 1) and `addPopulation()` refuses
-# a length-2 value up front, so this is unreachable through any supported path.
-#
-# Repairing the importer is what exposes it: the fixture's `child` individual and
-# `adultpop` population each declare two ontogenies, so the first project to have
-# its ontogenies read will hand a length-2 value straight to this function.
-test_that("more than one ontogeny cannot be read", {
-  expect_snapshot(
-    error = TRUE,
-    .readOntogeniesFromList(c("CYP3A4:CYP3A4", "CYP2D6:CYP2C8"))
-  )
-})
-
-# One ontogeny works, whether given as a single pair or as the comma-joined string
-# the importer writes, which is what confines the abort above to the multi-value
-# case rather than to the function as a whole.
+# #1213 item 2: the ontogenies the legacy fixture declares are what the runner
+# actually receives once the importer reads them, one pair or two, in the
+# comma-joined spelling the import folds them into.
 test_that("one ontogeny, and a comma-joined pair of them, read fine", {
   expect_length(.readOntogeniesFromList("CYP3A4:CYP3A4"), 1L)
   expect_length(.readOntogeniesFromList("CYP3A4:CYP3A4,CYP2D6:CYP2C8"), 2L)
@@ -828,13 +1065,14 @@ test_that("one ontogeny, and a comma-joined pair of them, read fine", {
 
 # #1213 item 6: a CSV population entry that names no `file` has its filename
 # derived as `<populationId>.csv`, and the id is canonicalized, which lowercases
-# it. The copy preserves the workbook's own mixed-case filename, so the derived
-# name and the real name differ in case and only a case-insensitive filesystem
-# joins them. That is why this works on macOS and Windows and fails on Linux.
+# it, while the copied file keeps the mixed case the workbook's author gave it.
+# The derived name is matched against the folder listing case-insensitively, so
+# the two spellings meet on a case-sensitive filesystem as well.
 #
-# Pinned on the strings rather than on a file lookup, so the test states the
-# mismatch on every platform instead of passing on one and failing on another.
-test_that("the derived population CSV filename is lowercased, so it cannot match a mixed-case file", {
+# Asserted on the strings and then on the resolved name, so the test states the
+# case mismatch on every platform instead of passing on one and failing on
+# another.
+test_that("the derived population CSV filename resolves to the mixed-case file on disk", {
   projectDir <- localLegacyExcelProject()
   imported <- importLegacyExcelProject(projectDir)
   scenario <- imported$project$definitions$scenarios[["csvpopscenario"]]
@@ -844,12 +1082,17 @@ test_that("the derived population CSV filename is lowercased, so it cannot match
   expect_true(scenario$readPopulationFromCSV)
   expect_null(imported$project$definitions$populations[["csvpop"]]$file)
 
-  present <- list.files(file.path(projectDir, "Configurations", "PopulationsCSV"))
+  populationsFolder <- imported$project$paths$populationsFolder
+  present <- list.files(populationsFolder)
   derived <- paste0(scenario$populationId, ".csv")
 
   expect_identical(present, "CsvPop.csv")
   expect_identical(derived, "csvpop.csv")
 
-  # No file of that exact name exists in the project.
+  # The two differ in case, and the file the run opens is the one on disk.
   expect_false(derived %in% present)
+  expect_identical(
+    .populationCsvFileName(scenario$populationId, populationsFolder),
+    "CsvPop.csv"
+  )
 })

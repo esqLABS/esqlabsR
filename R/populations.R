@@ -37,6 +37,10 @@
       }
       if (field %in% numericFields) {
         val <- as.double(val)
+      } else if (field == "proteinOntogenies") {
+        # A JSON array is read as a list; the field is authored as a character
+        # vector, so both shapes settle on the vector.
+        val <- as.character(unlist(val))
       }
       popData[[field]] <- val
     }
@@ -99,6 +103,41 @@
     "csv" = "file",
     character(0)
   )
+}
+
+# The CSV file a population is read from: the entry's own `file` when it names
+# one, otherwise the `<id>.csv` the legacy scenario-flag path derives. Shared by
+# the runtime and by the scenarios validator, so the file the validator checks is
+# the file the run opens.
+#
+# The derived name is matched against the folder listing case-insensitively: an
+# id is canonicalized to lowercase while the CSV file keeps the case its author
+# gave it (`TestPopulation.csv`), so a literal `<id>.csv` would resolve only on a
+# case-insensitive filesystem and fail on Linux. An exact match wins, so a folder
+# holding both spellings resolves to the one named. With nothing matching, the
+# derived name is returned unchanged, so the caller reports the name the author
+# would look for.
+#
+# @keywords internal
+# @noRd
+.populationCsvFileName <- function(id, populationsFolder, file = NULL) {
+  if (!is.null(file)) {
+    return(file)
+  }
+  derived <- paste0(id, ".csv")
+  if (is.null(populationsFolder) || !dir.exists(populationsFolder)) {
+    return(derived)
+  }
+  present <- list.files(
+    populationsFolder,
+    pattern = "\\.csv$",
+    ignore.case = TRUE
+  )
+  if (derived %in% present) {
+    return(derived)
+  }
+  matched <- present[tolower(present) == tolower(derived)]
+  if (length(matched) > 0L) matched[[1]] else derived
 }
 
 #' Validate the `populations` section of a Project
@@ -427,7 +466,9 @@ sampleRandomValue <- function(distribution, mean, sd, n) {
 #' - A **demographics spec**: pass `species` and `numberOfIndividuals` (plus
 #'   optional `...` fields). This vectorizes over a vector of ids (see the
 #'   recycling rule under Details); `species`, `numberOfIndividuals`, and the
-#'   `...` fields are scalar-per-definition (recycle/align).
+#'   `...` fields are scalar-per-definition (recycle/align), except
+#'   `proteinOntogenies`, which is vector-valued-per-definition (applied whole to
+#'   every population, or one vector per population via a length-`id` list).
 #' - An **injected object**: pass a single id and an [ospsuite::Population]
 #'   object in the `species` position. The object is stored in the R session
 #'   and the scenario runs against it directly (a mutated or programmatically
@@ -452,6 +493,11 @@ sampleRandomValue <- function(distribution, mean, sd, n) {
 #'   `ageMax`, `BMIMin`, `BMIMax`, `gender`, `weightUnit`, `heightUnit`,
 #'   `ageUnit`, `BMIUnit`, `population`, `diseaseState`, `proteinOntogenies`,
 #'   and `overwrite`. Numeric range fields are coerced via `as.double()`.
+#'   `proteinOntogenies` is a character vector of `"Protein:Ontogeny"` entries,
+#'   one per ontogeny (e.g. `c("CYP3A4:CYP3A4", "CYP2D6:CYP2C8")`), or the same
+#'   pairs as one comma-joined string as the Excel sheets spell it; the ontogeny
+#'   name must be a key of [ospsuite::StandardOntogeny], checked when the
+#'   scenario runs.
 #'   `overwrite` is a logical scalar (default `FALSE`): an id that already
 #'   exists aborts unless `overwrite = TRUE`, which replaces it
 #'   (last-write-wins).
@@ -514,12 +560,17 @@ addPopulation <- function(
       "{.arg numberOfIndividuals} is required when adding a demographics-spec population."
     )
   }
+  # `proteinOntogenies` is the one vector-valued-per-definition field (a whole
+  # vector of ontogenies belongs to one population, never split across ids);
+  # every other field is scalar-per-definition.
+  wholeNames <- intersect("proteinOntogenies", names(dots))
   perDefinition <- .alignAuthoringArgs(
     id,
     scalarFields = c(
       list(species = species, numberOfIndividuals = numberOfIndividuals),
-      dots
-    )
+      dots[setdiff(names(dots), wholeNames)]
+    ),
+    wholeFields = dots[wholeNames]
   )
 
   .assertNoOverwriteClash(
@@ -702,6 +753,8 @@ addPopulation <- function(
     )
   }
 
+  .assertProteinOntogenies(fields$proteinOntogenies, call = call)
+
   entry <- list(
     species = species,
     numberOfIndividuals = as.double(numberOfIndividuals)
@@ -789,8 +842,10 @@ removePopulation <- function(project, id) {
 #'   `weightMax`, `heightMin`, `heightMax`, `ageMin`, `ageMax`, `BMIMin`,
 #'   `BMIMax`, `gender`, `weightUnit`, `heightUnit`, `ageUnit`, `BMIUnit`,
 #'   `population`, `diseaseState`, `proteinOntogenies`. Scalar-per-definition
-#'   fields recycle/align across `id`. Numeric fields are coerced via
-#'   `as.double()`. Unknown fields trigger an error.
+#'   fields recycle/align across `id`; `proteinOntogenies` is applied whole (or
+#'   one vector per population via a length-`id` list) and takes the same
+#'   `"Protein:Ontogeny"` entries as [addPopulation()]. Numeric fields are
+#'   coerced via `as.double()`. Unknown fields trigger an error.
 #'
 #' @returns The `project` object, invisibly.
 #' @export
@@ -818,7 +873,12 @@ setPopulation <- function(project, id, ...) {
   }
 
   dots <- list(...)
-  perDefinition <- .alignAuthoringArgs(id, scalarFields = dots)
+  wholeNames <- intersect("proteinOntogenies", names(dots))
+  perDefinition <- .alignAuthoringArgs(
+    id,
+    scalarFields = dots[setdiff(names(dots), wholeNames)],
+    wholeFields = dots[wholeNames]
+  )
   suppliedNames <- names(dots)
 
   call <- .call
@@ -904,6 +964,10 @@ setPopulation <- function(project, id, ...) {
         }
       }
     }
+  }
+
+  if ("proteinOntogenies" %in% names(fields)) {
+    .assertProteinOntogenies(fields$proteinOntogenies, call = call)
   }
 
   entry <- project$definitions$populations[[id]]

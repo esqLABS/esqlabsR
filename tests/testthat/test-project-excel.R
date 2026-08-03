@@ -904,6 +904,215 @@ test_that("the individuals and populations import stay quiet on a sheet with no 
   )
 })
 
+# Regression (#1213): a real 5.x workbook spells the ontogenies as a `Protein` +
+# `Ontogeny` column pair, not as the single `Protein Ontogenies` cell this
+# fixture set uses. Reading only the single column returned nothing for every
+# legacy workbook, so every ontogeny was discarded, and because two definitions
+# differing only in their ontogenies then imported identically nothing in the
+# output revealed the loss.
+
+# One legacy-spelling row: the comma-separated `Protein` and `Ontogeny` cells
+# pair up positionally.
+.legacyOntogenyIndividual <- function(id, proteins, ontogenies) {
+  dplyr::tibble(
+    IndividualId = id,
+    Species = "Human",
+    Population = "European_ICRP_2002",
+    Gender = "MALE",
+    `Weight [kg]` = 73,
+    `Height [cm]` = 176,
+    `Age [year(s)]` = 30,
+    Protein = proteins,
+    Ontogeny = ontogenies
+  )
+}
+
+.legacyOntogenyPopulation <- function(id, proteins, ontogenies) {
+  dplyr::tibble(
+    PopulationName = id,
+    species = "Human",
+    population = "European_ICRP_2002",
+    numberOfIndividuals = 10,
+    Protein = proteins,
+    Ontogeny = ontogenies
+  )
+}
+
+test_that("a legacy two-column Protein + Ontogeny sheet imports its ontogenies", {
+  indiv <- .parseExcelIndividuals(.legacyOntogenyIndividual(
+    "Indiv1",
+    "CYP3A4,CYP2D6",
+    "CYP3A4,CYP2C8"
+  ))
+  expect_identical(
+    indiv[[1]]$proteinOntogenies,
+    "CYP3A4:CYP3A4,CYP2D6:CYP2C8"
+  )
+
+  pop <- .parseExcelPopulations(.legacyOntogenyPopulation(
+    "Pop1",
+    "CYP3A4",
+    "CYP3A4"
+  ))
+  expect_identical(pop[[1]]$proteinOntogenies, "CYP3A4:CYP3A4")
+
+  # Whitespace around a value is workbook noise, not part of the protein name.
+  spaced <- .parseExcelIndividuals(.legacyOntogenyIndividual(
+    "Indiv2",
+    "CYP3A4, CYP2D6",
+    "CYP3A4 ,CYP2C8"
+  ))
+  expect_identical(
+    spaced[[1]]$proteinOntogenies,
+    "CYP3A4:CYP3A4,CYP2D6:CYP2C8"
+  )
+})
+
+test_that("two populations differing only in their ontogenies do not import identically", {
+  # The assertion the single-column fixture could never make: with the pair
+  # columns unread, both rows imported byte-identically apart from the id.
+  populations <- .parseExcelPopulations(rbind(
+    .legacyOntogenyPopulation("Pop1", "CYP3A4", "CYP3A4"),
+    .legacyOntogenyPopulation("Pop2", "CYP2D6", "CYP2C8")
+  ))
+  expect_identical(populations[[1]]$proteinOntogenies, "CYP3A4:CYP3A4")
+  expect_identical(populations[[2]]$proteinOntogenies, "CYP2D6:CYP2C8")
+  expect_false(identical(
+    populations[[1]]$proteinOntogenies,
+    populations[[2]]$proteinOntogenies
+  ))
+})
+
+test_that("the current single-column spelling wins over the pair columns", {
+  both <- .legacyOntogenyIndividual("Indiv1", "CYP2D6", "CYP2C8")
+  both[["Protein Ontogenies"]] <- "CYP3A4:CYP3A4"
+  expect_identical(
+    .parseExcelIndividuals(both)[[1]]$proteinOntogenies,
+    "CYP3A4:CYP3A4"
+  )
+})
+
+test_that("an unpairable ontogeny declaration warns instead of dropping it in silence", {
+  # Each protein needs its own ontogeny: with an unmatched count the positional
+  # pairing has no answer, and the value would otherwise leave the project with
+  # no message at all.
+  expect_snapshot(
+    indiv <- .parseExcelIndividuals(.legacyOntogenyIndividual(
+      "Indiv1",
+      "CYP3A4,CYP2D6",
+      "CYP3A4"
+    ))
+  )
+  expect_null(indiv[[1]]$proteinOntogenies)
+
+  # A protein named with no ontogeny at all is the same failure.
+  expect_snapshot(
+    pop <- .parseExcelPopulations(.legacyOntogenyPopulation(
+      "Pop1",
+      "CYP3A4",
+      NA
+    ))
+  )
+  expect_null(pop[[1]]$proteinOntogenies)
+
+  # Neither column filled is not a declaration, so it stays quiet.
+  expect_no_warning(
+    quiet <- .parseExcelPopulations(.legacyOntogenyPopulation("Pop2", NA, NA))
+  )
+  expect_null(quiet[[1]]$proteinOntogenies)
+})
+
+# Copy the TestProjectExcel fixture and rewrite its individuals and populations
+# workbooks into the legacy `Protein` + `Ontogeny` spelling, returning the copied
+# project directory. The fixture itself keeps the current single-column spelling
+# (which is why it never caught the drop), so the legacy layout is produced here
+# rather than checked in as a second binary workbook.
+.excelFixtureWithLegacyOntogenies <- function(envir = parent.frame()) {
+  work <- withr::local_tempdir(.local_envir = envir)
+  file.copy(
+    list.files(
+      testthat::test_path("data", "TestProjectExcel"),
+      full.names = TRUE
+    ),
+    work,
+    recursive = TRUE
+  )
+  rewrite <- function(workbook, sheet, proteins, ontogenies) {
+    path <- file.path(work, "Configurations", workbook)
+    names <- readxl::excel_sheets(path)
+    sheets <- stats::setNames(
+      lapply(names, function(s) readExcel(path, sheet = s)),
+      names
+    )
+    df <- sheets[[sheet]]
+    df[["Protein Ontogenies"]] <- NULL
+    df[["Protein"]] <- proteins
+    df[["Ontogeny"]] <- ontogenies
+    sheets[[sheet]] <- df
+    .writeExcel(sheets, path)
+  }
+  # The fixture's individual and its first population both carry
+  # `CYP3A4:CYP3A4,CYP2D6:CYP2C8`; its second population carries none.
+  rewrite(
+    "Individuals.xlsx",
+    "IndividualBiometrics",
+    "CYP3A4,CYP2D6",
+    "CYP3A4,CYP2C8"
+  )
+  rewrite(
+    "Populations.xlsx",
+    "Demographics",
+    c("CYP3A4,CYP2D6", NA),
+    c("CYP3A4,CYP2C8", NA)
+  )
+  work
+}
+
+test_that("a legacy-spelling workbook imports its ontogenies, and round-trips through Excel", {
+  work <- .excelFixtureWithLegacyOntogenies()
+  jsonPath <- suppressWarnings(importProjectFromExcel(
+    file.path(work, "ProjectConfiguration.xlsx"),
+    outputDir = withr::local_tempdir(),
+    silent = TRUE
+  ))
+  project <- suppressWarnings(loadProject(jsonPath))
+
+  expected <- "CYP3A4:CYP3A4,CYP2D6:CYP2C8"
+  expect_identical(
+    project$definitions$individuals[["indiv1"]]$proteinOntogenies,
+    expected
+  )
+  expect_identical(
+    project$definitions$populations[["testpopulation"]]$proteinOntogenies,
+    expected
+  )
+  # The population authored without ontogenies keeps none, so the two are
+  # distinguishable in the imported tree.
+  expect_null(
+    project$definitions$populations[[
+      "testpopulation_noonto"
+    ]]$proteinOntogenies
+  )
+
+  # Exporting writes the single-cell spelling, and re-importing that reads the
+  # same pairs back: the ontogenies are a fixed point of the round trip.
+  excelOut <- withr::local_tempdir()
+  exportProjectToExcel(project, outputDir = excelOut, silent = TRUE)
+  reimported <- suppressWarnings(loadProject(importProjectFromExcel(
+    file.path(excelOut, "Project.xlsx"),
+    outputDir = withr::local_tempdir(),
+    silent = TRUE
+  )))
+  expect_identical(
+    reimported$definitions$individuals[["indiv1"]]$proteinOntogenies,
+    expected
+  )
+  expect_identical(
+    reimported$definitions$populations[["testpopulation"]]$proteinOntogenies,
+    expected
+  )
+})
+
 test_that(".parseExcelObservedData keeps a subfolder path rather than truncating to basename", {
   # The loader resolves `file` under `dataFolder`, so a file named in a subfolder
   # must keep its relative path; truncating to the basename would make it
@@ -1475,7 +1684,8 @@ test_that("importProjectFromExcel reports what it produced, and stays quiet unde
   # The output path, the per-section counts, and the assets that travelled.
   expect_match(summaryText, "Project.json", fixed = TRUE)
   expect_match(summaryText, "Scenarios: 8", fixed = TRUE)
-  expect_match(summaryText, "Copied 2 referenced folders", fixed = TRUE)
+  # Three: the models, the data, and the population csv folder.
+  expect_match(summaryText, "Copied 3 referenced folders", fixed = TRUE)
 
   expect_silent(suppressWarnings(importProjectFromExcel(
     configPath,
@@ -1530,6 +1740,91 @@ test_that("importProjectFromExcel copies the referenced input folders into a sep
   expect_false("File Not Found" %in% fileWarnings)
 })
 
+# An Excel project spells `populationsFolder` as a folder name under the
+# configurations folder, while a project resolves working folders against its own
+# root. Read literally the folder was neither copied nor resolvable, so a
+# csv-population scenario failed at run time with `validateProject()` reporting
+# nothing (#1213).
+test_that("importProjectFromExcel brings the population csv folder along and resolves it", {
+  work_dir <- withr::local_tempdir()
+  file.copy(dirname(testProjectExcelPath()), work_dir, recursive = TRUE)
+  projectDir <- file.path(work_dir, "TestProjectExcel")
+
+  outputDir <- withr::local_tempdir()
+  jsonPath <- suppressWarnings(importProjectFromExcel(
+    file.path(projectDir, "ProjectConfiguration.xlsx"),
+    outputDir = outputDir,
+    silent = TRUE
+  ))
+  project <- suppressWarnings(loadProject(jsonPath))
+
+  # The folder the project resolves is the folder the csv file was copied into,
+  # which is the whole point: the two used to disagree.
+  expect_true(dir.exists(project$paths$populationsFolder))
+  expect_true(file.exists(file.path(
+    project$paths$populationsFolder,
+    "TestPopulation.csv"
+  )))
+  # And the scenario reading it no longer validates clean-but-unrunnable.
+  report <- suppressWarnings(validateProject(project))
+  notFound <- unlist(lapply(report, function(section) {
+    vapply(section$warnings, function(w) w$category, character(1))
+  }))
+  expect_false("File Not Found" %in% notFound)
+})
+
+test_that("an in-place import resolves the population csv folder where the csvs are", {
+  # Nothing is copied when the import writes beside the workbooks, so the value
+  # itself has to name the folder that holds the csv files.
+  work_dir <- withr::local_tempdir()
+  file.copy(dirname(testProjectExcelPath()), work_dir, recursive = TRUE)
+  projectDir <- file.path(work_dir, "TestProjectExcel")
+
+  jsonPath <- suppressWarnings(importProjectFromExcel(
+    file.path(projectDir, "ProjectConfiguration.xlsx"),
+    silent = TRUE
+  ))
+  project <- suppressWarnings(loadProject(jsonPath))
+
+  expect_true(file.exists(file.path(
+    project$paths$populationsFolder,
+    "TestPopulation.csv"
+  )))
+})
+
+test_that("a populations folder already at the project root is taken as authored", {
+  # Both layouts are accepted; a project following the root-level layout must
+  # keep resolving there rather than be redirected under the configurations
+  # folder.
+  work_dir <- withr::local_tempdir()
+  file.copy(dirname(testProjectExcelPath()), work_dir, recursive = TRUE)
+  projectDir <- file.path(work_dir, "TestProjectExcel")
+  file.rename(
+    file.path(projectDir, "Configurations", "PopulationsCSV"),
+    file.path(projectDir, "PopulationsCSV")
+  )
+
+  outputDir <- withr::local_tempdir()
+  jsonPath <- suppressWarnings(importProjectFromExcel(
+    file.path(projectDir, "ProjectConfiguration.xlsx"),
+    outputDir = outputDir,
+    silent = TRUE
+  ))
+
+  expect_identical(
+    jsonlite::fromJSON(
+      jsonPath,
+      simplifyVector = FALSE
+    )$filePaths$populationsFolder,
+    "PopulationsCSV"
+  )
+  expect_true(file.exists(file.path(
+    outputDir,
+    "PopulationsCSV",
+    "TestPopulation.csv"
+  )))
+})
+
 test_that("importProjectFromExcel does not copy the results folder or the Excel workbooks", {
   work_dir <- withr::local_tempdir()
   file.copy(dirname(testProjectExcelPath()), work_dir, recursive = TRUE)
@@ -1544,8 +1839,18 @@ test_that("importProjectFromExcel does not copy the results folder or the Excel 
 
   # `outputFolder` holds what the project writes, not what it reads.
   expect_false(dir.exists(file.path(outputDir, "Results")))
-  # The Excel side is the source, not an asset of the JSON project.
-  expect_false(dir.exists(file.path(outputDir, "Configurations")))
+  # The workbooks are the source, not an asset of the JSON project. The
+  # configurations folder itself does travel, because the population csv files
+  # the project reads live under it, so what is asserted is that no workbook
+  # came with them.
+  expect_length(
+    list.files(
+      file.path(outputDir, "Configurations"),
+      pattern = "\\.xlsx$",
+      recursive = TRUE
+    ),
+    0L
+  )
 })
 
 # A `../`-climbing folder value names something the project does not own.
@@ -2872,35 +3177,37 @@ test_that("a sheet whose every row is skipped becomes no parameter set", {
 # of these shapes, which is why none of them has been reproducible until now.
 
 # #1213 item 1: a two-column `Protein` + `Ontogeny` pair is the pre-5.6 way to
-# declare ontogenies, and the only spelling any workbook older than 5.6 has. The
-# importer reads a single `Protein Ontogenies` column, so it finds nothing and
-# every ontogeny is discarded. Nothing in the output says so, which is what makes
-# this worse than an error: two individuals or populations differing only in their
-# ontogenies import identically.
-test_that("a legacy two-column ontogeny pair imports with no ontogenies at all", {
+# declare ontogenies, and the only spelling any workbook older than 5.6 has. Each
+# cell of the pair is a comma list, zipped positionally with the other, and the
+# pair is folded into the single-cell `Protein:Ontogeny,...` spelling on import,
+# so both layouts land on the same definition. A pair that reads cleanly is
+# silent; only an unpairable declaration is reported.
+test_that("a legacy two-column ontogeny pair imports its ontogenies", {
   imported <- importLegacyExcelProject(localLegacyExcelProject())
 
   # `adult` declares one ontogeny in the workbook, `child` two, `adultpop` two.
-  expect_null(
-    imported$project$definitions$individuals[["adult"]]$proteinOntogenies
+  expect_identical(
+    imported$project$definitions$individuals[["adult"]]$proteinOntogenies,
+    "CYP3A4:CYP3A4"
   )
-  expect_null(
-    imported$project$definitions$individuals[["child"]]$proteinOntogenies
+  expect_identical(
+    imported$project$definitions$individuals[["child"]]$proteinOntogenies,
+    "CYP3A4:CYP3A4,CYP2D6:CYP2C8"
   )
-  expect_null(
-    imported$project$definitions$populations[["adultpop"]]$proteinOntogenies
+  expect_identical(
+    imported$project$definitions$populations[["adultpop"]]$proteinOntogenies,
+    "CYP3A4:CYP3A4,CYP2D6:CYP2C8"
   )
 
-  # And the loss is silent: no warning mentions ontogenies.
+  # Every pair in this fixture is readable, so nothing is reported about them.
   expect_false(any(grepl("ontogen", imported$warnings, ignore.case = TRUE)))
 })
 
-# #1213 item 1, the other half of the same silence, and the sharpest statement of
-# it: two populations authored to differ in NOTHING but their ontogenies import to
-# byte-identical definition files apart from the id. So the imported project holds
-# no evidence of the loss either, and no amount of inspecting it can recover what
-# the workbook said.
-test_that("two populations differing only in their ontogenies import identically", {
+# #1213 item 1, the sharpest statement of the same thing: two populations authored
+# to differ in NOTHING but their ontogenies must not import to the same
+# definition, which is the assertion the sibling fixture cannot make because it
+# has no legacy-spelled ontogenies to differ in.
+test_that("two populations differing only in their ontogenies import differently", {
   projectDir <- localLegacyExcelProject()
   editWorkbookSheets(
     file.path(projectDir, "Configurations", "Populations.xlsx"),
@@ -2929,14 +3236,19 @@ test_that("two populations differing only in their ontogenies import identically
     "adultpopnoonto.json"
   ))
 
-  # Identical once the one line that carries the id is set aside.
+  # The ontogenies are the whole of the difference, once the id line is set aside.
   dropId <- function(lines) {
     grep("populationId", lines, fixed = TRUE, invert = TRUE, value = TRUE)
   }
-  expect_identical(dropId(withOntogenies), dropId(withoutOntogenies))
+  expect_false(identical(dropId(withOntogenies), dropId(withoutOntogenies)))
+  expect_match(
+    grep("proteinOntogenies", withOntogenies, value = TRUE),
+    "CYP3A4:CYP3A4,CYP2D6:CYP2C8",
+    fixed = TRUE
+  )
+  expect_false(any(grepl("proteinOntogenies", withoutOntogenies, fixed = TRUE)))
 
-  # The id line is where they do differ, so the comparison above is not passing
-  # because both files failed to be written.
+  # Both files were written, so the comparison above is a real difference.
   expect_true(any(grepl("adultpop", withOntogenies, fixed = TRUE)))
   expect_true(any(grepl("adultpopnoonto", withoutOntogenies, fixed = TRUE)))
 })
@@ -3078,16 +3390,12 @@ test_that("quoted legacy cells resolve, and a quoted single-value id keeps its q
   expect_equal(summary$total_critical_errors, 0)
 })
 
-# #1213 item 5: `populationsFolder` is resolved against the project root, while
-# the convention (this fixture, the bundled one, and the legacy-snapshot
-# materializer's own output) places it under the configurations folder. So the
-# folder is never found and never copied, and the report that would say so is
-# gated on `!silent`, which is off on the path where this always applies.
-#
-# The result is the worst available shape: `validateProject()` reports no error,
-# because it checks `modelFile` and observed-data existence but has no check for
-# the population CSV, and the scenario then dies at run time on a raw .NET error.
-test_that("the populations CSV folder does not travel with an imported project", {
+# #1213 item 5: an Excel project spells `populationsFolder` as a folder name under
+# the configurations folder, while a project resolves its working folders against
+# its own root. The import rewrites the value to the project-root-relative path of
+# the folder that actually holds the csv files, so the folder travels with the
+# project and the value means the same thing on both sides.
+test_that("the populations CSV folder travels with an imported project", {
   projectDir <- localLegacyExcelProject()
   imported <- importLegacyExcelProject(projectDir)
 
@@ -3104,17 +3412,21 @@ test_that("the populations CSV folder does not travel with an imported project",
   )))
   expect_true(dir.exists(file.path(imported$outputDir, "Data")))
 
-  # The populations folder did not, under either spelling.
-  expect_false(dir.exists(file.path(imported$outputDir, "PopulationsCSV")))
-  expect_false(dir.exists(
+  # So did the populations folder, keeping the layout it was authored in.
+  expect_true(dir.exists(
     file.path(imported$outputDir, "Configurations", "PopulationsCSV")
   ))
+  expect_false(dir.exists(file.path(imported$outputDir, "PopulationsCSV")))
 
-  # And `silent = TRUE` suppresses the one report that would have said so.
+  # And the folder the project resolves is the one the csv file was copied into.
+  expect_true(file.exists(file.path(
+    imported$project$paths$populationsFolder,
+    "CsvPop.csv"
+  )))
+
+  # Nothing was left behind, so nothing is reported as uncopied.
   expect_false(any(grepl("not copied", imported$warnings, fixed = TRUE)))
 
-  # Validation still calls the project clean, so nothing warns the user before
-  # the scenario reaches the solver.
   summary <- validationSummary(suppressWarnings(validateProject(
     imported$project
   )))
@@ -3148,10 +3460,12 @@ test_that("a named but absent workbook imports as an empty section, unreported",
   expect_false(any(grepl("Populations.xlsx", imported$warnings, fixed = TRUE)))
 
   # The summary lists the sections that imported something and omits the one that
-  # imported nothing, so the zero is not visible there either.
+  # imported nothing, so the zero is not visible there either. Matched on the
+  # section line, since the folder the import copies is named after the section
+  # too.
   summary <- paste(messages, collapse = "")
-  expect_match(summary, "Individuals")
-  expect_no_match(summary, "Populations")
+  expect_match(summary, "* Individuals:", fixed = TRUE)
+  expect_no_match(summary, "* Populations:", fixed = TRUE)
 
   # The only trace is downstream, at load: the two scenarios that name a
   # population now dangle, which describes the symptom rather than the cause.
