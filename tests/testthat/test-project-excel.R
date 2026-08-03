@@ -1127,8 +1127,10 @@ test_that(".parseExcelObservedData keeps a subfolder path rather than truncating
   result <- .parseExcelObservedData(list(), prop, work)
   entry <- result$observedData[[1]]
   expect_identical(entry$file, "Sub/Values.xlsx")
-  # The section key is the basename (an id cannot hold a path separator).
-  expect_identical(names(result$observedData), "Values.xlsx")
+  # The declaration states its own canonicalized id, so the section is keyed and
+  # the definition file is `values.json` rather than `Values.xlsx.json`.
+  expect_identical(names(result$observedData), "values")
+  expect_identical(entry$id, "values")
 })
 
 # The project records a single experimental-data workbook under `dataFolder`.
@@ -1229,7 +1231,7 @@ test_that(".parseExcelObservedData expands a ${VAR} dataFolder", {
     )
   }
   expect_silent(result <- .parseExcelObservedData(list(), prop, work))
-  expect_named(result$observedData, "Values.xlsx")
+  expect_named(result$observedData, "values")
   expect_identical(result$observedData[[1]]$sheets, list("Sheet1"))
 })
 
@@ -2795,7 +2797,7 @@ test_that(".parseExcelObservedData anchors a relative ${VAR} at the project file
   expect_silent(
     result <- .parseExcelObservedData(list(), prop, source, project)
   )
-  expect_named(result$observedData, "Values.xlsx")
+  expect_named(result$observedData, "values")
 })
 
 # A `ParameterSets` / `Individual Parameter Sets` cell names sheets of its own
@@ -3291,6 +3293,60 @@ test_that("a legacy parameter-identification Units cell is carried through", {
       character(1)
     ),
     c("Log Units", "mg", "mg")
+  )
+})
+
+# #1213 item 17: the imported observed-data declaration states its own `id`, the
+# canonicalized basename of the data file without its extension. Deriving one
+# instead named the definition file after the basename verbatim, so it came out
+# with a double extension and kept whatever spaces, commas and casing the data
+# file's name carried, and the declaration was addressable only by an id the
+# authoring API could not have produced.
+test_that("the imported observed-data declaration carries a canonicalized id", {
+  imported <- importLegacyExcelProject(localLegacyExcelProject())
+  entry <- imported$project$definitions$observedData[[1]]
+
+  expect_identical(entry$id, "testproject_timevaluesdata")
+  expect_identical(
+    list.files(file.path(imported$outputDir, "definitions", "observed-data")),
+    "testproject_timevaluesdata.json"
+  )
+  # And the id is the handle `removeObservedData()` matches on.
+  expect_identical(
+    .observedDataSectionIds(imported$project$definitions$observedData),
+    "testproject_timevaluesdata"
+  )
+})
+
+test_that("a data file whose name is not filename-safe still yields a canonical id", {
+  projectDir <- localLegacyExcelProject()
+  file.rename(
+    file.path(projectDir, "Data", "TestProject_TimeValuesData.xlsx"),
+    file.path(projectDir, "Data", "My Data, v2.xlsx")
+  )
+  editWorkbookSheets(
+    legacyExcelProjectPath(projectDir),
+    function(sheets) {
+      row <- sheets$Sheet1$Property == "dataFile"
+      sheets$Sheet1$Value[row] <- "My Data, v2.xlsx"
+      sheets
+    }
+  )
+  imported <- importLegacyExcelProject(projectDir)
+
+  expect_identical(
+    imported$project$definitions$observedData[[1]]$id,
+    "my_data__v2"
+  )
+  expect_identical(
+    list.files(file.path(imported$outputDir, "definitions", "observed-data")),
+    "my_data__v2.json"
+  )
+  # The stored `file` is untouched: it is a path the loader resolves under the
+  # data folder, not an id.
+  expect_identical(
+    imported$project$definitions$observedData[[1]]$file,
+    "My Data, v2.xlsx"
   )
 })
 
