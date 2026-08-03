@@ -506,6 +506,48 @@ test_that(".parameterIdentificationToJson() emits NULL for empty input", {
   expect_null(.parameterIdentificationToJson(proj))
 })
 
+# #1213 item 26: a task with no solver settings has to describe its configuration
+# the way a task with them does. An empty unnamed list serializes as `[]`, so such
+# a task read as having an array where every other task has an object.
+test_that("a PI task with no configuration serializes as an empty object", {
+  raw <- list(
+    list(
+      id = "t",
+      scenarios = list("S1"),
+      parameters = list(
+        list(
+          id = "k",
+          scenarios = list("S1"),
+          path = "x|y",
+          minValue = 0,
+          maxValue = 1,
+          startValue = 0.5
+        )
+      ),
+      outputMappings = list(
+        list(
+          id = "m",
+          scenarios = list("S1"),
+          outputPath = "P",
+          observedData = "D"
+        )
+      )
+    )
+  )
+  proj <- .fakeProject(parameterIdentification = .parsePITasks(raw))
+  serialized <- .parameterIdentificationToJson(proj)
+
+  expect_identical(
+    serialized[[1]]$configuration,
+    structure(list(), names = character(0L))
+  )
+  expect_match(
+    jsonlite::toJSON(serialized[[1]]$configuration, auto_unbox = TRUE),
+    "{}",
+    fixed = TRUE
+  )
+})
+
 test_that(".parsePITasks |> .parameterIdentificationToJson |> .parsePITasks is identity", {
   raw <- list(
     list(
@@ -719,6 +761,54 @@ test_that(".createSinglePITask builds a ParameterIdentification with the expecte
   expect_s3_class(pi, "ParameterIdentification")
   expect_length(pi$parameters, 1L)
   expect_length(pi$outputMappings, 1L)
+})
+
+# #1213 item 14: a legacy 5.x `PIParameters` sheet carries a `Units` column that
+# esqlabsR 5.x never applied, so a workbook that ran under 5.x routinely names a
+# unit of another dimension. Enforcing it as the display unit aborted such a task
+# (`Unit "mg" is not supported by dimension Inversed time!`) over a cell that has
+# never had any effect, so it is reported and left unapplied instead, and the
+# bounds stay in the parameter's own unit.
+test_that(".createSinglePITask reports a unit of another dimension instead of aborting", {
+  project <- testProject()
+  task <- PITask(
+    id = "WrongUnit",
+    scenarios = "testscenario",
+    parameters = list(
+      PIParameter(
+        id = "EHC",
+        scenarios = "testscenario",
+        path = "Organism|Liver|EHC continuous fraction",
+        units = "mg",
+        minValue = 0.5,
+        maxValue = 1.0,
+        startValue = 0.8
+      )
+    ),
+    outputMappings = list(
+      PIOutputMapping(
+        id = "PVB",
+        scenarios = "testscenario",
+        outputPath = "aciclovir_pvb",
+        observedData = "Laskin 1982.Group A_Aciclovir_1_Human_MALE_PeripheralVenousBlood_Plasma_2.5 mg/kg_iv_"
+      )
+    ),
+    configuration = list(algorithm = "BOBYQA")
+  )
+
+  expect_warning(
+    pi <- .createSinglePITask(
+      project = project,
+      piTask = task,
+      observedData = loadObservedData(project)
+    ),
+    "is not applied"
+  )
+
+  # The bounds are the ones the record declares, read in the parameter's own unit.
+  expect_equal(pi$parameters[[1]]$minValue, 0.5)
+  expect_equal(pi$parameters[[1]]$maxValue, 1.0)
+  expect_equal(pi$parameters[[1]]$startValue, 0.8)
 })
 
 test_that(".createSinglePITask shares one optimisation variable across scenarios for a multi-scenario PIParameter", {
@@ -2978,14 +3068,14 @@ test_that("removePITask removes a vector of task ids in one write-through", {
 # on an absent one it evaluates to `NA` and `if (NA)` aborted the whole restore
 # with `missing value where TRUE/FALSE needed`, naming neither sheet nor column
 # (#1190).
-test_that(".pi5xUniqueId falls back instead of aborting on an empty cell", {
-  expect_identical(.pi5xUniqueId(character(0), character()), "item")
-  expect_identical(.pi5xUniqueId(NULL, character()), "item")
-  expect_identical(.pi5xUniqueId(NA, character()), "item")
-  expect_identical(.pi5xUniqueId("   ", character()), "item")
+test_that(".uniqueImportedId falls back instead of aborting on an empty cell", {
+  expect_identical(.uniqueImportedId(character(0), character()), "item")
+  expect_identical(.uniqueImportedId(NULL, character()), "item")
+  expect_identical(.uniqueImportedId(NA, character()), "item")
+  expect_identical(.uniqueImportedId("   ", character()), "item")
   # A usable cell is unaffected, and a clash still gets a suffix.
-  expect_identical(.pi5xUniqueId("Conc", character()), "conc")
-  expect_identical(.pi5xUniqueId("Conc", "conc"), "conc_2")
+  expect_identical(.uniqueImportedId("Conc", character()), "conc")
+  expect_identical(.uniqueImportedId("Conc", "conc"), "conc_2")
 })
 
 test_that(".pi5xPath tolerates an absent container or parameter cell", {

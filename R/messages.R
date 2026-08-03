@@ -403,6 +403,205 @@ messages$importIncompletePIOutputMappings <- function(taskId, scenarios) {
   )
 }
 
+messages$importUnmergedPIParameterGroups <- function(taskId, paths) {
+  # Unglued, like the entry above: a task id and a parameter path are free text.
+  envir <- new.env(parent = parent.frame())
+  assign("taskId", taskId, envir = envir)
+  assign("paths", paths, envir = envir)
+  assign("n", length(paths), envir = envir)
+  list(
+    bullets = c(
+      "!" = "{cli::qty(n)}{n} {.field Group}{?s} of parameter-identification \\
+      task {.val {taskId}} {?does/do} not agree on the bounds, so {?its/their} \\
+      rows were imported as one parameter each: {.val {paths}}.",
+      "i" = "The rows of one {.field Group} are one parameter estimated across \\
+      the scenarios they name, so they share one {.field MinValue}, \\
+      {.field MaxValue} and {.field StartValue}. Make them agree in Excel and \\
+      import again to estimate them together.",
+      "i" = "As imported, each row is estimated independently, which is not what \\
+      the group asked for."
+    ),
+    envir = envir
+  )
+}
+
+messages$importMissingWorkbooks <- function(files) {
+  # Unglued: a workbook filename comes from the property sheet, so it is free text.
+  envir <- new.env(parent = parent.frame())
+  assign("files", files, envir = envir)
+  assign("n", length(files), envir = envir)
+  list(
+    bullets = c(
+      "!" = "{cli::qty(n)}{n} workbook{?s} named by the project configuration \\
+      {?is/are} not in the configurations folder, so {?its/their} section{?s} \\
+      {?was/were} imported as empty: {.file {files}}.",
+      "i" = "{cli::qty(n)}Place the workbook{?s} beside the others and import \\
+      again, or clear the property row{?s} if the section is deliberately empty."
+    ),
+    envir = envir
+  )
+}
+
+messages$importUnconsumedWorkbooks <- function(files) {
+  # Unglued: a workbook filename found on disk is free text.
+  envir <- new.env(parent = parent.frame())
+  assign("files", files, envir = envir)
+  assign("n", length(files), envir = envir)
+  list(
+    bullets = c(
+      "!" = "{cli::qty(n)}{n} workbook{?s} in the configurations folder \\
+      {?was/were} not read: {.file {files}}.",
+      "i" = "Only the workbooks the project configuration names are imported, \\
+      whatever else the folder holds, so nothing in {cli::qty(n)}{?it/them} is \\
+      in the project.",
+      "i" = "Point the matching property row at one to import it, or leave it \\
+      where it is if it is a spare copy."
+    ),
+    envir = envir
+  )
+}
+
+messages$importEmptySections <- function(sections) {
+  cliFormat(
+    "{length(sections)} section{?s} imported no definitions: {.field {sections}}."
+  )
+}
+
+messages$importUndeclaredWorkbooks <- function(files) {
+  # Unglued: a workbook filename is free text.
+  envir <- new.env(parent = parent.frame())
+  assign("files", files, envir = envir)
+  assign("n", length(files), envir = envir)
+  list(
+    bullets = c(
+      "i" = "{cli::qty(n)}{n} workbook{?s} {?was/were} read under {?its/their} \\
+      conventional name, which the project configuration does not name: \\
+      {.file {files}}.",
+      "i" = "Rename or remove {cli::qty(n)}{?it/them} to keep \\
+      {cli::qty(n)}{?it/them} out of the project."
+    ),
+    envir = envir
+  )
+}
+
+messages$importUnparametrizedIndividuals <- function(filePath, ids, sheets) {
+  # Unglued, like its neighbours: an individual id and a sheet name are free text.
+  envir <- new.env(parent = parent.frame())
+  assign("filePath", filePath, envir = envir)
+  assign("ids", ids, envir = envir)
+  assign("sheets", sheets, envir = envir)
+  assign("n", length(ids), envir = envir)
+  list(
+    bullets = c(
+      "!" = "{cli::qty(n)}{n} individual{?s} in {.file {filePath}} {?is/are} \\
+      imported without the parameter set {?it/they} declare{?s/}, because the \\
+      sheet did not parse as a parameter sheet:",
+      stats::setNames(
+        sprintf(
+          "Individual {.val {ids[[%1$d]]}}: sheet {.val {sheets[[%1$d]]}}.",
+          seq_along(ids)
+        ),
+        rep("x", length(ids))
+      ),
+      "i" = "Nothing else reports this: the individual imports without the \\
+      parametrization and the project still validates, so every scenario using \\
+      it runs on the unmodified model. Fix the sheet's columns in Excel and \\
+      import again."
+    ),
+    envir = envir
+  )
+}
+
+messages$importUndefinedIndividualSheets <- function(filePath, sheets) {
+  # Unglued, like its neighbours: a sheet name is free text.
+  envir <- new.env(parent = parent.frame())
+  assign("filePath", filePath, envir = envir)
+  assign("sheets", sheets, envir = envir)
+  assign("n", length(sheets), envir = envir)
+  list(
+    bullets = c(
+      "!" = "{cli::qty(n)}{n} parameter {?sheet/sheets} of {.file {filePath}} \\
+      {?names/name} an individual that {.field IndividualBiometrics} does not \\
+      define, so that individual is not imported: {.val {sheets}}.",
+      "i" = "An individual comes from its {.field IndividualBiometrics} row, so \\
+      the sheet is imported as a parameter set that no individual uses, and the \\
+      {cli::qty(n)}scenario{?s} naming the individual {?has/have} nothing to \\
+      resolve to.",
+      "i" = "Add a biometrics row for it in Excel and import again."
+    ),
+    envir = envir
+  )
+}
+
+messages$importUnimportedPIObservedDataSheets <- function(sheets) {
+  # Unglued: a sheet name is free text.
+  envir <- new.env(parent = parent.frame())
+  assign("sheets", sheets, envir = envir)
+  assign("n", length(sheets), envir = envir)
+  list(
+    bullets = c(
+      "!" = "{cli::qty(n)}{n} {.field ObservedDataSheet} {?sheet/sheets} named \\
+      by the {.field PIOutputMappings} sheet {?is/are} not among the imported \\
+      observed data: {.val {sheets}}.",
+      "i" = "Observed data is imported from the project's data file, one \\
+      definition listing that workbook's sheets, so a sheet that is not in it \\
+      holds no data set the project can resolve; the mapping's \\
+      {.field DataSet} will not resolve either, and {.fn validateProject} \\
+      reports it.",
+      "i" = "Point {.field dataFile} at the workbook that holds \\
+      {cli::qty(n)}{?it/them} and import again."
+    ),
+    envir = envir
+  )
+}
+
+messages$importSkippedPlotExportConfiguration <- function(
+  filePath,
+  rows,
+  grids
+) {
+  # Unglued: a grid name is free text.
+  envir <- new.env(parent = parent.frame())
+  assign("filePath", filePath, envir = envir)
+  assign("rows", rows, envir = envir)
+  assign("grids", grids, envir = envir)
+  assign("n", length(grids), envir = envir)
+  list(
+    bullets = c(
+      "!" = "The {.field exportConfiguration} sheet of {.file {filePath}} is \\
+      not imported: {cli::qty(rows)}{rows} {?row/rows} describing where a plot \\
+      grid's figure is written and at what size.",
+      if (length(grids) > 0L) {
+        c("x" = "{cli::qty(n)}Plot grid{?s} {.val {grids}}.")
+      },
+      "i" = "A project has no field for a figure's filename, width or height: \\
+      {.fn createPlots} returns the plot objects and the caller saves them, for \\
+      example with {.fn ggplot2::ggsave}, so the settings are not imported and \\
+      an export does not write them back."
+    ),
+    envir = envir
+  )
+}
+
+messages$importDuplicatePlotIds <- function(sheet, idField, ids) {
+  # Unglued, like its neighbours: a plot id is free text.
+  envir <- new.env(parent = parent.frame())
+  assign("sheet", sheet, envir = envir)
+  assign("idField", idField, envir = envir)
+  assign("ids", ids, envir = envir)
+  assign("n", length(ids), envir = envir)
+  list(
+    bullets = c(
+      "!" = "{cli::qty(n)}{n} {.field {idField}}{?s} {?is/are} used by more than \\
+      one row of the {.field {sheet}} sheet: {.val {ids}}.",
+      "i" = "Each id is one definition, built from the last row that carries it, \\
+      so the earlier {cli::qty(n)}row{?s} {?is/are} not imported.",
+      "i" = "Give every row its own id in Excel and import again to keep them all."
+    ),
+    envir = envir
+  )
+}
+
 messages$importSkippedNonNumericRows <- function(
   filePath,
   sheets,
@@ -1365,6 +1564,18 @@ messages$PIParameterNotFound <- function(path, simulationName) {
     "Parameter {.path {path}} not found in simulation {.val {simulationName}}.
     Check that the parameter path is correct and exists in the simulation."
   )
+}
+
+# Warned when a PI parameter declares a display unit that belongs to another
+# dimension. Not an abort: a legacy 5.x sheet's `Units` cell was never applied by
+# the version that wrote it, so such a cell is normal in a workbook that ran, and
+# the identification is still well defined without it.
+messages$PIParameterUnitNotApplied <- function(id, unit, dimension) {
+  cli::format_message(c(
+    "!" = "The unit {.val {unit}} of PI parameter {.val {id}} is not applied: it is not a unit of the parameter's dimension {.val {dimension}}.",
+    "i" = "Its {.field minValue}, {.field maxValue} and {.field startValue} are read in the parameter's own unit instead.",
+    "i" = "A legacy 5.x {.field PIParameters} sheet carries a {.field Units} column that esqlabsR 5.x never applied, which is where such a unit usually comes from; set the field with {.fn PIParameter} to fit in a different unit."
+  ))
 }
 
 messages$PIScenarioNotFound <- function(scenarioName, availableScenarios) {

@@ -451,6 +451,22 @@ PITask <- function(
   rec
 }
 
+# A PI task's `configuration` as it is serialized: an empty one becomes the empty
+# JSON object `{}`, the shape a populated configuration has. An empty unnamed list
+# serializes as `[]`, so a task with no solver settings would describe its
+# configuration as an array where every other task has an object. Shared by the
+# container serializer and the definition-tree serializer, so the two agree.
+#
+# @keywords internal
+# @noRd
+.piConfigurationToJson <- function(configuration) {
+  configuration <- configuration %||% list()
+  if (length(configuration) == 0L) {
+    return(structure(list(), names = character(0L)))
+  }
+  configuration
+}
+
 #' @exportS3Method
 #' @noRd
 print.PIParameter <- function(x, ...) {
@@ -853,8 +869,26 @@ print.PITask <- function(x, ...) {
     # stale maxValue, raise maxValue first; otherwise lower minValue first. The
     # PIParameter() record is already validated as minValue <= startValue <=
     # maxValue, so one of the two orders always succeeds.
+    #
+    # A unit that is not one of the parameter's own dimension is reported and
+    # left unapplied, rather than aborting the task. The legacy 5.x
+    # `PIParameters` sheet has a `Units` column that esqlabsR 5.x never applied,
+    # so a workbook that ran under 5.x routinely carries a unit belonging to
+    # another dimension (`mg` against an inversed time); aborting on it would
+    # make a migrated task unrunnable over a cell that has never had any effect.
+    # The bounds stay in the parameter's own unit, which is what such a sheet
+    # meant.
     if (!is.null(p$units) && nchar(p$units) > 0) {
-      runtime$unit <- p$units
+      dimension <- paramObjs[[1]]$dimension
+      if (p$units %in% ospsuite::getUnitsForDimension(dimension)) {
+        runtime$unit <- p$units
+      } else {
+        cli::cli_warn(messages$PIParameterUnitNotApplied(
+          p$id,
+          p$units,
+          dimension
+        ))
+      }
     }
     runtime$startValue <- p$startValue
     if (p$minValue >= runtime$maxValue) {

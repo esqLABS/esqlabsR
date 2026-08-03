@@ -95,13 +95,22 @@
       # accepts. This mirrors the Excel bridge in project-excel.R, the other
       # writer of these two fields.
       schemaVersion = "2.0",
-      esqlabsRVersion = as.character(utils::packageVersion("esqlabsR")),
-      name = project$info$name,
-      description = project$info$description,
-      definitionsFolder = project$paths$definitionsFolder,
-      filePaths = .filePathsToJson(project),
-      defaultSimulationRunOptions = project$defaultSimulationRunOptions
+      esqlabsRVersion = as.character(utils::packageVersion("esqlabsR"))
     ),
+    # A project with no name (one imported from a workbook that carries none, one
+    # upgraded from a snapshot) omits the key rather than declaring the metadata
+    # and setting it to null, which reads as a field someone emptied.
+    if (!is.null(project$info$name)) list(name = project$info$name),
+    if (!is.null(project$info$description)) {
+      list(description = project$info$description)
+    },
+    list(
+      definitionsFolder = project$paths$definitionsFolder,
+      filePaths = .filePathsToJson(project)
+    ),
+    if (!is.null(project$defaultSimulationRunOptions)) {
+      list(defaultSimulationRunOptions = project$defaultSimulationRunOptions)
+    },
     sections
   )
   if (length(excel) > 0L) {
@@ -479,7 +488,7 @@
       scenarios = as.list(task$scenarios),
       parameters = lapply(task$parameters, .piParameterToJson),
       outputMappings = lapply(task$outputMappings, .piOutputMappingToJson),
-      configuration = task$configuration
+      configuration = .piConfigurationToJson(task$configuration)
     )
   }) |>
     unname()

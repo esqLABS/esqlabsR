@@ -326,6 +326,31 @@ isProjectInitialized <- function(destination = ".") {
 #
 # @keywords internal
 # @noRd
+# Rewrite a container's `esqlabsRVersion` to the running package version, leaving
+# every other field as it is. Used on a container this package has just put on
+# disk without going through the serializer (the copied `initProject()` template),
+# so the field names the version that wrote the project, as it does on every path
+# that goes through the serializer.
+#
+# @keywords internal
+# @noRd
+.stampContainerEsqlabsRVersion <- function(path) {
+  if (!file.exists(path)) {
+    return(invisible(NULL))
+  }
+  parsed <- jsonlite::fromJSON(path, simplifyVector = FALSE)
+  parsed$esqlabsRVersion <- as.character(utils::packageVersion("esqlabsR"))
+  jsonlite::write_json(
+    parsed,
+    path,
+    auto_unbox = TRUE,
+    null = "null",
+    pretty = TRUE,
+    digits = NA
+  )
+  invisible(NULL)
+}
+
 .readContainerField <- function(path, field) {
   parsed <- tryCatch(
     jsonlite::fromJSON(path, simplifyVector = FALSE),
@@ -451,6 +476,13 @@ initProject <- function(
   if (!all(copied)) {
     cli::cli_abort(messages$failedToCopyTemplate(sourceFiles[!copied]))
   }
+
+  # The template ships a fixed `esqlabsRVersion`, and every other writer
+  # (`saveProject()`, `snapshotProject()`, the Excel bridge) stamps the running
+  # package version, so the copied value is restamped here: the field says which
+  # version wrote the project, and a scaffold that claimed one version and then
+  # reported another after the first save read as a downgrade.
+  .stampContainerEsqlabsRVersion(file.path(destination, "Project.json"))
 
   # Create the working-folder structure. Each folder gets a short `README.md`
   # so it stays tracked under version control (git ignores empty folders) and

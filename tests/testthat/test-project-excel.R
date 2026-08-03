@@ -2072,7 +2072,7 @@ test_that("importProjectFromExcel re-points a case-differing parameter-set refer
   # model-parameters sheet that took the plain id.
   expect_identical(
     unlist(project$definitions$individuals[["indiv1"]]$parameterSets),
-    "indiv1_1"
+    "indiv1_2"
   )
 })
 
@@ -2216,19 +2216,19 @@ test_that("importProjectFromExcel renames a duplicate parameter-set id and re-po
   sets <- .unwrapDefinitionList(project$definitions$parameterSets)
   expect_contains(
     names(sets),
-    c("indiv1", "indiv1_1", "protocol_250mg", "protocol_250mg_1")
+    c("indiv1", "indiv1_2", "protocol_250mg", "protocol_250mg_2")
   )
 
   # The individual still carries its OWN parameter set, not the model-parameters
   # sheet that took the id.
   expect_identical(
     unlist(project$definitions$individuals[["indiv1"]]$parameterSets),
-    "indiv1_1"
+    "indiv1_2"
   )
   # Same for the 5.x application wrapper built around its protocol sheet.
   expect_identical(
     unlist(project$definitions$applications[["protocol_250mg"]]$parameterSets),
-    "protocol_250mg_1"
+    "protocol_250mg_2"
   )
 })
 
@@ -3255,33 +3255,68 @@ test_that("two populations differing only in their ontogenies import differently
   expect_true(any(grepl("adultpopnoonto", withoutOntogenies, fixed = TRUE)))
 })
 
-# #1213 item 8: v5 merged `PIParameters` rows by
-# `(Group, Container Path, Parameter Name)`, so the two rows sharing group 2 here
-# were ONE free parameter estimated across both scenarios. The importer never
-# reads `Group`, so they become two independent free parameters with independent
-# estimates. That changes what the identification computes, not just how the
-# project is laid out.
-test_that("a repeated parameter-identification Group becomes independent parameters", {
+# #1213 item 4: the rows of a `PIParameters` sheet sharing a `Group` (with the
+# same container path and parameter name) are ONE free parameter estimated across
+# the scenarios they name between them, which is what the identification
+# estimates. The importer reads the column, so the two rows sharing group 2 here
+# import as one parameter naming both scenarios rather than two independent ones.
+test_that("a repeated parameter-identification Group imports as one parameter", {
   imported <- importLegacyExcelProject(localLegacyExcelProject())
   task <- imported$project$definitions$parameterIdentification[["aciclovirfit"]]
 
   # The workbook's three rows are group 1 (Lipophilicity) and group 2 twice
-  # (TSspec, once per scenario), so v5 estimated two free parameters. v6
-  # estimates three.
-  expect_length(task$parameters, 3L)
+  # (TSspec, once per scenario), so two free parameters are estimated.
+  expect_length(task$parameters, 2L)
+  expect_identical(
+    vapply(task$parameters, function(p) p$id, character(1)),
+    c("lipophilicity", "tsspec")
+  )
+
+  # The merged parameter is estimated across both of its rows' scenarios.
+  expect_identical(
+    unlist(task$parameters[[2]]$scenarios),
+    c("piscenario", "piscenario2")
+  )
+  expect_identical(unlist(task$parameters[[1]]$scenarios), "piscenario")
+
+  # Nothing to report: the group's bounds agree, so it merged.
+  expect_false(any(grepl("Group", imported$warnings, fixed = TRUE)))
+})
+
+# #1213 item 4, the check esqlabsR 5.x made alongside the merge: one parameter has
+# one set of bounds, so rows of a group that disagree about them cannot be one
+# parameter. 5.x refused to build the task at all; the import keeps the rows
+# unmerged (nothing invented, nothing lost) and says so, so the rest of the
+# project still migrates.
+test_that("a parameter-identification Group whose bounds disagree is reported and left unmerged", {
+  projectDir <- localLegacyExcelProject()
+  editWorkbookSheets(
+    file.path(projectDir, "Configurations", "ParameterIdentification.xlsx"),
+    function(sheets) {
+      sheets$PIParameters$MaxValue[[3]] <- 20
+      sheets
+    }
+  )
+  imported <- importLegacyExcelProject(projectDir)
+  task <- imported$project$definitions$parameterIdentification[["aciclovirfit"]]
+
   expect_identical(
     vapply(task$parameters, function(p) p$id, character(1)),
     c("lipophilicity", "tsspec", "tsspec_2")
   )
-
-  # Nothing reports the split.
-  expect_false(any(grepl("group", imported$warnings, ignore.case = TRUE)))
+  # Matched on single words: the rendered warning wraps, so a longer phrase can
+  # straddle a line break.
+  expect_true(any(grepl("bounds", imported$warnings, fixed = TRUE)))
+  expect_true(any(grepl("Group", imported$warnings, fixed = TRUE)))
 })
 
-# #1213 item 14: the legacy `Units` cell was ignored by v5 and is now assigned as
-# the parameter's display unit, so a cell v5 read past can abort `runPI()` (a
-# `mg` unit on a parameter whose dimension is an inversed time). The import side
-# is what carries it through, so that is what is pinned here.
+# #1213 item 14: the legacy `Units` cell is carried through as the parameter's
+# declared display unit, which is lossless. What used to make that a problem was
+# the runtime enforcing it: v5 read past the cell, so a workbook that ran under v5
+# routinely names a unit of another dimension (`mg` against an inversed time), and
+# `runPI()` aborted on it. The runtime now reports such a unit and leaves the
+# bounds in the parameter's own unit (see test-parameter-identification.R), so the
+# cell can be imported as authored.
 test_that("a legacy parameter-identification Units cell is carried through", {
   imported <- importLegacyExcelProject(localLegacyExcelProject())
   task <- imported$project$definitions$parameterIdentification[["aciclovirfit"]]
@@ -3292,7 +3327,7 @@ test_that("a legacy parameter-identification Units cell is carried through", {
       function(p) p$units %||% NA_character_,
       character(1)
     ),
-    c("Log Units", "mg", "mg")
+    c("Log Units", "mg")
   )
 })
 
@@ -3398,20 +3433,19 @@ test_that("a dangling parameter-identification observedData reference is reporte
   )
 })
 
-# #1213 item 19: a blank `SimulationTimeUnit` cell imports as `null`, while
-# `addScenario()` defaults the same absent value to `"h"`. So the same blank cell
-# means a different unit depending on which entrypoint wrote the project.
+# #1213 item 19: a blank `SimulationTimeUnit` cell imports as the same `"h"`
+# `addScenario()` defaults the absent value to, so the blank cell means one unit
+# whichever entrypoint wrote the project.
 #
-# #1213 item 9 in the same fixture: the scenarios sheet has no
-# `OverwriteFormulasInSS` column at all, and the absent column imports as `FALSE`
-# rather than as an absent field.
-test_that("a blank simulationTime unit and an absent OverwriteFormulasInSS column import as null and FALSE", {
+# The scenarios sheet also has no `OverwriteFormulasInSS` column at all, and the
+# absent column imports as `FALSE` rather than as an absent field.
+test_that("a blank simulationTime unit imports as the authoring default, and an absent OverwriteFormulasInSS column as FALSE", {
   imported <- importLegacyExcelProject(localLegacyExcelProject())
   scenario <- imported$project$definitions$scenarios[["adultscenario"]]
 
-  # The workbook leaves the cell blank; authoring the same scenario would give it
-  # `"h"`.
-  expect_null(scenario$simulationTimeUnit)
+  # The workbook leaves the cell blank, and authoring the same scenario gives it
+  # the same unit.
+  expect_identical(scenario$simulationTimeUnit, "h")
   expect_identical(formals(addScenario)$simulationTimeUnit, "h")
 
   # A scenario whose cell IS filled keeps its unit, so the above is the blank
@@ -3426,15 +3460,35 @@ test_that("a blank simulationTime unit and an absent OverwriteFormulasInSS colum
   expect_false(scenario$overwriteFormulasInSS)
 })
 
-# #1213 item 18: `rowToFields()` copies whatever type readxl guessed for a plots
-# column, with no numeric-coercion list of the kind `dataCombined` has. A workbook
-# storing `nsd` as text therefore yields the string `"1.96"` where the same field
-# authored programmatically is a number, which is the root cause behind every
-# `excel_in_sync = FALSE` report on a freshly imported tree.
-test_that("a plots field stored as text imports as a string, not a number", {
+# #1213 item 18: the plots section has the same field-type contract
+# `dataCombined` has, so a workbook storing `nsd` as text yields the number the
+# same field authored with `addPlot()` holds. A multi-value cell stays the
+# comma-separated string both entrypoints keep it in.
+test_that("a plots field stored as text imports as a number", {
   imported <- importLegacyExcelProject(localLegacyExcelProject())
+  plots <- imported$project$definitions$plots
 
-  expect_identical(imported$project$definitions$plots[["p3"]]$nsd, "1.96")
+  expect_identical(plots[["p3"]]$nsd, 1.96)
+  expect_identical(plots[["p3"]]$xValuesLimits, "0, 24")
+  expect_identical(plots[["p2"]]$foldDistance, "2, 3")
+})
+
+# #1213 item 18, what the field types were costing: a freshly exported workbook
+# read back had to describe the same project, and it did not, so `projectStatus()`
+# reported every imported project as out of sync with the Excel side-car it had
+# just written.
+test_that("a freshly exported workbook reports an imported project as in sync", {
+  projectDir <- localLegacyExcelProject()
+  imported <- importLegacyExcelProject(projectDir)
+  suppressMessages(exportProjectToExcel(
+    imported$project,
+    outputDir = imported$outputDir,
+    overwrite = TRUE,
+    silent = TRUE
+  ))
+
+  status <- suppressWarnings(suppressMessages(projectStatus(imported$project)))
+  expect_true(status$excel_in_sync)
 })
 
 # #1213 item 10 / the residue #1207 recorded: a 5.x multi-value cell is quoted,
@@ -3521,12 +3575,13 @@ test_that("the populations CSV folder travels with an imported project", {
 # one workbook of a throwaway copy, so a variant differs from the base in one
 # dimension and cannot interfere with another test's subject.
 
-# #1213 item 8: workbook resolution is purely property-driven. The section loop
-# has no `else` branch for a workbook the property sheet names but that is not on
-# disk, so the section imports as zero in complete silence. The one cue that could
-# have caught it is suppressed too, because a zero-count section is left out of
-# the import summary altogether.
-test_that("a named but absent workbook imports as an empty section, unreported", {
+# #1213 item 8: workbook resolution is property-driven, so a workbook the property
+# sheet names but that is not on disk leaves its section empty. That used to happen
+# in complete silence, with the one cue suppressed as well, because the summary's
+# count block lists only the sections that hold something. The import now names the
+# workbook that is not there, and the summary names the sections that came out
+# empty.
+test_that("a named but absent workbook is reported, and its empty section named", {
   projectDir <- localLegacyExcelProject()
   file.remove(file.path(projectDir, "Configurations", "Populations.xlsx"))
 
@@ -3539,28 +3594,84 @@ test_that("a named but absent workbook imports as an empty section, unreported",
     }
   )
 
-  # Both populations are gone, and nothing names the workbook that is missing.
+  # Both populations are gone, and the workbook that is missing is named.
   expect_length(imported$project$definitions$populations, 0L)
-  expect_false(any(grepl("Populations.xlsx", imported$warnings, fixed = TRUE)))
+  expect_true(any(grepl("Populations.xlsx", imported$warnings, fixed = TRUE)))
 
-  # The summary lists the sections that imported something and omits the one that
-  # imported nothing, so the zero is not visible there either. Matched on the
-  # section line, since the folder the import copies is named after the section
-  # too.
+  # The count block still lists only what imported something, so the summary names
+  # the empty sections separately. Matched on the section line, since the folder
+  # the import copies is named after the section too.
   summary <- paste(messages, collapse = "")
   expect_match(summary, "* Individuals:", fixed = TRUE)
   expect_no_match(summary, "* Populations:", fixed = TRUE)
+  expect_match(summary, "imported no definitions", fixed = TRUE)
+  expect_match(summary, "populations", fixed = TRUE)
 
-  # The only trace is downstream, at load: the two scenarios that name a
-  # population now dangle, which describes the symptom rather than the cause.
+  # And the downstream trace is unchanged: the two scenarios that name a
+  # population dangle at load.
   expect_true(any(grepl("undefined population", imported$warnings)))
 })
 
+# #1213 item 8, the mirror failures of the same property-driven resolution: a
+# workbook nothing names is never opened however much it holds, and one read under
+# its conventional name is content the project does not declare. Both are now
+# reported.
+test_that("an unread workbook is reported, and one read by convention is named", {
+  projectDir <- localLegacyExcelProject()
+  configDir <- file.path(projectDir, "Configurations")
+  # A second, nested set of workbooks the property sheet does not mention, the
+  # shape three of the tested projects had.
+  dir.create(file.path(configDir, "v2"))
+  file.copy(
+    file.path(configDir, "Scenarios.xlsx"),
+    file.path(configDir, "v2", "Scenarios.xlsx")
+  )
+  # And an initial-conditions workbook, whose property row the sheet never
+  # carried, sitting under the conventional filename.
+  writexl::write_xlsx(
+    list(
+      Global = data.frame(
+        `Container Path` = "Organism|Liver",
+        `Molecule Name` = "Aciclovir",
+        `Is Present` = TRUE,
+        Value = 1,
+        Units = "\u00b5mol/l",
+        `Scale Divisor` = 1,
+        `Neg. Values Allowed` = FALSE,
+        check.names = FALSE
+      )
+    ),
+    file.path(configDir, "InitialConditions.xlsx")
+  )
+
+  messages <- character()
+  imported <- withCallingHandlers(
+    importLegacyExcelProject(projectDir, silent = FALSE),
+    message = function(m) {
+      messages <<- c(messages, conditionMessage(m))
+      invokeRestart("muffleMessage")
+    }
+  )
+
+  # The nested copy contributed nothing and is named.
+  expect_length(imported$project$definitions$scenarios, 6L)
+  expect_true(any(grepl("not read", imported$warnings, fixed = TRUE)))
+  expect_true(any(grepl("Scenarios.xlsx", imported$warnings, fixed = TRUE)))
+
+  # The conventional workbook was imported, and the summary says the project does
+  # not name it.
+  expect_length(imported$project$definitions$initialConditions, 1L)
+  summary <- paste(messages, collapse = "")
+  expect_match(summary, "InitialConditions.xlsx", fixed = TRUE)
+  expect_match(summary, "conventional name", fixed = TRUE)
+})
+
 # #1213 item 9, first route: a parameter sheet whose column headers are duplicated
-# is correctly rejected as not a parameter sheet, and the rejection is reported.
-# What is not reported is the consequence: the individual named after that sheet
-# silently loses its whole parametrization, while its siblings keep theirs.
-test_that("a parameter sheet with duplicated headers costs its individual the parametrization", {
+# is correctly rejected as not a parameter sheet. The rejection names the sheet,
+# and a second warning now names the consequence: the individual that sheet
+# parametrized imports with no parametrization at all, while its siblings keep
+# theirs and the project still validates clean.
+test_that("a parameter sheet with duplicated headers names the individual it costs the parametrization", {
   projectDir <- localLegacyExcelProject()
   editWorkbookSheets(
     file.path(projectDir, "Configurations", "Individuals.xlsx"),
@@ -3584,20 +3695,21 @@ test_that("a parameter sheet with duplicated headers costs its individual the pa
   expect_null(imported$project$definitions$individuals[["child"]]$parameterSets)
   expect_false("child" %in% names(imported$project$definitions$parameterSets))
 
-  # The sheet is reported, and that is the whole of what the import says: one
-  # warning, about the sheet. Nothing follows it to say which individual just
-  # lost its parametrization.
-  expect_length(imported$warnings, 1L)
-  expect_match(imported$warnings, "Skipped sheet")
+  # Two warnings: the sheet that was skipped, and the individual it left
+  # unparametrized.
+  expect_length(imported$warnings, 2L)
+  expect_match(imported$warnings[[1]], "Skipped sheet")
+  expect_match(imported$warnings[[2]], "Child")
+  expect_match(imported$warnings[[2]], "without the parameter set")
 })
 
 # #1213 item 9, second route: individuals are keyed off the biometrics rows, so an
-# individual that has a parameter sheet but no biometrics row is dropped entirely.
-# Its sheet still becomes a parameter set, now owned by nobody, and the scenario
-# that names the individual is left dangling. Nothing reconciles the two at import
-# time; the only report comes later, from validation, and it describes the dangling
-# reference rather than the dropped individual.
-test_that("an individual with a parameter sheet but no biometrics row is dropped", {
+# individual that has a parameter sheet but no biometrics row is not imported. Its
+# sheet still becomes a parameter set owned by nobody, and the scenario naming the
+# individual is left dangling. Validation reports that dangling reference, which is
+# the symptom; the import now names the cause, the sheet whose individual has no
+# biometrics row, and the row to add.
+test_that("an individual with a parameter sheet but no biometrics row is dropped, and the sheet is named", {
   projectDir <- localLegacyExcelProject()
   editWorkbookSheets(
     file.path(projectDir, "Configurations", "Individuals.xlsx"),
@@ -3621,17 +3733,19 @@ test_that("an individual with a parameter sheet but no biometrics row is dropped
     "child"
   )
 
-  # Nothing at import time says an individual was dropped; the report that does
-  # arrive names the reference, not the cause.
-  expect_false(any(grepl("dropped|discarded", imported$warnings)))
+  # The import names the sheet whose individual is not defined, and validation
+  # still reports the reference the scenario is left with.
+  expect_true(any(grepl("does not", imported$warnings, fixed = TRUE)))
+  expect_true(any(grepl("Child", imported$warnings, fixed = TRUE)))
   expect_true(any(grepl("undefined individual", imported$warnings)))
 })
 
-# #1213 item 10: the plot definitions are keyed by id, with no duplicate check, so
-# a second row carrying an id an earlier row already used overwrites it. The
-# reported count is the count of surviving plots, so a workbook row that vanished
-# is invisible unless the reader counts the workbook themselves.
-test_that("two plot rows sharing an id silently lose one plot", {
+# #1213 item 10: each plot is one definition keyed by its id, so a second row
+# carrying an id an earlier row already used builds the same definition and the
+# earlier row's plot is gone. The reported count is the count of surviving plots,
+# which is why the loss used to be invisible unless the reader counted the
+# workbook themselves; the import now names the reused id.
+test_that("two plot rows sharing an id lose one plot, and it is reported", {
   projectDir <- localLegacyExcelProject()
   editWorkbookSheets(
     file.path(projectDir, "Configurations", "Plots.xlsx"),
@@ -3653,8 +3767,77 @@ test_that("two plot rows sharing an id silently lose one plot", {
     "observedVsSimulated"
   )
 
-  # And nothing reports a duplicate id.
-  expect_false(any(grepl("duplicate", imported$warnings, ignore.case = TRUE)))
+  # And the loss is reported, naming the id more than one row used.
+  expect_true(any(grepl("more than", imported$warnings, fixed = TRUE)))
+  expect_true(any(grepl("plotId", imported$warnings, fixed = TRUE)))
+})
+
+# #1213 item 15: the 5.x `PIOutputMappings` sheet names the sheet of the data
+# workbook each mapping's data set comes from. A project has no per-mapping
+# counterpart for it (an observed-data definition lists the sheets it imports, and
+# the import lists every sheet of the workbook), so the column is not carried and
+# the base fixture, whose sheet is in the workbook, says nothing. A named sheet
+# that is NOT imported is a mapping whose data set the project does not hold, and
+# that is reported.
+test_that("an ObservedDataSheet naming a sheet outside the data workbook is reported", {
+  expect_false(any(grepl(
+    "ObservedDataSheet",
+    importLegacyExcelProject(localLegacyExcelProject())$warnings,
+    fixed = TRUE
+  )))
+
+  projectDir <- localLegacyExcelProject()
+  editWorkbookSheets(
+    file.path(projectDir, "Configurations", "ParameterIdentification.xlsx"),
+    function(sheets) {
+      sheets$PIOutputMappings$ObservedDataSheet <- "Laskin 1982.Group B"
+      sheets
+    }
+  )
+  imported <- importLegacyExcelProject(projectDir)
+
+  expect_true(any(grepl(
+    "ObservedDataSheet",
+    imported$warnings,
+    fixed = TRUE
+  )))
+  expect_true(any(grepl("Group B", imported$warnings, fixed = TRUE)))
+})
+
+# #1213 item 26: the 5.x `exportConfiguration` sheet says where each grid's figure
+# is written and at what size, and a project has no field for any of it, so the
+# rows cannot be imported and an export cannot write them back. That decision is
+# the user's figure layout, so it is reported rather than dropped in silence. The
+# base fixture's sheet is header-only, which is what a workbook carries whether or
+# not it was filled in, and says nothing.
+test_that("a filled legacy plots exportConfiguration sheet is reported, an empty one is not", {
+  expect_false(any(grepl(
+    "exportConfiguration",
+    importLegacyExcelProject(localLegacyExcelProject())$warnings,
+    fixed = TRUE
+  )))
+
+  projectDir <- localLegacyExcelProject()
+  editWorkbookSheets(
+    file.path(projectDir, "Configurations", "Plots.xlsx"),
+    function(sheets) {
+      sheets$exportConfiguration <- data.frame(
+        plotGridName = "Aciclovir",
+        outputName = "aciclovir-pvb",
+        width = 20,
+        stringsAsFactors = FALSE
+      )
+      sheets
+    }
+  )
+  imported <- importLegacyExcelProject(projectDir)
+
+  expect_true(any(grepl(
+    "exportConfiguration",
+    imported$warnings,
+    fixed = TRUE
+  )))
+  expect_true(any(grepl("Aciclovir", imported$warnings, fixed = TRUE)))
 })
 
 # #1213 item 16: `.canonicalizeId()` folds Unicode compatibility variants and drops
