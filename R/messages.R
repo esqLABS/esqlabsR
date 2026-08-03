@@ -533,6 +533,34 @@ messages$importUndefinedIndividualSheets <- function(filePath, sheets) {
   )
 }
 
+messages$importSkippedPlotExportConfiguration <- function(
+  filePath,
+  rows,
+  grids
+) {
+  # Unglued: a grid name is free text.
+  envir <- new.env(parent = parent.frame())
+  assign("filePath", filePath, envir = envir)
+  assign("rows", rows, envir = envir)
+  assign("grids", grids, envir = envir)
+  assign("n", length(grids), envir = envir)
+  list(
+    bullets = c(
+      "!" = "The {.field exportConfiguration} sheet of {.file {filePath}} is \\
+      not imported: {cli::qty(rows)}{rows} {?row/rows} describing where a plot \\
+      grid's figure is written and at what size.",
+      if (length(grids) > 0L) {
+        c("x" = "{cli::qty(n)}Plot grid{?s} {.val {grids}}.")
+      },
+      "i" = "A project has no field for a figure's filename, width or height: \\
+      {.fn createPlots} returns the plot objects and the caller saves them, for \\
+      example with {.fn ggplot2::ggsave}, so the settings are not imported and \\
+      an export does not write them back."
+    ),
+    envir = envir
+  )
+}
+
 messages$importDuplicatePlotIds <- function(sheet, idField, ids) {
   # Unglued, like its neighbours: a plot id is free text.
   envir <- new.env(parent = parent.frame())

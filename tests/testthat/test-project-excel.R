@@ -3686,6 +3686,42 @@ test_that("two plot rows sharing an id lose one plot, and it is reported", {
   expect_true(any(grepl("plotId", imported$warnings, fixed = TRUE)))
 })
 
+# #1213 item 26: the 5.x `exportConfiguration` sheet says where each grid's figure
+# is written and at what size, and a project has no field for any of it, so the
+# rows cannot be imported and an export cannot write them back. That decision is
+# the user's figure layout, so it is reported rather than dropped in silence. The
+# base fixture's sheet is header-only, which is what a workbook carries whether or
+# not it was filled in, and says nothing.
+test_that("a filled legacy plots exportConfiguration sheet is reported, an empty one is not", {
+  expect_false(any(grepl(
+    "exportConfiguration",
+    importLegacyExcelProject(localLegacyExcelProject())$warnings,
+    fixed = TRUE
+  )))
+
+  projectDir <- localLegacyExcelProject()
+  editWorkbookSheets(
+    file.path(projectDir, "Configurations", "Plots.xlsx"),
+    function(sheets) {
+      sheets$exportConfiguration <- data.frame(
+        plotGridName = "Aciclovir",
+        outputName = "aciclovir-pvb",
+        width = 20,
+        stringsAsFactors = FALSE
+      )
+      sheets
+    }
+  )
+  imported <- importLegacyExcelProject(projectDir)
+
+  expect_true(any(grepl(
+    "exportConfiguration",
+    imported$warnings,
+    fixed = TRUE
+  )))
+  expect_true(any(grepl("Aciclovir", imported$warnings, fixed = TRUE)))
+})
+
 # #1213 item 16: `.canonicalizeId()` replaces whitespace through `[[:space:]]`,
 # which matches neither U+00A0 (no-break space) nor U+200B (zero-width space). So
 # an invisible character survives canonicalization into the id and from there into

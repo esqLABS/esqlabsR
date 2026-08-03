@@ -2596,6 +2596,10 @@ projectStatus <- function(project, silent = FALSE) {
     fields
   }
 
+  .warnSkippedPlotExportConfiguration(
+    readSheet("exportConfiguration"),
+    plotsFile
+  )
   plotConfiguration <- .parseExcelPlotSheet(
     readSheet("plotConfiguration"),
     rowToFields
@@ -2608,6 +2612,40 @@ projectStatus <- function(project, silent = FALSE) {
     dataCombined = .parseExcelDataCombinedSheet(readSheet("DataCombined")),
     plotConfiguration = plotConfiguration,
     plotGrids = plotGrids
+  )
+}
+
+# Report a legacy `exportConfiguration` sheet that carries rows.
+#
+# The sheet is the 5.x way of saying where each grid's figure is written and at
+# what size (`outputName`, `width`, `height`). A v6 project has no field for any
+# of that: figures are saved by the caller, from the plot objects `createPlots()`
+# returns, so the rows cannot be imported and an export cannot write them back
+# either. Which is a decision the user has to know about, since it is their
+# figure layout: a header-only sheet (what a workbook carries whether or not it
+# was ever filled in) says nothing and is silent.
+#
+# @param exportDf The `exportConfiguration` sheet, or NULL when absent or empty.
+# @param plotsFile The workbook, named in the warning.
+# @returns Nothing, called for its warning.
+# @keywords internal
+# @noRd
+.warnSkippedPlotExportConfiguration <- function(exportDf, plotsFile) {
+  if (is.null(exportDf) || nrow(exportDf) == 0L) {
+    return(invisible(NULL))
+  }
+  grids <- if ("plotGridName" %in% names(exportDf)) {
+    unique(as.character(exportDf$plotGridName))
+  } else {
+    character()
+  }
+  .warnFormatted(
+    messages$importSkippedPlotExportConfiguration(
+      plotsFile,
+      nrow(exportDf),
+      grids[!is.na(grids)]
+    ),
+    "esqlabsR_importSkippedPlotExportConfiguration"
   )
 }
 
