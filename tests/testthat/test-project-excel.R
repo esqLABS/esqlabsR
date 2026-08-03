@@ -3294,24 +3294,52 @@ test_that("a legacy parameter-identification Units cell is carried through", {
   )
 })
 
-# #1213 item 13: the `crossReferences` phase resolves a mapping's `outputPathId`
-# but never its `observedData`, so a mapping naming an observed data set the
-# project does not define is reported as no error at all. `runPI()` then aborts at
-# build time on a project `validateProject()` called clean.
-test_that("a dangling parameter-identification observedData reference is not reported", {
+# #1213 item 13: the `crossReferences` phase resolves a mapping's `observedData`
+# alongside its `outputPathId`. A mapping naming a data set no observed-data source
+# holds used to be reported as no error at all, and `runPI()` then aborted at build
+# time on a project `validateProject()` had called clean.
+test_that("a parameter-identification observedData reference resolves against the loaded data-set names", {
   imported <- importLegacyExcelProject(localLegacyExcelProject())
   task <- imported$project$definitions$parameterIdentification[["aciclovirfit"]]
 
-  # The reference is carried through and resolves to nothing: the observed-data
-  # section holds one positional entry with no id to match against.
-  expect_type(task$outputMappings[[1]]$observedDataId, "character")
-  expect_null(names(imported$project$definitions$observedData))
-
-  # And validation grades the whole project clean regardless.
+  # The fixture's mapping names a data set the workbook's data file really holds,
+  # so the reference resolves and the project is clean.
+  expect_true(
+    task$outputMappings[[1]]$observedDataId %in%
+      getObservedDataNames(imported$project)
+  )
   summary <- validationSummary(suppressWarnings(validateProject(
     imported$project
   )))
   expect_equal(summary$total_critical_errors, 0)
+})
+
+test_that("a dangling parameter-identification observedData reference is reported", {
+  projectDir <- localLegacyExcelProject()
+  editWorkbookSheets(
+    file.path(projectDir, "Configurations", "ParameterIdentification.xlsx"),
+    function(sheets) {
+      sheets$PIOutputMappings$DataSet <- "Laskin 1982.Group B_Aciclovir"
+      sheets
+    }
+  )
+  imported <- importLegacyExcelProject(projectDir)
+
+  results <- suppressWarnings(validateProject(imported$project))
+  messages <- vapply(
+    results$crossReferences$critical_errors,
+    function(e) e$message,
+    ""
+  )
+  expect_length(messages, 2L)
+  expect_true(all(grepl("undefined observed data", messages)))
+
+  # And `runPI()` is gated on that phase, so the mapping never reaches the build
+  # that used to be the first thing to notice.
+  expect_error(
+    runPI(imported$project),
+    "critical validation error"
+  )
 })
 
 # #1213 item 19: a blank `SimulationTimeUnit` cell imports as `null`, while

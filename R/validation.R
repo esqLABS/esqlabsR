@@ -1083,6 +1083,11 @@ validationSummary <- function(validationResults) {
   outputPathIds <- names(project$definitions$outputPaths %||% list())
 
   piHolders <- if (inScope("parameterIdentification")) names(piTasks) else NULL
+  # Resolved only when there is a task to check, since answering means loading
+  # the observed data.
+  observedDataNames <- if (length(piHolders) > 0L) {
+    .observedDataNamesForCrossReference(project)
+  }
   for (taskId in piHolders) {
     task <- piTasks[[taskId]]
 
@@ -1152,6 +1157,30 @@ validationSummary <- function(validationResults) {
             m$outputPathId,
             "'",
             .suggestSuffix(m$outputPathId, outputPathIds)
+          )
+        )
+      }
+      # `observedData` names a data set inside an observed-data source, not a
+      # declaration, so it resolves against the loaded data-set names. A `NULL`
+      # name set means the project could not be asked without running user code
+      # (see `.observedDataNamesForCrossReference()`), which leaves the reference
+      # unresolved rather than reported as dangling.
+      if (
+        !is.null(observedDataNames) &&
+          !.isMissingField(m$observedDataId) &&
+          !.refResolves(m$observedDataId, observedDataNames)
+      ) {
+        result$addCriticalError(
+          "Invalid Reference",
+          paste0(
+            "PI task '",
+            taskId,
+            "', outputMapping '",
+            m$id,
+            "' references undefined observed data '",
+            m$observedDataId,
+            "'",
+            .suggestSuffix(m$observedDataId, observedDataNames)
           )
         )
       }

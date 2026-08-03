@@ -142,10 +142,11 @@
       runPI(project)
     Condition
       Error in `.abortValidationErrors()`:
-      ! Cannot runPI: project has 3 critical validation errors.
+      ! Cannot runPI: project has 4 critical validation errors.
       x [crossReferences] PI task 't' references undefined scenarios: DoesNotExist
       x [crossReferences] PI task 't', parameter 'p' references undefined scenarios: DoesNotExist
       x [crossReferences] PI task 't', outputMapping 'm' references undefined scenarios: DoesNotExist
+      x [crossReferences] PI task 't', outputMapping 'm' references undefined observed data 'Laskin'
       i Run `validateProject(project)` for a full report.
 
 # .warnUnquantifiedUncertainty fires once per NA-uncertainty parameter
