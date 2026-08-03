@@ -820,11 +820,30 @@ buildSimulations <- function(
 #'
 #' @inherit vectorizedAuthoring details
 #'
+#' @section Passing a scenario back:
+#'   `id` also takes a `Scenario` record read out of a project
+#'   (`project$definitions$scenarios[["sc"]]`), in which case the record supplies
+#'   every field and no other field argument may be given. That is how a scenario
+#'   is copied to another project, or revised by editing the record's own field
+#'   and passing it back:
+#'
+#'   ```
+#'   sc <- project$definitions$scenarios[["aciclovir_iv"]]
+#'   sc$modelFile <- "Aciclovir_v2.pkml"
+#'   addScenario(project, sc, overwrite = TRUE)
+#'   ```
+#'
+#'   A field the record leaves unset is left to this function's default, exactly
+#'   as an absent key in the scenario's definition file is. To clear an optional
+#'   field, name the id and pass `NULL` for it
+#'   (`setScenario(project, "sc", individual = NULL)`).
+#'
 #' @param project A `Project` object.
 #' @param id Character vector of ids (names) for the new scenarios (the number
 #'   of scenarios to add). Each is canonicalized to a safe, lowercase,
 #'   single-path-segment id (a warning names the result if it changed); each
-#'   canonical id must not already exist in `scenarios` definitions.
+#'   canonical id must not already exist in `scenarios` definitions. A
+#'   `Scenario` record is also accepted; see the section below.
 #' @param modelFile Character. Name of the `.pkml` model file (relative
 #'   to model folder).
 #' @param individual Character or `NULL`. Id referencing
@@ -844,8 +863,10 @@ buildSimulations <- function(
 #'   the one the model file carries. One interval is a length-3 numeric vector
 #'   `c(start, end, resolution)` or the same grid written as a string,
 #'   `"start, end, resolution"`. Several intervals go in one string,
-#'   `"start, end, resolution; start, end, resolution"`. To give a different
-#'   grid per scenario, pass a list with one element (in either form) per id.
+#'   `"start, end, resolution; start, end, resolution"`, or in a list of
+#'   length-3 numeric vectors, which is the shape a scenario's parsed
+#'   `simulationTime` carries. To give a different grid per scenario, pass a list
+#'   with one element (in any of those forms) per id.
 #' @param simulationTimeUnit Character. Time unit string. Default `"h"`.
 #' @param steadyState Logical. Whether to simulate steady state. Default
 #'   `FALSE`.
@@ -885,6 +906,13 @@ addScenario <- function(
   overwrite = FALSE
 ) {
   validateIsOfType(project, "Project")
+  if (inherits(id, "Scenario")) {
+    .assertScenarioRecordAlone(match.call(), missing(modelFile))
+    return(do.call(
+      project$addScenario,
+      c(.scenarioRecordArgs(id), list(overwrite = overwrite))
+    ))
+  }
   project$addScenario(
     id,
     modelFile,
@@ -936,7 +964,7 @@ addScenario <- function(
   .assertIdVector(id)
   id <- .canonicalizeId(id)
   n <- length(id)
-  simulationTime <- .asSimulationTimeString(simulationTime)
+  simulationTime <- .asSimulationTimeString(simulationTime, n = n)
 
   perDefinition <- .alignAuthoringArgs(
     id,
@@ -1173,10 +1201,12 @@ removeScenario <- function(project, id) {
 #'   field left unsupplied is untouched on every scenario.
 #'
 #' @inherit vectorizedAuthoring details
+#' @inheritSection addScenario Passing a scenario back
 #' @inheritParams addScenario
 #' @param id Character vector. Ids of the scenarios to modify. Each is
 #'   canonicalized the same way [addScenario()] canonicalizes it, and must
-#'   already exist in `scenarios` definitions.
+#'   already exist in `scenarios` definitions. A `Scenario` record is also
+#'   accepted, and then supplies every field; see the section below.
 #' @param simulationTimeUnit Character time-unit string. Omitting the argument
 #'   leaves the current value untouched (there is no default; this is a
 #'   partial update).
@@ -1218,6 +1248,10 @@ setScenario <- function(
   readPopulationFromCSV
 ) {
   validateIsOfType(project, "Project")
+  if (inherits(id, "Scenario")) {
+    .assertScenarioRecordAlone(match.call(), missing(modelFile))
+    return(do.call(project$setScenario, .scenarioRecordArgs(id)))
+  }
 
   # Capture only the fields the caller actually supplied (partial update). A
   # supplied `NULL` (e.g. `individual = NULL`) clears the field, distinct
@@ -1297,7 +1331,9 @@ setScenario <- function(
     # `x[name] <- list(value)` keeps a supplied NULL (which clears the field) as
     # a present-but-NULL element, where `x$name <- NULL` would drop the name and
     # turn "clear it" into "leave it untouched".
-    dots["simulationTime"] <- list(.asSimulationTimeString(dots$simulationTime))
+    dots["simulationTime"] <- list(
+      .asSimulationTimeString(dots$simulationTime, n = n)
+    )
   }
   wholeNames <- intersect(
     c("parameterSets", "initialConditions", "outputPaths"),
@@ -1731,25 +1767,94 @@ duplicateScenario <- function(project, id, newId) {
   invisible(NULL)
 }
 
+# Translate a parsed `Scenario` record into the named argument list
+# `addScenario()` / `setScenario()` take, so a scenario read out of a project can
+# be handed straight back to the function that authors one.
+#
+# The record's field names are the ones the runtime reads (`scenarioName`,
+# `individualId`, `applicationProtocol`, `modelParameterSets`,
+# `simulateSteadyState`), while the authoring arguments are named after the
+# fields a definition file carries. `.scenarioToJson()` already bridges the two,
+# because it is what every save writes through, so the record goes through it
+# rather than through a second translation table that could drift from it. That
+# also settles the three shape differences in one place: the literal
+# `outputPaths` map becomes the id array again, a multi-interval `simulationTime`
+# becomes its one string, and the base-unit `steadyStateTime` returns to its
+# declared unit.
+#
+# A `NULL` field is dropped rather than passed on, because an absent key in a
+# definition file means "the argument was not given": that is what lets the
+# authoring defaults apply, and it is what keeps `steadyStateTime` /
+# `steadyStateTimeUnit` round-tripping when the record declares no unit. Handing
+# back a record therefore behaves exactly like handing back the fields the
+# scenario's own file carries. Clearing a reference stays an explicit
+# `setScenario(project, id, individual = NULL)`.
+#
+# @keywords internal
+# @noRd
+.scenarioRecordArgs <- function(record) {
+  entry <- .scenarioToJson(record)
+  names(entry)[names(entry) == "name"] <- "id"
+  Filter(Negate(is.null), entry)
+}
+
+# Abort when a `Scenario` record is passed as `id` alongside field arguments. The
+# record is the whole field set, so an accompanying field would be silently
+# ignored; edit the record's own field and pass it back, or name the id instead
+# of the record. `call` is the caller's `match.call()`, whose names cover every
+# named argument; `modelFileMissing` covers the one field that can be passed
+# positionally (and a further positional argument implies it was).
+#
+# @keywords internal
+# @noRd
+.assertScenarioRecordAlone <- function(
+  call,
+  modelFileMissing,
+  errorCall = rlang::caller_env()
+) {
+  extra <- setdiff(names(call), c("", "project", "id", "overwrite"))
+  if (!modelFileMissing) {
+    extra <- union("modelFile", extra)
+  }
+  if (length(extra) > 0L) {
+    cli::cli_abort(messages$scenarioRecordWithFields(extra), call = errorCall)
+  }
+  invisible(NULL)
+}
+
 # Bring a `simulationTime` authoring argument to the one string form the rest of
 # the pipeline reads, so `addScenario()` and `setScenario()` accept the numeric
 # time grid as readily as the string. A length-3 numeric vector
-# `c(start, end, resolution)` is one interval; a list holds one such value per
-# id; a character value passes through untouched, which is how several intervals
-# stay expressible ("0, 42, 48; 48, 96, 24"). Converting here, ahead of
+# `c(start, end, resolution)` is one interval, and a character value passes
+# through untouched, which is how several intervals stay expressible in one
+# string ("0, 42, 48; 48, 96, 24"). Converting here, ahead of
 # `.alignAuthoringArgs()`, is what keeps a length-3 numeric from being read as
 # three per-definition values.
+#
+# A list is read two ways, and `n` (the id count) decides which: one element per
+# id is the documented per-definition form, and any other length is one
+# multi-interval grid applied to every id. That second reading is the shape a
+# parsed scenario's own `simulationTime` carries, so a scenario's time grid can
+# be handed straight back. `n = NULL` means the caller does not know the id count
+# yet because it derives it from these very lengths
+# (`createScenariosFromPKML()`), so there every list is one element per id.
 #
 # @keywords internal
 # @noRd
 .asSimulationTimeString <- function(
   simulationTime,
+  n = NULL,
   call = rlang::caller_env()
 ) {
   if (is.null(simulationTime) || is.character(simulationTime)) {
     return(simulationTime)
   }
-  if (is.list(simulationTime)) {
+  if (length(simulationTime) == 0L) {
+    return(NULL)
+  }
+  perId <- is.list(simulationTime) &&
+    (is.null(n) || length(simulationTime) == n)
+  if (perId) {
     return(vapply(
       simulationTime,
       .simulationTimeIntervalString,
@@ -1760,16 +1865,24 @@ duplicateScenario <- function(project, id, newId) {
   .simulationTimeIntervalString(simulationTime, call = call)
 }
 
-# One scenario's time grid as a string. Accepts the string form verbatim and
-# turns `c(start, end, resolution)` into "start, end, resolution"; anything else
-# aborts naming both accepted forms. The interval itself (positive resolution,
-# start before end) is checked later, by `.parseSimulationTimeIntervals()`.
+# One scenario's time grid as a string. Accepts the string form verbatim, turns
+# `c(start, end, resolution)` into "start, end, resolution", and joins a list of
+# intervals (the parsed record's shape) into "a, b, c; d, e, f"; anything else
+# aborts naming the accepted forms. The intervals themselves (positive
+# resolution, start before end) are checked later, by
+# `.parseSimulationTimeIntervals()`.
 #
 # @keywords internal
 # @noRd
 .simulationTimeIntervalString <- function(value, call = rlang::caller_env()) {
   if (is.character(value) && length(value) == 1L && !is.na(value)) {
     return(value)
+  }
+  if (is.list(value)) {
+    return(paste(
+      vapply(value, .simulationTimeIntervalString, character(1), call = call),
+      collapse = "; "
+    ))
   }
   if (!is.numeric(value) || length(value) != 3L || anyNA(value)) {
     cli::cli_abort(messages$invalidSimulationTimeArgument(), call = call)

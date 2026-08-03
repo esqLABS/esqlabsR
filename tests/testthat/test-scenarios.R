@@ -716,6 +716,115 @@ test_that("addScenario stores steadyStateTime in base units and round-trips the 
   expect_equal(reloaded$definitions$scenarios[["ss"]]$steadyStateTimeUnit, "h")
 })
 
+# Passing a parsed Scenario record back ----
+
+test_that("a parsed scenario is accepted back by addScenario() unchanged", {
+  # The record's field names are the ones the runtime reads, not the authoring
+  # argument names, and three of its fields are stored in a different shape from
+  # the one authoring takes (resolved output paths, a parsed time grid, a
+  # base-unit steady-state time). Handing the record back has to survive all of
+  # that: the copy must equal the original in every field but its id.
+  project <- testProject()
+  sc <- project$definitions$scenarios[["testscenario"]]
+
+  addScenario(project, sc, overwrite = TRUE)
+  copy <- project$definitions$scenarios[["testscenario"]]
+
+  # This record declares no `steadyStateTimeUnit`, and a definition file cannot
+  # carry a steady-state time without one, so the copy gains the default "min" -
+  # the unit the stored value is already in, leaving the duration unchanged. This
+  # is what re-adding a scenario from its written definition file does too.
+  expect_null(sc$steadyStateTimeUnit)
+  expect_equal(copy$steadyStateTimeUnit, "min")
+  expect_equal(copy$steadyStateTime, sc$steadyStateTime)
+  rest <- setdiff(names(sc), "steadyStateTimeUnit")
+  expect_equal(copy[rest], sc[rest])
+
+  # And into a second project, under the record's own id.
+  other <- testProject()
+  removeScenario(other, "testscenario")
+  addScenario(other, sc)
+  expect_equal(other$definitions$scenarios[["testscenario"]][rest], sc[rest])
+})
+
+test_that("a scenario carrying a multi-interval time grid and a non-minute steady state round-trips", {
+  # The two record fields whose stored shape differs most from the authoring
+  # argument: a list of intervals, and a steady-state time held in minutes while
+  # the scenario declares hours.
+  project <- testProject()
+  addScenario(
+    project,
+    "grid",
+    modelFile = "Aciclovir.pkml",
+    simulationTime = "0, 42, 48; 48, 96, 24",
+    steadyState = TRUE,
+    steadyStateTime = 5,
+    steadyStateTimeUnit = "h"
+  )
+  sc <- project$definitions$scenarios[["grid"]]
+  expect_length(sc$simulationTime, 2L)
+  expect_equal(sc$steadyStateTime, 300)
+
+  addScenario(project, sc, overwrite = TRUE)
+  expect_equal(project$definitions$scenarios[["grid"]], sc)
+})
+
+test_that("setScenario() takes a parsed scenario, so an edited record writes back", {
+  project <- testProject()
+  sc <- project$definitions$scenarios[["testscenario"]]
+  sc$modelFile <- "Aciclovir.pkml"
+  sc$simulationTimeUnit <- "min"
+
+  setScenario(project, sc)
+  after <- project$definitions$scenarios[["testscenario"]]
+  expect_equal(after$modelFile, "Aciclovir.pkml")
+  expect_equal(after$simulationTimeUnit, "min")
+  rest <- setdiff(names(sc), "steadyStateTimeUnit")
+  expect_equal(after[rest], sc[rest])
+})
+
+test_that("a scenario record passed with field arguments alongside it aborts", {
+  project <- testProject()
+  sc <- project$definitions$scenarios[["testscenario"]]
+  expect_snapshot(
+    error = TRUE,
+    addScenario(project, sc, modelFile = "Other.pkml")
+  )
+  expect_snapshot(error = TRUE, setScenario(project, sc, individual = NULL))
+})
+
+test_that("addScenario() reads a list of intervals as one grid for one scenario", {
+  # A parsed multi-interval `simulationTime` is a list of length-3 numerics; with
+  # one id that is one grid, not one value per id.
+  project <- testProject()
+  addScenario(
+    project,
+    "listgrid",
+    modelFile = "Aciclovir.pkml",
+    simulationTime = list(c(0, 42, 48), c(48, 96, 24))
+  )
+  expect_equal(
+    project$definitions$scenarios[["listgrid"]]$simulationTime,
+    list(c(0, 42, 48), c(48, 96, 24))
+  )
+
+  # With two ids, a two-element list stays one grid per id.
+  addScenario(
+    project,
+    c("g1", "g2"),
+    modelFile = "Aciclovir.pkml",
+    simulationTime = list(c(0, 42, 48), c(48, 96, 24))
+  )
+  expect_equal(
+    project$definitions$scenarios[["g1"]]$simulationTime,
+    list(c(0, 42, 48))
+  )
+  expect_equal(
+    project$definitions$scenarios[["g2"]]$simulationTime,
+    list(c(48, 96, 24))
+  )
+})
+
 # setScenario ----
 
 test_that("setScenario changes a field in memory and persists on save", {

@@ -862,6 +862,19 @@ messages$unknownScenarioNames <- function(unknownNames) {
   )
 }
 
+# Raised when a `Scenario` record is passed where an id goes, together with field
+# arguments. The record carries every field, so an accompanying one would be
+# quietly overruled by it; the message names the two ways forward instead.
+messages$scenarioRecordWithFields <- function(fields) {
+  cli::format_message(c(
+    "A {.cls Scenario} passed as {.arg id} carries every field, so \\
+    {.arg {fields}} cannot be given alongside it.",
+    "i" = "Edit the record's own field and pass it back \\
+    ({.code sc$modelFile <- \"other.pkml\"}), or name the scenario's id instead \\
+    of the record."
+  ))
+}
+
 messages$invalidSimulationTimeArgument <- function() {
   cliFormat(
     "{.arg simulationTime} must be a length-3 numeric vector \\

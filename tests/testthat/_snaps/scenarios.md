@@ -110,6 +110,22 @@
       ! scenario "populationscenario" already exists.
       i Pass `overwrite = TRUE` to replace it.
 
+# a scenario record passed with field arguments alongside it aborts
+
+    Code
+      addScenario(project, sc, modelFile = "Other.pkml")
+    Condition
+      Error in `addScenario()`:
+      ! A <Scenario> passed as `id` carries every field, so `modelFile` cannot be given alongside it. i Edit the record's own field and pass it back (`sc$modelFile <- "other.pkml"`), or name the scenario's id instead of the record.
+
+---
+
+    Code
+      setScenario(project, sc, individual = NULL)
+    Condition
+      Error in `setScenario()`:
+      ! A <Scenario> passed as `id` carries every field, so `individual` cannot be given alongside it. i Edit the record's own field and pass it back (`sc$modelFile <- "other.pkml"`), or name the scenario's id instead of the record.
+
 # setScenario aborts on a non-existent scenario, no file written
 
     Code

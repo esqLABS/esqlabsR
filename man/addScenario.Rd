@@ -30,7 +30,8 @@ addScenario(
 \item{id}{Character vector of ids (names) for the new scenarios (the number
 of scenarios to add). Each is canonicalized to a safe, lowercase,
 single-path-segment id (a warning names the result if it changed); each
-canonical id must not already exist in \code{scenarios} definitions.}
+canonical id must not already exist in \code{scenarios} definitions. A
+\code{Scenario} record is also accepted; see the section below.}
 
 \item{modelFile}{Character. Name of the \code{.pkml} model file (relative
 to model folder).}
@@ -58,8 +59,10 @@ scenario.}
 the one the model file carries. One interval is a length-3 numeric vector
 \code{c(start, end, resolution)} or the same grid written as a string,
 \code{"start, end, resolution"}. Several intervals go in one string,
-\code{"start, end, resolution; start, end, resolution"}. To give a different
-grid per scenario, pass a list with one element (in either form) per id.}
+\code{"start, end, resolution; start, end, resolution"}, or in a list of
+length-3 numeric vectors, which is the shape a scenario's parsed
+\code{simulationTime} carries. To give a different grid per scenario, pass a list
+with one element (in any of those forms) per id.}
 
 \item{simulationTimeUnit}{Character. Time unit string. Default \code{"h"}.}
 
@@ -154,6 +157,25 @@ rule described here. \code{renameScenario()}, \code{duplicateScenario()},
 parameter-identification sub-definition helpers act on a single definition per
 call.
 }
+\section{Passing a scenario back}{
+
+\code{id} also takes a \code{Scenario} record read out of a project
+(\code{project$definitions$scenarios[["sc"]]}), in which case the record supplies
+every field and no other field argument may be given. That is how a scenario
+is copied to another project, or revised by editing the record's own field
+and passing it back:
+
+\if{html}{\out{<div class="sourceCode">}}\preformatted{sc <- project$definitions$scenarios[["aciclovir_iv"]]
+sc$modelFile <- "Aciclovir_v2.pkml"
+addScenario(project, sc, overwrite = TRUE)
+}\if{html}{\out{</div>}}
+
+A field the record leaves unset is left to this function's default, exactly
+as an absent key in the scenario's definition file is. To clear an optional
+field, name the id and pass \code{NULL} for it
+(\code{setScenario(project, "sc", individual = NULL)}).
+}
+
 \seealso{
 Other scenario:
 \code{\link[=duplicateScenario]{duplicateScenario()}},
