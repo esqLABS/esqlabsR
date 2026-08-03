@@ -685,23 +685,28 @@ print.Scenario <- function(x, ...) {
 #'   warning instead.
 #' @param stopIfFails Logical. If `TRUE` (default), a scenario that fails to
 #'   build (e.g. a missing model parameter path) or whose simulation produced
-#'   no results aborts the run with an error. Set to `FALSE` to instead warn
-#'   and leave that scenario's `outputValues` `NULL` while the other scenarios
-#'   are still built, run, and returned.
+#'   no results aborts the run with an error naming that scenario. Set to `FALSE`
+#'   to instead warn and leave that scenario's `results` and `outputValues`
+#'   `NULL` while the other scenarios are still built, run, and returned.
 #'
 #' @returns A named list keyed by scenario name. Each entry is a list
 #'   with `simulation` (the initialized [ospsuite::Simulation]),
 #'   `results` ([ospsuite::SimulationResults]), `outputValues` (the
-#'   computed output values, or `NULL` if simulation failed), and
-#'   `population` (an [ospsuite::Population] for population
-#'   scenarios, or `NULL` for individual scenarios). With
-#'   `stopIfFails = FALSE`, a scenario skipped at build time is still returned,
-#'   with `simulation`, `results`, and `outputValues` all `NULL`.
+#'   computed output values), and `population` (an [ospsuite::Population] for
+#'   population scenarios, or `NULL` for individual scenarios).
+#'
+#'   Every requested scenario gets an entry, including one that produced no
+#'   results under `stopIfFails = FALSE`. Such an entry carries `results = NULL`
+#'   (and `outputValues = NULL`), which is what tells a skipped scenario from one
+#'   that ran; a closing warning also names every scenario that produced none.
+#'   Select the ones that ran with
+#'   `Filter(\(x) !is.null(x$results), results)` before reaching into them.
 #'
 #' @details If a scenario fails, either at build time or because its
 #'   simulation produced no results, `runScenarios()` aborts by default
-#'   (`stopIfFails = TRUE`). Set `stopIfFails = FALSE` to instead produce a
-#'   warning, skip the failing scenario, and leave its `outputValues` `NULL`.
+#'   (`stopIfFails = TRUE`), naming the scenario. Set `stopIfFails = FALSE` to
+#'   instead produce a warning, skip the failing scenario, and leave its
+#'   `results` and `outputValues` `NULL`.
 #'
 #' @seealso [buildSimulations()] to obtain the parameterized simulations
 #'   without running them.

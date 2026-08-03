@@ -176,6 +176,17 @@ messages$fileNotFound <- function(filePath) {
   cliFormat("File not found: {.file {filePath}}")
 }
 
+# Raised from `.assertNotLfsPointer()`. Unglued so a path containing `{` or `}`
+# is interpolated exactly once, by the raising call, where the value is bound
+# under `path`.
+messages$gitLfsPointerFile <- function(path) {
+  c(
+    "x" = "{.file {path}} is a Git LFS pointer file, not the file it stands \\
+    for.",
+    "i" = "Fetch the real file with {.code git lfs pull}, then try again."
+  )
+}
+
 # Raised from `Project$.readJson()`. Unglued for the same reason as
 # `legacySnapshotNotLoadable()` below: a hand-edited `schemaVersion` containing
 # `{` or `}` would be glue-parsed a second time by the raising `cli_abort()` and
@@ -922,6 +933,35 @@ messages$scenarioBuildFailed <- function(scenarioName, conditionMessage) {
       "Could not build scenario {.val {scenarioName}}; skipping it."
     ),
     "i" = safe_msg
+  )
+}
+
+# The `stopIfFails = TRUE` counterpart of `scenarioBuildFailed()`: the underlying
+# error is attached as the abort's `parent`, so cli renders it below this header
+# rather than it needing to be interpolated (and brace-escaped) here.
+messages$scenarioBuildFailedAbort <- function(scenarioName, canSkip) {
+  c(
+    cli::format_inline("Could not build scenario {.val {scenarioName}}."),
+    # `buildSimulations()` has no `stopIfFails`, so only name it where it exists.
+    if (canSkip) {
+      c(
+        "i" = "Pass {.code stopIfFails = FALSE} to skip it and build the other \\
+        scenarios."
+      )
+    }
+  )
+}
+
+# Raised at the end of a `stopIfFails = FALSE` run, listing every scenario that
+# produced no results. The per-scenario warnings scroll away in a batch of
+# eighty, and the returned list gives every scenario an entry whatever happened
+# to it, so this is what tells the caller which ones to leave out.
+messages$scenariosSkipped <- function(scenarioNames) {
+  c(
+    "!" = "{length(scenarioNames)} of the scenarios produced no results: \\
+    {.val {scenarioNames}}.",
+    "i" = "Their entries carry {.code results = NULL}; select the ones that ran \\
+    with {.code Filter(\\(x) !is.null(x$results), results)}."
   )
 }
 

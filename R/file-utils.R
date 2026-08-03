@@ -270,6 +270,36 @@ readExcel <- function(path, sheet = NULL, ...) {
   writexl::write_xlsx(data, path = path, col_names = col_names)
 }
 
+#' Abort when a file is a Git LFS pointer rather than the file it stands for
+#'
+#' A pointer is a few lines of text opening with the LFS spec URL, so a `.pkml`
+#' that is still one reaches the simulation backend as malformed XML and aborts
+#' naming neither the file nor the reason. Projects that keep their models in LFS
+#' are common enough that a clone without `git lfs pull` is worth naming.
+#'
+#' @param path The file about to be read.
+#' @param call The frame the abort is attributed to.
+#' @returns `NULL`, invisibly; called for the abort.
+#' @keywords internal
+#' @noRd
+.assertNotLfsPointer <- function(path, call = rlang::caller_env()) {
+  # A pointer file is a few hundred bytes at most, so the size check keeps a real
+  # model (megabytes of XML) from being opened at all.
+  if (!file.exists(path) || file.size(path) > 1024) {
+    return(invisible(NULL))
+  }
+  firstLine <- tryCatch(
+    readLines(path, n = 1L, warn = FALSE),
+    error = function(e) character()
+  )
+  isPointer <- length(firstLine) == 1L &&
+    startsWith(firstLine, "version https://git-lfs.github.com/spec/")
+  if (isPointer) {
+    cli::cli_abort(messages$gitLfsPointerFile(path), call = call)
+  }
+  invisible(NULL)
+}
+
 #' Guard a name that will be joined onto a directory
 #'
 #' A name that becomes a path via `file.path(dir, name)` must be a single plain
@@ -284,7 +314,11 @@ readExcel <- function(path, sheet = NULL, ...) {
 #' @returns `NULL`, invisibly; called for the abort.
 #' @keywords internal
 #' @noRd
-.validateFilenameSegment <- function(name, message, call = rlang::caller_env()) {
+.validateFilenameSegment <- function(
+  name,
+  message,
+  call = rlang::caller_env()
+) {
   if (
     !is.character(name) ||
       length(name) != 1L ||
