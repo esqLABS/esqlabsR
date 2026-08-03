@@ -307,7 +307,9 @@ print.Scenario <- function(x, ...) {
 .scenariosValidatorAdapter <- function(project) {
   .validateScenarios(
     project$definitions$scenarios,
-    project$paths$simulationsFolder
+    project$paths$simulationsFolder,
+    project$paths$populationsFolder,
+    project$definitions$populations
   )
 }
 
@@ -320,8 +322,9 @@ print.Scenario <- function(x, ...) {
 #' Validate the `scenarios` section of a Project
 #'
 #' Per-entry checks: `modelFile` is set and non-empty, resolves on disk
-#' (warning), `simulationType` is one of the supported values, and
-#' population-typed scenarios declare a `populationId`.
+#' (warning), `simulationType` is one of the supported values,
+#' population-typed scenarios declare a `populationId`, and a scenario the
+#' runtime would read from a csv file has that file on disk (warning).
 #'
 #' Cross-section reference checks (individual, parameterSets, application,
 #' …) live in `.validateCrossReferences()`.
@@ -331,10 +334,23 @@ print.Scenario <- function(x, ...) {
 #' @param simulationsFolder Character. Absolute path to the project's
 #'   simulations folder, used to resolve relative `modelFile` paths. May be
 #'   `NULL`.
+#' @param populationsFolder Character. Absolute path to the project's
+#'   populations folder, used to resolve the csv file a population-from-csv
+#'   scenario reads. May be `NULL`.
+#' @param populations Named list from `populations` definitions. Read only to
+#'   apply the runtime's own rule for *which* file a scenario reads (a `csv`
+#'   entry names its own `file`; the scenario flag derives one), so the file
+#'   checked here is the file the run opens. Whether the referenced population
+#'   exists at all is `.validateCrossReferences()`'s check, not this one.
 #' @return validationResult.
 #' @keywords internal
 #' @noRd
-.validateScenarios <- function(scenarios, simulationsFolder = NULL) {
+.validateScenarios <- function(
+  scenarios,
+  simulationsFolder = NULL,
+  populationsFolder = NULL,
+  populations = NULL
+) {
   result <- validationResult$new()
 
   if (is.null(scenarios) || length(scenarios) == 0) {
@@ -426,6 +442,52 @@ print.Scenario <- function(x, ...) {
           "'; it will load as a Population scenario on the next reload."
         )
       )
+    }
+
+    # A population read from a csv file is the one scenario input nothing else
+    # checks: the file is named by an id (or by the entry's `file`), not by a
+    # path in the scenario, so an absent one surfaced only as a backend
+    # exception at run time. The type resolution is the runtime's own
+    # (`.resolvePopulation()`): an entry's `type` wins, else the scenario flag
+    # decides. Graded like a missing `modelFile`: a warning, since the project
+    # still parses and one absent input file should not block every scenario.
+    if (hasPopulationId) {
+      popData <- populations[[sc$populationId]]
+      readsCsv <- identical(
+        popData$type %||%
+          (if (isTRUE(sc$readPopulationFromCSV)) "csv" else "spec"),
+        "csv"
+      )
+      if (readsCsv && !is.null(populationsFolder)) {
+        fileName <- .populationCsvFileName(
+          sc$populationId,
+          populationsFolder,
+          popData$file
+        )
+        if (.pathEscapesRoot(fileName, populationsFolder)) {
+          result$addCriticalError(
+            "Path Containment",
+            paste0(
+              "Scenario '",
+              name,
+              "' reads a population file outside the project folder: ",
+              fileName
+            )
+          )
+        } else if (!file.exists(file.path(populationsFolder, fileName))) {
+          result$addWarning(
+            "File Not Found",
+            paste0(
+              "Scenario '",
+              name,
+              "' reads population '",
+              sc$populationId,
+              "' from a non-existent csv file: ",
+              fileName
+            )
+          )
+        }
+      }
     }
   }
 

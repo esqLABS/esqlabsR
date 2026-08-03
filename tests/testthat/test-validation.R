@@ -300,6 +300,80 @@ test_that(".validateScenarios flags a modelFile that escapes the simulations fol
   expect_length(containment, 1)
 })
 
+# A population read from a csv file used to be the one scenario input nothing
+# validated: the report showed 0 critical errors and the scenario then died at
+# run time on a backend exception (#1213).
+test_that(".validateScenarios warns when a scenario's population csv is absent", {
+  dir <- withr::local_tempdir()
+  file.create(file.path(dir, "model.pkml"))
+  sc <- Scenario(
+    modelFile = "model.pkml",
+    simulationType = "Population",
+    populationId = "testpopulation"
+  )
+  sc$readPopulationFromCSV <- TRUE
+
+  result <- .validateScenarios(
+    list(s1 = sc),
+    simulationsFolder = dir,
+    populationsFolder = withr::local_tempdir(),
+    # A demographics-spec entry: the scenario's own flag is what makes it a csv
+    # read, which is the shape every imported legacy project has.
+    populations = list(testpopulation = list(species = "Human"))
+  )
+
+  msgs <- vapply(result$warnings, \(w) w$message, character(1))
+  expect_match(msgs, "testpopulation\\.csv", all = FALSE)
+})
+
+test_that(".validateScenarios passes when the population csv is on disk", {
+  dir <- withr::local_tempdir()
+  file.create(file.path(dir, "model.pkml"))
+  populations <- withr::local_tempdir()
+  # Mixed case, as an author spells it, against the canonical lowercase id.
+  file.create(file.path(populations, "TestPopulation.csv"))
+  sc <- Scenario(
+    modelFile = "model.pkml",
+    simulationType = "Population",
+    populationId = "testpopulation"
+  )
+  sc$readPopulationFromCSV <- TRUE
+
+  result <- .validateScenarios(
+    list(s1 = sc),
+    simulationsFolder = dir,
+    populationsFolder = populations,
+    populations = list(testpopulation = list(species = "Human"))
+  )
+
+  expect_length(
+    Filter(\(w) w$category == "File Not Found", result$warnings),
+    0
+  )
+})
+
+test_that(".validateScenarios checks the file a csv population entry names", {
+  dir <- withr::local_tempdir()
+  file.create(file.path(dir, "model.pkml"))
+  sc <- Scenario(
+    modelFile = "model.pkml",
+    simulationType = "Population",
+    populationId = "frozen"
+  )
+
+  # No scenario flag: the entry's own `type` is what makes this a csv read, and
+  # the file it names is the one checked (not a derived `<id>.csv`).
+  result <- .validateScenarios(
+    list(s1 = sc),
+    simulationsFolder = dir,
+    populationsFolder = withr::local_tempdir(),
+    populations = list(frozen = list(type = "csv", file = "frozen.csv"))
+  )
+
+  msgs <- vapply(result$warnings, \(w) w$message, character(1))
+  expect_match(msgs, "frozen\\.csv", all = FALSE)
+})
+
 test_that(".validateIndividuals warns on empty section", {
   result <- .validateIndividuals(list())
   expect_length(result$warnings, 1)
