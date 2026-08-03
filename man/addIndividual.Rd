@@ -22,6 +22,11 @@ species name.}
 for some animal species); when supplied it must be a valid \code{GenderInt}
 token. Numeric fields are coerced via \code{as.double()}. \code{parameterSets} is a
 character vector of ids referencing \code{parameterSets} definitions.
+\code{proteinOntogenies} is a character vector of \code{"Protein:Ontogeny"} entries,
+one per ontogeny (e.g. \code{c("CYP3A4:CYP3A4", "CYP2D6:CYP2C8")}), or the same
+pairs as one comma-joined string as the Excel sheets spell it; the ontogeny
+name must be a key of \link[ospsuite:StandardOntogeny]{ospsuite::StandardOntogeny}, checked when the
+scenario runs.
 \code{overwrite} is a logical scalar (default \code{FALSE}): an id that already
 exists aborts unless \code{overwrite = TRUE}, which replaces it
 (last-write-wins). Unknown fields trigger an error.}
@@ -32,8 +37,8 @@ The \code{project} object, invisibly.
 \description{
 Add individuals to \code{individuals} definitions, vectorizing over a vector of ids
 (see the recycling rule under Details). Scalar-per-definition fields (\code{species}
-and the \code{...} fields \code{population}, \code{gender}, \code{weight}, \code{height}, \code{age},
-\code{proteinOntogenies}) follow the recycle/align rule; \code{parameterSets} is
+and the \code{...} fields \code{population}, \code{gender}, \code{weight}, \code{height}, \code{age}) follow
+the recycle/align rule; \code{parameterSets} and \code{proteinOntogenies} are
 vector-valued-per-definition (applied whole to every individual, or one vector
 per individual via a length-\code{id} list).
 }

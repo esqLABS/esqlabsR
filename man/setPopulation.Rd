@@ -18,8 +18,10 @@ already exist in \code{populations} definitions.}
 \code{weightMax}, \code{heightMin}, \code{heightMax}, \code{ageMin}, \code{ageMax}, \code{BMIMin},
 \code{BMIMax}, \code{gender}, \code{weightUnit}, \code{heightUnit}, \code{ageUnit}, \code{BMIUnit},
 \code{population}, \code{diseaseState}, \code{proteinOntogenies}. Scalar-per-definition
-fields recycle/align across \code{id}. Numeric fields are coerced via
-\code{as.double()}. Unknown fields trigger an error.}
+fields recycle/align across \code{id}; \code{proteinOntogenies} is applied whole (or
+one vector per population via a length-\code{id} list) and takes the same
+\code{"Protein:Ontogeny"} entries as \code{\link[=addPopulation]{addPopulation()}}. Numeric fields are
+coerced via \code{as.double()}. Unknown fields trigger an error.}
 }
 \value{
 The \code{project} object, invisibly.
