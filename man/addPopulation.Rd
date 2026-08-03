@@ -25,6 +25,11 @@ length as \code{id}. Omit when injecting a \code{Population} object.}
 \code{ageMax}, \code{BMIMin}, \code{BMIMax}, \code{gender}, \code{weightUnit}, \code{heightUnit},
 \code{ageUnit}, \code{BMIUnit}, \code{population}, \code{diseaseState}, \code{proteinOntogenies},
 and \code{overwrite}. Numeric range fields are coerced via \code{as.double()}.
+\code{proteinOntogenies} is a character vector of \code{"Protein:Ontogeny"} entries,
+one per ontogeny (e.g. \code{c("CYP3A4:CYP3A4", "CYP2D6:CYP2C8")}), or the same
+pairs as one comma-joined string as the Excel sheets spell it; the ontogeny
+name must be a key of \link[ospsuite:StandardOntogeny]{ospsuite::StandardOntogeny}, checked when the
+scenario runs.
 \code{overwrite} is a logical scalar (default \code{FALSE}): an id that already
 exists aborts unless \code{overwrite = TRUE}, which replaces it
 (last-write-wins).}
@@ -38,7 +43,9 @@ Add populations to \code{populations} definitions. Two forms:
 \item A \strong{demographics spec}: pass \code{species} and \code{numberOfIndividuals} (plus
 optional \code{...} fields). This vectorizes over a vector of ids (see the
 recycling rule under Details); \code{species}, \code{numberOfIndividuals}, and the
-\code{...} fields are scalar-per-definition (recycle/align).
+\code{...} fields are scalar-per-definition (recycle/align), except
+\code{proteinOntogenies}, which is vector-valued-per-definition (applied whole to
+every population, or one vector per population via a length-\code{id} list).
 \item An \strong{injected object}: pass a single id and an \link[ospsuite:Population]{ospsuite::Population}
 object in the \code{species} position. The object is stored in the R session
 and the scenario runs against it directly (a mutated or programmatically

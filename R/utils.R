@@ -145,6 +145,27 @@ compareWithNA <- function(v1, v2) {
   return(simulationTimeIntervals)
 }
 
+# Flatten a protein-ontogeny specification into a character vector of one entry
+# per ontogeny. Every shape the field takes across the package is accepted: a
+# character vector of `"Protein:Ontogeny"` entries, a single comma-joined cell as
+# the Excel sheets spell it, and the list a JSON array yields when read with
+# `simplifyVector = FALSE`. Blank and `NA` entries are dropped, so an empty cell
+# and an absent field both come back as `character(0)`.
+#
+# @keywords internal
+# @noRd
+.splitProteinOntogenies <- function(value) {
+  if (is.null(value)) {
+    return(character(0))
+  }
+  entries <- as.character(unlist(value, use.names = FALSE))
+  entries <- trimws(unlist(
+    strsplit(entries, ",", fixed = TRUE),
+    use.names = FALSE
+  ))
+  entries[!is.na(entries) & nzchar(entries)]
+}
+
 #' Get the name of the molecule from a quantity
 #'
 #' @description Returns the name of the molecule to which the quantity object is

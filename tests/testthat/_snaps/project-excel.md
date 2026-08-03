@@ -37,6 +37,23 @@
       x The "Demographics" sheet is missing required columns: PopulationName and population.
       i Add them to the workbook, or re-export the project with `exportProjectToExcel()` to get a sheet with the columns this version reads.
 
+# an unpairable ontogeny declaration warns instead of dropping it in silence
+
+    Code
+      indiv <- .parseExcelIndividuals(.legacyOntogenyIndividual("Indiv1",
+        "CYP3A4,CYP2D6", "CYP3A4"))
+    Condition
+      Warning:
+      ! The protein ontogenies of individual "Indiv1" are not imported: the Protein and Ontogeny columns cannot be paired. i 2 proteins against 1 ontogeny; each protein needs exactly one ontogeny. i Fix the workbook, or write the pairs into a single Protein Ontogenies cell as "Protein:Ontogeny,Protein:Ontogeny".
+
+---
+
+    Code
+      pop <- .parseExcelPopulations(.legacyOntogenyPopulation("Pop1", "CYP3A4", NA))
+    Condition
+      Warning:
+      ! The protein ontogenies of population "Pop1" are not imported: the Protein and Ontogeny columns cannot be paired. i 1 protein against 0 ontogenies; each protein needs exactly one ontogeny. i Fix the workbook, or write the pairs into a single Protein Ontogenies cell as "Protein:Ontogeny,Protein:Ontogeny".
+
 # importProjectFromExcel aborts when two ids canonicalize to the same value
 
     Code

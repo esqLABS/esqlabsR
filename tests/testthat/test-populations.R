@@ -275,6 +275,108 @@ test_that("addPopulation and setPopulation accept proteinOntogenies", {
   )
 })
 
+test_that("a population's ontogenies survive a save/load round trip as a vector", {
+  # One entry per ontogeny is the authored shape, so the field is applied whole
+  # to a population rather than split across ids, and it comes back off disk as
+  # the same character vector (a JSON array reads as a list otherwise).
+  project <- testProject()
+  ontogenies <- c("CYP3A4:CYP3A4", "CYP2D6:CYP2C8")
+  addPopulation(
+    project,
+    "onto_vec",
+    species = "Human",
+    numberOfIndividuals = 5,
+    proteinOntogenies = ontogenies
+  )
+  expect_identical(
+    project$definitions$populations[["onto_vec"]]$proteinOntogenies,
+    ontogenies
+  )
+
+  saveProject(project)
+  reloaded <- loadProject(project$info$projectFilePath)
+  expect_identical(
+    reloaded$definitions$populations[["onto_vec"]]$proteinOntogenies,
+    ontogenies
+  )
+})
+
+test_that("addPopulation applies one ontogeny vector whole, and a list per population", {
+  project <- testProject()
+  shared <- c("CYP3A4:CYP3A4", "CYP2D6:CYP2C8")
+  addPopulation(
+    project,
+    c("onto_a", "onto_b"),
+    species = "Human",
+    numberOfIndividuals = 5,
+    proteinOntogenies = shared
+  )
+  expect_identical(
+    project$definitions$populations[["onto_a"]]$proteinOntogenies,
+    shared
+  )
+  expect_identical(
+    project$definitions$populations[["onto_b"]]$proteinOntogenies,
+    shared
+  )
+
+  addPopulation(
+    project,
+    c("onto_c", "onto_d"),
+    species = "Human",
+    numberOfIndividuals = 5,
+    proteinOntogenies = list(
+      "CYP3A4:CYP3A4",
+      c("CYP2D6:CYP2C8", "CYP1A2:CYP1A2")
+    )
+  )
+  expect_identical(
+    project$definitions$populations[["onto_c"]]$proteinOntogenies,
+    "CYP3A4:CYP3A4"
+  )
+  expect_identical(
+    project$definitions$populations[["onto_d"]]$proteinOntogenies,
+    c("CYP2D6:CYP2C8", "CYP1A2:CYP1A2")
+  )
+})
+
+test_that("proteinOntogenies refuses a value it cannot store, at the call", {
+  # An `ospsuite::MoleculeOntogeny` object used to be accepted and then reached
+  # `saveProject()` as an R6 object the JSON writer cannot serialize, which left
+  # the whole project unsaved. The rejection has to describe ontogenies: the
+  # length-based one described a mismatch against the number of ids.
+  project <- testProject()
+  onto <- ospsuite::MoleculeOntogeny$new(
+    molecule = "CYP3A4",
+    ontogeny = ospsuite::StandardOntogeny$CYP3A4
+  )
+  expect_snapshot(
+    error = TRUE,
+    addPopulation(
+      project,
+      "onto_r6",
+      species = "Human",
+      numberOfIndividuals = 5,
+      proteinOntogenies = onto
+    )
+  )
+  expect_snapshot(
+    error = TRUE,
+    setPopulation(project, "testpopulation", proteinOntogenies = list(onto))
+  )
+  expect_snapshot(
+    error = TRUE,
+    setPopulation(
+      project,
+      "testpopulation",
+      proteinOntogenies = c("CYP3A4:CYP3A4", NA)
+    )
+  )
+  # The refused calls changed nothing, so the project is still saveable.
+  expect_null(project$definitions$populations[["onto_r6"]])
+  expect_no_error(saveProject(project))
+})
+
 test_that("setPopulation partial update leaves other fields untouched", {
   project <- testProject()
   before <- project$definitions$populations[["testpopulation"]]

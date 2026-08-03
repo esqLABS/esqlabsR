@@ -140,6 +140,36 @@ NULL
   invisible(id)
 }
 
+# Validate the `proteinOntogenies` value of one individual or population: a
+# character vector of `"Protein:Ontogeny"` entries, or a single comma-joined
+# string. `NULL` passes (an absent field). Anything else aborts here, at the
+# authoring call: an `ospsuite::MoleculeOntogeny` object stored unchecked reaches
+# `saveProject()` as an R6 object the JSON writer cannot serialize, which leaves
+# the whole project unsaved. The pairs themselves are not checked, because a
+# workbook cell is imported verbatim and the ontogeny name is validated against
+# `ospsuite::StandardOntogeny` when the scenario runs.
+#
+# @keywords internal
+# @noRd
+.assertProteinOntogenies <- function(value, call = rlang::caller_env()) {
+  if (is.null(value)) {
+    return(invisible(value))
+  }
+  given <- if (!is.character(value)) {
+    # Rendered here rather than in the catalog entry: an R6 object cannot be
+    # interpolated into a message template, only described.
+    cli::format_inline("{.obj_type_friendly {value}}")
+  } else if (anyNA(value)) {
+    "a character vector with a missing entry"
+  } else if (!all(nzchar(trimws(value)))) {
+    "a character vector with a blank entry"
+  }
+  if (!is.null(given)) {
+    cli::cli_abort(messages$invalidProteinOntogenies(given), call = call)
+  }
+  invisible(value)
+}
+
 # Validate and normalise the `overwrite` flag pulled out of `...` by the
 # authoring functions that take their per-definition fields through `...`
 # (addIndividual / addPopulation / addPlot / addPlotGrid). The functions that

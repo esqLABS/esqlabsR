@@ -16,8 +16,10 @@ already exist in \code{individuals} definitions.}
 \item{...}{Named fields to change. Accepted: \code{species}, \code{population},
 \code{gender}, \code{weight}, \code{height}, \code{age}, \code{proteinOntogenies},
 \code{parameterSets}. Scalar-per-definition fields recycle/align across \code{id};
-\code{parameterSets} is applied whole (or one vector per individual via a
-length-\code{id} list). Unknown fields trigger an error.}
+\code{parameterSets} and \code{proteinOntogenies} are applied whole (or one vector per
+individual via a length-\code{id} list). \code{proteinOntogenies} takes the same
+\code{"Protein:Ontogeny"} entries as \code{\link[=addIndividual]{addIndividual()}}. Unknown fields trigger an
+error.}
 }
 \value{
 The \code{project} object, invisibly.

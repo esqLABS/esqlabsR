@@ -141,6 +141,36 @@ messages$wrongOntogenyStructure <- function(entry) {
   )
 }
 
+# Raised when an authoring call is handed something other than the accepted
+# `proteinOntogenies` shape. It names the shape, because the field is aligned
+# across ids like every other one, so a length-based error would report a
+# mismatch against the number of ids, describing neither the value nor the fix.
+messages$invalidProteinOntogenies <- function(given) {
+  cli::format_message(c(
+    "{.arg proteinOntogenies} must be a character vector of {.val Protein:Ontogeny} entries.",
+    "x" = "It is {given}.",
+    "i" = "One entry per ontogeny, e.g. {.code c(\"CYP3A4:CYP3A4\", \"CYP2D6:CYP2C8\")}, or the same pairs as one comma-joined string."
+  ))
+}
+
+# Warned from the Excel import when a sheet declares protein ontogenies that
+# cannot be read as protein/ontogeny pairs. The legacy two-column spelling pairs
+# the two cells positionally, so an unmatched count means one of the two values
+# would be dropped; saying so is the difference between a reported gap and
+# ontogenies vanishing from the imported project.
+messages$excelOntogeniesNotReadable <- function(
+  recordType,
+  recordId,
+  proteins,
+  ontogenies
+) {
+  cli::format_message(c(
+    "!" = "The protein ontogenies of {recordType} {.val {recordId}} are not imported: the {.field Protein} and {.field Ontogeny} columns cannot be paired.",
+    "i" = "{length(proteins)} protein{?s} against {length(ontogenies)} ontogen{?y/ies}; each protein needs exactly one ontogeny.",
+    "i" = "Fix the workbook, or write the pairs into a single {.field Protein Ontogenies} cell as {.val Protein:Ontogeny,Protein:Ontogeny}."
+  ))
+}
+
 # utilities####
 messages$fileNotFound <- function(filePath) {
   cliFormat("File not found: {.file {filePath}}")

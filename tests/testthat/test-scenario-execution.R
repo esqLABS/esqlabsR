@@ -322,6 +322,64 @@ test_that("runScenarios builds an individual that carries no age or height", {
   expect_s3_class(out$testscenario$simulation, "Simulation")
 })
 
+test_that(".readOntogeniesFromList reads two ontogenies in every stored shape", {
+  # The field reaches the runner in three shapes: one entry per ontogeny as a
+  # character vector (the authoring shape), a single comma-joined cell (the
+  # Excel spelling), and a list (what a JSON array parses to). All three must
+  # yield the same two `MoleculeOntogeny` objects; testing the vector for
+  # NA-ness first aborted on the vector length before reading any ontogeny.
+  expected <- list(
+    c(molecule = "CYP3A4", ontogeny = "CYP3A4"),
+    c(molecule = "CYP2D6", ontogeny = "CYP2C8")
+  )
+  asPairs <- function(ontogenies) {
+    lapply(ontogenies, function(o) {
+      c(molecule = o$molecule, ontogeny = o$ontogeny)
+    })
+  }
+  for (stored in list(
+    c("CYP3A4:CYP3A4", "CYP2D6:CYP2C8"),
+    "CYP3A4:CYP3A4,CYP2D6:CYP2C8",
+    "CYP3A4:CYP3A4, CYP2D6:CYP2C8",
+    list("CYP3A4:CYP3A4", "CYP2D6:CYP2C8")
+  )) {
+    expect_identical(asPairs(.readOntogeniesFromList(stored)), expected)
+  }
+})
+
+test_that(".readOntogeniesFromList treats an unspecified field as no ontogenies", {
+  expect_null(.readOntogeniesFromList(NULL))
+  expect_null(.readOntogeniesFromList(NA))
+  expect_null(.readOntogeniesFromList(""))
+  expect_null(.readOntogeniesFromList(character(0)))
+  # A trailing separator leaves a blank entry, which is nothing rather than a
+  # malformed pair.
+  expect_length(.readOntogeniesFromList("CYP3A4:CYP3A4,"), 1)
+})
+
+test_that("runScenarios builds an individual carrying two protein ontogenies", {
+  # Two ontogenies on one individual, stored one entry per ontogeny. Reaching
+  # the "no results" path (the run is short-circuited by the mocked runner)
+  # proves both were read and `createIndividualCharacteristics()` accepted them.
+  withr::local_options(lifecycle_verbosity = "quiet")
+  project <- .testProject()
+  setIndividual(
+    project,
+    "indiv1",
+    proteinOntogenies = c("CYP3A4:CYP3A4", "CYP2D6:CYP2C8")
+  )
+  local_mocked_bindings(runSimulations = .mockNoResults)
+  expect_warning(
+    out <- runScenarios(
+      project,
+      scenarios = "testscenario",
+      stopIfFails = FALSE
+    ),
+    regexp = "No simulation results could be computed"
+  )
+  expect_s3_class(out$testscenario$simulation, "Simulation")
+})
+
 test_that("runScenarios with stopIfFails = FALSE warns and returns NULL outputValues", {
   withr::local_options(lifecycle_verbosity = "quiet")
   project <- .testProject()

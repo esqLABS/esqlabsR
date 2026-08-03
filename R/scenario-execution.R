@@ -659,19 +659,20 @@
   )
 }
 
-# Parse "Molecule:Ontogeny,Molecule:Ontogeny" into MoleculeOntogeny list.
-# Returns NULL on empty input.
+# Build the `MoleculeOntogeny` objects of one individual or population from its
+# `proteinOntogenies` field. Every shape the field takes is accepted (a character
+# vector of one `"Molecule:Ontogeny"` entry per ontogeny, a single comma-joined
+# cell, or the list a JSON array parses to), so the value is flattened by
+# `.splitProteinOntogenies()` before anything is asked of it: a scalar test such
+# as `is.na()` on a two-entry field aborts on the length alone, before a single
+# ontogeny is read. Returns NULL when nothing is specified.
 # @keywords internal
 # @noRd
-.readOntogeniesFromList <- function(ontogenyString) {
-  if (
-    is.null(ontogenyString) ||
-      is.na(ontogenyString) ||
-      identical(ontogenyString, "")
-  ) {
+.readOntogeniesFromList <- function(proteinOntogenies) {
+  parts <- .splitProteinOntogenies(proteinOntogenies)
+  if (length(parts) == 0L) {
     return(NULL)
   }
-  parts <- trimws(unlist(strsplit(ontogenyString, ",", fixed = TRUE)))
   out <- vector("list", length(parts))
   for (i in seq_along(parts)) {
     pair <- unlist(strsplit(parts[[i]], ":", fixed = TRUE))
