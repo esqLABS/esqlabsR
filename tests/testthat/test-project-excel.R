@@ -3320,8 +3320,8 @@ test_that("an id containing an invisible character survives into the definition 
   expect_length(unique(files), 3L)
   expect_length(unique(gsub(zwsp, "", files, fixed = TRUE)), 2L)
 
-  # Nothing warns, and validation is clean.
-  expect_false(any(grepl("id", imported$warnings, ignore.case = TRUE)))
+  # The import says nothing at all, and validation is clean.
+  expect_length(imported$warnings, 0L)
   summary <- validationSummary(suppressWarnings(validateProject(
     imported$project
   )))
