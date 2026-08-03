@@ -3090,3 +3090,210 @@ test_that("the populations CSV folder does not travel with an imported project",
   )))
   expect_equal(summary$total_critical_errors, 0)
 })
+
+# The tests below each derive a variant of the legacy fixture by mutating exactly
+# one workbook of a throwaway copy, so a variant differs from the base in one
+# dimension and cannot interfere with another test's subject.
+
+# #1213 item 8: workbook resolution is purely property-driven. The section loop
+# has no `else` branch for a workbook the property sheet names but that is not on
+# disk, so the section imports as zero in complete silence. The one cue that could
+# have caught it is suppressed too, because a zero-count section is left out of
+# the import summary altogether.
+test_that("a named but absent workbook imports as an empty section, unreported", {
+  projectDir <- localLegacyExcelProject()
+  file.remove(file.path(projectDir, "Configurations", "Populations.xlsx"))
+
+  messages <- character()
+  imported <- withCallingHandlers(
+    importLegacyExcelProject(projectDir, silent = FALSE),
+    message = function(m) {
+      messages <<- c(messages, conditionMessage(m))
+      invokeRestart("muffleMessage")
+    }
+  )
+
+  # Both populations are gone, and nothing names the workbook that is missing.
+  expect_length(imported$project$definitions$populations, 0L)
+  expect_false(any(grepl("Populations.xlsx", imported$warnings, fixed = TRUE)))
+
+  # The summary lists the sections that imported something and omits the one that
+  # imported nothing, so the zero is not visible there either.
+  summary <- paste(messages, collapse = "")
+  expect_match(summary, "Individuals")
+  expect_no_match(summary, "Populations")
+
+  # The only trace is downstream, at load: the two scenarios that name a
+  # population now dangle, which describes the symptom rather than the cause.
+  expect_true(any(grepl("undefined population", imported$warnings)))
+})
+
+# #1213 item 9, first route: a parameter sheet whose column headers are duplicated
+# is correctly rejected as not a parameter sheet, and the rejection is reported.
+# What is not reported is the consequence: the individual named after that sheet
+# silently loses its whole parametrization, while its siblings keep theirs.
+test_that("a parameter sheet with duplicated headers costs its individual the parametrization", {
+  projectDir <- localLegacyExcelProject()
+  editWorkbookSheets(
+    file.path(projectDir, "Configurations", "Individuals.xlsx"),
+    function(sheets) {
+      names(sheets$Child) <- c(
+        "Container Path",
+        "Parameter Name",
+        "Value",
+        "Value"
+      )
+      sheets
+    }
+  )
+  imported <- importLegacyExcelProject(projectDir)
+
+  # `adult` links to its own sheet; `child` has nothing left to link to.
+  expect_identical(
+    unlist(imported$project$definitions$individuals[["adult"]]$parameterSets),
+    "adult"
+  )
+  expect_null(imported$project$definitions$individuals[["child"]]$parameterSets)
+  expect_false("child" %in% names(imported$project$definitions$parameterSets))
+
+  # The sheet is reported, and that is the whole of what the import says: one
+  # warning, about the sheet. Nothing follows it to say which individual just
+  # lost its parametrization.
+  expect_length(imported$warnings, 1L)
+  expect_match(imported$warnings, "Skipped sheet")
+})
+
+# #1213 item 9, second route: individuals are keyed off the biometrics rows, so an
+# individual that has a parameter sheet but no biometrics row is dropped entirely.
+# Its sheet still becomes a parameter set, now owned by nobody, and the scenario
+# that names the individual is left dangling. Nothing reconciles the two at import
+# time; the only report comes later, from validation, and it describes the dangling
+# reference rather than the dropped individual.
+test_that("an individual with a parameter sheet but no biometrics row is dropped", {
+  projectDir <- localLegacyExcelProject()
+  editWorkbookSheets(
+    file.path(projectDir, "Configurations", "Individuals.xlsx"),
+    function(sheets) {
+      biometrics <- sheets$IndividualBiometrics
+      sheets$IndividualBiometrics <-
+        biometrics[biometrics$IndividualId != "Child", , drop = FALSE]
+      sheets
+    }
+  )
+  imported <- importLegacyExcelProject(projectDir)
+
+  expect_named(imported$project$definitions$individuals, "adult")
+
+  # The orphaned sheet survives as a parameter set with no individual.
+  expect_true("child" %in% names(imported$project$definitions$parameterSets))
+
+  # The scenario keeps pointing at the individual that no longer exists.
+  expect_identical(
+    imported$project$definitions$scenarios[["childscenario"]]$individualId,
+    "child"
+  )
+
+  # Nothing at import time says an individual was dropped; the report that does
+  # arrive names the reference, not the cause.
+  expect_false(any(grepl("dropped|discarded", imported$warnings)))
+  expect_true(any(grepl("undefined individual", imported$warnings)))
+})
+
+# #1213 item 10: the plot definitions are keyed by id, with no duplicate check, so
+# a second row carrying an id an earlier row already used overwrites it. The
+# reported count is the count of surviving plots, so a workbook row that vanished
+# is invisible unless the reader counts the workbook themselves.
+test_that("two plot rows sharing an id silently lose one plot", {
+  projectDir <- localLegacyExcelProject()
+  editWorkbookSheets(
+    file.path(projectDir, "Configurations", "Plots.xlsx"),
+    function(sheets) {
+      # Row 2 (`observedVsSimulated`) takes row 1's id.
+      sheets$plotConfiguration$plotID[[2]] <- "P1"
+      sheets
+    }
+  )
+  imported <- importLegacyExcelProject(projectDir)
+
+  # Three workbook rows, two plots.
+  expect_length(imported$project$definitions$plots, 2L)
+  expect_setequal(names(imported$project$definitions$plots), c("p1", "p3"))
+
+  # The later row won: `p1` carries row 2's fields, not row 1's.
+  expect_identical(
+    imported$project$definitions$plots[["p1"]]$plotType,
+    "observedVsSimulated"
+  )
+
+  # And nothing reports a duplicate id.
+  expect_false(any(grepl("duplicate", imported$warnings, ignore.case = TRUE)))
+})
+
+# #1213 item 16: `.canonicalizeId()` replaces whitespace through `[[:space:]]`,
+# which matches neither U+00A0 (no-break space) nor U+200B (zero-width space). So
+# an invisible character survives canonicalization into the id and from there into
+# the definition filename. Two ids differing only by a zero-width space become two
+# distinct definition files whose names render identically, and the project
+# validates clean, so nothing tells the author their two ids are not one typo.
+#
+# This is live data rather than a synthetic probe: one tested project carried 12
+# real ids containing U+00A0.
+test_that("an id containing an invisible character survives into the definition filename", {
+  nbsp <- " "
+  zwsp <- "​"
+  projectDir <- localLegacyExcelProject()
+  editWorkbookSheets(
+    file.path(projectDir, "Configurations", "Scenarios.xlsx"),
+    function(sheets) {
+      sheets$OutputPaths$OutputPathId <- c(
+        "OutPath",
+        paste0("Out", zwsp, "Path")
+      )
+      sheets$OutputPaths <- rbind(
+        sheets$OutputPaths,
+        data.frame(
+          OutputPathId = paste0("Renal", nbsp, "Clearance"),
+          OutputPath = "Organism|Kidney|Aciclovir|Concentration in container"
+        )
+      )
+      # Reference them consistently, so nothing dangles and the invisible
+      # characters are the only thing under test.
+      sheets$Scenarios$OutputPathsIds <- c(
+        "OutPath",
+        paste0("OutPath, Out", zwsp, "Path"),
+        NA,
+        NA,
+        "OutPath",
+        "OutPath"
+      )
+      sheets
+    }
+  )
+  imported <- importLegacyExcelProject(projectDir)
+  ids <- names(imported$project$definitions$outputPaths)
+
+  # Three distinct ids, two of which render identically.
+  expect_length(ids, 3L)
+  expect_true(paste0("out", zwsp, "path") %in% ids)
+  expect_true(paste0("renal", nbsp, "clearance") %in% ids)
+
+  # The invisible characters reach the filenames too.
+  files <- list.files(file.path(
+    imported$outputDir,
+    "definitions",
+    "output-paths"
+  ))
+  expect_true(paste0("out", zwsp, "path.json") %in% files)
+  expect_true(paste0("renal", nbsp, "clearance.json") %in% files)
+
+  # `outpath.json` and `out<U+200B>path.json` are two files that look like one.
+  expect_length(unique(files), 3L)
+  expect_length(unique(gsub(zwsp, "", files, fixed = TRUE)), 2L)
+
+  # Nothing warns, and validation is clean.
+  expect_false(any(grepl("id", imported$warnings, ignore.case = TRUE)))
+  summary <- validationSummary(suppressWarnings(validateProject(
+    imported$project
+  )))
+  expect_equal(summary$total_critical_errors, 0)
+})

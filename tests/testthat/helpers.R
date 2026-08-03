@@ -183,6 +183,7 @@ editWorkbookSheets <- function(path, edit) {
 #' an unresolved cross-reference) that has nothing to do with what it pins.
 importLegacyExcelProject <- function(
   projectDir,
+  silent = TRUE,
   ...,
   envir = parent.frame()
 ) {
@@ -196,7 +197,7 @@ importLegacyExcelProject <- function(
     importProjectFromExcel(
       legacyExcelProjectPath(projectDir),
       outputDir = outputDir,
-      silent = TRUE,
+      silent = silent,
       ...
     ),
     warning = collect
