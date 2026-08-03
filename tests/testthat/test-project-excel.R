@@ -1475,7 +1475,8 @@ test_that("importProjectFromExcel reports what it produced, and stays quiet unde
   # The output path, the per-section counts, and the assets that travelled.
   expect_match(summaryText, "Project.json", fixed = TRUE)
   expect_match(summaryText, "Scenarios: 8", fixed = TRUE)
-  expect_match(summaryText, "Copied 2 referenced folders", fixed = TRUE)
+  # Three: the models, the data, and the population csv folder.
+  expect_match(summaryText, "Copied 3 referenced folders", fixed = TRUE)
 
   expect_silent(suppressWarnings(importProjectFromExcel(
     configPath,
@@ -1530,6 +1531,91 @@ test_that("importProjectFromExcel copies the referenced input folders into a sep
   expect_false("File Not Found" %in% fileWarnings)
 })
 
+# An Excel project spells `populationsFolder` as a folder name under the
+# configurations folder, while a project resolves working folders against its own
+# root. Read literally the folder was neither copied nor resolvable, so a
+# csv-population scenario failed at run time with `validateProject()` reporting
+# nothing (#1213).
+test_that("importProjectFromExcel brings the population csv folder along and resolves it", {
+  work_dir <- withr::local_tempdir()
+  file.copy(dirname(testProjectExcelPath()), work_dir, recursive = TRUE)
+  projectDir <- file.path(work_dir, "TestProjectExcel")
+
+  outputDir <- withr::local_tempdir()
+  jsonPath <- suppressWarnings(importProjectFromExcel(
+    file.path(projectDir, "ProjectConfiguration.xlsx"),
+    outputDir = outputDir,
+    silent = TRUE
+  ))
+  project <- suppressWarnings(loadProject(jsonPath))
+
+  # The folder the project resolves is the folder the csv file was copied into,
+  # which is the whole point: the two used to disagree.
+  expect_true(dir.exists(project$paths$populationsFolder))
+  expect_true(file.exists(file.path(
+    project$paths$populationsFolder,
+    "TestPopulation.csv"
+  )))
+  # And the scenario reading it no longer validates clean-but-unrunnable.
+  report <- suppressWarnings(validateProject(project))
+  notFound <- unlist(lapply(report, function(section) {
+    vapply(section$warnings, function(w) w$category, character(1))
+  }))
+  expect_false("File Not Found" %in% notFound)
+})
+
+test_that("an in-place import resolves the population csv folder where the csvs are", {
+  # Nothing is copied when the import writes beside the workbooks, so the value
+  # itself has to name the folder that holds the csv files.
+  work_dir <- withr::local_tempdir()
+  file.copy(dirname(testProjectExcelPath()), work_dir, recursive = TRUE)
+  projectDir <- file.path(work_dir, "TestProjectExcel")
+
+  jsonPath <- suppressWarnings(importProjectFromExcel(
+    file.path(projectDir, "ProjectConfiguration.xlsx"),
+    silent = TRUE
+  ))
+  project <- suppressWarnings(loadProject(jsonPath))
+
+  expect_true(file.exists(file.path(
+    project$paths$populationsFolder,
+    "TestPopulation.csv"
+  )))
+})
+
+test_that("a populations folder already at the project root is taken as authored", {
+  # Both layouts are accepted; a project following the root-level layout must
+  # keep resolving there rather than be redirected under the configurations
+  # folder.
+  work_dir <- withr::local_tempdir()
+  file.copy(dirname(testProjectExcelPath()), work_dir, recursive = TRUE)
+  projectDir <- file.path(work_dir, "TestProjectExcel")
+  file.rename(
+    file.path(projectDir, "Configurations", "PopulationsCSV"),
+    file.path(projectDir, "PopulationsCSV")
+  )
+
+  outputDir <- withr::local_tempdir()
+  jsonPath <- suppressWarnings(importProjectFromExcel(
+    file.path(projectDir, "ProjectConfiguration.xlsx"),
+    outputDir = outputDir,
+    silent = TRUE
+  ))
+
+  expect_identical(
+    jsonlite::fromJSON(
+      jsonPath,
+      simplifyVector = FALSE
+    )$filePaths$populationsFolder,
+    "PopulationsCSV"
+  )
+  expect_true(file.exists(file.path(
+    outputDir,
+    "PopulationsCSV",
+    "TestPopulation.csv"
+  )))
+})
+
 test_that("importProjectFromExcel does not copy the results folder or the Excel workbooks", {
   work_dir <- withr::local_tempdir()
   file.copy(dirname(testProjectExcelPath()), work_dir, recursive = TRUE)
@@ -1544,8 +1630,18 @@ test_that("importProjectFromExcel does not copy the results folder or the Excel 
 
   # `outputFolder` holds what the project writes, not what it reads.
   expect_false(dir.exists(file.path(outputDir, "Results")))
-  # The Excel side is the source, not an asset of the JSON project.
-  expect_false(dir.exists(file.path(outputDir, "Configurations")))
+  # The workbooks are the source, not an asset of the JSON project. The
+  # configurations folder itself does travel, because the population csv files
+  # the project reads live under it, so what is asserted is that no workbook
+  # came with them.
+  expect_length(
+    list.files(
+      file.path(outputDir, "Configurations"),
+      pattern = "\\.xlsx$",
+      recursive = TRUE
+    ),
+    0L
+  )
 })
 
 # A `../`-climbing folder value names something the project does not own.
