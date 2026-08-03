@@ -2377,13 +2377,56 @@ projectStatus <- function(project, silent = FALSE) {
     fields
   }
 
+  plotConfiguration <- .parseExcelPlotSheet(
+    readSheet("plotConfiguration"),
+    rowToFields
+  )
+  plotGrids <- .parseExcelPlotGridSheet(readSheet("plotGrids"), rowToFields)
+  .warnDuplicatePlotIds(plotConfiguration, "plotId", "plotConfiguration")
+  .warnDuplicatePlotIds(plotGrids, "plotGridId", "plotGrids")
+
   list(
     dataCombined = .parseExcelDataCombinedSheet(readSheet("DataCombined")),
-    plotConfiguration = .parseExcelPlotSheet(
-      readSheet("plotConfiguration"),
-      rowToFields
-    ),
-    plotGrids = .parseExcelPlotGridSheet(readSheet("plotGrids"), rowToFields)
+    plotConfiguration = plotConfiguration,
+    plotGrids = plotGrids
+  )
+}
+
+# Report the rows of a plots sheet that reuse an id an earlier row already used.
+#
+# Each plot and each grid is one definition keyed by its id, so a repeated id is
+# one definition, built from the last row that carries it: the earlier row's whole
+# plot is gone, and the reported count is the count of what survived, so nothing
+# says a row went missing unless the workbook is counted by hand. The rows are not
+# renamed apart, because a grid naming the id would then reach only one of them
+# and the other plot would belong to no grid.
+#
+# Compared on the canonical id, since that is the id the definitions end up keyed
+# by: two rows spelling one id differently are as much of a collision as two
+# spelling it the same.
+#
+# @param records The parsed records of the sheet (an unnamed list).
+# @param idField The record field holding the id (`plotId` / `plotGridId`).
+# @param sheet The sheet name, for the warning.
+# @returns Nothing, called for its warning.
+# @keywords internal
+# @noRd
+.warnDuplicatePlotIds <- function(records, idField, sheet) {
+  if (length(records) == 0L) {
+    return(invisible(NULL))
+  }
+  ids <- vapply(
+    records,
+    function(record) .canonicalizeOneId(as.character(record[[idField]])),
+    character(1)
+  )
+  duplicated <- unique(ids[duplicated(ids)])
+  if (length(duplicated) == 0L) {
+    return(invisible(NULL))
+  }
+  .warnFormatted(
+    messages$importDuplicatePlotIds(sheet, idField, duplicated),
+    "esqlabsR_importDuplicatePlotIds"
   )
 }
 

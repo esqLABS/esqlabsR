@@ -3597,11 +3597,12 @@ test_that("an individual with a parameter sheet but no biometrics row is dropped
   expect_true(any(grepl("undefined individual", imported$warnings)))
 })
 
-# #1213 item 10: the plot definitions are keyed by id, with no duplicate check, so
-# a second row carrying an id an earlier row already used overwrites it. The
-# reported count is the count of surviving plots, so a workbook row that vanished
-# is invisible unless the reader counts the workbook themselves.
-test_that("two plot rows sharing an id silently lose one plot", {
+# #1213 item 10: each plot is one definition keyed by its id, so a second row
+# carrying an id an earlier row already used builds the same definition and the
+# earlier row's plot is gone. The reported count is the count of surviving plots,
+# which is why the loss used to be invisible unless the reader counted the
+# workbook themselves; the import now names the reused id.
+test_that("two plot rows sharing an id lose one plot, and it is reported", {
   projectDir <- localLegacyExcelProject()
   editWorkbookSheets(
     file.path(projectDir, "Configurations", "Plots.xlsx"),
@@ -3623,8 +3624,9 @@ test_that("two plot rows sharing an id silently lose one plot", {
     "observedVsSimulated"
   )
 
-  # And nothing reports a duplicate id.
-  expect_false(any(grepl("duplicate", imported$warnings, ignore.case = TRUE)))
+  # And the loss is reported, naming the id more than one row used.
+  expect_true(any(grepl("more than", imported$warnings, fixed = TRUE)))
+  expect_true(any(grepl("plotId", imported$warnings, fixed = TRUE)))
 })
 
 # #1213 item 16: `.canonicalizeId()` replaces whitespace through `[[:space:]]`,

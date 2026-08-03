@@ -425,6 +425,25 @@ messages$importUnmergedPIParameterGroups <- function(taskId, paths) {
   )
 }
 
+messages$importDuplicatePlotIds <- function(sheet, idField, ids) {
+  # Unglued, like its neighbours: a plot id is free text.
+  envir <- new.env(parent = parent.frame())
+  assign("sheet", sheet, envir = envir)
+  assign("idField", idField, envir = envir)
+  assign("ids", ids, envir = envir)
+  assign("n", length(ids), envir = envir)
+  list(
+    bullets = c(
+      "!" = "{cli::qty(n)}{n} {.field {idField}}{?s} {?is/are} used by more than \\
+      one row of the {.field {sheet}} sheet: {.val {ids}}.",
+      "i" = "Each id is one definition, built from the last row that carries it, \\
+      so the earlier {cli::qty(n)}row{?s} {?is/are} not imported.",
+      "i" = "Give every row its own id in Excel and import again to keep them all."
+    ),
+    envir = envir
+  )
+}
+
 messages$importSkippedNonNumericRows <- function(
   filePath,
   sheets,
