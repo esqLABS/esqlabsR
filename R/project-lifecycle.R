@@ -219,17 +219,14 @@ reloadProject <- function(project) {
 
 #' Emit a `cli_warn` listing critical cross-reference errors, if any
 #'
-#' Runs `scenarios` first so `.validateCrossReferences` can apply its
-#' skip-on-prior-errors guard — without this, a structurally invalid
-#' scenarios section would still trigger spurious cross-reference warnings.
+#' Validates the whole project so every section's references are resolved, not
+#' just the scenarios': a freshly loaded project is the moment to say what does
+#' not resolve, whichever section holds it.
 #'
 #' @keywords internal
 #' @noRd
 .warnOnCrossReferenceErrors <- function(project) {
-  results <- .runProjectValidation(
-    project,
-    sections = c("scenarios", "crossReferences")
-  )
+  results <- .runProjectValidation(project, sections = NULL)
   r <- results$crossReferences
   if (is.null(r) || !r$hasCriticalErrors()) {
     return(invisible(NULL))

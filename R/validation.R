@@ -8,11 +8,11 @@
 # an adapter into the section's R file and registering it in
 # `.validationAdapters` below.
 #
-# `crossReferences` is intentionally NOT in the adapter list, it runs
-# after all section validators because it inspects their partial
-# results to decide whether to skip itself (skip on prior critical
-# errors). It is appended as a fixed final phase by the dispatcher
-# rather than masquerading as a section.
+# `crossReferences` is intentionally NOT in the adapter list: it owns no
+# section, it resolves the references that span sections, and it needs
+# to know which sections the current run is about (a section adapter is
+# handed only its own slice). It is appended as a fixed final phase by
+# the dispatcher rather than masquerading as a section.
 
 # validationResult class ----
 
@@ -378,8 +378,9 @@ validationSummary <- function(validationResults) {
 #'
 #' Internal orchestration helper. Runs the requested section validators
 #' in canonical order and returns a `ValidationResults` list.
-#' `crossReferences` is always run last when included so it sees prior
-#' section results.
+#' `crossReferences` is always run last when included, and is told which
+#' sections the run is about so it resolves only the references those
+#' sections hold.
 #'
 #' @param project A loaded `Project` object.
 #' @param sections Character vector of section names to validate, or
@@ -399,7 +400,7 @@ validationSummary <- function(validationResults) {
   results <- list()
   for (section in sections) {
     if (section == "crossReferences") {
-      results[[section]] <- .validateCrossReferences(project, results)
+      results[[section]] <- .validateCrossReferences(project, sections)
       next
     }
     results[[section]] <- .validationAdapters[[section]](project)
@@ -839,38 +840,6 @@ validationSummary <- function(validationResults) {
   refs[dangling]
 }
 
-#' Does any section of the project have a critical error?
-#'
-#' Decides whether `.validateCrossReferences()` should skip itself. Evaluates
-#' the validity of EVERY section adapter against the project so the answer does
-#' not depend on which subset of sections the current run happened to validate.
-#' Results already computed in this run (`collected`) are reused; only the
-#' section adapters not present there are run, so a full `validateProject()`
-#' pays no extra cost and a targeted `.ensureValid()` subset still sees a broken
-#' sibling section it did not itself request.
-#'
-#' `crossReferences` is excluded (it is the caller and is not a section
-#' adapter).
-#'
-#' @param project A loaded `Project` object.
-#' @param collected Named list of `validationResult`s already computed in this
-#'   run (the `validationResults` passed to `.validateCrossReferences()`).
-#' @return A single logical.
-#' @keywords internal
-#' @noRd
-.anyProjectSectionHasErrors <- function(project, collected) {
-  for (section in names(.validationAdapters)) {
-    sectionResult <- collected[[section]]
-    if (!inherits(sectionResult, "validationResult")) {
-      sectionResult <- .validationAdapters[[section]](project)
-    }
-    if (sectionResult$hasCriticalErrors()) {
-      return(TRUE)
-    }
-  }
-  FALSE
-}
-
 #' Validate cross-references between Project sections
 #'
 #' Hand-rolled monolith that checks references that span sections:
@@ -880,55 +849,35 @@ validationSummary <- function(validationResults) {
 #' their respective lookups, `individual.parameterSets` and
 #' `application.parameterSets` against the corresponding parameter-set
 #' sections, and `dataCombined.simulated.scenario` against scenarios.
-#' Skips itself
-#' when any prior section validator already flagged a critical error
-#' and surfaces a single "skipped" warning naming the checks that were
-#' not performed, since cross-references built on broken sections tend
-#' to produce noisy spurious failures.
+#'
+#' The phase always evaluates. A critical error in some other section does not
+#' suppress it, because it is the phase the `runScenarios()` / `createPlots()` /
+#' `runPI()` gates actually depend on: dropping it there let a scenario naming a
+#' nonexistent individual reach the simulation backend.
+#'
+#' `sections` is the section list the run was asked for, and it scopes the phase
+#' to the references those sections HOLD. That is what keeps each gate to its own
+#' concern: `runScenarios()` asks for the sections a simulation is built from, so
+#' a `dataCombined` entry naming a nonexistent scenario (a plotting-only
+#' reference) is not graded against it, while `createPlots()` does ask for
+#' `dataCombined` and is. The candidate side is never scoped: a reference resolves
+#' against every definition the project has, whether or not that section is in
+#' the run.
 #'
 #' Future deepening: the end-state walks per-section `references()`
 #' declarations rather than hand-coding the FK list here. Out of scope
 #' for Chapter 4.
 #'
 #' @param project Project object.
-#' @param validationResults Already-collected per-section results.
+#' @param sections Character vector of the section names in scope, or `NULL` for
+#'   every one of them. A vector naming no reference-holding section resolves
+#'   nothing.
 #' @return validationResult.
 #' @keywords internal
 #' @noRd
-.validateCrossReferences <- function(project, validationResults) {
+.validateCrossReferences <- function(project, sections = NULL) {
   result <- validationResult$new()
-
-  # Skip-on-prior-errors must consult the PROJECT'S actual section validity, not
-  # just the sections present in this run's `validationResults`. A full
-  # `validateProject()` run collects every section, so a broken sibling is
-  # visible here; a targeted `.ensureValid()` subset collects only the requested
-  # sections, so a broken sibling that the subset did not run would otherwise be
-  # invisible and the cross-reference pass would emit spurious errors built on
-  # it. Evaluating full-project section validity (reusing the results already
-  # computed in this run) makes a full run and a targeted subset behave the same.
-  if (.anyProjectSectionHasErrors(project, validationResults)) {
-    skipped <- c(
-      "scenario individual / population references",
-      "scenario parameterSets references",
-      "scenario initialConditions references",
-      "scenario application references",
-      "scenario outputPaths references",
-      "individual parameterSets references",
-      "application parameterSets references",
-      "plot dataCombined scenario references",
-      "PI scenarios / outputPath references"
-    )
-    result$addWarning(
-      "Skipped",
-      paste0(
-        "Cross-reference validation skipped due to critical errors. ",
-        "Re-run validation after fixing them to also check: ",
-        paste(skipped, collapse = "; "),
-        "."
-      )
-    )
-    return(result)
-  }
+  inScope <- function(section) is.null(sections) || section %in% sections
 
   scenarioList <- project$definitions$scenarios %||% list()
   # Keep the section keys in their ORIGINAL spelling: the "did you mean" suffix
@@ -946,7 +895,8 @@ validationSummary <- function(validationResults) {
   applicationKeys <- names(project$definitions$applications %||% list())
   outputPathKeys <- names(project$definitions$outputPaths %||% list())
 
-  for (scName in names(scenarioList)) {
+  scenarioHolders <- if (inScope("scenarios")) names(scenarioList) else NULL
+  for (scName in scenarioHolders) {
     sc <- scenarioList[[scName]]
 
     if (
@@ -1059,7 +1009,7 @@ validationSummary <- function(validationResults) {
   # individuals/applications resolve their parameter-set refs against the same
   # unified section as scenarios.
   individuals <- project$definitions$individuals %||% list()
-  for (id in names(individuals)) {
+  for (id in if (inScope("individuals")) names(individuals) else NULL) {
     refs <- individuals[[id]]$parameterSets %||%
       character(0)
     refs <- as.character(unlist(refs))
@@ -1079,7 +1029,7 @@ validationSummary <- function(validationResults) {
   }
 
   applications <- project$definitions$applications %||% list()
-  for (id in names(applications)) {
+  for (id in if (inScope("applications")) names(applications) else NULL) {
     refs <- applications[[id]]$parameterSets %||%
       character(0)
     refs <- as.character(unlist(refs))
@@ -1104,7 +1054,7 @@ validationSummary <- function(validationResults) {
   scenarioNames <- names(scenarioList)
 
   dataCombined <- .unwrapDefinitionList(project$definitions$dataCombined)
-  if (!is.null(dataCombined) && length(dataCombined) > 0) {
+  if (inScope("dataCombined") && length(dataCombined) > 0) {
     referencedScenarios <- unlist(lapply(dataCombined, function(dc) {
       vapply(
         dc$simulated %||% list(),
@@ -1132,7 +1082,8 @@ validationSummary <- function(validationResults) {
   piTasks <- project$definitions$parameterIdentification %||% list()
   outputPathIds <- names(project$definitions$outputPaths %||% list())
 
-  for (taskId in names(piTasks)) {
+  piHolders <- if (inScope("parameterIdentification")) names(piTasks) else NULL
+  for (taskId in piHolders) {
     task <- piTasks[[taskId]]
 
     badTaskScenarios <- .danglingRefs(task$scenarios, scenarioNames)
@@ -1185,9 +1136,7 @@ validationSummary <- function(validationResults) {
       }
       # An absent `outputPathId` is a missing required field, which `.validatePI()`
       # reports as a section-local concern; this phase only resolves a reference
-      # that is there. Skipping it silently here rather than reporting it too
-      # matters because this phase skips itself entirely once any section has a
-      # critical error, so the two would never be seen together.
+      # that is there, so the same gap is not counted twice.
       if (
         !.isMissingField(m$outputPathId) &&
           !.refResolves(m$outputPathId, outputPathKeys)

@@ -723,11 +723,11 @@ print.PITask <- function(x, ...) {
 
     for (m in task$outputMappings) {
       # Both are required on a mapping and the load path is lenient about both
-      # (`.parsePIOutputMappings()`). Reported here rather than in the
-      # cross-reference phase, which skips itself once any section has a critical
-      # error and so would not be reached alongside a parameter's own gap. The
-      # record keeps the id-suffixed field names; the message uses the names the
-      # user wrote in the file.
+      # (`.parsePIOutputMappings()`). An absent field is this section's own gap,
+      # reported here; the cross-reference phase resolves only a field that is
+      # there, so the same gap is never counted twice. The record keeps the
+      # id-suffixed field names; the message uses the names the user wrote in the
+      # file.
       for (field in c("outputPath", "observedData")) {
         if (.isMissingField(m[[paste0(field, "Id")]])) {
           result$addCriticalError(

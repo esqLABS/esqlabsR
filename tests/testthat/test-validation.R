@@ -703,7 +703,7 @@ test_that(".validateCrossReferences flags scenario referencing missing individua
   sc$modelFile <- "x.pkml"
   sc$individualId <- "Ghost"
   project <- .fakeProject(scenarios = list(s1 = sc))
-  result <- .validateCrossReferences(project, list())
+  result <- .validateCrossReferences(project)
   msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
   expect_match(msgs, "undefined individual 'Ghost'", all = FALSE)
 })
@@ -727,7 +727,7 @@ test_that(".validateCrossReferences flags individual referencing unknown paramet
       ))
     )
   )
-  result <- .validateCrossReferences(project, list())
+  result <- .validateCrossReferences(project)
   msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
   expect_match(msgs, "undefined parameterSets", all = FALSE)
 })
@@ -751,7 +751,7 @@ test_that(".validateCrossReferences suggests a near match for an individual's pa
       ))
     )
   )
-  result <- .validateCrossReferences(project, list())
+  result <- .validateCrossReferences(project)
   msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
   expect_snapshot(cat(msgs[grepl("Individual", msgs)], sep = "\n"))
 })
@@ -771,7 +771,7 @@ test_that(".validateCrossReferences suggests a near match for an application's p
       ))
     )
   )
-  result <- .validateCrossReferences(project, list())
+  result <- .validateCrossReferences(project)
   msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
   expect_snapshot(cat(msgs[grepl("Application", msgs)], sep = "\n"))
 })
@@ -784,7 +784,7 @@ test_that(".validateCrossReferences flags a scenario's dangling initialCondition
     scenarios = list(s1 = sc),
     initialConditions = list(real = .asInitialConditionSet(list()))
   )
-  result <- .validateCrossReferences(project, list())
+  result <- .validateCrossReferences(project)
   msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
   expect_match(msgs, "undefined initial-condition sets", all = FALSE)
 })
@@ -799,7 +799,7 @@ test_that(".validateCrossReferences suggests a near match for a scenario's initi
       presysset1 = .asInitialConditionSet(list())
     )
   )
-  result <- .validateCrossReferences(project, list())
+  result <- .validateCrossReferences(project)
   msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
   expect_match(
     msgs[grepl("initial-condition", msgs)],
@@ -815,7 +815,7 @@ test_that(".validateCrossReferences passes a valid scenario initialConditions re
     scenarios = list(s1 = sc),
     initialConditions = list(real = .asInitialConditionSet(list()))
   )
-  result <- .validateCrossReferences(project, list())
+  result <- .validateCrossReferences(project)
   expect_length(result$critical_errors, 0)
 })
 
@@ -834,18 +834,27 @@ test_that(".validateCrossReferences resolves individuals/populations as named li
     individuals = individuals,
     populations = populations
   )
-  result <- .validateCrossReferences(project, list())
+  result <- .validateCrossReferences(project)
   expect_length(result$critical_errors, 0)
 })
 
-test_that(".validateCrossReferences skips and warns when prior section had critical errors", {
-  prior <- list(scenarios = validationResult$new())
-  prior$scenarios$addCriticalError("X", "broken")
-  project <- .fakeProject()
-  result <- .validateCrossReferences(project, prior)
-  expect_length(result$critical_errors, 0)
-  expect_length(result$warnings, 1)
-  expect_match(result$warnings[[1]]$message, "skipped")
+test_that(".validateCrossReferences evaluates whatever else in the project is broken", {
+  # A scenario with an empty modelFile is a critical error in the `scenarios`
+  # section AND names an individual the project does not define. Both are
+  # reported: the cross-reference phase does not stand down because a section
+  # validator found something, since it is the phase the run gate depends on.
+  sc <- Scenario()
+  sc$modelFile <- ""
+  sc$individualId <- "ghost"
+  project <- .fakeProject(scenarios = list(s1 = sc))
+
+  sectionResult <- .scenariosValidatorAdapter(project)
+  expect_true(sectionResult$hasCriticalErrors())
+
+  result <- .validateCrossReferences(project)
+  expect_length(result$warnings, 0)
+  expect_length(result$critical_errors, 1)
+  expect_match(result$critical_errors[[1]]$message, "undefined individual")
 })
 
 test_that(".validateCrossReferences resolves a case-only mismatched reference", {
@@ -870,20 +879,20 @@ test_that(".validateCrossReferences resolves a case-only mismatched reference", 
     applications = applications,
     outputPaths = c(outpath_1 = "Organism|A")
   )
-  result <- .validateCrossReferences(project, list())
+  result <- .validateCrossReferences(project)
   # No dangling-reference error: every case-only mismatch canonically resolves.
   expect_length(result$critical_errors, 0)
 })
 
-test_that(".validateCrossReferences skip guard consults full-project validity, not just the current run's sections", {
-  # A broken scenarios section (empty modelFile -> critical error) plus a
-  # dataCombined that references a non-existent scenario. A FULL run skips the
-  # cross-reference pass (a prior section is broken), suppressing the
-  # dataCombined error until the section is fixed. A targeted subset that does
-  # NOT itself validate scenarios must reach the SAME conclusion (skip), rather
-  # than emitting the dataCombined error the full run suppressed.
+test_that(".validateCrossReferences resolves only the references the requested sections hold", {
+  # A scenario naming a nonexistent individual (a reference a simulation is built
+  # from) plus a dataCombined naming a nonexistent scenario (a plotting-only
+  # reference). A full run reports both; a run scoped to the sections a
+  # simulation needs reports only the first, which is what keeps a plotting-only
+  # gap out of the `runScenarios()` gate.
   sc <- Scenario()
-  sc$modelFile <- "" # critical error in the scenarios section
+  sc$modelFile <- "m.pkml"
+  sc$individualId <- "ghost_individual"
   project <- .fakeProject(
     scenarios = list(s1 = sc),
     dataCombined = list(
@@ -891,22 +900,32 @@ test_that(".validateCrossReferences skip guard consults full-project validity, n
     )
   )
 
-  # Full run: scenarios broken, so cross-references are skipped (a warning, no
-  # critical error, and the "ghost" reference is NOT reported yet).
-  fullResults <- .runProjectValidation(project, sections = NULL)
-  fullCross <- fullResults$crossReferences
-  expect_length(fullCross$critical_errors, 0)
-  expect_length(fullCross$warnings, 1)
+  fullCross <- .runProjectValidation(project, sections = NULL)$crossReferences
+  messages <- vapply(fullCross$critical_errors, function(e) e$message, "")
+  expect_length(messages, 2L)
+  expect_true(any(grepl("undefined individual", messages)))
+  expect_true(any(grepl(
+    "dataCombined references undefined scenarios",
+    messages
+  )))
 
-  # Targeted subset that omits the scenarios adapter: the guard must still see
-  # the broken scenarios section (full-project validity) and skip identically.
-  subsetResults <- .runProjectValidation(
+  simCross <- .runProjectValidation(
     project,
-    sections = c("plots", "crossReferences")
-  )
-  subsetCross <- subsetResults$crossReferences
-  expect_length(subsetCross$critical_errors, 0)
-  expect_length(subsetCross$warnings, 1)
+    sections = c("scenarios", "individuals", "crossReferences")
+  )$crossReferences
+  simMessages <- vapply(simCross$critical_errors, function(e) e$message, "")
+  expect_length(simMessages, 1L)
+  expect_match(simMessages, "undefined individual")
+
+  # And the mirror: a run scoped to the plotting sections sees the plotting
+  # reference.
+  plotCross <- .runProjectValidation(
+    project,
+    sections = c("dataCombined", "crossReferences")
+  )$crossReferences
+  plotMessages <- vapply(plotCross$critical_errors, function(e) e$message, "")
+  expect_length(plotMessages, 1L)
+  expect_match(plotMessages, "dataCombined references undefined scenarios")
 })
 
 # Dispatcher behaviour ----
@@ -941,6 +960,70 @@ test_that("ensureValid() aborts with a formatted summary on critical errors", {
       sections = c("scenarios"),
       opName = "runScenarios"
     )
+  )
+})
+
+test_that("a broken plots section leaves the run gate's cross-reference check in place", {
+  # The run gate's own section list, as `.scenarioBuildPreflight()` passes it.
+  runSections <- c(
+    "outputPaths",
+    "scenarios",
+    "individuals",
+    "populations",
+    "applications",
+    "parameterSets",
+    "crossReferences"
+  )
+  sc <- Scenario()
+  sc$modelFile <- "m.pkml"
+  sc$individualId <- "ghost_individual"
+  project <- .fakeProject(
+    scenarios = list(s1 = sc),
+    # A critical error in a section a simulation is not built from: the plot
+    # references a data combination the project does not define.
+    plots = list(
+      p1 = list(
+        plotId = "p1",
+        dataCombinedId = "ghost",
+        plotType = "individual"
+      )
+    )
+  )
+  expect_true(.plotsValidatorAdapter(project)$hasCriticalErrors())
+
+  # The plots error does not stand the gate down: the dangling individual still
+  # stops the run.
+  expect_error(
+    project$ensureValid(sections = runSections, opName = "runScenarios"),
+    "undefined individual"
+  )
+})
+
+test_that("a plotting-only dangling reference does not block the run gate", {
+  runSections <- c(
+    "outputPaths",
+    "scenarios",
+    "individuals",
+    "populations",
+    "applications",
+    "parameterSets",
+    "crossReferences"
+  )
+  sc <- Scenario()
+  sc$modelFile <- "m.pkml"
+  project <- .fakeProject(
+    scenarios = list(s1 = sc),
+    dataCombined = list(
+      dc1 = list(simulated = list(list(label = "sim", scenario = "ghost")))
+    )
+  )
+  # `validateProject()` grades the plotting reference critical, so the full
+  # report shows it...
+  expect_true(isAnyCriticalErrors(suppressWarnings(validateProject(project))))
+  # ...but a run is built from none of the sections that hold it, so the gate
+  # lets the scenario through.
+  expect_no_error(
+    project$ensureValid(sections = runSections, opName = "runScenarios")
   )
 })
 
