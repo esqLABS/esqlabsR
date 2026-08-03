@@ -3253,27 +3253,59 @@ test_that("two populations differing only in their ontogenies import differently
   expect_true(any(grepl("adultpopnoonto", withoutOntogenies, fixed = TRUE)))
 })
 
-# #1213 item 8: v5 merged `PIParameters` rows by
-# `(Group, Container Path, Parameter Name)`, so the two rows sharing group 2 here
-# were ONE free parameter estimated across both scenarios. The importer never
-# reads `Group`, so they become two independent free parameters with independent
-# estimates. That changes what the identification computes, not just how the
-# project is laid out.
-test_that("a repeated parameter-identification Group becomes independent parameters", {
+# #1213 item 4: the rows of a `PIParameters` sheet sharing a `Group` (with the
+# same container path and parameter name) are ONE free parameter estimated across
+# the scenarios they name between them, which is what the identification
+# estimates. The importer reads the column, so the two rows sharing group 2 here
+# import as one parameter naming both scenarios rather than two independent ones.
+test_that("a repeated parameter-identification Group imports as one parameter", {
   imported <- importLegacyExcelProject(localLegacyExcelProject())
   task <- imported$project$definitions$parameterIdentification[["aciclovirfit"]]
 
   # The workbook's three rows are group 1 (Lipophilicity) and group 2 twice
-  # (TSspec, once per scenario), so v5 estimated two free parameters. v6
-  # estimates three.
-  expect_length(task$parameters, 3L)
+  # (TSspec, once per scenario), so two free parameters are estimated.
+  expect_length(task$parameters, 2L)
+  expect_identical(
+    vapply(task$parameters, function(p) p$id, character(1)),
+    c("lipophilicity", "tsspec")
+  )
+
+  # The merged parameter is estimated across both of its rows' scenarios.
+  expect_identical(
+    unlist(task$parameters[[2]]$scenarios),
+    c("piscenario", "piscenario2")
+  )
+  expect_identical(unlist(task$parameters[[1]]$scenarios), "piscenario")
+
+  # Nothing to report: the group's bounds agree, so it merged.
+  expect_false(any(grepl("Group", imported$warnings, fixed = TRUE)))
+})
+
+# #1213 item 4, the check esqlabsR 5.x made alongside the merge: one parameter has
+# one set of bounds, so rows of a group that disagree about them cannot be one
+# parameter. 5.x refused to build the task at all; the import keeps the rows
+# unmerged (nothing invented, nothing lost) and says so, so the rest of the
+# project still migrates.
+test_that("a parameter-identification Group whose bounds disagree is reported and left unmerged", {
+  projectDir <- localLegacyExcelProject()
+  editWorkbookSheets(
+    file.path(projectDir, "Configurations", "ParameterIdentification.xlsx"),
+    function(sheets) {
+      sheets$PIParameters$MaxValue[[3]] <- 20
+      sheets
+    }
+  )
+  imported <- importLegacyExcelProject(projectDir)
+  task <- imported$project$definitions$parameterIdentification[["aciclovirfit"]]
+
   expect_identical(
     vapply(task$parameters, function(p) p$id, character(1)),
     c("lipophilicity", "tsspec", "tsspec_2")
   )
-
-  # Nothing reports the split.
-  expect_false(any(grepl("group", imported$warnings, ignore.case = TRUE)))
+  # Matched on single words: the rendered warning wraps, so a longer phrase can
+  # straddle a line break.
+  expect_true(any(grepl("bounds", imported$warnings, fixed = TRUE)))
+  expect_true(any(grepl("Group", imported$warnings, fixed = TRUE)))
 })
 
 # #1213 item 14: the legacy `Units` cell was ignored by v5 and is now assigned as
@@ -3290,7 +3322,7 @@ test_that("a legacy parameter-identification Units cell is carried through", {
       function(p) p$units %||% NA_character_,
       character(1)
     ),
-    c("Log Units", "mg", "mg")
+    c("Log Units", "mg")
   )
 })
 

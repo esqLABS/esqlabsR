@@ -403,6 +403,28 @@ messages$importIncompletePIOutputMappings <- function(taskId, scenarios) {
   )
 }
 
+messages$importUnmergedPIParameterGroups <- function(taskId, paths) {
+  # Unglued, like the entry above: a task id and a parameter path are free text.
+  envir <- new.env(parent = parent.frame())
+  assign("taskId", taskId, envir = envir)
+  assign("paths", paths, envir = envir)
+  assign("n", length(paths), envir = envir)
+  list(
+    bullets = c(
+      "!" = "{cli::qty(n)}{n} {.field Group}{?s} of parameter-identification \\
+      task {.val {taskId}} {?does/do} not agree on the bounds, so {?its/their} \\
+      rows were imported as one parameter each: {.val {paths}}.",
+      "i" = "The rows of one {.field Group} are one parameter estimated across \\
+      the scenarios they name, so they share one {.field MinValue}, \\
+      {.field MaxValue} and {.field StartValue}. Make them agree in Excel and \\
+      import again to estimate them together.",
+      "i" = "As imported, each row is estimated independently, which is not what \\
+      the group asked for."
+    ),
+    envir = envir
+  )
+}
+
 messages$importSkippedNonNumericRows <- function(
   filePath,
   sheets,

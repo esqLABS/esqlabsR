@@ -2836,18 +2836,25 @@ projectStatus <- function(project, silent = FALSE) {
 # `Container Path` + `Parameter Name` columns to the flat `path`, and coins a
 # per-parameter `id` from the parameter name (de-duplicated within the task).
 #
+# The rows sharing a `Group` describe ONE free parameter estimated across several
+# scenarios, not one parameter each (see `.pi5xParameterGroups()`), so such rows
+# become a single record whose `scenarios` is the union of theirs.
+#
 # @keywords internal
 # @noRd
 .parseExcelPI5xParams <- function(df, task) {
   rows <- .pi5xTaskRows(df, task)
   ids <- character()
-  lapply(seq_len(nrow(rows)), function(i) {
-    row <- rows[i, ]
+  lapply(.pi5xParameterGroups(rows, task), function(group) {
+    row <- rows[group[[1]], ]
     id <- .pi5xUniqueId(as.character(row[["Parameter Name"]]), ids)
     ids[[length(ids) + 1L]] <<- id
+    scenarios <- unique(unlist(lapply(group, function(i) {
+      .parseCommaListToArray(rows[i, ][["Scenarios"]])
+    })))
     .dropNulls(list(
       id = id,
-      scenarios = as.list(.parseCommaListToArray(row[["Scenarios"]])),
+      scenarios = as.list(scenarios),
       path = .pi5xPath(row[["Container Path"]], row[["Parameter Name"]]),
       units = .naToNull(as.character(row[["Units"]])),
       minValue = .naToNull(as.numeric(row[["MinValue"]])),
@@ -2855,6 +2862,94 @@ projectStatus <- function(project, silent = FALSE) {
       startValue = .naToNull(as.numeric(row[["StartValue"]]))
     ))
   })
+}
+
+# Which rows of a task's 5.x `PIParameters` sheet describe one free parameter.
+#
+# The sheet's `Group` column is what makes several rows one optimisation variable:
+# rows sharing a group, a container path and a parameter name are the same
+# parameter estimated across the scenarios they name between them, which is how
+# the identification was set up and therefore what it estimates. A blank `Group`
+# is its own parameter, and two rows in one group at different paths are
+# different parameters, matching how esqlabsR 5.x read the sheet.
+#
+# The bounds have to agree inside a group, since one parameter has one set of
+# them. 5.x refused to build such a task at all; here the rows are left
+# unmerged (one parameter each, so nothing is invented and nothing is lost) and
+# named in a warning, so the rest of a project with one bad group still migrates.
+#
+# @param rows One task's rows of the sheet.
+# @param task The task id, for the warning.
+# @returns A list of integer vectors of row indices, one per parameter.
+# @keywords internal
+# @noRd
+.pi5xParameterGroups <- function(rows, task) {
+  if (nrow(rows) == 0L) {
+    return(list())
+  }
+  cell <- function(column, i) as.character(.cellValue(rows, column, i))
+  # `\r` cannot occur in an Excel cell, so it separates the key parts without a
+  # path or a name that contains the separator merging two distinct parameters.
+  keys <- vapply(
+    seq_len(nrow(rows)),
+    function(i) {
+      group <- .cellValue(rows, "Group", i)
+      if (.isBlankCell(group)) {
+        return(paste0("\r", i))
+      }
+      paste(
+        as.character(group),
+        cell("Container Path", i),
+        cell("Parameter Name", i),
+        sep = "\r"
+      )
+    },
+    character(1)
+  )
+  boundsOf <- function(i) {
+    vapply(
+      c("MinValue", "MaxValue", "StartValue"),
+      function(column) {
+        suppressWarnings(as.numeric(.cellValue(rows, column, i)))
+      },
+      numeric(1)
+    )
+  }
+
+  groups <- list()
+  mismatched <- character()
+  for (key in unique(keys)) {
+    members <- which(keys == key)
+    bounds <- boundsOf(members[[1]])
+    agree <- all(vapply(
+      members,
+      function(i) isTRUE(all.equal(bounds, boundsOf(i))),
+      logical(1)
+    ))
+    if (agree) {
+      groups[[length(groups) + 1L]] <- members
+      next
+    }
+    mismatched <- c(
+      mismatched,
+      .pi5xPath(
+        cell("Container Path", members[[1]]),
+        cell("Parameter Name", members[[1]])
+      ) %||%
+        cell("Parameter Name", members[[1]])
+    )
+    for (i in members) {
+      groups[[length(groups) + 1L]] <- i
+    }
+  }
+
+  if (length(mismatched) > 0L) {
+    .warnFormatted(
+      messages$importUnmergedPIParameterGroups(task, mismatched),
+      "esqlabsR_importUnmergedPIParameterGroups"
+    )
+  }
+  groups
 }
 
 # Build one task's `outputMappings` from the 5.x `PIOutputMappings` rows. Coins
