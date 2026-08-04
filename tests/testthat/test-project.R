@@ -610,6 +610,46 @@ test_that("a working folder resolving outside the project directory is rejected"
   expect_match(project$paths$simulationsFolder, "Models/Simulations$")
 })
 
+test_that("a definitionsFolder pointing outside the project directory is rejected", {
+  # The definitions folder feeds the two paths that delete files
+  # (`.writeDefinitionTree()` prunes its `<kind>/` subfolders, and
+  # `.clearProjectArtifacts()` unlinks the folder), so an escaping value from an
+  # untrusted `Project.json` must never reach either. Unlike the working folders
+  # this one is a single folder name, so it is rejected outright rather than
+  # resolved and contained.
+  tmp <- withr::local_tempfile(fileext = ".json")
+  jsonlite::write_json(
+    list(
+      schemaVersion = "2.0",
+      definitionsFolder = "../..",
+      outputPaths = structure(list(), names = character(0)),
+      scenarios = list()
+    ),
+    tmp,
+    auto_unbox = TRUE,
+    null = "null"
+  )
+  expect_error(loadProject(tmp), "single folder name")
+})
+
+test_that("setting definitionsFolder to an escaping value is rejected", {
+  project <- Project$new()
+
+  expect_error(
+    project$paths$definitionsFolder <- "../elsewhere",
+    "single folder name"
+  )
+  expect_error(project$paths$definitionsFolder <- "a/b", "single folder name")
+  expect_error(project$paths$definitionsFolder <- "", "empty string")
+  # A plain rename is the legitimate use and still works.
+  project$paths$definitionsFolder <- "defs"
+  expect_identical(project$paths$definitionsFolder, "defs")
+  # `NULL` means "unset", so it passes the guard and the default is reachable
+  # again after a rename.
+  project$paths$definitionsFolder <- NULL
+  expect_identical(project$paths$definitionsFolder, "definitions")
+})
+
 test_that("a working folder set via an environment variable is allowed outside the project", {
   # `${VAR}` is the sanctioned way to place a folder outside the project tree
   # (e.g. shared-drive data), so it is exempt from the containment check.

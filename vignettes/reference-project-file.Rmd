@@ -80,7 +80,7 @@ Every section is a read-only named list keyed by id. Assigning to one aborts. A 
 | `description` | no | string | Free text. Emitted only when set. |
 | `schemaVersion` | yes | string | Format version of the file. Always `"2.0"` for projects this package loads. Written by the save machinery. |
 | `esqlabsRVersion` | yes | string | Informational: the package version that wrote the file. Written by the save machinery. |
-| `definitionsFolder` | no | string | Folder holding the definition files, relative to the project folder. Defaults to `"definitions"`. Emitted only when set. |
+| `definitionsFolder` | no | string | Folder holding the definition files. A single folder name directly under the project folder, not a nested path. Defaults to `"definitions"`. Emitted only when set. |
 | `filePaths` | yes | object | The working folders. See below. |
 | `defaultSimulationRunOptions` | no | object | Run defaults `runScenarios()` falls back on. See below. Emitted only when set. |
 | `excel` | no | object | Excel-bridge workbook names. See below. Absent for a project created directly in the JSON format. |

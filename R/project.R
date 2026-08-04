@@ -137,8 +137,9 @@ Project <- R6::R6Class(
     #'   sitting under `Models/` alongside the `Snapshots` folder for PK-Sim /
     #'   MoBi snapshots), `dataFolder` (experimental data), `outputFolder`
     #'   (results), `populationsFolder` (population CSVs loaded by
-    #'   [runScenarios()]), and `definitionsFolder` (the folder holding the
-    #'   definition files, default `"definitions"`).
+    #'   [runScenarios()]), and `definitionsFolder` (a single folder name
+    #'   directly under the project folder holding the definition files, default
+    #'   `"definitions"`).
     #'   Read a field with `project$paths$simulationsFolder`: that returns the
     #'   **absolute** path, already resolved against `projectDirPath`, so it is
     #'   ready to use as-is and must not be joined onto `projectDirPath` again
@@ -952,6 +953,10 @@ Project <- R6::R6Class(
           definitionsFolder = list(
             get = function() private$.definitionsFolder %||% "definitions",
             set = function(value) {
+              # Unlike its four siblings, this folder is one plain segment under
+              # the project directory, so it is guarded on write rather than
+              # contained on read; see `.validateDefinitionsFolder()`.
+              .validateDefinitionsFolder(value)
               private$.definitionsFolder <- value
               private$.invalidateContainer()
             }
@@ -1428,6 +1433,7 @@ Project <- R6::R6Class(
       private$.esqlabsRVersion <- jsonData$esqlabsRVersion
       private$.name <- jsonData$name
       private$.description <- jsonData$description
+      .validateDefinitionsFolder(jsonData$definitionsFolder)
       private$.definitionsFolder <- jsonData$definitionsFolder
       private$.defaultSimulationRunOptions <- jsonData$defaultSimulationRunOptions
       private$.projectFilePath <- jsonPath

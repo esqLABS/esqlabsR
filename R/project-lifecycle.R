@@ -645,13 +645,24 @@ initProject <- function(
   # destination held an unmigrated Excel project), fall back to the default
   # folder name, and clear only that one: a folder no container names is not
   # known to be a definitions tree.
+  # Bound outside the `vapply()` lambda: taken inside it, the caller is the
+  # lambda, whose `sys.call()` is `FUN(X[[i]], ...)`, so the abort would read
+  # `Error in FUN():` and name nothing the user can act on.
+  callerEnv <- rlang::caller_env()
   definitionsFolders <- if (length(containers) == 0L) {
     "definitions"
   } else {
     unique(vapply(
       containers,
       function(path) {
-        .readContainerField(path, "definitionsFolder") %||% "definitions"
+        folder <- .readContainerField(path, "definitionsFolder")
+        # The container is read straight off disk here, without building a
+        # `Project`, so this is the only guard standing between an untrusted
+        # `definitionsFolder` and the recursive `unlink()` below. Refusing to
+        # clear is the safe outcome: better to abort the overwrite than to
+        # delete a directory outside `destination`.
+        .validateDefinitionsFolder(folder, call = callerEnv)
+        folder %||% "definitions"
       },
       character(1)
     ))

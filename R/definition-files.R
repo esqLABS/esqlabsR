@@ -48,6 +48,33 @@
 # `validateProject()` / `createPlots()`, never a write-time abort. The derived
 # single-file snapshot inlines all three as three top-level JSON sections.
 
+# Guard a `definitionsFolder` value against escaping the project directory.
+# The field names one folder joined onto `projectDirPath`, and it drives the two
+# paths in the package that delete files: `.writeDefinitionTree()` owns its
+# `<kind>/` subfolders and removes every `.json` it did not just write, and
+# `.clearProjectArtifacts()` unlinks the whole folder recursively. A `Project.json`
+# is untrusted input (projects travel as shared folders), so a value carrying a
+# separator or `..` would aim both of those at a directory outside the project.
+# Because the field is a single path segment by design, the filename guard is a
+# tighter check than the containment one the working folders use, and there is no
+# `${VAR}` opt-out to honour. NULL means "unset" and resolves to the default.
+#
+# @keywords internal
+# @noRd
+.validateDefinitionsFolder <- function(
+  definitionsFolder,
+  call = rlang::caller_env()
+) {
+  if (!is.null(definitionsFolder)) {
+    .validateFilenameSegment(
+      definitionsFolder,
+      messages$invalidDefinitionsFolder,
+      call = call
+    )
+  }
+  invisible(NULL)
+}
+
 # Resolve the definitions root for a project directory. This is the
 # folder that holds the project's authored definition files, separated from the
 # referenced working files (`Models/`, `Data/`, `Populations/`, `Results/`)
