@@ -45,7 +45,7 @@ project$definitions$scenarios
 
 A scenario can only reference definitions that already exist, so before you create the scenario you typically define the pieces it will use. The authoring API is uniform: every function takes the project first, then the definition's `id`, then its fields.
 
-Because an id can become a filename in the `definitions/` tree, ids are **canonicalized** the moment they enter the project: lowercased and made filename-safe. When canonicalization changes the id you typed, the authoring function warns you and stores the canonical form, as the `addOutputPath()` call below shows. See `vignette("how-to-set-up-a-project")` for the full treatment.
+Ids are **canonicalized** on entry (lowercased and made filename-safe), and the authoring function warns you when that changes what you typed, as the `addOutputPath()` call below shows. `vignette("about-the-project-model")` explains why.
 
 ### Output paths
 
@@ -91,7 +91,7 @@ Any definition (scenario, individual, or application) references parameter sets 
 
 ### Individuals
 
-An **Individual** carries the biometrics of a single simulated subject plus any individual-specific parameter sets. `species` and `gender` are required; the rest are optional named fields:
+An **Individual** carries the biometrics of a single simulated subject plus any individual-specific parameter sets. Only `species` is required; every other field is optional, and an omitted biometric is taken from the PK-Sim individual for that species (`vignette("reference-definition-fields")` lists what each omission falls back to).
 
 ```{r}
 addIndividual(
@@ -109,7 +109,7 @@ project$definitions$individuals[["adult_female"]]
 
 The `parameterSets` argument is a character vector of ids referencing the project's parameter sets; it is validated immediately, so a typo in a set id is caught at add time rather than at run time.
 
-The authoring functions are **vectorized over the id**: pass a vector of ids to add several definitions in one call. The id sets the count, a scalar field is recycled to all of them, a length-matched vector is aligned by position, and a field that is itself a vector for one definition (such as `parameterSets`) is applied whole to each. The call is all-or-nothing: if any one definition fails validation, none is applied.
+To add several definitions in one call, pass a vector of ids. The id sets the count, and the other arguments are recycled or aligned against it; `vignette("reference-definition-fields")` gives the exact rules, including the one place they do not read as you would expect. The call is all-or-nothing: if any one definition fails validation, none is applied.
 
 ```{r}
 addIndividual(
@@ -174,25 +174,17 @@ addScenario(
 project$definitions$scenarios[["aciclovir_iv_ckd"]]
 ```
 
-A scenario ties together several pieces, all referenced by id and all optional except the model file:
+Every field except `modelFile` is optional, and each one that you omit falls back to whatever the model file carries as exported from PK-Sim or MoBi. `vignette("reference-definition-fields")` lists all of them with their defaults.
 
-- **`modelFile`** (required): the `.pkml` file holding the model structure, named relative to the project's model folder.
-- **`individual`**: a named Individual applied before simulating. Omit it to simulate the subject as exported from PK-Sim or MoBi.
-- **`population`**: a Population to sample. Supplying one makes the scenario a population simulation.
-- **`application`**: an Application describing how the substance is administered.
-- **`parameterSets`**: Parameter Sets layered onto the model, in the order you list them (later sets override earlier ones).
-- **`outputPaths`**: the Output Paths to record.
-- **`simulationTime`** / **`simulationTimeUnit`**: the simulated time grid and its unit.
-- **`steadyState`**: whether to pre-run the model to a steady state first.
+Three behaviours are worth knowing while you write the call:
 
-Two behaviors matter here:
+- **References are checked as the scenario is added.** If `individual`, `application`, or any entry in `parameterSets` does not resolve, `addScenario()` aborts and nothing is created. This is why you build the supporting definitions first.
+- **`parameterSets` is applied in the order you list it.** Above, `global` goes on first, then `aciclovir`, then `ckd`, with later sets winning where they touch the same parameter. Reordering the vector changes the result.
+- **`simulationTime` is an interval string**, `"start, end, resolution"`, where resolution is points per unit of `simulationTimeUnit`. Separate several intervals with `;` to simulate part of the time course densely and the rest coarsely, as in `"0, 20, 60; 20, 504, 1"`.
 
-- Every reference is checked as the scenario is added. If `individual`, `application`, or any entry in `parameterSets` does not resolve to something defined in the project, `addScenario()` aborts and the scenario is not created. This is why you build the supporting definitions first.
-- `parameterSets` is applied in order: `global` first, then `aciclovir`, then `ckd`, with later sets overriding earlier ones where they touch the same parameter.
+To make it a population scenario, pass a `population` instead of, or alongside, an `individual`; the scenario type switches automatically. For a steady-state run, set `steadyState = TRUE` and give `steadyStateTime` and `steadyStateTimeUnit`.
 
-The `simulationTime` argument is a string of one or more intervals. A single interval is `"start, end, resolution"`, where resolution is the number of points per unit of `simulationTimeUnit`. Several intervals are separated by `;`, for example `"0, 20, 60; 20, 504, 1"` to simulate the first 20 hours densely and a longer tail coarsely.
-
-To make it a population scenario, pass a `population` instead of (or alongside) an `individual`; the scenario's type switches to a population simulation automatically. For a steady-state run, set `steadyState = TRUE` and give `steadyStateTime` and `steadyStateTimeUnit`. As with every authoring call, the scenario is staged in memory; it lands in `definitions/scenarios/aciclovir_iv_ckd.json` when you call `saveProject()`.
+As with every authoring call, the scenario is staged in memory. It lands in `definitions/scenarios/aciclovir_iv_ckd.json` when you call `saveProject()`.
 
 ## Editing a scenario in place
 
@@ -287,6 +279,8 @@ This is a starting point, not the finished article: the scenarios it creates are
 
 ## Where to go next
 
-You now have the full authoring loop: build the supporting definitions (output paths, parameter sets, individuals, populations, applications), assemble them into scenarios with `addScenario()`, refine them with `setScenario()` and the other field setters, and reshape the set with `duplicateScenario()`, `renameScenario()`, and `removeScenario()`. Every edit is staged in memory; call `saveProject(project)` to reconcile the `definitions/` tree to the current in-memory state, or `reloadProject(project)` to discard the unsaved edits and re-read from disk.
+Every edit above is staged in memory. Call `saveProject(project)` to reconcile the `definitions/` tree to it, or `reloadProject(project)` to discard the edits and re-read from disk.
 
-From here, validate what you have built with `validateProject()` (see `vignette("how-to-validate-a-project")`), then run it: `vignette("how-to-run-simulations")` covers passing the project to `runScenarios()` and collecting results, and `vignette("how-to-plot-results")` covers turning those results into figures.
+Next, validate what you built with `vignette("how-to-validate-a-project")`, then run it with `vignette("how-to-run-simulations")` and plot it with `vignette("how-to-plot-results")`.
+
+For the fields of each definition kind, their defaults, and the rules for adding several at once, see `vignette("reference-definition-fields")`. For why references are checked as you author but only reported when a project is read, see `vignette("about-the-project-model")`.
