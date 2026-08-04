@@ -1,0 +1,119 @@
+---
+title: "About the project model"
+output:
+  rmarkdown::html_vignette:
+    toc: true
+vignette: >
+  %\VignetteIndexEntry{About the project model}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  eval = FALSE
+)
+```
+
+This article explains why `esqlabsR` is organized around a Project, and why the project model behaves the way it does: why the `definitions/` tree is treated as the authoritative copy of an analysis, why saving is a step you ask for rather than something that happens as you type, why definition ids are rewritten on entry, why a reference is checked at one moment and not another, and why Excel is still supported but no longer authoritative.
+
+Nothing here tells you how to do anything. For the procedures, see the how-to guides; for the field-by-field description of what a project contains, see `vignette("reference-project-file")` and `vignette("reference-definition-fields")`.
+
+## Why a project rather than a script
+
+A PBPK or QSP analysis is made of many small decisions: which model file, which individual, what dose and schedule, which parameters to override, which outputs to record, over what simulated time, against which measurements, drawn in which figures. Written as a script, those decisions end up expressed as procedure. They are interleaved with the code that applies them, they are scattered across whichever file was open at the time, and the only way to find out what an analysis actually did is to read the whole script and mentally execute it.
+
+`esqlabsR` separates the decisions from the machinery. A **Project** holds the decisions as data: named definitions, each a small declarative record. Functions such as `runScenarios()` and `createPlots()` are the machinery, and they read the project rather than being configured by hand at the call site.
+
+The practical consequences are what make this worth the indirection:
+
+- **An analysis becomes reviewable.** A colleague can read what a scenario does without reading the code that runs it.
+- **An analysis becomes comparable.** Two scenarios that differ only in dose differ in one field, visibly.
+- **An analysis becomes portable.** The definitions travel as a directory, or as a single snapshot file, and behave the same on another machine. The files they point at (models, observed data, population CSVs) are not carried along and have to be provided or resolved separately.
+
+The cost is that you author definitions instead of writing statements, and that a mistake in a definition is caught by validation rather than by an R error at the line that made it. The rest of this article is largely about how the package tries to make that trade favourable.
+
+## Why the definitions tree is the source of truth
+
+On disk, a project's authored content lives in a `definitions/` folder, subdivided by kind, with **one file per definition, named after that definition's id**. The scenario whose id is `aciclovir_iv` is the file `definitions/scenarios/aciclovir_iv.json`, and nothing else.
+
+The obvious alternative is one large file holding every definition, which is simpler to write and simpler to read as a whole. It was rejected for reasons that only appear once more than one person works on a project:
+
+- **Independent editing.** Two people adding two unrelated scenarios touch two different files. In a single-file project they touch the same lines and collide.
+- **Legible history.** `git diff` after adding a scenario shows one new file. In a single-file project it shows a diff inside a large document, and the reader has to work out which part of the change was the point.
+- **Confined conflicts.** A merge conflict lands inside one definition, where it can be resolved by someone who understands that definition, instead of inside a document that spans the whole analysis.
+
+A project directory also contains **working folders** (for model files, data, populations, and results). The distinction between the two regions is worth holding onto, because it decides what you review and what you regenerate. `definitions/` is authored: it is the analysis, and it is what belongs under close review. The working folders hold the things definitions point *at* (a scenario names a model file that lives under `Models/`) and the things a run produces (`Results/`). A definition never contains the contents of a model file or a measurement; it contains a reference to one.
+
+That split is also why a project stays small even when the models and data it uses are large, and why handing someone a project means handing them the references plus whatever files those references resolve to.
+
+## Why saving is explicit
+
+For a loaded project, **memory is the source of truth**. When you add a scenario or change a field, the change is made on the in-memory `Project` and the project is marked as having unsaved changes. Nothing on disk moves until you call `saveProject()`, which reconciles the tree to memory: writing the definitions that changed, and deleting the files of definitions you removed.
+
+The alternative, write-through (every authoring call immediately writing its file), is genuinely more convenient in the small. It was dropped because of what it does in the large:
+
+- **An abandoned experiment leaves debris.** Trying three variants of a scenario to see which one is right means three files on disk, two of which you now have to remember to delete.
+- **There is no way to back out.** With write-through, an authoring mistake is already persisted by the time you notice it. With explicit save, `reloadProject()` discards every unsaved edit and re-reads from disk, which makes exploratory authoring safe.
+- **History fills with noise.** Every intermediate state of an edit reaches the tree, so the commit that adds a scenario is indistinguishable from the ten that were on the way to it.
+
+Explicit save also makes one guarantee that write-through cannot: after `saveProject()`, the tree matches memory exactly, so `git diff` shows precisely the edits you intended and nothing else. A save with nothing to write is a harmless no-op that says so, which means saving repeatedly is always safe.
+
+The honest cost is that you can end a session with unsaved work. Two pieces of the interface exist because of that: printing a project marks it `[unsaved changes]`, and `projectStatus()` reports whether there are unsaved edits at all. The section accessors are also read-only, so a definition can only change through an authoring function or by editing its file, which keeps the unsaved-changes flag truthful.
+
+## Why ids are canonicalized
+
+Every definition is referenced by its **id**, and because that id doubles as the definition's filename in the `definitions/` tree, an id has to be a legal, unambiguous filename. So ids are **canonicalized** the moment they enter a project: lowercased, and with characters that are illegal or awkward in a filename replaced. The id `Tumor/Drug:Conc` is stored as `tumor_drug_conc`, and the authoring function warns you when it changes what you typed, so the stored id is never a surprise.
+
+The alternative is to keep the id exactly as typed and escape it only when writing the file. That fails in a specific and unpleasant way: it produces two spellings of the same thing, one for references and one for filenames, and the mapping between them has to be maintained everywhere. Worse, it makes a project's behaviour depend on the filesystem. `MyScenario.json` and `myscenario.json` are the same file on a typical macOS or Windows machine and two different files on Linux, so a project authored with mixed-case ids can load on one machine and fail on another.
+
+Canonicalizing on entry avoids both. Because the same transformation is applied to references, a reference typed the way the definition was typed still resolves to it, so you do not have to remember the sanitized form. It is also why every example id in these articles is lowercase (`aciclovir_iv`, `adult_male`, `european_adults`): that is simply what ids look like after canonicalization.
+
+Observed-data sources are the one deliberate exception, and `vignette("about-the-plotting-model")` explains why.
+
+## Why references are checked at two different moments
+
+The package checks a reference at two different times depending on how it arrived, and the difference is deliberate.
+
+**An authoring function checks immediately.** `addScenario()` with a misspelled individual id aborts on the spot, names the missing id, and offers the closest existing one. That is the right moment because you are writing exactly one reference by hand and the typo is in front of you. Deferring the complaint would mean discovering it much later, with no memory of what you meant.
+
+**Reading a project defers.** `loadProject()` and `importProjectFromExcel()` accept a project whose references do not all resolve. Each section is read on its own, and the gaps are reported rather than fatal. That is the right behaviour because the alternative is a project you cannot open. A legacy Excel project with one real gap, or a work in progress a colleague is halfway through, would become unloadable, and the tools you would use to inspect and repair it all need it loaded first. Reading also tells you about every gap at once, instead of stopping at the first.
+
+So a loaded project can hold a dangling reference that `addScenario()` would have refused. That is the deferred half doing its job, not an inconsistency in the rules. The gate that catches it is further along: on their default settings, `runScenarios()` and `createPlots()` validate before they run, so a gap in the part of the project they are about still stops you before any simulation happens.
+
+That gate is an opt-out rather than a guarantee. Both functions take `validate = FALSE`, which skips the check and lets a scenario build on whatever the model file already carries. It exists for the case where you know the gap is deliberate, and it means a project is only as validated as the calls you made.
+
+## Why validation has two levels and not three
+
+Validation reports exactly two kinds of finding:
+
+- A **critical error** is blocking. A duplicate id, a required field left empty, a reference to something that does not exist. The operations built on that section will not run until it is resolved.
+- A **warning** is a non-blocking note, surfaced so you see it, but not a reason to stop.
+
+There is deliberately no third "valid data" tier, and a section that simply passed is just a result with no critical errors. A third level sounds more informative and is in practice worse, because it reintroduces the question every diagnostic system should answer by construction: *must I act on this one?* With two levels the answer is structural. Critical errors must be fixed; warnings are yours to judge. The single question "is anything blocking?" has a single answer, `isAnyCriticalErrors()`.
+
+Validation is also **partial by entry point**, and knowing that keeps a report from looking more alarming than it is. Each operation checks the sections its own work is built from, plus the references those sections make. `runScenarios()` checks the scenarios, individuals, populations, applications, parameter sets and output paths a simulation is assembled from; `createPlots()` checks the plots, data combinations and observed data; `runPI()` checks the parameter-identification tasks. A plot pointing at a data combination you have not written yet therefore blocks `createPlots()` and leaves `runScenarios()` free to run.
+
+That is on purpose: an unfinished figure is not a reason to refuse a simulation. `validateProject()` is the one view that reports every section at once, whichever operation you are heading for.
+
+## Why Excel is an interchange format and not a source of truth
+
+Before 6.0.0, a project *was* its Excel workbooks: a top-level file pointing at one workbook per concern (scenarios, model parameters, individuals, populations, applications, plots). The information survived the move to 6.0.0 almost unchanged; what changed is where it is authoritative.
+
+Three things were reshaped rather than copied:
+
+- **Many workbooks became one project plus a definitions tree.** Each scenario became its own file, so scenarios are edited and versioned independently rather than as rows in a shared sheet.
+- **Three parameter-set sources became one collection.** The Excel format kept parameter sets in the model-parameters workbook, in the non-biometrics sheets of the individuals workbook, and in the non-protocol sheets of the applications workbook. These merge into a single `parameterSets` collection that scenarios, individuals and applications all reference by id.
+- **Plots and parameter identification moved inside the project.** What were separate spreadsheets are now sections of the project itself.
+
+The reason for the demotion is that a spreadsheet is a poor authoritative store for an analysis that people review and share. A row cannot be diffed usefully, a sheet couples unrelated concerns into one binary file that cannot be merged, and an identifier written in a cell has no relationship to any filename, so nothing enforces that a reference and its target agree.
+
+Excel remains a fully supported secondary entrypoint, because handing a workbook to a collaborator is sometimes the only practical option: `importProjectFromExcel()` migrates a legacy project, `exportProjectToExcel()` writes the workbooks back out, and `projectStatus()` reports whether an Excel side-car is still a faithful export.
+
+One asymmetry is worth stating plainly rather than discovering: the export does not reconstruct the original three-workbook parameter-set split. It writes the unified collection as a single model-parameters workbook, one sheet per set. Exporting a migrated project and re-importing it is stable under the new unified model, but it is not a route back to your old workbooks verbatim. Treat the export as a way to share, not as a way to undo the migration.
+
+## Where to go next
+
+For the concrete shape of what this article describes, see `vignette("reference-project-file")` (the project file and its folders) and `vignette("reference-definition-fields")` (every definition kind, field by field). To act on any of it, see `vignette("how-to-set-up-a-project")`, `vignette("how-to-design-scenarios")`, and `vignette("how-to-validate-a-project")`. The companion explanation, `vignette("about-the-plotting-model")`, covers how figures and observed data are described.

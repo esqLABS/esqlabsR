@@ -1,0 +1,129 @@
+---
+title: "How to set up a project"
+output:
+  rmarkdown::html_vignette:
+    toc: true
+vignette: >
+  %\VignetteIndexEntry{How to set up a project}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  warning = FALSE,
+  message = FALSE,
+  fig.showtext = TRUE
+)
+library(esqlabsR)
+```
+
+Everything `esqlabsR` does runs off a **Project**: the object holding the models, subjects, dosing, parameters, outputs, observed data, and figures for an analysis. This guide covers the project-level tasks: bringing one into memory, creating one from scratch, saving your edits, undoing them, and handing the whole thing to someone else as a single file.
+
+![esqlabsR workflow](Figures/esqlabs-workflow.png)
+
+Setting a project up happens once. Authoring its definitions (`vignette("how-to-design-scenarios")`), running it (`vignette("how-to-run-simulations")`), and plotting it (`vignette("how-to-plot-results")`) are where you iterate.
+
+On disk a project is a directory: a `Project.json` file, a `definitions/` folder holding one file per definition, and working folders for models, data, populations and results. `vignette("reference-project-file")` describes the layout and every field; `vignette("about-the-project-model")` explains why it is arranged this way.
+
+## Load an existing project
+
+`loadProject()` reads a `Project.json` and its `definitions/` tree into a `Project` object. The package ships a complete worked example, and `exampleProjectPath()` returns the path to its project file.
+
+```{r}
+project <- loadProject(exampleProjectPath())
+project
+```
+
+Printing a project shows its name, source path, working folders, and a count of each kind of definition. Each definition section is a named list keyed by id:
+
+```{r}
+project$definitions$scenarios
+```
+
+The sections are read-only. To change a definition, use an authoring function (see `vignette("how-to-design-scenarios")`) or edit its JSON file directly.
+
+If `loadProject()` spots an obvious cross-reference mistake, such as a scenario pointing at an individual that is not defined, it warns immediately but still returns the project, so you can inspect and repair it. For the full picture run `validateProject()`.
+
+## Scaffold a new project
+
+`initProject()` creates a project at `destination`, creating that directory if it is not there yet. Pass `type = "minimal"` for an empty scaffold, or `type = "example"` to copy the complete worked example so you have something runnable to start from.
+
+The chunks below scaffold into temporary directories so nothing is written into your working tree. In your own work you would pass the directory where the project should live.
+
+```{r}
+minimal_dir <- withr::local_tempdir()
+initProject(destination = minimal_dir, type = "minimal", createExcel = FALSE)
+```
+
+A minimal project is the folder structure plus a `Project.json` with no definitions in it yet:
+
+```
+MyProject/
+├── Project.json     # metadata only, no definitions yet
+├── definitions/     # empty subfolders, one per kind
+├── Models/
+├── Data/
+├── Populations/
+└── Results/
+```
+
+```{r}
+example_dir <- withr::local_tempdir()
+initProject(destination = example_dir, type = "example", createExcel = FALSE)
+```
+
+`type = "example"` fills the `definitions/` tree instead, one file per definition. `createExcel = FALSE` keeps the project to the JSON form; `initProject()` can also write an Excel project alongside it, which `vignette("how-to-migrate-from-excel")` covers.
+
+## Save your edits
+
+Editing a project is an in-memory operation. `addScenario()`, `addIndividual()`, `setScenario()` and the rest change the loaded object and mark it as having unsaved changes; nothing on disk moves until you ask.
+
+`saveProject()` commits them. It reconciles the tree to memory, writing only what changed and deleting the files of definitions you removed, so `git diff` shows exactly what you touched. A save with nothing to write is a harmless no-op that says so, meaning saving repeatedly is always safe.
+
+Here we work against the writable copy scaffolded above rather than the read-only installed example:
+
+```{r}
+editable <- loadProject(file.path(example_dir, "Project.json"))
+addOutputPath(editable, "pvb", "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)")
+saveProject(editable)
+```
+
+Two ways to see where a project stands: printing it marks unsaved work as `<Project 'name'> [unsaved changes]`, and `projectStatus()` reports both whether there are unsaved edits and whether a sibling Excel project has become a stale export.
+
+## Discard unsaved edits
+
+`reloadProject()` is the undo. It throws away every unsaved change and re-reads the project from disk, in place, which makes it safe to try a few variants of a scenario and then back out of all of them.
+
+```{r, eval = FALSE}
+reloadProject(editable)
+```
+
+## Share a project as a single file
+
+`snapshotProject()` freezes the current in-memory state, unsaved edits included, into one `.esqlabsR` file with every section inlined, so the project definitions travel as a single file rather than a tree. Give it a target `dir` and an optional `name`; the extension is added for you, and it returns the path it wrote.
+
+The snapshot holds the project's metadata and definitions, not the files those definitions point at. Model PKML files, observed-data files and importer configurations, scripts, and population CSVs still have to reach the recipient another way, or resolve to somewhere they can already see (an environment-variable path to a shared drive is one way, see `vignette("reference-project-file")`).
+
+```{r}
+snapshot_dir <- withr::local_tempdir()
+snapshot_path <- snapshotProject(editable, dir = snapshot_dir, name = "study")
+```
+
+`restoreProject()` turns that file back into a working project. Give it a target directory; it materializes the full `definitions/` tree and `Project.json` there and returns a freshly loaded `Project` bound to it:
+
+```{r}
+restored_dir <- withr::local_tempdir()
+shared <- restoreProject(snapshot_path, restored_dir)
+shared
+```
+
+By default `restoreProject()` refuses any directory that is not empty, not just one that already holds a project, so a stray README or CSV is enough to stop it. Pass `overwrite = TRUE` to roll a working directory back to the snapshot in place, which is also how you use a snapshot to set an experiment aside and return to it later.
+
+## Where to go next
+
+Author what you want to simulate with `vignette("how-to-design-scenarios")`, then check it with `vignette("how-to-validate-a-project")` before running it with `vignette("how-to-run-simulations")`.
+
+For the fields and layout referred to above, see `vignette("reference-project-file")` and `vignette("reference-definition-fields")`. For why projects behave this way, including why saving is explicit and why definition ids are rewritten when you create them, see `vignette("about-the-project-model")`.
