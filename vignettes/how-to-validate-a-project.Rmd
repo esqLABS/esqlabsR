@@ -20,17 +20,11 @@ knitr::opts_chunk$set(
 library(esqlabsR)
 ```
 
-Once you have authored scenarios and their supporting definitions, the natural next step, before you run anything, is to check that the project hangs together: that every reference resolves, no required field is missing, and no id is duplicated. `validateProject()` does this and prints a readable report.
+Before you run anything, check that the project hangs together: every reference resolves, no required field is missing, no id is duplicated. `validateProject()` does this and prints a readable report. This guide shows how to run it, read the report, act on a problem, and gate a script on the result.
 
 It assumes you know what a Project is and how to author one (see `vignette("how-to-set-up-a-project")` and `vignette("how-to-design-scenarios")`).
 
-## Why and when to validate
-
-`runScenarios()` and `createPlots()` both validate the relevant parts of the project automatically before they run, so a broken project never silently produces wrong results; it stops with the validation problem. So why validate explicitly?
-
-Because an explicit `validateProject()` gives you the **full, readable report** for the whole project at once, at the moment you choose, rather than the first blocking error a run happens to hit. The natural moment is right after authoring and before running: it is the cheap check that saves a slow simulation from failing partway through.
-
-"The relevant parts" is literal, and worth knowing when a report looks alarming: each entry point checks the sections its own work is built from, plus the references those sections make. `runScenarios()` checks the scenarios, individuals, populations, applications, parameter sets and output paths a simulation is assembled from; `createPlots()` checks the plots, data combinations and observed data; `runPI()` checks the parameter-identification tasks. So a plot that points at a data combination you have not written yet blocks `createPlots()` and leaves `runScenarios()` free to run, while a scenario pointing at an individual that does not exist blocks the run. `validateProject()` is the only view that reports every section at once, whichever operation you are heading for.
+Run it right after authoring and before running: `runScenarios()` and `createPlots()` each validate the parts of the project their own work is built from, so an explicit `validateProject()` is what gives you the whole picture at the moment you choose, rather than the first blocking error a slow run happens to hit. `vignette("about-the-project-model")` covers why validation is split up this way and why it reports two levels of finding.
 
 Throughout, work on a writable copy of the bundled example:
 
@@ -40,26 +34,18 @@ initProject(destination = project_dir, type = "example", createExcel = FALSE)
 project <- loadProject(file.path(project_dir, "Project.json"))
 ```
 
-## Two diagnostic levels
+## Read a report
 
-Validation has exactly **two** levels, not three:
+A report separates two kinds of finding, and which one you got decides whether you have to act:
 
-- A **Critical Error** is a blocking problem: a duplicate id, a required field left empty, or a reference to a definition that does not exist. A section carrying one has no valid result (its `isValid()` method returns `FALSE`), and the operations built on that section will not run until it is resolved.
-- A **Warning** is a non-blocking note: surfaced so you see it, but it does not stop execution. A section with warnings and no critical errors is still valid (its `isValid()` method returns `TRUE`).
+- A **Critical Error** blocks. A duplicate id, a required field left empty, or a reference to something that does not exist. The section's `isValid()` returns `FALSE`, and the operations built on it will not run until you fix it.
+- A **Warning** does not block. It is surfaced so you see it, and a section with warnings and no critical errors is still valid.
 
-There is no separate "valid data" tier. A section that simply passed is just a result with no critical errors. The quickest single question, "is anything blocking?", is answered by `isAnyCriticalErrors()`.
+The quickest single question, "is anything blocking?", is `isAnyCriticalErrors()`.
 
-## When a reference is checked
+Passing `validate = FALSE` to `runScenarios()` or `createPlots()` skips their check and lets a scenario build on whatever the model file already carries. Reach for it only when you know the gap is deliberate.
 
-Authoring and reading check references at different moments, on purpose.
-
-An authoring function checks immediately: `addScenario(project, "s", modelFile = "m.pkml", individual = "adlt_male")` aborts on the spot, naming the missing id and the closest existing one, because at that moment you are writing one reference by hand and the typo is right in front of you.
-
-Reading a project defers to `validateProject()`. `loadProject()` and `importProjectFromExcel()` accept a project whose references do not all resolve: each section is read on its own, so a legacy project with a real gap still loads and imports, and the full report tells you about every gap at once instead of stopping at the first. That is what the worked example below shows.
-
-So a project can hold a dangling reference that `addScenario()` would have refused. That is the deferred half doing its job, not an inconsistency: `runScenarios()` and `createPlots()` validate before they run, so a gap in what they are about still stops you before any simulation. The one way past it is `validate = FALSE` on either function, which skips the check and lets a scenario build on whatever the model file already carries.
-
-## The clean case
+## Validate a clean project
 
 The bundled example is well formed, so its report is short. `validateProject()` runs every section validator plus a cross-reference pass and returns a structured object that prints a summary:
 
@@ -74,9 +60,11 @@ results
 isAnyCriticalErrors(results)
 ```
 
-## A worked example: a dangling reference
+## Diagnose a dangling reference
 
-The most common authoring slip is a dangling reference: a definition that points at an id that does not exist, usually a small misspelling. To see what the report looks like, suppose one scenario file in our copy mistypes the individual id `adult_male` as `adlt_male`. Reloading the project catches the dangling reference at load time, and `validateProject()` then reports it in full:
+The most common authoring slip is a dangling reference: a definition pointing at an id that does not exist, usually a small misspelling. Note that a *loaded* project can hold one even though `addScenario()` would have refused it, because reading a project reports gaps rather than rejecting them (`vignette("about-the-project-model")` explains why).
+
+To see what the report looks like, suppose one scenario file in our copy mistypes the individual id `adult_male` as `adlt_male`. Reloading the project catches the dangling reference at load time, and `validateProject()` then reports it in full:
 
 ```{r, echo = FALSE}
 scenario_file <- file.path(
@@ -134,3 +122,5 @@ Both the report and `isAnyCriticalErrors()` are clean, so the project is ready t
 ## Where to go next
 
 With a clean project in hand, see `vignette("how-to-run-simulations")` to execute the scenarios and `vignette("how-to-plot-results")` to turn the results into figures. To author or repair the definitions a validation problem points at, see `vignette("how-to-design-scenarios")`.
+
+To look up which fields a definition requires, see `vignette("reference-definition-fields")`. For why validation reports two levels and checks a different slice of the project per entry point, see `vignette("about-the-project-model")`.
