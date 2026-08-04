@@ -53,7 +53,9 @@
 # v6 restore does. `replacedExistingTree` (whether `dir` already held a project)
 # drives the same stale-handle warning the v6 restore path emits on overwrite.
 # `snapshotDir` is the folder holding the snapshot file, where the asset folders
-# it references are looked for (see below).
+# it references are looked for (see below). `name`, when given, names the upgraded
+# project: a previous-version snapshot carries no project name at all, so without
+# it the upgraded project has none.
 #
 # @keywords internal
 # @noRd
@@ -62,7 +64,8 @@
   dir,
   overwrite,
   replacedExistingTree = FALSE,
-  snapshotDir = NULL
+  snapshotDir = NULL,
+  name = NULL
 ) {
   props <- .legacyConfigProperties(jsonData$projectConfiguration)
 
@@ -117,6 +120,12 @@
   )
 
   project <- loadProject(containerPath)
+  # The name has to be applied after the import (which owns the whole write) and
+  # saved, since the upgrade hands back a project with nothing left unsaved.
+  if (!is.null(name)) {
+    project$info$name <- name
+    suppressMessages(project$save())
+  }
 
   # Name the folders that did not travel. This is the case the report always
   # applies to (a snapshot is a single file, and whether its assets were kept

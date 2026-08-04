@@ -123,6 +123,12 @@ snapshotProject <- function(
 #'   previous esqlabsR version). Must exist.
 #' @param dir Folder in which the project is recreated (default `"."`).
 #'   Created if it does not exist.
+#' @param name Optional project name to give the restored project. A snapshot
+#'   carries whatever name the project it was taken from had, which for one
+#'   written by a previous esqlabsR version is none at all, and the restored
+#'   project is otherwise identified only by the folder it lands in. The name is
+#'   written into the restored project file, so it shows in `print(project)` and
+#'   travels with the project from then on.
 #' @param overwrite If `FALSE` (default), `restoreProject()` aborts when
 #'   `dir` already contains any files — a project, unrelated files, anything;
 #'   restore into a fresh folder only. If `TRUE`, the contents of `dir` are
@@ -148,9 +154,10 @@ snapshotProject <- function(
 #'   name = "shared"
 #' )
 #' project <- restoreProject(snapshot, file.path(tempdir(), "restored"))
-restoreProject <- function(snapshot, dir = ".", overwrite = FALSE) {
+restoreProject <- function(snapshot, dir = ".", overwrite = FALSE, name = NULL) {
   validateIsString(snapshot)
   validateIsString(dir)
+  validateIsString(name, nullAllowed = TRUE)
   if (!file.exists(snapshot)) {
     cli::cli_abort(messages$fileNotFound(snapshot))
   }
@@ -184,7 +191,8 @@ restoreProject <- function(snapshot, dir = ".", overwrite = FALSE) {
       dir,
       overwrite,
       replacedExistingTree,
-      snapshotDir = dirname(fs::path_abs(snapshot))
+      snapshotDir = dirname(fs::path_abs(snapshot)),
+      name = name
     ))
   }
 
@@ -215,6 +223,11 @@ restoreProject <- function(snapshot, dir = ".", overwrite = FALSE) {
   # local is named `inMemory` (not `snapshotProject`) so it does not shadow the
   # exported `snapshotProject()` function.
   inMemory <- loadProject(canonFile)
+  # Named before the tree is written, so the name lands in the container the
+  # restore produces rather than needing a save of its own.
+  if (!is.null(name)) {
+    inMemory$info$name <- name
+  }
   # A restore materializes a brand-new tree project at `dir`, so it always
   # writes the canonical `Project.json` container name (the default). Passing
   # `inMemory`'s own `projectFilePath` would be wrong here: that is the

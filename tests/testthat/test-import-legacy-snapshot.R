@@ -113,6 +113,26 @@ test_that("restoreProject upgrades a previous-version snapshot to a v6 tree", {
   expect_length(reloaded$definitions$scenarios, 8)
 })
 
+# #1213 item 26: a previous-version snapshot carries no project name, so an
+# upgraded project had none and nothing could give it one. `restoreProject(name =)`
+# names the project it produces, on this path and on the v6 one.
+test_that("restoreProject names the project it upgrades", {
+  dir <- withr::local_tempdir()
+
+  project <- suppressMessages(
+    restoreProject(.legacySnapshotFixture(), dir, name = "Aciclovir study")
+  )
+
+  expect_identical(project$info$name, "Aciclovir study")
+  # Written into the project file, so it survives on its own.
+  expect_identical(
+    loadProject(file.path(dir, "Project.json"))$info$name,
+    "Aciclovir study"
+  )
+  # And nothing is left unsaved by the naming.
+  expect_true(project$status$tree_in_sync)
+})
+
 test_that("upgrading a snapshot with a configured data file emits no warning", {
   # The fixture configures a `dataFile` that no snapshot carries, so the bridge
   # would warn "data file not found"; the upgrade muffles that redundant
