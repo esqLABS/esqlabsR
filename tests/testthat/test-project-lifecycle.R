@@ -255,7 +255,12 @@ test_that("saveProject() stamps the writing version into the file and the handle
 # `initProject()` stamps the running version too, so all the writers agree.
 test_that("initProject() stamps the writing version, so a later save does not change it", {
   destination <- withr::local_tempdir()
-  initProject(destination, type = "minimal", createExcel = FALSE, overwrite = TRUE)
+  initProject(
+    destination,
+    type = "minimal",
+    createExcel = FALSE,
+    overwrite = TRUE
+  )
   current <- as.character(utils::packageVersion("esqlabsR"))
 
   project <- loadProject(file.path(destination, "Project.json"))
@@ -451,6 +456,37 @@ test_that("initProject does not overwrite a README a user has edited", {
     readLines(edited),
     "My own notes about this project's data."
   )
+})
+
+test_that("initProject(overwrite = TRUE) refuses a definitionsFolder pointing outside the project", {
+  # `.clearProjectArtifacts()` reads `definitionsFolder` straight out of the
+  # container and unlinks it recursively, so an escaping value in a downloaded
+  # `Project.json` would delete a tree above the destination. The overwrite must
+  # abort instead, leaving everything outside the project folder intact.
+  parent <- withr::local_tempdir()
+  dir <- file.path(parent, "project")
+  dir.create(dir)
+  initProject(destination = dir, type = "minimal", createExcel = FALSE)
+
+  bystander <- file.path(parent, "unrelated.txt")
+  writeLines("not part of any project", bystander)
+
+  container <- file.path(dir, "Project.json")
+  jsonData <- jsonlite::fromJSON(container, simplifyVector = FALSE)
+  jsonData$definitionsFolder <- ".."
+  jsonlite::write_json(jsonData, container, auto_unbox = TRUE, null = "null")
+
+  expect_error(
+    initProject(
+      destination = dir,
+      type = "minimal",
+      createExcel = FALSE,
+      overwrite = TRUE
+    ),
+    "single folder name"
+  )
+  expect_true(file.exists(bystander))
+  expect_true(dir.exists(file.path(dir, "definitions")))
 })
 
 test_that("initProject(type = 'minimal') scaffolds a definitions/ directory", {

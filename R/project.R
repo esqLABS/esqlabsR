@@ -952,6 +952,10 @@ Project <- R6::R6Class(
           definitionsFolder = list(
             get = function() private$.definitionsFolder %||% "definitions",
             set = function(value) {
+              # Unlike its four siblings, this folder is one plain segment under
+              # the project directory, so it is guarded on write rather than
+              # contained on read; see `.validateDefinitionsFolder()`.
+              .validateDefinitionsFolder(value)
               private$.definitionsFolder <- value
               private$.invalidateContainer()
             }
@@ -1428,6 +1432,7 @@ Project <- R6::R6Class(
       private$.esqlabsRVersion <- jsonData$esqlabsRVersion
       private$.name <- jsonData$name
       private$.description <- jsonData$description
+      .validateDefinitionsFolder(jsonData$definitionsFolder)
       private$.definitionsFolder <- jsonData$definitionsFolder
       private$.defaultSimulationRunOptions <- jsonData$defaultSimulationRunOptions
       private$.projectFilePath <- jsonPath

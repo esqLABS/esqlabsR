@@ -651,7 +651,14 @@ initProject <- function(
     unique(vapply(
       containers,
       function(path) {
-        .readContainerField(path, "definitionsFolder") %||% "definitions"
+        folder <- .readContainerField(path, "definitionsFolder")
+        # The container is read straight off disk here, without building a
+        # `Project`, so this is the only guard standing between an untrusted
+        # `definitionsFolder` and the recursive `unlink()` below. Refusing to
+        # clear is the safe outcome: better to abort the overwrite than to
+        # delete a directory outside `destination`.
+        .validateDefinitionsFolder(folder)
+        folder %||% "definitions"
       },
       character(1)
     ))

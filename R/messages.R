@@ -264,6 +264,26 @@ messages$invalidProjectFileName <- function(name, given) {
   )
 }
 
+# `definitionsFolder` names one folder directly under the project directory, and
+# it drives the two paths that delete files (`.writeDefinitionTree()` owns its
+# `<kind>/` subfolders, `.clearProjectArtifacts()` unlinks it recursively), so a
+# separator or `..` in it would point both outside the project. Same two-argument
+# contract as `invalidProjectFileName` above.
+messages$invalidDefinitionsFolder <- function(name, given) {
+  c(
+    "{.arg definitionsFolder} must be a single folder name directly under the \\
+    project folder.",
+    "x" = if (is.null(given)) {
+      "The name {.val {name}} contains a path separator or is {.val .} / \\
+      {.val ..}, so it could point outside the project folder."
+    } else {
+      "It is {given}, not a single non-empty string."
+    },
+    "i" = "Pass a plain folder name, for example {.val definitions} (the \\
+    default) or {.val defs}."
+  )
+}
+
 messages$restoreDirNotEmpty <- function(dir) {
   c(
     "The folder {.path {dir}} is not empty.",
