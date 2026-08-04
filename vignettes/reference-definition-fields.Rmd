@@ -1,0 +1,383 @@
+---
+title: "Definition fields"
+output:
+  rmarkdown::html_vignette:
+    toc: true
+vignette: >
+  %\VignetteIndexEntry{Definition fields}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  eval = FALSE
+)
+```
+
+```{css, echo = FALSE}
+table {
+  width: 100%;
+  display: block;
+  overflow-x: auto;
+}
+```
+
+Field-by-field description of every definition kind, the argument grammars the authoring functions accept, and the plot-configuration support matrices.
+
+Each table's **If omitted** column is the one to read when you are deciding what you actually have to supply: it says whether a field falls back to a default, is taken from the model file as exported from PK-Sim or MoBi, or simply does not apply.
+
+Two conventions run through all of it:
+
+- Every authoring function takes `project` first and the definition's `id` second. Only the fields after those are listed below.
+- Every authoring function accepts `overwrite`, a logical defaulting to `FALSE`. An id that already exists aborts unless you pass `overwrite = TRUE`, which replaces the definition (last write wins). It is omitted from the tables.
+
+For why definitions are shaped this way, see `vignette("about-the-project-model")` and `vignette("about-the-plotting-model")`. For the project file and folder layout, see `vignette("reference-project-file")`.
+
+## Scenario
+
+`addScenario(project, id, modelFile, ...)`. Only `modelFile` is required.
+
+| Field | Required | Type | If omitted |
+| --- | --- | --- | --- |
+| `modelFile` | **yes** | string | Aborts. Named relative to the project's simulations folder. |
+| `individual` | no | id | The model's own individual is simulated, as exported from PK-Sim or MoBi. |
+| `population` | no | id | The scenario is an individual scenario. Supplying one makes it a population simulation. |
+| `application` | no | id | The dosing in the model file is used unchanged. |
+| `parameterSets` | no | character vector of ids | No parameter sets are layered on; the model's own values apply. |
+| `initialConditions` | no | character vector of ids | The model's own initial conditions apply. |
+| `outputPaths` | no | character vector of ids | The output selections stored in the model file are recorded. |
+| `simulationTime` | no | interval string or numeric | The time grid stored in the model file is used. |
+| `simulationTimeUnit` | no | string | `"h"`. |
+| `steadyState` | no | logical | `FALSE`, so no steady-state pre-run. |
+| `steadyStateTime` | no | numeric | `1000`. |
+| `steadyStateTimeUnit` | no | string | `"min"`. |
+| `overwriteFormulasInSS` | no | logical | `FALSE`. |
+| `readPopulationFromCSV` | no | logical | `FALSE`. |
+
+Two behaviours are not visible from the table:
+
+- **Every reference is checked as the scenario is added.** If `individual`, `application`, or any entry in `parameterSets` does not resolve, `addScenario()` aborts and nothing is created.
+- **`parameterSets` is applied in the order you list them.** Later sets override earlier ones where they touch the same parameter, so `c("global", "aciclovir", "ckd")` applies `global` first and lets `ckd` win.
+
+### Stored field names
+
+The on-disk field names differ from the authoring argument names for the reference fields, which matters when reading a `definitions/scenarios/*.json` file or a record pulled off the project.
+
+| Authoring argument | Stored field |
+| --- | --- |
+| `individual` | `individualId` |
+| `population` | `populationId` |
+| `application` | `applicationProtocol` |
+| `parameterSets` | `modelParameterSets` |
+| `steadyState` | `simulateSteadyState` |
+| (the id) | `scenarioName` |
+
+The stored record also carries `simulationType`, derived from whether a population is referenced.
+
+### `simulationTime` grammar
+
+A string of one or more intervals. One interval is `"start, end, resolution"`, where resolution is the number of points per unit of `simulationTimeUnit`. Several intervals are separated by `;`:
+
+```r
+simulationTime = "0, 24, 60"            # 24 hours, 60 points per hour
+simulationTime = "0, 20, 60; 20, 504, 1" # dense first 20 h, coarse tail
+```
+
+A single interval may also be given as a numeric vector `c(start, end, resolution)`. The stored form is always a list of length-3 numeric vectors, one per interval.
+
+## Individual
+
+`addIndividual(project, id, species, ...)`. Only `species` is required.
+
+| Field | Required | Type | If omitted |
+| --- | --- | --- | --- |
+| `species` | **yes** | string | Aborts. |
+| `gender` | no | `GenderInt` token | `"UNKNOWN"`, which is the only valid PK-Sim gender for some animal species. A supplied value must be a valid token. |
+| `population` | no | string | Not set; PK-Sim uses its own default. |
+| `weight` | no | numeric | Taken from the PK-Sim individual for the species and demographics. |
+| `height` | no | numeric | Taken from the PK-Sim individual. |
+| `age` | no | numeric | Taken from the PK-Sim individual. |
+| `proteinOntogenies` | no | character vector of `"Protein:Ontogeny"` | No ontogenies applied. The ontogeny name must be a key of `ospsuite::StandardOntogeny`, checked when the scenario runs. |
+| `parameterSets` | no | character vector of ids | No individual-specific parameter sets. Validated at add time. |
+
+`proteinOntogenies` also accepts the same pairs as one comma-joined string, which is how the Excel sheets spell it. Numeric fields are coerced with `as.double()`.
+
+`setIndividual(project, id, ...)` changes named fields on an existing individual and accepts the same set.
+
+## Population
+
+`addPopulation(project, id, species, numberOfIndividuals = NULL, ...)`.
+
+A population is either a **demographics spec** (the default, no `type` field) or a **source**, set by `type`:
+
+| `type` | Meaning | Required field |
+| --- | --- | --- |
+| absent | Demographics spec to sample | `species` |
+| `"csv"` | Read from a population CSV | `file` |
+| `"programmatic"` | A `Population` object held in the session | none |
+
+Fields of a demographics spec:
+
+| Field | Required | Type | If omitted |
+| --- | --- | --- | --- |
+| `species` | **yes** | string | Aborts. |
+| `numberOfIndividuals` | no | numeric | Not set. Must be positive when supplied. |
+| `proportionOfFemales` | no | numeric | Not constrained. A value outside 0 to 100 warns. |
+| `ageMin`, `ageMax` | no | numeric | Unconstrained. |
+| `weightMin`, `weightMax` | no | numeric | Unconstrained. |
+| `heightMin`, `heightMax` | no | numeric | Unconstrained. |
+| `BMIMin`, `BMIMax` | no | numeric | Unconstrained. |
+| `ageUnit`, `weightUnit`, `heightUnit`, `BMIUnit` | no | string | PK-Sim defaults. |
+| `gender` | no | string | Not set. |
+| `population` | no | string | PK-Sim default. |
+| `diseaseState` | no | string | Healthy. |
+| `proteinOntogenies` | no | character vector | No ontogenies applied. |
+
+For a `csv` population that names no `file`, the CSV is looked for as `<id>.csv` in the populations folder. The lookup is case-insensitive against the folder listing, with an exact match winning, because an id is lowercase while a CSV keeps the case its author gave it.
+
+## Application
+
+`addApplication(project, id, parameterSets = NULL)`.
+
+| Field | Required | Type | If omitted |
+| --- | --- | --- | --- |
+| `parameterSets` | no | character vector of ids | The application carries no dosing parameters of its own. |
+
+An application is a thin record: the dose, start time, and other administration parameters live in the parameter sets it references.
+
+## Parameter set
+
+Two functions. `addParameterSet(project, id)` creates an empty set; `addParameterEntry(project, id, containerPath, parameterName, value, units = NULL)` fills it.
+
+| Field | Required | Type | Notes |
+| --- | --- | --- | --- |
+| `containerPath` | **yes** | non-empty string | The container in OSPS path notation. |
+| `parameterName` | **yes** | non-empty string | |
+| `value` | **yes** | numeric scalar | |
+| `units` | no | string | Use `""` for a dimensionless parameter. |
+
+`addParameterEntry()` creates the set on demand if it does not yet exist, and is last-write-wins on a repeated `(containerPath, parameterName)` pair. `removeParameterEntry()` takes an entry back out and auto-removes the set if it becomes empty; `removeParameterSet()` drops a whole set.
+
+Scenarios, individuals and applications all reference parameter sets from this one collection by id.
+
+## Initial conditions
+
+`addInitialConditions(project, id)` creates an empty set; `addInitialConditionEntry(project, id, path, value, unit)` fills it.
+
+| Field | Required | Type | Notes |
+| --- | --- | --- | --- |
+| `path` | **yes** | non-empty string | Molecule path in OSPS notation. |
+| `value` | **yes** | numeric scalar | |
+| `unit` | **yes** | non-empty string | Required, unlike a parameter entry's `units`. A blank unit is rejected at run time, so it is rejected at authoring time instead. |
+
+## Output path
+
+`addOutputPath(project, id, path)`.
+
+| Field | Required | Type | Notes |
+| --- | --- | --- | --- |
+| `path` | **yes** | non-empty string | The full model path in OSPS notation. |
+
+An empty path value is a critical error. Two ids pointing at the same path is a warning, not an error, since sharing an output between scenarios is legitimate.
+
+## Observed data
+
+`addObservedData(project, entry)`, where `entry` is either a configuration list or a `DataSet` object. Unlike the other authoring functions this one is not vectorized over ids: it adds one source per call.
+
+Required fields by `type`:
+
+| `type` | Required fields | Reads |
+| --- | --- | --- |
+| `excel` | `file`, `importerConfiguration`, `sheets` | Sheets of a workbook through an OSPS data-importer configuration. |
+| `pkml` | `file` | A `DataSet` saved to a PKML file. |
+| `script` | `file` | An R script returning a `DataSet` or a list of them. |
+| `programmatic` | none | A `DataSet` built in the session. |
+
+| Field | Required | Type | If omitted |
+| --- | --- | --- | --- |
+| `type` | **yes** | one of the four above | Critical error. |
+| `file` | per type | string | Critical error for `excel`, `pkml`, `script`. Relative to the project's data folder. |
+| `importerConfiguration` | `excel` only | string | Critical error for an `excel` source. |
+| `sheets` | `excel` only | character vector | Critical error for an `excel` source. An empty but present `sheets` counts as missing. |
+| `id` | no | string | Inherited from the source: the file basename for a file-based source, the `DataSet` name for an unsaved programmatic one. |
+
+A file that does not exist on disk is a warning rather than an error, so a project whose data lives elsewhere still loads. A path that escapes the data folder is a critical error, matching the abort the loader raises.
+
+Observed-data ids are matched **verbatim**, not canonicalized like every other definition kind. A saved programmatic source changes its id: `saveProject()` writes the `DataSet` to `<name>.pkml` and rewrites the entry as a `pkml` source, so afterwards you remove it by that file basename rather than by the original `DataSet` name.
+
+The source id and the DataSet name are different handles; `vignette("about-the-plotting-model")` explains why. Read the DataSet name from `getObservedDataNames()`.
+
+## DataCombined
+
+`addDataCombined(project, id, simulated = list(), observed = list())`. Both arguments are lists of entry lists.
+
+A `simulated` entry:
+
+| Field | Required | Type | If omitted |
+| --- | --- | --- | --- |
+| `label` | **yes** | string | Critical error. Names the curve. |
+| `scenario` | **yes** | id | Critical error. |
+| `path` | **yes** | string | Critical error. The full output path, not an output-path id. |
+| `group` | no | string | The curve is not grouped. Curves sharing a group are plotted together. |
+
+An `observed` entry:
+
+| Field | Required | Type | If omitted |
+| --- | --- | --- | --- |
+| `label` | **yes** | string | Critical error. |
+| `dataSet` | **yes** | DataSet name | Critical error. This is the DataSet name, not the observed-data source id. |
+| `group` | no | string | The curve is not grouped. |
+
+Optional per-curve transforms, applied before plotting. An offset requires its unit field:
+
+| Field | Type | Notes |
+| --- | --- | --- |
+| `xOffsets` | numeric | Requires `xOffsetsUnits`. |
+| `xOffsetsUnits` | string | |
+| `yOffsets` | numeric | Requires `yOffsetsUnits`. |
+| `yOffsetsUnits` | string | |
+| `xScaleFactors` | numeric | |
+| `yScaleFactors` | numeric | |
+
+## Plot
+
+`addPlot(project, id, dataCombined, plotType, ...)`. Both `dataCombined` and `plotType` are required.
+
+| Field | Required | Type | Notes |
+| --- | --- | --- | --- |
+| `dataCombined` | **yes** | id | Stored as `dataCombinedId`. Must reference a known DataCombined. |
+| `plotType` | **yes** | one of the five below | An unknown value is a critical error. |
+
+### Plot types
+
+| `plotType` | Draws |
+| --- | --- |
+| `individual` | A time profile for an individual scenario. |
+| `population` | A time profile for a population scenario. |
+| `observedVsSimulated` | Simulated against observed values. |
+| `residualsVsSimulated` | Residuals against simulated values. |
+| `residualsVsTime` | Residuals against time. |
+
+### Configuration fields
+
+Any plot-configuration field can be passed through `...`. Common ones: `title`, `subtitle`, `xUnit`, `yUnit`, `xAxisScale`, `yAxisScale`, `xValuesLimits`, `yValuesLimits`.
+
+Four fields apply to one plot type only. Setting one on any other type is silently ignored by the build, so validation warns:
+
+| Field | Applies only to |
+| --- | --- |
+| `quantiles` | `population` |
+| `aggregation` | `population` |
+| `nsd` | `population` |
+| `foldDistance` | `observedVsSimulated` |
+
+## Plot grid
+
+`addPlotGrid(project, id, plots, ...)`.
+
+| Field | Required | Type | Notes |
+| --- | --- | --- | --- |
+| `plots` | **yes** | character vector of plot ids | Stored as `plotIds`. Every plot listed becomes a panel. |
+
+`...` accepts grid fields such as `title` and `subtitle`.
+
+## Parameter identification
+
+`addPITask(project, id, scenarios, parameters, outputMappings, configuration)`.
+
+| Field | Required to create | Required to run | Type |
+| --- | --- | --- | --- |
+| `scenarios` | no | **yes** | character vector of scenario ids |
+| `parameters` | no | **yes** | list of PI Parameter records |
+| `outputMappings` | no | **yes** | list of PI Output Mapping records |
+| `configuration` | no | no | list (algorithm, confidence-interval method, and similar) |
+
+A task can be created empty and seeded afterwards, but an empty task cannot run: validation reports a missing `scenarios`, `parameters`, or `outputMappings` as a critical error, and the run gates on validation.
+
+Removing the last parameter and the last mapping leaves nothing to fit, so the now-empty task is removed for you, with a warning saying so.
+
+### PI parameter
+
+`addPIParameter(project, task, path, scenarios, minValue, maxValue, startValue, units = NULL, id = NULL)`.
+
+| Field | Required | Type | If omitted |
+| --- | --- | --- | --- |
+| `path` | **yes** | string | Aborts. Model parameter path to estimate. |
+| `scenarios` | **yes** | character vector of ids | Aborts. |
+| `minValue` | **yes** | numeric | Aborts. Lower bound. |
+| `maxValue` | **yes** | numeric | Aborts. Upper bound. |
+| `startValue` | **yes** | numeric | Aborts. Starting value. |
+| `units` | no | string | The parameter's own unit. |
+| `id` | no | string | Auto-generated. |
+
+### PI output mapping
+
+`addPIOutputMapping(project, task, outputPath, observedData, scenarios, ...)`.
+
+| Field | Required | Type | If omitted |
+| --- | --- | --- | --- |
+| `outputPath` | **yes** | output-path id | Aborts. |
+| `observedData` | **yes** | observed-data handle | Aborts. |
+| `scenarios` | **yes** | character vector of ids | Aborts. |
+| `scaling` | no | `"lin"` or `"log"` | The runtime default. |
+| `xOffset` | no | numeric | `0`. |
+| `yOffset` | no | numeric | `0`. |
+| `xFactor` | no | numeric | `1`. |
+| `yFactor` | no | numeric | `1`. |
+| `weight` | no | numeric scalar or vector | The data is unweighted. |
+| `id` | no | string | Auto-generated as `<task>_mapping_<N>`. |
+
+A build error (an unknown parameter path, output, or observed dataset) fails hard and stops the call, so a typo surfaces immediately. A numerical failure in the optimization leaves that task's `result` as `NULL` with an `error` element, and the remaining tasks still run.
+
+## Authoring several definitions in one call
+
+Most authoring functions are **vectorized over the id**: pass a vector of ids to add several definitions at once.
+
+| Argument shape | Behaviour |
+| --- | --- |
+| The `id` vector | Sets the count, N. |
+| A scalar field | Recycled to all N. |
+| A length-N vector | Aligned to the ids by position, one value per definition. |
+| A field that is itself a vector for one definition (such as `parameterSets`) | Applied whole to each definition. |
+
+The call is **all-or-nothing**: if any one definition fails validation, none is applied.
+
+`addPlot()` and `addPlotGrid()` carry a deliberate asymmetry worth knowing, because it is the one place the rules above do not read the way you would guess. A length-N vector passed to a **positional** argument (`dataCombined`, `plotType`, `plots`) aligns by position as usual. A length-N **atomic vector** passed through `...` is treated as one multi-value field and applied whole, collapsed to a comma-separated string. So `title = c("A", "B")` gives every plot the single title `"A, B"`. To vary a `...` field per definition, pass a length-N **list**: `title = list("A", "B")`.
+
+`addObservedData()` is not vectorized at all: its second argument is an entry, not an id.
+
+## Sensitivity plot configuration
+
+The three sensitivity plotting functions each recognize a subset of `defaultPlotConfiguration` fields, because each has a different visual structure. A field the function does not recognize has no effect.
+
+| Configuration field | `sensitivitySpiderPlot()` | `sensitivityTimeProfiles()` | `sensitivityTornadoPlot()` | Controls |
+| --- | :-: | :-: | :-: | --- |
+| `legendPosition` | yes | yes | yes | Legend placement |
+| `legendTitle` | yes | yes | yes | Legend title |
+| `linesAlpha` | yes | yes | | Line transparency |
+| `linesColor` | yes | yes | yes | Line colour, or bar colour for the tornado |
+| `linesSize` | yes | yes | | Line thickness |
+| `pointsShape` | yes | yes | | Point shape |
+| `pointsSize` | yes | | | Point size |
+| `title` | yes | yes | yes | Main title |
+| `titleSize` | yes | yes | yes | Title font size |
+| `subtitle` | yes | | yes | Subtitle |
+| `xAxisScale` | yes | yes | | X-axis scale, `"log"` or `"lin"` |
+| `xLabel` | yes | yes | yes | X-axis label |
+| `xValuesLimits` | yes | | | X-value limits |
+| `yAxisScale` | yes | yes | | Y-axis scale |
+| `yAxisTicks` | yes | | | Y-axis tick count |
+| `yAxisLimits` | yes | | | Y-axis limits |
+| `yValuesLimits` | yes | | | Y-value limits |
+| `yLabel` | yes | yes | yes | Y-axis label |
+
+Some settings are also exposed as direct function arguments, such as `xAxisScale` and `yAxisScale` on `sensitivityTimeProfiles()` and `xAxisType` and `yAxisType` on `sensitivitySpiderPlot()`. A direct argument **overrides** the configuration object, which is the mechanism for a one-off change without editing the configuration.
+
+For the broader catalog of `PlotConfiguration` fields and their defaults, see the [TLF-Library reference](https://www.open-systems-pharmacology.org/TLF-Library/reference/PlotConfiguration.html).
+
+## Where to go next
+
+To author these definitions, see `vignette("how-to-design-scenarios")`, `vignette("how-to-plot-results")`, `vignette("how-to-use-observed-data")`, and `vignette("how-to-identify-parameters")`. For the project file itself, see `vignette("reference-project-file")`.
