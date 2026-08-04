@@ -374,6 +374,7 @@
       modelFile = scenario$modelFile
     ))
   }
+  .assertNotLfsPointer(modelFilePath)
   simulation <- ospsuite::loadSimulation(
     filePath = modelFilePath,
     loadFromCache = FALSE
@@ -512,8 +513,10 @@
   customParams,
   simulationRunOptions,
   validate,
-  opName
+  opName,
+  .call = rlang::caller_env()
 ) {
+  rlang::local_error_call(.call)
   validateIsOfType(project, "Project")
   .validateParametersStructure(
     parameterStructure = customParams,
@@ -551,6 +554,9 @@
 # scenario; an unknown name aborts. Returns `list(scenarioNames, prepared)`
 # where `prepared` is a named list (keyed by scenario name) of
 # `.prepareScenario()`'s `list(simulation, population)` return.
+#
+# `canSkip` says whether the calling entrypoint offers `stopIfFails`, so a build
+# failure only points at it where it exists (`buildSimulations()` has none).
 # @keywords internal
 # @noRd
 .buildScenarioSimulations <- function(
@@ -559,8 +565,11 @@
   customParams = NULL,
   simulationRunOptions = NULL,
   stopIfParameterNotFound = TRUE,
-  stopIfFails = TRUE
+  stopIfFails = TRUE,
+  canSkip = TRUE,
+  .call = rlang::caller_env()
 ) {
+  rlang::local_error_call(.call)
   allScenarios <- project$definitions$scenarios
   if (is.null(scenarioNames)) {
     scenarioNames <- names(allScenarios)
@@ -593,6 +602,13 @@
     # as a warning and leave this scenario's entry NULL so the run continues
     # with the scenarios that built; the run loops below skip a NULL entry and
     # `.collectScenarioResult()` records it as producing no results.
+    #
+    # Either way the failure is reported as belonging to this scenario. A build
+    # error can come from the .NET backend, whose own message names neither the
+    # scenario nor the file (loading a `.pkml` that is not there, or is not a
+    # model), so re-raising it as-is left nothing to act on in a batch of
+    # scenarios: the abort now carries the scenario's name and the backend
+    # message as its cause.
     result <- tryCatch(
       .prepareScenario(
         scenario = allScenarios[[name]],
@@ -604,7 +620,17 @@
       ),
       error = function(e) {
         if (isTRUE(stopIfFails)) {
-          stop(e)
+          # Attribute explicitly: this runs in the handler closure, so the
+          # `local_error_call()` installed in the enclosing frame does not reach
+          # it.
+          cli::cli_abort(
+            messages$scenarioBuildFailedAbort(
+              scenarioName = name,
+              canSkip = canSkip
+            ),
+            parent = e,
+            call = .call
+          )
         }
         cli::cli_warn(messages$scenarioBuildFailed(
           scenarioName = name,
@@ -635,8 +661,10 @@
   simulation,
   results,
   population,
-  stopIfFails = TRUE
+  stopIfFails = TRUE,
+  .call = rlang::caller_env()
 ) {
+  rlang::local_error_call(.call)
   outputQuantities <- NULL
   # `simulation` is NULL for a scenario skipped at build time (stopIfFails =
   # FALSE); there is nothing to resolve output quantities against, so leave
@@ -714,14 +742,17 @@
   simulationRunOptions = NULL,
   validate = TRUE,
   stopIfParameterNotFound = TRUE,
-  stopIfFails = TRUE
+  stopIfFails = TRUE,
+  .call = rlang::caller_env()
 ) {
+  rlang::local_error_call(.call)
   simulationRunOptions <- .scenarioBuildPreflight(
     project = project,
     customParams = customParams,
     simulationRunOptions = simulationRunOptions,
     validate = validate,
-    opName = "runScenarios"
+    opName = "runScenarios",
+    .call = .call
   )
 
   built <- .buildScenarioSimulations(
@@ -730,7 +761,8 @@
     customParams = customParams,
     simulationRunOptions = simulationRunOptions,
     stopIfParameterNotFound = stopIfParameterNotFound,
-    stopIfFails = stopIfFails
+    stopIfFails = stopIfFails,
+    .call = .call
   )
   scenarioNames <- built$scenarioNames
   prepared <- built$prepared
@@ -776,9 +808,19 @@
       simulation = p$simulation,
       results = if (is.null(p)) NULL else simulationResults[[p$simulation$id]],
       population = p$population,
-      stopIfFails = stopIfFails
+      stopIfFails = stopIfFails,
+      .call = .call
     )
     names(out)[[idx]] <- name
+  }
+
+  # Every scenario gets an entry whatever happened to it, so close a
+  # `stopIfFails = FALSE` run by naming the ones that produced none in one
+  # place: the per-scenario warnings above are easy to lose in a large batch,
+  # and this is what a caller needs to know before reaching into the results.
+  skipped <- names(out)[vapply(out, function(r) is.null(r$results), logical(1))]
+  if (length(skipped) > 0L) {
+    cli::cli_warn(messages$scenariosSkipped(skipped))
   }
   out
 }
@@ -798,14 +840,17 @@
   customParams = NULL,
   simulationRunOptions = NULL,
   validate = TRUE,
-  stopIfParameterNotFound = TRUE
+  stopIfParameterNotFound = TRUE,
+  .call = rlang::caller_env()
 ) {
+  rlang::local_error_call(.call)
   simulationRunOptions <- .scenarioBuildPreflight(
     project = project,
     customParams = customParams,
     simulationRunOptions = simulationRunOptions,
     validate = validate,
-    opName = "buildSimulations"
+    opName = "buildSimulations",
+    .call = .call
   )
 
   built <- .buildScenarioSimulations(
@@ -813,7 +858,9 @@
     scenarioNames = scenarioNames,
     customParams = customParams,
     simulationRunOptions = simulationRunOptions,
-    stopIfParameterNotFound = stopIfParameterNotFound
+    stopIfParameterNotFound = stopIfParameterNotFound,
+    canSkip = FALSE,
+    .call = .call
   )
   built$prepared
 }

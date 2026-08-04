@@ -4,14 +4,22 @@
 \alias{PITask}
 \title{Create a Parameter Identification task}
 \usage{
-PITask(id, scenarios, parameters, outputMappings, configuration = list())
+PITask(
+  id,
+  scenarios = character(0),
+  parameters = list(),
+  outputMappings = list(),
+  configuration = list()
+)
 }
 \arguments{
 \item{id}{Character scalar. Identifier for the task.}
 
 \item{scenarios}{Character vector of scenario ids the task runs against.
 Every scenario referenced by a parameter or output mapping must be in
-this set.}
+this set. May be empty (\code{character(0)}) to create a task whose scenarios
+are set later with \code{\link[=setPITask]{setPITask()}}; a task must name at least one scenario
+to run, which \code{\link[=validateProject]{validateProject()}} enforces.}
 
 \item{parameters}{List of \code{\link[=PIParameter]{PIParameter()}} records. May be empty to create
 a task that is seeded later with \code{\link[=addPIParameter]{addPIParameter()}}; a task must have at
@@ -71,6 +79,7 @@ Other parameterIdentification:
 \code{\link[=addPITask]{addPITask()}},
 \code{\link[=removePIOutputMapping]{removePIOutputMapping()}},
 \code{\link[=removePIParameter]{removePIParameter()}},
-\code{\link[=removePITask]{removePITask()}}
+\code{\link[=removePITask]{removePITask()}},
+\code{\link[=setPITask]{setPITask()}}
 }
 \concept{parameterIdentification}

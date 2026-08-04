@@ -12,6 +12,43 @@ test_that("loadProject() errors when the file does not exist", {
   )
 })
 
+test_that("loadProject() opens a project folder, whatever its project file is called", {
+  # A folder is the natural thing to hand `loadProject()`, and an Excel import
+  # can name the container after the workbook it read, so neither the folder nor
+  # a non-default name may need the caller to spell out `Project.json`.
+  dir <- withr::local_tempdir()
+  initProject(destination = dir, type = "minimal", createExcel = FALSE)
+
+  expect_s3_class(loadProject(dir), "Project")
+
+  file.rename(file.path(dir, "Project.json"), file.path(dir, "MyStudy.json"))
+  project <- loadProject(dir)
+  expect_equal(fs::path_file(project$info$projectFilePath), "MyStudy.json")
+
+  # And with the folder as the working directory, a bare call finds it too.
+  withr::local_dir(dir)
+  expect_s3_class(loadProject(), "Project")
+})
+
+test_that("loadProject() names the mistake on a folder that holds no project", {
+  # Not a snapshot: the message carries the folder's absolute path, which is a
+  # machine-specific temp directory.
+  dir <- withr::local_tempdir()
+  expect_error(loadProject(dir), "No esqlabsR project found in the folder")
+})
+
+test_that("loadProject() asks which project to open when a folder holds several", {
+  dir <- withr::local_tempdir()
+  initProject(destination = dir, type = "minimal", createExcel = FALSE)
+  file.copy(
+    file.path(dir, "Project.json"),
+    file.path(dir, "StudyA.json")
+  )
+  file.rename(file.path(dir, "Project.json"), file.path(dir, "StudyB.json"))
+
+  expect_error(loadProject(dir), "2 project files")
+})
+
 test_that("loadProject() errors on an unsupported schemaVersion", {
   badPath <- withr::local_tempfile(fileext = ".json")
   writeLines(

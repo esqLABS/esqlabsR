@@ -59,10 +59,14 @@ MoBi snapshots), \code{dataFolder} (experimental data), \code{outputFolder}
 (results), \code{populationsFolder} (population CSVs loaded by
 \code{\link[=runScenarios]{runScenarios()}}), and \code{definitionsFolder} (the folder holding the
 definition files, default \code{"definitions"}).
-Read a field with \code{project$paths$simulationsFolder} (returned resolved
-against \code{projectDirPath}); write one with
-\code{project$paths$simulationsFolder <- "Models"} (stored verbatim, resolved
-on the next read). Assigning any field sets the dirty bit. Changing
+Read a field with \code{project$paths$simulationsFolder}: that returns the
+\strong{absolute} path, already resolved against \code{projectDirPath}, so it is
+ready to use as-is and must not be joined onto \code{projectDirPath} again
+(\code{project$print()} shows these folders relative to the project folder,
+which is a display choice, not the field's value). Write one with
+\code{project$paths$simulationsFolder <- "Models"} (stored verbatim, and
+relative to the project folder, resolved on the next read). Assigning any
+field sets the dirty bit. Changing
 \code{definitionsFolder} redirects where the next \code{\link[=saveProject]{saveProject()}} writes the
 definition files; nothing moves on disk until that save. The
 Excel-bridge sheet-name fields live in the separate \code{excel} group.}
@@ -156,6 +160,7 @@ differences, empty when everything is in sync). The same information
     \item \href{#method-Project-loadObservedData}{\code{Project$loadObservedData()}}
     \item \href{#method-Project-getObservedDataNames}{\code{Project$getObservedDataNames()}}
     \item \href{#method-Project-addPITask}{\code{Project$addPITask()}}
+    \item \href{#method-Project-setPITask}{\code{Project$setPITask()}}
     \item \href{#method-Project-removePITask}{\code{Project$removePITask()}}
     \item \href{#method-Project-addPIParameter}{\code{Project$addPIParameter()}}
     \item \href{#method-Project-removePIParameter}{\code{Project$removePIParameter()}}
@@ -186,7 +191,8 @@ empty in-memory project when called with no arguments.
     \if{html}{\out{<div class="arguments">}}
     \describe{
       \item{\code{projectFilePath}}{A string representing the path to the project
-JSON file.}
+JSON file, or to the folder holding it (see \code{\link[=loadProject]{loadProject()}} for how a
+folder is resolved).}
     }
     \if{html}{\out{</div>}}
   }
@@ -1013,9 +1019,9 @@ the \verb{add*} authoring methods. See \code{\link[=addParameterEntry]{addParame
     \if{html}{\out{<div class="r">}}
     \preformatted{Project$addPITask(
   id,
-  scenarios,
-  parameters,
-  outputMappings,
+  scenarios = character(0),
+  parameters = list(),
+  outputMappings = list(),
   configuration = list(),
   overwrite = FALSE
 )}
@@ -1028,6 +1034,27 @@ the \verb{add*} authoring methods. See \code{\link[=addParameterEntry]{addParame
       \item{\code{scenarios, parameters, outputMappings, configuration}}{Parameter-identification task components. See \code{\link[=addPITask]{addPITask()}}.}
       \item{\code{overwrite}}{Logical scalar controlling duplicate-collision behaviour of
 the \verb{add*} authoring methods. See \code{\link[=addParameterEntry]{addParameterEntry()}}, \code{\link[=addPITask]{addPITask()}}.}
+    }
+    \if{html}{\out{</div>}}
+  }
+}
+
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Project-setPITask"></a>}}
+\if{latex}{\out{\hypertarget{method-Project-setPITask}{}}}
+\subsection{\code{Project$setPITask()}}{
+  Modify a parameter-identification task's task-level fields.
+See \code{\link[=setPITask]{setPITask()}}, the primary entry point.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{Project$setPITask(id, ...)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{id}}{Character id (name) of the definition to add, modify, or remove.}
+      \item{\code{...}}{The supplied task-level fields, forwarded by \code{\link[=setPITask]{setPITask()}}.}
     }
     \if{html}{\out{</div>}}
   }

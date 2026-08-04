@@ -4,11 +4,14 @@
 \alias{loadProject}
 \title{Load a project from a JSON configuration file}
 \usage{
-loadProject(path = "Project.json")
+loadProject(path = ".")
 }
 \arguments{
-\item{path}{Path to the \code{Project.json} file. Defaults to
-\code{Project.json} in the working directory.}
+\item{path}{Path to the project's JSON file, or to the folder holding it.
+Given a folder, the project file inside it is opened: \code{Project.json} when
+it is there, otherwise the single project file the folder carries, so a
+project named through \code{importProjectFromExcel(projectFileName = )} opens
+too. Defaults to the working directory.}
 }
 \value{
 Object of type \code{Project}
@@ -32,6 +35,14 @@ save them; the files on disk stay as they are. Reading a section
 directly (for example \code{scenarios} definitions) never changes the project: a
 definition changes only through the add/set/remove functions.
 
+The project's own fields are not definitions and have no add/set/remove
+function: assign them on the project instead, \code{project$info$name <- "..."}
+for the name and description, and \code{project$paths$populationsFolder <- "..."}
+for a working folder (see \link{Project} for the full field list). An
+observed-data source's \code{file} and \code{importerConfiguration} are fields of the
+declaration, so they are authored with \code{\link[=addObservedData]{addObservedData()}}. Every such
+assignment is an in-memory edit like any other, saved by \code{\link[=saveProject]{saveProject()}}.
+
 Write your changes to the project files with \code{\link[=saveProject]{saveProject()}}. Discard
 unsaved changes and go back to what is saved on disk with
 \code{\link[=reloadProject]{reloadProject()}}. Save the current state of the whole project to a
@@ -45,6 +56,9 @@ Excel files with \code{\link[=projectStatus]{projectStatus()}}.
 \dontrun{
 project <- loadProject("Project.json")
 results <- runScenarios(project)
+
+# A project folder works too, whatever its project file is called.
+project <- loadProject("path/to/myProject")
 
 # Edits stay in memory until you save.
 addOutputPath(project, "x", "Organism|A|Concentration in container")

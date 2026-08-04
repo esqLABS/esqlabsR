@@ -351,7 +351,9 @@ PIOutputMapping <- function(
 #' @param id Character scalar. Identifier for the task.
 #' @param scenarios Character vector of scenario ids the task runs against.
 #'   Every scenario referenced by a parameter or output mapping must be in
-#'   this set.
+#'   this set. May be empty (`character(0)`) to create a task whose scenarios
+#'   are set later with [setPITask()]; a task must name at least one scenario
+#'   to run, which [validateProject()] enforces.
 #' @param parameters List of [PIParameter()] records. May be empty to create
 #'   a task that is seeded later with [addPIParameter()]; a task must have at
 #'   least one parameter to run, which [validateProject()] enforces.
@@ -388,23 +390,16 @@ PIOutputMapping <- function(
 #' )
 PITask <- function(
   id,
-  scenarios,
-  parameters,
-  outputMappings,
+  scenarios = character(0),
+  parameters = list(),
+  outputMappings = list(),
   configuration = list()
 ) {
   if (!is.character(id) || length(id) != 1L || is.na(id) || nchar(id) == 0) {
     cli::cli_abort(messages$PIRequiredField("id", "PITask", "<unset>"))
   }
 
-  if (
-    !is.character(scenarios) ||
-      length(scenarios) == 0L ||
-      any(is.na(scenarios)) ||
-      any(nchar(scenarios) == 0)
-  ) {
-    cli::cli_abort(messages$PIScenariosEmpty("PITask", id))
-  }
+  scenarios <- .asPITaskScenarios(scenarios, id)
 
   # An empty list is allowed here so a task can be created first and seeded
   # with addPIParameter() / addPIOutputMapping(), matching the create-then-add
@@ -449,6 +444,38 @@ PITask <- function(
   )
   class(rec) <- c("PITask", "list")
   rec
+}
+
+# Normalize a `PITask`'s `scenarios` to the character vector the record stores.
+#
+# A task's `scenarios` is a reference list, so it follows the same rule as every
+# other one: a zero-length value (`character(0)`, `NULL`, or the empty list a
+# JSON reader yields for `[]`) means "there are none", and a list of strings
+# flattens to the character vector the list of ids is. That is what makes a task
+# creatable empty and seeded afterwards with `setPITask()` /
+# `addPIParameter()` / `addPIOutputMapping()`; a task left with no scenarios
+# cannot run, and `validateProject()` reports it. An `NA` or empty-string id, or
+# a list holding anything but strings, still aborts.
+#
+# @keywords internal
+# @noRd
+.asPITaskScenarios <- function(scenarios, id, call = rlang::caller_env()) {
+  if (is.list(scenarios)) {
+    if (all(vapply(scenarios, .isScalarString, logical(1)))) {
+      scenarios <- as.character(unlist(scenarios))
+    }
+  }
+  if (is.null(scenarios)) {
+    return(character(0))
+  }
+  if (
+    !is.character(scenarios) ||
+      any(is.na(scenarios)) ||
+      any(nchar(scenarios) == 0)
+  ) {
+    cli::cli_abort(messages$PITaskScenariosInvalid(id), call = call)
+  }
+  scenarios
 }
 
 # A PI task's `configuration` as it is serialized: an empty one becomes the empty
@@ -656,6 +683,12 @@ print.PITask <- function(x, ...) {
 
     # A task may be created empty and seeded incrementally, but an empty task
     # cannot run, so validation (which the run gates on) rejects one left empty.
+    if (length(task$scenarios) == 0L) {
+      result$addCriticalError(
+        "Empty PI Task",
+        messages$PIEmptyList("scenarios", taskId)
+      )
+    }
     if (length(task$parameters) == 0L) {
       result$addCriticalError(
         "Empty PI Task",
@@ -1277,14 +1310,23 @@ createPITasks <- function(...) {
 #' Add a Parameter Identification task to a Project
 #'
 #' @param project A `Project` object.
+#' @description Adds one task to `parameterIdentification` definitions. Every
+#'   part of a task is optional, so `addPITask(project, "myFit")` creates an
+#'   empty task that is then grown with [setPITask()], [addPIParameter()] and
+#'   [addPIOutputMapping()]. A task must name at least one scenario, one
+#'   parameter and one output mapping to run, which [validateProject()] enforces
+#'   and [runPI()] gates on.
+#'
+#' @param project A `Project` object.
 #' @param id Character scalar. New task id; must not collide with an
 #'   existing task id.
 #' @param scenarios Character vector of scenario names. Each must exist
-#'   in `names(project$definitions$scenarios)`.
-#' @param parameters List of `PIParameter` records. May be empty (`list()`)
-#'   to create a task seeded later with [addPIParameter()].
-#' @param outputMappings List of `PIOutputMapping` records. May be empty
-#'   (`list()`) to create a task seeded later with [addPIOutputMapping()].
+#'   in `names(project$definitions$scenarios)`. Defaults to `character(0)`
+#'   (none yet); set them later with [setPITask()].
+#' @param parameters List of `PIParameter` records. Defaults to `list()` (none
+#'   yet); add them later with [addPIParameter()].
+#' @param outputMappings List of `PIOutputMapping` records. Defaults to `list()`
+#'   (none yet); add them later with [addPIOutputMapping()].
 #'   Each `outputPath` must identify a defined output path, either by its id
 #'   (a key in `names(project$definitions$outputPaths)`) or by its literal
 #'   model path.
@@ -1298,9 +1340,9 @@ createPITasks <- function(...) {
 addPITask <- function(
   project,
   id,
-  scenarios,
-  parameters,
-  outputMappings,
+  scenarios = character(0),
+  parameters = list(),
+  outputMappings = list(),
   configuration = list(),
   overwrite = FALSE
 ) {
@@ -1323,9 +1365,9 @@ addPITask <- function(
   self,
   private,
   id,
-  scenarios,
-  parameters,
-  outputMappings,
+  scenarios = character(0),
+  parameters = list(),
+  outputMappings = list(),
   configuration = list(),
   overwrite = FALSE,
   .call
@@ -1354,7 +1396,11 @@ addPITask <- function(
     }
   }
 
-  scenarios <- .canonicalizeIdRef(scenarios)
+  # `.canonicalizeVectorIdRef()` is the reference-list normalizer: it flattens
+  # the list a JSON reader yields for an id array and reads a zero-length value
+  # as "there are none", so a task's own written `scenarios` field goes straight
+  # back in and an empty task is creatable.
+  scenarios <- .canonicalizeVectorIdRef(scenarios)
   unknownScenarios <- setdiff(scenarios, names(self$definitions$scenarios))
   if (length(unknownScenarios) > 0L) {
     errors <- c(
@@ -1424,9 +1470,117 @@ addPITask <- function(
   invisible(self)
 }
 
+#' Modify a Parameter Identification task's task-level fields
+#'
+#' @description Changes the task-level fields of the task identified by `id`:
+#'   the `scenarios` it runs against and its solver `configuration`. Only the
+#'   arguments you pass are changed; the other keeps its current value (partial
+#'   update). Passing `scenarios = character(0)` or `configuration = NULL`
+#'   empties that field.
+#'
+#'   A task's parameters and output mappings are not task-level fields: grow and
+#'   shrink them with [addPIParameter()] / [removePIParameter()] and
+#'   [addPIOutputMapping()] / [removePIOutputMapping()]. To replace a whole task
+#'   at once, use `addPITask(..., overwrite = TRUE)`.
+#'
+#'   Like [addPITask()], this acts on one task per call.
+#'
+#' @param project A `Project` object.
+#' @param id Character scalar. Id of the task to modify, canonicalized the same
+#'   way [addPITask()] canonicalizes it. The task must already exist.
+#' @param scenarios Character vector of scenario ids the task runs against. Each
+#'   must exist in `names(project$definitions$scenarios)`.
+#' @param configuration Named list of solver settings; see the `configuration`
+#'   argument of [PITask()] for the supported keys. `NULL` clears every setting,
+#'   leaving the runtime defaults in place.
+#' @returns The `project` object, invisibly.
+#' @export
+#' @family parameterIdentification
+setPITask <- function(project, id, scenarios, configuration) {
+  validateIsOfType(project, "Project")
+
+  # Capture only the fields the caller supplied, the same way `setScenario()`
+  # does: `x[name] <- list(value)` keeps a supplied `NULL` (which clears the
+  # field) as a present-but-NULL element, where `x$name <- NULL` would drop the
+  # name and turn "clear it" into "leave it untouched".
+  supplied <- list()
+  if (!missing(scenarios)) {
+    supplied["scenarios"] <- list(scenarios)
+  }
+  if (!missing(configuration)) {
+    supplied["configuration"] <- list(configuration)
+  }
+
+  do.call(project$setPITask, c(list(id), supplied))
+}
+
+# Implementation behind `project$setPITask()` / `setPITask()`. The `...` carries
+# only the fields the caller supplied (partial update).
+#
+# @keywords internal
+# @noRd
+.setPITask_impl <- function(self, private, id, ..., .call) {
+  rlang::local_error_call(.call)
+  if (!is.character(id) || length(id) != 1L || is.na(id) || nchar(id) == 0) {
+    cli::cli_abort("{.arg id} must be a single non-empty string.")
+  }
+  id <- .canonicalizeId(id)
+  if (!(id %in% names(self$definitions$parameterIdentification))) {
+    cli::cli_abort(c(
+      "Cannot modify PI task {.val {id}}: it does not exist.",
+      "i" = "Use {.fn addPITask} to create it first."
+    ))
+  }
+
+  dots <- list(...)
+  # A name that is not a task-level field would otherwise be a silent no-op, so
+  # it aborts naming what can be set here.
+  unknown <- setdiff(names(dots), c("scenarios", "configuration"))
+  if (length(unknown) > 0L) {
+    cli::cli_abort(c(
+      "{.fn setPITask} cannot set {.field {unknown}}.",
+      "i" = "It sets {.field scenarios} and {.field configuration}; use \\
+      {.fn addPIParameter} / {.fn addPIOutputMapping} for a task's parameters \\
+      and output mappings."
+    ))
+  }
+  if (length(dots) == 0L) {
+    return(invisible(self))
+  }
+
+  task <- self$definitions$parameterIdentification[[id]]
+  if ("scenarios" %in% names(dots)) {
+    scenarios <- .canonicalizeVectorIdRef(dots$scenarios)
+    unknownScenarios <- setdiff(scenarios, names(self$definitions$scenarios))
+    if (length(unknownScenarios) > 0L) {
+      cli::cli_abort(c(
+        "Cannot modify PI task {.val {id}}:",
+        "x" = "scenarios not found in {.code project$definitions$scenarios}: \\
+        {.val {unknownScenarios}}"
+      ))
+    }
+    task$scenarios <- .asPITaskScenarios(scenarios, id)
+  }
+  if ("configuration" %in% names(dots)) {
+    configuration <- dots$configuration
+    if (!is.null(configuration) && !is.list(configuration)) {
+      cli::cli_abort(
+        "{.arg configuration} must be a named list of solver settings, or \\
+        {.code NULL}."
+      )
+    }
+    task$configuration <- configuration %||% list()
+  }
+
+  tasks <- private$.getSection("parameterIdentification")
+  tasks[[id]] <- task
+  private$.setSection("parameterIdentification", tasks)
+  invisible(self)
+}
+
 #' Remove one or more Parameter Identification tasks from a Project
 #'
-#' Drop the tasks with matching ids in one write-through. Warns (and skips)
+#' Drop the tasks with matching ids in one in-memory edit. Warns (and skips)
 #' any id not present.
 #'
 #' `addPITask()` is not vectorized over ids: each task is composed of its own

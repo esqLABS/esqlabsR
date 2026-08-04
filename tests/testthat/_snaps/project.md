@@ -10,7 +10,7 @@
         * esqlabsR Version: 6.0.0
         * JSON File: Project.json
       
-      -- Paths -----------------------------------------------------------------------
+      -- Paths (relative to the project folder) --------------------------------------
         * Simulations Folder: Models/Simulations
         * Data Folder: Data
         * Populations Folder: Populations
@@ -50,7 +50,7 @@
       [unsaved changes]
     Output
       
-      -- Paths -----------------------------------------------------------------------
+      -- Paths (relative to the project folder) --------------------------------------
         * Definitions Folder: definitions
       
       -- Definitions -----------------------------------------------------------------
@@ -63,7 +63,7 @@
     Output
       <Project>
       
-      -- Paths -----------------------------------------------------------------------
+      -- Paths (relative to the project folder) --------------------------------------
         * Definitions Folder: definitions
 
 # a whole-section assignment through a section accessor is rejected
@@ -137,7 +137,7 @@
         * esqlabsR Version: 6.0.0
         * JSON File: Project.json
       
-      -- Paths -----------------------------------------------------------------------
+      -- Paths (relative to the project folder) --------------------------------------
         * Simulations Folder: Models/Simulations
         * Data Folder: Data
         * Populations Folder: Populations
@@ -175,7 +175,7 @@
         * esqlabsR Version: 6.0.0
         * JSON File: Project.json
       
-      -- Paths -----------------------------------------------------------------------
+      -- Paths (relative to the project folder) --------------------------------------
         * Simulations Folder: Models/Simulations
         * Data Folder: Data
         * Populations Folder: Populations
@@ -213,7 +213,7 @@
         * esqlabsR Version: <version>
         * JSON File: Project.json
       
-      -- Paths -----------------------------------------------------------------------
+      -- Paths (relative to the project folder) --------------------------------------
         * Simulations Folder: Models/Simulations
         * Data Folder: Data
         * Populations Folder: Populations

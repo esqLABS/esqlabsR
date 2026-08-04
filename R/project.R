@@ -139,10 +139,14 @@ Project <- R6::R6Class(
     #'   (results), `populationsFolder` (population CSVs loaded by
     #'   [runScenarios()]), and `definitionsFolder` (the folder holding the
     #'   definition files, default `"definitions"`).
-    #'   Read a field with `project$paths$simulationsFolder` (returned resolved
-    #'   against `projectDirPath`); write one with
-    #'   `project$paths$simulationsFolder <- "Models"` (stored verbatim, resolved
-    #'   on the next read). Assigning any field sets the dirty bit. Changing
+    #'   Read a field with `project$paths$simulationsFolder`: that returns the
+    #'   **absolute** path, already resolved against `projectDirPath`, so it is
+    #'   ready to use as-is and must not be joined onto `projectDirPath` again
+    #'   (`project$print()` shows these folders relative to the project folder,
+    #'   which is a display choice, not the field's value). Write one with
+    #'   `project$paths$simulationsFolder <- "Models"` (stored verbatim, and
+    #'   relative to the project folder, resolved on the next read). Assigning any
+    #'   field sets the dirty bit. Changing
     #'   `definitionsFolder` redirects where the next [saveProject()] writes the
     #'   definition files; nothing moves on disk until that save. The
     #'   Excel-bridge sheet-name fields live in the separate `excel` group.
@@ -235,7 +239,8 @@ Project <- R6::R6Class(
     #'   empty in-memory project when called with no arguments.
     #'
     #' @param projectFilePath A string representing the path to the project
-    #'   JSON file.
+    #'   JSON file, or to the folder holding it (see [loadProject()] for how a
+    #'   folder is resolved).
     initialize = function(projectFilePath = character()) {
       private$.validatedSinceMutation <- FALSE
       if (is.character(projectFilePath) && length(projectFilePath) == 0L) {
@@ -540,9 +545,9 @@ Project <- R6::R6Class(
     #' @description Add a parameter-identification task. See [addPITask()].
     addPITask = function(
       id,
-      scenarios,
-      parameters,
-      outputMappings,
+      scenarios = character(0),
+      parameters = list(),
+      outputMappings = list(),
       configuration = list(),
       overwrite = FALSE
     ) {
@@ -555,6 +560,13 @@ Project <- R6::R6Class(
         configuration,
         overwrite
       )
+    },
+
+    #' @description Modify a parameter-identification task's task-level fields.
+    #'   See [setPITask()], the primary entry point.
+    #' @param ... The supplied task-level fields, forwarded by [setPITask()].
+    setPITask = function(id, ...) {
+      private$.impl(.setPITask_impl, id, ...)
     },
 
     #' @description Remove parameter-identification tasks. See [removePITask()].
@@ -1093,7 +1105,11 @@ Project <- R6::R6Class(
         )
       )
       if (length(items) > 0L) {
-        ospsuite.utils::ospPrintHeader("Paths")
+        # Say that the values are shown relative. Reading a folder through
+        # `project$paths` gives the absolute path, so without the label the print
+        # reads as the field's value and invites joining it onto
+        # `projectDirPath` a second time.
+        ospsuite.utils::ospPrintHeader("Paths (relative to the project folder)")
         ospsuite.utils::ospPrintItems(items)
       }
       invisible(self)
@@ -1378,7 +1394,7 @@ Project <- R6::R6Class(
       # `reloadProject()`). Attribute those aborts to no function at all rather
       # than to this private method, whose name means nothing to the reader.
       rlang::local_error_call(NULL)
-      jsonPath <- fs::path_abs(jsonPath)
+      jsonPath <- .resolveProjectContainerPath(jsonPath)
       if (!fs::file_exists(jsonPath)) {
         cli::cli_abort(messages$fileNotFound(jsonPath))
       }

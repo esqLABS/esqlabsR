@@ -356,12 +356,15 @@ test_that("addObservedData appends a valid config entry", {
   expect_equal(unclass(added), list(type = "pkml", file = "extra.pkml"))
 })
 
-test_that("addObservedData rejects an under-specified config entry", {
+test_that("addObservedData rejects an under-specified config entry, naming every gap at once", {
+  # An Excel source needs three fields; reporting one per attempt made a bare
+  # `list(type = "excel")` take three calls to complete (#1213).
   project <- testProject()
   expect_snapshot(
     error = TRUE,
     addObservedData(project, list(type = "excel", file = "x.xlsx"))
   )
+  expect_snapshot(error = TRUE, addObservedData(project, list(type = "excel")))
   expect_length(project$definitions$observedData, 1L)
 })
 

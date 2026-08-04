@@ -17,7 +17,7 @@ id must not already exist.}
 The \code{project} object, invisibly.
 }
 \description{
-Drop the parameter sets with matching ids in one write-through. Warns (and
+Drop the parameter sets with matching ids in one in-memory edit. Warns (and
 skips) any id not present, and warns when a removed set is still
 referenced.
 }
@@ -37,18 +37,20 @@ applied whole to every definition, never split positionally. To give a
 different multi-valued list per definition, pass a list of the same length
 as the id vector (one vector per definition).
 
-For a scenario's \code{parameterSets}, \code{initialConditions}, and \code{outputPaths}, a
-zero-length reference list means "there are none", the same as \code{NULL}. A
-definition file writes \verb{[]} for a reference list a scenario has none of, so
-\code{\link[=addScenario]{addScenario()}} and \code{\link[=setScenario]{setScenario()}} take a scenario's own written fields
-straight back, whether they were read as a character vector or as the list
+A zero-length reference list means "there are none", the same as \code{NULL}: a
+scenario's \code{parameterSets} / \code{initialConditions} / \code{outputPaths}, an
+application's \code{parameterSets}, and a PI task's \code{scenarios} all read it that
+way. A definition file writes \verb{[]} for a reference list a definition has none
+of, so the authoring functions take a definition's own written fields straight
+back, whether they were read as a character vector or as the list
 \code{jsonlite::fromJSON(simplifyVector = FALSE)} yields. The reference list of a
 plot grid (\code{plots}) must still be non-empty: a grid with no plots has nothing
 to render.
 
 The call is all-or-nothing: every definition is validated first, and if any
-fails the whole call aborts and writes nothing. On success all definitions
-are folded into the section and persisted in a single write-through.
+fails the whole call aborts and changes nothing. On success all definitions
+are folded into the section in one in-memory edit. Like every other edit, it
+reaches the project's files only when you call \code{\link[=saveProject]{saveProject()}}.
 
 An authoring function resolves every reference at the call that makes it: an
 \code{individual} or \code{parameterSets} id with no matching definition aborts naming
@@ -71,7 +73,7 @@ Two families of authoring functions sit outside this id-sets-\code{N} rule.
 entries (parallel \code{containerPath} / \code{parameterName} / \code{value} / \code{units}
 vectors) within a single named set, a different axis than the id-sets-\code{N}
 rule described here. \code{renameScenario()}, \code{duplicateScenario()},
-\code{addObservedData()}, \code{addPITask()}, and the per-task
+\code{addObservedData()}, \code{addPITask()}, \code{setPITask()}, and the per-task
 parameter-identification sub-definition helpers act on a single definition per
 call.
 }

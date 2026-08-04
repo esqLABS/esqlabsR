@@ -7,9 +7,9 @@
 addPITask(
   project,
   id,
-  scenarios,
-  parameters,
-  outputMappings,
+  scenarios = character(0),
+  parameters = list(),
+  outputMappings = list(),
   configuration = list(),
   overwrite = FALSE
 )
@@ -21,13 +21,14 @@ addPITask(
 existing task id.}
 
 \item{scenarios}{Character vector of scenario names. Each must exist
-in \code{names(project$definitions$scenarios)}.}
+in \code{names(project$definitions$scenarios)}. Defaults to \code{character(0)}
+(none yet); set them later with \code{\link[=setPITask]{setPITask()}}.}
 
-\item{parameters}{List of \code{PIParameter} records. May be empty (\code{list()})
-to create a task seeded later with \code{\link[=addPIParameter]{addPIParameter()}}.}
+\item{parameters}{List of \code{PIParameter} records. Defaults to \code{list()} (none
+yet); add them later with \code{\link[=addPIParameter]{addPIParameter()}}.}
 
-\item{outputMappings}{List of \code{PIOutputMapping} records. May be empty
-(\code{list()}) to create a task seeded later with \code{\link[=addPIOutputMapping]{addPIOutputMapping()}}.
+\item{outputMappings}{List of \code{PIOutputMapping} records. Defaults to \code{list()}
+(none yet); add them later with \code{\link[=addPIOutputMapping]{addPIOutputMapping()}}.
 Each \code{outputPath} must identify a defined output path, either by its id
 (a key in \code{names(project$definitions$outputPaths)}) or by its literal
 model path.}
@@ -42,7 +43,12 @@ aborts. When \code{TRUE}, the existing task is replaced (last-write-wins).}
 The \code{project} object, invisibly.
 }
 \description{
-Add a Parameter Identification task to a Project
+Adds one task to \code{parameterIdentification} definitions. Every
+part of a task is optional, so \code{addPITask(project, "myFit")} creates an
+empty task that is then grown with \code{\link[=setPITask]{setPITask()}}, \code{\link[=addPIParameter]{addPIParameter()}} and
+\code{\link[=addPIOutputMapping]{addPIOutputMapping()}}. A task must name at least one scenario, one
+parameter and one output mapping to run, which \code{\link[=validateProject]{validateProject()}} enforces
+and \code{\link[=runPI]{runPI()}} gates on.
 }
 \seealso{
 Other parameterIdentification:
@@ -53,6 +59,7 @@ Other parameterIdentification:
 \code{\link[=addPIParameter]{addPIParameter()}},
 \code{\link[=removePIOutputMapping]{removePIOutputMapping()}},
 \code{\link[=removePIParameter]{removePIParameter()}},
-\code{\link[=removePITask]{removePITask()}}
+\code{\link[=removePITask]{removePITask()}},
+\code{\link[=setPITask]{setPITask()}}
 }
 \concept{parameterIdentification}

@@ -322,10 +322,13 @@ addIndividual <- function(project, id, species, ...) {
   # weight/height/age are stored as doubles. Coerce a numeric-like value
   # (including a character such as "45") and reject only a value that does not
   # coerce to a single finite number (e.g. "80kg" -> NA) rather than silently
-  # storing NA. This matches the set path (`.setOneIndividual()`).
+  # storing NA. A supplied `NA` means the field is not set
+  # (`.isUnsetNumericField()`), the same as leaving it out, so an empty workbook
+  # cell can be handed straight in. This matches the set path
+  # (`.setOneIndividual()`).
   for (field in c("weight", "height", "age")) {
     value <- fields[[field]]
-    if (!is.null(value)) {
+    if (!is.null(value) && !.isUnsetNumericField(value)) {
       coerced <- suppressWarnings(as.double(value))
       if (length(value) != 1L || is.na(coerced) || !is.finite(coerced)) {
         errors <- c(errors, paste0(field, " must be a single finite number"))
@@ -350,8 +353,9 @@ addIndividual <- function(project, id, species, ...) {
     if (!is.null(fields[[field]])) entry[[field]] <- fields[[field]]
   }
   for (field in c("weight", "height", "age")) {
-    if (!is.null(fields[[field]])) {
-      entry[[field]] <- as.double(fields[[field]])
+    coerced <- .coerceNumericField(fields[[field]])
+    if (!is.null(coerced)) {
+      entry[[field]] <- coerced
     }
   }
   if (!is.null(fields$parameterSets)) {
@@ -380,7 +384,7 @@ addIndividual <- function(project, id, species, ...) {
 
 #' Remove one or more individuals from a Project
 #'
-#' Drop the individuals with matching ids in one write-through. Warns (and
+#' Drop the individuals with matching ids in one in-memory edit. Warns (and
 #' skips) any id not present, and warns when a removed individual is still
 #' referenced.
 #'
@@ -424,8 +428,8 @@ removeIndividual <- function(project, id) {
 #' Modify fields of an existing individual
 #'
 #' @description Changes one or more fields of the individual identified by
-#'   `id` and persists the change immediately to the individual definition
-#'   (write-through). The `individuals` definitions accessor is read-only, so this
+#'   `id`, in memory; write the change to the individual's definition file with
+#'   [saveProject()]. The `individuals` definitions accessor is read-only, so this
 #'   is the way to revise an existing individual in place.
 #'
 #'   Only the arguments you pass via `...` are changed; every other field
@@ -568,12 +572,12 @@ setIndividual <- function(project, id, ...) {
   # weight/height/age are stored as doubles. Coerce a numeric-like value
   # (including a character such as "45" from Excel) and reject only a value
   # that does not coerce to a single finite number (e.g. "80kg" -> NA) rather
-  # than silently storing NA. A NULL is allowed here: it clears the field via
-  # `.coerceNumericField()` below.
+  # than silently storing NA. A NULL, and a supplied `NA`, are allowed here:
+  # both clear the field via `.coerceNumericField()` below.
   for (field in c("weight", "height", "age")) {
     if (field %in% names(fields)) {
       value <- fields[[field]]
-      if (!is.null(value)) {
+      if (!is.null(value) && !.isUnsetNumericField(value)) {
         coerced <- suppressWarnings(as.double(value))
         if (length(value) != 1L || is.na(coerced) || !is.finite(coerced)) {
           cli::cli_abort(

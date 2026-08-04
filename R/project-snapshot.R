@@ -154,7 +154,12 @@ snapshotProject <- function(
 #'   name = "shared"
 #' )
 #' project <- restoreProject(snapshot, file.path(tempdir(), "restored"))
-restoreProject <- function(snapshot, dir = ".", overwrite = FALSE, name = NULL) {
+restoreProject <- function(
+  snapshot,
+  dir = ".",
+  overwrite = FALSE,
+  name = NULL
+) {
   validateIsString(snapshot)
   validateIsString(dir)
   validateIsString(name, nullAllowed = TRUE)
@@ -222,7 +227,11 @@ restoreProject <- function(snapshot, dir = ".", overwrite = FALSE, name = NULL) 
   # container back returns a fresh tree-backed `Project` bound to `dir`. The
   # local is named `inMemory` (not `snapshotProject`) so it does not shadow the
   # exported `snapshotProject()` function.
-  inMemory <- loadProject(canonFile)
+  # `Project$new()` rather than `loadProject()`: this load is an internal step
+  # towards the tree, and `loadProject()` warns about unresolved
+  # cross-references, which the caller would hear twice for one restore (once
+  # here, once from the returned project loaded below).
+  inMemory <- Project$new(projectFilePath = canonFile)
   # Named before the tree is written, so the name lands in the container the
   # restore produces rather than needing a save of its own.
   if (!is.null(name)) {

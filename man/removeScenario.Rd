@@ -9,7 +9,7 @@ removeScenario(project, id)
 \arguments{
 \item{project}{A \code{Project} object.}
 
-\item{id}{Character vector of scenario ids to remove in one write-through.
+\item{id}{Character vector of scenario ids to remove in one in-memory edit.
 Each is canonicalized the same way \code{\link[=addScenario]{addScenario()}} canonicalizes it, so
 the same typed id removes what it created. A not-found id warns and is
 skipped.}

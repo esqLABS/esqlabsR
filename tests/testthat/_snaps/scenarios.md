@@ -110,6 +110,40 @@
       ! scenario "populationscenario" already exists.
       i Pass `overwrite = TRUE` to replace it.
 
+# setScenario rejects `overwrite` instead of quietly setting a different field
+
+    Code
+      setScenario(project, "testscenario", overwrite = TRUE)
+    Condition
+      Error in `setScenario()`:
+      ! `setScenario()` has no `overwrite` argument.
+      i It always updates the scenario named by `id`; `addScenario()` is the one with `overwrite`.
+      i For the steady-state model option, pass `overwriteFormulasInSS` in full.
+
+# setScenario names a field it cannot set rather than dropping it
+
+    Code
+      project$setScenario("testscenario", simulationType = "Population")
+    Condition
+      Error:
+      ! `setScenario()` cannot set simulationType. i The settable fields are modelFile, individual, population, application, parameterSets, initialConditions, outputPaths, simulationTime, simulationTimeUnit, steadyState, steadyStateTime, steadyStateTimeUnit, overwriteFormulasInSS, and readPopulationFromCSV.
+
+# a scenario record passed with field arguments alongside it aborts
+
+    Code
+      addScenario(project, sc, modelFile = "Other.pkml")
+    Condition
+      Error in `addScenario()`:
+      ! A <Scenario> passed as `id` carries every field, so `modelFile` cannot be given alongside it. i Edit the record's own field and pass it back (`sc$modelFile <- "other.pkml"`), or name the scenario's id instead of the record.
+
+---
+
+    Code
+      setScenario(project, sc, individual = NULL)
+    Condition
+      Error in `setScenario()`:
+      ! A <Scenario> passed as `id` carries every field, so `individual` cannot be given alongside it. i Edit the record's own field and pass it back (`sc$modelFile <- "other.pkml"`), or name the scenario's id instead of the record.
+
 # setScenario aborts on a non-existent scenario, no file written
 
     Code

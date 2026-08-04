@@ -538,7 +538,8 @@ addObservedData <- function(project, entry, overwrite = FALSE) {
     # type, so an under-specified config entry is rejected at add time.
     .validateObservedDataEntry(
       entry,
-      length(self$definitions$observedData) + 1L
+      length(self$definitions$observedData) + 1L,
+      call = .call
     )
     # A declared `id` names the entry everywhere (its definition file, and the
     # key `removeObservedData()` matches), so it has to be a usable string
@@ -795,26 +796,40 @@ removeObservedData <- function(project, id) {
   unlist(ids) %||% character()
 }
 
-.validateObservedDataEntry <- function(entry, entryIndex) {
+.validateObservedDataEntry <- function(
+  entry,
+  entryIndex,
+  call = rlang::caller_env()
+) {
   validTypes <- .observedDataValidTypes
   if (is.null(entry$type) || !(entry$type %in% validTypes)) {
     cli::cli_abort(
       messages$observedDataInvalidEntryType(
         entry$type %||% "<unset>",
         validTypes
-      )
+      ),
+      call = call
     )
   }
   # Same required-field spec and same "missing" rule as the project validator
   # (`.validateObservedData`), so a present-but-empty `sheets` on an Excel
   # source is rejected here too rather than passing add/load and failing later
   # under `validateProject()`.
-  for (field in .observedDataRequiredFields(entry$type)) {
-    if (.observedDataFieldMissing(entry, field)) {
-      cli::cli_abort(
-        messages$observedDataMissingField(entryIndex, entry$type, field)
-      )
-    }
+  #
+  # Every missing field is reported at once. Aborting on the first one made an
+  # under-specified entry take one call per field to discover, although the
+  # required set for each type is fixed and documented.
+  required <- .observedDataRequiredFields(entry$type)
+  missingFields <- required[vapply(
+    required,
+    function(field) .observedDataFieldMissing(entry, field),
+    logical(1)
+  )]
+  if (length(missingFields) > 0L) {
+    cli::cli_abort(
+      messages$observedDataMissingFields(entryIndex, entry$type, missingFields),
+      call = call
+    )
   }
   invisible(TRUE)
 }

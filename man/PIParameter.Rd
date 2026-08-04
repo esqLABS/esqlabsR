@@ -60,6 +60,7 @@ Other parameterIdentification:
 \code{\link[=addPITask]{addPITask()}},
 \code{\link[=removePIOutputMapping]{removePIOutputMapping()}},
 \code{\link[=removePIParameter]{removePIParameter()}},
-\code{\link[=removePITask]{removePITask()}}
+\code{\link[=removePITask]{removePITask()}},
+\code{\link[=setPITask]{setPITask()}}
 }
 \concept{parameterIdentification}

@@ -278,6 +278,79 @@ test_that("runScenarios(stopIfFails = FALSE) skips a build-time failure and coll
   expect_null(out$second$outputValues)
 })
 
+test_that("runScenarios(stopIfFails = FALSE) closes by naming every scenario that produced no results", {
+  # Every scenario gets an entry whatever happened to it, so the run has to say
+  # which ones to leave out: the per-scenario warnings are easy to lose in a
+  # large batch, and reaching into a skipped entry is what kills a downstream
+  # call (#1213).
+  withr::local_options(lifecycle_verbosity = "quiet")
+  project <- .testProject()
+  addScenario(project, "second", modelFile = "does-not-exist.pkml")
+  local_mocked_bindings(runSimulations = .mockNoResults)
+
+  warnings <- character()
+  out <- withCallingHandlers(
+    runScenarios(project, stopIfFails = FALSE),
+    warning = function(w) {
+      warnings <<- c(warnings, conditionMessage(w))
+      invokeRestart("muffleWarning")
+    }
+  )
+  summary <- grep("produced no results", warnings, value = TRUE)
+  expect_length(summary, 1)
+  expect_match(summary, "second")
+  # And the documented way to pick out the scenarios that ran.
+  expect_named(Filter(\(x) !is.null(x$results), out), character(0))
+})
+
+test_that("a build failure under stopIfFails = TRUE names the scenario", {
+  # A build error from the backend names neither the scenario nor the file, so a
+  # batch of scenarios gave nothing to act on (#1213). The abort now carries the
+  # scenario's name, with the underlying error as its cause.
+  withr::local_options(lifecycle_verbosity = "quiet")
+  project <- .testProject()
+  addScenario(project, "second", modelFile = "Aciclovir.pkml")
+  local_mocked_bindings(
+    .prepareScenario = function(scenario, ...) {
+      if (scenario$scenarioName == "second") {
+        cli::cli_abort("a backend message naming nothing")
+      }
+      list(simulation = NULL, population = NULL)
+    }
+  )
+  err <- expect_error(runScenarios(project, validate = FALSE))
+  expect_match(conditionMessage(err), "second")
+  expect_match(conditionMessage(err), "a backend message naming nothing")
+})
+
+test_that("a modelFile that is still a Git LFS pointer is named as one", {
+  # Projects that keep their models in LFS reach the backend as malformed XML
+  # when the clone has no `git lfs pull`, and the .NET exception names neither
+  # the file nor the reason (#1213).
+  withr::local_options(lifecycle_verbosity = "quiet")
+  project <- .testProject()
+  pointer <- file.path(project$paths$simulationsFolder, "pointer.pkml")
+  writeLines(
+    c(
+      "version https://git-lfs.github.com/spec/v1",
+      "oid sha256:0000000000000000000000000000000000000000000000000000000000000000",
+      "size 12345"
+    ),
+    pointer
+  )
+  setScenario(project, "testscenario", modelFile = "pointer.pkml")
+
+  err <- expect_error(
+    .runScenariosFromProject(
+      project,
+      scenarioNames = "testscenario",
+      validate = FALSE
+    )
+  )
+  expect_match(conditionMessage(err), "Git LFS pointer")
+  expect_match(conditionMessage(err), "git lfs pull")
+})
+
 test_that("a scenario skipped at build time warns once, not twice", {
   # The build-time warning already names the scenario; the no-results
   # collection must not warn a second time for the same event.

@@ -227,32 +227,23 @@ test_that("PITask() errors when parameters or outputMappings is not a list", {
   )
 })
 
-test_that("PITask() errors on empty scenarios", {
-  expect_snapshot(
-    error = TRUE,
-    PITask(
-      id = "x",
-      scenarios = character(0),
-      parameters = list(
-        PIParameter(
-          id = "k",
-          scenarios = "S1",
-          path = "x|y",
-          minValue = 0,
-          maxValue = 1,
-          startValue = 0.5
-        )
-      ),
-      outputMappings = list(
-        PIOutputMapping(
-          id = "m",
-          scenarios = "S1",
-          outputPath = "PVB",
-          observedData = "Laskin"
-        )
-      )
-    )
+test_that("PITask() takes an empty scenarios reference list, and a list of ids", {
+  # `scenarios` is a reference list, so an empty one means "there are none" and
+  # a JSON array read as a list of strings flattens: a task's own written field
+  # goes straight back in, and a task is creatable with nothing in it at all.
+  expect_length(PITask(id = "x")$scenarios, 0L)
+  expect_length(PITask(id = "x", scenarios = character(0))$scenarios, 0L)
+  expect_length(PITask(id = "x", scenarios = list())$scenarios, 0L)
+  expect_equal(
+    PITask(id = "x", scenarios = list("S1", "S2"))$scenarios,
+    c("S1", "S2")
   )
+})
+
+test_that("PITask() errors on a malformed scenarios entry", {
+  expect_snapshot(error = TRUE, PITask(id = "x", scenarios = c("S1", NA)))
+  expect_snapshot(error = TRUE, PITask(id = "x", scenarios = ""))
+  expect_snapshot(error = TRUE, PITask(id = "x", scenarios = 1))
 })
 
 test_that("PITask() errors when parameters contains non-PIParameter elements", {
@@ -654,17 +645,17 @@ test_that(".validatePI is empty-section-friendly", {
   expect_false(result$hasCriticalErrors())
 })
 
-test_that(".validatePI flags a task left with no parameters or output mappings", {
+test_that(".validatePI flags a task left with no scenarios, parameters or output mappings", {
   # A task may be created empty and seeded later, but one still empty at
-  # validation time cannot run and is a critical error.
-  task <- PITask(
-    id = "t",
-    scenarios = "S1",
-    parameters = list(),
-    outputMappings = list()
-  )
+  # validation time cannot run and is a critical error. All three parts are
+  # reported at once, so an empty task takes one report to fix rather than three.
+  task <- PITask(id = "t")
   result <- .validatePI(list(t = task))
   expect_true(result$hasCriticalErrors())
+  expect_length(result$critical_errors, 3L)
+
+  withScenarios <- PITask(id = "t", scenarios = "S1")
+  expect_length(.validatePI(list(t = withScenarios))$critical_errors, 2L)
 })
 
 test_that("validateProject() flags PI parameters that reference unknown scenarios", {
@@ -1520,6 +1511,52 @@ test_that("addPITask() can create an empty task that addPIParameter()/addPIOutpu
   seeded <- project$definitions$parameterIdentification$seeded
   expect_length(seeded$parameters, 1L)
   expect_length(seeded$outputMappings, 1L)
+})
+
+test_that("addPITask() creates a wholly empty task, which setPITask() then gives its scenarios", {
+  # `addPITask(project, id)` is the create-then-seed entry point: nothing but the
+  # id is required, and the parts arrive afterwards.
+  project <- testProject()
+  addPITask(project, id = "empty")
+  task <- project$definitions$parameterIdentification$empty
+  expect_length(task$scenarios, 0L)
+  expect_length(task$parameters, 0L)
+  expect_length(task$outputMappings, 0L)
+
+  setPITask(project, "empty", scenarios = "testscenario")
+  expect_equal(
+    project$definitions$parameterIdentification$empty$scenarios,
+    "testscenario"
+  )
+})
+
+test_that("setPITask() sets the configuration, clears it, and leaves the other field alone", {
+  project <- testProject()
+  addPITask(project, id = "cfg", scenarios = "testscenario")
+
+  setPITask(project, "cfg", configuration = list(algorithm = "BOBYQA"))
+  task <- project$definitions$parameterIdentification$cfg
+  expect_equal(task$configuration$algorithm, "BOBYQA")
+  # The untouched field keeps its value.
+  expect_equal(task$scenarios, "testscenario")
+
+  setPITask(project, "cfg", configuration = NULL)
+  expect_length(
+    project$definitions$parameterIdentification$cfg$configuration,
+    0L
+  )
+})
+
+test_that("setPITask() errors on an unknown task, an unknown scenario, and a field it cannot set", {
+  project <- testProject()
+  addPITask(project, id = "cfg", scenarios = "testscenario")
+
+  expect_snapshot(error = TRUE, setPITask(project, "ghost", scenarios = "x"))
+  expect_snapshot(error = TRUE, setPITask(project, "cfg", scenarios = "ghost"))
+  expect_snapshot(
+    error = TRUE,
+    project$setPITask("cfg", parameters = list())
+  )
 })
 
 test_that("addPITask() errors on unknown scenario id", {

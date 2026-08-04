@@ -737,7 +737,7 @@ print.InitialConditionSet <- function(x, ...) {
 #' Create one or more parameter sets
 #'
 #' Adds empty parameter sets to the project's single `parameterSets` section,
-#' vectorizing over a vector of ids (all N added in one write-through). A
+#' vectorizing over a vector of ids (all N added in one in-memory edit). A
 #' scenario references the sets it applies through its `modelParameterSets`
 #' field, an individual or application through its `parameterSets` field; all
 #' three resolve against this one section.
@@ -788,7 +788,7 @@ addParameterSet <- function(project, id, overwrite = FALSE) {
 
 #' Remove one or more parameter sets
 #'
-#' Drop the parameter sets with matching ids in one write-through. Warns (and
+#' Drop the parameter sets with matching ids in one in-memory edit. Warns (and
 #' skips) any id not present, and warns when a removed set is still
 #' referenced.
 #'
@@ -1284,7 +1284,7 @@ removeParameterEntry <- function(
 #' Create one or more initial-condition sets
 #'
 #' Adds empty initial-condition sets to the project's `initialConditions`
-#' section, vectorizing over a vector of ids (all N added in one write-through).
+#' section, vectorizing over a vector of ids (all N added in one in-memory edit).
 #' An initial-condition set holds molecule start values (`path`, `value`,
 #' `unit`) a scenario applies through its `initialConditions` field, distinct
 #' from parameter sets (which set model parameters, not molecule start values).
@@ -1342,7 +1342,7 @@ addInitialConditions <- function(project, id, overwrite = FALSE) {
 
 #' Remove one or more initial-condition sets
 #'
-#' Drop the initial-condition sets with matching ids in one write-through.
+#' Drop the initial-condition sets with matching ids in one in-memory edit.
 #' Warns (and skips) any id not present, and warns when a removed set is still
 #' referenced.
 #'

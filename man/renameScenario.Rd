@@ -20,11 +20,10 @@ The \code{project} object, invisibly.
 }
 \description{
 Renames the scenario currently keyed \code{id} to \code{newId},
-preserving its configuration. The change is write-through: the scenario's
-old definition is removed and a new one written under \code{newId}, the
-in-memory key changes, and the record's stored name is updated to match
-the new key so a reload round-trips (the name-equals-key invariant the
-project relies on).
+preserving its configuration. The in-memory key changes and the record's
+stored name is updated to match it, so a reload round-trips (the
+name-equals-key invariant the project relies on); the next \code{\link[=saveProject]{saveProject()}}
+writes the definition under \code{newId} and removes the old file.
 
 Both \code{id} and \code{newId} are canonicalized the same way \code{\link[=addScenario]{addScenario()}}
 canonicalizes an id (lowercased, made a safe single-path-segment id, with

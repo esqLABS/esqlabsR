@@ -176,6 +176,17 @@ messages$fileNotFound <- function(filePath) {
   cliFormat("File not found: {.file {filePath}}")
 }
 
+# Raised from `.assertNotLfsPointer()`. Unglued so a path containing `{` or `}`
+# is interpolated exactly once, by the raising call, where the value is bound
+# under `path`.
+messages$gitLfsPointerFile <- function(path) {
+  c(
+    "x" = "{.file {path}} is a Git LFS pointer file, not the file it stands \\
+    for.",
+    "i" = "Fetch the real file with {.code git lfs pull}, then try again."
+  )
+}
+
 # Raised from `Project$.readJson()`. Unglued for the same reason as
 # `legacySnapshotNotLoadable()` below: a hand-edited `schemaVersion` containing
 # `{` or `}` would be glue-parsed a second time by the raising `cli_abort()` and
@@ -218,22 +229,35 @@ messages$snapshotFileExists <- function(path) {
 # The `{name}` placeholder is the validated value, not `snapshotProject()`'s
 # `name` argument (`{.arg name}` above renders that literally). It is spelled
 # `name` because `.validateFilenameSegment()` raises this from a frame where the
-# value is bound under that name.
-messages$invalidSnapshotName <- function(name) {
+# value is bound under that name. `given` is that helper's description of a value
+# that is no name at all (and `NULL` for a well-formed name that would escape the
+# directory), because quoting an empty string, an `NA` or a number as if it
+# "contained a path separator" says something untrue about it. Both placeholders
+# stay unglued, so the raising call interpolates each exactly once, from the frame
+# that binds them.
+messages$invalidSnapshotName <- function(name, given) {
   c(
     "{.arg name} must be a single filename stem without path separators.",
-    "x" = "The stem {.val {name}} contains a path separator or is {.val .} / \\
-    {.val ..}, so it could write outside {.arg dir}.",
+    "x" = if (is.null(given)) {
+      "The stem {.val {name}} contains a path separator or is {.val .} / \\
+      {.val ..}, so it could write outside {.arg dir}."
+    } else {
+      "It is {given}, not a single non-empty string."
+    },
     "i" = "Pass a single filename segment (no path separator and not {.val .} / \\
     {.val ..}), or leave {.arg name} as {.code NULL} for a timestamped default."
   )
 }
 
-messages$invalidProjectFileName <- function(name) {
+messages$invalidProjectFileName <- function(name, given) {
   c(
     "{.arg projectFileName} must be a single filename without path separators.",
-    "x" = "The name {.val {name}} contains a path separator or is {.val .} / \\
-    {.val ..}, so it could write outside {.arg outputDir}.",
+    "x" = if (is.null(given)) {
+      "The name {.val {name}} contains a path separator or is {.val .} / \\
+      {.val ..}, so it could write outside {.arg outputDir}."
+    } else {
+      "It is {given}, not a single non-empty string."
+    },
     "i" = "Pass a single filename segment, for example {.val Project.json} \\
     (the default) or {.val MyStudy}; a {.field .json} extension is appended \\
     when the name does not already end in one."
@@ -687,6 +711,34 @@ messages$legacySnapshotNotLoadable <- function(jsonPath) {
   )
 }
 
+# Raised from `Project$.readJson()` when it is handed a folder that holds no
+# project container. Naming the mistake is the point: a folder is the natural
+# second guess after a file, and letting it through produced a raw JSON parse
+# error about the folder itself. Unglued so a folder path containing `{` or `}`
+# is interpolated exactly once, by the raising call, where `folder` is bound.
+messages$noProjectContainerInFolder <- function(folder) {
+  c(
+    "x" = "No esqlabsR project found in the folder {.file {folder}}.",
+    "i" = "A project is a JSON container file (usually {.file Project.json}) \\
+    with a {.file definitions/} folder beside it.",
+    "i" = "Turn a pre-6.0.0 Excel project into one with \\
+    {.fn importProjectFromExcel}, or create a new project with \\
+    {.fn initProject}."
+  )
+}
+
+# Raised from `Project$.readJson()` when a folder holds several project
+# containers, so there is no single project to open. `folder` and `names` are
+# bound in the raising frame; unglued for the same reason as above.
+messages$multipleProjectContainersInFolder <- function(folder, names) {
+  c(
+    "x" = "The folder {.file {folder}} holds {length(names)} project files: \\
+    {.file {names}}.",
+    "i" = "Name the one to open, for example \\
+    {.code loadProject(file.path(folder, \"{names[[1]]}\"))}."
+  )
+}
+
 # Unglued, so `cli_abort()` renders these as real bullets rather than re-wrapping
 # one pre-formatted string with the glyphs inline. `sheet` and `columns` are bound
 # in `.requireExcelColumns()`, the raising frame.
@@ -1033,6 +1085,43 @@ messages$unknownScenarioNames <- function(unknownNames) {
   )
 }
 
+# Raised when a `Scenario` record is passed where an id goes, together with field
+# arguments. The record carries every field, so an accompanying one would be
+# quietly overruled by it; the message names the two ways forward instead.
+messages$scenarioRecordWithFields <- function(fields) {
+  cli::format_message(c(
+    "A {.cls Scenario} passed as {.arg id} carries every field, so \\
+    {.arg {fields}} cannot be given alongside it.",
+    "i" = "Edit the record's own field and pass it back \\
+    ({.code sc$modelFile <- \"other.pkml\"}), or name the scenario's id instead \\
+    of the record."
+  ))
+}
+
+# `setScenario()` declares `overwrite` only to intercept it: without the formal,
+# R's partial matching would resolve the name to `overwriteFormulasInSS` and
+# quietly set a steady-state model option instead.
+messages$setScenarioNoOverwrite <- function() {
+  c(
+    "{.fn setScenario} has no {.arg overwrite} argument.",
+    "i" = "It always updates the scenario named by {.arg id}; \\
+    {.fn addScenario} is the one with {.arg overwrite}.",
+    "i" = "For the steady-state model option, pass \\
+    {.arg overwriteFormulasInSS} in full."
+  )
+}
+
+# Raised when a name reaching `setScenario()`'s field set is not a scenario
+# field. Only the R6 method can be called with one (the exported function's
+# formals reject it), and without the guard the value would be aligned as a
+# per-definition field and then dropped in silence.
+messages$setScenarioUnknownFields <- function(fields, settable) {
+  cli::format_message(c(
+    "{.fn setScenario} cannot set {.field {fields}}.",
+    "i" = "The settable fields are {.field {settable}}."
+  ))
+}
+
 messages$invalidSimulationTimeArgument <- function() {
   cliFormat(
     "{.arg simulationTime} must be a length-3 numeric vector \\
@@ -1080,6 +1169,35 @@ messages$scenarioBuildFailed <- function(scenarioName, conditionMessage) {
       "Could not build scenario {.val {scenarioName}}; skipping it."
     ),
     "i" = safe_msg
+  )
+}
+
+# The `stopIfFails = TRUE` counterpart of `scenarioBuildFailed()`: the underlying
+# error is attached as the abort's `parent`, so cli renders it below this header
+# rather than it needing to be interpolated (and brace-escaped) here.
+messages$scenarioBuildFailedAbort <- function(scenarioName, canSkip) {
+  c(
+    cli::format_inline("Could not build scenario {.val {scenarioName}}."),
+    # `buildSimulations()` has no `stopIfFails`, so only name it where it exists.
+    if (canSkip) {
+      c(
+        "i" = "Pass {.code stopIfFails = FALSE} to skip it and build the other \\
+        scenarios."
+      )
+    }
+  )
+}
+
+# Raised at the end of a `stopIfFails = FALSE` run, listing every scenario that
+# produced no results. The per-scenario warnings scroll away in a batch of
+# eighty, and the returned list gives every scenario an entry whatever happened
+# to it, so this is what tells the caller which ones to leave out.
+messages$scenariosSkipped <- function(scenarioNames) {
+  c(
+    "!" = "{length(scenarioNames)} of the scenarios produced no results: \\
+    {.val {scenarioNames}}.",
+    "i" = "Their entries carry {.code results = NULL}; select the ones that ran \\
+    with {.code Filter(\\(x) !is.null(x$results), results)}."
   )
 }
 
@@ -1516,6 +1634,16 @@ messages$PIScenariosEmpty <- function(recordType, recordId) {
   )
 }
 
+# A PITask's `scenarios`, unlike a PIParameter's or a PIOutputMapping's, may be
+# empty: it is a reference list, and an empty reference list means "there are
+# none", so the message describes the shape rather than demanding a value.
+messages$PITaskScenariosInvalid <- function(recordId) {
+  cliFormat(
+    "Field {.code scenarios} on PITask {.val {recordId}} must be a character \\
+    vector of scenario ids with no NA or empty entries, or empty for none."
+  )
+}
+
 messages$PIInvalidNumericField <- function(field, recordId, value) {
   cliFormat(
     "Field {.code {field}} on PIOutputMapping {.val {recordId}} is invalid: \\
@@ -1601,9 +1729,13 @@ messages$observedDataInvalidEntryType <- function(badType, validTypes) {
   ))
 }
 
-messages$observedDataMissingField <- function(entryIndex, type, field) {
+# Every missing field at once: the required set for each type is fixed, so
+# reporting one field per call made an under-specified entry take as many calls
+# to fix as it had gaps.
+messages$observedDataMissingFields <- function(entryIndex, type, fields) {
   cliFormat(
-    "{.code observedData} entry {entryIndex} (type {.val {type}}) is missing required field {.field {field}}."
+    "{.code observedData} entry {entryIndex} (type {.val {type}}) is missing \\
+    {cli::qty(length(fields))}required field{?s} {.field {fields}}."
   )
 }
 
