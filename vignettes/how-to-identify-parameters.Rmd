@@ -33,17 +33,9 @@ Parameter identification (PI) estimates model parameters by fitting simulated ou
 
 To follow along you only need a loaded project; see `vignette("how-to-set-up-a-project")` for how a project is organized and loaded. Here we work entirely with the example project and never write anything into your project tree.
 
-## The PI task model
+A parameter identification is described by a **PI task**: a record naming the scenarios it fits, one **PI Parameter** per quantity to estimate (with a path, a starting value, and bounds), and one **PI Output Mapping** per output-to-measurements pairing, so the optimizer knows which simulated curve to compare against which data. Tasks live on the project under `project$definitions$parameterIdentification`, keyed by task id. `vignette("reference-definition-fields")` lists the fields of all three.
 
-A parameter identification is described by a **PI task**. A task is a plain-data record that names three things:
-
-- the **scenarios** it fits (one or more named scenarios already defined in the project),
-- a set of **PI Parameters**, one per quantity to estimate, each giving a model parameter path, the scenarios it applies to, a starting value, and lower and upper bounds, and
-- a set of **PI Output Mappings**, each pairing one model output (an output path of the project) with one Observed Data series (see `vignette("how-to-use-observed-data")`), so the optimizer knows which simulated curve to compare against which measurements.
-
-A task can also carry an optional configuration block (the optimization algorithm, the confidence-interval method, and similar settings). Tasks are stored on the project under `project$definitions$parameterIdentification`, keyed by task id.
-
-## Running the predefined task
+## Run a task the project already defines
 
 The bundled example project defines a single PI task, `aciclovirsimple`. It fits the parameter `EHC continuous fraction` on the scenario `aciclovir_iv`, mapping the simulated output `aciclovir_pvb` to an observed plasma series (from Laskin 1982, Group A).
 
@@ -66,9 +58,9 @@ Run it with `runPI()`. By default `runPI()` runs every task on the project; pass
 results <- runPI(project, tasks = "aciclovirsimple")
 ```
 
-## The shape of the result
+## Read the fit
 
-`runPI()` returns one entry per task. Each entry is a list with a `task` element (the parameter-identification object that was built and run) and a `result` element (the fit); if the optimization fails numerically, `result` is `NULL` and an `error` element carries the message while the run continues with the remaining tasks, whereas build errors (an unknown parameter path, output, or observed dataset) fail hard and stop the call so a typo surfaces immediately.
+`runPI()` returns one entry per task, each a list with a `task` element (the object that was built and run) and a `result` element (the fit). A numerical failure leaves `result` as `NULL` with an `error` element carrying the message, and the remaining tasks still run; a build error such as an unknown parameter path stops the call outright, so a typo surfaces immediately.
 
 ```{r resultShape}
 fit <- results[["aciclovirsimple"]]
@@ -81,25 +73,27 @@ Print the result for a human-readable optimization summary:
 fit$result
 ```
 
-## Reading the estimates
-
 Call `toDataFrame()` on the result to read the estimates as a tidy data frame, one row per estimated parameter, with the final `estimate` next to its `initialValue`, bounds, and uncertainty columns (`sd`, `cv`, `lowerCI`, `upperCI`):
 
 ```{r readEstimates}
 fit$result$toDataFrame()
 ```
 
-## When uncertainty cannot be quantified
+### What to do when the uncertainty columns are all `NA`
 
-A fit can converge and still report no usable uncertainty: when `sd`, `cv`, and the confidence interval all come back `NA`, the estimate is returned but its precision is unknown. This is what happens for `aciclovirsimple` above. Because a converged fit with no uncertainty is easy to mistake for a good one, `runPI()` emits a warning naming the task and parameter, with the likely causes:
+A fit can converge and still report no usable uncertainty. When `sd`, `cv`, and the confidence interval all come back `NA`, as they do for `aciclovirsimple` above, the estimate is returned but its precision is unknown, and `runPI()` warns you naming the task and parameter, because a converged fit with no uncertainty looks just like a good one.
 
-- a singular or ill-conditioned Hessian,
-- the estimate sitting at one of its bounds, or
-- an objective function insensitive to the parameter.
+Three things cause it, and each points at a different fix:
 
-When you see it, treat the estimate with caution and revisit the bounds, the output mapping, or whether the data constrain the parameter at all.
+| Cause | What to check |
+| --- | --- |
+| A singular or ill-conditioned Hessian | Whether two parameters are trading off against each other; try fitting fewer at once. |
+| The estimate sitting at one of its bounds | Whether `minValue` and `maxValue` are too tight. Widen them and refit. |
+| An objective function insensitive to the parameter | Whether the data constrain the parameter at all; the output mapping may not see its effect. |
 
-## Building a task programmatically
+Until one of those is resolved, treat the estimate as a point value with no confidence attached.
+
+## Build a task in R
 
 Instead of relying on a task stored in the project, you can author one in memory with the `add*` family. `addPITask()` creates a task and requires at least one PI Parameter and one PI Output Mapping at creation, so you seed it with existing records and grow it afterwards. The records are the same plain-data values the project already holds, so the simplest seed is to reuse the ones from the example task.
 
@@ -148,7 +142,7 @@ project <- addPIOutputMapping(
 
 Once a task has the parameters and mappings you want, run it the same way as the predefined one with `runPI(project, tasks = "ehc_fit")`.
 
-## Removing parameters and mappings
+## Remove parameters and mappings
 
 `removePIParameter()` and `removePIOutputMapping()` take the task id and the id of the record to drop. A task must always keep at least one parameter and one mapping, so removing the last of both leaves an empty task with nothing to fit. Rather than leave that empty shell on the project, `esqlabsR` removes the now-empty task for you and warns that it did so. The following strips `ehc_fit` down to nothing; the final removal triggers the auto-removal:
 
@@ -165,4 +159,6 @@ The example task `aciclovirsimple` is untouched, since we only edited the in-mem
 
 ## Where to go next
 
-The scenarios and output paths a PI task fits come from the rest of the project: see `vignette("how-to-design-scenarios")` for authoring scenarios and `vignette("how-to-use-observed-data")` for loading the measurements an output mapping compares against. For the underlying optimization, the confidence-interval methods, and the available algorithms, see the [`OSPSuite.ParameterIdentification`](https://www.open-systems-pharmacology.org/OSPSuite.ParameterIdentification/) package.
+The scenarios and output paths a PI task fits come from the rest of the project: see `vignette("how-to-design-scenarios")` for authoring scenarios and `vignette("how-to-use-observed-data")` for loading the measurements an output mapping compares against.
+
+For the fields of a task, a PI parameter, and an output mapping, see `vignette("reference-definition-fields")`. For the underlying optimization, the confidence-interval methods, and the available algorithms, see the [`OSPSuite.ParameterIdentification`](https://www.open-systems-pharmacology.org/OSPSuite.ParameterIdentification/) package.
