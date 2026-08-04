@@ -271,8 +271,8 @@ messages$invalidProjectFileName <- function(name, given) {
 # contract as `invalidProjectFileName` above.
 messages$invalidDefinitionsFolder <- function(name, given) {
   c(
-    "{.arg definitionsFolder} must be a single folder name directly under the \\
-    project folder.",
+    "{.field definitionsFolder} must be a single folder name directly under \\
+    the project folder.",
     "x" = if (is.null(given)) {
       "The name {.val {name}} contains a path separator or is {.val .} / \\
       {.val ..}, so it could point outside the project folder."

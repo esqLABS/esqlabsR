@@ -78,7 +78,7 @@ The `Project.json` file records the project metadata and the working-folder layo
 
 - `name` and optional `description`: a human label and free text, surfaced when you print the project. Editing one (`project$info$name <- "..."`) changes the project in memory; it reaches disk on the next `saveProject()`.
 - the schema and esqlabsR versions that wrote the file.
-- `definitionsFolder`: where the `definitions/` tree lives (`definitions` by default).
+- `definitionsFolder`: where the `definitions/` tree lives (`definitions` by default). It is a single folder name directly under the project folder, not a nested path.
 - `filePaths`: the four working folders (`simulationsFolder`, `dataFolder`, `populationsFolder`, `outputFolder`).
 - `defaultSimulationRunOptions` (optional): run defaults such as the number of cores, which `runScenarios()` falls back on when you pass no run options of your own.
 

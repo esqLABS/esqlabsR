@@ -644,6 +644,10 @@ test_that("setting definitionsFolder to an escaping value is rejected", {
   # A plain rename is the legitimate use and still works.
   project$paths$definitionsFolder <- "defs"
   expect_identical(project$paths$definitionsFolder, "defs")
+  # `NULL` means "unset", so it passes the guard and the default is reachable
+  # again after a rename.
+  project$paths$definitionsFolder <- NULL
+  expect_identical(project$paths$definitionsFolder, "definitions")
 })
 
 test_that("a working folder set via an environment variable is allowed outside the project", {

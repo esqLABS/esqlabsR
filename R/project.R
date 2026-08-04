@@ -137,8 +137,9 @@ Project <- R6::R6Class(
     #'   sitting under `Models/` alongside the `Snapshots` folder for PK-Sim /
     #'   MoBi snapshots), `dataFolder` (experimental data), `outputFolder`
     #'   (results), `populationsFolder` (population CSVs loaded by
-    #'   [runScenarios()]), and `definitionsFolder` (the folder holding the
-    #'   definition files, default `"definitions"`).
+    #'   [runScenarios()]), and `definitionsFolder` (a single folder name
+    #'   directly under the project folder holding the definition files, default
+    #'   `"definitions"`).
     #'   Read a field with `project$paths$simulationsFolder`: that returns the
     #'   **absolute** path, already resolved against `projectDirPath`, so it is
     #'   ready to use as-is and must not be joined onto `projectDirPath` again

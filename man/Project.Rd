@@ -57,8 +57,9 @@ group: \code{simulationsFolder} (pkml simulation files, \code{Models/Simulations
 sitting under \verb{Models/} alongside the \code{Snapshots} folder for PK-Sim /
 MoBi snapshots), \code{dataFolder} (experimental data), \code{outputFolder}
 (results), \code{populationsFolder} (population CSVs loaded by
-\code{\link[=runScenarios]{runScenarios()}}), and \code{definitionsFolder} (the folder holding the
-definition files, default \code{"definitions"}).
+\code{\link[=runScenarios]{runScenarios()}}), and \code{definitionsFolder} (a single folder name
+directly under the project folder holding the definition files, default
+\code{"definitions"}).
 Read a field with \code{project$paths$simulationsFolder}: that returns the
 \strong{absolute} path, already resolved against \code{projectDirPath}, so it is
 ready to use as-is and must not be joined onto \code{projectDirPath} again
