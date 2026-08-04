@@ -1127,8 +1127,10 @@ test_that(".parseExcelObservedData keeps a subfolder path rather than truncating
   result <- .parseExcelObservedData(list(), prop, work)
   entry <- result$observedData[[1]]
   expect_identical(entry$file, "Sub/Values.xlsx")
-  # The section key is the basename (an id cannot hold a path separator).
-  expect_identical(names(result$observedData), "Values.xlsx")
+  # The declaration states its own canonicalized id, so the section is keyed and
+  # the definition file is `values.json` rather than `Values.xlsx.json`.
+  expect_identical(names(result$observedData), "values")
+  expect_identical(entry$id, "values")
 })
 
 # The project records a single experimental-data workbook under `dataFolder`.
@@ -1229,7 +1231,7 @@ test_that(".parseExcelObservedData expands a ${VAR} dataFolder", {
     )
   }
   expect_silent(result <- .parseExcelObservedData(list(), prop, work))
-  expect_named(result$observedData, "Values.xlsx")
+  expect_named(result$observedData, "values")
   expect_identical(result$observedData[[1]]$sheets, list("Sheet1"))
 })
 
@@ -2795,7 +2797,7 @@ test_that(".parseExcelObservedData anchors a relative ${VAR} at the project file
   expect_silent(
     result <- .parseExcelObservedData(list(), prop, source, project)
   )
-  expect_named(result$observedData, "Values.xlsx")
+  expect_named(result$observedData, "values")
 })
 
 # A `ParameterSets` / `Individual Parameter Sets` cell names sheets of its own
@@ -3329,24 +3331,106 @@ test_that("a legacy parameter-identification Units cell is carried through", {
   )
 })
 
-# #1213 item 13: the `crossReferences` phase resolves a mapping's `outputPathId`
-# but never its `observedData`, so a mapping naming an observed data set the
-# project does not define is reported as no error at all. `runPI()` then aborts at
-# build time on a project `validateProject()` called clean.
-test_that("a dangling parameter-identification observedData reference is not reported", {
+# #1213 item 17: the imported observed-data declaration states its own `id`, the
+# canonicalized basename of the data file without its extension. Deriving one
+# instead named the definition file after the basename verbatim, so it came out
+# with a double extension and kept whatever spaces, commas and casing the data
+# file's name carried, and the declaration was addressable only by an id the
+# authoring API could not have produced.
+test_that("the imported observed-data declaration carries a canonicalized id", {
+  imported <- importLegacyExcelProject(localLegacyExcelProject())
+  entry <- imported$project$definitions$observedData[[1]]
+
+  expect_identical(entry$id, "testproject_timevaluesdata")
+  expect_identical(
+    list.files(file.path(imported$outputDir, "definitions", "observed-data")),
+    "testproject_timevaluesdata.json"
+  )
+  # And the id is the handle `removeObservedData()` matches on.
+  expect_identical(
+    .observedDataSectionIds(imported$project$definitions$observedData),
+    "testproject_timevaluesdata"
+  )
+})
+
+test_that("a data file whose name is not filename-safe still yields a canonical id", {
+  projectDir <- localLegacyExcelProject()
+  file.rename(
+    file.path(projectDir, "Data", "TestProject_TimeValuesData.xlsx"),
+    file.path(projectDir, "Data", "My Data, v2.xlsx")
+  )
+  editWorkbookSheets(
+    legacyExcelProjectPath(projectDir),
+    function(sheets) {
+      row <- sheets$Sheet1$Property == "dataFile"
+      sheets$Sheet1$Value[row] <- "My Data, v2.xlsx"
+      sheets
+    }
+  )
+  imported <- importLegacyExcelProject(projectDir)
+
+  expect_identical(
+    imported$project$definitions$observedData[[1]]$id,
+    "my_data__v2"
+  )
+  expect_identical(
+    list.files(file.path(imported$outputDir, "definitions", "observed-data")),
+    "my_data__v2.json"
+  )
+  # The stored `file` is untouched: it is a path the loader resolves under the
+  # data folder, not an id.
+  expect_identical(
+    imported$project$definitions$observedData[[1]]$file,
+    "My Data, v2.xlsx"
+  )
+})
+
+# #1213 item 13: the `crossReferences` phase resolves a mapping's `observedData`
+# alongside its `outputPathId`. A mapping naming a data set no observed-data source
+# holds used to be reported as no error at all, and `runPI()` then aborted at build
+# time on a project `validateProject()` had called clean.
+test_that("a parameter-identification observedData reference resolves against the loaded data-set names", {
   imported <- importLegacyExcelProject(localLegacyExcelProject())
   task <- imported$project$definitions$parameterIdentification[["aciclovirfit"]]
 
-  # The reference is carried through and resolves to nothing: the observed-data
-  # section holds one positional entry with no id to match against.
-  expect_type(task$outputMappings[[1]]$observedDataId, "character")
-  expect_null(names(imported$project$definitions$observedData))
-
-  # And validation grades the whole project clean regardless.
+  # The fixture's mapping names a data set the workbook's data file really holds,
+  # so the reference resolves and the project is clean.
+  expect_true(
+    task$outputMappings[[1]]$observedDataId %in%
+      getObservedDataNames(imported$project)
+  )
   summary <- validationSummary(suppressWarnings(validateProject(
     imported$project
   )))
   expect_equal(summary$total_critical_errors, 0)
+})
+
+test_that("a dangling parameter-identification observedData reference is reported", {
+  projectDir <- localLegacyExcelProject()
+  editWorkbookSheets(
+    file.path(projectDir, "Configurations", "ParameterIdentification.xlsx"),
+    function(sheets) {
+      sheets$PIOutputMappings$DataSet <- "Laskin 1982.Group B_Aciclovir"
+      sheets
+    }
+  )
+  imported <- importLegacyExcelProject(projectDir)
+
+  results <- suppressWarnings(validateProject(imported$project))
+  messages <- vapply(
+    results$crossReferences$critical_errors,
+    function(e) e$message,
+    ""
+  )
+  expect_length(messages, 2L)
+  expect_true(all(grepl("undefined observed data", messages)))
+
+  # And `runPI()` is gated on that phase, so the mapping never reaches the build
+  # that used to be the first thing to notice.
+  expect_error(
+    runPI(imported$project),
+    "critical validation error"
+  )
 })
 
 # #1213 item 19: a blank `SimulationTimeUnit` cell imports as the same `"h"`
@@ -3545,16 +3629,18 @@ test_that("an unread workbook is reported, and one read by convention is named",
   # And an initial-conditions workbook, whose property row the sheet never
   # carried, sitting under the conventional filename.
   writexl::write_xlsx(
-    list(Global = data.frame(
-      `Container Path` = "Organism|Liver",
-      `Molecule Name` = "Aciclovir",
-      `Is Present` = TRUE,
-      Value = 1,
-      Units = "\u00b5mol/l",
-      `Scale Divisor` = 1,
-      `Neg. Values Allowed` = FALSE,
-      check.names = FALSE
-    )),
+    list(
+      Global = data.frame(
+        `Container Path` = "Organism|Liver",
+        `Molecule Name` = "Aciclovir",
+        `Is Present` = TRUE,
+        Value = 1,
+        Units = "\u00b5mol/l",
+        `Scale Divisor` = 1,
+        `Neg. Values Allowed` = FALSE,
+        check.names = FALSE
+      )
+    ),
     file.path(configDir, "InitialConditions.xlsx")
   )
 
@@ -3754,17 +3840,64 @@ test_that("a filled legacy plots exportConfiguration sheet is reported, an empty
   expect_true(any(grepl("Aciclovir", imported$warnings, fixed = TRUE)))
 })
 
-# #1213 item 16: `.canonicalizeId()` replaces whitespace through `[[:space:]]`,
-# which matches neither U+00A0 (no-break space) nor U+200B (zero-width space). So
-# an invisible character survives canonicalization into the id and from there into
-# the definition filename. Two ids differing only by a zero-width space become two
-# distinct definition files whose names render identically, and the project
-# validates clean, so nothing tells the author their two ids are not one typo.
+# #1213 item 16: `.canonicalizeId()` folds Unicode compatibility variants and drops
+# the invisible formatting characters, so no invisible reaches a definition
+# filename from either entrypoint. A no-break space (U+00A0) folds onto the plain
+# space it renders as and becomes the same `_`; a zero-width space (U+200B) is
+# dropped, so an id carrying one is the id without it.
 #
 # This is live data rather than a synthetic probe: one tested project carried 12
 # real ids containing U+00A0.
-test_that("an id containing an invisible character survives into the definition filename", {
+test_that("an id containing a no-break space canonicalizes into a plain filename", {
   nbsp <- "\u00a0"
+  projectDir <- localLegacyExcelProject()
+  editWorkbookSheets(
+    file.path(projectDir, "Configurations", "Scenarios.xlsx"),
+    function(sheets) {
+      sheets$OutputPaths <- rbind(
+        sheets$OutputPaths,
+        data.frame(
+          OutputPathId = paste0("Renal", nbsp, "Clearance"),
+          OutputPath = "Organism|Kidney|Aciclovir|Concentration in container"
+        )
+      )
+      # Reference it with the same invisible the definition carries, so what is
+      # under test is only whether both sides land on one id.
+      sheets$Scenarios$OutputPathsIds[[2]] <- paste0(
+        "Aciclovir_PVB, Aciclovir_Fat, Renal",
+        nbsp,
+        "Clearance"
+      )
+      sheets
+    }
+  )
+  imported <- importLegacyExcelProject(projectDir)
+  ids <- names(imported$project$definitions$outputPaths)
+
+  # The no-break space became the `_` an ordinary space becomes.
+  expect_true("renal_clearance" %in% ids)
+
+  # So the definition filenames carry no invisible at all.
+  files <- list.files(file.path(
+    imported$outputDir,
+    "definitions",
+    "output-paths"
+  ))
+  expect_true("renal_clearance.json" %in% files)
+  expect_false(any(grepl("[^ -~]", files)))
+
+  # And the reference resolves onto it, so validation is clean.
+  summary <- validationSummary(suppressWarnings(validateProject(
+    imported$project
+  )))
+  expect_equal(summary$total_critical_errors, 0)
+})
+
+# The other half of item 16: two ids differing only by a zero-width space used to
+# become two definition files whose names render identically, with nothing said.
+# Dropping the invisible makes them one id, so the import aborts on the collision
+# the same way interactive authoring does, naming both spellings.
+test_that("two ids differing only by a zero-width space abort the import as a collision", {
   zwsp <- "\u200b"
   projectDir <- localLegacyExcelProject()
   editWorkbookSheets(
@@ -3774,51 +3907,15 @@ test_that("an id containing an invisible character survives into the definition 
         "OutPath",
         paste0("Out", zwsp, "Path")
       )
-      sheets$OutputPaths <- rbind(
-        sheets$OutputPaths,
-        data.frame(
-          OutputPathId = paste0("Renal", nbsp, "Clearance"),
-          OutputPath = "Organism|Kidney|Aciclovir|Concentration in container"
-        )
-      )
-      # Reference them consistently, so nothing dangles and the invisible
-      # characters are the only thing under test.
-      sheets$Scenarios$OutputPathsIds <- c(
-        "OutPath",
-        paste0("OutPath, Out", zwsp, "Path"),
-        NA,
-        NA,
-        "OutPath",
-        "OutPath"
-      )
       sheets
     }
   )
-  imported <- importLegacyExcelProject(projectDir)
-  ids <- names(imported$project$definitions$outputPaths)
-
-  # Three distinct ids, two of which render identically.
-  expect_length(ids, 3L)
-  expect_true(paste0("out", zwsp, "path") %in% ids)
-  expect_true(paste0("renal", nbsp, "clearance") %in% ids)
-
-  # The invisible characters reach the filenames too.
-  files <- list.files(file.path(
-    imported$outputDir,
-    "definitions",
-    "output-paths"
-  ))
-  expect_true(paste0("out", zwsp, "path.json") %in% files)
-  expect_true(paste0("renal", nbsp, "clearance.json") %in% files)
-
-  # `outpath.json` and `out<U+200B>path.json` are two files that look like one.
-  expect_length(unique(files), 3L)
-  expect_length(unique(gsub(zwsp, "", files, fixed = TRUE)), 2L)
-
-  # The import says nothing at all, and validation is clean.
-  expect_length(imported$warnings, 0L)
-  summary <- validationSummary(suppressWarnings(validateProject(
-    imported$project
-  )))
-  expect_equal(summary$total_critical_errors, 0)
+  expect_error(
+    suppressWarnings(importProjectFromExcel(
+      legacyExcelProjectPath(projectDir),
+      outputDir = withr::local_tempdir("LegacyOut_"),
+      silent = TRUE
+    )),
+    "collide after canonicalization"
+  )
 })

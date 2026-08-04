@@ -281,68 +281,72 @@ test_that(".suggestSuffix is empty when there is no close candidate", {
 
 # Invisible Unicode (#1213 item 16) ----
 
-# `.canonicalizeOneId()` maps whitespace to `_` through `[[:space:]]`, which
-# matches neither U+00A0 (no-break space) nor U+200B (zero-width space): under
-# both TRE and PCRE that class is ASCII whitespace. So an id carrying one of them
-# comes back carrying it, and becomes a definition filename carrying it.
+# `.canonicalizeOneId()` folds compatibility variants (NFKC) and drops the
+# invisible formatting characters, so a no-break space becomes the `_` an ordinary
+# space becomes and a zero-width space disappears. Both were admitted verbatim
+# while whitespace was matched through `[[:space:]]`, which is ASCII-only under
+# both TRE and PCRE, and an admitted invisible reached the definition filename.
 #
 # Pinned here as well as through the importer because this is the single shared
 # chokepoint every id goes through, from either entrypoint. Live data rather than
 # a synthetic probe: one migrated project carried 12 real ids containing U+00A0.
-test_that(".canonicalizeOneId leaves a no-break or zero-width space in the id", {
+test_that(".canonicalizeOneId folds a no-break space and drops a zero-width one", {
   nbsp <- "\u00a0"
   zwsp <- "\u200b"
 
-  # An ordinary space becomes `_`; these do not.
+  # A no-break space becomes `_`, exactly as an ordinary space does.
   expect_identical(.canonicalizeOneId("Out Path"), "out_path")
-  expect_identical(
-    .canonicalizeOneId(paste0("Out", nbsp, "Path")),
-    paste0("out", nbsp, "path")
-  )
-  expect_identical(
-    .canonicalizeOneId(paste0("Out", zwsp, "Path")),
-    paste0("out", zwsp, "path")
-  )
+  expect_identical(.canonicalizeOneId(paste0("Out", nbsp, "Path")), "out_path")
 
-  # So two ids that render identically canonicalize to two different ids, and
-  # the warning a caller would print about the rewrite reads as a no-op.
-  expect_false(identical(
+  # A zero-width space carries nothing, so it is removed rather than replaced.
+  expect_identical(.canonicalizeOneId(paste0("Out", zwsp, "Path")), "outpath")
+
+  # So two ids that render identically are one id, which is what lets the
+  # collision check speak up instead of writing two look-alike files.
+  expect_identical(
     .canonicalizeOneId("OutPath"),
     .canonicalizeOneId(paste0("Out", zwsp, "Path"))
-  ))
+  )
 })
 
-# The same class admits the other invisible formatting characters, so a fix that
-# only special-cases U+00A0 and U+200B would leave these behind.
-test_that(".canonicalizeOneId leaves the other invisible format characters in the id", {
-  for (ch in c("\u2060", "\u200d", "\ufeff")) {
-    expect_identical(
-      .canonicalizeOneId(paste0("a", ch, "b")),
-      paste0("a", ch, "b")
-    )
+# The whole invisible/format category goes, not just the two reported members.
+test_that(".canonicalizeOneId drops the other invisible format characters", {
+  for (ch in c("\u2060", "\u200d", "\ufeff", "\u00ad")) {
+    expect_identical(.canonicalizeOneId(paste0("a", ch, "b")), "ab")
   }
 })
 
-# #1213 item 25: the distance threshold is
-# `max(1, min(3, ceiling(nchar(x) / 3)))`, so a candidate that diverges by more
-# than 3 characters is never suggested however long the id is. The two shapes that
-# occur in practice, a per-analyte suffix and a `_mean` sibling, both diverge by
-# more than that, so the hint stays silent in exactly the cases it was added for
-# while firing on a one-character typo.
-test_that(".nearestMatch cannot reach a candidate diverging by a real suffix", {
-  # A `_mean` sibling: 5 characters, over the cap of 3.
+# NFKC also folds the compatibility letters, so a project that spells the micro
+# sign U+00B5 in one place and the Greek mu U+03BC in another has one id, not two.
+test_that(".canonicalizeOneId folds a compatibility character onto its twin", {
+  expect_identical(
+    .canonicalizeOneId("\u00b5g_dose"),
+    .canonicalizeOneId("\u03bcg_dose")
+  )
+})
+
+# #1213 item 25: the distance threshold is `max(1, ceiling(nchar(x) / 3))`, a
+# third of the id with nothing capping it. Dropping the former ceiling of 3 is
+# what lets the two shapes that occur in practice be suggested: a per-analyte
+# suffix (4 characters) and a `_mean` sibling (5), on ids long enough that a
+# third of them is more than either.
+test_that(".nearestMatch reaches a candidate diverging by a real suffix", {
+  # A `_mean` sibling: 5 characters.
   expect_identical(
     .nearestMatch("aciclovir_pvb_mean", "aciclovir_pvb"),
-    character(0)
+    "aciclovir_pvb"
   )
-  # A per-analyte variant: 4 characters, also over the cap.
+  # A per-analyte variant: a 4-character suffix.
   expect_identical(
     .nearestMatch("aciclovir_pvb_m1og", "aciclovir_pvb"),
-    character(0)
+    "aciclovir_pvb"
   )
-  # Meanwhile a single-character divergence is suggested, however long the id.
+  # A single-character divergence is still suggested, however long the id.
   expect_identical(
     .nearestMatch("aciclovir_pvc", "aciclovir_pvb"),
     "aciclovir_pvb"
   )
+  # And a short id keeps a tight threshold, so an unrelated sibling of a
+  # six-character id is still not suggested.
+  expect_identical(.nearestMatch("indiv1", c("Indiv1", "Pop1")), "Indiv1")
 })

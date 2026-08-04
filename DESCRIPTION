@@ -39,6 +39,7 @@ Imports:
     readxl,
     rlang,
     scales,
+    stringi,
     stringr,
     tidyr,
     tlf (>= 1.6.0),

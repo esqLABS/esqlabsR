@@ -736,6 +736,39 @@ removeObservedData <- function(project, id) {
 
 # Internal helpers ----
 
+# The data-set names a cross-reference can resolve against, or `NULL` when the
+# project cannot be asked.
+#
+# A declaration's id names the declaration; what a parameter-identification
+# output mapping references is the name of a data set INSIDE the source, which
+# only the source knows, so answering means loading it. Reading an Excel or PKML
+# source is the same kind of filesystem access the section validators already do,
+# but a `script` source is arbitrary R and validating a project must never run
+# it: a section holding one returns `NULL`, and so does a load that fails, since
+# an unreadable source is the observedData section's own finding rather than a
+# dangling reference. `NULL` therefore means "unresolved", not "nothing defined".
+#
+# @keywords internal
+# @noRd
+.observedDataNamesForCrossReference <- function(project) {
+  declarations <- project$definitions$observedData %||% list()
+  if (length(declarations) == 0L) {
+    return(character(0))
+  }
+  types <- vapply(
+    declarations,
+    function(e) as.character(e$type %||% NA_character_),
+    character(1)
+  )
+  if (any(types == "script", na.rm = TRUE)) {
+    return(NULL)
+  }
+  tryCatch(
+    suppressMessages(suppressWarnings(project$getObservedDataNames())),
+    error = function(cnd) NULL
+  )
+}
+
 # The declaration id of every entry in the section, `NA` for one that carries
 # nothing usable to derive an id from. One resolver for both kinds, so the
 # add-time collision check, the overwrite match, and the removal match all agree
