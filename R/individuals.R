@@ -289,12 +289,7 @@ addIndividual <- function(project, id, species, ...) {
   }
 
   species <- fields$species
-  if (
-    !is.character(species) ||
-      length(species) != 1L ||
-      is.na(species) ||
-      nchar(species) == 0
-  ) {
+  if (!.isNonEmptyString(species)) {
     errors <- c(errors, "species must be a non-empty string")
   }
 
@@ -304,12 +299,7 @@ addIndividual <- function(project, id, species, ...) {
   gender <- fields$gender
   if (is.null(gender)) {
     gender <- "UNKNOWN"
-  } else if (
-    !is.character(gender) ||
-      length(gender) != 1L ||
-      is.na(gender) ||
-      nchar(gender) == 0
-  ) {
+  } else if (!.isNonEmptyString(gender)) {
     errors <- c(errors, "gender must be a non-empty string")
   } else if (!(gender %in% names(GenderInt))) {
     errors <- c(
@@ -523,12 +513,7 @@ setIndividual <- function(project, id, ...) {
 
   if ("species" %in% names(fields)) {
     species <- fields$species
-    if (
-      !is.character(species) ||
-        length(species) != 1L ||
-        is.na(species) ||
-        nchar(species) == 0
-    ) {
+    if (!.isNonEmptyString(species)) {
       cli::cli_abort("{.arg species} must be a non-empty string", call = call)
     }
   }
@@ -536,10 +521,7 @@ setIndividual <- function(project, id, ...) {
     gender <- fields$gender
     if (
       is.null(gender) ||
-        !is.character(gender) ||
-        length(gender) != 1L ||
-        is.na(gender) ||
-        nchar(gender) == 0
+        !.isNonEmptyString(gender)
     ) {
       cli::cli_abort("{.arg gender} must be a non-empty string", call = call)
     }

@@ -50,7 +50,7 @@ PIParameter <- function(
   maxValue,
   startValue
 ) {
-  if (!is.character(id) || length(id) != 1L || is.na(id) || nchar(id) == 0) {
+  if (!.isNonEmptyString(id)) {
     cli::cli_abort(messages$PIRequiredField(
       "id",
       "PIParameter",
@@ -65,9 +65,7 @@ PIParameter <- function(
   ) {
     cli::cli_abort(messages$PIScenariosEmpty("PIParameter", id))
   }
-  if (
-    !is.character(path) || length(path) != 1L || is.na(path) || nchar(path) == 0
-  ) {
+  if (!.isNonEmptyString(path)) {
     cli::cli_abort(messages$PIRequiredField("path", "PIParameter", id))
   }
   # `units` is optional: NULL or an empty string both mean "no display unit".
@@ -205,7 +203,7 @@ PIOutputMapping <- function(
   yFactor = 1,
   weight = NULL
 ) {
-  if (!is.character(id) || length(id) != 1L || is.na(id) || nchar(id) == 0) {
+  if (!.isNonEmptyString(id)) {
     cli::cli_abort(messages$PIRequiredField(
       "id",
       "PIOutputMapping",
@@ -220,24 +218,14 @@ PIOutputMapping <- function(
   ) {
     cli::cli_abort(messages$PIScenariosEmpty("PIOutputMapping", id))
   }
-  if (
-    !is.character(outputPath) ||
-      length(outputPath) != 1L ||
-      is.na(outputPath) ||
-      nchar(outputPath) == 0
-  ) {
+  if (!.isNonEmptyString(outputPath)) {
     cli::cli_abort(messages$PIRequiredField(
       "outputPath",
       "PIOutputMapping",
       id
     ))
   }
-  if (
-    !is.character(observedData) ||
-      length(observedData) != 1L ||
-      is.na(observedData) ||
-      nchar(observedData) == 0
-  ) {
+  if (!.isNonEmptyString(observedData)) {
     cli::cli_abort(messages$PIRequiredField(
       "observedData",
       "PIOutputMapping",
@@ -246,10 +234,7 @@ PIOutputMapping <- function(
   }
   if (
     !is.null(scaling) &&
-      (!is.character(scaling) ||
-        length(scaling) != 1L ||
-        is.na(scaling) ||
-        nchar(scaling) == 0)
+      (!.isNonEmptyString(scaling))
   ) {
     cli::cli_abort(messages$PIInvalidScaling(id, scaling))
   }
@@ -395,7 +380,7 @@ PITask <- function(
   outputMappings = list(),
   configuration = list()
 ) {
-  if (!is.character(id) || length(id) != 1L || is.na(id) || nchar(id) == 0) {
+  if (!.isNonEmptyString(id)) {
     cli::cli_abort(messages$PIRequiredField("id", "PITask", "<unset>"))
   }
 
@@ -1374,7 +1359,7 @@ addPITask <- function(
 ) {
   rlang::local_error_call(.call)
   errors <- character()
-  if (!is.character(id) || length(id) != 1L || is.na(id) || nchar(id) == 0) {
+  if (!.isNonEmptyString(id)) {
     errors <- c(errors, "id must be a non-empty string")
   } else {
     id <- .canonicalizeId(id)
@@ -1521,7 +1506,7 @@ setPITask <- function(project, id, scenarios, configuration) {
 # @noRd
 .setPITask_impl <- function(self, private, id, ..., .call) {
   rlang::local_error_call(.call)
-  if (!is.character(id) || length(id) != 1L || is.na(id) || nchar(id) == 0) {
+  if (!.isNonEmptyString(id)) {
     cli::cli_abort("{.arg id} must be a single non-empty string.")
   }
   id <- .canonicalizeId(id)

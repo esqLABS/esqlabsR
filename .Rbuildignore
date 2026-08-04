@@ -58,3 +58,4 @@ _\.new\.png$
 ^\.claude$
 ^\.git$
 ^CLAUDE\.md$
+^quality$

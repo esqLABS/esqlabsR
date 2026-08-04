@@ -104,6 +104,31 @@ compareWithNA <- function(v1, v2) {
   return(same)
 }
 
+# Is a value a single non-empty string? This is what almost every authoring
+# argument and required definition field has to be: one character element, not
+# `NA`, not `""`. The `NA` test comes before the width test because
+# `nchar(NA)` is 2, so an `NA` would otherwise pass as non-empty.
+#
+# @keywords internal
+# @noRd
+.isNonEmptyString <- function(value) {
+  is.character(value) && length(value) == 1L && !is.na(value) && nzchar(value)
+}
+
+# Abort unless `value` is a single non-empty string, naming the argument.
+# Returns the value unchanged so a caller can write
+# `id <- .assertNonEmptyString(id, "id")`. `call` attributes the abort to the
+# public caller.
+#
+# @keywords internal
+# @noRd
+.assertNonEmptyString <- function(value, argName, call = rlang::caller_env()) {
+  if (!.isNonEmptyString(value)) {
+    cli::cli_abort("{.arg {argName}} must be a non-empty string", call = call)
+  }
+  value
+}
+
 # Parse simulation time intervals from a string of form "start,end,res" or
 # "start1,end1,res1;start2,end2,res2". Returns a list of numeric vectors, or
 # NULL if input is NULL.

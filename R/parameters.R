@@ -893,7 +893,7 @@ addParameterEntry <- function(
   .call
 ) {
   rlang::local_error_call(.call)
-  if (!is.character(id) || length(id) != 1L || is.na(id) || nchar(id) == 0) {
+  if (!.isNonEmptyString(id)) {
     cli::cli_abort("{.arg id} must be a non-empty string")
   }
   id <- .canonicalizeId(id)
@@ -971,7 +971,7 @@ removeParameterEntry <- function(
   .call
 ) {
   rlang::local_error_call(.call)
-  if (!is.character(id) || length(id) != 1L || is.na(id) || nchar(id) == 0) {
+  if (!.isNonEmptyString(id)) {
     cli::cli_abort("{.arg id} must be a non-empty string")
   }
   id <- .canonicalizeId(id)
@@ -1030,20 +1030,10 @@ removeParameterEntry <- function(
   units
 ) {
   errors <- character()
-  if (
-    !is.character(containerPath) ||
-      length(containerPath) != 1L ||
-      is.na(containerPath) ||
-      nchar(containerPath) == 0
-  ) {
+  if (!.isNonEmptyString(containerPath)) {
     errors <- c(errors, "containerPath must be a non-empty string")
   }
-  if (
-    !is.character(parameterName) ||
-      length(parameterName) != 1L ||
-      is.na(parameterName) ||
-      nchar(parameterName) == 0
-  ) {
+  if (!.isNonEmptyString(parameterName)) {
     errors <- c(errors, "parameterName must be a non-empty string")
   }
   if (!is.numeric(value) || length(value) != 1L || is.na(value)) {
@@ -1436,7 +1426,7 @@ addInitialConditionEntry <- function(
   .call
 ) {
   rlang::local_error_call(.call)
-  if (!is.character(id) || length(id) != 1L || is.na(id) || nchar(id) == 0) {
+  if (!.isNonEmptyString(id)) {
     cli::cli_abort("{.arg id} must be a non-empty string")
   }
   id <- .canonicalizeId(id)
@@ -1494,7 +1484,7 @@ removeInitialConditionEntry <- function(project, id, path) {
 # @noRd
 .removeInitialConditionEntry_impl <- function(self, private, id, path, .call) {
   rlang::local_error_call(.call)
-  if (!is.character(id) || length(id) != 1L || is.na(id) || nchar(id) == 0) {
+  if (!.isNonEmptyString(id)) {
     cli::cli_abort("{.arg id} must be a non-empty string")
   }
   id <- .canonicalizeId(id)
@@ -1529,12 +1519,7 @@ removeInitialConditionEntry <- function(project, id, path) {
 # @noRd
 .validateInitialConditionEntryArgs <- function(path, value, unit) {
   errors <- character()
-  if (
-    !is.character(path) ||
-      length(path) != 1L ||
-      is.na(path) ||
-      nchar(path) == 0
-  ) {
+  if (!.isNonEmptyString(path)) {
     errors <- c(errors, "path must be a non-empty string")
   }
   if (!is.numeric(value) || length(value) != 1L || is.na(value)) {
@@ -1543,12 +1528,7 @@ removeInitialConditionEntry <- function(project, id, path) {
   # A unit is mandatory for a molecule start value: `ospsuite::setQuantityValuesByPath()`
   # rejects a blank unit at run time, so reject it here (fail fast at authoring)
   # rather than deferring an opaque failure to the simulation.
-  if (
-    !is.character(unit) ||
-      length(unit) != 1L ||
-      is.na(unit) ||
-      nchar(unit) == 0L
-  ) {
+  if (!.isNonEmptyString(unit)) {
     errors <- c(errors, "unit must be a non-empty string")
   }
   errors

@@ -687,12 +687,7 @@ addPopulation <- function(
 .buildPopulationEntry <- function(id, fields, call = rlang::caller_env()) {
   errors <- character()
   species <- fields$species
-  if (
-    !is.character(species) ||
-      length(species) != 1L ||
-      is.na(species) ||
-      nchar(species) == 0
-  ) {
+  if (!.isNonEmptyString(species)) {
     errors <- c(errors, "species must be a non-empty string")
   }
 
@@ -915,12 +910,7 @@ setPopulation <- function(project, id, ...) {
 
   if ("species" %in% names(fields)) {
     species <- fields$species
-    if (
-      !is.character(species) ||
-        length(species) != 1L ||
-        is.na(species) ||
-        nchar(species) == 0
-    ) {
+    if (!.isNonEmptyString(species)) {
       cli::cli_abort("{.arg species} must be a non-empty string", call = call)
     }
   }
