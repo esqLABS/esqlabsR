@@ -13,6 +13,52 @@ authors:
     href: https://github.com/Felixmil
 development:
   mode: auto
+
+articles:
+  - title: Get Started
+    navbar:
+    desc: |
+      A single lesson that walks the whole workflow end to end. Start here if
+      you have not used the package before.
+    contents:
+      - esqlabsR
+  - title: How-to guides
+    navbar: How-to
+    desc: |
+      Directions for a reader with a task in hand. Each guide takes one goal
+      and shows the steps that reach it.
+    contents:
+      - how-to-set-up-a-project
+      - how-to-design-scenarios
+      - how-to-validate-a-project
+      - how-to-run-simulations
+      - how-to-plot-results
+      - how-to-use-observed-data
+      - how-to-identify-parameters
+      - how-to-run-a-sensitivity-analysis
+      - how-to-customize-sensitivity-plots
+      - how-to-migrate-from-excel
+  - title: Explanation
+    navbar: Explanation
+    desc: |
+      Why the package works the way it does. Read these when you want to
+      understand the design rather than complete a task.
+    contents:
+      - about-the-project-model
+      - about-the-plotting-model
+  - title: Reference articles
+    navbar: Reference articles
+    desc: |
+      Field-by-field description of the project file and of every definition
+      kind. Look things up here; these articles do not explain or instruct.
+    contents:
+      - reference-project-file
+      - reference-definition-fields
+  - title: Miscellaneous
+    navbar: Miscellaneous
+    contents:
+      - presentations
+
 reference:
   - title: Project workflow
     contents:
@@ -143,28 +189,3 @@ reference:
       - ProjectConfiguration
       - createDataCombinedFromExcel
       - createPlotsFromExcel
-articles:
-  - title: Workflow
-    navbar: Workflow
-    contents:
-      - esqlabsR
-      - projects
-      - design-scenarios
-      - validate-project
-      - run-simulations
-      - plot-results
-      - observed-data
-  - title: Parameter identification
-    navbar: Parameter identification
-    contents:
-      - pi-workflow
-  - title: Sensitivity analysis
-    navbar: Sensitivity analysis
-    contents:
-      - sensitivity
-      - sensitivity-plots
-  - title: Miscellaneous
-    navbar: Miscellaneous
-    contents:
-      - migrate-from-excel
-      - presentations

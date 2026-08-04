@@ -1,10 +1,10 @@
 ---
-title: "Sensitivity analysis"
+title: "How to run a sensitivity analysis"
 output:
   rmarkdown::html_vignette:
     toc: true
 vignette: >
-  %\VignetteIndexEntry{Sensitivity analysis}
+  %\VignetteIndexEntry{How to run a sensitivity analysis}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -24,7 +24,7 @@ library(esqlabsR)
 
 Sensitivity analysis varies model parameters and measures the effect on PK outcomes, which helps you judge model robustness when input values are uncertain. This vignette walks through a complete workflow with `sensitivityCalculation()` and its plot functions, using **aciclovir** as the example: run a base simulation, vary selected parameters, calculate sensitivities, and visualize the impact. For the mathematical background, see the OSPS documentation on [sensitivity analysis](https://docs.open-systems-pharmacology.org/shared-tools-and-example-workflows/sensitivity-analysis).
 
-## Running the sensitivity analysis
+## Run the analysis
 
 `sensitivityCalculation()` operates on an OSPS `Simulation` object, not on a project. You obtain one by loading the worked example project and running its `aciclovir_iv` scenario; the resulting Scenario Result carries the prepared `Simulation` in its `simulation` field:
 
@@ -66,10 +66,12 @@ analysis$pkData |>
   )
 ```
 
+`SensitivityPKParameter` is `NA` in the `ParameterFactor == 1` row, and that is expected rather than a problem: sensitivity is a change relative to the unvaried value, so the unvaried row has nothing to be relative to.
+
 In this example the default lipophilicity (−0.1 log units) yields an AUC of 3916.4 µmol·min/L. A ten-fold higher value (−0.01) reduces AUC by 0.52 %, whereas a ten-fold lower value (−1.0) increases it by 2.55 %. The sensitivity of AUC to a 10-fold decrease in lipophilicity is calculated as:
 $$ \text{Sensitivity}= \frac{\Delta \text{AUC}}{\Delta \text{lipophilicity}}\times\frac{\text{lipophilicity}}{\text{AUC}} = \frac{4016.3-3916.4}{-1.0--0.1} \times \frac{-0.1}{3916.4} = 0.0028 $$
 
-## Saving and loading sensitivity results
+## Save results and reload them
 
 Save the results of a sensitivity analysis with `saveSensitivityCalculation()` and restore them with `loadSensitivityCalculation()`. The `simulation` argument in `loadSensitivityCalculation()` is optional: if the original `Simulation` object is provided, reloading from disk is avoided. Otherwise, the function attempts to load the `.pkml` file from the path recorded during the original analysis, which must still be accessible.
 
@@ -82,7 +84,7 @@ saveSensitivityCalculation(analysis, outputDir)
 analysis <- loadSensitivityCalculation(outputDir, simulation)
 ```
 
-## Visualizing sensitivity results
+## Visualize the results
 
 Visualize the results of the sensitivity analysis with the following functions.
 
@@ -120,9 +122,9 @@ sensitivityTornadoPlot(analysis)
 
 The tornado plot confirms the trends seen in the previous plots, but makes it easier to compare the relative impact of each parameter across PK metrics.
 
-To change colors, scales, titles, or which PK parameters appear in any of these plots, see `vignette("sensitivity-plots")`.
+To change colors, scales, titles, or which PK parameters appear in any of these plots, see `vignette("how-to-customize-sensitivity-plots")`.
 
-## Sensitivity calculation for user-defined (non-PK) outputs
+## Calculate sensitivity for a user-defined output
 
 Though the typical sensitivity-analysis workflows focus on PK parameters, you can also calculate sensitivities for any numerical model output using user-defined functions. As for the PK parameters, the provided function(s) are applied to each output defined in the `outputPaths` argument of `sensitivityCalculation()`.
 
@@ -161,10 +163,6 @@ Finally, plot the sensitivity of the average concentration of aciclovir in the p
 sensitivitySpiderPlot(customAnalysis)
 ```
 
-## Troubleshooting
-
--   The `SensitivityPKParameter` column in `analysis$pkData` is `NA` in the rows corresponding to the initial parameter values (that is, where the multiplication factor is 1).
-
 ## Where to go next
 
-To customize the appearance of these plots (colors, scales, titles, and which PK parameters appear), see `vignette("sensitivity-plots")`.
+To change colors, scales, titles, or which PK parameters appear in any of these plots, see `vignette("how-to-customize-sensitivity-plots")`. For the scenario that produces the `Simulation` these functions consume, see `vignette("how-to-design-scenarios")` and `vignette("how-to-run-simulations")`.

@@ -1,10 +1,10 @@
 ---
-title: "Get started"
+title: "Introduction to ESQlabsR"
 output:
   rmarkdown::html_vignette:
     toc: true
 vignette: >
-  %\VignetteIndexEntry{Get started}
+  %\VignetteIndexEntry{Introduction to ESQlabsR}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -21,7 +21,9 @@ knitr::opts_chunk$set(
 
 `esqlabsR` builds modeling and simulation workflows on top of the Open Systems Pharmacology Suite (OSPS). It organizes everything a PBPK or QSP analysis needs (the model, the subjects you simulate, the dosing, the parameters you apply, the outputs you record, the observed data you compare against, and the figures you produce) into a single **Project**. You load a Project once, then run scenarios and plot results from it.
 
-This article walks the workflow end to end against a writable copy of the bundled example: you inspect a loaded project, author a scenario and a figure, then run and plot them. Each step links onward to the article that covers it in depth.
+This tutorial walks the whole workflow once, against the example project the package ships. You will load a project, look inside it, add an individual and a scenario, describe a figure, then run the scenario and draw the figure. It takes a few minutes, every step runs as written, and nothing you do here touches your own files.
+
+You do not need to understand each piece as you go. The point is to see the shape of the loop; the how-to guides fill in the detail afterwards.
 
 ## Install and load
 
@@ -33,7 +35,7 @@ library(esqlabsR)
 
 ## Load a project
 
-The package bundles a complete example Project. So that `saveProject()` never touches the read-only example inside the installed package, you work against a writable copy: `initProject()` scaffolds a copy into a temporary directory, and `loadProject()` reads it into an in-memory `Project` object. (`initProject()` returns the directory it scaffolds; `loadProject()` wants the `Project.json` path inside it.)
+The package bundles a complete example Project. Because you will save changes to it later, take your own copy first: `initProject()` scaffolds one into a temporary directory, and `loadProject()` reads it into memory. (`initProject()` takes the directory; `loadProject()` takes the `Project.json` file inside it.)
 
 ```{r}
 project_dir <- withr::local_tempdir()
@@ -47,34 +49,27 @@ Printing the Project gives you a quick map of its name, location, and definition
 print(project)
 ```
 
-## How a project is stored: the `definitions/` folder
+## Look inside the project
 
-On disk a project is a directory with two parts:
-
-- the `Project.json` file, holding metadata and file paths;
-- a `definitions/` folder, holding the authored content.
-
-A **definition** is one named piece of the project (a scenario, an individual, a population, and so on). Each kind lives in its own subfolder under `definitions/` (`definitions/scenarios/`, `definitions/individuals/`, ...), one JSON file per definition, named after the definition's id. `vignette("projects")` covers the full taxonomy.
-
-Each section is reachable as a named list on the project, keyed by id. Printing one shows a count and the ids it holds, for example the individuals the example already defines:
+A project is built out of **definitions**: named pieces such as a scenario, an individual, or a plot. Each kind is a named list on the project, keyed by id. Printing one shows how many there are and what they are called:
 
 ```{r}
 project$definitions$individuals
 ```
 
-A single definition prints its configured fields, so you can inspect one without digging into the raw file:
+Printing a single definition shows its configured fields, so you can inspect one without opening a file:
 
 ```{r}
 project$definitions$individuals$adult_male
 ```
 
-Editing follows an **explicit-save** model: when you add or edit a definition with one of the `add*` / `set*` / `remove*` functions, the change is made in memory, and `saveProject(project)` reconciles it to the `definitions/` tree on disk. That save is why you work against a writable copy rather than the installed example.
+That is enough to work with for now. (`vignette("reference-project-file")` describes how the pieces are stored on disk, if you want it later.)
 
-## Define: author a scenario and a figure
+## Author a scenario and a figure
 
-The authoring API is uniform: every function takes the `project` first, then the definition's `id`, then its fields. The example only defines an adult male; we add an adult female, run aciclovir in her, and plot the result.
+The authoring API is uniform: every function takes the `project` first, then the definition's `id`, then its fields. The example only defines an adult male, so we will add an adult female, run aciclovir in her, and plot the result.
 
-Start with a new **Individual** (the subject a scenario simulates): its species, sex, and biometrics.
+Start with a new **Individual**, the subject a scenario simulates.
 
 ```{r}
 addIndividual(
@@ -89,9 +84,9 @@ addIndividual(
 )
 ```
 
-The new definition is staged in memory; it lands in `definitions/individuals/adult_female.json` once you call `saveProject(project)`.
+Nothing has been written to disk yet: the new individual is held in memory until you save, which we do in a moment.
 
-With the individual in place, add a **Scenario** that simulates aciclovir in her. A Scenario pins a model to a subject, dosing, parameters, a time grid, and the outputs to record; the `id` comes first and `modelFile` is the only other required field, with everything else an optional reference into the project's other definitions. References are checked as the scenario is added, so a typo in an id is caught here rather than at run time. See `vignette("design-scenarios")` for the full set of fields.
+With the individual in place, add a **Scenario** that simulates aciclovir in her. A Scenario pins a model to a subject, dosing, parameters, a time grid, and the outputs to record. Only `modelFile` is required. Of the optional fields, some reference other definitions in the project (`individual`, `application`, `parameterSets`, `outputPaths`) and others are plain values (`simulationTime` and `simulationTimeUnit` set the time grid). The references are checked as the scenario is added, so a typo in an id stops you here rather than at run time.
 
 ```{r}
 addScenario(
@@ -107,7 +102,7 @@ addScenario(
 )
 ```
 
-Finally, describe a figure for the scenario you just built. A **DataCombined** pairs the curves a figure draws (here, one simulated curve: the plasma concentration from the new scenario), and a **Plot** draws one chart from a DataCombined. To compose several plots into one multi-panel figure you would add a **Plot Grid**, but a single plot needs none; `vignette("plot-results")` covers the full plotting model. Add a DataCombined that references the new scenario, then a plot from it:
+Finally, describe a figure. A **DataCombined** says which curves the figure draws, here just one: the plasma concentration from the new scenario. A **Plot** then draws a chart from it.
 
 ```{r}
 addDataCombined(
@@ -131,7 +126,7 @@ addPlot(
 )
 ```
 
-Everything so far has edited the project in memory. Persist the new individual, scenario, DataCombined, and plot to the `definitions/` tree with `saveProject()`:
+Everything so far has changed the project in memory only. `saveProject()` writes the new individual, scenario, DataCombined, and plot to disk:
 
 ```{r}
 saveProject(project)
@@ -145,11 +140,11 @@ With the scenario defined, run it. `runScenarios()` runs one or more scenarios f
 res <- runScenarios(project, scenarios = "aciclovir_iv_female")
 ```
 
-Each entry of the returned list is a **Scenario Result**, the record `createPlots()` reads from. It bundles the simulation and its outputs (not the raw OSPS `SimulationResults`); `vignette("run-simulations")` describes its structure.
+Each entry of the returned list is a **Scenario Result**, bundling the simulation and its outputs. This is what `createPlots()` reads from next.
 
 ## Plot the result
 
-`createPlots()` reads the plot definitions stored in the Project and draws them against the scenario results you pass in. Ask for the plot you just authored by its id; it returns a named list keyed by that id, each entry a `ggplot` object.
+`createPlots()` reads the plot definitions stored in the Project and draws them against the scenario results you pass in. Ask for the plot you just authored, by its id:
 
 ```{r}
 plots <- createPlots(
@@ -159,21 +154,27 @@ plots <- createPlots(
 )
 ```
 
-Each entry is a regular `ggplot` object, so you display it by printing it:
+Each entry is an ordinary `ggplot` object, so printing it draws it:
 
 ```{r, out.width = "80%", fig.align = "center", fig.width = 6, fig.asp = 0.7, dpi = 150}
 plots$aciclovir_female_profile
 ```
 
-That is the whole loop: you authored a scenario and a figure, ran the scenario, and plotted its result, all against one project.
+That is the whole loop. You added a subject and a scenario to a project, described a figure, ran the simulation, and drew the figure, all from one object.
 
 ## Where to go next
 
-Each step has a dedicated article that goes deeper:
+You have seen the shape of the workflow. From here, pick the guide for whatever you need to do next:
 
-- `vignette("projects")` explains what a Project is on disk and in memory, how to scaffold and load one, and how to share it as a single file.
-- `vignette("design-scenarios")` covers the full authoring API: every supporting definition, editing in place with the `set*` family, vectorized authoring (adding several definitions in one call), and seeding scenarios from model files.
-- `vignette("validate-project")` shows how to check that everything hangs together before you run it.
-- `vignette("run-simulations")` covers running several scenarios at once, populations, steady-state, and saving and reloading results.
-- `vignette("plot-results")` covers richer figures, attaching observed data, and the esqLABS house style.
-- `vignette("observed-data")` covers the ways measured data enters a project.
+- `vignette("how-to-set-up-a-project")` to create your own project, save your work, and share it as a single file.
+- `vignette("how-to-design-scenarios")` to author the definitions a scenario is built from, edit them in place, and add several at once.
+- `vignette("how-to-validate-a-project")` to check a project hangs together before running it.
+- `vignette("how-to-run-simulations")` to run many scenarios, populations, and steady-state runs, and to save and reload results.
+- `vignette("how-to-plot-results")` for richer figures, observed data overlays, population percentile bands, and the esqLABS house style.
+- `vignette("how-to-use-observed-data")` for the four ways measured data enters a project.
+- `vignette("how-to-identify-parameters")` to estimate model parameters by fitting them to observed data.
+- `vignette("how-to-run-a-sensitivity-analysis")` to see which parameters your PK outcomes are actually sensitive to.
+- `vignette("how-to-customize-sensitivity-plots")` to restyle those sensitivity figures.
+- `vignette("how-to-migrate-from-excel")` if you have a pre-6.0.0 project driven by Excel workbooks.
+
+Two other kinds of article are worth knowing about. `vignette("about-the-project-model")` and `vignette("about-the-plotting-model")` explain why the package works the way it does, which is the fastest way to stop being surprised by it. `vignette("reference-definition-fields")` and `vignette("reference-project-file")` are for looking things up: every field of every definition, whether it is required, and what happens when you leave it out.
