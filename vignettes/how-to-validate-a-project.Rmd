@@ -1,10 +1,10 @@
 ---
-title: "Validate a project"
+title: "How to validate a project"
 output:
   rmarkdown::html_vignette:
     toc: true
 vignette: >
-  %\VignetteIndexEntry{Validate a project}
+  %\VignetteIndexEntry{How to validate a project}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -22,7 +22,7 @@ library(esqlabsR)
 
 Once you have authored scenarios and their supporting definitions, the natural next step, before you run anything, is to check that the project hangs together: that every reference resolves, no required field is missing, and no id is duplicated. `validateProject()` does this and prints a readable report.
 
-It assumes you know what a Project is and how to author one (see `vignette("projects")` and `vignette("design-scenarios")`).
+It assumes you know what a Project is and how to author one (see `vignette("how-to-set-up-a-project")` and `vignette("how-to-design-scenarios")`).
 
 ## Why and when to validate
 
@@ -133,4 +133,4 @@ Both the report and `isAnyCriticalErrors()` are clean, so the project is ready t
 
 ## Where to go next
 
-With a clean project in hand, see `vignette("run-simulations")` to execute the scenarios and `vignette("plot-results")` to turn the results into figures. To author or repair the definitions a validation problem points at, see `vignette("design-scenarios")`.
+With a clean project in hand, see `vignette("how-to-run-simulations")` to execute the scenarios and `vignette("how-to-plot-results")` to turn the results into figures. To author or repair the definitions a validation problem points at, see `vignette("how-to-design-scenarios")`.

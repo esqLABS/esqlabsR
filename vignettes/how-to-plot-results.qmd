@@ -1,10 +1,10 @@
 ---
-title: "Plot results"
+title: "How to plot results"
 format:
   html:
     toc: true
 vignette: >
-  %\VignetteIndexEntry{Plot results}
+  %\VignetteIndexEntry{How to plot results}
   %\VignetteEngine{quarto::html}
   %\VignetteEncoding{UTF-8}
 ---
@@ -124,7 +124,7 @@ single$p1
 
 ## Attach observed data
 
-Comparing simulated curves against measurements is what makes a diagnostic figure useful. A project declares its observed data and resolves it on demand; how observed data enters a project (the four source types, the source definitions, and `loadObservedData()`) is covered in `vignette("observed-data")`. For plotting, you need just one handle: the **DataSet name** a **DataCombined** references, which `getObservedDataNames()` lists.
+Comparing simulated curves against measurements is what makes a diagnostic figure useful. A project declares its observed data and resolves it on demand; how observed data enters a project (the four source types, the source definitions, and `loadObservedData()`) is covered in `vignette("how-to-use-observed-data")`. For plotting, you need just one handle: the **DataSet name** a **DataCombined** references, which `getObservedDataNames()` lists.
 
 ```{r observed}
 getObservedDataNames(project)
@@ -249,4 +249,4 @@ for (name in names(reportGrids)) {
 
 ## Where to go next
 
-The **Plot Type** charts shown here are produced by `{ospsuite}`'s plotting engine; its DataCombined articles cover the chart types and their customization in depth, and the OSPSuite-R observed-data article covers loading measurements from Excel or PKML. For building and running the scenarios that feed these figures, see `vignette("esqlabsR")` and `vignette("run-simulations")`.
+The **Plot Type** charts shown here are produced by `{ospsuite}`'s plotting engine; its DataCombined articles cover the chart types and their customization in depth, and the OSPSuite-R observed-data article covers loading measurements from Excel or PKML. For building and running the scenarios that feed these figures, see `vignette("get-started")` and `vignette("how-to-run-simulations")`.

@@ -1,10 +1,10 @@
 ---
-title: "Sensitivity analysis: plot customization"
+title: "How to customize sensitivity plots"
 output:
   rmarkdown::html_vignette:
     toc: true
 vignette: >
-  %\VignetteIndexEntry{Sensitivity analysis: plot customization}
+  %\VignetteIndexEntry{How to customize sensitivity plots}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -24,9 +24,9 @@ library(esqlabsR)
 
 The three sensitivity plotting functions (`sensitivitySpiderPlot()`, `sensitivityTimeProfiles()`, and `sensitivityTornadoPlot()`) produce publication-ready figures by default. This article shows how to adjust their appearance: first with a `defaultPlotConfiguration` object, then with direct function arguments for one-off overrides, and finally with `{ggplot2}` and `{patchwork}` for anything the configuration cannot express.
 
-The examples reuse the aciclovir sensitivity analysis from `vignette("sensitivity")`. See that article for the analysis setup; here we assume the resulting `analysis` object is in scope.
+The examples reuse the aciclovir sensitivity analysis from `vignette("how-to-run-a-sensitivity-analysis")`. See that article for the analysis setup; here we assume the resulting `analysis` object is in scope.
 
-Reusing the analysis from `vignette("sensitivity")`:
+Reusing the analysis from `vignette("how-to-run-a-sensitivity-analysis")`:
 
 ```{r analysis}
 project <- loadProject(exampleProjectPath())
@@ -160,4 +160,4 @@ spiderPlot &
 
 ## Where to go next
 
-For the analysis that produces these results, see `vignette("sensitivity")`. For the full catalog of `PlotConfiguration` fields, see the [TLF-Library reference](https://www.open-systems-pharmacology.org/TLF-Library/reference/PlotConfiguration.html).
+For the analysis that produces these results, see `vignette("how-to-run-a-sensitivity-analysis")`. For the full catalog of `PlotConfiguration` fields, see the [TLF-Library reference](https://www.open-systems-pharmacology.org/TLF-Library/reference/PlotConfiguration.html).

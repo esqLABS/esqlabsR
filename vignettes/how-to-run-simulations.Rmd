@@ -1,10 +1,10 @@
 ---
-title: "Run simulations"
+title: "How to run simulations"
 output:
   rmarkdown::html_vignette:
     toc: true
 vignette: >
-  %\VignetteIndexEntry{Run simulations}
+  %\VignetteIndexEntry{How to run simulations}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -21,7 +21,7 @@ knitr::opts_chunk$set(
 library(esqlabsR)
 ```
 
-Once a project defines one or more scenarios, you run them with a single function, `runScenarios()`. A scenario is a named, runnable simulation specification (a model, an optional subject, the dosing, the parameters, the time grid, and the outputs to record); designing them is covered in `vignette("design-scenarios")`. Here we take a project that already has scenarios and focus on running them and handling the results.
+Once a project defines one or more scenarios, you run them with a single function, `runScenarios()`. A scenario is a named, runnable simulation specification (a model, an optional subject, the dosing, the parameters, the time grid, and the outputs to record); designing them is covered in `vignette("how-to-design-scenarios")`. Here we take a project that already has scenarios and focus on running them and handling the results.
 
 This article uses the worked example project bundled with the package, so every chunk runs as written. Load it with `loadProject()`:
 
@@ -131,4 +131,4 @@ The reloaded record has the same shape as the one `runScenarios()` returned, so 
 
 ## Where to go next
 
-Now that you have simulated scenarios and their results in hand, you can move on to visualizing them, which is covered in `vignette("plot-results")`.
+Now that you have simulated scenarios and their results in hand, you can move on to visualizing them, which is covered in `vignette("how-to-plot-results")`.

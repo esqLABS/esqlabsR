@@ -1,10 +1,10 @@
 ---
-title: "Observed data"
+title: "How to use observed data"
 output:
   rmarkdown::html_vignette:
     toc: true
 vignette: >
-  %\VignetteIndexEntry{Observed data}
+  %\VignetteIndexEntry{How to use observed data}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -22,7 +22,7 @@ library(esqlabsR)
 
 Comparing a simulation against measured data is what turns a model run into a diagnostic. In `esqlabsR`, measured data is **Observed Data**: a named series of time/value points. It is the package's term for what OSPS implements as a `DataSet`. This article covers how observed data enters a project, the four ways to declare a source, and how the project resolves that data when you build a figure.
 
-It assumes you already know what a Project is and how to load one (see `vignette("projects")`). For turning observed data and simulated curves into figures, see `vignette("plot-results")`, which owns the plotting model; this article owns how the data gets into the project in the first place.
+It assumes you already know what a Project is and how to load one (see `vignette("how-to-set-up-a-project")`). For turning observed data and simulated curves into figures, see `vignette("how-to-plot-results")`, which owns the plotting model; this article owns how the data gets into the project in the first place.
 
 ## An observed-data source is a definition
 
@@ -185,8 +185,8 @@ removeObservedData(project, c("extra_cohort.pkml", "Scratch measurement"))
 getObservedDataNames(project)
 ```
 
-If a removed source is still referenced by a DataCombined, the removal proceeds and leaves the reference dangling, which the next `validateProject()` (see `vignette("validate-project")`) reports as a problem, so prune the DataCombined too.
+If a removed source is still referenced by a DataCombined, the removal proceeds and leaves the reference dangling, which the next `validateProject()` (see `vignette("how-to-validate-a-project")`) reports as a problem, so prune the DataCombined too.
 
 ## Where to go next
 
-You now have all four ways observed data enters a project, and you know that the data is resolved on the fly from a source definition rather than stored in the project. To pair that observed data with simulated curves and turn it into report figures, see `vignette("plot-results")`. To check that every observed-data source and its references hang together, see `vignette("validate-project")`.
+You now have all four ways observed data enters a project, and you know that the data is resolved on the fly from a source definition rather than stored in the project. To pair that observed data with simulated curves and turn it into report figures, see `vignette("how-to-plot-results")`. To check that every observed-data source and its references hang together, see `vignette("how-to-validate-a-project")`.

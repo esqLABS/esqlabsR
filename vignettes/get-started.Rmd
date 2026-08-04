@@ -54,7 +54,7 @@ On disk a project is a directory with two parts:
 - the `Project.json` file, holding metadata and file paths;
 - a `definitions/` folder, holding the authored content.
 
-A **definition** is one named piece of the project (a scenario, an individual, a population, and so on). Each kind lives in its own subfolder under `definitions/` (`definitions/scenarios/`, `definitions/individuals/`, ...), one JSON file per definition, named after the definition's id. `vignette("projects")` covers the full taxonomy.
+A **definition** is one named piece of the project (a scenario, an individual, a population, and so on). Each kind lives in its own subfolder under `definitions/` (`definitions/scenarios/`, `definitions/individuals/`, ...), one JSON file per definition, named after the definition's id. `vignette("how-to-set-up-a-project")` covers the full taxonomy.
 
 Each section is reachable as a named list on the project, keyed by id. Printing one shows a count and the ids it holds, for example the individuals the example already defines:
 
@@ -91,7 +91,7 @@ addIndividual(
 
 The new definition is staged in memory; it lands in `definitions/individuals/adult_female.json` once you call `saveProject(project)`.
 
-With the individual in place, add a **Scenario** that simulates aciclovir in her. A Scenario pins a model to a subject, dosing, parameters, a time grid, and the outputs to record; the `id` comes first and `modelFile` is the only other required field, with everything else an optional reference into the project's other definitions. References are checked as the scenario is added, so a typo in an id is caught here rather than at run time. See `vignette("design-scenarios")` for the full set of fields.
+With the individual in place, add a **Scenario** that simulates aciclovir in her. A Scenario pins a model to a subject, dosing, parameters, a time grid, and the outputs to record; the `id` comes first and `modelFile` is the only other required field, with everything else an optional reference into the project's other definitions. References are checked as the scenario is added, so a typo in an id is caught here rather than at run time. See `vignette("how-to-design-scenarios")` for the full set of fields.
 
 ```{r}
 addScenario(
@@ -107,7 +107,7 @@ addScenario(
 )
 ```
 
-Finally, describe a figure for the scenario you just built. A **DataCombined** pairs the curves a figure draws (here, one simulated curve: the plasma concentration from the new scenario), and a **Plot** draws one chart from a DataCombined. To compose several plots into one multi-panel figure you would add a **Plot Grid**, but a single plot needs none; `vignette("plot-results")` covers the full plotting model. Add a DataCombined that references the new scenario, then a plot from it:
+Finally, describe a figure for the scenario you just built. A **DataCombined** pairs the curves a figure draws (here, one simulated curve: the plasma concentration from the new scenario), and a **Plot** draws one chart from a DataCombined. To compose several plots into one multi-panel figure you would add a **Plot Grid**, but a single plot needs none; `vignette("how-to-plot-results")` covers the full plotting model. Add a DataCombined that references the new scenario, then a plot from it:
 
 ```{r}
 addDataCombined(
@@ -145,7 +145,7 @@ With the scenario defined, run it. `runScenarios()` runs one or more scenarios f
 res <- runScenarios(project, scenarios = "aciclovir_iv_female")
 ```
 
-Each entry of the returned list is a **Scenario Result**, the record `createPlots()` reads from. It bundles the simulation and its outputs (not the raw OSPS `SimulationResults`); `vignette("run-simulations")` describes its structure.
+Each entry of the returned list is a **Scenario Result**, the record `createPlots()` reads from. It bundles the simulation and its outputs (not the raw OSPS `SimulationResults`); `vignette("how-to-run-simulations")` describes its structure.
 
 ## Plot the result
 
@@ -171,9 +171,9 @@ That is the whole loop: you authored a scenario and a figure, ran the scenario, 
 
 Each step has a dedicated article that goes deeper:
 
-- `vignette("projects")` explains what a Project is on disk and in memory, how to scaffold and load one, and how to share it as a single file.
-- `vignette("design-scenarios")` covers the full authoring API: every supporting definition, editing in place with the `set*` family, vectorized authoring (adding several definitions in one call), and seeding scenarios from model files.
-- `vignette("validate-project")` shows how to check that everything hangs together before you run it.
-- `vignette("run-simulations")` covers running several scenarios at once, populations, steady-state, and saving and reloading results.
-- `vignette("plot-results")` covers richer figures, attaching observed data, and the esqLABS house style.
-- `vignette("observed-data")` covers the ways measured data enters a project.
+- `vignette("how-to-set-up-a-project")` explains what a Project is on disk and in memory, how to scaffold and load one, and how to share it as a single file.
+- `vignette("how-to-design-scenarios")` covers the full authoring API: every supporting definition, editing in place with the `set*` family, vectorized authoring (adding several definitions in one call), and seeding scenarios from model files.
+- `vignette("how-to-validate-a-project")` shows how to check that everything hangs together before you run it.
+- `vignette("how-to-run-simulations")` covers running several scenarios at once, populations, steady-state, and saving and reloading results.
+- `vignette("how-to-plot-results")` covers richer figures, attaching observed data, and the esqLABS house style.
+- `vignette("how-to-use-observed-data")` covers the ways measured data enters a project.

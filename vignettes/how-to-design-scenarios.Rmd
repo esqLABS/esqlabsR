@@ -1,10 +1,10 @@
 ---
-title: "Design scenarios"
+title: "How to design scenarios"
 output:
   rmarkdown::html_vignette:
     toc: true
 vignette: >
-  %\VignetteIndexEntry{Design scenarios}
+  %\VignetteIndexEntry{How to design scenarios}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -22,7 +22,7 @@ library(esqlabsR)
 
 A **Scenario** is the unit of work in `esqlabsR`: one runnable simulation, described declaratively. It names the model to run, the subject to run it on, the dosing, the parameters to apply, the outputs to record, and the time grid. You author scenarios (and the definitions they reference) into a Project, then hand the Project to `runScenarios()` to execute them. This article shows how to build scenarios and their supporting definitions from R, and how to edit, rename, duplicate, and remove them.
 
-This article assumes you know what a Project is and how to load one; see `vignette("projects")` if not.
+This article assumes you know what a Project is and how to load one; see `vignette("how-to-set-up-a-project")` if not.
 
 ## Working against a writable copy
 
@@ -45,7 +45,7 @@ project$definitions$scenarios
 
 A scenario can only reference definitions that already exist, so before you create the scenario you typically define the pieces it will use. The authoring API is uniform: every function takes the project first, then the definition's `id`, then its fields.
 
-Because an id can become a filename in the `definitions/` tree, ids are **canonicalized** the moment they enter the project: lowercased and made filename-safe. When canonicalization changes the id you typed, the authoring function warns you and stores the canonical form, as the `addOutputPath()` call below shows. See `vignette("projects")` for the full treatment.
+Because an id can become a filename in the `definitions/` tree, ids are **canonicalized** the moment they enter the project: lowercased and made filename-safe. When canonicalization changes the id you typed, the authoring function warns you and stores the canonical form, as the `addOutputPath()` call below shows. See `vignette("how-to-set-up-a-project")` for the full treatment.
 
 ### Output paths
 
@@ -289,4 +289,4 @@ This is a starting point, not the finished article: the scenarios it creates are
 
 You now have the full authoring loop: build the supporting definitions (output paths, parameter sets, individuals, populations, applications), assemble them into scenarios with `addScenario()`, refine them with `setScenario()` and the other field setters, and reshape the set with `duplicateScenario()`, `renameScenario()`, and `removeScenario()`. Every edit is staged in memory; call `saveProject(project)` to reconcile the `definitions/` tree to the current in-memory state, or `reloadProject(project)` to discard the unsaved edits and re-read from disk.
 
-From here, validate what you have built with `validateProject()` (see `vignette("validate-project")`), then run it: `vignette("run-simulations")` covers passing the project to `runScenarios()` and collecting results, and `vignette("plot-results")` covers turning those results into figures.
+From here, validate what you have built with `validateProject()` (see `vignette("how-to-validate-a-project")`), then run it: `vignette("how-to-run-simulations")` covers passing the project to `runScenarios()` and collecting results, and `vignette("how-to-plot-results")` covers turning those results into figures.

@@ -1,10 +1,10 @@
 ---
-title: "Sensitivity analysis"
+title: "How to run a sensitivity analysis"
 output:
   rmarkdown::html_vignette:
     toc: true
 vignette: >
-  %\VignetteIndexEntry{Sensitivity analysis}
+  %\VignetteIndexEntry{How to run a sensitivity analysis}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -120,7 +120,7 @@ sensitivityTornadoPlot(analysis)
 
 The tornado plot confirms the trends seen in the previous plots, but makes it easier to compare the relative impact of each parameter across PK metrics.
 
-To change colors, scales, titles, or which PK parameters appear in any of these plots, see `vignette("sensitivity-plots")`.
+To change colors, scales, titles, or which PK parameters appear in any of these plots, see `vignette("how-to-customize-sensitivity-plots")`.
 
 ## Sensitivity calculation for user-defined (non-PK) outputs
 
@@ -167,4 +167,4 @@ sensitivitySpiderPlot(customAnalysis)
 
 ## Where to go next
 
-To customize the appearance of these plots (colors, scales, titles, and which PK parameters appear), see `vignette("sensitivity-plots")`.
+To customize the appearance of these plots (colors, scales, titles, and which PK parameters appear), see `vignette("how-to-customize-sensitivity-plots")`.

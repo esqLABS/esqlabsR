@@ -1,10 +1,10 @@
 ---
-title: "Parameter identification"
+title: "How to identify parameters"
 output:
   rmarkdown::html_vignette:
     toc: true
 vignette: >
-  %\VignetteIndexEntry{Parameter identification}
+  %\VignetteIndexEntry{How to identify parameters}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -31,7 +31,7 @@ table {
 
 Parameter identification (PI) estimates model parameters by fitting simulated outputs to observed data. In `esqlabsR` a PI task lives inside a project, alongside its scenarios, output paths, and observed data, and is run with a single call. This article shows how to run the parameter identification that ships with the bundled example project and how to assemble one yourself with the programmatic authoring functions. It builds on the [`OSPSuite.ParameterIdentification`](https://www.open-systems-pharmacology.org/OSPSuite.ParameterIdentification/) package, which performs the actual optimization.
 
-To follow along you only need a loaded project; see `vignette("projects")` for how a project is organized and loaded. Here we work entirely with the example project and never write anything into your project tree.
+To follow along you only need a loaded project; see `vignette("how-to-set-up-a-project")` for how a project is organized and loaded. Here we work entirely with the example project and never write anything into your project tree.
 
 ## The PI task model
 
@@ -39,7 +39,7 @@ A parameter identification is described by a **PI task**. A task is a plain-data
 
 - the **scenarios** it fits (one or more named scenarios already defined in the project),
 - a set of **PI Parameters**, one per quantity to estimate, each giving a model parameter path, the scenarios it applies to, a starting value, and lower and upper bounds, and
-- a set of **PI Output Mappings**, each pairing one model output (an output path of the project) with one Observed Data series (see `vignette("observed-data")`), so the optimizer knows which simulated curve to compare against which measurements.
+- a set of **PI Output Mappings**, each pairing one model output (an output path of the project) with one Observed Data series (see `vignette("how-to-use-observed-data")`), so the optimizer knows which simulated curve to compare against which measurements.
 
 A task can also carry an optional configuration block (the optimization algorithm, the confidence-interval method, and similar settings). Tasks are stored on the project under `project$definitions$parameterIdentification`, keyed by task id.
 
@@ -165,4 +165,4 @@ The example task `aciclovirsimple` is untouched, since we only edited the in-mem
 
 ## Where to go next
 
-The scenarios and output paths a PI task fits come from the rest of the project: see `vignette("design-scenarios")` for authoring scenarios and `vignette("observed-data")` for loading the measurements an output mapping compares against. For the underlying optimization, the confidence-interval methods, and the available algorithms, see the [`OSPSuite.ParameterIdentification`](https://www.open-systems-pharmacology.org/OSPSuite.ParameterIdentification/) package.
+The scenarios and output paths a PI task fits come from the rest of the project: see `vignette("how-to-design-scenarios")` for authoring scenarios and `vignette("how-to-use-observed-data")` for loading the measurements an output mapping compares against. For the underlying optimization, the confidence-interval methods, and the available algorithms, see the [`OSPSuite.ParameterIdentification`](https://www.open-systems-pharmacology.org/OSPSuite.ParameterIdentification/) package.
