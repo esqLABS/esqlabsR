@@ -203,49 +203,19 @@ folder is resolved).}
 \if{html}{\out{<a id="method-Project-addScenario"></a>}}
 \if{latex}{\out{\hypertarget{method-Project-addScenario}{}}}
 \subsection{\code{Project$addScenario()}}{
-  Add scenarios. See \code{\link[=addScenario]{addScenario()}}, the primary entry point.
+  Add scenarios. See \code{\link[=addScenario]{addScenario()}}, the primary entry point,
+for the fields a scenario carries and their defaults.
   \subsection{Usage}{
     \if{html}{\out{<div class="r">}}
-    \preformatted{Project$addScenario(
-  id,
-  modelFile,
-  individual = NULL,
-  population = NULL,
-  application = NULL,
-  parameterSets = NULL,
-  initialConditions = NULL,
-  outputPaths = NULL,
-  simulationTime = NULL,
-  simulationTimeUnit = "h",
-  steadyState = FALSE,
-  steadyStateTime = 1000,
-  steadyStateTimeUnit = "min",
-  overwriteFormulasInSS = FALSE,
-  readPopulationFromCSV = FALSE,
-  overwrite = FALSE
-)}
+    \preformatted{Project$addScenario(...)}
     \if{html}{\out{</div>}}
   }
   \subsection{Arguments}{
     \if{html}{\out{<div class="arguments">}}
     \describe{
-      \item{\code{id}}{Character id (name) of the definition to add, modify, or remove.}
-      \item{\code{modelFile}}{Character name of the \code{.pkml} model file. See
-\code{\link[=addScenario]{addScenario()}}.}
-      \item{\code{individual, population, application}}{Character id (or \code{NULL}) of the
-individual / population / application a scenario references. See
-\code{\link[=addScenario]{addScenario()}}.}
-      \item{\code{parameterSets, initialConditions, outputPaths}}{Character vectors (or
-\code{NULL}) of definition ids a scenario references, or the target of an
-\verb{add*}/\verb{set*}/\verb{remove*} call. See \code{\link[=addScenario]{addScenario()}}.}
-      \item{\code{simulationTime, simulationTimeUnit}}{Simulation time specification and
-its unit. See \code{\link[=addScenario]{addScenario()}}.}
-      \item{\code{steadyState, steadyStateTime, steadyStateTimeUnit}}{Steady-state flag,
-time, and unit. See \code{\link[=addScenario]{addScenario()}}.}
-      \item{\code{overwriteFormulasInSS, readPopulationFromCSV}}{Logical scenario options.
-See \code{\link[=addScenario]{addScenario()}}.}
-      \item{\code{overwrite}}{Logical scalar controlling duplicate-collision behaviour of
-the \verb{add*} authoring methods. See \code{\link[=addParameterEntry]{addParameterEntry()}}, \code{\link[=addPITask]{addPITask()}}.}
+      \item{\code{...}}{Passed to the matching authoring free function (e.g. the
+partial-update fields of \code{\link[=setScenario]{setScenario()}} / \code{\link[=setIndividual]{setIndividual()}}, or the
+remaining arguments of \code{\link[=createScenariosFromPKML]{createScenariosFromPKML()}}).}
     }
     \if{html}{\out{</div>}}
   }
