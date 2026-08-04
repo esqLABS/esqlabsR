@@ -95,7 +95,9 @@ Until one of those is resolved, treat the estimate as a point value with no conf
 
 ## Build a task in R
 
-Instead of relying on a task stored in the project, you can author one in memory with the `add*` family. `addPITask()` creates a task and requires at least one PI Parameter and one PI Output Mapping at creation, so you seed it with existing records and grow it afterwards. The records are the same plain-data values the project already holds, so the simplest seed is to reuse the ones from the example task.
+Instead of relying on a task stored in the project, you can author one in memory with the `add*` family. `addPITask()` can create an empty task and let you grow it afterwards: `scenarios`, `parameters`, and `outputMappings` all default to empty, and the requirement to have at least one of each is enforced before `runPI()` rather than at creation.
+
+Seeding a task from records that already exist is still the quickest way to get a runnable one, since the records are the same plain-data values the project holds. Here we reuse the ones from the example task.
 
 ```{r addTask}
 template <- project$definitions$parameterIdentification[["aciclovirsimple"]]

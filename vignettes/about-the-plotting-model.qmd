@@ -107,11 +107,13 @@ This is also the one place where ids are **not** canonicalized, unlike every oth
 
 The four source types (`excel`, `pkml`, `script`, `programmatic`) look like four separate choices and reduce to one question: **is the data fixed, or is it derived?**
 
-For fixed data you already have, the answer is a file-backed source: `excel` for a workbook read through an OSPS importer configuration, `pkml` for a saved DataSet, `programmatic` for a DataSet you built in the session (which `saveProject()` writes to a PKML file, so it becomes an ordinary file-backed source from then on). Nothing runs when the data is resolved; the values are read back. This is the default, and it should stay the default.
+For fixed data you already have, the answer is a file-backed source: `excel` for a workbook read through an OSPS importer configuration, `pkml` for a saved DataSet, or `programmatic` for a DataSet you built in the session. Nothing runs when the data is resolved; the values are read back. This is the default, and it should stay the default.
 
 For derived data, the answer is `script`: an R file that computes the DataSet each time it is resolved. Reach for it when the data is not a fixed set of numbers but a recipe (digitized points that need transforming, a join across several inputs, a unit conversion applied to a raw file). The recipe then travels with the project and stays in step with its inputs, which is the whole point.
 
-The `script` and `programmatic` choice is often presented as being about persistence. It is not: both survive a reload. It is about whether the numbers are a given or a computation.
+`programmatic` is the one type that is not file-backed at the moment you create it, and that is worth being precise about. The DataSet lives only on the in-memory project, and reloading before you save discards it. `saveProject()` is what makes it durable: it writes the DataSet to a PKML file and rewrites the entry as a `pkml` source, so from then on it is an ordinary file-backed source, addressed by the PKML file's basename rather than the DataSet name.
+
+So the `script` versus `programmatic` choice is not really about persistence, once that save has happened. It is about whether the numbers are a given or a computation.
 
 ### The trust boundary a script source creates
 

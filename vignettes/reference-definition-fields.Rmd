@@ -32,7 +32,7 @@ Each table's **If omitted** column is the one to read when you are deciding what
 Two conventions run through all of it:
 
 - Every authoring function takes `project` first and the definition's `id` second. Only the fields after those are listed below.
-- Every authoring function accepts `overwrite`, a logical defaulting to `FALSE`. An id that already exists aborts unless you pass `overwrite = TRUE`, which replaces the definition (last write wins). It is omitted from the tables.
+- Every authoring function accepts `overwrite`, a logical defaulting to `FALSE`. An id that already exists aborts unless you pass `overwrite = TRUE`, which replaces the definition (last write wins). It is omitted from the tables. The one carve-out is `addObservedData()`: `overwrite = TRUE` replaces a source only when the new one is the same kind as the old, and a cross-kind replacement is refused in either direction whatever you pass, so remove the existing source with `removeObservedData()` first.
 
 For why definitions are shaped this way, see `vignette("about-the-project-model")` and `vignette("about-the-plotting-model")`. For the project file and folder layout, see `vignette("reference-project-file")`.
 
@@ -62,20 +62,34 @@ Two behaviours are not visible from the table:
 - **Every reference is checked as the scenario is added.** If `individual`, `application`, or any entry in `parameterSets` does not resolve, `addScenario()` aborts and nothing is created.
 - **`parameterSets` is applied in the order you list them.** Later sets override earlier ones where they touch the same parameter, so `c("global", "aciclovir", "ckd")` applies `global` first and lets `ckd` win.
 
-### Stored field names
+### On-disk keys and in-memory field names
 
-The on-disk field names differ from the authoring argument names for the reference fields, which matters when reading a `definitions/scenarios/*.json` file or a record pulled off the project.
+**A `definitions/scenarios/*.json` file uses the authoring argument names above**, unchanged, with the id written as `name`. So a hand-authored scenario file looks like this:
 
-| Authoring argument | Stored field |
+```json
+{
+  "name": "aciclovir_iv",
+  "modelFile": "Aciclovir.pkml",
+  "individual": "adult_male",
+  "application": "aciclovir_iv_250mg",
+  "parameterSets": ["global", "aciclovir"],
+  "outputPaths": ["aciclovir_pvb"],
+  "steadyState": false
+}
+```
+
+The **parsed in-memory record** is what differs. A record read from `project$definitions$scenarios` renames the reference fields, so use these names when inspecting or editing a record in R:
+
+| Authoring argument and on-disk key | In-memory record field |
 | --- | --- |
 | `individual` | `individualId` |
 | `population` | `populationId` |
 | `application` | `applicationProtocol` |
 | `parameterSets` | `modelParameterSets` |
 | `steadyState` | `simulateSteadyState` |
-| (the id) | `scenarioName` |
+| `name` (the id) | `scenarioName` |
 
-The stored record also carries `simulationType`, derived from whether a population is referenced.
+The in-memory record also carries `simulationType`, derived from whether a population is referenced.
 
 ### `simulationTime` grammar
 
@@ -136,7 +150,9 @@ Fields of a demographics spec:
 | `diseaseState` | no | string | Healthy. |
 | `proteinOntogenies` | no | character vector | No ontogenies applied. |
 
-For a `csv` population that names no `file`, the CSV is looked for as `<id>.csv` in the populations folder. The lookup is case-insensitive against the folder listing, with an exact match winning, because an id is lowercase while a CSV keeps the case its author gave it.
+A `csv` population must name its `file`; omitting it is a validation error, not a fallback.
+
+The `<id>.csv` derivation belongs to a different mechanism: a scenario carrying `readPopulationFromCSV = TRUE`, which looks for `<id>.csv` in the populations folder. That lookup is case-insensitive against the folder listing, with an exact match winning, because an id is lowercase while a CSV keeps the case its author gave it.
 
 ## Application
 
@@ -159,7 +175,7 @@ Two functions. `addParameterSet(project, id)` creates an empty set; `addParamete
 | `value` | **yes** | numeric scalar | |
 | `units` | no | string | Use `""` for a dimensionless parameter. |
 
-`addParameterEntry()` creates the set on demand if it does not yet exist, and is last-write-wins on a repeated `(containerPath, parameterName)` pair. `removeParameterEntry()` takes an entry back out and auto-removes the set if it becomes empty; `removeParameterSet()` drops a whole set.
+`addParameterEntry()` creates the set on demand if it does not yet exist. A repeated `(containerPath, parameterName)` pair **aborts** unless you pass `overwrite = TRUE`, which replaces the existing entry (last write wins), so building a set incrementally does not silently overwrite what is already there. `removeParameterEntry()` takes an entry back out and auto-removes the set if it becomes empty; `removeParameterSet()` drops a whole set.
 
 Scenarios, individuals and applications all reference parameter sets from this one collection by id.
 
@@ -220,7 +236,7 @@ A `simulated` entry:
 | --- | --- | --- | --- |
 | `label` | **yes** | string | Critical error. Names the curve. |
 | `scenario` | **yes** | id | Critical error. |
-| `path` | **yes** | string | Critical error. The full output path, not an output-path id. |
+| `path` | **yes** | string | Critical error. An output-path id, or a full model path used verbatim when it matches no id. |
 | `group` | no | string | The curve is not grouped. Curves sharing a group are plotted together. |
 
 An `observed` entry:
@@ -345,7 +361,19 @@ Most authoring functions are **vectorized over the id**: pass a vector of ids to
 
 The call is **all-or-nothing**: if any one definition fails validation, none is applied.
 
-`addPlot()` and `addPlotGrid()` carry a deliberate asymmetry worth knowing, because it is the one place the rules above do not read the way you would guess. A length-N vector passed to a **positional** argument (`dataCombined`, `plotType`, `plots`) aligns by position as usual. A length-N **atomic vector** passed through `...` is treated as one multi-value field and applied whole, collapsed to a comma-separated string. So `title = c("A", "B")` gives every plot the single title `"A, B"`. To vary a `...` field per definition, pass a length-N **list**: `title = list("A", "B")`.
+The plot functions carry two asymmetries worth knowing, because they are the places the rules above do not read the way you would guess.
+
+**A `...` field is applied whole, not split.** A length-N atomic vector passed through `...` is treated as one multi-value field and collapsed to a comma-separated string, so `title = c("A", "B")` gives every plot the single title `"A, B"`. To vary a `...` field per definition, pass a length-N **list**: `title = list("A", "B")`.
+
+**`plots` in `addPlotGrid()` is whole-per-grid.** `dataCombined` and `plotType` in `addPlot()` align by position as usual, but a bare character vector passed to `plots` is applied intact to every grid, since a grid normally holds several plots. Only a length-N **list** assigns per grid:
+
+```r
+# Both grids get both plots:
+addPlotGrid(project, c("g1", "g2"), plots = c("p1", "p2"))
+
+# g1 gets p1, g2 gets p2:
+addPlotGrid(project, c("g1", "g2"), plots = list("p1", "p2"))
+```
 
 `addObservedData()` is not vectorized at all: its second argument is an entry, not an id.
 

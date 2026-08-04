@@ -86,7 +86,7 @@ addIndividual(
 
 Nothing has been written to disk yet: the new individual is held in memory until you save, which we do in a moment.
 
-With the individual in place, add a **Scenario** that simulates aciclovir in her. A Scenario pins a model to a subject, dosing, parameters, a time grid, and the outputs to record. Only `modelFile` is required; everything else is an optional reference to another definition in the project. References are checked as the scenario is added, so a typo in an id stops you here rather than at run time.
+With the individual in place, add a **Scenario** that simulates aciclovir in her. A Scenario pins a model to a subject, dosing, parameters, a time grid, and the outputs to record. Only `modelFile` is required. Of the optional fields, some reference other definitions in the project (`individual`, `application`, `parameterSets`, `outputPaths`) and others are plain values (`simulationTime` and `simulationTimeUnit` set the time grid). The references are checked as the scenario is added, so a typo in an id stops you here rather than at run time.
 
 ```{r}
 addScenario(
@@ -172,5 +172,9 @@ You have seen the shape of the workflow. From here, pick the guide for whatever 
 - `vignette("how-to-run-simulations")` to run many scenarios, populations, and steady-state runs, and to save and reload results.
 - `vignette("how-to-plot-results")` for richer figures, observed data overlays, population percentile bands, and the esqLABS house style.
 - `vignette("how-to-use-observed-data")` for the four ways measured data enters a project.
+- `vignette("how-to-identify-parameters")` to estimate model parameters by fitting them to observed data.
+- `vignette("how-to-run-a-sensitivity-analysis")` to see which parameters your PK outcomes are actually sensitive to.
+- `vignette("how-to-customize-sensitivity-plots")` to restyle those sensitivity figures.
+- `vignette("how-to-migrate-from-excel")` if you have a pre-6.0.0 project driven by Excel workbooks.
 
 Two other kinds of article are worth knowing about. `vignette("about-the-project-model")` and `vignette("about-the-plotting-model")` explain why the package works the way it does, which is the fastest way to stop being surprised by it. `vignette("reference-definition-fields")` and `vignette("reference-project-file")` are for looking things up: every field of every definition, whether it is required, and what happens when you leave it out.

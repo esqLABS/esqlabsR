@@ -31,7 +31,7 @@ The practical consequences are what make this worth the indirection:
 
 - **An analysis becomes reviewable.** A colleague can read what a scenario does without reading the code that runs it.
 - **An analysis becomes comparable.** Two scenarios that differ only in dose differ in one field, visibly.
-- **An analysis becomes portable.** The whole thing travels as a directory, or as a single snapshot file, and behaves the same on another machine.
+- **An analysis becomes portable.** The definitions travel as a directory, or as a single snapshot file, and behave the same on another machine. The files they point at (models, observed data, population CSVs) are not carried along and have to be provided or resolved separately.
 
 The cost is that you author definitions instead of writing statements, and that a mistake in a definition is caught by validation rather than by an R error at the line that made it. The rest of this article is largely about how the package tries to make that trade favourable.
 
@@ -81,7 +81,9 @@ The package checks a reference at two different times depending on how it arrive
 
 **Reading a project defers.** `loadProject()` and `importProjectFromExcel()` accept a project whose references do not all resolve. Each section is read on its own, and the gaps are reported rather than fatal. That is the right behaviour because the alternative is a project you cannot open. A legacy Excel project with one real gap, or a work in progress a colleague is halfway through, would become unloadable, and the tools you would use to inspect and repair it all need it loaded first. Reading also tells you about every gap at once, instead of stopping at the first.
 
-So a loaded project can hold a dangling reference that `addScenario()` would have refused. That is the deferred half doing its job, not an inconsistency in the rules. The gate that catches it is further along: `runScenarios()` and `createPlots()` validate before they run, so a gap in the part of the project they are about still stops you before any simulation happens.
+So a loaded project can hold a dangling reference that `addScenario()` would have refused. That is the deferred half doing its job, not an inconsistency in the rules. The gate that catches it is further along: on their default settings, `runScenarios()` and `createPlots()` validate before they run, so a gap in the part of the project they are about still stops you before any simulation happens.
+
+That gate is an opt-out rather than a guarantee. Both functions take `validate = FALSE`, which skips the check and lets a scenario build on whatever the model file already carries. It exists for the case where you know the gap is deliberate, and it means a project is only as validated as the calls you made.
 
 ## Why validation has two levels and not three
 

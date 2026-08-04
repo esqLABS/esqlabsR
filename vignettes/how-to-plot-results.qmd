@@ -203,7 +203,7 @@ populationPlots <- createPlots(
 populationPlots$aciclovir_population_range
 ```
 
-To show a different range, change the fractions: `quantiles = c(0.25, 0.5, 0.75)` draws the interquartile band, and a single value such as `quantiles = 0.5` draws the median alone.
+To show a different range, change the fractions: `quantiles = c(0.25, 0.5, 0.75)` draws the interquartile band, and a narrow band such as `c(0.45, 0.5, 0.55)` de-emphasises the spread. Pass three probabilities (lower band, middle, upper band); a single value is not a supported shape and fails when the figure is built.
 
 Three fields apply only to `plotType = "population"`. Setting one on any other plot type is ignored when the figure is built, and validation warns about it:
 

@@ -87,7 +87,7 @@ addParameterEntry(
 project$definitions$parameterSets[["ckd"]]
 ```
 
-Any definition (scenario, individual, or application) references parameter sets from this one collection by id, so you can compose a shared `global` set with disease-specific sets like `ckd` per scenario. `addParameterEntry()` is last-write-wins on a repeated `(containerPath, parameterName)` pair, and creates the set on demand if it does not yet exist.
+Any definition (scenario, individual, or application) references parameter sets from this one collection by id, so you can compose a shared `global` set with disease-specific sets like `ckd` per scenario. `addParameterEntry()` creates the set on demand if it does not yet exist, and aborts on a repeated `(containerPath, parameterName)` pair unless you pass `overwrite = TRUE`.
 
 ### Individuals
 
