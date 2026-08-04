@@ -729,19 +729,9 @@ addPopulation <- function(
     )
   }
 
-  # The numeric range fields are stored as doubles. Coerce a numeric-like
-  # value and reject only a value that does not coerce to a single finite
-  # number (e.g. "heavy" -> NA) rather than silently storing NA. A supplied `NA`
-  # means the field is not set (`.isUnsetNumericField()`), the same as leaving it
-  # out, so an empty workbook cell can be handed straight in. This matches the
-  # set path (`.setOnePopulation()`).
   for (field in .populationNumericFields) {
-    value <- fields[[field]]
-    if (!is.null(value) && !.isUnsetNumericField(value)) {
-      coerced <- suppressWarnings(as.double(value))
-      if (length(value) != 1L || is.na(coerced) || !is.finite(coerced)) {
-        errors <- c(errors, paste0(field, " must be a single finite number"))
-      }
+    if (.isInvalidNumericField(fields[[field]])) {
+      errors <- c(errors, paste0(field, " must be a single finite number"))
     }
   }
 
@@ -949,23 +939,11 @@ setPopulation <- function(project, id, ...) {
       )
     }
   }
-  # The numeric range fields are stored as doubles. Coerce a numeric-like
-  # value (including a character such as "75" from Excel) and reject only a
-  # value that does not coerce to a single finite number (e.g. "heavy" -> NA)
-  # rather than silently storing NA. A NULL, and a supplied `NA`, are allowed:
-  # both clear the field via `.coerceNumericField()` below.
+  # A NULL and a supplied `NA` are allowed here: both clear the field via
+  # `.coerceNumericField()` below.
   for (field in .populationNumericFields) {
-    if (field %in% names(fields)) {
-      value <- fields[[field]]
-      if (!is.null(value) && !.isUnsetNumericField(value)) {
-        coerced <- suppressWarnings(as.double(value))
-        if (length(value) != 1L || is.na(coerced) || !is.finite(coerced)) {
-          cli::cli_abort(
-            "{field} must be a single finite number",
-            call = call
-          )
-        }
-      }
+    if (.isInvalidNumericField(fields[[field]])) {
+      cli::cli_abort("{field} must be a single finite number", call = call)
     }
   }
 

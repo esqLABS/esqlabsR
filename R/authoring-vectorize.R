@@ -353,3 +353,21 @@ NULL
   }
   as.double(value)
 }
+
+# Is a numeric authoring field set to something `.coerceNumericField()` cannot
+# turn into a single finite number? A character such as `"45"` is fine; `"80kg"`
+# coerces to `NA` and is a mistake. An absent field (`NULL`) and an unset one
+# (`.isUnsetNumericField()`, which an empty workbook cell reads as) are not set
+# at all, so neither is invalid. This is the shared rule behind both the add
+# path, which collects the field name into an error list, and the set path,
+# which aborts on the first one.
+#
+# @keywords internal
+# @noRd
+.isInvalidNumericField <- function(value) {
+  if (is.null(value) || .isUnsetNumericField(value)) {
+    return(FALSE)
+  }
+  coerced <- suppressWarnings(as.double(value))
+  length(value) != 1L || is.na(coerced) || !is.finite(coerced)
+}

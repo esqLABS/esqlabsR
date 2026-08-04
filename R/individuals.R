@@ -1,3 +1,16 @@
+.individualNumericFields <- c("weight", "height", "age")
+
+# Every field an individual definition may carry. The order is the order the
+# "Allowed: ..." part of an unknown-field error lists them in.
+.individualFields <- c(
+  "species",
+  "population",
+  "gender",
+  .individualNumericFields,
+  "proteinOntogenies",
+  "parameterSets"
+)
+
 # Parse ----
 #
 # Parse the `individuals` JSON array into a named list keyed by
@@ -14,7 +27,6 @@
   if (is.null(individualsData) || length(individualsData) == 0L) {
     return(list())
   }
-  numericFields <- c("weight", "height", "age")
   result <- list()
   for (entry in individualsData) {
     id <- .keyedTreeRecordId(entry, "individualId", "individual")
@@ -28,7 +40,7 @@
       if (is.null(val)) {
         next
       }
-      if (field %in% numericFields) {
+      if (field %in% .individualNumericFields) {
         val <- as.double(val)
       } else if (field %in% c("parameterSets", "proteinOntogenies")) {
         val <- as.character(unlist(val))
@@ -112,7 +124,7 @@
       )
     }
 
-    for (numField in c("weight", "height", "age")) {
+    for (numField in .individualNumericFields) {
       val <- indiv[[numField]]
       if (!is.null(val) && !is.na(val) && !is.numeric(val)) {
         result$addWarning(
@@ -263,17 +275,7 @@ addIndividual <- function(project, id, species, ...) {
   call = rlang::caller_env()
 ) {
   errors <- character()
-  allowed <- c(
-    "species",
-    "population",
-    "gender",
-    "weight",
-    "height",
-    "age",
-    "proteinOntogenies",
-    "parameterSets"
-  )
-  unknown <- setdiff(names(fields), allowed)
+  unknown <- setdiff(names(fields), .individualFields)
   if (length(unknown) > 0L) {
     errors <- c(
       errors,
@@ -281,7 +283,7 @@ addIndividual <- function(project, id, species, ...) {
         "unknown fields: ",
         paste(unknown, collapse = ", "),
         ". Allowed: ",
-        paste(allowed, collapse = ", ")
+        paste(.individualFields, collapse = ", ")
       )
     )
   }
@@ -319,20 +321,9 @@ addIndividual <- function(project, id, species, ...) {
     )
   }
 
-  # weight/height/age are stored as doubles. Coerce a numeric-like value
-  # (including a character such as "45") and reject only a value that does not
-  # coerce to a single finite number (e.g. "80kg" -> NA) rather than silently
-  # storing NA. A supplied `NA` means the field is not set
-  # (`.isUnsetNumericField()`), the same as leaving it out, so an empty workbook
-  # cell can be handed straight in. This matches the set path
-  # (`.setOneIndividual()`).
-  for (field in c("weight", "height", "age")) {
-    value <- fields[[field]]
-    if (!is.null(value) && !.isUnsetNumericField(value)) {
-      coerced <- suppressWarnings(as.double(value))
-      if (length(value) != 1L || is.na(coerced) || !is.finite(coerced)) {
-        errors <- c(errors, paste0(field, " must be a single finite number"))
-      }
+  for (field in .individualNumericFields) {
+    if (.isInvalidNumericField(fields[[field]])) {
+      errors <- c(errors, paste0(field, " must be a single finite number"))
     }
   }
 
@@ -352,7 +343,7 @@ addIndividual <- function(project, id, species, ...) {
   for (field in c("population", "proteinOntogenies")) {
     if (!is.null(fields[[field]])) entry[[field]] <- fields[[field]]
   }
-  for (field in c("weight", "height", "age")) {
+  for (field in .individualNumericFields) {
     coerced <- .coerceNumericField(fields[[field]])
     if (!is.null(coerced)) {
       entry[[field]] <- coerced
@@ -519,22 +510,12 @@ setIndividual <- function(project, id, ...) {
 # @keywords internal
 # @noRd
 .setOneIndividual <- function(project, id, fields, call = rlang::caller_env()) {
-  allowed <- c(
-    "species",
-    "population",
-    "gender",
-    "weight",
-    "height",
-    "age",
-    "proteinOntogenies",
-    "parameterSets"
-  )
-  unknown <- setdiff(names(fields), allowed)
+  unknown <- setdiff(names(fields), .individualFields)
   if (length(unknown) > 0L) {
     cli::cli_abort(
       c(
         "Cannot modify individual {.val {id}}:",
-        "x" = "unknown fields: {.val {unknown}}. Allowed: {.val {allowed}}."
+        "x" = "unknown fields: {.val {unknown}}. Allowed: {.val {.individualFields}}."
       ),
       call = call
     )
@@ -569,23 +550,11 @@ setIndividual <- function(project, id, ...) {
       )
     }
   }
-  # weight/height/age are stored as doubles. Coerce a numeric-like value
-  # (including a character such as "45" from Excel) and reject only a value
-  # that does not coerce to a single finite number (e.g. "80kg" -> NA) rather
-  # than silently storing NA. A NULL, and a supplied `NA`, are allowed here:
-  # both clear the field via `.coerceNumericField()` below.
-  for (field in c("weight", "height", "age")) {
-    if (field %in% names(fields)) {
-      value <- fields[[field]]
-      if (!is.null(value) && !.isUnsetNumericField(value)) {
-        coerced <- suppressWarnings(as.double(value))
-        if (length(value) != 1L || is.na(coerced) || !is.finite(coerced)) {
-          cli::cli_abort(
-            "{field} must be a single finite number",
-            call = call
-          )
-        }
-      }
+  # A NULL and a supplied `NA` are allowed here: both clear the field via
+  # `.coerceNumericField()` below.
+  for (field in .individualNumericFields) {
+    if (.isInvalidNumericField(fields[[field]])) {
+      cli::cli_abort("{field} must be a single finite number", call = call)
     }
   }
   if ("proteinOntogenies" %in% names(fields)) {
@@ -616,7 +585,7 @@ setIndividual <- function(project, id, ...) {
 
   entry <- project$definitions$individuals[[id]]
   for (field in names(fields)) {
-    if (field %in% c("weight", "height", "age")) {
+    if (field %in% .individualNumericFields) {
       entry[[field]] <- .coerceNumericField(fields[[field]])
     } else {
       entry[[field]] <- fields[[field]]
