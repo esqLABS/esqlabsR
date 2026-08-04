@@ -1,0 +1,126 @@
+---
+title: "About the plotting model"
+format:
+  html:
+    toc: true
+vignette: >
+  %\VignetteIndexEntry{About the plotting model}
+  %\VignetteEngine{quarto::html}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r}
+#| include: false
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  eval = FALSE
+)
+```
+
+This article explains how `esqlabsR` describes a figure, and why it takes three building blocks rather than one to do it. It also covers the other half of a diagnostic figure, the measured data: why a project stores a reference to observed data instead of the numbers themselves, why two different names attach to every observed-data source, and how to think about the four kinds of source.
+
+Nothing here is a procedure. To build figures, see `vignette("how-to-plot-results")`; to declare observed data, see `vignette("how-to-use-observed-data")`; for the field-by-field description of a plot definition, see `vignette("reference-definition-fields")`.
+
+## Figures are described, not drawn
+
+In the same spirit as the rest of the project model, a figure in `esqlabsR` is a **definition** rather than a sequence of plotting calls. You describe what a chart shows; the package draws it when you ask.
+
+The payoff is reproducibility of a specific, practical kind. A figure that goes into a report is stored in the project alongside the scenarios that feed it, so regenerating it after re-simulating is one call rather than an archaeology exercise through an old script. The figure and the analysis cannot drift apart, because they are the same artifact.
+
+## Three building blocks, and why not one
+
+```{mermaid}
+classDiagram
+    direction LR
+    class DataCombined {
+        dataCombinedId
+        simulated: label, scenario, path
+        observed: label, dataSet
+        ...
+    }
+    class Plot {
+        plotId
+        dataCombined
+        plotType
+        title
+        ...
+    }
+    class PlotGrid {
+        plotGridId
+        plots
+        title
+        ...
+    }
+    DataCombined --> Plot
+    Plot --> PlotGrid
+
+    note for DataCombined "Simulation results paired with observed data"
+    note for Plot "The data and type of a single chart"
+    note for PlotGrid "Plots composed into one laid-out figure"
+```
+
+- A **DataCombined** answers *which numbers belong together*. It pairs one or more simulated curves with optional observed data, and can carry per-curve transformations such as offsets and scale factors.
+- A **Plot** answers *what chart to draw from them*. It names a DataCombined, a plot type, and its axis, aggregation and styling settings.
+- A **Plot Grid** answers *how charts are laid out together*. It composes one or more Plots into one multi-panel figure.
+
+Collapsing these into a single "figure" object would be smaller to write and would make the common case shorter. It was not done because each layer is reused independently, and a single object forces you to restate the layer you did not want to change.
+
+The clearest case is the DataCombined. The pairing "this simulated curve against these measurements" is exactly what a time profile, an observed-versus-simulated chart, and a residuals-versus-time chart all need. With the pairing factored out, those are three Plots pointing at one DataCombined. Without it, the same pairing (with the same long output path and the same DataSet name) would be written out three times, and correcting it would mean correcting it three times.
+
+The split between Plot and Plot Grid earns its place the same way, one level up: a single Plot can appear in a report figure, in a diagnostics panel, and on its own, without being redefined for each.
+
+## Why `createPlots()` returns Plot Grids
+
+`createPlots()` returns a list keyed by **Plot Grid** name, not by Plot name, which reads as a mismatch with its name and is worth understanding rather than working around.
+
+The grid is treated as the deliverable. A finished figure in a report or a qualification document is almost always a laid-out panel: a time profile beside its residuals, or one panel per output. Defaulting to grids means the common request produces the publishable object directly.
+
+A single chart is still directly reachable: asking for `plots` instead of `plotGrids` renders a Plot on its own and returns a plain `ggplot` object rather than a `patchwork` composition. The two selectors are independent, so one call can ask for both. What the package does not do is guess, and that is the reason the return value is keyed the way it is: a call that asked for grids gets grids.
+
+Because both kinds of result are ordinary `ggplot`/`patchwork` objects, anything `ggplot2` and `patchwork` can do to a figure can be done to these. The definitions are a starting point that stays open, not a closed format.
+
+## Observed data is a reference, not a copy
+
+A project does not store measured numbers. It stores a **source definition**: a small record saying where the data comes from and how to read it. The actual data is loaded on demand, whenever it is needed (at plot time, at validation time, or when you ask for it directly).
+
+This follows from who owns measured data. It is usually not the modeler: it arrives as a study file, a digitized figure, or a shared workbook that someone else maintains. Copying the numbers into the project would freeze a snapshot at import time, and that snapshot then diverges silently from the file everyone else is updating. A figure would keep reproducing beautifully, from data that no longer matches the study.
+
+Resolving on demand means a figure always reflects the current source file, and it keeps a project small regardless of how much data the analysis compares against.
+
+The cost is real and worth stating: a project is not self-contained without the files its sources point at, and a source that has moved or been deleted fails when the data is resolved rather than when it was declared. This is the same author-time-versus-read-time trade described in `vignette("about-the-project-model")`, and it is why validation reports observed-data problems as part of the whole-project view.
+
+## Why two names attach to every source
+
+Every observed-data source carries two strings that are not always equal, and confusing them is the most common stumble in this part of the package:
+
+- **The source id** is the project's handle on the declaration. It is the id you remove by, and it names the definition file. It is either the `id` you set, or, when you set none, it is inherited from the data source: the file basename for a file-based source, the `DataSet` name for an unsaved programmatic one.
+- **The DataSet name** is the handle a DataCombined references. It comes from the data itself. An Excel importer, for instance, expands a sheet into a long, fully qualified name that nobody would choose by hand.
+
+They differ because they answer different questions. The source id identifies *the declaration you wrote*; the DataSet name identifies *a series inside the data*, and one declaration can produce several of them (an Excel source naming three sheets yields three DataSets). No single string can serve both roles.
+
+The practical rule that falls out: read the DataSet name from `getObservedDataNames()` rather than typing it, and use the source id only when removing a source.
+
+This is also the one place where ids are **not** canonicalized, unlike every other definition kind. An observed-data id is matched verbatim, because it is so often a filename (`Aciclovir_TimeValuesData.xlsx`) or a DataSet name, and lowercasing it would rewrite the very string that identifies the source. The general rationale for canonicalizing ids, and why this exception does not undermine it, is in `vignette("about-the-project-model")`.
+
+## Four kinds of source, one question
+
+The four source types (`excel`, `pkml`, `script`, `programmatic`) look like four separate choices and reduce to one question: **is the data fixed, or is it derived?**
+
+For fixed data you already have, the answer is a file-backed source: `excel` for a workbook read through an OSPS importer configuration, `pkml` for a saved DataSet, `programmatic` for a DataSet you built in the session (which `saveProject()` writes to a PKML file, so it becomes an ordinary file-backed source from then on). Nothing runs when the data is resolved; the values are read back. This is the default, and it should stay the default.
+
+For derived data, the answer is `script`: an R file that computes the DataSet each time it is resolved. Reach for it when the data is not a fixed set of numbers but a recipe (digitized points that need transforming, a join across several inputs, a unit conversion applied to a raw file). The recipe then travels with the project and stays in step with its inputs, which is the whole point.
+
+The `script` and `programmatic` choice is often presented as being about persistence. It is not: both survive a reload. It is about whether the numbers are a given or a computation.
+
+### The trust boundary a script source creates
+
+A `script` source runs an R file on your machine, with `source()`, every time the data is resolved. Any R code in that file executes, with your permissions.
+
+That is a genuine security consideration and not merely a caveat, because it changes what receiving a project means. A project with a `script` source should be treated the way you would treat a script someone emails you: only load and resolve observed data from a project you trust. The package warns the first time a session sources a `script` source, so the execution is never silent, but the warning is a notification rather than a protection.
+
+This is the reason the file-backed sources are the recommended default rather than merely one option among four. Choose `script` when the data really is derived, and accept the trust cost knowingly; do not choose it for data that a PKML file could hold.
+
+## Where to go next
+
+To build figures, see `vignette("how-to-plot-results")`. To declare observed data, see `vignette("how-to-use-observed-data")`. For plot types, the fields each type accepts, and the observed-data source fields, see `vignette("reference-definition-fields")`. The companion explanation, `vignette("about-the-project-model")`, covers the project model these definitions live in.
