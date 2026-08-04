@@ -1,0 +1,177 @@
+---
+title: "Project file and folder layout"
+output:
+  rmarkdown::html_vignette:
+    toc: true
+vignette: >
+  %\VignetteIndexEntry{Project file and folder layout}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  eval = FALSE
+)
+```
+
+Technical description of a project's on-disk layout, the fields of the `Project.json` file, the in-memory `Project` field groups those fields are read through, the snapshot file format, and the record `runScenarios()` returns.
+
+For why the layout is shaped this way, see `vignette("about-the-project-model")`. For the fields of an individual definition, see `vignette("reference-definition-fields")`.
+
+## Project directory
+
+```
+MyProject/
+├── Project.json                    # metadata and working-folder paths
+├── definitions/                    # the authored definition files
+│   ├── scenarios/
+│   ├── individuals/
+│   ├── populations/
+│   ├── parameter-sets/
+│   ├── initial-conditions/
+│   ├── applications/
+│   ├── output-paths/
+│   ├── observed-data/
+│   ├── data-combined/
+│   ├── plots/
+│   ├── plot-grids/
+│   └── parameter-identification/
+├── Models/
+│   ├── Simulations/                # model PKML files
+│   └── Snapshots/                  # PK-Sim / MoBi snapshots (reserved)
+├── Data/                           # observed-data files, importer configuration
+├── Populations/                    # population CSV files
+└── Results/                        # simulation outputs and figures
+    ├── Figures/
+    └── SimulationResults/
+```
+
+Each working folder ships with a short `README.md` so it stays under version control while empty, since git does not track empty folders. `initProject()` writes the same placeholders.
+
+## Definition sections and their folders
+
+Twelve sections. Each is a folder under `definitions/` holding one JSON file per definition, named after that definition's id: the scenario with id `aciclovir_iv` is `definitions/scenarios/aciclovir_iv.json`.
+
+| Section on the project | Folder under `definitions/` |
+| --- | --- |
+| `project$definitions$scenarios` | `scenarios/` |
+| `project$definitions$individuals` | `individuals/` |
+| `project$definitions$populations` | `populations/` |
+| `project$definitions$parameterSets` | `parameter-sets/` |
+| `project$definitions$initialConditions` | `initial-conditions/` |
+| `project$definitions$applications` | `applications/` |
+| `project$definitions$outputPaths` | `output-paths/` |
+| `project$definitions$observedData` | `observed-data/` |
+| `project$definitions$dataCombined` | `data-combined/` |
+| `project$definitions$plots` | `plots/` |
+| `project$definitions$plotGrids` | `plot-grids/` |
+| `project$definitions$parameterIdentification` | `parameter-identification/` |
+
+Every section is a read-only named list keyed by id. Assigning to one aborts. A section changes only through an authoring function or by editing the definition's file on disk.
+
+## `Project.json` fields
+
+| Field | Required | Type | Description |
+| --- | --- | --- | --- |
+| `name` | no | string | Human-readable project name. Emitted only when set. |
+| `description` | no | string | Free text. Emitted only when set. |
+| `schemaVersion` | yes | string | Format version of the file. Always `"2.0"` for projects this package loads. Written by the save machinery. |
+| `esqlabsRVersion` | yes | string | Informational: the package version that wrote the file. Written by the save machinery. |
+| `definitionsFolder` | no | string | Folder holding the definition files, relative to the project folder. Defaults to `"definitions"`. Emitted only when set. |
+| `filePaths` | yes | object | The working folders. See below. |
+| `defaultSimulationRunOptions` | no | object | Run defaults `runScenarios()` falls back on. See below. Emitted only when set. |
+| `excel` | no | object | Excel-bridge workbook names. See below. Absent for a project created directly in the JSON format. |
+
+### `filePaths`
+
+Four folders, each a path relative to the project folder unless written as an absolute path.
+
+| Field | Holds | Conventional value |
+| --- | --- | --- |
+| `simulationsFolder` | Model PKML files | `Models/Simulations` |
+| `dataFolder` | Observed-data files and importer configuration | `Data` |
+| `populationsFolder` | Population CSV files read by `runScenarios()` | `Populations` |
+| `outputFolder` | Simulation results and figures | `Results` |
+
+A path may embed an environment variable in the form `${VAR}`, anywhere in the path, so a folder can live outside the project tree without hard-coding a machine-specific location:
+
+```json
+"dataFolder": "${PROJECT_DATA_FOLDER}/Aciclovir"
+```
+
+The variable is substituted when the path is resolved. An unset variable is left in place rather than blanking the path, so the failure names the variable instead of silently pointing at the project root. This applies to every folder in `filePaths`, so one project loads on several machines by setting the variable per machine.
+
+Any property in `filePaths` other than the four above sits unread, so an unrecognized entry cannot fail a load.
+
+### `defaultSimulationRunOptions`
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `numberOfCores` | number | Cores to use when simulating. |
+| `checkForNegativeValues` | logical | Whether the solver checks for negative values. |
+| `showProgress` | logical | Whether run progress is reported. |
+
+`runScenarios()` uses these as the default `simulationRunOptions` when the caller passes none.
+
+### `excel`
+
+Present only for a project that keeps an Excel side-car. Each field names a workbook; the file names resolve against `configurationsFolder`, which itself resolves against the project folder.
+
+`configurationsFolder`, `modelParamsFile`, `individualsFile`, `populationsFile`, `scenariosFile`, `applicationsFile`, `plotsFile`, `parameterIdentificationFile`, `initialConditionsFile`.
+
+## In-memory field groups
+
+The `Project` object gathers these fields into five groups.
+
+| Group | Access | Writable | Contents |
+| --- | --- | --- | --- |
+| `project$info` | `project$info$name` | `name`, `description` only | `name`, `description`, `schemaVersion`, `esqlabsRVersion`, `projectFilePath`, `projectDirPath` |
+| `project$paths` | `project$paths$dataFolder` | yes | the four `filePaths` folders plus `definitionsFolder` |
+| `project$excel` | `project$excel$modelParamsFile` | yes | the Excel workbook names |
+| `project$defaultSimulationRunOptions` | direct | yes | the run-options list, or `NULL` |
+| `project$definitions` | `project$definitions$scenarios` | no | the twelve definition sections |
+
+Two asymmetries to note when reading and writing paths:
+
+- **Reading a path returns an absolute path**, already resolved against `projectDirPath`, so it is ready to use and must not be joined onto `projectDirPath` again. `project$print()` shows folders relative to the project folder, which is a display choice rather than the field's value.
+- **Writing a path stores the value verbatim**, and it is resolved on the next read. So `project$paths$simulationsFolder <- "Models"` stores `"Models"`.
+
+`projectFilePath` and `projectDirPath` are read-only; assigning either aborts. The two version fields are managed by the load and save machinery. Assigning any writable field sets the unsaved-changes flag. Changing `definitionsFolder` redirects where the next `saveProject()` writes; nothing moves on disk until that save.
+
+## Snapshot file
+
+`snapshotProject()` writes a single self-contained file with every section inlined, so a whole project travels as one file rather than a tree.
+
+| Property | Value |
+| --- | --- |
+| Extension | `.esqlabsR`, always added; any extension you supply is replaced |
+| Content | JSON |
+| Default name | `<projectName>-YYYY-MM-DD-HHMMSS`, falling back to `project` when the project has no name |
+| Includes unsaved edits | yes, the snapshot is of the in-memory state |
+| Needs a folder on disk | no, a project that exists only in the session can be snapshotted |
+| Return value | invisibly, the path written |
+| Existing file | aborts unless `overwrite = TRUE` |
+
+`restoreProject()` materializes a snapshot back into a full project folder (a `Project.json` and the `definitions/` tree) and returns a freshly loaded `Project` bound to that directory. It refuses a directory that already holds a project unless `overwrite = TRUE`. The round trip is lossless: a snapshot reloads into a structurally identical project.
+
+## Scenario Result record
+
+`runScenarios()` returns a named list keyed by scenario name. Each entry is one Scenario Result, a plain list with four fields.
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `simulation` | OSPS `Simulation` | The initialized simulation, with all scenario parameters applied. |
+| `results` | OSPS `SimulationResults` | The results of running that simulation. |
+| `outputValues` | list of `data` and `metaData` | The recorded output paths extracted into a data frame, ready for analysis or plotting. |
+| `population` | OSPS `Population` or `NULL` | The sampled population for a population scenario; `NULL` for an individual scenario. |
+
+A Scenario Result is **not** an OSPS `SimulationResults`. The `SimulationResults` is only the inner `results` field. The `population` field is what distinguishes the two kinds of scenario at run time, and for a population scenario `outputValues` carries one trajectory per virtual individual rather than a single curve.
+
+`saveScenarioResults()` writes each record to disk as a `.csv` of results, a `.pkml` of the simulation, and, for a population scenario, a `<scenario>_population.csv`. `loadScenarioResults()` restores all four fields, so code consuming a Scenario Result works on a run and on a reload alike.
+
+## Where to go next
+
+For the fields of each definition kind, see `vignette("reference-definition-fields")`. For why the model is shaped this way, see `vignette("about-the-project-model")`. To act on any of it, see `vignette("how-to-set-up-a-project")`.
