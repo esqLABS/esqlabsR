@@ -20,20 +20,13 @@ knitr::opts_chunk$set(
 library(esqlabsR)
 ```
 
-Comparing a simulation against measured data is what turns a model run into a diagnostic. In `esqlabsR`, measured data is **Observed Data**: a named series of time/value points. It is the package's term for what OSPS implements as a `DataSet`. This article covers how observed data enters a project, the four ways to declare a source, and how the project resolves that data when you build a figure.
+Comparing a simulation against measured data is what turns a model run into a diagnostic. In `esqlabsR`, measured data is **Observed Data**: a named series of time/value points, the package's term for what OSPS implements as a `DataSet`. This guide shows how to declare each of the four kinds of source, load the data, and remove a source.
 
-It assumes you already know what a Project is and how to load one (see `vignette("how-to-set-up-a-project")`). For turning observed data and simulated curves into figures, see `vignette("how-to-plot-results")`, which owns the plotting model; this article owns how the data gets into the project in the first place.
+It assumes you already know what a Project is and how to load one (see `vignette("how-to-set-up-a-project")`). To pair observed data with simulated curves in a figure, see `vignette("how-to-plot-results")`.
 
-## An observed-data source is a definition
+A project stores a **source definition**, not the numbers: a small record under `definitions/observed-data/<id>.json` saying where the data comes from and how to read it. The data itself is loaded on demand, so it always reflects the current source file. `vignette("about-the-plotting-model")` explains why, and `vignette("reference-definition-fields")` lists the required fields per source type.
 
-A project does not store the measured numbers themselves. It stores a **source definition**: a small record under `definitions/observed-data/<id>.json` that says where the data comes from and how to read it. The actual `DataSet` is loaded on the fly from that definition whenever it is needed (at plot time, at validation time, or when you call `loadObservedData()` yourself), so the data is never baked into the project and always reflects the current source file.
-
-There are four source types, distinguished only by where the data comes from:
-
-- **`excel`** reads one or more sheets of an Excel workbook through an OSPS data-importer configuration.
-- **`pkml`** reads a `DataSet` saved to a PKML file.
-- **`script`** sources an R script that builds and returns a `DataSet` (or several), recomputing the data from code each time it is resolved.
-- **`programmatic`** holds a `DataSet` you built in the current session; on save it is written to a PKML file so it survives a reload (see "Source type 4" below).
+The four types differ only in where the data comes from: `excel` reads sheets of a workbook through an OSPS data-importer configuration, `pkml` reads a saved `DataSet`, `script` runs an R script that returns one, and `programmatic` takes a `DataSet` you built in the session.
 
 Throughout, scaffold a writable copy of the bundled example so the sources you add are written to a project you own, not the installed package:
 
@@ -49,16 +42,13 @@ The example already ships with one observed-data source, an Excel source. You ca
 project$definitions$observedData[[1]]
 ```
 
-## A note on observed-data ids
+## Choose the handle a source is known by
 
-Two strings attach to every source, and they are not always equal, so keep them distinct:
+Two strings attach to every source, and they are not interchangeable. The **source id** is what `removeObservedData()` matches and what names the definition file. The **DataSet name** is what a DataCombined references and what `getObservedDataNames()` lists; it comes from the data itself, so an Excel sheet becomes a long, fully qualified name. `vignette("about-the-plotting-model")` explains why one string cannot serve both roles.
 
-- **The source id** is the remove handle that `removeObservedData()` matches. It is taken verbatim (not canonicalized like other definitions): the declaration's own `id` field when it sets one, and otherwise the file basename for an `excel`, `pkml`, or `script` source (for example `Aciclovir_TimeValuesData.xlsx`), or the `DataSet` name for a `programmatic` source.
-- **The DataSet name** is the reference handle that a DataCombined uses and `getObservedDataNames()` lists. It comes from the data itself: the Excel importer expands a sheet into a long, fully qualified name; a `pkml` or `script` source uses the `DataSet$name`.
+The working rule: **read the DataSet name from `getObservedDataNames()` rather than typing it**, and use the source id only to remove a source.
 
-Because the two can differ, read the DataSet name from `getObservedDataNames()` rather than typing it by hand.
-
-Give a source an `id` when you want to choose that handle yourself instead of inheriting it from the file. The id also names the definition file, so the declaration below is stored as `laskin_iv.json` under the project's observed-data definitions folder (`definitions/observed-data/` in the default layout) rather than under the data file's name:
+Set an `id` when you want to choose that handle yourself instead of inheriting it from the file. Since the id also names the definition file, the declaration below is stored as `definitions/observed-data/laskin_iv.json` rather than under the data file's name:
 
 ```{r, eval = FALSE}
 addObservedData(
@@ -128,7 +118,7 @@ The source definition is written to `definitions/observed-data/extra_cohort.pkml
 
 ## Source type 3: Script
 
-A `script` source names an R script that the package sources at load time. The script must return a `DataSet` or a list of `DataSet` objects. The data is regenerated from code every time it is resolved, so a `script` source is the right choice when the data is computed (digitized points, a transformation of a raw file, a join across several inputs) rather than fixed: the recipe travels with the project and stays in step with its inputs. Write the script into the project (a `scripts/` subfolder of the data folder keeps it tidy), then declare it:
+A `script` source names an R script that the package sources when the data is resolved. The script must return a `DataSet` or a list of them. Use it when the data is *derived* rather than fixed, so the recipe travels with the project and stays in step with its inputs. Write the script into the project (a `scripts/` subfolder of the data folder keeps it tidy), then declare it:
 
 ```{r}
 script_dir <- file.path(data_folder, "scripts")
@@ -148,7 +138,7 @@ writeLines(
 addObservedData(project, list(type = "script", file = "scripts/literature_curve.R"))
 ```
 
-The id of this source is the file basename, `literature_curve.R`, while the DataSet it produces is named `Digitized literature curve` (the name a DataCombined references). Because the script runs each time the data is resolved, anything you can compute in R (digitized points, a transformation of a raw file, a join across several inputs) becomes reproducible observed data.
+The id of this source is the file basename, `literature_curve.R`, while the DataSet it produces is named `Digitized literature curve`, which is the name a DataCombined references. Because the script runs each time the data is resolved, anything you can compute in R (digitized points, a transformation of a raw file, a join across several inputs) becomes reproducible observed data.
 
 <div class="alert alert-warning">
 **Security.** A `script` source runs the R file it names on your machine, with `source()`, whenever the data is resolved. Any R code in that file executes. Treat a project the way you would treat a script someone sends you: only load and resolve observed data from a project you trust. The first time a session sources a `script` source, the package warns you that this is happening.
@@ -169,16 +159,9 @@ Until you save, that `DataSet` lives on the in-memory project and the entry on d
 
 Because saving turns a `programmatic` source into a `pkml` file, the data folder must be declared before you save; a project with no data folder cannot write the PKML and stops with a clear message. A `programmatic` sentinel that reaches a fresh session without its `DataSet` (a hand-authored declaration, or a project opened before it was ever saved) resolves to nothing, and the load warns you by name so it never vanishes silently.
 
-## Choosing between `script` and `programmatic`
+## Remove a source
 
-Both survive a reload, so the choice is not about persistence:
-
-- Reach for **`programmatic`** (or `pkml`) for fixed measured data you already have. Nothing runs when the data is resolved: the values are read back from a file. This is the safe default.
-- Reach for **`script`** only when the data must be *derived* (recomputed from inputs each time), so the recipe stays in step with its inputs. The cost is that a `script` source executes arbitrary R when it is resolved (see the security note above), so use it only in a project you trust.
-
-## Removing a source
-
-`removeObservedData()` takes the source id (the remove handle described above: the declaration's own `id` when it sets one, and otherwise the file basename for an `excel`, `pkml`, or `script` source or the DataSet name for a `programmatic` one) and accepts a vector to remove several at once:
+`removeObservedData()` takes the source id and accepts a vector to remove several at once:
 
 ```{r}
 removeObservedData(project, c("extra_cohort.pkml", "Scratch measurement"))
@@ -189,4 +172,6 @@ If a removed source is still referenced by a DataCombined, the removal proceeds 
 
 ## Where to go next
 
-You now have all four ways observed data enters a project, and you know that the data is resolved on the fly from a source definition rather than stored in the project. To pair that observed data with simulated curves and turn it into report figures, see `vignette("how-to-plot-results")`. To check that every observed-data source and its references hang together, see `vignette("how-to-validate-a-project")`.
+To pair observed data with simulated curves and turn it into report figures, see `vignette("how-to-plot-results")`. To check that every source and its references hang together, see `vignette("how-to-validate-a-project")`.
+
+For the required fields of each source type and the id rules, see `vignette("reference-definition-fields")`. For how to choose between the four types, and why a `script` source is the one that carries a trust cost, see `vignette("about-the-plotting-model")`.
