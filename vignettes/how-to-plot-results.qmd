@@ -27,45 +27,7 @@ Clear, consistent figures are a core part of model diagnostics and of any client
 
 Every figure below runs against the example project bundled with the package; loading it and running one scenario produces them all.
 
-## The plotting model
-
-`{esqlabsR}` describes figures with three building blocks that recur throughout this article.
-
-- A **DataCombined** pairs one or more simulated curves with optional observed data. It is the data input for a chart: it says *which* scenario output and *which* observed data belong together, and it can carry per-curve transformations (offsets, scale factors).
-- A **Plot** describes a single chart: its **Plot Type**, the **DataCombined** it draws from, and its axis, aggregation, and styling settings.
-- A **Plot Grid** composes one or more **Plots** into one laid-out figure (a multi-panel arrangement). A **Plot** is usually rendered as a panel inside a **Plot Grid**, but can also be rendered on its own (see below).
-
-A project stores all three as definitions under `definitions/data-combined/`, `definitions/plots/`, and `definitions/plot-grids/`, so the figures travel with the project. You can also assemble them yourself in R, which is covered below.
-
-```{mermaid}
-classDiagram
-    direction LR
-    class DataCombined {
-        dataCombinedId
-        simulated: label, scenario, path
-        observed: label, dataSet
-        ...
-    }
-    class Plot {
-        plotId
-        dataCombined
-        plotType
-        title
-        ...
-    }
-    class PlotGrid {
-        plotGridId
-        plots
-        title
-        ...
-    }
-    DataCombined --> Plot
-    Plot --> PlotGrid
-
-    note for DataCombined "Simulation results paired with observed data"
-    note for Plot "The data and type of a single chart"
-    note for PlotGrid "Plots composed into one laid-out figure"
-```
+Three building blocks recur below. A **DataCombined** says which simulated curves and which observed data belong together. A **Plot** describes one chart drawn from a DataCombined. A **Plot Grid** composes Plots into one laid-out figure. All three are stored as definitions in the project, so figures travel with it. `vignette("about-the-plotting-model")` explains why it takes three pieces rather than one, and `vignette("reference-definition-fields")` lists the fields of each.
 
 ## Load the example and run a scenario
 
@@ -158,15 +120,7 @@ addDataCombined(
 )
 ```
 
-Next, describe a **Plot** that draws from this **DataCombined**. The `plotType` selects the kind of chart:
-
-- `individual` plots a time profile for an individual scenario.
-- `population` plots a time profile for a population scenario; its `quantiles` field (which applies only to population plots) controls the displayed percentile bands.
-- `observedVsSimulated` plots simulated against observed values.
-- `residualsVsSimulated` plots residuals against simulated values.
-- `residualsVsTime` plots residuals against time.
-
-Any field accepted by a plot configuration can be passed through `...`, for example a `title` or an axis unit.
+Next, describe a **Plot** that draws from this **DataCombined**. The `plotType` selects the kind of chart: `individual` and `population` for time profiles, `observedVsSimulated`, `residualsVsSimulated`, and `residualsVsTime` for the diagnostic charts. Any plot-configuration field can be passed through `...`, for example a `title` or an axis unit; `vignette("reference-definition-fields")` lists them, including the four that apply to one plot type only.
 
 ```{r add-plot}
 addPlot(
@@ -201,6 +155,63 @@ reportGrids <- createPlots(
 
 reportGrids$report_figure
 ```
+
+## Plot a population with percentile bands
+
+A population scenario needs `plotType = "population"`, which draws percentile bands across the virtual individuals instead of a single curve. Run the example project's population scenario first:
+
+```{r run-population}
+populationResults <- runScenarios(
+  project,
+  scenarios = "aciclovir_iv_population"
+)
+```
+
+The **DataCombined** is written exactly as for an individual scenario: name the population scenario and the output path.
+
+```{r population-datacombined}
+addDataCombined(
+  project,
+  id = "aciclovir_population",
+  simulated = list(list(
+    label = "Aciclovir population",
+    scenario = "aciclovir_iv_population",
+    path = "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
+  ))
+)
+```
+
+`quantiles` chooses which percentiles are drawn. It takes fractions, not percentages, so the conventional 5th, 50th and 95th percentiles are `c(0.05, 0.5, 0.95)`.
+
+```{r population-plot}
+addPlot(
+  project,
+  id = "aciclovir_population_range",
+  dataCombined = "aciclovir_population",
+  plotType = "population",
+  quantiles = c(0.05, 0.5, 0.95),
+  title = "Aciclovir IV, 5th / 50th / 95th percentile",
+  yAxisScale = "log"
+)
+
+populationPlots <- createPlots(
+  project,
+  plots = "aciclovir_population_range",
+  scenarioResults = populationResults
+)
+
+populationPlots$aciclovir_population_range
+```
+
+To show a different range, change the fractions: `quantiles = c(0.25, 0.5, 0.75)` draws the interquartile band, and a single value such as `quantiles = 0.5` draws the median alone.
+
+Three fields apply only to `plotType = "population"`. Setting one on any other plot type is ignored when the figure is built, and validation warns about it:
+
+| Field | Controls |
+| --- | --- |
+| `quantiles` | Which percentiles are drawn, as fractions. |
+| `aggregation` | How the individual trajectories are summarized. |
+| `nsd` | The number of standard deviations, when aggregating by mean and standard deviation. |
 
 ## Apply the esqLABS house style
 
@@ -247,6 +258,16 @@ for (name in names(reportGrids)) {
 }
 ```
 
+## Reach for a chart type this article does not cover
+
+The charts above are produced by `{ospsuite}`'s plotting engine, and its DataCombined articles cover those chart types and their customization in depth.
+
+Some chart types are not in `{ospsuite}` at all and live in [`{ospsuite.plots}`](https://www.open-systems-pharmacology.org/OSPSuite.Plots/) instead. If the figure you need is not one of the five `plotType` values, look there before building it by hand: it covers additional PBPK reporting figures on top of the ones reachable through a Plot definition.
+
+Because everything `createPlots()` returns is an ordinary `ggplot` or `patchwork` object, a chart from another package and a chart from a Plot definition compose in the same figure.
+
 ## Where to go next
 
-The **Plot Type** charts shown here are produced by `{ospsuite}`'s plotting engine; its DataCombined articles cover the chart types and their customization in depth, and the OSPSuite-R observed-data article covers loading measurements from Excel or PKML. For building and running the scenarios that feed these figures, see `vignette("get-started")` and `vignette("how-to-run-simulations")`.
+For loading the measurements these figures compare against, see `vignette("how-to-use-observed-data")`. For building and running the scenarios that feed them, see `vignette("how-to-design-scenarios")` and `vignette("how-to-run-simulations")`.
+
+For the plot types and every configuration field, see `vignette("reference-definition-fields")`. For why a figure takes three definitions and why `createPlots()` is keyed by plot grid, see `vignette("about-the-plotting-model")`.
