@@ -1,18 +1,3 @@
-# The numeric-snapshot blocks below capture tabular output whose formatting
-# depends on print/precision options. Each such block sets them locally with
-# `withr::local_options()` (see `.localSnapshotOptions()`), so the state is
-# scoped to the test rather than leaked at file scope.
-.localSnapshotOptions <- function(.local_envir = parent.frame()) {
-  withr::local_options(
-    tibble.width = Inf,
-    pillar.min_title_chars = Inf,
-    pillar.sigfig = 4,
-    digits = 4,
-    scipen = 999,
-    .local_envir = .local_envir
-  )
-}
-
 # Single output path ------------------------------------------------------
 
 # Paths shared by the single-output-path tests below.

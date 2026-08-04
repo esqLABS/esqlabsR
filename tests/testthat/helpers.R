@@ -39,6 +39,90 @@ testProject <- function(envir = parent.frame()) {
   loadProject(file.path(.copyTestProjectDir(envir), "Project.json"))
 }
 
+#' Pin the print and precision options a numeric snapshot depends on.
+#'
+#' A snapshot of tabular output formats differently under another `digits` or
+#' `pillar.sigfig`, so a block taking one calls this first. Scoped to the
+#' calling frame with `withr::local_options()`, so nothing leaks past the test.
+.localSnapshotOptions <- function(.local_envir = parent.frame()) {
+  withr::local_options(
+    tibble.width = Inf,
+    pillar.min_title_chars = Inf,
+    pillar.sigfig = 4,
+    digits = 4,
+    scipen = 999,
+    .local_envir = .local_envir
+  )
+}
+
+#' The observed data set the test project's Aciclovir scenario is fitted against.
+#'
+#' The name is long and appears in most parameter-identification fixtures, so
+#' name it once here rather than pasting the literal into each test.
+testObservedDataId <- paste0(
+  "Laskin 1982.Group A_Aciclovir_1_Human_MALE_",
+  "PeripheralVenousBlood_Plasma_2.5 mg/kg_iv_"
+)
+
+#' Build a `PIParameter` for the test project's EHC parameter.
+#'
+#' Defaults describe the standard fixture; pass any `PIParameter()` argument to
+#' override just that one, so a test shows only what it varies.
+testPIParameter <- function(...) {
+  do.call(
+    PIParameter,
+    utils::modifyList(
+      list(
+        id = "EHC",
+        scenarios = "testscenario",
+        path = "Organism|Liver|EHC continuous fraction",
+        minValue = 0.5,
+        maxValue = 1.0,
+        startValue = 0.8
+      ),
+      list(...)
+    )
+  )
+}
+
+#' Build a `PIOutputMapping` for the test project's peripheral venous blood.
+#'
+#' Overrides work the same way as [testPIParameter()].
+testPIOutputMapping <- function(...) {
+  do.call(
+    PIOutputMapping,
+    utils::modifyList(
+      list(
+        id = "PVB",
+        scenarios = "testscenario",
+        outputPath = "aciclovir_pvb",
+        observedData = testObservedDataId
+      ),
+      list(...)
+    )
+  )
+}
+
+#' Build a `PITask` over the test project's Aciclovir scenario.
+#'
+#' Defaults to one [testPIParameter()] and one [testPIOutputMapping()].
+#' Overrides work the same way as [testPIParameter()].
+testPITask <- function(...) {
+  do.call(
+    PITask,
+    utils::modifyList(
+      list(
+        id = "t",
+        scenarios = "testscenario",
+        parameters = list(testPIParameter()),
+        outputMappings = list(testPIOutputMapping()),
+        configuration = list(algorithm = "BOBYQA")
+      ),
+      list(...)
+    )
+  )
+}
+
 # The Aciclovir PKML fixture that lives INSIDE a copied test project (under its
 # own `simulationsFolder`). Use this, rather than the source-tree `pkmlFixture`,
 # when a test builds an on-disk `testProject()` and calls
