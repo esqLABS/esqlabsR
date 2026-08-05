@@ -5,6 +5,34 @@ test_that("loadProject() returns a Project from a valid Project.json", {
   expect_equal(length(project$definitions$scenarios), 4)
 })
 
+test_that(".loadProjectTree() returns a plain list, not a Project, with every section", {
+  path <- file.path(.copyTestProjectDir(), "Project.json")
+  sections <- .loadProjectTree(path)
+
+  expect_type(sections, "list")
+  expect_false(inherits(sections, "Project"))
+  expect_equal(sections$schemaVersion, "2.0")
+  expect_equal(fs::path_file(sections$projectFilePath), "Project.json")
+  expect_equal(sections$projectDirPath, dirname(sections$projectFilePath))
+  expect_length(sections$scenarios, 4)
+  expect_true(all(
+    c(
+      "outputPaths",
+      "parameterSets",
+      "initialConditions",
+      "individuals",
+      "populations",
+      "applications",
+      "observedData",
+      "dataCombined",
+      "plots",
+      "plotGrids",
+      "parameterIdentification"
+    ) %in%
+      names(sections)
+  ))
+})
+
 test_that("loadProject() errors when the file does not exist", {
   expect_error(
     loadProject(file.path(tempdir(), "does_not_exist.json")),
