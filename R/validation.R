@@ -875,6 +875,41 @@ validationSummary <- function(validationResults) {
 #' @return validationResult.
 #' @keywords internal
 #' @noRd
+# Record a critical error for each definition in `definitions` whose
+# `parameterSets` field names a set the project does not define. `ids` is the
+# subset to check (empty when the section is out of scope) and `label` names the
+# kind in the message, e.g. "Individual". `result` is mutated in place.
+#
+# @keywords internal
+# @noRd
+.checkParameterSetRefs <- function(
+  definitions,
+  ids,
+  parameterSetKeys,
+  label,
+  result
+) {
+  for (id in ids) {
+    refs <- as.character(unlist(
+      definitions[[id]]$parameterSets %||% character(0)
+    ))
+    invalid <- .danglingRefs(refs, parameterSetKeys)
+    if (length(invalid) > 0) {
+      result$addCriticalError(
+        "Invalid Reference",
+        paste0(
+          label,
+          " '",
+          id,
+          "' references undefined parameterSets: ",
+          paste(invalid, collapse = ", "),
+          .suggestSuffixMulti(invalid, parameterSetKeys)
+        )
+      )
+    }
+  }
+}
+
 .validateCrossReferences <- function(project, sections = NULL) {
   result <- validationResult$new()
   inScope <- function(section) is.null(sections) || section %in% sections
@@ -1007,46 +1042,24 @@ validationSummary <- function(validationResults) {
   }
 
   # individuals/applications resolve their parameter-set refs against the same
-  # unified section as scenarios.
+  # unified section as scenarios, and report them the same way.
   individuals <- project$definitions$individuals %||% list()
-  for (id in if (inScope("individuals")) names(individuals) else NULL) {
-    refs <- individuals[[id]]$parameterSets %||%
-      character(0)
-    refs <- as.character(unlist(refs))
-    invalid <- .danglingRefs(refs, parameterSetKeys)
-    if (length(invalid) > 0) {
-      result$addCriticalError(
-        "Invalid Reference",
-        paste0(
-          "Individual '",
-          id,
-          "' references undefined parameterSets: ",
-          paste(invalid, collapse = ", "),
-          .suggestSuffixMulti(invalid, parameterSetKeys)
-        )
-      )
-    }
-  }
+  .checkParameterSetRefs(
+    individuals,
+    if (inScope("individuals")) names(individuals) else NULL,
+    parameterSetKeys,
+    "Individual",
+    result
+  )
 
   applications <- project$definitions$applications %||% list()
-  for (id in if (inScope("applications")) names(applications) else NULL) {
-    refs <- applications[[id]]$parameterSets %||%
-      character(0)
-    refs <- as.character(unlist(refs))
-    invalid <- .danglingRefs(refs, parameterSetKeys)
-    if (length(invalid) > 0) {
-      result$addCriticalError(
-        "Invalid Reference",
-        paste0(
-          "Application '",
-          id,
-          "' references undefined parameterSets: ",
-          paste(invalid, collapse = ", "),
-          .suggestSuffixMulti(invalid, parameterSetKeys)
-        )
-      )
-    }
-  }
+  .checkParameterSetRefs(
+    applications,
+    if (inScope("applications")) names(applications) else NULL,
+    parameterSetKeys,
+    "Application",
+    result
+  )
 
   # Scenario keys keep their original spelling; `.danglingRefs()` canonicalizes
   # both sides for the membership test and `.suggestSuffixMulti()` shows the
