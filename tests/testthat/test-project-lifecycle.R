@@ -6,14 +6,16 @@ test_that("loadProject() returns a Project from a valid Project.json", {
 })
 
 test_that(".loadProjectTree() returns a plain list, not a Project, with every section", {
-  path <- file.path(.copyTestProjectDir(), "Project.json")
+  dir <- .copyTestProjectDir()
+  path <- file.path(dir, "Project.json")
   sections <- .loadProjectTree(path)
 
+  # A `Project` (R6) instance has type "environment"; only a plain list
+  # (never an R6 object) can pass this.
   expect_type(sections, "list")
-  expect_false(inherits(sections, "Project"))
   expect_equal(sections$schemaVersion, "2.0")
   expect_equal(fs::path_file(sections$projectFilePath), "Project.json")
-  expect_equal(sections$projectDirPath, dirname(sections$projectFilePath))
+  expect_equal(sections$projectDirPath, as.character(fs::path_abs(dir)))
   expect_length(sections$scenarios, 4)
   expect_true(all(
     c(
@@ -326,6 +328,21 @@ test_that("reloadProject() discards in-memory edits and clears the dirty bit", {
   expect_false("willbediscarded" %in% names(project$definitions$scenarios))
   expect_false(.isModified(project))
   expect_true(project$status$tree_in_sync)
+})
+
+test_that("a failed reloadProject() leaves the project's in-memory state untouched", {
+  project <- testProject()
+  addScenario(project, "willsurvive", modelFile = "Aciclovir.pkml")
+  expect_true(.isModified(project))
+
+  # `.loadProjectTree()` reads and validates the whole container before
+  # `.applyLoadedSections()` commits anything, so a corrupt container aborts
+  # before any private field is touched: nothing is half-read.
+  writeLines('{"schemaVersion": "99.0"}', project$info$projectFilePath)
+
+  expect_error(reloadProject(project), "Unsupported schemaVersion")
+  expect_true("willsurvive" %in% names(project$definitions$scenarios))
+  expect_true(.isModified(project))
 })
 
 test_that("a clean reloadProject() is silent", {

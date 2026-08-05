@@ -731,11 +731,12 @@ messages$legacySnapshotNotLoadable <- function(jsonPath) {
   )
 }
 
-# Raised from `.loadProjectTree()` when it is handed a folder that holds no
-# project container. Naming the mistake is the point: a folder is the natural
-# second guess after a file, and letting it through produced a raw JSON parse
-# error about the folder itself. Unglued so a folder path containing `{` or `}`
-# is interpolated exactly once, by the raising call, where `folder` is bound.
+# Raised from `.resolveProjectContainerPath()` when it is handed a folder
+# that holds no project container. Naming the mistake is the point: a folder
+# is the natural second guess after a file, and letting it through produced a
+# raw JSON parse error about the folder itself. Unglued so a folder path
+# containing `{` or `}` is interpolated exactly once, by the raising call,
+# where `folder` is bound.
 messages$noProjectContainerInFolder <- function(folder) {
   c(
     "x" = "No esqlabsR project found in the folder {.file {folder}}.",
@@ -747,9 +748,10 @@ messages$noProjectContainerInFolder <- function(folder) {
   )
 }
 
-# Raised from `.loadProjectTree()` when a folder holds several project
-# containers, so there is no single project to open. `folder` and `names` are
-# bound in the raising frame; unglued for the same reason as above.
+# Raised from `.resolveProjectContainerPath()` when a folder holds several
+# project containers, so there is no single project to open. `folder` and
+# `names` are bound in the raising frame; unglued for the same reason as
+# above.
 messages$multipleProjectContainersInFolder <- function(folder, names) {
   c(
     "x" = "The folder {.file {folder}} holds {length(names)} project files: \\

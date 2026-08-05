@@ -248,9 +248,18 @@ Project <- R6::R6Class(
         private$.projectDirPath <- NULL
         return(invisible(self))
       }
-      # `.loadProjectTree()` validates `projectFilePath` itself (the same
-      # checks this method used to run inline) and does all of the load's
-      # I/O; this just commits what it returns.
+      # A bad `projectFilePath` is a property of this call, not of a file
+      # (none has been touched yet), so it aborts here, attributed to this
+      # method, rather than inside `.loadProjectTree()` (whose own aborts are
+      # genuinely about the file and carry no such attribution).
+      if (
+        !is.character(projectFilePath) ||
+          length(projectFilePath) != 1L ||
+          is.na(projectFilePath) ||
+          !nzchar(projectFilePath)
+      ) {
+        cli::cli_abort(messages$invalidPathArgument())
+      }
       private$.applyLoadedSections(.loadProjectTree(projectFilePath))
       invisible(self)
     },
@@ -1356,10 +1365,10 @@ Project <- R6::R6Class(
     # Commit a `.loadProjectTree()` snapshot to `private` in one
     # unconditional pass: every field the parse produced is assigned, and the
     # runtime-only state a tree carries no record of (session-added observed
-    # data and populations, the two caches, the dirty and validation flags)
-    # is reset to the just-loaded baseline. Shared by `initialize()`
-    # (constructing from a path) and `.reload()`, so load and reload commit
-    # identically.
+    # data and populations, the observed-data names cache, the dirty and
+    # validation flags) is reset to the just-loaded baseline. Shared by
+    # `initialize()` (constructing from a path) and `.reload()`, so load and
+    # reload commit identically.
     .applyLoadedSections = function(sections) {
       private$.projectFilePath <- sections$projectFilePath
       private$.projectDirPath <- sections$projectDirPath

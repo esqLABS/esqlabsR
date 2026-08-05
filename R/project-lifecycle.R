@@ -82,14 +82,6 @@ loadProject <- function(path = ".") {
 # @noRd
 .loadProjectTree <- function(path) {
   rlang::local_error_call(NULL)
-  if (
-    !is.character(path) ||
-      length(path) != 1L ||
-      is.na(path) ||
-      !nzchar(path)
-  ) {
-    cli::cli_abort(messages$invalidPathArgument())
-  }
   jsonPath <- .resolveProjectContainerPath(path)
   if (!fs::file_exists(jsonPath)) {
     cli::cli_abort(messages$fileNotFound(jsonPath))
