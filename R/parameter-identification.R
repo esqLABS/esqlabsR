@@ -1827,21 +1827,35 @@ removePIParameter <- function(project, task, id) {
 # @noRd
 .removePIParameter_impl <- function(self, private, task, id, .call) {
   rlang::local_error_call(.call)
-  task <- .requirePITask(self, task)
+  .removePIMember(
+    self,
+    private,
+    .requirePITask(self, task),
+    id,
+    field = "parameters",
+    label = "Parameter"
+  )
+}
+
+# Remove one member of a PI task: `field` is the task field holding them
+# (`parameters` or `outputMappings`) and `label` names the kind in the no-op
+# warning. A task left with neither parameters nor output mappings carries no
+# work, so it is dropped rather than stored empty. `task` must already be
+# canonical and known (see `.requirePITask()`).
+#
+# @keywords internal
+# @noRd
+.removePIMember <- function(self, private, task, id, field, label) {
   piTask <- self$definitions$parameterIdentification[[task]]
-  ids <- vapply(piTask$parameters, `[[`, character(1), "id")
+  ids <- vapply(piTask[[field]], `[[`, character(1), "id")
   if (!(id %in% ids)) {
-    cli::cli_warn(
-      "Parameter {.val {id}} not found in task {.val {task}}; no-op."
-    )
+    cli::cli_warn(messages$PIMemberNotFound(label, id, task))
     return(invisible(self))
   }
-  piTask$parameters <- piTask$parameters[ids != id]
+  piTask[[field]] <- piTask[[field]][ids != id]
   tasks <- private$.getSection("parameterIdentification")
   if (length(piTask$parameters) == 0L && length(piTask$outputMappings) == 0L) {
-    cli::cli_warn(
-      "PI task {.val {task}} is now empty and has been removed."
-    )
+    cli::cli_warn(messages$PITaskNowEmpty(task))
     tasks[[task]] <- NULL
   } else {
     tasks[[task]] <- piTask
@@ -1993,25 +2007,12 @@ removePIOutputMapping <- function(project, task, id) {
 # @noRd
 .removePIOutputMapping_impl <- function(self, private, task, id, .call) {
   rlang::local_error_call(.call)
-  task <- .requirePITask(self, task)
-  piTask <- self$definitions$parameterIdentification[[task]]
-  ids <- vapply(piTask$outputMappings, `[[`, character(1), "id")
-  if (!(id %in% ids)) {
-    cli::cli_warn(
-      "Output mapping {.val {id}} not found in task {.val {task}}; no-op."
-    )
-    return(invisible(self))
-  }
-  piTask$outputMappings <- piTask$outputMappings[ids != id]
-  tasks <- private$.getSection("parameterIdentification")
-  if (length(piTask$parameters) == 0L && length(piTask$outputMappings) == 0L) {
-    cli::cli_warn(
-      "PI task {.val {task}} is now empty and has been removed."
-    )
-    tasks[[task]] <- NULL
-  } else {
-    tasks[[task]] <- piTask
-  }
-  private$.setSection("parameterIdentification", tasks)
-  invisible(self)
+  .removePIMember(
+    self,
+    private,
+    .requirePITask(self, task),
+    id,
+    field = "outputMappings",
+    label = "Output mapping"
+  )
 }

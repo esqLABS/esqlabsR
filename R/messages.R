@@ -1736,6 +1736,14 @@ messages$PITaskNotFound <- function(task) {
   cliFormat("PI task {.val {task}} not found")
 }
 
+messages$PIMemberNotFound <- function(label, id, task) {
+  cliFormat("{label} {.val {id}} not found in task {.val {task}}; no-op.")
+}
+
+messages$PITaskNowEmpty <- function(task) {
+  cliFormat("PI task {.val {task}} is now empty and has been removed.")
+}
+
 messages$buildingPITask <- function(piTaskName) {
   cliFormat("Building PI task: {.val {piTaskName}}")
 }
