@@ -670,14 +670,14 @@ test_that("a mutation after validateProject() forces .ensureValid to re-validate
   # A mutation must clear the cache so .ensureValid re-runs the
   # validators on the new shape; otherwise downstream callers
   # (runScenarios, createPlots) would skip on a now-invalid project.
-  addOutputPath(project, "X", "Organism|A|Concentration in container")
+  addOutputPath(project, "x", "Organism|A|Concentration in container")
   expect_false(.isValidated(project))
 
   # .ensureValid short-circuits only when the flag is TRUE; re-mark
   # validated, mutate again, and confirm the flag is cleared a second
   # time (i.e. every successful mutator goes through .markModified).
   .markValidated(project)
-  removeOutputPath(project, "X")
+  removeOutputPath(project, "x")
   expect_false(.isValidated(project))
 })
 

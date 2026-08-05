@@ -497,7 +497,7 @@ test_that("removeDataCombined drops the entry and deletes its definition file", 
 test_that("removeDataCombined warns and is a no-op on an unknown id", {
   project <- exampleProject()
   before <- project$definitions$dataCombined
-  expect_warning(removeDataCombined(project, "Ghost"), "not found")
+  expect_warning(removeDataCombined(project, "ghost"), "not found")
   expect_identical(project$definitions$dataCombined, before)
 })
 

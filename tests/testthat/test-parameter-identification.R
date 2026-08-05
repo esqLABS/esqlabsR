@@ -1503,7 +1503,7 @@ test_that("addPITask() errors on unknown outputPath", {
 test_that("addPITask() errors on duplicate id", {
   project <- testProject()
   args <- list(
-    id = "Dup",
+    id = "dup",
     scenarios = "testscenario",
     parameters = list(
       PIParameter(
@@ -2307,7 +2307,7 @@ test_that("addPIParameter() scans for a free id and does not collide after a rem
     maxValue = 1,
     startValue = 0.5
   )
-  removePIParameter(project, "T", "p_explicit")
+  removePIParameter(project, "t", "p_explicit")
   # Auto-add again: must not abort with a colliding "T_param_2".
   addPIParameter(
     project,
@@ -2360,7 +2360,7 @@ test_that("addPIOutputMapping() scans for a free id and does not collide after a
     observedData = "D2",
     scenarios = "testscenario"
   )
-  removePIOutputMapping(project, "T", "m_explicit")
+  removePIOutputMapping(project, "t", "m_explicit")
   addPIOutputMapping(
     project,
     task = "t",
@@ -2500,7 +2500,7 @@ test_that(".validatePI surfaces duplicate output mapping ids within a task", {
 test_that("removePITask() warns and no-ops on an unknown task", {
   project <- testProject()
   before <- names(project$definitions$parameterIdentification)
-  expect_warning(removePITask(project, "Ghost"), "not found")
+  expect_warning(removePITask(project, "ghost"), "not found")
   expect_identical(names(project$definitions$parameterIdentification), before)
 })
 
@@ -2688,17 +2688,16 @@ test_that("runPI(tasks = ) canonicalizes the referenced task ids", {
   # canonical form. Referencing it by the originally typed (un-canonicalized)
   # name must still resolve, like every other id reference in the package.
   project <- testProject()
-  addPITask(
-    project,
-    id = "MixedCase",
-    scenarios = "testscenario",
-    parameters = list(
-      testPIParameter()
+  expect_warning(
+    addPITask(
+      project,
+      id = "MixedCase",
+      scenarios = "testscenario",
+      parameters = list(testPIParameter()),
+      outputMappings = list(testPIOutputMapping()),
+      configuration = list(algorithm = "BOBYQA")
     ),
-    outputMappings = list(
-      testPIOutputMapping()
-    ),
-    configuration = list(algorithm = "BOBYQA")
+    "Canonicalized 1 id"
   )
   expect_named(
     project$definitions$parameterIdentification,
@@ -2826,14 +2825,14 @@ test_that("removeOutputPath() warns when the path is referenced only by a PI map
       PIOutputMapping(
         id = "m",
         scenarios = "testscenario",
-        outputPath = "PIOnlyPath",
+        outputPath = "pionlypath",
         observedData = "D"
       )
     )
   )
   expect_warning(
-    removeOutputPath(project, "PIOnlyPath"),
-    "PIOnlyPath"
+    removeOutputPath(project, "pionlypath"),
+    "still referenced by 1 parameter identification task"
   )
 })
 
@@ -2854,7 +2853,7 @@ test_that("a complete PI task can be authored from scratch through exported func
   parameter <- testPIParameter()
   outputMapping <- testPIOutputMapping()
   task <- PITask(
-    id = "fromScratch",
+    id = "fromscratch",
     scenarios = "testscenario",
     parameters = list(parameter),
     outputMappings = list(outputMapping),

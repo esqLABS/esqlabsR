@@ -22,7 +22,12 @@ test_that("Project round-trips through Excel preserving outputPaths", {
     file.path(excel_out, "Project.xlsx"),
     silent = TRUE
   )
-  reimported <- loadProject(reimportedJson)
+  # The round trip does not carry the example project's observed data, so
+  # the re-imported project has one reference it cannot resolve.
+  expect_warning(
+    reimported <- loadProject(reimportedJson),
+    "unresolved cross-reference"
+  )
 
   expect_equal(
     unlist(reimported$definitions$outputPaths),
@@ -382,7 +387,12 @@ test_that("Excel round-trip preserves the filePaths/excel container split", {
     file.path(excel_out, "Project.xlsx"),
     silent = TRUE
   )
-  reimported <- loadProject(reimportedJson)
+  # The round trip does not carry the example project's observed data, so
+  # the re-imported project has one reference it cannot resolve.
+  expect_warning(
+    reimported <- loadProject(reimportedJson),
+    "unresolved cross-reference"
+  )
 
   # The four live folders stay in filePaths; the seven Excel-bridge sheet names
   # re-split back into the excel block (not leaking into filePaths).

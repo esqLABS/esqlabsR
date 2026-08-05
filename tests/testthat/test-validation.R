@@ -1159,7 +1159,7 @@ test_that(".validatePI flags a parameter scenario outside the task's scenarios",
   # project scenario that is not part of the task.
   addPITask(
     project,
-    id = "T2",
+    id = "t2",
     scenarios = c("testscenario"),
     parameters = list(PIParameter(
       id = "P1",
@@ -1185,7 +1185,7 @@ test_that(".validatePI flags a mapping scenario outside the task's scenarios", {
   project <- testProject()
   addPITask(
     project,
-    id = "T2",
+    id = "t2",
     scenarios = c("testscenario"),
     parameters = list(PIParameter(
       id = "P1",

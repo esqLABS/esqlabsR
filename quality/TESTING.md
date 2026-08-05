@@ -4,7 +4,9 @@
 
 `testthat` edition 3, run with `NOT_CRAN=true Rscript -e 'devtools::test()'`. One test file per source file, mirroring `R/`. Shared fixtures live in `tests/testthat/helpers.R` (27 builder functions) and session-wide setup in `tests/testthat/setup.R`. Real PK-Sim model files and a bundled test project under `tests/testthat/data` back the integration-level tests; `vdiffr` snapshots back the plotting tests.
 
-Baseline at 2026-08-04: `FAIL 0 | WARN 49 | SKIP 1 | PASS 3344`.
+Baseline at 2026-08-04: `FAIL 0 | WARN 49 | SKIP 1 | PASS 3344`. After the T2 pass: `FAIL 0 | WARN 11 | SKIP 1 | PASS 3358`, with all 11 remaining warnings coming from dependencies.
+
+The full suite gets killed partway when run in one invocation in this environment, so it is verified in three `filter =` chunks whose counts are summed.
 
 ## Safety Net Map
 
@@ -35,13 +37,26 @@ Ranked. These are about test *bloat and weakness*, not coverage.
 | # | Finding | Location | Cost | Fix |
 |---|---|---|---|---|
 | T1 | **Fixed.** A ~15-line `PITask(...)` fixture was rebuilt verbatim in 12 tests, each differing by one field. | `test-parameter-identification.R`, throughout | Adding a `PITask` field meant editing 12 blocks | `testPITask()`, `testPIParameter()`, `testPIOutputMapping()` and `testObservedDataId` now live in `helpers.R`; each test passes only what it varies. The file went from 3352 to 3163 lines. |
-| T2 | 49 warnings are raised during the run and never asserted. Tests tolerate them instead of pinning them, so a regression that stops warning passes silently. | whole suite; mostly id-canonicalization and cross-reference warnings | Warning behavior is unprotected | Wrap the intended ones in `expect_snapshot()` / `expect_warning()`; silence the incidental ones at the call site |
+| T2 | **Fixed.** 49 warnings were raised during the run and never asserted, so a regression that stopped warning would have passed silently. Now 11, every one of them from a dependency rather than from esqlabsR. | whole suite | Warning behaviour was unprotected, and the noise hid a test that asserted the wrong warning (see below) | Two fixes, applied per site. Where the non-canonical id was incidental, it is now written the way the project stores it, so no warning fires and nothing is lost. Where the warning is the point of the test, it is asserted with `expect_warning()`. |
 | T3 | The Excel test file repeats a 12-line project-setup block 4 times and a 10-line block 3 times, among others. | `test-project-excel.R` 34-52 / 105-116 / 207-218 / 242-255; 1721-1730 / 1768-1778 / 1935-1945; 2648-2659 / 2673-2684 / 2700-2708 | 3938-line file is hard to navigate | Extract the repeated setups into local builders in `helpers.R` |
 | T4 | **Partly fixed.** `.localSnapshotOptions()` was byte-identical in three sensitivity test files and now lives in `helpers.R`. The `sensFixture` / `sensFixtureMultiple` memoized fixtures around it stay duplicated on purpose. | `test-sensitivity-calculation.R`, `test-sensitivity-spider-plot.R`, `test-sensitivity-time-profiles.R` | 45 lines removed | Each file's `sensFixture` caches a PK-Sim native session deliberately per file, and its comments say so. Sharing one cache across files would change that isolation for a saving of a few lines, so it stays. |
 | T5 | **Fixed.** `test-snapshot.R` did not mirror its source file name `R/project-snapshot.R`, and its header pointed at the wrong file. | `tests/testthat/test-project-snapshot.R` | Broke the 1:1 naming rule; `devtools::test_active_file("R/project-snapshot.R")` could not find it | Renamed, with its `_snaps/` file, and the header corrected |
 | T6 | **Fixed.** Comments in tests narrated history rather than describing the current check. | `tests/testthat/setup.R`, `test-project.R` | Contradicted the repo's own comment rule in `REFACTORING.md` | Rewritten to state the current constraint |
 
 `test-definition-files-sections.R` has no matching source file, but it is a deliberate second file for the 1377-line `R/definition-files.R`. Left as is.
+
+### What the warning noise was hiding
+
+One test was passing for the wrong reason. `test-parameter-identification.R`, "removeOutputPath() warns when the path is referenced only by a PI mapping", added the output path as `pionlypath` but then wrote `PIOnlyPath` in the mapping and in the call under test, and asserted `expect_warning(..., "PIOnlyPath")`. That string appears only in the *canonicalization* warning (`"PIOnlyPath" -> "pionlypath"`), never in the "still referenced by 1 parameter identification task" warning the test is named for. The check the test existed to make was therefore never made: had the PI branch of `.warnIfReferenced()` stopped working entirely, the test would still have gone green. It now uses the canonical spelling throughout and asserts the real message.
+
+This is the argument for keeping a suite warning-free. The one genuinely wrong assertion was indistinguishable from 48 harmless ones until the harmless ones were gone.
+
+### The 11 remaining warnings
+
+None originate in esqlabsR, and none are suppressed, because suppressing them would hide information that belongs to somebody.
+
+- **2 x `plotIndividualTimeProfile()` was deprecated in ospsuite 12.4.2** (`test-create-plots.R:91`, `test-plots-utils.R:93`). ospsuite will remove the function in 14.0 and the replacement is not a drop-in. Tracked as B19 in `quality/TECH-DEBT.md`; left visible on purpose, since the warning is the only thing carrying the deadline.
+- **9 base-R warnings** (`test-sensitivity-time-profiles.R:259` and `:338`): eight `NAs introduced by coercion` and one `longer object length is not a multiple of shorter object length`. All come from `ospsuite.utils::validateEnumValue()` / `enumGetKey()`, which compares a value against an enum with `==` without matching lengths first. Reached from `R/sensitivity-time-profiles.R`, which is a do-not-touch area, and the fix belongs upstream in any case.
 
 ## CI Gates
 

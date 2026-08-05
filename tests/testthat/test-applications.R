@@ -35,7 +35,7 @@ test_that("addApplication takes the empty reference list a definition file write
 
 test_that("removeApplication warns on missing key and is a no-op", {
   project <- testProject()
-  expect_warning(removeApplication(project, "Ghost"), "not found")
+  expect_warning(removeApplication(project, "ghost"), "not found")
 })
 
 test_that("removeApplication warns when still referenced by a scenario, removes anyway", {

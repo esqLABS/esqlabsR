@@ -681,7 +681,12 @@ test_that("removeObservedData deletes the definition file on save", {
   )))
   saveProject(project)
   expect_false(file.exists(file.path(dir, paste0(id, ".json"))))
-  reloaded <- loadProject(project$info$projectFilePath)
+  # Dropping the only observed-data set leaves the PI mapping that referenced
+  # it dangling, which the reload reports.
+  expect_warning(
+    reloaded <- loadProject(project$info$projectFilePath),
+    "unresolved cross-reference"
+  )
   expect_length(reloaded$definitions$observedData, 0L)
 })
 
