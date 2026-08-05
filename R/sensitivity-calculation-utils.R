@@ -549,14 +549,20 @@
 #' @param nullAllowed Logical. If TRUE, allows NULL. Default is FALSE.
 #' @keywords internal
 #' @noRd
-.validateIsNamedList <- function(object, nullAllowed = FALSE) {
+.validateIsNamedList <- function(
+  object,
+  nullAllowed = FALSE,
+  call = rlang::caller_env()
+) {
   validateIsOfType(object, "list", nullAllowed = nullAllowed)
 
   if (!is.null(object)) {
     listNames <- names(object)
     argName <- deparse(substitute(object))
     if (hasEmptyStrings(listNames)) {
-      cli::cli_abort(messages$notNamedList(argName))
+      # `call` attributes the abort to the public function the user called,
+      # rather than to this internal validator.
+      cli::cli_abort(messages$notNamedList(argName), call = call)
     }
   }
 }

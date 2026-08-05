@@ -1729,6 +1729,21 @@ addPIParameter <- function(
   )
 }
 
+# Canonicalize a PI task id and abort when the project defines no such task.
+# Returns the canonical id, so a caller writes `task <- .requirePITask(self,
+# task)`. `call` attributes the abort to the public authoring function, whose
+# `_impl` has already set the error call.
+#
+# @keywords internal
+# @noRd
+.requirePITask <- function(self, task, call = rlang::caller_env()) {
+  task <- .canonicalizeId(task)
+  if (!(task %in% names(self$definitions$parameterIdentification))) {
+    cli::cli_abort(messages$PITaskNotFound(task), call = call)
+  }
+  task
+}
+
 # Implementation behind `project$addPIParameter()` / `addPIParameter()`.
 #
 # @keywords internal
@@ -1748,10 +1763,7 @@ addPIParameter <- function(
   .call
 ) {
   rlang::local_error_call(.call)
-  task <- .canonicalizeId(task)
-  if (!(task %in% names(self$definitions$parameterIdentification))) {
-    cli::cli_abort("PI task {.val {task}} not found")
-  }
+  task <- .requirePITask(self, task)
   scenarios <- .canonicalizeIdRef(scenarios)
   unknownScenarios <- setdiff(scenarios, names(self$definitions$scenarios))
   if (length(unknownScenarios) > 0L) {
@@ -1815,10 +1827,7 @@ removePIParameter <- function(project, task, id) {
 # @noRd
 .removePIParameter_impl <- function(self, private, task, id, .call) {
   rlang::local_error_call(.call)
-  task <- .canonicalizeId(task)
-  if (!(task %in% names(self$definitions$parameterIdentification))) {
-    cli::cli_abort("PI task {.val {task}} not found")
-  }
+  task <- .requirePITask(self, task)
   piTask <- self$definitions$parameterIdentification[[task]]
   ids <- vapply(piTask$parameters, `[[`, character(1), "id")
   if (!(id %in% ids)) {
@@ -1915,10 +1924,7 @@ addPIOutputMapping <- function(
   .call
 ) {
   rlang::local_error_call(.call)
-  task <- .canonicalizeId(task)
-  if (!(task %in% names(self$definitions$parameterIdentification))) {
-    cli::cli_abort("PI task {.val {task}} not found")
-  }
+  task <- .requirePITask(self, task)
   # Accept either an output-path id or the literal model path of a defined
   # output path; store the resolved id.
   outputPath <- .resolveOutputPathRef(outputPath, self)
@@ -1987,10 +1993,7 @@ removePIOutputMapping <- function(project, task, id) {
 # @noRd
 .removePIOutputMapping_impl <- function(self, private, task, id, .call) {
   rlang::local_error_call(.call)
-  task <- .canonicalizeId(task)
-  if (!(task %in% names(self$definitions$parameterIdentification))) {
-    cli::cli_abort("PI task {.val {task}} not found")
-  }
+  task <- .requirePITask(self, task)
   piTask <- self$definitions$parameterIdentification[[task]]
   ids <- vapply(piTask$outputMappings, `[[`, character(1), "id")
   if (!(id %in% ids)) {

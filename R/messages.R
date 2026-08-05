@@ -1451,9 +1451,8 @@ messages$invalidCustomFunctionParameters <- function(providedParams) {
 }
 
 messages$notNamedList <- function(objectName, optionalMessage = "") {
-  callingFunction <- ospsuite.utils:::.getCallingFunctionName()
   cliFormat(
-    "{.fn {callingFunction}}: argument {.arg {objectName}} is not a named list! {optionalMessage}"
+    "Argument {.arg {objectName}} is not a named list! {optionalMessage}"
   )
 }
 
@@ -1731,6 +1730,10 @@ messages$PIScenarioNotFound <- function(scenarioName, availableScenarios) {
     "x" = "Scenario {.val {scenarioName}} referenced in PI task configuration not found",
     "i" = "Available scenarios: {.val {paste(availableScenarios, collapse = ', ')}}"
   ))
+}
+
+messages$PITaskNotFound <- function(task) {
+  cliFormat("PI task {.val {task}} not found")
 }
 
 messages$buildingPITask <- function(piTaskName) {
