@@ -195,3 +195,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-08-05 14:30: Split reading a project's files into two pieces: a plain function that does the reading and a method that stores what it read. Nothing outside the class calls it differently yet. (#1226)
 - 2026-08-05 14:55: Made loading and reloading a project call the reading function directly instead of through the old go-between, and removed the go-between. A failed load or reload now leaves nothing half-read. (#1226)
 - 2026-08-05 15:05: Added a glossary naming the three different things called "Scenario" and the four different things called "Parameters" apart. (#1226)
+- 2026-08-05 15:20: Moved the glossary into CLAUDE.md itself instead of a separate file. (#1226)
