@@ -193,3 +193,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-08-05 11:30: Added tests for the two small files nothing tested: the read-only wrapper that stops a project section being assigned into, and the proxy behind `project$info` / `project$paths` / `project$excel`.
 - 2026-08-05 11:50: The Excel tests set the same fixtures up 45 times over; that setup now lives in three shared helpers, and the file is 167 lines shorter.
 - 2026-08-05 14:30: Split reading a project's files into two pieces: a plain function that does the reading and a method that stores what it read. Nothing outside the class calls it differently yet. (#1226)
+- 2026-08-05 14:55: Made loading and reloading a project call the reading function directly instead of through the old go-between, and removed the go-between. A failed load or reload now leaves nothing half-read. (#1226)
