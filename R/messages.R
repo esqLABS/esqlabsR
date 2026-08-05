@@ -187,7 +187,7 @@ messages$gitLfsPointerFile <- function(path) {
   )
 }
 
-# Raised from `Project$.readJson()`. Unglued for the same reason as
+# Raised from `.loadProjectTree()`. Unglued for the same reason as
 # `legacySnapshotNotLoadable()` below: a hand-edited `schemaVersion` containing
 # `{` or `}` would be glue-parsed a second time by the raising `cli_abort()` and
 # fail with a glue error instead of this message. The value is bound under
@@ -712,7 +712,7 @@ messages$importSkippedNonParameterSheets <- function(
   )
 }
 
-# Raised from `Project$.readJson()`, whose schema-version check fails on every
+# Raised from `.loadProjectTree()`, whose schema-version check fails on every
 # file `.isLegacySnapshot()` recognizes: a previous-version snapshot carries no
 # `schemaVersion` at all. The `{jsonPath}` placeholder stays unglued so
 # `cli_abort()` interpolates it once, in that frame, where the value is bound
@@ -731,7 +731,7 @@ messages$legacySnapshotNotLoadable <- function(jsonPath) {
   )
 }
 
-# Raised from `Project$.readJson()` when it is handed a folder that holds no
+# Raised from `.loadProjectTree()` when it is handed a folder that holds no
 # project container. Naming the mistake is the point: a folder is the natural
 # second guess after a file, and letting it through produced a raw JSON parse
 # error about the folder itself. Unglued so a folder path containing `{` or `}`
@@ -747,7 +747,7 @@ messages$noProjectContainerInFolder <- function(folder) {
   )
 }
 
-# Raised from `Project$.readJson()` when a folder holds several project
+# Raised from `.loadProjectTree()` when a folder holds several project
 # containers, so there is no single project to open. `folder` and `names` are
 # bound in the raising frame; unglued for the same reason as above.
 messages$multipleProjectContainersInFolder <- function(folder, names) {

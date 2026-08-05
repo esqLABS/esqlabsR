@@ -248,15 +248,10 @@ Project <- R6::R6Class(
         private$.projectDirPath <- NULL
         return(invisible(self))
       }
-      if (
-        !is.character(projectFilePath) ||
-          length(projectFilePath) != 1L ||
-          is.na(projectFilePath) ||
-          !nzchar(projectFilePath)
-      ) {
-        cli::cli_abort(messages$invalidPathArgument())
-      }
-      private$.readJson(projectFilePath)
+      # `.loadProjectTree()` validates `projectFilePath` itself (the same
+      # checks this method used to run inline) and does all of the load's
+      # I/O; this just commits what it returns.
+      private$.applyLoadedSections(.loadProjectTree(projectFilePath))
       invisible(self)
     },
 
@@ -1278,7 +1273,7 @@ Project <- R6::R6Class(
     # identity is preserved (the same R6 instance is mutated), so existing
     # handles stay valid.
     .reload = function() {
-      private$.readJson(private$.projectFilePath)
+      private$.applyLoadedSections(.loadProjectTree(private$.projectFilePath))
       invisible(self)
     },
 
@@ -1356,15 +1351,6 @@ Project <- R6::R6Class(
         ))
       }
       resolved
-    },
-
-    # All of this method's I/O now lives in the free function
-    # `.loadProjectTree()` (`R/project-lifecycle.R`), which returns a plain
-    # list; this just commits it. Kept as a named seam (rather than inlining
-    # the two calls at each caller) so `initialize()` and `.reload()` share
-    # one call.
-    .readJson = function(jsonPath) {
-      private$.applyLoadedSections(.loadProjectTree(jsonPath))
     },
 
     # Commit a `.loadProjectTree()` snapshot to `private` in one

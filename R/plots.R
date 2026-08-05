@@ -12,7 +12,7 @@
 # independent of this file.
 #
 # Called by:
-#   - Project$.readJson() via the three plots definition-tree specs
+#   - .loadProjectTree() via the three plots definition-tree specs
 #     (data-combined / plots / plot-grids).
 #   - .runProjectValidation() via .validatePlots()
 #   - .projectToJson() via .dataCombinedSectionToJson() / .plotsSectionToJson()

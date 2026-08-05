@@ -475,7 +475,7 @@ isProjectInitialized <- function(destination = ".") {
   # it, and the path arrives from several entrypoints (`loadProject()`,
   # `Project$new()`, `ProjectConfiguration()`). Attribute the abort to no
   # function at all rather than to this helper, whose name means nothing to the
-  # reader, exactly as `.readJson()` does.
+  # reader, exactly as `.loadProjectTree()` does.
   rlang::local_error_call(NULL)
   path <- fs::path_abs(path)
   if (!fs::dir_exists(path)) {
