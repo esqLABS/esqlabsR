@@ -924,3 +924,32 @@ test_that("print.PopulationSource renders a csv and a programmatic source", {
     print(prog)
   })
 })
+
+test_that("addPopulation aborts on a NaN numeric field", {
+  project <- testProject()
+
+  expect_snapshot(
+    error = TRUE,
+    addPopulation(
+      project,
+      "nanweight",
+      "Human",
+      numberOfIndividuals = 10,
+      weightMin = NaN
+    )
+  )
+})
+
+test_that("setPopulation aborts on a NaN numeric field and keeps the old value", {
+  project <- testProject()
+  addPopulation(
+    project,
+    "keepweight",
+    "Human",
+    numberOfIndividuals = 10,
+    weightMin = 50
+  )
+
+  expect_error(setPopulation(project, "keepweight", weightMin = NaN))
+  expect_equal(project$definitions$populations$keepweight$weightMin, 50)
+})
