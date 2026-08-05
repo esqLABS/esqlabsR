@@ -721,9 +721,14 @@ test_that("setScenario rejects `overwrite` instead of quietly setting a differen
   # matching turned the habit picked up from `addScenario()` into a silent change
   # to a steady-state model option (#1213).
   project <- testProject()
-  before <- project$definitions$scenarios[["testscenario"]]$overwriteFormulasInSS
+  before <- project$definitions$scenarios[[
+    "testscenario"
+  ]]$overwriteFormulasInSS
 
-  expect_snapshot(error = TRUE, setScenario(project, "testscenario", overwrite = TRUE))
+  expect_snapshot(
+    error = TRUE,
+    setScenario(project, "testscenario", overwrite = TRUE)
+  )
   expect_equal(
     project$definitions$scenarios[["testscenario"]]$overwriteFormulasInSS,
     before
@@ -1063,9 +1068,13 @@ test_that("renameScenario updates the record's stored name so a reload round-tri
     "renamed"
   )
   # A reload re-derives scenarios from the tree; the new key must validate and
-  # round-trip (name == key invariant holds).
+  # round-trip (name == key invariant holds). Renaming does not rewrite the
+  # definitions that referred to the old name, so the reload reports them.
   saveProject(project)
-  reloaded <- loadProject(project$info$projectFilePath)
+  expect_warning(
+    reloaded <- loadProject(project$info$projectFilePath),
+    "unresolved cross-reference"
+  )
   expect_true("renamed" %in% names(reloaded$definitions$scenarios))
   expect_equal(
     reloaded$definitions$scenarios[["renamed"]]$scenarioName,
@@ -1375,9 +1384,14 @@ test_that("buildSimulations applies customParams to the built simulation", {
 test_that("buildSimulations errors on an unknown scenario name", {
   withr::local_options(lifecycle_verbosity = "quiet")
   project <- testProject()
-  expect_error(
-    buildSimulations(project, scenarios = "NopeNope"),
-    regexp = "nopenope"
+  # The non-canonical name is deliberate: the abort must name the id the
+  # project would have filed it under, and the canonicalization says so.
+  expect_warning(
+    expect_error(
+      buildSimulations(project, scenarios = "NopeNope"),
+      regexp = "nopenope"
+    ),
+    "Canonicalized 1 id"
   )
 })
 

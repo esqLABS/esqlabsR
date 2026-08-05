@@ -919,22 +919,22 @@ addScenario <- function(
     ))
   }
   project$addScenario(
-    id,
-    modelFile,
-    individual,
-    population,
-    application,
-    parameterSets,
-    initialConditions,
-    outputPaths,
-    simulationTime,
-    simulationTimeUnit,
-    steadyState,
-    steadyStateTime,
-    steadyStateTimeUnit,
-    overwriteFormulasInSS,
-    readPopulationFromCSV,
-    overwrite
+    id = id,
+    modelFile = modelFile,
+    individual = individual,
+    population = population,
+    application = application,
+    parameterSets = parameterSets,
+    initialConditions = initialConditions,
+    outputPaths = outputPaths,
+    simulationTime = simulationTime,
+    simulationTimeUnit = simulationTimeUnit,
+    steadyState = steadyState,
+    steadyStateTime = steadyStateTime,
+    steadyStateTimeUnit = steadyStateTimeUnit,
+    overwriteFormulasInSS = overwriteFormulasInSS,
+    readPopulationFromCSV = readPopulationFromCSV,
+    overwrite = overwrite
   )
 }
 
@@ -1027,12 +1027,7 @@ addScenario <- function(
 ) {
   errors <- character()
   modelFile <- fields$modelFile
-  if (
-    !is.character(modelFile) ||
-      length(modelFile) != 1L ||
-      is.na(modelFile) ||
-      nchar(modelFile) == 0
-  ) {
+  if (!.isNonEmptyString(modelFile)) {
     errors <- c(errors, "modelFile must be a non-empty string")
   }
 
@@ -1661,8 +1656,8 @@ renameScenario <- function(project, id, newId) {
 # @noRd
 .renameScenario_impl <- function(self, private, id, newId, .call) {
   rlang::local_error_call(.call)
-  id <- .assertScenarioIdArg(id, "id")
-  newId <- .assertScenarioIdArg(newId, "newId")
+  id <- .assertNonEmptyString(id, "id")
+  newId <- .assertNonEmptyString(newId, "newId")
 
   id <- .canonicalizeId(id)
   .assertScenarioExists(self, id, "rename")
@@ -1725,8 +1720,8 @@ duplicateScenario <- function(project, id, newId) {
 # @noRd
 .duplicateScenario_impl <- function(self, private, id, newId, .call) {
   rlang::local_error_call(.call)
-  id <- .assertScenarioIdArg(id, "id")
-  newId <- .assertScenarioIdArg(newId, "newId")
+  id <- .assertNonEmptyString(id, "id")
+  newId <- .assertNonEmptyString(newId, "newId")
 
   id <- .canonicalizeId(id)
   .assertScenarioExists(self, id, "duplicate")
@@ -1743,26 +1738,6 @@ duplicateScenario <- function(project, id, newId) {
   private$.setSection("scenarios", scenarios)
 
   invisible(self)
-}
-
-# Validate that a scenario id argument (`id` / `newId` of `renameScenario()` /
-# `duplicateScenario()`) is a non-empty string, aborting with the argument
-# name when it is not. Returns the value unchanged so callers can write
-# `id <- .assertScenarioIdArg(id, "id")`. `call` attributes the abort to the
-# public caller.
-#
-# @keywords internal
-# @noRd
-.assertScenarioIdArg <- function(value, argName, call = rlang::caller_env()) {
-  if (
-    !is.character(value) ||
-      length(value) != 1L ||
-      is.na(value) ||
-      nchar(value) == 0
-  ) {
-    cli::cli_abort("{.arg {argName}} must be a non-empty string", call = call)
-  }
-  value
 }
 
 # Abort when a (canonical) scenario `id` is not in the project, with a
@@ -1953,12 +1928,7 @@ duplicateScenario <- function(project, id, newId) {
   if (is.null(value)) {
     return(character())
   }
-  if (
-    !is.character(value) ||
-      length(value) != 1L ||
-      is.na(value) ||
-      nchar(value) == 0
-  ) {
+  if (!.isNonEmptyString(value)) {
     return(paste0(argName, " must be a non-empty string or NULL"))
   }
   if (!(value %in% names(lookup))) {

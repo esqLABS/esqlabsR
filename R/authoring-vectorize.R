@@ -330,10 +330,15 @@ NULL
 # has to agree with it. A value that is not `NA` but merely coerces to one
 # (`"heavy"`) is a mistake, and the callers still abort on it.
 #
+# `NaN` is excluded even though `is.na(NaN)` is `TRUE`. No workbook cell reads as
+# `NaN`; it arrives from a calculation that went wrong (`0 / 0`), which is the
+# mistake case, not the unset one. Counting it as unset would let an add silently
+# omit the field and a set silently clear whatever the field already held.
+#
 # @keywords internal
 # @noRd
 .isUnsetNumericField <- function(value) {
-  length(value) == 1L && is.na(value)
+  length(value) == 1L && is.na(value) && !is.nan(value)
 }
 
 # Coerce a numeric authoring field for the set path, preserving the clears
@@ -352,4 +357,22 @@ NULL
     return(NULL)
   }
   as.double(value)
+}
+
+# Is a numeric authoring field set to something `.coerceNumericField()` cannot
+# turn into a single finite number? A character such as `"45"` is fine; `"80kg"`
+# coerces to `NA` and is a mistake. An absent field (`NULL`) and an unset one
+# (`.isUnsetNumericField()`, which an empty workbook cell reads as) are not set
+# at all, so neither is invalid. This is the shared rule behind both the add
+# path, which collects the field name into an error list, and the set path,
+# which aborts on the first one.
+#
+# @keywords internal
+# @noRd
+.isInvalidNumericField <- function(value) {
+  if (is.null(value) || .isUnsetNumericField(value)) {
+    return(FALSE)
+  }
+  coerced <- suppressWarnings(as.double(value))
+  length(value) != 1L || is.na(coerced) || !is.finite(coerced)
 }

@@ -139,3 +139,12 @@
         * Age: <empty string>
         * Parameter Sets: <empty string>
 
+# addIndividual aborts on a NaN numeric field
+
+    Code
+      addIndividual(project, "nanweight", "Human", weight = NaN)
+    Condition
+      Error in `addIndividual()`:
+      ! Cannot add individual "nanweight":
+      x weight must be a single finite number
+

@@ -9,7 +9,10 @@ test_that("loadProject reads every section from its definitions/<kind>/ tree", {
 
   # The example fixture materializes each non-empty section as a tree, and
   # Project.json carries no inline copy of it.
-  raw <- jsonlite::fromJSON(project$info$projectFilePath, simplifyVector = FALSE)
+  raw <- jsonlite::fromJSON(
+    project$info$projectFilePath,
+    simplifyVector = FALSE
+  )
 
   expect_true(dir.exists(file.path(defs, "individuals")))
   expect_setequal(
@@ -92,7 +95,10 @@ test_that("saveProject() writes the parameter set's definition file", {
 
   reloaded <- loadProject(project$info$projectFilePath)
   expect_length(reloaded$definitions$parameterSets[["newset"]], 1L)
-  expect_identical(reloaded$definitions$parameterSets[["newset"]][[1]]$value, 1.5)
+  expect_identical(
+    reloaded$definitions$parameterSets[["newset"]][[1]]$value,
+    1.5
+  )
 })
 
 # saveProject() writes if-different: a save after editing one definition
@@ -180,8 +186,15 @@ test_that("addPITask writes a per-task definition file; removePITask deletes it"
   saveProject(project)
   expect_true(file.exists(file.path(dir, "newtask.json")))
 
-  reloaded <- loadProject(project$info$projectFilePath)
-  expect_true("newtask" %in% names(reloaded$definitions$parameterIdentification))
+  # The mapping names an observed-data set the example project does not
+  # define, so the reload reports it; the task itself still round-trips.
+  expect_warning(
+    reloaded <- loadProject(project$info$projectFilePath),
+    "unresolved cross-reference"
+  )
+  expect_true(
+    "newtask" %in% names(reloaded$definitions$parameterIdentification)
+  )
 
   removePITask(project, "newtask")
   saveProject(project)
@@ -223,7 +236,11 @@ test_that("the three plots parts write to data-combined / plots / plot-grids", {
 test_that("removing a plot definition deletes only its file on save, leaving siblings", {
   project <- exampleProject()
   plotsDir <- file.path(project$info$projectDirPath, "definitions", "plots")
-  dcDir <- file.path(project$info$projectDirPath, "definitions", "data-combined")
+  dcDir <- file.path(
+    project$info$projectDirPath,
+    "definitions",
+    "data-combined"
+  )
 
   addPlot(project, "p_extra", "aciclovir_individual", "individual")
   saveProject(project)
@@ -296,7 +313,11 @@ test_that("saveProject() on a restored project materializes the full section tre
 test_that("a definitions/<kind>/ path that is a file aborts the load", {
   project <- exampleProject()
   jsonPath <- project$info$projectFilePath
-  kindDir <- file.path(project$info$projectDirPath, "definitions", "individuals")
+  kindDir <- file.path(
+    project$info$projectDirPath,
+    "definitions",
+    "individuals"
+  )
 
   unlink(kindDir, recursive = TRUE)
   writeLines("not a directory", kindDir)
@@ -463,7 +484,10 @@ test_that("loadProject reads each plots section from its own folder", {
     paste0(names(project$definitions$plotGrids), ".json")
   )
   # Project.json carries no inline copy of the plots section.
-  raw <- jsonlite::fromJSON(project$info$projectFilePath, simplifyVector = FALSE)
+  raw <- jsonlite::fromJSON(
+    project$info$projectFilePath,
+    simplifyVector = FALSE
+  )
   expect_null(raw$plots)
 })
 
@@ -492,7 +516,11 @@ test_that("a dangling cross-file plot ref is a lazy error, not a write abort", {
 
 test_that("a grid pointing at a missing plot stays a lazy error after reload", {
   project <- exampleProject()
-  gridsDir <- file.path(project$info$projectDirPath, "definitions", "plot-grids")
+  gridsDir <- file.path(
+    project$info$projectDirPath,
+    "definitions",
+    "plot-grids"
+  )
 
   # Repoint the grid at a plot id that does not exist; the grid write succeeds
   # (its own structure is valid), the dangling plotIds ref is lazy.
@@ -514,7 +542,11 @@ test_that("a grid pointing at a missing plot stays a lazy error after reload", {
 
 test_that("an emptied plots part clears its folder's files on save", {
   project <- exampleProject()
-  gridsDir <- file.path(project$info$projectDirPath, "definitions", "plot-grids")
+  gridsDir <- file.path(
+    project$info$projectDirPath,
+    "definitions",
+    "plot-grids"
+  )
   expect_true(file.exists(file.path(gridsDir, "individual_diagnostics.json")))
 
   removePlotGrid(project, "individual_diagnostics")

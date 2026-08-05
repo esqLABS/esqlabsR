@@ -1,4 +1,4 @@
-# Tests for the single-file snapshot artifact (R/definition-files.R):
+# Tests for the single-file snapshot artifact (R/project-snapshot.R):
 # `snapshotProject(project, dir, name, overwrite)` writes a portable
 # `.esqlabsR` freeze of the in-memory state, and
 # `restoreProject(snapshot, dir, overwrite)` reads one and materializes a full

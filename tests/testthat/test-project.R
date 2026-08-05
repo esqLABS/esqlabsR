@@ -1079,7 +1079,7 @@ test_that("reading a record, editing the copy, and re-submitting it is the suppo
   )
 })
 
-# Under explicit-save, `.setSection()` no longer serializes on write, so a
+# Under explicit-save, `.setSection()` does not serialize on write, so a
 # structurally bad record is accepted in memory but must abort the save: the
 # serialize-in-memory-first guarantee in `.writeDefinitionTree()` (driven by
 # `saveProject()`) rejects a wrong-typed reference field and an unknown field.

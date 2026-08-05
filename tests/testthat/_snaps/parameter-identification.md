@@ -256,9 +256,6 @@
     Code
       do.call(addPITask, c(list(project = project), args))
     Condition
-      Warning:
-      Canonicalized 1 id to a safe form:
-      * "Dup" -> "dup"
       Error:
       ! Cannot add PI task "dup":
       x PI task 'dup' already exists; pass overwrite = TRUE to replace it

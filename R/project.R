@@ -272,44 +272,10 @@ Project <- R6::R6Class(
     # that free function, and pulled in here with `@inheritParams` so no
     # `@param` block is ever duplicated between a method and its free function.
 
-    #' @description Add scenarios. See [addScenario()], the primary entry point.
-    addScenario = function(
-      id,
-      modelFile,
-      individual = NULL,
-      population = NULL,
-      application = NULL,
-      parameterSets = NULL,
-      initialConditions = NULL,
-      outputPaths = NULL,
-      simulationTime = NULL,
-      simulationTimeUnit = "h",
-      steadyState = FALSE,
-      steadyStateTime = 1000,
-      steadyStateTimeUnit = "min",
-      overwriteFormulasInSS = FALSE,
-      readPopulationFromCSV = FALSE,
-      overwrite = FALSE
-    ) {
-      private$.impl(
-        .addScenario_impl,
-        id,
-        modelFile,
-        individual,
-        population,
-        application,
-        parameterSets,
-        initialConditions,
-        outputPaths,
-        simulationTime,
-        simulationTimeUnit,
-        steadyState,
-        steadyStateTime,
-        steadyStateTimeUnit,
-        overwriteFormulasInSS,
-        readPopulationFromCSV,
-        overwrite
-      )
+    #' @description Add scenarios. See [addScenario()], the primary entry point,
+    #'   for the fields a scenario carries and their defaults.
+    addScenario = function(...) {
+      private$.impl(.addScenario_impl, ...)
     },
 
     #' @description Remove scenarios. See [removeScenario()].

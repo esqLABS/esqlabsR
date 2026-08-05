@@ -668,7 +668,12 @@ test_that("the three former parameter-set kinds are merged into project$definiti
 
 test_that("addParameterSet adds N sets in one saveProject()", {
   project <- testProject()
-  addParameterSet(project, c("setA", "setB"))
+  # The mixed-case ids are deliberate: they must land canonicalized,
+  # and say so.
+  expect_warning(
+    addParameterSet(project, c("setA", "setB")),
+    "Canonicalized 2 ids"
+  )
   expect_true(all(
     c("seta", "setb") %in% names(project$definitions$parameterSets)
   ))
@@ -923,7 +928,12 @@ test_that("removeInitialConditionEntry updates the on-disk set when entries rema
 
 test_that("addInitialConditions adds N sets in one saveProject()", {
   project <- testProject()
-  addInitialConditions(project, c("setA", "setB"))
+  # The mixed-case ids are deliberate: they must land canonicalized,
+  # and say so.
+  expect_warning(
+    addInitialConditions(project, c("setA", "setB")),
+    "Canonicalized 2 ids"
+  )
   expect_true(all(
     c("seta", "setb") %in% names(project$definitions$initialConditions)
   ))

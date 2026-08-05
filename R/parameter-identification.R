@@ -50,7 +50,7 @@ PIParameter <- function(
   maxValue,
   startValue
 ) {
-  if (!is.character(id) || length(id) != 1L || is.na(id) || nchar(id) == 0) {
+  if (!.isNonEmptyString(id)) {
     cli::cli_abort(messages$PIRequiredField(
       "id",
       "PIParameter",
@@ -65,9 +65,7 @@ PIParameter <- function(
   ) {
     cli::cli_abort(messages$PIScenariosEmpty("PIParameter", id))
   }
-  if (
-    !is.character(path) || length(path) != 1L || is.na(path) || nchar(path) == 0
-  ) {
+  if (!.isNonEmptyString(path)) {
     cli::cli_abort(messages$PIRequiredField("path", "PIParameter", id))
   }
   # `units` is optional: NULL or an empty string both mean "no display unit".
@@ -205,7 +203,7 @@ PIOutputMapping <- function(
   yFactor = 1,
   weight = NULL
 ) {
-  if (!is.character(id) || length(id) != 1L || is.na(id) || nchar(id) == 0) {
+  if (!.isNonEmptyString(id)) {
     cli::cli_abort(messages$PIRequiredField(
       "id",
       "PIOutputMapping",
@@ -220,24 +218,14 @@ PIOutputMapping <- function(
   ) {
     cli::cli_abort(messages$PIScenariosEmpty("PIOutputMapping", id))
   }
-  if (
-    !is.character(outputPath) ||
-      length(outputPath) != 1L ||
-      is.na(outputPath) ||
-      nchar(outputPath) == 0
-  ) {
+  if (!.isNonEmptyString(outputPath)) {
     cli::cli_abort(messages$PIRequiredField(
       "outputPath",
       "PIOutputMapping",
       id
     ))
   }
-  if (
-    !is.character(observedData) ||
-      length(observedData) != 1L ||
-      is.na(observedData) ||
-      nchar(observedData) == 0
-  ) {
+  if (!.isNonEmptyString(observedData)) {
     cli::cli_abort(messages$PIRequiredField(
       "observedData",
       "PIOutputMapping",
@@ -246,10 +234,7 @@ PIOutputMapping <- function(
   }
   if (
     !is.null(scaling) &&
-      (!is.character(scaling) ||
-        length(scaling) != 1L ||
-        is.na(scaling) ||
-        nchar(scaling) == 0)
+      (!.isNonEmptyString(scaling))
   ) {
     cli::cli_abort(messages$PIInvalidScaling(id, scaling))
   }
@@ -395,7 +380,7 @@ PITask <- function(
   outputMappings = list(),
   configuration = list()
 ) {
-  if (!is.character(id) || length(id) != 1L || is.na(id) || nchar(id) == 0) {
+  if (!.isNonEmptyString(id)) {
     cli::cli_abort(messages$PIRequiredField("id", "PITask", "<unset>"))
   }
 
@@ -1374,7 +1359,7 @@ addPITask <- function(
 ) {
   rlang::local_error_call(.call)
   errors <- character()
-  if (!is.character(id) || length(id) != 1L || is.na(id) || nchar(id) == 0) {
+  if (!.isNonEmptyString(id)) {
     errors <- c(errors, "id must be a non-empty string")
   } else {
     id <- .canonicalizeId(id)
@@ -1521,7 +1506,7 @@ setPITask <- function(project, id, scenarios, configuration) {
 # @noRd
 .setPITask_impl <- function(self, private, id, ..., .call) {
   rlang::local_error_call(.call)
-  if (!is.character(id) || length(id) != 1L || is.na(id) || nchar(id) == 0) {
+  if (!.isNonEmptyString(id)) {
     cli::cli_abort("{.arg id} must be a single non-empty string.")
   }
   id <- .canonicalizeId(id)
@@ -1744,6 +1729,21 @@ addPIParameter <- function(
   )
 }
 
+# Canonicalize a PI task id and abort when the project defines no such task.
+# Returns the canonical id, so a caller writes `task <- .requirePITask(self,
+# task)`. `call` attributes the abort to the public authoring function, whose
+# `_impl` has already set the error call.
+#
+# @keywords internal
+# @noRd
+.requirePITask <- function(self, task, call = rlang::caller_env()) {
+  task <- .canonicalizeId(task)
+  if (!(task %in% names(self$definitions$parameterIdentification))) {
+    cli::cli_abort(messages$PITaskNotFound(task), call = call)
+  }
+  task
+}
+
 # Implementation behind `project$addPIParameter()` / `addPIParameter()`.
 #
 # @keywords internal
@@ -1763,10 +1763,7 @@ addPIParameter <- function(
   .call
 ) {
   rlang::local_error_call(.call)
-  task <- .canonicalizeId(task)
-  if (!(task %in% names(self$definitions$parameterIdentification))) {
-    cli::cli_abort("PI task {.val {task}} not found")
-  }
+  task <- .requirePITask(self, task)
   scenarios <- .canonicalizeIdRef(scenarios)
   unknownScenarios <- setdiff(scenarios, names(self$definitions$scenarios))
   if (length(unknownScenarios) > 0L) {
@@ -1830,24 +1827,35 @@ removePIParameter <- function(project, task, id) {
 # @noRd
 .removePIParameter_impl <- function(self, private, task, id, .call) {
   rlang::local_error_call(.call)
-  task <- .canonicalizeId(task)
-  if (!(task %in% names(self$definitions$parameterIdentification))) {
-    cli::cli_abort("PI task {.val {task}} not found")
-  }
+  .removePIMember(
+    self,
+    private,
+    .requirePITask(self, task),
+    id,
+    field = "parameters",
+    label = "Parameter"
+  )
+}
+
+# Remove one member of a PI task: `field` is the task field holding them
+# (`parameters` or `outputMappings`) and `label` names the kind in the no-op
+# warning. A task left with neither parameters nor output mappings carries no
+# work, so it is dropped rather than stored empty. `task` must already be
+# canonical and known (see `.requirePITask()`).
+#
+# @keywords internal
+# @noRd
+.removePIMember <- function(self, private, task, id, field, label) {
   piTask <- self$definitions$parameterIdentification[[task]]
-  ids <- vapply(piTask$parameters, `[[`, character(1), "id")
+  ids <- vapply(piTask[[field]], `[[`, character(1), "id")
   if (!(id %in% ids)) {
-    cli::cli_warn(
-      "Parameter {.val {id}} not found in task {.val {task}}; no-op."
-    )
+    cli::cli_warn(messages$PIMemberNotFound(label, id, task))
     return(invisible(self))
   }
-  piTask$parameters <- piTask$parameters[ids != id]
+  piTask[[field]] <- piTask[[field]][ids != id]
   tasks <- private$.getSection("parameterIdentification")
   if (length(piTask$parameters) == 0L && length(piTask$outputMappings) == 0L) {
-    cli::cli_warn(
-      "PI task {.val {task}} is now empty and has been removed."
-    )
+    cli::cli_warn(messages$PITaskNowEmpty(task))
     tasks[[task]] <- NULL
   } else {
     tasks[[task]] <- piTask
@@ -1930,10 +1938,7 @@ addPIOutputMapping <- function(
   .call
 ) {
   rlang::local_error_call(.call)
-  task <- .canonicalizeId(task)
-  if (!(task %in% names(self$definitions$parameterIdentification))) {
-    cli::cli_abort("PI task {.val {task}} not found")
-  }
+  task <- .requirePITask(self, task)
   # Accept either an output-path id or the literal model path of a defined
   # output path; store the resolved id.
   outputPath <- .resolveOutputPathRef(outputPath, self)
@@ -2002,28 +2007,12 @@ removePIOutputMapping <- function(project, task, id) {
 # @noRd
 .removePIOutputMapping_impl <- function(self, private, task, id, .call) {
   rlang::local_error_call(.call)
-  task <- .canonicalizeId(task)
-  if (!(task %in% names(self$definitions$parameterIdentification))) {
-    cli::cli_abort("PI task {.val {task}} not found")
-  }
-  piTask <- self$definitions$parameterIdentification[[task]]
-  ids <- vapply(piTask$outputMappings, `[[`, character(1), "id")
-  if (!(id %in% ids)) {
-    cli::cli_warn(
-      "Output mapping {.val {id}} not found in task {.val {task}}; no-op."
-    )
-    return(invisible(self))
-  }
-  piTask$outputMappings <- piTask$outputMappings[ids != id]
-  tasks <- private$.getSection("parameterIdentification")
-  if (length(piTask$parameters) == 0L && length(piTask$outputMappings) == 0L) {
-    cli::cli_warn(
-      "PI task {.val {task}} is now empty and has been removed."
-    )
-    tasks[[task]] <- NULL
-  } else {
-    tasks[[task]] <- piTask
-  }
-  private$.setSection("parameterIdentification", tasks)
-  invisible(self)
+  .removePIMember(
+    self,
+    private,
+    .requirePITask(self, task),
+    id,
+    field = "outputMappings",
+    label = "Output mapping"
+  )
 }

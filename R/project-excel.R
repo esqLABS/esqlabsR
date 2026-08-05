@@ -1,232 +1,20 @@
 # Excel <-> JSON bridge: public API ----
 
-#' Import project configuration from Excel files
-#'
-#' @description Reads all Excel configuration files in an esqlabsR project and
-#' converts them to the JSON project format: a `Project.json` project file plus
-#' one file per definition in the `definitions/` folder. The result is a
-#' ready-to-use project — `loadProject("<outputDir>/Project.json")` can open it
-#' directly. This is the migration path from Excel-based projects to the
-#' JSON-primary workflow.
-#'
-#' The `configurationsFolder` and the per-section workbook filenames are read
-#' from the Excel file and must stay under the project folder: a value that
-#' escapes it (a `../` climb or an absolute path) aborts naming the field. A
-#' folder deliberately placed outside the project with the `${VAR}`
-#' environment-variable form is still allowed.
-#'
-#' @param projectConfigPath Path to the `Project.xlsx` file.
-#'   Defaults to `"Project.xlsx"`.
-#' @param outputDir Directory where the JSON project is created. If `NULL`
-#'   (default), it is created in the same directory as the source Excel file.
-#' @param overwrite Logical. Guards against silently replacing an existing JSON
-#'   project. With `overwrite = FALSE` (default), the import aborts when a
-#'   project file or a non-empty `definitions/` tree already exists in
-#'   `outputDir`, because re-importing replaces the JSON project with the Excel
-#'   state and deletes any definitions authored only on the JSON side. Pass
-#'   `overwrite = TRUE` to replace the existing JSON project with the Excel
-#'   state.
-#' @param silent Logical. If `TRUE`, suppresses the import summary (the project
-#'   written, its per-section definition counts, and the folders copied or
-#'   missing). Defaults to `FALSE`.
-#' @param copyAssets Logical. Whether to copy the input folders the project
-#'   references (models, data, csv populations) into `outputDir`, which is what
-#'   makes the imported project runnable where it was written. Defaults to
-#'   `TRUE`. Set it to `FALSE` when only the definitions are wanted and the
-#'   assets would be wasted work, as when the import feeds a throwaway
-#'   comparison snapshot.
-#' @param projectFileName Name of the project file the import writes in
-#'   `outputDir`. Defaults to `"Project.json"`, the same name [initProject()]
-#'   and [loadProject()] use, so an imported project opens like any other. Pass
-#'   another name (for example `"MyStudy"`, or `"MyStudy.json"`) to label the
-#'   project file after the study rather than by the generic name; a `.json`
-#'   extension is appended when the name does not already end in one. It must be
-#'   a plain filename, not a path.
-#'
-#'   This names the project file only. The `definitions/` tree beside it, and
-#'   the copied `Models/` and `Data/` folders, are shared by whatever is in
-#'   `outputDir`, so a second import into the same folder still replaces the
-#'   first project rather than sitting alongside it. Give each project its own
-#'   `outputDir`.
-#'
-#' @returns Invisibly returns the path to the created project file.
-#' @export
-#' @family projectPersistence
-importProjectFromExcel <- function(
-  projectConfigPath = "Project.xlsx",
-  outputDir = NULL,
-  overwrite = FALSE,
-  silent = FALSE,
-  copyAssets = TRUE,
-  projectFileName = "Project.json"
-) {
-  validateIsString(projectConfigPath)
-  validateIsLogical(copyAssets)
-  .validateFilenameSegment(projectFileName, messages$invalidProjectFileName)
-
-  if (!file.exists(projectConfigPath)) {
-    cli::cli_abort(messages$fileNotFound(projectConfigPath))
-  }
-
-  # Read the Project.xlsx to get path settings. A corrupt or empty file is not
-  # a valid Excel workbook, so `readxl` raises a raw "zip file cannot be opened"
-  # error that names nothing useful; wrap it in a clear message naming the path.
-  pcExcel <- tryCatch(
-    readExcel(projectConfigPath),
-    error = function(e) {
-      cli::cli_abort(
-        c(
-          "{.path {projectConfigPath}} is not a readable Excel project file.",
-          "i" = "It must be a valid {.field .xlsx} workbook \\
-          (the project's {.file Project.xlsx})."
-        ),
-        parent = e
-      )
-    }
-  )
-  pcDir <- dirname(fs::path_abs(projectConfigPath))
-
-  # Build a lookup of Property -> Value from the Excel file
-  pcProps <- stats::setNames(
-    as.character(pcExcel$Value),
-    as.character(pcExcel$Property)
-  )
-
-  # NULL-safe property lookup (single-bracket "[" returns NA when key absent
-  # in named character; collapse that to NULL).
-  prop <- function(name) {
-    if (!(name %in% names(pcProps))) {
-      return(NULL)
-    }
-    val <- pcProps[[name]]
-    if (length(val) == 0 || is.na(val)) NULL else val
-  }
-
-  # Read version metadata (with fallback for old Excel files)
-  schemaVersion <- prop("schemaVersion") %||% "2.0"
-
-  # Read container metadata. `name` / `description` are top-level container
-  # fields written by `exportProjectToExcel()`; read them back here so the
-  # round trip restores them. An absent row (an old Excel file) or an
-  # empty-string row (a project that carried no name/description on export)
-  # both resolve to NULL, so a nameless project does not gain an empty name.
-  emptyToNull <- function(x) if (is.null(x) || !nzchar(x)) NULL else x
-  projectName <- emptyToNull(prop("name"))
-  projectDescription <- emptyToNull(prop("description"))
-
-  # Remove version and container metadata from file path properties
-  pcProps <- pcProps[
-    !names(pcProps) %in%
-      c("schemaVersion", "esqlabsRVersion", "name", "description")
-  ]
-
-  # Resolve the configurations folder relative to the Excel file. The
-  # `configurationsFolder` and the per-section workbook filenames come from the
-  # author-controlled Property column, so they are contained under the Excel
-  # project directory (`pcDir`) the same way the JSON-side read paths are
-  # contained under their working folders (see `.resolveWorkingFolder()` /
-  # `.resolveProjectPath()`): a crafted workbook cannot name a folder or file
-  # that escapes the project root via `../` or an absolute path. The `${VAR}`
-  # environment-variable form remains the sanctioned way to point at an
-  # out-of-project location, so a value that declares one is exempt.
-  configsFolderRaw <- prop("configurationsFolder")
-  configsFolder <- configsFolderRaw
-  if (!is.null(configsFolder)) {
-    # Containment is judged on the raw (pre-expansion) value: a `${VAR}` opts
-    # into an out-of-project location and is exempt, everything else must stay
-    # under `pcDir`. Resolution then expands the variable and joins a relative
-    # value onto `pcDir`, matching `.cleanPath()`'s expand-then-resolve order.
-    if (!.declaresEnvVarPath(configsFolderRaw)) {
-      configsFolder <- .resolveProjectPath(
-        configsFolder,
-        pcDir,
-        "configurationsFolder"
-      )
-    } else {
-      configsFolder <- .replaceEnvVarPath(configsFolder)
-      if (!fs::is_absolute_path(configsFolder)) {
-        configsFolder <- file.path(pcDir, configsFolder)
-      }
-    }
-    configsFolder <- normalizePath(configsFolder, mustWork = FALSE)
-  }
-
-  # Helper to resolve a config file path, contained under `configsFolder`.
-  resolveConfigFile <- function(fileName, fieldName = "configuration file") {
-    if (is.null(fileName) || is.na(fileName) || fileName == "") {
-      return(NULL)
-    }
-    if (is.null(configsFolder)) {
-      return(NULL)
-    }
-    # Abort if the author-controlled filename escapes the configurations folder
-    # (a `../`-climbing or absolute value); a legitimate missing file is left to
-    # the caller's own existence check, so containment must run before that.
-    resolved <- .resolveProjectPath(fileName, configsFolder, fieldName)
-    normalizePath(resolved, mustWork = FALSE)
-  }
-
-  # Default config filenames for sections whose path property is omitted
-  # from Project.xlsx (e.g. exports of programmatic projects that never
-  # set a custom path). A workbook read under one of these rather than under a
-  # name the property sheet gives is reported in the import summary, since the
-  # project itself does not declare it.
-  defaultConfigFile <- list(
-    modelParamsFile = "ModelParameters.xlsx",
-    individualsFile = "Individuals.xlsx",
-    populationsFile = "Populations.xlsx",
-    scenariosFile = "Scenarios.xlsx",
-    applicationsFile = "Applications.xlsx",
-    plotsFile = "Plots.xlsx",
-    parameterIdentificationFile = "ParameterIdentification.xlsx",
-    initialConditionsFile = "InitialConditions.xlsx"
-  )
-  # Build the JSON structure -- schemaVersion comes from the Excel source;
-  # if the Excel predates versioning, default to "2.0".
-  jsonData <- list(
-    schemaVersion = schemaVersion,
-    esqlabsRVersion = as.character(utils::packageVersion("esqlabsR"))
-  )
-  # Carry the container metadata through only when present, so an old Excel
-  # file (no `name` / `description` rows) yields a project without them rather
-  # than null-valued fields.
-  if (!is.null(projectName)) {
-    jsonData$name <- projectName
-  }
-  if (!is.null(projectDescription)) {
-    jsonData$description <- projectDescription
-  }
-
-  # Path properties from Project.xlsx split into the two container blocks: the
-  # four live working folders (`filePaths`) and the seven Excel-bridge sheet
-  # names (`excel`). Any other property is treated as a live working folder.
-  pathProps <- as.list(pcProps)
-  excelProps <- pathProps[names(pathProps) %in% .excelFilePathFields]
-  filePathProps <- pathProps[!(names(pathProps) %in% .excelFilePathFields)]
-  filePathProps <- .resolveExcelPopulationsFolder(
-    filePathProps,
-    pcDir,
-    configsFolder
-  )
-  jsonData$filePaths <- filePathProps
-  if (length(excelProps) > 0L) {
-    jsonData$excel <- excelProps
-  }
-
-  # The unified `parameterSets` section is accumulated across several sources
-  # (the model-parameters workbook, plus the non-primary sheets of the
-  # individuals and applications workbooks). Seed it here so the section
-  # descriptors below can append to it. An id defined in more than one source
-  # is a collision that aborts the eventual load (`.mergeParameterSetSections`).
-  jsonData$parameterSets <- list()
-
-  # Each import section is described by the config-file property that locates
-  # its workbook and a `parse(file, jsonData)` closure that reads that workbook
-  # and returns the updated `jsonData`. One loop below resolves each property,
-  # skips a section whose workbook is absent, and applies its closure, so every
-  # section shares one existence guard rather than repeating it. The closures
-  # keep each section's own (heterogeneous) sheet handling explicit.
-  sections <- list(
+# Each import section is described by the config-file property that locates
+# its workbook and a `parse(file, jsonData)` closure that reads that workbook
+# and returns the updated `jsonData`. `importProjectFromExcel()` resolves each
+# property, skips a section whose workbook is absent, and applies its closure,
+# so every section shares one existence guard rather than repeating it. The
+# closures keep each section's own (heterogeneous) sheet handling explicit.
+#
+# The parameter-identification closure records the observed-data sheets its
+# workbook names into `state`, an environment the caller owns, because the
+# check they feed runs after the whole loop, once the observed data is parsed.
+#
+# @keywords internal
+# @noRd
+.excelImportSections <- function(state) {
+  list(
     # OutputPaths and Scenarios both live in the scenarios workbook.
     list(
       property = "scenariosFile",
@@ -470,7 +258,7 @@ importProjectFromExcel <- function(
     list(
       property = "parameterIdentificationFile",
       parse = function(file, jsonData) {
-        declaredObservedSheets <<- .excelPIObservedDataSheets(file)
+        state$declaredObservedSheets <- .excelPIObservedDataSheets(file)
         # The scenarios section is parsed above, so the oldest 5.x mapping layout
         # can reach the output paths its rows identify their outputs through.
         tasks <- .parseExcelParameterIdentification(file, jsonData$scenarios)
@@ -485,6 +273,234 @@ importProjectFromExcel <- function(
       }
     )
   )
+}
+
+#' Import project configuration from Excel files
+#'
+#' @description Reads all Excel configuration files in an esqlabsR project and
+#' converts them to the JSON project format: a `Project.json` project file plus
+#' one file per definition in the `definitions/` folder. The result is a
+#' ready-to-use project — `loadProject("<outputDir>/Project.json")` can open it
+#' directly. This is the migration path from Excel-based projects to the
+#' JSON-primary workflow.
+#'
+#' The `configurationsFolder` and the per-section workbook filenames are read
+#' from the Excel file and must stay under the project folder: a value that
+#' escapes it (a `../` climb or an absolute path) aborts naming the field. A
+#' folder deliberately placed outside the project with the `${VAR}`
+#' environment-variable form is still allowed.
+#'
+#' @param projectConfigPath Path to the `Project.xlsx` file.
+#'   Defaults to `"Project.xlsx"`.
+#' @param outputDir Directory where the JSON project is created. If `NULL`
+#'   (default), it is created in the same directory as the source Excel file.
+#' @param overwrite Logical. Guards against silently replacing an existing JSON
+#'   project. With `overwrite = FALSE` (default), the import aborts when a
+#'   project file or a non-empty `definitions/` tree already exists in
+#'   `outputDir`, because re-importing replaces the JSON project with the Excel
+#'   state and deletes any definitions authored only on the JSON side. Pass
+#'   `overwrite = TRUE` to replace the existing JSON project with the Excel
+#'   state.
+#' @param silent Logical. If `TRUE`, suppresses the import summary (the project
+#'   written, its per-section definition counts, and the folders copied or
+#'   missing). Defaults to `FALSE`.
+#' @param copyAssets Logical. Whether to copy the input folders the project
+#'   references (models, data, csv populations) into `outputDir`, which is what
+#'   makes the imported project runnable where it was written. Defaults to
+#'   `TRUE`. Set it to `FALSE` when only the definitions are wanted and the
+#'   assets would be wasted work, as when the import feeds a throwaway
+#'   comparison snapshot.
+#' @param projectFileName Name of the project file the import writes in
+#'   `outputDir`. Defaults to `"Project.json"`, the same name [initProject()]
+#'   and [loadProject()] use, so an imported project opens like any other. Pass
+#'   another name (for example `"MyStudy"`, or `"MyStudy.json"`) to label the
+#'   project file after the study rather than by the generic name; a `.json`
+#'   extension is appended when the name does not already end in one. It must be
+#'   a plain filename, not a path.
+#'
+#'   This names the project file only. The `definitions/` tree beside it, and
+#'   the copied `Models/` and `Data/` folders, are shared by whatever is in
+#'   `outputDir`, so a second import into the same folder still replaces the
+#'   first project rather than sitting alongside it. Give each project its own
+#'   `outputDir`.
+#'
+#' @returns Invisibly returns the path to the created project file.
+#' @export
+#' @family projectPersistence
+importProjectFromExcel <- function(
+  projectConfigPath = "Project.xlsx",
+  outputDir = NULL,
+  overwrite = FALSE,
+  silent = FALSE,
+  copyAssets = TRUE,
+  projectFileName = "Project.json"
+) {
+  validateIsString(projectConfigPath)
+  validateIsLogical(copyAssets)
+  .validateFilenameSegment(projectFileName, messages$invalidProjectFileName)
+
+  if (!file.exists(projectConfigPath)) {
+    cli::cli_abort(messages$fileNotFound(projectConfigPath))
+  }
+
+  # Read the Project.xlsx to get path settings. A corrupt or empty file is not
+  # a valid Excel workbook, so `readxl` raises a raw "zip file cannot be opened"
+  # error that names nothing useful; wrap it in a clear message naming the path.
+  pcExcel <- tryCatch(
+    readExcel(projectConfigPath),
+    error = function(e) {
+      cli::cli_abort(
+        c(
+          "{.path {projectConfigPath}} is not a readable Excel project file.",
+          "i" = "It must be a valid {.field .xlsx} workbook \\
+          (the project's {.file Project.xlsx})."
+        ),
+        parent = e
+      )
+    }
+  )
+  pcDir <- dirname(fs::path_abs(projectConfigPath))
+
+  # Build a lookup of Property -> Value from the Excel file
+  pcProps <- stats::setNames(
+    as.character(pcExcel$Value),
+    as.character(pcExcel$Property)
+  )
+
+  # NULL-safe property lookup (single-bracket "[" returns NA when key absent
+  # in named character; collapse that to NULL).
+  prop <- function(name) {
+    if (!(name %in% names(pcProps))) {
+      return(NULL)
+    }
+    val <- pcProps[[name]]
+    if (length(val) == 0 || is.na(val)) NULL else val
+  }
+
+  # Read version metadata (with fallback for old Excel files)
+  schemaVersion <- prop("schemaVersion") %||% "2.0"
+
+  # Read container metadata. `name` / `description` are top-level container
+  # fields written by `exportProjectToExcel()`; read them back here so the
+  # round trip restores them. An absent row (an old Excel file) or an
+  # empty-string row (a project that carried no name/description on export)
+  # both resolve to NULL, so a nameless project does not gain an empty name.
+  emptyToNull <- function(x) if (is.null(x) || !nzchar(x)) NULL else x
+  projectName <- emptyToNull(prop("name"))
+  projectDescription <- emptyToNull(prop("description"))
+
+  # Remove version and container metadata from file path properties
+  pcProps <- pcProps[
+    !names(pcProps) %in%
+      c("schemaVersion", "esqlabsRVersion", "name", "description")
+  ]
+
+  # Resolve the configurations folder relative to the Excel file. The
+  # `configurationsFolder` and the per-section workbook filenames come from the
+  # author-controlled Property column, so they are contained under the Excel
+  # project directory (`pcDir`) the same way the JSON-side read paths are
+  # contained under their working folders (see `.resolveWorkingFolder()` /
+  # `.resolveProjectPath()`): a crafted workbook cannot name a folder or file
+  # that escapes the project root via `../` or an absolute path. The `${VAR}`
+  # environment-variable form remains the sanctioned way to point at an
+  # out-of-project location, so a value that declares one is exempt.
+  configsFolderRaw <- prop("configurationsFolder")
+  configsFolder <- configsFolderRaw
+  if (!is.null(configsFolder)) {
+    # Containment is judged on the raw (pre-expansion) value: a `${VAR}` opts
+    # into an out-of-project location and is exempt, everything else must stay
+    # under `pcDir`. Resolution then expands the variable and joins a relative
+    # value onto `pcDir`, matching `.cleanPath()`'s expand-then-resolve order.
+    if (!.declaresEnvVarPath(configsFolderRaw)) {
+      configsFolder <- .resolveProjectPath(
+        configsFolder,
+        pcDir,
+        "configurationsFolder"
+      )
+    } else {
+      configsFolder <- .replaceEnvVarPath(configsFolder)
+      if (!fs::is_absolute_path(configsFolder)) {
+        configsFolder <- file.path(pcDir, configsFolder)
+      }
+    }
+    configsFolder <- normalizePath(configsFolder, mustWork = FALSE)
+  }
+
+  # Helper to resolve a config file path, contained under `configsFolder`.
+  resolveConfigFile <- function(fileName, fieldName = "configuration file") {
+    if (is.null(fileName) || is.na(fileName) || fileName == "") {
+      return(NULL)
+    }
+    if (is.null(configsFolder)) {
+      return(NULL)
+    }
+    # Abort if the author-controlled filename escapes the configurations folder
+    # (a `../`-climbing or absolute value); a legitimate missing file is left to
+    # the caller's own existence check, so containment must run before that.
+    resolved <- .resolveProjectPath(fileName, configsFolder, fieldName)
+    normalizePath(resolved, mustWork = FALSE)
+  }
+
+  # Default config filenames for sections whose path property is omitted
+  # from Project.xlsx (e.g. exports of programmatic projects that never
+  # set a custom path). A workbook read under one of these rather than under a
+  # name the property sheet gives is reported in the import summary, since the
+  # project itself does not declare it.
+  defaultConfigFile <- list(
+    modelParamsFile = "ModelParameters.xlsx",
+    individualsFile = "Individuals.xlsx",
+    populationsFile = "Populations.xlsx",
+    scenariosFile = "Scenarios.xlsx",
+    applicationsFile = "Applications.xlsx",
+    plotsFile = "Plots.xlsx",
+    parameterIdentificationFile = "ParameterIdentification.xlsx",
+    initialConditionsFile = "InitialConditions.xlsx"
+  )
+  # Build the JSON structure -- schemaVersion comes from the Excel source;
+  # if the Excel predates versioning, default to "2.0".
+  jsonData <- list(
+    schemaVersion = schemaVersion,
+    esqlabsRVersion = as.character(utils::packageVersion("esqlabsR"))
+  )
+  # Carry the container metadata through only when present, so an old Excel
+  # file (no `name` / `description` rows) yields a project without them rather
+  # than null-valued fields.
+  if (!is.null(projectName)) {
+    jsonData$name <- projectName
+  }
+  if (!is.null(projectDescription)) {
+    jsonData$description <- projectDescription
+  }
+
+  # Path properties from Project.xlsx split into the two container blocks: the
+  # four live working folders (`filePaths`) and the seven Excel-bridge sheet
+  # names (`excel`). Any other property is treated as a live working folder.
+  pathProps <- as.list(pcProps)
+  excelProps <- pathProps[names(pathProps) %in% .excelFilePathFields]
+  filePathProps <- pathProps[!(names(pathProps) %in% .excelFilePathFields)]
+  filePathProps <- .resolveExcelPopulationsFolder(
+    filePathProps,
+    pcDir,
+    configsFolder
+  )
+  jsonData$filePaths <- filePathProps
+  if (length(excelProps) > 0L) {
+    jsonData$excel <- excelProps
+  }
+
+  # The unified `parameterSets` section is accumulated across several sources
+  # (the model-parameters workbook, plus the non-primary sheets of the
+  # individuals and applications workbooks). Seed it here so the section
+  # descriptors below can append to it. An id defined in more than one source
+  # is a collision that aborts the eventual load (`.mergeParameterSetSections`).
+  jsonData$parameterSets <- list()
+
+  # The observed-data sheets a legacy parameter-identification workbook names.
+  # Checked against the observed data actually imported, which is parsed after
+  # the loop below, so the section closure writes them here and they are read
+  # back further down.
+  importState <- rlang::env(declaredObservedSheets = character())
+  sections <- .excelImportSections(importState)
 
   # What the loop below read, and what it could not: a workbook the property sheet
   # names but that is not on disk is a section silently imported as empty, and a
@@ -494,10 +510,6 @@ importProjectFromExcel <- function(
   missingWorkbooks <- character()
   conventionWorkbooks <- character()
   readWorkbooks <- character()
-  # The observed-data sheets a legacy parameter-identification workbook names.
-  # Checked against the observed data actually imported, which is parsed after
-  # this loop, so the names are collected here and reported there.
-  declaredObservedSheets <- character()
   for (section in sections) {
     named <- prop(section$property)
     file <- resolveConfigFile(
@@ -556,7 +568,7 @@ importProjectFromExcel <- function(
   # only worth a word when a sheet it names is not among the imported ones, since
   # then the mapping's data set is not in the project at all.
   .warnUnimportedPIObservedDataSheets(
-    declaredObservedSheets,
+    importState$declaredObservedSheets,
     jsonData$observedData
   )
 
@@ -624,7 +636,7 @@ importProjectFromExcel <- function(
   # canonical on-disk `Project.json` shape, so an imported project is
   # indistinguishable from any other tree project. The Excel sync check compares
   # the in-memory project against the workbook (see `.compareJsonToExcel()`), so
-  # it no longer needs an inlined container to diff against.
+  # it needs no inlined container to diff against.
   .writeProjectTree(importedProject, outputDir, containerPath = outputPath)
 
   # The definitions reference models, data, and population files by a path

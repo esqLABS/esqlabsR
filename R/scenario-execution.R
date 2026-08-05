@@ -114,41 +114,25 @@
 # @noRd
 .mergeScenarioParameters <- function(scenario, project, customParams = NULL) {
   params <- NULL
-  # Read the unified parameter-sets section once; the three loops below all
+  # Read the unified parameter-sets section once; the three layers below all
   # resolve their set ids against it.
   parameterSets <- project$definitions$parameterSets
 
   # 1. modelParameterSets
-  if (!is.null(scenario$modelParameterSets)) {
-    for (setId in scenario$modelParameterSets) {
-      setParams <- .parameterSetToStructure(
-        parameterSets[[setId]]
-      )
-      if (!is.null(setParams)) {
-        params <- extendParameterStructure(
-          parameters = params,
-          newParameters = setParams
-        )
-      }
-    }
-  }
+  params <- .extendWithParameterSets(
+    params,
+    scenario$modelParameterSets,
+    parameterSets
+  )
 
   # 2. individual parameterSets
   if (!is.null(scenario$individualId) && !is.na(scenario$individualId)) {
     indivData <- project$definitions$individuals[[scenario$individualId]]
-    if (!is.null(indivData)) {
-      for (setId in unlist(indivData$parameterSets)) {
-        setParams <- .parameterSetToStructure(
-          parameterSets[[setId]]
-        )
-        if (!is.null(setParams)) {
-          params <- extendParameterStructure(
-            parameters = params,
-            newParameters = setParams
-          )
-        }
-      }
-    }
+    params <- .extendWithParameterSets(
+      params,
+      unlist(indivData$parameterSets),
+      parameterSets
+    )
   }
 
   # 3. application parameterSets
@@ -163,17 +147,11 @@
         applicationProtocol = scenario$applicationProtocol
       ))
     }
-    for (setId in unlist(appData$parameterSets)) {
-      setParams <- .parameterSetToStructure(
-        parameterSets[[setId]]
-      )
-      if (!is.null(setParams)) {
-        params <- extendParameterStructure(
-          parameters = params,
-          newParameters = setParams
-        )
-      }
-    }
+    params <- .extendWithParameterSets(
+      params,
+      unlist(appData$parameterSets),
+      parameterSets
+    )
   }
 
   # 4. customParams
@@ -184,6 +162,26 @@
     )
   }
 
+  params
+}
+
+# Fold each named parameter set into `params`, skipping a set id that resolves
+# to nothing. The three layers a scenario draws sets from (its own
+# `modelParameterSets`, its individual's, and its application protocol's) merge
+# the same way, each overriding the one before it.
+#
+# @keywords internal
+# @noRd
+.extendWithParameterSets <- function(params, setIds, parameterSets) {
+  for (setId in setIds) {
+    setParams <- .parameterSetToStructure(parameterSets[[setId]])
+    if (!is.null(setParams)) {
+      params <- extendParameterStructure(
+        parameters = params,
+        newParameters = setParams
+      )
+    }
+  }
   params
 }
 

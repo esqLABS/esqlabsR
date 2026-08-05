@@ -31,7 +31,7 @@ test_that("paramSheets argument is soft-deprecated", {
       pkmlInProject(project),
       project = project,
       scenarios = "test1",
-      parameterSets = "Global",
+      parameterSets = "global",
       paramSheets = "Aciclovir"
     )),
     class = "lifecycle_warning_deprecated"
@@ -536,8 +536,8 @@ test_that("a failing addScenario rolls back scenarios and outputPaths", {
     suppressMessages(createScenariosFromPKML(
       rep(pkmlFixture, 2),
       project = project,
-      scenarios = c("Ok", "Bad"),
-      parameterSets = c("Global", "DoesNotExist")
+      scenarios = c("ok", "bad"),
+      parameterSets = c("global", "doesnotexist")
     ))
   )
 
@@ -556,8 +556,8 @@ test_that("a failing addScenario rollback preserves the validation flag", {
     suppressMessages(createScenariosFromPKML(
       rep(pkmlFixture, 2),
       project = project,
-      scenarios = c("Ok", "Bad"),
-      parameterSets = c("Global", "DoesNotExist")
+      scenarios = c("ok", "bad"),
+      parameterSets = c("global", "doesnotexist")
     ))
   )
 
@@ -569,9 +569,8 @@ test_that("a failing addScenario rolls back the on-disk scenario tree", {
   # branch that writes the restored section back to disk is never hit. Use a
   # real on-disk project so the rollback materializes to `definitions/scenarios`.
   project <- testProject()
-  project$paths$simulationsFolder <- dirname(pkmlFixture)
   # Reach a clean baseline (memory == tree) so the assertion below proves the
-  # rollback restores it, rather than reflecting the `simulationsFolder` edit above.
+  # rollback restores it.
   saveProject(project)
   expect_false(.isModified(project))
   scenariosDir <- file.path(
@@ -583,9 +582,9 @@ test_that("a failing addScenario rolls back the on-disk scenario tree", {
 
   expect_error(
     suppressMessages(createScenariosFromPKML(
-      rep(pkmlFixture, 2),
+      rep(pkmlInProject(project), 2),
       project = project,
-      scenarios = c("Ok", "Bad"),
+      scenarios = c("ok", "bad"),
       parameterSets = c("global", "doesnotexist")
     ))
   )

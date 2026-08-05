@@ -1231,9 +1231,9 @@
 # pointing the user at the canonicalizing authoring API. The authoring API
 # (`add*` / `set*`) canonicalizes ids before they reach here, so a normal
 # mutation always passes; this catches a raw write-back
-# (`project$<section>[[key]] <- record`) that bypassed canonicalization. This
-# subsumes the old case-insensitive-collision guard: two keys differing only in
-# case cannot both be canonical, so they can never both reach the tree.
+# (`project$<section>[[key]] <- record`) that bypassed canonicalization. It also
+# covers case-insensitive collisions: two keys differing only in case cannot
+# both be canonical, so they can never both reach the tree.
 #
 # @keywords internal
 # @noRd

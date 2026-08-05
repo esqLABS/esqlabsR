@@ -92,3 +92,28 @@ test_that(".coerceNumericField returns NULL for NULL and as.double otherwise", {
   expect_identical(.coerceNumericField(45), 45)
   expect_identical(.coerceNumericField("45"), 45)
 })
+
+test_that(".isUnsetNumericField treats NA as unset but NaN as a value", {
+  # An empty workbook cell arrives as NA, so NA means "field not set".
+  expect_true(.isUnsetNumericField(NA))
+  expect_true(.isUnsetNumericField(NA_real_))
+  expect_true(.isUnsetNumericField(NA_character_))
+  # NaN satisfies is.na() but never comes from an empty cell: it comes from a
+  # calculation that went wrong, so it is a value, and an invalid one.
+  expect_false(.isUnsetNumericField(NaN))
+  expect_false(.isUnsetNumericField(45))
+  expect_false(.isUnsetNumericField(c(NA, NA)))
+})
+
+test_that(".isInvalidNumericField rejects NaN and anything not coercing to a number", {
+  expect_true(.isInvalidNumericField(NaN))
+  expect_true(.isInvalidNumericField(Inf))
+  expect_true(.isInvalidNumericField("80kg"))
+  expect_true(.isInvalidNumericField(c(1, 2)))
+  # Not set, so not invalid.
+  expect_false(.isInvalidNumericField(NULL))
+  expect_false(.isInvalidNumericField(NA))
+  # Set and usable, including a numeric-like string from a workbook.
+  expect_false(.isInvalidNumericField(45))
+  expect_false(.isInvalidNumericField("45"))
+})

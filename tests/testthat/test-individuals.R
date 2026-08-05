@@ -525,3 +525,30 @@ test_that("a classed Individual still behaves as a list", {
   expect_identical(indiv[["species"]], "Human")
   expect_true("gender" %in% names(indiv))
 })
+
+test_that("addIndividual aborts on a NaN numeric field", {
+  project <- testProject()
+
+  expect_snapshot(
+    error = TRUE,
+    addIndividual(project, "nanweight", "Human", weight = NaN)
+  )
+})
+
+test_that("setIndividual aborts on a NaN numeric field and keeps the old value", {
+  project <- testProject()
+  addIndividual(project, "keepweight", "Human", weight = 70)
+
+  expect_error(setIndividual(project, "keepweight", weight = NaN))
+  # NaN must not be read as "clear the field": the stored weight survives.
+  expect_equal(project$definitions$individuals$keepweight$weight, 70)
+})
+
+test_that("setIndividual still clears a numeric field given NA", {
+  project <- testProject()
+  addIndividual(project, "clearweight", "Human", weight = 70)
+
+  setIndividual(project, "clearweight", weight = NA)
+
+  expect_null(project$definitions$individuals$clearweight$weight)
+})

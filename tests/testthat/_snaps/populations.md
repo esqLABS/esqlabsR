@@ -403,3 +403,13 @@
         * Type: programmatic
         * File: resolved from the runtime store at run time
 
+# addPopulation aborts on a NaN numeric field
+
+    Code
+      addPopulation(project, "nanweight", "Human", numberOfIndividuals = 10,
+        weightMin = NaN)
+    Condition
+      Error in `addPopulation()`:
+      ! Cannot add population "nanweight":
+      x weightMin must be a single finite number
+

@@ -39,6 +39,90 @@ testProject <- function(envir = parent.frame()) {
   loadProject(file.path(.copyTestProjectDir(envir), "Project.json"))
 }
 
+#' Pin the print and precision options a numeric snapshot depends on.
+#'
+#' A snapshot of tabular output formats differently under another `digits` or
+#' `pillar.sigfig`, so a block taking one calls this first. Scoped to the
+#' calling frame with `withr::local_options()`, so nothing leaks past the test.
+.localSnapshotOptions <- function(.local_envir = parent.frame()) {
+  withr::local_options(
+    tibble.width = Inf,
+    pillar.min_title_chars = Inf,
+    pillar.sigfig = 4,
+    digits = 4,
+    scipen = 999,
+    .local_envir = .local_envir
+  )
+}
+
+#' The observed data set the test project's Aciclovir scenario is fitted against.
+#'
+#' The name is long and appears in most parameter-identification fixtures, so
+#' name it once here rather than pasting the literal into each test.
+testObservedDataId <- paste0(
+  "Laskin 1982.Group A_Aciclovir_1_Human_MALE_",
+  "PeripheralVenousBlood_Plasma_2.5 mg/kg_iv_"
+)
+
+#' Build a `PIParameter` for the test project's EHC parameter.
+#'
+#' Defaults describe the standard fixture; pass any `PIParameter()` argument to
+#' override just that one, so a test shows only what it varies.
+testPIParameter <- function(...) {
+  do.call(
+    PIParameter,
+    utils::modifyList(
+      list(
+        id = "EHC",
+        scenarios = "testscenario",
+        path = "Organism|Liver|EHC continuous fraction",
+        minValue = 0.5,
+        maxValue = 1.0,
+        startValue = 0.8
+      ),
+      list(...)
+    )
+  )
+}
+
+#' Build a `PIOutputMapping` for the test project's peripheral venous blood.
+#'
+#' Overrides work the same way as [testPIParameter()].
+testPIOutputMapping <- function(...) {
+  do.call(
+    PIOutputMapping,
+    utils::modifyList(
+      list(
+        id = "PVB",
+        scenarios = "testscenario",
+        outputPath = "aciclovir_pvb",
+        observedData = testObservedDataId
+      ),
+      list(...)
+    )
+  )
+}
+
+#' Build a `PITask` over the test project's Aciclovir scenario.
+#'
+#' Defaults to one [testPIParameter()] and one [testPIOutputMapping()].
+#' Overrides work the same way as [testPIParameter()].
+testPITask <- function(...) {
+  do.call(
+    PITask,
+    utils::modifyList(
+      list(
+        id = "t",
+        scenarios = "testscenario",
+        parameters = list(testPIParameter()),
+        outputMappings = list(testPIOutputMapping()),
+        configuration = list(algorithm = "BOBYQA")
+      ),
+      list(...)
+    )
+  )
+}
+
 # The Aciclovir PKML fixture that lives INSIDE a copied test project (under its
 # own `simulationsFolder`). Use this, rather than the source-tree `pkmlFixture`,
 # when a test builds an on-disk `testProject()` and calls
@@ -87,6 +171,82 @@ exampleProject <- function(envir = parent.frame()) {
   dest <- withr::local_tempdir("Example_", .local_envir = envir)
   file.copy(list.files(src, full.names = TRUE), dest, recursive = TRUE)
   loadProject(file.path(dest, "Project.json"))
+}
+
+#' One row of an Excel `Scenarios` sheet, with every required column present.
+#'
+#' Named arguments override a column's value; passing `NULL` drops the column
+#' entirely, which is how a test builds a sheet that omits or misspells one.
+scenarioSheetRow <- function(...) {
+  row <- list(
+    Scenario_name = "s1",
+    IndividualId = NA_character_,
+    PopulationId = NA_character_,
+    ReadPopulationFromCSV = NA,
+    ModelParameterSheets = NA_character_,
+    ApplicationProtocol = NA_character_,
+    SimulationTime = NA_character_,
+    SimulationTimeUnit = NA_character_,
+    SteadyState = NA,
+    SteadyStateTime = NA_real_,
+    SteadyStateTimeUnit = NA_character_,
+    OverwriteFormulasInSS = NA,
+    ModelFile = "m.pkml",
+    OutputPathsIds = "op1"
+  )
+  overrides <- list(...)
+  for (column in names(overrides)) {
+    row[[column]] <- overrides[[column]]
+  }
+  row <- row[!vapply(row, is.null, logical(1))]
+  data.frame(row, stringsAsFactors = FALSE)
+}
+
+#' A writable copy of the `TestProjectExcel` fixture, returning its directory.
+#'
+#' The Excel-bridge tests import, export and re-import in place, so they need a
+#' throwaway copy rather than the version-controlled fixture. The copy is
+#' removed when the calling test finishes.
+localExcelProjectDir <- function(envir = parent.frame()) {
+  workDir <- withr::local_tempdir(.local_envir = envir)
+  file.copy(dirname(testProjectExcelPath()), workDir, recursive = TRUE)
+  file.path(workDir, "TestProjectExcel")
+}
+
+#' Export a project to Excel and read it back, returning the re-imported one.
+#'
+#' The two temporary directories (the workbook set, and the JSON project built
+#' from it) are removed when the calling test finishes.
+#'
+#' The example project's observed data does not survive the round trip, so the
+#' re-imported project always has one reference it cannot resolve. That one
+#' warning is muffled here because it says nothing about the section under
+#' test; every other warning is left to surface. Two tests assert it directly
+#' rather than calling this helper.
+excelRoundTrip <- function(project, envir = parent.frame()) {
+  excelOut <- withr::local_tempdir(.local_envir = envir)
+  exportProjectToExcel(project, outputDir = excelOut, silent = TRUE)
+  jsonOut <- withr::local_tempdir(.local_envir = envir)
+  .muffleCrossReferenceWarning({
+    reimportedJson <- importProjectFromExcel(
+      file.path(excelOut, "Project.xlsx"),
+      outputDir = jsonOut,
+      silent = TRUE
+    )
+    loadProject(reimportedJson)
+  })
+}
+
+#' Evaluate `expr`, dropping only the unresolved-cross-reference warning.
+.muffleCrossReferenceWarning <- function(expr) {
+  withCallingHandlers(
+    expr,
+    warning = function(w) {
+      if (grepl("unresolved cross-reference", conditionMessage(w))) {
+        invokeRestart("muffleWarning")
+      }
+    }
+  )
 }
 
 #' Path to the legacy Excel `ProjectConfiguration.xlsx` fixture, used by

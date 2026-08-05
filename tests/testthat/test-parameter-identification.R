@@ -718,29 +718,7 @@ test_that("validateProject() flags PI outputMappings that reference unknown outp
 
 test_that(".createSinglePITask builds a ParameterIdentification with the expected counts", {
   project <- testProject()
-  task <- PITask(
-    id = "t",
-    scenarios = "testscenario",
-    parameters = list(
-      PIParameter(
-        id = "EHC",
-        scenarios = "testscenario",
-        path = "Organism|Liver|EHC continuous fraction",
-        minValue = 0.5,
-        maxValue = 1.0,
-        startValue = 0.8
-      )
-    ),
-    outputMappings = list(
-      PIOutputMapping(
-        id = "PVB",
-        scenarios = "testscenario",
-        outputPath = "aciclovir_pvb",
-        observedData = "Laskin 1982.Group A_Aciclovir_1_Human_MALE_PeripheralVenousBlood_Plasma_2.5 mg/kg_iv_"
-      )
-    ),
-    configuration = list(algorithm = "BOBYQA")
-  )
+  task <- testPITask()
 
   observedData <- loadObservedData(project)
 
@@ -777,12 +755,7 @@ test_that(".createSinglePITask reports a unit of another dimension instead of ab
       )
     ),
     outputMappings = list(
-      PIOutputMapping(
-        id = "PVB",
-        scenarios = "testscenario",
-        outputPath = "aciclovir_pvb",
-        observedData = "Laskin 1982.Group A_Aciclovir_1_Human_MALE_PeripheralVenousBlood_Plasma_2.5 mg/kg_iv_"
-      )
+      testPIOutputMapping()
     ),
     configuration = list(algorithm = "BOBYQA")
   )
@@ -827,7 +800,7 @@ test_that(".createSinglePITask shares one optimisation variable across scenarios
         id = "PVB",
         scenarios = sharedScenarios,
         outputPath = "aciclovir_pvb",
-        observedData = "Laskin 1982.Group A_Aciclovir_1_Human_MALE_PeripheralVenousBlood_Plasma_2.5 mg/kg_iv_"
+        observedData = testObservedDataId
       )
     ),
     configuration = list(algorithm = "BOBYQA")
@@ -877,7 +850,7 @@ test_that(".createSinglePITask keeps the same path independent across scenarios 
         id = "PVB",
         scenarios = c("testscenario", "testscenario_steadystate"),
         outputPath = "aciclovir_pvb",
-        observedData = "Laskin 1982.Group A_Aciclovir_1_Human_MALE_PeripheralVenousBlood_Plasma_2.5 mg/kg_iv_"
+        observedData = testObservedDataId
       )
     ),
     configuration = list(algorithm = "BOBYQA")
@@ -901,14 +874,7 @@ test_that(".createSinglePITask errors when observedData is not in observedData",
     id = "t",
     scenarios = "testscenario",
     parameters = list(
-      PIParameter(
-        id = "EHC",
-        scenarios = "testscenario",
-        path = "Organism|Liver|EHC continuous fraction",
-        minValue = 0.5,
-        maxValue = 1.0,
-        startValue = 0.8
-      )
+      testPIParameter()
     ),
     outputMappings = list(
       PIOutputMapping(
@@ -947,12 +913,7 @@ test_that(".createSinglePITask errors when a parameter path is not in the simula
       )
     ),
     outputMappings = list(
-      PIOutputMapping(
-        id = "PVB",
-        scenarios = "testscenario",
-        outputPath = "aciclovir_pvb",
-        observedData = "Laskin 1982.Group A_Aciclovir_1_Human_MALE_PeripheralVenousBlood_Plasma_2.5 mg/kg_iv_"
-      )
+      testPIOutputMapping()
     ),
     configuration = list(algorithm = "BOBYQA")
   )
@@ -971,29 +932,7 @@ test_that(".createSinglePITask applies objectiveFunctionOptions from the configu
   project <- testProject()
   observedData <- loadObservedData(project)
   mkTask <- function(configuration) {
-    PITask(
-      id = "t",
-      scenarios = "testscenario",
-      parameters = list(
-        PIParameter(
-          id = "EHC",
-          scenarios = "testscenario",
-          path = "Organism|Liver|EHC continuous fraction",
-          minValue = 0.5,
-          maxValue = 1.0,
-          startValue = 0.8
-        )
-      ),
-      outputMappings = list(
-        PIOutputMapping(
-          id = "PVB",
-          scenarios = "testscenario",
-          outputPath = "aciclovir_pvb",
-          observedData = "Laskin 1982.Group A_Aciclovir_1_Human_MALE_PeripheralVenousBlood_Plasma_2.5 mg/kg_iv_"
-        )
-      ),
-      configuration = configuration
-    )
+    testPITask(configuration = configuration)
   }
 
   # Empty configuration: runtime defaults are preserved.
@@ -1034,29 +973,7 @@ test_that(".createSinglePITask applies simulationRunOptions from the configurati
   project <- testProject()
   observedData <- loadObservedData(project)
   mkTask <- function(configuration) {
-    PITask(
-      id = "t",
-      scenarios = "testscenario",
-      parameters = list(
-        PIParameter(
-          id = "EHC",
-          scenarios = "testscenario",
-          path = "Organism|Liver|EHC continuous fraction",
-          minValue = 0.5,
-          maxValue = 1.0,
-          startValue = 0.8
-        )
-      ),
-      outputMappings = list(
-        PIOutputMapping(
-          id = "PVB",
-          scenarios = "testscenario",
-          outputPath = "aciclovir_pvb",
-          observedData = "Laskin 1982.Group A_Aciclovir_1_Human_MALE_PeripheralVenousBlood_Plasma_2.5 mg/kg_iv_"
-        )
-      ),
-      configuration = configuration
-    )
+    testPITask(configuration = configuration)
   }
 
   # No block: simulationRunOptions stays NULL.
@@ -1099,29 +1016,7 @@ test_that(".createSinglePITask applies simulationRunOptions from the configurati
 
 test_that(".createSinglePITask overwrites scenario output paths with the PI-specified paths", {
   project <- testProject()
-  task <- PITask(
-    id = "t",
-    scenarios = "testscenario",
-    parameters = list(
-      PIParameter(
-        id = "EHC",
-        scenarios = "testscenario",
-        path = "Organism|Liver|EHC continuous fraction",
-        minValue = 0.5,
-        maxValue = 1.0,
-        startValue = 0.8
-      )
-    ),
-    outputMappings = list(
-      PIOutputMapping(
-        id = "PVB",
-        scenarios = "testscenario",
-        outputPath = "aciclovir_pvb",
-        observedData = "Laskin 1982.Group A_Aciclovir_1_Human_MALE_PeripheralVenousBlood_Plasma_2.5 mg/kg_iv_"
-      )
-    ),
-    configuration = list(algorithm = "BOBYQA")
-  )
+  task <- testPITask()
 
   pi <- .createSinglePITask(
     project = project,
@@ -1142,19 +1037,12 @@ test_that(".createSinglePITask overwrites scenario output paths with the PI-spec
 
 test_that(".createSinglePITask applies a scalar weight to the runtime dataWeights", {
   project <- testProject()
-  observedDataId <- "Laskin 1982.Group A_Aciclovir_1_Human_MALE_PeripheralVenousBlood_Plasma_2.5 mg/kg_iv_"
+  observedDataId <- testObservedDataId
   task <- PITask(
     id = "t",
     scenarios = "testscenario",
     parameters = list(
-      PIParameter(
-        id = "EHC",
-        scenarios = "testscenario",
-        path = "Organism|Liver|EHC continuous fraction",
-        minValue = 0.5,
-        maxValue = 1.0,
-        startValue = 0.8
-      )
+      testPIParameter()
     ),
     outputMappings = list(
       PIOutputMapping(
@@ -1179,19 +1067,12 @@ test_that(".createSinglePITask applies a scalar weight to the runtime dataWeight
 
 test_that(".createSinglePITask applies xOffset/yOffset/xFactor/yFactor to the runtime dataTransformations", {
   project <- testProject()
-  observedDataId <- "Laskin 1982.Group A_Aciclovir_1_Human_MALE_PeripheralVenousBlood_Plasma_2.5 mg/kg_iv_"
+  observedDataId <- testObservedDataId
   task <- PITask(
     id = "t",
     scenarios = "testscenario",
     parameters = list(
-      PIParameter(
-        id = "EHC",
-        scenarios = "testscenario",
-        path = "Organism|Liver|EHC continuous fraction",
-        minValue = 0.5,
-        maxValue = 1.0,
-        startValue = 0.8
-      )
+      testPIParameter()
     ),
     outputMappings = list(
       PIOutputMapping(
@@ -1622,7 +1503,7 @@ test_that("addPITask() errors on unknown outputPath", {
 test_that("addPITask() errors on duplicate id", {
   project <- testProject()
   args <- list(
-    id = "Dup",
+    id = "dup",
     scenarios = "testscenario",
     parameters = list(
       PIParameter(
@@ -2259,22 +2140,10 @@ test_that(".createSinglePITask builds when declared bounds do not bracket the mo
     id = "t",
     scenarios = "testscenario",
     parameters = list(
-      PIParameter(
-        id = "EHC",
-        scenarios = "testscenario",
-        path = "Organism|Liver|EHC continuous fraction",
-        minValue = 0.2,
-        maxValue = 0.8,
-        startValue = 0.5
-      )
+      testPIParameter(minValue = 0.2, maxValue = 0.8, startValue = 0.5)
     ),
     outputMappings = list(
-      PIOutputMapping(
-        id = "PVB",
-        scenarios = "testscenario",
-        outputPath = "aciclovir_pvb",
-        observedData = "Laskin 1982.Group A_Aciclovir_1_Human_MALE_PeripheralVenousBlood_Plasma_2.5 mg/kg_iv_"
-      )
+      testPIOutputMapping()
     ),
     configuration = list(algorithm = "BOBYQA")
   )
@@ -2308,12 +2177,7 @@ test_that(".createSinglePITask applies the declared PIParameter units to the run
       )
     ),
     outputMappings = list(
-      PIOutputMapping(
-        id = "PVB",
-        scenarios = "testscenario",
-        outputPath = "aciclovir_pvb",
-        observedData = "Laskin 1982.Group A_Aciclovir_1_Human_MALE_PeripheralVenousBlood_Plasma_2.5 mg/kg_iv_"
-      )
+      testPIOutputMapping()
     ),
     configuration = list(algorithm = "BOBYQA")
   )
@@ -2348,12 +2212,7 @@ test_that(".createSinglePITask leaves the model default unit for an unitless PIP
       )
     ),
     outputMappings = list(
-      PIOutputMapping(
-        id = "PVB",
-        scenarios = "testscenario",
-        outputPath = "aciclovir_pvb",
-        observedData = "Laskin 1982.Group A_Aciclovir_1_Human_MALE_PeripheralVenousBlood_Plasma_2.5 mg/kg_iv_"
-      )
+      testPIOutputMapping()
     ),
     configuration = list(algorithm = "BOBYQA")
   )
@@ -2448,7 +2307,7 @@ test_that("addPIParameter() scans for a free id and does not collide after a rem
     maxValue = 1,
     startValue = 0.5
   )
-  removePIParameter(project, "T", "p_explicit")
+  removePIParameter(project, "t", "p_explicit")
   # Auto-add again: must not abort with a colliding "T_param_2".
   addPIParameter(
     project,
@@ -2501,7 +2360,7 @@ test_that("addPIOutputMapping() scans for a free id and does not collide after a
     observedData = "D2",
     scenarios = "testscenario"
   )
-  removePIOutputMapping(project, "T", "m_explicit")
+  removePIOutputMapping(project, "t", "m_explicit")
   addPIOutputMapping(
     project,
     task = "t",
@@ -2641,7 +2500,7 @@ test_that(".validatePI surfaces duplicate output mapping ids within a task", {
 test_that("removePITask() warns and no-ops on an unknown task", {
   project <- testProject()
   before <- names(project$definitions$parameterIdentification)
-  expect_warning(removePITask(project, "Ghost"), "not found")
+  expect_warning(removePITask(project, "ghost"), "not found")
   expect_identical(names(project$definitions$parameterIdentification), before)
 })
 
@@ -2759,19 +2618,12 @@ test_that(".buildPIConfiguration() fills all algorithm defaults when algorithmOp
 
 test_that(".createSinglePITask honours non-default transforms and weights", {
   project <- testProject()
-  obsId <- "Laskin 1982.Group A_Aciclovir_1_Human_MALE_PeripheralVenousBlood_Plasma_2.5 mg/kg_iv_"
+  obsId <- testObservedDataId
   task <- PITask(
     id = "t",
     scenarios = "testscenario",
     parameters = list(
-      PIParameter(
-        id = "EHC",
-        scenarios = "testscenario",
-        path = "Organism|Liver|EHC continuous fraction",
-        minValue = 0.5,
-        maxValue = 1.0,
-        startValue = 0.8
-      )
+      testPIParameter()
     ),
     outputMappings = list(
       PIOutputMapping(
@@ -2810,22 +2662,10 @@ test_that("runPI(tasks = ) runs only the requested subset", {
     id = "second",
     scenarios = "testscenario",
     parameters = list(
-      PIParameter(
-        id = "EHC",
-        scenarios = "testscenario",
-        path = "Organism|Liver|EHC continuous fraction",
-        minValue = 0.5,
-        maxValue = 1.0,
-        startValue = 0.8
-      )
+      testPIParameter()
     ),
     outputMappings = list(
-      PIOutputMapping(
-        id = "PVB",
-        scenarios = "testscenario",
-        outputPath = "aciclovir_pvb",
-        observedData = "Laskin 1982.Group A_Aciclovir_1_Human_MALE_PeripheralVenousBlood_Plasma_2.5 mg/kg_iv_"
-      )
+      testPIOutputMapping()
     ),
     configuration = list(algorithm = "BOBYQA")
   )
@@ -2848,29 +2688,16 @@ test_that("runPI(tasks = ) canonicalizes the referenced task ids", {
   # canonical form. Referencing it by the originally typed (un-canonicalized)
   # name must still resolve, like every other id reference in the package.
   project <- testProject()
-  addPITask(
-    project,
-    id = "MixedCase",
-    scenarios = "testscenario",
-    parameters = list(
-      PIParameter(
-        id = "EHC",
-        scenarios = "testscenario",
-        path = "Organism|Liver|EHC continuous fraction",
-        minValue = 0.5,
-        maxValue = 1.0,
-        startValue = 0.8
-      )
+  expect_warning(
+    addPITask(
+      project,
+      id = "MixedCase",
+      scenarios = "testscenario",
+      parameters = list(testPIParameter()),
+      outputMappings = list(testPIOutputMapping()),
+      configuration = list(algorithm = "BOBYQA")
     ),
-    outputMappings = list(
-      PIOutputMapping(
-        id = "PVB",
-        scenarios = "testscenario",
-        outputPath = "aciclovir_pvb",
-        observedData = "Laskin 1982.Group A_Aciclovir_1_Human_MALE_PeripheralVenousBlood_Plasma_2.5 mg/kg_iv_"
-      )
-    ),
-    configuration = list(algorithm = "BOBYQA")
+    "Canonicalized 1 id"
   )
   expect_named(
     project$definitions$parameterIdentification,
@@ -2911,12 +2738,7 @@ test_that("runPI() builds every task before optimising any (fail fast on a build
       )
     ),
     outputMappings = list(
-      PIOutputMapping(
-        id = "PVB",
-        scenarios = "testscenario",
-        outputPath = "aciclovir_pvb",
-        observedData = "Laskin 1982.Group A_Aciclovir_1_Human_MALE_PeripheralVenousBlood_Plasma_2.5 mg/kg_iv_"
-      )
+      testPIOutputMapping()
     ),
     configuration = list(algorithm = "BOBYQA")
   )
@@ -3003,14 +2825,14 @@ test_that("removeOutputPath() warns when the path is referenced only by a PI map
       PIOutputMapping(
         id = "m",
         scenarios = "testscenario",
-        outputPath = "PIOnlyPath",
+        outputPath = "pionlypath",
         observedData = "D"
       )
     )
   )
   expect_warning(
-    removeOutputPath(project, "PIOnlyPath"),
-    "PIOnlyPath"
+    removeOutputPath(project, "pionlypath"),
+    "still referenced by 1 parameter identification task"
   )
 })
 
@@ -3028,22 +2850,10 @@ test_that("a complete PI task can be authored from scratch through exported func
   # add the task without reaching into an already-loaded project's internals.
   project <- testProject()
 
-  parameter <- PIParameter(
-    id = "EHC",
-    scenarios = "testscenario",
-    path = "Organism|Liver|EHC continuous fraction",
-    minValue = 0.5,
-    maxValue = 1.0,
-    startValue = 0.8
-  )
-  outputMapping <- PIOutputMapping(
-    id = "PVB",
-    scenarios = "testscenario",
-    outputPath = "aciclovir_pvb",
-    observedData = "Laskin 1982.Group A_Aciclovir_1_Human_MALE_PeripheralVenousBlood_Plasma_2.5 mg/kg_iv_"
-  )
+  parameter <- testPIParameter()
+  outputMapping <- testPIOutputMapping()
   task <- PITask(
-    id = "fromScratch",
+    id = "fromscratch",
     scenarios = "testscenario",
     parameters = list(parameter),
     outputMappings = list(outputMapping),

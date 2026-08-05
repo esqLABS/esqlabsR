@@ -103,7 +103,7 @@ test_that("createPlots succeeds when a plot belongs to no grid", {
   path <- project$definitions$outputPaths$aciclovir_pvb
   addDataCombined(
     project,
-    "DC_outside",
+    "dc_outside",
     simulated = list(list(
       label = "sim",
       scenario = "aciclovir_iv",
@@ -111,9 +111,9 @@ test_that("createPlots succeeds when a plot belongs to no grid", {
       group = "g"
     ))
   )
-  # Plot referencing DC_outside is in no grid; createPlots(project) builds
-  # all grids and must not abort just because DC_outside is unbuilt.
-  addPlot(project, "P_outside", "DC_outside", "individual")
+  # Plot referencing dc_outside is in no grid; createPlots(project) builds
+  # all grids and must not abort just because dc_outside is unbuilt.
+  addPlot(project, "p_outside", "dc_outside", "individual")
   simulated <- runScenarios(project, scenarios = "aciclovir_iv")
 
   result <- suppressWarnings(createPlots(
@@ -131,7 +131,7 @@ test_that("createPlots grid subset ignores plots in other grids", {
   path <- project$definitions$outputPaths$aciclovir_pvb
   addDataCombined(
     project,
-    "DC_other",
+    "dc_other",
     simulated = list(list(
       label = "sim",
       scenario = "aciclovir_iv_population",
@@ -139,11 +139,11 @@ test_that("createPlots grid subset ignores plots in other grids", {
       group = "g"
     ))
   )
-  addPlot(project, "P_other", "DC_other", "population")
-  addPlotGrid(project, "Grid_other", plots = "P_other")
+  addPlot(project, "p_other", "dc_other", "population")
+  addPlotGrid(project, "grid_other", plots = "p_other")
   simulated <- runScenarios(project, scenarios = "aciclovir_iv")
 
-  # Requesting only the original grid must not abort over Grid_other's DC,
+  # Requesting only the original grid must not abort over grid_other's DC,
   # which references a scenario absent from `simulated`.
   result <- suppressWarnings(createPlots(
     project,

@@ -177,12 +177,7 @@ setOutputPath <- function(project, id, path) {
   perId <- .recycleField(path, n, "path")
   for (i in seq_len(n)) {
     one <- perId[[i]]
-    if (
-      !is.character(one) ||
-        length(one) != 1L ||
-        is.na(one) ||
-        nchar(one) == 0
-    ) {
+    if (!.isNonEmptyString(one)) {
       cli::cli_abort("{.arg path} must contain non-empty strings")
     }
   }

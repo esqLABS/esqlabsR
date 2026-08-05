@@ -382,13 +382,18 @@ test_that("runScenarios builds an individual that carries no age or height", {
   local_mocked_bindings(
     runSimulations = .mockNoResults
   )
+  # Two warnings: the per-scenario one, and the batch summary naming every
+  # scenario that produced nothing.
   expect_warning(
-    out <- runScenarios(
-      project,
-      scenarios = "testscenario",
-      stopIfFails = FALSE
+    expect_warning(
+      out <- runScenarios(
+        project,
+        scenarios = "testscenario",
+        stopIfFails = FALSE
+      ),
+      regexp = "No simulation results could be computed"
     ),
-    regexp = "No simulation results could be computed"
+    regexp = "produced no results"
   )
   # A built simulation (not a build-time skip) proves the age/height-less
   # individual made it through `createIndividualCharacteristics()`.
@@ -442,13 +447,18 @@ test_that("runScenarios builds an individual carrying two protein ontogenies", {
     proteinOntogenies = c("CYP3A4:CYP3A4", "CYP2D6:CYP2C8")
   )
   local_mocked_bindings(runSimulations = .mockNoResults)
+  # Two warnings: the per-scenario one, and the batch summary naming every
+  # scenario that produced nothing.
   expect_warning(
-    out <- runScenarios(
-      project,
-      scenarios = "testscenario",
-      stopIfFails = FALSE
+    expect_warning(
+      out <- runScenarios(
+        project,
+        scenarios = "testscenario",
+        stopIfFails = FALSE
+      ),
+      regexp = "No simulation results could be computed"
     ),
-    regexp = "No simulation results could be computed"
+    regexp = "produced no results"
   )
   expect_s3_class(out$testscenario$simulation, "Simulation")
 })
@@ -459,13 +469,18 @@ test_that("runScenarios with stopIfFails = FALSE warns and returns NULL outputVa
   local_mocked_bindings(
     runSimulations = .mockNoResults
   )
+  # Two warnings: the per-scenario one, and the batch summary naming every
+  # scenario that produced nothing.
   expect_warning(
-    out <- runScenarios(
-      project,
-      scenarios = "testscenario",
-      stopIfFails = FALSE
+    expect_warning(
+      out <- runScenarios(
+        project,
+        scenarios = "testscenario",
+        stopIfFails = FALSE
+      ),
+      regexp = "No simulation results could be computed"
     ),
-    regexp = "No simulation results could be computed"
+    regexp = "produced no results"
   )
   expect_null(out$testscenario$outputValues)
 })
@@ -812,9 +827,14 @@ test_that(".runScenariosFromProject runs a CSV-population scenario and attaches 
 test_that(".runScenariosFromProject errors on unknown scenarioNames", {
   withr::local_options(lifecycle_verbosity = "quiet")
   project <- .testProject()
-  expect_error(
-    .runScenariosFromProject(project, scenarioNames = "NopeNope"),
-    regexp = "nopenope"
+  # The non-canonical name is deliberate: the abort must name the id the
+  # project would have filed it under, and the canonicalization says so.
+  expect_warning(
+    expect_error(
+      .runScenariosFromProject(project, scenarioNames = "NopeNope"),
+      regexp = "nopenope"
+    ),
+    "Canonicalized 1 id"
   )
 })
 
@@ -837,9 +857,14 @@ test_that(".buildScenarioSimulations resolves NULL to every scenario and returns
 test_that(".buildScenarioSimulations errors on an unknown scenario name", {
   withr::local_options(lifecycle_verbosity = "quiet")
   project <- .testProject()
-  expect_error(
-    .buildScenarioSimulations(project, scenarioNames = "NopeNope"),
-    regexp = "nopenope"
+  # The non-canonical name is deliberate: the abort must name the id the
+  # project would have filed it under, and the canonicalization says so.
+  expect_warning(
+    expect_error(
+      .buildScenarioSimulations(project, scenarioNames = "NopeNope"),
+      regexp = "nopenope"
+    ),
+    "Canonicalized 1 id"
   )
 })
 
