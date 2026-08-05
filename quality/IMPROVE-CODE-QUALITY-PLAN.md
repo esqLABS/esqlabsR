@@ -46,6 +46,9 @@ Phase 5 produced no Dependency Rule violations to track, so no `ARCHITECTURE.md`
 | `c63f3dfc` | B6, B13 — the Excel section table extracted, history comments rewritten | −0 (moved) |
 | `11f078a1` | B10, B12, B17 — one PI-task lookup, one parameter-set merge loop, and the illegal `:::` call removed | −45 |
 | `624b406b` | B8 (part) — the duplicated parameter-set reference check shared | −20 |
+| `6d110b96` | B10 (rest) — the 11-line PI member-removal body written once | −24 |
+| `de214721` | Tests for `definition-list.R` and `project-field-group.R`, the two files the suite never reached | +43 tests |
+| `fd5217a8` | T3 — 45 copied Excel test setups routed through three helpers | −167 in the test file |
 
 `R CMD check` was run once the code changes were in: `Status: 1 NOTE`, no errors and no warnings. The NOTE is B18, a pre-existing one about long snapshot file paths.
 
@@ -63,6 +66,9 @@ Phase 5 produced no Dependency Rule violations to track, so no `ARCHITECTURE.md`
 
 ## Next Actions
 
-- [ ] Review the ranked Debt Ledger in `quality/TECH-DEBT.md` and approve batch 1 (Felix)
-- [ ] Apply batch 1 as single-purpose commits, suite green between each (Claude)
-- [ ] Re-run `devtools::test()` and `devtools::check()` after each batch (Claude)
+Everything ranked P1 is applied. What is left is in the Debt Ledger; these are the rows worth a decision rather than a shrug.
+
+- [ ] B7 — split `.createScenariosFromPKML_impl()` (447 lines, now the longest in the package). Its own change, like B6 was. (Felix to schedule)
+- [ ] B8 — decide whether to split `.validateCrossReferences()` (292 lines) into per-section phases. Wide blast radius in the code that guards project data, so it wants its own review. (Felix to decide)
+- [ ] B19 — migrate off `plotIndividualTimeProfile()` before ospsuite 14.0 removes it. (Felix to schedule)
+- [ ] B14, B18, B20 and the rest of B9 stay logged, not planned.

@@ -2,33 +2,35 @@
 
 ## Test Strategy
 
-`testthat` edition 3, run with `NOT_CRAN=true Rscript -e 'devtools::test()'`. One test file per source file, mirroring `R/`. Shared fixtures live in `tests/testthat/helpers.R` (27 builder functions) and session-wide setup in `tests/testthat/setup.R`. Real PK-Sim model files and a bundled test project under `tests/testthat/data` back the integration-level tests; `vdiffr` snapshots back the plotting tests.
+`testthat` edition 3, run with `NOT_CRAN=true Rscript -e 'devtools::test()'`. One test file per source file, mirroring `R/`. Shared fixtures live in `tests/testthat/helpers.R` (34 builder functions) and session-wide setup in `tests/testthat/setup.R`. Real PK-Sim model files and a bundled test project under `tests/testthat/data` back the integration-level tests; `vdiffr` snapshots back the plotting tests.
 
-Baseline at 2026-08-04: `FAIL 0 | WARN 49 | SKIP 1 | PASS 3344`. After the T2 pass: `FAIL 0 | WARN 11 | SKIP 1 | PASS 3358`, with all 11 remaining warnings coming from dependencies.
+Baseline at 2026-08-04: `FAIL 0 | WARN 49 | SKIP 1 | PASS 3344`. Now: `FAIL 0 | WARN 11 | SKIP 1 | PASS 3401`, with all 11 remaining warnings coming from dependencies.
 
 The full suite gets killed partway when run in one invocation in this environment, so it is verified in three `filter =` chunks whose counts are summed.
 
 ## Safety Net Map
 
-The safety net is already in place: every source file that later phases touch has a mirrored test file and the suite is green. The gate is satisfied by the existing suite, not by newly written characterization tests.
+Every source file has a mirrored test file, bar the three noted below, and the suite is green.
 
 | Area | Source | Pinned behaviors | Test files | Gaps |
 |---|---|---|---|---|
-| Project object and lifecycle | `project.R`, `project-lifecycle.R`, `project-snapshot.R` | Load from folder or file, explicit save, dirty tracking, reload, snapshot round trip | `test-project.R` (1318), `test-project-lifecycle.R`, `test-snapshot.R` | `project-field-group.R` has no test file and is never named in any test |
-| Definition persistence | `definition-files.R`, `definition-id.R`, `definition-list.R` | Per-definition file tree read/write, id canonicalization, stale-file removal | `test-definition-files.R`, `test-definition-files-sections.R`, `test-definition-id.R` | `definition-list.R` has no test file; exercised only indirectly through `test-project*.R` |
+| Project object and lifecycle | `project.R`, `project-lifecycle.R`, `project-snapshot.R` | Load from folder or file, explicit save, dirty tracking, reload, snapshot round trip | `test-project.R`, `test-project-lifecycle.R`, `test-project-snapshot.R`, `test-project-field-group.R` | none |
+| Definition persistence | `definition-files.R`, `definition-id.R`, `definition-list.R` | Per-definition file tree read/write, id canonicalization, stale-file removal | `test-definition-files.R`, `test-definition-files-sections.R`, `test-definition-id.R`, `test-definition-list.R` | none |
 | Authoring API | `scenarios.R`, `individuals.R`, `populations.R`, `parameters.R`, `observed-data.R`, `output-paths.R`, `applications.R`, `plots.R` | add / set / remove / rename / duplicate per section, vectorized ids, overwrite semantics | one `test-<domain>.R` each | none |
-| Validation | `validation.R` plus per-section validators | Section validators, cross-reference phase, critical-vs-warning classification | `test-validation.R` (1390) | none |
-| Excel bridge | `project-excel.R` (4400), `import-legacy-snapshot.R` | Import legacy workbook, export, round trip, sync detection | `test-project-excel.R` (3938), `test-import-legacy-snapshot.R` | none |
+| Validation | `validation.R` plus per-section validators | Section validators, cross-reference phase, critical-vs-warning classification | `test-validation.R` | none |
+| Excel bridge | `project-excel.R`, `import-legacy-snapshot.R` | Import legacy workbook, export, round trip, sync detection | `test-project-excel.R`, `test-import-legacy-snapshot.R` | none |
 | Simulation and results | `scenario-execution.R`, `scenario-results.R`, `simulation.R`, `parallel.R` | Scenario build, run, result collection, failure handling | `test-scenario-execution.R`, `test-scenario-results.R`, `test-simulation.R`, `test-parallel.R` | none |
-| Parameter identification | `parameter-identification.R` (2029) | PI task build, run, output mappings, bounds and units | `test-parameter-identification.R` (3352) | none |
+| Parameter identification | `parameter-identification.R` | PI task build, run, output mappings, bounds and units | `test-parameter-identification.R` | none |
 | Plotting | `create-plots.R`, `plots.R`, `plots-utils.R`, `data-combined.R` | Plot and grid construction, axis handling, `DataCombined` assembly | `test-create-plots.R`, `test-plots.R`, `test-plots-utils.R`, `test-data-combined.R` | none |
 | Sensitivity analysis | `sensitivity-*.R` | Calculation, spider / tornado / time-profile plots | four `test-sensitivity-*.R` files | do-not-touch area per `REFACTORING.md`; tests kept as-is |
-| Message catalog | `messages.R` (1955) | — | none directly | All 190 catalog entries are referenced from `R/`; wording is pinned indirectly by `expect_snapshot()` assertions across the suite |
+| Message catalog | `messages.R` | — | none directly | All 190 catalog entries are referenced from `R/`; wording is pinned indirectly by `expect_snapshot()` assertions across the suite |
 
 ## Characterization Backlog
 
-- [ ] `R/definition-list.R` — the read-only `DefinitionList` wrapper (147 lines): `format`, `print`, and subsetting behavior are unpinned (low risk, low effort)
-- [ ] `R/project-field-group.R` — the field-group accessor and its read-only error (132 lines): never referenced from any test (low risk, low effort)
+- [x] `R/definition-list.R` — pinned by `test-definition-list.R`: wrapping and unwrapping, read transparency, the pluralized print header, and the abort on `[[<-` / `$<-` / `[<-`
+- [x] `R/project-field-group.R` — pinned by `test-project-field-group.R`: reads and writes through the field closures, a handle writing through live state, per-field closure capture, and both read-only handlers
+
+Both are done. `R/globals.R`, `R/messages.R` and `R/zzz.R` have no test file of their own by design: the first two are data, and the catalog's wording is pinned indirectly by the `expect_snapshot()` assertions across the suite.
 
 ## Test-Suite Quality Findings (Phase 10)
 
@@ -38,7 +40,7 @@ Ranked. These are about test *bloat and weakness*, not coverage.
 |---|---|---|---|---|
 | T1 | **Fixed.** A ~15-line `PITask(...)` fixture was rebuilt verbatim in 12 tests, each differing by one field. | `test-parameter-identification.R`, throughout | Adding a `PITask` field meant editing 12 blocks | `testPITask()`, `testPIParameter()`, `testPIOutputMapping()` and `testObservedDataId` now live in `helpers.R`; each test passes only what it varies. The file went from 3352 to 3163 lines. |
 | T2 | **Fixed.** 49 warnings were raised during the run and never asserted, so a regression that stopped warning would have passed silently. Now 11, every one of them from a dependency rather than from esqlabsR. | whole suite | Warning behaviour was unprotected, and the noise hid a test that asserted the wrong warning (see below) | Two fixes, applied per site. Where the non-canonical id was incidental, it is now written the way the project stores it, so no warning fires and nothing is lost. Where the warning is the point of the test, it is asserted with `expect_warning()`. |
-| T3 | The Excel test file repeats a 12-line project-setup block 4 times and a 10-line block 3 times, among others. | `test-project-excel.R` 34-52 / 105-116 / 207-218 / 242-255; 1721-1730 / 1768-1778 / 1935-1945; 2648-2659 / 2673-2684 / 2700-2708 | 3938-line file is hard to navigate | Extract the repeated setups into local builders in `helpers.R` |
+| T3 | **Fixed.** The Excel test file repeated the same setup 45 times: a three-line copy of the legacy Excel fixture (28x), a three-line load of the example project (11x, reimplementing the existing `exampleProject()` helper), an eight-line export-and-reimport round trip (6x), and a 15-column scenario-sheet data frame (3x). | `test-project-excel.R` | 3948-line file, 165 lines of it copied setup | `localExcelProjectDir()`, `excelRoundTrip()` and `scenarioSheetRow()` added to `helpers.R`; the example-project sites now call the helper that already existed. File down to 3781 lines. |
 | T4 | **Partly fixed.** `.localSnapshotOptions()` was byte-identical in three sensitivity test files and now lives in `helpers.R`. The `sensFixture` / `sensFixtureMultiple` memoized fixtures around it stay duplicated on purpose. | `test-sensitivity-calculation.R`, `test-sensitivity-spider-plot.R`, `test-sensitivity-time-profiles.R` | 45 lines removed | Each file's `sensFixture` caches a PK-Sim native session deliberately per file, and its comments say so. Sharing one cache across files would change that isolation for a saving of a few lines, so it stays. |
 | T5 | **Fixed.** `test-snapshot.R` did not mirror its source file name `R/project-snapshot.R`, and its header pointed at the wrong file. | `tests/testthat/test-project-snapshot.R` | Broke the 1:1 naming rule; `devtools::test_active_file("R/project-snapshot.R")` could not find it | Renamed, with its `_snaps/` file, and the header corrected |
 | T6 | **Fixed.** Comments in tests narrated history rather than describing the current check. | `tests/testthat/setup.R`, `test-project.R` | Contradicted the repo's own comment rule in `REFACTORING.md` | Rewritten to state the current constraint |
