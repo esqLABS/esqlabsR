@@ -173,6 +173,82 @@ exampleProject <- function(envir = parent.frame()) {
   loadProject(file.path(dest, "Project.json"))
 }
 
+#' One row of an Excel `Scenarios` sheet, with every required column present.
+#'
+#' Named arguments override a column's value; passing `NULL` drops the column
+#' entirely, which is how a test builds a sheet that omits or misspells one.
+scenarioSheetRow <- function(...) {
+  row <- list(
+    Scenario_name = "s1",
+    IndividualId = NA_character_,
+    PopulationId = NA_character_,
+    ReadPopulationFromCSV = NA,
+    ModelParameterSheets = NA_character_,
+    ApplicationProtocol = NA_character_,
+    SimulationTime = NA_character_,
+    SimulationTimeUnit = NA_character_,
+    SteadyState = NA,
+    SteadyStateTime = NA_real_,
+    SteadyStateTimeUnit = NA_character_,
+    OverwriteFormulasInSS = NA,
+    ModelFile = "m.pkml",
+    OutputPathsIds = "op1"
+  )
+  overrides <- list(...)
+  for (column in names(overrides)) {
+    row[[column]] <- overrides[[column]]
+  }
+  row <- row[!vapply(row, is.null, logical(1))]
+  data.frame(row, stringsAsFactors = FALSE)
+}
+
+#' A writable copy of the `TestProjectExcel` fixture, returning its directory.
+#'
+#' The Excel-bridge tests import, export and re-import in place, so they need a
+#' throwaway copy rather than the version-controlled fixture. The copy is
+#' removed when the calling test finishes.
+localExcelProjectDir <- function(envir = parent.frame()) {
+  workDir <- withr::local_tempdir(.local_envir = envir)
+  file.copy(dirname(testProjectExcelPath()), workDir, recursive = TRUE)
+  file.path(workDir, "TestProjectExcel")
+}
+
+#' Export a project to Excel and read it back, returning the re-imported one.
+#'
+#' The two temporary directories (the workbook set, and the JSON project built
+#' from it) are removed when the calling test finishes.
+#'
+#' The example project's observed data does not survive the round trip, so the
+#' re-imported project always has one reference it cannot resolve. That one
+#' warning is muffled here because it says nothing about the section under
+#' test; every other warning is left to surface. Two tests assert it directly
+#' rather than calling this helper.
+excelRoundTrip <- function(project, envir = parent.frame()) {
+  excelOut <- withr::local_tempdir(.local_envir = envir)
+  exportProjectToExcel(project, outputDir = excelOut, silent = TRUE)
+  jsonOut <- withr::local_tempdir(.local_envir = envir)
+  .muffleCrossReferenceWarning({
+    reimportedJson <- importProjectFromExcel(
+      file.path(excelOut, "Project.xlsx"),
+      outputDir = jsonOut,
+      silent = TRUE
+    )
+    loadProject(reimportedJson)
+  })
+}
+
+#' Evaluate `expr`, dropping only the unresolved-cross-reference warning.
+.muffleCrossReferenceWarning <- function(expr) {
+  withCallingHandlers(
+    expr,
+    warning = function(w) {
+      if (grepl("unresolved cross-reference", conditionMessage(w))) {
+        invokeRestart("muffleWarning")
+      }
+    }
+  )
+}
+
 #' Path to the legacy Excel `ProjectConfiguration.xlsx` fixture, used by
 #' Excel-bridge round-trip tests.
 testProjectExcelPath <- function() {

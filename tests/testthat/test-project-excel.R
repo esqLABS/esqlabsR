@@ -1,7 +1,5 @@
 test_that("exportProjectToExcel writes OutputPaths sheet with atomic columns", {
-  work_dir <- withr::local_tempdir()
-  file.copy(dirname(exampleProjectPath()), work_dir, recursive = TRUE)
-  project <- loadProject(file.path(work_dir, "Example", "Project.json"))
+  project <- exampleProject()
 
   excel_out <- withr::local_tempdir()
   exportProjectToExcel(project, outputDir = excel_out, silent = TRUE)
@@ -12,9 +10,7 @@ test_that("exportProjectToExcel writes OutputPaths sheet with atomic columns", {
 })
 
 test_that("Project round-trips through Excel preserving outputPaths", {
-  work_dir <- withr::local_tempdir()
-  file.copy(dirname(exampleProjectPath()), work_dir, recursive = TRUE)
-  project <- loadProject(file.path(work_dir, "Example", "Project.json"))
+  project <- exampleProject()
 
   excel_out <- withr::local_tempdir()
   exportProjectToExcel(project, outputDir = excel_out, silent = TRUE)
@@ -36,18 +32,9 @@ test_that("Project round-trips through Excel preserving outputPaths", {
 })
 
 test_that("Excel round-trip preserves parameter set values, paths, and units", {
-  work_dir <- withr::local_tempdir()
-  file.copy(dirname(exampleProjectPath()), work_dir, recursive = TRUE)
-  project <- loadProject(file.path(work_dir, "Example", "Project.json"))
+  project <- exampleProject()
 
-  excel_out <- withr::local_tempdir()
-  exportProjectToExcel(project, outputDir = excel_out, silent = TRUE)
-  reimportedJson <- suppressWarnings(importProjectFromExcel(
-    file.path(excel_out, "Project.xlsx"),
-    outputDir = withr::local_tempdir(),
-    silent = TRUE
-  ))
-  reimported <- suppressWarnings(loadProject(reimportedJson))
+  reimported <- excelRoundTrip(project)
 
   # The whole section must survive byte-equivalent: every set keeps its full
   # list of records (containerPath / parameterName / value / units), not just
@@ -107,18 +94,9 @@ test_that("Excel round-trip preserves initial-condition sets and scenario refs",
 })
 
 test_that("Excel round-trip preserves parameter identification tasks", {
-  work_dir <- withr::local_tempdir()
-  file.copy(dirname(exampleProjectPath()), work_dir, recursive = TRUE)
-  project <- loadProject(file.path(work_dir, "Example", "Project.json"))
+  project <- exampleProject()
 
-  excel_out <- withr::local_tempdir()
-  exportProjectToExcel(project, outputDir = excel_out, silent = TRUE)
-  reimportedJson <- suppressWarnings(importProjectFromExcel(
-    file.path(excel_out, "Project.xlsx"),
-    outputDir = withr::local_tempdir(),
-    silent = TRUE
-  ))
-  reimported <- suppressWarnings(loadProject(reimportedJson))
+  reimported <- excelRoundTrip(project)
 
   # The whole PI section must survive the three-sheet (PITasks / PIParameters /
   # PIOutputMappings) round-trip: each task keeps its scenarios, its flattened
@@ -151,9 +129,7 @@ test_that("Excel round-trip preserves parameter identification tasks", {
 })
 
 test_that("Excel round-trip preserves DataCombined numeric offsets and scales", {
-  work_dir <- withr::local_tempdir()
-  file.copy(dirname(exampleProjectPath()), work_dir, recursive = TRUE)
-  project <- loadProject(file.path(work_dir, "Example", "Project.json"))
+  project <- exampleProject()
 
   # The example DataCombined leaves all offset / scale fields null, so add one
   # with populated numerics (fractional, so the values are unambiguously double
@@ -184,14 +160,7 @@ test_that("Excel round-trip preserves DataCombined numeric offsets and scales", 
     ))
   )
 
-  excel_out <- withr::local_tempdir()
-  exportProjectToExcel(project, outputDir = excel_out, silent = TRUE)
-  reimportedJson <- suppressWarnings(importProjectFromExcel(
-    file.path(excel_out, "Project.xlsx"),
-    outputDir = withr::local_tempdir(),
-    silent = TRUE
-  ))
-  reimported <- suppressWarnings(loadProject(reimportedJson))
+  reimported <- excelRoundTrip(project)
   dc <- .unwrapDefinitionList(reimported$definitions$dataCombined)[[
     "dc_numeric"
   ]]
@@ -209,18 +178,9 @@ test_that("Excel round-trip preserves DataCombined numeric offsets and scales", 
 })
 
 test_that("Excel round-trip defaults a non-steady-state scenario's steady-state time and unit", {
-  work_dir <- withr::local_tempdir()
-  file.copy(dirname(exampleProjectPath()), work_dir, recursive = TRUE)
-  project <- loadProject(file.path(work_dir, "Example", "Project.json"))
+  project <- exampleProject()
 
-  excel_out <- withr::local_tempdir()
-  exportProjectToExcel(project, outputDir = excel_out, silent = TRUE)
-  reimportedJson <- suppressWarnings(importProjectFromExcel(
-    file.path(excel_out, "Project.xlsx"),
-    outputDir = withr::local_tempdir(),
-    silent = TRUE
-  ))
-  reimported <- suppressWarnings(loadProject(reimportedJson))
+  reimported <- excelRoundTrip(project)
   before <- .unwrapDefinitionList(project$definitions$scenarios)
   after <- .unwrapDefinitionList(reimported$definitions$scenarios)
 
@@ -244,18 +204,9 @@ test_that("Excel round-trip defaults a non-steady-state scenario's steady-state 
 })
 
 test_that("Excel round-trip preserves individuals, populations, and applications", {
-  work_dir <- withr::local_tempdir()
-  file.copy(dirname(exampleProjectPath()), work_dir, recursive = TRUE)
-  project <- loadProject(file.path(work_dir, "Example", "Project.json"))
+  project <- exampleProject()
 
-  excel_out <- withr::local_tempdir()
-  exportProjectToExcel(project, outputDir = excel_out, silent = TRUE)
-  reimportedJson <- suppressWarnings(importProjectFromExcel(
-    file.path(excel_out, "Project.xlsx"),
-    outputDir = withr::local_tempdir(),
-    silent = TRUE
-  ))
-  reimported <- suppressWarnings(loadProject(reimportedJson))
+  reimported <- excelRoundTrip(project)
 
   expect_equal(
     .unwrapDefinitionList(reimported$definitions$individuals),
@@ -272,9 +223,7 @@ test_that("Excel round-trip preserves individuals, populations, and applications
 })
 
 test_that("Excel round-trip preserves a grid whose plot id had a comma canonicalized out", {
-  work_dir <- withr::local_tempdir()
-  file.copy(dirname(exampleProjectPath()), work_dir, recursive = TRUE)
-  project <- loadProject(file.path(work_dir, "Example", "Project.json"))
+  project <- exampleProject()
 
   # A comma is canonicalized to `_` in every id (#1158), so no plot id ever
   # reaches the Excel boundary with a comma to be shredded. The grid membership
@@ -292,14 +241,7 @@ test_that("Excel round-trip preserves a grid whose plot id had a comma canonical
     plots = c("p1", "cmax, ss")
   ))
 
-  excel_out <- withr::local_tempdir()
-  exportProjectToExcel(project, outputDir = excel_out, silent = TRUE)
-  reimportedJson <- suppressWarnings(importProjectFromExcel(
-    file.path(excel_out, "Project.xlsx"),
-    outputDir = withr::local_tempdir(),
-    silent = TRUE
-  ))
-  reimported <- suppressWarnings(loadProject(reimportedJson))
+  reimported <- excelRoundTrip(project)
   grid <- .unwrapDefinitionList(reimported$definitions$plotGrids)[[
     "grid_comma"
   ]]
@@ -314,9 +256,7 @@ test_that("Excel round-trip preserves a grid whose plot id had a comma canonical
 # member of a quoted grid dangled and the freshly imported project failed its
 # own validateProject().
 test_that("a quoted 5.x plotIDs cell imports with the grid's members intact", {
-  work_dir <- withr::local_tempdir()
-  file.copy(dirname(testProjectExcelPath()), work_dir, recursive = TRUE)
-  projectDir <- file.path(work_dir, "TestProjectExcel")
+  projectDir <- localExcelProjectDir()
   plotsFile <- file.path(projectDir, "Configurations", "Plots.xlsx")
 
   sheetNames <- readxl::excel_sheets(plotsFile)
@@ -357,9 +297,7 @@ test_that("a quoted 5.x plotIDs cell imports with the grid's members intact", {
 })
 
 test_that("Excel round-trip preserves project name and description", {
-  work_dir <- withr::local_tempdir()
-  file.copy(dirname(exampleProjectPath()), work_dir, recursive = TRUE)
-  project <- loadProject(file.path(work_dir, "Example", "Project.json"))
+  project <- exampleProject()
   project$info$name <- "RT_Name"
   project$info$description <- "RT_Desc"
 
@@ -377,9 +315,7 @@ test_that("Excel round-trip preserves project name and description", {
 })
 
 test_that("Excel round-trip preserves the filePaths/excel container split", {
-  work_dir <- withr::local_tempdir()
-  file.copy(dirname(exampleProjectPath()), work_dir, recursive = TRUE)
-  project <- loadProject(file.path(work_dir, "Example", "Project.json"))
+  project <- exampleProject()
 
   excel_out <- withr::local_tempdir()
   exportProjectToExcel(project, outputDir = excel_out, silent = TRUE)
@@ -513,9 +449,7 @@ test_that("importProjectFromExcel aborts over an existing JSON project unless ov
 # It aborts by default when workbooks already exist in `outputDir`, and only
 # overwrites them when `overwrite = TRUE`.
 test_that("exportProjectToExcel aborts over existing workbooks unless overwrite = TRUE", {
-  work_dir <- withr::local_tempdir()
-  file.copy(dirname(exampleProjectPath()), work_dir, recursive = TRUE)
-  project <- loadProject(file.path(work_dir, "Example", "Project.json"))
+  project <- exampleProject()
 
   excelOut <- withr::local_tempdir()
 
@@ -1279,9 +1213,7 @@ test_that(".parseExcelObservedData warns and skips a dataFile outside dataFolder
 # and the imported project loads, because nothing reads the folder once no
 # observed data was imported (#1182).
 test_that("an absolute dataFolder no longer blocks the import", {
-  work_dir <- withr::local_tempdir()
-  file.copy(dirname(testProjectExcelPath()), work_dir, recursive = TRUE)
-  projectDir <- file.path(work_dir, "TestProjectExcel")
+  projectDir <- localExcelProjectDir()
   configPath <- file.path(projectDir, "ProjectConfiguration.xlsx")
 
   shared <- withr::local_tempdir()
@@ -1436,9 +1368,7 @@ test_that(".parseExcelParameterSheets keeps a header-only parameter sheet", {
 # abort the whole import with a bare `missing value where TRUE/FALSE needed`
 # naming neither the file nor the sheet (#1181).
 test_that("a non-parameter sheet in a parameter workbook no longer aborts the import", {
-  work_dir <- withr::local_tempdir()
-  file.copy(dirname(testProjectExcelPath()), work_dir, recursive = TRUE)
-  projectDir <- file.path(work_dir, "TestProjectExcel")
+  projectDir <- localExcelProjectDir()
   paramsFile <- file.path(projectDir, "Configurations", "ModelParameters.xlsx")
 
   sheetNames <- readxl::excel_sheets(paramsFile)
@@ -1469,9 +1399,7 @@ test_that("a non-parameter sheet in a parameter workbook no longer aborts the im
 # must not become an `Application` either: it would wrap a parameter set that
 # was never created and dangle on load (#1181).
 test_that("a non-parameter sheet in the applications workbook becomes neither a set nor an application", {
-  work_dir <- withr::local_tempdir()
-  file.copy(dirname(testProjectExcelPath()), work_dir, recursive = TRUE)
-  projectDir <- file.path(work_dir, "TestProjectExcel")
+  projectDir <- localExcelProjectDir()
   appsFile <- file.path(projectDir, "Configurations", "Applications.xlsx")
 
   sheetNames <- readxl::excel_sheets(appsFile)
@@ -1505,9 +1433,7 @@ test_that("a non-parameter sheet in the applications workbook becomes neither a 
 # When such a sheet is not a parameter sheet it is skipped, so the individual
 # must not gain a `parameterSets` reference to a set that does not exist (#1181).
 test_that("a skipped sheet named after an individual is not linked to that individual", {
-  work_dir <- withr::local_tempdir()
-  file.copy(dirname(testProjectExcelPath()), work_dir, recursive = TRUE)
-  projectDir <- file.path(work_dir, "TestProjectExcel")
+  projectDir <- localExcelProjectDir()
   indivFile <- file.path(projectDir, "Configurations", "Individuals.xlsx")
 
   .writeExcel(
@@ -1694,9 +1620,7 @@ test_that("importProjectFromExcel says what is wrong with a projectFileName that
 })
 
 test_that("importProjectFromExcel reports what it produced, and stays quiet under silent", {
-  work_dir <- withr::local_tempdir()
-  file.copy(dirname(testProjectExcelPath()), work_dir, recursive = TRUE)
-  projectDir <- file.path(work_dir, "TestProjectExcel")
+  projectDir <- localExcelProjectDir()
   configPath <- file.path(projectDir, "ProjectConfiguration.xlsx")
 
   summaryText <- paste(
@@ -1728,9 +1652,7 @@ test_that("importProjectFromExcel reports what it produced, and stays quiet unde
 # import into a different folder to resolve. Otherwise the output is a
 # definitions tree pointing at files that are not there.
 test_that("importProjectFromExcel copies the referenced input folders into a separate outputDir", {
-  work_dir <- withr::local_tempdir()
-  file.copy(dirname(testProjectExcelPath()), work_dir, recursive = TRUE)
-  projectDir <- file.path(work_dir, "TestProjectExcel")
+  projectDir <- localExcelProjectDir()
 
   outputDir <- withr::local_tempdir()
   jsonPath <- suppressWarnings(importProjectFromExcel(
@@ -1775,9 +1697,7 @@ test_that("importProjectFromExcel copies the referenced input folders into a sep
 # csv-population scenario failed at run time with `validateProject()` reporting
 # nothing (#1213).
 test_that("importProjectFromExcel brings the population csv folder along and resolves it", {
-  work_dir <- withr::local_tempdir()
-  file.copy(dirname(testProjectExcelPath()), work_dir, recursive = TRUE)
-  projectDir <- file.path(work_dir, "TestProjectExcel")
+  projectDir <- localExcelProjectDir()
 
   outputDir <- withr::local_tempdir()
   jsonPath <- suppressWarnings(importProjectFromExcel(
@@ -1805,9 +1725,7 @@ test_that("importProjectFromExcel brings the population csv folder along and res
 test_that("an in-place import resolves the population csv folder where the csvs are", {
   # Nothing is copied when the import writes beside the workbooks, so the value
   # itself has to name the folder that holds the csv files.
-  work_dir <- withr::local_tempdir()
-  file.copy(dirname(testProjectExcelPath()), work_dir, recursive = TRUE)
-  projectDir <- file.path(work_dir, "TestProjectExcel")
+  projectDir <- localExcelProjectDir()
 
   jsonPath <- suppressWarnings(importProjectFromExcel(
     file.path(projectDir, "ProjectConfiguration.xlsx"),
@@ -1825,9 +1743,7 @@ test_that("a populations folder already at the project root is taken as authored
   # Both layouts are accepted; a project following the root-level layout must
   # keep resolving there rather than be redirected under the configurations
   # folder.
-  work_dir <- withr::local_tempdir()
-  file.copy(dirname(testProjectExcelPath()), work_dir, recursive = TRUE)
-  projectDir <- file.path(work_dir, "TestProjectExcel")
+  projectDir <- localExcelProjectDir()
   file.rename(
     file.path(projectDir, "Configurations", "PopulationsCSV"),
     file.path(projectDir, "PopulationsCSV")
@@ -1855,9 +1771,7 @@ test_that("a populations folder already at the project root is taken as authored
 })
 
 test_that("importProjectFromExcel does not copy the results folder or the Excel workbooks", {
-  work_dir <- withr::local_tempdir()
-  file.copy(dirname(testProjectExcelPath()), work_dir, recursive = TRUE)
-  projectDir <- file.path(work_dir, "TestProjectExcel")
+  projectDir <- localExcelProjectDir()
 
   outputDir <- withr::local_tempdir()
   suppressWarnings(importProjectFromExcel(
@@ -1886,12 +1800,10 @@ test_that("importProjectFromExcel does not copy the results folder or the Excel 
 # Copying it would read outside the source project and write outside outputDir,
 # overwriting whatever sits beside it.
 test_that("importProjectFromExcel refuses to copy a folder that escapes the project", {
-  work_dir <- withr::local_tempdir()
-  file.copy(dirname(testProjectExcelPath()), work_dir, recursive = TRUE)
-  projectDir <- file.path(work_dir, "TestProjectExcel")
+  projectDir <- localExcelProjectDir()
 
   # A sibling of the project, which must not be touched.
-  bystander <- file.path(work_dir, "Bystander")
+  bystander <- file.path(dirname(projectDir), "Bystander")
   dir.create(bystander)
   writeLines("keep me", file.path(bystander, "keep.txt"))
 
@@ -1923,9 +1835,7 @@ test_that("importProjectFromExcel refuses to copy a folder that escapes the proj
 # on every `projectStatus()` read, so copying the whole asset tree there would
 # turn a cheap status query into a recursive tree copy.
 test_that("importProjectFromExcel skips the asset copy under copyAssets = FALSE", {
-  work_dir <- withr::local_tempdir()
-  file.copy(dirname(testProjectExcelPath()), work_dir, recursive = TRUE)
-  projectDir <- file.path(work_dir, "TestProjectExcel")
+  projectDir <- localExcelProjectDir()
 
   outputDir <- withr::local_tempdir()
   suppressWarnings(importProjectFromExcel(
@@ -1942,9 +1852,7 @@ test_that("importProjectFromExcel skips the asset copy under copyAssets = FALSE"
 })
 
 test_that("projectStatus() does not copy the asset tree into its comparison snapshot", {
-  work_dir <- withr::local_tempdir()
-  file.copy(dirname(testProjectExcelPath()), work_dir, recursive = TRUE)
-  projectDir <- file.path(work_dir, "TestProjectExcel")
+  projectDir <- localExcelProjectDir()
 
   outputDir <- withr::local_tempdir()
   jsonPath <- suppressWarnings(importProjectFromExcel(
@@ -1972,9 +1880,7 @@ test_that("projectStatus() does not copy the asset tree into its comparison snap
 # user who curates a model or data file in the output folder and then imports the
 # legacy workbook beside it loses that file with no warning and no way to decline.
 test_that("importProjectFromExcel leaves a non-empty asset folder alone unless overwrite = TRUE", {
-  work_dir <- withr::local_tempdir()
-  file.copy(dirname(testProjectExcelPath()), work_dir, recursive = TRUE)
-  projectDir <- file.path(work_dir, "TestProjectExcel")
+  projectDir <- localExcelProjectDir()
   configPath <- file.path(projectDir, "ProjectConfiguration.xlsx")
 
   outputDir <- withr::local_tempdir()
@@ -2018,13 +1924,11 @@ test_that("importProjectFromExcel leaves a non-empty asset folder alone unless o
 # onto itself.
 test_that("importProjectFromExcel detects an in-place import through a symlinked path", {
   skip_on_os("windows")
-  work_dir <- withr::local_tempdir()
-  file.copy(dirname(testProjectExcelPath()), work_dir, recursive = TRUE)
-  projectDir <- file.path(work_dir, "TestProjectExcel")
+  projectDir <- localExcelProjectDir()
 
   # Reach the very same directory by a symlink, and hand that spelling to
   # outputDir while the workbook is named by its real path.
-  linked <- file.path(work_dir, "linked")
+  linked <- file.path(dirname(projectDir), "linked")
   file.symlink(projectDir, linked)
 
   before <- sort(list.files(projectDir, recursive = TRUE))
@@ -2048,9 +1952,7 @@ test_that("importProjectFromExcel detects an in-place import through a symlinked
 # up canonically too: a cell spelling the sheet in a different case must follow
 # the rename, not keep resolving to the earlier workbook's set.
 test_that("importProjectFromExcel re-points a case-differing parameter-set reference", {
-  work_dir <- withr::local_tempdir()
-  file.copy(dirname(testProjectExcelPath()), work_dir, recursive = TRUE)
-  projectDir <- file.path(work_dir, "TestProjectExcel")
+  projectDir <- localExcelProjectDir()
   individualsFile <- file.path(projectDir, "Configurations", "Individuals.xlsx")
 
   # The individuals workbook's sheet is `Indiv1`; its own `ParameterSets` cell
@@ -2104,9 +2006,7 @@ test_that("importProjectFromExcel re-points a case-differing parameter-set refer
 })
 
 test_that("importProjectFromExcel names a referenced folder the Excel project does not have", {
-  work_dir <- withr::local_tempdir()
-  file.copy(dirname(testProjectExcelPath()), work_dir, recursive = TRUE)
-  projectDir <- file.path(work_dir, "TestProjectExcel")
+  projectDir <- localExcelProjectDir()
 
   # The configuration keeps naming `Data/`, but the folder is gone: there is
   # nothing to copy, and the user has to be told which folder to place.
@@ -2129,9 +2029,7 @@ test_that("importProjectFromExcel names a referenced folder the Excel project do
 })
 
 test_that("importProjectFromExcel in place leaves the referenced folders untouched", {
-  work_dir <- withr::local_tempdir()
-  file.copy(dirname(testProjectExcelPath()), work_dir, recursive = TRUE)
-  projectDir <- file.path(work_dir, "TestProjectExcel")
+  projectDir <- localExcelProjectDir()
 
   before <- sort(list.files(projectDir, recursive = TRUE))
   suppressWarnings(importProjectFromExcel(
@@ -2154,9 +2052,7 @@ test_that("importProjectFromExcel in place leaves the referenced folders untouch
 # in a single definition file and hides the observed block from any check keyed on
 # the canonical id.
 test_that("importProjectFromExcel canonicalizes an observed dataCombined entry's scenario reference", {
-  work_dir <- withr::local_tempdir()
-  file.copy(dirname(testProjectExcelPath()), work_dir, recursive = TRUE)
-  projectDir <- file.path(work_dir, "TestProjectExcel")
+  projectDir <- localExcelProjectDir()
   plotsFile <- file.path(projectDir, "Configurations", "Plots.xlsx")
 
   # Name a scenario on the observed rows, with the mixed-case spelling the
@@ -2199,9 +2095,7 @@ test_that("importProjectFromExcel canonicalizes an observed dataCombined entry's
 # the renamed set is orphaned and the referrer silently resolves to the *other*
 # workbook's set.
 test_that("importProjectFromExcel renames a duplicate parameter-set id and re-points its own workbook's references", {
-  work_dir <- withr::local_tempdir()
-  file.copy(dirname(testProjectExcelPath()), work_dir, recursive = TRUE)
-  projectDir <- file.path(work_dir, "TestProjectExcel")
+  projectDir <- localExcelProjectDir()
   modelParamsFile <- file.path(
     projectDir,
     "Configurations",
@@ -2260,9 +2154,7 @@ test_that("importProjectFromExcel renames a duplicate parameter-set id and re-po
 })
 
 test_that("importProjectFromExcel warns naming each renamed duplicate parameter set", {
-  work_dir <- withr::local_tempdir()
-  file.copy(dirname(testProjectExcelPath()), work_dir, recursive = TRUE)
-  projectDir <- file.path(work_dir, "TestProjectExcel")
+  projectDir <- localExcelProjectDir()
   individualsFile <- file.path(
     projectDir,
     "Configurations",
@@ -2655,24 +2547,8 @@ test_that(".parseExcelScenarios aborts on an unparseable boolean cell", {
 # yielding a scenario with no output paths (the partial-match `$` access
 # previously masked this).
 test_that(".parseExcelScenarios aborts on a renamed required column", {
-  scenarioDf <- data.frame(
-    Scenario_name = "s1",
-    IndividualId = NA_character_,
-    PopulationId = NA_character_,
-    ReadPopulationFromCSV = NA,
-    ModelParameterSheets = NA_character_,
-    ApplicationProtocol = NA_character_,
-    SimulationTime = NA_character_,
-    SimulationTimeUnit = NA_character_,
-    SteadyState = NA,
-    SteadyStateTime = NA_real_,
-    SteadyStateTimeUnit = NA_character_,
-    OverwriteFormulasInSS = NA,
-    ModelFile = "m.pkml",
-    # `OutputPathsIds` misspelled as `OutputPathsId`.
-    OutputPathsId = "op1",
-    stringsAsFactors = FALSE
-  )
+  # `OutputPathsIds` misspelled as `OutputPathsId`.
+  scenarioDf <- scenarioSheetRow(OutputPathsIds = NULL, OutputPathsId = "op1")
   expect_snapshot(error = TRUE, .parseExcelScenarios(scenarioDf))
 })
 
@@ -2680,23 +2556,8 @@ test_that(".parseExcelScenarios aborts on a renamed required column", {
 # sheet omits it. Its absence must default to FALSE rather than abort, matching
 # the sibling `InitialConditions` column (#1158).
 test_that(".parseExcelScenarios defaults OverwriteFormulasInSS when the column is absent", {
-  scenarioDf <- data.frame(
-    Scenario_name = "s1",
-    IndividualId = NA_character_,
-    PopulationId = NA_character_,
-    ReadPopulationFromCSV = NA,
-    ModelParameterSheets = NA_character_,
-    ApplicationProtocol = NA_character_,
-    SimulationTime = NA_character_,
-    SimulationTimeUnit = NA_character_,
-    SteadyState = NA,
-    SteadyStateTime = NA_real_,
-    SteadyStateTimeUnit = NA_character_,
-    # No `OverwriteFormulasInSS` column, as in a pre-6.0 sheet.
-    ModelFile = "m.pkml",
-    OutputPathsIds = "op1",
-    stringsAsFactors = FALSE
-  )
+  # No `OverwriteFormulasInSS` column, as in a pre-6.0 sheet.
+  scenarioDf <- scenarioSheetRow(OverwriteFormulasInSS = NULL)
   scenarios <- .parseExcelScenarios(scenarioDf)
   # The parser drops the absent value to NULL; the JSON serializer defaults it
   # to FALSE (`%||% FALSE`), so a round-trip through the tree reads FALSE.
@@ -2707,23 +2568,7 @@ test_that(".parseExcelScenarios defaults OverwriteFormulasInSS when the column i
 # writes (`1000` / `"min"`), not null, so an imported project is byte-identical
 # to the same project re-authored through `addScenario()` (#1158).
 test_that(".parseExcelScenarios defaults a blank steady-state time and unit", {
-  scenarioDf <- data.frame(
-    Scenario_name = "s1",
-    IndividualId = NA_character_,
-    PopulationId = NA_character_,
-    ReadPopulationFromCSV = NA,
-    ModelParameterSheets = NA_character_,
-    ApplicationProtocol = NA_character_,
-    SimulationTime = NA_character_,
-    SimulationTimeUnit = NA_character_,
-    SteadyState = FALSE,
-    SteadyStateTime = NA_real_,
-    SteadyStateTimeUnit = NA_character_,
-    OverwriteFormulasInSS = NA,
-    ModelFile = "m.pkml",
-    OutputPathsIds = "op1",
-    stringsAsFactors = FALSE
-  )
+  scenarioDf <- scenarioSheetRow(SteadyState = FALSE)
   scenarios <- .parseExcelScenarios(scenarioDf)
   expect_identical(scenarios[[1]]$steadyStateTime, 1000)
   expect_identical(scenarios[[1]]$steadyStateTimeUnit, "min")
@@ -2859,9 +2704,7 @@ test_that(".dropSkippedSheetRefs removes only references to skipped sheets", {
 # than from the sheet list, so it needs the same treatment as the 5.x layout
 # (#1181).
 test_that("an application referencing a skipped sheet loses the reference", {
-  work_dir <- withr::local_tempdir()
-  file.copy(dirname(testProjectExcelPath()), work_dir, recursive = TRUE)
-  projectDir <- file.path(work_dir, "TestProjectExcel")
+  projectDir <- localExcelProjectDir()
   appsFile <- file.path(projectDir, "Configurations", "Applications.xlsx")
 
   # Rebuild the workbook in the newer layout: a protocol naming two sheets, one
@@ -2897,9 +2740,7 @@ test_that("an application referencing a skipped sheet loses the reference", {
 # that hold nothing. Each was taken for a population definition and the import
 # aborted on the first of them for having no id (#1191).
 test_that("blank rows in a populations sheet do not become definitions", {
-  work_dir <- withr::local_tempdir()
-  file.copy(dirname(testProjectExcelPath()), work_dir, recursive = TRUE)
-  projectDir <- file.path(work_dir, "TestProjectExcel")
+  projectDir <- localExcelProjectDir()
   popFile <- file.path(projectDir, "Configurations", "Populations.xlsx")
 
   sheetNames <- readxl::excel_sheets(popFile)
@@ -2929,9 +2770,7 @@ test_that("blank rows in a populations sheet do not become definitions", {
 # sheet carries all four parameter columns, so it is a parameter sheet and its
 # rows are read, and a `Value` of "lower" aborted the whole import (#1189).
 test_that("a non-numeric Value skips the row, not the import", {
-  work_dir <- withr::local_tempdir()
-  file.copy(dirname(testProjectExcelPath()), work_dir, recursive = TRUE)
-  projectDir <- file.path(work_dir, "TestProjectExcel")
+  projectDir <- localExcelProjectDir()
   paramFile <- file.path(projectDir, "Configurations", "ModelParameters.xlsx")
 
   sheetNames <- readxl::excel_sheets(paramFile)
@@ -2973,9 +2812,7 @@ test_that("a non-numeric Value skips the row, not the import", {
 # stopped on the first one. The column's absence is now read as that older
 # layout, whose outputs come from the scenario (#1192).
 test_that("a PIOutputMappings sheet with no OutputPath column imports", {
-  work_dir <- withr::local_tempdir()
-  file.copy(dirname(testProjectExcelPath()), work_dir, recursive = TRUE)
-  projectDir <- file.path(work_dir, "TestProjectExcel")
+  projectDir <- localExcelProjectDir()
   configDir <- file.path(projectDir, "Configurations")
 
   rewriteSheet <- function(file, sheet, edit) {
@@ -3055,9 +2892,7 @@ test_that("a PIOutputMappings sheet with no OutputPath column imports", {
 # curve is kept (the user may still be able to fill the cell), so the import
 # names the affected data combinations and states the consequence (#1183).
 test_that("an observed curve with no dataSet is kept and reported", {
-  work_dir <- withr::local_tempdir()
-  file.copy(dirname(testProjectExcelPath()), work_dir, recursive = TRUE)
-  projectDir <- file.path(work_dir, "TestProjectExcel")
+  projectDir <- localExcelProjectDir()
   plotsFile <- file.path(projectDir, "Configurations", "Plots.xlsx")
 
   sheetNames <- readxl::excel_sheets(plotsFile)
@@ -3100,9 +2935,7 @@ test_that("an observed curve with no dataSet is kept and reported", {
 })
 
 test_that("a missing data file says the project will not validate", {
-  work_dir <- withr::local_tempdir()
-  file.copy(dirname(testProjectExcelPath()), work_dir, recursive = TRUE)
-  projectDir <- file.path(work_dir, "TestProjectExcel")
+  projectDir <- localExcelProjectDir()
   unlink(list.files(file.path(projectDir, "Data"), full.names = TRUE))
 
   expect_warning(
