@@ -192,3 +192,8 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-08-05 11:15: Removing a parameter or an output mapping from a parameter-identification task now runs through one shared piece of code instead of two near-identical copies, including the rule that a task left with nothing in it is deleted rather than kept empty.
 - 2026-08-05 11:30: Added tests for the two small files nothing tested: the read-only wrapper that stops a project section being assigned into, and the proxy behind `project$info` / `project$paths` / `project$excel`.
 - 2026-08-05 11:50: The Excel tests set the same fixtures up 45 times over; that setup now lives in three shared helpers, and the file is 167 lines shorter.
+- 2026-08-05 14:30: Split reading a project's files into two pieces: a plain function that does the reading and a method that stores what it read. Nothing outside the class calls it differently yet. (#1226)
+- 2026-08-05 14:55: Made loading and reloading a project call the reading function directly instead of through the old go-between, and removed the go-between. A failed load or reload now leaves nothing half-read. (#1226)
+- 2026-08-05 15:05: Added a glossary naming the three different things called "Scenario" and the four different things called "Parameters" apart. (#1226)
+- 2026-08-05 15:20: Moved the glossary into CLAUDE.md itself instead of a separate file. (#1226)
+- 2026-08-05 15:45: Addressed review on the load-extraction PR: replaced two tests that could never fail with a real test of the atomicity guarantee, fixed a miscount and a "used to" aside in two comments, pointed two other comments at the function that actually raises them, and moved a validation check back to where its error message names the right place. (#1226)

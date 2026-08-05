@@ -1,7 +1,8 @@
 # v2.0 Project → JSON serialization (internal) ----
 #
-# Inverse of `Project$.readJson()` (called by `Project$new()`). Walks a
-# `Project` and emits a v2.0 `Project.json` file. The contract is:
+# Inverse of `.loadProjectTree()` (composed with `Project$new()`'s commit
+# step). Walks a `Project` and emits a v2.0 `Project.json` file. The
+# contract is:
 #
 #   loadProject(path) |> saveSnapshot(out)  produces a JSON file that, when
 #   re-loaded, yields a `Project` structurally identical to the first one.
@@ -18,7 +19,7 @@
 
 #' Internal: render a `Project` to a JSON-shaped R list in the v2.0 schema.
 #'
-#' Not exported. Companion to `Project$.readJson()`. The list returned here
+#' Not exported. Companion to `.loadProjectTree()`. The list returned here
 #' is the canonical input to `jsonlite::write_json` (see `.saveProjectJson()`);
 #' writing and re-parsing it yields a structurally identical `Project`.
 #'
@@ -204,7 +205,7 @@
 # Per-section helpers ---------------------------------------------------------
 #
 # Each helper is paired with a `.parse<Section>()` (called from
-# `Project$.readJson()`) and is the canonical place for that section's
+# `.loadProjectTree()`) and is the canonical place for that section's
 # JSON-shape concerns. Today most helpers are trivial because the parser is
 # JSON-faithful; the bodies will grow as section-specific transformations
 # move here from caller code (e.g. relative-path normalization, ID

@@ -65,6 +65,154 @@ loadProject <- function(path = ".") {
   project
 }
 
+# Read a project container file and every section's `definitions/<kind>/` tree
+# (or inline fallback) into a plain list, doing all of the load's I/O and
+# nothing else: no field is assigned anywhere until the whole tree has parsed
+# successfully, so a failure partway (a missing file, an unsupported schema
+# version, a malformed definition) leaves nothing half-populated. The
+# `Project` commits the returned list via `private$.applyLoadedSections()`.
+#
+# Everything this aborts on is a property of the file, not of the call that
+# opened it, and the path is reached from several entrypoints (`loadProject()`,
+# `Project$new()`, `ProjectConfiguration()`, `reloadProject()`). Attribute
+# those aborts to no function at all rather than to this helper, whose name
+# means nothing to the reader.
+#
+# @keywords internal
+# @noRd
+.loadProjectTree <- function(path) {
+  rlang::local_error_call(NULL)
+  jsonPath <- .resolveProjectContainerPath(path)
+  if (!fs::file_exists(jsonPath)) {
+    cli::cli_abort(messages$fileNotFound(jsonPath))
+  }
+  jsonData <- tryCatch(
+    jsonlite::fromJSON(jsonPath, simplifyVector = FALSE),
+    error = function(e) {
+      cli::cli_abort(
+        "Failed to parse {.file {jsonPath}} as JSON.",
+        parent = e
+      )
+    }
+  )
+  if (!identical(jsonData$schemaVersion, "2.0")) {
+    # A previous-version monolithic snapshot has no `schemaVersion`, so it
+    # fails this check for a reason the version number cannot express: it is
+    # not a malformed project of the current format, it is an older project
+    # that `restoreProject()` upgrades. Name that call rather than reporting
+    # a missing schema version. Every entrypoint that opens a project file
+    # (`loadProject()`, `Project$new()`, the deprecated
+    # `ProjectConfiguration()`, `reloadProject()`) reads it through here, so
+    # the one guard covers all of them.
+    if (.isLegacySnapshot(jsonData)) {
+      cli::cli_abort(messages$legacySnapshotNotLoadable(jsonPath))
+    }
+    # `version` is bound here because the catalog entry leaves its
+    # placeholder unglued, so this call interpolates it exactly once.
+    version <- jsonData$schemaVersion %||% "<missing>"
+    cli::cli_abort(messages$unsupportedSchemaVersion(version))
+  }
+  .validateDefinitionsFolder(jsonData$definitionsFolder)
+  projectDirPath <- dirname(jsonPath)
+  definitionsFolder <- jsonData$definitionsFolder %||% "definitions"
+
+  # The container separates two concerns: the live working folders
+  # (the `filePaths` block) the runtime reads, and the Excel-bridge
+  # sheet-name fields (the `excel` block) only the Excel bridge reads. A
+  # legacy project carries both sets in one flat `filePaths` block; split
+  # it on read so both on-disk shapes load (the field-to-block mapping is
+  # fixed, so the partition is deterministic). A new-shape project reads
+  # each block from its own key; any Excel field that still appears in
+  # `filePaths` (e.g. a hand-edited file) is routed to the Excel store too.
+  fp <- jsonData$filePaths %||% list()
+  excel <- jsonData$excel %||% list()
+  # A hand-edited `Project.json` could carry both the legacy `modelFolder`
+  # and the current `simulationsFolder` key. They map to the same slot, so
+  # rather than let iteration order decide, warn and drop the legacy key so
+  # the current `simulationsFolder` deterministically wins.
+  hasSimulationsCollision <- all(
+    c("modelFolder", "simulationsFolder") %in% names(fp)
+  )
+  if (hasSimulationsCollision) {
+    cli::cli_warn(messages$duplicateSimulationsFolderKey())
+    fp[["modelFolder"]] <- NULL
+  }
+  filePathsData <- list()
+  excelData <- list()
+  for (n in names(fp)) {
+    # Accept the pre-6.0.0 key `modelFolder` and store it under the current
+    # name `simulationsFolder`, so a legacy `Project.json` (or an
+    # Excel-imported project whose `Property` column still says
+    # `modelFolder`) resolves without a manual edit.
+    key <- if (identical(n, "modelFolder")) "simulationsFolder" else n
+    if (key %in% .excelFilePathFields) {
+      excelData[[key]] <- list(value = fp[[n]], description = "")
+    } else {
+      filePathsData[[key]] <- list(value = fp[[n]], description = "")
+    }
+  }
+  for (n in names(excel)) {
+    excelData[[n]] <- list(value = excel[[n]], description = "")
+  }
+
+  # Every authored section is a definition tree under `definitions/<kind>/`; a
+  # single-file snapshot with no tree falls back to the inline section in
+  # `Project.json`. `.loadDefinitionTree()` resolves tree-vs-inline per kind and
+  # the kind's spec parses the raw records into the in-memory shape. Output
+  # paths load before scenarios because scenarios dereference their
+  # `outputPathIds` against the project-level `outputPaths` map; there is no
+  # live `Project` yet to hand the scenarios parser (it reads
+  # `project$definitions$outputPaths`), so a plain list exposing that one
+  # field stands in for it. The `parameterSets` inline fallback merges any
+  # legacy three-section `Project.json` into the one map (a clash aborts the
+  # load).
+  loadSection <- function(kind, project = NULL) {
+    spec <- .definitionTreeSpec(kind)
+    records <- .loadDefinitionTree(
+      projectDirPath,
+      kind,
+      spec$inline(jsonData),
+      definitionsFolder
+    )
+    spec$parse(records, project)
+  }
+  outputPaths <- loadSection("outputPaths")
+  scenarios <- loadSection(
+    "scenarios",
+    list(definitions = list(outputPaths = outputPaths))
+  )
+
+  list(
+    projectFilePath = jsonPath,
+    projectDirPath = projectDirPath,
+    schemaVersion = jsonData$schemaVersion,
+    esqlabsRVersion = jsonData$esqlabsRVersion,
+    name = jsonData$name,
+    description = jsonData$description,
+    definitionsFolder = jsonData$definitionsFolder,
+    defaultSimulationRunOptions = jsonData$defaultSimulationRunOptions,
+    filePathsData = filePathsData,
+    excelData = excelData,
+    outputPaths = outputPaths,
+    scenarios = scenarios,
+    parameterSets = loadSection("parameterSets"),
+    initialConditions = loadSection("initialConditions"),
+    individuals = loadSection("individuals"),
+    populations = loadSection("populations"),
+    applications = loadSection("applications"),
+    observedData = loadSection("observedData"),
+    # The plots concern is three independent top-level sections, each its own
+    # keyed kind: `dataCombined` (`definitions/data-combined/`), `plots`
+    # (`definitions/plots/`, the plot list), and `plotGrids`
+    # (`definitions/plot-grids/`). Each loads from its own tree (or its own
+    # top-level inline snapshot section as the fallback).
+    dataCombined = loadSection("dataCombined"),
+    plots = loadSection("plots"),
+    plotGrids = loadSection("plotGrids"),
+    parameterIdentification = loadSection("parameterIdentification")
+  )
+}
+
 #' Save the project to the disk
 #'
 #' @description Write your changes to the project files on disk. Changes made
@@ -319,7 +467,7 @@ isProjectInitialized <- function(destination = ".") {
   # it, and the path arrives from several entrypoints (`loadProject()`,
   # `Project$new()`, `ProjectConfiguration()`). Attribute the abort to no
   # function at all rather than to this helper, whose name means nothing to the
-  # reader, exactly as `.readJson()` does.
+  # reader, exactly as `.loadProjectTree()` does.
   rlang::local_error_call(NULL)
   path <- fs::path_abs(path)
   if (!fs::dir_exists(path)) {

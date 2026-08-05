@@ -248,6 +248,10 @@ Project <- R6::R6Class(
         private$.projectDirPath <- NULL
         return(invisible(self))
       }
+      # A bad `projectFilePath` is a property of this call, not of a file
+      # (none has been touched yet), so it aborts here, attributed to this
+      # method, rather than inside `.loadProjectTree()` (whose own aborts are
+      # genuinely about the file and carry no such attribution).
       if (
         !is.character(projectFilePath) ||
           length(projectFilePath) != 1L ||
@@ -256,7 +260,7 @@ Project <- R6::R6Class(
       ) {
         cli::cli_abort(messages$invalidPathArgument())
       }
-      private$.readJson(projectFilePath)
+      private$.applyLoadedSections(.loadProjectTree(projectFilePath))
       invisible(self)
     },
 
@@ -1278,7 +1282,7 @@ Project <- R6::R6Class(
     # identity is preserved (the same R6 instance is mutated), so existing
     # handles stay valid.
     .reload = function() {
-      private$.readJson(private$.projectFilePath)
+      private$.applyLoadedSections(.loadProjectTree(private$.projectFilePath))
       invisible(self)
     },
 
@@ -1358,126 +1362,36 @@ Project <- R6::R6Class(
       resolved
     },
 
-    .readJson = function(jsonPath) {
-      # Everything this method aborts on is a property of the file, not of the
-      # call that opened it, and the file is reached from several entrypoints
-      # (`loadProject()`, `Project$new()`, `ProjectConfiguration()`,
-      # `reloadProject()`). Attribute those aborts to no function at all rather
-      # than to this private method, whose name means nothing to the reader.
-      rlang::local_error_call(NULL)
-      jsonPath <- .resolveProjectContainerPath(jsonPath)
-      if (!fs::file_exists(jsonPath)) {
-        cli::cli_abort(messages$fileNotFound(jsonPath))
-      }
-      jsonData <- tryCatch(
-        jsonlite::fromJSON(jsonPath, simplifyVector = FALSE),
-        error = function(e) {
-          cli::cli_abort(
-            "Failed to parse {.file {jsonPath}} as JSON.",
-            parent = e
-          )
-        }
-      )
-      if (!identical(jsonData$schemaVersion, "2.0")) {
-        # A previous-version monolithic snapshot has no `schemaVersion`, so it
-        # fails this check for a reason the version number cannot express: it is
-        # not a malformed project of the current format, it is an older project
-        # that `restoreProject()` upgrades. Name that call rather than reporting
-        # a missing schema version. Every entrypoint that opens a project file
-        # (`loadProject()`, `Project$new()`, the deprecated
-        # `ProjectConfiguration()`, `reloadProject()`) reads it through here, so
-        # the one guard covers all of them.
-        if (.isLegacySnapshot(jsonData)) {
-          cli::cli_abort(messages$legacySnapshotNotLoadable(jsonPath))
-        }
-        # `version` is bound here because the catalog entry leaves its
-        # placeholder unglued, so this call interpolates it exactly once.
-        version <- jsonData$schemaVersion %||% "<missing>"
-        cli::cli_abort(messages$unsupportedSchemaVersion(version))
-      }
-      private$.schemaVersion <- jsonData$schemaVersion
-      private$.esqlabsRVersion <- jsonData$esqlabsRVersion
-      private$.name <- jsonData$name
-      private$.description <- jsonData$description
-      .validateDefinitionsFolder(jsonData$definitionsFolder)
-      private$.definitionsFolder <- jsonData$definitionsFolder
-      private$.defaultSimulationRunOptions <- jsonData$defaultSimulationRunOptions
-      private$.projectFilePath <- jsonPath
-      private$.projectDirPath <- dirname(jsonPath)
-
-      # The container separates two concerns: the live working folders
-      # (the `filePaths` block) the runtime reads, and the Excel-bridge
-      # sheet-name fields (the `excel` block) only the Excel bridge reads. A
-      # legacy project carries both sets in one flat `filePaths` block; split
-      # it on read so both on-disk shapes load (the field-to-block mapping is
-      # fixed, so the partition is deterministic). A new-shape project reads
-      # each block from its own key; any Excel field that still appears in
-      # `filePaths` (e.g. a hand-edited file) is routed to the Excel store too.
-      fp <- jsonData$filePaths %||% list()
-      excel <- jsonData$excel %||% list()
-      # A hand-edited `Project.json` could carry both the legacy `modelFolder`
-      # and the current `simulationsFolder` key. They map to the same slot, so
-      # rather than let iteration order decide, warn and drop the legacy key so
-      # the current `simulationsFolder` deterministically wins.
-      hasSimulationsCollision <- all(
-        c("modelFolder", "simulationsFolder") %in% names(fp)
-      )
-      if (hasSimulationsCollision) {
-        cli::cli_warn(messages$duplicateSimulationsFolderKey())
-        fp[["modelFolder"]] <- NULL
-      }
-      private$.filePathsData <- list()
-      private$.excelData <- list()
-      for (n in names(fp)) {
-        # Accept the pre-6.0.0 key `modelFolder` and store it under the current
-        # name `simulationsFolder`, so a legacy `Project.json` (or an
-        # Excel-imported project whose `Property` column still says
-        # `modelFolder`) resolves without a manual edit.
-        key <- if (identical(n, "modelFolder")) "simulationsFolder" else n
-        if (key %in% .excelFilePathFields) {
-          private$.excelData[[key]] <- list(value = fp[[n]], description = "")
-        } else {
-          private$.filePathsData[[key]] <- list(
-            value = fp[[n]],
-            description = ""
-          )
-        }
-      }
-      for (n in names(excel)) {
-        private$.excelData[[n]] <- list(value = excel[[n]], description = "")
-      }
-
-      # Every authored section is a definition tree under `definitions/<kind>/`; a
-      # single-file snapshot with no tree falls back to the inline section in
-      # `Project.json`. `.loadDefinitionTree()` resolves tree-vs-inline per kind and
-      # the kind's spec parses the raw records into the in-memory shape. Output
-      # paths load before scenarios because scenarios dereference their
-      # `outputPathIds` against the project-level `outputPaths` map. The
-      # `parameterSets` inline fallback merges any legacy three-section
-      # `Project.json` into the one map (a clash aborts the load).
-      private$.outputPaths <- private$.loadSection("outputPaths", jsonData)
-      private$.parameterSets <- private$.loadSection("parameterSets", jsonData)
-      private$.initialConditions <- private$.loadSection(
-        "initialConditions",
-        jsonData
-      )
-      private$.individuals <- private$.loadSection("individuals", jsonData)
-      private$.populations <- private$.loadSection("populations", jsonData)
-      private$.applications <- private$.loadSection("applications", jsonData)
-      private$.scenarios <- private$.loadSection("scenarios", jsonData)
-      private$.observedData <- private$.loadSection("observedData", jsonData)
-      # The plots concern is three independent top-level sections, each its own
-      # keyed kind: `dataCombined` (`definitions/data-combined/`), `plots`
-      # (`definitions/plots/`, the plot list), and `plotGrids`
-      # (`definitions/plot-grids/`). Each loads from its own tree (or its own
-      # top-level inline snapshot section as the fallback).
-      private$.dataCombined <- private$.loadSection("dataCombined", jsonData)
-      private$.plots <- private$.loadSection("plots", jsonData)
-      private$.plotGrids <- private$.loadSection("plotGrids", jsonData)
-      private$.parameterIdentification <- private$.loadSection(
-        "parameterIdentification",
-        jsonData
-      )
+    # Commit a `.loadProjectTree()` snapshot to `private` in one
+    # unconditional pass: every field the parse produced is assigned, and the
+    # runtime-only state a tree carries no record of (session-added observed
+    # data and populations, the observed-data names cache, the dirty and
+    # validation flags) is reset to the just-loaded baseline. Shared by
+    # `initialize()` (constructing from a path) and `.reload()`, so load and
+    # reload commit identically.
+    .applyLoadedSections = function(sections) {
+      private$.projectFilePath <- sections$projectFilePath
+      private$.projectDirPath <- sections$projectDirPath
+      private$.schemaVersion <- sections$schemaVersion
+      private$.esqlabsRVersion <- sections$esqlabsRVersion
+      private$.name <- sections$name
+      private$.description <- sections$description
+      private$.definitionsFolder <- sections$definitionsFolder
+      private$.defaultSimulationRunOptions <- sections$defaultSimulationRunOptions
+      private$.filePathsData <- sections$filePathsData
+      private$.excelData <- sections$excelData
+      private$.outputPaths <- sections$outputPaths
+      private$.parameterSets <- sections$parameterSets
+      private$.initialConditions <- sections$initialConditions
+      private$.individuals <- sections$individuals
+      private$.populations <- sections$populations
+      private$.applications <- sections$applications
+      private$.scenarios <- sections$scenarios
+      private$.observedData <- sections$observedData
+      private$.dataCombined <- sections$dataCombined
+      private$.plots <- sections$plots
+      private$.plotGrids <- sections$plotGrids
+      private$.parameterIdentification <- sections$parameterIdentification
 
       # Session-only observed-data state (runtime programmatic DataSets added via
       # `addObservedData(project, <DataSet>)`, and the observed-data names cache)
@@ -1495,20 +1409,7 @@ Project <- R6::R6Class(
       private$.validatedSinceMutation <- FALSE
       # A freshly loaded project has no unsaved changes: memory equals the tree.
       private$.modified <- FALSE
-    },
-
-    # Load one section: read its `definitions/<kind>/` tree (or the inline
-    # snapshot fallback) and parse the raw records into the in-memory shape via
-    # the kind's spec.
-    .loadSection = function(kind, jsonData) {
-      spec <- .definitionTreeSpec(kind)
-      records <- .loadDefinitionTree(
-        private$.projectDirPath,
-        kind,
-        spec$inline(jsonData),
-        private$.definitionsFolder %||% "definitions"
-      )
-      spec$parse(records, self)
+      invisible(self)
     }
   )
 )

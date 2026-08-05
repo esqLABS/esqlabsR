@@ -187,7 +187,7 @@ messages$gitLfsPointerFile <- function(path) {
   )
 }
 
-# Raised from `Project$.readJson()`. Unglued for the same reason as
+# Raised from `.loadProjectTree()`. Unglued for the same reason as
 # `legacySnapshotNotLoadable()` below: a hand-edited `schemaVersion` containing
 # `{` or `}` would be glue-parsed a second time by the raising `cli_abort()` and
 # fail with a glue error instead of this message. The value is bound under
@@ -712,7 +712,7 @@ messages$importSkippedNonParameterSheets <- function(
   )
 }
 
-# Raised from `Project$.readJson()`, whose schema-version check fails on every
+# Raised from `.loadProjectTree()`, whose schema-version check fails on every
 # file `.isLegacySnapshot()` recognizes: a previous-version snapshot carries no
 # `schemaVersion` at all. The `{jsonPath}` placeholder stays unglued so
 # `cli_abort()` interpolates it once, in that frame, where the value is bound
@@ -731,11 +731,12 @@ messages$legacySnapshotNotLoadable <- function(jsonPath) {
   )
 }
 
-# Raised from `Project$.readJson()` when it is handed a folder that holds no
-# project container. Naming the mistake is the point: a folder is the natural
-# second guess after a file, and letting it through produced a raw JSON parse
-# error about the folder itself. Unglued so a folder path containing `{` or `}`
-# is interpolated exactly once, by the raising call, where `folder` is bound.
+# Raised from `.resolveProjectContainerPath()` when it is handed a folder
+# that holds no project container. Naming the mistake is the point: a folder
+# is the natural second guess after a file, and letting it through produced a
+# raw JSON parse error about the folder itself. Unglued so a folder path
+# containing `{` or `}` is interpolated exactly once, by the raising call,
+# where `folder` is bound.
 messages$noProjectContainerInFolder <- function(folder) {
   c(
     "x" = "No esqlabsR project found in the folder {.file {folder}}.",
@@ -747,9 +748,10 @@ messages$noProjectContainerInFolder <- function(folder) {
   )
 }
 
-# Raised from `Project$.readJson()` when a folder holds several project
-# containers, so there is no single project to open. `folder` and `names` are
-# bound in the raising frame; unglued for the same reason as above.
+# Raised from `.resolveProjectContainerPath()` when a folder holds several
+# project containers, so there is no single project to open. `folder` and
+# `names` are bound in the raising frame; unglued for the same reason as
+# above.
 messages$multipleProjectContainersInFolder <- function(folder, names) {
   c(
     "x" = "The folder {.file {folder}} holds {length(names)} project files: \\
