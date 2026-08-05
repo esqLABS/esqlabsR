@@ -11,6 +11,7 @@ Worth recording, because these are the usual suspects and the package does not h
 - **No boarded-up hacks.** Zero `TODO`, `FIXME`, `HACK`, or `XXX` comments in `R/` or `tests/`. No commented-out code.
 - **Error handling is consistent.** User-facing text goes through the `messages` catalog and is raised with `cli::cli_abort()` / `cli_warn()` / `cli_inform()`, as the house rule requires. No bare `stop()` on inline literals.
 - **Function signatures are small.** Median 2 arguments across 775 top-level functions; only 9 exceed 10, and those are domain record constructors (a scenario genuinely has 16 fields).
+- **`R CMD check` is clean** apart from one NOTE, recorded as B18 below.
 
 ## Debt Ledger
 
@@ -23,21 +24,27 @@ Worth recording, because these are the usual suspects and the package does not h
 | B5 | Adding a field to a scenario means editing the same 16-argument signature in three places. Most other authoring methods on `Project` already forward with `...`; `addScenario` / `setScenario` / `createScenariosFromPKML` are the exceptions. | `project.R:276-313`, `scenarios.R:894-939`, `scenarios.R:947-967` | duplicated knowledge | medium | S | P1 | fixed (now two places) |
 | B6 | `importProjectFromExcel()` is 629 lines in one function, the longest in the package by 180 lines. | `project-excel.R:55` | long function | medium (hard to review, hard to test in parts) | L | P2 | fixed (629 -> 366) |
 | B7 | `.createScenariosFromPKML_impl()` is 447 lines. | `scenario-from-pkml.R:230` | long function | medium | L | P2 | open |
-| B8 | `.validateCrossReferences()` is 314 lines and encloses a 128-line `inScope()` function. | `validation.R:878` | long function | medium | M | P2 | open |
+| B8 | `.validateCrossReferences()` is 314 lines and encloses a 128-line `inScope()` function. Within it, the individuals and applications parameter-set checks were byte-identical apart from the kind they name. | `validation.R:878` | long function | medium | M | P2 | partly fixed — the duplicated check is shared; the phase split is still open |
 | B9 | 37 functions exceed 100 lines and 94 exceed 60, against a median of 13. | across `R/` | long function | low | L | P3 | open |
-| B10 | The "PI task not found" lookup-and-abort, and the task write-back through the section seam, are each duplicated between the add and set paths. | `parameter-identification.R:1761-1769` / `1928-1936`, and `1846-1856` / `2018-2028` | duplicated knowledge | low | S | P2 | open |
-| B11 | The `.appendParameterSets()` call block appears three times in the Excel importer. | `project-excel.R:278-286`, `387-395`, `~425` | duplicated knowledge | low | S | P2 | open |
-| B12 | The `extendParameterStructure()` merge block appears three times in a row inside one function. | `scenario-execution.R:124-131`, `141-148`, `167-174` | duplicated knowledge | low | S | P2 | open |
+| B10 | The "PI task not found" lookup-and-abort is written out in all four PI authoring impls, with the message as an inline literal rather than a catalog entry. | `parameter-identification.R`, four sites | duplicated knowledge | low | S | P2 | fixed |
+| B11 | The `.appendParameterSets()` call block appears four times in the Excel importer. | `project-excel.R`, four sites in `.excelImportSections()` | duplicated knowledge | low | S | P2 | won't fix — see note below |
+| B12 | The `extendParameterStructure()` merge block appears three times in a row inside one function. | `scenario-execution.R:124-131`, `141-148`, `167-174` | duplicated knowledge | low | S | P2 | fixed |
 | B13 | Comments narrate the code's history instead of describing what it does now, which the repo's own comment rule in `REFACTORING.md` forbids. | `definition-files.R:1235`, `project-excel.R:627`; in tests, `setup.R:3` and `test-project.R:1082` | comment rot | low | S | P2 | fixed |
 | B14 | `readxl` is called directly from two files outside the Excel boundary, bypassing the `readExcel()` wrapper in `file-utils.R` (which does not cover `excel_sheets()`). | `simulation.R:180`, `parameters.R:310` | leaky boundary | low | S | P3 | open |
 | B15 | The `Project` R6 class exposes 83 public methods. Each is a thin forwarder, so the class itself stays readable, but the interface a user faces is very wide. | `project.R:238-734` | wide interface | low | L | P3 | open (accept) |
 | B16 | Roughly 40 lines are shared between the spider-plot and time-profile builders: split-by-`OutputPath`, log-scale axis handling, and `patchwork` assembly. | `sensitivity-spider-plot.R:198-210, 332-340, 411-426` and `sensitivity-time-profiles.R:190-202, 319-326, 408-423` | duplicated knowledge | low | M | P3 | won't fix (do-not-touch area) |
+| B17 | `messages$notNamedList()` called `ospsuite.utils:::.getCallingFunctionName()`, reaching into another package's internal namespace. This fails `R CMD check` outright. | `messages.R:1454` | illegal dependency | high (blocks a CRAN-style check) | S | P1 | fixed |
+| B18 | `R CMD check` reports one NOTE: 14 file paths exceed the portable-length limit, all `vdiffr` snapshot files and one fixture. | `tests/testthat/_snaps/sensitivity-*`, `tests/testthat/data/TestProject/definitions/observed-data/` | portability | low | M | P3 | open |
 
 Test-suite findings T1-T6 live in `quality/TESTING.md` and are not repeated here.
 
-### Why B4 was not fixed
+### Why B4 and B11 were not fixed
 
-The two functions do share 18 lines, but those 18 lines are two calls whose arguments differ (`opName`, and `stopIfFails` versus `canSkip = FALSE`), and the run path needs `simulationRunOptions` back out while the build path does not. A function wrapping them would take nine parameters and its whole body would be "call A, then call B": it hides no decision and adds an interface wider than the duplication it removes. That is the shallow module the deep-module rule warns against, so the duplication stays and this note explains why, rather than the fix being silently skipped.
+Both are the same shape, and both fail the same test: does the extracted function hide a decision, or does it only forward arguments?
+
+**B11.** The repeated block is six lines, four of which are the `.appendParameterSets()` call itself and one of which is a plain field assignment. A wrapper would be a wrapper around a wrapper, and every caller would still have to unpack its result to reach `renames`. The reading cost of the extra hop exceeds the sixteen lines it saves.
+
+**B4.** These two functions do share 18 lines, but those 18 lines are two calls whose arguments differ (`opName`, and `stopIfFails` versus `canSkip = FALSE`), and the run path needs `simulationRunOptions` back out while the build path does not. A function wrapping them would take nine parameters and its whole body would be "call A, then call B": it hides no decision and adds an interface wider than the duplication it removes. That is the shallow module the deep-module rule warns against, so the duplication stays and this note explains why, rather than the fix being silently skipped.
 
 ## Smell Inventory
 

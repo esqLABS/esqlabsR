@@ -43,7 +43,11 @@ Phase 5 produced no Dependency Rule violations to track, so no `ARCHITECTURE.md`
 | `11cb3121` | B5 — `addScenario` forwards through `...`, three signatures become two | −30 |
 | `6edfe95d` | B1 — 26 inline string guards routed through `.isNonEmptyString()` | −72 |
 | `9fb9b281` | T1, T4, T5, T6 — shared PI test fixtures, `.localSnapshotOptions()` moved, snapshot test renamed | −150 |
-| (pending) | B6, B13 — the Excel section table extracted, history comments rewritten | −0 (moved) |
+| `c63f3dfc` | B6, B13 — the Excel section table extracted, history comments rewritten | −0 (moved) |
+| `11f078a1` | B10, B12, B17 — one PI-task lookup, one parameter-set merge loop, and the illegal `:::` call removed | −45 |
+| `624b406b` | B8 (part) — the duplicated parameter-set reference check shared | −20 |
+
+`R CMD check` was run once the code changes were in: `Status: 1 NOTE`, no errors and no warnings. The NOTE is B18, a pre-existing one about long snapshot file paths.
 
 ## Key Decisions
 
