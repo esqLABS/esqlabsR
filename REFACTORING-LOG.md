@@ -192,3 +192,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-08-05 11:15: Removing a parameter or an output mapping from a parameter-identification task now runs through one shared piece of code instead of two near-identical copies, including the rule that a task left with nothing in it is deleted rather than kept empty.
 - 2026-08-05 11:30: Added tests for the two small files nothing tested: the read-only wrapper that stops a project section being assigned into, and the proxy behind `project$info` / `project$paths` / `project$excel`.
 - 2026-08-05 11:50: The Excel tests set the same fixtures up 45 times over; that setup now lives in three shared helpers, and the file is 167 lines shorter.
+- 2026-08-05 14:30: Split reading a project's files into two pieces: a plain function that does the reading and a method that stores what it read. Nothing outside the class calls it differently yet. (#1226)
