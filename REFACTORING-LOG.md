@@ -196,3 +196,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-08-05 14:55: Made loading and reloading a project call the reading function directly instead of through the old go-between, and removed the go-between. A failed load or reload now leaves nothing half-read. (#1226)
 - 2026-08-05 15:05: Added a glossary naming the three different things called "Scenario" and the four different things called "Parameters" apart. (#1226)
 - 2026-08-05 15:20: Moved the glossary into CLAUDE.md itself instead of a separate file. (#1226)
+- 2026-08-05 15:45: Addressed review on the load-extraction PR: replaced two tests that could never fail with a real test of the atomicity guarantee, fixed a miscount and a "used to" aside in two comments, pointed two other comments at the function that actually raises them, and moved a validation check back to where its error message names the right place. (#1226)
