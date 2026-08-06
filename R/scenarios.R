@@ -1238,6 +1238,10 @@ setScenario <- function(project, id, ...) {
     cli::cli_abort(messages$setScenarioNoOverwrite())
   }
   if (inherits(id, "Scenario")) {
+    # This branch returns before `.setScenario_impl()` runs, so the naming rule
+    # is enforced here too. An all-unnamed `...` has no names attribute at all,
+    # which would leave `.assertScenarioRecordAlone()` with nothing to report.
+    .assertAuthoringFieldsNamed(dots)
     .assertScenarioRecordAlone(names(dots))
     return(do.call(project$setScenario, .scenarioRecordArgs(id)))
   }
