@@ -749,6 +749,21 @@ test_that("setScenario names a field it cannot set rather than dropping it", {
   )
 })
 
+test_that("setScenario requires its fields to be named", {
+  # The fields arrive through `...` (as they do for `setIndividual()` and
+  # `setPopulation()`), so a positional one carries no name to apply it under.
+  project <- testProject()
+  before <- project$definitions$scenarios[["testscenario"]]$modelFile
+  expect_error(
+    setScenario(project, "testscenario", "Aciclovir.pkml"),
+    "must be named"
+  )
+  expect_equal(
+    project$definitions$scenarios[["testscenario"]]$modelFile,
+    before
+  )
+})
+
 # Passing a parsed Scenario record back ----
 
 test_that("a parsed scenario is accepted back by addScenario() unchanged", {

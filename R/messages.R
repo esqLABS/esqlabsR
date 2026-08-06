@@ -1120,9 +1120,10 @@ messages$scenarioRecordWithFields <- function(fields) {
   ))
 }
 
-# `setScenario()` declares `overwrite` only to intercept it: without the formal,
-# R's partial matching would resolve the name to `overwriteFormulasInSS` and
-# quietly set a steady-state model option instead.
+# `setScenario()` intercepts `overwrite` rather than letting it reach the impl's
+# generic unknown-field message, because the name is a habit picked up from
+# `addScenario()` and the scenario carries a second argument that starts the
+# same way.
 messages$setScenarioNoOverwrite <- function() {
   c(
     "{.fn setScenario} has no {.arg overwrite} argument.",

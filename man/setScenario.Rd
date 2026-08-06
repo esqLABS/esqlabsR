@@ -4,25 +4,7 @@
 \alias{setScenario}
 \title{Modify fields of an existing scenario}
 \usage{
-setScenario(
-  project,
-  id,
-  modelFile,
-  individual,
-  population,
-  application,
-  parameterSets,
-  initialConditions,
-  outputPaths,
-  simulationTime,
-  simulationTimeUnit,
-  steadyState,
-  steadyStateTime,
-  steadyStateTimeUnit,
-  overwriteFormulasInSS,
-  readPopulationFromCSV,
-  overwrite
-)
+setScenario(project, id, ...)
 }
 \arguments{
 \item{project}{A \code{Project} object.}
@@ -32,66 +14,15 @@ canonicalized the same way \code{\link[=addScenario]{addScenario()}} canonicaliz
 already exist in \code{scenarios} definitions. A \code{Scenario} record is also
 accepted, and then supplies every field; see the section below.}
 
-\item{modelFile}{Character. Name of the \code{.pkml} model file (relative
-to model folder).}
-
-\item{individual}{Character or \code{NULL}. Id referencing
-\code{individuals} definitions.}
-
-\item{population}{Character or \code{NULL}. Id referencing
-\code{populations} definitions.}
-
-\item{application}{Character or \code{NULL}. Id of the application protocol
-referencing \code{applications} definitions.}
-
-\item{parameterSets}{Character vector or \code{NULL}. Parameter-set ids
-referencing \code{parameterSets} definitions. Applied whole to every scenario.}
-
-\item{initialConditions}{Character vector or \code{NULL}. Initial-condition set
-ids referencing \code{initialConditions} definitions. Applied whole to every
-scenario.}
-
-\item{outputPaths}{Character vector or \code{NULL}. Output-path ids referencing
-\code{outputPaths} definitions. Applied whole to every scenario.}
-
-\item{simulationTime}{The simulation time grid, or \code{NULL} (default) to keep
-the one the model file carries. One interval is a length-3 numeric vector
-\code{c(start, end, resolution)} or the same grid written as a string,
-\code{"start, end, resolution"}. Several intervals go in one string,
-\code{"start, end, resolution; start, end, resolution"}, or in a list of
-length-3 numeric vectors, which is the shape a scenario's parsed
-\code{simulationTime} carries. To give a different grid per scenario, pass a list
-with one element (in any of those forms) per id.}
-
-\item{simulationTimeUnit}{Character time-unit string. Omitting the argument
-leaves the current value untouched (there is no default; this is a
-partial update).}
-
-\item{steadyState}{Logical, whether to simulate steady state. Omitting the
-argument leaves the current value untouched (there is no default; this is
-a partial update).}
-
-\item{steadyStateTime}{Numeric steady-state time in \code{steadyStateTimeUnit}.
-Omitting the argument leaves the current value untouched (there is no
-default; this is a partial update).}
-
-\item{steadyStateTimeUnit}{Character unit for \code{steadyStateTime}. Omitting
-the argument leaves the current value untouched (there is no default; this
-is a partial update).}
-
-\item{overwriteFormulasInSS}{Logical, whether to overwrite formulas during
-steady state. Omitting the argument leaves the current value untouched
-(there is no default; this is a partial update).}
-
-\item{readPopulationFromCSV}{Logical, whether to load the population from
-CSV. Omitting the argument leaves the current value untouched (there is no
-default; this is a partial update).}
-
-\item{overwrite}{Not an argument of \code{setScenario()}, which always updates the
-scenario named by \code{id}. It is declared only to reject the name, which R's
-partial matching would otherwise resolve to \code{overwriteFormulasInSS}. Pass
-that name in full for the steady-state model option, or use \code{\link[=addScenario]{addScenario()}}
-for the \code{overwrite} that replaces a definition.}
+\item{...}{Named fields to change. Accepted: \code{modelFile}, \code{individual},
+\code{population}, \code{application}, \code{parameterSets}, \code{initialConditions},
+\code{outputPaths}, \code{simulationTime}, \code{simulationTimeUnit}, \code{steadyState},
+\code{steadyStateTime}, \code{steadyStateTimeUnit}, \code{overwriteFormulasInSS},
+\code{readPopulationFromCSV}. Each takes the value \code{\link[=addScenario]{addScenario()}} documents for
+it, but has no default here: an omitted field is left untouched, a field
+passed as \code{NULL} is cleared. Scalar-per-definition fields recycle/align
+across \code{id}; \code{parameterSets}, \code{initialConditions} and \code{outputPaths} are
+applied whole. An unknown or unnamed field triggers an error.}
 }
 \value{
 The \code{project} object, invisibly.
@@ -124,6 +55,11 @@ Details): a supplied scalar-per-definition field is recycled or aligned
 across \code{id}, and the whole-vector fields \code{parameterSets} /
 \code{initialConditions} / \code{outputPaths} are applied whole to every scenario. A
 field left unsupplied is untouched on every scenario.
+
+There is no \code{overwrite} argument: \code{setScenario()} always updates the
+scenario named by \code{id}, and passing the name is an error. Use
+\code{\link[=addScenario]{addScenario()}} for the \code{overwrite} that replaces a definition, and spell
+\code{overwriteFormulasInSS} out in full for the steady-state model option.
 }
 \details{
 The id argument sets \code{N}, the number of definitions to act on, and cannot

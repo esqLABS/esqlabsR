@@ -912,7 +912,9 @@ addScenario <- function(
 ) {
   validateIsOfType(project, "Project")
   if (inherits(id, "Scenario")) {
-    .assertScenarioRecordAlone(match.call(), missing(modelFile))
+    .assertScenarioRecordAlone(
+      .addScenarioExtraFields(match.call(), missing(modelFile))
+    )
     return(do.call(
       project$addScenario,
       c(.scenarioRecordArgs(id), list(overwrite = overwrite))
@@ -1200,124 +1202,47 @@ removeScenario <- function(project, id) {
 #'   `initialConditions` / `outputPaths` are applied whole to every scenario. A
 #'   field left unsupplied is untouched on every scenario.
 #'
+#'   There is no `overwrite` argument: `setScenario()` always updates the
+#'   scenario named by `id`, and passing the name is an error. Use
+#'   [addScenario()] for the `overwrite` that replaces a definition, and spell
+#'   `overwriteFormulasInSS` out in full for the steady-state model option.
+#'
 #' @inherit vectorizedAuthoring details
 #' @inheritSection addScenario Passing a scenario back
-#' @inheritParams addScenario
+#' @param project A `Project` object.
 #' @param id Character vector. Ids of the scenarios to modify. Each is
 #'   canonicalized the same way [addScenario()] canonicalizes it, and must
 #'   already exist in `scenarios` definitions. A `Scenario` record is also
 #'   accepted, and then supplies every field; see the section below.
-#' @param simulationTimeUnit Character time-unit string. Omitting the argument
-#'   leaves the current value untouched (there is no default; this is a
-#'   partial update).
-#' @param steadyState Logical, whether to simulate steady state. Omitting the
-#'   argument leaves the current value untouched (there is no default; this is
-#'   a partial update).
-#' @param steadyStateTime Numeric steady-state time in `steadyStateTimeUnit`.
-#'   Omitting the argument leaves the current value untouched (there is no
-#'   default; this is a partial update).
-#' @param steadyStateTimeUnit Character unit for `steadyStateTime`. Omitting
-#'   the argument leaves the current value untouched (there is no default; this
-#'   is a partial update).
-#' @param overwriteFormulasInSS Logical, whether to overwrite formulas during
-#'   steady state. Omitting the argument leaves the current value untouched
-#'   (there is no default; this is a partial update).
-#' @param readPopulationFromCSV Logical, whether to load the population from
-#'   CSV. Omitting the argument leaves the current value untouched (there is no
-#'   default; this is a partial update).
-#' @param overwrite Not an argument of `setScenario()`, which always updates the
-#'   scenario named by `id`. It is declared only to reject the name, which R's
-#'   partial matching would otherwise resolve to `overwriteFormulasInSS`. Pass
-#'   that name in full for the steady-state model option, or use [addScenario()]
-#'   for the `overwrite` that replaces a definition.
+#' @param ... Named fields to change. Accepted: `modelFile`, `individual`,
+#'   `population`, `application`, `parameterSets`, `initialConditions`,
+#'   `outputPaths`, `simulationTime`, `simulationTimeUnit`, `steadyState`,
+#'   `steadyStateTime`, `steadyStateTimeUnit`, `overwriteFormulasInSS`,
+#'   `readPopulationFromCSV`. Each takes the value [addScenario()] documents for
+#'   it, but has no default here: an omitted field is left untouched, a field
+#'   passed as `NULL` is cleared. Scalar-per-definition fields recycle/align
+#'   across `id`; `parameterSets`, `initialConditions` and `outputPaths` are
+#'   applied whole. An unknown or unnamed field triggers an error.
 #'
 #' @returns The `project` object, invisibly.
 #' @export
 #' @family scenario
-setScenario <- function(
-  project,
-  id,
-  modelFile,
-  individual,
-  population,
-  application,
-  parameterSets,
-  initialConditions,
-  outputPaths,
-  simulationTime,
-  simulationTimeUnit,
-  steadyState,
-  steadyStateTime,
-  steadyStateTimeUnit,
-  overwriteFormulasInSS,
-  readPopulationFromCSV,
-  overwrite
-) {
+setScenario <- function(project, id, ...) {
   validateIsOfType(project, "Project")
-  # `overwrite` is a formal only so it cannot be partial-matched:
-  # `setScenario(project, id, overwrite = TRUE)`, written out of habit from
-  # `addScenario()`, would otherwise match `overwriteFormulasInSS` and silently
-  # turn on a steady-state model option.
-  if (!missing(overwrite)) {
+  dots <- list(...)
+  # `overwrite` reaches the impl as an unknown field, which would name it in the
+  # generic "cannot set" message. Say what it is instead: `addScenario()` is the
+  # one with an `overwrite`, and this scenario also has an argument whose name
+  # starts the same way.
+  if ("overwrite" %in% names(dots)) {
     cli::cli_abort(messages$setScenarioNoOverwrite())
   }
   if (inherits(id, "Scenario")) {
-    .assertScenarioRecordAlone(match.call(), missing(modelFile))
+    .assertScenarioRecordAlone(names(dots))
     return(do.call(project$setScenario, .scenarioRecordArgs(id)))
   }
 
-  # Capture only the fields the caller actually supplied (partial update). A
-  # supplied `NULL` (e.g. `individual = NULL`) clears the field, distinct
-  # from an unsupplied argument; the `x[name] <- list(value)` form preserves a
-  # NULL-valued supplied field as a present-but-NULL list element (a plain
-  # `x$name <- NULL` would instead drop the name). Forward only the supplied
-  # fields to the method so its `...` carries exactly what the user gave, which
-  # is how the method distinguishes "clear this" from "leave untouched".
-  supplied <- list()
-  if (!missing(modelFile)) {
-    supplied["modelFile"] <- list(modelFile)
-  }
-  if (!missing(individual)) {
-    supplied["individual"] <- list(individual)
-  }
-  if (!missing(population)) {
-    supplied["population"] <- list(population)
-  }
-  if (!missing(application)) {
-    supplied["application"] <- list(application)
-  }
-  if (!missing(parameterSets)) {
-    supplied["parameterSets"] <- list(parameterSets)
-  }
-  if (!missing(initialConditions)) {
-    supplied["initialConditions"] <- list(initialConditions)
-  }
-  if (!missing(outputPaths)) {
-    supplied["outputPaths"] <- list(outputPaths)
-  }
-  if (!missing(simulationTime)) {
-    supplied["simulationTime"] <- list(simulationTime)
-  }
-  if (!missing(simulationTimeUnit)) {
-    supplied["simulationTimeUnit"] <- list(simulationTimeUnit)
-  }
-  if (!missing(steadyState)) {
-    supplied["steadyState"] <- list(steadyState)
-  }
-  if (!missing(steadyStateTime)) {
-    supplied["steadyStateTime"] <- list(steadyStateTime)
-  }
-  if (!missing(steadyStateTimeUnit)) {
-    supplied["steadyStateTimeUnit"] <- list(steadyStateTimeUnit)
-  }
-  if (!missing(overwriteFormulasInSS)) {
-    supplied["overwriteFormulasInSS"] <- list(overwriteFormulasInSS)
-  }
-  if (!missing(readPopulationFromCSV)) {
-    supplied["readPopulationFromCSV"] <- list(readPopulationFromCSV)
-  }
-
-  do.call(project$setScenario, c(list(id), supplied))
+  project$setScenario(id, ...)
 }
 
 # The scenario fields `setScenario()` can change, in the spelling its arguments
@@ -1822,28 +1747,36 @@ duplicateScenario <- function(project, id, newId) {
   Filter(Negate(is.null), entry)
 }
 
-# Abort when a `Scenario` record is passed as `id` alongside field arguments. The
-# record is the whole field set, so an accompanying field would be silently
+# Abort when a `Scenario` record is passed as `id` alongside field arguments.
+# The record is the whole field set, so an accompanying field would be silently
 # ignored; edit the record's own field and pass it back, or name the id instead
-# of the record. `call` is the caller's `match.call()`, whose names cover every
-# named argument; `modelFileMissing` covers the one field that can be passed
-# positionally (and a further positional argument implies it was).
+# of the record. `extra` is the field names the caller was given, which each
+# entrypoint reads off its own arguments: `setScenario()` from its `...`,
+# `addScenario()` from `match.call()` plus the one field its formals let through
+# positionally.
 #
 # @keywords internal
 # @noRd
-.assertScenarioRecordAlone <- function(
-  call,
-  modelFileMissing,
-  errorCall = rlang::caller_env()
-) {
-  extra <- setdiff(names(call), c("", "project", "id", "overwrite"))
-  if (!modelFileMissing) {
-    extra <- union("modelFile", extra)
-  }
+.assertScenarioRecordAlone <- function(extra, errorCall = rlang::caller_env()) {
   if (length(extra) > 0L) {
     cli::cli_abort(messages$scenarioRecordWithFields(extra), call = errorCall)
   }
   invisible(NULL)
+}
+
+# The field names an `addScenario()` call carried alongside a `Scenario` record.
+# `call` is the caller's `match.call()`, whose names cover every named argument;
+# `modelFileMissing` covers the one field that can be passed positionally (and a
+# further positional argument implies it was).
+#
+# @keywords internal
+# @noRd
+.addScenarioExtraFields <- function(call, modelFileMissing) {
+  extra <- setdiff(names(call), c("", "project", "id", "overwrite"))
+  if (!modelFileMissing) {
+    extra <- union("modelFile", extra)
+  }
+  extra
 }
 
 # Bring a `simulationTime` authoring argument to the one string form the rest of
