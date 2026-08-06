@@ -405,12 +405,15 @@ getObservedDataNames <- function(project) {
 #'
 #' `id` names the declaration itself: it becomes the declaration's file under
 #' the project's definitions folder (`definitions/observed-data/<id>.json` in
-#' the default layout) and is the id [removeObservedData()] matches on. Left
-#' out, the `file` basename serves as both. It is not the name the data is
-#' known by: each imported [`ospsuite::DataSet`] carries the name its source
-#' gives it (the data-set name in an Excel sheet, the name inside a PKML file),
-#' and that name, not the declaration's id, is what a `dataCombined` entry
-#' references.
+#' the default layout) and is the id [removeObservedData()] matches on. It is
+#' canonicalized like every other definition id (lowercased and made a safe
+#' filename segment), and you are told when that changes it. Left out, the
+#' `file` basename serves as both, kept exactly as the source spells it.
+#'
+#' An id is not the name the data is known by: each imported
+#' [`ospsuite::DataSet`] carries the name its source gives it (the data-set name
+#' in an Excel sheet, the name inside a PKML file), and that name, not the
+#' declaration's id, is what a `dataCombined` entry references.
 #'
 #' A `DataSet` you pass lives in the R session until you save. On
 #' [saveProject()] it is written to a PKML file named `<DataSet name>.pkml`
@@ -551,6 +554,16 @@ addObservedData <- function(project, entry, overwrite = FALSE) {
         "An observedData entry's {.field id} must be a single non-empty string."
       )
     }
+    # A declared id names a definition file, so it runs through the same
+    # canonicalizer every other section's `add*` runs its id through: two ids
+    # differing only in case would otherwise be two declarations mapping to one
+    # file on a case-insensitive filesystem. Only a declared id is rewritten; an
+    # id derived from the `file` basename or a programmatic `DataSet` name is the
+    # source's own string, which `.validateObservedDataId()` rejects rather than
+    # reshapes.
+    if (!is.null(entry[["id"]])) {
+      entry[["id"]] <- .canonicalizeId(entry[["id"]])
+    }
     # Config entries are keyed by the id `removeObservedData()` matches on: the
     # entry's own `id` when it declares one, else its `file` basename. That id
     # also names the definition file, so reject an unsafe one here rather than
@@ -623,9 +636,11 @@ addObservedData <- function(project, entry, overwrite = FALSE) {
 #' @param id Character vector of ids. An observed-data id is the declaration's
 #'   `id` field, or, when it declares none, comes from the data source itself
 #'   (the `DataSet` name of an unsaved programmatic source, or a file basename
-#'   for a file-based source). Either way it is matched verbatim, not
-#'   canonicalized. A saved programmatic source that declares no `id` is matched
-#'   by its `<name>.pkml` basename (see the note above).
+#'   for a file-based source). Either way it is matched exactly as the
+#'   declaration stores it: a declared `id` is stored canonicalized (the form
+#'   [addObservedData()] reported back to you), a derived one exactly as its
+#'   source spells it. A saved programmatic source that declares no `id` is
+#'   matched by its `<name>.pkml` basename (see the note above).
 #' @returns The `project` object, invisibly.
 #' @export
 #' @family observedData

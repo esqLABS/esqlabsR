@@ -36,7 +36,8 @@ literal model path it maps to. Both resolve to the same output path.}
 \item{scaling, xOffset, yOffset, xFactor, yFactor, weight}{Optional
 per-mapping fitting metadata. Defaults match \code{PIOutputMapping()}.}
 
-\item{id}{Optional character scalar; auto-generated as
+\item{id}{Optional character scalar, canonicalized the same way
+\code{\link[=addPITask]{addPITask()}} canonicalizes a task id; auto-generated as
 \verb{<task>_mapping_<N>} when absent.}
 
 \item{overwrite}{Logical scalar. When \code{FALSE} (default), an explicit \code{id}

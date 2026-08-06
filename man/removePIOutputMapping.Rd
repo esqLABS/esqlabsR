@@ -11,7 +11,8 @@ removePIOutputMapping(project, task, id)
 
 \item{task}{Character scalar. Existing PI task id.}
 
-\item{id}{Character scalar. Output mapping id to remove.}
+\item{id}{Character scalar. Output mapping id to remove, canonicalized the
+same way \code{\link[=addPIOutputMapping]{addPIOutputMapping()}} canonicalizes it.}
 }
 \value{
 The \code{project} object, invisibly.

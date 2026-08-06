@@ -12,9 +12,11 @@ removeObservedData(project, id)
 \item{id}{Character vector of ids. An observed-data id is the declaration's
 \code{id} field, or, when it declares none, comes from the data source itself
 (the \code{DataSet} name of an unsaved programmatic source, or a file basename
-for a file-based source). Either way it is matched verbatim, not
-canonicalized. A saved programmatic source that declares no \code{id} is matched
-by its \verb{<name>.pkml} basename (see the note above).}
+for a file-based source). Either way it is matched exactly as the
+declaration stores it: a declared \code{id} is stored canonicalized (the form
+\code{\link[=addObservedData]{addObservedData()}} reported back to you), a derived one exactly as its
+source spells it. A saved programmatic source that declares no \code{id} is
+matched by its \verb{<name>.pkml} basename (see the note above).}
 }
 \value{
 The \code{project} object, invisibly.

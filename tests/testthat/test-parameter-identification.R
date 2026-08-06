@@ -2255,7 +2255,7 @@ test_that("PIOutputMapping weight survives a Project save / load round trip", {
   addPIOutputMapping(
     project,
     task = "wt",
-    id = "scalarWeight",
+    id = "scalar_weight",
     outputPath = "aciclovir_pvb",
     observedData = "D2",
     scenarios = "testscenario",
@@ -2458,6 +2458,96 @@ test_that("addPIParameter() overwrite = TRUE replaces the existing parameter", {
   expect_length(params, 1L)
   expect_identical(params[[1]]$id, "dup")
   expect_identical(params[[1]]$path, "a|b")
+})
+
+test_that("addPIParameter() canonicalizes an explicit id", {
+  # The Excel importer coins this parameter's id as "lipophilicity"
+  # (`.uniqueImportedId()`), so hand-authoring has to land on the same id or the
+  # two routes build different tasks from one input.
+  project <- testProject()
+  addPITask(
+    project,
+    id = "t",
+    scenarios = "testscenario",
+    outputMappings = list(
+      PIOutputMapping(
+        id = "m",
+        scenarios = "testscenario",
+        outputPath = "aciclovir_pvb",
+        observedData = "D"
+      )
+    )
+  )
+  expect_warning(
+    addPIParameter(
+      project,
+      task = "t",
+      id = "Lipophilicity",
+      path = "Aciclovir|Lipophilicity",
+      scenarios = "testscenario",
+      minValue = 0,
+      maxValue = 1,
+      startValue = 0.5
+    ),
+    "Canonicalized"
+  )
+  params <- project$definitions$parameterIdentification$t$parameters
+  expect_identical(vapply(params, `[[`, character(1), "id"), "lipophilicity")
+
+  # The removal runs the same transform, so the id as typed still finds it.
+  expect_warning(
+    removePIParameter(project, task = "t", id = "Lipophilicity"),
+    "Canonicalized"
+  )
+  expect_length(project$definitions$parameterIdentification$t$parameters, 0L)
+})
+
+test_that("addPIOutputMapping() canonicalizes an explicit id", {
+  project <- testProject()
+  addPITask(
+    project,
+    id = "t",
+    scenarios = "testscenario",
+    parameters = list(
+      PIParameter(
+        id = "k",
+        scenarios = "testscenario",
+        path = "x|y",
+        minValue = 0,
+        maxValue = 1,
+        startValue = 0.5
+      )
+    )
+  )
+  expect_warning(
+    addPIOutputMapping(
+      project,
+      task = "t",
+      id = "Plasma (Peripheral Venous Blood)",
+      outputPath = "aciclovir_pvb",
+      observedData = "D",
+      scenarios = "testscenario"
+    ),
+    "Canonicalized"
+  )
+  mappings <- project$definitions$parameterIdentification$t$outputMappings
+  expect_identical(
+    vapply(mappings, `[[`, character(1), "id"),
+    "plasma_(peripheral_venous_blood)"
+  )
+
+  expect_warning(
+    removePIOutputMapping(
+      project,
+      task = "t",
+      id = "Plasma (Peripheral Venous Blood)"
+    ),
+    "Canonicalized"
+  )
+  expect_length(
+    project$definitions$parameterIdentification$t$outputMappings,
+    0L
+  )
 })
 
 test_that(".validatePI surfaces duplicate output mapping ids within a task", {

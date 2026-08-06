@@ -1624,8 +1624,9 @@ removePITask <- function(project, id) {
   invisible(self)
 }
 
-# Canonicalize the scenario references on a PIParameter record (its `id` is a
-# free label the PI run uses, not a definition-file id, so it is left as-is).
+# Canonicalize the scenario references on a PIParameter record. Only the
+# references: a record handed to `addPITask()` keeps its own `id` verbatim,
+# where `addPIParameter()` canonicalizes the `id` it is given.
 #
 # @keywords internal
 # @noRd
@@ -1711,7 +1712,8 @@ removePITask <- function(project, id) {
 #'   exist in `scenarios` definitions.
 #' @param minValue,maxValue,startValue Numeric scalars.
 #' @param units Optional character scalar.
-#' @param id Optional character scalar; auto-generated as
+#' @param id Optional character scalar, canonicalized the same way
+#'   [addPITask()] canonicalizes a task id; auto-generated as
 #'   `<task>_param_<N>` when absent.
 #' @param overwrite Logical scalar. When `FALSE` (default), an explicit `id`
 #'   that already exists in the task aborts. When `TRUE`, the existing
@@ -1790,8 +1792,13 @@ addPIParameter <- function(
   }
   piTask <- self$definitions$parameterIdentification[[task]]
   existingIds <- vapply(piTask$parameters, `[[`, character(1), "id")
+  # A generated id is built from the already-canonical task id; a supplied one
+  # is canonicalized like every other authored id, so hand-authoring and the
+  # Excel import file the same parameter under the same id.
   if (is.null(id)) {
     id <- .nextFreeId(paste0(task, "_param_"), existingIds)
+  } else {
+    id <- .canonicalizeId(id)
   }
   existingIdx <- which(existingIds == id)
   if (length(existingIdx) > 0L && !overwrite) {
@@ -1829,7 +1836,8 @@ addPIParameter <- function(
 #'
 #' @param project A `Project` object.
 #' @param task Character scalar. Existing PI task id.
-#' @param id Character scalar. Parameter id to remove.
+#' @param id Character scalar. Parameter id to remove, canonicalized the same
+#'   way [addPIParameter()] canonicalizes it.
 #' @returns The `project` object, invisibly.
 #' @export
 #' @family parameterIdentification
@@ -1863,6 +1871,9 @@ removePIParameter <- function(project, task, id) {
 # @keywords internal
 # @noRd
 .removePIMember <- function(self, private, task, id, field, label) {
+  # The add side canonicalizes a supplied id, so the removal has to run the same
+  # transform or an id typed the way it was first added would not find it.
+  id <- .canonicalizeId(id)
   piTask <- self$definitions$parameterIdentification[[task]]
   ids <- vapply(piTask[[field]], `[[`, character(1), "id")
   if (!(id %in% ids)) {
@@ -1892,7 +1903,8 @@ removePIParameter <- function(project, task, id) {
 #' @param scenarios Character vector of scenario names.
 #' @param scaling,xOffset,yOffset,xFactor,yFactor,weight Optional
 #'   per-mapping fitting metadata. Defaults match `PIOutputMapping()`.
-#' @param id Optional character scalar; auto-generated as
+#' @param id Optional character scalar, canonicalized the same way
+#'   [addPITask()] canonicalizes a task id; auto-generated as
 #'   `<task>_mapping_<N>` when absent.
 #' @param overwrite Logical scalar. When `FALSE` (default), an explicit `id`
 #'   that already exists in the task aborts. When `TRUE`, the existing mapping
@@ -1966,8 +1978,12 @@ addPIOutputMapping <- function(
   }
   piTask <- self$definitions$parameterIdentification[[task]]
   existingIds <- vapply(piTask$outputMappings, `[[`, character(1), "id")
+  # Same id rule as `.addPIParameter_impl()`: generated from the canonical task
+  # id, or canonicalized when supplied.
   if (is.null(id)) {
     id <- .nextFreeId(paste0(task, "_mapping_"), existingIds)
+  } else {
+    id <- .canonicalizeId(id)
   }
   existingIdx <- which(existingIds == id)
   if (length(existingIdx) > 0L && !overwrite) {
@@ -2008,7 +2024,8 @@ addPIOutputMapping <- function(
 #'
 #' @param project A `Project` object.
 #' @param task Character scalar. Existing PI task id.
-#' @param id Character scalar. Output mapping id to remove.
+#' @param id Character scalar. Output mapping id to remove, canonicalized the
+#'   same way [addPIOutputMapping()] canonicalizes it.
 #' @returns The `project` object, invisibly.
 #' @export
 #' @family parameterIdentification

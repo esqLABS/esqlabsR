@@ -208,3 +208,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-08-06 10:15: Split reading an Excel project from writing it out, so the reading half can be used on its own.
 - 2026-08-06 10:45: Checking whether the Excel files are up to date no longer runs a full import behind the scenes; it reads the workbooks and compares in memory, writing nothing.
 - 2026-08-06 11:20: Importing an Excel project now strips the quotation marks off a quoted single-value cell, so a name written "AciclovirPVB" becomes the same id as one written without quotes instead of _aciclovirpvb_. Applies to every id and reference the import canonicalizes, not just data combinations.
+- 2026-08-06 11:23: Made the observed-data and parameter-identification add functions clean up the ids you give them, the same way every other add function already does, so hand-authoring a project and importing the same one from Excel now file things under the same names.

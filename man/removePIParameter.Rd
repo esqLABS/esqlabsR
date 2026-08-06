@@ -11,7 +11,8 @@ removePIParameter(project, task, id)
 
 \item{task}{Character scalar. Existing PI task id.}
 
-\item{id}{Character scalar. Parameter id to remove.}
+\item{id}{Character scalar. Parameter id to remove, canonicalized the same
+way \code{\link[=addPIParameter]{addPIParameter()}} canonicalizes it.}
 }
 \value{
 The \code{project} object, invisibly.
