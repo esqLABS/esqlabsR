@@ -1100,6 +1100,34 @@ test_that("ensureValid() aborts with a formatted summary on critical errors", {
   )
 })
 
+test_that("the run gate validates the initial conditions a scenario build applies", {
+  # A scenario build folds its referenced sets into the simulation
+  # (`.mergeScenarioInitialConditions()`), so a set the validator grades
+  # critical has to stop the build rather than fail inside `ospsuite`. Goes
+  # through `.scenarioBuildPreflight()` so it tests the gate's real section
+  # list, not a copy of it.
+  sc <- Scenario()
+  sc$modelFile <- "m.pkml"
+  project <- .fakeProject(
+    scenarios = list(s1 = sc),
+    initialConditions = list(
+      presysset = .asInitialConditionSet(
+        list(list(path = "Organism|A|Drug", value = 1, unit = ""))
+      )
+    )
+  )
+  expect_error(
+    .scenarioBuildPreflight(
+      project = project,
+      customParams = NULL,
+      simulationRunOptions = NULL,
+      validate = TRUE,
+      opName = "runScenarios"
+    ),
+    "without a unit"
+  )
+})
+
 test_that("a broken plots section leaves the run gate's cross-reference check in place", {
   # The run gate's own section list, as `.scenarioBuildPreflight()` passes it.
   runSections <- c(
@@ -1109,6 +1137,7 @@ test_that("a broken plots section leaves the run gate's cross-reference check in
     "populations",
     "applications",
     "parameterSets",
+    "initialConditions",
     "crossReferences"
   )
   sc <- Scenario()
@@ -1144,6 +1173,7 @@ test_that("a plotting-only dangling reference does not block the run gate", {
     "populations",
     "applications",
     "parameterSets",
+    "initialConditions",
     "crossReferences"
   )
   sc <- Scenario()

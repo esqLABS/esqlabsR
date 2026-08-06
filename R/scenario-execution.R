@@ -535,6 +535,7 @@
         "populations",
         "applications",
         "parameterSets",
+        "initialConditions",
         "crossReferences"
       ),
       opName = opName
