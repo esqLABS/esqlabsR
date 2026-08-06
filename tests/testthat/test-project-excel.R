@@ -2425,6 +2425,28 @@ test_that(".compareJsonToExcel writes nothing", {
   )
 })
 
+# `.sortJsonSections()` puts the two sides of the Excel comparison into one
+# order by serializing each record into a sort key, so that key has to be as
+# discriminating as the `identical()` it feeds. Records tying on the key keep
+# their source order, because `order(method = "radix")` is stable, and source
+# order is exactly what the sort exists to normalize away.
+#
+# Every array section a real project holds carries a unique id per record
+# (`name`, `individualId`, `dataCombinedId`, ...), so no two records tie and the
+# key's precision does not currently reach the verdict. This guards the sort
+# itself rather than a live false-drift report: the records here are given the
+# same id so they differ only past the 4th decimal, which is where jsonlite's
+# default rounding would collapse them onto one key.
+test_that(".sortJsonSections orders records that differ past the 4th decimal", {
+  low <- list(id = "s", value = 1.00001)
+  high <- list(id = "s", value = 1.00002)
+
+  expect_identical(
+    .sortJsonSections(list(section = list(low, high))),
+    .sortJsonSections(list(section = list(high, low)))
+  )
+})
+
 # Regression (#1123): a dirty saveProject() on a normal tree project must not
 # flip the Excel axis's per-section verdicts. saveProject() writes the container
 # with the tree-owned sections emptied, and the old Excel comparison read that

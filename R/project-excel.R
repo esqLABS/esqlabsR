@@ -1218,10 +1218,19 @@ exportProjectToExcel <- function(
     if (!isArraySection) {
       next
     }
+    # `digits = NA` for the same reason `.asWrittenJson()` passes it: the key has
+    # to be as discriminating as the comparison it feeds. At jsonlite's default
+    # of 4 decimal places two records differing only past that share a key, and
+    # a stable sort then leaves each side in its own source order.
     keys <- vapply(
       section,
       function(record) {
-        as.character(jsonlite::toJSON(record, auto_unbox = TRUE, null = "null"))
+        as.character(jsonlite::toJSON(
+          record,
+          auto_unbox = TRUE,
+          digits = NA,
+          null = "null"
+        ))
       },
       character(1)
     )
