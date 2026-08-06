@@ -992,42 +992,48 @@ exportProjectToExcel <- function(
 # in-memory serialization (`.projectToJson()`) of a loaded project:
 #   - memory side: the live `project`, so the comparison reflects the project as
 #     it is now (unsaved edits included), not the on-disk container;
-#   - Excel side: a fresh re-import of the side-car workbook, loaded back into a
-#     `Project` and serialized the same way.
+#   - Excel side: the side-car workbook read into a `Project` and serialized the
+#     same way.
 # Serializing both from an in-memory project (rather than reading a container
 # file raw) is what makes the comparison container-shape-independent: a tree
 # project's on-disk container keeps every section emptied (the tree owns them),
 # so reading either container raw would blind the comparison and report false
 # drift on every section. The volatile `esqlabsRVersion` is ignored.
 #
+# Nothing is written: a read-only question is answered by reading. The workbooks
+# are parsed into an inlined container (`.excelToProjectJson()`) and that
+# container is parsed into a `Project` directly, so a status check costs one
+# workbook read rather than a whole definitions tree written to a temporary
+# directory, re-read, and deleted.
+#
 # @keywords internal
 # @noRd
 .compareJsonToExcel <- function(project, projectConfigPath, silent = FALSE) {
-  # Create temporary snapshot from current Excel files
-  tempDir <- tempfile("config_snapshot")
-  dir.create(tempDir, showWarnings = FALSE, recursive = TRUE)
-  on.exit(unlink(tempDir, recursive = TRUE), add = TRUE)
-
-  # `copyAssets = FALSE`: this snapshot exists only to be serialized and compared,
-  # then deleted with `tempDir`. Copying the referenced models, data, and
-  # population folders into it would turn every `projectStatus()` read into a
-  # recursive copy of the whole asset tree, and a copy failure (a locked file, a
-  # full disk) would surface as "cannot compare the Excel files".
-  tempJsonPath <- importProjectFromExcel(
+  projectDir <- dirname(fs::path_abs(projectConfigPath))
+  excelJson <- .excelToProjectJson(
     projectConfigPath,
-    outputDir = tempDir,
-    silent = TRUE,
-    copyAssets = FALSE
+    projectDir = projectDir
+  )$jsonData
+
+  # The container is parsed against a directory that does not exist, so every
+  # section resolves to the one inlined in it. Pointing this at the real project
+  # folder would instead resolve each section against the `definitions/` tree
+  # sitting beside the workbooks, which is the very thing being compared: the
+  # Excel side would read back the memory side and never report drift.
+  treelessDir <- tempfile("excel_compare")
+  excelProject <- Project$new(
+    sections = .parseProjectSections(
+      excelJson,
+      jsonPath = file.path(treelessDir, "Project.json"),
+      projectDirPath = treelessDir
+    )
   )
 
-  # The memory side: serialize the live in-memory project. The Excel side: load
-  # the just-imported temp tree project and serialize it the same way. Both go
-  # through `.projectToJson()`, so the two sides are compared in one shape
-  # regardless of how either container is stored on disk. `Project$new()` (not
-  # `loadProject()`) skips the cross-reference warning pass, so a project with
-  # dangling refs compares quietly.
+  # Both sides go through `.projectToJson()`, so they are compared in one shape
+  # regardless of how either container is stored on disk. The memory side is the
+  # live `project`, so the comparison reflects unsaved edits too.
   originalJsonObj <- .projectToJson(project)
-  currentJsonObj <- .projectToJson(Project$new(projectFilePath = tempJsonPath))
+  currentJsonObj <- .projectToJson(excelProject)
 
   # Both sides canonicalize every id (via `.canonicalizeProjectJsonIds()`) so id
   # canonicalization is never counted as drift (which would make an otherwise
@@ -1049,6 +1055,24 @@ exportProjectToExcel <- function(
   # task's parameter list) and is left as it is.
   originalJsonObj <- .sortJsonKeys(originalJsonObj)
   currentJsonObj <- .sortJsonKeys(currentJsonObj)
+
+  # And in the same spirit for the sections held as arrays (`scenarios`,
+  # `individuals`, `populations`, `observedData`): which definition comes first
+  # carries no meaning either. A tree project holds one file per definition, so
+  # its order is the order the filesystem lists them in, while a workbook's is
+  # the order its rows were typed. Only these top-level sections are reordered;
+  # an array inside a definition keeps its order.
+  originalJsonObj <- .sortJsonSections(originalJsonObj)
+  currentJsonObj <- .sortJsonSections(currentJsonObj)
+
+  # Finally, both sides are compared as the JSON they would be written as rather
+  # than as the R values behind it, because `jsonlite` narrows a whole double to
+  # an integer on the way back in: a `250` that reached one side through a file
+  # and the other straight from a workbook is the same number stored as two
+  # types. Encoding and decoding both sides the same way settles that, and
+  # neither side touches disk to do it.
+  originalJsonObj <- .asWrittenJson(originalJsonObj)
+  currentJsonObj <- .asWrittenJson(currentJsonObj)
 
   # Remove esqlabsRVersion -- it changes with package updates and would cause
   # false out-of-sync reports
@@ -1158,6 +1182,56 @@ exportProjectToExcel <- function(
     return(x)
   }
   x[order(names, method = "radix")]
+}
+
+# Put every top-level array-shaped section in one order, so the two sides of the
+# Excel comparison are not read as drifting over which definition comes first.
+# Records are ordered by their own serialized content rather than by an id
+# field, which needs no per-section knowledge and is exactly as discriminating:
+# two sections holding the same records sort the same, and two holding different
+# ones are reported as differing either way.
+#
+# Only the top level is touched. An array inside a definition (a PI task's
+# parameter list) is ordered on purpose and left alone.
+#
+# @keywords internal
+# @noRd
+.sortJsonSections <- function(x) {
+  if (!is.list(x)) {
+    return(x)
+  }
+  for (name in names(x)) {
+    section <- x[[name]]
+    isArraySection <- is.list(section) &&
+      length(section) > 1L &&
+      is.null(names(section))
+    if (!isArraySection) {
+      next
+    }
+    keys <- vapply(
+      section,
+      function(record) {
+        as.character(jsonlite::toJSON(record, auto_unbox = TRUE, null = "null"))
+      },
+      character(1)
+    )
+    x[[name]] <- section[order(keys, method = "radix")]
+  }
+  x
+}
+
+# Re-read a serialized project as the JSON it would be written as. Encoding and
+# decoding a value settles the storage type the way a written file would (a
+# whole double comes back an integer), so two objects built along different
+# routes are comparable on their content rather than on how they were built.
+#
+# @keywords internal
+# @noRd
+.asWrittenJson <- function(x) {
+  jsonlite::fromJSON(
+    jsonlite::toJSON(x, auto_unbox = TRUE, digits = NA, null = "null"),
+    simplifyVector = FALSE
+  )
 }
 
 # Excel <-> JSON bridge: sync helper ----

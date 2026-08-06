@@ -2343,6 +2343,56 @@ test_that(".compareJsonToExcel does not count id canonicalization as drift", {
   expect_true(inSync$excel_in_sync)
 })
 
+test_that(".compareJsonToExcel still reports a real edit as drift", {
+  # The comparison deliberately ignores several differences the round trip does
+  # not preserve (key order, definition order, storage type), so it needs a case
+  # proving it has not been normalized into always saying "in sync".
+  out <- withr::local_tempdir()
+  excelPath <- testProjectExcelPath()
+  jsonPath <- suppressWarnings(importProjectFromExcel(
+    excelPath,
+    outputDir = out,
+    silent = TRUE
+  ))
+  project <- suppressWarnings(loadProject(jsonPath))
+
+  addOutputPath(project, "drifted", "Organism|Liver|Volume")
+
+  drifted <- suppressWarnings(.compareJsonToExcel(
+    project = project,
+    projectConfigPath = excelPath,
+    silent = TRUE
+  ))
+  expect_false(drifted$excel_in_sync)
+  expect_identical(drifted$details$data_changes$outputPaths, "data differs")
+})
+
+test_that(".compareJsonToExcel writes nothing", {
+  # It answers a read-only question, so it must leave the Excel project folder
+  # exactly as it found it (it used to run the importer for real against a
+  # temporary directory).
+  out <- withr::local_tempdir()
+  excelPath <- testProjectExcelPath()
+  jsonPath <- suppressWarnings(importProjectFromExcel(
+    excelPath,
+    outputDir = out,
+    silent = TRUE
+  ))
+  project <- suppressWarnings(loadProject(jsonPath))
+
+  excelDir <- dirname(excelPath)
+  before <- list.files(excelDir, recursive = TRUE, all.files = TRUE)
+  suppressWarnings(.compareJsonToExcel(
+    project = project,
+    projectConfigPath = excelPath,
+    silent = TRUE
+  ))
+  expect_identical(
+    list.files(excelDir, recursive = TRUE, all.files = TRUE),
+    before
+  )
+})
+
 # Regression (#1123): a dirty saveProject() on a normal tree project must not
 # flip the Excel axis's per-section verdicts. saveProject() writes the container
 # with the tree-owned sections emptied, and the old Excel comparison read that

@@ -112,8 +112,29 @@ loadProject <- function(path = ".") {
     version <- jsonData$schemaVersion %||% "<missing>"
     cli::cli_abort(messages$unsupportedSchemaVersion(version))
   }
+  .parseProjectSections(jsonData, jsonPath, dirname(jsonPath))
+}
+
+# Turn a decoded container (the `Project.json` object as a plain list) into the
+# section list a `Project` commits, resolving each section against the
+# `definitions/<kind>/` tree under `projectDirPath` and falling back to the
+# section inlined in the container where no tree directory exists.
+#
+# Split from `.loadProjectTree()` so a container that never came off disk can be
+# parsed too: the Excel bridge builds one in memory (`.excelToProjectJson()`)
+# and compares the resulting project against a live one, with no import and no
+# temporary tree. Point `projectDirPath` at a directory holding no
+# `definitions/` for such a container, so every section takes the inline
+# fallback.
+#
+# `jsonPath` is recorded as the project's own file path and named in parse
+# errors; for an in-memory container it is the path the project would have.
+#
+# @keywords internal
+# @noRd
+.parseProjectSections <- function(jsonData, jsonPath, projectDirPath) {
+  rlang::local_error_call(NULL)
   .validateDefinitionsFolder(jsonData$definitionsFolder)
-  projectDirPath <- dirname(jsonPath)
   definitionsFolder <- jsonData$definitionsFolder %||% "definitions"
 
   # The container separates two concerns: the live working folders
