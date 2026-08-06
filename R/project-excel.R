@@ -1426,17 +1426,26 @@ projectStatus <- function(project, silent = FALSE) {
 #' @keywords internal
 #' @noRd
 .canonicalizeProjectJsonIds <- function(jsonData) {
+  # Every id and reference is unquoted before it is canonicalized: a workbook
+  # quotes a single-value cell as readily as a list one (`"AciclovirPVB"`), and
+  # the quotes are the cell's syntax, not part of the name. Canonicalizing them
+  # instead turns each one into `_`, so the id reads `_aciclovirpvb_` rather
+  # than the name the modeller wrote. Unquoting here rather than at each of the
+  # ~20 sheet readers is what keeps a definition and a reference on the same
+  # transform, which is the property the rest of this function rests on.
   canonScalar <- function(x) {
     if (is.null(x)) {
       return(x)
     }
-    .canonicalizeOneId(as.character(x))
+    .canonicalizeOneId(.stripWrappingQuotes(as.character(x)))
   }
   canonVec <- function(x) {
     if (is.null(x)) {
       return(x)
     }
-    lapply(x, function(e) .canonicalizeOneId(as.character(e)))
+    lapply(x, function(e) {
+      .canonicalizeOneId(.stripWrappingQuotes(as.character(e)))
+    })
   }
   canonNames <- function(section) {
     if (is.null(section) || length(section) == 0L) {
@@ -1451,7 +1460,9 @@ projectStatus <- function(project, silent = FALSE) {
       # per changed id; an Excel import renames in bulk and the migrate guide
       # documents that, so the per-id warning is suppressed while the
       # collision abort is allowed to propagate.
-      names(section) <- .silentlyCanonicalized(.canonicalizeId(nms))
+      names(section) <- .silentlyCanonicalized(
+        .canonicalizeId(.stripWrappingQuotes(nms))
+      )
     }
     section
   }
@@ -1578,7 +1589,11 @@ projectStatus <- function(project, silent = FALSE) {
         # id into several. Canonicalize each id in between.
         if (!is.null(grid$plots)) {
           ids <- .splitPlotIDs(as.character(grid$plots))
-          ids <- vapply(ids, .canonicalizeOneId, character(1))
+          ids <- vapply(
+            ids,
+            \(id) .canonicalizeOneId(.stripWrappingQuotes(id)),
+            character(1)
+          )
           grid$plots <- .joinPlotIDs(ids)
         }
         grid
@@ -4551,4 +4566,24 @@ projectStatus <- function(project, silent = FALSE) {
   parts <- c(parts, current)
   parts <- trimws(parts)
   parts[nzchar(parts)]
+}
+
+#' Drop the double quotes wrapping a single-value cell
+#'
+#' The same 5.x convention `.parseCommaListToArray()` honors for a list cell
+#' also reaches columns holding one value, so a name is as likely to be written
+#' `"AciclovirPVB"` as `AciclovirPVB` and both mean the name without the quotes.
+#' Only the outermost pair is a quoting artifact, so a quote anywhere else stays
+#' part of the value, and a cell that was never quoted is returned untouched.
+#'
+#' @param x One cell value.
+#' @returns `x` without its wrapping pair of double quotes, or `x` as given when
+#'   it is not a quoted string.
+#' @keywords internal
+#' @noRd
+.stripWrappingQuotes <- function(x) {
+  if (!is.character(x)) {
+    return(x)
+  }
+  sub('^"(.*)"$', "\\1", x)
 }

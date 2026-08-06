@@ -2740,6 +2740,33 @@ test_that(".parseCommaListToArray parses the quoted-CSV and backslash convention
   expect_identical(.parseCommaListToArray("a, b, c"), c("a", "b", "c"))
 })
 
+# The same quoting convention reaches a cell holding one value, where the whole
+# cell is the value, so only the wrapping pair may go: a comma or a quote inside
+# the text is content, not syntax, and an unquoted cell must come back as read.
+test_that(".stripWrappingQuotes drops only the wrapping pair", {
+  expect_identical(.stripWrappingQuotes('"AciclovirPVB"'), "AciclovirPVB")
+  # No wrapping pair, so nothing is a quoting artifact.
+  expect_identical(.stripWrappingQuotes("AciclovirPVB"), "AciclovirPVB")
+  expect_identical(
+    .stripWrappingQuotes('Aciclovir "PVB" plasma'),
+    'Aciclovir "PVB" plasma'
+  )
+  # Wrapped, and quoting an inner run that stays exactly as written.
+  expect_identical(
+    .stripWrappingQuotes('"Aciclovir "PVB" plasma"'),
+    'Aciclovir "PVB" plasma'
+  )
+  # A single-value cell is one value even when it contains a comma.
+  expect_identical(
+    .stripWrappingQuotes('"Sheet, with comma"'),
+    "Sheet, with comma"
+  )
+  # A lone quote has no pair to drop.
+  expect_identical(.stripWrappingQuotes('"'), '"')
+  # A numeric cell is handed back untouched, not stringified.
+  expect_identical(.stripWrappingQuotes(1.96), 1.96)
+})
+
 # Only the raw `${VAR}` is stored, so it is expanded afresh on every load and a
 # relative expansion is resolved against the project file. The import therefore
 # has to anchor it the same way, and the folder has to travel with the project,
@@ -3500,11 +3527,10 @@ test_that("a freshly exported workbook reports an imported project as in sync", 
 
 # #1213 item 10 / the residue #1207 recorded: a 5.x multi-value cell is quoted,
 # and a value may itself contain a comma, which is exactly what the quoting is
-# for. That half works. A quoted *single*-value reference cell is read raw on both
-# the defining and the referencing side, so a consistently quoted workbook
-# resolves but its ids carry the quote characters as underscores: the id is
-# `_name_` rather than the name the modeller wrote.
-test_that("quoted legacy cells resolve, and a quoted single-value id keeps its quotes as underscores", {
+# for. A single-value cell in the same workbook is quoted the same way and means
+# the same name without the quotes, so both sides of a `DataCombinedName`
+# reference read the name the modeller wrote rather than `_name_`.
+test_that("quoted legacy cells resolve to the names they were written with", {
   imported <- importLegacyExcelProject(localLegacyExcelProject())
 
   # The quoted multi-value cell splits on the separating commas only, so the
@@ -3516,15 +3542,17 @@ test_that("quoted legacy cells resolve, and a quoted single-value id keeps its q
     c("global", "aciclovir", "sheet__with_comma")
   )
 
-  # The quoted single-value `DataCombinedName` becomes `_name_` on both sides, so
-  # nothing dangles and nothing reads as the authored name either.
+  # The quoted single-value `DataCombinedName` is unquoted on the defining side,
+  # so the id matches the one `addDataCombined(project, "AciclovirPVB", ...)`
+  # would have produced.
   expect_setequal(
     names(imported$project$definitions$dataCombined),
-    c("_aciclovirpvb_", "_aciclovirpop_")
+    c("aciclovirpvb", "aciclovirpop")
   )
+  # And on the referencing side, so the plot still points at it.
   expect_identical(
     imported$project$definitions$plots[["p1"]]$dataCombined,
-    "_aciclovirpvb_"
+    "aciclovirpvb"
   )
 
   # Consistently quoted, so the project validates: only inconsistent quoting
