@@ -1009,6 +1009,26 @@ test_that(".validateCrossReferences resolves only the references the requested s
 
 # Dispatcher behaviour ----
 
+test_that("every definition kind has a validator", {
+  # `.definitionTreeSpecs()` is the source of truth for what a section is, and
+  # `.validationAdapters` is a hand-written list beside it, so the two drift
+  # apart silently: `initialConditions` sat unvalidated that way. `plotGrids`
+  # is the one deliberate absence -- `.plotsValidatorAdapter()` passes the
+  # grids into `.validatePlots()` along with the plots they hold.
+  validatedElsewhere <- "plotGrids"
+  expect_setequal(
+    setdiff(.definitionKindNames(), validatedElsewhere),
+    names(.validationAdapters)
+  )
+})
+
+test_that("every definition kind has a canonical empty JSON shape", {
+  # The container-only write emits one empty value per tree-owned section; a
+  # kind missing from that list would write a container the loader then reads
+  # as a section that was never there.
+  expect_setequal(names(.emptyTreeSectionsJson()), .definitionKindNames())
+})
+
 test_that(".runProjectValidation honors a targeted sections vector", {
   project <- .fakeProject()
   results <- .runProjectValidation(

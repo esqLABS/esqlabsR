@@ -199,3 +199,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-08-05 15:45: Addressed review on the load-extraction PR: replaced two tests that could never fail with a real test of the atomicity guarantee, fixed a miscount and a "used to" aside in two comments, pointed two other comments at the function that actually raises them, and moved a validation check back to where its error message names the right place. (#1226)
 - 2026-08-06 08:44: Initial-condition sets are now checked when you validate a project. A set with a blank molecule path or a missing unit used to pass unnoticed. (#1226)
 - 2026-08-06 08:52: Loading a project now walks the list of section kinds instead of naming all twelve by hand, so a new kind needs no edit here. (#1226)
+- 2026-08-06 08:56: Added two tests that fail if a new project section is ever added without a validator or without an empty shape to write. (#1226)
