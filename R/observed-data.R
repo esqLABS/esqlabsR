@@ -636,11 +636,12 @@ addObservedData <- function(project, entry, overwrite = FALSE) {
 #' @param id Character vector of ids. An observed-data id is the declaration's
 #'   `id` field, or, when it declares none, comes from the data source itself
 #'   (the `DataSet` name of an unsaved programmatic source, or a file basename
-#'   for a file-based source). Either way it is matched exactly as the
-#'   declaration stores it: a declared `id` is stored canonicalized (the form
-#'   [addObservedData()] reported back to you), a derived one exactly as its
-#'   source spells it. A saved programmatic source that declares no `id` is
-#'   matched by its `<name>.pkml` basename (see the note above).
+#'   for a file-based source). Each is matched as the declaration stores it and,
+#'   failing that, as [addObservedData()] would have canonicalized it, so a
+#'   derived id is found by the source's own spelling and a declared one by
+#'   either the form you authored or the canonical form you were given back. A
+#'   saved programmatic source that declares no `id` is matched by its
+#'   `<name>.pkml` basename (see the note above).
 #' @returns The `project` object, invisibly.
 #' @export
 #' @family observedData
@@ -666,6 +667,13 @@ removeObservedData <- function(project, id) {
   dropIdx <- integer()
   programmaticNames <- character()
   missingIds <- character()
+  entriesWithId <- function(key) {
+    which(vapply(
+      observedData,
+      function(e) identical(.observedDataEntryIdOrNA(e), key),
+      logical(1)
+    ))
+  }
   for (one in id) {
     if (one %in% names(private$.programmaticDataSets)) {
       programmaticNames <- c(programmaticNames, one)
@@ -679,11 +687,17 @@ removeObservedData <- function(project, id) {
       dropIdx <- c(dropIdx, matchIdx)
       next
     }
-    matchIdx <- which(vapply(
-      observedData,
-      function(e) identical(.observedDataEntryIdOrNA(e), one),
-      logical(1)
-    ))
+    matchIdx <- entriesWithId(one)
+    if (length(matchIdx) == 0L) {
+      # An id this section stores is one of two kinds, so the match takes two
+      # passes rather than one transform. A derived id is the source's own
+      # string (a `file` basename, a `DataSet` name), which only the verbatim
+      # pass above finds; a declared id is stored the way `addObservedData()`
+      # canonicalized it, so the id as the user authored it needs the same
+      # transform to reach it. Verbatim first, so a derived id that another
+      # entry's declared id happens to canonicalize to still wins its own match.
+      matchIdx <- entriesWithId(.silentlyCanonicalized(.canonicalizeId(one)))
+    }
     if (length(matchIdx) == 0L) {
       missingIds <- c(missingIds, one)
       next

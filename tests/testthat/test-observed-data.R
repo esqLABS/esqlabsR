@@ -810,6 +810,45 @@ test_that("addObservedData leaves a derived id and a DataSet name as they are", 
   )
 })
 
+test_that("removeObservedData finds every id kind by the spelling it was added with", {
+  # Three kinds of id share this one section. A declared id is stored the way
+  # `addObservedData()` canonicalized it; a derived one (a `file` basename, a
+  # `DataSet` name) is the source's own string and carries casing no
+  # canonicalization produces. Each has to be removable by the id its caller
+  # typed, which is why the match takes a verbatim pass and a canonical one.
+  project <- testProject()
+  ds <- ospsuite::DataSet$new(name = "MyProgSet")
+  ds$setValues(xValues = c(1, 2), yValues = c(3, 4))
+  # The DataSet goes in first: it resolves every declared source to check its
+  # name, which a config entry naming a file that is not there would abort.
+  suppressMessages(addObservedData(project, ds))
+  addObservedData(project, list(type = "pkml", file = "sub/MyObs.pkml"))
+  suppressWarnings(addObservedData(
+    project,
+    list(id = "MyDeclared", type = "pkml", file = "TimeValues.pkml")
+  ))
+
+  # A genuine miss still warns, naming the id as typed rather than the
+  # canonical form the second pass tried.
+  expect_warning(removeObservedData(project, "NotThere"), "NotThere")
+
+  # A declared id answers to the spelling that was authored, not only to the
+  # canonical one that spelling was rewritten to.
+  removeObservedData(project, "MyDeclared")
+  expect_false(
+    "mydeclared" %in% .observedDataSectionIds(project$definitions$observedData)
+  )
+
+  # A derived id and a programmatic `DataSet` name are matched verbatim, so
+  # canonicalizing the search key unconditionally would strand both.
+  removeObservedData(project, c("MyObs.pkml", "MyProgSet"))
+  expect_setequal(
+    .observedDataSectionIds(project$definitions$observedData),
+    "Aciclovir_TimeValuesData.xlsx"
+  )
+  expect_false("MyProgSet" %in% getObservedDataNames(project))
+})
+
 test_that("addObservedData rejects an id that is not a single non-empty string", {
   project <- testProject()
   # An id names the declaration's file and is its remove handle, so a blank, NA,
