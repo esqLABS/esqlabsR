@@ -834,6 +834,7 @@ exportProjectToExcel <- function(
   # the Excel-bridge sheet names (`excel`). Re-importing reads them back and
   # re-splits them into the two blocks, so the round trip is lossless.
   pathPropsData <- c(.extractFilePathsData(project), .extractExcelData(project))
+  pathPropsData <- .withDeclaredWorkbookProps(pathPropsData, project)
   for (propName in names(pathPropsData)) {
     props <- c(props, propName)
     vals <- c(vals, pathPropsData[[propName]]$value %||% "")
@@ -990,6 +991,106 @@ exportProjectToExcel <- function(
   }
 
   invisible(projConfigPath)
+}
+
+#' Add the workbook-naming properties a project's containers leave unset
+#'
+#' The `Project.xlsx` Property table is where a project names its
+#' experimental-data workbook (`dataFile`, with an optional
+#' `dataImporterConfigurationFile`) and its parameter-identification workbook
+#' (`parameterIdentificationFile`). A project imported from Excel carries those
+#' rows in its container blocks, but a project authored in JSON keeps the data
+#' source inside the observed-data definition itself and states no workbook
+#' names at all. Writing only the container blocks would then export a project
+#' that declares no observed data, and re-importing it drops the section without
+#' a word, since the importer's missing-data warning fires only for a `dataFile`
+#' that is declared. So derive the missing rows from the definitions themselves.
+#'
+#' A container value wins: only a property the containers leave blank is derived,
+#' so a project imported from Excel exports exactly the rows it came in with.
+#'
+#' The Property table holds one experimental-data workbook, so a project
+#' declaring several observed-data sources cannot state them all. The first
+#' `excel` source is written and the rest are named in a warning.
+#'
+#' @param pathProps Property records collected from the container blocks, as
+#'   `name -> list(value, description)`.
+#' @param project A `Project` object.
+#' @returns `pathProps` with the derived records added.
+#' @keywords internal
+#' @noRd
+.withDeclaredWorkbookProps <- function(pathProps, project) {
+  # The descriptions a legacy property sheet carries for these rows, so a
+  # derived row reads like one a 5.x project wrote by hand.
+  descriptions <- c(
+    dataFile = paste(
+      "Name of the excel file with experimental data.",
+      "Must be located in the \"dataFolder\""
+    ),
+    dataImporterConfigurationFile = paste(
+      "Name of data importer configuration file in xml format used to load",
+      "the data. Must be located in the \"dataFolder\""
+    ),
+    parameterIdentificationFile = paste(
+      "Name of the excel file with parameter identification task definitions.",
+      "Must be located in the \"configurationsFolder\""
+    )
+  )
+  blank <- function(name) .isBlankCell(pathProps[[name]]$value)
+
+  observed <- .unwrapDefinitionList(project$definitions$observedData) %||%
+    list()
+  excelSources <- Filter(
+    function(entry) identical(entry$type, "excel") && !.isBlankCell(entry$file),
+    observed
+  )
+  if (blank("dataFile") && length(excelSources) > 0L) {
+    primary <- excelSources[[1L]]
+    pathProps$dataFile <- list(
+      value = primary$file,
+      description = descriptions[["dataFile"]]
+    )
+    if (!.isBlankCell(primary$importerConfiguration)) {
+      pathProps$dataImporterConfigurationFile <- list(
+        value = primary$importerConfiguration,
+        description = descriptions[["dataImporterConfigurationFile"]]
+      )
+    }
+  }
+
+  # Every declaration the single `dataFile` row cannot carry: the remaining
+  # `excel` sources, and every `pkml` / `script` / `programmatic` one.
+  declaredFile <- pathProps$dataFile$value
+  unrepresented <- if (.isBlankCell(declaredFile)) {
+    observed
+  } else {
+    Filter(
+      function(entry) {
+        !(identical(entry$type, "excel") && identical(entry$file, declaredFile))
+      },
+      observed
+    )
+  }
+  if (length(unrepresented) > 0L) {
+    .warnFormatted(
+      messages$exportUndeclaredObservedData(
+        vapply(unrepresented, .observedDataEntryIdOrNA, character(1L))
+      ),
+      "esqlabsR_exportUndeclaredObservedData"
+    )
+  }
+
+  piTasks <- .unwrapDefinitionList(project$definitions$parameterIdentification)
+  if (
+    blank("parameterIdentificationFile") && length(piTasks %||% list()) > 0L
+  ) {
+    pathProps$parameterIdentificationFile <- list(
+      value = "ParameterIdentification.xlsx",
+      description = descriptions[["parameterIdentificationFile"]]
+    )
+  }
+
+  pathProps
 }
 
 # Compare an in-memory project against its Excel side-car and report whether
