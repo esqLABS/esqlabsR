@@ -3563,6 +3563,109 @@ test_that("quoted legacy cells resolve to the names they were written with", {
   expect_equal(summary$total_critical_errors, 0)
 })
 
+# A quoted and an unquoted spelling of one name are the same name, so a sheet
+# that groups its rows by that name has to group on the unquoted spelling. The
+# `DataCombined` sheet is long-format (one row per curve), so grouping on the raw
+# cell puts an inconsistently spelled combination's curves in two records, which
+# then land on one definition key and the first one's curves are dropped.
+test_that("a DataCombined name spelled quoted and unquoted is one combination", {
+  projectDir <- localLegacyExcelProject()
+  editWorkbookSheets(
+    file.path(projectDir, "Configurations", "Plots.xlsx"),
+    function(sheets) {
+      # Row 1 (simulated) keeps the fixture's `"AciclovirPVB"`; row 2 (observed)
+      # spells the same name without the quotes.
+      sheets$DataCombined$DataCombinedName[[2]] <- "AciclovirPVB"
+      sheets
+    }
+  )
+  imported <- importLegacyExcelProject(projectDir)
+  combined <- imported$project$definitions$dataCombined
+
+  expect_setequal(names(combined), c("aciclovirpvb", "aciclovirpop"))
+
+  # Both curves are on the one combination: neither row's is dropped.
+  expect_length(combined[["aciclovirpvb"]]$simulated, 1L)
+  expect_length(combined[["aciclovirpvb"]]$observed, 1L)
+})
+
+# The 5.x parameter-identification layout builds one task per distinct
+# `PITaskName`, gathering that task's rows from five sheets. The same reasoning as
+# for `DataCombined`: a sheet quoting the task name names the same task, so its
+# rows belong to it rather than to a second task that overwrites the first.
+test_that("a PI task name spelled quoted and unquoted is one task", {
+  projectDir <- localLegacyExcelProject()
+  editWorkbookSheets(
+    file.path(projectDir, "Configurations", "ParameterIdentification.xlsx"),
+    function(sheets) {
+      sheets$PIParameters$PITaskName <- paste0(
+        '"',
+        sheets$PIParameters$PITaskName,
+        '"'
+      )
+      sheets
+    }
+  )
+  imported <- importLegacyExcelProject(projectDir)
+  tasks <- imported$project$definitions$parameterIdentification
+
+  expect_named(tasks, "aciclovirfit")
+
+  # The quoted sheet's parameters and the unquoted sheets' output mappings are
+  # both on the one task.
+  expect_length(tasks[["aciclovirfit"]]$parameters, 2L)
+  expect_length(tasks[["aciclovirfit"]]$outputMappings, 2L)
+})
+
+# A plots sheet keys one definition per row rather than grouping, so two rows
+# naming one plot are a reused id, whichever way each spells it. That is the
+# reported loss `.warnDuplicatePlotIds()` already covers for two rows spelling the
+# id identically; a quoted spelling has to reach the same report rather than
+# passing as a second plot and then quietly overwriting the first.
+test_that("a plot id spelled quoted and unquoted is one reused id, and reported", {
+  projectDir <- localLegacyExcelProject()
+  editWorkbookSheets(
+    file.path(projectDir, "Configurations", "Plots.xlsx"),
+    function(sheets) {
+      sheets$plotConfiguration$plotID[[2]] <- "\"P1\""
+      sheets
+    }
+  )
+  imported <- importLegacyExcelProject(projectDir)
+
+  expect_setequal(names(imported$project$definitions$plots), c("p1", "p3"))
+  expect_true(any(grepl("more than", imported$warnings, fixed = TRUE)))
+  expect_true(any(grepl("plotId", imported$warnings, fixed = TRUE)))
+})
+
+# A section stored as an array of records is keyed by each record's own id field
+# just as a keyed section is keyed by its names, so two *distinct* names that
+# canonicalize onto one id are the same ambiguity `canonNames()` aborts on, and
+# not something to resolve by keeping whichever record came last. `DataCombined`
+# has no duplicate-id report of its own, so without the abort the collision costs
+# a curve in silence.
+test_that("two DataCombined names that canonicalize alike abort the import", {
+  projectDir <- localLegacyExcelProject()
+  editWorkbookSheets(
+    file.path(projectDir, "Configurations", "Plots.xlsx"),
+    function(sheets) {
+      # A space and a comma both canonicalize to `_`, so these are two names for
+      # two combinations that would be filed as one.
+      sheets$DataCombined$DataCombinedName[[1]] <- "Aciclovir PVB"
+      sheets$DataCombined$DataCombinedName[[2]] <- "Aciclovir,PVB"
+      sheets
+    }
+  )
+  expect_error(
+    suppressWarnings(importProjectFromExcel(
+      legacyExcelProjectPath(projectDir),
+      outputDir = withr::local_tempdir("LegacyOut_"),
+      silent = TRUE
+    )),
+    "collide after canonicalization"
+  )
+})
+
 # #1213 item 5: an Excel project spells `populationsFolder` as a folder name under
 # the configurations folder, while a project resolves its working folders against
 # its own root. The import rewrites the value to the project-root-relative path of

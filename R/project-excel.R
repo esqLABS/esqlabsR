@@ -1466,6 +1466,30 @@ projectStatus <- function(project, silent = FALSE) {
     }
     section
   }
+  # A section that is an array of records carries no names for `canonNames()` to
+  # check, yet the parse step keys it by each record's own id field
+  # (`result[[id]] <- entry`) just the same. Two records whose ids canonicalize
+  # alike therefore become one definition, built from the last of them, and the
+  # earlier record is gone without a word. Run the section's ids through the same
+  # collision-checking path for the abort alone; the per-record assignments below
+  # still write each canonical id.
+  checkRecordIds <- function(section, idField) {
+    if (is.null(section)) {
+      return(invisible(NULL))
+    }
+    ids <- vapply(
+      section,
+      function(record) {
+        value <- record[[idField]]
+        if (length(value) == 1L) as.character(value) else NA_character_
+      },
+      character(1)
+    )
+    .silentlyCanonicalized(
+      .canonicalizeId(.stripWrappingQuotes(ids[!is.na(ids)]))
+    )
+    invisible(NULL)
+  }
 
   jsonData$outputPaths <- canonNames(jsonData$outputPaths)
   jsonData$parameterSets <- canonNames(jsonData$parameterSets)
@@ -1482,6 +1506,7 @@ projectStatus <- function(project, silent = FALSE) {
   }
 
   if (!is.null(jsonData$scenarios)) {
+    checkRecordIds(jsonData$scenarios, "name")
     jsonData$scenarios <- lapply(jsonData$scenarios, function(sc) {
       sc$name <- canonScalar(sc$name)
       sc$individual <- canonScalar(sc$individual)
@@ -1495,6 +1520,7 @@ projectStatus <- function(project, silent = FALSE) {
   }
 
   if (!is.null(jsonData$individuals)) {
+    checkRecordIds(jsonData$individuals, "individualId")
     jsonData$individuals <- lapply(jsonData$individuals, function(ind) {
       ind$individualId <- canonScalar(ind$individualId)
       if (!is.null(ind$parameterSets)) {
@@ -1505,6 +1531,7 @@ projectStatus <- function(project, silent = FALSE) {
   }
 
   if (!is.null(jsonData$populations)) {
+    checkRecordIds(jsonData$populations, "populationId")
     jsonData$populations <- lapply(jsonData$populations, function(pop) {
       pop$populationId <- canonScalar(pop$populationId)
       pop
@@ -1543,6 +1570,7 @@ projectStatus <- function(project, silent = FALSE) {
   # data, whose ids are file basenames / DataSet names matched verbatim and
   # never canonicalized, so they are deliberately left untouched.
   if (!is.null(jsonData$dataCombined)) {
+    checkRecordIds(jsonData$dataCombined, "dataCombinedId")
     canonEntryScenario <- function(entry) {
       entry$scenario <- canonScalar(entry$scenario)
       entry
@@ -1567,6 +1595,7 @@ projectStatus <- function(project, silent = FALSE) {
     )
   }
   if (!is.null(jsonData$plots)) {
+    checkRecordIds(jsonData$plots, "plotId")
     jsonData$plots <- lapply(
       jsonData$plots,
       function(plot) {
@@ -1577,6 +1606,7 @@ projectStatus <- function(project, silent = FALSE) {
     )
   }
   if (!is.null(jsonData$plotGrids)) {
+    checkRecordIds(jsonData$plotGrids, "plotGridId")
     jsonData$plotGrids <- lapply(
       jsonData$plotGrids,
       function(grid) {
@@ -1609,6 +1639,7 @@ projectStatus <- function(project, silent = FALSE) {
   # ids), and a parameter's / mapping's own `id` is an inner id, not an
   # definition-file id, so those are left untouched.
   if (!is.null(jsonData$parameterIdentification)) {
+    checkRecordIds(jsonData$parameterIdentification, "id")
     jsonData$parameterIdentification <- lapply(
       jsonData$parameterIdentification,
       function(task) {
@@ -2850,9 +2881,10 @@ projectStatus <- function(project, silent = FALSE) {
 # renamed apart, because a grid naming the id would then reach only one of them
 # and the other plot would belong to no grid.
 #
-# Compared on the canonical id, since that is the id the definitions end up keyed
-# by: two rows spelling one id differently are as much of a collision as two
-# spelling it the same.
+# Compared on the unquoted, canonical id, since that is the id the definitions
+# end up keyed by: two rows spelling one id differently are as much of a
+# collision as two spelling it the same, and a row that quotes the id names the
+# same plot as a row that does not.
 #
 # @param records The parsed records of the sheet (an unnamed list).
 # @param idField The record field holding the id (`plotId` / `plotGridId`).
@@ -2866,7 +2898,9 @@ projectStatus <- function(project, silent = FALSE) {
   }
   ids <- vapply(
     records,
-    function(record) .canonicalizeOneId(as.character(record[[idField]])),
+    function(record) {
+      .canonicalizeOneId(.stripWrappingQuotes(as.character(record[[idField]])))
+    },
     character(1)
   )
   duplicated <- unique(ids[duplicated(ids)])
@@ -2938,7 +2972,11 @@ projectStatus <- function(project, silent = FALSE) {
     if (is.null(name)) {
       next
     }
-    name <- as.character(name)
+    # Group on the unquoted name, the name the definition ends up keyed by.
+    # Grouping on the raw cell splits one combination in two whenever a sheet
+    # spells its name both ways, and the two halves then land on one key, so
+    # whichever is built first is overwritten and its curves are lost.
+    name <- .stripWrappingQuotes(as.character(name))
     dataType <- .naToNull(df$dataType[[i]])
     entry <- list()
     for (col in names(df)) {
@@ -3337,11 +3375,15 @@ projectStatus <- function(project, silent = FALSE) {
   algDf <- read5xSheet("AlgorithmOptions")
   ciDf <- read5xSheet("CIOptions")
 
+  # Gather the task names unquoted, the name each task is keyed by, so a
+  # workbook spelling one task's name both ways still describes one task rather
+  # than two that collapse onto one key. `.pi5xTaskRows()` matches its rows the
+  # same way, so a sheet quoting the name still contributes to the task.
   taskNames <- unique(unlist(lapply(
     list(mappingDf, paramDf, configDf, algDf, ciDf),
     function(df) {
       if (!is.null(df) && "PITaskName" %in% names(df)) {
-        as.character(df$PITaskName)
+        .stripWrappingQuotes(as.character(df$PITaskName))
       }
     }
   )))
@@ -3692,7 +3734,8 @@ projectStatus <- function(project, silent = FALSE) {
     return(df[0, , drop = FALSE])
   }
   df[
-    !is.na(df$PITaskName) & as.character(df$PITaskName) == task,
+    !is.na(df$PITaskName) &
+      .stripWrappingQuotes(as.character(df$PITaskName)) == task,
     ,
     drop = FALSE
   ]
