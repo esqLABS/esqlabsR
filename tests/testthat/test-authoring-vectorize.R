@@ -118,6 +118,20 @@ test_that("setPopulation() rejects a positionally passed field", {
   expect_error(setPopulation(project, "pop1", "Rat"), "must be named")
 })
 
+test_that("the unnamed-field hint points at no one set*() function", {
+  # `setScenario()`, `setIndividual()` and `setPopulation()` all raise it, and
+  # they share no field, so an example written for one misdirects the other two.
+  # The abort header already names the function the caller used.
+  project <- .fakeProject(
+    populations = list(pop1 = list(species = "Human"))
+  )
+  err <- expect_error(setPopulation(project, "pop1", "Rat"))
+  expect_no_match(
+    conditionMessage(err),
+    "setScenario|setIndividual|setPopulation"
+  )
+})
+
 test_that(".coerceNumericField returns NULL for NULL and as.double otherwise", {
   # A NULL passes through as NULL so the set-path loops delete the key (clearing
   # the optional field); any other value coerces with as.double().

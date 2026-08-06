@@ -55,7 +55,7 @@
       .assertAuthoringFieldsNamed(list("Rat"))
     Condition
       Error:
-      ! Every field must be named. x No name on field 1. i Name the field, for example `setIndividual(project, id, species = "Rat")`.
+      ! Every field must be named. x No name on field 1. i Pass each field as `name = value`.
 
 ---
 
@@ -63,5 +63,5 @@
       .assertAuthoringFieldsNamed(list(species = "Rat", "UNKNOWN"))
     Condition
       Error:
-      ! Every field must be named. x No name on field 2. i Name the field, for example `setIndividual(project, id, species = "Rat")`.
+      ! Every field must be named. x No name on field 2. i Pass each field as `name = value`.
 

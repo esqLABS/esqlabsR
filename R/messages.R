@@ -1137,6 +1137,9 @@ messages$setScenarioNoOverwrite <- function() {
 # Raised when an authoring field reaches `.alignAuthoringArgs()` without a name.
 # Every field there is looked up by name, so an unnamed one would be dropped in
 # silence; the usual way to produce one is passing a `set*()` field positionally.
+# The hint names no function and no field: `setScenario()`, `setIndividual()` and
+# `setPopulation()` all raise this, they share no field, and the abort header
+# already names the one the caller used.
 messages$unnamedAuthoringFields <- function(positions) {
   # `cli::qty()` pluralizes on how many positions there are, not on the position
   # numbers themselves: a lone field at position 2 is still one field. It has to
@@ -1145,8 +1148,7 @@ messages$unnamedAuthoringFields <- function(positions) {
   cli::format_message(c(
     "Every field must be named.",
     "x" = "{cli::qty(length(positions))}No name on field{?s} {positions}.",
-    "i" = "Name the field, for example \\
-    {.code setIndividual(project, id, species = \"Rat\")}."
+    "i" = "Pass each field as {.code name = value}."
   ))
 }
 
