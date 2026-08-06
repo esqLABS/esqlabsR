@@ -227,6 +227,25 @@ test_that("Excel round-trip keeps a steady-state time declared with the flag off
   )
 })
 
+test_that("Excel round-trip keeps a declared steady-state time of zero", {
+  project <- exampleProject()
+  # Zero is an authored value like any other: the parser reads it, nothing
+  # constrains its sign, and the JSON writer emits it. Gating the export on a
+  # positive time blanked the cells, and the import's blank-cell defaults then
+  # substituted `1000` / `"min"` for it.
+  setScenario(
+    project,
+    "aciclovir_iv",
+    steadyState = FALSE,
+    steadyStateTime = 0,
+    steadyStateTimeUnit = "h"
+  )
+  after <- .unwrapDefinitionList(excelRoundTrip(project)$definitions$scenarios)
+
+  expect_identical(after[["aciclovir_iv"]]$steadyStateTimeUnit, "h")
+  expect_equal(after[["aciclovir_iv"]]$steadyStateTime, 0)
+})
+
 test_that("Excel round-trip preserves individuals, populations, and applications", {
   project <- exampleProject()
 
