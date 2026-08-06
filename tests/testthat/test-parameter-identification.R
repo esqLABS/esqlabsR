@@ -2255,7 +2255,7 @@ test_that("PIOutputMapping weight survives a Project save / load round trip", {
   addPIOutputMapping(
     project,
     task = "wt",
-    id = "scalar_weight",
+    id = "scalarWeight",
     outputPath = "aciclovir_pvb",
     observedData = "D2",
     scenarios = "testscenario",
@@ -2460,15 +2460,27 @@ test_that("addPIParameter() overwrite = TRUE replaces the existing parameter", {
   expect_identical(params[[1]]$path, "a|b")
 })
 
-test_that("addPIParameter() canonicalizes an explicit id", {
-  # The Excel importer coins this parameter's id as "lipophilicity"
-  # (`.uniqueImportedId()`), so hand-authoring has to land on the same id or the
-  # two routes build different tasks from one input.
+test_that("a PI parameter is removable by the id both doors stored it under", {
+  # A member id is a label inside the task's own definition file, so both doors
+  # that make one store it as typed. Were only `addPIParameter()` to lowercase
+  # it, the two doors would disagree and one of the two members below would be
+  # unreachable: nothing canonicalizes to a string carrying an uppercase letter,
+  # so no spelling would remove it.
   project <- testProject()
   addPITask(
     project,
     id = "t",
     scenarios = "testscenario",
+    parameters = list(
+      PIParameter(
+        id = "Lipophilicity",
+        scenarios = "testscenario",
+        path = "Aciclovir|Lipophilicity",
+        minValue = 0,
+        maxValue = 1,
+        startValue = 0.5
+      )
+    ),
     outputMappings = list(
       PIOutputMapping(
         id = "m",
@@ -2478,31 +2490,45 @@ test_that("addPIParameter() canonicalizes an explicit id", {
       )
     )
   )
-  expect_warning(
-    addPIParameter(
-      project,
-      task = "t",
-      id = "Lipophilicity",
-      path = "Aciclovir|Lipophilicity",
-      scenarios = "testscenario",
-      minValue = 0,
-      maxValue = 1,
-      startValue = 0.5
+  addPIParameter(
+    project,
+    task = "t",
+    id = "Solubility",
+    path = "Aciclovir|Solubility",
+    scenarios = "testscenario",
+    minValue = 0,
+    maxValue = 1,
+    startValue = 0.5
+  )
+  expect_identical(
+    vapply(
+      project$definitions$parameterIdentification$t$parameters,
+      `[[`,
+      character(1),
+      "id"
     ),
-    "Canonicalized"
+    c("Lipophilicity", "Solubility")
   )
-  params <- project$definitions$parameterIdentification$t$parameters
-  expect_identical(vapply(params, `[[`, character(1), "id"), "lipophilicity")
 
-  # The removal runs the same transform, so the id as typed still finds it.
+  # Exactly as stored, so the canonical spelling of a stored id is a different
+  # id and misses; the spelling each was added with removes it.
   expect_warning(
-    removePIParameter(project, task = "t", id = "Lipophilicity"),
-    "Canonicalized"
+    removePIParameter(project, task = "t", id = "lipophilicity"),
+    "not found"
   )
+  expect_warning(
+    removePIParameter(project, task = "t", id = "solubility"),
+    "not found"
+  )
+  removePIParameter(project, task = "t", id = "Lipophilicity")
+  removePIParameter(project, task = "t", id = "Solubility")
   expect_length(project$definitions$parameterIdentification$t$parameters, 0L)
 })
 
-test_that("addPIOutputMapping() canonicalizes an explicit id", {
+test_that("addPIParameter(overwrite = TRUE) replaces an inline-added member", {
+  # The overwrite lookup is the same exact match the removal makes, so a member
+  # `addPITask()` filed under a mixed-case id is replaced rather than joined by
+  # a second record under a rewritten id.
   project <- testProject()
   addPITask(
     project,
@@ -2510,44 +2536,84 @@ test_that("addPIOutputMapping() canonicalizes an explicit id", {
     scenarios = "testscenario",
     parameters = list(
       PIParameter(
-        id = "k",
+        id = "Lipophilicity",
         scenarios = "testscenario",
-        path = "x|y",
+        path = "old|path",
         minValue = 0,
         maxValue = 1,
         startValue = 0.5
       )
     )
   )
-  expect_warning(
-    addPIOutputMapping(
-      project,
-      task = "t",
-      id = "Plasma (Peripheral Venous Blood)",
-      outputPath = "aciclovir_pvb",
-      observedData = "D",
-      scenarios = "testscenario"
-    ),
-    "Canonicalized"
+  addPIParameter(
+    project,
+    task = "t",
+    id = "Lipophilicity",
+    path = "new|path",
+    scenarios = "testscenario",
+    minValue = 0,
+    maxValue = 1,
+    startValue = 0.5,
+    overwrite = TRUE
   )
-  mappings <- project$definitions$parameterIdentification$t$outputMappings
+  params <- project$definitions$parameterIdentification$t$parameters
+  expect_length(params, 1L)
+  expect_identical(params[[1]]$id, "Lipophilicity")
+  expect_identical(params[[1]]$path, "new|path")
+})
+
+test_that("a PI output mapping is removable by the id both doors stored it under", {
+  project <- testProject()
+  addPITask(
+    project,
+    id = "t",
+    scenarios = "testscenario",
+    outputMappings = list(
+      PIOutputMapping(
+        id = "Plasma (Peripheral Venous Blood)",
+        scenarios = "testscenario",
+        outputPath = "aciclovir_pvb",
+        observedData = "D"
+      )
+    )
+  )
+  addPIOutputMapping(
+    project,
+    task = "t",
+    id = "scalarWeight",
+    outputPath = "aciclovir_pvb",
+    observedData = "D2",
+    scenarios = "testscenario"
+  )
   expect_identical(
-    vapply(mappings, `[[`, character(1), "id"),
-    "plasma_(peripheral_venous_blood)"
+    vapply(
+      project$definitions$parameterIdentification$t$outputMappings,
+      `[[`,
+      character(1),
+      "id"
+    ),
+    c("Plasma (Peripheral Venous Blood)", "scalarWeight")
   )
 
   expect_warning(
     removePIOutputMapping(
       project,
       task = "t",
-      id = "Plasma (Peripheral Venous Blood)"
+      id = "plasma_(peripheral_venous_blood)"
     ),
-    "Canonicalized"
+    "not found"
   )
-  expect_length(
-    project$definitions$parameterIdentification$t$outputMappings,
-    0L
+  removePIOutputMapping(
+    project,
+    task = "t",
+    id = "Plasma (Peripheral Venous Blood)"
   )
+  # Removing the last mapping leaves the task with no work at all, so it goes.
+  expect_warning(
+    removePIOutputMapping(project, task = "t", id = "scalarWeight"),
+    "now empty"
+  )
+  expect_null(project$definitions$parameterIdentification$t)
 })
 
 test_that(".validatePI surfaces duplicate output mapping ids within a task", {
