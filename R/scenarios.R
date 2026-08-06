@@ -1362,6 +1362,7 @@ setScenario <- function(
   }
 
   dots <- list(...)
+  .assertAuthoringFieldsNamed(dots)
   # A name that is not a scenario field would otherwise be aligned as a
   # per-definition field and then quietly dropped when nothing applies it.
   unknownFields <- setdiff(names(dots), .settableScenarioFields)

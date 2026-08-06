@@ -861,6 +861,7 @@ setPopulation <- function(project, id, ...) {
   }
 
   dots <- list(...)
+  .assertAuthoringFieldsNamed(dots)
   wholeNames <- intersect("proteinOntogenies", names(dots))
   perDefinition <- .alignAuthoringArgs(
     id,

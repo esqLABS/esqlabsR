@@ -49,3 +49,19 @@
       ! `weight` must be length 1 or length 3 (the number of ids).
       x It is length 2.
 
+# .assertAuthoringFieldsNamed names the unnamed positions
+
+    Code
+      .assertAuthoringFieldsNamed(list("Rat"))
+    Condition
+      Error:
+      ! Every field must be named. x No name on field 1. i Name the field, for example `setIndividual(project, id, species = "Rat")`.
+
+---
+
+    Code
+      .assertAuthoringFieldsNamed(list(species = "Rat", "UNKNOWN"))
+    Condition
+      Error:
+      ! Every field must be named. x No name on field 2. i Name the field, for example `setIndividual(project, id, species = "Rat")`.
+

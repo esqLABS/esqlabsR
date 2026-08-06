@@ -311,6 +311,28 @@ NULL
   })
 }
 
+# Abort when a `set*()` field arrived without a name. Every field a `set*_impl`
+# handles is looked up by name (the whole/scalar split, the alignment, the
+# per-definition apply), so an unnamed one is invisible to all of them and would
+# be dropped without a word. A field passed positionally arrives that way, since
+# the `...` those functions forward carries no formals to match it against. With
+# no named field at all R drops the names attribute entirely, so both that and a
+# partially-named list are covered by testing for a blank name.
+#
+# @keywords internal
+# @noRd
+.assertAuthoringFieldsNamed <- function(fields, call = rlang::caller_env()) {
+  if (length(fields) == 0L) {
+    return(invisible(fields))
+  }
+  names <- names(fields) %||% rep("", length(fields))
+  unnamed <- which(is.na(names) | names == "")
+  if (length(unnamed) > 0L) {
+    cli::cli_abort(messages$unnamedAuthoringFields(unnamed), call = call)
+  }
+  invisible(fields)
+}
+
 # Extract element `i` of a vector or list, preserving the scalar shape. Used by
 # `.recycleField` so a character vector yields a length-1 string and a list
 # yields its i-th element.

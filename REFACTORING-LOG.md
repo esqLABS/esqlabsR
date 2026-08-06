@@ -201,3 +201,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-08-06 08:52: Loading a project now walks the list of section kinds instead of naming all twelve by hand, so a new kind needs no edit here. (#1226)
 - 2026-08-06 08:56: Added two tests that fail if a new project section is ever added without a validator or without an empty shape to write. (#1226)
 - 2026-08-06 09:05: Exporting to Excel no longer throws away a steady-state time a scenario declares but is not currently using; it used to come back as 1000 minutes.
+- 2026-08-06 09:20: A field passed without a name to setScenario, setIndividual or setPopulation is now an error; it used to be dropped in silence, leaving the definition unchanged.
