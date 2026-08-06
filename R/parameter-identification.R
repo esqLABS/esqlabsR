@@ -983,12 +983,13 @@ print.PITask <- function(x, ...) {
 #
 # The two bounds cannot be set at once, and each setter validates the new bound
 # against the *other* one, which still holds the model's default until it is
-# overwritten in turn. So one of the two orders passes through an invalid pair
-# and aborts: raising `minValue` above the stale `maxValue`, or lowering
-# `maxValue` below the stale `minValue`. Which one depends on where the new
-# bounds sit relative to the model defaults, so the order is chosen per
-# parameter. A `PIParameter()` record is already validated as
-# `minValue <= startValue <= maxValue`, so the other order always succeeds.
+# overwritten in turn. The order only matters when the new window sits entirely
+# outside the current one: above it, `minValue` first is blocked by the stale
+# `maxValue`; below it, `maxValue` first is blocked by the stale `minValue`. A
+# window that overlaps the current one goes through in either order. A
+# `PIParameter()` record is already validated as
+# `minValue <= startValue <= maxValue`, so a window cannot sit both above and
+# below: at most one order is ever blocked, and this picks the other.
 #
 # Mutates `runtime` in place (an R6 object) and returns it invisibly.
 #
