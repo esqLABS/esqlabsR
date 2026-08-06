@@ -4010,15 +4010,23 @@ projectStatus <- function(project, silent = FALSE) {
       }
     }
 
-    # Reconstruct steadyStateTime back to the original unit, but only for a
-    # scenario that actually runs steady-state. A non-steady-state scenario
-    # carries the parser's default `steadyStateTime` (with a null unit); writing
-    # it here would fabricate a unit and a steady-state time that re-import then
-    # materializes as a spurious configuration, so it is left blank instead.
+    # Write the steady-state time back in the unit it was given in.
+    #
+    # The unit says whether there is a real time to write. A scenario that names
+    # no steady-state time parses to a null unit; one that names a time gets
+    # both, whatever the `steadyState` flag says. So write the pair whenever a
+    # unit is there. That covers a scenario running steady state, and one that
+    # only holds a time it is not using right now. The JSON writer keeps that
+    # second value (`.scenarioToJson()`), so blanking the cells here would
+    # drop it.
+    #
+    # With no unit, leave both cells blank. Writing the parser's default instead
+    # would invent a steady-state setup nobody asked for, and re-import would
+    # read it back as real.
     ssTime <- NA
     ssTimeUnit <- NA
     if (
-      isTRUE(sc$simulateSteadyState) &&
+      (isTRUE(sc$simulateSteadyState) || !is.null(sc$steadyStateTimeUnit)) &&
         !is.null(sc$steadyStateTime) &&
         !is.na(sc$steadyStateTime) &&
         sc$steadyStateTime > 0
