@@ -952,7 +952,13 @@ test_that(".applyScenarioSteadyState solves at the scenario's time and writes th
         ignoreIfFormula = ignoreIfFormula,
         simulationRunOptions = simulationRunOptions
       )
-      list(sim1 = list(paths = c("Organism|A"), values = 3.5))
+      # `getSteadyState()` answers one entry per simulation it was handed. The
+      # entry for the simulation under test comes second, so reading the result
+      # positionally instead of by id picks up the other simulation's values.
+      list(
+        other = list(paths = "Organism|B", values = 99),
+        sim1 = list(paths = c("Organism|A"), values = 3.5)
+      )
     },
     setQuantityValuesByPath = function(quantityPaths, values, simulation) {
       written <<- list(
