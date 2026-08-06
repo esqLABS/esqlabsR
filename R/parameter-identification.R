@@ -880,13 +880,8 @@ print.PITask <- function(x, ...) {
       parameters = if (length(paramObjs) == 1L) paramObjs[[1]] else paramObjs
     )
     # Apply the declared display unit first so bounds and start value are
-    # interpreted in it, then the start value. The bound setters validate each
-    # new bound against the *other* bound, which still holds its model-default
-    # value until we overwrite it. Assign the bounds in whichever order keeps
-    # every intermediate state valid: if the new minValue would exceed the
-    # stale maxValue, raise maxValue first; otherwise lower minValue first. The
-    # PIParameter() record is already validated as minValue <= startValue <=
-    # maxValue, so one of the two orders always succeeds.
+    # interpreted in it, then the start value, then the bounds
+    # (`.assignPIBounds()` owns their ordering hazard).
     #
     # A unit that is not one of the parameter's own dimension is reported and
     # left unapplied, rather than aborting the task. The legacy 5.x
@@ -909,13 +904,7 @@ print.PITask <- function(x, ...) {
       }
     }
     runtime$startValue <- p$startValue
-    if (p$minValue >= runtime$maxValue) {
-      runtime$maxValue <- p$maxValue
-      runtime$minValue <- p$minValue
-    } else {
-      runtime$minValue <- p$minValue
-      runtime$maxValue <- p$maxValue
-    }
+    .assignPIBounds(runtime, p$minValue, p$maxValue)
     runtime
   })
 
@@ -987,6 +976,33 @@ print.PITask <- function(x, ...) {
     outputMappings = outputMappings,
     configuration = piConfig
   )
+}
+
+# Write a PI parameter's search bounds onto its runtime object, in an order that
+# keeps every intermediate state valid.
+#
+# The two bounds cannot be set at once, and each setter validates the new bound
+# against the *other* one, which still holds the model's default until it is
+# overwritten in turn. So one of the two orders passes through an invalid pair
+# and aborts: raising `minValue` above the stale `maxValue`, or lowering
+# `maxValue` below the stale `minValue`. Which one depends on where the new
+# bounds sit relative to the model defaults, so the order is chosen per
+# parameter. A `PIParameter()` record is already validated as
+# `minValue <= startValue <= maxValue`, so the other order always succeeds.
+#
+# Mutates `runtime` in place (an R6 object) and returns it invisibly.
+#
+# @keywords internal
+# @noRd
+.assignPIBounds <- function(runtime, minValue, maxValue) {
+  if (minValue >= runtime$maxValue) {
+    runtime$maxValue <- maxValue
+    runtime$minValue <- minValue
+  } else {
+    runtime$minValue <- minValue
+    runtime$maxValue <- maxValue
+  }
+  invisible(runtime)
 }
 
 # @keywords internal
