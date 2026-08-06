@@ -486,6 +486,38 @@ test_that("importProjectFromExcel aborts over an existing JSON project unless ov
   )))
 })
 
+# Both of importProjectFromExcel()'s preconditions are checked before the
+# workbook is read, so a call that is going to refuse says so instead of first
+# reporting on the contents of a project it will not import (an id collision
+# aborts the read, an incomplete observed curve warns during it). The source
+# path is checked ahead of the destination, so a mistyped `projectConfigPath` is
+# named rather than masked by an `outputDir` that already holds a project.
+test_that("importProjectFromExcel checks its preconditions before reading the workbook", {
+  out <- withr::local_tempdir()
+  writeLines("{}", file.path(out, "Project.json"))
+
+  # A source that exists but is not a readable workbook: the overwrite refusal
+  # still wins, which it can only do if the guard runs before the read.
+  unreadable <- file.path(withr::local_tempdir(), "Project.xlsx")
+  writeLines("not a workbook", unreadable)
+  expect_snapshot(
+    error = TRUE,
+    transform = .redactTmpDir,
+    importProjectFromExcel(unreadable, outputDir = out, silent = TRUE)
+  )
+
+  # A missing source is named ahead of the occupied destination.
+  expect_snapshot(
+    error = TRUE,
+    transform = .redactTmpDir,
+    importProjectFromExcel(
+      file.path(out, "Missing.xlsx"),
+      outputDir = out,
+      silent = TRUE
+    )
+  )
+})
+
 # Regression (#1126): exportProjectToExcel() replaces Project.xlsx and the
 # Configurations workbooks wholesale, defaulting outputDir to the project's own
 # directory, so a bare call would silently overwrite hand-maintained workbooks.

@@ -9,6 +9,24 @@
       x Re-importing replaces it with the Excel project and deletes any definitions that exist only on the JSON side.
       i Pass `overwrite = TRUE` to replace the existing JSON project with the Excel state, or import into a different `outputDir`.
 
+# importProjectFromExcel checks its preconditions before reading the workbook
+
+    Code
+      importProjectFromExcel(unreadable, outputDir = out, silent = TRUE)
+    Condition
+      Error in `importProjectFromExcel()`:
+      ! A JSON project already exists in '<tmp-path>'.
+      x Re-importing replaces it with the Excel project and deletes any definitions that exist only on the JSON side.
+      i Pass `overwrite = TRUE` to replace the existing JSON project with the Excel state, or import into a different `outputDir`.
+
+---
+
+    Code
+      importProjectFromExcel(file.path(out, "Missing.xlsx"), outputDir = out, silent = TRUE)
+    Condition
+      Error in `importProjectFromExcel()`:
+      ! File not found: '<tmp-path>'
+
 # exportProjectToExcel aborts over existing workbooks unless overwrite = TRUE
 
     Code

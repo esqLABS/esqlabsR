@@ -343,11 +343,15 @@ importProjectFromExcel <- function(
   # read half is handed that folder, so resolve it before reading.
   outputDir <- outputDir %||% dirname(fs::path_abs(projectConfigPath))
 
-  read <- .excelToProjectJson(projectConfigPath, projectDir = outputDir)
-  jsonData <- read$jsonData
-  pcDir <- read$pcDir
-  filePathProps <- read$filePathProps
-  conventionWorkbooks <- read$conventionWorkbooks
+  # Both preconditions are checked before the read, so a call that cannot
+  # proceed says why instead of first reporting on the contents of a workbook it
+  # is not going to import. `.excelToProjectJson()` checks the source path too;
+  # repeated here so a mistyped `projectConfigPath` is named before the
+  # destination refusal, which would otherwise mask it whenever the default
+  # `outputDir` already holds a project.
+  if (!file.exists(projectConfigPath)) {
+    cli::cli_abort(messages$fileNotFound(projectConfigPath))
+  }
 
   # Append `.json` rather than `fs::path_ext_set()`, which would *replace* an
   # existing extension: a dotted stem like `trial.v1` reads as an extension, so
@@ -367,6 +371,12 @@ importProjectFromExcel <- function(
   if (!overwrite && (file.exists(outputPath) || hasDefinitionTree)) {
     cli::cli_abort(messages$importWouldOverwriteProject(outputDir))
   }
+
+  read <- .excelToProjectJson(projectConfigPath, projectDir = outputDir)
+  jsonData <- read$jsonData
+  pcDir <- read$pcDir
+  filePathProps <- read$filePathProps
+  conventionWorkbooks <- read$conventionWorkbooks
 
   if (!dir.exists(dirname(outputPath))) {
     dir.create(dirname(outputPath), recursive = TRUE)
