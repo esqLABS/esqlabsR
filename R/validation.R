@@ -367,6 +367,7 @@ validationSummary <- function(validationResults) {
   scenarios = .scenariosValidatorAdapter,
   outputPaths = .outputPathsValidatorAdapter,
   parameterSets = .parameterSetsValidatorAdapter,
+  initialConditions = .initialConditionsValidatorAdapter,
   applications = .applicationsValidatorAdapter,
   plots = .plotsValidatorAdapter,
   dataCombined = .dataCombinedValidatorAdapter,
@@ -747,6 +748,110 @@ validationSummary <- function(validationResults) {
         "Uniqueness",
         paste0(
           "Duplicate parameter paths in set '",
+          setName,
+          "': ",
+          paste(unique(dupes), collapse = ", ")
+        )
+      )
+    }
+  }
+
+  result
+}
+
+#' Validate the initial-condition sets
+#'
+#' Each set is the array-of-records shape the parser and
+#' `addInitialConditionEntry()` produce: a list of
+#' `list(path, value, unit)` entries, one molecule start value each.
+#'
+#' The rules are the ones `.validateInitialConditionEntryArgs()`
+#' (R/parameters.R) already applies on the authoring path, restated here for
+#' the entries that never went through it: a set hand-written into the
+#' definitions tree, or one built by the Excel importer. `path` and `unit` are
+#' critical because a blank either way makes the set unusable
+#' (`ospsuite::setQuantityValuesByPath()` rejects a blank unit at run time);
+#' a non-numeric `value` and a duplicated `path` are warnings, matching how
+#' `.validateParameterSets()` grades the same two problems.
+#'
+#' @keywords internal
+#' @noRd
+.validateInitialConditions <- function(initialConditions, sectionName) {
+  result <- validationResult$new()
+
+  if (is.null(initialConditions) || length(initialConditions) == 0) {
+    result$addWarning("Data", paste0("No ", sectionName, " defined"))
+    return(result)
+  }
+
+  for (setName in names(initialConditions)) {
+    set <- initialConditions[[setName]]
+    if (length(set) == 0) {
+      next
+    }
+
+    paths <- vapply(
+      set,
+      function(e) as.character(e$path %||% NA_character_),
+      character(1)
+    )
+    units <- vapply(
+      set,
+      function(e) as.character(e$unit %||% NA_character_),
+      character(1)
+    )
+    values <- lapply(set, function(e) e$value)
+
+    if (any(is.na(paths) | paths == "")) {
+      result$addCriticalError(
+        "Missing Fields",
+        paste0(
+          "Set '",
+          setName,
+          "' in ",
+          sectionName,
+          " contains empty molecule paths"
+        )
+      )
+    }
+
+    if (any(is.na(units) | units == "")) {
+      result$addCriticalError(
+        "Missing Fields",
+        paste0(
+          "Set '",
+          setName,
+          "' in ",
+          sectionName,
+          " contains entries without a unit"
+        )
+      )
+    }
+
+    nonNumeric <- vapply(
+      values,
+      function(v) is.null(v) || length(v) != 1L || !is.numeric(v) || is.na(v),
+      logical(1)
+    )
+    if (any(nonNumeric)) {
+      result$addWarning(
+        "Data Type",
+        paste0(
+          "Set '",
+          setName,
+          "' in ",
+          sectionName,
+          " contains non-numeric values"
+        )
+      )
+    }
+
+    dupes <- paths[duplicated(paths)]
+    if (length(dupes) > 0) {
+      result$addWarning(
+        "Uniqueness",
+        paste0(
+          "Duplicate molecule paths in set '",
           setName,
           "': ",
           paste(unique(dupes), collapse = ", ")

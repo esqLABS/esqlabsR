@@ -514,6 +514,85 @@ test_that("validateProject() flags an invalid parameter set in the real shape", 
   expect_true(isAnyCriticalErrors(results))
 })
 
+# Section adapter: initial conditions ----
+
+test_that(".validateInitialConditions warns on an empty section", {
+  result <- .validateInitialConditions(list(), "initialConditions")
+  expect_s3_class(result, "validationResult")
+  expect_length(result$critical_errors, 0)
+  expect_length(result$warnings, 1)
+})
+
+test_that(".validateInitialConditions flags an empty molecule path", {
+  initialConditions <- list(
+    presysset = list(list(path = "", value = 1, unit = "µmol"))
+  )
+  result <- .validateInitialConditions(initialConditions, "initialConditions")
+  msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
+  expect_match(msgs, "empty molecule paths", all = FALSE)
+})
+
+test_that(".validateInitialConditions flags a missing unit", {
+  # A blank unit is critical, not cosmetic: `setQuantityValuesByPath()` rejects
+  # it, so the set is unusable at run time.
+  initialConditions <- list(
+    presysset = list(list(path = "Organism|A|Drug", value = 1, unit = NULL))
+  )
+  result <- .validateInitialConditions(initialConditions, "initialConditions")
+  msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
+  expect_match(msgs, "without a unit", all = FALSE)
+})
+
+test_that(".validateInitialConditions warns on a non-numeric value", {
+  initialConditions <- list(
+    presysset = list(list(
+      path = "Organism|A|Drug",
+      value = "abc",
+      unit = "µmol"
+    ))
+  )
+  result <- .validateInitialConditions(initialConditions, "initialConditions")
+  msgs <- vapply(result$warnings, \(w) w$message, character(1))
+  expect_match(msgs, "non-numeric value", all = FALSE)
+})
+
+test_that(".validateInitialConditions warns on a duplicated molecule path", {
+  initialConditions <- list(
+    presysset = list(
+      list(path = "Organism|A|Drug", value = 1, unit = "µmol"),
+      list(path = "Organism|A|Drug", value = 2, unit = "µmol")
+    )
+  )
+  result <- .validateInitialConditions(initialConditions, "initialConditions")
+  msgs <- vapply(result$warnings, \(w) w$message, character(1))
+  expect_match(msgs, "Duplicate molecule paths", all = FALSE)
+})
+
+test_that(".validateInitialConditions passes a well-formed set", {
+  initialConditions <- list(
+    presysset = list(list(path = "Organism|A|Drug", value = 1, unit = "µmol"))
+  )
+  result <- .validateInitialConditions(initialConditions, "initialConditions")
+  expect_length(result$critical_errors, 0)
+  expect_length(result$warnings, 0)
+})
+
+test_that("validateProject() flags an invalid initial-condition set", {
+  # The section reached `validateProject()` unchecked until it had an adapter;
+  # this is the whole-project path the hand-edited and Excel-imported cases
+  # arrive through.
+  project <- .fakeProject(
+    initialConditions = list(
+      presysset = .asInitialConditionSet(
+        list(list(path = "", value = 1, unit = ""))
+      )
+    )
+  )
+  results <- suppressWarnings(validateProject(project))
+  expect_true(isAnyCriticalErrors(results))
+  expect_true("initialConditions" %in% names(results))
+})
+
 # Section adapter: applications ----
 
 test_that(".validateApplications warns on empty section but emits no critical errors", {
