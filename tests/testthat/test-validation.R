@@ -577,6 +577,44 @@ test_that(".validateInitialConditions passes a well-formed set", {
   expect_length(result$warnings, 0)
 })
 
+test_that(".validateInitialConditions reports a non-scalar unit rather than aborting", {
+  # A hand-edited `"unit": []` or `"unit": ["mg", "g"]` is exactly the input
+  # this section polices, so it has to be reported, not abort the run.
+  initialConditions <- list(
+    presysset = list(
+      list(path = "Organism|A|Drug", value = 1, unit = list()),
+      list(path = "Organism|B|Drug", value = 2, unit = c("mg", "g"))
+    )
+  )
+  result <- .validateInitialConditions(initialConditions, "initialConditions")
+  msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
+  expect_match(msgs, "without a unit", all = FALSE)
+})
+
+test_that(".validateInitialConditions reports a bare-string entry rather than aborting", {
+  # `"initialConditions": ["Organism|Liver|Aciclovir"]` parses to entries that
+  # are strings, not records, so they carry no field to read.
+  initialConditions <- list(presysset = list("Organism|Liver|Aciclovir"))
+  result <- .validateInitialConditions(initialConditions, "initialConditions")
+  msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
+  expect_match(msgs, "empty molecule paths", all = FALSE)
+})
+
+test_that(".validateInitialConditions does not read path-less entries as duplicates", {
+  initialConditions <- list(
+    presysset = list(
+      list(value = 1, unit = "µmol"),
+      list(value = 2, unit = "µmol")
+    )
+  )
+  result <- .validateInitialConditions(initialConditions, "initialConditions")
+  msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
+  expect_match(msgs, "empty molecule paths", all = FALSE)
+  # The missing paths are already reported above; calling them duplicates of
+  # each other adds a second finding pointing at a path that does not exist.
+  expect_length(result$warnings, 0)
+})
+
 test_that("validateProject() flags an invalid initial-condition set", {
   # The section reached `validateProject()` unchecked until it had an adapter;
   # this is the whole-project path the hand-edited and Excel-imported cases

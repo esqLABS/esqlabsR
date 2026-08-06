@@ -784,23 +784,35 @@ validationSummary <- function(validationResults) {
     return(result)
   }
 
+  # Read one field as a scalar string, or `NA` when the entry does not hold
+  # exactly one value for it. A hand-edited set can write `"unit": []` or
+  # `"unit": ["mg", "g"]`, either of which would otherwise abort `vapply()`
+  # with an internal length error instead of being reported.
+  scalarField <- function(entries, field) {
+    vapply(
+      entries,
+      function(e) {
+        value <- e[[field]]
+        if (length(value) != 1L) NA_character_ else as.character(value)
+      },
+      character(1)
+    )
+  }
+
   for (setName in names(initialConditions)) {
     set <- initialConditions[[setName]]
     if (length(set) == 0) {
       next
     }
 
-    paths <- vapply(
-      set,
-      function(e) as.character(e$path %||% NA_character_),
-      character(1)
-    )
-    units <- vapply(
-      set,
-      function(e) as.character(e$unit %||% NA_character_),
-      character(1)
-    )
-    values <- lapply(set, function(e) e$value)
+    # An entry that is a bare string rather than a record (`["Organism|Liver|
+    # Aciclovir"]`) has no fields to read; treating it as an empty record folds
+    # it into the missing-field errors below instead of aborting on `$`.
+    entries <- lapply(set, function(e) if (is.list(e)) e else list())
+
+    paths <- scalarField(entries, "path")
+    units <- scalarField(entries, "unit")
+    values <- lapply(entries, function(e) e$value)
 
     if (any(is.na(paths) | paths == "")) {
       result$addCriticalError(
@@ -846,7 +858,11 @@ validationSummary <- function(validationResults) {
       )
     }
 
-    dupes <- paths[duplicated(paths)]
+    # Only real paths can duplicate: the blanks and `NA`s are already reported
+    # by the missing-path error above, and `duplicated()` would otherwise count
+    # two path-less entries as a duplicate of each other.
+    realPaths <- paths[!is.na(paths) & paths != ""]
+    dupes <- realPaths[duplicated(realPaths)]
     if (length(dupes) > 0) {
       result$addWarning(
         "Uniqueness",
