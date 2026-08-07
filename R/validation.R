@@ -670,17 +670,24 @@ validationSummary <- function(validationResults) {
 #' Read one field of a definition entry as a scalar string
 #'
 #' Shared by the parameter-set and initial-condition validators, which police
-#' hand-edited definition files. A field written as `[]` or as a two-element
-#' array (`"unit": ["mg", "g"]`) would otherwise abort `vapply()` with an
-#' internal length error instead of being reported, so anything that is not
-#' exactly one value reads as `NA` and falls into the caller's own
-#' missing-field check.
+#' hand-edited definition files. A usable path, name or unit is a single string,
+#' the shape the schema, the serializer and `.isNonEmptyString()` on the
+#' authoring path all agree on. Every other shape reads as `NA` and falls into
+#' the caller's own missing-field check.
+#'
+#' Testing the shape rather than only the length matters because
+#' `as.character()` invents plausible text for the shapes that happen to be one
+#' element long: `"containerPath": [null]` parses to a list holding `NULL` and
+#' renders as the string `"NULL"`, a nested object as `"list(b = 1)"`, `true` as
+#' `"TRUE"`. None of those is `NA` or blank, so the missing-field check would
+#' pass them and let a path like `"NULL|Dose"` flow onward. A blank string is
+#' returned as-is, since reporting it is the caller's `== ""` check.
 #'
 #' @param entries List of entry records, each already a list (see the
 #'   normalization the callers apply before reading any field).
 #' @param field Name of the field to read.
 #' @return Character vector, one element per entry, `NA` wherever the entry
-#'   does not hold exactly one value for `field`.
+#'   does not hold a single string for `field`.
 #' @keywords internal
 #' @noRd
 .scalarEntryField <- function(entries, field) {
@@ -688,7 +695,7 @@ validationSummary <- function(validationResults) {
     entries,
     function(e) {
       value <- e[[field]]
-      if (length(value) != 1L) NA_character_ else as.character(value)
+      if (is.character(value) && length(value) == 1L) value else NA_character_
     },
     character(1)
   )

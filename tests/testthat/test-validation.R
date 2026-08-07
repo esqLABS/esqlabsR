@@ -530,6 +530,39 @@ test_that(".validateParameterSets does not read path-less entries as duplicates"
   expect_length(result$warnings, 0)
 })
 
+test_that(".validateParameterSets reports a JSON null path, not the text \"NULL\"", {
+  # `[null]` is a one-element array holding nothing, so it survives a length
+  # check; `as.character()` then renders it as the string "NULL", which is
+  # neither `NA` nor blank and would sail past the missing-path check, leaving
+  # the bogus path "NULL|Dose" to flow onward. Parsed the way the definitions
+  # tree is read rather than hand-built, so the shape under test is the real one.
+  set <- jsonlite::fromJSON(
+    '[{"containerPath": [null], "parameterName": "Dose", "value": 1}]',
+    simplifyVector = FALSE
+  )
+  result <- .validateParameterSets(list(global = set), "parameterSets")
+  msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
+  expect_match(msgs, "empty parameter paths", all = FALSE)
+})
+
+test_that(".validateParameterSets reports every non-string path shape", {
+  # Only a single string is a usable path. Each of these is one set of its own,
+  # so all of them have to be reported, not just the first.
+  sets <- jsonlite::fromJSON(
+    '{
+      "nullInArray": [{"containerPath": [null], "parameterName": "Dose"}],
+      "boolean": [{"containerPath": true, "parameterName": "Dose"}],
+      "number": [{"containerPath": 42, "parameterName": "Dose"}],
+      "object": [{"containerPath": {"a": {"b": 1}}, "parameterName": "Dose"}],
+      "stringInArray": [{"containerPath": ["Organism"], "parameterName": "Dose"}]
+    }',
+    simplifyVector = FALSE
+  )
+  result <- .validateParameterSets(sets, "parameterSets")
+  msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
+  expect_length(grep("empty parameter paths", msgs), length(sets))
+})
+
 test_that("validateProject() flags an invalid parameter set in the real shape", {
   # A bad section needs to be on the project for whole-project validation; an
   # in-memory `.fakeProject()` takes the section without write validation (the
@@ -632,6 +665,21 @@ test_that(".validateInitialConditions reports a bare-string entry rather than ab
   # are strings, not records, so they carry no field to read.
   initialConditions <- list(presysset = list("Organism|Liver|Aciclovir"))
   result <- .validateInitialConditions(initialConditions, "initialConditions")
+  msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
+  expect_match(msgs, "empty molecule paths", all = FALSE)
+})
+
+test_that(".validateInitialConditions reports a JSON null path, not the text \"NULL\"", {
+  # The same field read backs both sections, so `"path": [null]` reading as the
+  # string "NULL" hides a broken initial-condition set the same way.
+  set <- jsonlite::fromJSON(
+    '[{"path": [null], "value": 1, "unit": "µmol"}]',
+    simplifyVector = FALSE
+  )
+  result <- .validateInitialConditions(
+    list(presysset = set),
+    "initialConditions"
+  )
   msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
   expect_match(msgs, "empty molecule paths", all = FALSE)
 })
