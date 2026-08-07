@@ -1,7 +1,7 @@
 {
   "schemaVersion": "2.0",
   "esqlabsRVersion": "6.0.0",
-  "name": "Blank",
+  "name": "",
   "definitionsFolder": "definitions",
   "filePaths": {
     "simulationsFolder": "Models/Simulations/",

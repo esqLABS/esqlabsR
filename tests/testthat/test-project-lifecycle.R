@@ -328,6 +328,49 @@ test_that("initProject() stamps the writing version, so a later save does not ch
   expect_identical(container$esqlabsRVersion, current)
 })
 
+test_that("initProject() leaves a minimal project unnamed", {
+  destination <- withr::local_tempdir()
+  initProject(
+    destination,
+    type = "minimal",
+    createExcel = FALSE,
+    overwrite = TRUE
+  )
+
+  container <- jsonlite::fromJSON(file.path(destination, "Project.json"))
+  expect_identical(container$name, "")
+})
+
+test_that("initProject(name = ) names the project it creates", {
+  destination <- withr::local_tempdir()
+  initProject(
+    destination,
+    type = "minimal",
+    createExcel = FALSE,
+    overwrite = TRUE,
+    name = "Aciclovir PK"
+  )
+
+  container <- jsonlite::fromJSON(file.path(destination, "Project.json"))
+  expect_identical(container$name, "Aciclovir PK")
+
+  project <- loadProject(file.path(destination, "Project.json"))
+  expect_identical(project$info$name, "Aciclovir PK")
+})
+
+test_that("initProject(type = 'example') keeps the template's own name", {
+  destination <- withr::local_tempdir()
+  initProject(
+    destination,
+    type = "example",
+    createExcel = FALSE,
+    overwrite = TRUE
+  )
+
+  container <- jsonlite::fromJSON(file.path(destination, "Project.json"))
+  expect_identical(container$name, "Example")
+})
+
 test_that("saveProject() never warns about a stale Excel side-car", {
   # Build a project with an Excel side-car that has drifted, then edit and save.
   temp_project <- with_temp_project()
