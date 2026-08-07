@@ -926,8 +926,18 @@ validationSummary <- function(validationResults) {
 #' `NA` and `NULL` pass through so the callers' own presence guards still apply,
 #' and the transform is applied element-wise to a vector of references.
 #'
+#' A value too long to be a filename passes through untransformed as well.
+#' `.canonicalizeOneId()` aborts on one, because a definition id becomes
+#' `<id>.json`, and a comparison must not abort: a hand-edited reference over the
+#' bound (a pasted deep model path, say) would otherwise take down
+#' `validateProject()` and with it `loadProject()`, and a project that cannot be
+#' opened cannot be fixed. No definition can be filed above the bound, so such a
+#' reference matches nothing and is reported as dangling, which is the answer the
+#' user needs.
+#'
 #' @param ids Character vector (or `NULL`) of ids / references.
-#' @return `ids` with each non-`NA` element canonicalized; `NULL`/`NA` preserved.
+#' @return `ids` with each non-`NA`, id-length element canonicalized;
+#'   `NULL`/`NA` and over-long elements preserved.
 #' @keywords internal
 #' @noRd
 .canonicalizeForCompare <- function(ids) {
@@ -935,7 +945,7 @@ validationSummary <- function(validationResults) {
     return(ids)
   }
   ids <- as.character(ids)
-  keep <- !is.na(ids)
+  keep <- !is.na(ids) & nchar(ids, type = "bytes") <= .maxDefinitionIdBytes
   if (any(keep)) {
     ids[keep] <- vapply(
       ids[keep],

@@ -1748,6 +1748,18 @@ projectStatus <- function(project, silent = FALSE) {
   # definition-file id, so those are left untouched.
   if (!is.null(jsonData$parameterIdentification)) {
     checkRecordIds(jsonData$parameterIdentification, "id")
+    # A mapping may name its output by the literal model path of a defined output
+    # path rather than by that path's id (the form `PIOutputMapping()`
+    # documents). Rewrite it to the id before the canonicalization below, which
+    # would turn every `|`, space and paren of a model path into `_`: no id can
+    # match the result, and it is the mangled string that would be persisted, so
+    # the path the user wrote is not even recoverable from the output.
+    # `jsonData$outputPaths` is keyed by canonical id by this point, so the
+    # substituted id needs no further transform.
+    jsonData$parameterIdentification <- .resolvePIOutputPathRefs(
+      jsonData$parameterIdentification,
+      jsonData$outputPaths
+    )
     jsonData$parameterIdentification <- lapply(
       jsonData$parameterIdentification,
       function(task) {
@@ -3943,7 +3955,10 @@ projectStatus <- function(project, silent = FALSE) {
 # than an output-path id) to the id of the `outputPaths` definition with that
 # value, so the reference resolves. A value with no matching definition is left
 # as-is (the cross-reference validator then reports it, which is the honest
-# signal that the legacy sheet names a path no output-path defines).
+# signal that the legacy sheet names a path no output-path defines). Both the
+# Excel bridge and `.canonicalizeProjectJsonIds()` run this on raw incoming data,
+# so nothing here aborts on a malformed record; every gap is left for the section
+# validators to report on the loaded project.
 #
 # @keywords internal
 # @noRd
@@ -3951,15 +3966,23 @@ projectStatus <- function(project, silent = FALSE) {
   if (length(tasks) == 0L || length(outputPaths) == 0L) {
     return(tasks)
   }
-  # value -> id, so a full path can be looked up back to its output-path id.
+  # value -> id, so a full path can be looked up back to its output-path id. Only
+  # a scalar entry carries a model path to match on; a malformed one is skipped
+  # rather than aborting on a length-1 coercion, so it reaches the validator.
+  scalar <- vapply(outputPaths, \(x) length(x) == 1L, logical(1))
+  if (!any(scalar)) {
+    return(tasks)
+  }
   valueToId <- stats::setNames(
-    names(outputPaths),
-    vapply(outputPaths, as.character, character(1))
+    names(outputPaths)[scalar],
+    vapply(outputPaths[scalar], as.character, character(1))
   )
   lapply(tasks, function(task) {
     task$outputMappings <- lapply(task$outputMappings, function(mapping) {
       path <- mapping$outputPath
-      if (!is.null(path) && path %in% names(valueToId)) {
+      # Scalar-only for the same reason the map is: a multi-length reference has
+      # no single value to look up, and testing it would abort the `&&`.
+      if (length(path) == 1L && path %in% names(valueToId)) {
         mapping$outputPath <- valueToId[[path]]
       }
       mapping
