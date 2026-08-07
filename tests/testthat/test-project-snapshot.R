@@ -565,3 +565,49 @@ test_that("restoreProject migrates a non-canonical legacy Project.json losslessl
   simScenario <- migrated$definitions$dataCombined[[1]]$simulated[[1]]$scenario
   expect_identical(simScenario, "aciclovir_iv")
 })
+
+test_that("restoreProject resolves a mapping's outputPath given as a model path", {
+  # #1226: `PIOutputMapping()` documents the literal model path as an accepted
+  # form of the reference. The id canonicalization a restore runs over the raw
+  # snapshot turns every `|`, space and paren of such a path into `_`, which
+  # matches no id, and the restored tree would keep that mangled string, so the
+  # path the user wrote could not be read back out of the restore either.
+  source <- exampleProject()
+  literal <- source$definitions$outputPaths[["aciclovir_pvb"]]
+  snapshotDir <- withr::local_tempdir()
+  snapshot <- file.path(snapshotDir, "Project.json")
+  .saveProjectJson(source, snapshot, includeScenarios = TRUE)
+
+  # Spell only the mapping's reference as the model path; the `outputPaths`
+  # definition that carries the same string as its value stays as it is.
+  raw <- jsonlite::fromJSON(snapshot, simplifyVector = FALSE)
+  raw$parameterIdentification[[1]]$outputMappings[[1]]$outputPath <- literal
+  jsonlite::write_json(
+    raw,
+    snapshot,
+    auto_unbox = TRUE,
+    pretty = TRUE,
+    null = "null",
+    digits = NA
+  )
+
+  dir <- withr::local_tempdir()
+  restored <- restoreProject(snapshot, dir)
+  mapping <- restored$definitions$parameterIdentification[[1]]$outputMappings[[
+    1
+  ]]
+  expect_identical(mapping$outputPathId, "aciclovir_pvb")
+  expect_false(isAnyCriticalErrors(validateProject(restored)))
+
+  # The resolved id, not a mangled path, is what the written tree carries.
+  onDisk <- jsonlite::fromJSON(
+    file.path(
+      dir,
+      "definitions",
+      "parameter-identification",
+      "aciclovirsimple.json"
+    ),
+    simplifyVector = FALSE
+  )
+  expect_identical(onDisk$outputMappings[[1]]$outputPath, "aciclovir_pvb")
+})

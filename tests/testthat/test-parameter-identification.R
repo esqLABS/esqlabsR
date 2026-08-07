@@ -657,6 +657,23 @@ test_that("loading keeps an outputPath naming no defined output path verbatim", 
   expect_true(isAnyCriticalErrors(validateProject(project)))
 })
 
+test_that("loading keeps an over-long outputPath naming no output path verbatim", {
+  # Same leniency for a reference too long to be a definition id. Resolving it
+  # canonicalizes it to compare against the defined ids, and `.canonicalizeOneId()`
+  # aborts above `.maxDefinitionIdBytes` because an id becomes a filename; that
+  # abort must not reach the load, or a pasted-over-long path (a deep metabolite
+  # path whose output-path entry was renamed away) is one more way to make a
+  # project unopenable, named by neither the task nor the field.
+  overlong <- paste0("Organism|Liver|Cell|", strrep("Metabolite_", 22), "|C")
+  expect_gt(nchar(overlong, type = "bytes"), .maxDefinitionIdBytes)
+  project <- suppressWarnings(.loadProjectWithMappingOutputPath(overlong))
+  m <- project$definitions$parameterIdentification$aciclovirsimple$outputMappings[[
+    1
+  ]]
+  expect_identical(m$outputPathId, overlong)
+  expect_true(isAnyCriticalErrors(validateProject(project)))
+})
+
 test_that(".validatePI returns no errors on a well-formed task", {
   task <- PITask(
     id = "T1",
@@ -2004,6 +2021,19 @@ test_that("addPIOutputMapping() aborts cleanly on a NULL / non-scalar outputPath
       task = "t",
       scenarios = "testscenario",
       outputPath = c("aciclovir_pvb", "aciclovir_fat_cell"),
+      observedData = "L"
+    ),
+    regexp = "neither a defined output-path id nor the model path"
+  )
+  # A value too long to be a definition id names no output path either, so it
+  # reports the unknown reference (with its did-you-mean hint) rather than the
+  # filename-length limit, which is not the problem the user has here.
+  expect_error(
+    addPIOutputMapping(
+      project,
+      task = "t",
+      scenarios = "testscenario",
+      outputPath = paste0("Organism|Liver|", strrep("Metabolite_", 22), "|C"),
       observedData = "L"
     ),
     regexp = "neither a defined output-path id nor the model path"

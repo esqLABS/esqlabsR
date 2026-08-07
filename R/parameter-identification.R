@@ -1699,8 +1699,14 @@ removePITask <- function(project, id) {
     return(literalHit[[1L]])
   }
   # Otherwise treat it as an id, canonicalized the same way the definition was
-  # filed (silent: a literal path would already have matched above).
-  canonical <- .silentlyCanonicalized(.canonicalizeIdRef(value))
+  # filed, through the transform the cross-reference validator resolves with, so
+  # this matcher and that report cannot disagree about whether a reference names
+  # a defined output path. It is silent (a literal path would already have matched
+  # above) and, unlike canonicalizing an id to file it, does not abort on a value
+  # too long to be a filename: such a value matches nothing and leaves here as
+  # `NULL`, which keeps the load lenient and makes the authoring abort name the
+  # unknown reference rather than a length limit.
+  canonical <- .canonicalizeForCompare(value)
   if (canonical %in% ids) {
     return(canonical)
   }
