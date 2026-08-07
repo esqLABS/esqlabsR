@@ -909,6 +909,112 @@ test_that(".buildScenarioSimulations shares one build cache across scenarios in 
   expect_identical(built, 1L)
 })
 
+# Steady state ----
+
+# A stand-in for the one thing `.applyScenarioSteadyState()` reads off the
+# simulation, so the tests below need no PK-Sim model loaded.
+.fakeSimulation <- function(id = "sim1") {
+  list(id = id)
+}
+
+test_that(".applyScenarioSteadyState is a no-op when the scenario does not ask for one", {
+  called <- FALSE
+  local_mocked_bindings(
+    getSteadyState = function(...) {
+      called <<- TRUE
+      list()
+    },
+    .package = "ospsuite"
+  )
+  scenario <- Scenario(modelFile = "m.pkml", simulateSteadyState = FALSE)
+  simulation <- .fakeSimulation()
+
+  expect_identical(
+    .applyScenarioSteadyState(simulation, scenario, NULL),
+    simulation
+  )
+  expect_false(called)
+})
+
+test_that(".applyScenarioSteadyState solves at the scenario's time and writes the values back", {
+  solved <- NULL
+  written <- NULL
+  local_mocked_bindings(
+    getSteadyState = function(
+      simulations,
+      steadyStateTime,
+      ignoreIfFormula,
+      simulationRunOptions
+    ) {
+      solved <<- list(
+        simulations = simulations,
+        steadyStateTime = steadyStateTime,
+        ignoreIfFormula = ignoreIfFormula,
+        simulationRunOptions = simulationRunOptions
+      )
+      # `getSteadyState()` answers one entry per simulation it was handed. The
+      # entry for the simulation under test comes second, so reading the result
+      # positionally instead of by id picks up the other simulation's values.
+      list(
+        other = list(paths = "Organism|B", values = 99),
+        sim1 = list(paths = c("Organism|A"), values = 3.5)
+      )
+    },
+    setQuantityValuesByPath = function(quantityPaths, values, simulation) {
+      written <<- list(
+        quantityPaths = quantityPaths,
+        values = values,
+        simulation = simulation
+      )
+      invisible(NULL)
+    },
+    .package = "ospsuite"
+  )
+  scenario <- Scenario(
+    modelFile = "m.pkml",
+    simulateSteadyState = TRUE,
+    steadyStateTime = 600,
+    overwriteFormulasInSS = FALSE
+  )
+  simulation <- .fakeSimulation()
+  runOptions <- ospsuite::SimulationRunOptions$new(numberOfCores = 1)
+
+  .applyScenarioSteadyState(simulation, scenario, runOptions)
+
+  expect_identical(solved$simulations, list(simulation))
+  expect_identical(solved$steadyStateTime, list(600))
+  expect_identical(solved$simulationRunOptions, runOptions)
+  # The scenario's `overwriteFormulasInSS` is the inverse of `ignoreIfFormula`:
+  # off means a formula-valued start value is left alone.
+  expect_true(solved$ignoreIfFormula)
+
+  # The solved values land on the simulation, keyed by its own id.
+  expect_identical(written$quantityPaths, c("Organism|A"))
+  expect_identical(written$values, 3.5)
+  expect_identical(written$simulation, simulation)
+})
+
+test_that(".applyScenarioSteadyState overwrites formulas when the scenario says so", {
+  ignoreIfFormula <- NULL
+  local_mocked_bindings(
+    getSteadyState = function(simulations, steadyStateTime, ...) {
+      ignoreIfFormula <<- list(...)$ignoreIfFormula
+      list(sim1 = list(paths = character(), values = numeric()))
+    },
+    setQuantityValuesByPath = function(...) invisible(NULL),
+    .package = "ospsuite"
+  )
+  scenario <- Scenario(
+    modelFile = "m.pkml",
+    simulateSteadyState = TRUE,
+    steadyStateTime = 600,
+    overwriteFormulasInSS = TRUE
+  )
+
+  .applyScenarioSteadyState(.fakeSimulation(), scenario, NULL)
+  expect_false(ignoreIfFormula)
+})
+
 # Population source resolution ----
 
 test_that(".resolveScenarioPopulation resolves a programmatic entry from the runtime store", {

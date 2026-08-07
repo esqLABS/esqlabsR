@@ -477,22 +477,48 @@
   }
 
   # 7. Steady state
-  if (scenario$simulateSteadyState) {
-    ignoreIfFormula <- !scenario$overwriteFormulasInSS
-    initialValues <- ospsuite::getSteadyState(
-      simulations = list(simulation),
-      steadyStateTime = list(scenario$steadyStateTime),
-      ignoreIfFormula = ignoreIfFormula,
-      simulationRunOptions = simulationRunOptions
-    )
-    ospsuite::setQuantityValuesByPath(
-      quantityPaths = initialValues[[simulation$id]]$paths,
-      values = initialValues[[simulation$id]]$values,
-      simulation = simulation
-    )
-  }
+  .applyScenarioSteadyState(simulation, scenario, simulationRunOptions)
 
   list(simulation = simulation, population = population)
+}
+
+# .applyScenarioSteadyState ----
+
+# Bring a scenario's simulation to steady state, when it asks for one: solve for
+# the steady-state quantity values at the scenario's `steadyStateTime` and write
+# them back as the simulation's start values. A scenario with
+# `simulateSteadyState` off is a no-op.
+#
+# `overwriteFormulasInSS` is the scenario's own spelling of the inverse of
+# `ospsuite`'s `ignoreIfFormula`: a quantity whose start value is a formula
+# keeps that formula unless the scenario opts into overwriting it.
+#
+# Mutates `simulation` in place (an `ospsuite::Simulation` is a reference
+# object), like the other steps of `.prepareScenario()`, and returns it
+# invisibly.
+#
+# @keywords internal
+# @noRd
+.applyScenarioSteadyState <- function(
+  simulation,
+  scenario,
+  simulationRunOptions
+) {
+  if (!scenario$simulateSteadyState) {
+    return(invisible(simulation))
+  }
+  initialValues <- ospsuite::getSteadyState(
+    simulations = list(simulation),
+    steadyStateTime = list(scenario$steadyStateTime),
+    ignoreIfFormula = !scenario$overwriteFormulasInSS,
+    simulationRunOptions = simulationRunOptions
+  )
+  ospsuite::setQuantityValuesByPath(
+    quantityPaths = initialValues[[simulation$id]]$paths,
+    values = initialValues[[simulation$id]]$values,
+    simulation = simulation
+  )
+  invisible(simulation)
 }
 
 # .scenarioBuildPreflight ----
