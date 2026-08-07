@@ -8,7 +8,8 @@ initProject(
   destination = ".",
   type = c("minimal", "example"),
   createExcel = TRUE,
-  overwrite = FALSE
+  overwrite = FALSE,
+  name = ""
 )
 }
 \arguments{
@@ -26,6 +27,11 @@ from the JSON. Set to \code{FALSE} for a JSON-only workflow.}
 \item{overwrite}{If TRUE, overwrites existing project without asking for
 permission. If FALSE and a project already exists, asks user for permission
 to overwrite.}
+
+\item{name}{Character scalar written to the \code{name} field of the new
+\code{Project.json}. Defaults to \code{""}, which writes no name and leaves whatever
+the template carries: no \code{name} field at all for \code{type = "minimal"}, and
+the example project's own name for \code{type = "example"}.}
 }
 \value{
 Invisibly returns \code{destination}, the path the project was

@@ -559,20 +559,26 @@ isProjectInitialized <- function(destination = ".") {
 #
 # @keywords internal
 # @noRd
-# Rewrite a container's `esqlabsRVersion` to the running package version, leaving
-# every other field as it is. Used on a container this package has just put on
-# disk without going through the serializer (the copied `initProject()` template),
-# so the field names the version that wrote the project, as it does on every path
-# that goes through the serializer.
+# Rewrite the fields a freshly copied container cannot carry itself, leaving every
+# other field as it is. Used on a container this package has just put on disk
+# without going through the serializer (the copied `initProject()` template).
+#
+# `esqlabsRVersion` becomes the running package version, so the field names the
+# version that wrote the project, as it does on every path that goes through the
+# serializer. `name` is written only when the caller supplied one, so a template
+# that carries a meaningful name of its own keeps it.
 #
 # @keywords internal
 # @noRd
-.stampContainerEsqlabsRVersion <- function(path) {
+.stampContainerFields <- function(path, name = "") {
   if (!file.exists(path)) {
     return(invisible(NULL))
   }
   parsed <- jsonlite::fromJSON(path, simplifyVector = FALSE)
   parsed$esqlabsRVersion <- as.character(utils::packageVersion("esqlabsR"))
+  if (!identical(name, "")) {
+    parsed$name <- name
+  }
   jsonlite::write_json(
     parsed,
     path,
@@ -643,6 +649,10 @@ isProjectInitialized <- function(destination = ".") {
 #' @param overwrite If TRUE, overwrites existing project without asking for
 #'   permission. If FALSE and a project already exists, asks user for permission
 #'   to overwrite.
+#' @param name Character scalar written to the `name` field of the new
+#'   `Project.json`. Defaults to `""`, which writes no name and leaves whatever
+#'   the template carries: no `name` field at all for `type = "minimal"`, and
+#'   the example project's own name for `type = "example"`.
 #' @returns Invisibly returns `destination`, the path the project was
 #'   initialized in.
 #' @export
@@ -651,10 +661,18 @@ initProject <- function(
   destination = ".",
   type = c("minimal", "example"),
   createExcel = TRUE,
-  overwrite = FALSE
+  overwrite = FALSE,
+  name = ""
 ) {
   destination <- fs::path_abs(destination)
   type <- match.arg(type)
+  # `validateIsString()` checks type only, so it accepts a character vector of
+  # any length and an `NA`. Either would reach the container as a JSON array or
+  # a `null` in a scalar field and fail somewhere further away.
+  validateIsString(name)
+  if (length(name) != 1L || is.na(name)) {
+    cli::cli_abort(messages$invalidInitProjectName())
+  }
 
   # The destination is about to be filled with the project scaffold, so an
   # absent folder is created rather than rejected: `initProject("myProject")`
@@ -714,8 +732,9 @@ initProject <- function(
   # (`saveProject()`, `snapshotProject()`, the Excel bridge) stamps the running
   # package version, so the copied value is restamped here: the field says which
   # version wrote the project, and a scaffold that claimed one version and then
-  # reported another after the first save read as a downgrade.
-  .stampContainerEsqlabsRVersion(file.path(destination, "Project.json"))
+  # reported another after the first save read as a downgrade. `name` is applied
+  # in the same pass, before the Excel export below reads the container back.
+  .stampContainerFields(file.path(destination, "Project.json"), name = name)
 
   # Create the working-folder structure. Each folder gets a short `README.md`
   # so it stays tracked under version control (git ignores empty folders) and
