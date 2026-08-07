@@ -494,6 +494,42 @@ test_that(".validateParameterSets flags a bad set in the unified section", {
   expect_gte(length(result$critical_errors), 1)
 })
 
+test_that(".validateParameterSets reports a non-scalar path field rather than aborting", {
+  # A hand-edited `"containerPath": []` or `"parameterName": ["p", "q"]` is
+  # exactly the input this section polices, so it has to be reported, not abort
+  # the run.
+  parameterSets <- list(
+    global = list(
+      list(containerPath = list(), parameterName = "p", value = 1),
+      list(containerPath = "Organism", parameterName = c("p", "q"), value = 2)
+    )
+  )
+  result <- .validateParameterSets(parameterSets, "parameterSets")
+  msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
+  expect_match(msgs, "empty parameter paths", all = FALSE)
+})
+
+test_that(".validateParameterSets reports a bare-string entry rather than aborting", {
+  # `"parameterSets": {"global": ["Organism|Liver|Volume"]}` parses to entries
+  # that are strings, not records, so they carry no field to read.
+  parameterSets <- list(global = list("Organism|Liver|Volume"))
+  result <- .validateParameterSets(parameterSets, "parameterSets")
+  msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
+  expect_match(msgs, "empty parameter paths", all = FALSE)
+})
+
+test_that(".validateParameterSets does not read path-less entries as duplicates", {
+  parameterSets <- list(
+    global = list(list(value = 1), list(value = 2))
+  )
+  result <- .validateParameterSets(parameterSets, "parameterSets")
+  msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
+  expect_match(msgs, "empty parameter paths", all = FALSE)
+  # The missing paths are already reported above; calling them duplicates of
+  # each other adds a second finding pointing at a path that does not exist.
+  expect_length(result$warnings, 0)
+})
+
 test_that("validateProject() flags an invalid parameter set in the real shape", {
   # A bad section needs to be on the project for whole-project validation; an
   # in-memory `.fakeProject()` takes the section without write validation (the

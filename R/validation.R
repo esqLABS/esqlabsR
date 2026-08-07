@@ -667,6 +667,33 @@ validationSummary <- function(validationResults) {
   result
 }
 
+#' Read one field of a definition entry as a scalar string
+#'
+#' Shared by the parameter-set and initial-condition validators, which police
+#' hand-edited definition files. A field written as `[]` or as a two-element
+#' array (`"unit": ["mg", "g"]`) would otherwise abort `vapply()` with an
+#' internal length error instead of being reported, so anything that is not
+#' exactly one value reads as `NA` and falls into the caller's own
+#' missing-field check.
+#'
+#' @param entries List of entry records, each already a list (see the
+#'   normalization the callers apply before reading any field).
+#' @param field Name of the field to read.
+#' @return Character vector, one element per entry, `NA` wherever the entry
+#'   does not hold exactly one value for `field`.
+#' @keywords internal
+#' @noRd
+.scalarEntryField <- function(entries, field) {
+  vapply(
+    entries,
+    function(e) {
+      value <- e[[field]]
+      if (length(value) != 1L) NA_character_ else as.character(value)
+    },
+    character(1)
+  )
+}
+
 #' Validate a parameter-set structure
 #'
 #' Shared body used by the model / individual / application
@@ -691,17 +718,16 @@ validationSummary <- function(validationResults) {
       next
     }
 
-    containerPaths <- vapply(
-      set,
-      function(e) as.character(e$containerPath %||% NA_character_),
-      character(1)
-    )
-    parameterNames <- vapply(
-      set,
-      function(e) as.character(e$parameterName %||% NA_character_),
-      character(1)
-    )
-    values <- lapply(set, function(e) e$value)
+    # An entry that is a bare string rather than a record
+    # (`["Organism|Liver|Volume"]`) has no fields to read; treating it as an
+    # empty record folds it into the missing-field error below instead of
+    # aborting on `$`. Normalized before any field is read, so the value read
+    # below is covered too.
+    entries <- lapply(set, function(e) if (is.list(e)) e else list())
+
+    containerPaths <- .scalarEntryField(entries, "containerPath")
+    parameterNames <- .scalarEntryField(entries, "parameterName")
+    values <- lapply(entries, function(e) e$value)
 
     if (
       any(
@@ -741,7 +767,18 @@ validationSummary <- function(validationResults) {
       )
     }
 
-    fullPaths <- paste(containerPaths, parameterNames, sep = "|")
+    # Only entries carrying both halves of a path can duplicate: the blanks and
+    # `NA`s are already reported by the missing-path error above, and `paste()`
+    # would otherwise render two of them as a literal "NA|NA" duplicate.
+    hasPath <- !is.na(containerPaths) &
+      containerPaths != "" &
+      !is.na(parameterNames) &
+      parameterNames != ""
+    fullPaths <- paste(
+      containerPaths[hasPath],
+      parameterNames[hasPath],
+      sep = "|"
+    )
     dupes <- fullPaths[duplicated(fullPaths)]
     if (length(dupes) > 0) {
       result$addWarning(
@@ -784,21 +821,6 @@ validationSummary <- function(validationResults) {
     return(result)
   }
 
-  # Read one field as a scalar string, or `NA` when the entry does not hold
-  # exactly one value for it. A hand-edited set can write `"unit": []` or
-  # `"unit": ["mg", "g"]`, either of which would otherwise abort `vapply()`
-  # with an internal length error instead of being reported.
-  scalarField <- function(entries, field) {
-    vapply(
-      entries,
-      function(e) {
-        value <- e[[field]]
-        if (length(value) != 1L) NA_character_ else as.character(value)
-      },
-      character(1)
-    )
-  }
-
   for (setName in names(initialConditions)) {
     set <- initialConditions[[setName]]
     if (length(set) == 0) {
@@ -810,8 +832,8 @@ validationSummary <- function(validationResults) {
     # it into the missing-field errors below instead of aborting on `$`.
     entries <- lapply(set, function(e) if (is.list(e)) e else list())
 
-    paths <- scalarField(entries, "path")
-    units <- scalarField(entries, "unit")
+    paths <- .scalarEntryField(entries, "path")
+    units <- .scalarEntryField(entries, "unit")
     values <- lapply(entries, function(e) e$value)
 
     if (any(is.na(paths) | paths == "")) {
