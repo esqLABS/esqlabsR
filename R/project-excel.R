@@ -482,9 +482,20 @@ importProjectFromExcel <- function(
 #   - conventionWorkbooks : workbooks read under their conventional filename
 #                           rather than one the property sheet names
 #
+# What this aborts on is a property of the workbook the caller named, so the
+# aborts are attributed to the caller (`.call`) rather than to this helper, whose
+# name means nothing to the reader. `importProjectFromExcel()` is the entrypoint
+# a user actually calls, and its own preconditions abort under that name too, so
+# threading the call keeps one import's whole error surface reading alike.
+#
 # @keywords internal
 # @noRd
-.excelToProjectJson <- function(projectConfigPath, projectDir) {
+.excelToProjectJson <- function(
+  projectConfigPath,
+  projectDir,
+  .call = rlang::caller_env()
+) {
+  rlang::local_error_call(.call)
   validateIsString(projectConfigPath)
 
   if (!file.exists(projectConfigPath)) {
@@ -498,11 +509,7 @@ importProjectFromExcel <- function(
     readExcel(projectConfigPath),
     error = function(e) {
       cli::cli_abort(
-        c(
-          "{.path {projectConfigPath}} is not a readable Excel project file.",
-          "i" = "It must be a valid {.field .xlsx} workbook \\
-          (the project's {.file Project.xlsx})."
-        ),
+        messages$excelProjectFileUnreadable(projectConfigPath),
         parent = e
       )
     }
