@@ -203,6 +203,49 @@ test_that("Excel round-trip defaults a non-steady-state scenario's steady-state 
   )
 })
 
+test_that("Excel round-trip keeps a steady-state time declared with the flag off", {
+  project <- exampleProject()
+  # A preset steady-state time the scenario is not currently using is valid and
+  # the JSON writer keeps it, so the workbook has to as well: blanking the two
+  # columns here sent the value through the import's blank-cell defaults and
+  # came back as `1000` / `"min"`.
+  setScenario(
+    project,
+    "aciclovir_iv",
+    steadyState = FALSE,
+    steadyStateTime = 1,
+    steadyStateTimeUnit = "h"
+  )
+  before <- .unwrapDefinitionList(project$definitions$scenarios)
+  after <- .unwrapDefinitionList(excelRoundTrip(project)$definitions$scenarios)
+
+  expect_false(isTRUE(after[["aciclovir_iv"]]$simulateSteadyState))
+  expect_identical(after[["aciclovir_iv"]]$steadyStateTimeUnit, "h")
+  expect_equal(
+    after[["aciclovir_iv"]]$steadyStateTime,
+    before[["aciclovir_iv"]]$steadyStateTime
+  )
+})
+
+test_that("Excel round-trip keeps a declared steady-state time of zero", {
+  project <- exampleProject()
+  # Zero is an authored value like any other: the parser reads it, nothing
+  # constrains its sign, and the JSON writer emits it. Gating the export on a
+  # positive time blanked the cells, and the import's blank-cell defaults then
+  # substituted `1000` / `"min"` for it.
+  setScenario(
+    project,
+    "aciclovir_iv",
+    steadyState = FALSE,
+    steadyStateTime = 0,
+    steadyStateTimeUnit = "h"
+  )
+  after <- .unwrapDefinitionList(excelRoundTrip(project)$definitions$scenarios)
+
+  expect_identical(after[["aciclovir_iv"]]$steadyStateTimeUnit, "h")
+  expect_equal(after[["aciclovir_iv"]]$steadyStateTime, 0)
+})
+
 test_that("Excel round-trip preserves individuals, populations, and applications", {
   project <- exampleProject()
 
