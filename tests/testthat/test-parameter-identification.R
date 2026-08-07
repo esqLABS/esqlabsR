@@ -3160,3 +3160,71 @@ test_that(".validatePI reports every incomplete PI record at once", {
   # No spurious bounds complaint: the comparison is skipped, not run on NULL.
   expect_false(any(grepl("invalid bounds", msgs, ignore.case = TRUE)))
 })
+
+# Runtime bounds assignment ----
+
+# A stand-in for `ospsuite.parameteridentification::PIParameters`' bound
+# setters: each rejects a value that would cross the *other* bound as it stands
+# right then, which is the constraint `.assignPIBounds()` has to route around.
+.boundedRuntime <- function(minValue, maxValue) {
+  R6::R6Class(
+    "FakePIParameters",
+    public = list(
+      initialize = function(minValue, maxValue) {
+        private$.min <- minValue
+        private$.max <- maxValue
+      }
+    ),
+    private = list(.min = NULL, .max = NULL),
+    active = list(
+      minValue = function(value) {
+        if (missing(value)) {
+          return(private$.min)
+        }
+        if (value > private$.max) {
+          stop("minValue above the current maxValue")
+        }
+        private$.min <- value
+      },
+      maxValue = function(value) {
+        if (missing(value)) {
+          return(private$.max)
+        }
+        if (value < private$.min) {
+          stop("maxValue below the current minValue")
+        }
+        private$.max <- value
+      }
+    )
+  )$new(minValue, maxValue)
+}
+
+test_that(".assignPIBounds sets bounds that sit above the model defaults", {
+  # New window entirely above the stale one: setting minValue first would cross
+  # the default maxValue, so maxValue has to be raised first.
+  runtime <- .boundedRuntime(minValue = 0, maxValue = 1)
+  .assignPIBounds(runtime, minValue = 10, maxValue = 20)
+  expect_identical(runtime$minValue, 10)
+  expect_identical(runtime$maxValue, 20)
+})
+
+test_that(".assignPIBounds sets bounds that sit below the model defaults", {
+  # New window entirely below the stale one: maxValue first would cross the
+  # default minValue, so minValue has to be lowered first.
+  runtime <- .boundedRuntime(minValue = 100, maxValue = 200)
+  .assignPIBounds(runtime, minValue = 1, maxValue = 5)
+  expect_identical(runtime$minValue, 1)
+  expect_identical(runtime$maxValue, 5)
+})
+
+test_that(".assignPIBounds sets bounds that overlap the model defaults", {
+  runtime <- .boundedRuntime(minValue = 0, maxValue = 10)
+  .assignPIBounds(runtime, minValue = 2, maxValue = 8)
+  expect_identical(runtime$minValue, 2)
+  expect_identical(runtime$maxValue, 8)
+})
+
+test_that(".assignPIBounds returns the runtime invisibly", {
+  runtime <- .boundedRuntime(minValue = 0, maxValue = 10)
+  expect_invisible(.assignPIBounds(runtime, minValue = 1, maxValue = 9))
+})
