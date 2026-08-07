@@ -1624,8 +1624,11 @@ removePITask <- function(project, id) {
   invisible(self)
 }
 
-# Canonicalize the scenario references on a PIParameter record (its `id` is a
-# free label the PI run uses, not a definition-file id, so it is left as-is).
+# Canonicalize the scenario references on a PIParameter record. Only the
+# references: a member's own `id` is a free label inside the task's definition
+# file, not a definition-file id of its own, so no door that makes one
+# (`addPITask()`, `addPIParameter()`, `.parsePIParameters()`, the Excel import)
+# reshapes it, and `.removePIMember()` matches it exactly as stored.
 #
 # @keywords internal
 # @noRd
@@ -1711,8 +1714,9 @@ removePITask <- function(project, id) {
 #'   exist in `scenarios` definitions.
 #' @param minValue,maxValue,startValue Numeric scalars.
 #' @param units Optional character scalar.
-#' @param id Optional character scalar; auto-generated as
-#'   `<task>_param_<N>` when absent.
+#' @param id Optional character scalar, stored exactly as given (unlike a task
+#'   id, a parameter id names no file, so it is not canonicalized);
+#'   auto-generated as `<task>_param_<N>` when absent.
 #' @param overwrite Logical scalar. When `FALSE` (default), an explicit `id`
 #'   that already exists in the task aborts. When `TRUE`, the existing
 #'   parameter is replaced (last-write-wins). Ignored for an auto-generated
@@ -1829,7 +1833,8 @@ addPIParameter <- function(
 #'
 #' @param project A `Project` object.
 #' @param task Character scalar. Existing PI task id.
-#' @param id Character scalar. Parameter id to remove.
+#' @param id Character scalar. Parameter id to remove, matched exactly as the
+#'   task stores it.
 #' @returns The `project` object, invisibly.
 #' @export
 #' @family parameterIdentification
@@ -1892,8 +1897,9 @@ removePIParameter <- function(project, task, id) {
 #' @param scenarios Character vector of scenario names.
 #' @param scaling,xOffset,yOffset,xFactor,yFactor,weight Optional
 #'   per-mapping fitting metadata. Defaults match `PIOutputMapping()`.
-#' @param id Optional character scalar; auto-generated as
-#'   `<task>_mapping_<N>` when absent.
+#' @param id Optional character scalar, stored exactly as given (unlike a task
+#'   id, a mapping id names no file, so it is not canonicalized);
+#'   auto-generated as `<task>_mapping_<N>` when absent.
 #' @param overwrite Logical scalar. When `FALSE` (default), an explicit `id`
 #'   that already exists in the task aborts. When `TRUE`, the existing mapping
 #'   is replaced (last-write-wins). Ignored for an auto-generated `id`, which
@@ -2008,7 +2014,8 @@ addPIOutputMapping <- function(
 #'
 #' @param project A `Project` object.
 #' @param task Character scalar. Existing PI task id.
-#' @param id Character scalar. Output mapping id to remove.
+#' @param id Character scalar. Output mapping id to remove, matched exactly as
+#'   the task stores it.
 #' @returns The `project` object, invisibly.
 #' @export
 #' @family parameterIdentification

@@ -405,12 +405,15 @@ getObservedDataNames <- function(project) {
 #'
 #' `id` names the declaration itself: it becomes the declaration's file under
 #' the project's definitions folder (`definitions/observed-data/<id>.json` in
-#' the default layout) and is the id [removeObservedData()] matches on. Left
-#' out, the `file` basename serves as both. It is not the name the data is
-#' known by: each imported [`ospsuite::DataSet`] carries the name its source
-#' gives it (the data-set name in an Excel sheet, the name inside a PKML file),
-#' and that name, not the declaration's id, is what a `dataCombined` entry
-#' references.
+#' the default layout) and is the id [removeObservedData()] matches on. It is
+#' canonicalized like every other definition id (lowercased and made a safe
+#' filename segment), and you are told when that changes it. Left out, the
+#' `file` basename serves as both, kept exactly as the source spells it.
+#'
+#' An id is not the name the data is known by: each imported
+#' [`ospsuite::DataSet`] carries the name its source gives it (the data-set name
+#' in an Excel sheet, the name inside a PKML file), and that name, not the
+#' declaration's id, is what a `dataCombined` entry references.
 #'
 #' A `DataSet` you pass lives in the R session until you save. On
 #' [saveProject()] it is written to a PKML file named `<DataSet name>.pkml`
@@ -551,6 +554,16 @@ addObservedData <- function(project, entry, overwrite = FALSE) {
         "An observedData entry's {.field id} must be a single non-empty string."
       )
     }
+    # A declared id names a definition file, so it runs through the same
+    # canonicalizer every other section's `add*` runs its id through: two ids
+    # differing only in case would otherwise be two declarations mapping to one
+    # file on a case-insensitive filesystem. Only a declared id is rewritten; an
+    # id derived from the `file` basename or a programmatic `DataSet` name is the
+    # source's own string, which `.validateObservedDataId()` rejects rather than
+    # reshapes.
+    if (!is.null(entry[["id"]])) {
+      entry[["id"]] <- .canonicalizeId(entry[["id"]])
+    }
     # Config entries are keyed by the id `removeObservedData()` matches on: the
     # entry's own `id` when it declares one, else its `file` basename. That id
     # also names the definition file, so reject an unsafe one here rather than
@@ -623,9 +636,12 @@ addObservedData <- function(project, entry, overwrite = FALSE) {
 #' @param id Character vector of ids. An observed-data id is the declaration's
 #'   `id` field, or, when it declares none, comes from the data source itself
 #'   (the `DataSet` name of an unsaved programmatic source, or a file basename
-#'   for a file-based source). Either way it is matched verbatim, not
-#'   canonicalized. A saved programmatic source that declares no `id` is matched
-#'   by its `<name>.pkml` basename (see the note above).
+#'   for a file-based source). Each is matched as the declaration stores it and,
+#'   failing that, as [addObservedData()] would have canonicalized it, so a
+#'   derived id is found by the source's own spelling and a declared one by
+#'   either the form you authored or the canonical form you were given back. A
+#'   saved programmatic source that declares no `id` is matched by its
+#'   `<name>.pkml` basename (see the note above).
 #' @returns The `project` object, invisibly.
 #' @export
 #' @family observedData
@@ -651,6 +667,13 @@ removeObservedData <- function(project, id) {
   dropIdx <- integer()
   programmaticNames <- character()
   missingIds <- character()
+  entriesWithId <- function(key) {
+    which(vapply(
+      observedData,
+      function(e) identical(.observedDataEntryIdOrNA(e), key),
+      logical(1)
+    ))
+  }
   for (one in id) {
     if (one %in% names(private$.programmaticDataSets)) {
       programmaticNames <- c(programmaticNames, one)
@@ -664,11 +687,17 @@ removeObservedData <- function(project, id) {
       dropIdx <- c(dropIdx, matchIdx)
       next
     }
-    matchIdx <- which(vapply(
-      observedData,
-      function(e) identical(.observedDataEntryIdOrNA(e), one),
-      logical(1)
-    ))
+    matchIdx <- entriesWithId(one)
+    if (length(matchIdx) == 0L) {
+      # An id this section stores is one of two kinds, so the match takes two
+      # passes rather than one transform. A derived id is the source's own
+      # string (a `file` basename, a `DataSet` name), which only the verbatim
+      # pass above finds; a declared id is stored the way `addObservedData()`
+      # canonicalized it, so the id as the user authored it needs the same
+      # transform to reach it. Verbatim first, so a derived id that another
+      # entry's declared id happens to canonicalize to still wins its own match.
+      matchIdx <- entriesWithId(.silentlyCanonicalized(.canonicalizeId(one)))
+    }
     if (length(matchIdx) == 0L) {
       missingIds <- c(missingIds, one)
       next

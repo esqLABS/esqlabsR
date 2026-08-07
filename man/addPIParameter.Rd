@@ -31,8 +31,9 @@ exist in \code{scenarios} definitions.}
 
 \item{units}{Optional character scalar.}
 
-\item{id}{Optional character scalar; auto-generated as
-\verb{<task>_param_<N>} when absent.}
+\item{id}{Optional character scalar, stored exactly as given (unlike a task
+id, a parameter id names no file, so it is not canonicalized);
+auto-generated as \verb{<task>_param_<N>} when absent.}
 
 \item{overwrite}{Logical scalar. When \code{FALSE} (default), an explicit \code{id}
 that already exists in the task aborts. When \code{TRUE}, the existing
