@@ -14,12 +14,18 @@ test_that("Project round-trips through Excel preserving outputPaths", {
 
   excel_out <- withr::local_tempdir()
   exportProjectToExcel(project, outputDir = excel_out, silent = TRUE)
-  reimportedJson <- importProjectFromExcel(
-    file.path(excel_out, "Project.xlsx"),
-    silent = TRUE
+  # The exported workbooks declare the project's data workbook but do not carry
+  # it, so re-importing from a scratch directory reports it as missing and skips
+  # the observed data.
+  expect_warning(
+    reimportedJson <- importProjectFromExcel(
+      file.path(excel_out, "Project.xlsx"),
+      silent = TRUE
+    ),
+    "was not found"
   )
-  # The round trip does not carry the example project's observed data, so
-  # the re-imported project has one reference it cannot resolve.
+  # That skip is what leaves the re-imported project one reference it cannot
+  # resolve.
   expect_warning(
     reimported <- loadProject(reimportedJson),
     "unresolved cross-reference"
@@ -344,14 +350,7 @@ test_that("Excel round-trip preserves project name and description", {
   project$info$name <- "RT_Name"
   project$info$description <- "RT_Desc"
 
-  excel_out <- withr::local_tempdir()
-  exportProjectToExcel(project, outputDir = excel_out, silent = TRUE)
-  reimportedJson <- importProjectFromExcel(
-    file.path(excel_out, "Project.xlsx"),
-    outputDir = withr::local_tempdir(),
-    silent = TRUE
-  )
-  reimported <- suppressWarnings(loadProject(reimportedJson))
+  reimported <- excelRoundTrip(project)
 
   expect_identical(reimported$info$name, "RT_Name")
   expect_identical(reimported$info$description, "RT_Desc")
@@ -362,22 +361,35 @@ test_that("Excel round-trip preserves the filePaths/excel container split", {
 
   excel_out <- withr::local_tempdir()
   exportProjectToExcel(project, outputDir = excel_out, silent = TRUE)
-  reimportedJson <- importProjectFromExcel(
-    file.path(excel_out, "Project.xlsx"),
-    silent = TRUE
+  # The exported workbooks declare the project's data workbook but do not carry
+  # it, so re-importing from a scratch directory reports it as missing, skips
+  # the observed data, and leaves the re-imported project one reference it
+  # cannot resolve.
+  expect_warning(
+    reimportedJson <- importProjectFromExcel(
+      file.path(excel_out, "Project.xlsx"),
+      silent = TRUE
+    ),
+    "was not found"
   )
-  # The round trip does not carry the example project's observed data, so
-  # the re-imported project has one reference it cannot resolve.
   expect_warning(
     reimported <- loadProject(reimportedJson),
     "unresolved cross-reference"
   )
 
-  # The four live folders stay in filePaths; the seven Excel-bridge sheet names
-  # re-split back into the excel block (not leaking into filePaths).
+  # The live folders stay in filePaths, joined by the experimental-data workbook
+  # the export derives from the observed-data declaration; the Excel-bridge
+  # sheet names re-split back into the excel block (not leaking into filePaths).
   expect_named(
     reimported$rawFilePaths(),
-    c("simulationsFolder", "populationsFolder", "dataFolder", "outputFolder"),
+    c(
+      "simulationsFolder",
+      "populationsFolder",
+      "dataFolder",
+      "dataFile",
+      "dataImporterConfigurationFile",
+      "outputFolder"
+    ),
     ignore.order = TRUE
   )
   expect_named(
@@ -389,9 +401,136 @@ test_that("Excel round-trip preserves the filePaths/excel container split", {
       "populationsFile",
       "scenariosFile",
       "applicationsFile",
-      "plotsFile"
+      "plotsFile",
+      "parameterIdentificationFile"
     ),
     ignore.order = TRUE
+  )
+})
+
+# The `Project.xlsx` Property table is where a project names its
+# experimental-data workbook and its parameter-identification workbook. A
+# project imported from Excel carries those rows in its containers, but one
+# authored in JSON keeps the data source inside the observed-data definition and
+# carries none of them, so exporting only the container blocks wrote a project
+# that declared no observed data at all. Re-importing that dropped the section
+# without a word (the importer's missing-data warning fires only for a
+# `dataFile` that is declared), and every parameter-identification mapping
+# reading a data set then dangled.
+test_that("exporting a JSON-authored project declares its data and PI workbooks", {
+  project <- exampleProject()
+  projectDir <- project$info$projectDirPath
+
+  # Exported into the project's own folder, so the exported `dataFolder` still
+  # names the folder the data workbook actually sits in.
+  exportProjectToExcel(
+    project,
+    outputDir = projectDir,
+    overwrite = TRUE,
+    silent = TRUE
+  )
+
+  properties <- excelProjectProperties(file.path(projectDir, "Project.xlsx"))
+  expect_identical(
+    properties[["dataFile"]],
+    "Aciclovir_TimeValuesData.xlsx"
+  )
+  expect_identical(
+    properties[["dataImporterConfigurationFile"]],
+    "esqlabs_dataImporter_configuration.xml"
+  )
+  # The export writes `Configurations/ParameterIdentification.xlsx`, so the
+  # exported project declares the workbook it wrote rather than relying on the
+  # importer's conventional-filename fallback.
+  expect_identical(
+    properties[["parameterIdentificationFile"]],
+    "ParameterIdentification.xlsx"
+  )
+
+  reimported <- loadProject(importProjectFromExcel(
+    file.path(projectDir, "Project.xlsx"),
+    outputDir = withr::local_tempdir(),
+    silent = TRUE
+  ))
+  expect_length(reimported$definitions$observedData, 1L)
+  # The declaration is back, so the PI task's output mappings resolve against a
+  # data set that exists instead of dangling.
+  expect_identical(
+    validateProject(reimported)$crossReferences$critical_errors,
+    list()
+  )
+})
+
+# The Property table names one experimental-data workbook, so a project
+# declaring several observed-data sources cannot state them all. The first
+# `excel` source is written and the rest are named in a warning, rather than one
+# of several being picked silently.
+test_that("exporting several observed-data declarations writes one and names the rest", {
+  project <- exampleProject()
+  addObservedData(
+    project,
+    list(
+      type = "excel",
+      id = "laskin_group_b",
+      file = "Laskin_GroupB_TimeValuesData.xlsx",
+      importerConfiguration = "esqlabs_dataImporter_configuration.xml",
+      sheets = list("Laskin 1982.Group B")
+    )
+  )
+
+  excelOut <- withr::local_tempdir()
+  expect_warning(
+    exportProjectToExcel(project, outputDir = excelOut, silent = TRUE),
+    "laskin_group_b"
+  )
+
+  properties <- excelProjectProperties(file.path(excelOut, "Project.xlsx"))
+  expect_identical(properties[["dataFile"]], "Aciclovir_TimeValuesData.xlsx")
+  expect_identical(
+    properties[["dataImporterConfigurationFile"]],
+    "esqlabs_dataImporter_configuration.xml"
+  )
+})
+
+# A value the containers carry always wins, so deriving the missing rows never
+# changes what a project imported from Excel exports.
+test_that("an Excel-imported project's own workbook names survive the export", {
+  project <- suppressWarnings(loadProject(importProjectFromExcel(
+    testProjectExcelPath(),
+    outputDir = withr::local_tempdir(),
+    silent = TRUE
+  )))
+  # A second declaration whose file differs from the one the container names:
+  # without the container-wins rule the export would write this one instead.
+  addObservedData(
+    project,
+    list(
+      type = "excel",
+      id = "later_addition",
+      file = "Later_TimeValuesData.xlsx",
+      importerConfiguration = "esqlabs_dataImporter_configuration.xml",
+      sheets = list("Sheet1")
+    )
+  )
+
+  excelOut <- withr::local_tempdir()
+  suppressWarnings(
+    exportProjectToExcel(project, outputDir = excelOut, silent = TRUE)
+  )
+
+  # The three rows the fixture's own property sheet declares, unchanged.
+  properties <- excelProjectProperties(file.path(excelOut, "Project.xlsx"))
+  expect_identical(
+    properties[["dataFile"]],
+    "TestProject_TimeValuesData.xlsx"
+  )
+  expect_identical(
+    properties[["dataImporterConfigurationFile"]],
+    "esqlabs_dataImporter_configuration.xml"
+  )
+  expect_identical(
+    properties[["parameterIdentificationFile"]],
+    "ParameterIdentification.xlsx"
   )
 })
 

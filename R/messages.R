@@ -817,6 +817,24 @@ messages$exportWouldOverwriteWorkbooks <- function(outputDir) {
   )
 }
 
+messages$exportUndeclaredObservedData <- function(ids) {
+  # Unglued: an observed-data id is a user-chosen name (typically a data-file
+  # basename), so it is free text.
+  envir <- new.env(parent = parent.frame())
+  assign("ids", ids, envir = envir)
+  assign("n", length(ids), envir = envir)
+  list(
+    bullets = c(
+      "!" = "{cli::qty(n)}The Excel project configuration can name a single \\
+      experimental-data workbook, so {n} observed-data declaration{?s} \\
+      {?was/were} not written: {.val {ids}}.",
+      "i" = "{cli::qty(n)}Anything that reads {?it/them} resolves only in the \\
+      JSON project, not in a project re-imported from these workbooks."
+    ),
+    envir = envir
+  )
+}
+
 messages$failedToRemoveStaleDefinitionFiles <- function(paths) {
   n <- length(paths)
   # Interpolate eagerly here, where `n` and `paths` are in scope: the

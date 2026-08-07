@@ -218,16 +218,18 @@ localExcelProjectDir <- function(envir = parent.frame()) {
 #' The two temporary directories (the workbook set, and the JSON project built
 #' from it) are removed when the calling test finishes.
 #'
-#' The example project's observed data does not survive the round trip, so the
-#' re-imported project always has one reference it cannot resolve. That one
-#' warning is muffled here because it says nothing about the section under
-#' test; every other warning is left to surface. Two tests assert it directly
-#' rather than calling this helper.
+#' The workbook set is written to a scratch directory, so the data folder the
+#' exported `dataFile` names is not beside it and the re-import reports the data
+#' workbook as missing and skips the observed data; the re-imported project then
+#' has one reference it cannot resolve. Both warnings are muffled here because
+#' neither says anything about the section under test; every other warning is
+#' left to surface. Two tests assert them directly rather than calling this
+#' helper.
 excelRoundTrip <- function(project, envir = parent.frame()) {
   excelOut <- withr::local_tempdir(.local_envir = envir)
   exportProjectToExcel(project, outputDir = excelOut, silent = TRUE)
   jsonOut <- withr::local_tempdir(.local_envir = envir)
-  .muffleCrossReferenceWarning({
+  .muffleRoundTripDataWarnings({
     reimportedJson <- importProjectFromExcel(
       file.path(excelOut, "Project.xlsx"),
       outputDir = jsonOut,
@@ -237,15 +239,32 @@ excelRoundTrip <- function(project, envir = parent.frame()) {
   })
 }
 
-#' Evaluate `expr`, dropping only the unresolved-cross-reference warning.
-.muffleCrossReferenceWarning <- function(expr) {
+#' Evaluate `expr`, dropping only the two warnings a round trip through a
+#' scratch directory always raises: the skipped observed data (its workbook is
+#' not beside the exported workbooks) and the cross-reference left unresolved
+#' by that skip.
+.muffleRoundTripDataWarnings <- function(expr) {
   withCallingHandlers(
     expr,
+    esqlabsR_importSkippedObservedData = function(w) {
+      invokeRestart("muffleWarning")
+    },
     warning = function(w) {
       if (grepl("unresolved cross-reference", conditionMessage(w))) {
         invokeRestart("muffleWarning")
       }
     }
+  )
+}
+
+#' The `Property -> Value` table of an exported `Project.xlsx`, as a named
+#' character vector. This is the lookup the importer reads the workbook back
+#' through, so a test asserting what a project declares reads it the same way.
+excelProjectProperties <- function(workbookPath) {
+  table <- as.data.frame(readxl::read_excel(workbookPath))
+  stats::setNames(
+    as.character(table$Value),
+    as.character(table$Property)
   )
 }
 
