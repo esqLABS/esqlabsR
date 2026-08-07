@@ -242,8 +242,20 @@ Project <- R6::R6Class(
     #' @param projectFilePath A string representing the path to the project
     #'   JSON file, or to the folder holding it (see [loadProject()] for how a
     #'   folder is resolved).
-    initialize = function(projectFilePath = character()) {
+    #' @param sections Internal. An already-parsed section list to commit
+    #'   instead of reading one, as `.loadProjectTree()` returns. The Excel
+    #'   bridge parses a container it built in memory and needs the resulting
+    #'   object without a folder on disk; `projectFilePath` is ignored when this
+    #'   is given.
+    initialize = function(projectFilePath = character(), sections = NULL) {
       private$.validatedSinceMutation <- FALSE
+      # Committing a parsed section list is the load path's own step, so it is
+      # reached by handing the list to the constructor rather than by a caller
+      # poking at the private seam.
+      if (!is.null(sections)) {
+        private$.applyLoadedSections(sections)
+        return(invisible(self))
+      }
       if (is.character(projectFilePath) && length(projectFilePath) == 0L) {
         private$.projectDirPath <- NULL
         return(invisible(self))

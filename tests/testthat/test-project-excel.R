@@ -486,6 +486,38 @@ test_that("importProjectFromExcel aborts over an existing JSON project unless ov
   )))
 })
 
+# Both of importProjectFromExcel()'s preconditions are checked before the
+# workbook is read, so a call that is going to refuse says so instead of first
+# reporting on the contents of a project it will not import (an id collision
+# aborts the read, an incomplete observed curve warns during it). The source
+# path is checked ahead of the destination, so a mistyped `projectConfigPath` is
+# named rather than masked by an `outputDir` that already holds a project.
+test_that("importProjectFromExcel checks its preconditions before reading the workbook", {
+  out <- withr::local_tempdir()
+  writeLines("{}", file.path(out, "Project.json"))
+
+  # A source that exists but is not a readable workbook: the overwrite refusal
+  # still wins, which it can only do if the guard runs before the read.
+  unreadable <- file.path(withr::local_tempdir(), "Project.xlsx")
+  writeLines("not a workbook", unreadable)
+  expect_snapshot(
+    error = TRUE,
+    transform = .redactTmpDir,
+    importProjectFromExcel(unreadable, outputDir = out, silent = TRUE)
+  )
+
+  # A missing source is named ahead of the occupied destination.
+  expect_snapshot(
+    error = TRUE,
+    transform = .redactTmpDir,
+    importProjectFromExcel(
+      file.path(out, "Missing.xlsx"),
+      outputDir = out,
+      silent = TRUE
+    )
+  )
+})
+
 # Regression (#1126): exportProjectToExcel() replaces Project.xlsx and the
 # Configurations workbooks wholesale, defaulting outputDir to the project's own
 # directory, so a bare call would silently overwrite hand-maintained workbooks.
@@ -2341,6 +2373,78 @@ test_that(".compareJsonToExcel does not count id canonicalization as drift", {
     silent = TRUE
   ))
   expect_true(inSync$excel_in_sync)
+})
+
+test_that(".compareJsonToExcel still reports a real edit as drift", {
+  # The comparison deliberately ignores several differences the round trip does
+  # not preserve (key order, definition order, storage type), so it needs a case
+  # proving it has not been normalized into always saying "in sync".
+  out <- withr::local_tempdir()
+  excelPath <- testProjectExcelPath()
+  jsonPath <- suppressWarnings(importProjectFromExcel(
+    excelPath,
+    outputDir = out,
+    silent = TRUE
+  ))
+  project <- suppressWarnings(loadProject(jsonPath))
+
+  addOutputPath(project, "drifted", "Organism|Liver|Volume")
+
+  drifted <- suppressWarnings(.compareJsonToExcel(
+    project = project,
+    projectConfigPath = excelPath,
+    silent = TRUE
+  ))
+  expect_false(drifted$excel_in_sync)
+  expect_identical(drifted$details$data_changes$outputPaths, "data differs")
+})
+
+test_that(".compareJsonToExcel writes nothing", {
+  # It answers a read-only question, so it must leave the Excel project folder
+  # exactly as it found it (it used to run the importer for real against a
+  # temporary directory).
+  out <- withr::local_tempdir()
+  excelPath <- testProjectExcelPath()
+  jsonPath <- suppressWarnings(importProjectFromExcel(
+    excelPath,
+    outputDir = out,
+    silent = TRUE
+  ))
+  project <- suppressWarnings(loadProject(jsonPath))
+
+  excelDir <- dirname(excelPath)
+  before <- list.files(excelDir, recursive = TRUE, all.files = TRUE)
+  suppressWarnings(.compareJsonToExcel(
+    project = project,
+    projectConfigPath = excelPath,
+    silent = TRUE
+  ))
+  expect_identical(
+    list.files(excelDir, recursive = TRUE, all.files = TRUE),
+    before
+  )
+})
+
+# `.sortJsonSections()` puts the two sides of the Excel comparison into one
+# order by serializing each record into a sort key, so that key has to be as
+# discriminating as the `identical()` it feeds. Records tying on the key keep
+# their source order, because `order(method = "radix")` is stable, and source
+# order is exactly what the sort exists to normalize away.
+#
+# Every array section a real project holds carries a unique id per record
+# (`name`, `individualId`, `dataCombinedId`, ...), so no two records tie and the
+# key's precision does not currently reach the verdict. This guards the sort
+# itself rather than a live false-drift report: the records here are given the
+# same id so they differ only past the 4th decimal, which is where jsonlite's
+# default rounding would collapse them onto one key.
+test_that(".sortJsonSections orders records that differ past the 4th decimal", {
+  low <- list(id = "s", value = 1.00001)
+  high <- list(id = "s", value = 1.00002)
+
+  expect_identical(
+    .sortJsonSections(list(section = list(low, high))),
+    .sortJsonSections(list(section = list(high, low)))
+  )
 })
 
 # Regression (#1123): a dirty saveProject() on a normal tree project must not

@@ -35,6 +35,32 @@ test_that(".loadProjectTree() returns a plain list, not a Project, with every se
   ))
 })
 
+test_that("Project$new(sections = ) commits a parsed list without reading a file", {
+  # The door the Excel bridge builds its comparison project through: it parses a
+  # container it assembled in memory, so there is nothing on disk to open.
+  dir <- .copyTestProjectDir()
+  sections <- .loadProjectTree(file.path(dir, "Project.json"))
+
+  project <- Project$new(sections = sections)
+  expect_s3_class(project, "Project")
+  expect_equal(project$info$schemaVersion, "2.0")
+  expect_length(project$definitions$scenarios, 4)
+  # Committed as a freshly loaded project: no unsaved changes.
+  expect_false(.isModified(project))
+})
+
+test_that("Project$new(sections = ) ignores projectFilePath", {
+  dir <- .copyTestProjectDir()
+  sections <- .loadProjectTree(file.path(dir, "Project.json"))
+
+  # The path is never opened, so even one that does not exist is inert.
+  project <- Project$new(
+    projectFilePath = file.path(dir, "no-such-project.json"),
+    sections = sections
+  )
+  expect_length(project$definitions$scenarios, 4)
+})
+
 test_that("loadProject() errors when the file does not exist", {
   expect_error(
     loadProject(file.path(tempdir(), "does_not_exist.json")),

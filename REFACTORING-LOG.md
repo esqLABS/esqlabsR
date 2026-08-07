@@ -205,3 +205,5 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-08-06 09:35: setScenario now takes its fields the same way setIndividual and setPopulation do, dropping 16 arguments and 70 lines of plumbing; fields must be named.
 - 2026-08-06 09:48: The steady-state step of preparing a scenario is now its own function with its own tests; it was only reachable by running the whole 150-line build.
 - 2026-08-06 09:58: The careful order in which a parameter-identification bound is written is now its own function with tests for both directions, instead of a comment inside a 170-line builder.
+- 2026-08-06 10:15: Split reading an Excel project from writing it out, so the reading half can be used on its own.
+- 2026-08-06 10:45: Checking whether the Excel files are up to date no longer runs a full import behind the scenes; it reads the workbooks and compares in memory, writing nothing.

@@ -185,7 +185,7 @@ differences, empty when everything is in sync). The same information
 empty in-memory project when called with no arguments.
   \subsection{Usage}{
     \if{html}{\out{<div class="r">}}
-    \preformatted{Project$new(projectFilePath = character())}
+    \preformatted{Project$new(projectFilePath = character(), sections = NULL)}
     \if{html}{\out{</div>}}
   }
   \subsection{Arguments}{
@@ -194,6 +194,11 @@ empty in-memory project when called with no arguments.
       \item{\code{projectFilePath}}{A string representing the path to the project
 JSON file, or to the folder holding it (see \code{\link[=loadProject]{loadProject()}} for how a
 folder is resolved).}
+      \item{\code{sections}}{Internal. An already-parsed section list to commit
+instead of reading one, as \code{.loadProjectTree()} returns. The Excel
+bridge parses a container it built in memory and needs the resulting
+object without a folder on disk; \code{projectFilePath} is ignored when this
+is given.}
     }
     \if{html}{\out{</div>}}
   }
