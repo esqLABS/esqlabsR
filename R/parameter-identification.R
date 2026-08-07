@@ -549,9 +549,14 @@ print.PITask <- function(x, ...) {
 # `PIParameter` and a list of `PIOutputMapping` records. Returns an
 # empty list when the section is absent or empty.
 #
+# `project` supplies the already-parsed `outputPaths` section each mapping's
+# output-path reference resolves against, the same stand-in the scenarios parser
+# takes (see `.parseProjectSections()`). It is optional: parsing the section on
+# its own leaves those references unresolved rather than failing.
+#
 # @keywords internal
 # @noRd
-.parsePITasks <- function(piData) {
+.parsePITasks <- function(piData, project = NULL) {
   if (is.null(piData) || length(piData) == 0L) {
     return(list())
   }
@@ -565,7 +570,8 @@ print.PITask <- function(x, ...) {
     parameters <- .parsePIParameters(rawTask$parameters %||% list(), id)
     outputMappings <- .parsePIOutputMappings(
       rawTask$outputMappings %||% list(),
-      id
+      id,
+      project
     )
     task <- PITask(
       id = id,
@@ -605,11 +611,24 @@ print.PITask <- function(x, ...) {
 
 # @keywords internal
 # @noRd
-.parsePIOutputMappings <- function(rawList, taskId) {
+.parsePIOutputMappings <- function(rawList, taskId, project = NULL) {
   out <- vector("list", length(rawList))
   for (i in seq_along(rawList)) {
     raw <- rawList[[i]]
     id <- raw$id %||% paste0(taskId, "_mapping_", i)
+    # Resolve the output-path reference the way `addPIOutputMapping()` resolves
+    # its argument, so every door stores the canonical output-path id that the
+    # runtime lookup (`.createSinglePITask()`) and `removeOutputPath()`'s in-use
+    # scan match on exactly: an id in any spelling that canonicalizes onto a
+    # defined one, or the literal model path of a defined output path (the form
+    # `PIOutputMapping()` documents). A reference naming no defined output path
+    # is kept verbatim, so the project still loads and `validateProject()`
+    # reports the dangling reference; without a `project` to resolve against,
+    # every reference is left verbatim for the same reason.
+    outputPath <- raw[["outputPath"]]
+    if (!is.null(project)) {
+      outputPath <- .matchOutputPathRef(outputPath, project) %||% outputPath
+    }
     # Built without `PIOutputMapping()`'s required-field guards, so a mapping
     # that names no output or no observed data loads and is reported by
     # `validateProject()` (which `runPI()` gates on) instead of aborting the load
@@ -621,7 +640,10 @@ print.PITask <- function(x, ...) {
       scenarios = as.character(unlist(raw$scenarios %||% list())),
       # Read the suffixless on-disk JSON keys (`outputPath` / `observedData`);
       # the record keeps them under their id-suffixed field names.
-      outputPath = raw[["outputPath"]],
+      # `observedData` names a data set inside an OSPS-owned observed-data
+      # source rather than a definition-file id, so it is stored exactly as
+      # written, as every other door stores it.
+      outputPath = outputPath,
       observedData = raw[["observedData"]],
       scaling = raw$scaling,
       xOffset = raw$xOffset %||% 0,

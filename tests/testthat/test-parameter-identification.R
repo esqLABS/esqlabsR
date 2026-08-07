@@ -578,6 +578,85 @@ test_that(".parsePITasks |> .parameterIdentificationToJson |> .parsePITasks is i
   expect_identical(reparsed, parsed)
 })
 
+# #1226: the load path was the one door into an output mapping that stored the
+# `outputPath` reference exactly as written, while the runtime looks it up
+# exactly (`project$definitions$outputPaths[[m$outputPathId]]`) and the
+# cross-reference validator compares it canonically. A hand-edited definition
+# file spelling the reference non-canonically therefore passed
+# `validateProject()` clean, and then the runtime build never called
+# `setOutputs()` for that scenario (the `NULL` lookup drops out of
+# `unique(c(...))`) before dying on `ospsuite::getQuantity(NULL, ...)` with a
+# message naming neither the task nor the reference. The parser now resolves the
+# reference the way `addPIOutputMapping()` does.
+#
+# Rewrite one output mapping's `outputPath` in a copied TestProject's definition
+# file and return the loaded project, so each case below shows only the spelling
+# it varies.
+.loadProjectWithMappingOutputPath <- function(value, envir = parent.frame()) {
+  dir <- .copyTestProjectDir(envir)
+  file <- file.path(
+    dir,
+    "definitions",
+    "parameter-identification",
+    "aciclovirsimple.json"
+  )
+  raw <- jsonlite::fromJSON(file, simplifyVector = FALSE)
+  raw$outputMappings[[1]]$outputPath <- value
+  jsonlite::write_json(
+    raw,
+    file,
+    auto_unbox = TRUE,
+    pretty = TRUE,
+    null = "null"
+  )
+  loadProject(file.path(dir, "Project.json"))
+}
+
+test_that("loading resolves a mapping's outputPath id spelled non-canonically", {
+  # `aciclovir_pvb` is the canonical id the definition is filed under. Both
+  # spellings canonicalize onto it: case folding, and space -> underscore.
+  for (spelling in c("Aciclovir_PVB", "aciclovir pvb")) {
+    project <- .loadProjectWithMappingOutputPath(spelling)
+    m <- project$definitions$parameterIdentification$aciclovirsimple$outputMappings[[
+      1
+    ]]
+    expect_identical(m$outputPathId, "aciclovir_pvb")
+    # The runtime looks the id up exactly; before the fix this was NULL.
+    expect_identical(
+      project$definitions$outputPaths[[m$outputPathId]],
+      "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
+    )
+    expect_false(isAnyCriticalErrors(validateProject(project)))
+  }
+})
+
+test_that("loading resolves a mapping's outputPath given as a literal model path", {
+  # `PIOutputMapping()` documents the literal model path as an accepted form and
+  # the authoring path resolves it; canonicalizing it would destroy it, so it is
+  # matched against the `outputPaths` values before being read as an id.
+  project <- .loadProjectWithMappingOutputPath(
+    "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
+  )
+  m <- project$definitions$parameterIdentification$aciclovirsimple$outputMappings[[
+    1
+  ]]
+  expect_identical(m$outputPathId, "aciclovir_pvb")
+  expect_false(isAnyCriticalErrors(validateProject(project)))
+})
+
+test_that("loading keeps an outputPath naming no defined output path verbatim", {
+  # The parser stays lenient: a project that cannot be opened cannot be fixed,
+  # so a dangling reference loads unchanged and `validateProject()` reports it.
+  project <- suppressWarnings(
+    .loadProjectWithMappingOutputPath("no_such_output_path")
+  )
+  m <- project$definitions$parameterIdentification$aciclovirsimple$outputMappings[[
+    1
+  ]]
+  expect_identical(m$outputPathId, "no_such_output_path")
+  expect_true(isAnyCriticalErrors(validateProject(project)))
+})
+
 test_that(".validatePI returns no errors on a well-formed task", {
   task <- PITask(
     id = "T1",

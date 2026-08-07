@@ -287,7 +287,7 @@
       serialize = function(section, project) {
         .serializePITaskSet(section)
       },
-      parse = function(records, project) .parsePITasks(records),
+      parse = function(records, project) .parsePITasks(records, project),
       inline = function(jsonData) jsonData$parameterIdentification
     )
   )
