@@ -19,7 +19,7 @@ PIOutputMapping(
 }
 \arguments{
 \item{id}{Character scalar. Identifier for this mapping, unique within
-its task.}
+its task. Used as a free label by the PI run, not as a definition-file id.}
 
 \item{scenarios}{Character vector of scenario ids the mapping applies to.
 Must be a subset of the task's own \code{scenarios}.}
