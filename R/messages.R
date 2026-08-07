@@ -1120,9 +1120,10 @@ messages$scenarioRecordWithFields <- function(fields) {
   ))
 }
 
-# `setScenario()` declares `overwrite` only to intercept it: without the formal,
-# R's partial matching would resolve the name to `overwriteFormulasInSS` and
-# quietly set a steady-state model option instead.
+# `setScenario()` intercepts `overwrite` rather than letting it reach the impl's
+# generic unknown-field message, because the name is a habit picked up from
+# `addScenario()` and the scenario carries a second argument that starts the
+# same way.
 messages$setScenarioNoOverwrite <- function() {
   c(
     "{.fn setScenario} has no {.arg overwrite} argument.",
@@ -1133,10 +1134,27 @@ messages$setScenarioNoOverwrite <- function() {
   )
 }
 
+# Raised when an authoring field reaches `.alignAuthoringArgs()` without a name.
+# Every field there is looked up by name, so an unnamed one would be dropped in
+# silence; the usual way to produce one is passing a `set*()` field positionally.
+# The hint names no function and no field: `setScenario()`, `setIndividual()` and
+# `setPopulation()` all raise this, they share no field, and the abort header
+# already names the one the caller used.
+messages$unnamedAuthoringFields <- function(positions) {
+  # `cli::qty()` pluralizes on how many positions there are, not on the position
+  # numbers themselves: a lone field at position 2 is still one field. It has to
+  # sit before every plural marker, since interpolating `positions` resets the
+  # quantity cli pluralizes on, which is why the sentence keeps them together.
+  cli::format_message(c(
+    "Every field must be named.",
+    "x" = "{cli::qty(length(positions))}No name on field{?s} {positions}.",
+    "i" = "Pass each field as {.code name = value}."
+  ))
+}
+
 # Raised when a name reaching `setScenario()`'s field set is not a scenario
-# field. Only the R6 method can be called with one (the exported function's
-# formals reject it), and without the guard the value would be aligned as a
-# per-definition field and then dropped in silence.
+# field. Without the guard the value would be aligned as a per-definition field
+# and then dropped in silence.
 messages$setScenarioUnknownFields <- function(fields, settable) {
   cli::format_message(c(
     "{.fn setScenario} cannot set {.field {fields}}.",

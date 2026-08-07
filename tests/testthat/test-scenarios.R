@@ -749,6 +749,21 @@ test_that("setScenario names a field it cannot set rather than dropping it", {
   )
 })
 
+test_that("setScenario requires its fields to be named", {
+  # The fields arrive through `...` (as they do for `setIndividual()` and
+  # `setPopulation()`), so a positional one carries no name to apply it under.
+  project <- testProject()
+  before <- project$definitions$scenarios[["testscenario"]]$modelFile
+  expect_error(
+    setScenario(project, "testscenario", "Aciclovir.pkml"),
+    "must be named"
+  )
+  expect_equal(
+    project$definitions$scenarios[["testscenario"]]$modelFile,
+    before
+  )
+})
+
 # Passing a parsed Scenario record back ----
 
 test_that("a parsed scenario is accepted back by addScenario() unchanged", {
@@ -824,6 +839,22 @@ test_that("a scenario record passed with field arguments alongside it aborts", {
     addScenario(project, sc, modelFile = "Other.pkml")
   )
   expect_snapshot(error = TRUE, setScenario(project, sc, individual = NULL))
+})
+
+test_that("a scenario record passed with an unnamed field alongside it aborts", {
+  # An all-positional `...` has no names attribute at all, so a guard reading
+  # only the names sees nothing to object to and the value goes nowhere: the
+  # record supplies every field the branch forwards.
+  project <- testProject()
+  sc <- project$definitions$scenarios[["testscenario"]]
+  expect_snapshot(error = TRUE, setScenario(project, sc, "Other.pkml"))
+
+  # Partially named, so the names attribute exists but carries a blank. The
+  # unnamed field is reported by its position, not as an empty field name.
+  expect_snapshot(
+    error = TRUE,
+    setScenario(project, sc, individual = NULL, "Other.pkml")
+  )
 })
 
 test_that("addScenario() reads a list of intervals as one grid for one scenario", {

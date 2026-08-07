@@ -461,6 +461,7 @@ setIndividual <- function(project, id, ...) {
   }
 
   dots <- list(...)
+  .assertAuthoringFieldsNamed(dots)
   wholeNames <- intersect(
     c("parameterSets", "proteinOntogenies"),
     names(dots)

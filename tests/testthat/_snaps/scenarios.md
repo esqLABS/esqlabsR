@@ -144,6 +144,22 @@
       Error in `setScenario()`:
       ! A <Scenario> passed as `id` carries every field, so `individual` cannot be given alongside it. i Edit the record's own field and pass it back (`sc$modelFile <- "other.pkml"`), or name the scenario's id instead of the record.
 
+# a scenario record passed with an unnamed field alongside it aborts
+
+    Code
+      setScenario(project, sc, "Other.pkml")
+    Condition
+      Error in `setScenario()`:
+      ! Every field must be named. x No name on field 1. i Pass each field as `name = value`.
+
+---
+
+    Code
+      setScenario(project, sc, individual = NULL, "Other.pkml")
+    Condition
+      Error in `setScenario()`:
+      ! Every field must be named. x No name on field 2. i Pass each field as `name = value`.
+
 # setScenario aborts on a non-existent scenario, no file written
 
     Code

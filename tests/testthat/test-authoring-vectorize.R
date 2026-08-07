@@ -85,6 +85,53 @@ test_that(".alignAuthoringArgs propagates a length error naming the field", {
   )
 })
 
+test_that(".assertAuthoringFieldsNamed passes a fully named field list", {
+  fields <- list(species = "Rat", weight = 0.25)
+  expect_identical(.assertAuthoringFieldsNamed(fields), fields)
+  expect_identical(.assertAuthoringFieldsNamed(list()), list())
+})
+
+test_that(".assertAuthoringFieldsNamed names the unnamed positions", {
+  # Every field is looked up by name downstream, so an unnamed one used to
+  # vanish without a word. It arrives that way when a `set*()` field is passed
+  # positionally.
+  expect_snapshot(error = TRUE, .assertAuthoringFieldsNamed(list("Rat")))
+  expect_snapshot(
+    error = TRUE,
+    .assertAuthoringFieldsNamed(list(species = "Rat", "UNKNOWN"))
+  )
+})
+
+test_that("setIndividual() rejects a positionally passed field", {
+  project <- .fakeProject(
+    individuals = list(indiv1 = list(species = "Human"))
+  )
+  expect_error(setIndividual(project, "indiv1", "Rat"), "must be named")
+  # The silent-drop version left the individual untouched and said nothing.
+  expect_identical(project$definitions$individuals$indiv1$species, "Human")
+})
+
+test_that("setPopulation() rejects a positionally passed field", {
+  project <- .fakeProject(
+    populations = list(pop1 = list(species = "Human"))
+  )
+  expect_error(setPopulation(project, "pop1", "Rat"), "must be named")
+})
+
+test_that("the unnamed-field hint points at no one set*() function", {
+  # `setScenario()`, `setIndividual()` and `setPopulation()` all raise it, and
+  # they share no field, so an example written for one misdirects the other two.
+  # The abort header already names the function the caller used.
+  project <- .fakeProject(
+    populations = list(pop1 = list(species = "Human"))
+  )
+  err <- expect_error(setPopulation(project, "pop1", "Rat"))
+  expect_no_match(
+    conditionMessage(err),
+    "setScenario|setIndividual|setPopulation"
+  )
+})
+
 test_that(".coerceNumericField returns NULL for NULL and as.double otherwise", {
   # A NULL passes through as NULL so the set-path loops delete the key (clearing
   # the optional field); any other value coerces with as.double().
