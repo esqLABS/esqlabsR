@@ -29,9 +29,9 @@ permission. If FALSE and a project already exists, asks user for permission
 to overwrite.}
 
 \item{name}{Character scalar written to the \code{name} field of the new
-\code{Project.json}. Defaults to \code{""}, which leaves whatever name the template
-carries: empty for \code{type = "minimal"}, and the example project's own name
-for \code{type = "example"}.}
+\code{Project.json}. Defaults to \code{""}, which writes no name and leaves whatever
+the template carries: no \code{name} field at all for \code{type = "minimal"}, and
+the example project's own name for \code{type = "example"}.}
 }
 \value{
 Invisibly returns \code{destination}, the path the project was

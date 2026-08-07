@@ -650,9 +650,9 @@ isProjectInitialized <- function(destination = ".") {
 #'   permission. If FALSE and a project already exists, asks user for permission
 #'   to overwrite.
 #' @param name Character scalar written to the `name` field of the new
-#'   `Project.json`. Defaults to `""`, which leaves whatever name the template
-#'   carries: empty for `type = "minimal"`, and the example project's own name
-#'   for `type = "example"`.
+#'   `Project.json`. Defaults to `""`, which writes no name and leaves whatever
+#'   the template carries: no `name` field at all for `type = "minimal"`, and
+#'   the example project's own name for `type = "example"`.
 #' @returns Invisibly returns `destination`, the path the project was
 #'   initialized in.
 #' @export
@@ -666,7 +666,13 @@ initProject <- function(
 ) {
   destination <- fs::path_abs(destination)
   type <- match.arg(type)
+  # `validateIsString()` checks type only, so it accepts a character vector of
+  # any length and an `NA`. Either would reach the container as a JSON array or
+  # a `null` in a scalar field and fail somewhere further away.
   validateIsString(name)
+  if (length(name) != 1L || is.na(name)) {
+    cli::cli_abort(messages$invalidInitProjectName())
+  }
 
   # The destination is about to be filled with the project scaffold, so an
   # absent folder is created rather than rejected: `initProject("myProject")`

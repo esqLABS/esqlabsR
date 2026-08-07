@@ -338,7 +338,49 @@ test_that("initProject() leaves a minimal project unnamed", {
   )
 
   container <- jsonlite::fromJSON(file.path(destination, "Project.json"))
-  expect_identical(container$name, "")
+  expect_null(container$name)
+})
+
+test_that("initProject() scaffolds a project already in sync with its Excel side-cars", {
+  # A default scaffold writes the side-cars itself, so nothing can have drifted
+  # yet. Spelling "unnamed" as an empty `name` rather than no `name` reports
+  # drift here: the Excel round trip reads a blank name cell back as no name at
+  # all, so the memory side carries a field the Excel side cannot.
+  destination <- withr::local_tempdir()
+  initProject(destination, type = "minimal", overwrite = TRUE)
+  project <- loadProject(file.path(destination, "Project.json"))
+
+  status <- suppressWarnings(projectStatus(project, silent = TRUE))
+  expect_true(status$excel_in_sync)
+})
+
+test_that("initProject() names an unnamed project's snapshot after the fallback stem", {
+  # `snapshotProject()` falls back to "project" only on a NULL name, so an
+  # empty-string name would produce a leading-dash filename.
+  destination <- withr::local_tempdir()
+  initProject(
+    destination,
+    type = "minimal",
+    createExcel = FALSE,
+    overwrite = TRUE
+  )
+  project <- loadProject(file.path(destination, "Project.json"))
+
+  snapshot <- snapshotProject(project, dir = withr::local_tempdir())
+  expect_match(basename(snapshot), "^project-")
+})
+
+test_that("initProject() rejects a name that is not a single string", {
+  destination <- withr::local_tempdir()
+
+  expect_snapshot(
+    initProject(destination, createExcel = FALSE, name = c("a", "b")),
+    error = TRUE
+  )
+  expect_snapshot(
+    initProject(destination, createExcel = FALSE, name = NA_character_),
+    error = TRUE
+  )
 })
 
 test_that("initProject(name = ) names the project it creates", {

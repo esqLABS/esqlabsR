@@ -200,6 +200,12 @@ messages$invalidPathArgument <- function() {
   cliFormat("{.arg path} must be a single non-empty, non-NA string.")
 }
 
+# Empty is allowed and is the default: it is the "leave whatever name the
+# template carries" sentinel, so the message asks only for a scalar.
+messages$invalidInitProjectName <- function() {
+  cliFormat("{.arg name} must be a single non-NA string.")
+}
+
 messages$saveProjectNoTree <- function() {
   c(
     "This project does not have a project folder on disk yet, so it cannot be saved.",
