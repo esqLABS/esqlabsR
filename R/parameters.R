@@ -1,13 +1,23 @@
-# Section validation adapter ----
+# Section validation adapters ----
 #
 # Registered in `.validationAdapters` (R/validation.R) and called by
-# `.runProjectValidation()`. The actual shape check lives in
-# `.validateParameterSets()` (in `R/validation.R`).
+# `.runProjectValidation()`. The actual shape checks live in
+# `.validateParameterSets()` / `.validateInitialConditions()` (in
+# `R/validation.R`).
 
 #' @keywords internal
 #' @noRd
 .parameterSetsValidatorAdapter <- function(project) {
   .validateParameterSets(project$definitions$parameterSets, "parameterSets")
+}
+
+#' @keywords internal
+#' @noRd
+.initialConditionsValidatorAdapter <- function(project) {
+  .validateInitialConditions(
+    project$definitions$initialConditions,
+    "initialConditions"
+  )
 }
 
 # Merge the parameter-set sections of a parsed `Project.json` into the single

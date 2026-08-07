@@ -514,6 +514,123 @@ test_that("validateProject() flags an invalid parameter set in the real shape", 
   expect_true(isAnyCriticalErrors(results))
 })
 
+# Section adapter: initial conditions ----
+
+test_that(".validateInitialConditions warns on an empty section", {
+  result <- .validateInitialConditions(list(), "initialConditions")
+  expect_s3_class(result, "validationResult")
+  expect_length(result$critical_errors, 0)
+  expect_length(result$warnings, 1)
+})
+
+test_that(".validateInitialConditions flags an empty molecule path", {
+  initialConditions <- list(
+    presysset = list(list(path = "", value = 1, unit = "µmol"))
+  )
+  result <- .validateInitialConditions(initialConditions, "initialConditions")
+  msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
+  expect_match(msgs, "empty molecule paths", all = FALSE)
+})
+
+test_that(".validateInitialConditions flags a missing unit", {
+  # A blank unit is critical, not cosmetic: `setQuantityValuesByPath()` rejects
+  # it, so the set is unusable at run time.
+  initialConditions <- list(
+    presysset = list(list(path = "Organism|A|Drug", value = 1, unit = NULL))
+  )
+  result <- .validateInitialConditions(initialConditions, "initialConditions")
+  msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
+  expect_match(msgs, "without a unit", all = FALSE)
+})
+
+test_that(".validateInitialConditions warns on a non-numeric value", {
+  initialConditions <- list(
+    presysset = list(list(
+      path = "Organism|A|Drug",
+      value = "abc",
+      unit = "µmol"
+    ))
+  )
+  result <- .validateInitialConditions(initialConditions, "initialConditions")
+  msgs <- vapply(result$warnings, \(w) w$message, character(1))
+  expect_match(msgs, "non-numeric value", all = FALSE)
+})
+
+test_that(".validateInitialConditions warns on a duplicated molecule path", {
+  initialConditions <- list(
+    presysset = list(
+      list(path = "Organism|A|Drug", value = 1, unit = "µmol"),
+      list(path = "Organism|A|Drug", value = 2, unit = "µmol")
+    )
+  )
+  result <- .validateInitialConditions(initialConditions, "initialConditions")
+  msgs <- vapply(result$warnings, \(w) w$message, character(1))
+  expect_match(msgs, "Duplicate molecule paths", all = FALSE)
+})
+
+test_that(".validateInitialConditions passes a well-formed set", {
+  initialConditions <- list(
+    presysset = list(list(path = "Organism|A|Drug", value = 1, unit = "µmol"))
+  )
+  result <- .validateInitialConditions(initialConditions, "initialConditions")
+  expect_length(result$critical_errors, 0)
+  expect_length(result$warnings, 0)
+})
+
+test_that(".validateInitialConditions reports a non-scalar unit rather than aborting", {
+  # A hand-edited `"unit": []` or `"unit": ["mg", "g"]` is exactly the input
+  # this section polices, so it has to be reported, not abort the run.
+  initialConditions <- list(
+    presysset = list(
+      list(path = "Organism|A|Drug", value = 1, unit = list()),
+      list(path = "Organism|B|Drug", value = 2, unit = c("mg", "g"))
+    )
+  )
+  result <- .validateInitialConditions(initialConditions, "initialConditions")
+  msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
+  expect_match(msgs, "without a unit", all = FALSE)
+})
+
+test_that(".validateInitialConditions reports a bare-string entry rather than aborting", {
+  # `"initialConditions": ["Organism|Liver|Aciclovir"]` parses to entries that
+  # are strings, not records, so they carry no field to read.
+  initialConditions <- list(presysset = list("Organism|Liver|Aciclovir"))
+  result <- .validateInitialConditions(initialConditions, "initialConditions")
+  msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
+  expect_match(msgs, "empty molecule paths", all = FALSE)
+})
+
+test_that(".validateInitialConditions does not read path-less entries as duplicates", {
+  initialConditions <- list(
+    presysset = list(
+      list(value = 1, unit = "µmol"),
+      list(value = 2, unit = "µmol")
+    )
+  )
+  result <- .validateInitialConditions(initialConditions, "initialConditions")
+  msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
+  expect_match(msgs, "empty molecule paths", all = FALSE)
+  # The missing paths are already reported above; calling them duplicates of
+  # each other adds a second finding pointing at a path that does not exist.
+  expect_length(result$warnings, 0)
+})
+
+test_that("validateProject() flags an invalid initial-condition set", {
+  # The section reached `validateProject()` unchecked until it had an adapter;
+  # this is the whole-project path the hand-edited and Excel-imported cases
+  # arrive through.
+  project <- .fakeProject(
+    initialConditions = list(
+      presysset = .asInitialConditionSet(
+        list(list(path = "", value = 1, unit = ""))
+      )
+    )
+  )
+  results <- suppressWarnings(validateProject(project))
+  expect_true(isAnyCriticalErrors(results))
+  expect_true("initialConditions" %in% names(results))
+})
+
 # Section adapter: applications ----
 
 test_that(".validateApplications warns on empty section but emits no critical errors", {
@@ -930,6 +1047,26 @@ test_that(".validateCrossReferences resolves only the references the requested s
 
 # Dispatcher behaviour ----
 
+test_that("every definition kind has a validator", {
+  # `.definitionTreeSpecs()` is the source of truth for what a section is, and
+  # `.validationAdapters` is a hand-written list beside it, so the two drift
+  # apart silently: `initialConditions` sat unvalidated that way. `plotGrids`
+  # is the one deliberate absence -- `.plotsValidatorAdapter()` passes the
+  # grids into `.validatePlots()` along with the plots they hold.
+  validatedElsewhere <- "plotGrids"
+  expect_setequal(
+    setdiff(.definitionKindNames(), validatedElsewhere),
+    names(.validationAdapters)
+  )
+})
+
+test_that("every definition kind has a canonical empty JSON shape", {
+  # The container-only write emits one empty value per tree-owned section; a
+  # kind missing from that list would write a container the loader then reads
+  # as a section that was never there.
+  expect_setequal(names(.emptyTreeSectionsJson()), .definitionKindNames())
+})
+
 test_that(".runProjectValidation honors a targeted sections vector", {
   project <- .fakeProject()
   results <- .runProjectValidation(
@@ -963,6 +1100,34 @@ test_that("ensureValid() aborts with a formatted summary on critical errors", {
   )
 })
 
+test_that("the run gate validates the initial conditions a scenario build applies", {
+  # A scenario build folds its referenced sets into the simulation
+  # (`.mergeScenarioInitialConditions()`), so a set the validator grades
+  # critical has to stop the build rather than fail inside `ospsuite`. Goes
+  # through `.scenarioBuildPreflight()` so it tests the gate's real section
+  # list, not a copy of it.
+  sc <- Scenario()
+  sc$modelFile <- "m.pkml"
+  project <- .fakeProject(
+    scenarios = list(s1 = sc),
+    initialConditions = list(
+      presysset = .asInitialConditionSet(
+        list(list(path = "Organism|A|Drug", value = 1, unit = ""))
+      )
+    )
+  )
+  expect_error(
+    .scenarioBuildPreflight(
+      project = project,
+      customParams = NULL,
+      simulationRunOptions = NULL,
+      validate = TRUE,
+      opName = "runScenarios"
+    ),
+    "without a unit"
+  )
+})
+
 test_that("a broken plots section leaves the run gate's cross-reference check in place", {
   # The run gate's own section list, as `.scenarioBuildPreflight()` passes it.
   runSections <- c(
@@ -972,6 +1137,7 @@ test_that("a broken plots section leaves the run gate's cross-reference check in
     "populations",
     "applications",
     "parameterSets",
+    "initialConditions",
     "crossReferences"
   )
   sc <- Scenario()
@@ -1007,6 +1173,7 @@ test_that("a plotting-only dangling reference does not block the run gate", {
     "populations",
     "applications",
     "parameterSets",
+    "initialConditions",
     "crossReferences"
   )
   sc <- Scenario()

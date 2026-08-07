@@ -1380,18 +1380,14 @@ Project <- R6::R6Class(
       private$.defaultSimulationRunOptions <- sections$defaultSimulationRunOptions
       private$.filePathsData <- sections$filePathsData
       private$.excelData <- sections$excelData
-      private$.outputPaths <- sections$outputPaths
-      private$.parameterSets <- sections$parameterSets
-      private$.initialConditions <- sections$initialConditions
-      private$.individuals <- sections$individuals
-      private$.populations <- sections$populations
-      private$.applications <- sections$applications
-      private$.scenarios <- sections$scenarios
-      private$.observedData <- sections$observedData
-      private$.dataCombined <- sections$dataCombined
-      private$.plots <- sections$plots
-      private$.plotGrids <- sections$plotGrids
-      private$.parameterIdentification <- sections$parameterIdentification
+
+      # The tree-owned sections are assigned by iterating the kind registry
+      # rather than named one by one, so a kind added to
+      # `.definitionTreeSpecs()` is committed here without a second edit. The
+      # container fields above are not sections and stay explicit.
+      for (kind in .definitionKindNames()) {
+        private[[private$.sectionField(kind)]] <- sections[[kind]]
+      }
 
       # Session-only observed-data state (runtime programmatic DataSets added via
       # `addObservedData(project, <DataSet>)`, and the observed-data names cache)
