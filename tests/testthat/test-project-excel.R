@@ -2740,6 +2740,33 @@ test_that(".parseCommaListToArray parses the quoted-CSV and backslash convention
   expect_identical(.parseCommaListToArray("a, b, c"), c("a", "b", "c"))
 })
 
+# The same quoting convention reaches a cell holding one value, where the whole
+# cell is the value, so only the wrapping pair may go: a comma or a quote inside
+# the text is content, not syntax, and an unquoted cell must come back as read.
+test_that(".stripWrappingQuotes drops only the wrapping pair", {
+  expect_identical(.stripWrappingQuotes('"AciclovirPVB"'), "AciclovirPVB")
+  # No wrapping pair, so nothing is a quoting artifact.
+  expect_identical(.stripWrappingQuotes("AciclovirPVB"), "AciclovirPVB")
+  expect_identical(
+    .stripWrappingQuotes('Aciclovir "PVB" plasma'),
+    'Aciclovir "PVB" plasma'
+  )
+  # Wrapped, and quoting an inner run that stays exactly as written.
+  expect_identical(
+    .stripWrappingQuotes('"Aciclovir "PVB" plasma"'),
+    'Aciclovir "PVB" plasma'
+  )
+  # A single-value cell is one value even when it contains a comma.
+  expect_identical(
+    .stripWrappingQuotes('"Sheet, with comma"'),
+    "Sheet, with comma"
+  )
+  # A lone quote has no pair to drop.
+  expect_identical(.stripWrappingQuotes('"'), '"')
+  # A numeric cell is handed back untouched, not stringified.
+  expect_identical(.stripWrappingQuotes(1.96), 1.96)
+})
+
 # Only the raw `${VAR}` is stored, so it is expanded afresh on every load and a
 # relative expansion is resolved against the project file. The import therefore
 # has to anchor it the same way, and the folder has to travel with the project,
@@ -3500,11 +3527,10 @@ test_that("a freshly exported workbook reports an imported project as in sync", 
 
 # #1213 item 10 / the residue #1207 recorded: a 5.x multi-value cell is quoted,
 # and a value may itself contain a comma, which is exactly what the quoting is
-# for. That half works. A quoted *single*-value reference cell is read raw on both
-# the defining and the referencing side, so a consistently quoted workbook
-# resolves but its ids carry the quote characters as underscores: the id is
-# `_name_` rather than the name the modeller wrote.
-test_that("quoted legacy cells resolve, and a quoted single-value id keeps its quotes as underscores", {
+# for. A single-value cell in the same workbook is quoted the same way and means
+# the same name without the quotes, so both sides of a `DataCombinedName`
+# reference read the name the modeller wrote rather than `_name_`.
+test_that("quoted legacy cells resolve to the names they were written with", {
   imported <- importLegacyExcelProject(localLegacyExcelProject())
 
   # The quoted multi-value cell splits on the separating commas only, so the
@@ -3516,15 +3542,17 @@ test_that("quoted legacy cells resolve, and a quoted single-value id keeps its q
     c("global", "aciclovir", "sheet__with_comma")
   )
 
-  # The quoted single-value `DataCombinedName` becomes `_name_` on both sides, so
-  # nothing dangles and nothing reads as the authored name either.
+  # The quoted single-value `DataCombinedName` is unquoted on the defining side,
+  # so the id matches the one `addDataCombined(project, "AciclovirPVB", ...)`
+  # would have produced.
   expect_setequal(
     names(imported$project$definitions$dataCombined),
-    c("_aciclovirpvb_", "_aciclovirpop_")
+    c("aciclovirpvb", "aciclovirpop")
   )
+  # And on the referencing side, so the plot still points at it.
   expect_identical(
     imported$project$definitions$plots[["p1"]]$dataCombined,
-    "_aciclovirpvb_"
+    "aciclovirpvb"
   )
 
   # Consistently quoted, so the project validates: only inconsistent quoting
@@ -3533,6 +3561,109 @@ test_that("quoted legacy cells resolve, and a quoted single-value id keeps its q
     imported$project
   )))
   expect_equal(summary$total_critical_errors, 0)
+})
+
+# A quoted and an unquoted spelling of one name are the same name, so a sheet
+# that groups its rows by that name has to group on the unquoted spelling. The
+# `DataCombined` sheet is long-format (one row per curve), so grouping on the raw
+# cell puts an inconsistently spelled combination's curves in two records, which
+# then land on one definition key and the first one's curves are dropped.
+test_that("a DataCombined name spelled quoted and unquoted is one combination", {
+  projectDir <- localLegacyExcelProject()
+  editWorkbookSheets(
+    file.path(projectDir, "Configurations", "Plots.xlsx"),
+    function(sheets) {
+      # Row 1 (simulated) keeps the fixture's `"AciclovirPVB"`; row 2 (observed)
+      # spells the same name without the quotes.
+      sheets$DataCombined$DataCombinedName[[2]] <- "AciclovirPVB"
+      sheets
+    }
+  )
+  imported <- importLegacyExcelProject(projectDir)
+  combined <- imported$project$definitions$dataCombined
+
+  expect_setequal(names(combined), c("aciclovirpvb", "aciclovirpop"))
+
+  # Both curves are on the one combination: neither row's is dropped.
+  expect_length(combined[["aciclovirpvb"]]$simulated, 1L)
+  expect_length(combined[["aciclovirpvb"]]$observed, 1L)
+})
+
+# The 5.x parameter-identification layout builds one task per distinct
+# `PITaskName`, gathering that task's rows from five sheets. The same reasoning as
+# for `DataCombined`: a sheet quoting the task name names the same task, so its
+# rows belong to it rather than to a second task that overwrites the first.
+test_that("a PI task name spelled quoted and unquoted is one task", {
+  projectDir <- localLegacyExcelProject()
+  editWorkbookSheets(
+    file.path(projectDir, "Configurations", "ParameterIdentification.xlsx"),
+    function(sheets) {
+      sheets$PIParameters$PITaskName <- paste0(
+        '"',
+        sheets$PIParameters$PITaskName,
+        '"'
+      )
+      sheets
+    }
+  )
+  imported <- importLegacyExcelProject(projectDir)
+  tasks <- imported$project$definitions$parameterIdentification
+
+  expect_named(tasks, "aciclovirfit")
+
+  # The quoted sheet's parameters and the unquoted sheets' output mappings are
+  # both on the one task.
+  expect_length(tasks[["aciclovirfit"]]$parameters, 2L)
+  expect_length(tasks[["aciclovirfit"]]$outputMappings, 2L)
+})
+
+# A plots sheet keys one definition per row rather than grouping, so two rows
+# naming one plot are a reused id, whichever way each spells it. That is the
+# reported loss `.warnDuplicatePlotIds()` already covers for two rows spelling the
+# id identically; a quoted spelling has to reach the same report rather than
+# passing as a second plot and then quietly overwriting the first.
+test_that("a plot id spelled quoted and unquoted is one reused id, and reported", {
+  projectDir <- localLegacyExcelProject()
+  editWorkbookSheets(
+    file.path(projectDir, "Configurations", "Plots.xlsx"),
+    function(sheets) {
+      sheets$plotConfiguration$plotID[[2]] <- "\"P1\""
+      sheets
+    }
+  )
+  imported <- importLegacyExcelProject(projectDir)
+
+  expect_setequal(names(imported$project$definitions$plots), c("p1", "p3"))
+  expect_true(any(grepl("more than", imported$warnings, fixed = TRUE)))
+  expect_true(any(grepl("plotId", imported$warnings, fixed = TRUE)))
+})
+
+# A section stored as an array of records is keyed by each record's own id field
+# just as a keyed section is keyed by its names, so two *distinct* names that
+# canonicalize onto one id are the same ambiguity `canonNames()` aborts on, and
+# not something to resolve by keeping whichever record came last. `DataCombined`
+# has no duplicate-id report of its own, so without the abort the collision costs
+# a curve in silence.
+test_that("two DataCombined names that canonicalize alike abort the import", {
+  projectDir <- localLegacyExcelProject()
+  editWorkbookSheets(
+    file.path(projectDir, "Configurations", "Plots.xlsx"),
+    function(sheets) {
+      # A space and a comma both canonicalize to `_`, so these are two names for
+      # two combinations that would be filed as one.
+      sheets$DataCombined$DataCombinedName[[1]] <- "Aciclovir PVB"
+      sheets$DataCombined$DataCombinedName[[2]] <- "Aciclovir,PVB"
+      sheets
+    }
+  )
+  expect_error(
+    suppressWarnings(importProjectFromExcel(
+      legacyExcelProjectPath(projectDir),
+      outputDir = withr::local_tempdir("LegacyOut_"),
+      silent = TRUE
+    )),
+    "collide after canonicalization"
+  )
 })
 
 # #1213 item 5: an Excel project spells `populationsFolder` as a folder name under

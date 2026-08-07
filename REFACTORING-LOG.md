@@ -207,3 +207,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-08-06 09:58: The careful order in which a parameter-identification bound is written is now its own function with tests for both directions, instead of a comment inside a 170-line builder.
 - 2026-08-06 10:15: Split reading an Excel project from writing it out, so the reading half can be used on its own.
 - 2026-08-06 10:45: Checking whether the Excel files are up to date no longer runs a full import behind the scenes; it reads the workbooks and compares in memory, writing nothing.
+- 2026-08-06 11:20: Importing an Excel project now strips the quotation marks off a quoted single-value cell, so a name written "AciclovirPVB" becomes the same id as one written without quotes instead of _aciclovirpvb_. Applies to every id and reference the import canonicalizes, not just data combinations.
