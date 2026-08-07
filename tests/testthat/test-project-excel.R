@@ -657,6 +657,30 @@ test_that("importProjectFromExcel checks its preconditions before reading the wo
   )
 })
 
+# The unreadable-workbook abort is raised inside `.excelToProjectJson()`, a
+# private helper no caller ever names, so it has to be attributed to the
+# entrypoint the user did call: an "Error in `.excelToProjectJson()`" prefix
+# points at a function that appears nowhere in the user's script. The two sibling
+# preconditions above already abort under the entrypoint's name, so this keeps
+# one import's whole error surface reading alike. Snapshotted rather than
+# pattern-matched because the attribution lives in the rendered text and nowhere
+# else, which is how an extraction changed it unnoticed.
+test_that("importProjectFromExcel names itself when the workbook cannot be read", {
+  sourceDir <- withr::local_tempdir()
+  workbook <- file.path(sourceDir, "Project.xlsx")
+  writeLines("this is not a valid xlsx workbook", workbook)
+
+  expect_snapshot(
+    error = TRUE,
+    transform = .redactProjectWorkbookPath,
+    importProjectFromExcel(
+      workbook,
+      outputDir = withr::local_tempdir(),
+      silent = TRUE
+    )
+  )
+})
+
 # Regression (#1126): exportProjectToExcel() replaces Project.xlsx and the
 # Configurations workbooks wholesale, defaulting outputDir to the project's own
 # directory, so a bare call would silently overwrite hand-maintained workbooks.
@@ -2742,10 +2766,14 @@ test_that("projectStatus() reports the Excel axis as NA (and warns) when the sid
   expect_identical(status$excel_in_sync, NA)
   expect_true(status$tree_in_sync)
 
-  # Non-silent: a warning surfaces naming the comparison failure.
-  expect_warning(
-    projectStatus(project, silent = FALSE),
-    "Cannot compare the Excel configuration files"
+  # Non-silent: a warning surfaces naming the comparison failure. Snapshotted
+  # whole because this is the second surface of the same unreadable-workbook
+  # text, re-raised as one bullet of this warning: the abort's own header must
+  # stay unglyphed for it to render here as a single bullet rather than a doubled
+  # one, and only the rendered text shows that.
+  expect_snapshot(
+    transform = .redactProjectWorkbookPath,
+    projectStatus(project, silent = FALSE)
   )
 })
 

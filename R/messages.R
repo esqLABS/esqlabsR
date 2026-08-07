@@ -775,6 +775,22 @@ messages$excelSheetMissingRequiredColumns <- function(sheet, columns) {
   )
 }
 
+# Unglued for two reasons: the bullets, and `projectConfigPath` being a path the
+# user chose, which may itself contain `{` or `}` and so must be interpolated
+# exactly once, by the raising call. `projectConfigPath` is bound in
+# `.excelToProjectJson()`, the raising frame.
+#
+# The first element stays unnamed, so it is the error header rather than a
+# bullet: `.projectSyncStatus()` re-raises this text as the `"x"` bullet of its
+# own warning, and a glyph baked in here would render doubled there.
+messages$excelProjectFileUnreadable <- function(projectConfigPath) {
+  c(
+    "{.path {projectConfigPath}} is not a readable Excel project file.",
+    "i" = "It must be a valid {.field .xlsx} workbook (the project's \\
+    {.file Project.xlsx})."
+  )
+}
+
 messages$legacySnapshotMalformedSheet <- function() {
   c(
     "x" = "This previous-version project snapshot is malformed and cannot be \\

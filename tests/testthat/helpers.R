@@ -429,6 +429,23 @@ importLegacyExcelProject <- function(
   gsub(paste0("'", prefix, "[^']*'"), "'<tmp-path>'", lines)
 }
 
+#' Redact every quoted absolute path ending in a `Project.xlsx` workbook, so an
+#' `expect_snapshot()` of the unreadable-workbook error is stable across runs.
+#'
+#' `.redactTmpDir()` cannot do this job: it anchors on `tempdir()`, and the
+#' `readxl` error chained onto that abort names the path as `utils::unzip()`
+#' resolved it, which never starts with `tempdir()` — on macOS it is the
+#' `/private`-prefixed symlink target, and on Windows it is the long user name
+#' with backslash separators (`C:\\Users\\runneradmin\\...`) where `tempdir()`
+#' reports the 8.3 short name with forward slashes (`C:/Users/RUNNER~1/...`).
+#' Matching on the workbook basename instead catches every spelling. A separator
+#' before the basename is required, so the bare `'Project.xlsx'` the advice
+#' bullet mentions is left intact; either separator counts, since the two ends of
+#' one chained error do not agree on which one they use.
+.redactProjectWorkbookPath <- function(lines) {
+  gsub("'[^']*[/\\\\]Project\\.xlsx'", "'<tmp-path>/Project.xlsx'", lines)
+}
+
 #' Escape the regex metacharacters in a literal string so it can be embedded in
 #' a pattern as a fixed prefix.
 .escapeRegex <- function(x) {

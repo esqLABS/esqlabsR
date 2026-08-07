@@ -27,6 +27,17 @@
       Error in `importProjectFromExcel()`:
       ! File not found: '<tmp-path>'
 
+# importProjectFromExcel names itself when the workbook cannot be read
+
+    Code
+      importProjectFromExcel(workbook, outputDir = withr::local_tempdir(), silent = TRUE)
+    Condition
+      Error in `importProjectFromExcel()`:
+      ! '<tmp-path>/Project.xlsx' is not a readable Excel project file.
+      i It must be a valid .xlsx workbook (the project's 'Project.xlsx').
+      Caused by error in `utils::unzip()`:
+      ! zip file '<tmp-path>/Project.xlsx' cannot be opened
+
 # exportProjectToExcel aborts over existing workbooks unless overwrite = TRUE
 
     Code
@@ -102,6 +113,18 @@
       ! 1 parameter set in 'Individuals.xlsx' reuses an id that is already taken, so it was renamed:
       * "Global" -> "Global_2"
       i The three former parameter-set kinds now share one parameterSets namespace, so one sheet name cannot serve two sets. References made in 'Individuals.xlsx' point at the renamed set; rename the sheet in Excel to choose the id yourself.
+
+# projectStatus() reports the Excel axis as NA (and warns) when the side-car is unreadable
+
+    Code
+      projectStatus(project, silent = FALSE)
+    Message
+      v No unsaved changes: the project matches the files on disk.
+    Condition
+      Warning:
+      Cannot compare the Excel configuration files to the project.
+      x '<tmp-path>/Project.xlsx' is not a readable Excel project file. i It must be a valid .xlsx workbook (the project's 'Project.xlsx'). Caused by error in `utils::unzip()`: ! zip file '<tmp-path>/Project.xlsx' cannot be opened
+      i The excel_in_sync status is reported as "NA".
 
 # .parseExcelScenarios aborts on an unparseable boolean cell
 
