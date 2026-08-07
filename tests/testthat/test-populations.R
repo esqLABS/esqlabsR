@@ -339,6 +339,34 @@ test_that("a population's ontogenies survive a save/load round trip as a vector"
   )
 })
 
+test_that("a population stored with comma-joined ontogenies still loads", {
+  # A project written before the Excel import emitted one entry per ontogeny
+  # holds the pairs as a single comma-joined string. Such a file has to keep
+  # loading, and the value it loads to has to still name both ontogenies.
+  project <- testProject()
+  path <- file.path(
+    dirname(project$info$projectFilePath),
+    "definitions",
+    "populations",
+    "testpopulation.json"
+  )
+  definition <- jsonlite::fromJSON(path, simplifyVector = FALSE)
+  definition$proteinOntogenies <- "CYP3A4:CYP3A4,CYP2D6:CYP2C8"
+  jsonlite::write_json(definition, path, auto_unbox = TRUE, pretty = TRUE)
+
+  reloaded <- loadProject(project$info$projectFilePath)
+  expect_identical(
+    reloaded$definitions$populations[["testpopulation"]]$proteinOntogenies,
+    "CYP3A4:CYP3A4,CYP2D6:CYP2C8"
+  )
+  expect_identical(
+    .splitProteinOntogenies(
+      reloaded$definitions$populations[["testpopulation"]]$proteinOntogenies
+    ),
+    c("CYP3A4:CYP3A4", "CYP2D6:CYP2C8")
+  )
+})
+
 test_that("addPopulation applies one ontogeny vector whole, and a list per population", {
   project <- testProject()
   shared <- c("CYP3A4:CYP3A4", "CYP2D6:CYP2C8")

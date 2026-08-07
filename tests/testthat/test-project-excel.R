@@ -965,7 +965,7 @@ test_that("a legacy two-column Protein + Ontogeny sheet imports its ontogenies",
   ))
   expect_identical(
     indiv[[1]]$proteinOntogenies,
-    "CYP3A4:CYP3A4,CYP2D6:CYP2C8"
+    c("CYP3A4:CYP3A4", "CYP2D6:CYP2C8")
   )
 
   pop <- .parseExcelPopulations(.legacyOntogenyPopulation(
@@ -983,7 +983,7 @@ test_that("a legacy two-column Protein + Ontogeny sheet imports its ontogenies",
   ))
   expect_identical(
     spaced[[1]]$proteinOntogenies,
-    "CYP3A4:CYP3A4,CYP2D6:CYP2C8"
+    c("CYP3A4:CYP3A4", "CYP2D6:CYP2C8")
   )
 })
 
@@ -1096,7 +1096,7 @@ test_that("a legacy-spelling workbook imports its ontogenies, and round-trips th
   ))
   project <- suppressWarnings(loadProject(jsonPath))
 
-  expected <- "CYP3A4:CYP3A4,CYP2D6:CYP2C8"
+  expected <- c("CYP3A4:CYP3A4", "CYP2D6:CYP2C8")
   expect_identical(
     project$definitions$individuals[["indiv1"]]$proteinOntogenies,
     expected
@@ -1130,6 +1130,50 @@ test_that("a legacy-spelling workbook imports its ontogenies, and round-trips th
     reimported$definitions$populations[["testpopulation"]]$proteinOntogenies,
     expected
   )
+})
+
+test_that("hand-authored ontogenies survive an Excel round trip without drifting", {
+  # An authoring call stores one entry per ontogeny, and the import reads the
+  # workbook back into that same shape, so exporting an authored project and
+  # reading the workbook returns the value it started with and the two sections
+  # carrying ontogenies are not reported as drifted. Importing the pairs as one
+  # comma-joined string instead differs from the authored value from the second
+  # ontogeny on, which no authored project could ever get back in sync.
+  tp <- with_temp_project()
+  project <- tp$project
+  ontogenies <- c("CYP3A4:CYP3A4", "CYP2D6:CYP2C8")
+  setIndividual(project, "adult_male", proteinOntogenies = ontogenies)
+  setPopulation(project, "european_adults", proteinOntogenies = ontogenies)
+  saveProject(project)
+  suppressMessages(exportProjectToExcel(
+    project,
+    outputDir = tp$path,
+    overwrite = TRUE,
+    silent = TRUE
+  ))
+
+  reimported <- suppressWarnings(loadProject(importProjectFromExcel(
+    file.path(tp$path, "Project.xlsx"),
+    outputDir = withr::local_tempdir(),
+    silent = TRUE
+  )))
+  expect_identical(
+    reimported$definitions$individuals[["adult_male"]]$proteinOntogenies,
+    ontogenies
+  )
+  expect_identical(
+    reimported$definitions$populations[["european_adults"]]$proteinOntogenies,
+    ontogenies
+  )
+
+  # The example project has its own round-trip drift in other sections, so the
+  # verdict here is per section rather than the overall `excel_in_sync`.
+  status <- suppressWarnings(suppressMessages(
+    projectStatus(project, silent = TRUE)
+  ))
+  drifted <- names(status$details$excel$data_changes)
+  expect_false("individuals" %in% drifted)
+  expect_false("populations" %in% drifted)
 })
 
 test_that(".parseExcelObservedData keeps a subfolder path rather than truncating to basename", {
@@ -3228,11 +3272,11 @@ test_that("a legacy two-column ontogeny pair imports its ontogenies", {
   )
   expect_identical(
     imported$project$definitions$individuals[["child"]]$proteinOntogenies,
-    "CYP3A4:CYP3A4,CYP2D6:CYP2C8"
+    c("CYP3A4:CYP3A4", "CYP2D6:CYP2C8")
   )
   expect_identical(
     imported$project$definitions$populations[["adultpop"]]$proteinOntogenies,
-    "CYP3A4:CYP3A4,CYP2D6:CYP2C8"
+    c("CYP3A4:CYP3A4", "CYP2D6:CYP2C8")
   )
 
   # Every pair in this fixture is readable, so nothing is reported about them.
@@ -3279,7 +3323,7 @@ test_that("two populations differing only in their ontogenies import differently
   expect_false(identical(dropId(withOntogenies), dropId(withoutOntogenies)))
   expect_match(
     grep("proteinOntogenies", withOntogenies, value = TRUE),
-    "CYP3A4:CYP3A4,CYP2D6:CYP2C8",
+    '["CYP3A4:CYP3A4", "CYP2D6:CYP2C8"]',
     fixed = TRUE
   )
   expect_false(any(grepl("proteinOntogenies", withoutOntogenies, fixed = TRUE)))

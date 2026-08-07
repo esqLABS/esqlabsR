@@ -4413,9 +4413,9 @@ projectStatus <- function(project, silent = FALSE) {
 #'     paired up positionally (`Protein` cell `A,B` with `Ontogeny` cell `X,Y`
 #'     means `A:X` and `B:Y`).
 #'
-#' The pair is folded into the single-cell spelling, so both layouts import to
-#' the same definition and an import -> export -> import round trip is a fixed
-#' point. A declaration that cannot be paired (only one of the two columns
+#' Both spellings are split into one entry per ontogeny, so both layouts import
+#' to the same definition and an import -> export -> import round trip is a
+#' fixed point. A declaration that cannot be paired (only one of the two columns
 #' filled, or a differing number of proteins and ontogenies) warns naming the
 #' record, because the alternative is ontogenies leaving the project in silence.
 #' The single cell wins when both spellings carry a value.
@@ -4423,16 +4423,17 @@ projectStatus <- function(project, silent = FALSE) {
 #' @param row One row of the sheet.
 #' @param recordType `"individual"` or `"population"`, for the warning.
 #' @param recordId The row's id, for the warning.
-#' @returns A single `Protein:Ontogeny,...` string, or `NULL` when the row
-#'   declares no ontogenies (or none that can be read).
+#' @returns A character vector of `Protein:Ontogeny` entries, one per ontogeny,
+#'   or `NULL` when the row declares no ontogenies (or none that can be read).
 #' @keywords internal
 #' @noRd
 .excelProteinOntogenies <- function(row, recordType, recordId) {
-  # A filled single cell is stored verbatim, exactly as it was before the pair
-  # spelling was read at all, so a workbook in the current spelling imports
-  # byte-identically.
-  single <- .naToNull(as.character(row[["Protein Ontogenies"]]))
-  if (!is.null(single) && length(.splitProteinOntogenies(single)) > 0L) {
+  # One entry per ontogeny, which is the shape `addIndividual()` and
+  # `addPopulation()` store: an imported definition and a hand-authored one
+  # holding the same ontogenies are then the same file, so an Excel round trip
+  # of an authored project reports no drift.
+  single <- .splitProteinOntogenies(row[["Protein Ontogenies"]])
+  if (length(single) > 0L) {
     return(single)
   }
   proteins <- .splitProteinOntogenies(row[["Protein"]])
@@ -4449,7 +4450,7 @@ projectStatus <- function(project, silent = FALSE) {
     ))
     return(NULL)
   }
-  paste(paste0(proteins, ":", ontogenies), collapse = ",")
+  paste0(proteins, ":", ontogenies)
 }
 
 #' Replace an absent/`NA` single cell with a default, else keep the value

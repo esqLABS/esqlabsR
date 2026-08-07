@@ -394,6 +394,34 @@ test_that("addIndividual applies an ontogeny vector whole and stores it as a vec
   )
 })
 
+test_that("an individual stored with comma-joined ontogenies still loads", {
+  # A project written before the Excel import emitted one entry per ontogeny
+  # holds the pairs as a single comma-joined string. Such a file has to keep
+  # loading, and the value it loads to has to still name both ontogenies.
+  project <- testProject()
+  path <- file.path(
+    dirname(project$info$projectFilePath),
+    "definitions",
+    "individuals",
+    "indiv1.json"
+  )
+  definition <- jsonlite::fromJSON(path, simplifyVector = FALSE)
+  definition$proteinOntogenies <- "CYP3A4:CYP3A4,CYP2D6:CYP2C8"
+  jsonlite::write_json(definition, path, auto_unbox = TRUE, pretty = TRUE)
+
+  reloaded <- loadProject(project$info$projectFilePath)
+  expect_identical(
+    reloaded$definitions$individuals$indiv1$proteinOntogenies,
+    "CYP3A4:CYP3A4,CYP2D6:CYP2C8"
+  )
+  expect_identical(
+    .splitProteinOntogenies(
+      reloaded$definitions$individuals$indiv1$proteinOntogenies
+    ),
+    c("CYP3A4:CYP3A4", "CYP2D6:CYP2C8")
+  )
+})
+
 test_that("setIndividual refuses an ontogeny value it cannot store", {
   # An `ospsuite::MoleculeOntogeny` object stored unchecked reached
   # `saveProject()` as an R6 object the JSON writer cannot serialize, which left
