@@ -667,6 +667,40 @@ validationSummary <- function(validationResults) {
   result
 }
 
+#' Read one field of a definition entry as a scalar string
+#'
+#' Shared by the parameter-set and initial-condition validators, which police
+#' hand-edited definition files. A usable path, name or unit is a single string,
+#' the shape the schema, the serializer and `.isNonEmptyString()` on the
+#' authoring path all agree on. Every other shape reads as `NA` and falls into
+#' the caller's own missing-field check.
+#'
+#' Testing the shape rather than only the length matters because
+#' `as.character()` invents plausible text for the shapes that happen to be one
+#' element long: `"containerPath": [null]` parses to a list holding `NULL` and
+#' renders as the string `"NULL"`, a nested object as `"list(b = 1)"`, `true` as
+#' `"TRUE"`. None of those is `NA` or blank, so the missing-field check would
+#' pass them and let a path like `"NULL|Dose"` flow onward. A blank string is
+#' returned as-is, since reporting it is the caller's `== ""` check.
+#'
+#' @param entries List of entry records, each already a list (see the
+#'   normalization the callers apply before reading any field).
+#' @param field Name of the field to read.
+#' @return Character vector, one element per entry, `NA` wherever the entry
+#'   does not hold a single string for `field`.
+#' @keywords internal
+#' @noRd
+.scalarEntryField <- function(entries, field) {
+  vapply(
+    entries,
+    function(e) {
+      value <- e[[field]]
+      if (is.character(value) && length(value) == 1L) value else NA_character_
+    },
+    character(1)
+  )
+}
+
 #' Validate a parameter-set structure
 #'
 #' Shared body used by the model / individual / application
@@ -691,17 +725,16 @@ validationSummary <- function(validationResults) {
       next
     }
 
-    containerPaths <- vapply(
-      set,
-      function(e) as.character(e$containerPath %||% NA_character_),
-      character(1)
-    )
-    parameterNames <- vapply(
-      set,
-      function(e) as.character(e$parameterName %||% NA_character_),
-      character(1)
-    )
-    values <- lapply(set, function(e) e$value)
+    # An entry that is a bare string rather than a record
+    # (`["Organism|Liver|Volume"]`) has no fields to read; treating it as an
+    # empty record folds it into the missing-field error below instead of
+    # aborting on `$`. Normalized before any field is read, so the value read
+    # below is covered too.
+    entries <- lapply(set, function(e) if (is.list(e)) e else list())
+
+    containerPaths <- .scalarEntryField(entries, "containerPath")
+    parameterNames <- .scalarEntryField(entries, "parameterName")
+    values <- lapply(entries, function(e) e$value)
 
     if (
       any(
@@ -741,7 +774,18 @@ validationSummary <- function(validationResults) {
       )
     }
 
-    fullPaths <- paste(containerPaths, parameterNames, sep = "|")
+    # Only entries carrying both halves of a path can duplicate: the blanks and
+    # `NA`s are already reported by the missing-path error above, and `paste()`
+    # would otherwise render two of them as a literal "NA|NA" duplicate.
+    hasPath <- !is.na(containerPaths) &
+      containerPaths != "" &
+      !is.na(parameterNames) &
+      parameterNames != ""
+    fullPaths <- paste(
+      containerPaths[hasPath],
+      parameterNames[hasPath],
+      sep = "|"
+    )
     dupes <- fullPaths[duplicated(fullPaths)]
     if (length(dupes) > 0) {
       result$addWarning(
@@ -784,21 +828,6 @@ validationSummary <- function(validationResults) {
     return(result)
   }
 
-  # Read one field as a scalar string, or `NA` when the entry does not hold
-  # exactly one value for it. A hand-edited set can write `"unit": []` or
-  # `"unit": ["mg", "g"]`, either of which would otherwise abort `vapply()`
-  # with an internal length error instead of being reported.
-  scalarField <- function(entries, field) {
-    vapply(
-      entries,
-      function(e) {
-        value <- e[[field]]
-        if (length(value) != 1L) NA_character_ else as.character(value)
-      },
-      character(1)
-    )
-  }
-
   for (setName in names(initialConditions)) {
     set <- initialConditions[[setName]]
     if (length(set) == 0) {
@@ -810,8 +839,8 @@ validationSummary <- function(validationResults) {
     # it into the missing-field errors below instead of aborting on `$`.
     entries <- lapply(set, function(e) if (is.list(e)) e else list())
 
-    paths <- scalarField(entries, "path")
-    units <- scalarField(entries, "unit")
+    paths <- .scalarEntryField(entries, "path")
+    units <- .scalarEntryField(entries, "unit")
     values <- lapply(entries, function(e) e$value)
 
     if (any(is.na(paths) | paths == "")) {
