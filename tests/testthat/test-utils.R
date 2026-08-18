@@ -204,14 +204,34 @@ test_that("`compareWithNA()` works as expected", {
 
   expect_equal(res, c(TRUE, FALSE, TRUE, FALSE))
 })
-simulation <- loadSimulation(system.file(
-  "extdata",
-  "Aciclovir.pkml",
-  package = "ospsuite"
-))
-simTree <- getSimulationTree(simulation)
+# `loadSimulation()` initializes a PK-Sim native session; running it at file
+# source time (as `test_dir()` sources every test file up front) bleeds native
+# state across files. Defer it behind a memoized accessor so the native load
+# happens inside a `test_that()` block on first use, computed once and cached for
+# the rest of the file.
+simFixture <- local({
+  cache <- NULL
+  function() {
+    if (is.null(cache)) {
+      simulation <- loadSimulation(system.file(
+        "extdata",
+        "Aciclovir.pkml",
+        package = "ospsuite"
+      ))
+      cache <<- list(
+        simulation = simulation,
+        simTree = getSimulationTree(simulation)
+      )
+    }
+    cache
+  }
+})
 
 test_that("It throws an error if the quantity does not come from a molecule", {
+  fixture <- simFixture()
+  simulation <- fixture$simulation
+  simTree <- fixture$simTree
+
   path <- simTree$Organism$Weight$path
   quantity <- getQuantity(path, simulation)
 
@@ -223,6 +243,10 @@ test_that("It throws an error if the quantity does not come from a molecule", {
 })
 
 test_that("It returns the correct name of the molecule for molecules global parameter", {
+  fixture <- simFixture()
+  simulation <- fixture$simulation
+  simTree <- fixture$simTree
+
   path <- simTree$Aciclovir$`Fraction unbound (plasma)`
   quantity <- getQuantity(path, simulation)
 
@@ -230,6 +254,10 @@ test_that("It returns the correct name of the molecule for molecules global para
 })
 
 test_that("It returns the correct name of the molecule for molecules local parameter", {
+  fixture <- simFixture()
+  simulation <- fixture$simulation
+  simTree <- fixture$simTree
+
   path <- simTree$Organism$VenousBlood$Plasma$Aciclovir$Concentration
   quantity <- getQuantity(path, simulation)
 
@@ -237,6 +265,10 @@ test_that("It returns the correct name of the molecule for molecules local param
 })
 
 test_that("It returns the correct name of the molecule in a container", {
+  fixture <- simFixture()
+  simulation <- fixture$simulation
+  simTree <- fixture$simTree
+
   path <- simTree$Organism$VenousBlood$Plasma$Aciclovir$path
   quantity <- getQuantity(path, simulation)
 
@@ -244,6 +276,10 @@ test_that("It returns the correct name of the molecule in a container", {
 })
 
 test_that("It returns the correct name for an observer", {
+  fixture <- simFixture()
+  simulation <- fixture$simulation
+  simTree <- fixture$simTree
+
   path <- simTree$Organism$PeripheralVenousBlood$Aciclovir$`Plasma (Peripheral Venous Blood)`
   quantity <- getQuantity(path, simulation)
 

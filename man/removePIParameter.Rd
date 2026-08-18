@@ -11,7 +11,8 @@ removePIParameter(project, task, id)
 
 \item{task}{Character scalar. Existing PI task id.}
 
-\item{id}{Character scalar. Parameter id to remove.}
+\item{id}{Character scalar. Parameter id to remove, matched exactly as the
+task stores it.}
 }
 \value{
 The \code{project} object, invisibly.
@@ -31,6 +32,7 @@ Other parameterIdentification:
 \code{\link[=addPIParameter]{addPIParameter()}},
 \code{\link[=addPITask]{addPITask()}},
 \code{\link[=removePIOutputMapping]{removePIOutputMapping()}},
-\code{\link[=removePITask]{removePITask()}}
+\code{\link[=removePITask]{removePITask()}},
+\code{\link[=setPITask]{setPITask()}}
 }
 \concept{parameterIdentification}

@@ -48,12 +48,15 @@ A \code{script} source runs the R file it names (see the Security section of
 
 \code{id} names the declaration itself: it becomes the declaration's file under
 the project's definitions folder (\verb{definitions/observed-data/<id>.json} in
-the default layout) and is the id \code{\link[=removeObservedData]{removeObservedData()}} matches on. Left
-out, the \code{file} basename serves as both. It is not the name the data is
-known by: each imported \code{\link[ospsuite:DataSet]{ospsuite::DataSet}} carries the name its source
-gives it (the data-set name in an Excel sheet, the name inside a PKML file),
-and that name, not the declaration's id, is what a \code{dataCombined} entry
-references.
+the default layout) and is the id \code{\link[=removeObservedData]{removeObservedData()}} matches on. It is
+canonicalized like every other definition id (lowercased and made a safe
+filename segment), and you are told when that changes it. Left out, the
+\code{file} basename serves as both, kept exactly as the source spells it.
+
+An id is not the name the data is known by: each imported
+\code{\link[ospsuite:DataSet]{ospsuite::DataSet}} carries the name its source gives it (the data-set name
+in an Excel sheet, the name inside a PKML file), and that name, not the
+declaration's id, is what a \code{dataCombined} entry references.
 
 A \code{DataSet} you pass lives in the R session until you save. On
 \code{\link[=saveProject]{saveProject()}} it is written to a PKML file named \verb{<DataSet name>.pkml}

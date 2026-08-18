@@ -227,32 +227,23 @@ test_that("PITask() errors when parameters or outputMappings is not a list", {
   )
 })
 
-test_that("PITask() errors on empty scenarios", {
-  expect_snapshot(
-    error = TRUE,
-    PITask(
-      id = "x",
-      scenarios = character(0),
-      parameters = list(
-        PIParameter(
-          id = "k",
-          scenarios = "S1",
-          path = "x|y",
-          minValue = 0,
-          maxValue = 1,
-          startValue = 0.5
-        )
-      ),
-      outputMappings = list(
-        PIOutputMapping(
-          id = "m",
-          scenarios = "S1",
-          outputPath = "PVB",
-          observedData = "Laskin"
-        )
-      )
-    )
+test_that("PITask() takes an empty scenarios reference list, and a list of ids", {
+  # `scenarios` is a reference list, so an empty one means "there are none" and
+  # a JSON array read as a list of strings flattens: a task's own written field
+  # goes straight back in, and a task is creatable with nothing in it at all.
+  expect_length(PITask(id = "x")$scenarios, 0L)
+  expect_length(PITask(id = "x", scenarios = character(0))$scenarios, 0L)
+  expect_length(PITask(id = "x", scenarios = list())$scenarios, 0L)
+  expect_equal(
+    PITask(id = "x", scenarios = list("S1", "S2"))$scenarios,
+    c("S1", "S2")
   )
+})
+
+test_that("PITask() errors on a malformed scenarios entry", {
+  expect_snapshot(error = TRUE, PITask(id = "x", scenarios = c("S1", NA)))
+  expect_snapshot(error = TRUE, PITask(id = "x", scenarios = ""))
+  expect_snapshot(error = TRUE, PITask(id = "x", scenarios = 1))
 })
 
 test_that("PITask() errors when parameters contains non-PIParameter elements", {
@@ -356,11 +347,11 @@ test_that("Project parses parameterIdentification field from JSON", {
 })
 
 test_that(".parsePITasks(NULL) returns an empty list", {
-  expect_identical(esqlabsR:::.parsePITasks(NULL), list())
+  expect_identical(.parsePITasks(NULL), list())
 })
 
 test_that(".parsePITasks(list()) returns an empty list", {
-  expect_identical(esqlabsR:::.parsePITasks(list()), list())
+  expect_identical(.parsePITasks(list()), list())
 })
 
 test_that(".parsePITasks() builds PITask records keyed by id", {
@@ -390,7 +381,7 @@ test_that(".parsePITasks() builds PITask records keyed by id", {
       configuration = list(algorithm = "Monte-Carlo")
     )
   )
-  parsed <- esqlabsR:::.parsePITasks(raw)
+  parsed <- .parsePITasks(raw)
   expect_named(parsed, "aciclovirsimple")
   expect_s3_class(parsed[["aciclovirsimple"]], "PITask")
   expect_s3_class(parsed[["aciclovirsimple"]]$parameters[[1]], "PIParameter")
@@ -434,7 +425,7 @@ test_that(".parsePITasks() auto-generates parameter and outputMapping ids when a
       )
     )
   )
-  parsed <- esqlabsR:::.parsePITasks(raw)
+  parsed <- .parsePITasks(raw)
   paramIds <- vapply(parsed[["T1"]]$parameters, `[[`, character(1), "id")
   expect_identical(paramIds, c("T1_param_1", "T1_param_2"))
 
@@ -465,7 +456,7 @@ test_that(".parsePITasks() preserves length-1 vector fields as length-1", {
       )
     )
   )
-  parsed <- esqlabsR:::.parsePITasks(raw)
+  parsed <- .parsePITasks(raw)
   expect_length(parsed[["T1"]]$scenarios, 1L)
   expect_length(parsed[["T1"]]$parameters[[1]]$scenarios, 1L)
 })
@@ -493,7 +484,7 @@ test_that(".parsePITasks() injects defaults for outputMapping offset/factor fiel
       )
     )
   )
-  parsed <- esqlabsR:::.parsePITasks(raw)
+  parsed <- .parsePITasks(raw)
   m <- parsed[["T1"]]$outputMappings[[1]]
   expect_identical(m$xOffset, 0)
   expect_identical(m$yOffset, 0)
@@ -503,7 +494,49 @@ test_that(".parsePITasks() injects defaults for outputMapping offset/factor fiel
 
 test_that(".parameterIdentificationToJson() emits NULL for empty input", {
   proj <- .fakeProject(parameterIdentification = list())
-  expect_null(esqlabsR:::.parameterIdentificationToJson(proj))
+  expect_null(.parameterIdentificationToJson(proj))
+})
+
+# #1213 item 26: a task with no solver settings has to describe its configuration
+# the way a task with them does. An empty unnamed list serializes as `[]`, so such
+# a task read as having an array where every other task has an object.
+test_that("a PI task with no configuration serializes as an empty object", {
+  raw <- list(
+    list(
+      id = "t",
+      scenarios = list("S1"),
+      parameters = list(
+        list(
+          id = "k",
+          scenarios = list("S1"),
+          path = "x|y",
+          minValue = 0,
+          maxValue = 1,
+          startValue = 0.5
+        )
+      ),
+      outputMappings = list(
+        list(
+          id = "m",
+          scenarios = list("S1"),
+          outputPath = "P",
+          observedData = "D"
+        )
+      )
+    )
+  )
+  proj <- .fakeProject(parameterIdentification = .parsePITasks(raw))
+  serialized <- .parameterIdentificationToJson(proj)
+
+  expect_identical(
+    serialized[[1]]$configuration,
+    structure(list(), names = character(0L))
+  )
+  expect_match(
+    jsonlite::toJSON(serialized[[1]]$configuration, auto_unbox = TRUE),
+    "{}",
+    fixed = TRUE
+  )
 })
 
 test_that(".parsePITasks |> .parameterIdentificationToJson |> .parsePITasks is identity", {
@@ -538,11 +571,107 @@ test_that(".parsePITasks |> .parameterIdentificationToJson |> .parsePITasks is i
       configuration = list(algorithm = "Monte-Carlo")
     )
   )
-  parsed <- esqlabsR:::.parsePITasks(raw)
+  parsed <- .parsePITasks(raw)
   proj <- .fakeProject(parameterIdentification = parsed)
-  serialized <- esqlabsR:::.parameterIdentificationToJson(proj)
-  reparsed <- esqlabsR:::.parsePITasks(serialized)
+  serialized <- .parameterIdentificationToJson(proj)
+  reparsed <- .parsePITasks(serialized)
   expect_identical(reparsed, parsed)
+})
+
+# #1226: the load path was the one door into an output mapping that stored the
+# `outputPath` reference exactly as written, while the runtime looks it up
+# exactly (`project$definitions$outputPaths[[m$outputPathId]]`) and the
+# cross-reference validator compares it canonically. A hand-edited definition
+# file spelling the reference non-canonically therefore passed
+# `validateProject()` clean, and then the runtime build never called
+# `setOutputs()` for that scenario (the `NULL` lookup drops out of
+# `unique(c(...))`) before dying on `ospsuite::getQuantity(NULL, ...)` with a
+# message naming neither the task nor the reference. The parser now resolves the
+# reference the way `addPIOutputMapping()` does.
+#
+# Rewrite one output mapping's `outputPath` in a copied TestProject's definition
+# file and return the loaded project, so each case below shows only the spelling
+# it varies.
+.loadProjectWithMappingOutputPath <- function(value, envir = parent.frame()) {
+  dir <- .copyTestProjectDir(envir)
+  file <- file.path(
+    dir,
+    "definitions",
+    "parameter-identification",
+    "aciclovirsimple.json"
+  )
+  raw <- jsonlite::fromJSON(file, simplifyVector = FALSE)
+  raw$outputMappings[[1]]$outputPath <- value
+  jsonlite::write_json(
+    raw,
+    file,
+    auto_unbox = TRUE,
+    pretty = TRUE,
+    null = "null"
+  )
+  loadProject(file.path(dir, "Project.json"))
+}
+
+test_that("loading resolves a mapping's outputPath id spelled non-canonically", {
+  # `aciclovir_pvb` is the canonical id the definition is filed under. Both
+  # spellings canonicalize onto it: case folding, and space -> underscore.
+  for (spelling in c("Aciclovir_PVB", "aciclovir pvb")) {
+    project <- .loadProjectWithMappingOutputPath(spelling)
+    m <- project$definitions$parameterIdentification$aciclovirsimple$outputMappings[[
+      1
+    ]]
+    expect_identical(m$outputPathId, "aciclovir_pvb")
+    # The runtime looks the id up exactly; before the fix this was NULL.
+    expect_identical(
+      project$definitions$outputPaths[[m$outputPathId]],
+      "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
+    )
+    expect_false(isAnyCriticalErrors(validateProject(project)))
+  }
+})
+
+test_that("loading resolves a mapping's outputPath given as a literal model path", {
+  # `PIOutputMapping()` documents the literal model path as an accepted form and
+  # the authoring path resolves it; canonicalizing it would destroy it, so it is
+  # matched against the `outputPaths` values before being read as an id.
+  project <- .loadProjectWithMappingOutputPath(
+    "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
+  )
+  m <- project$definitions$parameterIdentification$aciclovirsimple$outputMappings[[
+    1
+  ]]
+  expect_identical(m$outputPathId, "aciclovir_pvb")
+  expect_false(isAnyCriticalErrors(validateProject(project)))
+})
+
+test_that("loading keeps an outputPath naming no defined output path verbatim", {
+  # The parser stays lenient: a project that cannot be opened cannot be fixed,
+  # so a dangling reference loads unchanged and `validateProject()` reports it.
+  project <- suppressWarnings(
+    .loadProjectWithMappingOutputPath("no_such_output_path")
+  )
+  m <- project$definitions$parameterIdentification$aciclovirsimple$outputMappings[[
+    1
+  ]]
+  expect_identical(m$outputPathId, "no_such_output_path")
+  expect_true(isAnyCriticalErrors(validateProject(project)))
+})
+
+test_that("loading keeps an over-long outputPath naming no output path verbatim", {
+  # Same leniency for a reference too long to be a definition id. Resolving it
+  # canonicalizes it to compare against the defined ids, and `.canonicalizeOneId()`
+  # aborts above `.maxDefinitionIdBytes` because an id becomes a filename; that
+  # abort must not reach the load, or a pasted-over-long path (a deep metabolite
+  # path whose output-path entry was renamed away) is one more way to make a
+  # project unopenable, named by neither the task nor the field.
+  overlong <- paste0("Organism|Liver|Cell|", strrep("Metabolite_", 22), "|C")
+  expect_gt(nchar(overlong, type = "bytes"), .maxDefinitionIdBytes)
+  project <- suppressWarnings(.loadProjectWithMappingOutputPath(overlong))
+  m <- project$definitions$parameterIdentification$aciclovirsimple$outputMappings[[
+    1
+  ]]
+  expect_identical(m$outputPathId, overlong)
+  expect_true(isAnyCriticalErrors(validateProject(project)))
 })
 
 test_that(".validatePI returns no errors on a well-formed task", {
@@ -568,7 +697,7 @@ test_that(".validatePI returns no errors on a well-formed task", {
       )
     )
   )
-  result <- esqlabsR:::.validatePI(list(T1 = task))
+  result <- .validatePI(list(T1 = task))
   expect_false(result$hasCriticalErrors())
 })
 
@@ -603,26 +732,26 @@ test_that(".validatePI surfaces duplicate parameter ids within a task", {
       )
     )
   )
-  result <- esqlabsR:::.validatePI(list(t = task))
+  result <- .validatePI(list(t = task))
   expect_true(result$hasCriticalErrors())
 })
 
 test_that(".validatePI is empty-section-friendly", {
-  result <- esqlabsR:::.validatePI(list())
+  result <- .validatePI(list())
   expect_false(result$hasCriticalErrors())
 })
 
-test_that(".validatePI flags a task left with no parameters or output mappings", {
+test_that(".validatePI flags a task left with no scenarios, parameters or output mappings", {
   # A task may be created empty and seeded later, but one still empty at
-  # validation time cannot run and is a critical error.
-  task <- PITask(
-    id = "t",
-    scenarios = "S1",
-    parameters = list(),
-    outputMappings = list()
-  )
-  result <- esqlabsR:::.validatePI(list(t = task))
+  # validation time cannot run and is a critical error. All three parts are
+  # reported at once, so an empty task takes one report to fix rather than three.
+  task <- PITask(id = "t")
+  result <- .validatePI(list(t = task))
   expect_true(result$hasCriticalErrors())
+  expect_length(result$critical_errors, 3L)
+
+  withScenarios <- PITask(id = "t", scenarios = "S1")
+  expect_length(.validatePI(list(t = withScenarios))$critical_errors, 2L)
 })
 
 test_that("validateProject() flags PI parameters that reference unknown scenarios", {
@@ -685,33 +814,11 @@ test_that("validateProject() flags PI outputMappings that reference unknown outp
 
 test_that(".createSinglePITask builds a ParameterIdentification with the expected counts", {
   project <- testProject()
-  task <- PITask(
-    id = "t",
-    scenarios = "testscenario",
-    parameters = list(
-      PIParameter(
-        id = "EHC",
-        scenarios = "testscenario",
-        path = "Organism|Liver|EHC continuous fraction",
-        minValue = 0.5,
-        maxValue = 1.0,
-        startValue = 0.8
-      )
-    ),
-    outputMappings = list(
-      PIOutputMapping(
-        id = "PVB",
-        scenarios = "testscenario",
-        outputPath = "aciclovir_pvb",
-        observedData = "Laskin 1982.Group A_Aciclovir_1_Human_MALE_PeripheralVenousBlood_Plasma_2.5 mg/kg_iv_"
-      )
-    ),
-    configuration = list(algorithm = "BOBYQA")
-  )
+  task <- testPITask()
 
   observedData <- loadObservedData(project)
 
-  pi <- esqlabsR:::.createSinglePITask(
+  pi <- .createSinglePITask(
     project = project,
     piTask = task,
     observedData = observedData
@@ -719,6 +826,49 @@ test_that(".createSinglePITask builds a ParameterIdentification with the expecte
   expect_s3_class(pi, "ParameterIdentification")
   expect_length(pi$parameters, 1L)
   expect_length(pi$outputMappings, 1L)
+})
+
+# #1213 item 14: a legacy 5.x `PIParameters` sheet carries a `Units` column that
+# esqlabsR 5.x never applied, so a workbook that ran under 5.x routinely names a
+# unit of another dimension. Enforcing it as the display unit aborted such a task
+# (`Unit "mg" is not supported by dimension Inversed time!`) over a cell that has
+# never had any effect, so it is reported and left unapplied instead, and the
+# bounds stay in the parameter's own unit.
+test_that(".createSinglePITask reports a unit of another dimension instead of aborting", {
+  project <- testProject()
+  task <- PITask(
+    id = "WrongUnit",
+    scenarios = "testscenario",
+    parameters = list(
+      PIParameter(
+        id = "EHC",
+        scenarios = "testscenario",
+        path = "Organism|Liver|EHC continuous fraction",
+        units = "mg",
+        minValue = 0.5,
+        maxValue = 1.0,
+        startValue = 0.8
+      )
+    ),
+    outputMappings = list(
+      testPIOutputMapping()
+    ),
+    configuration = list(algorithm = "BOBYQA")
+  )
+
+  expect_warning(
+    pi <- .createSinglePITask(
+      project = project,
+      piTask = task,
+      observedData = loadObservedData(project)
+    ),
+    "is not applied"
+  )
+
+  # The bounds are the ones the record declares, read in the parameter's own unit.
+  expect_equal(pi$parameters[[1]]$minValue, 0.5)
+  expect_equal(pi$parameters[[1]]$maxValue, 1.0)
+  expect_equal(pi$parameters[[1]]$startValue, 0.8)
 })
 
 test_that(".createSinglePITask shares one optimisation variable across scenarios for a multi-scenario PIParameter", {
@@ -746,13 +896,13 @@ test_that(".createSinglePITask shares one optimisation variable across scenarios
         id = "PVB",
         scenarios = sharedScenarios,
         outputPath = "aciclovir_pvb",
-        observedData = "Laskin 1982.Group A_Aciclovir_1_Human_MALE_PeripheralVenousBlood_Plasma_2.5 mg/kg_iv_"
+        observedData = testObservedDataId
       )
     ),
     configuration = list(algorithm = "BOBYQA")
   )
 
-  pi <- esqlabsR:::.createSinglePITask(
+  pi <- .createSinglePITask(
     project = project,
     piTask = task,
     observedData = loadObservedData(project)
@@ -796,13 +946,13 @@ test_that(".createSinglePITask keeps the same path independent across scenarios 
         id = "PVB",
         scenarios = c("testscenario", "testscenario_steadystate"),
         outputPath = "aciclovir_pvb",
-        observedData = "Laskin 1982.Group A_Aciclovir_1_Human_MALE_PeripheralVenousBlood_Plasma_2.5 mg/kg_iv_"
+        observedData = testObservedDataId
       )
     ),
     configuration = list(algorithm = "BOBYQA")
   )
 
-  pi <- esqlabsR:::.createSinglePITask(
+  pi <- .createSinglePITask(
     project = project,
     piTask = task,
     observedData = loadObservedData(project)
@@ -820,14 +970,7 @@ test_that(".createSinglePITask errors when observedData is not in observedData",
     id = "t",
     scenarios = "testscenario",
     parameters = list(
-      PIParameter(
-        id = "EHC",
-        scenarios = "testscenario",
-        path = "Organism|Liver|EHC continuous fraction",
-        minValue = 0.5,
-        maxValue = 1.0,
-        startValue = 0.8
-      )
+      testPIParameter()
     ),
     outputMappings = list(
       PIOutputMapping(
@@ -841,7 +984,7 @@ test_that(".createSinglePITask errors when observedData is not in observedData",
   )
 
   expect_error(
-    esqlabsR:::.createSinglePITask(
+    .createSinglePITask(
       project = project,
       piTask = task,
       observedData = loadObservedData(project)
@@ -866,18 +1009,13 @@ test_that(".createSinglePITask errors when a parameter path is not in the simula
       )
     ),
     outputMappings = list(
-      PIOutputMapping(
-        id = "PVB",
-        scenarios = "testscenario",
-        outputPath = "aciclovir_pvb",
-        observedData = "Laskin 1982.Group A_Aciclovir_1_Human_MALE_PeripheralVenousBlood_Plasma_2.5 mg/kg_iv_"
-      )
+      testPIOutputMapping()
     ),
     configuration = list(algorithm = "BOBYQA")
   )
 
   expect_error(
-    esqlabsR:::.createSinglePITask(
+    .createSinglePITask(
       project = project,
       piTask = task,
       observedData = loadObservedData(project)
@@ -890,40 +1028,18 @@ test_that(".createSinglePITask applies objectiveFunctionOptions from the configu
   project <- testProject()
   observedData <- loadObservedData(project)
   mkTask <- function(configuration) {
-    PITask(
-      id = "t",
-      scenarios = "testscenario",
-      parameters = list(
-        PIParameter(
-          id = "EHC",
-          scenarios = "testscenario",
-          path = "Organism|Liver|EHC continuous fraction",
-          minValue = 0.5,
-          maxValue = 1.0,
-          startValue = 0.8
-        )
-      ),
-      outputMappings = list(
-        PIOutputMapping(
-          id = "PVB",
-          scenarios = "testscenario",
-          outputPath = "aciclovir_pvb",
-          observedData = "Laskin 1982.Group A_Aciclovir_1_Human_MALE_PeripheralVenousBlood_Plasma_2.5 mg/kg_iv_"
-        )
-      ),
-      configuration = configuration
-    )
+    testPITask(configuration = configuration)
   }
 
   # Empty configuration: runtime defaults are preserved.
-  pi <- esqlabsR:::.createSinglePITask(project, mkTask(list()), observedData)
+  pi <- .createSinglePITask(project, mkTask(list()), observedData)
   ofo <- pi$configuration$objectiveFunctionOptions
   expect_equal(ofo$objectiveFunctionType, "lsq")
   expect_equal(ofo$residualWeightingMethod, "none")
   expect_equal(ofo$robustMethod, "none")
 
   # String fields land.
-  pi <- esqlabsR:::.createSinglePITask(
+  pi <- .createSinglePITask(
     project,
     mkTask(list(
       objectiveFunction = list(
@@ -939,7 +1055,7 @@ test_that(".createSinglePITask applies objectiveFunctionOptions from the configu
   expect_equal(ofo$robustMethod, "none")
 
   # Numeric fields land.
-  pi <- esqlabsR:::.createSinglePITask(
+  pi <- .createSinglePITask(
     project,
     mkTask(list(objectiveFunction = list(linScaleCV = 0.3, logScaleSD = 0.1))),
     observedData
@@ -953,37 +1069,15 @@ test_that(".createSinglePITask applies simulationRunOptions from the configurati
   project <- testProject()
   observedData <- loadObservedData(project)
   mkTask <- function(configuration) {
-    PITask(
-      id = "t",
-      scenarios = "testscenario",
-      parameters = list(
-        PIParameter(
-          id = "EHC",
-          scenarios = "testscenario",
-          path = "Organism|Liver|EHC continuous fraction",
-          minValue = 0.5,
-          maxValue = 1.0,
-          startValue = 0.8
-        )
-      ),
-      outputMappings = list(
-        PIOutputMapping(
-          id = "PVB",
-          scenarios = "testscenario",
-          outputPath = "aciclovir_pvb",
-          observedData = "Laskin 1982.Group A_Aciclovir_1_Human_MALE_PeripheralVenousBlood_Plasma_2.5 mg/kg_iv_"
-        )
-      ),
-      configuration = configuration
-    )
+    testPITask(configuration = configuration)
   }
 
   # No block: simulationRunOptions stays NULL.
-  pi <- esqlabsR:::.createSinglePITask(project, mkTask(list()), observedData)
+  pi <- .createSinglePITask(project, mkTask(list()), observedData)
   expect_null(pi$configuration$simulationRunOptions)
 
   # numberOfCores only.
-  pi <- esqlabsR:::.createSinglePITask(
+  pi <- .createSinglePITask(
     project,
     mkTask(list(simulationRunOptions = list(numberOfCores = 2))),
     observedData
@@ -993,7 +1087,7 @@ test_that(".createSinglePITask applies simulationRunOptions from the configurati
   expect_equal(opts$numberOfCores, 2L)
 
   # checkForNegativeValues only.
-  pi <- esqlabsR:::.createSinglePITask(
+  pi <- .createSinglePITask(
     project,
     mkTask(list(simulationRunOptions = list(checkForNegativeValues = FALSE))),
     observedData
@@ -1001,7 +1095,7 @@ test_that(".createSinglePITask applies simulationRunOptions from the configurati
   expect_false(pi$configuration$simulationRunOptions$checkForNegativeValues)
 
   # Both set.
-  pi <- esqlabsR:::.createSinglePITask(
+  pi <- .createSinglePITask(
     project,
     mkTask(list(
       simulationRunOptions = list(
@@ -1018,31 +1112,9 @@ test_that(".createSinglePITask applies simulationRunOptions from the configurati
 
 test_that(".createSinglePITask overwrites scenario output paths with the PI-specified paths", {
   project <- testProject()
-  task <- PITask(
-    id = "t",
-    scenarios = "testscenario",
-    parameters = list(
-      PIParameter(
-        id = "EHC",
-        scenarios = "testscenario",
-        path = "Organism|Liver|EHC continuous fraction",
-        minValue = 0.5,
-        maxValue = 1.0,
-        startValue = 0.8
-      )
-    ),
-    outputMappings = list(
-      PIOutputMapping(
-        id = "PVB",
-        scenarios = "testscenario",
-        outputPath = "aciclovir_pvb",
-        observedData = "Laskin 1982.Group A_Aciclovir_1_Human_MALE_PeripheralVenousBlood_Plasma_2.5 mg/kg_iv_"
-      )
-    ),
-    configuration = list(algorithm = "BOBYQA")
-  )
+  task <- testPITask()
 
-  pi <- esqlabsR:::.createSinglePITask(
+  pi <- .createSinglePITask(
     project = project,
     piTask = task,
     observedData = loadObservedData(project)
@@ -1061,19 +1133,12 @@ test_that(".createSinglePITask overwrites scenario output paths with the PI-spec
 
 test_that(".createSinglePITask applies a scalar weight to the runtime dataWeights", {
   project <- testProject()
-  observedDataId <- "Laskin 1982.Group A_Aciclovir_1_Human_MALE_PeripheralVenousBlood_Plasma_2.5 mg/kg_iv_"
+  observedDataId <- testObservedDataId
   task <- PITask(
     id = "t",
     scenarios = "testscenario",
     parameters = list(
-      PIParameter(
-        id = "EHC",
-        scenarios = "testscenario",
-        path = "Organism|Liver|EHC continuous fraction",
-        minValue = 0.5,
-        maxValue = 1.0,
-        startValue = 0.8
-      )
+      testPIParameter()
     ),
     outputMappings = list(
       PIOutputMapping(
@@ -1087,7 +1152,7 @@ test_that(".createSinglePITask applies a scalar weight to the runtime dataWeight
     configuration = list(algorithm = "BOBYQA")
   )
 
-  pi <- esqlabsR:::.createSinglePITask(
+  pi <- .createSinglePITask(
     project = project,
     piTask = task,
     observedData = loadObservedData(project)
@@ -1098,19 +1163,12 @@ test_that(".createSinglePITask applies a scalar weight to the runtime dataWeight
 
 test_that(".createSinglePITask applies xOffset/yOffset/xFactor/yFactor to the runtime dataTransformations", {
   project <- testProject()
-  observedDataId <- "Laskin 1982.Group A_Aciclovir_1_Human_MALE_PeripheralVenousBlood_Plasma_2.5 mg/kg_iv_"
+  observedDataId <- testObservedDataId
   task <- PITask(
     id = "t",
     scenarios = "testscenario",
     parameters = list(
-      PIParameter(
-        id = "EHC",
-        scenarios = "testscenario",
-        path = "Organism|Liver|EHC continuous fraction",
-        minValue = 0.5,
-        maxValue = 1.0,
-        startValue = 0.8
-      )
+      testPIParameter()
     ),
     outputMappings = list(
       PIOutputMapping(
@@ -1127,7 +1185,7 @@ test_that(".createSinglePITask applies xOffset/yOffset/xFactor/yFactor to the ru
     configuration = list(algorithm = "BOBYQA")
   )
 
-  pi <- esqlabsR:::.createSinglePITask(
+  pi <- .createSinglePITask(
     project = project,
     piTask = task,
     observedData = loadObservedData(project)
@@ -1215,7 +1273,7 @@ test_that(".warnUnquantifiedUncertainty fires once per NA-uncertainty parameter"
     }
   )
   expect_snapshot(
-    esqlabsR:::.warnUnquantifiedUncertainty("myTask", fakeResult)
+    .warnUnquantifiedUncertainty("myTask", fakeResult)
   )
 })
 
@@ -1233,7 +1291,7 @@ test_that(".warnUnquantifiedUncertainty is silent when uncertainty is quantified
       )
     }
   )
-  expect_no_warning(esqlabsR:::.warnUnquantifiedUncertainty(
+  expect_no_warning(.warnUnquantifiedUncertainty(
     "myTask",
     fakeResult
   ))
@@ -1261,7 +1319,7 @@ test_that(".warnUnquantifiedUncertainty tolerates short or absent uncertainty ve
 
   warnings <- character()
   withCallingHandlers(
-    esqlabsR:::.warnUnquantifiedUncertainty("myTask", fakeResult),
+    .warnUnquantifiedUncertainty("myTask", fakeResult),
     warning = function(cnd) {
       warnings <<- c(warnings, conditionMessage(cnd))
       invokeRestart("muffleWarning")
@@ -1432,6 +1490,52 @@ test_that("addPITask() can create an empty task that addPIParameter()/addPIOutpu
   expect_length(seeded$outputMappings, 1L)
 })
 
+test_that("addPITask() creates a wholly empty task, which setPITask() then gives its scenarios", {
+  # `addPITask(project, id)` is the create-then-seed entry point: nothing but the
+  # id is required, and the parts arrive afterwards.
+  project <- testProject()
+  addPITask(project, id = "empty")
+  task <- project$definitions$parameterIdentification$empty
+  expect_length(task$scenarios, 0L)
+  expect_length(task$parameters, 0L)
+  expect_length(task$outputMappings, 0L)
+
+  setPITask(project, "empty", scenarios = "testscenario")
+  expect_equal(
+    project$definitions$parameterIdentification$empty$scenarios,
+    "testscenario"
+  )
+})
+
+test_that("setPITask() sets the configuration, clears it, and leaves the other field alone", {
+  project <- testProject()
+  addPITask(project, id = "cfg", scenarios = "testscenario")
+
+  setPITask(project, "cfg", configuration = list(algorithm = "BOBYQA"))
+  task <- project$definitions$parameterIdentification$cfg
+  expect_equal(task$configuration$algorithm, "BOBYQA")
+  # The untouched field keeps its value.
+  expect_equal(task$scenarios, "testscenario")
+
+  setPITask(project, "cfg", configuration = NULL)
+  expect_length(
+    project$definitions$parameterIdentification$cfg$configuration,
+    0L
+  )
+})
+
+test_that("setPITask() errors on an unknown task, an unknown scenario, and a field it cannot set", {
+  project <- testProject()
+  addPITask(project, id = "cfg", scenarios = "testscenario")
+
+  expect_snapshot(error = TRUE, setPITask(project, "ghost", scenarios = "x"))
+  expect_snapshot(error = TRUE, setPITask(project, "cfg", scenarios = "ghost"))
+  expect_snapshot(
+    error = TRUE,
+    project$setPITask("cfg", parameters = list())
+  )
+})
+
 test_that("addPITask() errors on unknown scenario id", {
   project <- testProject()
   expect_snapshot(
@@ -1495,7 +1599,7 @@ test_that("addPITask() errors on unknown outputPath", {
 test_that("addPITask() errors on duplicate id", {
   project <- testProject()
   args <- list(
-    id = "Dup",
+    id = "dup",
     scenarios = "testscenario",
     parameters = list(
       PIParameter(
@@ -1921,6 +2025,19 @@ test_that("addPIOutputMapping() aborts cleanly on a NULL / non-scalar outputPath
     ),
     regexp = "neither a defined output-path id nor the model path"
   )
+  # A value too long to be a definition id names no output path either, so it
+  # reports the unknown reference (with its did-you-mean hint) rather than the
+  # filename-length limit, which is not the problem the user has here.
+  expect_error(
+    addPIOutputMapping(
+      project,
+      task = "t",
+      scenarios = "testscenario",
+      outputPath = paste0("Organism|Liver|", strrep("Metabolite_", 22), "|C"),
+      observedData = "L"
+    ),
+    regexp = "neither a defined output-path id nor the model path"
+  )
 })
 
 # PI sub-mutator write-through (on-disk) ----
@@ -2112,7 +2229,7 @@ test_that("Project save / load round-trip preserves the parameterIdentification 
   tmp <- withr::local_tempfile(fileext = ".json")
   source <- test_path("data", "TestProject", "Project.json")
   project <- loadProject(source)
-  esqlabsR:::.saveProjectJson(project, tmp)
+  .saveProjectJson(project, tmp)
   project2 <- loadProject(tmp)
   expect_identical(
     project2$definitions$parameterIdentification,
@@ -2132,26 +2249,14 @@ test_that(".createSinglePITask builds when declared bounds do not bracket the mo
     id = "t",
     scenarios = "testscenario",
     parameters = list(
-      PIParameter(
-        id = "EHC",
-        scenarios = "testscenario",
-        path = "Organism|Liver|EHC continuous fraction",
-        minValue = 0.2,
-        maxValue = 0.8,
-        startValue = 0.5
-      )
+      testPIParameter(minValue = 0.2, maxValue = 0.8, startValue = 0.5)
     ),
     outputMappings = list(
-      PIOutputMapping(
-        id = "PVB",
-        scenarios = "testscenario",
-        outputPath = "aciclovir_pvb",
-        observedData = "Laskin 1982.Group A_Aciclovir_1_Human_MALE_PeripheralVenousBlood_Plasma_2.5 mg/kg_iv_"
-      )
+      testPIOutputMapping()
     ),
     configuration = list(algorithm = "BOBYQA")
   )
-  pi <- esqlabsR:::.createSinglePITask(
+  pi <- .createSinglePITask(
     project = project,
     piTask = task,
     observedData = loadObservedData(project)
@@ -2181,16 +2286,11 @@ test_that(".createSinglePITask applies the declared PIParameter units to the run
       )
     ),
     outputMappings = list(
-      PIOutputMapping(
-        id = "PVB",
-        scenarios = "testscenario",
-        outputPath = "aciclovir_pvb",
-        observedData = "Laskin 1982.Group A_Aciclovir_1_Human_MALE_PeripheralVenousBlood_Plasma_2.5 mg/kg_iv_"
-      )
+      testPIOutputMapping()
     ),
     configuration = list(algorithm = "BOBYQA")
   )
-  pi <- esqlabsR:::.createSinglePITask(
+  pi <- .createSinglePITask(
     project = project,
     piTask = task,
     observedData = loadObservedData(project)
@@ -2221,16 +2321,11 @@ test_that(".createSinglePITask leaves the model default unit for an unitless PIP
       )
     ),
     outputMappings = list(
-      PIOutputMapping(
-        id = "PVB",
-        scenarios = "testscenario",
-        outputPath = "aciclovir_pvb",
-        observedData = "Laskin 1982.Group A_Aciclovir_1_Human_MALE_PeripheralVenousBlood_Plasma_2.5 mg/kg_iv_"
-      )
+      testPIOutputMapping()
     ),
     configuration = list(algorithm = "BOBYQA")
   )
-  pi <- esqlabsR:::.createSinglePITask(
+  pi <- .createSinglePITask(
     project = project,
     piTask = task,
     observedData = loadObservedData(project)
@@ -2277,7 +2372,7 @@ test_that("PIOutputMapping weight survives a Project save / load round trip", {
   )
 
   tmp <- withr::local_tempfile(fileext = ".json")
-  esqlabsR:::.saveProjectJson(project, tmp)
+  .saveProjectJson(project, tmp)
   reloaded <- loadProject(tmp)
   mappings <- reloaded$definitions$parameterIdentification[[
     "wt"
@@ -2321,7 +2416,7 @@ test_that("addPIParameter() scans for a free id and does not collide after a rem
     maxValue = 1,
     startValue = 0.5
   )
-  removePIParameter(project, "T", "p_explicit")
+  removePIParameter(project, "t", "p_explicit")
   # Auto-add again: must not abort with a colliding "T_param_2".
   addPIParameter(
     project,
@@ -2374,7 +2469,7 @@ test_that("addPIOutputMapping() scans for a free id and does not collide after a
     observedData = "D2",
     scenarios = "testscenario"
   )
-  removePIOutputMapping(project, "T", "m_explicit")
+  removePIOutputMapping(project, "t", "m_explicit")
   addPIOutputMapping(
     project,
     task = "t",
@@ -2474,6 +2569,162 @@ test_that("addPIParameter() overwrite = TRUE replaces the existing parameter", {
   expect_identical(params[[1]]$path, "a|b")
 })
 
+test_that("a PI parameter is removable by the id both doors stored it under", {
+  # A member id is a label inside the task's own definition file, so both doors
+  # that make one store it as typed. Were only `addPIParameter()` to lowercase
+  # it, the two doors would disagree and one of the two members below would be
+  # unreachable: nothing canonicalizes to a string carrying an uppercase letter,
+  # so no spelling would remove it.
+  project <- testProject()
+  addPITask(
+    project,
+    id = "t",
+    scenarios = "testscenario",
+    parameters = list(
+      PIParameter(
+        id = "Lipophilicity",
+        scenarios = "testscenario",
+        path = "Aciclovir|Lipophilicity",
+        minValue = 0,
+        maxValue = 1,
+        startValue = 0.5
+      )
+    ),
+    outputMappings = list(
+      PIOutputMapping(
+        id = "m",
+        scenarios = "testscenario",
+        outputPath = "aciclovir_pvb",
+        observedData = "D"
+      )
+    )
+  )
+  addPIParameter(
+    project,
+    task = "t",
+    id = "Solubility",
+    path = "Aciclovir|Solubility",
+    scenarios = "testscenario",
+    minValue = 0,
+    maxValue = 1,
+    startValue = 0.5
+  )
+  expect_identical(
+    vapply(
+      project$definitions$parameterIdentification$t$parameters,
+      `[[`,
+      character(1),
+      "id"
+    ),
+    c("Lipophilicity", "Solubility")
+  )
+
+  # Exactly as stored, so the canonical spelling of a stored id is a different
+  # id and misses; the spelling each was added with removes it.
+  expect_warning(
+    removePIParameter(project, task = "t", id = "lipophilicity"),
+    "not found"
+  )
+  expect_warning(
+    removePIParameter(project, task = "t", id = "solubility"),
+    "not found"
+  )
+  removePIParameter(project, task = "t", id = "Lipophilicity")
+  removePIParameter(project, task = "t", id = "Solubility")
+  expect_length(project$definitions$parameterIdentification$t$parameters, 0L)
+})
+
+test_that("addPIParameter(overwrite = TRUE) replaces an inline-added member", {
+  # The overwrite lookup is the same exact match the removal makes, so a member
+  # `addPITask()` filed under a mixed-case id is replaced rather than joined by
+  # a second record under a rewritten id.
+  project <- testProject()
+  addPITask(
+    project,
+    id = "t",
+    scenarios = "testscenario",
+    parameters = list(
+      PIParameter(
+        id = "Lipophilicity",
+        scenarios = "testscenario",
+        path = "old|path",
+        minValue = 0,
+        maxValue = 1,
+        startValue = 0.5
+      )
+    )
+  )
+  addPIParameter(
+    project,
+    task = "t",
+    id = "Lipophilicity",
+    path = "new|path",
+    scenarios = "testscenario",
+    minValue = 0,
+    maxValue = 1,
+    startValue = 0.5,
+    overwrite = TRUE
+  )
+  params <- project$definitions$parameterIdentification$t$parameters
+  expect_length(params, 1L)
+  expect_identical(params[[1]]$id, "Lipophilicity")
+  expect_identical(params[[1]]$path, "new|path")
+})
+
+test_that("a PI output mapping is removable by the id both doors stored it under", {
+  project <- testProject()
+  addPITask(
+    project,
+    id = "t",
+    scenarios = "testscenario",
+    outputMappings = list(
+      PIOutputMapping(
+        id = "Plasma (Peripheral Venous Blood)",
+        scenarios = "testscenario",
+        outputPath = "aciclovir_pvb",
+        observedData = "D"
+      )
+    )
+  )
+  addPIOutputMapping(
+    project,
+    task = "t",
+    id = "scalarWeight",
+    outputPath = "aciclovir_pvb",
+    observedData = "D2",
+    scenarios = "testscenario"
+  )
+  expect_identical(
+    vapply(
+      project$definitions$parameterIdentification$t$outputMappings,
+      `[[`,
+      character(1),
+      "id"
+    ),
+    c("Plasma (Peripheral Venous Blood)", "scalarWeight")
+  )
+
+  expect_warning(
+    removePIOutputMapping(
+      project,
+      task = "t",
+      id = "plasma_(peripheral_venous_blood)"
+    ),
+    "not found"
+  )
+  removePIOutputMapping(
+    project,
+    task = "t",
+    id = "Plasma (Peripheral Venous Blood)"
+  )
+  # Removing the last mapping leaves the task with no work at all, so it goes.
+  expect_warning(
+    removePIOutputMapping(project, task = "t", id = "scalarWeight"),
+    "now empty"
+  )
+  expect_null(project$definitions$parameterIdentification$t)
+})
+
 test_that(".validatePI surfaces duplicate output mapping ids within a task", {
   task <- PITask(
     id = "t1",
@@ -2503,7 +2754,7 @@ test_that(".validatePI surfaces duplicate output mapping ids within a task", {
       )
     )
   )
-  result <- esqlabsR:::.validatePI(list(T1 = task))
+  result <- .validatePI(list(T1 = task))
   expect_false(result$isValid())
   expect_match(
     paste(result$critical_errors, collapse = " "),
@@ -2514,7 +2765,7 @@ test_that(".validatePI surfaces duplicate output mapping ids within a task", {
 test_that("removePITask() warns and no-ops on an unknown task", {
   project <- testProject()
   before <- names(project$definitions$parameterIdentification)
-  expect_warning(removePITask(project, "Ghost"), "not found")
+  expect_warning(removePITask(project, "ghost"), "not found")
   expect_identical(names(project$definitions$parameterIdentification), before)
 })
 
@@ -2584,7 +2835,7 @@ test_that(".buildPIConfiguration() maps type to objectiveFunctionType and builds
       checkForNegativeValues = FALSE
     )
   )
-  piConfig <- esqlabsR:::.buildPIConfiguration(cfg)
+  piConfig <- .buildPIConfiguration(cfg)
   expect_identical(piConfig$algorithm, "BOBYQA")
   expect_identical(
     piConfig$objectiveFunctionOptions$objectiveFunctionType,
@@ -2603,7 +2854,7 @@ test_that(".buildPIConfiguration() merges partial algorithmOptions and ciOptions
     ciMethod = "PL",
     ciOptions = list(confLevel = 0.9)
   )
-  piConfig <- esqlabsR:::.buildPIConfiguration(cfg)
+  piConfig <- .buildPIConfiguration(cfg)
   # User-supplied value overrides the default.
   expect_identical(piConfig$algorithmOptions$maxeval, 500L)
   # Remaining BOBYQA defaults are still filled in.
@@ -2623,7 +2874,7 @@ test_that(".buildPIConfiguration() merges partial algorithmOptions and ciOptions
 test_that(".buildPIConfiguration() fills all algorithm defaults when algorithmOptions is absent", {
   skip_if_not_installed("ospsuite.parameteridentification")
   cfg <- list(algorithm = "HJKB")
-  piConfig <- esqlabsR:::.buildPIConfiguration(cfg)
+  piConfig <- .buildPIConfiguration(cfg)
   expect_equal(
     piConfig$algorithmOptions,
     ospsuite.parameteridentification::AlgorithmDefaults$HJKB
@@ -2632,19 +2883,12 @@ test_that(".buildPIConfiguration() fills all algorithm defaults when algorithmOp
 
 test_that(".createSinglePITask honours non-default transforms and weights", {
   project <- testProject()
-  obsId <- "Laskin 1982.Group A_Aciclovir_1_Human_MALE_PeripheralVenousBlood_Plasma_2.5 mg/kg_iv_"
+  obsId <- testObservedDataId
   task <- PITask(
     id = "t",
     scenarios = "testscenario",
     parameters = list(
-      PIParameter(
-        id = "EHC",
-        scenarios = "testscenario",
-        path = "Organism|Liver|EHC continuous fraction",
-        minValue = 0.5,
-        maxValue = 1.0,
-        startValue = 0.8
-      )
+      testPIParameter()
     ),
     outputMappings = list(
       PIOutputMapping(
@@ -2658,7 +2902,7 @@ test_that(".createSinglePITask honours non-default transforms and weights", {
       )
     )
   )
-  pi <- esqlabsR:::.createSinglePITask(
+  pi <- .createSinglePITask(
     project = project,
     piTask = task,
     observedData = loadObservedData(project)
@@ -2683,22 +2927,10 @@ test_that("runPI(tasks = ) runs only the requested subset", {
     id = "second",
     scenarios = "testscenario",
     parameters = list(
-      PIParameter(
-        id = "EHC",
-        scenarios = "testscenario",
-        path = "Organism|Liver|EHC continuous fraction",
-        minValue = 0.5,
-        maxValue = 1.0,
-        startValue = 0.8
-      )
+      testPIParameter()
     ),
     outputMappings = list(
-      PIOutputMapping(
-        id = "PVB",
-        scenarios = "testscenario",
-        outputPath = "aciclovir_pvb",
-        observedData = "Laskin 1982.Group A_Aciclovir_1_Human_MALE_PeripheralVenousBlood_Plasma_2.5 mg/kg_iv_"
-      )
+      testPIOutputMapping()
     ),
     configuration = list(algorithm = "BOBYQA")
   )
@@ -2721,29 +2953,16 @@ test_that("runPI(tasks = ) canonicalizes the referenced task ids", {
   # canonical form. Referencing it by the originally typed (un-canonicalized)
   # name must still resolve, like every other id reference in the package.
   project <- testProject()
-  addPITask(
-    project,
-    id = "MixedCase",
-    scenarios = "testscenario",
-    parameters = list(
-      PIParameter(
-        id = "EHC",
-        scenarios = "testscenario",
-        path = "Organism|Liver|EHC continuous fraction",
-        minValue = 0.5,
-        maxValue = 1.0,
-        startValue = 0.8
-      )
+  expect_warning(
+    addPITask(
+      project,
+      id = "MixedCase",
+      scenarios = "testscenario",
+      parameters = list(testPIParameter()),
+      outputMappings = list(testPIOutputMapping()),
+      configuration = list(algorithm = "BOBYQA")
     ),
-    outputMappings = list(
-      PIOutputMapping(
-        id = "PVB",
-        scenarios = "testscenario",
-        outputPath = "aciclovir_pvb",
-        observedData = "Laskin 1982.Group A_Aciclovir_1_Human_MALE_PeripheralVenousBlood_Plasma_2.5 mg/kg_iv_"
-      )
-    ),
-    configuration = list(algorithm = "BOBYQA")
+    "Canonicalized 1 id"
   )
   expect_named(
     project$definitions$parameterIdentification,
@@ -2784,12 +3003,7 @@ test_that("runPI() builds every task before optimising any (fail fast on a build
       )
     ),
     outputMappings = list(
-      PIOutputMapping(
-        id = "PVB",
-        scenarios = "testscenario",
-        outputPath = "aciclovir_pvb",
-        observedData = "Laskin 1982.Group A_Aciclovir_1_Human_MALE_PeripheralVenousBlood_Plasma_2.5 mg/kg_iv_"
-      )
+      testPIOutputMapping()
     ),
     configuration = list(algorithm = "BOBYQA")
   )
@@ -2876,14 +3090,14 @@ test_that("removeOutputPath() warns when the path is referenced only by a PI map
       PIOutputMapping(
         id = "m",
         scenarios = "testscenario",
-        outputPath = "PIOnlyPath",
+        outputPath = "pionlypath",
         observedData = "D"
       )
     )
   )
   expect_warning(
-    removeOutputPath(project, "PIOnlyPath"),
-    "PIOnlyPath"
+    removeOutputPath(project, "pionlypath"),
+    "still referenced by 1 parameter identification task"
   )
 })
 
@@ -2901,22 +3115,10 @@ test_that("a complete PI task can be authored from scratch through exported func
   # add the task without reaching into an already-loaded project's internals.
   project <- testProject()
 
-  parameter <- PIParameter(
-    id = "EHC",
-    scenarios = "testscenario",
-    path = "Organism|Liver|EHC continuous fraction",
-    minValue = 0.5,
-    maxValue = 1.0,
-    startValue = 0.8
-  )
-  outputMapping <- PIOutputMapping(
-    id = "PVB",
-    scenarios = "testscenario",
-    outputPath = "aciclovir_pvb",
-    observedData = "Laskin 1982.Group A_Aciclovir_1_Human_MALE_PeripheralVenousBlood_Plasma_2.5 mg/kg_iv_"
-  )
+  parameter <- testPIParameter()
+  outputMapping <- testPIOutputMapping()
   task <- PITask(
-    id = "fromScratch",
+    id = "fromscratch",
     scenarios = "testscenario",
     parameters = list(parameter),
     outputMappings = list(outputMapping),
@@ -2978,14 +3180,14 @@ test_that("removePITask removes a vector of task ids in one write-through", {
 # on an absent one it evaluates to `NA` and `if (NA)` aborted the whole restore
 # with `missing value where TRUE/FALSE needed`, naming neither sheet nor column
 # (#1190).
-test_that(".pi5xUniqueId falls back instead of aborting on an empty cell", {
-  expect_identical(.pi5xUniqueId(character(0), character()), "item")
-  expect_identical(.pi5xUniqueId(NULL, character()), "item")
-  expect_identical(.pi5xUniqueId(NA, character()), "item")
-  expect_identical(.pi5xUniqueId("   ", character()), "item")
+test_that(".uniqueImportedId falls back instead of aborting on an empty cell", {
+  expect_identical(.uniqueImportedId(character(0), character()), "item")
+  expect_identical(.uniqueImportedId(NULL, character()), "item")
+  expect_identical(.uniqueImportedId(NA, character()), "item")
+  expect_identical(.uniqueImportedId("   ", character()), "item")
   # A usable cell is unaffected, and a clash still gets a suffix.
-  expect_identical(.pi5xUniqueId("Conc", character()), "conc")
-  expect_identical(.pi5xUniqueId("Conc", "conc"), "conc_2")
+  expect_identical(.uniqueImportedId("Conc", character()), "conc")
+  expect_identical(.uniqueImportedId("Conc", "conc"), "conc_2")
 })
 
 test_that(".pi5xPath tolerates an absent container or parameter cell", {
@@ -3031,12 +3233,263 @@ test_that(".parseExcelPI5xMappings parses a row with no output path", {
   expect_null(mappings[[2]]$outputPath)
   # Still gets a usable, unique id.
   expect_identical(mappings[[2]]$id, "item")
+})
 
+# The sheet's oldest revision has no `OutputPath` column at all: it predates the
+# column and identified a mapping's output through the scenario, one mapping per
+# output path the scenario declares. Reproducing that lets such a workbook
+# restore instead of failing on every one of its mappings (#1192).
+test_that(".parseExcelPI5xMappings derives a missing OutputPath column", {
+  noColumn <- data.frame(
+    PITaskName = "t1",
+    Scenarios = "s1, s2",
+    DataSet = "d1",
+    Scaling = "log",
+    stringsAsFactors = FALSE
+  )
+  scenarios <- list(
+    list(name = "s1", outputPaths = list("pvb", "urine")),
+    list(name = "s2", outputPaths = list("pvb"))
+  )
+
+  mappings <- .parseExcelPI5xMappings(noColumn, "t1", scenarios)
+
+  # One mapping per output path, not per scenario: a path both scenarios declare
+  # becomes one mapping naming both.
+  expect_length(mappings, 2L)
+  expect_identical(mappings[[1]]$outputPath, "pvb")
+  expect_identical(unlist(mappings[[1]]$scenarios), c("s1", "s2"))
+  expect_identical(mappings[[2]]$outputPath, "urine")
+  expect_identical(unlist(mappings[[2]]$scenarios), "s1")
+  # Every other cell of the original row rides along.
+  expect_identical(mappings[[1]]$observedData, "d1")
+  expect_identical(mappings[[1]]$scaling, "log")
+})
+
+test_that(".parseExcelPI5xMappings keeps and reports an underivable path", {
   noColumn <- data.frame(
     PITaskName = "t1",
     Scenarios = "s1",
     DataSet = "d1",
     stringsAsFactors = FALSE
   )
-  expect_length(.parseExcelPI5xMappings(noColumn, "t1"), 1L)
+
+  # A scenario that declares no output path, and no scenarios section at all,
+  # both leave the mapping unidentifiable. The mapping is kept without a path
+  # (validation reports it) rather than dropped from the task.
+  expect_warning(
+    mappings <- .parseExcelPI5xMappings(
+      noColumn,
+      "t1",
+      list(list(name = "s1"))
+    ),
+    class = "esqlabsR_importIncompletePIOutputMappings"
+  )
+  expect_length(mappings, 1L)
+  expect_null(mappings[[1]]$outputPath)
+  expect_identical(mappings[[1]]$observedData, "d1")
+
+  expect_warning(
+    expect_length(.parseExcelPI5xMappings(noColumn, "t1", NULL), 1L),
+    class = "esqlabsR_importIncompletePIOutputMappings"
+  )
+})
+
+# The two sheets are hand-maintained separately, so they routinely spell one
+# scenario differently. Every other cross-sheet reference in the import resolves
+# on the canonical id, and this one has to as well, or the mapping is dropped and
+# the warning blames a scenario that does have an output path.
+test_that(".parseExcelPI5xMappings matches a scenario on its canonical id", {
+  noColumn <- data.frame(
+    PITaskName = "t1",
+    Scenarios = "aciclovir iv",
+    DataSet = "d1",
+    stringsAsFactors = FALSE
+  )
+  scenarios <- list(list(name = "Aciclovir_IV", outputPaths = list("pvb")))
+
+  mappings <- .parseExcelPI5xMappings(noColumn, "t1", scenarios)
+
+  expect_length(mappings, 1L)
+  expect_identical(mappings[[1]]$outputPath, "pvb")
+})
+
+# `observedData` is as required as `outputPath` on a built mapping, so a row with
+# no DataSet is incomplete too. It is kept and reported, not dropped: the load
+# path is lenient about both fields and validation names them.
+test_that(".parseExcelPI5xMappings keeps a derived row with no DataSet", {
+  noColumn <- data.frame(
+    PITaskName = "t1",
+    Scenarios = c("s1", "s1"),
+    DataSet = c(NA, "d1"),
+    stringsAsFactors = FALSE
+  )
+  scenarios <- list(list(name = "s1", outputPaths = list("pvb")))
+
+  mappings <- .parseExcelPI5xMappings(noColumn, "t1", scenarios)
+
+  expect_length(mappings, 2L)
+  expect_null(mappings[[1]]$observedData)
+  expect_identical(mappings[[1]]$outputPath, "pvb")
+  expect_identical(mappings[[2]]$observedData, "d1")
+})
+
+# The load path is deliberately more tolerant than the constructor: a project
+# file carrying an incomplete mapping has to open so validateProject() can report
+# it, while authoring one through PIOutputMapping() is still rejected at the call.
+test_that(".parsePIOutputMappings loads a mapping the constructor would reject", {
+  mappings <- .parsePIOutputMappings(
+    list(list(id = "m1", scenarios = list("s1"), observedData = "d1")),
+    "t1"
+  )
+
+  expect_length(mappings, 1L)
+  expect_s3_class(mappings[[1]], "PIOutputMapping")
+  expect_null(mappings[[1]]$outputPathId)
+  expect_identical(mappings[[1]]$observedDataId, "d1")
+
+  expect_snapshot(
+    error = TRUE,
+    PIOutputMapping(id = "m1", scenarios = "s1", observedData = "d1")
+  )
+})
+
+# A hand-maintained 5.x `PIParameters` sheet routinely leaves a bounds cell
+# blank. The parameter loads and validation names the gap, rather than the whole
+# project failing to open, which is what made such a workbook unfixable.
+test_that(".parsePIParameters loads a parameter the constructor would reject", {
+  parameters <- .parsePIParameters(
+    list(list(
+      id = "p1",
+      scenarios = list("s1"),
+      path = "Aciclovir|Lipophilicity",
+      maxValue = 2,
+      startValue = 0
+    )),
+    "t1"
+  )
+
+  expect_length(parameters, 1L)
+  expect_s3_class(parameters[[1]], "PIParameter")
+  # Absent, not NA: the validator tells "no value" from "an unusable one".
+  expect_null(parameters[[1]]$minValue)
+  expect_identical(parameters[[1]]$maxValue, 2)
+
+  expect_snapshot(
+    error = TRUE,
+    PIParameter(
+      id = "p1",
+      scenarios = "s1",
+      path = "Aciclovir|Lipophilicity",
+      maxValue = 2,
+      startValue = 0
+    )
+  )
+})
+
+# Every gap in one report. The cross-reference phase skips itself once a section
+# has a critical error, so a mapping's missing field is reported by the section
+# validator; otherwise a user fixing a parameter would only then discover the
+# mapping. The bounds comparison must also not run against an absent bound.
+test_that(".validatePI reports every incomplete PI record at once", {
+  task <- PITask(
+    id = "t1",
+    scenarios = "s1",
+    parameters = list(PIParameter(
+      id = "p1",
+      scenarios = "s1",
+      path = "A|B",
+      minValue = 0,
+      maxValue = 2,
+      startValue = 1
+    )),
+    outputMappings = list(PIOutputMapping(
+      id = "m1",
+      scenarios = "s1",
+      outputPath = "pvb",
+      observedData = "d1"
+    ))
+  )
+  # Hollow out one field of each record, as a blank workbook cell would.
+  task$parameters[[1]]$minValue <- NULL
+  task$outputMappings[[1]]$observedDataId <- NULL
+
+  msgs <- vapply(
+    .validatePI(list(t1 = task))$critical_errors,
+    \(e) e$message,
+    character(1)
+  )
+
+  expect_match(msgs, "missing required field: minValue", all = FALSE)
+  expect_match(msgs, "does not define an observedData", all = FALSE)
+  # No spurious bounds complaint: the comparison is skipped, not run on NULL.
+  expect_false(any(grepl("invalid bounds", msgs, ignore.case = TRUE)))
+})
+
+# Runtime bounds assignment ----
+
+# A stand-in for `ospsuite.parameteridentification::PIParameters`' bound
+# setters: each rejects a value that would cross the *other* bound as it stands
+# right then, which is the constraint `.assignPIBounds()` has to route around.
+.boundedRuntime <- function(minValue, maxValue) {
+  R6::R6Class(
+    "FakePIParameters",
+    public = list(
+      initialize = function(minValue, maxValue) {
+        private$.min <- minValue
+        private$.max <- maxValue
+      }
+    ),
+    private = list(.min = NULL, .max = NULL),
+    active = list(
+      minValue = function(value) {
+        if (missing(value)) {
+          return(private$.min)
+        }
+        if (value > private$.max) {
+          stop("minValue above the current maxValue")
+        }
+        private$.min <- value
+      },
+      maxValue = function(value) {
+        if (missing(value)) {
+          return(private$.max)
+        }
+        if (value < private$.min) {
+          stop("maxValue below the current minValue")
+        }
+        private$.max <- value
+      }
+    )
+  )$new(minValue, maxValue)
+}
+
+test_that(".assignPIBounds sets bounds that sit above the model defaults", {
+  # New window entirely above the stale one: setting minValue first would cross
+  # the default maxValue, so maxValue has to be raised first.
+  runtime <- .boundedRuntime(minValue = 0, maxValue = 1)
+  .assignPIBounds(runtime, minValue = 10, maxValue = 20)
+  expect_identical(runtime$minValue, 10)
+  expect_identical(runtime$maxValue, 20)
+})
+
+test_that(".assignPIBounds sets bounds that sit below the model defaults", {
+  # New window entirely below the stale one: maxValue first would cross the
+  # default minValue, so minValue has to be lowered first.
+  runtime <- .boundedRuntime(minValue = 100, maxValue = 200)
+  .assignPIBounds(runtime, minValue = 1, maxValue = 5)
+  expect_identical(runtime$minValue, 1)
+  expect_identical(runtime$maxValue, 5)
+})
+
+test_that(".assignPIBounds sets bounds that overlap the model defaults", {
+  runtime <- .boundedRuntime(minValue = 0, maxValue = 10)
+  .assignPIBounds(runtime, minValue = 2, maxValue = 8)
+  expect_identical(runtime$minValue, 2)
+  expect_identical(runtime$maxValue, 8)
+})
+
+test_that(".assignPIBounds returns the runtime invisibly", {
+  runtime <- .boundedRuntime(minValue = 0, maxValue = 10)
+  expect_invisible(.assignPIBounds(runtime, minValue = 1, maxValue = 9))
 })

@@ -11,7 +11,7 @@ test_that(".parseNestedDataCombined re-keys by id and drops the id field", {
       observed = list(list(label = "b"))
     )
   )
-  parsed <- esqlabsR:::.parseNestedDataCombined(raw)
+  parsed <- .parseNestedDataCombined(raw)
   expect_named(parsed, c("DC1", "DC2"))
   expect_named(parsed$DC1, c("simulated", "observed"))
   expect_equal(parsed$DC1$simulated[[1]]$label, "a")
@@ -19,8 +19,8 @@ test_that(".parseNestedDataCombined re-keys by id and drops the id field", {
 })
 
 test_that(".parseNestedDataCombined returns empty list for NULL or empty input", {
-  expect_identical(esqlabsR:::.parseNestedDataCombined(NULL), list())
-  expect_identical(esqlabsR:::.parseNestedDataCombined(list()), list())
+  expect_identical(.parseNestedDataCombined(NULL), list())
+  expect_identical(.parseNestedDataCombined(list()), list())
 })
 
 test_that(".parsePlotEntries re-keys by id and drops absent fields", {
@@ -28,7 +28,7 @@ test_that(".parsePlotEntries re-keys by id and drops absent fields", {
     list(plotId = "P1", plotType = "individual", title = "T1"),
     list(plotId = "P2", plotType = "population")
   )
-  parsed <- esqlabsR:::.parsePlotEntries(raw, "plotId", "Plot")
+  parsed <- .parsePlotEntries(raw, "plotId", "Plot")
   expect_named(parsed, c("P1", "P2"))
   expect_s3_class(parsed$P1, "Plot")
   expect_equal(parsed$P1$title, "T1")
@@ -37,9 +37,9 @@ test_that(".parsePlotEntries re-keys by id and drops absent fields", {
 })
 
 test_that(".parsePlotEntries returns an empty list for NULL or empty", {
-  expect_identical(esqlabsR:::.parsePlotEntries(NULL, "plotId", "Plot"), list())
+  expect_identical(.parsePlotEntries(NULL, "plotId", "Plot"), list())
   expect_identical(
-    esqlabsR:::.parsePlotEntries(list(), "plotId", "Plot"),
+    .parsePlotEntries(list(), "plotId", "Plot"),
     list()
   )
 })
@@ -322,7 +322,7 @@ test_that("addPlotGrid accepts a plain list of plot ids for a single grid", {
   saveProject(project)
   reloaded <- loadProject(project$info$projectFilePath)
   expect_identical(
-    esqlabsR:::.splitPlotIDs(
+    .splitPlotIDs(
       reloaded$definitions$plotGrids$single_grid$plotIds
     ),
     c("sp1", "sp2")
@@ -350,7 +350,7 @@ test_that("addPlotGrid canonicalizes a comma out of a plot id and still resolves
   saveProject(project)
   reloaded <- loadProject(project$info$projectFilePath)
   expect_identical(
-    esqlabsR:::.splitPlotIDs(reloaded$definitions$plotGrids$comma_grid$plotIds),
+    .splitPlotIDs(reloaded$definitions$plotGrids$comma_grid$plotIds),
     "p_evil"
   )
 })
@@ -358,11 +358,52 @@ test_that("addPlotGrid canonicalizes a comma out of a plot id and still resolves
 test_that(".joinPlotIDs / .splitPlotIDs round-trip delimiter-bearing ids", {
   ids <- c("plain", "has,comma", "has\\backslash", "trailing,")
   expect_identical(
-    esqlabsR:::.splitPlotIDs(esqlabsR:::.joinPlotIDs(ids)),
+    .splitPlotIDs(.joinPlotIDs(ids)),
     ids
   )
-  expect_identical(esqlabsR:::.joinPlotIDs(character()), "")
-  expect_identical(esqlabsR:::.splitPlotIDs(""), character())
+  expect_identical(.joinPlotIDs(character()), "")
+  expect_identical(.splitPlotIDs(""), character())
+})
+
+# Validation ----
+
+test_that(".validatePlots names the closest existing id for a dangling reference", {
+  result <- .validatePlots(
+    dataCombined = list(aciclovir_pvb = list()),
+    plotConfig = list(
+      p1 = list(
+        plotId = "p1",
+        dataCombinedId = "aciclovir_pbv",
+        plotType = "individual"
+      )
+    ),
+    plotGrids = list(grid = list(plotGridId = "grid", plotIds = "p2"))
+  )
+
+  expect_snapshot(cat(
+    vapply(result$critical_errors, function(e) e$message, character(1)),
+    sep = "\n"
+  ))
+})
+
+test_that(".validatePlots reports an empty reference, which the missing-field loop lets through", {
+  # `""` is not `NULL`, so the required-field loop accepts it. It must still be
+  # reported here: `createPlots()` aborts on it, and nothing else flags it.
+  result <- .validatePlots(
+    dataCombined = list(aciclovir_pvb = list()),
+    plotConfig = list(
+      p1 = list(plotId = "p1", dataCombinedId = "", plotType = "individual")
+    ),
+    plotGrids = list(grid = list(plotGridId = "grid", plotIds = "p1, "))
+  )
+
+  messages <- vapply(
+    result$critical_errors,
+    function(e) e$message,
+    character(1)
+  )
+  expect_true(any(grepl("unknown dataCombinedId", messages)))
+  expect_true(any(grepl("unknown plotIds", messages)))
 })
 
 test_that("removePlot removes a vector of ids in one pass and warns on misses", {
@@ -456,7 +497,7 @@ test_that("removeDataCombined drops the entry and deletes its definition file", 
 test_that("removeDataCombined warns and is a no-op on an unknown id", {
   project <- exampleProject()
   before <- project$definitions$dataCombined
-  expect_warning(removeDataCombined(project, "Ghost"), "not found")
+  expect_warning(removeDataCombined(project, "ghost"), "not found")
   expect_identical(project$definitions$dataCombined, before)
 })
 

@@ -24,10 +24,6 @@ test_that("esqlabsColors returns ten colors", {
   expect_length(esqlabsColors(10), 10)
 })
 
-test_that("esqlabsColors returns ten colors", {
-  expect_length(esqlabsColors(10), 10)
-})
-
 # col2hsv -----------------------------------------------------------------
 
 test_that("col2hsv returns expected HSV values for a given R color name", {
@@ -142,17 +138,17 @@ test_that(".updatePlotConfiguration applies the override when a default value ca
 
 test_that(".calculateLimits widens a zero-width range to a finite interval", {
   # All-equal nonzero input on a linear axis.
-  linNonzero <- esqlabsR:::.calculateLimits(c(5, 5, 5))
+  linNonzero <- .calculateLimits(c(5, 5, 5))
   expect_true(all(is.finite(linNonzero)))
   expect_gt(linNonzero[[2]], linNonzero[[1]])
 
   # All-zero input on a linear axis previously collapsed to c(0, 0).
-  linZero <- esqlabsR:::.calculateLimits(c(0, 0, 0))
+  linZero <- .calculateLimits(c(0, 0, 0))
   expect_true(all(is.finite(linZero)))
   expect_gt(linZero[[2]], linZero[[1]])
 
   # All-equal positive input on a log axis stays strictly positive.
-  logNonzero <- esqlabsR:::.calculateLimits(c(5, 5, 5), scaling = "log")
+  logNonzero <- .calculateLimits(c(5, 5, 5), scaling = "log")
   expect_true(all(is.finite(logNonzero)))
   expect_gt(logNonzero[[1]], 0)
   expect_gt(logNonzero[[2]], logNonzero[[1]])

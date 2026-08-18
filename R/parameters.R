@@ -1,13 +1,23 @@
-# Section validation adapter ----
+# Section validation adapters ----
 #
 # Registered in `.validationAdapters` (R/validation.R) and called by
-# `.runProjectValidation()`. The actual shape check lives in
-# `.validateParameterSets()` (in `R/validation.R`).
+# `.runProjectValidation()`. The actual shape checks live in
+# `.validateParameterSets()` / `.validateInitialConditions()` (in
+# `R/validation.R`).
 
 #' @keywords internal
 #' @noRd
 .parameterSetsValidatorAdapter <- function(project) {
   .validateParameterSets(project$definitions$parameterSets, "parameterSets")
+}
+
+#' @keywords internal
+#' @noRd
+.initialConditionsValidatorAdapter <- function(project) {
+  .validateInitialConditions(
+    project$definitions$initialConditions,
+    "initialConditions"
+  )
 }
 
 # Merge the parameter-set sections of a parsed `Project.json` into the single
@@ -737,7 +747,7 @@ print.InitialConditionSet <- function(x, ...) {
 #' Create one or more parameter sets
 #'
 #' Adds empty parameter sets to the project's single `parameterSets` section,
-#' vectorizing over a vector of ids (all N added in one write-through). A
+#' vectorizing over a vector of ids (all N added in one in-memory edit). A
 #' scenario references the sets it applies through its `modelParameterSets`
 #' field, an individual or application through its `parameterSets` field; all
 #' three resolve against this one section.
@@ -788,7 +798,7 @@ addParameterSet <- function(project, id, overwrite = FALSE) {
 
 #' Remove one or more parameter sets
 #'
-#' Drop the parameter sets with matching ids in one write-through. Warns (and
+#' Drop the parameter sets with matching ids in one in-memory edit. Warns (and
 #' skips) any id not present, and warns when a removed set is still
 #' referenced.
 #'
@@ -893,7 +903,7 @@ addParameterEntry <- function(
   .call
 ) {
   rlang::local_error_call(.call)
-  if (!is.character(id) || length(id) != 1L || is.na(id) || nchar(id) == 0) {
+  if (!.isNonEmptyString(id)) {
     cli::cli_abort("{.arg id} must be a non-empty string")
   }
   id <- .canonicalizeId(id)
@@ -971,7 +981,7 @@ removeParameterEntry <- function(
   .call
 ) {
   rlang::local_error_call(.call)
-  if (!is.character(id) || length(id) != 1L || is.na(id) || nchar(id) == 0) {
+  if (!.isNonEmptyString(id)) {
     cli::cli_abort("{.arg id} must be a non-empty string")
   }
   id <- .canonicalizeId(id)
@@ -1030,20 +1040,10 @@ removeParameterEntry <- function(
   units
 ) {
   errors <- character()
-  if (
-    !is.character(containerPath) ||
-      length(containerPath) != 1L ||
-      is.na(containerPath) ||
-      nchar(containerPath) == 0
-  ) {
+  if (!.isNonEmptyString(containerPath)) {
     errors <- c(errors, "containerPath must be a non-empty string")
   }
-  if (
-    !is.character(parameterName) ||
-      length(parameterName) != 1L ||
-      is.na(parameterName) ||
-      nchar(parameterName) == 0
-  ) {
+  if (!.isNonEmptyString(parameterName)) {
     errors <- c(errors, "parameterName must be a non-empty string")
   }
   if (!is.numeric(value) || length(value) != 1L || is.na(value)) {
@@ -1284,7 +1284,7 @@ removeParameterEntry <- function(
 #' Create one or more initial-condition sets
 #'
 #' Adds empty initial-condition sets to the project's `initialConditions`
-#' section, vectorizing over a vector of ids (all N added in one write-through).
+#' section, vectorizing over a vector of ids (all N added in one in-memory edit).
 #' An initial-condition set holds molecule start values (`path`, `value`,
 #' `unit`) a scenario applies through its `initialConditions` field, distinct
 #' from parameter sets (which set model parameters, not molecule start values).
@@ -1342,7 +1342,7 @@ addInitialConditions <- function(project, id, overwrite = FALSE) {
 
 #' Remove one or more initial-condition sets
 #'
-#' Drop the initial-condition sets with matching ids in one write-through.
+#' Drop the initial-condition sets with matching ids in one in-memory edit.
 #' Warns (and skips) any id not present, and warns when a removed set is still
 #' referenced.
 #'
@@ -1436,7 +1436,7 @@ addInitialConditionEntry <- function(
   .call
 ) {
   rlang::local_error_call(.call)
-  if (!is.character(id) || length(id) != 1L || is.na(id) || nchar(id) == 0) {
+  if (!.isNonEmptyString(id)) {
     cli::cli_abort("{.arg id} must be a non-empty string")
   }
   id <- .canonicalizeId(id)
@@ -1494,7 +1494,7 @@ removeInitialConditionEntry <- function(project, id, path) {
 # @noRd
 .removeInitialConditionEntry_impl <- function(self, private, id, path, .call) {
   rlang::local_error_call(.call)
-  if (!is.character(id) || length(id) != 1L || is.na(id) || nchar(id) == 0) {
+  if (!.isNonEmptyString(id)) {
     cli::cli_abort("{.arg id} must be a non-empty string")
   }
   id <- .canonicalizeId(id)
@@ -1529,12 +1529,7 @@ removeInitialConditionEntry <- function(project, id, path) {
 # @noRd
 .validateInitialConditionEntryArgs <- function(path, value, unit) {
   errors <- character()
-  if (
-    !is.character(path) ||
-      length(path) != 1L ||
-      is.na(path) ||
-      nchar(path) == 0
-  ) {
+  if (!.isNonEmptyString(path)) {
     errors <- c(errors, "path must be a non-empty string")
   }
   if (!is.numeric(value) || length(value) != 1L || is.na(value)) {
@@ -1543,12 +1538,7 @@ removeInitialConditionEntry <- function(project, id, path) {
   # A unit is mandatory for a molecule start value: `ospsuite::setQuantityValuesByPath()`
   # rejects a blank unit at run time, so reject it here (fail fast at authoring)
   # rather than deferring an opaque failure to the simulation.
-  if (
-    !is.character(unit) ||
-      length(unit) != 1L ||
-      is.na(unit) ||
-      nchar(unit) == 0L
-  ) {
+  if (!.isNonEmptyString(unit)) {
     errors <- c(errors, "unit must be a non-empty string")
   }
   errors

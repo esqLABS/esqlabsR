@@ -4,7 +4,7 @@
       result <- createScenariosFromPKML(pkmlInProject(project), project = project,
       scenarios = "seeded")
     Message
-      i Added 1 scenario: "seeded"
+      Added 1 scenario: "seeded"
 
 # user alias ignored in favour of registered id emits an inform
 
@@ -12,8 +12,8 @@
       createScenariosFromPKML(pkmlInProject(project), project = project, scenarios = "seeded",
       outputPaths = stats::setNames(existingPath, "myAlias"))
     Message
-      i Output path alias "myAlias" ignored: path "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)" is already registered as "aciclovir_pvb".
-      i Added 1 scenario: "seeded"
+      Output path alias "myAlias" ignored: path "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)" is already registered as "aciclovir_pvb".
+      Added 1 scenario: "seeded"
 
 # named outputPaths colliding with an existing id mapped to a different path abort and leave the project unchanged
 
@@ -31,7 +31,7 @@
       parameterSets = "DoesNotExist")
     Condition
       Warning:
-      Canonicalized 1 referenced id to a safe form:
+      Canonicalized 1 id to a safe form:
       * "DoesNotExist" -> "doesnotexist"
       Error in `project$createScenariosFromPKML()`:
       ! Cannot add scenario "seeded":
@@ -44,7 +44,7 @@
       application = "NoSuchProtocol")
     Condition
       Warning:
-      Canonicalized 1 referenced id to a safe form:
+      Canonicalized 1 id to a safe form:
       * "NoSuchProtocol" -> "nosuchprotocol"
       Error in `project$createScenariosFromPKML()`:
       ! Cannot add scenario "seeded":
@@ -59,7 +59,7 @@
       Warning:
       Duplicate scenario names found and made unique by adding indices: i Duplicated names: "s", renamed to "s_2"
     Message
-      i Added 2 scenarios: "s" and "s_2"
+      Added 2 scenarios: "s" and "s_2"
 
 # NULL simulationsFolder falls back to the absolute pkml path with a warning
 

@@ -1,4 +1,4 @@
-# Tests for the single-file snapshot artifact (R/definition-files.R):
+# Tests for the single-file snapshot artifact (R/project-snapshot.R):
 # `snapshotProject(project, dir, name, overwrite)` writes a portable
 # `.esqlabsR` freeze of the in-memory state, and
 # `restoreProject(snapshot, dir, overwrite)` reads one and materializes a full
@@ -183,6 +183,29 @@ test_that("restoreProject writes a tree and returns the Project bound to dir", {
   expect_false(.isModified(project))
 })
 
+# #1213 item 26: a restored project was identified only by the folder it landed
+# in, and a snapshot written by a previous esqlabsR version carries no name at all,
+# so there was no way to give one. `name` names the project the restore produces.
+test_that("restoreProject names the project it writes", {
+  out <- snapshotProject(
+    testProject(),
+    dir = withr::local_tempdir(),
+    name = "study"
+  )
+  dir <- withr::local_tempdir()
+
+  project <- restoreProject(out, dir, name = "Renal study")
+
+  expect_identical(project$info$name, "Renal study")
+  # In the container the restore wrote, so it survives a reload, and the restore
+  # still leaves nothing unsaved.
+  expect_identical(
+    loadProject(file.path(dir, "Project.json"))$info$name,
+    "Renal study"
+  )
+  expect_false(.isModified(project))
+})
+
 test_that("restoreProject's tree reloads via loadProject identically", {
   source <- exampleProject()
   out <- snapshotProject(source, dir = withr::local_tempdir(), name = "study")
@@ -255,6 +278,34 @@ test_that("restoreProject reads a .esqlabsR snapshot", {
     names(testProject()$definitions$scenarios),
     ignore.order = TRUE
   )
+})
+
+test_that("restoreProject warns about a dangling cross-reference once, not twice", {
+  # A restore loads twice (the snapshot on the way in, the materialized tree on
+  # the way out), and only the returned project's load is the user's, so the
+  # warning is theirs to hear once (#1213).
+  project <- testProject()
+  addScenario(project, "dangler", modelFile = "Aciclovir.pkml")
+  # Point the new scenario at an individual that is not defined, by editing the
+  # snapshot the restore reads (the authoring API refuses a dangling reference).
+  out <- snapshotProject(project, dir = withr::local_tempdir(), name = "study")
+  raw <- jsonlite::fromJSON(out, simplifyVector = FALSE)
+  for (i in seq_along(raw$scenarios)) {
+    if (identical(raw$scenarios[[i]]$name, "dangler")) {
+      raw$scenarios[[i]]$individual <- "ghost"
+    }
+  }
+  jsonlite::write_json(raw, out, auto_unbox = TRUE, null = "null", digits = NA)
+
+  warnings <- character()
+  withCallingHandlers(
+    restoreProject(out, withr::local_tempdir()),
+    warning = function(w) {
+      warnings <<- c(warnings, conditionMessage(w))
+      invokeRestart("muffleWarning")
+    }
+  )
+  expect_length(grep("unresolved cross-reference", warnings), 1)
 })
 
 test_that("restoreProject still reads a plain inlined Project.json (back-compat)", {
@@ -513,4 +564,50 @@ test_that("restoreProject migrates a non-canonical legacy Project.json losslessl
 
   simScenario <- migrated$definitions$dataCombined[[1]]$simulated[[1]]$scenario
   expect_identical(simScenario, "aciclovir_iv")
+})
+
+test_that("restoreProject resolves a mapping's outputPath given as a model path", {
+  # #1226: `PIOutputMapping()` documents the literal model path as an accepted
+  # form of the reference. The id canonicalization a restore runs over the raw
+  # snapshot turns every `|`, space and paren of such a path into `_`, which
+  # matches no id, and the restored tree would keep that mangled string, so the
+  # path the user wrote could not be read back out of the restore either.
+  source <- exampleProject()
+  literal <- source$definitions$outputPaths[["aciclovir_pvb"]]
+  snapshotDir <- withr::local_tempdir()
+  snapshot <- file.path(snapshotDir, "Project.json")
+  .saveProjectJson(source, snapshot, includeScenarios = TRUE)
+
+  # Spell only the mapping's reference as the model path; the `outputPaths`
+  # definition that carries the same string as its value stays as it is.
+  raw <- jsonlite::fromJSON(snapshot, simplifyVector = FALSE)
+  raw$parameterIdentification[[1]]$outputMappings[[1]]$outputPath <- literal
+  jsonlite::write_json(
+    raw,
+    snapshot,
+    auto_unbox = TRUE,
+    pretty = TRUE,
+    null = "null",
+    digits = NA
+  )
+
+  dir <- withr::local_tempdir()
+  restored <- restoreProject(snapshot, dir)
+  mapping <- restored$definitions$parameterIdentification[[1]]$outputMappings[[
+    1
+  ]]
+  expect_identical(mapping$outputPathId, "aciclovir_pvb")
+  expect_false(isAnyCriticalErrors(validateProject(restored)))
+
+  # The resolved id, not a mangled path, is what the written tree carries.
+  onDisk <- jsonlite::fromJSON(
+    file.path(
+      dir,
+      "definitions",
+      "parameter-identification",
+      "aciclovirsimple.json"
+    ),
+    simplifyVector = FALSE
+  )
+  expect_identical(onDisk$outputMappings[[1]]$outputPath, "aciclovir_pvb")
 })

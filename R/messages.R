@@ -8,6 +8,27 @@ messages <- ospsuite.utils::messages
 # text belongs here as a catalog entry routed through those wrappers, not as a
 # base `stop()`/`warning()`/`message()` on an inline literal string.
 #
+# An entry is built one of three ways, and the choice is capability, not taste.
+#
+#   * `cliFormat()` by default, for a single-line message. It is
+#     `cli::format_inline(paste(..., sep = "\n"))`, so it formats one inline
+#     string: interpolation, the inline classes (`{.file}`, `{.fn}`, `{.val}`,
+#     ...), pluralization (`{?s}`, `{cli::qty()}`) and collapsing (`{.or}`) all
+#     work. A long template still wraps across physical lines with a trailing
+#     `\\`; `cliFormat()` leaves that continuation in the string it returns, and
+#     the raising `cli_abort()` / `cli_warn()` resolves it on its own pass.
+#   * `cli::format_message()` when the message carries `"i"` / `"x"` / `"!"` /
+#     `"*"` bullets. This is the one thing `cliFormat()` cannot express: it drops
+#     the names of a `cli` vector and glues the elements into one run-on line.
+#   * The raw templated vector, returned unglued, when a value interpolated into
+#     it may itself contain `{` or `}`. Both helpers above glue eagerly, and the
+#     raising call then glue-parses the finished string a second time, so such a
+#     value would be evaluated as an R expression. Returning the template
+#     instead means the raising call interpolates exactly once, from its own
+#     frame, which is why those entries name their parameters after the
+#     variables bound at the raising site (`restoreDirNotEmpty()`'s `dir`,
+#     `unsupportedSchemaVersion()`'s `version`).
+#
 # One known exception: the project validation framework (`R/validation.R` and
 # the per-section validators in `R/scenarios.R`, `R/individuals.R`,
 # `R/populations.R`, `R/output-paths.R`, `R/plots.R`,
@@ -120,13 +141,69 @@ messages$wrongOntogenyStructure <- function(entry) {
   )
 }
 
+# Raised when an authoring call is handed something other than the accepted
+# `proteinOntogenies` shape. It names the shape, because the field is aligned
+# across ids like every other one, so a length-based error would report a
+# mismatch against the number of ids, describing neither the value nor the fix.
+messages$invalidProteinOntogenies <- function(given) {
+  cli::format_message(c(
+    "{.arg proteinOntogenies} must be a character vector of {.val Protein:Ontogeny} entries.",
+    "x" = "It is {given}.",
+    "i" = "One entry per ontogeny, e.g. {.code c(\"CYP3A4:CYP3A4\", \"CYP2D6:CYP2C8\")}, or the same pairs as one comma-joined string."
+  ))
+}
+
+# Warned from the Excel import when a sheet declares protein ontogenies that
+# cannot be read as protein/ontogeny pairs. The legacy two-column spelling pairs
+# the two cells positionally, so an unmatched count means one of the two values
+# would be dropped; saying so is the difference between a reported gap and
+# ontogenies vanishing from the imported project.
+messages$excelOntogeniesNotReadable <- function(
+  recordType,
+  recordId,
+  proteins,
+  ontogenies
+) {
+  cli::format_message(c(
+    "!" = "The protein ontogenies of {recordType} {.val {recordId}} are not imported: the {.field Protein} and {.field Ontogeny} columns cannot be paired.",
+    "i" = "{length(proteins)} protein{?s} against {length(ontogenies)} ontogen{?y/ies}; each protein needs exactly one ontogeny.",
+    "i" = "Fix the workbook, or write the pairs into a single {.field Protein Ontogenies} cell as {.val Protein:Ontogeny,Protein:Ontogeny}."
+  ))
+}
+
 # utilities####
 messages$fileNotFound <- function(filePath) {
   cliFormat("File not found: {.file {filePath}}")
 }
 
+# Raised from `.assertNotLfsPointer()`. Unglued so a path containing `{` or `}`
+# is interpolated exactly once, by the raising call, where the value is bound
+# under `path`.
+messages$gitLfsPointerFile <- function(path) {
+  c(
+    "x" = "{.file {path}} is a Git LFS pointer file, not the file it stands \\
+    for.",
+    "i" = "Fetch the real file with {.code git lfs pull}, then try again."
+  )
+}
+
+# Raised from `.loadProjectTree()`. Unglued for the same reason as
+# `legacySnapshotNotLoadable()` below: a hand-edited `schemaVersion` containing
+# `{` or `}` would be glue-parsed a second time by the raising `cli_abort()` and
+# fail with a glue error instead of this message. The value is bound under
+# `version` in the raising frame.
+messages$unsupportedSchemaVersion <- function(version) {
+  "Unsupported schemaVersion: {.val {version}}. Expected {.val 2.0}."
+}
+
 messages$invalidPathArgument <- function() {
   cliFormat("{.arg path} must be a single non-empty, non-NA string.")
+}
+
+# Empty is allowed and is the default: it is the "leave whatever name the
+# template carries" sentinel, so the message asks only for a scalar.
+messages$invalidInitProjectName <- function() {
+  cliFormat("{.arg name} must be a single non-NA string.")
 }
 
 messages$saveProjectNoTree <- function() {
@@ -155,13 +232,61 @@ messages$snapshotFileExists <- function(path) {
   )
 }
 
-messages$invalidSnapshotName <- function(stem) {
+# The `{name}` placeholder is the validated value, not `snapshotProject()`'s
+# `name` argument (`{.arg name}` above renders that literally). It is spelled
+# `name` because `.validateFilenameSegment()` raises this from a frame where the
+# value is bound under that name. `given` is that helper's description of a value
+# that is no name at all (and `NULL` for a well-formed name that would escape the
+# directory), because quoting an empty string, an `NA` or a number as if it
+# "contained a path separator" says something untrue about it. Both placeholders
+# stay unglued, so the raising call interpolates each exactly once, from the frame
+# that binds them.
+messages$invalidSnapshotName <- function(name, given) {
   c(
     "{.arg name} must be a single filename stem without path separators.",
-    "x" = "The stem {.val {stem}} contains a path separator or is {.val .} / \\
-    {.val ..}, so it could write outside {.arg dir}.",
+    "x" = if (is.null(given)) {
+      "The stem {.val {name}} contains a path separator or is {.val .} / \\
+      {.val ..}, so it could write outside {.arg dir}."
+    } else {
+      "It is {given}, not a single non-empty string."
+    },
     "i" = "Pass a single filename segment (no path separator and not {.val .} / \\
     {.val ..}), or leave {.arg name} as {.code NULL} for a timestamped default."
+  )
+}
+
+messages$invalidProjectFileName <- function(name, given) {
+  c(
+    "{.arg projectFileName} must be a single filename without path separators.",
+    "x" = if (is.null(given)) {
+      "The name {.val {name}} contains a path separator or is {.val .} / \\
+      {.val ..}, so it could write outside {.arg outputDir}."
+    } else {
+      "It is {given}, not a single non-empty string."
+    },
+    "i" = "Pass a single filename segment, for example {.val Project.json} \\
+    (the default) or {.val MyStudy}; a {.field .json} extension is appended \\
+    when the name does not already end in one."
+  )
+}
+
+# `definitionsFolder` names one folder directly under the project directory, and
+# it drives the two paths that delete files (`.writeDefinitionTree()` owns its
+# `<kind>/` subfolders, `.clearProjectArtifacts()` unlinks it recursively), so a
+# separator or `..` in it would point both outside the project. Same two-argument
+# contract as `invalidProjectFileName` above.
+messages$invalidDefinitionsFolder <- function(name, given) {
+  c(
+    "{.field definitionsFolder} must be a single folder name directly under \\
+    the project folder.",
+    "x" = if (is.null(given)) {
+      "The name {.val {name}} contains a path separator or is {.val .} / \\
+      {.val ..}, so it could point outside the project folder."
+    } else {
+      "It is {given}, not a single non-empty string."
+    },
+    "i" = "Pass a plain folder name, for example {.val definitions} (the \\
+    default) or {.val defs}."
   )
 }
 
@@ -239,7 +364,28 @@ messages$importSkippedObservedData <- function(dataFile) {
     "!" = "The configured data file {.file {dataFile}} was not found, so no \\
     observed data was imported.",
     "i" = "Any plot or parameter-identification mapping that references \\
-    observed data will not resolve until the data file is present."
+    observed data will not resolve, and {.fn validateProject} will report it, \\
+    until the data file is present."
+  )
+}
+
+messages$importIncompleteObservedCurves <- function(dataCombinedIds) {
+  # Unglued, like the sheet-skip warnings below: a definition id is free text.
+  envir <- new.env(parent = parent.frame())
+  assign("ids", dataCombinedIds, envir = envir)
+  assign("n", length(dataCombinedIds), envir = envir)
+  list(
+    bullets = c(
+      "!" = "{cli::qty(n)}{n} imported data {?combination/combinations} \\
+      {?has/have} an observed curve that names no data set: {.val {ids}}.",
+      "i" = "The {.field DataCombined} sheet marked the row {.val observed} but \\
+      left its {.field dataSet} cell empty, so there is nothing to resolve \\
+      against. The row is kept as it was authored, not dropped.",
+      "i" = "{.fn validateProject} reports each one as a critical error until \\
+      the cell is filled in Excel and the project imported again, or the curve \\
+      is completed with {.fn addDataCombined}."
+    ),
+    envir = envir
   )
 }
 
@@ -260,7 +406,8 @@ messages$importSkippedOutOfProjectDataFolder <- function() {
     resolves from wherever the project is opened. Set one, or copy the data \\
     under the project folder, then import again.",
     "i" = "Any plot or parameter-identification mapping that references \\
-    observed data will not resolve until then."
+    observed data will not resolve, and {.fn validateProject} will report it, \\
+    until then."
   )
 }
 
@@ -272,7 +419,274 @@ messages$importSkippedOutOfProjectDataFile <- function() {
     Move the file under that folder, or point {.field dataFolder} at the \\
     folder that holds it, then import again.",
     "i" = "Any plot or parameter-identification mapping that references \\
-    observed data will not resolve until then."
+    observed data will not resolve, and {.fn validateProject} will report it, \\
+    until then."
+  )
+}
+
+messages$importIncompletePIOutputMappings <- function(taskId, scenarios) {
+  # Unglued, like the two below: a task id and a scenario name are both free text.
+  envir <- new.env(parent = parent.frame())
+  assign("taskId", taskId, envir = envir)
+  assign("scenarios", scenarios, envir = envir)
+  assign("n", length(scenarios), envir = envir)
+  list(
+    bullets = c(
+      "!" = "{cli::qty(n)}{n} output {?mapping/mappings} of \\
+      parameter-identification task {.val {taskId}} {?has/have} no output path.",
+      stats::setNames(
+        sprintf(
+          "Scenarios cell {.val {scenarios[[%1$d]]}}.",
+          seq_along(scenarios)
+        ),
+        rep("x", length(scenarios))
+      ),
+      "i" = "This {.field PIOutputMappings} sheet has no {.field OutputPath} \\
+      column, so each mapping takes its outputs from the {.field OutputPathsIds} \\
+      of the scenarios it names. Give those scenarios an output path, or add an \\
+      {.field OutputPath} column, then import again.",
+      "i" = "The mappings are kept as they were authored, so {.fn validateProject} \\
+      reports each one until then; {.fn addPIOutputMapping} with \\
+      {.code overwrite = TRUE} completes one in place."
+    ),
+    envir = envir
+  )
+}
+
+messages$importUnmergedPIParameterGroups <- function(taskId, paths) {
+  # Unglued, like the entry above: a task id and a parameter path are free text.
+  envir <- new.env(parent = parent.frame())
+  assign("taskId", taskId, envir = envir)
+  assign("paths", paths, envir = envir)
+  assign("n", length(paths), envir = envir)
+  list(
+    bullets = c(
+      "!" = "{cli::qty(n)}{n} {.field Group}{?s} of parameter-identification \\
+      task {.val {taskId}} {?does/do} not agree on the bounds, so {?its/their} \\
+      rows were imported as one parameter each: {.val {paths}}.",
+      "i" = "The rows of one {.field Group} are one parameter estimated across \\
+      the scenarios they name, so they share one {.field MinValue}, \\
+      {.field MaxValue} and {.field StartValue}. Make them agree in Excel and \\
+      import again to estimate them together.",
+      "i" = "As imported, each row is estimated independently, which is not what \\
+      the group asked for."
+    ),
+    envir = envir
+  )
+}
+
+messages$importMissingWorkbooks <- function(files) {
+  # Unglued: a workbook filename comes from the property sheet, so it is free text.
+  envir <- new.env(parent = parent.frame())
+  assign("files", files, envir = envir)
+  assign("n", length(files), envir = envir)
+  list(
+    bullets = c(
+      "!" = "{cli::qty(n)}{n} workbook{?s} named by the project configuration \\
+      {?is/are} not in the configurations folder, so {?its/their} section{?s} \\
+      {?was/were} imported as empty: {.file {files}}.",
+      "i" = "{cli::qty(n)}Place the workbook{?s} beside the others and import \\
+      again, or clear the property row{?s} if the section is deliberately empty."
+    ),
+    envir = envir
+  )
+}
+
+messages$importUnconsumedWorkbooks <- function(files) {
+  # Unglued: a workbook filename found on disk is free text.
+  envir <- new.env(parent = parent.frame())
+  assign("files", files, envir = envir)
+  assign("n", length(files), envir = envir)
+  list(
+    bullets = c(
+      "!" = "{cli::qty(n)}{n} workbook{?s} in the configurations folder \\
+      {?was/were} not read: {.file {files}}.",
+      "i" = "Only the workbooks the project configuration names are imported, \\
+      whatever else the folder holds, so nothing in {cli::qty(n)}{?it/them} is \\
+      in the project.",
+      "i" = "Point the matching property row at one to import it, or leave it \\
+      where it is if it is a spare copy."
+    ),
+    envir = envir
+  )
+}
+
+messages$importEmptySections <- function(sections) {
+  cliFormat(
+    "{length(sections)} section{?s} imported no definitions: {.field {sections}}."
+  )
+}
+
+messages$importUndeclaredWorkbooks <- function(files) {
+  # Unglued: a workbook filename is free text.
+  envir <- new.env(parent = parent.frame())
+  assign("files", files, envir = envir)
+  assign("n", length(files), envir = envir)
+  list(
+    bullets = c(
+      "i" = "{cli::qty(n)}{n} workbook{?s} {?was/were} read under {?its/their} \\
+      conventional name, which the project configuration does not name: \\
+      {.file {files}}.",
+      "i" = "Rename or remove {cli::qty(n)}{?it/them} to keep \\
+      {cli::qty(n)}{?it/them} out of the project."
+    ),
+    envir = envir
+  )
+}
+
+messages$importUnparametrizedIndividuals <- function(filePath, ids, sheets) {
+  # Unglued, like its neighbours: an individual id and a sheet name are free text.
+  envir <- new.env(parent = parent.frame())
+  assign("filePath", filePath, envir = envir)
+  assign("ids", ids, envir = envir)
+  assign("sheets", sheets, envir = envir)
+  assign("n", length(ids), envir = envir)
+  list(
+    bullets = c(
+      "!" = "{cli::qty(n)}{n} individual{?s} in {.file {filePath}} {?is/are} \\
+      imported without the parameter set {?it/they} declare{?s/}, because the \\
+      sheet did not parse as a parameter sheet:",
+      stats::setNames(
+        sprintf(
+          "Individual {.val {ids[[%1$d]]}}: sheet {.val {sheets[[%1$d]]}}.",
+          seq_along(ids)
+        ),
+        rep("x", length(ids))
+      ),
+      "i" = "Nothing else reports this: the individual imports without the \\
+      parametrization and the project still validates, so every scenario using \\
+      it runs on the unmodified model. Fix the sheet's columns in Excel and \\
+      import again."
+    ),
+    envir = envir
+  )
+}
+
+messages$importUndefinedIndividualSheets <- function(filePath, sheets) {
+  # Unglued, like its neighbours: a sheet name is free text.
+  envir <- new.env(parent = parent.frame())
+  assign("filePath", filePath, envir = envir)
+  assign("sheets", sheets, envir = envir)
+  assign("n", length(sheets), envir = envir)
+  list(
+    bullets = c(
+      "!" = "{cli::qty(n)}{n} parameter {?sheet/sheets} of {.file {filePath}} \\
+      {?names/name} an individual that {.field IndividualBiometrics} does not \\
+      define, so that individual is not imported: {.val {sheets}}.",
+      "i" = "An individual comes from its {.field IndividualBiometrics} row, so \\
+      the sheet is imported as a parameter set that no individual uses, and the \\
+      {cli::qty(n)}scenario{?s} naming the individual {?has/have} nothing to \\
+      resolve to.",
+      "i" = "Add a biometrics row for it in Excel and import again."
+    ),
+    envir = envir
+  )
+}
+
+messages$importUnimportedPIObservedDataSheets <- function(sheets) {
+  # Unglued: a sheet name is free text.
+  envir <- new.env(parent = parent.frame())
+  assign("sheets", sheets, envir = envir)
+  assign("n", length(sheets), envir = envir)
+  list(
+    bullets = c(
+      "!" = "{cli::qty(n)}{n} {.field ObservedDataSheet} {?sheet/sheets} named \\
+      by the {.field PIOutputMappings} sheet {?is/are} not among the imported \\
+      observed data: {.val {sheets}}.",
+      "i" = "Observed data is imported from the project's data file, one \\
+      definition listing that workbook's sheets, so a sheet that is not in it \\
+      holds no data set the project can resolve; the mapping's \\
+      {.field DataSet} will not resolve either, and {.fn validateProject} \\
+      reports it.",
+      "i" = "Point {.field dataFile} at the workbook that holds \\
+      {cli::qty(n)}{?it/them} and import again."
+    ),
+    envir = envir
+  )
+}
+
+messages$importSkippedPlotExportConfiguration <- function(
+  filePath,
+  rows,
+  grids
+) {
+  # Unglued: a grid name is free text.
+  envir <- new.env(parent = parent.frame())
+  assign("filePath", filePath, envir = envir)
+  assign("rows", rows, envir = envir)
+  assign("grids", grids, envir = envir)
+  assign("n", length(grids), envir = envir)
+  list(
+    bullets = c(
+      "!" = "The {.field exportConfiguration} sheet of {.file {filePath}} is \\
+      not imported: {cli::qty(rows)}{rows} {?row/rows} describing where a plot \\
+      grid's figure is written and at what size.",
+      if (length(grids) > 0L) {
+        c("x" = "{cli::qty(n)}Plot grid{?s} {.val {grids}}.")
+      },
+      "i" = "A project has no field for a figure's filename, width or height: \\
+      {.fn createPlots} returns the plot objects and the caller saves them, for \\
+      example with {.fn ggplot2::ggsave}, so the settings are not imported and \\
+      an export does not write them back."
+    ),
+    envir = envir
+  )
+}
+
+messages$importDuplicatePlotIds <- function(sheet, idField, ids) {
+  # Unglued, like its neighbours: a plot id is free text.
+  envir <- new.env(parent = parent.frame())
+  assign("sheet", sheet, envir = envir)
+  assign("idField", idField, envir = envir)
+  assign("ids", ids, envir = envir)
+  assign("n", length(ids), envir = envir)
+  list(
+    bullets = c(
+      "!" = "{cli::qty(n)}{n} {.field {idField}}{?s} {?is/are} used by more than \\
+      one row of the {.field {sheet}} sheet: {.val {ids}}.",
+      "i" = "Each id is one definition, built from the last row that carries it, \\
+      so the earlier {cli::qty(n)}row{?s} {?is/are} not imported.",
+      "i" = "Give every row its own id in Excel and import again to keep them all."
+    ),
+    envir = envir
+  )
+}
+
+messages$importSkippedNonNumericRows <- function(
+  filePath,
+  sheets,
+  rows,
+  values
+) {
+  # Same unglued `bullets`/`envir` contract, and for the same reason, as
+  # `importSkippedNonParameterSheets()` below: a sheet name and a cell's own
+  # text are both free text that can contain `{`/`}`.
+  envir <- new.env(parent = parent.frame())
+  assign("filePath", filePath, envir = envir)
+  assign("sheets", sheets, envir = envir)
+  assign("rows", rows, envir = envir)
+  assign("values", values, envir = envir)
+  assign("n", length(rows), envir = envir)
+  list(
+    bullets = c(
+      "!" = "{cli::qty(n)}Skipped {n} {?row/rows} in {.file {filePath}}: \\
+      the {.field Value} cell is not a number.",
+      # One bullet per skipped row rather than one summary line: a row has to be
+      # findable in the workbook to be fixed. Each bullet indexes the vectors in
+      # `envir` rather than embedding the cell's text, the same way
+      # `.canonicalizedIdBullets()` keeps user text behind a variable.
+      stats::setNames(
+        sprintf(
+          "Sheet {.val {sheets[[%1$d]]}}, row {rows[[%1$d]]}: \\
+          {.val {values[[%1$d]]}}.",
+          seq_along(rows)
+        ),
+        rep("x", length(rows))
+      ),
+      "i" = "A blank cell is allowed; a non-blank cell must be numeric \\
+      (use {.val .} as the decimal separator)."
+    ),
+    envir = envir
   )
 }
 
@@ -304,6 +718,85 @@ messages$importSkippedNonParameterSheets <- function(
   )
 }
 
+# Raised from `.loadProjectTree()`, whose schema-version check fails on every
+# file `.isLegacySnapshot()` recognizes: a previous-version snapshot carries no
+# `schemaVersion` at all. The `{jsonPath}` placeholder stays unglued so
+# `cli_abort()` interpolates it once, in that frame, where the value is bound
+# under that name (as with `restoreDirNotEmpty()`'s `dir`); pre-gluing it here
+# would leave a path containing `{` or `}` to be glue-parsed a second time by
+# the raising call.
+messages$legacySnapshotNotLoadable <- function(jsonPath) {
+  c(
+    "x" = "{.file {jsonPath}} is a previous-version project snapshot, not a \\
+    project of the current format.",
+    "i" = "A previous-version snapshot has to be upgraded before it can be \\
+    opened.",
+    "i" = "Upgrade it into a new folder with \\
+    {.code restoreProject(<snapshot>, dir = <newFolder>)}, which returns the \\
+    upgraded project."
+  )
+}
+
+# Raised from `.resolveProjectContainerPath()` when it is handed a folder
+# that holds no project container. Naming the mistake is the point: a folder
+# is the natural second guess after a file, and letting it through produced a
+# raw JSON parse error about the folder itself. Unglued so a folder path
+# containing `{` or `}` is interpolated exactly once, by the raising call,
+# where `folder` is bound.
+messages$noProjectContainerInFolder <- function(folder) {
+  c(
+    "x" = "No esqlabsR project found in the folder {.file {folder}}.",
+    "i" = "A project is a JSON container file (usually {.file Project.json}) \\
+    with a {.file definitions/} folder beside it.",
+    "i" = "Turn a pre-6.0.0 Excel project into one with \\
+    {.fn importProjectFromExcel}, or create a new project with \\
+    {.fn initProject}."
+  )
+}
+
+# Raised from `.resolveProjectContainerPath()` when a folder holds several
+# project containers, so there is no single project to open. `folder` and
+# `names` are bound in the raising frame; unglued for the same reason as
+# above.
+messages$multipleProjectContainersInFolder <- function(folder, names) {
+  c(
+    "x" = "The folder {.file {folder}} holds {length(names)} project files: \\
+    {.file {names}}.",
+    "i" = "Name the one to open, for example \\
+    {.code loadProject(file.path(folder, \"{names[[1]]}\"))}."
+  )
+}
+
+# Unglued, so `cli_abort()` renders these as real bullets rather than re-wrapping
+# one pre-formatted string with the glyphs inline. `sheet` and `columns` are bound
+# in `.requireExcelColumns()`, the raising frame.
+messages$excelSheetMissingRequiredColumns <- function(sheet, columns) {
+  c(
+    "x" = "The {.val {sheet}} sheet is missing \\
+    {cli::qty(columns)}{?a required column/required columns}: \\
+    {.field {columns}}.",
+    "i" = "Add {cli::qty(columns)}{?it/them} to the workbook, or re-export the \\
+    project with {.fn exportProjectToExcel} to get a sheet with the columns \\
+    this version reads."
+  )
+}
+
+# Unglued for two reasons: the bullets, and `projectConfigPath` being a path the
+# user chose, which may itself contain `{` or `}` and so must be interpolated
+# exactly once, by the raising call. `projectConfigPath` is bound in
+# `.excelToProjectJson()`, the raising frame.
+#
+# The first element stays unnamed, so it is the error header rather than a
+# bullet: `.projectSyncStatus()` re-raises this text as the `"x"` bullet of its
+# own warning, and a glyph baked in here would render doubled there.
+messages$excelProjectFileUnreadable <- function(projectConfigPath) {
+  c(
+    "{.path {projectConfigPath}} is not a readable Excel project file.",
+    "i" = "It must be a valid {.field .xlsx} workbook (the project's \\
+    {.file Project.xlsx})."
+  )
+}
+
 messages$legacySnapshotMalformedSheet <- function() {
   c(
     "x" = "This previous-version project snapshot is malformed and cannot be \\
@@ -313,12 +806,26 @@ messages$legacySnapshotMalformedSheet <- function() {
   )
 }
 
-messages$upgradedLegacySnapshot <- function() {
-  c(
+messages$upgradedLegacySnapshot <- function(missingFolders = character()) {
+  notice <- c(
     "i" = "Detected a previous-version project snapshot and upgraded it to the \\
     current project format.",
     "!" = "Observed data does not travel in a snapshot; add it with \\
     {.fn addObservedData} if a plot or parameter identification needs it."
+  )
+  if (length(missingFolders) == 0L) {
+    return(notice)
+  }
+  c(
+    notice,
+    "!" = "{length(missingFolders)} referenced folder{?s} \\
+    {cli::qty(length(missingFolders))}{?is/are} missing from the upgraded \\
+    project: {.file {missingFolders}}.",
+    "i" = "A snapshot carries only the configuration workbooks, so a model, \\
+    data or population folder travels with it only when it sits beside the \\
+    snapshot file at that relative path.",
+    "i" = "Nothing that reads from one of them will resolve until you place the \\
+    folder in the project."
   )
 }
 
@@ -329,6 +836,24 @@ messages$exportWouldOverwriteWorkbooks <- function(outputDir) {
     {.file Configurations} workbooks, discarding any hand-edits they carry.",
     "i" = "Pass {.code overwrite = TRUE} to replace the existing workbooks, or \\
     export into a different {.arg outputDir}."
+  )
+}
+
+messages$exportUndeclaredObservedData <- function(ids) {
+  # Unglued: an observed-data id is a user-chosen name (typically a data-file
+  # basename), so it is free text.
+  envir <- new.env(parent = parent.frame())
+  assign("ids", ids, envir = envir)
+  assign("n", length(ids), envir = envir)
+  list(
+    bullets = c(
+      "!" = "{cli::qty(n)}The Excel project configuration can name a single \\
+      experimental-data workbook, so {n} observed-data declaration{?s} \\
+      {?was/were} not written: {.val {ids}}.",
+      "i" = "{cli::qty(n)}Anything that reads {?it/them} resolves only in the \\
+      JSON project, not in a project re-imported from these workbooks."
+    ),
+    envir = envir
   )
 }
 
@@ -377,9 +902,9 @@ messages$autocorrectDuplicateScenarioNames <- function(
 }
 
 messages$scenariosAddedToProject <- function(scenarioNames) {
-  cli::format_message(c(
-    "i" = "Added {length(scenarioNames)} scenario{?s}: {.val {scenarioNames}}"
-  ))
+  cliFormat(
+    "Added {length(scenarioNames)} scenario{?s}: {.val {scenarioNames}}"
+  )
 }
 
 messages$noSimulationsFolderUsingAbsolutePath <- function(pkmlPath) {
@@ -400,10 +925,10 @@ messages$outputPathIdCollision <- function(id, existingPath, newPath) {
 }
 
 messages$outputPathAliasIgnored <- function(userAlias, registeredId, path) {
-  cli::format_message(c(
-    "i" = "Output path alias {.val {userAlias}} ignored: \\
+  cliFormat(
+    "Output path alias {.val {userAlias}} ignored: \\
     path {.val {path}} is already registered as {.val {registeredId}}."
-  ))
+  )
 }
 
 messages$noSimulationsFolderForRelativeModelFile <- function(
@@ -428,6 +953,36 @@ messages$noPopulationsFolderForCSVPopulation <- function(
   ))
 }
 
+messages$populationCsvNotFound <- function(
+  scenarioName,
+  populationId,
+  fileName,
+  populationsFolder
+) {
+  cli::format_message(c(
+    "x" = "Cannot read population {.val {populationId}} for scenario \\
+    {.val {scenarioName}}: {.file {fileName}} is not in the populations folder.",
+    "i" = "Expected it under {.path {populationsFolder}}.",
+    "i" = "Place the csv file there, or point {.field populationsFolder} at the \\
+    folder that holds it."
+  ))
+}
+
+messages$populationIdResolvedTwoWays <- function(
+  populationId,
+  scenarioName,
+  effectiveType
+) {
+  cli::format_message(c(
+    "!" = "Population {.val {populationId}} resolves to more than one \\
+    population in this run.",
+    "i" = "Scenario {.val {scenarioName}} resolves it as {.val {effectiveType}}, \\
+    another scenario in the same run resolves it differently.",
+    "i" = "Each scenario gets the population it asks for. Check \\
+    {.field readPopulationFromCSV} on the scenarios sharing this population."
+  ))
+}
+
 
 messages$importedProject <- function(inputFile, outputFile) {
   cliFormat(
@@ -441,11 +996,20 @@ messages$restoredProjectConfiguration <- function(inputFile, outputFile) {
   )
 }
 
-# The Excel axis of `projectStatus()`: with no `Project.xlsx` side-car there is
-# nothing to compare the in-memory project against.
-messages$syncNoExcel <- function() {
+# The Excel axis of `projectStatus()`: with no Excel side-car there is nothing
+# to compare the in-memory project against. The side-car is derived from the
+# project file's name, so name the file that was looked for; a project with no
+# folder on disk has no name to derive one from, hence the pathless variant.
+messages$syncNoExcel <- function(excelPath = NULL) {
+  if (is.null(excelPath)) {
+    return(cli::format_inline(
+      "No Excel configuration file found; nothing to compare."
+    ))
+  }
   cli::format_inline(
-    "No Excel configuration file ({.file Project.xlsx}) found; nothing to compare."
+    "No Excel configuration file ({.file {fs::path_file(excelPath)}}) found \\
+    next to the project; nothing to compare. Write one with \\
+    {.fn exportProjectToExcel}."
   )
 }
 
@@ -501,9 +1065,9 @@ messages$outputMolWeightNeeded <- function() {
 }
 
 messages$offsetUnitsNotDefined <- function(rows) {
-  cli::format_message(c(
-    "x" = "Error in DataCombined {.arg {rows}}: If x/yOffsets is set, then x/yOffsetsUnits must be defined as well. "
-  ))
+  cliFormat(
+    "Error in DataCombined {.arg {rows}}: If x/yOffsets is set, then x/yOffsetsUnits must be defined as well. "
+  )
 }
 
 # plots ####
@@ -583,6 +1147,61 @@ messages$unknownScenarioNames <- function(unknownNames) {
   )
 }
 
+# Raised when a `Scenario` record is passed where an id goes, together with field
+# arguments. The record carries every field, so an accompanying one would be
+# quietly overruled by it; the message names the two ways forward instead.
+messages$scenarioRecordWithFields <- function(fields) {
+  cli::format_message(c(
+    "A {.cls Scenario} passed as {.arg id} carries every field, so \\
+    {.arg {fields}} cannot be given alongside it.",
+    "i" = "Edit the record's own field and pass it back \\
+    ({.code sc$modelFile <- \"other.pkml\"}), or name the scenario's id instead \\
+    of the record."
+  ))
+}
+
+# `setScenario()` intercepts `overwrite` rather than letting it reach the impl's
+# generic unknown-field message, because the name is a habit picked up from
+# `addScenario()` and the scenario carries a second argument that starts the
+# same way.
+messages$setScenarioNoOverwrite <- function() {
+  c(
+    "{.fn setScenario} has no {.arg overwrite} argument.",
+    "i" = "It always updates the scenario named by {.arg id}; \\
+    {.fn addScenario} is the one with {.arg overwrite}.",
+    "i" = "For the steady-state model option, pass \\
+    {.arg overwriteFormulasInSS} in full."
+  )
+}
+
+# Raised when an authoring field reaches `.alignAuthoringArgs()` without a name.
+# Every field there is looked up by name, so an unnamed one would be dropped in
+# silence; the usual way to produce one is passing a `set*()` field positionally.
+# The hint names no function and no field: `setScenario()`, `setIndividual()` and
+# `setPopulation()` all raise this, they share no field, and the abort header
+# already names the one the caller used.
+messages$unnamedAuthoringFields <- function(positions) {
+  # `cli::qty()` pluralizes on how many positions there are, not on the position
+  # numbers themselves: a lone field at position 2 is still one field. It has to
+  # sit before every plural marker, since interpolating `positions` resets the
+  # quantity cli pluralizes on, which is why the sentence keeps them together.
+  cli::format_message(c(
+    "Every field must be named.",
+    "x" = "{cli::qty(length(positions))}No name on field{?s} {positions}.",
+    "i" = "Pass each field as {.code name = value}."
+  ))
+}
+
+# Raised when a name reaching `setScenario()`'s field set is not a scenario
+# field. Without the guard the value would be aligned as a per-definition field
+# and then dropped in silence.
+messages$setScenarioUnknownFields <- function(fields, settable) {
+  cli::format_message(c(
+    "{.fn setScenario} cannot set {.field {fields}}.",
+    "i" = "The settable fields are {.field {settable}}."
+  ))
+}
+
 messages$invalidSimulationTimeArgument <- function() {
   cliFormat(
     "{.arg simulationTime} must be a length-3 numeric vector \\
@@ -630,6 +1249,35 @@ messages$scenarioBuildFailed <- function(scenarioName, conditionMessage) {
       "Could not build scenario {.val {scenarioName}}; skipping it."
     ),
     "i" = safe_msg
+  )
+}
+
+# The `stopIfFails = TRUE` counterpart of `scenarioBuildFailed()`: the underlying
+# error is attached as the abort's `parent`, so cli renders it below this header
+# rather than it needing to be interpolated (and brace-escaped) here.
+messages$scenarioBuildFailedAbort <- function(scenarioName, canSkip) {
+  c(
+    cli::format_inline("Could not build scenario {.val {scenarioName}}."),
+    # `buildSimulations()` has no `stopIfFails`, so only name it where it exists.
+    if (canSkip) {
+      c(
+        "i" = "Pass {.code stopIfFails = FALSE} to skip it and build the other \\
+        scenarios."
+      )
+    }
+  )
+}
+
+# Raised at the end of a `stopIfFails = FALSE` run, listing every scenario that
+# produced no results. The per-scenario warnings scroll away in a batch of
+# eighty, and the returned list gives every scenario an entry whatever happened
+# to it, so this is what tells the caller which ones to leave out.
+messages$scenariosSkipped <- function(scenarioNames) {
+  c(
+    "!" = "{length(scenarioNames)} of the scenarios produced no results: \\
+    {.val {scenarioNames}}.",
+    "i" = "Their entries carry {.code results = NULL}; select the ones that ran \\
+    with {.code Filter(\\(x) !is.null(x$results), results)}."
   )
 }
 
@@ -842,6 +1490,19 @@ messages$sensitivityAnalysisSimulationFailure <- function(
   )
 }
 
+messages$absoluteVariationZeroInitialValue <- function(parameterPaths) {
+  cliFormat(
+    "{.code variationType = \"absolute\"} requires a non-zero initial value for every parameter, but the following parameter(s) have an initial value of 0: {.val {paste(parameterPaths, collapse = ', ')}}. Use {.code variationType = \"relative\"} or provide parameters with non-zero initial values."
+  )
+}
+
+messages$sensitivityAllRunsFailed <- function(parameterPath) {
+  cliFormat(
+    "All simulation runs failed for {.var {parameterPath}}.
+    No PK parameters could be calculated for this parameter and it will not be included in the sensitivity calculation."
+  )
+}
+
 messages$invalidCustomFunctionParameters <- function(providedParams) {
   cliFormat(
     "The user-defined function must have either {.var x}, {.var y}, or both {.var x} and {.var y} as parameters.
@@ -850,9 +1511,8 @@ messages$invalidCustomFunctionParameters <- function(providedParams) {
 }
 
 messages$notNamedList <- function(objectName, optionalMessage = "") {
-  callingFunction <- ospsuite.utils:::.getCallingFunctionName()
   cliFormat(
-    "{.fn {callingFunction}}: argument {.arg {objectName}} is not a named list! {optionalMessage}"
+    "Argument {.arg {objectName}} is not a named list! {optionalMessage}"
   )
 }
 
@@ -864,6 +1524,13 @@ messages$invalidVariationRangeLength <- function() {
 
 messages$sensitivityCalculationNotFound <- function(path) {
   cliFormat("Sensitivity calculation not found at path {.file {path}}.")
+}
+
+messages$noRetainedSimulationResults <- function() {
+  cliFormat(
+    "The sensitivity calculation contains no simulation results to save.",
+    "All simulation runs appear to have failed."
+  )
 }
 
 messages$outputDirExists <- function(outputDir) {
@@ -1046,6 +1713,16 @@ messages$PIScenariosEmpty <- function(recordType, recordId) {
   )
 }
 
+# A PITask's `scenarios`, unlike a PIParameter's or a PIOutputMapping's, may be
+# empty: it is a reference list, and an empty reference list means "there are
+# none", so the message describes the shape rather than demanding a value.
+messages$PITaskScenariosInvalid <- function(recordId) {
+  cliFormat(
+    "Field {.code scenarios} on PITask {.val {recordId}} must be a character \\
+    vector of scenario ids with no NA or empty entries, or empty for none."
+  )
+}
+
 messages$PIInvalidNumericField <- function(field, recordId, value) {
   cliFormat(
     "Field {.code {field}} on PIOutputMapping {.val {recordId}} is invalid: \\
@@ -1096,11 +1773,35 @@ messages$PIParameterNotFound <- function(path, simulationName) {
   )
 }
 
+# Warned when a PI parameter declares a display unit that belongs to another
+# dimension. Not an abort: a legacy 5.x sheet's `Units` cell was never applied by
+# the version that wrote it, so such a cell is normal in a workbook that ran, and
+# the identification is still well defined without it.
+messages$PIParameterUnitNotApplied <- function(id, unit, dimension) {
+  cli::format_message(c(
+    "!" = "The unit {.val {unit}} of PI parameter {.val {id}} is not applied: it is not a unit of the parameter's dimension {.val {dimension}}.",
+    "i" = "Its {.field minValue}, {.field maxValue} and {.field startValue} are read in the parameter's own unit instead.",
+    "i" = "A legacy 5.x {.field PIParameters} sheet carries a {.field Units} column that esqlabsR 5.x never applied, which is where such a unit usually comes from; set the field with {.fn PIParameter} to fit in a different unit."
+  ))
+}
+
 messages$PIScenarioNotFound <- function(scenarioName, availableScenarios) {
   cli::format_message(c(
     "x" = "Scenario {.val {scenarioName}} referenced in PI task configuration not found",
     "i" = "Available scenarios: {.val {paste(availableScenarios, collapse = ', ')}}"
   ))
+}
+
+messages$PITaskNotFound <- function(task) {
+  cliFormat("PI task {.val {task}} not found")
+}
+
+messages$PIMemberNotFound <- function(label, id, task) {
+  cliFormat("{label} {.val {id}} not found in task {.val {task}}; no-op.")
+}
+
+messages$PITaskNowEmpty <- function(task) {
+  cliFormat("PI task {.val {task}} is now empty and has been removed.")
 }
 
 messages$buildingPITask <- function(piTaskName) {
@@ -1119,16 +1820,18 @@ messages$observedDataInvalidEntryType <- function(badType, validTypes) {
   ))
 }
 
-messages$observedDataMissingField <- function(entryIndex, type, field) {
-  cli::format_message(c(
-    "x" = "{.code observedData} entry {entryIndex} (type {.val {type}}) is missing required field {.field {field}}."
-  ))
+# Every missing field at once: the required set for each type is fixed, so
+# reporting one field per call made an under-specified entry take as many calls
+# to fix as it had gaps.
+messages$observedDataMissingFields <- function(entryIndex, type, fields) {
+  cliFormat(
+    "{.code observedData} entry {entryIndex} (type {.val {type}}) is missing \\
+    {cli::qty(length(fields))}required field{?s} {.field {fields}}."
+  )
 }
 
 messages$observedDataFileNotFound <- function(filePath) {
-  cli::format_message(c(
-    "x" = "Observed-data source file not found: {.path {filePath}}."
-  ))
+  cliFormat("Observed-data source file not found: {.path {filePath}}.")
 }
 
 messages$observedDataScriptWrongReturnType <- function(filePath, klass) {

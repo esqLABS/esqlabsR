@@ -21,15 +21,14 @@ test_that("getEsqlabsRSetting returns correct settings", {
 })
 
 test_that(".getEsqlabsColors returns the expected colors", {
-  # Access the internal function
-  colors <- esqlabsR:::.getEsqlabsColors()
+  colors <- .getEsqlabsColors()
 
   # Test that it returns expected format
   expect_true(is.character(colors))
   expect_true(all(grepl("^#[0-9A-Fa-f]{6}$", colors)))
 
   # Test that it includes the first fixed colors
-  firstColors <- esqlabsR:::esqlabsColors(3)
+  firstColors <- esqlabsColors(3)
   expect_true(all(firstColors %in% colors))
 
   # The number of colors might change, so instead of testing the exact number,

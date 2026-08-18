@@ -433,6 +433,7 @@ createScenariosFromPKML <- function(
     if (!file.exists(pkmlPath)) {
       cli::cli_abort(messages$fileNotFound(pkmlPath))
     }
+    .assertNotLfsPointer(pkmlPath)
     # Memoize the load: a single PKML recycled across N scenarios would
     # otherwise be parsed N times.
     if (is.null(simulationCache[[pkmlPath]])) {

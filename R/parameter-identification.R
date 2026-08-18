@@ -50,7 +50,7 @@ PIParameter <- function(
   maxValue,
   startValue
 ) {
-  if (!is.character(id) || length(id) != 1L || is.na(id) || nchar(id) == 0) {
+  if (!.isNonEmptyString(id)) {
     cli::cli_abort(messages$PIRequiredField(
       "id",
       "PIParameter",
@@ -65,9 +65,7 @@ PIParameter <- function(
   ) {
     cli::cli_abort(messages$PIScenariosEmpty("PIParameter", id))
   }
-  if (
-    !is.character(path) || length(path) != 1L || is.na(path) || nchar(path) == 0
-  ) {
+  if (!.isNonEmptyString(path)) {
     cli::cli_abort(messages$PIRequiredField("path", "PIParameter", id))
   }
   # `units` is optional: NULL or an empty string both mean "no display unit".
@@ -104,14 +102,49 @@ PIParameter <- function(
     ))
   }
 
+  .piParameterRecord(
+    id = id,
+    scenarios = scenarios,
+    path = path,
+    units = units,
+    minValue = minValue,
+    maxValue = maxValue,
+    startValue = startValue
+  )
+}
+
+# Assemble a `PIParameter` record, without the guards above.
+#
+# Split out of `PIParameter()` for the same reason as `.piOutputMappingRecord()`:
+# authoring a parameter with no path or no bounds is a mistake to reject at the
+# call, whereas a project file (or a legacy workbook with a blank `MinValue`
+# cell) carrying one has to load so `validateProject()` can report it. A project
+# that cannot be opened cannot be fixed. `runPI()` gates on that validation, so
+# an incomplete parameter never reaches an optimisation.
+#
+# An absent bound stays absent rather than becoming `NA`: `.validatePI()`
+# distinguishes "no value" from "an unusable one" only if the field is missing.
+#
+# @keywords internal
+# @noRd
+.piParameterRecord <- function(
+  id,
+  scenarios,
+  path,
+  units = NULL,
+  minValue = NULL,
+  maxValue = NULL,
+  startValue = NULL
+) {
+  asBound <- function(x) if (is.null(x)) NULL else as.double(x)
   rec <- list(
     id = id,
     scenarios = as.character(scenarios),
     path = path,
     units = units,
-    minValue = as.double(minValue),
-    maxValue = as.double(maxValue),
-    startValue = as.double(startValue)
+    minValue = asBound(minValue),
+    maxValue = asBound(maxValue),
+    startValue = asBound(startValue)
   )
   class(rec) <- c("PIParameter", "list")
   rec
@@ -129,7 +162,7 @@ PIParameter <- function(
 #'   or add one to an existing task with [addPIOutputMapping()].
 #'
 #' @param id Character scalar. Identifier for this mapping, unique within
-#'   its task.
+#'   its task. Used as a free label by the PI run, not as a definition-file id.
 #' @param scenarios Character vector of scenario ids the mapping applies to.
 #'   Must be a subset of the task's own `scenarios`.
 #' @param outputPath Character scalar identifying an output path defined in
@@ -170,7 +203,7 @@ PIOutputMapping <- function(
   yFactor = 1,
   weight = NULL
 ) {
-  if (!is.character(id) || length(id) != 1L || is.na(id) || nchar(id) == 0) {
+  if (!.isNonEmptyString(id)) {
     cli::cli_abort(messages$PIRequiredField(
       "id",
       "PIOutputMapping",
@@ -185,24 +218,14 @@ PIOutputMapping <- function(
   ) {
     cli::cli_abort(messages$PIScenariosEmpty("PIOutputMapping", id))
   }
-  if (
-    !is.character(outputPath) ||
-      length(outputPath) != 1L ||
-      is.na(outputPath) ||
-      nchar(outputPath) == 0
-  ) {
+  if (!.isNonEmptyString(outputPath)) {
     cli::cli_abort(messages$PIRequiredField(
       "outputPath",
       "PIOutputMapping",
       id
     ))
   }
-  if (
-    !is.character(observedData) ||
-      length(observedData) != 1L ||
-      is.na(observedData) ||
-      nchar(observedData) == 0
-  ) {
+  if (!.isNonEmptyString(observedData)) {
     cli::cli_abort(messages$PIRequiredField(
       "observedData",
       "PIOutputMapping",
@@ -211,10 +234,7 @@ PIOutputMapping <- function(
   }
   if (
     !is.null(scaling) &&
-      (!is.character(scaling) ||
-        length(scaling) != 1L ||
-        is.na(scaling) ||
-        nchar(scaling) == 0)
+      (!.isNonEmptyString(scaling))
   ) {
     cli::cli_abort(messages$PIInvalidScaling(id, scaling))
   }
@@ -237,13 +257,51 @@ PIOutputMapping <- function(
     }
   }
 
-  # The user-facing args and on-disk JSON keys are suffixless (`outputPath` /
-  # `observedData`), while the in-memory record keeps its id-suffixed field
-  # names (`outputPathId` / `observedDataId`), which the runtime build,
-  # validation, and serializer all read. This constructor is the mapping seam:
-  # the new arg feeds the kept record field. The parser (`.parsePIOutputMappings`)
-  # reads the new JSON key into the new arg; the serializer
-  # (`.piOutputMappingToJson`) mirrors it back to the new key.
+  .piOutputMappingRecord(
+    id = id,
+    scenarios = scenarios,
+    outputPath = outputPath,
+    observedData = observedData,
+    scaling = scaling,
+    xOffset = xOffset,
+    yOffset = yOffset,
+    xFactor = xFactor,
+    yFactor = yFactor,
+    weight = weight
+  )
+}
+
+# Assemble a `PIOutputMapping` record, without the guards above.
+#
+# The user-facing args and on-disk JSON keys are suffixless (`outputPath` /
+# `observedData`), while the in-memory record keeps its id-suffixed field names
+# (`outputPathId` / `observedDataId`), which the runtime build, validation, and
+# serializer all read. This is the mapping seam: the arg feeds the kept record
+# field. The parser (`.parsePIOutputMappings`) reads the JSON key into the arg;
+# the serializer (`.piOutputMappingToJson`) mirrors it back to the key.
+#
+# Split out from `PIOutputMapping()` so authoring and loading can differ in
+# strictness while producing one record shape: authoring a mapping with no output
+# or no observed data is a mistake to reject at the call, whereas a project file
+# (or a legacy workbook) carrying one has to load so `validateProject()` can
+# report it, which is the same parse-leniently-then-validate contract the
+# `dataCombined` section keeps. `runPI()` gates on that validation, so an
+# incomplete mapping never reaches the build.
+#
+# @keywords internal
+# @noRd
+.piOutputMappingRecord <- function(
+  id,
+  scenarios,
+  outputPath,
+  observedData,
+  scaling = NULL,
+  xOffset = 0,
+  yOffset = 0,
+  xFactor = 1,
+  yFactor = 1,
+  weight = NULL
+) {
   rec <- list(
     id = id,
     scenarios = as.character(scenarios),
@@ -278,7 +336,9 @@ PIOutputMapping <- function(
 #' @param id Character scalar. Identifier for the task.
 #' @param scenarios Character vector of scenario ids the task runs against.
 #'   Every scenario referenced by a parameter or output mapping must be in
-#'   this set.
+#'   this set. May be empty (`character(0)`) to create a task whose scenarios
+#'   are set later with [setPITask()]; a task must name at least one scenario
+#'   to run, which [validateProject()] enforces.
 #' @param parameters List of [PIParameter()] records. May be empty to create
 #'   a task that is seeded later with [addPIParameter()]; a task must have at
 #'   least one parameter to run, which [validateProject()] enforces.
@@ -315,23 +375,16 @@ PIOutputMapping <- function(
 #' )
 PITask <- function(
   id,
-  scenarios,
-  parameters,
-  outputMappings,
+  scenarios = character(0),
+  parameters = list(),
+  outputMappings = list(),
   configuration = list()
 ) {
-  if (!is.character(id) || length(id) != 1L || is.na(id) || nchar(id) == 0) {
+  if (!.isNonEmptyString(id)) {
     cli::cli_abort(messages$PIRequiredField("id", "PITask", "<unset>"))
   }
 
-  if (
-    !is.character(scenarios) ||
-      length(scenarios) == 0L ||
-      any(is.na(scenarios)) ||
-      any(nchar(scenarios) == 0)
-  ) {
-    cli::cli_abort(messages$PIScenariosEmpty("PITask", id))
-  }
+  scenarios <- .asPITaskScenarios(scenarios, id)
 
   # An empty list is allowed here so a task can be created first and seeded
   # with addPIParameter() / addPIOutputMapping(), matching the create-then-add
@@ -376,6 +429,54 @@ PITask <- function(
   )
   class(rec) <- c("PITask", "list")
   rec
+}
+
+# Normalize a `PITask`'s `scenarios` to the character vector the record stores.
+#
+# A task's `scenarios` is a reference list, so it follows the same rule as every
+# other one: a zero-length value (`character(0)`, `NULL`, or the empty list a
+# JSON reader yields for `[]`) means "there are none", and a list of strings
+# flattens to the character vector the list of ids is. That is what makes a task
+# creatable empty and seeded afterwards with `setPITask()` /
+# `addPIParameter()` / `addPIOutputMapping()`; a task left with no scenarios
+# cannot run, and `validateProject()` reports it. An `NA` or empty-string id, or
+# a list holding anything but strings, still aborts.
+#
+# @keywords internal
+# @noRd
+.asPITaskScenarios <- function(scenarios, id, call = rlang::caller_env()) {
+  if (is.list(scenarios)) {
+    if (all(vapply(scenarios, .isScalarString, logical(1)))) {
+      scenarios <- as.character(unlist(scenarios))
+    }
+  }
+  if (is.null(scenarios)) {
+    return(character(0))
+  }
+  if (
+    !is.character(scenarios) ||
+      any(is.na(scenarios)) ||
+      any(nchar(scenarios) == 0)
+  ) {
+    cli::cli_abort(messages$PITaskScenariosInvalid(id), call = call)
+  }
+  scenarios
+}
+
+# A PI task's `configuration` as it is serialized: an empty one becomes the empty
+# JSON object `{}`, the shape a populated configuration has. An empty unnamed list
+# serializes as `[]`, so a task with no solver settings would describe its
+# configuration as an array where every other task has an object. Shared by the
+# container serializer and the definition-tree serializer, so the two agree.
+#
+# @keywords internal
+# @noRd
+.piConfigurationToJson <- function(configuration) {
+  configuration <- configuration %||% list()
+  if (length(configuration) == 0L) {
+    return(structure(list(), names = character(0L)))
+  }
+  configuration
 }
 
 #' @exportS3Method
@@ -448,9 +549,14 @@ print.PITask <- function(x, ...) {
 # `PIParameter` and a list of `PIOutputMapping` records. Returns an
 # empty list when the section is absent or empty.
 #
+# `project` supplies the already-parsed `outputPaths` section each mapping's
+# output-path reference resolves against, the same stand-in the scenarios parser
+# takes (see `.parseProjectSections()`). It is optional: parsing the section on
+# its own leaves those references unresolved rather than failing.
+#
 # @keywords internal
 # @noRd
-.parsePITasks <- function(piData) {
+.parsePITasks <- function(piData, project = NULL) {
   if (is.null(piData) || length(piData) == 0L) {
     return(list())
   }
@@ -464,7 +570,8 @@ print.PITask <- function(x, ...) {
     parameters <- .parsePIParameters(rawTask$parameters %||% list(), id)
     outputMappings <- .parsePIOutputMappings(
       rawTask$outputMappings %||% list(),
-      id
+      id,
+      project
     )
     task <- PITask(
       id = id,
@@ -485,7 +592,11 @@ print.PITask <- function(x, ...) {
   for (i in seq_along(rawList)) {
     raw <- rawList[[i]]
     id <- raw$id %||% paste0(taskId, "_param_", i)
-    out[[i]] <- PIParameter(
+    # Built without `PIParameter()`'s guards, so a parameter with no path or an
+    # incomplete set of bounds loads and is reported by `validateProject()`
+    # instead of aborting the load of the whole project. The guards still apply
+    # to authoring a parameter through the constructor.
+    out[[i]] <- .piParameterRecord(
       id = id,
       scenarios = as.character(unlist(raw$scenarios %||% list())),
       path = raw$path,
@@ -500,17 +611,39 @@ print.PITask <- function(x, ...) {
 
 # @keywords internal
 # @noRd
-.parsePIOutputMappings <- function(rawList, taskId) {
+.parsePIOutputMappings <- function(rawList, taskId, project = NULL) {
   out <- vector("list", length(rawList))
   for (i in seq_along(rawList)) {
     raw <- rawList[[i]]
     id <- raw$id %||% paste0(taskId, "_mapping_", i)
-    out[[i]] <- PIOutputMapping(
+    # Resolve the output-path reference the way `addPIOutputMapping()` resolves
+    # its argument, so every door stores the canonical output-path id that the
+    # runtime lookup (`.createSinglePITask()`) and `removeOutputPath()`'s in-use
+    # scan match on exactly: an id in any spelling that canonicalizes onto a
+    # defined one, or the literal model path of a defined output path (the form
+    # `PIOutputMapping()` documents). A reference naming no defined output path
+    # is kept verbatim, so the project still loads and `validateProject()`
+    # reports the dangling reference; without a `project` to resolve against,
+    # every reference is left verbatim for the same reason.
+    outputPath <- raw[["outputPath"]]
+    if (!is.null(project)) {
+      outputPath <- .matchOutputPathRef(outputPath, project) %||% outputPath
+    }
+    # Built without `PIOutputMapping()`'s required-field guards, so a mapping
+    # that names no output or no observed data loads and is reported by
+    # `validateProject()` (which `runPI()` gates on) instead of aborting the load
+    # of the whole project. A hand-maintained legacy workbook routinely leaves one
+    # such cell blank, and a project that cannot be opened cannot be fixed. The
+    # guards still apply to authoring a mapping through the constructor.
+    out[[i]] <- .piOutputMappingRecord(
       id = id,
       scenarios = as.character(unlist(raw$scenarios %||% list())),
       # Read the suffixless on-disk JSON keys (`outputPath` / `observedData`);
-      # the constructor maps them to the kept record fields.
-      outputPath = raw[["outputPath"]],
+      # the record keeps them under their id-suffixed field names.
+      # `observedData` names a data set inside an OSPS-owned observed-data
+      # source rather than a definition-file id, so it is stored exactly as
+      # written, as every other door stores it.
+      outputPath = outputPath,
       observedData = raw[["observedData"]],
       scaling = raw$scaling,
       xOffset = raw$xOffset %||% 0,
@@ -557,6 +690,12 @@ print.PITask <- function(x, ...) {
 
     # A task may be created empty and seeded incrementally, but an empty task
     # cannot run, so validation (which the run gates on) rejects one left empty.
+    if (length(task$scenarios) == 0L) {
+      result$addCriticalError(
+        "Empty PI Task",
+        messages$PIEmptyList("scenarios", taskId)
+      )
+    }
     if (length(task$parameters) == 0L) {
       result$addCriticalError(
         "Empty PI Task",
@@ -585,7 +724,33 @@ print.PITask <- function(x, ...) {
     )
 
     for (p in task$parameters) {
-      if (!(p$minValue <= p$startValue && p$startValue <= p$maxValue)) {
+      # The load path is lenient about a parameter's required fields
+      # (`.parsePIParameters()`), so their absence is reported here. The bounds
+      # comparison below reads all three, and `NULL <= NULL` is `logical(0)`,
+      # which `if` cannot branch on, so it only runs once all three are present.
+      missingFields <- c("path", "minValue", "maxValue", "startValue")
+      missingFields <- missingFields[vapply(
+        missingFields,
+        function(field) .isMissingField(p[[field]]),
+        logical(1)
+      )]
+      for (field in missingFields) {
+        result$addCriticalError(
+          "Missing Fields",
+          paste0(
+            "PI task '",
+            taskId,
+            "', parameter '",
+            p$id,
+            "' is missing required field: ",
+            field
+          )
+        )
+      }
+      if (
+        !any(c("minValue", "maxValue", "startValue") %in% missingFields) &&
+          !(p$minValue <= p$startValue && p$startValue <= p$maxValue)
+      ) {
         result$addCriticalError(
           "Invalid Bounds",
           messages$PIInvalidBounds(
@@ -613,6 +778,27 @@ print.PITask <- function(x, ...) {
     }
 
     for (m in task$outputMappings) {
+      # Both are required on a mapping and the load path is lenient about both
+      # (`.parsePIOutputMappings()`). An absent field is this section's own gap,
+      # reported here; the cross-reference phase resolves only a field that is
+      # there, so the same gap is never counted twice. The record keeps the
+      # id-suffixed field names; the message uses the names the user wrote in the
+      # file.
+      for (field in c("outputPath", "observedData")) {
+        if (.isMissingField(m[[paste0(field, "Id")]])) {
+          result$addCriticalError(
+            "Missing Fields",
+            paste0(
+              "PI task '",
+              taskId,
+              "', outputMapping '",
+              m$id,
+              "' does not define an ",
+              field
+            )
+          )
+        }
+      }
       outsideTask <- setdiff(m$scenarios, task$scenarios)
       if (length(outsideTask) > 0L) {
         result$addCriticalError(
@@ -716,24 +902,31 @@ print.PITask <- function(x, ...) {
       parameters = if (length(paramObjs) == 1L) paramObjs[[1]] else paramObjs
     )
     # Apply the declared display unit first so bounds and start value are
-    # interpreted in it, then the start value. The bound setters validate each
-    # new bound against the *other* bound, which still holds its model-default
-    # value until we overwrite it. Assign the bounds in whichever order keeps
-    # every intermediate state valid: if the new minValue would exceed the
-    # stale maxValue, raise maxValue first; otherwise lower minValue first. The
-    # PIParameter() record is already validated as minValue <= startValue <=
-    # maxValue, so one of the two orders always succeeds.
+    # interpreted in it, then the start value, then the bounds
+    # (`.assignPIBounds()` owns their ordering hazard).
+    #
+    # A unit that is not one of the parameter's own dimension is reported and
+    # left unapplied, rather than aborting the task. The legacy 5.x
+    # `PIParameters` sheet has a `Units` column that esqlabsR 5.x never applied,
+    # so a workbook that ran under 5.x routinely carries a unit belonging to
+    # another dimension (`mg` against an inversed time); aborting on it would
+    # make a migrated task unrunnable over a cell that has never had any effect.
+    # The bounds stay in the parameter's own unit, which is what such a sheet
+    # meant.
     if (!is.null(p$units) && nchar(p$units) > 0) {
-      runtime$unit <- p$units
+      dimension <- paramObjs[[1]]$dimension
+      if (p$units %in% ospsuite::getUnitsForDimension(dimension)) {
+        runtime$unit <- p$units
+      } else {
+        cli::cli_warn(messages$PIParameterUnitNotApplied(
+          p$id,
+          p$units,
+          dimension
+        ))
+      }
     }
     runtime$startValue <- p$startValue
-    if (p$minValue >= runtime$maxValue) {
-      runtime$maxValue <- p$maxValue
-      runtime$minValue <- p$minValue
-    } else {
-      runtime$minValue <- p$minValue
-      runtime$maxValue <- p$maxValue
-    }
+    .assignPIBounds(runtime, p$minValue, p$maxValue)
     runtime
   })
 
@@ -807,6 +1000,34 @@ print.PITask <- function(x, ...) {
   )
 }
 
+# Write a PI parameter's search bounds onto its runtime object, in an order that
+# keeps every intermediate state valid.
+#
+# The two bounds cannot be set at once, and each setter validates the new bound
+# against the *other* one, which still holds the model's default until it is
+# overwritten in turn. The order only matters when the new window sits entirely
+# outside the current one: above it, `minValue` first is blocked by the stale
+# `maxValue`; below it, `maxValue` first is blocked by the stale `minValue`. A
+# window that overlaps the current one goes through in either order. A
+# `PIParameter()` record is already validated as
+# `minValue <= startValue <= maxValue`, so a window cannot sit both above and
+# below: at most one order is ever blocked, and this picks the other.
+#
+# Mutates `runtime` in place (an R6 object) and returns it invisibly.
+#
+# @keywords internal
+# @noRd
+.assignPIBounds <- function(runtime, minValue, maxValue) {
+  if (minValue >= runtime$maxValue) {
+    runtime$maxValue <- maxValue
+    runtime$minValue <- minValue
+  } else {
+    runtime$minValue <- minValue
+    runtime$maxValue <- maxValue
+  }
+  invisible(runtime)
+}
+
 # @keywords internal
 # @noRd
 .buildPIConfiguration <- function(cfg) {
@@ -831,7 +1052,7 @@ print.PITask <- function(x, ...) {
     NULL
   }
   if (!is.null(algDefaults) || !is.null(cfg$algorithmOptions)) {
-    piConfig$algorithmOptions <- modifyList(
+    piConfig$algorithmOptions <- utils::modifyList(
       algDefaults %||% list(),
       cfg$algorithmOptions %||% list()
     )
@@ -844,7 +1065,7 @@ print.PITask <- function(x, ...) {
     NULL
   }
   if (!is.null(ciDefaults) || !is.null(cfg$ciOptions)) {
-    piConfig$ciOptions <- modifyList(
+    piConfig$ciOptions <- utils::modifyList(
       ciDefaults %||% list(),
       cfg$ciOptions %||% list()
     )
@@ -1113,14 +1334,23 @@ createPITasks <- function(...) {
 #' Add a Parameter Identification task to a Project
 #'
 #' @param project A `Project` object.
+#' @description Adds one task to `parameterIdentification` definitions. Every
+#'   part of a task is optional, so `addPITask(project, "myFit")` creates an
+#'   empty task that is then grown with [setPITask()], [addPIParameter()] and
+#'   [addPIOutputMapping()]. A task must name at least one scenario, one
+#'   parameter and one output mapping to run, which [validateProject()] enforces
+#'   and [runPI()] gates on.
+#'
+#' @param project A `Project` object.
 #' @param id Character scalar. New task id; must not collide with an
 #'   existing task id.
 #' @param scenarios Character vector of scenario names. Each must exist
-#'   in `names(project$definitions$scenarios)`.
-#' @param parameters List of `PIParameter` records. May be empty (`list()`)
-#'   to create a task seeded later with [addPIParameter()].
-#' @param outputMappings List of `PIOutputMapping` records. May be empty
-#'   (`list()`) to create a task seeded later with [addPIOutputMapping()].
+#'   in `names(project$definitions$scenarios)`. Defaults to `character(0)`
+#'   (none yet); set them later with [setPITask()].
+#' @param parameters List of `PIParameter` records. Defaults to `list()` (none
+#'   yet); add them later with [addPIParameter()].
+#' @param outputMappings List of `PIOutputMapping` records. Defaults to `list()`
+#'   (none yet); add them later with [addPIOutputMapping()].
 #'   Each `outputPath` must identify a defined output path, either by its id
 #'   (a key in `names(project$definitions$outputPaths)`) or by its literal
 #'   model path.
@@ -1134,9 +1364,9 @@ createPITasks <- function(...) {
 addPITask <- function(
   project,
   id,
-  scenarios,
-  parameters,
-  outputMappings,
+  scenarios = character(0),
+  parameters = list(),
+  outputMappings = list(),
   configuration = list(),
   overwrite = FALSE
 ) {
@@ -1159,16 +1389,16 @@ addPITask <- function(
   self,
   private,
   id,
-  scenarios,
-  parameters,
-  outputMappings,
+  scenarios = character(0),
+  parameters = list(),
+  outputMappings = list(),
   configuration = list(),
   overwrite = FALSE,
   .call
 ) {
   rlang::local_error_call(.call)
   errors <- character()
-  if (!is.character(id) || length(id) != 1L || is.na(id) || nchar(id) == 0) {
+  if (!.isNonEmptyString(id)) {
     errors <- c(errors, "id must be a non-empty string")
   } else {
     id <- .canonicalizeId(id)
@@ -1190,7 +1420,11 @@ addPITask <- function(
     }
   }
 
-  scenarios <- .canonicalizeIdRef(scenarios)
+  # `.canonicalizeVectorIdRef()` is the reference-list normalizer: it flattens
+  # the list a JSON reader yields for an id array and reads a zero-length value
+  # as "there are none", so a task's own written `scenarios` field goes straight
+  # back in and an empty task is creatable.
+  scenarios <- .canonicalizeVectorIdRef(scenarios)
   unknownScenarios <- setdiff(scenarios, names(self$definitions$scenarios))
   if (length(unknownScenarios) > 0L) {
     errors <- c(
@@ -1260,9 +1494,117 @@ addPITask <- function(
   invisible(self)
 }
 
+#' Modify a Parameter Identification task's task-level fields
+#'
+#' @description Changes the task-level fields of the task identified by `id`:
+#'   the `scenarios` it runs against and its solver `configuration`. Only the
+#'   arguments you pass are changed; the other keeps its current value (partial
+#'   update). Passing `scenarios = character(0)` or `configuration = NULL`
+#'   empties that field.
+#'
+#'   A task's parameters and output mappings are not task-level fields: grow and
+#'   shrink them with [addPIParameter()] / [removePIParameter()] and
+#'   [addPIOutputMapping()] / [removePIOutputMapping()]. To replace a whole task
+#'   at once, use `addPITask(..., overwrite = TRUE)`.
+#'
+#'   Like [addPITask()], this acts on one task per call.
+#'
+#' @param project A `Project` object.
+#' @param id Character scalar. Id of the task to modify, canonicalized the same
+#'   way [addPITask()] canonicalizes it. The task must already exist.
+#' @param scenarios Character vector of scenario ids the task runs against. Each
+#'   must exist in `names(project$definitions$scenarios)`.
+#' @param configuration Named list of solver settings; see the `configuration`
+#'   argument of [PITask()] for the supported keys. `NULL` clears every setting,
+#'   leaving the runtime defaults in place.
+#' @returns The `project` object, invisibly.
+#' @export
+#' @family parameterIdentification
+setPITask <- function(project, id, scenarios, configuration) {
+  validateIsOfType(project, "Project")
+
+  # Capture only the fields the caller supplied, the same way `setScenario()`
+  # does: `x[name] <- list(value)` keeps a supplied `NULL` (which clears the
+  # field) as a present-but-NULL element, where `x$name <- NULL` would drop the
+  # name and turn "clear it" into "leave it untouched".
+  supplied <- list()
+  if (!missing(scenarios)) {
+    supplied["scenarios"] <- list(scenarios)
+  }
+  if (!missing(configuration)) {
+    supplied["configuration"] <- list(configuration)
+  }
+
+  do.call(project$setPITask, c(list(id), supplied))
+}
+
+# Implementation behind `project$setPITask()` / `setPITask()`. The `...` carries
+# only the fields the caller supplied (partial update).
+#
+# @keywords internal
+# @noRd
+.setPITask_impl <- function(self, private, id, ..., .call) {
+  rlang::local_error_call(.call)
+  if (!.isNonEmptyString(id)) {
+    cli::cli_abort("{.arg id} must be a single non-empty string.")
+  }
+  id <- .canonicalizeId(id)
+  if (!(id %in% names(self$definitions$parameterIdentification))) {
+    cli::cli_abort(c(
+      "Cannot modify PI task {.val {id}}: it does not exist.",
+      "i" = "Use {.fn addPITask} to create it first."
+    ))
+  }
+
+  dots <- list(...)
+  # A name that is not a task-level field would otherwise be a silent no-op, so
+  # it aborts naming what can be set here.
+  unknown <- setdiff(names(dots), c("scenarios", "configuration"))
+  if (length(unknown) > 0L) {
+    cli::cli_abort(c(
+      "{.fn setPITask} cannot set {.field {unknown}}.",
+      "i" = "It sets {.field scenarios} and {.field configuration}; use \\
+      {.fn addPIParameter} / {.fn addPIOutputMapping} for a task's parameters \\
+      and output mappings."
+    ))
+  }
+  if (length(dots) == 0L) {
+    return(invisible(self))
+  }
+
+  task <- self$definitions$parameterIdentification[[id]]
+  if ("scenarios" %in% names(dots)) {
+    scenarios <- .canonicalizeVectorIdRef(dots$scenarios)
+    unknownScenarios <- setdiff(scenarios, names(self$definitions$scenarios))
+    if (length(unknownScenarios) > 0L) {
+      cli::cli_abort(c(
+        "Cannot modify PI task {.val {id}}:",
+        "x" = "scenarios not found in {.code project$definitions$scenarios}: \\
+        {.val {unknownScenarios}}"
+      ))
+    }
+    task$scenarios <- .asPITaskScenarios(scenarios, id)
+  }
+  if ("configuration" %in% names(dots)) {
+    configuration <- dots$configuration
+    if (!is.null(configuration) && !is.list(configuration)) {
+      cli::cli_abort(
+        "{.arg configuration} must be a named list of solver settings, or \\
+        {.code NULL}."
+      )
+    }
+    task$configuration <- configuration %||% list()
+  }
+
+  tasks <- private$.getSection("parameterIdentification")
+  tasks[[id]] <- task
+  private$.setSection("parameterIdentification", tasks)
+  invisible(self)
+}
+
 #' Remove one or more Parameter Identification tasks from a Project
 #'
-#' Drop the tasks with matching ids in one write-through. Warns (and skips)
+#' Drop the tasks with matching ids in one in-memory edit. Warns (and skips)
 #' any id not present.
 #'
 #' `addPITask()` is not vectorized over ids: each task is composed of its own
@@ -1304,8 +1646,11 @@ removePITask <- function(project, id) {
   invisible(self)
 }
 
-# Canonicalize the scenario references on a PIParameter record (its `id` is a
-# free label the PI run uses, not a definition-file id, so it is left as-is).
+# Canonicalize the scenario references on a PIParameter record. Only the
+# references: a member's own `id` is a free label inside the task's definition
+# file, not a definition-file id of its own, so no door that makes one
+# (`addPITask()`, `addPIParameter()`, `.parsePIParameters()`, the Excel import)
+# reshapes it, and `.removePIMember()` matches it exactly as stored.
 #
 # @keywords internal
 # @noRd
@@ -1354,8 +1699,14 @@ removePITask <- function(project, id) {
     return(literalHit[[1L]])
   }
   # Otherwise treat it as an id, canonicalized the same way the definition was
-  # filed (silent: a literal path would already have matched above).
-  canonical <- suppressWarnings(.canonicalizeIdRef(value))
+  # filed, through the transform the cross-reference validator resolves with, so
+  # this matcher and that report cannot disagree about whether a reference names
+  # a defined output path. It is silent (a literal path would already have matched
+  # above) and, unlike canonicalizing an id to file it, does not abort on a value
+  # too long to be a filename: such a value matches nothing and leaves here as
+  # `NULL`, which keeps the load lenient and makes the authoring abort name the
+  # unknown reference rather than a length limit.
+  canonical <- .canonicalizeForCompare(value)
   if (canonical %in% ids) {
     return(canonical)
   }
@@ -1391,8 +1742,9 @@ removePITask <- function(project, id) {
 #'   exist in `scenarios` definitions.
 #' @param minValue,maxValue,startValue Numeric scalars.
 #' @param units Optional character scalar.
-#' @param id Optional character scalar; auto-generated as
-#'   `<task>_param_<N>` when absent.
+#' @param id Optional character scalar, stored exactly as given (unlike a task
+#'   id, a parameter id names no file, so it is not canonicalized);
+#'   auto-generated as `<task>_param_<N>` when absent.
 #' @param overwrite Logical scalar. When `FALSE` (default), an explicit `id`
 #'   that already exists in the task aborts. When `TRUE`, the existing
 #'   parameter is replaced (last-write-wins). Ignored for an auto-generated
@@ -1426,6 +1778,21 @@ addPIParameter <- function(
   )
 }
 
+# Canonicalize a PI task id and abort when the project defines no such task.
+# Returns the canonical id, so a caller writes `task <- .requirePITask(self,
+# task)`. `call` attributes the abort to the public authoring function, whose
+# `_impl` has already set the error call.
+#
+# @keywords internal
+# @noRd
+.requirePITask <- function(self, task, call = rlang::caller_env()) {
+  task <- .canonicalizeId(task)
+  if (!(task %in% names(self$definitions$parameterIdentification))) {
+    cli::cli_abort(messages$PITaskNotFound(task), call = call)
+  }
+  task
+}
+
 # Implementation behind `project$addPIParameter()` / `addPIParameter()`.
 #
 # @keywords internal
@@ -1445,10 +1812,7 @@ addPIParameter <- function(
   .call
 ) {
   rlang::local_error_call(.call)
-  task <- .canonicalizeId(task)
-  if (!(task %in% names(self$definitions$parameterIdentification))) {
-    cli::cli_abort("PI task {.val {task}} not found")
-  }
+  task <- .requirePITask(self, task)
   scenarios <- .canonicalizeIdRef(scenarios)
   unknownScenarios <- setdiff(scenarios, names(self$definitions$scenarios))
   if (length(unknownScenarios) > 0L) {
@@ -1497,7 +1861,8 @@ addPIParameter <- function(
 #'
 #' @param project A `Project` object.
 #' @param task Character scalar. Existing PI task id.
-#' @param id Character scalar. Parameter id to remove.
+#' @param id Character scalar. Parameter id to remove, matched exactly as the
+#'   task stores it.
 #' @returns The `project` object, invisibly.
 #' @export
 #' @family parameterIdentification
@@ -1512,24 +1877,35 @@ removePIParameter <- function(project, task, id) {
 # @noRd
 .removePIParameter_impl <- function(self, private, task, id, .call) {
   rlang::local_error_call(.call)
-  task <- .canonicalizeId(task)
-  if (!(task %in% names(self$definitions$parameterIdentification))) {
-    cli::cli_abort("PI task {.val {task}} not found")
-  }
+  .removePIMember(
+    self,
+    private,
+    .requirePITask(self, task),
+    id,
+    field = "parameters",
+    label = "Parameter"
+  )
+}
+
+# Remove one member of a PI task: `field` is the task field holding them
+# (`parameters` or `outputMappings`) and `label` names the kind in the no-op
+# warning. A task left with neither parameters nor output mappings carries no
+# work, so it is dropped rather than stored empty. `task` must already be
+# canonical and known (see `.requirePITask()`).
+#
+# @keywords internal
+# @noRd
+.removePIMember <- function(self, private, task, id, field, label) {
   piTask <- self$definitions$parameterIdentification[[task]]
-  ids <- vapply(piTask$parameters, `[[`, character(1), "id")
+  ids <- vapply(piTask[[field]], `[[`, character(1), "id")
   if (!(id %in% ids)) {
-    cli::cli_warn(
-      "Parameter {.val {id}} not found in task {.val {task}}; no-op."
-    )
+    cli::cli_warn(messages$PIMemberNotFound(label, id, task))
     return(invisible(self))
   }
-  piTask$parameters <- piTask$parameters[ids != id]
+  piTask[[field]] <- piTask[[field]][ids != id]
   tasks <- private$.getSection("parameterIdentification")
   if (length(piTask$parameters) == 0L && length(piTask$outputMappings) == 0L) {
-    cli::cli_warn(
-      "PI task {.val {task}} is now empty and has been removed."
-    )
+    cli::cli_warn(messages$PITaskNowEmpty(task))
     tasks[[task]] <- NULL
   } else {
     tasks[[task]] <- piTask
@@ -1549,8 +1925,9 @@ removePIParameter <- function(project, task, id) {
 #' @param scenarios Character vector of scenario names.
 #' @param scaling,xOffset,yOffset,xFactor,yFactor,weight Optional
 #'   per-mapping fitting metadata. Defaults match `PIOutputMapping()`.
-#' @param id Optional character scalar; auto-generated as
-#'   `<task>_mapping_<N>` when absent.
+#' @param id Optional character scalar, stored exactly as given (unlike a task
+#'   id, a mapping id names no file, so it is not canonicalized);
+#'   auto-generated as `<task>_mapping_<N>` when absent.
 #' @param overwrite Logical scalar. When `FALSE` (default), an explicit `id`
 #'   that already exists in the task aborts. When `TRUE`, the existing mapping
 #'   is replaced (last-write-wins). Ignored for an auto-generated `id`, which
@@ -1612,10 +1989,7 @@ addPIOutputMapping <- function(
   .call
 ) {
   rlang::local_error_call(.call)
-  task <- .canonicalizeId(task)
-  if (!(task %in% names(self$definitions$parameterIdentification))) {
-    cli::cli_abort("PI task {.val {task}} not found")
-  }
+  task <- .requirePITask(self, task)
   # Accept either an output-path id or the literal model path of a defined
   # output path; store the resolved id.
   outputPath <- .resolveOutputPathRef(outputPath, self)
@@ -1668,7 +2042,8 @@ addPIOutputMapping <- function(
 #'
 #' @param project A `Project` object.
 #' @param task Character scalar. Existing PI task id.
-#' @param id Character scalar. Output mapping id to remove.
+#' @param id Character scalar. Output mapping id to remove, matched exactly as
+#'   the task stores it.
 #' @returns The `project` object, invisibly.
 #' @export
 #' @family parameterIdentification
@@ -1684,28 +2059,12 @@ removePIOutputMapping <- function(project, task, id) {
 # @noRd
 .removePIOutputMapping_impl <- function(self, private, task, id, .call) {
   rlang::local_error_call(.call)
-  task <- .canonicalizeId(task)
-  if (!(task %in% names(self$definitions$parameterIdentification))) {
-    cli::cli_abort("PI task {.val {task}} not found")
-  }
-  piTask <- self$definitions$parameterIdentification[[task]]
-  ids <- vapply(piTask$outputMappings, `[[`, character(1), "id")
-  if (!(id %in% ids)) {
-    cli::cli_warn(
-      "Output mapping {.val {id}} not found in task {.val {task}}; no-op."
-    )
-    return(invisible(self))
-  }
-  piTask$outputMappings <- piTask$outputMappings[ids != id]
-  tasks <- private$.getSection("parameterIdentification")
-  if (length(piTask$parameters) == 0L && length(piTask$outputMappings) == 0L) {
-    cli::cli_warn(
-      "PI task {.val {task}} is now empty and has been removed."
-    )
-    tasks[[task]] <- NULL
-  } else {
-    tasks[[task]] <- piTask
-  }
-  private$.setSection("parameterIdentification", tasks)
-  invisible(self)
+  .removePIMember(
+    self,
+    private,
+    .requirePITask(self, task),
+    id,
+    field = "outputMappings",
+    label = "Output mapping"
+  )
 }

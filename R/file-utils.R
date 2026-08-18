@@ -80,6 +80,14 @@ readExcel <- function(path, sheet = NULL, ...) {
 }
 
 # Drop the rows of a parsed sheet that are blank in every column.
+#
+# The kept rows' original positions are recorded in a `sheetRow` attribute (1 for
+# the first row below the header), because dropping rows here is what makes a
+# parsed-frame index untrue as a workbook coordinate: a parser that reports a row
+# to the user reads the attribute rather than guessing at a header offset. It is
+# an attribute rather than a column so no parser that loops over `names(data)`
+# sees it, and it therefore does not survive subsetting the frame: read it
+# straight off the value `readExcel()` returned.
 # @keywords internal
 # @noRd
 .dropBlankRows <- function(data) {
@@ -87,7 +95,9 @@ readExcel <- function(path, sheet = NULL, ...) {
     return(data)
   }
   blank <- Reduce(`&`, lapply(data, .blankColumnCells))
-  data[!blank, , drop = FALSE]
+  kept <- data[!blank, , drop = FALSE]
+  attr(kept, "sheetRow") <- which(!blank)
+  kept
 }
 
 #' Resolve a project-controlled path and require it to stay under its root
@@ -258,4 +268,79 @@ readExcel <- function(path, sheet = NULL, ...) {
   }
 
   writexl::write_xlsx(data, path = path, col_names = col_names)
+}
+
+#' Abort when a file is a Git LFS pointer rather than the file it stands for
+#'
+#' A pointer is a few lines of text opening with the LFS spec URL, so a `.pkml`
+#' that is still one reaches the simulation backend as malformed XML and aborts
+#' naming neither the file nor the reason. Projects that keep their models in LFS
+#' are common enough that a clone without `git lfs pull` is worth naming.
+#'
+#' @param path The file about to be read.
+#' @param call The frame the abort is attributed to.
+#' @returns `NULL`, invisibly; called for the abort.
+#' @keywords internal
+#' @noRd
+.assertNotLfsPointer <- function(path, call = rlang::caller_env()) {
+  # A pointer file is a few hundred bytes at most, so the size check keeps a real
+  # model (megabytes of XML) from being opened at all.
+  if (!file.exists(path) || file.size(path) > 1024) {
+    return(invisible(NULL))
+  }
+  firstLine <- tryCatch(
+    readLines(path, n = 1L, warn = FALSE),
+    error = function(e) character()
+  )
+  isPointer <- length(firstLine) == 1L &&
+    startsWith(firstLine, "version https://git-lfs.github.com/spec/")
+  if (isPointer) {
+    cli::cli_abort(messages$gitLfsPointerFile(path), call = call)
+  }
+  invisible(NULL)
+}
+
+#' Guard a name that will be joined onto a directory
+#'
+#' A name that becomes a path via `file.path(dir, name)` must be a single plain
+#' filename. One carrying a path separator, or `.` / `..`, would resolve outside
+#' `dir` and write over whatever sits there.
+#'
+#' A value that is not a single non-empty string is a different mistake from one
+#' that is a name but would escape `dir`, so the two are told apart: saying
+#' "contains a path separator" of an empty string, an `NA`, or a number says
+#' something untrue about it. What the value actually is is rendered here, once,
+#' and handed to the message entry as `given`.
+#'
+#' @param name The name to check.
+#' @param message A `messages` entry taking `(name, given)` and returning the
+#'   abort text, so each caller names its own argument. `given` describes a value
+#'   that is no name at all, and is `NULL` when the name is well-formed but
+#'   would escape the directory.
+#' @param call The frame the abort is attributed to; defaults to the caller, so
+#'   the error reads as the public function the user actually called.
+#' @returns `NULL`, invisibly; called for the abort.
+#' @keywords internal
+#' @noRd
+.validateFilenameSegment <- function(
+  name,
+  message,
+  call = rlang::caller_env()
+) {
+  given <- if (!is.character(name)) {
+    cli::format_inline("{.obj_type_friendly {name}}")
+  } else if (length(name) != 1L) {
+    cli::format_inline("a character vector of length {length(name)}")
+  } else if (is.na(name)) {
+    "NA"
+  } else if (!nzchar(name)) {
+    "an empty string"
+  }
+  if (!is.null(given)) {
+    cli::cli_abort(message(name, given), call = call)
+  }
+  if (grepl("[/\\]", name) || name %in% c(".", "..")) {
+    cli::cli_abort(message(name, NULL), call = call)
+  }
+  invisible(NULL)
 }

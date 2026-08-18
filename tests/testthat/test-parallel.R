@@ -1,5 +1,5 @@
 test_that("`executeInParallel()` works as expected", {
-  skip_on_os("mac")
+  # skip_on_os("mac")
 
   chk <- Sys.getenv("_R_CHECK_LIMIT_CORES_", "")
 

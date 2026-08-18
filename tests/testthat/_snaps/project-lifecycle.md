@@ -15,6 +15,22 @@
       i Use `snapshotProject()` to save it to a single file.
       i Or create a project folder with `initProject()` and load it with `loadProject()`.
 
+# initProject() rejects a name that is not a single string
+
+    Code
+      initProject(destination, createExcel = FALSE, name = c("a", "b"))
+    Condition
+      Error in `initProject()`:
+      ! `name` must be a single non-NA string.
+
+---
+
+    Code
+      initProject(destination, createExcel = FALSE, name = NA_character_)
+    Condition
+      Error in `initProject()`:
+      ! `name` must be a single non-NA string.
+
 # reloadProject() on an unbound in-memory project aborts
 
     Code
@@ -23,6 +39,14 @@
       Error in `reloadProject()`:
       ! This project does not have a project folder on disk, so there is nothing to reload.
       i `reloadProject()` re-reads the project files from disk; this project was not loaded from a folder.
+
+# initProject does not scaffold over an unmigrated legacy Excel project
+
+    Code
+      initProject(destination = dir, type = "minimal", createExcel = FALSE)
+    Condition
+      Error in `initProject()`:
+      ! The destination folder already contains an esqlabsR project. R is not running interactively, so esqlabsR cannot ask for confirmation; pass `overwrite = TRUE` to overwrite it.
 
 # initProject aborts non-interactively when a project exists and overwrite = FALSE
 

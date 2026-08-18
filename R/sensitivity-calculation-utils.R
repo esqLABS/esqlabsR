@@ -58,6 +58,15 @@
   parameterPath,
   customOutputFunctions = NULL
 ) {
+  # When every run for this parameter failed, the nesting step in
+  # `sensitivityCalculation()` dropped all results and `simulationResults` is an
+  # empty list. There is nothing to extract, so warn and return an empty frame
+  # with the expected columns rather than erroring downstream in `rename()`.
+  if (length(simulationResults) == 0) {
+    cli::cli_warn(messages$sensitivityAllRunsFailed(parameterPath))
+    return(.emptyPKDataFrame())
+  }
+
   # calculate standard pkAnalyses
   pkDataList <- userPKDataList <-
     stats::setNames(
@@ -101,7 +110,7 @@
 
   pkData <- .addParameterColumns(pkData, simulationResults, parameterPath)
   pkData <- dplyr::group_by(pkData, ParameterPath, PKParameter) |>
-    dplyr::group_modify(.f = ~ .computePercentChange(.)) |>
+    dplyr::group_modify(.f = ~ .computePercentChange(.x, .y)) |>
     dplyr::ungroup()
 
   pkData <- dplyr::select(pkData, -dplyr::any_of("IndividualId"))
@@ -115,6 +124,31 @@
     dplyr::arrange(ParameterPath, PKParameter, ParameterFactor)
 
   return(pkData)
+}
+
+#' Empty PK parameter data frame
+#'
+#' Returns a zero-row data frame with the columns produced by
+#' `.simulationResultsToPKDataFrame()`, used when every run for a parameter
+#' failed and no PK data can be extracted.
+#'
+#' @keywords internal
+#' @noRd
+.emptyPKDataFrame <- function() {
+  data.frame(
+    OutputPath = character(0),
+    ParameterPath = character(0),
+    ParameterFactor = numeric(0),
+    ParameterValue = numeric(0),
+    ParameterUnit = character(0),
+    ParameterPathUserName = character(0),
+    PKParameter = character(0),
+    PKParameterValue = numeric(0),
+    PKPercentChange = numeric(0),
+    Unit = character(0),
+    SensitivityPKParameter = numeric(0),
+    stringsAsFactors = FALSE
+  )
 }
 
 # dataframe modification helpers ------------------------------
@@ -206,22 +240,27 @@
 #'
 #' @param data A dataframe returned by `pkAnalysesAsDataFrame()` and with
 #'   columns renamed to follow `UpperCamel` case.
+#' @param groupKeys Optional one-row data frame of grouping keys as supplied by
+#'   `dplyr::group_modify()`. `group_modify()` strips the grouping columns
+#'   (`ParameterPath`, `PKParameter`) from `data`, so the keys are read from here
+#'   to give the missing-baseline warning meaningful context. When called
+#'   directly (outside `group_modify()`) the keys are taken from `data` instead.
 #'
 #' @keywords internal
 #' @noRd
-.computePercentChange <- function(data) {
+.computePercentChange <- function(data, groupKeys = NULL) {
   # baseline values with a scaling of 1, i.e. no scaling
   baseDataFrame <- dplyr::filter(data, ParameterFactor == 1.0)
 
   # Handle case where no baseline data (ParameterFactor == 1.0) exists
   if (nrow(baseDataFrame) == 0) {
-    parameterPath <- unique(data$ParameterPath)[1]
-    pkParameter <- unique(data$PKParameter)[1]
+    parameterPath <- groupKeys$ParameterPath %||% unique(data$ParameterPath)
+    pkParameter <- groupKeys$PKParameter %||% unique(data$PKParameter)
 
     cli::cli_warn(
       messages$sensitivityPKParameterNotCalculated(
-        parameterPath,
-        pkParameter
+        parameterPath[1],
+        pkParameter[1]
       )
     )
 
@@ -234,13 +273,20 @@
     )
   }
 
-  # baseline values for parameters of interest
-  ParameterBaseValue <- baseDataFrame |> dplyr::pull(ParameterValue)
-  PKParameterBaseValue <- baseDataFrame |> dplyr::pull(PKParameterValue)
+  # Join the per-OutputPath baseline values back onto every row so that values
+  # align by OutputPath instead of relying on silent vector recycling, which is
+  # only correct when rows happen to be ordered output-major.
+  baseValues <- baseDataFrame |>
+    dplyr::select(
+      OutputPath,
+      ParameterBaseValue = ParameterValue,
+      PKParameterBaseValue = PKParameterValue
+    )
 
   # add columns with %change and sensitivity
   # reference: https://docs.open-systems-pharmacology.org/shared-tools-and-example-workflows/sensitivity-analysis#mathematical-background
   data |>
+    dplyr::left_join(baseValues, by = "OutputPath") |>
     dplyr::mutate(
       PKPercentChange = ((PKParameterValue - PKParameterBaseValue) /
         PKParameterBaseValue) *
@@ -250,7 +296,8 @@
         PKParameterBaseValue) *
         # p / delta p
         (ParameterBaseValue / (ParameterValue - ParameterBaseValue))
-    )
+    ) |>
+    dplyr::select(-ParameterBaseValue, -PKParameterBaseValue)
 }
 
 #' @keywords internal
@@ -317,6 +364,19 @@
       ParameterPathUserName = names(parameterPath) %||% NA_character_,
     ) |>
     dplyr::mutate(ParameterValue = ParameterValue * ParameterFactor)
+}
+
+#' Match parameter factors within a relative tolerance
+#'
+#' Compares `x` against each value in `y`, returning a logical vector the same
+#' length as `y`. Uses a relative tolerance so that a user-typed reciprocal
+#' (e.g. `3.333333`) matches a computed one (e.g. `1 / 0.3`), which
+#' `dplyr::near()`'s much tighter absolute tolerance would reject.
+#'
+#' @keywords internal
+#' @noRd
+.factorsMatch <- function(x, y, tol = 1e-4) {
+  abs(x - y) <= tol * pmax(abs(x), abs(y), 1)
 }
 
 # variationRange handlers -------------------------------------------------
@@ -402,6 +462,14 @@
   variationType
 ) {
   if (variationType == "absolute") {
+    # Absolute targets are converted to relative scaling factors by dividing by
+    # the initial value. A parameter with an initial value of 0 has no
+    # multiplicative scaling that reaches a non-zero target, so dividing would
+    # silently produce Inf/NaN factors and undiagnosed batch failures. Guard it.
+    zeroInitial <- names(initialValues)[initialValues == 0]
+    if (length(zeroInitial) > 0) {
+      cli::cli_abort(messages$absoluteVariationZeroInitialValue(zeroInitial))
+    }
     variationRange <- purrr::map2(variationRange, initialValues, ~ .x / .y)
   }
 
@@ -481,14 +549,20 @@
 #' @param nullAllowed Logical. If TRUE, allows NULL. Default is FALSE.
 #' @keywords internal
 #' @noRd
-.validateIsNamedList <- function(object, nullAllowed = FALSE) {
+.validateIsNamedList <- function(
+  object,
+  nullAllowed = FALSE,
+  call = rlang::caller_env()
+) {
   validateIsOfType(object, "list", nullAllowed = nullAllowed)
 
   if (!is.null(object)) {
     listNames <- names(object)
     argName <- deparse(substitute(object))
     if (hasEmptyStrings(listNames)) {
-      cli::cli_abort(messages$notNamedList(argName))
+      # `call` attributes the abort to the public function the user called,
+      # rather than to this internal validator.
+      cli::cli_abort(messages$notNamedList(argName), call = call)
     }
   }
 }
@@ -526,11 +600,36 @@
 
 # save / load SensitivityCalculation ------------
 
+#' Simulation of the first retained `SimulationResults`
+#'
+#' The nested `simulationResults` structure drops entries whose runs all failed,
+#' so individual per-parameter buckets (and their factor entries) may be empty.
+#' Returns the `Simulation` of the first retained result, scanning across
+#' parameters and factors, rather than assuming `[[1]][[1]]` exists.
+#'
+#' @param simulationResults The nested `simulationResults` list from a
+#'   `SensitivityCalculation`.
+#'
+#' @keywords internal
+#' @noRd
+.firstRetainedSimulation <- function(simulationResults) {
+  for (parameterResults in simulationResults) {
+    for (simulationResult in parameterResults) {
+      if (!is.null(simulationResult)) {
+        return(simulationResult$simulation)
+      }
+    }
+  }
+  cli::cli_abort(messages$noRetainedSimulationResults())
+}
+
 #' Save Sensitivity Calculation Results
 #'
 #' Saves the results of a sensitivity analysis to a specified directory,
 #' including metadata and simulation output required for restoring or sharing
-#' the analysis.
+#' the analysis. The underlying simulation is written to `simulation.pkml` in the
+#' same directory so the saved calculation is self-contained and can be reloaded
+#' without access to the original simulation file.
 #'
 #' @param sensitivityCalculation A named list of class `SensitivityCalculation`
 #'   as returned by [sensitivityCalculation()], containing `simulationResults`,
@@ -591,9 +690,20 @@ saveSensitivityCalculation <- function(
 
   simulationResults <- sensitivityCalculation$simulationResults
 
-  # Store the simulation source path so it can be reloaded later
-  simFilePath <- simulationResults[[1]][[1]]$simulation$sourceFile
+  # Store the simulation source path so it can be reloaded later. The first
+  # parameter bucket can be empty when all of its runs failed, so locate the
+  # first retained result rather than assuming `[[1]][[1]]` exists.
+  simulation <- .firstRetainedSimulation(simulationResults)
+  simFilePath <- simulation$sourceFile
   sensitivityCalculation$simFilePath <- simFilePath
+
+  # Save the simulation itself into the output folder so the saved calculation
+  # is self-contained and can be reloaded even when the original source file is
+  # unavailable (e.g. moved, renamed, or the folder shared with another user).
+  ospsuite::saveSimulation(
+    simulation = simulation,
+    filePath = file.path(outputDir, "simulation.pkml")
+  )
 
   # Export each SimulationResults object to CSV
   for (i in seq_along(simulationResults)) {
@@ -623,13 +733,15 @@ saveSensitivityCalculation <- function(
 #'
 #' Restores a previously saved sensitivity calculation from a directory created
 #' with [saveSensitivityCalculation()]. If no simulation object is provided, the
-#' function attempts to load it from the saved simulation file path.
+#' function loads the `simulation.pkml` bundled in the directory, falling back to
+#' the simulation file path stored in the metadata for folders saved before the
+#' pkml was bundled.
 #'
 #' @param outputDir Path to the directory containing the saved sensitivity
 #'   calculation files.
 #' @param simulation Optional. A `Simulation` object. If not provided, the
-#'   function will attempt to load the simulation from the path stored in the
-#'   metadata.
+#'   function loads the `simulation.pkml` bundled in `outputDir`, or, if absent,
+#'   the simulation stored at the source path recorded in the metadata.
 #'
 #' @return A named list of class `SensitivityCalculation`.
 #'
@@ -652,16 +764,25 @@ loadSensitivityCalculation <- function(outputDir, simulation = NULL) {
   # Load sensitivityCalculation structure
   sensitivityCalculation <- readRDS(metaPath)
 
-  # Attempt to load simulation if not provided
+  # Resolve the simulation if not provided explicitly. Prefer the pkml bundled
+  # in `outputDir` (self-contained, portable) and fall back to the source path
+  # stored in the metadata for folders saved before the pkml was bundled. Both
+  # sources share the same error handling so callers get a consistent,
+  # actionable message when loading fails (e.g. a corrupt bundled pkml).
   if (is.null(simulation)) {
-    simFilePath <- sensitivityCalculation$simFilePath
+    bundledSimPath <- file.path(outputDir, "simulation.pkml")
+    simSource <- if (file.exists(bundledSimPath)) {
+      bundledSimPath
+    } else {
+      sensitivityCalculation$simFilePath
+    }
     simulation <- tryCatch(
       {
-        ospsuite::loadSimulation(simFilePath)
+        ospsuite::loadSimulation(simSource)
       },
       error = function(e) {
         cli::cli_abort(
-          messages$failedToLoadSimulation(simFilePath, e$message)
+          messages$failedToLoadSimulation(simSource, e$message)
         )
       }
     )
@@ -674,10 +795,12 @@ loadSensitivityCalculation <- function(outputDir, simulation = NULL) {
     full.names = TRUE
   )
 
-  variationRange <- unique(sensitivityCalculation$pkData$ParameterFactor)
-  parameterPaths <- sensitivityCalculation$parameterPaths
-
-  expectedCount <- length(parameterPaths) * length(variationRange)
+  # One CSV was written per stored `SimulationResults` object, i.e. one per
+  # (parameter, retained factor) entry in the nested `simulationResults`
+  # structure. This count is robust to per-parameter variation ranges, absolute
+  # variation (factors differ per parameter), and dropped failed runs, all of
+  # which break the naive `parameters * factors` assumption.
+  expectedCount <- sum(lengths(sensitivityCalculation$simulationResults))
   if (length(simResultFiles) != expectedCount) {
     cli::cli_abort(messages$corruptSensitivityCalculation(outputDir))
   }

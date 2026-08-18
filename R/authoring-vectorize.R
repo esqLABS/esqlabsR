@@ -16,9 +16,9 @@
 #      different multi-valued list per definition, the caller passes a length-N
 #      list (one vector per definition); anything else is the one value applied to
 #      every definition. Whole fields are exempt from the length check.
-#   4. All-or-nothing: the caller validates all N definitions first and writes
-#      nothing on any failure, then folds all N into the section and triggers
-#      exactly one write-through.
+#   4. All-or-nothing: the caller validates all N definitions first and changes
+#      nothing on any failure, then folds all N into the section in one
+#      in-memory edit (which `saveProject()` later reconciles to the tree).
 #
 # Two families of authoring functions sit outside this id-sets-N rule.
 # `addParameterEntry()` / `removeParameterEntry()` vectorize over parameter
@@ -37,7 +37,7 @@
 #'
 #' @description Every `add*` / `set*` / `remove*` function in the authoring
 #'   API accepts a vector of ids and vectorizes over them in one call (and one
-#'   write to disk).
+#'   in-memory edit).
 #'
 #' @details
 #' The id argument sets `N`, the number of definitions to act on, and cannot
@@ -55,16 +55,43 @@
 #' different multi-valued list per definition, pass a list of the same length
 #' as the id vector (one vector per definition).
 #'
+#' A zero-length reference list means "there are none", the same as `NULL`: a
+#' scenario's `parameterSets` / `initialConditions` / `outputPaths`, an
+#' application's `parameterSets`, and a PI task's `scenarios` all read it that
+#' way. A definition file writes `[]` for a reference list a definition has none
+#' of, so the authoring functions take a definition's own written fields straight
+#' back, whether they were read as a character vector or as the list
+#' `jsonlite::fromJSON(simplifyVector = FALSE)` yields. The reference list of a
+#' plot grid (`plots`) must still be non-empty: a grid with no plots has nothing
+#' to render.
+#'
 #' The call is all-or-nothing: every definition is validated first, and if any
-#' fails the whole call aborts and writes nothing. On success all definitions
-#' are folded into the section and persisted in a single write-through.
+#' fails the whole call aborts and changes nothing. On success all definitions
+#' are folded into the section in one in-memory edit. Like every other edit, it
+#' reaches the project's files only when you call [saveProject()].
+#'
+#' An authoring function resolves every reference at the call that makes it: an
+#' `individual` or `parameterSets` id with no matching definition aborts naming
+#' the missing id, so a mistyped reference surfaces where it was typed rather
+#' than at the next run. Add the definitions in dependency order,
+#' `addIndividual()` before the `addScenario()` that references it. A scenario's
+#' reference errors also name the closest existing id, as [validateProject()]
+#' does; the other sections name only the missing one.
+#'
+#' Reading a project instead defers: [loadProject()] and
+#' [importProjectFromExcel()] accept a project whose references do not all
+#' resolve (each section is parsed on its own, so a legacy project with a
+#' genuine gap still imports) and leave [validateProject()] to report every gap
+#' at once. The two timings are deliberate, not an inconsistency: eager where a
+#' single reference is being written by hand, deferred where a whole project is
+#' being read.
 #'
 #' Two families of authoring functions sit outside this id-sets-`N` rule.
 #' `addParameterEntry()` and `removeParameterEntry()` vectorize over parameter
 #' entries (parallel `containerPath` / `parameterName` / `value` / `units`
 #' vectors) within a single named set, a different axis than the id-sets-`N`
 #' rule described here. `renameScenario()`, `duplicateScenario()`,
-#' `addObservedData()`, `addPITask()`, and the per-task
+#' `addObservedData()`, `addPITask()`, `setPITask()`, and the per-task
 #' parameter-identification sub-definition helpers act on a single definition per
 #' call.
 #'
@@ -113,6 +140,36 @@ NULL
     )
   }
   invisible(id)
+}
+
+# Validate the `proteinOntogenies` value of one individual or population: a
+# character vector of `"Protein:Ontogeny"` entries, or a single comma-joined
+# string. `NULL` passes (an absent field). Anything else aborts here, at the
+# authoring call: an `ospsuite::MoleculeOntogeny` object stored unchecked reaches
+# `saveProject()` as an R6 object the JSON writer cannot serialize, which leaves
+# the whole project unsaved. The pairs themselves are not checked, because a
+# workbook cell is imported verbatim and the ontogeny name is validated against
+# `ospsuite::StandardOntogeny` when the scenario runs.
+#
+# @keywords internal
+# @noRd
+.assertProteinOntogenies <- function(value, call = rlang::caller_env()) {
+  if (is.null(value)) {
+    return(invisible(value))
+  }
+  given <- if (!is.character(value)) {
+    # Rendered here rather than in the catalog entry: an R6 object cannot be
+    # interpolated into a message template, only described.
+    cli::format_inline("{.obj_type_friendly {value}}")
+  } else if (anyNA(value)) {
+    "a character vector with a missing entry"
+  } else if (!all(nzchar(trimws(value)))) {
+    "a character vector with a blank entry"
+  }
+  if (!is.null(given)) {
+    cli::cli_abort(messages$invalidProteinOntogenies(given), call = call)
+  }
+  invisible(value)
 }
 
 # Validate and normalise the `overwrite` flag pulled out of `...` by the
@@ -254,6 +311,28 @@ NULL
   })
 }
 
+# Abort when a `set*()` field arrived without a name. Every field a `set*_impl`
+# handles is looked up by name (the whole/scalar split, the alignment, the
+# per-definition apply), so an unnamed one is invisible to all of them and would
+# be dropped without a word. A field passed positionally arrives that way, since
+# the `...` those functions forward carries no formals to match it against. With
+# no named field at all R drops the names attribute entirely, so both that and a
+# partially-named list are covered by testing for a blank name.
+#
+# @keywords internal
+# @noRd
+.assertAuthoringFieldsNamed <- function(fields, call = rlang::caller_env()) {
+  if (length(fields) == 0L) {
+    return(invisible(fields))
+  }
+  names <- names(fields) %||% rep("", length(fields))
+  unnamed <- which(is.na(names) | names == "")
+  if (length(unnamed) > 0L) {
+    cli::cli_abort(messages$unnamedAuthoringFields(unnamed), call = call)
+  }
+  invisible(fields)
+}
+
 # Extract element `i` of a vector or list, preserving the scalar shape. Used by
 # `.recycleField` so a character vector yields a length-1 string and a list
 # yields its i-th element.
@@ -267,20 +346,55 @@ NULL
   value[[i]]
 }
 
-# Coerce a numeric authoring field for the set path, preserving the NULL-clears
-# contract. A supplied `NULL` returns `NULL` so `entry[[field]] <- NULL` deletes
-# the key (clearing the optional field); any other value coerces with
-# `as.double()`. This mirrors the add-path builders' `if (!is.null(...))` guard
-# so both set-path loops (`.setOneIndividual()`, `.setOnePopulation()`) treat a
-# `NULL` numeric field as "clear it", not "store numeric(0)". Purely a coercion:
+# Does a numeric authoring field mean "not set"? A length-1 `NA` of any type
+# does: an empty cell read from a workbook arrives as `NA`, and the Excel import
+# already reads such a cell as an absent field, so hand-authoring the same value
+# has to agree with it. A value that is not `NA` but merely coerces to one
+# (`"heavy"`) is a mistake, and the callers still abort on it.
+#
+# `NaN` is excluded even though `is.na(NaN)` is `TRUE`. No workbook cell reads as
+# `NaN`; it arrives from a calculation that went wrong (`0 / 0`), which is the
+# mistake case, not the unset one. Counting it as unset would let an add silently
+# omit the field and a set silently clear whatever the field already held.
+#
+# @keywords internal
+# @noRd
+.isUnsetNumericField <- function(value) {
+  length(value) == 1L && is.na(value) && !is.nan(value)
+}
+
+# Coerce a numeric authoring field for the set path, preserving the clears
+# contract. A supplied `NULL`, and a supplied `NA` (see `.isUnsetNumericField()`),
+# return `NULL` so `entry[[field]] <- NULL` deletes the key, clearing the optional
+# field; any other value coerces with `as.double()`. This mirrors the add-path
+# builders so both set-path loops (`.setOneIndividual()`, `.setOnePopulation()`)
+# treat an unset numeric field as "clear it", not "store NA". Purely a coercion:
 # it does not validate; validation happens in the `.setOne*` guards above the
 # assignment loop.
 #
 # @keywords internal
 # @noRd
 .coerceNumericField <- function(value) {
-  if (is.null(value)) {
+  if (is.null(value) || .isUnsetNumericField(value)) {
     return(NULL)
   }
   as.double(value)
+}
+
+# Is a numeric authoring field set to something `.coerceNumericField()` cannot
+# turn into a single finite number? A character such as `"45"` is fine; `"80kg"`
+# coerces to `NA` and is a mistake. An absent field (`NULL`) and an unset one
+# (`.isUnsetNumericField()`, which an empty workbook cell reads as) are not set
+# at all, so neither is invalid. This is the shared rule behind both the add
+# path, which collects the field name into an error list, and the set path,
+# which aborts on the first one.
+#
+# @keywords internal
+# @noRd
+.isInvalidNumericField <- function(value) {
+  if (is.null(value) || .isUnsetNumericField(value)) {
+    return(FALSE)
+  }
+  coerced <- suppressWarnings(as.double(value))
+  length(value) != 1L || is.na(coerced) || !is.finite(coerced)
 }

@@ -5,7 +5,8 @@
 
 <!-- badges: start -->
 
-[![](https://img.shields.io/github/actions/workflow/status/esqlabs/esqlabsR/main-workflow.yaml?branch=main&label=Build)](https://github.com/esqlabs/esqlabsR/actions/workflows/main-workflow.yaml)
+[![Build
+status](https://img.shields.io/github/actions/workflow/status/esqlabs/esqlabsR/merge-to-main.yaml?branch=main&label=Build)](https://github.com/esqlabs/esqlabsR/actions/workflows/merge-to-main.yaml)
 [![Codecov test
 coverage](https://codecov.io/gh/esqlabs/esqlabsR/branch/main/graph/badge.svg)](https://app.codecov.io/gh/esqlabs/esqlabsR?branch=main)
 <!-- badges: end -->
@@ -43,7 +44,19 @@ tutorial](https://esqlabs.github.io/esqlabsR/articles/esqlabsR.html).
 
 ### Install the package
 
-You can install the package by running:
+`{esqlabsR}` depends on OSP packages that are not on CRAN. They are
+published on the [OSP
+R-universe](https://open-systems-pharmacology.r-universe.dev), so add it
+to your repositories first:
+
+``` r
+options(repos = c(
+  OSP = "https://open-systems-pharmacology.r-universe.dev",
+  getOption("repos")
+))
+```
+
+You can then install the package by running:
 
 ``` r
 install.packages("pak")
@@ -102,23 +115,28 @@ You then author and edit the project’s definitions, scenarios,
 individuals, populations, parameter sets, output paths, observed data,
 and plots, with the `add*()`, `set*()`, and `remove*()` functions. Each
 of these takes the definition `id` first, for example
-`addScenario(project, id = "aciclovir_iv", ...)`. These edits are
-write-through: each one persists to its definition file immediately, so
-there is no separate save step. Once your project is configured, you run
-it with `runScenarios()`, plot it with `createPlots()`, and check it for
-configuration problems with `validateProject()`.
+`addScenario(project, id = "aciclovir_iv", ...)`. These edits are made
+in memory; `saveProject()` then writes them to the definition files, so
+nothing reaches disk until you ask for it. Once your project is
+configured, you run it with `runScenarios()`, plot it with
+`createPlots()`, and check it for configuration problems with
+`validateProject()`.
 
-To share or archive a project, render a single self-contained
-`.esqlabsR` snapshot with `saveSnapshot()` and read it back with
-`loadSnapshot()`.
+To share or archive a project, freeze a single self-contained
+`.esqlabsR` snapshot with `snapshotProject()` and read it back with
+`restoreProject()`.
 
 ## Learn more
 
-You can find more information on specific topics in the dedicated
-articles on the [package website](https://esqlabs.github.io/esqlabsR/),
-covering the project structure, designing scenarios, running
-simulations, and plotting results. The “Get Started” article walks
-through the full workflow.
+The articles on the [package
+website](https://esqlabs.github.io/esqlabsR/) are grouped by what you
+need from them. **Get started** is a single lesson through the whole
+workflow. The **How-to** guides each take one task, such as designing
+scenarios, running simulations, or plotting results. **Explanation**
+covers why the project model and the plotting model work the way they
+do. The **Reference articles** describe the project file and every
+definition field, including which fields are required and what happens
+when you omit one.
 
 ## Related Work
 

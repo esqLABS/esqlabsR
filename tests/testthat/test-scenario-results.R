@@ -67,7 +67,9 @@ test_that("loadScenarioResults with project restricts to the declared output pat
   # and reload): re-run the saved simulation with an extra recorded output and
   # overwrite the artifacts. `testscenario` declares only `aciclovir_pvb`.
   simulation <- run$testscenario$simulation
-  declaredPaths <- unname(project$definitions$scenarios[["testscenario"]]$outputPaths)
+  declaredPaths <- unname(
+    project$definitions$scenarios[["testscenario"]]$outputPaths
+  )
   extraPath <- project$definitions$outputPaths[["aciclovir_fat_cell"]]
   setOutputs(
     quantitiesOrPaths = c(declaredPaths, extraPath),

@@ -1,7 +1,5 @@
 test_that("exportProjectToExcel writes OutputPaths sheet with atomic columns", {
-  work_dir <- withr::local_tempdir()
-  file.copy(dirname(exampleProjectPath()), work_dir, recursive = TRUE)
-  project <- loadProject(file.path(work_dir, "Example", "Project.json"))
+  project <- exampleProject()
 
   excel_out <- withr::local_tempdir()
   exportProjectToExcel(project, outputDir = excel_out, silent = TRUE)
@@ -12,17 +10,26 @@ test_that("exportProjectToExcel writes OutputPaths sheet with atomic columns", {
 })
 
 test_that("Project round-trips through Excel preserving outputPaths", {
-  work_dir <- withr::local_tempdir()
-  file.copy(dirname(exampleProjectPath()), work_dir, recursive = TRUE)
-  project <- loadProject(file.path(work_dir, "Example", "Project.json"))
+  project <- exampleProject()
 
   excel_out <- withr::local_tempdir()
   exportProjectToExcel(project, outputDir = excel_out, silent = TRUE)
-  reimportedJson <- importProjectFromExcel(
-    file.path(excel_out, "Project.xlsx"),
-    silent = TRUE
+  # The exported workbooks declare the project's data workbook but do not carry
+  # it, so re-importing from a scratch directory reports it as missing and skips
+  # the observed data.
+  expect_warning(
+    reimportedJson <- importProjectFromExcel(
+      file.path(excel_out, "Project.xlsx"),
+      silent = TRUE
+    ),
+    "was not found"
   )
-  reimported <- loadProject(reimportedJson)
+  # That skip is what leaves the re-imported project one reference it cannot
+  # resolve.
+  expect_warning(
+    reimported <- loadProject(reimportedJson),
+    "unresolved cross-reference"
+  )
 
   expect_equal(
     unlist(reimported$definitions$outputPaths),
@@ -31,18 +38,9 @@ test_that("Project round-trips through Excel preserving outputPaths", {
 })
 
 test_that("Excel round-trip preserves parameter set values, paths, and units", {
-  work_dir <- withr::local_tempdir()
-  file.copy(dirname(exampleProjectPath()), work_dir, recursive = TRUE)
-  project <- loadProject(file.path(work_dir, "Example", "Project.json"))
+  project <- exampleProject()
 
-  excel_out <- withr::local_tempdir()
-  exportProjectToExcel(project, outputDir = excel_out, silent = TRUE)
-  reimportedJson <- suppressWarnings(importProjectFromExcel(
-    file.path(excel_out, "Project.xlsx"),
-    outputDir = withr::local_tempdir(),
-    silent = TRUE
-  ))
-  reimported <- suppressWarnings(loadProject(reimportedJson))
+  reimported <- excelRoundTrip(project)
 
   # The whole section must survive byte-equivalent: every set keeps its full
   # list of records (containerPath / parameterName / value / units), not just
@@ -102,18 +100,9 @@ test_that("Excel round-trip preserves initial-condition sets and scenario refs",
 })
 
 test_that("Excel round-trip preserves parameter identification tasks", {
-  work_dir <- withr::local_tempdir()
-  file.copy(dirname(exampleProjectPath()), work_dir, recursive = TRUE)
-  project <- loadProject(file.path(work_dir, "Example", "Project.json"))
+  project <- exampleProject()
 
-  excel_out <- withr::local_tempdir()
-  exportProjectToExcel(project, outputDir = excel_out, silent = TRUE)
-  reimportedJson <- suppressWarnings(importProjectFromExcel(
-    file.path(excel_out, "Project.xlsx"),
-    outputDir = withr::local_tempdir(),
-    silent = TRUE
-  ))
-  reimported <- suppressWarnings(loadProject(reimportedJson))
+  reimported <- excelRoundTrip(project)
 
   # The whole PI section must survive the three-sheet (PITasks / PIParameters /
   # PIOutputMappings) round-trip: each task keeps its scenarios, its flattened
@@ -146,9 +135,7 @@ test_that("Excel round-trip preserves parameter identification tasks", {
 })
 
 test_that("Excel round-trip preserves DataCombined numeric offsets and scales", {
-  work_dir <- withr::local_tempdir()
-  file.copy(dirname(exampleProjectPath()), work_dir, recursive = TRUE)
-  project <- loadProject(file.path(work_dir, "Example", "Project.json"))
+  project <- exampleProject()
 
   # The example DataCombined leaves all offset / scale fields null, so add one
   # with populated numerics (fractional, so the values are unambiguously double
@@ -179,14 +166,7 @@ test_that("Excel round-trip preserves DataCombined numeric offsets and scales", 
     ))
   )
 
-  excel_out <- withr::local_tempdir()
-  exportProjectToExcel(project, outputDir = excel_out, silent = TRUE)
-  reimportedJson <- suppressWarnings(importProjectFromExcel(
-    file.path(excel_out, "Project.xlsx"),
-    outputDir = withr::local_tempdir(),
-    silent = TRUE
-  ))
-  reimported <- suppressWarnings(loadProject(reimportedJson))
+  reimported <- excelRoundTrip(project)
   dc <- .unwrapDefinitionList(reimported$definitions$dataCombined)[[
     "dc_numeric"
   ]]
@@ -204,18 +184,9 @@ test_that("Excel round-trip preserves DataCombined numeric offsets and scales", 
 })
 
 test_that("Excel round-trip defaults a non-steady-state scenario's steady-state time and unit", {
-  work_dir <- withr::local_tempdir()
-  file.copy(dirname(exampleProjectPath()), work_dir, recursive = TRUE)
-  project <- loadProject(file.path(work_dir, "Example", "Project.json"))
+  project <- exampleProject()
 
-  excel_out <- withr::local_tempdir()
-  exportProjectToExcel(project, outputDir = excel_out, silent = TRUE)
-  reimportedJson <- suppressWarnings(importProjectFromExcel(
-    file.path(excel_out, "Project.xlsx"),
-    outputDir = withr::local_tempdir(),
-    silent = TRUE
-  ))
-  reimported <- suppressWarnings(loadProject(reimportedJson))
+  reimported <- excelRoundTrip(project)
   before <- .unwrapDefinitionList(project$definitions$scenarios)
   after <- .unwrapDefinitionList(reimported$definitions$scenarios)
 
@@ -238,19 +209,53 @@ test_that("Excel round-trip defaults a non-steady-state scenario's steady-state 
   )
 })
 
-test_that("Excel round-trip preserves individuals, populations, and applications", {
-  work_dir <- withr::local_tempdir()
-  file.copy(dirname(exampleProjectPath()), work_dir, recursive = TRUE)
-  project <- loadProject(file.path(work_dir, "Example", "Project.json"))
+test_that("Excel round-trip keeps a steady-state time declared with the flag off", {
+  project <- exampleProject()
+  # A preset steady-state time the scenario is not currently using is valid and
+  # the JSON writer keeps it, so the workbook has to as well: blanking the two
+  # columns here sent the value through the import's blank-cell defaults and
+  # came back as `1000` / `"min"`.
+  setScenario(
+    project,
+    "aciclovir_iv",
+    steadyState = FALSE,
+    steadyStateTime = 1,
+    steadyStateTimeUnit = "h"
+  )
+  before <- .unwrapDefinitionList(project$definitions$scenarios)
+  after <- .unwrapDefinitionList(excelRoundTrip(project)$definitions$scenarios)
 
-  excel_out <- withr::local_tempdir()
-  exportProjectToExcel(project, outputDir = excel_out, silent = TRUE)
-  reimportedJson <- suppressWarnings(importProjectFromExcel(
-    file.path(excel_out, "Project.xlsx"),
-    outputDir = withr::local_tempdir(),
-    silent = TRUE
-  ))
-  reimported <- suppressWarnings(loadProject(reimportedJson))
+  expect_false(isTRUE(after[["aciclovir_iv"]]$simulateSteadyState))
+  expect_identical(after[["aciclovir_iv"]]$steadyStateTimeUnit, "h")
+  expect_equal(
+    after[["aciclovir_iv"]]$steadyStateTime,
+    before[["aciclovir_iv"]]$steadyStateTime
+  )
+})
+
+test_that("Excel round-trip keeps a declared steady-state time of zero", {
+  project <- exampleProject()
+  # Zero is an authored value like any other: the parser reads it, nothing
+  # constrains its sign, and the JSON writer emits it. Gating the export on a
+  # positive time blanked the cells, and the import's blank-cell defaults then
+  # substituted `1000` / `"min"` for it.
+  setScenario(
+    project,
+    "aciclovir_iv",
+    steadyState = FALSE,
+    steadyStateTime = 0,
+    steadyStateTimeUnit = "h"
+  )
+  after <- .unwrapDefinitionList(excelRoundTrip(project)$definitions$scenarios)
+
+  expect_identical(after[["aciclovir_iv"]]$steadyStateTimeUnit, "h")
+  expect_equal(after[["aciclovir_iv"]]$steadyStateTime, 0)
+})
+
+test_that("Excel round-trip preserves individuals, populations, and applications", {
+  project <- exampleProject()
+
+  reimported <- excelRoundTrip(project)
 
   expect_equal(
     .unwrapDefinitionList(reimported$definitions$individuals),
@@ -267,9 +272,7 @@ test_that("Excel round-trip preserves individuals, populations, and applications
 })
 
 test_that("Excel round-trip preserves a grid whose plot id had a comma canonicalized out", {
-  work_dir <- withr::local_tempdir()
-  file.copy(dirname(exampleProjectPath()), work_dir, recursive = TRUE)
-  project <- loadProject(file.path(work_dir, "Example", "Project.json"))
+  project <- exampleProject()
 
   # A comma is canonicalized to `_` in every id (#1158), so no plot id ever
   # reaches the Excel boundary with a comma to be shredded. The grid membership
@@ -287,14 +290,7 @@ test_that("Excel round-trip preserves a grid whose plot id had a comma canonical
     plots = c("p1", "cmax, ss")
   ))
 
-  excel_out <- withr::local_tempdir()
-  exportProjectToExcel(project, outputDir = excel_out, silent = TRUE)
-  reimportedJson <- suppressWarnings(importProjectFromExcel(
-    file.path(excel_out, "Project.xlsx"),
-    outputDir = withr::local_tempdir(),
-    silent = TRUE
-  ))
-  reimported <- suppressWarnings(loadProject(reimportedJson))
+  reimported <- excelRoundTrip(project)
   grid <- .unwrapDefinitionList(reimported$definitions$plotGrids)[[
     "grid_comma"
   ]]
@@ -302,44 +298,98 @@ test_that("Excel round-trip preserves a grid whose plot id had a comma canonical
   expect_identical(.splitPlotIDs(grid$plotIds), c("p1", "cmax__ss"))
 })
 
+# Regression (#1184): a grid's `plotIDs` cell is a multi-value Excel cell, and
+# the 5.x convention wraps each value in `""` so it may itself contain a comma.
+# Decoding that cell with the in-memory codec kept the quotes, which
+# canonicalization then turned into underscores (`"P1"` -> `_p1_`), so every
+# member of a quoted grid dangled and the freshly imported project failed its
+# own validateProject().
+test_that("a quoted 5.x plotIDs cell imports with the grid's members intact", {
+  projectDir <- localExcelProjectDir()
+  plotsFile <- file.path(projectDir, "Configurations", "Plots.xlsx")
+
+  sheetNames <- readxl::excel_sheets(plotsFile)
+  sheets <- stats::setNames(
+    lapply(sheetNames, function(s) readExcel(plotsFile, sheet = s)),
+    sheetNames
+  )
+  # Rewrite `P1, P2, P3` as `"P1", "P2", "P3"`, the quoted form v5 accepted.
+  sheets$plotGrids$plotIDs <- vapply(
+    strsplit(sheets$plotGrids$plotIDs, ",[[:space:]]*"),
+    function(ids) paste0("\"", ids, "\"", collapse = ", "),
+    character(1)
+  )
+  .writeExcel(sheets, plotsFile)
+
+  jsonPath <- suppressWarnings(importProjectFromExcel(
+    file.path(projectDir, "ProjectConfiguration.xlsx"),
+    outputDir = withr::local_tempdir(),
+    silent = TRUE
+  ))
+  project <- suppressWarnings(loadProject(jsonPath))
+
+  grids <- .unwrapDefinitionList(project$definitions$plotGrids)
+  expect_identical(
+    .splitPlotIDs(grids[["aciclovir"]]$plotIds),
+    c("p1", "p2", "p3")
+  )
+  expect_identical(.splitPlotIDs(grids[["aciclovir2"]]$plotIds), "p2")
+
+  # The whole point: the imported project no longer reports the grid members as
+  # unknown plot ids.
+  plotErrors <- vapply(
+    suppressWarnings(validateProject(project))$plots$critical_errors,
+    function(e) e$message,
+    character(1)
+  )
+  expect_false(any(grepl("references unknown plotIds", plotErrors)))
+})
+
 test_that("Excel round-trip preserves project name and description", {
-  work_dir <- withr::local_tempdir()
-  file.copy(dirname(exampleProjectPath()), work_dir, recursive = TRUE)
-  project <- loadProject(file.path(work_dir, "Example", "Project.json"))
+  project <- exampleProject()
   project$info$name <- "RT_Name"
   project$info$description <- "RT_Desc"
 
-  excel_out <- withr::local_tempdir()
-  exportProjectToExcel(project, outputDir = excel_out, silent = TRUE)
-  reimportedJson <- importProjectFromExcel(
-    file.path(excel_out, "Project.xlsx"),
-    outputDir = withr::local_tempdir(),
-    silent = TRUE
-  )
-  reimported <- suppressWarnings(loadProject(reimportedJson))
+  reimported <- excelRoundTrip(project)
 
   expect_identical(reimported$info$name, "RT_Name")
   expect_identical(reimported$info$description, "RT_Desc")
 })
 
 test_that("Excel round-trip preserves the filePaths/excel container split", {
-  work_dir <- withr::local_tempdir()
-  file.copy(dirname(exampleProjectPath()), work_dir, recursive = TRUE)
-  project <- loadProject(file.path(work_dir, "Example", "Project.json"))
+  project <- exampleProject()
 
   excel_out <- withr::local_tempdir()
   exportProjectToExcel(project, outputDir = excel_out, silent = TRUE)
-  reimportedJson <- importProjectFromExcel(
-    file.path(excel_out, "Project.xlsx"),
-    silent = TRUE
+  # The exported workbooks declare the project's data workbook but do not carry
+  # it, so re-importing from a scratch directory reports it as missing, skips
+  # the observed data, and leaves the re-imported project one reference it
+  # cannot resolve.
+  expect_warning(
+    reimportedJson <- importProjectFromExcel(
+      file.path(excel_out, "Project.xlsx"),
+      silent = TRUE
+    ),
+    "was not found"
   )
-  reimported <- loadProject(reimportedJson)
+  expect_warning(
+    reimported <- loadProject(reimportedJson),
+    "unresolved cross-reference"
+  )
 
-  # The four live folders stay in filePaths; the seven Excel-bridge sheet names
-  # re-split back into the excel block (not leaking into filePaths).
+  # The live folders stay in filePaths, joined by the experimental-data workbook
+  # the export derives from the observed-data declaration; the Excel-bridge
+  # sheet names re-split back into the excel block (not leaking into filePaths).
   expect_named(
     reimported$rawFilePaths(),
-    c("simulationsFolder", "populationsFolder", "dataFolder", "outputFolder"),
+    c(
+      "simulationsFolder",
+      "populationsFolder",
+      "dataFolder",
+      "dataFile",
+      "dataImporterConfigurationFile",
+      "outputFolder"
+    ),
     ignore.order = TRUE
   )
   expect_named(
@@ -351,9 +401,136 @@ test_that("Excel round-trip preserves the filePaths/excel container split", {
       "populationsFile",
       "scenariosFile",
       "applicationsFile",
-      "plotsFile"
+      "plotsFile",
+      "parameterIdentificationFile"
     ),
     ignore.order = TRUE
+  )
+})
+
+# The `Project.xlsx` Property table is where a project names its
+# experimental-data workbook and its parameter-identification workbook. A
+# project imported from Excel carries those rows in its containers, but one
+# authored in JSON keeps the data source inside the observed-data definition and
+# carries none of them, so exporting only the container blocks wrote a project
+# that declared no observed data at all. Re-importing that dropped the section
+# without a word (the importer's missing-data warning fires only for a
+# `dataFile` that is declared), and every parameter-identification mapping
+# reading a data set then dangled.
+test_that("exporting a JSON-authored project declares its data and PI workbooks", {
+  project <- exampleProject()
+  projectDir <- project$info$projectDirPath
+
+  # Exported into the project's own folder, so the exported `dataFolder` still
+  # names the folder the data workbook actually sits in.
+  exportProjectToExcel(
+    project,
+    outputDir = projectDir,
+    overwrite = TRUE,
+    silent = TRUE
+  )
+
+  properties <- excelProjectProperties(file.path(projectDir, "Project.xlsx"))
+  expect_identical(
+    properties[["dataFile"]],
+    "Aciclovir_TimeValuesData.xlsx"
+  )
+  expect_identical(
+    properties[["dataImporterConfigurationFile"]],
+    "esqlabs_dataImporter_configuration.xml"
+  )
+  # The export writes `Configurations/ParameterIdentification.xlsx`, so the
+  # exported project declares the workbook it wrote rather than relying on the
+  # importer's conventional-filename fallback.
+  expect_identical(
+    properties[["parameterIdentificationFile"]],
+    "ParameterIdentification.xlsx"
+  )
+
+  reimported <- loadProject(importProjectFromExcel(
+    file.path(projectDir, "Project.xlsx"),
+    outputDir = withr::local_tempdir(),
+    silent = TRUE
+  ))
+  expect_length(reimported$definitions$observedData, 1L)
+  # The declaration is back, so the PI task's output mappings resolve against a
+  # data set that exists instead of dangling.
+  expect_identical(
+    validateProject(reimported)$crossReferences$critical_errors,
+    list()
+  )
+})
+
+# The Property table names one experimental-data workbook, so a project
+# declaring several observed-data sources cannot state them all. The first
+# `excel` source is written and the rest are named in a warning, rather than one
+# of several being picked silently.
+test_that("exporting several observed-data declarations writes one and names the rest", {
+  project <- exampleProject()
+  addObservedData(
+    project,
+    list(
+      type = "excel",
+      id = "laskin_group_b",
+      file = "Laskin_GroupB_TimeValuesData.xlsx",
+      importerConfiguration = "esqlabs_dataImporter_configuration.xml",
+      sheets = list("Laskin 1982.Group B")
+    )
+  )
+
+  excelOut <- withr::local_tempdir()
+  expect_warning(
+    exportProjectToExcel(project, outputDir = excelOut, silent = TRUE),
+    "laskin_group_b"
+  )
+
+  properties <- excelProjectProperties(file.path(excelOut, "Project.xlsx"))
+  expect_identical(properties[["dataFile"]], "Aciclovir_TimeValuesData.xlsx")
+  expect_identical(
+    properties[["dataImporterConfigurationFile"]],
+    "esqlabs_dataImporter_configuration.xml"
+  )
+})
+
+# A value the containers carry always wins, so deriving the missing rows never
+# changes what a project imported from Excel exports.
+test_that("an Excel-imported project's own workbook names survive the export", {
+  project <- suppressWarnings(loadProject(importProjectFromExcel(
+    testProjectExcelPath(),
+    outputDir = withr::local_tempdir(),
+    silent = TRUE
+  )))
+  # A second declaration whose file differs from the one the container names:
+  # without the container-wins rule the export would write this one instead.
+  addObservedData(
+    project,
+    list(
+      type = "excel",
+      id = "later_addition",
+      file = "Later_TimeValuesData.xlsx",
+      importerConfiguration = "esqlabs_dataImporter_configuration.xml",
+      sheets = list("Sheet1")
+    )
+  )
+
+  excelOut <- withr::local_tempdir()
+  suppressWarnings(
+    exportProjectToExcel(project, outputDir = excelOut, silent = TRUE)
+  )
+
+  # The three rows the fixture's own property sheet declares, unchanged.
+  properties <- excelProjectProperties(file.path(excelOut, "Project.xlsx"))
+  expect_identical(
+    properties[["dataFile"]],
+    "TestProject_TimeValuesData.xlsx"
+  )
+  expect_identical(
+    properties[["dataImporterConfigurationFile"]],
+    "esqlabs_dataImporter_configuration.xml"
+  )
+  expect_identical(
+    properties[["parameterIdentificationFile"]],
+    "ParameterIdentification.xlsx"
   )
 })
 
@@ -448,15 +625,69 @@ test_that("importProjectFromExcel aborts over an existing JSON project unless ov
   )))
 })
 
+# Both of importProjectFromExcel()'s preconditions are checked before the
+# workbook is read, so a call that is going to refuse says so instead of first
+# reporting on the contents of a project it will not import (an id collision
+# aborts the read, an incomplete observed curve warns during it). The source
+# path is checked ahead of the destination, so a mistyped `projectConfigPath` is
+# named rather than masked by an `outputDir` that already holds a project.
+test_that("importProjectFromExcel checks its preconditions before reading the workbook", {
+  out <- withr::local_tempdir()
+  writeLines("{}", file.path(out, "Project.json"))
+
+  # A source that exists but is not a readable workbook: the overwrite refusal
+  # still wins, which it can only do if the guard runs before the read.
+  unreadable <- file.path(withr::local_tempdir(), "Project.xlsx")
+  writeLines("not a workbook", unreadable)
+  expect_snapshot(
+    error = TRUE,
+    transform = .redactTmpDir,
+    importProjectFromExcel(unreadable, outputDir = out, silent = TRUE)
+  )
+
+  # A missing source is named ahead of the occupied destination.
+  expect_snapshot(
+    error = TRUE,
+    transform = .redactTmpDir,
+    importProjectFromExcel(
+      file.path(out, "Missing.xlsx"),
+      outputDir = out,
+      silent = TRUE
+    )
+  )
+})
+
+# The unreadable-workbook abort is raised inside `.excelToProjectJson()`, a
+# private helper no caller ever names, so it has to be attributed to the
+# entrypoint the user did call: an "Error in `.excelToProjectJson()`" prefix
+# points at a function that appears nowhere in the user's script. The two sibling
+# preconditions above already abort under the entrypoint's name, so this keeps
+# one import's whole error surface reading alike. Snapshotted rather than
+# pattern-matched because the attribution lives in the rendered text and nowhere
+# else, which is how an extraction changed it unnoticed.
+test_that("importProjectFromExcel names itself when the workbook cannot be read", {
+  sourceDir <- withr::local_tempdir()
+  workbook <- file.path(sourceDir, "Project.xlsx")
+  writeLines("this is not a valid xlsx workbook", workbook)
+
+  expect_snapshot(
+    error = TRUE,
+    transform = .redactProjectWorkbookPath,
+    importProjectFromExcel(
+      workbook,
+      outputDir = withr::local_tempdir(),
+      silent = TRUE
+    )
+  )
+})
+
 # Regression (#1126): exportProjectToExcel() replaces Project.xlsx and the
 # Configurations workbooks wholesale, defaulting outputDir to the project's own
 # directory, so a bare call would silently overwrite hand-maintained workbooks.
 # It aborts by default when workbooks already exist in `outputDir`, and only
 # overwrites them when `overwrite = TRUE`.
 test_that("exportProjectToExcel aborts over existing workbooks unless overwrite = TRUE", {
-  work_dir <- withr::local_tempdir()
-  file.copy(dirname(exampleProjectPath()), work_dir, recursive = TRUE)
-  project <- loadProject(file.path(work_dir, "Example", "Project.json"))
+  project <- exampleProject()
 
   excelOut <- withr::local_tempdir()
 
@@ -799,6 +1030,315 @@ test_that("the individuals import treats a blank-string Gender cell as absent", 
   expect_identical(individuals[[2]]$gender, "UNKNOWN")
 })
 
+test_that("the individuals and populations import stay quiet on a sheet with no Protein Ontogenies column", {
+  # `readExcel()` hands the parsers a tibble, and a tibble's `$` warns about an
+  # unknown column, so a workbook omitting the optional `Protein Ontogenies`
+  # column used to leak a raw "Unknown or uninitialised column" warning to the
+  # user. The sheets are built as tibbles here on purpose: a data.frame does not
+  # warn, which is why the tests above never caught this.
+  indivDf <- dplyr::tibble(
+    IndividualId = "Indiv1",
+    Species = "Human",
+    Population = "European_ICRP_2002",
+    Gender = "MALE",
+    `Weight [kg]` = 73,
+    `Height [cm]` = 176,
+    `Age [year(s)]` = 30
+  )
+  expect_no_warning(individuals <- .parseExcelIndividuals(indivDf))
+  expect_null(individuals[[1]]$proteinOntogenies)
+
+  popDf <- dplyr::tibble(
+    PopulationName = "Pop1",
+    species = "Human",
+    population = "European_ICRP_2002",
+    numberOfIndividuals = 10
+  )
+  expect_no_warning(populations <- .parseExcelPopulations(popDf))
+  expect_null(populations[[1]]$proteinOntogenies)
+
+  # A missing *required* column is a different case: it has no silent reading,
+  # and staying quiet about it would surface later as a zero-length value that
+  # names nothing.
+  expect_snapshot(
+    error = TRUE,
+    .parseExcelIndividuals(dplyr::tibble(Species = "Human", Gender = "MALE"))
+  )
+  expect_snapshot(
+    error = TRUE,
+    .parseExcelPopulations(dplyr::tibble(species = "Human"))
+  )
+
+  # A sheet that does carry the column still reads its value.
+  withOntogenies <- dplyr::tibble(
+    IndividualId = "Indiv2",
+    Species = "Human",
+    Population = "European_ICRP_2002",
+    Gender = "MALE",
+    `Weight [kg]` = 73,
+    `Height [cm]` = 176,
+    `Age [year(s)]` = 30,
+    `Protein Ontogenies` = "CYP3A4"
+  )
+  expect_identical(
+    .parseExcelIndividuals(withOntogenies)[[1]]$proteinOntogenies,
+    "CYP3A4"
+  )
+})
+
+# Regression (#1213): a real 5.x workbook spells the ontogenies as a `Protein` +
+# `Ontogeny` column pair, not as the single `Protein Ontogenies` cell this
+# fixture set uses. Reading only the single column returned nothing for every
+# legacy workbook, so every ontogeny was discarded, and because two definitions
+# differing only in their ontogenies then imported identically nothing in the
+# output revealed the loss.
+
+# One legacy-spelling row: the comma-separated `Protein` and `Ontogeny` cells
+# pair up positionally.
+.legacyOntogenyIndividual <- function(id, proteins, ontogenies) {
+  dplyr::tibble(
+    IndividualId = id,
+    Species = "Human",
+    Population = "European_ICRP_2002",
+    Gender = "MALE",
+    `Weight [kg]` = 73,
+    `Height [cm]` = 176,
+    `Age [year(s)]` = 30,
+    Protein = proteins,
+    Ontogeny = ontogenies
+  )
+}
+
+.legacyOntogenyPopulation <- function(id, proteins, ontogenies) {
+  dplyr::tibble(
+    PopulationName = id,
+    species = "Human",
+    population = "European_ICRP_2002",
+    numberOfIndividuals = 10,
+    Protein = proteins,
+    Ontogeny = ontogenies
+  )
+}
+
+test_that("a legacy two-column Protein + Ontogeny sheet imports its ontogenies", {
+  indiv <- .parseExcelIndividuals(.legacyOntogenyIndividual(
+    "Indiv1",
+    "CYP3A4,CYP2D6",
+    "CYP3A4,CYP2C8"
+  ))
+  expect_identical(
+    indiv[[1]]$proteinOntogenies,
+    c("CYP3A4:CYP3A4", "CYP2D6:CYP2C8")
+  )
+
+  pop <- .parseExcelPopulations(.legacyOntogenyPopulation(
+    "Pop1",
+    "CYP3A4",
+    "CYP3A4"
+  ))
+  expect_identical(pop[[1]]$proteinOntogenies, "CYP3A4:CYP3A4")
+
+  # Whitespace around a value is workbook noise, not part of the protein name.
+  spaced <- .parseExcelIndividuals(.legacyOntogenyIndividual(
+    "Indiv2",
+    "CYP3A4, CYP2D6",
+    "CYP3A4 ,CYP2C8"
+  ))
+  expect_identical(
+    spaced[[1]]$proteinOntogenies,
+    c("CYP3A4:CYP3A4", "CYP2D6:CYP2C8")
+  )
+})
+
+test_that("two populations differing only in their ontogenies do not import identically", {
+  # The assertion the single-column fixture could never make: with the pair
+  # columns unread, both rows imported byte-identically apart from the id.
+  populations <- .parseExcelPopulations(rbind(
+    .legacyOntogenyPopulation("Pop1", "CYP3A4", "CYP3A4"),
+    .legacyOntogenyPopulation("Pop2", "CYP2D6", "CYP2C8")
+  ))
+  expect_identical(populations[[1]]$proteinOntogenies, "CYP3A4:CYP3A4")
+  expect_identical(populations[[2]]$proteinOntogenies, "CYP2D6:CYP2C8")
+  expect_false(identical(
+    populations[[1]]$proteinOntogenies,
+    populations[[2]]$proteinOntogenies
+  ))
+})
+
+test_that("the current single-column spelling wins over the pair columns", {
+  both <- .legacyOntogenyIndividual("Indiv1", "CYP2D6", "CYP2C8")
+  both[["Protein Ontogenies"]] <- "CYP3A4:CYP3A4"
+  expect_identical(
+    .parseExcelIndividuals(both)[[1]]$proteinOntogenies,
+    "CYP3A4:CYP3A4"
+  )
+})
+
+test_that("an unpairable ontogeny declaration warns instead of dropping it in silence", {
+  # Each protein needs its own ontogeny: with an unmatched count the positional
+  # pairing has no answer, and the value would otherwise leave the project with
+  # no message at all.
+  expect_snapshot(
+    indiv <- .parseExcelIndividuals(.legacyOntogenyIndividual(
+      "Indiv1",
+      "CYP3A4,CYP2D6",
+      "CYP3A4"
+    ))
+  )
+  expect_null(indiv[[1]]$proteinOntogenies)
+
+  # A protein named with no ontogeny at all is the same failure.
+  expect_snapshot(
+    pop <- .parseExcelPopulations(.legacyOntogenyPopulation(
+      "Pop1",
+      "CYP3A4",
+      NA
+    ))
+  )
+  expect_null(pop[[1]]$proteinOntogenies)
+
+  # Neither column filled is not a declaration, so it stays quiet.
+  expect_no_warning(
+    quiet <- .parseExcelPopulations(.legacyOntogenyPopulation("Pop2", NA, NA))
+  )
+  expect_null(quiet[[1]]$proteinOntogenies)
+})
+
+# Copy the TestProjectExcel fixture and rewrite its individuals and populations
+# workbooks into the legacy `Protein` + `Ontogeny` spelling, returning the copied
+# project directory. The fixture itself keeps the current single-column spelling
+# (which is why it never caught the drop), so the legacy layout is produced here
+# rather than checked in as a second binary workbook.
+.excelFixtureWithLegacyOntogenies <- function(envir = parent.frame()) {
+  work <- withr::local_tempdir(.local_envir = envir)
+  file.copy(
+    list.files(
+      testthat::test_path("data", "TestProjectExcel"),
+      full.names = TRUE
+    ),
+    work,
+    recursive = TRUE
+  )
+  rewrite <- function(workbook, sheet, proteins, ontogenies) {
+    path <- file.path(work, "Configurations", workbook)
+    names <- readxl::excel_sheets(path)
+    sheets <- stats::setNames(
+      lapply(names, function(s) readExcel(path, sheet = s)),
+      names
+    )
+    df <- sheets[[sheet]]
+    df[["Protein Ontogenies"]] <- NULL
+    df[["Protein"]] <- proteins
+    df[["Ontogeny"]] <- ontogenies
+    sheets[[sheet]] <- df
+    .writeExcel(sheets, path)
+  }
+  # The fixture's individual and its first population both carry
+  # `CYP3A4:CYP3A4,CYP2D6:CYP2C8`; its second population carries none.
+  rewrite(
+    "Individuals.xlsx",
+    "IndividualBiometrics",
+    "CYP3A4,CYP2D6",
+    "CYP3A4,CYP2C8"
+  )
+  rewrite(
+    "Populations.xlsx",
+    "Demographics",
+    c("CYP3A4,CYP2D6", NA),
+    c("CYP3A4,CYP2C8", NA)
+  )
+  work
+}
+
+test_that("a legacy-spelling workbook imports its ontogenies, and round-trips through Excel", {
+  work <- .excelFixtureWithLegacyOntogenies()
+  jsonPath <- suppressWarnings(importProjectFromExcel(
+    file.path(work, "ProjectConfiguration.xlsx"),
+    outputDir = withr::local_tempdir(),
+    silent = TRUE
+  ))
+  project <- suppressWarnings(loadProject(jsonPath))
+
+  expected <- c("CYP3A4:CYP3A4", "CYP2D6:CYP2C8")
+  expect_identical(
+    project$definitions$individuals[["indiv1"]]$proteinOntogenies,
+    expected
+  )
+  expect_identical(
+    project$definitions$populations[["testpopulation"]]$proteinOntogenies,
+    expected
+  )
+  # The population authored without ontogenies keeps none, so the two are
+  # distinguishable in the imported tree.
+  expect_null(
+    project$definitions$populations[[
+      "testpopulation_noonto"
+    ]]$proteinOntogenies
+  )
+
+  # Exporting writes the single-cell spelling, and re-importing that reads the
+  # same pairs back: the ontogenies are a fixed point of the round trip.
+  excelOut <- withr::local_tempdir()
+  exportProjectToExcel(project, outputDir = excelOut, silent = TRUE)
+  reimported <- suppressWarnings(loadProject(importProjectFromExcel(
+    file.path(excelOut, "Project.xlsx"),
+    outputDir = withr::local_tempdir(),
+    silent = TRUE
+  )))
+  expect_identical(
+    reimported$definitions$individuals[["indiv1"]]$proteinOntogenies,
+    expected
+  )
+  expect_identical(
+    reimported$definitions$populations[["testpopulation"]]$proteinOntogenies,
+    expected
+  )
+})
+
+test_that("hand-authored ontogenies survive an Excel round trip without drifting", {
+  # An authoring call stores one entry per ontogeny, and the import reads the
+  # workbook back into that same shape, so exporting an authored project and
+  # reading the workbook returns the value it started with and the two sections
+  # carrying ontogenies are not reported as drifted. Importing the pairs as one
+  # comma-joined string instead differs from the authored value from the second
+  # ontogeny on, which no authored project could ever get back in sync.
+  tp <- with_temp_project()
+  project <- tp$project
+  ontogenies <- c("CYP3A4:CYP3A4", "CYP2D6:CYP2C8")
+  setIndividual(project, "adult_male", proteinOntogenies = ontogenies)
+  setPopulation(project, "european_adults", proteinOntogenies = ontogenies)
+  saveProject(project)
+  suppressMessages(exportProjectToExcel(
+    project,
+    outputDir = tp$path,
+    overwrite = TRUE,
+    silent = TRUE
+  ))
+
+  reimported <- suppressWarnings(loadProject(importProjectFromExcel(
+    file.path(tp$path, "Project.xlsx"),
+    outputDir = withr::local_tempdir(),
+    silent = TRUE
+  )))
+  expect_identical(
+    reimported$definitions$individuals[["adult_male"]]$proteinOntogenies,
+    ontogenies
+  )
+  expect_identical(
+    reimported$definitions$populations[["european_adults"]]$proteinOntogenies,
+    ontogenies
+  )
+
+  # The example project has its own round-trip drift in other sections, so the
+  # verdict here is per section rather than the overall `excel_in_sync`.
+  status <- suppressWarnings(suppressMessages(
+    projectStatus(project, silent = TRUE)
+  ))
+  drifted <- names(status$details$excel$data_changes)
+  expect_false("individuals" %in% drifted)
+  expect_false("populations" %in% drifted)
+})
+
 test_that(".parseExcelObservedData keeps a subfolder path rather than truncating to basename", {
   # The loader resolves `file` under `dataFolder`, so a file named in a subfolder
   # must keep its relative path; truncating to the basename would make it
@@ -813,8 +1353,10 @@ test_that(".parseExcelObservedData keeps a subfolder path rather than truncating
   result <- .parseExcelObservedData(list(), prop, work)
   entry <- result$observedData[[1]]
   expect_identical(entry$file, "Sub/Values.xlsx")
-  # The section key is the basename (an id cannot hold a path separator).
-  expect_identical(names(result$observedData), "Values.xlsx")
+  # The declaration states its own canonicalized id, so the section is keyed and
+  # the definition file is `values.json` rather than `Values.xlsx.json`.
+  expect_identical(names(result$observedData), "values")
+  expect_identical(entry$id, "values")
 })
 
 # The project records a single experimental-data workbook under `dataFolder`.
@@ -915,7 +1457,7 @@ test_that(".parseExcelObservedData expands a ${VAR} dataFolder", {
     )
   }
   expect_silent(result <- .parseExcelObservedData(list(), prop, work))
-  expect_named(result$observedData, "Values.xlsx")
+  expect_named(result$observedData, "values")
   expect_identical(result$observedData[[1]]$sheets, list("Sheet1"))
 })
 
@@ -953,9 +1495,7 @@ test_that(".parseExcelObservedData warns and skips a dataFile outside dataFolder
 # and the imported project loads, because nothing reads the folder once no
 # observed data was imported (#1182).
 test_that("an absolute dataFolder no longer blocks the import", {
-  work_dir <- withr::local_tempdir()
-  file.copy(dirname(testProjectExcelPath()), work_dir, recursive = TRUE)
-  projectDir <- file.path(work_dir, "TestProjectExcel")
+  projectDir <- localExcelProjectDir()
   configPath <- file.path(projectDir, "ProjectConfiguration.xlsx")
 
   shared <- withr::local_tempdir()
@@ -1110,9 +1650,7 @@ test_that(".parseExcelParameterSheets keeps a header-only parameter sheet", {
 # abort the whole import with a bare `missing value where TRUE/FALSE needed`
 # naming neither the file nor the sheet (#1181).
 test_that("a non-parameter sheet in a parameter workbook no longer aborts the import", {
-  work_dir <- withr::local_tempdir()
-  file.copy(dirname(testProjectExcelPath()), work_dir, recursive = TRUE)
-  projectDir <- file.path(work_dir, "TestProjectExcel")
+  projectDir <- localExcelProjectDir()
   paramsFile <- file.path(projectDir, "Configurations", "ModelParameters.xlsx")
 
   sheetNames <- readxl::excel_sheets(paramsFile)
@@ -1143,9 +1681,7 @@ test_that("a non-parameter sheet in a parameter workbook no longer aborts the im
 # must not become an `Application` either: it would wrap a parameter set that
 # was never created and dangle on load (#1181).
 test_that("a non-parameter sheet in the applications workbook becomes neither a set nor an application", {
-  work_dir <- withr::local_tempdir()
-  file.copy(dirname(testProjectExcelPath()), work_dir, recursive = TRUE)
-  projectDir <- file.path(work_dir, "TestProjectExcel")
+  projectDir <- localExcelProjectDir()
   appsFile <- file.path(projectDir, "Configurations", "Applications.xlsx")
 
   sheetNames <- readxl::excel_sheets(appsFile)
@@ -1179,9 +1715,7 @@ test_that("a non-parameter sheet in the applications workbook becomes neither a 
 # When such a sheet is not a parameter sheet it is skipped, so the individual
 # must not gain a `parameterSets` reference to a set that does not exist (#1181).
 test_that("a skipped sheet named after an individual is not linked to that individual", {
-  work_dir <- withr::local_tempdir()
-  file.copy(dirname(testProjectExcelPath()), work_dir, recursive = TRUE)
-  projectDir <- file.path(work_dir, "TestProjectExcel")
+  projectDir <- localExcelProjectDir()
   indivFile <- file.path(projectDir, "Configurations", "Individuals.xlsx")
 
   .writeExcel(
@@ -1253,10 +1787,122 @@ test_that("importProjectFromExcel aborts when two ids canonicalize to the same v
 # An import run from a script has no other sign of what was written, or that it
 # succeeded, so the summary is gated on `silent` alone, never on the session
 # being interactive.
+# Regression (#1174): the import used to name the project file after the
+# workbook it read, so a legacy `ProjectConfiguration.xlsx` produced a
+# `ProjectConfiguration.json` that the `Project.json` default of `loadProject()`
+# and `initProject()` did not match. The name is now canonical whatever the
+# workbook is called, so the obvious next call after an import works.
+test_that("importProjectFromExcel writes Project.json whatever the workbook is called", {
+  outputDir <- withr::local_tempdir()
+
+  jsonPath <- suppressWarnings(importProjectFromExcel(
+    testProjectExcelPath(),
+    outputDir = outputDir,
+    silent = TRUE
+  ))
+
+  expect_identical(fs::path_file(jsonPath), "Project.json")
+  expect_false(file.exists(file.path(outputDir, "ProjectConfiguration.json")))
+  expect_s3_class(
+    suppressWarnings(loadProject(file.path(outputDir, "Project.json"))),
+    "Project"
+  )
+})
+
+test_that("importProjectFromExcel honours projectFileName, and saving keeps it", {
+  outputDir <- withr::local_tempdir()
+
+  jsonPath <- suppressWarnings(importProjectFromExcel(
+    testProjectExcelPath(),
+    outputDir = outputDir,
+    silent = TRUE,
+    projectFileName = "MyStudy.json"
+  ))
+
+  expect_identical(fs::path_file(jsonPath), "MyStudy.json")
+  expect_false(file.exists(file.path(outputDir, "Project.json")))
+
+  # A project saves back to the file it was loaded from, so the chosen name
+  # survives an edit rather than forking a stray `Project.json`.
+  project <- suppressWarnings(loadProject(jsonPath))
+  project$info$description <- "edited"
+  saveProject(project)
+
+  expect_false(file.exists(file.path(outputDir, "Project.json")))
+  expect_identical(
+    suppressWarnings(loadProject(jsonPath))$info$description,
+    "edited"
+  )
+})
+
+test_that("importProjectFromExcel adds the .json extension to projectFileName", {
+  outputDir <- withr::local_tempdir()
+
+  jsonPath <- suppressWarnings(importProjectFromExcel(
+    testProjectExcelPath(),
+    outputDir = outputDir,
+    silent = TRUE,
+    projectFileName = "MyStudy"
+  ))
+
+  expect_identical(fs::path_file(jsonPath), "MyStudy.json")
+})
+
+# The extension is appended, not set: `fs::path_ext_set()` would read the `.v1`
+# of a dotted stem as an extension and replace it, silently collapsing
+# `trial.v1` and `trial.v2` onto one project file.
+test_that("importProjectFromExcel keeps a dotted projectFileName stem intact", {
+  outputDir <- withr::local_tempdir()
+
+  first <- suppressWarnings(importProjectFromExcel(
+    testProjectExcelPath(),
+    outputDir = outputDir,
+    silent = TRUE,
+    projectFileName = "trial.v1"
+  ))
+  second <- suppressWarnings(importProjectFromExcel(
+    testProjectExcelPath(),
+    outputDir = outputDir,
+    silent = TRUE,
+    overwrite = TRUE,
+    projectFileName = "trial.v2"
+  ))
+
+  expect_identical(fs::path_file(first), "trial.v1.json")
+  expect_identical(fs::path_file(second), "trial.v2.json")
+})
+
+test_that("importProjectFromExcel rejects a projectFileName that is a path", {
+  expect_snapshot(
+    error = TRUE,
+    importProjectFromExcel(
+      testProjectExcelPath(),
+      outputDir = withr::local_tempdir(),
+      silent = TRUE,
+      projectFileName = "../Project.json"
+    )
+  )
+})
+
+test_that("importProjectFromExcel says what is wrong with a projectFileName that is no name at all", {
+  # An empty string, an `NA` and a number are not names that "contain a path
+  # separator", so the rejection describes the value it got instead (#1213).
+  for (bad in list("", NA_character_, 42, c("a", "b"))) {
+    err <- expect_error(
+      importProjectFromExcel(
+        testProjectExcelPath(),
+        outputDir = withr::local_tempdir(),
+        silent = TRUE,
+        projectFileName = bad
+      )
+    )
+    expect_match(conditionMessage(err), "not a single non-empty string")
+    expect_no_match(conditionMessage(err), "contains a path separator")
+  }
+})
+
 test_that("importProjectFromExcel reports what it produced, and stays quiet under silent", {
-  work_dir <- withr::local_tempdir()
-  file.copy(dirname(testProjectExcelPath()), work_dir, recursive = TRUE)
-  projectDir <- file.path(work_dir, "TestProjectExcel")
+  projectDir <- localExcelProjectDir()
   configPath <- file.path(projectDir, "ProjectConfiguration.xlsx")
 
   summaryText <- paste(
@@ -1271,9 +1917,10 @@ test_that("importProjectFromExcel reports what it produced, and stays quiet unde
   )
 
   # The output path, the per-section counts, and the assets that travelled.
-  expect_match(summaryText, "ProjectConfiguration.json", fixed = TRUE)
+  expect_match(summaryText, "Project.json", fixed = TRUE)
   expect_match(summaryText, "Scenarios: 8", fixed = TRUE)
-  expect_match(summaryText, "Copied 2 referenced folders", fixed = TRUE)
+  # Three: the models, the data, and the population csv folder.
+  expect_match(summaryText, "Copied 3 referenced folders", fixed = TRUE)
 
   expect_silent(suppressWarnings(importProjectFromExcel(
     configPath,
@@ -1287,9 +1934,7 @@ test_that("importProjectFromExcel reports what it produced, and stays quiet unde
 # import into a different folder to resolve. Otherwise the output is a
 # definitions tree pointing at files that are not there.
 test_that("importProjectFromExcel copies the referenced input folders into a separate outputDir", {
-  work_dir <- withr::local_tempdir()
-  file.copy(dirname(testProjectExcelPath()), work_dir, recursive = TRUE)
-  projectDir <- file.path(work_dir, "TestProjectExcel")
+  projectDir <- localExcelProjectDir()
 
   outputDir <- withr::local_tempdir()
   jsonPath <- suppressWarnings(importProjectFromExcel(
@@ -1328,10 +1973,87 @@ test_that("importProjectFromExcel copies the referenced input folders into a sep
   expect_false("File Not Found" %in% fileWarnings)
 })
 
+# An Excel project spells `populationsFolder` as a folder name under the
+# configurations folder, while a project resolves working folders against its own
+# root. Read literally the folder was neither copied nor resolvable, so a
+# csv-population scenario failed at run time with `validateProject()` reporting
+# nothing (#1213).
+test_that("importProjectFromExcel brings the population csv folder along and resolves it", {
+  projectDir <- localExcelProjectDir()
+
+  outputDir <- withr::local_tempdir()
+  jsonPath <- suppressWarnings(importProjectFromExcel(
+    file.path(projectDir, "ProjectConfiguration.xlsx"),
+    outputDir = outputDir,
+    silent = TRUE
+  ))
+  project <- suppressWarnings(loadProject(jsonPath))
+
+  # The folder the project resolves is the folder the csv file was copied into,
+  # which is the whole point: the two used to disagree.
+  expect_true(dir.exists(project$paths$populationsFolder))
+  expect_true(file.exists(file.path(
+    project$paths$populationsFolder,
+    "TestPopulation.csv"
+  )))
+  # And the scenario reading it no longer validates clean-but-unrunnable.
+  report <- suppressWarnings(validateProject(project))
+  notFound <- unlist(lapply(report, function(section) {
+    vapply(section$warnings, function(w) w$category, character(1))
+  }))
+  expect_false("File Not Found" %in% notFound)
+})
+
+test_that("an in-place import resolves the population csv folder where the csvs are", {
+  # Nothing is copied when the import writes beside the workbooks, so the value
+  # itself has to name the folder that holds the csv files.
+  projectDir <- localExcelProjectDir()
+
+  jsonPath <- suppressWarnings(importProjectFromExcel(
+    file.path(projectDir, "ProjectConfiguration.xlsx"),
+    silent = TRUE
+  ))
+  project <- suppressWarnings(loadProject(jsonPath))
+
+  expect_true(file.exists(file.path(
+    project$paths$populationsFolder,
+    "TestPopulation.csv"
+  )))
+})
+
+test_that("a populations folder already at the project root is taken as authored", {
+  # Both layouts are accepted; a project following the root-level layout must
+  # keep resolving there rather than be redirected under the configurations
+  # folder.
+  projectDir <- localExcelProjectDir()
+  file.rename(
+    file.path(projectDir, "Configurations", "PopulationsCSV"),
+    file.path(projectDir, "PopulationsCSV")
+  )
+
+  outputDir <- withr::local_tempdir()
+  jsonPath <- suppressWarnings(importProjectFromExcel(
+    file.path(projectDir, "ProjectConfiguration.xlsx"),
+    outputDir = outputDir,
+    silent = TRUE
+  ))
+
+  expect_identical(
+    jsonlite::fromJSON(
+      jsonPath,
+      simplifyVector = FALSE
+    )$filePaths$populationsFolder,
+    "PopulationsCSV"
+  )
+  expect_true(file.exists(file.path(
+    outputDir,
+    "PopulationsCSV",
+    "TestPopulation.csv"
+  )))
+})
+
 test_that("importProjectFromExcel does not copy the results folder or the Excel workbooks", {
-  work_dir <- withr::local_tempdir()
-  file.copy(dirname(testProjectExcelPath()), work_dir, recursive = TRUE)
-  projectDir <- file.path(work_dir, "TestProjectExcel")
+  projectDir <- localExcelProjectDir()
 
   outputDir <- withr::local_tempdir()
   suppressWarnings(importProjectFromExcel(
@@ -1342,20 +2064,28 @@ test_that("importProjectFromExcel does not copy the results folder or the Excel 
 
   # `outputFolder` holds what the project writes, not what it reads.
   expect_false(dir.exists(file.path(outputDir, "Results")))
-  # The Excel side is the source, not an asset of the JSON project.
-  expect_false(dir.exists(file.path(outputDir, "Configurations")))
+  # The workbooks are the source, not an asset of the JSON project. The
+  # configurations folder itself does travel, because the population csv files
+  # the project reads live under it, so what is asserted is that no workbook
+  # came with them.
+  expect_length(
+    list.files(
+      file.path(outputDir, "Configurations"),
+      pattern = "\\.xlsx$",
+      recursive = TRUE
+    ),
+    0L
+  )
 })
 
 # A `../`-climbing folder value names something the project does not own.
 # Copying it would read outside the source project and write outside outputDir,
 # overwriting whatever sits beside it.
 test_that("importProjectFromExcel refuses to copy a folder that escapes the project", {
-  work_dir <- withr::local_tempdir()
-  file.copy(dirname(testProjectExcelPath()), work_dir, recursive = TRUE)
-  projectDir <- file.path(work_dir, "TestProjectExcel")
+  projectDir <- localExcelProjectDir()
 
   # A sibling of the project, which must not be touched.
-  bystander <- file.path(work_dir, "Bystander")
+  bystander <- file.path(dirname(projectDir), "Bystander")
   dir.create(bystander)
   writeLines("keep me", file.path(bystander, "keep.txt"))
 
@@ -1387,9 +2117,7 @@ test_that("importProjectFromExcel refuses to copy a folder that escapes the proj
 # on every `projectStatus()` read, so copying the whole asset tree there would
 # turn a cheap status query into a recursive tree copy.
 test_that("importProjectFromExcel skips the asset copy under copyAssets = FALSE", {
-  work_dir <- withr::local_tempdir()
-  file.copy(dirname(testProjectExcelPath()), work_dir, recursive = TRUE)
-  projectDir <- file.path(work_dir, "TestProjectExcel")
+  projectDir <- localExcelProjectDir()
 
   outputDir <- withr::local_tempdir()
   suppressWarnings(importProjectFromExcel(
@@ -1406,9 +2134,7 @@ test_that("importProjectFromExcel skips the asset copy under copyAssets = FALSE"
 })
 
 test_that("projectStatus() does not copy the asset tree into its comparison snapshot", {
-  work_dir <- withr::local_tempdir()
-  file.copy(dirname(testProjectExcelPath()), work_dir, recursive = TRUE)
-  projectDir <- file.path(work_dir, "TestProjectExcel")
+  projectDir <- localExcelProjectDir()
 
   outputDir <- withr::local_tempdir()
   jsonPath <- suppressWarnings(importProjectFromExcel(
@@ -1436,9 +2162,7 @@ test_that("projectStatus() does not copy the asset tree into its comparison snap
 # user who curates a model or data file in the output folder and then imports the
 # legacy workbook beside it loses that file with no warning and no way to decline.
 test_that("importProjectFromExcel leaves a non-empty asset folder alone unless overwrite = TRUE", {
-  work_dir <- withr::local_tempdir()
-  file.copy(dirname(testProjectExcelPath()), work_dir, recursive = TRUE)
-  projectDir <- file.path(work_dir, "TestProjectExcel")
+  projectDir <- localExcelProjectDir()
   configPath <- file.path(projectDir, "ProjectConfiguration.xlsx")
 
   outputDir <- withr::local_tempdir()
@@ -1482,13 +2206,11 @@ test_that("importProjectFromExcel leaves a non-empty asset folder alone unless o
 # onto itself.
 test_that("importProjectFromExcel detects an in-place import through a symlinked path", {
   skip_on_os("windows")
-  work_dir <- withr::local_tempdir()
-  file.copy(dirname(testProjectExcelPath()), work_dir, recursive = TRUE)
-  projectDir <- file.path(work_dir, "TestProjectExcel")
+  projectDir <- localExcelProjectDir()
 
   # Reach the very same directory by a symlink, and hand that spelling to
   # outputDir while the workbook is named by its real path.
-  linked <- file.path(work_dir, "linked")
+  linked <- file.path(dirname(projectDir), "linked")
   file.symlink(projectDir, linked)
 
   before <- sort(list.files(projectDir, recursive = TRUE))
@@ -1500,9 +2222,10 @@ test_that("importProjectFromExcel detects an in-place import through a symlinked
   ))
   after <- sort(list.files(projectDir, recursive = TRUE))
 
-  # Recognized as in place: only definition files were added, no folder was
-  # duplicated into its own subtree.
-  expect_match(setdiff(after, before), "^definitions/", all = TRUE)
+  # Recognized as in place: the project file and its definition files were
+  # added, no folder was duplicated into its own subtree.
+  added <- setdiff(after, before)
+  expect_match(added[added != "Project.json"], "^definitions/", all = TRUE)
   expect_false(dir.exists(file.path(projectDir, "Models", "Models")))
   expect_false(dir.exists(file.path(projectDir, "Data", "Data")))
 })
@@ -1511,9 +2234,7 @@ test_that("importProjectFromExcel detects an in-place import through a symlinked
 # up canonically too: a cell spelling the sheet in a different case must follow
 # the rename, not keep resolving to the earlier workbook's set.
 test_that("importProjectFromExcel re-points a case-differing parameter-set reference", {
-  work_dir <- withr::local_tempdir()
-  file.copy(dirname(testProjectExcelPath()), work_dir, recursive = TRUE)
-  projectDir <- file.path(work_dir, "TestProjectExcel")
+  projectDir <- localExcelProjectDir()
   individualsFile <- file.path(projectDir, "Configurations", "Individuals.xlsx")
 
   # The individuals workbook's sheet is `Indiv1`; its own `ParameterSets` cell
@@ -1562,14 +2283,12 @@ test_that("importProjectFromExcel re-points a case-differing parameter-set refer
   # model-parameters sheet that took the plain id.
   expect_identical(
     unlist(project$definitions$individuals[["indiv1"]]$parameterSets),
-    "indiv1_1"
+    "indiv1_2"
   )
 })
 
 test_that("importProjectFromExcel names a referenced folder the Excel project does not have", {
-  work_dir <- withr::local_tempdir()
-  file.copy(dirname(testProjectExcelPath()), work_dir, recursive = TRUE)
-  projectDir <- file.path(work_dir, "TestProjectExcel")
+  projectDir <- localExcelProjectDir()
 
   # The configuration keeps naming `Data/`, but the folder is gone: there is
   # nothing to copy, and the user has to be told which folder to place.
@@ -1592,9 +2311,7 @@ test_that("importProjectFromExcel names a referenced folder the Excel project do
 })
 
 test_that("importProjectFromExcel in place leaves the referenced folders untouched", {
-  work_dir <- withr::local_tempdir()
-  file.copy(dirname(testProjectExcelPath()), work_dir, recursive = TRUE)
-  projectDir <- file.path(work_dir, "TestProjectExcel")
+  projectDir <- localExcelProjectDir()
 
   before <- sort(list.files(projectDir, recursive = TRUE))
   suppressWarnings(importProjectFromExcel(
@@ -1604,9 +2321,11 @@ test_that("importProjectFromExcel in place leaves the referenced folders untouch
   ))
   after <- sort(list.files(projectDir, recursive = TRUE))
 
-  # Everything the import added is a definition file; no folder was copied onto
-  # itself, which would have duplicated the models and data into subfolders.
-  expect_match(setdiff(after, before), "^definitions/", all = TRUE)
+  # Everything the import added is the project file or a definition file; no
+  # folder was copied onto itself, which would have duplicated the models and
+  # data into subfolders.
+  added <- setdiff(after, before)
+  expect_match(added[added != "Project.json"], "^definitions/", all = TRUE)
 })
 
 # An observed DataCombined row may name a scenario just as a simulated row does.
@@ -1615,9 +2334,7 @@ test_that("importProjectFromExcel in place leaves the referenced folders untouch
 # in a single definition file and hides the observed block from any check keyed on
 # the canonical id.
 test_that("importProjectFromExcel canonicalizes an observed dataCombined entry's scenario reference", {
-  work_dir <- withr::local_tempdir()
-  file.copy(dirname(testProjectExcelPath()), work_dir, recursive = TRUE)
-  projectDir <- file.path(work_dir, "TestProjectExcel")
+  projectDir <- localExcelProjectDir()
   plotsFile <- file.path(projectDir, "Configurations", "Plots.xlsx")
 
   # Name a scenario on the observed rows, with the mixed-case spelling the
@@ -1660,9 +2377,7 @@ test_that("importProjectFromExcel canonicalizes an observed dataCombined entry's
 # the renamed set is orphaned and the referrer silently resolves to the *other*
 # workbook's set.
 test_that("importProjectFromExcel renames a duplicate parameter-set id and re-points its own workbook's references", {
-  work_dir <- withr::local_tempdir()
-  file.copy(dirname(testProjectExcelPath()), work_dir, recursive = TRUE)
-  projectDir <- file.path(work_dir, "TestProjectExcel")
+  projectDir <- localExcelProjectDir()
   modelParamsFile <- file.path(
     projectDir,
     "Configurations",
@@ -1704,26 +2419,24 @@ test_that("importProjectFromExcel renames a duplicate parameter-set id and re-po
   sets <- .unwrapDefinitionList(project$definitions$parameterSets)
   expect_contains(
     names(sets),
-    c("indiv1", "indiv1_1", "protocol_250mg", "protocol_250mg_1")
+    c("indiv1", "indiv1_2", "protocol_250mg", "protocol_250mg_2")
   )
 
   # The individual still carries its OWN parameter set, not the model-parameters
   # sheet that took the id.
   expect_identical(
     unlist(project$definitions$individuals[["indiv1"]]$parameterSets),
-    "indiv1_1"
+    "indiv1_2"
   )
   # Same for the 5.x application wrapper built around its protocol sheet.
   expect_identical(
     unlist(project$definitions$applications[["protocol_250mg"]]$parameterSets),
-    "protocol_250mg_1"
+    "protocol_250mg_2"
   )
 })
 
 test_that("importProjectFromExcel warns naming each renamed duplicate parameter set", {
-  work_dir <- withr::local_tempdir()
-  file.copy(dirname(testProjectExcelPath()), work_dir, recursive = TRUE)
-  projectDir <- file.path(work_dir, "TestProjectExcel")
+  projectDir <- localExcelProjectDir()
   individualsFile <- file.path(
     projectDir,
     "Configurations",
@@ -1793,21 +2506,39 @@ test_that("exportProjectToExcel keeps both ids when two share one output path", 
 })
 
 # A non-blank parameter `Value` cell that does not coerce to a number (text, a
-# comma-decimal) must abort naming the sheet and row, rather than silently
-# becoming NA and serialising a value-less parameter into the JSON project.
-test_that(".parseExcelParameterSheets aborts on a non-numeric Value cell", {
+# comma-decimal) skips its row, naming the sheet, row and cell, rather than
+# silently becoming NA and serialising a value-less parameter into the JSON
+# project. Skipping the row rather than aborting the import is what lets a
+# project carrying a fit-bounds sheet migrate at all (#1189).
+test_that(".parseExcelParameterSheets skips a non-numeric Value cell", {
   paramFile <- withr::local_tempfile(fileext = ".xlsx")
   df <- data.frame(
     `Container Path` = "Organism|A",
-    `Parameter Name` = "P",
-    Value = "not_a_number",
+    `Parameter Name` = c("P", "Q", "R"),
+    Value = c("not_a_number", "1,5", "2"),
     Units = "mg",
     check.names = FALSE,
     stringsAsFactors = FALSE
   )
   .writeExcel(list(Global = df), paramFile)
 
-  expect_snapshot(error = TRUE, .parseExcelParameterSheets(paramFile))
+  # Not a snapshot: the warning names the workbook, whose path is a temp file
+  # here, so a snapshot would record a machine-specific string.
+  expect_warning(
+    parsed <- .parseExcelParameterSheets(paramFile),
+    class = "esqlabsR_importSkippedNonNumericRows"
+  )
+  # Each skipped row is named with its sheet, row and cell. The rows are the
+  # workbook's, so the first data row is row 2, below the header.
+  expect_warning(
+    .parseExcelParameterSheets(paramFile),
+    'row 2: "not_a_number"'
+  )
+  expect_warning(.parseExcelParameterSheets(paramFile), 'row 3: "1,5"')
+  # Only the numeric row survives; a comma-decimal is text, so it is skipped
+  # rather than silently read as 1.
+  expect_length(parsed$Global, 1L)
+  expect_identical(parsed$Global[[1]]$value, 2)
 })
 
 # A blank `Value` cell stays allowed (NA), so a partially-filled sheet still
@@ -1849,6 +2580,78 @@ test_that(".compareJsonToExcel does not count id canonicalization as drift", {
     silent = TRUE
   ))
   expect_true(inSync$excel_in_sync)
+})
+
+test_that(".compareJsonToExcel still reports a real edit as drift", {
+  # The comparison deliberately ignores several differences the round trip does
+  # not preserve (key order, definition order, storage type), so it needs a case
+  # proving it has not been normalized into always saying "in sync".
+  out <- withr::local_tempdir()
+  excelPath <- testProjectExcelPath()
+  jsonPath <- suppressWarnings(importProjectFromExcel(
+    excelPath,
+    outputDir = out,
+    silent = TRUE
+  ))
+  project <- suppressWarnings(loadProject(jsonPath))
+
+  addOutputPath(project, "drifted", "Organism|Liver|Volume")
+
+  drifted <- suppressWarnings(.compareJsonToExcel(
+    project = project,
+    projectConfigPath = excelPath,
+    silent = TRUE
+  ))
+  expect_false(drifted$excel_in_sync)
+  expect_identical(drifted$details$data_changes$outputPaths, "data differs")
+})
+
+test_that(".compareJsonToExcel writes nothing", {
+  # It answers a read-only question, so it must leave the Excel project folder
+  # exactly as it found it (it used to run the importer for real against a
+  # temporary directory).
+  out <- withr::local_tempdir()
+  excelPath <- testProjectExcelPath()
+  jsonPath <- suppressWarnings(importProjectFromExcel(
+    excelPath,
+    outputDir = out,
+    silent = TRUE
+  ))
+  project <- suppressWarnings(loadProject(jsonPath))
+
+  excelDir <- dirname(excelPath)
+  before <- list.files(excelDir, recursive = TRUE, all.files = TRUE)
+  suppressWarnings(.compareJsonToExcel(
+    project = project,
+    projectConfigPath = excelPath,
+    silent = TRUE
+  ))
+  expect_identical(
+    list.files(excelDir, recursive = TRUE, all.files = TRUE),
+    before
+  )
+})
+
+# `.sortJsonSections()` puts the two sides of the Excel comparison into one
+# order by serializing each record into a sort key, so that key has to be as
+# discriminating as the `identical()` it feeds. Records tying on the key keep
+# their source order, because `order(method = "radix")` is stable, and source
+# order is exactly what the sort exists to normalize away.
+#
+# Every array section a real project holds carries a unique id per record
+# (`name`, `individualId`, `dataCombinedId`, ...), so no two records tie and the
+# key's precision does not currently reach the verdict. This guards the sort
+# itself rather than a live false-drift report: the records here are given the
+# same id so they differ only past the 4th decimal, which is where jsonlite's
+# default rounding would collapse them onto one key.
+test_that(".sortJsonSections orders records that differ past the 4th decimal", {
+  low <- list(id = "s", value = 1.00001)
+  high <- list(id = "s", value = 1.00002)
+
+  expect_identical(
+    .sortJsonSections(list(section = list(low, high))),
+    .sortJsonSections(list(section = list(high, low)))
+  )
 })
 
 # Regression (#1123): a dirty saveProject() on a normal tree project must not
@@ -1909,6 +2712,41 @@ test_that("projectStatus() does not report false section drift after a dirty sav
 # projectStatus() must report that honestly as NA (the "cannot compare" state),
 # not silently claim the project is in sync, and must warn when not silent. The
 # tree axis is unaffected (a freshly loaded project is in sync).
+# The side-car is derived from the project file's name, so a project whose
+# folder holds no matching workbook must say which file was looked for and how
+# to produce it, rather than naming a fixed `Project.xlsx` it never checked.
+test_that("projectStatus() names the missing Excel side-car it looked for", {
+  outputDir <- withr::local_tempdir()
+  jsonPath <- suppressWarnings(importProjectFromExcel(
+    testProjectExcelPath(),
+    outputDir = outputDir,
+    silent = TRUE,
+    projectFileName = "MyStudy"
+  ))
+  project <- suppressWarnings(loadProject(jsonPath))
+
+  expect_message(
+    suppressWarnings(projectStatus(project)),
+    "MyStudy\\.xlsx.*exportProjectToExcel"
+  )
+  expect_identical(
+    suppressWarnings(projectStatus(project, silent = TRUE))$excel_in_sync,
+    NA
+  )
+
+  # The advice has to be followable: exporting writes the very workbook the
+  # status check looked for, so the Excel axis stops reporting "cannot compare".
+  suppressWarnings(exportProjectToExcel(
+    project,
+    outputDir = outputDir,
+    silent = TRUE
+  ))
+  expect_true(file.exists(file.path(outputDir, "MyStudy.xlsx")))
+  expect_false(is.na(
+    suppressWarnings(projectStatus(project, silent = TRUE))$excel_in_sync
+  ))
+})
+
 test_that("projectStatus() reports the Excel axis as NA (and warns) when the side-car is unreadable", {
   work_dir <- withr::local_tempdir()
   file.copy(dirname(exampleProjectPath()), work_dir, recursive = TRUE)
@@ -1928,10 +2766,14 @@ test_that("projectStatus() reports the Excel axis as NA (and warns) when the sid
   expect_identical(status$excel_in_sync, NA)
   expect_true(status$tree_in_sync)
 
-  # Non-silent: a warning surfaces naming the comparison failure.
-  expect_warning(
-    projectStatus(project, silent = FALSE),
-    "Cannot compare the Excel configuration files"
+  # Non-silent: a warning surfaces naming the comparison failure. Snapshotted
+  # whole because this is the second surface of the same unreadable-workbook
+  # text, re-raised as one bullet of this warning: the abort's own header must
+  # stay unglyphed for it to render here as a single bullet rather than a doubled
+  # one, and only the rendered text shows that.
+  expect_snapshot(
+    transform = .redactProjectWorkbookPath,
+    projectStatus(project, silent = FALSE)
   )
 })
 
@@ -1943,9 +2785,6 @@ test_that("projectStatus() reports the Excel axis as NA (and warns) when the sid
 # (not the source), so the project itself loads cleanly and only the comparison
 # re-import hits the collision.
 test_that("projectStatus() does not abort on a side-car canonicalization collision", {
-  # Copy the fixture with the entry workbook named Project.xlsx, so the imported
-  # container is Project.json and the exported side-car stem matches what the
-  # status check derives.
   work <- withr::local_tempdir()
   file.copy(
     list.files(
@@ -1955,13 +2794,9 @@ test_that("projectStatus() does not abort on a side-car canonicalization collisi
     work,
     recursive = TRUE
   )
-  file.rename(
-    file.path(work, "ProjectConfiguration.xlsx"),
-    file.path(work, "Project.xlsx")
-  )
 
   jsonPath <- suppressWarnings(importProjectFromExcel(
-    file.path(work, "Project.xlsx"),
+    file.path(work, "ProjectConfiguration.xlsx"),
     outputDir = work,
     silent = TRUE
   ))
@@ -2070,24 +2905,8 @@ test_that(".parseExcelScenarios aborts on an unparseable boolean cell", {
 # yielding a scenario with no output paths (the partial-match `$` access
 # previously masked this).
 test_that(".parseExcelScenarios aborts on a renamed required column", {
-  scenarioDf <- data.frame(
-    Scenario_name = "s1",
-    IndividualId = NA_character_,
-    PopulationId = NA_character_,
-    ReadPopulationFromCSV = NA,
-    ModelParameterSheets = NA_character_,
-    ApplicationProtocol = NA_character_,
-    SimulationTime = NA_character_,
-    SimulationTimeUnit = NA_character_,
-    SteadyState = NA,
-    SteadyStateTime = NA_real_,
-    SteadyStateTimeUnit = NA_character_,
-    OverwriteFormulasInSS = NA,
-    ModelFile = "m.pkml",
-    # `OutputPathsIds` misspelled as `OutputPathsId`.
-    OutputPathsId = "op1",
-    stringsAsFactors = FALSE
-  )
+  # `OutputPathsIds` misspelled as `OutputPathsId`.
+  scenarioDf <- scenarioSheetRow(OutputPathsIds = NULL, OutputPathsId = "op1")
   expect_snapshot(error = TRUE, .parseExcelScenarios(scenarioDf))
 })
 
@@ -2095,23 +2914,8 @@ test_that(".parseExcelScenarios aborts on a renamed required column", {
 # sheet omits it. Its absence must default to FALSE rather than abort, matching
 # the sibling `InitialConditions` column (#1158).
 test_that(".parseExcelScenarios defaults OverwriteFormulasInSS when the column is absent", {
-  scenarioDf <- data.frame(
-    Scenario_name = "s1",
-    IndividualId = NA_character_,
-    PopulationId = NA_character_,
-    ReadPopulationFromCSV = NA,
-    ModelParameterSheets = NA_character_,
-    ApplicationProtocol = NA_character_,
-    SimulationTime = NA_character_,
-    SimulationTimeUnit = NA_character_,
-    SteadyState = NA,
-    SteadyStateTime = NA_real_,
-    SteadyStateTimeUnit = NA_character_,
-    # No `OverwriteFormulasInSS` column, as in a pre-6.0 sheet.
-    ModelFile = "m.pkml",
-    OutputPathsIds = "op1",
-    stringsAsFactors = FALSE
-  )
+  # No `OverwriteFormulasInSS` column, as in a pre-6.0 sheet.
+  scenarioDf <- scenarioSheetRow(OverwriteFormulasInSS = NULL)
   scenarios <- .parseExcelScenarios(scenarioDf)
   # The parser drops the absent value to NULL; the JSON serializer defaults it
   # to FALSE (`%||% FALSE`), so a round-trip through the tree reads FALSE.
@@ -2122,23 +2926,7 @@ test_that(".parseExcelScenarios defaults OverwriteFormulasInSS when the column i
 # writes (`1000` / `"min"`), not null, so an imported project is byte-identical
 # to the same project re-authored through `addScenario()` (#1158).
 test_that(".parseExcelScenarios defaults a blank steady-state time and unit", {
-  scenarioDf <- data.frame(
-    Scenario_name = "s1",
-    IndividualId = NA_character_,
-    PopulationId = NA_character_,
-    ReadPopulationFromCSV = NA,
-    ModelParameterSheets = NA_character_,
-    ApplicationProtocol = NA_character_,
-    SimulationTime = NA_character_,
-    SimulationTimeUnit = NA_character_,
-    SteadyState = FALSE,
-    SteadyStateTime = NA_real_,
-    SteadyStateTimeUnit = NA_character_,
-    OverwriteFormulasInSS = NA,
-    ModelFile = "m.pkml",
-    OutputPathsIds = "op1",
-    stringsAsFactors = FALSE
-  )
+  scenarioDf <- scenarioSheetRow(SteadyState = FALSE)
   scenarios <- .parseExcelScenarios(scenarioDf)
   expect_identical(scenarios[[1]]$steadyStateTime, 1000)
   expect_identical(scenarios[[1]]$steadyStateTimeUnit, "min")
@@ -2161,6 +2949,33 @@ test_that(".parseCommaListToArray parses the quoted-CSV and backslash convention
   )
   # A plain unquoted list is unaffected.
   expect_identical(.parseCommaListToArray("a, b, c"), c("a", "b", "c"))
+})
+
+# The same quoting convention reaches a cell holding one value, where the whole
+# cell is the value, so only the wrapping pair may go: a comma or a quote inside
+# the text is content, not syntax, and an unquoted cell must come back as read.
+test_that(".stripWrappingQuotes drops only the wrapping pair", {
+  expect_identical(.stripWrappingQuotes('"AciclovirPVB"'), "AciclovirPVB")
+  # No wrapping pair, so nothing is a quoting artifact.
+  expect_identical(.stripWrappingQuotes("AciclovirPVB"), "AciclovirPVB")
+  expect_identical(
+    .stripWrappingQuotes('Aciclovir "PVB" plasma'),
+    'Aciclovir "PVB" plasma'
+  )
+  # Wrapped, and quoting an inner run that stays exactly as written.
+  expect_identical(
+    .stripWrappingQuotes('"Aciclovir "PVB" plasma"'),
+    'Aciclovir "PVB" plasma'
+  )
+  # A single-value cell is one value even when it contains a comma.
+  expect_identical(
+    .stripWrappingQuotes('"Sheet, with comma"'),
+    "Sheet, with comma"
+  )
+  # A lone quote has no pair to drop.
+  expect_identical(.stripWrappingQuotes('"'), '"')
+  # A numeric cell is handed back untouched, not stringified.
+  expect_identical(.stripWrappingQuotes(1.96), 1.96)
 })
 
 # Only the raw `${VAR}` is stored, so it is expanded afresh on every load and a
@@ -2239,7 +3054,7 @@ test_that(".parseExcelObservedData anchors a relative ${VAR} at the project file
   expect_silent(
     result <- .parseExcelObservedData(list(), prop, source, project)
   )
-  expect_named(result$observedData, "Values.xlsx")
+  expect_named(result$observedData, "values")
 })
 
 # A `ParameterSets` / `Individual Parameter Sets` cell names sheets of its own
@@ -2263,7 +3078,10 @@ test_that(".dropSkippedSheetRefs removes only references to skipped sheets", {
   expect_identical(result$d, definitions$d)
   # A reference matching on canonical id alone is still dropped.
   expect_null(
-    .dropSkippedSheetRefs(list(a = list(parameterSets = list("skipped"))), "Skipped")$a$parameterSets
+    .dropSkippedSheetRefs(
+      list(a = list(parameterSets = list("skipped"))),
+      "Skipped"
+    )$a$parameterSets
   )
 })
 
@@ -2271,9 +3089,7 @@ test_that(".dropSkippedSheetRefs removes only references to skipped sheets", {
 # than from the sheet list, so it needs the same treatment as the 5.x layout
 # (#1181).
 test_that("an application referencing a skipped sheet loses the reference", {
-  work_dir <- withr::local_tempdir()
-  file.copy(dirname(testProjectExcelPath()), work_dir, recursive = TRUE)
-  projectDir <- file.path(work_dir, "TestProjectExcel")
+  projectDir <- localExcelProjectDir()
   appsFile <- file.path(projectDir, "Configurations", "Applications.xlsx")
 
   # Rebuild the workbook in the newer layout: a protocol naming two sheets, one
@@ -2309,9 +3125,7 @@ test_that("an application referencing a skipped sheet loses the reference", {
 # that hold nothing. Each was taken for a population definition and the import
 # aborted on the first of them for having no id (#1191).
 test_that("blank rows in a populations sheet do not become definitions", {
-  work_dir <- withr::local_tempdir()
-  file.copy(dirname(testProjectExcelPath()), work_dir, recursive = TRUE)
-  projectDir <- file.path(work_dir, "TestProjectExcel")
+  projectDir <- localExcelProjectDir()
   popFile <- file.path(projectDir, "Configurations", "Populations.xlsx")
 
   sheetNames <- readxl::excel_sheets(popFile)
@@ -2335,4 +3149,1122 @@ test_that("blank rows in a populations sheet do not become definitions", {
   project <- suppressWarnings(loadProject(jsonPath))
 
   expect_length(project$definitions$populations, realRows)
+})
+
+# The reported case: a fit-bounds sheet authored by copying a real parameter
+# sheet carries all four parameter columns, so it is a parameter sheet and its
+# rows are read, and a `Value` of "lower" aborted the whole import (#1189).
+test_that("a non-numeric Value skips the row, not the import", {
+  projectDir <- localExcelProjectDir()
+  paramFile <- file.path(projectDir, "Configurations", "ModelParameters.xlsx")
+
+  sheetNames <- readxl::excel_sheets(paramFile)
+  sheets <- stats::setNames(
+    lapply(sheetNames, function(s) readExcel(paramFile, sheet = s)),
+    sheetNames
+  )
+  sheets[["RefConc_fit"]] <- data.frame(
+    `Container Path` = c("Target", "Target", "Target"),
+    `Parameter Name` = c("Reference concentration", "Kd", "koff"),
+    Value = c("lower", "2.5", "upper"),
+    Units = c("nmol/l", "nmol/l", "1/min"),
+    check.names = FALSE,
+    stringsAsFactors = FALSE
+  )
+  .writeExcel(sheets, paramFile)
+
+  expect_warning(
+    jsonPath <- importProjectFromExcel(
+      file.path(projectDir, "ProjectConfiguration.xlsx"),
+      outputDir = withr::local_tempdir(),
+      silent = TRUE
+    ),
+    class = "esqlabsR_importSkippedNonNumericRows"
+  )
+  project <- suppressWarnings(loadProject(jsonPath))
+
+  # The two unparseable rows are gone; the numeric one survives with its value.
+  set <- .unwrapDefinitionList(project$definitions$parameterSets)[[
+    "refconc_fit"
+  ]]
+  expect_length(set, 1L)
+  expect_identical(set[[1]]$parameterName, "Kd")
+  expect_identical(set[[1]]$value, 2.5)
+})
+
+# The reported case: a `PIOutputMappings` sheet from the layout that predates the
+# `OutputPath` column. Every mapping came out with no output path and the restore
+# stopped on the first one. The column's absence is now read as that older
+# layout, whose outputs come from the scenario (#1192).
+test_that("a PIOutputMappings sheet with no OutputPath column imports", {
+  projectDir <- localExcelProjectDir()
+  configDir <- file.path(projectDir, "Configurations")
+
+  rewriteSheet <- function(file, sheet, edit) {
+    sheetNames <- readxl::excel_sheets(file)
+    sheets <- stats::setNames(
+      lapply(sheetNames, function(s) readExcel(file, sheet = s)),
+      sheetNames
+    )
+    sheets[[sheet]] <- edit(sheets[[sheet]])
+    .writeExcel(sheets, file)
+  }
+
+  # The fixture's PI scenarios declare no output path, so give the one this task
+  # uses two of them: the derivation has to fan a single row out over both.
+  rewriteSheet(
+    file.path(configDir, "Scenarios.xlsx"),
+    "Scenarios",
+    function(df) {
+      df$OutputPathsIds[df$Scenario_name == "PITestScenario"] <-
+        "Aciclovir_PVB, Aciclovir_fat_cell"
+      df
+    }
+  )
+  # Reproduce the older layout: no `OutputPath` column at all.
+  rewriteSheet(
+    file.path(configDir, "ParameterIdentification.xlsx"),
+    "PIOutputMappings",
+    function(df) df[, setdiff(names(df), "OutputPath"), drop = FALSE]
+  )
+
+  jsonPath <- suppressWarnings(importProjectFromExcel(
+    file.path(projectDir, "ProjectConfiguration.xlsx"),
+    outputDir = withr::local_tempdir(),
+    silent = TRUE
+  ))
+  project <- suppressWarnings(loadProject(jsonPath))
+
+  task <- .unwrapDefinitionList(project$definitions$parameterIdentification)[[
+    "aciclovirsimple"
+  ]]
+  # One mapping per output path the scenario declares, each carrying the row's
+  # observed data set.
+  expect_setequal(
+    vapply(task$outputMappings, function(m) m$outputPath, character(1)),
+    c("aciclovir_pvb", "aciclovir_fat_cell")
+  )
+  expect_true(all(vapply(
+    task$outputMappings,
+    function(m) grepl("^Laskin 1982", m$observedData),
+    logical(1)
+  )))
+
+  # The whole point: the project the import produced is loadable, and the task
+  # whose scenario declares output paths has no complaint against it.
+  results <- suppressWarnings(validateProject(project))
+  errors <- unlist(lapply(results, function(section) {
+    vapply(section$critical_errors %||% list(), \(e) e$message, character(1))
+  })) %||%
+    character()
+  expect_false(any(grepl("aciclovirsimple'.*outputPath", errors)))
+
+  # The fixture's other task runs against scenarios that declare no output path,
+  # so its mappings cannot be derived. They load anyway and validation names them,
+  # rather than vanishing from the task.
+  other <- .unwrapDefinitionList(project$definitions$parameterIdentification)[[
+    "aciclovirmultiscenario"
+  ]]
+  expect_length(other$outputMappings, 2L)
+  expect_true(any(grepl(
+    "aciclovirmultiscenario'.*does not define an outputPath",
+    errors
+  )))
+})
+
+# The reported case: a fresh, never-edited import came back invalid with one
+# critical error per observed curve, and nothing in the import said why. The
+# curve is kept (the user may still be able to fill the cell), so the import
+# names the affected data combinations and states the consequence (#1183).
+test_that("an observed curve with no dataSet is kept and reported", {
+  projectDir <- localExcelProjectDir()
+  plotsFile <- file.path(projectDir, "Configurations", "Plots.xlsx")
+
+  sheetNames <- readxl::excel_sheets(plotsFile)
+  sheets <- stats::setNames(
+    lapply(sheetNames, function(s) readExcel(plotsFile, sheet = s)),
+    sheetNames
+  )
+  observed <- sheets$DataCombined$dataType == "observed"
+  sheets$DataCombined$dataSet[observed] <- NA
+  .writeExcel(sheets, plotsFile)
+
+  expect_warning(
+    jsonPath <- importProjectFromExcel(
+      file.path(projectDir, "ProjectConfiguration.xlsx"),
+      outputDir = withr::local_tempdir(),
+      silent = TRUE
+    ),
+    class = "esqlabsR_importIncompleteObservedCurves"
+  )
+  project <- suppressWarnings(loadProject(jsonPath))
+
+  # Nothing dropped: the observed curve is still there, and so is the simulated
+  # one beside it.
+  dc <- .unwrapDefinitionList(project$definitions$dataCombined)[[
+    "aciclovirpvb"
+  ]]
+  expect_length(dc$observed, 1L)
+  expect_length(dc$simulated, 1L)
+  expect_null(dc$observed[[1]]$dataSet)
+
+  # And the consequence the warning states is the one that actually happens.
+  results <- suppressWarnings(validateProject(project))
+  errors <- unlist(lapply(results, function(section) {
+    vapply(section$critical_errors %||% list(), \(e) e$message, character(1))
+  }))
+  expect_true(any(grepl(
+    "observed entry missing required field: dataSet",
+    errors
+  )))
+})
+
+test_that("a missing data file says the project will not validate", {
+  projectDir <- localExcelProjectDir()
+  unlink(list.files(file.path(projectDir, "Data"), full.names = TRUE))
+
+  expect_warning(
+    importProjectFromExcel(
+      file.path(projectDir, "ProjectConfiguration.xlsx"),
+      outputDir = withr::local_tempdir(),
+      silent = TRUE
+    ),
+    "validateProject"
+  )
+})
+
+# The warning's wording is the whole of the fix for #1183, so it is snapshotted
+# rather than only matched on its class. Called directly, not through an import,
+# so no temp path lands in the snapshot.
+test_that(".warnIncompleteObservedCurves names the affected combinations", {
+  expect_snapshot(.warnIncompleteObservedCurves(list(
+    list(
+      dataCombinedId = "plasma",
+      simulated = list(list(label = "sim")),
+      observed = list(list(label = "obs"))
+    ),
+    list(
+      dataCombinedId = "urine",
+      observed = list(list(label = "obs", dataSet = "d1"))
+    ),
+    list(
+      dataCombinedId = "fat",
+      observed = list(list(label = "obs", dataSet = ""))
+    )
+  )))
+
+  # Nothing to say when every observed curve names a data set.
+  expect_silent(.warnIncompleteObservedCurves(list(
+    list(dataCombinedId = "urine", observed = list(list(dataSet = "d1")))
+  )))
+  expect_silent(.warnIncompleteObservedCurves(NULL))
+})
+
+# Blank rows are dropped on read, so the parsed-frame index is not the row Excel
+# shows. Findability is the whole purpose of the reported number, so it is the
+# workbook row: blank rows above the offender counted, header included.
+test_that("a skipped row is reported at its workbook row", {
+  paramFile <- withr::local_tempfile(fileext = ".xlsx")
+  df <- data.frame(
+    `Container Path` = c("Organism|A", NA, NA, "Organism|A"),
+    `Parameter Name` = c("P", NA, NA, "Q"),
+    Value = c("1", NA, NA, "lower"),
+    Units = c("mg", NA, NA, "mg"),
+    check.names = FALSE,
+    stringsAsFactors = FALSE
+  )
+  .writeExcel(list(Global = df), paramFile)
+
+  # The offending cell is on sheet row 5: header, one data row, two blank rows.
+  expect_warning(.parseExcelParameterSheets(paramFile), "row 5")
+})
+
+# A sheet that had rows but kept none describes no parameter, so it becomes no
+# definition. A header-only sheet is a real (empty) set and is unaffected; the
+# test above covers that case.
+test_that("a sheet whose every row is skipped becomes no parameter set", {
+  paramFile <- withr::local_tempfile(fileext = ".xlsx")
+  .writeExcel(
+    list(
+      Global = data.frame(
+        `Container Path` = "Organism|A",
+        `Parameter Name` = "P",
+        Value = "1",
+        Units = "mg",
+        check.names = FALSE
+      ),
+      RefConc_fit = data.frame(
+        `Container Path` = "Target",
+        `Parameter Name` = c("Reference concentration", "Kd"),
+        Value = c("lower", "upper"),
+        Units = "nmol/l",
+        check.names = FALSE
+      )
+    ),
+    paramFile
+  )
+
+  expect_warning(
+    parsed <- .parseExcelParameterSheets(paramFile),
+    class = "esqlabsR_importSkippedNonNumericRows"
+  )
+  expect_named(parsed, "Global")
+})
+
+# Legacy Excel fixture: characterization of the #1213 migration findings ----
+#
+# These tests pin what the importer does *today* with the workbook shapes real
+# pre-5.6 projects carry, using the `TestProjectExcelLegacy/` fixture. Several of
+# the behaviours pinned here are the defects reported in #1213: each such test
+# passes against the current behaviour and names the finding it covers, so it
+# flips visibly when that finding is fixed rather than quietly keeping a green
+# suite over a silent data loss.
+#
+# The sibling `TestProjectExcel/` fixture uses the modern spelling of every one
+# of these shapes, which is why none of them has been reproducible until now.
+
+# #1213 item 1: a two-column `Protein` + `Ontogeny` pair is the pre-5.6 way to
+# declare ontogenies, and the only spelling any workbook older than 5.6 has. Each
+# cell of the pair is a comma list, zipped positionally with the other, and the
+# pair is folded into the single-cell `Protein:Ontogeny,...` spelling on import,
+# so both layouts land on the same definition. A pair that reads cleanly is
+# silent; only an unpairable declaration is reported.
+test_that("a legacy two-column ontogeny pair imports its ontogenies", {
+  imported <- importLegacyExcelProject(localLegacyExcelProject())
+
+  # `adult` declares one ontogeny in the workbook, `child` two, `adultpop` two.
+  expect_identical(
+    imported$project$definitions$individuals[["adult"]]$proteinOntogenies,
+    "CYP3A4:CYP3A4"
+  )
+  expect_identical(
+    imported$project$definitions$individuals[["child"]]$proteinOntogenies,
+    c("CYP3A4:CYP3A4", "CYP2D6:CYP2C8")
+  )
+  expect_identical(
+    imported$project$definitions$populations[["adultpop"]]$proteinOntogenies,
+    c("CYP3A4:CYP3A4", "CYP2D6:CYP2C8")
+  )
+
+  # Every pair in this fixture is readable, so nothing is reported about them.
+  expect_false(any(grepl("ontogen", imported$warnings, ignore.case = TRUE)))
+})
+
+# #1213 item 1, the sharpest statement of the same thing: two populations authored
+# to differ in NOTHING but their ontogenies must not import to the same
+# definition, which is the assertion the sibling fixture cannot make because it
+# has no legacy-spelled ontogenies to differ in.
+test_that("two populations differing only in their ontogenies import differently", {
+  projectDir <- localLegacyExcelProject()
+  editWorkbookSheets(
+    file.path(projectDir, "Configurations", "Populations.xlsx"),
+    function(sheets) {
+      demographics <- sheets$Demographics
+      # A copy of `AdultPop` whose only difference is that it declares no
+      # ontogenies.
+      twin <- demographics[demographics$PopulationName == "AdultPop", ]
+      twin$PopulationName <- "AdultPopNoOnto"
+      twin$Protein <- NA
+      twin$Ontogeny <- NA
+      sheets$Demographics <- rbind(demographics, twin)
+      sheets
+    }
+  )
+  imported <- importLegacyExcelProject(projectDir)
+
+  definitionsDir <- file.path(
+    imported$outputDir,
+    "definitions",
+    "populations"
+  )
+  withOntogenies <- readLines(file.path(definitionsDir, "adultpop.json"))
+  withoutOntogenies <- readLines(file.path(
+    definitionsDir,
+    "adultpopnoonto.json"
+  ))
+
+  # The ontogenies are the whole of the difference, once the id line is set aside.
+  dropId <- function(lines) {
+    grep("populationId", lines, fixed = TRUE, invert = TRUE, value = TRUE)
+  }
+  expect_false(identical(dropId(withOntogenies), dropId(withoutOntogenies)))
+  expect_match(
+    grep("proteinOntogenies", withOntogenies, value = TRUE),
+    '["CYP3A4:CYP3A4", "CYP2D6:CYP2C8"]',
+    fixed = TRUE
+  )
+  expect_false(any(grepl("proteinOntogenies", withoutOntogenies, fixed = TRUE)))
+
+  # Both files were written, so the comparison above is a real difference.
+  expect_true(any(grepl("adultpop", withOntogenies, fixed = TRUE)))
+  expect_true(any(grepl("adultpopnoonto", withoutOntogenies, fixed = TRUE)))
+})
+
+# #1213 item 4: the rows of a `PIParameters` sheet sharing a `Group` (with the
+# same container path and parameter name) are ONE free parameter estimated across
+# the scenarios they name between them, which is what the identification
+# estimates. The importer reads the column, so the two rows sharing group 2 here
+# import as one parameter naming both scenarios rather than two independent ones.
+test_that("a repeated parameter-identification Group imports as one parameter", {
+  imported <- importLegacyExcelProject(localLegacyExcelProject())
+  task <- imported$project$definitions$parameterIdentification[["aciclovirfit"]]
+
+  # The workbook's three rows are group 1 (Lipophilicity) and group 2 twice
+  # (TSspec, once per scenario), so two free parameters are estimated.
+  expect_length(task$parameters, 2L)
+  expect_identical(
+    vapply(task$parameters, function(p) p$id, character(1)),
+    c("lipophilicity", "tsspec")
+  )
+
+  # The merged parameter is estimated across both of its rows' scenarios.
+  expect_identical(
+    unlist(task$parameters[[2]]$scenarios),
+    c("piscenario", "piscenario2")
+  )
+  expect_identical(unlist(task$parameters[[1]]$scenarios), "piscenario")
+
+  # Nothing to report: the group's bounds agree, so it merged.
+  expect_false(any(grepl("Group", imported$warnings, fixed = TRUE)))
+})
+
+# #1213 item 4, the check esqlabsR 5.x made alongside the merge: one parameter has
+# one set of bounds, so rows of a group that disagree about them cannot be one
+# parameter. 5.x refused to build the task at all; the import keeps the rows
+# unmerged (nothing invented, nothing lost) and says so, so the rest of the
+# project still migrates.
+test_that("a parameter-identification Group whose bounds disagree is reported and left unmerged", {
+  projectDir <- localLegacyExcelProject()
+  editWorkbookSheets(
+    file.path(projectDir, "Configurations", "ParameterIdentification.xlsx"),
+    function(sheets) {
+      sheets$PIParameters$MaxValue[[3]] <- 20
+      sheets
+    }
+  )
+  imported <- importLegacyExcelProject(projectDir)
+  task <- imported$project$definitions$parameterIdentification[["aciclovirfit"]]
+
+  expect_identical(
+    vapply(task$parameters, function(p) p$id, character(1)),
+    c("lipophilicity", "tsspec", "tsspec_2")
+  )
+  # Matched on single words: the rendered warning wraps, so a longer phrase can
+  # straddle a line break.
+  expect_true(any(grepl("bounds", imported$warnings, fixed = TRUE)))
+  expect_true(any(grepl("Group", imported$warnings, fixed = TRUE)))
+})
+
+# #1213 item 14: the legacy `Units` cell is carried through as the parameter's
+# declared display unit, which is lossless. What used to make that a problem was
+# the runtime enforcing it: v5 read past the cell, so a workbook that ran under v5
+# routinely names a unit of another dimension (`mg` against an inversed time), and
+# `runPI()` aborted on it. The runtime now reports such a unit and leaves the
+# bounds in the parameter's own unit (see test-parameter-identification.R), so the
+# cell can be imported as authored.
+test_that("a legacy parameter-identification Units cell is carried through", {
+  imported <- importLegacyExcelProject(localLegacyExcelProject())
+  task <- imported$project$definitions$parameterIdentification[["aciclovirfit"]]
+
+  expect_identical(
+    vapply(
+      task$parameters,
+      function(p) p$units %||% NA_character_,
+      character(1)
+    ),
+    c("Log Units", "mg")
+  )
+})
+
+# #1213 item 17: the imported observed-data declaration states its own `id`, the
+# canonicalized basename of the data file without its extension. Deriving one
+# instead named the definition file after the basename verbatim, so it came out
+# with a double extension and kept whatever spaces, commas and casing the data
+# file's name carried, and the declaration was addressable only by an id the
+# authoring API could not have produced.
+test_that("the imported observed-data declaration carries a canonicalized id", {
+  imported <- importLegacyExcelProject(localLegacyExcelProject())
+  entry <- imported$project$definitions$observedData[[1]]
+
+  expect_identical(entry$id, "testproject_timevaluesdata")
+  expect_identical(
+    list.files(file.path(imported$outputDir, "definitions", "observed-data")),
+    "testproject_timevaluesdata.json"
+  )
+  # And the id is the handle `removeObservedData()` matches on.
+  expect_identical(
+    .observedDataSectionIds(imported$project$definitions$observedData),
+    "testproject_timevaluesdata"
+  )
+})
+
+test_that("a data file whose name is not filename-safe still yields a canonical id", {
+  projectDir <- localLegacyExcelProject()
+  file.rename(
+    file.path(projectDir, "Data", "TestProject_TimeValuesData.xlsx"),
+    file.path(projectDir, "Data", "My Data, v2.xlsx")
+  )
+  editWorkbookSheets(
+    legacyExcelProjectPath(projectDir),
+    function(sheets) {
+      row <- sheets$Sheet1$Property == "dataFile"
+      sheets$Sheet1$Value[row] <- "My Data, v2.xlsx"
+      sheets
+    }
+  )
+  imported <- importLegacyExcelProject(projectDir)
+
+  expect_identical(
+    imported$project$definitions$observedData[[1]]$id,
+    "my_data__v2"
+  )
+  expect_identical(
+    list.files(file.path(imported$outputDir, "definitions", "observed-data")),
+    "my_data__v2.json"
+  )
+  # The stored `file` is untouched: it is a path the loader resolves under the
+  # data folder, not an id.
+  expect_identical(
+    imported$project$definitions$observedData[[1]]$file,
+    "My Data, v2.xlsx"
+  )
+})
+
+# #1213 item 13: the `crossReferences` phase resolves a mapping's `observedData`
+# alongside its `outputPathId`. A mapping naming a data set no observed-data source
+# holds used to be reported as no error at all, and `runPI()` then aborted at build
+# time on a project `validateProject()` had called clean.
+test_that("a parameter-identification observedData reference resolves against the loaded data-set names", {
+  imported <- importLegacyExcelProject(localLegacyExcelProject())
+  task <- imported$project$definitions$parameterIdentification[["aciclovirfit"]]
+
+  # The fixture's mapping names a data set the workbook's data file really holds,
+  # so the reference resolves and the project is clean.
+  expect_true(
+    task$outputMappings[[1]]$observedDataId %in%
+      getObservedDataNames(imported$project)
+  )
+  summary <- validationSummary(suppressWarnings(validateProject(
+    imported$project
+  )))
+  expect_equal(summary$total_critical_errors, 0)
+})
+
+test_that("a dangling parameter-identification observedData reference is reported", {
+  projectDir <- localLegacyExcelProject()
+  editWorkbookSheets(
+    file.path(projectDir, "Configurations", "ParameterIdentification.xlsx"),
+    function(sheets) {
+      sheets$PIOutputMappings$DataSet <- "Laskin 1982.Group B_Aciclovir"
+      sheets
+    }
+  )
+  imported <- importLegacyExcelProject(projectDir)
+
+  results <- suppressWarnings(validateProject(imported$project))
+  messages <- vapply(
+    results$crossReferences$critical_errors,
+    function(e) e$message,
+    ""
+  )
+  expect_length(messages, 2L)
+  expect_true(all(grepl("undefined observed data", messages)))
+
+  # And `runPI()` is gated on that phase, so the mapping never reaches the build
+  # that used to be the first thing to notice.
+  expect_error(
+    runPI(imported$project),
+    "critical validation error"
+  )
+})
+
+# #1213 item 19: a blank `SimulationTimeUnit` cell imports as the same `"h"`
+# `addScenario()` defaults the absent value to, so the blank cell means one unit
+# whichever entrypoint wrote the project.
+#
+# The scenarios sheet also has no `OverwriteFormulasInSS` column at all, and the
+# absent column imports as `FALSE` rather than as an absent field.
+test_that("a blank simulationTime unit imports as the authoring default, and an absent OverwriteFormulasInSS column as FALSE", {
+  imported <- importLegacyExcelProject(localLegacyExcelProject())
+  scenario <- imported$project$definitions$scenarios[["adultscenario"]]
+
+  # The workbook leaves the cell blank, and authoring the same scenario gives it
+  # the same unit.
+  expect_identical(scenario$simulationTimeUnit, "h")
+  expect_identical(formals(addScenario)$simulationTimeUnit, "h")
+
+  # A scenario whose cell IS filled keeps its unit, so the above is the blank
+  # cell and not the whole column being dropped.
+  expect_identical(
+    imported$project$definitions$scenarios[[
+      "childscenario"
+    ]]$simulationTimeUnit,
+    "h"
+  )
+
+  expect_false(scenario$overwriteFormulasInSS)
+})
+
+# #1213 item 18: the plots section has the same field-type contract
+# `dataCombined` has, so a workbook storing `nsd` as text yields the number the
+# same field authored with `addPlot()` holds. A multi-value cell stays the
+# comma-separated string both entrypoints keep it in.
+test_that("a plots field stored as text imports as a number", {
+  imported <- importLegacyExcelProject(localLegacyExcelProject())
+  plots <- imported$project$definitions$plots
+
+  expect_identical(plots[["p3"]]$nsd, 1.96)
+  expect_identical(plots[["p3"]]$xValuesLimits, "0, 24")
+  expect_identical(plots[["p2"]]$foldDistance, "2, 3")
+})
+
+# #1213 item 18, what the field types were costing: a freshly exported workbook
+# read back had to describe the same project, and it did not, so `projectStatus()`
+# reported every imported project as out of sync with the Excel side-car it had
+# just written.
+test_that("a freshly exported workbook reports an imported project as in sync", {
+  projectDir <- localLegacyExcelProject()
+  imported <- importLegacyExcelProject(projectDir)
+  suppressMessages(exportProjectToExcel(
+    imported$project,
+    outputDir = imported$outputDir,
+    overwrite = TRUE,
+    silent = TRUE
+  ))
+
+  status <- suppressWarnings(suppressMessages(projectStatus(imported$project)))
+  expect_true(status$excel_in_sync)
+})
+
+# #1213 item 10 / the residue #1207 recorded: a 5.x multi-value cell is quoted,
+# and a value may itself contain a comma, which is exactly what the quoting is
+# for. A single-value cell in the same workbook is quoted the same way and means
+# the same name without the quotes, so both sides of a `DataCombinedName`
+# reference read the name the modeller wrote rather than `_name_`.
+test_that("quoted legacy cells resolve to the names they were written with", {
+  imported <- importLegacyExcelProject(localLegacyExcelProject())
+
+  # The quoted multi-value cell splits on the separating commas only, so the
+  # sheet name containing a comma survives as one reference.
+  expect_identical(
+    imported$project$definitions$scenarios[[
+      "adultscenario"
+    ]]$modelParameterSets,
+    c("global", "aciclovir", "sheet__with_comma")
+  )
+
+  # The quoted single-value `DataCombinedName` is unquoted on the defining side,
+  # so the id matches the one `addDataCombined(project, "AciclovirPVB", ...)`
+  # would have produced.
+  expect_setequal(
+    names(imported$project$definitions$dataCombined),
+    c("aciclovirpvb", "aciclovirpop")
+  )
+  # And on the referencing side, so the plot still points at it.
+  expect_identical(
+    imported$project$definitions$plots[["p1"]]$dataCombined,
+    "aciclovirpvb"
+  )
+
+  # Consistently quoted, so the project validates: only inconsistent quoting
+  # dangles (#1207).
+  summary <- validationSummary(suppressWarnings(validateProject(
+    imported$project
+  )))
+  expect_equal(summary$total_critical_errors, 0)
+})
+
+# A quoted and an unquoted spelling of one name are the same name, so a sheet
+# that groups its rows by that name has to group on the unquoted spelling. The
+# `DataCombined` sheet is long-format (one row per curve), so grouping on the raw
+# cell puts an inconsistently spelled combination's curves in two records, which
+# then land on one definition key and the first one's curves are dropped.
+test_that("a DataCombined name spelled quoted and unquoted is one combination", {
+  projectDir <- localLegacyExcelProject()
+  editWorkbookSheets(
+    file.path(projectDir, "Configurations", "Plots.xlsx"),
+    function(sheets) {
+      # Row 1 (simulated) keeps the fixture's `"AciclovirPVB"`; row 2 (observed)
+      # spells the same name without the quotes.
+      sheets$DataCombined$DataCombinedName[[2]] <- "AciclovirPVB"
+      sheets
+    }
+  )
+  imported <- importLegacyExcelProject(projectDir)
+  combined <- imported$project$definitions$dataCombined
+
+  expect_setequal(names(combined), c("aciclovirpvb", "aciclovirpop"))
+
+  # Both curves are on the one combination: neither row's is dropped.
+  expect_length(combined[["aciclovirpvb"]]$simulated, 1L)
+  expect_length(combined[["aciclovirpvb"]]$observed, 1L)
+})
+
+# The 5.x parameter-identification layout builds one task per distinct
+# `PITaskName`, gathering that task's rows from five sheets. The same reasoning as
+# for `DataCombined`: a sheet quoting the task name names the same task, so its
+# rows belong to it rather than to a second task that overwrites the first.
+test_that("a PI task name spelled quoted and unquoted is one task", {
+  projectDir <- localLegacyExcelProject()
+  editWorkbookSheets(
+    file.path(projectDir, "Configurations", "ParameterIdentification.xlsx"),
+    function(sheets) {
+      sheets$PIParameters$PITaskName <- paste0(
+        '"',
+        sheets$PIParameters$PITaskName,
+        '"'
+      )
+      sheets
+    }
+  )
+  imported <- importLegacyExcelProject(projectDir)
+  tasks <- imported$project$definitions$parameterIdentification
+
+  expect_named(tasks, "aciclovirfit")
+
+  # The quoted sheet's parameters and the unquoted sheets' output mappings are
+  # both on the one task.
+  expect_length(tasks[["aciclovirfit"]]$parameters, 2L)
+  expect_length(tasks[["aciclovirfit"]]$outputMappings, 2L)
+})
+
+# A plots sheet keys one definition per row rather than grouping, so two rows
+# naming one plot are a reused id, whichever way each spells it. That is the
+# reported loss `.warnDuplicatePlotIds()` already covers for two rows spelling the
+# id identically; a quoted spelling has to reach the same report rather than
+# passing as a second plot and then quietly overwriting the first.
+test_that("a plot id spelled quoted and unquoted is one reused id, and reported", {
+  projectDir <- localLegacyExcelProject()
+  editWorkbookSheets(
+    file.path(projectDir, "Configurations", "Plots.xlsx"),
+    function(sheets) {
+      sheets$plotConfiguration$plotID[[2]] <- "\"P1\""
+      sheets
+    }
+  )
+  imported <- importLegacyExcelProject(projectDir)
+
+  expect_setequal(names(imported$project$definitions$plots), c("p1", "p3"))
+  expect_true(any(grepl("more than", imported$warnings, fixed = TRUE)))
+  expect_true(any(grepl("plotId", imported$warnings, fixed = TRUE)))
+})
+
+# A section stored as an array of records is keyed by each record's own id field
+# just as a keyed section is keyed by its names, so two *distinct* names that
+# canonicalize onto one id are the same ambiguity `canonNames()` aborts on, and
+# not something to resolve by keeping whichever record came last. `DataCombined`
+# has no duplicate-id report of its own, so without the abort the collision costs
+# a curve in silence.
+test_that("two DataCombined names that canonicalize alike abort the import", {
+  projectDir <- localLegacyExcelProject()
+  editWorkbookSheets(
+    file.path(projectDir, "Configurations", "Plots.xlsx"),
+    function(sheets) {
+      # A space and a comma both canonicalize to `_`, so these are two names for
+      # two combinations that would be filed as one.
+      sheets$DataCombined$DataCombinedName[[1]] <- "Aciclovir PVB"
+      sheets$DataCombined$DataCombinedName[[2]] <- "Aciclovir,PVB"
+      sheets
+    }
+  )
+  expect_error(
+    suppressWarnings(importProjectFromExcel(
+      legacyExcelProjectPath(projectDir),
+      outputDir = withr::local_tempdir("LegacyOut_"),
+      silent = TRUE
+    )),
+    "collide after canonicalization"
+  )
+})
+
+# #1213 item 5: an Excel project spells `populationsFolder` as a folder name under
+# the configurations folder, while a project resolves its working folders against
+# its own root. The import rewrites the value to the project-root-relative path of
+# the folder that actually holds the csv files, so the folder travels with the
+# project and the value means the same thing on both sides.
+test_that("the populations CSV folder travels with an imported project", {
+  projectDir <- localLegacyExcelProject()
+  imported <- importLegacyExcelProject(projectDir)
+
+  # It is there in the Excel project, under the configurations folder.
+  expect_true(dir.exists(
+    file.path(projectDir, "Configurations", "PopulationsCSV")
+  ))
+
+  # The sibling asset folders travelled.
+  expect_true(dir.exists(file.path(
+    imported$outputDir,
+    "Models",
+    "Simulations"
+  )))
+  expect_true(dir.exists(file.path(imported$outputDir, "Data")))
+
+  # So did the populations folder, keeping the layout it was authored in.
+  expect_true(dir.exists(
+    file.path(imported$outputDir, "Configurations", "PopulationsCSV")
+  ))
+  expect_false(dir.exists(file.path(imported$outputDir, "PopulationsCSV")))
+
+  # And the folder the project resolves is the one the csv file was copied into.
+  expect_true(file.exists(file.path(
+    imported$project$paths$populationsFolder,
+    "CsvPop.csv"
+  )))
+
+  # Nothing was left behind, so nothing is reported as uncopied.
+  expect_false(any(grepl("not copied", imported$warnings, fixed = TRUE)))
+
+  summary <- validationSummary(suppressWarnings(validateProject(
+    imported$project
+  )))
+  expect_equal(summary$total_critical_errors, 0)
+})
+
+# The tests below each derive a variant of the legacy fixture by mutating exactly
+# one workbook of a throwaway copy, so a variant differs from the base in one
+# dimension and cannot interfere with another test's subject.
+
+# #1213 item 8: workbook resolution is property-driven, so a workbook the property
+# sheet names but that is not on disk leaves its section empty. That used to happen
+# in complete silence, with the one cue suppressed as well, because the summary's
+# count block lists only the sections that hold something. The import now names the
+# workbook that is not there, and the summary names the sections that came out
+# empty.
+test_that("a named but absent workbook is reported, and its empty section named", {
+  projectDir <- localLegacyExcelProject()
+  file.remove(file.path(projectDir, "Configurations", "Populations.xlsx"))
+
+  messages <- character()
+  imported <- withCallingHandlers(
+    importLegacyExcelProject(projectDir, silent = FALSE),
+    message = function(m) {
+      messages <<- c(messages, conditionMessage(m))
+      invokeRestart("muffleMessage")
+    }
+  )
+
+  # Both populations are gone, and the workbook that is missing is named.
+  expect_length(imported$project$definitions$populations, 0L)
+  expect_true(any(grepl("Populations.xlsx", imported$warnings, fixed = TRUE)))
+
+  # The count block still lists only what imported something, so the summary names
+  # the empty sections separately. Matched on the section line, since the folder
+  # the import copies is named after the section too.
+  summary <- paste(messages, collapse = "")
+  expect_match(summary, "* Individuals:", fixed = TRUE)
+  expect_no_match(summary, "* Populations:", fixed = TRUE)
+  expect_match(summary, "imported no definitions", fixed = TRUE)
+  expect_match(summary, "populations", fixed = TRUE)
+
+  # And the downstream trace is unchanged: the two scenarios that name a
+  # population dangle at load.
+  expect_true(any(grepl("undefined population", imported$warnings)))
+})
+
+# #1213 item 8, the mirror failures of the same property-driven resolution: a
+# workbook nothing names is never opened however much it holds, and one read under
+# its conventional name is content the project does not declare. Both are now
+# reported.
+test_that("an unread workbook is reported, and one read by convention is named", {
+  projectDir <- localLegacyExcelProject()
+  configDir <- file.path(projectDir, "Configurations")
+  # A second, nested set of workbooks the property sheet does not mention, the
+  # shape three of the tested projects had.
+  dir.create(file.path(configDir, "v2"))
+  file.copy(
+    file.path(configDir, "Scenarios.xlsx"),
+    file.path(configDir, "v2", "Scenarios.xlsx")
+  )
+  # And an initial-conditions workbook, whose property row the sheet never
+  # carried, sitting under the conventional filename.
+  writexl::write_xlsx(
+    list(
+      Global = data.frame(
+        `Container Path` = "Organism|Liver",
+        `Molecule Name` = "Aciclovir",
+        `Is Present` = TRUE,
+        Value = 1,
+        Units = "\u00b5mol/l",
+        `Scale Divisor` = 1,
+        `Neg. Values Allowed` = FALSE,
+        check.names = FALSE
+      )
+    ),
+    file.path(configDir, "InitialConditions.xlsx")
+  )
+
+  messages <- character()
+  imported <- withCallingHandlers(
+    importLegacyExcelProject(projectDir, silent = FALSE),
+    message = function(m) {
+      messages <<- c(messages, conditionMessage(m))
+      invokeRestart("muffleMessage")
+    }
+  )
+
+  # The nested copy contributed nothing and is named.
+  expect_length(imported$project$definitions$scenarios, 6L)
+  expect_true(any(grepl("not read", imported$warnings, fixed = TRUE)))
+  expect_true(any(grepl("Scenarios.xlsx", imported$warnings, fixed = TRUE)))
+
+  # The conventional workbook was imported, and the summary says the project does
+  # not name it.
+  expect_length(imported$project$definitions$initialConditions, 1L)
+  summary <- paste(messages, collapse = "")
+  expect_match(summary, "InitialConditions.xlsx", fixed = TRUE)
+  expect_match(summary, "conventional name", fixed = TRUE)
+})
+
+# #1213 item 9, first route: a parameter sheet whose column headers are duplicated
+# is correctly rejected as not a parameter sheet. The rejection names the sheet,
+# and a second warning now names the consequence: the individual that sheet
+# parametrized imports with no parametrization at all, while its siblings keep
+# theirs and the project still validates clean.
+test_that("a parameter sheet with duplicated headers names the individual it costs the parametrization", {
+  projectDir <- localLegacyExcelProject()
+  editWorkbookSheets(
+    file.path(projectDir, "Configurations", "Individuals.xlsx"),
+    function(sheets) {
+      names(sheets$Child) <- c(
+        "Container Path",
+        "Parameter Name",
+        "Value",
+        "Value"
+      )
+      sheets
+    }
+  )
+  imported <- importLegacyExcelProject(projectDir)
+
+  # `adult` links to its own sheet; `child` has nothing left to link to.
+  expect_identical(
+    unlist(imported$project$definitions$individuals[["adult"]]$parameterSets),
+    "adult"
+  )
+  expect_null(imported$project$definitions$individuals[["child"]]$parameterSets)
+  expect_false("child" %in% names(imported$project$definitions$parameterSets))
+
+  # Two warnings: the sheet that was skipped, and the individual it left
+  # unparametrized.
+  expect_length(imported$warnings, 2L)
+  expect_match(imported$warnings[[1]], "Skipped sheet")
+  expect_match(imported$warnings[[2]], "Child")
+  expect_match(imported$warnings[[2]], "without the parameter set")
+})
+
+# #1213 item 9, second route: individuals are keyed off the biometrics rows, so an
+# individual that has a parameter sheet but no biometrics row is not imported. Its
+# sheet still becomes a parameter set owned by nobody, and the scenario naming the
+# individual is left dangling. Validation reports that dangling reference, which is
+# the symptom; the import now names the cause, the sheet whose individual has no
+# biometrics row, and the row to add.
+test_that("an individual with a parameter sheet but no biometrics row is dropped, and the sheet is named", {
+  projectDir <- localLegacyExcelProject()
+  editWorkbookSheets(
+    file.path(projectDir, "Configurations", "Individuals.xlsx"),
+    function(sheets) {
+      biometrics <- sheets$IndividualBiometrics
+      sheets$IndividualBiometrics <-
+        biometrics[biometrics$IndividualId != "Child", , drop = FALSE]
+      sheets
+    }
+  )
+  imported <- importLegacyExcelProject(projectDir)
+
+  expect_named(imported$project$definitions$individuals, "adult")
+
+  # The orphaned sheet survives as a parameter set with no individual.
+  expect_true("child" %in% names(imported$project$definitions$parameterSets))
+
+  # The scenario keeps pointing at the individual that no longer exists.
+  expect_identical(
+    imported$project$definitions$scenarios[["childscenario"]]$individualId,
+    "child"
+  )
+
+  # The import names the sheet whose individual is not defined, and validation
+  # still reports the reference the scenario is left with.
+  expect_true(any(grepl("does not", imported$warnings, fixed = TRUE)))
+  expect_true(any(grepl("Child", imported$warnings, fixed = TRUE)))
+  expect_true(any(grepl("undefined individual", imported$warnings)))
+})
+
+# #1213 item 10: each plot is one definition keyed by its id, so a second row
+# carrying an id an earlier row already used builds the same definition and the
+# earlier row's plot is gone. The reported count is the count of surviving plots,
+# which is why the loss used to be invisible unless the reader counted the
+# workbook themselves; the import now names the reused id.
+test_that("two plot rows sharing an id lose one plot, and it is reported", {
+  projectDir <- localLegacyExcelProject()
+  editWorkbookSheets(
+    file.path(projectDir, "Configurations", "Plots.xlsx"),
+    function(sheets) {
+      # Row 2 (`observedVsSimulated`) takes row 1's id.
+      sheets$plotConfiguration$plotID[[2]] <- "P1"
+      sheets
+    }
+  )
+  imported <- importLegacyExcelProject(projectDir)
+
+  # Three workbook rows, two plots.
+  expect_length(imported$project$definitions$plots, 2L)
+  expect_setequal(names(imported$project$definitions$plots), c("p1", "p3"))
+
+  # The later row won: `p1` carries row 2's fields, not row 1's.
+  expect_identical(
+    imported$project$definitions$plots[["p1"]]$plotType,
+    "observedVsSimulated"
+  )
+
+  # And the loss is reported, naming the id more than one row used.
+  expect_true(any(grepl("more than", imported$warnings, fixed = TRUE)))
+  expect_true(any(grepl("plotId", imported$warnings, fixed = TRUE)))
+})
+
+# #1213 item 15: the 5.x `PIOutputMappings` sheet names the sheet of the data
+# workbook each mapping's data set comes from. A project has no per-mapping
+# counterpart for it (an observed-data definition lists the sheets it imports, and
+# the import lists every sheet of the workbook), so the column is not carried and
+# the base fixture, whose sheet is in the workbook, says nothing. A named sheet
+# that is NOT imported is a mapping whose data set the project does not hold, and
+# that is reported.
+test_that("an ObservedDataSheet naming a sheet outside the data workbook is reported", {
+  expect_false(any(grepl(
+    "ObservedDataSheet",
+    importLegacyExcelProject(localLegacyExcelProject())$warnings,
+    fixed = TRUE
+  )))
+
+  projectDir <- localLegacyExcelProject()
+  editWorkbookSheets(
+    file.path(projectDir, "Configurations", "ParameterIdentification.xlsx"),
+    function(sheets) {
+      sheets$PIOutputMappings$ObservedDataSheet <- "Laskin 1982.Group B"
+      sheets
+    }
+  )
+  imported <- importLegacyExcelProject(projectDir)
+
+  expect_true(any(grepl(
+    "ObservedDataSheet",
+    imported$warnings,
+    fixed = TRUE
+  )))
+  expect_true(any(grepl("Group B", imported$warnings, fixed = TRUE)))
+})
+
+# #1213 item 26: the 5.x `exportConfiguration` sheet says where each grid's figure
+# is written and at what size, and a project has no field for any of it, so the
+# rows cannot be imported and an export cannot write them back. That decision is
+# the user's figure layout, so it is reported rather than dropped in silence. The
+# base fixture's sheet is header-only, which is what a workbook carries whether or
+# not it was filled in, and says nothing.
+test_that("a filled legacy plots exportConfiguration sheet is reported, an empty one is not", {
+  expect_false(any(grepl(
+    "exportConfiguration",
+    importLegacyExcelProject(localLegacyExcelProject())$warnings,
+    fixed = TRUE
+  )))
+
+  projectDir <- localLegacyExcelProject()
+  editWorkbookSheets(
+    file.path(projectDir, "Configurations", "Plots.xlsx"),
+    function(sheets) {
+      sheets$exportConfiguration <- data.frame(
+        plotGridName = "Aciclovir",
+        outputName = "aciclovir-pvb",
+        width = 20,
+        stringsAsFactors = FALSE
+      )
+      sheets
+    }
+  )
+  imported <- importLegacyExcelProject(projectDir)
+
+  expect_true(any(grepl(
+    "exportConfiguration",
+    imported$warnings,
+    fixed = TRUE
+  )))
+  expect_true(any(grepl("Aciclovir", imported$warnings, fixed = TRUE)))
+})
+
+# #1213 item 16: `.canonicalizeId()` folds Unicode compatibility variants and drops
+# the invisible formatting characters, so no invisible reaches a definition
+# filename from either entrypoint. A no-break space (U+00A0) folds onto the plain
+# space it renders as and becomes the same `_`; a zero-width space (U+200B) is
+# dropped, so an id carrying one is the id without it.
+#
+# This is live data rather than a synthetic probe: one tested project carried 12
+# real ids containing U+00A0.
+test_that("an id containing a no-break space canonicalizes into a plain filename", {
+  nbsp <- "\u00a0"
+  projectDir <- localLegacyExcelProject()
+  editWorkbookSheets(
+    file.path(projectDir, "Configurations", "Scenarios.xlsx"),
+    function(sheets) {
+      sheets$OutputPaths <- rbind(
+        sheets$OutputPaths,
+        data.frame(
+          OutputPathId = paste0("Renal", nbsp, "Clearance"),
+          OutputPath = "Organism|Kidney|Aciclovir|Concentration in container"
+        )
+      )
+      # Reference it with the same invisible the definition carries, so what is
+      # under test is only whether both sides land on one id.
+      sheets$Scenarios$OutputPathsIds[[2]] <- paste0(
+        "Aciclovir_PVB, Aciclovir_Fat, Renal",
+        nbsp,
+        "Clearance"
+      )
+      sheets
+    }
+  )
+  imported <- importLegacyExcelProject(projectDir)
+  ids <- names(imported$project$definitions$outputPaths)
+
+  # The no-break space became the `_` an ordinary space becomes.
+  expect_true("renal_clearance" %in% ids)
+
+  # So the definition filenames carry no invisible at all.
+  files <- list.files(file.path(
+    imported$outputDir,
+    "definitions",
+    "output-paths"
+  ))
+  expect_true("renal_clearance.json" %in% files)
+  expect_false(any(grepl("[^ -~]", files)))
+
+  # And the reference resolves onto it, so validation is clean.
+  summary <- validationSummary(suppressWarnings(validateProject(
+    imported$project
+  )))
+  expect_equal(summary$total_critical_errors, 0)
+})
+
+# The other half of item 16: two ids differing only by a zero-width space used to
+# become two definition files whose names render identically, with nothing said.
+# Dropping the invisible makes them one id, so the import aborts on the collision
+# the same way interactive authoring does, naming both spellings.
+test_that("two ids differing only by a zero-width space abort the import as a collision", {
+  zwsp <- "\u200b"
+  projectDir <- localLegacyExcelProject()
+  editWorkbookSheets(
+    file.path(projectDir, "Configurations", "Scenarios.xlsx"),
+    function(sheets) {
+      sheets$OutputPaths$OutputPathId <- c(
+        "OutPath",
+        paste0("Out", zwsp, "Path")
+      )
+      sheets
+    }
+  )
+  expect_error(
+    suppressWarnings(importProjectFromExcel(
+      legacyExcelProjectPath(projectDir),
+      outputDir = withr::local_tempdir("LegacyOut_"),
+      silent = TRUE
+    )),
+    "collide after canonicalization"
+  )
 })

@@ -75,7 +75,7 @@ test_that("Scenario derives simulationType from populationId", {
 
 test_that(".parseScenarios returns list() for NULL input", {
   expect_identical(
-    esqlabsR:::.parseScenarios(NULL, list()),
+    .parseScenarios(NULL, list()),
     list()
   )
 })
@@ -102,13 +102,13 @@ test_that(".parseScenarios reads a scenario's initialConditions references", {
     parameterSets = list("ps1"),
     initialConditions = list("ic1", "ic2")
   ))
-  sc <- esqlabsR:::.parseScenarios(raw, list())[["WithIC"]]
+  sc <- .parseScenarios(raw, list())[["WithIC"]]
   expect_identical(sc$initialConditions, c("ic1", "ic2"))
 })
 
 test_that(".parseScenarios leaves initialConditions NULL when JSON omits it", {
   raw <- list(list(name = "NoIC", modelFile = "m.pkml"))
-  sc <- esqlabsR:::.parseScenarios(raw, list())[["NoIC"]]
+  sc <- .parseScenarios(raw, list())[["NoIC"]]
   expect_null(sc$initialConditions)
 })
 
@@ -118,10 +118,10 @@ test_that("a scenario's initialConditions round-trips through serialize/parse", 
     modelFile = "m.pkml",
     initialConditions = c("ic1", "ic2")
   )
-  json <- esqlabsR:::.scenarioToJson(sc)
+  json <- .scenarioToJson(sc)
   expect_identical(json$initialConditions, list("ic1", "ic2"))
 
-  reparsed <- esqlabsR:::.parseScenarios(
+  reparsed <- .parseScenarios(
     list(stats::setNames(
       list(json$name, json$modelFile, json$initialConditions),
       c("name", "modelFile", "initialConditions")
@@ -148,7 +148,7 @@ test_that(".parseScenarios defaults applicationProtocol to NA when JSON has null
       application = NULL
     )
   )
-  result <- esqlabsR:::.parseScenarios(raw, list())
+  result <- .parseScenarios(raw, list())
 
   expect_length(result, 1L)
   expect_true(is.na(result[["X"]]$applicationProtocol))
@@ -178,7 +178,7 @@ test_that(".parseScenarios coerces a whole-number steadyStateTime to double", {
       steadyStateTimeUnit = "min"
     )
   )
-  sc <- esqlabsR:::.parseScenarios(raw, list())[["WholeSS"]]
+  sc <- .parseScenarios(raw, list())[["WholeSS"]]
 
   expect_type(sc$steadyStateTime, "double")
   expect_identical(sc$steadyStateTime, 1000)
@@ -205,7 +205,7 @@ test_that(".parseScenarios errors when steadyStateTime set without unit", {
     )
   )
   expect_error(
-    esqlabsR:::.parseScenarios(raw, list()),
+    .parseScenarios(raw, list()),
     "BadSS.*steadyStateTime.*steadyStateTimeUnit"
   )
 })
@@ -264,7 +264,7 @@ test_that(".parseScenarios keeps unknown outputPaths ids as dangling refs (lazy)
   )
   outputPaths <- list(Aciclovir_PVB = "Organism|PVB|...")
 
-  sc <- esqlabsR:::.parseScenarios(raw, outputPaths)[["BadRefs"]]
+  sc <- .parseScenarios(raw, outputPaths)[["BadRefs"]]
   expect_named(sc$outputPaths, c("Aciclovir_PVB", "Nope", "AlsoNope"))
   expect_identical(
     unname(sc$outputPaths[["Aciclovir_PVB"]]),
@@ -287,7 +287,7 @@ test_that(".parseScenarios collapses duplicate outputPaths ids to one (first-see
   )
   outputPaths <- list(a = "PATH_A", b = "PATH_B")
 
-  sc <- esqlabsR:::.parseScenarios(raw, outputPaths)[["Dups"]]
+  sc <- .parseScenarios(raw, outputPaths)[["Dups"]]
   expect_named(sc$outputPaths, c("a", "b"))
   expect_identical(unname(sc$outputPaths), c("PATH_A", "PATH_B"))
 })
@@ -300,7 +300,7 @@ test_that(".parseScenarios leaves outputPaths NULL when JSON omits outputPaths",
       modelFile = "m.pkml"
     )
   )
-  result <- esqlabsR:::.parseScenarios(raw, list())
+  result <- .parseScenarios(raw, list())
 
   expect_null(result[["NoOutputs"]]$outputPaths)
 })
@@ -314,6 +314,44 @@ test_that("addScenario aborts when a referenced individual is unknown", {
       id = "bad",
       modelFile = "Aciclovir.pkml",
       individual = "Ghost"
+    )
+  )
+})
+
+test_that("addScenario suggests the closest existing id for a dangling reference", {
+  # Authoring catches a dangling reference eagerly and `validateProject()`
+  # catches it later; both name the near miss, so the same typo reads the same
+  # way whichever path finds it.
+  project <- testProject()
+  expect_snapshot(
+    error = TRUE,
+    addScenario(
+      project,
+      id = "bad",
+      modelFile = "Aciclovir.pkml",
+      individual = "indiv2"
+    )
+  )
+  expect_snapshot(
+    error = TRUE,
+    addScenario(
+      project,
+      id = "bad",
+      modelFile = "Aciclovir.pkml",
+      outputPaths = "aciclovir_pv"
+    )
+  )
+})
+
+test_that("addScenario leaves the reference error bare when no id is close", {
+  project <- testProject()
+  expect_snapshot(
+    error = TRUE,
+    addScenario(
+      project,
+      id = "bad",
+      modelFile = "Aciclovir.pkml",
+      outputPaths = "somethingentirelyunrelated"
     )
   )
 })
@@ -462,6 +500,117 @@ test_that("addScenario rejects NA-valued FK args", {
   )
 })
 
+test_that("addScenario treats a zero-length reference vector as none", {
+  # A definition file carries `[]` for a scenario that references no output
+  # paths, parameter sets, or initial conditions, so `character(0)` means what
+  # `NULL` means here: there are none. Rejecting it would make a value the
+  # write path produces unusable as authoring input.
+  project <- testProject()
+  addScenario(
+    project,
+    id = "nonerefs",
+    modelFile = "Aciclovir.pkml",
+    outputPaths = character(0),
+    parameterSets = character(0),
+    initialConditions = character(0)
+  )
+  sc <- project$definitions$scenarios[["nonerefs"]]
+  expect_null(sc$outputPaths)
+  expect_null(sc$modelParameterSets)
+  expect_null(sc$initialConditions)
+})
+
+test_that("addScenario treats the empty list jsonlite yields for [] as none", {
+  # Reading a definition file with `jsonlite::fromJSON()` turns `[]` into
+  # `list()`, not `character(0)`, so the zero-length rule has to cover both.
+  project <- testProject()
+  addScenario(
+    project,
+    id = "emptylist",
+    modelFile = "Aciclovir.pkml",
+    outputPaths = list(),
+    parameterSets = list()
+  )
+  sc <- project$definitions$scenarios[["emptylist"]]
+  expect_null(sc$outputPaths)
+  expect_null(sc$modelParameterSets)
+})
+
+test_that("setScenario clears a reference field given a zero-length vector", {
+  project <- testProject()
+  setScenario(project, "testscenario", outputPaths = character(0))
+  expect_null(project$definitions$scenarios[["testscenario"]]$outputPaths)
+})
+
+test_that("a scenario's own written reference fields are accepted back by addScenario", {
+  # The round trip an imported project needs: read a scenario's fields straight
+  # out of its definition file and hand them to `addScenario()`. Read the file
+  # the way the package reads it (`simplifyVector = FALSE`), so an absent
+  # reference list arrives as `list()` and a populated one as a list of strings.
+  project <- testProject()
+  addScenario(project, id = "written", modelFile = "Aciclovir.pkml")
+  addScenario(
+    project,
+    id = "writtenrefs",
+    modelFile = "Aciclovir.pkml",
+    outputPaths = c("aciclovir_pvb", "aciclovir_fat_cell")
+  )
+  saveProject(project)
+
+  readDefinition <- function(id) {
+    jsonlite::fromJSON(
+      file.path(
+        project$info$projectDirPath,
+        project$paths$definitionsFolder,
+        "scenarios",
+        paste0(id, ".json")
+      ),
+      simplifyVector = FALSE
+    )
+  }
+
+  bare <- readDefinition("written")
+  expect_length(bare$outputPaths, 0L)
+  addScenario(
+    project,
+    id = "rebuiltbare",
+    modelFile = bare$modelFile,
+    outputPaths = bare$outputPaths,
+    parameterSets = bare$parameterSets,
+    initialConditions = bare$initialConditions
+  )
+  expect_null(project$definitions$scenarios[["rebuiltbare"]]$outputPaths)
+
+  withRefs <- readDefinition("writtenrefs")
+  expect_type(withRefs$outputPaths, "list")
+  expect_length(withRefs$outputPaths, 2L)
+  addScenario(
+    project,
+    id = "rebuiltrefs",
+    modelFile = withRefs$modelFile,
+    outputPaths = withRefs$outputPaths
+  )
+  expect_named(
+    project$definitions$scenarios[["rebuiltrefs"]]$outputPaths,
+    c("aciclovir_pvb", "aciclovir_fat_cell")
+  )
+})
+
+test_that("addScenario keeps rejecting a reference list holding a non-string", {
+  # Only an all-strings list flattens to a reference vector; anything else is
+  # still a malformed argument, not a list of ids.
+  project <- testProject()
+  expect_snapshot(
+    error = TRUE,
+    addScenario(
+      project,
+      id = "badlist",
+      modelFile = "Aciclovir.pkml",
+      outputPaths = list("aciclovir_pvb", 1)
+    )
+  )
+})
+
 test_that("addScenario collapses duplicate outputPaths to one (first-seen order)", {
   project <- testProject()
   addScenario(
@@ -555,7 +704,7 @@ test_that("addScenario stores steadyStateTime in base units and round-trips the 
   # Saved JSON carries the declared 10 / "h" (the serializer converts the
   # base-unit value back to the declared unit).
   out <- withr::local_tempfile(fileext = ".json")
-  esqlabsR:::.saveProjectJson(project, out)
+  .saveProjectJson(project, out)
   raw <- jsonlite::fromJSON(out, simplifyVector = FALSE)
   savedSS <- Filter(\(s) identical(s[["name"]], "ss"), raw$scenarios)[[1]]
   expect_equal(savedSS$steadyStateTime, 10)
@@ -565,6 +714,179 @@ test_that("addScenario stores steadyStateTime in base units and round-trips the 
   reloaded <- loadProject(out)
   expect_equal(reloaded$definitions$scenarios[["ss"]]$steadyStateTime, 600)
   expect_equal(reloaded$definitions$scenarios[["ss"]]$steadyStateTimeUnit, "h")
+})
+
+test_that("setScenario rejects `overwrite` instead of quietly setting a different field", {
+  # `overwrite` is a unique prefix of `overwriteFormulasInSS`, so R's partial
+  # matching turned the habit picked up from `addScenario()` into a silent change
+  # to a steady-state model option (#1213).
+  project <- testProject()
+  before <- project$definitions$scenarios[[
+    "testscenario"
+  ]]$overwriteFormulasInSS
+
+  expect_snapshot(
+    error = TRUE,
+    setScenario(project, "testscenario", overwrite = TRUE)
+  )
+  expect_equal(
+    project$definitions$scenarios[["testscenario"]]$overwriteFormulasInSS,
+    before
+  )
+
+  # And the field itself still sets, under its full name.
+  setScenario(project, "testscenario", overwriteFormulasInSS = TRUE)
+  expect_true(
+    project$definitions$scenarios[["testscenario"]]$overwriteFormulasInSS
+  )
+})
+
+test_that("setScenario names a field it cannot set rather than dropping it", {
+  project <- testProject()
+  expect_snapshot(
+    error = TRUE,
+    project$setScenario("testscenario", simulationType = "Population")
+  )
+})
+
+test_that("setScenario requires its fields to be named", {
+  # The fields arrive through `...` (as they do for `setIndividual()` and
+  # `setPopulation()`), so a positional one carries no name to apply it under.
+  project <- testProject()
+  before <- project$definitions$scenarios[["testscenario"]]$modelFile
+  expect_error(
+    setScenario(project, "testscenario", "Aciclovir.pkml"),
+    "must be named"
+  )
+  expect_equal(
+    project$definitions$scenarios[["testscenario"]]$modelFile,
+    before
+  )
+})
+
+# Passing a parsed Scenario record back ----
+
+test_that("a parsed scenario is accepted back by addScenario() unchanged", {
+  # The record's field names are the ones the runtime reads, not the authoring
+  # argument names, and three of its fields are stored in a different shape from
+  # the one authoring takes (resolved output paths, a parsed time grid, a
+  # base-unit steady-state time). Handing the record back has to survive all of
+  # that: the copy must equal the original in every field but its id.
+  project <- testProject()
+  sc <- project$definitions$scenarios[["testscenario"]]
+
+  addScenario(project, sc, overwrite = TRUE)
+  copy <- project$definitions$scenarios[["testscenario"]]
+
+  # This record declares no `steadyStateTimeUnit`, and a definition file cannot
+  # carry a steady-state time without one, so the copy gains the default "min" -
+  # the unit the stored value is already in, leaving the duration unchanged. This
+  # is what re-adding a scenario from its written definition file does too.
+  expect_null(sc$steadyStateTimeUnit)
+  expect_equal(copy$steadyStateTimeUnit, "min")
+  expect_equal(copy$steadyStateTime, sc$steadyStateTime)
+  rest <- setdiff(names(sc), "steadyStateTimeUnit")
+  expect_equal(copy[rest], sc[rest])
+
+  # And into a second project, under the record's own id.
+  other <- testProject()
+  removeScenario(other, "testscenario")
+  addScenario(other, sc)
+  expect_equal(other$definitions$scenarios[["testscenario"]][rest], sc[rest])
+})
+
+test_that("a scenario carrying a multi-interval time grid and a non-minute steady state round-trips", {
+  # The two record fields whose stored shape differs most from the authoring
+  # argument: a list of intervals, and a steady-state time held in minutes while
+  # the scenario declares hours.
+  project <- testProject()
+  addScenario(
+    project,
+    "grid",
+    modelFile = "Aciclovir.pkml",
+    simulationTime = "0, 42, 48; 48, 96, 24",
+    steadyState = TRUE,
+    steadyStateTime = 5,
+    steadyStateTimeUnit = "h"
+  )
+  sc <- project$definitions$scenarios[["grid"]]
+  expect_length(sc$simulationTime, 2L)
+  expect_equal(sc$steadyStateTime, 300)
+
+  addScenario(project, sc, overwrite = TRUE)
+  expect_equal(project$definitions$scenarios[["grid"]], sc)
+})
+
+test_that("setScenario() takes a parsed scenario, so an edited record writes back", {
+  project <- testProject()
+  sc <- project$definitions$scenarios[["testscenario"]]
+  sc$modelFile <- "Aciclovir.pkml"
+  sc$simulationTimeUnit <- "min"
+
+  setScenario(project, sc)
+  after <- project$definitions$scenarios[["testscenario"]]
+  expect_equal(after$modelFile, "Aciclovir.pkml")
+  expect_equal(after$simulationTimeUnit, "min")
+  rest <- setdiff(names(sc), "steadyStateTimeUnit")
+  expect_equal(after[rest], sc[rest])
+})
+
+test_that("a scenario record passed with field arguments alongside it aborts", {
+  project <- testProject()
+  sc <- project$definitions$scenarios[["testscenario"]]
+  expect_snapshot(
+    error = TRUE,
+    addScenario(project, sc, modelFile = "Other.pkml")
+  )
+  expect_snapshot(error = TRUE, setScenario(project, sc, individual = NULL))
+})
+
+test_that("a scenario record passed with an unnamed field alongside it aborts", {
+  # An all-positional `...` has no names attribute at all, so a guard reading
+  # only the names sees nothing to object to and the value goes nowhere: the
+  # record supplies every field the branch forwards.
+  project <- testProject()
+  sc <- project$definitions$scenarios[["testscenario"]]
+  expect_snapshot(error = TRUE, setScenario(project, sc, "Other.pkml"))
+
+  # Partially named, so the names attribute exists but carries a blank. The
+  # unnamed field is reported by its position, not as an empty field name.
+  expect_snapshot(
+    error = TRUE,
+    setScenario(project, sc, individual = NULL, "Other.pkml")
+  )
+})
+
+test_that("addScenario() reads a list of intervals as one grid for one scenario", {
+  # A parsed multi-interval `simulationTime` is a list of length-3 numerics; with
+  # one id that is one grid, not one value per id.
+  project <- testProject()
+  addScenario(
+    project,
+    "listgrid",
+    modelFile = "Aciclovir.pkml",
+    simulationTime = list(c(0, 42, 48), c(48, 96, 24))
+  )
+  expect_equal(
+    project$definitions$scenarios[["listgrid"]]$simulationTime,
+    list(c(0, 42, 48), c(48, 96, 24))
+  )
+
+  # With two ids, a two-element list stays one grid per id.
+  addScenario(
+    project,
+    c("g1", "g2"),
+    modelFile = "Aciclovir.pkml",
+    simulationTime = list(c(0, 42, 48), c(48, 96, 24))
+  )
+  expect_equal(
+    project$definitions$scenarios[["g1"]]$simulationTime,
+    list(c(0, 42, 48))
+  )
+  expect_equal(
+    project$definitions$scenarios[["g2"]]$simulationTime,
+    list(c(48, 96, 24))
+  )
 })
 
 # setScenario ----
@@ -777,9 +1099,13 @@ test_that("renameScenario updates the record's stored name so a reload round-tri
     "renamed"
   )
   # A reload re-derives scenarios from the tree; the new key must validate and
-  # round-trip (name == key invariant holds).
+  # round-trip (name == key invariant holds). Renaming does not rewrite the
+  # definitions that referred to the old name, so the reload reports them.
   saveProject(project)
-  reloaded <- loadProject(project$info$projectFilePath)
+  expect_warning(
+    reloaded <- loadProject(project$info$projectFilePath),
+    "unresolved cross-reference"
+  )
   expect_true("renamed" %in% names(reloaded$definitions$scenarios))
   expect_equal(
     reloaded$definitions$scenarios[["renamed"]]$scenarioName,
@@ -1089,9 +1415,14 @@ test_that("buildSimulations applies customParams to the built simulation", {
 test_that("buildSimulations errors on an unknown scenario name", {
   withr::local_options(lifecycle_verbosity = "quiet")
   project <- testProject()
-  expect_error(
-    buildSimulations(project, scenarios = "NopeNope"),
-    regexp = "nopenope"
+  # The non-canonical name is deliberate: the abort must name the id the
+  # project would have filed it under, and the canonicalization says so.
+  expect_warning(
+    expect_error(
+      buildSimulations(project, scenarios = "NopeNope"),
+      regexp = "nopenope"
+    ),
+    "Canonicalized 1 id"
   )
 })
 

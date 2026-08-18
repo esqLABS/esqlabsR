@@ -47,6 +47,14 @@
       ! `dataCombined` must be length 1 or length 3 (the number of ids).
       x It is length 2.
 
+# .validatePlots names the closest existing id for a dangling reference
+
+    Code
+      cat(vapply(result$critical_errors, function(e) e$message, character(1)), sep = "\n")
+    Output
+      plotConfiguration references unknown dataCombinedId: aciclovir_pbv (did you mean 'aciclovir_pvb'?)
+      plotGrids references unknown plotIds: p2 (did you mean 'p1'?)
+
 # print.Plot renders a single plot configuration
 
     Code

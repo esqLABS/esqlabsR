@@ -3,7 +3,7 @@ test_that("addOutputPath() clears the validation flag", {
   .markValidated(project)
   expect_true(.isValidated(project))
 
-  addOutputPath(project, "X", "Organism|A|Concentration in container")
+  addOutputPath(project, "x", "Organism|A|Concentration in container")
 
   expect_false(.isValidated(project))
 })
@@ -11,7 +11,7 @@ test_that("addOutputPath() clears the validation flag", {
 test_that("removeOutputPath() warns on missing key and is a no-op", {
   project <- testProject()
   .markValidated(project)
-  expect_warning(removeOutputPath(project, "Ghost"), "not found")
+  expect_warning(removeOutputPath(project, "ghost"), "not found")
   # A no-op must not invalidate the validation cache.
   expect_true(.isValidated(project))
 })

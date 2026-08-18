@@ -328,8 +328,8 @@
 # .splitParameterPathIntoContainerAndName aborts on a separator-less path
 
     Code
-      esqlabsR:::.splitParameterPathIntoContainerAndName("Volume")
+      .splitParameterPathIntoContainerAndName("Volume")
     Condition
-      Error in `esqlabsR:::.splitParameterPathIntoContainerAndName()`:
+      Error in `.splitParameterPathIntoContainerAndName()`:
       ! parameter path "Volume" must contain a container path and a parameter name separated by "|".
 

@@ -1,3 +1,41 @@
+test_that("addPopulation and setPopulation read NA as an unset numeric field", {
+  # An empty workbook cell arrives as `NA`, and the Excel import already reads it
+  # as an absent field, so hand-authoring the same value has to agree (#1213).
+  project <- testProject()
+  addPopulation(
+    project,
+    "nafields",
+    species = "Human",
+    numberOfIndividuals = 3,
+    proportionOfFemales = NA,
+    weightMin = NA_real_
+  )
+  entry <- project$definitions$populations[["nafields"]]
+  expect_null(entry$proportionOfFemales)
+  expect_null(entry$weightMin)
+
+  # On the set path an `NA` clears a field that is set, as `NULL` does.
+  setPopulation(project, "nafields", proportionOfFemales = 0.5)
+  expect_equal(
+    project$definitions$populations[["nafields"]]$proportionOfFemales,
+    0.5
+  )
+  setPopulation(project, "nafields", proportionOfFemales = NA)
+  expect_null(project$definitions$populations[["nafields"]]$proportionOfFemales)
+
+  # A value that is not NA but does not coerce to a number is still a mistake.
+  expect_error(
+    addPopulation(
+      project,
+      "bad",
+      species = "Human",
+      numberOfIndividuals = 3,
+      proportionOfFemales = "many"
+    ),
+    "single finite number"
+  )
+})
+
 test_that("`sampleRandomValue()` rejects an unsupported distribution", {
   expect_error(
     sampleRandomValue("xyz", 5, 2, 10),
@@ -273,6 +311,136 @@ test_that("addPopulation and setPopulation accept proteinOntogenies", {
     project$definitions$populations[["onto_pop"]]$proteinOntogenies,
     "CYP2D6"
   )
+})
+
+test_that("a population's ontogenies survive a save/load round trip as a vector", {
+  # One entry per ontogeny is the authored shape, so the field is applied whole
+  # to a population rather than split across ids, and it comes back off disk as
+  # the same character vector (a JSON array reads as a list otherwise).
+  project <- testProject()
+  ontogenies <- c("CYP3A4:CYP3A4", "CYP2D6:CYP2C8")
+  addPopulation(
+    project,
+    "onto_vec",
+    species = "Human",
+    numberOfIndividuals = 5,
+    proteinOntogenies = ontogenies
+  )
+  expect_identical(
+    project$definitions$populations[["onto_vec"]]$proteinOntogenies,
+    ontogenies
+  )
+
+  saveProject(project)
+  reloaded <- loadProject(project$info$projectFilePath)
+  expect_identical(
+    reloaded$definitions$populations[["onto_vec"]]$proteinOntogenies,
+    ontogenies
+  )
+})
+
+test_that("a population stored with comma-joined ontogenies still loads", {
+  # A project written before the Excel import emitted one entry per ontogeny
+  # holds the pairs as a single comma-joined string. Such a file has to keep
+  # loading, and the value it loads to has to still name both ontogenies.
+  project <- testProject()
+  path <- file.path(
+    dirname(project$info$projectFilePath),
+    "definitions",
+    "populations",
+    "testpopulation.json"
+  )
+  definition <- jsonlite::fromJSON(path, simplifyVector = FALSE)
+  definition$proteinOntogenies <- "CYP3A4:CYP3A4,CYP2D6:CYP2C8"
+  jsonlite::write_json(definition, path, auto_unbox = TRUE, pretty = TRUE)
+
+  reloaded <- loadProject(project$info$projectFilePath)
+  expect_identical(
+    reloaded$definitions$populations[["testpopulation"]]$proteinOntogenies,
+    "CYP3A4:CYP3A4,CYP2D6:CYP2C8"
+  )
+  expect_identical(
+    .splitProteinOntogenies(
+      reloaded$definitions$populations[["testpopulation"]]$proteinOntogenies
+    ),
+    c("CYP3A4:CYP3A4", "CYP2D6:CYP2C8")
+  )
+})
+
+test_that("addPopulation applies one ontogeny vector whole, and a list per population", {
+  project <- testProject()
+  shared <- c("CYP3A4:CYP3A4", "CYP2D6:CYP2C8")
+  addPopulation(
+    project,
+    c("onto_a", "onto_b"),
+    species = "Human",
+    numberOfIndividuals = 5,
+    proteinOntogenies = shared
+  )
+  expect_identical(
+    project$definitions$populations[["onto_a"]]$proteinOntogenies,
+    shared
+  )
+  expect_identical(
+    project$definitions$populations[["onto_b"]]$proteinOntogenies,
+    shared
+  )
+
+  addPopulation(
+    project,
+    c("onto_c", "onto_d"),
+    species = "Human",
+    numberOfIndividuals = 5,
+    proteinOntogenies = list(
+      "CYP3A4:CYP3A4",
+      c("CYP2D6:CYP2C8", "CYP1A2:CYP1A2")
+    )
+  )
+  expect_identical(
+    project$definitions$populations[["onto_c"]]$proteinOntogenies,
+    "CYP3A4:CYP3A4"
+  )
+  expect_identical(
+    project$definitions$populations[["onto_d"]]$proteinOntogenies,
+    c("CYP2D6:CYP2C8", "CYP1A2:CYP1A2")
+  )
+})
+
+test_that("proteinOntogenies refuses a value it cannot store, at the call", {
+  # An `ospsuite::MoleculeOntogeny` object used to be accepted and then reached
+  # `saveProject()` as an R6 object the JSON writer cannot serialize, which left
+  # the whole project unsaved. The rejection has to describe ontogenies: the
+  # length-based one described a mismatch against the number of ids.
+  project <- testProject()
+  onto <- ospsuite::MoleculeOntogeny$new(
+    molecule = "CYP3A4",
+    ontogeny = ospsuite::StandardOntogeny$CYP3A4
+  )
+  expect_snapshot(
+    error = TRUE,
+    addPopulation(
+      project,
+      "onto_r6",
+      species = "Human",
+      numberOfIndividuals = 5,
+      proteinOntogenies = onto
+    )
+  )
+  expect_snapshot(
+    error = TRUE,
+    setPopulation(project, "testpopulation", proteinOntogenies = list(onto))
+  )
+  expect_snapshot(
+    error = TRUE,
+    setPopulation(
+      project,
+      "testpopulation",
+      proteinOntogenies = c("CYP3A4:CYP3A4", NA)
+    )
+  )
+  # The refused calls changed nothing, so the project is still saveable.
+  expect_null(project$definitions$populations[["onto_r6"]])
+  expect_no_error(saveProject(project))
 })
 
 test_that("setPopulation partial update leaves other fields untouched", {
@@ -563,7 +731,7 @@ test_that("print.Population renders a minimal population", {
 # Source-typed populations (type discriminator) ----
 
 test_that(".parsePopulations stamps a demographics spec as Population, a source entry as PopulationSource", {
-  parsed <- esqlabsR:::.parsePopulations(list(
+  parsed <- .parsePopulations(list(
     list(populationId = "spec", species = "Human", numberOfIndividuals = 10),
     list(populationId = "prog", type = "programmatic"),
     list(populationId = "fromcsv", type = "csv", file = "fromcsv.csv")
@@ -579,29 +747,29 @@ test_that(".parsePopulations stamps a demographics spec as Population, a source 
 
 test_that(".validatePopulations does not require species for a csv or programmatic entry", {
   populations <- list(
-    prog = esqlabsR:::.asPopulationSource(list(type = "programmatic")),
-    fromcsv = esqlabsR:::.asPopulationSource(list(
+    prog = .asPopulationSource(list(type = "programmatic")),
+    fromcsv = .asPopulationSource(list(
       type = "csv",
       file = "p.csv"
     ))
   )
-  result <- esqlabsR:::.validatePopulations(populations)
+  result <- .validatePopulations(populations)
   expect_length(result$critical_errors, 0)
 })
 
 test_that(".validatePopulations requires file for a csv entry", {
   populations <- list(
-    fromcsv = esqlabsR:::.asPopulationSource(list(type = "csv"))
+    fromcsv = .asPopulationSource(list(type = "csv"))
   )
-  result <- esqlabsR:::.validatePopulations(populations)
+  result <- .validatePopulations(populations)
   expect_true(any(grepl("file", unlist(result$critical_errors))))
 })
 
 test_that(".validatePopulations flags an unrecognized type", {
   populations <- list(
-    bad = esqlabsR:::.asPopulationSource(list(type = "nonsense"))
+    bad = .asPopulationSource(list(type = "nonsense"))
   )
-  result <- esqlabsR:::.validatePopulations(populations)
+  result <- .validatePopulations(populations)
   expect_true(any(grepl("invalid type", unlist(result$critical_errors))))
 })
 
@@ -684,6 +852,27 @@ test_that("reloadProject drops a session-injected Population", {
   expect_null(project$getProgrammaticPopulation("injected"))
 })
 
+# An id is canonicalized to lowercase while the csv file keeps the case its
+# author gave it, so deriving a literal `<id>.csv` resolved only on a
+# case-insensitive filesystem and failed on Linux (#1213).
+test_that(".populationCsvFileName keeps the case of the file on disk", {
+  folder <- withr::local_tempdir()
+  file.create(file.path(folder, "TestPopulation.csv"))
+
+  expect_identical(
+    .populationCsvFileName("testpopulation", folder),
+    "TestPopulation.csv"
+  )
+  # An entry that names its own file is authoritative, matched or not.
+  expect_identical(
+    .populationCsvFileName("testpopulation", folder, "Frozen.csv"),
+    "Frozen.csv"
+  )
+  # Nothing on disk: the derived name is returned, so the caller reports the
+  # name the author would look for.
+  expect_identical(.populationCsvFileName("absent", folder), "absent.csv")
+})
+
 test_that("saveProject freezes an injected Population to CSV and rewrites the entry", {
   project <- testProject()
   pop <- .injectablePopulation()
@@ -710,7 +899,7 @@ test_that("saveProject serializes an orphan programmatic sentinel verbatim inste
   # restored snapshot, or a reloaded session) must not break an unrelated save.
   project <- testProject()
   populations <- .getSection(project, "populations")
-  populations[["orphan"]] <- esqlabsR:::.asPopulationSource(list(
+  populations[["orphan"]] <- .asPopulationSource(list(
     type = "programmatic"
   ))
   .setSection(project, "populations", populations)
@@ -739,7 +928,7 @@ test_that("saveProject aborts when a frozen population CSV would collide with an
   # entry already pointing at that basename makes the freeze collide.
   project <- testProject()
   populations <- .getSection(project, "populations")
-  populations[["other"]] <- esqlabsR:::.asPopulationSource(list(
+  populations[["other"]] <- .asPopulationSource(list(
     type = "csv",
     file = "injected.csv"
   ))
@@ -756,10 +945,39 @@ test_that("saveProject aborts when a frozen population CSV would collide with an
 test_that("print.PopulationSource renders a csv and a programmatic source", {
   withr::local_options(cli.unicode = FALSE)
   local_reproducible_output()
-  csv <- esqlabsR:::.asPopulationSource(list(type = "csv", file = "p.csv"))
-  prog <- esqlabsR:::.asPopulationSource(list(type = "programmatic"))
+  csv <- .asPopulationSource(list(type = "csv", file = "p.csv"))
+  prog <- .asPopulationSource(list(type = "programmatic"))
   expect_snapshot({
     print(csv)
     print(prog)
   })
+})
+
+test_that("addPopulation aborts on a NaN numeric field", {
+  project <- testProject()
+
+  expect_snapshot(
+    error = TRUE,
+    addPopulation(
+      project,
+      "nanweight",
+      "Human",
+      numberOfIndividuals = 10,
+      weightMin = NaN
+    )
+  )
+})
+
+test_that("setPopulation aborts on a NaN numeric field and keeps the old value", {
+  project <- testProject()
+  addPopulation(
+    project,
+    "keepweight",
+    "Human",
+    numberOfIndividuals = 10,
+    weightMin = 50
+  )
+
+  expect_error(setPopulation(project, "keepweight", weightMin = NaN))
+  expect_equal(project$definitions$populations$keepweight$weightMin, 50)
 })

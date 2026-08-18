@@ -4,11 +4,38 @@
       addScenario(project, id = "bad", modelFile = "Aciclovir.pkml", individual = "Ghost")
     Condition
       Warning:
-      Canonicalized 1 referenced id to a safe form:
+      Canonicalized 1 id to a safe form:
       * "Ghost" -> "ghost"
       Error in `addScenario()`:
       ! Cannot add scenario "bad":
       x individual 'ghost' not found in individuals
+
+# addScenario suggests the closest existing id for a dangling reference
+
+    Code
+      addScenario(project, id = "bad", modelFile = "Aciclovir.pkml", individual = "indiv2")
+    Condition
+      Error in `addScenario()`:
+      ! Cannot add scenario "bad":
+      x individual 'indiv2' not found in individuals (did you mean 'indiv1'?)
+
+---
+
+    Code
+      addScenario(project, id = "bad", modelFile = "Aciclovir.pkml", outputPaths = "aciclovir_pv")
+    Condition
+      Error in `addScenario()`:
+      ! Cannot add scenario "bad":
+      x outputPaths not found in outputPaths: aciclovir_pv (did you mean 'aciclovir_pvb'?)
+
+# addScenario leaves the reference error bare when no id is close
+
+    Code
+      addScenario(project, id = "bad", modelFile = "Aciclovir.pkml", outputPaths = "somethingentirelyunrelated")
+    Condition
+      Error in `addScenario()`:
+      ! Cannot add scenario "bad":
+      x outputPaths not found in outputPaths: somethingentirelyunrelated
 
 # addScenario aborts eagerly on a dangling initialConditions ref
 
@@ -57,13 +84,21 @@
         "Output1", NA_character_))
     Condition
       Warning:
-      Canonicalized 1 id to a safe form:
+      Canonicalized 2 ids to a safe form:
       * "S" -> "s"
-      Warning:
-      Canonicalized 1 referenced id to a safe form:
       * "Output1" -> "output1"
       Error in `addScenario()`:
       ! Cannot add scenario "s":
+      x outputPaths must be a non-empty character vector with no NA or empty entries
+
+# addScenario keeps rejecting a reference list holding a non-string
+
+    Code
+      addScenario(project, id = "badlist", modelFile = "Aciclovir.pkml", outputPaths = list(
+        "aciclovir_pvb", 1))
+    Condition
+      Error in `addScenario()`:
+      ! Cannot add scenario "badlist":
       x outputPaths must be a non-empty character vector with no NA or empty entries
 
 # addScenario aborts on an existing id, replaces it with overwrite
@@ -74,6 +109,56 @@
       Error in `addScenario()`:
       ! scenario "populationscenario" already exists.
       i Pass `overwrite = TRUE` to replace it.
+
+# setScenario rejects `overwrite` instead of quietly setting a different field
+
+    Code
+      setScenario(project, "testscenario", overwrite = TRUE)
+    Condition
+      Error in `setScenario()`:
+      ! `setScenario()` has no `overwrite` argument.
+      i It always updates the scenario named by `id`; `addScenario()` is the one with `overwrite`.
+      i For the steady-state model option, pass `overwriteFormulasInSS` in full.
+
+# setScenario names a field it cannot set rather than dropping it
+
+    Code
+      project$setScenario("testscenario", simulationType = "Population")
+    Condition
+      Error:
+      ! `setScenario()` cannot set simulationType. i The settable fields are modelFile, individual, population, application, parameterSets, initialConditions, outputPaths, simulationTime, simulationTimeUnit, steadyState, steadyStateTime, steadyStateTimeUnit, overwriteFormulasInSS, and readPopulationFromCSV.
+
+# a scenario record passed with field arguments alongside it aborts
+
+    Code
+      addScenario(project, sc, modelFile = "Other.pkml")
+    Condition
+      Error in `addScenario()`:
+      ! A <Scenario> passed as `id` carries every field, so `modelFile` cannot be given alongside it. i Edit the record's own field and pass it back (`sc$modelFile <- "other.pkml"`), or name the scenario's id instead of the record.
+
+---
+
+    Code
+      setScenario(project, sc, individual = NULL)
+    Condition
+      Error in `setScenario()`:
+      ! A <Scenario> passed as `id` carries every field, so `individual` cannot be given alongside it. i Edit the record's own field and pass it back (`sc$modelFile <- "other.pkml"`), or name the scenario's id instead of the record.
+
+# a scenario record passed with an unnamed field alongside it aborts
+
+    Code
+      setScenario(project, sc, "Other.pkml")
+    Condition
+      Error in `setScenario()`:
+      ! Every field must be named. x No name on field 1. i Pass each field as `name = value`.
+
+---
+
+    Code
+      setScenario(project, sc, individual = NULL, "Other.pkml")
+    Condition
+      Error in `setScenario()`:
+      ! Every field must be named. x No name on field 2. i Pass each field as `name = value`.
 
 # setScenario aborts on a non-existent scenario, no file written
 
@@ -93,7 +178,7 @@
       setScenario(project, "testscenario", individual = "Ghost")
     Condition
       Warning:
-      Canonicalized 1 referenced id to a safe form:
+      Canonicalized 1 id to a safe form:
       * "Ghost" -> "ghost"
       Error in `setScenario()`:
       ! Cannot modify scenario "testscenario":

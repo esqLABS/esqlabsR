@@ -85,10 +85,82 @@ test_that(".alignAuthoringArgs propagates a length error naming the field", {
   )
 })
 
+test_that(".assertAuthoringFieldsNamed passes a fully named field list", {
+  fields <- list(species = "Rat", weight = 0.25)
+  expect_identical(.assertAuthoringFieldsNamed(fields), fields)
+  expect_identical(.assertAuthoringFieldsNamed(list()), list())
+})
+
+test_that(".assertAuthoringFieldsNamed names the unnamed positions", {
+  # Every field is looked up by name downstream, so an unnamed one used to
+  # vanish without a word. It arrives that way when a `set*()` field is passed
+  # positionally.
+  expect_snapshot(error = TRUE, .assertAuthoringFieldsNamed(list("Rat")))
+  expect_snapshot(
+    error = TRUE,
+    .assertAuthoringFieldsNamed(list(species = "Rat", "UNKNOWN"))
+  )
+})
+
+test_that("setIndividual() rejects a positionally passed field", {
+  project <- .fakeProject(
+    individuals = list(indiv1 = list(species = "Human"))
+  )
+  expect_error(setIndividual(project, "indiv1", "Rat"), "must be named")
+  # The silent-drop version left the individual untouched and said nothing.
+  expect_identical(project$definitions$individuals$indiv1$species, "Human")
+})
+
+test_that("setPopulation() rejects a positionally passed field", {
+  project <- .fakeProject(
+    populations = list(pop1 = list(species = "Human"))
+  )
+  expect_error(setPopulation(project, "pop1", "Rat"), "must be named")
+})
+
+test_that("the unnamed-field hint points at no one set*() function", {
+  # `setScenario()`, `setIndividual()` and `setPopulation()` all raise it, and
+  # they share no field, so an example written for one misdirects the other two.
+  # The abort header already names the function the caller used.
+  project <- .fakeProject(
+    populations = list(pop1 = list(species = "Human"))
+  )
+  err <- expect_error(setPopulation(project, "pop1", "Rat"))
+  expect_no_match(
+    conditionMessage(err),
+    "setScenario|setIndividual|setPopulation"
+  )
+})
+
 test_that(".coerceNumericField returns NULL for NULL and as.double otherwise", {
   # A NULL passes through as NULL so the set-path loops delete the key (clearing
   # the optional field); any other value coerces with as.double().
   expect_null(.coerceNumericField(NULL))
   expect_identical(.coerceNumericField(45), 45)
   expect_identical(.coerceNumericField("45"), 45)
+})
+
+test_that(".isUnsetNumericField treats NA as unset but NaN as a value", {
+  # An empty workbook cell arrives as NA, so NA means "field not set".
+  expect_true(.isUnsetNumericField(NA))
+  expect_true(.isUnsetNumericField(NA_real_))
+  expect_true(.isUnsetNumericField(NA_character_))
+  # NaN satisfies is.na() but never comes from an empty cell: it comes from a
+  # calculation that went wrong, so it is a value, and an invalid one.
+  expect_false(.isUnsetNumericField(NaN))
+  expect_false(.isUnsetNumericField(45))
+  expect_false(.isUnsetNumericField(c(NA, NA)))
+})
+
+test_that(".isInvalidNumericField rejects NaN and anything not coercing to a number", {
+  expect_true(.isInvalidNumericField(NaN))
+  expect_true(.isInvalidNumericField(Inf))
+  expect_true(.isInvalidNumericField("80kg"))
+  expect_true(.isInvalidNumericField(c(1, 2)))
+  # Not set, so not invalid.
+  expect_false(.isInvalidNumericField(NULL))
+  expect_false(.isInvalidNumericField(NA))
+  # Set and usable, including a numeric-like string from a workbook.
+  expect_false(.isInvalidNumericField(45))
+  expect_false(.isInvalidNumericField("45"))
 })

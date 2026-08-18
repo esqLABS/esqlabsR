@@ -18,8 +18,8 @@ exportProjectToExcel(
 to the directory of the source JSON file.}
 
 \item{overwrite}{Logical. Guards against silently overwriting existing Excel
-workbooks. With \code{overwrite = FALSE} (default), the export aborts when
-\code{Project.xlsx} or any \verb{Configurations/} workbook already exists in
+workbooks. With \code{overwrite = FALSE} (default), the export aborts when the
+project's own workbook or any \verb{Configurations/} workbook already exists in
 \code{outputDir}, because the export replaces each workbook wholesale and would
 discard any hand-edits it carries. Pass \code{overwrite = TRUE} to replace the
 existing workbooks.}
@@ -28,19 +28,25 @@ existing workbooks.}
 Defaults to \code{FALSE}.}
 }
 \value{
-Invisibly returns the path to the created
-\code{Project.xlsx}.
+Invisibly returns the path to the created workbook.
 }
 \description{
 Writes Excel configuration files from a \code{Project}
 object (typically loaded from JSON). This is the reverse of
 \code{importProjectFromExcel()}.
+
+The top-level workbook is named after the project file, so a project loaded
+from \code{MyStudy.json} exports \code{MyStudy.xlsx} (and one loaded from the
+canonical \code{Project.json} exports \code{Project.xlsx}). That is the pairing
+\code{\link[=projectStatus]{projectStatus()}} reads back, so the workbook this writes is the one the
+status check then compares the project against.
 }
 \seealso{
 Other projectPersistence:
 \code{\link[=exampleProjectPath]{exampleProjectPath()}},
 \code{\link[=importProjectFromExcel]{importProjectFromExcel()}},
 \code{\link[=initProject]{initProject()}},
+\code{\link[=isProjectInitialized]{isProjectInitialized()}},
 \code{\link[=loadProject]{loadProject()}},
 \code{\link[=projectStatus]{projectStatus()}},
 \code{\link[=reloadProject]{reloadProject()}},

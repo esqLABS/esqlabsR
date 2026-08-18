@@ -263,6 +263,32 @@
       Error in `extendPopulationFromXLS()`:
       ! x The specified excel sheet does not contain any complete row * Please fill all the columns and try again.
 
+# proteinOntogenies refuses a value it cannot store, at the call
+
+    Code
+      addPopulation(project, "onto_r6", species = "Human", numberOfIndividuals = 5,
+        proteinOntogenies = onto)
+    Condition
+      Error in `addPopulation()`:
+      ! `proteinOntogenies` must be a character vector of "Protein:Ontogeny" entries. x It is a <MoleculeOntogeny> object. i One entry per ontogeny, e.g. `c("CYP3A4:CYP3A4", "CYP2D6:CYP2C8")`, or the same pairs as one comma-joined string.
+
+---
+
+    Code
+      setPopulation(project, "testpopulation", proteinOntogenies = list(onto))
+    Condition
+      Error in `setPopulation()`:
+      ! `proteinOntogenies` must be a character vector of "Protein:Ontogeny" entries. x It is a <MoleculeOntogeny> object. i One entry per ontogeny, e.g. `c("CYP3A4:CYP3A4", "CYP2D6:CYP2C8")`, or the same pairs as one comma-joined string.
+
+---
+
+    Code
+      setPopulation(project, "testpopulation", proteinOntogenies = c("CYP3A4:CYP3A4",
+        NA))
+    Condition
+      Error in `setPopulation()`:
+      ! `proteinOntogenies` must be a character vector of "Protein:Ontogeny" entries. x It is a character vector with a missing entry. i One entry per ontogeny, e.g. `c("CYP3A4:CYP3A4", "CYP2D6:CYP2C8")`, or the same pairs as one comma-joined string.
+
 # setPopulation aborts on a non-existent population
 
     Code
@@ -376,4 +402,14 @@
       <PopulationSource>
         * Type: programmatic
         * File: resolved from the runtime store at run time
+
+# addPopulation aborts on a NaN numeric field
+
+    Code
+      addPopulation(project, "nanweight", "Human", numberOfIndividuals = 10,
+        weightMin = NaN)
+    Condition
+      Error in `addPopulation()`:
+      ! Cannot add population "nanweight":
+      x weightMin must be a single finite number
 

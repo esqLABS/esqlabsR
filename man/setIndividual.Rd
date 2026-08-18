@@ -16,16 +16,18 @@ already exist in \code{individuals} definitions.}
 \item{...}{Named fields to change. Accepted: \code{species}, \code{population},
 \code{gender}, \code{weight}, \code{height}, \code{age}, \code{proteinOntogenies},
 \code{parameterSets}. Scalar-per-definition fields recycle/align across \code{id};
-\code{parameterSets} is applied whole (or one vector per individual via a
-length-\code{id} list). Unknown fields trigger an error.}
+\code{parameterSets} and \code{proteinOntogenies} are applied whole (or one vector per
+individual via a length-\code{id} list). \code{proteinOntogenies} takes the same
+\code{"Protein:Ontogeny"} entries as \code{\link[=addIndividual]{addIndividual()}}. Unknown fields trigger an
+error.}
 }
 \value{
 The \code{project} object, invisibly.
 }
 \description{
 Changes one or more fields of the individual identified by
-\code{id} and persists the change immediately to the individual definition
-(write-through). The \code{individuals} definitions accessor is read-only, so this
+\code{id}, in memory; write the change to the individual's definition file with
+\code{\link[=saveProject]{saveProject()}}. The \code{individuals} definitions accessor is read-only, so this
 is the way to revise an existing individual in place.
 
 Only the arguments you pass via \code{...} are changed; every other field
@@ -52,16 +54,43 @@ applied whole to every definition, never split positionally. To give a
 different multi-valued list per definition, pass a list of the same length
 as the id vector (one vector per definition).
 
+A zero-length reference list means "there are none", the same as \code{NULL}: a
+scenario's \code{parameterSets} / \code{initialConditions} / \code{outputPaths}, an
+application's \code{parameterSets}, and a PI task's \code{scenarios} all read it that
+way. A definition file writes \verb{[]} for a reference list a definition has none
+of, so the authoring functions take a definition's own written fields straight
+back, whether they were read as a character vector or as the list
+\code{jsonlite::fromJSON(simplifyVector = FALSE)} yields. The reference list of a
+plot grid (\code{plots}) must still be non-empty: a grid with no plots has nothing
+to render.
+
 The call is all-or-nothing: every definition is validated first, and if any
-fails the whole call aborts and writes nothing. On success all definitions
-are folded into the section and persisted in a single write-through.
+fails the whole call aborts and changes nothing. On success all definitions
+are folded into the section in one in-memory edit. Like every other edit, it
+reaches the project's files only when you call \code{\link[=saveProject]{saveProject()}}.
+
+An authoring function resolves every reference at the call that makes it: an
+\code{individual} or \code{parameterSets} id with no matching definition aborts naming
+the missing id, so a mistyped reference surfaces where it was typed rather
+than at the next run. Add the definitions in dependency order,
+\code{addIndividual()} before the \code{addScenario()} that references it. A scenario's
+reference errors also name the closest existing id, as \code{\link[=validateProject]{validateProject()}}
+does; the other sections name only the missing one.
+
+Reading a project instead defers: \code{\link[=loadProject]{loadProject()}} and
+\code{\link[=importProjectFromExcel]{importProjectFromExcel()}} accept a project whose references do not all
+resolve (each section is parsed on its own, so a legacy project with a
+genuine gap still imports) and leave \code{\link[=validateProject]{validateProject()}} to report every gap
+at once. The two timings are deliberate, not an inconsistency: eager where a
+single reference is being written by hand, deferred where a whole project is
+being read.
 
 Two families of authoring functions sit outside this id-sets-\code{N} rule.
 \code{addParameterEntry()} and \code{removeParameterEntry()} vectorize over parameter
 entries (parallel \code{containerPath} / \code{parameterName} / \code{value} / \code{units}
 vectors) within a single named set, a different axis than the id-sets-\code{N}
 rule described here. \code{renameScenario()}, \code{duplicateScenario()},
-\code{addObservedData()}, \code{addPITask()}, and the per-task
+\code{addObservedData()}, \code{addPITask()}, \code{setPITask()}, and the per-task
 parameter-identification sub-definition helpers act on a single definition per
 call.
 }

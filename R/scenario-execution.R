@@ -91,65 +91,51 @@
   conditions
 }
 
-# Five-layer merge ----
+# Four-layer merge ----
 
 # Pure function. Builds a `list(paths, values, units)` parameter
 # structure (or `NULL`) for one scenario. Layers, in order
-# (last-write-wins): scenario `modelParameterSets` -> species defaults
-# -> individual `parameterSets` -> application `parameterSets` ->
-# caller-supplied `customParams`. Each of those reference fields is a
+# (last-write-wins): scenario `modelParameterSets` -> individual
+# `parameterSets` -> application `parameterSets` -> caller-supplied
+# `customParams`. Each of those reference fields is a
 # list of set ids, iterated in listed order; every id is looked up in
 # the project's single `parameterSets` section. Unknown ids are silently
 # skipped (consistent across all three layers).
+#
+# Every layer here is authored by the user, which is what lets
+# `initializeSimulation()` apply the merged result strictly: a path the user
+# wrote that the model does not have is a mistake in their project and must
+# abort. The bundled species defaults are deliberately NOT a layer: they are a
+# package-shipped superset covering every model of a species, so a path they
+# carry that this particular model lacks is normal, not a user error.
+# `initializeSimulation()` therefore applies them separately and tolerantly,
+# before the merged user layers, which also keeps them overridable by all four.
 # @keywords internal
 # @noRd
 .mergeScenarioParameters <- function(scenario, project, customParams = NULL) {
   params <- NULL
-  # Read the unified parameter-sets section once; the three loops below all
+  # Read the unified parameter-sets section once; the three layers below all
   # resolve their set ids against it.
   parameterSets <- project$definitions$parameterSets
 
   # 1. modelParameterSets
-  if (!is.null(scenario$modelParameterSets)) {
-    for (setId in scenario$modelParameterSets) {
-      setParams <- .parameterSetToStructure(
-        parameterSets[[setId]]
-      )
-      if (!is.null(setParams)) {
-        params <- extendParameterStructure(
-          parameters = params,
-          newParameters = setParams
-        )
-      }
-    }
-  }
+  params <- .extendWithParameterSets(
+    params,
+    scenario$modelParameterSets,
+    parameterSets
+  )
 
-  # 2. + 3. species defaults + individual parameterSets
+  # 2. individual parameterSets
   if (!is.null(scenario$individualId) && !is.na(scenario$individualId)) {
     indivData <- project$definitions$individuals[[scenario$individualId]]
-    if (!is.null(indivData)) {
-      speciesParams <- .getSpeciesParameters(indivData$species)
-      if (!is.null(speciesParams)) {
-        params <- extendParameterStructure(
-          parameters = params,
-          newParameters = speciesParams
-        )
-      }
-      for (setId in unlist(indivData$parameterSets)) {
-        setParams <- .parameterSetToStructure(
-          parameterSets[[setId]]
-        )
-        if (!is.null(setParams)) {
-          params <- extendParameterStructure(
-            parameters = params,
-            newParameters = setParams
-          )
-        }
-      }
-    }
+    params <- .extendWithParameterSets(
+      params,
+      unlist(indivData$parameterSets),
+      parameterSets
+    )
   }
 
-  # 4. application parameterSets
+  # 3. application parameterSets
   if (
     !is.null(scenario$applicationProtocol) &&
       !is.na(scenario$applicationProtocol)
@@ -161,20 +147,14 @@
         applicationProtocol = scenario$applicationProtocol
       ))
     }
-    for (setId in unlist(appData$parameterSets)) {
-      setParams <- .parameterSetToStructure(
-        parameterSets[[setId]]
-      )
-      if (!is.null(setParams)) {
-        params <- extendParameterStructure(
-          parameters = params,
-          newParameters = setParams
-        )
-      }
-    }
+    params <- .extendWithParameterSets(
+      params,
+      unlist(appData$parameterSets),
+      parameterSets
+    )
   }
 
-  # 5. customParams
+  # 4. customParams
   if (!is.null(customParams)) {
     params <- extendParameterStructure(
       parameters = params,
@@ -185,27 +165,24 @@
   params
 }
 
-# Read species defaults from the bundled SpeciesParameters.xlsx if a
-# matching sheet exists. `NULL` when the file or sheet is missing.
+# Fold each named parameter set into `params`, skipping a set id that resolves
+# to nothing. The three layers a scenario draws sets from (its own
+# `modelParameterSets`, its individual's, and its application protocol's) merge
+# the same way, each overriding the one before it.
+#
 # @keywords internal
 # @noRd
-.getSpeciesParameters <- function(species) {
-  if (is.null(species) || is.na(species)) {
-    return(NULL)
+.extendWithParameterSets <- function(params, setIds, parameterSets) {
+  for (setId in setIds) {
+    setParams <- .parameterSetToStructure(parameterSets[[setId]])
+    if (!is.null(setParams)) {
+      params <- extendParameterStructure(
+        parameters = params,
+        newParameters = setParams
+      )
+    }
   }
-  filePath <- system.file(
-    "extdata",
-    "SpeciesParameters.xlsx",
-    package = "esqlabsR"
-  )
-  if (!nzchar(filePath) || !file.exists(filePath)) {
-    return(NULL)
-  }
-  sheets <- readxl::excel_sheets(filePath)
-  if (!any(sheets == species)) {
-    return(NULL)
-  }
-  readParametersFromXLS(paramsXLSpath = filePath, sheets = species)
+  params
 }
 
 # Population resolution ----
@@ -215,8 +192,9 @@
 # comes from the runtime store; a `csv` entry loads its `file`; an entry with no
 # `type` is a demographics spec built via `createPopulationCharacteristics`,
 # unless the scenario's `readPopulationFromCSV` flag is set (back-compat: that
-# still loads `<populationId>.csv`). Resolved objects are cached per run so a
-# population shared by two scenarios is built or loaded once.
+# still loads `<populationId>.csv`). Resolved objects are cached per run, keyed
+# on the source they were resolved from, so a population two scenarios resolve
+# the same way is built or loaded once.
 # @keywords internal
 # @noRd
 .resolveScenarioPopulation <- function(scenario, project, cache) {
@@ -225,16 +203,41 @@
       scenario$scenarioName
     ))
   }
-  cached <- cache$populations[[scenario$populationId]]
-  if (!is.null(cached)) {
-    return(cached)
-  }
 
   popData <- project$definitions$populations[[scenario$populationId]]
   # The entry type wins over the scenario flag; a spec entry falls back to the
   # scenario's `readPopulationFromCSV` for the legacy CSV path.
   effectiveType <- popData$type %||%
     (if (isTRUE(scenario$readPopulationFromCSV)) "csv" else "spec")
+
+  # The key holds everything that decides which population an id resolves to,
+  # not the id alone: the effective type can come from the *scenario*, so one id
+  # resolves to a spec-built population for a scenario without
+  # `readPopulationFromCSV` and to the csv table for a scenario with it, and both
+  # have to coexist in one batch. `\r` cannot occur in a canonicalized id, which
+  # substitutes every control and space character.
+  key <- paste(
+    scenario$populationId,
+    effectiveType,
+    popData$file %||% "",
+    sep = "\r"
+  )
+  cached <- cache$populations[[key]]
+  if (!is.null(cached)) {
+    return(cached)
+  }
+  # This id already stands for another population in this batch. Each scenario
+  # still gets the source it names, but one id meaning two populations is almost
+  # always a project mistake (typically `readPopulationFromCSV` set on one
+  # scenario and not on another that shares the population), so say so.
+  seenKeys <- names(cache$populations) %||% character()
+  if (any(startsWith(seenKeys, paste0(scenario$populationId, "\r")))) {
+    cli::cli_warn(messages$populationIdResolvedTwoWays(
+      populationId = scenario$populationId,
+      scenarioName = scenario$scenarioName,
+      effectiveType = effectiveType
+    ))
+  }
 
   population <- switch(
     effectiveType,
@@ -251,7 +254,7 @@
     "csv" = .resolveCsvPopulation(scenario, project, popData),
     "spec" = .resolveSpecPopulation(scenario, popData)
   )
-  cache$populations[[scenario$populationId]] <- population
+  cache$populations[[key]] <- population
   population
 }
 
@@ -268,12 +271,27 @@
       populationId = scenario$populationId
     ))
   }
-  fileName <- popData$file %||% paste0(scenario$populationId, ".csv")
+  fileName <- .populationCsvFileName(
+    scenario$populationId,
+    project$paths$populationsFolder,
+    popData$file
+  )
   populationPath <- .resolveProjectPath(
     fileName,
     project$paths$populationsFolder,
     "populationId"
   )
+  # Report an absent file here rather than handing a nonexistent path to the
+  # backend, which fails with a raw .NET exception naming neither the scenario
+  # nor the folder the file is expected in.
+  if (!file.exists(populationPath)) {
+    cli::cli_abort(messages$populationCsvNotFound(
+      scenarioName = scenario$scenarioName,
+      populationId = scenario$populationId,
+      fileName = fileName,
+      populationsFolder = project$paths$populationsFolder
+    ))
+  }
   loadPopulation(populationPath)
 }
 
@@ -354,6 +372,7 @@
       modelFile = scenario$modelFile
     ))
   }
+  .assertNotLfsPointer(modelFilePath)
   simulation <- ospsuite::loadSimulation(
     filePath = modelFilePath,
     loadFromCache = FALSE
@@ -458,22 +477,48 @@
   }
 
   # 7. Steady state
-  if (scenario$simulateSteadyState) {
-    ignoreIfFormula <- !scenario$overwriteFormulasInSS
-    initialValues <- ospsuite::getSteadyState(
-      simulations = list(simulation),
-      steadyStateTime = list(scenario$steadyStateTime),
-      ignoreIfFormula = ignoreIfFormula,
-      simulationRunOptions = simulationRunOptions
-    )
-    ospsuite::setQuantityValuesByPath(
-      quantityPaths = initialValues[[simulation$id]]$paths,
-      values = initialValues[[simulation$id]]$values,
-      simulation = simulation
-    )
-  }
+  .applyScenarioSteadyState(simulation, scenario, simulationRunOptions)
 
   list(simulation = simulation, population = population)
+}
+
+# .applyScenarioSteadyState ----
+
+# Bring a scenario's simulation to steady state, when it asks for one: solve for
+# the steady-state quantity values at the scenario's `steadyStateTime` and write
+# them back as the simulation's start values. A scenario with
+# `simulateSteadyState` off is a no-op.
+#
+# `overwriteFormulasInSS` is the scenario's own spelling of the inverse of
+# `ospsuite`'s `ignoreIfFormula`: a quantity whose start value is a formula
+# keeps that formula unless the scenario opts into overwriting it.
+#
+# Mutates `simulation` in place (an `ospsuite::Simulation` is a reference
+# object), like the other steps of `.prepareScenario()`, and returns it
+# invisibly.
+#
+# @keywords internal
+# @noRd
+.applyScenarioSteadyState <- function(
+  simulation,
+  scenario,
+  simulationRunOptions
+) {
+  if (!scenario$simulateSteadyState) {
+    return(invisible(simulation))
+  }
+  initialValues <- ospsuite::getSteadyState(
+    simulations = list(simulation),
+    steadyStateTime = list(scenario$steadyStateTime),
+    ignoreIfFormula = !scenario$overwriteFormulasInSS,
+    simulationRunOptions = simulationRunOptions
+  )
+  ospsuite::setQuantityValuesByPath(
+    quantityPaths = initialValues[[simulation$id]]$paths,
+    values = initialValues[[simulation$id]]$values,
+    simulation = simulation
+  )
+  invisible(simulation)
 }
 
 # .scenarioBuildPreflight ----
@@ -492,8 +537,10 @@
   customParams,
   simulationRunOptions,
   validate,
-  opName
+  opName,
+  .call = rlang::caller_env()
 ) {
+  rlang::local_error_call(.call)
   validateIsOfType(project, "Project")
   .validateParametersStructure(
     parameterStructure = customParams,
@@ -514,6 +561,7 @@
         "populations",
         "applications",
         "parameterSets",
+        "initialConditions",
         "crossReferences"
       ),
       opName = opName
@@ -531,6 +579,9 @@
 # scenario; an unknown name aborts. Returns `list(scenarioNames, prepared)`
 # where `prepared` is a named list (keyed by scenario name) of
 # `.prepareScenario()`'s `list(simulation, population)` return.
+#
+# `canSkip` says whether the calling entrypoint offers `stopIfFails`, so a build
+# failure only points at it where it exists (`buildSimulations()` has none).
 # @keywords internal
 # @noRd
 .buildScenarioSimulations <- function(
@@ -539,8 +590,11 @@
   customParams = NULL,
   simulationRunOptions = NULL,
   stopIfParameterNotFound = TRUE,
-  stopIfFails = TRUE
+  stopIfFails = TRUE,
+  canSkip = TRUE,
+  .call = rlang::caller_env()
 ) {
+  rlang::local_error_call(.call)
   allScenarios <- project$definitions$scenarios
   if (is.null(scenarioNames)) {
     scenarioNames <- names(allScenarios)
@@ -573,6 +627,13 @@
     # as a warning and leave this scenario's entry NULL so the run continues
     # with the scenarios that built; the run loops below skip a NULL entry and
     # `.collectScenarioResult()` records it as producing no results.
+    #
+    # Either way the failure is reported as belonging to this scenario. A build
+    # error can come from the .NET backend, whose own message names neither the
+    # scenario nor the file (loading a `.pkml` that is not there, or is not a
+    # model), so re-raising it as-is left nothing to act on in a batch of
+    # scenarios: the abort now carries the scenario's name and the backend
+    # message as its cause.
     result <- tryCatch(
       .prepareScenario(
         scenario = allScenarios[[name]],
@@ -584,7 +645,17 @@
       ),
       error = function(e) {
         if (isTRUE(stopIfFails)) {
-          stop(e)
+          # Attribute explicitly: this runs in the handler closure, so the
+          # `local_error_call()` installed in the enclosing frame does not reach
+          # it.
+          cli::cli_abort(
+            messages$scenarioBuildFailedAbort(
+              scenarioName = name,
+              canSkip = canSkip
+            ),
+            parent = e,
+            call = .call
+          )
         }
         cli::cli_warn(messages$scenarioBuildFailed(
           scenarioName = name,
@@ -615,8 +686,10 @@
   simulation,
   results,
   population,
-  stopIfFails = TRUE
+  stopIfFails = TRUE,
+  .call = rlang::caller_env()
 ) {
+  rlang::local_error_call(.call)
   outputQuantities <- NULL
   # `simulation` is NULL for a scenario skipped at build time (stopIfFails =
   # FALSE); there is nothing to resolve output quantities against, so leave
@@ -654,19 +727,20 @@
   )
 }
 
-# Parse "Molecule:Ontogeny,Molecule:Ontogeny" into MoleculeOntogeny list.
-# Returns NULL on empty input.
+# Build the `MoleculeOntogeny` objects of one individual or population from its
+# `proteinOntogenies` field. Every shape the field takes is accepted (a character
+# vector of one `"Molecule:Ontogeny"` entry per ontogeny, a single comma-joined
+# cell, or the list a JSON array parses to), so the value is flattened by
+# `.splitProteinOntogenies()` before anything is asked of it: a scalar test such
+# as `is.na()` on a two-entry field aborts on the length alone, before a single
+# ontogeny is read. Returns NULL when nothing is specified.
 # @keywords internal
 # @noRd
-.readOntogeniesFromList <- function(ontogenyString) {
-  if (
-    is.null(ontogenyString) ||
-      is.na(ontogenyString) ||
-      identical(ontogenyString, "")
-  ) {
+.readOntogeniesFromList <- function(proteinOntogenies) {
+  parts <- .splitProteinOntogenies(proteinOntogenies)
+  if (length(parts) == 0L) {
     return(NULL)
   }
-  parts <- trimws(unlist(strsplit(ontogenyString, ",", fixed = TRUE)))
   out <- vector("list", length(parts))
   for (i in seq_along(parts)) {
     pair <- unlist(strsplit(parts[[i]], ":", fixed = TRUE))
@@ -693,14 +767,17 @@
   simulationRunOptions = NULL,
   validate = TRUE,
   stopIfParameterNotFound = TRUE,
-  stopIfFails = TRUE
+  stopIfFails = TRUE,
+  .call = rlang::caller_env()
 ) {
+  rlang::local_error_call(.call)
   simulationRunOptions <- .scenarioBuildPreflight(
     project = project,
     customParams = customParams,
     simulationRunOptions = simulationRunOptions,
     validate = validate,
-    opName = "runScenarios"
+    opName = "runScenarios",
+    .call = .call
   )
 
   built <- .buildScenarioSimulations(
@@ -709,7 +786,8 @@
     customParams = customParams,
     simulationRunOptions = simulationRunOptions,
     stopIfParameterNotFound = stopIfParameterNotFound,
-    stopIfFails = stopIfFails
+    stopIfFails = stopIfFails,
+    .call = .call
   )
   scenarioNames <- built$scenarioNames
   prepared <- built$prepared
@@ -755,9 +833,19 @@
       simulation = p$simulation,
       results = if (is.null(p)) NULL else simulationResults[[p$simulation$id]],
       population = p$population,
-      stopIfFails = stopIfFails
+      stopIfFails = stopIfFails,
+      .call = .call
     )
     names(out)[[idx]] <- name
+  }
+
+  # Every scenario gets an entry whatever happened to it, so close a
+  # `stopIfFails = FALSE` run by naming the ones that produced none in one
+  # place: the per-scenario warnings above are easy to lose in a large batch,
+  # and this is what a caller needs to know before reaching into the results.
+  skipped <- names(out)[vapply(out, function(r) is.null(r$results), logical(1))]
+  if (length(skipped) > 0L) {
+    cli::cli_warn(messages$scenariosSkipped(skipped))
   }
   out
 }
@@ -777,14 +865,17 @@
   customParams = NULL,
   simulationRunOptions = NULL,
   validate = TRUE,
-  stopIfParameterNotFound = TRUE
+  stopIfParameterNotFound = TRUE,
+  .call = rlang::caller_env()
 ) {
+  rlang::local_error_call(.call)
   simulationRunOptions <- .scenarioBuildPreflight(
     project = project,
     customParams = customParams,
     simulationRunOptions = simulationRunOptions,
     validate = validate,
-    opName = "buildSimulations"
+    opName = "buildSimulations",
+    .call = .call
   )
 
   built <- .buildScenarioSimulations(
@@ -792,7 +883,9 @@
     scenarioNames = scenarioNames,
     customParams = customParams,
     simulationRunOptions = simulationRunOptions,
-    stopIfParameterNotFound = stopIfParameterNotFound
+    stopIfParameterNotFound = stopIfParameterNotFound,
+    canSkip = FALSE,
+    .call = .call
   )
   built$prepared
 }

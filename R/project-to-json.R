@@ -1,7 +1,8 @@
 # v2.0 Project → JSON serialization (internal) ----
 #
-# Inverse of `Project$.readJson()` (called by `Project$new()`). Walks a
-# `Project` and emits a v2.0 `Project.json` file. The contract is:
+# Inverse of `.loadProjectTree()` (composed with `Project$new()`'s commit
+# step). Walks a `Project` and emits a v2.0 `Project.json` file. The
+# contract is:
 #
 #   loadProject(path) |> saveSnapshot(out)  produces a JSON file that, when
 #   re-loaded, yields a `Project` structurally identical to the first one.
@@ -18,7 +19,7 @@
 
 #' Internal: render a `Project` to a JSON-shaped R list in the v2.0 schema.
 #'
-#' Not exported. Companion to `Project$.readJson()`. The list returned here
+#' Not exported. Companion to `.loadProjectTree()`. The list returned here
 #' is the canonical input to `jsonlite::write_json` (see `.saveProjectJson()`);
 #' writing and re-parsing it yields a structurally identical `Project`.
 #'
@@ -87,16 +88,30 @@
   }
   out <- c(
     list(
-      # Default the version so an empty `Project$new()` serializes a file that
-      # `loadProject()` accepts (mirrors the Excel bridge in project-excel.R).
-      schemaVersion = project$info$schemaVersion %||% "2.0",
-      esqlabsRVersion = project$info$esqlabsRVersion,
-      name = project$info$name,
-      description = project$info$description,
-      definitionsFolder = project$paths$definitionsFolder,
-      filePaths = .filePathsToJson(project),
-      defaultSimulationRunOptions = project$defaultSimulationRunOptions
+      # Both version fields describe the file being written, not the file the
+      # project was read from: `schemaVersion` is the format this serializer
+      # produces, and `esqlabsRVersion` the package version producing it. So a
+      # project authored under an earlier version reports the version that last
+      # wrote it, and an empty `Project$new()` serializes a file `loadProject()`
+      # accepts. This mirrors the Excel bridge in project-excel.R, the other
+      # writer of these two fields.
+      schemaVersion = "2.0",
+      esqlabsRVersion = as.character(utils::packageVersion("esqlabsR"))
     ),
+    # A project with no name (one imported from a workbook that carries none, one
+    # upgraded from a snapshot) omits the key rather than declaring the metadata
+    # and setting it to null, which reads as a field someone emptied.
+    if (!is.null(project$info$name)) list(name = project$info$name),
+    if (!is.null(project$info$description)) {
+      list(description = project$info$description)
+    },
+    list(
+      definitionsFolder = project$paths$definitionsFolder,
+      filePaths = .filePathsToJson(project)
+    ),
+    if (!is.null(project$defaultSimulationRunOptions)) {
+      list(defaultSimulationRunOptions = project$defaultSimulationRunOptions)
+    },
     sections
   )
   if (length(excel) > 0L) {
@@ -190,7 +205,7 @@
 # Per-section helpers ---------------------------------------------------------
 #
 # Each helper is paired with a `.parse<Section>()` (called from
-# `Project$.readJson()`) and is the canonical place for that section's
+# `.loadProjectTree()`) and is the canonical place for that section's
 # JSON-shape concerns. Today most helpers are trivial because the parser is
 # JSON-faithful; the bodies will grow as section-specific transformations
 # move here from caller code (e.g. relative-path normalization, ID
@@ -474,7 +489,7 @@
       scenarios = as.list(task$scenarios),
       parameters = lapply(task$parameters, .piParameterToJson),
       outputMappings = lapply(task$outputMappings, .piOutputMappingToJson),
-      configuration = task$configuration
+      configuration = .piConfigurationToJson(task$configuration)
     )
   }) |>
     unname()

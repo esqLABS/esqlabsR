@@ -8,11 +8,11 @@
 # an adapter into the section's R file and registering it in
 # `.validationAdapters` below.
 #
-# `crossReferences` is intentionally NOT in the adapter list, it runs
-# after all section validators because it inspects their partial
-# results to decide whether to skip itself (skip on prior critical
-# errors). It is appended as a fixed final phase by the dispatcher
-# rather than masquerading as a section.
+# `crossReferences` is intentionally NOT in the adapter list: it owns no
+# section, it resolves the references that span sections, and it needs
+# to know which sections the current run is about (a section adapter is
+# handed only its own slice). It is appended as a fixed final phase by
+# the dispatcher rather than masquerading as a section.
 
 # validationResult class ----
 
@@ -109,8 +109,8 @@ validationResult <- R6::R6Class(
 #' [validationSummary()]), then lists each definition type that has at
 #' least one issue: a cross marks each critical error, a `!` marks each
 #' warning, and the `category` of each entry is shown as a sub-label.
-#' Definition types with no issues are folded into a compact "N
-#' section{?s} OK" tail. A fully valid result prints a single "no issues"
+#' Definition types with no issues are folded into a compact
+#' "N sections OK" tail. A fully valid result prints a single "no issues"
 #' line. Glyphs and styling come from `cli`, so the output degrades
 #' gracefully to plain ASCII when unicode or colour is unavailable.
 #'
@@ -367,6 +367,7 @@ validationSummary <- function(validationResults) {
   scenarios = .scenariosValidatorAdapter,
   outputPaths = .outputPathsValidatorAdapter,
   parameterSets = .parameterSetsValidatorAdapter,
+  initialConditions = .initialConditionsValidatorAdapter,
   applications = .applicationsValidatorAdapter,
   plots = .plotsValidatorAdapter,
   dataCombined = .dataCombinedValidatorAdapter,
@@ -378,8 +379,9 @@ validationSummary <- function(validationResults) {
 #'
 #' Internal orchestration helper. Runs the requested section validators
 #' in canonical order and returns a `ValidationResults` list.
-#' `crossReferences` is always run last when included so it sees prior
-#' section results.
+#' `crossReferences` is always run last when included, and is told which
+#' sections the run is about so it resolves only the references those
+#' sections hold.
 #'
 #' @param project A loaded `Project` object.
 #' @param sections Character vector of section names to validate, or
@@ -399,7 +401,7 @@ validationSummary <- function(validationResults) {
   results <- list()
   for (section in sections) {
     if (section == "crossReferences") {
-      results[[section]] <- .validateCrossReferences(project, results)
+      results[[section]] <- .validateCrossReferences(project, sections)
       next
     }
     results[[section]] <- .validationAdapters[[section]](project)
@@ -665,6 +667,40 @@ validationSummary <- function(validationResults) {
   result
 }
 
+#' Read one field of a definition entry as a scalar string
+#'
+#' Shared by the parameter-set and initial-condition validators, which police
+#' hand-edited definition files. A usable path, name or unit is a single string,
+#' the shape the schema, the serializer and `.isNonEmptyString()` on the
+#' authoring path all agree on. Every other shape reads as `NA` and falls into
+#' the caller's own missing-field check.
+#'
+#' Testing the shape rather than only the length matters because
+#' `as.character()` invents plausible text for the shapes that happen to be one
+#' element long: `"containerPath": [null]` parses to a list holding `NULL` and
+#' renders as the string `"NULL"`, a nested object as `"list(b = 1)"`, `true` as
+#' `"TRUE"`. None of those is `NA` or blank, so the missing-field check would
+#' pass them and let a path like `"NULL|Dose"` flow onward. A blank string is
+#' returned as-is, since reporting it is the caller's `== ""` check.
+#'
+#' @param entries List of entry records, each already a list (see the
+#'   normalization the callers apply before reading any field).
+#' @param field Name of the field to read.
+#' @return Character vector, one element per entry, `NA` wherever the entry
+#'   does not hold a single string for `field`.
+#' @keywords internal
+#' @noRd
+.scalarEntryField <- function(entries, field) {
+  vapply(
+    entries,
+    function(e) {
+      value <- e[[field]]
+      if (is.character(value) && length(value) == 1L) value else NA_character_
+    },
+    character(1)
+  )
+}
+
 #' Validate a parameter-set structure
 #'
 #' Shared body used by the model / individual / application
@@ -689,17 +725,16 @@ validationSummary <- function(validationResults) {
       next
     }
 
-    containerPaths <- vapply(
-      set,
-      function(e) as.character(e$containerPath %||% NA_character_),
-      character(1)
-    )
-    parameterNames <- vapply(
-      set,
-      function(e) as.character(e$parameterName %||% NA_character_),
-      character(1)
-    )
-    values <- lapply(set, function(e) e$value)
+    # An entry that is a bare string rather than a record
+    # (`["Organism|Liver|Volume"]`) has no fields to read; treating it as an
+    # empty record folds it into the missing-field error below instead of
+    # aborting on `$`. Normalized before any field is read, so the value read
+    # below is covered too.
+    entries <- lapply(set, function(e) if (is.list(e)) e else list())
+
+    containerPaths <- .scalarEntryField(entries, "containerPath")
+    parameterNames <- .scalarEntryField(entries, "parameterName")
+    values <- lapply(entries, function(e) e$value)
 
     if (
       any(
@@ -739,13 +774,129 @@ validationSummary <- function(validationResults) {
       )
     }
 
-    fullPaths <- paste(containerPaths, parameterNames, sep = "|")
+    # Only entries carrying both halves of a path can duplicate: the blanks and
+    # `NA`s are already reported by the missing-path error above, and `paste()`
+    # would otherwise render two of them as a literal "NA|NA" duplicate.
+    hasPath <- !is.na(containerPaths) &
+      containerPaths != "" &
+      !is.na(parameterNames) &
+      parameterNames != ""
+    fullPaths <- paste(
+      containerPaths[hasPath],
+      parameterNames[hasPath],
+      sep = "|"
+    )
     dupes <- fullPaths[duplicated(fullPaths)]
     if (length(dupes) > 0) {
       result$addWarning(
         "Uniqueness",
         paste0(
           "Duplicate parameter paths in set '",
+          setName,
+          "': ",
+          paste(unique(dupes), collapse = ", ")
+        )
+      )
+    }
+  }
+
+  result
+}
+
+#' Validate the initial-condition sets
+#'
+#' Each set is the array-of-records shape the parser and
+#' `addInitialConditionEntry()` produce: a list of
+#' `list(path, value, unit)` entries, one molecule start value each.
+#'
+#' The rules are the ones `.validateInitialConditionEntryArgs()`
+#' (R/parameters.R) already applies on the authoring path, restated here for
+#' the entries that never went through it: a set hand-written into the
+#' definitions tree, or one built by the Excel importer. `path` and `unit` are
+#' critical because a blank either way makes the set unusable
+#' (`ospsuite::setQuantityValuesByPath()` rejects a blank unit at run time);
+#' a non-numeric `value` and a duplicated `path` are warnings, matching how
+#' `.validateParameterSets()` grades the same two problems.
+#'
+#' @keywords internal
+#' @noRd
+.validateInitialConditions <- function(initialConditions, sectionName) {
+  result <- validationResult$new()
+
+  if (is.null(initialConditions) || length(initialConditions) == 0) {
+    result$addWarning("Data", paste0("No ", sectionName, " defined"))
+    return(result)
+  }
+
+  for (setName in names(initialConditions)) {
+    set <- initialConditions[[setName]]
+    if (length(set) == 0) {
+      next
+    }
+
+    # An entry that is a bare string rather than a record (`["Organism|Liver|
+    # Aciclovir"]`) has no fields to read; treating it as an empty record folds
+    # it into the missing-field errors below instead of aborting on `$`.
+    entries <- lapply(set, function(e) if (is.list(e)) e else list())
+
+    paths <- .scalarEntryField(entries, "path")
+    units <- .scalarEntryField(entries, "unit")
+    values <- lapply(entries, function(e) e$value)
+
+    if (any(is.na(paths) | paths == "")) {
+      result$addCriticalError(
+        "Missing Fields",
+        paste0(
+          "Set '",
+          setName,
+          "' in ",
+          sectionName,
+          " contains empty molecule paths"
+        )
+      )
+    }
+
+    if (any(is.na(units) | units == "")) {
+      result$addCriticalError(
+        "Missing Fields",
+        paste0(
+          "Set '",
+          setName,
+          "' in ",
+          sectionName,
+          " contains entries without a unit"
+        )
+      )
+    }
+
+    nonNumeric <- vapply(
+      values,
+      function(v) is.null(v) || length(v) != 1L || !is.numeric(v) || is.na(v),
+      logical(1)
+    )
+    if (any(nonNumeric)) {
+      result$addWarning(
+        "Data Type",
+        paste0(
+          "Set '",
+          setName,
+          "' in ",
+          sectionName,
+          " contains non-numeric values"
+        )
+      )
+    }
+
+    # Only real paths can duplicate: the blanks and `NA`s are already reported
+    # by the missing-path error above, and `duplicated()` would otherwise count
+    # two path-less entries as a duplicate of each other.
+    realPaths <- paths[!is.na(paths) & paths != ""]
+    dupes <- realPaths[duplicated(realPaths)]
+    if (length(dupes) > 0) {
+      result$addWarning(
+        "Uniqueness",
+        paste0(
+          "Duplicate molecule paths in set '",
           setName,
           "': ",
           paste(unique(dupes), collapse = ", ")
@@ -775,8 +926,18 @@ validationSummary <- function(validationResults) {
 #' `NA` and `NULL` pass through so the callers' own presence guards still apply,
 #' and the transform is applied element-wise to a vector of references.
 #'
+#' A value too long to be a filename passes through untransformed as well.
+#' `.canonicalizeOneId()` aborts on one, because a definition id becomes
+#' `<id>.json`, and a comparison must not abort: a hand-edited reference over the
+#' bound (a pasted deep model path, say) would otherwise take down
+#' `validateProject()` and with it `loadProject()`, and a project that cannot be
+#' opened cannot be fixed. No definition can be filed above the bound, so such a
+#' reference matches nothing and is reported as dangling, which is the answer the
+#' user needs.
+#'
 #' @param ids Character vector (or `NULL`) of ids / references.
-#' @return `ids` with each non-`NA` element canonicalized; `NULL`/`NA` preserved.
+#' @return `ids` with each non-`NA`, id-length element canonicalized;
+#'   `NULL`/`NA` and over-long elements preserved.
 #' @keywords internal
 #' @noRd
 .canonicalizeForCompare <- function(ids) {
@@ -784,7 +945,7 @@ validationSummary <- function(validationResults) {
     return(ids)
   }
   ids <- as.character(ids)
-  keep <- !is.na(ids)
+  keep <- !is.na(ids) & nchar(ids, type = "bytes") <= .maxDefinitionIdBytes
   if (any(keep)) {
     ids[keep] <- vapply(
       ids[keep],
@@ -839,38 +1000,6 @@ validationSummary <- function(validationResults) {
   refs[dangling]
 }
 
-#' Does any section of the project have a critical error?
-#'
-#' Decides whether `.validateCrossReferences()` should skip itself. Evaluates
-#' the validity of EVERY section adapter against the project so the answer does
-#' not depend on which subset of sections the current run happened to validate.
-#' Results already computed in this run (`collected`) are reused; only the
-#' section adapters not present there are run, so a full `validateProject()`
-#' pays no extra cost and a targeted `.ensureValid()` subset still sees a broken
-#' sibling section it did not itself request.
-#'
-#' `crossReferences` is excluded (it is the caller and is not a section
-#' adapter).
-#'
-#' @param project A loaded `Project` object.
-#' @param collected Named list of `validationResult`s already computed in this
-#'   run (the `validationResults` passed to `.validateCrossReferences()`).
-#' @return A single logical.
-#' @keywords internal
-#' @noRd
-.anyProjectSectionHasErrors <- function(project, collected) {
-  for (section in names(.validationAdapters)) {
-    sectionResult <- collected[[section]]
-    if (!inherits(sectionResult, "validationResult")) {
-      sectionResult <- .validationAdapters[[section]](project)
-    }
-    if (sectionResult$hasCriticalErrors()) {
-      return(TRUE)
-    }
-  }
-  FALSE
-}
-
 #' Validate cross-references between Project sections
 #'
 #' Hand-rolled monolith that checks references that span sections:
@@ -880,55 +1009,70 @@ validationSummary <- function(validationResults) {
 #' their respective lookups, `individual.parameterSets` and
 #' `application.parameterSets` against the corresponding parameter-set
 #' sections, and `dataCombined.simulated.scenario` against scenarios.
-#' Skips itself
-#' when any prior section validator already flagged a critical error
-#' and surfaces a single "skipped" warning naming the checks that were
-#' not performed, since cross-references built on broken sections tend
-#' to produce noisy spurious failures.
+#'
+#' The phase always evaluates. A critical error in some other section does not
+#' suppress it, because it is the phase the `runScenarios()` / `createPlots()` /
+#' `runPI()` gates actually depend on: dropping it there let a scenario naming a
+#' nonexistent individual reach the simulation backend.
+#'
+#' `sections` is the section list the run was asked for, and it scopes the phase
+#' to the references those sections HOLD. That is what keeps each gate to its own
+#' concern: `runScenarios()` asks for the sections a simulation is built from, so
+#' a `dataCombined` entry naming a nonexistent scenario (a plotting-only
+#' reference) is not graded against it, while `createPlots()` does ask for
+#' `dataCombined` and is. The candidate side is never scoped: a reference resolves
+#' against every definition the project has, whether or not that section is in
+#' the run.
 #'
 #' Future deepening: the end-state walks per-section `references()`
 #' declarations rather than hand-coding the FK list here. Out of scope
 #' for Chapter 4.
 #'
 #' @param project Project object.
-#' @param validationResults Already-collected per-section results.
+#' @param sections Character vector of the section names in scope, or `NULL` for
+#'   every one of them. A vector naming no reference-holding section resolves
+#'   nothing.
 #' @return validationResult.
 #' @keywords internal
 #' @noRd
-.validateCrossReferences <- function(project, validationResults) {
-  result <- validationResult$new()
-
-  # Skip-on-prior-errors must consult the PROJECT'S actual section validity, not
-  # just the sections present in this run's `validationResults`. A full
-  # `validateProject()` run collects every section, so a broken sibling is
-  # visible here; a targeted `.ensureValid()` subset collects only the requested
-  # sections, so a broken sibling that the subset did not run would otherwise be
-  # invisible and the cross-reference pass would emit spurious errors built on
-  # it. Evaluating full-project section validity (reusing the results already
-  # computed in this run) makes a full run and a targeted subset behave the same.
-  if (.anyProjectSectionHasErrors(project, validationResults)) {
-    skipped <- c(
-      "scenario individual / population references",
-      "scenario parameterSets references",
-      "scenario initialConditions references",
-      "scenario application references",
-      "scenario outputPaths references",
-      "individual parameterSets references",
-      "application parameterSets references",
-      "plot dataCombined scenario references",
-      "PI scenarios / outputPath references"
-    )
-    result$addWarning(
-      "Skipped",
-      paste0(
-        "Cross-reference validation skipped due to critical errors. ",
-        "Re-run validation after fixing them to also check: ",
-        paste(skipped, collapse = "; "),
-        "."
+# Record a critical error for each definition in `definitions` whose
+# `parameterSets` field names a set the project does not define. `ids` is the
+# subset to check (empty when the section is out of scope) and `label` names the
+# kind in the message, e.g. "Individual". `result` is mutated in place.
+#
+# @keywords internal
+# @noRd
+.checkParameterSetRefs <- function(
+  definitions,
+  ids,
+  parameterSetKeys,
+  label,
+  result
+) {
+  for (id in ids) {
+    refs <- as.character(unlist(
+      definitions[[id]]$parameterSets %||% character(0)
+    ))
+    invalid <- .danglingRefs(refs, parameterSetKeys)
+    if (length(invalid) > 0) {
+      result$addCriticalError(
+        "Invalid Reference",
+        paste0(
+          label,
+          " '",
+          id,
+          "' references undefined parameterSets: ",
+          paste(invalid, collapse = ", "),
+          .suggestSuffixMulti(invalid, parameterSetKeys)
+        )
       )
-    )
-    return(result)
+    }
   }
+}
+
+.validateCrossReferences <- function(project, sections = NULL) {
+  result <- validationResult$new()
+  inScope <- function(section) is.null(sections) || section %in% sections
 
   scenarioList <- project$definitions$scenarios %||% list()
   # Keep the section keys in their ORIGINAL spelling: the "did you mean" suffix
@@ -946,7 +1090,8 @@ validationSummary <- function(validationResults) {
   applicationKeys <- names(project$definitions$applications %||% list())
   outputPathKeys <- names(project$definitions$outputPaths %||% list())
 
-  for (scName in names(scenarioList)) {
+  scenarioHolders <- if (inScope("scenarios")) names(scenarioList) else NULL
+  for (scName in scenarioHolders) {
     sc <- scenarioList[[scName]]
 
     if (
@@ -1057,46 +1202,24 @@ validationSummary <- function(validationResults) {
   }
 
   # individuals/applications resolve their parameter-set refs against the same
-  # unified section as scenarios.
+  # unified section as scenarios, and report them the same way.
   individuals <- project$definitions$individuals %||% list()
-  for (id in names(individuals)) {
-    refs <- individuals[[id]]$parameterSets %||%
-      character(0)
-    refs <- as.character(unlist(refs))
-    invalid <- .danglingRefs(refs, parameterSetKeys)
-    if (length(invalid) > 0) {
-      result$addCriticalError(
-        "Invalid Reference",
-        paste0(
-          "Individual '",
-          id,
-          "' references undefined parameterSets: ",
-          paste(invalid, collapse = ", "),
-          .suggestSuffixMulti(invalid, parameterSetKeys)
-        )
-      )
-    }
-  }
+  .checkParameterSetRefs(
+    individuals,
+    if (inScope("individuals")) names(individuals) else NULL,
+    parameterSetKeys,
+    "Individual",
+    result
+  )
 
   applications <- project$definitions$applications %||% list()
-  for (id in names(applications)) {
-    refs <- applications[[id]]$parameterSets %||%
-      character(0)
-    refs <- as.character(unlist(refs))
-    invalid <- .danglingRefs(refs, parameterSetKeys)
-    if (length(invalid) > 0) {
-      result$addCriticalError(
-        "Invalid Reference",
-        paste0(
-          "Application '",
-          id,
-          "' references undefined parameterSets: ",
-          paste(invalid, collapse = ", "),
-          .suggestSuffixMulti(invalid, parameterSetKeys)
-        )
-      )
-    }
-  }
+  .checkParameterSetRefs(
+    applications,
+    if (inScope("applications")) names(applications) else NULL,
+    parameterSetKeys,
+    "Application",
+    result
+  )
 
   # Scenario keys keep their original spelling; `.danglingRefs()` canonicalizes
   # both sides for the membership test and `.suggestSuffixMulti()` shows the
@@ -1104,7 +1227,7 @@ validationSummary <- function(validationResults) {
   scenarioNames <- names(scenarioList)
 
   dataCombined <- .unwrapDefinitionList(project$definitions$dataCombined)
-  if (!is.null(dataCombined) && length(dataCombined) > 0) {
+  if (inScope("dataCombined") && length(dataCombined) > 0) {
     referencedScenarios <- unlist(lapply(dataCombined, function(dc) {
       vapply(
         dc$simulated %||% list(),
@@ -1132,7 +1255,13 @@ validationSummary <- function(validationResults) {
   piTasks <- project$definitions$parameterIdentification %||% list()
   outputPathIds <- names(project$definitions$outputPaths %||% list())
 
-  for (taskId in names(piTasks)) {
+  piHolders <- if (inScope("parameterIdentification")) names(piTasks) else NULL
+  # Resolved only when there is a task to check, since answering means loading
+  # the observed data.
+  observedDataNames <- if (length(piHolders) > 0L) {
+    .observedDataNamesForCrossReference(project)
+  }
+  for (taskId in piHolders) {
     task <- piTasks[[taskId]]
 
     badTaskScenarios <- .danglingRefs(task$scenarios, scenarioNames)
@@ -1183,18 +1312,13 @@ validationSummary <- function(validationResults) {
           )
         )
       }
-      if (is.null(m$outputPathId) || is.na(m$outputPathId)) {
-        result$addCriticalError(
-          "Invalid Reference",
-          paste0(
-            "PI task '",
-            taskId,
-            "', outputMapping '",
-            m$id,
-            "' does not define an outputPath"
-          )
-        )
-      } else if (!.refResolves(m$outputPathId, outputPathKeys)) {
+      # An absent `outputPathId` is a missing required field, which `.validatePI()`
+      # reports as a section-local concern; this phase only resolves a reference
+      # that is there, so the same gap is not counted twice.
+      if (
+        !.isMissingField(m$outputPathId) &&
+          !.refResolves(m$outputPathId, outputPathKeys)
+      ) {
         result$addCriticalError(
           "Invalid Reference",
           paste0(
@@ -1206,6 +1330,30 @@ validationSummary <- function(validationResults) {
             m$outputPathId,
             "'",
             .suggestSuffix(m$outputPathId, outputPathIds)
+          )
+        )
+      }
+      # `observedData` names a data set inside an observed-data source, not a
+      # declaration, so it resolves against the loaded data-set names. A `NULL`
+      # name set means the project could not be asked without running user code
+      # (see `.observedDataNamesForCrossReference()`), which leaves the reference
+      # unresolved rather than reported as dangling.
+      if (
+        !is.null(observedDataNames) &&
+          !.isMissingField(m$observedDataId) &&
+          !.refResolves(m$observedDataId, observedDataNames)
+      ) {
+        result$addCriticalError(
+          "Invalid Reference",
+          paste0(
+            "PI task '",
+            taskId,
+            "', outputMapping '",
+            m$id,
+            "' references undefined observed data '",
+            m$observedDataId,
+            "'",
+            .suggestSuffix(m$observedDataId, observedDataNames)
           )
         )
       }

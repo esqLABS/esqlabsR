@@ -16,7 +16,7 @@ canonicalized the same way \code{\link[=addIndividual]{addIndividual()}} canonic
 The \code{project} object, invisibly.
 }
 \description{
-Drop the individuals with matching ids in one write-through. Warns (and
+Drop the individuals with matching ids in one in-memory edit. Warns (and
 skips) any id not present, and warns when a removed individual is still
 referenced.
 }

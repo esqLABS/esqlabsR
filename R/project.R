@@ -19,6 +19,21 @@
   "initialConditionsFile"
 )
 
+# The `filePaths` values `.pathsGroup()` reads through `.resolveWorkingFolder()`,
+# which requires each to stay under the project directory unless it opts out with
+# a `${VAR}`. Any other property sits in `filePaths` unread, so it cannot fail a
+# load. Named here so code that writes a project can judge a folder value by the
+# same set the loader will.
+#
+# @keywords internal
+# @noRd
+.containedWorkingFolders <- c(
+  "simulationsFolder",
+  "dataFolder",
+  "outputFolder",
+  "populationsFolder"
+)
+
 #' @title Project
 #' @docType class
 #' @description An R6 class representing an esqlabsR project.
@@ -122,12 +137,17 @@ Project <- R6::R6Class(
     #'   sitting under `Models/` alongside the `Snapshots` folder for PK-Sim /
     #'   MoBi snapshots), `dataFolder` (experimental data), `outputFolder`
     #'   (results), `populationsFolder` (population CSVs loaded by
-    #'   [runScenarios()]), and `definitionsFolder` (the folder holding the
-    #'   definition files, default `"definitions"`).
-    #'   Read a field with `project$paths$simulationsFolder` (returned resolved
-    #'   against `projectDirPath`); write one with
-    #'   `project$paths$simulationsFolder <- "Models"` (stored verbatim, resolved
-    #'   on the next read). Assigning any field sets the dirty bit. Changing
+    #'   [runScenarios()]), and `definitionsFolder` (a single folder name
+    #'   directly under the project folder holding the definition files, default
+    #'   `"definitions"`).
+    #'   Read a field with `project$paths$simulationsFolder`: that returns the
+    #'   **absolute** path, already resolved against `projectDirPath`, so it is
+    #'   ready to use as-is and must not be joined onto `projectDirPath` again
+    #'   (`project$print()` shows these folders relative to the project folder,
+    #'   which is a display choice, not the field's value). Write one with
+    #'   `project$paths$simulationsFolder <- "Models"` (stored verbatim, and
+    #'   relative to the project folder, resolved on the next read). Assigning any
+    #'   field sets the dirty bit. Changing
     #'   `definitionsFolder` redirects where the next [saveProject()] writes the
     #'   definition files; nothing moves on disk until that save. The
     #'   Excel-bridge sheet-name fields live in the separate `excel` group.
@@ -220,13 +240,30 @@ Project <- R6::R6Class(
     #'   empty in-memory project when called with no arguments.
     #'
     #' @param projectFilePath A string representing the path to the project
-    #'   JSON file.
-    initialize = function(projectFilePath = character()) {
+    #'   JSON file, or to the folder holding it (see [loadProject()] for how a
+    #'   folder is resolved).
+    #' @param sections Internal. An already-parsed section list to commit
+    #'   instead of reading one, as `.loadProjectTree()` returns. The Excel
+    #'   bridge parses a container it built in memory and needs the resulting
+    #'   object without a folder on disk; `projectFilePath` is ignored when this
+    #'   is given.
+    initialize = function(projectFilePath = character(), sections = NULL) {
       private$.validatedSinceMutation <- FALSE
+      # Committing a parsed section list is the load path's own step, so it is
+      # reached by handing the list to the constructor rather than by a caller
+      # poking at the private seam.
+      if (!is.null(sections)) {
+        private$.applyLoadedSections(sections)
+        return(invisible(self))
+      }
       if (is.character(projectFilePath) && length(projectFilePath) == 0L) {
         private$.projectDirPath <- NULL
         return(invisible(self))
       }
+      # A bad `projectFilePath` is a property of this call, not of a file
+      # (none has been touched yet), so it aborts here, attributed to this
+      # method, rather than inside `.loadProjectTree()` (whose own aborts are
+      # genuinely about the file and carry no such attribution).
       if (
         !is.character(projectFilePath) ||
           length(projectFilePath) != 1L ||
@@ -235,7 +272,7 @@ Project <- R6::R6Class(
       ) {
         cli::cli_abort(messages$invalidPathArgument())
       }
-      private$.readJson(projectFilePath)
+      private$.applyLoadedSections(.loadProjectTree(projectFilePath))
       invisible(self)
     },
 
@@ -251,44 +288,10 @@ Project <- R6::R6Class(
     # that free function, and pulled in here with `@inheritParams` so no
     # `@param` block is ever duplicated between a method and its free function.
 
-    #' @description Add scenarios. See [addScenario()], the primary entry point.
-    addScenario = function(
-      id,
-      modelFile,
-      individual = NULL,
-      population = NULL,
-      application = NULL,
-      parameterSets = NULL,
-      initialConditions = NULL,
-      outputPaths = NULL,
-      simulationTime = NULL,
-      simulationTimeUnit = "h",
-      steadyState = FALSE,
-      steadyStateTime = 1000,
-      steadyStateTimeUnit = "min",
-      overwriteFormulasInSS = FALSE,
-      readPopulationFromCSV = FALSE,
-      overwrite = FALSE
-    ) {
-      private$.impl(
-        .addScenario_impl,
-        id,
-        modelFile,
-        individual,
-        population,
-        application,
-        parameterSets,
-        initialConditions,
-        outputPaths,
-        simulationTime,
-        simulationTimeUnit,
-        steadyState,
-        steadyStateTime,
-        steadyStateTimeUnit,
-        overwriteFormulasInSS,
-        readPopulationFromCSV,
-        overwrite
-      )
+    #' @description Add scenarios. See [addScenario()], the primary entry point,
+    #'   for the fields a scenario carries and their defaults.
+    addScenario = function(...) {
+      private$.impl(.addScenario_impl, ...)
     },
 
     #' @description Remove scenarios. See [removeScenario()].
@@ -525,9 +528,9 @@ Project <- R6::R6Class(
     #' @description Add a parameter-identification task. See [addPITask()].
     addPITask = function(
       id,
-      scenarios,
-      parameters,
-      outputMappings,
+      scenarios = character(0),
+      parameters = list(),
+      outputMappings = list(),
       configuration = list(),
       overwrite = FALSE
     ) {
@@ -540,6 +543,13 @@ Project <- R6::R6Class(
         configuration,
         overwrite
       )
+    },
+
+    #' @description Modify a parameter-identification task's task-level fields.
+    #'   See [setPITask()], the primary entry point.
+    #' @param ... The supplied task-level fields, forwarded by [setPITask()].
+    setPITask = function(id, ...) {
+      private$.impl(.setPITask_impl, id, ...)
     },
 
     #' @description Remove parameter-identification tasks. See [removePITask()].
@@ -925,6 +935,10 @@ Project <- R6::R6Class(
           definitionsFolder = list(
             get = function() private$.definitionsFolder %||% "definitions",
             set = function(value) {
+              # Unlike its four siblings, this folder is one plain segment under
+              # the project directory, so it is guarded on write rather than
+              # contained on read; see `.validateDefinitionsFolder()`.
+              .validateDefinitionsFolder(value)
               private$.definitionsFolder <- value
               private$.invalidateContainer()
             }
@@ -1078,7 +1092,11 @@ Project <- R6::R6Class(
         )
       )
       if (length(items) > 0L) {
-        ospsuite.utils::ospPrintHeader("Paths")
+        # Say that the values are shown relative. Reading a folder through
+        # `project$paths` gives the absolute path, so without the label the print
+        # reads as the field's value and invites joining it onto
+        # `projectDirPath` a second time.
+        ospsuite.utils::ospPrintHeader("Paths (relative to the project folder)")
         ospsuite.utils::ospPrintItems(items)
       }
       invisible(self)
@@ -1172,7 +1190,15 @@ Project <- R6::R6Class(
     # `do.call(addIndividual, list(.call = x))`); it would match `.call` twice
     # and R aborts with "matched by multiple actual arguments".
     .impl = function(fn, ...) {
-      fn(self, private, ..., .call = rlang::caller_env(2))
+      # Resolve the attribution call as its own statement, before the collector
+      # wraps the dispatch: `caller_env(2)` is read from this method's frame
+      # either way, and naming it here keeps that independent of when the wrapped
+      # expression is forced.
+      call <- rlang::caller_env(2)
+      # One canonicalization collector per authoring call, so a call over
+      # non-canonical ids reports the definition's own id and every reference it
+      # names in a single warning instead of one per id.
+      .collectCanonicalizedRefs(fn(self, private, ..., .call = call))
     },
 
     # Read one definition section. Returns the plain backing list (NOT wrapped
@@ -1268,7 +1294,7 @@ Project <- R6::R6Class(
     # identity is preserved (the same R6 instance is mutated), so existing
     # handles stay valid.
     .reload = function() {
-      private$.readJson(private$.projectFilePath)
+      private$.applyLoadedSections(.loadProjectTree(private$.projectFilePath))
       invisible(self)
     },
 
@@ -1348,107 +1374,32 @@ Project <- R6::R6Class(
       resolved
     },
 
-    .readJson = function(jsonPath) {
-      jsonPath <- fs::path_abs(jsonPath)
-      if (!fs::file_exists(jsonPath)) {
-        cli::cli_abort(messages$fileNotFound(jsonPath))
-      }
-      jsonData <- tryCatch(
-        jsonlite::fromJSON(jsonPath, simplifyVector = FALSE),
-        error = function(e) {
-          cli::cli_abort(
-            "Failed to parse {.file {jsonPath}} as JSON.",
-            parent = e
-          )
-        }
-      )
-      if (!identical(jsonData$schemaVersion, "2.0")) {
-        cli::cli_abort(
-          "Unsupported schemaVersion: {.val {jsonData$schemaVersion %||% '<missing>'}}. Expected {.val 2.0}."
-        )
-      }
-      private$.schemaVersion <- jsonData$schemaVersion
-      private$.esqlabsRVersion <- jsonData$esqlabsRVersion
-      private$.name <- jsonData$name
-      private$.description <- jsonData$description
-      private$.definitionsFolder <- jsonData$definitionsFolder
-      private$.defaultSimulationRunOptions <- jsonData$defaultSimulationRunOptions
-      private$.projectFilePath <- jsonPath
-      private$.projectDirPath <- dirname(jsonPath)
+    # Commit a `.loadProjectTree()` snapshot to `private` in one
+    # unconditional pass: every field the parse produced is assigned, and the
+    # runtime-only state a tree carries no record of (session-added observed
+    # data and populations, the observed-data names cache, the dirty and
+    # validation flags) is reset to the just-loaded baseline. Shared by
+    # `initialize()` (constructing from a path) and `.reload()`, so load and
+    # reload commit identically.
+    .applyLoadedSections = function(sections) {
+      private$.projectFilePath <- sections$projectFilePath
+      private$.projectDirPath <- sections$projectDirPath
+      private$.schemaVersion <- sections$schemaVersion
+      private$.esqlabsRVersion <- sections$esqlabsRVersion
+      private$.name <- sections$name
+      private$.description <- sections$description
+      private$.definitionsFolder <- sections$definitionsFolder
+      private$.defaultSimulationRunOptions <- sections$defaultSimulationRunOptions
+      private$.filePathsData <- sections$filePathsData
+      private$.excelData <- sections$excelData
 
-      # The container separates two concerns: the live working folders
-      # (the `filePaths` block) the runtime reads, and the Excel-bridge
-      # sheet-name fields (the `excel` block) only the Excel bridge reads. A
-      # legacy project carries both sets in one flat `filePaths` block; split
-      # it on read so both on-disk shapes load (the field-to-block mapping is
-      # fixed, so the partition is deterministic). A new-shape project reads
-      # each block from its own key; any Excel field that still appears in
-      # `filePaths` (e.g. a hand-edited file) is routed to the Excel store too.
-      fp <- jsonData$filePaths %||% list()
-      excel <- jsonData$excel %||% list()
-      # A hand-edited `Project.json` could carry both the legacy `modelFolder`
-      # and the current `simulationsFolder` key. They map to the same slot, so
-      # rather than let iteration order decide, warn and drop the legacy key so
-      # the current `simulationsFolder` deterministically wins.
-      hasSimulationsCollision <- all(
-        c("modelFolder", "simulationsFolder") %in% names(fp)
-      )
-      if (hasSimulationsCollision) {
-        cli::cli_warn(messages$duplicateSimulationsFolderKey())
-        fp[["modelFolder"]] <- NULL
+      # The tree-owned sections are assigned by iterating the kind registry
+      # rather than named one by one, so a kind added to
+      # `.definitionTreeSpecs()` is committed here without a second edit. The
+      # container fields above are not sections and stay explicit.
+      for (kind in .definitionKindNames()) {
+        private[[private$.sectionField(kind)]] <- sections[[kind]]
       }
-      private$.filePathsData <- list()
-      private$.excelData <- list()
-      for (n in names(fp)) {
-        # Accept the pre-6.0.0 key `modelFolder` and store it under the current
-        # name `simulationsFolder`, so a legacy `Project.json` (or an
-        # Excel-imported project whose `Property` column still says
-        # `modelFolder`) resolves without a manual edit.
-        key <- if (identical(n, "modelFolder")) "simulationsFolder" else n
-        if (key %in% .excelFilePathFields) {
-          private$.excelData[[key]] <- list(value = fp[[n]], description = "")
-        } else {
-          private$.filePathsData[[key]] <- list(
-            value = fp[[n]],
-            description = ""
-          )
-        }
-      }
-      for (n in names(excel)) {
-        private$.excelData[[n]] <- list(value = excel[[n]], description = "")
-      }
-
-      # Every authored section is a definition tree under `definitions/<kind>/`; a
-      # single-file snapshot with no tree falls back to the inline section in
-      # `Project.json`. `.loadDefinitionTree()` resolves tree-vs-inline per kind and
-      # the kind's spec parses the raw records into the in-memory shape. Output
-      # paths load before scenarios because scenarios dereference their
-      # `outputPathIds` against the project-level `outputPaths` map. The
-      # `parameterSets` inline fallback merges any legacy three-section
-      # `Project.json` into the one map (a clash aborts the load).
-      private$.outputPaths <- private$.loadSection("outputPaths", jsonData)
-      private$.parameterSets <- private$.loadSection("parameterSets", jsonData)
-      private$.initialConditions <- private$.loadSection(
-        "initialConditions",
-        jsonData
-      )
-      private$.individuals <- private$.loadSection("individuals", jsonData)
-      private$.populations <- private$.loadSection("populations", jsonData)
-      private$.applications <- private$.loadSection("applications", jsonData)
-      private$.scenarios <- private$.loadSection("scenarios", jsonData)
-      private$.observedData <- private$.loadSection("observedData", jsonData)
-      # The plots concern is three independent top-level sections, each its own
-      # keyed kind: `dataCombined` (`definitions/data-combined/`), `plots`
-      # (`definitions/plots/`, the plot list), and `plotGrids`
-      # (`definitions/plot-grids/`). Each loads from its own tree (or its own
-      # top-level inline snapshot section as the fallback).
-      private$.dataCombined <- private$.loadSection("dataCombined", jsonData)
-      private$.plots <- private$.loadSection("plots", jsonData)
-      private$.plotGrids <- private$.loadSection("plotGrids", jsonData)
-      private$.parameterIdentification <- private$.loadSection(
-        "parameterIdentification",
-        jsonData
-      )
 
       # Session-only observed-data state (runtime programmatic DataSets added via
       # `addObservedData(project, <DataSet>)`, and the observed-data names cache)
@@ -1466,20 +1417,7 @@ Project <- R6::R6Class(
       private$.validatedSinceMutation <- FALSE
       # A freshly loaded project has no unsaved changes: memory equals the tree.
       private$.modified <- FALSE
-    },
-
-    # Load one section: read its `definitions/<kind>/` tree (or the inline
-    # snapshot fallback) and parse the raw records into the in-memory shape via
-    # the kind's spec.
-    .loadSection = function(kind, jsonData) {
-      spec <- .definitionTreeSpec(kind)
-      records <- .loadDefinitionTree(
-        private$.projectDirPath,
-        kind,
-        spec$inline(jsonData),
-        private$.definitionsFolder %||% "definitions"
-      )
-      spec$parse(records, self)
+      invisible(self)
     }
   )
 )

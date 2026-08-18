@@ -25,10 +25,13 @@
 # path-segment ids. Vectorized over `ids`.
 #
 # Rules (intersection of Windows + macOS + Linux filename rules):
+#   - fold Unicode compatibility variants (NFKC), so one character has one
+#     spelling
+#   - drop invisible formatting characters (zero-width space and friends)
 #   - lowercase
 #   - trim leading/trailing dots and spaces
-#   - replace each of `/ \ : * ? " < > |`, commas, whitespace (spaces, tabs),
-#     and control characters with `_`
+#   - replace each of `/ \ : * ? " < > |`, commas, any space, and control
+#     characters with `_`
 #   - an id that is empty or trims to nothing becomes `_`
 #   - a Windows reserved basename (CON, PRN, AUX, NUL, COM1-9, LPT1-9,
 #     case-insensitive) gets a `_` suffix so it is never a bare reserved name
@@ -52,14 +55,7 @@
 
   changed <- !is.na(ids) & ids != canonical
   if (any(changed)) {
-    rendered <- .canonicalizedIdBullets(ids[changed], canonical[changed])
-    cli::cli_warn(
-      c(
-        "Canonicalized {sum(changed)} id{?s} to a safe form:",
-        rendered$bullets
-      ),
-      .envir = rendered$envir
-    )
+    .reportCanonicalizedIds(ids[changed], canonical[changed])
   }
 
   # Two DISTINCT inputs that collapse to one canonical id are real ambiguity.
@@ -166,35 +162,79 @@
   )
   changed <- ref[keep] != canon
   if (any(changed)) {
-    # When a batch authoring call is collecting reference canonicalizations
-    # (`.collectCanonicalizedRefs()`), record each changed pair and stay
-    # silent so the caller emits one consolidated warning per call instead of
-    # one per definition. Outside a collector (a standalone call) warn immediately.
-    inputs <- ref[keep][changed]
-    canonicals <- canon[changed]
-    if (.canonRefSink$depth > 0L) {
-      .canonRefSink$inputs <- c(.canonRefSink$inputs, inputs)
-      .canonRefSink$canonicals <- c(.canonRefSink$canonicals, canonicals)
-    } else {
-      .warnCanonicalizedRefs(inputs, canonicals)
-    }
+    .reportCanonicalizedIds(ref[keep][changed], canon[changed])
   }
   out[keep] <- canon
   out
 }
 
-# Sink for collecting reference-canonicalization changes across the per-definition
-# builds of one vectorized authoring call, so the whole call emits a single
-# warning naming each `input -> canonical` change rather than one warning per
-# definition. `depth` guards re-entrancy; the inputs/canonicals accumulate the
-# changed pairs.
+# Canonicalize a vector-valued foreign-key argument (a scenario's
+# `parameterSets` / `initialConditions` / `outputPaths`) as it comes out of a
+# definition file, so a scenario's own written fields can be handed straight back
+# to an authoring function. Two normalizations get it there:
+#
+#   * A list of one-element strings flattens to the character vector the
+#     reference list is. The package reads a definition file with
+#     `jsonlite::fromJSON(simplifyVector = FALSE)`, which turns a JSON array of
+#     ids into `list("a", "b")`; the FK validators want the character vector.
+#     A list holding anything else is left alone for them to reject.
+#   * A zero-length value becomes `NULL`. A definition file carries `[]` for a
+#     scenario that references none, and `character(0)` (or `list()`) means
+#     exactly what `NULL` means here: there are none. That also keeps the record
+#     shape identical to the one `.parseScenarios()` builds from the same `[]`.
+#
+# @keywords internal
+# @noRd
+.canonicalizeVectorIdRef <- function(ref) {
+  if (is.list(ref) && all(vapply(ref, .isScalarString, logical(1)))) {
+    ref <- unlist(ref)
+  }
+  ref <- .canonicalizeIdRef(ref)
+  if (length(ref) == 0L) {
+    return(NULL)
+  }
+  ref
+}
+
+# Is `x` a single string? Used to decide whether a list of reference ids can be
+# flattened to a character vector.
+#
+# @keywords internal
+# @noRd
+.isScalarString <- function(x) {
+  is.character(x) && length(x) == 1L
+}
+
+# Sink for collecting id-canonicalization changes across one authoring call, so
+# the whole call emits a single warning naming each `input -> canonical` change
+# rather than one warning per `.canonicalizeId()` / `.canonicalizeIdRef()` call
+# it makes. Both sides feed it: a definition's own id and every reference the
+# definition names, so authoring over a project full of non-canonical ids emits
+# one warning per `add*()` rather than one per id. `depth` guards re-entrancy;
+# the inputs/canonicals accumulate the changed pairs.
 #
 # @keywords internal
 # @noRd
 .canonRefSink <- new.env(parent = emptyenv())
 .canonRefSink$depth <- 0L
+.canonRefSink$silent <- 0L
 .canonRefSink$inputs <- character()
 .canonRefSink$canonicals <- character()
+
+# Canonicalize without reporting the change. Some callers canonicalize only to
+# compare or to re-key, where the transform is an internal detail the user did
+# not ask for: re-keying a section read off disk, matching a reference against
+# the id it was filed under. `suppressWarnings()` does not cover those: inside a
+# collector the pair is recorded rather than warned, and would surface later,
+# from the flush, outside the suppressing frame.
+#
+# @keywords internal
+# @noRd
+.silentlyCanonicalized <- function(expr) {
+  .canonRefSink$silent <- .canonRefSink$silent + 1L
+  on.exit(.canonRefSink$silent <- .canonRefSink$silent - 1L, add = TRUE)
+  expr
+}
 
 # Run `expr` while collecting every reference canonicalization it triggers
 # (via `.canonicalizeIdRef()`), then emit ONE consolidated warning naming each
@@ -238,9 +278,12 @@
   )
   withCallingHandlers(
     {
-      result <- force(expr)
+      # Carry `expr`'s visibility through: the collector wraps whole authoring
+      # dispatches, which return the project invisibly, and returning the value
+      # plainly here would make every `add*()` / `remove*()` print it.
+      result <- withVisible(force(expr))
       flush()
-      result
+      if (result$visible) result$value else invisible(result$value)
     },
     error = function(cnd) {
       # Flush the collected canonicalizations before the error unwinds the
@@ -250,20 +293,42 @@
   )
 }
 
-# Render the consolidated reference-canonicalization warning. Shared by the
-# standalone `.canonicalizeIdRef()` path and the batch collector so both emit
-# byte-identical text.
+# Report a batch of `input -> canonical` changes. Inside a collector
+# (`.collectCanonicalizedRefs()`), record the pairs and stay silent so the whole
+# authoring call emits one consolidated warning; outside one (a standalone
+# `.canonicalizeId()` / `.canonicalizeIdRef()` call) warn immediately.
+#
+# @keywords internal
+# @noRd
+.reportCanonicalizedIds <- function(inputs, canonicals) {
+  if (.canonRefSink$silent > 0L) {
+    return(invisible(NULL))
+  }
+  if (.canonRefSink$depth > 0L) {
+    .canonRefSink$inputs <- c(.canonRefSink$inputs, inputs)
+    .canonRefSink$canonicals <- c(.canonRefSink$canonicals, canonicals)
+  } else {
+    .warnCanonicalizedRefs(inputs, canonicals)
+  }
+  invisible(NULL)
+}
+
+# Render the consolidated canonicalization warning. Shared by the standalone
+# paths and the batch collector so every route emits byte-identical text. The
+# wording says "id" for both a definition's own id and a reference, because one
+# consolidated warning can carry either kind and each bullet names the value it
+# rewrote.
 #
 # @keywords internal
 # @noRd
 .warnCanonicalizedRefs <- function(inputs, canonicals) {
-  # Same fix as `.canonicalizeId()`'s changed-id warning: build the bullet
-  # templates and their binding environment via `.canonicalizedIdBullets()`
-  # and glue-parse them in a single outer `cli_warn()` call.
+  # Build the bullet templates and their binding environment via
+  # `.canonicalizedIdBullets()` and glue-parse them in a single outer
+  # `cli_warn()` call, so an id containing `{` or `}` is never evaluated.
   rendered <- .canonicalizedIdBullets(inputs, canonicals)
   cli::cli_warn(
     c(
-      "Canonicalized {length(inputs)} referenced id{?s} to a safe form:",
+      "Canonicalized {length(inputs)} id{?s} to a safe form:",
       rendered$bullets
     ),
     .envir = rendered$envir
@@ -308,16 +373,32 @@
       {limit} bytes."
     ))
   }
-  out <- tolower(id)
+  # Fold compatibility variants onto their canonical twin (NFKC) before anything
+  # else, so two spellings of one character are one id: the micro sign U+00B5 and
+  # the Greek mu U+03BC, a full-width letter and its ASCII form, and every
+  # compatibility space (the no-break space U+00A0, the U+2000 block) which lands
+  # on a plain space the replacement below turns into `_`.
+  out <- stringi::stri_trans_nfkc(id)
+  # Drop the invisible formatting characters NFKC keeps: the zero-width space
+  # U+200B, zero-width joiner U+200D, word joiner U+2060, byte-order mark U+FEFF
+  # and soft hyphen U+00AD. They carry nothing in an id, and left in they make
+  # two ids that render identically into two definition files whose names render
+  # identically. Removed rather than replaced, so `Out<U+200B>Path` and
+  # `OutPath` become the same id and the collision check can speak up.
+  out <- gsub("\\p{Cf}", "", out, perl = TRUE)
+  out <- tolower(out)
   # Trim leading/trailing dots and spaces first (illegal as a trailing segment
   # on Windows, and a leading dot hides the file on Unix), so an edge space is
   # dropped rather than turned into an underscore by the replacement below.
   out <- gsub("^[. ]+|[. ]+$", "", out)
-  # Forbidden characters, control characters, and any interior comma or space
-  # -> underscore. A comma or space is legal on disk but not a safe id: it makes
-  # a fragile filename and breaks the comma-separated reference lists the Excel
-  # bridge parses, so canonicalize them out here at the single shared chokepoint.
-  out <- gsub("[/\\:*?\"<>|,[:space:][:cntrl:]]", "_", out)
+  # Forbidden characters, every separator (`\p{Z}`, i.e. any space) and every
+  # remaining control/unassigned character (`\p{C}`) -> underscore. A comma or
+  # space is legal on disk but not a safe id: it makes a fragile filename and
+  # breaks the comma-separated reference lists the Excel bridge parses, so
+  # canonicalize them out here at the single shared chokepoint. The Unicode
+  # property classes are what make this hold beyond ASCII, where `[[:space:]]`
+  # stops.
+  out <- gsub("[/\\\\:*?\"<>|,\\p{Z}\\p{C}]", "_", out, perl = TRUE)
   if (nchar(out) == 0L) {
     return("_")
   }
@@ -336,11 +417,17 @@
 # room for the `.json` suffix.
 .maxDefinitionIdBytes <- 250L
 
-# Find the candidate ids closest to `x` (typo-tolerant). Mirrors ESQmrg's
-# `nearest_match`: `utils::adist(ignore.case = TRUE)`, a distance threshold of
-# `max(1, min(3, ceiling(nchar(x) / 3)))`, returning at most the `n` closest.
+# Find the candidate ids closest to `x` (typo-tolerant): `utils::adist(ignore.case
+# = TRUE)` against a distance threshold, returning at most the `n` closest.
 # Returns `character(0)` when there are no candidates or nothing is within
 # threshold.
+#
+# The threshold is `max(1, ceiling(nchar(x) / 3))`: a third of the id may differ,
+# and nothing caps it. The cap is what the shapes that actually dangle ran into.
+# A dataCombined id and its `_mean` sibling differ by 5 characters and a
+# per-analyte variant by a 4-character suffix, so a fixed ceiling of 3 went
+# silent on exactly the references the hint exists for, while the proportional
+# rule reaches both (an 18-character id tolerates 6).
 #
 # @keywords internal
 # @noRd
@@ -355,7 +442,7 @@
   }
   d <- utils::adist(x, candidates, ignore.case = TRUE)[1, ]
   ord <- order(d)
-  thr <- max(1L, min(3L, ceiling(nchar(x) / 3)))
+  thr <- max(1L, ceiling(nchar(x) / 3))
   keep <- ord[d[ord] <= thr]
   candidates[utils::head(keep, n)]
 }

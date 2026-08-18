@@ -4,92 +4,33 @@
 \alias{setScenario}
 \title{Modify fields of an existing scenario}
 \usage{
-setScenario(
-  project,
-  id,
-  modelFile,
-  individual,
-  population,
-  application,
-  parameterSets,
-  initialConditions,
-  outputPaths,
-  simulationTime,
-  simulationTimeUnit,
-  steadyState,
-  steadyStateTime,
-  steadyStateTimeUnit,
-  overwriteFormulasInSS,
-  readPopulationFromCSV
-)
+setScenario(project, id, ...)
 }
 \arguments{
 \item{project}{A \code{Project} object.}
 
 \item{id}{Character vector. Ids of the scenarios to modify. Each is
 canonicalized the same way \code{\link[=addScenario]{addScenario()}} canonicalizes it, and must
-already exist in \code{scenarios} definitions.}
+already exist in \code{scenarios} definitions. A \code{Scenario} record is also
+accepted, and then supplies every field; see the section below.}
 
-\item{modelFile}{Character. Name of the \code{.pkml} model file (relative
-to model folder).}
-
-\item{individual}{Character or \code{NULL}. Id referencing
-\code{individuals} definitions.}
-
-\item{population}{Character or \code{NULL}. Id referencing
-\code{populations} definitions.}
-
-\item{application}{Character or \code{NULL}. Id of the application protocol
-referencing \code{applications} definitions.}
-
-\item{parameterSets}{Character vector or \code{NULL}. Parameter-set ids
-referencing \code{parameterSets} definitions. Applied whole to every scenario.}
-
-\item{initialConditions}{Character vector or \code{NULL}. Initial-condition set
-ids referencing \code{initialConditions} definitions. Applied whole to every
-scenario.}
-
-\item{outputPaths}{Character vector or \code{NULL}. Output-path ids referencing
-\code{outputPaths} definitions. Applied whole to every scenario.}
-
-\item{simulationTime}{The simulation time grid, or \code{NULL} (default) to keep
-the one the model file carries. One interval is a length-3 numeric vector
-\code{c(start, end, resolution)} or the same grid written as a string,
-\code{"start, end, resolution"}. Several intervals go in one string,
-\code{"start, end, resolution; start, end, resolution"}. To give a different
-grid per scenario, pass a list with one element (in either form) per id.}
-
-\item{simulationTimeUnit}{Character time-unit string. Omitting the argument
-leaves the current value untouched (there is no default; this is a
-partial update).}
-
-\item{steadyState}{Logical, whether to simulate steady state. Omitting the
-argument leaves the current value untouched (there is no default; this is
-a partial update).}
-
-\item{steadyStateTime}{Numeric steady-state time in \code{steadyStateTimeUnit}.
-Omitting the argument leaves the current value untouched (there is no
-default; this is a partial update).}
-
-\item{steadyStateTimeUnit}{Character unit for \code{steadyStateTime}. Omitting
-the argument leaves the current value untouched (there is no default; this
-is a partial update).}
-
-\item{overwriteFormulasInSS}{Logical, whether to overwrite formulas during
-steady state. Omitting the argument leaves the current value untouched
-(there is no default; this is a partial update).}
-
-\item{readPopulationFromCSV}{Logical, whether to load the population from
-CSV. Omitting the argument leaves the current value untouched (there is no
-default; this is a partial update).}
+\item{...}{Named fields to change. Accepted: \code{modelFile}, \code{individual},
+\code{population}, \code{application}, \code{parameterSets}, \code{initialConditions},
+\code{outputPaths}, \code{simulationTime}, \code{simulationTimeUnit}, \code{steadyState},
+\code{steadyStateTime}, \code{steadyStateTimeUnit}, \code{overwriteFormulasInSS},
+\code{readPopulationFromCSV}. Each takes the value \code{\link[=addScenario]{addScenario()}} documents for
+it, but has no default here: an omitted field is left untouched, a field
+passed as \code{NULL} is cleared. Scalar-per-definition fields recycle/align
+across \code{id}; \code{parameterSets}, \code{initialConditions} and \code{outputPaths} are
+applied whole. An unknown or unnamed field triggers an error.}
 }
 \value{
 The \code{project} object, invisibly.
 }
 \description{
 Changes one or more fields of the scenario identified by
-\code{id} and persists the change the same way \code{\link[=addScenario]{addScenario()}}
-does (write-through to the scenario definition). The section accessor
+\code{id}, in memory, the same way \code{\link[=addScenario]{addScenario()}} does; write the change to the
+scenario's definition file with \code{\link[=saveProject]{saveProject()}}. The section accessor
 \code{project$definitions$scenarios} is read-only, so this is the way to revise
 an existing scenario: read it if you need the current values
 (\code{sc <- project$definitions$scenarios[[name]]}), then pass the changes here
@@ -114,6 +55,11 @@ Details): a supplied scalar-per-definition field is recycled or aligned
 across \code{id}, and the whole-vector fields \code{parameterSets} /
 \code{initialConditions} / \code{outputPaths} are applied whole to every scenario. A
 field left unsupplied is untouched on every scenario.
+
+There is no \code{overwrite} argument: \code{setScenario()} always updates the
+scenario named by \code{id}, and passing the name is an error. Use
+\code{\link[=addScenario]{addScenario()}} for the \code{overwrite} that replaces a definition, and spell
+\code{overwriteFormulasInSS} out in full for the steady-state model option.
 }
 \details{
 The id argument sets \code{N}, the number of definitions to act on, and cannot
@@ -131,19 +77,65 @@ applied whole to every definition, never split positionally. To give a
 different multi-valued list per definition, pass a list of the same length
 as the id vector (one vector per definition).
 
+A zero-length reference list means "there are none", the same as \code{NULL}: a
+scenario's \code{parameterSets} / \code{initialConditions} / \code{outputPaths}, an
+application's \code{parameterSets}, and a PI task's \code{scenarios} all read it that
+way. A definition file writes \verb{[]} for a reference list a definition has none
+of, so the authoring functions take a definition's own written fields straight
+back, whether they were read as a character vector or as the list
+\code{jsonlite::fromJSON(simplifyVector = FALSE)} yields. The reference list of a
+plot grid (\code{plots}) must still be non-empty: a grid with no plots has nothing
+to render.
+
 The call is all-or-nothing: every definition is validated first, and if any
-fails the whole call aborts and writes nothing. On success all definitions
-are folded into the section and persisted in a single write-through.
+fails the whole call aborts and changes nothing. On success all definitions
+are folded into the section in one in-memory edit. Like every other edit, it
+reaches the project's files only when you call \code{\link[=saveProject]{saveProject()}}.
+
+An authoring function resolves every reference at the call that makes it: an
+\code{individual} or \code{parameterSets} id with no matching definition aborts naming
+the missing id, so a mistyped reference surfaces where it was typed rather
+than at the next run. Add the definitions in dependency order,
+\code{addIndividual()} before the \code{addScenario()} that references it. A scenario's
+reference errors also name the closest existing id, as \code{\link[=validateProject]{validateProject()}}
+does; the other sections name only the missing one.
+
+Reading a project instead defers: \code{\link[=loadProject]{loadProject()}} and
+\code{\link[=importProjectFromExcel]{importProjectFromExcel()}} accept a project whose references do not all
+resolve (each section is parsed on its own, so a legacy project with a
+genuine gap still imports) and leave \code{\link[=validateProject]{validateProject()}} to report every gap
+at once. The two timings are deliberate, not an inconsistency: eager where a
+single reference is being written by hand, deferred where a whole project is
+being read.
 
 Two families of authoring functions sit outside this id-sets-\code{N} rule.
 \code{addParameterEntry()} and \code{removeParameterEntry()} vectorize over parameter
 entries (parallel \code{containerPath} / \code{parameterName} / \code{value} / \code{units}
 vectors) within a single named set, a different axis than the id-sets-\code{N}
 rule described here. \code{renameScenario()}, \code{duplicateScenario()},
-\code{addObservedData()}, \code{addPITask()}, and the per-task
+\code{addObservedData()}, \code{addPITask()}, \code{setPITask()}, and the per-task
 parameter-identification sub-definition helpers act on a single definition per
 call.
 }
+\section{Passing a scenario back}{
+
+\code{id} also takes a \code{Scenario} record read out of a project
+(\code{project$definitions$scenarios[["sc"]]}), in which case the record supplies
+every field and no other field argument may be given. That is how a scenario
+is copied to another project, or revised by editing the record's own field
+and passing it back:
+
+\if{html}{\out{<div class="sourceCode">}}\preformatted{sc <- project$definitions$scenarios[["aciclovir_iv"]]
+sc$modelFile <- "Aciclovir_v2.pkml"
+addScenario(project, sc, overwrite = TRUE)
+}\if{html}{\out{</div>}}
+
+A field the record leaves unset is left to this function's default, exactly
+as an absent key in the scenario's definition file is. To clear an optional
+field, name the id and pass \code{NULL} for it
+(\code{setScenario(project, "sc", individual = NULL)}).
+}
+
 \seealso{
 Other scenario:
 \code{\link[=addScenario]{addScenario()}},

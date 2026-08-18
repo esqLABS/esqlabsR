@@ -89,7 +89,7 @@ addOutputPath <- function(project, id, path, overwrite = FALSE) {
 
 #' Remove one or more output paths from a Project
 #'
-#' Drop the output paths with matching ids in one write-through. Warns (and
+#' Drop the output paths with matching ids in one in-memory edit. Warns (and
 #' skips) any id not present, and warns when a removed output path is still
 #' referenced.
 #'
@@ -133,8 +133,8 @@ removeOutputPath <- function(project, id) {
 #' Change the literal path of one or more existing output paths
 #'
 #' @description Updates the OSPS-notation path string bound to existing
-#'   output-path ids and persists the change immediately to the output-path
-#'   definition (write-through). The ids themselves are not changed (use
+#'   output-path ids, in memory; write the change to the output-path definition
+#'   files with [saveProject()]. The ids themselves are not changed (use
 #'   [removeOutputPath()] + [addOutputPath()] to rename), so
 #'   every scenario that records these output paths keeps referencing them.
 #'   The `outputPaths` definitions accessor is read-only, so this is the way to
@@ -177,12 +177,7 @@ setOutputPath <- function(project, id, path) {
   perId <- .recycleField(path, n, "path")
   for (i in seq_len(n)) {
     one <- perId[[i]]
-    if (
-      !is.character(one) ||
-        length(one) != 1L ||
-        is.na(one) ||
-        nchar(one) == 0
-    ) {
+    if (!.isNonEmptyString(one)) {
       cli::cli_abort("{.arg path} must contain non-empty strings")
     }
   }

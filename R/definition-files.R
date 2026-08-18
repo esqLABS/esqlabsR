@@ -48,6 +48,33 @@
 # `validateProject()` / `createPlots()`, never a write-time abort. The derived
 # single-file snapshot inlines all three as three top-level JSON sections.
 
+# Guard a `definitionsFolder` value against escaping the project directory.
+# The field names one folder joined onto `projectDirPath`, and it drives the two
+# paths in the package that delete files: `.writeDefinitionTree()` owns its
+# `<kind>/` subfolders and removes every `.json` it did not just write, and
+# `.clearProjectArtifacts()` unlinks the whole folder recursively. A `Project.json`
+# is untrusted input (projects travel as shared folders), so a value carrying a
+# separator or `..` would aim both of those at a directory outside the project.
+# Because the field is a single path segment by design, the filename guard is a
+# tighter check than the containment one the working folders use, and there is no
+# `${VAR}` opt-out to honour. NULL means "unset" and resolves to the default.
+#
+# @keywords internal
+# @noRd
+.validateDefinitionsFolder <- function(
+  definitionsFolder,
+  call = rlang::caller_env()
+) {
+  if (!is.null(definitionsFolder)) {
+    .validateFilenameSegment(
+      definitionsFolder,
+      messages$invalidDefinitionsFolder,
+      call = call
+    )
+  }
+  invisible(NULL)
+}
+
 # Resolve the definitions root for a project directory. This is the
 # folder that holds the project's authored definition files, separated from the
 # referenced working files (`Models/`, `Data/`, `Populations/`, `Results/`)
@@ -260,7 +287,7 @@
       serialize = function(section, project) {
         .serializePITaskSet(section)
       },
-      parse = function(records, project) .parsePITasks(records),
+      parse = function(records, project) .parsePITasks(records, project),
       inline = function(jsonData) jsonData$parameterIdentification
     )
   )
@@ -273,7 +300,7 @@
 # is a one-place edit (the spec) rather than three lists kept in lockstep. Used
 # by the whole-tree writers, where write order does not matter (each kind writes
 # into its own folder independently); the load order that must resolve
-# `outputPaths` before scenarios is fixed separately in `Project$.readJson()`.
+# `outputPaths` before scenarios is fixed separately in `.loadProjectTree()`.
 #
 # @keywords internal
 # @noRd
@@ -1193,7 +1220,7 @@
       scenarios = as.list(task$scenarios),
       parameters = lapply(task$parameters, .piParameterToJson),
       outputMappings = lapply(task$outputMappings, .piOutputMappingToJson),
-      configuration = task$configuration
+      configuration = .piConfigurationToJson(task$configuration)
     )
   }
   out
@@ -1204,14 +1231,14 @@
 # pointing the user at the canonicalizing authoring API. The authoring API
 # (`add*` / `set*`) canonicalizes ids before they reach here, so a normal
 # mutation always passes; this catches a raw write-back
-# (`project$<section>[[key]] <- record`) that bypassed canonicalization. This
-# subsumes the old case-insensitive-collision guard: two keys differing only in
-# case cannot both be canonical, so they can never both reach the tree.
+# (`project$<section>[[key]] <- record`) that bypassed canonicalization. It also
+# covers case-insensitive collisions: two keys differing only in case cannot
+# both be canonical, so they can never both reach the tree.
 #
 # @keywords internal
 # @noRd
 .validateDefinitionTreeKey <- function(key, definitionLabel) {
-  canonical <- suppressWarnings(.canonicalizeId(key))
+  canonical <- .silentlyCanonicalized(.canonicalizeId(key))
   if (!identical(key, canonical)) {
     cli::cli_abort(c(
       "{definitionLabel} id {.val {key}} is not a canonical definition-file id.",
@@ -1329,10 +1356,9 @@
 # `containerPath` names the container file to write. `saveProject()` passes the
 # path the project was loaded from (`project$info$projectFilePath`), so a save
 # updates that file in place rather than writing a stray `Project.json` next to
-# a legacy-named container. `restoreProject()` passes a fresh
+# a legacy-named container. `restoreProject()` and the Excel import pass a fresh
 # `file.path(dir, "Project.json")` (the canonical name for a new tree project),
-# and the Excel import passes the container it just wrote, named after the
-# source workbook (`<xlsx-stem>.json`).
+# the import instead honouring its `projectFileName` when the caller sets one.
 #
 # @keywords internal
 # @noRd

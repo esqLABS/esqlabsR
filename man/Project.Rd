@@ -57,12 +57,17 @@ group: \code{simulationsFolder} (pkml simulation files, \code{Models/Simulations
 sitting under \verb{Models/} alongside the \code{Snapshots} folder for PK-Sim /
 MoBi snapshots), \code{dataFolder} (experimental data), \code{outputFolder}
 (results), \code{populationsFolder} (population CSVs loaded by
-\code{\link[=runScenarios]{runScenarios()}}), and \code{definitionsFolder} (the folder holding the
-definition files, default \code{"definitions"}).
-Read a field with \code{project$paths$simulationsFolder} (returned resolved
-against \code{projectDirPath}); write one with
-\code{project$paths$simulationsFolder <- "Models"} (stored verbatim, resolved
-on the next read). Assigning any field sets the dirty bit. Changing
+\code{\link[=runScenarios]{runScenarios()}}), and \code{definitionsFolder} (a single folder name
+directly under the project folder holding the definition files, default
+\code{"definitions"}).
+Read a field with \code{project$paths$simulationsFolder}: that returns the
+\strong{absolute} path, already resolved against \code{projectDirPath}, so it is
+ready to use as-is and must not be joined onto \code{projectDirPath} again
+(\code{project$print()} shows these folders relative to the project folder,
+which is a display choice, not the field's value). Write one with
+\code{project$paths$simulationsFolder <- "Models"} (stored verbatim, and
+relative to the project folder, resolved on the next read). Assigning any
+field sets the dirty bit. Changing
 \code{definitionsFolder} redirects where the next \code{\link[=saveProject]{saveProject()}} writes the
 definition files; nothing moves on disk until that save. The
 Excel-bridge sheet-name fields live in the separate \code{excel} group.}
@@ -156,6 +161,7 @@ differences, empty when everything is in sync). The same information
     \item \href{#method-Project-loadObservedData}{\code{Project$loadObservedData()}}
     \item \href{#method-Project-getObservedDataNames}{\code{Project$getObservedDataNames()}}
     \item \href{#method-Project-addPITask}{\code{Project$addPITask()}}
+    \item \href{#method-Project-setPITask}{\code{Project$setPITask()}}
     \item \href{#method-Project-removePITask}{\code{Project$removePITask()}}
     \item \href{#method-Project-addPIParameter}{\code{Project$addPIParameter()}}
     \item \href{#method-Project-removePIParameter}{\code{Project$removePIParameter()}}
@@ -179,14 +185,20 @@ differences, empty when everything is in sync). The same information
 empty in-memory project when called with no arguments.
   \subsection{Usage}{
     \if{html}{\out{<div class="r">}}
-    \preformatted{Project$new(projectFilePath = character())}
+    \preformatted{Project$new(projectFilePath = character(), sections = NULL)}
     \if{html}{\out{</div>}}
   }
   \subsection{Arguments}{
     \if{html}{\out{<div class="arguments">}}
     \describe{
       \item{\code{projectFilePath}}{A string representing the path to the project
-JSON file.}
+JSON file, or to the folder holding it (see \code{\link[=loadProject]{loadProject()}} for how a
+folder is resolved).}
+      \item{\code{sections}}{Internal. An already-parsed section list to commit
+instead of reading one, as \code{.loadProjectTree()} returns. The Excel
+bridge parses a container it built in memory and needs the resulting
+object without a folder on disk; \code{projectFilePath} is ignored when this
+is given.}
     }
     \if{html}{\out{</div>}}
   }
@@ -196,49 +208,19 @@ JSON file.}
 \if{html}{\out{<a id="method-Project-addScenario"></a>}}
 \if{latex}{\out{\hypertarget{method-Project-addScenario}{}}}
 \subsection{\code{Project$addScenario()}}{
-  Add scenarios. See \code{\link[=addScenario]{addScenario()}}, the primary entry point.
+  Add scenarios. See \code{\link[=addScenario]{addScenario()}}, the primary entry point,
+for the fields a scenario carries and their defaults.
   \subsection{Usage}{
     \if{html}{\out{<div class="r">}}
-    \preformatted{Project$addScenario(
-  id,
-  modelFile,
-  individual = NULL,
-  population = NULL,
-  application = NULL,
-  parameterSets = NULL,
-  initialConditions = NULL,
-  outputPaths = NULL,
-  simulationTime = NULL,
-  simulationTimeUnit = "h",
-  steadyState = FALSE,
-  steadyStateTime = 1000,
-  steadyStateTimeUnit = "min",
-  overwriteFormulasInSS = FALSE,
-  readPopulationFromCSV = FALSE,
-  overwrite = FALSE
-)}
+    \preformatted{Project$addScenario(...)}
     \if{html}{\out{</div>}}
   }
   \subsection{Arguments}{
     \if{html}{\out{<div class="arguments">}}
     \describe{
-      \item{\code{id}}{Character id (name) of the definition to add, modify, or remove.}
-      \item{\code{modelFile}}{Character name of the \code{.pkml} model file. See
-\code{\link[=addScenario]{addScenario()}}.}
-      \item{\code{individual, population, application}}{Character id (or \code{NULL}) of the
-individual / population / application a scenario references. See
-\code{\link[=addScenario]{addScenario()}}.}
-      \item{\code{parameterSets, initialConditions, outputPaths}}{Character vectors (or
-\code{NULL}) of definition ids a scenario references, or the target of an
-\verb{add*}/\verb{set*}/\verb{remove*} call. See \code{\link[=addScenario]{addScenario()}}.}
-      \item{\code{simulationTime, simulationTimeUnit}}{Simulation time specification and
-its unit. See \code{\link[=addScenario]{addScenario()}}.}
-      \item{\code{steadyState, steadyStateTime, steadyStateTimeUnit}}{Steady-state flag,
-time, and unit. See \code{\link[=addScenario]{addScenario()}}.}
-      \item{\code{overwriteFormulasInSS, readPopulationFromCSV}}{Logical scenario options.
-See \code{\link[=addScenario]{addScenario()}}.}
-      \item{\code{overwrite}}{Logical scalar controlling duplicate-collision behaviour of
-the \verb{add*} authoring methods. See \code{\link[=addParameterEntry]{addParameterEntry()}}, \code{\link[=addPITask]{addPITask()}}.}
+      \item{\code{...}}{Passed to the matching authoring free function (e.g. the
+partial-update fields of \code{\link[=setScenario]{setScenario()}} / \code{\link[=setIndividual]{setIndividual()}}, or the
+remaining arguments of \code{\link[=createScenariosFromPKML]{createScenariosFromPKML()}}).}
     }
     \if{html}{\out{</div>}}
   }
@@ -1013,9 +995,9 @@ the \verb{add*} authoring methods. See \code{\link[=addParameterEntry]{addParame
     \if{html}{\out{<div class="r">}}
     \preformatted{Project$addPITask(
   id,
-  scenarios,
-  parameters,
-  outputMappings,
+  scenarios = character(0),
+  parameters = list(),
+  outputMappings = list(),
   configuration = list(),
   overwrite = FALSE
 )}
@@ -1028,6 +1010,27 @@ the \verb{add*} authoring methods. See \code{\link[=addParameterEntry]{addParame
       \item{\code{scenarios, parameters, outputMappings, configuration}}{Parameter-identification task components. See \code{\link[=addPITask]{addPITask()}}.}
       \item{\code{overwrite}}{Logical scalar controlling duplicate-collision behaviour of
 the \verb{add*} authoring methods. See \code{\link[=addParameterEntry]{addParameterEntry()}}, \code{\link[=addPITask]{addPITask()}}.}
+    }
+    \if{html}{\out{</div>}}
+  }
+}
+
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Project-setPITask"></a>}}
+\if{latex}{\out{\hypertarget{method-Project-setPITask}{}}}
+\subsection{\code{Project$setPITask()}}{
+  Modify a parameter-identification task's task-level fields.
+See \code{\link[=setPITask]{setPITask()}}, the primary entry point.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{Project$setPITask(id, ...)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{id}}{Character id (name) of the definition to add, modify, or remove.}
+      \item{\code{...}}{The supplied task-level fields, forwarded by \code{\link[=setPITask]{setPITask()}}.}
     }
     \if{html}{\out{</div>}}
   }

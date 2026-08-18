@@ -1,18 +1,3 @@
-# The numeric-snapshot blocks below capture tabular output whose formatting
-# depends on print/precision options. Each such block sets them locally with
-# `withr::local_options()` (see `.localSnapshotOptions()`), so the state is
-# scoped to the test rather than leaked at file scope.
-.localSnapshotOptions <- function(.local_envir = parent.frame()) {
-  withr::local_options(
-    tibble.width = Inf,
-    pillar.min_title_chars = Inf,
-    pillar.sigfig = 4,
-    digits = 4,
-    scipen = 999,
-    .local_envir = .local_envir
-  )
-}
-
 # Single output path ------------------------------------------------------
 
 # Paths shared by the single-output-path tests below.
@@ -463,6 +448,26 @@ test_that("sensitivityCalculation fails with invalid `variationType`", {
   )
 })
 
+test_that("sensitivityCalculation errors on absolute variation with zero initial value", {
+  # A parameter whose initial value is 0 has no multiplicative scaling that
+  # reaches a non-zero absolute target, so the conversion to relative factors
+  # must be refused rather than yielding Inf/NaN.
+  localSim <- loadSimulation(simPath)
+  zeroParam <- "Aciclovir|Lipophilicity"
+  setParameterValuesByPath(zeroParam, 0, localSim)
+
+  expect_snapshot(
+    sensitivityCalculation(
+      simulation = localSim,
+      outputPaths = outputPaths,
+      parameterPaths = zeroParam,
+      variationRange = c(1, 2),
+      variationType = "absolute"
+    ),
+    error = TRUE
+  )
+})
+
 # Check SensitivityCalculation object -------------------------------------
 
 test_that("sensitivityCalculation returns a valid `SensitivityCalculation` object", {
@@ -720,7 +725,7 @@ test_that("sensitivityCalculation converts output to wide format as expected", {
     variationRange = c(0.1, 2, 20),
     pkParameters = NULL
   )
-  pkDataWide <- esqlabsR:::.convertToWide(results2$pkData)
+  pkDataWide <- .convertToWide(results2$pkData)
 
   expect_equal(dim(pkDataWide), c(12L, 58L))
   expect_equal(colnames(pkDataWide), pkDataWideColumns)
@@ -762,7 +767,7 @@ test_that("sensitivityCalculation converts output to wide format as expected wit
     names(ospsuite::StandardPKParameter),
     names(customFunctions)
   )
-  pkDataWide <- esqlabsR:::.convertToWide(results2$pkData, pkParameterNames)
+  pkDataWide <- .convertToWide(results2$pkData, pkParameterNames)
 
   expect_equal(dim(pkDataWide), c(12L, 66L))
   expect_equal(colnames(pkDataWide), pkDataWideColumns)

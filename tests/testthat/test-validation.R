@@ -174,7 +174,7 @@ test_that("validateProject() returns sections in canonical order", {
   expect_s3_class(results, "ValidationResults")
   expect_named(
     results,
-    c(names(esqlabsR:::.validationAdapters), "crossReferences")
+    c(names(.validationAdapters), "crossReferences")
   )
 })
 
@@ -190,7 +190,7 @@ test_that("validateProject() flips the validation flag when clean", {
 
 test_that("validateProject() leaves the validation flag FALSE on errors", {
   project <- .fakeProject(
-    scenarios = list(Bad = esqlabsR:::Scenario())
+    scenarios = list(Bad = Scenario())
   )
 
   results <- validateProject(project)
@@ -213,20 +213,20 @@ test_that(".markValidated and .markModified flip the flag", {
 # Section adapter: outputPaths ----
 
 test_that(".validateOutputPaths warns on empty section", {
-  result <- esqlabsR:::.validateOutputPaths(list())
+  result <- .validateOutputPaths(list())
   expect_length(result$warnings, 1)
   expect_length(result$critical_errors, 0)
 })
 
 test_that(".validateOutputPaths flags duplicate ids and empty values", {
   paths <- c(a = "X|y", a = "X|y", b = "")
-  result <- esqlabsR:::.validateOutputPaths(paths)
+  result <- .validateOutputPaths(paths)
   expect_gte(length(result$critical_errors), 2)
 })
 
 test_that(".validateOutputPaths warns when ids collide on a path", {
   paths <- c(a = "X|y", b = "X|y")
-  result <- esqlabsR:::.validateOutputPaths(paths)
+  result <- .validateOutputPaths(paths)
   expect_length(result$critical_errors, 0)
   expect_length(result$warnings, 1)
 })
@@ -234,28 +234,28 @@ test_that(".validateOutputPaths warns when ids collide on a path", {
 # Section adapter: scenarios ----
 
 test_that(".validateScenarios flags missing modelFile and bad simulationType", {
-  sc <- esqlabsR:::Scenario()
+  sc <- Scenario()
   sc$modelFile <- ""
-  result <- esqlabsR:::.validateScenarios(list(s1 = sc))
+  result <- .validateScenarios(list(s1 = sc))
   expect_gte(length(result$critical_errors), 1)
 })
 
 test_that(".validateScenarios flags Population scenario without populationId", {
-  sc <- esqlabsR:::Scenario()
+  sc <- Scenario()
   sc$modelFile <- "model.pkml"
   sc$simulationType <- "Population"
   sc$populationId <- ""
-  result <- esqlabsR:::.validateScenarios(list(s1 = sc))
+  result <- .validateScenarios(list(s1 = sc))
   msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
   expect_match(msgs, "populationId", all = FALSE)
 })
 
 test_that(".validateScenarios warns when modelFile does not exist on disk", {
-  sc <- esqlabsR:::Scenario(
+  sc <- Scenario(
     modelFile = "missing.pkml",
     simulationType = "Individual"
   )
-  result <- esqlabsR:::.validateScenarios(
+  result <- .validateScenarios(
     list(s1 = sc),
     simulationsFolder = withr::local_tempdir()
   )
@@ -266,11 +266,11 @@ test_that(".validateScenarios warns when modelFile does not exist on disk", {
 test_that(".validateScenarios passes when modelFile exists on disk", {
   dir <- withr::local_tempdir()
   file.create(file.path(dir, "model.pkml"))
-  sc <- esqlabsR:::Scenario(
+  sc <- Scenario(
     modelFile = "model.pkml",
     simulationType = "Individual"
   )
-  result <- esqlabsR:::.validateScenarios(
+  result <- .validateScenarios(
     list(s1 = sc),
     simulationsFolder = dir
   )
@@ -285,11 +285,11 @@ test_that(".validateScenarios flags a modelFile that escapes the simulations fol
   # `validateProject()` must agree with the run-time containment check rather
   # than give false assurance: an escaping relative `modelFile` is a critical
   # error here, not a silent pass.
-  sc <- esqlabsR:::Scenario(
+  sc <- Scenario(
     modelFile = "../../../../etc/passwd",
     simulationType = "Individual"
   )
-  result <- esqlabsR:::.validateScenarios(
+  result <- .validateScenarios(
     list(s1 = sc),
     simulationsFolder = withr::local_tempdir()
   )
@@ -300,8 +300,82 @@ test_that(".validateScenarios flags a modelFile that escapes the simulations fol
   expect_length(containment, 1)
 })
 
+# A population read from a csv file used to be the one scenario input nothing
+# validated: the report showed 0 critical errors and the scenario then died at
+# run time on a backend exception (#1213).
+test_that(".validateScenarios warns when a scenario's population csv is absent", {
+  dir <- withr::local_tempdir()
+  file.create(file.path(dir, "model.pkml"))
+  sc <- Scenario(
+    modelFile = "model.pkml",
+    simulationType = "Population",
+    populationId = "testpopulation"
+  )
+  sc$readPopulationFromCSV <- TRUE
+
+  result <- .validateScenarios(
+    list(s1 = sc),
+    simulationsFolder = dir,
+    populationsFolder = withr::local_tempdir(),
+    # A demographics-spec entry: the scenario's own flag is what makes it a csv
+    # read, which is the shape every imported legacy project has.
+    populations = list(testpopulation = list(species = "Human"))
+  )
+
+  msgs <- vapply(result$warnings, \(w) w$message, character(1))
+  expect_match(msgs, "testpopulation\\.csv", all = FALSE)
+})
+
+test_that(".validateScenarios passes when the population csv is on disk", {
+  dir <- withr::local_tempdir()
+  file.create(file.path(dir, "model.pkml"))
+  populations <- withr::local_tempdir()
+  # Mixed case, as an author spells it, against the canonical lowercase id.
+  file.create(file.path(populations, "TestPopulation.csv"))
+  sc <- Scenario(
+    modelFile = "model.pkml",
+    simulationType = "Population",
+    populationId = "testpopulation"
+  )
+  sc$readPopulationFromCSV <- TRUE
+
+  result <- .validateScenarios(
+    list(s1 = sc),
+    simulationsFolder = dir,
+    populationsFolder = populations,
+    populations = list(testpopulation = list(species = "Human"))
+  )
+
+  expect_length(
+    Filter(\(w) w$category == "File Not Found", result$warnings),
+    0
+  )
+})
+
+test_that(".validateScenarios checks the file a csv population entry names", {
+  dir <- withr::local_tempdir()
+  file.create(file.path(dir, "model.pkml"))
+  sc <- Scenario(
+    modelFile = "model.pkml",
+    simulationType = "Population",
+    populationId = "frozen"
+  )
+
+  # No scenario flag: the entry's own `type` is what makes this a csv read, and
+  # the file it names is the one checked (not a derived `<id>.csv`).
+  result <- .validateScenarios(
+    list(s1 = sc),
+    simulationsFolder = dir,
+    populationsFolder = withr::local_tempdir(),
+    populations = list(frozen = list(type = "csv", file = "frozen.csv"))
+  )
+
+  msgs <- vapply(result$warnings, \(w) w$message, character(1))
+  expect_match(msgs, "frozen\\.csv", all = FALSE)
+})
+
 test_that(".validateIndividuals warns on empty section", {
-  result <- esqlabsR:::.validateIndividuals(list())
+  result <- .validateIndividuals(list())
   expect_length(result$warnings, 1)
   expect_length(result$critical_errors, 0)
 })
@@ -310,7 +384,7 @@ test_that(".validateIndividuals catches a missing required field", {
   individuals <- list(
     Bad = list()
   )
-  result <- esqlabsR:::.validateIndividuals(individuals)
+  result <- .validateIndividuals(individuals)
   msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
   expect_match(msgs, "species", all = FALSE)
 })
@@ -321,7 +395,7 @@ test_that(".validateIndividuals does not flag an absent gender", {
   individuals <- list(
     Dog = list(species = "Dog", weight = 10)
   )
-  result <- esqlabsR:::.validateIndividuals(individuals)
+  result <- .validateIndividuals(individuals)
   expect_length(result$critical_errors, 0)
 })
 
@@ -332,7 +406,7 @@ test_that(".validateIndividuals flags a present but invalid gender", {
     Bad = list(species = "Human", gender = "banana"),
     Blank = list(species = "Human", gender = "")
   )
-  result <- esqlabsR:::.validateIndividuals(individuals)
+  result <- .validateIndividuals(individuals)
   msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
   expect_length(result$critical_errors, 2)
   expect_match(msgs, "gender", all = TRUE)
@@ -348,7 +422,7 @@ test_that(".validatePopulations warns on inverted ranges", {
       ageMax = 30
     )
   )
-  result <- esqlabsR:::.validatePopulations(populations)
+  result <- .validatePopulations(populations)
   msgs <- vapply(result$warnings, \(w) w$message, character(1))
   expect_match(msgs, "ageMin > ageMax", all = FALSE)
 })
@@ -368,7 +442,7 @@ test_that(".validateParameterSets flags empty paths in a real set", {
       list(containerPath = "", parameterName = "", value = 1, units = NULL)
     )
   )
-  result <- esqlabsR:::.validateParameterSets(parameterSets, "parameterSets")
+  result <- .validateParameterSets(parameterSets, "parameterSets")
   msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
   expect_match(msgs, "empty parameter paths", all = FALSE)
 })
@@ -379,7 +453,7 @@ test_that(".validateParameterSets flags empty containerPath with valid parameter
       list(containerPath = "", parameterName = "BMI", value = 1, units = NULL)
     )
   )
-  result <- esqlabsR:::.validateParameterSets(parameterSets, "parameterSets")
+  result <- .validateParameterSets(parameterSets, "parameterSets")
   msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
   expect_match(msgs, "empty parameter paths", all = FALSE)
 })
@@ -395,7 +469,7 @@ test_that(".validateParameterSets flags non-numeric values in a real set", {
       )
     )
   )
-  result <- esqlabsR:::.validateParameterSets(parameterSets, "parameterSets")
+  result <- .validateParameterSets(parameterSets, "parameterSets")
   msgs <- vapply(result$warnings, \(w) w$message, character(1))
   expect_match(msgs, "non-numeric value", all = FALSE)
 })
@@ -416,8 +490,77 @@ test_that(".validateParameterSets flags a bad set in the unified section", {
     indiv1_default = badEntry,
     aciclovir_iv_250mg_default = badEntry
   )
-  result <- esqlabsR:::.validateParameterSets(parameterSets, "parameterSets")
+  result <- .validateParameterSets(parameterSets, "parameterSets")
   expect_gte(length(result$critical_errors), 1)
+})
+
+test_that(".validateParameterSets reports a non-scalar path field rather than aborting", {
+  # A hand-edited `"containerPath": []` or `"parameterName": ["p", "q"]` is
+  # exactly the input this section polices, so it has to be reported, not abort
+  # the run.
+  parameterSets <- list(
+    global = list(
+      list(containerPath = list(), parameterName = "p", value = 1),
+      list(containerPath = "Organism", parameterName = c("p", "q"), value = 2)
+    )
+  )
+  result <- .validateParameterSets(parameterSets, "parameterSets")
+  msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
+  expect_match(msgs, "empty parameter paths", all = FALSE)
+})
+
+test_that(".validateParameterSets reports a bare-string entry rather than aborting", {
+  # `"parameterSets": {"global": ["Organism|Liver|Volume"]}` parses to entries
+  # that are strings, not records, so they carry no field to read.
+  parameterSets <- list(global = list("Organism|Liver|Volume"))
+  result <- .validateParameterSets(parameterSets, "parameterSets")
+  msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
+  expect_match(msgs, "empty parameter paths", all = FALSE)
+})
+
+test_that(".validateParameterSets does not read path-less entries as duplicates", {
+  parameterSets <- list(
+    global = list(list(value = 1), list(value = 2))
+  )
+  result <- .validateParameterSets(parameterSets, "parameterSets")
+  msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
+  expect_match(msgs, "empty parameter paths", all = FALSE)
+  # The missing paths are already reported above; calling them duplicates of
+  # each other adds a second finding pointing at a path that does not exist.
+  expect_length(result$warnings, 0)
+})
+
+test_that(".validateParameterSets reports a JSON null path, not the text \"NULL\"", {
+  # `[null]` is a one-element array holding nothing, so it survives a length
+  # check; `as.character()` then renders it as the string "NULL", which is
+  # neither `NA` nor blank and would sail past the missing-path check, leaving
+  # the bogus path "NULL|Dose" to flow onward. Parsed the way the definitions
+  # tree is read rather than hand-built, so the shape under test is the real one.
+  set <- jsonlite::fromJSON(
+    '[{"containerPath": [null], "parameterName": "Dose", "value": 1}]',
+    simplifyVector = FALSE
+  )
+  result <- .validateParameterSets(list(global = set), "parameterSets")
+  msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
+  expect_match(msgs, "empty parameter paths", all = FALSE)
+})
+
+test_that(".validateParameterSets reports every non-string path shape", {
+  # Only a single string is a usable path. Each of these is one set of its own,
+  # so all of them have to be reported, not just the first.
+  sets <- jsonlite::fromJSON(
+    '{
+      "nullInArray": [{"containerPath": [null], "parameterName": "Dose"}],
+      "boolean": [{"containerPath": true, "parameterName": "Dose"}],
+      "number": [{"containerPath": 42, "parameterName": "Dose"}],
+      "object": [{"containerPath": {"a": {"b": 1}}, "parameterName": "Dose"}],
+      "stringInArray": [{"containerPath": ["Organism"], "parameterName": "Dose"}]
+    }',
+    simplifyVector = FALSE
+  )
+  result <- .validateParameterSets(sets, "parameterSets")
+  msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
+  expect_length(grep("empty parameter paths", msgs), length(sets))
 })
 
 test_that("validateProject() flags an invalid parameter set in the real shape", {
@@ -440,10 +583,142 @@ test_that("validateProject() flags an invalid parameter set in the real shape", 
   expect_true(isAnyCriticalErrors(results))
 })
 
+# Section adapter: initial conditions ----
+
+test_that(".validateInitialConditions warns on an empty section", {
+  result <- .validateInitialConditions(list(), "initialConditions")
+  expect_s3_class(result, "validationResult")
+  expect_length(result$critical_errors, 0)
+  expect_length(result$warnings, 1)
+})
+
+test_that(".validateInitialConditions flags an empty molecule path", {
+  initialConditions <- list(
+    presysset = list(list(path = "", value = 1, unit = "µmol"))
+  )
+  result <- .validateInitialConditions(initialConditions, "initialConditions")
+  msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
+  expect_match(msgs, "empty molecule paths", all = FALSE)
+})
+
+test_that(".validateInitialConditions flags a missing unit", {
+  # A blank unit is critical, not cosmetic: `setQuantityValuesByPath()` rejects
+  # it, so the set is unusable at run time.
+  initialConditions <- list(
+    presysset = list(list(path = "Organism|A|Drug", value = 1, unit = NULL))
+  )
+  result <- .validateInitialConditions(initialConditions, "initialConditions")
+  msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
+  expect_match(msgs, "without a unit", all = FALSE)
+})
+
+test_that(".validateInitialConditions warns on a non-numeric value", {
+  initialConditions <- list(
+    presysset = list(list(
+      path = "Organism|A|Drug",
+      value = "abc",
+      unit = "µmol"
+    ))
+  )
+  result <- .validateInitialConditions(initialConditions, "initialConditions")
+  msgs <- vapply(result$warnings, \(w) w$message, character(1))
+  expect_match(msgs, "non-numeric value", all = FALSE)
+})
+
+test_that(".validateInitialConditions warns on a duplicated molecule path", {
+  initialConditions <- list(
+    presysset = list(
+      list(path = "Organism|A|Drug", value = 1, unit = "µmol"),
+      list(path = "Organism|A|Drug", value = 2, unit = "µmol")
+    )
+  )
+  result <- .validateInitialConditions(initialConditions, "initialConditions")
+  msgs <- vapply(result$warnings, \(w) w$message, character(1))
+  expect_match(msgs, "Duplicate molecule paths", all = FALSE)
+})
+
+test_that(".validateInitialConditions passes a well-formed set", {
+  initialConditions <- list(
+    presysset = list(list(path = "Organism|A|Drug", value = 1, unit = "µmol"))
+  )
+  result <- .validateInitialConditions(initialConditions, "initialConditions")
+  expect_length(result$critical_errors, 0)
+  expect_length(result$warnings, 0)
+})
+
+test_that(".validateInitialConditions reports a non-scalar unit rather than aborting", {
+  # A hand-edited `"unit": []` or `"unit": ["mg", "g"]` is exactly the input
+  # this section polices, so it has to be reported, not abort the run.
+  initialConditions <- list(
+    presysset = list(
+      list(path = "Organism|A|Drug", value = 1, unit = list()),
+      list(path = "Organism|B|Drug", value = 2, unit = c("mg", "g"))
+    )
+  )
+  result <- .validateInitialConditions(initialConditions, "initialConditions")
+  msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
+  expect_match(msgs, "without a unit", all = FALSE)
+})
+
+test_that(".validateInitialConditions reports a bare-string entry rather than aborting", {
+  # `"initialConditions": ["Organism|Liver|Aciclovir"]` parses to entries that
+  # are strings, not records, so they carry no field to read.
+  initialConditions <- list(presysset = list("Organism|Liver|Aciclovir"))
+  result <- .validateInitialConditions(initialConditions, "initialConditions")
+  msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
+  expect_match(msgs, "empty molecule paths", all = FALSE)
+})
+
+test_that(".validateInitialConditions reports a JSON null path, not the text \"NULL\"", {
+  # The same field read backs both sections, so `"path": [null]` reading as the
+  # string "NULL" hides a broken initial-condition set the same way.
+  set <- jsonlite::fromJSON(
+    '[{"path": [null], "value": 1, "unit": "µmol"}]',
+    simplifyVector = FALSE
+  )
+  result <- .validateInitialConditions(
+    list(presysset = set),
+    "initialConditions"
+  )
+  msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
+  expect_match(msgs, "empty molecule paths", all = FALSE)
+})
+
+test_that(".validateInitialConditions does not read path-less entries as duplicates", {
+  initialConditions <- list(
+    presysset = list(
+      list(value = 1, unit = "µmol"),
+      list(value = 2, unit = "µmol")
+    )
+  )
+  result <- .validateInitialConditions(initialConditions, "initialConditions")
+  msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
+  expect_match(msgs, "empty molecule paths", all = FALSE)
+  # The missing paths are already reported above; calling them duplicates of
+  # each other adds a second finding pointing at a path that does not exist.
+  expect_length(result$warnings, 0)
+})
+
+test_that("validateProject() flags an invalid initial-condition set", {
+  # The section reached `validateProject()` unchecked until it had an adapter;
+  # this is the whole-project path the hand-edited and Excel-imported cases
+  # arrive through.
+  project <- .fakeProject(
+    initialConditions = list(
+      presysset = .asInitialConditionSet(
+        list(list(path = "", value = 1, unit = ""))
+      )
+    )
+  )
+  results <- suppressWarnings(validateProject(project))
+  expect_true(isAnyCriticalErrors(results))
+  expect_true("initialConditions" %in% names(results))
+})
+
 # Section adapter: applications ----
 
 test_that(".validateApplications warns on empty section but emits no critical errors", {
-  result <- esqlabsR:::.validateApplications(list())
+  result <- .validateApplications(list())
   expect_s3_class(result, "validationResult")
   expect_length(result$critical_errors, 0)
   expect_length(result$warnings, 1)
@@ -457,7 +732,7 @@ test_that(".validateObservedData flags unknown type and missing required fields"
     list(type = "excel"),
     list()
   )
-  result <- esqlabsR:::.validateObservedData(observedData, NULL)
+  result <- .validateObservedData(observedData, NULL)
   msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
   expect_match(msgs, "invalid type 'weird'", all = FALSE)
   expect_match(msgs, "file", all = FALSE)
@@ -469,7 +744,7 @@ test_that(".validateObservedData warns on missing files when dataFolder set", {
   observedData <- list(
     list(type = "pkml", file = "missing.pkml")
   )
-  result <- esqlabsR:::.validateObservedData(observedData, tmp)
+  result <- .validateObservedData(observedData, tmp)
   msgs <- vapply(result$warnings, \(w) w$message, character(1))
   expect_match(msgs, "non-existent file", all = FALSE)
 })
@@ -490,8 +765,8 @@ test_that("both observed-data validators require a present, non-empty sheets on 
   )
 
   # .validateObservedData (project validator): a critical error naming `sheets`.
-  missingResult <- esqlabsR:::.validateObservedData(list(missingSheets), NULL)
-  emptyResult <- esqlabsR:::.validateObservedData(list(emptySheets), NULL)
+  missingResult <- .validateObservedData(list(missingSheets), NULL)
+  emptyResult <- .validateObservedData(list(emptySheets), NULL)
   missingMsgs <- vapply(
     missingResult$critical_errors,
     \(e) e$message,
@@ -504,11 +779,11 @@ test_that("both observed-data validators require a present, non-empty sheets on 
   # .validateObservedDataEntry (load/add guard): aborts naming `sheets`.
   # Before unification an empty-but-present `sheets` slipped through here.
   expect_error(
-    esqlabsR:::.validateObservedDataEntry(missingSheets, 1L),
+    .validateObservedDataEntry(missingSheets, 1L),
     "sheets"
   )
   expect_error(
-    esqlabsR:::.validateObservedDataEntry(emptySheets, 1L),
+    .validateObservedDataEntry(emptySheets, 1L),
     "sheets"
   )
 })
@@ -520,15 +795,15 @@ test_that("both observed-data validators accept a well-formed excel entry", {
     importerConfiguration = "c.xml",
     sheets = list("Sheet1")
   )
-  result <- esqlabsR:::.validateObservedData(list(good), NULL)
+  result <- .validateObservedData(list(good), NULL)
   expect_length(result$critical_errors, 0)
-  expect_true(esqlabsR:::.validateObservedDataEntry(good, 1L))
+  expect_true(.validateObservedDataEntry(good, 1L))
 })
 
 # Section adapter: plots ----
 
 test_that(".validatePlots warns when project has no plots sections", {
-  result <- esqlabsR:::.validatePlots(NULL)
+  result <- .validatePlots(NULL)
   expect_length(result$warnings, 1)
   expect_length(result$critical_errors, 0)
 })
@@ -552,7 +827,7 @@ test_that(".validatePlots flags duplicate plotIds and unknown dataCombinedId", {
       plotType = "individual"
     )
   )
-  result <- esqlabsR:::.validatePlots(dataCombined, plotConfig, list())
+  result <- .validatePlots(dataCombined, plotConfig, list())
   msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
   expect_match(msgs, "Duplicate plotId", all = FALSE)
   expect_match(msgs, "unknown dataCombinedId", all = FALSE)
@@ -581,7 +856,7 @@ test_that(".validatePlots warns on plotType-irrelevant fields (non-blocking)", {
       foldDistance = "2"
     )
   )
-  result <- esqlabsR:::.validatePlots(dataCombined, plotConfig, list())
+  result <- .validatePlots(dataCombined, plotConfig, list())
 
   expect_length(result$critical_errors, 0)
   msgs <- vapply(result$warnings, \(w) w$message, character(1))
@@ -612,7 +887,7 @@ test_that(".validatePlots does not warn when the field matches its plotType", {
       foldDistance = "2"
     )
   )
-  result <- esqlabsR:::.validatePlots(dataCombined, plotConfig, list())
+  result <- .validatePlots(dataCombined, plotConfig, list())
 
   expect_length(result$critical_errors, 0)
   irrelevant <- Filter(
@@ -625,11 +900,11 @@ test_that(".validatePlots does not warn when the field matches its plotType", {
 # Cross-references ----
 
 test_that(".validateCrossReferences flags scenario referencing missing individualId", {
-  sc <- esqlabsR:::Scenario()
+  sc <- Scenario()
   sc$modelFile <- "x.pkml"
   sc$individualId <- "Ghost"
   project <- .fakeProject(scenarios = list(s1 = sc))
-  result <- esqlabsR:::.validateCrossReferences(project, list())
+  result <- .validateCrossReferences(project)
   msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
   expect_match(msgs, "undefined individual 'Ghost'", all = FALSE)
 })
@@ -653,7 +928,7 @@ test_that(".validateCrossReferences flags individual referencing unknown paramet
       ))
     )
   )
-  result <- esqlabsR:::.validateCrossReferences(project, list())
+  result <- .validateCrossReferences(project)
   msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
   expect_match(msgs, "undefined parameterSets", all = FALSE)
 })
@@ -677,7 +952,7 @@ test_that(".validateCrossReferences suggests a near match for an individual's pa
       ))
     )
   )
-  result <- esqlabsR:::.validateCrossReferences(project, list())
+  result <- .validateCrossReferences(project)
   msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
   expect_snapshot(cat(msgs[grepl("Individual", msgs)], sep = "\n"))
 })
@@ -697,35 +972,35 @@ test_that(".validateCrossReferences suggests a near match for an application's p
       ))
     )
   )
-  result <- esqlabsR:::.validateCrossReferences(project, list())
+  result <- .validateCrossReferences(project)
   msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
   expect_snapshot(cat(msgs[grepl("Application", msgs)], sep = "\n"))
 })
 
 test_that(".validateCrossReferences flags a scenario's dangling initialConditions", {
-  sc <- esqlabsR:::Scenario()
+  sc <- Scenario()
   sc$modelFile <- "x.pkml"
   sc$initialConditions <- "nope"
   project <- .fakeProject(
     scenarios = list(s1 = sc),
-    initialConditions = list(real = esqlabsR:::.asInitialConditionSet(list()))
+    initialConditions = list(real = .asInitialConditionSet(list()))
   )
-  result <- esqlabsR:::.validateCrossReferences(project, list())
+  result <- .validateCrossReferences(project)
   msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
   expect_match(msgs, "undefined initial-condition sets", all = FALSE)
 })
 
 test_that(".validateCrossReferences suggests a near match for a scenario's initialConditions", {
-  sc <- esqlabsR:::Scenario()
+  sc <- Scenario()
   sc$modelFile <- "x.pkml"
   sc$initialConditions <- "presysset2"
   project <- .fakeProject(
     scenarios = list(s1 = sc),
     initialConditions = list(
-      presysset1 = esqlabsR:::.asInitialConditionSet(list())
+      presysset1 = .asInitialConditionSet(list())
     )
   )
-  result <- esqlabsR:::.validateCrossReferences(project, list())
+  result <- .validateCrossReferences(project)
   msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
   expect_match(
     msgs[grepl("initial-condition", msgs)],
@@ -734,14 +1009,14 @@ test_that(".validateCrossReferences suggests a near match for a scenario's initi
 })
 
 test_that(".validateCrossReferences passes a valid scenario initialConditions ref", {
-  sc <- esqlabsR:::Scenario()
+  sc <- Scenario()
   sc$modelFile <- "x.pkml"
   sc$initialConditions <- "real"
   project <- .fakeProject(
     scenarios = list(s1 = sc),
-    initialConditions = list(real = esqlabsR:::.asInitialConditionSet(list()))
+    initialConditions = list(real = .asInitialConditionSet(list()))
   )
-  result <- esqlabsR:::.validateCrossReferences(project, list())
+  result <- .validateCrossReferences(project)
   expect_length(result$critical_errors, 0)
 })
 
@@ -750,7 +1025,7 @@ test_that(".validateCrossReferences resolves individuals/populations as named li
     I1 = list(species = "Human", gender = "MALE")
   )
   populations <- list(P1 = list(species = "Human"))
-  sc <- esqlabsR:::Scenario()
+  sc <- Scenario()
   sc$modelFile <- "x.pkml"
   sc$individualId <- "I1"
   sc$populationId <- "P1"
@@ -760,18 +1035,27 @@ test_that(".validateCrossReferences resolves individuals/populations as named li
     individuals = individuals,
     populations = populations
   )
-  result <- esqlabsR:::.validateCrossReferences(project, list())
+  result <- .validateCrossReferences(project)
   expect_length(result$critical_errors, 0)
 })
 
-test_that(".validateCrossReferences skips and warns when prior section had critical errors", {
-  prior <- list(scenarios = validationResult$new())
-  prior$scenarios$addCriticalError("X", "broken")
-  project <- .fakeProject()
-  result <- esqlabsR:::.validateCrossReferences(project, prior)
-  expect_length(result$critical_errors, 0)
-  expect_length(result$warnings, 1)
-  expect_match(result$warnings[[1]]$message, "skipped")
+test_that(".validateCrossReferences evaluates whatever else in the project is broken", {
+  # A scenario with an empty modelFile is a critical error in the `scenarios`
+  # section AND names an individual the project does not define. Both are
+  # reported: the cross-reference phase does not stand down because a section
+  # validator found something, since it is the phase the run gate depends on.
+  sc <- Scenario()
+  sc$modelFile <- ""
+  sc$individualId <- "ghost"
+  project <- .fakeProject(scenarios = list(s1 = sc))
+
+  sectionResult <- .scenariosValidatorAdapter(project)
+  expect_true(sectionResult$hasCriticalErrors())
+
+  result <- .validateCrossReferences(project)
+  expect_length(result$warnings, 0)
+  expect_length(result$critical_errors, 1)
+  expect_match(result$critical_errors[[1]]$message, "undefined individual")
 })
 
 test_that(".validateCrossReferences resolves a case-only mismatched reference", {
@@ -782,7 +1066,7 @@ test_that(".validateCrossReferences resolves a case-only mismatched reference", 
   individuals <- list(adult = list(species = "Human", gender = "MALE"))
   populations <- list(elderly = list(species = "Human"))
   applications <- list(iv_bolus = list())
-  sc <- esqlabsR:::Scenario()
+  sc <- Scenario()
   sc$modelFile <- "x.pkml"
   sc$individualId <- "Adult"
   sc$populationId <- "Elderly"
@@ -796,20 +1080,20 @@ test_that(".validateCrossReferences resolves a case-only mismatched reference", 
     applications = applications,
     outputPaths = c(outpath_1 = "Organism|A")
   )
-  result <- esqlabsR:::.validateCrossReferences(project, list())
+  result <- .validateCrossReferences(project)
   # No dangling-reference error: every case-only mismatch canonically resolves.
   expect_length(result$critical_errors, 0)
 })
 
-test_that(".validateCrossReferences skip guard consults full-project validity, not just the current run's sections", {
-  # A broken scenarios section (empty modelFile -> critical error) plus a
-  # dataCombined that references a non-existent scenario. A FULL run skips the
-  # cross-reference pass (a prior section is broken), suppressing the
-  # dataCombined error until the section is fixed. A targeted subset that does
-  # NOT itself validate scenarios must reach the SAME conclusion (skip), rather
-  # than emitting the dataCombined error the full run suppressed.
-  sc <- esqlabsR:::Scenario()
-  sc$modelFile <- "" # critical error in the scenarios section
+test_that(".validateCrossReferences resolves only the references the requested sections hold", {
+  # A scenario naming a nonexistent individual (a reference a simulation is built
+  # from) plus a dataCombined naming a nonexistent scenario (a plotting-only
+  # reference). A full run reports both; a run scoped to the sections a
+  # simulation needs reports only the first, which is what keeps a plotting-only
+  # gap out of the `runScenarios()` gate.
+  sc <- Scenario()
+  sc$modelFile <- "m.pkml"
+  sc$individualId <- "ghost_individual"
   project <- .fakeProject(
     scenarios = list(s1 = sc),
     dataCombined = list(
@@ -817,29 +1101,59 @@ test_that(".validateCrossReferences skip guard consults full-project validity, n
     )
   )
 
-  # Full run: scenarios broken, so cross-references are skipped (a warning, no
-  # critical error, and the "ghost" reference is NOT reported yet).
-  fullResults <- esqlabsR:::.runProjectValidation(project, sections = NULL)
-  fullCross <- fullResults$crossReferences
-  expect_length(fullCross$critical_errors, 0)
-  expect_length(fullCross$warnings, 1)
+  fullCross <- .runProjectValidation(project, sections = NULL)$crossReferences
+  messages <- vapply(fullCross$critical_errors, function(e) e$message, "")
+  expect_length(messages, 2L)
+  expect_true(any(grepl("undefined individual", messages)))
+  expect_true(any(grepl(
+    "dataCombined references undefined scenarios",
+    messages
+  )))
 
-  # Targeted subset that omits the scenarios adapter: the guard must still see
-  # the broken scenarios section (full-project validity) and skip identically.
-  subsetResults <- esqlabsR:::.runProjectValidation(
+  simCross <- .runProjectValidation(
     project,
-    sections = c("plots", "crossReferences")
-  )
-  subsetCross <- subsetResults$crossReferences
-  expect_length(subsetCross$critical_errors, 0)
-  expect_length(subsetCross$warnings, 1)
+    sections = c("scenarios", "individuals", "crossReferences")
+  )$crossReferences
+  simMessages <- vapply(simCross$critical_errors, function(e) e$message, "")
+  expect_length(simMessages, 1L)
+  expect_match(simMessages, "undefined individual")
+
+  # And the mirror: a run scoped to the plotting sections sees the plotting
+  # reference.
+  plotCross <- .runProjectValidation(
+    project,
+    sections = c("dataCombined", "crossReferences")
+  )$crossReferences
+  plotMessages <- vapply(plotCross$critical_errors, function(e) e$message, "")
+  expect_length(plotMessages, 1L)
+  expect_match(plotMessages, "dataCombined references undefined scenarios")
 })
 
 # Dispatcher behaviour ----
 
+test_that("every definition kind has a validator", {
+  # `.definitionTreeSpecs()` is the source of truth for what a section is, and
+  # `.validationAdapters` is a hand-written list beside it, so the two drift
+  # apart silently: `initialConditions` sat unvalidated that way. `plotGrids`
+  # is the one deliberate absence -- `.plotsValidatorAdapter()` passes the
+  # grids into `.validatePlots()` along with the plots they hold.
+  validatedElsewhere <- "plotGrids"
+  expect_setequal(
+    setdiff(.definitionKindNames(), validatedElsewhere),
+    names(.validationAdapters)
+  )
+})
+
+test_that("every definition kind has a canonical empty JSON shape", {
+  # The container-only write emits one empty value per tree-owned section; a
+  # kind missing from that list would write a container the loader then reads
+  # as a section that was never there.
+  expect_setequal(names(.emptyTreeSectionsJson()), .definitionKindNames())
+})
+
 test_that(".runProjectValidation honors a targeted sections vector", {
   project <- .fakeProject()
-  results <- esqlabsR:::.runProjectValidation(
+  results <- .runProjectValidation(
     project,
     sections = c("scenarios", "outputPaths", "unknownSection")
   )
@@ -858,7 +1172,7 @@ test_that("ensureValid() short-circuits when the project is validated", {
 })
 
 test_that("ensureValid() aborts with a formatted summary on critical errors", {
-  sc <- esqlabsR:::Scenario()
+  sc <- Scenario()
   sc$modelFile <- ""
   project <- .fakeProject(scenarios = list(s1 = sc))
   expect_snapshot(
@@ -867,6 +1181,100 @@ test_that("ensureValid() aborts with a formatted summary on critical errors", {
       sections = c("scenarios"),
       opName = "runScenarios"
     )
+  )
+})
+
+test_that("the run gate validates the initial conditions a scenario build applies", {
+  # A scenario build folds its referenced sets into the simulation
+  # (`.mergeScenarioInitialConditions()`), so a set the validator grades
+  # critical has to stop the build rather than fail inside `ospsuite`. Goes
+  # through `.scenarioBuildPreflight()` so it tests the gate's real section
+  # list, not a copy of it.
+  sc <- Scenario()
+  sc$modelFile <- "m.pkml"
+  project <- .fakeProject(
+    scenarios = list(s1 = sc),
+    initialConditions = list(
+      presysset = .asInitialConditionSet(
+        list(list(path = "Organism|A|Drug", value = 1, unit = ""))
+      )
+    )
+  )
+  expect_error(
+    .scenarioBuildPreflight(
+      project = project,
+      customParams = NULL,
+      simulationRunOptions = NULL,
+      validate = TRUE,
+      opName = "runScenarios"
+    ),
+    "without a unit"
+  )
+})
+
+test_that("a broken plots section leaves the run gate's cross-reference check in place", {
+  # The run gate's own section list, as `.scenarioBuildPreflight()` passes it.
+  runSections <- c(
+    "outputPaths",
+    "scenarios",
+    "individuals",
+    "populations",
+    "applications",
+    "parameterSets",
+    "initialConditions",
+    "crossReferences"
+  )
+  sc <- Scenario()
+  sc$modelFile <- "m.pkml"
+  sc$individualId <- "ghost_individual"
+  project <- .fakeProject(
+    scenarios = list(s1 = sc),
+    # A critical error in a section a simulation is not built from: the plot
+    # references a data combination the project does not define.
+    plots = list(
+      p1 = list(
+        plotId = "p1",
+        dataCombinedId = "ghost",
+        plotType = "individual"
+      )
+    )
+  )
+  expect_true(.plotsValidatorAdapter(project)$hasCriticalErrors())
+
+  # The plots error does not stand the gate down: the dangling individual still
+  # stops the run.
+  expect_error(
+    project$ensureValid(sections = runSections, opName = "runScenarios"),
+    "undefined individual"
+  )
+})
+
+test_that("a plotting-only dangling reference does not block the run gate", {
+  runSections <- c(
+    "outputPaths",
+    "scenarios",
+    "individuals",
+    "populations",
+    "applications",
+    "parameterSets",
+    "initialConditions",
+    "crossReferences"
+  )
+  sc <- Scenario()
+  sc$modelFile <- "m.pkml"
+  project <- .fakeProject(
+    scenarios = list(s1 = sc),
+    dataCombined = list(
+      dc1 = list(simulated = list(list(label = "sim", scenario = "ghost")))
+    )
+  )
+  # `validateProject()` grades the plotting reference critical, so the full
+  # report shows it...
+  expect_true(isAnyCriticalErrors(suppressWarnings(validateProject(project))))
+  # ...but a run is built from none of the sections that hold it, so the gate
+  # lets the scenario through.
+  expect_no_error(
+    project$ensureValid(sections = runSections, opName = "runScenarios")
   )
 })
 
@@ -901,7 +1309,7 @@ test_that(".abortValidationErrors escapes glue metacharacters in messages", {
   results <- list(scenarios = result)
   expect_snapshot(
     error = TRUE,
-    esqlabsR:::.abortValidationErrors(results, "runScenarios")
+    .abortValidationErrors(results, "runScenarios")
   )
 })
 
@@ -957,7 +1365,7 @@ test_that(".validatePlots flags an unknown plotType from JSON", {
       p1 = list(plotId = "p1", dataCombinedId = "dc1", plotType = "bogusType")
     )
   )
-  result <- esqlabsR:::.plotsValidatorAdapter(project)
+  result <- .plotsValidatorAdapter(project)
   msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
   expect_match(msgs, "plotType", all = FALSE)
 })
@@ -979,13 +1387,13 @@ test_that(".validatePlots hard-errors on unknown plotGrid plotIDs", {
     "plotGrids",
     list(g1 = list(plotGridId = "g1", plotIds = "ghost"))
   )
-  result <- esqlabsR:::.plotsValidatorAdapter(project)
+  result <- .plotsValidatorAdapter(project)
   msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
   expect_match(msgs, "ghost", all = FALSE)
 })
 
 test_that(".validatePlots flags unknown plotGrid ids even with empty plotConfig", {
-  result <- esqlabsR:::.validatePlots(
+  result <- .validatePlots(
     list(),
     list(),
     list(g1 = list(plotGridId = "g1", plotIds = "ghost"))
@@ -1002,9 +1410,9 @@ test_that(".validatePI flags a parameter scenario outside the task's scenarios",
   # project scenario that is not part of the task.
   addPITask(
     project,
-    id = "T2",
+    id = "t2",
     scenarios = c("testscenario"),
-    parameters = list(esqlabsR:::PIParameter(
+    parameters = list(PIParameter(
       id = "P1",
       scenarios = c("testscenario_steadystate"),
       path = "Organism|Liver|EHC continuous fraction",
@@ -1012,14 +1420,14 @@ test_that(".validatePI flags a parameter scenario outside the task's scenarios",
       maxValue = 1,
       startValue = 0.8
     )),
-    outputMappings = list(esqlabsR:::PIOutputMapping(
+    outputMappings = list(PIOutputMapping(
       id = "M1",
       scenarios = c("testscenario"),
       outputPath = "aciclovir_pvb",
       observedData = "obs"
     ))
   )
-  result <- esqlabsR:::.validatePI(project$definitions$parameterIdentification)
+  result <- .validatePI(project$definitions$parameterIdentification)
   msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
   expect_match(msgs, "testscenario_steadystate", all = FALSE)
 })
@@ -1028,9 +1436,9 @@ test_that(".validatePI flags a mapping scenario outside the task's scenarios", {
   project <- testProject()
   addPITask(
     project,
-    id = "T2",
+    id = "t2",
     scenarios = c("testscenario"),
-    parameters = list(esqlabsR:::PIParameter(
+    parameters = list(PIParameter(
       id = "P1",
       scenarios = c("testscenario"),
       path = "Organism|Liver|EHC continuous fraction",
@@ -1038,14 +1446,14 @@ test_that(".validatePI flags a mapping scenario outside the task's scenarios", {
       maxValue = 1,
       startValue = 0.8
     )),
-    outputMappings = list(esqlabsR:::PIOutputMapping(
+    outputMappings = list(PIOutputMapping(
       id = "M1",
       scenarios = c("populationscenario"),
       outputPath = "aciclovir_pvb",
       observedData = "obs"
     ))
   )
-  result <- esqlabsR:::.validatePI(project$definitions$parameterIdentification)
+  result <- .validatePI(project$definitions$parameterIdentification)
   msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
   expect_match(msgs, "populationscenario", all = FALSE)
 })
@@ -1139,21 +1547,25 @@ test_that("validateProject() flags a PI outputMapping referencing a removed outp
 test_that("validateProject() flags a PI outputMapping with no outputPath", {
   project <- testProject()
   # Mimic a hand-edited Project.json whose PI outputMapping lost its
-  # `outputPath`: the record reaches cross-reference validation with a NULL
-  # `outputPathId`. This must be reported as a critical error, not crash the
-  # cross-reference pass with "argument is of length zero".
+  # `outputPath`: the record carries a NULL `outputPathId`. This must be reported
+  # as a critical error, not crash the cross-reference pass with "argument is of
+  # length zero".
   private <- project$.__enclos_env__$private
   tasks <- private$.parameterIdentification
   tasks[["aciclovirsimple"]]$outputMappings[[1]]$outputPathId <- NULL
   private$.parameterIdentification <- tasks
 
   results <- suppressWarnings(validateProject(project))
+  # Reported by the section validator, not the cross-reference phase: an absent
+  # field is not a reference to resolve, and that phase skips itself once any
+  # section has a critical error, so a project with two gaps would show only one.
   msgs <- vapply(
-    results$crossReferences$critical_errors,
+    results$parameterIdentification$critical_errors,
     \(e) e$message,
     character(1)
   )
   expect_match(msgs, "does not define an outputPath", all = FALSE)
+  expect_length(results$crossReferences$critical_errors, 0L)
 })
 
 # print.ValidationResults ----

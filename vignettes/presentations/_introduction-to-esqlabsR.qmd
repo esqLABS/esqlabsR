@@ -113,7 +113,12 @@ Software](https://www.open-systems-pharmacology.org/)
 ```{r, eval=FALSE}
 install.packages("pak")
 
-pak::pak("esqLABS/esqlabsR*release")
+options(repos = c(
+  OSP = "https://open-systems-pharmacology.r-universe.dev",
+  getOption("repos")
+))
+
+pak::pak("esqLABS/esqlabsR@*release")
 ```
 <br>
 

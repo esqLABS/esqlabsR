@@ -4,7 +4,7 @@
 \alias{restoreProject}
 \title{Recreate a project folder from a snapshot file}
 \usage{
-restoreProject(snapshot, dir = ".", overwrite = FALSE)
+restoreProject(snapshot, dir = ".", overwrite = FALSE, name = NULL)
 }
 \arguments{
 \item{snapshot}{Path to the snapshot file to read (a \code{.esqlabsR} file, a
@@ -22,6 +22,13 @@ warning reminds you that a \code{Project} you loaded from \code{dir} earlier no
 longer matches the files: continue with the returned project, or refresh
 the old one with \code{\link[=reloadProject]{reloadProject()}}. The recommended form is
 \code{p <- restoreProject(snap, dir, overwrite = TRUE)}.}
+
+\item{name}{Optional project name to give the restored project. A snapshot
+carries whatever name the project it was taken from had, which for one
+written by a previous esqlabsR version is none at all, and the restored
+project is otherwise identified only by the folder it lands in. The name is
+written into the restored project file, so it shows in \code{print(project)} and
+travels with the project from then on.}
 }
 \value{
 A freshly loaded \code{Project} working from \code{dir}, with no unsaved
@@ -71,6 +78,7 @@ Other projectPersistence:
 \code{\link[=exportProjectToExcel]{exportProjectToExcel()}},
 \code{\link[=importProjectFromExcel]{importProjectFromExcel()}},
 \code{\link[=initProject]{initProject()}},
+\code{\link[=isProjectInitialized]{isProjectInitialized()}},
 \code{\link[=loadProject]{loadProject()}},
 \code{\link[=projectStatus]{projectStatus()}},
 \code{\link[=reloadProject]{reloadProject()}},

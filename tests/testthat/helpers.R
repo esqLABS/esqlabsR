@@ -14,6 +14,12 @@
 #                         tests of the Excel import / export bridge.
 #                         Reached via testProjectExcelPath() (the entry .xlsx).
 #
+#   - TestProjectExcelLegacy/
+#                         pre-5.6 Excel project, carrying the workbook shapes
+#                         real legacy projects have rather than the modern
+#                         spelling of each. Reached via
+#                         localLegacyExcelProject().
+#
 # For a writable, throwaway project use with_temp_project(), which calls
 # initProject(type = "example", createExcel = TRUE) in a temp dir.
 
@@ -31,6 +37,90 @@ getTestDataFilePath <- function(fileName = "") {
 #' the calling test finishes.
 testProject <- function(envir = parent.frame()) {
   loadProject(file.path(.copyTestProjectDir(envir), "Project.json"))
+}
+
+#' Pin the print and precision options a numeric snapshot depends on.
+#'
+#' A snapshot of tabular output formats differently under another `digits` or
+#' `pillar.sigfig`, so a block taking one calls this first. Scoped to the
+#' calling frame with `withr::local_options()`, so nothing leaks past the test.
+.localSnapshotOptions <- function(.local_envir = parent.frame()) {
+  withr::local_options(
+    tibble.width = Inf,
+    pillar.min_title_chars = Inf,
+    pillar.sigfig = 4,
+    digits = 4,
+    scipen = 999,
+    .local_envir = .local_envir
+  )
+}
+
+#' The observed data set the test project's Aciclovir scenario is fitted against.
+#'
+#' The name is long and appears in most parameter-identification fixtures, so
+#' name it once here rather than pasting the literal into each test.
+testObservedDataId <- paste0(
+  "Laskin 1982.Group A_Aciclovir_1_Human_MALE_",
+  "PeripheralVenousBlood_Plasma_2.5 mg/kg_iv_"
+)
+
+#' Build a `PIParameter` for the test project's EHC parameter.
+#'
+#' Defaults describe the standard fixture; pass any `PIParameter()` argument to
+#' override just that one, so a test shows only what it varies.
+testPIParameter <- function(...) {
+  do.call(
+    PIParameter,
+    utils::modifyList(
+      list(
+        id = "EHC",
+        scenarios = "testscenario",
+        path = "Organism|Liver|EHC continuous fraction",
+        minValue = 0.5,
+        maxValue = 1.0,
+        startValue = 0.8
+      ),
+      list(...)
+    )
+  )
+}
+
+#' Build a `PIOutputMapping` for the test project's peripheral venous blood.
+#'
+#' Overrides work the same way as [testPIParameter()].
+testPIOutputMapping <- function(...) {
+  do.call(
+    PIOutputMapping,
+    utils::modifyList(
+      list(
+        id = "PVB",
+        scenarios = "testscenario",
+        outputPath = "aciclovir_pvb",
+        observedData = testObservedDataId
+      ),
+      list(...)
+    )
+  )
+}
+
+#' Build a `PITask` over the test project's Aciclovir scenario.
+#'
+#' Defaults to one [testPIParameter()] and one [testPIOutputMapping()].
+#' Overrides work the same way as [testPIParameter()].
+testPITask <- function(...) {
+  do.call(
+    PITask,
+    utils::modifyList(
+      list(
+        id = "t",
+        scenarios = "testscenario",
+        parameters = list(testPIParameter()),
+        outputMappings = list(testPIOutputMapping()),
+        configuration = list(algorithm = "BOBYQA")
+      ),
+      list(...)
+    )
+  )
 }
 
 # The Aciclovir PKML fixture that lives INSIDE a copied test project (under its
@@ -83,6 +173,101 @@ exampleProject <- function(envir = parent.frame()) {
   loadProject(file.path(dest, "Project.json"))
 }
 
+#' One row of an Excel `Scenarios` sheet, with every required column present.
+#'
+#' Named arguments override a column's value; passing `NULL` drops the column
+#' entirely, which is how a test builds a sheet that omits or misspells one.
+scenarioSheetRow <- function(...) {
+  row <- list(
+    Scenario_name = "s1",
+    IndividualId = NA_character_,
+    PopulationId = NA_character_,
+    ReadPopulationFromCSV = NA,
+    ModelParameterSheets = NA_character_,
+    ApplicationProtocol = NA_character_,
+    SimulationTime = NA_character_,
+    SimulationTimeUnit = NA_character_,
+    SteadyState = NA,
+    SteadyStateTime = NA_real_,
+    SteadyStateTimeUnit = NA_character_,
+    OverwriteFormulasInSS = NA,
+    ModelFile = "m.pkml",
+    OutputPathsIds = "op1"
+  )
+  overrides <- list(...)
+  for (column in names(overrides)) {
+    row[[column]] <- overrides[[column]]
+  }
+  row <- row[!vapply(row, is.null, logical(1))]
+  data.frame(row, stringsAsFactors = FALSE)
+}
+
+#' A writable copy of the `TestProjectExcel` fixture, returning its directory.
+#'
+#' The Excel-bridge tests import, export and re-import in place, so they need a
+#' throwaway copy rather than the version-controlled fixture. The copy is
+#' removed when the calling test finishes.
+localExcelProjectDir <- function(envir = parent.frame()) {
+  workDir <- withr::local_tempdir(.local_envir = envir)
+  file.copy(dirname(testProjectExcelPath()), workDir, recursive = TRUE)
+  file.path(workDir, "TestProjectExcel")
+}
+
+#' Export a project to Excel and read it back, returning the re-imported one.
+#'
+#' The two temporary directories (the workbook set, and the JSON project built
+#' from it) are removed when the calling test finishes.
+#'
+#' The workbook set is written to a scratch directory, so the data folder the
+#' exported `dataFile` names is not beside it and the re-import reports the data
+#' workbook as missing and skips the observed data; the re-imported project then
+#' has one reference it cannot resolve. Both warnings are muffled here because
+#' neither says anything about the section under test; every other warning is
+#' left to surface. Two tests assert them directly rather than calling this
+#' helper.
+excelRoundTrip <- function(project, envir = parent.frame()) {
+  excelOut <- withr::local_tempdir(.local_envir = envir)
+  exportProjectToExcel(project, outputDir = excelOut, silent = TRUE)
+  jsonOut <- withr::local_tempdir(.local_envir = envir)
+  .muffleRoundTripDataWarnings({
+    reimportedJson <- importProjectFromExcel(
+      file.path(excelOut, "Project.xlsx"),
+      outputDir = jsonOut,
+      silent = TRUE
+    )
+    loadProject(reimportedJson)
+  })
+}
+
+#' Evaluate `expr`, dropping only the two warnings a round trip through a
+#' scratch directory always raises: the skipped observed data (its workbook is
+#' not beside the exported workbooks) and the cross-reference left unresolved
+#' by that skip.
+.muffleRoundTripDataWarnings <- function(expr) {
+  withCallingHandlers(
+    expr,
+    esqlabsR_importSkippedObservedData = function(w) {
+      invokeRestart("muffleWarning")
+    },
+    warning = function(w) {
+      if (grepl("unresolved cross-reference", conditionMessage(w))) {
+        invokeRestart("muffleWarning")
+      }
+    }
+  )
+}
+
+#' The `Property -> Value` table of an exported `Project.xlsx`, as a named
+#' character vector. This is the lookup the importer reads the workbook back
+#' through, so a test asserting what a project declares reads it the same way.
+excelProjectProperties <- function(workbookPath) {
+  table <- as.data.frame(readxl::read_excel(workbookPath))
+  stats::setNames(
+    as.character(table$Value),
+    as.character(table$Property)
+  )
+}
+
 #' Path to the legacy Excel `ProjectConfiguration.xlsx` fixture, used by
 #' Excel-bridge round-trip tests.
 testProjectExcelPath <- function() {
@@ -91,6 +276,113 @@ testProjectExcelPath <- function() {
     "TestProjectExcel",
     "ProjectConfiguration.xlsx"
   )
+}
+
+# Legacy Excel fixture (issue #1213) ----
+#
+# `TestProjectExcelLegacy/` is a pre-5.6 project: two-column `Protein` +
+# `Ontogeny` ontogenies, no `OverwriteFormulasInSS` column, quoted multi-value
+# cells, a populations CSV folder under the configurations folder, and the 5.x
+# parameter-identification sheet layout. The sibling `TestProjectExcel/` fixture
+# has the modern spelling of every one of those, so it cannot reproduce what the
+# importer does with the legacy ones.
+#
+# `data-raw/TestProjectExcelLegacy.R` regenerates the workbooks and documents
+# each legacy trait.
+
+#' Copy the legacy Excel fixture to a throwaway directory and return it.
+#'
+#' The committed fixture holds no `.pkml`: the 7 MB public Aciclovir model the
+#' sibling `TestProjectExcel/` fixture already carries is copied into the throwaway
+#' project's `Models/Simulations/` here, so the copy is a complete, runnable
+#' project without a second copy of that binary in the repository.
+#'
+#' The copy is removed when the calling test finishes. Mutate one workbook of it
+#' with [editWorkbookSheets()] to derive a per-defect variant.
+localLegacyExcelProject <- function(envir = parent.frame()) {
+  src <- testthat::test_path("data", "TestProjectExcelLegacy")
+  dest <- withr::local_tempdir("LegacyExcel_", .local_envir = envir)
+  file.copy(list.files(src, full.names = TRUE), dest, recursive = TRUE)
+  file.copy(
+    testthat::test_path(
+      "data",
+      "TestProjectExcel",
+      "Models",
+      "Simulations",
+      "Aciclovir.pkml"
+    ),
+    file.path(dest, "Models", "Simulations", "Aciclovir.pkml")
+  )
+  dest
+}
+
+#' Path to the legacy fixture's entry workbook inside a copied project.
+legacyExcelProjectPath <- function(projectDir) {
+  file.path(projectDir, "ProjectConfiguration.xlsx")
+}
+
+#' Rewrite one workbook in place, through a function of all its sheets.
+#'
+#' Reads every sheet of `path` into a named list of data frames, passes that list
+#' to `edit`, and writes the result back. Keeping the whole workbook in the round
+#' trip is what makes a variant a *single* change: writing only the edited sheet
+#' would silently drop the workbook's other sheets, so the variant would differ
+#' from the base in more than the one dimension it means to.
+#'
+#' Note that this loses the original cell formatting (it is a `readxl` read
+#' followed by a `writexl` write), which no importer behaviour depends on. A
+#' column's *type* does survive, so an edit that replaces a numeric column with a
+#' character one does store text cells.
+editWorkbookSheets <- function(path, edit) {
+  sheetNames <- readxl::excel_sheets(path)
+  sheets <- lapply(sheetNames, function(sheet) {
+    as.data.frame(
+      readxl::read_excel(path, sheet = sheet, .name_repair = "minimal"),
+      check.names = FALSE
+    )
+  })
+  writexl::write_xlsx(edit(stats::setNames(sheets, sheetNames)), path)
+  invisible(path)
+}
+
+#' Import a copied legacy Excel project and load the result.
+#'
+#' @returns A list of
+#'   - `project`: the loaded `Project`.
+#'   - `outputDir`: where the JSON project was written (removed when the calling
+#'     test finishes), for assertions about which asset folders travelled.
+#'   - `warnings`: every warning message the import raised.
+#'
+#' The warnings are collected rather than suppressed because most of what these
+#' tests pin is *silence*: an import that drops something without a word. A test
+#' asserts that no collected warning mentions its own subject, which starts
+#' failing as soon as a fix adds one. Gating on the subject rather than using a
+#' bare `expect_no_warning()` keeps each test's assertion about its own defect,
+#' since a variant may legitimately raise an unrelated warning (a skipped sheet,
+#' an unresolved cross-reference) that has nothing to do with what it pins.
+importLegacyExcelProject <- function(
+  projectDir,
+  silent = TRUE,
+  ...,
+  envir = parent.frame()
+) {
+  outputDir <- withr::local_tempdir("LegacyOut_", .local_envir = envir)
+  warnings <- character()
+  collect <- function(w) {
+    warnings <<- c(warnings, conditionMessage(w))
+    invokeRestart("muffleWarning")
+  }
+  jsonPath <- withCallingHandlers(
+    importProjectFromExcel(
+      legacyExcelProjectPath(projectDir),
+      outputDir = outputDir,
+      silent = silent,
+      ...
+    ),
+    warning = collect
+  )
+  project <- withCallingHandlers(loadProject(jsonPath), warning = collect)
+  list(project = project, outputDir = outputDir, warnings = warnings)
 }
 
 #' Redact the throwaway-project absolute prefix from a quoted path in an error
@@ -135,6 +427,23 @@ testProjectExcelPath <- function() {
     lines
   )
   gsub(paste0("'", prefix, "[^']*'"), "'<tmp-path>'", lines)
+}
+
+#' Redact every quoted absolute path ending in a `Project.xlsx` workbook, so an
+#' `expect_snapshot()` of the unreadable-workbook error is stable across runs.
+#'
+#' `.redactTmpDir()` cannot do this job: it anchors on `tempdir()`, and the
+#' `readxl` error chained onto that abort names the path as `utils::unzip()`
+#' resolved it, which never starts with `tempdir()` — on macOS it is the
+#' `/private`-prefixed symlink target, and on Windows it is the long user name
+#' with backslash separators (`C:\\Users\\runneradmin\\...`) where `tempdir()`
+#' reports the 8.3 short name with forward slashes (`C:/Users/RUNNER~1/...`).
+#' Matching on the workbook basename instead catches every spelling. A separator
+#' before the basename is required, so the bare `'Project.xlsx'` the advice
+#' bullet mentions is left intact; either separator counts, since the two ends of
+#' one chained error do not agree on which one they use.
+.redactProjectWorkbookPath <- function(lines) {
+  gsub("'[^']*[/\\\\]Project\\.xlsx'", "'<tmp-path>/Project.xlsx'", lines)
 }
 
 #' Escape the regex metacharacters in a literal string so it can be embedded in

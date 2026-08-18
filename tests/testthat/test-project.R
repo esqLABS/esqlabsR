@@ -17,7 +17,7 @@ test_that("Project$new(path) loads a v2.0 JSON file", {
 
 test_that("asList round-trips with .projectToJson", {
   project <- testProject()
-  expect_identical(project$asList, esqlabsR:::.projectToJson(project))
+  expect_identical(project$asList, .projectToJson(project))
 })
 
 test_that("ProjectConfiguration() wrapper emits lifecycle warning and returns Project", {
@@ -160,12 +160,6 @@ test_that(".cleanPath returns NULL on NULL/NA/zero-length input", {
   expect_null(cp(NA_character_, parent = NULL))
   expect_null(cp(character(0), parent = NULL))
 })
-
-
-# Tests for the v2.0 Project.json parser. These tests cover only the parser
-# and the internal `Project` class — the parser is not wired into runScenarios,
-# validators, or plotting on this branch. Tests use `:::` because both are
-# intentionally unexported.
 
 test_that("loadProject() returns an internal Project from the bundled example", {
   project <- exampleProject()
@@ -616,6 +610,46 @@ test_that("a working folder resolving outside the project directory is rejected"
   expect_match(project$paths$simulationsFolder, "Models/Simulations$")
 })
 
+test_that("a definitionsFolder pointing outside the project directory is rejected", {
+  # The definitions folder feeds the two paths that delete files
+  # (`.writeDefinitionTree()` prunes its `<kind>/` subfolders, and
+  # `.clearProjectArtifacts()` unlinks the folder), so an escaping value from an
+  # untrusted `Project.json` must never reach either. Unlike the working folders
+  # this one is a single folder name, so it is rejected outright rather than
+  # resolved and contained.
+  tmp <- withr::local_tempfile(fileext = ".json")
+  jsonlite::write_json(
+    list(
+      schemaVersion = "2.0",
+      definitionsFolder = "../..",
+      outputPaths = structure(list(), names = character(0)),
+      scenarios = list()
+    ),
+    tmp,
+    auto_unbox = TRUE,
+    null = "null"
+  )
+  expect_error(loadProject(tmp), "single folder name")
+})
+
+test_that("setting definitionsFolder to an escaping value is rejected", {
+  project <- Project$new()
+
+  expect_error(
+    project$paths$definitionsFolder <- "../elsewhere",
+    "single folder name"
+  )
+  expect_error(project$paths$definitionsFolder <- "a/b", "single folder name")
+  expect_error(project$paths$definitionsFolder <- "", "empty string")
+  # A plain rename is the legitimate use and still works.
+  project$paths$definitionsFolder <- "defs"
+  expect_identical(project$paths$definitionsFolder, "defs")
+  # `NULL` means "unset", so it passes the guard and the default is reachable
+  # again after a rename.
+  project$paths$definitionsFolder <- NULL
+  expect_identical(project$paths$definitionsFolder, "definitions")
+})
+
 test_that("a working folder set via an environment variable is allowed outside the project", {
   # `${VAR}` is the sanctioned way to place a folder outside the project tree
   # (e.g. shared-drive data), so it is exempt from the containment check.
@@ -717,7 +751,7 @@ test_that("definitionsFolder honors a non-default tree location", {
   src <- exampleProject()
   src$paths$definitionsFolder <- "defs"
   dir <- withr::local_tempdir("custom_defs_")
-  esqlabsR:::.writeProjectTree(src, dir)
+  .writeProjectTree(src, dir)
 
   expect_true(dir.exists(file.path(dir, "defs", "scenarios")))
   expect_false(dir.exists(file.path(dir, "definitions")))
@@ -1045,7 +1079,7 @@ test_that("reading a record, editing the copy, and re-submitting it is the suppo
   )
 })
 
-# Under explicit-save, `.setSection()` no longer serializes on write, so a
+# Under explicit-save, `.setSection()` does not serialize on write, so a
 # structurally bad record is accepted in memory but must abort the save: the
 # serialize-in-memory-first guarantee in `.writeDefinitionTree()` (driven by
 # `saveProject()`) rejects a wrong-typed reference field and an unknown field.
@@ -1139,6 +1173,18 @@ test_that("project$status is read-only", {
   gsub(".*(TestProject_[^/]+)", "<tmp>", lines)
 }
 
+# A save stamps the running package version into the project, so the version
+# line of a saved project's print output tracks `DESCRIPTION` rather than the
+# fixture. Redact it on top of the path redaction, so the snapshot survives a
+# version bump.
+.redactVersionAndJsonPathLine <- function(lines) {
+  gsub(
+    "(\\* esqlabsR Version: ).*",
+    "\\1<version>",
+    .redactJsonPathLine(lines)
+  )
+}
+
 test_that("print() shows the unsaved-changes marker after an edit", {
   project <- testProject()
   addOutputPath(project, "markerpath", "Organism|A|Concentration in container")
@@ -1153,7 +1199,7 @@ test_that("print() shows no marker on a freshly loaded or saved project", {
   addOutputPath(project, "markerpath", "Organism|A|Concentration in container")
   saveProject(project)
   # After saving: clean again.
-  expect_snapshot(print(project), transform = .redactJsonPathLine)
+  expect_snapshot(print(project), transform = .redactVersionAndJsonPathLine)
 })
 
 # DefinitionList section-accessor printing ----

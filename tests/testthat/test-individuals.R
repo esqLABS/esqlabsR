@@ -7,7 +7,7 @@ test_that(".parseIndividuals passes through unknown fields", {
       futureField = "kept"
     )
   )
-  result <- esqlabsR:::.parseIndividuals(raw)
+  result <- .parseIndividuals(raw)
 
   expect_identical(result[["I1"]]$species, "Human")
   expect_identical(result[["I1"]]$weight, 70)
@@ -23,10 +23,10 @@ test_that("an individual carrying an unknown field round-trips through serializa
       futureField = "kept"
     )
   )
-  individuals <- esqlabsR:::.parseIndividuals(raw)
+  individuals <- .parseIndividuals(raw)
   project <- .fakeProject(individuals = individuals)
 
-  out <- esqlabsR:::.individualsToJson(project)[[1L]]
+  out <- .individualsToJson(project)[[1L]]
   expect_identical(out$individualId, "I1")
   expect_identical(out$futureField, "kept")
   # individualId leads; the remaining fields pass through in record order.
@@ -87,7 +87,7 @@ test_that(".parseIndividuals defaults an absent gender to UNKNOWN", {
   # JSON is the primary authoring path: an individual hand-authored in
   # definitions/individuals/*.json without a gender key must get the same
   # UNKNOWN default the authoring API and the Excel importer apply.
-  parsed <- esqlabsR:::.parseIndividuals(list(
+  parsed <- .parseIndividuals(list(
     list(individualId = "beagle", species = "Dog", weight = 10),
     list(individualId = "adult", species = "Human", gender = "FEMALE")
   ))
@@ -365,6 +365,82 @@ test_that("addIndividual recycles scalar fields and applies parameterSets whole"
   )
 })
 
+test_that("addIndividual applies an ontogeny vector whole and stores it as a vector", {
+  # One entry per ontogeny: the vector belongs to the individual as a whole and
+  # is never split across ids, and it survives the trip through JSON (where an
+  # array would otherwise read back as a list).
+  project <- testProject()
+  ontogenies <- c("CYP3A4:CYP3A4", "CYP2D6:CYP2C8")
+  addIndividual(
+    project,
+    c("a", "b"),
+    species = "Human",
+    proteinOntogenies = ontogenies
+  )
+  expect_identical(
+    project$definitions$individuals$a$proteinOntogenies,
+    ontogenies
+  )
+  expect_identical(
+    project$definitions$individuals$b$proteinOntogenies,
+    ontogenies
+  )
+
+  saveProject(project)
+  reloaded <- loadProject(project$info$projectFilePath)
+  expect_identical(
+    reloaded$definitions$individuals$a$proteinOntogenies,
+    ontogenies
+  )
+})
+
+test_that("an individual stored with comma-joined ontogenies still loads", {
+  # A project written before the Excel import emitted one entry per ontogeny
+  # holds the pairs as a single comma-joined string. Such a file has to keep
+  # loading, and the value it loads to has to still name both ontogenies.
+  project <- testProject()
+  path <- file.path(
+    dirname(project$info$projectFilePath),
+    "definitions",
+    "individuals",
+    "indiv1.json"
+  )
+  definition <- jsonlite::fromJSON(path, simplifyVector = FALSE)
+  definition$proteinOntogenies <- "CYP3A4:CYP3A4,CYP2D6:CYP2C8"
+  jsonlite::write_json(definition, path, auto_unbox = TRUE, pretty = TRUE)
+
+  reloaded <- loadProject(project$info$projectFilePath)
+  expect_identical(
+    reloaded$definitions$individuals$indiv1$proteinOntogenies,
+    "CYP3A4:CYP3A4,CYP2D6:CYP2C8"
+  )
+  expect_identical(
+    .splitProteinOntogenies(
+      reloaded$definitions$individuals$indiv1$proteinOntogenies
+    ),
+    c("CYP3A4:CYP3A4", "CYP2D6:CYP2C8")
+  )
+})
+
+test_that("setIndividual refuses an ontogeny value it cannot store", {
+  # An `ospsuite::MoleculeOntogeny` object stored unchecked reached
+  # `saveProject()` as an R6 object the JSON writer cannot serialize, which left
+  # the whole project unsaved.
+  project <- testProject()
+  expect_snapshot(
+    error = TRUE,
+    setIndividual(
+      project,
+      "indiv1",
+      proteinOntogenies = ospsuite::MoleculeOntogeny$new(
+        molecule = "CYP3A4",
+        ontogeny = ospsuite::StandardOntogeny$CYP3A4
+      )
+    )
+  )
+  expect_no_error(saveProject(project))
+})
+
 test_that("addIndividual persists all N to disk in one saveProject()", {
   project <- testProject()
   addIndividual(
@@ -476,4 +552,31 @@ test_that("a classed Individual still behaves as a list", {
   expect_type(indiv, "list")
   expect_identical(indiv[["species"]], "Human")
   expect_true("gender" %in% names(indiv))
+})
+
+test_that("addIndividual aborts on a NaN numeric field", {
+  project <- testProject()
+
+  expect_snapshot(
+    error = TRUE,
+    addIndividual(project, "nanweight", "Human", weight = NaN)
+  )
+})
+
+test_that("setIndividual aborts on a NaN numeric field and keeps the old value", {
+  project <- testProject()
+  addIndividual(project, "keepweight", "Human", weight = 70)
+
+  expect_error(setIndividual(project, "keepweight", weight = NaN))
+  # NaN must not be read as "clear the field": the stored weight survives.
+  expect_equal(project$definitions$individuals$keepweight$weight, 70)
+})
+
+test_that("setIndividual still clears a numeric field given NA", {
+  project <- testProject()
+  addIndividual(project, "clearweight", "Human", weight = 70)
+
+  setIndividual(project, "clearweight", weight = NA)
+
+  expect_null(project$definitions$individuals$clearweight$weight)
 })

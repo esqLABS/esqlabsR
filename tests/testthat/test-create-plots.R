@@ -1,5 +1,5 @@
 test_that(".parseExcelMultiValueField numeric conversion path is covered", {
-  result <- esqlabsR:::.parseExcelMultiValueField(
+  result <- .parseExcelMultiValueField(
     value = "72.5, 80.5",
     fieldName = "test",
     plotID = "P1",
@@ -10,7 +10,7 @@ test_that(".parseExcelMultiValueField numeric conversion path is covered", {
   expect_true(is.numeric(result))
 
   expect_error(
-    esqlabsR:::.parseExcelMultiValueField(
+    .parseExcelMultiValueField(
       value = "72 80",
       fieldName = "test",
       plotID = "P1",
@@ -26,20 +26,20 @@ test_that(".validateClassHasField is NA-safe when the object has NA names", {
   object <- list(1, 2)
   names(object) <- c(NA, "b")
 
-  expect_false(esqlabsR:::.validateClassHasField(object, "x"))
-  expect_true(esqlabsR:::.validateClassHasField(object, "b"))
+  expect_false(.validateClassHasField(object, "x"))
+  expect_true(.validateClassHasField(object, "b"))
 })
 
 test_that("the plot-build assertion helpers raise cli (rlang) errors", {
   expect_error(
-    esqlabsR:::.assertPlotConfigurationsBuildable(
+    .assertPlotConfigurationsBuildable(
       list(a = list(plotId = "p1", plotType = "individual")),
       dataCombinedNames = character()
     ),
     class = "rlang_error"
   )
   expect_error(
-    esqlabsR:::.assertPlotGridsBuildable(
+    .assertPlotGridsBuildable(
       list(g = list(plotGridId = "g1", plotIds = "ghost")),
       plotIDs = "p1"
     ),
@@ -52,7 +52,7 @@ test_that(".assertPlotGridsBuildable aborts on a grid missing its plotGridId", {
   # rather than slipping through to fail opaquely at grid-name assignment.
   expect_snapshot(
     error = TRUE,
-    esqlabsR:::.assertPlotGridsBuildable(
+    .assertPlotGridsBuildable(
       list(list(plotIds = "p1")),
       plotIDs = "p1"
     )
@@ -65,7 +65,7 @@ test_that(".assertPlotConfigurationsBuildable aborts on a plot missing its plotI
   # would otherwise slip through and fail opaquely at grid build.
   expect_snapshot(
     error = TRUE,
-    esqlabsR:::.assertPlotConfigurationsBuildable(
+    .assertPlotConfigurationsBuildable(
       list(list(dataCombinedId = "dc", plotType = "individual")),
       dataCombinedNames = "dc"
     )
@@ -103,7 +103,7 @@ test_that("createPlots succeeds when a plot belongs to no grid", {
   path <- project$definitions$outputPaths$aciclovir_pvb
   addDataCombined(
     project,
-    "DC_outside",
+    "dc_outside",
     simulated = list(list(
       label = "sim",
       scenario = "aciclovir_iv",
@@ -111,9 +111,9 @@ test_that("createPlots succeeds when a plot belongs to no grid", {
       group = "g"
     ))
   )
-  # Plot referencing DC_outside is in no grid; createPlots(project) builds
-  # all grids and must not abort just because DC_outside is unbuilt.
-  addPlot(project, "P_outside", "DC_outside", "individual")
+  # Plot referencing dc_outside is in no grid; createPlots(project) builds
+  # all grids and must not abort just because dc_outside is unbuilt.
+  addPlot(project, "p_outside", "dc_outside", "individual")
   simulated <- runScenarios(project, scenarios = "aciclovir_iv")
 
   result <- suppressWarnings(createPlots(
@@ -131,7 +131,7 @@ test_that("createPlots grid subset ignores plots in other grids", {
   path <- project$definitions$outputPaths$aciclovir_pvb
   addDataCombined(
     project,
-    "DC_other",
+    "dc_other",
     simulated = list(list(
       label = "sim",
       scenario = "aciclovir_iv_population",
@@ -139,11 +139,11 @@ test_that("createPlots grid subset ignores plots in other grids", {
       group = "g"
     ))
   )
-  addPlot(project, "P_other", "DC_other", "population")
-  addPlotGrid(project, "Grid_other", plots = "P_other")
+  addPlot(project, "p_other", "dc_other", "population")
+  addPlotGrid(project, "grid_other", plots = "p_other")
   simulated <- runScenarios(project, scenarios = "aciclovir_iv")
 
-  # Requesting only the original grid must not abort over Grid_other's DC,
+  # Requesting only the original grid must not abort over grid_other's DC,
   # which references a scenario absent from `simulated`.
   result <- suppressWarnings(createPlots(
     project,

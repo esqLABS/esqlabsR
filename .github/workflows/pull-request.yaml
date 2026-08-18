@@ -1,0 +1,35 @@
+name: Pull Request Workflow
+
+# Runs on every pull request. OSP dependencies resolve from the OSP R-universe,
+# so there is no `Remotes:` field to keep in sync with the package Version.
+
+on:
+  pull_request:
+
+permissions: read-all
+
+jobs:
+  R-CMD-Check:
+    uses: Open-Systems-Pharmacology/Workflows/.github/workflows/R-CMD-check-build.yaml@main
+    with:
+      setup-quarto: true
+      extra-packages: local::.
+      extra-repositories: https://open-systems-pharmacology.r-universe.dev
+
+  test-coverage:
+    uses: Open-Systems-Pharmacology/Workflows/.github/workflows/test-coverage.yaml@main
+    with:
+      extra-repositories: https://open-systems-pharmacology.r-universe.dev
+    secrets:
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
+  lychee-link-check:
+    uses: Open-Systems-Pharmacology/Workflows/.github/workflows/Check_URLs.yml@main
+
+  pkgdown:
+    permissions:
+      contents: write # required by the pkgdown reusable workflow (no deploy on PRs)
+      pull-requests: read # the workflow's check-changes job reads PR file changes
+    uses: Open-Systems-Pharmacology/Workflows/.github/workflows/pkgdown.yaml@main
+    with:
+      extra-repositories: https://open-systems-pharmacology.r-universe.dev

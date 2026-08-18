@@ -67,16 +67,29 @@
       Error in `PITask()`:
       ! Field "outputMappings" on PITask "x" must be a list.
 
-# PITask() errors on empty scenarios
+# PITask() errors on a malformed scenarios entry
 
     Code
-      PITask(id = "x", scenarios = character(0), parameters = list(PIParameter(id = "k",
-        scenarios = "S1", path = "x|y", minValue = 0, maxValue = 1, startValue = 0.5)),
-      outputMappings = list(PIOutputMapping(id = "m", scenarios = "S1", outputPath = "PVB",
-        observedData = "Laskin")))
+      PITask(id = "x", scenarios = c("S1", NA))
     Condition
       Error in `PITask()`:
-      ! Field `scenarios` on PITask "x" must be a non-empty character vector.
+      ! Field `scenarios` on PITask "x" must be a character vector of scenario ids with no NA or empty entries, or empty for none.
+
+---
+
+    Code
+      PITask(id = "x", scenarios = "")
+    Condition
+      Error in `PITask()`:
+      ! Field `scenarios` on PITask "x" must be a character vector of scenario ids with no NA or empty entries, or empty for none.
+
+---
+
+    Code
+      PITask(id = "x", scenarios = 1)
+    Condition
+      Error in `PITask()`:
+      ! Field `scenarios` on PITask "x" must be a character vector of scenario ids with no NA or empty entries, or empty for none.
 
 # PITask() errors when parameters contains non-PIParameter elements
 
@@ -142,16 +155,17 @@
       runPI(project)
     Condition
       Error in `.abortValidationErrors()`:
-      ! Cannot runPI: project has 3 critical validation errors.
+      ! Cannot runPI: project has 4 critical validation errors.
       x [crossReferences] PI task 't' references undefined scenarios: DoesNotExist
       x [crossReferences] PI task 't', parameter 'p' references undefined scenarios: DoesNotExist
       x [crossReferences] PI task 't', outputMapping 'm' references undefined scenarios: DoesNotExist
+      x [crossReferences] PI task 't', outputMapping 'm' references undefined observed data 'Laskin'
       i Run `validateProject(project)` for a full report.
 
 # .warnUnquantifiedUncertainty fires once per NA-uncertainty parameter
 
     Code
-      esqlabsR:::.warnUnquantifiedUncertainty("myTask", fakeResult)
+      .warnUnquantifiedUncertainty("myTask", fakeResult)
     Condition
       Warning:
       Parameter identification task "myTask": uncertainty could not be quantified for parameter "k_clear" (standard deviation, CV, and confidence interval are all "NA").
@@ -179,6 +193,33 @@
       Error in `runPI()`:
       ! `runPI()` now requires a <Project> object as its first argument. Migrate via `loadProject()` and a parameterIdentification section in your Project.json.
 
+# setPITask() errors on an unknown task, an unknown scenario, and a field it cannot set
+
+    Code
+      setPITask(project, "ghost", scenarios = "x")
+    Condition
+      Error in `setPITask()`:
+      ! Cannot modify PI task "ghost": it does not exist.
+      i Use `addPITask()` to create it first.
+
+---
+
+    Code
+      setPITask(project, "cfg", scenarios = "ghost")
+    Condition
+      Error in `setPITask()`:
+      ! Cannot modify PI task "cfg":
+      x scenarios not found in `project$definitions$scenarios`: "ghost"
+
+---
+
+    Code
+      project$setPITask("cfg", parameters = list())
+    Condition
+      Error:
+      ! `setPITask()` cannot set parameters.
+      i It sets scenarios and configuration; use `addPIParameter()` / `addPIOutputMapping()` for a task's parameters and output mappings.
+
 # addPITask() errors on unknown scenario id
 
     Code
@@ -188,16 +229,8 @@
         scenarios = "Ghost", outputPath = "aciclovir_pvb", observedData = "Laskin")))
     Condition
       Warning:
-      Canonicalized 1 id to a safe form:
+      Canonicalized 2 ids to a safe form:
       * "Bad" -> "bad"
-      Warning:
-      Canonicalized 1 referenced id to a safe form:
-      * "Ghost" -> "ghost"
-      Warning:
-      Canonicalized 1 referenced id to a safe form:
-      * "Ghost" -> "ghost"
-      Warning:
-      Canonicalized 1 referenced id to a safe form:
       * "Ghost" -> "ghost"
       Error in `addPITask()`:
       ! Cannot add PI task "bad":
@@ -223,9 +256,6 @@
     Code
       do.call(addPITask, c(list(project = project), args))
     Condition
-      Warning:
-      Canonicalized 1 id to a safe form:
-      * "Dup" -> "dup"
       Error:
       ! Cannot add PI task "dup":
       x PI task 'dup' already exists; pass overwrite = TRUE to replace it
@@ -236,10 +266,10 @@
       removePITask(project, "NotThere")
     Condition
       Warning:
+      PI task "notthere" not found; no-op.
+      Warning:
       Canonicalized 1 id to a safe form:
       * "NotThere" -> "notthere"
-      Warning:
-      PI task "notthere" not found; no-op.
 
 # addPIParameter() errors on unknown task
 
@@ -260,7 +290,7 @@
         path = "a|b", minValue = 0, maxValue = 1, startValue = 0.5)
     Condition
       Warning:
-      Canonicalized 1 referenced id to a safe form:
+      Canonicalized 1 id to a safe form:
       * "Ghost" -> "ghost"
       Error in `addPIParameter()`:
       ! scenarios not found: "ghost"
@@ -335,8 +365,25 @@
       runPI(project, tasks = "Ghost")
     Condition
       Warning:
-      Canonicalized 1 referenced id to a safe form:
+      Canonicalized 1 id to a safe form:
       * "Ghost" -> "ghost"
       Error in `runPI()`:
       ! Unknown `tasks`: "ghost". Available: "aciclovirsimple".
+
+# .parsePIOutputMappings loads a mapping the constructor would reject
+
+    Code
+      PIOutputMapping(id = "m1", scenarios = "s1", observedData = "d1")
+    Condition
+      Error in `PIOutputMapping()`:
+      ! argument "outputPath" is missing, with no default
+
+# .parsePIParameters loads a parameter the constructor would reject
+
+    Code
+      PIParameter(id = "p1", scenarios = "s1", path = "Aciclovir|Lipophilicity",
+        maxValue = 2, startValue = 0)
+    Condition
+      Error in `PIParameter()`:
+      ! argument "minValue" is missing, with no default
 
