@@ -24,7 +24,7 @@ practices.
 
 The package provides functions to:
 
-- Design, import and run Simulations,
+- Design, import and run simulations,
 - Generate standardized plots and other reporting materials,
 - Validate and share reproducible project configurations.
 
@@ -35,7 +35,7 @@ tutorial](https://esqlabs.github.io/esqlabsR/articles/esqlabsR.html).
 
 ### Pre-requisites
 
-<!-- As `{esqlabsR}` relies indirectly on  `{rSharp}`, it requires its its external dependencies (Visual C++ Redistributable and .NET 8). Install them by following these instructions: -->
+<!-- As `{esqlabsR}` relies indirectly on `{rSharp}`, it requires its external dependencies (Visual C++ Redistributable and .NET 10). Install them by following these instructions: -->
 
 - [For
   Windows](https://github.com/Open-Systems-Pharmacology/rSharp?tab=readme-ov-file#prerequisites)
@@ -50,10 +50,12 @@ R-universe](https://open-systems-pharmacology.r-universe.dev), so add it
 to your repositories first:
 
 ``` r
-options(repos = c(
-  OSP = "https://open-systems-pharmacology.r-universe.dev",
-  getOption("repos")
-))
+options(
+  repos = c(
+    OSP = "https://open-systems-pharmacology.r-universe.dev",
+    getOption("repos")
+  )
+)
 ```
 
 You can then install the package by running:
@@ -75,13 +77,13 @@ Note: For projects created for version 3 of `esqlabsR` package, refer to
 
 ## Usage
 
-A `{esqlabsR}` project is a directory. At its root sits a `Project.json`
-container alongside a `definitions/` folder that holds your authored
-definition files, one file per definition, with the scenarios living
-under `definitions/scenarios/`. The package ships a complete worked
-example project that you can load and run directly.
+An `{esqlabsR}` project is a directory. At its root sits a
+`Project.json` container alongside a `definitions/` folder that holds
+your authored definition files, one file per definition, with the
+scenarios living under `definitions/scenarios/`. The package ships a
+complete worked example project that you can load and run directly.
 
-The quickest way to see the workflow end to end is to load the example
+The quickest way to see the workflow end-to-end is to load the example
 project, run one of its scenarios, and plot the result:
 
 ``` r
@@ -90,7 +92,7 @@ library(esqlabsR)
 # Load the worked example project shipped with the package.
 project <- loadProject(exampleProjectPath())
 
-# Run a single scenario. The first run initializes PK-Sim and is slow.
+# Run a single scenario.
 results <- runScenarios(project, scenarios = "aciclovir_iv")
 
 # Build the project's plots from the scenario results.
@@ -101,28 +103,35 @@ plots$individual_diagnostics
 ```
 
 `runScenarios()` returns a named list keyed by scenario name. Each entry
-bundles the prepared simulation, its results, the extracted output
-values, and the population (or `NULL` for individual scenarios).
+holds the prepared simulation, its results, the extracted output values,
+and the population (or `NULL` for individual scenarios).
 
-To start your own project from scratch, scaffold the required folder
-structure and files in the current working directory with:
+To start your own project from scratch, create a new project with the
+required folder structure and files in the current working directory (or
+provide a path to the folder you want to create the project in) with:
 
 ``` r
 esqlabsR::initProject()
 ```
 
-You then author and edit the project’s definitions, scenarios,
+Then load the project into the memory:
+
+``` r
+project <- esqlabsR::loadProject()
+```
+
+You then create and edit the project’s definitions, scenarios,
 individuals, populations, parameter sets, output paths, observed data,
 and plots, with the `add*()`, `set*()`, and `remove*()` functions. Each
-of these takes the definition `id` first, for example
+of these requires a definition `id` (unique name), for example
 `addScenario(project, id = "aciclovir_iv", ...)`. These edits are made
 in memory; `saveProject()` then writes them to the definition files, so
 nothing reaches disk until you ask for it. Once your project is
-configured, you run it with `runScenarios()`, plot it with
-`createPlots()`, and check it for configuration problems with
+configured, you run simulations with `runScenarios()`, create plots with
+`createPlots()`, and check the project for configuration problems with
 `validateProject()`.
 
-To share or archive a project, freeze a single self-contained
+To share or archive a project, create a single self-contained
 `.esqlabsR` snapshot with `snapshotProject()` and read it back with
 `restoreProject()`.
 
