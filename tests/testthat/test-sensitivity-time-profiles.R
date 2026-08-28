@@ -39,6 +39,23 @@ obsData <<- loadDataSetsFromExcel(
   importerConfigurationOrPath = dataConfiguration
 )
 
+# Plot data ---------------------------------------------------------------
+
+test_that("simulated ParameterFactor carries the variation values", {
+  # `DataCombined$toDataFrame()` hands the dataset names back as a factor, so
+  # the numeric factor must come from the label, not the level position;
+  # otherwise 0.1 / 2 / 20 turn into 1 / 2 / 4 and the colour legend follows.
+  data <- .aggregateSimulationAndObservedData(
+    simulationResults = results$simulationResults,
+    dataSets = NULL,
+    parameterPaths = results$parameterPaths,
+    outputPaths = results$outputPaths,
+    xUnits = NULL,
+    yUnits = NULL
+  )
+  expect_equal(sort(unique(data$ParameterFactor)), c(0.1, 1, 2, 20))
+})
+
 # Validate plotting arguments ---------------------------------------------
 
 test_that("sensitivityTimeProfiles fails with invalid input", {
