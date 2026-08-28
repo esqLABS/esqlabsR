@@ -112,9 +112,10 @@ General settings for each PI task. If omitted, defaults are used.
 | `LogScaleSD`               | Standard deviation for log scale (default `0.086`)                |
 
 `numberOfCores` is passed on as the `ospsuite::SimulationRunOptions` of the
-task. `checkForNegativeValues` switches the solver's negative-values check on
-or off for the task's simulations (`simulation$solver$checkForNegativeValues`).
-Leave them empty to use the defaults.
+task; leave it empty to use the ospsuite default. `checkForNegativeValues`
+switches the solver's check for negative values on or off for the task's
+simulations (`simulation$solver$checkForNegativeValues`); leave it empty to
+keep the setting stored in the model.
 
 For background on `ObjectiveFunctionType`, `ResidualWeightingMethod`, and
 `RobustMethod`, see the [`OSPSuite.ParameterIdentification` error calculation

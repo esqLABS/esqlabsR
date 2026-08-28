@@ -1,16 +1,5 @@
 projectConfiguration <- testProjectConfiguration()
 
-# A PI task's `checkForNegativeValues` lives on its simulations' solver
-# settings; `piTask$simulations` is a single `Simulation` for a one-scenario
-# task and a list otherwise.
-.taskCheckForNegativeValues <- function(piTask) {
-  simulations <- piTask$simulations
-  if (!is.list(simulations)) {
-    simulations <- list(simulations)
-  }
-  simulations[[1]]$solver$checkForNegativeValues
-}
-
 test_that("createPITasks creates ParameterIdentification objects from configurations", {
   piTaskConfigurations <- readPITaskConfigurationFromExcel(
     piTaskNames = "AciclovirSimple",
@@ -555,7 +544,7 @@ test_that("createPITasks applies simulationRunOptions from PIConfiguration colum
     projectConfiguration = projectConfigurationLocal
   ))
   expect_null(piTasks$Task1$configuration$simulationRunOptions)
-  expect_false(.taskCheckForNegativeValues(piTasks$Task1))
+  expect_false(piTasks$Task1$simulations[[1]]$solver$checkForNegativeValues)
 
   # Both set
   sheets$PIConfiguration$numberOfCores <- 4
@@ -568,14 +557,11 @@ test_that("createPITasks applies simulationRunOptions from PIConfiguration colum
   ))
   opts <- piTasks$Task1$configuration$simulationRunOptions
   expect_equal(opts$numberOfCores, 4L)
-  expect_false(.taskCheckForNegativeValues(piTasks$Task1))
+  expect_false(piTasks$Task1$simulations[[1]]$solver$checkForNegativeValues)
 })
 
 test_that(".applySolverCheckForNegativeValues writes the value to each simulation's solver", {
-  simulation <- ospsuite::loadSimulation(
-    testthat::test_path("..", "data", "simple.pkml"),
-    loadFromCache = FALSE
-  )
+  simulation <- loadTestSimulation("simple")
   # The fixture model ships with the check switched on, so a FALSE proves the
   # write landed.
   expect_true(simulation$solver$checkForNegativeValues)

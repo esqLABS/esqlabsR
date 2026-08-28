@@ -2,7 +2,7 @@
 
 ## Breaking changes
 
-- Bumped minimum required `ospsuite` version to 13.0.0. The `checkForNegativeValues` column of the `PIConfiguration` sheet is written to the solver settings of the task's simulations (`simulation$solver$checkForNegativeValues`); ospsuite 13 no longer carries it on `SimulationRunOptions`, so earlier esqlabsR versions failed in `createPITasks()` for any workbook that fills that cell (#1252).
+- Requires `ospsuite` 13.0.0 or later (#1252).
 
 ## Minor improvements and bug fixes
 
@@ -15,6 +15,7 @@
 - `sensitivityCalculation()` no longer errors when all runs for a parameter fail; it now warns and omits that parameter from the results (#1056).
 - `sensitivityTornadoPlot()` now matches the `parameterFactor` and its reciprocal against the analysis results with a numerical tolerance, so user supplied reciprocal factors are no longer rejected due to floating point representation (#1056).
 - `createPITasks()` no longer rejects parameter bounds that exclude the model's current value, applying the sheet `StartValue` before validating them (#1140).
+- The `checkForNegativeValues` column of the `PIConfiguration` sheet is now applied to the solver settings of the task's simulations (`simulation$solver$checkForNegativeValues`); with ospsuite 13, `createPITasks()` previously stopped with an error when that cell was filled (#1252).
 
 # esqlabsR 5.7.0
 
