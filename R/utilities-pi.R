@@ -159,6 +159,13 @@ runPI <- function(piTasks) {
     configurations = piTaskConfiguration$piConfiguration
   )
 
+  # From ospsuite 13 on, the sheet's `checkForNegativeValues` is a solver
+  # setting of each simulation rather than a run option.
+  .applySolverCheckForNegativeValues(
+    simulations = simulations,
+    value = piTaskConfiguration$piConfiguration[["checkForNegativeValues"]]
+  )
+
   # Create ParameterIdentification
   piTask <- ospsuite.parameteridentification::ParameterIdentification$new(
     simulations = simulations,
@@ -478,6 +485,46 @@ runPI <- function(piTasks) {
   return(outputMappings)
 }
 
+#' Whether `ospsuite::SimulationRunOptions` carries `checkForNegativeValues`
+#'
+#' `TRUE` for ospsuite < 13, where the negative-values check is a run option
+#' that overrides the solver setting at run time. From ospsuite 13 on the field
+#' is gone (assigning it errors) and the check is a solver setting only,
+#' `simulation$solver$checkForNegativeValues`. Read off the class generator, so
+#' no .NET object is created.
+#' @returns Logical scalar.
+#' @keywords internal
+#' @noRd
+.runOptionsCarryCheckForNegativeValues <- function() {
+  "checkForNegativeValues" %in% names(ospsuite::SimulationRunOptions$active)
+}
+
+#' Write a PI task's `checkForNegativeValues` to its simulations' solvers
+#'
+#' Used from ospsuite 13 on, where the check is a solver setting; with an
+#' earlier ospsuite the value travels on the run options instead (see
+#' `.createPIConfigurationFromConfig()`) and this does nothing. An empty sheet
+#' cell (`NULL` or `NA`) leaves every simulation's own setting in place.
+#' @param simulations Named list of `ospsuite::Simulation` objects (an entry
+#'   may be `NULL`).
+#' @param value The `checkForNegativeValues` cell of the PIConfiguration sheet.
+#' @returns `simulations`, invisibly; the simulations are modified in place.
+#' @keywords internal
+#' @noRd
+.applySolverCheckForNegativeValues <- function(simulations, value) {
+  if (
+    is.null(value) || is.na(value) || .runOptionsCarryCheckForNegativeValues()
+  ) {
+    return(invisible(simulations))
+  }
+  for (simulation in simulations) {
+    if (!is.null(simulation)) {
+      simulation$solver$checkForNegativeValues <- as.logical(value)
+    }
+  }
+  invisible(simulations)
+}
+
 #' Create PIConfiguration from configuration options
 #' @param configurations Named list of configuration options from
 #'   PIConfiguration sheet
@@ -515,7 +562,10 @@ runPI <- function(piTasks) {
     }
   }
 
-  # Apply SimulationRunOptions
+  # Apply SimulationRunOptions. `checkForNegativeValues` is a field of
+  # `SimulationRunOptions` only in ospsuite < 13; from 13 on it is a solver
+  # setting, written to each simulation by
+  # `.applySolverCheckForNegativeValues()` in `.createSinglePITask()`.
   numberOfCores <- configurations[["numberOfCores"]]
   checkForNegativeValues <- configurations[["checkForNegativeValues"]]
   hasNumberOfCores <- !is.null(numberOfCores) && !is.na(numberOfCores)
@@ -526,7 +576,7 @@ runPI <- function(piTasks) {
     if (hasNumberOfCores) {
       simRunOptions$numberOfCores <- as.integer(numberOfCores)
     }
-    if (hasCheckForNegativeValues) {
+    if (hasCheckForNegativeValues && .runOptionsCarryCheckForNegativeValues()) {
       simRunOptions$checkForNegativeValues <- as.logical(checkForNegativeValues)
     }
     piConfig$simulationRunOptions <- simRunOptions

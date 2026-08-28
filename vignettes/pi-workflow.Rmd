@@ -111,8 +111,11 @@ General settings for each PI task. If omitted, defaults are used.
 | `LinScaleCV`               | Coefficient of variation for linear scale (default `0.2`)         |
 | `LogScaleSD`               | Standard deviation for log scale (default `0.086`)                |
 
-`numberOfCores` and `checkForNegativeValues` correspond to the options of
-`ospsuite::SimulationRunOptions`. Leave them empty to use the defaults.
+`numberOfCores` is passed on as the `ospsuite::SimulationRunOptions` of the
+task. `checkForNegativeValues` switches the solver's negative-values check on
+or off for the task's simulations (with ospsuite 13 it is written to each
+simulation's `simulation$solver$checkForNegativeValues`; with ospsuite 12 it
+is passed as a run option). Leave them empty to use the defaults.
 
 For background on `ObjectiveFunctionType`, `ResidualWeightingMethod`, and
 `RobustMethod`, see the [`OSPSuite.ParameterIdentification` error calculation

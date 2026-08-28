@@ -11,6 +11,7 @@
 - `sensitivityCalculation()` no longer errors when all runs for a parameter fail; it now warns and omits that parameter from the results (#1056).
 - `sensitivityTornadoPlot()` now matches the `parameterFactor` and its reciprocal against the analysis results with a numerical tolerance, so user supplied reciprocal factors are no longer rejected due to floating point representation (#1056).
 - `createPITasks()` no longer rejects parameter bounds that exclude the model's current value, applying the sheet `StartValue` before validating them (#1140).
+- `createPITasks()` works with ospsuite 13: the `checkForNegativeValues` column of the `PIConfiguration` sheet is written to the solver settings of the task's simulations (`simulation$solver$checkForNegativeValues`), since ospsuite 13 no longer carries it on `SimulationRunOptions`; with ospsuite 12 it is still passed as a run option (#1252).
 
 # esqlabsR 5.7.0
 

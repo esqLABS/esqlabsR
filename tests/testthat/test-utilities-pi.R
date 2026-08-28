@@ -1,5 +1,19 @@
 projectConfiguration <- testProjectConfiguration()
 
+# Where a PI task's `checkForNegativeValues` lands depends on the ospsuite
+# version: the run options before 13, the simulations' solver from 13 on. Read
+# it back from the place this ospsuite uses.
+.taskCheckForNegativeValues <- function(piTask) {
+  if (.runOptionsCarryCheckForNegativeValues()) {
+    return(piTask$configuration$simulationRunOptions$checkForNegativeValues)
+  }
+  simulations <- piTask$simulations
+  if (!is.list(simulations)) {
+    simulations <- list(simulations)
+  }
+  simulations[[1]]$solver$checkForNegativeValues
+}
+
 test_that("createPITasks creates ParameterIdentification objects from configurations", {
   piTaskConfigurations <- readPITaskConfigurationFromExcel(
     piTaskNames = "AciclovirSimple",
@@ -532,7 +546,9 @@ test_that("createPITasks applies simulationRunOptions from PIConfiguration colum
   expect_false(is.null(opts))
   expect_equal(opts$numberOfCores, 2L)
 
-  # Only checkForNegativeValues set
+  # Only checkForNegativeValues set. Where it lands depends on the ospsuite
+  # version (run option before 13, the simulations' solver from 13 on), so read
+  # it back from the place this ospsuite uses.
   sheets$PIConfiguration$numberOfCores <- NA_real_
   sheets$PIConfiguration$checkForNegativeValues <- FALSE
   .writeExcel(
@@ -544,7 +560,7 @@ test_that("createPITasks applies simulationRunOptions from PIConfiguration colum
   ))
   opts <- piTasks$Task1$configuration$simulationRunOptions
   expect_false(is.null(opts))
-  expect_false(opts$checkForNegativeValues)
+  expect_false(.taskCheckForNegativeValues(piTasks$Task1))
 
   # Both set
   sheets$PIConfiguration$numberOfCores <- 4
@@ -557,7 +573,34 @@ test_that("createPITasks applies simulationRunOptions from PIConfiguration colum
   ))
   opts <- piTasks$Task1$configuration$simulationRunOptions
   expect_equal(opts$numberOfCores, 4L)
-  expect_false(opts$checkForNegativeValues)
+  expect_false(.taskCheckForNegativeValues(piTasks$Task1))
+})
+
+test_that(".applySolverCheckForNegativeValues writes the value to each simulation's solver on ospsuite 13", {
+  skip_if(
+    .runOptionsCarryCheckForNegativeValues(),
+    "ospsuite < 13 carries checkForNegativeValues on the run options"
+  )
+  simulation <- ospsuite::loadSimulation(
+    testthat::test_path("..", "data", "simple.pkml"),
+    loadFromCache = FALSE
+  )
+  # The fixture model ships with the check switched on, so a FALSE proves the
+  # write landed.
+  expect_true(simulation$solver$checkForNegativeValues)
+
+  # A NULL entry (a scenario that did not build) is skipped, not an error.
+  .applySolverCheckForNegativeValues(
+    simulations = list(a = simulation, b = NULL),
+    value = FALSE
+  )
+  expect_false(simulation$solver$checkForNegativeValues)
+
+  # An empty sheet cell leaves the setting alone.
+  .applySolverCheckForNegativeValues(list(simulation), value = NA)
+  expect_false(simulation$solver$checkForNegativeValues)
+  .applySolverCheckForNegativeValues(list(simulation), value = NULL)
+  expect_false(simulation$solver$checkForNegativeValues)
 })
 
 test_that("createPITasks applies objectiveFunctionOptions from PIConfiguration columns", {
