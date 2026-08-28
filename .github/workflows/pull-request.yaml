@@ -3,6 +3,11 @@ name: Pull Request Workflow
 # Runs on every pull request. sync-remotes pins/unpins `Remotes:` in DESCRIPTION
 # to match the package Version and commits the fix to the PR branch; the checks
 # then run on that synced tree so what gets validated is what will be merged.
+#
+# Every check passes the OSP R-universe as an extra repository: ospsuite pulls
+# in packages that are not on CRAN (ospsuite.plots, tlf), and pak does not read
+# a dependency's own Additional_repositories, so without it dependency
+# resolution fails before any check runs.
 
 on:
   pull_request:
@@ -23,11 +28,14 @@ jobs:
     with:
       setup-quarto: true
       extra-packages: local::.
+      extra-repositories: https://open-systems-pharmacology.r-universe.dev
 
   test-coverage:
     needs: [sync-remotes]
     if: ${{ !cancelled() && needs.sync-remotes.result != 'failure' }}
     uses: Open-Systems-Pharmacology/Workflows/.github/workflows/test-coverage.yaml@main
+    with:
+      extra-repositories: https://open-systems-pharmacology.r-universe.dev
     secrets:
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
@@ -43,3 +51,5 @@ jobs:
       contents: write # required by the pkgdown reusable workflow (no deploy on PRs)
       pull-requests: read # the workflow's check-changes job reads PR file changes
     uses: Open-Systems-Pharmacology/Workflows/.github/workflows/pkgdown.yaml@main
+    with:
+      extra-repositories: https://open-systems-pharmacology.r-universe.dev
