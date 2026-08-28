@@ -11,6 +11,7 @@
 - `sensitivityCalculation()` no longer errors when all runs for a parameter fail; it now warns and omits that parameter from the results (#1056).
 - `sensitivityTornadoPlot()` now matches the `parameterFactor` and its reciprocal against the analysis results with a numerical tolerance, so user supplied reciprocal factors are no longer rejected due to floating point representation (#1056).
 - `createPITasks()` no longer rejects parameter bounds that exclude the model's current value, applying the sheet `StartValue` before validating them (#1140).
+- `sensitivityTimeProfiles()` again labels the parameter-factor colour legend with the variation values (for example 0.1, 1, 20) and draws the lines in factor order. With ospsuite 13, which returns dataset names from `DataCombined` as a factor, the factors had been read as their positions 1, 2, 3 (#1259).
 
 # esqlabsR 5.7.0
 
