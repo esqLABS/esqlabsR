@@ -545,11 +545,13 @@ sensitivityTimeProfiles <- function(
     ParameterPathUserName = parameterPathUserName %||% NA_character_
   )
 
-  # Convert parameterFactor to numeric for simulated data
+  # Convert parameterFactor to numeric for simulated data. `name` comes back
+  # from `DataCombined$toDataFrame()` as a factor, so go through the label:
+  # `as.numeric()` on the factor itself would give the level position.
   combinedDf <- dplyr::rowwise(combinedDf) |>
     dplyr::mutate(
       ParameterFactor = if (dataType == "simulated") {
-        as.numeric(name)
+        as.numeric(as.character(name))
       } else {
         NA_real_
       }
