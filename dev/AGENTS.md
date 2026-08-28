@@ -34,6 +34,11 @@ vignettes instead of guessing:
 
 ## Coding conventions
 
+- Internal (non-exported) functions are named with a leading dot:
+  [`.validateParametersStructure()`](https://esqlabs.github.io/esqlabsR/dev/reference/dot-validateParametersStructure.md),
+  `.getEsqlabsColors()`. The dot marks a function as internal at every
+  call site, so a reader never has to check `NAMESPACE` to know whether
+  they are looking at part of the package’s interface.
 - Type checking: use
   [`ospsuite.utils::validateIsOfType()`](https://www.open-systems-pharmacology.org/OSPSuite.RUtils/reference/validateIsOfType.html)
   /
@@ -76,9 +81,9 @@ The target reader of all user-facing documentation (roxygen
 modeling, scenarios, individuals, and populations; they do not know
 software-engineering vocabulary.
 
-- Do **not** use developer jargon: “reconcile”, “authoring”, “orphan”,
-  “idempotent”, “in-memory vs. on-disk tree”, “bound/unbound”, “no-op”,
-  “side-car”, “mutate”.
+- Do **not** use developer jargon: “reconcile”, “authoring”, “scaffold”,
+  “orphan”, “idempotent”, “in-memory vs. on-disk tree”, “bound/unbound”,
+  “no-op”, “side-car”, “mutate”.
 - Describe behavior by **what the user sees and does**, not by
   mechanism. Prefer “Only files with actual changes are re-written, so
   `git diff` shows exactly the definitions you edited” over

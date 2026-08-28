@@ -1,7 +1,7 @@
 # Parse and validate comma-separated Excel field
 
 Parses comma-separated values from Excel and validates using
-ospsuite.utils. Provides Excel-specific error context (plotId, field
+ospsuite.utils. Provides Excel-specific error context (plotID, field
 name) for common issues.
 
 ## Usage

@@ -1,6 +1,6 @@
-# Check that an object has a named field
+# Check if the `object` contains active binding with the name `field`
 
-Check if the `object` contains an active binding with the name `field`
+Check if the `object` contains active binding with the name `field`
 
 ## Usage
 

@@ -1,8 +1,7 @@
-# Names of the settings stored in esqlabsEnv
+# Names of the settings stored in esqlabsEnv Can be used with `getEsqlabsRSetting()`
 
-The returned names can be used with
+Names of the settings stored in esqlabsEnv Can be used with
 [`getEsqlabsRSetting()`](https://esqlabs.github.io/esqlabsR/dev/reference/getEsqlabsRSetting.md)
-to look up the value of a global esqlabsR setting.
 
 ## Usage
 

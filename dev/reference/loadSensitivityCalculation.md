@@ -3,8 +3,10 @@
 Restores a previously saved sensitivity calculation from a directory
 created with
 [`saveSensitivityCalculation()`](https://esqlabs.github.io/esqlabsR/dev/reference/saveSensitivityCalculation.md).
-If no simulation object is provided, the function attempts to load it
-from the saved simulation file path.
+If no simulation object is provided, the function loads the
+`simulation.pkml` bundled in the directory, falling back to the
+simulation file path stored in the metadata for folders saved before the
+pkml was bundled.
 
 ## Usage
 
@@ -21,8 +23,9 @@ loadSensitivityCalculation(outputDir, simulation = NULL)
 
 - simulation:
 
-  Optional. A `Simulation` object. If not provided, the function will
-  attempt to load the simulation from the path stored in the metadata.
+  Optional. A `Simulation` object. If not provided, the function loads
+  the `simulation.pkml` bundled in `outputDir`, or, if absent, the
+  simulation stored at the source path recorded in the metadata.
 
 ## Value
 

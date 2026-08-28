@@ -1,9 +1,6 @@
-# isAnyCriticalErrors
+# Check if validation results contain any critical errors
 
-Reports whether any section of a validation run produced a critical
-error, collapsing the per-section results from
-[`validateProject()`](https://esqlabs.github.io/esqlabsR/dev/reference/validateProject.md)
-into a single logical.
+Check if validation results contain any critical errors
 
 ## Usage
 
@@ -15,27 +12,8 @@ isAnyCriticalErrors(validationResults)
 
 - validationResults:
 
-  Named list of class `"ValidationResults"`, the output of
-  [`validateProject()`](https://esqlabs.github.io/esqlabsR/dev/reference/validateProject.md).
+  Output from validateAllConfigurations
 
 ## Value
 
-A single logical: `TRUE` if any section has critical errors, otherwise
-`FALSE`.
-
-## See also
-
-[`validateProject()`](https://esqlabs.github.io/esqlabsR/dev/reference/validateProject.md),
-[`validationSummary()`](https://esqlabs.github.io/esqlabsR/dev/reference/validationSummary.md).
-
-## Examples
-
-``` r
-if (FALSE) { # \dontrun{
-project <- loadProject("Project.json")
-results <- validateProject(project)
-if (isAnyCriticalErrors(results)) {
-  print(validationSummary(results))
-}
-} # }
-```
+Logical indicating if there are critical errors

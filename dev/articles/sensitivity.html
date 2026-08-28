@@ -5,12 +5,12 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<title>Sensitivity analysis • esqlabsR</title>
+<title>Sensitivity Analysis • esqlabsR</title>
 <script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
 <script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
-<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Sensitivity analysis">
+<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Sensitivity Analysis">
 <meta name="robots" content="noindex">
 </head>
 <body>
@@ -21,7 +21,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">esqlabsR</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">6.0.0.9001</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.7.0.9008</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -36,24 +36,22 @@
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
 <li><hr class="dropdown-divider"></li>
-    <li><h6 class="dropdown-header" data-toc-skip>Workflow</h6></li>
-    <li><a class="dropdown-item" href="../articles/projects.html">Projects and the project structure</a></li>
-    <li><a class="dropdown-item" href="../articles/design-scenarios.html">Design scenarios</a></li>
-    <li><a class="dropdown-item" href="../articles/validate-project.html">Validate a project</a></li>
-    <li><a class="dropdown-item" href="../articles/run-simulations.html">Run simulations</a></li>
-    <li><a class="dropdown-item" href="../articles/plot-results.html">Plot results</a></li>
-    <li><a class="dropdown-item" href="../articles/observed-data.html">Observed data</a></li>
+    <li><h6 class="dropdown-header" data-toc-skip>esqlabsR Workflow</h6></li>
+    <li><a class="dropdown-item" href="../articles/workflow-overview.html">Overview</a></li>
+    <li><a class="dropdown-item" href="../articles/project-structure.html">Project configuration</a></li>
+    <li><a class="dropdown-item" href="../articles/design-scenarios.html">2. Design Scenarios</a></li>
+    <li><a class="dropdown-item" href="../articles/run-simulations.html">3. Run Simulations</a></li>
+    <li><a class="dropdown-item" href="../articles/plot-results.html">4. Plot Results</a></li>
+    <li><a class="dropdown-item" href="../articles/sensitivity.html">Sensitivity Analysis</a></li>
+    <li><a class="dropdown-item" href="../articles/sensitivity-plots.html">Sensitivity Analysis – Plot Customization</a></li>
     <li><hr class="dropdown-divider"></li>
-    <li><h6 class="dropdown-header" data-toc-skip>Parameter identification</h6></li>
-    <li><a class="dropdown-item" href="../articles/pi-workflow.html">Parameter identification</a></li>
-    <li><hr class="dropdown-divider"></li>
-    <li><h6 class="dropdown-header" data-toc-skip>Sensitivity analysis</h6></li>
-    <li><a class="dropdown-item" href="../articles/sensitivity.html">Sensitivity analysis</a></li>
-    <li><a class="dropdown-item" href="../articles/sensitivity-plots.html">Sensitivity analysis: plot customization</a></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Parameter Identification</h6></li>
+    <li><a class="dropdown-item" href="../articles/pi-workflow.html">Parameter Identification</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Miscellaneous</h6></li>
-    <li><a class="dropdown-item" href="../articles/migrate-from-excel.html">Migrating an Excel project to 6.0.0</a></li>
-    <li><a class="dropdown-item" href="../articles/presentations.html">Slide decks</a></li>
+    <li><a class="dropdown-item" href="../articles/presentations.html">Slide Decks</a></li>
+    <li><a class="dropdown-item" href="../articles/advanced.html">Advanced Topics</a></li>
+    <li><a class="dropdown-item" href="../articles/project-migration-guide.html">Migrating Project Structure Versions</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
@@ -75,44 +73,54 @@
 
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
-      <img src="../logo.png" class="logo" alt=""><h1>Sensitivity analysis</h1>
+      <img src="../logo.png" class="logo" alt=""><h1>Sensitivity Analysis</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/esqLABS/esqlabsR/blob/import-incomplete-records/vignettes/sensitivity.Rmd" class="external-link"><code>vignettes/sensitivity.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/esqLABS/esqlabsR/blob/main/vignettes/sensitivity.Rmd" class="external-link"><code>vignettes/sensitivity.Rmd</code></a></small>
       <div class="d-none name"><code>sensitivity.Rmd</code></div>
     </div>
 
     
     
-<p>Sensitivity analysis varies model parameters and measures the effect
-on PK outcomes, which helps you judge model robustness when input values
-are uncertain. This vignette walks through a complete workflow with
-<code><a href="../reference/sensitivityCalculation.html">sensitivityCalculation()</a></code> and its plot functions, using
-<strong>aciclovir</strong> as the example: run a base simulation, vary
-selected parameters, calculate sensitivities, and visualize the impact.
-For the mathematical background, see the OSPS documentation on <a href="https://docs.open-systems-pharmacology.org/shared-tools-and-example-workflows/sensitivity-analysis" class="external-link">sensitivity
-analysis</a>.</p>
-<div class="section level2">
-<h2 id="running-the-sensitivity-analysis">Running the sensitivity analysis<a class="anchor" aria-label="anchor" href="#running-the-sensitivity-analysis"></a>
-</h2>
-<p><code><a href="../reference/sensitivityCalculation.html">sensitivityCalculation()</a></code> operates on an OSPS
-<code>Simulation</code> object, not on a project. You obtain one by
-loading the worked example project and running its
-<code>aciclovir_iv</code> scenario; the resulting Scenario Result
-carries the prepared <code>Simulation</code> in its
-<code>simulation</code> field:</p>
+<div class="section level3">
+<h3 id="overview">Overview<a class="anchor" aria-label="anchor" href="#overview"></a>
+</h3>
+<p>Sensitivity analysis helps to understand how variations in key
+simulation parameters affect pharmacokinetic (PK) outcomes. It is a
+critical step in evaluating model robustness, particularly when
+parameter values are uncertain. For details on sensitivity analysis and
+its mathematical background, see the OSPS documentation on <a href="https://docs.open-systems-pharmacology.org/shared-tools-and-example-workflows/sensitivity-analysis" class="external-link">Sensitivity
+Analysis</a>.</p>
+<p>This vignette demonstrates a complete sensitivity analysis workflow
+in <a href="https://github.com/esqLABS/esqlabsR" class="external-link">esqlabsR</a> using <strong>aciclovir</strong> as an
+example. We run a base simulation, define and vary selected parameters,
+calculate sensitivities, and visualize the impact on PK metrics.</p>
+</div>
+<div class="section level3">
+<h3 id="running-the-sensitivity-analysis">Running the sensitivity analysis<a class="anchor" aria-label="anchor" href="#running-the-sensitivity-analysis"></a>
+</h3>
+<p>We begin by loading a simulation of aciclovir from the package
+example data:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">project</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/loadProject.html">loadProject</a></span><span class="op">(</span><span class="fu"><a href="../reference/exampleProjectPath.html">exampleProjectPath</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="va">results</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/runScenarios.html">runScenarios</a></span><span class="op">(</span><span class="va">project</span>, scenarios <span class="op">=</span> <span class="st">"aciclovir_iv"</span><span class="op">)</span></span>
-<span><span class="va">simulation</span> <span class="op">&lt;-</span> <span class="va">results</span><span class="op">[[</span><span class="st">"aciclovir_iv"</span><span class="op">]</span><span class="op">]</span><span class="op">$</span><span class="va">simulation</span></span></code></pre></div>
-<p>By default <code><a href="../reference/sensitivityCalculation.html">sensitivityCalculation()</a></code> re-runs the
-simulation with each parameter scaled from 0.1x to 10x its original
-value; pass <code>variationRange</code> to change this. It returns the
-varied parameters, the simulation results, and a data frame of PK
-metrics per variation.</p>
-<p>Here you analyze how changes in <em>lipophilicity</em>,
-<em>dose</em>, and <em>glomerular filtration rate (GFR fraction)</em>
-affect the pharmacokinetics of aciclovir:</p>
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/esqLABS/esqlabsR" class="external-link">esqlabsR</a></span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">simulationFilePath</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span></span>
+<span>  <span class="st">"extdata/examples/TestProject/Models/Simulations/Aciclovir.pkml"</span>,</span>
+<span>  package <span class="op">=</span> <span class="st">"esqlabsR"</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">simulation</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://www.open-systems-pharmacology.org/OSPSuite-R/reference/loadSimulation.html" class="external-link">loadSimulation</a></span><span class="op">(</span><span class="va">simulationFilePath</span><span class="op">)</span></span></code></pre></div>
+<p>The <code><a href="../reference/sensitivityCalculation.html">sensitivityCalculation()</a></code> function in
+<a href="https://github.com/esqLABS/esqlabsR" class="external-link">esqlabsR</a> automates the analysis process by re-running the
+simulation with scaled input parameters. By default, each parameter is
+varied from 0.1× to 10× its original value, which can be customized
+using the <code>variationRange</code> argument.</p>
+<p>The function returns a structured list containing the varied
+parameters, simulation results, and a data frame of calculated PK
+metrics for each variation.</p>
+<p>In the following example, we analyze how changes in
+<em>lipophilicity</em>, <em>dose</em>, and <em>glomerular filtration
+rate (GFR fraction)</em> affect the pharmacokinetics of aciclovir:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">outputPaths</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
 <span>  Aciclovir_PVB <span class="op">=</span> <span class="st">"Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"</span></span>
@@ -123,10 +131,22 @@ affect the pharmacokinetics of aciclovir:</p>
 <span>  <span class="st">"GFR fraction"</span> <span class="op">=</span> <span class="st">"Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Glomerular Filtration-GFR-Aciclovir|GFR fraction"</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">analysis</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/sensitivityCalculation.html">sensitivityCalculation</a></span><span class="op">(</span><span class="va">simulation</span>, <span class="va">outputPaths</span>, <span class="va">parameterPaths</span><span class="op">)</span></span></code></pre></div>
-<p>To interpret the results, focus on <em>lipophilicity</em>. Isolate
-that parameter and the columns that drive the sensitivity
-calculation:</p>
+<span><span class="va">analysis</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/sensitivityCalculation.html">sensitivityCalculation</a></span><span class="op">(</span><span class="va">simulation</span>, <span class="va">outputPaths</span>, <span class="va">parameterPaths</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">analysis</span><span class="op">$</span><span class="va">pkData</span><span class="op">)</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 6 × 11</span></span></span>
+<span><span class="co">#&gt;   OutputPath          ParameterPath ParameterFactor ParameterValue ParameterUnit</span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>               <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>        </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> Organism|Periphera… Aciclovir|Li…             0.1        -<span style="color: #BB0000;">0.009</span><span style="color: #BB0000; text-decoration: underline;">7</span> Log Units    </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> Organism|Periphera… Aciclovir|Li…             0.2        -<span style="color: #BB0000;">0.019</span><span style="color: #BB0000; text-decoration: underline;">4</span> Log Units    </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> Organism|Periphera… Aciclovir|Li…             0.3        -<span style="color: #BB0000;">0.029</span><span style="color: #BB0000; text-decoration: underline;">1</span> Log Units    </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span> Organism|Periphera… Aciclovir|Li…             0.4        -<span style="color: #BB0000;">0.038</span><span style="color: #BB0000; text-decoration: underline;">8</span> Log Units    </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span> Organism|Periphera… Aciclovir|Li…             0.5        -<span style="color: #BB0000;">0.048</span><span style="color: #BB0000; text-decoration: underline;">5</span> Log Units    </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">6</span> Organism|Periphera… Aciclovir|Li…             0.6        -<span style="color: #BB0000;">0.058</span><span style="color: #BB0000; text-decoration: underline;">2</span> Log Units    </span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 6 more variables: ParameterPathUserName &lt;chr&gt;, PKParameter &lt;chr&gt;,</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;">#   PKParameterValue &lt;dbl&gt;, PKPercentChange &lt;dbl&gt;, Unit &lt;chr&gt;,</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;">#   SensitivityPKParameter &lt;dbl&gt;</span></span></span></code></pre></div>
+<p>To illustrate interpretation we will focus on <em>lipophilicity</em>
+only.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">analysis</span><span class="op">$</span><span class="va">pkData</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span></span>
@@ -137,27 +157,31 @@ calculation:</p>
 <span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span></span>
 <span>    <span class="va">ParameterFactor</span>, <span class="va">PKParameterValue</span>,</span>
 <span>    <span class="va">PKPercentChange</span>, <span class="va">SensitivityPKParameter</span></span>
+<span>  <span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span></span>
+<span>    PKPercentChange <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">PKPercentChange</span>, <span class="fl">2</span><span class="op">)</span>,</span>
+<span>    SensitivityPKParameter <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">SensitivityPKParameter</span>, <span class="fl">4</span><span class="op">)</span></span>
 <span>  <span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 3 × 4</span></span></span>
 <span><span class="co">#&gt;   ParameterFactor PKParameterValue PKPercentChange SensitivityPKParameter</span></span>
 <span><span class="co">#&gt;             <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>            <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>           <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>                  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>             0.1            <span style="text-decoration: underline;">3</span>898.          -<span style="color: #BB0000;">0.523</span>                0.005<span style="text-decoration: underline;">81</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>             1              <span style="text-decoration: underline;">3</span>919.           0                  <span style="color: #BB0000;">NaN</span>      </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span>            10              <span style="text-decoration: underline;">4</span>019.           2.55                 0.002<span style="text-decoration: underline;">83</span></span></span></code></pre></div>
-<p>In this example the default lipophilicity (−0.1 log units) yields an
-AUC of 3916.4 µmol·min/L. A ten-fold higher value (−0.01) reduces AUC by
-0.52 %, whereas a ten-fold lower value (−1.0) increases it by 2.55 %.
-The sensitivity of AUC to a 10-fold decrease in lipophilicity is
-calculated as:
-<math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext mathvariant="normal">Sensitivity</mtext><mo>=</mo><mfrac><mrow><mi mathvariant="normal">Δ</mi><mtext mathvariant="normal">AUC</mtext></mrow><mrow><mi mathvariant="normal">Δ</mi><mtext mathvariant="normal">lipophilicity</mtext></mrow></mfrac><mo>×</mo><mfrac><mtext mathvariant="normal">lipophilicity</mtext><mtext mathvariant="normal">AUC</mtext></mfrac><mo>=</mo><mfrac><mrow><mn>4016.3</mn><mo>−</mo><mn>3916.4</mn></mrow><mrow><mi>−</mi><mn>1.0</mn><mo>−</mo><mi>−</mi><mn>0.1</mn></mrow></mfrac><mo>×</mo><mfrac><mrow><mi>−</mi><mn>0.1</mn></mrow><mn>3916.4</mn></mfrac><mo>=</mo><mn>0.0028</mn></mrow><annotation encoding="application/x-tex"> \text{Sensitivity}= \frac{\Delta \text{AUC}}{\Delta \text{lipophilicity}}\times\frac{\text{lipophilicity}}{\text{AUC}} = \frac{4016.3-3916.4}{-1.0--0.1} \times \frac{-0.1}{3916.4} = 0.0028 </annotation></semantics></math></p>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>             0.1            <span style="text-decoration: underline;">4</span>055.           -<span style="color: #BB0000;">0.44</span>                 0.004<span style="text-decoration: underline;">9</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>             1              <span style="text-decoration: underline;">4</span>073.            0                  <span style="color: #BB0000;">NaN</span>     </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span>            10              <span style="text-decoration: underline;">4</span>160.            2.13                 0.002<span style="text-decoration: underline;">4</span></span></span></code></pre></div>
+<p>In our example the default lipophilicity (−0.097 log units) yields an
+AUC of 4072.6 µmol·min/L. Ten-fold higher (−0.0097) reduces AUC by 0.44
+%, whereas ten-fold lower (−0.97) increases it by 2.13 %. The
+sensitivity of AUC to a 10-fold increase in lipophilicity is calculated
+as:
+<math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext mathvariant="normal">Sensitivity</mtext><mo>=</mo><mfrac><mrow><mi mathvariant="normal">Δ</mi><mtext mathvariant="normal">AUC</mtext></mrow><mrow><mi mathvariant="normal">Δ</mi><mtext mathvariant="normal">lipophilicity</mtext></mrow></mfrac><mo>×</mo><mfrac><mtext mathvariant="normal">lipophilicity</mtext><mtext mathvariant="normal">AUC</mtext></mfrac><mo>=</mo><mfrac><mrow><mn>4159.5</mn><mo>−</mo><mn>4072.6</mn></mrow><mrow><mi>−</mi><mn>0.97</mn><mo>−</mo><mi>−</mi><mn>0.097</mn></mrow></mfrac><mo>×</mo><mfrac><mrow><mi>−</mi><mn>0.097</mn></mrow><mn>4072.6</mn></mfrac><mo>=</mo><mn>0.0028</mn></mrow><annotation encoding="application/x-tex"> \text{Sensitivity}= \frac{\Delta \text{AUC}}{\Delta \text{lipophilicity}}\times\frac{\text{lipophilicity}}{\text{AUC}} = \frac{4159.5-4072.6}{-0.97--0.097} \times \frac{-0.097}{4072.6} = 0.0028 </annotation></semantics></math></p>
 </div>
-<div class="section level2">
-<h2 id="saving-and-loading-sensitivity-results">Saving and loading sensitivity results<a class="anchor" aria-label="anchor" href="#saving-and-loading-sensitivity-results"></a>
-</h2>
-<p>Save the results of a sensitivity analysis with
-<code><a href="../reference/saveSensitivityCalculation.html">saveSensitivityCalculation()</a></code> and restore them with
+<div class="section level3">
+<h3 id="saving-and-loading-sensitivity-results">Saving and Loading Sensitivity Results<a class="anchor" aria-label="anchor" href="#saving-and-loading-sensitivity-results"></a>
+</h3>
+<p>The results of a sensitivity analysis can be saved using
+<code><a href="../reference/saveSensitivityCalculation.html">saveSensitivityCalculation()</a></code> and restored with
 <code><a href="../reference/loadSensitivityCalculation.html">loadSensitivityCalculation()</a></code>. The <code>simulation</code>
-argument in <code><a href="../reference/loadSensitivityCalculation.html">loadSensitivityCalculation()</a></code> is optional: if
+argument in <code><a href="../reference/loadSensitivityCalculation.html">loadSensitivityCalculation()</a></code> is optional. If
 the original <code>Simulation</code> object is provided, reloading from
 disk is avoided. Otherwise, the function attempts to load the
 <code>.pkml</code> file from the path recorded during the original
@@ -170,19 +194,22 @@ analysis, which must still be accessible.</p>
 <span><span class="co"># Reload from disk</span></span>
 <span><span class="va">analysis</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/loadSensitivityCalculation.html">loadSensitivityCalculation</a></span><span class="op">(</span><span class="va">outputDir</span>, <span class="va">simulation</span><span class="op">)</span></span></code></pre></div>
 </div>
-<div class="section level2">
-<h2 id="visualizing-sensitivity-results">Visualizing sensitivity results<a class="anchor" aria-label="anchor" href="#visualizing-sensitivity-results"></a>
-</h2>
-<p>Visualize the results of the sensitivity analysis with the following
-functions.</p>
 <div class="section level3">
-<h3 id="sensitivity-spider-plot">Sensitivity spider plot<a class="anchor" aria-label="anchor" href="#sensitivity-spider-plot"></a>
+<h3 id="visualizing-sensitivity-results">Visualizing Sensitivity Results<a class="anchor" aria-label="anchor" href="#visualizing-sensitivity-results"></a>
 </h3>
+<p>The results of the sensitivity analysis can be visualized using the
+following functions:</p>
+<div class="section level4">
+<h4 id="sensitivity-spider-plot">Sensitivity Spider Plot<a class="anchor" aria-label="anchor" href="#sensitivity-spider-plot"></a>
+</h4>
 <p><code><a href="../reference/sensitivitySpiderPlot.html">sensitivitySpiderPlot()</a></code> visualizes how PK parameters
 respond as model input parameters are scaled. Each panel represents one
 PK metric (default: <code>C_max</code>, <code>t_max</code>,
-<code>AUC_inf</code>), making it straightforward to identify nonlinear
-trends and compare the direction and magnitude of effects.</p>
+<code>AUC_inf</code>), making it easy to identify nonlinear trends and
+compare the direction and magnitude of effects.</p>
+<p>By default, the plot includes all PK parameters in
+<code>analysis$pkData</code>. To restrict the output, use the
+<code>pkParameters</code> argument.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/sensitivitySpiderPlot.html">sensitivitySpiderPlot</a></span><span class="op">(</span><span class="va">analysis</span><span class="op">)</span></span>
 <span><span class="co">#&gt; $`Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)`</span></span></code></pre></div>
@@ -192,12 +219,12 @@ both <code>C_max</code> and <code>AUC_inf</code>, while
 <code>t_max</code> remains relatively stable. <em>GFR fraction</em> and
 <em>lipophilicity</em> have more modest but still visible effects.</p>
 </div>
-<div class="section level3">
-<h3 id="sensitivity-time-profiles">Sensitivity time profiles<a class="anchor" aria-label="anchor" href="#sensitivity-time-profiles"></a>
-</h3>
-<p><code><a href="../reference/sensitivityTimeProfiles.html">sensitivityTimeProfiles()</a></code> displays full
-concentration-time curves for each input parameter variation. This plot
-is suited to understanding how parameter changes affect the shape and
+<div class="section level4">
+<h4 id="sensitivity-time-profiles">Sensitivity time profiles<a class="anchor" aria-label="anchor" href="#sensitivity-time-profiles"></a>
+</h4>
+<p>The <code><a href="../reference/sensitivityTimeProfiles.html">sensitivityTimeProfiles()</a></code> function displays full
+concentration–time curves for each input parameter variation. This plot
+is ideal for understanding how parameter changes affect the shape and
 timing of the drug profile, rather than summary PK metrics.</p>
 <p>Each panel corresponds to one input parameter, with a color gradient
 representing the scaling factor: 0.1 = blue, 1.0 = black, 10 = red.</p>
@@ -210,15 +237,15 @@ while changes in <em>GFR fraction</em> affect the rate of decline,
 indicating faster or slower elimination. <em>Lipophilicity</em> causes
 only minor shifts in the curve.</p>
 </div>
-<div class="section level3">
-<h3 id="sensitivity-tornado-plot">Sensitivity tornado plot<a class="anchor" aria-label="anchor" href="#sensitivity-tornado-plot"></a>
-</h3>
-<p><code><a href="../reference/sensitivityTornadoPlot.html">sensitivityTornadoPlot()</a></code> provides a compact,
-side-by-side comparison of how each input parameter influences different
-PK outputs at a fixed scaling factor. The plot is best used to
+<div class="section level4">
+<h4 id="sensitivity-tornado-plot">Sensitivity tornado plot<a class="anchor" aria-label="anchor" href="#sensitivity-tornado-plot"></a>
+</h4>
+<p>The <code><a href="../reference/sensitivityTornadoPlot.html">sensitivityTornadoPlot()</a></code> function provides a
+compact, side-by-side comparison of how each input parameter influences
+different PK outputs at a fixed scaling factor. The plot is best used to
 <strong>rank parameters by influence</strong> and identify those with
 the strongest impact.</p>
-<p>By default, the plot compares the results at 0.1x and 10x the
+<p>By default, the plot compares the results at 0.1× and 10× the
 original parameter value. Other scaling factors can also be used, but
 they must be included in the <code>variationRange</code> passed to
 <code><a href="../reference/sensitivityCalculation.html">sensitivityCalculation()</a></code>.</p>
@@ -226,42 +253,44 @@ they must be included in the <code>variationRange</code> passed to
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/sensitivityTornadoPlot.html">sensitivityTornadoPlot</a></span><span class="op">(</span><span class="va">analysis</span><span class="op">)</span></span>
 <span><span class="co">#&gt; $`Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)`</span></span></code></pre></div>
 <p><img src="sensitivity_files/figure-html/tornado-plot-1.png" class="r-plt" alt="" width="672"></p>
-<p>The tornado plot confirms the trends seen in the previous plots, but
+<p>The tornado plot confirms the trends seen in previous plots, but
 makes it easier to compare the relative impact of each parameter across
 PK metrics.</p>
-<p>To change colors, scales, titles, or which PK parameters appear in
-any of these plots, see <code><a href="../articles/sensitivity-plots.html">vignette("sensitivity-plots")</a></code>.</p>
 </div>
 </div>
-<div class="section level2">
-<h2 id="sensitivity-calculation-for-user-defined-non-pk-outputs">Sensitivity calculation for user-defined (non-PK) outputs<a class="anchor" aria-label="anchor" href="#sensitivity-calculation-for-user-defined-non-pk-outputs"></a>
-</h2>
-<p>Though the typical sensitivity-analysis workflows focus on PK
-parameters, you can also calculate sensitivities for any numerical model
-output using user-defined functions. As for the PK parameters, the
-provided function(s) are applied to each output defined in the
-<code>outputPaths</code> argument of
-<code><a href="../reference/sensitivityCalculation.html">sensitivityCalculation()</a></code>.</p>
-<p>The custom functions are provided as a named list in the
-<code>customOutputFunctions</code> argument. Each function must take
+<div class="section level3">
+<h3 id="sensitivity-calculation-for-user-defined-non-pk-parameters-outputs">Sensitivity calculation for user-defined (non-PK parameters)
+outputs<a class="anchor" aria-label="anchor" href="#sensitivity-calculation-for-user-defined-non-pk-parameters-outputs"></a>
+</h3>
+<p>Though the typical workflows for sensitivity analysis are focused on
+PK parameters, it is also possible to calculate the sensitivities for
+any numerical model outputs using user-defined functions. As for the PK
+parameters, the provided function(s) will be applied to each output
+defined in the argument <code>outputPaths</code> of the
+<code><a href="../reference/sensitivityCalculation.html">sensitivityCalculation()</a></code> function.</p>
+<p>The custom functions are provided as a named list of functions in the
+<code>customOutputFunctions</code> argument. Each function must have the
 arguments <code>x</code> and <code>y</code>, through which it accesses
-the simulated time values (<code>x</code>) and the output values
-(<code>y</code>), and must return a single numeric value.</p>
-<p>In the following example, you calculate the sensitivity of the
-average concentration of aciclovir in the peripheral venous blood to the
-lipophilicity of aciclovir. First, define a function that calculates the
-mean of a numeric vector:</p>
+the simulated time values (<code>x</code>) or the output values
+(<code>y</code>). The function should return a single numeric value.</p>
+<p>In the following example, we calculate the sensitivity of the average
+concentration of aciclovir in the peripheral venous blood to the
+lipophilicity of aciclovir.</p>
+<p>We first define a function that calculates the mean of a given
+numerical vector:</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">meanFunction</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">y</span><span class="op">)</span></span>
 <span><span class="op">}</span></span></code></pre></div>
-<p>Next, run the sensitivity analysis for the average concentration,
-reusing the <code>simulation</code> from the base run. To define custom
-labels for the parameters in the resulting plots, pass a <em>named
-vector</em> to <code>parameterPaths</code>, where the names are used as
-labels instead of full paths:</p>
+<p>Next, we run the sensitivity analysis for the average concentration
+of aciclovir in the peripheral venous blood:</p>
+<p>To define custom labels for the parameters in the resulting plots,
+you can pass a <em>named vector</em> to the <code>parameterPaths</code>
+argument, where the names will be used as labels instead of full
+paths.</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">customOutputPaths</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
+<code class="sourceCode R"><span><span class="va">simulation</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://www.open-systems-pharmacology.org/OSPSuite-R/reference/loadSimulation.html" class="external-link">loadSimulation</a></span><span class="op">(</span><span class="va">simulationFilePath</span><span class="op">)</span></span>
+<span><span class="va">customOutputPaths</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
 <span>  Aciclovir_PVB <span class="op">=</span> <span class="st">"Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"</span></span>
 <span><span class="op">)</span></span>
 <span><span class="va">customParameterPaths</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Lipophilicity"</span> <span class="op">=</span> <span class="st">"Aciclovir|Lipophilicity"</span><span class="op">)</span></span>
@@ -272,33 +301,52 @@ labels instead of full paths:</p>
 <span>  pkParameters <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"C_max"</span><span class="op">)</span>,</span>
 <span>  parameterPaths <span class="op">=</span> <span class="va">customParameterPaths</span>,</span>
 <span>  customOutputFunctions <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>AverageConcentration <span class="op">=</span> <span class="va">meanFunction</span><span class="op">)</span></span>
-<span><span class="op">)</span></span></code></pre></div>
-<p><u><strong>Note</strong></u>: To calculate the sensitivity of the
-custom function only, without the default PK parameters, set
-<code>pkParameters</code> to an empty list.</p>
-<p>Finally, plot the sensitivity of the average concentration of
-aciclovir in the peripheral venous blood to its lipophilicity:</p>
+<span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">customAnalysis</span><span class="op">$</span><span class="va">pkData</span><span class="op">)</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 6 × 11</span></span></span>
+<span><span class="co">#&gt;   OutputPath          ParameterPath ParameterFactor ParameterValue ParameterUnit</span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>               <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>        </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> Organism|Periphera… Aciclovir|Li…             0.1        -<span style="color: #BB0000;">0.009</span><span style="color: #BB0000; text-decoration: underline;">7</span> Log Units    </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> Organism|Periphera… Aciclovir|Li…             0.2        -<span style="color: #BB0000;">0.019</span><span style="color: #BB0000; text-decoration: underline;">4</span> Log Units    </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> Organism|Periphera… Aciclovir|Li…             0.3        -<span style="color: #BB0000;">0.029</span><span style="color: #BB0000; text-decoration: underline;">1</span> Log Units    </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span> Organism|Periphera… Aciclovir|Li…             0.4        -<span style="color: #BB0000;">0.038</span><span style="color: #BB0000; text-decoration: underline;">8</span> Log Units    </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span> Organism|Periphera… Aciclovir|Li…             0.5        -<span style="color: #BB0000;">0.048</span><span style="color: #BB0000; text-decoration: underline;">5</span> Log Units    </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">6</span> Organism|Periphera… Aciclovir|Li…             0.6        -<span style="color: #BB0000;">0.058</span><span style="color: #BB0000; text-decoration: underline;">2</span> Log Units    </span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 6 more variables: ParameterPathUserName &lt;chr&gt;, PKParameter &lt;chr&gt;,</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;">#   PKParameterValue &lt;dbl&gt;, PKPercentChange &lt;dbl&gt;, Unit &lt;chr&gt;,</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;">#   SensitivityPKParameter &lt;dbl&gt;</span></span></span></code></pre></div>
+<p><u><strong>Note</strong></u>: If we want to calculate the sensitivity
+of the custom function only without the default PK-parameters, we need
+to set the <code>pkParameters</code> value to an empty list.</p>
+<p>Finally, we plot the sensitivity of the average concentration of
+aciclovir in the peripheral venous blood to the lipophilicity of
+aciclovir.</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/sensitivitySpiderPlot.html">sensitivitySpiderPlot</a></span><span class="op">(</span><span class="va">customAnalysis</span><span class="op">)</span></span>
 <span><span class="co">#&gt; $`Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)`</span></span></code></pre></div>
 <p><img src="sensitivity_files/figure-html/custom-plot-1.png" class="r-plt" alt="" width="672"></p>
 </div>
-<div class="section level2">
-<h2 id="troubleshooting">Troubleshooting<a class="anchor" aria-label="anchor" href="#troubleshooting"></a>
-</h2>
+<div class="section level3">
+<h3 id="troubleshooting">Troubleshooting<a class="anchor" aria-label="anchor" href="#troubleshooting"></a>
+</h3>
 <ul>
-<li>The <code>SensitivityPKParameter</code> column in
-<code>analysis$pkData</code> is <code>NA</code> in the rows
-corresponding to the initial parameter values (that is, where the
+<li>The <code>SensitivityPKParameter</code> column in the output of
+<code>analysis$pkData</code> will be <code>NA</code> in the rows
+corresponding to the initial parameter values (i.e., where the
 multiplication factor is 1).</li>
 </ul>
-</div>
-<div class="section level2">
-<h2 id="where-to-go-next">Where to go next<a class="anchor" aria-label="anchor" href="#where-to-go-next"></a>
-</h2>
-<p>To customize the appearance of these plots (colors, scales, titles,
-and which PK parameters appear), see
-<code><a href="../articles/sensitivity-plots.html">vignette("sensitivity-plots")</a></code>.</p>
+<p>More detailed information on function signatures can be found in:</p>
+<ul>
+<li>
+<code>esqlabsR</code> documentation on:
+<ul>
+<li><a href="https://esqlabs.github.io/esqlabsR/reference/sensitivityCalculation.html">sensitivityCalculation()</a></li>
+<li><a href="https://esqlabs.github.io/esqlabsR/reference/sensitivitySpiderPlot.html">sensitivitySpiderPlot()</a></li>
+<li><a href="https://esqlabs.github.io/esqlabsR/reference/sensitivityTimeProfiles.html">sensitivityTimeProfiles()</a></li>
+<li><a href="https://esqlabs.github.io/esqlabsR/reference/sensitivityTornadoPlot.html">sensitivityTornadoPlot()</a></li>
+</ul>
+</li>
+</ul>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

@@ -2,7 +2,10 @@
 
 Saves the results of a sensitivity analysis to a specified directory,
 including metadata and simulation output required for restoring or
-sharing the analysis.
+sharing the analysis. The underlying simulation is written to
+`simulation.pkml` in the same directory so the saved calculation is
+self-contained and can be reloaded without access to the original
+simulation file.
 
 ## Usage
 

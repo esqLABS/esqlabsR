@@ -24,7 +24,7 @@ exist, an error is thrown.
 ``` r
 getEsqlabsRSetting("packageVersion")
 #>      version 
-#> "6.0.0.9001" 
+#> "5.7.0.9008" 
 getEsqlabsRSetting("packageName")
 #> [1] "esqlabsR"
 ```

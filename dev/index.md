@@ -15,7 +15,7 @@ The package provides functions to:
 
 - Design, import and run Simulations,
 - Generate standardized plots and other reporting materials,
-- Validate and share reproducible project configurations.
+- Interact with the OSPS features using simple Excel files.
 
 To get started with the esqlabsR package, please follow the [Get Started
 tutorial](https://esqlabs.github.io/esqlabsR/articles/esqlabsR.html).
@@ -52,71 +52,119 @@ Note: For projects created for version 3 of `esqlabsR` package, refer to
 
 ## Usage
 
-A [esqlabsR](https://github.com/esqLABS/esqlabsR) project is a
-directory. At its root sits a `Project.json` container alongside a
-`definitions/` folder that holds your authored definition files, one
-file per definition, with the scenarios living under
-`definitions/scenarios/`. The package ships a complete worked example
-project that you can load and run directly.
+You can start with the “Get Started” vignette:
+[`vignette("esqlabsR")`](https://esqlabs.github.io/esqlabsR/dev/articles/esqlabsR.md).
 
-The quickest way to see the workflow end to end is to load the example
-project, run one of its scenarios, and plot the result:
-
-``` r
-
-library(esqlabsR)
-
-# Load the worked example project shipped with the package.
-project <- loadProject(exampleProjectPath())
-
-# Run a single scenario. The first run initializes PK-Sim and is slow.
-results <- runScenarios(project, scenarios = "aciclovir_iv")
-
-# Build the project's plots from the scenario results.
-# `createPlots()` returns a named list of Plot Grids.
-plots <- createPlots(project, scenarioResults = results)
-
-plots$individual_diagnostics
-```
-
-[`runScenarios()`](https://esqlabs.github.io/esqlabsR/dev/reference/runScenarios.md)
-returns a named list keyed by scenario name. Each entry bundles the
-prepared simulation, its results, the extracted output values, and the
-population (or `NULL` for individual scenarios).
-
-To start your own project from scratch, scaffold the required folder
-structure and files in the current working directory with:
+[esqlabsR](https://github.com/esqLABS/esqlabsR) workflows require a
+specific project structure. You can initialize a new project by running:
 
 ``` r
 
 esqlabsR::initProject()
 ```
 
-You then author and edit the project’s definitions, scenarios,
-individuals, populations, parameter sets, output paths, observed data,
-and plots, with the `add*()`, `set*()`, and `remove*()` functions. Each
-of these takes the definition `id` first, for example
-`addScenario(project, id = "aciclovir_iv", ...)`. These edits are
-write-through: each one persists to its definition file immediately, so
-there is no separate save step. Once your project is configured, you run
-it with
-[`runScenarios()`](https://esqlabs.github.io/esqlabsR/dev/reference/runScenarios.md),
-plot it with
-[`createPlots()`](https://esqlabs.github.io/esqlabsR/dev/reference/createPlots.md),
-and check it for configuration problems with
-[`validateProject()`](https://esqlabs.github.io/esqlabsR/dev/reference/validateProject.md).
+This will create the required folder structure and files for your
+project in the working directory from where you run the command.
 
-To share or archive a project, render a single self-contained
-`.esqlabsR` snapshot with `saveSnapshot()` and read it back with
-`loadSnapshot()`.
+Below is a simple example of how to work with the package:
 
-## Learn more
+``` r
 
-You can find more information on specific topics in the dedicated
-articles on the [package website](https://esqlabs.github.io/esqlabsR/),
-covering the project structure, designing scenarios, running
-simulations, and plotting results. The “Get Started” article walks
-through the full workflow.
+# load esqlabsR
+library(esqlabsR)
+
+# Load excel-based configuration
+# The function `exampleProjectConfigurationPath()` returns the path to the example project
+# configuration included in the package. Replace the variable `configurationPath`
+# with the path to you project configuration file.
+configurationPath <- exampleProjectConfigurationPath()
+
+myProjectConfiguration <-
+  createProjectConfiguration(configurationPath)
+
+# Define which scenarios to run
+scenarioNames <- c("TestScenario")
+# Set scenario names to NULL if you want to simulate all scenarios defined in the
+# excel file
+# scenarioNames <- NULL
+
+# Create `ScenarioConfiguration` objects from excel files
+scenarioConfigurations <- readScenarioConfigurationFromExcel(
+  scenarioNames = scenarioNames,
+  projectConfiguration = myProjectConfiguration
+)
+
+# Define custom parameters for the scenarios. These parameter will be applied
+# additionally to the paremetrization specified in the Excel files.
+customParam <- list(
+  paths = c(
+    "Aciclovir|Lipophilicity"
+  ),
+  values = c(
+    -0.1
+  ),
+  units = c(
+    "Log Units"
+  )
+)
+
+# Create simulation scenarios defined in the excel files and apply the custom parameters
+myScenarios <- createScenarios(
+  scenarioConfigurations = scenarioConfigurations,
+  customParams = customParam
+)
+
+# Adjust simulation run options, if necessary.
+# E.g. disable check for negative values if required
+simulationRunOptions <- ospsuite::SimulationRunOptions$new()
+simulationRunOptions$checkForNegativeValues <- FALSE
+
+# Run simulations
+simulatedScenariosResults <- runScenarios(
+  scenarios = myScenarios,
+  simulationRunOptions = simulationRunOptions
+)
+
+    # Save results and store the path to the results for later re-use
+    outputFolder <- saveScenarioResults(simulatedScenariosResults, myProjectConfiguration)
+
+    # Load observed data using the default importer configuration provided with the package. Alternatively, you can load a custom data importer configuration.
+  dataSheets <- c("Laskin 1982.Group A")
+  observedData <- esqlabsR::loadObservedData(
+    projectConfiguration = myProjectConfiguration,
+    sheets = dataSheets
+  )
+
+  ########## Create figures defined in the Plots.xlsx file########
+  plots <- createPlotsFromExcel(
+    plotGridNames = c("Aciclovir",
+                      "Aciclovir2"),
+    simulatedScenarios = simulatedScenariosResults,
+    observedData = observedData,
+    projectConfiguration = myProjectConfiguration,
+    outputFolder = outputFolder,
+    stopIfNotFound = TRUE
+  )
+
+  plots$Aciclovir
+```
+
+![](reference/figures/README-unnamed-chunk-6-1.png)
+
+## Learn More
+
+You can find more information on specific topics in dedicated vignettes:
+
+- Start with `vignette("esqlabsR-workflow-overview")` to learn about the
+  esqlabsR’s streamlined workflow.
+- `vignette("esqlabsR-project-structure")` details the structure and
+  purpose of each component file and directory of an esqlabsR project.
+- `vignette("esqlabsR-design-scenarios")` explains how you can design
+  your own simulations only using excel files.
+- `vignette("esqlabsR-run-simulations")` describes all you need to know
+  to run your customized simulations.
+- `vignette("esqlabsR-plot-results")` explains how to generate
+  visualizations from simulations.
 
 ## Related Work
 

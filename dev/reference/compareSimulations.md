@@ -44,7 +44,7 @@ that differ:
 
 - in simulation1 but not in simulation 2 (`In1NotIn2`)
 
-- in simulation 2 but not in simulation 1 (`In2NotIn1`)
+- in simulation 2 but not in simulation 1 (`I21NotIn1`)
 
 - a list `Different` with all parameters which values differ between the
   simulations. Two parameters are considered different if their formulas
@@ -60,6 +60,6 @@ isParametersEqual
 if (FALSE) { # \dontrun{
 humanSim <- loadSimulation(file.path(modelFolder, "DefaultHuman.pkml"))
 ratSim <- loadSimulation(file.path(modelFolder, "DefaultRat.pkml"))
-diffParams <- compareSimulations(humanSim, ratSim)
+diffParams <- compareSimulationParameters(humanSim, ratSim)
 } # }
 ```

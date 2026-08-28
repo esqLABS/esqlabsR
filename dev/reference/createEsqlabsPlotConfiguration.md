@@ -18,7 +18,8 @@ An instance of `DefaultPlotConfiguration` R6 class.
 
 ## See also
 
-Other createPlottingConfigurations:
+Other create-plotting-configurations:
+[`createEsqlabsExportConfiguration()`](https://esqlabs.github.io/esqlabsR/dev/reference/createEsqlabsExportConfiguration.md),
 [`createEsqlabsPlotGridConfiguration()`](https://esqlabs.github.io/esqlabsR/dev/reference/createEsqlabsPlotGridConfiguration.md)
 
 ## Examples

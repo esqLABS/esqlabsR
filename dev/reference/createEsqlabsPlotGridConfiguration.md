@@ -19,7 +19,8 @@ An instance of `PlotGridConfiguration` R6 class.
 
 ## See also
 
-Other createPlottingConfigurations:
+Other create-plotting-configurations:
+[`createEsqlabsExportConfiguration()`](https://esqlabs.github.io/esqlabsR/dev/reference/createEsqlabsExportConfiguration.md),
 [`createEsqlabsPlotConfiguration()`](https://esqlabs.github.io/esqlabsR/dev/reference/createEsqlabsPlotConfiguration.md)
 
 ## Examples

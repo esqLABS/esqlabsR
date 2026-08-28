@@ -1,125 +1,95 @@
-# Create a Scenario
+# Scenario
 
-Builds a plain-data `Scenario` record holding the configuration fields
-of a v2.0 `Project.json` scenario entry. It does not create or hold
-ospsuite runtime objects; the runtime is built by
-[`runScenarios()`](https://esqlabs.github.io/esqlabsR/dev/reference/runScenarios.md)
-at execution time.
+Simulation scenario
 
-A `Scenario` is a named list with copy semantics: an entry extracted
-from `scenarios` definitions is an independent copy. The section
-accessor is read-only, so to apply a change you pass the record to an
-authoring function
-([`addScenario()`](https://esqlabs.github.io/esqlabsR/dev/reference/addScenario.md)
-/
-[`setScenario()`](https://esqlabs.github.io/esqlabsR/dev/reference/setScenario.md)),
-which validates and writes it through to the project.
+## Active bindings
 
-## Usage
+- `scenarioConfiguration`:
 
-``` r
-Scenario(
-  scenarioName = NULL,
-  modelFile = NULL,
-  applicationProtocol = NULL,
-  individualId = NULL,
-  populationId = NULL,
-  outputPaths = NULL,
-  simulationType = if (is.null(populationId)) "Individual" else "Population",
-  readPopulationFromCSV = FALSE,
-  simulateSteadyState = FALSE,
-  simulationTime = NULL,
-  simulationTimeUnit = NULL,
-  steadyStateTime = 1000,
-  steadyStateTimeUnit = NULL,
-  overwriteFormulasInSS = FALSE,
-  modelParameterSets = NULL,
-  initialConditions = NULL
-)
-```
+  `scenarioConfiguration` used for creation of this scenario. Read-only.
 
-## Arguments
+- `finalCustomParams`:
 
-- scenarioName:
+  Custom parameters to be used for the simulation. Read-only.
 
-  Character. Name of the scenario.
+- `simulation`:
 
-- modelFile:
+  Simulation object created from the `ScenarioConfiguration`. Read-only
 
-  Character. Name of the `.pkml` model file (relative to the model
-  folder).
+- `population`:
 
-- applicationProtocol:
+  Population object in case the scenario is a population simulation.
+  Read-only.
 
-  Character or `NA`. Name of the application protocol; `NA` when absent.
+- `scenarioType`:
 
-- individualId:
+  Type of the scenario - individual or population. Read-only
 
-  Character or `NULL`. ID referencing `individuals` definitions.
+## Methods
 
-- populationId:
+### Public methods
 
-  Character or `NULL`. ID referencing `populations` definitions.
+- [`Scenario$new()`](#method-Scenario-initialize)
 
-- outputPaths:
+- [`Scenario$print()`](#method-Scenario-print)
 
-  Named character vector of literal output paths. Names are the ids
-  referencing `outputPaths` definitions; values are the literal paths.
-  `NULL` when the scenario declares no outputs. Round-trip serialization
-  reads `names(outputPaths)` to rebuild the `outputPaths` id array, so
-  the named-vector invariant must be preserved.
+------------------------------------------------------------------------
 
-- simulationType:
+### `Scenario$new()`
 
-  Character. `"Individual"` or `"Population"`. Defaults to
-  `"Population"` when `populationId` is set, `"Individual"` otherwise.
+Custom parameters to be used for the simulation. The final custom
+parameters are a combination of parametrization through the excel files
+and the custom parameters specified by the user through the
+`customParams` argument of the `Scenario` constructor.
 
-- readPopulationFromCSV:
+Simulation object. Read-only.
 
-  Logical. If `TRUE`, load population from CSV.
+Initialize a new instance of the class. Initializes the scenario from
+`ScenarioConfiguration` object.
 
-- simulateSteadyState:
+#### Usage
 
-  Logical. If `TRUE`, run steady-state before the main simulation.
+    Scenario$new(
+      scenarioConfiguration,
+      customParams = NULL,
+      stopIfParameterNotFound = TRUE
+    )
 
-- simulationTime:
+#### Arguments
 
-  The parsed time grid: a list of length-3 numeric vectors
-  `c(start, end, resolution)`, one per interval. This is the stored
-  form;
-  [`addScenario()`](https://esqlabs.github.io/esqlabsR/dev/reference/addScenario.md)
-  and
-  [`setScenario()`](https://esqlabs.github.io/esqlabsR/dev/reference/setScenario.md)
-  also take a single interval as `c(start, end, resolution)` or a
-  `"start, end, resolution"` string and parse it to this shape.
+- `scenarioConfiguration`:
 
-- simulationTimeUnit:
+  An object of class `ScenarioConfiguration`.
 
-  Character. Time unit for `simulationTime`.
+- `customParams`:
 
-- steadyStateTime:
+  Custom parameters to be used for the simulation. A list containing
+  vectors 'paths' with the full paths to the parameters, 'values' the
+  values of the parameters, and 'units' with the units the values are
+  in.
 
-  Numeric. Steady-state time **in base unit (minutes)**.
+- `stopIfParameterNotFound`:
 
-- steadyStateTimeUnit:
+  Logical. If `TRUE` (default), an error is thrown if any of the custom
+  defined parameter does not exist. If `FALSE`, non-existent parameters
+  are ignored.
 
-  Character. Original unit for `steadyStateTime`, preserved for
-  round-trip serialization.
+#### Returns
 
-- overwriteFormulasInSS:
+A new `Scenario` object.
 
-  Logical. Overwrite formula parameters during steady-state.
+------------------------------------------------------------------------
 
-- modelParameterSets:
+### `Scenario$print()`
 
-  Character vector. Parameter-set ids referencing `parameterSets`
-  definitions.
+Print the object to the console
 
-- initialConditions:
+#### Usage
 
-  Character vector. Initial-condition set ids referencing
-  `initialConditions` definitions.
+    Scenario$print(...)
 
-## Value
+#### Arguments
 
-A `Scenario` object: a named list carrying exactly the fields above.
+- `...`:
+
+  Rest arguments.

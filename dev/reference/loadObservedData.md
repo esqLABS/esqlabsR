@@ -1,55 +1,58 @@
-# Load observed data declared in a Project
+# Load data from excel
 
-Reads the `observedData` declarations from a
-[Project](https://esqlabs.github.io/esqlabsR/dev/reference/loadProject.md)
-and returns the corresponding
-[`ospsuite::DataSet`](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/DataSet.html)
-objects. Source types: `excel` (via importer configuration), `pkml`,
-`script`, and `programmatic`. A `programmatic` declaration is a sentinel
-for a `DataSet` added at runtime with
-[`addObservedData()`](https://esqlabs.github.io/esqlabsR/dev/reference/addObservedData.md);
-its data lives in the session until you save, and
-[`saveProject()`](https://esqlabs.github.io/esqlabsR/dev/reference/saveProject.md)
-persists it to a PKML file and rewrites the entry as a `pkml` source. A
-`programmatic` sentinel read from disk with no matching in-session
-`DataSet` (a hand-authored declaration, or a project opened before it
-was ever saved) resolves to nothing, and the load warns you by name.
+Loads data sets from excel. The excel file containing the data must be
+located in the folder `projectConfiguration$dataFolder` and be named
+`projectConfiguration$dataFile`. Importer configuration file must be
+located in the same folder and named
+`projectConfiguration$dataImporterConfigurationFile`.
 
 ## Usage
 
 ``` r
-loadObservedData(project)
+loadObservedData(
+  projectConfiguration,
+  sheets = NULL,
+  importerConfiguration = NULL
+)
 ```
 
 ## Arguments
 
-- project:
+- projectConfiguration:
 
-  A `Project` object (see
-  [`loadProject()`](https://esqlabs.github.io/esqlabsR/dev/reference/loadProject.md)).
+  Object of class `ProjectConfiguration` containing the necessary
+  information.
+
+- sheets:
+
+  String or a list of strings defining which sheets to load. If `NULL`
+  (default), all sheets within the file are loaded. This parameter takes
+  precedence over any sheets defined in `importerConfiguration`: the
+  function always sets `importerConfiguration$sheets` to `NULL` before
+  calling
+  [`ospsuite::loadDataSetsFromExcel()`](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/loadDataSetsFromExcel.html),
+  so the passed `importerConfiguration` object is mutated as a side
+  effect.
+
+- importerConfiguration:
+
+  `DataImporterConfiguration` object used to load the data. If `NULL`
+  (default), default esqlabs importer configuration as defined in
+  `projectConfiguration$dataImporterConfigurationFile` will be used.
+  Note: the `sheets` property of this object is always set to `NULL` by
+  this function (see the `sheets` parameter description).
 
 ## Value
 
-A named list of
-[`ospsuite::DataSet`](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/DataSet.html)
-objects. Empty list when `observedData` definitions is empty or `NULL`.
-
-## Security
-
-A `script` observed-data source runs the R file it names, with
-[`source()`](https://rdrr.io/r/base/source.html), on your machine when
-the data is resolved. Any R code in that file executes, so treat a
-project the same way you would treat a script someone sends you: only
-load and resolve observed data from a project you trust. This applies to
-`loadObservedData()` and to anything that resolves observed data for
-you, such as
-[`createDataCombined()`](https://esqlabs.github.io/esqlabsR/dev/reference/createDataCombined.md).
+A named list of `DataSet` objects, with names being the names of the
+data sets.
 
 ## Examples
 
 ``` r
 if (FALSE) { # \dontrun{
-project <- loadProject("path/to/Project.json")
-dataSets <- loadObservedData(project)
+# Create default project configuration
+projectConfiguration <- createProjectConfiguration()
+dataSets <- loadObservedData(projectConfiguration)
 } # }
 ```

@@ -1,257 +1,322 @@
-# Parameter identification
+# Parameter Identification
 
-Parameter identification (PI) estimates model parameters by fitting
-simulated outputs to observed data. In `esqlabsR` a PI task lives inside
-a project, alongside its scenarios, output paths, and observed data, and
-is run with a single call. This article shows how to run the parameter
-identification that ships with the bundled example project and how to
-assemble one yourself with the programmatic authoring functions. It
+`esqlabsR` provides an excel-based workflow for parameter identification
+(PI), following the same principles as the standard project workflow. It
 builds on the
-[`OSPSuite.ParameterIdentification`](https://www.open-systems-pharmacology.org/OSPSuite.ParameterIdentification/)
-package, which performs the actual optimization.
+[`OSPSuite.ParameterIdentification`](http://www.open-systems-pharmacology.org/OSPSuite.ParameterIdentification/)
+package. PI tasks are defined in the `ParameterIdentification.xlsx` file
+and executed in three steps:
 
-To follow along you only need a loaded project; see
-[`vignette("projects")`](https://esqlabs.github.io/esqlabsR/dev/articles/projects.md)
-for how a project is organized and loaded. Here we work entirely with
-the example project and never write anything into your project tree.
+1.  Read PI task configurations from Excel
+2.  Create PI tasks
+3.  Run PI
 
-## The PI task model
+The PI workflow builds on top of a configured project. Each PI task
+references one or more **scenarios** that define the simulation model,
+its parametrization, and output paths. Scenarios must be set up in
+`Scenarios.xlsx` before configuring PI tasks. See
+[`vignette("design-scenarios")`](https://esqlabs.github.io/esqlabsR/dev/articles/design-scenarios.md)
+for how to create scenarios.
 
-A parameter identification is described by a **PI task**. A task is a
-plain-data record that names three things:
+> **Note:** Parameters defined in `ModelParameterSheets` and output
+> paths defined in `OutputPathsIds` of the referenced scenario will be
+> overwritten by the settings in `PIParameters` and `PIOutputMappings`,
+> respectively.
 
-- the **scenarios** it fits (one or more named scenarios already defined
-  in the project),
-- a set of **PI Parameters**, one per quantity to estimate, each giving
-  a model parameter path, the scenarios it applies to, a starting value,
-  and lower and upper bounds, and
-- a set of **PI Output Mappings**, each pairing one model output (an
-  output path of the project) with one Observed Data series (see
-  [`vignette("observed-data")`](https://esqlabs.github.io/esqlabsR/dev/articles/observed-data.md)),
-  so the optimizer knows which simulated curve to compare against which
-  measurements.
+## The `ParameterIdentification.xlsx` file
 
-A task can also carry an optional configuration block (the optimization
-algorithm, the confidence-interval method, and similar settings). Tasks
-are stored on the project under
-`project$definitions$parameterIdentification`, keyed by task id.
+The `ParameterIdentification.xlsx` file is located in the
+`Configurations` folder of your project. Its path is stored in the
+`ProjectConfiguration` and can be accessed via
+`projectConfiguration$parameterIdentificationFile`. The file contains
+five sheets, of which **PIParameters** and **PIOutputMappings** are
+mandatory. **PIConfiguration**, **AlgorithmOptions**, and **CIOptions**
+are optional and allow customizing the optimization behavior.
 
-## Running the predefined task
+### PIParameters (mandatory)
 
-The bundled example project defines a single PI task, `aciclovirsimple`.
-It fits the parameter `EHC continuous fraction` on the scenario
-`aciclovir_iv`, mapping the simulated output `aciclovir_pvb` to an
-observed plasma series (from Laskin 1982, Group A).
+Defines the parameters to be identified. Each row maps a model parameter
+to a scenario and specifies bounds for the optimization.
 
-Load the project and inspect the task:
+| Column | Description |
+|:---|:---|
+| `PITaskName` | Name of the PI task this row belongs to |
+| `Scenarios` | Name of the scenario (must exist in `Scenarios.xlsx`) |
+| `Container Path` | Container path of the parameter in the simulation |
+| `Parameter Name` | Name of the parameter |
+| `Units` | Unit of the parameter value (optional) |
+| `MinValue` | Lower bound for optimization |
+| `MaxValue` | Upper bound for optimization |
+| `StartValue` | Starting value for optimization |
+| `Group` | Group identifier (see [Parameter Grouping](#parameter-grouping)) |
+
+### PIOutputMappings (mandatory)
+
+Maps simulation outputs to observed data sets used to compute the
+objective function.
+
+| Column | Description |
+|:---|:---|
+| `PITaskName` | Name of the PI task |
+| `Scenarios` | Name of the scenario (must exist in `Scenarios.xlsx`) |
+| `OutputPath` | Simulation output path or `OutputPathId` from `Scenarios.xlsx` |
+| `ObservedDataSheet` | Sheet name in the observed data Excel file |
+| `DataSet` | Name of the specific data set within the sheet |
+| `Scaling` | Residual scaling: `lin` (linear) or `log` (logarithmic) |
+| `xOffset` | Offset applied to x-values of observed data (optional) |
+| `yOffset` | Offset applied to y-values of observed data (optional) |
+| `xFactor` | Scale factor applied to x-values of observed data (optional) |
+| `yFactor` | Scale factor applied to y-values of observed data (optional) |
+| `Weight` | Weight(s) for this output mapping (optional) |
+
+### PIConfiguration (optional)
+
+General settings for each PI task. If omitted, defaults are used.
+
+| Column | Description |
+|:---|:---|
+| `PITaskName` | Unique name of the PI task |
+| `Algorithm` | Optimization algorithm (e.g., `BOBYQA`) |
+| `CIMethod` | Confidence interval method (e.g., `hessian`) |
+| `PrintEvaluationFeedback` | Print progress during optimization (`TRUE`/`FALSE`) |
+| `AutoEstimateCI` | Automatically estimate confidence intervals (`TRUE`/`FALSE`) |
+| `numberOfCores` | Number of CPU cores for parallel simulation runs |
+| `checkForNegativeValues` | Check for negative values during simulation (`TRUE`/`FALSE`) |
+| `ObjectiveFunctionType` | Error model: `lsq` (default) or `m3` |
+| `ResidualWeightingMethod` | Residual weighting: `none` (default), `std`, `mean`, `error` |
+| `RobustMethod` | Robust estimation: `none` (default), `huber`, `bisquare` |
+| `ScaleVar` | Scale variance (`TRUE`/`FALSE`, default `FALSE`) |
+| `LinScaleCV` | Coefficient of variation for linear scale (default `0.2`) |
+| `LogScaleSD` | Standard deviation for log scale (default `0.086`) |
+
+`numberOfCores` and `checkForNegativeValues` correspond to the options
+of
+[`ospsuite::SimulationRunOptions`](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/SimulationRunOptions.html).
+Leave them empty to use the defaults.
+
+For background on `ObjectiveFunctionType`, `ResidualWeightingMethod`,
+and `RobustMethod`, see the [`OSPSuite.ParameterIdentification` error
+calculation
+vignette](https://www.open-systems-pharmacology.org/OSPSuite.ParameterIdentification/articles/error-calculation.html).
+
+### AlgorithmOptions (optional)
+
+Fine-tuning of the optimization algorithm in long format. For guidance
+on choosing an algorithm and understanding its options, see the
+[`OSPSuite.ParameterIdentification` optimization algorithms
+vignette](https://www.open-systems-pharmacology.org/OSPSuite.ParameterIdentification/articles/optimization-algorithms.html).
+For a quick lookup of available option names and their defaults, run
+e.g.:
 
 ``` r
 
-# Work on a writable copy of the bundled example: saving the PI tasks we add
-# below writes to this project's own files rather than to the read-only example
-# shipped with the package.
-project_dir <- withr::local_tempdir()
-initProject(destination = project_dir, type = "example", createExcel = FALSE)
-project <- loadProject(file.path(project_dir, "Project.json"))
+ospsuite.parameteridentification::AlgorithmOptions_BOBYQA
+ospsuite.parameteridentification::AlgorithmOptions_DEoptim
+```
 
-project$definitions$parameterIdentification[["aciclovirsimple"]]
-#> <PITask>
-#>   • Id: aciclovirsimple
-#>   • Scenarios: aciclovir_iv
+| Column        | Description                                                |
+|:--------------|:-----------------------------------------------------------|
+| `PITaskName`  | Name of the PI task                                        |
+| `OptionName`  | Name of the algorithm option (e.g., `maxeval`, `ftol_rel`) |
+| `OptionValue` | Value of the option                                        |
+
+### CIOptions (optional)
+
+Options for confidence interval estimation in long format. For a quick
+lookup of available option names and their defaults, run e.g.:
+
+``` r
+
+ospsuite.parameteridentification::CIOptions_hessian
+ospsuite.parameteridentification::CIOptions_bootstrap
+```
+
+| Column        | Description                               |
+|:--------------|:------------------------------------------|
+| `PITaskName`  | Name of the PI task                       |
+| `OptionName`  | Name of the CI option (e.g., `confLevel`) |
+| `OptionValue` | Value of the option                       |
+
+## Simple example
+
+The example project included in
+[esqlabsR](https://github.com/esqLABS/esqlabsR) contains a PI task
+called `AciclovirSimple` that estimates the lipophilicity of aciclovir
+using a single scenario and one observed data set.
+
+### 1. Read PI task configurations
+
+First, load the project configuration and read the PI task definitions
+from Excel:
+
+``` r
+
+projectConfiguration <- createProjectConfiguration(
+  path = exampleProjectConfigurationPath(),
+  ignoreVersionCheck = TRUE
+)
+
+piTaskConfigurations <- readPITaskConfigurationFromExcel(
+  piTaskNames = "AciclovirSimple",
+  projectConfiguration = projectConfiguration
+)
+```
+
+The returned object is a named list of `PITaskConfiguration` objects.
+You can inspect the configuration by printing it:
+
+``` r
+
+piTaskConfigurations$AciclovirSimple
+#> <PITaskConfiguration>
+#> 
+#> ── PI Task Configuration ───────────────────────────────────────────────────────
+#>   • Task Name: AciclovirSimple
+#>   • Scenario(s): PITestScenario
+#>   • Model File(s): Aciclovir.pkml
+#>   • Algorithm: BOBYQA
+#>   • CI Method: hessian
 #>   • Number of Parameters: 1
 #>   • Number of Output Mappings: 1
-#>   • Algorithm: BOBYQA
-#>   • CI Method: hessian
 ```
 
-Run it with
-[`runPI()`](https://esqlabs.github.io/esqlabsR/dev/reference/runPI.md).
-By default
+### 2. Create PI tasks
+
+Next, create the `ParameterIdentification` objects. This step loads the
+simulations, resolves the parameter paths, and maps the observed data:
+
+``` r
+
+piTasks <- createPITasks(piTaskConfigurations)
+```
+
+### 3. Run PI
+
+Finally, run the parameter identification:
+
+``` r
+
+piResults <- runPI(piTasks)
+```
+
+The function returns a named list. Each entry contains:
+
+- `task`: the original `ParameterIdentification` object
+- `result`: a `PIResult` object with the optimized parameter values, or
+  `NULL` if the optimization failed
+- `error`: error message string (only present if the optimization
+  failed)
+
+If multiple PI tasks are passed,
 [`runPI()`](https://esqlabs.github.io/esqlabsR/dev/reference/runPI.md)
-runs every task on the project; pass `tasks` to restrict the run to
-specific tasks. The first call is slow because it initializes PK-Sim and
-builds the simulation before optimizing.
+continues with the remaining tasks even if one fails.
+
+## Multi-scenario example
+
+The example project also includes `AciclovirMultiScenario`, which
+demonstrates a more advanced setup: fitting parameters across two
+scenarios with different dose levels (250 mg and 500 mg) and using
+parameter grouping to control whether a parameter is shared across
+scenarios.
+
+### Excel configuration
+
+The `PIParameters` sheet for this task:
+
+| PITaskName | Scenarios | Container Path | Parameter Name | MinValue | MaxValue | StartValue | Group |
+|:---|:---|:---|:---|---:|---:|---:|---:|
+| AciclovirMultiScenario | PIScenario_250mg | Aciclovir | Lipophilicity | -10 | 10 | 1.0 | 1 |
+| AciclovirMultiScenario | PIScenario_500mg | Aciclovir | Lipophilicity | -10 | 10 | 1.0 | 1 |
+| AciclovirMultiScenario | PIScenario_250mg | Neighborhoods\|Kidney_pls_Kidney_ur\|Aciclovir\|Renal Clearances-TS-Aciclovir | TSspec | 0 | 10 | 0.5 | 2 |
+| AciclovirMultiScenario | PIScenario_500mg | Neighborhoods\|Kidney_pls_Kidney_ur\|Aciclovir\|Renal Clearances-TS-Aciclovir | TSspec | 0 | 10 | 0.5 | 3 |
+
+The `PIOutputMappings` sheet maps each scenario to its respective
+observed data set:
+
+| PITaskName | Scenarios | OutputPath | ObservedDataSheet | DataSet | Scaling | xOffset | yOffset | xFactor | yFactor | Weight |
+|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| AciclovirMultiScenario | PIScenario_250mg | Organism\|PeripheralVenousBlood\|Aciclovir\|Plasma (Peripheral Venous Blood) | Laskin 1982.Group A | Laskin 1982.Group A_Aciclovir_1_Human_MALE_PeripheralVenousBlood_Plasma_2.5 mg/kg_iv\_ | log | NA | NA | NA | NA | NA |
+| AciclovirMultiScenario | PIScenario_500mg | Organism\|PeripheralVenousBlood\|Aciclovir\|Plasma (Peripheral Venous Blood) | Laskin 1982.Group A | Laskin 1982.Group A_Aciclovir_1_Human_MALE_PeripheralVenousBlood_Plasma_5.0 mg/kg_iv\_ | log | NA | NA | NA | NA | NA |
+
+### Parameter Grouping
+
+The `Group` column in the `PIParameters` sheet controls how parameters
+are linked across scenarios during optimization:
+
+- **Same group, same parameter path**: The parameter is treated as a
+  single variable across the listed scenarios. The optimizer finds one
+  value that best fits all scenarios simultaneously. In the example
+  above, `Lipophilicity` has `Group = 1` in both rows, meaning a single
+  lipophilicity value is estimated across both dose levels.
+- **Different groups, same parameter path**: The parameter is treated as
+  independent in each scenario and optimized separately. `TSspec` has
+  `Group = 2` for the 250 mg scenario and `Group = 3` for the 500 mg
+  scenario, allowing different estimates per dose level.
+
+Within a group, `MinValue`, `MaxValue`, and `StartValue` must be
+identical across all rows.
+
+### Running the multi-scenario task
+
+The workflow is identical to the simple case:
 
 ``` r
 
-results <- runPI(project, tasks = "aciclovirsimple")
-```
-
-## The shape of the result
-
-[`runPI()`](https://esqlabs.github.io/esqlabsR/dev/reference/runPI.md)
-returns one entry per task. Each entry is a list with a `task` element
-(the parameter-identification object that was built and run) and a
-`result` element (the fit); if the optimization fails numerically,
-`result` is `NULL` and an `error` element carries the message while the
-run continues with the remaining tasks, whereas build errors (an unknown
-parameter path, output, or observed dataset) fail hard and stop the call
-so a typo surfaces immediately.
-
-``` r
-
-fit <- results[["aciclovirsimple"]]
-names(fit)
-#> [1] "task"   "result"
-```
-
-Print the result for a human-readable optimization summary:
-
-``` r
-
-fit$result
-#> <PIResult>
-#> Optimization Summary:
-#>   • Algorithm: BOBYQA
-#>   • CI Method: hessian
-#>   • Convergence: TRUE
-#>   • Objective value: 698.8
-#>   • Iterations: 12
-#>   • Function evaluations: 12
-#>   • Elapsed (optimization): 3.340 s
-#>   • Elapsed (CI): 1.985 s
-#> Parameter Estimates:
-#>   • EHC continuous fraction: Estimate = 0.8000, SD = NA, CV = NA, CI = [NA, NA]
-```
-
-## Reading the estimates
-
-Call `toDataFrame()` on the result to read the estimates as a tidy data
-frame, one row per estimated parameter, with the final `estimate` next
-to its `initialValue`, bounds, and uncertainty columns (`sd`, `cv`,
-`lowerCI`, `upperCI`):
-
-``` r
-
-fit$result$toDataFrame()
-#>   group                    name
-#> 1     1 EHC continuous fraction
-#>                                                  path unit estimate sd cv
-#> 1 aciclovir_iv|Organism|Liver|EHC continuous fraction           0.8 NA NA
-#>   lowerCI upperCI ciType initialValue
-#> 1      NA      NA   <NA>          0.8
-```
-
-## When uncertainty cannot be quantified
-
-A fit can converge and still report no usable uncertainty: when `sd`,
-`cv`, and the confidence interval all come back `NA`, the estimate is
-returned but its precision is unknown. This is what happens for
-`aciclovirsimple` above. Because a converged fit with no uncertainty is
-easy to mistake for a good one,
-[`runPI()`](https://esqlabs.github.io/esqlabsR/dev/reference/runPI.md)
-emits a warning naming the task and parameter, with the likely causes:
-
-- a singular or ill-conditioned Hessian,
-- the estimate sitting at one of its bounds, or
-- an objective function insensitive to the parameter.
-
-When you see it, treat the estimate with caution and revisit the bounds,
-the output mapping, or whether the data constrain the parameter at all.
-
-## Building a task programmatically
-
-Instead of relying on a task stored in the project, you can author one
-in memory with the `add*` family.
-[`addPITask()`](https://esqlabs.github.io/esqlabsR/dev/reference/addPITask.md)
-creates a task and requires at least one PI Parameter and one PI Output
-Mapping at creation, so you seed it with existing records and grow it
-afterwards. The records are the same plain-data values the project
-already holds, so the simplest seed is to reuse the ones from the
-example task.
-
-``` r
-
-template <- project$definitions$parameterIdentification[["aciclovirsimple"]]
-
-project <- addPITask(
-  project,
-  id = "ehc_fit",
-  scenarios = "aciclovir_iv",
-  parameters = template$parameters,
-  outputMappings = template$outputMappings
+piTaskConfigurations <- readPITaskConfigurationFromExcel(
+  piTaskNames = "AciclovirMultiScenario",
+  projectConfiguration = projectConfiguration
 )
+
+piTasks <- createPITasks(piTaskConfigurations)
+piResults <- runPI(piTasks)
 ```
 
-[`addPIParameter()`](https://esqlabs.github.io/esqlabsR/dev/reference/addPIParameter.md)
-adds another parameter to fit. Give it the task id, the model parameter
-path, the scenarios it applies to, and the starting value with its
-bounds:
+## Details
 
-``` r
+### Scenarios
 
-project <- addPIParameter(
-  project,
-  task = "ehc_fit",
-  path = "Organism|Liver|EHC continuous fraction",
-  scenarios = "aciclovir_iv",
-  minValue = 0.4,
-  maxValue = 0.9,
-  startValue = 0.6,
-  id = "ehc_alt"
-)
-```
-
-[`addPIOutputMapping()`](https://esqlabs.github.io/esqlabsR/dev/reference/addPIOutputMapping.md)
-adds another output-to-data pairing, naming an output path already
-registered in the project and the Observed Data series to compare it
-against:
-
-``` r
-
-observedId <- template$outputMappings[[1]]$observedDataId
-
-project <- addPIOutputMapping(
-  project,
-  task = "ehc_fit",
-  outputPath = "aciclovir_pvb",
-  observedData = observedId,
-  scenarios = "aciclovir_iv",
-  scaling = "lin",
-  id = "pvb_alt"
-)
-```
-
-Once a task has the parameters and mappings you want, run it the same
-way as the predefined one with `runPI(project, tasks = "ehc_fit")`.
-
-## Removing parameters and mappings
-
-[`removePIParameter()`](https://esqlabs.github.io/esqlabsR/dev/reference/removePIParameter.md)
-and
-[`removePIOutputMapping()`](https://esqlabs.github.io/esqlabsR/dev/reference/removePIOutputMapping.md)
-take the task id and the id of the record to drop. A task must always
-keep at least one parameter and one mapping, so removing the last of
-both leaves an empty task with nothing to fit. Rather than leave that
-empty shell on the project, `esqlabsR` removes the now-empty task for
-you and warns that it did so. The following strips `ehc_fit` down to
-nothing; the final removal triggers the auto-removal:
-
-``` r
-
-project <- removePIParameter(project, "ehc_fit", "ehc_alt")
-project <- removePIParameter(project, "ehc_fit", template$parameters[[1]]$id)
-project <- removePIOutputMapping(project, "ehc_fit", "pvb_alt")
-project <- removePIOutputMapping(project, "ehc_fit", template$outputMappings[[1]]$id)
-
-project$definitions$parameterIdentification
-#> <DefinitionList>
-#> parameterIdentification (1 definition):
-#>   • aciclovirsimple
-```
-
-The example task `aciclovirsimple` is untouched, since we only edited
-the in-memory copy of `ehc_fit`; nothing was written back to disk.
-
-## Where to go next
-
-The scenarios and output paths a PI task fits come from the rest of the
-project: see
+PI tasks reference scenarios defined in the `Scenarios.xlsx` file. These
+scenarios must exist before running PI — see
 [`vignette("design-scenarios")`](https://esqlabs.github.io/esqlabsR/dev/articles/design-scenarios.md)
-for authoring scenarios and
-[`vignette("observed-data")`](https://esqlabs.github.io/esqlabsR/dev/articles/observed-data.md)
-for loading the measurements an output mapping compares against. For the
-underlying optimization, the confidence-interval methods, and the
-available algorithms, see the
-[`OSPSuite.ParameterIdentification`](https://www.open-systems-pharmacology.org/OSPSuite.ParameterIdentification/)
-package.
+for how to set them up. In the example project, `PITestScenario` is a
+minimal scenario using default simulation settings, while
+`PIScenario_250mg` and `PIScenario_500mg` define specific application
+protocols and simulation times.
+
+The `Scenarios` column in `PIParameters` and `PIOutputMappings` accepts
+a single scenario name per row. To apply a parameter across multiple
+scenarios, add one row per scenario with the same `Group` value.
+
+### Observed data
+
+The `ObservedDataSheet` column specifies which sheet to load from the
+observed data file configured in `ProjectConfiguration`. The `DataSet`
+column specifies the exact data set name within the loaded sheet. To
+find available data set names, use:
+
+``` r
+
+observedData <- loadObservedData(
+  projectConfiguration = projectConfiguration,
+  sheets = "Laskin 1982.Group A"
+)
+names(observedData)
+```
+
+### Residual scaling
+
+The `Scaling` column in `PIOutputMappings` controls how residuals are
+computed:
+
+- `lin`: Linear residuals. Suitable when observed values span a narrow
+  range.
+- `log`: Logarithmic residuals. Preferred when observed values span
+  several orders of magnitude, giving equal weight to low and high
+  concentrations.
+
+### Weights
+
+The `Weight` column allows assigning relative importance to specific
+output mappings. A single numeric value applies uniform weight. Multiple
+values (separated by `,`) assign per-data-point weights. If left empty,
+all data points are weighted equally.

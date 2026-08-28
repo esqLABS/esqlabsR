@@ -5,12 +5,12 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<title>Run simulations • esqlabsR</title>
+<title>3. Run Simulations • esqlabsR</title>
 <script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
 <script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
-<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Run simulations">
+<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="3. Run Simulations">
 <meta name="robots" content="noindex">
 </head>
 <body>
@@ -21,7 +21,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">esqlabsR</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">6.0.0.9001</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.7.0.9008</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -36,24 +36,22 @@
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
 <li><hr class="dropdown-divider"></li>
-    <li><h6 class="dropdown-header" data-toc-skip>Workflow</h6></li>
-    <li><a class="dropdown-item" href="../articles/projects.html">Projects and the project structure</a></li>
-    <li><a class="dropdown-item" href="../articles/design-scenarios.html">Design scenarios</a></li>
-    <li><a class="dropdown-item" href="../articles/validate-project.html">Validate a project</a></li>
-    <li><a class="dropdown-item" href="../articles/run-simulations.html">Run simulations</a></li>
-    <li><a class="dropdown-item" href="../articles/plot-results.html">Plot results</a></li>
-    <li><a class="dropdown-item" href="../articles/observed-data.html">Observed data</a></li>
+    <li><h6 class="dropdown-header" data-toc-skip>esqlabsR Workflow</h6></li>
+    <li><a class="dropdown-item" href="../articles/workflow-overview.html">Overview</a></li>
+    <li><a class="dropdown-item" href="../articles/project-structure.html">Project configuration</a></li>
+    <li><a class="dropdown-item" href="../articles/design-scenarios.html">2. Design Scenarios</a></li>
+    <li><a class="dropdown-item" href="../articles/run-simulations.html">3. Run Simulations</a></li>
+    <li><a class="dropdown-item" href="../articles/plot-results.html">4. Plot Results</a></li>
+    <li><a class="dropdown-item" href="../articles/sensitivity.html">Sensitivity Analysis</a></li>
+    <li><a class="dropdown-item" href="../articles/sensitivity-plots.html">Sensitivity Analysis – Plot Customization</a></li>
     <li><hr class="dropdown-divider"></li>
-    <li><h6 class="dropdown-header" data-toc-skip>Parameter identification</h6></li>
-    <li><a class="dropdown-item" href="../articles/pi-workflow.html">Parameter identification</a></li>
-    <li><hr class="dropdown-divider"></li>
-    <li><h6 class="dropdown-header" data-toc-skip>Sensitivity analysis</h6></li>
-    <li><a class="dropdown-item" href="../articles/sensitivity.html">Sensitivity analysis</a></li>
-    <li><a class="dropdown-item" href="../articles/sensitivity-plots.html">Sensitivity analysis: plot customization</a></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Parameter Identification</h6></li>
+    <li><a class="dropdown-item" href="../articles/pi-workflow.html">Parameter Identification</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Miscellaneous</h6></li>
-    <li><a class="dropdown-item" href="../articles/migrate-from-excel.html">Migrating an Excel project to 6.0.0</a></li>
-    <li><a class="dropdown-item" href="../articles/presentations.html">Slide decks</a></li>
+    <li><a class="dropdown-item" href="../articles/presentations.html">Slide Decks</a></li>
+    <li><a class="dropdown-item" href="../articles/advanced.html">Advanced Topics</a></li>
+    <li><a class="dropdown-item" href="../articles/project-migration-guide.html">Migrating Project Structure Versions</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
@@ -75,101 +73,131 @@
 
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
-      <img src="../logo.png" class="logo" alt=""><h1>Run simulations</h1>
+      <img src="../logo.png" class="logo" alt=""><h1>3. Run Simulations</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/esqLABS/esqlabsR/blob/import-incomplete-records/vignettes/run-simulations.Rmd" class="external-link"><code>vignettes/run-simulations.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/esqLABS/esqlabsR/blob/main/vignettes/run-simulations.Rmd" class="external-link"><code>vignettes/run-simulations.Rmd</code></a></small>
       <div class="d-none name"><code>run-simulations.Rmd</code></div>
     </div>
 
     
     
-<p>Once a project defines one or more scenarios, you run them with a
-single function, <code><a href="../reference/runScenarios.html">runScenarios()</a></code>. A scenario is a named,
-runnable simulation specification (a model, an optional subject, the
-dosing, the parameters, the time grid, and the outputs to record);
-designing them is covered in <code><a href="../articles/design-scenarios.html">vignette("design-scenarios")</a></code>.
-Here we take a project that already has scenarios and focus on running
-them and handling the results.</p>
-<p>This article uses the worked example project bundled with the
-package, so every chunk runs as written. Load it with
-<code><a href="../reference/loadProject.html">loadProject()</a></code>:</p>
+<p>Running scenarios can be divided into three steps:</p>
+<ol style="list-style-type: decimal">
+<li>Creating the <code>ScenarioConfiguration</code> objects,</li>
+<li>Creating the <code>Scenario</code> objects from configurations,</li>
+<li>Running the scenarios.</li>
+</ol>
+<div class="section level3">
+<h3 id="creating-scenarioconfiguration-objects">Creating <code>ScenarioConfiguration</code> objects<a class="anchor" aria-label="anchor" href="#creating-scenarioconfiguration-objects"></a>
+</h3>
+<p>A <code>ScenarioConfiguration</code> object holds all information
+about a scenario that is defined in the Excel files. Though it is
+possible to create an empty <code>ScenarioConfiguration</code> and
+populate it by hand, we usually want to create scenario configurations
+from the Excel files by calling the
+<code><a href="../reference/readScenarioConfigurationFromExcel.html">readScenarioConfigurationFromExcel()</a></code> function. A
+<code>ScenarioConfiguration</code> is based on the
+<code>ProjectConfiguration</code>, which has to be provided as an
+argument to the function. To create the configuration for the
+<em>‘TestScenario’</em> scenario defined in the
+<code>Scenarios.xlsx</code> file, we call:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">project</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/loadProject.html">loadProject</a></span><span class="op">(</span><span class="fu"><a href="../reference/exampleProjectPath.html">exampleProjectPath</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
-<span></span>
-<span><span class="va">project</span><span class="op">$</span><span class="va">definitions</span><span class="op">$</span><span class="va">scenarios</span></span>
-<span><span class="co">#&gt; <span style="color: #0000BB;">&lt;DefinitionList&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="font-weight: bold;">scenarios (3 definitions)</span>:</span></span>
-<span><span class="co">#&gt;   • aciclovir_iv</span></span>
-<span><span class="co">#&gt;   • aciclovir_iv_population</span></span>
-<span><span class="co">#&gt;   • aciclovir_iv_steadystate</span></span></code></pre></div>
-<p>The example defines three scenarios: an individual scenario, a
-population scenario, and an individual scenario that runs to steady
-state first.</p>
-<div class="section level2">
-<h2 id="running-scenarios">Running scenarios<a class="anchor" aria-label="anchor" href="#running-scenarios"></a>
-</h2>
-<p><code><a href="../reference/runScenarios.html">runScenarios()</a></code> takes the project and, optionally, the
-names of the scenarios to run. The first call in a session initializes
-PK-Sim, which takes a moment; subsequent calls are faster.</p>
-<p>To run a single scenario, name it:</p>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">results</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/runScenarios.html">runScenarios</a></span><span class="op">(</span><span class="va">project</span>, scenarios <span class="op">=</span> <span class="st">"aciclovir_iv"</span><span class="op">)</span></span>
-<span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">results</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] "aciclovir_iv"</span></span></code></pre></div>
-<p>To run a subset, pass a vector of names:</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">results</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/runScenarios.html">runScenarios</a></span><span class="op">(</span></span>
-<span>  <span class="va">project</span>,</span>
-<span>  scenarios <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"aciclovir_iv"</span>, <span class="st">"aciclovir_iv_steadystate"</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="co"># Create `ScenarioConfiguration` objects from excel files</span></span>
+<span><span class="va">scenarioConfigurations</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/readScenarioConfigurationFromExcel.html">readScenarioConfigurationFromExcel</a></span><span class="op">(</span></span>
+<span>  scenarioNames <span class="op">=</span> <span class="st">"TestScenario"</span>,</span>
+<span>  projectConfiguration <span class="op">=</span> <span class="va">projectConfiguration</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p>To run every scenario in the project, leave <code>scenarios</code> as
-its default <code>NULL</code>:</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">results</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/runScenarios.html">runScenarios</a></span><span class="op">(</span><span class="va">project</span><span class="op">)</span></span></code></pre></div>
-<p>In this article we keep the runnable example to the single individual
-scenario above, because each scenario builds and simulates a full PBPK
-model and that work adds up quickly.</p>
+<pre><code><span><span class="co">#&gt; <span style="color: #0000BB;">&lt;ScenarioConfiguration&gt;</span></span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">──</span> <span style="font-weight: bold;">Scenario configuration</span> <span style="color: #00BBBB;">──────────────────────────────────────────────────────</span></span></span>
+<span><span class="co">#&gt;   • Scenario name: TestScenario</span></span>
+<span><span class="co">#&gt;   • Model file name: Aciclovir.pkml</span></span>
+<span><span class="co">#&gt;   • Application protocol: Aciclovir_iv_250mg</span></span>
+<span><span class="co">#&gt;   • Simulation type: Individual</span></span>
+<span><span class="co">#&gt;   • Individual Id: Indiv1</span></span>
+<span><span class="co">#&gt;   • Population Id: NULL</span></span>
+<span><span class="co">#&gt;   • Read population from csv file: FALSE</span></span>
+<span><span class="co">#&gt;   • Parameters sheets: Global</span></span>
+<span><span class="co">#&gt;   • Simulate steady-state: FALSE</span></span>
+<span><span class="co">#&gt;   • Steady-state time: 1000</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; ── <span style="font-weight: bold;">Simulation time intervals</span> ──</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; <span style="font-weight: bold;">Interval 1</span>:</span></span>
+<span><span class="co">#&gt;   • Start: 0</span></span>
+<span><span class="co">#&gt;   • End: 24</span></span>
+<span><span class="co">#&gt;   • Resolution: 60</span></span>
+<span><span class="co">#&gt;   • Simulation time intervals unit: h</span></span></code></pre>
+<p>Alternatively, we can create configurations for all scenarios defined
+in the <code>Scenarios.xlsx</code> by calling
+<code>readScenarioConfigurationFromExcel(projectConfiguration = projectConfiguration)</code>
+without specifying the scenarios’ names.</p>
 </div>
-<div class="section level2">
-<h2 id="the-scenario-result-record">The Scenario Result record<a class="anchor" aria-label="anchor" href="#the-scenario-result-record"></a>
-</h2>
-<p><code><a href="../reference/runScenarios.html">runScenarios()</a></code> returns a named list keyed by scenario
-name. Each entry is one Scenario Result, a plain list with four
-fields:</p>
+<div class="section level3">
+<h3 id="creating-scenario-objects-from-configurations">Creating <code>Scenario</code> objects from configurations<a class="anchor" aria-label="anchor" href="#creating-scenario-objects-from-configurations"></a>
+</h3>
+<p>Once all scenario configurations are set up, <code>Scenario</code>
+objects can be created from them. A <code>Scenario</code> object
+contains the fully parametrized simulation, the <code>Population</code>
+object in case of a population simulation, the underlying
+<code>ScenarioConfiguration</code> object, and the list of all
+user-defined parameters.</p>
+<p>During the model development/fitting phase, you might want to test
+parameter values before storing them in the <code>Parameters</code>
+Excel files. You can define the paths of the test parameters, their
+values, and the units in the <code>TestParameters</code> file and pass
+them as <code>customParams</code> argument to the
+<code><a href="../reference/createScenarios.html">createScenarios()</a></code> function.</p>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Create `Scenario` objects from `ScenarioConfiguration` objects</span></span>
+<span><span class="va">scenarios</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createScenarios.html">createScenarios</a></span><span class="op">(</span><span class="va">scenarioConfigurations</span><span class="op">)</span></span></code></pre></div>
+<p>You can view the final parametrization that is applied to the
+simulation by calling the <code>finalCustomParams</code> property:</p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">scenarios</span><span class="op">$</span><span class="va">TestScenario</span><span class="op">$</span><span class="va">finalCustomParams</span></span>
+<span><span class="co">#&gt; $paths</span></span>
+<span><span class="co">#&gt; [1] "Organism|Liver|EHC continuous fraction"                     </span></span>
+<span><span class="co">#&gt; [2] "Organism|Kidney|GFR"                                        </span></span>
+<span><span class="co">#&gt; [3] "Events|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose"</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; $values</span></span>
+<span><span class="co">#&gt; [1]   1  90 250</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; $units</span></span>
+<span><span class="co">#&gt; [1] ""       "ml/min" "mg"</span></span></code></pre></div>
+</div>
+<div class="section level3">
+<h3 id="running-scenarios">Running scenarios<a class="anchor" aria-label="anchor" href="#running-scenarios"></a>
+</h3>
+<p>Once the <code>Scenario</code> objects are created, they can be
+simulated by calling the <code><a href="../reference/runScenarios.html">runScenarios()</a></code> function. The
+output of this function is a named list, where the names are scenario
+names, and the values are the lists of simulations,
+<code>SimulatioResults</code> produced by running the simulation, the
+output values of the <code>SimulationResults</code>, and the population
+if the scenario is a population simulation.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">scenarioResult</span> <span class="op">&lt;-</span> <span class="va">results</span><span class="op">[[</span><span class="st">"aciclovir_iv"</span><span class="op">]</span><span class="op">]</span></span></code></pre></div>
-<ul>
-<li>
-<code>simulation</code>: the initialized OSPS
-<code>Simulation</code> object, with all scenario parameters
-applied.</li>
-<li>
-<code>results</code>: the OSPS <code>SimulationResults</code> object
-produced by running that simulation.</li>
-<li>
-<code>outputValues</code>: the recorded output paths extracted into
-a data frame, ready for analysis or plotting.</li>
-<li>
-<code>population</code>: the OSPS <code>Population</code> for a
-population scenario, or <code>NULL</code> for an individual
-scenario.</li>
-</ul>
-<p>A common point of confusion is worth stating directly: a Scenario
-Result is <strong>not</strong> the OSPS <code>SimulationResults</code>.
-The Scenario Result is the larger record that bundles the simulation,
-the results, the extracted output values, and the population. The OSPS
-<code>SimulationResults</code> is only the inner <code>results</code>
-field:</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/class.html" class="external-link">class</a></span><span class="op">(</span><span class="va">scenarioResult</span><span class="op">$</span><span class="va">results</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] "SimulationResults" "DotNetWrapper"     "NetObject"        </span></span>
-<span><span class="co">#&gt; [4] "R6"</span></span></code></pre></div>
-<p>The <code>outputValues</code> field splits into the simulated
-<code>data</code> and its <code>metaData</code>:</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">scenarioResult</span><span class="op">$</span><span class="va">outputValues</span><span class="op">$</span><span class="va">data</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">simulatedScenariosResults</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/runScenarios.html">runScenarios</a></span><span class="op">(</span></span>
+<span>  scenarios <span class="op">=</span> <span class="va">scenarios</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Each simulation is stored separately inside the simulatedScenariosResults</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">simulatedScenariosResults</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Each simulation can be accessed using its name</span></span>
+<span><span class="va">simulatedScenariosResults</span><span class="op">$</span><span class="va">TestScenario</span><span class="op">$</span><span class="va">simulation</span></span>
+<span></span>
+<span><span class="co"># Of course, it contains simulated results as dataframe</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">simulatedScenariosResults</span><span class="op">$</span><span class="va">TestScenario</span><span class="op">$</span><span class="va">outputValues</span><span class="op">$</span><span class="va">data</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># It also contains dataframe's metadata</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">simulatedScenariosResults</span><span class="op">$</span><span class="va">TestScenario</span><span class="op">$</span><span class="va">outputValues</span><span class="op">$</span><span class="va">metaData</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] "TestScenario"</span></span>
+<span><span class="co">#&gt; <span style="color: #0000BB;">&lt;Simulation&gt;</span></span></span>
+<span><span class="co">#&gt;   • Name: TestScenario</span></span>
+<span><span class="co">#&gt;   • Source file:</span></span>
+<span><span class="co">#&gt;   /home/runner/work/_temp/Library/esqlabsR/extdata/examples/TestProject/Models/Simulations/Aciclovir.pkml</span></span>
 <span><span class="co">#&gt;   IndividualId Time</span></span>
 <span><span class="co">#&gt; 1            0    0</span></span>
 <span><span class="co">#&gt; 2            0    1</span></span>
@@ -179,85 +207,23 @@ field:</p>
 <span><span class="co">#&gt; 6            0    5</span></span>
 <span><span class="co">#&gt;   Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)</span></span>
 <span><span class="co">#&gt; 1                                                                  0.000000</span></span>
-<span><span class="co">#&gt; 2                                                                  2.734356</span></span>
-<span><span class="co">#&gt; 3                                                                  7.854644</span></span>
-<span><span class="co">#&gt; 4                                                                 13.132996</span></span>
-<span><span class="co">#&gt; 5                                                                 18.281834</span></span>
-<span><span class="co">#&gt; 6                                                                 23.265469</span></span></code></pre></div>
-</div>
-<div class="section level2">
-<h2 id="individual-versus-population-scenarios">Individual versus population scenarios<a class="anchor" aria-label="anchor" href="#individual-versus-population-scenarios"></a>
-</h2>
-<p>The <code>population</code> field is what distinguishes the two kinds
-of scenario at run time. For an individual scenario, no population is
-attached and the field is <code>NULL</code>:</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">scenarioResult</span><span class="op">$</span><span class="va">population</span></span>
+<span><span class="co">#&gt; 2                                                                  2.713036</span></span>
+<span><span class="co">#&gt; 3                                                                  7.830409</span></span>
+<span><span class="co">#&gt; 4                                                                 13.107441</span></span>
+<span><span class="co">#&gt; 5                                                                 18.254143</span></span>
+<span><span class="co">#&gt; 6                                                                 23.234890</span></span>
 <span><span class="co">#&gt; NULL</span></span></code></pre></div>
-<p>For a population scenario, the same field instead holds the sampled
-<code>Population</code>, and <code>outputValues</code> then carries one
-trajectory per virtual individual rather than a single curve.</p>
-</div>
-<div class="section level2">
-<h2 id="saving-and-reloading-results">Saving and reloading results<a class="anchor" aria-label="anchor" href="#saving-and-reloading-results"></a>
-</h2>
-<p>Simulating a model is the slow step, so it is good practice to save
-results once and reload them for downstream work such as redrawing a
-figure, rather than re-simulating each time.
-<code><a href="../reference/saveScenarioResults.html">saveScenarioResults()</a></code> writes each Scenario Result to disk:
-the results as a <code>.csv</code>, the simulation as a
-<code>.pkml</code>, and, for population scenarios, the population as a
-<code>&lt;scenario&gt;_population.csv</code>.</p>
-<p>By default the destination is derived from the project’s output
-folder. You can also pass an explicit <code>outputFolder</code>; here we
-send the output to a temporary directory so nothing is written into the
-project tree:</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">resultsFolder</span> <span class="op">&lt;-</span> <span class="fu">withr</span><span class="fu">::</span><span class="fu"><a href="https://withr.r-lib.org/reference/with_tempfile.html" class="external-link">local_tempdir</a></span><span class="op">(</span><span class="op">)</span></span>
-<span></span>
-<span><span class="fu"><a href="../reference/saveScenarioResults.html">saveScenarioResults</a></span><span class="op">(</span></span>
-<span>  <span class="va">results</span>,</span>
-<span>  <span class="va">project</span>,</span>
-<span>  outputFolder <span class="op">=</span> <span class="va">resultsFolder</span></span>
-<span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] "/tmp/RtmpLWvkLy/file28e63edf6c"</span></span></code></pre></div>
-<p><code><a href="../reference/loadScenarioResults.html">loadScenarioResults()</a></code> reads the saved files back, given
-the scenario names and the folder they were written to. Passing the
-<code>project</code> restricts the reloaded output values to each
-scenario’s declared output paths, so the reloaded column set matches
-what <code><a href="../reference/runScenarios.html">runScenarios()</a></code> produced. The reload restores all four
-fields of each Scenario Result, including <code>population</code> for
-population scenarios:</p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">reloaded</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/loadScenarioResults.html">loadScenarioResults</a></span><span class="op">(</span></span>
-<span>  scenarios <span class="op">=</span> <span class="st">"aciclovir_iv"</span>,</span>
-<span>  resultsFolder <span class="op">=</span> <span class="va">resultsFolder</span>,</span>
-<span>  project <span class="op">=</span> <span class="va">project</span></span>
-<span><span class="op">)</span></span></code></pre></div>
-<p>The reloaded record has the same shape as the one
-<code><a href="../reference/runScenarios.html">runScenarios()</a></code> returned, so any code that consumes a
-Scenario Result works on either.</p>
-</div>
-<div class="section level2">
-<h2 id="run-options-and-parallel-execution">Run options and parallel execution<a class="anchor" aria-label="anchor" href="#run-options-and-parallel-execution"></a>
-</h2>
-<p><code><a href="../reference/runScenarios.html">runScenarios()</a></code> accepts a
-<code>simulationRunOptions</code> argument, an
-<code><a href="https://www.open-systems-pharmacology.org/OSPSuite-R/reference/SimulationRunOptions.html" class="external-link">ospsuite::SimulationRunOptions</a></code> object, to control how the
-underlying simulations run. It governs solver settings and whether
-scenarios are simulated in parallel. Leaving it at its default
-<code>NULL</code> uses the package defaults, which is the right choice
-for most analyses. Reach for an explicit
-<code>SimulationRunOptions</code> when you need to tune the run, for
-example to enable parallel execution across multiple cores when running
-many scenarios.</p>
-</div>
-<div class="section level2">
-<h2 id="where-to-go-next">Where to go next<a class="anchor" aria-label="anchor" href="#where-to-go-next"></a>
-</h2>
-<p>Now that you have simulated scenarios and their results in hand, you
-can move on to visualizing them, which is covered in
-<code><a href="../articles/plot-results.html">vignette("plot-results")</a></code>.</p>
+<p>It is a good idea to store simulation results as <code>*.csv</code>
+along with simulations as <code>.*pkml</code> and, optionally, the
+applied population as <code>*.csv</code> file and load them for further
+processing to avoid re-simulating every time, e.g., a change to a figure
+showing the simulation results is required. The convenient function for
+saving the results of a scenario run is
+<code>saveScenarioResults</code>. Then, you will be able to restore the
+results using <code>loadScenarioResults</code>.</p>
+<p>Now that the results have been generated, you can proceed to the next
+step in the <code><a href="../articles/plot-results.html">vignette("plot-results")</a></code>.
+<!-- Read the following sections to learn more about the options for running simulations. --></p>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

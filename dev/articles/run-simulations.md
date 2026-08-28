@@ -1,113 +1,132 @@
-# Run simulations
+# 3. Run Simulations
 
-Once a project defines one or more scenarios, you run them with a single
-function,
-[`runScenarios()`](https://esqlabs.github.io/esqlabsR/dev/reference/runScenarios.md).
-A scenario is a named, runnable simulation specification (a model, an
-optional subject, the dosing, the parameters, the time grid, and the
-outputs to record); designing them is covered in
-[`vignette("design-scenarios")`](https://esqlabs.github.io/esqlabsR/dev/articles/design-scenarios.md).
-Here we take a project that already has scenarios and focus on running
-them and handling the results.
+Running scenarios can be divided into three steps:
 
-This article uses the worked example project bundled with the package,
-so every chunk runs as written. Load it with
-[`loadProject()`](https://esqlabs.github.io/esqlabsR/dev/reference/loadProject.md):
+1.  Creating the `ScenarioConfiguration` objects,
+2.  Creating the `Scenario` objects from configurations,
+3.  Running the scenarios.
 
-``` r
+### Creating `ScenarioConfiguration` objects
 
-project <- loadProject(exampleProjectPath())
-
-project$definitions$scenarios
-#> <DefinitionList>
-#> scenarios (3 definitions):
-#>   • aciclovir_iv
-#>   • aciclovir_iv_population
-#>   • aciclovir_iv_steadystate
-```
-
-The example defines three scenarios: an individual scenario, a
-population scenario, and an individual scenario that runs to steady
-state first.
-
-## Running scenarios
-
-[`runScenarios()`](https://esqlabs.github.io/esqlabsR/dev/reference/runScenarios.md)
-takes the project and, optionally, the names of the scenarios to run.
-The first call in a session initializes PK-Sim, which takes a moment;
-subsequent calls are faster.
-
-To run a single scenario, name it:
+A `ScenarioConfiguration` object holds all information about a scenario
+that is defined in the Excel files. Though it is possible to create an
+empty `ScenarioConfiguration` and populate it by hand, we usually want
+to create scenario configurations from the Excel files by calling the
+[`readScenarioConfigurationFromExcel()`](https://esqlabs.github.io/esqlabsR/dev/reference/readScenarioConfigurationFromExcel.md)
+function. A `ScenarioConfiguration` is based on the
+`ProjectConfiguration`, which has to be provided as an argument to the
+function. To create the configuration for the *‘TestScenario’* scenario
+defined in the `Scenarios.xlsx` file, we call:
 
 ``` r
 
-results <- runScenarios(project, scenarios = "aciclovir_iv")
-
-names(results)
-#> [1] "aciclovir_iv"
-```
-
-To run a subset, pass a vector of names:
-
-``` r
-
-results <- runScenarios(
-  project,
-  scenarios = c("aciclovir_iv", "aciclovir_iv_steadystate")
+# Create `ScenarioConfiguration` objects from excel files
+scenarioConfigurations <- readScenarioConfigurationFromExcel(
+  scenarioNames = "TestScenario",
+  projectConfiguration = projectConfiguration
 )
 ```
 
-To run every scenario in the project, leave `scenarios` as its default
-`NULL`:
+    #> <ScenarioConfiguration>
+    #> 
+    #> ── Scenario configuration ──────────────────────────────────────────────────────
+    #>   • Scenario name: TestScenario
+    #>   • Model file name: Aciclovir.pkml
+    #>   • Application protocol: Aciclovir_iv_250mg
+    #>   • Simulation type: Individual
+    #>   • Individual Id: Indiv1
+    #>   • Population Id: NULL
+    #>   • Read population from csv file: FALSE
+    #>   • Parameters sheets: Global
+    #>   • Simulate steady-state: FALSE
+    #>   • Steady-state time: 1000
+    #> 
+    #> ── Simulation time intervals ──
+    #> 
+    #> Interval 1:
+    #>   • Start: 0
+    #>   • End: 24
+    #>   • Resolution: 60
+    #>   • Simulation time intervals unit: h
+
+Alternatively, we can create configurations for all scenarios defined in
+the `Scenarios.xlsx` by calling
+`readScenarioConfigurationFromExcel(projectConfiguration = projectConfiguration)`
+without specifying the scenarios’ names.
+
+### Creating `Scenario` objects from configurations
+
+Once all scenario configurations are set up, `Scenario` objects can be
+created from them. A `Scenario` object contains the fully parametrized
+simulation, the `Population` object in case of a population simulation,
+the underlying `ScenarioConfiguration` object, and the list of all
+user-defined parameters.
+
+During the model development/fitting phase, you might want to test
+parameter values before storing them in the `Parameters` Excel files.
+You can define the paths of the test parameters, their values, and the
+units in the `TestParameters` file and pass them as `customParams`
+argument to the
+[`createScenarios()`](https://esqlabs.github.io/esqlabsR/dev/reference/createScenarios.md)
+function.
 
 ``` r
 
-results <- runScenarios(project)
+# Create `Scenario` objects from `ScenarioConfiguration` objects
+scenarios <- createScenarios(scenarioConfigurations)
 ```
 
-In this article we keep the runnable example to the single individual
-scenario above, because each scenario builds and simulates a full PBPK
-model and that work adds up quickly.
+You can view the final parametrization that is applied to the simulation
+by calling the `finalCustomParams` property:
 
-## The Scenario Result record
+``` r
 
+scenarios$TestScenario$finalCustomParams
+#> $paths
+#> [1] "Organism|Liver|EHC continuous fraction"                     
+#> [2] "Organism|Kidney|GFR"                                        
+#> [3] "Events|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose"
+#> 
+#> $values
+#> [1]   1  90 250
+#> 
+#> $units
+#> [1] ""       "ml/min" "mg"
+```
+
+### Running scenarios
+
+Once the `Scenario` objects are created, they can be simulated by
+calling the
 [`runScenarios()`](https://esqlabs.github.io/esqlabsR/dev/reference/runScenarios.md)
-returns a named list keyed by scenario name. Each entry is one Scenario
-Result, a plain list with four fields:
+function. The output of this function is a named list, where the names
+are scenario names, and the values are the lists of simulations,
+`SimulatioResults` produced by running the simulation, the output values
+of the `SimulationResults`, and the population if the scenario is a
+population simulation.
 
 ``` r
 
-scenarioResult <- results[["aciclovir_iv"]]
-```
+simulatedScenariosResults <- runScenarios(
+  scenarios = scenarios
+)
 
-- `simulation`: the initialized OSPS `Simulation` object, with all
-  scenario parameters applied.
-- `results`: the OSPS `SimulationResults` object produced by running
-  that simulation.
-- `outputValues`: the recorded output paths extracted into a data frame,
-  ready for analysis or plotting.
-- `population`: the OSPS `Population` for a population scenario, or
-  `NULL` for an individual scenario.
+# Each simulation is stored separately inside the simulatedScenariosResults
+names(simulatedScenariosResults)
 
-A common point of confusion is worth stating directly: a Scenario Result
-is **not** the OSPS `SimulationResults`. The Scenario Result is the
-larger record that bundles the simulation, the results, the extracted
-output values, and the population. The OSPS `SimulationResults` is only
-the inner `results` field:
+# Each simulation can be accessed using its name
+simulatedScenariosResults$TestScenario$simulation
 
-``` r
+# Of course, it contains simulated results as dataframe
+head(simulatedScenariosResults$TestScenario$outputValues$data)
 
-class(scenarioResult$results)
-#> [1] "SimulationResults" "DotNetWrapper"     "NetObject"        
-#> [4] "R6"
-```
-
-The `outputValues` field splits into the simulated `data` and its
-`metaData`:
-
-``` r
-
-head(scenarioResult$outputValues$data)
+# It also contains dataframe's metadata
+head(simulatedScenariosResults$TestScenario$outputValues$metaData)
+#> [1] "TestScenario"
+#> <Simulation>
+#>   • Name: TestScenario
+#>   • Source file:
+#>   /home/runner/work/_temp/Library/esqlabsR/extdata/examples/TestProject/Models/Simulations/Aciclovir.pkml
 #>   IndividualId Time
 #> 1            0    0
 #> 2            0    1
@@ -117,91 +136,22 @@ head(scenarioResult$outputValues$data)
 #> 6            0    5
 #>   Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)
 #> 1                                                                  0.000000
-#> 2                                                                  2.734356
-#> 3                                                                  7.854644
-#> 4                                                                 13.132996
-#> 5                                                                 18.281834
-#> 6                                                                 23.265469
-```
-
-## Individual versus population scenarios
-
-The `population` field is what distinguishes the two kinds of scenario
-at run time. For an individual scenario, no population is attached and
-the field is `NULL`:
-
-``` r
-
-scenarioResult$population
+#> 2                                                                  2.713036
+#> 3                                                                  7.830409
+#> 4                                                                 13.107441
+#> 5                                                                 18.254143
+#> 6                                                                 23.234890
 #> NULL
 ```
 
-For a population scenario, the same field instead holds the sampled
-`Population`, and `outputValues` then carries one trajectory per virtual
-individual rather than a single curve.
+It is a good idea to store simulation results as `*.csv` along with
+simulations as `.*pkml` and, optionally, the applied population as
+`*.csv` file and load them for further processing to avoid re-simulating
+every time, e.g., a change to a figure showing the simulation results is
+required. The convenient function for saving the results of a scenario
+run is `saveScenarioResults`. Then, you will be able to restore the
+results using `loadScenarioResults`.
 
-## Saving and reloading results
-
-Simulating a model is the slow step, so it is good practice to save
-results once and reload them for downstream work such as redrawing a
-figure, rather than re-simulating each time.
-[`saveScenarioResults()`](https://esqlabs.github.io/esqlabsR/dev/reference/saveScenarioResults.md)
-writes each Scenario Result to disk: the results as a `.csv`, the
-simulation as a `.pkml`, and, for population scenarios, the population
-as a `<scenario>_population.csv`.
-
-By default the destination is derived from the project’s output folder.
-You can also pass an explicit `outputFolder`; here we send the output to
-a temporary directory so nothing is written into the project tree:
-
-``` r
-
-resultsFolder <- withr::local_tempdir()
-
-saveScenarioResults(
-  results,
-  project,
-  outputFolder = resultsFolder
-)
-#> [1] "/tmp/RtmpLWvkLy/file28e63edf6c"
-```
-
-[`loadScenarioResults()`](https://esqlabs.github.io/esqlabsR/dev/reference/loadScenarioResults.md)
-reads the saved files back, given the scenario names and the folder they
-were written to. Passing the `project` restricts the reloaded output
-values to each scenario’s declared output paths, so the reloaded column
-set matches what
-[`runScenarios()`](https://esqlabs.github.io/esqlabsR/dev/reference/runScenarios.md)
-produced. The reload restores all four fields of each Scenario Result,
-including `population` for population scenarios:
-
-``` r
-
-reloaded <- loadScenarioResults(
-  scenarios = "aciclovir_iv",
-  resultsFolder = resultsFolder,
-  project = project
-)
-```
-
-The reloaded record has the same shape as the one
-[`runScenarios()`](https://esqlabs.github.io/esqlabsR/dev/reference/runScenarios.md)
-returned, so any code that consumes a Scenario Result works on either.
-
-## Run options and parallel execution
-
-[`runScenarios()`](https://esqlabs.github.io/esqlabsR/dev/reference/runScenarios.md)
-accepts a `simulationRunOptions` argument, an
-[`ospsuite::SimulationRunOptions`](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/SimulationRunOptions.html)
-object, to control how the underlying simulations run. It governs solver
-settings and whether scenarios are simulated in parallel. Leaving it at
-its default `NULL` uses the package defaults, which is the right choice
-for most analyses. Reach for an explicit `SimulationRunOptions` when you
-need to tune the run, for example to enable parallel execution across
-multiple cores when running many scenarios.
-
-## Where to go next
-
-Now that you have simulated scenarios and their results in hand, you can
-move on to visualizing them, which is covered in
+Now that the results have been generated, you can proceed to the next
+step in the
 [`vignette("plot-results")`](https://esqlabs.github.io/esqlabsR/dev/articles/plot-results.md).

@@ -21,7 +21,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">esqlabsR</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.7.0.9006</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.7.0.9008</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -148,7 +148,10 @@ performing any simulations.</p>
 <p>By printing the <code>ProjectConfiguration</code>, we can see the
 locations of all files used in the workflows:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">my_project_configuration</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createProjectConfiguration.html">createProjectConfiguration</a></span><span class="op">(</span>path <span class="op">=</span> <span class="fu"><a href="../reference/exampleProjectConfigurationPath.html">exampleProjectConfigurationPath</a></span><span class="op">(</span><span class="op">)</span>, ignoreVersionCheck <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">my_project_configuration</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createProjectConfiguration.html">createProjectConfiguration</a></span><span class="op">(</span></span>
+<span>  path <span class="op">=</span> <span class="fu"><a href="../reference/exampleProjectConfigurationPath.html">exampleProjectConfigurationPath</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  ignoreVersionCheck <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span><span class="op">)</span></span></code></pre></div>
 <div class="section level3">
 <h3 id="package-version-tracking">Package version tracking<a class="anchor" aria-label="anchor" href="#package-version-tracking"></a>
 </h3>
@@ -267,7 +270,10 @@ use</li>
 <span><span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="../reference/isAnyCriticalErrors.html">isAnyCriticalErrors</a></span><span class="op">(</span><span class="va">validation_results</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="co"># Get detailed summary</span></span>
 <span>  <span class="va">summary</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/validationSummary.html">validationSummary</a></span><span class="op">(</span><span class="va">validation_results</span><span class="op">)</span></span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span><span class="st">"Critical errors found in:"</span>, <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span><span class="va">summary</span><span class="op">$</span><span class="va">files_with_errors</span>, collapse <span class="op">=</span> <span class="st">", "</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span></span>
+<span>    <span class="st">"Critical errors found in:"</span>,</span>
+<span>    <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span><span class="va">summary</span><span class="op">$</span><span class="va">files_with_errors</span>, collapse <span class="op">=</span> <span class="st">", "</span><span class="op">)</span></span>
+<span>  <span class="op">)</span><span class="op">)</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span><span class="st">"Total critical errors:"</span>, <span class="va">summary</span><span class="op">$</span><span class="va">total_critical_errors</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="op">}</span> <span class="kw">else</span> <span class="op">{</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="st">"All validations passed!"</span><span class="op">)</span></span>
@@ -377,7 +383,10 @@ data</li>
 </ul>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Create a snapshot from a ProjectConfiguration object</span></span>
-<span><span class="va">my_project_configuration</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createProjectConfiguration.html">createProjectConfiguration</a></span><span class="op">(</span><span class="st">"ProjectConfiguration.xlsx"</span>, ignoreVersionCheck <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span><span class="va">my_project_configuration</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createProjectConfiguration.html">createProjectConfiguration</a></span><span class="op">(</span></span>
+<span>  <span class="st">"ProjectConfiguration.xlsx"</span>,</span>
+<span>  ignoreVersionCheck <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/snapshotProjectConfiguration.html">snapshotProjectConfiguration</a></span><span class="op">(</span><span class="va">my_project_configuration</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Or create a snapshot directly from the Excel file path</span></span>
@@ -405,7 +414,10 @@ Regenerate all Excel configuration files 3. Return a new
 files are synchronized with your JSON snapshot:</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Check if files are in sync</span></span>
-<span><span class="va">status</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/projectConfigurationStatus.html">projectConfigurationStatus</a></span><span class="op">(</span><span class="st">"ProjectConfiguration.xlsx"</span>, <span class="st">"ProjectConfiguration.json"</span><span class="op">)</span></span>
+<span><span class="va">status</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/projectConfigurationStatus.html">projectConfigurationStatus</a></span><span class="op">(</span></span>
+<span>  <span class="st">"ProjectConfiguration.xlsx"</span>,</span>
+<span>  <span class="st">"ProjectConfiguration.json"</span></span>
+<span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">status</span><span class="op">$</span><span class="va">in_sync</span><span class="op">)</span> <span class="co"># TRUE if synchronized, FALSE otherwise</span></span></code></pre></div>
 </div>
 <div class="section level4">

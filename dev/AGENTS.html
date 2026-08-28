@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="index.html">esqlabsR</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.7.0.9006</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.7.0.9008</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -77,7 +77,8 @@
 </ul></div>
 <div class="section level2">
 <h2 id="coding-conventions">Coding conventions<a class="anchor" aria-label="anchor" href="#coding-conventions"></a></h2>
-<ul><li>Type checking: use <code><a href="https://www.open-systems-pharmacology.org/OSPSuite.RUtils/reference/validateIsOfType.html" class="external-link">ospsuite.utils::validateIsOfType()</a></code> / <code><a href="https://www.open-systems-pharmacology.org/OSPSuite.RUtils/reference/isOfType.html" class="external-link">ospsuite.utils::isOfType()</a></code> instead of native <code><a href="https://rdrr.io/r/base/class.html" class="external-link">inherits()</a></code> checks.</li>
+<ul><li>Internal (non-exported) functions are named with a leading dot: <code><a href="reference/dot-validateParametersStructure.html">.validateParametersStructure()</a></code>, <code>.getEsqlabsColors()</code>. The dot marks a function as internal at every call site, so a reader never has to check <code>NAMESPACE</code> to know whether they are looking at part of the package’s interface.</li>
+<li>Type checking: use <code><a href="https://www.open-systems-pharmacology.org/OSPSuite.RUtils/reference/validateIsOfType.html" class="external-link">ospsuite.utils::validateIsOfType()</a></code> / <code><a href="https://www.open-systems-pharmacology.org/OSPSuite.RUtils/reference/isOfType.html" class="external-link">ospsuite.utils::isOfType()</a></code> instead of native <code><a href="https://rdrr.io/r/base/class.html" class="external-link">inherits()</a></code> checks.</li>
 <li>All user-facing messages, warnings, and errors live in <code>R/messages.R</code> as dedicated functions using <code><a href="https://www.open-systems-pharmacology.org/OSPSuite.RUtils/reference/cliFormat.html" class="external-link">ospsuite.utils::cliFormat()</a></code> with cli markup (<code>{.val {x}}</code>, <code>{.arg {name}}</code>). Never inline message strings or build them with <code><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste()</a></code>.</li>
 <li>Use explicit <code>package::function()</code> for functions from other packages. Never use <code><a href="https://rdrr.io/r/base/library.html" class="external-link">library()</a></code> or <code><a href="https://rdrr.io/r/base/library.html" class="external-link">require()</a></code> in package code. In tests, call esqlabsR’s own functions directly, without a namespace prefix.</li>
 <li>Use vectorized operations for simple vector math. For complex operations, prefer explicit <code>for</code> loops over <code><a href="https://rdrr.io/r/base/apply.html" class="external-link">apply()</a></code>/<code><a href="https://purrr.tidyverse.org/reference/map.html" class="external-link">purrr::map()</a></code>.</li>
@@ -93,7 +94,7 @@
 <div class="section level2">
 <h2 id="user-visible-documentation">User-visible documentation<a class="anchor" aria-label="anchor" href="#user-visible-documentation"></a></h2>
 <p>The target reader of all user-facing documentation (roxygen <code>@description</code>, <code>@param</code>, <code>@details</code>, vignettes, messages) is a <strong>modeling expert, not a coder or data scientist</strong>. They know PBPK/QSP modeling, scenarios, individuals, and populations; they do not know software-engineering vocabulary.</p>
-<ul><li>Do <strong>not</strong> use developer jargon: “reconcile”, “authoring”, “orphan”, “idempotent”, “in-memory vs. on-disk tree”, “bound/unbound”, “no-op”, “side-car”, “mutate”.</li>
+<ul><li>Do <strong>not</strong> use developer jargon: “reconcile”, “authoring”, “scaffold”, “orphan”, “idempotent”, “in-memory vs. on-disk tree”, “bound/unbound”, “no-op”, “side-car”, “mutate”.</li>
 <li>Describe behavior by <strong>what the user sees and does</strong>, not by mechanism. Prefer “Only files with actual changes are re-written, so <code>git diff</code> shows exactly the definitions you edited” over “write-if-different reconciliation”.</li>
 <li>Say things plainly: “idempotent no-op” → “saving repeatedly is always safe”; “orphan deletion” → “if you removed a scenario, its file is deleted”.</li>
 <li>State what a function does <em>not</em> do and what to call instead (e.g. saving does not update the Excel files; use <code>exportProjectToExcel()</code>).</li>

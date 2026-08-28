@@ -64,7 +64,10 @@ files used in the workflows:
 
 ``` r
 
-my_project_configuration <- createProjectConfiguration(path = exampleProjectConfigurationPath(), ignoreVersionCheck = TRUE)
+my_project_configuration <- createProjectConfiguration(
+  path = exampleProjectConfigurationPath(),
+  ignoreVersionCheck = TRUE
+)
 ```
 
 ### Package version tracking
@@ -172,7 +175,10 @@ validation_results <- validateAllConfigurations(exampleProjectConfigurationPath(
 if (isAnyCriticalErrors(validation_results)) {
   # Get detailed summary
   summary <- validationSummary(validation_results)
-  print(paste("Critical errors found in:", paste(summary$files_with_errors, collapse = ", ")))
+  print(paste(
+    "Critical errors found in:",
+    paste(summary$files_with_errors, collapse = ", ")
+  ))
   print(paste("Total critical errors:", summary$total_critical_errors))
 } else {
   print("All validations passed!")
@@ -272,7 +278,10 @@ single JSON file. This JSON format is ideal for version control as it’s:
 ``` r
 
 # Create a snapshot from a ProjectConfiguration object
-my_project_configuration <- createProjectConfiguration("ProjectConfiguration.xlsx", ignoreVersionCheck = TRUE)
+my_project_configuration <- createProjectConfiguration(
+  "ProjectConfiguration.xlsx",
+  ignoreVersionCheck = TRUE
+)
 snapshotProjectConfiguration(my_project_configuration)
 
 # Or create a snapshot directly from the Excel file path
@@ -309,7 +318,10 @@ to check if your Excel files are synchronized with your JSON snapshot:
 ``` r
 
 # Check if files are in sync
-status <- projectConfigurationStatus("ProjectConfiguration.xlsx", "ProjectConfiguration.json")
+status <- projectConfigurationStatus(
+  "ProjectConfiguration.xlsx",
+  "ProjectConfiguration.json"
+)
 print(status$in_sync) # TRUE if synchronized, FALSE otherwise
 ```
 
