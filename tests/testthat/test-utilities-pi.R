@@ -1,12 +1,9 @@
 projectConfiguration <- testProjectConfiguration()
 
-# Where a PI task's `checkForNegativeValues` lands depends on the ospsuite
-# version: the run options before 13, the simulations' solver from 13 on. Read
-# it back from the place this ospsuite uses.
+# A PI task's `checkForNegativeValues` lives on its simulations' solver
+# settings; `piTask$simulations` is a single `Simulation` for a one-scenario
+# task and a list otherwise.
 .taskCheckForNegativeValues <- function(piTask) {
-  if (.runOptionsCarryCheckForNegativeValues()) {
-    return(piTask$configuration$simulationRunOptions$checkForNegativeValues)
-  }
   simulations <- piTask$simulations
   if (!is.list(simulations)) {
     simulations <- list(simulations)
@@ -546,9 +543,8 @@ test_that("createPITasks applies simulationRunOptions from PIConfiguration colum
   expect_false(is.null(opts))
   expect_equal(opts$numberOfCores, 2L)
 
-  # Only checkForNegativeValues set. Where it lands depends on the ospsuite
-  # version (run option before 13, the simulations' solver from 13 on), so read
-  # it back from the place this ospsuite uses.
+  # Only checkForNegativeValues set: a solver setting, so no run options are
+  # built and the value lands on the task's simulations.
   sheets$PIConfiguration$numberOfCores <- NA_real_
   sheets$PIConfiguration$checkForNegativeValues <- FALSE
   .writeExcel(
@@ -558,8 +554,7 @@ test_that("createPITasks applies simulationRunOptions from PIConfiguration colum
   piTasks <- createPITasks(readPITaskConfigurationFromExcel(
     projectConfiguration = projectConfigurationLocal
   ))
-  opts <- piTasks$Task1$configuration$simulationRunOptions
-  expect_false(is.null(opts))
+  expect_null(piTasks$Task1$configuration$simulationRunOptions)
   expect_false(.taskCheckForNegativeValues(piTasks$Task1))
 
   # Both set
@@ -576,11 +571,7 @@ test_that("createPITasks applies simulationRunOptions from PIConfiguration colum
   expect_false(.taskCheckForNegativeValues(piTasks$Task1))
 })
 
-test_that(".applySolverCheckForNegativeValues writes the value to each simulation's solver on ospsuite 13", {
-  skip_if(
-    .runOptionsCarryCheckForNegativeValues(),
-    "ospsuite < 13 carries checkForNegativeValues on the run options"
-  )
+test_that(".applySolverCheckForNegativeValues writes the value to each simulation's solver", {
   simulation <- ospsuite::loadSimulation(
     testthat::test_path("..", "data", "simple.pkml"),
     loadFromCache = FALSE
