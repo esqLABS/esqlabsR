@@ -63,7 +63,7 @@ executeWithTestFile <- function(actionWithFile) {
 #' }
 testProjectConfigurationPath <- function() {
   # for now it targets TestProject as it is both an example and a test project
-  file.path(exampleDirectory("TestProject"), "ProjectConfiguration.xlsx")
+  file.path(.exampleDirectory("TestProject"), "ProjectConfiguration.xlsx")
 }
 
 #' Create test project configuration
@@ -103,7 +103,7 @@ testProjectConfiguration <- function() {
 #' }
 testConfigurationsPath <- function(...) {
   normalizePath(
-    file.path(exampleDirectory("TestProject"), "Configurations", ...),
+    file.path(.exampleDirectory("TestProject"), "Configurations", ...),
     mustWork = TRUE
   )
 }
@@ -232,7 +232,7 @@ local_test_project <- function(
   temp_dir <- withr::local_tempdir("test_project", .local_envir = env)
 
   # Copy example project to temp directory to avoid modifying the original
-  example_dir <- exampleDirectory(project_name)
+  example_dir <- .exampleDirectory(project_name)
   file.copy(
     list.files(example_dir, full.names = TRUE),
     temp_dir,

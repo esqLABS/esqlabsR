@@ -164,7 +164,11 @@ Each one of these folders contains a series of .xlsx files with specific purpose
 
 ```{r, echo = FALSE, eval=FALSE}
 # rerun this if project structure change and paste below
-file_tree <- fs::dir_tree(esqlabsR:::exampleDirectory("TestProject"), glob = "*.md|*.R", invert = TRUE)
+file_tree <- fs::dir_tree(
+  esqlabsR:::.exampleDirectory("TestProject"),
+  glob = "*.md|*.R",
+  invert = TRUE
+)
 ```
 
 ```{.sh}
@@ -236,7 +240,8 @@ reactable::reactable(
   ),
   outlined = TRUE,
   pagination = FALSE,
-  highlight = TRUE, style = list(fontSize = 20)
+  highlight = TRUE,
+  style = list(fontSize = 20)
 )
 ```
 
@@ -463,7 +468,9 @@ my_scenarios
 ```
 
 ```{r, echo = FALSE}
-my_scenarios$TestScenario$scenarioConfiguration$print(projectConfiguration = FALSE)
+my_scenarios$TestScenario$scenarioConfiguration$print(
+  projectConfiguration = FALSE
+)
 ```
 
 ::: footer
@@ -484,11 +491,14 @@ reactable::reactable(
   columns = list(
     "IndividualId" = reactable::colDef(minWidth = 50),
     "Time" = reactable::colDef(minWidth = 50),
-    "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)" = reactable::colDef(minWidth = 200)
+    "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)" = reactable::colDef(
+      minWidth = 200
+    )
   ),
   outlined = TRUE,
   pagination = FALSE,
-  highlight = TRUE, style = list(fontSize = 20)
+  highlight = TRUE,
+  style = list(fontSize = 20)
 )
 ```
 
@@ -508,7 +518,8 @@ Simulation results are compatible with `{ospsuite}` plotting workflow.
 ```{r, cache = FALSE}
 my_datacombined <- DataCombined$new()
 
-my_datacombined$addSimulationResults(myScenarioResults$TestScenario$results,
+my_datacombined$addSimulationResults(
+  myScenarioResults$TestScenario$results,
   names = "Simulated",
   groups = "Aciclovir"
 )
