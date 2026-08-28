@@ -51,6 +51,12 @@
   no longer rejects parameter bounds that exclude the model’s current
   value, applying the sheet `StartValue` before validating them
   ([\#1140](https://github.com/esqLABS/esqlabsR/issues/1140)).
+- [`sensitivityTimeProfiles()`](https://esqlabs.github.io/esqlabsR/dev/reference/sensitivityTimeProfiles.md)
+  again labels the parameter-factor colour legend with the variation
+  values (for example 0.1, 1, 20) and draws the lines in factor order.
+  With ospsuite 13, which returns dataset names from `DataCombined` as a
+  factor, the factors had been read as their positions in the list (1,
+  2, 3, 4) ([\#1259](https://github.com/esqLABS/esqlabsR/issues/1259)).
 
 ## esqlabsR 5.7.0
 
