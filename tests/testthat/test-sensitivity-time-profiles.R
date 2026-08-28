@@ -53,7 +53,7 @@ test_that("simulated ParameterFactor carries the variation values", {
     xUnits = NULL,
     yUnits = NULL
   )
-  expect_setequal(unique(data$ParameterFactor), c(0.1, 1, 2, 20))
+  expect_equal(sort(unique(data$ParameterFactor)), c(0.1, 1, 2, 20))
 })
 
 # Validate plotting arguments ---------------------------------------------
