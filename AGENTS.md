@@ -22,6 +22,7 @@ esqlabsR builds on the Open Systems Pharmacology ecosystem. When unsure about an
 
 ## Coding conventions
 
+- Internal (non-exported) functions are named with a leading dot: `.addInitialConditionEntry()`, `.absoluteAgainstRoot()`. The dot marks a function as internal at every call site, so a reader never has to check `NAMESPACE` to know whether they are looking at part of the package's interface.
 - Type checking: use `ospsuite.utils::validateIsOfType()` / `ospsuite.utils::isOfType()` instead of native `inherits()` checks.
 - All user-facing messages, warnings, and errors live in `R/messages.R` as dedicated functions using `ospsuite.utils::cliFormat()` with cli markup (`{.val {x}}`, `{.arg {name}}`). Never inline message strings or build them with `paste()`.
 - Use explicit `package::function()` for functions from other packages. Never use `library()` or `require()` in package code. In tests, call esqlabsR's own functions directly, without a namespace prefix.
@@ -39,7 +40,7 @@ esqlabsR builds on the Open Systems Pharmacology ecosystem. When unsure about an
 
 The target reader of all user-facing documentation (roxygen `@description`, `@param`, `@details`, vignettes, messages) is a **modeling expert, not a coder or data scientist**. They know PBPK/QSP modeling, scenarios, individuals, and populations; they do not know software-engineering vocabulary.
 
-- Do **not** use developer jargon: "reconcile", "authoring", "orphan", "idempotent", "in-memory vs. on-disk tree", "bound/unbound", "no-op", "side-car", "mutate".
+- Do **not** use developer jargon: "reconcile", "authoring", "scaffold", "orphan", "idempotent", "in-memory vs. on-disk tree", "bound/unbound", "no-op", "side-car", "mutate".
 - Describe behavior by **what the user sees and does**, not by mechanism. Prefer "Only files with actual changes are re-written, so `git diff` shows exactly the definitions you edited" over "write-if-different reconciliation".
 - Say things plainly: "idempotent no-op" → "saving repeatedly is always safe"; "orphan deletion" → "if you removed a scenario, its file is deleted".
 - State what a function does *not* do and what to call instead (e.g. saving does not update the Excel files; use `exportProjectToExcel()`).
