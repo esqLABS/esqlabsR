@@ -39,7 +39,11 @@ structure.
 
 
 ```{r, echo = FALSE}
-fs::dir_tree(path = esqlabsR:::exampleDirectory("TestProject"), glob = "*.md|*.R", invert = TRUE)
+fs::dir_tree(
+  path = esqlabsR:::.exampleDirectory("TestProject"),
+  glob = "*.md|*.R",
+  invert = TRUE
+)
 ```
 ## Create a ProjectConfiguration
 
@@ -51,7 +55,10 @@ By printing the `ProjectConfiguration`, we can see the locations of all files
 used in the workflows:
 
 ```{r, eval = TRUE}
-my_project_configuration <- createProjectConfiguration(path = exampleProjectConfigurationPath(), ignoreVersionCheck = TRUE)
+my_project_configuration <- createProjectConfiguration(
+  path = exampleProjectConfigurationPath(),
+  ignoreVersionCheck = TRUE
+)
 ```
 
 ### Package version tracking
@@ -148,7 +155,10 @@ validation_results <- validateAllConfigurations(exampleProjectConfigurationPath(
 if (isAnyCriticalErrors(validation_results)) {
   # Get detailed summary
   summary <- validationSummary(validation_results)
-  print(paste("Critical errors found in:", paste(summary$files_with_errors, collapse = ", ")))
+  print(paste(
+    "Critical errors found in:",
+    paste(summary$files_with_errors, collapse = ", ")
+  ))
   print(paste("Total critical errors:", summary$total_critical_errors))
 } else {
   print("All validations passed!")
@@ -215,7 +225,8 @@ describe in next sections.
 ```{r, echo = FALSE}
 ProjectConfiguration_excel <- readxl::read_xlsx(exampleProjectConfigurationPath())
 
-reactable::reactable(ProjectConfiguration_excel,
+reactable::reactable(
+  ProjectConfiguration_excel,
   columns = list(
     "Property" = reactable::colDef(minWidth = 50),
     "Value" = reactable::colDef(show = FALSE),
@@ -248,7 +259,10 @@ The `snapshotProjectConfiguration()` function exports all Excel configuration fi
 
 ```{r, eval=FALSE}
 # Create a snapshot from a ProjectConfiguration object
-my_project_configuration <- createProjectConfiguration("ProjectConfiguration.xlsx", ignoreVersionCheck = TRUE)
+my_project_configuration <- createProjectConfiguration(
+  "ProjectConfiguration.xlsx",
+  ignoreVersionCheck = TRUE
+)
 snapshotProjectConfiguration(my_project_configuration)
 
 # Or create a snapshot directly from the Excel file path
@@ -277,7 +291,10 @@ Use `projectConfigurationStatus()` to check if your Excel files are synchronized
 
 ```{r, eval=FALSE}
 # Check if files are in sync
-status <- projectConfigurationStatus("ProjectConfiguration.xlsx", "ProjectConfiguration.json")
+status <- projectConfigurationStatus(
+  "ProjectConfiguration.xlsx",
+  "ProjectConfiguration.json"
+)
 print(status$in_sync) # TRUE if synchronized, FALSE otherwise
 ```
 

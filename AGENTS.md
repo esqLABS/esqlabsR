@@ -22,7 +22,7 @@ esqlabsR builds on the Open Systems Pharmacology ecosystem. When unsure about an
 
 ## Coding conventions
 
-- Internal (non-exported) functions are named with a leading dot: `.addInitialConditionEntry()`, `.absoluteAgainstRoot()`. The dot marks a function as internal at every call site, so a reader never has to check `NAMESPACE` to know whether they are looking at part of the package's interface.
+- Internal (non-exported) functions are named with a leading dot: `.validateParametersStructure()`, `.getEsqlabsColors()`. The dot marks a function as internal at every call site, so a reader never has to check `NAMESPACE` to know whether they are looking at part of the package's interface.
 - Type checking: use `ospsuite.utils::validateIsOfType()` / `ospsuite.utils::isOfType()` instead of native `inherits()` checks.
 - All user-facing messages, warnings, and errors live in `R/messages.R` as dedicated functions using `ospsuite.utils::cliFormat()` with cli markup (`{.val {x}}`, `{.arg {name}}`). Never inline message strings or build them with `paste()`.
 - Use explicit `package::function()` for functions from other packages. Never use `library()` or `require()` in package code. In tests, call esqlabsR's own functions directly, without a namespace prefix.
