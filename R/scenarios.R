@@ -672,8 +672,11 @@ print.Scenario <- function(x, ...) {
 #'   `units` — applied to every selected scenario as the final
 #'   parameter layer.
 #' @param simulationRunOptions Optional [ospsuite::SimulationRunOptions]
-#'   for the simulation run. `NULL` (default) uses the package
-#'   defaults.
+#'   for the simulation run. `NULL` (default) falls back to the project's
+#'   `defaultSimulationRunOptions`, including its solver setting
+#'   `checkForNegativeValues`, which is written to each simulation. An
+#'   explicit value replaces the project default entirely, so the
+#'   simulations keep the solver settings of their model files.
 #' @param validate Logical. If `TRUE` (default), runs the relevant
 #'   section validators via [validateProject()] before simulating and
 #'   aborts with a formatted summary on critical errors. Set to
@@ -762,7 +765,10 @@ runScenarios <- function(
 #'   Consulted only for a scenario with `simulateSteadyState` set (the
 #'   steady-state pre-solve still runs); it is not applied to the returned
 #'   simulations, since they are not run here. `NULL` (default) falls back
-#'   to the project's `defaultSimulationRunOptions`.
+#'   to the project's `defaultSimulationRunOptions`, including its solver
+#'   setting `checkForNegativeValues`, which is written to each returned
+#'   simulation; an explicit value replaces the project default entirely,
+#'   so the simulations keep the solver settings of their model files.
 #' @param validate Logical. If `TRUE` (default), runs the relevant
 #'   section validators via [validateProject()] before building and
 #'   aborts with a formatted summary on critical errors. Set to

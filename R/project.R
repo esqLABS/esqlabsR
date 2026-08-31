@@ -180,7 +180,15 @@ Project <- R6::R6Class(
     #'   field), or `NULL` when none are declared. Used by [runScenarios()] as
     #'   the default `simulationRunOptions` when the caller does not pass one.
     #'   Recognized fields: `numberOfCores`, `checkForNegativeValues`,
-    #'   `showProgress`.
+    #'   `showProgress`. `numberOfCores` and `showProgress` become the run
+    #'   options. `checkForNegativeValues` is a solver setting: when
+    #'   [runScenarios()] or [buildSimulations()] is called without
+    #'   `simulationRunOptions`, it is written to each simulation
+    #'   (`simulation$solver$checkForNegativeValues`); an explicit
+    #'   `simulationRunOptions` argument replaces the whole default, and the
+    #'   simulations then keep the solver settings of their model files. A
+    #'   parameter identification applies it to its simulations as well, unless
+    #'   the PI task's own `simulationRunOptions` block sets the field.
     defaultSimulationRunOptions = function(value) {
       if (!missing(value)) {
         private$.defaultSimulationRunOptions <- value

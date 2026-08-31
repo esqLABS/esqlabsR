@@ -88,7 +88,15 @@ default simulation run options (the \code{defaultSimulationRunOptions} JSON
 field), or \code{NULL} when none are declared. Used by \code{\link[=runScenarios]{runScenarios()}} as
 the default \code{simulationRunOptions} when the caller does not pass one.
 Recognized fields: \code{numberOfCores}, \code{checkForNegativeValues},
-\code{showProgress}.}
+\code{showProgress}. \code{numberOfCores} and \code{showProgress} become the run
+options. \code{checkForNegativeValues} is a solver setting: when
+\code{\link[=runScenarios]{runScenarios()}} or \code{\link[=buildSimulations]{buildSimulations()}} is called without
+\code{simulationRunOptions}, it is written to each simulation
+(\code{simulation$solver$checkForNegativeValues}); an explicit
+\code{simulationRunOptions} argument replaces the whole default, and the
+simulations then keep the solver settings of their model files. A
+parameter identification applies it to its simulations as well, unless
+the PI task's own \code{simulationRunOptions} block sets the field.}
 
     \item{\code{definitions}}{The project's definition sections, as a read-only
 field group. Each section is one field: \code{outputPaths}, \code{scenarios},

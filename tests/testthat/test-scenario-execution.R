@@ -42,7 +42,9 @@ test_that(".buildSimulationRunOptions returns NULL when no defaults are declared
   expect_null(.buildSimulationRunOptions(list()))
 })
 
-test_that(".buildSimulationRunOptions maps the three settable fields", {
+test_that(".buildSimulationRunOptions maps numberOfCores and showProgress", {
+  # `checkForNegativeValues` is present in the record but is a solver setting,
+  # so it must be tolerated here and not written to the run options (#1252).
   opts <- .buildSimulationRunOptions(list(
     numberOfCores = 3,
     checkForNegativeValues = TRUE,
@@ -50,15 +52,83 @@ test_that(".buildSimulationRunOptions maps the three settable fields", {
   ))
   expect_s3_class(opts, "SimulationRunOptions")
   expect_identical(opts$numberOfCores, 3L)
-  expect_true(opts$checkForNegativeValues)
   expect_false(opts$showProgress)
 })
 
 test_that(".buildSimulationRunOptions leaves an unset field at its default", {
-  baseline <- ospsuite::SimulationRunOptions$new()$checkForNegativeValues
+  baseline <- ospsuite::SimulationRunOptions$new()$showProgress
   opts <- .buildSimulationRunOptions(list(numberOfCores = 1))
   expect_identical(opts$numberOfCores, 1L)
-  expect_identical(opts$checkForNegativeValues, baseline)
+  expect_identical(opts$showProgress, baseline)
+})
+
+test_that(".applySolverSettings writes checkForNegativeValues to the simulation's solver", {
+  simulation <- ospsuite::loadSimulation(
+    testthat::test_path("data", "simple.pkml"),
+    loadFromCache = FALSE
+  )
+  # The fixture model ships with the check switched on, so a FALSE proves the
+  # write landed.
+  expect_true(simulation$solver$checkForNegativeValues)
+
+  .applySolverSettings(simulation, list(checkForNegativeValues = FALSE))
+  expect_false(simulation$solver$checkForNegativeValues)
+
+  # A record without the entry, or no record at all, leaves the solver alone.
+  .applySolverSettings(simulation, list(numberOfCores = 2))
+  expect_false(simulation$solver$checkForNegativeValues)
+  .applySolverSettings(simulation, NULL)
+  expect_false(simulation$solver$checkForNegativeValues)
+})
+
+test_that(".resolveRunOptions lets an explicit argument replace the project record entirely", {
+  project <- .testProject()
+  project$defaultSimulationRunOptions <- list(
+    numberOfCores = 2,
+    checkForNegativeValues = FALSE
+  )
+
+  # No argument: both halves come from the project record.
+  resolved <- .resolveRunOptions(project, NULL)
+  expect_identical(resolved$runOptions$numberOfCores, 2L)
+  expect_identical(
+    resolved$solverSettings,
+    list(numberOfCores = 2, checkForNegativeValues = FALSE)
+  )
+
+  # Explicit argument: it is passed through and no solver settings are
+  # resolved, so the project's `checkForNegativeValues` is not applied.
+  callerOptions <- ospsuite::SimulationRunOptions$new(numberOfCores = 5)
+  resolved <- .resolveRunOptions(project, callerOptions)
+  expect_identical(resolved$runOptions, callerOptions)
+  expect_null(resolved$solverSettings)
+
+  # No project record and no argument: package defaults all round.
+  project$defaultSimulationRunOptions <- NULL
+  expect_identical(
+    .resolveRunOptions(project, NULL),
+    list(runOptions = NULL, solverSettings = NULL)
+  )
+})
+
+test_that("buildSimulations applies the project default checkForNegativeValues only when the caller passes no run options", {
+  # Regression for #1252: with ospsuite 13 the project default must reach
+  # `simulation$solver` (there is no field for it on `SimulationRunOptions`),
+  # and only when the project default is in force at all.
+  project <- .testProject()
+  project$defaultSimulationRunOptions <- list(checkForNegativeValues = FALSE)
+
+  built <- buildSimulations(project, scenarios = "testscenario")
+  expect_false(built$testscenario$simulation$solver$checkForNegativeValues)
+
+  # An explicit argument replaces the project default, so the simulation keeps
+  # the model file's own setting (on, for the Aciclovir fixture).
+  built <- buildSimulations(
+    project,
+    scenarios = "testscenario",
+    simulationRunOptions = ospsuite::SimulationRunOptions$new()
+  )
+  expect_true(built$testscenario$simulation$solver$checkForNegativeValues)
 })
 
 test_that("runScenarios falls back to the project default run options when the caller passes none", {
