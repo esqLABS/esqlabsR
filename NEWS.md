@@ -73,6 +73,7 @@ Deprecation intensity follows the lifecycle policy: forwarding shims that still 
 
 ## Minor improvements and bug fixes
 
+- `sensitivityTimeProfiles()` again labels the parameter-factor colour legend with the variation values (for example 0.1, 1, 20) and draws the lines in factor order. With ospsuite 13, which returns dataset names from `DataCombined` as a factor, the factors had been read as their positions in the list (1, 2, 3, 4) (#1259).
 - The articles are reorganized so each one serves a single purpose, and the website groups them accordingly: one **Get started** tutorial, ten **How-to** guides each named after the task it performs, two new **Explanation** articles (`about-the-project-model`, `about-the-plotting-model`) covering why the package behaves as it does, and two new **Reference** articles (`reference-project-file`, `reference-definition-fields`). Rationale and field listings that used to interrupt the procedures now live in the explanation and reference articles.
 - `reference-definition-fields` documents every field of every definition kind with whether it is required and what happens when it is omitted, including which values fall back to the model file as exported from PK-Sim or MoBi. (#734)
 - `how-to-plot-results` gains a runnable population example showing how `quantiles` sets the displayed percentile bands, documents the three population-only plot fields, and points at `{ospsuite.plots}` for chart types not available through a plot definition. (#771, #950)
