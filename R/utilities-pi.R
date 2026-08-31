@@ -159,6 +159,13 @@ runPI <- function(piTasks) {
     configurations = piTaskConfiguration$piConfiguration
   )
 
+  # The sheet's `checkForNegativeValues` is a solver setting of each
+  # simulation, not a run option.
+  .applySolverCheckForNegativeValues(
+    simulations = simulations,
+    value = piTaskConfiguration$piConfiguration[["checkForNegativeValues"]]
+  )
+
   # Create ParameterIdentification
   piTask <- ospsuite.parameteridentification::ParameterIdentification$new(
     simulations = simulations,
@@ -478,6 +485,30 @@ runPI <- function(piTasks) {
   return(outputMappings)
 }
 
+#' Write a PI task's `checkForNegativeValues` to its simulations' solvers
+#'
+#' The negative-values check is a solver setting,
+#' `simulation$solver$checkForNegativeValues`; `SimulationRunOptions` has no
+#' field for it. An empty sheet cell (`NULL` or `NA`) leaves every simulation's
+#' own setting in place.
+#' @param simulations Named list of `ospsuite::Simulation` objects (an entry
+#'   may be `NULL`).
+#' @param value The `checkForNegativeValues` cell of the PIConfiguration sheet.
+#' @returns `simulations`, invisibly; the simulations are modified in place.
+#' @keywords internal
+#' @noRd
+.applySolverCheckForNegativeValues <- function(simulations, value) {
+  if (is.null(value) || is.na(value)) {
+    return(invisible(simulations))
+  }
+  for (simulation in simulations) {
+    if (!is.null(simulation)) {
+      simulation$solver$checkForNegativeValues <- as.logical(value)
+    }
+  }
+  invisible(simulations)
+}
+
 #' Create PIConfiguration from configuration options
 #' @param configurations Named list of configuration options from
 #'   PIConfiguration sheet
@@ -515,20 +546,13 @@ runPI <- function(piTasks) {
     }
   }
 
-  # Apply SimulationRunOptions
+  # Apply SimulationRunOptions. The sheet's `checkForNegativeValues` is a
+  # solver setting, not a run option; `.createSinglePITask()` writes it to each
+  # simulation through `.applySolverCheckForNegativeValues()`.
   numberOfCores <- configurations[["numberOfCores"]]
-  checkForNegativeValues <- configurations[["checkForNegativeValues"]]
-  hasNumberOfCores <- !is.null(numberOfCores) && !is.na(numberOfCores)
-  hasCheckForNegativeValues <- !is.null(checkForNegativeValues) &&
-    !is.na(checkForNegativeValues)
-  if (hasNumberOfCores || hasCheckForNegativeValues) {
+  if (!is.null(numberOfCores) && !is.na(numberOfCores)) {
     simRunOptions <- ospsuite::SimulationRunOptions$new()
-    if (hasNumberOfCores) {
-      simRunOptions$numberOfCores <- as.integer(numberOfCores)
-    }
-    if (hasCheckForNegativeValues) {
-      simRunOptions$checkForNegativeValues <- as.logical(checkForNegativeValues)
-    }
+    simRunOptions$numberOfCores <- as.integer(numberOfCores)
     piConfig$simulationRunOptions <- simRunOptions
   }
 
