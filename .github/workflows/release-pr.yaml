@@ -1,10 +1,11 @@
 name: Release PR
 
 # Manually open a release pull request: runs usethis::use_version(<which>) to
-# set the release Version and rename the NEWS.md development heading, pins
-# Remotes to @*release, then opens a `release-pr-<version>` PR. The PR is
-# validated by the normal pull request pipeline before merge; tagging and the
-# GitHub Release happen afterwards via a manual dispatch of publish.yaml.
+# set the release Version and rename the NEWS.md development heading, then opens
+# a `release-pr-<version>` PR. The PR is validated by the normal pull request
+# pipeline before merge; tagging and the GitHub Release happen afterwards via a
+# manual dispatch of publish.yaml. The workflow's Remotes-pinning step is a no-op
+# here: OSP dependencies come from the R-universe, not from a `Remotes:` field.
 
 on:
   workflow_dispatch:

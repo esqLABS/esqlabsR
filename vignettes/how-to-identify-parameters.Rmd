@@ -1,0 +1,166 @@
+---
+title: "How to identify parameters"
+output:
+  rmarkdown::html_vignette:
+    toc: true
+vignette: >
+  %\VignetteIndexEntry{How to identify parameters}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  warning = FALSE,
+  message = FALSE,
+  fig.showtext = TRUE
+)
+
+library(esqlabsR)
+```
+
+```{css, echo = FALSE}
+table {
+  width: 100%;
+  display: block;
+  overflow-x: auto;
+}
+```
+
+Parameter identification (PI) estimates model parameters by fitting simulated outputs to observed data. In `esqlabsR` a PI task lives inside a project, alongside its scenarios, output paths, and observed data, and is run with a single call. This article shows how to run the parameter identification that ships with the bundled example project and how to assemble one yourself with the programmatic authoring functions. It builds on the [`OSPSuite.ParameterIdentification`](https://www.open-systems-pharmacology.org/OSPSuite.ParameterIdentification/) package, which performs the actual optimization.
+
+To follow along you only need a loaded project; see `vignette("how-to-set-up-a-project")` for how a project is organized and loaded. Here we work entirely with the example project and never write anything into your project tree.
+
+A parameter identification is described by a **PI task**: a record naming the scenarios it fits, one **PI Parameter** per quantity to estimate (with a path, a starting value, and bounds), and one **PI Output Mapping** per output-to-measurements pairing, so the optimizer knows which simulated curve to compare against which data. Tasks live on the project under `project$definitions$parameterIdentification`, keyed by task id. `vignette("reference-definition-fields")` lists the fields of all three.
+
+## Run a task the project already defines
+
+The bundled example project defines a single PI task, `aciclovirsimple`. It fits the parameter `EHC continuous fraction` on the scenario `aciclovir_iv`, mapping the simulated output `aciclovir_pvb` to an observed plasma series (from Laskin 1982, Group A).
+
+Load the project and inspect the task:
+
+```{r loadProject}
+# Work on a writable copy of the bundled example: saving the PI tasks we add
+# below writes to this project's own files rather than to the read-only example
+# shipped with the package.
+project_dir <- withr::local_tempdir()
+initProject(destination = project_dir, type = "example", createExcel = FALSE)
+project <- loadProject(file.path(project_dir, "Project.json"))
+
+project$definitions$parameterIdentification[["aciclovirsimple"]]
+```
+
+Run it with `runPI()`. By default `runPI()` runs every task on the project; pass `tasks` to restrict the run to specific tasks. The first call is slow because it initializes PK-Sim and builds the simulation before optimizing.
+
+```{r runPredefined}
+results <- runPI(project, tasks = "aciclovirsimple")
+```
+
+## Read the fit
+
+`runPI()` returns one entry per task, each a list with a `task` element (the object that was built and run) and a `result` element (the fit). A numerical failure leaves `result` as `NULL` with an `error` element carrying the message, and the remaining tasks still run; a build error such as an unknown parameter path stops the call outright, so a typo surfaces immediately.
+
+```{r resultShape}
+fit <- results[["aciclovirsimple"]]
+names(fit)
+```
+
+Print the result for a human-readable optimization summary:
+
+```{r printResult}
+fit$result
+```
+
+Call `toDataFrame()` on the result to read the estimates as a tidy data frame, one row per estimated parameter, with the final `estimate` next to its `initialValue`, bounds, and uncertainty columns (`sd`, `cv`, `lowerCI`, `upperCI`):
+
+```{r readEstimates}
+fit$result$toDataFrame()
+```
+
+### What to do when the uncertainty columns are all `NA`
+
+A fit can converge and still report no usable uncertainty. When `sd`, `cv`, and the confidence interval all come back `NA`, as they do for `aciclovirsimple` above, the estimate is returned but its precision is unknown, and `runPI()` warns you naming the task and parameter, because a converged fit with no uncertainty looks just like a good one.
+
+Three things cause it, and each points at a different fix:
+
+| Cause | What to check |
+| --- | --- |
+| A singular or ill-conditioned Hessian | Whether two parameters are trading off against each other; try fitting fewer at once. |
+| The estimate sitting at one of its bounds | Whether `minValue` and `maxValue` are too tight. Widen them and refit. |
+| An objective function insensitive to the parameter | Whether the data constrain the parameter at all; the output mapping may not see its effect. |
+
+Until one of those is resolved, treat the estimate as a point value with no confidence attached.
+
+## Build a task in R
+
+Instead of relying on a task stored in the project, you can author one in memory with the `add*` family. `addPITask()` can create an empty task and let you grow it afterwards: `scenarios`, `parameters`, and `outputMappings` all default to empty, and the requirement to have at least one of each is enforced before `runPI()` rather than at creation.
+
+Seeding a task from records that already exist is still the quickest way to get a runnable one, since the records are the same plain-data values the project holds. Here we reuse the ones from the example task.
+
+```{r addTask}
+template <- project$definitions$parameterIdentification[["aciclovirsimple"]]
+
+project <- addPITask(
+  project,
+  id = "ehc_fit",
+  scenarios = "aciclovir_iv",
+  parameters = template$parameters,
+  outputMappings = template$outputMappings
+)
+```
+
+`addPIParameter()` adds another parameter to fit. Give it the task id, the model parameter path, the scenarios it applies to, and the starting value with its bounds:
+
+```{r addParameter}
+project <- addPIParameter(
+  project,
+  task = "ehc_fit",
+  path = "Organism|Liver|EHC continuous fraction",
+  scenarios = "aciclovir_iv",
+  minValue = 0.4,
+  maxValue = 0.9,
+  startValue = 0.6,
+  id = "ehc_alt"
+)
+```
+
+`addPIOutputMapping()` adds another output-to-data pairing, naming an output path already registered in the project and the Observed Data series to compare it against:
+
+```{r addMapping}
+observedId <- template$outputMappings[[1]]$observedDataId
+
+project <- addPIOutputMapping(
+  project,
+  task = "ehc_fit",
+  outputPath = "aciclovir_pvb",
+  observedData = observedId,
+  scenarios = "aciclovir_iv",
+  scaling = "lin",
+  id = "pvb_alt"
+)
+```
+
+Once a task has the parameters and mappings you want, run it the same way as the predefined one with `runPI(project, tasks = "ehc_fit")`.
+
+## Remove parameters and mappings
+
+`removePIParameter()` and `removePIOutputMapping()` take the task id and the id of the record to drop. A task must always keep at least one parameter and one mapping, so removing the last of both leaves an empty task with nothing to fit. Rather than leave that empty shell on the project, `esqlabsR` removes the now-empty task for you and warns that it did so. The following strips `ehc_fit` down to nothing; the final removal triggers the auto-removal:
+
+```{r removeAndAutoRemove}
+project <- removePIParameter(project, "ehc_fit", "ehc_alt")
+project <- removePIParameter(project, "ehc_fit", template$parameters[[1]]$id)
+project <- removePIOutputMapping(project, "ehc_fit", "pvb_alt")
+project <- removePIOutputMapping(project, "ehc_fit", template$outputMappings[[1]]$id)
+
+project$definitions$parameterIdentification
+```
+
+The example task `aciclovirsimple` is untouched, since we only edited the in-memory copy of `ehc_fit`; nothing was written back to disk.
+
+## Where to go next
+
+The scenarios and output paths a PI task fits come from the rest of the project: see `vignette("how-to-design-scenarios")` for authoring scenarios and `vignette("how-to-use-observed-data")` for loading the measurements an output mapping compares against.
+
+For the fields of a task, a PI parameter, and an output mapping, see `vignette("reference-definition-fields")`. For the underlying optimization, the confidence-interval methods, and the available algorithms, see the [`OSPSuite.ParameterIdentification`](https://www.open-systems-pharmacology.org/OSPSuite.ParameterIdentification/) package.

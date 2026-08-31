@@ -40,7 +40,7 @@
 #' @param simulationRunOptions Optional instance of a `SimulationRunOptions`
 #'   used during the simulation run
 #'
-#' @family sensitivity-calculation
+#' @family sensitivityCalculation
 #'
 #' @returns
 #'
@@ -121,20 +121,17 @@ sensitivityCalculation <- function(
   # Normalize variationRange
   variationRange <- .normalizeVariationRange(variationRange, parameterPaths)
 
-  # Store old simulation outputs and set user defined. The original output
-  # selections are restored on exit (including on error) so the caller's
-  # simulation is left untouched by the sensitivity sweep.
-  oldOutputPaths <- vapply(
-    simulation$outputSelections$allOutputs,
-    function(x) x$path,
-    character(1)
-  )
+  # Store the caller's output selections and restore them on exit, so the
+  # analysis (which replaces them with its own output paths below) does not
+  # permanently mutate the passed simulation. Registering the restore via
+  # on.exit() also restores the selections if the analysis aborts partway.
+  oldOutputSelections <- simulation$outputSelections$allOutputs
   on.exit(
     {
       clearOutputs(simulation = simulation)
-      if (length(oldOutputPaths) > 0) {
+      for (outputSelection in oldOutputSelections) {
         ospsuite::addOutputs(
-          quantitiesOrPaths = oldOutputPaths,
+          quantitiesOrPaths = outputSelection$path,
           simulation = simulation
         )
       }
@@ -270,7 +267,7 @@ sensitivityCalculation <- function(
           purrr::pluck(simulationBatchesResults, resultId)
       } else {
         simulationResultsBatch[[parameterPath]][[parameterFactor]] <- NULL
-        warning(
+        cli::cli_warn(
           messages$sensitivityAnalysisSimulationFailure(
             parameterPath,
             parameterFactor
@@ -299,7 +296,7 @@ sensitivityCalculation <- function(
   if (!is.null(saOutputFilePath)) {
     # If there is no data to write to Excel sheet, inform user and do nothing.
     if (nrow(pkData) == 0L) {
-      warning(messages$noPKDataToWrite())
+      cli::cli_warn(messages$noPKDataToWrite(saOutputFilePath))
     } else {
       # Convert tidy data to wide format
       pkParameterNames <- c(
@@ -316,15 +313,14 @@ sensitivityCalculation <- function(
   # Return sensitivity calculation results --------------------------------
 
   # Final list with needed objects and data frames for plotting functions.
+  # The caller's simulation output selections are restored by the on.exit()
+  # handler registered at the top of the function.
   results <- list(
     "simulationResults" = simulationResultsBatch,
     "outputPaths" = outputPaths,
     "parameterPaths" = parameterPaths,
     "pkData" = pkData
   )
-
-  # Original output selections are restored by the on.exit() handler registered
-  # above.
 
   class(results) <- c("SensitivityCalculation", class(results))
 

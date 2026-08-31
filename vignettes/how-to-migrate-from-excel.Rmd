@@ -1,0 +1,128 @@
+---
+title: "How to migrate an Excel project to 6.0.0"
+output:
+  rmarkdown::html_vignette:
+    toc: true
+vignette: >
+  %\VignetteIndexEntry{How to migrate an Excel project to 6.0.0}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  warning = FALSE,
+  message = FALSE,
+  eval = FALSE
+)
+library(esqlabsR)
+```
+
+## Who this guide is for
+
+This guide is for modelers who have an existing pre-6.0.0 esqlabsR project driven by Excel workbooks and want to move it to the 6.0.0 model, where a project is a single `Project.json` file backed by a tree of one-file-per-definition files. If you are starting a new project from scratch in 6.0.0, you do not need this guide; create the project directly in the new format instead.
+
+The code below is shown but not run; the commands are correct against a real Excel project, so substitute your own paths.
+
+## Before you start: what will look different
+
+A pre-6.0.0 project is an *Excel project*: a `ProjectConfiguration.xlsx` (called `Project.xlsx` in later 5.x releases) pointing at a folder of configuration workbooks, one per concern (`Scenarios.xlsx`, `ModelParameters.xlsx`, `Individuals.xlsx`, `Populations.xlsx`, `Applications.xlsx`, `Plots.xlsx`). The migration keeps the same information and reshapes where it lives. `vignette("about-the-project-model")` explains why; three of the changes are ones you will notice while checking the result, so they are worth knowing before you run the import.
+
+* **The workbooks become one `Project.json` plus a `definitions/` tree.** Each scenario becomes its own file under `definitions/scenarios/`, so where you used to look at a row you now look at a file.
+
+* **Parameter sets merge into one collection.** Excel kept them in three places: the model parameters workbook, the non-biometrics sheets of the individuals workbook, and the non-protocol sheets of the applications workbook. They become a single `parameterSets` collection that scenarios, individuals, and applications all reference by id. This is the change most likely to need your attention, since two sets that shared a name in different workbooks now collide.
+
+* **Ids are lowercased and made filename-safe.** An id you spelled `MyScenario` in Excel becomes `myscenario`, and every reference to it is rewritten the same way, so it still resolves. This matters when you read the imported project, and when anything outside the project refers to an id by its old spelling.
+
+Two functions form the bridge:
+
+* `importProjectFromExcel(projectConfigPath, outputDir, silent)` reads an Excel project and writes the JSON project. It returns, invisibly, the path to the `Project.json` it wrote. The file is called `Project.json` whatever the Excel file was called; pass `projectFileName` to choose another name.
+
+* `exportProjectToExcel(project, outputDir, silent)` writes the workbooks back out from a loaded `Project`, for when you still need to hand a colleague an Excel project or want to compare the two forms.
+
+## Step 1: run the import
+
+Point `importProjectFromExcel()` at your project's top-level Excel file. If your project predates the `Project.xlsx` rename, that file is named `ProjectConfiguration.xlsx`; pass whichever name your project uses. Either way the import writes a `Project.json`, the same name a project created from scratch carries.
+
+```{r import}
+jsonPath <- importProjectFromExcel(
+  projectConfigPath = "MyProject/Project.xlsx",
+  outputDir = "MyProject"
+)
+jsonPath
+#> "MyProject/Project.json"
+```
+
+A few details about what the import does:
+
+* It resolves the configuration workbooks relative to the configurations folder recorded in the Excel file, and reads whichever exist. Missing workbooks are skipped.
+* The three former parameter-set sources are read into the single `parameterSets` collection. A duplicated id across sources is a collision; the import merges them regardless, and the collision later aborts the load (see "Caveats to check by hand").
+* The import replaces any JSON project already in `outputDir`: it rewrites the project file and reconciles the whole `definitions/` tree to the Excel content, which deletes any definition you authored only on the JSON side. To protect that work, the import aborts by default when a JSON project already exists in `outputDir`. Re-run it with `overwrite = TRUE` once you are sure you want the Excel state to win. This matters if you migrated once, then kept authoring in the JSON project: do not casually re-import over it.
+* The `configurationsFolder` and the per-workbook filenames recorded in the Excel file must stay under the project folder. A value that points outside it (a `../` climb or an absolute path) aborts the import naming the offending field, so a shared or downloaded Excel project cannot read a workbook from elsewhere on the machine. A folder deliberately kept outside the project (for example a shared drive) is still reachable through the `${VAR}` environment-variable form.
+
+## Step 2: load the project
+
+Load the JSON into an in-memory `Project`.
+
+```{r load}
+project <- loadProject(jsonPath)
+```
+
+`loadProject()` already runs a quick check for the most common cross-reference problems (for example a scenario that points at an individual or population that no longer exists) and warns about them, but it still returns the project so you can inspect it. For the full picture, validate explicitly.
+
+The imported project is a normal tree project: every authoring function (`addScenario()`, `setIndividual()`, and so on) edits the project in memory, and `saveProject(project)` reconciles those edits to the definition files under `definitions/`. To label the project file after the study rather than by the generic name, pass `projectFileName` (`importProjectFromExcel(..., projectFileName = "MyStudy")` writes `MyStudy.json`); `saveProject()` then updates that same file, since a project always saves back to the file it was loaded from. Note that this names the project file only: the `definitions/` tree and the copied `Models/` and `Data/` folders beside it are shared by whatever sits in `outputDir`, so migrating several Excel projects means giving each one its own `outputDir`, not just its own project file name.
+
+## Step 3: validate what carried over
+
+Run `validateProject()` to get a complete report. This is the step that catches references that did not survive the reshape, most often because an id was canonicalized on one side of a reference but you expected the original spelling, or because a parameter set the import expected was absent.
+
+```{r validate}
+results <- validateProject(project)
+
+if (isAnyCriticalErrors(results)) {
+  print(validationSummary(results))
+}
+```
+
+`validateProject()` prints a report grouped by section and separates blocking **critical errors** from non-blocking **warnings**; the article on validating a project (`vignette("how-to-validate-a-project")`) covers reading that report in full. After a migration the most useful part is the **"did you mean"** suggestion the validator attaches to an unresolved reference, which is exactly the clue you need after canonicalization. For instance, if a scenario references a parameter set written as `Global` in Excel but the canonical id is `global`, the report reads something like:
+
+```
+[crossReferences] Scenario 'myscenario' references undefined model parameter
+sets: Global (did you mean 'global'?)
+```
+
+`isAnyCriticalErrors()` gives a single pass/fail check. Once the project validates with no critical errors, the migration is complete and you can run scenarios (`vignette("how-to-run-simulations")`) and create plots (`vignette("how-to-plot-results")`) from the JSON project as normal.
+
+## Caveats to check by hand
+
+The migration is faithful for the common case, but a few things deserve a manual look.
+
+* **Parameter-set id collisions abort the load.** Because model, individual, and application parameter sets now share one `parameterSets` namespace, two sets that had the same id in different Excel workbooks now collide, and the collision aborts `loadProject()`. If a load fails this way, rename the clashing set in the source Excel and re-import. Even with no collision, skim the merged `parameterSets` after import to confirm each set landed where you expect.
+
+* **Update external scripts to the canonical ids.** Import rewrites any id that was not already lowercase and filename-safe (a warning names each `original -> canonical` change), so the ids in the JSON project and in the `definitions/scenarios/` filenames differ from the Excel spellings. If you have scripts that refer to scenarios or parameter sets by their old Excel names, change them to the canonical ids.
+
+* **The export does not reconstruct your old workbooks.** `exportProjectToExcel()` writes the unified `parameterSets` collection as a single model-parameters workbook, one sheet per set, rather than the original three-workbook split. Exporting a migrated project and re-importing it is stable, but it is not a route back to the layout you started from. Keep the original workbooks if you need them.
+
+* **Empty or absent sections are dropped, not preserved as empty.** A configuration workbook that did not exist, or a sheet with no rows, simply does not appear in the JSON project. If a section you expected is missing after import, check that its workbook and sheet actually held data.
+
+* **Keep the Excel project around until you trust the JSON one.** During the transition you can use `projectStatus(project)` to confirm the workbooks still match the loaded project before you retire them (see Step 4).
+
+## Step 4: confirm the two forms agree
+
+`projectStatus(project)` reports, for a loaded `Project`, whether it has unsaved in-memory edits (the memory-vs-tree axis) and whether a configured `Project.xlsx` side-car is a stale export of the current project (the memory-vs-Excel axis). During a migration the Excel axis is the one to watch: it tells you whether re-exporting would change the workbooks.
+
+```{r status}
+status <- projectStatus(project)
+status$excel_in_sync
+#> TRUE
+```
+
+When `excel_in_sync` is `FALSE`, `status$details` describes the divergence, so you can see whether it is something you changed deliberately or a migration gap to investigate. Once you trust the JSON project, you can retire the Excel workbooks.
+
+## Where to go next
+
+With the project validating, work with it as any other: `vignette("how-to-design-scenarios")` to author, `vignette("how-to-run-simulations")` to run, `vignette("how-to-plot-results")` to plot. To hand the whole thing to a colleague as one file, see the snapshot workflow in `vignette("how-to-set-up-a-project")`.
+
+For the layout the import writes, see `vignette("reference-project-file")`. For why Excel is now an interchange format rather than the source of truth, see `vignette("about-the-project-model")`.

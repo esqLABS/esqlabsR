@@ -1,0 +1,76 @@
+name: Nightly check
+
+# Nightly R-CMD-check against whatever CRAN, the OSP R-universe and the runner
+# images currently serve, so a breaking R release or dependency rebuild surfaces
+# within a day rather than on the next pull request.
+#
+# Deliberately a plain r-lib/actions check rather than a reusable OSP workflow:
+# nothing here needs renv, Remotes pinning or binary artifacts, and running the
+# check directly lets it install the package into the check library, which the
+# Quarto vignette needs (see the extra-packages comment below).
+
+on:
+  schedule:
+    - cron: '0 3 * * *' # Run at 3 AM UTC daily
+  workflow_dispatch:
+
+permissions: read-all
+
+jobs:
+  nightly-check:
+    runs-on: ${{ matrix.os }}
+
+    name: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest, macos-latest]
+
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      R_KEEP_PKG_SOURCE: yes
+
+    steps:
+      - uses: actions/checkout@v7
+
+      # rSharp, which ospsuite loads, needs the .NET 8 runtime.
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: '8.0.x'
+
+      - uses: r-lib/actions/setup-pandoc@v2
+
+      # plot-results.qmd is a Quarto vignette.
+      - uses: quarto-dev/quarto-actions/setup@v2
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: release
+          use-public-rspm: true
+          # The OSP dependencies are not on CRAN; DESCRIPTION records this
+          # R-universe in Additional_repositories, but that field is metadata
+          # only, so the repository has to be added here for pak to resolve them.
+          extra-repositories: https://open-systems-pharmacology.r-universe.dev
+
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          # `local::.` installs esqlabsR itself into the check library. Quarto
+          # renders plot-results.qmd in its own R session, which resolves
+          # esqlabsR from the library rather than from the package under check.
+          extra-packages: |
+            any::rcmdcheck
+            local::.
+
+      - uses: r-lib/actions/check-r-package@v2
+        with:
+          upload-snapshots: true
+          args: 'c("--no-manual")'
+          build_args: 'c("--no-manual")'
+          error-on: 'c("error")'
+
+      - name: Diagnostic message on failure
+        if: failure()
+        run: |
+          echo "::warning::This nightly check runs against the current CRAN, OSP R-universe and runner-image versions."
+          echo "::warning::If the pull request and merge-to-main checks are green but this one fails, the breakage came from an upstream update (R, a CRAN package, or an OSP dependency rebuild), not from a change in this repository."

@@ -2,10 +2,11 @@
 % Please edit documentation in R/esqlabs-env.R
 \name{esqlabsRSettingNames}
 \alias{esqlabsRSettingNames}
-\title{Names of the settings stored in esqlabsEnv Can be used with \code{getEsqlabsRSetting()}}
+\title{Names of the settings stored in esqlabsEnv}
 \usage{
 esqlabsRSettingNames
 }
 \description{
-Names of the settings stored in esqlabsEnv Can be used with \code{getEsqlabsRSetting()}
+The returned names can be used with \code{getEsqlabsRSetting()} to look up the
+value of a global esqlabsR setting.
 }

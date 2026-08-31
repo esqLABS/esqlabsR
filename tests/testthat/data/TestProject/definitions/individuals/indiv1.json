@@ -1,0 +1,12 @@
+{
+  "individualId": "indiv1",
+  "species": "Human",
+  "population": "European_ICRP_2002",
+  "gender": "MALE",
+  "weight": 73,
+  "height": 176,
+  "age": 30,
+  "parameterSets": [
+    "indiv1_default"
+  ]
+}

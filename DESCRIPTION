@@ -1,7 +1,7 @@
 Type: Package
 Package: esqlabsR
 Title: ESQlabs utilities package
-Version: 5.7.0.9005
+Version: 5.7.0.9999
 Authors@R: c(
     person("ESQlabs GmbH", role = c("cph", "fnd")),
     person("Pavel", "Balazki", , "pavel.balazki@esqlabs.com", role = c("cre", "aut"),
@@ -37,25 +37,24 @@ Imports:
     purrr,
     R6 (>= 2.5.0),
     readxl,
+    rlang,
     scales,
+    stringi,
     stringr,
     tidyr,
     tlf (>= 1.6.0),
     ospsuite.utils (>= 1.10.0),
     tools,
-    usethis,
-    vctrs,
+    utils,
     writexl
 Suggests:
     clipr,
     covr,
     devtools,
     knitr,
-    openxlsx,
     quarto,
     reactable,
     rmarkdown,
-    rlang,
     showtext,
     testthat (>= 3.0.0),
     vdiffr (>= 1.0.0),
@@ -70,9 +69,5 @@ Config/rcmdcheck/ignore-inconsequential-notes: true
 Encoding: UTF-8
 Language: en-US
 Roxygen: list(markdown = TRUE)
-Remotes:
-    ospsuite=Open-Systems-Pharmacology/OSPSuite-R,
-    ospsuite.utils=Open-Systems-Pharmacology/OSPSuite.RUtils,
-    tlf=Open-Systems-Pharmacology/TLF-Library,
-    ospsuite.parameteridentification=Open-Systems-Pharmacology/OSPSuite.ParameterIdentification
+Additional_repositories: https://open-systems-pharmacology.r-universe.dev
 Config/roxygen2/version: 8.0.0

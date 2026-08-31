@@ -43,7 +43,7 @@
 #'
 #' @import ggplot2
 #'
-#' @family sensitivity-calculation
+#' @family sensitivityCalculation
 #'
 #' @returns A `patchwork` object containing the combined ggplot objects if a
 #'   single output path is specified, or a list of `patchwork` objects for
@@ -83,7 +83,10 @@
 #' namedParameterPaths <- c(
 #'   "Lipophilicity" = "Aciclovir|Lipophilicity",
 #'   "Dose" = "Events|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose",
-#'   "GFR fraction" = "Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Glomerular Filtration-GFR-Aciclovir|GFR fraction"
+#'   "GFR fraction" = paste0(
+#'     "Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|",
+#'     "Glomerular Filtration-GFR-Aciclovir|GFR fraction"
+#'   )
 #' )
 #'
 #' resultsNamed <- sensitivityCalculation(
@@ -138,7 +141,7 @@ sensitivityTornadoPlot <- function(
     ~ any(.factorsMatch(.x, storedFactors))
   )
   if (!all(requestedFound)) {
-    stop(messages$noParameterFactor(data, parameterFactor))
+    cli::cli_abort(messages$noParameterFactor(data, parameterFactor))
   }
 
   # Plot configuration setup -----------------------------

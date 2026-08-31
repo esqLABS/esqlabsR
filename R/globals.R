@@ -5,9 +5,35 @@
 
 utils::globalVariables(
   names = c(
+    "dataCombinedName",
+    "IndividualId",
+    "OutputPath",
+    "OutputPathId",
+    "PKMeanPercentChange",
+    "PKParameter",
+    "PKParameterValue",
+    "PKPercentChange",
+    "Parameter",
+    "ParameterFactor",
+    "ParameterPath",
     "ParameterPathLabel",
+    "ParameterPathUserName",
+    "ParameterValue",
+    "QuantityPath",
     "Scenario_name",
-    "ParameterPathUserName"
+    "SensitivityPKParameter",
+    "Study Id",
+    "Unit",
+    "Value",
+    "dataType",
+    "paths",
+    "scenario",
+    "xOffsets",
+    "xScaleFactors",
+    "xValues",
+    "yOffsets",
+    "yScaleFactors",
+    "yValues"
   ),
   package = "esqlabsR",
   add = FALSE

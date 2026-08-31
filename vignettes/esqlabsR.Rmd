@@ -1,10 +1,10 @@
 ---
-title: "Get Started"
-output: 
+title: "Introduction to ESQlabsR"
+output:
   rmarkdown::html_vignette:
     toc: true
 vignette: >
-  %\VignetteIndexEntry{Introduction to esqlabsR}
+  %\VignetteIndexEntry{Introduction to ESQlabsR}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -17,238 +17,164 @@ knitr::opts_chunk$set(
   message = FALSE,
   fig.showtext = TRUE
 )
-library(esqlabsR)
-require(readxl)
 ```
 
-## Introduction
+`esqlabsR` builds modeling and simulation workflows on top of the Open Systems Pharmacology Suite (OSPS). It organizes everything a PBPK or QSP analysis needs (the model, the subjects you simulate, the dosing, the parameters you apply, the outputs you record, the observed data you compare against, and the figures you produce) into a single **Project**. You load a Project once, then run scenarios and plot results from it.
 
-`{esqlabsR}` is designed to make life easier for OSPS users. The workflows
-implemented in this package rely on simple concepts:
+This tutorial walks the whole workflow once, against the example project the package ships. You will load a project, look inside it, add an individual and a scenario, describe a figure, then run the scenario and draw the figure. It takes a few minutes, every step runs as written, and nothing you do here touches your own files.
 
-  - a predefined project folder structure,
-  - Excel files for definition of simulation scenarios out outputs.
+You do not need to understand each piece as you go. The point is to see the shape of the loop; the how-to guides fill in the detail afterwards.
 
-## Initialize Project
+## Install and load
 
-`{esqlabsR}` facilitates modeling and simulation workflows with OSPS relying on
-a well defined project structure based on Excel files. These files are organized
-in different folders and their structure must not be altered.
-
-A new project folder can be initialized with the `initProject()`
-function.
-
-```{r, eval=FALSE}
-library(esqlabsR)
-
-initProject()
-```
-
-It will create the expected simulation project's folder structure, which is described 
-in details in `vignette("project-structure")`.
-
-Each one of these folders contains a series of `.xlsx` files with
-specific purpose. They are all linked to the project through the
-`ProjectConfiguration.xlsx` file located in the root of the project folder.
-
-This file defines *where* all the necessary files are stored in the
-project folder. This file is already preconfigured and should not be changed in
-most cases. However, if target files would come to change location, 
-`ProjectConfiguration.xlsx` should reflect that. All the path specified in the 
-`Value` column should be *relative* to the `ProjectConfiguration.xlsx` location. 
-
-Loading the project configuration is the first step in any workflow using
-`{esqlabsR}`.
-
-```{r, eval=FALSE}
-my_project_configuration <- createProjectConfiguration(
-  path = "path/to/ProjectConfiguration.xlsx"
-)
-```
-
-```         
-ProjectConfiguration: 
-   ...
-   Model folder: Models/Simulations 
-   Configurations folder: Configurations 
-   Model Parameters: Configurations/ModelParameters.xlsx 
-   Individuals: Configurations/Individuals.xlsx 
-   Populations: Configurations/Populations.xlsx 
-   Populations Folder: Configurations/PopulationsCSV 
-   Scenarios: Configurations/Scenarios.xlsx 
-...
-```
-
-Note that the `ProjectConfiguration` stores paths to other files that
-are used in the project.
-
-To create an example `ProjectConfiguration`  and execute the rest of this tutorial,
-run the following:
-
-```{r, warning=FALSE, message = FALSE}
-my_project_configuration <- createProjectConfiguration(
-  path = exampleProjectConfigurationPath(),
-  ignoreVersionCheck = TRUE
-)
-```
-
-## Version Control and Project Sharing
-
-`esqlabsR` provides powerful version control capabilities through project configuration snapshots. This allows you to:
-
-- **Track changes** to your project configuration in version control systems like Git
-- **Share projects** with team members easily  
-- **Create backups** before making significant changes
-- **Ensure reproducibility** across different environments
-
-```{r, eval=FALSE}
-# Create a JSON snapshot of your project configuration
-snapshotProjectConfiguration(my_project_configuration)
-
-# Share the JSON file with team members or commit to version control
-# Later, restore the project configuration from the snapshot
-restored_config <- restoreProjectConfiguration("ProjectConfiguration.json")
-```
-
-For comprehensive information about version control features, workflows, and best practices, see the "Version Control and Project Sharing" section in `vignette("project-structure")`.
-
-## Design Scenarios
-
-Now that the project's file structure is ready, the next step is to run
-simulations. In `{esqlabsR}`, simulation are run by defining and
-executing multiple **scenarios**.
-
-To modify, add or delete a scenario, edit the
-`Parameters/Scenarios.xslx` file. Each row of this file defines a simulation scenario.
-
-The main properties that can be defined for a scenario are:
-
--   `ModelFile` is the name of the `.pkml` file that can be found in the
-    `Models/` directory.
--   `ModelParameterSheets` are the names of the *sheets* in
-    `Parameters/ModelParameters.xlsx` that contain the parameters to
-    apply to the model,
--   `ApplicationProtocol` is the name of the *sheet* in
-    `Parameters/ApplicationParameters.xlsx` that specify the simulated
-    administration protocol,
--   `SimulationTime` and `SimulationTimeUnit` define the time range to
-    simulate, it should be three numbers for `{start, end, resolution}`
--   `Individuald`: the id of the individual to simulate. The id and
-    settings for individuals are defined in
-    `Parameters/Individuals.xlsx`,
--   `PopulationId`: the id of the *population* to simulate. The id and
-    settings for populations are defined in
-    `Parameters/PopulationParameters.xlsx`.
-
-Note that multiple aspects of a simulation scenario are defined in other
-excel files, and the `Scenarios.xslx` file links to the specific sheets
-or other information stored in those files.
-
-![](Figures/scenarios_links_files.png)
-
-For example, if we want to change the characteristic of the individual
-used in the simulation, we must add a new row with a different
-`IndividualId` in the `IndividualBiometrics` sheet of
-the`Individuals.xlsx` file and/or specify a parameter sheet with this
-`IndividualId` in the same file.
-
-For more information on all the scenario parameters that can be setup,
-read `vignette("design-scenarios")`.
-
-## Run Scenarios
-
-Once all the scenario properties are set up in the excel files, we can
-import `ScenarioConfiguration` using `readScenarioConfigurationFromExcel()` and create 
-`Scenario` objects with `createScenarios()`:
-
+`esqlabsR` depends on the OSPS R packages. Install those via the Open Systems Pharmacology setup instructions, then install and load `esqlabsR`:
 
 ```{r}
-my_scenarios <- createScenarios(
-  readScenarioConfigurationFromExcel(
-    scenarioNames = "TestScenario",
-    projectConfiguration = my_project_configuration
+library(esqlabsR)
+```
+
+## Load a project
+
+The package bundles a complete example Project. Because you will save changes to it later, take your own copy first: `initProject()` scaffolds one into a temporary directory, and `loadProject()` reads it into memory. (`initProject()` takes the directory; `loadProject()` takes the `Project.json` file inside it.)
+
+```{r}
+project_dir <- withr::local_tempdir()
+initProject(destination = project_dir, type = "example", createExcel = FALSE)
+project <- loadProject(file.path(project_dir, "Project.json"))
+```
+
+Printing the Project gives you a quick map of its name, location, and definition counts.
+
+```{r}
+print(project)
+```
+
+## Look inside the project
+
+A project is built out of **definitions**: named pieces such as a scenario, an individual, or a plot. Each kind is a named list on the project, keyed by id. Printing one shows how many there are and what they are called:
+
+```{r}
+project$definitions$individuals
+```
+
+Printing a single definition shows its configured fields, so you can inspect one without opening a file:
+
+```{r}
+project$definitions$individuals$adult_male
+```
+
+That is enough to work with for now. (`vignette("reference-project-file")` describes how the pieces are stored on disk, if you want it later.)
+
+## Author a scenario and a figure
+
+The authoring API is uniform: every function takes the `project` first, then the definition's `id`, then its fields. The example only defines an adult male, so we will add an adult female, run aciclovir in her, and plot the result.
+
+Start with a new **Individual**, the subject a scenario simulates.
+
+```{r}
+addIndividual(
+  project,
+  id = "adult_female",
+  species = "Human",
+  population = "European_ICRP_2002",
+  gender = "FEMALE",
+  weight = 60,
+  height = 165,
+  age = 30
+)
+```
+
+Nothing has been written to disk yet: the new individual is held in memory until you save, which we do in a moment.
+
+With the individual in place, add a **Scenario** that simulates aciclovir in her. A Scenario pins a model to a subject, dosing, parameters, a time grid, and the outputs to record. Only `modelFile` is required. Of the optional fields, some reference other definitions in the project (`individual`, `application`, `parameterSets`, `outputPaths`) and others are plain values (`simulationTime` and `simulationTimeUnit` set the time grid). The references are checked as the scenario is added, so a typo in an id stops you here rather than at run time.
+
+```{r}
+addScenario(
+  project,
+  id = "aciclovir_iv_female",
+  modelFile = "Aciclovir.pkml",
+  individual = "adult_female",
+  application = "aciclovir_iv_250mg",
+  parameterSets = c("global", "aciclovir"),
+  outputPaths = "aciclovir_pvb",
+  simulationTime = "0, 24, 60",
+  simulationTimeUnit = "h"
+)
+```
+
+Finally, describe a figure. A **DataCombined** says which curves the figure draws, here just one: the plasma concentration from the new scenario. A **Plot** then draws a chart from it.
+
+```{r}
+addDataCombined(
+  project,
+  id = "aciclovir_female_combined",
+  simulated = list(
+    list(
+      label = "Aciclovir (female)",
+      scenario = "aciclovir_iv_female",
+      path = "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
+    )
   )
 )
-```
 
-```{r, echo = FALSE}
-my_scenarios$TestScenario$scenarioConfiguration$print(
-  projectConfiguration = FALSE
+addPlot(
+  project,
+  id = "aciclovir_female_profile",
+  dataCombined = "aciclovir_female_combined",
+  plotType = "individual",
+  title = "Aciclovir plasma profile (adult female)"
 )
 ```
 
-Then, we run the simulations by passing the scenarios we defined:
+Everything so far has changed the project in memory only. `saveProject()` writes the new individual, scenario, DataCombined, and plot to disk:
 
 ```{r}
-myScenarioResults <- runScenarios(my_scenarios)
+saveProject(project)
 ```
 
-Simulation results can be saved for later use: `saveScenarioResults()`
-and `loadScenarioResults()`.
+## Run the scenario
 
-```{r, eval = FALSE}
-saveScenarioResults(
-  myScenarioResults,
-  projectConfiguration = my_project_configuration,
-  outputFolder = my_project_configuration$outputFolder
-)
-
-myScenarioResults <- loadScenarioResults(
-  scenarioNames = "TestScenario",
-  resultsFolder = my_project_configuration$outputFolder
-)
-```
-
-Learn more on how to run simulations in
-`vignette("run-simulations")`.
-
-## Plot Results
-
-The simulation results can now be plotted. For this, the package relies
-on on the concept of combining multiple simulation results and observed
-data using the `DataCombined` class and creating figures using functions
-implemented in the `{ospsuite}` package.
-
-First, a `DataCombined` object is initialized:
+With the scenario defined, run it. `runScenarios()` runs one or more scenarios from the Project and returns a named list keyed by scenario name. We pass the single scenario we just built; the first run of a session initializes PK-Sim and takes a few seconds, so a one-scenario example keeps things quick.
 
 ```{r}
-my_datacombined <- DataCombined$new()
+res <- runScenarios(project, scenarios = "aciclovir_iv_female")
 ```
 
-Then, simulation result are added to the dataCombined object:
+Each entry of the returned list is a **Scenario Result**, bundling the simulation and its outputs. This is what `createPlots()` reads from next.
+
+## Plot the result
+
+`createPlots()` reads the plot definitions stored in the Project and draws them against the scenario results you pass in. Ask for the plot you just authored, by its id:
 
 ```{r}
-my_datacombined$addSimulationResults(
-  myScenarioResults$TestScenario$results,
-  names = "Simulated",
-  groups = "Aciclovir"
+plots <- createPlots(
+  project,
+  plots = "aciclovir_female_profile",
+  scenarioResults = res
 )
 ```
 
-Finally, the plot is generated:
+Each entry is an ordinary `ggplot` object, so printing it draws it:
 
-```{r, out.width="80%", fig.align="center", fig.width=5, fig.asp=0.618, dpi=300}
-plotIndividualTimeProfile(my_datacombined)
+```{r, out.width = "80%", fig.align = "center", fig.width = 6, fig.asp = 0.7, dpi = 150}
+plots$aciclovir_female_profile
 ```
 
-In some cases, we also want to plot the observed experimental data
-(stored in `Data/`). `DataCombined` also has the ability to store
-observed data for them to be plotted.
+That is the whole loop. You added a subject and a scenario to a project, described a figure, ran the simulation, and drew the figure, all from one object.
 
-```{r, out.width="80%", fig.align="center", fig.width=5, fig.asp=0.618, dpi=300}
-observed_data <- loadObservedData(
-  projectConfiguration = my_project_configuration,
-  sheets = "Laskin 1982.Group A"
-)
+## Where to go next
 
-my_datacombined$addDataSets(
-  observed_data,
-  names = "Observed",
-  groups = "Aciclovir"
-)
+You have seen the shape of the workflow. From here, pick the guide for whatever you need to do next:
 
-plotObservedVsSimulated(my_datacombined)
-```
+- `vignette("how-to-set-up-a-project")` to create your own project, save your work, and share it as a single file.
+- `vignette("how-to-design-scenarios")` to author the definitions a scenario is built from, edit them in place, and add several at once.
+- `vignette("how-to-validate-a-project")` to check a project hangs together before running it.
+- `vignette("how-to-run-simulations")` to run many scenarios, populations, and steady-state runs, and to save and reload results.
+- `vignette("how-to-plot-results")` for richer figures, observed data overlays, population percentile bands, and the esqLABS house style.
+- `vignette("how-to-use-observed-data")` for the four ways measured data enters a project.
+- `vignette("how-to-identify-parameters")` to estimate model parameters by fitting them to observed data.
+- `vignette("how-to-run-a-sensitivity-analysis")` to see which parameters your PK outcomes are actually sensitive to.
+- `vignette("how-to-customize-sensitivity-plots")` to restyle those sensitivity figures.
+- `vignette("how-to-migrate-from-excel")` if you have a pre-6.0.0 project driven by Excel workbooks.
 
-Many other plot types are available in `{esqlabsR}`, read
-`vignette("plot-results")` to learn more.
+Two other kinds of article are worth knowing about. `vignette("about-the-project-model")` and `vignette("about-the-plotting-model")` explain why the package works the way it does, which is the fastest way to stop being surprised by it. `vignette("reference-definition-fields")` and `vignette("reference-project-file")` are for looking things up: every field of every definition, whether it is required, and what happens when you leave it out.
