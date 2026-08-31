@@ -31,7 +31,10 @@ parameter layer.}
 Consulted only for a scenario with \code{simulateSteadyState} set (the
 steady-state pre-solve still runs); it is not applied to the returned
 simulations, since they are not run here. \code{NULL} (default) falls back
-to the project's \code{defaultSimulationRunOptions}.}
+to the project's \code{defaultSimulationRunOptions}, including its solver
+setting \code{checkForNegativeValues}, which is written to each returned
+simulation; an explicit value replaces the project default entirely,
+so the simulations keep the solver settings of their model files.}
 
 \item{validate}{Logical. If \code{TRUE} (default), runs the relevant
 section validators via \code{\link[=validateProject]{validateProject()}} before building and
