@@ -114,16 +114,14 @@ myScenarios <- createScenarios(
   customParams = customParam
 )
 
-# Adjust simulation run options, if necessary.
-# E.g. disable check for negative values if required
-simulationRunOptions <- ospsuite::SimulationRunOptions$new()
-simulationRunOptions$checkForNegativeValues <- FALSE
+# Adjust solver settings, if necessary.
+# E.g. disable the check for negative values if required
+for (scenario in myScenarios) {
+  scenario$simulation$solver$checkForNegativeValues <- FALSE
+}
 
 # Run simulations
-simulatedScenariosResults <- runScenarios(
-  scenarios = myScenarios,
-  simulationRunOptions = simulationRunOptions
-)
+simulatedScenariosResults <- runScenarios(scenarios = myScenarios)
 
     # Save results and store the path to the results for later re-use
     outputFolder <- saveScenarioResults(simulatedScenariosResults, myProjectConfiguration)

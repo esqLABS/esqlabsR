@@ -21,7 +21,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">esqlabsR</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.7.0.9009</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.7.0.9010</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -331,10 +331,12 @@ default <code>FALSE</code>)</td>
 </tr>
 </tbody>
 </table>
-<p><code>numberOfCores</code> and <code>checkForNegativeValues</code>
-correspond to the options of
-<code><a href="https://www.open-systems-pharmacology.org/OSPSuite-R/reference/SimulationRunOptions.html" class="external-link">ospsuite::SimulationRunOptions</a></code>. Leave them empty to use the
-defaults.</p>
+<p><code>numberOfCores</code> is passed on as the
+<code><a href="https://www.open-systems-pharmacology.org/OSPSuite-R/reference/SimulationRunOptions.html" class="external-link">ospsuite::SimulationRunOptions</a></code> of the task; leave it empty
+to use the ospsuite default. <code>checkForNegativeValues</code>
+switches the solver’s check for negative values on or off for the task’s
+simulations (<code>simulation$solver$checkForNegativeValues</code>);
+leave it empty to keep the setting stored in the model.</p>
 <p>For background on <code>ObjectiveFunctionType</code>,
 <code>ResidualWeightingMethod</code>, and <code>RobustMethod</code>, see
 the <a href="https://www.open-systems-pharmacology.org/OSPSuite.ParameterIdentification/articles/error-calculation.html" class="external-link"><code>OSPSuite.ParameterIdentification</code>

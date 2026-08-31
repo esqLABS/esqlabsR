@@ -24,7 +24,7 @@
 
     <a class="navbar-brand me-2" href="index.html">esqlabsR</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.7.0.9009</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.7.0.9010</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -168,16 +168,14 @@
 <span>  customParams <span class="op">=</span> <span class="va">customParam</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># Adjust simulation run options, if necessary.</span></span>
-<span><span class="co"># E.g. disable check for negative values if required</span></span>
-<span><span class="va">simulationRunOptions</span> <span class="op">&lt;-</span> <span class="fu">ospsuite</span><span class="fu">::</span><span class="va"><a href="https://www.open-systems-pharmacology.org/OSPSuite-R/reference/SimulationRunOptions.html" class="external-link">SimulationRunOptions</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="va">simulationRunOptions</span><span class="op">$</span><span class="va">checkForNegativeValues</span> <span class="op">&lt;-</span> <span class="cn">FALSE</span></span>
+<span><span class="co"># Adjust solver settings, if necessary.</span></span>
+<span><span class="co"># E.g. disable the check for negative values if required</span></span>
+<span><span class="kw">for</span> <span class="op">(</span><span class="va">scenario</span> <span class="kw">in</span> <span class="va">myScenarios</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="va">scenario</span><span class="op">$</span><span class="va">simulation</span><span class="op">$</span><span class="va">solver</span><span class="op">$</span><span class="va">checkForNegativeValues</span> <span class="op">&lt;-</span> <span class="cn">FALSE</span></span>
+<span><span class="op">}</span></span>
 <span></span>
 <span><span class="co"># Run simulations</span></span>
-<span><span class="va">simulatedScenariosResults</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/runScenarios.html">runScenarios</a></span><span class="op">(</span></span>
-<span>  scenarios <span class="op">=</span> <span class="va">myScenarios</span>,</span>
-<span>  simulationRunOptions <span class="op">=</span> <span class="va">simulationRunOptions</span></span>
-<span><span class="op">)</span></span>
+<span><span class="va">simulatedScenariosResults</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/runScenarios.html">runScenarios</a></span><span class="op">(</span>scenarios <span class="op">=</span> <span class="va">myScenarios</span><span class="op">)</span></span>
 <span></span>
 <span>    <span class="co"># Save results and store the path to the results for later re-use</span></span>
 <span>    <span class="va">outputFolder</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/saveScenarioResults.html">saveScenarioResults</a></span><span class="op">(</span><span class="va">simulatedScenariosResults</span>, <span class="va">myProjectConfiguration</span><span class="op">)</span></span>

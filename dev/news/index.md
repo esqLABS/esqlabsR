@@ -2,6 +2,11 @@
 
 ## esqlabsR (development version)
 
+### Breaking changes
+
+- Requires `ospsuite` 13.0.0 or later
+  ([\#1252](https://github.com/esqLABS/esqlabsR/issues/1252)).
+
 ### Minor improvements and bug fixes
 
 - [`saveSensitivityCalculation()`](https://esqlabs.github.io/esqlabsR/dev/reference/saveSensitivityCalculation.md)
@@ -51,6 +56,12 @@
   no longer rejects parameter bounds that exclude the model’s current
   value, applying the sheet `StartValue` before validating them
   ([\#1140](https://github.com/esqLABS/esqlabsR/issues/1140)).
+- The `checkForNegativeValues` column of the `PIConfiguration` sheet is
+  now applied to the solver settings of the task’s simulations
+  (`simulation$solver$checkForNegativeValues`); with ospsuite 13,
+  [`createPITasks()`](https://esqlabs.github.io/esqlabsR/dev/reference/createPITasks.md)
+  previously stopped with an error when that cell was filled
+  ([\#1252](https://github.com/esqLABS/esqlabsR/issues/1252)).
 - [`sensitivityTimeProfiles()`](https://esqlabs.github.io/esqlabsR/dev/reference/sensitivityTimeProfiles.md)
   again labels the parameter-factor colour legend with the variation
   values (for example 0.1, 1, 20) and draws the lines in factor order.

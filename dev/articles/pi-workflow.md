@@ -89,10 +89,13 @@ General settings for each PI task. If omitted, defaults are used.
 | `LinScaleCV` | Coefficient of variation for linear scale (default `0.2`) |
 | `LogScaleSD` | Standard deviation for log scale (default `0.086`) |
 
-`numberOfCores` and `checkForNegativeValues` correspond to the options
-of
-[`ospsuite::SimulationRunOptions`](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/SimulationRunOptions.html).
-Leave them empty to use the defaults.
+`numberOfCores` is passed on as the
+[`ospsuite::SimulationRunOptions`](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/SimulationRunOptions.html)
+of the task; leave it empty to use the ospsuite default.
+`checkForNegativeValues` switches the solver’s check for negative values
+on or off for the task’s simulations
+(`simulation$solver$checkForNegativeValues`); leave it empty to keep the
+setting stored in the model.
 
 For background on `ObjectiveFunctionType`, `ResidualWeightingMethod`,
 and `RobustMethod`, see the [`OSPSuite.ParameterIdentification` error
