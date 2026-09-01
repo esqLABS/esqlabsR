@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="index.html">esqlabsR</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.7.0.9010</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.7.0.9011</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -94,7 +94,7 @@
 <div class="section level2">
 <h2 id="user-visible-documentation">User-visible documentation<a class="anchor" aria-label="anchor" href="#user-visible-documentation"></a></h2>
 <p>The target reader of all user-facing documentation (roxygen <code>@description</code>, <code>@param</code>, <code>@details</code>, vignettes, messages) is a <strong>modeling expert, not a coder or data scientist</strong>. They know PBPK/QSP modeling, scenarios, individuals, and populations; they do not know software-engineering vocabulary.</p>
-<ul><li>Do <strong>not</strong> use developer jargon: “reconcile”, “authoring”, “scaffold”, “orphan”, “idempotent”, “in-memory vs. on-disk tree”, “bound/unbound”, “no-op”, “side-car”, “mutate”.</li>
+<ul><li>Do <strong>not</strong> use developer jargon: “reconcile”, “authoring”, “scaffold”, “orphan”, “idempotent”, “in-memory vs. on-disk tree”, “bound/unbound”, “no-op”, “side-car”, “mutate”, “sweep”.</li>
 <li>Describe behavior by <strong>what the user sees and does</strong>, not by mechanism. Prefer “Only files with actual changes are re-written, so <code>git diff</code> shows exactly the definitions you edited” over “write-if-different reconciliation”.</li>
 <li>Say things plainly: “idempotent no-op” → “saving repeatedly is always safe”; “orphan deletion” → “if you removed a scenario, its file is deleted”.</li>
 <li>State what a function does <em>not</em> do and what to call instead (e.g. saving does not update the Excel files; use <code>exportProjectToExcel()</code>).</li>

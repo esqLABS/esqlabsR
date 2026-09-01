@@ -83,7 +83,7 @@ software-engineering vocabulary.
 
 - Do **not** use developer jargon: “reconcile”, “authoring”, “scaffold”,
   “orphan”, “idempotent”, “in-memory vs. on-disk tree”, “bound/unbound”,
-  “no-op”, “side-car”, “mutate”.
+  “no-op”, “side-car”, “mutate”, “sweep”.
 - Describe behavior by **what the user sees and does**, not by
   mechanism. Prefer “Only files with actual changes are re-written, so
   `git diff` shows exactly the definitions you edited” over
