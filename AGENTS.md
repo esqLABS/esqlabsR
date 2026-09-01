@@ -40,7 +40,7 @@ esqlabsR builds on the Open Systems Pharmacology ecosystem. When unsure about an
 
 The target reader of all user-facing documentation (roxygen `@description`, `@param`, `@details`, vignettes, messages) is a **modeling expert, not a coder or data scientist**. They know PBPK/QSP modeling, scenarios, individuals, and populations; they do not know software-engineering vocabulary.
 
-- Do **not** use developer jargon: "reconcile", "authoring", "scaffold", "orphan", "idempotent", "in-memory vs. on-disk tree", "bound/unbound", "no-op", "side-car", "mutate".
+- Do **not** use developer jargon: "reconcile", "authoring", "scaffold", "orphan", "idempotent", "in-memory vs. on-disk tree", "bound/unbound", "no-op", "side-car", "mutate", "sweep".
 - Describe behavior by **what the user sees and does**, not by mechanism. Prefer "Only files with actual changes are re-written, so `git diff` shows exactly the definitions you edited" over "write-if-different reconciliation".
 - Say things plainly: "idempotent no-op" → "saving repeatedly is always safe"; "orphan deletion" → "if you removed a scenario, its file is deleted".
 - State what a function does *not* do and what to call instead (e.g. saving does not update the Excel files; use `exportProjectToExcel()`).
