@@ -31,7 +31,8 @@
         "Gender",
         "Age [year(s)]",
         "Height [cm]",
-        "Weight [kg]"
+        "Weight [kg]",
+        "Individual Parameter Sets"
       )
       missing_cols <- setdiff(required_cols, names(df))
 

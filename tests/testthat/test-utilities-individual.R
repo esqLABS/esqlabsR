@@ -49,6 +49,39 @@ test_that("It create IndividualCharacteristics when numerical values are empty",
   expect_equal(individualCharacteristics$gender, "MALE")
 })
 
+test_that("`.readIndividualParameterSetsFromXLS()` returns NULL if individual is not found", {
+  expect_null(esqlabsR:::.readIndividualParameterSetsFromXLS(
+    XLSpath = XLSpath,
+    individualId = "notPresent",
+    scenarioName = "TestScenario"
+  ))
+})
+
+test_that("`.readIndividualParameterSetsFromXLS()` returns empty params when 'Individual Parameter Sets' is empty", {
+  result <- esqlabsR:::.readIndividualParameterSetsFromXLS(
+    XLSpath = XLSpath,
+    individualId = "Vicini_1999",
+    scenarioName = "TestScenario"
+  )
+  expect_length(result$paths, 0)
+  expect_length(result$values, 0)
+  expect_length(result$units, 0)
+})
+
+test_that("`.readIndividualParameterSetsFromXLS()` errors for missing sheets", {
+  expect_error(
+    esqlabsR:::.readIndividualParameterSetsFromXLS(
+      XLSpath = XLSpath,
+      individualId = "Individual_with_param_sets",
+      scenarioName = "TestScenario"
+    ),
+    regexp = messages$errorIndividualParameterSetNotFound(
+      "TestScenario",
+      "ParamSet2"
+    )
+  )
+})
+
 
 test_that("`writeIndividualToXLS()` writes correct data to a spreadsheet", {
   withr::with_tempdir(

@@ -264,9 +264,11 @@
       $Individuals
       $Individuals$IndividualBiometrics
       $Individuals$IndividualBiometrics$column_names
-      [1] "IndividualId"       "Species"            "Population"        
-      [4] "Gender"             "Weight [kg]"        "Height [cm]"       
-      [7] "Age [year(s)]"      "Protein Ontogenies"
+      [1] "IndividualId"              "Species"                  
+      [3] "Population"                "Gender"                   
+      [5] "Weight [kg]"               "Height [cm]"              
+      [7] "Age [year(s)]"             "Protein Ontogenies"       
+      [9] "Individual Parameter Sets"
       
       $Individuals$IndividualBiometrics$rows
       $Individuals$IndividualBiometrics$rows[[1]]
@@ -293,6 +295,9 @@
       
       $Individuals$IndividualBiometrics$rows[[1]]$`Protein Ontogenies`
       [1] "CYP3A4:CYP3A4,CYP2D6:CYP2C8"
+      
+      $Individuals$IndividualBiometrics$rows[[1]]$`Individual Parameter Sets`
+      [1] "Indiv1"
       
       
       
@@ -449,13 +454,36 @@
       
       
       $Scenarios
+      $Scenarios$OutputPaths
+      $Scenarios$OutputPaths$column_names
+      [1] "OutputPathId" "OutputPath"  
+      
+      $Scenarios$OutputPaths$rows
+      $Scenarios$OutputPaths$rows[[1]]
+      $Scenarios$OutputPaths$rows[[1]]$OutputPathId
+      [1] "Aciclovir_PVB"
+      
+      $Scenarios$OutputPaths$rows[[1]]$OutputPath
+      [1] "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
+      
+      
+      $Scenarios$OutputPaths$rows[[2]]
+      $Scenarios$OutputPaths$rows[[2]]$OutputPathId
+      [1] "Aciclovir_fat_cell"
+      
+      $Scenarios$OutputPaths$rows[[2]]$OutputPath
+      [1] "Organism|Fat|Intracellular|Aciclovir|Concentration in container"
+      
+      
+      
+      
       $Scenarios$Scenarios
       $Scenarios$Scenarios$column_names
        [1] "Scenario_name"         "IndividualId"          "PopulationId"         
        [4] "ReadPopulationFromCSV" "ModelParameterSheets"  "ApplicationProtocol"  
        [7] "SimulationTime"        "SimulationTimeUnit"    "SteadyState"          
-      [10] "SteadyStateTime"       "SteadyStateTimeUnit"   "ModelFile"            
-      [13] "OutputPathsIds"       
+      [10] "SteadyStateTime"       "SteadyStateTimeUnit"   "OverwriteFormulasInSS"
+      [13] "ModelFile"             "OutputPathsIds"       
       
       $Scenarios$Scenarios$rows
       $Scenarios$Scenarios$rows[[1]]
@@ -490,6 +518,9 @@
       [1] NA
       
       $Scenarios$Scenarios$rows[[1]]$SteadyStateTimeUnit
+      [1] NA
+      
+      $Scenarios$Scenarios$rows[[1]]$OverwriteFormulasInSS
       [1] NA
       
       $Scenarios$Scenarios$rows[[1]]$ModelFile
@@ -533,6 +564,9 @@
       $Scenarios$Scenarios$rows[[2]]$SteadyStateTimeUnit
       [1] "min"
       
+      $Scenarios$Scenarios$rows[[2]]$OverwriteFormulasInSS
+      [1] NA
+      
       $Scenarios$Scenarios$rows[[2]]$ModelFile
       [1] "Aciclovir.pkml"
       
@@ -572,6 +606,9 @@
       [1] NA
       
       $Scenarios$Scenarios$rows[[3]]$SteadyStateTimeUnit
+      [1] NA
+      
+      $Scenarios$Scenarios$rows[[3]]$OverwriteFormulasInSS
       [1] NA
       
       $Scenarios$Scenarios$rows[[3]]$ModelFile
@@ -615,6 +652,9 @@
       $Scenarios$Scenarios$rows[[4]]$SteadyStateTimeUnit
       [1] NA
       
+      $Scenarios$Scenarios$rows[[4]]$OverwriteFormulasInSS
+      [1] NA
+      
       $Scenarios$Scenarios$rows[[4]]$ModelFile
       [1] "Aciclovir.pkml"
       
@@ -654,6 +694,9 @@
       [1] NA
       
       $Scenarios$Scenarios$rows[[5]]$SteadyStateTimeUnit
+      [1] NA
+      
+      $Scenarios$Scenarios$rows[[5]]$OverwriteFormulasInSS
       [1] NA
       
       $Scenarios$Scenarios$rows[[5]]$ModelFile
@@ -697,6 +740,9 @@
       $Scenarios$Scenarios$rows[[6]]$SteadyStateTimeUnit
       [1] NA
       
+      $Scenarios$Scenarios$rows[[6]]$OverwriteFormulasInSS
+      [1] NA
+      
       $Scenarios$Scenarios$rows[[6]]$ModelFile
       [1] "Aciclovir.pkml"
       
@@ -736,6 +782,9 @@
       [1] NA
       
       $Scenarios$Scenarios$rows[[7]]$SteadyStateTimeUnit
+      [1] NA
+      
+      $Scenarios$Scenarios$rows[[7]]$OverwriteFormulasInSS
       [1] NA
       
       $Scenarios$Scenarios$rows[[7]]$ModelFile
@@ -779,34 +828,14 @@
       $Scenarios$Scenarios$rows[[8]]$SteadyStateTimeUnit
       [1] NA
       
+      $Scenarios$Scenarios$rows[[8]]$OverwriteFormulasInSS
+      [1] NA
+      
       $Scenarios$Scenarios$rows[[8]]$ModelFile
       [1] "Aciclovir.pkml"
       
       $Scenarios$Scenarios$rows[[8]]$OutputPathsIds
       [1] NA
-      
-      
-      
-      
-      $Scenarios$OutputPaths
-      $Scenarios$OutputPaths$column_names
-      [1] "OutputPathId" "OutputPath"  
-      
-      $Scenarios$OutputPaths$rows
-      $Scenarios$OutputPaths$rows[[1]]
-      $Scenarios$OutputPaths$rows[[1]]$OutputPathId
-      [1] "Aciclovir_PVB"
-      
-      $Scenarios$OutputPaths$rows[[1]]$OutputPath
-      [1] "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
-      
-      
-      $Scenarios$OutputPaths$rows[[2]]
-      $Scenarios$OutputPaths$rows[[2]]$OutputPathId
-      [1] "Aciclovir_fat_cell"
-      
-      $Scenarios$OutputPaths$rows[[2]]$OutputPath
-      [1] "Organism|Fat|Intracellular|Aciclovir|Concentration in container"
       
       
       
@@ -2599,15 +2628,17 @@
       $Individuals
       $Individuals$IndividualBiometrics
       $Individuals$IndividualBiometrics$column_names
-      [1] "IndividualId"       "Species"            "Population"        
-      [4] "Gender"             "Weight [kg]"        "Height [cm]"       
-      [7] "Age [year(s)]"      "Protein Ontogenies"
+      [1] "IndividualId"              "Species"                  
+      [3] "Population"                "Gender"                   
+      [5] "Weight [kg]"               "Height [cm]"              
+      [7] "Age [year(s)]"             "Protein Ontogenies"       
+      [9] "Individual Parameter Sets"
       
       $Individuals$IndividualBiometrics$rows
         IndividualId Species         Population Gender Weight [kg] Height [cm]
       1       Indiv1   Human European_ICRP_2002   MALE          73         176
-        Age [year(s)]          Protein Ontogenies
-      1            30 CYP3A4:CYP3A4,CYP2D6:CYP2C8
+        Age [year(s)]          Protein Ontogenies Individual Parameter Sets
+      1            30 CYP3A4:CYP3A4,CYP2D6:CYP2C8                    Indiv1
       
       
       $Individuals$Indiv1
@@ -2653,13 +2684,26 @@
       
       
       $Scenarios
+      $Scenarios$OutputPaths
+      $Scenarios$OutputPaths$column_names
+      [1] "OutputPathId" "OutputPath"  
+      
+      $Scenarios$OutputPaths$rows
+              OutputPathId
+      1      Aciclovir_PVB
+      2 Aciclovir_fat_cell
+                                                                       OutputPath
+      1 Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)
+      2           Organism|Fat|Intracellular|Aciclovir|Concentration in container
+      
+      
       $Scenarios$Scenarios
       $Scenarios$Scenarios$column_names
        [1] "Scenario_name"         "IndividualId"          "PopulationId"         
        [4] "ReadPopulationFromCSV" "ModelParameterSheets"  "ApplicationProtocol"  
        [7] "SimulationTime"        "SimulationTimeUnit"    "SteadyState"          
-      [10] "SteadyStateTime"       "SteadyStateTimeUnit"   "ModelFile"            
-      [13] "OutputPathsIds"       
+      [10] "SteadyStateTime"       "SteadyStateTimeUnit"   "OverwriteFormulasInSS"
+      [13] "ModelFile"             "OutputPathsIds"       
       
       $Scenarios$Scenarios$rows
                     Scenario_name IndividualId   PopulationId ReadPopulationFromCSV
@@ -2689,28 +2733,24 @@
       6                <NA>               <NA>        <NA>            <NA>
       7             0,120,1                  h       FALSE            <NA>
       8             0,120,1                  h       FALSE            <NA>
-        SteadyStateTimeUnit      ModelFile                    OutputPathsIds
-      1                <NA> Aciclovir.pkml                     Aciclovir_PVB
-      2                 min Aciclovir.pkml Aciclovir_PVB, Aciclovir_fat_cell
-      3                <NA> Aciclovir.pkml                              <NA>
-      4                <NA> Aciclovir.pkml                              <NA>
-      5                <NA> Aciclovir.pkml                              <NA>
-      6                <NA> Aciclovir.pkml                              <NA>
-      7                <NA> Aciclovir.pkml                              <NA>
-      8                <NA> Aciclovir.pkml                              <NA>
-      
-      
-      $Scenarios$OutputPaths
-      $Scenarios$OutputPaths$column_names
-      [1] "OutputPathId" "OutputPath"  
-      
-      $Scenarios$OutputPaths$rows
-              OutputPathId
-      1      Aciclovir_PVB
-      2 Aciclovir_fat_cell
-                                                                       OutputPath
-      1 Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)
-      2           Organism|Fat|Intracellular|Aciclovir|Concentration in container
+        SteadyStateTimeUnit OverwriteFormulasInSS      ModelFile
+      1                <NA>                    NA Aciclovir.pkml
+      2                 min                    NA Aciclovir.pkml
+      3                <NA>                    NA Aciclovir.pkml
+      4                <NA>                    NA Aciclovir.pkml
+      5                <NA>                    NA Aciclovir.pkml
+      6                <NA>                    NA Aciclovir.pkml
+      7                <NA>                    NA Aciclovir.pkml
+      8                <NA>                    NA Aciclovir.pkml
+                           OutputPathsIds
+      1                     Aciclovir_PVB
+      2 Aciclovir_PVB, Aciclovir_fat_cell
+      3                              <NA>
+      4                              <NA>
+      5                              <NA>
+      6                              <NA>
+      7                              <NA>
+      8                              <NA>
       
       
       
@@ -3345,7 +3385,7 @@
       
       $data_changes
       $data_changes$Scenarios
-      [1] "Scenarios"
+      [1] "OutputPaths"
       
       
 
@@ -3392,7 +3432,7 @@
       
       $data_changes
       $data_changes$Scenarios
-      [1] "Scenarios"
+      [1] "OutputPaths"
       
       
 

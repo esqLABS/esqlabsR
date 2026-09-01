@@ -519,6 +519,7 @@ test_that(".validateIndividualsFile detects duplicate IndividualId", {
         `Age [year(s)]` = c(30, 40),
         `Height [cm]` = c(175, 165),
         `Weight [kg]` = c(70, 60),
+        `Individual Parameter Sets` = c(NA_character_, NA_character_),
         check.names = FALSE
       )
     ),
@@ -543,6 +544,7 @@ test_that(".validateIndividualsFile warns about non-numeric columns", {
         `Age [year(s)]` = c("thirty", "forty"),
         `Height [cm]` = c(175, 165),
         `Weight [kg]` = c(70, 60),
+        `Individual Parameter Sets` = c(NA_character_, NA_character_),
         check.names = FALSE
       )
     ),
@@ -567,6 +569,7 @@ test_that(".validateIndividualsFile handles valid file", {
         `Age [year(s)]` = c(30, 40),
         `Height [cm]` = c(175, 165),
         `Weight [kg]` = c(70, 60),
+        `Individual Parameter Sets` = c(NA_character_, NA_character_),
         check.names = FALSE
       )
     ),
@@ -900,7 +903,8 @@ test_that(".validateScenariosFile warns about empty Scenarios sheet", {
         IndividualId = character(),
         PopulationId = character(),
         ApplicationProtocol = character(),
-        SteadyStateTime = numeric()
+        SteadyStateTime = numeric(),
+        OverwriteFormulasInSS = logical()
       ),
       OutputPaths = data.frame(
         OutputPathId = "OP1",
@@ -924,7 +928,8 @@ test_that(".validateScenariosFile handles valid file", {
         IndividualId = c("ID1", "ID2"),
         PopulationId = c("Pop1", "Pop2"),
         ApplicationProtocol = c("App1", "App2"),
-        SteadyStateTime = c(0, 0)
+        SteadyStateTime = c(0, 0),
+        OverwriteFormulasInSS = c(TRUE, FALSE)
       ),
       OutputPaths = data.frame(
         OutputPathId = c("OP1", "OP2"),
