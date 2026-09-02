@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="index.html">esqlabsR</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.7.0.9011</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.7.0.9012</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -104,7 +104,9 @@
 <div class="section level2">
 <h2 id="pull-requests">Pull requests<a class="anchor" aria-label="anchor" href="#pull-requests"></a></h2>
 <ul><li>Open new PRs as <strong>draft (WIP)</strong>.</li>
-<li>Add one <code>NEWS.md</code> bullet per PR with user-facing changes, summarizing them for the end user. Skip the bullet when a PR has none.</li>
+<li>Every PR with user-facing changes needs at least one <code>NEWS.md</code> bullet, written for the end user. Add <strong>one bullet per user-visible change</strong>, not one per PR — a PR that changes three things visible to users gets three bullets. Do not combine unrelated changes into a single bullet.</li>
+<li>Skip <code>NEWS.md</code> only when the PR has no user-facing change at all (internal refactoring, tests, CI, agent guidance).</li>
+<li>Each bullet names the affected function as <code>functionName()</code>, says what the user now sees or can do, and ends with the issue number in parentheses, e.g. <code>(#1056)</code>. File it under <code>## Breaking changes</code>, <code>## New features</code>, or <code>## Minor improvements and bug fixes</code> in the development section.</li>
 </ul></div>
 <div class="section level2">
 <h2 id="documentation--rd-files">Documentation / Rd files<a class="anchor" aria-label="anchor" href="#documentation--rd-files"></a></h2>
