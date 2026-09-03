@@ -1,5 +1,9 @@
 # esqlabsR (development version)
 
+## Breaking changes
+
+- Requires `ospsuite` 13.0.0 or later (#1252).
+
 ## Minor improvements and bug fixes
 
 - `saveSensitivityCalculation()` now writes the simulation as `simulation.pkml` into the output directory, and `loadSensitivityCalculation()` loads it from there, so a saved sensitivity calculation is self-contained and can be reloaded even when the original simulation file is unavailable (#878).
@@ -10,6 +14,9 @@
 - `sensitivityCalculation()` now aligns baseline values by output path when computing percent change and sensitivity, fixing possible misalignment with multiple output paths (#1056).
 - `sensitivityCalculation()` no longer errors when all runs for a parameter fail; it now warns and omits that parameter from the results (#1056).
 - `sensitivityTornadoPlot()` now matches the `parameterFactor` and its reciprocal against the analysis results with a numerical tolerance, so user supplied reciprocal factors are no longer rejected due to floating point representation (#1056).
+- `createPITasks()` no longer rejects parameter bounds that exclude the model's current value, applying the sheet `StartValue` before validating them (#1140).
+- The `checkForNegativeValues` column of the `PIConfiguration` sheet is now applied to the solver settings of the task's simulations (`simulation$solver$checkForNegativeValues`); with ospsuite 13, `createPITasks()` previously stopped with an error when that cell was filled (#1252).
+- `sensitivityTimeProfiles()` again labels the parameter-factor colour legend with the variation values (for example 0.1, 1, 20) and draws the lines in factor order. With ospsuite 13, which returns dataset names from `DataCombined` as a factor, the factors had been read as their positions in the list (1, 2, 3, 4) (#1259).
 
 # esqlabsR 5.7.0
 

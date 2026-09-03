@@ -114,7 +114,7 @@ initProject <- function(destination = ".", overwrite = FALSE) {
   }
 
   type <- "example"
-  source_folder <- switch(type, "example" = exampleDirectory("TestProject"))
+  source_folder <- switch(type, "example" = .exampleDirectory("TestProject"))
 
   # Check if project already exists
   if (isProjectInitialized(destination)) {
@@ -155,5 +155,5 @@ initProject <- function(destination = ".", overwrite = FALSE) {
 #' exampleProjectConfigurationPath()
 exampleProjectConfigurationPath <- function() {
   # Returns the path to the example project configuration file in TestProject
-  file.path(exampleDirectory("TestProject"), "ProjectConfiguration.xlsx")
+  file.path(.exampleDirectory("TestProject"), "ProjectConfiguration.xlsx")
 }

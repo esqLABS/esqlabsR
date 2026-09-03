@@ -157,6 +157,35 @@ test_that("createPITasks throws error when parameter bounds are invalid", {
   )
 })
 
+test_that("createPITasks applies StartValue before validating bounds (#1135)", {
+  temp_project <- with_temp_project()
+  projectConfigurationLocal <- temp_project$config
+
+  # Bounds are internally valid (Min <= Start <= Max) but do NOT bracket the
+  # model's current Lipophilicity value (about -0.1), which is what the
+  # constructor seeds as the provisional start value.
+  sheets <- createValidPISheets()
+  sheets$PIParameters$MinValue <- 5
+  sheets$PIParameters$StartValue <- 7
+  sheets$PIParameters$MaxValue <- 10
+
+  .writeExcel(
+    data = sheets,
+    path = projectConfigurationLocal$parameterIdentificationFile
+  )
+
+  piTaskConfigurations <- readPITaskConfigurationFromExcel(
+    projectConfiguration = projectConfigurationLocal
+  )
+
+  expect_no_error(piTasks <- createPITasks(piTaskConfigurations))
+
+  firstParam <- piTasks[[1]]$parameters[[1]]
+  expect_equal(firstParam$startValue, 7)
+  expect_equal(firstParam$minValue, 5)
+  expect_equal(firstParam$maxValue, 10)
+})
+
 test_that("Same parameter across scenarios with different bounds in same group fails", {
   temp_project <- with_temp_project()
   projectConfigurationLocal <- temp_project$config
@@ -503,7 +532,8 @@ test_that("createPITasks applies simulationRunOptions from PIConfiguration colum
   expect_false(is.null(opts))
   expect_equal(opts$numberOfCores, 2L)
 
-  # Only checkForNegativeValues set
+  # Only checkForNegativeValues set: a solver setting, so no run options are
+  # built and the value lands on the task's simulations.
   sheets$PIConfiguration$numberOfCores <- NA_real_
   sheets$PIConfiguration$checkForNegativeValues <- FALSE
   .writeExcel(
@@ -513,9 +543,8 @@ test_that("createPITasks applies simulationRunOptions from PIConfiguration colum
   piTasks <- createPITasks(readPITaskConfigurationFromExcel(
     projectConfiguration = projectConfigurationLocal
   ))
-  opts <- piTasks$Task1$configuration$simulationRunOptions
-  expect_false(is.null(opts))
-  expect_false(opts$checkForNegativeValues)
+  expect_null(piTasks$Task1$configuration$simulationRunOptions)
+  expect_false(piTasks$Task1$simulations[[1]]$solver$checkForNegativeValues)
 
   # Both set
   sheets$PIConfiguration$numberOfCores <- 4
@@ -528,7 +557,27 @@ test_that("createPITasks applies simulationRunOptions from PIConfiguration colum
   ))
   opts <- piTasks$Task1$configuration$simulationRunOptions
   expect_equal(opts$numberOfCores, 4L)
-  expect_false(opts$checkForNegativeValues)
+  expect_false(piTasks$Task1$simulations[[1]]$solver$checkForNegativeValues)
+})
+
+test_that(".applySolverCheckForNegativeValues writes the value to each simulation's solver", {
+  simulation <- loadTestSimulation("simple")
+  # The fixture model ships with the check switched on, so a FALSE proves the
+  # write landed.
+  expect_true(simulation$solver$checkForNegativeValues)
+
+  # A NULL entry (a scenario that did not build) is skipped, not an error.
+  .applySolverCheckForNegativeValues(
+    simulations = list(a = simulation, b = NULL),
+    value = FALSE
+  )
+  expect_false(simulation$solver$checkForNegativeValues)
+
+  # An empty sheet cell leaves the setting alone.
+  .applySolverCheckForNegativeValues(list(simulation), value = NA)
+  expect_false(simulation$solver$checkForNegativeValues)
+  .applySolverCheckForNegativeValues(list(simulation), value = NULL)
+  expect_false(simulation$solver$checkForNegativeValues)
 })
 
 test_that("createPITasks applies objectiveFunctionOptions from PIConfiguration columns", {
