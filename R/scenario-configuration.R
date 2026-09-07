@@ -73,6 +73,24 @@ ScenarioConfiguration <- R6::R6Class(
         private$.steadyStateTime <- value
       }
     },
+    #' @field overwriteFormulasInSS Boolean representing whether formula-defined
+    #'   parameters will be overwritten with their steady-state values.
+    #'   When `TRUE`, corresponds to `ignoreIfFormula = FALSE` in
+    #'   `ospsuite::getSteadyState` (formulas are overwritten). Default is
+    #'   `FALSE` (formula-defined parameters are kept unchanged).
+    overwriteFormulasInSS = function(value) {
+      if (missing(value)) {
+        private$.overwriteFormulasInSS
+      } else {
+        validateIsLogical(value)
+        # If the value is `NA`, treat as `FALSE`
+        if (is.na(value)) {
+          private$.overwriteFormulasInSS <- FALSE
+        } else {
+          private$.overwriteFormulasInSS <- value
+        }
+      }
+    },
     #' @field paramSheets A named list. Names of the sheets from the
     #'   parameters-excel file that will be applied to the simulation
     paramSheets = function(value) {
@@ -117,6 +135,7 @@ a parameter sheet from the list"
     .simulationTime = NULL,
     .simulationTimeUnit = ospUnits$Time$min,
     .steadyStateTime = 1000,
+    .overwriteFormulasInSS = FALSE,
     .individualCharacteristics = NULL,
     .paramSheets = NULL,
     .simulationType = "Individual",
@@ -204,9 +223,7 @@ a parameter sheet from the list"
           "Individual Id" = self$individualId,
           "Population Id" = self$populationId,
           "Read population from csv file" = self$readPopulationFromCSV,
-          "Parameters sheets" = enumKeys(self$paramSheets),
-          "Simulate steady-state" = self$simulateSteadyState,
-          "Steady-state time" = self$steadyStateTime
+          "Parameters sheets" = enumKeys(self$paramSheets)
         ),
         print_empty = TRUE
       )
@@ -230,7 +247,8 @@ a parameter sheet from the list"
         ospsuite.utils::ospPrintItems(
           list(
             "Simulate steady-state" = self$simulateSteadyState,
-            "Steady-state time" = self$steadyStateTime
+            "Steady-state time" = self$steadyStateTime,
+            "Overwrite formulas in steady-state" = self$overwriteFormulasInSS
           ),
           title = "Steady state"
         )

@@ -31,7 +31,8 @@ The function expects the Excel file to have a "Scenarios" sheet with the
 following columns: \code{Scenario_name}, \code{IndividualId}, \code{PopulationId},
 \code{ReadPopulationFromCSV}, \code{ModelParameterSheets}, \code{ApplicationProtocol},
 \code{SimulationTime}, \code{SimulationTimeUnit}, \code{SteadyState}, \code{SteadyStateTime},
-\code{SteadyStateTimeUnit}, \code{ModelFile}, \code{OutputPathsIds}. It also expects an
+\code{SteadyStateTimeUnit}, \code{OverwriteFormulasInSS}, \code{ModelFile},
+\code{OutputPathsIds}. It also expects an
 "OutputPaths" sheet with \code{OutputPathId} and \code{OutputPath} columns.
 }
 \examples{

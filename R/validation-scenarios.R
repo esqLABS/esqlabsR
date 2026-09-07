@@ -33,7 +33,8 @@
         "IndividualId",
         "PopulationId",
         "ApplicationProtocol",
-        "SteadyStateTime"
+        "SteadyStateTime",
+        "OverwriteFormulasInSS"
       )
       missing_cols <- setdiff(required_cols, names(scenarios_df))
 
