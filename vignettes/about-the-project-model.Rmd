@@ -25,7 +25,7 @@ Nothing here tells you how to do anything. For the procedures, see the how-to gu
 
 A PBPK or QSP analysis is made of many small decisions: which model file, which individual, what dose and schedule, which parameters to override, which outputs to record, over what simulated time, against which measurements, drawn in which figures. Written as a script, those decisions end up expressed as procedure. They are interleaved with the code that applies them, they are scattered across whichever file was open at the time, and the only way to find out what an analysis actually did is to read the whole script and mentally execute it.
 
-`esqlabsR` separates the decisions from the machinery. A **Project** holds the decisions as data: named definitions, each a small declarative record. Functions such as `runScenarios()` and `createPlots()` are the machinery, and they read the project rather than being configured by hand at the call site.
+`esqlabsR` separates the decisions from the machinery. A **Project** holds the decisions as data: named definitions, each a small record of your choices. Functions such as `runScenarios()` and `createPlots()` are the machinery, and they read the project rather than being configured by hand at the call site.
 
 The practical consequences are what make this worth the indirection:
 
@@ -33,11 +33,11 @@ The practical consequences are what make this worth the indirection:
 - **An analysis becomes comparable.** Two scenarios that differ only in dose differ in one field, visibly.
 - **An analysis becomes portable.** The definitions travel as a directory, or as a single snapshot file, and behave the same on another machine. The files they point at (models, observed data, population CSVs) are not carried along and have to be provided or resolved separately.
 
-The cost is that you author definitions instead of writing statements, and that a mistake in a definition is caught by validation rather than by an R error at the line that made it. The rest of this article is largely about how the package tries to make that trade favourable.
+The cost is that you write definitions instead of statements, and that a mistake in a definition is caught by validation rather than by an R error at the line that made it. The rest of this article is largely about how the package tries to make that trade favourable.
 
 ## Why the definitions tree is the source of truth
 
-On disk, a project's authored content lives in a `definitions/` folder, subdivided by kind, with **one file per definition, named after that definition's id**. The scenario whose id is `aciclovir_iv` is the file `definitions/scenarios/aciclovir_iv.json`, and nothing else.
+On disk, the content you write lives in a `definitions/` folder, subdivided by kind, with **one file per definition, named after that definition's id**. The scenario whose id is `aciclovir_iv` is the file `definitions/scenarios/aciclovir_iv.json`, and nothing else.
 
 The obvious alternative is one large file holding every definition, which is simpler to write and simpler to read as a whole. It was rejected for reasons that only appear once more than one person works on a project:
 
@@ -45,29 +45,29 @@ The obvious alternative is one large file holding every definition, which is sim
 - **Legible history.** `git diff` after adding a scenario shows one new file. In a single-file project it shows a diff inside a large document, and the reader has to work out which part of the change was the point.
 - **Confined conflicts.** A merge conflict lands inside one definition, where it can be resolved by someone who understands that definition, instead of inside a document that spans the whole analysis.
 
-A project directory also contains **working folders** (for model files, data, populations, and results). The distinction between the two regions is worth holding onto, because it decides what you review and what you regenerate. `definitions/` is authored: it is the analysis, and it is what belongs under close review. The working folders hold the things definitions point *at* (a scenario names a model file that lives under `Models/`) and the things a run produces (`Results/`). A definition never contains the contents of a model file or a measurement; it contains a reference to one.
+A project directory also contains **working folders** (for model files, data, populations, and results). The distinction between the two regions is worth holding onto, because it decides what you review and what you regenerate. `definitions/` is what you write: it is the analysis, and it is what belongs under close review. The working folders hold the things definitions point *at* (a scenario names a model file under `Models/`, the `.pkml` simulation exported from PK-Sim or MoBi) and the things a run produces (`Results/`). A definition never contains the contents of a model file or a measurement; it contains a reference to one.
 
 That split is also why a project stays small even when the models and data it uses are large, and why handing someone a project means handing them the references plus whatever files those references resolve to.
 
 ## Why saving is explicit
 
-For a loaded project, **memory is the source of truth**. When you add a scenario or change a field, the change is made on the in-memory `Project` and the project is marked as having unsaved changes. Nothing on disk moves until you call `saveProject()`, which reconciles the tree to memory: writing the definitions that changed, and deleting the files of definitions you removed.
+For a loaded project, **memory is the source of truth**. When you add a scenario or change a field, the change is made on the in-memory `Project` and the project is marked as having unsaved changes. Nothing on disk moves until you call `saveProject()`, which brings the files on disk in line with memory: writing the definitions that changed, and deleting the files of definitions you removed.
 
-The alternative, write-through (every authoring call immediately writing its file), is genuinely more convenient in the small. It was dropped because of what it does in the large:
+The alternative, write-through (every edit immediately writing its file), is genuinely more convenient in the small. It was dropped because of what it does in the large:
 
 - **An abandoned experiment leaves debris.** Trying three variants of a scenario to see which one is right means three files on disk, two of which you now have to remember to delete.
-- **There is no way to back out.** With write-through, an authoring mistake is already persisted by the time you notice it. With explicit save, `reloadProject()` discards every unsaved edit and re-reads from disk, which makes exploratory authoring safe.
+- **There is no way to back out.** With write-through, a mistake is already on disk by the time you notice it. With explicit save, `reloadProject()` discards every unsaved edit and re-reads from disk, which makes exploring safe.
 - **History fills with noise.** Every intermediate state of an edit reaches the tree, so the commit that adds a scenario is indistinguishable from the ten that were on the way to it.
 
-Explicit save also makes one guarantee that write-through cannot: after `saveProject()`, the tree matches memory exactly, so `git diff` shows precisely the edits you intended and nothing else. A save with nothing to write is a harmless no-op that says so, which means saving repeatedly is always safe.
+Explicit save also makes one guarantee that write-through cannot: after `saveProject()`, the tree matches memory exactly, so `git diff` shows precisely the edits you intended and nothing else. A save with nothing to write says so and leaves the files alone, which means saving repeatedly is always safe.
 
-The honest cost is that you can end a session with unsaved work. Two pieces of the interface exist because of that: printing a project marks it `[unsaved changes]`, and `projectStatus()` reports whether there are unsaved edits at all. The section accessors are also read-only, so a definition can only change through an authoring function or by editing its file, which keeps the unsaved-changes flag truthful.
+The honest cost is that you can end a session with unsaved work. Two pieces of the interface exist because of that: printing a project marks it `[unsaved changes]`, and `projectStatus()` reports whether there are unsaved edits at all. The section accessors are also read-only, so a definition can only change through an `add*`, `set*`, or `remove*` function or by editing its file, which keeps the unsaved-changes flag truthful.
 
 ## Why ids are canonicalized
 
-Every definition is referenced by its **id**, and because that id doubles as the definition's filename in the `definitions/` tree, an id has to be a legal, unambiguous filename. So ids are **canonicalized** the moment they enter a project: lowercased, and with characters that are illegal or awkward in a filename replaced. The id `Tumor/Drug:Conc` is stored as `tumor_drug_conc`, and the authoring function warns you when it changes what you typed, so the stored id is never a surprise.
+Every definition is referenced by its **id**, and because that id doubles as the definition's filename in the `definitions/` tree, an id has to be a legal, unambiguous filename. So ids are **canonicalized** the moment they enter a project: lowercased, and with characters that are illegal or awkward in a filename replaced. The id `Tumor/Drug:Conc` is stored as `tumor_drug_conc`, and the function warns you when it changes what you typed, so the stored id is never a surprise.
 
-The alternative is to keep the id exactly as typed and escape it only when writing the file. That fails in a specific and unpleasant way: it produces two spellings of the same thing, one for references and one for filenames, and the mapping between them has to be maintained everywhere. Worse, it makes a project's behaviour depend on the filesystem. `MyScenario.json` and `myscenario.json` are the same file on a typical macOS or Windows machine and two different files on Linux, so a project authored with mixed-case ids can load on one machine and fail on another.
+The alternative is to keep the id exactly as typed and escape it only when writing the file. That fails in a specific and unpleasant way: it produces two spellings of the same thing, one for references and one for filenames, and the mapping between them has to be maintained everywhere. Worse, it makes a project's behaviour depend on the filesystem. `MyScenario.json` and `myscenario.json` are the same file on a typical macOS or Windows machine and two different files on Linux, so a project written with mixed-case ids can load on one machine and fail on another.
 
 Canonicalizing on entry avoids both. Because the same transformation is applied to references, a reference typed the way the definition was typed still resolves to it, so you do not have to remember the sanitized form. It is also why every example id in these articles is lowercase (`aciclovir_iv`, `adult_male`, `european_adults`): that is simply what ids look like after canonicalization.
 
@@ -77,7 +77,7 @@ Observed-data sources are the one deliberate exception, and `vignette("about-the
 
 The package checks a reference at two different times depending on how it arrived, and the difference is deliberate.
 
-**An authoring function checks immediately.** `addScenario()` with a misspelled individual id aborts on the spot, names the missing id, and offers the closest existing one. That is the right moment because you are writing exactly one reference by hand and the typo is in front of you. Deferring the complaint would mean discovering it much later, with no memory of what you meant.
+**An `add*` or `set*` function checks immediately.** `addScenario()` with a misspelled individual id aborts on the spot, names the missing id, and offers the closest existing one. That is the right moment because you are writing exactly one reference by hand and the typo is in front of you. Deferring the complaint would mean discovering it much later, with no memory of what you meant.
 
 **Reading a project defers.** `loadProject()` and `importProjectFromExcel()` accept a project whose references do not all resolve. Each section is read on its own, and the gaps are reported rather than fatal. That is the right behaviour because the alternative is a project you cannot open. A legacy Excel project with one real gap, or a work in progress a colleague is halfway through, would become unloadable, and the tools you would use to inspect and repair it all need it loaded first. Reading also tells you about every gap at once, instead of stopping at the first.
 

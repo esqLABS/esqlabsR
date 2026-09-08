@@ -28,7 +28,7 @@ A project stores a **source definition**, not the numbers: a small record under 
 
 The four types differ only in where the data comes from: `excel` reads sheets of a workbook through an OSPS data-importer configuration, `pkml` reads a saved `DataSet`, `script` runs an R script that returns one, and `programmatic` takes a `DataSet` you built in the session.
 
-Throughout, scaffold a writable copy of the bundled example so the sources you add are written to a project you own, not the installed package:
+Throughout, work against a writable copy of the bundled example so the sources you add are written to a project you own, not the installed package:
 
 ```{r}
 project_dir <- withr::local_tempdir()
@@ -42,13 +42,13 @@ The example already ships with one observed-data source, an Excel source. You ca
 project$definitions$observedData[[1]]
 ```
 
-## Choose the handle a source is known by
+## Choose the name a source is known by
 
 Two strings attach to every source, and they are not interchangeable. The **source id** is what `removeObservedData()` matches and what names the definition file. The **DataSet name** is what a DataCombined references and what `getObservedDataNames()` lists; it comes from the data itself, so an Excel sheet becomes a long, fully qualified name. `vignette("about-the-plotting-model")` explains why one string cannot serve both roles.
 
 The working rule: **read the DataSet name from `getObservedDataNames()` rather than typing it**, and use the source id only to remove a source.
 
-Set an `id` when you want to choose that handle yourself instead of inheriting it from the file. Since the id also names the definition file, the declaration below is stored as `definitions/observed-data/laskin_iv.json` rather than under the data file's name:
+Set an `id` when you want to choose that name yourself instead of inheriting it from the file. Since the id also names the definition file, the declaration below is stored as `definitions/observed-data/laskin_iv.json` rather than under the data file's name:
 
 ```{r, eval = FALSE}
 addObservedData(
@@ -65,6 +65,21 @@ removeObservedData(project, "laskin_iv")
 ```{r}
 getObservedDataNames(project)
 ```
+
+A DataCombined references that name in the `dataSet` field of an observed entry, so read it out rather than typing it:
+
+```{r, eval = FALSE}
+addDataCombined(
+  project,
+  id = "aciclovir_report",
+  observed = list(list(
+    label = "Aciclovir observed",
+    dataSet = getObservedDataNames(project)[1]
+  ))
+)
+```
+
+`vignette("how-to-plot-results")` pairs this with a simulated curve and draws the figure.
 
 ## Loading observed data
 
@@ -157,7 +172,7 @@ addObservedData(project, scratch)
 
 Until you save, that `DataSet` lives on the in-memory project and the entry on disk is a `{type: "programmatic", name}` sentinel. On `saveProject()` the package writes the `DataSet` to a PKML file named after it (`Scratch measurement.pkml`) under the data folder and rewrites the entry to a `pkml` source. From then on it is an ordinary file-backed source: it survives a reload, and its remove id becomes the PKML file basename rather than the DataSet name.
 
-Because saving turns a `programmatic` source into a `pkml` file, the data folder must be declared before you save; a project with no data folder cannot write the PKML and stops with a clear message. A `programmatic` sentinel that reaches a fresh session without its `DataSet` (a hand-authored declaration, or a project opened before it was ever saved) resolves to nothing, and the load warns you by name so it never vanishes silently.
+Because saving turns a `programmatic` source into a `pkml` file, the data folder must be declared before you save; a project with no data folder cannot write the PKML and stops with a clear message. A `programmatic` sentinel that reaches a fresh session without its `DataSet` (a declaration written by hand, or a project opened before it was ever saved) resolves to nothing, and the load warns you by name so it never vanishes silently.
 
 ## Remove a source
 
