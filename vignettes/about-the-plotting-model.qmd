@@ -88,14 +88,14 @@ This follows from who owns measured data. It is usually not the modeler: it arri
 
 Resolving on demand means a figure always reflects the current source file, and it keeps a project small regardless of how much data the analysis compares against.
 
-The cost is real and worth stating: a project is not self-contained without the files its sources point at, and a source that has moved or been deleted fails when the data is resolved rather than when it was declared. This is the same author-time-versus-read-time trade described in `vignette("about-the-project-model")`, and it is why validation reports observed-data problems as part of the whole-project view.
+The cost is real and worth stating: a project is not self-contained without the files its sources point at, and a source that has moved or been deleted fails when the data is resolved rather than when it was declared. This is the same checked-as-you-write versus checked-when-the-project-is-opened trade described in `vignette("about-the-project-model")`, and it is why validation reports observed-data problems as part of the whole-project view.
 
 ## Why two names attach to every source
 
 Every observed-data source carries two strings that are not always equal, and confusing them is the most common stumble in this part of the package:
 
-- **The source id** is the project's handle on the declaration. It is the id you remove by, and it names the definition file. It is either the `id` you set, or, when you set none, it is inherited from the data source: the file basename for a file-based source, the `DataSet` name for an unsaved programmatic one.
-- **The DataSet name** is the handle a DataCombined references. It comes from the data itself. An Excel importer, for instance, expands a sheet into a long, fully qualified name that nobody would choose by hand.
+- **The source id** is the name the project knows the declaration by. It is the id you remove by, and it names the definition file. It is either the `id` you set, or, when you set none, it is inherited from the data source: the file basename for a file-based source, the `DataSet` name for an unsaved programmatic one.
+- **The DataSet name** is the name a DataCombined references. It comes from the data itself. An Excel importer, for instance, expands a sheet into a long, fully qualified name that nobody would choose by hand.
 
 They differ because they answer different questions. The source id identifies *the declaration you wrote*; the DataSet name identifies *a series inside the data*, and one declaration can produce several of them (an Excel source naming three sheets yields three DataSets). No single string can serve both roles.
 

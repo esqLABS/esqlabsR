@@ -22,9 +22,9 @@ library(esqlabsR)
 
 Before you run anything, check that the project hangs together: every reference resolves, no required field is missing, no id is duplicated. `validateProject()` does this and prints a readable report. This guide shows how to run it, read the report, act on a problem, and gate a script on the result.
 
-It assumes you know what a Project is and how to author one (see `vignette("how-to-set-up-a-project")` and `vignette("how-to-design-scenarios")`).
+It assumes you know what a Project is and how to create one (see `vignette("how-to-set-up-a-project")` and `vignette("how-to-design-scenarios")`).
 
-Run it right after authoring and before running: `runScenarios()` and `createPlots()` each validate the parts of the project their own work is built from, so an explicit `validateProject()` is what gives you the whole picture at the moment you choose, rather than the first blocking error a slow run happens to hit. `vignette("about-the-project-model")` covers why validation is split up this way and why it reports two levels of finding.
+Run it right after you finish editing and before running: `runScenarios()` and `createPlots()` each validate the parts of the project their own work is built from, so an explicit `validateProject()` is what gives you the whole picture at the moment you choose, rather than the first blocking error a slow run happens to hit. `vignette("about-the-project-model")` covers why validation is split up this way and why it reports two levels of finding.
 
 Throughout, work on a writable copy of the bundled example:
 
@@ -62,7 +62,7 @@ isAnyCriticalErrors(results)
 
 ## Diagnose a dangling reference
 
-The most common authoring slip is a dangling reference: a definition pointing at an id that does not exist, usually a small misspelling. Note that a *loaded* project can hold one even though `addScenario()` would have refused it, because reading a project reports gaps rather than rejecting them (`vignette("about-the-project-model")` explains why).
+The most common slip is a dangling reference: a definition pointing at an id that does not exist, usually a small misspelling. Note that a *loaded* project can hold one even though `addScenario()` would have refused it, because reading a project reports gaps rather than rejecting them (`vignette("about-the-project-model")` explains why).
 
 To see what the report looks like, suppose one scenario file in our copy mistypes the individual id `adult_male` as `adlt_male`. Reloading the project catches the dangling reference at load time, and `validateProject()` then reports it in full:
 
@@ -103,7 +103,7 @@ validationSummary(broken_results)
 
 ## Resolve and re-validate
 
-Fixing the problem is the same authoring you already know. Here the scenario simply needs to point at the correct individual id; `setScenario()` updates it in memory (call `saveProject()` when you want the fix on disk):
+Fixing the problem uses the same functions you already know. Here the scenario simply needs to point at the correct individual id; `setScenario()` updates it in memory (call `saveProject()` when you want the fix on disk):
 
 ```{r}
 setScenario(broken, "aciclovir_iv", individual = "adult_male")
@@ -121,6 +121,6 @@ Both the report and `isAnyCriticalErrors()` are clean, so the project is ready t
 
 ## Where to go next
 
-With a clean project in hand, see `vignette("how-to-run-simulations")` to execute the scenarios and `vignette("how-to-plot-results")` to turn the results into figures. To author or repair the definitions a validation problem points at, see `vignette("how-to-design-scenarios")`.
+With a clean project in hand, see `vignette("how-to-run-simulations")` to execute the scenarios and `vignette("how-to-plot-results")` to turn the results into figures. To write or repair the definitions a validation problem points at, see `vignette("how-to-design-scenarios")`.
 
 To look up which fields a definition requires, see `vignette("reference-definition-fields")`. For why validation reports two levels and checks a different slice of the project per entry point, see `vignette("about-the-project-model")`.

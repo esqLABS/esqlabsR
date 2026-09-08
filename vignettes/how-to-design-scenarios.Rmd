@@ -20,13 +20,13 @@ knitr::opts_chunk$set(
 library(esqlabsR)
 ```
 
-A **Scenario** is the unit of work in `esqlabsR`: one runnable simulation, described declaratively. It names the model to run, the subject to run it on, the dosing, the parameters to apply, the outputs to record, and the time grid. You author scenarios (and the definitions they reference) into a Project, then hand the Project to `runScenarios()` to execute them. This article shows how to build scenarios and their supporting definitions from R, and how to edit, rename, duplicate, and remove them.
+A **Scenario** is the unit of work in `esqlabsR`: one runnable simulation, written down once as a set of choices. It names the model to run (a `.pkml` simulation file exported from PK-Sim or MoBi), the subject to run it on, the dosing, the parameters to apply, the outputs to record, and the time grid. You write scenarios (and the definitions they reference) into a Project, then hand the Project to `runScenarios()` to execute them. This article shows how to build scenarios and their supporting definitions from R, and how to edit, rename, duplicate, and remove them.
 
 This article assumes you know what a Project is and how to load one; see `vignette("how-to-set-up-a-project")` if not.
 
 ## Working against a writable copy
 
-Every authoring function in this article mutates a Project in memory, and `saveProject()` reconciles those edits to the `definitions/scenarios/` tree on disk. So you never want to author against (and save over) the package's own bundled example. Instead, scaffold a fresh, writable copy of the worked example into a temporary directory and load that:
+Every `add*`, `set*`, and `remove*` function in this article changes a Project in memory, and `saveProject()` brings the `definitions/scenarios/` files on disk in line with it. So you never want to work against (and save over) the package's own bundled example. Instead, make a fresh, writable copy of the worked example in a temporary directory and load that:
 
 ```{r}
 project_dir <- withr::local_tempdir()
@@ -41,11 +41,24 @@ In your own work you would point `loadProject()` at your real project instead; e
 project$definitions$scenarios
 ```
 
+## The simplest scenario
+
+A scenario needs nothing but the model file. Every other field falls back to what PK-Sim or MoBi exported: the dosing written into the model, the model's own individual, the output selections it stores, and its time grid. So a one-argument scenario is already complete, and it simulates the model exactly as it was exported:
+
+```{r}
+addScenario(project, "aciclovir_as_exported", modelFile = "Aciclovir.pkml")
+project$definitions$scenarios[["aciclovir_as_exported"]]
+```
+
+`modelFile` names the exported simulation relative to the project's simulations folder (`Models/Simulations`). That is enough to run: `runScenarios(project, scenarios = "aciclovir_as_exported")`, covered in `vignette("how-to-run-simulations")`.
+
+The rest of this article is for when the export is not what you want to simulate: a different individual, a different dose, other parameter values, other outputs, or a different time grid.
+
 ## Building the supporting definitions
 
-A scenario can only reference definitions that already exist, so before you create the scenario you typically define the pieces it will use. The authoring API is uniform: every function takes the project first, then the definition's `id`, then its fields.
+A scenario can only reference definitions that already exist, so before you create the scenario you typically define the pieces it will use. These functions all take the project first, then the definition's `id`, then its fields.
 
-Ids are **canonicalized** on entry (lowercased and made filename-safe), and the authoring function warns you when that changes what you typed, as the `addOutputPath()` call below shows. `vignette("about-the-project-model")` explains why.
+Ids are **canonicalized** on entry (lowercased and made filename-safe), and the function warns you when that changes what you typed, as the `addOutputPath()` call below shows. `vignette("about-the-project-model")` explains why.
 
 ### Output paths
 
@@ -157,7 +170,7 @@ project$definitions$applications[["aciclovir_iv_500mg"]]
 
 ## Creating a scenario
 
-With the supporting definitions in place, `addScenario()` assembles them into a runnable scenario. The id comes first, right after the project, and `modelFile` is the only other required argument; everything else is an optional reference or setting:
+With the supporting definitions in place, `addScenario()` assembles them into a runnable scenario. The id comes first, right after the project, and the exported PK-Sim or MoBi simulation named by `modelFile` is the only other required argument; everything else is an optional reference or setting:
 
 ```{r}
 addScenario(
@@ -174,7 +187,7 @@ addScenario(
 project$definitions$scenarios[["aciclovir_iv_ckd"]]
 ```
 
-Every field except `modelFile` is optional, and each one that you omit falls back to whatever the model file carries as exported from PK-Sim or MoBi. `vignette("reference-definition-fields")` lists all of them with their defaults.
+As in the simplest scenario above, every field except `modelFile` is optional, and each one you omit falls back to whatever the model file carries as exported from PK-Sim or MoBi. `vignette("reference-definition-fields")` lists all of them with their defaults.
 
 Three behaviours are worth knowing while you write the call:
 
@@ -184,7 +197,7 @@ Three behaviours are worth knowing while you write the call:
 
 To make it a population scenario, pass a `population` instead of, or alongside, an `individual`; the scenario type switches automatically. For a steady-state run, set `steadyState = TRUE` and give `steadyStateTime` and `steadyStateTimeUnit`.
 
-As with every authoring call, the scenario is staged in memory. It lands in `definitions/scenarios/aciclovir_iv_ckd.json` when you call `saveProject()`.
+Like every other edit, the scenario is only in memory. It lands in `definitions/scenarios/aciclovir_iv_ckd.json` when you call `saveProject()`.
 
 ## Editing a scenario in place
 
@@ -230,14 +243,14 @@ As with `setScenario()`, a reference argument is validated before anything is wr
 
 ## Renaming, duplicating, and removing scenarios
 
-A common authoring move is to take a working scenario as a template for a variant. `duplicateScenario()` makes an independent copy under a new id, leaving the original untouched:
+A common move is to take a working scenario as a template for a variant. `duplicateScenario()` makes an independent copy under a new id, leaving the original untouched:
 
 ```{r}
 duplicateScenario(project, "aciclovir_iv", "aciclovir_iv_highdose")
 names(project$definitions$scenarios)
 ```
 
-`renameScenario()` changes a scenario's id in memory, keeping the stored name in step with the new key; the next `saveProject()` reconciles the tree, writing the definition under the new id and deleting the old file:
+`renameScenario()` changes a scenario's id in memory, keeping the stored name in step with the new key; the next `saveProject()` writes the definition under the new id and deletes the old file:
 
 ```{r}
 renameScenario(project, "aciclovir_iv_highdose", "aciclovir_iv_high")
@@ -246,7 +259,7 @@ names(project$definitions$scenarios)
 
 Both take the existing id first and the new id second, and both canonicalize their ids the same way `addScenario()` does. Neither will silently overwrite an existing scenario: a rename or duplicate onto an id already in use aborts.
 
-When a scenario has served its purpose, `removeScenario()` drops it from the in-memory project; the next `saveProject()` reconciles the tree and deletes its definition file:
+When a scenario has served its purpose, `removeScenario()` drops it from the in-memory project; the next `saveProject()` deletes its definition file:
 
 ```{r}
 removeScenario(project, "aciclovir_iv_high")
@@ -279,8 +292,8 @@ This is a starting point, not the finished article: the scenarios it creates are
 
 ## Where to go next
 
-Every edit above is staged in memory. Call `saveProject(project)` to reconcile the `definitions/` tree to it, or `reloadProject(project)` to discard the edits and re-read from disk.
+Every edit above is staged in memory. Call `saveProject(project)` to write them to the `definitions/` tree, or `reloadProject(project)` to discard the edits and re-read from disk.
 
 Next, validate what you built with `vignette("how-to-validate-a-project")`, then run it with `vignette("how-to-run-simulations")` and plot it with `vignette("how-to-plot-results")`.
 
-For the fields of each definition kind, their defaults, and the rules for adding several at once, see `vignette("reference-definition-fields")`. For why references are checked as you author but only reported when a project is read, see `vignette("about-the-project-model")`.
+For the fields of each definition kind, their defaults, and the rules for adding several at once, see `vignette("reference-definition-fields")`. For why references are checked as you write them but only reported when a project is read, see `vignette("about-the-project-model")`.
