@@ -56,7 +56,7 @@
       -- Definitions -----------------------------------------------------------------
         * Scenarios: 1
 
-# Project$print() hides the Excel section and empty sections
+# Project$print() hides the Excel section and says a project has no definitions yet
 
     Code
       print(project)
@@ -65,6 +65,18 @@
       
       -- Paths (relative to the project folder) --------------------------------------
         * Definitions Folder: definitions
+      
+      -- Definitions -----------------------------------------------------------------
+        * No definitions yet.
+
+# printing the definitions accessor of an empty project says it is empty
+
+    Code
+      print(project$definitions)
+    Output
+      
+      -- Definitions -----------------------------------------------------------------
+        * No definitions yet.
 
 # a whole-section assignment through a section accessor is rejected
 
