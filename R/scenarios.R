@@ -672,11 +672,10 @@ print.Scenario <- function(x, ...) {
 #'   `units` — applied to every selected scenario as the final
 #'   parameter layer.
 #' @param simulationRunOptions Optional [ospsuite::SimulationRunOptions]
-#'   for the simulation run. `NULL` (default) falls back to the project's
-#'   `defaultSimulationRunOptions`, including its solver setting
-#'   `checkForNegativeValues`, which is written to each simulation. An
-#'   explicit value replaces the project default entirely, so the
-#'   simulations keep the solver settings of their model files.
+#'   for the simulation run. `NULL` (default) takes the run options from the
+#'   project's `defaultSimulationRunOptions`. An explicit value replaces the
+#'   run options only: a [ospsuite::SimulationRunOptions] has no solver field,
+#'   so the project's and each scenario's solver settings still apply.
 #' @param validate Logical. If `TRUE` (default), runs the relevant
 #'   section validators via [validateProject()] before simulating and
 #'   aborts with a formatted summary on critical errors. Set to
@@ -762,13 +761,14 @@ runScenarios <- function(
 #'   `units` — applied to every selected scenario as the final
 #'   parameter layer.
 #' @param simulationRunOptions Optional [ospsuite::SimulationRunOptions].
-#'   Consulted only for a scenario with `simulateSteadyState` set (the
-#'   steady-state pre-solve still runs); it is not applied to the returned
-#'   simulations, since they are not run here. `NULL` (default) falls back
-#'   to the project's `defaultSimulationRunOptions`, including its solver
-#'   setting `checkForNegativeValues`, which is written to each returned
-#'   simulation; an explicit value replaces the project default entirely,
-#'   so the simulations keep the solver settings of their model files.
+#'   Its run options are consulted only for a scenario with
+#'   `simulateSteadyState` set (the steady-state pre-solve still runs), since
+#'   the returned simulations are not run here. `NULL` (default) takes them
+#'   from the project's `defaultSimulationRunOptions`. Solver settings are a
+#'   separate matter: those are written to each returned simulation, from the
+#'   project's `defaultSimulationRunOptions` and each scenario's own
+#'   `solverSettings`, and a [ospsuite::SimulationRunOptions] has no solver
+#'   field with which to replace them.
 #' @param validate Logical. If `TRUE` (default), runs the relevant
 #'   section validators via [validateProject()] before building and
 #'   aborts with a formatted summary on critical errors. Set to

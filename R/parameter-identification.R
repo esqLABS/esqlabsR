@@ -841,13 +841,15 @@ print.PITask <- function(x, ...) {
   cache$individuals <- list()
   cache$populations <- list()
 
-  # Solver settings for the task's simulations: the project's default record
-  # is the baseline and the task's own `simulationRunOptions` block overrides
-  # it entry by entry. `.prepareScenario()` writes the result before its
-  # steady-state pre-solve.
-  solverSettings <- utils::modifyList(
-    project$defaultSimulationRunOptions %||% list(),
-    piTask$configuration$simulationRunOptions %||% list()
+  # Solver settings for the task's simulations: the project's default record is
+  # the baseline and the task's own `simulationRunOptions` block overrides it
+  # field by field. The result is handed to `.prepareScenario()` as the record
+  # *below* each scenario's own `solverSettings` block, so a scenario's setting
+  # wins over the task's, and nothing sits above it because `runPI()` takes no
+  # run options of its own.
+  solverDefaults <- .mergeRunOptionRecords(
+    project$defaultSimulationRunOptions,
+    piTask$configuration$simulationRunOptions
   )
 
   scenarioNames <- piTask$scenarios
@@ -867,7 +869,7 @@ print.PITask <- function(x, ...) {
       cache = cache,
       simulationRunOptions = NULL,
       stopIfParameterNotFound = stopIfParameterNotFound,
-      solverSettings = solverSettings
+      solverDefaults = solverDefaults
     )
   }
   simulations <- lapply(prepared, `[[`, "simulation")

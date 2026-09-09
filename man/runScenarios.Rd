@@ -29,11 +29,10 @@ to a different form warns, naming the id it resolved to.}
 parameter layer.}
 
 \item{simulationRunOptions}{Optional \link[ospsuite:SimulationRunOptions]{ospsuite::SimulationRunOptions}
-for the simulation run. \code{NULL} (default) falls back to the project's
-\code{defaultSimulationRunOptions}, including its solver setting
-\code{checkForNegativeValues}, which is written to each simulation. An
-explicit value replaces the project default entirely, so the
-simulations keep the solver settings of their model files.}
+for the simulation run. \code{NULL} (default) takes the run options from the
+project's \code{defaultSimulationRunOptions}. An explicit value replaces the
+run options only: a \link[ospsuite:SimulationRunOptions]{ospsuite::SimulationRunOptions} has no solver field,
+so the project's and each scenario's solver settings still apply.}
 
 \item{validate}{Logical. If \code{TRUE} (default), runs the relevant
 section validators via \code{\link[=validateProject]{validateProject()}} before simulating and

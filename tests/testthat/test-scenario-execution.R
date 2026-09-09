@@ -122,54 +122,86 @@ test_that(".applySolverSettings leaves a setting the record does not carry", {
   expect_false(simulation$solver$checkForNegativeValues)
 })
 
-test_that(".resolveRunOptions lets an explicit argument replace the project record entirely", {
+test_that(".mergeRunOptionRecords lets a later record win field by field", {
+  expect_identical(
+    .mergeRunOptionRecords(
+      list(relTol = 1e-5, hMax = 2, checkForNegativeValues = FALSE),
+      list(relTol = 1e-6, hMax = 0.5),
+      list(relTol = 1e-4)
+    ),
+    list(relTol = 1e-4, hMax = 0.5, checkForNegativeValues = FALSE)
+  )
+
+  # A NULL or empty record contributes nothing, so an absent level cannot
+  # blank a field a lower level set.
+  expect_identical(
+    .mergeRunOptionRecords(list(relTol = 1e-5), NULL, list()),
+    list(relTol = 1e-5)
+  )
+  expect_identical(.mergeRunOptionRecords(), list())
+  expect_identical(.mergeRunOptionRecords(NULL, NULL), list())
+})
+
+test_that(".resolveRunOptions keeps the solver chain's two ends apart", {
   project <- .testProject()
   project$defaultSimulationRunOptions <- list(
     numberOfCores = 2,
     checkForNegativeValues = FALSE
   )
 
-  # No argument: both halves come from the project record.
+  # No argument: the run options are built from the project record, which is
+  # also the record below a scenario's own block.
   resolved <- .resolveRunOptions(project, NULL)
   expect_identical(resolved$runOptions$numberOfCores, 2L)
   expect_identical(
-    resolved$solverSettings,
+    resolved$solverDefaults,
     list(numberOfCores = 2, checkForNegativeValues = FALSE)
   )
+  expect_null(resolved$solverOverrides)
 
-  # Explicit argument: it is passed through and no solver settings are
-  # resolved, so the project's `checkForNegativeValues` is not applied.
+  # An explicit argument replaces the run options only. It carries no solver
+  # field, so the project's `checkForNegativeValues` still applies rather than
+  # being suppressed along with the run options.
   callerOptions <- ospsuite::SimulationRunOptions$new(numberOfCores = 5)
   resolved <- .resolveRunOptions(project, callerOptions)
   expect_identical(resolved$runOptions, callerOptions)
-  expect_null(resolved$solverSettings)
+  expect_identical(
+    resolved$solverDefaults,
+    list(numberOfCores = 2, checkForNegativeValues = FALSE)
+  )
+  expect_null(resolved$solverOverrides)
 
   # No project record and no argument: package defaults all round.
   project$defaultSimulationRunOptions <- NULL
   expect_identical(
     .resolveRunOptions(project, NULL),
-    list(runOptions = NULL, solverSettings = NULL)
+    list(runOptions = NULL, solverDefaults = NULL, solverOverrides = NULL)
   )
 })
 
-test_that("buildSimulations applies the project default checkForNegativeValues only when the caller passes no run options", {
+test_that("buildSimulations applies the project default solver settings whether or not the caller passes run options", {
   # Regression for #1252: with ospsuite 13 the project default must reach
-  # `simulation$solver` (there is no field for it on `SimulationRunOptions`),
-  # and only when the project default is in force at all.
+  # `simulation$solver`, there being no field for it on `SimulationRunOptions`.
   project <- .testProject()
-  project$defaultSimulationRunOptions <- list(checkForNegativeValues = FALSE)
+  project$defaultSimulationRunOptions <- list(
+    checkForNegativeValues = FALSE,
+    relTol = 1e-7
+  )
 
   built <- buildSimulations(project, scenarios = "testscenario")
   expect_false(built$testscenario$simulation$solver$checkForNegativeValues)
+  expect_identical(built$testscenario$simulation$solver$relTol, 1e-7)
 
-  # An explicit argument replaces the project default, so the simulation keeps
-  # the model file's own setting (on, for the Aciclovir fixture).
+  # A `SimulationRunOptions` object replaces the run options only: it carries
+  # no solver field, so it cannot suppress the project's solver settings
+  # (#408).
   built <- buildSimulations(
     project,
     scenarios = "testscenario",
     simulationRunOptions = ospsuite::SimulationRunOptions$new()
   )
-  expect_true(built$testscenario$simulation$solver$checkForNegativeValues)
+  expect_false(built$testscenario$simulation$solver$checkForNegativeValues)
+  expect_identical(built$testscenario$simulation$solver$relTol, 1e-7)
 })
 
 test_that("runScenarios falls back to the project default run options when the caller passes none", {

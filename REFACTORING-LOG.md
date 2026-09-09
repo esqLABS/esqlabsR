@@ -228,3 +228,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-09-09 10:15: The release workflow comment now says what the new ospsuite Remotes entry does to a release PR, instead of claiming the pinning step is a no-op. (#1252)
 - 2026-09-09 12:10: Documenting the package no longer prints four unresolved-link warnings; four roxygen comments in the Excel import named an internal helper as a cross-reference to a page that does not exist, and now name it as code like the rest of the package does. (#1267)
 - 2026-09-09 16:32: Every solver setting a project or PI task declares now reaches the simulation, not just checkForNegativeValues. (#408)
+- 2026-09-09 16:37: Solver settings now resolve as one field-by-field chain instead of one level suppressing another, so a simulationRunOptions argument replaces the run options without discarding the project default solver settings. (#408)

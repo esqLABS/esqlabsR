@@ -28,13 +28,14 @@ to a different form warns, naming the id it resolved to.}
 parameter layer.}
 
 \item{simulationRunOptions}{Optional \link[ospsuite:SimulationRunOptions]{ospsuite::SimulationRunOptions}.
-Consulted only for a scenario with \code{simulateSteadyState} set (the
-steady-state pre-solve still runs); it is not applied to the returned
-simulations, since they are not run here. \code{NULL} (default) falls back
-to the project's \code{defaultSimulationRunOptions}, including its solver
-setting \code{checkForNegativeValues}, which is written to each returned
-simulation; an explicit value replaces the project default entirely,
-so the simulations keep the solver settings of their model files.}
+Its run options are consulted only for a scenario with
+\code{simulateSteadyState} set (the steady-state pre-solve still runs), since
+the returned simulations are not run here. \code{NULL} (default) takes them
+from the project's \code{defaultSimulationRunOptions}. Solver settings are a
+separate matter: those are written to each returned simulation, from the
+project's \code{defaultSimulationRunOptions} and each scenario's own
+\code{solverSettings}, and a \link[ospsuite:SimulationRunOptions]{ospsuite::SimulationRunOptions} has no solver
+field with which to replace them.}
 
 \item{validate}{Logical. If \code{TRUE} (default), runs the relevant
 section validators via \code{\link[=validateProject]{validateProject()}} before building and

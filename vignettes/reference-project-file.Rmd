@@ -128,7 +128,15 @@ The remaining fields are solver settings, the settable properties of `ospsuite::
 | `useJacobian` | logical | Whether the analytic Jacobian is used. |
 | `checkForNegativeValues` | logical | Whether the solver checks for negative values. |
 
-`runScenarios()` and `buildSimulations()` use this block when the caller passes no `simulationRunOptions`: `numberOfCores` and `showProgress` become the run options, and every solver setting is written to each simulation (`simulation$solver`). An explicit `simulationRunOptions` argument replaces the whole block, and the simulations then keep the solver settings of their model files. A parameter identification applies the block's solver settings to its simulations as well, unless the PI task's own `simulationRunOptions` block sets the same field.
+`runScenarios()` and `buildSimulations()` read this block as the project-wide default: `numberOfCores` and `showProgress` become the run options, and every solver setting is written to each simulation (`simulation$solver`).
+
+The block is a default, never the last word. Each level of the chain overrides the level below it field by field, and a field nobody sets keeps the value the model file carries:
+
+- `defaultSimulationRunOptions`, the project-wide default,
+- a scenario's own `solverSettings` block (see `vignette("reference-definition-fields")`), or a PI task's own `simulationRunOptions` block,
+- the `simulationRunOptions` argument of `runScenarios()` or `buildSimulations()`.
+
+So an `ospsuite::SimulationRunOptions` passed to `runScenarios()` replaces the run options without touching any solver setting, since it has no field for one. Inside a parameter identification the scenario block wins over the task block, and `runPI()` takes no run options of its own.
 
 ### `excel`
 
