@@ -225,3 +225,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-08-31 11:20: The sensitivity time-profile colour legend shows the variation factors again; ospsuite 13 hands dataset names back as a factor, and the numeric value is now read from the label instead of the level position. (#1259)
 - 2026-08-31 12:40: Regenerated the reference pages for the run-options documentation before review. (#1252)
 - 2026-09-07 19:56: print(project) always shows the Definitions section, and a project holding nothing says so instead of dropping the section; printing project$definitions on such a project says the same instead of printing nothing. (#1265)
+- 2026-09-09 10:15: The release workflow comment now says what the new ospsuite Remotes entry does to a release PR, instead of claiming the pinning step is a no-op. (#1252)
