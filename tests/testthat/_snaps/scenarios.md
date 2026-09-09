@@ -126,7 +126,7 @@
       project$setScenario("testscenario", simulationType = "Population")
     Condition
       Error:
-      ! `setScenario()` cannot set simulationType. i The settable fields are modelFile, individual, population, application, parameterSets, initialConditions, outputPaths, simulationTime, simulationTimeUnit, steadyState, steadyStateTime, steadyStateTimeUnit, overwriteFormulasInSS, and readPopulationFromCSV.
+      ! `setScenario()` cannot set simulationType. i The settable fields are modelFile, individual, population, application, parameterSets, initialConditions, outputPaths, simulationTime, simulationTimeUnit, steadyState, steadyStateTime, steadyStateTimeUnit, overwriteFormulasInSS, readPopulationFromCSV, and solverSettings.
 
 # a scenario record passed with field arguments alongside it aborts
 

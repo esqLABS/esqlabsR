@@ -906,6 +906,14 @@ buildSimulations <- function(
 #'   steady state. Default `FALSE`.
 #' @param readPopulationFromCSV Logical. Load population from CSV.
 #'   Default `FALSE`.
+#' @param solverSettings Named list. Solver settings for this scenario's
+#'   simulation: any of `absTol`, `relTol`, `h0`, `hMin`, `hMax`, `mxStep`,
+#'   `useJacobian` and `checkForNegativeValues`, e.g.
+#'   `list(relTol = 1e-6)`. Default `NULL`, which leaves the scenario with the
+#'   project's `defaultSimulationRunOptions` and, where that sets nothing, the
+#'   solver settings of the model file. The whole block is one value per
+#'   scenario, so an `id` of several scenarios gives each of them the same
+#'   block.
 #' @param overwrite Logical. When `FALSE` (default), an id that already exists
 #'   aborts. When `TRUE`, the existing scenario is replaced (last-write-wins).
 #'   Distinct from `overwriteFormulasInSS`, which is a steady-state model
@@ -931,6 +939,7 @@ addScenario <- function(
   steadyStateTimeUnit = "min",
   overwriteFormulasInSS = FALSE,
   readPopulationFromCSV = FALSE,
+  solverSettings = NULL,
   overwrite = FALSE
 ) {
   validateIsOfType(project, "Project")
@@ -959,6 +968,7 @@ addScenario <- function(
     steadyStateTimeUnit = steadyStateTimeUnit,
     overwriteFormulasInSS = overwriteFormulasInSS,
     readPopulationFromCSV = readPopulationFromCSV,
+    solverSettings = solverSettings,
     overwrite = overwrite
   )
 }
@@ -987,6 +997,7 @@ addScenario <- function(
   steadyStateTimeUnit = "min",
   overwriteFormulasInSS = FALSE,
   readPopulationFromCSV = FALSE,
+  solverSettings = NULL,
   overwrite = FALSE,
   .call
 ) {
@@ -1014,7 +1025,10 @@ addScenario <- function(
     wholeFields = list(
       parameterSets = parameterSets,
       initialConditions = initialConditions,
-      outputPaths = outputPaths
+      outputPaths = outputPaths,
+      # Wrapped so `.wholeField()` cannot read one block of N settings in an
+      # N-id call as one setting per id: each id gets the whole block.
+      solverSettings = rep(list(solverSettings), n)
     )
   )
 
@@ -1151,7 +1165,8 @@ addScenario <- function(
     steadyStateTimeUnit = steadyStateTimeUnit,
     overwriteFormulasInSS = fields$overwriteFormulasInSS,
     modelParameterSets = parameterSets,
-    initialConditions = initialConditions
+    initialConditions = initialConditions,
+    solverSettings = fields$solverSettings
   )
 }
 
@@ -1241,11 +1256,13 @@ removeScenario <- function(project, id) {
 #'   `population`, `application`, `parameterSets`, `initialConditions`,
 #'   `outputPaths`, `simulationTime`, `simulationTimeUnit`, `steadyState`,
 #'   `steadyStateTime`, `steadyStateTimeUnit`, `overwriteFormulasInSS`,
-#'   `readPopulationFromCSV`. Each takes the value [addScenario()] documents for
-#'   it, but has no default here: an omitted field is left untouched, a field
-#'   passed as `NULL` is cleared. Scalar-per-definition fields recycle/align
-#'   across `id`; `parameterSets`, `initialConditions` and `outputPaths` are
-#'   applied whole. An unknown or unnamed field triggers an error.
+#'   `readPopulationFromCSV`, `solverSettings`. Each takes the value
+#'   [addScenario()] documents for it, but has no default here: an omitted
+#'   field is left untouched, a field passed as `NULL` is cleared.
+#'   Scalar-per-definition fields recycle/align across `id`; `parameterSets`,
+#'   `initialConditions`, `outputPaths` and `solverSettings` are applied whole,
+#'   so `solverSettings` replaces the scenario's block rather than merging into
+#'   it. An unknown or unnamed field triggers an error.
 #'
 #' @returns The `project` object, invisibly.
 #' @export
@@ -1291,7 +1308,8 @@ setScenario <- function(project, id, ...) {
   "steadyStateTime",
   "steadyStateTimeUnit",
   "overwriteFormulasInSS",
-  "readPopulationFromCSV"
+  "readPopulationFromCSV",
+  "solverSettings"
 )
 
 # Implementation behind `project$setScenario()` / `setScenario()`. The `...`
@@ -1333,11 +1351,19 @@ setScenario <- function(project, id, ...) {
     )
   }
   wholeNames <- intersect(
-    c("parameterSets", "initialConditions", "outputPaths"),
+    c("parameterSets", "initialConditions", "outputPaths", "solverSettings"),
     names(dots)
   )
   scalarSupplied <- dots[setdiff(names(dots), wholeNames)]
   wholeSupplied <- dots[wholeNames]
+  if ("solverSettings" %in% wholeNames) {
+    # Wrapped so `.wholeField()` cannot read one block of N settings in an
+    # N-id call as one setting per id: each id gets the whole block. The
+    # `[` form keeps a supplied NULL, which clears the block.
+    wholeSupplied["solverSettings"] <- list(
+      rep(list(dots[["solverSettings"]]), n)
+    )
+  }
 
   perDefinition <- .alignAuthoringArgs(
     id,
@@ -1572,6 +1598,11 @@ setScenario <- function(project, id, ...) {
   }
   if ("readPopulationFromCSV" %in% supplied) {
     sc$readPopulationFromCSV <- fields$readPopulationFromCSV
+  }
+  if ("solverSettings" %in% supplied) {
+    # The block is replaced, not merged into: a supplied NULL clears it, which
+    # needs the `[` form for the same reason `simulationTime` does above.
+    sc["solverSettings"] <- list(fields$solverSettings)
   }
   sc
 }

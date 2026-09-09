@@ -231,3 +231,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-09-09 16:37: Solver settings now resolve as one field-by-field chain instead of one level suppressing another, so a simulationRunOptions argument replaces the run options without discarding the project default solver settings. (#408)
 - 2026-09-09 20:32: runScenarios() and buildSimulations() now take simulationRunOptions as a plain named list too, so one run can override a solver setting without editing the project. (#408)
 - 2026-09-09 20:35: A scenario definition can now carry a solverSettings block, which loads, prints, and round-trips through the definition file. (#408)
+- 2026-09-09 20:40: addScenario() and setScenario() now take a solverSettings block, replacing it whole and clearing it with NULL. (#408)

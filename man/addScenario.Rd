@@ -21,6 +21,7 @@ addScenario(
   steadyStateTimeUnit = "min",
   overwriteFormulasInSS = FALSE,
   readPopulationFromCSV = FALSE,
+  solverSettings = NULL,
   overwrite = FALSE
 )
 }
@@ -80,6 +81,15 @@ steady state. Default \code{FALSE}.}
 
 \item{readPopulationFromCSV}{Logical. Load population from CSV.
 Default \code{FALSE}.}
+
+\item{solverSettings}{Named list. Solver settings for this scenario's
+simulation: any of \code{absTol}, \code{relTol}, \code{h0}, \code{hMin}, \code{hMax}, \code{mxStep},
+\code{useJacobian} and \code{checkForNegativeValues}, e.g.
+\code{list(relTol = 1e-6)}. Default \code{NULL}, which leaves the scenario with the
+project's \code{defaultSimulationRunOptions} and, where that sets nothing, the
+solver settings of the model file. The whole block is one value per
+scenario, so an \code{id} of several scenarios gives each of them the same
+block.}
 
 \item{overwrite}{Logical. When \code{FALSE} (default), an id that already exists
 aborts. When \code{TRUE}, the existing scenario is replaced (last-write-wins).
