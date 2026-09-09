@@ -114,7 +114,7 @@ Any property in `filePaths` other than the four above sits unread, so an unrecog
 | `checkForNegativeValues` | logical | Whether the solver checks for negative values. |
 | `showProgress` | logical | Whether run progress is reported. |
 
-`runScenarios()` uses these as the default `simulationRunOptions` when the caller passes none.
+`runScenarios()` and `buildSimulations()` use this block when the caller passes no `simulationRunOptions`: `numberOfCores` and `showProgress` become the run options, and `checkForNegativeValues`, a solver setting, is written to each simulation (`simulation$solver$checkForNegativeValues`). An explicit `simulationRunOptions` argument replaces the whole block, and the simulations then keep the solver settings of their model files. A parameter identification applies `checkForNegativeValues` to its simulations as well, unless the PI task's own `simulationRunOptions` block sets it.
 
 ### `excel`
 

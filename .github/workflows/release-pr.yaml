@@ -4,8 +4,13 @@ name: Release PR
 # set the release Version and rename the NEWS.md development heading, then opens
 # a `release-pr-<version>` PR. The PR is validated by the normal pull request
 # pipeline before merge; tagging and the GitHub Release happen afterwards via a
-# manual dispatch of publish.yaml. The workflow's Remotes-pinning step is a no-op
-# here: OSP dependencies come from the R-universe, not from a `Remotes:` field.
+# manual dispatch of publish.yaml.
+#
+# The workflow's Remotes-pinning step rewrites the `ospsuite` entry in
+# DESCRIPTION to `@*release`, which resolves to the latest ospsuite GitHub
+# release. `Depends:` requires ospsuite 13, which has no release yet, so that
+# pin resolves to 12.4.x and the release PR fails its own dependency
+# resolution. A release has to wait for ospsuite 13 to ship (#1252).
 
 on:
   workflow_dispatch:

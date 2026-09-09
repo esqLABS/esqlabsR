@@ -1086,13 +1086,15 @@ test_that(".createSinglePITask applies simulationRunOptions from the configurati
   expect_s3_class(opts, "SimulationRunOptions")
   expect_equal(opts$numberOfCores, 2L)
 
-  # checkForNegativeValues only.
+  # checkForNegativeValues only: a solver setting, written to the task's
+  # simulations rather than to the run options (#1252).
   pi <- .createSinglePITask(
     project,
     mkTask(list(simulationRunOptions = list(checkForNegativeValues = FALSE))),
     observedData
   )
-  expect_false(pi$configuration$simulationRunOptions$checkForNegativeValues)
+  expect_s3_class(pi$configuration$simulationRunOptions, "SimulationRunOptions")
+  expect_false(pi$simulations[[1]]$solver$checkForNegativeValues)
 
   # Both set.
   pi <- .createSinglePITask(
@@ -1107,7 +1109,47 @@ test_that(".createSinglePITask applies simulationRunOptions from the configurati
   )
   opts <- pi$configuration$simulationRunOptions
   expect_equal(opts$numberOfCores, 4L)
-  expect_false(opts$checkForNegativeValues)
+  expect_false(pi$simulations[[1]]$solver$checkForNegativeValues)
+
+  # Project default without a task-level block: the default reaches the solver.
+  project$defaultSimulationRunOptions <- list(checkForNegativeValues = FALSE)
+  pi <- .createSinglePITask(project, mkTask(list()), observedData)
+  expect_false(pi$simulations[[1]]$solver$checkForNegativeValues)
+
+  # A task-level value wins over the project default.
+  pi <- .createSinglePITask(
+    project,
+    mkTask(list(simulationRunOptions = list(checkForNegativeValues = TRUE))),
+    observedData
+  )
+  expect_true(pi$simulations[[1]]$solver$checkForNegativeValues)
+})
+
+test_that(".createSinglePITask applies the task's checkForNegativeValues before the steady-state pre-solve", {
+  # The pre-solve is a real simulation, so a task that switches the check off
+  # to get past a transiently negative model needs the setting in place by
+  # then. Record what the solver carries at the moment the pre-solve is
+  # reached, without simulating.
+  project <- testProject()
+  observedData <- loadObservedData(project)
+  seen <- NULL
+  local_mocked_bindings(
+    .applyScenarioSteadyState = function(simulation, scenario, ...) {
+      seen <<- simulation$solver$checkForNegativeValues
+      invisible(simulation)
+    }
+  )
+
+  .createSinglePITask(
+    project,
+    testPITask(
+      configuration = list(
+        simulationRunOptions = list(checkForNegativeValues = FALSE)
+      )
+    ),
+    observedData
+  )
+  expect_false(seen)
 })
 
 test_that(".createSinglePITask overwrites scenario output paths with the PI-specified paths", {
@@ -2827,12 +2869,15 @@ test_that("addPITask() rejects malformed outputMappings with a typed error", {
 
 test_that(".buildPIConfiguration() maps type to objectiveFunctionType and builds simulationRunOptions", {
   skip_if_not_installed("ospsuite.parameteridentification")
+  # `checkForNegativeValues` is a solver setting: the block must tolerate it
+  # without writing it to the run options (#1252).
   cfg <- list(
     algorithm = "BOBYQA",
     objectiveFunction = list(type = "lsq"),
     simulationRunOptions = list(
       numberOfCores = 2,
-      checkForNegativeValues = FALSE
+      checkForNegativeValues = FALSE,
+      showProgress = FALSE
     )
   )
   piConfig <- .buildPIConfiguration(cfg)
@@ -2843,7 +2888,7 @@ test_that(".buildPIConfiguration() maps type to objectiveFunctionType and builds
   )
   expect_s3_class(piConfig$simulationRunOptions, "SimulationRunOptions")
   expect_identical(piConfig$simulationRunOptions$numberOfCores, 2L)
-  expect_false(piConfig$simulationRunOptions$checkForNegativeValues)
+  expect_false(piConfig$simulationRunOptions$showProgress)
 })
 
 test_that(".buildPIConfiguration() merges partial algorithmOptions and ciOptions with per-algorithm defaults", {

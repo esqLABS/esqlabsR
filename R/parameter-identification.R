@@ -841,6 +841,15 @@ print.PITask <- function(x, ...) {
   cache$individuals <- list()
   cache$populations <- list()
 
+  # Solver settings for the task's simulations: the project's default record
+  # is the baseline and the task's own `simulationRunOptions` block overrides
+  # it entry by entry. `.prepareScenario()` writes the result before its
+  # steady-state pre-solve.
+  solverSettings <- utils::modifyList(
+    project$defaultSimulationRunOptions %||% list(),
+    piTask$configuration$simulationRunOptions %||% list()
+  )
+
   scenarioNames <- piTask$scenarios
   prepared <- list()
   for (sName in scenarioNames) {
@@ -857,7 +866,8 @@ print.PITask <- function(x, ...) {
       customParams = NULL,
       cache = cache,
       simulationRunOptions = NULL,
-      stopIfParameterNotFound = stopIfParameterNotFound
+      stopIfParameterNotFound = stopIfParameterNotFound,
+      solverSettings = solverSettings
     )
   }
   simulations <- lapply(prepared, `[[`, "simulation")
@@ -1090,16 +1100,11 @@ print.PITask <- function(x, ...) {
     piConfig$objectiveFunctionOptions <- current
   }
 
+  # The block's `checkForNegativeValues` is a solver setting; it reaches the
+  # task's simulations through `.createSinglePITask()`, not the run options.
   sro <- cfg$simulationRunOptions
   if (!is.null(sro)) {
-    runOpts <- ospsuite::SimulationRunOptions$new()
-    if (!is.null(sro$numberOfCores)) {
-      runOpts$numberOfCores <- as.integer(sro$numberOfCores)
-    }
-    if (!is.null(sro$checkForNegativeValues)) {
-      runOpts$checkForNegativeValues <- isTRUE(sro$checkForNegativeValues)
-    }
-    piConfig$simulationRunOptions <- runOpts
+    piConfig$simulationRunOptions <- .buildSimulationRunOptions(sro)
   }
 
   piConfig
