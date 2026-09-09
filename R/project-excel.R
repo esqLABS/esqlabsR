@@ -2041,7 +2041,7 @@ projectStatus <- function(project, silent = FALSE) {
 #' The uniquifying runs on the *canonical* id, not the raw sheet name: `Rat` and
 #' `rat` in two workbooks are as much of a clash as `Rat` twice, because both
 #' canonicalize to the same definition filename. The suffix comes from
-#' [.uniqueImportedId()], the one coiner the import uses for every id it has to
+#' `.uniqueImportedId()`, the one coiner the import uses for every id it has to
 #' invent, and is carried back onto the raw sheet name, so the renamed set keeps
 #' its readable spelling (`Indiv1` -> `Indiv1_2`).
 #'
@@ -2059,7 +2059,7 @@ projectStatus <- function(project, silent = FALSE) {
 #' @returns `list(sets, renames)`: the merged section, and a named character
 #'   vector mapping each renamed set's *canonical* id to its new raw id (empty
 #'   when nothing clashed). The caller re-points the references that workbook
-#'   itself makes with [.applyIdRenames()].
+#'   itself makes with `.applyIdRenames()`.
 #' @keywords internal
 #' @noRd
 .appendParameterSets <- function(existing, incoming, source) {
@@ -2126,7 +2126,7 @@ projectStatus <- function(project, silent = FALSE) {
 
 #' Re-point parameter-set references through a rename map
 #'
-#' Applies the `renames` map [.appendParameterSets()] returned to a vector of
+#' Applies the `renames` map `.appendParameterSets()` returned to a vector of
 #' referenced ids, leaving an id that was not renamed untouched. Used on the
 #' references a workbook makes into its *own* former namespace (an individual's
 #' sheet link, an application's `ParameterSets` column), so a set that had to be
@@ -4466,7 +4466,7 @@ projectStatus <- function(project, silent = FALSE) {
 
 #' Emit an unglued catalog message as an informational message
 #'
-#' The `cli_inform()` sibling of [.warnFormatted()], for a catalog entry that
+#' The `cli_inform()` sibling of `.warnFormatted()`, for a catalog entry that
 #' returns its templates unglued for the same reason (a filename it names is free
 #' text that can contain `{`/`}`).
 #'
