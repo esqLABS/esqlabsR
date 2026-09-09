@@ -234,3 +234,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-09-09 20:40: addScenario() and setScenario() now take a solverSettings block, replacing it whole and clearing it with NULL. (#408)
 - 2026-09-09 20:43: A scenario solverSettings block is now checked when it is authored and when the project is validated, so an unknown setting or a wrong type is named instead of being coerced silently by the solver. (#408)
 - 2026-09-09 20:45: Exporting a project to Excel now names the scenarios whose solverSettings the workbook cannot carry, instead of dropping them silently. (#408)
+- 2026-09-09 20:46: NEWS records per-scenario solver settings for 6.0.0. (#408)
