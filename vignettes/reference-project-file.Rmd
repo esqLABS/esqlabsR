@@ -108,13 +108,27 @@ Any property in `filePaths` other than the four above sits unread, so an unrecog
 
 ### `defaultSimulationRunOptions`
 
+Two run options, plus any of the solver settings below.
+
 | Field | Type | Description |
 | --- | --- | --- |
 | `numberOfCores` | number | Cores to use when simulating. |
-| `checkForNegativeValues` | logical | Whether the solver checks for negative values. |
 | `showProgress` | logical | Whether run progress is reported. |
 
-`runScenarios()` and `buildSimulations()` use this block when the caller passes no `simulationRunOptions`: `numberOfCores` and `showProgress` become the run options, and `checkForNegativeValues`, a solver setting, is written to each simulation (`simulation$solver$checkForNegativeValues`). An explicit `simulationRunOptions` argument replaces the whole block, and the simulations then keep the solver settings of their model files. A parameter identification applies `checkForNegativeValues` to its simulations as well, unless the PI task's own `simulationRunOptions` block sets it.
+The remaining fields are solver settings, the settable properties of `ospsuite::SolverSettings`. A field you leave out keeps the value the model file carries.
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `absTol` | number | Absolute tolerance. |
+| `relTol` | number | Relative tolerance. |
+| `h0` | number | Initial step size. |
+| `hMin` | number | Smallest step size the solver may take. |
+| `hMax` | number | Largest step size the solver may take. |
+| `mxStep` | whole number | Maximum number of internal steps per output interval. |
+| `useJacobian` | logical | Whether the analytic Jacobian is used. |
+| `checkForNegativeValues` | logical | Whether the solver checks for negative values. |
+
+`runScenarios()` and `buildSimulations()` use this block when the caller passes no `simulationRunOptions`: `numberOfCores` and `showProgress` become the run options, and every solver setting is written to each simulation (`simulation$solver`). An explicit `simulationRunOptions` argument replaces the whole block, and the simulations then keep the solver settings of their model files. A parameter identification applies the block's solver settings to its simulations as well, unless the PI task's own `simulationRunOptions` block sets the same field.
 
 ### `excel`
 

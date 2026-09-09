@@ -7,9 +7,9 @@
 # `simulationRunOptions` block, as a plain list parsed from JSON), or return
 # NULL when the record is empty (so the caller keeps the package defaults).
 # Only `numberOfCores` and `showProgress` are fields of `SimulationRunOptions`;
-# an unset one keeps its default. The record's `checkForNegativeValues` is a
-# solver setting with no counterpart on `SimulationRunOptions` (assigning one
-# errors) and is written to each simulation by `.applySolverSettings()`.
+# an unset one keeps its default. A record's remaining keys are solver settings
+# with no counterpart on `SimulationRunOptions` (assigning one errors) and are
+# written to each simulation by `.applySolverSettings()`.
 # @keywords internal
 # @noRd
 .buildSimulationRunOptions <- function(defaults) {
@@ -26,17 +26,49 @@
   runOpts
 }
 
-# Write the solver-level entries of a run-options record to one simulation:
-# `checkForNegativeValues` goes to `simulation$solver$checkForNegativeValues`.
-# An absent entry (or a NULL record) leaves the setting the model file carries.
-# Mutates `simulation` in place (an `ospsuite::Simulation` is a reference
-# object) and returns it invisibly.
+# The solver settings a run-options record may carry, mapped to the value shape
+# each one takes. These are exactly the settable fields of
+# `ospsuite::SolverSettings`; every other key in a record (`numberOfCores`,
+# `showProgress`) belongs to `ospsuite::SimulationRunOptions` instead. The
+# `"count"` and `"flag"` tags exist because the .NET side coerces silently:
+# `mxStep <- 1.5` truncates to 1 and a negative `hMin` is accepted as given, so
+# the tag drives both the coercion here and the type rule
+# `.checkSolverSettings()` enforces.
+# @keywords internal
+# @noRd
+.solverSettingFields <- c(
+  absTol = "number",
+  relTol = "number",
+  h0 = "number",
+  hMin = "number",
+  hMax = "number",
+  mxStep = "count",
+  useJacobian = "flag",
+  checkForNegativeValues = "flag"
+)
+
+# Write the solver settings of a run-options record to one simulation. A field
+# the record does not carry (or a NULL record) leaves the setting the model file
+# carries. Mutates `simulation` in place (an `ospsuite::Simulation` is a
+# reference object) and returns it invisibly.
 # @keywords internal
 # @noRd
 .applySolverSettings <- function(simulation, record) {
-  if (!is.null(record$checkForNegativeValues)) {
-    simulation$solver$checkForNegativeValues <- isTRUE(
-      record$checkForNegativeValues
+  fields <- intersect(names(.solverSettingFields), names(record))
+  if (length(fields) == 0L) {
+    return(invisible(simulation))
+  }
+  solver <- simulation$solver
+  for (field in fields) {
+    value <- record[[field]]
+    if (is.null(value)) {
+      next
+    }
+    solver[[field]] <- switch(
+      .solverSettingFields[[field]],
+      number = as.double(value),
+      count = as.integer(value),
+      flag = isTRUE(value)
     )
   }
   invisible(simulation)

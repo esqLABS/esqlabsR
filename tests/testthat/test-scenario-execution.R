@@ -62,7 +62,7 @@ test_that(".buildSimulationRunOptions leaves an unset field at its default", {
   expect_identical(opts$showProgress, baseline)
 })
 
-test_that(".applySolverSettings writes checkForNegativeValues to the simulation's solver", {
+test_that(".applySolverSettings writes every solver setting a record carries", {
   simulation <- ospsuite::loadSimulation(
     testthat::test_path("data", "simple.pkml"),
     loadFromCache = FALSE
@@ -71,13 +71,54 @@ test_that(".applySolverSettings writes checkForNegativeValues to the simulation'
   # write landed.
   expect_true(simulation$solver$checkForNegativeValues)
 
+  .applySolverSettings(
+    simulation,
+    list(
+      absTol = 1e-11,
+      relTol = 1e-8,
+      h0 = 1e-3,
+      hMin = 0,
+      hMax = 0.5,
+      mxStep = 1e5,
+      useJacobian = FALSE,
+      checkForNegativeValues = FALSE
+    )
+  )
+  solver <- simulation$solver
+  expect_identical(solver$absTol, 1e-11)
+  expect_identical(solver$relTol, 1e-8)
+  expect_identical(solver$h0, 1e-3)
+  expect_identical(solver$hMin, 0)
+  expect_identical(solver$hMax, 0.5)
+  # `mxStep` is a count: the record's numeric literal reaches the solver as an
+  # integer rather than silently truncating on the .NET side.
+  expect_identical(solver$mxStep, 100000L)
+  expect_false(solver$useJacobian)
+  expect_false(solver$checkForNegativeValues)
+})
+
+test_that(".applySolverSettings leaves a setting the record does not carry", {
+  simulation <- ospsuite::loadSimulation(
+    testthat::test_path("data", "simple.pkml"),
+    loadFromCache = FALSE
+  )
+  baseline <- simulation$solver$relTol
+  expect_true(simulation$solver$checkForNegativeValues)
+
+  # A run-options key is not a solver setting and must not be mistaken for one.
+  .applySolverSettings(simulation, list(numberOfCores = 2, showProgress = TRUE))
+  expect_identical(simulation$solver$relTol, baseline)
+  expect_true(simulation$solver$checkForNegativeValues)
+
+  # A partial record touches only the field it names.
   .applySolverSettings(simulation, list(checkForNegativeValues = FALSE))
+  expect_identical(simulation$solver$relTol, baseline)
   expect_false(simulation$solver$checkForNegativeValues)
 
-  # A record without the entry, or no record at all, leaves the solver alone.
-  .applySolverSettings(simulation, list(numberOfCores = 2))
-  expect_false(simulation$solver$checkForNegativeValues)
+  # No record at all, and a record whose field is NULL, are both no-ops.
   .applySolverSettings(simulation, NULL)
+  .applySolverSettings(simulation, list(relTol = NULL))
+  expect_identical(simulation$solver$relTol, baseline)
   expect_false(simulation$solver$checkForNegativeValues)
 })
 
