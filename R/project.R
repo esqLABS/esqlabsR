@@ -1112,7 +1112,9 @@ Project <- R6::R6Class(
 
     # `project$definitions`: the per-section entry counts. `ospPrintItems()`
     # prints an integer `0`, so zero-count sections are dropped explicitly (not
-    # via `print_empty`). The header is omitted when every section is empty.
+    # via `print_empty`). The header is always printed: a project holding nothing
+    # says so, rather than leaving the reader to tell an empty project apart from
+    # a section accessor that returned nothing.
     .printDefinitionsBlock = function() {
       counts <- list(
         "Scenarios" = length(private$.scenarios),
@@ -1129,9 +1131,13 @@ Project <- R6::R6Class(
         "Parameter Identification" = length(private$.parameterIdentification)
       )
       counts <- Filter(function(n) n > 0L, counts)
+      ospsuite.utils::ospPrintHeader("Definitions")
       if (length(counts) > 0L) {
-        ospsuite.utils::ospPrintHeader("Definitions")
         ospsuite.utils::ospPrintItems(counts)
+      } else {
+        # An unnamed one-element list renders as a bullet with no label, so the
+        # line sits at the same indent as a count.
+        ospsuite.utils::ospPrintItems(list("No definitions yet."))
       }
       invisible(self)
     },

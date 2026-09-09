@@ -26,7 +26,7 @@ For why the layout is shaped this way, see `vignette("about-the-project-model")`
 ```
 MyProject/
 ├── Project.json                    # metadata and working-folder paths
-├── definitions/                    # the authored definition files
+├── definitions/                    # the definition files you write
 │   ├── scenarios/
 │   ├── individuals/
 │   ├── populations/
@@ -70,7 +70,7 @@ Twelve sections. Each is a folder under `definitions/` holding one JSON file per
 | `project$definitions$plotGrids` | `plot-grids/` |
 | `project$definitions$parameterIdentification` | `parameter-identification/` |
 
-Every section is a read-only named list keyed by id. Assigning to one aborts. A section changes only through an authoring function or by editing the definition's file on disk.
+Every section is a read-only named list keyed by id. Assigning to one aborts. A section changes only through an `add*`, `set*`, or `remove*` function, or by editing the definition's file on disk.
 
 ## `Project.json` fields
 

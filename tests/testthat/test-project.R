@@ -880,13 +880,23 @@ test_that("Project$print() omits zero-count definition sections", {
   expect_snapshot(print(project))
 })
 
-test_that("Project$print() hides the Excel section and empty sections", {
+test_that("Project$print() hides the Excel section and says a project has no definitions yet", {
   project <- Project$new()
 
-  # A from-scratch JSON-only project prints just the `<Project>` header: no
-  # metadata bullets, no `Paths`, `Definitions`, or `Excel` headers, and no
-  # stray bullets.
+  # A from-scratch JSON-only project has no metadata bullets, no working
+  # folders, and no Excel side-car, so `Paths` carries only the definitions
+  # folder and no `Excel` header appears. `Definitions` still prints, reporting
+  # that the project holds nothing yet.
   expect_snapshot(print(project))
+})
+
+test_that("printing the definitions accessor of an empty project says it is empty", {
+  project <- Project$new()
+
+  # `project$definitions` renders through the same block `Project$print()` uses,
+  # so a fresh project reports that it holds no definitions instead of printing
+  # nothing at all.
+  expect_snapshot(print(project$definitions))
 })
 
 test_that("defaultSimulationRunOptions round-trips and defaults to NULL", {

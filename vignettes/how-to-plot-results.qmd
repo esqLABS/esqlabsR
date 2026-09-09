@@ -23,7 +23,7 @@ knitr::opts_chunk$set(
 library(esqlabsR)
 ```
 
-Clear, consistent figures are a core part of model diagnostics and of any client-facing report. This article shows how to turn scenario results into figures with `{esqlabsR}`: first the plots a project already defines, then how to author your own, attach observed data, apply the esqLABS house style, and export to a file.
+Clear, consistent figures are a core part of model diagnostics and of any client-facing report. This article shows how to turn scenario results into figures with `{esqlabsR}`: first the plots a project already defines, then how to create your own, attach observed data, apply the esqLABS house style, and export to a file.
 
 Every figure below runs against the example project bundled with the package; loading it and running one scenario produces them all.
 
@@ -31,7 +31,7 @@ Three building blocks recur below. A **DataCombined** says which simulated curve
 
 ## Load the example and run a scenario
 
-Every figure in this article is built from the results of one simulated scenario. Author against a writable copy of the example so the figures you add later do not change the installed package: `initProject()` scaffolds a fresh copy in a temporary directory, which you load and run the `aciclovir_iv` scenario against.
+Every figure in this article is built from the results of one simulated scenario. Work against a writable copy of the example so the figures you add later do not change the installed package: `initProject()` makes a fresh copy in a temporary directory, which you load and run the `aciclovir_iv` scenario against.
 
 ```{r setup-run}
 project_dir <- withr::local_tempdir()
@@ -86,17 +86,17 @@ single$p1
 
 ## Attach observed data
 
-Comparing simulated curves against measurements is what makes a diagnostic figure useful. A project declares its observed data and resolves it on demand; how observed data enters a project (the four source types, the source definitions, and `loadObservedData()`) is covered in `vignette("how-to-use-observed-data")`. For plotting, you need just one handle: the **DataSet name** a **DataCombined** references, which `getObservedDataNames()` lists.
+Comparing simulated curves against measurements is what makes a diagnostic figure useful. A project declares its observed data and resolves it on demand; how observed data enters a project (the four source types, the source definitions, and `loadObservedData()`) is covered in `vignette("how-to-use-observed-data")`. For plotting, you need just one name: the **DataSet name** a **DataCombined** references, which `getObservedDataNames()` lists.
 
 ```{r observed}
 getObservedDataNames(project)
 ```
 
-Read this name from `getObservedDataNames()` rather than typing the long, fully qualified Excel name by hand. The predefined `aciclovir_individual` **DataCombined** already pairs the simulated curve with it, which is why the figure above overlays measurements on the prediction. Reference the same name when you author your own **DataCombined**.
+Read this name from `getObservedDataNames()` rather than typing the long, fully qualified Excel name by hand. The predefined `aciclovir_individual` **DataCombined** already pairs the simulated curve with it, which is why the figure above overlays measurements on the prediction. Reference the same name when you write your own **DataCombined**.
 
-## Author your own figures
+## Create your own figures
 
-Beyond a project's predefined figures, you can describe new ones in R with `addDataCombined()`, `addPlot()`, and `addPlotGrid()`. Like every authoring function, these edit the project in memory; `saveProject()` then writes each definition to the project's `definitions/data-combined/`, `definitions/plots/`, or `definitions/plot-grids/` folder. Because you scaffolded a writable copy above, a save lands in the temporary project, not the installed package.
+Beyond a project's predefined figures, you can describe new ones in R with `addDataCombined()`, `addPlot()`, and `addPlotGrid()`. Like every other `add*` function, these edit the project in memory; `saveProject()` then writes each definition to the project's `definitions/data-combined/`, `definitions/plots/`, or `definitions/plot-grids/` folder. Because you made a writable copy above, a save lands in the temporary project, not the installed package.
 
 First, define a **DataCombined** that pairs the simulated peripheral-venous-blood curve with the observed data. Curves that share a `group` are plotted together.
 
@@ -144,7 +144,7 @@ addPlotGrid(
 )
 ```
 
-Build the authored grid the same way as the predefined ones.
+Build the grid you just defined the same way as the predefined ones.
 
 ```{r build-authored}
 reportGrids <- createPlots(
