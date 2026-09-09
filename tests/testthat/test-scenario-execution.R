@@ -179,6 +179,64 @@ test_that(".resolveRunOptions keeps the solver chain's two ends apart", {
   )
 })
 
+test_that(".resolveRunOptions takes a named record as the top of the chain", {
+  project <- .testProject()
+  project$defaultSimulationRunOptions <- list(
+    numberOfCores = 2,
+    showProgress = FALSE,
+    relTol = 1e-5
+  )
+
+  resolved <- .resolveRunOptions(
+    project,
+    list(numberOfCores = 8, relTol = 1e-4)
+  )
+  # The record's run options are merged over the project's, so `showProgress`
+  # falls through from the project while `numberOfCores` is replaced.
+  expect_identical(resolved$runOptions$numberOfCores, 8L)
+  expect_false(resolved$runOptions$showProgress)
+  # Its solver settings sit above the scenario block, not merged into the
+  # baseline, so a scenario cannot override the call site.
+  expect_identical(resolved$solverDefaults$relTol, 1e-5)
+  expect_identical(
+    resolved$solverOverrides,
+    list(numberOfCores = 8, relTol = 1e-4)
+  )
+})
+
+test_that("buildSimulations takes a solver setting from a named simulationRunOptions", {
+  project <- .testProject()
+  project$defaultSimulationRunOptions <- list(relTol = 1e-5)
+
+  built <- buildSimulations(
+    project,
+    scenarios = "testscenario",
+    simulationRunOptions = list(relTol = 1e-4, numberOfCores = 1)
+  )
+  # The record's solver setting overrides the project's, and its run option is
+  # not mistaken for one.
+  expect_identical(built$testscenario$simulation$solver$relTol, 1e-4)
+})
+
+test_that("runScenarios rejects a simulationRunOptions that is neither form", {
+  project <- .testProject()
+  # The abort names the entrypoint, not the guard, so the reader sees the call
+  # they made.
+  expect_snapshot(
+    error = TRUE,
+    runScenarios(project, scenarios = "testscenario", simulationRunOptions = 4)
+  )
+  # An unnamed list is not a record: every run option is addressed by name.
+  expect_snapshot(
+    error = TRUE,
+    buildSimulations(
+      project,
+      scenarios = "testscenario",
+      simulationRunOptions = list(1e-6)
+    )
+  )
+})
+
 test_that("buildSimulations applies the project default solver settings whether or not the caller passes run options", {
   # Regression for #1252: with ospsuite 13 the project default must reach
   # `simulation$solver`, there being no field for it on `SimulationRunOptions`.

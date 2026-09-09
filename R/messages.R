@@ -1202,6 +1202,20 @@ messages$setScenarioUnknownFields <- function(fields, settable) {
   ))
 }
 
+# Raised when `simulationRunOptions` is neither an `ospsuite` object nor a
+# named record. An unnamed list would otherwise reach `utils::modifyList()`
+# and abort there as `invalid 'x'`, naming neither the argument nor the caller.
+messages$invalidSimulationRunOptions <- function(value) {
+  cli::format_message(c(
+    "{.arg simulationRunOptions} must be an \\
+    {.cls ospsuite::SimulationRunOptions} or a named list of run options, \\
+    not {.obj_type_friendly {value}}.",
+    "i" = "A named list may carry {.field numberOfCores}, \\
+    {.field showProgress}, and any solver setting, e.g. \\
+    {.code list(relTol = 1e-6)}."
+  ))
+}
+
 messages$invalidSimulationTimeArgument <- function() {
   cliFormat(
     "{.arg simulationTime} must be a length-3 numeric vector \\

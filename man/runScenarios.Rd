@@ -28,11 +28,14 @@ to a different form warns, naming the id it resolved to.}
 \code{units} — applied to every selected scenario as the final
 parameter layer.}
 
-\item{simulationRunOptions}{Optional \link[ospsuite:SimulationRunOptions]{ospsuite::SimulationRunOptions}
-for the simulation run. \code{NULL} (default) takes the run options from the
-project's \code{defaultSimulationRunOptions}. An explicit value replaces the
-run options only: a \link[ospsuite:SimulationRunOptions]{ospsuite::SimulationRunOptions} has no solver field,
-so the project's and each scenario's solver settings still apply.}
+\item{simulationRunOptions}{Optional run options, either an
+\link[ospsuite:SimulationRunOptions]{ospsuite::SimulationRunOptions} or a named list of the same shape as the
+project's \code{defaultSimulationRunOptions} (\code{numberOfCores}, \code{showProgress},
+and any solver setting, e.g. \code{list(relTol = 1e-6)}). \code{NULL} (default)
+takes the run options from \code{defaultSimulationRunOptions}. An
+\link[ospsuite:SimulationRunOptions]{ospsuite::SimulationRunOptions} replaces the run options only, having no
+solver field, so the project's and each scenario's solver settings still
+apply; a named list wins over both, field by field.}
 
 \item{validate}{Logical. If \code{TRUE} (default), runs the relevant
 section validators via \code{\link[=validateProject]{validateProject()}} before simulating and

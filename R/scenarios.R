@@ -671,11 +671,14 @@ print.Scenario <- function(x, ...) {
 #' @param customParams A list with vectors `paths`, `values`, and
 #'   `units` — applied to every selected scenario as the final
 #'   parameter layer.
-#' @param simulationRunOptions Optional [ospsuite::SimulationRunOptions]
-#'   for the simulation run. `NULL` (default) takes the run options from the
-#'   project's `defaultSimulationRunOptions`. An explicit value replaces the
-#'   run options only: a [ospsuite::SimulationRunOptions] has no solver field,
-#'   so the project's and each scenario's solver settings still apply.
+#' @param simulationRunOptions Optional run options, either an
+#'   [ospsuite::SimulationRunOptions] or a named list of the same shape as the
+#'   project's `defaultSimulationRunOptions` (`numberOfCores`, `showProgress`,
+#'   and any solver setting, e.g. `list(relTol = 1e-6)`). `NULL` (default)
+#'   takes the run options from `defaultSimulationRunOptions`. An
+#'   [ospsuite::SimulationRunOptions] replaces the run options only, having no
+#'   solver field, so the project's and each scenario's solver settings still
+#'   apply; a named list wins over both, field by field.
 #' @param validate Logical. If `TRUE` (default), runs the relevant
 #'   section validators via [validateProject()] before simulating and
 #'   aborts with a formatted summary on critical errors. Set to
@@ -760,15 +763,16 @@ runScenarios <- function(
 #' @param customParams A list with vectors `paths`, `values`, and
 #'   `units` — applied to every selected scenario as the final
 #'   parameter layer.
-#' @param simulationRunOptions Optional [ospsuite::SimulationRunOptions].
-#'   Its run options are consulted only for a scenario with
-#'   `simulateSteadyState` set (the steady-state pre-solve still runs), since
-#'   the returned simulations are not run here. `NULL` (default) takes them
-#'   from the project's `defaultSimulationRunOptions`. Solver settings are a
-#'   separate matter: those are written to each returned simulation, from the
-#'   project's `defaultSimulationRunOptions` and each scenario's own
-#'   `solverSettings`, and a [ospsuite::SimulationRunOptions] has no solver
-#'   field with which to replace them.
+#' @param simulationRunOptions Optional run options, either an
+#'   [ospsuite::SimulationRunOptions] or a named list of the same shape as the
+#'   project's `defaultSimulationRunOptions` (`numberOfCores`, `showProgress`,
+#'   and any solver setting, e.g. `list(relTol = 1e-6)`). The run options half
+#'   is consulted only for a scenario with `simulateSteadyState` set (the
+#'   steady-state pre-solve still runs), since the returned simulations are not
+#'   run here; `NULL` (default) takes it from `defaultSimulationRunOptions`.
+#'   Solver settings are written to each returned simulation, resolved field by
+#'   field from `defaultSimulationRunOptions`, then each scenario's own
+#'   `solverSettings`, then this argument when it is a named list.
 #' @param validate Logical. If `TRUE` (default), runs the relevant
 #'   section validators via [validateProject()] before building and
 #'   aborts with a formatted summary on critical errors. Set to

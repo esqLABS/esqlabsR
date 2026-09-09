@@ -27,15 +27,16 @@ to a different form warns, naming the id it resolved to.}
 \code{units} — applied to every selected scenario as the final
 parameter layer.}
 
-\item{simulationRunOptions}{Optional \link[ospsuite:SimulationRunOptions]{ospsuite::SimulationRunOptions}.
-Its run options are consulted only for a scenario with
-\code{simulateSteadyState} set (the steady-state pre-solve still runs), since
-the returned simulations are not run here. \code{NULL} (default) takes them
-from the project's \code{defaultSimulationRunOptions}. Solver settings are a
-separate matter: those are written to each returned simulation, from the
-project's \code{defaultSimulationRunOptions} and each scenario's own
-\code{solverSettings}, and a \link[ospsuite:SimulationRunOptions]{ospsuite::SimulationRunOptions} has no solver
-field with which to replace them.}
+\item{simulationRunOptions}{Optional run options, either an
+\link[ospsuite:SimulationRunOptions]{ospsuite::SimulationRunOptions} or a named list of the same shape as the
+project's \code{defaultSimulationRunOptions} (\code{numberOfCores}, \code{showProgress},
+and any solver setting, e.g. \code{list(relTol = 1e-6)}). The run options half
+is consulted only for a scenario with \code{simulateSteadyState} set (the
+steady-state pre-solve still runs), since the returned simulations are not
+run here; \code{NULL} (default) takes it from \code{defaultSimulationRunOptions}.
+Solver settings are written to each returned simulation, resolved field by
+field from \code{defaultSimulationRunOptions}, then each scenario's own
+\code{solverSettings}, then this argument when it is a named list.}
 
 \item{validate}{Logical. If \code{TRUE} (default), runs the relevant
 section validators via \code{\link[=validateProject]{validateProject()}} before building and

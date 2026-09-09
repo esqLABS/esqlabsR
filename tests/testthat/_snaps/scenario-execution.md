@@ -1,3 +1,20 @@
+# runScenarios rejects a simulationRunOptions that is neither form
+
+    Code
+      runScenarios(project, scenarios = "testscenario", simulationRunOptions = 4)
+    Condition
+      Error in `runScenarios()`:
+      ! `simulationRunOptions` must be an <ospsuite::SimulationRunOptions> or a named list of run options, not a number. i A named list may carry numberOfCores, showProgress, and any solver setting, e.g. `list(relTol = 1e-6)`.
+
+---
+
+    Code
+      buildSimulations(project, scenarios = "testscenario", simulationRunOptions = list(
+        1e-06))
+    Condition
+      Error in `buildSimulations()`:
+      ! `simulationRunOptions` must be an <ospsuite::SimulationRunOptions> or a named list of run options, not a list. i A named list may carry numberOfCores, showProgress, and any solver setting, e.g. `list(relTol = 1e-6)`.
+
 # a user parameter path the model lacks still stops the build
 
     Code

@@ -100,14 +100,29 @@
 # Keeping the two solver records apart is what lets `.prepareScenario()` fold
 # each scenario's block into the middle of the chain, without knowing which
 # level either record came from.
+#
+# The argument takes either shape. An `ospsuite::SimulationRunOptions` object
+# is used as it stands and contributes no solver setting, having no field for
+# one. A named record (the shape of `defaultSimulationRunOptions`) can carry
+# both halves: its run options are merged over the project's and built into an
+# object, and it becomes the top of the solver chain. `.scenarioBuildPreflight()`
+# has already rejected anything that is neither.
 # @keywords internal
 # @noRd
 .resolveRunOptions <- function(project, simulationRunOptions) {
   defaults <- project$defaultSimulationRunOptions
+  if (inherits(simulationRunOptions, "SimulationRunOptions")) {
+    return(list(
+      runOptions = simulationRunOptions,
+      solverDefaults = defaults,
+      solverOverrides = NULL
+    ))
+  }
+  merged <- .mergeRunOptionRecords(defaults, simulationRunOptions)
   list(
-    runOptions = simulationRunOptions %||% .buildSimulationRunOptions(defaults),
+    runOptions = .buildSimulationRunOptions(merged),
     solverDefaults = defaults,
-    solverOverrides = NULL
+    solverOverrides = simulationRunOptions
   )
 }
 
@@ -653,6 +668,17 @@
     argumentName = "customParams",
     nullAllowed = TRUE
   )
+  # `simulationRunOptions` takes either shape `.resolveRunOptions()` accepts.
+  # An empty list counts as a record: it names no field, so it resolves to the
+  # project default like a missing argument does.
+  runOptionsOk <- is.null(simulationRunOptions) ||
+    inherits(simulationRunOptions, "SimulationRunOptions") ||
+    (is.list(simulationRunOptions) &&
+      (length(simulationRunOptions) == 0L ||
+        !is.null(names(simulationRunOptions))))
+  if (!runOptionsOk) {
+    cli::cli_abort(messages$invalidSimulationRunOptions(simulationRunOptions))
+  }
   resolved <- .resolveRunOptions(project, simulationRunOptions)
   if (isTRUE(validate)) {
     project$ensureValid(
