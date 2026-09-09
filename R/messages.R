@@ -857,6 +857,24 @@ messages$exportUndeclaredObservedData <- function(ids) {
   )
 }
 
+messages$exportScenarioSolverSettings <- function(ids) {
+  # Unglued: a scenario id is a user-chosen name, so it is free text.
+  envir <- new.env(parent = parent.frame())
+  assign("ids", ids, envir = envir)
+  assign("n", length(ids), envir = envir)
+  list(
+    bullets = c(
+      "!" = "{cli::qty(n)}The Excel scenario sheet has no solver-settings \\
+      columns, so the {.field solverSettings} block{?s} of {n} \\
+      scenario{?s} {?was/were} not written: {.val {ids}}.",
+      "i" = "{cli::qty(n)}Keep the JSON project as the source of truth for \\
+      {?this scenario/these scenarios}: a project re-imported from these \\
+      workbooks solves with its model files' own solver settings."
+    ),
+    envir = envir
+  )
+}
+
 messages$failedToRemoveStaleDefinitionFiles <- function(paths) {
   n <- length(paths)
   # Interpolate eagerly here, where `n` and `paths` are in scope: the

@@ -345,6 +345,39 @@ test_that("a quoted 5.x plotIDs cell imports with the grid's members intact", {
   expect_false(any(grepl("references unknown plotIds", plotErrors)))
 })
 
+test_that("exportProjectToExcel names the scenarios whose solverSettings it cannot carry", {
+  project <- exampleProject()
+  setScenario(project, "aciclovir_iv", solverSettings = list(relTol = 1e-6))
+  excel_out <- withr::local_tempdir()
+
+  expect_warning(
+    exportProjectToExcel(project, outputDir = excel_out, silent = TRUE),
+    "aciclovir_iv",
+    class = "esqlabsR_exportScenarioSolverSettings"
+  )
+  # The block is dropped, not the export: the workbooks are still written.
+  expect_true(file.exists(file.path(
+    excel_out,
+    "Configurations",
+    "Scenarios.xlsx"
+  )))
+})
+
+test_that("exportProjectToExcel is silent about solver settings when no scenario has any", {
+  project <- exampleProject()
+  excel_out <- withr::local_tempdir()
+
+  # Every other warning the export may raise still passes through; only the
+  # solver-settings one must be absent.
+  withCallingHandlers(
+    exportProjectToExcel(project, outputDir = excel_out, silent = TRUE),
+    esqlabsR_exportScenarioSolverSettings = function(w) {
+      testthat::fail("warned about solver settings for a project with none")
+    }
+  )
+  expect_true(file.exists(file.path(excel_out, "Project.xlsx")))
+})
+
 test_that("Excel round-trip preserves project name and description", {
   project <- exampleProject()
   project$info$name <- "RT_Name"
