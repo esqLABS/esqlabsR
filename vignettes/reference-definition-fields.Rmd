@@ -25,14 +25,14 @@ table {
 }
 ```
 
-Field-by-field description of every definition kind, the argument grammars the authoring functions accept, and the plot-configuration support matrices.
+Field-by-field description of every definition kind, the argument grammars the `add*` and `set*` functions accept, and the plot-configuration support matrices.
 
 Each table's **If omitted** column is the one to read when you are deciding what you actually have to supply: it says whether a field falls back to a default, is taken from the model file as exported from PK-Sim or MoBi, or simply does not apply.
 
 Two conventions run through all of it:
 
-- Every authoring function takes `project` first and the definition's `id` second. Only the fields after those are listed below.
-- Every authoring function accepts `overwrite`, a logical defaulting to `FALSE`. An id that already exists aborts unless you pass `overwrite = TRUE`, which replaces the definition (last write wins). It is omitted from the tables. The one carve-out is `addObservedData()`: `overwrite = TRUE` replaces a source only when the new one is the same kind as the old, and a cross-kind replacement is refused in either direction whatever you pass, so remove the existing source with `removeObservedData()` first.
+- Every `add*`, `set*`, and `remove*` function takes `project` first and the definition's `id` second. Only the fields after those are listed below.
+- Every `add*` function accepts `overwrite`, a logical defaulting to `FALSE`. An id that already exists aborts unless you pass `overwrite = TRUE`, which replaces the definition (last write wins). It is omitted from the tables. The one carve-out is `addObservedData()`: `overwrite = TRUE` replaces a source only when the new one is the same kind as the old, and a cross-kind replacement is refused in either direction whatever you pass, so remove the existing source with `removeObservedData()` first.
 
 For why definitions are shaped this way, see `vignette("about-the-project-model")` and `vignette("about-the-plotting-model")`. For the project file and folder layout, see `vignette("reference-project-file")`.
 
@@ -64,7 +64,7 @@ Two behaviours are not visible from the table:
 
 ### On-disk keys and in-memory field names
 
-**A `definitions/scenarios/*.json` file uses the authoring argument names above**, unchanged, with the id written as `name`. So a hand-authored scenario file looks like this:
+**A `definitions/scenarios/*.json` file uses the argument names above**, unchanged, with the id written as `name`. So a scenario file written by hand looks like this:
 
 ```json
 {
@@ -80,7 +80,7 @@ Two behaviours are not visible from the table:
 
 The **parsed in-memory record** is what differs. A record read from `project$definitions$scenarios` renames the reference fields, so use these names when inspecting or editing a record in R:
 
-| Authoring argument and on-disk key | In-memory record field |
+| Argument and on-disk key | In-memory record field |
 | --- | --- |
 | `individual` | `individualId` |
 | `population` | `populationId` |
@@ -168,14 +168,14 @@ An application is a thin record: the dose, start time, and other administration 
 
 Two functions. `addParameterSet(project, id)` creates an empty set; `addParameterEntry(project, id, containerPath, parameterName, value, units = NULL)` fills it.
 
-| Field | Required | Type | Notes |
+| Field | Required | Type | If omitted |
 | --- | --- | --- | --- |
-| `containerPath` | **yes** | non-empty string | The container in OSPS path notation. |
-| `parameterName` | **yes** | non-empty string | |
-| `value` | **yes** | numeric scalar | |
-| `units` | no | string | Use `""` for a dimensionless parameter. |
+| `containerPath` | **yes** | non-empty string | Aborts. |
+| `parameterName` | **yes** | non-empty string | Aborts. |
+| `value` | **yes** | numeric scalar | Aborts. |
+| `units` | no | string | The value is taken to be in the parameter's base unit. Use `""` for a dimensionless parameter. |
 
-`addParameterEntry()` creates the set on demand if it does not yet exist. A repeated `(containerPath, parameterName)` pair **aborts** unless you pass `overwrite = TRUE`, which replaces the existing entry (last write wins), so building a set incrementally does not silently overwrite what is already there. `removeParameterEntry()` takes an entry back out and auto-removes the set if it becomes empty; `removeParameterSet()` drops a whole set.
+`containerPath` is the container in OSPS path notation. `addParameterEntry()` creates the set on demand if it does not yet exist. A repeated `(containerPath, parameterName)` pair **aborts** unless you pass `overwrite = TRUE`, which replaces the existing entry (last write wins), so building a set incrementally does not silently overwrite what is already there. `removeParameterEntry()` takes an entry back out and auto-removes the set if it becomes empty; `removeParameterSet()` drops a whole set.
 
 Scenarios, individuals and applications all reference parameter sets from this one collection by id.
 
@@ -187,7 +187,9 @@ Scenarios, individuals and applications all reference parameter sets from this o
 | --- | --- | --- | --- |
 | `path` | **yes** | non-empty string | Molecule path in OSPS notation. |
 | `value` | **yes** | numeric scalar | |
-| `unit` | **yes** | non-empty string | Required, unlike a parameter entry's `units`. A blank unit is rejected at run time, so it is rejected at authoring time instead. |
+| `unit` | **yes** | non-empty string | Required, unlike a parameter entry's `units`. A blank unit is rejected at run time, so it is rejected when you write it instead. |
+
+Every field here is required, so nothing falls back to the model file.
 
 ## Output path
 
@@ -197,11 +199,11 @@ Scenarios, individuals and applications all reference parameter sets from this o
 | --- | --- | --- | --- |
 | `path` | **yes** | non-empty string | The full model path in OSPS notation. |
 
-An empty path value is a critical error. Two ids pointing at the same path is a warning, not an error, since sharing an output between scenarios is legitimate.
+The one field is required, so nothing falls back to the model file. An empty path value is a critical error. Two ids pointing at the same path is a warning, not an error, since sharing an output between scenarios is legitimate.
 
 ## Observed data
 
-`addObservedData(project, entry)`, where `entry` is either a configuration list or a `DataSet` object. Unlike the other authoring functions this one is not vectorized over ids: it adds one source per call.
+`addObservedData(project, entry)`, where `entry` is either a configuration list or a `DataSet` object. Unlike the other `add*` functions this one is not vectorized over ids: it adds one source per call.
 
 Required fields by `type`:
 
@@ -224,7 +226,7 @@ A file that does not exist on disk is a warning rather than an error, so a proje
 
 Observed-data ids are matched **verbatim**, not canonicalized like every other definition kind. A saved programmatic source changes its id: `saveProject()` writes the `DataSet` to `<name>.pkml` and rewrites the entry as a `pkml` source, so afterwards you remove it by that file basename rather than by the original `DataSet` name.
 
-The source id and the DataSet name are different handles; `vignette("about-the-plotting-model")` explains why. Read the DataSet name from `getObservedDataNames()`.
+The source id and the DataSet name are different names; `vignette("about-the-plotting-model")` explains why. Read the DataSet name from `getObservedDataNames()`.
 
 ## DataCombined
 
@@ -244,19 +246,19 @@ An `observed` entry:
 | Field | Required | Type | If omitted |
 | --- | --- | --- | --- |
 | `label` | **yes** | string | Critical error. |
-| `dataSet` | **yes** | DataSet name | Critical error. This is the DataSet name, not the observed-data source id. |
+| `dataSet` | **yes** | DataSet name | Critical error. This is the DataSet name, not the observed-data source id. Read it from `getObservedDataNames(project)`. |
 | `group` | no | string | The curve is not grouped. |
 
 Optional per-curve transforms, applied before plotting. An offset requires its unit field:
 
-| Field | Type | Notes |
+| Field | Type | If omitted |
 | --- | --- | --- |
-| `xOffsets` | numeric | Requires `xOffsetsUnits`. |
-| `xOffsetsUnits` | string | |
-| `yOffsets` | numeric | Requires `yOffsetsUnits`. |
-| `yOffsetsUnits` | string | |
-| `xScaleFactors` | numeric | |
-| `yScaleFactors` | numeric | |
+| `xOffsets` | numeric | No offset on x. Requires `xOffsetsUnits`. |
+| `xOffsetsUnits` | string | Aborts when `xOffsets` is given. |
+| `yOffsets` | numeric | No offset on y. Requires `yOffsetsUnits`. |
+| `yOffsetsUnits` | string | Aborts when `yOffsets` is given. |
+| `xScaleFactors` | numeric | No scaling, factor `1`. |
+| `yScaleFactors` | numeric | No scaling, factor `1`. |
 
 ## Plot
 
@@ -281,6 +283,8 @@ Optional per-curve transforms, applied before plotting. An offset requires its u
 
 Any plot-configuration field can be passed through `...`. Common ones: `title`, `subtitle`, `xUnit`, `yUnit`, `xAxisScale`, `yAxisScale`, `xValuesLimits`, `yValuesLimits`.
 
+**Every configuration field is optional**, and none of them fall back to the model file. A field you leave out is simply not set, and the OSP Suite draws the plot with its own default for that plot type. Two cases worth stating outright: leaving out `title` or `subtitle` draws the plot without one, and leaving out `xValuesLimits` or `yValuesLimits` plots every data point (these limits filter points out before plotting, they do not just crop the axis).
+
 Four fields apply to one plot type only. Setting one on any other type is silently ignored by the build, so validation warns:
 
 | Field | Applies only to |
@@ -298,7 +302,7 @@ Four fields apply to one plot type only. Setting one on any other type is silent
 | --- | --- | --- | --- |
 | `plots` | **yes** | character vector of plot ids | Stored as `plotIds`. Every plot listed becomes a panel. |
 
-`...` accepts grid fields such as `title` and `subtitle`.
+`plots` is required, so nothing falls back to the model file. `...` accepts grid fields such as `title` and `subtitle`, and a grid without them is drawn untitled.
 
 ## Parameter identification
 
@@ -311,7 +315,7 @@ Four fields apply to one plot type only. Setting one on any other type is silent
 | `outputMappings` | no | **yes** | list of PI Output Mapping records |
 | `configuration` | no | no | list (algorithm, confidence-interval method, and similar) |
 
-A task can be created empty and seeded afterwards, but an empty task cannot run: validation reports a missing `scenarios`, `parameters`, or `outputMappings` as a critical error, and the run gates on validation.
+Leaving `configuration` out uses the runtime's own optimization defaults. A task can be created empty and filled in afterwards, but an empty task cannot run: validation reports a missing `scenarios`, `parameters`, or `outputMappings` as a critical error, and the run gates on validation.
 
 Removing the last parameter and the last mapping leaves nothing to fit, so the now-empty task is removed for you, with a warning saying so.
 
@@ -336,7 +340,7 @@ Removing the last parameter and the last mapping leaves nothing to fit, so the n
 | Field | Required | Type | If omitted |
 | --- | --- | --- | --- |
 | `outputPath` | **yes** | output-path id | Aborts. |
-| `observedData` | **yes** | observed-data handle | Aborts. |
+| `observedData` | **yes** | observed-data name | Aborts. |
 | `scenarios` | **yes** | character vector of ids | Aborts. |
 | `scaling` | no | `"lin"` or `"log"` | The runtime default. |
 | `xOffset` | no | numeric | `0`. |
@@ -348,9 +352,9 @@ Removing the last parameter and the last mapping leaves nothing to fit, so the n
 
 A build error (an unknown parameter path, output, or observed dataset) fails hard and stops the call, so a typo surfaces immediately. A numerical failure in the optimization leaves that task's `result` as `NULL` with an `error` element, and the remaining tasks still run.
 
-## Authoring several definitions in one call
+## Creating several definitions in one call
 
-Most authoring functions are **vectorized over the id**: pass a vector of ids to add several definitions at once.
+Most `add*` functions are **vectorized over the id**: pass a vector of ids to add several definitions at once.
 
 | Argument shape | Behaviour |
 | --- | --- |
@@ -408,4 +412,4 @@ For the broader catalog of `PlotConfiguration` fields and their defaults, see th
 
 ## Where to go next
 
-To author these definitions, see `vignette("how-to-design-scenarios")`, `vignette("how-to-plot-results")`, `vignette("how-to-use-observed-data")`, and `vignette("how-to-identify-parameters")`. For the project file itself, see `vignette("reference-project-file")`.
+To write these definitions, see `vignette("how-to-design-scenarios")`, `vignette("how-to-plot-results")`, `vignette("how-to-use-observed-data")`, and `vignette("how-to-identify-parameters")`. For the project file itself, see `vignette("reference-project-file")`.

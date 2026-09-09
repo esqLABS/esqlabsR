@@ -29,7 +29,7 @@ table {
 }
 ```
 
-Parameter identification (PI) estimates model parameters by fitting simulated outputs to observed data. In `esqlabsR` a PI task lives inside a project, alongside its scenarios, output paths, and observed data, and is run with a single call. This article shows how to run the parameter identification that ships with the bundled example project and how to assemble one yourself with the programmatic authoring functions. It builds on the [`OSPSuite.ParameterIdentification`](https://www.open-systems-pharmacology.org/OSPSuite.ParameterIdentification/) package, which performs the actual optimization.
+Parameter identification (PI) estimates model parameters by fitting simulated outputs to observed data. In `esqlabsR` a PI task lives inside a project, alongside its scenarios, output paths, and observed data, and is run with a single call. This article shows how to run the parameter identification that ships with the bundled example project and how to assemble one yourself with the `add*` functions. It builds on the [`OSPSuite.ParameterIdentification`](https://www.open-systems-pharmacology.org/OSPSuite.ParameterIdentification/) package, which performs the actual optimization.
 
 To follow along you only need a loaded project; see `vignette("how-to-set-up-a-project")` for how a project is organized and loaded. Here we work entirely with the example project and never write anything into your project tree.
 
@@ -95,7 +95,7 @@ Until one of those is resolved, treat the estimate as a point value with no conf
 
 ## Build a task in R
 
-Instead of relying on a task stored in the project, you can author one in memory with the `add*` family. `addPITask()` can create an empty task and let you grow it afterwards: `scenarios`, `parameters`, and `outputMappings` all default to empty, and the requirement to have at least one of each is enforced before `runPI()` rather than at creation.
+Instead of relying on a task stored in the project, you can create one in memory with the `add*` family. `addPITask()` can create an empty task and let you grow it afterwards: `scenarios`, `parameters`, and `outputMappings` all default to empty, and the requirement to have at least one of each is enforced before `runPI()` rather than at creation.
 
 Seeding a task from records that already exist is still the quickest way to get a runnable one, since the records are the same plain-data values the project holds. Here we reuse the ones from the example task.
 
@@ -161,6 +161,6 @@ The example task `aciclovirsimple` is untouched, since we only edited the in-mem
 
 ## Where to go next
 
-The scenarios and output paths a PI task fits come from the rest of the project: see `vignette("how-to-design-scenarios")` for authoring scenarios and `vignette("how-to-use-observed-data")` for loading the measurements an output mapping compares against.
+The scenarios and output paths a PI task fits come from the rest of the project: see `vignette("how-to-design-scenarios")` for writing scenarios and `vignette("how-to-use-observed-data")` for loading the measurements an output mapping compares against.
 
 For the fields of a task, a PI parameter, and an output mapping, see `vignette("reference-definition-fields")`. For the underlying optimization, the confidence-interval methods, and the available algorithms, see the [`OSPSuite.ParameterIdentification`](https://www.open-systems-pharmacology.org/OSPSuite.ParameterIdentification/) package.

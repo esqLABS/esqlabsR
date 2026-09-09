@@ -35,7 +35,7 @@ library(esqlabsR)
 
 ## Load a project
 
-The package bundles a complete example Project. Because you will save changes to it later, take your own copy first: `initProject()` scaffolds one into a temporary directory, and `loadProject()` reads it into memory. (`initProject()` takes the directory; `loadProject()` takes the `Project.json` file inside it.)
+The package bundles a complete example Project. Because you will save changes to it later, take your own copy first: `initProject()` copies one into a temporary directory, and `loadProject()` reads it into memory. (`initProject()` takes the directory; `loadProject()` takes the `Project.json` file inside it.)
 
 ```{r}
 project_dir <- withr::local_tempdir()
@@ -65,9 +65,9 @@ project$definitions$individuals$adult_male
 
 That is enough to work with for now. (`vignette("reference-project-file")` describes how the pieces are stored on disk, if you want it later.)
 
-## Author a scenario and a figure
+## Create a scenario and a figure
 
-The authoring API is uniform: every function takes the `project` first, then the definition's `id`, then its fields. The example only defines an adult male, so we will add an adult female, run aciclovir in her, and plot the result.
+The `add*`, `set*`, and `remove*` functions all take the `project` first, then the definition's `id`, then its fields. The example only defines an adult male, so we will add an adult female, run aciclovir in her, and plot the result.
 
 Start with a new **Individual**, the subject a scenario simulates.
 
@@ -86,7 +86,7 @@ addIndividual(
 
 Nothing has been written to disk yet: the new individual is held in memory until you save, which we do in a moment.
 
-With the individual in place, add a **Scenario** that simulates aciclovir in her. A Scenario pins a model to a subject, dosing, parameters, a time grid, and the outputs to record. Only `modelFile` is required. Of the optional fields, some reference other definitions in the project (`individual`, `application`, `parameterSets`, `outputPaths`) and others are plain values (`simulationTime` and `simulationTimeUnit` set the time grid). The references are checked as the scenario is added, so a typo in an id stops you here rather than at run time.
+With the individual in place, add a **Scenario** that simulates aciclovir in her. A Scenario pins a model to a subject, dosing, parameters, a time grid, and the outputs to record. The model is a `.pkml` simulation file exported from PK-Sim or MoBi, and it is the only required field: everything you leave out falls back to what that export already carries. Of the optional fields, some reference other definitions in the project (`individual`, `application`, `parameterSets`, `outputPaths`) and others are plain values (`simulationTime` and `simulationTimeUnit` set the time grid). The references are checked as the scenario is added, so a typo in an id stops you here rather than at run time.
 
 ```{r}
 addScenario(
@@ -144,7 +144,7 @@ Each entry of the returned list is a **Scenario Result**, bundling the simulatio
 
 ## Plot the result
 
-`createPlots()` reads the plot definitions stored in the Project and draws them against the scenario results you pass in. Ask for the plot you just authored, by its id:
+`createPlots()` reads the plot definitions stored in the Project and draws them against the scenario results you pass in. Ask for the plot you just defined, by its id:
 
 ```{r}
 plots <- createPlots(
@@ -167,7 +167,7 @@ That is the whole loop. You added a subject and a scenario to a project, describ
 You have seen the shape of the workflow. From here, pick the guide for whatever you need to do next:
 
 - `vignette("how-to-set-up-a-project")` to create your own project, save your work, and share it as a single file.
-- `vignette("how-to-design-scenarios")` to author the definitions a scenario is built from, edit them in place, and add several at once.
+- `vignette("how-to-design-scenarios")` to create the definitions a scenario is built from, edit them in place, and add several at once.
 - `vignette("how-to-validate-a-project")` to check a project hangs together before running it.
 - `vignette("how-to-run-simulations")` to run many scenarios, populations, and steady-state runs, and to save and reload results.
 - `vignette("how-to-plot-results")` for richer figures, observed data overlays, population percentile bands, and the esqLABS house style.
