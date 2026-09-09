@@ -20,7 +20,8 @@ Scenario(
   steadyStateTimeUnit = NULL,
   overwriteFormulasInSS = FALSE,
   modelParameterSets = NULL,
-  initialConditions = NULL
+  initialConditions = NULL,
+  solverSettings = NULL
 )
 }
 \arguments{
@@ -76,6 +77,13 @@ referencing \code{parameterSets} definitions.}
 
 \item{initialConditions}{Character vector. Initial-condition set ids
 referencing \code{initialConditions} definitions.}
+
+\item{solverSettings}{Named list or \code{NULL}. Solver settings for this
+scenario's simulation, any of \code{absTol}, \code{relTol}, \code{h0}, \code{hMin}, \code{hMax},
+\code{mxStep}, \code{useJacobian} and \code{checkForNegativeValues}. A setting given here
+overrides the project's \code{defaultSimulationRunOptions}; one left out keeps
+whatever the level below sets, and finally whatever the model file
+carries.}
 }
 \value{
 A \code{Scenario} object: a named list carrying exactly the fields

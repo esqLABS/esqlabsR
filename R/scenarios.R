@@ -26,7 +26,8 @@
   "steadyStateTimeUnit",
   "overwriteFormulasInSS",
   "modelParameterSets",
-  "initialConditions"
+  "initialConditions",
+  "solverSettings"
 )
 
 #' Create a Scenario
@@ -79,6 +80,12 @@
 #'   referencing `parameterSets` definitions.
 #' @param initialConditions Character vector. Initial-condition set ids
 #'   referencing `initialConditions` definitions.
+#' @param solverSettings Named list or `NULL`. Solver settings for this
+#'   scenario's simulation, any of `absTol`, `relTol`, `h0`, `hMin`, `hMax`,
+#'   `mxStep`, `useJacobian` and `checkForNegativeValues`. A setting given here
+#'   overrides the project's `defaultSimulationRunOptions`; one left out keeps
+#'   whatever the level below sets, and finally whatever the model file
+#'   carries.
 #'
 #' @returns A `Scenario` object: a named list carrying exactly the fields
 #'   above.
@@ -99,7 +106,8 @@ Scenario <- function(
   steadyStateTimeUnit = NULL,
   overwriteFormulasInSS = FALSE,
   modelParameterSets = NULL,
-  initialConditions = NULL
+  initialConditions = NULL,
+  solverSettings = NULL
 ) {
   # `mget()` reads every formal by name (the formals are exactly
   # `.scenarioFieldNames`, in order), keeping NULL-valued slots so the record
@@ -135,7 +143,8 @@ print.Scenario <- function(x, ...) {
       "Parameter Sets" = paste(x$modelParameterSets, collapse = ", "),
       "Initial Conditions" = paste(x$initialConditions, collapse = ", "),
       "Output Paths" = length(x$outputPaths %||% list()),
-      "Steady State" = x$simulateSteadyState %||% FALSE
+      "Steady State" = x$simulateSteadyState %||% FALSE,
+      "Solver Settings" = paste(names(x$solverSettings), collapse = ", ")
     ),
     print_empty = TRUE
   )
@@ -261,7 +270,11 @@ print.Scenario <- function(x, ...) {
       },
       initialConditions = if (!is.null(entry[["initialConditions"]])) {
         unlist(entry[["initialConditions"]])
-      }
+      },
+      # Kept verbatim: which settings a scenario may name, and their types, are
+      # checked by the validators, not here, so a hand-edited file loads and
+      # then reports rather than aborting mid-parse.
+      solverSettings = entry[["solverSettings"]]
     )
   }
   result

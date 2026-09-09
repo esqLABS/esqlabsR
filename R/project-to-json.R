@@ -324,7 +324,7 @@
     ))
   }
 
-  list(
+  entry <- list(
     name = sc$scenarioName,
     individual = sc$individualId,
     # Emit the population id verbatim rather than keying off the derived
@@ -365,6 +365,13 @@
     modelFile = sc$modelFile,
     outputPaths = outputPathIds
   )
+  # Omitted rather than emitted as `null` when the scenario sets no solver
+  # setting: a `jsonlite` round-trip turns `"solverSettings": null` into `{}`,
+  # which `.assertNoEmptyObjectFields()` rejects on the next load.
+  if (length(sc$solverSettings) > 0L) {
+    entry$solverSettings <- sc$solverSettings
+  }
+  entry
 }
 
 # JSON object (map of parameter-set id → array of parameter entries). The

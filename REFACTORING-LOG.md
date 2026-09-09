@@ -230,3 +230,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-09-09 16:32: Every solver setting a project or PI task declares now reaches the simulation, not just checkForNegativeValues. (#408)
 - 2026-09-09 16:37: Solver settings now resolve as one field-by-field chain instead of one level suppressing another, so a simulationRunOptions argument replaces the run options without discarding the project default solver settings. (#408)
 - 2026-09-09 20:32: runScenarios() and buildSimulations() now take simulationRunOptions as a plain named list too, so one run can override a solver setting without editing the project. (#408)
+- 2026-09-09 20:35: A scenario definition can now carry a solverSettings block, which loads, prints, and round-trips through the definition file. (#408)

@@ -22,6 +22,7 @@ test_that("Scenario has the documented field defaults", {
   expect_null(sc$steadyStateTimeUnit)
   expect_false(sc$overwriteFormulasInSS)
   expect_null(sc$modelParameterSets)
+  expect_null(sc$solverSettings)
 })
 
 test_that("as.list(Scenario()) exposes exactly the v2.0 schema fields", {
@@ -45,7 +46,8 @@ test_that("as.list(Scenario()) exposes exactly the v2.0 schema fields", {
       "steadyStateTimeUnit",
       "overwriteFormulasInSS",
       "modelParameterSets",
-      "initialConditions"
+      "initialConditions",
+      "solverSettings"
     )
   )
 })
@@ -129,6 +131,62 @@ test_that("a scenario's initialConditions round-trips through serialize/parse", 
     list()
   )[["RT"]]
   expect_identical(reparsed$initialConditions, c("ic1", "ic2"))
+})
+
+test_that(".parseScenarios reads a scenario's solverSettings block verbatim", {
+  raw <- list(list(
+    name = "Stiff",
+    modelFile = "m.pkml",
+    solverSettings = list(relTol = 1e-6, checkForNegativeValues = FALSE)
+  ))
+  sc <- .parseScenarios(raw, list())[["Stiff"]]
+  expect_identical(
+    sc$solverSettings,
+    list(relTol = 1e-6, checkForNegativeValues = FALSE)
+  )
+})
+
+test_that(".parseScenarios leaves solverSettings NULL when JSON omits it", {
+  raw <- list(list(name = "Plain", modelFile = "m.pkml"))
+  expect_null(.parseScenarios(raw, list())[["Plain"]]$solverSettings)
+})
+
+test_that("a scenario's solverSettings round-trips through serialize/parse", {
+  sc <- Scenario(
+    scenarioName = "RTSolver",
+    modelFile = "m.pkml",
+    solverSettings = list(relTol = 1e-6, hMax = 0.5)
+  )
+  json <- .scenarioToJson(sc)
+  expect_identical(json$solverSettings, list(relTol = 1e-6, hMax = 0.5))
+
+  reparsed <- .parseScenarios(
+    list(stats::setNames(
+      list(json$name, json$modelFile, json$solverSettings),
+      c("name", "modelFile", "solverSettings")
+    )),
+    list()
+  )[["RTSolver"]]
+  expect_identical(reparsed$solverSettings, list(relTol = 1e-6, hMax = 0.5))
+})
+
+test_that("a scenario without solverSettings emits no key at all", {
+  # `null` is not an option: a `jsonlite` round-trip turns it into `{}`, which
+  # `.assertNoEmptyObjectFields()` then rejects on load.
+  json <- .scenarioToJson(Scenario(
+    scenarioName = "Plain",
+    modelFile = "m.pkml"
+  ))
+  expect_false("solverSettings" %in% names(json))
+})
+
+test_that("a hand-written empty solverSettings object is rejected on parse", {
+  raw <- list(list(
+    name = "Empty",
+    modelFile = "m.pkml",
+    solverSettings = stats::setNames(list(), character(0))
+  ))
+  expect_error(.parseScenarios(raw, list()), "empty object")
 })
 
 test_that(".parseScenarios sets simulationType=Population when populationId present", {
