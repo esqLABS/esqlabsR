@@ -47,6 +47,80 @@
   checkForNegativeValues = "flag"
 )
 
+# Report what is wrong with a `solverSettings` block, as a character vector of
+# problems (empty when it is sound). Returning strings rather than aborting is
+# what lets the authoring paths fold the problems into their own "cannot add
+# scenario" list and the section validator turn each into a critical error,
+# from the one set of rules.
+#
+# The type rules matter because the .NET side coerces silently: `mxStep <- 1.5`
+# truncates to 1 and a negative `hMin` is accepted as given, so an authoring
+# slip would otherwise change how the model solves without saying anything.
+# @keywords internal
+# @noRd
+.checkSolverSettings <- function(solverSettings) {
+  if (is.null(solverSettings) || length(solverSettings) == 0L) {
+    return(character())
+  }
+  if (!is.list(solverSettings) || is.null(names(solverSettings))) {
+    return("solverSettings must be a named list, e.g. list(relTol = 1e-6)")
+  }
+
+  problems <- character()
+  known <- names(.solverSettingFields)
+  unknown <- setdiff(names(solverSettings), known)
+  if (length(unknown) > 0L) {
+    problems <- c(
+      problems,
+      paste0(
+        "solverSettings has unknown setting",
+        if (length(unknown) > 1L) "s" else "",
+        " ",
+        paste0("'", unknown, "'", collapse = ", "),
+        "; the settings are ",
+        paste(known, collapse = ", ")
+      )
+    )
+  }
+
+  for (field in intersect(known, names(solverSettings))) {
+    value <- solverSettings[[field]]
+    if (is.null(value)) {
+      next
+    }
+    problem <- switch(
+      .solverSettingFields[[field]],
+      number = if (
+        !is.numeric(value) ||
+          length(value) != 1L ||
+          !is.finite(value) ||
+          value < 0
+      ) {
+        "a single non-negative number"
+      },
+      count = if (
+        !is.numeric(value) ||
+          length(value) != 1L ||
+          !is.finite(value) ||
+          value < 1 ||
+          value != trunc(value)
+      ) {
+        "a single whole number of at least 1"
+      },
+      flag = if (!is.logical(value) || length(value) != 1L || is.na(value)) {
+        "TRUE or FALSE"
+      }
+    )
+    if (!is.null(problem)) {
+      problems <- c(
+        problems,
+        paste0("solverSettings$", field, " must be ", problem)
+      )
+    }
+  }
+  problems
+}
+
 # Write the solver settings of a run-options record to one simulation. A field
 # the record does not carry (or a NULL record) leaves the setting the model file
 # carries. Mutates `simulation` in place (an `ospsuite::Simulation` is a

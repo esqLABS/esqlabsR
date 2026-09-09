@@ -502,6 +502,16 @@ print.Scenario <- function(x, ...) {
         }
       }
     }
+
+    # An unsound `solverSettings` block reaches here only from a hand-edited
+    # definition file; both authoring doors reject one. Report it now rather
+    # than letting the solver take a truncated or negative value in silence.
+    for (problem in .checkSolverSettings(sc$solverSettings)) {
+      result$addCriticalError(
+        "Validation",
+        paste0("Scenario '", name, "': ", problem)
+      )
+    }
   }
 
   result
@@ -1122,7 +1132,8 @@ addScenario <- function(
       "outputPaths",
       project$definitions$outputPaths,
       "outputPaths"
-    )
+    ),
+    .checkSolverSettings(fields$solverSettings)
   )
 
   if (length(errors) > 0L) {
@@ -1429,6 +1440,10 @@ setScenario <- function(project, id, ...) {
     if (!is.null(fields$outputPaths)) {
       fields$outputPaths <- unique(fields$outputPaths)
     }
+  }
+
+  if ("solverSettings" %in% supplied) {
+    errors <- c(errors, .checkSolverSettings(fields$solverSettings))
   }
 
   # Validate only the foreign-key arguments the caller actually supplied,

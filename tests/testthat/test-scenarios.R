@@ -931,6 +931,33 @@ test_that("a scenario's solverSettings survives a save and reload", {
   )
 })
 
+test_that("addScenario rejects an unsound solverSettings block", {
+  project <- testProject()
+  expect_snapshot(
+    error = TRUE,
+    addScenario(
+      project,
+      "stiff",
+      modelFile = "Aciclovir.pkml",
+      solverSettings = list(reltol = 1e-6, mxStep = 1.5)
+    )
+  )
+  expect_false("stiff" %in% names(project$definitions$scenarios))
+})
+
+test_that("setScenario rejects an unsound solverSettings block", {
+  project <- testProject()
+  before <- project$definitions$scenarios[["testscenario"]]$solverSettings
+  expect_snapshot(
+    error = TRUE,
+    setScenario(project, "testscenario", solverSettings = list(hMax = "big"))
+  )
+  expect_identical(
+    project$definitions$scenarios[["testscenario"]]$solverSettings,
+    before
+  )
+})
+
 # Passing a parsed Scenario record back ----
 
 test_that("a parsed scenario is accepted back by addScenario() unchanged", {

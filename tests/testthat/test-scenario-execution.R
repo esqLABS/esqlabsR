@@ -62,6 +62,74 @@ test_that(".buildSimulationRunOptions leaves an unset field at its default", {
   expect_identical(opts$showProgress, baseline)
 })
 
+test_that(".checkSolverSettings passes a sound block", {
+  expect_identical(.checkSolverSettings(NULL), character())
+  expect_identical(.checkSolverSettings(list()), character())
+  expect_identical(
+    .checkSolverSettings(list(
+      absTol = 1e-11,
+      relTol = 1e-8,
+      h0 = 1e-3,
+      # Zero is `hMin`'s own default, so the rule is non-negative, not
+      # positive.
+      hMin = 0,
+      hMax = 0.5,
+      mxStep = 100000,
+      useJacobian = FALSE,
+      checkForNegativeValues = TRUE
+    )),
+    character()
+  )
+  # A field explicitly set to NULL is the same as an absent one.
+  expect_identical(.checkSolverSettings(list(relTol = NULL)), character())
+})
+
+test_that(".checkSolverSettings names an unknown setting and the ones that exist", {
+  problems <- .checkSolverSettings(list(reltol = 1e-6))
+  expect_length(problems, 1L)
+  expect_match(problems, "unknown setting 'reltol'")
+  expect_match(problems, "relTol")
+
+  expect_match(
+    .checkSolverSettings(list(foo = 1, bar = 2)),
+    "unknown settings 'foo', 'bar'"
+  )
+})
+
+test_that(".checkSolverSettings enforces each setting's type", {
+  expect_match(
+    .checkSolverSettings(list(relTol = -1)),
+    "relTol must be a single non-negative number"
+  )
+  expect_match(
+    .checkSolverSettings(list(hMax = c(1, 2))),
+    "hMax must be a single non-negative number"
+  )
+  # The .NET side truncates a fractional `mxStep` to 1 without a word, so a
+  # slip would silently change how the model solves.
+  expect_match(
+    .checkSolverSettings(list(mxStep = 1.5)),
+    "mxStep must be a single whole number of at least 1"
+  )
+  expect_match(
+    .checkSolverSettings(list(mxStep = 0)),
+    "mxStep must be a single whole number of at least 1"
+  )
+  expect_match(
+    .checkSolverSettings(list(useJacobian = "yes")),
+    "useJacobian must be TRUE or FALSE"
+  )
+  expect_match(
+    .checkSolverSettings(list(checkForNegativeValues = NA)),
+    "checkForNegativeValues must be TRUE or FALSE"
+  )
+})
+
+test_that(".checkSolverSettings rejects a block that is not a named list", {
+  expect_match(.checkSolverSettings(list(1e-6)), "must be a named list")
+  expect_match(.checkSolverSettings(1e-6), "must be a named list")
+})
+
 test_that(".applySolverSettings writes every solver setting a record carries", {
   simulation <- ospsuite::loadSimulation(
     testthat::test_path("data", "simple.pkml"),

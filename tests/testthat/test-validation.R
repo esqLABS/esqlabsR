@@ -250,6 +250,24 @@ test_that(".validateScenarios flags Population scenario without populationId", {
   expect_match(msgs, "populationId", all = FALSE)
 })
 
+test_that(".validateScenarios flags an unsound solverSettings block", {
+  # Both authoring doors reject one, so this catches a hand-edited definition
+  # file: the solver would otherwise take a truncated value in silence.
+  sc <- Scenario(modelFile = "model.pkml")
+  sc$solverSettings <- list(reltol = 1e-6, mxStep = 1.5)
+  result <- .validateScenarios(list(s1 = sc))
+  msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
+  expect_match(msgs, "unknown setting 'reltol'", all = FALSE)
+  expect_match(msgs, "mxStep must be a single whole number", all = FALSE)
+  expect_match(msgs, "Scenario 's1'", all = FALSE)
+})
+
+test_that(".validateScenarios passes a sound solverSettings block", {
+  sc <- Scenario(modelFile = "model.pkml")
+  sc$solverSettings <- list(relTol = 1e-6, checkForNegativeValues = FALSE)
+  expect_length(.validateScenarios(list(s1 = sc))$critical_errors, 0L)
+})
+
 test_that(".validateScenarios warns when modelFile does not exist on disk", {
   sc <- Scenario(
     modelFile = "missing.pkml",
