@@ -2,15 +2,14 @@
 % Please edit documentation in R/utilities-individual.R
 \name{writeIndividualToXLS}
 \alias{writeIndividualToXLS}
-\title{Create a parameter set describing an individual and write it to the Excel
-file}
+\title{Write the parameters of an individual to an Excel file}
 \usage{
 writeIndividualToXLS(individualCharacteristics, outputXLSPath)
 }
 \arguments{
 \item{individualCharacteristics}{An \code{IndividualCharacteristics} object
-describing the individual. See \code{createIndividualCharacterstics} for more
-information.}
+describing the individual, as returned by
+\code{ospsuite::createIndividualCharacteristics()}.}
 
 \item{outputXLSPath}{Path to the Excel file the parameter set will be written
 to}
@@ -19,20 +18,39 @@ to}
 Path to the created Excel file
 }
 \description{
-Create a parameter set describing an individual and write it to the Excel
-file
+Writes the parameter values that describe
+\code{individualCharacteristics} to an Excel file with the columns
+\verb{Container Path}, \verb{Parameter Name}, \code{Value}, and \code{Units}, the layout of a
+model parameter sheet that \code{\link[=readParametersFromXLS]{readParametersFromXLS()}} reads. The parameters
+are the ones \code{\link[=applyIndividualParameters]{applyIndividualParameters()}} sets: for a human individual, the
+parameters that vary between individuals of the species; for any other
+species, also the derived parameters and the species constants that scale a
+human model to that species.
+}
+\details{
+The sheet of a non-human individual describes every model of the
+species, so it can hold parameters a given model does not have, for example
+in the container \code{Organism|EndogenousIgG}. Applying such a row to a model
+that lacks it stops the run unless parameters that are not found are
+allowed, for example with \code{stopIfParameterNotFound = FALSE} in
+\code{\link[=initializeSimulation]{initializeSimulation()}}. Remove the rows the model lacks, or allow them.
 }
 \examples{
 \dontrun{
-simulation <- loadSimulation(pathToPKML)
 humanIndividualCharacteristics <- createIndividualCharacteristics(
   species = Species$Human, population = HumanPopulation$European_ICRP_2002,
   gender = Gender$Male, weight = 70
 )
 writeIndividualToXLS(humanIndividualCharacteristics, pathToExcelFile)
+
+# All parameters that scale a human model to a rat of 250 g
+ratIndividualCharacteristics <- createIndividualCharacteristics(
+  species = Species$Rat, weight = 0.25
+)
+writeIndividualToXLS(ratIndividualCharacteristics, pathToExcelFile)
 }
 
 }
 \seealso{
-createIndividualCharacteristics crateIndividual
+\code{\link[=applyIndividualParameters]{applyIndividualParameters()}}, \code{\link[=readParametersFromXLS]{readParametersFromXLS()}}
 }

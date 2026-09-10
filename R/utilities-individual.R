@@ -1,63 +1,64 @@
-#' Create a parameter set describing an individual and write it to the Excel
-#' file
+#' Write the parameters of an individual to an Excel file
+#'
+#' @description Writes the parameter values that describe
+#' `individualCharacteristics` to an Excel file with the columns
+#' `Container Path`, `Parameter Name`, `Value`, and `Units`, the layout of a
+#' model parameter sheet that [readParametersFromXLS()] reads. The parameters
+#' are the ones [applyIndividualParameters()] sets: for a human individual, the
+#' parameters that vary between individuals of the species; for any other
+#' species, also the derived parameters and the species constants that scale a
+#' human model to that species.
+#'
+#' @details The sheet of a non-human individual describes every model of the
+#' species, so it can hold parameters a given model does not have, for example
+#' in the container `Organism|EndogenousIgG`. Applying such a row to a model
+#' that lacks it stops the run unless parameters that are not found are
+#' allowed, for example with `stopIfParameterNotFound = FALSE` in
+#' [initializeSimulation()]. Remove the rows the model lacks, or allow them.
 #'
 #' @param individualCharacteristics An `IndividualCharacteristics` object
-#'   describing the individual. See `createIndividualCharacterstics` for more
-#'   information.
+#'   describing the individual, as returned by
+#'   `ospsuite::createIndividualCharacteristics()`.
 #' @param outputXLSPath Path to the Excel file the parameter set will be written
 #'   to
 #'
-#' @return Path to the created Excel file
+#' @returns Path to the created Excel file
 #'
-#' @seealso createIndividualCharacteristics crateIndividual
+#' @seealso [applyIndividualParameters()], [readParametersFromXLS()]
 #'
 #' @examples
 #' \dontrun{
-#' simulation <- loadSimulation(pathToPKML)
 #' humanIndividualCharacteristics <- createIndividualCharacteristics(
 #'   species = Species$Human, population = HumanPopulation$European_ICRP_2002,
 #'   gender = Gender$Male, weight = 70
 #' )
 #' writeIndividualToXLS(humanIndividualCharacteristics, pathToExcelFile)
+#'
+#' # All parameters that scale a human model to a rat of 250 g
+#' ratIndividualCharacteristics <- createIndividualCharacteristics(
+#'   species = Species$Rat, weight = 0.25
+#' )
+#' writeIndividualToXLS(ratIndividualCharacteristics, pathToExcelFile)
 #' }
 #'
 #' @export
 writeIndividualToXLS <- function(individualCharacteristics, outputXLSPath) {
   validateIsString(outputXLSPath)
 
-  individual <- createIndividual(individualCharacteristics)
-
-  columnNames <- c("Container Path", "Parameter Name", "Value", "Units")
-
-  containerPaths <- vector(
-    "character",
-    length(individual$distributedParameters$paths)
+  parameters <- .individualParameterSet(individualCharacteristics)
+  splitPaths <- lapply(
+    parameters$paths,
+    .splitParameterPathIntoContainerAndName
   )
-  paramNames <- vector(
-    "character",
-    length(individual$distributedParameters$paths)
-  )
-  values <- vector("numeric", length(individual$distributedParameters$paths))
-  units <- vector("character", length(individual$distributedParameters$paths))
-
-  for (i in seq_along(individual$distributedParameters$paths)) {
-    splittedPath <- .splitParameterPathIntoContainerAndName(individual$distributedParameters$paths[[
-      i
-    ]])
-
-    containerPaths[i] <- splittedPath$containerPath
-    paramNames[i] <- splittedPath$parameterName
-    values[i] <- individual$distributedParameters$values[[i]]
-    units[i] <- individual$distributedParameters$units[[i]]
-  }
 
   output <- data.frame(
-    unlist(containerPaths, use.names = FALSE),
-    unlist(paramNames, use.names = FALSE),
-    unlist(as.numeric(values), use.names = FALSE),
-    unlist(units, use.names = FALSE)
+    "Container Path" = vapply(splitPaths, `[[`, character(1), "containerPath"),
+    "Parameter Name" = vapply(splitPaths, `[[`, character(1), "parameterName"),
+    "Value" = as.numeric(parameters$values),
+    "Units" = as.character(parameters$units),
+    check.names = FALSE,
+    stringsAsFactors = FALSE
   )
-  colnames(output) <- columnNames
 
   .writeExcel(data = output, path = outputXLSPath)
   return(outputXLSPath)
@@ -187,65 +188,79 @@ readIndividualCharacteristicsFromXLS <- function(
 #' applyIndividualParameters(ratIndividualCharacteristics, simulation)
 #' }
 applyIndividualParameters <- function(individualCharacteristics, simulation) {
-  isHuman <- individualCharacteristics$species == ospsuite::Species$Human
-  if (isHuman) {
+  if (individualCharacteristics$species == ospsuite::Species$Human) {
     .stopIfNotHumanModel(simulation)
   }
-  individual <- ospsuite::createIndividual(individualCharacteristics)
-
-  # For human species, only set distributed parameters
-  allParamPaths <- individual$distributedParameters$paths
-  allParamValues <- individual$distributedParameters$values
-  allParamUnits <- individual$distributedParameters$units
-
-  # For other species, also add derived parameters
-  if (!isHuman) {
-    allParamPaths <- c(allParamPaths, individual$derivedParameters$paths)
-    allParamValues <- c(allParamValues, individual$derivedParameters$values)
-    allParamUnits <- c(allParamUnits, individual$derivedParameters$units)
-  }
+  parameters <- .individualParameterSet(individualCharacteristics, simulation)
 
   ospsuite::setParameterValuesByPath(
-    parameterPaths = allParamPaths,
-    values = allParamValues,
+    parameterPaths = parameters$paths,
+    values = parameters$values,
     simulation = simulation,
-    units = allParamUnits,
+    units = parameters$units,
     stopIfNotFound = FALSE
   )
-
-  # `createIndividual()` returns only the parameters PK-Sim varies between
-  # individuals of a species. The constants that differ between species come
-  # from the individual building block. They are applied after the derived
-  # parameters, which are already at the values of the species.
-  if (!isHuman) {
-    speciesParams <- .speciesParametersFromBuildingBlock(
-      individualCharacteristics,
-      simulation
-    )
-    if (length(speciesParams$paths) > 0) {
-      ospsuite::setParameterValuesByPath(
-        parameterPaths = speciesParams$paths,
-        values = speciesParams$values,
-        simulation = simulation,
-        units = speciesParams$units,
-        stopIfNotFound = FALSE
-      )
-    }
-  }
 
   invisible(simulation)
 }
 
+# Parameters that describe `individualCharacteristics`, as `paths`, `values`,
+# and `units`. For a human individual these are the distributed parameters of
+# `ospsuite::createIndividual()` only, so that parameters defined by formulas
+# keep their formulas. For any other species the derived parameters follow,
+# which replace formulas with the values of the species (organ volumes, blood
+# flow rates, body weight), and then the species constants of the individual
+# building block, see `.speciesParametersFromBuildingBlock()`, which
+# `createIndividual()` never returns. `simulation`, when given, restricts the
+# species constants to the parameters the model has. Each path appears once;
+# the derived parameters and the building block agree on the paths they share.
+# @keywords internal
+# @noRd
+.individualParameterSet <- function(
+  individualCharacteristics,
+  simulation = NULL
+) {
+  individual <- ospsuite::createIndividual(individualCharacteristics)
+  paths <- individual$distributedParameters$paths
+  values <- individual$distributedParameters$values
+  units <- individual$distributedParameters$units
+
+  if (individualCharacteristics$species != ospsuite::Species$Human) {
+    speciesParameters <- .speciesParametersFromBuildingBlock(
+      individualCharacteristics,
+      simulation
+    )
+    paths <- c(
+      paths,
+      individual$derivedParameters$paths,
+      speciesParameters$paths
+    )
+    values <- c(
+      values,
+      individual$derivedParameters$values,
+      speciesParameters$values
+    )
+    units <- c(
+      units,
+      individual$derivedParameters$units,
+      speciesParameters$units
+    )
+  }
+
+  keep <- !duplicated(paths, fromLast = TRUE)
+  list(paths = paths[keep], values = values[keep], units = units[keep])
+}
+
 # Species constants for a non-human individual: every parameter with a value in
 # the individual building block PK-Sim creates for `individualCharacteristics`,
-# restricted to the parameters that exist in `simulation`. Entries the building
-# block defines by a formula (wall thickness and wall volume of the lumen
-# segments) come back without a value and are left out.
+# restricted to the parameters that exist in `simulation` when one is given.
+# Entries the building block defines by a formula (wall thickness and wall
+# volume of the lumen segments) come back without a value and are left out.
 # @keywords internal
 # @noRd
 .speciesParametersFromBuildingBlock <- function(
   individualCharacteristics,
-  simulation
+  simulation = NULL
 ) {
   gestationalAge <- .snapshotParameterValue(
     individualCharacteristics$gestationalAge
@@ -277,9 +292,12 @@ applyIndividualParameters <- function(individualCharacteristics, simulation) {
     parameters[["Parameter Name"]],
     sep = "|"
   )
-  # Keep only parameters that are defined by a constant. Parameters that are defined by formulas have the `NaN` value
-  keep <- is.finite(parameters[["Value"]]) &
-    paths %in% ospsuite::getAllParameterPathsIn(simulation)
+  # Keep only parameters that are defined by a constant. Parameters that are
+  # defined by formulas have the `NaN` value
+  keep <- is.finite(parameters[["Value"]])
+  if (!is.null(simulation)) {
+    keep <- keep & paths %in% ospsuite::getAllParameterPathsIn(simulation)
+  }
 
   list(
     paths = paths[keep],

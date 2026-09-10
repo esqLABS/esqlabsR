@@ -188,6 +188,29 @@ test_that("`applyIndividualParameters()` leaves the species constants of a human
   )
 })
 
+# Values of the parameters at `paths` in `simulation`, named by path and
+# sorted, for comparing two simulations.
+.parameterValues <- function(simulation, paths) {
+  parameters <- getAllParametersMatching(paths, simulation)
+  values <- vapply(
+    parameters,
+    function(parameter) parameter$value,
+    numeric(1)
+  )
+  names(values) <- vapply(
+    parameters,
+    function(parameter) parameter$path,
+    character(1)
+  )
+  values[order(names(values))]
+}
+
+# Values of every `Organism|` parameter of `simulation`
+.organismValues <- function(simulation) {
+  paths <- getAllParameterPathsIn(simulation)
+  .parameterValues(simulation, paths[startsWith(paths, "Organism|")])
+}
+
 test_that("`applyIndividualParameters()` scales between two non-human species", {
   # A model already scaled to a rat and then scaled to a mouse must equal the
   # human model scaled to a mouse directly.
@@ -206,27 +229,9 @@ test_that("`applyIndividualParameters()` scales between two non-human species", 
     simulationDirect
   )
 
-  organismValues <- function(simulation) {
-    paths <- getAllParameterPathsIn(simulation)
-    parameters <- getAllParametersMatching(
-      paths[startsWith(paths, "Organism|")],
-      simulation
-    )
-    values <- vapply(
-      parameters,
-      function(parameter) parameter$value,
-      numeric(1)
-    )
-    names(values) <- vapply(
-      parameters,
-      function(parameter) parameter$path,
-      character(1)
-    )
-    values[order(names(values))]
-  }
   expect_equal(
-    organismValues(simulationViaRat),
-    organismValues(simulationDirect)
+    .organismValues(simulationViaRat),
+    .organismValues(simulationDirect)
   )
 })
 
@@ -310,4 +315,73 @@ test_that("`.simulationSpecies()` reads the stored individual, then the paramete
     .humanCharacteristics(),
     humanSimulation
   ))
+})
+
+test_that("`writeIndividualToXLS()` writes the complete parameter set of a rat", {
+  withr::with_tempdir({
+    ratCharacteristics <- createIndividualCharacteristics(
+      species = Species$Rat,
+      weight = 0.4
+    )
+    sheet <- readxl::read_xlsx(
+      writeIndividualToXLS(ratCharacteristics, "Rat.xlsx")
+    )
+    paths <- paste(
+      sheet[["Container Path"]],
+      sheet[["Parameter Name"]],
+      sep = "|"
+    )
+    values <- setNames(sheet$Value, paths)
+
+    expect_equal(
+      colnames(sheet),
+      c("Container Path", "Parameter Name", "Value", "Units")
+    )
+    expect_false(any(duplicated(paths)))
+    # Derived parameters of a 0.4 kg rat and species constants, the set
+    # `applyIndividualParameters()` applies
+    expect_equal(values[["Organism|Weight"]], 0.4)
+    expect_equal(
+      values[["Organism|Liver|Volume"]],
+      0.0180878666414959,
+      tolerance = 1e-6
+    )
+    expect_equal(
+      values[["Organism|Lumen|Stomach|Basal pH in fasted state"]],
+      3.9
+    )
+    expect_equal(
+      values[["Organism|Lumen|ColonAscendens|Bile Salt concentration"]],
+      5000
+    )
+    # The sheet describes every model of the species, so it holds containers a
+    # model may lack
+    expect_true(any(startsWith(paths, "Organism|EndogenousIgG|")))
+  })
+})
+
+test_that("a sheet from `writeIndividualToXLS()` scales a model like `applyIndividualParameters()`", {
+  withr::with_tempdir({
+    ratCharacteristics <- createIndividualCharacteristics(species = Species$Rat)
+    parameters <- readParametersFromXLS(
+      writeIndividualToXLS(ratCharacteristics, "Rat.xlsx")
+    )
+
+    fromSheet <- .loadExampleAciclovirSimulation()
+    initializeSimulation(
+      fromSheet,
+      additionalParams = parameters,
+      stopIfParameterNotFound = FALSE
+    )
+    direct <- .loadExampleAciclovirSimulation()
+    applyIndividualParameters(ratCharacteristics, direct)
+
+    # Every parameter the sheet sets has the value of the direct scaling
+    modelPaths <- getAllParameterPathsIn(direct)
+    paths <- parameters$paths[parameters$paths %in% modelPaths]
+    expect_equal(
+      .parameterValues(fromSheet, paths),
+      .parameterValues(direct, paths)
+    )
+  })
 })
