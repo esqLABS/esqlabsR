@@ -17,6 +17,7 @@
 - `createPITasks()` no longer rejects parameter bounds that exclude the model's current value, applying the sheet `StartValue` before validating them (#1140).
 - The `checkForNegativeValues` column of the `PIConfiguration` sheet is now applied to the solver settings of the task's simulations (`simulation$solver$checkForNegativeValues`); with ospsuite 13, `createPITasks()` previously stopped with an error when that cell was filled (#1252).
 - `sensitivityTimeProfiles()` again labels the parameter-factor colour legend with the variation values (for example 0.1, 1, 20) and draws the lines in factor order. With ospsuite 13, which returns dataset names from `DataCombined` as a factor, the factors had been read as their positions in the list (1, 2, 3, 4) (#1259).
+- The example project's `Aciclovir.pkml` is re-exported with PK-Sim 13. The dose of its application now lives at `Events|IV 250mg 10min|No formulation|Application_1|ProtocolSchemaItem|Dose`; the example configuration files use the new path.
 
 # esqlabsR 5.7.0
 
