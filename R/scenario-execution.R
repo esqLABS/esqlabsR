@@ -103,9 +103,16 @@
           length(value) != 1L ||
           !is.finite(value) ||
           value < 1 ||
-          value != trunc(value)
+          value != trunc(value) ||
+          # The applier coerces with `as.integer()`, which yields NA above the
+          # integer range, so an unbounded rule would pass a value the solver
+          # then receives as NA_integer_.
+          value > .Machine$integer.max
       ) {
-        "a single whole number of at least 1"
+        paste0(
+          "a single whole number between 1 and ",
+          format(.Machine$integer.max, scientific = FALSE)
+        )
       },
       flag = if (!is.logical(value) || length(value) != 1L || is.na(value)) {
         "TRUE or FALSE"

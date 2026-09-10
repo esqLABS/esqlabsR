@@ -236,3 +236,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-09-09 20:45: Exporting a project to Excel now names the scenarios whose solverSettings the workbook cannot carry, instead of dropping them silently. (#408)
 - 2026-09-09 20:46: NEWS records per-scenario solver settings for 6.0.0. (#408)
 - 2026-09-10 11:20: A solver setting given as NULL now inherits the level below instead of deleting it, so NULL means the same thing everywhere in the precedence chain. (#408)
+- 2026-09-10 11:22: mxStep is now rejected above the integer maximum, where it used to pass validation and reach the solver as NA. (#408)

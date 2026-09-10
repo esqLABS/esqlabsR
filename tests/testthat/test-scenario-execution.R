@@ -109,11 +109,21 @@ test_that(".checkSolverSettings enforces each setting's type", {
   # slip would silently change how the model solves.
   expect_match(
     .checkSolverSettings(list(mxStep = 1.5)),
-    "mxStep must be a single whole number of at least 1"
+    "mxStep must be a single whole number between 1 and 2147483647"
   )
   expect_match(
     .checkSolverSettings(list(mxStep = 0)),
-    "mxStep must be a single whole number of at least 1"
+    "mxStep must be a single whole number between 1 and 2147483647"
+  )
+  # Above the integer range `as.integer()` yields NA, so the bound has to stop
+  # the value here rather than letting the solver receive NA_integer_.
+  expect_match(
+    .checkSolverSettings(list(mxStep = 5e9)),
+    "mxStep must be a single whole number between 1 and 2147483647"
+  )
+  expect_identical(
+    .checkSolverSettings(list(mxStep = .Machine$integer.max)),
+    character()
   )
   expect_match(
     .checkSolverSettings(list(useJacobian = "yes")),
