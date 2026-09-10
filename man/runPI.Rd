@@ -8,8 +8,7 @@ runPI(
   project,
   tasks = NULL,
   observedData = NULL,
-  stopIfParameterNotFound = TRUE,
-  simulationRunOptions = NULL
+  stopIfParameterNotFound = TRUE
 )
 }
 \arguments{
@@ -29,14 +28,6 @@ parameter listed in a scenario's parameter sets but absent from the
 simulation aborts the build; when \code{FALSE}, it is skipped with a
 warning. Forwarded through \code{.prepareScenario()} to
 \code{initializeSimulation()}.}
-
-\item{simulationRunOptions}{How the identification is executed: an
-\href{https://www.open-systems-pharmacology.org/OSPSuite-R/reference/SimulationRunOptions.html}{SimulationRunOptions}
-object setting \code{numberOfCores} and \code{showProgress}, for example
-\code{ospsuite::SimulationRunOptions$new(numberOfCores = 8)}. \code{NULL} (default)
-uses the \code{ospsuite} defaults. This is not project data, so a task's
-\code{configuration} never supplies it; how the solver behaves does live there,
-as the task's \code{solverSettings}.}
 }
 \value{
 Named list of per-task results. Each entry is a list with

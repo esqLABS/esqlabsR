@@ -1065,7 +1065,7 @@ test_that(".createSinglePITask applies objectiveFunctionOptions from the configu
   expect_equal(ofo$logScaleSD, 0.1)
 })
 
-test_that(".createSinglePITask applies solverSettings from the configuration block", {
+test_that(".createSinglePITask applies the configuration block's solver settings", {
   project <- testProject()
   observedData <- loadObservedData(project)
   mkTask <- function(configuration) {
@@ -1080,7 +1080,7 @@ test_that(".createSinglePITask applies solverSettings from the configuration blo
   # A task-level setting reaches the solver.
   pi <- .createSinglePITask(
     project,
-    mkTask(list(solverSettings = list(checkForNegativeValues = FALSE))),
+    mkTask(list(simulationRunOptions = list(checkForNegativeValues = FALSE))),
     observedData
   )
   expect_false(pi$simulations[[1]]$solver$checkForNegativeValues)
@@ -1088,7 +1088,7 @@ test_that(".createSinglePITask applies solverSettings from the configuration blo
   # Every setting, not only the negative-values check.
   pi <- .createSinglePITask(
     project,
-    mkTask(list(solverSettings = list(relTol = 1e-7))),
+    mkTask(list(simulationRunOptions = list(relTol = 1e-7))),
     observedData
   )
   expect_identical(pi$simulations[[1]]$solver$relTol, 1e-7)
@@ -1101,33 +1101,10 @@ test_that(".createSinglePITask applies solverSettings from the configuration blo
   # A task-level value wins over the project default.
   pi <- .createSinglePITask(
     project,
-    mkTask(list(solverSettings = list(checkForNegativeValues = TRUE))),
+    mkTask(list(simulationRunOptions = list(checkForNegativeValues = TRUE))),
     observedData
   )
   expect_true(pi$simulations[[1]]$solver$checkForNegativeValues)
-})
-
-test_that("a PI task takes its run options from the caller, not the project", {
-  # How the identification is executed is `runPI()`'s argument; a task's
-  # configuration holds only how the solver behaves.
-  project <- testProject()
-  observedData <- loadObservedData(project)
-
-  pi <- .createSinglePITask(
-    project,
-    testPITask(configuration = list()),
-    observedData
-  )
-  expect_null(pi$configuration$simulationRunOptions)
-
-  callerOptions <- ospsuite::SimulationRunOptions$new(numberOfCores = 2)
-  pi <- .createSinglePITask(
-    project,
-    testPITask(configuration = list()),
-    observedData,
-    simulationRunOptions = callerOptions
-  )
-  expect_equal(pi$configuration$simulationRunOptions$numberOfCores, 2L)
 })
 
 test_that(".createSinglePITask applies the task's checkForNegativeValues before the steady-state pre-solve", {
@@ -1149,7 +1126,7 @@ test_that(".createSinglePITask applies the task's checkForNegativeValues before 
     project,
     testPITask(
       configuration = list(
-        solverSettings = list(checkForNegativeValues = FALSE)
+        simulationRunOptions = list(checkForNegativeValues = FALSE)
       )
     ),
     observedData
@@ -1388,8 +1365,7 @@ test_that("runPI(project) hard-fails when the build phase errors", {
       project,
       piTask,
       observedData,
-      stopIfParameterNotFound = TRUE,
-      ...
+      stopIfParameterNotFound = TRUE
     ) {
       stop("Parameter |Organism|Live|EHC| not found in simulation")
     }
@@ -1412,8 +1388,7 @@ test_that("runPI(project) soft-fails when the optimisation phase errors", {
       project,
       piTask,
       observedData,
-      stopIfParameterNotFound = TRUE,
-      ...
+      stopIfParameterNotFound = TRUE
     ) {
       fakeRuntime
     }
@@ -1438,8 +1413,7 @@ test_that("runPI(project) soft-fails when the optimiser error message contains b
       project,
       piTask,
       observedData,
-      stopIfParameterNotFound = TRUE,
-      ...
+      stopIfParameterNotFound = TRUE
     ) {
       fakeRuntime
     }
@@ -2875,15 +2849,18 @@ test_that("addPITask() rejects malformed outputMappings with a typed error", {
   )
 })
 
-test_that(".buildPIConfiguration() maps type to objectiveFunctionType", {
+test_that(".buildPIConfiguration() maps type to objectiveFunctionType and builds simulationRunOptions", {
   skip_if_not_installed("ospsuite.parameteridentification")
-  # A task's `solverSettings` reaches its simulations through
-  # `.createSinglePITask()`, so the configuration builder ignores the block
-  # rather than writing it to the run options (#1252, #408).
+  # `checkForNegativeValues` is a solver setting: the block must tolerate it
+  # without writing it to the run options (#1252).
   cfg <- list(
     algorithm = "BOBYQA",
     objectiveFunction = list(type = "lsq"),
-    solverSettings = list(checkForNegativeValues = FALSE)
+    simulationRunOptions = list(
+      numberOfCores = 2,
+      checkForNegativeValues = FALSE,
+      showProgress = FALSE
+    )
   )
   piConfig <- .buildPIConfiguration(cfg)
   expect_identical(piConfig$algorithm, "BOBYQA")
@@ -2891,7 +2868,9 @@ test_that(".buildPIConfiguration() maps type to objectiveFunctionType", {
     piConfig$objectiveFunctionOptions$objectiveFunctionType,
     "lsq"
   )
-  expect_null(piConfig$simulationRunOptions)
+  expect_s3_class(piConfig$simulationRunOptions, "SimulationRunOptions")
+  expect_identical(piConfig$simulationRunOptions$numberOfCores, 2L)
+  expect_false(piConfig$simulationRunOptions$showProgress)
 })
 
 test_that(".buildPIConfiguration() merges partial algorithmOptions and ciOptions with per-algorithm defaults", {
@@ -3061,8 +3040,7 @@ test_that("runPI() builds every task before optimising any (fail fast on a build
       project,
       piTask,
       observedData,
-      stopIfParameterNotFound = TRUE,
-      ...
+      stopIfParameterNotFound = TRUE
     ) {
       if (identical(piTask$id, "broken")) {
         stop("Parameter not found in simulation")

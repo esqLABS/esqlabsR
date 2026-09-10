@@ -3360,7 +3360,7 @@ projectStatus <- function(project, silent = FALSE) {
   "objectiveFunction",
   "algorithmOptions",
   "ciOptions",
-  "solverSettings"
+  "simulationRunOptions"
 )
 
 # Flatten a PI task's `configuration` to the one-scalar-per-column shape a sheet
@@ -3832,17 +3832,14 @@ projectStatus <- function(project, silent = FALSE) {
       configuration$objectiveFunction <- objective
     }
 
-    # A 5.x sheet's `numberOfCores` names how the run is executed, which is an
-    # argument of `runPI()` rather than task data, so it has no counterpart
-    # here and is dropped. `checkForNegativeValues` is a solver setting and
-    # keeps its place.
-    solverSettings <- .dropNulls(list(
+    runOptions <- .dropNulls(list(
+      numberOfCores = .naToNull(as.numeric(row[["numberOfCores"]])),
       checkForNegativeValues = .naToNull(
         .toLogical(row[["checkForNegativeValues"]], "checkForNegativeValues")
       )
     ))
-    if (length(solverSettings) > 0L) {
-      configuration$solverSettings <- solverSettings
+    if (length(runOptions) > 0L) {
+      configuration$simulationRunOptions <- runOptions
     }
   }
 

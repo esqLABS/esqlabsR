@@ -2,6 +2,28 @@
 #
 # Modern (JSON-Project-driven) runtime path.
 
+# Build an `ospsuite::SimulationRunOptions` from a parameter-identification
+# task's `simulationRunOptions` block (a plain list parsed from JSON), or return
+# NULL when the block is empty so the caller keeps the package defaults. Only
+# `numberOfCores` and `showProgress` are fields of `SimulationRunOptions`; an
+# unset one keeps its default, and the block's solver settings are ignored here
+# because `.createSinglePITask()` writes those to each simulation instead.
+# @keywords internal
+# @noRd
+.buildSimulationRunOptions <- function(defaults) {
+  if (is.null(defaults) || length(defaults) == 0L) {
+    return(NULL)
+  }
+  runOpts <- ospsuite::SimulationRunOptions$new()
+  if (!is.null(defaults$numberOfCores)) {
+    runOpts$numberOfCores <- as.integer(defaults$numberOfCores)
+  }
+  if (!is.null(defaults$showProgress)) {
+    runOpts$showProgress <- isTRUE(defaults$showProgress)
+  }
+  runOpts
+}
+
 # The solver settings a project, scenario or parameter-identification task may
 # carry, mapped to the value shape each one takes. The names are exactly the
 # settable fields of `ospsuite`'s `SolverSettings`. How the run is executed

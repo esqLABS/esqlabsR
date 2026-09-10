@@ -124,7 +124,7 @@ How the solver should behave for every scenario in the project, as any of the se
 These are defaults, so a scenario or a single run can still say otherwise. For each setting, the most specific place that gives it a value wins:
 
 - `defaultSolverSettings`, the project-wide default,
-- a scenario's own `solverSettings` block (see `vignette("reference-definition-fields")`), or a parameter-identification task's own `solverSettings` block,
+- a scenario's own `solverSettings` block (see `vignette("reference-definition-fields")`), or a parameter-identification task's own `simulationRunOptions` block,
 - the `solverSettings` argument of `runScenarios()` or `buildSimulations()`.
 
 **How the run is executed is not project data.** `numberOfCores` and `showProgress` belong to [`SimulationRunOptions`](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/SimulationRunOptions.html), which you pass to `runScenarios()`, `buildSimulations()` or `runPI()` as their `simulationRunOptions` argument. A project file does not carry them; one written before this split is loaded with a warning naming the run options it dropped.
