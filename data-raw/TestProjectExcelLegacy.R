@@ -241,7 +241,7 @@ write_xlsx(
 write_xlsx(
   list(
     IV_250mg = data.frame(
-      `Container Path` = "Events|IV 250mg 10min|Application_1|ProtocolSchemaItem",
+      `Container Path` = "Events|IV 250mg 10min|No formulation|Application_1|ProtocolSchemaItem",
       `Parameter Name` = "Dose",
       Value = 250,
       Units = "mg",

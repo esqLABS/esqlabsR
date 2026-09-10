@@ -699,7 +699,7 @@ test_that(".mergeScenarioParameters silently skips an unknown application parame
   scenario$individualId <- NULL
   merged <- .mergeScenarioParameters(scenario, project, NULL)
   expect_true(
-    "Events|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose" %in%
+    "Events|IV 250mg 10min|No formulation|Application_1|ProtocolSchemaItem|Dose" %in%
       merged$paths
   )
 })
