@@ -15,7 +15,8 @@ initializeSimulation(
 \item{simulation}{\code{Simulation} loaded from a PKML file}
 
 \item{individualCharacteristics}{Optional \code{IndividualCharacteristics}
-describing an individual.}
+describing an individual. For a non-human species, the simulation is scaled
+to that species, see \code{\link[=applyIndividualParameters]{applyIndividualParameters()}}.}
 
 \item{additionalParams}{Optional named list with lists 'paths', 'values', and
 'units'.}

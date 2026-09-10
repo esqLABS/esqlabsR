@@ -2,22 +2,47 @@
 % Please edit documentation in R/utilities-individual.R
 \name{applyIndividualParameters}
 \alias{applyIndividualParameters}
-\title{Apply an individual to the simulation. For human species, only parameters
-that do not override formulas are applied. For other species, all parameters
-returned by \code{createIndividual} are applied.}
+\title{Apply an individual to a simulation}
 \usage{
 applyIndividualParameters(individualCharacteristics, simulation)
 }
 \arguments{
 \item{individualCharacteristics}{\code{IndividualCharacteristics} describing an
-individual. Optional}
+individual, as returned by \code{ospsuite::createIndividualCharacteristics()}.}
 
 \item{simulation}{\code{Simulation} loaded from the PKML file}
 }
+\value{
+\code{simulation}, invisibly, with the parameter values applied.
+}
 \description{
-Apply an individual to the simulation. For human species, only parameters
-that do not override formulas are applied. For other species, all parameters
-returned by \code{createIndividual} are applied.
+Sets the parameter values that describe
+\code{individualCharacteristics} in \code{simulation}.
+
+For a human individual, only the parameters that vary between individuals of
+the same species are set; parameters defined by formulas keep their formulas.
+
+For any other species, the simulation is scaled to that species. Two sets of
+values are applied: the individual parameters returned by
+\code{ospsuite::createIndividual()}, including those that replace formulas (organ
+volumes, blood flow rates, body weight), and the species constants of the
+PK-Sim database (tissue composition, blood flow, gut geometry and transit,
+lumen pH, bile salt concentrations), taken from an individual building block
+that \code{ospsuite::createIndividualBuildingBlock()} creates for the same
+characteristics. The values follow the body weight, height, and age given in
+\code{individualCharacteristics}. Parameters that do not exist in \code{simulation} are
+skipped.
+}
+\details{
+Scaling works from a simulation exported for a human individual to
+every species PK-Sim supports, and between two non-human species. Scaling
+from a non-human species to human is not supported: a human individual needs
+age- and height-dependent parameters that are not part of an animal model.
+
+The wall thickness and wall volume of the intestinal lumen segments keep
+their human formulas after scaling. They only feed the mucosa volumes, which
+are set to the values of the target species, so simulation results are not
+affected.
 }
 \examples{
 \dontrun{
@@ -27,5 +52,11 @@ humanIndividualCharacteristics <- createIndividualCharacteristics(
   gender = Gender$Male, weight = 70
 )
 applyIndividualParameters(humanIndividualCharacteristics, simulation)
+
+# Scale a human model to a rat of 250 g
+ratIndividualCharacteristics <- createIndividualCharacteristics(
+  species = Species$Rat, weight = 0.25
+)
+applyIndividualParameters(ratIndividualCharacteristics, simulation)
 }
 }

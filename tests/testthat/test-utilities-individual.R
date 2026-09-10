@@ -90,3 +90,98 @@ test_that("`writeIndividualToXLS()` writes correct data to a spreadsheet", {
     }
   )
 })
+
+# Species scaling ----
+
+# Human example model, re-exported with PK-Sim 13
+.loadExampleAciclovirSimulation <- function() {
+  loadSimulation(
+    file.path(
+      .exampleDirectory("TestProject"),
+      "Models",
+      "Simulations",
+      "Aciclovir.pkml"
+    ),
+    loadFromCache = FALSE
+  )
+}
+
+test_that("`applyIndividualParameters()` scales a human model to a rat", {
+  simulation <- .loadExampleAciclovirSimulation()
+  ratCharacteristics <- createIndividualCharacteristics(species = Species$Rat)
+
+  expect_no_warning(applyIndividualParameters(ratCharacteristics, simulation))
+
+  # Expected values are those of a rat individual created in PK-Sim 13. They
+  # cover species constants that `createIndividual()` does not return, the
+  # colon bile salt concentration that is new in PK-Sim 13, lumen geometry
+  # that is a formula in the human model, and the derived body weight.
+  expectedValues <- c(
+    "Organism|Liver|EHC continuous fraction" = 1,
+    "Organism|Lumen|Stomach|Basal pH in fasted state" = 3.9,
+    "Organism|Liver|Vf (neutral lipid)-PT" = 0.0138,
+    "Organism|Kidney|Fraction vascular" = 0.105,
+    "Organism|Bone|Allometric scale factor" = 0.75,
+    "Organism|Muscle|Vf (water)-PT" = 0.756,
+    "Organism|Lumen|Duodenum|Length" = 1,
+    "Organism|Lumen|ColonAscendens|Bile Salt concentration" = 5000,
+    "Organism|Liver|Volume" = 0.0103,
+    "Organism|Weight" = 0.227777
+  )
+  values <- vapply(
+    names(expectedValues),
+    function(path) getParameter(path, simulation)$value,
+    FUN.VALUE = numeric(1)
+  )
+  expect_equal(values, expectedValues, tolerance = 1e-6)
+})
+
+test_that("`applyIndividualParameters()` follows the body weight of a rat", {
+  simulation <- .loadExampleAciclovirSimulation()
+  ratCharacteristics <- createIndividualCharacteristics(
+    species = Species$Rat,
+    weight = 0.4
+  )
+
+  applyIndividualParameters(ratCharacteristics, simulation)
+
+  # Organ volumes of a 0.4 kg rat created in PK-Sim 13; species constants do
+  # not depend on the weight.
+  expectedValues <- c(
+    "Organism|Weight" = 0.4,
+    "Organism|Liver|Volume" = 0.0180878666414959,
+    "Organism|Kidney|Volume" = 0.0040390381820816,
+    "Organism|Liver|Vf (neutral lipid)-PT" = 0.0138
+  )
+  values <- vapply(
+    names(expectedValues),
+    function(path) getParameter(path, simulation)$value,
+    FUN.VALUE = numeric(1)
+  )
+  expect_equal(values, expectedValues, tolerance = 1e-6)
+})
+
+test_that("`applyIndividualParameters()` leaves the species constants of a human model", {
+  simulation <- .loadExampleAciclovirSimulation()
+  humanCharacteristics <- createIndividualCharacteristics(
+    species = Species$Human,
+    population = HumanPopulation$European_ICRP_2002,
+    gender = Gender$Male,
+    weight = 73,
+    height = 176,
+    age = 30
+  )
+
+  applyIndividualParameters(humanCharacteristics, simulation)
+
+  expect_equal(
+    getParameter("Organism|Liver|Vf (neutral lipid)-PT", simulation)$value,
+    0.0348
+  )
+  expect_equal(
+    getParameter("Organism|Liver|EHC continuous fraction", simulation)$value,
+    0
+  )
+  # Lumen geometry stays a formula of the body height
+  expect_true(getParameter("Organism|Lumen|Duodenum|Length", simulation)$isFormula)
+})

@@ -17,6 +17,8 @@
 - `createPITasks()` no longer rejects parameter bounds that exclude the model's current value, applying the sheet `StartValue` before validating them (#1140).
 - The `checkForNegativeValues` column of the `PIConfiguration` sheet is now applied to the solver settings of the task's simulations (`simulation$solver$checkForNegativeValues`); with ospsuite 13, `createPITasks()` previously stopped with an error when that cell was filled (#1252).
 - `sensitivityTimeProfiles()` again labels the parameter-factor colour legend with the variation values (for example 0.1, 1, 20) and draws the lines in factor order. With ospsuite 13, which returns dataset names from `DataCombined` as a factor, the factors had been read as their positions in the list (1, 2, 3, 4) (#1259).
+- `applyIndividualParameters()` and `initializeSimulation()` now take the species constants for a non-human individual from `ospsuite::createIndividualBuildingBlock()` instead of the bundled `SpeciesParameters.xlsx`. Scaling a human model to Beagle, Dog, Minipig, Monkey, Mouse, Rabbit, or Rat now sets every parameter PK-Sim 13 changes between species, for example the bile salt concentrations of the colon segments, which the sheet did not carry, and the values follow the body weight given for the individual (#666).
+- `applyIndividualParameters()` and `initializeSimulation()` now also scale a model between two non-human species, for example from a rat model to a mouse (#666).
 - The example project's `Aciclovir.pkml` is re-exported with PK-Sim 13. The dose of its application now lives at `Events|IV 250mg 10min|No formulation|Application_1|ProtocolSchemaItem|Dose`; the example configuration files use the new path.
 
 # esqlabsR 5.7.0

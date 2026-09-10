@@ -107,3 +107,36 @@ test_that("It returns an empty list when a molecule is defined that is not in th
 
   expect_equal(applicationParams, list())
 })
+
+test_that("`initializeSimulation()` scales a human model to a mouse and runs it", {
+  simulation <- loadSimulation(
+    file.path(
+      .exampleDirectory("TestProject"),
+      "Models",
+      "Simulations",
+      "Aciclovir.pkml"
+    ),
+    loadFromCache = FALSE
+  )
+  mouseCharacteristics <- createIndividualCharacteristics(species = Species$Mouse)
+
+  expect_no_warning(
+    initializeSimulation(
+      simulation,
+      individualCharacteristics = mouseCharacteristics
+    )
+  )
+
+  # Values of a mouse individual created in PK-Sim 13
+  expect_equal(
+    getParameter("Organism|Lumen|Stomach|Basal pH in fasted state", simulation)$value,
+    4.04
+  )
+  expect_equal(
+    getParameter("Organism|Liver|Specific blood flow rate", simulation)$value,
+    0.269230769230769,
+    tolerance = 1e-6
+  )
+  simulationResults <- runSimulations(simulation)[[1]]
+  expect_true(isOfType(simulationResults, "SimulationResults"))
+})
