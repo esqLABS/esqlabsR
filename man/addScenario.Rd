@@ -82,14 +82,16 @@ steady state. Default \code{FALSE}.}
 \item{readPopulationFromCSV}{Logical. Load population from CSV.
 Default \code{FALSE}.}
 
-\item{solverSettings}{Named list. Solver settings for this scenario's
-simulation: any of \code{absTol}, \code{relTol}, \code{h0}, \code{hMin}, \code{hMax}, \code{mxStep},
-\code{useJacobian} and \code{checkForNegativeValues}, e.g.
-\code{list(relTol = 1e-6)}. Default \code{NULL}, which leaves the scenario with the
-project's \code{defaultSimulationRunOptions} and, where that sets nothing, the
-solver settings of the model file. The whole block is one value per
-scenario, so an \code{id} of several scenarios gives each of them the same
-block.}
+\item{solverSettings}{How the solver should behave for this scenario, as a
+named list. Takes any of the settings of
+\href{https://www.open-systems-pharmacology.org/OSPSuite-R/reference/SolverSettings.html}{SolverSettings}:
+\code{absTol}, \code{relTol}, \code{h0}, \code{hMin}, \code{hMax}, \code{mxStep}, \code{useJacobian} and
+\code{checkForNegativeValues}, for example \code{list(relTol = 1e-6)}. Default
+\code{NULL}, which leaves the scenario with the project's
+\code{defaultSimulationRunOptions} and, for a setting the project does not
+give either, the value stored in the model file. The list counts as one
+value per scenario, so an \code{id} naming several scenarios gives each of
+them the same settings.}
 
 \item{overwrite}{Logical. When \code{FALSE} (default), an id that already exists
 aborts. When \code{TRUE}, the existing scenario is replaced (last-write-wins).

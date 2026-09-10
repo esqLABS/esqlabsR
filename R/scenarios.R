@@ -80,12 +80,14 @@
 #'   referencing `parameterSets` definitions.
 #' @param initialConditions Character vector. Initial-condition set ids
 #'   referencing `initialConditions` definitions.
-#' @param solverSettings Named list or `NULL`. Solver settings for this
-#'   scenario's simulation, any of `absTol`, `relTol`, `h0`, `hMin`, `hMax`,
-#'   `mxStep`, `useJacobian` and `checkForNegativeValues`. A setting given here
-#'   overrides the project's `defaultSimulationRunOptions`; one left out keeps
-#'   whatever the level below sets, and finally whatever the model file
-#'   carries.
+#' @param solverSettings How the solver should behave for this scenario, as a
+#'   named list, or `NULL`. Takes any of the settings of
+#'   [SolverSettings](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/SolverSettings.html):
+#'   `absTol`, `relTol`, `h0`, `hMin`, `hMax`, `mxStep`, `useJacobian` and
+#'   `checkForNegativeValues`. A setting given here overrides the project's
+#'   `defaultSimulationRunOptions`. A setting you leave out is not changed:
+#'   the project value applies, or the model file's own value when the project
+#'   gives none either.
 #'
 #' @returns A `Scenario` object: a named list carrying exactly the fields
 #'   above.
@@ -694,14 +696,15 @@ print.Scenario <- function(x, ...) {
 #' @param customParams A list with vectors `paths`, `values`, and
 #'   `units` — applied to every selected scenario as the final
 #'   parameter layer.
-#' @param simulationRunOptions Optional run options, either an
-#'   [ospsuite::SimulationRunOptions] or a named list of the same shape as the
-#'   project's `defaultSimulationRunOptions` (`numberOfCores`, `showProgress`,
-#'   and any solver setting, e.g. `list(relTol = 1e-6)`). `NULL` (default)
-#'   takes the run options from `defaultSimulationRunOptions`. An
-#'   [ospsuite::SimulationRunOptions] replaces the run options only, having no
-#'   solver field, so the project's and each scenario's solver settings still
-#'   apply; a named list wins over both, field by field.
+#' @param simulationRunOptions Settings for this run only, overriding both the
+#'   project's `defaultSimulationRunOptions` and each scenario's own
+#'   `solverSettings`, setting by setting. `NULL` (default) leaves both in
+#'   place. Either an
+#'   [SimulationRunOptions](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/SimulationRunOptions.html)
+#'   object, which sets `numberOfCores` and `showProgress` and leaves every
+#'   solver setting alone, or a named list, which can also set any
+#'   [SolverSettings](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/SolverSettings.html)
+#'   value, for example `list(numberOfCores = 8, relTol = 1e-6)`.
 #' @param validate Logical. If `TRUE` (default), runs the relevant
 #'   section validators via [validateProject()] before simulating and
 #'   aborts with a formatted summary on critical errors. Set to
@@ -786,16 +789,13 @@ runScenarios <- function(
 #' @param customParams A list with vectors `paths`, `values`, and
 #'   `units` — applied to every selected scenario as the final
 #'   parameter layer.
-#' @param simulationRunOptions Optional run options, either an
-#'   [ospsuite::SimulationRunOptions] or a named list of the same shape as the
-#'   project's `defaultSimulationRunOptions` (`numberOfCores`, `showProgress`,
-#'   and any solver setting, e.g. `list(relTol = 1e-6)`). The run options half
-#'   is consulted only for a scenario with `simulateSteadyState` set (the
-#'   steady-state pre-solve still runs), since the returned simulations are not
-#'   run here; `NULL` (default) takes it from `defaultSimulationRunOptions`.
-#'   Solver settings are written to each returned simulation, resolved field by
-#'   field from `defaultSimulationRunOptions`, then each scenario's own
-#'   `solverSettings`, then this argument when it is a named list.
+#' @inheritParams runScenarios
+#' @param simulationRunOptions Settings for this build, taking the same two
+#'   forms and the same precedence as in [runScenarios()]. Solver settings are
+#'   written to each simulation returned here. `numberOfCores` and
+#'   `showProgress` matter only for a scenario with `simulateSteadyState` set,
+#'   whose steady-state pre-solve does run; the returned simulations
+#'   themselves are not run.
 #' @param validate Logical. If `TRUE` (default), runs the relevant
 #'   section validators via [validateProject()] before building and
 #'   aborts with a formatted summary on critical errors. Set to
@@ -916,14 +916,16 @@ buildSimulations <- function(
 #'   steady state. Default `FALSE`.
 #' @param readPopulationFromCSV Logical. Load population from CSV.
 #'   Default `FALSE`.
-#' @param solverSettings Named list. Solver settings for this scenario's
-#'   simulation: any of `absTol`, `relTol`, `h0`, `hMin`, `hMax`, `mxStep`,
-#'   `useJacobian` and `checkForNegativeValues`, e.g.
-#'   `list(relTol = 1e-6)`. Default `NULL`, which leaves the scenario with the
-#'   project's `defaultSimulationRunOptions` and, where that sets nothing, the
-#'   solver settings of the model file. The whole block is one value per
-#'   scenario, so an `id` of several scenarios gives each of them the same
-#'   block.
+#' @param solverSettings How the solver should behave for this scenario, as a
+#'   named list. Takes any of the settings of
+#'   [SolverSettings](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/SolverSettings.html):
+#'   `absTol`, `relTol`, `h0`, `hMin`, `hMax`, `mxStep`, `useJacobian` and
+#'   `checkForNegativeValues`, for example `list(relTol = 1e-6)`. Default
+#'   `NULL`, which leaves the scenario with the project's
+#'   `defaultSimulationRunOptions` and, for a setting the project does not
+#'   give either, the value stored in the model file. The list counts as one
+#'   value per scenario, so an `id` naming several scenarios gives each of
+#'   them the same settings.
 #' @param overwrite Logical. When `FALSE` (default), an id that already exists
 #'   aborts. When `TRUE`, the existing scenario is replaced (last-write-wins).
 #'   Distinct from `overwriteFormulasInSS`, which is a steady-state model

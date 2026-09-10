@@ -140,6 +140,17 @@ test_that(".checkSolverSettings rejects a block that is not a named list", {
   expect_match(.checkSolverSettings(1e-6), "must be a named list")
 })
 
+test_that(".solverSettingFields covers exactly ospsuite's SolverSettings", {
+  # The table is written out in the package (the class exposes active bindings,
+  # which carry no type information, and is not exported). This is the drift
+  # guard: a setting added or renamed upstream fails here instead of being
+  # silently rejected as an unknown setting.
+  upstream <- names(
+    utils::getFromNamespace("SolverSettings", "ospsuite")$active
+  )
+  expect_setequal(names(.solverSettingFields), upstream)
+})
+
 test_that(".checkRunOptionRecord accepts run options beside solver settings", {
   expect_identical(.checkRunOptionRecord(NULL), character())
   expect_identical(.checkRunOptionRecord(list()), character())

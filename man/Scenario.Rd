@@ -78,12 +78,14 @@ referencing \code{parameterSets} definitions.}
 \item{initialConditions}{Character vector. Initial-condition set ids
 referencing \code{initialConditions} definitions.}
 
-\item{solverSettings}{Named list or \code{NULL}. Solver settings for this
-scenario's simulation, any of \code{absTol}, \code{relTol}, \code{h0}, \code{hMin}, \code{hMax},
-\code{mxStep}, \code{useJacobian} and \code{checkForNegativeValues}. A setting given here
-overrides the project's \code{defaultSimulationRunOptions}; one left out keeps
-whatever the level below sets, and finally whatever the model file
-carries.}
+\item{solverSettings}{How the solver should behave for this scenario, as a
+named list, or \code{NULL}. Takes any of the settings of
+\href{https://www.open-systems-pharmacology.org/OSPSuite-R/reference/SolverSettings.html}{SolverSettings}:
+\code{absTol}, \code{relTol}, \code{h0}, \code{hMin}, \code{hMax}, \code{mxStep}, \code{useJacobian} and
+\code{checkForNegativeValues}. A setting given here overrides the project's
+\code{defaultSimulationRunOptions}. A setting you leave out is not changed:
+the project value applies, or the model file's own value when the project
+gives none either.}
 }
 \value{
 A \code{Scenario} object: a named list carrying exactly the fields

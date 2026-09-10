@@ -83,28 +83,29 @@ write one with \code{project$excel$modelParamsFile <- "P.xlsx"} (stored
 verbatim). Assigning any field sets the dirty bit. Empty for a project
 created directly in the JSON format, without Excel files.}
 
-    \item{\code{defaultSimulationRunOptions}}{Named list of the project-level
-defaults (the \code{defaultSimulationRunOptions} JSON field), or \code{NULL}
-when none are declared. Recognized fields are the two run options
-\code{numberOfCores} and \code{showProgress}, plus any solver setting: \code{absTol},
-\code{relTol}, \code{h0}, \code{hMin}, \code{hMax}, \code{mxStep}, \code{useJacobian},
-\code{checkForNegativeValues}.
+    \item{\code{defaultSimulationRunOptions}}{The settings every scenario in the
+project starts from (the \code{defaultSimulationRunOptions} field of
+\code{Project.json}), as a named list, or \code{NULL} when the project declares
+none. It takes two kinds of setting, both named after the \code{ospsuite}
+class they belong to:
+\itemize{
+\item how the run is executed, from
+\href{https://www.open-systems-pharmacology.org/OSPSuite-R/reference/SimulationRunOptions.html}{SimulationRunOptions}:
+\code{numberOfCores} and \code{showProgress}.
+\item how the solver behaves, from
+\href{https://www.open-systems-pharmacology.org/OSPSuite-R/reference/SolverSettings.html}{SolverSettings}:
+\code{absTol}, \code{relTol}, \code{h0}, \code{hMin}, \code{hMax}, \code{mxStep}, \code{useJacobian}
+and \code{checkForNegativeValues}.
+}
 
-The run options become the \code{simulationRunOptions} \code{\link[=runScenarios]{runScenarios()}} and
-\code{\link[=buildSimulations]{buildSimulations()}} use when the caller passes none. The solver
-settings have no counterpart on \link[ospsuite:SimulationRunOptions]{ospsuite::SimulationRunOptions} and
-are written to each simulation (\code{simulation$solver}) instead.
-
-This block is the bottom of a precedence chain, never the last word.
-Each level overrides the level below it field by field, and a field
-nobody sets keeps the value the model file carries: this block, then a
-scenario's own \code{solverSettings}, then the \code{simulationRunOptions}
-argument. So an \link[ospsuite:SimulationRunOptions]{ospsuite::SimulationRunOptions} passed to
-\code{\link[=runScenarios]{runScenarios()}} replaces the run options while leaving every solver
-setting in place, having no field for one; pass a named list to
-override a solver setting per run. A parameter identification resolves
-the same way with the PI task's own \code{simulationRunOptions} block in
-the middle position, since \code{\link[=runPI]{runPI()}} takes no run options of its own.}
+These are defaults, so a scenario or a single run can still say
+otherwise. For each setting, the most specific place that gives it a
+value wins: a scenario's own \code{solverSettings} beats this list, and the
+\code{simulationRunOptions} you pass to \code{\link[=runScenarios]{runScenarios()}} or
+\code{\link[=buildSimulations]{buildSimulations()}} beats both. A setting nobody gives a value keeps
+the value stored in the model file. A parameter identification works
+the same way, with the task's own settings in place of the per-run
+ones.}
 
     \item{\code{definitions}}{The project's definition sections, as a read-only
 field group. Each section is one field: \code{outputPaths}, \code{scenarios},

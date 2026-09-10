@@ -175,28 +175,28 @@ Project <- R6::R6Class(
       private$.excelGroup()
     },
 
-    #' @field defaultSimulationRunOptions Named list of the project-level
-    #'   defaults (the `defaultSimulationRunOptions` JSON field), or `NULL`
-    #'   when none are declared. Recognized fields are the two run options
-    #'   `numberOfCores` and `showProgress`, plus any solver setting: `absTol`,
-    #'   `relTol`, `h0`, `hMin`, `hMax`, `mxStep`, `useJacobian`,
-    #'   `checkForNegativeValues`.
+    #' @field defaultSimulationRunOptions The settings every scenario in the
+    #'   project starts from (the `defaultSimulationRunOptions` field of
+    #'   `Project.json`), as a named list, or `NULL` when the project declares
+    #'   none. It takes two kinds of setting, both named after the `ospsuite`
+    #'   class they belong to:
     #'
-    #'   The run options become the `simulationRunOptions` [runScenarios()] and
-    #'   [buildSimulations()] use when the caller passes none. The solver
-    #'   settings have no counterpart on [ospsuite::SimulationRunOptions] and
-    #'   are written to each simulation (`simulation$solver`) instead.
+    #'   * how the run is executed, from
+    #'     [SimulationRunOptions](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/SimulationRunOptions.html):
+    #'     `numberOfCores` and `showProgress`.
+    #'   * how the solver behaves, from
+    #'     [SolverSettings](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/SolverSettings.html):
+    #'     `absTol`, `relTol`, `h0`, `hMin`, `hMax`, `mxStep`, `useJacobian`
+    #'     and `checkForNegativeValues`.
     #'
-    #'   This block is the bottom of a precedence chain, never the last word.
-    #'   Each level overrides the level below it field by field, and a field
-    #'   nobody sets keeps the value the model file carries: this block, then a
-    #'   scenario's own `solverSettings`, then the `simulationRunOptions`
-    #'   argument. So an [ospsuite::SimulationRunOptions] passed to
-    #'   [runScenarios()] replaces the run options while leaving every solver
-    #'   setting in place, having no field for one; pass a named list to
-    #'   override a solver setting per run. A parameter identification resolves
-    #'   the same way with the PI task's own `simulationRunOptions` block in
-    #'   the middle position, since [runPI()] takes no run options of its own.
+    #'   These are defaults, so a scenario or a single run can still say
+    #'   otherwise. For each setting, the most specific place that gives it a
+    #'   value wins: a scenario's own `solverSettings` beats this list, and the
+    #'   `simulationRunOptions` you pass to [runScenarios()] or
+    #'   [buildSimulations()] beats both. A setting nobody gives a value keeps
+    #'   the value stored in the model file. A parameter identification works
+    #'   the same way, with the task's own settings in place of the per-run
+    #'   ones.
     defaultSimulationRunOptions = function(value) {
       if (!missing(value)) {
         private$.defaultSimulationRunOptions <- value

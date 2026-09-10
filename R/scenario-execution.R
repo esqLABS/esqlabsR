@@ -7,8 +7,8 @@
 # `simulationRunOptions` block, as a plain list parsed from JSON), or return
 # NULL when the record is empty (so the caller keeps the package defaults).
 # Only `numberOfCores` and `showProgress` are fields of `SimulationRunOptions`;
-# an unset one keeps its default. A record's remaining keys are solver settings
-# with no counterpart on `SimulationRunOptions` (assigning one errors) and are
+# an unset one keeps its default. A record's remaining keys are solver settings,
+# which belong to `SolverSettings` rather than `SimulationRunOptions`, and are
 # written to each simulation by `.applySolverSettings()`.
 # @keywords internal
 # @noRd
@@ -27,13 +27,19 @@
 }
 
 # The solver settings a run-options record may carry, mapped to the value shape
-# each one takes. These are exactly the settable fields of
-# `ospsuite::SolverSettings`; every other key in a record (`numberOfCores`,
-# `showProgress`) belongs to `ospsuite::SimulationRunOptions` instead. The
-# `"count"` and `"flag"` tags exist because the .NET side coerces silently:
-# `mxStep <- 1.5` truncates to 1 and a negative `hMin` is accepted as given, so
-# the tag drives both the coercion here and the type rule
-# `.checkSolverSettings()` enforces.
+# each one takes. The names are exactly the settable fields of
+# `ospsuite`'s `SolverSettings`; every other key in a record (`numberOfCores`,
+# `showProgress`) belongs to `SimulationRunOptions` instead.
+#
+# The list is written out rather than read from the class because the tag is
+# the point: `SolverSettings` exposes its fields as R6 active bindings, which
+# say nothing about the value each one takes, and it is not exported, so
+# reading it from package code would mean a `:::` call. The tags are needed
+# because the .NET side coerces silently: `mxStep <- 1.5` truncates to 1 and a
+# negative `hMin` is accepted as given, so each tag drives both the coercion
+# in `.applySolverSettings()` and the type rule `.checkSolverSettings()`
+# enforces. `test-scenario-execution.R` compares these names against the class
+# so a field added upstream cannot go unnoticed.
 # @keywords internal
 # @noRd
 .solverSettingFields <- c(
@@ -134,9 +140,10 @@
 #
 # A run-options record holds two run options alongside any solver setting, so
 # `.checkSolverSettings()` cannot check one as it stands: it would report
-# `numberOfCores` and `showProgress` as unknown settings. This widens the
-# known-key half and hands the solver half to the same per-field rules, so a
-# typo or a wrong type is named wherever in the chain it was written.
+# `numberOfCores` and `showProgress` as unknown settings, those two belonging
+# to `SimulationRunOptions`. This widens the known-key half and hands the
+# solver half to the same per-field rules, so a typo or a wrong type is named
+# wherever in the chain it was written.
 # @keywords internal
 # @noRd
 .checkRunOptionRecord <- function(record) {

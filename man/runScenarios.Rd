@@ -28,14 +28,15 @@ to a different form warns, naming the id it resolved to.}
 \code{units} — applied to every selected scenario as the final
 parameter layer.}
 
-\item{simulationRunOptions}{Optional run options, either an
-\link[ospsuite:SimulationRunOptions]{ospsuite::SimulationRunOptions} or a named list of the same shape as the
-project's \code{defaultSimulationRunOptions} (\code{numberOfCores}, \code{showProgress},
-and any solver setting, e.g. \code{list(relTol = 1e-6)}). \code{NULL} (default)
-takes the run options from \code{defaultSimulationRunOptions}. An
-\link[ospsuite:SimulationRunOptions]{ospsuite::SimulationRunOptions} replaces the run options only, having no
-solver field, so the project's and each scenario's solver settings still
-apply; a named list wins over both, field by field.}
+\item{simulationRunOptions}{Settings for this run only, overriding both the
+project's \code{defaultSimulationRunOptions} and each scenario's own
+\code{solverSettings}, setting by setting. \code{NULL} (default) leaves both in
+place. Either an
+\href{https://www.open-systems-pharmacology.org/OSPSuite-R/reference/SimulationRunOptions.html}{SimulationRunOptions}
+object, which sets \code{numberOfCores} and \code{showProgress} and leaves every
+solver setting alone, or a named list, which can also set any
+\href{https://www.open-systems-pharmacology.org/OSPSuite-R/reference/SolverSettings.html}{SolverSettings}
+value, for example \code{list(numberOfCores = 8, relTol = 1e-6)}.}
 
 \item{validate}{Logical. If \code{TRUE} (default), runs the relevant
 section validators via \code{\link[=validateProject]{validateProject()}} before simulating and
