@@ -153,10 +153,20 @@
 # empty record contributes nothing. This is the merge rule every level of the
 # precedence chain shares, so the chain is expressed by the order of the
 # arguments rather than by a rule per caller.
+#
+# A field present but NULL counts as not carried, so it falls through to the
+# level below instead of suppressing it. The entries have to be dropped before
+# the fold because `utils::modifyList()` reads a NULL as "delete this key",
+# which would make a NULL mean "inherit" everywhere else in the chain
+# (`.applySolverSettings()`, `.checkSolverSettings()`) and "clear the level
+# below" here.
 # @keywords internal
 # @noRd
 .mergeRunOptionRecords <- function(...) {
   records <- Filter(function(x) length(x) > 0L, list(...))
+  records <- lapply(records, function(record) {
+    record[!vapply(record, is.null, logical(1))]
+  })
   Reduce(utils::modifyList, records, init = list())
 }
 

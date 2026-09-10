@@ -206,6 +206,18 @@ test_that(".mergeRunOptionRecords lets a later record win field by field", {
     .mergeRunOptionRecords(list(relTol = 1e-5), NULL, list()),
     list(relTol = 1e-5)
   )
+
+  # Nor can a field that is present but NULL: it means "not carried" here, as
+  # it does to `.applySolverSettings()` and `.checkSolverSettings()`, so it
+  # falls through to the level below rather than deleting it the way
+  # `utils::modifyList()` would on its own.
+  expect_identical(
+    .mergeRunOptionRecords(
+      list(relTol = 1e-5, hMax = 2),
+      list(relTol = NULL)
+    ),
+    list(relTol = 1e-5, hMax = 2)
+  )
   expect_identical(.mergeRunOptionRecords(), list())
   expect_identical(.mergeRunOptionRecords(NULL, NULL), list())
 })
