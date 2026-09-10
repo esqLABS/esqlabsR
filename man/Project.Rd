@@ -84,19 +84,27 @@ verbatim). Assigning any field sets the dirty bit. Empty for a project
 created directly in the JSON format, without Excel files.}
 
     \item{\code{defaultSimulationRunOptions}}{Named list of the project-level
-default simulation run options (the \code{defaultSimulationRunOptions} JSON
-field), or \code{NULL} when none are declared. Used by \code{\link[=runScenarios]{runScenarios()}} as
-the default \code{simulationRunOptions} when the caller does not pass one.
-Recognized fields: \code{numberOfCores}, \code{checkForNegativeValues},
-\code{showProgress}. \code{numberOfCores} and \code{showProgress} become the run
-options. \code{checkForNegativeValues} is a solver setting: when
-\code{\link[=runScenarios]{runScenarios()}} or \code{\link[=buildSimulations]{buildSimulations()}} is called without
-\code{simulationRunOptions}, it is written to each simulation
-(\code{simulation$solver$checkForNegativeValues}); an explicit
-\code{simulationRunOptions} argument replaces the whole default, and the
-simulations then keep the solver settings of their model files. A
-parameter identification applies it to its simulations as well, unless
-the PI task's own \code{simulationRunOptions} block sets the field.}
+defaults (the \code{defaultSimulationRunOptions} JSON field), or \code{NULL}
+when none are declared. Recognized fields are the two run options
+\code{numberOfCores} and \code{showProgress}, plus any solver setting: \code{absTol},
+\code{relTol}, \code{h0}, \code{hMin}, \code{hMax}, \code{mxStep}, \code{useJacobian},
+\code{checkForNegativeValues}.
+
+The run options become the \code{simulationRunOptions} \code{\link[=runScenarios]{runScenarios()}} and
+\code{\link[=buildSimulations]{buildSimulations()}} use when the caller passes none. The solver
+settings have no counterpart on \link[ospsuite:SimulationRunOptions]{ospsuite::SimulationRunOptions} and
+are written to each simulation (\code{simulation$solver}) instead.
+
+This block is the bottom of a precedence chain, never the last word.
+Each level overrides the level below it field by field, and a field
+nobody sets keeps the value the model file carries: this block, then a
+scenario's own \code{solverSettings}, then the \code{simulationRunOptions}
+argument. So an \link[ospsuite:SimulationRunOptions]{ospsuite::SimulationRunOptions} passed to
+\code{\link[=runScenarios]{runScenarios()}} replaces the run options while leaving every solver
+setting in place, having no field for one; pass a named list to
+override a solver setting per run. A parameter identification resolves
+the same way with the PI task's own \code{simulationRunOptions} block in
+the middle position, since \code{\link[=runPI]{runPI()}} takes no run options of its own.}
 
     \item{\code{definitions}}{The project's definition sections, as a read-only
 field group. Each section is one field: \code{outputPaths}, \code{scenarios},

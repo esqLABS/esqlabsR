@@ -257,9 +257,11 @@ test_that(".validateScenarios flags an unsound solverSettings block", {
   sc$solverSettings <- list(reltol = 1e-6, mxStep = 1.5)
   result <- .validateScenarios(list(s1 = sc))
   msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
+  # Pinned so an unrelated extra error cannot pass the matches below.
+  expect_length(msgs, 2L)
   expect_match(msgs, "unknown setting 'reltol'", all = FALSE)
   expect_match(msgs, "mxStep must be a single whole number", all = FALSE)
-  expect_match(msgs, "Scenario 's1'", all = FALSE)
+  expect_match(msgs, "Scenario 's1'", all = TRUE)
 })
 
 test_that(".validateScenarios passes a sound solverSettings block", {

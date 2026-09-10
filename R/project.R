@@ -176,19 +176,27 @@ Project <- R6::R6Class(
     },
 
     #' @field defaultSimulationRunOptions Named list of the project-level
-    #'   default simulation run options (the `defaultSimulationRunOptions` JSON
-    #'   field), or `NULL` when none are declared. Used by [runScenarios()] as
-    #'   the default `simulationRunOptions` when the caller does not pass one.
-    #'   Recognized fields: `numberOfCores`, `checkForNegativeValues`,
-    #'   `showProgress`. `numberOfCores` and `showProgress` become the run
-    #'   options. `checkForNegativeValues` is a solver setting: when
-    #'   [runScenarios()] or [buildSimulations()] is called without
-    #'   `simulationRunOptions`, it is written to each simulation
-    #'   (`simulation$solver$checkForNegativeValues`); an explicit
-    #'   `simulationRunOptions` argument replaces the whole default, and the
-    #'   simulations then keep the solver settings of their model files. A
-    #'   parameter identification applies it to its simulations as well, unless
-    #'   the PI task's own `simulationRunOptions` block sets the field.
+    #'   defaults (the `defaultSimulationRunOptions` JSON field), or `NULL`
+    #'   when none are declared. Recognized fields are the two run options
+    #'   `numberOfCores` and `showProgress`, plus any solver setting: `absTol`,
+    #'   `relTol`, `h0`, `hMin`, `hMax`, `mxStep`, `useJacobian`,
+    #'   `checkForNegativeValues`.
+    #'
+    #'   The run options become the `simulationRunOptions` [runScenarios()] and
+    #'   [buildSimulations()] use when the caller passes none. The solver
+    #'   settings have no counterpart on [ospsuite::SimulationRunOptions] and
+    #'   are written to each simulation (`simulation$solver`) instead.
+    #'
+    #'   This block is the bottom of a precedence chain, never the last word.
+    #'   Each level overrides the level below it field by field, and a field
+    #'   nobody sets keeps the value the model file carries: this block, then a
+    #'   scenario's own `solverSettings`, then the `simulationRunOptions`
+    #'   argument. So an [ospsuite::SimulationRunOptions] passed to
+    #'   [runScenarios()] replaces the run options while leaving every solver
+    #'   setting in place, having no field for one; pass a named list to
+    #'   override a solver setting per run. A parameter identification resolves
+    #'   the same way with the PI task's own `simulationRunOptions` block in
+    #'   the middle position, since [runPI()] takes no run options of its own.
     defaultSimulationRunOptions = function(value) {
       if (!missing(value)) {
         private$.defaultSimulationRunOptions <- value
