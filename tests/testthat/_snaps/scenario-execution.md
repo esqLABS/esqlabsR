@@ -1,3 +1,14 @@
+# buildSimulations reports an unsound simulationRunOptions record
+
+    Code
+      buildSimulations(project, scenarios = "testscenario", simulationRunOptions = list(
+        reltol = 1e-04, mxStep = 1.5))
+    Condition
+      Error in `buildSimulations()`:
+      ! Invalid `simulationRunOptions`:
+      x simulationRunOptions has unknown field 'reltol'; the fields are numberOfCores, showProgress, absTol, relTol, h0, hMin, hMax, mxStep, useJacobian, checkForNegativeValues
+      x simulationRunOptions$mxStep must be a single whole number between 1 and 2147483647
+
 # runScenarios rejects a simulationRunOptions that is neither form
 
     Code

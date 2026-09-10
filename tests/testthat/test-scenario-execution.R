@@ -140,6 +140,51 @@ test_that(".checkSolverSettings rejects a block that is not a named list", {
   expect_match(.checkSolverSettings(1e-6), "must be a named list")
 })
 
+test_that(".checkRunOptionRecord accepts run options beside solver settings", {
+  expect_identical(.checkRunOptionRecord(NULL), character())
+  expect_identical(.checkRunOptionRecord(list()), character())
+  expect_identical(
+    .checkRunOptionRecord(list(
+      numberOfCores = 4,
+      showProgress = TRUE,
+      relTol = 1e-6
+    )),
+    character()
+  )
+})
+
+test_that(".checkRunOptionRecord applies the same rules a scenario block gets", {
+  # The whole point of the checker is that the level a setting was written at
+  # does not decide whether a slip is reported.
+  expect_match(
+    .checkRunOptionRecord(list(reltol = 1e-4)),
+    "unknown field 'reltol'"
+  )
+  expect_match(
+    .checkRunOptionRecord(list(mxStep = 1.5)),
+    "simulationRunOptions\\$mxStep must be a single whole number"
+  )
+  expect_match(
+    .checkRunOptionRecord(list(relTol = -1)),
+    "simulationRunOptions\\$relTol must be a single non-negative number"
+  )
+  # A run option is not reported twice, once as itself and once as an unknown
+  # solver setting.
+  expect_length(.checkRunOptionRecord(list(numberOfCores = 4, foo = 1)), 1L)
+})
+
+test_that("buildSimulations reports an unsound simulationRunOptions record", {
+  project <- .testProject()
+  expect_snapshot(
+    error = TRUE,
+    buildSimulations(
+      project,
+      scenarios = "testscenario",
+      simulationRunOptions = list(reltol = 1e-4, mxStep = 1.5)
+    )
+  )
+})
+
 test_that(".applySolverSettings writes every solver setting a record carries", {
   simulation <- ospsuite::loadSimulation(
     testthat::test_path("data", "simple.pkml"),

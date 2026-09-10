@@ -128,6 +128,59 @@
   problems
 }
 
+# Report what is wrong with a run-options record (the shape of
+# `defaultSimulationRunOptions`, or the named-list form of the
+# `simulationRunOptions` argument), as a character vector of problems.
+#
+# A run-options record holds two run options alongside any solver setting, so
+# `.checkSolverSettings()` cannot check one as it stands: it would report
+# `numberOfCores` and `showProgress` as unknown settings. This widens the
+# known-key half and hands the solver half to the same per-field rules, so a
+# typo or a wrong type is named wherever in the chain it was written.
+# @keywords internal
+# @noRd
+.checkRunOptionRecord <- function(record) {
+  if (is.null(record) || length(record) == 0L) {
+    return(character())
+  }
+  if (!is.list(record) || is.null(names(record))) {
+    return("simulationRunOptions must be a named list")
+  }
+
+  problems <- character()
+  runOptionFields <- c("numberOfCores", "showProgress")
+  unknown <- setdiff(
+    names(record),
+    c(runOptionFields, names(.solverSettingFields))
+  )
+  if (length(unknown) > 0L) {
+    problems <- c(
+      problems,
+      paste0(
+        "simulationRunOptions has unknown field",
+        if (length(unknown) > 1L) "s" else "",
+        " ",
+        paste0("'", unknown, "'", collapse = ", "),
+        "; the fields are ",
+        paste(c(runOptionFields, names(.solverSettingFields)), collapse = ", ")
+      )
+    )
+  }
+
+  # The solver half goes through the shared rules. Its own unknown-key report
+  # is dropped by slicing to the known settings first, so a run option is not
+  # reported twice under two names.
+  solverHalf <- record[intersect(names(.solverSettingFields), names(record))]
+  c(
+    problems,
+    sub(
+      "^solverSettings",
+      "simulationRunOptions",
+      .checkSolverSettings(solverHalf)
+    )
+  )
+}
+
 # Write the solver settings of a run-options record to one simulation. A field
 # the record does not carry (or a NULL record) leaves the setting the model file
 # carries. Mutates `simulation` in place (an `ospsuite::Simulation` is a
@@ -769,6 +822,19 @@
         !is.null(names(simulationRunOptions))))
   if (!runOptionsOk) {
     cli::cli_abort(messages$invalidSimulationRunOptions(simulationRunOptions))
+  }
+  # A record's contents go through the same rules a scenario's block does, so
+  # the level a setting was written at does not decide whether a typo or a
+  # wrong type is reported. An `ospsuite::SimulationRunOptions` object needs no
+  # check: its own active bindings police its two fields.
+  if (!inherits(simulationRunOptions, "SimulationRunOptions")) {
+    problems <- .checkRunOptionRecord(simulationRunOptions)
+    if (length(problems) > 0L) {
+      cli::cli_abort(c(
+        "Invalid {.arg simulationRunOptions}:",
+        stats::setNames(problems, rep("x", length(problems)))
+      ))
+    }
   }
   resolved <- .resolveRunOptions(project, simulationRunOptions)
   if (isTRUE(validate)) {

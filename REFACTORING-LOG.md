@@ -237,3 +237,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-09-09 20:46: NEWS records per-scenario solver settings for 6.0.0. (#408)
 - 2026-09-10 11:20: A solver setting given as NULL now inherits the level below instead of deleting it, so NULL means the same thing everywhere in the precedence chain. (#408)
 - 2026-09-10 11:22: mxStep is now rejected above the integer maximum, where it used to pass validation and reach the solver as NA. (#408)
+- 2026-09-10 11:24: A simulationRunOptions list is now checked the same way a scenario block is, so a typo or a wrong type at the call site is named instead of being dropped or truncated. (#408)
