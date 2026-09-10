@@ -347,7 +347,7 @@ PIOutputMapping <- function(
 #'   must have at least one output mapping to run, which [validateProject()]
 #'   enforces.
 #' @param configuration Named list of solver settings (e.g. `algorithm`,
-#'   `ciMethod`, `objectiveFunction`, `simulationRunOptions`). Defaults to
+#'   `ciMethod`, `objectiveFunction`, `solverSettings`). Defaults to
 #'   an empty list, leaving every runtime default in place.
 #'
 #' @returns A `PITask` object: a named list with copy semantics.
@@ -834,22 +834,22 @@ print.PITask <- function(x, ...) {
   project,
   piTask,
   observedData,
-  stopIfParameterNotFound = TRUE
+  stopIfParameterNotFound = TRUE,
+  simulationRunOptions = NULL
 ) {
   # Build simulations for this task's scenarios via the modern primitive.
   cache <- new.env(parent = emptyenv())
   cache$individuals <- list()
   cache$populations <- list()
 
-  # Solver settings for the task's simulations: the project's default record is
-  # the baseline and the task's own `simulationRunOptions` block overrides it
-  # field by field. The result is handed to `.prepareScenario()` as the record
+  # Solver settings for the task's simulations: the project's defaults are the
+  # baseline and the task's own `solverSettings` block overrides them setting
+  # by setting. The result is handed to `.prepareScenario()` as the record
   # *below* each scenario's own `solverSettings` block, so a scenario's setting
-  # wins over the task's, and nothing sits above it because `runPI()` takes no
-  # run options of its own.
+  # wins over the task's.
   solverDefaults <- .mergeRunOptionRecords(
-    project$defaultSimulationRunOptions,
-    piTask$configuration$simulationRunOptions
+    project$defaultSolverSettings,
+    piTask$configuration$solverSettings
   )
 
   scenarioNames <- piTask$scenarios
@@ -1001,14 +1001,13 @@ print.PITask <- function(x, ...) {
   }
 
   # 4. Build PIConfiguration from the JSON nested-block shape.
-  # The merged record, not the task's own block: `numberOfCores` and
-  # `showProgress` follow the same project-then-task chain the solver settings
-  # do, so a project default is not lost just because the task declares no run
-  # options of its own.
-  piConfig <- .buildPIConfiguration(utils::modifyList(
-    piTask$configuration,
-    list(simulationRunOptions = solverDefaults)
-  ))
+  piConfig <- .buildPIConfiguration(piTask$configuration)
+  # How the run is executed comes from the caller, never from the task: a
+  # `PIConfiguration` carries an `ospsuite::SimulationRunOptions`, and that is
+  # `runPI()`'s argument.
+  if (!is.null(simulationRunOptions)) {
+    piConfig$simulationRunOptions <- simulationRunOptions
+  }
 
   # 5. Assemble final ParameterIdentification.
   ospsuite.parameteridentification::ParameterIdentification$new(
@@ -1109,14 +1108,6 @@ print.PITask <- function(x, ...) {
     piConfig$objectiveFunctionOptions <- current
   }
 
-  # The record's solver settings reach the task's simulations through
-  # `.createSinglePITask()`, not the run options, so only `numberOfCores` and
-  # `showProgress` are read here.
-  sro <- cfg$simulationRunOptions
-  if (!is.null(sro)) {
-    piConfig$simulationRunOptions <- .buildSimulationRunOptions(sro)
-  }
-
   piConfig
 }
 
@@ -1160,6 +1151,13 @@ print.PITask <- function(x, ...) {
 #'   simulation aborts the build; when `FALSE`, it is skipped with a
 #'   warning. Forwarded through `.prepareScenario()` to
 #'   `initializeSimulation()`.
+#' @param simulationRunOptions How the identification is executed: an
+#'   [SimulationRunOptions](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/SimulationRunOptions.html)
+#'   object setting `numberOfCores` and `showProgress`, for example
+#'   `ospsuite::SimulationRunOptions$new(numberOfCores = 8)`. `NULL` (default)
+#'   uses the `ospsuite` defaults. This is not project data, so a task's
+#'   `configuration` never supplies it; how the solver behaves does live there,
+#'   as the task's `solverSettings`.
 #' @returns Named list of per-task results. Each entry is a list with
 #'   `task` (the runtime `ParameterIdentification` object), `result`
 #'   (the `PIResult` from `task$run()`, or `NULL` on optimisation
@@ -1170,7 +1168,8 @@ runPI <- function(
   project,
   tasks = NULL,
   observedData = NULL,
-  stopIfParameterNotFound = TRUE
+  stopIfParameterNotFound = TRUE,
+  simulationRunOptions = NULL
 ) {
   # Soft-deprecation: legacy first-arg shape (a list of pre-built
   # ParameterIdentification objects, not a Project).
@@ -1233,7 +1232,8 @@ runPI <- function(
       project = project,
       piTask = taskMap[[taskName]],
       observedData = observedData,
-      stopIfParameterNotFound = stopIfParameterNotFound
+      stopIfParameterNotFound = stopIfParameterNotFound,
+      simulationRunOptions = simulationRunOptions
     )
   }
 

@@ -9,6 +9,7 @@ buildSimulations(
   scenarios = NULL,
   customParams = NULL,
   simulationRunOptions = NULL,
+  solverSettings = NULL,
   validate = TRUE,
   stopIfParameterNotFound = TRUE
 )
@@ -27,12 +28,14 @@ to a different form warns, naming the id it resolved to.}
 \code{units} — applied to every selected scenario as the final
 parameter layer.}
 
-\item{simulationRunOptions}{Settings for this build, taking the same two
-forms and the same precedence as in \code{\link[=runScenarios]{runScenarios()}}. Solver settings are
-written to each simulation returned here. \code{numberOfCores} and
-\code{showProgress} matter only for a scenario with \code{simulateSteadyState} set,
-whose steady-state pre-solve does run; the returned simulations
-themselves are not run.}
+\item{simulationRunOptions}{How the steady-state pre-solve is executed, for
+a scenario with \code{simulateSteadyState} set. Takes the same form as in
+\code{\link[=runScenarios]{runScenarios()}}. The simulations returned here are not run, so it has no
+other effect.}
+
+\item{solverSettings}{How the solver behaves, taking the same form and the
+same precedence as in \code{\link[=runScenarios]{runScenarios()}}. Written to each simulation
+returned here.}
 
 \item{validate}{Logical. If \code{TRUE} (default), runs the relevant
 section validators via \code{\link[=validateProject]{validateProject()}} before building and

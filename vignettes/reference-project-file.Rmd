@@ -82,7 +82,7 @@ Every section is a read-only named list keyed by id. Assigning to one aborts. A 
 | `esqlabsRVersion` | yes | string | Informational: the package version that wrote the file. Written by the save machinery. |
 | `definitionsFolder` | no | string | Folder holding the definition files. A single folder name directly under the project folder, not a nested path. Defaults to `"definitions"`. Emitted only when set. |
 | `filePaths` | yes | object | The working folders. See below. |
-| `defaultSimulationRunOptions` | no | object | Run defaults `runScenarios()` falls back on. See below. Emitted only when set. |
+| `defaultSolverSettings` | no | object | Solver defaults every scenario starts from. See below. Emitted only when set. |
 | `excel` | no | object | Excel-bridge workbook names. See below. Absent for a project created directly in the JSON format. |
 
 ### `filePaths`
@@ -106,16 +106,9 @@ The variable is substituted when the path is resolved. An unset variable is left
 
 Any property in `filePaths` other than the four above sits unread, so an unrecognized entry cannot fail a load.
 
-### `defaultSimulationRunOptions`
+### `defaultSolverSettings`
 
-Two run options, plus any of the solver settings below.
-
-| Field | Type | Description |
-| --- | --- | --- |
-| `numberOfCores` | number | Cores to use when simulating. |
-| `showProgress` | logical | Whether run progress is reported. |
-
-The remaining fields are solver settings, the settable properties of `ospsuite::SolverSettings`. A field you leave out keeps the value the model file carries.
+How the solver should behave for every scenario in the project, as any of the settable properties of [`SolverSettings`](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/SolverSettings.html). A setting you leave out keeps the value the model file carries.
 
 | Field | Type | Description |
 | --- | --- | --- |
@@ -128,15 +121,13 @@ The remaining fields are solver settings, the settable properties of `ospsuite::
 | `useJacobian` | logical | Whether the analytic Jacobian is used. |
 | `checkForNegativeValues` | logical | Whether the solver checks for negative values. |
 
-`runScenarios()` and `buildSimulations()` read this block as the project-wide default: `numberOfCores` and `showProgress` become the run options, and every solver setting is written to each simulation (`simulation$solver`).
+These are defaults, so a scenario or a single run can still say otherwise. For each setting, the most specific place that gives it a value wins:
 
-The block is a default, never the last word. Each level of the chain overrides the level below it field by field, and a field nobody sets keeps the value the model file carries:
+- `defaultSolverSettings`, the project-wide default,
+- a scenario's own `solverSettings` block (see `vignette("reference-definition-fields")`), or a parameter-identification task's own `solverSettings` block,
+- the `solverSettings` argument of `runScenarios()` or `buildSimulations()`.
 
-- `defaultSimulationRunOptions`, the project-wide default,
-- a scenario's own `solverSettings` block (see `vignette("reference-definition-fields")`), or a PI task's own `simulationRunOptions` block,
-- the `simulationRunOptions` argument of `runScenarios()` or `buildSimulations()`.
-
-So an `ospsuite::SimulationRunOptions` passed to `runScenarios()` replaces the run options without touching any solver setting, since it has no field for one. Inside a parameter identification the scenario block wins over the task block, and `runPI()` takes no run options of its own.
+**How the run is executed is not project data.** `numberOfCores` and `showProgress` belong to [`SimulationRunOptions`](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/SimulationRunOptions.html), which you pass to `runScenarios()`, `buildSimulations()` or `runPI()` as their `simulationRunOptions` argument. A project file does not carry them; one written before this split is loaded with a warning naming the run options it dropped.
 
 ### `excel`
 
@@ -153,7 +144,7 @@ The `Project` object gathers these fields into five groups.
 | `project$info` | `project$info$name` | `name`, `description` only | `name`, `description`, `schemaVersion`, `esqlabsRVersion`, `projectFilePath`, `projectDirPath` |
 | `project$paths` | `project$paths$dataFolder` | yes | the four `filePaths` folders plus `definitionsFolder` |
 | `project$excel` | `project$excel$modelParamsFile` | yes | the Excel workbook names |
-| `project$defaultSimulationRunOptions` | direct | yes | the run-options list, or `NULL` |
+| `project$defaultSolverSettings` | direct | yes | the solver-settings list, or `NULL` |
 | `project$definitions` | `project$definitions$scenarios` | no | the twelve definition sections |
 
 Two asymmetries to note when reading and writing paths:

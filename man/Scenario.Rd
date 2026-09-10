@@ -83,7 +83,7 @@ named list, or \code{NULL}. Takes any of the settings of
 \href{https://www.open-systems-pharmacology.org/OSPSuite-R/reference/SolverSettings.html}{SolverSettings}:
 \code{absTol}, \code{relTol}, \code{h0}, \code{hMin}, \code{hMax}, \code{mxStep}, \code{useJacobian} and
 \code{checkForNegativeValues}. A setting given here overrides the project's
-\code{defaultSimulationRunOptions}. A setting you leave out is not changed:
+\code{defaultSolverSettings}. A setting you leave out is not changed:
 the project value applies, or the model file's own value when the project
 gives none either.}
 }

@@ -85,7 +85,7 @@
 #'   [SolverSettings](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/SolverSettings.html):
 #'   `absTol`, `relTol`, `h0`, `hMin`, `hMax`, `mxStep`, `useJacobian` and
 #'   `checkForNegativeValues`. A setting given here overrides the project's
-#'   `defaultSimulationRunOptions`. A setting you leave out is not changed:
+#'   `defaultSolverSettings`. A setting you leave out is not changed:
 #'   the project value applies, or the model file's own value when the project
 #'   gives none either.
 #'
@@ -696,15 +696,17 @@ print.Scenario <- function(x, ...) {
 #' @param customParams A list with vectors `paths`, `values`, and
 #'   `units` — applied to every selected scenario as the final
 #'   parameter layer.
-#' @param simulationRunOptions Settings for this run only, overriding both the
-#'   project's `defaultSimulationRunOptions` and each scenario's own
-#'   `solverSettings`, setting by setting. `NULL` (default) leaves both in
-#'   place. Either an
+#' @param simulationRunOptions How this run is executed: an
 #'   [SimulationRunOptions](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/SimulationRunOptions.html)
-#'   object, which sets `numberOfCores` and `showProgress` and leaves every
-#'   solver setting alone, or a named list, which can also set any
-#'   [SolverSettings](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/SolverSettings.html)
-#'   value, for example `list(numberOfCores = 8, relTol = 1e-6)`.
+#'   object setting `numberOfCores` and `showProgress`, for example
+#'   `ospsuite::SimulationRunOptions$new(numberOfCores = 8)`. `NULL` (default)
+#'   uses the `ospsuite` defaults. This is not project data, so a project file
+#'   never supplies it.
+#' @param solverSettings How the solver behaves for this run, as a named list
+#'   of [SolverSettings](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/SolverSettings.html)
+#'   values, for example `list(relTol = 1e-6)`. A setting given here wins over
+#'   the project's `defaultSolverSettings` and over each scenario's own
+#'   `solverSettings`. `NULL` (default) leaves both in place.
 #' @param validate Logical. If `TRUE` (default), runs the relevant
 #'   section validators via [validateProject()] before simulating and
 #'   aborts with a formatted summary on critical errors. Set to
@@ -748,6 +750,7 @@ runScenarios <- function(
   scenarios = NULL,
   customParams = NULL,
   simulationRunOptions = NULL,
+  solverSettings = NULL,
   validate = TRUE,
   stopIfParameterNotFound = TRUE,
   stopIfFails = TRUE
@@ -763,6 +766,7 @@ runScenarios <- function(
     scenarios,
     customParams,
     simulationRunOptions,
+    solverSettings,
     validate,
     stopIfParameterNotFound,
     stopIfFails
@@ -790,12 +794,13 @@ runScenarios <- function(
 #'   `units` — applied to every selected scenario as the final
 #'   parameter layer.
 #' @inheritParams runScenarios
-#' @param simulationRunOptions Settings for this build, taking the same two
-#'   forms and the same precedence as in [runScenarios()]. Solver settings are
-#'   written to each simulation returned here. `numberOfCores` and
-#'   `showProgress` matter only for a scenario with `simulateSteadyState` set,
-#'   whose steady-state pre-solve does run; the returned simulations
-#'   themselves are not run.
+#' @param simulationRunOptions How the steady-state pre-solve is executed, for
+#'   a scenario with `simulateSteadyState` set. Takes the same form as in
+#'   [runScenarios()]. The simulations returned here are not run, so it has no
+#'   other effect.
+#' @param solverSettings How the solver behaves, taking the same form and the
+#'   same precedence as in [runScenarios()]. Written to each simulation
+#'   returned here.
 #' @param validate Logical. If `TRUE` (default), runs the relevant
 #'   section validators via [validateProject()] before building and
 #'   aborts with a formatted summary on critical errors. Set to
@@ -821,6 +826,7 @@ buildSimulations <- function(
   scenarios = NULL,
   customParams = NULL,
   simulationRunOptions = NULL,
+  solverSettings = NULL,
   validate = TRUE,
   stopIfParameterNotFound = TRUE
 ) {
@@ -835,6 +841,7 @@ buildSimulations <- function(
     scenarios,
     customParams,
     simulationRunOptions,
+    solverSettings,
     validate,
     stopIfParameterNotFound
   )
@@ -922,7 +929,7 @@ buildSimulations <- function(
 #'   `absTol`, `relTol`, `h0`, `hMin`, `hMax`, `mxStep`, `useJacobian` and
 #'   `checkForNegativeValues`, for example `list(relTol = 1e-6)`. Default
 #'   `NULL`, which leaves the scenario with the project's
-#'   `defaultSimulationRunOptions` and, for a setting the project does not
+#'   `defaultSolverSettings` and, for a setting the project does not
 #'   give either, the value stored in the model file. The list counts as one
 #'   value per scenario, so an `id` naming several scenarios gives each of
 #'   them the same settings.

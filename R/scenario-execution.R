@@ -2,34 +2,12 @@
 #
 # Modern (JSON-Project-driven) runtime path.
 
-# Build an `ospsuite::SimulationRunOptions` from a run-options record (the
-# project's `defaultSimulationRunOptions` block or a PI task's
-# `simulationRunOptions` block, as a plain list parsed from JSON), or return
-# NULL when the record is empty (so the caller keeps the package defaults).
-# Only `numberOfCores` and `showProgress` are fields of `SimulationRunOptions`;
-# an unset one keeps its default. A record's remaining keys are solver settings,
-# which belong to `SolverSettings` rather than `SimulationRunOptions`, and are
-# written to each simulation by `.applySolverSettings()`.
-# @keywords internal
-# @noRd
-.buildSimulationRunOptions <- function(defaults) {
-  if (is.null(defaults) || length(defaults) == 0L) {
-    return(NULL)
-  }
-  runOpts <- ospsuite::SimulationRunOptions$new()
-  if (!is.null(defaults$numberOfCores)) {
-    runOpts$numberOfCores <- as.integer(defaults$numberOfCores)
-  }
-  if (!is.null(defaults$showProgress)) {
-    runOpts$showProgress <- isTRUE(defaults$showProgress)
-  }
-  runOpts
-}
-
-# The solver settings a run-options record may carry, mapped to the value shape
-# each one takes. The names are exactly the settable fields of
-# `ospsuite`'s `SolverSettings`; every other key in a record (`numberOfCores`,
-# `showProgress`) belongs to `SimulationRunOptions` instead.
+# The solver settings a project, scenario or parameter-identification task may
+# carry, mapped to the value shape each one takes. The names are exactly the
+# settable fields of `ospsuite`'s `SolverSettings`. How the run is executed
+# (`numberOfCores`, `showProgress`) belongs to `SimulationRunOptions`, which is
+# an argument of the run functions rather than project data, so it never
+# appears in one of these records.
 #
 # The list is written out rather than read from the class because the tag is
 # the point: `SolverSettings` exposes its fields as R6 active bindings, which
@@ -134,61 +112,7 @@
   problems
 }
 
-# Report what is wrong with a run-options record (the shape of
-# `defaultSimulationRunOptions`, or the named-list form of the
-# `simulationRunOptions` argument), as a character vector of problems.
-#
-# A run-options record holds two run options alongside any solver setting, so
-# `.checkSolverSettings()` cannot check one as it stands: it would report
-# `numberOfCores` and `showProgress` as unknown settings, those two belonging
-# to `SimulationRunOptions`. This widens the known-key half and hands the
-# solver half to the same per-field rules, so a typo or a wrong type is named
-# wherever in the chain it was written.
-# @keywords internal
-# @noRd
-.checkRunOptionRecord <- function(record) {
-  if (is.null(record) || length(record) == 0L) {
-    return(character())
-  }
-  if (!is.list(record) || is.null(names(record))) {
-    return("simulationRunOptions must be a named list")
-  }
-
-  problems <- character()
-  runOptionFields <- c("numberOfCores", "showProgress")
-  unknown <- setdiff(
-    names(record),
-    c(runOptionFields, names(.solverSettingFields))
-  )
-  if (length(unknown) > 0L) {
-    problems <- c(
-      problems,
-      paste0(
-        "simulationRunOptions has unknown field",
-        if (length(unknown) > 1L) "s" else "",
-        " ",
-        paste0("'", unknown, "'", collapse = ", "),
-        "; the fields are ",
-        paste(c(runOptionFields, names(.solverSettingFields)), collapse = ", ")
-      )
-    )
-  }
-
-  # The solver half goes through the shared rules. Its own unknown-key report
-  # is dropped by slicing to the known settings first, so a run option is not
-  # reported twice under two names.
-  solverHalf <- record[intersect(names(.solverSettingFields), names(record))]
-  c(
-    problems,
-    sub(
-      "^solverSettings",
-      "simulationRunOptions",
-      .checkSolverSettings(solverHalf)
-    )
-  )
-}
-
-# Write the solver settings of a run-options record to one simulation. A field
+# Write a solver-settings record to one simulation. A field
 # the record does not carry (or a NULL record) leaves the setting the model file
 # carries. Mutates `simulation` in place (an `ospsuite::Simulation` is a
 # reference object) and returns it invisibly.
@@ -237,43 +161,28 @@
   Reduce(utils::modifyList, records, init = list())
 }
 
-# Resolve the run options for a scenario build from the caller's
-# `simulationRunOptions` argument and the project's
-# `defaultSimulationRunOptions`. Returns the three pieces the build needs:
+# Resolve what a scenario build needs from its two settings arguments and the
+# project's own defaults. Returns three pieces:
 #
-# - `runOptions`: an `ospsuite::SimulationRunOptions` (or NULL for the package
-#   defaults), resolved once for the whole build because a scenario carries no
-#   run option of its own.
+# - `runOptions`: the caller's `ospsuite::SimulationRunOptions`, or NULL for
+#   the package defaults. How the run is executed is never project data, so
+#   there is nothing to fall back on and nothing to merge; it is resolved once
+#   for the whole build because a scenario has no say in it.
 # - `solverDefaults`: the record that sits *below* a scenario's own
-#   `solverSettings` block.
-# - `solverOverrides`: the record that sits *above* it.
+#   `solverSettings` block, the project's `defaultSolverSettings`.
+# - `solverOverrides`: the record that sits *above* it, the caller's
+#   `solverSettings`.
 #
 # Keeping the two solver records apart is what lets `.prepareScenario()` fold
 # each scenario's block into the middle of the chain, without knowing which
 # level either record came from.
-#
-# The argument takes either shape. An `ospsuite::SimulationRunOptions` object
-# is used as it stands and contributes no solver setting, having no field for
-# one. A named record (the shape of `defaultSimulationRunOptions`) can carry
-# both halves: its run options are merged over the project's and built into an
-# object, and it becomes the top of the solver chain. `.scenarioBuildPreflight()`
-# has already rejected anything that is neither.
 # @keywords internal
 # @noRd
-.resolveRunOptions <- function(project, simulationRunOptions) {
-  defaults <- project$defaultSimulationRunOptions
-  if (inherits(simulationRunOptions, "SimulationRunOptions")) {
-    return(list(
-      runOptions = simulationRunOptions,
-      solverDefaults = defaults,
-      solverOverrides = NULL
-    ))
-  }
-  merged <- .mergeRunOptionRecords(defaults, simulationRunOptions)
+.resolveRunOptions <- function(project, simulationRunOptions, solverSettings) {
   list(
-    runOptions = .buildSimulationRunOptions(merged),
-    solverDefaults = defaults,
-    solverOverrides = simulationRunOptions
+    runOptions = simulationRunOptions,
+    solverDefaults = project$defaultSolverSettings,
+    solverOverrides = solverSettings
   )
 }
 
@@ -797,9 +706,9 @@
 # .scenarioBuildPreflight ----
 
 # Shared entry guard for `.runScenariosFromProject` / `.buildSimulationsFromProject`:
-# validate `project` and `customParams`, resolve the run options through
-# `.resolveRunOptions()`, and, when `validate`, run the section validators the
-# scenario build depends on. Returns `.resolveRunOptions()`'s
+# validate `project`, `customParams` and the two settings arguments, resolve
+# them through `.resolveRunOptions()`, and, when `validate`, run the section
+# validators the scenario build depends on. Returns `.resolveRunOptions()`'s
 # `list(runOptions, solverDefaults, solverOverrides)`. `opName` names the
 # calling entrypoint in any validation abort.
 # @keywords internal
@@ -808,6 +717,7 @@
   project,
   customParams,
   simulationRunOptions,
+  solverSettings = NULL,
   validate,
   opName,
   .call = rlang::caller_env()
@@ -819,31 +729,27 @@
     argumentName = "customParams",
     nullAllowed = TRUE
   )
-  # `simulationRunOptions` takes either shape `.resolveRunOptions()` accepts.
-  # An empty list counts as a record: it names no field, so it resolves to the
-  # project default like a missing argument does.
-  runOptionsOk <- is.null(simulationRunOptions) ||
-    inherits(simulationRunOptions, "SimulationRunOptions") ||
-    (is.list(simulationRunOptions) &&
-      (length(simulationRunOptions) == 0L ||
-        !is.null(names(simulationRunOptions))))
-  if (!runOptionsOk) {
+  if (
+    !is.null(simulationRunOptions) &&
+      !inherits(simulationRunOptions, "SimulationRunOptions")
+  ) {
     cli::cli_abort(messages$invalidSimulationRunOptions(simulationRunOptions))
   }
-  # A record's contents go through the same rules a scenario's block does, so
+  # The argument goes through the same rules a scenario's own block does, so
   # the level a setting was written at does not decide whether a typo or a
-  # wrong type is reported. An `ospsuite::SimulationRunOptions` object needs no
-  # check: its own active bindings police its two fields.
-  if (!inherits(simulationRunOptions, "SimulationRunOptions")) {
-    problems <- .checkRunOptionRecord(simulationRunOptions)
-    if (length(problems) > 0L) {
-      cli::cli_abort(c(
-        "Invalid {.arg simulationRunOptions}:",
-        stats::setNames(problems, rep("x", length(problems)))
-      ))
-    }
+  # wrong type is reported.
+  problems <- .checkSolverSettings(solverSettings)
+  if (length(problems) > 0L) {
+    cli::cli_abort(c(
+      "Invalid {.arg solverSettings}:",
+      stats::setNames(problems, rep("x", length(problems)))
+    ))
   }
-  resolved <- .resolveRunOptions(project, simulationRunOptions)
+  resolved <- .resolveRunOptions(
+    project,
+    simulationRunOptions,
+    solverSettings
+  )
   if (isTRUE(validate)) {
     project$ensureValid(
       sections = c(
@@ -1063,6 +969,7 @@
   scenarioNames = NULL,
   customParams = NULL,
   simulationRunOptions = NULL,
+  solverSettings = NULL,
   validate = TRUE,
   stopIfParameterNotFound = TRUE,
   stopIfFails = TRUE,
@@ -1073,6 +980,7 @@
     project = project,
     customParams = customParams,
     simulationRunOptions = simulationRunOptions,
+    solverSettings = solverSettings,
     validate = validate,
     opName = "runScenarios",
     .call = .call
@@ -1165,6 +1073,7 @@
   scenarioNames = NULL,
   customParams = NULL,
   simulationRunOptions = NULL,
+  solverSettings = NULL,
   validate = TRUE,
   stopIfParameterNotFound = TRUE,
   .call = rlang::caller_env()
@@ -1174,6 +1083,7 @@
     project = project,
     customParams = customParams,
     simulationRunOptions = simulationRunOptions,
+    solverSettings = solverSettings,
     validate = validate,
     opName = "buildSimulations",
     .call = .call

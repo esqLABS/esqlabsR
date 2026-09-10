@@ -857,6 +857,25 @@ messages$exportUndeclaredObservedData <- function(ids) {
   )
 }
 
+messages$runOptionsInProjectFile <- function(fields) {
+  # Unglued: the field names come from a hand-editable JSON file.
+  envir <- new.env(parent = parent.frame())
+  assign("fields", fields, envir = envir)
+  assign("n", length(fields), envir = envir)
+  list(
+    bullets = c(
+      "!" = "{cli::qty(n)}{.file Project.json} sets {n} run option{?s} that a \\
+      project file does not carry: {.field {fields}}.",
+      "i" = "A project file holds solver settings. Pass run options to \\
+      {.fn runScenarios}, {.fn buildSimulations} or {.fn runPI} instead, as \\
+      {.code simulationRunOptions = ospsuite::SimulationRunOptions$new(...)}.",
+      "i" = "{cli::qty(n)}The setting{?s} {?is/are} ignored and dropped on the \\
+      next {.fn saveProject}."
+    ),
+    envir = envir
+  )
+}
+
 messages$exportScenarioSolverSettings <- function(ids) {
   # Unglued: a scenario id is a user-chosen name, so it is free text.
   envir <- new.env(parent = parent.frame())
@@ -1220,17 +1239,17 @@ messages$setScenarioUnknownFields <- function(fields, settable) {
   ))
 }
 
-# Raised when `simulationRunOptions` is neither an `ospsuite` object nor a
-# named record. An unnamed list would otherwise reach `utils::modifyList()`
-# and abort there as `invalid 'x'`, naming neither the argument nor the caller.
+# Raised when `simulationRunOptions` is not an `ospsuite::SimulationRunOptions`.
+# The hint names `solverSettings` because reaching for this argument to set a
+# tolerance is the likely mistake: the two used to travel in one list.
 messages$invalidSimulationRunOptions <- function(value) {
   cli::format_message(c(
     "{.arg simulationRunOptions} must be an \\
-    {.cls ospsuite::SimulationRunOptions} or a named list of run options, \\
-    not {.obj_type_friendly {value}}.",
-    "i" = "A named list may carry {.field numberOfCores}, \\
-    {.field showProgress}, and any solver setting, e.g. \\
-    {.code list(relTol = 1e-6)}."
+    {.cls ospsuite::SimulationRunOptions}, not {.obj_type_friendly {value}}.",
+    "i" = "Build one with \\
+    {.code ospsuite::SimulationRunOptions$new(numberOfCores = 4)}.",
+    "i" = "To change how the solver behaves, pass {.arg solverSettings} \\
+    instead, as {.code list(relTol = 1e-6)}."
   ))
 }
 

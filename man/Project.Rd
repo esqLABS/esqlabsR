@@ -83,29 +83,25 @@ write one with \code{project$excel$modelParamsFile <- "P.xlsx"} (stored
 verbatim). Assigning any field sets the dirty bit. Empty for a project
 created directly in the JSON format, without Excel files.}
 
-    \item{\code{defaultSimulationRunOptions}}{The settings every scenario in the
-project starts from (the \code{defaultSimulationRunOptions} field of
+    \item{\code{defaultSolverSettings}}{How the solver should behave for every
+scenario in the project (the \code{defaultSolverSettings} field of
 \code{Project.json}), as a named list, or \code{NULL} when the project declares
-none. It takes two kinds of setting, both named after the \code{ospsuite}
-class they belong to:
-\itemize{
-\item how the run is executed, from
-\href{https://www.open-systems-pharmacology.org/OSPSuite-R/reference/SimulationRunOptions.html}{SimulationRunOptions}:
-\code{numberOfCores} and \code{showProgress}.
-\item how the solver behaves, from
+none. Takes any of the settings of
 \href{https://www.open-systems-pharmacology.org/OSPSuite-R/reference/SolverSettings.html}{SolverSettings}:
-\code{absTol}, \code{relTol}, \code{h0}, \code{hMin}, \code{hMax}, \code{mxStep}, \code{useJacobian}
-and \code{checkForNegativeValues}.
-}
+\code{absTol}, \code{relTol}, \code{h0}, \code{hMin}, \code{hMax}, \code{mxStep}, \code{useJacobian} and
+\code{checkForNegativeValues}.
 
 These are defaults, so a scenario or a single run can still say
 otherwise. For each setting, the most specific place that gives it a
 value wins: a scenario's own \code{solverSettings} beats this list, and the
-\code{simulationRunOptions} you pass to \code{\link[=runScenarios]{runScenarios()}} or
-\code{\link[=buildSimulations]{buildSimulations()}} beats both. A setting nobody gives a value keeps
-the value stored in the model file. A parameter identification works
-the same way, with the task's own settings in place of the per-run
-ones.}
+\code{solverSettings} you pass to \code{\link[=runScenarios]{runScenarios()}} or \code{\link[=buildSimulations]{buildSimulations()}}
+beats both. A setting nobody gives a value keeps the value stored in
+the model file.
+
+How the run itself is executed is not project data. Pass
+\code{numberOfCores} and \code{showProgress} to \code{\link[=runScenarios]{runScenarios()}},
+\code{\link[=buildSimulations]{buildSimulations()}} or \code{\link[=runPI]{runPI()}} as their \code{simulationRunOptions}
+argument.}
 
     \item{\code{definitions}}{The project's definition sections, as a read-only
 field group. Each section is one field: \code{outputPaths}, \code{scenarios},

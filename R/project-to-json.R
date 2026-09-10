@@ -34,7 +34,7 @@
 #'   applications, outputPaths, observedData, dataCombined, plots, plotGrids,
 #'   parameterIdentification) is emitted in its canonical empty shape rather
 #'   than serialized, leaving only the container itself (metadata, filePaths,
-#'   defaultSimulationRunOptions, excel). This is the on-disk `Project.json`
+#'   defaultSolverSettings, excel). This is the on-disk `Project.json`
 #'   container shape: the `definitions/<kind>/` tree owns every section and
 #'   wins on reload, so re-serializing the sections here is wasted work. When
 #'   `FALSE` (default) the sections are serialized (the self-contained snapshot
@@ -59,7 +59,7 @@
   # (`excel`). The `excel` block is emitted only when the project actually
   # carries Excel-bridge fields (an Excel side-car exists); a from-scratch JSON
   # project omits it. The `name` / `description` metadata, `definitionsFolder`,
-  # and `defaultSimulationRunOptions` are emitted only when set, so an empty
+  # and `defaultSolverSettings` are emitted only when set, so an empty
   # `Project$new()` still serializes a minimal, round-trippable file.
   #
   # `containerOnly` serializes none of the tree-owned sections: each is emitted
@@ -109,8 +109,8 @@
       definitionsFolder = project$paths$definitionsFolder,
       filePaths = .filePathsToJson(project)
     ),
-    if (!is.null(project$defaultSimulationRunOptions)) {
-      list(defaultSimulationRunOptions = project$defaultSimulationRunOptions)
+    if (!is.null(project$defaultSolverSettings)) {
+      list(defaultSolverSettings = project$defaultSolverSettings)
     },
     sections
   )
@@ -163,7 +163,7 @@
 #'   the container shape with scenarios held as a definition tree alongside.
 #'   Ignored when `containerOnly` is `TRUE`.
 #' @param containerOnly Logical. Passed to `.projectToJson()`: `TRUE` writes
-#'   only the container (metadata, filePaths, defaultSimulationRunOptions,
+#'   only the container (metadata, filePaths, defaultSolverSettings,
 #'   excel) with every tree-owned section emptied; `FALSE` (default)
 #'   serializes the sections too.
 #'

@@ -9,6 +9,7 @@ runScenarios(
   scenarios = NULL,
   customParams = NULL,
   simulationRunOptions = NULL,
+  solverSettings = NULL,
   validate = TRUE,
   stopIfParameterNotFound = TRUE,
   stopIfFails = TRUE
@@ -28,15 +29,18 @@ to a different form warns, naming the id it resolved to.}
 \code{units} — applied to every selected scenario as the final
 parameter layer.}
 
-\item{simulationRunOptions}{Settings for this run only, overriding both the
-project's \code{defaultSimulationRunOptions} and each scenario's own
-\code{solverSettings}, setting by setting. \code{NULL} (default) leaves both in
-place. Either an
+\item{simulationRunOptions}{How this run is executed: an
 \href{https://www.open-systems-pharmacology.org/OSPSuite-R/reference/SimulationRunOptions.html}{SimulationRunOptions}
-object, which sets \code{numberOfCores} and \code{showProgress} and leaves every
-solver setting alone, or a named list, which can also set any
-\href{https://www.open-systems-pharmacology.org/OSPSuite-R/reference/SolverSettings.html}{SolverSettings}
-value, for example \code{list(numberOfCores = 8, relTol = 1e-6)}.}
+object setting \code{numberOfCores} and \code{showProgress}, for example
+\code{ospsuite::SimulationRunOptions$new(numberOfCores = 8)}. \code{NULL} (default)
+uses the \code{ospsuite} defaults. This is not project data, so a project file
+never supplies it.}
+
+\item{solverSettings}{How the solver behaves for this run, as a named list
+of \href{https://www.open-systems-pharmacology.org/OSPSuite-R/reference/SolverSettings.html}{SolverSettings}
+values, for example \code{list(relTol = 1e-6)}. A setting given here wins over
+the project's \code{defaultSolverSettings} and over each scenario's own
+\code{solverSettings}. \code{NULL} (default) leaves both in place.}
 
 \item{validate}{Logical. If \code{TRUE} (default), runs the relevant
 section validators via \code{\link[=validateProject]{validateProject()}} before simulating and

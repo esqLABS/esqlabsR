@@ -1065,90 +1065,69 @@ test_that(".createSinglePITask applies objectiveFunctionOptions from the configu
   expect_equal(ofo$logScaleSD, 0.1)
 })
 
-test_that(".createSinglePITask applies simulationRunOptions from the configuration block", {
+test_that(".createSinglePITask applies solverSettings from the configuration block", {
   project <- testProject()
   observedData <- loadObservedData(project)
   mkTask <- function(configuration) {
     testPITask(configuration = configuration)
   }
 
-  # No block: simulationRunOptions stays NULL.
+  # No block: the task's simulations keep their model files' solver settings
+  # (on, for the Aciclovir fixture).
   pi <- .createSinglePITask(project, mkTask(list()), observedData)
-  expect_null(pi$configuration$simulationRunOptions)
+  expect_true(pi$simulations[[1]]$solver$checkForNegativeValues)
 
-  # numberOfCores only.
+  # A task-level setting reaches the solver.
   pi <- .createSinglePITask(
     project,
-    mkTask(list(simulationRunOptions = list(numberOfCores = 2))),
+    mkTask(list(solverSettings = list(checkForNegativeValues = FALSE))),
     observedData
   )
-  opts <- pi$configuration$simulationRunOptions
-  expect_s3_class(opts, "SimulationRunOptions")
-  expect_equal(opts$numberOfCores, 2L)
-
-  # checkForNegativeValues only: a solver setting, written to the task's
-  # simulations rather than to the run options (#1252).
-  pi <- .createSinglePITask(
-    project,
-    mkTask(list(simulationRunOptions = list(checkForNegativeValues = FALSE))),
-    observedData
-  )
-  expect_s3_class(pi$configuration$simulationRunOptions, "SimulationRunOptions")
   expect_false(pi$simulations[[1]]$solver$checkForNegativeValues)
 
-  # Both set.
+  # Every setting, not only the negative-values check.
   pi <- .createSinglePITask(
     project,
-    mkTask(list(
-      simulationRunOptions = list(
-        numberOfCores = 4,
-        checkForNegativeValues = FALSE
-      )
-    )),
+    mkTask(list(solverSettings = list(relTol = 1e-7))),
     observedData
   )
-  opts <- pi$configuration$simulationRunOptions
-  expect_equal(opts$numberOfCores, 4L)
-  expect_false(pi$simulations[[1]]$solver$checkForNegativeValues)
+  expect_identical(pi$simulations[[1]]$solver$relTol, 1e-7)
 
-  # Project default without a task-level block: the default reaches the solver.
-  project$defaultSimulationRunOptions <- list(checkForNegativeValues = FALSE)
+  # Project defaults without a task-level block: the defaults reach the solver.
+  project$defaultSolverSettings <- list(checkForNegativeValues = FALSE)
   pi <- .createSinglePITask(project, mkTask(list()), observedData)
   expect_false(pi$simulations[[1]]$solver$checkForNegativeValues)
 
   # A task-level value wins over the project default.
   pi <- .createSinglePITask(
     project,
-    mkTask(list(simulationRunOptions = list(checkForNegativeValues = TRUE))),
+    mkTask(list(solverSettings = list(checkForNegativeValues = TRUE))),
     observedData
   )
   expect_true(pi$simulations[[1]]$solver$checkForNegativeValues)
 })
 
-test_that(".createSinglePITask takes numberOfCores from the project when the task sets none", {
-  # The run options follow the same project-then-task chain the solver settings
-  # do, so a project default is not lost just because the task declares no
-  # block of its own.
+test_that("a PI task takes its run options from the caller, not the project", {
+  # How the identification is executed is `runPI()`'s argument; a task's
+  # configuration holds only how the solver behaves.
   project <- testProject()
   observedData <- loadObservedData(project)
-  project$defaultSimulationRunOptions <- list(numberOfCores = 3)
 
   pi <- .createSinglePITask(
     project,
     testPITask(configuration = list()),
     observedData
   )
-  expect_equal(pi$configuration$simulationRunOptions$numberOfCores, 3L)
+  expect_null(pi$configuration$simulationRunOptions)
 
-  # The task still wins where it does set the field.
+  callerOptions <- ospsuite::SimulationRunOptions$new(numberOfCores = 2)
   pi <- .createSinglePITask(
     project,
-    testPITask(
-      configuration = list(simulationRunOptions = list(numberOfCores = 5))
-    ),
-    observedData
+    testPITask(configuration = list()),
+    observedData,
+    simulationRunOptions = callerOptions
   )
-  expect_equal(pi$configuration$simulationRunOptions$numberOfCores, 5L)
+  expect_equal(pi$configuration$simulationRunOptions$numberOfCores, 2L)
 })
 
 test_that(".createSinglePITask applies the task's checkForNegativeValues before the steady-state pre-solve", {
@@ -1170,7 +1149,7 @@ test_that(".createSinglePITask applies the task's checkForNegativeValues before 
     project,
     testPITask(
       configuration = list(
-        simulationRunOptions = list(checkForNegativeValues = FALSE)
+        solverSettings = list(checkForNegativeValues = FALSE)
       )
     ),
     observedData
@@ -1409,7 +1388,8 @@ test_that("runPI(project) hard-fails when the build phase errors", {
       project,
       piTask,
       observedData,
-      stopIfParameterNotFound = TRUE
+      stopIfParameterNotFound = TRUE,
+      ...
     ) {
       stop("Parameter |Organism|Live|EHC| not found in simulation")
     }
@@ -1432,7 +1412,8 @@ test_that("runPI(project) soft-fails when the optimisation phase errors", {
       project,
       piTask,
       observedData,
-      stopIfParameterNotFound = TRUE
+      stopIfParameterNotFound = TRUE,
+      ...
     ) {
       fakeRuntime
     }
@@ -1457,7 +1438,8 @@ test_that("runPI(project) soft-fails when the optimiser error message contains b
       project,
       piTask,
       observedData,
-      stopIfParameterNotFound = TRUE
+      stopIfParameterNotFound = TRUE,
+      ...
     ) {
       fakeRuntime
     }
@@ -2893,18 +2875,15 @@ test_that("addPITask() rejects malformed outputMappings with a typed error", {
   )
 })
 
-test_that(".buildPIConfiguration() maps type to objectiveFunctionType and builds simulationRunOptions", {
+test_that(".buildPIConfiguration() maps type to objectiveFunctionType", {
   skip_if_not_installed("ospsuite.parameteridentification")
-  # `checkForNegativeValues` is a solver setting: the block must tolerate it
-  # without writing it to the run options (#1252).
+  # A task's `solverSettings` reaches its simulations through
+  # `.createSinglePITask()`, so the configuration builder ignores the block
+  # rather than writing it to the run options (#1252, #408).
   cfg <- list(
     algorithm = "BOBYQA",
     objectiveFunction = list(type = "lsq"),
-    simulationRunOptions = list(
-      numberOfCores = 2,
-      checkForNegativeValues = FALSE,
-      showProgress = FALSE
-    )
+    solverSettings = list(checkForNegativeValues = FALSE)
   )
   piConfig <- .buildPIConfiguration(cfg)
   expect_identical(piConfig$algorithm, "BOBYQA")
@@ -2912,9 +2891,7 @@ test_that(".buildPIConfiguration() maps type to objectiveFunctionType and builds
     piConfig$objectiveFunctionOptions$objectiveFunctionType,
     "lsq"
   )
-  expect_s3_class(piConfig$simulationRunOptions, "SimulationRunOptions")
-  expect_identical(piConfig$simulationRunOptions$numberOfCores, 2L)
-  expect_false(piConfig$simulationRunOptions$showProgress)
+  expect_null(piConfig$simulationRunOptions)
 })
 
 test_that(".buildPIConfiguration() merges partial algorithmOptions and ciOptions with per-algorithm defaults", {
@@ -3084,7 +3061,8 @@ test_that("runPI() builds every task before optimising any (fail fast on a build
       project,
       piTask,
       observedData,
-      stopIfParameterNotFound = TRUE
+      stopIfParameterNotFound = TRUE,
+      ...
     ) {
       if (identical(piTask$id, "broken")) {
         stop("Parameter not found in simulation")

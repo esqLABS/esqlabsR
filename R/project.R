@@ -175,35 +175,32 @@ Project <- R6::R6Class(
       private$.excelGroup()
     },
 
-    #' @field defaultSimulationRunOptions The settings every scenario in the
-    #'   project starts from (the `defaultSimulationRunOptions` field of
+    #' @field defaultSolverSettings How the solver should behave for every
+    #'   scenario in the project (the `defaultSolverSettings` field of
     #'   `Project.json`), as a named list, or `NULL` when the project declares
-    #'   none. It takes two kinds of setting, both named after the `ospsuite`
-    #'   class they belong to:
-    #'
-    #'   * how the run is executed, from
-    #'     [SimulationRunOptions](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/SimulationRunOptions.html):
-    #'     `numberOfCores` and `showProgress`.
-    #'   * how the solver behaves, from
-    #'     [SolverSettings](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/SolverSettings.html):
-    #'     `absTol`, `relTol`, `h0`, `hMin`, `hMax`, `mxStep`, `useJacobian`
-    #'     and `checkForNegativeValues`.
+    #'   none. Takes any of the settings of
+    #'   [SolverSettings](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/SolverSettings.html):
+    #'   `absTol`, `relTol`, `h0`, `hMin`, `hMax`, `mxStep`, `useJacobian` and
+    #'   `checkForNegativeValues`.
     #'
     #'   These are defaults, so a scenario or a single run can still say
     #'   otherwise. For each setting, the most specific place that gives it a
     #'   value wins: a scenario's own `solverSettings` beats this list, and the
-    #'   `simulationRunOptions` you pass to [runScenarios()] or
-    #'   [buildSimulations()] beats both. A setting nobody gives a value keeps
-    #'   the value stored in the model file. A parameter identification works
-    #'   the same way, with the task's own settings in place of the per-run
-    #'   ones.
-    defaultSimulationRunOptions = function(value) {
+    #'   `solverSettings` you pass to [runScenarios()] or [buildSimulations()]
+    #'   beats both. A setting nobody gives a value keeps the value stored in
+    #'   the model file.
+    #'
+    #'   How the run itself is executed is not project data. Pass
+    #'   `numberOfCores` and `showProgress` to [runScenarios()],
+    #'   [buildSimulations()] or [runPI()] as their `simulationRunOptions`
+    #'   argument.
+    defaultSolverSettings = function(value) {
       if (!missing(value)) {
-        private$.defaultSimulationRunOptions <- value
+        private$.defaultSolverSettings <- value
         private$.invalidateContainer()
         return(invisible(value))
       }
-      private$.defaultSimulationRunOptions
+      private$.defaultSolverSettings
     },
 
     #' @field definitions The project's definition sections, as a read-only
@@ -768,7 +765,7 @@ Project <- R6::R6Class(
     .name = NULL,
     .description = NULL,
     .definitionsFolder = NULL,
-    .defaultSimulationRunOptions = NULL,
+    .defaultSolverSettings = NULL,
     .outputPaths = NULL,
     .scenarios = NULL,
     .parameterSets = NULL,
@@ -1411,7 +1408,7 @@ Project <- R6::R6Class(
       private$.name <- sections$name
       private$.description <- sections$description
       private$.definitionsFolder <- sections$definitionsFolder
-      private$.defaultSimulationRunOptions <- sections$defaultSimulationRunOptions
+      private$.defaultSolverSettings <- sections$defaultSolverSettings
       private$.filePathsData <- sections$filePathsData
       private$.excelData <- sections$excelData
 

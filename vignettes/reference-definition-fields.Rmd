@@ -56,7 +56,7 @@ For why definitions are shaped this way, see `vignette("about-the-project-model"
 | `steadyStateTimeUnit` | no | string | `"min"`. |
 | `overwriteFormulasInSS` | no | logical | `FALSE`. |
 | `readPopulationFromCSV` | no | logical | `FALSE`. |
-| `solverSettings` | no | named list | The solver settings of the project's `defaultSimulationRunOptions` apply, and where it sets none, those of the model file. |
+| `solverSettings` | no | named list | The project's `defaultSolverSettings` apply, and for a setting it does not give either, the model file's own value. |
 
 Two behaviours are not visible from the table:
 
@@ -114,7 +114,7 @@ addScenario(project, "stiff_iv",
 | `useJacobian` | logical | Whether the analytic Jacobian is used. |
 | `checkForNegativeValues` | logical | Whether the solver checks for negative values. |
 
-A setting here overrides the project's `defaultSimulationRunOptions`, and the `simulationRunOptions` argument of `runScenarios()` overrides both. `setScenario()` replaces the whole block rather than merging into it, so pass every setting you want kept, and `solverSettings = NULL` clears it. See `vignette("reference-project-file")` for the full chain.
+A setting here overrides the project's `defaultSolverSettings`, and the `solverSettings` argument of `runScenarios()` overrides both. `setScenario()` replaces the whole block rather than merging into it, so pass every setting you want kept, and `solverSettings = NULL` clears it. See `vignette("reference-project-file")` for the full chain.
 
 ### `simulationTime` grammar
 

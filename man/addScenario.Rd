@@ -88,7 +88,7 @@ named list. Takes any of the settings of
 \code{absTol}, \code{relTol}, \code{h0}, \code{hMin}, \code{hMax}, \code{mxStep}, \code{useJacobian} and
 \code{checkForNegativeValues}, for example \code{list(relTol = 1e-6)}. Default
 \code{NULL}, which leaves the scenario with the project's
-\code{defaultSimulationRunOptions} and, for a setting the project does not
+\code{defaultSolverSettings} and, for a setting the project does not
 give either, the value stored in the model file. The list counts as one
 value per scenario, so an \code{id} naming several scenarios gives each of
 them the same settings.}

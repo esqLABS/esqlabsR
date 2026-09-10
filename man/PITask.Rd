@@ -31,7 +31,7 @@ must have at least one output mapping to run, which \code{\link[=validateProject
 enforces.}
 
 \item{configuration}{Named list of solver settings (e.g. \code{algorithm},
-\code{ciMethod}, \code{objectiveFunction}, \code{simulationRunOptions}). Defaults to
+\code{ciMethod}, \code{objectiveFunction}, \code{solverSettings}). Defaults to
 an empty list, leaving every runtime default in place.}
 }
 \value{
