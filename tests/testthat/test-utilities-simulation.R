@@ -118,7 +118,9 @@ test_that("`initializeSimulation()` scales a human model to a mouse and runs it"
     ),
     loadFromCache = FALSE
   )
-  mouseCharacteristics <- createIndividualCharacteristics(species = Species$Mouse)
+  mouseCharacteristics <- createIndividualCharacteristics(
+    species = Species$Mouse
+  )
 
   expect_no_warning(
     initializeSimulation(
@@ -129,7 +131,10 @@ test_that("`initializeSimulation()` scales a human model to a mouse and runs it"
 
   # Values of a mouse individual created in PK-Sim 13
   expect_equal(
-    getParameter("Organism|Lumen|Stomach|Basal pH in fasted state", simulation)$value,
+    getParameter(
+      "Organism|Lumen|Stomach|Basal pH in fasted state",
+      simulation
+    )$value,
     4.04
   )
   expect_equal(

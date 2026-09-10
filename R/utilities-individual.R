@@ -136,7 +136,7 @@ readIndividualCharacteristicsFromXLS <- function(
   return(individualCharacteristics)
 }
 
-#' Apply an individual to a simulation
+#' Apply an individual parametrization to a simulation
 #'
 #' @description Sets the parameter values that describe
 #' `individualCharacteristics` in `simulation`.
@@ -152,8 +152,7 @@ readIndividualCharacteristicsFromXLS <- function(
 #' lumen pH, bile salt concentrations), taken from an individual building block
 #' that `ospsuite::createIndividualBuildingBlock()` creates for the same
 #' characteristics. The values follow the body weight, height, and age given in
-#' `individualCharacteristics`. Parameters that do not exist in `simulation` are
-#' skipped.
+#' `individualCharacteristics`.
 #'
 #' @details Scaling works from a simulation exported for a human individual to
 #' every species PK-Sim supports, and between two non-human species. Scaling
@@ -164,11 +163,6 @@ readIndividualCharacteristicsFromXLS <- function(
 #' the individual stored in the simulation (PK-Sim exports since OSP version
 #' 12); an older export counts as human when it has the parameters
 #' `Organism|Height` and `Organism|Age`.
-#'
-#' The wall thickness and wall volume of the intestinal lumen segments keep
-#' their human formulas after scaling. They only feed the mucosa volumes, which
-#' are set to the values of the target species, so simulation results are not
-#' affected.
 #'
 #' @param individualCharacteristics `IndividualCharacteristics` describing an
 #'   individual, as returned by `ospsuite::createIndividualCharacteristics()`.
@@ -256,6 +250,7 @@ applyIndividualParameters <- function(individualCharacteristics, simulation) {
   gestationalAge <- .snapshotParameterValue(
     individualCharacteristics$gestationalAge
   )
+  # If no gestational age is supplied, use the default value.
   if (is.null(gestationalAge)) {
     gestationalAge <- 40
   }
@@ -282,6 +277,7 @@ applyIndividualParameters <- function(individualCharacteristics, simulation) {
     parameters[["Parameter Name"]],
     sep = "|"
   )
+  # Keep only parameters that are defined by a constant. Parameters that are defined by formulas have the `NaN` value
   keep <- is.finite(parameters[["Value"]]) &
     paths %in% ospsuite::getAllParameterPathsIn(simulation)
 
@@ -372,7 +368,12 @@ applyIndividualParameters <- function(individualCharacteristics, simulation) {
     error = function(e) NULL
   )
   species <- individual$species
-  if (is.null(species) || length(species) == 0 || is.na(species) || !nzchar(species)) {
+  if (
+    is.null(species) ||
+      length(species) == 0 ||
+      is.na(species) ||
+      !nzchar(species)
+  ) {
     return(NULL)
   }
   species

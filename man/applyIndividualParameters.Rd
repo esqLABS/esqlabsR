@@ -2,7 +2,7 @@
 % Please edit documentation in R/utilities-individual.R
 \name{applyIndividualParameters}
 \alias{applyIndividualParameters}
-\title{Apply an individual to a simulation}
+\title{Apply an individual parametrization to a simulation}
 \usage{
 applyIndividualParameters(individualCharacteristics, simulation)
 }
@@ -30,8 +30,7 @@ PK-Sim database (tissue composition, blood flow, gut geometry and transit,
 lumen pH, bile salt concentrations), taken from an individual building block
 that \code{ospsuite::createIndividualBuildingBlock()} creates for the same
 characteristics. The values follow the body weight, height, and age given in
-\code{individualCharacteristics}. Parameters that do not exist in \code{simulation} are
-skipped.
+\code{individualCharacteristics}.
 }
 \details{
 Scaling works from a simulation exported for a human individual to
@@ -43,11 +42,6 @@ applied to a simulation built for another species. The species is read from
 the individual stored in the simulation (PK-Sim exports since OSP version
 12); an older export counts as human when it has the parameters
 \code{Organism|Height} and \code{Organism|Age}.
-
-The wall thickness and wall volume of the intestinal lumen segments keep
-their human formulas after scaling. They only feed the mucosa volumes, which
-are set to the values of the target species, so simulation results are not
-affected.
 }
 \examples{
 \dontrun{

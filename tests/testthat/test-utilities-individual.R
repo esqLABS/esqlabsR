@@ -183,7 +183,9 @@ test_that("`applyIndividualParameters()` leaves the species constants of a human
     0
   )
   # Lumen geometry stays a formula of the body height
-  expect_true(getParameter("Organism|Lumen|Duodenum|Length", simulation)$isFormula)
+  expect_true(
+    getParameter("Organism|Lumen|Duodenum|Length", simulation)$isFormula
+  )
 })
 
 test_that("`applyIndividualParameters()` scales between two non-human species", {
@@ -210,11 +212,22 @@ test_that("`applyIndividualParameters()` scales between two non-human species", 
       paths[startsWith(paths, "Organism|")],
       simulation
     )
-    values <- vapply(parameters, function(parameter) parameter$value, numeric(1))
-    names(values) <- vapply(parameters, function(parameter) parameter$path, character(1))
+    values <- vapply(
+      parameters,
+      function(parameter) parameter$value,
+      numeric(1)
+    )
+    names(values) <- vapply(
+      parameters,
+      function(parameter) parameter$path,
+      character(1)
+    )
     values[order(names(values))]
   }
-  expect_equal(organismValues(simulationViaRat), organismValues(simulationDirect))
+  expect_equal(
+    organismValues(simulationViaRat),
+    organismValues(simulationDirect)
+  )
 })
 
 # ospsuite's test snapshot holds a mouse project. Loading it takes about ten
@@ -251,7 +264,10 @@ test_that("`applyIndividualParameters()` refuses a human individual on a non-hum
     "Mouse"
   )
   # The model is untouched
-  expect_equal(getParameter("Organism|Weight", mouseSimulation)$value, weightBefore)
+  expect_equal(
+    getParameter("Organism|Weight", mouseSimulation)$value,
+    weightBefore
+  )
 
   # Another non-human species is still applied
   expect_no_error(
@@ -261,7 +277,10 @@ test_that("`applyIndividualParameters()` refuses a human individual on a non-hum
     )
   )
   expect_equal(
-    getParameter("Organism|Lumen|Stomach|Basal pH in fasted state", mouseSimulation)$value,
+    getParameter(
+      "Organism|Lumen|Stomach|Basal pH in fasted state",
+      mouseSimulation
+    )$value,
     3.9
   )
 })
@@ -287,5 +306,8 @@ test_that("`.simulationSpecies()` reads the stored individual, then the paramete
     applyIndividualParameters(.humanCharacteristics(), .mouseSimulation()),
     "not built for a human individual"
   )
-  expect_no_error(applyIndividualParameters(.humanCharacteristics(), humanSimulation))
+  expect_no_error(applyIndividualParameters(
+    .humanCharacteristics(),
+    humanSimulation
+  ))
 })

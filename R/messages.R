@@ -84,7 +84,10 @@ messages$errorWrongIndividualId <- function(individualId) {
   )
 }
 
-messages$errorHumanIndividualForNonHumanModel <- function(simulationName, species) {
+messages$errorHumanIndividualForNonHumanModel <- function(
+  simulationName,
+  species
+) {
   builtFor <- if (is.na(species)) {
     "The simulation {.val {simulationName}} was not built for a human individual."
   } else {
