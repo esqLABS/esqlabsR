@@ -1001,7 +1001,14 @@ print.PITask <- function(x, ...) {
   }
 
   # 4. Build PIConfiguration from the JSON nested-block shape.
-  piConfig <- .buildPIConfiguration(piTask$configuration)
+  # The merged record, not the task's own block: `numberOfCores` and
+  # `showProgress` follow the same project-then-task chain the solver settings
+  # do, so a project default is not lost just because the task declares no run
+  # options of its own.
+  piConfig <- .buildPIConfiguration(utils::modifyList(
+    piTask$configuration,
+    list(simulationRunOptions = solverDefaults)
+  ))
 
   # 5. Assemble final ParameterIdentification.
   ospsuite.parameteridentification::ParameterIdentification$new(
@@ -1102,8 +1109,9 @@ print.PITask <- function(x, ...) {
     piConfig$objectiveFunctionOptions <- current
   }
 
-  # The block's `checkForNegativeValues` is a solver setting; it reaches the
-  # task's simulations through `.createSinglePITask()`, not the run options.
+  # The record's solver settings reach the task's simulations through
+  # `.createSinglePITask()`, not the run options, so only `numberOfCores` and
+  # `showProgress` are read here.
   sro <- cfg$simulationRunOptions
   if (!is.null(sro)) {
     piConfig$simulationRunOptions <- .buildSimulationRunOptions(sro)

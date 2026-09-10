@@ -1125,6 +1125,32 @@ test_that(".createSinglePITask applies simulationRunOptions from the configurati
   expect_true(pi$simulations[[1]]$solver$checkForNegativeValues)
 })
 
+test_that(".createSinglePITask takes numberOfCores from the project when the task sets none", {
+  # The run options follow the same project-then-task chain the solver settings
+  # do, so a project default is not lost just because the task declares no
+  # block of its own.
+  project <- testProject()
+  observedData <- loadObservedData(project)
+  project$defaultSimulationRunOptions <- list(numberOfCores = 3)
+
+  pi <- .createSinglePITask(
+    project,
+    testPITask(configuration = list()),
+    observedData
+  )
+  expect_equal(pi$configuration$simulationRunOptions$numberOfCores, 3L)
+
+  # The task still wins where it does set the field.
+  pi <- .createSinglePITask(
+    project,
+    testPITask(
+      configuration = list(simulationRunOptions = list(numberOfCores = 5))
+    ),
+    observedData
+  )
+  expect_equal(pi$configuration$simulationRunOptions$numberOfCores, 5L)
+})
+
 test_that(".createSinglePITask applies the task's checkForNegativeValues before the steady-state pre-solve", {
   # The pre-solve is a real simulation, so a task that switches the check off
   # to get past a transiently negative model needs the setting in place by
