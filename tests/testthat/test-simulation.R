@@ -296,3 +296,76 @@ test_that("`applyIndividualParameters()` scales between two non-human species", 
   }
   expect_equal(organismValues(simulationViaRat), organismValues(simulationDirect))
 })
+
+# ospsuite's test snapshot holds a mouse project. Loading it takes about ten
+# seconds, so the simulation is loaded once for this file.
+.mouseSimulation <- local({
+  simulation <- NULL
+  function() {
+    if (is.null(simulation)) {
+      simulation <<- ospsuite::loadSimulationsFromSnapshot(
+        system.file("extdata", "test_snapshot.json", package = "ospsuite")
+      )[[1]]
+    }
+    simulation
+  }
+})
+
+.humanCharacteristics <- function() {
+  createIndividualCharacteristics(
+    species = Species$Human,
+    population = HumanPopulation$European_ICRP_2002,
+    gender = Gender$Male,
+    weight = 73,
+    height = 176,
+    age = 30
+  )
+}
+
+test_that("`applyIndividualParameters()` refuses a human individual on a non-human model", {
+  mouseSimulation <- .mouseSimulation()
+  weightBefore <- getParameter("Organism|Weight", mouseSimulation)$value
+
+  expect_error(
+    applyIndividualParameters(.humanCharacteristics(), mouseSimulation),
+    "Mouse"
+  )
+  # The model is untouched
+  expect_equal(getParameter("Organism|Weight", mouseSimulation)$value, weightBefore)
+
+  # Another non-human species is still applied
+  expect_no_error(
+    applyIndividualParameters(
+      createIndividualCharacteristics(species = Species$Rat),
+      mouseSimulation
+    )
+  )
+  expect_equal(
+    getParameter("Organism|Lumen|Stomach|Basal pH in fasted state", mouseSimulation)$value,
+    3.9
+  )
+})
+
+test_that("`.simulationSpecies()` reads the stored individual, then the parameters", {
+  humanSimulation <- .loadHumanAciclovirSimulation()
+  expect_identical(.simulationSpecies(humanSimulation), Species$Human)
+  expect_identical(.simulationSpecies(.mouseSimulation()), Species$Mouse)
+
+  # A MoBi model without a PK-Sim organism cannot be told
+  mobiSimulation <- loadSimulation(
+    system.file("extdata", "simple.pkml", package = "ospsuite"),
+    loadFromCache = FALSE
+  )
+  expect_null(.simulationSpecies(mobiSimulation))
+
+  # Without a stored individual, as in exports older than OSP version 12, the
+  # human-only parameters decide
+  local_mocked_bindings(.storedIndividualSpecies = function(simulation) NULL)
+  expect_identical(.simulationSpecies(humanSimulation), Species$Human)
+  expect_identical(.simulationSpecies(.mouseSimulation()), NA_character_)
+  expect_error(
+    applyIndividualParameters(.humanCharacteristics(), .mouseSimulation()),
+    "not built for a human individual"
+  )
+  expect_no_error(applyIndividualParameters(.humanCharacteristics(), humanSimulation))
+})

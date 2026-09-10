@@ -23,6 +23,11 @@
 #' every species PK-Sim supports, and between two non-human species. Scaling
 #' from a non-human species to human is not supported: a human individual needs
 #' age- and height-dependent parameters that are not part of an animal model.
+#' The function therefore stops with an error when a human individual is
+#' applied to a simulation built for another species. The species is read from
+#' the individual stored in the simulation (PK-Sim exports since OSP version
+#' 12); an older export counts as human when it has the parameters
+#' `Organism|Height` and `Organism|Age`.
 #'
 #' The wall thickness and wall volume of the intestinal lumen segments keep
 #' their human formulas after scaling. They only feed the mucosa volumes, which
@@ -52,8 +57,11 @@
 #' applyIndividualParameters(ratIndividualCharacteristics, simulation)
 #' }
 applyIndividualParameters <- function(individualCharacteristics, simulation) {
-  individual <- ospsuite::createIndividual(individualCharacteristics)
   isHuman <- individualCharacteristics$species == ospsuite::Species$Human
+  if (isHuman) {
+    .stopIfNotHumanModel(simulation)
+  }
+  individual <- ospsuite::createIndividual(individualCharacteristics)
 
   # For human species, only set distributed parameters
   allParamPaths <- individual$distributedParameters$paths
@@ -176,6 +184,62 @@ applyIndividualParameters <- function(individualCharacteristics, simulation) {
     return(default)
   }
   unit
+}
+
+# A human individual only fits a simulation built for a human. Stops when
+# `simulation` was built for another species; does nothing when the species
+# cannot be told.
+# @keywords internal
+# @noRd
+.stopIfNotHumanModel <- function(simulation) {
+  species <- .simulationSpecies(simulation)
+  if (is.null(species) || isTRUE(species == ospsuite::Species$Human)) {
+    return(invisible(NULL))
+  }
+  simulationName <- simulation$name
+  cli::cli_abort(messages$humanIndividualForNonHumanModel(simulationName, species))
+}
+
+# Species of the individual `simulation` was built for. PK-Sim exports since
+# OSP version 12 store their individual building block, whose species counts.
+# For an older export the parameters decide: every human model has
+# `Organism|Height` and `Organism|Age`, no animal model has them. `NULL` when
+# the model has no `Organism|Weight`, that is, no PK-Sim organism at all.
+# `NA` for a non-human model whose species is not stored.
+# @keywords internal
+# @noRd
+.simulationSpecies <- function(simulation) {
+  species <- .storedIndividualSpecies(simulation)
+  if (!is.null(species)) {
+    return(species)
+  }
+  hasParameter <- function(path) {
+    !is.null(ospsuite::getParameter(path, simulation, stopIfNotFound = FALSE))
+  }
+  if (!hasParameter("Organism|Weight")) {
+    return(NULL)
+  }
+  if (hasParameter("Organism|Height") && hasParameter("Organism|Age")) {
+    return(ospsuite::Species$Human)
+  }
+  NA_character_
+}
+
+# Species of the individual building block stored in `simulation`, `NULL` when
+# the simulation stores none: a MoBi model, or an export older than OSP
+# version 12, for which ospsuite reports the missing configuration as an error.
+# @keywords internal
+# @noRd
+.storedIndividualSpecies <- function(simulation) {
+  individual <- tryCatch(
+    simulation$configuration$individual,
+    error = function(e) NULL
+  )
+  species <- individual$species
+  if (is.null(species) || length(species) == 0 || is.na(species) || !nzchar(species)) {
+    return(NULL)
+  }
+  species
 }
 
 # Initialize simulation ----

@@ -38,6 +38,11 @@ Scaling works from a simulation exported for a human individual to
 every species PK-Sim supports, and between two non-human species. Scaling
 from a non-human species to human is not supported: a human individual needs
 age- and height-dependent parameters that are not part of an animal model.
+The function therefore stops with an error when a human individual is
+applied to a simulation built for another species. The species is read from
+the individual stored in the simulation (PK-Sim exports since OSP version
+12); an older export counts as human when it has the parameters
+\code{Organism|Height} and \code{Organism|Age}.
 
 The wall thickness and wall volume of the intestinal lumen segments keep
 their human formulas after scaling. They only feed the mucosa volumes, which

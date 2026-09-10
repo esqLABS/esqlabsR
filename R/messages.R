@@ -122,6 +122,24 @@ messages$duplicateInitialConditions <- function(
   )
 }
 
+# Raised from `applyIndividualParameters()` when a human individual is applied
+# to a simulation built for another species. Unglued: the simulation name is
+# free text. `species` is the species stored in the simulation, or `NA` when
+# the file predates OSP version 12 and only its parameters tell that it is not
+# a human model.
+messages$humanIndividualForNonHumanModel <- function(simulationName, species) {
+  c(
+    if (is.na(species)) {
+      "The simulation {.val {simulationName}} was not built for a human individual."
+    } else {
+      "The simulation {.val {simulationName}} was built for a {.val {species}} individual."
+    },
+    "x" = "Scaling it to a human individual is not supported: a human model needs \\
+    age- and height-dependent parameters that a non-human model does not have.",
+    "i" = "Load a simulation exported for a human individual instead."
+  )
+}
+
 # Enum####
 messages$enumPutListMultipleKeys <- function() {
   cliFormat("Trying to put multiple keys, but only one key is allowed!")
