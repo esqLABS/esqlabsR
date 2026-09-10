@@ -185,3 +185,34 @@ test_that("`applyIndividualParameters()` leaves the species constants of a human
   # Lumen geometry stays a formula of the body height
   expect_true(getParameter("Organism|Lumen|Duodenum|Length", simulation)$isFormula)
 })
+
+test_that("`applyIndividualParameters()` scales between two non-human species", {
+  # A model already scaled to a rat and then scaled to a mouse must equal the
+  # human model scaled to a mouse directly.
+  simulationViaRat <- .loadExampleAciclovirSimulation()
+  applyIndividualParameters(
+    createIndividualCharacteristics(species = Species$Rat),
+    simulationViaRat
+  )
+  applyIndividualParameters(
+    createIndividualCharacteristics(species = Species$Mouse),
+    simulationViaRat
+  )
+  simulationDirect <- .loadExampleAciclovirSimulation()
+  applyIndividualParameters(
+    createIndividualCharacteristics(species = Species$Mouse),
+    simulationDirect
+  )
+
+  organismValues <- function(simulation) {
+    paths <- getAllParameterPathsIn(simulation)
+    parameters <- getAllParametersMatching(
+      paths[startsWith(paths, "Organism|")],
+      simulation
+    )
+    values <- vapply(parameters, function(parameter) parameter$value, numeric(1))
+    names(values) <- vapply(parameters, function(parameter) parameter$path, character(1))
+    values[order(names(values))]
+  }
+  expect_equal(organismValues(simulationViaRat), organismValues(simulationDirect))
+})
