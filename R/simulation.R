@@ -1,6 +1,6 @@
 # Apply individual to simulation ----
 
-#' Apply an individual to a simulation
+#' Apply an individual parametrization to a simulation
 #'
 #' @description Sets the parameter values that describe
 #' `individualCharacteristics` in `simulation`.
@@ -16,8 +16,7 @@
 #' lumen pH, bile salt concentrations), taken from an individual building block
 #' that `ospsuite::createIndividualBuildingBlock()` creates for the same
 #' characteristics. The values follow the body weight, height, and age given in
-#' `individualCharacteristics`. Parameters that do not exist in `simulation` are
-#' skipped.
+#' `individualCharacteristics`.
 #'
 #' @details Scaling works from a simulation exported for a human individual to
 #' every species PK-Sim supports, and between two non-human species. Scaling
@@ -28,11 +27,6 @@
 #' the individual stored in the simulation (PK-Sim exports since OSP version
 #' 12); an older export counts as human when it has the parameters
 #' `Organism|Height` and `Organism|Age`.
-#'
-#' The wall thickness and wall volume of the intestinal lumen segments keep
-#' their human formulas after scaling. They only feed the mucosa volumes, which
-#' are set to the values of the target species, so simulation results are not
-#' affected.
 #'
 #' @param individualCharacteristics `IndividualCharacteristics` describing an
 #'   individual, as returned by `ospsuite::createIndividualCharacteristics()`.
@@ -57,69 +51,84 @@
 #' applyIndividualParameters(ratIndividualCharacteristics, simulation)
 #' }
 applyIndividualParameters <- function(individualCharacteristics, simulation) {
-  isHuman <- individualCharacteristics$species == ospsuite::Species$Human
-  if (isHuman) {
+  if (individualCharacteristics$species == ospsuite::Species$Human) {
     .stopIfNotHumanModel(simulation)
   }
-  individual <- ospsuite::createIndividual(individualCharacteristics)
-
-  # For human species, only set distributed parameters
-  allParamPaths <- individual$distributedParameters$paths
-  allParamValues <- individual$distributedParameters$values
-  allParamUnits <- individual$distributedParameters$units
-
-  # For other species, also add derived parameters
-  if (!isHuman) {
-    allParamPaths <- c(allParamPaths, individual$derivedParameters$paths)
-    allParamValues <- c(allParamValues, individual$derivedParameters$values)
-    allParamUnits <- c(allParamUnits, individual$derivedParameters$units)
-  }
+  parameters <- .individualParameterSet(individualCharacteristics, simulation)
 
   ospsuite::setParameterValuesByPath(
-    parameterPaths = allParamPaths,
-    values = allParamValues,
+    parameterPaths = parameters$paths,
+    values = parameters$values,
     simulation = simulation,
-    units = allParamUnits,
+    units = parameters$units,
     stopIfNotFound = FALSE
   )
-
-  # `createIndividual()` returns only the parameters PK-Sim varies between
-  # individuals of a species. The constants that differ between species come
-  # from the individual building block. They are applied after the derived
-  # parameters, which are already at the values of the species.
-  if (!isHuman) {
-    speciesParams <- .speciesParametersFromBuildingBlock(
-      individualCharacteristics,
-      simulation
-    )
-    if (length(speciesParams$paths) > 0) {
-      ospsuite::setParameterValuesByPath(
-        parameterPaths = speciesParams$paths,
-        values = speciesParams$values,
-        simulation = simulation,
-        units = speciesParams$units,
-        stopIfNotFound = FALSE
-      )
-    }
-  }
 
   invisible(simulation)
 }
 
+# Parameters that describe `individualCharacteristics`, as `paths`, `values`,
+# and `units`. For a human individual these are the distributed parameters of
+# `ospsuite::createIndividual()` only, so that parameters defined by formulas
+# keep their formulas. For any other species the derived parameters follow,
+# which replace formulas with the values of the species (organ volumes, blood
+# flow rates, body weight), and then the species constants of the individual
+# building block, see `.speciesParametersFromBuildingBlock()`, which
+# `createIndividual()` never returns. `simulation`, when given, restricts the
+# species constants to the parameters the model has. Each path appears once;
+# the derived parameters and the building block agree on the paths they share.
+# @keywords internal
+# @noRd
+.individualParameterSet <- function(
+  individualCharacteristics,
+  simulation = NULL
+) {
+  individual <- ospsuite::createIndividual(individualCharacteristics)
+  paths <- individual$distributedParameters$paths
+  values <- individual$distributedParameters$values
+  units <- individual$distributedParameters$units
+
+  if (individualCharacteristics$species != ospsuite::Species$Human) {
+    speciesParameters <- .speciesParametersFromBuildingBlock(
+      individualCharacteristics,
+      simulation
+    )
+    paths <- c(
+      paths,
+      individual$derivedParameters$paths,
+      speciesParameters$paths
+    )
+    values <- c(
+      values,
+      individual$derivedParameters$values,
+      speciesParameters$values
+    )
+    units <- c(
+      units,
+      individual$derivedParameters$units,
+      speciesParameters$units
+    )
+  }
+
+  keep <- !duplicated(paths, fromLast = TRUE)
+  list(paths = paths[keep], values = values[keep], units = units[keep])
+}
+
 # Species constants for a non-human individual: every parameter with a value in
 # the individual building block PK-Sim creates for `individualCharacteristics`,
-# restricted to the parameters that exist in `simulation`. Entries the building
-# block defines by a formula (wall thickness and wall volume of the lumen
-# segments) come back without a value and are left out.
+# restricted to the parameters that exist in `simulation` when one is given.
+# Entries the building block defines by a formula (wall thickness and wall
+# volume of the lumen segments) come back without a value and are left out.
 # @keywords internal
 # @noRd
 .speciesParametersFromBuildingBlock <- function(
   individualCharacteristics,
-  simulation
+  simulation = NULL
 ) {
   gestationalAge <- .snapshotParameterValue(
     individualCharacteristics$gestationalAge
   )
+  # If no gestational age is supplied, use the default value.
   if (is.null(gestationalAge)) {
     gestationalAge <- 40
   }
@@ -146,8 +155,12 @@ applyIndividualParameters <- function(individualCharacteristics, simulation) {
     parameters[["Parameter Name"]],
     sep = "|"
   )
-  keep <- is.finite(parameters[["Value"]]) &
-    paths %in% ospsuite::getAllParameterPathsIn(simulation)
+  # Keep only parameters that are defined by a constant. Parameters that are
+  # defined by formulas have the `NaN` value
+  keep <- is.finite(parameters[["Value"]])
+  if (!is.null(simulation)) {
+    keep <- keep & paths %in% ospsuite::getAllParameterPathsIn(simulation)
+  }
 
   list(
     paths = paths[keep],
@@ -197,7 +210,9 @@ applyIndividualParameters <- function(individualCharacteristics, simulation) {
     return(invisible(NULL))
   }
   simulationName <- simulation$name
-  cli::cli_abort(messages$humanIndividualForNonHumanModel(simulationName, species))
+  cli::cli_abort(
+    messages$humanIndividualForNonHumanModel(simulationName, species)
+  )
 }
 
 # Species of the individual `simulation` was built for. PK-Sim exports since
@@ -236,7 +251,12 @@ applyIndividualParameters <- function(individualCharacteristics, simulation) {
     error = function(e) NULL
   )
   species <- individual$species
-  if (is.null(species) || length(species) == 0 || is.na(species) || !nzchar(species)) {
+  if (
+    is.null(species) ||
+      length(species) == 0 ||
+      is.na(species) ||
+      !nzchar(species)
+  ) {
     return(NULL)
   }
   species
