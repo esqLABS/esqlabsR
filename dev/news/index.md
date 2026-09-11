@@ -68,6 +68,46 @@
   With ospsuite 13, which returns dataset names from `DataCombined` as a
   factor, the factors had been read as their positions in the list (1,
   2, 3, 4) ([\#1259](https://github.com/esqLABS/esqlabsR/issues/1259)).
+- [`applyIndividualParameters()`](https://esqlabs.github.io/esqlabsR/dev/reference/applyIndividualParameters.md)
+  and
+  [`initializeSimulation()`](https://esqlabs.github.io/esqlabsR/dev/reference/initializeSimulation.md)
+  now take the species constants for a non-human individual from
+  [`ospsuite::createIndividualBuildingBlock()`](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/createIndividualBuildingBlock.html)
+  instead of the bundled `SpeciesParameters.xlsx`. Scaling a human model
+  to Beagle, Dog, Minipig, Monkey, Mouse, Rabbit, or Rat now sets every
+  parameter PK-Sim 13 changes between species, for example the bile salt
+  concentrations of the colon segments, which the sheet did not carry,
+  and the values follow the body weight given for the individual
+  ([\#666](https://github.com/esqLABS/esqlabsR/issues/666)).
+- [`applyIndividualParameters()`](https://esqlabs.github.io/esqlabsR/dev/reference/applyIndividualParameters.md)
+  and
+  [`initializeSimulation()`](https://esqlabs.github.io/esqlabsR/dev/reference/initializeSimulation.md)
+  now also scale a model between two non-human species, for example from
+  a rat model to a mouse
+  ([\#666](https://github.com/esqLABS/esqlabsR/issues/666)).
+- [`applyIndividualParameters()`](https://esqlabs.github.io/esqlabsR/dev/reference/applyIndividualParameters.md)
+  and
+  [`initializeSimulation()`](https://esqlabs.github.io/esqlabsR/dev/reference/initializeSimulation.md)
+  stop with an error when a human individual is applied to a simulation
+  built for another species, instead of writing human values into that
+  model and continuing. The species is read from the individual stored
+  in the simulation (PK-Sim exports since OSP version 12) or, for older
+  exports, from the presence of the human-only parameters
+  `Organism|Height` and `Organism|Age`
+  ([\#666](https://github.com/esqLABS/esqlabsR/issues/666)).
+- [`writeIndividualToXLS()`](https://esqlabs.github.io/esqlabsR/dev/reference/writeIndividualToXLS.md)
+  writes, for a non-human individual, the complete parameter set
+  [`applyIndividualParameters()`](https://esqlabs.github.io/esqlabsR/dev/reference/applyIndividualParameters.md)
+  applies, derived parameters and species constants included, instead of
+  the two ontogeny factors it wrote before. The sheet covers every model
+  of the species, so rows for containers a model lacks must be removed
+  or applied with `stopIfParameterNotFound = FALSE`
+  ([\#666](https://github.com/esqLABS/esqlabsR/issues/666)).
+- The example project’s `Aciclovir.pkml` is re-exported with PK-Sim 13.
+  The dose of its application now lives at
+  `Events|IV 250mg 10min|No formulation|Application_1|ProtocolSchemaItem|Dose`;
+  the example configuration files use the new path
+  ([\#1273](https://github.com/esqLABS/esqlabsR/issues/1273)).
 
 ## esqlabsR 5.7.0
 

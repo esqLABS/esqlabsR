@@ -318,8 +318,7 @@ By contributing to this project, you agree to abide by its terms.
   `condition` is true.
 
 - [`writeIndividualToXLS()`](https://esqlabs.github.io/esqlabsR/dev/reference/writeIndividualToXLS.md)
-  : Create a parameter set describing an individual and write it to the
-  Excel file
+  : Write the parameters of an individual to an Excel file
 
 - [`writeParameterStructureToXLS()`](https://esqlabs.github.io/esqlabsR/dev/reference/writeParameterStructureToXLS.md)
   : Write parameter structure to excel that can be loaded in MoBi
@@ -359,11 +358,7 @@ By contributing to this project, you agree to abide by its terms.
   : Sample a random value from a distribution
 
 - [`applyIndividualParameters()`](https://esqlabs.github.io/esqlabsR/dev/reference/applyIndividualParameters.md)
-  :
-
-  Apply an individual to the simulation. For human species, only
-  parameters that do not override formulas are applied. For other
-  species, all parameters returned by `createIndividual` are applied.
+  : Apply an individual parametrization to a simulation
 
 - [`Distributions`](https://esqlabs.github.io/esqlabsR/dev/reference/Distributions.md)
   : Supported distributions for sampling

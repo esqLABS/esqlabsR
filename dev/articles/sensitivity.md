@@ -55,7 +55,7 @@ outputPaths <- c(
 )
 parameterPaths <- c(
   "Lipophilicity" = "Aciclovir|Lipophilicity",
-  "Dose" = "Events|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose",
+  "Dose" = "Events|IV 250mg 10min|No formulation|Application_1|ProtocolSchemaItem|Dose",
   "GFR fraction" = "Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Glomerular Filtration-GFR-Aciclovir|GFR fraction"
 )
 

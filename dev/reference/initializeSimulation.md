@@ -25,7 +25,9 @@ initializeSimulation(
 
 - individualCharacteristics:
 
-  Optional `IndividualCharacteristics` describing an individual.
+  Optional `IndividualCharacteristics` describing an individual. For a
+  non-human species, the simulation is scaled to that species, see
+  [`applyIndividualParameters()`](https://esqlabs.github.io/esqlabsR/dev/reference/applyIndividualParameters.md).
 
 - additionalParams:
 

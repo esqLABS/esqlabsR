@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">esqlabsR</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.7.0.9012</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">5.7.0.9013</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -81,6 +81,15 @@
 <li>The <code>checkForNegativeValues</code> column of the <code>PIConfiguration</code> sheet is now applied to the solver settings of the task’s simulations (<code>simulation$solver$checkForNegativeValues</code>); with ospsuite 13, <code><a href="../reference/createPITasks.html">createPITasks()</a></code> previously stopped with an error when that cell was filled (<a href="https://github.com/esqLABS/esqlabsR/issues/1252" class="external-link">#1252</a>).</li>
 <li>
 <code><a href="../reference/sensitivityTimeProfiles.html">sensitivityTimeProfiles()</a></code> again labels the parameter-factor colour legend with the variation values (for example 0.1, 1, 20) and draws the lines in factor order. With ospsuite 13, which returns dataset names from <code>DataCombined</code> as a factor, the factors had been read as their positions in the list (1, 2, 3, 4) (<a href="https://github.com/esqLABS/esqlabsR/issues/1259" class="external-link">#1259</a>).</li>
+<li>
+<code><a href="../reference/applyIndividualParameters.html">applyIndividualParameters()</a></code> and <code><a href="../reference/initializeSimulation.html">initializeSimulation()</a></code> now take the species constants for a non-human individual from <code><a href="https://www.open-systems-pharmacology.org/OSPSuite-R/reference/createIndividualBuildingBlock.html" class="external-link">ospsuite::createIndividualBuildingBlock()</a></code> instead of the bundled <code>SpeciesParameters.xlsx</code>. Scaling a human model to Beagle, Dog, Minipig, Monkey, Mouse, Rabbit, or Rat now sets every parameter PK-Sim 13 changes between species, for example the bile salt concentrations of the colon segments, which the sheet did not carry, and the values follow the body weight given for the individual (<a href="https://github.com/esqLABS/esqlabsR/issues/666" class="external-link">#666</a>).</li>
+<li>
+<code><a href="../reference/applyIndividualParameters.html">applyIndividualParameters()</a></code> and <code><a href="../reference/initializeSimulation.html">initializeSimulation()</a></code> now also scale a model between two non-human species, for example from a rat model to a mouse (<a href="https://github.com/esqLABS/esqlabsR/issues/666" class="external-link">#666</a>).</li>
+<li>
+<code><a href="../reference/applyIndividualParameters.html">applyIndividualParameters()</a></code> and <code><a href="../reference/initializeSimulation.html">initializeSimulation()</a></code> stop with an error when a human individual is applied to a simulation built for another species, instead of writing human values into that model and continuing. The species is read from the individual stored in the simulation (PK-Sim exports since OSP version 12) or, for older exports, from the presence of the human-only parameters <code>Organism|Height</code> and <code>Organism|Age</code> (<a href="https://github.com/esqLABS/esqlabsR/issues/666" class="external-link">#666</a>).</li>
+<li>
+<code><a href="../reference/writeIndividualToXLS.html">writeIndividualToXLS()</a></code> writes, for a non-human individual, the complete parameter set <code><a href="../reference/applyIndividualParameters.html">applyIndividualParameters()</a></code> applies, derived parameters and species constants included, instead of the two ontogeny factors it wrote before. The sheet covers every model of the species, so rows for containers a model lacks must be removed or applied with <code>stopIfParameterNotFound = FALSE</code> (<a href="https://github.com/esqLABS/esqlabsR/issues/666" class="external-link">#666</a>).</li>
+<li>The example project’s <code>Aciclovir.pkml</code> is re-exported with PK-Sim 13. The dose of its application now lives at <code>Events|IV 250mg 10min|No formulation|Application_1|ProtocolSchemaItem|Dose</code>; the example configuration files use the new path (<a href="https://github.com/esqLABS/esqlabsR/issues/1273" class="external-link">#1273</a>).</li>
 </ul></div>
 </div>
     <div class="section level2">

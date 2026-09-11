@@ -314,11 +314,11 @@ case, the individual as defined in the `pkml` simulation without any
 individual-specific model parameters will be simulated. The same
 individual can be used in multiple scenarios. It is possible to scale
 from a human model to the species **Beagle**, **Dog**, **Minipig**,
-**Mouse**, **Rat**, **Rabbit**, and **Monkey** by applying the
-respective individual to the simulation. Other species scalings are
-technically possible but the correctness of the results is not
-guaranteed as there exist some structural differences between the
-species.
+**Mouse**, **Rat**, **Rabbit**, and **Monkey**, and between these
+species, by applying the respective individual to the simulation. The
+species-specific parameter values come from the PK-Sim database, see
+[`applyIndividualParameters()`](https://esqlabs.github.io/esqlabsR/dev/reference/applyIndividualParameters.md).
+Scaling from a non-human species to human is not supported.
 
 #### PopulationId
 
