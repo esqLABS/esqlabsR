@@ -1,3 +1,23 @@
+# sensitivityCalculation fails with invalid `outputPaths`
+
+    Code
+      sensitivityCalculation(simulation = simulation, outputPaths = c("",
+        "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"),
+      parameterPaths = parameterPaths)
+    Condition
+      Error in `.validateCharVector()`:
+      ! argument "outputPaths" has empty strings!
+
+---
+
+    Code
+      sensitivityCalculation(simulation = simulation, outputPaths = rep(
+        "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)",
+        2), parameterPaths = parameterPaths)
+    Condition
+      Error in `.validateCharVector()`:
+      ! Object has duplicated values; only unique values are allowed.
+
 # sensitivityCalculation errors on absolute variation with zero initial value
 
     Code

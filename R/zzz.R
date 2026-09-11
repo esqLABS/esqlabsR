@@ -1,52 +1,28 @@
 # nocov start
-esqlabsEnv$colorPalette <- .getEsqlabsColors()
-
 .onLoad <- function(libname, pkgname) {
-  Sys.setenv("_R_CHECK_LENGTH_1_CONDITION_" = "true")
+  esqlabsEnv$colorPalette <- .getEsqlabsColors()
 
   # Change maximal caption width in figures coming from TLF
   tlf::setDefaultMaxCharacterWidth(75)
-
-  # tlf calls showtext::showtext_auto() on load, which rasterizes glyphs to
-  # filled SVG paths using the system "sans" font. That font differs across OSes
-  # (Helvetica on macOS, DejaVu/Liberation on Linux), so we disable it to get
-  # portable <text> elements instead. This will become moot once the package
-  # migrates to osp.plots.
-  if (requireNamespace("showtext", quietly = TRUE)) {
-    showtext::showtext_auto(enable = FALSE)
-  }
 }
 
+# The package reaches every dependency as `pkg::fun()`, so this is the one
+# `@importFrom` it carries. `R6::R6Class()` is only ever called at top level
+# (`R/project.R`, `R/validation.R`), and `R CMD check` does not credit a
+# top-level `::` call as a use of the package, so without an import directive it
+# reports R6 as a declared-but-unused import. The call sites keep their explicit
+# `R6::` prefix.
+#
+#' @importFrom R6 R6Class
+NULL
+
+# Column names that exist only inside a data mask (dplyr verbs that build or read
+# them), which `R CMD check` cannot see are bound and so reports as undefined
+# globals. Declared here rather than rewritten as `.data$` pronouns at the call
+# sites, which are in the sensitivity code this refactor leaves alone.
 utils::globalVariables(c(
-  "DataCombinedName",
-  "IndividualId",
-  "OutputPath",
-  "OutputPathId",
-  "PKMeanPercentChange",
-  "PKParameter",
-  "PKParameterValue",
-  "PKPercentChange",
-  "Parameter",
-  "ParameterFactor",
-  "ParameterPath",
-  "ParameterValue",
-  "QuantityPath",
-  "SensitivityPKParameter",
-  "Study Id",
-  "Unit",
-  "Value",
-  "dataType",
   "name",
-  "outputName",
-  "paths",
-  "plotGridName",
-  "plotID",
-  "scenario",
-  "xOffsets",
-  "xScaleFactors",
-  "xValues",
-  "yOffsets",
-  "yScaleFactors",
-  "yValues"
+  "ParameterBaseValue",
+  "PKParameterBaseValue"
 ))
 # nocov end

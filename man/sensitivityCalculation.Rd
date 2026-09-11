@@ -109,9 +109,9 @@ sensitivityCalculation(
 
 }
 \seealso{
-Other sensitivity-calculation:
+Other sensitivityCalculation:
 \code{\link[=sensitivitySpiderPlot]{sensitivitySpiderPlot()}},
 \code{\link[=sensitivityTimeProfiles]{sensitivityTimeProfiles()}},
 \code{\link[=sensitivityTornadoPlot]{sensitivityTornadoPlot()}}
 }
-\concept{sensitivity-calculation}
+\concept{sensitivityCalculation}

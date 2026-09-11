@@ -1,0 +1,11 @@
+{
+  "id": "indiv1_default",
+  "parameters": [
+    {
+      "containerPath": "Organism|Kidney",
+      "parameterName": "GFR",
+      "value": 90,
+      "units": "ml/min"
+    }
+  ]
+}

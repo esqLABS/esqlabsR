@@ -1,18 +1,6 @@
-# Save old options
-old_opts <- options()
-
-options(
-  tibble.width = Inf,
-  pillar.min_title_chars = Inf,
-  pillar.sigfig = 4,
-  digits = 4,
-  scipen = 999
-)
-
 # Single output path ------------------------------------------------------
 
 simPath <- system.file("extdata", "Aciclovir.pkml", package = "ospsuite")
-simulation <- loadSimulation(simPath)
 outputPaths <- "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
 parameterPaths <- c(
   "Aciclovir|Lipophilicity",
@@ -21,23 +9,124 @@ parameterPaths <- c(
 )
 variationRange <- c(0.1, 2, 20) # 1.0 is deliberately left out for testing
 
-set.seed(123)
-results <- sensitivityCalculation(
-  simulation = simulation,
-  outputPaths = outputPaths,
-  parameterPaths = parameterPaths,
-  variationRange = variationRange
-)
+# Both `loadSimulation()` and the Excel observed-data importer initialize a
+# PK-Sim native session; running them at file source time (as `test_dir()`
+# sources every test file up front) bleeds native state across files. Defer them
+# behind memoized accessors so the native loads and the baseline
+# `sensitivityCalculation()` happen inside a `test_that()` block on first use,
+# computed once and cached for the rest of the file.
+sensFixture <- local({
+  cache <- NULL
+  function() {
+    if (is.null(cache)) {
+      simulation <- loadSimulation(simPath)
+      withr::local_seed(123)
+      results <- sensitivityCalculation(
+        simulation = simulation,
+        outputPaths = outputPaths,
+        parameterPaths = parameterPaths,
+        variationRange = variationRange
+      )
+      cache <<- list(simulation = simulation, results = results)
+    }
+    cache
+  }
+})
 
-# load observed data
-filePath <- testthat::test_path("../data/AciclovirLaskinData.xlsx")
-dataConfiguration <- createImporterConfigurationForFile(filePath = filePath)
-dataConfiguration$sheets <- "Laskin 1982.Group A"
-dataConfiguration$namingPattern <- "{Source}.{Sheet}"
-obsData <<- loadDataSetsFromExcel(
-  xlsFilePath = filePath,
-  importerConfigurationOrPath = dataConfiguration
-)
+sensFixtureMultiple <- local({
+  cache <- NULL
+  function() {
+    if (is.null(cache)) {
+      simulation <- sensFixture()$simulation
+      outputPathsMultiple <- c(
+        "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)",
+        "Organism|Age",
+        "Organism|ArterialBlood|Plasma|Aciclovir"
+      )
+      parameterPathsMultiple <- c(
+        "Aciclovir|Lipophilicity",
+        "Events|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose",
+        "Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Glomerular Filtration-GFR-Aciclovir|GFR fraction"
+      )
+      resultsMultiple <- sensitivityCalculation(
+        simulation = simulation,
+        outputPaths = outputPathsMultiple,
+        parameterPaths = parameterPathsMultiple,
+        variationRange = c(0.2, 1, 5, 10)
+      )
+      cache <<- list(resultsMultiple = resultsMultiple)
+    }
+    cache
+  }
+})
+
+# Observed-data accessors. `loadDataSetsFromExcel()` initializes the native data
+# importer, so it is deferred here as well. `obsDataFixture()` returns the
+# memoized single data set; `loadObsData()` returns a fresh load (used to build
+# the mutated multi-data-set fixtures inside the relevant test blocks).
+loadObsData <- local({
+  config <- NULL
+  function() {
+    if (is.null(config$filePath)) {
+      filePath <- getTestDataFilePath("AciclovirLaskinData.xlsx")
+      dataConfiguration <- createImporterConfigurationForFile(
+        filePath = filePath
+      )
+      dataConfiguration$sheets <- "Laskin 1982.Group A"
+      dataConfiguration$namingPattern <- "{Source}.{Sheet}"
+      config <<- list(
+        filePath = filePath,
+        dataConfiguration = dataConfiguration
+      )
+    }
+    loadDataSetsFromExcel(
+      xlsFilePath = config$filePath,
+      importerConfigurationOrPath = config$dataConfiguration
+    )
+  }
+})
+
+obsDataFixture <- local({
+  cache <- NULL
+  function() {
+    if (is.null(cache)) {
+      cache <<- loadObsData()
+    }
+    cache
+  }
+})
+
+# Build the two-element observed-data set used by the multi-data-set tests, with
+# its second element renamed and shifted (mirrors the original setup).
+buildObsDataMultiple <- function() {
+  obsDataMultiple <- c(loadObsData(), loadObsData())
+  names(obsDataMultiple)[2] <- "AciclovirLaskinData.Laskin 1982.Group A - Mock"
+  obsDataMultiple[[2]]$name <- "AciclovirLaskinData.Laskin 1982.Group A - Mock"
+  obsDataMultiple[[2]]$addMetaData("Study Id", "Laskin 1982.Group A - Mock")
+  obsDataMultiple[[2]]$setValues(
+    obsDataMultiple[[2]]$xValues,
+    obsDataMultiple[[2]]$yValues + 0.1
+  )
+  obsDataMultiple
+}
+
+# Plot data ---------------------------------------------------------------
+
+test_that("simulated ParameterFactor carries the variation values", {
+  # `DataCombined$toDataFrame()` hands the dataset names back as a factor, so
+  # the numeric factor must come from the label, not the level position;
+  # otherwise 0.1 / 2 / 20 turn into 1 / 2 / 4 and the colour legend follows.
+  results <- sensFixture()$results
+  data <- .aggregateSimulationAndObservedData(
+    simulationResults = results$simulationResults,
+    dataSets = NULL,
+    parameterPaths = results$parameterPaths,
+    outputPaths = results$outputPaths,
+    xUnits = NULL,
+    yUnits = NULL
+  )
+  expect_equal(sort(unique(data$ParameterFactor)), c(0.1, 1, 2, 20))
+})
 
 # Validate plotting arguments ---------------------------------------------
 
@@ -56,10 +145,12 @@ test_that("sensitivityTimeProfiles fails with invalid input", {
 # Default plot ------------------------------------------------------------
 
 test_that("sensitivityTimeProfiles creates expected default plot", {
-  set.seed(123)
+  .localSnapshotOptions()
+  results <- sensFixture()$results
+  withr::local_seed(123)
   p <- sensitivityTimeProfiles(results)
 
-  set.seed(123)
+  withr::local_seed(123)
   suppressWarnings(
     vdiffr::expect_doppelganger(
       title = "sensitivityTimeProfiles works as expected",
@@ -76,12 +167,16 @@ test_that("sensitivityTimeProfiles creates expected default plot", {
 })
 
 test_that("sensitivityTimeProfiles applies user-defined parameter labels", {
-  names(parameterPaths) <- c("Lipophilicity", "Dose", "GFR fraction")
+  simulation <- sensFixture()$simulation
+  # Work on a labelled local copy so the file-scope `parameterPaths` is never
+  # mutated for other tests in this file.
+  namedParameterPaths <- parameterPaths
+  names(namedParameterPaths) <- c("Lipophilicity", "Dose", "GFR fraction")
 
   resultsLab <- sensitivityCalculation(
     simulation = simulation,
     outputPaths = outputPaths,
-    parameterPaths = parameterPaths,
+    parameterPaths = namedParameterPaths,
     variationRange = variationRange
   )
 
@@ -100,10 +195,12 @@ test_that("sensitivityTimeProfiles applies user-defined parameter labels", {
 n <- "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
 
 test_that("sensitivityTimeProfiles applies linear y-axis scaling correctly", {
-  set.seed(123)
+  .localSnapshotOptions()
+  results <- sensFixture()$results
+  withr::local_seed(123)
   p <- sensitivityTimeProfiles(results, yAxisScale = "lin")
 
-  set.seed(123)
+  withr::local_seed(123)
   suppressWarnings(
     vdiffr::expect_doppelganger(
       title = "sensitivityTimeProfiles linear y-axis",
@@ -115,10 +212,12 @@ test_that("sensitivityTimeProfiles applies linear y-axis scaling correctly", {
 })
 
 test_that("sensitivityTimeProfiles works with observed data", {
-  set.seed(123)
+  results <- sensFixture()$results
+  obsData <- obsDataFixture()
+  withr::local_seed(123)
   p <- sensitivityTimeProfiles(results, observedData = obsData[[1]])
 
-  set.seed(123)
+  withr::local_seed(123)
   suppressWarnings(
     vdiffr::expect_doppelganger(
       title = "sensitivityTimeProfiles works with observed data",
@@ -130,10 +229,11 @@ test_that("sensitivityTimeProfiles works with observed data", {
 # Unit conversion ---------------------------------------------------------
 
 test_that("sensitivityTimeProfiles accepts non-list units", {
+  results <- sensFixture()$results
   # x-axis units: scalar vs list should result in the same axis range
-  set.seed(123)
+  withr::local_seed(123)
   p_x_list <- sensitivityTimeProfiles(results, xUnits = list("h"))
-  set.seed(123)
+  withr::local_seed(123)
   p_x_scalar <- sensitivityTimeProfiles(results, xUnits = "h")
 
   x_range_list <- extractAxisRange(p_x_list)$x
@@ -141,9 +241,9 @@ test_that("sensitivityTimeProfiles accepts non-list units", {
   expect_equal(x_range_scalar, x_range_list)
 
   # y-axis units: scalar vs list should result in the same axis range
-  set.seed(123)
+  withr::local_seed(123)
   p_y_list <- sensitivityTimeProfiles(results, yUnits = list("mol/l"))
-  set.seed(123)
+  withr::local_seed(123)
   p_y_scalar <- sensitivityTimeProfiles(results, yUnits = "mol/l")
 
   y_range_list <- extractAxisRange(p_y_list)$y
@@ -152,6 +252,7 @@ test_that("sensitivityTimeProfiles accepts non-list units", {
 })
 
 test_that("sensitivityTimeProfiles errors on invalid units", {
+  results <- sensFixture()$results
   # invalid unit (list form)
   expect_error(
     sensitivityTimeProfiles(results, yUnits = list("mol/kg")),
@@ -185,14 +286,15 @@ test_that("sensitivityTimeProfiles errors on invalid units", {
 })
 
 test_that("sensitivityTimeProfiles applies unit conversion", {
-  set.seed(123)
+  results <- sensFixture()$results
+  withr::local_seed(123)
   p <- sensitivityTimeProfiles(
     results,
     xUnits = list("h"),
     yUnits = list("mol/l")
   )
 
-  set.seed(123)
+  withr::local_seed(123)
   suppressWarnings(
     vdiffr::expect_doppelganger(
       title = "sensitivityTimeProfiles unit conversion",
@@ -202,6 +304,7 @@ test_that("sensitivityTimeProfiles applies unit conversion", {
 })
 
 test_that("sensitivityTimeProfiles handles non-convertible y-units", {
+  results <- sensFixture()$results
   p1 <- sensitivityTimeProfiles(results) # default
   p2 <- sensitivityTimeProfiles(results, yUnits = list("mol")) # no conversion
 
@@ -213,29 +316,12 @@ test_that("sensitivityTimeProfiles handles non-convertible y-units", {
 
 # Multiple output paths ---------------------------------------------------
 
-outputPaths <- c(
-  "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)",
-  "Organism|Age",
-  "Organism|ArterialBlood|Plasma|Aciclovir"
-)
-parameterPaths <- c(
-  "Aciclovir|Lipophilicity",
-  "Events|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose",
-  "Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Glomerular Filtration-GFR-Aciclovir|GFR fraction"
-)
-
-resultsMultiple <- sensitivityCalculation(
-  simulation = simulation,
-  outputPaths = outputPaths,
-  parameterPaths = parameterPaths,
-  variationRange = c(0.2, 1, 5, 10)
-)
-
 test_that("sensitivityTimeProfiles plots are correct for multiple output paths", {
-  set.seed(123)
+  resultsMultiple <- sensFixtureMultiple()$resultsMultiple
+  withr::local_seed(123)
   plotsMultiple <- sensitivityTimeProfiles(resultsMultiple)
 
-  set.seed(123)
+  withr::local_seed(123)
   suppressWarnings(
     vdiffr::expect_doppelganger(
       title = "multiple output path profiles",
@@ -245,13 +331,15 @@ test_that("sensitivityTimeProfiles plots are correct for multiple output paths",
 })
 
 test_that("sensitivityTimeProfiles works with multiple outputs and observed data", {
-  set.seed(123)
+  resultsMultiple <- sensFixtureMultiple()$resultsMultiple
+  obsData <- obsDataFixture()
+  withr::local_seed(123)
   plotsMultiple <- sensitivityTimeProfiles(
     resultsMultiple,
     observedData = obsData
   )
 
-  set.seed(123)
+  withr::local_seed(123)
   suppressWarnings(
     vdiffr::expect_doppelganger(
       title = "multiple output path profiles with observed data",
@@ -263,6 +351,8 @@ test_that("sensitivityTimeProfiles works with multiple outputs and observed data
 # multiple output paths unit conversion
 
 test_that("sensitivityTimeProfiles applies y-unit conversion for multiple paths", {
+  .localSnapshotOptions()
+  resultsMultiple <- sensFixtureMultiple()$resultsMultiple
   p <- sensitivityTimeProfiles(
     resultsMultiple,
     yUnits = list("mol/l", "month(s)", "nmol")
@@ -272,6 +362,8 @@ test_that("sensitivityTimeProfiles applies y-unit conversion for multiple paths"
 })
 
 test_that("sensitivityTimeProfiles handles y-unit conversion with `NULL` for multiple paths", {
+  .localSnapshotOptions()
+  resultsMultiple <- sensFixtureMultiple()$resultsMultiple
   p <- sensitivityTimeProfiles(
     resultsMultiple,
     yUnits = list("mol/l", NULL, "mol")
@@ -281,6 +373,8 @@ test_that("sensitivityTimeProfiles handles y-unit conversion with `NULL` for mul
 })
 
 test_that("sensitivityTimeProfiles applies y-unit conversion with a single unit for multiple paths", {
+  .localSnapshotOptions()
+  resultsMultiple <- sensFixtureMultiple()$resultsMultiple
   p1 <- sensitivityTimeProfiles(resultsMultiple, yUnits = list("mg/ml"))
   p2 <- sensitivityTimeProfiles(resultsMultiple, yUnits = list("mg/ml", NULL))
 
@@ -292,6 +386,7 @@ test_that("sensitivityTimeProfiles applies y-unit conversion with a single unit 
 })
 
 test_that("sensitivityTimeProfiles handles non-convertible y-units for multiple paths", {
+  resultsMultiple <- sensFixtureMultiple()$resultsMultiple
   p1 <- sensitivityTimeProfiles(resultsMultiple) # default
   p2 <- sensitivityTimeProfiles(
     resultsMultiple, # not converted: all wrong units
@@ -313,33 +408,17 @@ test_that("sensitivityTimeProfiles handles non-convertible y-units for multiple 
 })
 
 # multiple output paths with multiple observed data
-obsData1 <- loadDataSetsFromExcel(
-  xlsFilePath = filePath,
-  importerConfigurationOrPath = dataConfiguration
-)
-obsData2 <- loadDataSetsFromExcel(
-  xlsFilePath = filePath,
-  importerConfigurationOrPath = dataConfiguration
-)
-
-obsDataMultiple <- c(obsData1, obsData2)
-# Rename one of the data sets and shift its values
-names(obsDataMultiple)[2] <- "AciclovirLaskinData.Laskin 1982.Group A - Mock"
-obsDataMultiple[[2]]$name <- "AciclovirLaskinData.Laskin 1982.Group A - Mock"
-obsDataMultiple[[2]]$addMetaData("Study Id", "Laskin 1982.Group A - Mock")
-obsDataMultiple[[2]]$setValues(
-  obsDataMultiple[[2]]$xValues,
-  obsDataMultiple[[2]]$yValues + 0.1
-)
 
 test_that("sensitivityTimeProfiles works with multiple observed data with same dimension", {
-  set.seed(123)
+  resultsMultiple <- sensFixtureMultiple()$resultsMultiple
+  obsDataMultiple <- buildObsDataMultiple()
+  withr::local_seed(123)
   plotsMultiple <- sensitivityTimeProfiles(
     resultsMultiple,
     observedData = obsDataMultiple
   )
 
-  set.seed(123)
+  withr::local_seed(123)
   suppressWarnings(
     vdiffr::expect_doppelganger(
       title = "multiple output path profiles with 2 observed data same dimension - concentration",
@@ -348,25 +427,27 @@ test_that("sensitivityTimeProfiles works with multiple observed data with same d
   )
 })
 
-# create mock observed data with "Amount" dimension
-obsDataMultiple[[2]]$yDimension <- "Amount"
-obsDataMultiple[[2]]$yUnit <- ospUnits$Amount$µmol
-
 test_that("sensitivityTimeProfiles works with multiple observed data with different dimensions", {
-  set.seed(123)
+  resultsMultiple <- sensFixtureMultiple()$resultsMultiple
+  obsDataMultiple <- buildObsDataMultiple()
+  # create mock observed data with "Amount" dimension
+  obsDataMultiple[[2]]$yDimension <- "Amount"
+  obsDataMultiple[[2]]$yUnit <- ospUnits$Amount$µmol
+
+  withr::local_seed(123)
   plotsMultiple <- sensitivityTimeProfiles(
     resultsMultiple,
     observedData = obsDataMultiple
   )
 
-  set.seed(123)
+  withr::local_seed(123)
   suppressWarnings(
     vdiffr::expect_doppelganger(
       title = "multiple output path profiles with 2 observed data - amount",
       fig = plotsMultiple[[2]]
     )
   )
-  set.seed(123)
+  withr::local_seed(123)
   suppressWarnings(
     vdiffr::expect_doppelganger(
       title = "multiple output path profiles with 2 observed data - concentration",
@@ -381,14 +462,15 @@ outputPathsFilter <- "Organism|ArterialBlood|Plasma|Aciclovir"
 parameterPathsFilter <- "Aciclovir|Lipophilicity"
 
 test_that("sensitivityTimeProfiles plots are as expected with filters", {
-  set.seed(123)
+  resultsMultiple <- sensFixtureMultiple()$resultsMultiple
+  withr::local_seed(123)
   plotFiltered <- sensitivityTimeProfiles(
     resultsMultiple,
     outputPaths = outputPathsFilter,
     parameterPaths = parameterPathsFilter
   )
 
-  set.seed(123)
+  withr::local_seed(123)
   suppressWarnings(
     vdiffr::expect_doppelganger(
       title = "filtered profile",
@@ -396,6 +478,3 @@ test_that("sensitivityTimeProfiles plots are as expected with filters", {
     )
   )
 })
-
-# Restore old options
-on.exit(options(old_opts), add = TRUE)

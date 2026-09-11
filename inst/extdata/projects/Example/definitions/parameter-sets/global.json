@@ -1,0 +1,11 @@
+{
+  "id": "global",
+  "parameters": [
+    {
+      "containerPath": "Organism|Liver",
+      "parameterName": "EHC continuous fraction",
+      "value": 1,
+      "units": null
+    }
+  ]
+}
