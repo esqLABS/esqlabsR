@@ -108,7 +108,7 @@ Any property in `filePaths` other than the four above sits unread, so an unrecog
 
 ### `defaultSolverSettings`
 
-How the solver behaves, as a named list of [`SolverSettings`](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/SolverSettings.html) values. It applies to every scenario in the project, and is the least specific place a setting can be given.
+How the solver behaves, as a named list of [`SolverSettings`](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/SolverSettings.html) values. It applies to every scenario in the project, and is the least specific place a setting can be given. An unknown setting, or one of the wrong type, stops the load naming the file, rather than being dropped in silence at run time.
 
 | Setting | Type | Meaning |
 | --- | --- | --- |

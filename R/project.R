@@ -194,6 +194,14 @@ Project <- R6::R6Class(
     #'   [buildSimulations()] as their `simulationRunOptions` argument.
     defaultSolverSettings = function(value) {
       if (!missing(value)) {
+        # The other door into this field. Without the check an unknown setting
+        # or a wrong type would sit in memory, save to the project file, and be
+        # dropped in silence by every run that read it.
+        problems <- .checkSolverSettings(value, label = "defaultSolverSettings")
+        if (length(problems) > 0L) {
+          msg <- messages$invalidDefaultSolverSettings(problems)
+          cli::cli_abort(msg$bullets, .envir = msg$envir)
+        }
         private$.defaultSolverSettings <- value
         private$.invalidateContainer()
         return(invisible(value))

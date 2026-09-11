@@ -913,6 +913,55 @@ test_that("defaultSolverSettings round-trips and defaults to NULL", {
   expect_true(reloaded$defaultSolverSettings$checkForNegativeValues)
 })
 
+test_that("defaultSolverSettings is checked when the project file is read", {
+  # Left unchecked, an unknown setting or a wrong type would be dropped in
+  # silence by `.applySolverSettings()` and change how every scenario solves.
+  project <- testProject()
+  path <- project$info$projectFilePath
+  container <- jsonlite::fromJSON(path, simplifyVector = FALSE)
+  container$defaultSolverSettings <- list(reltol = 1e-6, relTol = -1)
+  jsonlite::write_json(container, path, auto_unbox = TRUE, pretty = TRUE)
+
+  expect_error(loadProject(path), "unknown setting")
+  expect_error(loadProject(path), "must be a single non-negative number")
+  # The abort names the file, since a hand-edit is what puts it there.
+  expect_error(loadProject(path), "Project.json")
+})
+
+test_that("a sound defaultSolverSettings loads", {
+  project <- testProject()
+  path <- project$info$projectFilePath
+  container <- jsonlite::fromJSON(path, simplifyVector = FALSE)
+  container$defaultSolverSettings <- list(relTol = 1e-6, useJacobian = FALSE)
+  jsonlite::write_json(container, path, auto_unbox = TRUE, pretty = TRUE)
+
+  expect_equal(
+    loadProject(path)$defaultSolverSettings,
+    list(relTol = 1e-6, useJacobian = FALSE)
+  )
+})
+
+test_that("assigning defaultSolverSettings is checked too", {
+  # The other door into the field: without the check the value would sit in
+  # memory, save to the project file, and be dropped by every run that read it.
+  project <- testProject()
+
+  expect_error(
+    project$defaultSolverSettings <- list(reltol = 1e-6),
+    "unknown setting"
+  )
+  expect_error(
+    project$defaultSolverSettings <- list(mxStep = 1.5),
+    "must be a single whole number"
+  )
+  expect_null(project$defaultSolverSettings)
+
+  project$defaultSolverSettings <- list(relTol = 1e-6)
+  expect_identical(project$defaultSolverSettings, list(relTol = 1e-6))
+  project$defaultSolverSettings <- NULL
+  expect_null(project$defaultSolverSettings)
+})
+
 test_that("a project file's run options are reported and dropped", {
   # `numberOfCores` and `showProgress` name how a run is executed, which is a
   # `runScenarios()` argument rather than project data. A file written before

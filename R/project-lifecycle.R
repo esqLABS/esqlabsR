@@ -74,7 +74,7 @@ loadProject <- function(path = ".") {
 # reported and dropped and only the solver settings are kept.
 # @keywords internal
 # @noRd
-.readDefaultSolverSettings <- function(jsonData) {
+.readDefaultSolverSettings <- function(jsonData, jsonPath = NULL) {
   record <- jsonData$defaultSolverSettings %||%
     jsonData$defaultSimulationRunOptions
   if (length(record) == 0L) {
@@ -88,7 +88,18 @@ loadProject <- function(path = ".") {
     )
     record <- record[setdiff(names(record), runOptions)]
   }
-  if (length(record) == 0L) NULL else record
+  if (length(record) == 0L) {
+    return(NULL)
+  }
+  # Checked here rather than left to `validateProject()`: an unknown setting or
+  # a wrong type would otherwise be dropped in silence by `.applySolverSettings()`
+  # and change how every scenario in the project solves.
+  problems <- .checkSolverSettings(record, label = "defaultSolverSettings")
+  if (length(problems) > 0L) {
+    msg <- messages$invalidDefaultSolverSettings(problems, jsonPath)
+    cli::cli_abort(msg$bullets, .envir = msg$envir)
+  }
+  record
 }
 
 # Read a project container file and every section's `definitions/<kind>/` tree
@@ -239,7 +250,7 @@ loadProject <- function(path = ".") {
     name = jsonData$name,
     description = jsonData$description,
     definitionsFolder = jsonData$definitionsFolder,
-    defaultSolverSettings = .readDefaultSolverSettings(jsonData),
+    defaultSolverSettings = .readDefaultSolverSettings(jsonData, jsonPath),
     filePathsData = filePathsData,
     excelData = excelData,
     outputPaths = outputPaths,

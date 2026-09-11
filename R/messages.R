@@ -857,6 +857,32 @@ messages$exportUndeclaredObservedData <- function(ids) {
   )
 }
 
+messages$invalidDefaultSolverSettings <- function(problems, file = NULL) {
+  # Unglued: the problems name settings read from a hand-editable JSON file.
+  envir <- new.env(parent = parent.frame())
+  assign("problems", problems, envir = envir)
+  assign("file", file, envir = envir)
+  where <- if (is.null(file)) {
+    character()
+  } else {
+    c("i" = "Check {.file {file}}.")
+  }
+  list(
+    bullets = c(
+      "{.field defaultSolverSettings} is not valid.",
+      stats::setNames(
+        # One bullet per problem, each interpolating only its own element: a
+        # setting name read from the file may itself contain braces, so the
+        # template is what reaches the raising call, not the glued text.
+        paste0("{problems[[", seq_along(problems), "]]}"),
+        rep("x", length(problems))
+      ),
+      where
+    ),
+    envir = envir
+  )
+}
+
 messages$runOptionsInProjectFile <- function(fields) {
   # Unglued: the field names come from a hand-editable JSON file.
   envir <- new.env(parent = parent.frame())

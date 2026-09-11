@@ -53,8 +53,11 @@
   checkForNegativeValues = "flag"
 )
 
-# Report what is wrong with a `solverSettings` block, as a character vector of
-# problems (empty when it is sound). Returning strings rather than aborting is
+# Report what is wrong with a solver-settings record, as a character vector of
+# problems (empty when it is sound). `label` names the field in each message,
+# so the same rules report against whichever door the value came through: a
+# scenario's `solverSettings`, the `solverSettings` argument, or the project's
+# `defaultSolverSettings`. Returning strings rather than aborting is
 # what lets the authoring paths fold the problems into their own "cannot add
 # scenario" list and the section validator turn each into a critical error,
 # from the one set of rules.
@@ -64,12 +67,12 @@
 # slip would otherwise change how the model solves without saying anything.
 # @keywords internal
 # @noRd
-.checkSolverSettings <- function(solverSettings) {
+.checkSolverSettings <- function(solverSettings, label = "solverSettings") {
   if (is.null(solverSettings) || length(solverSettings) == 0L) {
     return(character())
   }
   if (!is.list(solverSettings) || is.null(names(solverSettings))) {
-    return("solverSettings must be a named list, e.g. list(relTol = 1e-6)")
+    return(paste0(label, " must be a named list, e.g. list(relTol = 1e-6)"))
   }
 
   problems <- character()
@@ -79,7 +82,8 @@
     problems <- c(
       problems,
       paste0(
-        "solverSettings has unknown setting",
+        label,
+        " has unknown setting",
         if (length(unknown) > 1L) "s" else "",
         " ",
         paste0("'", unknown, "'", collapse = ", "),
@@ -127,7 +131,7 @@
     if (!is.null(problem)) {
       problems <- c(
         problems,
-        paste0("solverSettings$", field, " must be ", problem)
+        paste0(label, "$", field, " must be ", problem)
       )
     }
   }

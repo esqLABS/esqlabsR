@@ -244,3 +244,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-09-10 15:09: Project and PI task configurations now hold solver settings only; how many cores a run uses and whether it reports progress moved to arguments of runScenarios(), buildSimulations() and runPI(), and a per-run solver override got its own solverSettings argument. (#408)
 - 2026-09-10 17:16: Reverted the parameter-identification changes that issue 408 did not require: a task block keeps its name and its run options, and runPI() keeps its signature. (#408)
 - 2026-09-11 14:56: The solverSettings documentation now reads the same everywhere: one wording for the scenario level, one for the run level, and the same table in both reference articles. (#408)
+- 2026-09-11 15:27: A bad defaultSolverSettings is now caught when the project file is read or the field is assigned, instead of being dropped in silence at run time. (#408)
