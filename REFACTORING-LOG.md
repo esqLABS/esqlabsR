@@ -249,3 +249,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-09-11 11:36: The species-scaling code of applyIndividualParameters() matches main after #1273: one helper builds the parameter set of an individual, the documentation drops the gut-wall paragraph and the sentence on skipped parameters, and two long lines are wrapped. (#1272)
 - 2026-09-11 14:56: The solverSettings documentation now reads the same everywhere: one wording for the scenario level, one for the run level, and the same table in both reference articles. (#408)
 - 2026-09-11 15:27: A bad defaultSolverSettings is now caught when the project file is read or the field is assigned, instead of being dropped in silence at run time. (#408)
+- 2026-09-11 18:12: The list of solver settings now comes from ospsuite itself, so a setting added upstream works without a change here; only the value type each one takes is still written out. (#408)

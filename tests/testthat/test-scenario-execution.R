@@ -115,16 +115,43 @@ test_that(".checkSolverSettings rejects a block that is not a named list", {
   expect_match(.checkSolverSettings(1e-6), "must be a named list")
 })
 
-test_that(".solverSettingFields covers exactly ospsuite's SolverSettings", {
-  # The table is written out in the package (the class exposes active bindings,
-  # which carry no type information, and is not exported). This is the drift
-  # guard: a setting added or renamed upstream fails here instead of being
-  # silently rejected as an unknown setting.
-  upstream <- names(
-    utils::getFromNamespace("SolverSettings", "ospsuite")$active
+test_that(".solverSettingNames() reads the settings ospsuite declares", {
+  expect_setequal(
+    .solverSettingNames(),
+    names(utils::getFromNamespace("SolverSettings", "ospsuite")$active)
   )
-  expect_setequal(names(.solverSettingFields), upstream)
 })
+
+test_that("every tagged setting still exists upstream", {
+  # The names come from `ospsuite`; only the value type is written out here.
+  # This catches the other direction of drift: a tag kept for a setting the
+  # class no longer has, which would then never be reached.
+  expect_true(all(names(.solverSettingTypes) %in% .solverSettingNames()))
+})
+
+test_that("a supported setting with no type tag is accepted and written as given", {
+  # `ospsuite` deciding what is supported is the point: a setting added
+  # upstream works without a change here, rather than being rejected as
+  # unknown. It is simply written as given, since this package has no rule
+  # describing its value.
+  local_mocked_bindings(
+    .solverSettingNames = function() c("relTol", "brandNewSetting")
+  )
+
+  expect_identical(
+    .checkSolverSettings(list(brandNewSetting = "anything")),
+    character()
+  )
+
+  simulation <- ospsuite::loadSimulation(
+    testthat::test_path("data", "simple.pkml"),
+    loadFromCache = FALSE
+  )
+  # Reaches the solver untouched, where a tagged setting would be coerced.
+  .applySolverSettings(simulation, list(relTol = 1e-8))
+  expect_identical(simulation$solver$relTol, 1e-8)
+})
+
 
 test_that(".applySolverSettings writes every solver setting a record carries", {
   simulation <- ospsuite::loadSimulation(

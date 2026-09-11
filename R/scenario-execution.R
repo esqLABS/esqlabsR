@@ -24,25 +24,30 @@
   runOpts
 }
 
-# The solver settings a project, scenario or parameter-identification task may
-# carry, mapped to the value shape each one takes. The names are exactly the
-# settable fields of `ospsuite`'s `SolverSettings`. How the run is executed
+# The solver settings `ospsuite` supports, read from the class itself so a
+# setting added upstream works here without a change. How the run is executed
 # (`numberOfCores`, `showProgress`) belongs to `SimulationRunOptions`, which is
 # an argument of the run functions rather than project data, so it never
 # appears in one of these records.
-#
-# The list is written out rather than read from the class because the tag is
-# the point: `SolverSettings` exposes its fields as R6 active bindings, which
-# say nothing about the value each one takes, and it is not exported, so
-# reading it from package code would mean a `:::` call. The tags are needed
-# because the .NET side coerces silently: `mxStep <- 1.5` truncates to 1 and a
-# negative `hMin` is accepted as given, so each tag drives both the coercion
-# in `.applySolverSettings()` and the type rule `.checkSolverSettings()`
-# enforces. `test-scenario-execution.R` compares these names against the class
-# so a field added upstream cannot go unnoticed.
 # @keywords internal
 # @noRd
-.solverSettingFields <- c(
+.solverSettingNames <- function() {
+  names(ospsuite:::SolverSettings$active)
+}
+
+# The value each solver setting takes, which the class cannot say: its fields
+# are R6 active bindings, and every one of them is the same one-line call apart
+# from the property name. The tags are needed because the .NET side coerces in
+# silence (`mxStep <- 1.5` truncates to 1, a negative `hMin` is taken as given),
+# so each drives both the coercion in `.applySolverSettings()` and the type rule
+# `.checkSolverSettings()` enforces.
+#
+# A setting `ospsuite` supports but this table has no tag for is still applied
+# and still accepted; it is simply written as given, since inventing a rule for
+# it would be guessing.
+# @keywords internal
+# @noRd
+.solverSettingTypes <- c(
   absTol = "number",
   relTol = "number",
   h0 = "number",
@@ -76,7 +81,7 @@
   }
 
   problems <- character()
-  known <- names(.solverSettingFields)
+  known <- .solverSettingNames()
   unknown <- setdiff(names(solverSettings), known)
   if (length(unknown) > 0L) {
     problems <- c(
@@ -88,18 +93,20 @@
         " ",
         paste0("'", unknown, "'", collapse = ", "),
         "; the settings are ",
-        paste(known, collapse = ", ")
+        paste(sort(known), collapse = ", ")
       )
     )
   }
 
-  for (field in intersect(known, names(solverSettings))) {
+  # Only the settings this package has a type rule for. One `ospsuite` supports
+  # but the table does not describe is accepted as given.
+  for (field in intersect(names(.solverSettingTypes), names(solverSettings))) {
     value <- solverSettings[[field]]
     if (is.null(value)) {
       next
     }
     problem <- switch(
-      .solverSettingFields[[field]],
+      .solverSettingTypes[[field]],
       number = if (
         !is.numeric(value) ||
           length(value) != 1L ||
@@ -145,7 +152,7 @@
 # @keywords internal
 # @noRd
 .applySolverSettings <- function(simulation, record) {
-  fields <- intersect(names(.solverSettingFields), names(record))
+  fields <- intersect(.solverSettingNames(), names(record))
   if (length(fields) == 0L) {
     return(invisible(simulation))
   }
@@ -155,11 +162,19 @@
     if (is.null(value)) {
       next
     }
+    # A setting with no tag is written as given: `ospsuite` supports it, this
+    # package simply has no rule describing its value.
+    type <- if (field %in% names(.solverSettingTypes)) {
+      .solverSettingTypes[[field]]
+    } else {
+      "asis"
+    }
     solver[[field]] <- switch(
-      .solverSettingFields[[field]],
+      type,
       number = as.double(value),
       count = as.integer(value),
-      flag = isTRUE(value)
+      flag = isTRUE(value),
+      asis = value
     )
   }
   invisible(simulation)

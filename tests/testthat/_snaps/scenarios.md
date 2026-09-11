@@ -136,7 +136,7 @@
     Condition
       Error in `addScenario()`:
       ! Cannot add scenario "stiff":
-      x solverSettings has unknown setting 'reltol'; the settings are absTol, relTol, h0, hMin, hMax, mxStep, useJacobian, checkForNegativeValues
+      x solverSettings has unknown setting 'reltol'; the settings are absTol, checkForNegativeValues, h0, hMax, hMin, mxStep, relTol, useJacobian
       x solverSettings$mxStep must be a single whole number between 1 and 2147483647
 
 # setScenario rejects an unsound solverSettings block
