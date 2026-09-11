@@ -175,25 +175,23 @@ Project <- R6::R6Class(
       private$.excelGroup()
     },
 
-    #' @field defaultSolverSettings How the solver should behave for every
-    #'   scenario in the project (the `defaultSolverSettings` field of
-    #'   `Project.json`), as a named list, or `NULL` when the project declares
-    #'   none. Takes any of the settings of
-    #'   [SolverSettings](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/SolverSettings.html):
-    #'   `absTol`, `relTol`, `h0`, `hMin`, `hMax`, `mxStep`, `useJacobian` and
-    #'   `checkForNegativeValues`.
+    #' @field defaultSolverSettings How the solver behaves, as a named list of
+    #'   [SolverSettings](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/SolverSettings.html)
+    #'   values: any of `absTol`, `relTol`, `h0`, `hMin`, `hMax`, `mxStep`,
+    #'   `useJacobian` and `checkForNegativeValues`, for example
+    #'   `list(relTol = 1e-6)`.
+    #'   This is the `defaultSolverSettings` field of `Project.json`, and
+    #'   `NULL` when the project declares none.
     #'
-    #'   These are defaults, so a scenario or a single run can still say
-    #'   otherwise. For each setting, the most specific place that gives it a
-    #'   value wins: a scenario's own `solverSettings` beats this list, and the
-    #'   `solverSettings` you pass to [runScenarios()] or [buildSimulations()]
-    #'   beats both. A setting nobody gives a value keeps the value stored in
-    #'   the model file.
+    #'   It applies to every scenario in the project, and is the least specific
+    #'   place a setting can be given. A scenario's own `solverSettings` wins
+    #'   over it, and the `solverSettings` argument of [runScenarios()] or
+    #'   [buildSimulations()] wins over both. A setting nobody gives a value
+    #'   keeps the value stored in the model file.
     #'
     #'   How the run itself is executed is not project data. Pass
-    #'   `numberOfCores` and `showProgress` to [runScenarios()],
-    #'   [buildSimulations()] or [runPI()] as their `simulationRunOptions`
-    #'   argument.
+    #'   `numberOfCores` and `showProgress` to [runScenarios()] or
+    #'   [buildSimulations()] as their `simulationRunOptions` argument.
     defaultSolverSettings = function(value) {
       if (!missing(value)) {
         private$.defaultSolverSettings <- value

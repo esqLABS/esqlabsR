@@ -108,9 +108,9 @@ Any property in `filePaths` other than the four above sits unread, so an unrecog
 
 ### `defaultSolverSettings`
 
-How the solver should behave for every scenario in the project, as any of the settable properties of [`SolverSettings`](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/SolverSettings.html). A setting you leave out keeps the value the model file carries.
+How the solver behaves, as a named list of [`SolverSettings`](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/SolverSettings.html) values. It applies to every scenario in the project, and is the least specific place a setting can be given.
 
-| Field | Type | Description |
+| Setting | Type | Meaning |
 | --- | --- | --- |
 | `absTol` | number | Absolute tolerance. |
 | `relTol` | number | Relative tolerance. |

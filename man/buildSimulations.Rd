@@ -33,9 +33,15 @@ a scenario with \code{simulateSteadyState} set. Takes the same form as in
 \code{\link[=runScenarios]{runScenarios()}}. The simulations returned here are not run, so it has no
 other effect.}
 
-\item{solverSettings}{How the solver behaves, taking the same form and the
-same precedence as in \code{\link[=runScenarios]{runScenarios()}}. Written to each simulation
-returned here.}
+\item{solverSettings}{How the solver behaves, as a named list of
+\href{https://www.open-systems-pharmacology.org/OSPSuite-R/reference/SolverSettings.html}{SolverSettings}
+values: any of \code{absTol}, \code{relTol}, \code{h0}, \code{hMin}, \code{hMax}, \code{mxStep},
+\code{useJacobian} and \code{checkForNegativeValues}, for example
+\code{list(relTol = 1e-6)}.
+A setting given here wins over the project's \code{defaultSolverSettings} and
+over each scenario's own \code{solverSettings}. A setting you leave out keeps
+whichever of those applies, or the value stored in the model file where
+neither gives one. \code{NULL} (default) leaves every setting to those two.}
 
 \item{validate}{Logical. If \code{TRUE} (default), runs the relevant
 section validators via \code{\link[=validateProject]{validateProject()}} before building and

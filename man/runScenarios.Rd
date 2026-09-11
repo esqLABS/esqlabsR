@@ -36,11 +36,15 @@ object setting \code{numberOfCores} and \code{showProgress}, for example
 uses the \code{ospsuite} defaults. This is not project data, so a project file
 never supplies it.}
 
-\item{solverSettings}{How the solver behaves for this run, as a named list
-of \href{https://www.open-systems-pharmacology.org/OSPSuite-R/reference/SolverSettings.html}{SolverSettings}
-values, for example \code{list(relTol = 1e-6)}. A setting given here wins over
-the project's \code{defaultSolverSettings} and over each scenario's own
-\code{solverSettings}. \code{NULL} (default) leaves both in place.}
+\item{solverSettings}{How the solver behaves, as a named list of
+\href{https://www.open-systems-pharmacology.org/OSPSuite-R/reference/SolverSettings.html}{SolverSettings}
+values: any of \code{absTol}, \code{relTol}, \code{h0}, \code{hMin}, \code{hMax}, \code{mxStep},
+\code{useJacobian} and \code{checkForNegativeValues}, for example
+\code{list(relTol = 1e-6)}.
+A setting given here wins over the project's \code{defaultSolverSettings} and
+over each scenario's own \code{solverSettings}. A setting you leave out keeps
+whichever of those applies, or the value stored in the model file where
+neither gives one. \code{NULL} (default) leaves every setting to those two.}
 
 \item{validate}{Logical. If \code{TRUE} (default), runs the relevant
 section validators via \code{\link[=validateProject]{validateProject()}} before simulating and

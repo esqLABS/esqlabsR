@@ -80,14 +80,15 @@
 #'   referencing `parameterSets` definitions.
 #' @param initialConditions Character vector. Initial-condition set ids
 #'   referencing `initialConditions` definitions.
-#' @param solverSettings How the solver should behave for this scenario, as a
-#'   named list, or `NULL`. Takes any of the settings of
-#'   [SolverSettings](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/SolverSettings.html):
-#'   `absTol`, `relTol`, `h0`, `hMin`, `hMax`, `mxStep`, `useJacobian` and
-#'   `checkForNegativeValues`. A setting given here overrides the project's
-#'   `defaultSolverSettings`. A setting you leave out is not changed:
-#'   the project value applies, or the model file's own value when the project
-#'   gives none either.
+#' @param solverSettings How the solver behaves, as a named list of
+#'   [SolverSettings](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/SolverSettings.html)
+#'   values: any of `absTol`, `relTol`, `h0`, `hMin`, `hMax`, `mxStep`,
+#'   `useJacobian` and `checkForNegativeValues`, for example
+#'   `list(relTol = 1e-6)`.
+#'   A setting given here wins over the project's `defaultSolverSettings`. A
+#'   setting you leave out keeps the project's value, or the value stored in
+#'   the model file where the project gives none. `NULL` (default) leaves every
+#'   setting to those two.
 #'
 #' @returns A `Scenario` object: a named list carrying exactly the fields
 #'   above.
@@ -702,11 +703,15 @@ print.Scenario <- function(x, ...) {
 #'   `ospsuite::SimulationRunOptions$new(numberOfCores = 8)`. `NULL` (default)
 #'   uses the `ospsuite` defaults. This is not project data, so a project file
 #'   never supplies it.
-#' @param solverSettings How the solver behaves for this run, as a named list
-#'   of [SolverSettings](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/SolverSettings.html)
-#'   values, for example `list(relTol = 1e-6)`. A setting given here wins over
-#'   the project's `defaultSolverSettings` and over each scenario's own
-#'   `solverSettings`. `NULL` (default) leaves both in place.
+#' @param solverSettings How the solver behaves, as a named list of
+#'   [SolverSettings](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/SolverSettings.html)
+#'   values: any of `absTol`, `relTol`, `h0`, `hMin`, `hMax`, `mxStep`,
+#'   `useJacobian` and `checkForNegativeValues`, for example
+#'   `list(relTol = 1e-6)`.
+#'   A setting given here wins over the project's `defaultSolverSettings` and
+#'   over each scenario's own `solverSettings`. A setting you leave out keeps
+#'   whichever of those applies, or the value stored in the model file where
+#'   neither gives one. `NULL` (default) leaves every setting to those two.
 #' @param validate Logical. If `TRUE` (default), runs the relevant
 #'   section validators via [validateProject()] before simulating and
 #'   aborts with a formatted summary on critical errors. Set to
@@ -798,9 +803,6 @@ runScenarios <- function(
 #'   a scenario with `simulateSteadyState` set. Takes the same form as in
 #'   [runScenarios()]. The simulations returned here are not run, so it has no
 #'   other effect.
-#' @param solverSettings How the solver behaves, taking the same form and the
-#'   same precedence as in [runScenarios()]. Written to each simulation
-#'   returned here.
 #' @param validate Logical. If `TRUE` (default), runs the relevant
 #'   section validators via [validateProject()] before building and
 #'   aborts with a formatted summary on critical errors. Set to
@@ -923,16 +925,17 @@ buildSimulations <- function(
 #'   steady state. Default `FALSE`.
 #' @param readPopulationFromCSV Logical. Load population from CSV.
 #'   Default `FALSE`.
-#' @param solverSettings How the solver should behave for this scenario, as a
-#'   named list. Takes any of the settings of
-#'   [SolverSettings](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/SolverSettings.html):
-#'   `absTol`, `relTol`, `h0`, `hMin`, `hMax`, `mxStep`, `useJacobian` and
-#'   `checkForNegativeValues`, for example `list(relTol = 1e-6)`. Default
-#'   `NULL`, which leaves the scenario with the project's
-#'   `defaultSolverSettings` and, for a setting the project does not
-#'   give either, the value stored in the model file. The list counts as one
-#'   value per scenario, so an `id` naming several scenarios gives each of
-#'   them the same settings.
+#' @param solverSettings How the solver behaves, as a named list of
+#'   [SolverSettings](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/SolverSettings.html)
+#'   values: any of `absTol`, `relTol`, `h0`, `hMin`, `hMax`, `mxStep`,
+#'   `useJacobian` and `checkForNegativeValues`, for example
+#'   `list(relTol = 1e-6)`.
+#'   A setting given here wins over the project's `defaultSolverSettings`. A
+#'   setting you leave out keeps the project's value, or the value stored in
+#'   the model file where the project gives none. `NULL` (default) leaves every
+#'   setting to those two.
+#'   The list counts as one value per scenario, so an `id` naming several
+#'   scenarios gives each of them the same settings.
 #' @param overwrite Logical. When `FALSE` (default), an id that already exists
 #'   aborts. When `TRUE`, the existing scenario is replaced (last-write-wins).
 #'   Distinct from `overwriteFormulasInSS`, which is a steady-state model

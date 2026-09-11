@@ -78,14 +78,15 @@ referencing \code{parameterSets} definitions.}
 \item{initialConditions}{Character vector. Initial-condition set ids
 referencing \code{initialConditions} definitions.}
 
-\item{solverSettings}{How the solver should behave for this scenario, as a
-named list, or \code{NULL}. Takes any of the settings of
-\href{https://www.open-systems-pharmacology.org/OSPSuite-R/reference/SolverSettings.html}{SolverSettings}:
-\code{absTol}, \code{relTol}, \code{h0}, \code{hMin}, \code{hMax}, \code{mxStep}, \code{useJacobian} and
-\code{checkForNegativeValues}. A setting given here overrides the project's
-\code{defaultSolverSettings}. A setting you leave out is not changed:
-the project value applies, or the model file's own value when the project
-gives none either.}
+\item{solverSettings}{How the solver behaves, as a named list of
+\href{https://www.open-systems-pharmacology.org/OSPSuite-R/reference/SolverSettings.html}{SolverSettings}
+values: any of \code{absTol}, \code{relTol}, \code{h0}, \code{hMin}, \code{hMax}, \code{mxStep},
+\code{useJacobian} and \code{checkForNegativeValues}, for example
+\code{list(relTol = 1e-6)}.
+A setting given here wins over the project's \code{defaultSolverSettings}. A
+setting you leave out keeps the project's value, or the value stored in
+the model file where the project gives none. \code{NULL} (default) leaves every
+setting to those two.}
 }
 \value{
 A \code{Scenario} object: a named list carrying exactly the fields
