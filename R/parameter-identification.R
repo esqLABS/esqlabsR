@@ -841,13 +841,15 @@ print.PITask <- function(x, ...) {
   cache$individuals <- list()
   cache$populations <- list()
 
-  # Solver settings for the task's simulations: the project's default record
-  # is the baseline and the task's own `simulationRunOptions` block overrides
-  # it entry by entry. `.prepareScenario()` writes the result before its
-  # steady-state pre-solve.
-  solverSettings <- utils::modifyList(
-    project$defaultSimulationRunOptions %||% list(),
-    piTask$configuration$simulationRunOptions %||% list()
+  # Solver settings for the task's simulations: the project's defaults are the
+  # baseline and the task's own `simulationRunOptions` block overrides them
+  # setting by setting. The result is handed to `.prepareScenario()` as the
+  # record *below* each scenario's own `solverSettings` block, so a scenario's
+  # setting wins over the task's. The block's run options are ignored here;
+  # `.buildPIConfiguration()` reads those.
+  solverDefaults <- .mergeRunOptionRecords(
+    project$defaultSolverSettings,
+    piTask$configuration$simulationRunOptions
   )
 
   scenarioNames <- piTask$scenarios
@@ -867,7 +869,7 @@ print.PITask <- function(x, ...) {
       cache = cache,
       simulationRunOptions = NULL,
       stopIfParameterNotFound = stopIfParameterNotFound,
-      solverSettings = solverSettings
+      solverDefaults = solverDefaults
     )
   }
   simulations <- lapply(prepared, `[[`, "simulation")
@@ -1100,8 +1102,9 @@ print.PITask <- function(x, ...) {
     piConfig$objectiveFunctionOptions <- current
   }
 
-  # The block's `checkForNegativeValues` is a solver setting; it reaches the
-  # task's simulations through `.createSinglePITask()`, not the run options.
+  # The block's solver settings reach the task's simulations through
+  # `.createSinglePITask()`, not the run options, so only `numberOfCores` and
+  # `showProgress` are read here.
   sro <- cfg$simulationRunOptions
   if (!is.null(sro)) {
     piConfig$simulationRunOptions <- .buildSimulationRunOptions(sro)

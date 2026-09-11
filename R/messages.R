@@ -875,6 +875,69 @@ messages$exportUndeclaredObservedData <- function(ids) {
   )
 }
 
+messages$invalidDefaultSolverSettings <- function(problems, file = NULL) {
+  # Unglued: the problems name settings read from a hand-editable JSON file.
+  envir <- new.env(parent = parent.frame())
+  assign("problems", problems, envir = envir)
+  assign("file", file, envir = envir)
+  where <- if (is.null(file)) {
+    character()
+  } else {
+    c("i" = "Check {.file {file}}.")
+  }
+  list(
+    bullets = c(
+      "{.field defaultSolverSettings} is not valid.",
+      stats::setNames(
+        # One bullet per problem, each interpolating only its own element: a
+        # setting name read from the file may itself contain braces, so the
+        # template is what reaches the raising call, not the glued text.
+        paste0("{problems[[", seq_along(problems), "]]}"),
+        rep("x", length(problems))
+      ),
+      where
+    ),
+    envir = envir
+  )
+}
+
+messages$runOptionsInProjectFile <- function(fields) {
+  # Unglued: the field names come from a hand-editable JSON file.
+  envir <- new.env(parent = parent.frame())
+  assign("fields", fields, envir = envir)
+  assign("n", length(fields), envir = envir)
+  list(
+    bullets = c(
+      "!" = "{cli::qty(n)}{.file Project.json} sets {n} run option{?s} that a \\
+      project file does not carry: {.field {fields}}.",
+      "i" = "A project file holds solver settings. Pass run options to \\
+      {.fn runScenarios}, {.fn buildSimulations} or {.fn runPI} instead, as \\
+      {.code simulationRunOptions = ospsuite::SimulationRunOptions$new(...)}.",
+      "i" = "{cli::qty(n)}The setting{?s} {?is/are} ignored and dropped on the \\
+      next {.fn saveProject}."
+    ),
+    envir = envir
+  )
+}
+
+messages$exportScenarioSolverSettings <- function(ids) {
+  # Unglued: a scenario id is a user-chosen name, so it is free text.
+  envir <- new.env(parent = parent.frame())
+  assign("ids", ids, envir = envir)
+  assign("n", length(ids), envir = envir)
+  list(
+    bullets = c(
+      "!" = "{cli::qty(n)}The Excel scenario sheet has no solver-settings \\
+      columns, so the {.field solverSettings} block{?s} of {n} \\
+      scenario{?s} {?was/were} not written: {.val {ids}}.",
+      "i" = "{cli::qty(n)}Keep the JSON project as the source of truth for \\
+      {?this scenario/these scenarios}: a project re-imported from these \\
+      workbooks solves with its model files' own solver settings."
+    ),
+    envir = envir
+  )
+}
+
 messages$failedToRemoveStaleDefinitionFiles <- function(paths) {
   n <- length(paths)
   # Interpolate eagerly here, where `n` and `paths` are in scope: the
@@ -1217,6 +1280,20 @@ messages$setScenarioUnknownFields <- function(fields, settable) {
   cli::format_message(c(
     "{.fn setScenario} cannot set {.field {fields}}.",
     "i" = "The settable fields are {.field {settable}}."
+  ))
+}
+
+# Raised when `simulationRunOptions` is not an `ospsuite::SimulationRunOptions`.
+# The hint names `solverSettings` because reaching for this argument to set a
+# tolerance is the likely mistake: the two used to travel in one list.
+messages$invalidSimulationRunOptions <- function(value) {
+  cli::format_message(c(
+    "{.arg simulationRunOptions} must be an \\
+    {.cls ospsuite::SimulationRunOptions}, not {.obj_type_friendly {value}}.",
+    "i" = "Build one with \\
+    {.code ospsuite::SimulationRunOptions$new(numberOfCores = 4)}.",
+    "i" = "To change how the solver behaves, pass {.arg solverSettings} \\
+    instead, as {.code list(relTol = 1e-6)}."
   ))
 }
 

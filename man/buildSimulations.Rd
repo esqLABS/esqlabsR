@@ -9,6 +9,7 @@ buildSimulations(
   scenarios = NULL,
   customParams = NULL,
   simulationRunOptions = NULL,
+  solverSettings = NULL,
   validate = TRUE,
   stopIfParameterNotFound = TRUE
 )
@@ -27,14 +28,20 @@ to a different form warns, naming the id it resolved to.}
 \code{units} — applied to every selected scenario as the final
 parameter layer.}
 
-\item{simulationRunOptions}{Optional \link[ospsuite:SimulationRunOptions]{ospsuite::SimulationRunOptions}.
-Consulted only for a scenario with \code{simulateSteadyState} set (the
-steady-state pre-solve still runs); it is not applied to the returned
-simulations, since they are not run here. \code{NULL} (default) falls back
-to the project's \code{defaultSimulationRunOptions}, including its solver
-setting \code{checkForNegativeValues}, which is written to each returned
-simulation; an explicit value replaces the project default entirely,
-so the simulations keep the solver settings of their model files.}
+\item{simulationRunOptions}{How the steady-state pre-solve is executed, for
+a scenario with \code{simulateSteadyState} set. Takes the same form as in
+\code{\link[=runScenarios]{runScenarios()}}. The simulations returned here are not run, so it has no
+other effect.}
+
+\item{solverSettings}{How the solver behaves, as a named list of
+\href{https://www.open-systems-pharmacology.org/OSPSuite-R/reference/SolverSettings.html}{SolverSettings}
+values: any of \code{absTol}, \code{relTol}, \code{h0}, \code{hMin}, \code{hMax}, \code{mxStep},
+\code{useJacobian} and \code{checkForNegativeValues}, for example
+\code{list(relTol = 1e-6)}.
+A setting given here wins over the project's \code{defaultSolverSettings} and
+over each scenario's own \code{solverSettings}. A setting you leave out keeps
+whichever of those applies, or the value stored in the model file where
+neither gives one. \code{NULL} (default) leaves every setting to those two.}
 
 \item{validate}{Logical. If \code{TRUE} (default), runs the relevant
 section validators via \code{\link[=validateProject]{validateProject()}} before building and

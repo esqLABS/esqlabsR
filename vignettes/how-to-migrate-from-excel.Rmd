@@ -107,6 +107,8 @@ The migration is faithful for the common case, but a few things deserve a manual
 
 * **Empty or absent sections are dropped, not preserved as empty.** A configuration workbook that did not exist, or a sheet with no rows, simply does not appear in the JSON project. If a section you expected is missing after import, check that its workbook and sheet actually held data.
 
+* **A scenario's `solverSettings` is JSON only.** The Excel scenario sheet has no solver-settings columns, so a scenario carrying a `solverSettings` block cannot be written to a workbook. `exportProjectToExcel()` warns and names the scenarios it dropped. What a re-imported scenario then solves with is whatever the rest of the chain still supplies: the project's `defaultSolverSettings` if the workbooks carry one, or a parameter-identification task's own block, and only where no level sets a field does the model file's value apply. The scenario-level override itself is gone. `projectStatus()` also reports such a project as out of sync on the Excel axis for as long as the block is there, because the workbooks genuinely no longer describe it. Import is unaffected: it never produces a block.
+
 * **Keep the Excel project around until you trust the JSON one.** During the transition you can use `projectStatus(project)` to confirm the workbooks still match the loaded project before you retire them (see Step 4).
 
 ## Step 4: confirm the two forms agree

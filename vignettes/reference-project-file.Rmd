@@ -82,7 +82,7 @@ Every section is a read-only named list keyed by id. Assigning to one aborts. A 
 | `esqlabsRVersion` | yes | string | Informational: the package version that wrote the file. Written by the save machinery. |
 | `definitionsFolder` | no | string | Folder holding the definition files. A single folder name directly under the project folder, not a nested path. Defaults to `"definitions"`. Emitted only when set. |
 | `filePaths` | yes | object | The working folders. See below. |
-| `defaultSimulationRunOptions` | no | object | Run defaults `runScenarios()` falls back on. See below. Emitted only when set. |
+| `defaultSolverSettings` | no | object | Solver defaults every scenario starts from. See below. Emitted only when set. |
 | `excel` | no | object | Excel-bridge workbook names. See below. Absent for a project created directly in the JSON format. |
 
 ### `filePaths`
@@ -106,15 +106,28 @@ The variable is substituted when the path is resolved. An unset variable is left
 
 Any property in `filePaths` other than the four above sits unread, so an unrecognized entry cannot fail a load.
 
-### `defaultSimulationRunOptions`
+### `defaultSolverSettings`
 
-| Field | Type | Description |
+How the solver behaves, as a named list of [`SolverSettings`](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/SolverSettings.html) values. It applies to every scenario in the project, and is the least specific place a setting can be given. An unknown setting, or one of the wrong type, stops the load naming the file, rather than being dropped in silence at run time.
+
+| Setting | Type | Meaning |
 | --- | --- | --- |
-| `numberOfCores` | number | Cores to use when simulating. |
+| `absTol` | number | Absolute tolerance. |
+| `relTol` | number | Relative tolerance. |
+| `h0` | number | Initial step size. |
+| `hMin` | number | Smallest step size the solver may take. |
+| `hMax` | number | Largest step size the solver may take. |
+| `mxStep` | whole number | Maximum number of internal steps per output interval. |
+| `useJacobian` | logical | Whether the analytic Jacobian is used. |
 | `checkForNegativeValues` | logical | Whether the solver checks for negative values. |
-| `showProgress` | logical | Whether run progress is reported. |
 
-`runScenarios()` and `buildSimulations()` use this block when the caller passes no `simulationRunOptions`: `numberOfCores` and `showProgress` become the run options, and `checkForNegativeValues`, a solver setting, is written to each simulation (`simulation$solver$checkForNegativeValues`). An explicit `simulationRunOptions` argument replaces the whole block, and the simulations then keep the solver settings of their model files. A parameter identification applies `checkForNegativeValues` to its simulations as well, unless the PI task's own `simulationRunOptions` block sets it.
+These are defaults, so a scenario or a single run can still say otherwise. For each setting, the most specific place that gives it a value wins:
+
+- `defaultSolverSettings`, the project-wide default,
+- a scenario's own `solverSettings` block (see `vignette("reference-definition-fields")`), or a parameter-identification task's own `simulationRunOptions` block,
+- the `solverSettings` argument of `runScenarios()` or `buildSimulations()`.
+
+**How the run is executed is not project data.** `numberOfCores` and `showProgress` belong to [`SimulationRunOptions`](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/SimulationRunOptions.html), which you pass to `runScenarios()`, `buildSimulations()` or `runPI()` as their `simulationRunOptions` argument. A project file does not carry them; one written before this split is loaded with a warning naming the run options it dropped.
 
 ### `excel`
 
@@ -131,7 +144,7 @@ The `Project` object gathers these fields into five groups.
 | `project$info` | `project$info$name` | `name`, `description` only | `name`, `description`, `schemaVersion`, `esqlabsRVersion`, `projectFilePath`, `projectDirPath` |
 | `project$paths` | `project$paths$dataFolder` | yes | the four `filePaths` folders plus `definitionsFolder` |
 | `project$excel` | `project$excel$modelParamsFile` | yes | the Excel workbook names |
-| `project$defaultSimulationRunOptions` | direct | yes | the run-options list, or `NULL` |
+| `project$defaultSolverSettings` | direct | yes | the solver-settings list, or `NULL` |
 | `project$definitions` | `project$definitions$scenarios` | no | the twelve definition sections |
 
 Two asymmetries to note when reading and writing paths:

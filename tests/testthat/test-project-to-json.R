@@ -31,7 +31,7 @@ test_that(".projectToJson() returns a JSON-shaped list with the canonical top-le
       "parameterIdentification",
       # The Excel-bridge block is emitted only when the project carries
       # Excel-bridge fields (the bundled example does). The optional metadata
-      # (`name`, `description`, `defaultSimulationRunOptions`) is likewise
+      # (`name`, `description`, `defaultSolverSettings`) is likewise
       # emitted only when set, and the example carries a name and a description
       # but no run options.
       "excel"
@@ -93,7 +93,7 @@ test_that(".projectToJson() omits the excel block and the unset metadata for a f
   expect_false("excel" %in% names(tree))
   expect_false("name" %in% names(tree))
   expect_false("description" %in% names(tree))
-  expect_false("defaultSimulationRunOptions" %in% names(tree))
+  expect_false("defaultSolverSettings" %in% names(tree))
 })
 
 test_that(".projectToJson() rejects non-Project input", {

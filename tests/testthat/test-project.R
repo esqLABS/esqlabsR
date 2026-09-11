@@ -490,7 +490,7 @@ test_that("Project$print() renders the example project through ospPrint*", {
 })
 
 # Container rework: metadata, definitionsFolder, the filePaths/excel split,
-# and defaultSimulationRunOptions.
+# and defaultSolverSettings.
 
 test_that("loadProject() exposes name and description metadata", {
   project <- exampleProject()
@@ -899,18 +899,89 @@ test_that("printing the definitions accessor of an empty project says it is empt
   expect_snapshot(print(project$definitions))
 })
 
-test_that("defaultSimulationRunOptions round-trips and defaults to NULL", {
-  project <- exampleProject()
-  expect_null(project$defaultSimulationRunOptions)
+test_that("defaultSolverSettings round-trips and defaults to NULL", {
+  project <- testProject()
+  expect_null(project$defaultSolverSettings)
 
-  project$defaultSimulationRunOptions <- list(
-    numberOfCores = 2,
+  project$defaultSolverSettings <- list(
+    relTol = 1e-6,
     checkForNegativeValues = TRUE
   )
   saveProject(project)
   reloaded <- loadProject(project$info$projectFilePath)
-  expect_equal(reloaded$defaultSimulationRunOptions$numberOfCores, 2)
-  expect_true(reloaded$defaultSimulationRunOptions$checkForNegativeValues)
+  expect_equal(reloaded$defaultSolverSettings$relTol, 1e-6)
+  expect_true(reloaded$defaultSolverSettings$checkForNegativeValues)
+})
+
+test_that("defaultSolverSettings is checked when the project file is read", {
+  # Left unchecked, an unknown setting or a wrong type would be dropped in
+  # silence by `.applySolverSettings()` and change how every scenario solves.
+  project <- testProject()
+  path <- project$info$projectFilePath
+  container <- jsonlite::fromJSON(path, simplifyVector = FALSE)
+  container$defaultSolverSettings <- list(reltol = 1e-6, relTol = -1)
+  jsonlite::write_json(container, path, auto_unbox = TRUE, pretty = TRUE)
+
+  expect_error(loadProject(path), "unknown setting")
+  expect_error(loadProject(path), "must be a single non-negative number")
+  # The abort names the file, since a hand-edit is what puts it there.
+  expect_error(loadProject(path), "Project.json")
+})
+
+test_that("a sound defaultSolverSettings loads", {
+  project <- testProject()
+  path <- project$info$projectFilePath
+  container <- jsonlite::fromJSON(path, simplifyVector = FALSE)
+  container$defaultSolverSettings <- list(relTol = 1e-6, useJacobian = FALSE)
+  jsonlite::write_json(container, path, auto_unbox = TRUE, pretty = TRUE)
+
+  expect_equal(
+    loadProject(path)$defaultSolverSettings,
+    list(relTol = 1e-6, useJacobian = FALSE)
+  )
+})
+
+test_that("assigning defaultSolverSettings is checked too", {
+  # The other door into the field: without the check the value would sit in
+  # memory, save to the project file, and be dropped by every run that read it.
+  project <- testProject()
+
+  expect_error(
+    project$defaultSolverSettings <- list(reltol = 1e-6),
+    "unknown setting"
+  )
+  expect_error(
+    project$defaultSolverSettings <- list(mxStep = 1.5),
+    "must be a single whole number"
+  )
+  expect_null(project$defaultSolverSettings)
+
+  project$defaultSolverSettings <- list(relTol = 1e-6)
+  expect_identical(project$defaultSolverSettings, list(relTol = 1e-6))
+  project$defaultSolverSettings <- NULL
+  expect_null(project$defaultSolverSettings)
+})
+
+test_that("a project file's run options are reported and dropped", {
+  # `numberOfCores` and `showProgress` name how a run is executed, which is a
+  # `runScenarios()` argument rather than project data. A file written before
+  # the split carries them under the old key.
+  project <- testProject()
+  path <- project$info$projectFilePath
+  container <- jsonlite::fromJSON(path, simplifyVector = FALSE)
+  container$defaultSimulationRunOptions <- list(
+    numberOfCores = 2,
+    relTol = 1e-6
+  )
+  jsonlite::write_json(container, path, auto_unbox = TRUE, pretty = TRUE)
+
+  expect_warning(
+    reloaded <- loadProject(path),
+    "run option",
+    class = "esqlabsR_runOptionsInProjectFile"
+  )
+  # The solver half survives under the new name; the run option is gone.
+  expect_equal(reloaded$defaultSolverSettings, list(relTol = 1e-6))
 })
 
 test_that("an Excel-bridge file field write targets the excel block", {

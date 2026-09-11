@@ -26,7 +26,8 @@
   "steadyStateTimeUnit",
   "overwriteFormulasInSS",
   "modelParameterSets",
-  "initialConditions"
+  "initialConditions",
+  "solverSettings"
 )
 
 #' Create a Scenario
@@ -79,6 +80,15 @@
 #'   referencing `parameterSets` definitions.
 #' @param initialConditions Character vector. Initial-condition set ids
 #'   referencing `initialConditions` definitions.
+#' @param solverSettings How the solver behaves, as a named list of
+#'   [SolverSettings](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/SolverSettings.html)
+#'   values: any of `absTol`, `relTol`, `h0`, `hMin`, `hMax`, `mxStep`,
+#'   `useJacobian` and `checkForNegativeValues`, for example
+#'   `list(relTol = 1e-6)`.
+#'   A setting given here wins over the project's `defaultSolverSettings`. A
+#'   setting you leave out keeps the project's value, or the value stored in
+#'   the model file where the project gives none. `NULL` (default) leaves every
+#'   setting to those two.
 #'
 #' @returns A `Scenario` object: a named list carrying exactly the fields
 #'   above.
@@ -99,7 +109,8 @@ Scenario <- function(
   steadyStateTimeUnit = NULL,
   overwriteFormulasInSS = FALSE,
   modelParameterSets = NULL,
-  initialConditions = NULL
+  initialConditions = NULL,
+  solverSettings = NULL
 ) {
   # `mget()` reads every formal by name (the formals are exactly
   # `.scenarioFieldNames`, in order), keeping NULL-valued slots so the record
@@ -135,7 +146,8 @@ print.Scenario <- function(x, ...) {
       "Parameter Sets" = paste(x$modelParameterSets, collapse = ", "),
       "Initial Conditions" = paste(x$initialConditions, collapse = ", "),
       "Output Paths" = length(x$outputPaths %||% list()),
-      "Steady State" = x$simulateSteadyState %||% FALSE
+      "Steady State" = x$simulateSteadyState %||% FALSE,
+      "Solver Settings" = paste(names(x$solverSettings), collapse = ", ")
     ),
     print_empty = TRUE
   )
@@ -261,7 +273,11 @@ print.Scenario <- function(x, ...) {
       },
       initialConditions = if (!is.null(entry[["initialConditions"]])) {
         unlist(entry[["initialConditions"]])
-      }
+      },
+      # Kept verbatim: which settings a scenario may name, and their types, are
+      # checked by the validators, not here, so a hand-edited file loads and
+      # then reports rather than aborting mid-parse.
+      solverSettings = entry[["solverSettings"]]
     )
   }
   result
@@ -489,6 +505,16 @@ print.Scenario <- function(x, ...) {
         }
       }
     }
+
+    # An unsound `solverSettings` block reaches here only from a hand-edited
+    # definition file; both authoring doors reject one. Report it now rather
+    # than letting the solver take a truncated or negative value in silence.
+    for (problem in .checkSolverSettings(sc$solverSettings)) {
+      result$addCriticalError(
+        "Validation",
+        paste0("Scenario '", name, "': ", problem)
+      )
+    }
   }
 
   result
@@ -671,12 +697,21 @@ print.Scenario <- function(x, ...) {
 #' @param customParams A list with vectors `paths`, `values`, and
 #'   `units` — applied to every selected scenario as the final
 #'   parameter layer.
-#' @param simulationRunOptions Optional [ospsuite::SimulationRunOptions]
-#'   for the simulation run. `NULL` (default) falls back to the project's
-#'   `defaultSimulationRunOptions`, including its solver setting
-#'   `checkForNegativeValues`, which is written to each simulation. An
-#'   explicit value replaces the project default entirely, so the
-#'   simulations keep the solver settings of their model files.
+#' @param simulationRunOptions How this run is executed: an
+#'   [SimulationRunOptions](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/SimulationRunOptions.html)
+#'   object setting `numberOfCores` and `showProgress`, for example
+#'   `ospsuite::SimulationRunOptions$new(numberOfCores = 8)`. `NULL` (default)
+#'   uses the `ospsuite` defaults. This is not project data, so a project file
+#'   never supplies it.
+#' @param solverSettings How the solver behaves, as a named list of
+#'   [SolverSettings](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/SolverSettings.html)
+#'   values: any of `absTol`, `relTol`, `h0`, `hMin`, `hMax`, `mxStep`,
+#'   `useJacobian` and `checkForNegativeValues`, for example
+#'   `list(relTol = 1e-6)`.
+#'   A setting given here wins over the project's `defaultSolverSettings` and
+#'   over each scenario's own `solverSettings`. A setting you leave out keeps
+#'   whichever of those applies, or the value stored in the model file where
+#'   neither gives one. `NULL` (default) leaves every setting to those two.
 #' @param validate Logical. If `TRUE` (default), runs the relevant
 #'   section validators via [validateProject()] before simulating and
 #'   aborts with a formatted summary on critical errors. Set to
@@ -720,6 +755,7 @@ runScenarios <- function(
   scenarios = NULL,
   customParams = NULL,
   simulationRunOptions = NULL,
+  solverSettings = NULL,
   validate = TRUE,
   stopIfParameterNotFound = TRUE,
   stopIfFails = TRUE
@@ -735,6 +771,7 @@ runScenarios <- function(
     scenarios,
     customParams,
     simulationRunOptions,
+    solverSettings,
     validate,
     stopIfParameterNotFound,
     stopIfFails
@@ -761,14 +798,11 @@ runScenarios <- function(
 #' @param customParams A list with vectors `paths`, `values`, and
 #'   `units` — applied to every selected scenario as the final
 #'   parameter layer.
-#' @param simulationRunOptions Optional [ospsuite::SimulationRunOptions].
-#'   Consulted only for a scenario with `simulateSteadyState` set (the
-#'   steady-state pre-solve still runs); it is not applied to the returned
-#'   simulations, since they are not run here. `NULL` (default) falls back
-#'   to the project's `defaultSimulationRunOptions`, including its solver
-#'   setting `checkForNegativeValues`, which is written to each returned
-#'   simulation; an explicit value replaces the project default entirely,
-#'   so the simulations keep the solver settings of their model files.
+#' @inheritParams runScenarios
+#' @param simulationRunOptions How the steady-state pre-solve is executed, for
+#'   a scenario with `simulateSteadyState` set. Takes the same form as in
+#'   [runScenarios()]. The simulations returned here are not run, so it has no
+#'   other effect.
 #' @param validate Logical. If `TRUE` (default), runs the relevant
 #'   section validators via [validateProject()] before building and
 #'   aborts with a formatted summary on critical errors. Set to
@@ -794,6 +828,7 @@ buildSimulations <- function(
   scenarios = NULL,
   customParams = NULL,
   simulationRunOptions = NULL,
+  solverSettings = NULL,
   validate = TRUE,
   stopIfParameterNotFound = TRUE
 ) {
@@ -808,6 +843,7 @@ buildSimulations <- function(
     scenarios,
     customParams,
     simulationRunOptions,
+    solverSettings,
     validate,
     stopIfParameterNotFound
   )
@@ -889,6 +925,17 @@ buildSimulations <- function(
 #'   steady state. Default `FALSE`.
 #' @param readPopulationFromCSV Logical. Load population from CSV.
 #'   Default `FALSE`.
+#' @param solverSettings How the solver behaves, as a named list of
+#'   [SolverSettings](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/SolverSettings.html)
+#'   values: any of `absTol`, `relTol`, `h0`, `hMin`, `hMax`, `mxStep`,
+#'   `useJacobian` and `checkForNegativeValues`, for example
+#'   `list(relTol = 1e-6)`.
+#'   A setting given here wins over the project's `defaultSolverSettings`. A
+#'   setting you leave out keeps the project's value, or the value stored in
+#'   the model file where the project gives none. `NULL` (default) leaves every
+#'   setting to those two.
+#'   The list counts as one value per scenario, so an `id` naming several
+#'   scenarios gives each of them the same settings.
 #' @param overwrite Logical. When `FALSE` (default), an id that already exists
 #'   aborts. When `TRUE`, the existing scenario is replaced (last-write-wins).
 #'   Distinct from `overwriteFormulasInSS`, which is a steady-state model
@@ -914,6 +961,7 @@ addScenario <- function(
   steadyStateTimeUnit = "min",
   overwriteFormulasInSS = FALSE,
   readPopulationFromCSV = FALSE,
+  solverSettings = NULL,
   overwrite = FALSE
 ) {
   validateIsOfType(project, "Project")
@@ -942,6 +990,7 @@ addScenario <- function(
     steadyStateTimeUnit = steadyStateTimeUnit,
     overwriteFormulasInSS = overwriteFormulasInSS,
     readPopulationFromCSV = readPopulationFromCSV,
+    solverSettings = solverSettings,
     overwrite = overwrite
   )
 }
@@ -970,6 +1019,7 @@ addScenario <- function(
   steadyStateTimeUnit = "min",
   overwriteFormulasInSS = FALSE,
   readPopulationFromCSV = FALSE,
+  solverSettings = NULL,
   overwrite = FALSE,
   .call
 ) {
@@ -997,7 +1047,10 @@ addScenario <- function(
     wholeFields = list(
       parameterSets = parameterSets,
       initialConditions = initialConditions,
-      outputPaths = outputPaths
+      outputPaths = outputPaths,
+      # Wrapped so `.wholeField()` cannot read one block of N settings in an
+      # N-id call as one setting per id: each id gets the whole block.
+      solverSettings = rep(list(solverSettings), n)
     )
   )
 
@@ -1091,7 +1144,8 @@ addScenario <- function(
       "outputPaths",
       project$definitions$outputPaths,
       "outputPaths"
-    )
+    ),
+    .checkSolverSettings(fields$solverSettings)
   )
 
   if (length(errors) > 0L) {
@@ -1134,7 +1188,8 @@ addScenario <- function(
     steadyStateTimeUnit = steadyStateTimeUnit,
     overwriteFormulasInSS = fields$overwriteFormulasInSS,
     modelParameterSets = parameterSets,
-    initialConditions = initialConditions
+    initialConditions = initialConditions,
+    solverSettings = fields$solverSettings
   )
 }
 
@@ -1224,11 +1279,13 @@ removeScenario <- function(project, id) {
 #'   `population`, `application`, `parameterSets`, `initialConditions`,
 #'   `outputPaths`, `simulationTime`, `simulationTimeUnit`, `steadyState`,
 #'   `steadyStateTime`, `steadyStateTimeUnit`, `overwriteFormulasInSS`,
-#'   `readPopulationFromCSV`. Each takes the value [addScenario()] documents for
-#'   it, but has no default here: an omitted field is left untouched, a field
-#'   passed as `NULL` is cleared. Scalar-per-definition fields recycle/align
-#'   across `id`; `parameterSets`, `initialConditions` and `outputPaths` are
-#'   applied whole. An unknown or unnamed field triggers an error.
+#'   `readPopulationFromCSV`, `solverSettings`. Each takes the value
+#'   [addScenario()] documents for it, but has no default here: an omitted
+#'   field is left untouched, a field passed as `NULL` is cleared.
+#'   Scalar-per-definition fields recycle/align across `id`; `parameterSets`,
+#'   `initialConditions`, `outputPaths` and `solverSettings` are applied whole,
+#'   so `solverSettings` replaces the scenario's block rather than merging into
+#'   it. An unknown or unnamed field triggers an error.
 #'
 #' @returns The `project` object, invisibly.
 #' @export
@@ -1274,7 +1331,8 @@ setScenario <- function(project, id, ...) {
   "steadyStateTime",
   "steadyStateTimeUnit",
   "overwriteFormulasInSS",
-  "readPopulationFromCSV"
+  "readPopulationFromCSV",
+  "solverSettings"
 )
 
 # Implementation behind `project$setScenario()` / `setScenario()`. The `...`
@@ -1316,11 +1374,19 @@ setScenario <- function(project, id, ...) {
     )
   }
   wholeNames <- intersect(
-    c("parameterSets", "initialConditions", "outputPaths"),
+    c("parameterSets", "initialConditions", "outputPaths", "solverSettings"),
     names(dots)
   )
   scalarSupplied <- dots[setdiff(names(dots), wholeNames)]
   wholeSupplied <- dots[wholeNames]
+  if ("solverSettings" %in% wholeNames) {
+    # Wrapped so `.wholeField()` cannot read one block of N settings in an
+    # N-id call as one setting per id: each id gets the whole block. The
+    # `[` form keeps a supplied NULL, which clears the block.
+    wholeSupplied["solverSettings"] <- list(
+      rep(list(dots[["solverSettings"]]), n)
+    )
+  }
 
   perDefinition <- .alignAuthoringArgs(
     id,
@@ -1386,6 +1452,10 @@ setScenario <- function(project, id, ...) {
     if (!is.null(fields$outputPaths)) {
       fields$outputPaths <- unique(fields$outputPaths)
     }
+  }
+
+  if ("solverSettings" %in% supplied) {
+    errors <- c(errors, .checkSolverSettings(fields$solverSettings))
   }
 
   # Validate only the foreign-key arguments the caller actually supplied,
@@ -1555,6 +1625,11 @@ setScenario <- function(project, id, ...) {
   }
   if ("readPopulationFromCSV" %in% supplied) {
     sc$readPopulationFromCSV <- fields$readPopulationFromCSV
+  }
+  if ("solverSettings" %in% supplied) {
+    # The block is replaced, not merged into: a supplied NULL clears it, which
+    # needs the `[` form for the same reason `simulationTime` does above.
+    sc["solverSettings"] <- list(fields$solverSettings)
   }
   sc
 }

@@ -126,7 +126,27 @@
       project$setScenario("testscenario", simulationType = "Population")
     Condition
       Error:
-      ! `setScenario()` cannot set simulationType. i The settable fields are modelFile, individual, population, application, parameterSets, initialConditions, outputPaths, simulationTime, simulationTimeUnit, steadyState, steadyStateTime, steadyStateTimeUnit, overwriteFormulasInSS, and readPopulationFromCSV.
+      ! `setScenario()` cannot set simulationType. i The settable fields are modelFile, individual, population, application, parameterSets, initialConditions, outputPaths, simulationTime, simulationTimeUnit, steadyState, steadyStateTime, steadyStateTimeUnit, overwriteFormulasInSS, readPopulationFromCSV, and solverSettings.
+
+# addScenario rejects an unsound solverSettings block
+
+    Code
+      addScenario(project, "stiff", modelFile = "Aciclovir.pkml", solverSettings = list(
+        reltol = 1e-06, mxStep = 1.5))
+    Condition
+      Error in `addScenario()`:
+      ! Cannot add scenario "stiff":
+      x solverSettings has unknown setting 'reltol'; the settings are absTol, checkForNegativeValues, h0, hMax, hMin, mxStep, relTol, useJacobian
+      x solverSettings$mxStep must be a single whole number between 1 and 2147483647
+
+# setScenario rejects an unsound solverSettings block
+
+    Code
+      setScenario(project, "testscenario", solverSettings = list(hMax = "big"))
+    Condition
+      Error in `setScenario()`:
+      ! Cannot modify scenario "testscenario":
+      x solverSettings$hMax must be a single non-negative number
 
 # a scenario record passed with field arguments alongside it aborts
 
@@ -287,4 +307,5 @@
         * Initial Conditions: testinitialset
         * Output Paths: 1
         * Steady State: FALSE
+        * Solver Settings: <empty string>
 

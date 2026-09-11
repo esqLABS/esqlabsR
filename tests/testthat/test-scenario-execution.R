@@ -37,32 +37,123 @@
   stats::setNames(vector("list", length(ids)), ids)
 }
 
-test_that(".buildSimulationRunOptions returns NULL when no defaults are declared", {
-  expect_null(.buildSimulationRunOptions(NULL))
-  expect_null(.buildSimulationRunOptions(list()))
+test_that(".checkSolverSettings passes a sound block", {
+  expect_identical(.checkSolverSettings(NULL), character())
+  expect_identical(.checkSolverSettings(list()), character())
+  expect_identical(
+    .checkSolverSettings(list(
+      absTol = 1e-11,
+      relTol = 1e-8,
+      h0 = 1e-3,
+      # Zero is `hMin`'s own default, so the rule is non-negative, not
+      # positive.
+      hMin = 0,
+      hMax = 0.5,
+      mxStep = 100000,
+      useJacobian = FALSE,
+      checkForNegativeValues = TRUE
+    )),
+    character()
+  )
+  # A field explicitly set to NULL is the same as an absent one.
+  expect_identical(.checkSolverSettings(list(relTol = NULL)), character())
 })
 
-test_that(".buildSimulationRunOptions maps numberOfCores and showProgress", {
-  # `checkForNegativeValues` is present in the record but is a solver setting,
-  # so it must be tolerated here and not written to the run options (#1252).
-  opts <- .buildSimulationRunOptions(list(
-    numberOfCores = 3,
-    checkForNegativeValues = TRUE,
-    showProgress = FALSE
-  ))
-  expect_s3_class(opts, "SimulationRunOptions")
-  expect_identical(opts$numberOfCores, 3L)
-  expect_false(opts$showProgress)
+test_that(".checkSolverSettings names an unknown setting and the ones that exist", {
+  problems <- .checkSolverSettings(list(reltol = 1e-6))
+  expect_length(problems, 1L)
+  expect_match(problems, "unknown setting 'reltol'")
+  expect_match(problems, "relTol")
+
+  expect_match(
+    .checkSolverSettings(list(foo = 1, bar = 2)),
+    "unknown settings 'foo', 'bar'"
+  )
 })
 
-test_that(".buildSimulationRunOptions leaves an unset field at its default", {
-  baseline <- ospsuite::SimulationRunOptions$new()$showProgress
-  opts <- .buildSimulationRunOptions(list(numberOfCores = 1))
-  expect_identical(opts$numberOfCores, 1L)
-  expect_identical(opts$showProgress, baseline)
+test_that(".checkSolverSettings enforces each setting's type", {
+  expect_match(
+    .checkSolverSettings(list(relTol = -1)),
+    "relTol must be a single non-negative number"
+  )
+  expect_match(
+    .checkSolverSettings(list(hMax = c(1, 2))),
+    "hMax must be a single non-negative number"
+  )
+  # The .NET side truncates a fractional `mxStep` to 1 without a word, so a
+  # slip would silently change how the model solves.
+  expect_match(
+    .checkSolverSettings(list(mxStep = 1.5)),
+    "mxStep must be a single whole number between 1 and 2147483647"
+  )
+  expect_match(
+    .checkSolverSettings(list(mxStep = 0)),
+    "mxStep must be a single whole number between 1 and 2147483647"
+  )
+  # Above the integer range `as.integer()` yields NA, so the bound has to stop
+  # the value here rather than letting the solver receive NA_integer_.
+  expect_match(
+    .checkSolverSettings(list(mxStep = 5e9)),
+    "mxStep must be a single whole number between 1 and 2147483647"
+  )
+  expect_identical(
+    .checkSolverSettings(list(mxStep = .Machine$integer.max)),
+    character()
+  )
+  expect_match(
+    .checkSolverSettings(list(useJacobian = "yes")),
+    "useJacobian must be TRUE or FALSE"
+  )
+  expect_match(
+    .checkSolverSettings(list(checkForNegativeValues = NA)),
+    "checkForNegativeValues must be TRUE or FALSE"
+  )
 })
 
-test_that(".applySolverSettings writes checkForNegativeValues to the simulation's solver", {
+test_that(".checkSolverSettings rejects a block that is not a named list", {
+  expect_match(.checkSolverSettings(list(1e-6)), "must be a named list")
+  expect_match(.checkSolverSettings(1e-6), "must be a named list")
+})
+
+test_that(".solverSettingNames() reads the settings ospsuite declares", {
+  expect_setequal(
+    .solverSettingNames(),
+    names(utils::getFromNamespace("SolverSettings", "ospsuite")$active)
+  )
+})
+
+test_that("every tagged setting still exists upstream", {
+  # The names come from `ospsuite`; only the value type is written out here.
+  # This catches the other direction of drift: a tag kept for a setting the
+  # class no longer has, which would then never be reached.
+  expect_true(all(names(.solverSettingTypes) %in% .solverSettingNames()))
+})
+
+test_that("a supported setting with no type tag is accepted and written as given", {
+  # `ospsuite` deciding what is supported is the point: a setting added
+  # upstream works without a change here, rather than being rejected as
+  # unknown. It is simply written as given, since this package has no rule
+  # describing its value.
+  local_mocked_bindings(
+    .solverSettingNames = function() c("relTol", "brandNewSetting")
+  )
+
+  expect_identical(
+    .checkSolverSettings(list(brandNewSetting = "anything")),
+    character()
+  )
+
+  simulation <- ospsuite::loadSimulation(
+    testthat::test_path("data", "simple.pkml"),
+    loadFromCache = FALSE
+  )
+  # Reaches the solver untouched, where a tagged setting would be coerced.
+  .applySolverSettings(simulation, list(relTol = 1e-8))
+  expect_identical(simulation$solver$relTol, 1e-8)
+})
+
+
+test_that(".applySolverSettings writes every solver setting a record carries", {
   simulation <- ospsuite::loadSimulation(
     testthat::test_path("data", "simple.pkml"),
     loadFromCache = FALSE
@@ -71,72 +162,200 @@ test_that(".applySolverSettings writes checkForNegativeValues to the simulation'
   # write landed.
   expect_true(simulation$solver$checkForNegativeValues)
 
+  .applySolverSettings(
+    simulation,
+    list(
+      absTol = 1e-11,
+      relTol = 1e-8,
+      h0 = 1e-3,
+      hMin = 0,
+      hMax = 0.5,
+      mxStep = 1e5,
+      useJacobian = FALSE,
+      checkForNegativeValues = FALSE
+    )
+  )
+  solver <- simulation$solver
+  expect_identical(solver$absTol, 1e-11)
+  expect_identical(solver$relTol, 1e-8)
+  expect_identical(solver$h0, 1e-3)
+  expect_identical(solver$hMin, 0)
+  expect_identical(solver$hMax, 0.5)
+  # `mxStep` is a count: the record's numeric literal reaches the solver as an
+  # integer rather than silently truncating on the .NET side.
+  expect_identical(solver$mxStep, 100000L)
+  expect_false(solver$useJacobian)
+  expect_false(solver$checkForNegativeValues)
+})
+
+test_that(".applySolverSettings leaves a setting the record does not carry", {
+  simulation <- ospsuite::loadSimulation(
+    testthat::test_path("data", "simple.pkml"),
+    loadFromCache = FALSE
+  )
+  baseline <- simulation$solver$relTol
+  expect_true(simulation$solver$checkForNegativeValues)
+
+  # A run-options key is not a solver setting and must not be mistaken for one.
+  .applySolverSettings(simulation, list(numberOfCores = 2, showProgress = TRUE))
+  expect_identical(simulation$solver$relTol, baseline)
+  expect_true(simulation$solver$checkForNegativeValues)
+
+  # A partial record touches only the field it names.
   .applySolverSettings(simulation, list(checkForNegativeValues = FALSE))
+  expect_identical(simulation$solver$relTol, baseline)
   expect_false(simulation$solver$checkForNegativeValues)
 
-  # A record without the entry, or no record at all, leaves the solver alone.
-  .applySolverSettings(simulation, list(numberOfCores = 2))
-  expect_false(simulation$solver$checkForNegativeValues)
+  # No record at all, and a record whose field is NULL, are both no-ops.
   .applySolverSettings(simulation, NULL)
+  .applySolverSettings(simulation, list(relTol = NULL))
+  expect_identical(simulation$solver$relTol, baseline)
   expect_false(simulation$solver$checkForNegativeValues)
 })
 
-test_that(".resolveRunOptions lets an explicit argument replace the project record entirely", {
+test_that(".mergeRunOptionRecords lets a later record win field by field", {
+  expect_identical(
+    .mergeRunOptionRecords(
+      list(relTol = 1e-5, hMax = 2, checkForNegativeValues = FALSE),
+      list(relTol = 1e-6, hMax = 0.5),
+      list(relTol = 1e-4)
+    ),
+    list(relTol = 1e-4, hMax = 0.5, checkForNegativeValues = FALSE)
+  )
+
+  # A NULL or empty record contributes nothing, so an absent level cannot
+  # blank a field a lower level set.
+  expect_identical(
+    .mergeRunOptionRecords(list(relTol = 1e-5), NULL, list()),
+    list(relTol = 1e-5)
+  )
+
+  # Nor can a field that is present but NULL: it means "not carried" here, as
+  # it does to `.applySolverSettings()` and `.checkSolverSettings()`, so it
+  # falls through to the level below rather than deleting it the way
+  # `utils::modifyList()` would on its own.
+  expect_identical(
+    .mergeRunOptionRecords(
+      list(relTol = 1e-5, hMax = 2),
+      list(relTol = NULL)
+    ),
+    list(relTol = 1e-5, hMax = 2)
+  )
+  expect_identical(.mergeRunOptionRecords(), list())
+  expect_identical(.mergeRunOptionRecords(NULL, NULL), list())
+})
+
+test_that(".resolveRunOptions keeps the solver chain's two ends apart", {
   project <- .testProject()
-  project$defaultSimulationRunOptions <- list(
-    numberOfCores = 2,
-    checkForNegativeValues = FALSE
-  )
+  project$defaultSolverSettings <- list(checkForNegativeValues = FALSE)
 
-  # No argument: both halves come from the project record.
-  resolved <- .resolveRunOptions(project, NULL)
-  expect_identical(resolved$runOptions$numberOfCores, 2L)
+  # No arguments: the project's settings are the bottom of the chain, nothing
+  # sits above them, and the run options stay at the ospsuite defaults.
   expect_identical(
-    resolved$solverSettings,
-    list(numberOfCores = 2, checkForNegativeValues = FALSE)
+    .resolveRunOptions(project, NULL, NULL),
+    list(
+      runOptions = NULL,
+      solverDefaults = list(checkForNegativeValues = FALSE),
+      solverOverrides = NULL
+    )
   )
 
-  # Explicit argument: it is passed through and no solver settings are
-  # resolved, so the project's `checkForNegativeValues` is not applied.
+  # The two arguments land in their own slots and never mix: how the run is
+  # executed is not project data, so it is passed straight through.
   callerOptions <- ospsuite::SimulationRunOptions$new(numberOfCores = 5)
-  resolved <- .resolveRunOptions(project, callerOptions)
+  resolved <- .resolveRunOptions(
+    project,
+    callerOptions,
+    list(relTol = 1e-4)
+  )
   expect_identical(resolved$runOptions, callerOptions)
-  expect_null(resolved$solverSettings)
-
-  # No project record and no argument: package defaults all round.
-  project$defaultSimulationRunOptions <- NULL
   expect_identical(
-    .resolveRunOptions(project, NULL),
-    list(runOptions = NULL, solverSettings = NULL)
+    resolved$solverDefaults,
+    list(checkForNegativeValues = FALSE)
+  )
+  expect_identical(resolved$solverOverrides, list(relTol = 1e-4))
+})
+
+test_that("runScenarios rejects a simulationRunOptions that is not the class", {
+  project <- .testProject()
+  # The abort names the entrypoint, not the guard, so the reader sees the call
+  # they made, and points at `solverSettings` for the likely mistake.
+  expect_snapshot(
+    error = TRUE,
+    runScenarios(project, scenarios = "testscenario", simulationRunOptions = 4)
+  )
+  # A solver setting in the wrong argument: the two used to travel in one list.
+  expect_snapshot(
+    error = TRUE,
+    buildSimulations(
+      project,
+      scenarios = "testscenario",
+      simulationRunOptions = list(relTol = 1e-6)
+    )
   )
 })
 
-test_that("buildSimulations applies the project default checkForNegativeValues only when the caller passes no run options", {
-  # Regression for #1252: with ospsuite 13 the project default must reach
-  # `simulation$solver` (there is no field for it on `SimulationRunOptions`),
-  # and only when the project default is in force at all.
+test_that("buildSimulations reports an unsound solverSettings argument", {
   project <- .testProject()
-  project$defaultSimulationRunOptions <- list(checkForNegativeValues = FALSE)
+  expect_snapshot(
+    error = TRUE,
+    buildSimulations(
+      project,
+      scenarios = "testscenario",
+      solverSettings = list(reltol = 1e-4, mxStep = 1.5)
+    )
+  )
+})
+
+test_that("the solverSettings argument wins over the project and the scenario", {
+  project <- .testProject()
+  project$defaultSolverSettings <- list(relTol = 1e-5, hMax = 2)
+  setScenario(project, "testscenario", solverSettings = list(relTol = 1e-6))
+
+  built <- buildSimulations(
+    project,
+    scenarios = "testscenario",
+    solverSettings = list(relTol = 1e-4)
+  )
+  solver <- built$testscenario$simulation$solver
+  expect_identical(solver$relTol, 1e-4)
+  # A setting the argument does not name still comes from the level below.
+  expect_identical(solver$hMax, 2)
+})
+
+test_that("buildSimulations applies the project default solver settings", {
+  # Regression for #1252: with ospsuite 13 the project's settings must reach
+  # `simulation$solver`, there being no field for them on
+  # `SimulationRunOptions`.
+  project <- .testProject()
+  project$defaultSolverSettings <- list(
+    checkForNegativeValues = FALSE,
+    relTol = 1e-7
+  )
 
   built <- buildSimulations(project, scenarios = "testscenario")
   expect_false(built$testscenario$simulation$solver$checkForNegativeValues)
+  expect_identical(built$testscenario$simulation$solver$relTol, 1e-7)
 
-  # An explicit argument replaces the project default, so the simulation keeps
-  # the model file's own setting (on, for the Aciclovir fixture).
+  # Passing run options cannot disturb them: the two are separate arguments
+  # holding separate concerns (#408).
   built <- buildSimulations(
     project,
     scenarios = "testscenario",
     simulationRunOptions = ospsuite::SimulationRunOptions$new()
   )
-  expect_true(built$testscenario$simulation$solver$checkForNegativeValues)
+  expect_false(built$testscenario$simulation$solver$checkForNegativeValues)
+  expect_identical(built$testscenario$simulation$solver$relTol, 1e-7)
 })
 
-test_that("runScenarios falls back to the project default run options when the caller passes none", {
-  # Capture the run options `.runScenariosFromProject` resolves without a native
-  # simulation: mock `.prepareScenario` to record them and abort immediately.
+test_that("runScenarios passes simulationRunOptions straight through", {
+  # How the run is executed is never project data, so there is nothing to fall
+  # back on and nothing to merge: the caller's object reaches
+  # `.prepareScenario()` as it stands, and no argument leaves the ospsuite
+  # defaults in place. Capture-then-abort mock, no native simulation.
   withr::local_options(lifecycle_verbosity = "quiet")
   project <- .testProject()
-  project$defaultSimulationRunOptions <- list(numberOfCores = 2)
+  project$defaultSolverSettings <- list(relTol = 1e-7)
 
   captured <- NULL
   local_mocked_bindings(
@@ -145,32 +364,14 @@ test_that("runScenarios falls back to the project default run options when the c
       stop("stop before simulating")
     }
   )
+
   expect_error(
-    .runScenariosFromProject(
-      project,
-      scenarioNames = "testscenario"
-    ),
+    .runScenariosFromProject(project, scenarioNames = "testscenario"),
     "stop before simulating"
   )
-  expect_s3_class(captured, "SimulationRunOptions")
-  expect_identical(captured$numberOfCores, 2L)
-})
+  expect_null(captured)
 
-test_that("runScenarios lets an explicit simulationRunOptions argument win over the project default", {
-  # The caller's argument must override `defaultSimulationRunOptions` entirely,
-  # not merge with it. Same capture-then-abort mock, no native simulation.
-  withr::local_options(lifecycle_verbosity = "quiet")
-  project <- .testProject()
-  project$defaultSimulationRunOptions <- list(numberOfCores = 2)
   callerOptions <- ospsuite::SimulationRunOptions$new(numberOfCores = 5)
-
-  captured <- NULL
-  local_mocked_bindings(
-    .prepareScenario = function(scenario, project, ..., simulationRunOptions) {
-      captured <<- simulationRunOptions
-      stop("stop before simulating")
-    }
-  )
   expect_error(
     .runScenariosFromProject(
       project,
@@ -180,7 +381,6 @@ test_that("runScenarios lets an explicit simulationRunOptions argument win over 
     "stop before simulating"
   )
   expect_identical(captured, callerOptions)
-  expect_identical(captured$numberOfCores, 5L)
 })
 
 test_that("runScenarios threads stopIfParameterNotFound through to .prepareScenario", {

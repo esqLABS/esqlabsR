@@ -175,27 +175,38 @@ Project <- R6::R6Class(
       private$.excelGroup()
     },
 
-    #' @field defaultSimulationRunOptions Named list of the project-level
-    #'   default simulation run options (the `defaultSimulationRunOptions` JSON
-    #'   field), or `NULL` when none are declared. Used by [runScenarios()] as
-    #'   the default `simulationRunOptions` when the caller does not pass one.
-    #'   Recognized fields: `numberOfCores`, `checkForNegativeValues`,
-    #'   `showProgress`. `numberOfCores` and `showProgress` become the run
-    #'   options. `checkForNegativeValues` is a solver setting: when
-    #'   [runScenarios()] or [buildSimulations()] is called without
-    #'   `simulationRunOptions`, it is written to each simulation
-    #'   (`simulation$solver$checkForNegativeValues`); an explicit
-    #'   `simulationRunOptions` argument replaces the whole default, and the
-    #'   simulations then keep the solver settings of their model files. A
-    #'   parameter identification applies it to its simulations as well, unless
-    #'   the PI task's own `simulationRunOptions` block sets the field.
-    defaultSimulationRunOptions = function(value) {
+    #' @field defaultSolverSettings How the solver behaves, as a named list of
+    #'   [SolverSettings](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/SolverSettings.html)
+    #'   values: any of `absTol`, `relTol`, `h0`, `hMin`, `hMax`, `mxStep`,
+    #'   `useJacobian` and `checkForNegativeValues`, for example
+    #'   `list(relTol = 1e-6)`.
+    #'   This is the `defaultSolverSettings` field of `Project.json`, and
+    #'   `NULL` when the project declares none.
+    #'
+    #'   It applies to every scenario in the project, and is the least specific
+    #'   place a setting can be given. A scenario's own `solverSettings` wins
+    #'   over it, and the `solverSettings` argument of [runScenarios()] or
+    #'   [buildSimulations()] wins over both. A setting nobody gives a value
+    #'   keeps the value stored in the model file.
+    #'
+    #'   How the run itself is executed is not project data. Pass
+    #'   `numberOfCores` and `showProgress` to [runScenarios()] or
+    #'   [buildSimulations()] as their `simulationRunOptions` argument.
+    defaultSolverSettings = function(value) {
       if (!missing(value)) {
-        private$.defaultSimulationRunOptions <- value
+        # The other door into this field. Without the check an unknown setting
+        # or a wrong type would sit in memory, save to the project file, and be
+        # dropped in silence by every run that read it.
+        problems <- .checkSolverSettings(value, label = "defaultSolverSettings")
+        if (length(problems) > 0L) {
+          msg <- messages$invalidDefaultSolverSettings(problems)
+          cli::cli_abort(msg$bullets, .envir = msg$envir)
+        }
+        private$.defaultSolverSettings <- value
         private$.invalidateContainer()
         return(invisible(value))
       }
-      private$.defaultSimulationRunOptions
+      private$.defaultSolverSettings
     },
 
     #' @field definitions The project's definition sections, as a read-only
@@ -760,7 +771,7 @@ Project <- R6::R6Class(
     .name = NULL,
     .description = NULL,
     .definitionsFolder = NULL,
-    .defaultSimulationRunOptions = NULL,
+    .defaultSolverSettings = NULL,
     .outputPaths = NULL,
     .scenarios = NULL,
     .parameterSets = NULL,
@@ -1403,7 +1414,7 @@ Project <- R6::R6Class(
       private$.name <- sections$name
       private$.description <- sections$description
       private$.definitionsFolder <- sections$definitionsFolder
-      private$.defaultSimulationRunOptions <- sections$defaultSimulationRunOptions
+      private$.defaultSolverSettings <- sections$defaultSolverSettings
       private$.filePathsData <- sections$filePathsData
       private$.excelData <- sections$excelData
 

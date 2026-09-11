@@ -65,6 +65,43 @@ loadProject <- function(path = ".") {
   project
 }
 
+# Read the project's default solver settings out of a parsed `Project.json`.
+#
+# The field is `defaultSolverSettings`. A file written before the split names it
+# `defaultSimulationRunOptions` and may hold two run options alongside the
+# solver settings; those two belong to an `ospsuite::SimulationRunOptions`,
+# which is a run-function argument rather than project data, so they are
+# reported and dropped and only the solver settings are kept.
+# @keywords internal
+# @noRd
+.readDefaultSolverSettings <- function(jsonData, jsonPath = NULL) {
+  record <- jsonData$defaultSolverSettings %||%
+    jsonData$defaultSimulationRunOptions
+  if (length(record) == 0L) {
+    return(NULL)
+  }
+  runOptions <- intersect(c("numberOfCores", "showProgress"), names(record))
+  if (length(runOptions) > 0L) {
+    .warnFormatted(
+      messages$runOptionsInProjectFile(runOptions),
+      "esqlabsR_runOptionsInProjectFile"
+    )
+    record <- record[setdiff(names(record), runOptions)]
+  }
+  if (length(record) == 0L) {
+    return(NULL)
+  }
+  # Checked here rather than left to `validateProject()`: an unknown setting or
+  # a wrong type would otherwise be dropped in silence by `.applySolverSettings()`
+  # and change how every scenario in the project solves.
+  problems <- .checkSolverSettings(record, label = "defaultSolverSettings")
+  if (length(problems) > 0L) {
+    msg <- messages$invalidDefaultSolverSettings(problems, jsonPath)
+    cli::cli_abort(msg$bullets, .envir = msg$envir)
+  }
+  record
+}
+
 # Read a project container file and every section's `definitions/<kind>/` tree
 # (or inline fallback) into a plain list, doing all of the load's I/O and
 # nothing else: no field is assigned anywhere until the whole tree has parsed
@@ -213,7 +250,7 @@ loadProject <- function(path = ".") {
     name = jsonData$name,
     description = jsonData$description,
     definitionsFolder = jsonData$definitionsFolder,
-    defaultSimulationRunOptions = jsonData$defaultSimulationRunOptions,
+    defaultSolverSettings = .readDefaultSolverSettings(jsonData, jsonPath),
     filePathsData = filePathsData,
     excelData = excelData,
     outputPaths = outputPaths,
