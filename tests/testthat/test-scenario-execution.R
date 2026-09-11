@@ -5,12 +5,12 @@
   testProject(envir = envir)
 }
 
-# Repoint the fixture's individual at a non-human species, so the bundled
-# `SpeciesParameters.xlsx` actually contributes: it ships a sheet per animal
-# species and none for `Human`. `Rat` carries ~245 paths, of which the human
-# Aciclovir fixture model has no `Organism|EndogenousIgG|...` container, which
-# is what makes it the species-defaults regression case. Biometrics are cleared
-# down to a weight, all an animal individual needs.
+# Repoint the fixture's individual at a non-human species, so the species
+# constants of the PK-Sim individual building block actually contribute. A
+# `Rat` building block carries about 400 parameters, among them
+# `Organism|EndogenousIgG|...`, which the human Aciclovir fixture model has no
+# container for; that is what makes it the species-defaults regression case.
+# Biometrics are cleared down to a weight, all an animal individual needs.
 .useRatIndividual <- function(project) {
   setIndividual(
     project,
@@ -872,41 +872,52 @@ test_that(".mergeScenarioParameters silently skips an unknown application parame
   scenario$individualId <- NULL
   merged <- .mergeScenarioParameters(scenario, project, NULL)
   expect_true(
-    "Events|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose" %in%
+    "Events|IV 250mg 10min|No formulation|Application_1|ProtocolSchemaItem|Dose" %in%
       merged$paths
   )
 })
 
 # Species defaults vs. user parameters ----
 #
-# The bundled species sheet and the user's own parameters are applied
-# separately, with opposite strictness. Both halves are asserted on the same
-# Rat scenario, since the point is that one run treats the two differently.
+# The species constants of the PK-Sim individual and the user's own parameters
+# are applied separately, with opposite strictness. Both halves are asserted on
+# the same Rat scenario, since the point is that one run treats the two
+# differently.
 
-test_that("a bundled species path the model lacks does not stop the build", {
-  # The Rat sheet carries `Organism|EndogenousIgG|...`, which the human
-  # Aciclovir fixture has no container for. Building under the default
-  # `stopIfParameterNotFound = TRUE` must still succeed: the sheet is
-  # package-shipped and covers every model of the species, so a path this model
+test_that("a species parameter the model lacks does not stop the build", {
+  # The Rat building block carries `Organism|EndogenousIgG|...`, which the
+  # human Aciclovir fixture has no container for. Building under the default
+  # `stopIfParameterNotFound = TRUE` must still succeed and stay silent: the
+  # building block describes every model of the species, so a path this model
   # lacks is normal. Needing `stopIfParameterNotFound = FALSE` here would be
   # the regression.
   withr::local_options(lifecycle_verbosity = "quiet")
   project <- .useRatIndividual(.testProject())
-  built <- buildSimulations(project, scenarios = "testscenario")
+  expect_no_warning(
+    built <- buildSimulations(project, scenarios = "testscenario")
+  )
   expect_s3_class(built$testscenario$simulation, "Simulation")
+  # A species constant that only the individual building block provides
+  expect_equal(
+    getParameter(
+      "Organism|Lumen|ColonAscendens|Bile Salt concentration",
+      built$testscenario$simulation
+    )$value,
+    5000
+  )
 })
 
-test_that("the species sheet is applied once, not once per layer", {
-  # Each application of a sheet path the model lacks emits one native
-  # "Could not find quantity" warning, so a duplicated application shows up as
-  # a doubled count for the single missing Rat path.
+test_that("the species constants are applied once, not once per layer", {
   withr::local_options(lifecycle_verbosity = "quiet")
   project <- .useRatIndividual(.testProject())
   applied <- 0L
   local_mocked_bindings(
-    .getSpeciesParameters = function(species) {
+    .speciesParametersFromBuildingBlock = function(
+      individualCharacteristics,
+      simulation
+    ) {
       applied <<- applied + 1L
-      NULL
+      list(paths = character(0), values = numeric(0), units = character(0))
     }
   )
   buildSimulations(project, scenarios = "testscenario")
@@ -916,7 +927,7 @@ test_that("the species sheet is applied once, not once per layer", {
 test_that("a user parameter path the model lacks still stops the build", {
   # The other half: silently ignoring a path the user wrote themselves would
   # hide a real mistake in their project, so the merged user layers stay strict
-  # even though the species sheet above does not.
+  # even though the species constants above do not.
   withr::local_options(lifecycle_verbosity = "quiet")
   project <- .useRatIndividual(.testProject())
   # ospsuite's message carries the name of the outermost calling function, which
