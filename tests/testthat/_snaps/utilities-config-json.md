@@ -820,7 +820,7 @@
       $Applications$Aciclovir_iv_250mg$rows
       $Applications$Aciclovir_iv_250mg$rows[[1]]
       $Applications$Aciclovir_iv_250mg$rows[[1]]$`Container Path`
-      [1] "Events|IV 250mg 10min|Application_1|ProtocolSchemaItem"
+      [1] "Events|IV 250mg 10min|No formulation|Application_1|ProtocolSchemaItem"
       
       $Applications$Aciclovir_iv_250mg$rows[[1]]$`Parameter Name`
       [1] "Dose"
@@ -841,7 +841,7 @@
       $Applications$Protocol_250mg$rows
       $Applications$Protocol_250mg$rows[[1]]
       $Applications$Protocol_250mg$rows[[1]]$`Container Path`
-      [1] "Events|IV 250mg 10min|Application_1|ProtocolSchemaItem"
+      [1] "Events|IV 250mg 10min|No formulation|Application_1|ProtocolSchemaItem"
       
       $Applications$Protocol_250mg$rows[[1]]$`Parameter Name`
       [1] "Dose"
@@ -862,7 +862,7 @@
       $Applications$Protocol_500mg$rows
       $Applications$Protocol_500mg$rows[[1]]
       $Applications$Protocol_500mg$rows[[1]]$`Container Path`
-      [1] "Events|IV 250mg 10min|Application_1|ProtocolSchemaItem"
+      [1] "Events|IV 250mg 10min|No formulation|Application_1|ProtocolSchemaItem"
       
       $Applications$Protocol_500mg$rows[[1]]$`Parameter Name`
       [1] "Dose"
@@ -2720,10 +2720,10 @@
       [1] "Container Path" "Parameter Name" "Value"          "Units"         
       
       $Applications$Aciclovir_iv_250mg$rows
-                                                Container Path Parameter Name Value
-      1 Events|IV 250mg 10min|Application_1|ProtocolSchemaItem           Dose   250
-        Units
-      1    mg
+                                                               Container Path
+      1 Events|IV 250mg 10min|No formulation|Application_1|ProtocolSchemaItem
+        Parameter Name Value Units
+      1           Dose   250    mg
       
       
       $Applications$Protocol_250mg
@@ -2731,10 +2731,10 @@
       [1] "Container Path" "Parameter Name" "Value"          "Units"         
       
       $Applications$Protocol_250mg$rows
-                                                Container Path Parameter Name Value
-      1 Events|IV 250mg 10min|Application_1|ProtocolSchemaItem           Dose   250
-        Units
-      1    mg
+                                                               Container Path
+      1 Events|IV 250mg 10min|No formulation|Application_1|ProtocolSchemaItem
+        Parameter Name Value Units
+      1           Dose   250    mg
       
       
       $Applications$Protocol_500mg
@@ -2742,10 +2742,10 @@
       [1] "Container Path" "Parameter Name" "Value"          "Units"         
       
       $Applications$Protocol_500mg$rows
-                                                Container Path Parameter Name Value
-      1 Events|IV 250mg 10min|Application_1|ProtocolSchemaItem           Dose   500
-        Units
-      1    mg
+                                                               Container Path
+      1 Events|IV 250mg 10min|No formulation|Application_1|ProtocolSchemaItem
+        Parameter Name Value Units
+      1           Dose   500    mg
       
       
       

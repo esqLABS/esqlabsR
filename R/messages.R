@@ -84,6 +84,23 @@ messages$errorWrongIndividualId <- function(individualId) {
   )
 }
 
+messages$errorHumanIndividualForNonHumanModel <- function(
+  simulationName,
+  species
+) {
+  builtFor <- if (is.na(species)) {
+    "The simulation {.val {simulationName}} was not built for a human individual."
+  } else {
+    "The simulation {.val {simulationName}} was built for a {.val {species}} individual."
+  }
+  cliFormat(paste(
+    builtFor,
+    "Scaling it to a human individual is not supported: a human model needs",
+    "age- and height-dependent parameters that a non-human model does not have.",
+    "Load a simulation exported for a human individual instead."
+  ))
+}
+
 # utilities####
 messages$fileNotFound <- function(filePath) {
   cliFormat("File not found: {.file {filePath}}")
