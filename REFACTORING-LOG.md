@@ -251,3 +251,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-09-11 15:27: A bad defaultSolverSettings is now caught when the project file is read or the field is assigned, instead of being dropped in silence at run time. (#408)
 - 2026-09-11 18:12: The list of solver settings now comes from ospsuite itself, so a setting added upstream works without a change here; only the value type each one takes is still written out. (#408)
 - 2026-09-14 21:49: The solverSettings docs no longer promise things the code does not do: runPI() has no simulationRunOptions argument, an Excel round-trip loses only the scenario-level setting rather than every one, and the Project field links the SimulationRunOptions page it points at. (#408)
+- 2026-09-14 21:52: The test for a solver setting esqlabsR has no type rule for now checks that it reaches the solver as given, which it never did. (#408)

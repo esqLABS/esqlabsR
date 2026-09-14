@@ -143,13 +143,20 @@ test_that("a supported setting with no type tag is accepted and written as given
     character()
   )
 
-  simulation <- ospsuite::loadSimulation(
-    testthat::test_path("data", "simple.pkml"),
-    loadFromCache = FALSE
+  # No real solver carries the setting, so the simulation is stood in for by a
+  # reference object that records what was written: the untagged setting
+  # arrives exactly as given, the tagged one still through its coercion, and
+  # `mxStep` shows that the names really are what decides.
+  simulation <- list(solver = new.env(parent = emptyenv()))
+  .applySolverSettings(
+    simulation,
+    list(relTol = 1e-8, mxStep = 5000, brandNewSetting = "a string")
   )
-  # Reaches the solver untouched, where a tagged setting would be coerced.
-  .applySolverSettings(simulation, list(relTol = 1e-8))
+
+  expect_identical(simulation$solver$brandNewSetting, "a string")
   expect_identical(simulation$solver$relTol, 1e-8)
+  # Not carried: `ospsuite` no longer lists it, so nothing is written for it.
+  expect_false(exists("mxStep", envir = simulation$solver, inherits = FALSE))
 })
 
 
