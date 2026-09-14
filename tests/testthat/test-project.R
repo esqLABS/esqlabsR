@@ -982,6 +982,11 @@ test_that("a project file's run options are reported and dropped", {
   )
   # The solver half survives under the new name; the run option is gone.
   expect_equal(reloaded$defaultSolverSettings, list(relTol = 1e-6))
+
+  # The advice is what the reader acts on, so the wording is pinned: naming a
+  # function that has no `simulationRunOptions` argument would send them to an
+  # error.
+  expect_snapshot(invisible(loadProject(path)))
 })
 
 test_that("an Excel-bridge file field write targets the excel block", {

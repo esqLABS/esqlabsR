@@ -911,8 +911,9 @@ messages$runOptionsInProjectFile <- function(fields) {
       "!" = "{cli::qty(n)}{.file Project.json} sets {n} run option{?s} that a \\
       project file does not carry: {.field {fields}}.",
       "i" = "A project file holds solver settings. Pass run options to \\
-      {.fn runScenarios}, {.fn buildSimulations} or {.fn runPI} instead, as \\
-      {.code simulationRunOptions = ospsuite::SimulationRunOptions$new(...)}.",
+      {.fn runScenarios} or {.fn buildSimulations} instead, as \\
+      {.code simulationRunOptions = ospsuite::SimulationRunOptions$new(...)}; \\
+      a parameter identification reads them from its own task.",
       "i" = "{cli::qty(n)}The setting{?s} {?is/are} ignored and dropped on the \\
       next {.fn saveProject}."
     ),
