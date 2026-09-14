@@ -99,7 +99,9 @@ keeps the value stored in the model file.
 
 How the run itself is executed is not project data. Pass
 \code{numberOfCores} and \code{showProgress} to \code{\link[=runScenarios]{runScenarios()}} or
-\code{\link[=buildSimulations]{buildSimulations()}} as their \code{simulationRunOptions} argument.}
+\code{\link[=buildSimulations]{buildSimulations()}} as their \code{simulationRunOptions} argument, a
+\href{https://www.open-systems-pharmacology.org/OSPSuite-R/reference/SimulationRunOptions.html}{SimulationRunOptions}
+object.}
 
     \item{\code{definitions}}{The project's definition sections, as a read-only
 field group. Each section is one field: \code{outputPaths}, \code{scenarios},

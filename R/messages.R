@@ -932,7 +932,9 @@ messages$exportScenarioSolverSettings <- function(ids) {
       scenario{?s} {?was/were} not written: {.val {ids}}.",
       "i" = "{cli::qty(n)}Keep the JSON project as the source of truth for \\
       {?this scenario/these scenarios}: a project re-imported from these \\
-      workbooks solves with its model files' own solver settings."
+      workbooks has no scenario-level setting left, and solves with \\
+      whatever the rest of the chain still gives, down to its model \\
+      files' own solver settings."
     ),
     envir = envir
   )

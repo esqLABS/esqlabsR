@@ -191,7 +191,9 @@ Project <- R6::R6Class(
     #'
     #'   How the run itself is executed is not project data. Pass
     #'   `numberOfCores` and `showProgress` to [runScenarios()] or
-    #'   [buildSimulations()] as their `simulationRunOptions` argument.
+    #'   [buildSimulations()] as their `simulationRunOptions` argument, a
+    #'   [SimulationRunOptions](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/SimulationRunOptions.html)
+    #'   object.
     defaultSolverSettings = function(value) {
       if (!missing(value)) {
         # The other door into this field. Without the check an unknown setting

@@ -127,7 +127,7 @@ These are defaults, so a scenario or a single run can still say otherwise. For e
 - a scenario's own `solverSettings` block (see `vignette("reference-definition-fields")`), or a parameter-identification task's own `simulationRunOptions` block,
 - the `solverSettings` argument of `runScenarios()` or `buildSimulations()`.
 
-**How the run is executed is not project data.** `numberOfCores` and `showProgress` belong to [`SimulationRunOptions`](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/SimulationRunOptions.html), which you pass to `runScenarios()`, `buildSimulations()` or `runPI()` as their `simulationRunOptions` argument. A project file does not carry them; one written before this split is loaded with a warning naming the run options it dropped.
+**How the run is executed is not project data.** `numberOfCores` and `showProgress` belong to [`SimulationRunOptions`](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/SimulationRunOptions.html), which you pass to `runScenarios()` or `buildSimulations()` as their `simulationRunOptions` argument. A parameter identification reads them from its own task's `configuration` block instead. `Project.json` does not carry them; one written before this split is loaded with a warning naming the run options it dropped.
 
 ### `excel`
 
