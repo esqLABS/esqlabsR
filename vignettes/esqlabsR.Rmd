@@ -21,7 +21,7 @@ knitr::opts_chunk$set(
 
 `esqlabsR` builds modeling and simulation workflows on top of the Open Systems Pharmacology Suite (OSPS). It organizes everything a PBPK or QSP analysis needs (the model, the subjects you simulate, the dosing, the parameters you apply, the outputs you record, the observed data you compare against, and the figures you produce) into a single **Project**. You load a Project once, then run scenarios and plot results from it.
 
-This tutorial walks the whole workflow once, against the example project the package ships. You will load a project, look inside it, add an individual and a scenario, describe a figure, then run the scenario and draw the figure. It takes a few minutes, every step runs as written, and nothing you do here touches your own files.
+This tutorial walks the whole workflow once, using the example project that comes with the package. You will load a project, inspect it, add an individual and a scenario, describe a figure, then run the scenario and draw the figure. It takes a few minutes, every step runs as written, and nothing you do here touches your own files.
 
 You do not need to understand each piece as you go. The point is to see the shape of the loop; the how-to guides fill in the detail afterwards.
 
