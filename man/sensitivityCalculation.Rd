@@ -83,7 +83,7 @@ simulation <- loadSimulation(simPath)
 outputPaths <- "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
 parameterPaths <- c(
   "Aciclovir|Lipophilicity",
-  "Events|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose",
+  "Events|IV 250mg 10min|No formulation|Application_1|ProtocolSchemaItem|Dose",
   "Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Glomerular Filtration-GFR-Aciclovir|GFR fraction"
 )
 
