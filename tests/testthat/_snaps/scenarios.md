@@ -302,10 +302,50 @@
         * Type: Individual
         * Individual: indiv1
         * Population: <empty string>
-        * Protocol: aciclovir_iv_250mg
+        * Administration Protocol: aciclovir_iv_250mg
         * Parameter Sets: global
         * Initial Conditions: testinitialset
-        * Output Paths: 1
         * Steady State: FALSE
         * Solver Settings: <empty string>
+      Output Paths:
+        * Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)
+
+# print.Scenario lists output paths, flagging unresolved ids
+
+    Code
+      print(scenario)
+    Output
+      <Scenario>
+        * Name: outputs
+        * Model: Aciclovir.pkml
+        * Type: Individual
+        * Individual: <empty string>
+        * Population: <empty string>
+        * Administration Protocol: <empty string>
+        * Parameter Sets: <empty string>
+        * Initial Conditions: <empty string>
+        * Steady State: FALSE
+        * Solver Settings: <empty string>
+      Output Paths:
+        * Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)
+        * kidney_urine (unknown output path)
+
+# print.Scenario shows an empty output-path block when there are none
+
+    Code
+      print(scenario)
+    Output
+      <Scenario>
+        * Name: nooutputs
+        * Model: Aciclovir.pkml
+        * Type: Individual
+        * Individual: <empty string>
+        * Population: <empty string>
+        * Administration Protocol: <empty string>
+        * Parameter Sets: <empty string>
+        * Initial Conditions: <empty string>
+        * Steady State: FALSE
+        * Solver Settings: <empty string>
+      Output Paths:
+        * <empty vector>
 

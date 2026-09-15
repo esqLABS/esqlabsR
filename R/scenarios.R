@@ -142,16 +142,58 @@ print.Scenario <- function(x, ...) {
       "Type" = x$simulationType %||% "",
       "Individual" = x$individualId %||% "",
       "Population" = x$populationId %||% "",
-      "Protocol" = protocol,
+      "Administration Protocol" = protocol,
       "Parameter Sets" = paste(x$modelParameterSets, collapse = ", "),
       "Initial Conditions" = paste(x$initialConditions, collapse = ", "),
-      "Output Paths" = length(x$outputPaths %||% list()),
       "Steady State" = x$simulateSteadyState %||% FALSE,
       "Solver Settings" = paste(names(x$solverSettings), collapse = ", ")
     ),
     print_empty = TRUE
   )
+  ospsuite.utils::ospPrintItems(
+    .scenarioOutputPathLines(x$outputPaths),
+    title = "Output Paths",
+    print_empty = TRUE
+  )
   invisible(x)
+}
+
+# One display line per referenced output path, for `print.Scenario()`.
+#
+# `outputPaths` is the scenario's stored named character vector (names are
+# `outputPaths` definition ids, values the literal paths). Referential
+# integrity is lazy, so a value can be `NA` for an id with no matching
+# definition; name that id instead of printing a bare `NA`, which would hide
+# the dangling reference the cross-reference validator later reports.
+#
+# Returns a list of unlabeled items (all names empty), the shape
+# `ospPrintItems()` renders as plain bullets. A scenario with no output paths
+# yields a single zero-length item so the block renders the house empty marker
+# instead of a bare title, which would read as a section cut short.
+#
+# @keywords internal
+# @noRd
+.scenarioOutputPathLines <- function(outputPaths) {
+  if (length(outputPaths) == 0L) {
+    return(stats::setNames(list(character(0)), ""))
+  }
+  ids <- names(outputPaths) %||% rep("", length(outputPaths))
+  lines <- vapply(
+    seq_along(outputPaths),
+    function(i) {
+      value <- outputPaths[[i]]
+      if (!is.na(value) && nzchar(value)) {
+        return(value)
+      }
+      if (nzchar(ids[[i]])) {
+        paste0(ids[[i]], " (unknown output path)")
+      } else {
+        "(unknown output path)"
+      }
+    },
+    character(1)
+  )
+  stats::setNames(as.list(lines), rep("", length(lines)))
 }
 
 # Parse ----

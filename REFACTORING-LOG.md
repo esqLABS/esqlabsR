@@ -255,3 +255,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-09-14 21:56: The warning about run options in a project file no longer sends the reader to runPI(), which has no simulationRunOptions argument, and its wording is now pinned by a snapshot. (#408)
 - 2026-09-15 09:16: The sensitivity examples and tests name the Aciclovir dose as ospsuite 13.0.0.9010 exports it, which puts a "No formulation" container between the application and its schema item. (#408)
 - 2026-09-15 09:17: The population snapshots record the demographics ospsuite 13.0.0.9010 ships in its example population, which gained BSA and reordered its parameters. (#408)
+- 2026-09-15 15:10: Scenario print now lists the output paths themselves and labels the protocol field "Administration Protocol". (#1279)
