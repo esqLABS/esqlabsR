@@ -233,3 +233,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-09-11 11:36: The species-scaling code of applyIndividualParameters() matches main after #1273: one helper builds the parameter set of an individual, the documentation drops the gut-wall paragraph and the sentence on skipped parameters, and two long lines are wrapped. (#1272)
 - 2026-09-15 09:16: The sensitivity examples and tests name the Aciclovir dose as ospsuite 13.0.0.9010 exports it, which puts a "No formulation" container between the application and its schema item. (#408)
 - 2026-09-15 09:17: The population snapshots record the demographics ospsuite 13.0.0.9010 ships in its example population, which gained BSA and reordered its parameters. (#408)
+- 2026-09-15 15:31: The README explains how a snapshot differs from the project folder and why to use one, and its wording is tidied.
