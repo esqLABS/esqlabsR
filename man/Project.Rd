@@ -109,8 +109,12 @@ field group. Each section is one field: \code{outputPaths}, \code{scenarios},
 \code{applications}, \code{observedData}, \code{dataCombined}, \code{plots}, \code{plotGrids},
 \code{parameterIdentification}. Read a section with
 \code{project$definitions$scenarios} (returned as a printable, read-only
-named list keyed by id). The group is read-only from the handle: every
-assignment form aborts. The only sanctioned way to change a section is
+named list keyed by id). \code{observedData} is the one section that is not
+keyed by id: it is a plain list of sources read by position
+(\code{project$definitions$observedData[[1]]}), and printing it shows the id
+each source is known by, which is the id \code{\link[=removeObservedData]{removeObservedData()}} takes.
+The group is read-only from the handle: every assignment form aborts.
+The only sanctioned way to change a section is
 an authoring function (\code{\link[=addScenario]{addScenario()}} / \code{\link[=setScenario]{setScenario()}} /
 \code{\link[=removeScenario]{removeScenario()}} and their per-section siblings) or editing the
 definition's JSON file; those route through the internal write seam,
