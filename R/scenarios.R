@@ -150,12 +150,40 @@ print.Scenario <- function(x, ...) {
     ),
     print_empty = TRUE
   )
-  ospsuite.utils::ospPrintItems(
-    .scenarioOutputPathLines(x$outputPaths),
-    title = "Output Paths",
-    print_empty = TRUE
-  )
+  .printScenarioOutputPaths(x$outputPaths)
   invisible(x)
+}
+
+# The `Output Paths` block of `print.Scenario()`: an `Output Paths:` bullet
+# sitting with the scalar fields above it, and the referenced paths one level
+# deeper under it.
+#
+# `ospPrintItems()` cannot express that nesting: its `title` is a flush-left
+# header rather than a bullet, so the block would sit outside the field list it
+# belongs to. The block is therefore built from the same `cli` pieces
+# `ospPrintItems()` itself uses, with the inner list's margin at 0 so it indents
+# by exactly one level rather than two.
+#
+# @keywords internal
+# @noRd
+.printScenarioOutputPaths <- function(outputPaths) {
+  lines <- .scenarioOutputPathLines(outputPaths)
+  block <- cli::cli_format_method({
+    cli::cli_div(theme = list(ul = list(`margin-left` = 2)))
+    cli::cli_ul()
+    cli::cli_li("Output Paths:")
+    cli::cli_div(theme = list(ul = list(`margin-left` = 0)))
+    cli::cli_ul()
+    for (line in lines) {
+      cli::cli_li("{line}")
+    }
+    cli::cli_end()
+    cli::cli_end()
+    cli::cli_end()
+    cli::cli_end()
+  })
+  cat(block, sep = "\n")
+  invisible(NULL)
 }
 
 # One display line per referenced output path, for `print.Scenario()`.
@@ -166,16 +194,15 @@ print.Scenario <- function(x, ...) {
 # definition; name that id instead of printing a bare `NA`, which would hide
 # the dangling reference the cross-reference validator later reports.
 #
-# Returns a list of unlabeled items (all names empty), the shape
-# `ospPrintItems()` renders as plain bullets. A scenario with no output paths
-# yields a single zero-length item so the block renders the house empty marker
-# instead of a bare title, which would read as a section cut short.
+# Returns one string per referenced path. A scenario with no output paths
+# yields the house empty marker, so the block still renders a bullet instead of
+# a bare `Output Paths:`, which would read as a section cut short.
 #
 # @keywords internal
 # @noRd
 .scenarioOutputPathLines <- function(outputPaths) {
   if (length(outputPaths) == 0L) {
-    return(stats::setNames(list(character(0)), ""))
+    return("<empty vector>")
   }
   ids <- names(outputPaths) %||% rep("", length(outputPaths))
   lines <- vapply(
@@ -193,7 +220,7 @@ print.Scenario <- function(x, ...) {
     },
     character(1)
   )
-  stats::setNames(as.list(lines), rep("", length(lines)))
+  lines
 }
 
 # Parse ----

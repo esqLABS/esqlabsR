@@ -307,8 +307,8 @@
         * Initial Conditions: testinitialset
         * Steady State: FALSE
         * Solver Settings: <empty string>
-      Output Paths:
-        * Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)
+        * Output Paths:
+          * Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)
 
 # print.Scenario lists output paths, flagging unresolved ids
 
@@ -326,9 +326,9 @@
         * Initial Conditions: <empty string>
         * Steady State: FALSE
         * Solver Settings: <empty string>
-      Output Paths:
-        * Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)
-        * kidney_urine (unknown output path)
+        * Output Paths:
+          * Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)
+          * kidney_urine (unknown output path)
 
 # print.Scenario shows an empty output-path block when there are none
 
@@ -346,6 +346,6 @@
         * Initial Conditions: <empty string>
         * Steady State: FALSE
         * Solver Settings: <empty string>
-      Output Paths:
-        * <empty vector>
+        * Output Paths:
+          * <empty vector>
 
