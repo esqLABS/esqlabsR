@@ -259,3 +259,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-09-16 10:20: The output paths a scenario print shows now sit under an "Output Paths" bullet in the field list, one indentation level deeper, instead of under a heading outside it. (#1279)
 - 2026-09-15 15:31: The README explains how a snapshot differs from the project folder and why to use one, and its wording is tidied.
 - 2026-09-15 21:28: The Get started article points to the README for installation, names what a Scenario defines in modeler terms, links the Scenario Result reference, and drops the code wording (keyed, in memory).
+- 2026-09-16 10:40: The NEWS bullets for the scenario print name the print() function, as the contributor guide requires. (#1279)
