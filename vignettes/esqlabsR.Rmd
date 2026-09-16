@@ -1,10 +1,10 @@
 ---
-title: "Introduction to ESQlabsR"
+title: "Get started with esqlabsR"
 output:
   rmarkdown::html_vignette:
     toc: true
 vignette: >
-  %\VignetteIndexEntry{Introduction to ESQlabsR}
+  %\VignetteIndexEntry{Get started with esqlabsR}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -21,13 +21,13 @@ knitr::opts_chunk$set(
 
 `esqlabsR` builds modeling and simulation workflows on top of the Open Systems Pharmacology Suite (OSPS). It organizes everything a PBPK or QSP analysis needs (the model, the subjects you simulate, the dosing, the parameters you apply, the outputs you record, the observed data you compare against, and the figures you produce) into a single **Project**. You load a Project once, then run scenarios and plot results from it.
 
-This tutorial walks the whole workflow once, against the example project the package ships. You will load a project, look inside it, add an individual and a scenario, describe a figure, then run the scenario and draw the figure. It takes a few minutes, every step runs as written, and nothing you do here touches your own files.
+This tutorial walks the whole workflow once, using the example project that comes with the package. You will load a project, inspect it, add an individual and a scenario, describe a figure, then run the scenario and draw the figure.
 
-You do not need to understand each piece as you go. The point is to see the shape of the loop; the how-to guides fill in the detail afterwards.
+You do not need to understand each piece as you go. The point is to see the shape of the loop; the how-to guides fill in the details afterwards.
 
 ## Install and load
 
-`esqlabsR` depends on the OSPS R packages. Install those via the Open Systems Pharmacology setup instructions, then install and load `esqlabsR`:
+`esqlabsR` depends on the OSPS R packages, which are not on CRAN. The [Installation section of the README](https://esqlabs.github.io/esqlabsR/#installation) lists the prerequisites and the two commands that add the OSP repository and install the package. Once installed, load it:
 
 ```{r}
 library(esqlabsR)
@@ -35,10 +35,12 @@ library(esqlabsR)
 
 ## Load a project
 
-The package bundles a complete example Project. Because you will save changes to it later, take your own copy first: `initProject()` copies one into a temporary directory, and `loadProject()` reads it into memory. (`initProject()` takes the directory; `loadProject()` takes the `Project.json` file inside it.)
+The package comes with a complete example Project. Because you will save changes to it later, work on a copy: create a temporary folder, let `initProject()` fill it with the example project, then read the project into your R session with `loadProject()`. Note that `initProject()` takes the folder, while `loadProject()` takes the `Project.json` file inside it.
 
 ```{r}
+# Create a temporary folder
 project_dir <- withr::local_tempdir()
+# Initialize a project inside the temporary folder
 initProject(destination = project_dir, type = "example", createExcel = FALSE)
 project <- loadProject(file.path(project_dir, "Project.json"))
 ```
@@ -51,23 +53,23 @@ print(project)
 
 ## Look inside the project
 
-A project is built out of **definitions**: named pieces such as a scenario, an individual, or a plot. Each kind is a named list on the project, keyed by id. Printing one shows how many there are and what they are called:
+A project is built out of **definitions**: named pieces such as a scenario, an individual, or a plot. Each kind is a named list, with one entry per id. Printing one shows how many there are and what they are called:
 
 ```{r}
 project$definitions$individuals
 ```
 
-Printing a single definition shows its configured fields, so you can inspect one without opening a file:
+Printing a single definition shows its configured fields:
 
 ```{r}
 project$definitions$individuals$adult_male
 ```
 
-That is enough to work with for now. (`vignette("reference-project-file")` describes how the pieces are stored on disk, if you want it later.)
+That is enough to work with for now. `vignette("reference-project-file")` describes how the pieces are stored on disk.
 
 ## Create a scenario and a figure
 
-The `add*`, `set*`, and `remove*` functions all take the `project` first, then the definition's `id`, then its fields. The example only defines an adult male, so we will add an adult female, run aciclovir in her, and plot the result.
+The `add*` and `set*` functions all take the `project` first, then the definition's `id`, then its fields; `remove*` takes the `project` and the `id`. The example only defines an adult male, so we will add an adult female, run the aciclovir scenario for her, and plot the result.
 
 Start with a new **Individual**, the subject a scenario simulates.
 
@@ -84,9 +86,7 @@ addIndividual(
 )
 ```
 
-Nothing has been written to disk yet: the new individual is held in memory until you save, which we do in a moment.
-
-With the individual in place, add a **Scenario** that simulates aciclovir in her. A Scenario pins a model to a subject, dosing, parameters, a time grid, and the outputs to record. The model is a `.pkml` simulation file exported from PK-Sim or MoBi, and it is the only required field: everything you leave out falls back to what that export already carries. Of the optional fields, some reference other definitions in the project (`individual`, `application`, `parameterSets`, `outputPaths`) and others are plain values (`simulationTime` and `simulationTimeUnit` set the time grid). The references are checked as the scenario is added, so a typo in an id stops you here rather than at run time.
+With the individual in place, create a new **Scenario** that runs the aciclovir simulation with the new individual. A Scenario defines which model to load, which individual or population to simulate, which parameter values to apply, how the drug is administered, how long to simulate, and which outputs to record. The model is a `.pkml` simulation file exported from PK-Sim or MoBi, stored in the project's model folder, and it is the only required field: everything you leave out is taken from the model file itself. The optional fields either reference other definitions in the project (`individual`, `application`, `parameterSets`, `outputPaths`) or set a value directly (for example `simulationTime` and `simulationTimeUnit`). The references are checked as the scenario is added, so a typo in an id stops you here rather than at run time.
 
 ```{r}
 addScenario(
@@ -102,7 +102,7 @@ addScenario(
 )
 ```
 
-Finally, describe a figure. A **DataCombined** says which curves the figure draws, here just one: the plasma concentration from the new scenario. A **Plot** then draws a chart from it.
+Finally, describe a figure. A **DataCombined** says which curves the figure draws, here just one: the plasma concentration from the new scenario. A **Plot** then describes how to draw it: here the plot type and a title.
 
 ```{r}
 addDataCombined(
@@ -126,7 +126,7 @@ addPlot(
 )
 ```
 
-Everything so far has changed the project in memory only. `saveProject()` writes the new individual, scenario, DataCombined, and plot to disk:
+Everything so far has changed the project in your R session only. `saveProject()` writes the new individual, scenario, DataCombined, and plot to disk:
 
 ```{r}
 saveProject(project)
@@ -134,17 +134,17 @@ saveProject(project)
 
 ## Run the scenario
 
-With the scenario defined, run it. `runScenarios()` runs one or more scenarios from the Project and returns a named list keyed by scenario name. We pass the single scenario we just built; the first run of a session initializes PK-Sim and takes a few seconds, so a one-scenario example keeps things quick.
+With the scenario defined, run it. `runScenarios()` runs one or more scenarios from the Project and returns a list with one entry per scenario, named after the scenario. We pass the single scenario we just built.
 
 ```{r}
 res <- runScenarios(project, scenarios = "aciclovir_iv_female")
 ```
 
-Each entry of the returned list is a **Scenario Result**, bundling the simulation and its outputs. This is what `createPlots()` reads from next.
+Each entry of the returned list is a **Scenario Result**, bundling the simulation and its outputs; the "Scenario Result record" section of `vignette("reference-project-file")` lists its four fields. This is what `createPlots()` reads from next.
 
 ## Plot the result
 
-`createPlots()` reads the plot definitions stored in the Project and draws them against the scenario results you pass in. Ask for the plot you just defined, by its id:
+`createPlots()` reads the plot definitions stored in the Project and draws them from the scenario results you pass in. Here we ask for the plot just defined, by its id:
 
 ```{r}
 plots <- createPlots(
@@ -160,7 +160,7 @@ Each entry is an ordinary `ggplot` object, so printing it draws it:
 plots$aciclovir_female_profile
 ```
 
-That is the whole loop. You added a subject and a scenario to a project, described a figure, ran the simulation, and drew the figure, all from one object.
+That is the whole loop. You added an individual and a scenario to a project, described a figure, ran the simulation, and drew the figure, all from one Project.
 
 ## Where to go next
 
@@ -168,13 +168,13 @@ You have seen the shape of the workflow. From here, pick the guide for whatever 
 
 - `vignette("how-to-set-up-a-project")` to create your own project, save your work, and share it as a single file.
 - `vignette("how-to-design-scenarios")` to create the definitions a scenario is built from, edit them in place, and add several at once.
-- `vignette("how-to-validate-a-project")` to check a project hangs together before running it.
+- `vignette("how-to-validate-a-project")` to check that a project is consistent before running it.
 - `vignette("how-to-run-simulations")` to run many scenarios, populations, and steady-state runs, and to save and reload results.
-- `vignette("how-to-plot-results")` for richer figures, observed data overlays, population percentile bands, and the esqLABS house style.
+- `vignette("how-to-plot-results")` for richer figures, observed data overlays, population percentile bands, and the ESQlabs house style.
 - `vignette("how-to-use-observed-data")` for the four ways measured data enters a project.
 - `vignette("how-to-identify-parameters")` to estimate model parameters by fitting them to observed data.
-- `vignette("how-to-run-a-sensitivity-analysis")` to see which parameters your PK outcomes are actually sensitive to.
+- `vignette("how-to-run-a-sensitivity-analysis")` to see which parameters your PK outcomes are sensitive to.
 - `vignette("how-to-customize-sensitivity-plots")` to restyle those sensitivity figures.
 - `vignette("how-to-migrate-from-excel")` if you have a pre-6.0.0 project driven by Excel workbooks.
 
-Two other kinds of article are worth knowing about. `vignette("about-the-project-model")` and `vignette("about-the-plotting-model")` explain why the package works the way it does, which is the fastest way to stop being surprised by it. `vignette("reference-definition-fields")` and `vignette("reference-project-file")` are for looking things up: every field of every definition, whether it is required, and what happens when you leave it out.
+Two other kinds of article are worth knowing about. `vignette("about-the-project-model")` and `vignette("about-the-plotting-model")` explain why the package works the way it does, which helps when the package behaves in a way you did not expect. `vignette("reference-definition-fields")` and `vignette("reference-project-file")` are for looking things up: every field of every definition, whether it is required, and what happens when you leave it out.

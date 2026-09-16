@@ -14,17 +14,16 @@ coverage](https://codecov.io/gh/esqlabs/esqlabsR/branch/main/graph/badge.svg)](h
 The `{esqlabsR}` package facilitates and standardizes the modeling and
 simulation of physiologically based kinetic (PBK) and quantitative
 systems pharmacology/toxicology (QSP/T) models implemented in the [Open
-Systems Pharmacology
-Software](https://www.open-systems-pharmacology.org/) (OSPS).
+Systems Pharmacology Suite](https://www.open-systems-pharmacology.org/)
+(OSPS).
 
-The `{esqlabsR}` package is designed for PBK modelers who use the OSPS
-suite. By using this package, you can streamline your modeling and
-simulation (M&S) workflow and ensure standardized and reproducible
-practices.
+The `{esqlabsR}` package is designed for PBK modelers who use OSPS. By
+using this package, you can streamline your modeling and simulation
+(M&S) workflow and ensure standardized and reproducible practices.
 
 The package provides functions to:
 
-- Design, import and run simulations,
+- Design, import, and run simulations,
 - Generate standardized plots and other reporting materials,
 - Validate and share reproducible project configurations.
 
@@ -72,16 +71,17 @@ with:
 pak::pak("esqLABS/esqlabsR")
 ```
 
-Note: For projects created for version 3 of `esqlabsR` package, refer to
-[`esqlabsRLegacy`](https://github.com/esqLABS/esqlabsRLegacy).
+Note: For projects created for version 3 of the `esqlabsR` package,
+refer to [`esqlabsRLegacy`](https://github.com/esqLABS/esqlabsRLegacy).
 
 ## Usage
 
-An `{esqlabsR}` project is a directory. At its root sits a
-`Project.json` container alongside a `definitions/` folder that holds
-your authored definition files, one file per definition, with the
-scenarios living under `definitions/scenarios/`. The package ships a
-complete worked example project that you can load and run directly.
+An `{esqlabsR}` project consists of multiple files, all stored within
+one folder. At its root sits a `Project.json` file alongside a
+`definitions/` folder that holds the **definition** files. The
+definitions are, for example, the scenarios, populations, individuals,
+and plots. The package comes with an example project that you can load
+and run directly.
 
 The quickest way to see the workflow end-to-end is to load the example
 project, run one of its scenarios, and plot the result:
@@ -89,7 +89,7 @@ project, run one of its scenarios, and plot the result:
 ``` r
 library(esqlabsR)
 
-# Load the worked example project shipped with the package.
+# Load the example project shipped with the package.
 project <- loadProject(exampleProjectPath())
 
 # Run a single scenario.
@@ -102,9 +102,10 @@ plots <- createPlots(project, scenarioResults = results)
 plots$individual_diagnostics
 ```
 
-`runScenarios()` returns a named list keyed by scenario name. Each entry
-holds the prepared simulation, its results, the extracted output values,
-and the population (or `NULL` for individual scenarios).
+`runScenarios()` returns a list with one entry per scenario, named after
+the scenario. Each entry holds the prepared simulation, its results, the
+extracted output values, and the population (or `NULL` for individual
+scenarios).
 
 To start your own project from scratch, create a new project with the
 required folder structure and files in the current working directory (or
@@ -114,26 +115,54 @@ provide a path to the folder you want to create the project in) with:
 esqlabsR::initProject()
 ```
 
-Then load the project into the memory:
+Then load the project into your R session:
 
 ``` r
 project <- esqlabsR::loadProject()
 ```
 
-You then create and edit the project’s definitions, scenarios,
+You then create and edit the project’s definitions (scenarios,
 individuals, populations, parameter sets, output paths, observed data,
-and plots, with the `add*()`, `set*()`, and `remove*()` functions. Each
-of these requires a definition `id` (unique name), for example
-`addScenario(project, id = "aciclovir_iv", ...)`. These edits are made
-in memory; `saveProject()` then writes them to the definition files, so
-nothing reaches disk until you ask for it. Once your project is
-configured, you run simulations with `runScenarios()`, create plots with
-`createPlots()`, and check the project for configuration problems with
-`validateProject()`.
+and plots) with the `add*()`, `set*()`, and `remove*()` functions. Each
+of these requires a definition `id` (a unique name), for example
+`addScenario(project, id = "aciclovir_iv", ...)`. These edits stay in
+your R session; `saveProject()` then writes them to the definition
+files, so nothing on disk changes until you ask for it. Once your
+project is configured, you run simulations with `runScenarios()`, create
+plots with `createPlots()`, and check the project for configuration
+problems with `validateProject()`.
 
 To share or archive a project, create a single self-contained
 `.esqlabsR` snapshot with `snapshotProject()` and read it back with
 `restoreProject()`.
+
+A snapshot is not a copy of the project folder. It differs in three
+ways:
+
+- **One file instead of a folder.** The `Project.json` file and every
+  definition file under `definitions/` are written into one `.esqlabsR`
+  file, so a project configuration travels as a single attachment. The
+  file name carries a timestamp by default, which makes a snapshot a
+  dated record you can keep next to a report or a set of results.
+- **It captures your R session, not the folder.** The snapshot holds the
+  project as it is in your R session, unsaved edits included, and
+  writing it does not change the project folder. That makes it a save
+  point: try something out, and if it does not work out, go back with
+  `restoreProject(snapshot, dir, overwrite = TRUE)`. A project you
+  created in R that has no folder yet can be snapshotted as well.
+- **It holds the configuration only.** Model files, observed data files,
+  population CSV files, and scripts are not packed into the snapshot.
+  They have to reach the recipient another way, for example alongside
+  the snapshot or on a shared drive that both of you point at.
+
+Copy or zip the whole project folder when you want to hand over
+everything, including the model and data files. Use a snapshot when the
+configuration is what you want to share, archive, or return to.
+`restoreProject()` turns a snapshot back into a normal project folder
+with `Project.json` and `definitions/`, and nothing is lost in the round
+trip. The [How to set up a
+project](https://esqlabs.github.io/esqlabsR/articles/how-to-set-up-a-project.html)
+article shows the workflow step by step.
 
 ## Learn more
 
