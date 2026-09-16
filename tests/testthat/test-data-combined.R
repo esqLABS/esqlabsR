@@ -424,18 +424,21 @@ test_that(".matchOutputPathIds matches exactly, then canonically", {
 test_that(".resolveOutputPathValue resolves an id and leaves a model path alone", {
   outputPaths <- list(aciclovir_pvb = "Organism|A|B")
 
-  resolved <- .resolveOutputPathValue("Aciclovir_PVB", outputPaths)
-  expect_identical(resolved$path, "Organism|A|B")
-  expect_identical(resolved$fromId, "aciclovir_pvb")
+  expect_identical(
+    .resolveOutputPathValue("Aciclovir_PVB", outputPaths),
+    list(path = "Organism|A|B", fromId = "aciclovir_pvb")
+  )
 
-  verbatim <- .resolveOutputPathValue("Organism|C|D", outputPaths)
-  expect_identical(verbatim$path, "Organism|C|D")
-  expect_null(verbatim$fromId)
+  expect_identical(
+    .resolveOutputPathValue("Organism|C|D", outputPaths),
+    list(path = "Organism|C|D", fromId = NULL)
+  )
 
   # A single-segment quantity path that names no id stays a model path.
-  single <- .resolveOutputPathValue("Lonely", outputPaths)
-  expect_identical(single$path, "Lonely")
-  expect_null(single$fromId)
+  expect_identical(
+    .resolveOutputPathValue("Lonely", outputPaths),
+    list(path = "Lonely", fromId = NULL)
+  )
 })
 
 test_that(".resolveOutputPathValue aborts on an ambiguous reference", {

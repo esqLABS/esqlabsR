@@ -1682,7 +1682,15 @@ test_that("crossReferences warns on a path that looks like an undefined output p
   result <- .validateCrossReferences(project, sections = "dataCombined")
 
   expect_false(result$hasCriticalErrors())
-  warnings <- unlist(result$warnings)
-  expect_length(grep("aciclovir_pvbb", warnings), 1)
-  expect_length(grep("Organism\\|C\\|D", warnings), 0)
+  # Exactly one finding: the known id and the model path are both silent.
+  expect_length(result$warnings, 1)
+  expect_identical(result$warnings[[1]]$category, "Invalid Reference")
+  expect_identical(
+    result$warnings[[1]]$message,
+    paste0(
+      "DataCombined 'DC' references 'aciclovir_pvbb', which looks like an ",
+      "output path id but is not defined; it is used as a model path ",
+      "(did you mean 'aciclovir_pvb'?)"
+    )
+  )
 })

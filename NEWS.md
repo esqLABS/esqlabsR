@@ -74,7 +74,7 @@ Deprecation intensity follows the lifecycle policy: forwarding shims that still 
 
 ## Minor improvements and bug fixes
 
-- `label` is now optional on a DataCombined simulated entry: when it is left out, the curve is named by whatever is written in `path`, so naming an output by its output-path id gives a short legend entry without repeating the name. `label` stays required on an observed entry. (#1280)
+- `label` is now optional on a DataCombined simulated entry, in `addDataCombined()` and in a hand-written definition file: when it is left out, `createDataCombined()` names the curve by whatever is written in `path`, so naming an output by its output-path id gives a short legend entry without repeating the name. `label` stays required on an observed entry. (#1280)
 - An output-path id written in a DataCombined simulated entry's `path` is now matched the way the project's other references are matched, so its spelling need not be the canonical one (`Aciclovir_PVB` finds `aciclovir_pvb`). A value that looks like an output-path id but names none is reported by `validateProject()` as a warning, instead of being discovered at plotting time. (#1280)
 - Two curves in one DataCombined that end up with the same label now abort, at `addDataCombined()` and at `createDataCombined()`, and are reported as a critical error by `validateProject()`. Previously the plotting layer warned and dropped one of the two curves from the figure. (#1280)
 - `sensitivityTimeProfiles()` again labels the parameter-factor colour legend with the variation values (for example 0.1, 1, 20) and draws the lines in factor order. With ospsuite 13, which returns dataset names from `DataCombined` as a factor, the factors had been read as their positions in the list (1, 2, 3, 4) (#1259).

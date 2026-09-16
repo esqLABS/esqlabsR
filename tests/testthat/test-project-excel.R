@@ -4319,8 +4319,11 @@ test_that("Excel round-trip preserves a simulated entry that omits its label", {
     "dc_no_label"
   ]]
 
-  # The empty label cell comes back as an omission, so the curve keeps its
-  # default name across the round trip.
-  expect_true(.isMissingField(dc$simulated[[1]]$label))
-  expect_identical(dc$simulated[[1]]$path, "Aciclovir_PVB")
+  # The empty label cell comes back as an omission (no `label` member at all),
+  # so the curve keeps its default name across the round trip, and the rest of
+  # the entry survives unchanged.
+  expect_identical(
+    dc$simulated[[1]],
+    list(scenario = "aciclovir_iv", path = "Aciclovir_PVB")
+  )
 })
