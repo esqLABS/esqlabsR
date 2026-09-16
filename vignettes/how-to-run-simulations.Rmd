@@ -118,9 +118,27 @@ The reloaded record has the same shape as the one `runScenarios()` returned, so 
 
 ## Tune the run
 
-`runScenarios()` accepts a `simulationRunOptions` argument, an `ospsuite::SimulationRunOptions` object, controlling solver settings and whether scenarios are simulated in parallel. Leaving it at its default `NULL` uses the package defaults, which is right for most analyses. Pass one explicitly when you need to tune the run, for instance to spread many scenarios across several cores.
+`runScenarios()` takes two separate arguments, because how a run is executed and how the solver behaves are two different things.
 
-A project can also carry its own defaults in `defaultSimulationRunOptions`, which `runScenarios()` falls back on when you pass no options of your own; see `vignette("reference-project-file")` for the fields it accepts.
+`simulationRunOptions` says how the run is executed: how many cores to use, and whether progress is reported.
+
+```{r eval=FALSE}
+runScenarios(
+  project,
+  simulationRunOptions = ospsuite::SimulationRunOptions$new(numberOfCores = 8)
+)
+```
+
+`solverSettings` says how the solver behaves, as a named list:
+
+```{r eval=FALSE}
+# A tighter tolerance for this one run, without editing the project
+runScenarios(project, solverSettings = list(relTol = 1e-8))
+```
+
+Leaving both at their default `NULL` is right for most analyses.
+
+Solver settings can also be stored in the project, so a run is reproducible from the shared project artifact: `defaultSolverSettings` applies to every scenario, and a single scenario can carry a `solverSettings` block of its own. The `solverSettings` argument wins over both, setting by setting. See `vignette("reference-project-file")` for the settings these accept and how the levels combine. How the run is executed is never stored in the project.
 
 ## Where to go next
 

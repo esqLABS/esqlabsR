@@ -1065,54 +1065,36 @@ test_that(".createSinglePITask applies objectiveFunctionOptions from the configu
   expect_equal(ofo$logScaleSD, 0.1)
 })
 
-test_that(".createSinglePITask applies simulationRunOptions from the configuration block", {
+test_that(".createSinglePITask applies the configuration block's solver settings", {
   project <- testProject()
   observedData <- loadObservedData(project)
   mkTask <- function(configuration) {
     testPITask(configuration = configuration)
   }
 
-  # No block: simulationRunOptions stays NULL.
+  # No block: the task's simulations keep their model files' solver settings
+  # (on, for the Aciclovir fixture).
   pi <- .createSinglePITask(project, mkTask(list()), observedData)
-  expect_null(pi$configuration$simulationRunOptions)
+  expect_true(pi$simulations[[1]]$solver$checkForNegativeValues)
 
-  # numberOfCores only.
-  pi <- .createSinglePITask(
-    project,
-    mkTask(list(simulationRunOptions = list(numberOfCores = 2))),
-    observedData
-  )
-  opts <- pi$configuration$simulationRunOptions
-  expect_s3_class(opts, "SimulationRunOptions")
-  expect_equal(opts$numberOfCores, 2L)
-
-  # checkForNegativeValues only: a solver setting, written to the task's
-  # simulations rather than to the run options (#1252).
+  # A task-level setting reaches the solver.
   pi <- .createSinglePITask(
     project,
     mkTask(list(simulationRunOptions = list(checkForNegativeValues = FALSE))),
     observedData
   )
-  expect_s3_class(pi$configuration$simulationRunOptions, "SimulationRunOptions")
   expect_false(pi$simulations[[1]]$solver$checkForNegativeValues)
 
-  # Both set.
+  # Every setting, not only the negative-values check.
   pi <- .createSinglePITask(
     project,
-    mkTask(list(
-      simulationRunOptions = list(
-        numberOfCores = 4,
-        checkForNegativeValues = FALSE
-      )
-    )),
+    mkTask(list(simulationRunOptions = list(relTol = 1e-7))),
     observedData
   )
-  opts <- pi$configuration$simulationRunOptions
-  expect_equal(opts$numberOfCores, 4L)
-  expect_false(pi$simulations[[1]]$solver$checkForNegativeValues)
+  expect_identical(pi$simulations[[1]]$solver$relTol, 1e-7)
 
-  # Project default without a task-level block: the default reaches the solver.
-  project$defaultSimulationRunOptions <- list(checkForNegativeValues = FALSE)
+  # Project defaults without a task-level block: the defaults reach the solver.
+  project$defaultSolverSettings <- list(checkForNegativeValues = FALSE)
   pi <- .createSinglePITask(project, mkTask(list()), observedData)
   expect_false(pi$simulations[[1]]$solver$checkForNegativeValues)
 

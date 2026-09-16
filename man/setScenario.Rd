@@ -18,11 +18,13 @@ accepted, and then supplies every field; see the section below.}
 \code{population}, \code{application}, \code{parameterSets}, \code{initialConditions},
 \code{outputPaths}, \code{simulationTime}, \code{simulationTimeUnit}, \code{steadyState},
 \code{steadyStateTime}, \code{steadyStateTimeUnit}, \code{overwriteFormulasInSS},
-\code{readPopulationFromCSV}. Each takes the value \code{\link[=addScenario]{addScenario()}} documents for
-it, but has no default here: an omitted field is left untouched, a field
-passed as \code{NULL} is cleared. Scalar-per-definition fields recycle/align
-across \code{id}; \code{parameterSets}, \code{initialConditions} and \code{outputPaths} are
-applied whole. An unknown or unnamed field triggers an error.}
+\code{readPopulationFromCSV}, \code{solverSettings}. Each takes the value
+\code{\link[=addScenario]{addScenario()}} documents for it, but has no default here: an omitted
+field is left untouched, a field passed as \code{NULL} is cleared.
+Scalar-per-definition fields recycle/align across \code{id}; \code{parameterSets},
+\code{initialConditions}, \code{outputPaths} and \code{solverSettings} are applied whole,
+so \code{solverSettings} replaces the scenario's block rather than merging into
+it. An unknown or unnamed field triggers an error.}
 }
 \value{
 The \code{project} object, invisibly.

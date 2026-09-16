@@ -78,6 +78,16 @@
       -- Definitions -----------------------------------------------------------------
         * No definitions yet.
 
+# a project file's run options are reported and dropped
+
+    Code
+      invisible(loadProject(path))
+    Condition
+      Warning:
+      ! 'Project.json' sets 1 run option that a project file does not carry: numberOfCores.
+      i A project file holds solver settings. Pass run options to `runScenarios()` or `buildSimulations()` instead, as `simulationRunOptions = ospsuite::SimulationRunOptions$new(...)`; a parameter identification reads them from its own task.
+      i The setting is ignored and dropped on the next `saveProject()`.
+
 # a whole-section assignment through a section accessor is rejected
 
     Code

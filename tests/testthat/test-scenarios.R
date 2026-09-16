@@ -22,6 +22,7 @@ test_that("Scenario has the documented field defaults", {
   expect_null(sc$steadyStateTimeUnit)
   expect_false(sc$overwriteFormulasInSS)
   expect_null(sc$modelParameterSets)
+  expect_null(sc$solverSettings)
 })
 
 test_that("as.list(Scenario()) exposes exactly the v2.0 schema fields", {
@@ -45,7 +46,8 @@ test_that("as.list(Scenario()) exposes exactly the v2.0 schema fields", {
       "steadyStateTimeUnit",
       "overwriteFormulasInSS",
       "modelParameterSets",
-      "initialConditions"
+      "initialConditions",
+      "solverSettings"
     )
   )
 })
@@ -129,6 +131,62 @@ test_that("a scenario's initialConditions round-trips through serialize/parse", 
     list()
   )[["RT"]]
   expect_identical(reparsed$initialConditions, c("ic1", "ic2"))
+})
+
+test_that(".parseScenarios reads a scenario's solverSettings block verbatim", {
+  raw <- list(list(
+    name = "Stiff",
+    modelFile = "m.pkml",
+    solverSettings = list(relTol = 1e-6, checkForNegativeValues = FALSE)
+  ))
+  sc <- .parseScenarios(raw, list())[["Stiff"]]
+  expect_identical(
+    sc$solverSettings,
+    list(relTol = 1e-6, checkForNegativeValues = FALSE)
+  )
+})
+
+test_that(".parseScenarios leaves solverSettings NULL when JSON omits it", {
+  raw <- list(list(name = "Plain", modelFile = "m.pkml"))
+  expect_null(.parseScenarios(raw, list())[["Plain"]]$solverSettings)
+})
+
+test_that("a scenario's solverSettings round-trips through serialize/parse", {
+  sc <- Scenario(
+    scenarioName = "RTSolver",
+    modelFile = "m.pkml",
+    solverSettings = list(relTol = 1e-6, hMax = 0.5)
+  )
+  json <- .scenarioToJson(sc)
+  expect_identical(json$solverSettings, list(relTol = 1e-6, hMax = 0.5))
+
+  reparsed <- .parseScenarios(
+    list(stats::setNames(
+      list(json$name, json$modelFile, json$solverSettings),
+      c("name", "modelFile", "solverSettings")
+    )),
+    list()
+  )[["RTSolver"]]
+  expect_identical(reparsed$solverSettings, list(relTol = 1e-6, hMax = 0.5))
+})
+
+test_that("a scenario without solverSettings emits no key at all", {
+  # `null` is not an option: a `jsonlite` round-trip turns it into `{}`, which
+  # `.assertNoEmptyObjectFields()` then rejects on load.
+  json <- .scenarioToJson(Scenario(
+    scenarioName = "Plain",
+    modelFile = "m.pkml"
+  ))
+  expect_false("solverSettings" %in% names(json))
+})
+
+test_that("a hand-written empty solverSettings object is rejected on parse", {
+  raw <- list(list(
+    name = "Empty",
+    modelFile = "m.pkml",
+    solverSettings = stats::setNames(list(), character(0))
+  ))
+  expect_error(.parseScenarios(raw, list()), "empty object")
 })
 
 test_that(".parseScenarios sets simulationType=Population when populationId present", {
@@ -764,6 +822,142 @@ test_that("setScenario requires its fields to be named", {
   )
 })
 
+# solverSettings ----
+
+test_that("addScenario stores a solverSettings block", {
+  project <- testProject()
+  addScenario(
+    project,
+    "stiff",
+    modelFile = "Aciclovir.pkml",
+    solverSettings = list(relTol = 1e-6, hMax = 0.5)
+  )
+  expect_identical(
+    project$definitions$scenarios[["stiff"]]$solverSettings,
+    list(relTol = 1e-6, hMax = 0.5)
+  )
+})
+
+test_that("addScenario gives every id the same intact solverSettings block", {
+  # The block is one value per scenario, not one setting per scenario:
+  # `.wholeField()` reads a list whose length matches the id count as one
+  # element per id, which would hand each scenario a bare unnamed number.
+  project <- testProject()
+  addScenario(
+    project,
+    c("stiff_a", "stiff_b"),
+    modelFile = "Aciclovir.pkml",
+    solverSettings = list(relTol = 1e-6, hMax = 0.5)
+  )
+  for (id in c("stiff_a", "stiff_b")) {
+    expect_identical(
+      project$definitions$scenarios[[id]]$solverSettings,
+      list(relTol = 1e-6, hMax = 0.5)
+    )
+  }
+})
+
+test_that("setScenario replaces the solverSettings block rather than merging", {
+  project <- testProject()
+  addScenario(
+    project,
+    "stiff",
+    modelFile = "Aciclovir.pkml",
+    solverSettings = list(relTol = 1e-6, hMax = 0.5)
+  )
+
+  setScenario(project, "stiff", solverSettings = list(relTol = 1e-8))
+  expect_identical(
+    project$definitions$scenarios[["stiff"]]$solverSettings,
+    list(relTol = 1e-8)
+  )
+})
+
+test_that("setScenario clears the solverSettings block with NULL", {
+  project <- testProject()
+  addScenario(
+    project,
+    "stiff",
+    modelFile = "Aciclovir.pkml",
+    solverSettings = list(relTol = 1e-6)
+  )
+
+  setScenario(project, "stiff", solverSettings = NULL)
+  sc <- project$definitions$scenarios[["stiff"]]
+  expect_null(sc$solverSettings)
+  # Cleared, not dropped: the record keeps the full field shape, so the
+  # serializer and the unknown-field validator still see a known field.
+  expect_true("solverSettings" %in% names(sc))
+})
+
+test_that("setScenario gives every id the same intact solverSettings block", {
+  project <- testProject()
+  addScenario(
+    project,
+    c("stiff_a", "stiff_b"),
+    modelFile = "Aciclovir.pkml"
+  )
+
+  setScenario(
+    project,
+    c("stiff_a", "stiff_b"),
+    solverSettings = list(relTol = 1e-6, hMax = 0.5)
+  )
+  for (id in c("stiff_a", "stiff_b")) {
+    expect_identical(
+      project$definitions$scenarios[[id]]$solverSettings,
+      list(relTol = 1e-6, hMax = 0.5)
+    )
+  }
+})
+
+test_that("a scenario's solverSettings survives a save and reload", {
+  project <- testProject()
+  addScenario(
+    project,
+    "stiff",
+    modelFile = "Aciclovir.pkml",
+    solverSettings = list(relTol = 1e-6, mxStep = 100000)
+  )
+  saveProject(project)
+
+  reloaded <- loadProject(project$info$projectFilePath)
+  # `expect_equal`, not `expect_identical`: JSON has one number type, so a
+  # whole `mxStep` comes back as an integer. `.applySolverSettings()` coerces
+  # it either way.
+  expect_equal(
+    reloaded$definitions$scenarios[["stiff"]]$solverSettings,
+    list(relTol = 1e-6, mxStep = 100000)
+  )
+})
+
+test_that("addScenario rejects an unsound solverSettings block", {
+  project <- testProject()
+  expect_snapshot(
+    error = TRUE,
+    addScenario(
+      project,
+      "stiff",
+      modelFile = "Aciclovir.pkml",
+      solverSettings = list(reltol = 1e-6, mxStep = 1.5)
+    )
+  )
+  expect_false("stiff" %in% names(project$definitions$scenarios))
+})
+
+test_that("setScenario rejects an unsound solverSettings block", {
+  project <- testProject()
+  before <- project$definitions$scenarios[["testscenario"]]$solverSettings
+  expect_snapshot(
+    error = TRUE,
+    setScenario(project, "testscenario", solverSettings = list(hMax = "big"))
+  )
+  expect_identical(
+    project$definitions$scenarios[["testscenario"]]$solverSettings,
+    before
+  )
+})
+
 # Passing a parsed Scenario record back ----
 
 test_that("a parsed scenario is accepted back by addScenario() unchanged", {
@@ -773,6 +967,7 @@ test_that("a parsed scenario is accepted back by addScenario() unchanged", {
   # base-unit steady-state time). Handing the record back has to survive all of
   # that: the copy must equal the original in every field but its id.
   project <- testProject()
+  setScenario(project, "testscenario", solverSettings = list(relTol = 1e-6))
   sc <- project$definitions$scenarios[["testscenario"]]
 
   addScenario(project, sc, overwrite = TRUE)

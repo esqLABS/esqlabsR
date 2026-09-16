@@ -1,3 +1,31 @@
+# runScenarios rejects a simulationRunOptions that is not the class
+
+    Code
+      runScenarios(project, scenarios = "testscenario", simulationRunOptions = 4)
+    Condition
+      Error in `runScenarios()`:
+      ! `simulationRunOptions` must be an <ospsuite::SimulationRunOptions>, not a number. i Build one with `ospsuite::SimulationRunOptions$new(numberOfCores = 4)`. i To change how the solver behaves, pass `solverSettings` instead, as `list(relTol = 1e-6)`.
+
+---
+
+    Code
+      buildSimulations(project, scenarios = "testscenario", simulationRunOptions = list(
+        relTol = 1e-06))
+    Condition
+      Error in `buildSimulations()`:
+      ! `simulationRunOptions` must be an <ospsuite::SimulationRunOptions>, not a list. i Build one with `ospsuite::SimulationRunOptions$new(numberOfCores = 4)`. i To change how the solver behaves, pass `solverSettings` instead, as `list(relTol = 1e-6)`.
+
+# buildSimulations reports an unsound solverSettings argument
+
+    Code
+      buildSimulations(project, scenarios = "testscenario", solverSettings = list(
+        reltol = 1e-04, mxStep = 1.5))
+    Condition
+      Error in `buildSimulations()`:
+      ! Invalid `solverSettings`:
+      x solverSettings has unknown setting 'reltol'; the settings are absTol, checkForNegativeValues, h0, hMax, hMin, mxStep, relTol, useJacobian
+      x solverSettings$mxStep must be a single whole number between 1 and 2147483647
+
 # a user parameter path the model lacks still stops the build
 
     Code
