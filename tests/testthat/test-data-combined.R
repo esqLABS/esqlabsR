@@ -25,10 +25,10 @@ test_that(".validateDataCombined accepts a well-formed section", {
   expect_false(.validateDataCombined(dc)$hasCriticalErrors())
 })
 
-test_that(".validateDataCombined flags a simulated entry missing label", {
+test_that(".validateDataCombined accepts a simulated entry without a label", {
+  # `label` is optional on a simulated entry: the curve is named by `path`.
   dc <- list(DC = list(simulated = list(list(scenario = "s", path = "p"))))
-  result <- .validateDataCombined(dc)
-  expect_true(result$hasCriticalErrors())
+  expect_false(.validateDataCombined(dc)$hasCriticalErrors())
 })
 
 test_that(".validateDataCombined flags a simulated entry missing scenario", {
@@ -50,8 +50,8 @@ test_that(".validateDataCombined treats an empty string as missing", {
   dc <- list(
     DC = list(
       simulated = list(list(
-        label = "",
-        scenario = "s",
+        label = "l",
+        scenario = "",
         path = "p"
       ))
     )
@@ -75,7 +75,7 @@ test_that(".validateDataCombined flags duplicate dataCombined ids", {
 test_that("validateProject runs the dataCombined adapter", {
   project <- .fakeProject(
     dataCombined = list(
-      Bad = list(simulated = list(list(scenario = "s", path = "p")))
+      Bad = list(simulated = list(list(label = "l", path = "p")))
     )
   )
   results <- .runProjectValidation(
@@ -394,4 +394,289 @@ test_that("createDataCombined returns empty DataCombined when spec has no entrie
   expect_named(result, "EmptyDC")
   expect_s3_class(result$EmptyDC, "DataCombined")
   expect_null(result$EmptyDC$toDataFrame())
+})
+
+# Output-path reference matching ----
+
+test_that(".matchOutputPathIds matches exactly, then canonically", {
+  outputPaths <- list(aciclovir_pvb = "Organism|A|B")
+
+  expect_identical(
+    .matchOutputPathIds("aciclovir_pvb", outputPaths),
+    "aciclovir_pvb"
+  )
+  # A reference resolves the way every other project reference does, so the
+  # spelling need not be the canonical one.
+  expect_identical(
+    .matchOutputPathIds("Aciclovir_PVB", outputPaths),
+    "aciclovir_pvb"
+  )
+  expect_identical(.matchOutputPathIds("unknown", outputPaths), character(0))
+  # A value carrying the OSP separator is a model path in every case.
+  expect_identical(
+    .matchOutputPathIds("Organism|A|B", outputPaths),
+    character(0)
+  )
+  expect_identical(.matchOutputPathIds(NULL, outputPaths), character(0))
+  expect_identical(.matchOutputPathIds("", outputPaths), character(0))
+})
+
+test_that(".resolveOutputPathValue resolves an id and leaves a model path alone", {
+  outputPaths <- list(aciclovir_pvb = "Organism|A|B")
+
+  resolved <- .resolveOutputPathValue("Aciclovir_PVB", outputPaths)
+  expect_identical(resolved$path, "Organism|A|B")
+  expect_identical(resolved$fromId, "aciclovir_pvb")
+
+  verbatim <- .resolveOutputPathValue("Organism|C|D", outputPaths)
+  expect_identical(verbatim$path, "Organism|C|D")
+  expect_null(verbatim$fromId)
+
+  # A single-segment quantity path that names no id stays a model path.
+  single <- .resolveOutputPathValue("Lonely", outputPaths)
+  expect_identical(single$path, "Lonely")
+  expect_null(single$fromId)
+})
+
+test_that(".resolveOutputPathValue aborts on an ambiguous reference", {
+  # Only reachable in a hand-edited tree: authoring rejects two ids that
+  # canonicalize alike.
+  outputPaths <- list(
+    Aciclovir_PVB = "Organism|A|B",
+    aciclovir_pvb = "Organism|C|D"
+  )
+  expect_error(
+    .resolveOutputPathValue("ACICLOVIR_PVB", outputPaths),
+    "matches several output path ids"
+  )
+})
+
+# Default curve labels ----
+
+test_that("a simulated entry without a label is named by its path as written", {
+  project <- testProject()
+  addDataCombined(
+    project,
+    "dc_default_label",
+    simulated = list(list(scenario = "testscenario", path = "Aciclovir_PVB"))
+  )
+  simulated <- runScenarios(project, scenarios = "testscenario")
+
+  result <- createDataCombined(
+    project,
+    dataCombined = "dc_default_label",
+    scenarioResults = simulated
+  )
+
+  df <- result$dc_default_label$toDataFrame()
+  # The id resolves canonically to its literal path, but the curve keeps the
+  # spelling the definition used.
+  expect_identical(unique(as.character(df$name)), "Aciclovir_PVB")
+})
+
+test_that("a defaulted-label curve gets its own transformations", {
+  project <- testProject()
+  path <- project$definitions$outputPaths$aciclovir_pvb
+  addDataCombined(
+    project,
+    "dc_plain_default",
+    simulated = list(list(scenario = "testscenario", path = path))
+  )
+  addDataCombined(
+    project,
+    "dc_offset_default",
+    simulated = list(list(
+      scenario = "testscenario",
+      path = path,
+      yScaleFactors = 2
+    ))
+  )
+  simulated <- runScenarios(project, scenarios = "testscenario")
+
+  result <- createDataCombined(
+    project,
+    dataCombined = c("dc_plain_default", "dc_offset_default"),
+    scenarioResults = simulated
+  )
+
+  expect_equal(
+    result$dc_offset_default$toDataFrame()$yValues,
+    result$dc_plain_default$toDataFrame()$yValues * 2
+  )
+})
+
+test_that("a written label wins over the path", {
+  project <- testProject()
+  addDataCombined(
+    project,
+    "dc_written_label",
+    simulated = list(list(
+      label = "Aciclovir simulated",
+      scenario = "testscenario",
+      path = "aciclovir_pvb"
+    ))
+  )
+  simulated <- runScenarios(project, scenarios = "testscenario")
+
+  result <- createDataCombined(
+    project,
+    dataCombined = "dc_written_label",
+    scenarioResults = simulated
+  )
+  expect_identical(
+    unique(as.character(result$dc_written_label$toDataFrame()$name)),
+    "Aciclovir simulated"
+  )
+})
+
+test_that("addDataCombined accepts a simulated entry without a label but not an observed one", {
+  project <- testProject()
+  expect_silent(addDataCombined(
+    project,
+    "dc_no_label",
+    simulated = list(list(scenario = "testscenario", path = "aciclovir_pvb"))
+  ))
+  expect_error(
+    addDataCombined(
+      project,
+      "dc_obs_no_label",
+      observed = list(list(dataSet = "d"))
+    ),
+    "observed entry is missing required field"
+  )
+})
+
+test_that("an entry naming its output by id names both id and path when not simulated", {
+  project <- testProject()
+  addOutputPath(project, "ghost_path", "Organism|NotAReal|Path")
+  addDataCombined(
+    project,
+    "dc_ghost",
+    simulated = list(list(scenario = "testscenario", path = "ghost_path"))
+  )
+  simulated <- runScenarios(project, scenarios = "testscenario")
+
+  expect_error(
+    createDataCombined(
+      project,
+      dataCombined = "dc_ghost",
+      scenarioResults = simulated
+    ),
+    "ghost_path"
+  )
+})
+
+# Unique labels within one DataCombined ----
+
+test_that("duplicate labels abort the build before any curve is added", {
+  project <- testProject()
+  path <- project$definitions$outputPaths$aciclovir_pvb
+  # Built by hand: `addDataCombined()` refuses the same collision (below).
+  project$definitions$dataCombined
+  .fakeDuplicate <- list(
+    simulated = list(
+      list(scenario = "testscenario", path = path),
+      list(scenario = "testscenario", path = path)
+    )
+  )
+  dc <- .unwrapDefinitionList(project$definitions$dataCombined) %||% list()
+  dc$dc_dupe <- .fakeDuplicate
+  project$.__enclos_env__$private$.setSection("dataCombined", dc)
+
+  simulated <- runScenarios(project, scenarios = "testscenario")
+  expect_error(
+    createDataCombined(
+      project,
+      dataCombined = "dc_dupe",
+      scenarioResults = simulated,
+      validate = FALSE
+    ),
+    "curves with the label"
+  )
+  # The report does not depend on scenario results or on `stopIfNotFound`.
+  expect_error(
+    createDataCombined(
+      project,
+      dataCombined = "dc_dupe",
+      scenarioResults = list(),
+      stopIfNotFound = FALSE,
+      validate = FALSE
+    ),
+    "curves with the label"
+  )
+})
+
+test_that("addDataCombined aborts on duplicate labels, simulated and observed together", {
+  project <- testProject()
+  expect_error(
+    addDataCombined(
+      project,
+      "dc_dupe_author",
+      simulated = list(
+        list(scenario = "testscenario", path = "aciclovir_pvb"),
+        list(
+          label = "aciclovir_pvb",
+          scenario = "testscenario",
+          path = "Organism|A"
+        )
+      )
+    ),
+    "curves with the label"
+  )
+  expect_false("dc_dupe_author" %in% names(project$definitions$dataCombined))
+
+  expect_error(
+    addDataCombined(
+      project,
+      "dc_dupe_mixed",
+      simulated = list(list(
+        label = "x",
+        scenario = "testscenario",
+        path = "Organism|A"
+      )),
+      observed = list(list(label = "x", dataSet = "d"))
+    ),
+    "curves with the label"
+  )
+})
+
+test_that("the same label may be reused in different DataCombined", {
+  project <- testProject()
+  addDataCombined(
+    project,
+    "dc_one",
+    simulated = list(list(
+      label = "x",
+      scenario = "testscenario",
+      path = "Organism|A"
+    ))
+  )
+  expect_silent(addDataCombined(
+    project,
+    "dc_two",
+    simulated = list(list(
+      label = "x",
+      scenario = "testscenario",
+      path = "Organism|A"
+    ))
+  ))
+})
+
+test_that(".validateDataCombined reports duplicate labels as a critical error", {
+  dc <- list(
+    DC = list(
+      simulated = list(list(scenario = "s", path = "p")),
+      observed = list(list(label = "p", dataSet = "d"))
+    )
+  )
+  result <- .validateDataCombined(dc)
+  expect_true(result$hasCriticalErrors())
+  # Labels differing only in case are two distinct curves.
+  ok <- list(
+    DC = list(
+      simulated = list(list(scenario = "s", path = "p")),
+      observed = list(list(label = "P", dataSet = "d"))
+    )
+  )
+  expect_false(.validateDataCombined(ok)$hasCriticalErrors())
 })

@@ -642,7 +642,9 @@ print.DataCombined <- function(x, ...) {
 # @noRd
 .requiredDataCombinedFields <- function(dataType) {
   if (dataType == "simulated") {
-    c("label", "scenario", "path")
+    # `label` is optional on a simulated entry: it defaults to the `path` value
+    # exactly as written (see `.effectiveSimulatedLabel()`).
+    c("scenario", "path")
   } else {
     c("label", "dataSet")
   }
@@ -1047,7 +1049,10 @@ removePlotGrid <- function(project, id) {
 #'
 #' Append new DataCombined entries (each with one or more simulated and/or
 #' observed rows) to `dataCombined` definitions. Pass a vector of ids to add
-#' several DataCombined in one call.
+#' several DataCombined in one call. The labels of the curves in one
+#' DataCombined must be distinct, counting default labels and simulated and
+#' observed curves together; a repeated label aborts, so a project that cannot
+#' be plotted is never written to disk.
 #'
 #' @inherit vectorizedAuthoring details
 #'
@@ -1056,17 +1061,20 @@ removePlotGrid <- function(project, id) {
 #'   DataCombined to add). Each is canonicalized to a safe, lowercase id (a
 #'   warning names the result if it changed).
 #' @param simulated For a single DataCombined (`id` length 1), a list of
-#'   named lists, each including `label`, `scenario`, and `path` (optional
+#'   named lists, each including `scenario` and `path` (optional `label`,
 #'   `group`, `xOffsets`, `xOffsetsUnits`, `yOffsets`, `yOffsetsUnits`,
-#'   `xScaleFactors`, `yScaleFactors`). `path` may be either a literal model
-#'   quantity path or an output-path id (a key of the project's `outputPaths`
-#'   definitions); an id is resolved to its literal path when the DataCombined
-#'   is built by [createDataCombined()]. The `scenario` reference is
-#'   canonicalized to match its scenario definition. To add several
-#'   DataCombined in one call, pass a list of the same length as `id`, one
-#'   such simulated list per DataCombined.
+#'   `xScaleFactors`, `yScaleFactors`). `path` may be either a model quantity
+#'   path or an output-path id (a key of the project's `outputPaths`
+#'   definitions); an id is resolved to its model path when the DataCombined is
+#'   built by [createDataCombined()], and is matched the way the project's
+#'   other references are matched, so its spelling need not be the canonical
+#'   one. When `label` is left out, the curve is named by whatever is written
+#'   in `path`. The `scenario` reference is canonicalized to match its scenario
+#'   definition. To add several DataCombined in one call, pass a list of the
+#'   same length as `id`, one such simulated list per DataCombined.
 #' @param observed Like `simulated`, but each named list includes `label` and
 #'   `dataSet` (optional fields as `simulated` minus `scenario` and `path`).
+#'   `label` is required here.
 #' @param overwrite Logical scalar. When `FALSE` (default), an id that already
 #'   exists aborts. When `TRUE`, the existing DataCombined is replaced
 #'   (last-write-wins).
@@ -1126,6 +1134,13 @@ addDataCombined <- function(
     }
     for (e in perIdObserved[[i]]) {
       .checkDataCombinedEntry(e, "observed")
+    }
+    duplicated <- .duplicateDataCombinedLabels(
+      perIdSimulated[[i]],
+      perIdObserved[[i]]
+    )
+    if (length(duplicated) > 0L) {
+      cli::cli_abort(messages$duplicateDataCombinedLabels(id[[i]], duplicated))
     }
   }
 

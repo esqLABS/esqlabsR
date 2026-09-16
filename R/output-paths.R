@@ -244,3 +244,71 @@ setOutputPath <- function(project, id, path) {
 
   result
 }
+
+# Output-path reference matching ----
+
+# Which output-path ids does a `path` value name?
+#
+# A DataCombined simulated entry's `path` carries either a literal model
+# quantity path or an output-path id. The rules below settle which:
+#   * a value carrying the OSP separator `|` is a model path in every case, so
+#     it is never compared against ids (id canonicalization replaces `|`, so no
+#     id can hold one);
+#   * an exact key match names that one id;
+#   * otherwise the comparison is the canonical one every other project
+#     reference resolves with, so `Aciclovir_PVB` finds the stored
+#     `aciclovir_pvb`.
+#
+# Returns zero, one, or (only from a hand-edited tree holding two ids that
+# canonicalize alike) several ids.
+#
+# @keywords internal
+# @noRd
+.matchOutputPathIds <- function(path, outputPaths) {
+  if (
+    is.null(path) ||
+      length(path) != 1L ||
+      is.na(path) ||
+      !nzchar(as.character(path))
+  ) {
+    return(character(0))
+  }
+  path <- as.character(path)
+  if (grepl("|", path, fixed = TRUE)) {
+    return(character(0))
+  }
+  ids <- names(outputPaths %||% list())
+  if (length(ids) == 0L) {
+    return(character(0))
+  }
+  if (path %in% ids) {
+    return(path)
+  }
+  ids[.canonicalizeForCompare(ids) == .canonicalizeForCompare(path)]
+}
+
+# Resolve a `path` value to the literal model path to plot.
+#
+# Returns a list of the literal `path` and `fromId`, the id it was resolved
+# from (`NULL` when the value is used verbatim). A value naming more than one id
+# is ambiguous and aborts.
+#
+# @keywords internal
+# @noRd
+.resolveOutputPathValue <- function(
+  path,
+  outputPaths,
+  call = rlang::caller_env()
+) {
+  matched <- .matchOutputPathIds(path, outputPaths)
+  if (length(matched) == 0L) {
+    return(list(path = path, fromId = NULL))
+  }
+  if (length(matched) > 1L) {
+    cli::cli_abort(
+      messages$ambiguousOutputPathRef(path, matched),
+      call = call
+    )
+  }
+  list(path = outputPaths[[matched]], fromId = matched)
+}
