@@ -54,7 +54,7 @@
 print.DefinitionList <- function(x, ...) {
   ospsuite.utils::ospPrintClass(x)
   ospsuite.utils::ospPrintItems(
-    names(x),
+    .definitionListIds(x),
     title = .definitionListTitle(x),
     print_empty = TRUE
   )
@@ -65,6 +65,27 @@ print.DefinitionList <- function(x, ...) {
 #' @noRd
 format.DefinitionList <- function(x, ...) {
   utils::capture.output(print(x, ...))
+}
+
+# The ids a section shows when it prints. Every section but one is a named list
+# keyed by id, so its ids are its names. `observedData` is the exception: its
+# JSON shape is an array, not a map, so it is stored as an unnamed list of
+# declarations and `names()` is `NULL`. Its ids are derived from each
+# declaration exactly as `removeObservedData()` derives the one it matches on
+# (a declared `id`, else the file basename, else the programmatic name), so the
+# names the section prints are the names an authoring function accepts. A
+# declaration that carries nothing to derive an id from shows as `(no id)`;
+# `validateProject()` is what reports it as under-specified.
+#
+# @keywords internal
+# @noRd
+.definitionListIds <- function(x) {
+  if (!identical(attr(x, "definitionKind"), "observedData")) {
+    return(names(x))
+  }
+  ids <- .observedDataSectionIds(.unwrapDefinitionList(x))
+  ids[is.na(ids)] <- "(no id)"
+  ids
 }
 
 # Build the `ospPrintItems` title line for a section accessor: the section
