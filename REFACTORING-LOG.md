@@ -261,3 +261,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-09-15 21:28: The Get started article points to the README for installation, names what a Scenario defines in modeler terms, links the Scenario Result reference, and drops the code wording (keyed, in memory).
 - 2026-09-16 10:40: The NEWS bullets for the scenario print name the print() function, as the contributor guide requires. (#1279)
 - 2026-09-17 14:14: The refactoring rules say NEWS compares the development version against the last release, so a change made and undone within the unreleased cycle gets no entry. (#1279)
+- 2026-09-17 14:15: The scenario print NEWS bullets are gone: both described a change inside the unreleased 6.0.0 cycle, which its NEWS reader never saw. (#1279)
