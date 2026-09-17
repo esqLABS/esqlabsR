@@ -50,8 +50,17 @@ simulated/observed entries; \code{loadObservedData(project)} resolves observed
 sources internally. Either \code{dataCombined} or \code{plotGrids} (or both)
 selects which DataCombined to build.
 
-A simulated entry's \code{path} may be either a literal model quantity path or an
+A simulated entry's \code{path} may be either a model quantity path or an
 output-path id (a key of the project's \code{outputPaths} definitions). An id is
-resolved to its literal path before the entry is built; any value that is not
-a known id is used as a literal path.
+resolved to its model path before the entry is built, and is matched the way
+the project's other references are matched, so its spelling need not be the
+canonical one (\code{Aciclovir_PVB} finds \code{aciclovir_pvb}). Any value that names
+no output path is used as a model path.
+
+\code{label} is optional on a simulated entry: when it is left out, the curve is
+named by whatever is written in \code{path}, that is the output-path id in the
+spelling the definition uses, or the model path. \code{label} is still required on
+an observed entry. The labels of the curves in one DataCombined must be
+distinct, counting written and default labels, and simulated and observed
+curves together; a repeated label aborts.
 }

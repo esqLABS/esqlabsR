@@ -120,6 +120,21 @@ addDataCombined(
 )
 ```
 
+`label` is optional on a simulated curve. Leave it out and the curve is named by whatever you wrote in `path`, so naming the output by its **output-path id** gives a short legend entry without repeating the name:
+
+```{r add-datacombined-short}
+addDataCombined(
+  project,
+  id = "aciclovir_short",
+  simulated = list(list(
+    scenario = "aciclovir_iv",
+    path = "Aciclovir_PVB"
+  ))
+)
+```
+
+An output-path id is matched the way the project's other references are matched, so its spelling need not be the canonical one: `Aciclovir_PVB` finds the declared `aciclovir_pvb`. `label` is still required on an observed curve, because DataSet names are long and make poor legend entries. Within one **DataCombined**, the labels of all curves must be distinct, counting the ones taken from `path`; a repeat stops the plot rather than dropping a curve.
+
 Next, describe a **Plot** that draws from this **DataCombined**. The `plotType` selects the kind of chart: `individual` and `population` for time profiles, `observedVsSimulated`, `residualsVsSimulated`, and `residualsVsTime` for the diagnostic charts. Any plot-configuration field can be passed through `...`, for example a `title` or an axis unit; `vignette("reference-definition-fields")` lists them, including the four that apply to one plot type only.
 
 ```{r add-plot}

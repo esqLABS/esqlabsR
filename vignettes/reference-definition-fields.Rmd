@@ -261,9 +261,9 @@ A `simulated` entry:
 
 | Field | Required | Type | If omitted |
 | --- | --- | --- | --- |
-| `label` | **yes** | string | Critical error. Names the curve. |
+| `label` | no | string | The curve is named by whatever is written in `path`. |
 | `scenario` | **yes** | id | Critical error. |
-| `path` | **yes** | string | Critical error. An output-path id, or a full model path used verbatim when it matches no id. |
+| `path` | **yes** | string | Critical error. An output-path id, or a full model path used verbatim when it matches no id. An id is matched the way the project's other references are matched, so its spelling need not be the canonical one: `Aciclovir_PVB` finds `aciclovir_pvb`. |
 | `group` | no | string | The curve is not grouped. Curves sharing a group are plotted together. |
 
 An `observed` entry:
@@ -273,6 +273,10 @@ An `observed` entry:
 | `label` | **yes** | string | Critical error. |
 | `dataSet` | **yes** | DataSet name | Critical error. This is the DataSet name, not the observed-data source id. Read it from `getObservedDataNames(project)`. |
 | `group` | no | string | The curve is not grouped. |
+
+`label` is required on an observed entry: DataSet names are long, so a name taken from the data would read worse in the legend than the one you write.
+
+The labels of the curves in one DataCombined must be distinct, counting the labels you write and the ones taken from `path`, and counting simulated and observed curves together. A repeated label is a critical error, and plotting stops rather than dropping one of the two curves. The same label may be used again in another DataCombined.
 
 Optional per-curve transforms, applied before plotting. An offset requires its unit field:
 

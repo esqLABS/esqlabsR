@@ -1659,3 +1659,38 @@ test_that("format.ValidationResults returns the printed lines as a character vec
   expect_type(lines, "character")
   expect_match(lines, "scenarios", all = FALSE)
 })
+
+test_that("crossReferences warns on a path that looks like an undefined output path id", {
+  project <- .fakeProject(
+    outputPaths = list(aciclovir_pvb = "Organism|A|B"),
+    scenarios = list(s = list()),
+    dataCombined = list(
+      DC = list(
+        simulated = list(
+          # A mistyped id: reported, because it names no output path.
+          list(scenario = "s", path = "aciclovir_pvbb"),
+          # A known id in a non-canonical spelling: resolves, not reported.
+          list(scenario = "s", path = "Aciclovir_PVB"),
+          # A model path: never reported, since it can only be confirmed
+          # against a loaded simulation.
+          list(scenario = "s", path = "Organism|C|D")
+        )
+      )
+    )
+  )
+
+  result <- .validateCrossReferences(project, sections = "dataCombined")
+
+  expect_false(result$hasCriticalErrors())
+  # Exactly one finding: the known id and the model path are both silent.
+  expect_length(result$warnings, 1)
+  expect_identical(result$warnings[[1]]$category, "Invalid Reference")
+  expect_identical(
+    result$warnings[[1]]$message,
+    paste0(
+      "DataCombined 'DC' references 'aciclovir_pvbb', which looks like an ",
+      "output path id but is not defined; it is used as a model path ",
+      "(did you mean 'aciclovir_pvb'?)"
+    )
+  )
+})
