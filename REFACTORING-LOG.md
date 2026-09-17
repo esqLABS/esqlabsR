@@ -255,6 +255,11 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-09-14 21:56: The warning about run options in a project file no longer sends the reader to runPI(), which has no simulationRunOptions argument, and its wording is now pinned by a snapshot. (#408)
 - 2026-09-15 09:16: The sensitivity examples and tests name the Aciclovir dose as ospsuite 13.0.0.9010 exports it, which puts a "No formulation" container between the application and its schema item. (#408)
 - 2026-09-15 09:17: The population snapshots record the demographics ospsuite 13.0.0.9010 ships in its example population, which gained BSA and reordered its parameters. (#408)
+- 2026-09-15 15:10: Scenario print now lists the output paths themselves and labels the protocol field "Administration Protocol". (#1279)
+- 2026-09-16 10:20: The output paths a scenario print shows now sit under an "Output Paths" bullet in the field list, one indentation level deeper, instead of under a heading outside it. (#1279)
 - 2026-09-15 17:09: Printing `project$definitions$observedData` lists the source ids instead of a bare count with nothing under it; the section is stored as a plain list rather than keyed by id, so its ids are read from each source the same way `removeObservedData()` reads them. (#1281)
 - 2026-09-15 15:31: The README explains how a snapshot differs from the project folder and why to use one, and its wording is tidied.
 - 2026-09-15 21:28: The Get started article points to the README for installation, names what a Scenario defines in modeler terms, links the Scenario Result reference, and drops the code wording (keyed, in memory).
+- 2026-09-16 10:40: The NEWS bullets for the scenario print name the print() function, as the contributor guide requires. (#1279)
+- 2026-09-17 14:14: The refactoring rules say NEWS compares the development version against the last release, so a change made and undone within the unreleased cycle gets no entry. (#1279)
+- 2026-09-17 14:15: The scenario print NEWS bullets are gone: both described a change inside the unreleased 6.0.0 cycle, which its NEWS reader never saw. (#1279)
