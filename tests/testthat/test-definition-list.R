@@ -106,3 +106,54 @@ test_that("assigning into a section with no kind still aborts", {
 
   expect_snapshot(error = TRUE, bare[["a"]] <- 2)
 })
+
+# `observedData` is the one section stored as an unnamed list (its JSON shape is
+# an array, not a map), so its ids cannot come from `names()` like every other
+# section's. `.definitionListIds()` is what the print method asks for them.
+
+test_that(".definitionListIds takes a keyed section's ids from its names", {
+  wrapped <- .asDefinitionList(list(one = 1, two = 2), "scenarios")
+
+  expect_equal(.definitionListIds(wrapped), c("one", "two"))
+})
+
+test_that(".definitionListIds derives the ids of the unnamed observedData section", {
+  section <- .asDefinitionList(
+    list(
+      list(type = "excel", file = "Laskin_1982.xlsx"),
+      list(type = "pkml", file = "aciclovir_plasma.pkml"),
+      list(type = "programmatic", name = "simulated_plasma")
+    ),
+    "observedData"
+  )
+
+  expect_equal(
+    .definitionListIds(section),
+    c("Laskin_1982.xlsx", "aciclovir_plasma.pkml", "simulated_plasma")
+  )
+})
+
+test_that(".definitionListIds labels an observedData declaration with no derivable id", {
+  section <- .asDefinitionList(list(list(type = "pkml")), "observedData")
+
+  expect_equal(.definitionListIds(section), "(no id)")
+})
+
+test_that(".definitionListIds returns no ids for an empty observedData section", {
+  expect_equal(
+    .definitionListIds(.asDefinitionList(list(), "observedData")),
+    character(0)
+  )
+})
+
+test_that("printing the observedData section shows its derived ids", {
+  section <- .asDefinitionList(
+    list(
+      list(type = "excel", file = "Laskin_1982.xlsx"),
+      list(type = "programmatic", name = "simulated_plasma")
+    ),
+    "observedData"
+  )
+
+  expect_snapshot(print(section))
+})

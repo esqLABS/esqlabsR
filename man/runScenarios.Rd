@@ -9,6 +9,7 @@ runScenarios(
   scenarios = NULL,
   customParams = NULL,
   simulationRunOptions = NULL,
+  solverSettings = NULL,
   validate = TRUE,
   stopIfParameterNotFound = TRUE,
   stopIfFails = TRUE
@@ -28,12 +29,22 @@ to a different form warns, naming the id it resolved to.}
 \code{units} — applied to every selected scenario as the final
 parameter layer.}
 
-\item{simulationRunOptions}{Optional \link[ospsuite:SimulationRunOptions]{ospsuite::SimulationRunOptions}
-for the simulation run. \code{NULL} (default) falls back to the project's
-\code{defaultSimulationRunOptions}, including its solver setting
-\code{checkForNegativeValues}, which is written to each simulation. An
-explicit value replaces the project default entirely, so the
-simulations keep the solver settings of their model files.}
+\item{simulationRunOptions}{How this run is executed: an
+\href{https://www.open-systems-pharmacology.org/OSPSuite-R/reference/SimulationRunOptions.html}{SimulationRunOptions}
+object setting \code{numberOfCores} and \code{showProgress}, for example
+\code{ospsuite::SimulationRunOptions$new(numberOfCores = 8)}. \code{NULL} (default)
+uses the \code{ospsuite} defaults. This is not project data, so a project file
+never supplies it.}
+
+\item{solverSettings}{How the solver behaves, as a named list of
+\href{https://www.open-systems-pharmacology.org/OSPSuite-R/reference/SolverSettings.html}{SolverSettings}
+values: any of \code{absTol}, \code{relTol}, \code{h0}, \code{hMin}, \code{hMax}, \code{mxStep},
+\code{useJacobian} and \code{checkForNegativeValues}, for example
+\code{list(relTol = 1e-6)}.
+A setting given here wins over the project's \code{defaultSolverSettings} and
+over each scenario's own \code{solverSettings}. A setting you leave out keeps
+whichever of those applies, or the value stored in the model file where
+neither gives one. \code{NULL} (default) leaves every setting to those two.}
 
 \item{validate}{Logical. If \code{TRUE} (default), runs the relevant
 section validators via \code{\link[=validateProject]{validateProject()}} before simulating and

@@ -2,14 +2,12 @@
 #
 # Modern (JSON-Project-driven) runtime path.
 
-# Build an `ospsuite::SimulationRunOptions` from a run-options record (the
-# project's `defaultSimulationRunOptions` block or a PI task's
-# `simulationRunOptions` block, as a plain list parsed from JSON), or return
-# NULL when the record is empty (so the caller keeps the package defaults).
-# Only `numberOfCores` and `showProgress` are fields of `SimulationRunOptions`;
-# an unset one keeps its default. The record's `checkForNegativeValues` is a
-# solver setting with no counterpart on `SimulationRunOptions` (assigning one
-# errors) and is written to each simulation by `.applySolverSettings()`.
+# Build an `ospsuite::SimulationRunOptions` from a parameter-identification
+# task's `simulationRunOptions` block (a plain list parsed from JSON), or return
+# NULL when the block is empty so the caller keeps the package defaults. Only
+# `numberOfCores` and `showProgress` are fields of `SimulationRunOptions`; an
+# unset one keeps its default, and the block's solver settings are ignored here
+# because `.createSinglePITask()` writes those to each simulation instead.
 # @keywords internal
 # @noRd
 .buildSimulationRunOptions <- function(defaults) {
@@ -26,41 +24,206 @@
   runOpts
 }
 
-# Write the solver-level entries of a run-options record to one simulation:
-# `checkForNegativeValues` goes to `simulation$solver$checkForNegativeValues`.
-# An absent entry (or a NULL record) leaves the setting the model file carries.
-# Mutates `simulation` in place (an `ospsuite::Simulation` is a reference
-# object) and returns it invisibly.
+# The solver settings `ospsuite` supports, read from the class itself so a
+# setting added upstream works here without a change. How the run is executed
+# (`numberOfCores`, `showProgress`) belongs to `SimulationRunOptions`, which is
+# an argument of the run functions rather than project data, so it never
+# appears in one of these records.
+# @keywords internal
+# @noRd
+.solverSettingNames <- function() {
+  names(ospsuite:::SolverSettings$active)
+}
+
+# The value each solver setting takes, which the class cannot say: its fields
+# are R6 active bindings, and every one of them is the same one-line call apart
+# from the property name. The tags are needed because the .NET side coerces in
+# silence (`mxStep <- 1.5` truncates to 1, a negative `hMin` is taken as given),
+# so each drives both the coercion in `.applySolverSettings()` and the type rule
+# `.checkSolverSettings()` enforces.
+#
+# A setting `ospsuite` supports but this table has no tag for is still applied
+# and still accepted; it is simply written as given, since inventing a rule for
+# it would be guessing.
+# @keywords internal
+# @noRd
+.solverSettingTypes <- c(
+  absTol = "number",
+  relTol = "number",
+  h0 = "number",
+  hMin = "number",
+  hMax = "number",
+  mxStep = "count",
+  useJacobian = "flag",
+  checkForNegativeValues = "flag"
+)
+
+# Report what is wrong with a solver-settings record, as a character vector of
+# problems (empty when it is sound). `label` names the field in each message,
+# so the same rules report against whichever door the value came through: a
+# scenario's `solverSettings`, the `solverSettings` argument, or the project's
+# `defaultSolverSettings`. Returning strings rather than aborting is
+# what lets the authoring paths fold the problems into their own "cannot add
+# scenario" list and the section validator turn each into a critical error,
+# from the one set of rules.
+#
+# The type rules matter because the .NET side coerces silently: `mxStep <- 1.5`
+# truncates to 1 and a negative `hMin` is accepted as given, so an authoring
+# slip would otherwise change how the model solves without saying anything.
+# @keywords internal
+# @noRd
+.checkSolverSettings <- function(solverSettings, label = "solverSettings") {
+  if (is.null(solverSettings) || length(solverSettings) == 0L) {
+    return(character())
+  }
+  if (!is.list(solverSettings) || is.null(names(solverSettings))) {
+    return(paste0(label, " must be a named list, e.g. list(relTol = 1e-6)"))
+  }
+
+  problems <- character()
+  known <- .solverSettingNames()
+  unknown <- setdiff(names(solverSettings), known)
+  if (length(unknown) > 0L) {
+    problems <- c(
+      problems,
+      paste0(
+        label,
+        " has unknown setting",
+        if (length(unknown) > 1L) "s" else "",
+        " ",
+        paste0("'", unknown, "'", collapse = ", "),
+        "; the settings are ",
+        paste(sort(known), collapse = ", ")
+      )
+    )
+  }
+
+  # Only the settings this package has a type rule for. One `ospsuite` supports
+  # but the table does not describe is accepted as given.
+  for (field in intersect(names(.solverSettingTypes), names(solverSettings))) {
+    value <- solverSettings[[field]]
+    if (is.null(value)) {
+      next
+    }
+    problem <- switch(
+      .solverSettingTypes[[field]],
+      number = if (
+        !is.numeric(value) ||
+          length(value) != 1L ||
+          !is.finite(value) ||
+          value < 0
+      ) {
+        "a single non-negative number"
+      },
+      count = if (
+        !is.numeric(value) ||
+          length(value) != 1L ||
+          !is.finite(value) ||
+          value < 1 ||
+          value != trunc(value) ||
+          # The applier coerces with `as.integer()`, which yields NA above the
+          # integer range, so an unbounded rule would pass a value the solver
+          # then receives as NA_integer_.
+          value > .Machine$integer.max
+      ) {
+        paste0(
+          "a single whole number between 1 and ",
+          format(.Machine$integer.max, scientific = FALSE)
+        )
+      },
+      flag = if (!is.logical(value) || length(value) != 1L || is.na(value)) {
+        "TRUE or FALSE"
+      }
+    )
+    if (!is.null(problem)) {
+      problems <- c(
+        problems,
+        paste0(label, "$", field, " must be ", problem)
+      )
+    }
+  }
+  problems
+}
+
+# Write a solver-settings record to one simulation. A field
+# the record does not carry (or a NULL record) leaves the setting the model file
+# carries. Mutates `simulation` in place (an `ospsuite::Simulation` is a
+# reference object) and returns it invisibly.
 # @keywords internal
 # @noRd
 .applySolverSettings <- function(simulation, record) {
-  if (!is.null(record$checkForNegativeValues)) {
-    simulation$solver$checkForNegativeValues <- isTRUE(
-      record$checkForNegativeValues
+  fields <- intersect(.solverSettingNames(), names(record))
+  if (length(fields) == 0L) {
+    return(invisible(simulation))
+  }
+  solver <- simulation$solver
+  for (field in fields) {
+    value <- record[[field]]
+    if (is.null(value)) {
+      next
+    }
+    # A setting with no tag is written as given: `ospsuite` supports it, this
+    # package simply has no rule describing its value.
+    type <- if (field %in% names(.solverSettingTypes)) {
+      .solverSettingTypes[[field]]
+    } else {
+      "asis"
+    }
+    solver[[field]] <- switch(
+      type,
+      number = as.double(value),
+      count = as.integer(value),
+      flag = isTRUE(value),
+      asis = value
     )
   }
   invisible(simulation)
 }
 
-# Resolve the run options for a scenario build from the caller's
-# `simulationRunOptions` argument and the project's
-# `defaultSimulationRunOptions`. An explicit argument wins entirely: the
-# project record is not consulted, so its solver setting is not written either
-# and each simulation keeps the solver settings of its model file. Without an
-# argument the project record supplies both halves. Returns
-# `list(runOptions, solverSettings)`: an `ospsuite::SimulationRunOptions` (or
-# NULL for package defaults) and the record `.applySolverSettings()` reads (or
-# NULL).
+# Fold run-options records into one, left to right: a field set in a later
+# record wins, a field only an earlier one sets falls through, and a NULL or
+# empty record contributes nothing. This is the merge rule every level of the
+# precedence chain shares, so the chain is expressed by the order of the
+# arguments rather than by a rule per caller.
+#
+# A field present but NULL counts as not carried, so it falls through to the
+# level below instead of suppressing it. The entries have to be dropped before
+# the fold because `utils::modifyList()` reads a NULL as "delete this key",
+# which would make a NULL mean "inherit" everywhere else in the chain
+# (`.applySolverSettings()`, `.checkSolverSettings()`) and "clear the level
+# below" here.
 # @keywords internal
 # @noRd
-.resolveRunOptions <- function(project, simulationRunOptions) {
-  if (!is.null(simulationRunOptions)) {
-    return(list(runOptions = simulationRunOptions, solverSettings = NULL))
-  }
-  defaults <- project$defaultSimulationRunOptions
+.mergeRunOptionRecords <- function(...) {
+  records <- Filter(function(x) length(x) > 0L, list(...))
+  records <- lapply(records, function(record) {
+    record[!vapply(record, is.null, logical(1))]
+  })
+  Reduce(utils::modifyList, records, init = list())
+}
+
+# Resolve what a scenario build needs from its two settings arguments and the
+# project's own defaults. Returns three pieces:
+#
+# - `runOptions`: the caller's `ospsuite::SimulationRunOptions`, or NULL for
+#   the package defaults. How the run is executed is never project data, so
+#   there is nothing to fall back on and nothing to merge; it is resolved once
+#   for the whole build because a scenario has no say in it.
+# - `solverDefaults`: the record that sits *below* a scenario's own
+#   `solverSettings` block, the project's `defaultSolverSettings`.
+# - `solverOverrides`: the record that sits *above* it, the caller's
+#   `solverSettings`.
+#
+# Keeping the two solver records apart is what lets `.prepareScenario()` fold
+# each scenario's block into the middle of the chain, without knowing which
+# level either record came from.
+# @keywords internal
+# @noRd
+.resolveRunOptions <- function(project, simulationRunOptions, solverSettings) {
   list(
-    runOptions = .buildSimulationRunOptions(defaults),
-    solverSettings = defaults
+    runOptions = simulationRunOptions,
+    solverDefaults = project$defaultSolverSettings,
+    solverOverrides = solverSettings
   )
 }
 
@@ -381,11 +544,16 @@
 # Population, run steady-state if requested. Returns
 # list(simulation, population). Does NOT run the simulation.
 #
-# `solverSettings` is the run-options record whose solver-level entries are
-# written to the simulation (see `.applySolverSettings()`), resolved by the
-# caller: `.resolveRunOptions()` for a scenario build, the task-over-project
-# merge for a PI task. It is applied right after loading, ahead of the
-# steady-state pre-solve, so that solve already runs with the resolved setting.
+# `solverDefaults` and `solverOverrides` are the run-options records that sit
+# below and above the scenario's own `solverSettings` block; the three are
+# merged field by field (see `.mergeRunOptionRecords()`) and written to the
+# simulation by `.applySolverSettings()`. Taking the two ends separately is what
+# lets each caller order the chain its own way: a scenario build passes the
+# project record below and the call-site record above, a PI task passes the
+# task-over-project record below and nothing above, which puts the scenario
+# block on top. The merged record is applied right after loading, ahead of the
+# steady-state pre-solve, so that solve already runs with the resolved
+# settings.
 # @keywords internal
 # @noRd
 .prepareScenario <- function(
@@ -395,7 +563,8 @@
   cache,
   simulationRunOptions,
   stopIfParameterNotFound = TRUE,
-  solverSettings = NULL
+  solverDefaults = NULL,
+  solverOverrides = NULL
 ) {
   # 1. Load simulation. An absolute `modelFile` is used as-is; a relative one
   # is resolved against the project's simulations folder, which must exist for
@@ -423,8 +592,15 @@
   )
   simulation$name <- scenario$scenarioName
 
-  # 1a. Solver settings from the resolved run-options record
-  .applySolverSettings(simulation, solverSettings)
+  # 1a. Solver settings, project default < scenario block < call site
+  .applySolverSettings(
+    simulation,
+    .mergeRunOptionRecords(
+      solverDefaults,
+      scenario$solverSettings,
+      solverOverrides
+    )
+  )
 
   # 2. Build merged parameter structure
   params <- .mergeScenarioParameters(scenario, project, customParams)
@@ -571,18 +747,18 @@
 # .scenarioBuildPreflight ----
 
 # Shared entry guard for `.runScenariosFromProject` / `.buildSimulationsFromProject`:
-# validate `project` and `customParams`, resolve the run options through
-# `.resolveRunOptions()` (an explicit argument wins; otherwise the project-level
-# `defaultSimulationRunOptions`, leaving NULL = package defaults), and, when
-# `validate`, run the section validators the scenario build depends on. Returns
-# `.resolveRunOptions()`'s `list(runOptions, solverSettings)`. `opName` names
-# the calling entrypoint in any validation abort.
+# validate `project`, `customParams` and the two settings arguments, resolve
+# them through `.resolveRunOptions()`, and, when `validate`, run the section
+# validators the scenario build depends on. Returns `.resolveRunOptions()`'s
+# `list(runOptions, solverDefaults, solverOverrides)`. `opName` names the
+# calling entrypoint in any validation abort.
 # @keywords internal
 # @noRd
 .scenarioBuildPreflight <- function(
   project,
   customParams,
   simulationRunOptions,
+  solverSettings = NULL,
   validate,
   opName,
   .call = rlang::caller_env()
@@ -594,7 +770,27 @@
     argumentName = "customParams",
     nullAllowed = TRUE
   )
-  resolved <- .resolveRunOptions(project, simulationRunOptions)
+  if (
+    !is.null(simulationRunOptions) &&
+      !inherits(simulationRunOptions, "SimulationRunOptions")
+  ) {
+    cli::cli_abort(messages$invalidSimulationRunOptions(simulationRunOptions))
+  }
+  # The argument goes through the same rules a scenario's own block does, so
+  # the level a setting was written at does not decide whether a typo or a
+  # wrong type is reported.
+  problems <- .checkSolverSettings(solverSettings)
+  if (length(problems) > 0L) {
+    cli::cli_abort(c(
+      "Invalid {.arg solverSettings}:",
+      stats::setNames(problems, rep("x", length(problems)))
+    ))
+  }
+  resolved <- .resolveRunOptions(
+    project,
+    simulationRunOptions,
+    solverSettings
+  )
   if (isTRUE(validate)) {
     project$ensureValid(
       sections = c(
@@ -625,8 +821,8 @@
 #
 # `canSkip` says whether the calling entrypoint offers `stopIfFails`, so a build
 # failure only points at it where it exists (`buildSimulations()` has none).
-# `simulationRunOptions` and `solverSettings` are the two halves of
-# `.resolveRunOptions()`, handed through to `.prepareScenario()`.
+# `simulationRunOptions`, `solverDefaults` and `solverOverrides` are
+# `.resolveRunOptions()`'s three pieces, handed through to `.prepareScenario()`.
 # @keywords internal
 # @noRd
 .buildScenarioSimulations <- function(
@@ -634,7 +830,8 @@
   scenarioNames = NULL,
   customParams = NULL,
   simulationRunOptions = NULL,
-  solverSettings = NULL,
+  solverDefaults = NULL,
+  solverOverrides = NULL,
   stopIfParameterNotFound = TRUE,
   stopIfFails = TRUE,
   canSkip = TRUE,
@@ -688,7 +885,8 @@
         cache = cache,
         simulationRunOptions = simulationRunOptions,
         stopIfParameterNotFound = stopIfParameterNotFound,
-        solverSettings = solverSettings
+        solverDefaults = solverDefaults,
+        solverOverrides = solverOverrides
       ),
       error = function(e) {
         if (isTRUE(stopIfFails)) {
@@ -812,6 +1010,7 @@
   scenarioNames = NULL,
   customParams = NULL,
   simulationRunOptions = NULL,
+  solverSettings = NULL,
   validate = TRUE,
   stopIfParameterNotFound = TRUE,
   stopIfFails = TRUE,
@@ -822,6 +1021,7 @@
     project = project,
     customParams = customParams,
     simulationRunOptions = simulationRunOptions,
+    solverSettings = solverSettings,
     validate = validate,
     opName = "runScenarios",
     .call = .call
@@ -833,7 +1033,8 @@
     scenarioNames = scenarioNames,
     customParams = customParams,
     simulationRunOptions = simulationRunOptions,
-    solverSettings = resolved$solverSettings,
+    solverDefaults = resolved$solverDefaults,
+    solverOverrides = resolved$solverOverrides,
     stopIfParameterNotFound = stopIfParameterNotFound,
     stopIfFails = stopIfFails,
     .call = .call
@@ -913,6 +1114,7 @@
   scenarioNames = NULL,
   customParams = NULL,
   simulationRunOptions = NULL,
+  solverSettings = NULL,
   validate = TRUE,
   stopIfParameterNotFound = TRUE,
   .call = rlang::caller_env()
@@ -922,6 +1124,7 @@
     project = project,
     customParams = customParams,
     simulationRunOptions = simulationRunOptions,
+    solverSettings = solverSettings,
     validate = validate,
     opName = "buildSimulations",
     .call = .call
@@ -932,7 +1135,8 @@
     scenarioNames = scenarioNames,
     customParams = customParams,
     simulationRunOptions = resolved$runOptions,
-    solverSettings = resolved$solverSettings,
+    solverDefaults = resolved$solverDefaults,
+    solverOverrides = resolved$solverOverrides,
     stopIfParameterNotFound = stopIfParameterNotFound,
     canSkip = FALSE,
     .call = .call

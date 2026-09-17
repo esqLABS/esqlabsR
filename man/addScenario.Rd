@@ -21,6 +21,7 @@ addScenario(
   steadyStateTimeUnit = "min",
   overwriteFormulasInSS = FALSE,
   readPopulationFromCSV = FALSE,
+  solverSettings = NULL,
   overwrite = FALSE
 )
 }
@@ -80,6 +81,18 @@ steady state. Default \code{FALSE}.}
 
 \item{readPopulationFromCSV}{Logical. Load population from CSV.
 Default \code{FALSE}.}
+
+\item{solverSettings}{How the solver behaves, as a named list of
+\href{https://www.open-systems-pharmacology.org/OSPSuite-R/reference/SolverSettings.html}{SolverSettings}
+values: any of \code{absTol}, \code{relTol}, \code{h0}, \code{hMin}, \code{hMax}, \code{mxStep},
+\code{useJacobian} and \code{checkForNegativeValues}, for example
+\code{list(relTol = 1e-6)}.
+A setting given here wins over the project's \code{defaultSolverSettings}. A
+setting you leave out keeps the project's value, or the value stored in
+the model file where the project gives none. \code{NULL} (default) leaves every
+setting to those two.
+The list counts as one value per scenario, so an \code{id} naming several
+scenarios gives each of them the same settings.}
 
 \item{overwrite}{Logical. When \code{FALSE} (default), an id that already exists
 aborts. When \code{TRUE}, the existing scenario is replaced (last-write-wins).

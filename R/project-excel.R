@@ -917,6 +917,19 @@ exportProjectToExcel <- function(
       project$definitions$scenarios,
       outputPaths = project$definitions$outputPaths
     )
+    # The sheet has no solver-settings columns, so a scenario carrying a block
+    # loses it here. Say which scenarios, rather than letting a re-import come
+    # back quietly solving differently.
+    withSolverSettings <- names(Filter(
+      function(sc) length(sc$solverSettings) > 0L,
+      project$definitions$scenarios
+    ))
+    if (length(withSolverSettings) > 0L) {
+      .warnFormatted(
+        messages$exportScenarioSolverSettings(withSolverSettings),
+        "esqlabsR_exportScenarioSolverSettings"
+      )
+    }
   }
   if (
     !is.null(project$definitions$outputPaths) &&
