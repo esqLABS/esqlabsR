@@ -264,3 +264,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-09-16 10:40: The NEWS bullets for the scenario print name the print() function, as the contributor guide requires. (#1279)
 - 2026-09-17 14:14: The refactoring rules say NEWS compares the development version against the last release, so a change made and undone within the unreleased cycle gets no entry. (#1279)
 - 2026-09-17 14:15: The scenario print NEWS bullets are gone: both described a change inside the unreleased 6.0.0 cycle, which its NEWS reader never saw. (#1279)
+- 2026-09-17 15:20: The DataCombined tests compare whole result structures, and the NEWS bullets for the curve labels describe the current behavior rather than the branch history. (#1280)
