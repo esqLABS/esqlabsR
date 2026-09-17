@@ -217,8 +217,12 @@ Project <- R6::R6Class(
     #'   `applications`, `observedData`, `dataCombined`, `plots`, `plotGrids`,
     #'   `parameterIdentification`. Read a section with
     #'   `project$definitions$scenarios` (returned as a printable, read-only
-    #'   named list keyed by id). The group is read-only from the handle: every
-    #'   assignment form aborts. The only sanctioned way to change a section is
+    #'   named list keyed by id). `observedData` is the one section that is not
+    #'   keyed by id: it is a plain list of sources read by position
+    #'   (`project$definitions$observedData[[1]]`), and printing it shows the id
+    #'   each source is known by, which is the id [removeObservedData()] takes.
+    #'   The group is read-only from the handle: every assignment form aborts.
+    #'   The only sanctioned way to change a section is
     #'   an authoring function ([addScenario()] / [setScenario()] /
     #'   [removeScenario()] and their per-section siblings) or editing the
     #'   definition's JSON file; those route through the internal write seam,

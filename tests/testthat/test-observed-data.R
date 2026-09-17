@@ -947,3 +947,17 @@ test_that("print.ObservedDataSource renders the source declaration", {
   local_reproducible_output()
   expect_snapshot(print(project$definitions$observedData[[1]]))
 })
+
+# The section is stored as an unnamed list, so printing it showed the count with
+# no ids underneath (#1281). It lists the same ids the authoring functions take.
+
+test_that("printing the observedData section lists the declaration ids", {
+  project <- testProject()
+  suppressMessages(addObservedData(
+    project,
+    ospsuite::DataSet$new(name = "simulated_plasma")
+  ))
+  withr::local_options(cli.unicode = FALSE)
+  local_reproducible_output()
+  expect_snapshot(print(project$definitions$observedData))
+})

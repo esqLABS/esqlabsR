@@ -70,7 +70,9 @@ Twelve sections. Each is a folder under `definitions/` holding one JSON file per
 | `project$definitions$plotGrids` | `plot-grids/` |
 | `project$definitions$parameterIdentification` | `parameter-identification/` |
 
-Every section is a read-only named list keyed by id. Assigning to one aborts. A section changes only through an `add*`, `set*`, or `remove*` function, or by editing the definition's file on disk.
+Every section is read-only: assigning to one aborts. A section changes only through an `add*`, `set*`, or `remove*` function, or by editing the definition's file on disk. Printing a section shows how many definitions it holds and their ids.
+
+Every section except `observedData` is a named list keyed by id, so one definition is `project$definitions$scenarios[["aciclovir_iv"]]`. `observedData` is a plain list read by position (`project$definitions$observedData[[1]]`); the id printed next to each source is the one `removeObservedData()` takes.
 
 ## `Project.json` fields
 

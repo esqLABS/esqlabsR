@@ -125,3 +125,13 @@
         * Importer Configuration: esqlabs_dataImporter_configuration.xml
         * Sheets: Laskin 1982.Group A
 
+# printing the observedData section lists the declaration ids
+
+    Code
+      print(project$definitions$observedData)
+    Output
+      <DefinitionList>
+      observedData (2 definitions):
+        * Aciclovir_TimeValuesData.xlsx
+        * simulated_plasma
+
