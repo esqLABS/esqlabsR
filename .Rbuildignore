@@ -54,3 +54,7 @@ _\.new\.png$
 ^\.vscode$
 ^AGENTS\.md$
 ^.cursor/.
+^REFACTORING.*$
+^\.claude$
+^\.git$
+^CLAUDE\.md$

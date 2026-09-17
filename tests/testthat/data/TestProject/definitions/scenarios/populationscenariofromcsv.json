@@ -1,0 +1,21 @@
+{
+  "name": "populationscenariofromcsv",
+  "individual": "indiv1",
+  "population": "testpopulation",
+  "readPopulationFromCSV": true,
+  "parameterSets": [
+    "global"
+  ],
+  "initialConditions": [],
+  "application": "aciclovir_iv_250mg",
+  "simulationTime": "0, 12, 20",
+  "simulationTimeUnit": "h",
+  "steadyState": false,
+  "steadyStateTime": null,
+  "steadyStateTimeUnit": null,
+  "overwriteFormulasInSS": false,
+  "modelFile": "Aciclovir.pkml",
+  "outputPaths": [
+    "aciclovir_pvb"
+  ]
+}

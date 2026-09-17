@@ -1,111 +1,455 @@
 # =============================================================================
 # Test Helper Functions
 # =============================================================================
+#
+# Test fixtures live under `tests/testthat/data/`:
+#
+#   - flat files (pkml, single xlsx sheets, csvs) for unit-level tests.
+#     Reached via getTestDataFilePath().
+#
+#   - TestProject/        canonical JSON-first test project. Reached via
+#                         testProject().
+#
+#   - TestProjectExcel/   legacy Excel-shape project kept for round-trip
+#                         tests of the Excel import / export bridge.
+#                         Reached via testProjectExcelPath() (the entry .xlsx).
+#
+#   - TestProjectExcelLegacy/
+#                         pre-5.6 Excel project, carrying the workbook shapes
+#                         real legacy projects have rather than the modern
+#                         spelling of each. Reached via
+#                         localLegacyExcelProject().
+#
+# For a writable, throwaway project use with_temp_project(), which calls
+# initProject(type = "example", createExcel = TRUE) in a temp dir.
 
-#' Get path to test data file
-#'
-#' @description
-#' Returns the full path to a file in the test data directory.
-#'
-#' @param fileName Name of the file in the test data directory. If empty, returns the directory path.
-#'
-#' @returns Full path to the test data file or directory.
-#'
-#' @examples
-#' \dontrun{
-#' # Get path to a specific test file
-#' file_path <- getTestDataFilePath("test_data.xlsx")
-#'
-#' # Get path to test data directory
-#' data_dir <- getTestDataFilePath("")
-#' }
+#' Get path to a file in `tests/testthat/data/`.
 getTestDataFilePath <- function(fileName = "") {
-  testthat::test_path("../data", fileName)
+  testthat::test_path("data", fileName)
 }
 
-getSimulationFilePath <- function(simulationName) {
-  getTestDataFilePath(paste0(simulationName, ".pkml"))
+#' Load the canonical test `Project` from a throwaway copy.
+#'
+#' Saving a loaded project (`saveProject()`) writes to its
+#' `definitions/<kind>/` tree. To keep the version-controlled fixture pristine
+#' and tests isolated from one another, the fixture is copied to a temporary
+#' directory and the project is loaded from the copy. The copy is removed when
+#' the calling test finishes.
+testProject <- function(envir = parent.frame()) {
+  loadProject(file.path(.copyTestProjectDir(envir), "Project.json"))
 }
 
-# Helper function to load a model easily. In the test environment, we do not want to load from cache by default. Instead
-# new instances should be created unless specifically specified otherwise
-loadTestSimulation <- function(
-  simulationName,
-  loadFromCache = FALSE,
-  addToCache = TRUE
+#' Pin the print and precision options a numeric snapshot depends on.
+#'
+#' A snapshot of tabular output formats differently under another `digits` or
+#' `pillar.sigfig`, so a block taking one calls this first. Scoped to the
+#' calling frame with `withr::local_options()`, so nothing leaks past the test.
+.localSnapshotOptions <- function(.local_envir = parent.frame()) {
+  withr::local_options(
+    tibble.width = Inf,
+    pillar.min_title_chars = Inf,
+    pillar.sigfig = 4,
+    digits = 4,
+    scipen = 999,
+    .local_envir = .local_envir
+  )
+}
+
+#' The observed data set the test project's Aciclovir scenario is fitted against.
+#'
+#' The name is long and appears in most parameter-identification fixtures, so
+#' name it once here rather than pasting the literal into each test.
+testObservedDataId <- paste0(
+  "Laskin 1982.Group A_Aciclovir_1_Human_MALE_",
+  "PeripheralVenousBlood_Plasma_2.5 mg/kg_iv_"
+)
+
+#' Build a `PIParameter` for the test project's EHC parameter.
+#'
+#' Defaults describe the standard fixture; pass any `PIParameter()` argument to
+#' override just that one, so a test shows only what it varies.
+testPIParameter <- function(...) {
+  do.call(
+    PIParameter,
+    utils::modifyList(
+      list(
+        id = "EHC",
+        scenarios = "testscenario",
+        path = "Organism|Liver|EHC continuous fraction",
+        minValue = 0.5,
+        maxValue = 1.0,
+        startValue = 0.8
+      ),
+      list(...)
+    )
+  )
+}
+
+#' Build a `PIOutputMapping` for the test project's peripheral venous blood.
+#'
+#' Overrides work the same way as [testPIParameter()].
+testPIOutputMapping <- function(...) {
+  do.call(
+    PIOutputMapping,
+    utils::modifyList(
+      list(
+        id = "PVB",
+        scenarios = "testscenario",
+        outputPath = "aciclovir_pvb",
+        observedData = testObservedDataId
+      ),
+      list(...)
+    )
+  )
+}
+
+#' Build a `PITask` over the test project's Aciclovir scenario.
+#'
+#' Defaults to one [testPIParameter()] and one [testPIOutputMapping()].
+#' Overrides work the same way as [testPIParameter()].
+testPITask <- function(...) {
+  do.call(
+    PITask,
+    utils::modifyList(
+      list(
+        id = "t",
+        scenarios = "testscenario",
+        parameters = list(testPIParameter()),
+        outputMappings = list(testPIOutputMapping()),
+        configuration = list(algorithm = "BOBYQA")
+      ),
+      list(...)
+    )
+  )
+}
+
+# The Aciclovir PKML fixture that lives INSIDE a copied test project (under its
+# own `simulationsFolder`). Use this, rather than the source-tree `pkmlFixture`,
+# when a test builds an on-disk `testProject()` and calls
+# `createScenariosFromPKML()`, so the stored `modelFile` stays inside the
+# project and does not trip the out-of-folder warning.
+pkmlInProject <- function(project) {
+  file.path(project$paths$simulationsFolder, "Aciclovir.pkml")
+}
+
+#' A `Project.json` path inside a fresh throwaway directory.
+#'
+#' Use this when a test needs a throwaway project location: a project is a
+#' directory (the `Project.json` container plus a `definitions/` definition tree
+#' alongside it), so writing into the shared session tempdir would scatter a
+#' `definitions/` directory there and leak definitions into unrelated
+#' `loadProject()` calls. The directory is removed when the calling test
+#' finishes.
+local_projectPath <- function(envir = parent.frame()) {
+  file.path(
+    withr::local_tempdir("project_", .local_envir = envir),
+    "Project.json"
+  )
+}
+
+#' Copy the canonical TestProject fixture to a throwaway directory and
+#' return that directory. Cleaned up when the calling test finishes.
+.copyTestProjectDir <- function(envir = parent.frame()) {
+  src <- testthat::test_path("data", "TestProject")
+  dest <- withr::local_tempdir("TestProject_", .local_envir = envir)
+  file.copy(
+    list.files(src, full.names = TRUE),
+    dest,
+    recursive = TRUE
+  )
+  dest
+}
+
+#' Load the bundled example `Project` from a throwaway copy.
+#'
+#' Like [testProject()], the bundled example is copied to a temporary
+#' directory before loading so that saving edits (`saveProject()`) never
+#' touches the version-controlled fixture under `inst/extdata`. The copy is
+#' removed when the calling test finishes.
+exampleProject <- function(envir = parent.frame()) {
+  src <- dirname(exampleProjectPath())
+  dest <- withr::local_tempdir("Example_", .local_envir = envir)
+  file.copy(list.files(src, full.names = TRUE), dest, recursive = TRUE)
+  loadProject(file.path(dest, "Project.json"))
+}
+
+#' One row of an Excel `Scenarios` sheet, with every required column present.
+#'
+#' Named arguments override a column's value; passing `NULL` drops the column
+#' entirely, which is how a test builds a sheet that omits or misspells one.
+scenarioSheetRow <- function(...) {
+  row <- list(
+    Scenario_name = "s1",
+    IndividualId = NA_character_,
+    PopulationId = NA_character_,
+    ReadPopulationFromCSV = NA,
+    ModelParameterSheets = NA_character_,
+    ApplicationProtocol = NA_character_,
+    SimulationTime = NA_character_,
+    SimulationTimeUnit = NA_character_,
+    SteadyState = NA,
+    SteadyStateTime = NA_real_,
+    SteadyStateTimeUnit = NA_character_,
+    OverwriteFormulasInSS = NA,
+    ModelFile = "m.pkml",
+    OutputPathsIds = "op1"
+  )
+  overrides <- list(...)
+  for (column in names(overrides)) {
+    row[[column]] <- overrides[[column]]
+  }
+  row <- row[!vapply(row, is.null, logical(1))]
+  data.frame(row, stringsAsFactors = FALSE)
+}
+
+#' A writable copy of the `TestProjectExcel` fixture, returning its directory.
+#'
+#' The Excel-bridge tests import, export and re-import in place, so they need a
+#' throwaway copy rather than the version-controlled fixture. The copy is
+#' removed when the calling test finishes.
+localExcelProjectDir <- function(envir = parent.frame()) {
+  workDir <- withr::local_tempdir(.local_envir = envir)
+  file.copy(dirname(testProjectExcelPath()), workDir, recursive = TRUE)
+  file.path(workDir, "TestProjectExcel")
+}
+
+#' Export a project to Excel and read it back, returning the re-imported one.
+#'
+#' The two temporary directories (the workbook set, and the JSON project built
+#' from it) are removed when the calling test finishes.
+#'
+#' The workbook set is written to a scratch directory, so the data folder the
+#' exported `dataFile` names is not beside it and the re-import reports the data
+#' workbook as missing and skips the observed data; the re-imported project then
+#' has one reference it cannot resolve. Both warnings are muffled here because
+#' neither says anything about the section under test; every other warning is
+#' left to surface. Two tests assert them directly rather than calling this
+#' helper.
+excelRoundTrip <- function(project, envir = parent.frame()) {
+  excelOut <- withr::local_tempdir(.local_envir = envir)
+  exportProjectToExcel(project, outputDir = excelOut, silent = TRUE)
+  jsonOut <- withr::local_tempdir(.local_envir = envir)
+  .muffleRoundTripDataWarnings({
+    reimportedJson <- importProjectFromExcel(
+      file.path(excelOut, "Project.xlsx"),
+      outputDir = jsonOut,
+      silent = TRUE
+    )
+    loadProject(reimportedJson)
+  })
+}
+
+#' Evaluate `expr`, dropping only the two warnings a round trip through a
+#' scratch directory always raises: the skipped observed data (its workbook is
+#' not beside the exported workbooks) and the cross-reference left unresolved
+#' by that skip.
+.muffleRoundTripDataWarnings <- function(expr) {
+  withCallingHandlers(
+    expr,
+    esqlabsR_importSkippedObservedData = function(w) {
+      invokeRestart("muffleWarning")
+    },
+    warning = function(w) {
+      if (grepl("unresolved cross-reference", conditionMessage(w))) {
+        invokeRestart("muffleWarning")
+      }
+    }
+  )
+}
+
+#' The `Property -> Value` table of an exported `Project.xlsx`, as a named
+#' character vector. This is the lookup the importer reads the workbook back
+#' through, so a test asserting what a project declares reads it the same way.
+excelProjectProperties <- function(workbookPath) {
+  table <- as.data.frame(readxl::read_excel(workbookPath))
+  stats::setNames(
+    as.character(table$Value),
+    as.character(table$Property)
+  )
+}
+
+#' Path to the legacy Excel `ProjectConfiguration.xlsx` fixture, used by
+#' Excel-bridge round-trip tests.
+testProjectExcelPath <- function() {
+  testthat::test_path(
+    "data",
+    "TestProjectExcel",
+    "ProjectConfiguration.xlsx"
+  )
+}
+
+# Legacy Excel fixture (issue #1213) ----
+#
+# `TestProjectExcelLegacy/` is a pre-5.6 project: two-column `Protein` +
+# `Ontogeny` ontogenies, no `OverwriteFormulasInSS` column, quoted multi-value
+# cells, a populations CSV folder under the configurations folder, and the 5.x
+# parameter-identification sheet layout. The sibling `TestProjectExcel/` fixture
+# has the modern spelling of every one of those, so it cannot reproduce what the
+# importer does with the legacy ones.
+#
+# `data-raw/TestProjectExcelLegacy.R` regenerates the workbooks and documents
+# each legacy trait.
+
+#' Copy the legacy Excel fixture to a throwaway directory and return it.
+#'
+#' The committed fixture holds no `.pkml`: the 7 MB public Aciclovir model the
+#' sibling `TestProjectExcel/` fixture already carries is copied into the throwaway
+#' project's `Models/Simulations/` here, so the copy is a complete, runnable
+#' project without a second copy of that binary in the repository.
+#'
+#' The copy is removed when the calling test finishes. Mutate one workbook of it
+#' with [editWorkbookSheets()] to derive a per-defect variant.
+localLegacyExcelProject <- function(envir = parent.frame()) {
+  src <- testthat::test_path("data", "TestProjectExcelLegacy")
+  dest <- withr::local_tempdir("LegacyExcel_", .local_envir = envir)
+  file.copy(list.files(src, full.names = TRUE), dest, recursive = TRUE)
+  file.copy(
+    testthat::test_path(
+      "data",
+      "TestProjectExcel",
+      "Models",
+      "Simulations",
+      "Aciclovir.pkml"
+    ),
+    file.path(dest, "Models", "Simulations", "Aciclovir.pkml")
+  )
+  dest
+}
+
+#' Path to the legacy fixture's entry workbook inside a copied project.
+legacyExcelProjectPath <- function(projectDir) {
+  file.path(projectDir, "ProjectConfiguration.xlsx")
+}
+
+#' Rewrite one workbook in place, through a function of all its sheets.
+#'
+#' Reads every sheet of `path` into a named list of data frames, passes that list
+#' to `edit`, and writes the result back. Keeping the whole workbook in the round
+#' trip is what makes a variant a *single* change: writing only the edited sheet
+#' would silently drop the workbook's other sheets, so the variant would differ
+#' from the base in more than the one dimension it means to.
+#'
+#' Note that this loses the original cell formatting (it is a `readxl` read
+#' followed by a `writexl` write), which no importer behaviour depends on. A
+#' column's *type* does survive, so an edit that replaces a numeric column with a
+#' character one does store text cells.
+editWorkbookSheets <- function(path, edit) {
+  sheetNames <- readxl::excel_sheets(path)
+  sheets <- lapply(sheetNames, function(sheet) {
+    as.data.frame(
+      readxl::read_excel(path, sheet = sheet, .name_repair = "minimal"),
+      check.names = FALSE
+    )
+  })
+  writexl::write_xlsx(edit(stats::setNames(sheets, sheetNames)), path)
+  invisible(path)
+}
+
+#' Import a copied legacy Excel project and load the result.
+#'
+#' @returns A list of
+#'   - `project`: the loaded `Project`.
+#'   - `outputDir`: where the JSON project was written (removed when the calling
+#'     test finishes), for assertions about which asset folders travelled.
+#'   - `warnings`: every warning message the import raised.
+#'
+#' The warnings are collected rather than suppressed because most of what these
+#' tests pin is *silence*: an import that drops something without a word. A test
+#' asserts that no collected warning mentions its own subject, which starts
+#' failing as soon as a fix adds one. Gating on the subject rather than using a
+#' bare `expect_no_warning()` keeps each test's assertion about its own defect,
+#' since a variant may legitimately raise an unrelated warning (a skipped sheet,
+#' an unresolved cross-reference) that has nothing to do with what it pins.
+importLegacyExcelProject <- function(
+  projectDir,
+  silent = TRUE,
+  ...,
+  envir = parent.frame()
 ) {
-  simFile <- getSimulationFilePath(simulationName)
-  sim <- ospsuite::loadSimulation(
-    simFile,
-    loadFromCache = loadFromCache,
-    addToCache = addToCache
+  outputDir <- withr::local_tempdir("LegacyOut_", .local_envir = envir)
+  warnings <- character()
+  collect <- function(w) {
+    warnings <<- c(warnings, conditionMessage(w))
+    invokeRestart("muffleWarning")
+  }
+  jsonPath <- withCallingHandlers(
+    importProjectFromExcel(
+      legacyExcelProjectPath(projectDir),
+      outputDir = outputDir,
+      silent = silent,
+      ...
+    ),
+    warning = collect
   )
-  return(sim)
+  project <- withCallingHandlers(loadProject(jsonPath), warning = collect)
+  list(project = project, outputDir = outputDir, warnings = warnings)
 }
 
-executeWithTestFile <- function(actionWithFile) {
-  newFile <- tempfile()
-  actionWithFile(newFile)
-  file.remove(newFile)
+#' Redact the throwaway-project absolute prefix from a quoted path in an error
+#' message so an `expect_snapshot()` is stable across runs, keeping the
+#' project-relative `definitions/...` tail that carries the meaning. Used as the
+#' `transform` of snapshots whose error names an absolute definition-file path in a
+#' temp directory.
+.redactTmpPath <- function(lines) {
+  gsub("'[^']*/(definitions(/[^']*)?)'", "'<project>/\\1'", lines)
 }
 
-#' Get path to test project configuration
+#' Redact a whole quoted absolute path that lives under the session temp
+#' directory, so an `expect_snapshot()` of a message naming a per-run temp path
+#' (a snapshot file, a target directory) is stable across runs. Both the temp
+#' root and the random per-run basename vary run to run, so the whole quoted
+#' path is collapsed to `'<tmp-path>'`, keeping a fixed `.esqlabsR` suffix when
+#' present so a snapshot-file message still reads as one. Used as the
+#' `transform` of snapshots whose message names such a path with no meaningful
+#' project-relative tail.
 #'
-#' @description
-#' Returns the path to the test project configuration file.
-#' Currently targets the TestProject as it serves both as an example and test project.
-#'
-#' @returns Full path to the test project configuration file.
-#'
-#' @examples
-#' \dontrun{
-#' config_path <- testProjectConfigurationPath()
-#' }
-testProjectConfigurationPath <- function() {
-  # for now it targets TestProject as it is both an example and a test project
-  file.path(exampleDirectory("TestProject"), "ProjectConfiguration.xlsx")
-}
-
-#' Create test project configuration
-#'
-#' @description
-#' Creates a ProjectConfiguration object from the test project configuration file.
-#'
-#' @returns ProjectConfiguration object for testing.
-#'
-#' @examples
-#' \dontrun{
-#' config <- testProjectConfiguration()
-#' }
-testProjectConfiguration <- function() {
-  createProjectConfiguration(
-    testProjectConfigurationPath(),
-    ignoreVersionCheck = TRUE
+#' Redaction is restricted to quoted paths under `tempdir()`: a quoted absolute
+#' path elsewhere is left intact, so a meaningful assertion on a real path is
+#' never silently hidden. Separators are normalized to `/` first (so a Windows
+#' backslash path matches), and both a Unix (`/tmp/...`) and a drive-prefixed
+#' Windows (`C:/...`) temp path are matched.
+.redactTmpDir <- function(lines) {
+  # Normalize backslashes to forward slashes so a Windows path (in the message
+  # or in `tempdir()`) matches the same pattern as a Unix one.
+  lines <- gsub("\\\\", "/", lines)
+  tmp <- gsub("\\\\", "/", tempdir())
+  # Anchor the match to the escaped `tempdir()` prefix, so only a quoted path
+  # that actually starts under `tempdir()` is redacted. On Windows `tempdir()`
+  # already carries the drive letter (`C:/...`), so escaping it verbatim also
+  # matches the drive-prefixed form a message reports; a Unix path starts with
+  # `/tmp/...`. Either way, an unrelated absolute path is left intact.
+  prefix <- .escapeRegex(tmp)
+  # A quoted temp path ending in the snapshot extension keeps that suffix; any
+  # other quoted temp path collapses to a bare placeholder.
+  lines <- gsub(
+    paste0("'", prefix, "[^']*\\.esqlabsR'"),
+    "'<tmp-path>.esqlabsR'",
+    lines
   )
+  gsub(paste0("'", prefix, "[^']*'"), "'<tmp-path>'", lines)
 }
 
-#' Get path to test configurations directory
+#' Redact every quoted absolute path ending in a `Project.xlsx` workbook, so an
+#' `expect_snapshot()` of the unreadable-workbook error is stable across runs.
 #'
-#' @description
-#' Returns the normalized path to the test configurations directory with optional subdirectories.
-#'
-#' @param ... Additional path components to append to the configurations directory.
-#'
-#' @returns Full normalized path to the test configurations directory or subdirectory.
-#'
-#' @examples
-#' \dontrun{
-#' # Get path to configurations directory
-#' config_dir <- testConfigurationsPath()
-#'
-#' # Get path to specific configuration file
-#' populations_file <- testConfigurationsPath("Populations.xlsx")
-#' }
-testConfigurationsPath <- function(...) {
-  normalizePath(
-    file.path(exampleDirectory("TestProject"), "Configurations", ...),
-    mustWork = TRUE
-  )
+#' `.redactTmpDir()` cannot do this job: it anchors on `tempdir()`, and the
+#' `readxl` error chained onto that abort names the path as `utils::unzip()`
+#' resolved it, which never starts with `tempdir()` — on macOS it is the
+#' `/private`-prefixed symlink target, and on Windows it is the long user name
+#' with backslash separators (`C:\\Users\\runneradmin\\...`) where `tempdir()`
+#' reports the 8.3 short name with forward slashes (`C:/Users/RUNNER~1/...`).
+#' Matching on the workbook basename instead catches every spelling. A separator
+#' before the basename is required, so the bare `'Project.xlsx'` the advice
+#' bullet mentions is left intact; either separator counts, since the two ends of
+#' one chained error do not agree on which one they use.
+.redactProjectWorkbookPath <- function(lines) {
+  gsub("'[^']*[/\\\\]Project\\.xlsx'", "'<tmp-path>/Project.xlsx'", lines)
+}
+
+#' Escape the regex metacharacters in a literal string so it can be embedded in
+#' a pattern as a fixed prefix.
+.escapeRegex <- function(x) {
+  gsub("([.^$*+?()\\[\\]{}|\\\\])", "\\\\\\1", x, perl = TRUE)
 }
 
 #' Extract axis ranges from plots
@@ -171,136 +515,119 @@ summarizer <- function(data, path) {
 #'
 #' @description
 #' Creates a temporary directory with an initialized esqlabsR project for testing.
-#' Uses `withr::local_tempdir()` to ensure proper cleanup after the test.
+#' Uses `withr::defer()` to ensure proper cleanup after the test.
 #'
 #' @param projectName Optional name for the project. If provided, uses this name in the temporary directory pattern.
 #' @param overwrite Whether to overwrite existing project files. Defaults to TRUE.
 #'
 #' @returns A list containing:
 #'   - `path`: Path to the temporary project directory
-#'   - `config`: ProjectConfiguration object for the project
+#'   - `project`: `Project` object loaded from the initialized `Project.json`
 #'
 #' @examples
 #' \dontrun{
-#' # Create temporary project with random name
 #' temp_project <- with_temp_project()
-#'
-#' # Create temporary project with specific name
-#' temp_project <- with_temp_project("MyTestProject")
-#'
-#' # Use the project
-#' project_path <- temp_project$path
-#' project_config <- temp_project$config
-#'
-#' # Project will be automatically cleaned up when the function exits
+#' temp_project$path
+#' temp_project$project
 #' }
 with_temp_project <- function(projectName = NULL, overwrite = TRUE) {
-  # Generate a unique temp directory path
-  if (is.null(projectName)) {
-    temp_dir <- tempfile("esqlabsR_test_")
+  prefix <- if (is.null(projectName)) {
+    "esqlabsR_test_"
   } else {
-    temp_dir <- tempfile(paste0("esqlabsR_", projectName, "_"))
+    paste0("esqlabsR_", projectName, "_")
   }
-  dir.create(temp_dir, recursive = TRUE, showWarnings = FALSE)
-  # Ensure cleanup after test
-  withr::defer(unlink(temp_dir, recursive = TRUE), envir = parent.frame())
+  # `local_tempdir()` creates the directory and, scoped to the calling test's
+  # frame, removes it when that test exits (even on error).
+  temp_dir <- withr::local_tempdir(prefix, .local_envir = parent.frame())
 
-  # Initialize project
-  initProject(destination = temp_dir, overwrite = overwrite)
-
-  # Load project configuration
-  project_config <- createProjectConfiguration(
-    file.path(temp_dir, "ProjectConfiguration.xlsx"),
-    ignoreVersionCheck = TRUE
+  initProject(
+    destination = temp_dir,
+    type = "example",
+    createExcel = TRUE,
+    overwrite = overwrite
   )
+  project <- loadProject(file.path(temp_dir, "Project.json"))
 
-  # Return list with path and config
   list(
     path = temp_dir,
-    config = project_config
+    project = project
   )
 }
 
-# Create a temporary test project directory with proper cleanup
-# This is a test fixture following the pattern from testthat.r-lib.org/articles/test-fixtures.html
-# Returns a list with paths to the project directory and key files
-local_test_project <- function(
-  project_name = "TestProject",
-  env = parent.frame()
-) {
-  # Create temp directory for test
-  temp_dir <- withr::local_tempdir("test_project", .local_envir = env)
-
-  # Copy example project to temp directory to avoid modifying the original
-  example_dir <- exampleDirectory(project_name)
-  file.copy(
-    list.files(example_dir, full.names = TRUE),
-    temp_dir,
-    recursive = TRUE
-  )
-
-  # Return the paths needed for testing
-  list(
-    dir = temp_dir,
-    project_config_path = file.path(temp_dir, "ProjectConfiguration.xlsx"),
-    snapshot_path = file.path(temp_dir, "ProjectConfiguration.json"),
-    configurations_dir = file.path(temp_dir, "Configurations")
-  )
+# White-box test hooks onto the `Project` internal seam.
+#
+# The read/write seam (`.getSection`, `.setSection`, the lifecycle markers) is a
+# set of `private$` methods on the class, reachable only from within a method of
+# the instance, never from a free function. Tests that need to seed raw section
+# state (often deliberately invalid, to exercise a validator) or assert on the
+# dirty/validation bits reach the live private environment through
+# `.__enclos_env__`, the standard R6 white-box test hook. These wrappers keep
+# that reach in one documented place instead of scattering it across the suite;
+# they are test-only and never part of the package surface.
+.projectSeam <- function(project) {
+  project$.__enclos_env__$private
+}
+.getSection <- function(project, kind) {
+  .projectSeam(project)$.getSection(kind)
+}
+.setSection <- function(project, kind, value) {
+  .projectSeam(project)$.setSection(kind, value)
+}
+.markModified <- function(project) {
+  .projectSeam(project)$.markModified()
+}
+.markValidated <- function(project) {
+  .projectSeam(project)$.markValidated()
+}
+.isModified <- function(project) {
+  .projectSeam(project)$.isModified()
+}
+.isValidated <- function(project) {
+  .projectSeam(project)$.isValidated()
+}
+# Seed a read-only info backing field (`.schemaVersion` / `.esqlabsRVersion`)
+# through the private seam, standing in for the load machinery. A local binds
+# the seam environment first: `.projectSeam(project)$.field <- value` would ask
+# R for a `.projectSeam<-` replacement function, which does not exist.
+.setInfoField <- function(project, field, value) {
+  seam <- .projectSeam(project)
+  seam[[paste0(".", field)]] <- value
+  invisible(project)
 }
 
-# Creates a minimal valid set of PI Excel sheets (all 5 sheets) for a single
-# task, suitable as a base for tests that manipulate specific fields.
-createValidPISheets <- function() {
-  list(
-    PIOutputMappings = data.frame(
-      PITaskName = "Task1",
-      Scenarios = "PITestScenario",
-      OutputPath = "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)",
-      ObservedDataSheet = "Laskin 1982.Group A",
-      DataSet = "Laskin 1982.Group A_Aciclovir_1_Human_MALE_PeripheralVenousBlood_Plasma_2.5 mg/kg_iv_",
-      Scaling = "log",
-      xOffset = NA,
-      yOffset = NA,
-      xFactor = NA,
-      yFactor = NA,
-      Weight = NA
-    ),
-    PIParameters = data.frame(
-      PITaskName = "Task1",
-      Scenarios = "PITestScenario",
-      `Container Path` = "Aciclovir",
-      `Parameter Name` = "Lipophilicity",
-      Units = "Log Units",
-      MinValue = -2,
-      MaxValue = 2,
-      StartValue = -0.1,
-      Group = NA,
-      check.names = FALSE
-    ),
-    PIConfiguration = data.frame(
-      PITaskName = "Task1",
-      Algorithm = "BOBYQA",
-      CIMethod = "hessian",
-      PrintEvaluationFeedback = TRUE,
-      AutoEstimateCI = FALSE,
-      numberOfCores = NA_real_,
-      checkForNegativeValues = NA,
-      ObjectiveFunctionType = NA,
-      ResidualWeightingMethod = NA,
-      RobustMethod = NA,
-      ScaleVar = NA,
-      LinScaleCV = NA,
-      LogScaleSD = NA
-    ),
-    AlgorithmOptions = data.frame(
-      PITaskName = character(0),
-      OptionName = character(0),
-      OptionValue = character(0)
-    ),
-    CIOptions = data.frame(
-      PITaskName = character(0),
-      OptionName = character(0),
-      OptionValue = character(0)
-    )
+# Builds a minimal in-memory `Project` for validation/serialization tests:
+# all section fields default to empty, and `...` overrides named fields so a
+# test can target one section without loading the full TestProject fixture.
+# The section accessors are read-only from the handle, so sections are written
+# through the internal `.setSection()` seam the authoring methods use
+# (this is test setup standing in for an authoring call, not end-user code).
+.fakeProject <- function(...) {
+  project <- Project$new()
+  # `schemaVersion` / `esqlabsRVersion` are read-only on the object surface
+  # (managed by the load/save machinery, not by users), so seed the backing
+  # fields through the private seam the load machinery uses, standing in for a
+  # load here.
+  .setInfoField(project, "schemaVersion", "2.0")
+  .setInfoField(project, "esqlabsRVersion", NA_character_)
+  sections <- c(
+    "outputPaths",
+    "scenarios",
+    "parameterSets",
+    "initialConditions",
+    "individuals",
+    "populations",
+    "applications",
+    "observedData",
+    "dataCombined",
+    "plots",
+    "plotGrids"
   )
+  for (section in sections) {
+    .setSection(project, section, list())
+  }
+  overrides <- list(...)
+  for (nm in names(overrides)) {
+    .setSection(project, nm, overrides[[nm]])
+  }
+  project
 }

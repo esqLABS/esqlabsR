@@ -1,0 +1,11 @@
+{
+  "id": "adult_male_default",
+  "parameters": [
+    {
+      "containerPath": "Organism|Kidney",
+      "parameterName": "GFR",
+      "value": 90,
+      "units": "ml/min"
+    }
+  ]
+}

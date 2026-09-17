@@ -1,0 +1,18 @@
+# This directory doubles as the symlinked `.claude` dir for the esqlabsR repo
+# and its worktrees, so the Claude Code runtime writes its own state here.
+# Track only the hand-authored coordination content; ignore all runtime churn.
+
+.DS_Store
+
+# Claude Code runtime state (not ours to version)
+worktrees/
+scheduled_tasks.json
+scheduled_tasks.lock
+routines/.state/
+checkpoints/
+mailbox/
+agent-registry.json
+agent-memory-local/
+first-run
+assistant-daemon-state.json
+settings.local.json

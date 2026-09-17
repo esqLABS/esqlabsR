@@ -1,10 +1,10 @@
 ---
-title: "Slide Decks"
+title: "Slide decks"
 output: rmarkdown::html_vignette
 resource_files:
   - presentations/_introduction-to-esqlabsR.html
 vignette: >
-  %\VignetteIndexEntry{presentations}
+  %\VignetteIndexEntry{Slide decks}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---

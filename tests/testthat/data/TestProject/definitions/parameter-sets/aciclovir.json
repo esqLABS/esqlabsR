@@ -1,0 +1,11 @@
+{
+  "id": "aciclovir",
+  "parameters": [
+    {
+      "containerPath": "Aciclovir",
+      "parameterName": "Lipophilicity",
+      "value": -0.1,
+      "units": "Log Units"
+    }
+  ]
+}

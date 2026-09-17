@@ -1,0 +1,13 @@
+{
+  "individualId": "adult_male",
+  "species": "Human",
+  "population": "European_ICRP_2002",
+  "gender": "MALE",
+  "weight": 73,
+  "height": 176,
+  "age": 30,
+  "proteinOntogenies": "CYP3A4:CYP3A4",
+  "parameterSets": [
+    "adult_male_default"
+  ]
+}

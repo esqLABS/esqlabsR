@@ -1,0 +1,29 @@
+{
+  "schemaVersion": "2.0",
+  "esqlabsRVersion": "6.0.0",
+  "name": "TestProject",
+  "definitionsFolder": "definitions",
+  "filePaths": {
+    "simulationsFolder": "Models/Simulations/",
+    "populationsFolder": "Populations",
+    "dataFolder": "Data/",
+    "outputFolder": "Results/"
+  },
+  "observedData": [],
+  "outputPaths": {},
+  "scenarios": [],
+  "parameterSets": {},
+  "individuals": [],
+  "populations": [],
+  "applications": {},
+  "parameterIdentification": [],
+  "excel": {
+    "configurationsFolder": "Configurations/",
+    "modelParamsFile": "ModelParameters.xlsx",
+    "individualsFile": "Individuals.xlsx",
+    "populationsFile": "Populations.xlsx",
+    "scenariosFile": "Scenarios.xlsx",
+    "applicationsFile": "Applications.xlsx",
+    "plotsFile": "Plots.xlsx"
+  }
+}

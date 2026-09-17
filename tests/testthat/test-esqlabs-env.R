@@ -1,34 +1,34 @@
-test_that("esqlabsRSettingNames function returns correct enum", {
-  # Check that esqlabsRSettingNames returns an enum
-  expect_true(is.list(esqlabsRSettingNames))
-  expect_true(all(
-    c("packageName", "packageVersion") %in% names(esqlabsRSettingNames)
-  ))
+test_that("esqlabsRSettingNames lists the expected settings", {
+  # `esqlabsRSettingNames` derives its order from `names(esqlabsEnv)`, an
+  # environment whose name order is not guaranteed, so assert the set of names
+  # rather than a fixed order.
+  expect_setequal(
+    names(esqlabsRSettingNames),
+    c("packageVersion", "packageName", "colorPalette")
+  )
+  # It is an enum: each value equals its own name.
+  expect_equal(
+    unname(unlist(esqlabsRSettingNames)),
+    names(esqlabsRSettingNames)
+  )
 })
 
 test_that("getEsqlabsRSetting returns correct settings", {
-  # Check packageName
   expect_equal(getEsqlabsRSetting("packageName"), "esqlabsR")
+  expect_type(getEsqlabsRSetting("packageVersion"), "character")
 
-  # Check packageVersion
-  expect_true(is.character(getEsqlabsRSetting("packageVersion")))
-
-  # Check error for non-existent setting
-  # The error message contains the list of available settings which may change over time
-  # so we just check that an error is thrown without checking the specific message
-  expect_error(getEsqlabsRSetting("nonExistentSetting"))
+  expect_snapshot(getEsqlabsRSetting("nonExistentSetting"), error = TRUE)
 })
 
 test_that(".getEsqlabsColors returns the expected colors", {
-  # Access the internal function
-  colors <- esqlabsR:::.getEsqlabsColors()
+  colors <- .getEsqlabsColors()
 
   # Test that it returns expected format
   expect_true(is.character(colors))
   expect_true(all(grepl("^#[0-9A-Fa-f]{6}$", colors)))
 
   # Test that it includes the first fixed colors
-  firstColors <- esqlabsR:::esqlabsColors(3)
+  firstColors <- esqlabsColors(3)
   expect_true(all(firstColors %in% colors))
 
   # The number of colors might change, so instead of testing the exact number,

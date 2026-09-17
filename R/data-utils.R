@@ -1,0 +1,314 @@
+#' Convert string to numeric
+#'
+#' @param string A string or a list of strings to be converted to numeric values
+#' @param lloqMode How to treat entries below LLOQ, i.e., of a form "<2":
+#'   `LLOQ/2` (default): return the number divided by 2, `LLOQ`: return the
+#'   numerical value, `ZERO`: return 0, `ignore`: return `NA`
+#' @param uloqMode How to treat entries above ULOQ, i.e., of a form ">2":
+#'   `ULOQ`: return the numerical value, `ignore`: return `NA`
+#'
+#' @details Tries to convert each string to a numeric with `as.numeric()`. If
+#'   any conversion fails and returns `NA`, the value is tested for being a
+#'   LLOQ- or a ULOQ value, i.e., of a form "<2" or ">2", respectively. If this
+#'   is a case, the returned value is defined by the parameters `lloqMode` and
+#'   `uloqMode`. In any other case where the string cannot be converted to a
+#'   numeric, `NA` is returned.
+#' @returns A numeric value or a list of numeric values
+#' @export
+stringToNum <- function(
+  string,
+  lloqMode = LLOQMode$`LLOQ/2`,
+  uloqMode = ULOQMode$ULOQ
+) {
+  # Input validations
+  validateEnumValue(lloqMode, LLOQMode)
+  validateEnumValue(uloqMode, ULOQMode)
+  # Remove all whitespaces
+  string <- gsub(" ", "", string, fixed = TRUE)
+  # Attempt to convert all passed values to numeric
+  numVals <- suppressWarnings(as.numeric(string))
+
+  # If any values could not be interpreted and were coerced to NA, decide what
+  # to do (e.g. LLOQ and ULOQ treatment)
+  naVals <- is.na(numVals)
+  if (any(naVals)) {
+    for (idx in which(naVals)) {
+      # If the value in the original string is NA, skip
+      if (is.na(string[[idx]])) {
+        next
+      }
+      # CHECK FOR LLOQ
+      if (substring(string[[idx]], first = 1, last = 1) == "<") {
+        # Transform the value that follow the "<" character
+        value <- suppressWarnings(as.numeric(substring(
+          string[[idx]],
+          first = 2
+        )))
+        # If value is NA (could not convert to numeric), continue, as the output
+        # should be NA
+        if (is.na(value)) {
+          next
+        }
+        switch(
+          lloqMode,
+          "LLOQ/2" = {
+            numVals[[idx]] <- value / 2
+          },
+          "LLOQ" = numVals[[idx]] <- value,
+          # set all data points with lloq to 0
+          "ZERO" = numVals[[idx]] <- 0,
+          # remove data points with lloq
+          "ignore" = numVals[[idx]] <- NA
+        )
+      }
+
+      # CHECK FOR ULOQ
+      if (substring(string[[idx]], first = 1, last = 1) == ">") {
+        # Transform the value that follow the "<" character
+        value <- suppressWarnings(as.numeric(substring(
+          string[[idx]],
+          first = 2
+        )))
+        # If value is NA (could not convert to numeric), continue, as the output
+        # should be NA
+        if (is.na(value)) {
+          next
+        }
+        switch(
+          uloqMode,
+          "ULOQ" = numVals[[idx]] <- value,
+          # remove data points with lloq
+          "ignore" = numVals[[idx]] <- NA
+        )
+      }
+    }
+  }
+  return(numVals)
+}
+
+#' Calculate geometric mean of a numeric vector
+#'
+#' @param x Numeric array to calculate geometric mean for
+#' @param na.rm A logical value indicating whether `NA` values should be
+#'   stripped before the computation proceeds
+#' @param trim Fraction (0 to 0.5) of observations to be trimmed from each end
+#'   of `x` before the mean is computed. Values of trim outside that range are
+#'   taken as the nearest endpoint
+#'
+#' @returns Geometric mean of `x`
+#' @export
+geomean <- function(x, na.rm = FALSE, trim = 0) {
+  exp(mean(log(x), na.rm = na.rm, trim = trim))
+}
+
+#' Calculate geometric standard deviation of a numeric vector
+#'
+#' @param x Numeric array
+#' @param na.rm A logical value indicating whether `NA` values should be
+#'   stripped before the computation proceeds.
+#'
+#' @returns Geometric standard deviation of `x`
+#' @export
+geosd <- function(x, na.rm = FALSE) {
+  exp(stats::sd(log(x), na.rm = na.rm))
+}
+
+#' Calculate mean and standard deviation for the yValues of the given `DataSet`
+#' objects
+#'
+#' @param dataSets list of `DataSet` objects
+#' @param method method for calculating the mean and standard deviation - either
+#'   `arithmetic` (default) or `geometric`
+#' @param lloqMode how to treat data points below LLOQ if LLOQ is given -
+#'   `LLOQ/2` (default): use as given (since `DataSet` stores values below LLOQ
+#'   as `LLOQ/2`), `LLOQ`: set value to LLOQ value, `ZERO`: set value to 0,
+#'   `ignore`: do not use data points for mean calculation
+#' @param outputXunit xUnit of output data set, if `NULL` (default) xUnit of the
+#'   first data set will be used
+#' @param outputYunit yUnit of output data set, if `NULL` (default) yUnit of the
+#'   first data set will be used
+#' @param outputMolWeight molWeight of output data set in `g/mol` - obligatory
+#'   when initial data sets have differing molWeight values
+#' @details Calculates mean and standard deviation of the yValues of the given
+#'   `DataSet` objects per xValue. The meta data of the returned `DataSet`
+#'   consists of all meta data that are equal in all initial data sets. Its LLOQ
+#'   is the mean LLOQ value of all data sets which have an LLOQ set, e.g. if
+#'   dataSet1 has LLOQ 1, dataSet2 has LLOQ 3 and dataSet3 has no LLOQ, then 2
+#'   is used for the returned `DataSet`. The LLOQ of the returned `DataSet` is
+#'   the arithmetic mean of LLOQ values of all `DataSet`s
+#' @returns A single `DataSet` object
+#' @export
+calculateMeanDataSet <- function(
+  dataSets,
+  method = "arithmetic",
+  lloqMode = LLOQMode$`LLOQ/2`,
+  outputXunit = NULL,
+  outputYunit = NULL,
+  outputMolWeight = NULL
+) {
+  validateIsOfType(dataSets, "DataSet")
+  if (!any(c("arithmetic", "geometric") == method)) {
+    msg <- messages$invalidMeanMethod()
+    cli::cli_abort("{msg}")
+  }
+  validateEnumValue(lloqMode, LLOQMode)
+
+  meanDataSet <- ospsuite::DataSet$new(name = "Mean")
+  df <- ospsuite::dataSetToDataFrame(dataSets)
+  # If df is empty, return an empty mean data set
+  if (isEmpty(df)) {
+    meanDataSet$addMetaData(name = "Subject ID", value = "mean")
+    return(meanDataSet)
+  }
+
+  molWeights <- unique(df$molWeight)
+  # molWeight is specified by user - use as specified
+  if (!is.null(outputMolWeight)) {
+    meanDataSet$molWeight <- outputMolWeight
+  } else if (length(molWeights) > 1) {
+    # molWeight is not specified by user and molWeights of data sets differ -
+    # error
+    msg <- messages$outputMolWeightNeeded()
+    cli::cli_abort("{msg}")
+  } else if (!is.na(molWeights)) {
+    # molWeight is not specified by user and all molWeights are equal and not NULL -
+    # take this value
+    meanDataSet$molWeight <- molWeights
+  }
+
+  # set units and dimensions to those of first data set if not specified otherwise
+  # outputXunit and outputYunit
+  if (is.null(outputXunit)) {
+    meanDataSet$xDimension <- df$xDimension[1]
+    meanDataSet$xUnit <- df$xUnit[1]
+  } else {
+    meanDataSet$xDimension <- ospsuite::getDimensionForUnit(outputXunit)
+    meanDataSet$xUnit <- outputXunit
+  }
+
+  if (is.null(outputYunit)) {
+    meanDataSet$yDimension <- df$yDimension[1]
+    meanDataSet$yUnit <- df$yUnit[1]
+  } else {
+    meanDataSet$yDimension <- ospsuite::getDimensionForUnit(outputYunit)
+    meanDataSet$yUnit <- outputYunit
+  }
+
+  # adjust yValues as specified by lloqMode argument
+  ind <- !is.na(df$lloq) & df$yValues < df$lloq
+  switch(
+    lloqMode,
+    # nothing to do for LLOQ/2
+    "LLOQ/2" = {},
+    # set all data points with lloq that are smaller than it to value of lloq
+    "LLOQ" = df[ind, "yValues"] <- df[ind, "lloq"],
+    # set all data points with lloq to 0
+    "ZERO" = df[ind, "yValues"] <- 0,
+    # remove data points with lloq
+    "ignore" = df <- df[!ind, ]
+  )
+
+  # meanDataSet$LLOQ = arithmetic mean lloq of all data sets with lloq
+  lloqMean <- suppressWarnings(mean(
+    unlist(
+      lapply(c(dataSets), function(x) {
+        x$LLOQ
+      }),
+      use.names = FALSE
+    ),
+    na.rm = TRUE
+  ))
+  if (!is.na(lloqMean)) {
+    meanDataSet$LLOQ <- lloqMean
+  }
+
+  # convert xValues to same unit
+  df$xValues <- mapply(
+    function(vals, unit) {
+      ospsuite::toUnit(
+        quantityOrDimension = meanDataSet$xDimension,
+        targetUnit = meanDataSet$xUnit,
+        values = vals,
+        sourceUnit = unit
+      )
+    },
+    df$xValues,
+    df$xUnit
+  )
+
+  # convert yValues to same unit
+  df$yValues <- mapply(
+    function(vals, unit, mw) {
+      ospsuite::toUnit(
+        quantityOrDimension = meanDataSet$yDimension,
+        targetUnit = meanDataSet$yUnit,
+        values = vals,
+        sourceUnit = unit,
+        molWeight = mw,
+        molWeightUnit = "g/mol"
+      )
+    },
+    df$yValues,
+    df$yUnit,
+    df$molWeight
+  )
+
+  # calculate means and standard deviations according to chosen method
+  switch(
+    method,
+    arithmetic = {
+      yMeans <- tapply(df[["yValues"]], df[["xValues"]], mean)
+      yError <- tapply(df[["yValues"]], df[["xValues"]], stats::sd)
+      meanDataSet$setValues(
+        xValues = as.numeric(names(yMeans)),
+        yValues = yMeans,
+        yErrorValues = yError
+      )
+      meanDataSet$yErrorType <- ospsuite::DataErrorType$ArithmeticStdDev
+    },
+    geometric = {
+      yMeans <- tapply(df[["yValues"]], df[["xValues"]], geomean)
+      yError <- tapply(df[["yValues"]], df[["xValues"]], geosd)
+      meanDataSet$setValues(
+        xValues = as.numeric(names(yMeans)),
+        yValues = yMeans,
+        yErrorValues = yError
+      )
+      meanDataSet$yErrorType <- ospsuite::DataErrorType$GeometricStdDev
+    }
+  )
+
+  # add all meta that are equal in every data set
+  metaDataNames <- Reduce(
+    intersect,
+    lapply(c(dataSets), function(x) {
+      names(x$metaData)
+    })
+  )
+  for (name in metaDataNames) {
+    value <- Reduce(
+      intersect,
+      lapply(
+        c(dataSets),
+        function(x) {
+          x$metaData[[name]]
+        }
+      )
+    )
+    if (length(value) != 0) {
+      meanDataSet$addMetaData(name = name, value = value)
+    }
+  }
+
+  meanDataSet$addMetaData(name = "Subject ID", value = "mean")
+
+  return(meanDataSet)
+}
+
+#' Possible entries for the `lloqMode` argument of `calculateMeans()`
+#' @export
+LLOQMode <- enum(list("LLOQ/2", "LLOQ", "ZERO", "ignore"))
+
+#' Possible modes to treat values above the upper limit of quantification.
+#' @export
+ULOQMode <- enum(list("ULOQ", "ignore"))
