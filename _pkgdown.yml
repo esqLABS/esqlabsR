@@ -13,19 +13,123 @@ authors:
     href: https://github.com/Felixmil
 development:
   mode: auto
+
+articles:
+  - title: Get Started
+    navbar:
+    desc: |
+      A single lesson that walks the whole workflow end to end. Start here if
+      you have not used the package before.
+    contents:
+      - esqlabsR
+  - title: How-to guides
+    navbar: How-to
+    desc: |
+      Directions for a reader with a task in hand. Each guide takes one goal
+      and shows the steps that reach it.
+    contents:
+      - how-to-set-up-a-project
+      - how-to-design-scenarios
+      - how-to-validate-a-project
+      - how-to-run-simulations
+      - how-to-plot-results
+      - how-to-use-observed-data
+      - how-to-identify-parameters
+      - how-to-run-a-sensitivity-analysis
+      - how-to-customize-sensitivity-plots
+      - how-to-migrate-from-excel
+  - title: Explanation
+    navbar: Explanation
+    desc: |
+      Why the package works the way it does. Read these when you want to
+      understand the design rather than complete a task.
+    contents:
+      - about-the-project-model
+      - about-the-plotting-model
+  - title: Reference articles
+    navbar: Reference articles
+    desc: |
+      Field-by-field description of the project file and of every definition
+      kind. Look things up here; these articles do not explain or instruct.
+    contents:
+      - reference-project-file
+      - reference-definition-fields
+  - title: Miscellaneous
+    navbar: Miscellaneous
+    contents:
+      - presentations
+
 reference:
   - title: Project workflow
     contents:
-      - contains("Project")
-      - contains("Scenario")
-      - projectConfigurationStatus
-      - createPlotsFromExcel
+      - Project
+      - loadProject
+      - saveProject
+      - reloadProject
+      - snapshotProject
+      - restoreProject
+      - projectStatus
       - initProject
+      - exampleProjectPath
+      - importProjectFromExcel
+      - exportProjectToExcel
+      - createScenariosFromPKML
+      - contains("Scenario")
+  - title: Programmatic Project mutation
+    contents:
+      - addScenario
+      - removeScenario
+      - setScenario
+      - renameScenario
+      - duplicateScenario
+      - addIndividual
+      - removeIndividual
+      - setIndividual
+      - addPopulation
+      - removePopulation
+      - setPopulation
+      - addApplication
+      - removeApplication
+      - setApplicationParameterSets
+      - addOutputPath
+      - removeOutputPath
+      - setOutputPath
+      - addObservedData
+      - removeObservedData
+      - getObservedDataNames
+      - addDataCombined
+      - removeDataCombined
+      - addPlot
+      - removePlot
+      - addPlotGrid
+      - removePlotGrid
+      - addParameterSet
+      - removeParameterSet
+      - addParameterEntry
+      - removeParameterEntry
+      - addInitialConditions
+      - removeInitialConditions
+      - addInitialConditionEntry
+      - removeInitialConditionEntry
   - title: Parameter identification workflow
     contents:
-      - PITaskConfiguration
-      - createPITasks
+      - PITask
+      - PIParameter
+      - PIOutputMapping
       - runPI
+      - addPITask
+      - setPITask
+      - removePITask
+      - addPIParameter
+      - removePIParameter
+      - addPIOutputMapping
+      - removePIOutputMapping
+  - title: Deprecated parameter identification API
+    desc: |
+      Legacy entry points retained for migration only. They emit a
+      deprecation warning and abort. Use the project-driven API above.
+    contents:
+      - createPITasks
   - title: Helpers for data import, wrangling, and export
     contents:
       - matches("^read")
@@ -33,7 +137,6 @@ reference:
       - matches("^set")
       - matches("^write")
       - matches("^export")
-      - createDataCombinedFromExcel
   - title: Helpers for modeling and simulation
     contents:
       - matches("^compare")
@@ -48,18 +151,20 @@ reference:
       - LLOQMode
       - ULOQMode
       - loadObservedData
-      - loadObservedDataFromPKML
   - title: Helpers for plotting
     contents:
       - matches("^plot")
       - matches("^col")
       - matches("[Cc]olor")
-      - has_concept("create-plotting-configurations")
-      - createDataCombinedFromExcel
+      - has_concept("createPlottingConfigurations")
+      - createDataCombined
+      - createPlots
   - title: Input validation
     contents:
       - matches("^valid")
       - matches("^is")
+      - print.ValidationResults
+      - format.ValidationResults
       - stringToNum
       - GenderInt
       - contains("Types")
@@ -76,26 +181,11 @@ reference:
       - removeFromList
       - sourceAll
       - esqlabsRSettingNames
-  - title: Inherited classes
-    contents: ExportConfiguration
-articles:
-  - title: esqlabsR Workflow
-    navbar: esqlabsR Workflow
+  - title: Deprecated
+    desc: |
+      Legacy entry points retained for migration only. They emit a
+      deprecation warning. Use the new project-driven API above.
     contents:
-      - workflow-overview
-      - project-structure
-      - design-scenarios
-      - run-simulations
-      - plot-results
-      - sensitivity
-      - sensitivity-plots
-  - title: Parameter Identification
-    navbar: Parameter Identification
-    contents:
-      - pi-workflow
-  - title: Miscellaneous
-    navbar: Miscellaneous
-    contents:
-      - presentations
-      - advanced
-      - project-migration-guide
+      - ProjectConfiguration
+      - createDataCombinedFromExcel
+      - createPlotsFromExcel

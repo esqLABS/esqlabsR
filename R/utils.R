@@ -1,0 +1,272 @@
+#' Find value in an array
+#'
+#' @description Find the index of the value in an array that is closest to given
+#'   one. By default, no restriction is applied how big the absolute numerical
+#'   distance between `value` and a value in the `array` may be. A limit can be
+#'   set by the parameters `thresholdAbs` or `thresholdRel`. If no value within
+#'   the `array` has the distance to `value` that is equal to or less than the
+#'   threshold, the `value` is considered not present in the `array` and `NULL`
+#'   is returned.
+#'
+#' @param value Numerical value
+#' @param array Numerical array
+#' @param thresholdAbs Absolute numerical distance by which the closest value in
+#'   `array` may differ from `value` to be accepted. If both `thresholdAbs` and
+#'   `thresholdRel` are `NULL` (default), no threshold is applied. If
+#'   `thresholdAbs` is set, `thresholdRel` is ignored. If 0, only exact match
+#'   between `value` and `array` is accepted.
+#' @param thresholdRel A fraction by which the closest value may differ from
+#'   `value` to be accepted. **WARNING**: setting a relative threshold will
+#'   result in only exact matches if `value` is 0!
+#'
+#' @returns Index of a value within the array which is closest to `value` and
+#'   the difference is within the defined threshold. If multiple entries of
+#'   `array` have the same difference which is minimal, a vector of indices is
+#'   returned. If no value is within the defined threshold, `NULL` is returned.
+#' @export
+getIndexClosestToValue <- function(
+  value,
+  array,
+  thresholdAbs = NULL,
+  thresholdRel = NULL
+) {
+  # `value` must be a single scalar; a vector would silently recycle through the
+  # threshold and distance arithmetic below and return garbage.
+  ospsuite.utils::validateIsOfLength(value, 1)
+
+  # If no absolute threshold is set, calculate if from relative threshold
+  if (is.null(thresholdAbs)) {
+    # If no relative threshold is set also, no threshold is applied
+    if (!is.null(thresholdRel)) {
+      thresholdAbs <- abs(value * thresholdRel)
+    } else {
+      thresholdAbs <- Inf
+    }
+  }
+
+  validateIsNumeric(c(value, array))
+
+  # Calculate distances
+  distances <- abs(array - value)
+  # Compute the minimum distance ignoring NA entries so an exact match is not
+  # lost when the array contains NA. If every distance is NA (or the array is
+  # empty), `minDist` is not finite and no index qualifies below.
+  minDist <- suppressWarnings(min(distances, na.rm = TRUE))
+  idx <- which(distances == minDist & distances <= thresholdAbs)
+
+  if (length(idx) == 0) {
+    msg <- messages$valueWithinThresholdNotExisting(value, thresholdAbs)
+    cli::cli_warn("{msg}")
+    return(NULL)
+  }
+
+  return(idx)
+}
+
+#' Remove an entry from a list
+#'
+#' @param entry The entry to be removed
+#' @param listArg The list from which the entry will be removed
+#' @description Removes all occurrences of the entry from the list. If the entry
+#'   is not in the list nothing is removed.
+#' @returns The list without the entry. If the input is a vector, it is
+#'   converted to a list.
+#'
+#' @examples
+#' myList <- list("one", "two", "one", "three")
+#' myList <- removeFromList("one", myList)
+#' print(myList)
+#' @export
+removeFromList <- function(entry, listArg) {
+  if (is.null(listArg)) {
+    return(NULL)
+  }
+  if (!is.list(listArg)) {
+    listArg <- as.list(listArg)
+  }
+  idx <- which(entry == listArg)
+  listArg[idx] <- NULL
+  return(listArg)
+}
+
+#' Compare values including `NA`
+#'
+#' @param v1 Value or a list of values to compare. May include `NA`.
+#' @param v2 Value or a list of values to compare. May include `NA`.
+#' @details From http://www.cookbook-r.com/Manipulating_data/Comparing_vectors_or_factors_with_NA/
+#'
+#' @returns `TRUE` wherever elements are the same, including `NA`'s,
+# and `FALSE` everywhere else.
+#' @export
+compareWithNA <- function(v1, v2) {
+  same <- (v1 == v2) | (is.na(v1) & is.na(v2))
+  same[is.na(same)] <- FALSE
+  return(same)
+}
+
+# Is a value a single non-empty string? This is what almost every authoring
+# argument and required definition field has to be: one character element, not
+# `NA`, not `""`. The `NA` test comes before the width test because
+# `nchar(NA)` is 2, so an `NA` would otherwise pass as non-empty.
+#
+# @keywords internal
+# @noRd
+.isNonEmptyString <- function(value) {
+  is.character(value) && length(value) == 1L && !is.na(value) && nzchar(value)
+}
+
+# Abort unless `value` is a single non-empty string, naming the argument.
+# Returns the value unchanged so a caller can write
+# `id <- .assertNonEmptyString(id, "id")`. `call` attributes the abort to the
+# public caller.
+#
+# @keywords internal
+# @noRd
+.assertNonEmptyString <- function(value, argName, call = rlang::caller_env()) {
+  if (!.isNonEmptyString(value)) {
+    cli::cli_abort("{.arg {argName}} must be a non-empty string", call = call)
+  }
+  value
+}
+
+# Parse simulation time intervals from a string of form "start,end,res" or
+# "start1,end1,res1;start2,end2,res2". Returns a list of numeric vectors, or
+# NULL if input is NULL.
+#
+# @keywords internal
+# @noRd
+.parseSimulationTimeIntervals <- function(simulationTimeIntervalsString) {
+  if (is.null(simulationTimeIntervalsString)) {
+    return(NULL)
+  }
+  simulationTimeIntervals <- strsplit(
+    x = simulationTimeIntervalsString,
+    split = ";",
+    fixed = TRUE
+  )[[1]]
+  simulationTimeIntervals <- strsplit(
+    x = simulationTimeIntervals,
+    split = ",",
+    fixed = TRUE
+  )
+  simulationTimeIntervals <- lapply(simulationTimeIntervals, as.numeric)
+  validateIsNumeric(simulationTimeIntervals)
+  if (any(unlist(simulationTimeIntervals) < 0)) {
+    msg <- messages$wrongTimeIntervalString(simulationTimeIntervalsString)
+    cli::cli_abort("{msg}")
+  }
+  if (any(vapply(simulationTimeIntervals, length, integer(1)) != 3)) {
+    msg <- messages$wrongTimeIntervalString(simulationTimeIntervalsString)
+    cli::cli_abort("{msg}")
+  }
+  if (any(vapply(simulationTimeIntervals, \(x) x[3] <= 0, logical(1)))) {
+    msg <- messages$wrongTimeIntervalString(simulationTimeIntervalsString)
+    cli::cli_abort("{msg}")
+  }
+  if (any(vapply(simulationTimeIntervals, \(x) x[1] >= x[2], logical(1)))) {
+    msg <- messages$wrongTimeIntervalString(simulationTimeIntervalsString)
+    cli::cli_abort("{msg}")
+  }
+  return(simulationTimeIntervals)
+}
+
+# Flatten a protein-ontogeny specification into a character vector of one entry
+# per ontogeny. Every shape the field takes across the package is accepted: a
+# character vector of `"Protein:Ontogeny"` entries, a single comma-joined cell as
+# the Excel sheets spell it, and the list a JSON array yields when read with
+# `simplifyVector = FALSE`. Blank and `NA` entries are dropped, so an empty cell
+# and an absent field both come back as `character(0)`.
+#
+# @keywords internal
+# @noRd
+.splitProteinOntogenies <- function(value) {
+  if (is.null(value)) {
+    return(character(0))
+  }
+  entries <- as.character(unlist(value, use.names = FALSE))
+  entries <- trimws(unlist(
+    strsplit(entries, ",", fixed = TRUE),
+    use.names = FALSE
+  ))
+  entries[!is.na(entries) & nzchar(entries)]
+}
+
+#' Get the name of the molecule from a quantity
+#'
+#' @description Returns the name of the molecule to which the quantity object is
+#'   associated. The quantity could be the amount of the molecule in a container
+#'   ('Organism|VenousBlood|Plasma|Aciclovir'), a parameter of the molecule
+#'   ('Aciclovir|Lipophilicity' or
+#'   'Organism|VenousBlood|Plasma|Aciclovir|Concentration'), or an observer
+#'   ("Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous
+#'   Blood)").
+#'
+#'   If the quantity is not associated with a molecule (e.g. 'Organism|Weight'),
+#'   an error is thrown.
+#'
+#' @param quantity A `Quantity` object
+#'
+#' @returns Name of the molecule the quantity is associated with.
+#' @export
+#'
+#' @examples
+#' simulation <- loadSimulation(system.file("extdata", "Aciclovir.pkml", package = "ospsuite"))
+#' quantity <- getQuantity(
+#'   path = "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)",
+#'   container = simulation
+#' )
+#' getMoleculeNameFromQuantity(quantity = quantity)
+getMoleculeNameFromQuantity <- function(quantity) {
+  validateIsOfType(quantity, "Quantity")
+
+  quantityType <- quantity$quantityType
+
+  # If the passed quantitiy is a molecule, return its name
+  if (quantityType %in% c("Drug", "Molecule")) {
+    return(quantity$name)
+  }
+
+  # Otherwise try to get its parent container
+  parentContainer <- quantity$parentContainer
+  parentContainerType <- parentContainer$containerType
+
+  # If parent container is not a molecule, stop with an error
+  if (!(parentContainerType %in% c("Drug", "Molecule"))) {
+    msg <- messages$cannotGetMoleculeFromQuantity(quantity$path)
+    cli::cli_abort("{msg}")
+  }
+
+  return(parentContainer$name)
+}
+
+#' Add a new key-value pairs to an enum, where the value is a list.
+#'
+#' @param key Key to be added
+#' @param values Values to be added
+#' @param enum enum the key-value pairs should be added to.
+#' **WARNING**: the original object is not modified!
+#' @param overwrite if TRUE and a `key` exists, it will be overwritten with the
+#'   new value. Otherwise, an error is thrown. Default is `FALSE`.
+#'
+#' @returns Enum with added key-value pair.
+#' @export
+#'
+#' @examples
+#' library(ospsuite.utils)
+#' myEnum <- enum(c(a = "b"))
+#' myEnum <- enumPut("c", "d", myEnum)
+#' myEnum <- enumPut(c("c", "d", "g"), list(12, 2, "a"), myEnum, overwrite = TRUE)
+#' myEnum <- enumPutList("g", list(12, 2, "a"), myEnum, overwrite = TRUE)
+enumPutList <- function(key, values, enum, overwrite = FALSE) {
+  if (length(key) > 1) {
+    msg <- messages$enumPutListMultipleKeys()
+    cli::cli_abort("{msg}")
+  }
+  if (enumHasKey(key, enum) && !overwrite) {
+    msg <- messages$errorKeyInEnumPresent(key)
+    cli::cli_abort("{msg}")
+  }
+  enum[[key]] <- values
+
+  return(enum)
+}

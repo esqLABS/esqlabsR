@@ -185,6 +185,7 @@ sensitivityCalculation
 sensitivitySpiderPlot
 sensitivityTimeProfiles
 simulationRunOptions
+simulationsFolder
 startValue
 subfolder
 tibble

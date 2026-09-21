@@ -1,0 +1,150 @@
+# addIndividual aborts when individualId already exists
+
+    Code
+      addIndividual(project, "indiv1", species = "Human", gender = "MALE")
+    Condition
+      Error in `addIndividual()`:
+      ! individual "indiv1" already exists.
+      i Pass `overwrite = TRUE` to replace it.
+
+# addIndividual rejects a non-logical overwrite passed through ...
+
+    Code
+      addIndividual(project, "newi", species = "Human", overwrite = "TRUE")
+    Condition
+      Error in `addIndividual()`:
+      ! `overwrite` must be a single `TRUE` or `FALSE`.
+
+# addIndividual aborts when gender is not a valid GenderInt token
+
+    Code
+      addIndividual(project, "newi", species = "Human", gender = "banana")
+    Condition
+      Error in `addIndividual()`:
+      ! Cannot add individual "newi":
+      x gender must be one of MALE, FEMALE, UNKNOWN
+
+# setIndividual aborts on a non-existent individual
+
+    Code
+      setIndividual(project, "Ghost", weight = 80)
+    Condition
+      Warning:
+      Canonicalized 1 id to a safe form:
+      * "Ghost" -> "ghost"
+      Error in `setIndividual()`:
+      ! Cannot modify individual "ghost": it does not exist.
+      i Use `addIndividual()` to create it first.
+
+# setIndividual rejects an empty gender like addIndividual
+
+    Code
+      setIndividual(project, "indiv1", gender = "")
+    Condition
+      Error in `setIndividual()`:
+      ! `gender` must be a non-empty string
+
+# setIndividual rejects a gender that is not a valid GenderInt token
+
+    Code
+      setIndividual(project, "indiv1", gender = "banana")
+    Condition
+      Error in `setIndividual()`:
+      ! `gender` must be one of "MALE", "FEMALE", and "UNKNOWN"
+
+# setIndividual rejects a non-numeric weight like addIndividual
+
+    Code
+      setIndividual(project, "indiv1", weight = "80kg")
+    Condition
+      Error in `setIndividual()`:
+      ! weight must be a single finite number
+
+# setIndividual rejects parameterSets that do not resolve
+
+    Code
+      setIndividual(project, "indiv1", parameterSets = "Ghost")
+    Condition
+      Warning:
+      Canonicalized 1 id to a safe form:
+      * "Ghost" -> "ghost"
+      Error in `setIndividual()`:
+      ! `parameterSets` references undefined parameter sets:
+      x "ghost"
+
+# setIndividual aborts on an undefined parameter set
+
+    Code
+      setIndividual(project, "indiv1", parameterSets = "Ghost")
+    Condition
+      Warning:
+      Canonicalized 1 id to a safe form:
+      * "Ghost" -> "ghost"
+      Error in `setIndividual()`:
+      ! `parameterSets` references undefined parameter sets:
+      x "ghost"
+
+# setIndividual refuses an ontogeny value it cannot store
+
+    Code
+      setIndividual(project, "indiv1", proteinOntogenies = ospsuite::MoleculeOntogeny$
+        new(molecule = "CYP3A4", ontogeny = ospsuite::StandardOntogeny$CYP3A4))
+    Condition
+      Error in `setIndividual()`:
+      ! `proteinOntogenies` must be a character vector of "Protein:Ontogeny" entries. x It is a <MoleculeOntogeny> object. i One entry per ontogeny, e.g. `c("CYP3A4:CYP3A4", "CYP2D6:CYP2C8")`, or the same pairs as one comma-joined string.
+
+# addIndividual aborts on a mismatched scalar field length
+
+    Code
+      addIndividual(project, c("a", "b", "c"), species = "Human", gender = c("MALE",
+        "FEMALE"))
+    Condition
+      Error in `addIndividual()`:
+      ! `gender` must be length 1 or length 3 (the number of ids).
+      x It is length 2.
+
+# addIndividual aborts on a duplicate id in the batch
+
+    Code
+      addIndividual(project, c("a", "a"), species = "Human", gender = "MALE")
+    Condition
+      Error in `addIndividual()`:
+      ! duplicate individual id in the batch: "a"
+
+# print.Individual renders the configured fields
+
+    Code
+      print(project$definitions$individuals[["indiv1"]])
+    Output
+      <Individual>
+        * Species: Human
+        * Population: European_ICRP_2002
+        * Gender: MALE
+        * Weight: 73
+        * Height: 176
+        * Age: 30
+        * Parameter Sets: indiv1_default
+
+# print.Individual renders a minimal individual
+
+    Code
+      print(project$definitions$individuals[["minimal"]])
+    Output
+      <Individual>
+        * Species: Human
+        * Population: <empty string>
+        * Gender: MALE
+        * Weight: <empty string>
+        * Height: <empty string>
+        * Age: <empty string>
+        * Parameter Sets: <empty string>
+
+# addIndividual aborts on a NaN numeric field
+
+    Code
+      addIndividual(project, "nanweight", "Human", weight = NaN)
+    Condition
+      Error in `addIndividual()`:
+      ! Cannot add individual "nanweight":
+      x weight must be a single finite number
+

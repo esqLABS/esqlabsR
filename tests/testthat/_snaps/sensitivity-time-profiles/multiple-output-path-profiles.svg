@@ -141,8 +141,8 @@
 </defs>
 <g clip-path='url(#cpMjcwLjk5fDQ4NC41NHwyOC45OHw1NS4xMw==)'>
 <rect x='270.99' y='28.98' width='213.55' height='26.15' style='stroke-width: 1.07; stroke: #333333; fill: #D9D9D9;' />
-<text x='377.76' y='40.33' text-anchor='middle' style='font-size: 8.80px; fill: #1A1A1A; font-family: sans;' textLength='150.70px' lengthAdjust='spacingAndGlyphs'>Events|IV 250mg 10min|Application_1|</text>
-<text x='377.76' y='49.84' text-anchor='middle' style='font-size: 8.80px; fill: #1A1A1A; font-family: sans;' textLength='104.53px' lengthAdjust='spacingAndGlyphs'>ProtocolSchemaItem|Dose</text>
+<text x='377.76' y='40.33' text-anchor='middle' style='font-size: 8.80px; fill: #1A1A1A; font-family: sans;' textLength='155.09px' lengthAdjust='spacingAndGlyphs'>Events|IV 250mg 10min|No formulation|</text>
+<text x='377.76' y='49.84' text-anchor='middle' style='font-size: 8.80px; fill: #1A1A1A; font-family: sans;' textLength='159.66px' lengthAdjust='spacingAndGlyphs'>Application_1|ProtocolSchemaItem|Dose</text>
 </g>
 <g clip-path='url(#cpMC4wMHw3MjAuMDB8MC4wMHw1NzYuMDA=)'>
 <polyline points='280.70,474.48 280.70,471.74 ' style='stroke-width: 1.07; stroke: #333333; stroke-linecap: butt;' />

@@ -106,8 +106,8 @@
 <text x='232.57' y='132.18' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: sans;' textLength='80.55px' lengthAdjust='spacingAndGlyphs'>Aciclovir|Lipophilicity</text>
 <text x='232.57' y='95.30' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: sans;' textLength='186.91px' lengthAdjust='spacingAndGlyphs'>Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|</text>
 <text x='232.57' y='104.81' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: sans;' textLength='189.09px' lengthAdjust='spacingAndGlyphs'>Glomerular Filtration-GFR-Aciclovir|GFR fraction</text>
-<text x='232.57' y='63.18' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: sans;' textLength='150.70px' lengthAdjust='spacingAndGlyphs'>Events|IV 250mg 10min|Application_1|</text>
-<text x='232.57' y='72.68' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: sans;' textLength='104.53px' lengthAdjust='spacingAndGlyphs'>ProtocolSchemaItem|Dose</text>
+<text x='232.57' y='63.18' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: sans;' textLength='155.09px' lengthAdjust='spacingAndGlyphs'>Events|IV 250mg 10min|No formulation|</text>
+<text x='232.57' y='72.68' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: sans;' textLength='159.66px' lengthAdjust='spacingAndGlyphs'>Application_1|ProtocolSchemaItem|Dose</text>
 <polyline points='232.57,129.15 235.31,129.15 ' style='stroke-width: 0.53; stroke: #B3B3B3; stroke-linecap: butt;' />
 <polyline points='232.57,97.03 235.31,97.03 ' style='stroke-width: 0.53; stroke: #B3B3B3; stroke-linecap: butt;' />
 <polyline points='232.57,64.90 235.31,64.90 ' style='stroke-width: 0.53; stroke: #B3B3B3; stroke-linecap: butt;' />
@@ -149,8 +149,8 @@
 <text x='232.57' y='262.58' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: sans;' textLength='80.55px' lengthAdjust='spacingAndGlyphs'>Aciclovir|Lipophilicity</text>
 <text x='232.57' y='225.71' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: sans;' textLength='186.91px' lengthAdjust='spacingAndGlyphs'>Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|</text>
 <text x='232.57' y='235.21' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: sans;' textLength='189.09px' lengthAdjust='spacingAndGlyphs'>Glomerular Filtration-GFR-Aciclovir|GFR fraction</text>
-<text x='232.57' y='193.58' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: sans;' textLength='150.70px' lengthAdjust='spacingAndGlyphs'>Events|IV 250mg 10min|Application_1|</text>
-<text x='232.57' y='203.09' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: sans;' textLength='104.53px' lengthAdjust='spacingAndGlyphs'>ProtocolSchemaItem|Dose</text>
+<text x='232.57' y='193.58' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: sans;' textLength='155.09px' lengthAdjust='spacingAndGlyphs'>Events|IV 250mg 10min|No formulation|</text>
+<text x='232.57' y='203.09' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: sans;' textLength='159.66px' lengthAdjust='spacingAndGlyphs'>Application_1|ProtocolSchemaItem|Dose</text>
 <polyline points='232.57,259.55 235.31,259.55 ' style='stroke-width: 0.53; stroke: #B3B3B3; stroke-linecap: butt;' />
 <polyline points='232.57,227.43 235.31,227.43 ' style='stroke-width: 0.53; stroke: #B3B3B3; stroke-linecap: butt;' />
 <polyline points='232.57,195.31 235.31,195.31 ' style='stroke-width: 0.53; stroke: #B3B3B3; stroke-linecap: butt;' />
@@ -192,8 +192,8 @@
 <text x='232.57' y='392.98' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: sans;' textLength='80.55px' lengthAdjust='spacingAndGlyphs'>Aciclovir|Lipophilicity</text>
 <text x='232.57' y='356.11' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: sans;' textLength='186.91px' lengthAdjust='spacingAndGlyphs'>Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|</text>
 <text x='232.57' y='365.61' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: sans;' textLength='189.09px' lengthAdjust='spacingAndGlyphs'>Glomerular Filtration-GFR-Aciclovir|GFR fraction</text>
-<text x='232.57' y='323.99' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: sans;' textLength='150.70px' lengthAdjust='spacingAndGlyphs'>Events|IV 250mg 10min|Application_1|</text>
-<text x='232.57' y='333.49' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: sans;' textLength='104.53px' lengthAdjust='spacingAndGlyphs'>ProtocolSchemaItem|Dose</text>
+<text x='232.57' y='323.99' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: sans;' textLength='155.09px' lengthAdjust='spacingAndGlyphs'>Events|IV 250mg 10min|No formulation|</text>
+<text x='232.57' y='333.49' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: sans;' textLength='159.66px' lengthAdjust='spacingAndGlyphs'>Application_1|ProtocolSchemaItem|Dose</text>
 <polyline points='232.57,389.96 235.31,389.96 ' style='stroke-width: 0.53; stroke: #B3B3B3; stroke-linecap: butt;' />
 <polyline points='232.57,357.83 235.31,357.83 ' style='stroke-width: 0.53; stroke: #B3B3B3; stroke-linecap: butt;' />
 <polyline points='232.57,325.71 235.31,325.71 ' style='stroke-width: 0.53; stroke: #B3B3B3; stroke-linecap: butt;' />
@@ -241,8 +241,8 @@
 <text x='232.57' y='523.39' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: sans;' textLength='80.55px' lengthAdjust='spacingAndGlyphs'>Aciclovir|Lipophilicity</text>
 <text x='232.57' y='486.51' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: sans;' textLength='186.91px' lengthAdjust='spacingAndGlyphs'>Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|</text>
 <text x='232.57' y='496.02' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: sans;' textLength='189.09px' lengthAdjust='spacingAndGlyphs'>Glomerular Filtration-GFR-Aciclovir|GFR fraction</text>
-<text x='232.57' y='454.39' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: sans;' textLength='150.70px' lengthAdjust='spacingAndGlyphs'>Events|IV 250mg 10min|Application_1|</text>
-<text x='232.57' y='463.89' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: sans;' textLength='104.53px' lengthAdjust='spacingAndGlyphs'>ProtocolSchemaItem|Dose</text>
+<text x='232.57' y='454.39' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: sans;' textLength='155.09px' lengthAdjust='spacingAndGlyphs'>Events|IV 250mg 10min|No formulation|</text>
+<text x='232.57' y='463.89' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: sans;' textLength='159.66px' lengthAdjust='spacingAndGlyphs'>Application_1|ProtocolSchemaItem|Dose</text>
 <polyline points='232.57,520.36 235.31,520.36 ' style='stroke-width: 0.53; stroke: #B3B3B3; stroke-linecap: butt;' />
 <polyline points='232.57,488.24 235.31,488.24 ' style='stroke-width: 0.53; stroke: #B3B3B3; stroke-linecap: butt;' />
 <polyline points='232.57,456.11 235.31,456.11 ' style='stroke-width: 0.53; stroke: #B3B3B3; stroke-linecap: butt;' />

@@ -2,8 +2,9 @@ name: Dev PR
 
 # Manually open a "restore development mode" pull request: runs
 # usethis::use_dev_version() (Version x.y.z -> x.y.z.9000 and a new NEWS.md
-# development heading), unpins Remotes (strips @*release), then opens a
-# `dev-pr-<version>` PR. Run after a release, or on demand.
+# development heading), then opens a `dev-pr-<version>` PR. Run after a release,
+# or on demand. The workflow's Remotes-unpinning step is a no-op here: OSP
+# dependencies come from the R-universe, not from a `Remotes:` field.
 
 on:
   workflow_dispatch:

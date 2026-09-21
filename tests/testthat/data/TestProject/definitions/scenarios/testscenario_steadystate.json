@@ -1,0 +1,23 @@
+{
+  "name": "testscenario_steadystate",
+  "individual": "indiv1",
+  "population": null,
+  "readPopulationFromCSV": false,
+  "parameterSets": [
+    "global",
+    "aciclovir"
+  ],
+  "initialConditions": [],
+  "application": "aciclovir_iv_250mg",
+  "simulationTime": "0, 24, 60",
+  "simulationTimeUnit": "h",
+  "steadyState": true,
+  "steadyStateTime": 500,
+  "steadyStateTimeUnit": "min",
+  "overwriteFormulasInSS": false,
+  "modelFile": "Aciclovir.pkml",
+  "outputPaths": [
+    "aciclovir_pvb",
+    "aciclovir_fat_cell"
+  ]
+}

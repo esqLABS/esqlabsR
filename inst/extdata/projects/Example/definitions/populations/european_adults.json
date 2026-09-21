@@ -1,0 +1,13 @@
+{
+  "populationId": "european_adults",
+  "species": "Human",
+  "population": "European_ICRP_2002",
+  "numberOfIndividuals": 50,
+  "proportionOfFemales": 50,
+  "weightUnit": "kg",
+  "heightUnit": "cm",
+  "ageMin": 18,
+  "ageMax": 65,
+  "BMIUnit": "kg/m²",
+  "proteinOntogenies": "CYP3A4:CYP3A4"
+}
