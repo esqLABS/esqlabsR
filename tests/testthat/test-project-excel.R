@@ -4301,3 +4301,29 @@ test_that("two ids differing only by a zero-width space abort the import as a co
     "collide after canonicalization"
   )
 })
+
+test_that("Excel round-trip preserves a simulated entry that omits its label", {
+  project <- exampleProject()
+
+  addDataCombined(
+    project,
+    id = "dc_no_label",
+    simulated = list(list(
+      scenario = "aciclovir_iv",
+      path = "Aciclovir_PVB"
+    ))
+  )
+
+  reimported <- excelRoundTrip(project)
+  dc <- .unwrapDefinitionList(reimported$definitions$dataCombined)[[
+    "dc_no_label"
+  ]]
+
+  # The empty label cell comes back as an omission (no `label` member at all),
+  # so the curve keeps its default name across the round trip, and the rest of
+  # the entry survives unchanged.
+  expect_identical(
+    dc$simulated[[1]],
+    list(scenario = "aciclovir_iv", path = "Aciclovir_PVB")
+  )
+})

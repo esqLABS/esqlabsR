@@ -1246,6 +1246,36 @@ validationSummary <- function(validationResults) {
         )
       )
     }
+
+    # A simulated entry's `path` carries either an output-path id or a model
+    # path. A value holding the OSP separator `|` is a model path and can only
+    # be confirmed against a loaded simulation, so it is never reported here.
+    # Anything else that names no output path is most likely a mistyped id;
+    # the report is a warning because a single-segment quantity path, while
+    # unusual, is not impossible, and the build uses the value as a model path.
+    outputPathsDefs <- project$definitions$outputPaths %||% list()
+    for (dcId in names(dataCombined)) {
+      for (entry in dataCombined[[dcId]]$simulated %||% list()) {
+        path <- entry$path
+        if (.isMissingField(path) || grepl("|", path, fixed = TRUE)) {
+          next
+        }
+        if (length(.matchOutputPathIds(path, outputPathsDefs)) == 0L) {
+          result$addWarning(
+            "Invalid Reference",
+            paste0(
+              "DataCombined '",
+              dcId,
+              "' references '",
+              path,
+              "', which looks like an output path id but is not defined; ",
+              "it is used as a model path",
+              .suggestSuffix(path, outputPathKeys)
+            )
+          )
+        }
+      }
+    }
   }
 
   # parameterIdentification cross-references -----------------------

@@ -20,18 +20,21 @@ DataCombined to add). Each is canonicalized to a safe, lowercase id (a
 warning names the result if it changed).}
 
 \item{simulated}{For a single DataCombined (\code{id} length 1), a list of
-named lists, each including \code{label}, \code{scenario}, and \code{path} (optional
+named lists, each including \code{scenario} and \code{path} (optional \code{label},
 \code{group}, \code{xOffsets}, \code{xOffsetsUnits}, \code{yOffsets}, \code{yOffsetsUnits},
-\code{xScaleFactors}, \code{yScaleFactors}). \code{path} may be either a literal model
-quantity path or an output-path id (a key of the project's \code{outputPaths}
-definitions); an id is resolved to its literal path when the DataCombined
-is built by \code{\link[=createDataCombined]{createDataCombined()}}. The \code{scenario} reference is
-canonicalized to match its scenario definition. To add several
-DataCombined in one call, pass a list of the same length as \code{id}, one
-such simulated list per DataCombined.}
+\code{xScaleFactors}, \code{yScaleFactors}). \code{path} may be either a model quantity
+path or an output-path id (a key of the project's \code{outputPaths}
+definitions); an id is resolved to its model path when the DataCombined is
+built by \code{\link[=createDataCombined]{createDataCombined()}}, and is matched the way the project's
+other references are matched, so its spelling need not be the canonical
+one. When \code{label} is left out, the curve is named by whatever is written
+in \code{path}. The \code{scenario} reference is canonicalized to match its scenario
+definition. To add several DataCombined in one call, pass a list of the
+same length as \code{id}, one such simulated list per DataCombined.}
 
 \item{observed}{Like \code{simulated}, but each named list includes \code{label} and
-\code{dataSet} (optional fields as \code{simulated} minus \code{scenario} and \code{path}).}
+\code{dataSet} (optional fields as \code{simulated} minus \code{scenario} and \code{path}).
+\code{label} is required here.}
 
 \item{overwrite}{Logical scalar. When \code{FALSE} (default), an id that already
 exists aborts. When \code{TRUE}, the existing DataCombined is replaced
@@ -43,7 +46,10 @@ The \code{project} object, invisibly.
 \description{
 Append new DataCombined entries (each with one or more simulated and/or
 observed rows) to \code{dataCombined} definitions. Pass a vector of ids to add
-several DataCombined in one call.
+several DataCombined in one call. The labels of the curves in one
+DataCombined must be distinct, counting default labels and simulated and
+observed curves together; a repeated label aborts, so a project that cannot
+be plotted is never written to disk.
 }
 \details{
 The id argument sets \code{N}, the number of definitions to act on, and cannot

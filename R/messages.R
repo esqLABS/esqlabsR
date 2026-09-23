@@ -1495,9 +1495,38 @@ messages$dataCombinedNamesNotFound <- function(dataCombinedNames) {
   )
 }
 
-messages$wrongOutputPath <- function(dataCombinedName, scenarioName, path) {
+messages$ambiguousOutputPathRef <- function(path, ids) {
   cliFormat(
-    "Output path {.path {path}} is defined in the DataCombined {.val {paste(dataCombinedName, collapse = \", \")}}
+    "The output path reference {.val {path}} matches several output path ids:
+    {.val {paste(ids, collapse = \", \")}}.
+    Rename one of them, or write the model path in the entry instead."
+  )
+}
+
+messages$duplicateDataCombinedLabels <- function(dataCombinedName, labels) {
+  cliFormat(
+    "The DataCombined {.val {dataCombinedName}} has several curves with the label
+    {.val {paste(labels, collapse = \", \")}}. Curve labels must be unique within one
+    DataCombined; give each curve its own {.field label}."
+  )
+}
+
+# `outputPathId` is the value the entry wrote when it named its output by id,
+# and `NULL` when it wrote a model path; in the latter case the message reads
+# exactly as it does for a hand-written model path.
+messages$wrongOutputPath <- function(
+  dataCombinedName,
+  scenarioName,
+  path,
+  outputPathId = NULL
+) {
+  named <- if (is.null(outputPathId)) {
+    cliFormat("Output path {.path {path}}")
+  } else {
+    cliFormat("Output path {.val {outputPathId}} ({.path {path}})")
+  }
+  cliFormat(
+    "{named} is defined in the DataCombined {.val {paste(dataCombinedName, collapse = \", \")}}
     for scenario {.cls {scenarioName}} but has not been simulated.
     Please check that the output path is specified for this scenario."
   )

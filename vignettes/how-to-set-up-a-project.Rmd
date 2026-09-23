@@ -35,7 +35,9 @@ project <- loadProject(exampleProjectPath())
 project
 ```
 
-Printing a project shows its name, source path, working folders, and a count of each kind of definition. Each definition section is a named list, with one entry per id:
+Printing a project shows its name and description, the name of its project file, its working folders, a count of each kind of definition, and the names of its Excel files when it has any. No full path is printed: folders appear relative to the project folder, and the project file by its name alone, so a printed project reads the same on any computer. When you need the full path, read `project$info$projectFilePath`.
+
+Each definition section is a named list keyed by id:
 
 ```{r}
 project$definitions$scenarios

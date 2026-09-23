@@ -1636,3 +1636,24 @@ test_that("print.Scenario renders the configured fields", {
   local_reproducible_output()
   expect_snapshot(print(project$definitions$scenarios[["testscenario"]]))
 })
+
+test_that("print.Scenario lists output paths, flagging unresolved ids", {
+  withr::local_options(cli.unicode = FALSE)
+  local_reproducible_output()
+  scenario <- Scenario(
+    scenarioName = "outputs",
+    modelFile = "Aciclovir.pkml",
+    outputPaths = c(
+      plasma = "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)",
+      kidney_urine = NA_character_
+    )
+  )
+  expect_snapshot(print(scenario))
+})
+
+test_that("print.Scenario shows an empty output-path block when there are none", {
+  withr::local_options(cli.unicode = FALSE)
+  local_reproducible_output()
+  scenario <- Scenario(scenarioName = "nooutputs", modelFile = "Aciclovir.pkml")
+  expect_snapshot(print(scenario))
+})

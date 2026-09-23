@@ -7,10 +7,19 @@
 #' sources internally. Either `dataCombined` or `plotGrids` (or both)
 #' selects which DataCombined to build.
 #'
-#' A simulated entry's `path` may be either a literal model quantity path or an
+#' A simulated entry's `path` may be either a model quantity path or an
 #' output-path id (a key of the project's `outputPaths` definitions). An id is
-#' resolved to its literal path before the entry is built; any value that is not
-#' a known id is used as a literal path.
+#' resolved to its model path before the entry is built, and is matched the way
+#' the project's other references are matched, so its spelling need not be the
+#' canonical one (`Aciclovir_PVB` finds `aciclovir_pvb`). Any value that names
+#' no output path is used as a model path.
+#'
+#' `label` is optional on a simulated entry: when it is left out, the curve is
+#' named by whatever is written in `path`, that is the output-path id in the
+#' spelling the definition uses, or the model path. `label` is still required on
+#' an observed entry. The labels of the curves in one DataCombined must be
+#' distinct, counting written and default labels, and simulated and observed
+#' curves together; a repeated label aborts.
 #'
 #' @param project A `Project` (see [loadProject()]).
 #' @param dataCombined Names of the DataCombined entries to build. If
@@ -170,13 +179,34 @@ createDataCombinedFromExcel <- function(...) {
   # step below, which would otherwise operate on a label that was never added.
   skippedLabels <- character(0)
 
-  for (entry in spec$simulated %||% list()) {
+  # Compute the effective entries once, so the label defaulting and the
+  # output-path resolution below happen before any curve is added and every
+  # downstream consumer (the add loops, `skippedLabels`, the transform step)
+  # reads one identity per entry.
+  simulatedEntries <- lapply(
+    spec$simulated %||% list(),
+    function(entry) {
+      .effectiveSimulatedEntry(entry, outputPaths, call = call)
+    }
+  )
+  observedEntriesRaw <- spec$observed %||% list()
+
+  duplicated <- .duplicateDataCombinedLabels(
+    simulatedEntries,
+    observedEntriesRaw
+  )
+  if (length(duplicated) > 0L) {
+    cli::cli_abort(
+      messages$duplicateDataCombinedLabels(name, duplicated),
+      call = call
+    )
+  }
+
+  for (entry in simulatedEntries) {
     scenarioName <- entry$scenario
     scenarioResult <- scenarioResults[[scenarioName]]
     results <- scenarioResult$results
-    # Resolve an output-path id to its literal path; a value that is not a known
-    # id is used verbatim as a literal model path.
-    path <- outputPaths[[entry$path]] %||% entry$path
+    path <- entry$path
 
     if (!is.null(results) && any(results$allQuantityPaths == path)) {
       dataCombined$addSimulationResults(
@@ -205,7 +235,8 @@ createDataCombinedFromExcel <- function(...) {
         messages$wrongOutputPath(
           dataCombinedName = name,
           scenarioName = scenarioName,
-          path = path
+          path = path,
+          outputPathId = entry$.outputPathId
         )
       }
       if (stopIfNotFound) {
@@ -216,7 +247,7 @@ createDataCombinedFromExcel <- function(...) {
     }
   }
 
-  observedEntries <- spec$observed %||% list()
+  observedEntries <- observedEntriesRaw
   if (length(observedEntries) > 0) {
     dataSetIds <- vapply(observedEntries, function(e) e$dataSet, character(1))
     missingDataSets <- setdiff(dataSetIds, names(observedData))
@@ -255,11 +286,71 @@ createDataCombinedFromExcel <- function(...) {
   .applyDataCombinedTransformations(
     dataCombined,
     name = name,
-    entries = c(spec$simulated %||% list(), spec$observed %||% list()),
+    entries = c(simulatedEntries, observedEntriesRaw),
     skippedLabels = skippedLabels
   )
 
   dataCombined
+}
+
+# Turn one raw simulated entry into its effective form: the label it is known
+# by, and the literal model path it plots.
+#
+# The label is the entry's own `label` when it carries one, otherwise the `path`
+# value exactly as written (the output-path id in the spelling the definition
+# uses, or the model path). Resolution never feeds the label, so two entries
+# writing the same id in two spellings are two distinct curves that plot the
+# same quantity. An entry with no usable `path` gets no default label: it is
+# already a critical error from the required-field check, and fabricating a
+# label would hide it.
+#
+# @keywords internal
+# @noRd
+.effectiveSimulatedEntry <- function(
+  entry,
+  outputPaths,
+  call = rlang::caller_env()
+) {
+  entry$label <- .effectiveSimulatedLabel(entry)
+  resolved <- .resolveOutputPathValue(entry$path, outputPaths, call = call)
+  entry$path <- resolved$path
+  entry$.outputPathId <- resolved$fromId
+  entry
+}
+
+# The label a simulated entry is known by, or `NULL` when it has neither a
+# label nor a `path` to default from.
+#
+# @keywords internal
+# @noRd
+.effectiveSimulatedLabel <- function(entry) {
+  if (!.isMissingField(entry$label)) {
+    return(entry$label)
+  }
+  if (.isMissingField(entry$path)) {
+    return(NULL)
+  }
+  as.character(entry$path)
+}
+
+# The labels that occur more than once across one DataCombined's simulated and
+# observed entries, counting written and defaulted labels alike.
+#
+# Labels are compared exactly, letter for letter, because that is what the
+# plotting layer underneath does. Entries with no label at all are ignored:
+# they are reported by the required-field checks.
+#
+# @keywords internal
+# @noRd
+.duplicateDataCombinedLabels <- function(simulated, observed) {
+  labels <- c(
+    lapply(simulated %||% list(), .effectiveSimulatedLabel),
+    lapply(observed %||% list(), function(entry) {
+      if (.isMissingField(entry$label)) NULL else entry$label
+    })
+  )
+  labels <- as.character(unlist(labels, use.names = FALSE))
+  unique(labels[duplicated(labels)])
 }
 
 # Apply the per-entry x/y offsets and scale factors declared on a DataCombined
@@ -277,7 +368,7 @@ createDataCombinedFromExcel <- function(...) {
 ) {
   df <- dataCombined$toDataFrame()
   for (entry in entries) {
-    if (entry$label %in% skippedLabels) {
+    if (.isMissingField(entry$label) || entry$label %in% skippedLabels) {
       next
     }
     hasTransform <- !is.null(entry$xOffsets) ||
@@ -350,8 +441,10 @@ createDataCombinedFromExcel <- function(...) {
 #' Validate the `dataCombined` section of a Project
 #'
 #' Static, spec-only checks on the JSON `dataCombined` section: every simulated
-#' entry must declare `label`, `scenario`, and `path`; every observed entry must
-#' declare `label` and `dataSet`. An empty section is valid. Cross-section
+#' entry must declare `scenario` and `path` (`label` is optional there and
+#' defaults to the `path` value as written); every observed entry must declare
+#' `label` and `dataSet`; and the curve labels within one DataCombined must be
+#' distinct. An empty section is valid. Cross-section
 #' reference resolution (a simulated entry's `scenario` against defined
 #' scenarios) is handled by the `crossReferences` phase, not here; runtime
 #' resolution against scenario results and observed data happens in
@@ -379,6 +472,18 @@ createDataCombinedFromExcel <- function(...) {
     }
     for (entry in dc$observed %||% list()) {
       .checkDataCombinedEntryFields(entry, "observed", id, result)
+    }
+    duplicated <- .duplicateDataCombinedLabels(dc$simulated, dc$observed)
+    if (length(duplicated) > 0) {
+      result$addCriticalError(
+        "Uniqueness",
+        paste0(
+          "DataCombined '",
+          id,
+          "' has several curves with the same label: ",
+          paste(duplicated, collapse = ", ")
+        )
+      )
     }
   }
 

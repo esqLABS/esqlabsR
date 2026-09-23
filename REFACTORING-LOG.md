@@ -255,8 +255,14 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-09-14 21:56: The warning about run options in a project file no longer sends the reader to runPI(), which has no simulationRunOptions argument, and its wording is now pinned by a snapshot. (#408)
 - 2026-09-15 09:16: The sensitivity examples and tests name the Aciclovir dose as ospsuite 13.0.0.9010 exports it, which puts a "No formulation" container between the application and its schema item. (#408)
 - 2026-09-15 09:17: The population snapshots record the demographics ospsuite 13.0.0.9010 ships in its example population, which gained BSA and reordered its parameters. (#408)
-- 2026-09-15 15:31: The README explains how a snapshot differs from the project folder and why to use one, and its wording is tidied.
+- 2026-09-15 15:10: Scenario print now lists the output paths themselves and labels the protocol field "Administration Protocol". (#1279)
+- 2026-09-16 10:20: The output paths a scenario print shows now sit under an "Output Paths" bullet in the field list, one indentation level deeper, instead of under a heading outside it. (#1279)
 - 2026-09-15 17:09: Printing `project$definitions$observedData` lists the source ids instead of a bare count with nothing under it; the section is stored as a plain list rather than keyed by id, so its ids are read from each source the same way `removeObservedData()` reads them. (#1281)
+- 2026-09-15 15:31: The README explains how a snapshot differs from the project folder and why to use one, and its wording is tidied.
 - 2026-09-15 21:28: The Get started article points to the README for installation, names what a Scenario defines in modeler terms, links the Scenario Result reference, and drops the code wording (keyed, in memory).
-- 2026-09-17 13:54: The set-up article says folder instead of directory, drops the code wording (in-memory, commits, keyed, materializes), corrects the minimal project tree, and shows the workflow as an SVG diagram that the deck also uses.
-- 2026-09-17 15:25: Every name `R CMD check` needs declared as a data-mask column is listed in one place, `R/globals.R`, and seven names no code uses any more are dropped; `R/zzz.R` also loses the R6 import directive, since the check already credits the `R6::` call sites on its own.
+- 2026-09-16 09:10: A plot curve can now take its name from the output path written in its DataCombined entry, output path ids are matched the way other references are, and two curves with the same name stop the build. (#1280)
+- 2026-09-16 10:40: The NEWS bullets for the scenario print name the print() function, as the contributor guide requires. (#1279)
+- 2026-09-17 14:14: The refactoring rules say NEWS compares the development version against the last release, so a change made and undone within the unreleased cycle gets no entry. (#1279)
+- 2026-09-17 14:15: The scenario print NEWS bullets are gone: both described a change inside the unreleased 6.0.0 cycle, which its NEWS reader never saw. (#1279)
+- 2026-09-17 15:20: The DataCombined tests compare whole result structures, and the NEWS bullets for the curve labels describe the current behavior rather than the branch history. (#1280)
+- 2026-09-21 17:34: The Get started article now describes what printing a project really shows, and says that no full path is printed so a printed project reads the same on any computer. (#1289)
