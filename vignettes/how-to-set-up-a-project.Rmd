@@ -20,24 +20,22 @@ knitr::opts_chunk$set(
 library(esqlabsR)
 ```
 
-Everything `esqlabsR` does runs off a **Project**: the object holding the models, subjects, dosing, parameters, outputs, observed data, and figures for an analysis. This guide covers the project-level tasks: bringing one into memory, creating one from scratch, saving your edits, undoing them, and handing the whole thing to someone else as a single file.
+`esqlabsR` is built around a **Project**: the object that describes the models, individuals and populations, dosing, parameters, outputs, observed data, and figures of an analysis. This guide covers the project-level tasks: loading one into your R session, creating one from scratch, saving your edits, undoing them, and handing over the whole project to someone else as a single file.
 
-![esqlabsR workflow](Figures/esqlabs-workflow.png)
+![esqlabsR workflow](Figures/esqlabs-workflow.svg)
 
-Setting a project up happens once. Writing its definitions (`vignette("how-to-design-scenarios")`), running it (`vignette("how-to-run-simulations")`), and plotting it (`vignette("how-to-plot-results")`) are where you iterate.
-
-On disk a project is a directory: a `Project.json` file, a `definitions/` folder holding one file per definition, and working folders for models, data, populations and results. `vignette("reference-project-file")` describes the layout and every field; `vignette("about-the-project-model")` explains why it is arranged this way.
+A project is stored as a folder, containing a `Project.json` file, a `definitions/` folder holding one file per definition, and working folders for models, data, populations, and results. A definition is one named piece of the analysis, such as a scenario, an individual, a parameter set, or a plot. `vignette("reference-project-file")` describes the layout and every field; `vignette("about-the-project-model")` explains why it is arranged this way.
 
 ## Load an existing project
 
-`loadProject()` reads a `Project.json` and its `definitions/` tree into a `Project` object. The package ships a complete worked example, and `exampleProjectPath()` returns the path to its project file.
+`loadProject()` reads a `Project.json` and its `definitions/` tree into a `Project` object. The package comes with a complete example project, and `exampleProjectPath()` returns the path to its project file.
 
 ```{r}
 project <- loadProject(exampleProjectPath())
 project
 ```
 
-Printing a project shows its name and description, the name of its project file, its working folders, a count of each kind of definition, and the names of its Excel files when it has any. No full path is printed: folders appear relative to the project folder, and the project file by its name alone, so a printed project reads the same on any computer. When you need the full path, read `project$info$projectFilePath`.
+Printing a project shows its name and description, the name of its project file, its working folders, the count of each kind of definition, and the names of its Excel files, even if those files have not been written yet. Folders and files are printed relative to the project folder. For full paths, read them from `project$paths`, for example `project$paths$dataFolder`; `project$info$projectDirPath` is the project folder.
 
 Each definition section is a named list keyed by id:
 
@@ -45,15 +43,17 @@ Each definition section is a named list keyed by id:
 project$definitions$scenarios
 ```
 
-The sections are read-only. To change a definition, use an `add*`, `set*`, or `remove*` function (see `vignette("how-to-design-scenarios")`) or edit its JSON file directly.
+The sections are read-only. To change a definition, use the `add*`, `set*`, or `remove*` functions (see `vignette("how-to-design-scenarios")`), or edit its JSON file directly and then read the change in with `reloadProject()`, which also discards any edits you have not saved. When you edit a file by hand, keep the id lowercase and the same as the file name (see "Ids are always lowercase" below).
 
-If `loadProject()` spots an obvious cross-reference mistake, such as a scenario pointing at an individual that is not defined, it warns immediately but still returns the project, so you can inspect and repair it. For the full picture run `validateProject()`.
+If `loadProject()` spots a reference to something that does not exist, such as a scenario pointing at an individual that is not defined, it warns immediately but still returns the project, so you can inspect and repair it. For a full check of the project, run `validateProject()` (see `vignette("how-to-validate-a-project")`).
 
 ## Create a new project
 
-`initProject()` creates a project at `destination`, creating that directory if it is not there yet. Pass `type = "minimal"` for an empty project, or `type = "example"` to copy the complete worked example so you have something runnable to start from.
+`initProject()` creates a project at `destination`, creating that folder if it does not exist yet. Pass `type = "minimal"` for an empty project, or `type = "example"` to copy the example project so you have something runnable to start from.
 
-The chunks below create their projects in temporary directories so nothing is written into your working tree. In your own work you would pass the directory where the project should live.
+If the folder already holds a project, `initProject()` asks before replacing it; where it cannot ask, such as in a script run with `Rscript`, it stops unless you pass `overwrite = TRUE`. Replacing deletes the old `Project.json` and `definitions/` folder and keeps your other files, such as models and data; with `type = "example"`, the example's own files replace any of yours with the same name. Pass `name` to name the new project, for example `initProject("MyProject", name = "Aciclovir study")`.
+
+The examples below create their projects in temporary folders so nothing is written into your own folders. In your own work you would pass the folder where the project should live.
 
 ```{r}
 minimal_dir <- withr::local_tempdir()
@@ -64,36 +64,58 @@ A minimal project is the folder structure plus a `Project.json` with no definiti
 
 ```
 MyProject/
-├── Project.json     # metadata only, no definitions yet
-├── definitions/     # empty subfolders, one per kind
+├── Project.json          # metadata only, no definitions yet
+├── definitions/          # empty until you add definitions
 ├── Models/
-├── Data/
-├── Populations/
+│   ├── Simulations/      # .pkml files the scenarios reference
+│   └── Snapshots/        # PK-Sim / MoBi snapshots (reserved)
+├── Data/                 # observed data files
+├── Populations/          # population .csv files
 └── Results/
+    ├── Figures/
+    └── SimulationResults/
 ```
+
+Each working folder holds a short `README.md` saying what belongs there. To fill a minimal project, put your `.pkml` model files into `Models/Simulations/` and add definitions as described in `vignette("how-to-design-scenarios")`.
 
 ```{r}
 example_dir <- withr::local_tempdir()
 initProject(destination = example_dir, type = "example", createExcel = FALSE)
 ```
 
-`type = "example"` fills the `definitions/` tree instead, one file per definition. `createExcel = FALSE` keeps the project to the JSON form; `initProject()` can also write an Excel project alongside it, which `vignette("how-to-migrate-from-excel")` covers.
+`type = "example"` fills the `definitions/` tree, one file per definition. `createExcel = FALSE` keeps the project JSON-only; by default `initProject()` also writes a set of Excel files alongside it, covered in the "Edit a project in Excel" section below.
+
+## Name the project and choose its folders
+
+The project's name and description, and its working folders (where it finds models, data, and populations, and writes results), are settings you change by assigning a new value:
+
+```{r, eval = FALSE}
+project <- loadProject("MyProject/Project.json")
+project$info$name <- "Aciclovir PBPK study"
+project$info$description <- "Adult IV dosing"
+project$paths$dataFolder <- "${SHARED_DATA}/aciclovir"
+saveProject(project)
+```
+
+Like any other edit, these changes stay in your R session until you save them, as the next section explains. A folder must stay inside the project folder, unless its path contains an environment variable such as `${SHARED_DATA}`. Each user sets that variable to where the shared folder is on their own computer, for example with `Sys.setenv(SHARED_DATA = "S:/aciclovir-data")` before loading the project, or once in their `.Renviron` file. `vignette("reference-project-file")` lists the folders and what each one holds.
 
 ## Save your edits
 
-Editing a project is an in-memory operation. `addScenario()`, `addIndividual()`, `setScenario()` and the rest change the loaded object and mark it as having unsaved changes; nothing on disk moves until you ask.
+Editing a project through `addScenario()`, `addIndividual()`, `setScenario()`, and the rest modifies the loaded `Project`. Printing a project with unsaved changes shows `[unsaved changes]` right under its first line, and `projectStatus()` reports both whether there are unsaved edits and whether the Excel files next to it are out of date.
 
-`saveProject()` commits them. It brings the files on disk in line with the project in memory, writing only what changed and deleting the files of definitions you removed, so `git diff` shows exactly what you touched. A save with nothing to write says so and leaves the files alone, meaning saving repeatedly is always safe.
+To write the edits to the project files, use `saveProject()`. It brings the files on disk in line with the project in your R session. Saving rewrites only the files of definitions you changed and deletes the file of any definition you removed. It does not update the Excel files; run `exportProjectToExcel(project, overwrite = TRUE)` for that.
 
-Here we work against the writable copy created above rather than the read-only installed example:
+Here we use the copy created above:
 
 ```{r}
 editable <- loadProject(file.path(example_dir, "Project.json"))
-addOutputPath(editable, "pvb", "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)")
+addOutputPath(
+  editable,
+  id = "pvb",
+  path = "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
+)
 saveProject(editable)
 ```
-
-Two ways to see where a project stands: printing it marks unsaved work as `<Project 'name'> [unsaved changes]`, and `projectStatus()` reports both whether there are unsaved edits and whether a sibling Excel project has become a stale export.
 
 ## Discard unsaved edits
 
@@ -103,18 +125,99 @@ Two ways to see where a project stands: printing it marks unsaved work as `<Proj
 reloadProject(editable)
 ```
 
-## Share a project as a single file
+## Edit a project in Excel
 
-`snapshotProject()` freezes the current in-memory state, unsaved edits included, into one `.esqlabsR` file with every section inlined, so the project definitions travel as a single file rather than a tree. Give it a target `dir` and an optional `name`; the extension is added for you, and it returns the path it wrote.
+The `Project.json` file and its `definitions/` tree are the project: everything the package runs reads from them. A project can also be written out as a set of Excel files, so you can work in a spreadsheet instead of editing JSON files by hand. Think of the Excel files as a picture of the project taken at the moment you exported it. Editing them changes nothing until you read them back in.
 
-The snapshot holds the project's metadata and definitions, not the files those definitions point at. Model PKML files exported from PK-Sim or MoBi, observed-data files and importer configurations, scripts, and population CSVs still have to reach the recipient another way, or resolve to somewhere they can already see (an environment-variable path to a shared drive is one way, see `vignette("reference-project-file")`).
+### Where the files are
+
+The Excel files sit in the project folder, next to `Project.json`:
+
+```
+MyProject/
+├── Project.json
+├── Project.xlsx                        # working folders and file names
+├── definitions/                        # project definitions in json format
+└── Configurations/                     # definitions in excel format
+    ├── Applications.xlsx
+    ├── Individuals.xlsx
+    ├── InitialConditions.xlsx
+    ├── ModelParameters.xlsx
+    ├── ParameterIdentification.xlsx
+    ├── Plots.xlsx
+    ├── Populations.xlsx
+    └── Scenarios.xlsx
+```
+
+The top-level file is named after the project file, so a project loaded from `MyStudy.json` exports `MyStudy.xlsx`. Each file under `Configurations/` covers one kind of definition. `initProject()` writes all of them unless you pass `createExcel = FALSE`, as the examples above did.
+
+### Write the Excel files
+
+`exportProjectToExcel()` writes the files from a loaded project. Without `outputDir` it writes into the project's own folder, which is what you normally want; in the example here we send them to a temporary folder so nothing is written into your own folders.
+
+```{r}
+excel_dir <- withr::local_tempdir()
+exportProjectToExcel(editable, outputDir = excel_dir)
+list.files(excel_dir, recursive = TRUE, pattern = "[.]xlsx$")
+```
+
+Exporting refuses to write over Excel files that are already there; pass `overwrite = TRUE` to replace them.
+
+### Read the Excel files back
+
+`importProjectFromExcel()` writes the project files (`Project.json` and the `definitions/` folder) from the Excel files. It does not load the project into your R session; call `loadProject()` afterwards.
+
+Take care with the import, because it is the step that can lose work. It rewrites the whole `definitions/` tree from what the Excel files hold, which deletes any definition you created in R or in the JSON files and never exported. That is why it refuses to run over an existing project until you pass `overwrite = TRUE`. The safe habit is to work in one form at a time: either edit the spreadsheets and import, or edit the project in R and export, but not both at once.
+
+```{r, eval = FALSE}
+importProjectFromExcel(
+  projectConfigPath = "MyProject/Project.xlsx",
+  outputDir = "MyProject",
+  overwrite = TRUE
+)
+# Now load the project as usual
+project <- loadProject("MyProject/Project.json")
+validateProject(project)
+```
+
+The usual round trip through Excel is:
+
+1. `project <- loadProject("MyProject/Project.json")`
+2. `exportProjectToExcel(project)`, adding `overwrite = TRUE` if Excel files from an earlier export are there (`initProject()` writes them by default).
+3. Edit the spreadsheets in Excel and save them.
+4. `importProjectFromExcel("MyProject/Project.xlsx", overwrite = TRUE)`
+5. `project <- loadProject("MyProject/Project.json")`
+
+To check where you stand, `projectStatus(project)` reports whether the Excel files still match the loaded project:
+
+```{r, eval = FALSE}
+projectStatus(editable)$excel_in_sync
+```
+
+### Notes
+
+**Ids are always lowercase.** Every id in a project is lowercase and filename-safe, because each id is also the name of a definition file (`vignette("about-the-project-model")` explains why). Import applies that rule without a message, and rewrites the references along with it, so a scenario you called `MyScenario` in the spreadsheet comes back as `myscenario`, and the next export writes `myscenario` into the spreadsheet. In R you can keep typing `MyScenario`: `runScenarios(project, scenarios = "MyScenario")` runs `myscenario` and tells you so.
+
+**Solver settings are not exported.** A scenario's `solverSettings` has no column in the spreadsheets, so exporting warns and leaves it out, and a project imported from those spreadsheets has no scenario solver settings.
+
+**Only one observed-data workbook.** The Excel files can name only one observed-data workbook, the `dataFile` row in `Project.xlsx`. If the project has more than one observed-data source, or a PKML, script, or programmatic source, the export writes one Excel source and warns about the others. A project imported from these files has only that one source, reading every sheet of its workbook, and re-importing over the existing project removes the other sources from it.
+
+**Importing pre-6.0.0 projects from Excel.** If you are bringing over a pre-6.0.0 project, rather than editing a current project in Excel, `vignette("how-to-migrate-from-excel")` is the guide for that, and it lists the rest of what to check after an import.
+
+## Save the project's definitions to one file
+
+`snapshotProject()` writes the project as it is in your R session, unsaved edits included, into one `.esqlabsR` file located in the current working directory (`getwd()`), so the project definitions travel as a single file rather than a folder. Give it a target `dir` and an optional `name`.
+
+The snapshot holds the project's metadata and definitions, not the files those definitions point at. Model files (`.pkml`, exported from PK-Sim or MoBi), observed-data files and importer configurations, scripts, and population CSVs still have to reach the recipient another way, or sit at a path both of you can reach. One way is a folder path that uses an environment variable, such as `${SHARED_DATA}/aciclovir` (see "Name the project and choose its folders" above).
+
+Use a snapshot to share or archive the definitions, or as a save point you can return to. To hand over everything, including the model and data files, copy or zip the whole project folder instead.
 
 ```{r}
 snapshot_dir <- withr::local_tempdir()
 snapshot_path <- snapshotProject(editable, dir = snapshot_dir, name = "study")
 ```
 
-`restoreProject()` turns that file back into a working project. Give it a target directory; it materializes the full `definitions/` tree and `Project.json` there and returns a freshly loaded `Project` bound to it:
+`restoreProject()` turns that file back into a working project. Give it a target folder; it recreates `Project.json` and the `definitions/` folder there and returns a freshly loaded `Project` that works from that folder:
 
 ```{r}
 restored_dir <- withr::local_tempdir()
@@ -122,7 +225,9 @@ shared <- restoreProject(snapshot_path, restored_dir)
 shared
 ```
 
-By default `restoreProject()` refuses any directory that is not empty, not just one that already holds a project, so a stray README or CSV is enough to stop it. Pass `overwrite = TRUE` to roll a working directory back to the snapshot in place, which is also how you use a snapshot to set an experiment aside and return to it later.
+The restored folder holds only `Project.json` and the `definitions/` folder. Before you run the project, copy the model, data, and population files into it, in the same subfolders as in the original project; `validateProject()` lists any file it cannot find.
+
+By default `restoreProject()` refuses any folder that is not empty, not just one that already holds a project, so a stray README or CSV is enough to stop it. Pass `overwrite = TRUE` to roll an existing project folder back to the snapshot. Only `Project.json` and the definitions are replaced; your model and data files stay. A project you loaded from that folder earlier is then out of date: continue with the project `restoreProject()` returns, or refresh the old one with `reloadProject()`.
 
 ## Where to go next
 
