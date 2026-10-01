@@ -35,7 +35,7 @@ project <- loadProject(exampleProjectPath())
 project
 ```
 
-Printing a project shows its name and description, the name of its project file, its working folders, a count of each kind of definition, and the names of its Excel files when it has any. No full path is printed: folders appear relative to the project folder, and the project file by its name alone, so a printed project reads the same on any computer. When you need the full path, read `project$info$projectFilePath`.
+Printing a project shows its name and description, the name of its project file, its working folders, the count of each kind of definition, and the names of its Excel files, if any. Folders and files are printed relative to the project folder. If you need the full paths, read `project$info$projectFilePath` to get the root folder.
 
 Each definition section is a named list keyed by id:
 
@@ -43,7 +43,7 @@ Each definition section is a named list keyed by id:
 project$definitions$scenarios
 ```
 
-The sections are read-only. To change a definition, use an `add*`, `set*`, or `remove*` function (see `vignette("how-to-design-scenarios")`) or edit its JSON file directly.
+The sections are read-only. To change a definition, use the `add*`, `set*`, or `remove*` functions (see `vignette("how-to-design-scenarios")`) or edit its JSON file directly.
 
 If `loadProject()` spots a reference to something that does not exist, such as a scenario pointing at an individual that is not defined, it warns immediately but still returns the project, so you can inspect and repair it. For the full validation of project's consistency, run `validateProject()`.
 
@@ -81,13 +81,15 @@ example_dir <- withr::local_tempdir()
 initProject(destination = example_dir, type = "example", createExcel = FALSE)
 ```
 
-`type = "example"` fills the `definitions/` tree instead, one file per definition. `createExcel = FALSE` keeps the project JSON-only; by default `initProject()` also writes a set of Excel files alongside it, covered in the "Edit a project in Excel" section below.
+`type = "example"` fills the `definitions/` tree, one file per definition. `createExcel = FALSE` keeps the project JSON-only; by default `initProject()` also writes a set of Excel files alongside it, covered in the "Edit a project in Excel" section below.
 
 ## Save your edits
 
-Editing a project through `addScenario()`, `addIndividual()`, `setScenario()` and the rest modify the loaded `Project`. To save the edits to the local storage, use `saveProject()`. It brings the files on disk in line with the project in your R session, writing only what changed and deleting the files of definitions you removed, so `git diff` shows exactly what you touched. A save with nothing to write says so and leaves the files alone, meaning saving repeatedly is always safe.
+Editing a project through `addScenario()`, `addIndividual()`, `setScenario()`, and the rest modifies the loaded `Project`. Changes that have not been saved yet are marked as `<Project 'name'> [unsaved changes]` when printing the project, and `projectStatus()` reports both whether there are unsaved edits and whether the Excel files next to it are out of date.
 
-Here we use the copy created above, because the example that comes with the package is installed read-only:
+To write the edits to the project files, use `saveProject()`. It brings the files on disk in line with the project in your R session.
+
+Here we use the copy created above:
 
 ```{r}
 editable <- loadProject(file.path(example_dir, "Project.json"))
@@ -99,8 +101,6 @@ addOutputPath(
 saveProject(editable)
 ```
 
-Two ways to see where a project stands: printing it marks unsaved work as `<Project 'name'> [unsaved changes]`, and `projectStatus()` reports both whether there are unsaved edits and whether the Excel files next to it are out of date.
-
 ## Discard unsaved edits
 
 `reloadProject()` is the undo. It throws away every unsaved change and re-reads the project from disk, in place, which makes it safe to try a few variants of a scenario and then back out of all of them.
@@ -111,7 +111,7 @@ reloadProject(editable)
 
 ## Edit a project in Excel
 
-The `Project.json` file and its `definitions/` tree are the main source for all workflows. For user convenience, a project can also be represented as a set of Excel files., which is there so you can fill in a spreadsheet instead of editing JSON files by hand. Think of the Excel files as a picture of the project taken at the moment you exported it. Editing them changes nothing until you read them back in.
+The `Project.json` file and its `definitions/` tree are the main source for all workflows. For user convenience, a project can also be represented as a set of Excel files. You can work on a spreadsheet instead of editing JSON files by hand. Think of the Excel files as a picture of the project taken at the moment you exported it. Editing them changes nothing until you read them back in.
 
 ### Where the files are
 
@@ -121,8 +121,8 @@ The Excel files sit in the project folder, next to `Project.json`:
 MyProject/
 ├── Project.json
 ├── Project.xlsx                        # working folders and file names
-├── definitions/
-└── Configurations/
+├── definitions/                        # project definitions in json format
+└── Configurations/                     # definitions in excel format
     ├── Applications.xlsx
     ├── Individuals.xlsx
     ├── InitialConditions.xlsx
@@ -137,7 +137,7 @@ The top-level file is named after the project file, so a project loaded from `My
 
 ### Write the Excel files
 
-`exportProjectToExcel()` writes the files from a loaded project. Without `outputDir` it writes into the project's own folder, which is what you normally want; here we send them to a temporary folder so nothing is written into your own folders.
+`exportProjectToExcel()` writes the files from a loaded project. Without `outputDir` it writes into the project's own folder, which is what you normally want; in the example here we send them to a temporary folder so nothing is written into your own folders.
 
 ```{r}
 excel_dir <- withr::local_tempdir()
@@ -145,11 +145,11 @@ exportProjectToExcel(editable, outputDir = excel_dir)
 list.files(excel_dir, recursive = TRUE, pattern = "[.]xlsx$")
 ```
 
-Exporting refuses to write over Excel files that are already there. Pass `overwrite = TRUE` once you are sure the edits in them are no longer needed. This is what protects a morning of spreadsheet work from a stray export.
+Exporting refuses to write over Excel files that are already there. Pass `overwrite = TRUE`if you want to overwrite them.
 
 ### Read the Excel files back
 
-`importProjectFromExcel()` turns the files back into a project, then load it as usual:
+`importProjectFromExcel()` recreates the project (including its definitions) from excel files. Keep in mind that it does not load the project into the R session, but writes/overwrites the `*.json` files.
 
 ```{r, eval = FALSE}
 importProjectFromExcel(
@@ -157,15 +157,14 @@ importProjectFromExcel(
   outputDir = "MyProject",
   overwrite = TRUE
 )
+# Now load the project as usual
 project <- loadProject("MyProject/Project.json")
 validateProject(project)
 ```
 
-So the round trip is: export, edit in Excel, import, load, validate.
+The typical use case is to load the project to Excel, edit it there, and then export the changes back to the project `*.json` format. The sequence is therefore: `project <- loadProject()` -> `exportProjectToExcel(project)` -> <Edit in Excel> -> `importProjectFromExcel()` -> `project <- loadProject()`.
 
 Read the import step carefully, because it is the one that can lose work. It rewrites the whole `definitions/` tree from what the Excel files hold, which deletes any definition you created on the JSON side and never exported. That is why it refuses to run over an existing project until you pass `overwrite = TRUE`. The safe habit is to work in one form at a time: either edit the spreadsheets and import, or edit the project in R and export, but not both at once.
-
-Two more things worth knowing. Import makes every id lowercase and filename-safe, and rewrites the references along with it, so a scenario you called `MyScenario` in the spreadsheet comes back as `myscenario`. And a scenario's `solverSettings` has no column in the spreadsheets, so exporting warns and leaves it out.
 
 To check where you stand, `projectStatus(project)` reports whether the Excel files still match the loaded project:
 
@@ -173,11 +172,17 @@ To check where you stand, `projectStatus(project)` reports whether the Excel fil
 projectStatus(editable)$excel_in_sync
 ```
 
-If you are bringing a pre-6.0.0 project over rather than using Excel as an editing surface, `vignette("how-to-migrate-from-excel")` is the guide for that, and it lists the rest of what to check after an import.
+### Notes
+
+**Definition ID canonization**. Every id in a project is lowercase and filename-safe, because each id is also the name of a definition file (`vignette("about-the-project-model")` explains why). Import applies that rule without a message, and rewrites the references along with it, so a scenario you called `MyScenario` in the spreadsheet comes back as `myscenario`, and the next export writes `myscenario` into the spreadsheet. In R you can keep typing `MyScenario`: `runScenarios(project, scenarios = "MyScenario")` runs `myscenario` and tells you so. And a scenario's `solverSettings` has no column in the spreadsheets, so exporting warns and leaves it out.
+
+**Observed Data definition in Excel**. The Excel files can name only one observed-data workbook, the `dataFile` row in `Project.xlsx`. If the project has more than one observed-data source, or a PKML, script, or programmatic source, the export writes one Excel source and warns about the others. A project imported from these files has only that one source, reading every sheet of its workbook, and re-importing over the existing project removes the other sources from it.
+
+**Importing pre-6.0.0 projects from Excel**. If you are bringing a pre-6.0.0 project over rather than using Excel as an editing surface, `vignette("how-to-migrate-from-excel")` is the guide for that, and it lists the rest of what to check after an import.
 
 ## Share a project as a single file
 
-`snapshotProject()` writes the project as it is in your R session, unsaved edits included, into one `.esqlabsR` file, so the project definitions travel as a single file rather than a folder. Give it a target `dir` and an optional `name`; the extension is added for you, and it returns the path it wrote.
+`snapshotProject()` writes the project as it is in your R session, unsaved edits included, into one `.esqlabsR` file located in the current working directory (`getwd()`), so the project definitions travel as a single file rather than a folder. Give it a target `dir` and an optional `name`.
 
 The snapshot holds the project's metadata and definitions, not the files those definitions point at. Model files (`.pkml`, exported from PK-Sim or MoBi), observed-data files and importer configurations, scripts, and population CSVs still have to reach the recipient another way, or sit at a path both of you can reach (a path containing an environment variable, pointing at a shared drive, is one way; see `vignette("reference-project-file")`).
 
@@ -194,9 +199,7 @@ shared <- restoreProject(snapshot_path, restored_dir)
 shared
 ```
 
-By default `restoreProject()` refuses any folder that is not empty, not just one that already holds a project, so a stray README or CSV is enough to stop it. Pass `overwrite = TRUE` to roll an existing project folder back to the snapshot in place, which is also how you use a snapshot to set an experiment aside and return to it later.
-
-
+By default `restoreProject()` refuses any folder that is not empty, not just one that already holds a project, so a stray README or CSV is enough to stop it. Pass `overwrite = TRUE` to roll an revert an project folder back to the snapshot in place.
 
 ## Where to go next
 
