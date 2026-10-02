@@ -26,7 +26,7 @@ This article assumes you know what a Project is and how to load one; see `vignet
 
 ## Working against a writable copy
 
-Every `add*`, `set*`, and `remove*` function in this article changes a Project in memory, and `saveProject()` brings the `definitions/scenarios/` files on disk in line with it. So you never want to work against (and save over) the package's own bundled example. Instead, make a fresh, writable copy of the worked example in a temporary directory and load that:
+Every `add*`, `set*`, and `remove*` function in this article changes the project in your R session, and `saveProject()` writes those changes to the files in the project's `definitions/` folder. So never work on the package's own example project, because saving would change it. Instead, make a fresh, writable copy of the worked example in a temporary directory and load that:
 
 ```{r}
 project_dir <- withr::local_tempdir()
@@ -35,7 +35,7 @@ project <- loadProject(file.path(project_dir, "Project.json"))
 project
 ```
 
-In your own work you would point `loadProject()` at your real project instead; everything below operates on this `project` object. Each definition kind is reachable as a named list on the project, keyed by id, so you can inspect what is defined at any time, for example `project$definitions$scenarios`:
+In your own work you would point `loadProject()` at your real project instead; everything below operates on this `project` object. Each kind of definition has its own section under `project$definitions`. Print a section to see the ids it holds, and pick out one definition by its id, as in `project$definitions$scenarios[["aciclovir_iv"]]`:
 
 ```{r}
 project$definitions$scenarios
@@ -43,12 +43,14 @@ project$definitions$scenarios
 
 ## The simplest scenario
 
-A scenario needs nothing but the model file. Every other field falls back to what PK-Sim or MoBi exported: the dosing written into the model, the model's own individual, the output selections it stores, and its time grid. So a one-argument scenario is already complete, and it simulates the model exactly as it was exported:
+A scenario needs nothing but the model file. Without other fields it uses what PK-Sim or MoBi exported: the dosing written into the model, the model's own individual, its parameter values, the outputs it records, and its time grid. Only the solver settings can come from elsewhere: if the project sets `defaultSolverSettings`, those apply. The example project sets none, so this scenario simulates the model exactly as it was exported:
 
 ```{r}
 addScenario(project, "aciclovir_as_exported", modelFile = "Aciclovir.pkml")
 project$definitions$scenarios[["aciclovir_as_exported"]]
 ```
+
+The printout lists what the scenario uses. `Name` is the scenario's id, `Administration Protocol` is its application, and `Output Paths` lists the model paths it records. `<empty string>` means the field is not set, and `<empty vector>` under `Output Paths` means the outputs stored in the model file are recorded. The time grid is not printed; read it with `project$definitions$scenarios[["aciclovir_as_exported"]]$simulationTime`.
 
 `modelFile` names the exported simulation relative to the project's simulations folder (`Models/Simulations`). That is enough to run: `runScenarios(project, scenarios = "aciclovir_as_exported")`, covered in `vignette("how-to-run-simulations")`.
 
@@ -58,7 +60,7 @@ The rest of this article is for when the export is not what you want to simulate
 
 A scenario can only reference definitions that already exist, so before you create the scenario you typically define the pieces it will use. These functions all take the project first, then the definition's `id`, then its fields.
 
-Ids are **canonicalized** on entry (lowercased and made filename-safe), and the function warns you when that changes what you typed, as the `addOutputPath()` call below shows. `vignette("about-the-project-model")` explains why.
+Each id is made lowercase and safe as a file name when you create the definition, because the id is also the name of its file. The function warns you when that changes what you typed, as the `addOutputPath()` call below shows. `vignette("about-the-project-model")` explains why.
 
 ### Output paths
 
@@ -68,12 +70,12 @@ An Output Path maps a short id to a full model path in OSPS notation. Recording 
 addOutputPath(
   project,
   id = "Aciclovir/Liver:Conc",
-  path = "Organism|Liver|Intracellular|Aciclovir|Concentration in container"
+  path = "Organism|Liver|Periportal|Intracellular|Aciclovir|Concentration in container"
 )
 project$definitions$outputPaths[["aciclovir_liver_conc"]]
 ```
 
-The id you typed was stored as `aciclovir_liver_conc`. Where the id is already canonical no warning appears:
+The id you typed was stored as `aciclovir_liver_conc`. An id that is already lowercase and safe as a file name is stored as typed, without a warning:
 
 ```{r}
 addOutputPath(
@@ -85,7 +87,7 @@ addOutputPath(
 
 ### Parameter sets
 
-Model parameters are organized into named **Parameter Sets**. A set is a group of parameter entries that you apply together. You create an empty set with `addParameterSet()` and fill it with `addParameterEntry()`, one entry at a time. Each entry is a `(containerPath, parameterName, value, units)` quadruple:
+Model parameters are organized into named **Parameter Sets**. A set is a group of parameter entries that you apply together. You create an empty set with `addParameterSet()` and fill it with `addParameterEntry()`, one entry at a time. Each entry names the container path, the parameter name, the value, and its unit:
 
 ```{r}
 addParameterSet(project, "ckd")
@@ -100,27 +102,46 @@ addParameterEntry(
 project$definitions$parameterSets[["ckd"]]
 ```
 
-Any definition (scenario, individual, or application) references parameter sets from this one collection by id, so you can compose a shared `global` set with disease-specific sets like `ckd` per scenario. `addParameterEntry()` creates the set on demand if it does not yet exist, and aborts on a repeated `(containerPath, parameterName)` pair unless you pass `overwrite = TRUE`.
+Scenarios, individuals, and applications all take their parameter sets from this one collection, so a set such as `global` can be shared by many scenarios. `addParameterEntry()` creates the set if it does not exist yet, and stops with an error if the set already has an entry for the same parameter (the same `containerPath` and `parameterName`), unless you pass `overwrite = TRUE`.
+
+### Initial conditions
+
+An **Initial Condition** set gives molecules their amount at the start of the simulation, in place of the start values in the model file. It works like a parameter set: create an empty set with `addInitialConditions()`, then add one entry per molecule with `addInitialConditionEntry()`. Every entry needs a path, a value, and a unit:
+
+```{r}
+addInitialConditions(project, "plasma_start")
+addInitialConditionEntry(
+  project,
+  "plasma_start",
+  path = "Organism|VenousBlood|Plasma|Aciclovir",
+  value = 0.5,
+  unit = "µmol"
+)
+project$definitions$initialConditions[["plasma_start"]]
+```
+
+A scenario uses the set through its `initialConditions` argument.
 
 ### Individuals
 
-An **Individual** carries the biometrics of a single simulated subject plus any individual-specific parameter sets. Only `species` is required; every other field is optional, and an omitted biometric is taken from the PK-Sim individual for that species (`vignette("reference-definition-fields")` lists what each omission falls back to).
+An **Individual** carries the biometrics of a single simulated subject plus any individual-specific parameter sets. Only `species` is required; every other field is optional, and an omitted biometric is taken from the PK-Sim individual for that species (`vignette("reference-definition-fields")` lists what each omission falls back to). Here we add a patient with chronic kidney disease:
 
 ```{r}
 addIndividual(
   project,
-  "adult_female",
+  "adult_male_ckd",
   species = "Human",
-  gender = "FEMALE",
-  weight = 60,
-  height = 165,
-  age = 35,
-  parameterSets = "adult_male_default"
+  population = "European_ICRP_2002",
+  gender = "MALE",
+  weight = 73,
+  height = 176,
+  age = 60,
+  parameterSets = c("adult_male_default", "ckd")
 )
-project$definitions$individuals[["adult_female"]]
+project$definitions$individuals[["adult_male_ckd"]]
 ```
 
-The `parameterSets` argument is a character vector of ids referencing the project's parameter sets; it is validated immediately, so a typo in a set id is caught at add time rather than at run time.
+The `parameterSets` argument is a character vector of ids referencing the project's parameter sets; it is validated immediately, so a typo in a set id is caught at add time rather than at run time. The sets are applied in the order you list them, so `ckd` comes after `adult_male_default`, and its GFR of 30 ml/min replaces the 90 ml/min that `adult_male_default` sets.
 
 To add several definitions in one call, pass a vector of ids. The id sets the count, and the other arguments are recycled or aligned against it; `vignette("reference-definition-fields")` gives the exact rules, including the one place they do not read as you would expect. The call is all-or-nothing: if any one definition fails validation, none is applied.
 
@@ -129,11 +150,11 @@ addIndividual(
   project,
   c("teen_male", "teen_female"),
   species = "Human",
+  population = "European_ICRP_2002",
   gender = c("MALE", "FEMALE"),
   weight = c(50, 48),
   height = 160,
-  age = 14,
-  parameterSets = "adult_male_default"
+  age = 14
 )
 names(project$definitions$individuals)
 ```
@@ -147,6 +168,7 @@ addPopulation(
   project,
   "pediatric",
   species = "Human",
+  population = "European_ICRP_2002",
   numberOfIndividuals = 25,
   ageMin = 2,
   ageMax = 12,
@@ -157,13 +179,21 @@ project$definitions$populations[["pediatric"]]
 
 ### Applications
 
-An **Application** describes how the substance is administered, stored as a reference to the parameter set that holds its dose, start time, and other parameters:
+An **Application** names the parameter sets that change the dosing in the model file, such as the dose, the start time, or the infusion time. It can only change administrations the model already contains: a parameter path that is not in the model stops the run. Here a new parameter set doubles the dose of the model's IV infusion. The model calls that event `IV 250mg 10min`; the set changes its dose, not its name:
 
 ```{r}
+addParameterEntry(
+  project,
+  "aciclovir_iv_500mg",
+  containerPath = "Events|IV 250mg 10min|No formulation|Application_1|ProtocolSchemaItem",
+  parameterName = "Dose",
+  value = 500,
+  units = "mg"
+)
 addApplication(
   project,
   "aciclovir_iv_500mg",
-  parameterSets = "aciclovir_iv_250mg_default"
+  parameterSets = "aciclovir_iv_500mg"
 )
 project$definitions$applications[["aciclovir_iv_500mg"]]
 ```
@@ -177,9 +207,9 @@ addScenario(
   project,
   "aciclovir_iv_ckd",
   modelFile = "Aciclovir.pkml",
-  individual = "adult_male",
+  individual = "adult_male_ckd",
   application = "aciclovir_iv_250mg",
-  parameterSets = c("global", "aciclovir", "ckd"),
+  parameterSets = c("global", "aciclovir"),
   outputPaths = c("aciclovir_pvb", "aciclovir_kidney"),
   simulationTime = "0, 24, 60",
   simulationTimeUnit = "h"
@@ -187,26 +217,30 @@ addScenario(
 project$definitions$scenarios[["aciclovir_iv_ckd"]]
 ```
 
-As in the simplest scenario above, every field except `modelFile` is optional, and each one you omit falls back to whatever the model file carries as exported from PK-Sim or MoBi. `vignette("reference-definition-fields")` lists all of them with their defaults.
+The id is also the scenario's name: printouts and the results of `runScenarios()` show it, and the project keeps no other name. Choose an id you can read later. An id such as `Aciclovir_IV-2.5mg/kg` is stored as `aciclovir_iv-2.5mg_kg`, and the original spelling is not kept.
 
-Three behaviours are worth knowing while you write the call:
+As in the simplest scenario above, only `modelFile` is required. Each reference or setting you leave out falls back to the model file, except two: steady state is off unless you turn it on, and the solver settings come from the project's `defaultSolverSettings` where it has any. `vignette("reference-definition-fields")` lists every field with what happens when you omit it.
 
-- **References are checked as the scenario is added.** If `individual`, `application`, or any entry in `parameterSets` does not resolve, `addScenario()` aborts and nothing is created. This is why you build the supporting definitions first.
-- **`parameterSets` is applied in the order you list it.** Above, `global` goes on first, then `aciclovir`, then `ckd`, with later sets winning where they touch the same parameter. Reordering the vector changes the result.
+Three behaviors are worth knowing while you write the call:
+
+- **References are checked as the scenario is added.** If `individual`, `population`, `application`, or any entry in `parameterSets`, `initialConditions`, or `outputPaths` names a definition that does not exist, `addScenario()` stops with an error, suggests the closest existing id, and creates nothing. This is why you build the supporting definitions first. The model file is not checked at this point: `validateProject()` warns if it is missing.
+- **Parameter sets are applied in layers.** First the scenario's own `parameterSets`, in the order you list them, then the parameter sets of its individual, then those of its application. Where two sets change the same parameter, the one applied last wins. Above, `global` and `aciclovir` go on first, then the individual's `adult_male_default` and `ckd`, then the application's `aciclovir_iv_250mg_default`. That is why `ckd` belongs on the individual: listed in the scenario's `parameterSets`, its GFR would be replaced by the one in `adult_male_default`.
 - **`simulationTime` is an interval string**, `"start, end, resolution"`, where resolution is points per unit of `simulationTimeUnit`. Separate several intervals with `;` to simulate part of the time course densely and the rest coarsely, as in `"0, 20, 60; 20, 504, 1"`.
 
-To make it a population scenario, pass a `population` instead of, or alongside, an `individual`; the scenario type switches automatically. For a steady-state run, set `steadyState = TRUE` and give `steadyStateTime` and `steadyStateTimeUnit`.
+To make it a population scenario, pass a `population`; the scenario type changes automatically. If you also keep an `individual`, its parameter sets still apply, to every virtual individual. For a steady-state run, set `steadyState = TRUE`; `steadyStateTime` and `steadyStateTimeUnit` default to 1000 min.
 
-Like every other edit, the scenario is only in memory. It lands in `definitions/scenarios/aciclovir_iv_ckd.json` when you call `saveProject()`.
+To change how the solver behaves for this scenario only, pass `solverSettings`, for example `solverSettings = list(relTol = 1e-6)`. `readPopulationFromCSV = TRUE` makes a population scenario read its population from a CSV file in the project's populations folder instead of sampling it. `vignette("reference-definition-fields")` describes both.
 
-## Editing a scenario in place
+Like every other edit, the new scenario exists only in your R session until you call `saveProject()`, which writes it to `definitions/scenarios/aciclovir_iv_ckd.json`.
 
-You will rarely get a scenario right on the first try. Rather than removing and re-adding it, edit it in place with `setScenario()`. It mirrors `addScenario()` exactly, but with two important behaviors:
+## Changing an existing scenario
+
+You will rarely get a scenario right on the first try. Rather than removing and re-adding it, change it with `setScenario()`. It takes the same arguments as `addScenario()` except `overwrite`, and differs in two ways:
 
 - **Only the fields you pass change.** Every argument you omit keeps its current value (a partial update).
 - **Passing `NULL` clears an optional field**, whereas omitting the argument leaves it untouched. (The required `modelFile` cannot be cleared.)
 
-Here we widen the time grid and swap the dose, leaving everything else as it was:
+Here we double the dose and widen the time grid, leaving everything else as it was. The printout does not show the time grid, so the chunk reads it separately:
 
 ```{r}
 setScenario(
@@ -216,20 +250,23 @@ setScenario(
   simulationTime = "0, 48, 60"
 )
 project$definitions$scenarios[["aciclovir_iv_ckd"]]
+project$definitions$scenarios[["aciclovir_iv_ckd"]]$simulationTime
 ```
 
-And here we detach the individual entirely by passing `NULL`, so the scenario simulates the model's own default individual:
+And here we detach the individual entirely by passing `NULL`, so the scenario simulates the model's own default individual. In R, a scenario record calls this field `individualId`, not `individual`; `vignette("reference-definition-fields")` lists the fields whose names differ:
 
 ```{r}
 setScenario(project, "aciclovir_iv_ckd", individual = NULL)
 project$definitions$scenarios[["aciclovir_iv_ckd"]]$individualId
 ```
 
+Detaching the individual also drops its parameter sets, so the CKD GFR of 30 ml/min no longer applies and the model's own value is used.
+
 The same partial-update, `NULL`-clears pattern applies to the supporting definitions. `setIndividual()` and `setPopulation()` change named fields on an existing individual or population, and `setOutputPath()` changes the literal path bound to an output-path id (keeping the id, so every scenario that records it keeps working):
 
 ```{r}
-setIndividual(project, "adult_female", weight = 62, age = 36)
-project$definitions$individuals[["adult_female"]]
+setIndividual(project, "adult_male_ckd", weight = 70, age = 62)
+project$definitions$individuals[["adult_male_ckd"]]
 
 setOutputPath(
   project,
@@ -239,7 +276,9 @@ setOutputPath(
 project$definitions$outputPaths[["aciclovir_kidney"]]
 ```
 
-As with `setScenario()`, a reference argument is validated before anything is written, so an invalid edit touches neither memory nor disk. To take a parameter entry back out use `removeParameterEntry()` (the set is auto-removed if it becomes empty), and `removeParameterSet()` drops a whole set.
+As with `setScenario()`, a reference to a definition that does not exist stops the call with an error, and nothing is changed.
+
+There is no `setParameterSet()`. To change a value in a set, call `addParameterEntry()` again with `overwrite = TRUE`. To change which parameter sets an application uses, call `setApplicationParameterSets()`. To take an entry out of a set, use `removeParameterEntry()`. If that was the last entry, the set itself is removed too, and anything that still names the set is left with a broken reference (you get a warning naming them). `removeParameterSet()` removes a whole set.
 
 ## Renaming, duplicating, and removing scenarios
 
@@ -250,7 +289,7 @@ duplicateScenario(project, "aciclovir_iv", "aciclovir_iv_highdose")
 names(project$definitions$scenarios)
 ```
 
-`renameScenario()` changes a scenario's id in memory, keeping the stored name in step with the new key; the next `saveProject()` writes the definition under the new id and deletes the old file:
+`renameScenario()` gives a scenario a new id. The next `saveProject()` writes its file under the new id and deletes the file with the old one:
 
 ```{r}
 renameScenario(project, "aciclovir_iv_highdose", "aciclovir_iv_high")
@@ -259,16 +298,18 @@ names(project$definitions$scenarios)
 
 Both take the existing id first and the new id second, and both canonicalize their ids the same way `addScenario()` does. Neither will silently overwrite an existing scenario: a rename or duplicate onto an id already in use aborts.
 
-When a scenario has served its purpose, `removeScenario()` drops it from the in-memory project; the next `saveProject()` deletes its definition file:
+When a scenario has served its purpose, `removeScenario()` removes it from the project; the next `saveProject()` deletes its definition file:
 
 ```{r}
 removeScenario(project, "aciclovir_iv_high")
 names(project$definitions$scenarios)
 ```
 
-## Seeding scenarios from a model file
+Renaming or removing a scenario does not update the DataCombined entries or parameter-identification tasks that name it. You get a warning, and `validateProject()` reports them as critical errors until you update them.
 
-When you already have one or more `.pkml` files and want a scenario per file, `createScenariosFromPKML()` saves you from writing each `addScenario()` call by hand. It reads each model file, extracts the output selections and the simulation time grid embedded in it, and adds a scenario to the project for each one:
+## Creating scenarios from model files
+
+When you already have one or more `.pkml` files and want a scenario per file, `createScenariosFromPKML()` saves you from writing each `addScenario()` call by hand. It reads each model file, extracts the output selections and the simulation time grid embedded in it, and adds a scenario to the project for each one. Unlike the other functions in this article, it takes the model files first and the project second:
 
 ```{r}
 pkml_path <- file.path(project_dir, "Models", "Simulations", "Aciclovir.pkml")
@@ -286,14 +327,16 @@ For each model, the call:
 - Makes the new scenario names unique against the scenarios already present.
 - Recycles a single per-scenario setting (individual, population, application, parameter sets) to every scenario, or aligns a longer vector by position.
 
-Pass a vector of `pkmlFilePaths` to create several scenarios at once. Pass `scenarios` to name them yourself; otherwise the simulation names stored inside the models are used.
+Pass a vector of `pkmlFilePaths` to create several scenarios at once. Pass `scenarios` to name them yourself; otherwise each scenario is named after the simulation in its model file, made lowercase and safe as a file name: the simulation `Vergin 1995 IV` becomes the scenario `vergin_1995_iv`.
 
-This is a starting point, not the finished article: the scenarios it creates are ordinary scenarios, so you refine them afterward with `setScenario()`, attach an individual or parameter sets, and adjust the time grid, exactly as in the sections above.
+The result is a first version of each scenario. They are ordinary scenarios, so you refine them afterward with `setScenario()`, attach an individual or parameter sets, and adjust the time grid, exactly as in the sections above.
+
+## Saving your work
+
+Every edit above exists only in your R session until you save it. Call `saveProject(project)` to write the edits to the `definitions/` folder, or `reloadProject(project)` to discard them and read the project files again. Edits you have not saved are lost when the R session ends; printing the project shows `[unsaved changes]` while there are any.
 
 ## Where to go next
 
-Every edit above is staged in memory. Call `saveProject(project)` to write them to the `definitions/` tree, or `reloadProject(project)` to discard the edits and re-read from disk.
-
 Next, validate what you built with `vignette("how-to-validate-a-project")`, then run it with `vignette("how-to-run-simulations")` and plot it with `vignette("how-to-plot-results")`.
 
-For the fields of each definition kind, their defaults, and the rules for adding several at once, see `vignette("reference-definition-fields")`. For why references are checked as you write them but only reported when a project is read, see `vignette("about-the-project-model")`.
+For the fields of each definition kind, their defaults, and the rules for adding several at once, see `vignette("reference-definition-fields")`. For why the `add*` and `set*` functions refuse a reference to a definition that does not exist, while loading a project only reports it, see `vignette("about-the-project-model")`.

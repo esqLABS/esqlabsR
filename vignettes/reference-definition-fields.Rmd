@@ -58,10 +58,10 @@ For why definitions are shaped this way, see `vignette("about-the-project-model"
 | `readPopulationFromCSV` | no | logical | `FALSE`. |
 | `solverSettings` | no | named list | The project's `defaultSolverSettings` apply, and for a setting the project does not give, the value stored in the model file. |
 
-Two behaviours are not visible from the table:
+Two behaviors are not visible from the table:
 
-- **Every reference is checked as the scenario is added.** If `individual`, `application`, or any entry in `parameterSets` does not resolve, `addScenario()` aborts and nothing is created.
-- **`parameterSets` is applied in the order you list them.** Later sets override earlier ones where they touch the same parameter, so `c("global", "aciclovir", "ckd")` applies `global` first and lets `ckd` win.
+- **Every reference is checked as the scenario is added.** If `individual`, `population`, `application`, or any entry in `parameterSets`, `initialConditions`, or `outputPaths` does not resolve, `addScenario()` aborts and nothing is created. The model file is not checked then; `validateProject()` warns when it is missing.
+- **Parameter sets are applied in layers.** First the scenario's own `parameterSets`, in the order you list them, then the parameter sets of its individual, then those of its application. Where two sets touch the same parameter, the one applied last wins: `c("global", "aciclovir", "ckd")` applies `global` first and lets `ckd` win, and a set of the individual or the application overrides all three.
 
 ### On-disk keys and in-memory field names
 
