@@ -1,3 +1,34 @@
+# exportProjectToExcel names the scenarios whose solverSettings it cannot carry
+
+    Code
+      cat(conditionMessage(warning))
+    Output
+      ! The Excel scenario sheet has no solver-settings columns, so the solverSettings block of 1 scenario was not written: "aciclovir_iv".
+      i Keep the JSON project as the source of truth for this scenario. A project re-imported from these workbooks solves it with the project's defaultSolverSettings, which the workbooks do carry, and in a parameter identification with the task's own simulationRunOptions on top. A setting none of these gives keeps the value stored in the model file.
+
+# importProjectFromExcel reports an invalid DefaultSolverSettings sheet
+
+    Code
+      importProjectFromExcel(workbook, outputDir = withr::local_tempdir(), silent = TRUE)
+    Condition
+      Error in `importProjectFromExcel()`:
+      ! defaultSolverSettings is not valid.
+      x defaultSolverSettings sets 'relTol' in more than one row
+      x row 4 of the DefaultSolverSettings sheet has a value but no setting
+      x defaultSolverSettings has unknown setting 'reltol'; the settings are absTol, checkForNegativeValues, h0, hMax, hMin, mxStep, relTol, useJacobian
+      x defaultSolverSettings$mxStep must be a single whole number between 1 and 2147483647
+      x defaultSolverSettings$useJacobian must be TRUE or FALSE
+      i Check the "DefaultSolverSettings" sheet of '<tmp-path>/Project.xlsx'.
+
+# importProjectFromExcel aborts on a DefaultSolverSettings sheet without its columns
+
+    Code
+      importProjectFromExcel(workbook, outputDir = withr::local_tempdir(), silent = TRUE)
+    Condition
+      Error:
+      x The "DefaultSolverSettings" sheet is missing required columns: Setting and Value.
+      i Add them to the workbook, or re-export the project with `exportProjectToExcel()` to get a sheet with the columns this version reads.
+
 # importProjectFromExcel aborts over an existing JSON project unless overwrite = TRUE
 
     Code

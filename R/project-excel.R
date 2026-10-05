@@ -290,6 +290,13 @@
 #' folder deliberately placed outside the project with the `${VAR}`
 #' environment-variable form is still allowed.
 #'
+#' The `DefaultSolverSettings` sheet of the workbook, when there is one, becomes
+#' the project's `defaultSolverSettings`. It is checked the way [loadProject()]
+#' checks `Project.json`: an unknown setting, a value of the wrong type, a
+#' setting named in two rows, or a value with no setting beside it stops the
+#' import and names the sheet. A workbook without the sheet gives a project
+#' without `defaultSolverSettings`.
+#'
 #' @param projectConfigPath Path to the `Project.xlsx` file.
 #'   Defaults to `"Project.xlsx"`.
 #' @param outputDir Directory where the JSON project is created. If `NULL`
@@ -516,6 +523,13 @@ importProjectFromExcel <- function(
   )
   pcDir <- dirname(fs::path_abs(projectConfigPath))
 
+  # Read before any section, so an invalid setting aborts the read before
+  # anything else is reported about the workbooks.
+  defaultSolverSettings <- .readExcelDefaultSolverSettings(
+    projectConfigPath,
+    call = .call
+  )
+
   # Build a lookup of Property -> Value from the Excel file
   pcProps <- stats::setNames(
     as.character(pcExcel$Value),
@@ -625,6 +639,11 @@ importProjectFromExcel <- function(
   }
   if (!is.null(projectDescription)) {
     jsonData$description <- projectDescription
+  }
+  # Likewise only when the workbook sets any, so a workbook without the sheet
+  # yields a project without the field.
+  if (!is.null(defaultSolverSettings)) {
+    jsonData$defaultSolverSettings <- defaultSolverSettings
   }
 
   # Path properties from Project.xlsx split into the two container blocks: the
@@ -760,6 +779,12 @@ importProjectFromExcel <- function(
 #' [projectStatus()] reads back, so the workbook this writes is the one the
 #' status check then compares the project against.
 #'
+#' The project's `defaultSolverSettings` are written to a `DefaultSolverSettings`
+#' sheet of that workbook, one row per setting, and [importProjectFromExcel()]
+#' reads them back. A scenario's own `solverSettings` has no column in the
+#' scenario sheet, so it is not written, and the export warns naming the
+#' scenarios that carry one.
+#'
 #' @param project A `Project` object.
 #' @param outputDir Directory where the Excel files will be created. Defaults
 #'   to the directory of the source JSON file.
@@ -853,8 +878,15 @@ exportProjectToExcel <- function(
     Description = descs,
     stringsAsFactors = FALSE
   )
+  # The project's `defaultSolverSettings` go on a sheet of their own, after the
+  # Property table (which every reader takes as the first sheet). Re-importing
+  # reads them back, so the round trip keeps how the project solves.
+  projSheets <- list(Project = projConfigDf)
+  projSheets[[.defaultSolverSettingsSheet]] <- .defaultSolverSettingsToExcelDf(
+    project$defaultSolverSettings
+  )
   projConfigPath <- file.path(outputDir, workbookName)
-  .writeExcel(projConfigDf, projConfigPath)
+  .writeExcel(projSheets, projConfigPath)
 
   # --- ModelParameters.xlsx ---
   # The project's single `parameterSets` section is exported as one workbook,
@@ -4418,6 +4450,172 @@ projectStatus <- function(project, silent = FALSE) {
 #' @noRd
 .extractExcelData <- function(project) {
   project$rawExcel()
+}
+
+# The sheet of the project workbook that carries the project's
+# `defaultSolverSettings`, one row per setting. It sits after the Property
+# table, which every reader takes by position as the first sheet.
+.defaultSolverSettingsSheet <- "DefaultSolverSettings"
+
+# What the `Description` column says beside each setting. A setting without an
+# entry gets an empty description.
+.solverSettingDescriptions <- c(
+  absTol = "Absolute tolerance",
+  relTol = "Relative tolerance",
+  h0 = "Initial step size",
+  hMin = "Smallest step size the solver may take",
+  hMax = "Largest step size the solver may take",
+  mxStep = "Maximum number of internal steps per output interval",
+  useJacobian = "Whether the analytic Jacobian is used (TRUE or FALSE)",
+  checkForNegativeValues = "Whether the solver checks for negative values (TRUE or FALSE)"
+)
+
+# Write one solver setting as the text of a `Value` cell. The column holds every
+# setting, so it is text, and the text must read back as the same value
+# (`.excelCellToSolverSetting()`): a number in the shortest form that parses
+# back to the identical double, a count with no exponent.
+# @keywords internal
+# @noRd
+.solverSettingToExcelText <- function(field, value) {
+  switch(
+    .solverSettingType(field),
+    number = {
+      for (digits in 15:17) {
+        text <- format(value, digits = digits)
+        if (as.numeric(text) == value) {
+          break
+        }
+      }
+      text
+    },
+    count = format(value, scientific = FALSE),
+    flag = as.character(value),
+    asis = paste(as.character(value), collapse = ", ")
+  )
+}
+
+# The `DefaultSolverSettings` sheet for a project, or NULL when the project
+# sets no solver setting (NULL, an empty list, or only NULL entries).
+# @keywords internal
+# @noRd
+.defaultSolverSettingsToExcelDf <- function(solverSettings) {
+  solverSettings <- Filter(Negate(is.null), solverSettings)
+  if (length(solverSettings) == 0L) {
+    return(NULL)
+  }
+  fields <- names(solverSettings)
+  values <- character(length(fields))
+  descriptions <- character(length(fields))
+  for (i in seq_along(fields)) {
+    values[[i]] <- .solverSettingToExcelText(fields[[i]], solverSettings[[i]])
+    if (fields[[i]] %in% names(.solverSettingDescriptions)) {
+      descriptions[[i]] <- .solverSettingDescriptions[[fields[[i]]]]
+    }
+  }
+  data.frame(
+    Setting = fields,
+    Value = values,
+    Description = descriptions,
+    stringsAsFactors = FALSE
+  )
+}
+
+# Turn one `Value` cell back into a solver setting, by the setting's type tag. A
+# cell the modeler typed as an Excel number or boolean keeps its type; text,
+# which is what the export writes, is parsed. A value that does not parse is
+# returned as it is, never as NA, so `.checkSolverSettings()` reports it.
+# @keywords internal
+# @noRd
+.excelCellToSolverSetting <- function(field, cell) {
+  if (!is.character(cell)) {
+    return(cell)
+  }
+  text <- trimws(cell)
+  number <- suppressWarnings(as.numeric(text))
+  flag <- switch(toupper(text), "TRUE" = TRUE, "FALSE" = FALSE, NULL)
+  switch(
+    .solverSettingType(field),
+    number = ,
+    count = if (!is.na(number)) number else cell,
+    flag = flag %||% cell,
+    asis = if (!is.na(number)) number else flag %||% cell
+  )
+}
+
+# Read the project's `defaultSolverSettings` from the `DefaultSolverSettings`
+# sheet of the project workbook. Returns NULL when the workbook has no such
+# sheet or the sheet sets nothing, which is how a workbook exported before the
+# sheet existed reads.
+#
+# The record is checked with the rules and the message `Project.json` gets
+# (`.readDefaultSolverSettings()`), plus the two mistakes only a sheet can
+# make: a setting named in two rows, and a value with no setting beside it. A
+# row with a setting but no value is a setting left unset.
+# @keywords internal
+# @noRd
+.readExcelDefaultSolverSettings <- function(
+  projectConfigPath,
+  call = rlang::caller_env()
+) {
+  sheet <- .defaultSolverSettingsSheet
+  if (!(sheet %in% readxl::excel_sheets(projectConfigPath))) {
+    return(NULL)
+  }
+  # Cell by cell, so a number or a boolean typed into the sheet keeps its type
+  # instead of the whole column being guessed as one.
+  df <- readExcel(projectConfigPath, sheet = sheet, col_types = "list")
+  .requireExcelColumns(df, c("Setting", "Value"), sheet)
+
+  problems <- character()
+  record <- list()
+  sheetRows <- attr(df, "sheetRow")
+  for (i in seq_len(nrow(df))) {
+    settingCell <- df$Setting[[i]]
+    valueCell <- df$Value[[i]]
+    if (.isBlankCell(valueCell)) {
+      next
+    }
+    if (.isBlankCell(settingCell)) {
+      problems <- c(
+        problems,
+        paste0(
+          "row ",
+          sheetRows[[i]] + 1L,
+          " of the ",
+          sheet,
+          " sheet has a value but no setting"
+        )
+      )
+      next
+    }
+    field <- trimws(as.character(settingCell))
+    if (field %in% names(record)) {
+      problems <- c(
+        problems,
+        paste0(
+          "defaultSolverSettings sets '",
+          field,
+          "' in more than one row"
+        )
+      )
+      next
+    }
+    record[[field]] <- .excelCellToSolverSetting(field, valueCell)
+  }
+
+  problems <- c(
+    problems,
+    .checkSolverSettings(record, label = "defaultSolverSettings")
+  )
+  if (length(problems) > 0L) {
+    msg <- messages$invalidDefaultSolverSettings(
+      problems,
+      projectConfigPath,
+      sheet = sheet
+    )
+    cli::cli_abort(msg$bullets, .envir = msg$envir, call = call)
+  }
+  if (length(record) == 0L) NULL else record
 }
 
 #' Is a single Excel cell empty?

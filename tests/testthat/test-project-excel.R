@@ -350,11 +350,14 @@ test_that("exportProjectToExcel names the scenarios whose solverSettings it cann
   setScenario(project, "aciclovir_iv", solverSettings = list(relTol = 1e-6))
   excel_out <- withr::local_tempdir()
 
-  expect_warning(
+  warning <- expect_warning(
     exportProjectToExcel(project, outputDir = excel_out, silent = TRUE),
     "aciclovir_iv",
     class = "esqlabsR_exportScenarioSolverSettings"
   )
+  # The message names what a re-imported project solves the scenario with
+  # instead: the project-wide defaults, which the workbooks do carry.
+  expect_snapshot(cat(conditionMessage(warning)))
   # The block is dropped, not the export: the workbooks are still written.
   expect_true(file.exists(file.path(
     excel_out,
@@ -376,6 +379,189 @@ test_that("exportProjectToExcel is silent about solver settings when no scenario
     }
   )
   expect_true(file.exists(file.path(excel_out, "Project.xlsx")))
+})
+
+# The project-wide solver defaults travel on a sheet of their own, after the
+# Property table every reader takes as the first sheet. Each value is text that
+# reads back as the identical value: a tolerance that needs every digit keeps
+# them, and a step count is written without an exponent.
+test_that("exportProjectToExcel writes the project's defaultSolverSettings to their own sheet", {
+  project <- exampleProject()
+  project$defaultSolverSettings <- list(
+    relTol = 1e-6,
+    absTol = 0.1 + 0.2,
+    mxStep = 100000L,
+    useJacobian = FALSE
+  )
+  excel_out <- withr::local_tempdir()
+
+  exportProjectToExcel(project, outputDir = excel_out, silent = TRUE)
+
+  workbook <- file.path(excel_out, "Project.xlsx")
+  expect_identical(
+    readxl::excel_sheets(workbook),
+    c("Project", "DefaultSolverSettings")
+  )
+  expect_equal(
+    as.data.frame(readxl::read_excel(
+      workbook,
+      sheet = "DefaultSolverSettings"
+    )),
+    data.frame(
+      Setting = c("relTol", "absTol", "mxStep", "useJacobian"),
+      Value = c("1e-06", "0.30000000000000004", "100000", "FALSE"),
+      Description = c(
+        "Relative tolerance",
+        "Absolute tolerance",
+        "Maximum number of internal steps per output interval",
+        "Whether the analytic Jacobian is used (TRUE or FALSE)"
+      )
+    )
+  )
+})
+
+test_that("exportProjectToExcel writes no solver-settings sheet for a project without defaults", {
+  project <- exampleProject()
+  expect_null(project$defaultSolverSettings)
+  excel_out <- withr::local_tempdir()
+
+  exportProjectToExcel(project, outputDir = excel_out, silent = TRUE)
+
+  expect_identical(
+    readxl::excel_sheets(file.path(excel_out, "Project.xlsx")),
+    "Project"
+  )
+})
+
+test_that("Excel round-trip preserves the project's defaultSolverSettings", {
+  project <- exampleProject()
+  project$defaultSolverSettings <- list(
+    relTol = 1e-8,
+    hMax = 60,
+    mxStep = 50000L,
+    checkForNegativeValues = TRUE
+  )
+
+  reimported <- excelRoundTrip(project)
+
+  expect_equal(
+    reimported$defaultSolverSettings,
+    list(
+      relTol = 1e-8,
+      hMax = 60,
+      mxStep = 50000,
+      checkForNegativeValues = TRUE
+    )
+  )
+})
+
+# Before the sheet existed, a project whose only Excel gap was its solver
+# defaults was reported out of sync right after its own export.
+test_that("projectStatus() finds the defaultSolverSettings in sync after an export", {
+  project <- exampleProject()
+  project$defaultSolverSettings <- list(relTol = 1e-6)
+  suppressMessages(saveProject(project))
+  exportProjectToExcel(project, overwrite = TRUE, silent = TRUE)
+
+  status <- suppressWarnings(suppressMessages(
+    projectStatus(project, silent = TRUE)
+  ))
+
+  expect_false(
+    "defaultSolverSettings" %in%
+      c(
+        names(status$details$excel$file_changes),
+        names(status$details$excel$data_changes)
+      )
+  )
+})
+
+# A modeler editing the sheet by hand may type a tolerance as an Excel number
+# and a switch as an Excel boolean, rather than as the text the export writes.
+# Both keep their type, so neither is rejected for being written the natural way.
+test_that("the DefaultSolverSettings sheet reads numbers and booleans typed into Excel", {
+  excel_out <- withr::local_tempdir()
+  numbers <- file.path(excel_out, "Numbers.xlsx")
+  writexl::write_xlsx(
+    list(
+      Project = data.frame(Property = "schemaVersion", Value = "2.0"),
+      DefaultSolverSettings = data.frame(
+        Setting = c("relTol", "mxStep"),
+        Value = c(1e-6, 5000)
+      )
+    ),
+    numbers
+  )
+  flags <- file.path(excel_out, "Flags.xlsx")
+  writexl::write_xlsx(
+    list(
+      Project = data.frame(Property = "schemaVersion", Value = "2.0"),
+      DefaultSolverSettings = data.frame(
+        Setting = c("useJacobian", "checkForNegativeValues"),
+        Value = c(TRUE, FALSE)
+      )
+    ),
+    flags
+  )
+
+  expect_identical(
+    .readExcelDefaultSolverSettings(numbers),
+    list(relTol = 1e-6, mxStep = 5000)
+  )
+  expect_identical(
+    .readExcelDefaultSolverSettings(flags),
+    list(useJacobian = TRUE, checkForNegativeValues = FALSE)
+  )
+})
+
+# A hand-edited sheet is checked by the rules `Project.json` gets, with the same
+# message, plus the two mistakes only a sheet can make. A value that does not
+# parse reaches the check as written instead of being dropped, so it is named.
+test_that("importProjectFromExcel reports an invalid DefaultSolverSettings sheet", {
+  project <- exampleProject()
+  excel_out <- withr::local_tempdir()
+  exportProjectToExcel(project, outputDir = excel_out, silent = TRUE)
+  workbook <- file.path(excel_out, "Project.xlsx")
+  editWorkbookSheets(workbook, function(sheets) {
+    sheets$DefaultSolverSettings <- data.frame(
+      Setting = c("relTol", "relTol", NA, "reltol", "mxStep", "useJacobian"),
+      Value = c("1e-6", "1e-8", "1e-4", "1e-6", "1.5", "yes")
+    )
+    sheets
+  })
+
+  expect_snapshot(
+    error = TRUE,
+    transform = .redactProjectWorkbookPath,
+    importProjectFromExcel(
+      workbook,
+      outputDir = withr::local_tempdir(),
+      silent = TRUE
+    )
+  )
+})
+
+test_that("importProjectFromExcel aborts on a DefaultSolverSettings sheet without its columns", {
+  project <- exampleProject()
+  excel_out <- withr::local_tempdir()
+  exportProjectToExcel(project, outputDir = excel_out, silent = TRUE)
+  workbook <- file.path(excel_out, "Project.xlsx")
+  editWorkbookSheets(workbook, function(sheets) {
+    sheets$DefaultSolverSettings <- data.frame(
+      Name = "relTol",
+      Tolerance = 1e-6
+    )
+    sheets
+  })
+
+  expect_snapshot(
+    error = TRUE,
+    importProjectFromExcel(
+      workbook,
+      outputDir = withr::local_tempdir(),
+      silent = TRUE
+    )
+  )
 })
 
 test_that("Excel round-trip preserves project name and description", {
