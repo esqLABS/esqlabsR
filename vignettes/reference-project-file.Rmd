@@ -123,6 +123,8 @@ How the solver behaves, as a named list of [`SolverSettings`](https://www.open-s
 | `useJacobian` | logical | Whether the analytic Jacobian is used. |
 | `checkForNegativeValues` | logical | Whether the solver checks for negative values. |
 
+In the Excel files, these settings are the `DefaultSolverSettings` sheet of `Project.xlsx`, one row per setting. `exportProjectToExcel()` writes that sheet, and `importProjectFromExcel()` reads it back with the same checks.
+
 These are defaults, so a scenario or a single run can still say otherwise. For each setting, the most specific place that gives it a value wins:
 
 - `defaultSolverSettings`, the project-wide default,

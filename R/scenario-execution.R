@@ -58,6 +58,19 @@
   checkForNegativeValues = "flag"
 )
 
+# The type tag of one solver setting, or `"asis"` for a setting `ospsuite`
+# supports but `.solverSettingTypes` does not describe: such a setting is
+# written as given, since this package has no rule for its value.
+# @keywords internal
+# @noRd
+.solverSettingType <- function(field) {
+  if (field %in% names(.solverSettingTypes)) {
+    .solverSettingTypes[[field]]
+  } else {
+    "asis"
+  }
+}
+
 # Report what is wrong with a solver-settings record, as a character vector of
 # problems (empty when it is sound). `label` names the field in each message,
 # so the same rules report against whichever door the value came through: a
@@ -162,15 +175,8 @@
     if (is.null(value)) {
       next
     }
-    # A setting with no tag is written as given: `ospsuite` supports it, this
-    # package simply has no rule describing its value.
-    type <- if (field %in% names(.solverSettingTypes)) {
-      .solverSettingTypes[[field]]
-    } else {
-      "asis"
-    }
     solver[[field]] <- switch(
-      type,
+      .solverSettingType(field),
       number = as.double(value),
       count = as.integer(value),
       flag = isTRUE(value),
