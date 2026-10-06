@@ -14,7 +14,7 @@
       Error in `importProjectFromExcel()`:
       ! defaultSolverSettings is not valid.
       x defaultSolverSettings sets 'relTol' in more than one row
-      x row 4 of the DefaultSolverSettings sheet has a value but no setting
+      x defaultSolverSettings has a value with no setting in row 4 of the DefaultSolverSettings sheet
       x defaultSolverSettings has unknown setting 'reltol'; the settings are absTol, checkForNegativeValues, h0, hMax, hMin, mxStep, relTol, useJacobian
       x defaultSolverSettings$mxStep must be a single whole number between 1 and 2147483647
       x defaultSolverSettings$useJacobian must be TRUE or FALSE

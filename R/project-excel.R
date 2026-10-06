@@ -4579,11 +4579,11 @@ projectStatus <- function(project, silent = FALSE) {
       problems <- c(
         problems,
         paste0(
-          "row ",
+          "defaultSolverSettings has a value with no setting in row ",
           sheetRows[[i]] + 1L,
           " of the ",
           sheet,
-          " sheet has a value but no setting"
+          " sheet"
         )
       )
       next

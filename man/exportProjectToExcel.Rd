@@ -40,6 +40,12 @@ from \code{MyStudy.json} exports \code{MyStudy.xlsx} (and one loaded from the
 canonical \code{Project.json} exports \code{Project.xlsx}). That is the pairing
 \code{\link[=projectStatus]{projectStatus()}} reads back, so the workbook this writes is the one the
 status check then compares the project against.
+
+The project's \code{defaultSolverSettings} are written to a \code{DefaultSolverSettings}
+sheet of that workbook, one row per setting, and \code{\link[=importProjectFromExcel]{importProjectFromExcel()}}
+reads them back. A scenario's own \code{solverSettings} has no column in the
+scenario sheet, so it is not written, and the export warns naming the
+scenarios that carry one.
 }
 \seealso{
 Other projectPersistence:

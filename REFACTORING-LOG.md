@@ -266,3 +266,5 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-09-17 14:15: The scenario print NEWS bullets are gone: both described a change inside the unreleased 6.0.0 cycle, which its NEWS reader never saw. (#1279)
 - 2026-09-17 15:20: The DataCombined tests compare whole result structures, and the NEWS bullets for the curve labels describe the current behavior rather than the branch history. (#1280)
 - 2026-09-21 17:34: The Get started article now describes what printing a project really shows, and says that no full path is printed so a printed project reads the same on any computer. (#1289)
+- 2026-10-05 20:37: The Excel files carry the project's default solver settings on a sheet of their own, and importing checks them the way the project file is checked. (#1300)
+- 2026-10-06 09:32: The help pages describe the solver-settings sheet, and NEWS mentions it in the Excel round-trip bullet rather than as a change from a state that never shipped. (#1300)
