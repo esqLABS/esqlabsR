@@ -841,10 +841,8 @@ removeParameterSet <- function(project, id) {
 #'
 #' Adds parameter entries to the named set in `parameterSets` definitions.
 #' `containerPath`, `parameterName`, `value`, and `units` accept parallel
-#' vectors of equal length N to add all N entries in a single call (and a
-#' single write to disk); a scalar call (length-1 vectors) adds one entry.
-#' Building a large set with one vectorized call is far cheaper than a loop of
-#' scalar calls, since each call rewrites the whole set file.
+#' vectors of equal length N to add all N entries in a single call; a scalar
+#' call (length-1 vectors) adds one entry.
 #'
 #' Unlike the other `add*` functions, which abort on a missing parent, this
 #' creates the parent set on demand if it does not yet exist (informing you
@@ -925,8 +923,8 @@ addParameterEntry <- function(
       "Created parameter set {.val {id}} on demand to hold the new entr{?y/ies}."
     )
   }
-  # Fold all N entries into the set in memory first, so the single write below
-  # triggers exactly one write-through (not one per entry).
+  # Fold all N entries into a copy of the set first, so an entry that aborts
+  # leaves the project unchanged.
   parameterSets <- private$.getSection("parameterSets")
   parameterSets[[id]] <- .asParameterSet(.addParameterEntries(
     current,
@@ -945,10 +943,10 @@ addParameterEntry <- function(
 #'
 #' Removes parameter entries from the named set. `containerPath` and
 #' `parameterName` accept parallel vectors of equal length N to remove all N
-#' entries in a single call (and a single write to disk); a scalar call
-#' (length-1 vectors) removes one entry. If every entry of the set is removed,
-#' the set itself is auto-removed from `parameterSets` definitions. Warns if the
-#' set or any named entry doesn't exist.
+#' entries in a single call; a scalar call (length-1 vectors) removes one
+#' entry. If every entry of the set is removed, the set itself is auto-removed
+#' from `parameterSets` definitions. Warns if the set or any named entry
+#' doesn't exist.
 #'
 #' @param project A `Project` object.
 #' @param id Character scalar, set id. Canonicalized.
@@ -989,8 +987,8 @@ removeParameterEntry <- function(
     cli::cli_warn("parameter set {.val {id}} not found; no-op.")
     return(invisible(self))
   }
-  # Fold all N removals into the set in memory first, so the single assignment
-  # below triggers exactly one write-through (not one per entry).
+  # Fold all N removals into a copy of the set first, so the section is updated
+  # once, and not at all when nothing was removed.
   result <- .removeParameterEntries(
     self$definitions$parameterSets[[id]],
     containerPath,
@@ -1089,8 +1087,9 @@ removeParameterEntry <- function(
 # pass, returning the updated list. Each entry is validated and appended via
 # `.addParameterEntry`. A duplicate `(containerPath, parameterName)` (already in
 # the set, or repeated earlier in this batch) aborts unless `overwrite = TRUE`,
-# in which case the last value wins. N=1 is the scalar case. Folding in memory
-# first lets the caller persist the whole set in a single write-through.
+# in which case the last value wins. N=1 is the scalar case. Folding into a
+# copy first lets the caller update the section once, and leaves the project
+# unchanged when an entry aborts.
 #
 # @keywords internal
 # @noRd
@@ -1194,8 +1193,8 @@ removeParameterEntry <- function(
 # `.removeParameterEntry`. `removed` is `TRUE` if ANY named entry was actually
 # removed (a not-found entry warns and is skipped, as in the scalar case);
 # `parameters` is `NULL` when the removals emptied the set, so the caller
-# auto-removes it. N=1 is the scalar case. Folding in memory first lets the
-# caller persist the whole set in a single write-through.
+# auto-removes it. N=1 is the scalar case. Folding into a copy first lets the
+# caller update the section once.
 #
 # @keywords internal
 # @noRd
@@ -1228,7 +1227,7 @@ removeParameterEntry <- function(
 #   - `parameters`: the updated set, or `NULL` if removal emptied the set
 #     (callers use the `NULL` to auto-remove the named set).
 #   - `removed`: `TRUE` if an entry was actually removed, `FALSE` for a
-#     no-op (entry not found). Callers gate the write-through on this so
+#     no-op (entry not found). Callers gate the section update on this so
 #     a no-op warn doesn't touch the section (and so doesn't invalidate the
 #     validation cache).
 #
@@ -1386,10 +1385,8 @@ removeInitialConditions <- function(project, id) {
 #'
 #' Adds molecule start-value entries to the named set in
 #' `initialConditions` definitions. `path`, `value`, and `unit` accept parallel
-#' vectors of equal length N to add all N entries in a single call (and a
-#' single write to disk); a scalar call (length-1 vectors) adds one entry.
-#' Building a large set with one vectorized call is far cheaper than a loop of
-#' scalar calls, since each call rewrites the whole set file.
+#' vectors of equal length N to add all N entries in a single call; a scalar
+#' call (length-1 vectors) adds one entry.
 #'
 #' Unlike the other `add*` functions, which abort on a missing parent, this
 #' creates the parent set on demand if it does not yet exist (informing you
@@ -1452,8 +1449,8 @@ addInitialConditionEntry <- function(
       "Created initial-condition set {.val {id}} on demand to hold the new entr{?y/ies}."
     )
   }
-  # Fold all N entries into the set in memory first, so the single write below
-  # triggers exactly one write-through (not one per entry).
+  # Fold all N entries into a copy of the set first, so an entry that aborts
+  # leaves the project unchanged.
   initialConditions <- private$.getSection("initialConditions")
   initialConditions[[id]] <- .asInitialConditionSet(.addInitialConditionEntries(
     current,
@@ -1470,11 +1467,10 @@ addInitialConditionEntry <- function(
 #' Remove one or many entries from a named initial-condition set
 #'
 #' Removes molecule start-value entries from the named set. `path` accepts a
-#' vector of length N to remove all N entries in a single call (and a single
-#' write to disk); a scalar call (length-1 vector) removes one entry. If every
-#' entry of the set is removed, the set itself is auto-removed from
-#' `initialConditions` definitions. Warns if the set or any named entry doesn't
-#' exist.
+#' vector of length N to remove all N entries in a single call; a scalar call
+#' (length-1 vector) removes one entry. If every entry of the set is removed,
+#' the set itself is auto-removed from `initialConditions` definitions. Warns
+#' if the set or any named entry doesn't exist.
 #'
 #' @param project A `Project` object.
 #' @param id Character scalar, set id. Canonicalized.
@@ -1502,8 +1498,8 @@ removeInitialConditionEntry <- function(project, id, path) {
     cli::cli_warn("initial-condition set {.val {id}} not found; no-op.")
     return(invisible(self))
   }
-  # Fold all N removals into the set in memory first, so the single assignment
-  # below triggers exactly one write-through (not one per entry).
+  # Fold all N removals into a copy of the set first, so the section is updated
+  # once, and not at all when nothing was removed.
   result <- .removeInitialConditionEntries(
     self$definitions$initialConditions[[id]],
     path
@@ -1571,8 +1567,9 @@ removeInitialConditionEntry <- function(project, id, path) {
 # returning the updated list. Each entry is validated and appended via
 # `.addInitialConditionEntry`. A duplicate `path` (already in the set, or
 # repeated earlier in this batch) aborts unless `overwrite = TRUE`, in which
-# case the last value wins. N=1 is the scalar case. Folding in memory first
-# lets the caller persist the whole set in a single write-through.
+# case the last value wins. N=1 is the scalar case. Folding into a copy first
+# lets the caller update the section once, and leaves the project unchanged
+# when an entry aborts.
 #
 # @keywords internal
 # @noRd
@@ -1658,8 +1655,8 @@ removeInitialConditionEntry <- function(project, id, path) {
 # `.removeInitialConditionEntry`. `removed` is `TRUE` if ANY named entry was
 # actually removed (a not-found entry warns and is skipped, as in the scalar
 # case); `entries` is `NULL` when the removals emptied the set, so the caller
-# auto-removes it. N=1 is the scalar case. Folding in memory first lets the
-# caller persist the whole set in a single write-through.
+# auto-removes it. N=1 is the scalar case. Folding into a copy first lets the
+# caller update the section once.
 #
 # @keywords internal
 # @noRd
@@ -1680,7 +1677,7 @@ removeInitialConditionEntry <- function(project, id, path) {
 #   - `entries`: the updated set, or `NULL` if removal emptied the set (callers
 #     use the `NULL` to auto-remove the named set).
 #   - `removed`: `TRUE` if an entry was actually removed, `FALSE` for a no-op
-#     (entry not found). Callers gate the write-through on this so a no-op warn
+#     (entry not found). Callers gate the section update on this so a no-op warn
 #     doesn't touch the section (and so doesn't invalidate the validation cache).
 #
 # @keywords internal

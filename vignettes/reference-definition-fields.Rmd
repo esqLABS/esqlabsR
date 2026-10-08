@@ -191,14 +191,14 @@ An application is a thin record: the dose, start time, and other administration 
 
 ## Parameter set
 
-Two functions. `addParameterSet(project, id)` creates an empty set; `addParameterEntry(project, id, containerPath, parameterName, value, units = NULL)` fills it.
+Two functions. `addParameterSet(project, id)` creates an empty set; `addParameterEntry(project, id, containerPath, parameterName, value, units = NULL)` fills it. One call can add several entries: give each field as a vector with one element per entry, all of the same length.
 
 | Field | Required | Type | If omitted |
 | --- | --- | --- | --- |
-| `containerPath` | **yes** | non-empty string | Aborts. |
-| `parameterName` | **yes** | non-empty string | Aborts. |
-| `value` | **yes** | numeric scalar | Aborts. |
-| `units` | no | string | The value is taken to be in the parameter's base unit. Use `""` for a dimensionless parameter. |
+| `containerPath` | **yes** | non-empty strings, one per entry | Aborts. |
+| `parameterName` | **yes** | non-empty strings, one per entry | Aborts. |
+| `value` | **yes** | numbers, one per entry | Aborts. |
+| `units` | no | strings, one per entry | The value is taken to be in the parameter's base unit. Use `""` for a dimensionless parameter. |
 
 `containerPath` is the container in OSPS path notation. `addParameterEntry()` creates the set on demand if it does not yet exist. A repeated `(containerPath, parameterName)` pair **aborts** unless you pass `overwrite = TRUE`, which replaces the existing entry (last write wins), so building a set incrementally does not silently overwrite what is already there. `removeParameterEntry()` takes an entry back out and auto-removes the set if it becomes empty; `removeParameterSet()` drops a whole set.
 
@@ -206,13 +206,13 @@ Scenarios, individuals and applications all reference parameter sets from this o
 
 ## Initial conditions
 
-`addInitialConditions(project, id)` creates an empty set; `addInitialConditionEntry(project, id, path, value, unit)` fills it.
+`addInitialConditions(project, id)` creates an empty set; `addInitialConditionEntry(project, id, path, value, unit)` fills it. As with parameter entries, one call can add several entries: give each field as a vector with one element per entry, all of the same length.
 
 | Field | Required | Type | Notes |
 | --- | --- | --- | --- |
-| `path` | **yes** | non-empty string | Molecule path in OSPS notation. |
-| `value` | **yes** | numeric scalar | |
-| `unit` | **yes** | non-empty string | Required, unlike a parameter entry's `units`. A blank unit is rejected at run time, so it is rejected when you write it instead. |
+| `path` | **yes** | non-empty strings, one per entry | Molecule path in OSPS notation. |
+| `value` | **yes** | numbers, one per entry | |
+| `unit` | **yes** | non-empty strings, one per entry | Required, unlike a parameter entry's `units`. A blank unit is rejected at run time, so it is rejected when you write it instead. |
 
 Every field here is required, so nothing falls back to the model file.
 
