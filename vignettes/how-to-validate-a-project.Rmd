@@ -62,9 +62,9 @@ isAnyCriticalErrors(results)
 
 The most common slip is a dangling reference: a definition pointing at an id that does not exist, usually a small misspelling. Note that a *loaded* project can hold one even though `addScenario()` would have refused it, because reading a project reports gaps rather than rejecting them (`vignette("about-the-project-model")` explains why).
 
-To see what the report looks like, suppose one scenario file in our copy mistypes the individual id `adult_male` as `adlt_male`. Reloading the project catches the dangling reference at load time, and `validateProject()` then reports it in full:
+To see what the report looks like, suppose one scenario file in our copy mistypes the individual id `adult_male` as `adlt_male`. Here we make the typo by editing the scenario file, as a hand edit or a colleague's change would. `loadProject()` warns about this kind of misspelling as soon as it reads the file:
 
-```{r, echo = FALSE}
+```{r, warning = TRUE}
 scenario_file <- file.path(
   project_dir,
   "definitions",
@@ -75,10 +75,10 @@ text <- readLines(scenario_file)
 text <- gsub('"adult_male"', '"adlt_male"', text, fixed = TRUE)
 writeLines(text, scenario_file)
 
-broken <- suppressWarnings(loadProject(file.path(project_dir, "Project.json")))
+broken <- loadProject(file.path(project_dir, "Project.json"))
 ```
 
-The report is grouped by definition type, and the references from one definition to another that do not resolve are listed together under `crossReferences`. A cross (`✖`) marks each critical error, an exclamation mark (`!`) marks each warning, and the sections with nothing to report collapse into a single tail line.
+`validateProject()` reports it together with everything else. The report is grouped by definition type, and the references from one definition to another that do not resolve are listed together under `crossReferences`. A cross (`✖`) marks each critical error, an exclamation mark (`!`) marks each warning, and the sections with nothing to report collapse into a single tail line.
 
 ```{r}
 broken_results <- validateProject(broken)
@@ -86,6 +86,23 @@ broken_results
 ```
 
 Notice the message does not just say the reference is missing; it offers a **"did you mean"** suggestion built from the ids that actually exist (`did you mean 'adult_male'?`), the validator catching the most common mistake, a small misspelling of an existing id.
+
+## Read a warning
+
+A warning does not block, but read it anyway. Point a scenario at a model file that is not in the project's model folder:
+
+```{r}
+setScenario(project, "aciclovir_iv", modelFile = "Aciclovir_v2.pkml")
+validateProject(project)
+```
+
+The report counts one warning and no critical error, so `isAnyCriticalErrors()` returns `FALSE` and nothing stops you from running. The run then fails when it tries to load the model file. Put the correct file name back:
+
+```{r}
+setScenario(project, "aciclovir_iv", modelFile = "Aciclovir.pkml")
+```
+
+Some warnings are expected. A new project created with `initProject(type = "minimal")` reports one warning such as `No scenarios defined` for each empty section, and each one goes away once you add a definition to that section.
 
 ## Read the result in code
 
