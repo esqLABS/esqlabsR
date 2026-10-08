@@ -20,7 +20,7 @@ knitr::opts_chunk$set(
 library(esqlabsR)
 ```
 
-Before you run anything, check that the project hangs together: every reference resolves, no required field is missing, no id is duplicated. `validateProject()` does this and prints a readable report. This guide shows how to run it, read the report, act on a problem, and gate a script on the result.
+The project can be checked for validity to identify potential problems that would prevent the workflows from being executed: does every reference resolve, are no required fields missing, are there any duplicated id. `validateProject()` does this and prints a readable report. This guide shows how to run it, read the report, act on a problem, and gate a script on the result.
 
 It assumes you know what a Project is and how to create one (see `vignette("how-to-set-up-a-project")` and `vignette("how-to-design-scenarios")`).
 
@@ -68,7 +68,10 @@ To see what the report looks like, suppose one scenario file in our copy mistype
 
 ```{r, echo = FALSE}
 scenario_file <- file.path(
-  project_dir, "definitions", "scenarios", "aciclovir_iv.json"
+  project_dir,
+  "definitions",
+  "scenarios",
+  "aciclovir_iv.json"
 )
 text <- readLines(scenario_file)
 text <- gsub('"adult_male"', '"adlt_male"', text, fixed = TRUE)
