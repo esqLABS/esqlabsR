@@ -45,7 +45,7 @@ The quickest single question, "is anything blocking?", is `isAnyCriticalErrors()
 
 ## Validate a clean project
 
-The bundled example is well formed, so its report is short. `validateProject()` runs every section validator plus a cross-reference pass and returns a structured object that prints a summary:
+The bundled example is well formed, so its report has no findings. `validateProject()` runs every section validator plus a cross-reference pass and returns a structured object that prints a summary:
 
 ```{r}
 results <- validateProject(project)
@@ -60,7 +60,7 @@ isAnyCriticalErrors(results)
 
 ## Diagnose a dangling reference
 
-The most common slip is a dangling reference: a definition pointing at an id that does not exist, usually a small misspelling. Note that a *loaded* project can hold one even though `addScenario()` would have refused it, because reading a project reports gaps rather than rejecting them (`vignette("about-the-project-model")` explains why).
+The most common slip is a dangling reference: a definition pointing at an id that does not exist, usually a small misspelling. A *loaded* project can hold one even though `addScenario()` would have refused it, because reading a project reports gaps rather than rejecting them (`vignette("about-the-project-model")` explains why).
 
 To see what the report looks like, suppose one scenario file in our copy mistypes the individual id `adult_male` as `adlt_male`. Here we make the typo by editing the scenario file, as a hand edit or a colleague's change would. `loadProject()` warns about this kind of misspelling as soon as it reads the file:
 
@@ -85,7 +85,7 @@ broken_results <- validateProject(broken)
 broken_results
 ```
 
-Notice the message does not just say the reference is missing; it offers a **"did you mean"** suggestion built from the ids that actually exist (`did you mean 'adult_male'?`), the validator catching the most common mistake, a small misspelling of an existing id.
+The message also suggests the closest existing id (`did you mean 'adult_male'?`). The suggestion appears only when an existing id is close: a reference to `child_female` in this project gets none.
 
 ## Read a warning
 
@@ -121,7 +121,7 @@ validationSummary(broken_results)
 
 ## Resolve and re-validate
 
-Fixing the problem uses the same functions you already know. Here the scenario simply needs to point at the correct individual id; `setScenario()` updates it in memory (call `saveProject()` when you want the fix on disk):
+Fixing the problem uses the same functions you already know. Here the scenario needs to point at the correct individual id; `setScenario()` updates it in memory (call `saveProject()` when you want the fix on disk):
 
 ```{r}
 setScenario(broken, "aciclovir_iv", individual = "adult_male")
