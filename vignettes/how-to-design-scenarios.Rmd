@@ -64,7 +64,7 @@ Printing a scenario shows its settings. `Name` is the scenario's id, `Type` says
 print(project$definitions$scenarios[["aciclovir_as_exported"]])
 
 # Print the time grid (if defined separately)
-print(project$definitions$scenarios[["aciclovir_as_exported"]])$simulationTime
+project$definitions$scenarios[["aciclovir_as_exported"]]$simulationTime
 ```
 
 The following sections of this article describe how to set up scenarios that are based on the exported model, but differ in their properties.
@@ -262,7 +262,7 @@ Like every other edit, the new scenario exists only in your R session until you 
 
 To run a population scenario, pass a `population` id during scenario creation, or add a population later to the field `project$definitions$scenarios[["scenario_name"]]$populationId`; the scenario type changes automatically. If you also keep an `individual`, its parameter sets still apply.
 
-`readPopulationFromCSV = TRUE` makes a population scenario read its population from a CSV file in the project's populations folder instead of sampling it. The SCV file must be named as the `populationID` defined in the scenario.
+`readPopulationFromCSV = TRUE` makes a population scenario read its population from a CSV file in the project's populations folder instead of sampling it. The CSV file must be named as the `populationID` defined in the scenario.
 
 ### Simulating a steady-state
 
@@ -291,7 +291,7 @@ setScenario(
 project$definitions$scenarios[["aciclovir_iv_ckd"]]$simulationTime
 ```
 
-In the next example, we remove the individual assignment from the scenario by passing `NULL`. The consequence is that parameters describing the physiology will not be overwritten, and individul-specific parameter sets defined in `project$definitions$individuals$adult_male_ckd$parameterSets` will not be applied.
+In the next example, we remove the individual assignment from the scenario by passing `NULL`. The consequence is that parameters describing the physiology will not be overwritten, and individual-specific parameter sets defined in `project$definitions$individuals$adult_male_ckd$parameterSets` will not be applied.
 
  In R, a scenario record calls this field `individualId`, not `individual`; `vignette("reference-definition-fields")` lists the fields whose names differ:
 
