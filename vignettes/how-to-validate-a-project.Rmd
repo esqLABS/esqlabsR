@@ -24,7 +24,7 @@ The project can be checked for validity to identify potential problems that woul
 
 It assumes you know what a Project is and how to create one (see `vignette("how-to-set-up-a-project")` and `vignette("how-to-design-scenarios")`).
 
-Run it right after you finish editing and before running: `runScenarios()` and `createPlots()` each validate the parts of the project their own work is built from, so an explicit `validateProject()` is what gives you the whole picture at the moment you choose, rather than the first blocking error a slow run happens to hit. `vignette("about-the-project-model")` covers why validation is split up this way and why it reports two levels of finding.
+Run it right after you finish editing and before running. `runScenarios()`, `buildSimulations()`, `createDataCombined()`, `createPlots()` and `runPI()` each check the parts of the project they use before any simulation starts, and stop with a list of every critical error they find there. They do not show warnings, and they do not look at the other parts of the project. An explicit `validateProject()` gives you the whole picture: every section, warnings included. `vignette("about-the-project-model")` covers why validation is split up this way and why it reports two levels of finding.
 
 Throughout, work on a writable copy of the bundled example:
 
@@ -38,8 +38,8 @@ project <- loadProject(file.path(project_dir, "Project.json"))
 
 A report separates two kinds of finding, and which one you got decides whether you have to act:
 
-- A **Critical Error** blocks. A duplicate id, a required field left empty, or a reference to something that does not exist. The section's `isValid()` returns `FALSE`, and the operations built on it will not run until you fix it.
-- A **Warning** does not block. It is surfaced so you see it, and a section with warnings and no critical errors is still valid.
+- A **critical error** blocks. A duplicate id, a required field left empty, or a reference to something that does not exist. `isAnyCriticalErrors()` returns `TRUE`, and the operations that use that part of the project will not run until you fix it.
+- A **warning** does not block. It is surfaced so you see it, and a section with warnings and no critical errors is still valid.
 
 The quickest single question, "is anything blocking?", is `isAnyCriticalErrors()`.
 
@@ -80,7 +80,7 @@ writeLines(text, scenario_file)
 broken <- suppressWarnings(loadProject(file.path(project_dir, "Project.json")))
 ```
 
-The report is grouped by definition type: a cross (`✖`) marks each critical error, an exclamation mark (`!`) marks each warning, and the sections with nothing to report collapse into a single tail line.
+The report is grouped by definition type, and the references from one definition to another that do not resolve are listed together under `crossReferences`. A cross (`✖`) marks each critical error, an exclamation mark (`!`) marks each warning, and the sections with nothing to report collapse into a single tail line.
 
 ```{r}
 broken_results <- validateProject(broken)
@@ -91,7 +91,7 @@ Notice the message does not just say the reference is missing; it offers a **"di
 
 ## Read the result in code
 
-The printed report is for you; the object `validateProject()` returns is for your code. It is a named list with one entry per definition type, and each entry is a Validation Result you can index into. So a script can gate on a specific section without parsing any text:
+The printed report is for you; the object `validateProject()` returns is for your code. It is a named list with one entry per definition type, plus `crossReferences`, which holds every reference from one definition to another that does not resolve. Each entry holds the critical errors and warnings for that part of the project, so a script can read them without parsing any text. The misspelled individual id is reported under `crossReferences`, not under `scenarios`:
 
 ```{r}
 names(broken_results)
@@ -120,7 +120,7 @@ fixed_results
 isAnyCriticalErrors(fixed_results)
 ```
 
-Both the report and `isAnyCriticalErrors()` are clean, so the project is ready to run.
+Both the report and `isAnyCriticalErrors()` are clean: every reference resolves and no required field is missing. Validation does not open the model file, so some problems still show up only when a scenario is built: a parameter path that does not exist in the model, a missing model file (reported only as a warning), a human individual or population without a `population`, a protein ontogeny that cannot be applied, or a human individual used with an animal model.
 
 ## Where to go next
 
