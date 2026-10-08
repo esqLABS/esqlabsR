@@ -269,3 +269,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-10-02 16:05: The scenario article's worked examples now do what its text says, and it and the field reference give the order in which parameter sets are applied.
 - 2026-10-08 19:24: The validation article opens by saying what the check looks for and why it matters.
 - 2026-10-08 19:24: The validation article no longer says a clean report means a project is ready to run, lists every function that checks before running, and says where a misspelled reference is reported.
+- 2026-10-08 19:25: The validation article shows how to stop a script when the project has a blocking problem, and says what skipping the check before a run really does.

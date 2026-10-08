@@ -43,8 +43,6 @@ A report separates two kinds of finding, and which one you got decides whether y
 
 The quickest single question, "is anything blocking?", is `isAnyCriticalErrors()`.
 
-Passing `validate = FALSE` to `runScenarios()` or `createPlots()` skips their check and lets a scenario build on whatever the model file already carries. Reach for it only when you know the gap is deliberate.
-
 ## Validate a clean project
 
 The bundled example is well formed, so its report is short. `validateProject()` runs every section validator plus a cross-reference pass and returns a structured object that prints a summary:
@@ -121,6 +119,26 @@ isAnyCriticalErrors(fixed_results)
 ```
 
 Both the report and `isAnyCriticalErrors()` are clean: every reference resolves and no required field is missing. Validation does not open the model file, so some problems still show up only when a scenario is built: a parameter path that does not exist in the model, a missing model file (reported only as a warning), a human individual or population without a `population`, a protein ontogeny that cannot be applied, or a human individual used with an animal model.
+
+## Stop a script on a blocking problem
+
+In a script that runs unattended, check the project first and stop with the full report when anything blocks:
+
+```{r}
+results <- validateProject(project)
+if (isAnyCriticalErrors(results)) {
+  print(results)
+  stop("Fix the project before running it.")
+}
+```
+
+`runScenarios()`, `buildSimulations()`, `createDataCombined()` and `createPlots()` take `validate = FALSE`, which skips their own check; `runPI()` always checks. Skipping the check does not make a broken reference harmless. With the misspelled individual id from above, `runScenarios(validate = FALSE)` still runs the scenario, with the individual stored in the model file instead of `adult_male`, and says so only in a warning:
+
+```
+Scenario "aciclovir_iv": No individual characteristics for individual id "adlt_male" found.
+```
+
+Use `validate = FALSE` only when you know the gap is deliberate.
 
 ## Where to go next
 
