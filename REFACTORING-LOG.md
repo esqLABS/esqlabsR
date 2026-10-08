@@ -272,3 +272,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-10-08 19:25: The validation article shows how to stop a script when the project has a blocking problem, and says what skipping the check before a run really does.
 - 2026-10-08 19:26: The validation article shows the warning loadProject() gives for a misspelled reference, and shows a warning that still makes the run fail.
 - 2026-10-08 19:26: Plainer wording in the validation article, including when the "did you mean" suggestion appears.
+- 2026-10-08 19:27: The project-model article lists which parts of the project each run, data and plot function checks before it starts, matching what the functions do.
