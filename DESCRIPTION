@@ -46,7 +46,8 @@ Imports:
     vctrs,
     writexl,
     ospsuite.plots (>= 1.0.1.9009),
-    ggtext
+    ggtext,
+    rSharp
 Suggests: 
     clipr,
     covr,
@@ -71,8 +72,9 @@ Encoding: UTF-8
 Language: en-US
 Roxygen: list(markdown = TRUE)
 Remotes:
-    ospsuite=Open-Systems-Pharmacology/OSPSuite-R,
     ospsuite.utils=Open-Systems-Pharmacology/OSPSuite.RUtils,
+    rSharp=Open-Systems-Pharmacology/rSharp,
     ospsuite.plots=Open-Systems-Pharmacology/OSPSuite.Plots,
+    ospsuite=Open-Systems-Pharmacology/OSPSuite-R,
     ospsuite.parameteridentification=Open-Systems-Pharmacology/OSPSuite.ParameterIdentification
 Config/roxygen2/version: 8.1.0
