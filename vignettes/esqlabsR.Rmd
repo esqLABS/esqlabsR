@@ -14,8 +14,7 @@ knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
   warning = FALSE,
-  message = FALSE,
-  fig.showtext = TRUE
+  message = FALSE
 )
 library(esqlabsR)
 require(readxl)
@@ -228,7 +227,7 @@ my_datacombined$addSimulationResults(
 Finally, the plot is generated:
 
 ```{r, out.width="80%", fig.align="center", fig.width=5, fig.asp=0.618, dpi=300}
-plotIndividualTimeProfile(my_datacombined)
+plotTimeProfile(my_datacombined)
 ```
 
 In some cases, we also want to plot the observed experimental data
@@ -247,7 +246,7 @@ my_datacombined$addDataSets(
   groups = "Aciclovir"
 )
 
-plotObservedVsSimulated(my_datacombined)
+plotPredictedVsObserved(my_datacombined)
 ```
 
 Many other plot types are available in `{esqlabsR}`, read

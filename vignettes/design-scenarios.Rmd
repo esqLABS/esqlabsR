@@ -10,8 +10,7 @@ vignette: >
 ```{r, include = FALSE, warning =FALSE, message = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
-  comment = "#>",
-  fig.showtext = TRUE
+  comment = "#>"
 )
 
 library(esqlabsR)

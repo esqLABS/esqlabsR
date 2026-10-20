@@ -82,12 +82,5 @@
     result$add_warning("Structure", "Optional sheet 'plotGrids' not found")
   }
 
-  if (!"exportConfiguration" %in% sheets) {
-    result$add_warning(
-      "Structure",
-      "Optional sheet 'exportConfiguration' not found"
-    )
-  }
-
   return(result)
 }

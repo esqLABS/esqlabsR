@@ -98,7 +98,7 @@ test_that("`writeIndividualToXLS()` writes correct data to a spreadsheet", {
       )
       df <- readxl::read_xlsx(tmp)
 
-      expect_equal(dim(df), c(96L, 4L))
+      expect_equal(dim(df), c(117L, 4L))
       expect_equal(
         colnames(df),
         c("Container Path", "Parameter Name", "Value", "Units")
@@ -114,7 +114,8 @@ test_that("`writeIndividualToXLS()` writes correct data to a spreadsheet", {
           "l",
           "l/min/kg organ",
           "l/min",
-          "min"
+          "min",
+          "µmol/l"
         )
       )
     }

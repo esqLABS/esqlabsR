@@ -244,7 +244,7 @@ test_that("The hierarchy of parametrization is correct", {
   # Check that the hierarchy of parametrization is correct
   idx <- which(
     scenarios[[1]]$finalCustomParams$paths ==
-      "Events|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose"
+      "Events|IV 250mg 10min|No formulation|Application_1|ProtocolSchemaItem|Dose"
   )
   expect_equal(scenarios[[1]]$finalCustomParams$values[[idx]], 250)
 
@@ -252,7 +252,7 @@ test_that("The hierarchy of parametrization is correct", {
   scenarios <- createScenarios(
     scenarioConfigurations = scenarioConfigurations,
     customParams = list(
-      paths = "Events|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose",
+      paths = "Events|IV 250mg 10min|No formulation|Application_1|ProtocolSchemaItem|Dose",
       values = 300,
       units = "mg"
     )
@@ -261,7 +261,7 @@ test_that("The hierarchy of parametrization is correct", {
   # Check that the custom parameter overrides the default
   idx <- which(
     scenarios[[1]]$finalCustomParams$paths ==
-      "Events|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose"
+      "Events|IV 250mg 10min|No formulation|Application_1|ProtocolSchemaItem|Dose"
   )
   expect_equal(scenarios[[1]]$finalCustomParams$values[[idx]], 300)
 })

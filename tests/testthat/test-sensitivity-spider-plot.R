@@ -16,7 +16,7 @@ simulation <- loadSimulation(simPath)
 outputPaths <- "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
 parameterPaths <- c(
   "Aciclovir|Lipophilicity",
-  "Events|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose",
+  "Events|IV 250mg 10min|No formulation|Application_1|ProtocolSchemaItem|Dose",
   "Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Glomerular Filtration-GFR-Aciclovir|GFR fraction"
 )
 variationRange <- c(0.1, 2, 20) # 1.0 is deliberately left out for testing
@@ -166,13 +166,13 @@ test_that("sensitivitySpiderPlot applies absolute x- and y-axis values correctly
     xAxisType = "absolute",
     yAxisType = "absolute",
     xAxisScale = "log",
-    yAxisScale = "lin"
+    yAxisScale = "linear"
   ) # default scales
   p2 <- sensitivitySpiderPlot(
     results,
     xAxisType = "absolute",
     yAxisType = "absolute",
-    xAxisScale = "lin",
+    xAxisScale = "linear",
     yAxisScale = "log"
   )
 
@@ -203,8 +203,8 @@ test_that("sensitivitySpiderPlot applies free scaling with absolute y-values", {
 n <- "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
 
 test_that("sensitivitySpiderPlot uses defaultPlotConfiguration scales", {
-  myPlotConfiguration <- createEsqlabsPlotConfiguration()
-  myPlotConfiguration$xAxisScale <- "lin"
+  myPlotConfiguration <- createEsqlabsPlotConfiguration("spiderPlot")
+  myPlotConfiguration$xAxisScale <- "linear"
   myPlotConfiguration$yAxisScale <- "log"
 
   p <- sensitivitySpiderPlot(
@@ -218,15 +218,15 @@ test_that("sensitivitySpiderPlot uses defaultPlotConfiguration scales", {
 })
 
 test_that("sensitivitySpiderPlot signature overrides defaultPlotConfiguration", {
-  myPlotConfiguration <- createEsqlabsPlotConfiguration()
-  myPlotConfiguration$xAxisScale <- "lin" # to be overridden
+  myPlotConfiguration <- createEsqlabsPlotConfiguration("spiderPlot")
+  myPlotConfiguration$xAxisScale <- "linear" # to be overridden
   myPlotConfiguration$yAxisScale <- "log" # to be overridden
 
   p <- sensitivitySpiderPlot(
     results,
     defaultPlotConfiguration = myPlotConfiguration,
     xAxisScale = "log",
-    yAxisScale = "lin"
+    yAxisScale = "linear"
   )
   pb <- ggplot2::ggplot_build(p[[n]][[1]])
 
@@ -245,7 +245,7 @@ outputPaths <- c(
 )
 parameterPaths <- c(
   "Aciclovir|Lipophilicity",
-  "Events|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose",
+  "Events|IV 250mg 10min|No formulation|Application_1|ProtocolSchemaItem|Dose",
   "Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Glomerular Filtration-GFR-Aciclovir|GFR fraction"
 )
 
