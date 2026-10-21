@@ -46,8 +46,8 @@ messages$errorWrongXLSStructure <- function(
 
 messages$wrongParametersStructure <- function(argumentName) {
   cliFormat(
-    "Argument {.arg {argumentName}} has wrong structure. Expected is a named list with three vectors `paths` 
-    representing full parameter paths, `values` with numerical values of the parameters, 
+    "Argument {.arg {argumentName}} has wrong structure. Expected is a named list with three vectors `paths`
+    representing full parameter paths, `values` with numerical values of the parameters,
     and `units` representing the units the values are in. All three vectors must have the same length"
   )
 }
@@ -306,18 +306,18 @@ messages$stopScenarioNameNonUnique <- function(scenarioName) {
 
 messages$stopWrongTimeIntervalString <- function(timeIntervalString) {
   cliFormat(
-    "The time interval string {.val {timeIntervalString}} is not valid! Please 
-    check the format of the string. Following criteria must be 
-    met: 1) Each time interval must contain three numbers separated by a ',', 2) all 
-    numbers must be positive, 3) The first number (start time) must be smaller than 
-    the second number (end time), 4) The third number (resolution) must 
+    "The time interval string {.val {timeIntervalString}} is not valid! Please
+    check the format of the string. Following criteria must be
+    met: 1) Each time interval must contain three numbers separated by a ',', 2) all
+    numbers must be positive, 3) The first number (start time) must be smaller than
+    the second number (end time), 4) The third number (resolution) must
     be greater than zero. Time intervals must be separated by a ';'."
   )
 }
 
 messages$stopScenarioMissingTimeUnit <- function(scenarioName) {
   cliFormat(
-    "Scenario {.val {scenarioName}} has simulation time defined, but no unit is specified! 
+    "Scenario {.val {scenarioName}} has simulation time defined, but no unit is specified!
     Please specify simulation time unit."
   )
 }
@@ -630,7 +630,11 @@ messages$excelFieldFormatError <- function(
   plotID,
   expectedFormat
 ) {
-  plotInfo <- if (!is.null(plotID)) cliFormat(" in plot {.val {plotID}}") else ""
+  plotInfo <- if (!is.null(plotID)) {
+    cliFormat(" in plot {.val {plotID}}")
+  } else {
+    ""
+  }
   cliFormat(
     "Excel validation error{plotInfo}: Invalid format for {.field {fieldName}}.
     Provided: {.val {value}}
@@ -646,7 +650,11 @@ messages$excelFieldLengthError <- function(
   expected,
   actual
 ) {
-  plotInfo <- if (!is.null(plotID)) cliFormat(" in plot {.val {plotID}}") else ""
+  plotInfo <- if (!is.null(plotID)) {
+    cliFormat(" in plot {.val {plotID}}")
+  } else {
+    ""
+  }
   cliFormat(
     "Excel validation error{plotInfo}: Wrong number of values for {.field {fieldName}}.
     Provided: {.val {value}} ({actual} value{?s})
@@ -661,7 +669,11 @@ messages$excelFieldTypeError <- function(
   plotID,
   expectedType
 ) {
-  plotInfo <- if (!is.null(plotID)) cliFormat(" in plot {.val {plotID}}") else ""
+  plotInfo <- if (!is.null(plotID)) {
+    cliFormat(" in plot {.val {plotID}}")
+  } else {
+    ""
+  }
   cliFormat(
     "Excel validation error{plotInfo}: Invalid {.field {fieldName}} value.
     Provided: {.val {value}}
@@ -925,4 +937,10 @@ messages$conflictingAxesScales <- function(plotID) {
     "x" = "{.strong observedVsSimulated} plot with plotID {.val {plotID}} has conflicting {.field xAxisScale} and {.field yAxisScale}",
     "i" = "Use either {.val linear} or {.val log} in both columns"
   ))
+}
+
+messages$deprecatedCheckForNegativeValues <- function() {
+  cliFormat(
+    "{.field SimulationRunOptions$checkForNegativeValues} option is now deprecated in {.pkg ospsuite} package"
+  )
 }

@@ -515,7 +515,6 @@ test_that("createPITasks applies simulationRunOptions from PIConfiguration colum
   ))
   opts <- piTasks$Task1$configuration$simulationRunOptions
   expect_false(is.null(opts))
-  expect_false(opts$checkForNegativeValues)
 
   # Both set
   sheets$PIConfiguration$numberOfCores <- 4
@@ -528,7 +527,6 @@ test_that("createPITasks applies simulationRunOptions from PIConfiguration colum
   ))
   opts <- piTasks$Task1$configuration$simulationRunOptions
   expect_equal(opts$numberOfCores, 4L)
-  expect_false(opts$checkForNegativeValues)
 })
 
 test_that("createPITasks applies objectiveFunctionOptions from PIConfiguration columns", {

@@ -518,7 +518,10 @@ runPI <- function(piTasks) {
       simRunOptions$numberOfCores <- as.integer(numberOfCores)
     }
     if (hasCheckForNegativeValues) {
-      simRunOptions$checkForNegativeValues <- as.logical(checkForNegativeValues)
+      # based on ospsuite documentation
+      # checkForNegativeValues method was deprecated on SimulationRunOptions objects
+      # it is now accessible only through Simulation objects under solver method
+      message(messages$deprecatedCheckForNegativeValues())
     }
     piConfig$simulationRunOptions <- simRunOptions
   }
