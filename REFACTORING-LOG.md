@@ -274,3 +274,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-10-08 19:26: Plainer wording in the validation article, including when the "did you mean" suggestion appears.
 - 2026-10-08 19:27: The project-model article lists which parts of the project each run, data and plot function checks before it starts, matching what the functions do.
 - 2026-10-21 17:20: Plainer wording throughout the validation article, written for modelers.
+- 2026-10-21 17:21: The validation article opens with a table of the functions it uses.

@@ -24,6 +24,16 @@ The project can be checked for validity to identify potential problems that woul
 
 It assumes you know what a Project is and how to create one (see `vignette("how-to-set-up-a-project")` and `vignette("how-to-design-scenarios")`).
 
+The article uses these functions:
+
+| Function | What it does |
+|---|---|
+| `validateProject()` | Checks the whole project and returns a report of critical errors and warnings. |
+| `isAnyCriticalErrors()` | Returns `TRUE` when a report has at least one critical error. |
+| `validationSummary()` | Counts the critical errors and warnings in a report and names the sections that have them. |
+| `loadProject()` | Warns about most references to a definition that does not exist, for example a misspelled individual id in a scenario. |
+| `validate` argument of `runScenarios()`, `buildSimulations()`, `createDataCombined()` and `createPlots()` | With `TRUE` (the default), the function checks the parts of the project it uses before it runs. With `FALSE`, it skips the check. `runPI()` always checks. |
+
 You should run a validation after you finish editing the project and before running. `runScenarios()`, `buildSimulations()`, `createDataCombined()`, `createPlots()` and `runPI()` each check the parts of the project they use before any simulation starts, and stop with a list of every critical error they find there. They do not show warnings, and they do not look at the other parts of the project. An explicit `validateProject()` gives you the whole picture: every section, warnings included. `vignette("about-the-project-model")` covers more details.
 
 If you want to follow the examples of this article, create a local copy of the example project:
