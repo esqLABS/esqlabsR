@@ -1228,7 +1228,7 @@ createPlotsFromExcel <- function(
 ) {
   if (fieldName %in% "foldDistance") {
     if (is.null(plotConfigurationRow[["foldDistance"]])) {
-      return(defaultConfiguration[["comparisonLineVector"]])
+      return(eval(defaultConfiguration[["comparisonLineVector"]]))
     }
     foldDistance <- .parseExcelMultiValueField(
       plotConfigurationRow[["foldDistance"]],
@@ -1291,6 +1291,14 @@ createPlotsFromExcel <- function(
       return(eval(defaultConfiguration[[fieldName]]))
     }
     return(defaultConfiguration[[fieldName]])
+  }
+  if (fieldName == "quantiles") {
+    return(.parseExcelMultiValueField(
+      value = plotConfigurationRow[[fieldName]],
+      fieldName = fieldName,
+      plotID = plotConfigurationRow$plotID,
+      expectedLength = 3
+    ))
   }
   return(plotConfigurationRow[[fieldName]])
 }
