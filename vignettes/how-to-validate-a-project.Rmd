@@ -44,7 +44,7 @@ initProject(destination = project_dir, type = "example", createExcel = FALSE)
 project <- loadProject(file.path(project_dir, "Project.json"))
 ```
 
-Calling `validateProject()` on a `Project` creates a report that report lists two kinds of problems:
+Calling `validateProject()` on a `Project` creates a report that lists two kinds of problems:
 
 - **Critical errors** must be fixed. Examples are an id used twice, a required field left empty, or a reference to a definition that does not exist. Until you fix them, the functions that use that part of the project refuse to run.
 - **Warnings** do not stop anything. Read them anyway: some point to a problem that only shows up when you run, such as a model file that cannot be found.
