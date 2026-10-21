@@ -20,13 +20,13 @@ knitr::opts_chunk$set(
 library(esqlabsR)
 ```
 
-The project can be checked for validity to identify potential problems that would prevent the workflows from being executed: does every reference resolve, are no required fields missing, are there any duplicated id. `validateProject()` does this and prints a readable report. This guide shows how to run it, read the report, act on a problem, and gate a script on the result.
+The project can be checked for validity to identify potential problems that would prevent the workflows from being executed: does every reference resolve, are no required fields missing, are there any duplicated ids, etc. `validateProject()` does this and prints a readable report. This guide shows how to run it, read the report, act on a problem, and stop a script when the project has a blocking problem.
 
 It assumes you know what a Project is and how to create one (see `vignette("how-to-set-up-a-project")` and `vignette("how-to-design-scenarios")`).
 
-Run it right after you finish editing and before running. `runScenarios()`, `buildSimulations()`, `createDataCombined()`, `createPlots()` and `runPI()` each check the parts of the project they use before any simulation starts, and stop with a list of every critical error they find there. They do not show warnings, and they do not look at the other parts of the project. An explicit `validateProject()` gives you the whole picture: every section, warnings included. `vignette("about-the-project-model")` covers why validation is split up this way and why it reports two levels of finding.
+You should run a validation after you finish editing the project and before running. `runScenarios()`, `buildSimulations()`, `createDataCombined()`, `createPlots()` and `runPI()` each check the parts of the project they use before any simulation starts, and stop with a list of every critical error they find there. They do not show warnings, and they do not look at the other parts of the project. An explicit `validateProject()` gives you the whole picture: every section, warnings included. `vignette("about-the-project-model")` covers more details.
 
-Throughout, work on a writable copy of the bundled example:
+If you want to follow the examples of this article, create a local copy of the example project:
 
 ```{r}
 project_dir <- withr::local_tempdir()
@@ -34,18 +34,16 @@ initProject(destination = project_dir, type = "example", createExcel = FALSE)
 project <- loadProject(file.path(project_dir, "Project.json"))
 ```
 
-## Read a report
+Calling `validateProject()` on a `Project` creates a report that report lists two kinds of problems:
 
-A report separates two kinds of finding, and which one you got decides whether you have to act:
+- **Critical errors** must be fixed. Examples are an id used twice, a required field left empty, or a reference to a definition that does not exist. Until you fix them, the functions that use that part of the project refuse to run.
+- **Warnings** do not stop anything. Read them anyway: some point to a problem that only shows up when you run, such as a model file that cannot be found.
 
-- A **critical error** blocks. A duplicate id, a required field left empty, or a reference to something that does not exist. `isAnyCriticalErrors()` returns `TRUE`, and the operations that use that part of the project will not run until you fix it.
-- A **warning** does not block. It is surfaced so you see it, and a section with warnings and no critical errors is still valid.
-
-The quickest single question, "is anything blocking?", is `isAnyCriticalErrors()`.
+To check in a script whether anything blocks, call `isAnyCriticalErrors()`. It returns `TRUE` when the report has at least one critical error.
 
 ## Validate a clean project
 
-The bundled example is well formed, so its report has no findings. `validateProject()` runs every section validator plus a cross-reference pass and returns a structured object that prints a summary:
+The example project has no problems. `validateProject()` checks every part of the project, and the references between the parts, then prints a summary of what it found:
 
 ```{r}
 results <- validateProject(project)
@@ -58,11 +56,11 @@ results
 isAnyCriticalErrors(results)
 ```
 
-## Diagnose a dangling reference
+## Find a reference to a missing definition
 
-The most common slip is a dangling reference: a definition pointing at an id that does not exist, usually a small misspelling. A *loaded* project can hold one even though `addScenario()` would have refused it, because reading a project reports gaps rather than rejecting them (`vignette("about-the-project-model")` explains why).
+The most common problem is a reference to a definition that does not exist, usually because an id is misspelled. `addScenario()` refuses such a reference right away. A project loaded from disk can still contain one, for example after someone edited a definition file by hand: `loadProject()` opens the project anyway, so you can repair it (`vignette("about-the-project-model")` explains why).
 
-To see what the report looks like, suppose one scenario file in our copy mistypes the individual id `adult_male` as `adlt_male`. Here we make the typo by editing the scenario file, as a hand edit or a colleague's change would. `loadProject()` warns about this kind of misspelling as soon as it reads the file:
+As an example, change the individual id `adult_male` to `adlt_male` in one scenario file of the example project, as a hand edit could. `loadProject()` warns about the misspelling when it reads the file:
 
 ```{r, warning = TRUE}
 scenario_file <- file.path(
@@ -78,56 +76,55 @@ writeLines(text, scenario_file)
 broken <- loadProject(file.path(project_dir, "Project.json"))
 ```
 
-`validateProject()` reports it together with everything else. The report is grouped by definition type, and the references from one definition to another that do not resolve are listed together under `crossReferences`. A cross (`✖`) marks each critical error, an exclamation mark (`!`) marks each warning, and the sections with nothing to report collapse into a single tail line.
+The problems can be diagnosed also after loading the project:
+
 
 ```{r}
 broken_results <- validateProject(broken)
 broken_results
 ```
 
-The message also suggests the closest existing id (`did you mean 'adult_male'?`). The suggestion appears only when an existing id is close: a reference to `child_female` in this project gets none.
-
 ## Read a warning
 
-A warning does not block, but read it anyway. Point a scenario at a model file that is not in the project's model folder:
+As an example of a warning, set the model file of a scenario to a file that is not in the project's model folder:
 
 ```{r}
 setScenario(project, "aciclovir_iv", modelFile = "Aciclovir_v2.pkml")
 validateProject(project)
 ```
 
-The report counts one warning and no critical error, so `isAnyCriticalErrors()` returns `FALSE` and nothing stops you from running. The run then fails when it tries to load the model file. Put the correct file name back:
+The report shows one warning and no critical errors. `isAnyCriticalErrors()` returns `FALSE`, so `runScenarios()` starts, but the scenario then fails because the model file cannot be found. Set the correct file name again:
 
 ```{r}
 setScenario(project, "aciclovir_iv", modelFile = "Aciclovir.pkml")
 ```
 
-Some warnings are expected. A new project created with `initProject(type = "minimal")` reports one warning such as `No scenarios defined` for each empty section, and each one goes away once you add a definition to that section.
+Some warnings are normal. A new, empty project created with `initProject(type = "minimal")` gives one warning for each empty section, for example `No scenarios defined`. The warning goes away when you add a definition to that section.
 
-## Read the result in code
+## Read the result of validation
 
-The printed report is for you; the object `validateProject()` returns is for your code. It is a named list with one entry per definition type, plus `crossReferences`, which holds every reference from one definition to another that does not resolve. Each entry holds the critical errors and warnings for that part of the project, so a script can read them without parsing any text. The misspelled individual id is reported under `crossReferences`, not under `scenarios`:
+`validateProject()` returns the report as an R list, so a script can check it without reading the printed text. The list has one element for each section of the project, such as `scenarios` or `individuals`, plus `crossReferences`. `crossReferences` holds the references between definitions that point to something that does not exist. That is why the misspelled individual id is listed there, and not under `scenarios`:
 
 ```{r}
 names(broken_results)
 broken_results$crossReferences$critical_errors[[1]]$message
 ```
 
-`validationSummary()` rolls the per-section results into aggregate counts and the names of the sections that produced errors or warnings, which is handy for a one-line status in a report or a log:
+Each element holds the critical errors and warnings of its section. `validationSummary()` counts them for the whole project and names the sections that have any, for example for a status line in a log file:
 
 ```{r}
 validationSummary(broken_results)
 ```
 
-## Resolve and re-validate
+## Fix the problem and check again
 
-Fixing the problem uses the same functions you already know. Here the scenario needs to point at the correct individual id; `setScenario()` updates it in memory (call `saveProject()` when you want the fix on disk):
+Fix the problem with the same functions you use to build a project. Here, set the individual of the scenario back to `adult_male`. `setScenario()` changes the project in your R session only. Call `saveProject()` to write the fix to the project files, if needed:
 
 ```{r}
 setScenario(broken, "aciclovir_iv", individual = "adult_male")
 ```
 
-Re-validate to confirm the project is clean again:
+Validate again to check that the problem is gone:
 
 ```{r}
 fixed_results <- validateProject(broken)
@@ -135,11 +132,17 @@ fixed_results
 isAnyCriticalErrors(fixed_results)
 ```
 
-Both the report and `isAnyCriticalErrors()` are clean: every reference resolves and no required field is missing. Validation does not open the model file, so some problems still show up only when a scenario is built: a parameter path that does not exist in the model, a missing model file (reported only as a warning), a human individual or population without a `population`, a protein ontogeny that cannot be applied, or a human individual used with an animal model.
+The report is clean: every reference points to an existing definition, and no required field is empty. Validation does not load and inspect the model files, so some problems show up only when a scenario is built:
 
-## Stop a script on a blocking problem
+- a parameter path that does not exist in the model
+- a model file that cannot be found (a warning only, see above)
+- a human individual or population without a PK-Sim population
+- a protein ontogeny that cannot be applied
+- a human individual used with a model built for an animal
 
-In a script that runs unattended, check the project first and stop with the full report when anything blocks:
+## Stop a script when the project has a blocking problem
+
+In a script that runs without you watching it, for example overnight, validate the project first. If it has a critical error, print the report and stop:
 
 ```{r}
 results <- validateProject(project)
@@ -149,13 +152,15 @@ if (isAnyCriticalErrors(results)) {
 }
 ```
 
-`runScenarios()`, `buildSimulations()`, `createDataCombined()` and `createPlots()` take `validate = FALSE`, which skips their own check; `runPI()` always checks. Skipping the check does not make a broken reference harmless. With the misspelled individual id from above, `runScenarios(validate = FALSE)` still runs the scenario, with the individual stored in the model file instead of `adult_male`, and says so only in a warning:
+`runScenarios()`, `buildSimulations()`, `createDataCombined()` and `createPlots()` have an argument `validate`. With `validate = FALSE` they skip their own check. `runPI()` always checks.
+
+Skipping the check does not make the problem go away. With the misspelled individual id from above, `runScenarios(validate = FALSE)` still runs the scenario. It then uses the individual stored in the model file instead of `adult_male`, and tells you only in a warning:
 
 ```
 Scenario "aciclovir_iv": No individual characteristics for individual id "adlt_male" found.
 ```
 
-Use `validate = FALSE` only when you know the gap is deliberate.
+Use `validate = FALSE` only when you know why the check fails and are sure the results are still correct.
 
 ## Where to go next
 
