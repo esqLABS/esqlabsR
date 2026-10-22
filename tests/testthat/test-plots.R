@@ -340,7 +340,9 @@ test_that("addPlot stores the supported fields as given", {
 
 test_that(".validatePlots reports field problems as critical errors", {
   dataCombined <- list(
-    DC1 = list(simulated = list(list(label = "L1", scenario = "S1", path = "P")))
+    DC1 = list(
+      simulated = list(list(label = "L1", scenario = "S1", path = "P"))
+    )
   )
   plotConfig <- list(
     p_style = list(
@@ -374,7 +376,9 @@ test_that(".validatePlots reports field problems as critical errors", {
 
 test_that(".validatePlots warns about a supported field on a plot type that ignores it", {
   dataCombined <- list(
-    DC1 = list(simulated = list(list(label = "L1", scenario = "S1", path = "P")))
+    DC1 = list(
+      simulated = list(list(label = "L1", scenario = "S1", path = "P"))
+    )
   )
   plotConfig <- list(
     p_rvs = list(

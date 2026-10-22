@@ -593,7 +593,9 @@ print.DataCombined <- function(x, ...) {
 
   for (field in c("xAxisScale", "yAxisScale")) {
     value <- entry[[field]]
-    if (!is.null(value) && !(length(value) == 1L && value %in% .plotAxisScales)) {
+    if (
+      !is.null(value) && !(length(value) == 1L && value %in% .plotAxisScales)
+    ) {
       errors <- c(
         errors,
         messages$invalidPlotAxisScale(plotId, field, value, .plotAxisScales)
@@ -618,7 +620,9 @@ print.DataCombined <- function(x, ...) {
   }
 
   lloq <- entry$lloqOnBothAxes
-  if (!is.null(lloq) && !(is.logical(lloq) && length(lloq) == 1L && !is.na(lloq))) {
+  if (
+    !is.null(lloq) && !(is.logical(lloq) && length(lloq) == 1L && !is.na(lloq))
+  ) {
     errors <- c(errors, messages$invalidLloqOnBothAxes(plotId, lloq))
   }
 
@@ -643,7 +647,10 @@ print.DataCombined <- function(x, ...) {
     rep("x", length(problems))
   )
   cli::cli_abort(
-    c("{cli::qty(length(problems))}Invalid plot configuration field{?s}:", bullets),
+    c(
+      "{cli::qty(length(problems))}Invalid plot configuration field{?s}:",
+      bullets
+    ),
     call = call
   )
 }

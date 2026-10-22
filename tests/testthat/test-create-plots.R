@@ -611,11 +611,21 @@ test_that(".buildPlot passes each field to the ospsuite argument of its plot typ
     dataCombined = "dc"
   )
   .buildPlot(
-    list(plotId = "p_ovs", plotType = "observedVsSimulated", yAxisScale = "linear", foldDistance = 3),
+    list(
+      plotId = "p_ovs",
+      plotType = "observedVsSimulated",
+      yAxisScale = "linear",
+      foldDistance = 3
+    ),
     dataCombined = "dc"
   )
   .buildPlot(
-    list(plotId = "p_rvt", plotType = "residualsVsTime", xUnit = "min", yUnit = "mg/l"),
+    list(
+      plotId = "p_rvt",
+      plotType = "residualsVsTime",
+      xUnit = "min",
+      yUnit = "mg/l"
+    ),
     dataCombined = "dc"
   )
 
@@ -651,9 +661,15 @@ test_that(".plotScaleArgs maps value limits and axis limits", {
   expect_null(.plotScaleArgs(list(plotId = "p"), "x"))
 
   # Value limits only: points outside are removed.
-  valuesOnly <- .plotScaleArgs(list(plotId = "p", yValuesLimits = "1, 100"), "y")
+  valuesOnly <- .plotScaleArgs(
+    list(plotId = "p", yValuesLimits = "1, 100"),
+    "y"
+  )
   expect_equal(valuesOnly$limits, c(1, 100))
-  expect_equal(valuesOnly$oob(c(0.5, 50, 200), range = c(1, 100)), c(NA, 50, NA))
+  expect_equal(
+    valuesOnly$oob(c(0.5, 50, 200), range = c(1, 100)),
+    c(NA, 50, NA)
+  )
 
   # Axis limits only: the axis is zoomed, points outside are kept.
   axisOnly <- .plotScaleArgs(list(plotId = "p", xAxisLimits = "0, 12"), "x")
@@ -672,7 +688,10 @@ test_that(".plotScaleArgs maps value limits and axis limits", {
     "y"
   )
   expect_equal(both$limits, c(0.1, 1000))
-  expect_equal(both$oob(log10(c(0.5, 50, 500)), range = log10(c(0.1, 1000))), c(NA, log10(50), NA))
+  expect_equal(
+    both$oob(log10(c(0.5, 50, 500)), range = log10(c(0.1, 1000))),
+    c(NA, log10(50), NA)
+  )
 })
 
 test_that("createPlots applies axis limits, labels, and the title to a time profile", {
@@ -728,4 +747,3 @@ test_that("the build guard rejects field problems even when validate = FALSE", {
     )
   )
 })
-

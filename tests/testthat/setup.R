@@ -17,4 +17,3 @@ withr::local_options(
   lifecycle_verbosity = "quiet",
   .local_envir = testthat::teardown_env()
 )
-

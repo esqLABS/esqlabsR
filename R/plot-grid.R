@@ -94,7 +94,10 @@
 #' @family createPlottingConfigurations
 #' @export
 plotGrid <- function(plotGridConfiguration) {
-  ospsuite.utils::validateIsOfType(plotGridConfiguration, "PlotGridConfiguration")
+  ospsuite.utils::validateIsOfType(
+    plotGridConfiguration,
+    "PlotGridConfiguration"
+  )
 
   patchwork::wrap_plots(
     plotGridConfiguration$plotList,
