@@ -4222,6 +4222,46 @@ test_that("a filled legacy plots exportConfiguration sheet is reported, an empty
   expect_true(any(grepl("Aciclovir", imported$warnings, fixed = TRUE)))
 })
 
+# #969: a 5.x `plotConfiguration` sheet styles each plot with columns a Plot
+# definition has no field for. They are dropped, and the ones that hold a value
+# are named, since that is styling the user set. `"lin"` is the 5.x spelling of
+# the linear scale, and `lloqOnBothAxes` is a yes/no cell.
+test_that("the plots import drops unsupported columns with a warning and converts lin", {
+  projectDir <- localLegacyExcelProject()
+  editWorkbookSheets(
+    file.path(projectDir, "Configurations", "Plots.xlsx"),
+    function(sheets) {
+      plots <- sheets$plotConfiguration
+      plots$linesColor <- c("red", NA, NA)
+      plots$legendPosition <- NA_character_
+      plots$xAxisScale <- c("lin", NA, "log")
+      plots$lloqOnBothAxes <- c(NA, "no", NA)
+      sheets$plotConfiguration <- plots
+      sheets
+    }
+  )
+
+  imported <- importLegacyExcelProject(projectDir)
+  plots <- imported$project$definitions$plots
+
+  skippedWarnings <- grep("linesColor", imported$warnings, value = TRUE)
+  expect_length(skippedWarnings, 1L)
+  expect_false(any(grepl("legendPosition", imported$warnings, fixed = TRUE)))
+  checkedFields <- c("xAxisScale", "lloqOnBothAxes", "linesColor")
+  expect_equal(
+    lapply(plots, function(p) unclass(p)[intersect(checkedFields, names(p))]),
+    list(
+      p1 = list(xAxisScale = "linear"),
+      p2 = list(lloqOnBothAxes = FALSE),
+      p3 = list(xAxisScale = "log")
+    )
+  )
+  expect_snapshot(
+    cat(skippedWarnings),
+    transform = function(x) gsub("'[^']*Plots\\.xlsx'", "'Plots.xlsx'", x)
+  )
+})
+
 # #1213 item 16: `.canonicalizeId()` folds Unicode compatibility variants and drops
 # the invisible formatting characters, so no invisible reaches a definition
 # filename from either entrypoint. A no-break space (U+00A0) folds onto the plain

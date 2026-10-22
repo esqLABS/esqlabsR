@@ -2956,10 +2956,9 @@ projectStatus <- function(project, silent = FALSE) {
     readSheet("exportConfiguration"),
     plotsFile
   )
-  plotConfiguration <- .parseExcelPlotSheet(
-    readSheet("plotConfiguration"),
-    rowToFields
-  )
+  plotSheet <- readSheet("plotConfiguration")
+  .warnSkippedPlotColumns(plotSheet, plotsFile)
+  plotConfiguration <- .parseExcelPlotSheet(plotSheet, rowToFields)
   plotGrids <- .parseExcelPlotGridSheet(readSheet("plotGrids"), rowToFields)
   .warnDuplicatePlotIds(plotConfiguration, "plotId", "plotConfiguration")
   .warnDuplicatePlotIds(plotGrids, "plotGridId", "plotGrids")
@@ -3002,6 +3001,53 @@ projectStatus <- function(project, silent = FALSE) {
       grids[!is.na(grids)]
     ),
     "esqlabsR_importSkippedPlotExportConfiguration"
+  )
+}
+
+# The `plotConfiguration` columns a Plot definition can hold: the id and
+# reference columns under their legacy and their exported names, plus the fields
+# of `.plotDefinitionFields`. Any other column is a 5.x style setting the plot
+# functions no longer take.
+.importedPlotColumns <- function() {
+  c(
+    "plotID",
+    "plotId",
+    "DataCombinedName",
+    "dataCombined",
+    "plotType",
+    names(.plotDefinitionFields)
+  )
+}
+
+# Report the `plotConfiguration` columns that are not imported.
+#
+# A 5.x workbook styles each plot with columns such as `linesColor` or
+# `legendPosition`. A Plot definition has no field for them, so they are dropped;
+# the warning names the ones that hold a value, since that is styling the user
+# set and loses. A header-only column says nothing and is silent, the same rule
+# as `.warnSkippedPlotExportConfiguration()`.
+#
+# @param plotDf The `plotConfiguration` sheet, or NULL when absent or empty.
+# @param plotsFile The workbook, named in the warning.
+# @returns Nothing, called for its warning.
+# @keywords internal
+# @noRd
+.warnSkippedPlotColumns <- function(plotDf, plotsFile) {
+  if (is.null(plotDf)) {
+    return(invisible(NULL))
+  }
+  skipped <- setdiff(names(plotDf), .importedPlotColumns())
+  filled <- skipped[vapply(
+    skipped,
+    function(column) any(!is.na(plotDf[[column]]) & plotDf[[column]] != ""),
+    logical(1)
+  )]
+  if (length(filled) == 0L) {
+    return(invisible(NULL))
+  }
+  .warnFormatted(
+    messages$importSkippedPlotColumns(plotsFile, filled),
+    "esqlabsR_importSkippedPlotColumns"
   )
 }
 
@@ -3156,8 +3202,23 @@ projectStatus <- function(project, silent = FALSE) {
       i,
       idColumn = "plotID",
       idField = "plotId",
-      drop = "DataCombinedName"
+      drop = c(
+        "DataCombinedName",
+        setdiff(names(df), .importedPlotColumns())
+      )
     )
+    # 5.x spelled the linear scale `"lin"`.
+    for (scaleField in c("xAxisScale", "yAxisScale")) {
+      if (identical(fields[[scaleField]], "lin")) {
+        fields[[scaleField]] <- "linear"
+      }
+    }
+    if (!is.null(fields$lloqOnBothAxes)) {
+      fields$lloqOnBothAxes <- .toLogical(
+        fields$lloqOnBothAxes,
+        "lloqOnBothAxes"
+      )
+    }
     # Map the legacy `DataCombinedName` column onto the canonical JSON key; a
     # sheet that already uses `dataCombined` (e.g. one written by
     # `exportProjectToExcel()`) passes that column through verbatim instead.
