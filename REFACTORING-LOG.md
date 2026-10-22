@@ -267,3 +267,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-09-17 15:20: The DataCombined tests compare whole result structures, and the NEWS bullets for the curve labels describe the current behavior rather than the branch history. (#1280)
 - 2026-09-21 17:34: The Get started article now describes what printing a project really shows, and says that no full path is printed so a printed project reads the same on any computer. (#1289)
 - 2026-10-22 15:04: A parameter path the model does not have now stops the run with every missing path named and a pointer to `stopIfParameterNotFound`, whose documentation now says it also covers parameter-set paths.
+- 2026-10-22 15:04: The How to run simulations article is reworded for modelers, corrects what outputValues and the run options hold, and adds sections on tuning a run and on what happens when a scenario fails.

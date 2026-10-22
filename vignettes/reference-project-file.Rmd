@@ -184,7 +184,7 @@ The round trip is lossless for what the snapshot covers: metadata and definition
 | --- | --- | --- |
 | `simulation` | OSPS `Simulation` | The initialized simulation, with all scenario parameters applied. |
 | `results` | OSPS `SimulationResults` | The results of running that simulation. |
-| `outputValues` | list of `data` and `metaData` | The recorded output paths extracted into a data frame, ready for analysis or plotting. |
+| `outputValues` | list of `data` and `metaData` | The recorded output paths extracted into a data frame in the model's base units, ready for analysis or plotting. `metaData` is `NULL`. |
 | `population` | OSPS `Population` or `NULL` | The sampled population for a population scenario; `NULL` for an individual scenario. |
 
 A Scenario Result is **not** an OSPS `SimulationResults`. The `SimulationResults` is only the inner `results` field. The `population` field is what distinguishes the two kinds of scenario at run time, and for a population scenario `outputValues` carries one trajectory per virtual individual rather than a single curve.
