@@ -24,8 +24,8 @@
 #' @param xAxisZoomRange Numeric vector of length 2; specifies the x-axis limits
 #'   to zoom into. This does not remove any data but constrains the visible
 #'   plotting range for improved readability.
-#' @param defaultPlotConfiguration An object of class `DefaultPlotConfiguration`
-#'   used to customize plot aesthetics.
+#' @param defaultPlotConfiguration A named list of plot settings, as returned by
+#'   [createEsqlabsPlotConfiguration()], used to customize plot aesthetics.
 #'
 #'   Supported parameters include:
 #' - `legendPosition`: Position of the legend on the plot.
@@ -226,7 +226,7 @@ sensitivityTornadoPlot <- function(
   defaultPlotConfiguration
 ) {
   # update data dependent plot configuration
-  plotConfiguration <- defaultPlotConfiguration$clone()
+  plotConfiguration <- defaultPlotConfiguration
   plotConfiguration <- .updatePlotConfiguration(
     plotConfiguration,
     list(title = unique(data$OutputPath))

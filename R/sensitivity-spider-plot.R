@@ -19,10 +19,10 @@
 #'   visualization. A separate plot will be generated for each output path. Each
 #'   plot will contain a spider plot panel for each PK parameter, and the
 #'   sensitivities for each parameter will be displayed as lines.
-#' @param xAxisScale Character string, either "log" (logarithmic scale) or "lin"
-#'   (linear scale), to set the x-axis scale. Default is "log".
-#' @param yAxisScale Character string, either "log" or "lin", sets the y-axis
-#'   scale similarly to `xAxisScale`. Default is "lin".
+#' @param xAxisScale Character string, either "log" (logarithmic scale) or
+#'   "linear" (linear scale), to set the x-axis scale. Default is "log".
+#' @param yAxisScale Character string, either "log" or "linear", sets the y-axis
+#'   scale similarly to `xAxisScale`. Default is "linear".
 #' @param xAxisType Character string, either "percent" (percentage change) or
 #'   "absolute" (absolute values) for PK parameter values, for x-axis data
 #'   normalization. Default is "percent".
@@ -35,10 +35,11 @@
 #'   which allows for easier comparison between different PK parameters. If
 #'   "free", each facet will have its own range, which allows for better
 #'   visualization of the single PK parameters sensitivity.
-#' @param defaultPlotConfiguration An object of class `DefaultPlotConfiguration`
-#'   used to customize plot aesthetics. Plot-specific settings provided directly
-#'   to the function, such as `xAxisScale`, will take precedence over any
-#'   modifications in `defaultPlotConfiguration`.
+#' @param defaultPlotConfiguration A named list of plot settings, as returned by
+#'   [createEsqlabsPlotConfiguration()], used to customize plot aesthetics.
+#'   Plot-specific settings provided directly to the function, such as
+#'   `xAxisScale`, will take precedence over any modifications in
+#'   `defaultPlotConfiguration`.
 #'
 #'   Supported parameters include:
 #' - `legendPosition`: Position of the legend on the plot.
@@ -51,11 +52,11 @@
 #' - `subtitle`: Subtitle text for the plot.
 #' - `title`: Main title text for the plot.
 #' - `titleSize`: Font size of the plot title.
-#' - `xAxisScale`: Scale type for the x-axis (`"log"` or `"lin"`).
+#' - `xAxisScale`: Scale type for the x-axis (`"log"` or `"linear"`).
 #' - `xLabel`: Label text for the x-axis.
 #' - `xValuesLimits`: Numeric vector specifying the limits for x-values.
 #' - `yAxisLimits`: Numeric vector specifying the limits for y-values.
-#' - `yAxisScale`: Scale type for the y-axis (`"log"` or `"lin"`).
+#' - `yAxisScale`: Scale type for the y-axis (`"log"` or `"linear"`).
 #' - `yAxisTicks`: Number of ticks on the y-axis.
 #' - `yLabel`: Label text for the y-axis.
 #' - `yValuesLimits`: Numeric vector specifying the limits for y-values.
@@ -153,7 +154,7 @@ sensitivitySpiderPlot <- function(
     titleSize = 14,
     xAxisScale = "log",
     xLabel = NULL,
-    yAxisScale = "lin",
+    yAxisScale = "linear",
     yAxisTicks = 10L,
     yLabel = NULL
   )
@@ -166,7 +167,7 @@ sensitivitySpiderPlot <- function(
     yAxisScale = yAxisScale
   )
 
-  # validate separately as not supported by DefaultPlotConfiguration
+  # validate separately as these are not plot configuration settings
   validateIsOption(
     list(
       yAxisFacetScales = yAxisFacetScales,
@@ -230,7 +231,7 @@ sensitivitySpiderPlot <- function(
   defaultPlotConfiguration
 ) {
   # update data dependent plot configuration
-  plotConfiguration <- defaultPlotConfiguration$clone()
+  plotConfiguration <- defaultPlotConfiguration
   plotConfiguration <- .updatePlotConfiguration(
     plotConfiguration,
     list(title = unique(data$OutputPath))

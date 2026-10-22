@@ -310,18 +310,62 @@ Optional per-curve transforms, applied before plotting. An offset requires its u
 
 ### Configuration fields
 
-Any plot-configuration field can be passed through `...`. Common ones: `title`, `subtitle`, `xUnit`, `yUnit`, `xAxisScale`, `yAxisScale`, `xValuesLimits`, `yValuesLimits`.
+A plot accepts the plot settings of esqlabsR 5.x under the same names, plus five fields of its own (`aggregation`, `quantiles`, `nsd`, `foldDistance`, `lloqOnBothAxes`). Pass them through `...` of `addPlot()`, or as columns of the `plotConfiguration` sheet of an Excel project. **An unknown field name, or a value outside the rule of its field, is a critical validation error**, and `addPlot()` refuses it.
 
-**Every configuration field is optional**, and none of them fall back to the model file. A field you leave out is simply not set, and the OSP Suite draws the plot with its own default for that plot type. Two cases worth stating outright: leaving out `title` or `subtitle` draws the plot without one, and leaving out `xValuesLimits` or `yValuesLimits` plots every data point (these limits filter points out before plotting, they do not just crop the axis).
+**Every configuration field is optional**, and none of them fall back to the model file. A field you leave out takes the ESQlabs value of `createEsqlabsPlotConfiguration()` (text sizes, line and point sizes, colors, legend position), or else the default of the OSP Suite plot function.
 
-Four fields apply to one plot type only. Setting one on any other type is silently ignored by the build, so validation warns:
+In the table, "time profiles" are the `individual` and `population` plots, and "residual plots" are `residualsVsSimulated` and `residualsVsTime`.
 
-| Field | Applies only to |
-| --- | --- |
-| `quantiles` | `population` |
-| `aggregation` | `population` |
-| `nsd` | `population` |
-| `foldDistance` | `observedVsSimulated` |
+| Fields | Applies to | Value | Controls |
+| --- | --- | --- | --- |
+| `xUnit` | time profiles, `residualsVsTime` | A unit | Unit of the time axis |
+| `yUnit` | time profiles, `observedVsSimulated`, `residualsVsSimulated` | A unit | Unit of the y values. On `observedVsSimulated` and `residualsVsSimulated` the x axis also shows y values |
+| `title`, `subtitle`, `caption`, `xLabel`, `yLabel` | all | Text, used as written | Plot title, subtitle, caption, and axis titles |
+| `legendTitle` | all | Text, used as written | Title of the legend of the groups |
+| `<text>Color`, `<text>Size`, `<text>FontFace`, `<text>FontFamily`, `<text>Angle`, `<text>Align`, `<text>Margin`, where `<text>` is `title`, `subtitle`, `caption`, `xLabel`, `yLabel`, `legendTitle`, `legendKeys` (legend entries), `xAxisLabelTicks`, or `yAxisLabelTicks` (tick labels) | all | A color; a size in points; `"plain"`, `"bold"`, `"italic"`, or `"bold.italic"`; a font family; an angle in degrees; `"left"`, `"center"`, or `"right"`; four numbers (top, right, bottom, left, in points) | Look of that text |
+| `legendPosition` | all | `"none"`, `"insideTop"`, `"insideTopLeft"`, `"insideLeft"`, `"insideBottomLeft"`, `"insideBottom"`, `"insideBottomRight"`, `"insideRight"`, `"insideTopRight"`, the same eight with `outside` instead of `inside`, or `"top"`, `"bottom"`, `"left"`, `"right"` | Legend inside the panel, or outside on the side named first and aligned toward the side named second (`"outsideTopLeft"`: above the panel, on the left) |
+| `legendBackgroundColor`, `legendBackgroundAlpha`, `legendBorderColor`, `legendBorderType`, `legendBorderSize` | all | A color; 0 to 1; a color; a line type; a number | Legend box |
+| `xAxisScale`, `yAxisScale` | all | `"linear"` or `"log"` | Axis scale. An `observedVsSimulated` plot has one scale for both axes, so when both fields are set they must be equal |
+| `xValuesLimits`, `yValuesLimits` | all | Two numbers | Points outside are removed before drawing |
+| `xAxisLimits`, `yAxisLimits` | all | Two numbers | Visible axis range; points outside are kept (zoom) |
+| `xAxisTicks`, `yAxisTicks` | all | Numbers | Tick positions |
+| `xAxisTicksLabels`, `yAxisTicksLabels` | all | `"default"`, `"none"`, `"identity"`, `"log"`, `"ln"`, `"sqrt"`, `"greek"`, `"pi"`, `"percentiles"`, or one text per tick | Tick labels. Texts need the ticks field with the same number of values |
+| `xAxisExpand`, `yAxisExpand` | all | `TRUE` or `FALSE` | Space between the data and the panel edge |
+| `xAxisColor`, `xAxisSize`, `xAxisLinetype`, and the same for `yAxis`, `xGrid`, `yGrid` | all | A color; a number; a line type | Axis lines and major grid lines |
+| `plotBackgroundFill`, `plotBackgroundColor`, `plotBackgroundSize`, `plotBackgroundLinetype`, and the same for `plotPanelBackground` | all | A color; a color; a number; a line type | Background and outline of the whole plot and of the panel |
+| `linesColor` | time profiles | Colors | Color of each group: curve, observed points, error bars |
+| `linesSize`, `linesAlpha` | all | A number; 0 to 1 | Time profiles: the curves. `observedVsSimulated`: the fold lines. Residual plots: the zero line |
+| `linesLinetype` | time profiles, residual plots | Line types | Time profiles: one line type per simulated data set. Residual plots: the zero line |
+| `pointsColor` | `observedVsSimulated`, residual plots | Colors | Color of each group |
+| `pointsShape`, `pointsSize`, `pointsAlpha` | all | Shape names (`"circle"`, `"diamond"`, `"triangle"`, `"square"`, ...); a number; 0 to 1 | Observed points, with one shape per observed data set |
+| `ribbonsFill`, `ribbonsAlpha`, `ribbonsSize`, `ribbonsLinetype` | `population` | Colors; 0 to 1; a number; a line type | Percentile or standard deviation band. Setting the size or line type draws the band outline |
+| `errorbarsSize`, `errorbarsCapSize`, `errorbarsLinetype`, `errorbarsAlpha` | time profiles, `observedVsSimulated` | A number; a number; a line type; 0 to 1 | Error bars of observed data |
+| `lloqDirection` | time profiles, `observedVsSimulated` | Time profiles: `"horizontal"`. `observedVsSimulated`: `"vertical"` or `"both"` | Where the LLOQ is drawn |
+| `lloqOnBothAxes` | `observedVsSimulated` | `TRUE` or `FALSE` | LLOQ on both axes (default `TRUE`) |
+| `foldDistance` | `observedVsSimulated` | Numbers | Fold lines around the line of identity |
+| `foldLinesLegend` | `observedVsSimulated` | `TRUE` or `FALSE` | `FALSE` leaves the fold lines out of the legend |
+| `aggregation`, `quantiles`, `nsd` | `population` | How the population is summarized. `quantiles` is three probabilities | Percentile or standard deviation band |
+
+A color is a color name (`"red"`) or a hexadecimal code (`"#4ABDCB"`). A line type is `"blank"`, `"solid"`, `"dashed"`, `"dotted"`, `"dotdash"`, `"longdash"`, `"twodash"`, or a number from 0 to 6 in that order. Fields with several values use them in order and start again when there are more groups or data sets than values.
+
+Some rules where fields act on the same thing:
+
+- **Colors on time profiles.** A simulated curve and its observed points share one group color, set by `linesColor`. `pointsColor` applies only to `observedVsSimulated` and residual plots. On a `population` plot the band takes `ribbonsFill`.
+- **Limits.** When value limits and axis limits are both set on one axis, the axis limits set the visible range and the points outside the value limits are removed.
+- **LLOQ.** `lloqDirection` and `lloqOnBothAxes` must agree on an `observedVsSimulated` plot. A direction the plot type cannot draw is a critical error.
+
+A field with several values is stored as one comma-separated string (`"0, 12, 24"`), which is also what `addPlot()` stores for a vector. A value that contains a comma is put in double quotes (`"\"12 h, second dose\", end"`). Text fields such as `title` are never split.
+
+Validation warns about a field that has no effect: a field set on a plot type it does not apply to, and a text style field without its text (`titleColor` without `title`).
+
+### Settings the OSP Suite cannot draw yet
+
+A plot accepts these esqlabsR 5.x settings, so a project or workbook that uses them still loads, but they have no effect: the OSP Suite plot functions have no option for them yet. Validation warns when a plot sets one.
+
+- `watermark`, `watermarkColor`, `watermarkSize`, `watermarkFontFace`, `watermarkFontFamily`, `watermarkAngle`, `watermarkAlign`, `watermarkMargin`: a watermark on one plot. To mark all figures of a session, use the `{ospsuite.plots}` watermark: `options(ospsuite.plots.watermarkEnabled = TRUE)`.
+- `displayLLOQ`: a plot without the lower limit of quantification.
+- `foldLinesLegendDiagonal`: the fold-line legend without the line of identity.
+- `linesLinetype` on an `observedVsSimulated` plot: the line types of the fold lines.
 
 ## Plot grid
 
@@ -412,7 +456,7 @@ addPlotGrid(project, c("g1", "g2"), plots = list("p1", "p2"))
 
 ## Sensitivity plot configuration
 
-The three sensitivity plotting functions each recognize a subset of `defaultPlotConfiguration` fields, because each has a different visual structure. A field the function does not recognize has no effect.
+The three sensitivity plotting functions each recognize a subset of `defaultPlotConfiguration` fields, because each has a different visual structure. A plot configuration field the function does not recognize has no effect. A name that is not a plot configuration field (a misspelling such as `lineColour`) stops the function with an error.
 
 | Configuration field | `sensitivitySpiderPlot()` | `sensitivityTimeProfiles()` | `sensitivityTornadoPlot()` | Controls |
 | --- | :-: | :-: | :-: | --- |
@@ -426,18 +470,20 @@ The three sensitivity plotting functions each recognize a subset of `defaultPlot
 | `title` | yes | yes | yes | Main title |
 | `titleSize` | yes | yes | yes | Title font size |
 | `subtitle` | yes | | yes | Subtitle |
-| `xAxisScale` | yes | yes | | X-axis scale, `"log"` or `"lin"` |
+| `xAxisScale` | yes | yes | | X-axis scale, `"log"` or `"linear"` |
 | `xLabel` | yes | yes | yes | X-axis label |
 | `xValuesLimits` | yes | | | X-value limits |
-| `yAxisScale` | yes | yes | | Y-axis scale |
+| `yAxisScale` | yes | yes | | Y-axis scale, `"log"` or `"linear"` |
 | `yAxisTicks` | yes | | | Y-axis tick count |
 | `yAxisLimits` | yes | | | Y-axis limits |
 | `yValuesLimits` | yes | | | Y-value limits |
 | `yLabel` | yes | yes | yes | Y-axis label |
 
+A setting that still has its ESQlabs value is replaced by the function's own value. For example, the ESQlabs `legendPosition` is `"outsideTopLeft"`, and the spider plot and the time profiles put the legend at the bottom and the tornado plot on the right. A value you change is kept. The sensitivity plots accept the `legendPosition` values `"top"`, `"bottom"`, `"left"`, `"right"`, and `"none"`.
+
 Some settings are also exposed as direct function arguments, such as `xAxisScale` and `yAxisScale` on `sensitivityTimeProfiles()` and `xAxisType` and `yAxisType` on `sensitivitySpiderPlot()`. A direct argument **overrides** the configuration object, which is the mechanism for a one-off change without editing the configuration.
 
-For the broader catalog of `PlotConfiguration` fields and their defaults, see the [TLF-Library reference](https://www.open-systems-pharmacology.org/TLF-Library/reference/PlotConfiguration.html).
+`createEsqlabsPlotConfiguration()` returns a named list that holds the ESQlabs values of these fields. Change an entry with `$`, for example `myConfiguration$linesSize <- 1`. The plots themselves are drawn with `{ggplot2}`; the OSP Suite plot functions used by `createPlots()` come from [`{ospsuite.plots}`](https://www.open-systems-pharmacology.org/OSPSuite.Plots/).
 
 ## Where to go next
 

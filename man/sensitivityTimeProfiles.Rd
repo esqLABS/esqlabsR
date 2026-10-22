@@ -28,10 +28,10 @@ separate plot will be generated for each output path, and a separate curve
 will be generated for each parameter variation. A separate panel is created
 for each varied parameter.}
 
-\item{xAxisScale}{Character string, either "log" (logarithmic scale) or "lin"
-(linear scale), to set the x-axis scale. Default is "lin".}
+\item{xAxisScale}{Character string, either "log" (logarithmic scale) or
+"linear" (linear scale), to set the x-axis scale. Default is "linear".}
 
-\item{yAxisScale}{Character string, either "log" or "lin", sets the y-axis
+\item{yAxisScale}{Character string, either "log" or "linear", sets the y-axis
 scale similarly to \code{xAxisScale}. Default is "log".}
 
 \item{xUnits, yUnits}{Units for the x-axis and y-axis, respectively. Can be
@@ -48,10 +48,11 @@ together with the simulated data based on \code{OutputPath} dimension for direct
 comparison within the visualizations. Observed data will only be added to
 plots with matching y-dimensions.}
 
-\item{defaultPlotConfiguration}{An object of class \code{DefaultPlotConfiguration}
-used to customize plot aesthetics. Plot-specific settings provided directly
-to the function, such as \code{xAxisScale}, will take precedence over any
-modifications in \code{defaultPlotConfiguration}. If not provided, default
+\item{defaultPlotConfiguration}{A named list of plot settings, as returned by
+\code{\link[=createEsqlabsPlotConfiguration]{createEsqlabsPlotConfiguration()}}, used to customize plot aesthetics.
+Plot-specific settings provided directly to the function, such as
+\code{xAxisScale}, will take precedence over any modifications in
+\code{defaultPlotConfiguration}. If not provided, default
 settings are applied.
 
 Supported parameters for \code{defaultPlotConfiguration} include:
@@ -64,9 +65,9 @@ Supported parameters for \code{defaultPlotConfiguration} include:
 \item \code{pointsShape}: Shape of the point elements for observed data.
 \item \code{title}: Main title text for the plot.
 \item \code{titleSize}: Font size of the plot title.
-\item \code{xAxisScale}: Scale type for the x-axis (\code{"log"} or \code{"lin"}).
+\item \code{xAxisScale}: Scale type for the x-axis (\code{"log"} or \code{"linear"}).
 \item \code{xLabel}: Label text for the x-axis.
-\item \code{yAxisScale}: Scale type for the y-axis (\code{"log"} or \code{"lin"}).
+\item \code{yAxisScale}: Scale type for the y-axis (\code{"log"} or \code{"linear"}).
 \item \code{yLabel}: Label text for the y-axis.
 }}
 }
@@ -102,7 +103,7 @@ results <- sensitivityCalculation(
 sensitivityTimeProfiles(results)
 
 # Print plots with linear y-axis values
-sensitivityTimeProfiles(results, yAxisScale = "lin")
+sensitivityTimeProfiles(results, yAxisScale = "linear")
 
 # Print plots with custom configuration settings
 myPlotConfiguration <- createEsqlabsPlotConfiguration()

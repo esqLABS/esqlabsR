@@ -272,6 +272,384 @@ test_that("addPlot is all-or-nothing: an invalid entry writes nothing", {
   expect_setequal(list.files(plotsDir), filesBefore)
 })
 
+test_that("addPlot rejects unknown fields and invalid values, writing nothing", {
+  project <- exampleProject()
+  addDataCombined(
+    project,
+    "dc_ok",
+    simulated = list(list(
+      label = "s",
+      scenario = "aciclovir_iv",
+      path = project$definitions$outputPaths$aciclovir_pvb
+    ))
+  )
+  before <- names(project$definitions$plots)
+
+  # `lineColour` is a misspelled field, `"lin"` the 5.x scale spelling, and
+  # `"reddish"` no color; all are rejected before anything is added.
+  expect_snapshot(
+    error = TRUE,
+    addPlot(
+      project,
+      id = c("p_style", "p_scale"),
+      dataCombined = "dc_ok",
+      plotType = "individual",
+      lineColour = list("red", NULL),
+      linesColor = list(NULL, "reddish"),
+      yAxisScale = list(NULL, "lin")
+    )
+  )
+  expect_identical(names(project$definitions$plots), before)
+})
+
+test_that("addPlot stores the supported fields as given", {
+  project <- exampleProject()
+  addDataCombined(
+    project,
+    "dc_ok",
+    simulated = list(list(
+      label = "s",
+      scenario = "aciclovir_iv",
+      path = project$definitions$outputPaths$aciclovir_pvb
+    ))
+  )
+
+  addPlot(
+    project,
+    "p_ovs",
+    "dc_ok",
+    "observedVsSimulated",
+    xAxisScale = "linear",
+    yAxisScale = "linear",
+    foldDistance = c(1.5, 2),
+    lloqOnBothAxes = FALSE
+  )
+
+  expect_equal(
+    unclass(project$definitions$plots$p_ovs),
+    list(
+      plotId = "p_ovs",
+      dataCombinedId = "dc_ok",
+      plotType = "observedVsSimulated",
+      xAxisScale = "linear",
+      yAxisScale = "linear",
+      foldDistance = "1.5, 2",
+      lloqOnBothAxes = FALSE
+    )
+  )
+})
+
+test_that(".validatePlots reports field problems as critical errors", {
+  dataCombined <- list(
+    DC1 = list(
+      simulated = list(list(label = "L1", scenario = "S1", path = "P"))
+    )
+  )
+  plot <- function(id, plotType, ...) {
+    list(plotId = id, dataCombinedId = "DC1", plotType = plotType, ...)
+  }
+  plotConfig <- list(
+    p_unknown = plot("p_unknown", "individual", lineColour = "red"),
+    p_lin = plot("p_lin", "individual", xAxisScale = "lin"),
+    p_values = plot(
+      "p_values",
+      "individual",
+      linesColor = "#4ABDCB, reddish",
+      titleFontFace = "heavy",
+      linesAlpha = 2,
+      xAxisLimits = "0, 12, 24"
+    ),
+    p_ovs = plot(
+      "p_ovs",
+      "observedVsSimulated",
+      xAxisScale = "log",
+      yAxisScale = "linear"
+    ),
+    p_lloq = plot("p_lloq", "individual", lloqDirection = "vertical"),
+    p_lloq_ovs = plot(
+      "p_lloq_ovs",
+      "observedVsSimulated",
+      lloqDirection = "both",
+      lloqOnBothAxes = FALSE
+    ),
+    p_ticks = plot(
+      "p_ticks",
+      "individual",
+      xAxisTicks = "0, 12",
+      xAxisTicksLabels = "start, middle, end"
+    )
+  )
+
+  result <- .validatePlots(dataCombined, plotConfig, list())
+
+  msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
+  expect_snapshot(cat(msgs, sep = "\n"))
+})
+
+test_that(".validatePlots accepts the 5.x plot settings", {
+  dataCombined <- list(
+    DC1 = list(
+      simulated = list(list(label = "L1", scenario = "S1", path = "P"))
+    )
+  )
+  plotConfig <- list(
+    p_ind = list(
+      plotId = "p_ind",
+      dataCombinedId = "DC1",
+      plotType = "individual",
+      title = "Aciclovir, IV",
+      titleColor = "navy",
+      titleMargin = "20, 2, 10, 2",
+      legendPosition = "insideTopRight",
+      linesColor = "#4ABDCB, red",
+      linesLinetype = "solid, 2",
+      xAxisTicks = "0, 12, 24",
+      xAxisTicksLabels = "start, middle, end",
+      yAxisTicksLabels = "log",
+      xGridLinetype = "dotted",
+      lloqDirection = "horizontal"
+    ),
+    p_ovs = list(
+      plotId = "p_ovs",
+      dataCombinedId = "DC1",
+      plotType = "observedVsSimulated",
+      pointsColor = "red",
+      lloqDirection = "vertical",
+      lloqOnBothAxes = FALSE,
+      foldLinesLegend = TRUE
+    )
+  )
+
+  result <- .validatePlots(dataCombined, plotConfig, list())
+
+  expect_length(result$critical_errors, 0)
+  expect_length(result$warnings, 0)
+})
+
+test_that(".validatePlots warns about plot fields that have no effect", {
+  dataCombined <- list(
+    DC1 = list(
+      simulated = list(list(label = "L1", scenario = "S1", path = "P"))
+    )
+  )
+  plotConfig <- list(
+    p_rvs = list(
+      plotId = "p_rvs",
+      dataCombinedId = "DC1",
+      plotType = "residualsVsSimulated",
+      xUnit = "h",
+      ribbonsAlpha = 0.3
+    ),
+    p_ind = list(
+      plotId = "p_ind",
+      dataCombinedId = "DC1",
+      plotType = "individual",
+      pointsColor = "red",
+      titleColor = "navy",
+      watermark = "DRAFT",
+      watermarkSize = 20,
+      displayLLOQ = FALSE
+    ),
+    p_ovs = list(
+      plotId = "p_ovs",
+      dataCombinedId = "DC1",
+      plotType = "observedVsSimulated",
+      linesLinetype = "dotted",
+      foldLinesLegendDiagonal = TRUE
+    )
+  )
+
+  result <- .validatePlots(dataCombined, plotConfig, list())
+
+  expect_length(result$critical_errors, 0)
+  msgs <- vapply(result$warnings, \(w) w$message, character(1))
+  expect_snapshot(cat(msgs, sep = "\n"))
+})
+
+test_that("the plot fields are the 5.x configuration fields plus the Plot-only fields", {
+  # The fields of `DefaultPlotConfiguration` in OSPSuite-R v13.0.1
+  # (`R/default-plot-configuration.R`), the plot settings of esqlabsR 5.x.
+  configurationFields <- c(
+    "xUnit",
+    "yUnit",
+    "title",
+    "titleColor",
+    "titleSize",
+    "titleFontFace",
+    "titleFontFamily",
+    "titleAngle",
+    "titleAlign",
+    "titleMargin",
+    "subtitle",
+    "subtitleColor",
+    "subtitleSize",
+    "subtitleFontFace",
+    "subtitleFontFamily",
+    "subtitleAngle",
+    "subtitleAlign",
+    "subtitleMargin",
+    "caption",
+    "captionColor",
+    "captionSize",
+    "captionFontFace",
+    "captionFontFamily",
+    "captionAngle",
+    "captionAlign",
+    "captionMargin",
+    "xLabel",
+    "xLabelColor",
+    "xLabelSize",
+    "xLabelFontFace",
+    "xLabelFontFamily",
+    "xLabelAngle",
+    "xLabelAlign",
+    "xLabelMargin",
+    "yLabel",
+    "yLabelColor",
+    "yLabelSize",
+    "yLabelFontFace",
+    "yLabelFontFamily",
+    "yLabelAngle",
+    "yLabelAlign",
+    "yLabelMargin",
+    "legendPosition",
+    "legendTitle",
+    "legendTitleSize",
+    "legendTitleColor",
+    "legendTitleFontFamily",
+    "legendTitleFontFace",
+    "legendTitleAngle",
+    "legendTitleAlign",
+    "legendTitleMargin",
+    "legendBackgroundColor",
+    "legendBackgroundAlpha",
+    "legendBorderColor",
+    "legendBorderType",
+    "legendBorderSize",
+    "legendKeysSize",
+    "legendKeysColor",
+    "legendKeysFontFamily",
+    "legendKeysFontFace",
+    "legendKeysAngle",
+    "legendKeysAlign",
+    "legendKeysMargin",
+    "xAxisLimits",
+    "xValuesLimits",
+    "xAxisScale",
+    "xAxisTicks",
+    "xAxisTicksLabels",
+    "xAxisLabelTicksSize",
+    "xAxisLabelTicksColor",
+    "xAxisLabelTicksFontFamily",
+    "xAxisLabelTicksFontFace",
+    "xAxisLabelTicksAngle",
+    "xAxisLabelTicksAlign",
+    "xAxisLabelTicksMargin",
+    "yAxisLimits",
+    "yValuesLimits",
+    "yAxisScale",
+    "yAxisTicks",
+    "yAxisTicksLabels",
+    "yAxisLabelTicksSize",
+    "yAxisLabelTicksColor",
+    "yAxisLabelTicksFontFamily",
+    "yAxisLabelTicksFontFace",
+    "yAxisLabelTicksAngle",
+    "yAxisLabelTicksAlign",
+    "yAxisLabelTicksMargin",
+    "watermark",
+    "watermarkSize",
+    "watermarkColor",
+    "watermarkFontFamily",
+    "watermarkFontFace",
+    "watermarkAngle",
+    "watermarkAlign",
+    "watermarkMargin",
+    "plotBackgroundFill",
+    "plotBackgroundColor",
+    "plotBackgroundSize",
+    "plotBackgroundLinetype",
+    "plotPanelBackgroundFill",
+    "plotPanelBackgroundColor",
+    "plotPanelBackgroundSize",
+    "plotPanelBackgroundLinetype",
+    "xAxisColor",
+    "xAxisSize",
+    "xAxisLinetype",
+    "xAxisExpand",
+    "yAxisColor",
+    "yAxisSize",
+    "yAxisLinetype",
+    "yAxisExpand",
+    "xGridColor",
+    "xGridSize",
+    "xGridLinetype",
+    "yGridColor",
+    "yGridSize",
+    "yGridLinetype",
+    "linesColor",
+    "linesSize",
+    "linesLinetype",
+    "linesAlpha",
+    "pointsColor",
+    "pointsShape",
+    "pointsSize",
+    "pointsAlpha",
+    "ribbonsFill",
+    "ribbonsSize",
+    "ribbonsLinetype",
+    "ribbonsAlpha",
+    "errorbarsSize",
+    "errorbarsCapSize",
+    "errorbarsLinetype",
+    "errorbarsAlpha",
+    "displayLLOQ",
+    "lloqDirection",
+    "foldLinesLegend",
+    "foldLinesLegendDiagonal"
+  )
+  plotOnlyFields <- c(
+    "aggregation",
+    "quantiles",
+    "nsd",
+    "foldDistance",
+    "lloqOnBothAxes"
+  )
+
+  expect_setequal(
+    names(.plotFields),
+    c(configurationFields, plotOnlyFields)
+  )
+})
+
+test_that("addPlot keeps a comma inside one value of a multi-value field", {
+  project <- exampleProject()
+  addDataCombined(
+    project,
+    "dc_ok",
+    simulated = list(list(
+      label = "s",
+      scenario = "aciclovir_iv",
+      path = project$definitions$outputPaths$aciclovir_pvb
+    ))
+  )
+
+  addPlot(
+    project,
+    "p_labels",
+    "dc_ok",
+    "individual",
+    xAxisTicks = c(0, 12, 24),
+    xAxisTicksLabels = c("start", "12 h, dose 2", "end")
+  )
+
+  stored <- project$definitions$plots$p_labels$xAxisTicksLabels
+  expect_identical(
+    .parsePlotFieldValue(stored, .plotFields$xAxisTicksLabels),
+    c("start", "12 h, dose 2", "end")
+  )
+})
+
 test_that("addPlotGrid vectorizes with per-grid plots and one write-through", {
   project <- exampleProject()
   addDataCombined(

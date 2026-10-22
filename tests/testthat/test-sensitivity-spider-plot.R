@@ -213,13 +213,13 @@ test_that("sensitivitySpiderPlot applies absolute x- and y-axis values correctly
     xAxisType = "absolute",
     yAxisType = "absolute",
     xAxisScale = "log",
-    yAxisScale = "lin"
+    yAxisScale = "linear"
   ) # default scales
   p2 <- sensitivitySpiderPlot(
     results,
     xAxisType = "absolute",
     yAxisType = "absolute",
-    xAxisScale = "lin",
+    xAxisScale = "linear",
     yAxisScale = "log"
   )
 
@@ -254,7 +254,7 @@ n <- "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
 test_that("sensitivitySpiderPlot uses defaultPlotConfiguration scales", {
   results <- sensFixture()$results
   myPlotConfiguration <- createEsqlabsPlotConfiguration()
-  myPlotConfiguration$xAxisScale <- "lin"
+  myPlotConfiguration$xAxisScale <- "linear"
   myPlotConfiguration$yAxisScale <- "log"
 
   p <- sensitivitySpiderPlot(
@@ -270,14 +270,14 @@ test_that("sensitivitySpiderPlot uses defaultPlotConfiguration scales", {
 test_that("sensitivitySpiderPlot signature overrides defaultPlotConfiguration", {
   results <- sensFixture()$results
   myPlotConfiguration <- createEsqlabsPlotConfiguration()
-  myPlotConfiguration$xAxisScale <- "lin" # to be overridden
+  myPlotConfiguration$xAxisScale <- "linear" # to be overridden
   myPlotConfiguration$yAxisScale <- "log" # to be overridden
 
   p <- sensitivitySpiderPlot(
     results,
     defaultPlotConfiguration = myPlotConfiguration,
     xAxisScale = "log",
-    yAxisScale = "lin"
+    yAxisScale = "linear"
   )
   pb <- ggplot2::ggplot_build(p[[n]][[1]])
 
