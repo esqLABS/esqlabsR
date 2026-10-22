@@ -164,7 +164,7 @@ if (isAnyCriticalErrors(results)) {
 
 `runScenarios()`, `buildSimulations()`, `createDataCombined()` and `createPlots()` have an argument `validate`. With `validate = FALSE` they skip their own check. `runPI()` always checks.
 
-Skipping the check does not make the problem go away. With the misspelled individual id from above, `runScenarios(validate = FALSE)` still runs the scenario. It then uses the individual stored in the model file instead of `adult_male`, and tells you only in a warning:
+Skipping the check does not make the problem go away. With the misspelled individual id from above, `runScenarios(project, validate = FALSE)` still runs the scenario. It then uses the individual stored in the model file instead of `adult_male`, and tells you only in a warning:
 
 ```
 Scenario "aciclovir_iv": No individual characteristics for individual id "adlt_male" found.
