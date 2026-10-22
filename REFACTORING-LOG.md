@@ -272,3 +272,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-10-22 10:42: Documented the ospsuite.plots-based plotting: supported plot fields, "linear" scales, plotGrid() in the plotting guide, dropped Excel styling columns in the migration guide, NEWS, README, and regenerated man/ and NAMESPACE. (#969)
 - 2026-10-22 10:47: Applied the air formatter to the plotting files of the tlf port. (#969)
 - 2026-10-22 10:59: createPlots() figures use the ESQlabs colors: the house style sets discrete colour and fill scales, since ospsuite.plots replaces a missing scale with its own and ignores the theme palette. (#969)
+- 2026-10-22 11:04: Installed rSharp from GitHub through Remotes, listed in Imports so that pak uses the remote, because ospsuite needs rSharp 2.0.0 and the OSP r-universe does not have it. (#969)

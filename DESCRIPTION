@@ -38,6 +38,7 @@ Imports:
     patchwork,
     purrr,
     R6 (>= 2.5.0),
+    rSharp (>= 2.0.0),
     readxl,
     rlang,
     scales,
@@ -70,6 +71,7 @@ Encoding: UTF-8
 Language: en-US
 Roxygen: list(markdown = TRUE)
 Remotes:
-    ospsuite=Open-Systems-Pharmacology/OSPSuite-R
+    ospsuite=Open-Systems-Pharmacology/OSPSuite-R,
+    rSharp=Open-Systems-Pharmacology/rSharp
 Additional_repositories: https://open-systems-pharmacology.r-universe.dev
 Config/roxygen2/version: 8.1.0
