@@ -1024,7 +1024,10 @@ test_that("every plot field changes the plot of the plot types that apply it", {
   # Each field on the first plot type that applies it, plus the plot types on
   # which it acts through another mechanism.
   supportedFields <- setdiff(names(.plotFields), .plotFieldsNotSupportedYet)
-  checks <- lapply(supportedFields, function(field) {
+  # Whether a font family changes the drawn text depends on the fonts installed
+  # on the machine, so the font family fields are checked on the theme below.
+  fontFamilyFields <- grep("FontFamily$", supportedFields, value = TRUE)
+  checks <- lapply(setdiff(supportedFields, fontFamilyFields), function(field) {
     plotType <- .plotFields[[field]]$appliesTo[[1]]
     if (field == "lloqDirection") {
       plotType <- "observedVsSimulated"
@@ -1073,6 +1076,39 @@ test_that("every plot field changes the plot of the plot types that apply it", {
   }
 
   expect_identical(withoutEffect, character())
+
+  themeElements <- c(
+    title = "plot.title",
+    subtitle = "plot.subtitle",
+    caption = "plot.caption",
+    xLabel = "axis.title.x",
+    yLabel = "axis.title.y",
+    legendTitle = "legend.title",
+    legendKeys = "legend.text",
+    xAxisLabelTicks = "axis.text.x",
+    yAxisLabelTicks = "axis.text.y"
+  )
+  families <- vapply(
+    fontFamilyFields,
+    function(field) {
+      element <- sub("FontFamily$", "", field)
+      entry <- c(
+        list(plotId = "p", plotType = "individual"),
+        companions(field),
+        stats::setNames(list(sample[[field]]), field)
+      )
+      plot <- suppressWarnings(.buildPlot(entry, individual))
+      ggplot2::calc_element(
+        themeElements[[element]],
+        ggplot2::complete_theme(plot$theme)
+      )$family
+    },
+    character(1)
+  )
+  expect_equal(
+    families,
+    stats::setNames(rep("mono", length(fontFamilyFields)), fontFamilyFields)
+  )
 
   # The fields the OSP Suite plot functions cannot draw yet change nothing.
   withEffect <- character()
