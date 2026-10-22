@@ -1,8 +1,8 @@
 # Plot configuration utilities ----
 #
-# Palette, plot/grid/export configuration constructors, and the override /
-# overlay helpers used by createPlots() when applying per-plot configuration
-# diffs.
+# Palette, plot / grid configuration constructors, and the override helpers the
+# sensitivity plots use to merge their own settings into the user's plot
+# configuration.
 
 # Color palette ----
 
@@ -132,78 +132,116 @@ col2hsv <- function(color) {
   return(grDevices::rgb2hsv(rgb))
 }
 
-#' @title Create an instance of `DefaultPlotConfiguration` R6 class
+#' @title Create the ESQlabs plot configuration
 #' @rdname createEsqlabsPlotConfiguration
 #'
 #' @description
 #'
-#' An instance of `DefaultPlotConfiguration` R6 class from `{tlf}` package is
-#' needed for creating visualizations with the `{ospsuite}` package.
+#' A named list of plot settings (text sizes, line and point sizes, colors,
+#' legend position) chosen to reflect the corporate standards adopted by
+#' ESQlabs GmbH.
 #'
-#' The default attributes of the class are chosen to reflect the corporate
-#' standards adopted by esqLABS GmbH.
+#' Pass it, changed or not, as `defaultPlotConfiguration` to
+#' [sensitivitySpiderPlot()], [sensitivityTornadoPlot()], and
+#' [sensitivityTimeProfiles()]. [createPlots()] applies the same values to the
+#' plots it builds.
 #'
-#' @returns An instance of `DefaultPlotConfiguration` R6 class.
+#' @returns A named list.
 #'
 #' @examples
-#' createEsqlabsPlotConfiguration()
+#' myPlotConfiguration <- createEsqlabsPlotConfiguration()
+#' myPlotConfiguration$linesSize <- 1
 #'
 #' @family createPlottingConfigurations
 #'
 #' @export
 createEsqlabsPlotConfiguration <- function() {
-  defaultPlotConfiguration <- ospsuite::DefaultPlotConfiguration$new()
-
-  # Size
-  defaultPlotConfiguration$titleSize <- 10
-  defaultPlotConfiguration$xLabelSize <- 9
-  defaultPlotConfiguration$yLabelSize <- 9
-  defaultPlotConfiguration$xAxisLabelTicksSize <- 8
-  defaultPlotConfiguration$yAxisLabelTicksSize <- 8
-  defaultPlotConfiguration$legendKeysSize <- 6
-
-  defaultPlotConfiguration$xLabelMargin <- c(10, 0, 0, 0)
-  defaultPlotConfiguration$yLabelMargin <- c(0, 0, 10, 0)
-
-  # Lines size
-  defaultPlotConfiguration$linesSize <- 0.5
-
-  # Points size
-  defaultPlotConfiguration$pointsSize <- 1.75
-
-  # Error bars size
-  defaultPlotConfiguration$errorbarsSize <- 0.65
-  defaultPlotConfiguration$errorbarsCapSize <- 2.75
-
-  # Legend appearance
-  # defaultPlotConfiguration$legendBorderColor <- "grey10"
-  # defaultPlotConfiguration$legendBorderType <- 1
-  defaultPlotConfiguration$legendPosition <- tlf::LegendPositions$outsideTopLeft
-
-  # Axis appearance
-  defaultPlotConfiguration$yAxisLabelTicksAngle <- 0
-
-  # Colors
-  defaultPlotConfiguration$pointsColor <- esqlabsEnv$colorPalette
-  defaultPlotConfiguration$ribbonsFill <- esqlabsEnv$colorPalette
-  defaultPlotConfiguration$linesColor <- esqlabsEnv$colorPalette
-
-  return(defaultPlotConfiguration)
+  list(
+    # Text sizes
+    titleSize = 10,
+    xLabelSize = 9,
+    yLabelSize = 9,
+    xAxisLabelTicksSize = 8,
+    yAxisLabelTicksSize = 8,
+    legendKeysSize = 6,
+    xLabelMargin = c(10, 0, 0, 0),
+    yLabelMargin = c(0, 0, 10, 0),
+    # Lines, points, and error bars
+    linesSize = 0.5,
+    linesAlpha = 0.75,
+    pointsSize = 1.75,
+    pointsShape = ospsuite.plots::ospShapeNames,
+    errorbarsSize = 0.65,
+    errorbarsCapSize = 2.75,
+    # Legend and axes
+    legendPosition = "top",
+    legendJustification = "left",
+    yAxisLabelTicksAngle = 0,
+    # Colors
+    pointsColor = esqlabsEnv$colorPalette,
+    ribbonsFill = esqlabsEnv$colorPalette,
+    linesColor = esqlabsEnv$colorPalette
+  )
 }
 
-#' @title Create an instance of `PlotGridConfiguration` R6 class
+#' House theme for the plots built by `createPlots()`
+#'
+#' A `ggplot2` theme layer whose sizes, margins, legend placement, and discrete
+#' color palette come from [createEsqlabsPlotConfiguration()]. Margins are
+#' `c(top, right, bottom, left)` in points.
+#'
+#' @returns A `ggplot2` theme.
+#' @keywords internal
+#' @noRd
+.esqlabsPlotTheme <- function() {
+  config <- createEsqlabsPlotConfiguration()
+  marginFrom <- function(values) {
+    ggplot2::margin(
+      t = values[[1]],
+      r = values[[2]],
+      b = values[[3]],
+      l = values[[4]],
+      unit = "pt"
+    )
+  }
+  ggplot2::theme(
+    # A text box wraps a title that is wider than the plot.
+    plot.title = ggtext::element_textbox_simple(
+      size = config$titleSize,
+      hjust = 0
+    ),
+    axis.title.x = ggplot2::element_text(
+      size = config$xLabelSize,
+      margin = marginFrom(config$xLabelMargin)
+    ),
+    axis.title.y = ggplot2::element_text(
+      size = config$yLabelSize,
+      margin = marginFrom(config$yLabelMargin)
+    ),
+    axis.text.x = ggplot2::element_text(size = config$xAxisLabelTicksSize),
+    axis.text.y = ggplot2::element_text(
+      size = config$yAxisLabelTicksSize,
+      angle = config$yAxisLabelTicksAngle
+    ),
+    legend.key.size = ggplot2::unit(config$legendKeysSize, "pt"),
+    legend.position = config$legendPosition,
+    legend.justification = config$legendJustification,
+    palette.colour.discrete = esqlabsColors
+  )
+}
+
+#' @title Create the ESQlabs plot grid configuration
 #' @rdname createEsqlabsPlotGridConfiguration
 #'
 #' @description
 #'
-#' An instance of `PlotGridConfiguration` R6 class from `{tlf}` package is
-#' needed for creating a grid of multiple visualizations created using the
-#' `{ospsuite}` package.
+#' A [PlotGridConfiguration] object for arranging several plots in one figure
+#' with [plotGrid()].
 #'
 #' The default attributes of the class are chosen to reflect the corporate
-#' standards adopted by esqLABS GmbH.
+#' standards adopted by ESQlabs GmbH.
 #'
-#' @returns An instance of `PlotGridConfiguration` R6 class.
+#' @returns A [PlotGridConfiguration] object.
 #'
 #' @examples
 #' createEsqlabsPlotGridConfiguration()
@@ -213,7 +251,7 @@ createEsqlabsPlotConfiguration <- function() {
 #' @export
 createEsqlabsPlotGridConfiguration <- function() {
   # nolint: object_length_linter.
-  plotGridConfiguration <- tlf::PlotGridConfiguration$new()
+  plotGridConfiguration <- PlotGridConfiguration$new()
 
   plotGridConfiguration$tagLevels <- "a"
   plotGridConfiguration$tagSize <- 11
@@ -226,37 +264,37 @@ createEsqlabsPlotGridConfiguration <- function() {
 
 # Plot configuration override and overlay helpers ----
 
-#' @param plotOverrideConfig A list with new configuration settings to apply.
+#' Apply function-specific settings to a plot configuration
 #'
+#' A setting from `plotOverrideConfig` replaces the value in
+#' `plotConfiguration` when that value is unset (absent from the list) or still
+#' equals the value from [createEsqlabsPlotConfiguration()]. A value the user
+#' changed is kept.
+#'
+#' @param plotConfiguration A named list of plot settings.
+#' @param plotOverrideConfig A named list with new configuration settings to
+#'   apply.
+#' @returns The updated named list.
 #' @keywords internal
 #' @noRd
 .updatePlotConfiguration <- function(plotConfiguration, plotOverrideConfig) {
   defaultValues <- createEsqlabsPlotConfiguration()
 
   for (name in names(plotOverrideConfig)) {
-    if (!name %in% names(plotConfiguration)) {
-      cli::cli_warn(messages$unknownPlotConfiguration(name))
-      next
-    }
-
-    if (is.null(defaultValues[[name]]) && is.null(plotConfiguration[[name]])) {
-      plotConfiguration[[name]] <- plotOverrideConfig[[name]]
-    } else if (
-      !is.null(defaultValues[[name]]) && !is.null(plotConfiguration[[name]])
-    ) {
-      # Apply the override only when the current value still equals the
-      # default (the user has not customized it). Use an NA-safe comparison:
-      # a plain `all(x == default)` returns NA when either side holds an NA,
-      # and `isTRUE(NA)` is FALSE, which would silently skip a legit override.
-      if (
-        isTRUE(all.equal(
-          plotConfiguration[[name]],
-          defaultValues[[name]],
-          check.attributes = FALSE
-        ))
-      ) {
-        plotConfiguration[[name]] <- plotOverrideConfig[[name]]
-      }
+    currentValue <- plotConfiguration[[name]]
+    # Use an NA-safe comparison: a plain `all(x == default)` returns NA when
+    # either side holds an NA, and `isTRUE(NA)` is FALSE, which would silently
+    # skip a legit override.
+    isDefault <- !is.null(defaultValues[[name]]) &&
+      isTRUE(all.equal(
+        currentValue,
+        defaultValues[[name]],
+        check.attributes = FALSE
+      ))
+    if (is.null(currentValue) || isDefault) {
+      # `[name]` rather than `[[name]]` so that a `NULL` override is stored as
+      # an unset entry instead of being dropped from the list.
+      plotConfiguration[name] <- list(plotOverrideConfig[[name]])
     }
   }
 
@@ -272,8 +310,8 @@ createEsqlabsPlotGridConfiguration <- function() {
 #' already been set by the additional parameters. Finally, it validates the
 #' final configuration to ensure all options are valid.
 #'
-#' @param defaultPlotConfiguration An object of class `DefaultPlotConfiguration`
-#'   or a list of such objects.
+#' @param defaultPlotConfiguration A named list from
+#'   [createEsqlabsPlotConfiguration()], or `NULL` to use that list unchanged.
 #' @param plotOverrideConfig A list with new configuration settings to apply.
 #' @param ... Additional parameters to override specific configuration settings
 #'   dynamically.
@@ -285,21 +323,18 @@ createEsqlabsPlotGridConfiguration <- function() {
   plotOverrideConfig = NULL,
   ...
 ) {
-  # validate input defaultPlotConfiguration
   if (is.null(defaultPlotConfiguration)) {
     defaultPlotConfiguration <- createEsqlabsPlotConfiguration()
-  } else {
-    validateIsOfType(defaultPlotConfiguration, "DefaultPlotConfiguration")
+  } else if (
+    !is.list(defaultPlotConfiguration) ||
+      !rlang::is_named(defaultPlotConfiguration)
+  ) {
+    cli::cli_abort(
+      messages$plotConfigurationNotNamedList(class(defaultPlotConfiguration)),
+      call = rlang::caller_env()
+    )
   }
-
-  # Clone the `DefaultPlotConfiguration` object
-  # If a list of configurations is passed, clone only the first configuration
-  # in the list. List processing not supported yet.
-  if (inherits(defaultPlotConfiguration, "list")) {
-    customPlotConfiguration <- defaultPlotConfiguration[[1]]$clone()
-  } else {
-    customPlotConfiguration <- defaultPlotConfiguration$clone()
-  }
+  customPlotConfiguration <- defaultPlotConfiguration
 
   # Capture additional parameters passed through ... and override
   additionalParams <- list(...)
@@ -315,14 +350,10 @@ createEsqlabsPlotGridConfiguration <- function() {
     plotOverrideConfig
   )
 
-  # convert to list and validate final plot configuration
-  plotConfigurationList <- purrr::map(
-    purrr::set_names(names(customPlotConfiguration)),
-    ~ customPlotConfiguration[[.]]
-  )
+  # validate final plot configuration
   optionNames <- unique(c(names(plotOverrideConfig), names(additionalParams)))
   ospsuite.utils::validateIsOption(
-    plotConfigurationList,
+    customPlotConfiguration,
     .getPlotConfigurationOptions(optionNames)
   )
 
@@ -423,7 +454,10 @@ createEsqlabsPlotGridConfiguration <- function() {
     ),
     xAxisScale = list(
       type = "character",
-      allowedValues = c("log", "lin")
+      allowedValues = c(
+        ospsuite.plots::AxisScales$linear,
+        ospsuite.plots::AxisScales$log
+      )
     ),
     xLabel = list(
       type = "character",
@@ -435,7 +469,10 @@ createEsqlabsPlotGridConfiguration <- function() {
     ),
     yAxisScale = list(
       type = "character",
-      allowedValues = c("log", "lin")
+      allowedValues = c(
+        ospsuite.plots::AxisScales$linear,
+        ospsuite.plots::AxisScales$log
+      )
     ),
     yAxisTicks = list(
       type = "integer",

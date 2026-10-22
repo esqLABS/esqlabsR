@@ -1177,8 +1177,11 @@ messages$plotGridsNamesMustBeUnique <- function(
   )
 }
 
-messages$unknownPlotConfiguration <- function(name) {
-  cliFormat("Unknown plot configuration option: {.arg {name}}")
+messages$plotConfigurationNotNamedList <- function(type) {
+  cliFormat(
+    "{.arg defaultPlotConfiguration} must be a named list, as returned by \\
+    {.fn createEsqlabsPlotConfiguration}, not {.cls {type}}."
+  )
 }
 
 # scenario####
