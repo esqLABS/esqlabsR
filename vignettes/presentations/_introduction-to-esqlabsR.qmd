@@ -129,7 +129,7 @@ pak::pak("esqLABS/esqlabsR@*release")
 <br>
 
 ::: {.center}
-![](../Figures/esqlabs-workflow.png)
+![](../Figures/esqlabs-workflow.svg)
 <br>
 
 **esqlabsR workflow**
@@ -504,7 +504,7 @@ dc <- createDataCombined(
   scenarioResults = results
 )
 
-ospsuite::plotIndividualTimeProfile(dc$aciclovir_individual)
+ospsuite::plotTimeProfile(dc$aciclovir_individual)
 ```
 
 ::: footer
@@ -586,7 +586,7 @@ V And more
 <br>
 
 ::: {.center}
-![](../Figures/esqlabs-workflow.png)
+![](../Figures/esqlabs-workflow.svg)
 :::
 
 

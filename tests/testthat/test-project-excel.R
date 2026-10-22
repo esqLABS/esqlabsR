@@ -4408,6 +4408,64 @@ test_that("a filled legacy plots exportConfiguration sheet is reported, an empty
   expect_true(any(grepl("Aciclovir", imported$warnings, fixed = TRUE)))
 })
 
+# #969: a 5.x `plotConfiguration` sheet styles each plot with columns such as
+# `linesColor` or `legendPosition`. They are plot fields, so they are imported
+# and converted by the field table (a single number to a number, a yes/no cell
+# to a logical), and `"lin"`, the 5.x spelling of the linear scale, becomes
+# `"linear"`. The export writes them back, so the workbook stays in sync.
+test_that("the plots import keeps the 5.x plot settings and converts lin", {
+  projectDir <- localLegacyExcelProject()
+  editWorkbookSheets(
+    file.path(projectDir, "Configurations", "Plots.xlsx"),
+    function(sheets) {
+      plots <- sheets$plotConfiguration
+      plots$linesColor <- c("red, blue", NA, NA)
+      plots$legendPosition <- c("insideTopRight", NA, NA)
+      plots$titleSize <- c("14", NA, NA)
+      plots$displayLLOQ <- c("no", NA, NA)
+      plots$xAxisScale <- c("lin", NA, "log")
+      plots$lloqOnBothAxes <- c(NA, "no", NA)
+      sheets$plotConfiguration <- plots
+      sheets
+    }
+  )
+
+  imported <- importLegacyExcelProject(projectDir)
+  plots <- imported$project$definitions$plots
+
+  checkedFields <- c(
+    "linesColor",
+    "legendPosition",
+    "titleSize",
+    "displayLLOQ",
+    "xAxisScale",
+    "lloqOnBothAxes"
+  )
+  expect_equal(
+    lapply(plots, function(p) unclass(p)[intersect(checkedFields, names(p))]),
+    list(
+      p1 = list(
+        linesColor = "red, blue",
+        legendPosition = "insideTopRight",
+        titleSize = 14,
+        displayLLOQ = FALSE,
+        xAxisScale = "linear"
+      ),
+      p2 = list(lloqOnBothAxes = FALSE),
+      p3 = list(xAxisScale = "log")
+    )
+  )
+
+  suppressMessages(exportProjectToExcel(
+    imported$project,
+    outputDir = imported$outputDir,
+    overwrite = TRUE,
+    silent = TRUE
+  ))
+  status <- suppressWarnings(suppressMessages(projectStatus(imported$project)))
+  expect_true(status$excel_in_sync)
+})
+
 # #1213 item 16: `.canonicalizeId()` folds Unicode compatibility variants and drops
 # the invisible formatting characters, so no invisible reaches a definition
 # filename from either entrypoint. A no-break space (U+00A0) folds onto the plain

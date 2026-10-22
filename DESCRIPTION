@@ -26,23 +26,25 @@ Imports:
     cli,
     dplyr,
     fs,
-    ggplot2,
+    ggplot2 (>= 4.0.0),
+    ggtext,
     grDevices,
     jsonlite,
     lifecycle,
     methods,
     ospsuite.parameteridentification,
+    ospsuite.plots (>= 1.3.0),
     parallel,
     patchwork,
     purrr,
     R6 (>= 2.5.0),
+    rSharp (>= 2.0.0),
     readxl,
     rlang,
     scales,
     stringi,
     stringr,
     tidyr,
-    tlf (>= 1.6.0),
     ospsuite.utils (>= 1.10.0),
     tools,
     utils,
@@ -55,7 +57,7 @@ Suggests:
     quarto,
     reactable,
     rmarkdown,
-    showtext,
+    svglite,
     testthat (>= 3.0.0),
     vdiffr (>= 1.0.0),
     withr,
@@ -70,6 +72,7 @@ Encoding: UTF-8
 Language: en-US
 Roxygen: list(markdown = TRUE)
 Remotes:
-    ospsuite=Open-Systems-Pharmacology/OSPSuite-R
+    ospsuite=Open-Systems-Pharmacology/OSPSuite-R,
+    rSharp=Open-Systems-Pharmacology/rSharp
 Additional_repositories: https://open-systems-pharmacology.r-universe.dev
-Config/roxygen2/version: 8.0.0
+Config/roxygen2/version: 8.1.0
