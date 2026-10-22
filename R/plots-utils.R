@@ -205,11 +205,13 @@ createEsqlabsPlotConfiguration <- function() {
     )
   }
   ggplot2::theme(
-    # A text box wraps a title that is wider than the plot.
+    # A text box wraps a title that is wider than the plot. The subtitle is
+    # aligned with the title.
     plot.title = ggtext::element_textbox_simple(
       size = config$titleSize,
       hjust = 0
     ),
+    plot.subtitle = ggtext::element_textbox_simple(hjust = 0),
     axis.title.x = ggplot2::element_text(
       size = config$xLabelSize,
       margin = marginFrom(config$xLabelMargin)

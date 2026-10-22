@@ -310,18 +310,26 @@ Optional per-curve transforms, applied before plotting. An offset requires its u
 
 ### Configuration fields
 
-Any plot-configuration field can be passed through `...`. Common ones: `title`, `subtitle`, `xUnit`, `yUnit`, `xAxisScale`, `yAxisScale`, `xValuesLimits`, `yValuesLimits`.
+A plot accepts the configuration fields in the table below, passed through `...` of `addPlot()` or as columns of the `plotConfiguration` sheet. **Any other field is a critical validation error**, and `addPlot()` refuses it. When you import an Excel project, other `plotConfiguration` columns (for example the colors and sizes of version 5) are not imported, and the import warns about the ones that hold a value.
 
-**Every configuration field is optional**, and none of them fall back to the model file. A field you leave out is simply not set, and the OSP Suite draws the plot with its own default for that plot type. Two cases worth stating outright: leaving out `title` or `subtitle` draws the plot without one, and leaving out `xValuesLimits` or `yValuesLimits` plots every data point (these limits filter points out before plotting, they do not just crop the axis).
+**Every configuration field is optional**, and none of them fall back to the model file. A field you leave out is not set, and the OSP Suite draws the plot with its own default for that plot type.
 
-Four fields apply to one plot type only. Setting one on any other type is silently ignored by the build, so validation warns:
+| Field | Applies to | Value | When absent |
+| --- | --- | --- | --- |
+| `title`, `subtitle` | all plot types | Text, used as written | No title or subtitle |
+| `xLabel`, `yLabel` | all plot types | Text, used as written | Axis title from the OSP Suite |
+| `xUnit` | `individual`, `population`, `residualsVsTime` | Unit of the time axis | OSP Suite default |
+| `yUnit` | all plot types | Unit of the y values. On `observedVsSimulated` and `residualsVsSimulated` the x axis also shows y values | OSP Suite default |
+| `xAxisScale`, `yAxisScale` | `individual`, `population`, `observedVsSimulated` | `"linear"` or `"log"`. An `observedVsSimulated` plot has one scale for both axes, so when both fields are set they must be equal | OSP Suite default |
+| `xValuesLimits`, `yValuesLimits` | `individual`, `population` | Two numbers. Points outside are removed before drawing | All points drawn |
+| `xAxisLimits`, `yAxisLimits` | `individual`, `population` | Two numbers. The visible axis range; points outside are kept (zoom) | Range from the data |
+| `aggregation`, `quantiles`, `nsd` | `population` | How the population is summarized. `quantiles` is three probabilities | OSP Suite default |
+| `foldDistance` | `observedVsSimulated` | One or more numbers: the fold lines around the line of identity | OSP Suite default |
+| `lloqOnBothAxes` | `observedVsSimulated` | `TRUE` or `FALSE`: the lower limit of quantification on both axes | `TRUE` |
 
-| Field | Applies only to |
-| --- | --- |
-| `quantiles` | `population` |
-| `aggregation` | `population` |
-| `nsd` | `population` |
-| `foldDistance` | `observedVsSimulated` |
+When value limits and axis limits are both set on one axis, the axis limits set the visible range and the points outside the value limits are removed. A multi-value field is written as a comma-separated string (`"0, 24"`), which is also what `addPlot()` stores for a vector.
+
+A field set on a plot type it does not apply to is ignored when the plot is drawn, so validation warns about it.
 
 ## Plot grid
 
@@ -426,10 +434,10 @@ The three sensitivity plotting functions each recognize a subset of `defaultPlot
 | `title` | yes | yes | yes | Main title |
 | `titleSize` | yes | yes | yes | Title font size |
 | `subtitle` | yes | | yes | Subtitle |
-| `xAxisScale` | yes | yes | | X-axis scale, `"log"` or `"lin"` |
+| `xAxisScale` | yes | yes | | X-axis scale, `"log"` or `"linear"` |
 | `xLabel` | yes | yes | yes | X-axis label |
 | `xValuesLimits` | yes | | | X-value limits |
-| `yAxisScale` | yes | yes | | Y-axis scale |
+| `yAxisScale` | yes | yes | | Y-axis scale, `"log"` or `"linear"` |
 | `yAxisTicks` | yes | | | Y-axis tick count |
 | `yAxisLimits` | yes | | | Y-axis limits |
 | `yValuesLimits` | yes | | | Y-value limits |
@@ -437,7 +445,7 @@ The three sensitivity plotting functions each recognize a subset of `defaultPlot
 
 Some settings are also exposed as direct function arguments, such as `xAxisScale` and `yAxisScale` on `sensitivityTimeProfiles()` and `xAxisType` and `yAxisType` on `sensitivitySpiderPlot()`. A direct argument **overrides** the configuration object, which is the mechanism for a one-off change without editing the configuration.
 
-For the broader catalog of `PlotConfiguration` fields and their defaults, see the [TLF-Library reference](https://www.open-systems-pharmacology.org/TLF-Library/reference/PlotConfiguration.html).
+`createEsqlabsPlotConfiguration()` returns a named list that holds the ESQlabs values of these fields. Change an entry with `$`, for example `myConfiguration$linesSize <- 1`. The plots themselves are drawn with `{ggplot2}`; the OSP Suite plot functions used by `createPlots()` come from [`{ospsuite.plots}`](https://www.open-systems-pharmacology.org/OSPSuite.Plots/).
 
 ## Where to go next
 

@@ -21,13 +21,44 @@ existing DataCombined id on the project.}
 Each one of \code{"individual"}, \code{"population"}, \code{"observedVsSimulated"},
 \code{"residualsVsSimulated"}, \code{"residualsVsTime"}.}
 
-\item{...}{Optional plot-configuration fields, e.g. \code{title},
-\code{subtitle}, \code{xUnit}, \code{yUnit}, \code{xAxisScale}, \code{yAxisScale},
-\code{xValuesLimits}, \code{yValuesLimits}, \code{aggregation}, \code{quantiles},
-\code{nsd}, \code{foldDistance}. A multi-value field (e.g.
-\code{quantiles = c(0.05, 0.5, 0.95)}) is applied whole to every plot and
-stored as a comma-separated string; to set a scalar field differently
-per plot, pass a list of the same length as \code{id}.
+\item{...}{Optional plot-configuration fields. A field that is not set
+uses the default of the \code{{ospsuite}} plot function. Any other field
+name is an error.
+
+For all plot types:
+\itemize{
+\item \code{title}, \code{subtitle}: plot title and subtitle, used as written.
+\item \code{xLabel}, \code{yLabel}: axis titles, used as written.
+\item \code{yUnit}: unit of the y values. On \code{"observedVsSimulated"} and
+\code{"residualsVsSimulated"} plots the x axis also shows y values.
+}
+
+For some plot types only (a field on another plot type is ignored, and
+\code{\link[=validateProject]{validateProject()}} warns about it):
+\itemize{
+\item \code{xUnit}: unit of the time axis (\code{"individual"}, \code{"population"},
+\code{"residualsVsTime"}).
+\item \code{xAxisScale}, \code{yAxisScale}: \code{"linear"} or \code{"log"} (\code{"individual"},
+\code{"population"}, \code{"observedVsSimulated"}). An \code{"observedVsSimulated"}
+plot uses one scale for both axes, so when both fields are set they
+must be equal.
+\item \code{xValuesLimits}, \code{yValuesLimits}: two numbers; points outside are
+removed (\code{"individual"}, \code{"population"}).
+\item \code{xAxisLimits}, \code{yAxisLimits}: two numbers; the visible axis range, the
+points outside are kept (\code{"individual"}, \code{"population"}). With value
+limits on the same axis, the axis limits set the visible range.
+\item \code{aggregation}, \code{quantiles} (three probabilities), \code{nsd}: how a
+population is summarized (\code{"population"}).
+\item \code{foldDistance}: one or more numbers, the fold lines drawn around the
+line of identity (\code{"observedVsSimulated"}).
+\item \code{lloqOnBothAxes}: \code{TRUE} (default) or \code{FALSE}, whether the lower limit
+of quantification is drawn on both axes (\code{"observedVsSimulated"}).
+}
+
+A multi-value field (e.g. \code{quantiles = c(0.05, 0.5, 0.95)}) is applied
+whole to every plot and stored as a comma-separated string; to set a
+scalar field differently per plot, pass a list of the same length as
+\code{id}.
 
 Note the deliberate asymmetry with the positional scalar args above: a
 length-\code{N} \emph{vector} passed to \code{dataCombined} or \code{plotType} aligns to the
@@ -48,8 +79,9 @@ The \code{project} object, invisibly.
 \description{
 Add one or more entries to \code{plots} definitions (a keyed list, one entry per
 plot). Errors if a \code{plotId} already exists, if a \code{dataCombined} is not
-present in \code{dataCombined} definitions, or if a \code{plotType} is not one of the
-supported types.
+present in \code{dataCombined} definitions, if a \code{plotType} is not one of the
+supported types, or if a field in \code{...} is not supported or has an invalid
+value. Nothing is added when one plot fails these checks.
 }
 \details{
 The id argument sets \code{N}, the number of definitions to act on, and cannot
