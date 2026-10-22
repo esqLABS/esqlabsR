@@ -272,6 +272,127 @@ test_that("addPlot is all-or-nothing: an invalid entry writes nothing", {
   expect_setequal(list.files(plotsDir), filesBefore)
 })
 
+test_that("addPlot rejects unsupported fields and invalid scales, writing nothing", {
+  project <- exampleProject()
+  addDataCombined(
+    project,
+    "dc_ok",
+    simulated = list(list(
+      label = "s",
+      scenario = "aciclovir_iv",
+      path = project$definitions$outputPaths$aciclovir_pvb
+    ))
+  )
+  before <- names(project$definitions$plots)
+
+  # `linesColor` is a style setting from the removed TLF engine, and `"lin"`
+  # its scale spelling; both are rejected before anything is added.
+  expect_snapshot(
+    error = TRUE,
+    addPlot(
+      project,
+      id = c("p_style", "p_scale"),
+      dataCombined = "dc_ok",
+      plotType = "individual",
+      linesColor = list("red", NULL),
+      yAxisScale = list(NULL, "lin")
+    )
+  )
+  expect_identical(names(project$definitions$plots), before)
+})
+
+test_that("addPlot stores the supported fields as given", {
+  project <- exampleProject()
+  addDataCombined(
+    project,
+    "dc_ok",
+    simulated = list(list(
+      label = "s",
+      scenario = "aciclovir_iv",
+      path = project$definitions$outputPaths$aciclovir_pvb
+    ))
+  )
+
+  addPlot(
+    project,
+    "p_ovs",
+    "dc_ok",
+    "observedVsSimulated",
+    xAxisScale = "linear",
+    yAxisScale = "linear",
+    foldDistance = c(1.5, 2),
+    lloqOnBothAxes = FALSE
+  )
+
+  expect_equal(
+    unclass(project$definitions$plots$p_ovs),
+    list(
+      plotId = "p_ovs",
+      dataCombinedId = "dc_ok",
+      plotType = "observedVsSimulated",
+      xAxisScale = "linear",
+      yAxisScale = "linear",
+      foldDistance = "1.5, 2",
+      lloqOnBothAxes = FALSE
+    )
+  )
+})
+
+test_that(".validatePlots reports field problems as critical errors", {
+  dataCombined <- list(
+    DC1 = list(simulated = list(list(label = "L1", scenario = "S1", path = "P")))
+  )
+  plotConfig <- list(
+    p_style = list(
+      plotId = "p_style",
+      dataCombinedId = "DC1",
+      plotType = "individual",
+      linesColor = "red",
+      legendPosition = "top"
+    ),
+    p_lin = list(
+      plotId = "p_lin",
+      dataCombinedId = "DC1",
+      plotType = "individual",
+      xAxisScale = "lin"
+    ),
+    p_ovs = list(
+      plotId = "p_ovs",
+      dataCombinedId = "DC1",
+      plotType = "observedVsSimulated",
+      xAxisScale = "log",
+      yAxisScale = "linear",
+      lloqOnBothAxes = "yes"
+    )
+  )
+
+  result <- .validatePlots(dataCombined, plotConfig, list())
+
+  msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
+  expect_snapshot(cat(msgs, sep = "\n"))
+})
+
+test_that(".validatePlots warns about a supported field on a plot type that ignores it", {
+  dataCombined <- list(
+    DC1 = list(simulated = list(list(label = "L1", scenario = "S1", path = "P")))
+  )
+  plotConfig <- list(
+    p_rvs = list(
+      plotId = "p_rvs",
+      dataCombinedId = "DC1",
+      plotType = "residualsVsSimulated",
+      xUnit = "h",
+      yAxisLimits = "0, 10"
+    )
+  )
+
+  result <- .validatePlots(dataCombined, plotConfig, list())
+
+  expect_length(result$critical_errors, 0)
+  msgs <- vapply(result$warnings, \(w) w$message, character(1))
+  expect_snapshot(cat(msgs, sep = "\n"))
+})
+
 test_that("addPlotGrid vectorizes with per-grid plots and one write-through", {
   project <- exampleProject()
   addDataCombined(

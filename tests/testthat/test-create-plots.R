@@ -579,3 +579,153 @@ test_that("createPlots aborts on an unknown plotType even when validate = FALSE"
     ))
   )
 })
+
+# Plot definition fields -> ospsuite plot functions ----
+
+test_that(".buildPlot passes each field to the ospsuite argument of its plot type", {
+  calls <- list()
+  capture <- function(fn) {
+    function(...) {
+      calls[[fn]] <<- list(...)
+      NULL
+    }
+  }
+  local_mocked_bindings(
+    plotTimeProfile = capture("plotTimeProfile"),
+    plotPredictedVsObserved = capture("plotPredictedVsObserved"),
+    plotResidualsVsCovariate = capture("plotResidualsVsCovariate"),
+    .package = "ospsuite"
+  )
+
+  .buildPlot(
+    list(
+      plotId = "p_pop",
+      plotType = "population",
+      xUnit = "h",
+      yUnit = "µmol/l",
+      yAxisScale = "log",
+      aggregation = "quantiles",
+      quantiles = "0.1, 0.5, 0.9",
+      nsd = 2
+    ),
+    dataCombined = "dc"
+  )
+  .buildPlot(
+    list(plotId = "p_ovs", plotType = "observedVsSimulated", yAxisScale = "linear", foldDistance = 3),
+    dataCombined = "dc"
+  )
+  .buildPlot(
+    list(plotId = "p_rvt", plotType = "residualsVsTime", xUnit = "min", yUnit = "mg/l"),
+    dataCombined = "dc"
+  )
+
+  expect_equal(
+    calls,
+    list(
+      plotTimeProfile = list(
+        plotData = "dc",
+        yUnit = "µmol/l",
+        xUnit = "h",
+        yScale = "log",
+        aggregation = "quantiles",
+        quantiles = c(0.1, 0.5, 0.9),
+        nsd = 2
+      ),
+      plotPredictedVsObserved = list(
+        plotData = "dc",
+        xyScale = "linear",
+        comparisonLineVector = ospsuite.plots::getFoldDistanceList(folds = 3),
+        lloqOnBothAxes = TRUE
+      ),
+      plotResidualsVsCovariate = list(
+        plotData = "dc",
+        yUnit = "mg/l",
+        xUnit = "min",
+        xAxis = "time"
+      )
+    )
+  )
+})
+
+test_that(".plotScaleArgs maps value limits and axis limits", {
+  expect_null(.plotScaleArgs(list(plotId = "p"), "x"))
+
+  # Value limits only: points outside are removed.
+  valuesOnly <- .plotScaleArgs(list(plotId = "p", yValuesLimits = "1, 100"), "y")
+  expect_equal(valuesOnly$limits, c(1, 100))
+  expect_equal(valuesOnly$oob(c(0.5, 50, 200), range = c(1, 100)), c(NA, 50, NA))
+
+  # Axis limits only: the axis is zoomed, points outside are kept.
+  axisOnly <- .plotScaleArgs(list(plotId = "p", xAxisLimits = "0, 12"), "x")
+  expect_equal(axisOnly$limits, c(0, 12))
+  expect_equal(axisOnly$oob(c(-1, 6, 24), range = c(0, 12)), c(-1, 6, 24))
+
+  # Both on a log axis: the axis limits set the range, and the value limits
+  # remove points on the transformed (log10) scale the oob function receives.
+  both <- .plotScaleArgs(
+    list(
+      plotId = "p",
+      yAxisScale = "log",
+      yAxisLimits = "0.1, 1000",
+      yValuesLimits = "1, 100"
+    ),
+    "y"
+  )
+  expect_equal(both$limits, c(0.1, 1000))
+  expect_equal(both$oob(log10(c(0.5, 50, 500)), range = log10(c(0.1, 1000))), c(NA, log10(50), NA))
+})
+
+test_that("createPlots applies axis limits, labels, and the title to a time profile", {
+  project <- exampleProject()
+  path <- project$definitions$outputPaths$aciclovir_pvb
+  addDataCombined(
+    project,
+    "dc_lim",
+    simulated = list(list(
+      label = "sim",
+      scenario = "aciclovir_iv",
+      path = path,
+      group = "g"
+    ))
+  )
+  addPlot(
+    project,
+    "p_lim",
+    "dc_lim",
+    "individual",
+    title = "Aciclovir, IV",
+    xAxisLimits = c(0, 6),
+    yAxisScale = "log"
+  )
+  simulated <- runScenarios(project, scenarios = "aciclovir_iv")
+
+  plot <- suppressWarnings(createPlots(
+    project,
+    plots = "p_lim",
+    scenarioResults = simulated
+  ))$p_lim
+
+  expect_equal(ggplot2::layer_scales(plot)$x$get_limits(), c(0, 6))
+  expect_equal(plot$scales$get_scales("y")$trans$name, "log-10")
+  expect_identical(plot$labels$title, "Aciclovir, IV")
+})
+
+test_that("the build guard rejects field problems even when validate = FALSE", {
+  expect_snapshot(
+    error = TRUE,
+    .assertPlotConfigurationsBuildable(
+      list(
+        p1 = list(
+          plotId = "p1",
+          dataCombinedId = "dc",
+          plotType = "observedVsSimulated",
+          xAxisScale = "log",
+          yAxisScale = "linear",
+          pointsSize = 2
+        )
+      ),
+      dataCombinedNames = "dc"
+    )
+  )
+})
+

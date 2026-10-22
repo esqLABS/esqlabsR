@@ -247,7 +247,8 @@ createPlotsFromExcel <- function(...) {
 
 #' Validate that log scale axes do not have limits containing zero
 #'
-#' @param plotConfiguration A plot configuration object
+#' @param plotConfiguration A Plot definition (a named list); the limit fields
+#'   hold their stored values (a comma-separated string or a number).
 #' @param plotID Optional plot ID for the warning message
 #'
 #' @keywords internal
@@ -270,7 +271,7 @@ createPlotsFromExcel <- function(...) {
     scaleValue <- plotConfiguration[[check$scale]]
     if (!is.null(scaleValue) && scaleValue == "log") {
       for (limitsField in check$limits) {
-        limitsValue <- plotConfiguration[[limitsField]]
+        limitsValue <- .parsePlotLimits(plotConfiguration, limitsField)
         if (!is.null(limitsValue) && 0 %in% limitsValue) {
           msg <- messages$logScaleWithZeroLimit(
             plotID = plotID,
@@ -284,14 +285,13 @@ createPlotsFromExcel <- function(...) {
   }
 }
 
-#' Create a plotConfiguration or plotGridConfiguration object from a keyed
-#' list of plot / grid fields
+#' Create a plotGridConfiguration object from a keyed list of grid fields
 #'
-#' @param defaultConfiguration default plotConfiguration or
-#'   plotGridConfiguration to clone and customize.
+#' @param defaultConfiguration default plotGridConfiguration to clone and
+#'   customize.
 #' @param fields Named list of configuration properties (one per field). An
 #'   absent optional field is simply absent from the list (no NA cell).
-#' @returns A customized plot- or plotGridConfiguration object.
+#' @returns A customized plotGridConfiguration object.
 #' @keywords internal
 #' @noRd
 .createConfigurationFromEntry <- function(defaultConfiguration, fields) {
@@ -309,54 +309,28 @@ createPlotsFromExcel <- function(...) {
       )
       cli::cli_abort("{msg}")
     }
-    # Special treatment for axis limits - parse and validate early with clear errors
-    if (
-      colName %in%
-        c(
-          "xAxisLimits",
-          "yAxisLimits",
-          "xValuesLimits",
-          "yValuesLimits"
-        )
-    ) {
-      # Use wrapper function with ospsuite.utils validation
-      value <- .parseExcelMultiValueField(
-        value = value,
-        fieldName = colName,
-        plotID = fields[["plotId"]],
-        expectedLength = 2,
-        expectedType = "numeric"
-      )
-      # Set directly (already validated and converted)
-      newConfiguration[[colName]] <- value
-    } else {
-      # For other fields, use existing logic
-      # For fields that require multiple values, values are separated by a ','.
-      # Alternatively, the values can be enclosed in "" in case the title should contain a ','.
-      # Split the input string by ',' but do not split within ""
-      value <- unlist(trimws(scan(
-        text = as.character(value),
-        what = "character",
-        sep = ",",
-        quiet = TRUE
-      )))
+    # For fields that require multiple values, values are separated by a ','.
+    # Alternatively, the values can be enclosed in "" in case a value should
+    # contain a ','. Split the input string by ',' but do not split within "".
+    value <- unlist(trimws(scan(
+      text = as.character(value),
+      what = "character",
+      sep = ",",
+      quiet = TRUE
+    )))
 
-      # Expected type of the field to cast the value to the
-      # correct type. For fields that do not have a default value (NULL), we have
-      # to assume character until a better solution is found
-      expectedType <- "character"
-      # Try to get the expected type of the field from the default value
-      defVal <- newConfiguration[[colName]]
-      if (!is.null(defVal)) {
-        expectedType <- typeof(defVal)
-      }
-
-      # Caste the value and set it
-      newConfiguration[[colName]] <- methods::as(
-        object = value,
-        Class = expectedType
-      )
+    # Expected type of the field to cast the value to the correct type. For
+    # fields that do not have a default value (NULL), we have to assume
+    # character until a better solution is found.
+    expectedType <- "character"
+    defVal <- newConfiguration[[colName]]
+    if (!is.null(defVal)) {
+      expectedType <- typeof(defVal)
     }
+    newConfiguration[[colName]] <- methods::as(
+      object = value,
+      Class = expectedType
+    )
   }
 
   return(newConfiguration)
@@ -442,6 +416,7 @@ createPlotsFromExcel <- function(...) {
       "i" = "Must be one of: {.val {(.validPlotTypes)}}."
     ))
   }
+  .abortOnPlotEntryFieldErrors(plotConfigurations)
   missingDataCombined <- setdiff(
     unlist(dataCombinedIds),
     dataCombinedNames
@@ -499,8 +474,8 @@ createPlotsFromExcel <- function(...) {
 #' Used by `createPlots(project, ...)`.
 #'
 #' @param plotConfigurations keyed list (one entry per plot), each entry a
-#'   named list with `plotId`, `dataCombinedId`, `plotType`, `title`,
-#'   `subtitle`, plus axis/styling fields. Callers must pass only plots whose
+#'   named list with `plotId`, `dataCombinedId`, `plotType`, plus the fields of
+#'   `.plotDefinitionFields`. Callers must pass only plots whose
 #'   `dataCombinedId` is built in `dataCombinedList`;
 #'   `.assertPlotConfigurationsBuildable()` aborts on any `dataCombinedId`
 #'   missing from the list.
@@ -529,98 +504,9 @@ createPlotsFromExcel <- function(...) {
   )
   .assertPlotGridsBuildable(plotGrids, unique(configPlotIds))
 
-  styleFields <- c(
-    "plotId",
-    "dataCombinedId",
-    "plotType",
-    "title",
-    "subtitle",
-    "xLabel",
-    "yLabel",
-    "aggregation",
-    "quantiles",
-    "nsd",
-    "foldDistance"
-  )
-
-  defaultPlotConfiguration <- createEsqlabsPlotConfiguration()
-  plotConfigurationList <- lapply(plotConfigurations, function(entry) {
-    plotConfiguration <- .createConfigurationFromEntry(
-      defaultConfiguration = defaultPlotConfiguration,
-      fields = entry[!(names(entry) %in% styleFields)]
-    )
-    # Free-text scalar fields are excluded from `styleFields` and re-applied
-    # here verbatim, not through `.createConfigurationFromEntry`, so a label
-    # containing a comma (e.g. "Concentration, ng/mL") is not shredded into a
-    # character vector by the comma-splitting scan.
-    if (!is.null(entry$title)) {
-      plotConfiguration$title <- entry$title
-    }
-    if (!is.null(entry$subtitle)) {
-      plotConfiguration$subtitle <- entry$subtitle
-    }
-    if (!is.null(entry$xLabel)) {
-      plotConfiguration$xLabel <- entry$xLabel
-    }
-    if (!is.null(entry$yLabel)) {
-      plotConfiguration$yLabel <- entry$yLabel
-    }
-    .validateLogScaleAxisLimits(plotConfiguration, entry$plotId)
-    plotConfiguration
-  })
-  names(plotConfigurationList) <- configPlotIds
-
   plotList <- lapply(plotConfigurations, function(entry) {
-    plotId <- entry$plotId
-    dataCombined <- dataCombinedList[[entry$dataCombinedId]]
-    switch(
-      entry$plotType,
-      individual = plotIndividualTimeProfile(
-        dataCombined,
-        plotConfigurationList[[plotId]]
-      ),
-      population = {
-        args <- list()
-        args$dataCombined <- dataCombined
-        args$defaultPlotConfiguration <- plotConfigurationList[[plotId]]
-        if (!is.null(entry$aggregation)) {
-          args$aggregation <- entry$aggregation
-        }
-        if (!is.null(entry$quantiles)) {
-          args$quantiles <- as.numeric(unlist(
-            strsplit(entry$quantiles, split = ",")
-          ))
-        }
-        if (!is.null(entry$nsd)) {
-          args$nsd <- as.numeric(entry$nsd)
-        }
-        do.call(plotPopulationTimeProfile, args)
-      },
-      observedVsSimulated = {
-        if (is.null(entry$foldDistance)) {
-          plotObservedVsSimulated(
-            dataCombined,
-            plotConfigurationList[[plotId]]
-          )
-        } else {
-          plotObservedVsSimulated(
-            dataCombined,
-            plotConfigurationList[[plotId]],
-            foldDistance = as.numeric(unlist(
-              strsplit(entry$foldDistance, split = ",")
-            ))
-          )
-        }
-      },
-      residualsVsSimulated = plotResidualsVsSimulated(
-        dataCombined,
-        plotConfigurationList[[plotId]]
-      ),
-      residualsVsTime = plotResidualsVsTime(
-        dataCombined,
-        plotConfigurationList[[plotId]]
-      )
-    )
+    .validateLogScaleAxisLimits(entry, entry$plotId)
+    .buildPlot(entry, dataCombinedList[[entry$dataCombinedId]])
   })
   names(plotList) <- configPlotIds
 
@@ -662,9 +548,151 @@ createPlotsFromExcel <- function(...) {
   # also inside a requested grid still gets its own entry here (independent
   # selectors). The grid entries and the standalone entries are unioned.
   standalonePlots <- plotList[intersect(standalonePlotIds, names(plotList))]
-  # Drop any NULL entry for symmetry with the grid path. The plotType-enum
-  # check in `.assertPlotConfigurationsBuildable()` already prevents unknown
-  # types from producing a NULL here, so this is belt-and-suspenders.
+  # A plot without data to draw is NULL (the `ospsuite` plot function warns);
+  # drop it, as the grid path does.
   standalonePlots <- standalonePlots[lengths(standalonePlots) != 0]
   c(builtGrids, standalonePlots)
+}
+
+#' Build one plot from its Plot definition
+#'
+#' Maps the fields of `.plotDefinitionFields` onto the arguments of the
+#' `ospsuite` plot function for the plot type. An absent field passes no
+#' argument, so the `ospsuite` default applies; `lloqOnBothAxes` defaults to
+#' `TRUE`. A plot that is drawn gets the house theme, its title and subtitle,
+#' and its axis titles when `xLabel` / `yLabel` are set.
+#'
+#' @param entry One Plot definition (a named list).
+#' @param dataCombined The `DataCombined` the plot draws.
+#' @returns A `ggplot` object, or `NULL` when the `ospsuite` plot function finds
+#'   no data to draw.
+#' @keywords internal
+#' @noRd
+.buildPlot <- function(entry, dataCombined) {
+  args <- list(plotData = dataCombined, yUnit = entry$yUnit)
+  plotType <- entry$plotType
+  if (plotType %in% c(.timeProfilePlotTypes, "residualsVsTime")) {
+    args$xUnit <- entry$xUnit
+  }
+
+  if (plotType %in% .timeProfilePlotTypes) {
+    args$xScale <- entry$xAxisScale
+    args$yScale <- entry$yAxisScale
+    args$xScaleArgs <- .plotScaleArgs(entry, "x")
+    args$yScaleArgs <- .plotScaleArgs(entry, "y")
+  }
+  if (plotType == "population") {
+    args$aggregation <- entry$aggregation
+    if (!is.null(entry$quantiles)) {
+      args$quantiles <- .parseExcelMultiValueField(
+        entry$quantiles,
+        fieldName = "quantiles",
+        plotID = entry$plotId,
+        expectedLength = 3
+      )
+    }
+    if (!is.null(entry$nsd)) {
+      args$nsd <- as.numeric(entry$nsd)
+    }
+  }
+  if (plotType == "observedVsSimulated") {
+    # One scale for both axes; the field checks reject two different values.
+    args$xyScale <- entry$xAxisScale %||% entry$yAxisScale
+    if (!is.null(entry$foldDistance)) {
+      args$comparisonLineVector <- ospsuite.plots::getFoldDistanceList(
+        folds = .parseExcelMultiValueField(
+          entry$foldDistance,
+          fieldName = "foldDistance",
+          plotID = entry$plotId
+        )
+      )
+    }
+    args$lloqOnBothAxes <- entry$lloqOnBothAxes %||% TRUE
+  }
+  # Drop the absent fields so the `ospsuite` defaults apply.
+  args <- Filter(Negate(is.null), args)
+
+  plot <- switch(
+    plotType,
+    individual = ,
+    population = do.call(ospsuite::plotTimeProfile, args),
+    observedVsSimulated = do.call(ospsuite::plotPredictedVsObserved, args),
+    residualsVsSimulated = do.call(
+      ospsuite::plotResidualsVsCovariate,
+      c(args, xAxis = "predicted")
+    ),
+    residualsVsTime = do.call(
+      ospsuite::plotResidualsVsCovariate,
+      c(args, xAxis = "time")
+    )
+  )
+  if (is.null(plot)) {
+    return(NULL)
+  }
+
+  labels <- Filter(
+    Negate(is.null),
+    list(x = entry$xLabel, y = entry$yLabel)
+  )
+  plot +
+    .esqlabsPlotTheme() +
+    do.call(
+      ggplot2::labs,
+      c(list(title = entry$title, subtitle = entry$subtitle), labels)
+    )
+}
+
+#' Parse one limits field of a Plot definition
+#'
+#' @param entry One Plot definition (a named list).
+#' @param field `"xValuesLimits"`, `"yValuesLimits"`, `"xAxisLimits"`, or
+#'   `"yAxisLimits"`.
+#' @returns Two numbers, or `NULL` when the field is absent.
+#' @keywords internal
+#' @noRd
+.parsePlotLimits <- function(entry, field) {
+  if (is.null(entry[[field]])) {
+    return(NULL)
+  }
+  .parseExcelMultiValueField(
+    entry[[field]],
+    fieldName = field,
+    plotID = entry$plotId,
+    expectedLength = 2
+  )
+}
+
+#' Scale arguments for one axis of a time profile
+#'
+#' Axis limits set the visible range and keep the points outside it (a zoom).
+#' Value limits remove the points outside them. With both, the axis limits set
+#' the range and the points outside the value limits are removed.
+#'
+#' @param entry One Plot definition (a named list).
+#' @param axis `"x"` or `"y"`.
+#' @returns A list of arguments for the `ggplot2` position scale, or `NULL`
+#'   when the plot sets no limits on this axis, so that the `ospsuite.plots`
+#'   default applies.
+#' @keywords internal
+#' @noRd
+.plotScaleArgs <- function(entry, axis) {
+  valuesLimits <- .parsePlotLimits(entry, paste0(axis, "ValuesLimits"))
+  axisLimits <- .parsePlotLimits(entry, paste0(axis, "AxisLimits"))
+  if (is.null(axisLimits)) {
+    if (is.null(valuesLimits)) {
+      return(NULL)
+    }
+    return(list(limits = valuesLimits, oob = scales::oob_censor))
+  }
+  if (is.null(valuesLimits)) {
+    return(list(limits = axisLimits, oob = scales::oob_keep))
+  }
+  # `oob` receives values on the transformed scale, so the value limits are
+  # transformed the same way. `ospsuite.plots` uses a linear scale by default.
+  isLog <- identical(entry[[paste0(axis, "AxisScale")]], "log")
+  censorRange <- if (isLog) log10(valuesLimits) else valuesLimits
+  list(
+    limits = axisLimits,
+    oob = function(x, range) scales::oob_censor(x, range = censorRange)
+  )
 }

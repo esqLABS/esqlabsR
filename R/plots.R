@@ -344,11 +344,17 @@ print.DataCombined <- function(x, ...) {
       )
     }
 
-    # Fields that only take effect for a specific plotType. `quantiles`,
-    # `aggregation`, and `nsd` are consumed only by population plots;
-    # `foldDistance` only by observedVsSimulated plots. Setting one on any
-    # other plotType is silently ignored by the build, so warn (non-blocking)
-    # rather than fail: the plot still renders, just without that field.
+    # Unsupported fields and invalid values stop the build, so they are
+    # critical here too.
+    for (entry in plotConfig) {
+      for (message in .plotEntryFieldErrors(entry)) {
+        result$addCriticalError("Invalid Field", message)
+      }
+    }
+
+    # A supported field on a plotType that does not apply it is ignored by the
+    # build, so warn (non-blocking) rather than fail: the plot still renders,
+    # just without that field.
     result <- .warnPlotTypeIrrelevantFields(plotConfig, result)
   }
 
@@ -387,11 +393,11 @@ print.DataCombined <- function(x, ...) {
 
 #' Warn about plotType-irrelevant fields on a plot configuration
 #'
-#' `quantiles`, `aggregation`, and `nsd` only take effect for `population`
-#' plots; `foldDistance` only for `observedVsSimulated` plots. When one is set
-#' on any other `plotType`, the build path silently ignores it. This adds a
-#' non-blocking warning to `result` for each such field so the mismatch is
-#' surfaced without gating execution.
+#' Each field in `.plotDefinitionFields` applies to some plot types only (for
+#' example `quantiles` only to `population` plots). When one is set on any
+#' other `plotType`, the build path ignores it. This adds a non-blocking
+#' warning to `result` for each such field so the mismatch is surfaced without
+#' gating execution.
 #'
 #' @param plotConfig Named list from `plots` definitions (keyed by `plotId`).
 #' @param result `validationResult` to mutate.
@@ -399,41 +405,36 @@ print.DataCombined <- function(x, ...) {
 #' @keywords internal
 #' @noRd
 .warnPlotTypeIrrelevantFields <- function(plotConfig, result) {
-  # Each entry: the fields that only apply to `plotType`.
-  fieldsByPlotType <- list(
-    population = c("quantiles", "aggregation", "nsd"),
-    observedVsSimulated = "foldDistance"
-  )
-
-  for (usedByType in names(fieldsByPlotType)) {
-    typeFields <- fieldsByPlotType[[usedByType]]
-    for (entry in plotConfig) {
-      plotType <- entry$plotType
-      if (is.null(plotType) || identical(plotType, usedByType)) {
+  for (entry in plotConfig) {
+    plotType <- entry$plotType
+    if (is.null(plotType) || !(plotType %in% .validPlotTypes)) {
+      next
+    }
+    presentFields <- intersect(names(.plotDefinitionFields), names(entry))
+    # A field present but empty (NULL / NA) is not really "set"; skip it.
+    presentFields <- Filter(
+      function(f) !.isMissingField(entry[[f]]),
+      presentFields
+    )
+    for (field in presentFields) {
+      usedByTypes <- .plotDefinitionFields[[field]]
+      if (plotType %in% usedByTypes) {
         next
       }
-      presentFields <- intersect(typeFields, names(entry))
-      # A field present but empty (NULL / NA) is not really "set"; skip it.
-      presentFields <- Filter(
-        function(f) !.isMissingField(entry[[f]]),
-        presentFields
-      )
-      for (field in presentFields) {
-        result$addWarning(
-          "Data",
-          paste0(
-            "Plot '",
-            entry$plotId %||% "<unknown>",
-            "' of plotType '",
-            plotType,
-            "' sets '",
-            field,
-            "', which only applies to plotType '",
-            usedByType,
-            "' and is ignored."
-          )
+      result$addWarning(
+        "Data",
+        paste0(
+          "Plot '",
+          entry$plotId %||% "<unknown>",
+          "' of plotType '",
+          plotType,
+          "' sets '",
+          field,
+          "', which only applies to plotType ",
+          paste0("'", usedByTypes, "'", collapse = ", "),
+          " and is ignored."
         )
-      }
+      )
     }
   }
 
@@ -530,6 +531,122 @@ print.DataCombined <- function(x, ...) {
   "residualsVsSimulated",
   "residualsVsTime"
 )
+
+# The configuration fields a Plot definition accepts, each with the plot types
+# that apply it. Any other field (beyond the identity fields `plotId`,
+# `dataCombinedId`, and `plotType`) is a critical error, and a listed field on a
+# plot type that does not apply it is a warning. Read by the validator,
+# `addPlot()`, the build guard in `createPlots()`, and the Excel import.
+.timeProfilePlotTypes <- c("individual", "population")
+.plotDefinitionFields <- list(
+  title = .validPlotTypes,
+  subtitle = .validPlotTypes,
+  xLabel = .validPlotTypes,
+  yLabel = .validPlotTypes,
+  xUnit = c(.timeProfilePlotTypes, "residualsVsTime"),
+  yUnit = .validPlotTypes,
+  xAxisScale = c(.timeProfilePlotTypes, "observedVsSimulated"),
+  yAxisScale = c(.timeProfilePlotTypes, "observedVsSimulated"),
+  xValuesLimits = .timeProfilePlotTypes,
+  yValuesLimits = .timeProfilePlotTypes,
+  xAxisLimits = .timeProfilePlotTypes,
+  yAxisLimits = .timeProfilePlotTypes,
+  aggregation = "population",
+  quantiles = "population",
+  nsd = "population",
+  foldDistance = "observedVsSimulated",
+  lloqOnBothAxes = "observedVsSimulated"
+)
+.plotIdentityFields <- c("plotId", "dataCombinedId", "plotType")
+.plotAxisScales <- c("linear", "log")
+
+# The problems with the configuration fields of one Plot definition that stop
+# it from being built: an unsupported field, an axis scale other than
+# `"linear"` / `"log"`, two different scales on an `observedVsSimulated` plot
+# (it has one scale for both axes), and an `lloqOnBothAxes` that is not one
+# logical. Shared by the validator (critical errors) and the two aborting
+# gates, `addPlot()` and `.assertPlotConfigurationsBuildable()`, so they can
+# never disagree.
+#
+# @param entry One Plot definition (a named list).
+# @returns A character vector of messages, empty when the fields are valid.
+# @keywords internal
+# @noRd
+.plotEntryFieldErrors <- function(entry) {
+  plotId <- entry$plotId %||% "<unknown>"
+  errors <- character()
+
+  unsupported <- setdiff(
+    names(entry),
+    c(.plotIdentityFields, names(.plotDefinitionFields))
+  )
+  if (length(unsupported) > 0L) {
+    errors <- c(
+      errors,
+      messages$unsupportedPlotFields(
+        plotId,
+        unsupported,
+        names(.plotDefinitionFields)
+      )
+    )
+  }
+
+  for (field in c("xAxisScale", "yAxisScale")) {
+    value <- entry[[field]]
+    if (!is.null(value) && !(length(value) == 1L && value %in% .plotAxisScales)) {
+      errors <- c(
+        errors,
+        messages$invalidPlotAxisScale(plotId, field, value, .plotAxisScales)
+      )
+    }
+  }
+
+  if (
+    identical(entry$plotType, "observedVsSimulated") &&
+      length(entry$xAxisScale) == 1L &&
+      length(entry$yAxisScale) == 1L &&
+      !identical(entry$xAxisScale, entry$yAxisScale)
+  ) {
+    errors <- c(
+      errors,
+      messages$conflictingPlotAxisScales(
+        plotId,
+        entry$xAxisScale,
+        entry$yAxisScale
+      )
+    )
+  }
+
+  lloq <- entry$lloqOnBothAxes
+  if (!is.null(lloq) && !(is.logical(lloq) && length(lloq) == 1L && !is.na(lloq))) {
+    errors <- c(errors, messages$invalidLloqOnBothAxes(plotId, lloq))
+  }
+
+  errors
+}
+
+# Abort with every field problem of the given Plot definitions, one bullet per
+# problem. Each bullet interpolates its message as a value, so a field name
+# holding `{` or `}` is printed as is.
+#
+# @param entries A list of Plot definitions.
+# @returns `entries`, invisibly, when no definition has a field problem.
+# @keywords internal
+# @noRd
+.abortOnPlotEntryFieldErrors <- function(entries, call = rlang::caller_env()) {
+  problems <- unlist(lapply(entries, .plotEntryFieldErrors))
+  if (length(problems) == 0L) {
+    return(invisible(entries))
+  }
+  bullets <- rlang::set_names(
+    sprintf("{problems[[%d]]}", seq_along(problems)),
+    rep("x", length(problems))
+  )
+  cli::cli_abort(
+    c("{cli::qty(length(problems))}Invalid plot configuration field{?s}:", bullets),
+    call = call
+  )
+}
 
 # Reject a character vector argument (e.g. the id vector that sets N) uniformly
 # across the plot add/remove fns. It must be a non-empty character vector with
@@ -715,8 +832,9 @@ print.DataCombined <- function(x, ...) {
 #'
 #' Add one or more entries to `plots` definitions (a keyed list, one entry per
 #' plot). Errors if a `plotId` already exists, if a `dataCombined` is not
-#' present in `dataCombined` definitions, or if a `plotType` is not one of the
-#' supported types.
+#' present in `dataCombined` definitions, if a `plotType` is not one of the
+#' supported types, or if a field in `...` is not supported or has an invalid
+#' value. Nothing is added when one plot fails these checks.
 #'
 #' @inherit vectorizedAuthoring details
 #'
@@ -730,13 +848,40 @@ print.DataCombined <- function(x, ...) {
 #' @param plotType Character, length 1 (recycled) or the same length as `id`.
 #'   Each one of `"individual"`, `"population"`, `"observedVsSimulated"`,
 #'   `"residualsVsSimulated"`, `"residualsVsTime"`.
-#' @param ... Optional plot-configuration fields, e.g. `title`,
-#'   `subtitle`, `xUnit`, `yUnit`, `xAxisScale`, `yAxisScale`,
-#'   `xValuesLimits`, `yValuesLimits`, `aggregation`, `quantiles`,
-#'   `nsd`, `foldDistance`. A multi-value field (e.g.
-#'   `quantiles = c(0.05, 0.5, 0.95)`) is applied whole to every plot and
-#'   stored as a comma-separated string; to set a scalar field differently
-#'   per plot, pass a list of the same length as `id`.
+#' @param ... Optional plot-configuration fields. A field that is not set
+#'   uses the default of the `{ospsuite}` plot function. Any other field
+#'   name is an error.
+#'
+#'   For all plot types:
+#'   - `title`, `subtitle`: plot title and subtitle, used as written.
+#'   - `xLabel`, `yLabel`: axis titles, used as written.
+#'   - `yUnit`: unit of the y values. On `"observedVsSimulated"` and
+#'     `"residualsVsSimulated"` plots the x axis also shows y values.
+#'
+#'   For some plot types only (a field on another plot type is ignored, and
+#'   [validateProject()] warns about it):
+#'   - `xUnit`: unit of the time axis (`"individual"`, `"population"`,
+#'     `"residualsVsTime"`).
+#'   - `xAxisScale`, `yAxisScale`: `"linear"` or `"log"` (`"individual"`,
+#'     `"population"`, `"observedVsSimulated"`). An `"observedVsSimulated"`
+#'     plot uses one scale for both axes, so when both fields are set they
+#'     must be equal.
+#'   - `xValuesLimits`, `yValuesLimits`: two numbers; points outside are
+#'     removed (`"individual"`, `"population"`).
+#'   - `xAxisLimits`, `yAxisLimits`: two numbers; the visible axis range, the
+#'     points outside are kept (`"individual"`, `"population"`). With value
+#'     limits on the same axis, the axis limits set the visible range.
+#'   - `aggregation`, `quantiles` (three probabilities), `nsd`: how a
+#'     population is summarized (`"population"`).
+#'   - `foldDistance`: one or more numbers, the fold lines drawn around the
+#'     line of identity (`"observedVsSimulated"`).
+#'   - `lloqOnBothAxes`: `TRUE` (default) or `FALSE`, whether the lower limit
+#'     of quantification is drawn on both axes (`"observedVsSimulated"`).
+#'
+#'   A multi-value field (e.g. `quantiles = c(0.05, 0.5, 0.95)`) is applied
+#'   whole to every plot and stored as a comma-separated string; to set a
+#'   scalar field differently per plot, pass a list of the same length as
+#'   `id`.
 #'
 #'   Note the deliberate asymmetry with the positional scalar args above: a
 #'   length-`N` *vector* passed to `dataCombined` or `plotType` aligns to the
@@ -803,17 +948,21 @@ addPlot <- function(project, id, dataCombined, plotType, ...) {
       "i" = "Must be one of: {.val {.validPlotTypes}}."
     ))
   }
-
-  # Fold all N entries into the section in memory, then ONE assignment triggers
-  # exactly one write-through.
-  plotConfig <- .unwrapDefinitionList(private$.getSection("plots")) %||% list()
-  for (i in seq_len(n)) {
-    plotConfig[[id[[i]]]] <- .buildPlotEntry(
+  newEntries <- lapply(seq_len(n), function(i) {
+    .buildPlotEntry(
       id[[i]],
       dataCombined[[i]],
       plotType[[i]],
       perDefinitionFields[[i]]
     )
+  })
+  .abortOnPlotEntryFieldErrors(newEntries, call = .call)
+
+  # Fold all N entries into the section in memory, then ONE assignment triggers
+  # exactly one write-through.
+  plotConfig <- .unwrapDefinitionList(private$.getSection("plots")) %||% list()
+  for (i in seq_len(n)) {
+    plotConfig[[id[[i]]]] <- newEntries[[i]]
   }
   private$.setSection("plots", plotConfig)
   invisible(self)

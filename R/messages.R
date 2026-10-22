@@ -651,6 +651,25 @@ messages$importSkippedPlotExportConfiguration <- function(
   )
 }
 
+messages$importSkippedPlotColumns <- function(filePath, columns) {
+  # Unglued, like its neighbours: a column header is free text.
+  envir <- new.env(parent = parent.frame())
+  assign("filePath", filePath, envir = envir)
+  assign("columns", columns, envir = envir)
+  assign("n", length(columns), envir = envir)
+  list(
+    bullets = c(
+      "!" = "The {.field plotConfiguration} sheet of {.file {filePath}} has \\
+      {cli::qty(n)}{?a column/columns} that a plot does not support. \\
+      {?It is/They are} not imported:",
+      "x" = "{.field {columns}}",
+      "i" = "Plots are drawn with the default style of the {.pkg ospsuite} \\
+      plot functions. See {.fn addPlot} for the supported fields."
+    ),
+    envir = envir
+  )
+}
+
 messages$importDuplicatePlotIds <- function(sheet, idField, ids) {
   # Unglued, like its neighbours: a plot id is free text.
   envir <- new.env(parent = parent.frame())
@@ -1449,6 +1468,40 @@ messages$logScaleWithZeroLimit <- function(
     "Column {.field {axisLimitsField}} in plot {.val {plotID}} contains zero, but the {.val {axis}}-axis scale is set to {.val log}.
     Logarithmic scale cannot display zero values. This may result in empty or unexpected plots."
   )
+}
+
+# The four plot-field entries below also feed `validationResult` messages, which
+# are not passed through `cli` again, so they are built without a trailing `\\`
+# line continuation.
+messages$unsupportedPlotFields <- function(plotId, fields, supportedFields) {
+  cliFormat(paste(
+    "Plot {.val {plotId}} has unsupported field{?s} {.field {fields}}.",
+    "Supported fields: {.field {supportedFields}}."
+  ))
+}
+
+messages$invalidPlotAxisScale <- function(plotId, field, value, allowedValues) {
+  cliFormat(paste(
+    "Plot {.val {plotId}} has {.field {field}} {.val {value}}.",
+    "Allowed values: {.val {allowedValues}}.",
+    if (identical(value, "lin")) "Use {.val linear} instead of {.val lin}."
+  ))
+}
+
+messages$conflictingPlotAxisScales <- function(plotId, xAxisScale, yAxisScale) {
+  cliFormat(paste(
+    "Plot {.val {plotId}} is an {.val observedVsSimulated} plot with",
+    "{.field xAxisScale} {.val {xAxisScale}} and {.field yAxisScale}",
+    "{.val {yAxisScale}}. Both axes of this plot type use one scale:",
+    "set both fields to the same value, or set only one of them."
+  ))
+}
+
+messages$invalidLloqOnBothAxes <- function(plotId, value) {
+  cliFormat(paste(
+    "Plot {.val {plotId}} has {.field lloqOnBothAxes} {.val {value}}.",
+    "It must be a single {.code TRUE} or {.code FALSE}."
+  ))
 }
 
 messages$invalidPlotID <- function(plotIDs) {

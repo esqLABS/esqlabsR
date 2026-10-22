@@ -47,6 +47,36 @@
       ! `dataCombined` must be length 1 or length 3 (the number of ids).
       x It is length 2.
 
+# addPlot rejects unsupported fields and invalid scales, writing nothing
+
+    Code
+      addPlot(project, id = c("p_style", "p_scale"), dataCombined = "dc_ok",
+      plotType = "individual", linesColor = list("red", NULL), yAxisScale = list(NULL,
+        "lin"))
+    Condition
+      Error in `addPlot()`:
+      ! Invalid plot configuration fields:
+      x Plot "p_style" has unsupported field linesColor. Supported fields: title, subtitle, xLabel, yLabel, xUnit, yUnit, xAxisScale, yAxisScale, xValuesLimits, yValuesLimits, xAxisLimits, yAxisLimits, aggregation, quantiles, nsd, foldDistance, and lloqOnBothAxes.
+      x Plot "p_scale" has yAxisScale "lin". Allowed values: "linear" and "log". Use "linear" instead of "lin".
+
+# .validatePlots reports field problems as critical errors
+
+    Code
+      cat(msgs, sep = "\n")
+    Output
+      Plot "p_style" has unsupported field linesColor and legendPosition. Supported fields: title, subtitle, xLabel, yLabel, xUnit, yUnit, xAxisScale, yAxisScale, xValuesLimits, yValuesLimits, xAxisLimits, yAxisLimits, aggregation, quantiles, nsd, foldDistance, and lloqOnBothAxes.
+      Plot "p_lin" has xAxisScale "lin". Allowed values: "linear" and "log". Use "linear" instead of "lin".
+      Plot "p_ovs" is an "observedVsSimulated" plot with xAxisScale "log" and yAxisScale "linear". Both axes of this plot type use one scale: set both fields to the same value, or set only one of them.
+      Plot "p_ovs" has lloqOnBothAxes "yes". It must be a single `TRUE` or `FALSE`.
+
+# .validatePlots warns about a supported field on a plot type that ignores it
+
+    Code
+      cat(msgs, sep = "\n")
+    Output
+      Plot 'p_rvs' of plotType 'residualsVsSimulated' sets 'xUnit', which only applies to plotType 'individual', 'population', 'residualsVsTime' and is ignored.
+      Plot 'p_rvs' of plotType 'residualsVsSimulated' sets 'yAxisLimits', which only applies to plotType 'individual', 'population' and is ignored.
+
 # .validatePlots names the closest existing id for a dangling reference
 
     Code
