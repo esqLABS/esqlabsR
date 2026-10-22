@@ -739,11 +739,17 @@ print.DataCombined <- function(x, ...) {
 
 .plotConfigurationFields <- function() {
   ovs <- "observedVsSimulated"
+  errorbarTypes <- c(.timeProfilePlotTypes, ovs)
   alpha <- c(0, 1)
   c(
     list(
       xUnit = .plotField("string", c(.timeProfilePlotTypes, "residualsVsTime")),
-      yUnit = .plotField("string"),
+      # The residuals of a residualsVsTime plot have no unit, and its x axis
+      # is time, so the y unit changes nothing there.
+      yUnit = .plotField(
+        "string",
+        c(.timeProfilePlotTypes, "observedVsSimulated", "residualsVsSimulated")
+      ),
       title = .plotField("text"),
       subtitle = .plotField("text"),
       caption = .plotField("text"),
@@ -804,10 +810,11 @@ print.DataCombined <- function(x, ...) {
       ribbonsSize = .plotField("number", "population", range = c(0, Inf)),
       ribbonsLinetype = .plotField("linetype", "population", multiple = TRUE),
       ribbonsAlpha = .plotField("number", "population", range = alpha),
-      errorbarsSize = .plotField("number", range = c(0, Inf)),
-      errorbarsCapSize = .plotField("number", range = c(0, Inf)),
-      errorbarsLinetype = .plotField("linetype"),
-      errorbarsAlpha = .plotField("number", range = alpha),
+      # Residual plots draw no error bars.
+      errorbarsSize = .plotField("number", errorbarTypes, range = c(0, Inf)),
+      errorbarsCapSize = .plotField("number", errorbarTypes, range = c(0, Inf)),
+      errorbarsLinetype = .plotField("linetype", errorbarTypes),
+      errorbarsAlpha = .plotField("number", errorbarTypes, range = alpha),
       displayLLOQ = .plotField("logical", c(.timeProfilePlotTypes, ovs)),
       lloqDirection = .plotField(
         "choice",

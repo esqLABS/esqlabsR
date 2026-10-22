@@ -247,6 +247,8 @@ createPlotsFromExcel <- function(...) {
 
 #' Validate that log scale axes do not have limits containing zero
 #'
+#' The axes of an `observedVsSimulated` plot are logarithmic by default.
+#'
 #' @param plotConfiguration A Plot definition (a named list); the limit fields
 #'   hold their stored values (a comma-separated string or a number).
 #' @param plotID Optional plot ID for the warning message
@@ -267,11 +269,24 @@ createPlotsFromExcel <- function(...) {
     )
   )
 
+  isOvs <- identical(plotConfiguration$plotType, "observedVsSimulated")
   for (check in axisChecks) {
     scaleValue <- plotConfiguration[[check$scale]]
+    # An observedVsSimulated plot has one scale for both axes, logarithmic
+    # unless a scale field says otherwise.
+    if (isOvs) {
+      scaleValue <- plotConfiguration$xAxisScale %||%
+        plotConfiguration$yAxisScale %||%
+        "log"
+    }
     if (!is.null(scaleValue) && scaleValue == "log") {
       for (limitsField in check$limits) {
-        limitsValue <- .parsePlotLimits(plotConfiguration, limitsField)
+        limitsValue <- if (!is.null(plotConfiguration[[limitsField]])) {
+          .parsePlotFieldValue(
+            plotConfiguration[[limitsField]],
+            .plotFields[[limitsField]]
+          )
+        }
         if (!is.null(limitsValue) && 0 %in% limitsValue) {
           msg <- messages$logScaleWithZeroLimit(
             plotID = plotID,
@@ -556,11 +571,14 @@ createPlotsFromExcel <- function(...) {
 
 #' Build one plot from its Plot definition
 #'
-#' Maps the fields of `.plotFields` onto the arguments of the
-#' `ospsuite` plot function for the plot type. An absent field passes no
-#' argument, so the `ospsuite` default applies; `lloqOnBothAxes` defaults to
-#' `TRUE`. A plot that is drawn gets the house style, its title and subtitle,
-#' and its axis titles when `xLabel` / `yLabel` are set.
+#' Overlays the Plot definition's fields on [createEsqlabsPlotConfiguration()]
+#' and maps the result through `.plotFields`: units, scales, scale arguments,
+#' geom attributes, LLOQ, fold-line, and population settings become arguments
+#' of the `ospsuite` plot function; text, theme, color, shape, and line type
+#' settings and the watermark are added to the returned plot
+#' (`.plotStyleComponents()`). A field the plot type does not apply has no
+#' effect, and an unset field without a house value passes no argument, so the
+#' `ospsuite` default applies.
 #'
 #' @param entry One Plot definition (a named list).
 #' @param dataCombined The `DataCombined` the plot draws.
@@ -569,48 +587,9 @@ createPlotsFromExcel <- function(...) {
 #' @keywords internal
 #' @noRd
 .buildPlot <- function(entry, dataCombined) {
-  args <- list(plotData = dataCombined, yUnit = entry$yUnit)
   plotType <- entry$plotType
-  if (plotType %in% c(.timeProfilePlotTypes, "residualsVsTime")) {
-    args$xUnit <- entry$xUnit
-  }
-
-  if (plotType %in% .timeProfilePlotTypes) {
-    args$xScale <- entry$xAxisScale
-    args$yScale <- entry$yAxisScale
-    args$xScaleArgs <- .plotScaleArgs(entry, "x")
-    args$yScaleArgs <- .plotScaleArgs(entry, "y")
-  }
-  if (plotType == "population") {
-    args$aggregation <- entry$aggregation
-    if (!is.null(entry$quantiles)) {
-      args$quantiles <- .parseExcelMultiValueField(
-        entry$quantiles,
-        fieldName = "quantiles",
-        plotID = entry$plotId,
-        expectedLength = 3
-      )
-    }
-    if (!is.null(entry$nsd)) {
-      args$nsd <- as.numeric(entry$nsd)
-    }
-  }
-  if (plotType == "observedVsSimulated") {
-    # One scale for both axes; the field checks reject two different values.
-    args$xyScale <- entry$xAxisScale %||% entry$yAxisScale
-    if (!is.null(entry$foldDistance)) {
-      args$comparisonLineVector <- ospsuite.plots::getFoldDistanceList(
-        folds = .parseExcelMultiValueField(
-          entry$foldDistance,
-          fieldName = "foldDistance",
-          plotID = entry$plotId
-        )
-      )
-    }
-    args$lloqOnBothAxes <- entry$lloqOnBothAxes %||% TRUE
-  }
-  # Drop the absent fields so the `ospsuite` defaults apply.
-  args <- Filter(Negate(is.null), args)
+  config <- .plotConfigurationForEntry(entry)
+  args <- .plotFunctionArgs(config, plotType, dataCombined)
 
   plot <- switch(
     plotType,
@@ -629,70 +608,234 @@ createPlotsFromExcel <- function(...) {
   if (is.null(plot)) {
     return(NULL)
   }
-
-  labels <- Filter(
-    Negate(is.null),
-    list(x = entry$xLabel, y = entry$yLabel)
-  )
-  plot +
-    .esqlabsPlotStyle() +
-    do.call(
-      ggplot2::labs,
-      c(list(title = entry$title, subtitle = entry$subtitle), labels)
-    )
+  # Adding a scale that replaces one `ospsuite.plots` already set is reported
+  # by `ggplot2` with a message; replacing it is the intent.
+  suppressMessages(plot + .plotStyleComponents(config, plotType, plot))
 }
 
-#' Parse one limits field of a Plot definition
+#' The plot settings of one Plot definition
 #'
 #' @param entry One Plot definition (a named list).
-#' @param field `"xValuesLimits"`, `"yValuesLimits"`, `"xAxisLimits"`, or
-#'   `"yAxisLimits"`.
-#' @returns Two numbers, or `NULL` when the field is absent.
+#' @returns [createEsqlabsPlotConfiguration()] with the definition's fields,
+#'   converted to their types, in place of the house values.
 #' @keywords internal
 #' @noRd
-.parsePlotLimits <- function(entry, field) {
-  if (is.null(entry[[field]])) {
-    return(NULL)
+.plotConfigurationForEntry <- function(entry) {
+  config <- createEsqlabsPlotConfiguration()
+  for (field in intersect(names(entry), names(.plotFields))) {
+    if (!is.null(entry[[field]])) {
+      config[[field]] <- .parsePlotFieldValue(
+        entry[[field]],
+        .plotFields[[field]]
+      )
+    }
   }
-  .parseExcelMultiValueField(
-    entry[[field]],
-    fieldName = field,
-    plotID = entry$plotId,
-    expectedLength = 2
-  )
+  config
 }
 
-#' Scale arguments for one axis of a time profile
+#' Arguments of the `ospsuite` plot function for one plot
 #'
-#' Axis limits set the visible range and keep the points outside it (a zoom).
-#' Value limits remove the points outside them. With both, the axis limits set
-#' the range and the points outside the value limits are removed.
+#' @param config Plot settings from `.plotConfigurationForEntry()`.
+#' @param plotType The plot type.
+#' @param dataCombined The `DataCombined` the plot draws.
+#' @returns A named list of arguments without `NULL` entries.
+#' @keywords internal
+#' @noRd
+.plotFunctionArgs <- function(config, plotType, dataCombined) {
+  isTimeProfile <- plotType %in% .timeProfilePlotTypes
+  isOvs <- identical(plotType, "observedVsSimulated")
+
+  plotData <- dataCombined
+  if (identical(config$displayLLOQ, FALSE) && (isTimeProfile || isOvs)) {
+    # Without an LLOQ value no LLOQ line is drawn, and points below the LLOQ
+    # look like the others.
+    plotData <- dataCombined$toDataFrame()
+    if ("lloq" %in% names(plotData)) {
+      plotData$lloq <- NA_real_
+    }
+  }
+
+  args <- list(plotData = plotData, yUnit = config$yUnit)
+  if (isTimeProfile || identical(plotType, "residualsVsTime")) {
+    args$xUnit <- config$xUnit
+  }
+  if (isOvs) {
+    # One scale for both axes; the field checks reject two different values.
+    args$xyScale <- config$xAxisScale %||% config$yAxisScale
+  } else {
+    args$xScale <- config$xAxisScale
+    args$yScale <- config$yAxisScale
+  }
+  args$xScaleArgs <- .plotScaleArgs(config, "x", plotType)
+  args$yScaleArgs <- .plotScaleArgs(config, "y", plotType)
+
+  args$geomPointAttributes <- .dropNull(list(
+    size = config$pointsSize,
+    alpha = config$pointsAlpha
+  ))
+  args$geomErrorbarAttributes <- utils::modifyList(
+    ospsuite.plots::getDefaultGeomAttributes("Errorbar"),
+    .dropNull(list(
+      linewidth = config$errorbarsSize,
+      width = config$errorbarsCapSize,
+      linetype = config$errorbarsLinetype,
+      alpha = config$errorbarsAlpha
+    ))
+  )
+  lineAttributes <- .dropNull(list(
+    linewidth = config$linesSize,
+    alpha = config$linesAlpha
+  ))
+  if (isTimeProfile) {
+    args$geomLineAttributes <- utils::modifyList(
+      ospsuite.plots::getDefaultGeomAttributes("Line"),
+      lineAttributes
+    )
+  } else {
+    if (plotType %in% .residualPlotTypes && !is.null(config$linesLinetype)) {
+      lineAttributes$linetype <- config$linesLinetype[[1]]
+    }
+    args$geomComparisonLineAttributes <- utils::modifyList(
+      ospsuite.plots::getDefaultGeomAttributes("ComparisonLine"),
+      lineAttributes
+    )
+  }
+
+  if (identical(plotType, "population")) {
+    args$aggregation <- config$aggregation
+    args$quantiles <- config$quantiles
+    args$nsd <- config$nsd
+    ribbonAttributes <- utils::modifyList(
+      ospsuite.plots::getDefaultGeomAttributes("Ribbon"),
+      .dropNull(list(
+        alpha = config$ribbonsAlpha,
+        linewidth = config$ribbonsSize,
+        linetype = config$ribbonsLinetype[1]
+      ))
+    )
+    # `ospsuite.plots` draws the band without an outline (`color = NA`); an
+    # outline setting draws it in the band's color.
+    if (!is.null(config$ribbonsSize) || !is.null(config$ribbonsLinetype)) {
+      ribbonAttributes$color <- NULL
+    }
+    args$geomRibbonAttributes <- ribbonAttributes
+  }
+
+  if (isOvs) {
+    if (!is.null(config$foldDistance)) {
+      args$comparisonLineVector <- ospsuite.plots::getFoldDistanceList(
+        folds = config$foldDistance
+      )
+    }
+    args$lloqOnBothAxes <- config$lloqOnBothAxes %||%
+      if (!is.null(config$lloqDirection)) {
+        identical(config$lloqDirection, "both")
+      } else {
+        TRUE
+      }
+  }
+
+  .dropNull(args)
+}
+
+#' A list without its `NULL` entries
 #'
-#' @param entry One Plot definition (a named list).
+#' @keywords internal
+#' @noRd
+.dropNull <- function(x) {
+  Filter(Negate(is.null), x)
+}
+
+#' Scale arguments for one axis of a plot
+#'
+#' Each field owns one argument: the limits fields `limits` and `oob`, the
+#' ticks `breaks`, the tick labels `labels`, and the expansion `expand`. Axis
+#' limits set the visible range and keep the points outside it (a zoom). Value
+#' limits remove the points outside them. With both, the axis limits set the
+#' range and the points outside the value limits are removed.
+#'
+#' @param config Plot settings from `.plotConfigurationForEntry()`.
 #' @param axis `"x"` or `"y"`.
+#' @param plotType The plot type.
 #' @returns A list of arguments for the `ggplot2` position scale, or `NULL`
-#'   when the plot sets no limits on this axis, so that the `ospsuite.plots`
+#'   when the plot sets nothing on this axis, so that the `ospsuite.plots`
 #'   default applies.
 #' @keywords internal
 #' @noRd
-.plotScaleArgs <- function(entry, axis) {
-  valuesLimits <- .parsePlotLimits(entry, paste0(axis, "ValuesLimits"))
-  axisLimits <- .parsePlotLimits(entry, paste0(axis, "AxisLimits"))
-  if (is.null(axisLimits)) {
-    if (is.null(valuesLimits)) {
-      return(NULL)
+.plotScaleArgs <- function(config, axis, plotType) {
+  field <- function(suffix) config[[paste0(axis, suffix)]]
+  args <- list()
+
+  valuesLimits <- field("ValuesLimits")
+  axisLimits <- field("AxisLimits")
+  if (!is.null(axisLimits)) {
+    args$limits <- axisLimits
+    args$oob <- scales::oob_keep
+    if (!is.null(valuesLimits)) {
+      # `oob` receives values on the transformed scale, so the value limits are
+      # transformed the same way.
+      defaultScale <- if (identical(plotType, "observedVsSimulated")) {
+        "log"
+      } else {
+        "linear"
+      }
+      isLog <- identical(field("AxisScale") %||% defaultScale, "log")
+      censorRange <- if (isLog) log10(valuesLimits) else valuesLimits
+      args$oob <- function(x, range) scales::oob_censor(x, range = censorRange)
     }
-    return(list(limits = valuesLimits, oob = scales::oob_censor))
+  } else if (!is.null(valuesLimits)) {
+    args$limits <- valuesLimits
+    args$oob <- scales::oob_censor
   }
-  if (is.null(valuesLimits)) {
-    return(list(limits = axisLimits, oob = scales::oob_keep))
+
+  if (!is.null(field("AxisTicks"))) {
+    args$breaks <- field("AxisTicks")
   }
-  # `oob` receives values on the transformed scale, so the value limits are
-  # transformed the same way. `ospsuite.plots` uses a linear scale by default.
-  isLog <- identical(entry[[paste0(axis, "AxisScale")]], "log")
-  censorRange <- if (isLog) log10(valuesLimits) else valuesLimits
-  list(
-    limits = axisLimits,
-    oob = function(x, range) scales::oob_censor(x, range = censorRange)
+  tickLabels <- field("AxisTicksLabels")
+  if (!is.null(tickLabels) && !identical(tickLabels, "default")) {
+    args$labels <- .plotTickLabels(tickLabels)
+  }
+  if (!is.null(field("AxisExpand"))) {
+    args$expand <- if (isTRUE(field("AxisExpand"))) {
+      ggplot2::expansion(mult = 0.05)
+    } else {
+      ggplot2::expansion(mult = 0, add = 0)
+    }
+  }
+
+  if (length(args) == 0L) {
+    return(NULL)
+  }
+  # The time axis of a time profile starts at 0 by default; keep that unless a
+  # limits field replaces it.
+  if (axis == "x" && plotType %in% .timeProfilePlotTypes) {
+    args <- utils::modifyList(
+      eval(formals(ospsuite.plots::plotTimeProfile)$xScaleArgs),
+      args
+    )
+  }
+  args
+}
+
+#' Tick labels for one tick-label setting
+#'
+#' @param tickLabels One of `.plotTickLabelNames` or label texts.
+#' @returns The `labels` argument of a `ggplot2` scale.
+#' @keywords internal
+#' @noRd
+.plotTickLabels <- function(tickLabels) {
+  if (length(tickLabels) > 1L || !tickLabels %in% .plotTickLabelNames) {
+    return(tickLabels)
+  }
+  switch(
+    tickLabels,
+    none = function(ticks) rep("", length(ticks)),
+    identity = function(ticks) as.character(ticks),
+    log = .logTickLabels,
+    ln = .lnTickLabels,
+    sqrt = .sqrtTickLabels,
+    greek = .greekTickLabels,
+    pi = .piTickLabels,
+    percentiles = .percentileTickLabels
   )
 }

@@ -57,6 +57,7 @@ Suggests:
     quarto,
     reactable,
     rmarkdown,
+    svglite,
     testthat (>= 3.0.0),
     vdiffr (>= 1.0.0),
     withr,

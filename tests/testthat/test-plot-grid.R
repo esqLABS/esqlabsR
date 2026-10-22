@@ -106,7 +106,9 @@ test_that("plotGrid() renders the grid with its annotations and tags", {
 
 test_that("plotGrid() wraps long grid annotations and long plot titles", {
   plots <- lapply(boxPlots(), function(p) {
-    p + .esqlabsPlotStyle() + ggplot2::labs(title = longText("Title:"))
+    p +
+      .plotTheme(createEsqlabsPlotConfiguration(), p) +
+      ggplot2::labs(title = longText("Title:"))
   })
   plotGridConfiguration <- PlotGridConfiguration$new(plots)
   plotGridConfiguration$tagLevels <- "A"

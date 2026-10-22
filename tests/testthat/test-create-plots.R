@@ -582,89 +582,101 @@ test_that("createPlots aborts on an unknown plotType even when validate = FALSE"
 
 # Plot definition fields -> ospsuite plot functions ----
 
-test_that(".buildPlot passes each field to the ospsuite argument of its plot type", {
-  calls <- list()
-  capture <- function(fn) {
-    function(...) {
-      calls[[fn]] <<- list(...)
-      NULL
-    }
+test_that(".plotFunctionArgs maps fields to the ospsuite arguments of each plot type", {
+  argsFor <- function(entry) {
+    .plotFunctionArgs(
+      .plotConfigurationForEntry(entry),
+      entry$plotType,
+      dataCombined = "dc"
+    )
   }
-  local_mocked_bindings(
-    plotTimeProfile = capture("plotTimeProfile"),
-    plotPredictedVsObserved = capture("plotPredictedVsObserved"),
-    plotResidualsVsCovariate = capture("plotResidualsVsCovariate"),
-    .package = "ospsuite"
-  )
+  houseErrorbars <- list(width = 2.75, linewidth = 0.65)
 
-  .buildPlot(
-    list(
-      plotId = "p_pop",
-      plotType = "population",
-      xUnit = "h",
-      yUnit = "µmol/l",
-      yAxisScale = "log",
-      aggregation = "quantiles",
-      quantiles = "0.1, 0.5, 0.9",
-      nsd = 2
-    ),
-    dataCombined = "dc"
-  )
-  .buildPlot(
-    list(
-      plotId = "p_ovs",
-      plotType = "observedVsSimulated",
-      yAxisScale = "linear",
-      foldDistance = 3
-    ),
-    dataCombined = "dc"
-  )
-  .buildPlot(
-    list(
-      plotId = "p_rvt",
-      plotType = "residualsVsTime",
-      xUnit = "min",
-      yUnit = "mg/l"
-    ),
-    dataCombined = "dc"
-  )
+  population <- argsFor(list(
+    plotType = "population",
+    xUnit = "h",
+    yUnit = "µmol/l",
+    yAxisScale = "log",
+    aggregation = "quantiles",
+    quantiles = "0.1, 0.5, 0.9",
+    nsd = 2,
+    linesSize = 2,
+    pointsAlpha = 0.4,
+    ribbonsAlpha = 0.3,
+    ribbonsLinetype = "dashed",
+    errorbarsLinetype = "dotted"
+  ))
+  ovs <- argsFor(list(
+    plotType = "observedVsSimulated",
+    yAxisScale = "linear",
+    foldDistance = 3,
+    lloqDirection = "vertical"
+  ))
+  residuals <- argsFor(list(
+    plotType = "residualsVsTime",
+    xUnit = "min",
+    yUnit = "mg/l",
+    linesLinetype = "dotted"
+  ))
 
   expect_equal(
-    calls,
     list(
-      plotTimeProfile = list(
+      population = population,
+      ovs = ovs,
+      residuals = residuals
+    ),
+    list(
+      population = list(
         plotData = "dc",
         yUnit = "µmol/l",
         xUnit = "h",
         yScale = "log",
+        geomPointAttributes = list(size = 1.75, alpha = 0.4),
+        geomErrorbarAttributes = c(houseErrorbars, linetype = "dotted"),
+        geomLineAttributes = list(linewidth = 2, alpha = 0.75),
         aggregation = "quantiles",
         quantiles = c(0.1, 0.5, 0.9),
-        nsd = 2
+        nsd = 2,
+        geomRibbonAttributes = list(alpha = 0.3, linetype = "dashed")
       ),
-      plotPredictedVsObserved = list(
+      ovs = list(
         plotData = "dc",
         xyScale = "linear",
+        geomPointAttributes = list(size = 1.75),
+        geomErrorbarAttributes = houseErrorbars,
+        geomComparisonLineAttributes = list(
+          linetype = "dashed",
+          linewidth = 0.5,
+          alpha = 0.75
+        ),
         comparisonLineVector = ospsuite.plots::getFoldDistanceList(folds = 3),
-        lloqOnBothAxes = TRUE
+        lloqOnBothAxes = FALSE
       ),
-      plotResidualsVsCovariate = list(
+      residuals = list(
         plotData = "dc",
         yUnit = "mg/l",
         xUnit = "min",
-        xAxis = "time"
+        geomPointAttributes = list(size = 1.75),
+        geomErrorbarAttributes = houseErrorbars,
+        geomComparisonLineAttributes = list(
+          linetype = "dotted",
+          linewidth = 0.5,
+          alpha = 0.75
+        )
       )
     )
   )
 })
 
-test_that(".plotScaleArgs maps value limits and axis limits", {
-  expect_null(.plotScaleArgs(list(plotId = "p"), "x"))
+test_that(".plotScaleArgs maps limits, ticks, tick labels, and expansion", {
+  scaleArgs <- function(entry, axis, plotType = "individual") {
+    .plotScaleArgs(.plotConfigurationForEntry(entry), axis, plotType)
+  }
+
+  expect_null(scaleArgs(list(), "y"))
 
   # Value limits only: points outside are removed.
-  valuesOnly <- .plotScaleArgs(
-    list(plotId = "p", yValuesLimits = "1, 100"),
-    "y"
-  )
+  valuesOnly <- scaleArgs(list(yValuesLimits = "1, 100"), "y")
   expect_equal(valuesOnly$limits, c(1, 100))
   expect_equal(
     valuesOnly$oob(c(0.5, 50, 200), range = c(1, 100)),
@@ -672,15 +684,14 @@ test_that(".plotScaleArgs maps value limits and axis limits", {
   )
 
   # Axis limits only: the axis is zoomed, points outside are kept.
-  axisOnly <- .plotScaleArgs(list(plotId = "p", xAxisLimits = "0, 12"), "x")
+  axisOnly <- scaleArgs(list(xAxisLimits = "0, 12"), "x")
   expect_equal(axisOnly$limits, c(0, 12))
   expect_equal(axisOnly$oob(c(-1, 6, 24), range = c(0, 12)), c(-1, 6, 24))
 
   # Both on a log axis: the axis limits set the range, and the value limits
   # remove points on the transformed (log10) scale the oob function receives.
-  both <- .plotScaleArgs(
+  both <- scaleArgs(
     list(
-      plotId = "p",
       yAxisScale = "log",
       yAxisLimits = "0.1, 1000",
       yValuesLimits = "1, 100"
@@ -691,6 +702,54 @@ test_that(".plotScaleArgs maps value limits and axis limits", {
   expect_equal(
     both$oob(log10(c(0.5, 50, 500)), range = log10(c(0.1, 1000))),
     c(NA, log10(50), NA)
+  )
+  # On an observedVsSimulated plot the axes are logarithmic by default.
+  ovs <- scaleArgs(
+    list(yAxisLimits = "0.1, 1000", yValuesLimits = "1, 100"),
+    "y",
+    "observedVsSimulated"
+  )
+  expect_equal(ovs$oob(log10(c(0.5, 50)), range = 0), c(NA, log10(50)))
+
+  # Ticks, label texts, and no expansion on the time axis, which keeps its
+  # start at 0.
+  ticks <- scaleArgs(
+    list(
+      xAxisTicks = "0, 12, 24",
+      xAxisTicksLabels = "dose, \"12 h, second dose\", end",
+      xAxisExpand = FALSE
+    ),
+    "x"
+  )
+  expect_equal(
+    ticks,
+    list(
+      limits = c(0, NA),
+      breaks = c(0, 12, 24),
+      labels = c("dose", "12 h, second dose", "end"),
+      expand = ggplot2::expansion(mult = 0, add = 0)
+    )
+  )
+})
+
+test_that("the tick label names give the tlf labels", {
+  expect_equal(
+    list(
+      none = .plotTickLabels("none")(c(1, 10)),
+      identity = .plotTickLabels("identity")(c(1, 10)),
+      log = .plotTickLabels("log")(c(1, 20)),
+      greek = .plotTickLabels("greek")(c(1, 2)),
+      pi = .plotTickLabels("pi")(c(0, pi / 2, pi)),
+      percentiles = .plotTickLabels("percentiles")(0)
+    ),
+    list(
+      none = c("", ""),
+      identity = c("1", "10"),
+      log = expression(10^0, 2 %*% 10^1),
+      greek = c("\u03b1", "\u03b2"),
+      pi = c("0", " + \u03c0/2", "\u03c0"),
+      percentiles = "50%"
+    )
   )
 })
 
@@ -789,4 +848,220 @@ test_that("createPlots draws lines, points, and ribbons in the ESQlabs colors", 
       populationFill = esqlabsColors(1)
     )
   )
+})
+
+# Every plot field changes the drawn plot ----
+
+test_that("every plot field changes the plot of the plot types that apply it", {
+  skip_if_not_installed("svglite")
+  project <- exampleProject()
+  results <- suppressWarnings(runScenarios(
+    project,
+    scenarios = c("aciclovir_iv", "aciclovir_iv_population")
+  ))
+  path <- project$definitions$outputPaths$aciclovir_pvb
+  # An LLOQ, so that the LLOQ fields have a line to act on.
+  observed <- loadObservedData(project)[[1]]
+  observed$LLOQ <- 1
+  individual <- DataCombined$new()
+  individual$addSimulationResults(
+    results$aciclovir_iv$results,
+    quantitiesOrPaths = path,
+    names = "Aciclovir simulated",
+    groups = "Aciclovir"
+  )
+  individual$addDataSets(
+    observed,
+    names = "Aciclovir observed",
+    groups = "Aciclovir"
+  )
+  population <- DataCombined$new()
+  population$addSimulationResults(
+    results$aciclovir_iv_population$results,
+    quantitiesOrPaths = path,
+    names = "Population",
+    groups = "Aciclovir"
+  )
+  population$addDataSets(
+    observed,
+    names = "Aciclovir observed",
+    groups = "Aciclovir"
+  )
+
+  render <- function(entry) {
+    dataCombined <- if (entry$plotType == "population") {
+      population
+    } else {
+      individual
+    }
+    plot <- suppressWarnings(.buildPlot(entry, dataCombined))
+    svg <- svglite::svgstring(width = 7, height = 5, standalone = FALSE)
+    suppressWarnings(print(plot))
+    grDevices::dev.off()
+    as.character(svg())
+  }
+
+  # A value for each field that differs from its house and `ospsuite` default.
+  sample <- list(
+    xUnit = "min",
+    yUnit = "µg/l",
+    title = "Aciclovir",
+    subtitle = "IV",
+    caption = "Source: study",
+    xLabel = "Time",
+    yLabel = "Concentration",
+    legendTitle = "Compound",
+    legendPosition = "insideTopRight",
+    legendBackgroundColor = "yellow",
+    legendBackgroundAlpha = 0.5,
+    legendBorderColor = "red",
+    legendBorderType = "dotted",
+    legendBorderSize = 2,
+    xAxisScale = "log",
+    yAxisScale = "log",
+    xAxisLimits = "1, 6",
+    yAxisLimits = "1, 5",
+    xValuesLimits = "1, 6",
+    yValuesLimits = "1, 5",
+    xAxisTicks = "0, 6, 18",
+    yAxisTicks = "1, 5",
+    xAxisTicksLabels = "none",
+    yAxisTicksLabels = "greek",
+    xAxisExpand = FALSE,
+    yAxisExpand = FALSE,
+    watermark = "DRAFT",
+    linesColor = "red, navy",
+    linesSize = 3,
+    linesLinetype = "dotted",
+    linesAlpha = 0.2,
+    pointsColor = "red",
+    pointsShape = "square, triangle",
+    pointsSize = 5,
+    pointsAlpha = 0.2,
+    ribbonsFill = "red",
+    ribbonsSize = 2,
+    ribbonsLinetype = "dotted",
+    ribbonsAlpha = 0.1,
+    errorbarsSize = 2,
+    errorbarsCapSize = 10,
+    errorbarsLinetype = "dotted",
+    errorbarsAlpha = 0.1,
+    displayLLOQ = FALSE,
+    lloqDirection = "vertical",
+    foldLinesLegend = FALSE,
+    foldLinesLegendDiagonal = FALSE,
+    aggregation = "arithmetic",
+    quantiles = "0.25, 0.5, 0.75",
+    nsd = 3,
+    foldDistance = 3,
+    lloqOnBothAxes = FALSE
+  )
+  for (element in c(.plotTextElements, "watermark")) {
+    style <- list(
+      Color = "red",
+      Size = 17,
+      FontFace = "bold.italic",
+      FontFamily = "mono",
+      Angle = 45,
+      Align = if (element %in% c("caption", "yAxisLabelTicks")) {
+        "left"
+      } else {
+        "right"
+      },
+      Margin = if (element == "watermark") "10, 0, 60, 0" else "25, 25, 25, 25"
+    )
+    sample[paste0(element, names(style))] <- style
+  }
+  for (prefix in c("xAxis", "yAxis", "xGrid", "yGrid")) {
+    sample[paste0(prefix, c("Color", "Size", "Linetype"))] <- list(
+      "red",
+      3,
+      "dotted"
+    )
+  }
+  for (prefix in c("plotBackground", "plotPanelBackground")) {
+    sample[paste0(prefix, c("Fill", "Color", "Size", "Linetype"))] <-
+      list("lightyellow", "red", 3, "dotted")
+  }
+  expect_setequal(names(sample), names(.plotFields))
+
+  # Fields that need another field to have something to act on.
+  companions <- function(field) {
+    element <- sub(
+      paste0("(", paste(.plotTextStyleSuffixes, collapse = "|"), ")$"),
+      "",
+      field
+    )
+    textElements <- c(
+      "title",
+      "subtitle",
+      "caption",
+      "legendTitle",
+      "watermark"
+    )
+    switch(
+      field,
+      legendBorderType = ,
+      legendBorderSize = list(legendBorderColor = "red"),
+      nsd = list(aggregation = "arithmetic"),
+      if (element != field && element %in% textElements) {
+        stats::setNames(list(sample[[element]]), element)
+      } else {
+        list()
+      }
+    )
+  }
+  # Each field on the first plot type that applies it, plus the plot types on
+  # which it acts through another mechanism.
+  checks <- lapply(names(.plotFields), function(field) {
+    plotType <- .plotFields[[field]]$appliesTo[[1]]
+    if (field == "lloqDirection") {
+      plotType <- "observedVsSimulated"
+    }
+    list(field = field, plotType = plotType)
+  })
+  otherMechanisms <- list(
+    c("linesLinetype", "observedVsSimulated"),
+    c("linesLinetype", "residualsVsTime"),
+    c("linesSize", "observedVsSimulated"),
+    c("linesAlpha", "residualsVsSimulated"),
+    c("pointsColor", "residualsVsTime"),
+    c("xAxisScale", "residualsVsSimulated"),
+    c("displayLLOQ", "observedVsSimulated"),
+    c("xAxisLimits", "observedVsSimulated"),
+    c("yValuesLimits", "observedVsSimulated"),
+    c("xAxisTicks", "residualsVsTime"),
+    c("errorbarsCapSize", "observedVsSimulated")
+  )
+  checks <- c(
+    checks,
+    lapply(otherMechanisms, function(x) list(field = x[[1]], plotType = x[[2]]))
+  )
+
+  baselines <- list()
+  withoutEffect <- character()
+  for (check in checks) {
+    base <- c(
+      list(plotId = "p", plotType = check$plotType),
+      companions(check$field)
+    )
+    key <- paste(check$plotType, names(base)[-(1:2)], collapse = "/")
+    baselines[[key]] <- baselines[[key]] %||% render(base)
+    entry <- base
+    entry[[check$field]] <- sample[[check$field]]
+    if (
+      check$plotType == "observedVsSimulated" &&
+        grepl("AxisScale$", check$field)
+    ) {
+      entry[[check$field]] <- "linear"
+    }
+    if (identical(render(entry), baselines[[key]])) {
+      withoutEffect <- c(
+        withoutEffect,
+        paste(check$field, "on", check$plotType)
+      )
+    }
+  }
+
+  expect_identical(withoutEffect, character())
 })
