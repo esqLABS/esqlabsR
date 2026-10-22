@@ -191,7 +191,7 @@ createEsqlabsPlotConfiguration <- function() {
 #
 # The parts of a Plot definition's settings that are added to the plot the
 # `ospsuite` plot function returns: one theme, the titles, the color, fill,
-# shape, and line type scales, legend guides, and the watermark. The field
+# shape, and line type scales, and legend guides. The field
 # table `.plotFields` (R/plots.R) says which plot types apply each field.
 
 #' Style components for one plot
@@ -203,7 +203,8 @@ createEsqlabsPlotConfiguration <- function() {
 #' @param config Plot settings from `.plotConfigurationForEntry()`.
 #' @param plotType The plot type.
 #' @param plot The plot the `ospsuite` plot function returned, read for the
-#'   theme values and scales that a setting changes.
+#'   theme value a setting builds on (the legend fill under
+#'   `legendBackgroundAlpha`).
 #' @returns A list of `ggplot2` components, to add to `plot` with `+`.
 #' @keywords internal
 #' @noRd
@@ -214,18 +215,17 @@ createEsqlabsPlotConfiguration <- function() {
       do.call(
         ggplot2::labs,
         .dropNull(list(
-          title = config$title,
-          subtitle = config$subtitle,
-          caption = config$caption,
-          x = config$xLabel,
-          y = config$yLabel,
-          colour = config$legendTitle,
-          fill = config$legendTitle
+          title = config[["title"]],
+          subtitle = config[["subtitle"]],
+          caption = config[["caption"]],
+          x = config[["xLabel"]],
+          y = config[["yLabel"]],
+          colour = config[["legendTitle"]],
+          fill = config[["legendTitle"]]
         ))
       )
     ),
-    .plotScales(config, plotType, plot),
-    .plotWatermark(config)
+    .plotScales(config, plotType)
   )
 }
 
@@ -391,39 +391,39 @@ createEsqlabsPlotConfiguration <- function() {
     panel.grid.major.x = lineElement("xGrid"),
     panel.grid.major.y = lineElement("yGrid"),
     plot.background = rectElement(
-      config$plotBackgroundFill,
-      config$plotBackgroundColor,
-      config$plotBackgroundSize,
-      config$plotBackgroundLinetype
+      config[["plotBackgroundFill"]],
+      config[["plotBackgroundColor"]],
+      config[["plotBackgroundSize"]],
+      config[["plotBackgroundLinetype"]]
     ),
     panel.background = rectElement(
-      config$plotPanelBackgroundFill,
+      config[["plotPanelBackgroundFill"]],
       NULL,
       NULL,
       NULL
     ),
     # `ospsuite.plots` draws the panel outline with `panel.border`.
     panel.border = if (
-      !is.null(config$plotPanelBackgroundColor) ||
-        !is.null(config$plotPanelBackgroundSize) ||
-        !is.null(config$plotPanelBackgroundLinetype)
+      !is.null(config[["plotPanelBackgroundColor"]]) ||
+        !is.null(config[["plotPanelBackgroundSize"]]) ||
+        !is.null(config[["plotPanelBackgroundLinetype"]])
     ) {
       rectElement(
         NA,
-        config$plotPanelBackgroundColor,
-        config$plotPanelBackgroundSize,
-        config$plotPanelBackgroundLinetype
+        config[["plotPanelBackgroundColor"]],
+        config[["plotPanelBackgroundSize"]],
+        config[["plotPanelBackgroundLinetype"]]
       )
     }
   )
   # `ospsuite` blanks the legend title; a `legendTitle` shows it again.
-  if (!is.null(config$legendTitle)) {
+  if (!is.null(config[["legendTitle"]])) {
     elements$legend.title <- .plotTextElement(config, "legendTitle") %||%
       ggplot2::element_text()
   }
 
-  backgroundFill <- config$legendBackgroundColor
-  if (!is.null(config$legendBackgroundAlpha)) {
+  backgroundFill <- config[["legendBackgroundColor"]]
+  if (!is.null(config[["legendBackgroundAlpha"]])) {
     backgroundFill <- backgroundFill %||%
       ggplot2::calc_element(
         "legend.background",
@@ -432,18 +432,18 @@ createEsqlabsPlotConfiguration <- function() {
       "white"
     backgroundFill <- scales::alpha(
       backgroundFill,
-      config$legendBackgroundAlpha
+      config[["legendBackgroundAlpha"]]
     )
   }
   elements$legend.background <- rectElement(
     backgroundFill,
-    config$legendBorderColor,
-    config$legendBorderSize,
-    config$legendBorderType
+    config[["legendBorderColor"]],
+    config[["legendBorderSize"]],
+    config[["legendBorderType"]]
   )
 
-  if (!is.null(config$legendPosition)) {
-    elements <- c(elements, .plotLegendPlacement(config$legendPosition))
+  if (!is.null(config[["legendPosition"]])) {
+    elements <- c(elements, .plotLegendPlacement(config[["legendPosition"]]))
   }
 
   do.call(ggplot2::theme, .dropNull(elements))
@@ -461,7 +461,7 @@ createEsqlabsPlotConfiguration <- function() {
 #' @returns A list of `ggplot2` components.
 #' @keywords internal
 #' @noRd
-.plotScales <- function(config, plotType, plot) {
+.plotScales <- function(config, plotType) {
   recycled <- function(aesthetic, values) {
     ggplot2::discrete_scale(
       aesthetic,
@@ -469,99 +469,39 @@ createEsqlabsPlotConfiguration <- function() {
     )
   }
   isTimeProfile <- plotType %in% .timeProfilePlotTypes
-  colors <- if (isTimeProfile) config$linesColor else config$pointsColor
-  fills <- if (identical(plotType, "population")) config$ribbonsFill else colors
+  colors <- if (isTimeProfile) {
+    config[["linesColor"]]
+  } else {
+    config[["pointsColor"]]
+  }
+  fills <- if (identical(plotType, "population")) {
+    config[["ribbonsFill"]]
+  } else {
+    colors
+  }
   components <- .dropNull(list(
     if (!is.null(colors)) recycled("colour", colors),
     if (!is.null(fills)) recycled("fill", fills),
-    if (!is.null(config$pointsShape)) recycled("shape", config$pointsShape)
+    if (!is.null(config[["pointsShape"]])) {
+      recycled("shape", config[["pointsShape"]])
+    }
   ))
 
-  if (isTimeProfile && !is.null(config$linesLinetype)) {
+  if (isTimeProfile && !is.null(config[["linesLinetype"]])) {
     components <- c(
       components,
-      list(recycled("linetype", config$linesLinetype))
+      list(recycled("linetype", config[["linesLinetype"]]))
     )
   }
 
-  if (identical(plotType, "observedVsSimulated")) {
-    foldLines <- plot$scales$get_scales("linetype")
-    if (
-      !is.null(foldLines) &&
-        (!is.null(config$linesLinetype) ||
-          identical(config$foldLinesLegendDiagonal, FALSE))
-    ) {
-      labels <- foldLines$breaks
-      linetypes <- foldLines$palette(length(labels))
-      if (!is.null(config$linesLinetype)) {
-        linetypes <- rep_len(config$linesLinetype, length(labels))
-      }
-      names(linetypes) <- labels
-      # The first fold line is the line of identity.
-      breaks <- if (identical(config$foldLinesLegendDiagonal, FALSE)) {
-        labels[-1]
-      } else {
-        labels
-      }
-      components <- c(
-        components,
-        list(ggplot2::scale_linetype_manual(
-          values = linetypes,
-          breaks = breaks,
-          guide = ggplot2::guide_legend(order = 10, title = NULL)
-        ))
-      )
-    }
-    if (identical(config$foldLinesLegend, FALSE)) {
-      components <- c(components, list(ggplot2::guides(linetype = "none")))
-    }
+  if (
+    identical(plotType, "observedVsSimulated") &&
+      identical(config[["foldLinesLegend"]], FALSE)
+  ) {
+    components <- c(components, list(ggplot2::guides(linetype = "none")))
   }
 
   components
-}
-
-#' Watermark of one plot
-#'
-#' One text layer inside the plot's panel, so it stays with the plot inside a
-#' plot grid. It is independent of the session watermark of `ospsuite.plots`,
-#' whose `watermarkFormat` option gives the style a field leaves unset.
-#'
-#' @param config Plot settings.
-#' @returns A list with one `ggplot2` layer, or an empty list.
-#' @keywords internal
-#' @noRd
-.plotWatermark <- function(config) {
-  if (is.null(config$watermark)) {
-    return(list())
-  }
-  format <- ospsuite.plots::getOspsuite.plots.option(
-    ospsuite.plots::OptionKeys$watermarkFormat
-  )
-  margin <- config$watermarkMargin %||% c(0, 0, 0, 0)
-  align <- config$watermarkAlign %||% "center"
-  x <- switch(
-    align,
-    left = grid::unit(0, "npc") + grid::unit(margin[[4]], "pt"),
-    center = grid::unit(0.5, "npc"),
-    right = grid::unit(1, "npc") - grid::unit(margin[[2]], "pt")
-  )
-  y <- grid::unit(0.5, "npc") +
-    grid::unit((margin[[3]] - margin[[1]]) / 2, "pt")
-  label <- grid::textGrob(
-    config$watermark,
-    x = x,
-    y = y,
-    hjust = .plotHjust(align),
-    rot = config$watermarkAngle %||% format$angle,
-    gp = grid::gpar(
-      col = config$watermarkColor %||% format$color,
-      alpha = if (is.null(config$watermarkColor)) format$alpha else 1,
-      fontsize = config$watermarkSize %||% format$fontsize,
-      fontfamily = config$watermarkFontFamily %||% "",
-      fontface = config$watermarkFontFace %||% "plain"
-    )
-  )
-  list(ggplot2::annotation_custom(label))
 }
 
 #' Tick labels ported from `tlf`
@@ -617,7 +557,11 @@ createEsqlabsPlotConfiguration <- function() {
         return("")
       }
       key <- as.character(f)
-      if (key %in% names(fractions)) fractions[[key]] else paste0("+", f, "\u03c0")
+      if (key %in% names(fractions)) {
+        fractions[[key]]
+      } else {
+        paste0("+", f, "\u03c0")
+      }
     },
     character(1)
   )
@@ -750,6 +694,11 @@ createEsqlabsPlotGridConfiguration <- function() {
     )
   }
   customPlotConfiguration <- defaultPlotConfiguration
+  # `$` on a list matches a name partially, so `$subtitle` on a list without a
+  # subtitle but with `subtitleSize` would return the size. Holding every
+  # configuration field, unset ones as `NULL`, makes each `$` exact.
+  unset <- setdiff(.plotConfigurationFieldNames, names(customPlotConfiguration))
+  customPlotConfiguration[unset] <- list(NULL)
 
   # Capture additional parameters passed through ... and override
   additionalParams <- list(...)

@@ -732,6 +732,18 @@ test_that(".plotScaleArgs maps limits, ticks, tick labels, and expansion", {
   )
 })
 
+test_that("a plot without title fields gets no title", {
+  # The house settings hold `titleSize`, which `$title` would partially match.
+  config <- .plotConfigurationForEntry(list(plotType = "individual"))
+  plot <- ggplot2::ggplot() +
+    .plotStyleComponents(config, "individual", ggplot2::ggplot())
+
+  expect_equal(
+    list(title = plot$labels$title, subtitle = plot$labels$subtitle),
+    list(title = NULL, subtitle = NULL)
+  )
+})
+
 test_that("the tick label names give the tlf labels", {
   expect_equal(
     list(
@@ -1011,7 +1023,8 @@ test_that("every plot field changes the plot of the plot types that apply it", {
   }
   # Each field on the first plot type that applies it, plus the plot types on
   # which it acts through another mechanism.
-  checks <- lapply(names(.plotFields), function(field) {
+  supportedFields <- setdiff(names(.plotFields), .plotFieldsNotSupportedYet)
+  checks <- lapply(supportedFields, function(field) {
     plotType <- .plotFields[[field]]$appliesTo[[1]]
     if (field == "lloqDirection") {
       plotType <- "observedVsSimulated"
@@ -1019,13 +1032,11 @@ test_that("every plot field changes the plot of the plot types that apply it", {
     list(field = field, plotType = plotType)
   })
   otherMechanisms <- list(
-    c("linesLinetype", "observedVsSimulated"),
     c("linesLinetype", "residualsVsTime"),
     c("linesSize", "observedVsSimulated"),
     c("linesAlpha", "residualsVsSimulated"),
     c("pointsColor", "residualsVsTime"),
     c("xAxisScale", "residualsVsSimulated"),
-    c("displayLLOQ", "observedVsSimulated"),
     c("xAxisLimits", "observedVsSimulated"),
     c("yValuesLimits", "observedVsSimulated"),
     c("xAxisTicks", "residualsVsTime"),
@@ -1062,4 +1073,16 @@ test_that("every plot field changes the plot of the plot types that apply it", {
   }
 
   expect_identical(withoutEffect, character())
+
+  # The fields the OSP Suite plot functions cannot draw yet change nothing.
+  withEffect <- character()
+  for (field in .plotFieldsNotSupportedYet) {
+    plotType <- .plotFields[[field]]$appliesTo[[1]]
+    base <- list(plotId = "p", plotType = plotType)
+    entry <- c(base, sample[field])
+    if (!identical(render(entry), render(base))) {
+      withEffect <- c(withEffect, field)
+    }
+  }
+  expect_identical(withEffect, character())
 })

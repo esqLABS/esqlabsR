@@ -269,15 +269,15 @@ createPlotsFromExcel <- function(...) {
     )
   )
 
-  isOvs <- identical(plotConfiguration$plotType, "observedVsSimulated")
+  isOvs <- identical(plotConfiguration[["plotType"]], "observedVsSimulated")
   for (check in axisChecks) {
     scaleValue <- plotConfiguration[[check$scale]]
     # An observedVsSimulated plot has one scale for both axes, logarithmic
     # unless a scale field says otherwise.
     if (isOvs) {
-      scaleValue <- plotConfiguration$xAxisScale %||%
-        plotConfiguration$yAxisScale %||%
-        "log"
+      scaleValue <- plotConfiguration[["xAxisScale"]] %||%
+        plotConfiguration[["yAxisScale"]] %||%
+        formals(ospsuite::plotPredictedVsObserved)$xyScale
     }
     if (!is.null(scaleValue) && scaleValue == "log") {
       for (limitsField in check$limits) {
@@ -574,8 +574,8 @@ createPlotsFromExcel <- function(...) {
 #' Overlays the Plot definition's fields on [createEsqlabsPlotConfiguration()]
 #' and maps the result through `.plotFields`: units, scales, scale arguments,
 #' geom attributes, LLOQ, fold-line, and population settings become arguments
-#' of the `ospsuite` plot function; text, theme, color, shape, and line type
-#' settings and the watermark are added to the returned plot
+#' of the `ospsuite` plot function; titles, theme, and the color, shape, and
+#' line type scales are added to the returned plot as `ggplot2` layers
 #' (`.plotStyleComponents()`). A field the plot type does not apply has no
 #' effect, and an unset field without a house value passes no argument, so the
 #' `ospsuite` default applies.
@@ -645,46 +645,36 @@ createPlotsFromExcel <- function(...) {
   isTimeProfile <- plotType %in% .timeProfilePlotTypes
   isOvs <- identical(plotType, "observedVsSimulated")
 
-  plotData <- dataCombined
-  if (identical(config$displayLLOQ, FALSE) && (isTimeProfile || isOvs)) {
-    # Without an LLOQ value no LLOQ line is drawn, and points below the LLOQ
-    # look like the others.
-    plotData <- dataCombined$toDataFrame()
-    if ("lloq" %in% names(plotData)) {
-      plotData$lloq <- NA_real_
-    }
-  }
-
-  args <- list(plotData = plotData, yUnit = config$yUnit)
+  args <- list(plotData = dataCombined, yUnit = config[["yUnit"]])
   if (isTimeProfile || identical(plotType, "residualsVsTime")) {
-    args$xUnit <- config$xUnit
+    args$xUnit <- config[["xUnit"]]
   }
   if (isOvs) {
     # One scale for both axes; the field checks reject two different values.
-    args$xyScale <- config$xAxisScale %||% config$yAxisScale
+    args$xyScale <- config[["xAxisScale"]] %||% config[["yAxisScale"]]
   } else {
-    args$xScale <- config$xAxisScale
-    args$yScale <- config$yAxisScale
+    args$xScale <- config[["xAxisScale"]]
+    args$yScale <- config[["yAxisScale"]]
   }
   args$xScaleArgs <- .plotScaleArgs(config, "x", plotType)
   args$yScaleArgs <- .plotScaleArgs(config, "y", plotType)
 
   args$geomPointAttributes <- .dropNull(list(
-    size = config$pointsSize,
-    alpha = config$pointsAlpha
+    size = config[["pointsSize"]],
+    alpha = config[["pointsAlpha"]]
   ))
   args$geomErrorbarAttributes <- utils::modifyList(
     ospsuite.plots::getDefaultGeomAttributes("Errorbar"),
     .dropNull(list(
-      linewidth = config$errorbarsSize,
-      width = config$errorbarsCapSize,
-      linetype = config$errorbarsLinetype,
-      alpha = config$errorbarsAlpha
+      linewidth = config[["errorbarsSize"]],
+      width = config[["errorbarsCapSize"]],
+      linetype = config[["errorbarsLinetype"]],
+      alpha = config[["errorbarsAlpha"]]
     ))
   )
   lineAttributes <- .dropNull(list(
-    linewidth = config$linesSize,
-    alpha = config$linesAlpha
+    linewidth = config[["linesSize"]],
+    alpha = config[["linesAlpha"]]
   ))
   if (isTimeProfile) {
     args$geomLineAttributes <- utils::modifyList(
@@ -692,8 +682,10 @@ createPlotsFromExcel <- function(...) {
       lineAttributes
     )
   } else {
-    if (plotType %in% .residualPlotTypes && !is.null(config$linesLinetype)) {
-      lineAttributes$linetype <- config$linesLinetype[[1]]
+    if (
+      plotType %in% .residualPlotTypes && !is.null(config[["linesLinetype"]])
+    ) {
+      lineAttributes$linetype <- config[["linesLinetype"]][[1]]
     }
     args$geomComparisonLineAttributes <- utils::modifyList(
       ospsuite.plots::getDefaultGeomAttributes("ComparisonLine"),
@@ -702,34 +694,36 @@ createPlotsFromExcel <- function(...) {
   }
 
   if (identical(plotType, "population")) {
-    args$aggregation <- config$aggregation
-    args$quantiles <- config$quantiles
-    args$nsd <- config$nsd
+    args$aggregation <- config[["aggregation"]]
+    args$quantiles <- config[["quantiles"]]
+    args$nsd <- config[["nsd"]]
     ribbonAttributes <- utils::modifyList(
       ospsuite.plots::getDefaultGeomAttributes("Ribbon"),
       .dropNull(list(
-        alpha = config$ribbonsAlpha,
-        linewidth = config$ribbonsSize,
-        linetype = config$ribbonsLinetype[1]
+        alpha = config[["ribbonsAlpha"]],
+        linewidth = config[["ribbonsSize"]],
+        linetype = config[["ribbonsLinetype"]][1]
       ))
     )
     # `ospsuite.plots` draws the band without an outline (`color = NA`); an
     # outline setting draws it in the band's color.
-    if (!is.null(config$ribbonsSize) || !is.null(config$ribbonsLinetype)) {
+    if (
+      !is.null(config[["ribbonsSize"]]) || !is.null(config[["ribbonsLinetype"]])
+    ) {
       ribbonAttributes$color <- NULL
     }
     args$geomRibbonAttributes <- ribbonAttributes
   }
 
   if (isOvs) {
-    if (!is.null(config$foldDistance)) {
+    if (!is.null(config[["foldDistance"]])) {
       args$comparisonLineVector <- ospsuite.plots::getFoldDistanceList(
-        folds = config$foldDistance
+        folds = config[["foldDistance"]]
       )
     }
-    args$lloqOnBothAxes <- config$lloqOnBothAxes %||%
-      if (!is.null(config$lloqDirection)) {
-        identical(config$lloqDirection, "both")
+    args$lloqOnBothAxes <- config[["lloqOnBothAxes"]] %||%
+      if (!is.null(config[["lloqDirection"]])) {
+        identical(config[["lloqDirection"]], "both")
       } else {
         TRUE
       }
@@ -772,16 +766,14 @@ createPlotsFromExcel <- function(...) {
     args$limits <- axisLimits
     args$oob <- scales::oob_keep
     if (!is.null(valuesLimits)) {
-      # `oob` receives values on the transformed scale, so the value limits are
-      # transformed the same way.
-      defaultScale <- if (identical(plotType, "observedVsSimulated")) {
-        "log"
-      } else {
-        "linear"
+      # `oob` receives values and limits on the transformed scale. The limits
+      # are the axis limits, so comparing them tells whether the scale is
+      # logarithmic, and the value limits are transformed the same way.
+      args$oob <- function(x, range) {
+        isLog <- isTRUE(all.equal(range, log10(axisLimits)))
+        censorRange <- if (isLog) log10(valuesLimits) else valuesLimits
+        scales::oob_censor(x, range = censorRange)
       }
-      isLog <- identical(field("AxisScale") %||% defaultScale, "log")
-      censorRange <- if (isLog) log10(valuesLimits) else valuesLimits
-      args$oob <- function(x, range) scales::oob_censor(x, range = censorRange)
     }
   } else if (!is.null(valuesLimits)) {
     args$limits <- valuesLimits

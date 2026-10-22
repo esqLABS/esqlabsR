@@ -159,6 +159,20 @@ test_that("the sensitivity plots reject an unknown name in the plot configuratio
   )
 })
 
+test_that("an unset field reads as NULL, not as a field it prefixes", {
+  plotConfiguration <- createEsqlabsPlotConfiguration()
+  plotConfiguration$subtitleSize <- 12
+
+  applied <- .applyPlotConfiguration(
+    defaultPlotConfiguration = plotConfiguration
+  )
+
+  expect_equal(
+    list(applied$subtitle, applied$title, applied$subtitleSize),
+    list(NULL, NULL, 12)
+  )
+})
+
 test_that("the house plot configuration holds only plot configuration fields", {
   expect_in(
     names(createEsqlabsPlotConfiguration()),

@@ -407,7 +407,6 @@ test_that(".validatePlots accepts the 5.x plot settings", {
       xAxisTicksLabels = "start, middle, end",
       yAxisTicksLabels = "log",
       xGridLinetype = "dotted",
-      displayLLOQ = FALSE,
       lloqDirection = "horizontal"
     ),
     p_ovs = list(
@@ -447,13 +446,15 @@ test_that(".validatePlots warns about plot fields that have no effect", {
       plotType = "individual",
       pointsColor = "red",
       titleColor = "navy",
-      watermarkSize = 20
+      watermark = "DRAFT",
+      watermarkSize = 20,
+      displayLLOQ = FALSE
     ),
     p_ovs = list(
       plotId = "p_ovs",
       dataCombinedId = "DC1",
       plotType = "observedVsSimulated",
-      foldLinesLegend = FALSE,
+      linesLinetype = "dotted",
       foldLinesLegendDiagonal = TRUE
     )
   )

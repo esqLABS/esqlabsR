@@ -83,10 +83,11 @@
     Output
       Plot 'p_rvs' of plotType 'residualsVsSimulated' sets 'xUnit', which only applies to plotType 'individual', 'population', 'residualsVsTime' and is ignored.
       Plot 'p_rvs' of plotType 'residualsVsSimulated' sets 'ribbonsAlpha', which only applies to plotType 'population' and is ignored.
+      Plot 'p_ind' sets 'watermark', 'watermarkSize', 'displayLLOQ', which the OSP Suite plot functions cannot draw yet. The settings have no effect.
       Plot 'p_ind' of plotType 'individual' sets 'pointsColor', which only applies to plotType 'observedVsSimulated', 'residualsVsSimulated', 'residualsVsTime' and is ignored. On a time profile, observed points take the color of their curve: use 'linesColor'.
       Plot 'p_ind' sets 'titleColor' but not 'title', so there is no text to style and the setting is ignored.
-      Plot 'p_ind' sets 'watermarkSize' but not 'watermark', so there is no text to style and the setting is ignored.
-      Plot 'p_ovs' sets 'foldLinesLegendDiagonal' with 'foldLinesLegend' FALSE: the fold lines have no legend, so the setting is ignored.
+      Plot 'p_ovs' sets 'foldLinesLegendDiagonal', which the OSP Suite plot functions cannot draw yet. The setting has no effect.
+      Plot 'p_ovs' of plotType 'observedVsSimulated' sets 'linesLinetype', which only applies to plotType 'individual', 'population', 'residualsVsSimulated', 'residualsVsTime' and is ignored.
 
 # .validatePlots names the closest existing id for a dangling reference
 

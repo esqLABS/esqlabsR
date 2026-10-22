@@ -396,10 +396,9 @@ print.DataCombined <- function(x, ...) {
 #' Each field in `.plotFields` applies to some plot types only (for example
 #' `quantiles` only to `population` plots). When one is set on any other
 #' `plotType`, the build path ignores it. The same holds for a text style field
-#' without its text (`titleColor` without `title`) and for
-#' `foldLinesLegendDiagonal` when the fold lines have no legend. This adds a
-#' non-blocking warning to `result` for each such field so the mismatch is
-#' surfaced without gating execution.
+#' without its text (`titleColor` without `title`) and for the fields in
+#' `.plotFieldsNotSupportedYet`. This adds a non-blocking warning to `result`
+#' for each such field so the mismatch is surfaced without gating execution.
 #'
 #' @param plotConfig Named list from `plots` definitions (keyed by `plotId`).
 #' @param result `validationResult` to mutate.
@@ -407,13 +406,7 @@ print.DataCombined <- function(x, ...) {
 #' @keywords internal
 #' @noRd
 .warnPlotTypeIrrelevantFields <- function(plotConfig, result) {
-  textFields <- c(
-    "title",
-    "subtitle",
-    "caption",
-    "legendTitle",
-    "watermark"
-  )
+  textFields <- c("title", "subtitle", "caption", "legendTitle")
   for (entry in plotConfig) {
     plotType <- entry$plotType
     if (is.null(plotType) || !(plotType %in% .validPlotTypes)) {
@@ -426,7 +419,25 @@ print.DataCombined <- function(x, ...) {
       function(f) !.isMissingField(entry[[f]]),
       presentFields
     )
-    for (field in presentFields) {
+    notSupportedYet <- intersect(presentFields, .plotFieldsNotSupportedYet)
+    if (length(notSupportedYet) > 0L) {
+      result$addWarning(
+        "Data",
+        paste0(
+          "Plot '",
+          plotId,
+          "' sets ",
+          paste0("'", notSupportedYet, "'", collapse = ", "),
+          ", which the OSP Suite plot functions cannot draw yet. ",
+          if (length(notSupportedYet) > 1L) {
+            "The settings have no effect."
+          } else {
+            "The setting has no effect."
+          }
+        )
+      )
+    }
+    for (field in setdiff(presentFields, .plotFieldsNotSupportedYet)) {
       usedByTypes <- .plotFields[[field]]$appliesTo
       if (plotType %in% usedByTypes) {
         next
@@ -468,27 +479,6 @@ print.DataCombined <- function(x, ...) {
           )
         )
       }
-    }
-    if (
-      "foldLinesLegendDiagonal" %in%
-        presentFields &&
-        identical(
-          .parsePlotFieldValue(
-            entry$foldLinesLegend %||% TRUE,
-            .plotFields$foldLinesLegend
-          ),
-          FALSE
-        )
-    ) {
-      result$addWarning(
-        "Data",
-        paste0(
-          "Plot '",
-          plotId,
-          "' sets 'foldLinesLegendDiagonal' with 'foldLinesLegend' FALSE: ",
-          "the fold lines have no legend, so the setting is ignored."
-        )
-      )
     }
   }
 
@@ -792,7 +782,13 @@ print.DataCombined <- function(x, ...) {
     list(
       linesColor = .plotField("color", .timeProfilePlotTypes, multiple = TRUE),
       linesSize = .plotField("number", range = c(0, Inf)),
-      linesLinetype = .plotField("linetype", multiple = TRUE),
+      # The fold lines of an observedVsSimulated plot take their line types
+      # from a scale `ospsuite.plots` builds, with no argument to set them.
+      linesLinetype = .plotField(
+        "linetype",
+        c(.timeProfilePlotTypes, .residualPlotTypes),
+        multiple = TRUE
+      ),
       linesAlpha = .plotField("number", range = alpha),
       pointsColor = .plotField(
         "color",
@@ -843,6 +839,17 @@ print.DataCombined <- function(x, ...) {
 }
 
 .plotConfigurationFieldNames <- names(.plotConfigurationFields())
+
+# Fields a Plot definition accepts but that the `ospsuite` plot functions have
+# no argument for yet: a watermark on one plot, leaving the LLOQ out, and
+# leaving the line of identity out of the fold-line legend. They have no effect,
+# and validation warns about them.
+.plotFieldsNotSupportedYet <- c(
+  "watermark",
+  paste0("watermark", .plotTextStyleSuffixes),
+  "displayLLOQ",
+  "foldLinesLegendDiagonal"
+)
 .plotFields <- c(.plotConfigurationFields(), .plotOnlyFields())
 
 # Line type numbers 0 to 6 as their names, the `ggplot2` order.
@@ -1026,21 +1033,21 @@ print.DataCombined <- function(x, ...) {
 
   if (
     identical(plotType, "observedVsSimulated") &&
-      !is.null(entry$xAxisScale) &&
-      !is.null(entry$yAxisScale) &&
-      !identical(entry$xAxisScale, entry$yAxisScale)
+      !is.null(entry[["xAxisScale"]]) &&
+      !is.null(entry[["yAxisScale"]]) &&
+      !identical(entry[["xAxisScale"]], entry[["yAxisScale"]])
   ) {
     errors <- c(
       errors,
       messages$conflictingPlotAxisScales(
         plotId,
-        entry$xAxisScale,
-        entry$yAxisScale
+        entry[["xAxisScale"]],
+        entry[["yAxisScale"]]
       )
     )
   }
 
-  direction <- entry$lloqDirection
+  direction <- entry[["lloqDirection"]]
   if (!is.null(direction) && !is.null(plotType)) {
     allowedDirections <- if (plotType %in% .timeProfilePlotTypes) {
       "horizontal"
@@ -1059,10 +1066,10 @@ print.DataCombined <- function(x, ...) {
       )
     } else if (
       identical(plotType, "observedVsSimulated") &&
-        !is.null(entry$lloqOnBothAxes)
+        !is.null(entry[["lloqOnBothAxes"]])
     ) {
       onBothAxes <- .parsePlotFieldValue(
-        entry$lloqOnBothAxes,
+        entry[["lloqOnBothAxes"]],
         .plotFields$lloqOnBothAxes
       )
       if (!identical(onBothAxes, identical(direction, "both"))) {

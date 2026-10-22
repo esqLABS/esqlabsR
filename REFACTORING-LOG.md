@@ -281,3 +281,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-10-22 13:37: Documented that a plot keeps the 5.x plot settings: field families in the reference article, a styled plot in the plotting guide, what looks different after an Excel migration, NEWS, and the regenerated man pages. (#969)
 - 2026-10-22 14:00: Wrote the pi sign of the ported tick labels as an escape, so the R code stays ASCII. (#969)
 - 2026-10-22 14:01: The field-effect test checks the legend border fields on their own. (#969)
+- 2026-10-22 14:21: Plots are styled only through the ospsuite plot function arguments and ggplot2 layers: the watermark, displayLLOQ, foldLinesLegendDiagonal, and the fold-line line types are accepted with a warning that they have no effect yet; plot settings are read by exact name, so an untitled plot no longer gets titleSize as its title. (#969)
