@@ -333,18 +333,17 @@ In the table, "time profiles" are the `individual` and `population` plots, and "
 | `xAxisExpand`, `yAxisExpand` | all | `TRUE` or `FALSE` | Space between the data and the panel edge |
 | `xAxisColor`, `xAxisSize`, `xAxisLinetype`, and the same for `yAxis`, `xGrid`, `yGrid` | all | A color; a number; a line type | Axis lines and major grid lines |
 | `plotBackgroundFill`, `plotBackgroundColor`, `plotBackgroundSize`, `plotBackgroundLinetype`, and the same for `plotPanelBackground` | all | A color; a color; a number; a line type | Background and outline of the whole plot and of the panel |
-| `watermark`, `watermarkColor`, `watermarkSize`, `watermarkFontFace`, `watermarkFontFamily`, `watermarkAngle`, `watermarkAlign`, `watermarkMargin` | all | Text, then the text style values above | A watermark inside the panel of this plot |
 | `linesColor` | time profiles | Colors | Color of each group: curve, observed points, error bars |
-| `linesSize`, `linesAlpha`, `linesLinetype` | all | A number; 0 to 1; line types | Time profiles: the curves, with one line type per simulated data set. `observedVsSimulated`: the fold lines. Residual plots: the zero line |
+| `linesSize`, `linesAlpha` | all | A number; 0 to 1 | Time profiles: the curves. `observedVsSimulated`: the fold lines. Residual plots: the zero line |
+| `linesLinetype` | time profiles, residual plots | Line types | Time profiles: one line type per simulated data set. Residual plots: the zero line |
 | `pointsColor` | `observedVsSimulated`, residual plots | Colors | Color of each group |
 | `pointsShape`, `pointsSize`, `pointsAlpha` | all | Shape names (`"circle"`, `"diamond"`, `"triangle"`, `"square"`, ...); a number; 0 to 1 | Observed points, with one shape per observed data set |
 | `ribbonsFill`, `ribbonsAlpha`, `ribbonsSize`, `ribbonsLinetype` | `population` | Colors; 0 to 1; a number; a line type | Percentile or standard deviation band. Setting the size or line type draws the band outline |
 | `errorbarsSize`, `errorbarsCapSize`, `errorbarsLinetype`, `errorbarsAlpha` | time profiles, `observedVsSimulated` | A number; a number; a line type; 0 to 1 | Error bars of observed data |
-| `displayLLOQ` | time profiles, `observedVsSimulated` | `TRUE` or `FALSE` | `FALSE` draws no lower limit of quantification (LLOQ) |
 | `lloqDirection` | time profiles, `observedVsSimulated` | Time profiles: `"horizontal"`. `observedVsSimulated`: `"vertical"` or `"both"` | Where the LLOQ is drawn |
 | `lloqOnBothAxes` | `observedVsSimulated` | `TRUE` or `FALSE` | LLOQ on both axes (default `TRUE`) |
 | `foldDistance` | `observedVsSimulated` | Numbers | Fold lines around the line of identity |
-| `foldLinesLegend`, `foldLinesLegendDiagonal` | `observedVsSimulated` | `TRUE` or `FALSE` | `FALSE` leaves the fold lines, or only the line of identity, out of the legend |
+| `foldLinesLegend` | `observedVsSimulated` | `TRUE` or `FALSE` | `FALSE` leaves the fold lines out of the legend |
 | `aggregation`, `quantiles`, `nsd` | `population` | How the population is summarized. `quantiles` is three probabilities | Percentile or standard deviation band |
 
 A color is a color name (`"red"`) or a hexadecimal code (`"#4ABDCB"`). A line type is `"blank"`, `"solid"`, `"dashed"`, `"dotted"`, `"dotdash"`, `"longdash"`, `"twodash"`, or a number from 0 to 6 in that order. Fields with several values use them in order and start again when there are more groups or data sets than values.
@@ -353,11 +352,20 @@ Some rules where fields act on the same thing:
 
 - **Colors on time profiles.** A simulated curve and its observed points share one group color, set by `linesColor`. `pointsColor` applies only to `observedVsSimulated` and residual plots. On a `population` plot the band takes `ribbonsFill`.
 - **Limits.** When value limits and axis limits are both set on one axis, the axis limits set the visible range and the points outside the value limits are removed.
-- **LLOQ.** `lloqDirection` and `lloqOnBothAxes` must agree on an `observedVsSimulated` plot. A direction the plot type cannot draw is a critical error. `displayLLOQ = FALSE` wins over both.
+- **LLOQ.** `lloqDirection` and `lloqOnBothAxes` must agree on an `observedVsSimulated` plot. A direction the plot type cannot draw is a critical error.
 
 A field with several values is stored as one comma-separated string (`"0, 12, 24"`), which is also what `addPlot()` stores for a vector. A value that contains a comma is put in double quotes (`"\"12 h, second dose\", end"`). Text fields such as `title` are never split.
 
-Validation warns about a field that has no effect: a field set on a plot type it does not apply to, a text style field without its text (`titleColor` without `title`), and `foldLinesLegendDiagonal` when `foldLinesLegend` is `FALSE`.
+Validation warns about a field that has no effect: a field set on a plot type it does not apply to, and a text style field without its text (`titleColor` without `title`).
+
+### Settings the OSP Suite cannot draw yet
+
+A plot accepts these esqlabsR 5.x settings, so a project or workbook that uses them still loads, but they have no effect: the OSP Suite plot functions have no option for them yet. Validation warns when a plot sets one.
+
+- `watermark`, `watermarkColor`, `watermarkSize`, `watermarkFontFace`, `watermarkFontFamily`, `watermarkAngle`, `watermarkAlign`, `watermarkMargin`: a watermark on one plot. To mark all figures of a session, use the `{ospsuite.plots}` watermark: `options(ospsuite.plots.watermarkEnabled = TRUE)`.
+- `displayLLOQ`: a plot without the lower limit of quantification.
+- `foldLinesLegendDiagonal`: the fold-line legend without the line of identity.
+- `linesLinetype` on an `observedVsSimulated` plot: the line types of the fold lines.
 
 ## Plot grid
 

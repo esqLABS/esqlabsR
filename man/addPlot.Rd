@@ -31,7 +31,9 @@ that is not set takes the ESQlabs value of
 \code{\link[=createEsqlabsPlotConfiguration]{createEsqlabsPlotConfiguration()}}, or the default of the \code{{ospsuite}}
 plot function. An unknown field name or a value outside its rule is an
 error. A field on a plot type that does not apply it is ignored, and
-\code{\link[=validateProject]{validateProject()}} warns about it.
+\code{\link[=validateProject]{validateProject()}} warns about it. The watermark settings,
+\code{displayLLOQ}, and \code{foldLinesLegendDiagonal} are accepted but have no
+effect yet, and \code{\link[=validateProject]{validateProject()}} warns about them too.
 
 A multi-value field (e.g. \code{quantiles = c(0.05, 0.5, 0.95)}) is applied
 whole to every plot and stored as a comma-separated string (an element

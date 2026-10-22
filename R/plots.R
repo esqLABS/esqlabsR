@@ -1354,7 +1354,9 @@ print.DataCombined <- function(x, ...) {
 #'   [createEsqlabsPlotConfiguration()], or the default of the `{ospsuite}`
 #'   plot function. An unknown field name or a value outside its rule is an
 #'   error. A field on a plot type that does not apply it is ignored, and
-#'   [validateProject()] warns about it.
+#'   [validateProject()] warns about it. The watermark settings,
+#'   `displayLLOQ`, and `foldLinesLegendDiagonal` are accepted but have no
+#'   effect yet, and [validateProject()] warns about them too.
 #'
 #'   A multi-value field (e.g. `quantiles = c(0.05, 0.5, 0.95)`) is applied
 #'   whole to every plot and stored as a comma-separated string (an element
