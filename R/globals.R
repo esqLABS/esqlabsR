@@ -1,19 +1,19 @@
-# These variables are set to NULL to avoid R CMD Check warning
-# 'no visible global function definition for ..."
-
-# defining global variables and functions to appease R CMD Check
+# Column names that exist only inside a data mask (dplyr verbs and ggplot
+# aesthetics that build or read them), which `R CMD check` cannot see are bound
+# and so reports as undefined globals. Declaring them here is the alternative to
+# rewriting every call site to use the `.data` pronoun.
 
 utils::globalVariables(
   names = c(
-    "dataCombinedName",
     "IndividualId",
     "OutputPath",
-    "OutputPathId",
     "PKMeanPercentChange",
     "PKParameter",
+    "PKParameterBaseValue",
     "PKParameterValue",
     "PKPercentChange",
     "Parameter",
+    "ParameterBaseValue",
     "ParameterFactor",
     "ParameterPath",
     "ParameterPathLabel",
@@ -26,13 +26,9 @@ utils::globalVariables(
     "Unit",
     "Value",
     "dataType",
+    "name",
     "paths",
-    "scenario",
-    "xOffsets",
-    "xScaleFactors",
     "xValues",
-    "yOffsets",
-    "yScaleFactors",
     "yValues"
   ),
   package = "esqlabsR",

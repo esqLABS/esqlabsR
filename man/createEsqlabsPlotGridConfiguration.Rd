@@ -2,20 +2,19 @@
 % Please edit documentation in R/plots-utils.R
 \name{createEsqlabsPlotGridConfiguration}
 \alias{createEsqlabsPlotGridConfiguration}
-\title{Create an instance of \code{PlotGridConfiguration} R6 class}
+\title{Create the ESQlabs plot grid configuration}
 \usage{
 createEsqlabsPlotGridConfiguration()
 }
 \value{
-An instance of \code{PlotGridConfiguration} R6 class.
+A \link{PlotGridConfiguration} object.
 }
 \description{
-An instance of \code{PlotGridConfiguration} R6 class from \code{{tlf}} package is
-needed for creating a grid of multiple visualizations created using the
-\code{{ospsuite}} package.
+A \link{PlotGridConfiguration} object for arranging several plots in one figure
+with \code{\link[=plotGrid]{plotGrid()}}.
 
 The default attributes of the class are chosen to reflect the corporate
-standards adopted by esqLABS GmbH.
+standards adopted by ESQlabs GmbH.
 }
 \examples{
 createEsqlabsPlotGridConfiguration()
@@ -23,6 +22,8 @@ createEsqlabsPlotGridConfiguration()
 }
 \seealso{
 Other createPlottingConfigurations:
-\code{\link[=createEsqlabsPlotConfiguration]{createEsqlabsPlotConfiguration()}}
+\code{\link{PlotGridConfiguration}},
+\code{\link[=createEsqlabsPlotConfiguration]{createEsqlabsPlotConfiguration()}},
+\code{\link[=plotGrid]{plotGrid()}}
 }
 \concept{createPlottingConfigurations}
