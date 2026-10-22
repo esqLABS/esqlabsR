@@ -183,7 +183,7 @@ packages:
 
 - [rSharp](https://github.com/Open-Systems-Pharmacology/rSharp/)
 - [ospsuite.utils](https://github.com/Open-Systems-Pharmacology/OSPSuite.RUtils)
-- [tlf](https://github.com/Open-Systems-Pharmacology/TLF-Library)
+- [ospsuite.plots](https://github.com/Open-Systems-Pharmacology/OSPSuite.Plots)
 - [ospsuite](https://github.com/Open-Systems-Pharmacology/OSPSuite-R)
 
 ## Contributing

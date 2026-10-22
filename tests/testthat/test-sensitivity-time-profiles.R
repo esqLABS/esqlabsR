@@ -198,7 +198,7 @@ test_that("sensitivityTimeProfiles applies linear y-axis scaling correctly", {
   .localSnapshotOptions()
   results <- sensFixture()$results
   withr::local_seed(123)
-  p <- sensitivityTimeProfiles(results, yAxisScale = "lin")
+  p <- sensitivityTimeProfiles(results, yAxisScale = "linear")
 
   withr::local_seed(123)
   suppressWarnings(

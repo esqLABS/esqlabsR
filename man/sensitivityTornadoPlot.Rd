@@ -36,8 +36,8 @@ is 0.1.}
 to zoom into. This does not remove any data but constrains the visible
 plotting range for improved readability.}
 
-\item{defaultPlotConfiguration}{An object of class \code{DefaultPlotConfiguration}
-used to customize plot aesthetics.
+\item{defaultPlotConfiguration}{A named list of plot settings, as returned by
+\code{\link[=createEsqlabsPlotConfiguration]{createEsqlabsPlotConfiguration()}}, used to customize plot aesthetics.
 
 Supported parameters include:
 \itemize{

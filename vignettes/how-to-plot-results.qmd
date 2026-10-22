@@ -16,8 +16,7 @@ knitr::opts_chunk$set(
   message = FALSE,
   warning = FALSE,
   fig.width = 7,
-  fig.asp = 0.618,
-  fig.showtext = TRUE
+  fig.asp = 0.618
 )
 
 library(esqlabsR)
@@ -135,7 +134,7 @@ addDataCombined(
 
 An output-path id is matched the way the project's other references are matched, so its spelling need not be the canonical one: `Aciclovir_PVB` finds the declared `aciclovir_pvb`. `label` is still required on an observed curve, because DataSet names are long and make poor legend entries. Within one **DataCombined**, the labels of all curves must be distinct, counting the ones taken from `path`; a repeat stops the plot rather than dropping a curve.
 
-Next, describe a **Plot** that draws from this **DataCombined**. The `plotType` selects the kind of chart: `individual` and `population` for time profiles, `observedVsSimulated`, `residualsVsSimulated`, and `residualsVsTime` for the diagnostic charts. Any plot-configuration field can be passed through `...`, for example a `title` or an axis unit; `vignette("reference-definition-fields")` lists them, including the four that apply to one plot type only.
+Next, describe a **Plot** that draws from this **DataCombined**. The `plotType` selects the kind of chart: `individual` and `population` for time profiles, `observedVsSimulated`, `residualsVsSimulated`, and `residualsVsTime` for the diagnostic charts. Any plot setting can be passed through `...`, for example a `title`, an axis unit, axis limits, or a line color; `vignette("reference-definition-fields")` lists them and the plot types each one applies to.
 
 ```{r add-plot}
 addPlot(
@@ -228,19 +227,58 @@ Three fields apply only to `plotType = "population"`. Setting one on any other p
 | `aggregation` | How the individual trajectories are summarized. |
 | `nsd` | The number of standard deviations, when aggregating by mean and standard deviation. |
 
-## Apply the esqLABS house style
+## Apply the ESQlabs house style
 
-`createPlots()` already styles figures with the esqLABS look, so the figures above are house-styled out of the box. When you build plots more directly, two helpers give you the same configurations to start from:
+`createPlots()` draws every plot with the ESQlabs house style (text sizes, line and point sizes, legend at the top left, and the ESQlabs colors), so the figures above are house-styled out of the box. The house values are those of `createEsqlabsPlotConfiguration()`, and every setting you leave out of a **Plot** takes them.
 
-- `createEsqlabsPlotConfiguration()` returns a plot configuration carrying the esqLABS defaults for fonts, sizes, legend placement, and colors.
-- `createEsqlabsPlotGridConfiguration()` returns the matching grid configuration (panel tags, title sizing, alignment).
+To change the look of one plot, set its fields. Here the curve and its observed points are drawn in dark red, the legend goes inside the panel, and the title is bold:
 
-```{r esqlabs-config}
-plotConfig <- createEsqlabsPlotConfiguration()
-gridConfig <- createEsqlabsPlotGridConfiguration()
+```{r styled-plot}
+addPlot(
+  project,
+  id = "aciclovir_styled",
+  dataCombined = "aciclovir_report",
+  plotType = "individual",
+  title = "Aciclovir IV, individual profile",
+  titleFontFace = "bold",
+  linesColor = "darkred",
+  linesSize = 1,
+  legendPosition = "insideTopRight",
+  xUnit = "h"
+)
+
+styledPlots <- createPlots(
+  project,
+  plots = "aciclovir_styled",
+  scenarioResults = scenarioResults
+)
+
+styledPlots$aciclovir_styled
 ```
 
-The palette behind that look is `esqlabsColors()`, which extrapolates between the esqLABS blue, red, and green for any number of curves. Use it whenever you need house colors outside the plotting helpers.
+On a time profile, a curve and its observed points share one color, set by `linesColor`; `pointsColor` colors the points of the observed-versus-simulated and residual plots.
+
+When you draw plots yourself with the `{ospsuite}` plot functions, such as `plotTimeProfile()` or `plotPredictedVsObserved()`, `createEsqlabsPlotGridConfiguration()` gives you the ESQlabs grid layout (panel tags, title size, alignment). Add your plots to it and draw the figure with `plotGrid()`:
+
+```{r esqlabs-grid}
+dataCombined <- createDataCombined(
+  project,
+  dataCombined = "aciclovir_report",
+  scenarioResults = scenarioResults
+)$aciclovir_report
+
+gridConfig <- createEsqlabsPlotGridConfiguration()
+gridConfig$title <- "Aciclovir IV, linear and log scale"
+gridConfig$addPlots(list(
+  plotTimeProfile(dataCombined),
+  plotTimeProfile(dataCombined, yScale = "log")
+))
+plotGrid(gridConfig)
+```
+
+`createEsqlabsPlotConfiguration()` returns the ESQlabs settings as a named list. The sensitivity plots take it as their `defaultPlotConfiguration`; see `vignette("how-to-customize-sensitivity-plots")`.
+
+The palette behind that look is `esqlabsColors()`, which extrapolates between the ESQlabs blue, red, and green for any number of curves. Use it whenever you need house colors outside the plotting helpers.
 
 ```{r colors}
 esqlabsColors(3)
@@ -275,9 +313,9 @@ for (name in names(reportGrids)) {
 
 ## Reach for a chart type this article does not cover
 
-The charts above are produced by `{ospsuite}`'s plotting engine, and its DataCombined articles cover those chart types and their customization in depth.
+The charts above are produced by the `{ospsuite}` plot functions, which are built on [`{ospsuite.plots}`](https://www.open-systems-pharmacology.org/OSPSuite.Plots/). The `{ospsuite}` DataCombined articles cover those chart types and their customization in depth.
 
-Some chart types are not in `{ospsuite}` at all and live in [`{ospsuite.plots}`](https://www.open-systems-pharmacology.org/OSPSuite.Plots/) instead. If the figure you need is not one of the five `plotType` values, look there before building it by hand: it covers additional PBPK reporting figures on top of the ones reachable through a Plot definition.
+Some chart types are not in `{ospsuite}` at all and live only in `{ospsuite.plots}`. If the figure you need is not one of the five `plotType` values, look there before building it by hand: it covers additional PBPK reporting figures on top of the ones reachable through a Plot definition.
 
 Because everything `createPlots()` returns is an ordinary `ggplot` or `patchwork` object, a chart from another package and a chart from a Plot definition compose in the same figure.
 
