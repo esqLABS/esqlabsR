@@ -1,0 +1,12 @@
+{
+  "populationId": "testpopulation",
+  "species": "Human",
+  "population": "European_ICRP_2002",
+  "numberOfIndividuals": 2,
+  "proportionOfFemales": 0,
+  "weightUnit": "kg",
+  "heightUnit": "cm",
+  "ageMin": 18,
+  "ageMax": 65,
+  "BMIUnit": "kg/m²"
+}

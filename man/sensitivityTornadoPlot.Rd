@@ -36,8 +36,8 @@ is 0.1.}
 to zoom into. This does not remove any data but constrains the visible
 plotting range for improved readability.}
 
-\item{defaultPlotConfiguration}{An object of class \code{DefaultPlotConfiguration}
-used to customize plot aesthetics.
+\item{defaultPlotConfiguration}{A named list of plot settings, as returned by
+\code{\link[=createEsqlabsPlotConfiguration]{createEsqlabsPlotConfiguration()}}, used to customize plot aesthetics.
 
 Supported parameters include:
 \itemize{
@@ -74,7 +74,7 @@ simulation <- loadSimulation(simPath)
 outputPaths <- "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
 parameterPaths <- c(
   "Aciclovir|Lipophilicity",
-  "Events|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose",
+  "Events|IV 250mg 10min|No formulation|Application_1|ProtocolSchemaItem|Dose",
   "Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Glomerular Filtration-GFR-Aciclovir|GFR fraction"
 )
 
@@ -100,8 +100,11 @@ sensitivityTornadoPlot(results, defaultPlotConfiguration = myPlotConfiguration)
 # Use named parameter paths to customize axis labels
 namedParameterPaths <- c(
   "Lipophilicity" = "Aciclovir|Lipophilicity",
-  "Dose" = "Events|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose",
-  "GFR fraction" = "Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Glomerular Filtration-GFR-Aciclovir|GFR fraction"
+  "Dose" = "Events|IV 250mg 10min|No formulation|Application_1|ProtocolSchemaItem|Dose",
+  "GFR fraction" = paste0(
+    "Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|",
+    "Glomerular Filtration-GFR-Aciclovir|GFR fraction"
+  )
 )
 
 resultsNamed <- sensitivityCalculation(
@@ -115,9 +118,9 @@ sensitivityTornadoPlot(resultsNamed)
 
 }
 \seealso{
-Other sensitivity-calculation:
+Other sensitivityCalculation:
 \code{\link[=sensitivityCalculation]{sensitivityCalculation()}},
 \code{\link[=sensitivitySpiderPlot]{sensitivitySpiderPlot()}},
 \code{\link[=sensitivityTimeProfiles]{sensitivityTimeProfiles()}}
 }
-\concept{sensitivity-calculation}
+\concept{sensitivityCalculation}

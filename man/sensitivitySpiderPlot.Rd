@@ -29,11 +29,11 @@ visualization. A separate plot will be generated for each output path. Each
 plot will contain a spider plot panel for each PK parameter, and the
 sensitivities for each parameter will be displayed as lines.}
 
-\item{xAxisScale}{Character string, either "log" (logarithmic scale) or "lin"
-(linear scale), to set the x-axis scale. Default is "log".}
+\item{xAxisScale}{Character string, either "log" (logarithmic scale) or
+"linear" (linear scale), to set the x-axis scale. Default is "log".}
 
-\item{yAxisScale}{Character string, either "log" or "lin", sets the y-axis
-scale similarly to \code{xAxisScale}. Default is "lin".}
+\item{yAxisScale}{Character string, either "log" or "linear", sets the y-axis
+scale similarly to \code{xAxisScale}. Default is "linear".}
 
 \item{xAxisType}{Character string, either "percent" (percentage change) or
 "absolute" (absolute values) for PK parameter values, for x-axis data
@@ -50,10 +50,11 @@ which allows for easier comparison between different PK parameters. If
 "free", each facet will have its own range, which allows for better
 visualization of the single PK parameters sensitivity.}
 
-\item{defaultPlotConfiguration}{An object of class \code{DefaultPlotConfiguration}
-used to customize plot aesthetics. Plot-specific settings provided directly
-to the function, such as \code{xAxisScale}, will take precedence over any
-modifications in \code{defaultPlotConfiguration}.
+\item{defaultPlotConfiguration}{A named list of plot settings, as returned by
+\code{\link[=createEsqlabsPlotConfiguration]{createEsqlabsPlotConfiguration()}}, used to customize plot aesthetics.
+Plot-specific settings provided directly to the function, such as
+\code{xAxisScale}, will take precedence over any modifications in
+\code{defaultPlotConfiguration}.
 
 Supported parameters include:
 \itemize{
@@ -67,11 +68,11 @@ Supported parameters include:
 \item \code{subtitle}: Subtitle text for the plot.
 \item \code{title}: Main title text for the plot.
 \item \code{titleSize}: Font size of the plot title.
-\item \code{xAxisScale}: Scale type for the x-axis (\code{"log"} or \code{"lin"}).
+\item \code{xAxisScale}: Scale type for the x-axis (\code{"log"} or \code{"linear"}).
 \item \code{xLabel}: Label text for the x-axis.
 \item \code{xValuesLimits}: Numeric vector specifying the limits for x-values.
 \item \code{yAxisLimits}: Numeric vector specifying the limits for y-values.
-\item \code{yAxisScale}: Scale type for the y-axis (\code{"log"} or \code{"lin"}).
+\item \code{yAxisScale}: Scale type for the y-axis (\code{"log"} or \code{"linear"}).
 \item \code{yAxisTicks}: Number of ticks on the y-axis.
 \item \code{yLabel}: Label text for the y-axis.
 \item \code{yValuesLimits}: Numeric vector specifying the limits for y-values.
@@ -102,7 +103,7 @@ simulation <- loadSimulation(simPath)
 outputPaths <- "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
 parameterPaths <- c(
   "Aciclovir|Lipophilicity",
-  "Events|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose",
+  "Events|IV 250mg 10min|No formulation|Application_1|ProtocolSchemaItem|Dose",
   "Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Glomerular Filtration-GFR-Aciclovir|GFR fraction"
 )
 
@@ -127,8 +128,11 @@ sensitivitySpiderPlot(results, defaultPlotConfiguration = myPlotConfiguration)
 # Use named parameter paths to customize legend labels
 namedParameterPaths <- c(
   "Lipophilicity" = "Aciclovir|Lipophilicity",
-  "Dose" = "Events|IV 250mg 10min|Application_1|ProtocolSchemaItem|Dose",
-  "GFR fraction" = "Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|Glomerular Filtration-GFR-Aciclovir|GFR fraction"
+  "Dose" = "Events|IV 250mg 10min|No formulation|Application_1|ProtocolSchemaItem|Dose",
+  "GFR fraction" = paste0(
+    "Neighborhoods|Kidney_pls_Kidney_ur|Aciclovir|",
+    "Glomerular Filtration-GFR-Aciclovir|GFR fraction"
+  )
 )
 
 resultsNamed <- sensitivityCalculation(
@@ -142,9 +146,9 @@ sensitivitySpiderPlot(resultsNamed)
 
 }
 \seealso{
-Other sensitivity-calculation:
+Other sensitivityCalculation:
 \code{\link[=sensitivityCalculation]{sensitivityCalculation()}},
 \code{\link[=sensitivityTimeProfiles]{sensitivityTimeProfiles()}},
 \code{\link[=sensitivityTornadoPlot]{sensitivityTornadoPlot()}}
 }
-\concept{sensitivity-calculation}
+\concept{sensitivityCalculation}

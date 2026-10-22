@@ -1,0 +1,10 @@
+{
+  "id": "testinitialset",
+  "initialConditions": [
+    {
+      "path": "Organism|VenousBlood|Plasma|Aciclovir",
+      "value": 0.5,
+      "unit": "µmol"
+    }
+  ]
+}
