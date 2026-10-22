@@ -33,21 +33,22 @@ test_that("PlotGridConfiguration prints its annotations, arrangement, and tags",
 })
 
 test_that("addPlots() appends a single plot or a list of plots", {
+  titled <- function(title) ggplot2::ggplot() + ggplot2::labs(title = title)
   plotGridConfiguration <- PlotGridConfiguration$new()
 
-  plotGridConfiguration$addPlots(ggplot2::ggplot())
-  plotGridConfiguration$addPlots(list(
-    "p1" = ggplot2::ggplot(),
-    "p2" = ggplot2::ggplot()
-  ))
-  plotGridConfiguration$addPlots(list("p3" = ggplot2::ggplot()))
+  plotGridConfiguration$addPlots(titled("IV"))
+  plotGridConfiguration$addPlots(list(p1 = titled("Oral"), p2 = titled("IM")))
+  plotGridConfiguration$addPlots(list(p3 = titled("SC")))
 
-  expect_equal(names(plotGridConfiguration$plotList), c("", "p1", "p2", "p3"))
-  expect_true(all(vapply(
+  expect_equal(
     plotGridConfiguration$plotList,
-    function(p) inherits(p, "ggplot"),
-    logical(1)
-  )))
+    list(
+      titled("IV"),
+      p1 = titled("Oral"),
+      p2 = titled("IM"),
+      p3 = titled("SC")
+    )
+  )
 })
 
 test_that("plotGrid() applies the tag margin to every panel", {
