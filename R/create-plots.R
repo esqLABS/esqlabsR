@@ -559,7 +559,7 @@ createPlotsFromExcel <- function(...) {
 #' Maps the fields of `.plotDefinitionFields` onto the arguments of the
 #' `ospsuite` plot function for the plot type. An absent field passes no
 #' argument, so the `ospsuite` default applies; `lloqOnBothAxes` defaults to
-#' `TRUE`. A plot that is drawn gets the house theme, its title and subtitle,
+#' `TRUE`. A plot that is drawn gets the house style, its title and subtitle,
 #' and its axis titles when `xLabel` / `yLabel` are set.
 #'
 #' @param entry One Plot definition (a named list).
@@ -635,7 +635,7 @@ createPlotsFromExcel <- function(...) {
     list(x = entry$xLabel, y = entry$yLabel)
   )
   plot +
-    .esqlabsPlotTheme() +
+    .esqlabsPlotStyle() +
     do.call(
       ggplot2::labs,
       c(list(title = entry$title, subtitle = entry$subtitle), labels)

@@ -184,16 +184,21 @@ createEsqlabsPlotConfiguration <- function() {
   )
 }
 
-#' House theme for the plots built by `createPlots()`
+#' House style for the plots built by `createPlots()`
 #'
-#' A `ggplot2` theme layer whose sizes, margins, legend placement, and discrete
-#' color palette come from [createEsqlabsPlotConfiguration()]. Margins are
-#' `c(top, right, bottom, left)` in points.
+#' A `ggplot2` theme whose sizes, margins, and legend placement come from
+#' [createEsqlabsPlotConfiguration()], plus discrete colour and fill scales
+#' with the [esqlabsColors()] palette. Margins are `c(top, right, bottom,
+#' left)` in points.
 #'
-#' @returns A `ggplot2` theme.
+#' The palette is set through scales rather than the theme: an `{ospsuite.plots}`
+#' plot that has no colour or fill scale gets the OSP scales when it is built,
+#' which ignore the theme palette.
+#'
+#' @returns A list of `ggplot2` components, to add to a plot with `+`.
 #' @keywords internal
 #' @noRd
-.esqlabsPlotTheme <- function() {
+.esqlabsPlotStyle <- function() {
   config <- createEsqlabsPlotConfiguration()
   marginFrom <- function(values) {
     ggplot2::margin(
@@ -204,7 +209,7 @@ createEsqlabsPlotConfiguration <- function() {
       unit = "pt"
     )
   }
-  ggplot2::theme(
+  theme <- ggplot2::theme(
     # A text box wraps a title that is wider than the plot. The subtitle is
     # aligned with the title.
     plot.title = ggtext::element_textbox_simple(
@@ -227,8 +232,12 @@ createEsqlabsPlotConfiguration <- function() {
     ),
     legend.key.size = ggplot2::unit(config$legendKeysSize, "pt"),
     legend.position = config$legendPosition,
-    legend.justification = config$legendJustification,
-    palette.colour.discrete = esqlabsColors
+    legend.justification = config$legendJustification
+  )
+  list(
+    theme,
+    ggplot2::discrete_scale("colour", palette = esqlabsColors),
+    ggplot2::discrete_scale("fill", palette = esqlabsColors)
   )
 }
 

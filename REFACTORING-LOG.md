@@ -271,3 +271,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-10-22 10:34: The Excel import keeps only the supported plotConfiguration columns and names the dropped ones that hold a value, converts "lin" to "linear", and reads lloqOnBothAxes as a logical. (#969)
 - 2026-10-22 10:42: Documented the ospsuite.plots-based plotting: supported plot fields, "linear" scales, plotGrid() in the plotting guide, dropped Excel styling columns in the migration guide, NEWS, README, and regenerated man/ and NAMESPACE. (#969)
 - 2026-10-22 10:47: Applied the air formatter to the plotting files of the tlf port. (#969)
+- 2026-10-22 10:59: createPlots() figures use the ESQlabs colors: the house style sets discrete colour and fill scales, since ospsuite.plots replaces a missing scale with its own and ignores the theme palette. (#969)

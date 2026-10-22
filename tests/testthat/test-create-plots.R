@@ -747,3 +747,46 @@ test_that("the build guard rejects field problems even when validate = FALSE", {
     )
   )
 })
+
+test_that("createPlots draws lines, points, and ribbons in the ESQlabs colors", {
+  # `{ospsuite.plots}` adds its own colour and fill scales at build time when a
+  # plot has none, so the check is on the built layers, not on the plot object.
+  builtColors <- function(plot, aesthetic) {
+    unique(unlist(lapply(
+      ggplot2::ggplot_build(plot)$data,
+      function(layer) layer[[aesthetic]]
+    )))
+  }
+  project <- exampleProject()
+  addDataCombined(
+    project,
+    "dc_pop",
+    simulated = list(list(
+      label = "Aciclovir population",
+      scenario = "aciclovir_iv_population",
+      path = project$definitions$outputPaths$aciclovir_pvb
+    ))
+  )
+  addPlot(project, "p_pop", "dc_pop", "population")
+  simulated <- runScenarios(
+    project,
+    scenarios = c("aciclovir_iv", "aciclovir_iv_population")
+  )
+
+  plots <- suppressWarnings(createPlots(
+    project,
+    plots = c("p1", "p_pop"),
+    scenarioResults = simulated
+  ))
+
+  expect_equal(
+    list(
+      individualColour = builtColors(plots$p1, "colour"),
+      populationFill = builtColors(plots$p_pop, "fill")
+    ),
+    list(
+      individualColour = esqlabsColors(1),
+      populationFill = esqlabsColors(1)
+    )
+  )
+})
