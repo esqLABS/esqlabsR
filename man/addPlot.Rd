@@ -21,42 +21,21 @@ existing DataCombined id on the project.}
 Each one of \code{"individual"}, \code{"population"}, \code{"observedVsSimulated"},
 \code{"residualsVsSimulated"}, \code{"residualsVsTime"}.}
 
-\item{...}{Optional plot-configuration fields. A field that is not set
-uses the default of the \code{{ospsuite}} plot function. Any other field
-name is an error.
-
-For all plot types:
-\itemize{
-\item \code{title}, \code{subtitle}: plot title and subtitle, used as written.
-\item \code{xLabel}, \code{yLabel}: axis titles, used as written.
-\item \code{yUnit}: unit of the y values. On \code{"observedVsSimulated"} and
-\code{"residualsVsSimulated"} plots the x axis also shows y values.
-}
-
-For some plot types only (a field on another plot type is ignored, and
-\code{\link[=validateProject]{validateProject()}} warns about it):
-\itemize{
-\item \code{xUnit}: unit of the time axis (\code{"individual"}, \code{"population"},
-\code{"residualsVsTime"}).
-\item \code{xAxisScale}, \code{yAxisScale}: \code{"linear"} or \code{"log"} (\code{"individual"},
-\code{"population"}, \code{"observedVsSimulated"}). An \code{"observedVsSimulated"}
-plot uses one scale for both axes, so when both fields are set they
-must be equal.
-\item \code{xValuesLimits}, \code{yValuesLimits}: two numbers; points outside are
-removed (\code{"individual"}, \code{"population"}).
-\item \code{xAxisLimits}, \code{yAxisLimits}: two numbers; the visible axis range, the
-points outside are kept (\code{"individual"}, \code{"population"}). With value
-limits on the same axis, the axis limits set the visible range.
-\item \code{aggregation}, \code{quantiles} (three probabilities), \code{nsd}: how a
-population is summarized (\code{"population"}).
-\item \code{foldDistance}: one or more numbers, the fold lines drawn around the
-line of identity (\code{"observedVsSimulated"}).
-\item \code{lloqOnBothAxes}: \code{TRUE} (default) or \code{FALSE}, whether the lower limit
-of quantification is drawn on both axes (\code{"observedVsSimulated"}).
-}
+\item{...}{Optional plot-configuration fields: the plot settings of
+esqlabsR 5.x (titles and their text style, legend, axes, ticks, grid,
+backgrounds, watermark, colors, line, point, ribbon, and error bar style,
+LLOQ, fold lines) plus \code{aggregation}, \code{quantiles}, \code{nsd}, \code{foldDistance},
+and \code{lloqOnBothAxes}. \code{vignette("reference-definition-fields")} lists
+every field with its values and the plot types it applies to. A field
+that is not set takes the ESQlabs value of
+\code{\link[=createEsqlabsPlotConfiguration]{createEsqlabsPlotConfiguration()}}, or the default of the \code{{ospsuite}}
+plot function. An unknown field name or a value outside its rule is an
+error. A field on a plot type that does not apply it is ignored, and
+\code{\link[=validateProject]{validateProject()}} warns about it.
 
 A multi-value field (e.g. \code{quantiles = c(0.05, 0.5, 0.95)}) is applied
-whole to every plot and stored as a comma-separated string; to set a
+whole to every plot and stored as a comma-separated string (an element
+that holds a comma is put in double quotes); to set a
 scalar field differently per plot, pass a list of the same length as
 \code{id}.
 

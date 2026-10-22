@@ -17,7 +17,11 @@ ESQlabs GmbH.
 Pass it, changed or not, as \code{defaultPlotConfiguration} to
 \code{\link[=sensitivitySpiderPlot]{sensitivitySpiderPlot()}}, \code{\link[=sensitivityTornadoPlot]{sensitivityTornadoPlot()}}, and
 \code{\link[=sensitivityTimeProfiles]{sensitivityTimeProfiles()}}. \code{\link[=createPlots]{createPlots()}} applies the same values to the
-plots it builds.
+plots it builds, where a Plot definition does not set the field.
+
+The names are plot configuration fields, listed in
+\code{vignette("reference-definition-fields")}. You can add any of them; a name
+that is not one of them stops the sensitivity plot functions with an error.
 }
 \examples{
 myPlotConfiguration <- createEsqlabsPlotConfiguration()

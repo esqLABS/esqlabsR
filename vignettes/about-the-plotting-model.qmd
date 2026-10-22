@@ -61,7 +61,7 @@ classDiagram
 ```
 
 - A **DataCombined** answers *which numbers belong together*. It pairs one or more simulated curves with optional observed data, and can carry per-curve transformations such as offsets and scale factors.
-- A **Plot** answers *what chart to draw from them*. It names a DataCombined, a plot type, and its titles, axis settings, and aggregation settings.
+- A **Plot** answers *what chart to draw from them*. It names a DataCombined, a plot type, and its display settings: titles, axes, legend, colors, and line and point style.
 - A **Plot Grid** answers *how charts are laid out together*. It composes one or more Plots into one multi-panel figure.
 
 Collapsing these into a single "figure" object would be smaller to write and would make the common case shorter. It was not done because each layer is reused independently, and a single object forces you to restate the layer you did not want to change.

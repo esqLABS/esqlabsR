@@ -134,7 +134,7 @@ addDataCombined(
 
 An output-path id is matched the way the project's other references are matched, so its spelling need not be the canonical one: `Aciclovir_PVB` finds the declared `aciclovir_pvb`. `label` is still required on an observed curve, because DataSet names are long and make poor legend entries. Within one **DataCombined**, the labels of all curves must be distinct, counting the ones taken from `path`; a repeat stops the plot rather than dropping a curve.
 
-Next, describe a **Plot** that draws from this **DataCombined**. The `plotType` selects the kind of chart: `individual` and `population` for time profiles, `observedVsSimulated`, `residualsVsSimulated`, and `residualsVsTime` for the diagnostic charts. A plot accepts a fixed set of configuration fields through `...`, for example a `title`, an axis unit, or axis limits; `vignette("reference-definition-fields")` lists them and the plot types each one applies to.
+Next, describe a **Plot** that draws from this **DataCombined**. The `plotType` selects the kind of chart: `individual` and `population` for time profiles, `observedVsSimulated`, `residualsVsSimulated`, and `residualsVsTime` for the diagnostic charts. Any plot setting can be passed through `...`, for example a `title`, an axis unit, axis limits, or a line color; `vignette("reference-definition-fields")` lists them and the plot types each one applies to.
 
 ```{r add-plot}
 addPlot(
@@ -229,7 +229,34 @@ Three fields apply only to `plotType = "population"`. Setting one on any other p
 
 ## Apply the ESQlabs house style
 
-`createPlots()` draws every plot with the ESQlabs house style (text sizes, legend at the top left, and the ESQlabs colors), so the figures above are house-styled out of the box.
+`createPlots()` draws every plot with the ESQlabs house style (text sizes, line and point sizes, legend at the top left, and the ESQlabs colors), so the figures above are house-styled out of the box. The house values are those of `createEsqlabsPlotConfiguration()`, and every setting you leave out of a **Plot** takes them.
+
+To change the look of one plot, set its fields. Here the curve and its observed points are drawn in dark red, the legend goes inside the panel, and the title is bold:
+
+```{r styled-plot}
+addPlot(
+  project,
+  id = "aciclovir_styled",
+  dataCombined = "aciclovir_report",
+  plotType = "individual",
+  title = "Aciclovir IV, individual profile",
+  titleFontFace = "bold",
+  linesColor = "darkred",
+  linesSize = 1,
+  legendPosition = "insideTopRight",
+  xUnit = "h"
+)
+
+styledPlots <- createPlots(
+  project,
+  plots = "aciclovir_styled",
+  scenarioResults = scenarioResults
+)
+
+styledPlots$aciclovir_styled
+```
+
+On a time profile, a curve and its observed points share one color, set by `linesColor`; `pointsColor` colors the points of the observed-versus-simulated and residual plots.
 
 When you draw plots yourself with the `{ospsuite}` plot functions, such as `plotTimeProfile()` or `plotPredictedVsObserved()`, `createEsqlabsPlotGridConfiguration()` gives you the ESQlabs grid layout (panel tags, title size, alignment). Add your plots to it and draw the figure with `plotGrid()`:
 
