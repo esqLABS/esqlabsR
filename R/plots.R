@@ -842,6 +842,7 @@ print.DataCombined <- function(x, ...) {
   )
 }
 
+.plotConfigurationFieldNames <- names(.plotConfigurationFields())
 .plotFields <- c(.plotConfigurationFields(), .plotOnlyFields())
 
 # Line type numbers 0 to 6 as their names, the `ggplot2` order.

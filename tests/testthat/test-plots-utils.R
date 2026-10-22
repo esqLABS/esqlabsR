@@ -149,6 +149,23 @@ test_that(".applyPlotConfiguration rejects a configuration that is not a named l
   )
 })
 
+test_that("the sensitivity plots reject an unknown name in the plot configuration", {
+  plotConfiguration <- createEsqlabsPlotConfiguration()
+  plotConfiguration$lineColour <- "red"
+
+  expect_snapshot(
+    error = TRUE,
+    .applyPlotConfiguration(defaultPlotConfiguration = plotConfiguration)
+  )
+})
+
+test_that("the house plot configuration holds only plot configuration fields", {
+  expect_in(
+    names(createEsqlabsPlotConfiguration()),
+    .plotConfigurationFieldNames
+  )
+})
+
 test_that(".calculateLimits widens a zero-width range to a finite interval", {
   # All-equal nonzero input on a linear axis.
   linNonzero <- .calculateLimits(c(5, 5, 5))

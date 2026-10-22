@@ -1177,6 +1177,14 @@ messages$plotGridsNamesMustBeUnique <- function(
   )
 }
 
+messages$unknownPlotConfigurationNames <- function(names) {
+  cliFormat(paste(
+    "{.arg defaultPlotConfiguration} has unknown name{?s} {.field {names}}.",
+    "See {.code vignette(\"reference-definition-fields\")} for the plot",
+    "configuration fields."
+  ))
+}
+
 messages$plotConfigurationNotNamedList <- function(type) {
   cliFormat(
     "{.arg defaultPlotConfiguration} must be a named list, as returned by \\

@@ -711,6 +711,8 @@ createEsqlabsPlotGridConfiguration <- function() {
 #'
 #' @param defaultPlotConfiguration A named list from
 #'   [createEsqlabsPlotConfiguration()], or `NULL` to use that list unchanged.
+#'   A name that is not a plot configuration field (a misspelling such as
+#'   `lineColour`) is an error.
 #' @param plotOverrideConfig A list with new configuration settings to apply.
 #' @param ... Additional parameters to override specific configuration settings
 #'   dynamically.
@@ -730,6 +732,16 @@ createEsqlabsPlotGridConfiguration <- function() {
   ) {
     cli::cli_abort(
       messages$plotConfigurationNotNamedList(class(defaultPlotConfiguration)),
+      call = rlang::caller_env()
+    )
+  }
+  unknownNames <- setdiff(
+    names(defaultPlotConfiguration),
+    .plotConfigurationFieldNames
+  )
+  if (length(unknownNames) > 0L) {
+    cli::cli_abort(
+      messages$unknownPlotConfigurationNames(unknownNames),
       call = rlang::caller_env()
     )
   }
