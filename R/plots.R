@@ -344,8 +344,8 @@ print.DataCombined <- function(x, ...) {
       )
     }
 
-    # Unsupported fields and invalid values stop the build, so they are
-    # critical here too.
+    # Unknown fields and invalid values stop the build, so they are critical
+    # here too.
     for (entry in plotConfig) {
       for (message in .plotEntryFieldErrors(entry)) {
         result$addCriticalError("Invalid Field", message)
@@ -391,13 +391,15 @@ print.DataCombined <- function(x, ...) {
   result
 }
 
-#' Warn about plotType-irrelevant fields on a plot configuration
+#' Warn about plot fields that have no effect on a plot configuration
 #'
-#' Each field in `.plotDefinitionFields` applies to some plot types only (for
-#' example `quantiles` only to `population` plots). When one is set on any
-#' other `plotType`, the build path ignores it. This adds a non-blocking
-#' warning to `result` for each such field so the mismatch is surfaced without
-#' gating execution.
+#' Each field in `.plotFields` applies to some plot types only (for example
+#' `quantiles` only to `population` plots). When one is set on any other
+#' `plotType`, the build path ignores it. The same holds for a text style field
+#' without its text (`titleColor` without `title`) and for
+#' `foldLinesLegendDiagonal` when the fold lines have no legend. This adds a
+#' non-blocking warning to `result` for each such field so the mismatch is
+#' surfaced without gating execution.
 #'
 #' @param plotConfig Named list from `plots` definitions (keyed by `plotId`).
 #' @param result `validationResult` to mutate.
@@ -405,19 +407,27 @@ print.DataCombined <- function(x, ...) {
 #' @keywords internal
 #' @noRd
 .warnPlotTypeIrrelevantFields <- function(plotConfig, result) {
+  textFields <- c(
+    "title",
+    "subtitle",
+    "caption",
+    "legendTitle",
+    "watermark"
+  )
   for (entry in plotConfig) {
     plotType <- entry$plotType
     if (is.null(plotType) || !(plotType %in% .validPlotTypes)) {
       next
     }
-    presentFields <- intersect(names(.plotDefinitionFields), names(entry))
+    plotId <- entry$plotId %||% "<unknown>"
+    presentFields <- intersect(names(.plotFields), names(entry))
     # A field present but empty (NULL / NA) is not really "set"; skip it.
     presentFields <- Filter(
       function(f) !.isMissingField(entry[[f]]),
       presentFields
     )
     for (field in presentFields) {
-      usedByTypes <- .plotDefinitionFields[[field]]
+      usedByTypes <- .plotFields[[field]]$appliesTo
       if (plotType %in% usedByTypes) {
         next
       }
@@ -425,14 +435,58 @@ print.DataCombined <- function(x, ...) {
         "Data",
         paste0(
           "Plot '",
-          entry$plotId %||% "<unknown>",
+          plotId,
           "' of plotType '",
           plotType,
           "' sets '",
           field,
           "', which only applies to plotType ",
           paste0("'", usedByTypes, "'", collapse = ", "),
-          " and is ignored."
+          " and is ignored.",
+          if (field == "pointsColor") {
+            " On a time profile, observed points take the color of their curve: use 'linesColor'."
+          }
+        )
+      )
+    }
+    for (textField in setdiff(textFields, presentFields)) {
+      styleFields <- intersect(
+        paste0(textField, .plotTextStyleSuffixes),
+        presentFields
+      )
+      if (length(styleFields) > 0L) {
+        result$addWarning(
+          "Data",
+          paste0(
+            "Plot '",
+            plotId,
+            "' sets ",
+            paste0("'", styleFields, "'", collapse = ", "),
+            " but not '",
+            textField,
+            "', so there is no text to style and the setting is ignored."
+          )
+        )
+      }
+    }
+    if (
+      "foldLinesLegendDiagonal" %in%
+        presentFields &&
+        identical(
+          .parsePlotFieldValue(
+            entry$foldLinesLegend %||% TRUE,
+            .plotFields$foldLinesLegend
+          ),
+          FALSE
+        )
+    ) {
+      result$addWarning(
+        "Data",
+        paste0(
+          "Plot '",
+          plotId,
+          "' sets 'foldLinesLegendDiagonal' with 'foldLinesLegend' FALSE: ",
+          "the fold lines have no legend, so the setting is ignored."
         )
       )
     }
@@ -532,41 +586,401 @@ print.DataCombined <- function(x, ...) {
   "residualsVsTime"
 )
 
-# The configuration fields a Plot definition accepts, each with the plot types
-# that apply it. Any other field (beyond the identity fields `plotId`,
-# `dataCombinedId`, and `plotType`) is a critical error, and a listed field on a
-# plot type that does not apply it is a warning. Read by the validator,
-# `addPlot()`, the build guard in `createPlots()`, and the Excel import.
+# Plot definition fields ----
+#
+# A Plot definition accepts the fields of the `DefaultPlotConfiguration` that
+# `{tlf}` gave esqlabsR 5.x (the "configuration fields", also the names
+# `createEsqlabsPlotConfiguration()` may hold) plus five Plot-only fields. Each
+# field has a value rule and the plot types that apply it. This one table is
+# read by the validator, `addPlot()`, the build guard in `createPlots()`, the
+# Excel import, the plot builder, and the sensitivity name check.
+
 .timeProfilePlotTypes <- c("individual", "population")
-.plotDefinitionFields <- list(
-  title = .validPlotTypes,
-  subtitle = .validPlotTypes,
-  xLabel = .validPlotTypes,
-  yLabel = .validPlotTypes,
-  xUnit = c(.timeProfilePlotTypes, "residualsVsTime"),
-  yUnit = .validPlotTypes,
-  xAxisScale = c(.timeProfilePlotTypes, "observedVsSimulated"),
-  yAxisScale = c(.timeProfilePlotTypes, "observedVsSimulated"),
-  xValuesLimits = .timeProfilePlotTypes,
-  yValuesLimits = .timeProfilePlotTypes,
-  xAxisLimits = .timeProfilePlotTypes,
-  yAxisLimits = .timeProfilePlotTypes,
-  aggregation = "population",
-  quantiles = "population",
-  nsd = "population",
-  foldDistance = "observedVsSimulated",
-  lloqOnBothAxes = "observedVsSimulated"
-)
+.residualPlotTypes <- c("residualsVsSimulated", "residualsVsTime")
 .plotIdentityFields <- c("plotId", "dataCombinedId", "plotType")
 .plotAxisScales <- c("linear", "log")
+.plotFontFaces <- c("plain", "bold", "italic", "bold.italic")
+.plotAlignments <- c("left", "center", "right")
+.plotLinetypes <- c(
+  "blank",
+  "solid",
+  "dashed",
+  "dotted",
+  "dotdash",
+  "longdash",
+  "twodash"
+)
+.plotLegendPositions <- c(
+  "none",
+  "insideTop",
+  "insideTopLeft",
+  "insideLeft",
+  "insideBottomLeft",
+  "insideBottom",
+  "insideBottomRight",
+  "insideRight",
+  "insideTopRight",
+  "outsideTop",
+  "outsideTopLeft",
+  "outsideLeft",
+  "outsideBottomLeft",
+  "outsideBottom",
+  "outsideBottomRight",
+  "outsideRight",
+  "outsideTopRight",
+  "top",
+  "bottom",
+  "left",
+  "right"
+)
+.plotTickLabelNames <- c(
+  "default",
+  "none",
+  "identity",
+  "log",
+  "ln",
+  "sqrt",
+  "greek",
+  "pi",
+  "percentiles"
+)
+# Elements whose text style is set by the `<element>Color`, `...Size`,
+# `...FontFace`, `...FontFamily`, `...Angle`, `...Align`, and `...Margin` fields.
+.plotTextElements <- c(
+  "title",
+  "subtitle",
+  "caption",
+  "xLabel",
+  "yLabel",
+  "legendTitle",
+  "legendKeys",
+  "xAxisLabelTicks",
+  "yAxisLabelTicks"
+)
+.plotTextStyleSuffixes <- c(
+  "Color",
+  "Size",
+  "FontFace",
+  "FontFamily",
+  "Angle",
+  "Align",
+  "Margin"
+)
+
+# One field of the table.
+#
+# @param type `"text"` (free text, never split), `"string"`, `"choice"`,
+#   `"number"`, `"logical"`, `"color"`, `"linetype"`, or `"tickLabels"`.
+# @param appliesTo Plot types that apply the field.
+# @param count Exact number of values, or `NULL` for "one or more" when
+#   `multiple` is `TRUE`.
+# @param multiple Whether the field holds several values.
+# @param allowed Allowed values of a `"choice"` field.
+# @param range Allowed numeric range, inclusive.
+# @keywords internal
+# @noRd
+.plotField <- function(
+  type,
+  appliesTo = .validPlotTypes,
+  multiple = FALSE,
+  count = NULL,
+  allowed = NULL,
+  range = NULL
+) {
+  list(
+    type = type,
+    appliesTo = appliesTo,
+    multiple = multiple || (!is.null(count) && count > 1L),
+    count = count %||% if (!multiple) 1L,
+    allowed = allowed,
+    range = range
+  )
+}
+
+# Text style fields of one element (title, legend keys, ...), and of the
+# watermark, which has no `Margin`-less variant.
+.plotTextStyleFields <- function(element) {
+  stats::setNames(
+    list(
+      .plotField("color"),
+      .plotField("number", range = c(0, Inf)),
+      .plotField("choice", allowed = .plotFontFaces),
+      .plotField("string"),
+      .plotField("number"),
+      .plotField("choice", allowed = .plotAlignments),
+      .plotField("number", count = 4L)
+    ),
+    paste0(element, .plotTextStyleSuffixes)
+  )
+}
+
+.plotLineStyleFields <- function(prefix, appliesTo = .validPlotTypes) {
+  stats::setNames(
+    list(
+      .plotField("color", appliesTo),
+      .plotField("number", appliesTo, range = c(0, Inf)),
+      .plotField("linetype", appliesTo)
+    ),
+    paste0(prefix, c("Color", "Size", "Linetype"))
+  )
+}
+
+.plotBackgroundFields <- function(prefix) {
+  stats::setNames(
+    list(
+      .plotField("color"),
+      .plotField("color"),
+      .plotField("number", range = c(0, Inf)),
+      .plotField("linetype")
+    ),
+    paste0(prefix, c("Fill", "Color", "Size", "Linetype"))
+  )
+}
+
+.plotConfigurationFields <- function() {
+  ovs <- "observedVsSimulated"
+  alpha <- c(0, 1)
+  c(
+    list(
+      xUnit = .plotField("string", c(.timeProfilePlotTypes, "residualsVsTime")),
+      yUnit = .plotField("string"),
+      title = .plotField("text"),
+      subtitle = .plotField("text"),
+      caption = .plotField("text"),
+      xLabel = .plotField("text"),
+      yLabel = .plotField("text"),
+      legendTitle = .plotField("text"),
+      legendPosition = .plotField("choice", allowed = .plotLegendPositions),
+      legendBackgroundColor = .plotField("color"),
+      legendBackgroundAlpha = .plotField("number", range = alpha),
+      legendBorderColor = .plotField("color"),
+      legendBorderType = .plotField("linetype"),
+      legendBorderSize = .plotField("number", range = c(0, Inf))
+    ),
+    unlist(
+      lapply(.plotTextElements, .plotTextStyleFields),
+      recursive = FALSE
+    ),
+    list(
+      xAxisScale = .plotField("choice", allowed = .plotAxisScales),
+      yAxisScale = .plotField("choice", allowed = .plotAxisScales),
+      xAxisLimits = .plotField("number", count = 2L),
+      yAxisLimits = .plotField("number", count = 2L),
+      xValuesLimits = .plotField("number", count = 2L),
+      yValuesLimits = .plotField("number", count = 2L),
+      xAxisTicks = .plotField("number", multiple = TRUE),
+      yAxisTicks = .plotField("number", multiple = TRUE),
+      xAxisTicksLabels = .plotField("tickLabels", multiple = TRUE),
+      yAxisTicksLabels = .plotField("tickLabels", multiple = TRUE),
+      xAxisExpand = .plotField("logical"),
+      yAxisExpand = .plotField("logical")
+    ),
+    .plotLineStyleFields("xAxis"),
+    .plotLineStyleFields("yAxis"),
+    .plotLineStyleFields("xGrid"),
+    .plotLineStyleFields("yGrid"),
+    .plotBackgroundFields("plotBackground"),
+    .plotBackgroundFields("plotPanelBackground"),
+    list(watermark = .plotField("text")),
+    .plotTextStyleFields("watermark"),
+    list(
+      linesColor = .plotField("color", .timeProfilePlotTypes, multiple = TRUE),
+      linesSize = .plotField("number", range = c(0, Inf)),
+      linesLinetype = .plotField("linetype", multiple = TRUE),
+      linesAlpha = .plotField("number", range = alpha),
+      pointsColor = .plotField(
+        "color",
+        c(ovs, .residualPlotTypes),
+        multiple = TRUE
+      ),
+      pointsShape = .plotField(
+        "choice",
+        multiple = TRUE,
+        allowed = ospsuite.plots::ospShapeNames
+      ),
+      pointsSize = .plotField("number", range = c(0, Inf)),
+      pointsAlpha = .plotField("number", range = alpha),
+      ribbonsFill = .plotField("color", "population", multiple = TRUE),
+      ribbonsSize = .plotField("number", "population", range = c(0, Inf)),
+      ribbonsLinetype = .plotField("linetype", "population", multiple = TRUE),
+      ribbonsAlpha = .plotField("number", "population", range = alpha),
+      errorbarsSize = .plotField("number", range = c(0, Inf)),
+      errorbarsCapSize = .plotField("number", range = c(0, Inf)),
+      errorbarsLinetype = .plotField("linetype"),
+      errorbarsAlpha = .plotField("number", range = alpha),
+      displayLLOQ = .plotField("logical", c(.timeProfilePlotTypes, ovs)),
+      lloqDirection = .plotField(
+        "choice",
+        c(.timeProfilePlotTypes, ovs),
+        allowed = c("horizontal", "vertical", "both")
+      ),
+      foldLinesLegend = .plotField("logical", ovs),
+      foldLinesLegendDiagonal = .plotField("logical", ovs)
+    )
+  )
+}
+
+.plotOnlyFields <- function() {
+  list(
+    aggregation = .plotField("string", "population"),
+    quantiles = .plotField("number", "population", count = 3L, range = c(0, 1)),
+    nsd = .plotField("number", "population", range = c(0, Inf)),
+    foldDistance = .plotField(
+      "number",
+      "observedVsSimulated",
+      multiple = TRUE,
+      range = c(0, Inf)
+    ),
+    lloqOnBothAxes = .plotField("logical", "observedVsSimulated")
+  )
+}
+
+.plotFields <- c(.plotConfigurationFields(), .plotOnlyFields())
+
+# Line type numbers 0 to 6 as their names, the `ggplot2` order.
+.plotLinetypeName <- function(token) {
+  if (grepl("^[0-6]$", token)) {
+    return(.plotLinetypes[[as.integer(token) + 1L]])
+  }
+  token
+}
+
+# The values of one stored field, converted to the field's type.
+#
+# A stored value is a number, a logical, a vector (a JSON array), or one string
+# that holds several values separated by commas, where double quotes protect a
+# comma inside one value (the `origin/main` reading rule). Free text is never
+# split.
+#
+# @param value The stored value (not `NULL`).
+# @param spec The field's entry in `.plotFields`.
+# @returns The converted values. A value that does not convert is `NA`.
+# @keywords internal
+# @noRd
+.parsePlotFieldValue <- function(value, spec) {
+  value <- unlist(value, use.names = FALSE)
+  if (identical(spec$type, "text")) {
+    return(paste(as.character(value), collapse = ", "))
+  }
+  if (is.character(value) && length(value) == 1L) {
+    value <- trimws(scan(
+      text = value,
+      what = "character",
+      sep = ",",
+      quiet = TRUE,
+      strip.white = TRUE
+    ))
+  }
+  switch(
+    spec$type,
+    number = suppressWarnings(as.numeric(value)),
+    logical = vapply(
+      value,
+      function(x) {
+        if (is.logical(x)) {
+          return(x)
+        }
+        token <- tolower(as.character(x))
+        if (token %in% c("true", "t", "1", "yes", "y")) {
+          return(TRUE)
+        }
+        if (token %in% c("false", "f", "0", "no", "n")) {
+          return(FALSE)
+        }
+        NA
+      },
+      logical(1),
+      USE.NAMES = FALSE
+    ),
+    linetype = vapply(
+      as.character(value),
+      .plotLinetypeName,
+      character(1),
+      USE.NAMES = FALSE
+    ),
+    as.character(value)
+  )
+}
+
+# The problem with one field value, or `NULL` when the value follows its rule.
+#
+# @keywords internal
+# @noRd
+.plotFieldValueProblem <- function(plotId, field, value, spec) {
+  parsed <- .parsePlotFieldValue(value, spec)
+  shown <- paste(as.character(unlist(value)), collapse = ", ")
+  problem <- function(rule) {
+    messages$invalidPlotFieldValue(plotId, field, shown, rule)
+  }
+  if (identical(spec$type, "text")) {
+    return(NULL)
+  }
+  if (length(parsed) == 0L) {
+    return(problem("a value"))
+  }
+  if (!is.null(spec$count) && length(parsed) != spec$count) {
+    return(problem(paste(
+      spec$count,
+      if (spec$count == 1L) "value" else "values"
+    )))
+  }
+  if (anyNA(parsed)) {
+    return(problem(switch(
+      spec$type,
+      number = "numbers",
+      logical = "TRUE or FALSE",
+      "valid values"
+    )))
+  }
+  if (identical(spec$type, "choice") && !all(parsed %in% spec$allowed)) {
+    if (field %in% c("xAxisScale", "yAxisScale")) {
+      return(messages$invalidPlotAxisScale(plotId, field, shown, spec$allowed))
+    }
+    return(problem(paste0("one of: ", paste(spec$allowed, collapse = ", "))))
+  }
+  if (identical(spec$type, "linetype") && !all(parsed %in% .plotLinetypes)) {
+    return(problem(paste0(
+      "line types: ",
+      paste(.plotLinetypes, collapse = ", "),
+      ", or 0 to 6"
+    )))
+  }
+  if (identical(spec$type, "color")) {
+    isColor <- vapply(
+      parsed,
+      function(x) {
+        !inherits(
+          tryCatch(grDevices::col2rgb(x), error = function(e) e),
+          "error"
+        )
+      },
+      logical(1)
+    )
+    if (!all(isColor)) {
+      return(problem("color names or hexadecimal color codes"))
+    }
+  }
+  if (
+    !is.null(spec$range) &&
+      any(parsed < spec$range[[1]] | parsed > spec$range[[2]])
+  ) {
+    return(problem(paste0(
+      "numbers from ",
+      spec$range[[1]],
+      " to ",
+      spec$range[[2]]
+    )))
+  }
+  NULL
+}
 
 # The problems with the configuration fields of one Plot definition that stop
-# it from being built: an unsupported field, an axis scale other than
-# `"linear"` / `"log"`, two different scales on an `observedVsSimulated` plot
-# (it has one scale for both axes), and an `lloqOnBothAxes` that is not one
-# logical. Shared by the validator (critical errors) and the two aborting
-# gates, `addPlot()` and `.assertPlotConfigurationsBuildable()`, so they can
-# never disagree.
+# it from being built: an unknown field, a value outside its rule, two
+# different scales on an `observedVsSimulated` plot (it has one scale for both
+# axes), an `lloqDirection` that the plot type cannot draw or that contradicts
+# `lloqOnBothAxes`, and tick label texts without matching ticks. Shared by the
+# validator (critical errors) and the two aborting gates, `addPlot()` and
+# `.assertPlotConfigurationsBuildable()`, so they can never disagree.
 #
 # @param entry One Plot definition (a named list).
 # @returns A character vector of messages, empty when the fields are valid.
@@ -574,39 +988,38 @@ print.DataCombined <- function(x, ...) {
 # @noRd
 .plotEntryFieldErrors <- function(entry) {
   plotId <- entry$plotId %||% "<unknown>"
+  plotType <- entry$plotType
   errors <- character()
 
-  unsupported <- setdiff(
-    names(entry),
-    c(.plotIdentityFields, names(.plotDefinitionFields))
-  )
-  if (length(unsupported) > 0L) {
-    errors <- c(
-      errors,
-      messages$unsupportedPlotFields(
+  unknown <- setdiff(names(entry), c(.plotIdentityFields, names(.plotFields)))
+  if (length(unknown) > 0L) {
+    errors <- c(errors, messages$unknownPlotFields(plotId, unknown))
+  }
+
+  valueErrors <- character()
+  for (field in intersect(names(entry), names(.plotFields))) {
+    if (is.null(entry[[field]])) {
+      next
+    }
+    valueErrors <- c(
+      valueErrors,
+      .plotFieldValueProblem(
         plotId,
-        unsupported,
-        names(.plotDefinitionFields)
+        field,
+        entry[[field]],
+        .plotFields[[field]]
       )
     )
   }
-
-  for (field in c("xAxisScale", "yAxisScale")) {
-    value <- entry[[field]]
-    if (
-      !is.null(value) && !(length(value) == 1L && value %in% .plotAxisScales)
-    ) {
-      errors <- c(
-        errors,
-        messages$invalidPlotAxisScale(plotId, field, value, .plotAxisScales)
-      )
-    }
+  # The checks across fields read the values, so they wait for valid ones.
+  if (length(valueErrors) > 0L) {
+    return(c(errors, valueErrors))
   }
 
   if (
-    identical(entry$plotType, "observedVsSimulated") &&
-      length(entry$xAxisScale) == 1L &&
-      length(entry$yAxisScale) == 1L &&
+    identical(plotType, "observedVsSimulated") &&
+      !is.null(entry$xAxisScale) &&
+      !is.null(entry$yAxisScale) &&
       !identical(entry$xAxisScale, entry$yAxisScale)
   ) {
     errors <- c(
@@ -619,11 +1032,67 @@ print.DataCombined <- function(x, ...) {
     )
   }
 
-  lloq <- entry$lloqOnBothAxes
-  if (
-    !is.null(lloq) && !(is.logical(lloq) && length(lloq) == 1L && !is.na(lloq))
-  ) {
-    errors <- c(errors, messages$invalidLloqOnBothAxes(plotId, lloq))
+  direction <- entry$lloqDirection
+  if (!is.null(direction) && !is.null(plotType)) {
+    allowedDirections <- if (plotType %in% .timeProfilePlotTypes) {
+      "horizontal"
+    } else if (identical(plotType, "observedVsSimulated")) {
+      c("vertical", "both")
+    }
+    if (!is.null(allowedDirections) && !direction %in% allowedDirections) {
+      errors <- c(
+        errors,
+        messages$invalidLloqDirection(
+          plotId,
+          plotType,
+          direction,
+          allowedDirections
+        )
+      )
+    } else if (
+      identical(plotType, "observedVsSimulated") &&
+        !is.null(entry$lloqOnBothAxes)
+    ) {
+      onBothAxes <- .parsePlotFieldValue(
+        entry$lloqOnBothAxes,
+        .plotFields$lloqOnBothAxes
+      )
+      if (!identical(onBothAxes, identical(direction, "both"))) {
+        errors <- c(
+          errors,
+          messages$conflictingLloqSettings(plotId, direction, onBothAxes)
+        )
+      }
+    }
+  }
+
+  for (axis in c("x", "y")) {
+    labelsField <- paste0(axis, "AxisTicksLabels")
+    if (is.null(entry[[labelsField]])) {
+      next
+    }
+    labels <- .parsePlotFieldValue(
+      entry[[labelsField]],
+      .plotFields[[labelsField]]
+    )
+    if (length(labels) == 1L && labels %in% .plotTickLabelNames) {
+      next
+    }
+    ticksField <- paste0(axis, "AxisTicks")
+    ticks <- if (!is.null(entry[[ticksField]])) {
+      .parsePlotFieldValue(entry[[ticksField]], .plotFields[[ticksField]])
+    }
+    if (length(ticks) != length(labels)) {
+      errors <- c(
+        errors,
+        messages$tickLabelsWithoutTicks(
+          plotId,
+          labelsField,
+          ticksField,
+          length(labels)
+        )
+      )
+    }
   }
 
   errors
@@ -729,8 +1198,9 @@ print.DataCombined <- function(x, ...) {
 #   (e.g. `quantiles = c(0.05, 0.5, 0.95)` becomes `"0.05, 0.5, 0.95"`).
 #   This is the canonical in-memory shape for the multi-value
 #   plotConfiguration fields: the JSON stores them as comma-separated
-#   strings, the parser keeps them as strings, and the plot dispatchers
-#   re-split them with `strsplit(x, ",")`.
+#   strings, the parser keeps them as strings, and the plot builder splits
+#   them with `.parsePlotFieldValue()`, where double quotes protect a comma
+#   inside one value (`c("A, B", "C")` is stored as `"\"A, B\", C"`).
 #
 # @keywords internal
 # @noRd
@@ -739,6 +1209,10 @@ print.DataCombined <- function(x, ...) {
   dots <- Filter(Negate(is.null), dots)
   lapply(dots, function(v) {
     if (length(v) > 1L) {
+      # Quote an element that holds a comma, so it reads back as one value.
+      if (is.character(v)) {
+        v <- ifelse(grepl(",", v, fixed = TRUE), paste0('"', v, '"'), v)
+      }
       return(paste(v, collapse = ", "))
     }
     v
@@ -855,38 +1329,21 @@ print.DataCombined <- function(x, ...) {
 #' @param plotType Character, length 1 (recycled) or the same length as `id`.
 #'   Each one of `"individual"`, `"population"`, `"observedVsSimulated"`,
 #'   `"residualsVsSimulated"`, `"residualsVsTime"`.
-#' @param ... Optional plot-configuration fields. A field that is not set
-#'   uses the default of the `{ospsuite}` plot function. Any other field
-#'   name is an error.
-#'
-#'   For all plot types:
-#'   - `title`, `subtitle`: plot title and subtitle, used as written.
-#'   - `xLabel`, `yLabel`: axis titles, used as written.
-#'   - `yUnit`: unit of the y values. On `"observedVsSimulated"` and
-#'     `"residualsVsSimulated"` plots the x axis also shows y values.
-#'
-#'   For some plot types only (a field on another plot type is ignored, and
-#'   [validateProject()] warns about it):
-#'   - `xUnit`: unit of the time axis (`"individual"`, `"population"`,
-#'     `"residualsVsTime"`).
-#'   - `xAxisScale`, `yAxisScale`: `"linear"` or `"log"` (`"individual"`,
-#'     `"population"`, `"observedVsSimulated"`). An `"observedVsSimulated"`
-#'     plot uses one scale for both axes, so when both fields are set they
-#'     must be equal.
-#'   - `xValuesLimits`, `yValuesLimits`: two numbers; points outside are
-#'     removed (`"individual"`, `"population"`).
-#'   - `xAxisLimits`, `yAxisLimits`: two numbers; the visible axis range, the
-#'     points outside are kept (`"individual"`, `"population"`). With value
-#'     limits on the same axis, the axis limits set the visible range.
-#'   - `aggregation`, `quantiles` (three probabilities), `nsd`: how a
-#'     population is summarized (`"population"`).
-#'   - `foldDistance`: one or more numbers, the fold lines drawn around the
-#'     line of identity (`"observedVsSimulated"`).
-#'   - `lloqOnBothAxes`: `TRUE` (default) or `FALSE`, whether the lower limit
-#'     of quantification is drawn on both axes (`"observedVsSimulated"`).
+#' @param ... Optional plot-configuration fields: the plot settings of
+#'   esqlabsR 5.x (titles and their text style, legend, axes, ticks, grid,
+#'   backgrounds, watermark, colors, line, point, ribbon, and error bar style,
+#'   LLOQ, fold lines) plus `aggregation`, `quantiles`, `nsd`, `foldDistance`,
+#'   and `lloqOnBothAxes`. `vignette("reference-definition-fields")` lists
+#'   every field with its values and the plot types it applies to. A field
+#'   that is not set takes the ESQlabs value of
+#'   [createEsqlabsPlotConfiguration()], or the default of the `{ospsuite}`
+#'   plot function. An unknown field name or a value outside its rule is an
+#'   error. A field on a plot type that does not apply it is ignored, and
+#'   [validateProject()] warns about it.
 #'
 #'   A multi-value field (e.g. `quantiles = c(0.05, 0.5, 0.95)`) is applied
-#'   whole to every plot and stored as a comma-separated string; to set a
+#'   whole to every plot and stored as a comma-separated string (an element
+#'   that holds a comma is put in double quotes); to set a
 #'   scalar field differently per plot, pass a list of the same length as
 #'   `id`.
 #'

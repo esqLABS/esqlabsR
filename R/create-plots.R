@@ -475,7 +475,7 @@ createPlotsFromExcel <- function(...) {
 #'
 #' @param plotConfigurations keyed list (one entry per plot), each entry a
 #'   named list with `plotId`, `dataCombinedId`, `plotType`, plus the fields of
-#'   `.plotDefinitionFields`. Callers must pass only plots whose
+#'   `.plotFields`. Callers must pass only plots whose
 #'   `dataCombinedId` is built in `dataCombinedList`;
 #'   `.assertPlotConfigurationsBuildable()` aborts on any `dataCombinedId`
 #'   missing from the list.
@@ -556,7 +556,7 @@ createPlotsFromExcel <- function(...) {
 
 #' Build one plot from its Plot definition
 #'
-#' Maps the fields of `.plotDefinitionFields` onto the arguments of the
+#' Maps the fields of `.plotFields` onto the arguments of the
 #' `ospsuite` plot function for the plot type. An absent field passes no
 #' argument, so the `ospsuite` default applies; `lloqOnBothAxes` defaults to
 #' `TRUE`. A plot that is drawn gets the house style, its title and subtitle,

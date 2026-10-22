@@ -2956,9 +2956,10 @@ projectStatus <- function(project, silent = FALSE) {
     readSheet("exportConfiguration"),
     plotsFile
   )
-  plotSheet <- readSheet("plotConfiguration")
-  .warnSkippedPlotColumns(plotSheet, plotsFile)
-  plotConfiguration <- .parseExcelPlotSheet(plotSheet, rowToFields)
+  plotConfiguration <- .parseExcelPlotSheet(
+    readSheet("plotConfiguration"),
+    rowToFields
+  )
   plotGrids <- .parseExcelPlotGridSheet(readSheet("plotGrids"), rowToFields)
   .warnDuplicatePlotIds(plotConfiguration, "plotId", "plotConfiguration")
   .warnDuplicatePlotIds(plotGrids, "plotGridId", "plotGrids")
@@ -3001,53 +3002,6 @@ projectStatus <- function(project, silent = FALSE) {
       grids[!is.na(grids)]
     ),
     "esqlabsR_importSkippedPlotExportConfiguration"
-  )
-}
-
-# The `plotConfiguration` columns a Plot definition can hold: the id and
-# reference columns under their legacy and their exported names, plus the fields
-# of `.plotDefinitionFields`. Any other column is a 5.x style setting the plot
-# functions no longer take.
-.importedPlotColumns <- function() {
-  c(
-    "plotID",
-    "plotId",
-    "DataCombinedName",
-    "dataCombined",
-    "plotType",
-    names(.plotDefinitionFields)
-  )
-}
-
-# Report the `plotConfiguration` columns that are not imported.
-#
-# A 5.x workbook styles each plot with columns such as `linesColor` or
-# `legendPosition`. A Plot definition has no field for them, so they are dropped;
-# the warning names the ones that hold a value, since that is styling the user
-# set and loses. A header-only column says nothing and is silent, the same rule
-# as `.warnSkippedPlotExportConfiguration()`.
-#
-# @param plotDf The `plotConfiguration` sheet, or NULL when absent or empty.
-# @param plotsFile The workbook, named in the warning.
-# @returns Nothing, called for its warning.
-# @keywords internal
-# @noRd
-.warnSkippedPlotColumns <- function(plotDf, plotsFile) {
-  if (is.null(plotDf)) {
-    return(invisible(NULL))
-  }
-  skipped <- setdiff(names(plotDf), .importedPlotColumns())
-  filled <- skipped[vapply(
-    skipped,
-    function(column) any(!is.na(plotDf[[column]]) & plotDf[[column]] != ""),
-    logical(1)
-  )]
-  if (length(filled) == 0L) {
-    return(invisible(NULL))
-  }
-  .warnFormatted(
-    messages$importSkippedPlotColumns(plotsFile, filled),
-    "esqlabsR_importSkippedPlotColumns"
   )
 }
 
@@ -3101,37 +3055,32 @@ projectStatus <- function(project, silent = FALSE) {
   "yScaleFactors"
 )
 
-# The plot / plot-grid fields that carry numbers rather than text, the field-type
-# contract `.dataCombinedNumericFields` gives the sibling section. A
-# hand-maintained workbook routinely stores one of these as text (`nsd` typed as
+# One plots cell, converted by the plot field table (`.plotFields`), the
+# field-type contract `.dataCombinedNumericFields` gives the sibling section. A
+# hand-maintained workbook routinely stores a number as text (`nsd` typed as
 # `"1.96"`), which readxl reads as a string, so the imported definition would hold
-# a string where the same field authored with `addPlot()` holds a number.
-#
-# Several of them are multi-value fields both entrypoints keep as one
-# comma-separated string, so the coercion is conditional on the cell holding a
-# single number (`.plotFieldValue()`): `"0, 24"` stays the string it is.
-.plotNumericFields <- c(
-  "nsd",
-  "quantiles",
-  "foldDistance",
-  "xValuesLimits",
-  "yValuesLimits",
-  "xAxisLimits",
-  "yAxisLimits"
-)
-
-# One plots cell, coerced to a number when the field is a numeric one and the
-# cell holds a single number. Anything else (text, a multi-value cell, a value
-# already numeric) is returned as read.
+# a string where the same field authored with `addPlot()` holds a number. A
+# numeric field becomes a number when the cell holds a single number (a
+# multi-value cell such as `"0, 24"` stays the string it is); a logical field
+# becomes a logical. A cell that does not convert, and a field outside the table
+# (a plot grid field, an unknown column), is returned as read, so validation
+# reports a bad value instead of the import aborting on it.
 #
 # @keywords internal
 # @noRd
 .plotFieldValue <- function(field, value) {
-  if (!(field %in% .plotNumericFields) || is.numeric(value)) {
+  spec <- .plotFields[[field]]
+  if (is.null(spec)) {
     return(value)
   }
-  numeric <- suppressWarnings(as.numeric(value))
-  if (length(numeric) == 1L && !is.na(numeric)) numeric else value
+  if (identical(spec$type, "logical") && !is.logical(value)) {
+    return(tryCatch(.toLogical(value, field), error = function(e) value))
+  }
+  if (identical(spec$type, "number") && !is.numeric(value)) {
+    numeric <- suppressWarnings(as.numeric(value))
+    return(if (length(numeric) == 1L && !is.na(numeric)) numeric else value)
+  }
+  value
 }
 
 # Group the long-format DataCombined sheet (one row per simulated/observed
@@ -3202,22 +3151,13 @@ projectStatus <- function(project, silent = FALSE) {
       i,
       idColumn = "plotID",
       idField = "plotId",
-      drop = c(
-        "DataCombinedName",
-        setdiff(names(df), .importedPlotColumns())
-      )
+      drop = "DataCombinedName"
     )
     # 5.x spelled the linear scale `"lin"`.
     for (scaleField in c("xAxisScale", "yAxisScale")) {
       if (identical(fields[[scaleField]], "lin")) {
         fields[[scaleField]] <- "linear"
       }
-    }
-    if (!is.null(fields$lloqOnBothAxes)) {
-      fields$lloqOnBothAxes <- .toLogical(
-        fields$lloqOnBothAxes,
-        "lloqOnBothAxes"
-      )
     }
     # Map the legacy `DataCombinedName` column onto the canonical JSON key; a
     # sheet that already uses `dataCombined` (e.g. one written by

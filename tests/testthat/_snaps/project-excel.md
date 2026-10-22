@@ -157,12 +157,3 @@
       i The DataCombined sheet marked the row "observed" but left its dataSet cell empty, so there is nothing to resolve against. The row is kept as it was authored, not dropped.
       i `validateProject()` reports each one as a critical error until the cell is filled in Excel and the project imported again, or the curve is completed with `addDataCombined()`.
 
-# the plots import drops unsupported columns with a warning and converts lin
-
-    Code
-      cat(skippedWarnings)
-    Output
-      ! The plotConfiguration sheet of 'Plots.xlsx' has a column that a plot does not support. It is not imported:
-      x linesColor
-      i Plots are drawn with the default style of the ospsuite plot functions. See `addPlot()` for the supported fields.
-

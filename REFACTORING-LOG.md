@@ -275,3 +275,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-10-22 11:04: Installed rSharp from GitHub through Remotes, listed in Imports so that pak uses the remote, because ospsuite needs rSharp 2.0.0 and the OSP r-universe does not have it. (#969)
 - 2026-10-22 11:24: plotGrid() applies the tagMargin of a PlotGridConfiguration to the panel tags. (#969)
 - 2026-10-22 11:24: The addPlots() test compares the stored plots with distinguishable expected plots. (#969)
+- 2026-10-22 12:24: A Plot definition accepts the 137 plot settings of esqlabsR 5.x plus the five Plot-only fields, with one field table for value rules and plot types; unknown fields and invalid values are errors, fields that cannot act warn, and the Excel import keeps every plotConfiguration column. (#969)

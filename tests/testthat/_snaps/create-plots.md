@@ -48,10 +48,10 @@
     Code
       .assertPlotConfigurationsBuildable(list(p1 = list(plotId = "p1",
         dataCombinedId = "dc", plotType = "observedVsSimulated", xAxisScale = "log",
-        yAxisScale = "linear", pointsSize = 2)), dataCombinedNames = "dc")
+        yAxisScale = "linear", pointSize = 2)), dataCombinedNames = "dc")
     Condition
       Error in `.assertPlotConfigurationsBuildable()`:
       ! Invalid plot configuration fields:
-      x Plot "p1" has unsupported field pointsSize. Supported fields: title, subtitle, xLabel, yLabel, xUnit, yUnit, xAxisScale, yAxisScale, xValuesLimits, yValuesLimits, xAxisLimits, yAxisLimits, aggregation, quantiles, nsd, foldDistance, and lloqOnBothAxes.
+      x Plot "p1" has unknown field pointSize. See `vignette("reference-definition-fields")` for the plot fields.
       x Plot "p1" is an "observedVsSimulated" plot with xAxisScale "log" and yAxisScale "linear". Both axes of this plot type use one scale: set both fields to the same value, or set only one of them.
 

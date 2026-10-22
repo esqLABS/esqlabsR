@@ -740,7 +740,7 @@ test_that("the build guard rejects field problems even when validate = FALSE", {
           plotType = "observedVsSimulated",
           xAxisScale = "log",
           yAxisScale = "linear",
-          pointsSize = 2
+          pointSize = 2
         )
       ),
       dataCombinedNames = "dc"

@@ -651,25 +651,6 @@ messages$importSkippedPlotExportConfiguration <- function(
   )
 }
 
-messages$importSkippedPlotColumns <- function(filePath, columns) {
-  # Unglued, like its neighbours: a column header is free text.
-  envir <- new.env(parent = parent.frame())
-  assign("filePath", filePath, envir = envir)
-  assign("columns", columns, envir = envir)
-  assign("n", length(columns), envir = envir)
-  list(
-    bullets = c(
-      "!" = "The {.field plotConfiguration} sheet of {.file {filePath}} has \\
-      {cli::qty(n)}{?a column/columns} that a plot does not support. \\
-      {?It is/They are} not imported:",
-      "x" = "{.field {columns}}",
-      "i" = "Plots are drawn with the default style of the {.pkg ospsuite} \\
-      plot functions. See {.fn addPlot} for the supported fields."
-    ),
-    envir = envir
-  )
-}
-
 messages$importDuplicatePlotIds <- function(sheet, idField, ids) {
   # Unglued, like its neighbours: a plot id is free text.
   envir <- new.env(parent = parent.frame())
@@ -1470,13 +1451,20 @@ messages$logScaleWithZeroLimit <- function(
   )
 }
 
-# The four plot-field entries below also feed `validationResult` messages, which
+# The plot-field entries below also feed `validationResult` messages, which
 # are not passed through `cli` again, so they are built without a trailing `\\`
 # line continuation.
-messages$unsupportedPlotFields <- function(plotId, fields, supportedFields) {
+messages$unknownPlotFields <- function(plotId, fields) {
   cliFormat(paste(
-    "Plot {.val {plotId}} has unsupported field{?s} {.field {fields}}.",
-    "Supported fields: {.field {supportedFields}}."
+    "Plot {.val {plotId}} has unknown field{?s} {.field {fields}}.",
+    "See {.code vignette(\"reference-definition-fields\")} for the plot fields."
+  ))
+}
+
+messages$invalidPlotFieldValue <- function(plotId, field, value, rule) {
+  cliFormat(paste(
+    "Plot {.val {plotId}} has {.field {field}} {.val {value}}.",
+    "Expected: {rule}."
   ))
 }
 
@@ -1497,10 +1485,38 @@ messages$conflictingPlotAxisScales <- function(plotId, xAxisScale, yAxisScale) {
   ))
 }
 
-messages$invalidLloqOnBothAxes <- function(plotId, value) {
+messages$invalidLloqDirection <- function(
+  plotId,
+  plotType,
+  direction,
+  allowedDirections
+) {
   cliFormat(paste(
-    "Plot {.val {plotId}} has {.field lloqOnBothAxes} {.val {value}}.",
-    "It must be a single {.code TRUE} or {.code FALSE}."
+    "Plot {.val {plotId}} has {.field lloqDirection} {.val {direction}},",
+    "which a plot of type {.val {plotType}} cannot draw.",
+    "Allowed: {.val {allowedDirections}}."
+  ))
+}
+
+messages$conflictingLloqSettings <- function(plotId, direction, onBothAxes) {
+  cliFormat(paste(
+    "Plot {.val {plotId}} has {.field lloqDirection} {.val {direction}} and",
+    "{.field lloqOnBothAxes} {.val {onBothAxes}}, which disagree.",
+    "{.val both} draws the LLOQ on both axes, {.val vertical} only on the",
+    "observed axis: set one of the two fields."
+  ))
+}
+
+messages$tickLabelsWithoutTicks <- function(
+  plotId,
+  labelsField,
+  ticksField,
+  count
+) {
+  cliFormat(paste(
+    "Plot {.val {plotId}} has {count} tick label{?s} in {.field {labelsField}}",
+    "but not the same number of ticks in {.field {ticksField}}.",
+    "Label texts need one tick each."
   ))
 }
 
