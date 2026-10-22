@@ -189,7 +189,16 @@ plotGrid <- function(plotGridConfiguration) {
         hjust = plotGridConfiguration$tagHorizontalJustification,
         vjust = plotGridConfiguration$tagVerticalJustification,
         angle = plotGridConfiguration$tagAngle,
-        lineheight = plotGridConfiguration$tagLineHeight
+        lineheight = plotGridConfiguration$tagLineHeight,
+        margin = if (!is.null(plotGridConfiguration$tagMargin)) {
+          ggplot2::margin(
+            t = plotGridConfiguration$tagMargin[1],
+            r = plotGridConfiguration$tagMargin[2],
+            b = plotGridConfiguration$tagMargin[3],
+            l = plotGridConfiguration$tagMargin[4],
+            unit = "pt"
+          )
+        }
       ),
       plot.tag.position = plotGridConfiguration$tagPosition
     )

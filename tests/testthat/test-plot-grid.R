@@ -50,6 +50,23 @@ test_that("addPlots() appends a single plot or a list of plots", {
   )))
 })
 
+test_that("plotGrid() applies the tag margin to every panel", {
+  plotGridConfiguration <- PlotGridConfiguration$new(boxPlots())
+  plotGridConfiguration$tagLevels <- "a"
+  plotGridConfiguration$tagMargin <- c(1, 2, 3, 4)
+
+  pGrid <- plotGrid(plotGridConfiguration)
+
+  expect_equal(
+    lapply(pGrid$patches$plots, function(p) p$theme$plot.tag$margin),
+    list(ggplot2::margin(1, 2, 3, 4, unit = "pt"))
+  )
+  expect_equal(
+    pGrid$theme$plot.tag$margin,
+    ggplot2::margin(1, 2, 3, 4, unit = "pt")
+  )
+})
+
 test_that(".convertAngleToOrientation maps counter-clockwise angles", {
   expect_equal(
     vapply(c(0, 90, 180, 270, -90, 45), .convertAngleToOrientation, ""),
