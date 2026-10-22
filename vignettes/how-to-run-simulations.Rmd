@@ -23,7 +23,7 @@ library(esqlabsR)
 
 Once a project defines one or more scenarios, you run them with a single function, `runScenarios()`. A scenario is a named, runnable simulation specification (a model, an optional subject, the dosing, the parameters, the time grid, and the outputs to record); designing them is covered in `vignette("how-to-design-scenarios")`. Here we take a project that already has scenarios and focus on running them and handling the results.
 
-This article uses the worked example project bundled with the package, so every chunk runs as written. Load it with `loadProject()`:
+This article uses the example project bundled with the package:
 
 ```{r load-project}
 project <- loadProject(exampleProjectPath())
@@ -60,7 +60,7 @@ To run every scenario in the project, leave `scenarios` as its default `NULL`:
 results <- runScenarios(project)
 ```
 
-In this article we keep the runnable example to the single individual scenario above, because each scenario builds and simulates a full PBPK model and that work adds up quickly.
+In this article we keep the runnable example to the single individual scenario above.
 
 ## Get at the results
 
