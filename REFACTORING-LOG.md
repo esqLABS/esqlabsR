@@ -280,3 +280,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-10-22 13:35: The sensitivity plots stop on a name in defaultPlotConfiguration that is not a plot configuration field, such as a misspelling. (#969)
 - 2026-10-22 13:37: Documented that a plot keeps the 5.x plot settings: field families in the reference article, a styled plot in the plotting guide, what looks different after an Excel migration, NEWS, and the regenerated man pages. (#969)
 - 2026-10-22 14:00: Wrote the pi sign of the ported tick labels as an escape, so the R code stays ASCII. (#969)
+- 2026-10-22 14:01: The field-effect test checks the legend border fields on their own. (#969)

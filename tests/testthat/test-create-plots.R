@@ -1001,8 +1001,6 @@ test_that("every plot field changes the plot of the plot types that apply it", {
     )
     switch(
       field,
-      legendBorderType = ,
-      legendBorderSize = list(legendBorderColor = "red"),
       nsd = list(aggregation = "arithmetic"),
       if (element != field && element %in% textElements) {
         stats::setNames(list(sample[[element]]), element)
