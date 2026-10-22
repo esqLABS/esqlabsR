@@ -267,9 +267,9 @@ To run a population scenario, pass a `population` id during scenario creation, o
 
 If `steadyState = TRUE`, the simulation will be run for `steadyStateTime` after its final parametrization, the last simulated values of all molecules and state-variable parameters will be applied as their initial values, and the simulation will be run again. This is particularly useful when applying parametrization that changes the steady-state of the system, e.g., production rates of endogenous substrates.
 
-### Solver properties (scenario-specific)
+### Solver settings
 
-To change how the solver behaves for this scenario only, pass `solverSettings`, for example `solverSettings = list(relTol = 1e-6)`. See `vignette("reference-definition-fields")` for supported properties.
+To change how the solver behaves for this scenario only, pass `solverSettings` as a named list, for example `solverSettings = list(relTol = 1e-6)`. Give only the settings you want to change. A setting you leave out keeps the value of the project's `defaultSolverSettings`, or the value stored in the model file. `setScenario()` replaces the whole list instead of adding to it, so pass every setting you want to keep; `solverSettings = NULL` removes the list. The Excel scenario sheet has no columns for solver settings, so they are stored only in the scenario's JSON file. `vignette("reference-definition-fields")` lists the settings, and `vignette("how-to-run-simulations")` shows how to change them for a single run.
 
 ## Changing an existing scenario
 
