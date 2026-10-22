@@ -262,7 +262,7 @@ Like every other edit, the new scenario exists only in your R session until you 
 
 To run a population scenario, pass a `population` id during scenario creation, or add a population later to the field `project$definitions$scenarios[["scenario_name"]]$populationId`; the scenario type changes automatically. If you also keep an `individual`, its parameter sets still apply.
 
-`readPopulationFromCSV = TRUE` makes a population scenario read its population from a CSV file in the project's populations folder instead of sampling it. The CSV file must be named as the `populationID` defined in the scenario.
+`readPopulationFromCSV = TRUE` makes a population scenario read its population from a CSV file in the project's populations folder instead of sampling it. The CSV file must be named as the `populationId` defined in the scenario.
 
 ### Simulating a steady-state
 
