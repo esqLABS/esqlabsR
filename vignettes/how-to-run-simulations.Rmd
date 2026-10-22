@@ -20,17 +20,9 @@ knitr::opts_chunk$set(
 library(esqlabsR)
 ```
 
-Once a project defines scenarios, you run them with one function, `runScenarios()`. A scenario is a named simulation setup. It names:
+Scenarios can be run with `runScenarios()`. A scenario is a named simulation setup, see `vignette("how-to-design-scenarios")` how to create scenarios.
 
-- the model file,
-- the individual, and optionally a population,
-- the administration protocol,
-- the parameter sets and initial conditions,
-- the output paths and the time grid.
-
-`vignette("how-to-design-scenarios")` shows how to create scenarios. This article takes a project that already has scenarios, runs them, and works with the results.
-
-This article uses the example project bundled with the package:
+This article uses the example project:
 
 ```{r load-project}
 project <- loadProject(exampleProjectPath())
@@ -42,14 +34,12 @@ The example defines three scenarios: an individual scenario, a population scenar
 
 ## Run scenarios
 
-`runScenarios()` takes the project and, optionally, the names of the scenarios to run. The first call in an R session starts PK-Sim and prints a line such as `Initializing PK-Sim 13.0.191`. Later calls skip this step.
+`runScenarios()` takes the project and, optionally, the names of the scenarios to run.
 
-To run a single scenario, name it:
+To run a single scenario, specify it:
 
-```{r run-one}
+```{r run-one, eval = FALSE}
 results <- runScenarios(project, scenarios = "aciclovir_iv")
-
-names(results)
 ```
 
 To run a subset, pass a vector of names:
@@ -63,13 +53,10 @@ results <- runScenarios(
 
 To run every scenario in the project, leave `scenarios` as its default `NULL`:
 
-```{r run-all, eval = FALSE}
+```{r run-all}
 results <- runScenarios(project)
+names(results)
 ```
-
-In this article we keep the runnable example to the single individual scenario above.
-
-## Read the results
 
 `runScenarios()` returns a named list with one entry per scenario. Each entry is one **Scenario Result**, a list with four fields:
 
@@ -99,7 +86,7 @@ class(scenarioResult$results)
 The `population` field is `NULL` for an individual scenario. For a population scenario it holds the sampled `Population`, and `outputValues$data` holds one curve per virtual individual, told apart by `IndividualId`.
 
 ```{r individual-population}
-scenarioResult$population
+results[["aciclovir_iv_population"]]$population
 ```
 
 ## Save results and reload them later
@@ -134,15 +121,44 @@ reloaded <- loadScenarioResults(
 )
 ```
 
-The reloaded Scenario Result has the same fields as the one `runScenarios()` returned, so any code that works on one works on the other.
+The reloaded Scenario Result has the same structure as the one `runScenarios()` returns, so any code that works on one works on the other.
 
-## Tune the run
+## Change parameter values for one run
 
-Three arguments of `runScenarios()` change a run without editing the project:
+Pass `customParams` to change parameter values for one run. The values are set after all parameter sets of the scenario, so they replace the values the parameter sets give. They apply to every scenario in the run.
 
-- `simulationRunOptions`: how the run is executed, that is the number of cores and whether progress is shown,
-- `solverSettings`: how the solver behaves,
-- `customParams`: model parameter values for this run only.
+`customParams` is a list of three vectors, named `paths`, `values`, and `units`, in this order:
+
+- `paths`: full parameter paths, such as `"Organism|Liver|Volume"`. Each path must name exactly one parameter. Paths are case-sensitive, and wildcards such as `*` are not accepted.
+- `values`: the numeric values.
+- `units`: the unit of each value, such as `"ml"`. The value is converted to the unit of the model. Use `""` for a parameter without a unit, such as a fraction.
+
+```{r eval=FALSE}
+runScenarios(
+  project,
+  scenarios = "aciclovir_iv",
+  customParams = list(
+    paths = c(
+      "Aciclovir|Lipophilicity",
+      "Organism|Liver|Volume",
+      "Aciclovir|Fraction unbound (plasma, reference value)"
+    ),
+    values = c(0.5, 2000, 0.5),
+    units = c("Log Units", "ml", "")
+  )
+)
+```
+
+Give one value and one unit for each path. A missing value is not reported: R reuses the values from the start, so `values = 0.5` with two paths sets both parameters to 0.5. If a path appears twice, the last value wins.
+
+A path that the model of one scenario does not have stops the whole run, even if the other scenarios have it. A unit that does not fit the parameter also stops the run, for example `` Unit "kg" is not valid for quantity with path `Organism|Liver|Volume` and dimension "Volume" ``. The section "When a scenario fails" shows how to skip missing paths with `stopIfParameterNotFound = FALSE`.
+
+## Solver settings and run options
+
+Two arguments of `runScenarios()` control the solver behavior:
+
+- `simulationRunOptions`: how the run is executed, that is the number of cores and whether a progress bar for population simulations is shown,
+- `solverSettings`: how the solver behaves.
 
 `simulationRunOptions` takes an `ospsuite::SimulationRunOptions` object:
 
@@ -153,7 +169,16 @@ runScenarios(
 )
 ```
 
-`solverSettings` takes a named list:
+`solverSettings` takes a named list of [`SolverSettings`](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/SolverSettings.html) values. Give only the ones you want to change:
+
+- `absTol`: absolute tolerance of the solved quantities,
+- `relTol`: relative tolerance of the solved quantities,
+- `h0`: initial step size,
+- `hMin`: smallest step size the solver may take,
+- `hMax`: largest step size the solver may take,
+- `mxStep`: maximum number of internal steps the solver takes to reach the next output time point, a whole number,
+- `useJacobian`: whether the solver uses the Jacobian matrix, `TRUE` or `FALSE`,
+- `checkForNegativeValues`: whether the solver checks for negative values, `TRUE` or `FALSE`.
 
 ```{r eval=FALSE}
 # A tighter tolerance for this one run, without editing the project
@@ -164,27 +189,9 @@ Leaving both at their default `NULL` is right for most analyses.
 
 Solver settings can also be stored in the project, so everyone who runs it gets the same ones. There are three levels:
 
-- `defaultSolverSettings` in `Project.json` applies to every scenario,
-- a scenario's own `solverSettings` block applies to that scenario,
+- `defaultSolverSettings` in `Project.json`, set with `project$defaultSolverSettings <- list(...)`, applies to every scenario,
+- a scenario's own `solverSettings` (see `vignette("reference-definition-fields")`), set with `addScenario()` or `setScenario()`, applies to that scenario,
 - the `solverSettings` argument applies to this one run.
-
-For each setting, the most specific level that gives a value wins. See `vignette("reference-project-file")` for the settings you can give. `runScenarios()` never reads `numberOfCores` or `showProgress` from the project. Pass them with `simulationRunOptions` in each call.
-
-`customParams` sets model parameters for this run only, after all parameter sets of the scenario. It applies to every scenario in the run. Give the parameter paths, the values, and the units:
-
-```{r eval=FALSE}
-runScenarios(
-  project,
-  scenarios = "aciclovir_iv",
-  customParams = list(
-    paths = "Aciclovir|Lipophilicity",
-    values = 0.5,
-    units = "Log Units"
-  )
-)
-```
-
-A path that matches no parameter in the model stops the run, as described in the next section.
 
 ## When a scenario fails
 
@@ -214,6 +221,50 @@ results <- runScenarios(project, stopIfFails = FALSE)
 results <- Filter(\(x) !is.null(x$results), results)
 ```
 
+## Build simulations without running them
+
+`buildSimulations()` prepares the simulations of the scenarios but does not run them. It does everything `runScenarios()` does before simulating:
+
+- checks the project with `validateProject()`,
+- loads the model file of each scenario,
+- applies the individual, the parameter sets, the initial conditions, and `customParams`,
+- sets the output paths, the time grid, and the solver settings,
+- for a steady-state scenario, runs the steady-state simulation and applies its end values as the start values.
+
+Use it to check or change a simulation before you run it yourself, or to pass it to another `ospsuite` function. It takes the same arguments as `runScenarios()`, except `stopIfFails`: a scenario that cannot be built always stops the call.
+
+`buildSimulations()` returns a named list with one entry per scenario. Each entry has two fields, `simulation` and `population` (`NULL` for an individual scenario). Here we check a parameter value, change it, and run the simulation with `ospsuite::runSimulations()`:
+
+```{r build-simulations}
+built <- buildSimulations(project, scenarios = "aciclovir_iv")
+simulation <- built$aciclovir_iv$simulation
+
+ospsuite::getParameter("Aciclovir|Lipophilicity", simulation)$value
+
+ospsuite::setParameterValuesByPath(
+  "Aciclovir|Lipophilicity",
+  values = 0.5,
+  simulation = simulation,
+  units = "Log Units"
+)
+
+simulationResults <- ospsuite::runSimulations(simulation)[[1]]
+head(ospsuite::getOutputValues(simulationResults)$data)
+```
+
+For a population scenario, pass both fields of its entry:
+
+```{r eval=FALSE}
+built <- buildSimulations(project, scenarios = "aciclovir_iv_population")
+entry <- built$aciclovir_iv_population
+simulationResults <- ospsuite::runSimulations(
+  entry$simulation,
+  population = entry$population
+)[[1]]
+```
+
+The change is made to this simulation object only, not to the project. The result is a `SimulationResults` object, not a Scenario Result, so `saveScenarioResults()` cannot save it. To keep a change, add it to a parameter set of the project and run the scenario with `runScenarios()`.
+
 ## Where to go next
 
-With results in hand, turn them into figures with `vignette("how-to-plot-results")`. For the fields of a Scenario Result and the files `saveScenarioResults()` writes, see `vignette("reference-project-file")`. To get the simulations with all scenario parameters applied without running them, for example to check or change one first, use `buildSimulations()`.
+With results in hand, turn them into figures with `vignette("how-to-plot-results")`. For the fields of a Scenario Result and the files `saveScenarioResults()` writes, see `vignette("reference-project-file")`.
