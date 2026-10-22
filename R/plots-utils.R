@@ -600,14 +600,14 @@ createEsqlabsPlotConfiguration <- function() {
   multiples <- as.character(ticks %/% pi)
   multiples[multiples == "1"] <- ""
   multiples[multiples == "-1"] <- "-"
-  wholePart <- ifelse(multiples == "0", "", paste0(multiples, "π"))
+  wholePart <- ifelse(multiples == "0", "", paste0(multiples, "\u03c0"))
   fractions <- c(
-    "0.167" = " + π/6",
-    "0.25" = " + π/4",
-    "0.333" = " + π/3",
-    "0.5" = " + π/2",
-    "0.667" = " + 2π/3",
-    "0.833" = " + 5π/6"
+    "0.167" = " + \u03c0/6",
+    "0.25" = " + \u03c0/4",
+    "0.333" = " + \u03c0/3",
+    "0.5" = " + \u03c0/2",
+    "0.667" = " + 2\u03c0/3",
+    "0.833" = " + 5\u03c0/6"
   )
   fraction <- round((ticks %% pi) / pi, 3)
   fractionPart <- vapply(
@@ -617,7 +617,7 @@ createEsqlabsPlotConfiguration <- function() {
         return("")
       }
       key <- as.character(f)
-      if (key %in% names(fractions)) fractions[[key]] else paste0("+", f, "π")
+      if (key %in% names(fractions)) fractions[[key]] else paste0("+", f, "\u03c0")
     },
     character(1)
   )
