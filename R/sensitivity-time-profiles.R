@@ -15,9 +15,9 @@
 #'   separate plot will be generated for each output path, and a separate curve
 #'   will be generated for each parameter variation. A separate panel is created
 #'   for each varied parameter.
-#' @param xAxisScale Character string, either "log" (logarithmic scale) or "lin"
-#'   (linear scale), to set the x-axis scale. Default is "lin".
-#' @param yAxisScale Character string, either "log" or "lin", sets the y-axis
+#' @param xAxisScale Character string, either "log" (logarithmic scale) or
+#'   "linear" (linear scale), to set the x-axis scale. Default is "linear".
+#' @param yAxisScale Character string, either "log" or "linear", sets the y-axis
 #'   scale similarly to `xAxisScale`. Default is "log".
 #' @param xUnits,yUnits Units for the x-axis and y-axis, respectively. Can be
 #'   provided as a single string (e.g., `"nmol/l"`) or a list of strings. A
@@ -31,10 +31,11 @@
 #'   together with the simulated data based on `OutputPath` dimension for direct
 #'   comparison within the visualizations. Observed data will only be added to
 #'   plots with matching y-dimensions.
-#' @param defaultPlotConfiguration An object of class `DefaultPlotConfiguration`
-#'   used to customize plot aesthetics. Plot-specific settings provided directly
-#'   to the function, such as `xAxisScale`, will take precedence over any
-#'   modifications in `defaultPlotConfiguration`. If not provided, default
+#' @param defaultPlotConfiguration A named list of plot settings, as returned by
+#'   [createEsqlabsPlotConfiguration()], used to customize plot aesthetics.
+#'   Plot-specific settings provided directly to the function, such as
+#'   `xAxisScale`, will take precedence over any modifications in
+#'   `defaultPlotConfiguration`. If not provided, default
 #'   settings are applied.
 #'
 #'   Supported parameters for `defaultPlotConfiguration` include:
@@ -46,9 +47,9 @@
 #' - `pointsShape`: Shape of the point elements for observed data.
 #' - `title`: Main title text for the plot.
 #' - `titleSize`: Font size of the plot title.
-#' - `xAxisScale`: Scale type for the x-axis (`"log"` or `"lin"`).
+#' - `xAxisScale`: Scale type for the x-axis (`"log"` or `"linear"`).
 #' - `xLabel`: Label text for the x-axis.
-#' - `yAxisScale`: Scale type for the y-axis (`"log"` or `"lin"`).
+#' - `yAxisScale`: Scale type for the y-axis (`"log"` or `"linear"`).
 #' - `yLabel`: Label text for the y-axis.
 #'
 #' @import ggplot2
@@ -80,7 +81,7 @@
 #' sensitivityTimeProfiles(results)
 #'
 #' # Print plots with linear y-axis values
-#' sensitivityTimeProfiles(results, yAxisScale = "lin")
+#' sensitivityTimeProfiles(results, yAxisScale = "linear")
 #'
 #' # Print plots with custom configuration settings
 #' myPlotConfiguration <- createEsqlabsPlotConfiguration()
@@ -146,7 +147,7 @@ sensitivityTimeProfiles <- function(
     # pointsShape = NULL,
     title = NULL,
     titleSize = 14,
-    xAxisScale = "lin",
+    xAxisScale = "linear",
     xLabel = NULL,
     yAxisScale = "log",
     yLabel = NULL
@@ -213,7 +214,7 @@ sensitivityTimeProfiles <- function(
 #' @noRd
 .createTimeProfiles <- function(data, defaultPlotConfiguration) {
   # update data dependent plot configuration
-  plotConfiguration <- defaultPlotConfiguration$clone()
+  plotConfiguration <- defaultPlotConfiguration
   plotConfiguration <- .updatePlotConfiguration(
     plotConfiguration,
     list(title = unique(data$OutputPath))

@@ -1,8 +1,8 @@
 # Plot configuration utilities ----
 #
-# Palette, plot/grid/export configuration constructors, and the override /
-# overlay helpers used by createPlots() when applying per-plot configuration
-# diffs.
+# Palette, plot / grid configuration constructors, and the override helpers the
+# sensitivity plots use to merge their own settings into the user's plot
+# configuration.
 
 # Color palette ----
 
@@ -132,78 +132,463 @@ col2hsv <- function(color) {
   return(grDevices::rgb2hsv(rgb))
 }
 
-#' @title Create an instance of `DefaultPlotConfiguration` R6 class
+#' @title Create the ESQlabs plot configuration
 #' @rdname createEsqlabsPlotConfiguration
 #'
 #' @description
 #'
-#' An instance of `DefaultPlotConfiguration` R6 class from `{tlf}` package is
-#' needed for creating visualizations with the `{ospsuite}` package.
+#' A named list of plot settings (text sizes, line and point sizes, colors,
+#' legend position) chosen to reflect the corporate standards adopted by
+#' ESQlabs GmbH.
 #'
-#' The default attributes of the class are chosen to reflect the corporate
-#' standards adopted by esqLABS GmbH.
+#' Pass it, changed or not, as `defaultPlotConfiguration` to
+#' [sensitivitySpiderPlot()], [sensitivityTornadoPlot()], and
+#' [sensitivityTimeProfiles()]. [createPlots()] applies the same values to the
+#' plots it builds, where a Plot definition does not set the field.
 #'
-#' @returns An instance of `DefaultPlotConfiguration` R6 class.
+#' The names are plot configuration fields, listed in
+#' `vignette("reference-definition-fields")`. You can add any of them; a name
+#' that is not one of them stops the sensitivity plot functions with an error.
+#'
+#' @returns A named list.
 #'
 #' @examples
-#' createEsqlabsPlotConfiguration()
+#' myPlotConfiguration <- createEsqlabsPlotConfiguration()
+#' myPlotConfiguration$linesSize <- 1
 #'
 #' @family createPlottingConfigurations
 #'
 #' @export
 createEsqlabsPlotConfiguration <- function() {
-  defaultPlotConfiguration <- ospsuite::DefaultPlotConfiguration$new()
-
-  # Size
-  defaultPlotConfiguration$titleSize <- 10
-  defaultPlotConfiguration$xLabelSize <- 9
-  defaultPlotConfiguration$yLabelSize <- 9
-  defaultPlotConfiguration$xAxisLabelTicksSize <- 8
-  defaultPlotConfiguration$yAxisLabelTicksSize <- 8
-  defaultPlotConfiguration$legendKeysSize <- 6
-
-  defaultPlotConfiguration$xLabelMargin <- c(10, 0, 0, 0)
-  defaultPlotConfiguration$yLabelMargin <- c(0, 0, 10, 0)
-
-  # Lines size
-  defaultPlotConfiguration$linesSize <- 0.5
-
-  # Points size
-  defaultPlotConfiguration$pointsSize <- 1.75
-
-  # Error bars size
-  defaultPlotConfiguration$errorbarsSize <- 0.65
-  defaultPlotConfiguration$errorbarsCapSize <- 2.75
-
-  # Legend appearance
-  # defaultPlotConfiguration$legendBorderColor <- "grey10"
-  # defaultPlotConfiguration$legendBorderType <- 1
-  defaultPlotConfiguration$legendPosition <- tlf::LegendPositions$outsideTopLeft
-
-  # Axis appearance
-  defaultPlotConfiguration$yAxisLabelTicksAngle <- 0
-
-  # Colors
-  defaultPlotConfiguration$pointsColor <- esqlabsEnv$colorPalette
-  defaultPlotConfiguration$ribbonsFill <- esqlabsEnv$colorPalette
-  defaultPlotConfiguration$linesColor <- esqlabsEnv$colorPalette
-
-  return(defaultPlotConfiguration)
+  list(
+    # Text sizes
+    titleSize = 10,
+    xLabelSize = 9,
+    yLabelSize = 9,
+    xAxisLabelTicksSize = 8,
+    yAxisLabelTicksSize = 8,
+    legendKeysSize = 6,
+    xLabelMargin = c(10, 0, 0, 0),
+    yLabelMargin = c(0, 0, 10, 0),
+    # Lines, points, and error bars
+    linesSize = 0.5,
+    linesAlpha = 0.75,
+    pointsSize = 1.75,
+    pointsShape = ospsuite.plots::ospShapeNames,
+    errorbarsSize = 0.65,
+    errorbarsCapSize = 2.75,
+    # Legend and axes
+    legendPosition = "outsideTopLeft",
+    yAxisLabelTicksAngle = 0,
+    # Colors
+    pointsColor = esqlabsEnv$colorPalette,
+    ribbonsFill = esqlabsEnv$colorPalette,
+    linesColor = esqlabsEnv$colorPalette
+  )
 }
 
-#' @title Create an instance of `PlotGridConfiguration` R6 class
+# Plot style ----
+#
+# The parts of a Plot definition's settings that are added to the plot the
+# `ospsuite` plot function returns: one theme, the titles, the color, fill,
+# shape, and line type scales, and legend guides. The field
+# table `.plotFields` (R/plots.R) says which plot types apply each field.
+
+#' Style components for one plot
+#'
+#' Every color, fill, and shape scale is set explicitly: a `{ospsuite.plots}`
+#' plot that has no such scale gets the OSP scales when it is built, which
+#' ignore any theme palette.
+#'
+#' @param config Plot settings from `.plotConfigurationForEntry()`.
+#' @param plotType The plot type.
+#' @param plot The plot the `ospsuite` plot function returned, read for the
+#'   theme value a setting builds on (the legend fill under
+#'   `legendBackgroundAlpha`).
+#' @returns A list of `ggplot2` components, to add to `plot` with `+`.
+#' @keywords internal
+#' @noRd
+.plotStyleComponents <- function(config, plotType, plot) {
+  c(
+    list(
+      .plotTheme(config, plot),
+      do.call(
+        ggplot2::labs,
+        .dropNull(list(
+          title = config[["title"]],
+          subtitle = config[["subtitle"]],
+          caption = config[["caption"]],
+          x = config[["xLabel"]],
+          y = config[["yLabel"]],
+          colour = config[["legendTitle"]],
+          fill = config[["legendTitle"]]
+        ))
+      )
+    ),
+    .plotScales(config, plotType)
+  )
+}
+
+# `tlf` alignments as `hjust` values.
+.plotHjust <- function(align) {
+  if (is.null(align)) {
+    return(NULL)
+  }
+  c(left = 0, center = 0.5, right = 1)[[align]]
+}
+
+.plotMargin <- function(values) {
+  if (is.null(values)) {
+    return(NULL)
+  }
+  ggplot2::margin(
+    t = values[[1]],
+    r = values[[2]],
+    b = values[[3]],
+    l = values[[4]],
+    unit = "pt"
+  )
+}
+
+#' The theme element of one text element
+#'
+#' @param config Plot settings.
+#' @param element One of `.plotTextElements`.
+#' @param textbox Whether the element is a plot title, subtitle, or caption,
+#'   drawn as a text box that wraps long text (unless it is rotated).
+#' @param defaultAlign Alignment when the element sets none.
+#' @returns A theme element, or `NULL` when no style field of the element is
+#'   set and it is not a text box.
+#' @keywords internal
+#' @noRd
+.plotTextElement <- function(
+  config,
+  element,
+  textbox = FALSE,
+  defaultAlign = NULL
+) {
+  style <- function(suffix) config[[paste0(element, suffix)]]
+  isSet <- vapply(
+    .plotTextStyleSuffixes,
+    function(suffix) !is.null(style(suffix)),
+    logical(1)
+  )
+  if (!any(isSet) && !textbox) {
+    return(NULL)
+  }
+  hjust <- .plotHjust(style("Align") %||% defaultAlign)
+  properties <- .dropNull(list(
+    colour = style("Color"),
+    size = style("Size"),
+    face = style("FontFace"),
+    family = style("FontFamily"),
+    hjust = hjust,
+    margin = .plotMargin(style("Margin"))
+  ))
+  angle <- style("Angle")
+  if (textbox && (is.null(angle) || angle == 0)) {
+    return(do.call(
+      ggtext::element_textbox_simple,
+      c(properties, .dropNull(list(halign = hjust)))
+    ))
+  }
+  do.call(ggplot2::element_text, c(properties, .dropNull(list(angle = angle))))
+}
+
+#' Legend placement for one `legendPosition` value
+#'
+#' `none` hides the legend. An `inside...` value places it inside the panel at
+#' that corner or side. An `outside...` value places it on the side named first
+#' and justifies it toward the side named second (`outsideTopLeft`: top, left).
+#' A `ggplot2` name (`top`, `bottom`, `left`, `right`) is used as is, centered.
+#'
+#' @param position One of `.plotLegendPositions`.
+#' @returns A list of theme arguments.
+#' @keywords internal
+#' @noRd
+.plotLegendPlacement <- function(position) {
+  if (position %in% c("none", "top", "bottom", "left", "right")) {
+    return(list(
+      legend.position = position,
+      legend.justification = if (position != "none") "center"
+    ))
+  }
+  sides <- tolower(regmatches(
+    position,
+    gregexpr("Top|Bottom|Left|Right", position)
+  )[[1]])
+  if (startsWith(position, "inside")) {
+    point <- c(
+      x = if ("left" %in% sides) {
+        0
+      } else if ("right" %in% sides) {
+        1
+      } else {
+        0.5
+      },
+      y = if ("bottom" %in% sides) {
+        0
+      } else if ("top" %in% sides) {
+        1
+      } else {
+        0.5
+      }
+    )
+    return(list(
+      legend.position = "inside",
+      legend.position.inside = unname(point),
+      legend.justification = unname(point)
+    ))
+  }
+  list(
+    legend.position = sides[[1]],
+    legend.justification = if (length(sides) > 1L) sides[[2]] else "center"
+  )
+}
+
+#' The theme of one plot
+#'
+#' @inheritParams .plotStyleComponents
+#' @returns A `ggplot2` theme.
+#' @keywords internal
+#' @noRd
+.plotTheme <- function(config, plot) {
+  lineElement <- function(prefix) {
+    properties <- .dropNull(list(
+      colour = config[[paste0(prefix, "Color")]],
+      linewidth = config[[paste0(prefix, "Size")]],
+      linetype = config[[paste0(prefix, "Linetype")]]
+    ))
+    if (length(properties) == 0L) {
+      return(NULL)
+    }
+    do.call(ggplot2::element_line, properties)
+  }
+  rectElement <- function(fill, colour, linewidth, linetype) {
+    properties <- .dropNull(list(
+      fill = fill,
+      colour = colour,
+      linewidth = linewidth,
+      linetype = linetype
+    ))
+    if (length(properties) == 0L) {
+      return(NULL)
+    }
+    do.call(ggplot2::element_rect, properties)
+  }
+
+  elements <- list(
+    plot.title = .plotTextElement(config, "title", TRUE, "left"),
+    plot.subtitle = .plotTextElement(config, "subtitle", TRUE, "left"),
+    plot.caption = .plotTextElement(config, "caption", TRUE, "right"),
+    axis.title.x = .plotTextElement(config, "xLabel"),
+    axis.title.y = .plotTextElement(config, "yLabel"),
+    legend.text = .plotTextElement(config, "legendKeys"),
+    axis.text.x = .plotTextElement(config, "xAxisLabelTicks"),
+    axis.text.y = .plotTextElement(config, "yAxisLabelTicks"),
+    axis.line.x = lineElement("xAxis"),
+    axis.line.y = lineElement("yAxis"),
+    panel.grid.major.x = lineElement("xGrid"),
+    panel.grid.major.y = lineElement("yGrid"),
+    plot.background = rectElement(
+      config[["plotBackgroundFill"]],
+      config[["plotBackgroundColor"]],
+      config[["plotBackgroundSize"]],
+      config[["plotBackgroundLinetype"]]
+    ),
+    panel.background = rectElement(
+      config[["plotPanelBackgroundFill"]],
+      NULL,
+      NULL,
+      NULL
+    ),
+    # `ospsuite.plots` draws the panel outline with `panel.border`.
+    panel.border = if (
+      !is.null(config[["plotPanelBackgroundColor"]]) ||
+        !is.null(config[["plotPanelBackgroundSize"]]) ||
+        !is.null(config[["plotPanelBackgroundLinetype"]])
+    ) {
+      rectElement(
+        NA,
+        config[["plotPanelBackgroundColor"]],
+        config[["plotPanelBackgroundSize"]],
+        config[["plotPanelBackgroundLinetype"]]
+      )
+    }
+  )
+  # `ospsuite` blanks the legend title; a `legendTitle` shows it again.
+  if (!is.null(config[["legendTitle"]])) {
+    elements$legend.title <- .plotTextElement(config, "legendTitle") %||%
+      ggplot2::element_text()
+  }
+
+  backgroundFill <- config[["legendBackgroundColor"]]
+  if (!is.null(config[["legendBackgroundAlpha"]])) {
+    backgroundFill <- backgroundFill %||%
+      ggplot2::calc_element(
+        "legend.background",
+        ggplot2::complete_theme(plot$theme)
+      )$fill %||%
+      "white"
+    backgroundFill <- scales::alpha(
+      backgroundFill,
+      config[["legendBackgroundAlpha"]]
+    )
+  }
+  elements$legend.background <- rectElement(
+    backgroundFill,
+    config[["legendBorderColor"]],
+    config[["legendBorderSize"]],
+    config[["legendBorderType"]]
+  )
+
+  if (!is.null(config[["legendPosition"]])) {
+    elements <- c(elements, .plotLegendPlacement(config[["legendPosition"]]))
+  }
+
+  do.call(ggplot2::theme, .dropNull(elements))
+}
+
+#' Color, fill, shape, and line type scales and legend guides of one plot
+#'
+#' On a time profile a simulated curve and its observed points share one group
+#' color, from `linesColor`; the fill is `linesColor` on `individual` plots and
+#' `ribbonsFill` on `population` plots. On the other plot types the points take
+#' `pointsColor`. Colors, shapes, and line types are used in order and
+#' recycled.
+#'
+#' @inheritParams .plotStyleComponents
+#' @returns A list of `ggplot2` components.
+#' @keywords internal
+#' @noRd
+.plotScales <- function(config, plotType) {
+  recycled <- function(aesthetic, values) {
+    ggplot2::discrete_scale(
+      aesthetic,
+      palette = function(n) rep_len(values, n)
+    )
+  }
+  isTimeProfile <- plotType %in% .timeProfilePlotTypes
+  colors <- if (isTimeProfile) {
+    config[["linesColor"]]
+  } else {
+    config[["pointsColor"]]
+  }
+  fills <- if (identical(plotType, "population")) {
+    config[["ribbonsFill"]]
+  } else {
+    colors
+  }
+  components <- .dropNull(list(
+    if (!is.null(colors)) recycled("colour", colors),
+    if (!is.null(fills)) recycled("fill", fills),
+    if (!is.null(config[["pointsShape"]])) {
+      recycled("shape", config[["pointsShape"]])
+    }
+  ))
+
+  if (isTimeProfile && !is.null(config[["linesLinetype"]])) {
+    components <- c(
+      components,
+      list(recycled("linetype", config[["linesLinetype"]]))
+    )
+  }
+
+  if (
+    identical(plotType, "observedVsSimulated") &&
+      identical(config[["foldLinesLegend"]], FALSE)
+  ) {
+    components <- c(components, list(ggplot2::guides(linetype = "none")))
+  }
+
+  components
+}
+
+#' Tick labels ported from `tlf`
+#'
+#' @param ticks The tick values.
+#' @returns The tick labels.
+#' @keywords internal
+#' @noRd
+.logTickLabels <- function(ticks) {
+  exponents <- floor(log10(ticks))
+  prefixes <- paste0(ticks * 10^(-exponents), "%*%")
+  prefixes[prefixes == "1%*%"] <- ""
+  .parseTickLabels(paste0(prefixes, "10^", exponents))
+}
+
+.lnTickLabels <- function(ticks) {
+  exponents <- floor(log(ticks))
+  prefixes <- paste0(ticks * exp(-exponents), "%*%")
+  prefixes[prefixes == "1%*%"] <- ""
+  .parseTickLabels(paste0(prefixes, "e^", exponents))
+}
+
+.sqrtTickLabels <- function(ticks) {
+  .parseTickLabels(paste0("sqrt(", ticks^2, ")"))
+}
+
+.greekTickLabels <- function(ticks) {
+  vapply(ticks, function(tick) intToUtf8(tick + 944), character(1))
+}
+
+.percentileTickLabels <- function(ticks) {
+  paste0(round(100 * stats::pnorm(ticks), 3), "%")
+}
+
+.piTickLabels <- function(ticks) {
+  multiples <- as.character(ticks %/% pi)
+  multiples[multiples == "1"] <- ""
+  multiples[multiples == "-1"] <- "-"
+  wholePart <- ifelse(multiples == "0", "", paste0(multiples, "\u03c0"))
+  fractions <- c(
+    "0.167" = " + \u03c0/6",
+    "0.25" = " + \u03c0/4",
+    "0.333" = " + \u03c0/3",
+    "0.5" = " + \u03c0/2",
+    "0.667" = " + 2\u03c0/3",
+    "0.833" = " + 5\u03c0/6"
+  )
+  fraction <- round((ticks %% pi) / pi, 3)
+  fractionPart <- vapply(
+    fraction,
+    function(f) {
+      if (f == 0) {
+        return("")
+      }
+      key <- as.character(f)
+      if (key %in% names(fractions)) {
+        fractions[[key]]
+      } else {
+        paste0("+", f, "\u03c0")
+      }
+    },
+    character(1)
+  )
+  labels <- paste0(wholePart, fractionPart)
+  labels[labels == ""] <- "0"
+  labels
+}
+
+# Parse tick labels as plotmath expressions; `NA` ticks give empty labels.
+.parseTickLabels <- function(texts) {
+  as.expression(lapply(texts, function(text) {
+    if (grepl("NA", text, fixed = TRUE)) "" else str2lang(text)
+  }))
+}
+
+#' @title Create the ESQlabs plot grid configuration
 #' @rdname createEsqlabsPlotGridConfiguration
 #'
 #' @description
 #'
-#' An instance of `PlotGridConfiguration` R6 class from `{tlf}` package is
-#' needed for creating a grid of multiple visualizations created using the
-#' `{ospsuite}` package.
+#' A [PlotGridConfiguration] object for arranging several plots in one figure
+#' with [plotGrid()].
 #'
 #' The default attributes of the class are chosen to reflect the corporate
-#' standards adopted by esqLABS GmbH.
+#' standards adopted by ESQlabs GmbH.
 #'
-#' @returns An instance of `PlotGridConfiguration` R6 class.
+#' @returns A [PlotGridConfiguration] object.
 #'
 #' @examples
 #' createEsqlabsPlotGridConfiguration()
@@ -213,7 +598,7 @@ createEsqlabsPlotConfiguration <- function() {
 #' @export
 createEsqlabsPlotGridConfiguration <- function() {
   # nolint: object_length_linter.
-  plotGridConfiguration <- tlf::PlotGridConfiguration$new()
+  plotGridConfiguration <- PlotGridConfiguration$new()
 
   plotGridConfiguration$tagLevels <- "a"
   plotGridConfiguration$tagSize <- 11
@@ -226,37 +611,37 @@ createEsqlabsPlotGridConfiguration <- function() {
 
 # Plot configuration override and overlay helpers ----
 
-#' @param plotOverrideConfig A list with new configuration settings to apply.
+#' Apply function-specific settings to a plot configuration
 #'
+#' A setting from `plotOverrideConfig` replaces the value in
+#' `plotConfiguration` when that value is unset (absent from the list) or still
+#' equals the value from [createEsqlabsPlotConfiguration()]. A value the user
+#' changed is kept.
+#'
+#' @param plotConfiguration A named list of plot settings.
+#' @param plotOverrideConfig A named list with new configuration settings to
+#'   apply.
+#' @returns The updated named list.
 #' @keywords internal
 #' @noRd
 .updatePlotConfiguration <- function(plotConfiguration, plotOverrideConfig) {
   defaultValues <- createEsqlabsPlotConfiguration()
 
   for (name in names(plotOverrideConfig)) {
-    if (!name %in% names(plotConfiguration)) {
-      cli::cli_warn(messages$unknownPlotConfiguration(name))
-      next
-    }
-
-    if (is.null(defaultValues[[name]]) && is.null(plotConfiguration[[name]])) {
-      plotConfiguration[[name]] <- plotOverrideConfig[[name]]
-    } else if (
-      !is.null(defaultValues[[name]]) && !is.null(plotConfiguration[[name]])
-    ) {
-      # Apply the override only when the current value still equals the
-      # default (the user has not customized it). Use an NA-safe comparison:
-      # a plain `all(x == default)` returns NA when either side holds an NA,
-      # and `isTRUE(NA)` is FALSE, which would silently skip a legit override.
-      if (
-        isTRUE(all.equal(
-          plotConfiguration[[name]],
-          defaultValues[[name]],
-          check.attributes = FALSE
-        ))
-      ) {
-        plotConfiguration[[name]] <- plotOverrideConfig[[name]]
-      }
+    currentValue <- plotConfiguration[[name]]
+    # Use an NA-safe comparison: a plain `all(x == default)` returns NA when
+    # either side holds an NA, and `isTRUE(NA)` is FALSE, which would silently
+    # skip a legit override.
+    isDefault <- !is.null(defaultValues[[name]]) &&
+      isTRUE(all.equal(
+        currentValue,
+        defaultValues[[name]],
+        check.attributes = FALSE
+      ))
+    if (is.null(currentValue) || isDefault) {
+      # `[name]` rather than `[[name]]` so that a `NULL` override is stored as
+      # an unset entry instead of being dropped from the list.
+      plotConfiguration[name] <- list(plotOverrideConfig[[name]])
     }
   }
 
@@ -272,8 +657,10 @@ createEsqlabsPlotGridConfiguration <- function() {
 #' already been set by the additional parameters. Finally, it validates the
 #' final configuration to ensure all options are valid.
 #'
-#' @param defaultPlotConfiguration An object of class `DefaultPlotConfiguration`
-#'   or a list of such objects.
+#' @param defaultPlotConfiguration A named list from
+#'   [createEsqlabsPlotConfiguration()], or `NULL` to use that list unchanged.
+#'   A name that is not a plot configuration field (a misspelling such as
+#'   `lineColour`) is an error.
 #' @param plotOverrideConfig A list with new configuration settings to apply.
 #' @param ... Additional parameters to override specific configuration settings
 #'   dynamically.
@@ -285,21 +672,33 @@ createEsqlabsPlotGridConfiguration <- function() {
   plotOverrideConfig = NULL,
   ...
 ) {
-  # validate input defaultPlotConfiguration
   if (is.null(defaultPlotConfiguration)) {
     defaultPlotConfiguration <- createEsqlabsPlotConfiguration()
-  } else {
-    validateIsOfType(defaultPlotConfiguration, "DefaultPlotConfiguration")
+  } else if (
+    !is.list(defaultPlotConfiguration) ||
+      !rlang::is_named(defaultPlotConfiguration)
+  ) {
+    cli::cli_abort(
+      messages$plotConfigurationNotNamedList(class(defaultPlotConfiguration)),
+      call = rlang::caller_env()
+    )
   }
-
-  # Clone the `DefaultPlotConfiguration` object
-  # If a list of configurations is passed, clone only the first configuration
-  # in the list. List processing not supported yet.
-  if (inherits(defaultPlotConfiguration, "list")) {
-    customPlotConfiguration <- defaultPlotConfiguration[[1]]$clone()
-  } else {
-    customPlotConfiguration <- defaultPlotConfiguration$clone()
+  unknownNames <- setdiff(
+    names(defaultPlotConfiguration),
+    .plotConfigurationFieldNames
+  )
+  if (length(unknownNames) > 0L) {
+    cli::cli_abort(
+      messages$unknownPlotConfigurationNames(unknownNames),
+      call = rlang::caller_env()
+    )
   }
+  customPlotConfiguration <- defaultPlotConfiguration
+  # `$` on a list matches a name partially, so `$subtitle` on a list without a
+  # subtitle but with `subtitleSize` would return the size. Holding every
+  # configuration field, unset ones as `NULL`, makes each `$` exact.
+  unset <- setdiff(.plotConfigurationFieldNames, names(customPlotConfiguration))
+  customPlotConfiguration[unset] <- list(NULL)
 
   # Capture additional parameters passed through ... and override
   additionalParams <- list(...)
@@ -315,14 +714,10 @@ createEsqlabsPlotGridConfiguration <- function() {
     plotOverrideConfig
   )
 
-  # convert to list and validate final plot configuration
-  plotConfigurationList <- purrr::map(
-    purrr::set_names(names(customPlotConfiguration)),
-    ~ customPlotConfiguration[[.]]
-  )
+  # validate final plot configuration
   optionNames <- unique(c(names(plotOverrideConfig), names(additionalParams)))
   ospsuite.utils::validateIsOption(
-    plotConfigurationList,
+    customPlotConfiguration,
     .getPlotConfigurationOptions(optionNames)
   )
 
@@ -423,7 +818,10 @@ createEsqlabsPlotGridConfiguration <- function() {
     ),
     xAxisScale = list(
       type = "character",
-      allowedValues = c("log", "lin")
+      allowedValues = c(
+        ospsuite.plots::AxisScales$linear,
+        ospsuite.plots::AxisScales$log
+      )
     ),
     xLabel = list(
       type = "character",
@@ -435,7 +833,10 @@ createEsqlabsPlotGridConfiguration <- function() {
     ),
     yAxisScale = list(
       type = "character",
-      allowedValues = c("log", "lin")
+      allowedValues = c(
+        ospsuite.plots::AxisScales$linear,
+        ospsuite.plots::AxisScales$log
+      )
     ),
     yAxisTicks = list(
       type = "integer",

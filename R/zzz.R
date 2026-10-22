@@ -2,7 +2,10 @@
 .onLoad <- function(libname, pkgname) {
   esqlabsEnv$colorPalette <- .getEsqlabsColors()
 
-  # Change maximal caption width in figures coming from TLF
-  tlf::setDefaultMaxCharacterWidth(75)
+  # `ospsuite.plots` adds a watermark when a standalone plot is printed. Keep it
+  # off unless the user turned it on before loading the package.
+  if (is.null(getOption("ospsuite.plots.watermarkEnabled"))) {
+    options(ospsuite.plots.watermarkEnabled = FALSE)
+  }
 }
 # nocov end

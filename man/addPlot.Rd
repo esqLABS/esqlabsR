@@ -21,13 +21,25 @@ existing DataCombined id on the project.}
 Each one of \code{"individual"}, \code{"population"}, \code{"observedVsSimulated"},
 \code{"residualsVsSimulated"}, \code{"residualsVsTime"}.}
 
-\item{...}{Optional plot-configuration fields, e.g. \code{title},
-\code{subtitle}, \code{xUnit}, \code{yUnit}, \code{xAxisScale}, \code{yAxisScale},
-\code{xValuesLimits}, \code{yValuesLimits}, \code{aggregation}, \code{quantiles},
-\code{nsd}, \code{foldDistance}. A multi-value field (e.g.
-\code{quantiles = c(0.05, 0.5, 0.95)}) is applied whole to every plot and
-stored as a comma-separated string; to set a scalar field differently
-per plot, pass a list of the same length as \code{id}.
+\item{...}{Optional plot-configuration fields: the plot settings of
+esqlabsR 5.x (titles and their text style, legend, axes, ticks, grid,
+backgrounds, watermark, colors, line, point, ribbon, and error bar style,
+LLOQ, fold lines) plus \code{aggregation}, \code{quantiles}, \code{nsd}, \code{foldDistance},
+and \code{lloqOnBothAxes}. \code{vignette("reference-definition-fields")} lists
+every field with its values and the plot types it applies to. A field
+that is not set takes the ESQlabs value of
+\code{\link[=createEsqlabsPlotConfiguration]{createEsqlabsPlotConfiguration()}}, or the default of the \code{{ospsuite}}
+plot function. An unknown field name or a value outside its rule is an
+error. A field on a plot type that does not apply it is ignored, and
+\code{\link[=validateProject]{validateProject()}} warns about it. The watermark settings,
+\code{displayLLOQ}, and \code{foldLinesLegendDiagonal} are accepted but have no
+effect yet, and \code{\link[=validateProject]{validateProject()}} warns about them too.
+
+A multi-value field (e.g. \code{quantiles = c(0.05, 0.5, 0.95)}) is applied
+whole to every plot and stored as a comma-separated string (an element
+that holds a comma is put in double quotes); to set a
+scalar field differently per plot, pass a list of the same length as
+\code{id}.
 
 Note the deliberate asymmetry with the positional scalar args above: a
 length-\code{N} \emph{vector} passed to \code{dataCombined} or \code{plotType} aligns to the
@@ -48,8 +60,9 @@ The \code{project} object, invisibly.
 \description{
 Add one or more entries to \code{plots} definitions (a keyed list, one entry per
 plot). Errors if a \code{plotId} already exists, if a \code{dataCombined} is not
-present in \code{dataCombined} definitions, or if a \code{plotType} is not one of the
-supported types.
+present in \code{dataCombined} definitions, if a \code{plotType} is not one of the
+supported types, or if a field in \code{...} is not supported or has an invalid
+value. Nothing is added when one plot fails these checks.
 }
 \details{
 The id argument sets \code{N}, the number of definitions to act on, and cannot

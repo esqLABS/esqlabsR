@@ -48,52 +48,41 @@ test_that("col2hsv returns expected HSV values for a given R color name", {
 
 # createEsqlabsPlotConfiguration ------------------------------------------
 
-test_that("createEsqlabsPlotConfiguration() creates object with chosen defaults", {
-  myPC <- createEsqlabsPlotConfiguration()
-  expect_true(isOfType(myPC, "DefaultPlotConfiguration"))
-  expect_equal(myPC$titleSize, 10)
+test_that("createEsqlabsPlotConfiguration() returns the house settings as a named list", {
+  expect_equal(
+    createEsqlabsPlotConfiguration(),
+    list(
+      titleSize = 10,
+      xLabelSize = 9,
+      yLabelSize = 9,
+      xAxisLabelTicksSize = 8,
+      yAxisLabelTicksSize = 8,
+      legendKeysSize = 6,
+      xLabelMargin = c(10, 0, 0, 0),
+      yLabelMargin = c(0, 0, 10, 0),
+      linesSize = 0.5,
+      linesAlpha = 0.75,
+      pointsSize = 1.75,
+      pointsShape = ospsuite.plots::ospShapeNames,
+      errorbarsSize = 0.65,
+      errorbarsCapSize = 2.75,
+      legendPosition = "outsideTopLeft",
+      yAxisLabelTicksAngle = 0,
+      pointsColor = .getEsqlabsColors(),
+      ribbonsFill = .getEsqlabsColors(),
+      linesColor = .getEsqlabsColors()
+    )
+  )
 })
 
 test_that("createEsqlabsPlotGridConfiguration() creates object with chosen defaults", {
   myPGC <- createEsqlabsPlotGridConfiguration()
   expect_true(isOfType(myPGC, "PlotGridConfiguration"))
-  expect_equal(myPGC$tagLevels, "a")
-})
-
-test_that("esqlabsPlotConfiguration fields match DefaultPlotConfiguration", {
-  defaultConfig <- ospsuite::DefaultPlotConfiguration$new()
-  esqlabsConfig <- createEsqlabsPlotConfiguration()
-
-  defaultFields <- names(defaultConfig)
-  esqlabsFields <- names(esqlabsConfig)
-
-  missingFields <- setdiff(defaultFields, esqlabsFields)
-  expect_true(
-    length(missingFields) == 0,
-    info = paste("Missing fields:", paste(missingFields, collapse = ", "))
+  expect_equal(
+    list(myPGC$tagLevels, myPGC$tagSize, myPGC$titleSize),
+    list("a", 11, 12)
   )
-
-  esqlabsConfig$linesColor <- NULL
-  esqlabsConfig$legendPosition <- NULL
-
-  for (field in defaultFields) {
-    expect_equal(
-      class(esqlabsConfig[[field]]),
-      class(defaultConfig[[field]]),
-      info = paste("Field", field, "has different types")
-    )
-  }
-})
-
-test_that("createEsqlabsPlotConfiguration() works with ospsuite::plotIndividualTimeProfile", {
-  oneObsSimDC <- readRDS(getTestDataFilePath("oneObsSimDC"))
-  esqlabsConfig <- createEsqlabsPlotConfiguration()
-
-  withr::local_seed(123)
-  vdiffr::expect_doppelganger(
-    title = "time profile - esqlabsPlotConfiguration",
-    fig = plotIndividualTimeProfile(oneObsSimDC, esqlabsConfig)
-  )
+  expect_equal(myPGC$titleHorizontalJustification, 0.5)
 })
 
 test_that(".updatePlotConfiguration keeps a user-customized field over the override", {
@@ -115,13 +104,13 @@ test_that(".updatePlotConfiguration applies the override when a default value ca
   # Regression for the NA-unsafe default comparison: when the current value
   # still equals the default AND that value contains an NA, `all(x == x)`
   # returns NA and `isTRUE(NA)` is FALSE, so a legit override was silently
-  # skipped. Build a config whose default `titleMargin` carries a matching NA
+  # skipped. Build a config whose default `xLabelMargin` carries a matching NA
   # (capture the real default first to avoid recursing into the mock).
   realConfig <- createEsqlabsPlotConfiguration()
-  withNA <- realConfig$titleMargin
+  withNA <- realConfig$xLabelMargin
   withNA[[2]] <- NA_real_
   naDefaultConfig <- realConfig
-  naDefaultConfig$titleMargin <- withNA
+  naDefaultConfig$xLabelMargin <- withNA
 
   local_mocked_bindings(
     createEsqlabsPlotConfiguration = function(...) naDefaultConfig
@@ -130,10 +119,65 @@ test_that(".updatePlotConfiguration applies the override when a default value ca
   plotConfiguration <- naDefaultConfig
   result <- .updatePlotConfiguration(
     plotConfiguration,
-    list(titleMargin = c(5, 5, 5, 5))
+    list(xLabelMargin = c(5, 5, 5, 5))
   )
 
-  expect_identical(result$titleMargin, c(5, 5, 5, 5))
+  expect_identical(result$xLabelMargin, c(5, 5, 5, 5))
+})
+
+test_that(".updatePlotConfiguration applies the override to an unset field", {
+  # A list cannot hold `NULL`, so a field the user removed or never set is
+  # absent, and the function-specific setting fills it.
+  plotConfiguration <- createEsqlabsPlotConfiguration()
+  plotConfiguration$legendPosition <- NULL
+
+  result <- .updatePlotConfiguration(
+    plotConfiguration,
+    list(legendPosition = "bottom", legendTitle = "Parameter")
+  )
+
+  expect_identical(
+    result[c("legendPosition", "legendTitle")],
+    list(legendPosition = "bottom", legendTitle = "Parameter")
+  )
+})
+
+test_that(".applyPlotConfiguration rejects a configuration that is not a named list", {
+  expect_snapshot(
+    error = TRUE,
+    .applyPlotConfiguration(defaultPlotConfiguration = c(titleSize = 10))
+  )
+})
+
+test_that("the sensitivity plots reject an unknown name in the plot configuration", {
+  plotConfiguration <- createEsqlabsPlotConfiguration()
+  plotConfiguration$lineColour <- "red"
+
+  expect_snapshot(
+    error = TRUE,
+    .applyPlotConfiguration(defaultPlotConfiguration = plotConfiguration)
+  )
+})
+
+test_that("an unset field reads as NULL, not as a field it prefixes", {
+  plotConfiguration <- createEsqlabsPlotConfiguration()
+  plotConfiguration$subtitleSize <- 12
+
+  applied <- .applyPlotConfiguration(
+    defaultPlotConfiguration = plotConfiguration
+  )
+
+  expect_equal(
+    list(applied$subtitle, applied$title, applied$subtitleSize),
+    list(NULL, NULL, 12)
+  )
+})
+
+test_that("the house plot configuration holds only plot configuration fields", {
+  expect_in(
+    names(createEsqlabsPlotConfiguration()),
+    .plotConfigurationFieldNames
+  )
 })
 
 test_that(".calculateLimits widens a zero-width range to a finite interval", {

@@ -504,7 +504,7 @@ dc <- createDataCombined(
   scenarioResults = results
 )
 
-ospsuite::plotIndividualTimeProfile(dc$aciclovir_individual)
+ospsuite::plotTimeProfile(dc$aciclovir_individual)
 ```
 
 ::: footer
