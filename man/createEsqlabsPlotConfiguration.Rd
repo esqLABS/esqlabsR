@@ -2,26 +2,36 @@
 % Please edit documentation in R/plots-utils.R
 \name{createEsqlabsPlotConfiguration}
 \alias{createEsqlabsPlotConfiguration}
-\title{Create an instance of \code{DefaultPlotConfiguration} R6 class}
+\title{Create the ESQlabs plot configuration}
 \usage{
 createEsqlabsPlotConfiguration()
 }
 \value{
-An instance of \code{DefaultPlotConfiguration} R6 class.
+A named list.
 }
 \description{
-An instance of \code{DefaultPlotConfiguration} R6 class from \code{{tlf}} package is
-needed for creating visualizations with the \code{{ospsuite}} package.
+A named list of plot settings (text sizes, line and point sizes, colors,
+legend position) chosen to reflect the corporate standards adopted by
+ESQlabs GmbH.
 
-The default attributes of the class are chosen to reflect the corporate
-standards adopted by esqLABS GmbH.
+Pass it, changed or not, as \code{defaultPlotConfiguration} to
+\code{\link[=sensitivitySpiderPlot]{sensitivitySpiderPlot()}}, \code{\link[=sensitivityTornadoPlot]{sensitivityTornadoPlot()}}, and
+\code{\link[=sensitivityTimeProfiles]{sensitivityTimeProfiles()}}. \code{\link[=createPlots]{createPlots()}} applies the same values to the
+plots it builds, where a Plot definition does not set the field.
+
+The names are plot configuration fields, listed in
+\code{vignette("reference-definition-fields")}. You can add any of them; a name
+that is not one of them stops the sensitivity plot functions with an error.
 }
 \examples{
-createEsqlabsPlotConfiguration()
+myPlotConfiguration <- createEsqlabsPlotConfiguration()
+myPlotConfiguration$linesSize <- 1
 
 }
 \seealso{
 Other createPlottingConfigurations:
-\code{\link[=createEsqlabsPlotGridConfiguration]{createEsqlabsPlotGridConfiguration()}}
+\code{\link{PlotGridConfiguration}},
+\code{\link[=createEsqlabsPlotGridConfiguration]{createEsqlabsPlotGridConfiguration()}},
+\code{\link[=plotGrid]{plotGrid()}}
 }
 \concept{createPlottingConfigurations}

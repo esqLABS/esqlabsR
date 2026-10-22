@@ -1177,8 +1177,19 @@ messages$plotGridsNamesMustBeUnique <- function(
   )
 }
 
-messages$unknownPlotConfiguration <- function(name) {
-  cliFormat("Unknown plot configuration option: {.arg {name}}")
+messages$unknownPlotConfigurationNames <- function(names) {
+  cliFormat(paste(
+    "{.arg defaultPlotConfiguration} has unknown name{?s} {.field {names}}.",
+    "See {.code vignette(\"reference-definition-fields\")} for the plot",
+    "configuration fields."
+  ))
+}
+
+messages$plotConfigurationNotNamedList <- function(type) {
+  cliFormat(
+    "{.arg defaultPlotConfiguration} must be a named list, as returned by \\
+    {.fn createEsqlabsPlotConfiguration}, not {.cls {type}}."
+  )
 }
 
 # scenario####
@@ -1459,6 +1470,75 @@ messages$logScaleWithZeroLimit <- function(
     "Column {.field {axisLimitsField}} in plot {.val {plotID}} contains zero, but the {.val {axis}}-axis scale is set to {.val log}.
     Logarithmic scale cannot display zero values. This may result in empty or unexpected plots."
   )
+}
+
+# The plot-field entries below also feed `validationResult` messages, which
+# are not passed through `cli` again, so they are built without a trailing `\\`
+# line continuation.
+messages$unknownPlotFields <- function(plotId, fields) {
+  cliFormat(paste(
+    "Plot {.val {plotId}} has unknown field{?s} {.field {fields}}.",
+    "See {.code vignette(\"reference-definition-fields\")} for the plot fields."
+  ))
+}
+
+messages$invalidPlotFieldValue <- function(plotId, field, value, rule) {
+  cliFormat(paste(
+    "Plot {.val {plotId}} has {.field {field}} {.val {value}}.",
+    "Expected: {rule}."
+  ))
+}
+
+messages$invalidPlotAxisScale <- function(plotId, field, value, allowedValues) {
+  cliFormat(paste(
+    "Plot {.val {plotId}} has {.field {field}} {.val {value}}.",
+    "Allowed values: {.val {allowedValues}}.",
+    if (identical(value, "lin")) "Use {.val linear} instead of {.val lin}."
+  ))
+}
+
+messages$conflictingPlotAxisScales <- function(plotId, xAxisScale, yAxisScale) {
+  cliFormat(paste(
+    "Plot {.val {plotId}} is an {.val observedVsSimulated} plot with",
+    "{.field xAxisScale} {.val {xAxisScale}} and {.field yAxisScale}",
+    "{.val {yAxisScale}}. Both axes of this plot type use one scale:",
+    "set both fields to the same value, or set only one of them."
+  ))
+}
+
+messages$invalidLloqDirection <- function(
+  plotId,
+  plotType,
+  direction,
+  allowedDirections
+) {
+  cliFormat(paste(
+    "Plot {.val {plotId}} has {.field lloqDirection} {.val {direction}},",
+    "which a plot of type {.val {plotType}} cannot draw.",
+    "Allowed: {.val {allowedDirections}}."
+  ))
+}
+
+messages$conflictingLloqSettings <- function(plotId, direction, onBothAxes) {
+  cliFormat(paste(
+    "Plot {.val {plotId}} has {.field lloqDirection} {.val {direction}} and",
+    "{.field lloqOnBothAxes} {.val {onBothAxes}}, which disagree.",
+    "{.val both} draws the LLOQ on both axes, {.val vertical} only on the",
+    "observed axis: set one of the two fields."
+  ))
+}
+
+messages$tickLabelsWithoutTicks <- function(
+  plotId,
+  labelsField,
+  ticksField,
+  count
+) {
+  cliFormat(paste(
+    "Plot {.val {plotId}} has {count} tick label{?s} in {.field {labelsField}}",
+    "but not the same number of ticks in {.field {ticksField}}.",
+    "Label texts need one tick each."
+  ))
 }
 
 messages$invalidPlotID <- function(plotIDs) {
