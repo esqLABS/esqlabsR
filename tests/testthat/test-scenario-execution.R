@@ -600,6 +600,35 @@ test_that("a build failure under stopIfFails = TRUE names the scenario", {
   expect_match(conditionMessage(err), "a backend message naming nothing")
 })
 
+test_that("a parameter path the model lacks is named, with the argument that skips it", {
+  # The backend names only the first path it cannot find, and `stopIfFails`
+  # skips the whole scenario. The argument that skips the path itself is
+  # `stopIfParameterNotFound`, so the abort has to name every missing path and
+  # point at that one.
+  withr::local_options(lifecycle_verbosity = "quiet")
+  project <- .testProject()
+  err <- expect_error(
+    runScenarios(
+      project,
+      scenarios = "testscenario",
+      customParams = list(
+        paths = c("Organism|Liverr|Volume", "Organism|Kidneyy|Volume"),
+        values = c(1, 1),
+        units = c("l", "l")
+      ),
+      validate = FALSE
+    )
+  )
+  expect_match(conditionMessage(err), "testscenario")
+  expect_match(conditionMessage(err), "Organism|Liverr|Volume", fixed = TRUE)
+  expect_match(conditionMessage(err), "Organism|Kidneyy|Volume", fixed = TRUE)
+  expect_match(
+    conditionMessage(err),
+    "stopIfParameterNotFound = FALSE",
+    fixed = TRUE
+  )
+})
+
 test_that("a modelFile that is still a Git LFS pointer is named as one", {
   # Projects that keep their models in LFS reach the backend as malformed XML
   # when the clone has no `git lfs pull`, and the .NET exception names neither

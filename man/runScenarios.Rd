@@ -52,9 +52,10 @@ aborts with a formatted summary on critical errors. Set to
 \code{FALSE} to skip the pre-flight check (e.g. when the caller has
 already validated the project).}
 
-\item{stopIfParameterNotFound}{Logical. If \code{TRUE} (default), a
-\code{customParams} path that matches no parameter in a scenario's
-simulation aborts the run. Set to \code{FALSE} to skip such paths with a
+\item{stopIfParameterNotFound}{Logical. If \code{TRUE} (default), a parameter
+path that matches no parameter in a scenario's simulation aborts the run,
+naming every such path. This covers the paths of the scenario's parameter
+sets and of \code{customParams}. Set to \code{FALSE} to skip such paths with a
 warning instead.}
 
 \item{stopIfFails}{Logical. If \code{TRUE} (default), a scenario that fails to

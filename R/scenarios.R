@@ -786,9 +786,10 @@ print.Scenario <- function(x, ...) {
 #'   aborts with a formatted summary on critical errors. Set to
 #'   `FALSE` to skip the pre-flight check (e.g. when the caller has
 #'   already validated the project).
-#' @param stopIfParameterNotFound Logical. If `TRUE` (default), a
-#'   `customParams` path that matches no parameter in a scenario's
-#'   simulation aborts the run. Set to `FALSE` to skip such paths with a
+#' @param stopIfParameterNotFound Logical. If `TRUE` (default), a parameter
+#'   path that matches no parameter in a scenario's simulation aborts the run,
+#'   naming every such path. This covers the paths of the scenario's parameter
+#'   sets and of `customParams`. Set to `FALSE` to skip such paths with a
 #'   warning instead.
 #' @param stopIfFails Logical. If `TRUE` (default), a scenario that fails to
 #'   build (e.g. a missing model parameter path) or whose simulation produced
@@ -876,10 +877,11 @@ runScenarios <- function(
 #'   section validators via [validateProject()] before building and
 #'   aborts with a formatted summary on critical errors. Set to
 #'   `FALSE` to skip the pre-flight check.
-#' @param stopIfParameterNotFound Logical. If `TRUE` (default), a
-#'   `customParams` path that matches no parameter in a scenario's
-#'   simulation aborts the build. Set to `FALSE` to skip such paths with
-#'   a warning instead.
+#' @param stopIfParameterNotFound Logical. If `TRUE` (default), a parameter
+#'   path that matches no parameter in a scenario's simulation aborts the
+#'   build, naming every such path. This covers the paths of the scenario's
+#'   parameter sets and of `customParams`. Set to `FALSE` to skip such paths
+#'   with a warning instead.
 #'
 #' @returns A named list keyed by scenario name. Each entry is a list
 #'   with `simulation` (the initialized, not-yet-run

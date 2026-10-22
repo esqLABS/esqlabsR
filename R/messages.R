@@ -1366,6 +1366,19 @@ messages$scenarioBuildFailedAbort <- function(scenarioName, canSkip) {
   )
 }
 
+# The paths come from the user's parameter sets and may contain any character,
+# so the template is returned unglued and the raising site, which binds
+# `missingPaths`, interpolates it once.
+messages$scenarioParametersNotFound <- function(missingPaths) {
+  c(
+    "The model has no parameter at {cli::qty(missingPaths)}{?this path/these \\
+    paths}: {.val {missingPaths}}.",
+    "i" = "Pass {.code stopIfParameterNotFound = FALSE} to skip \\
+    {cli::qty(missingPaths)}{?it/them} and build the scenario without \\
+    {?it/them}."
+  )
+}
+
 # Raised at the end of a `stopIfFails = FALSE` run, listing every scenario that
 # produced no results. The per-scenario warnings scroll away in a batch of
 # eighty, and the returned list gives every scenario an entry whatever happened

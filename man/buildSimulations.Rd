@@ -48,10 +48,11 @@ section validators via \code{\link[=validateProject]{validateProject()}} before 
 aborts with a formatted summary on critical errors. Set to
 \code{FALSE} to skip the pre-flight check.}
 
-\item{stopIfParameterNotFound}{Logical. If \code{TRUE} (default), a
-\code{customParams} path that matches no parameter in a scenario's
-simulation aborts the build. Set to \code{FALSE} to skip such paths with
-a warning instead.}
+\item{stopIfParameterNotFound}{Logical. If \code{TRUE} (default), a parameter
+path that matches no parameter in a scenario's simulation aborts the
+build, naming every such path. This covers the paths of the scenario's
+parameter sets and of \code{customParams}. Set to \code{FALSE} to skip such paths
+with a warning instead.}
 }
 \value{
 A named list keyed by scenario name. Each entry is a list

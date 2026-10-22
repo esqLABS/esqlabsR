@@ -684,13 +684,42 @@
     }
   }
 
-  # 5. Initialize simulation
-  initializeSimulation(
-    simulation = simulation,
-    individualCharacteristics = individualCharacteristics,
-    additionalParams = params,
-    additionalInitialConditions = initialConditions,
-    stopIfParameterNotFound = stopIfParameterNotFound
+  # 5. Initialize simulation. The backend stops at the first parameter path the
+  # model lacks and names only that one, so on its error every missing path is
+  # looked up and named, with the argument that skips them; that message
+  # replaces the backend's. The lookup costs a backend call per path, which is
+  # why it runs only after a failure.
+  withCallingHandlers(
+    initializeSimulation(
+      simulation = simulation,
+      individualCharacteristics = individualCharacteristics,
+      additionalParams = params,
+      additionalInitialConditions = initialConditions,
+      stopIfParameterNotFound = stopIfParameterNotFound
+    ),
+    error = function(e) {
+      if (!isTRUE(stopIfParameterNotFound)) {
+        return()
+      }
+      paths <- unique(unlist(params$paths))
+      missingPaths <- paths[vapply(
+        paths,
+        function(path) {
+          is.null(ospsuite::getParameter(
+            path,
+            simulation,
+            stopIfNotFound = FALSE
+          ))
+        },
+        logical(1)
+      )]
+      if (length(missingPaths) > 0L) {
+        cli::cli_abort(
+          messages$scenarioParametersNotFound(missingPaths),
+          call = NULL
+        )
+      }
+    }
   )
 
   # 6. Population
