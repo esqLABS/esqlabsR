@@ -283,3 +283,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-10-22 14:01: The field-effect test checks the legend border fields on their own. (#969)
 - 2026-10-22 14:21: Plots are styled only through the ospsuite plot function arguments and ggplot2 layers: the watermark, displayLLOQ, foldLinesLegendDiagonal, and the fold-line line types are accepted with a warning that they have no effect yet; plot settings are read by exact name, so an untitled plot no longer gets titleSize as its title. (#969)
 - 2026-10-22 14:22: Documented the plot settings the OSP Suite plot functions cannot draw yet (watermark, displayLLOQ, foldLinesLegendDiagonal, fold-line line types) in the reference article, the migration guide, NEWS, and addPlot(). (#969)
+- 2026-10-22 14:44: NEWS names createPlots() in the plot-settings bullets and says which settings it draws and which it does not yet. (#969)
