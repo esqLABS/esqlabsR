@@ -7,15 +7,26 @@
 .validateParametersStructure(
   parameterStructure,
   argumentName = NULL,
-  nullAllowed = FALSE
+  nullAllowed = FALSE,
+  call = rlang::caller_env()
 )
 }
 \arguments{
 \item{parameterStructure}{Object to be checked. Expected is a named list with
-names "paths", "values", and "units".}
+the names "paths", "values", and "units", in any order. \code{values} and
+\code{units} have one element per path, or one element that is used for every
+path.}
+
+\item{argumentName}{Name of the checked argument, used in the error message.}
+
+\item{nullAllowed}{If \code{TRUE}, \code{NULL} is accepted and returned.}
+
+\item{call}{Environment of the function the error is attributed to.}
 }
 \value{
-\code{TRUE} if validation succeeded (silently). Throws an error otherwise.
+The structure with its fields in the order \code{paths}, \code{values},
+\code{units}, and a \code{values} or \code{units} of length 1 repeated for every path
+(invisibly). Throws an error if the structure is not valid.
 }
 \description{
 Validate parameter list structure

@@ -22,6 +22,27 @@
       Warning:
       Duplicate parameter path(s) in parameters file 'Parameters.xlsx': "Path1|Param1". Only the last value defined for each path is used.
 
+# extendParameterStructure stops on values or units of another length
+
+    Code
+      extendParameterStructure(parameters = list(paths = "Path1", values = 1, units = ""),
+      newParameters = list(paths = c("Path1", "Path2", "Path3"), values = c(1, 2),
+      units = "l"))
+    Condition
+      Error in `extendParameterStructure()`:
+      ! `newParameters$values` must have length 1 or 3, one per path.
+      x It has length 2.
+
+---
+
+    Code
+      extendParameterStructure(parameters = list(paths = c("Path1", "Path2"), values = 1,
+      units = c()), newParameters = NULL)
+    Condition
+      Error in `extendParameterStructure()`:
+      ! `parameters$units` must have length 1 or 2, one per path.
+      x It has length 0.
+
 # addParameterSet canonicalizes its id
 
     Code

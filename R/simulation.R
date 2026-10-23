@@ -276,11 +276,13 @@ applyIndividualParameters <- function(individualCharacteristics, simulation) {
 #' @param individualCharacteristics Optional `IndividualCharacteristics`
 #'   describing an individual. For a non-human species, the simulation is scaled
 #'   to that species, see [applyIndividualParameters()].
-#' @param additionalParams Optional named list with lists 'paths', 'values', and
-#'   'units'.
-#' @param additionalInitialConditions Optional named list with lists 'paths',
-#'   'values', and 'units', giving molecule start values to apply via
-#'   `ospsuite::setQuantityValuesByPath()` after the parameters.
+#' @param additionalParams Optional named list with vectors `paths`, `values`,
+#'   and `units`. `values` and `units` have one element per path, or one
+#'   element that is used for every path. Any other length stops with an error.
+#' @param additionalInitialConditions Optional named list with vectors `paths`,
+#'   `values`, and `units`, giving molecule start values to apply via
+#'   `ospsuite::setQuantityValuesByPath()` after the parameters. The lengths
+#'   follow the same rule as in `additionalParams`.
 #' @param stopIfParameterNotFound Logical. If `TRUE` (default), a path in
 #'   `additionalParams` or `additionalInitialConditions` that the model does
 #'   not have stops with an error that names every such path. Nothing from
@@ -312,12 +314,12 @@ initializeSimulation <- function(
     "IndividualCharacteristics",
     nullAllowed = TRUE
   )
-  .validateParametersStructure(
+  additionalParams <- .validateParametersStructure(
     additionalParams,
     "additionalParams",
     nullAllowed = TRUE
   )
-  .validateParametersStructure(
+  additionalInitialConditions <- .validateParametersStructure(
     additionalInitialConditions,
     "additionalInitialConditions",
     nullAllowed = TRUE

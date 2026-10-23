@@ -54,7 +54,23 @@ messages$wrongParametersStructure <- function(argumentName) {
   cliFormat(
     "Argument {.arg {argumentName}} has wrong structure. Expected is a named list with three vectors `paths`
     representing full parameter paths, `values` with numerical values of the parameters,
-    and `units` representing the units the values are in. All three vectors must have the same length"
+    and `units` representing the units the values are in."
+  )
+}
+
+# Returned unglued, so the raising `cli_abort()` keeps the "x" bullet on its own
+# line. The raising site, `.validateParametersStructure()`, binds
+# `argumentName`, `field`, `fieldLength`, and `pathCount`.
+messages$parametersStructureLengthMismatch <- function(
+  argumentName,
+  field,
+  fieldLength,
+  pathCount
+) {
+  c(
+    "{.code {argumentName}${field}} must have length 1 or {pathCount}, one \\
+    per path.",
+    "x" = "It has length {fieldLength}."
   )
 }
 
@@ -1313,20 +1329,6 @@ messages$setScenarioUnknownFields <- function(fields, settable) {
 # Raised when `simulationRunOptions` is not an `ospsuite::SimulationRunOptions`.
 # The hint names `solverSettings` because reaching for this argument to set a
 # tolerance is the likely mistake: the two used to travel in one list.
-# Returned unglued, so the raising `cli_abort()` keeps the "x" bullet on its own
-# line. The raising site binds `field`, `fieldLength`, and `pathCount`.
-messages$customParamsLengthMismatch <- function(
-  field,
-  fieldLength,
-  pathCount
-) {
-  c(
-    "{.code customParams${field}} must have length 1 or {pathCount}, one per \\
-    path.",
-    "x" = "It has length {fieldLength}."
-  )
-}
-
 messages$invalidSimulationRunOptions <- function(value) {
   cli::format_message(c(
     "{.arg simulationRunOptions} must be an \\
