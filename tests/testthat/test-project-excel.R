@@ -844,6 +844,92 @@ test_that("importProjectFromExcel aborts over an existing JSON project unless ov
   )))
 })
 
+# The Excel round trip of `vignette("how-to-set-up-a-project")`: export, edit the
+# workbooks, import them back over the project they came from. The import has to
+# take every definition from the workbooks, so an edit, an added row, and a
+# deleted row all arrive, and a definition that exists only in the JSON files is
+# deleted, as `overwrite` documents.
+test_that("importProjectFromExcel(overwrite = TRUE) replaces the project with the edited workbooks", {
+  project <- exampleProject()
+  projectDir <- project$info$projectDirPath
+  exportProjectToExcel(project, outputDir = projectDir, silent = TRUE)
+  addOutputPath(project, id = "json_only", path = "Organism|Lumen|Aciclovir")
+  saveProject(project)
+
+  configurations <- file.path(projectDir, "Configurations")
+  editWorkbookSheets(
+    file.path(configurations, "Scenarios.xlsx"),
+    function(sheets) {
+      scenarios <- sheets$Scenarios
+      row <- which(scenarios$Scenario_name == "aciclovir_iv")
+      scenarios$SimulationTime[row] <- "0, 48, 10"
+      newRow <- scenarios[row, ]
+      newRow$Scenario_name <- "aciclovir_iv_copy"
+      scenarios <- rbind(scenarios, newRow)
+      sheets$Scenarios <- scenarios[
+        scenarios$Scenario_name != "aciclovir_iv_steadystate",
+      ]
+      sheets
+    }
+  )
+  editWorkbookSheets(
+    file.path(configurations, "ModelParameters.xlsx"),
+    function(sheets) {
+      sheets$global$Value[1] <- 0.5
+      newRow <- sheets$global[1, ]
+      newRow[["Parameter Name"]] <- "Volume"
+      sheets$global <- rbind(sheets$global, newRow)
+      sheets$aciclovir <- sheets$aciclovir[0, ]
+      sheets
+    }
+  )
+
+  summaryText <- paste(
+    utils::capture.output(
+      importProjectFromExcel(
+        file.path(projectDir, "Project.xlsx"),
+        overwrite = TRUE
+      ),
+      type = "message"
+    ),
+    collapse = "\n"
+  )
+  # The counts are those of the workbooks: two output paths, not the three the
+  # JSON project held before the import.
+  expect_match(summaryText, "Output Paths: 2", fixed = TRUE)
+
+  imported <- loadProject(file.path(projectDir, "Project.json"))
+  scenarios <- imported$definitions$scenarios
+  expect_setequal(
+    names(scenarios),
+    c("aciclovir_iv", "aciclovir_iv_copy", "aciclovir_iv_population")
+  )
+  expect_equal(scenarios$aciclovir_iv$simulationTime, list(c(0, 48, 10)))
+  expect_false(file.exists(file.path(
+    projectDir,
+    "definitions",
+    "scenarios",
+    "aciclovir_iv_steadystate.json"
+  )))
+
+  parameterSets <- imported$definitions$parameterSets
+  expect_equal(
+    vapply(parameterSets$global, `[[`, character(1), "parameterName"),
+    c("EHC continuous fraction", "Volume")
+  )
+  expect_equal(parameterSets$global[[1]]$value, 0.5)
+  expect_length(parameterSets$aciclovir, 0L)
+
+  expect_false("json_only" %in% names(imported$definitions$outputPaths))
+  expect_false(file.exists(file.path(
+    projectDir,
+    "definitions",
+    "output-paths",
+    "json_only.json"
+  )))
+  expect_true(projectStatus(imported, silent = TRUE)$excel_in_sync)
+})
+
 # Both of importProjectFromExcel()'s preconditions are checked before the
 # workbook is read, so a call that is going to refuse says so instead of first
 # reporting on the contents of a project it will not import (an id collision
