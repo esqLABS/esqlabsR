@@ -296,4 +296,5 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-10-22 14:22: Documented the plot settings the OSP Suite plot functions cannot draw yet (watermark, displayLLOQ, foldLinesLegendDiagonal, fold-line line types) in the reference article, the migration guide, NEWS, and addPlot(). (#969)
 - 2026-10-22 14:44: NEWS names createPlots() in the plot-settings bullets and says which settings it draws and which it does not yet. (#969)
 - 2026-10-22 15:09: The field-effect test checks the font family fields on the plot theme instead of the drawn SVG, which depends on the fonts installed on the machine (failed on Windows CI). (#969)
+- 2026-10-22 16:55: The refactoring brief and the migration-test command name v6 as the project branch, since json-based-project is merged into v6 and deleted.
 - 2026-10-22 18:05: The How to design scenarios article explains how to set a scenario's solver settings: what a left-out setting falls back to, that setScenario() replaces the whole list, and that the settings are stored only in JSON.

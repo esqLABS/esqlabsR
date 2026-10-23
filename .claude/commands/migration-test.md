@@ -10,7 +10,7 @@ You are running a **migration test** of the esqlabsR JSON-based project model. G
 Parse from `$ARGUMENTS` (both may be omitted; if so, ask for them before starting):
 
 - `SOURCE` = a local legacy Excel project directory, OR a `owner/repo` GitHub repo containing one.
-- `ESQLABSR_REF` = the esqlabsR ref to test (e.g. `json-based-project`, a tag, or a commit sha). Default `json-based-project`.
+- `ESQLABSR_REF` = the esqlabsR ref to test (e.g. `v6`, a tag, or a commit sha). Default `v6`.
 
 ## Rules
 
