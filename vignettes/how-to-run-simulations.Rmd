@@ -115,13 +115,12 @@ resultsFolder <- saveScenarioResults(
 )
 ```
 
-`loadScenarioResults()` reads the saved files back, given the scenario names and the folder they were written to. Pass the same `project` so the reload keeps only each scenario's output paths. The reload restores all four fields of each Scenario Result, including `population` for population scenarios:
+`loadScenarioResults()` reads the saved files back, given the scenario names and the folder they were written to. The reload restores all four fields of each Scenario Result, including `population` for population scenarios:
 
 ```{r load-results}
 reloaded <- loadScenarioResults(
   scenarios = "aciclovir_iv",
-  resultsFolder = resultsFolder,
-  project = project
+  resultsFolder = resultsFolder
 )
 ```
 
