@@ -631,6 +631,26 @@ test_that("a failing addScenario rolls back scenarios and outputPaths", {
   expect_identical(names(project$definitions$outputPaths), outputsBefore)
 })
 
+test_that("a rename warning turned into an error rolls back the added scenarios", {
+  # The rename warnings are raised once the scenarios are added; with
+  # `options(warn = 2)` each becomes an error, which must not leave them behind.
+  withr::local_options(warn = 2)
+  project <- .fakeProject()
+  project$paths$simulationsFolder <- dirname(pkmlFixture)
+
+  expect_error(
+    suppressMessages(createScenariosFromPKML(
+      rep(pkmlFixture, 2),
+      project = project,
+      scenarios = "s"
+    )),
+    "Duplicate scenario names"
+  )
+
+  expect_length(project$definitions$scenarios, 0)
+  expect_length(project$definitions$outputPaths, 0)
+})
+
 test_that("a failing addScenario rollback preserves the validation flag", {
   project <- .fakeProject(
     parameterSets = list(global = list())

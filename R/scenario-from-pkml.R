@@ -658,6 +658,14 @@ createScenariosFromPKML <- function(
           .call = rlang::caller_env(2)
         )
       }
+      # Report the call's changes cause first: the canonicalization warning
+      # (typed names and the references the scenarios name) explains a
+      # duplicate suffix on a name that canonicalized onto an existing scenario,
+      # and both come before the summary. A failed call reports no renames.
+      # Inside the rollback, so a warning turned into an error
+      # (`options(warn = 2)`) does not leave the scenarios behind.
+      .flushCanonicalizedRefs()
+      .warnSuffixedScenarioNames(requestedNames, finalNames)
     },
     error = function(cnd) {
       private$.setSection("scenarios", oldScenarios)
@@ -675,12 +683,6 @@ createScenariosFromPKML <- function(
     }
   )
 
-  # Report the call's changes cause first: the canonicalization warning (typed
-  # names and the references the scenarios name) explains a duplicate suffix on
-  # a name that canonicalized onto an existing scenario, and both come before
-  # the summary. A rolled back call stops above and reports no renames.
-  .flushCanonicalizedRefs()
-  .warnSuffixedScenarioNames(requestedNames, finalNames)
   addedNames <- vapply(specs, function(spec) spec$scenarioName, character(1))
   if (length(addedNames) > 0) {
     cli::cli_inform(messages$scenariosAddedToProject(addedNames))

@@ -303,3 +303,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-10-23 11:51: Left the createScenariosFromPKML() help page to the Rd regeneration done before the pull request is ready, as AGENTS.md asks.
 - 2026-10-23 12:07: createScenariosFromPKML() reports a canonicalized typed name before the duplicate warning it explains, still in one canonicalization warning per call. (#1307)
 - 2026-10-23 12:07: Regenerated the createScenariosFromPKML() help page for the new descriptions of scenarios and simulationTimeUnit. (#1302, #1307)
+- 2026-10-23 12:43: createScenariosFromPKML() also rolls back the added scenarios when one of its rename warnings becomes an error under options(warn = 2). (#1307)
