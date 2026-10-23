@@ -23,7 +23,8 @@
 #'   same length as `id`.
 #' @param overwrite Logical scalar. When `FALSE` (default), an id that already
 #'   exists aborts. When `TRUE`, the existing output path is replaced
-#'   (last-write-wins).
+#'   (last-write-wins), and every scenario that records the id uses the new
+#'   path.
 #' @returns The `project` object, invisibly.
 #' @export
 #' @family outputPath
@@ -136,7 +137,8 @@ removeOutputPath <- function(project, id) {
 #'   output-path ids, in memory; write the change to the output-path definition
 #'   files with [saveProject()]. The ids themselves are not changed (use
 #'   [removeOutputPath()] + [addOutputPath()] to rename), so
-#'   every scenario that records these output paths keeps referencing them.
+#'   every scenario that records these output paths keeps referencing them,
+#'   and uses the new path at once when you print, build, or run it.
 #'   The `outputPaths` definitions accessor is read-only, so this is the way to
 #'   change a path in place. The call vectorizes over a vector of ids (see the
 #'   recycling rule under Details); `path` is scalar-per-definition (one path

@@ -43,7 +43,11 @@ protocol; \code{NA} when absent.}
 Names are the ids referencing \code{outputPaths} definitions; values are the
 literal paths. \code{NULL} when the scenario declares no outputs.
 Round-trip serialization reads \code{names(outputPaths)} to rebuild the
-\code{outputPaths} id array, so the named-vector invariant must be preserved.}
+\code{outputPaths} id array, so the named-vector invariant must be preserved.
+The project keeps only the ids: a scenario read from \code{scenarios}
+definitions shows the path each id has in \code{outputPaths} definitions at
+that moment, and a record passed to \code{\link[=addScenario]{addScenario()}} contributes its ids,
+not its paths.}
 
 \item{simulationType}{Character. \code{"Individual"} or \code{"Population"}.
 Defaults to \code{"Population"} when \code{populationId} is set,

@@ -162,9 +162,7 @@
       serialize = function(section, project) {
         .serializeScenarioSet(section)
       },
-      parse = function(records, project) {
-        .parseScenarios(records, project$definitions$outputPaths)
-      },
+      parse = function(records, project) .parseScenarios(records),
       inline = function(jsonData) jsonData$scenarios
     ),
     individuals = list(
@@ -300,7 +298,8 @@
 # is a one-place edit (the spec) rather than three lists kept in lockstep. Used
 # by the whole-tree writers, where write order does not matter (each kind writes
 # into its own folder independently); the load order that must resolve
-# `outputPaths` before scenarios is fixed separately in `.loadProjectTree()`.
+# `outputPaths` before parameter identification is fixed separately in
+# `.loadProjectTree()`.
 #
 # @keywords internal
 # @noRd
