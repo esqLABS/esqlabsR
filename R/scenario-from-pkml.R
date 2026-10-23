@@ -460,9 +460,9 @@ createScenariosFromPKML <- function(
   # so there is no within-call collision error: a recycled PKML legitimately
   # yields identical names that `.dedupeScenarioNames()` then suffixes. A name
   # typed in `scenarios` that changes is reported in the call's canonicalization
-  # warning, as `addScenario()` reports its `id`. A name taken from the PKML is
-  # not: the user did not type it, and the message listing the added scenarios
-  # shows the id it got.
+  # warning, as `addScenario()` reports its `id`, once the scenarios are added
+  # (see below). A name taken from the PKML is not: the user did not type it,
+  # and the message listing the added scenarios shows the id it got.
   requestedNames <- if (is.null(scenarios)) {
     .silentlyCanonicalized(.canonicalizeIdRef(requestedNames))
   } else {
@@ -675,6 +675,12 @@ createScenariosFromPKML <- function(
     }
   )
 
+  # Report the call's changes cause first: the canonicalization warning (typed
+  # names and the references the scenarios name) explains a duplicate suffix on
+  # a name that canonicalized onto an existing scenario, and both come before
+  # the summary. A rolled back call stops above and reports no renames.
+  .flushCanonicalizedRefs()
+  .warnSuffixedScenarioNames(requestedNames, finalNames)
   addedNames <- vapply(specs, function(spec) spec$scenarioName, character(1))
   if (length(addedNames) > 0) {
     cli::cli_inform(messages$scenariosAddedToProject(addedNames))
@@ -687,8 +693,9 @@ createScenariosFromPKML <- function(
 #' @noRd
 # Resolve a vector of requested scenario names against the names already on
 # the project (`existingNames`) plus the names resolved earlier in the same
-# call, appending `_2`, `_3`, ... until each candidate is free. Warns once per
-# rename.
+# call, appending `_2`, `_3`, ... until each candidate is free. Silent: the
+# caller reports the renames with `.warnSuffixedScenarioNames()` once they are
+# applied.
 .dedupeScenarioNames <- function(requestedNames, existingNames) {
   taken <- existingNames %||% character()
   resolved <- character(length(requestedNames))
@@ -704,15 +711,26 @@ createScenariosFromPKML <- function(
         }
         suffix <- suffix + 1L
       }
-      cli::cli_warn(messages$autocorrectDuplicateScenarioNames(
-        original,
-        candidate
-      ))
     }
     taken <- c(taken, candidate)
     resolved[[i]] <- candidate
   }
   resolved
+}
+
+#' @keywords internal
+#' @noRd
+# Warn once for each name `.dedupeScenarioNames()` suffixed, that is each
+# position where the final name differs from the requested one.
+.warnSuffixedScenarioNames <- function(requestedNames, finalNames) {
+  for (i in which(requestedNames != finalNames)) {
+    original <- requestedNames[[i]]
+    candidate <- finalNames[[i]]
+    cli::cli_warn(messages$autocorrectDuplicateScenarioNames(
+      original,
+      candidate
+    ))
+  }
 }
 
 #' @keywords internal

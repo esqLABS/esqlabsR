@@ -66,27 +66,28 @@
 
     Code
       createScenariosFromPKML(pkmlInProject(project), project = project, scenarios = "My PKML Scenario")
-    Message
-      Added 1 scenario: "my_pkml_scenario"
     Condition
       Warning:
       Canonicalized 1 id to a safe form:
       * "My PKML Scenario" -> "my_pkml_scenario"
+    Message
+      Added 1 scenario: "my_pkml_scenario"
 
-# a typed name matching a project scenario but for case warns about both changes
+# a typed name matching a project scenario but for case is reported before its suffix
 
     Code
-      createScenariosFromPKML(pkmlInProject(project), project = project, scenarios = "TestScenario")
+      createScenariosFromPKML(pkmlInProject(project), project = project, scenarios = "TestScenario",
+      parameterSets = "Global")
     Condition
+      Warning:
+      Canonicalized 2 ids to a safe form:
+      * "TestScenario" -> "testscenario"
+      * "Global" -> "global"
       Warning:
       Duplicate scenario names found and made unique by adding indices:
       i Duplicated names: "testscenario", renamed to "testscenario_2"
     Message
       Added 1 scenario: "testscenario_2"
-    Condition
-      Warning:
-      Canonicalized 1 id to a safe form:
-      * "TestScenario" -> "testscenario"
 
 # scenario names containing braces are reported verbatim
 

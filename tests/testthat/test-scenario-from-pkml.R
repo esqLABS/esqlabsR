@@ -358,13 +358,16 @@ test_that("a typed scenario name that is canonicalized warns as addScenario() do
   expect_true("my_pkml_scenario" %in% names(project$definitions$scenarios))
 })
 
-test_that("a typed name matching a project scenario but for case warns about both changes", {
+test_that("a typed name matching a project scenario but for case is reported before its suffix", {
+  # One canonicalization warning names the typed name and the typed parameter
+  # set, and it comes before the duplicate warning it explains.
   project <- testProject()
   expect_snapshot(
     createScenariosFromPKML(
       pkmlInProject(project),
       project = project,
-      scenarios = "TestScenario"
+      scenarios = "TestScenario",
+      parameterSets = "Global"
     )
   )
   expect_true("testscenario_2" %in% names(project$definitions$scenarios))
@@ -731,19 +734,17 @@ test_that("end-to-end: steadyState = TRUE round-trips through snapshot and load"
 # Internal helpers ----
 
 test_that(".dedupeScenarioNames probes suffixes against project and call names", {
-  out <- suppressWarnings(.dedupeScenarioNames(c("s", "s", "s_2"), character()))
-  expect_identical(out, c("s", "s_2", "s_2_2"))
-
-  expect_warning(
-    .dedupeScenarioNames("TestScenario", "TestScenario"),
-    "Duplicate scenario names"
-  )
-
+  # Silent: `createScenariosFromPKML()` reports the renames once it has added
+  # the scenarios.
   expect_silent(
     expect_identical(
-      .dedupeScenarioNames(c("A", "B"), character()),
-      c("A", "B")
+      .dedupeScenarioNames(c("s", "s", "s_2"), character()),
+      c("s", "s_2", "s_2_2")
     )
+  )
+  expect_identical(
+    .dedupeScenarioNames(c("testscenario", "other"), "testscenario"),
+    c("testscenario_2", "other")
   )
 })
 

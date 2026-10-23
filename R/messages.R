@@ -985,10 +985,11 @@ messages$inconsistentArgumentLengths <- function(vectorLengths) {
   ))
 }
 
-# Raised by `.dedupeScenarioNames()`, once per name it suffixes. Unglued, so the
-# raising `cli_warn()` lays out the header and bullet itself and glues the names
-# once, in its frame, where they are bound under `original` and `candidate`:
-# canonicalization keeps `{` and `}`, so a scenario name may contain them.
+# Raised by `.warnSuffixedScenarioNames()`, once per suffixed name. Unglued, so
+# the raising `cli_warn()` lays out the header and bullet itself and glues the
+# names once, in its frame, where they are bound under `original` and
+# `candidate`: canonicalization keeps `{` and `}`, so a scenario name may
+# contain them.
 messages$autocorrectDuplicateScenarioNames <- function(original, candidate) {
   c(
     "Duplicate scenario names found and made unique by adding indices:",
