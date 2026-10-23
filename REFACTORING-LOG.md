@@ -312,3 +312,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-10-23 12:35: The How to run simulations article runs only one individual scenario when it is built, and describes the customParams length rule, the missing-path error, and the printed skip line as they are.
 - 2026-10-23 12:36: Brought the run-simulations article branch up to date with v6.
 - 2026-10-23 14:24: Every parameter structure (customParams, initializeSimulation()'s additionalParams and additionalInitialConditions, extendParameterStructure()) follows one length rule, a single value or unit used for every path and any other length stopping, and its three names are accepted in any order.
+- 2026-10-23 15:00: The parameter structure length error is one line that names only the accepted lengths, so a single path no longer reads "length 1 or 1".

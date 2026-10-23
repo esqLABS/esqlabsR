@@ -300,6 +300,14 @@ test_that("extendParameterStructure stops on values or units of another length",
     ),
     error = TRUE
   )
+  # With one path, length 1 is the only accepted length.
+  expect_snapshot(
+    extendParameterStructure(
+      parameters = NULL,
+      newParameters = list(paths = "Path1", values = c(1, 2), units = "")
+    ),
+    error = TRUE
+  )
 })
 
 test_that("extendParameterStructure rejects a structure with other names", {

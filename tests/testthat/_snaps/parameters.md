@@ -30,8 +30,7 @@
       units = "l"))
     Condition
       Error in `extendParameterStructure()`:
-      ! `newParameters$values` must have length 1 or 3, one per path.
-      x It has length 2.
+      ! `newParameters$values` has length 2, but it must have length 1 or 3, one element per path.
 
 ---
 
@@ -40,8 +39,16 @@
       units = c()), newParameters = NULL)
     Condition
       Error in `extendParameterStructure()`:
-      ! `parameters$units` must have length 1 or 2, one per path.
-      x It has length 0.
+      ! `parameters$units` has length 0, but it must have length 1 or 2, one element per path.
+
+---
+
+    Code
+      extendParameterStructure(parameters = NULL, newParameters = list(paths = "Path1",
+        values = c(1, 2), units = ""))
+    Condition
+      Error in `extendParameterStructure()`:
+      ! `newParameters$values` has length 2, but it must have length 1, one element per path.
 
 # addParameterSet canonicalizes its id
 
