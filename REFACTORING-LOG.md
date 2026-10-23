@@ -301,6 +301,13 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-10-22 16:30: Brought the run-simulations article branch up to date with the ospsuite.plots port on json-based-project.
 - 2026-10-22 16:55: The refactoring brief and the migration-test command name v6 as the project branch, since json-based-project is merged into v6 and deleted.
 - 2026-10-22 18:05: The How to design scenarios article explains how to set a scenario's solver settings: what a left-out setting falls back to, that setScenario() replaces the whole list, and that the settings are stored only in JSON.
+- 2026-10-23 11:48: createScenariosFromPKML() converts the time grid it reads from a model file to the scenario's unit, resolution included, so the built simulation keeps the model's grid. (#1302)
+- 2026-10-23 11:49: createScenariosFromPKML() warns when it canonicalizes a typed scenario name, as addScenario() does, and its duplicate-name warning shows its bullet on its own line. (#1307)
+- 2026-10-23 11:51: Left the createScenariosFromPKML() help page to the Rd regeneration done before the pull request is ready, as AGENTS.md asks.
+- 2026-10-23 12:07: createScenariosFromPKML() reports a canonicalized typed name before the duplicate warning it explains, still in one canonicalization warning per call. (#1307)
+- 2026-10-23 12:07: Regenerated the createScenariosFromPKML() help page for the new descriptions of scenarios and simulationTimeUnit. (#1302, #1307)
+- 2026-10-23 12:43: createScenariosFromPKML() also rolls back the added scenarios when one of its rename warnings becomes an error under options(warn = 2). (#1307)
+- 2026-10-23 12:43: The NEWS bullet on createScenariosFromPKML() says how it canonicalizes and suffixes scenario names, and which ones it warns about. (#1307)
 - 2026-10-23 12:34: initializeSimulation() checks every parameter and initial-condition path before it applies any, and names all the missing ones with the simulation; a short customParams values or units vector is used for every path only when it has one element, any other length stops.
 - 2026-10-23 12:35: The How to run simulations article runs only one individual scenario when it is built, and describes the customParams length rule, the missing-path error, and the printed skip line as they are.
 - 2026-10-23 12:36: Brought the run-simulations article branch up to date with v6.

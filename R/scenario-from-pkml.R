@@ -20,7 +20,10 @@
 #' @param scenarios Character vector. Optional custom names for the
 #'   scenarios. If `NULL` (default), scenario names will be extracted from
 #'   the simulation names in the PKML files. If provided, must have the same
-#'   length as `pkmlFilePaths`.
+#'   length as `pkmlFilePaths`. Each name is canonicalized to a safe,
+#'   lowercase, single-path-segment id the way [addScenario()] canonicalizes
+#'   its `id`, with a warning naming the result if it changed. A name taken
+#'   from a simulation is canonicalized without a warning.
 #' @param individual Character vector. Optional individual ids to use for
 #'   scenarios. If `NULL` (default), no individual will be specified. Can be
 #'   a single string (recycled for all scenarios) or a vector with the same
@@ -64,11 +67,12 @@
 #'   `pkmlFilePaths`.
 #' @param simulationTimeUnit Character vector. Optional simulation time unit.
 #'   It is the unit `simulationTime` is given in, and, when `simulationTime` is
-#'   left to PKML extraction, the unit the extracted interval bounds are
-#'   converted to. If `NULL` (default), it is taken from the PKML file's output
-#'   schema intervals, or set to `"min"` (minutes) if not available. Can be a
-#'   single string (recycled for all scenarios) or a vector with the same length
-#'   as `pkmlFilePaths`.
+#'   left to PKML extraction, the unit the extracted intervals are converted to:
+#'   their start and end to this unit, their resolution to points per this
+#'   unit. If `NULL` (default), it is taken from the PKML file's output schema
+#'   intervals, or set to `"min"` (minutes) if not available. Can be a single
+#'   string (recycled for all scenarios) or a vector with the same length as
+#'   `pkmlFilePaths`.
 #' @param steadyState Logical vector. Whether to simulate steady-state for
 #'   each scenario. Default is `FALSE`. Can be a single logical value
 #'   (recycled for all scenarios) or a vector with the same length as
@@ -452,14 +456,18 @@ createScenariosFromPKML <- function(
   # operates in canonical (lowercase, safe) space and the canonical ids the
   # specs are built with are exactly what `addScenario()` will store, so its
   # duplicate-name abort can never fire on a case-only or sanitization clash.
-  # Per-element (no within-call collision error): a recycled PKML legitimately
-  # yields identical names that `.dedupeScenarioNames()` then suffixes.
-  requestedNames <- vapply(
-    requestedNames,
-    function(n) suppressWarnings(.canonicalizeOneId(n)),
-    character(1),
-    USE.NAMES = FALSE
-  )
+  # Per-element, through `.canonicalizeIdRef()` rather than `.canonicalizeId()`,
+  # so there is no within-call collision error: a recycled PKML legitimately
+  # yields identical names that `.dedupeScenarioNames()` then suffixes. A name
+  # typed in `scenarios` that changes is reported in the call's canonicalization
+  # warning, as `addScenario()` reports its `id`, once the scenarios are added
+  # (see below). A name taken from the PKML is not: the user did not type it,
+  # and the message listing the added scenarios shows the id it got.
+  requestedNames <- if (is.null(scenarios)) {
+    .silentlyCanonicalized(.canonicalizeIdRef(requestedNames))
+  } else {
+    .canonicalizeIdRef(requestedNames)
+  }
   finalNames <- .dedupeScenarioNames(
     requestedNames,
     names(self$definitions$scenarios)
@@ -650,6 +658,14 @@ createScenariosFromPKML <- function(
           .call = rlang::caller_env(2)
         )
       }
+      # Report the call's changes cause first: the canonicalization warning
+      # (typed names and the references the scenarios name) explains a
+      # duplicate suffix on a name that canonicalized onto an existing scenario,
+      # and both come before the summary. A failed call reports no renames.
+      # Inside the rollback, so a warning turned into an error
+      # (`options(warn = 2)`) does not leave the scenarios behind.
+      .flushCanonicalizedRefs()
+      .warnSuffixedScenarioNames(requestedNames, finalNames)
     },
     error = function(cnd) {
       private$.setSection("scenarios", oldScenarios)
@@ -679,8 +695,9 @@ createScenariosFromPKML <- function(
 #' @noRd
 # Resolve a vector of requested scenario names against the names already on
 # the project (`existingNames`) plus the names resolved earlier in the same
-# call, appending `_2`, `_3`, ... until each candidate is free. Warns once per
-# rename.
+# call, appending `_2`, `_3`, ... until each candidate is free. Silent: the
+# caller reports the renames with `.warnSuffixedScenarioNames()` once they are
+# applied.
 .dedupeScenarioNames <- function(requestedNames, existingNames) {
   taken <- existingNames %||% character()
   resolved <- character(length(requestedNames))
@@ -696,15 +713,26 @@ createScenariosFromPKML <- function(
         }
         suffix <- suffix + 1L
       }
-      cli::cli_warn(messages$autocorrectDuplicateScenarioNames(
-        original,
-        candidate
-      ))
     }
     taken <- c(taken, candidate)
     resolved[[i]] <- candidate
   }
   resolved
+}
+
+#' @keywords internal
+#' @noRd
+# Warn once for each name `.dedupeScenarioNames()` suffixed, that is each
+# position where the final name differs from the requested one.
+.warnSuffixedScenarioNames <- function(requestedNames, finalNames) {
+  for (i in which(requestedNames != finalNames)) {
+    original <- requestedNames[[i]]
+    candidate <- finalNames[[i]]
+    cli::cli_warn(messages$autocorrectDuplicateScenarioNames(
+      original,
+      candidate
+    ))
+  }
 }
 
 #' @keywords internal
@@ -732,10 +760,14 @@ createScenariosFromPKML <- function(
 #' @noRd
 # Extract simulation time intervals from a PKML output schema as the
 # "start, end, resolution; ..." string `addScenario()` expects, together with
-# the resolved time unit. `targetUnit` (if provided) overrides the PKML's own
-# display unit and interval bounds are converted to it. Returns a list with
-# `simulationTime` and `simulationTimeUnit`, both NULL when the schema has no
-# intervals.
+# the time unit that string is in: `targetUnit` if provided, otherwise the
+# PKML's own display unit. Returns a list with `simulationTime` and
+# `simulationTimeUnit`, both NULL when the schema has no intervals.
+#
+# ospsuite reports every interval in base units whatever its display unit:
+# start and end in minutes, resolution in points per minute. So the bounds are
+# divided by the minutes in one unit and the resolution multiplied by them,
+# which inverts what `.prepareScenario()` applies to build the simulation.
 .extractSimulationTimeFromPkml <- function(simulation, targetUnit = NULL) {
   empty <- list(simulationTime = NULL, simulationTimeUnit = NULL)
   intervals <- simulation$outputSchema$intervals
@@ -743,29 +775,20 @@ createScenariosFromPKML <- function(
     return(empty)
   }
 
-  unit <- targetUnit
-  if (is.null(unit)) {
-    unit <- intervals[[1]]$startTime$displayUnit %||% "min"
-  }
-
-  toTargetUnit <- function(value, fromUnit) {
-    if (fromUnit == unit) {
-      return(value)
-    }
-    ospsuite::toUnit(
-      quantityOrDimension = ospsuite::ospDimensions$Time,
-      values = value,
-      targetUnit = unit
-    )
-  }
+  unit <- targetUnit %||% intervals[[1]]$startTime$displayUnit %||% "min"
+  minutesPerUnit <- ospsuite::toBaseUnit(
+    quantityOrDimension = ospsuite::ospDimensions$Time,
+    values = 1,
+    unit = unit
+  )
 
   intervalStrings <- vapply(
     intervals,
     function(interval) {
       paste(
-        toTargetUnit(interval$startTime$value, interval$startTime$displayUnit),
-        toTargetUnit(interval$endTime$value, interval$endTime$displayUnit),
-        interval$resolution$value,
+        interval$startTime$value / minutesPerUnit,
+        interval$endTime$value / minutesPerUnit,
+        interval$resolution$value * minutesPerUnit,
         sep = ", "
       )
     },

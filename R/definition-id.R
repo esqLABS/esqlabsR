@@ -243,7 +243,8 @@
 # a batch that aborts partway still surfaces the canonicalizations that
 # happened before the abort (preserving the warning-then-error order the
 # per-definition path had). Re-entrant collectors share the outermost sink; only
-# the outermost one flushes.
+# the outermost one flushes, unless the authoring call flushes earlier with
+# `.flushCanonicalizedRefs()`.
 #
 # @keywords internal
 # @noRd
@@ -260,15 +261,7 @@
       return(invisible(NULL))
     }
     flushed <<- TRUE
-    inputs <- .canonRefSink$inputs
-    canonicals <- .canonRefSink$canonicals
-    if (length(inputs) > 0L) {
-      # Deduplicate by pair, keeping first-seen order, so a reference repeated
-      # across several definitions in the batch is named once.
-      key <- paste(inputs, canonicals, sep = "\r")
-      firstSeen <- !duplicated(key)
-      .warnCanonicalizedRefs(inputs[firstSeen], canonicals[firstSeen])
-    }
+    .flushCanonicalizedRefs()
   }
   on.exit(
     {
@@ -291,6 +284,34 @@
       flush()
     }
   )
+}
+
+# Emit the one warning for the changes collected so far in this authoring call,
+# and empty the sink so the collector's own flush reports only later changes.
+# The outermost collector calls it when the call ends. An authoring call whose
+# later messages a canonicalization explains calls it before them, so the cause
+# is read first (`createScenariosFromPKML()`: a canonicalized name can collide
+# with an existing scenario and be suffixed). Outside a collector every change
+# has already warned, so there is nothing to emit.
+#
+# @keywords internal
+# @noRd
+.flushCanonicalizedRefs <- function() {
+  if (.canonRefSink$depth == 0L) {
+    return(invisible(NULL))
+  }
+  inputs <- .canonRefSink$inputs
+  canonicals <- .canonRefSink$canonicals
+  .canonRefSink$inputs <- character()
+  .canonRefSink$canonicals <- character()
+  if (length(inputs) > 0L) {
+    # Deduplicate by pair, keeping first-seen order, so a reference repeated
+    # across several definitions in the batch is named once.
+    key <- paste(inputs, canonicals, sep = "\r")
+    firstSeen <- !duplicated(key)
+    .warnCanonicalizedRefs(inputs[firstSeen], canonicals[firstSeen])
+  }
+  invisible(NULL)
 }
 
 # Report a batch of `input -> canonical` changes. Inside a collector

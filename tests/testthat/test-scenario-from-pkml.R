@@ -346,6 +346,60 @@ test_that("scenario names colliding with pre-existing project scenarios are suff
   expect_true("testscenario_2" %in% names(project$definitions$scenarios))
 })
 
+test_that("a typed scenario name that is canonicalized warns as addScenario() does", {
+  project <- testProject()
+  expect_snapshot(
+    createScenariosFromPKML(
+      pkmlInProject(project),
+      project = project,
+      scenarios = "My PKML Scenario"
+    )
+  )
+  expect_true("my_pkml_scenario" %in% names(project$definitions$scenarios))
+})
+
+test_that("a typed name matching a project scenario but for case is reported before its suffix", {
+  # One canonicalization warning names the typed name and the typed parameter
+  # set, and it comes before the duplicate warning it explains.
+  project <- testProject()
+  expect_snapshot(
+    createScenariosFromPKML(
+      pkmlInProject(project),
+      project = project,
+      scenarios = "TestScenario",
+      parameterSets = "Global"
+    )
+  )
+  expect_true("testscenario_2" %in% names(project$definitions$scenarios))
+})
+
+test_that("a scenario name taken from the PKML is canonicalized without a warning", {
+  # The user did not type "Vergin 1995 IV"; the message naming the added
+  # scenario already shows the id it got.
+  project <- testProject()
+  expect_no_warning(expect_message(
+    createScenariosFromPKML(pkmlInProject(project), project = project),
+    "vergin_1995_iv"
+  ))
+})
+
+test_that("scenario names containing braces are reported verbatim", {
+  # Canonicalization keeps `{` and `}`, so the messages naming scenarios must
+  # not read them as cli expressions.
+  project <- .fakeProject()
+  project$paths$simulationsFolder <- dirname(pkmlFixture)
+  expect_snapshot(
+    createScenariosFromPKML(
+      c(pkmlFixture, pkmlFixture),
+      project = project,
+      scenarios = "s{x}"
+    )
+  )
+  expect_true(all(
+    c("s{x}", "s{x}_2") %in% names(project$definitions$scenarios)
+  ))
+})
+
 test_that("scenarios = NULL derives names from the simulation and dedupes a recycled PKML", {
   project <- .fakeProject()
   project$paths$simulationsFolder <- dirname(pkmlFixture)
@@ -363,16 +417,48 @@ test_that("scenarios = NULL derives names from the simulation and dedupes a recy
 
 # createScenariosFromPKML: simulation time ----
 
-test_that("simulation time and unit are extracted from the PKML output schema", {
+test_that("a scenario built from the extracted time grid simulates the PKML's own grid", {
+  # The fixture displays its output intervals in hours, while ospsuite reports
+  # them in minutes and points per minute, so every unit but minutes needs the
+  # start, end, and resolution converted.
   project <- testProject()
-  suppressMessages(createScenariosFromPKML(
-    pkmlInProject(project),
-    project = project,
-    scenarios = "seeded"
-  ))
-  sc <- project$definitions$scenarios[["seeded"]]
-  expect_false(is.null(sc$simulationTime))
-  expect_false(is.null(sc$simulationTimeUnit))
+  pkml <- pkmlInProject(project)
+  intervalsOf <- function(simulation) {
+    lapply(simulation$outputSchema$intervals, function(interval) {
+      c(
+        interval$startTime$value,
+        interval$endTime$value,
+        interval$resolution$value
+      )
+    })
+  }
+  expected <- intervalsOf(ospsuite::loadSimulation(pkml, loadFromCache = FALSE))
+  units <- list(default = NULL, h = "h", days = "day(s)", min = "min")
+  for (id in names(units)) {
+    suppressMessages(createScenariosFromPKML(
+      pkml,
+      project = project,
+      scenarios = id,
+      simulationTimeUnit = units[[id]]
+    ))
+  }
+
+  # Without a unit, the scenario keeps the model's display unit.
+  sc <- project$definitions$scenarios[["default"]]
+  expect_identical(sc$simulationTimeUnit, "h")
+  expect_equal(
+    sc$simulationTime,
+    list(c(0, 0.25, 60), c(0.25, 24, 20), c(2, 24, 4))
+  )
+
+  built <- suppressMessages(buildSimulations(project, scenarios = names(units)))
+  for (id in names(units)) {
+    expect_equal(
+      intervalsOf(built[[id]]$simulation),
+      expected,
+      label = paste0("intervals of scenario \"", id, "\"")
+    )
+  }
 })
 
 test_that("user simulationTime overrides PKML extraction", {
@@ -545,6 +631,26 @@ test_that("a failing addScenario rolls back scenarios and outputPaths", {
   expect_identical(names(project$definitions$outputPaths), outputsBefore)
 })
 
+test_that("a rename warning turned into an error rolls back the added scenarios", {
+  # The rename warnings are raised once the scenarios are added; with
+  # `options(warn = 2)` each becomes an error, which must not leave them behind.
+  withr::local_options(warn = 2)
+  project <- .fakeProject()
+  project$paths$simulationsFolder <- dirname(pkmlFixture)
+
+  expect_error(
+    suppressMessages(createScenariosFromPKML(
+      rep(pkmlFixture, 2),
+      project = project,
+      scenarios = "s"
+    )),
+    "Duplicate scenario names"
+  )
+
+  expect_length(project$definitions$scenarios, 0)
+  expect_length(project$definitions$outputPaths, 0)
+})
+
 test_that("a failing addScenario rollback preserves the validation flag", {
   project <- .fakeProject(
     parameterSets = list(global = list())
@@ -648,51 +754,50 @@ test_that("end-to-end: steadyState = TRUE round-trips through snapshot and load"
 # Internal helpers ----
 
 test_that(".dedupeScenarioNames probes suffixes against project and call names", {
-  out <- suppressWarnings(.dedupeScenarioNames(c("s", "s", "s_2"), character()))
-  expect_identical(out, c("s", "s_2", "s_2_2"))
-
-  expect_warning(
-    .dedupeScenarioNames("TestScenario", "TestScenario"),
-    "Duplicate scenario names"
-  )
-
+  # Silent: `createScenariosFromPKML()` reports the renames once it has added
+  # the scenarios.
   expect_silent(
     expect_identical(
-      .dedupeScenarioNames(c("A", "B"), character()),
-      c("A", "B")
+      .dedupeScenarioNames(c("s", "s", "s_2"), character()),
+      c("s", "s_2", "s_2_2")
     )
+  )
+  expect_identical(
+    .dedupeScenarioNames(c("testscenario", "other"), "testscenario"),
+    c("testscenario_2", "other")
   )
 })
 
 test_that(".extractSimulationTimeFromPkml joins intervals and converts to the target unit", {
-  # A self-consistent schema stub: values genuinely in base-unit minutes.
+  # A schema stub shaped like ospsuite's: values in minutes and points per
+  # minute, whatever unit the intervals are displayed in.
   sim <- list(
     outputSchema = list(
       intervals = list(
         list(
-          startTime = list(value = 0, displayUnit = "min"),
-          endTime = list(value = 60, displayUnit = "min"),
+          startTime = list(value = 0, displayUnit = "h"),
+          endTime = list(value = 60, displayUnit = "h"),
           resolution = list(value = 2)
         ),
         list(
-          startTime = list(value = 60, displayUnit = "min"),
-          endTime = list(value = 120, displayUnit = "min"),
+          startTime = list(value = 60, displayUnit = "h"),
+          endTime = list(value = 120, displayUnit = "h"),
           resolution = list(value = 1)
         )
       )
     )
   )
 
-  # No override: intervals are joined with "; " and the schema unit is kept.
+  # No override: intervals are joined with "; " in the display unit, the
+  # bounds in hours and the resolution in points per hour.
   kept <- .extractSimulationTimeFromPkml(sim)
-  expect_identical(kept$simulationTimeUnit, "min")
-  expect_identical(kept$simulationTime, "0, 60, 2; 60, 120, 1")
+  expect_identical(kept$simulationTimeUnit, "h")
+  expect_identical(kept$simulationTime, "0, 1, 120; 1, 2, 60")
 
-  # Override to hours: the bounds are converted (60 min -> 1 h), the
-  # resolution is left untouched, and the unit is the requested one.
-  converted <- .extractSimulationTimeFromPkml(sim, targetUnit = "h")
-  expect_identical(converted$simulationTimeUnit, "h")
-  expect_identical(converted$simulationTime, "0, 1, 2; 1, 2, 1")
+  # Override to minutes: the values are the ones ospsuite reports.
+  converted <- .extractSimulationTimeFromPkml(sim, targetUnit = "min")
+  expect_identical(converted$simulationTimeUnit, "min")
+  expect_identical(converted$simulationTime, "0, 60, 2; 60, 120, 1")
 })
 
 test_that(".extractSimulationTimeFromPkml returns NULLs when the schema has no intervals", {

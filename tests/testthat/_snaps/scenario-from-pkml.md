@@ -57,9 +57,49 @@
       scenarios = c("s", "s"))
     Condition
       Warning:
-      Duplicate scenario names found and made unique by adding indices: i Duplicated names: "s", renamed to "s_2"
+      Duplicate scenario names found and made unique by adding indices:
+      i Duplicated names: "s", renamed to "s_2"
     Message
       Added 2 scenarios: "s" and "s_2"
+
+# a typed scenario name that is canonicalized warns as addScenario() does
+
+    Code
+      createScenariosFromPKML(pkmlInProject(project), project = project, scenarios = "My PKML Scenario")
+    Condition
+      Warning:
+      Canonicalized 1 id to a safe form:
+      * "My PKML Scenario" -> "my_pkml_scenario"
+    Message
+      Added 1 scenario: "my_pkml_scenario"
+
+# a typed name matching a project scenario but for case is reported before its suffix
+
+    Code
+      createScenariosFromPKML(pkmlInProject(project), project = project, scenarios = "TestScenario",
+      parameterSets = "Global")
+    Condition
+      Warning:
+      Canonicalized 2 ids to a safe form:
+      * "TestScenario" -> "testscenario"
+      * "Global" -> "global"
+      Warning:
+      Duplicate scenario names found and made unique by adding indices:
+      i Duplicated names: "testscenario", renamed to "testscenario_2"
+    Message
+      Added 1 scenario: "testscenario_2"
+
+# scenario names containing braces are reported verbatim
+
+    Code
+      createScenariosFromPKML(c(pkmlFixture, pkmlFixture), project = project,
+      scenarios = "s{x}")
+    Condition
+      Warning:
+      Duplicate scenario names found and made unique by adding indices:
+      i Duplicated names: "s{x}", renamed to "s{x}_2"
+    Message
+      Added 2 scenarios: "s{x}" and "s{x}_2"
 
 # NULL simulationsFolder falls back to the absolute pkml path with a warning
 
