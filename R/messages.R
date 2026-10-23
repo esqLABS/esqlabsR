@@ -58,19 +58,18 @@ messages$wrongParametersStructure <- function(argumentName) {
   )
 }
 
-# Returned unglued, so the raising `cli_abort()` keeps the "x" bullet on its own
-# line. The raising site, `.validateParametersStructure()`, binds
-# `argumentName`, `field`, `fieldLength`, and `pathCount`.
+# A field of length 1 is used for every path, so with one path the only
+# accepted length is 1.
 messages$parametersStructureLengthMismatch <- function(
   argumentName,
   field,
   fieldLength,
   pathCount
 ) {
-  c(
-    "{.code {argumentName}${field}} must have length 1 or {pathCount}, one \\
-    per path.",
-    "x" = "It has length {fieldLength}."
+  allowedLengths <- sort(unique(c(1L, pathCount)))
+  cliFormat(
+    "{.code {argumentName}${field}} has length {fieldLength}, but it must \\
+    have length {.or {allowedLengths}}, one element per path."
   )
 }
 
