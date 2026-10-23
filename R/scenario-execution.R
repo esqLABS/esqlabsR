@@ -756,8 +756,9 @@
 # validate `project`, `customParams` and the two settings arguments, resolve
 # them through `.resolveRunOptions()`, and, when `validate`, run the section
 # validators the scenario build depends on. Returns `.resolveRunOptions()`'s
-# `list(runOptions, solverDefaults, solverOverrides)`. `opName` names the
-# calling entrypoint in any validation abort.
+# `list(runOptions, solverDefaults, solverOverrides)` plus `customParams`, with
+# its `values` and `units` recycled to the length of its `paths`. `opName` names
+# the calling entrypoint in any validation abort.
 # @keywords internal
 # @noRd
 .scenarioBuildPreflight <- function(
@@ -776,6 +777,7 @@
     argumentName = "customParams",
     nullAllowed = TRUE
   )
+  customParams <- .recycleCustomParams(customParams, call = .call)
   if (
     !is.null(simulationRunOptions) &&
       !inherits(simulationRunOptions, "SimulationRunOptions")
@@ -812,7 +814,38 @@
       opName = opName
     )
   }
+  resolved$customParams <- customParams
   resolved
+}
+
+# `customParams` with its `values` and `units` matched to its `paths` by the
+# tidyverse recycling rule: a field of length 1 is used for every path, a field
+# as long as `paths` is kept, and any other length stops. Unchecked, a short
+# field is recycled silently when the scenario has parameter sets and stops in
+# the backend when it has none.
+# @keywords internal
+# @noRd
+.recycleCustomParams <- function(customParams, call = rlang::caller_env()) {
+  if (is.null(customParams)) {
+    return(NULL)
+  }
+  pathCount <- length(customParams$paths)
+  for (field in c("values", "units")) {
+    value <- customParams[[field]]
+    fieldLength <- length(value)
+    if (is.null(value) || fieldLength == pathCount) {
+      next
+    }
+    if (fieldLength == 1L) {
+      customParams[[field]] <- rep(value, pathCount)
+      next
+    }
+    cli::cli_abort(
+      messages$customParamsLengthMismatch(field, fieldLength, pathCount),
+      call = call
+    )
+  }
+  customParams
 }
 
 # .buildScenarioSimulations ----
@@ -1037,7 +1070,7 @@
   built <- .buildScenarioSimulations(
     project = project,
     scenarioNames = scenarioNames,
-    customParams = customParams,
+    customParams = resolved$customParams,
     simulationRunOptions = simulationRunOptions,
     solverDefaults = resolved$solverDefaults,
     solverOverrides = resolved$solverOverrides,
@@ -1139,7 +1172,7 @@
   built <- .buildScenarioSimulations(
     project = project,
     scenarioNames = scenarioNames,
-    customParams = customParams,
+    customParams = resolved$customParams,
     simulationRunOptions = resolved$runOptions,
     solverDefaults = resolved$solverDefaults,
     solverOverrides = resolved$solverOverrides,

@@ -295,7 +295,10 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-10-22 14:21: Plots are styled only through the ospsuite plot function arguments and ggplot2 layers: the watermark, displayLLOQ, foldLinesLegendDiagonal, and the fold-line line types are accepted with a warning that they have no effect yet; plot settings are read by exact name, so an untitled plot no longer gets titleSize as its title. (#969)
 - 2026-10-22 14:22: Documented the plot settings the OSP Suite plot functions cannot draw yet (watermark, displayLLOQ, foldLinesLegendDiagonal, fold-line line types) in the reference article, the migration guide, NEWS, and addPlot(). (#969)
 - 2026-10-22 14:44: NEWS names createPlots() in the plot-settings bullets and says which settings it draws and which it does not yet. (#969)
+- 2026-10-22 15:04: A parameter path the model does not have now stops the run with every missing path named and a pointer to `stopIfParameterNotFound`, whose documentation now says it also covers parameter-set paths.
+- 2026-10-22 15:04: The How to run simulations article is reworded for modelers, corrects what outputValues and the run options hold, and adds sections on tuning a run and on what happens when a scenario fails.
 - 2026-10-22 15:09: The field-effect test checks the font family fields on the plot theme instead of the drawn SVG, which depends on the fonts installed on the machine (failed on Windows CI). (#969)
+- 2026-10-22 16:30: Brought the run-simulations article branch up to date with the ospsuite.plots port on json-based-project.
 - 2026-10-22 16:55: The refactoring brief and the migration-test command name v6 as the project branch, since json-based-project is merged into v6 and deleted.
 - 2026-10-22 18:05: The How to design scenarios article explains how to set a scenario's solver settings: what a left-out setting falls back to, that setScenario() replaces the whole list, and that the settings are stored only in JSON.
 - 2026-10-23 11:48: createScenariosFromPKML() converts the time grid it reads from a model file to the scenario's unit, resolution included, so the built simulation keeps the model's grid. (#1302)
@@ -305,3 +308,6 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-10-23 12:07: Regenerated the createScenariosFromPKML() help page for the new descriptions of scenarios and simulationTimeUnit. (#1302, #1307)
 - 2026-10-23 12:43: createScenariosFromPKML() also rolls back the added scenarios when one of its rename warnings becomes an error under options(warn = 2). (#1307)
 - 2026-10-23 12:43: The NEWS bullet on createScenariosFromPKML() says how it canonicalizes and suffixes scenario names, and which ones it warns about. (#1307)
+- 2026-10-23 12:34: initializeSimulation() checks every parameter and initial-condition path before it applies any, and names all the missing ones with the simulation; a short customParams values or units vector is used for every path only when it has one element, any other length stops.
+- 2026-10-23 12:35: The How to run simulations article runs only one individual scenario when it is built, and describes the customParams length rule, the missing-path error, and the printed skip line as they are.
+- 2026-10-23 12:36: Brought the run-simulations article branch up to date with v6.

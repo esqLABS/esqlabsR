@@ -26,6 +26,29 @@
       x solverSettings has unknown setting 'reltol'; the settings are absTol, checkForNegativeValues, h0, hMax, hMin, mxStep, relTol, useJacobian
       x solverSettings$mxStep must be a single whole number between 1 and 2147483647
 
+# a parameter-set and an initial-condition path the model lacks are named
+
+    Code
+      runScenarios(project, scenarios = "testscenario", validate = FALSE)
+    Condition
+      Error in `runScenarios()`:
+      ! Could not build scenario "testscenario".
+      i Pass `stopIfFails = FALSE` to skip it and build the other scenarios.
+      Caused by error in `initializeSimulation()`:
+      ! The model of simulation "testscenario" has no parameter or molecule at these paths: "Organism|Liverr|Volume" and "Organism|VenousBlood|Plasma|Aciclovirr".
+      i Pass `stopIfParameterNotFound = FALSE` to skip them.
+
+# customParams values of another length stop with the field named
+
+    Code
+      buildSimulations(project, scenarios = "testscenario", customParams = list(
+        paths = c("Organism|Liver|Volume", "Organism|Kidney|Volume",
+          "Organism|Brain|Volume"), values = c(0.5, 0.6), units = "l"), validate = FALSE)
+    Condition
+      Error in `buildSimulations()`:
+      ! `customParams$values` must have length 1 or 3, one per path.
+      x It has length 2.
+
 # a user parameter path the model lacks still stops the build
 
     Code
@@ -34,8 +57,9 @@
     Condition
       Error in `buildSimulations()`:
       ! Could not build scenario "testscenario".
-      Caused by error in `.validateEntitiesExist()`:
-      ! `<caller>`: no entity exists for path "Organism|NoSuchContainer|NoSuchParameter" located under container <testscenario>!
+      Caused by error in `initializeSimulation()`:
+      ! The model of simulation "testscenario" has no parameter or molecule at this path: "Organism|NoSuchContainer|NoSuchParameter".
+      i Pass `stopIfParameterNotFound = FALSE` to skip it.
 
 # .resolveScenarioPopulation warns when one id resolves two ways in a run
 
