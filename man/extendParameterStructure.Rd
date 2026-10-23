@@ -9,12 +9,14 @@ extendParameterStructure(parameters, newParameters)
 \arguments{
 \item{parameters}{A parameter structure (a list with elements \code{paths},
 \code{values}, and \code{units}) or \code{NULL}. If \code{NULL}, it is treated as an empty
-parameter structure.}
+parameter structure. \code{values} and \code{units} have one element per path, or
+one element that is used for every path. Any other length stops with an
+error.}
 
 \item{newParameters}{A parameter structure (a list with elements \code{paths},
 \code{values}, and \code{units}) or \code{NULL}. If \code{NULL}, it is treated as an empty
 parameter structure whose entries will be added to or overwrite those in
-\code{parameters}.}
+\code{parameters}. The lengths follow the same rule as in \code{parameters}.}
 }
 \value{
 Updated list of parameter paths, values, and units

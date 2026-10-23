@@ -251,6 +251,74 @@ test_that("It extends a structure by a new structure", {
   expect_equal(extended$units, c("", "", "µmol"))
 })
 
+test_that("extendParameterStructure accepts the three names in any order", {
+  newParams <- list(
+    values = c(1, 2),
+    units = c("", "l"),
+    paths = c("Path1", "Path2")
+  )
+
+  extended <- extendParameterStructure(
+    parameters = NULL,
+    newParameters = newParams
+  )
+
+  expect_identical(
+    extended,
+    list(paths = c("Path1", "Path2"), values = c(1, 2), units = c("", "l"))
+  )
+})
+
+test_that("extendParameterStructure uses a single value or unit for every path", {
+  extended <- extendParameterStructure(
+    parameters = list(paths = "Path1", values = 1, units = ""),
+    newParameters = list(paths = c("Path2", "Path3"), values = 0.5, units = "l")
+  )
+
+  expect_equal(extended$values, c(1, 0.5, 0.5))
+  expect_equal(extended$units, c("", "l", "l"))
+})
+
+test_that("extendParameterStructure stops on values or units of another length", {
+  # Two values for three paths would otherwise give the third path the first
+  # value without a warning.
+  expect_snapshot(
+    extendParameterStructure(
+      parameters = list(paths = "Path1", values = 1, units = ""),
+      newParameters = list(
+        paths = c("Path1", "Path2", "Path3"),
+        values = c(1, 2),
+        units = "l"
+      )
+    ),
+    error = TRUE
+  )
+  expect_snapshot(
+    extendParameterStructure(
+      parameters = list(paths = c("Path1", "Path2"), values = 1, units = c()),
+      newParameters = NULL
+    ),
+    error = TRUE
+  )
+})
+
+test_that("extendParameterStructure rejects a structure with other names", {
+  expect_error(
+    extendParameterStructure(
+      parameters = NULL,
+      newParameters = list(paths = "one", values = 2, units = "", extra = 1)
+    ),
+    "wrong structure"
+  )
+  expect_error(
+    extendParameterStructure(
+      parameters = NULL,
+      newParameters = c(paths = "one", values = "2", units = "")
+    ),
+    "wrong structure"
+  )
+})
+
 # Unified parameterSets section ----
 
 test_that("addParameterSet creates a set; removeParameterSet drops it", {
@@ -1018,7 +1086,7 @@ test_that("`readInitialConditionsFromXLS()` reads a valid sheet and builds molec
     sheets = "ValidSheet"
   )
 
-  expect_true(.validateParametersStructure(initialValues))
+  expect_identical(.validateParametersStructure(initialValues), initialValues)
   expect_setequal(
     initialValues$paths,
     c("Organism|Liver|A", "Organism|Liver|B")
@@ -1084,7 +1152,7 @@ test_that("`readInitialConditionsFromXLS()` returns empty structure when all mol
     sheets = "AllAbsent"
   )
 
-  expect_true(.validateParametersStructure(initialValues))
+  expect_identical(.validateParametersStructure(initialValues), initialValues)
   expect_length(initialValues$paths, 0)
   expect_length(initialValues$values, 0)
   expect_length(initialValues$units, 0)

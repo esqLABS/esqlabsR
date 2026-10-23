@@ -131,7 +131,7 @@ The reloaded Scenario Result has the same structure as the one `runScenarios()` 
 
 Pass `customParams` to change parameter values for one run. The values are set after all parameter sets of the scenario, so they replace the values the parameter sets give. They apply to every scenario in the run.
 
-`customParams` is a list of three vectors, named `paths`, `values`, and `units`, in this order:
+`customParams` is a list of three vectors, named `paths`, `values`, and `units`:
 
 - `paths`: full parameter paths, such as `"Organism|Liver|Volume"`. Each path must name exactly one parameter. Paths are case-sensitive, and wildcards such as `*` are not accepted.
 - `values`: the numeric values.
