@@ -266,6 +266,17 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-09-17 14:15: The scenario print NEWS bullets are gone: both described a change inside the unreleased 6.0.0 cycle, which its NEWS reader never saw. (#1279)
 - 2026-09-17 15:20: The DataCombined tests compare whole result structures, and the NEWS bullets for the curve labels describe the current behavior rather than the branch history. (#1280)
 - 2026-09-21 17:34: The Get started article now describes what printing a project really shows, and says that no full path is printed so a printed project reads the same on any computer. (#1289)
+- 2026-10-02 16:05: The scenario article's worked examples now do what its text says, and it and the field reference give the order in which parameter sets are applied.
+- 2026-10-05 20:37: The Excel files carry the project's default solver settings on a sheet of their own, and importing checks them the way the project file is checked. (#1300)
+- 2026-10-06 09:32: The help pages describe the solver-settings sheet, and NEWS mentions it in the Excel round-trip bullet rather than as a change from a state that never shipped. (#1300)
+- 2026-10-08 19:24: The validation article opens by saying what the check looks for and why it matters.
+- 2026-10-08 19:24: The validation article no longer says a clean report means a project is ready to run, lists every function that checks before running, and says where a misspelled reference is reported.
+- 2026-10-08 19:25: The validation article shows how to stop a script when the project has a blocking problem, and says what skipping the check before a run really does.
+- 2026-10-08 19:26: The validation article shows the warning loadProject() gives for a misspelled reference, and shows a warning that still makes the run fail.
+- 2026-10-08 19:26: Plainer wording in the validation article, including when the "did you mean" suggestion appears.
+- 2026-10-08 19:27: The project-model article lists which parts of the project each run, data and plot function checks before it starts, matching what the functions do.
+- 2026-10-21 17:20: Plainer wording throughout the validation article, written for modelers.
+- 2026-10-21 17:21: The validation article opens with a table of the functions it uses.
 - 2026-10-22 10:22: Replaced tlf with ospsuite.plots for the plot grid and the house plot settings: esqlabsR now has its own PlotGridConfiguration and plotGrid(), createEsqlabsPlotConfiguration() returns a named list, the sensitivity plots take "linear" instead of "lin", and the ospsuite.plots watermark is off by default. (#969)
 - 2026-10-22 10:32: createPlots() draws each plot with the ospsuite plot functions and a house theme; a Plot definition accepts a fixed set of fields (the PR's set plus labels and axis limits), anything else is a critical error, and lloqOnBothAxes defaults to TRUE. (#969)
 - 2026-10-22 10:34: The Excel import keeps only the supported plotConfiguration columns and names the dropped ones that hold a value, converts "lin" to "linear", and reads lloqOnBothAxes as a logical. (#969)
@@ -285,3 +296,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-10-22 14:22: Documented the plot settings the OSP Suite plot functions cannot draw yet (watermark, displayLLOQ, foldLinesLegendDiagonal, fold-line line types) in the reference article, the migration guide, NEWS, and addPlot(). (#969)
 - 2026-10-22 14:44: NEWS names createPlots() in the plot-settings bullets and says which settings it draws and which it does not yet. (#969)
 - 2026-10-22 15:09: The field-effect test checks the font family fields on the plot theme instead of the drawn SVG, which depends on the fonts installed on the machine (failed on Windows CI). (#969)
+- 2026-10-22 18:05: The How to design scenarios article explains how to set a scenario's solver settings: what a left-out setting falls back to, that setScenario() replaces the whole list, and that the settings are stored only in JSON.
