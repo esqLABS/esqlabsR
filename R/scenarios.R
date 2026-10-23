@@ -764,8 +764,9 @@ print.Scenario <- function(x, ...) {
 #'   the name you passed to [addScenario()] resolves; a name that canonicalizes
 #'   to a different form warns, naming the id it resolved to.
 #' @param customParams A list with vectors `paths`, `values`, and
-#'   `units` — applied to every selected scenario as the final
-#'   parameter layer.
+#'   `units`, applied to every selected scenario after all its parameter
+#'   sets. `values` and `units` have one element per path, or one element
+#'   that is used for every path. Any other length stops with an error.
 #' @param simulationRunOptions How this run is executed: an
 #'   [SimulationRunOptions](https://www.open-systems-pharmacology.org/OSPSuite-R/reference/SimulationRunOptions.html)
 #'   object setting `numberOfCores` and `showProgress`, for example
@@ -786,11 +787,12 @@ print.Scenario <- function(x, ...) {
 #'   aborts with a formatted summary on critical errors. Set to
 #'   `FALSE` to skip the pre-flight check (e.g. when the caller has
 #'   already validated the project).
-#' @param stopIfParameterNotFound Logical. If `TRUE` (default), a parameter
-#'   path that matches no parameter in a scenario's simulation aborts the run,
-#'   naming every such path. This covers the paths of the scenario's parameter
-#'   sets and of `customParams`. Set to `FALSE` to skip such paths with a
-#'   warning instead.
+#' @param stopIfParameterNotFound Logical. If `TRUE` (default), a path that
+#'   the model of a scenario does not have stops the run, with an error that
+#'   names every such path. This covers the paths of the scenario's parameter
+#'   sets, of its initial conditions, and of `customParams`. Set to `FALSE` to
+#'   skip such paths and apply the others. Each skipped path is reported in a
+#'   printed line, not as an R warning.
 #' @param stopIfFails Logical. If `TRUE` (default), a scenario that fails to
 #'   build (e.g. a missing model parameter path) or whose simulation produced
 #'   no results aborts the run with an error naming that scenario. Set to `FALSE`
@@ -866,8 +868,9 @@ runScenarios <- function(
 #'   the name you passed to [addScenario()] resolves; a name that canonicalizes
 #'   to a different form warns, naming the id it resolved to.
 #' @param customParams A list with vectors `paths`, `values`, and
-#'   `units` — applied to every selected scenario as the final
-#'   parameter layer.
+#'   `units`, applied to every selected scenario after all its parameter
+#'   sets. `values` and `units` have one element per path, or one element
+#'   that is used for every path. Any other length stops with an error.
 #' @inheritParams runScenarios
 #' @param simulationRunOptions How the steady-state pre-solve is executed, for
 #'   a scenario with `simulateSteadyState` set. Takes the same form as in
@@ -877,11 +880,12 @@ runScenarios <- function(
 #'   section validators via [validateProject()] before building and
 #'   aborts with a formatted summary on critical errors. Set to
 #'   `FALSE` to skip the pre-flight check.
-#' @param stopIfParameterNotFound Logical. If `TRUE` (default), a parameter
-#'   path that matches no parameter in a scenario's simulation aborts the
-#'   build, naming every such path. This covers the paths of the scenario's
-#'   parameter sets and of `customParams`. Set to `FALSE` to skip such paths
-#'   with a warning instead.
+#' @param stopIfParameterNotFound Logical. If `TRUE` (default), a path that
+#'   the model of a scenario does not have stops the build, with an error that
+#'   names every such path. This covers the paths of the scenario's parameter
+#'   sets, of its initial conditions, and of `customParams`. Set to `FALSE` to
+#'   skip such paths and apply the others. Each skipped path is reported in a
+#'   printed line, not as an R warning.
 #'
 #' @returns A named list keyed by scenario name. Each entry is a list
 #'   with `simulation` (the initialized, not-yet-run

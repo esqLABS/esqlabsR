@@ -1300,6 +1300,20 @@ messages$setScenarioUnknownFields <- function(fields, settable) {
 # Raised when `simulationRunOptions` is not an `ospsuite::SimulationRunOptions`.
 # The hint names `solverSettings` because reaching for this argument to set a
 # tolerance is the likely mistake: the two used to travel in one list.
+# Returned unglued, so the raising `cli_abort()` keeps the "x" bullet on its own
+# line. The raising site binds `field`, `fieldLength`, and `pathCount`.
+messages$customParamsLengthMismatch <- function(
+  field,
+  fieldLength,
+  pathCount
+) {
+  c(
+    "{.code customParams${field}} must have length 1 or {pathCount}, one per \\
+    path.",
+    "x" = "It has length {fieldLength}."
+  )
+}
+
 messages$invalidSimulationRunOptions <- function(value) {
   cli::format_message(c(
     "{.arg simulationRunOptions} must be an \\
@@ -1379,14 +1393,15 @@ messages$scenarioBuildFailedAbort <- function(scenarioName, canSkip) {
 
 # The paths come from the user's parameter sets and may contain any character,
 # so the template is returned unglued and the raising site, which binds
-# `missingPaths`, interpolates it once.
-messages$scenarioParametersNotFound <- function(missingPaths) {
+# `simulationName` and `missingPaths`, interpolates it once. `cli_vec()` lifts
+# cli's limit of 20 values, so a long list is still named in full.
+messages$quantityPathsNotFound <- function(simulationName, missingPaths) {
   c(
-    "The model has no parameter at {cli::qty(missingPaths)}{?this path/these \\
-    paths}: {.val {missingPaths}}.",
+    "The model of simulation {.val {simulationName}} has no parameter or \\
+    molecule at {cli::qty(missingPaths)}{?this path/these paths}: \\
+    {.val {cli::cli_vec(missingPaths, list('vec-trunc' = Inf))}}.",
     "i" = "Pass {.code stopIfParameterNotFound = FALSE} to skip \\
-    {cli::qty(missingPaths)}{?it/them} and build the scenario without \\
-    {?it/them}."
+    {cli::qty(missingPaths)}{?it/them}."
   )
 }
 

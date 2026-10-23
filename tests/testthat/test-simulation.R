@@ -64,6 +64,125 @@ test_that("`initializeSimulation()` does not fail when additionalInitialConditio
   expect_true(isOfType(simulationResults, "SimulationResults"))
 })
 
+test_that("`initializeSimulation()` names every path the model lacks and applies none", {
+  # The backend names only the first path it cannot find. A misspelled
+  # parameter and a misspelled molecule are both named, and the existing
+  # liver volume listed with them is left as it was.
+  simulation <- loadSimulation(system.file(
+    "extdata",
+    "simple.pkml",
+    package = "ospsuite"
+  ))
+  volumeBefore <- getParameter("Organism|Liver|Volume", simulation)$value
+  expect_snapshot(
+    initializeSimulation(
+      simulation,
+      additionalParams = list(
+        paths = c("Organism|Liver|Volume", "Organism|Liverr|Volume"),
+        values = c(2, 2),
+        units = c("l", "l")
+      ),
+      additionalInitialConditions = list(
+        paths = "Organism|Liver|Metformn",
+        values = 1,
+        units = "µmol"
+      )
+    ),
+    error = TRUE
+  )
+  expect_equal(
+    getParameter("Organism|Liver|Volume", simulation)$value,
+    volumeBefore
+  )
+})
+
+test_that("`initializeSimulation()` names a single missing path in the singular", {
+  simulation <- loadSimulation(system.file(
+    "extdata",
+    "simple.pkml",
+    package = "ospsuite"
+  ))
+  expect_snapshot(
+    initializeSimulation(
+      simulation,
+      additionalParams = list(
+        paths = "Organism|Liverr|Volume",
+        values = 2,
+        units = "l"
+      )
+    ),
+    error = TRUE
+  )
+})
+
+test_that("`initializeSimulation()` names more than twenty missing paths in full", {
+  # cli shortens a vector of more than twenty values with an ellipsis. A
+  # parameter set written for another model can miss that many paths, and each
+  # one has to be found and fixed.
+  simulation <- loadSimulation(system.file(
+    "extdata",
+    "simple.pkml",
+    package = "ospsuite"
+  ))
+  missingPaths <- paste0("Organism|Organ", 1:25, "|Volume")
+  err <- expect_error(
+    initializeSimulation(
+      simulation,
+      additionalParams = list(
+        paths = missingPaths,
+        values = rep(1, 25),
+        units = rep("l", 25)
+      )
+    )
+  )
+  named <- vapply(
+    missingPaths,
+    function(path) grepl(path, conditionMessage(err), fixed = TRUE),
+    logical(1)
+  )
+  expect_true(all(named))
+})
+
+test_that("`initializeSimulation()` accepts a molecule path in additionalParams", {
+  # The backend sets any quantity, not only parameters, so a molecule start
+  # value given as a parameter is applied, not reported as missing.
+  simulation <- loadSimulation(system.file(
+    "extdata",
+    "simple.pkml",
+    package = "ospsuite"
+  ))
+  initializeSimulation(
+    simulation,
+    additionalParams = list(paths = "Organism|A", values = 42, units = "µmol")
+  )
+  expect_equal(
+    ospsuite::getQuantityValuesByPath("Organism|A", simulation, units = "µmol"),
+    42
+  )
+})
+
+test_that("`initializeSimulation()` leaves a wildcard path to the backend", {
+  # A wildcard path matches quantities in the model, so it is not missing. The
+  # backend refuses it when it sets the value, and that message is the one
+  # that says what is wrong.
+  simulation <- loadSimulation(system.file(
+    "extdata",
+    "simple.pkml",
+    package = "ospsuite"
+  ))
+  expect_error(
+    initializeSimulation(
+      simulation,
+      additionalParams = list(
+        paths = "Organism|*|Volume",
+        values = 2,
+        units = "l"
+      )
+    ),
+    "wildcard"
+  )
+})
+
 
 test_that("`compareSimulations()` produces no differences with identical simulations", {
   simPath <- system.file("extdata", "simple.pkml", package = "ospsuite")
@@ -367,6 +486,24 @@ test_that("`applyIndividualParameters()` refuses a human individual on a non-hum
       mouseSimulation
     )$value,
     3.9
+  )
+})
+
+test_that("`initializeSimulation()` reports a wrong individual before a missing path", {
+  # The individual is applied before the paths are checked. A human individual
+  # on a mouse model is the error to fix first, and naming only the missing
+  # path would hide it.
+  expect_error(
+    initializeSimulation(
+      .mouseSimulation(),
+      individualCharacteristics = .humanCharacteristics(),
+      additionalParams = list(
+        paths = "Organism|Liverr|Volume",
+        values = 2,
+        units = "l"
+      )
+    ),
+    "Mouse"
   )
 })
 

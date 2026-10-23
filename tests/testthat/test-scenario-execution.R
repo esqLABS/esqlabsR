@@ -600,32 +600,79 @@ test_that("a build failure under stopIfFails = TRUE names the scenario", {
   expect_match(conditionMessage(err), "a backend message naming nothing")
 })
 
-test_that("a parameter path the model lacks is named, with the argument that skips it", {
-  # The backend names only the first path it cannot find, and `stopIfFails`
-  # skips the whole scenario. The argument that skips the path itself is
-  # `stopIfParameterNotFound`, so the abort has to name every missing path and
-  # point at that one.
+test_that("a parameter-set and an initial-condition path the model lacks are named", {
+  # `stopIfFails` skips the whole scenario. The argument that skips only the
+  # missing paths is `stopIfParameterNotFound`, so the abort names the
+  # scenario, every missing path from the project, and that argument.
   withr::local_options(lifecycle_verbosity = "quiet")
   project <- .testProject()
-  err <- expect_error(
-    runScenarios(
+  addParameterSet(project, "typoset")
+  suppressMessages(
+    addParameterEntry(project, "typoset", "Organism|Liverr", "Volume", 1, "l")
+  )
+  addInitialConditions(project, "typoic")
+  suppressMessages(
+    addInitialConditionEntry(
+      project,
+      "typoic",
+      "Organism|VenousBlood|Plasma|Aciclovirr",
+      7,
+      "µmol"
+    )
+  )
+  setScenario(
+    project,
+    "testscenario",
+    parameterSets = "typoset",
+    initialConditions = "typoic"
+  )
+  expect_snapshot(
+    runScenarios(project, scenarios = "testscenario", validate = FALSE),
+    error = TRUE
+  )
+})
+
+test_that("a single customParams value and unit are used for every path", {
+  withr::local_options(lifecycle_verbosity = "quiet")
+  project <- .testProject()
+  paths <- c("Organism|Liver|Volume", "Organism|Kidney|Volume")
+  built <- buildSimulations(
+    project,
+    scenarios = "testscenario",
+    customParams = list(paths = paths, values = 0.5, units = "l"),
+    validate = FALSE
+  )
+  expect_equal(
+    ospsuite::getQuantityValuesByPath(
+      paths,
+      built$testscenario$simulation,
+      units = c("l", "l")
+    ),
+    c(0.5, 0.5)
+  )
+})
+
+test_that("customParams values of another length stop with the field named", {
+  # Two values for three paths would otherwise be reused silently when the
+  # scenario has parameter sets, giving the third path the first value.
+  withr::local_options(lifecycle_verbosity = "quiet")
+  project <- .testProject()
+  expect_snapshot(
+    buildSimulations(
       project,
       scenarios = "testscenario",
       customParams = list(
-        paths = c("Organism|Liverr|Volume", "Organism|Kidneyy|Volume"),
-        values = c(1, 1),
-        units = c("l", "l")
+        paths = c(
+          "Organism|Liver|Volume",
+          "Organism|Kidney|Volume",
+          "Organism|Brain|Volume"
+        ),
+        values = c(0.5, 0.6),
+        units = "l"
       ),
       validate = FALSE
-    )
-  )
-  expect_match(conditionMessage(err), "testscenario")
-  expect_match(conditionMessage(err), "Organism|Liverr|Volume", fixed = TRUE)
-  expect_match(conditionMessage(err), "Organism|Kidneyy|Volume", fixed = TRUE)
-  expect_match(
-    conditionMessage(err),
-    "stopIfParameterNotFound = FALSE",
-    fixed = TRUE
+    ),
+    error = TRUE
   )
 })
 
@@ -993,11 +1040,6 @@ test_that("a user parameter path the model lacks still stops the build", {
   # even though the species constants above do not.
   withr::local_options(lifecycle_verbosity = "quiet")
   project <- .useRatIndividual(.testProject())
-  # ospsuite's message carries the name of the outermost calling function, which
-  # is the test runner and so differs between `testthat::test_file()`,
-  # `devtools::test()` and `R CMD check`. Scrub only that bullet's call name,
-  # leaving the `.validateEntitiesExist()` attribution and the offending path
-  # asserted.
   expect_snapshot(
     buildSimulations(
       project,
@@ -1008,10 +1050,7 @@ test_that("a user parameter path the model lacks still stops the build", {
         units = ""
       )
     ),
-    error = TRUE,
-    transform = \(lines) {
-      gsub("^(\\s*! )`[^`]+\\(\\)`:", "\\1`<caller>`:", lines)
-    }
+    error = TRUE
   )
 })
 

@@ -26,9 +26,11 @@ to that species, see \code{\link[=applyIndividualParameters]{applyIndividualPara
 'values', and 'units', giving molecule start values to apply via
 \code{ospsuite::setQuantityValuesByPath()} after the parameters.}
 
-\item{stopIfParameterNotFound}{Logical. If \code{TRUE} (default), an error is
-thrown if any of the \code{additionalParams} does not exist. If \code{FALSE},
-non-existent parameters are  ignored.}
+\item{stopIfParameterNotFound}{Logical. If \code{TRUE} (default), a path in
+\code{additionalParams} or \code{additionalInitialConditions} that the model does
+not have stops with an error that names every such path. Nothing from
+\code{additionalParams} or \code{additionalInitialConditions} is applied then. If
+\code{FALSE}, such paths are skipped and the others are applied.}
 }
 \description{
 Helper method that combines a set of common steps performed

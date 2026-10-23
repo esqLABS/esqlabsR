@@ -684,42 +684,13 @@
     }
   }
 
-  # 5. Initialize simulation. The backend stops at the first parameter path the
-  # model lacks and names only that one, so on its error every missing path is
-  # looked up and named, with the argument that skips them; that message
-  # replaces the backend's. The lookup costs a backend call per path, which is
-  # why it runs only after a failure.
-  withCallingHandlers(
-    initializeSimulation(
-      simulation = simulation,
-      individualCharacteristics = individualCharacteristics,
-      additionalParams = params,
-      additionalInitialConditions = initialConditions,
-      stopIfParameterNotFound = stopIfParameterNotFound
-    ),
-    error = function(e) {
-      if (!isTRUE(stopIfParameterNotFound)) {
-        return()
-      }
-      paths <- unique(unlist(params$paths))
-      missingPaths <- paths[vapply(
-        paths,
-        function(path) {
-          is.null(ospsuite::getParameter(
-            path,
-            simulation,
-            stopIfNotFound = FALSE
-          ))
-        },
-        logical(1)
-      )]
-      if (length(missingPaths) > 0L) {
-        cli::cli_abort(
-          messages$scenarioParametersNotFound(missingPaths),
-          call = NULL
-        )
-      }
-    }
+  # 5. Initialize simulation
+  initializeSimulation(
+    simulation = simulation,
+    individualCharacteristics = individualCharacteristics,
+    additionalParams = params,
+    additionalInitialConditions = initialConditions,
+    stopIfParameterNotFound = stopIfParameterNotFound
   )
 
   # 6. Population
@@ -779,8 +750,9 @@
 # validate `project`, `customParams` and the two settings arguments, resolve
 # them through `.resolveRunOptions()`, and, when `validate`, run the section
 # validators the scenario build depends on. Returns `.resolveRunOptions()`'s
-# `list(runOptions, solverDefaults, solverOverrides)`. `opName` names the
-# calling entrypoint in any validation abort.
+# `list(runOptions, solverDefaults, solverOverrides)` plus `customParams`, with
+# its `values` and `units` recycled to the length of its `paths`. `opName` names
+# the calling entrypoint in any validation abort.
 # @keywords internal
 # @noRd
 .scenarioBuildPreflight <- function(
@@ -799,6 +771,7 @@
     argumentName = "customParams",
     nullAllowed = TRUE
   )
+  customParams <- .recycleCustomParams(customParams, call = .call)
   if (
     !is.null(simulationRunOptions) &&
       !inherits(simulationRunOptions, "SimulationRunOptions")
@@ -835,7 +808,38 @@
       opName = opName
     )
   }
+  resolved$customParams <- customParams
   resolved
+}
+
+# `customParams` with its `values` and `units` matched to its `paths` by the
+# tidyverse recycling rule: a field of length 1 is used for every path, a field
+# as long as `paths` is kept, and any other length stops. Unchecked, a short
+# field is recycled silently when the scenario has parameter sets and stops in
+# the backend when it has none.
+# @keywords internal
+# @noRd
+.recycleCustomParams <- function(customParams, call = rlang::caller_env()) {
+  if (is.null(customParams)) {
+    return(NULL)
+  }
+  pathCount <- length(customParams$paths)
+  for (field in c("values", "units")) {
+    value <- customParams[[field]]
+    fieldLength <- length(value)
+    if (is.null(value) || fieldLength == pathCount) {
+      next
+    }
+    if (fieldLength == 1L) {
+      customParams[[field]] <- rep(value, pathCount)
+      next
+    }
+    cli::cli_abort(
+      messages$customParamsLengthMismatch(field, fieldLength, pathCount),
+      call = call
+    )
+  }
+  customParams
 }
 
 # .buildScenarioSimulations ----
@@ -1060,7 +1064,7 @@
   built <- .buildScenarioSimulations(
     project = project,
     scenarioNames = scenarioNames,
-    customParams = customParams,
+    customParams = resolved$customParams,
     simulationRunOptions = simulationRunOptions,
     solverDefaults = resolved$solverDefaults,
     solverOverrides = resolved$solverOverrides,
@@ -1162,7 +1166,7 @@
   built <- .buildScenarioSimulations(
     project = project,
     scenarioNames = scenarioNames,
-    customParams = customParams,
+    customParams = resolved$customParams,
     simulationRunOptions = resolved$runOptions,
     solverDefaults = resolved$solverDefaults,
     solverOverrides = resolved$solverOverrides,

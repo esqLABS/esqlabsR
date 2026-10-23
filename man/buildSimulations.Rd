@@ -25,8 +25,9 @@ the name you passed to \code{\link[=addScenario]{addScenario()}} resolves; a nam
 to a different form warns, naming the id it resolved to.}
 
 \item{customParams}{A list with vectors \code{paths}, \code{values}, and
-\code{units} — applied to every selected scenario as the final
-parameter layer.}
+\code{units}, applied to every selected scenario after all its parameter
+sets. \code{values} and \code{units} have one element per path, or one element
+that is used for every path. Any other length stops with an error.}
 
 \item{simulationRunOptions}{How the steady-state pre-solve is executed, for
 a scenario with \code{simulateSteadyState} set. Takes the same form as in
@@ -48,11 +49,12 @@ section validators via \code{\link[=validateProject]{validateProject()}} before 
 aborts with a formatted summary on critical errors. Set to
 \code{FALSE} to skip the pre-flight check.}
 
-\item{stopIfParameterNotFound}{Logical. If \code{TRUE} (default), a parameter
-path that matches no parameter in a scenario's simulation aborts the
-build, naming every such path. This covers the paths of the scenario's
-parameter sets and of \code{customParams}. Set to \code{FALSE} to skip such paths
-with a warning instead.}
+\item{stopIfParameterNotFound}{Logical. If \code{TRUE} (default), a path that
+the model of a scenario does not have stops the build, with an error that
+names every such path. This covers the paths of the scenario's parameter
+sets, of its initial conditions, and of \code{customParams}. Set to \code{FALSE} to
+skip such paths and apply the others. Each skipped path is reported in a
+printed line, not as an R warning.}
 }
 \value{
 A named list keyed by scenario name. Each entry is a list
