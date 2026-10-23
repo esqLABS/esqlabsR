@@ -1,3 +1,12 @@
+# `initializeSimulation()` stops on additionalParams values of another length
+
+    Code
+      initializeSimulation(simulation, additionalParams = list(paths = c(
+        "Organism|Liver|Volume", "Organism|Volume"), values = c(2, 0.5, 9), units = "l"))
+    Condition
+      Error in `initializeSimulation()`:
+      ! `additionalParams$values` has length 3, but it must have length 1 or 2, one element per path.
+
 # `initializeSimulation()` names every path the model lacks and applies none
 
     Code

@@ -46,8 +46,7 @@
           "Organism|Brain|Volume"), values = c(0.5, 0.6), units = "l"), validate = FALSE)
     Condition
       Error in `buildSimulations()`:
-      ! `customParams$values` must have length 1 or 3, one per path.
-      x It has length 2.
+      ! `customParams$values` has length 2, but it must have length 1 or 3, one element per path.
 
 # a user parameter path the model lacks still stops the build
 
