@@ -34,7 +34,10 @@ a vector with the same length as the number of scenarios being created
 \item{scenarios}{Character vector. Optional custom names for the
 scenarios. If \code{NULL} (default), scenario names will be extracted from
 the simulation names in the PKML files. If provided, must have the same
-length as \code{pkmlFilePaths}.}
+length as \code{pkmlFilePaths}. Each name is canonicalized to a safe,
+lowercase, single-path-segment id the way \code{\link[=addScenario]{addScenario()}} canonicalizes
+its \code{id}, with a warning naming the result if it changed. A name taken
+from a simulation is canonicalized without a warning.}
 
 \item{individual}{Character vector. Optional individual ids to use for
 scenarios. If \code{NULL} (default), no individual will be specified. Can be
@@ -85,11 +88,12 @@ scenarios) or, as a list or character vector, one value per entry of
 
 \item{simulationTimeUnit}{Character vector. Optional simulation time unit.
 It is the unit \code{simulationTime} is given in, and, when \code{simulationTime} is
-left to PKML extraction, the unit the extracted interval bounds are
-converted to. If \code{NULL} (default), it is taken from the PKML file's output
-schema intervals, or set to \code{"min"} (minutes) if not available. Can be a
-single string (recycled for all scenarios) or a vector with the same length
-as \code{pkmlFilePaths}.}
+left to PKML extraction, the unit the extracted intervals are converted to:
+their start and end to this unit, their resolution to points per this
+unit. If \code{NULL} (default), it is taken from the PKML file's output schema
+intervals, or set to \code{"min"} (minutes) if not available. Can be a single
+string (recycled for all scenarios) or a vector with the same length as
+\code{pkmlFilePaths}.}
 
 \item{steadyState}{Logical vector. Whether to simulate steady-state for
 each scenario. Default is \code{FALSE}. Can be a single logical value
