@@ -38,8 +38,9 @@ The example defines three scenarios: an individual scenario, a population scenar
 
 To run a single scenario, specify it:
 
-```{r run-one, eval = FALSE}
+```{r run-one}
 results <- runScenarios(project, scenarios = "aciclovir_iv")
+names(results)
 ```
 
 To run a subset, pass a vector of names:
@@ -53,10 +54,11 @@ results <- runScenarios(
 
 To run every scenario in the project, leave `scenarios` as its default `NULL`:
 
-```{r run-all}
+```{r run-all, eval = FALSE}
 results <- runScenarios(project)
-names(results)
 ```
+
+The rest of this article uses the results of the single scenario `aciclovir_iv`.
 
 `runScenarios()` returns a named list with one entry per scenario. Each entry is one **Scenario Result**, a list with four fields:
 
@@ -83,11 +85,13 @@ A Scenario Result is not a `SimulationResults` object. A function that expects o
 class(scenarioResult$results)
 ```
 
-The `population` field is `NULL` for an individual scenario. For a population scenario it holds the sampled `Population`, and `outputValues$data` holds one curve per virtual individual, told apart by `IndividualId`.
+The `population` field is `NULL` for an individual scenario:
 
 ```{r individual-population}
-results[["aciclovir_iv_population"]]$population
+scenarioResult$population
 ```
+
+For a population scenario, such as `aciclovir_iv_population`, it holds the sampled `Population`, and `outputValues$data` holds one curve per virtual individual, told apart by `IndividualId`.
 
 ## Save results and reload them later
 
@@ -149,7 +153,7 @@ runScenarios(
 )
 ```
 
-Give one value and one unit for each path. A missing value is not reported: R reuses the values from the start, so `values = 0.5` with two paths sets both parameters to 0.5. If a path appears twice, the last value wins.
+Give one value and one unit for each path. A single value or a single unit is used for every path, so `values = 0.5` with two paths sets both parameters to 0.5. Any other length stops the run with an error. If a path appears twice, the last value wins.
 
 A path that the model of one scenario does not have stops the whole run, even if the other scenarios have it. A unit that does not fit the parameter also stops the run, for example `` Unit "kg" is not valid for quantity with path `Organism|Liver|Volume` and dimension "Volume" ``. The section "When a scenario fails" shows how to skip missing paths with `stopIfParameterNotFound = FALSE`.
 
@@ -197,21 +201,21 @@ Solver settings can also be stored in the project, so everyone who runs it gets 
 
 `runScenarios()` first checks the project with `validateProject()`. A critical error stops the run before anything is simulated, with a message such as `Cannot runScenarios: project has 1 critical validation error.` The check covers every scenario in the project, not only the ones you asked for. `vignette("how-to-validate-a-project")` shows how to read and fix these errors.
 
-A project that passes the check can still fail when a scenario is built. For example, a parameter set or `customParams` can name a path that does not exist in the model. By default, such a scenario stops the whole run with an error that names the scenario and every missing path:
+A project that passes the check can still fail when a scenario is built. For example, a parameter set, an initial condition, or `customParams` can name a path that does not exist in the model. By default, such a scenario stops the whole run with an error that names the scenario and every missing path:
 
 ```
 Error in `runScenarios()`:
 ! Could not build scenario "aciclovir_iv_steadystate".
 ℹ Pass `stopIfFails = FALSE` to skip it and build the other scenarios.
-Caused by error:
-! The model has no parameter at this path: "Organism|Liverr|Volume".
-ℹ Pass `stopIfParameterNotFound = FALSE` to skip it and build the scenario
-  without it.
+Caused by error in `initializeSimulation()`:
+! The model of simulation "aciclovir_iv_steadystate" has no parameter or
+  molecule at this path: "Organism|Liverr|Volume".
+ℹ Pass `stopIfParameterNotFound = FALSE` to skip it.
 ```
 
 You can skip the missing paths or the whole scenario:
 
-- `stopIfParameterNotFound = FALSE` skips the missing paths and runs the scenario without them. The run prints a line such as `Warning - Could not find quantity with path 'Organism|Liverr|Volume'.`
+- `stopIfParameterNotFound = FALSE` skips the missing paths and runs the scenario without them. The run prints a line such as `Warning - Could not find quantity with path 'Organism|Liverr|Volume'.` This line is not an R warning, so `suppressWarnings()` does not hide it.
 - `stopIfFails = FALSE` skips a scenario that fails to build and runs the others.
 
 A scenario skipped with `stopIfFails = FALSE` is still in the returned list, with `results` and `outputValues` set to `NULL`. Keep only the scenarios that ran before you work with the results:

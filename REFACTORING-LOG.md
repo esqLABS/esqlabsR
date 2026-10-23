@@ -289,3 +289,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-10-22 15:09: The field-effect test checks the font family fields on the plot theme instead of the drawn SVG, which depends on the fonts installed on the machine (failed on Windows CI). (#969)
 - 2026-10-22 16:30: Brought the run-simulations article branch up to date with the ospsuite.plots port on json-based-project.
 - 2026-10-23 12:34: initializeSimulation() checks every parameter and initial-condition path before it applies any, and names all the missing ones with the simulation; a short customParams values or units vector is used for every path only when it has one element, any other length stops.
+- 2026-10-23 12:35: The How to run simulations article runs only one individual scenario when it is built, and describes the customParams length rule, the missing-path error, and the printed skip line as they are.
