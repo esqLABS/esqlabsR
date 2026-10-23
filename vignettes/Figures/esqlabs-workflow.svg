@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="320" viewBox="0 0 1100 320" role="img" aria-labelledby="title">
+  <title id="title">esqlabsR workflow: set up a project, design scenarios, specify figures, identify parameters, run simulations, and generate a report; sensitivity analysis branches off the scenarios and feeds parameter identification</title>
+  <defs>
+    <style>
+      .box { fill: #ffffff; stroke: #000000; stroke-width: 2; rx: 10; ry: 10; }
+      .label { font-family: Arial, Helvetica, sans-serif; font-size: 20px; fill: #000000; text-anchor: middle; dominant-baseline: central; }
+      .arrow { stroke: #000000; stroke-width: 2; fill: none; marker-end: url(#arrowhead); }
+      .dashed { stroke: #000000; stroke-width: 2; stroke-dasharray: 8 8; fill: none; marker-end: url(#arrowhead); }
+    </style>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0,0 10,3.5 0,7" fill="#000000"/>
+    </marker>
+  </defs>
+
+  <rect class="box" x="50" y="50" width="160" height="80"/>
+  <text class="label" x="130" y="90"><tspan x="130" dy="-12">Set up</tspan><tspan x="130" dy="28">Project</tspan></text>
+
+  <rect class="box" x="260" y="50" width="160" height="80"/>
+  <text class="label" x="340" y="90"><tspan x="340" dy="-12">Design</tspan><tspan x="340" dy="28">Scenarios</tspan></text>
+
+  <rect class="box" x="470" y="50" width="160" height="80"/>
+  <text class="label" x="550" y="90"><tspan x="550" dy="-12">Specify</tspan><tspan x="550" dy="28">Figures</tspan></text>
+
+  <rect class="box" x="680" y="50" width="160" height="80"/>
+  <text class="label" x="760" y="90"><tspan x="760" dy="-12">Identify</tspan><tspan x="760" dy="28">Parameters</tspan></text>
+
+  <rect class="box" x="890" y="50" width="160" height="80"/>
+  <text class="label" x="970" y="90"><tspan x="970" dy="-12">Run</tspan><tspan x="970" dy="28">Simulations</tspan></text>
+
+  <rect class="box" x="470" y="210" width="160" height="80"/>
+  <text class="label" x="550" y="250"><tspan x="550" dy="-12">Analyze</tspan><tspan x="550" dy="28">Sensitivity</tspan></text>
+
+  <rect class="box" x="890" y="210" width="160" height="80"/>
+  <text class="label" x="970" y="250"><tspan x="970" dy="-12">Generate MD</tspan><tspan x="970" dy="28">Report</tspan></text>
+
+  <path class="arrow" d="M 210,90 H 259"/>
+  <path class="arrow" d="M 420,90 H 469"/>
+  <path class="arrow" d="M 630,90 H 679"/>
+  <path class="arrow" d="M 840,90 H 889"/>
+  <path class="arrow" d="M 970,130 V 209"/>
+
+  <path class="dashed" d="M 340,130 V 250 H 469"/>
+  <path class="dashed" d="M 630,250 H 760 V 131"/>
+</svg>

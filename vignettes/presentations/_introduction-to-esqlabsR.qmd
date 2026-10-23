@@ -129,7 +129,7 @@ pak::pak("esqLABS/esqlabsR@*release")
 <br>
 
 ::: {.center}
-![](../Figures/esqlabs-workflow.png)
+![](../Figures/esqlabs-workflow.svg)
 <br>
 
 **esqlabsR workflow**
@@ -586,7 +586,7 @@ V And more
 <br>
 
 ::: {.center}
-![](../Figures/esqlabs-workflow.png)
+![](../Figures/esqlabs-workflow.svg)
 :::
 
 

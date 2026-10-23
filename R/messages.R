@@ -875,15 +875,23 @@ messages$exportUndeclaredObservedData <- function(ids) {
   )
 }
 
-messages$invalidDefaultSolverSettings <- function(problems, file = NULL) {
-  # Unglued: the problems name settings read from a hand-editable JSON file.
+messages$invalidDefaultSolverSettings <- function(
+  problems,
+  file = NULL,
+  sheet = NULL
+) {
+  # Unglued: the problems name settings read from a hand-editable JSON file or
+  # spreadsheet.
   envir <- new.env(parent = parent.frame())
   assign("problems", problems, envir = envir)
   assign("file", file, envir = envir)
+  assign("sheet", sheet, envir = envir)
   where <- if (is.null(file)) {
     character()
-  } else {
+  } else if (is.null(sheet)) {
     c("i" = "Check {.file {file}}.")
+  } else {
+    c("i" = "Check the {.val {sheet}} sheet of {.file {file}}.")
   }
   list(
     bullets = c(
@@ -932,10 +940,12 @@ messages$exportScenarioSolverSettings <- function(ids) {
       columns, so the {.field solverSettings} block{?s} of {n} \\
       scenario{?s} {?was/were} not written: {.val {ids}}.",
       "i" = "{cli::qty(n)}Keep the JSON project as the source of truth for \\
-      {?this scenario/these scenarios}: a project re-imported from these \\
-      workbooks has no scenario-level setting left, and solves with \\
-      whatever the rest of the chain still gives, down to its model \\
-      files' own solver settings."
+      {?this scenario/these scenarios}. A project re-imported from these \\
+      workbooks solves {?it/them} with the project's \\
+      {.field defaultSolverSettings}, which the workbooks do carry, and in a \\
+      parameter identification with the task's own \\
+      {.field simulationRunOptions} on top. A setting none of these gives \\
+      keeps the value stored in the model file."
     ),
     envir = envir
   )

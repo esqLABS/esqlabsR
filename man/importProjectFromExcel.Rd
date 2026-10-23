@@ -69,6 +69,13 @@ from the Excel file and must stay under the project folder: a value that
 escapes it (a \verb{../} climb or an absolute path) aborts naming the field. A
 folder deliberately placed outside the project with the \verb{$\{VAR\}}
 environment-variable form is still allowed.
+
+The \code{DefaultSolverSettings} sheet of the workbook, when there is one, becomes
+the project's \code{defaultSolverSettings}. It is checked the way \code{\link[=loadProject]{loadProject()}}
+checks \code{Project.json}: an unknown setting, a value of the wrong type, a
+setting named in two rows, or a value with no setting beside it stops the
+import and names the sheet. A workbook without the sheet gives a project
+without \code{defaultSolverSettings}.
 }
 \seealso{
 Other projectPersistence:
