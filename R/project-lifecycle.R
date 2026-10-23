@@ -217,11 +217,9 @@ loadProject <- function(path = ".") {
   # single-file snapshot with no tree falls back to the inline section in
   # `Project.json`. `.loadDefinitionTree()` resolves tree-vs-inline per kind and
   # the kind's spec parses the raw records into the in-memory shape. Output
-  # paths load before the two sections that dereference them against the
-  # project-level `outputPaths` map: scenarios dereference their
-  # `outputPathIds`, and a PI task's output mappings resolve each `outputPath`
-  # reference to the canonical id its definition was filed under. There is no
-  # live `Project` yet to hand either parser (both read
+  # paths load before parameter identification, whose output mappings resolve
+  # each `outputPath` reference to the canonical id its definition was filed
+  # under. There is no live `Project` yet to hand that parser (it reads
   # `project$definitions$outputPaths`), so a plain list exposing that one
   # field stands in for it. The `parameterSets` inline fallback merges any
   # legacy three-section `Project.json` into the one map (a clash aborts the
@@ -237,10 +235,6 @@ loadProject <- function(path = ".") {
     spec$parse(records, project)
   }
   outputPaths <- loadSection("outputPaths")
-  scenarios <- loadSection(
-    "scenarios",
-    list(definitions = list(outputPaths = outputPaths))
-  )
 
   list(
     projectFilePath = jsonPath,
@@ -254,7 +248,7 @@ loadProject <- function(path = ".") {
     filePathsData = filePathsData,
     excelData = excelData,
     outputPaths = outputPaths,
-    scenarios = scenarios,
+    scenarios = loadSection("scenarios"),
     parameterSets = loadSection("parameterSets"),
     initialConditions = loadSection("initialConditions"),
     individuals = loadSection("individuals"),

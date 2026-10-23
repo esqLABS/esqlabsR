@@ -482,7 +482,7 @@ test_that("steadyState=false with a declared time and unit round-trips", {
       steadyStateTimeUnit = "h"
     )
   )
-  scenarios <- .parseScenarios(raw, list())
+  scenarios <- .parseScenarios(raw)
   sc <- scenarios[["S"]]
 
   # Parser stored the time in base units (minutes) but kept the flag off.
@@ -509,7 +509,7 @@ test_that("a standalone simulationTimeUnit round-trips when simulationTime is nu
       simulationTimeUnit = "h"
     )
   )
-  scenarios <- .parseScenarios(raw, list())
+  scenarios <- .parseScenarios(raw)
 
   expect_null(scenarios[["S"]]$simulationTime)
   expect_identical(scenarios[["S"]]$simulationTimeUnit, "h")
@@ -556,15 +556,15 @@ test_that(".scenariosToJson keeps unknown outputPaths (referential, lazy)", {
   expect_identical(out$outputPaths, list("UnknownId"))
 })
 
-test_that(".scenariosToJson errors when outputPaths has unnamed elements", {
-  # Build the bad state on an in-memory project so the serializer guard is
-  # exercised directly (a tree-backed project would fail-fast at write).
+test_that(".scenarioToJson errors when outputPaths has unnamed elements", {
+  # A project stores a scenario's output paths as bare ids and its accessor
+  # always names them, so the bad state only reaches the serializer as an
+  # edited record handed back to an authoring function; call it directly.
   sc <- Scenario(scenarioName = "S", modelFile = "m.pkml")
   sc$outputPaths <- unname(c(PVB = "Organism|PVB|Drug"))
-  project <- .fakeProject(scenarios = list(S = sc))
 
   expect_error(
-    .projectToJson(project),
+    .scenarioToJson(sc),
     "outputPaths.*without ids"
   )
 })

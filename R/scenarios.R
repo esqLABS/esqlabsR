@@ -57,6 +57,10 @@
 #'   literal paths. `NULL` when the scenario declares no outputs.
 #'   Round-trip serialization reads `names(outputPaths)` to rebuild the
 #'   `outputPaths` id array, so the named-vector invariant must be preserved.
+#'   The project keeps only the ids: a scenario read from `scenarios`
+#'   definitions shows the path each id has in `outputPaths` definitions at
+#'   that moment, and a record passed to [addScenario()] contributes its ids,
+#'   not its paths.
 #' @param simulationType Character. `"Individual"` or `"Population"`.
 #'   Defaults to `"Population"` when `populationId` is set,
 #'   `"Individual"` otherwise.
@@ -229,19 +233,17 @@ print.Scenario <- function(x, ...) {
 # `Scenario` objects, keyed by scenario name.
 #
 # `scenariosData` is the raw `simplifyVector = FALSE` shape produced by
-# `jsonlite::fromJSON()`: a list of plain named lists. `outputPaths` is
-# the project-level lookup table (named list or named character vector
-# of `id -> literal path`); used to resolve the scenario's `outputPaths`
-# id array.
+# `jsonlite::fromJSON()`: a list of plain named lists.
 #
 # This helper handles only what's needed at parse time: field copies,
 # `simulationType` derivation from `population` presence,
-# `simulationTime` string parsing, `steadyStateTime` unit conversion,
-# the `outputPaths` id array -> literal `outputPaths` resolution.
+# `simulationTime` string parsing, `steadyStateTime` unit conversion. The
+# `outputPaths` id array is kept as ids, the stored form; the section accessor
+# fills in the literal paths (`.fillScenarioOutputPaths()`).
 #
 # @keywords internal
 # @noRd
-.parseScenarios <- function(scenariosData, outputPaths) {
+.parseScenarios <- function(scenariosData) {
   if (is.null(scenariosData)) {
     return(list())
   }
@@ -301,27 +303,11 @@ print.Scenario <- function(x, ...) {
       steadyStateTimeUnit <- entry[["steadyStateTimeUnit"]]
     }
 
-    scenarioOutputPaths <- NULL
     # Collapse a repeated id to a single entry (first-seen order) so the same
     # output path is never resolved, run, or plotted twice; `unique()` keeps
-    # the first occurrence.
-    pathIds <- unique(unlist(entry[["outputPaths"]]))
-    # An absent key and an empty `outputPaths: []` both collapse to NULL
-    # (no resolved paths), matching the serializer's array-shape symmetry.
-    if (length(pathIds) > 0L) {
-      # Referential integrity is lazy: an output-path id that is not in the
-      # project-level `outputPaths` map is kept as a name with an `NA`
-      # literal path, so it round-trips and the cross-reference validator
-      # (which checks `names(sc$outputPaths)`) flags it at validate/run/plot
-      # time rather than aborting the load.
-      resolved <- vapply(
-        pathIds,
-        function(id) outputPaths[[id]] %||% NA_character_,
-        character(1),
-        USE.NAMES = FALSE
-      )
-      scenarioOutputPaths <- stats::setNames(resolved, pathIds)
-    }
+    # the first occurrence. An absent key and an empty `outputPaths: []` both
+    # collapse to NULL, matching the serializer's array-shape symmetry.
+    scenarioOutputPaths <- unique(unlist(entry[["outputPaths"]]))
 
     result[[scenarioName]] <- Scenario(
       scenarioName = scenarioName,
@@ -350,6 +336,64 @@ print.Scenario <- function(x, ...) {
     )
   }
   result
+}
+
+# Output paths: stored as ids, resolved on read ----
+#
+# A stored scenario holds only the ids of its output paths, as its definition
+# file does. The literal path behind an id lives once, in the `outputPaths`
+# section, so `setOutputPath()` and `addOutputPath(overwrite = TRUE)` reach
+# every scenario that records the id without an update step. The section
+# accessor (`project$definitions$scenarios`) fills in the paths on every read,
+# so the printout, the build, the run, and user code all see the `id -> path`
+# vector of the current definitions.
+
+# Give each scenario's `outputPaths` its current literal paths, as a named
+# vector of `id -> path`. Referential integrity is lazy: an id with no
+# `outputPaths` definition (a hand-edited file, or a removed output path) keeps
+# its name with an `NA` path, so it round-trips and the cross-reference
+# validator (which checks `names(sc$outputPaths)`) flags it at
+# validate/run/plot time. `outputPaths` is the section's named list of
+# `id -> path`; ids are matched exactly.
+#
+# @keywords internal
+# @noRd
+.fillScenarioOutputPaths <- function(scenarios, outputPaths) {
+  if (length(scenarios) == 0L) {
+    return(scenarios)
+  }
+  lapply(scenarios, function(sc) {
+    ids <- sc$outputPaths
+    if (length(ids) > 0L) {
+      paths <- vapply(
+        match(ids, names(outputPaths)),
+        function(i) if (is.na(i)) NA_character_ else outputPaths[[i]],
+        character(1)
+      )
+      sc$outputPaths <- stats::setNames(paths, ids)
+    }
+    sc
+  })
+}
+
+# Reduce each scenario's `outputPaths` to the stored form, the ids alone. A
+# record read through the section accessor carries the resolved `id -> path`
+# vector, whose names are the ids; a record taken from the stored section
+# already holds the bare ids and is kept as it is.
+#
+# @keywords internal
+# @noRd
+.storeScenarioOutputPathIds <- function(scenarios) {
+  if (length(scenarios) == 0L) {
+    return(scenarios)
+  }
+  lapply(scenarios, function(sc) {
+    ids <- names(sc$outputPaths)
+    if (!is.null(ids)) {
+      sc$outputPaths <- ids
+    }
+    sc
+  })
 }
 
 # Assert that a scenario JSON field, when present, is a length-1 string (or
@@ -1240,12 +1284,7 @@ addScenario <- function(
     applicationProtocol = application %||% NA,
     individualId = individual,
     populationId = population,
-    outputPaths = if (!is.null(outputPaths)) {
-      stats::setNames(
-        unlist(project$definitions$outputPaths[outputPaths], use.names = FALSE),
-        outputPaths
-      )
-    },
+    outputPaths = outputPaths,
     readPopulationFromCSV = fields$readPopulationFromCSV,
     simulateSteadyState = fields$steadyState,
     simulationTime = if (!is.null(fields$simulationTime)) {
@@ -1639,17 +1678,9 @@ setScenario <- function(project, id, ...) {
     sc$initialConditions <- fields$initialConditions
   }
   if ("outputPaths" %in% supplied) {
-    sc$outputPaths <- if (is.null(fields$outputPaths)) {
-      NULL
-    } else {
-      stats::setNames(
-        unlist(
-          project$definitions$outputPaths[fields$outputPaths],
-          use.names = FALSE
-        ),
-        fields$outputPaths
-      )
-    }
+    # The ids alone, the stored form; the `[` form keeps a supplied NULL as a
+    # cleared slot instead of dropping it, as for `simulationTime` below.
+    sc["outputPaths"] <- list(fields$outputPaths)
   }
   if ("simulationTime" %in% supplied) {
     # `sc[name] <- list(value)`, not `sc$name <- value`: clearing the field with
