@@ -85,11 +85,12 @@ scenarios) or, as a list or character vector, one value per entry of
 
 \item{simulationTimeUnit}{Character vector. Optional simulation time unit.
 It is the unit \code{simulationTime} is given in, and, when \code{simulationTime} is
-left to PKML extraction, the unit the extracted interval bounds are
-converted to. If \code{NULL} (default), it is taken from the PKML file's output
-schema intervals, or set to \code{"min"} (minutes) if not available. Can be a
-single string (recycled for all scenarios) or a vector with the same length
-as \code{pkmlFilePaths}.}
+left to PKML extraction, the unit the extracted intervals are converted to:
+their start and end to this unit, their resolution to points per this
+unit. If \code{NULL} (default), it is taken from the PKML file's output schema
+intervals, or set to \code{"min"} (minutes) if not available. Can be a single
+string (recycled for all scenarios) or a vector with the same length as
+\code{pkmlFilePaths}.}
 
 \item{steadyState}{Logical vector. Whether to simulate steady-state for
 each scenario. Default is \code{FALSE}. Can be a single logical value

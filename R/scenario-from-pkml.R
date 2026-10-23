@@ -64,11 +64,12 @@
 #'   `pkmlFilePaths`.
 #' @param simulationTimeUnit Character vector. Optional simulation time unit.
 #'   It is the unit `simulationTime` is given in, and, when `simulationTime` is
-#'   left to PKML extraction, the unit the extracted interval bounds are
-#'   converted to. If `NULL` (default), it is taken from the PKML file's output
-#'   schema intervals, or set to `"min"` (minutes) if not available. Can be a
-#'   single string (recycled for all scenarios) or a vector with the same length
-#'   as `pkmlFilePaths`.
+#'   left to PKML extraction, the unit the extracted intervals are converted to:
+#'   their start and end to this unit, their resolution to points per this
+#'   unit. If `NULL` (default), it is taken from the PKML file's output schema
+#'   intervals, or set to `"min"` (minutes) if not available. Can be a single
+#'   string (recycled for all scenarios) or a vector with the same length as
+#'   `pkmlFilePaths`.
 #' @param steadyState Logical vector. Whether to simulate steady-state for
 #'   each scenario. Default is `FALSE`. Can be a single logical value
 #'   (recycled for all scenarios) or a vector with the same length as
@@ -732,10 +733,14 @@ createScenariosFromPKML <- function(
 #' @noRd
 # Extract simulation time intervals from a PKML output schema as the
 # "start, end, resolution; ..." string `addScenario()` expects, together with
-# the resolved time unit. `targetUnit` (if provided) overrides the PKML's own
-# display unit and interval bounds are converted to it. Returns a list with
-# `simulationTime` and `simulationTimeUnit`, both NULL when the schema has no
-# intervals.
+# the time unit that string is in: `targetUnit` if provided, otherwise the
+# PKML's own display unit. Returns a list with `simulationTime` and
+# `simulationTimeUnit`, both NULL when the schema has no intervals.
+#
+# ospsuite reports every interval in base units whatever its display unit:
+# start and end in minutes, resolution in points per minute. So the bounds are
+# divided by the minutes in one unit and the resolution multiplied by them,
+# which inverts what `.prepareScenario()` applies to build the simulation.
 .extractSimulationTimeFromPkml <- function(simulation, targetUnit = NULL) {
   empty <- list(simulationTime = NULL, simulationTimeUnit = NULL)
   intervals <- simulation$outputSchema$intervals
@@ -743,29 +748,20 @@ createScenariosFromPKML <- function(
     return(empty)
   }
 
-  unit <- targetUnit
-  if (is.null(unit)) {
-    unit <- intervals[[1]]$startTime$displayUnit %||% "min"
-  }
-
-  toTargetUnit <- function(value, fromUnit) {
-    if (fromUnit == unit) {
-      return(value)
-    }
-    ospsuite::toUnit(
-      quantityOrDimension = ospsuite::ospDimensions$Time,
-      values = value,
-      targetUnit = unit
-    )
-  }
+  unit <- targetUnit %||% intervals[[1]]$startTime$displayUnit %||% "min"
+  minutesPerUnit <- ospsuite::toBaseUnit(
+    quantityOrDimension = ospsuite::ospDimensions$Time,
+    values = 1,
+    unit = unit
+  )
 
   intervalStrings <- vapply(
     intervals,
     function(interval) {
       paste(
-        toTargetUnit(interval$startTime$value, interval$startTime$displayUnit),
-        toTargetUnit(interval$endTime$value, interval$endTime$displayUnit),
-        interval$resolution$value,
+        interval$startTime$value / minutesPerUnit,
+        interval$endTime$value / minutesPerUnit,
+        interval$resolution$value * minutesPerUnit,
         sep = ", "
       )
     },
