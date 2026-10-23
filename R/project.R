@@ -1028,7 +1028,16 @@ Project <- R6::R6Class(
         force(kind)
         list(
           get = function() {
-            .asDefinitionList(private$.getSection(kind), kind)
+            section <- private$.getSection(kind)
+            # A stored scenario holds only its output-path ids; each read fills
+            # in the paths the `outputPaths` section holds now.
+            if (identical(kind, "scenarios")) {
+              section <- .fillScenarioOutputPaths(
+                section,
+                private$.outputPaths
+              )
+            }
+            .asDefinitionList(section, kind)
           },
           set = NULL
         )
@@ -1249,6 +1258,12 @@ Project <- R6::R6Class(
     .setSection = function(kind, value) {
       field <- private$.sectionField(kind)
       value <- .unwrapDefinitionList(value)
+      # Scenarios are stored with their output-path ids only, so a record read
+      # through the accessor (paths filled in) does not store a copy of a path
+      # that `setOutputPath()` could later leave behind.
+      if (identical(kind, "scenarios")) {
+        value <- .storeScenarioOutputPathIds(value)
+      }
       private[[field]] <- value
       # Writing observed data invalidates the cached observed-data names, as the
       # active-binding setter did.

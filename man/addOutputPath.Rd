@@ -17,7 +17,8 @@ same length as \code{id}.}
 
 \item{overwrite}{Logical scalar. When \code{FALSE} (default), an id that already
 exists aborts. When \code{TRUE}, the existing output path is replaced
-(last-write-wins).}
+(last-write-wins), and every scenario that records the id uses the new
+path.}
 }
 \value{
 The \code{project} object, invisibly.

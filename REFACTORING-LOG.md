@@ -311,3 +311,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-10-23 12:34: initializeSimulation() checks every parameter and initial-condition path before it applies any, and names all the missing ones with the simulation; a short customParams values or units vector is used for every path only when it has one element, any other length stops.
 - 2026-10-23 12:35: The How to run simulations article runs only one individual scenario when it is built, and describes the customParams length rule, the missing-path error, and the printed skip line as they are.
 - 2026-10-23 12:36: Brought the run-simulations article branch up to date with v6.
+- 2026-10-23 14:56: A scenario keeps only the ids of its output paths and looks up their paths each time it is read, so setOutputPath() and addOutputPath(overwrite = TRUE) reach the scenarios already in the session, and a scenario still using a removed output path shows it as unknown. (#1304)
