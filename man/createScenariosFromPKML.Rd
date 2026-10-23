@@ -34,7 +34,10 @@ a vector with the same length as the number of scenarios being created
 \item{scenarios}{Character vector. Optional custom names for the
 scenarios. If \code{NULL} (default), scenario names will be extracted from
 the simulation names in the PKML files. If provided, must have the same
-length as \code{pkmlFilePaths}.}
+length as \code{pkmlFilePaths}. Each name is canonicalized to a safe,
+lowercase, single-path-segment id the way \code{\link[=addScenario]{addScenario()}} canonicalizes
+its \code{id}, with a warning naming the result if it changed. A name taken
+from a simulation is canonicalized without a warning.}
 
 \item{individual}{Character vector. Optional individual ids to use for
 scenarios. If \code{NULL} (default), no individual will be specified. Can be

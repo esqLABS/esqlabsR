@@ -20,7 +20,10 @@
 #' @param scenarios Character vector. Optional custom names for the
 #'   scenarios. If `NULL` (default), scenario names will be extracted from
 #'   the simulation names in the PKML files. If provided, must have the same
-#'   length as `pkmlFilePaths`.
+#'   length as `pkmlFilePaths`. Each name is canonicalized to a safe,
+#'   lowercase, single-path-segment id the way [addScenario()] canonicalizes
+#'   its `id`, with a warning naming the result if it changed. A name taken
+#'   from a simulation is canonicalized without a warning.
 #' @param individual Character vector. Optional individual ids to use for
 #'   scenarios. If `NULL` (default), no individual will be specified. Can be
 #'   a single string (recycled for all scenarios) or a vector with the same
@@ -453,14 +456,18 @@ createScenariosFromPKML <- function(
   # operates in canonical (lowercase, safe) space and the canonical ids the
   # specs are built with are exactly what `addScenario()` will store, so its
   # duplicate-name abort can never fire on a case-only or sanitization clash.
-  # Per-element (no within-call collision error): a recycled PKML legitimately
-  # yields identical names that `.dedupeScenarioNames()` then suffixes.
-  requestedNames <- vapply(
-    requestedNames,
-    function(n) suppressWarnings(.canonicalizeOneId(n)),
-    character(1),
-    USE.NAMES = FALSE
-  )
+  # Per-element, through `.canonicalizeIdRef()` rather than `.canonicalizeId()`,
+  # so there is no within-call collision error: a recycled PKML legitimately
+  # yields identical names that `.dedupeScenarioNames()` then suffixes. A name
+  # typed in `scenarios` that changes is reported in the call's canonicalization
+  # warning, as `addScenario()` reports its `id`. A name taken from the PKML is
+  # not: the user did not type it, and the message listing the added scenarios
+  # shows the id it got.
+  requestedNames <- if (is.null(scenarios)) {
+    .silentlyCanonicalized(.canonicalizeIdRef(requestedNames))
+  } else {
+    .canonicalizeIdRef(requestedNames)
+  }
   finalNames <- .dedupeScenarioNames(
     requestedNames,
     names(self$definitions$scenarios)

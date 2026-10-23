@@ -299,3 +299,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-10-22 16:55: The refactoring brief and the migration-test command name v6 as the project branch, since json-based-project is merged into v6 and deleted.
 - 2026-10-22 18:05: The How to design scenarios article explains how to set a scenario's solver settings: what a left-out setting falls back to, that setScenario() replaces the whole list, and that the settings are stored only in JSON.
 - 2026-10-23 11:48: createScenariosFromPKML() converts the time grid it reads from a model file to the scenario's unit, resolution included, so the built simulation keeps the model's grid. (#1302)
+- 2026-10-23 11:49: createScenariosFromPKML() warns when it canonicalizes a typed scenario name, as addScenario() does, and its duplicate-name warning shows its bullet on its own line. (#1307)

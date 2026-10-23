@@ -985,20 +985,22 @@ messages$inconsistentArgumentLengths <- function(vectorLengths) {
   ))
 }
 
-messages$autocorrectDuplicateScenarioNames <- function(
-  originalScenarioName,
-  scenarioName
-) {
-  cli::format_message(c(
+# Raised by `.dedupeScenarioNames()`, once per name it suffixes. Unglued, so the
+# raising `cli_warn()` lays out the header and bullet itself and glues the names
+# once, in its frame, where they are bound under `original` and `candidate`:
+# canonicalization keeps `{` and `}`, so a scenario name may contain them.
+messages$autocorrectDuplicateScenarioNames <- function(original, candidate) {
+  c(
     "Duplicate scenario names found and made unique by adding indices:",
-    "i" = "Duplicated names: {.val {originalScenarioName}}, renamed to {.val {scenarioName}}"
-  ))
+    "i" = "Duplicated names: {.val {original}}, renamed to {.val {candidate}}"
+  )
 }
 
-messages$scenariosAddedToProject <- function(scenarioNames) {
-  cliFormat(
-    "Added {length(scenarioNames)} scenario{?s}: {.val {scenarioNames}}"
-  )
+# Raised by `createScenariosFromPKML()`. Unglued for the same reason as
+# `autocorrectDuplicateScenarioNames()`; the names are bound under `addedNames`
+# in the raising frame.
+messages$scenariosAddedToProject <- function(addedNames) {
+  "Added {length(addedNames)} scenario{?s}: {.val {addedNames}}"
 }
 
 messages$noSimulationsFolderUsingAbsolutePath <- function(pkmlPath) {

@@ -346,6 +346,57 @@ test_that("scenario names colliding with pre-existing project scenarios are suff
   expect_true("testscenario_2" %in% names(project$definitions$scenarios))
 })
 
+test_that("a typed scenario name that is canonicalized warns as addScenario() does", {
+  project <- testProject()
+  expect_snapshot(
+    createScenariosFromPKML(
+      pkmlInProject(project),
+      project = project,
+      scenarios = "My PKML Scenario"
+    )
+  )
+  expect_true("my_pkml_scenario" %in% names(project$definitions$scenarios))
+})
+
+test_that("a typed name matching a project scenario but for case warns about both changes", {
+  project <- testProject()
+  expect_snapshot(
+    createScenariosFromPKML(
+      pkmlInProject(project),
+      project = project,
+      scenarios = "TestScenario"
+    )
+  )
+  expect_true("testscenario_2" %in% names(project$definitions$scenarios))
+})
+
+test_that("a scenario name taken from the PKML is canonicalized without a warning", {
+  # The user did not type "Vergin 1995 IV"; the message naming the added
+  # scenario already shows the id it got.
+  project <- testProject()
+  expect_no_warning(expect_message(
+    createScenariosFromPKML(pkmlInProject(project), project = project),
+    "vergin_1995_iv"
+  ))
+})
+
+test_that("scenario names containing braces are reported verbatim", {
+  # Canonicalization keeps `{` and `}`, so the messages naming scenarios must
+  # not read them as cli expressions.
+  project <- .fakeProject()
+  project$paths$simulationsFolder <- dirname(pkmlFixture)
+  expect_snapshot(
+    createScenariosFromPKML(
+      c(pkmlFixture, pkmlFixture),
+      project = project,
+      scenarios = "s{x}"
+    )
+  )
+  expect_true(all(
+    c("s{x}", "s{x}_2") %in% names(project$definitions$scenarios)
+  ))
+})
+
 test_that("scenarios = NULL derives names from the simulation and dedupes a recycled PKML", {
   project <- .fakeProject()
   project$paths$simulationsFolder <- dirname(pkmlFixture)
