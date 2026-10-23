@@ -1148,11 +1148,12 @@ print.PITask <- function(x, ...) {
 #' @param observedData Optional named list of pre-loaded `DataSet`
 #'   objects that overrides automatic resolution from
 #'   `observedData` definitions.
-#' @param stopIfParameterNotFound Logical. When `TRUE` (default), a
-#'   parameter listed in a scenario's parameter sets but absent from the
-#'   simulation aborts the build; when `FALSE`, it is skipped with a
-#'   warning. Forwarded through `.prepareScenario()` to
-#'   `initializeSimulation()`.
+#' @param stopIfParameterNotFound Logical. If `TRUE` (default), a path that
+#'   the model of a scenario does not have stops the task, with an error that
+#'   names every such path. This covers the paths of the scenario's parameter
+#'   sets and of its initial conditions. Set to `FALSE` to skip such paths and
+#'   apply the others. Each skipped path is reported in a printed line, not as
+#'   an R warning.
 #' @returns Named list of per-task results. Each entry is a list with
 #'   `task` (the runtime `ParameterIdentification` object), `result`
 #'   (the `PIResult` from `task$run()`, or `NULL` on optimisation

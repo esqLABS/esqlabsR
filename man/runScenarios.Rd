@@ -26,8 +26,9 @@ the name you passed to \code{\link[=addScenario]{addScenario()}} resolves; a nam
 to a different form warns, naming the id it resolved to.}
 
 \item{customParams}{A list with vectors \code{paths}, \code{values}, and
-\code{units} — applied to every selected scenario as the final
-parameter layer.}
+\code{units}, applied to every selected scenario after all its parameter
+sets. \code{values} and \code{units} have one element per path, or one element
+that is used for every path. Any other length stops with an error.}
 
 \item{simulationRunOptions}{How this run is executed: an
 \href{https://www.open-systems-pharmacology.org/OSPSuite-R/reference/SimulationRunOptions.html}{SimulationRunOptions}
@@ -52,10 +53,12 @@ aborts with a formatted summary on critical errors. Set to
 \code{FALSE} to skip the pre-flight check (e.g. when the caller has
 already validated the project).}
 
-\item{stopIfParameterNotFound}{Logical. If \code{TRUE} (default), a
-\code{customParams} path that matches no parameter in a scenario's
-simulation aborts the run. Set to \code{FALSE} to skip such paths with a
-warning instead.}
+\item{stopIfParameterNotFound}{Logical. If \code{TRUE} (default), a path that
+the model of a scenario does not have stops the run, with an error that
+names every such path. This covers the paths of the scenario's parameter
+sets, of its initial conditions, and of \code{customParams}. Set to \code{FALSE} to
+skip such paths and apply the others. Each skipped path is reported in a
+printed line, not as an R warning.}
 
 \item{stopIfFails}{Logical. If \code{TRUE} (default), a scenario that fails to
 build (e.g. a missing model parameter path) or whose simulation produced

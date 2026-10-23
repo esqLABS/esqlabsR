@@ -23,11 +23,12 @@ name typed as it was first passed to \code{addPITask()} still resolves.}
 objects that overrides automatic resolution from
 \code{observedData} definitions.}
 
-\item{stopIfParameterNotFound}{Logical. When \code{TRUE} (default), a
-parameter listed in a scenario's parameter sets but absent from the
-simulation aborts the build; when \code{FALSE}, it is skipped with a
-warning. Forwarded through \code{.prepareScenario()} to
-\code{initializeSimulation()}.}
+\item{stopIfParameterNotFound}{Logical. If \code{TRUE} (default), a path that
+the model of a scenario does not have stops the task, with an error that
+names every such path. This covers the paths of the scenario's parameter
+sets and of its initial conditions. Set to \code{FALSE} to skip such paths and
+apply the others. Each skipped path is reported in a printed line, not as
+an R warning.}
 }
 \value{
 Named list of per-task results. Each entry is a list with

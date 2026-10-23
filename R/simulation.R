@@ -281,9 +281,11 @@ applyIndividualParameters <- function(individualCharacteristics, simulation) {
 #' @param additionalInitialConditions Optional named list with lists 'paths',
 #'   'values', and 'units', giving molecule start values to apply via
 #'   `ospsuite::setQuantityValuesByPath()` after the parameters.
-#' @param stopIfParameterNotFound Logical. If `TRUE` (default), an error is
-#'   thrown if any of the `additionalParams` does not exist. If `FALSE`,
-#'   non-existent parameters are  ignored.
+#' @param stopIfParameterNotFound Logical. If `TRUE` (default), a path in
+#'   `additionalParams` or `additionalInitialConditions` that the model does
+#'   not have stops with an error that names every such path. Nothing from
+#'   `additionalParams` or `additionalInitialConditions` is applied then. If
+#'   `FALSE`, such paths are skipped and the others are applied.
 #' @export
 #'
 #' @examples
@@ -326,6 +328,24 @@ initializeSimulation <- function(
     applyIndividualParameters(individualCharacteristics, simulation)
   }
 
+  # The backend stops at the first path the model lacks and names only that
+  # one, so every path is checked before any is applied.
+  if (isTRUE(stopIfParameterNotFound)) {
+    missingPaths <- .quantityPathsNotFound(
+      c(
+        unlist(additionalParams$paths),
+        unlist(additionalInitialConditions$paths)
+      ),
+      simulation
+    )
+    if (length(missingPaths) > 0L) {
+      simulationName <- simulation$name
+      cli::cli_abort(
+        messages$quantityPathsNotFound(simulationName, missingPaths)
+      )
+    }
+  }
+
   # Apply additional parameters
   if (!is.null(additionalParams)) {
     # Skip if the correct structure is supplied, but no parameters are defined
@@ -354,6 +374,28 @@ initializeSimulation <- function(
       )
     }
   }
+}
+
+# The paths among `paths` that match no quantity (parameter, molecule, or
+# observer) in `simulation`. A path is matched the way
+# `ospsuite::setQuantityValuesByPath()` matches it before setting a value, so a
+# path it accepts is never reported. One backend call lists every quantity
+# path; only a path missing from that list, usually none, needs its own call.
+# A wildcard path is one of those: it matches here and the backend then
+# refuses it with its own message.
+# @keywords internal
+# @noRd
+.quantityPathsNotFound <- function(paths, simulation) {
+  candidates <- setdiff(
+    unique(as.character(paths)),
+    ospsuite::getAllQuantityPathsIn(simulation)
+  )
+  found <- logical(length(candidates))
+  for (i in seq_along(candidates)) {
+    matches <- ospsuite::getAllQuantitiesMatching(candidates[[i]], simulation)
+    found[[i]] <- length(matches) > 0L
+  }
+  candidates[!found]
 }
 
 #' Compare two simulations
