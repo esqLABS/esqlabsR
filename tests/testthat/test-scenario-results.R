@@ -199,9 +199,9 @@ test_that("saveScenarioResults aborts when two names collide after sanitization"
   # silently overwrite each other, so the save must abort before writing.
   colliding <- setNames(c(original, original), c("A/B", "A_B"))
   resultsFolder <- withr::local_tempdir()
-  expect_error(
+  expect_snapshot(
     saveScenarioResults(colliding, project, outputFolder = resultsFolder),
-    "collide"
+    error = TRUE
   )
   # Nothing was written.
   expect_length(list.files(resultsFolder), 0L)

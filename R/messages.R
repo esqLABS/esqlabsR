@@ -1435,9 +1435,12 @@ messages$savingScenarioResult <- function(scenarioName) {
   )
 }
 
+# `{.val}` escapes a backslash the way R prints a string, so it gets the
+# one-character string, not a literal backslash in the template.
 messages$scenarioResultNameCollision <- function(colliding) {
+  separators <- c("/", "\\")
   cliBullets(
-    "x" = "Scenario names collide once {.val /} and {.val \\\\} are replaced with {.val _} for file names:",
+    "x" = "Scenario names collide once {.val {separators}} are replaced with {.val _} for file names:",
     "*" = "{.val {colliding}}",
     "i" = "Rename the scenarios so their file-safe names differ before saving."
   )

@@ -47,3 +47,13 @@
       Caused by error in `<caller>`:
       ! `<caller>`: argument "simulation" is of type <character>, but expected <Simulation>!
 
+# saveScenarioResults aborts when two names collide after sanitization
+
+    Code
+      saveScenarioResults(colliding, project, outputFolder = resultsFolder)
+    Condition
+      Error in `saveScenarioResults()`:
+      x Scenario names collide once "/" and "\\" are replaced with "_" for file names:
+      * "A/B" and "A_B"
+      i Rename the scenarios so their file-safe names differ before saving.
+
