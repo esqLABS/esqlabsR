@@ -144,10 +144,9 @@ loadProject <- function(path = ".") {
     if (.isLegacySnapshot(jsonData)) {
       cli::cli_abort(messages$legacySnapshotNotLoadable(jsonPath))
     }
-    # `version` is bound here because the catalog entry leaves its
-    # placeholder unglued, so this call interpolates it exactly once.
-    version <- jsonData$schemaVersion %||% "<missing>"
-    cli::cli_abort(messages$unsupportedSchemaVersion(version))
+    cli::cli_abort(messages$unsupportedSchemaVersion(
+      jsonData$schemaVersion %||% "<missing>"
+    ))
   }
   .parseProjectSections(jsonData, jsonPath, dirname(jsonPath))
 }
@@ -487,14 +486,13 @@ isProjectInitialized <- function(destination = ".") {
   if (length(containers) == 1L) {
     return(fs::path_abs(containers[[1]]))
   }
-  # `folder` / `names` are bound here because both catalog entries leave their
-  # placeholders unglued, so the raising call interpolates them exactly once.
-  folder <- path
   if (length(containers) == 0L) {
-    cli::cli_abort(messages$noProjectContainerInFolder(folder))
+    cli::cli_abort(messages$noProjectContainerInFolder(path))
   }
-  names <- fs::path_file(containers)
-  cli::cli_abort(messages$multipleProjectContainersInFolder(folder, names))
+  cli::cli_abort(messages$multipleProjectContainersInFolder(
+    path,
+    fs::path_file(containers)
+  ))
 }
 
 # The paths of every project container directly inside `destination`: a `.json`

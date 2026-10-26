@@ -8,7 +8,9 @@ messages <- ospsuite.utils::messages
 # text belongs here as a catalog entry routed through those wrappers, not as a
 # base `stop()`/`warning()`/`message()` on an inline literal string.
 #
-# An entry is built one of three ways, and the choice is capability, not taste.
+# An entry is built one of two ways, and the choice is capability, not taste.
+# Either way the entry interpolates its own arguments: the raising call only
+# lays the text out.
 #
 #   * `cliFormat()` by default, for a single-line message. It is
 #     `cli::format_inline(paste(..., sep = "\n"))`, so it formats one inline
@@ -17,17 +19,28 @@ messages <- ospsuite.utils::messages
 #     work. A long template still wraps across physical lines with a trailing
 #     `\\`; `cliFormat()` leaves that continuation in the string it returns, and
 #     the raising `cli_abort()` / `cli_warn()` resolves it on its own pass.
-#   * `cli::format_message()` when the message carries `"i"` / `"x"` / `"!"` /
-#     `"*"` bullets. This is the one thing `cliFormat()` cannot express: it drops
-#     the names of a `cli` vector and glues the elements into one run-on line.
-#   * The raw templated vector, returned unglued, when a value interpolated into
-#     it may itself contain `{` or `}`. Both helpers above glue eagerly, and the
-#     raising call then glue-parses the finished string a second time, so such a
-#     value would be evaluated as an R expression. Returning the template
-#     instead means the raising call interpolates exactly once, from its own
-#     frame, which is why those entries name their parameters after the
-#     variables bound at the raising site (`restoreDirNotEmpty()`'s `dir`,
-#     `unsupportedSchemaVersion()`'s `version`).
+#   * `cliBullets()` when the message carries `"i"` / `"x"` / `"!"` / `"*"`
+#     bullets, or when a value interpolated into it may itself contain `{` or
+#     `}`. It formats each element like `cliFormat()` but keeps the names, so
+#     the raising call puts every bullet on its own line, and it escapes the
+#     braces of the formatted text, so the raising call's own glue pass prints
+#     a value such as a scenario name `Fit {old}` as it is instead of
+#     evaluating it. `cliFormat()` does neither: it drops the names of a `cli`
+#     vector and glues the elements into one run-on line, and it leaves a
+#     value's braces for the raising call to evaluate.
+#
+# Do not build an entry with `cli::format_message()`: it returns one string,
+# which the raising call wraps again as a single paragraph, so the bullets run
+# into the text. Nor return a bare template for the raising call to glue: that
+# call interpolates it from its own frame, where a name such as
+# `scenarioNames` may hold another value than the entry's argument.
+#
+# Some import and export entries return `list(bullets =, envir =)` instead:
+# templates still unglued plus an environment that binds their variables,
+# raised with `.envir = msg$envir` (`.warnFormatted()` and `.informFormatted()`
+# in `R/project-excel.R`). `.canonicalizedIdBullets()` in `R/definition-id.R`
+# builds the same shape. A value is reached only through a variable there, so
+# its braces are safe too.
 #
 # One known exception: the project validation framework (`R/validation.R` and
 # the per-section validators in `R/scenarios.R`, `R/individuals.R`,
@@ -166,12 +179,11 @@ messages$duplicateInitialConditions <- function(
 }
 
 # Raised from `applyIndividualParameters()` when a human individual is applied
-# to a simulation built for another species. Unglued: the simulation name is
-# free text. `species` is the species stored in the simulation, or `NA` when
-# the file predates OSP version 12 and only its parameters tell that it is not
-# a human model.
+# to a simulation built for another species. `species` is the species stored in
+# the simulation, or `NA` when the file predates OSP version 12 and only its
+# parameters tell that it is not a human model.
 messages$humanIndividualForNonHumanModel <- function(simulationName, species) {
-  c(
+  cliBullets(
     if (is.na(species)) {
       "The simulation {.val {simulationName}} was not built for a human individual."
     } else {
@@ -207,11 +219,11 @@ messages$wrongOntogenyStructure <- function(entry) {
 # across ids like every other one, so a length-based error would report a
 # mismatch against the number of ids, describing neither the value nor the fix.
 messages$invalidProteinOntogenies <- function(given) {
-  cli::format_message(c(
+  cliBullets(
     "{.arg proteinOntogenies} must be a character vector of {.val Protein:Ontogeny} entries.",
     "x" = "It is {given}.",
     "i" = "One entry per ontogeny, e.g. {.code c(\"CYP3A4:CYP3A4\", \"CYP2D6:CYP2C8\")}, or the same pairs as one comma-joined string."
-  ))
+  )
 }
 
 # Warned from the Excel import when a sheet declares protein ontogenies that
@@ -225,11 +237,11 @@ messages$excelOntogeniesNotReadable <- function(
   proteins,
   ontogenies
 ) {
-  cli::format_message(c(
+  cliBullets(
     "!" = "The protein ontogenies of {recordType} {.val {recordId}} are not imported: the {.field Protein} and {.field Ontogeny} columns cannot be paired.",
     "i" = "{length(proteins)} protein{?s} against {length(ontogenies)} ontogen{?y/ies}; each protein needs exactly one ontogeny.",
     "i" = "Fix the workbook, or write the pairs into a single {.field Protein Ontogenies} cell as {.val Protein:Ontogeny,Protein:Ontogeny}."
-  ))
+  )
 }
 
 # utilities####
@@ -237,24 +249,21 @@ messages$fileNotFound <- function(filePath) {
   cliFormat("File not found: {.file {filePath}}")
 }
 
-# Raised from `.assertNotLfsPointer()`. Unglued so a path containing `{` or `}`
-# is interpolated exactly once, by the raising call, where the value is bound
-# under `path`.
+# Raised from `.assertNotLfsPointer()`.
 messages$gitLfsPointerFile <- function(path) {
-  c(
+  cliBullets(
     "x" = "{.file {path}} is a Git LFS pointer file, not the file it stands \\
     for.",
     "i" = "Fetch the real file with {.code git lfs pull}, then try again."
   )
 }
 
-# Raised from `.loadProjectTree()`. Unglued for the same reason as
-# `legacySnapshotNotLoadable()` below: a hand-edited `schemaVersion` containing
-# `{` or `}` would be glue-parsed a second time by the raising `cli_abort()` and
-# fail with a glue error instead of this message. The value is bound under
-# `version` in the raising frame.
+# Raised from `.loadProjectTree()`. Built with `cliBullets()` although it has no
+# bullet: a hand-edited `schemaVersion` may contain `{` or `}`.
 messages$unsupportedSchemaVersion <- function(version) {
-  "Unsupported schemaVersion: {.val {version}}. Expected {.val 2.0}."
+  cliBullets(
+    "Unsupported schemaVersion: {.val {version}}. Expected {.val 2.0}."
+  )
 }
 
 messages$invalidPathArgument <- function() {
@@ -268,7 +277,7 @@ messages$invalidInitProjectName <- function() {
 }
 
 messages$saveProjectNoTree <- function() {
-  c(
+  cliBullets(
     "This project does not have a project folder on disk yet, so it cannot be saved.",
     "i" = "Use {.fn snapshotProject} to save it to a single file.",
     "i" = "Or create a project folder with {.fn initProject} and load it with {.fn loadProject}."
@@ -280,23 +289,20 @@ messages$projectAlreadyUpToDate <- function() {
 }
 
 messages$snapshotFileExists <- function(path) {
-  c(
+  cliBullets(
     "A snapshot file already exists at {.file {path}}.",
     "i" = "Pass {.code overwrite = TRUE} to replace it, or a different {.arg name}."
   )
 }
 
 # The `{name}` placeholder is the validated value, not `snapshotProject()`'s
-# `name` argument (`{.arg name}` above renders that literally). It is spelled
-# `name` because `.validateFilenameSegment()` raises this from a frame where the
-# value is bound under that name. `given` is that helper's description of a value
-# that is no name at all (and `NULL` for a well-formed name that would escape the
-# directory), because quoting an empty string, an `NA` or a number as if it
-# "contained a path separator" says something untrue about it. Both placeholders
-# stay unglued, so the raising call interpolates each exactly once, from the frame
-# that binds them.
+# `name` argument (`{.arg name}` above renders that literally). `given` is
+# `.validateFilenameSegment()`'s description of a value that is no name at all
+# (and `NULL` for a well-formed name that would escape the directory), because
+# quoting an empty string, an `NA` or a number as if it "contained a path
+# separator" says something untrue about it.
 messages$invalidSnapshotName <- function(name, given) {
-  c(
+  cliBullets(
     "{.arg name} must be a single filename stem without path separators.",
     "x" = if (is.null(given)) {
       "The stem {.val {name}} contains a path separator or is {.val .} / \\
@@ -310,7 +316,7 @@ messages$invalidSnapshotName <- function(name, given) {
 }
 
 messages$invalidProjectFileName <- function(name, given) {
-  c(
+  cliBullets(
     "{.arg projectFileName} must be a single filename without path separators.",
     "x" = if (is.null(given)) {
       "The name {.val {name}} contains a path separator or is {.val .} / \\
@@ -330,7 +336,7 @@ messages$invalidProjectFileName <- function(name, given) {
 # separator or `..` in it would point both outside the project. Same two-argument
 # contract as `invalidProjectFileName` above.
 messages$invalidDefinitionsFolder <- function(name, given) {
-  c(
+  cliBullets(
     "{.field definitionsFolder} must be a single folder name directly under \\
     the project folder.",
     "x" = if (is.null(given)) {
@@ -345,7 +351,7 @@ messages$invalidDefinitionsFolder <- function(name, given) {
 }
 
 messages$restoreDirNotEmpty <- function(dir) {
-  c(
+  cliBullets(
     "The folder {.path {dir}} is not empty.",
     "i" = "{.fn restoreProject} needs an empty or new folder. Pass \\
     {.code overwrite = TRUE} to replace the folder's contents, or choose a \\
@@ -354,7 +360,7 @@ messages$restoreDirNotEmpty <- function(dir) {
 }
 
 messages$restoreOverwroteTree <- function(dir) {
-  c(
+  cliBullets(
     "Replaced the project in {.path {dir}} with the snapshot.",
     "!" = "Project objects loaded from this folder before the restore still \\
     contain the old project.",
@@ -364,7 +370,7 @@ messages$restoreOverwroteTree <- function(dir) {
 }
 
 messages$importWouldOverwriteProject <- function(outputDir) {
-  c(
+  cliBullets(
     "A JSON project already exists in {.path {outputDir}}.",
     "x" = "Re-importing replaces it with the Excel project and deletes any \\
     definitions that exist only on the JSON side.",
@@ -414,7 +420,7 @@ messages$importRenamedDuplicateParameterSets <- function(bullets) {
 }
 
 messages$importSkippedObservedData <- function(dataFile) {
-  c(
+  cliBullets(
     "!" = "The configured data file {.file {dataFile}} was not found, so no \\
     observed data was imported.",
     "i" = "Any plot or parameter-identification mapping that references \\
@@ -452,7 +458,7 @@ messages$importIncompleteObservedCurves <- function(dataCombinedIds) {
 # it would put the user's account name in the output.
 
 messages$importSkippedOutOfProjectDataFolder <- function() {
-  c(
+  cliBullets(
     "!" = "{.field dataFolder} points outside the project folder, so no \\
     observed data was imported.",
     "i" = "Data kept outside the project (a synced drive shared between \\
@@ -466,7 +472,7 @@ messages$importSkippedOutOfProjectDataFolder <- function() {
 }
 
 messages$importSkippedOutOfProjectDataFile <- function() {
-  c(
+  cliBullets(
     "!" = "{.field dataFile} points outside {.field dataFolder}, so no \\
     observed data was imported.",
     "i" = "The loader resolves {.field dataFile} under {.field dataFolder}. \\
@@ -774,13 +780,9 @@ messages$importSkippedNonParameterSheets <- function(
 
 # Raised from `.loadProjectTree()`, whose schema-version check fails on every
 # file `.isLegacySnapshot()` recognizes: a previous-version snapshot carries no
-# `schemaVersion` at all. The `{jsonPath}` placeholder stays unglued so
-# `cli_abort()` interpolates it once, in that frame, where the value is bound
-# under that name (as with `restoreDirNotEmpty()`'s `dir`); pre-gluing it here
-# would leave a path containing `{` or `}` to be glue-parsed a second time by
-# the raising call.
+# `schemaVersion` at all.
 messages$legacySnapshotNotLoadable <- function(jsonPath) {
-  c(
+  cliBullets(
     "x" = "{.file {jsonPath}} is a previous-version project snapshot, not a \\
     project of the current format.",
     "i" = "A previous-version snapshot has to be upgraded before it can be \\
@@ -794,11 +796,9 @@ messages$legacySnapshotNotLoadable <- function(jsonPath) {
 # Raised from `.resolveProjectContainerPath()` when it is handed a folder
 # that holds no project container. Naming the mistake is the point: a folder
 # is the natural second guess after a file, and letting it through produced a
-# raw JSON parse error about the folder itself. Unglued so a folder path
-# containing `{` or `}` is interpolated exactly once, by the raising call,
-# where `folder` is bound.
+# raw JSON parse error about the folder itself.
 messages$noProjectContainerInFolder <- function(folder) {
-  c(
+  cliBullets(
     "x" = "No esqlabsR project found in the folder {.file {folder}}.",
     "i" = "A project is a JSON container file (usually {.file Project.json}) \\
     with a {.file definitions/} folder beside it.",
@@ -809,11 +809,9 @@ messages$noProjectContainerInFolder <- function(folder) {
 }
 
 # Raised from `.resolveProjectContainerPath()` when a folder holds several
-# project containers, so there is no single project to open. `folder` and
-# `names` are bound in the raising frame; unglued for the same reason as
-# above.
+# project containers, so there is no single project to open.
 messages$multipleProjectContainersInFolder <- function(folder, names) {
-  c(
+  cliBullets(
     "x" = "The folder {.file {folder}} holds {length(names)} project files: \\
     {.file {names}}.",
     "i" = "Name the one to open, for example \\
@@ -821,11 +819,9 @@ messages$multipleProjectContainersInFolder <- function(folder, names) {
   )
 }
 
-# Unglued, so `cli_abort()` renders these as real bullets rather than re-wrapping
-# one pre-formatted string with the glyphs inline. `sheet` and `columns` are bound
-# in `.requireExcelColumns()`, the raising frame.
+# Raised from `.requireExcelColumns()`.
 messages$excelSheetMissingRequiredColumns <- function(sheet, columns) {
-  c(
+  cliBullets(
     "x" = "The {.val {sheet}} sheet is missing \\
     {cli::qty(columns)}{?a required column/required columns}: \\
     {.field {columns}}.",
@@ -835,16 +831,10 @@ messages$excelSheetMissingRequiredColumns <- function(sheet, columns) {
   )
 }
 
-# Unglued for two reasons: the bullets, and `projectConfigPath` being a path the
-# user chose, which may itself contain `{` or `}` and so must be interpolated
-# exactly once, by the raising call. `projectConfigPath` is bound in
-# `.excelToProjectJson()`, the raising frame.
-#
-# The first element stays unnamed, so it is the error header rather than a
-# bullet: `.projectSyncStatus()` re-raises this text as the `"x"` bullet of its
-# own warning, and a glyph baked in here would render doubled there.
+# Raised from `.excelToProjectJson()`. `.projectSyncStatus()` attaches this
+# error as the `parent` of its own warning.
 messages$excelProjectFileUnreadable <- function(projectConfigPath) {
-  c(
+  cliBullets(
     "{.path {projectConfigPath}} is not a readable Excel project file.",
     "i" = "It must be a valid {.field .xlsx} workbook (the project's \\
     {.file Project.xlsx})."
@@ -852,7 +842,7 @@ messages$excelProjectFileUnreadable <- function(projectConfigPath) {
 }
 
 messages$legacySnapshotMalformedSheet <- function() {
-  c(
+  cliBullets(
     "x" = "This previous-version project snapshot is malformed and cannot be \\
     upgraded.",
     "i" = "A sheet in the snapshot is not a {.code {{column_names, rows}}} \\
@@ -867,24 +857,24 @@ messages$upgradedLegacySnapshot <- function(missingFolders = character()) {
     "!" = "Observed data does not travel in a snapshot; add it with \\
     {.fn addObservedData} if a plot or parameter identification needs it."
   )
-  if (length(missingFolders) == 0L) {
-    return(notice)
+  if (length(missingFolders) > 0L) {
+    notice <- c(
+      notice,
+      "!" = "{length(missingFolders)} referenced folder{?s} \\
+      {cli::qty(length(missingFolders))}{?is/are} missing from the upgraded \\
+      project: {.file {missingFolders}}.",
+      "i" = "A snapshot carries only the configuration workbooks, so a model, \\
+      data or population folder travels with it only when it sits beside the \\
+      snapshot file at that relative path.",
+      "i" = "Nothing that reads from one of them will resolve until you place \\
+      the folder in the project."
+    )
   }
-  c(
-    notice,
-    "!" = "{length(missingFolders)} referenced folder{?s} \\
-    {cli::qty(length(missingFolders))}{?is/are} missing from the upgraded \\
-    project: {.file {missingFolders}}.",
-    "i" = "A snapshot carries only the configuration workbooks, so a model, \\
-    data or population folder travels with it only when it sits beside the \\
-    snapshot file at that relative path.",
-    "i" = "Nothing that reads from one of them will resolve until you place the \\
-    folder in the project."
-  )
+  cliBullets(notice)
 }
 
 messages$exportWouldOverwriteWorkbooks <- function(outputDir) {
-  c(
+  cliBullets(
     "Excel workbooks already exist in {.path {outputDir}}.",
     "x" = "Exporting overwrites {.file Project.xlsx} and the \\
     {.file Configurations} workbooks, discarding any hand-edits they carry.",
@@ -992,11 +982,11 @@ messages$failedToRemoveStaleDefinitionFiles <- function(paths) {
   # Interpolate eagerly here, where `n` and `paths` are in scope: the
   # `cli::cli_abort()` call site does not carry these names, so a lazily
   # interpolated glue vector would fail to evaluate `{n}` / `{paths}` there.
-  cli::format_message(c(
+  cliBullets(
     "Failed to delete {n} outdated definition file{?s} from the {.file definitions} folder.",
     "x" = "{.file {paths}}",
     "i" = "A file that cannot be deleted comes back as a definition the next time you {.fn loadProject}; check the file permissions and delete it manually."
-  ))
+  )
 }
 
 messages$overwriteDestination <- function(path) {
@@ -1006,55 +996,51 @@ messages$overwriteDestination <- function(path) {
 messages$failedToClearProjectArtifacts <- function(path) {
   # Interpolate eagerly here where `path` is in scope; the `cli::cli_abort()`
   # call site passes a local whose name is not `path`.
-  cli::format_message(c(
+  cliBullets(
     "Failed to remove a file or folder of the existing project before overwriting.",
     "x" = "{.path {path}}",
     "i" = "Overwriting first removes the old project's {.file definitions} folder and {.file Project.json}; check the permissions and remove it manually."
-  ))
+  )
 }
 
 messages$inconsistentArgumentLengths <- function(vectorLengths) {
-  cli::format_message(c(
+  cliBullets(
     "Inconsistent vector argument lengths:",
     "x" = "All vector arguments with length > 1 must have the same length",
     "i" = "Found lengths: {.val {paste(unique(vectorLengths), collapse = ', ')}}"
-  ))
+  )
 }
 
-# Raised by `.warnSuffixedScenarioNames()`, once per suffixed name. Unglued, so
-# the raising `cli_warn()` lays out the header and bullet itself and glues the
-# names once, in its frame, where they are bound under `original` and
-# `candidate`: canonicalization keeps `{` and `}`, so a scenario name may
-# contain them.
+# Raised by `.warnSuffixedScenarioNames()`, once per suffixed name.
+# Canonicalization keeps `{` and `}`, so a scenario name may contain them.
 messages$autocorrectDuplicateScenarioNames <- function(original, candidate) {
-  c(
+  cliBullets(
     "Duplicate scenario names found and made unique by adding indices:",
     "i" = "Duplicated names: {.val {original}}, renamed to {.val {candidate}}"
   )
 }
 
-# Raised by `createScenariosFromPKML()`. Unglued for the same reason as
-# `autocorrectDuplicateScenarioNames()`; the names are bound under `addedNames`
-# in the raising frame.
+# Raised by `createScenariosFromPKML()`. Built with `cliBullets()` although it
+# has no bullet, for the same reason as `autocorrectDuplicateScenarioNames()`.
 messages$scenariosAddedToProject <- function(addedNames) {
-  "Added {length(addedNames)} scenario{?s}: {.val {addedNames}}"
+  cliBullets("Added {length(addedNames)} scenario{?s}: {.val {addedNames}}")
 }
 
 messages$noSimulationsFolderUsingAbsolutePath <- function(pkmlPath) {
-  cli::format_message(c(
+  cliBullets(
     "!" = "The project has no {.field simulationsFolder}; storing an absolute \\
     model file path.",
     "i" = "Set a {.field simulationsFolder} on the project so the scenario \\
     stores a portable relative path ({.file {pkmlPath}})."
-  ))
+  )
 }
 
 messages$outputPathIdCollision <- function(id, existingPath, newPath) {
-  cli::format_message(c(
+  cliBullets(
     "x" = "Output path id {.val {id}} already maps to a different path.",
     "i" = "Existing: {.val {existingPath}}",
     "i" = "Requested: {.val {newPath}}"
-  ))
+  )
 }
 
 messages$outputPathAliasIgnored <- function(userAlias, registeredId, path) {
@@ -1068,22 +1054,22 @@ messages$noSimulationsFolderForRelativeModelFile <- function(
   scenarioName,
   modelFile
 ) {
-  cli::format_message(c(
+  cliBullets(
     "x" = "Cannot resolve the model file for scenario {.val {scenarioName}}.",
     "i" = "{.field modelFile} {.val {modelFile}} is relative but the project \\
     has no {.field simulationsFolder} to resolve it against."
-  ))
+  )
 }
 
 messages$noPopulationsFolderForCSVPopulation <- function(
   scenarioName,
   populationId
 ) {
-  cli::format_message(c(
+  cliBullets(
     "x" = "Cannot resolve the population csv for scenario {.val {scenarioName}}.",
     "i" = "{.field populationId} {.val {populationId}} is read from a csv but \\
     the project has no {.field populationsFolder} to resolve it against."
-  ))
+  )
 }
 
 messages$populationCsvNotFound <- function(
@@ -1092,13 +1078,13 @@ messages$populationCsvNotFound <- function(
   fileName,
   populationsFolder
 ) {
-  cli::format_message(c(
+  cliBullets(
     "x" = "Cannot read population {.val {populationId}} for scenario \\
     {.val {scenarioName}}: {.file {fileName}} is not in the populations folder.",
     "i" = "Expected it under {.path {populationsFolder}}.",
     "i" = "Place the csv file there, or point {.field populationsFolder} at the \\
     folder that holds it."
-  ))
+  )
 }
 
 messages$populationIdResolvedTwoWays <- function(
@@ -1106,14 +1092,14 @@ messages$populationIdResolvedTwoWays <- function(
   scenarioName,
   effectiveType
 ) {
-  cli::format_message(c(
+  cliBullets(
     "!" = "Population {.val {populationId}} resolves to more than one \\
     population in this run.",
     "i" = "Scenario {.val {scenarioName}} resolves it as {.val {effectiveType}}, \\
     another scenario in the same run resolves it differently.",
     "i" = "Each scenario gets the population it asks for. Check \\
     {.field readPopulationFromCSV} on the scenarios sharing this population."
-  ))
+  )
 }
 
 
@@ -1167,11 +1153,11 @@ messages$syncNoTree <- function() {
 }
 
 messages$invalidArgumentLength <- function(noOfOutpaths, noOfScenarios) {
-  cli::format_message(c(
+  cliBullets(
     "Invalid argument length:",
     "x" = "outputPaths must have length 1 or same length as pkmlFilePaths",
     "i" = "outputPaths has length {.val {noOfOutpaths}}, pkmlFilePaths has length {.val {noOfScenarios}}"
-  ))
+  )
 }
 
 messages$valueWithinThresholdNotExisting <- function(
@@ -1256,11 +1242,11 @@ messages$invalidArgumentLengthScenarios <- function(
   arg,
   noOfScenarios
 ) {
-  cli::format_message(c(
+  cliBullets(
     "Invalid argument length:",
     "x" = "{.arg {argName}} must have length 1 or same length as pkmlFilePaths",
     "i" = "{.arg {argName}} has length {.val {length(arg)}}, pkmlFilePaths has length {.val {noOfScenarios}}"
-  ))
+  )
 }
 
 messages$noIndividualCharacteristics <- function(
@@ -1295,13 +1281,13 @@ messages$unknownScenarioNames <- function(unknownNames) {
 # arguments. The record carries every field, so an accompanying one would be
 # quietly overruled by it; the message names the two ways forward instead.
 messages$scenarioRecordWithFields <- function(fields) {
-  cli::format_message(c(
+  cliBullets(
     "A {.cls Scenario} passed as {.arg id} carries every field, so \\
     {.arg {fields}} cannot be given alongside it.",
     "i" = "Edit the record's own field and pass it back \\
     ({.code sc$modelFile <- \"other.pkml\"}), or name the scenario's id instead \\
     of the record."
-  ))
+  )
 }
 
 # `setScenario()` intercepts `overwrite` rather than letting it reach the impl's
@@ -1309,7 +1295,7 @@ messages$scenarioRecordWithFields <- function(fields) {
 # `addScenario()` and the scenario carries a second argument that starts the
 # same way.
 messages$setScenarioNoOverwrite <- function() {
-  c(
+  cliBullets(
     "{.fn setScenario} has no {.arg overwrite} argument.",
     "i" = "It always updates the scenario named by {.arg id}; \\
     {.fn addScenario} is the one with {.arg overwrite}.",
@@ -1329,35 +1315,35 @@ messages$unnamedAuthoringFields <- function(positions) {
   # numbers themselves: a lone field at position 2 is still one field. It has to
   # sit before every plural marker, since interpolating `positions` resets the
   # quantity cli pluralizes on, which is why the sentence keeps them together.
-  cli::format_message(c(
+  cliBullets(
     "Every field must be named.",
     "x" = "{cli::qty(length(positions))}No name on field{?s} {positions}.",
     "i" = "Pass each field as {.code name = value}."
-  ))
+  )
 }
 
 # Raised when a name reaching `setScenario()`'s field set is not a scenario
 # field. Without the guard the value would be aligned as a per-definition field
 # and then dropped in silence.
 messages$setScenarioUnknownFields <- function(fields, settable) {
-  cli::format_message(c(
+  cliBullets(
     "{.fn setScenario} cannot set {.field {fields}}.",
     "i" = "The settable fields are {.field {settable}}."
-  ))
+  )
 }
 
 # Raised when `simulationRunOptions` is not an `ospsuite::SimulationRunOptions`.
 # The hint names `solverSettings` because reaching for this argument to set a
 # tolerance is the likely mistake: the two used to travel in one list.
 messages$invalidSimulationRunOptions <- function(value) {
-  cli::format_message(c(
+  cliBullets(
     "{.arg simulationRunOptions} must be an \\
     {.cls ospsuite::SimulationRunOptions}, not {.obj_type_friendly {value}}.",
     "i" = "Build one with \\
     {.code ospsuite::SimulationRunOptions$new(numberOfCores = 4)}.",
     "i" = "To change how the solver behaves, pass {.arg solverSettings} \\
     instead, as {.code list(relTol = 1e-6)}."
-  ))
+  )
 }
 
 messages$invalidSimulationTimeArgument <- function() {
@@ -1393,29 +1379,19 @@ messages$missingResultsForScenario <- function(scenarioName) {
   )
 }
 
-messages$scenarioBuildFailed <- function(scenarioName, conditionMessage) {
-  # Escape braces in the underlying error text so cli does not re-interpret it
-  # as glue expressions when the returned vector is passed to cli_warn().
-  safe_msg <- gsub(
-    "}",
-    "}}",
-    gsub("{", "{{", conditionMessage, fixed = TRUE),
-    fixed = TRUE
-  )
-  c(
-    "x" = cli::format_inline(
-      "Could not build scenario {.val {scenarioName}}; skipping it."
-    ),
-    "i" = safe_msg
+# The caller attaches the underlying error as the warning's `parent`, so cli
+# prints it below this line with its own bullets.
+messages$scenarioBuildFailed <- function(scenarioName) {
+  cliBullets(
+    "x" = "Could not build scenario {.val {scenarioName}}; skipping it."
   )
 }
 
-# The `stopIfFails = TRUE` counterpart of `scenarioBuildFailed()`: the underlying
-# error is attached as the abort's `parent`, so cli renders it below this header
-# rather than it needing to be interpolated (and brace-escaped) here.
+# The `stopIfFails = TRUE` counterpart of `scenarioBuildFailed()`, with the
+# underlying error attached the same way.
 messages$scenarioBuildFailedAbort <- function(scenarioName, canSkip) {
-  c(
-    cli::format_inline("Could not build scenario {.val {scenarioName}}."),
+  cliBullets(
+    "Could not build scenario {.val {scenarioName}}.",
     # `buildSimulations()` has no `stopIfFails`, so only name it where it exists.
     if (canSkip) {
       c(
@@ -1426,12 +1402,10 @@ messages$scenarioBuildFailedAbort <- function(scenarioName, canSkip) {
   )
 }
 
-# The paths come from the user's parameter sets and may contain any character,
-# so the template is returned unglued and the raising site, which binds
-# `simulationName` and `missingPaths`, interpolates it once. `cli_vec()` lifts
-# cli's limit of 20 values, so a long list is still named in full.
+# The paths come from the user's parameter sets and may contain any character.
+# `cli_vec()` lifts cli's limit of 20 values, so a long list is still named in full.
 messages$quantityPathsNotFound <- function(simulationName, missingPaths) {
-  c(
+  cliBullets(
     "The model of simulation {.val {simulationName}} has no parameter or \\
     molecule at {cli::qty(missingPaths)}{?this path/these paths}: \\
     {.val {cli::cli_vec(missingPaths, list('vec-trunc' = Inf))}}.",
@@ -1453,37 +1427,24 @@ messages$scenariosSkipped <- function(scenarioNames) {
   )
 }
 
-messages$savingScenarioResult <- function(scenarioName, conditionMessage) {
-  # Escape braces in the condition message so that cli does not try to
-  # re-interpret arbitrary error text as glue expressions when cli_warn()
-  # processes the returned vector.
-  safe_msg <- gsub(
-    "}",
-    "}}",
-    gsub("{", "{{", conditionMessage, fixed = TRUE),
-    fixed = TRUE
-  )
-  c(
-    "x" = cli::format_inline(
-      "Failed to save results for scenario {.val {scenarioName}}."
-    ),
-    "i" = safe_msg
+# The caller attaches the underlying error as the warning's `parent`, as for
+# `scenarioBuildFailed()`.
+messages$savingScenarioResult <- function(scenarioName) {
+  cliBullets(
+    "x" = "Failed to save results for scenario {.val {scenarioName}}."
   )
 }
 
 messages$scenarioResultNameCollision <- function(colliding) {
-  cli::format_message(c(
+  cliBullets(
     "x" = "Scenario names collide once {.val /} and {.val \\\\} are replaced with {.val _} for file names:",
     "*" = "{.val {colliding}}",
     "i" = "Rename the scenarios so their file-safe names differ before saving."
-  ))
+  )
 }
 
-# Both entries below return the raw template: a scenario name or folder path
-# may contain `{` or `}`, so the raising `cli_abort()` interpolates them once
-# from its own frame.
 messages$scenarioResultsFolderNotFound <- function(resultsFolder) {
-  c(
+  cliBullets(
     "x" = "Cannot load scenario results: the folder {.path {resultsFolder}} \\
     does not exist.",
     "i" = "Pass the folder that {.fn saveScenarioResults} returned."
@@ -1495,7 +1456,7 @@ messages$scenarioResultFilesNotFound <- function(
   missingFiles,
   resultsFolder
 ) {
-  c(
+  cliBullets(
     "x" = "Cannot load results for scenario {.val {scenarioName}}: \\
     {.file {missingFiles}} {?is/are} not in the results folder.",
     "i" = "Looked in {.path {resultsFolder}}.",
@@ -1770,10 +1731,10 @@ messages$invalidSimulationResultNames <- function(
 
 # Sensitivity calculation####
 messages$nonStandardPKParametersNotCalculated <- function(pkParameterNames) {
-  cli::format_message(c(
+  cliBullets(
     "i" = "The following PK parameters are specified but were not calculated:",
     "*" = "{.val {pkParameterNames}}"
-  ))
+  )
 }
 
 messages$sensitivityAnalysisSimulationFailure <- function(
@@ -1917,24 +1878,24 @@ messages$sensitivityPKParameterNotCalculated <- function(
 }
 
 messages$excelNoDataRows <- function() {
-  cli::format_message(c(
+  cliBullets(
     "x" = "The specified excel sheet does not contain any rows with data.",
     "*" = "Please check the excel sheet name and content and try again."
-  ))
+  )
 }
 
 messages$excelUncompleteRows <- function() {
-  cli::format_message(c(
+  cliBullets(
     "x" = "The specified excel sheet contains uncomplete row(s)",
     "i" = "Using only complete rows to define population parameters"
-  ))
+  )
 }
 
 messages$excelNoCompleteRows <- function() {
-  cli::format_message(c(
+  cliBullets(
     "x" = "The specified excel sheet does not contain any complete row",
     "*" = "Please fill all the columns and try again."
-  ))
+  )
 }
 
 
@@ -1972,10 +1933,10 @@ messages$failedToCopyTemplate <- function(paths) {
 }
 
 messages$PIDatasetNotFound <- function(datasetName, availableDatasets) {
-  cli::format_message(c(
+  cliBullets(
     "x" = "Dataset {.val {datasetName}} not found",
     "i" = "Available datasets: {.val {paste(availableDatasets, collapse = ', ')}}"
-  ))
+  )
 }
 
 messages$PIInvalidBounds <- function(paramPath, min, start, max) {
@@ -2046,13 +2007,13 @@ messages$PIWrongElementType <- function(
 
 messages$outputPathRefNotFound <- function(value, outputPathIds) {
   hint <- .suggestSuffix(value, outputPathIds)
-  cli::format_message(c(
+  cliBullets(
     "x" = "outputPath {.val {value}} is neither a defined output-path id nor \\
     the model path of one.",
     "i" = "Pass an output-path id (a key in \\
     {.code project$definitions$outputPaths}) or the literal model path of a \\
     defined output path; define new ones with {.fn addOutputPath}.{hint}"
-  ))
+  )
 }
 
 messages$PIOutputQuantityNotFound <- function(path, simulationName) {
@@ -2074,18 +2035,18 @@ messages$PIParameterNotFound <- function(path, simulationName) {
 # the version that wrote it, so such a cell is normal in a workbook that ran, and
 # the identification is still well defined without it.
 messages$PIParameterUnitNotApplied <- function(id, unit, dimension) {
-  cli::format_message(c(
+  cliBullets(
     "!" = "The unit {.val {unit}} of PI parameter {.val {id}} is not applied: it is not a unit of the parameter's dimension {.val {dimension}}.",
     "i" = "Its {.field minValue}, {.field maxValue} and {.field startValue} are read in the parameter's own unit instead.",
     "i" = "A legacy 5.x {.field PIParameters} sheet carries a {.field Units} column that esqlabsR 5.x never applied, which is where such a unit usually comes from; set the field with {.fn PIParameter} to fit in a different unit."
-  ))
+  )
 }
 
 messages$PIScenarioNotFound <- function(scenarioName, availableScenarios) {
-  cli::format_message(c(
+  cliBullets(
     "x" = "Scenario {.val {scenarioName}} referenced in PI task configuration not found",
     "i" = "Available scenarios: {.val {paste(availableScenarios, collapse = ', ')}}"
-  ))
+  )
 }
 
 messages$PITaskNotFound <- function(task) {
@@ -2110,10 +2071,10 @@ messages$runningPITask <- function(piTaskName) {
 
 # Observed data (Chapter 5) ####
 messages$observedDataInvalidEntryType <- function(badType, validTypes) {
-  cli::format_message(c(
+  cliBullets(
     "x" = "Invalid {.field type} {.val {badType}} in {.code observedData} entry.",
     "i" = "Must be one of: {.val {validTypes}}."
-  ))
+  )
 }
 
 # Every missing field at once: the required set for each type is fixed, so
@@ -2131,10 +2092,10 @@ messages$observedDataFileNotFound <- function(filePath) {
 }
 
 messages$observedDataScriptWrongReturnType <- function(filePath, klass) {
-  cli::format_message(c(
+  cliBullets(
     "x" = "Script {.path {filePath}} did not return a {.cls DataSet} or list of {.cls DataSet}.",
     "i" = "Got an object of class {.cls {klass}}."
-  ))
+  )
 }
 
 messages$observedDataScriptSourcing <- function(filePath) {
@@ -2142,19 +2103,19 @@ messages$observedDataScriptSourcing <- function(filePath) {
 }
 
 messages$observedDataScriptSecurityWarn <- function() {
-  cli::format_message(c(
+  cliBullets(
     "!" = "This project runs an R script to build observed data, executing arbitrary R code on your machine.",
     "i" = "Only resolve observed data from a project you trust. See {.help esqlabsR::loadObservedData} for details.",
     "i" = "This warning is shown once per session."
-  ))
+  )
 }
 
 messages$observedDataProgrammaticUnresolved <- function(names) {
-  cli::format_message(c(
+  cliBullets(
     "!" = "{length(names)} programmatic observed-data source{?s} resolved to no data: {.val {names}}.",
     "i" = "A programmatic source holds its {.cls DataSet} only in the session that added it; it is not saved to disk.",
     "i" = "Re-add {cli::qty(names)}{?it/them} with {.fn addObservedData} in this session, or declare {?it/them} as a {.code script} or {.code pkml} source to persist across a reload."
-  ))
+  )
 }
 
 messages$observedDataDataFolderNotDeclared <- function(file) {
@@ -2169,25 +2130,25 @@ messages$observedDataProgrammaticAdded <- function(name, hasDataFolder = TRUE) {
   } else {
     "Declare a {.field dataFolder} in {.code filePaths} before saving: {.fn saveProject} writes it to a PKML file there so it survives a reload, and aborts if no data folder is declared."
   }
-  cli::format_message(c(
+  cliBullets(
     "i" = "Added programmatic observed-data source {.val {name}}. It lives in this session until you save.",
     "i" = saveNote
-  ))
+  )
 }
 
 messages$observedDataPersistNoDataFolder <- function(name) {
-  cli::format_message(c(
+  cliBullets(
     "x" = "Cannot save the programmatic observed-data source {.val {name}}: {.field dataFolder} is not declared in {.code filePaths}.",
     "i" = "A programmatic source is written to a PKML file under {.field dataFolder} on save. Declare {.field dataFolder}, then save again."
-  ))
+  )
 }
 
 messages$observedDataPersistIdCollision <- function(ids) {
-  cli::format_message(c(
+  cliBullets(
     "x" = "Saving a programmatic observed-data source would overwrite another source: {.file {ids}}.",
     "i" = "A programmatic source is written to {.file <name>.pkml}; this clashes with an existing source filed under the same name.",
     "i" = "Rename the {.cls DataSet} (its {.field name}) so the file names differ."
-  ))
+  )
 }
 
 messages$populationProgrammaticAdded <- function(
@@ -2199,68 +2160,68 @@ messages$populationProgrammaticAdded <- function(
   } else {
     "Declare a {.field populationsFolder} in {.code filePaths} before saving: {.fn saveProject} writes it to a CSV file there so it survives a reload, and aborts if no populations folder is declared."
   }
-  cli::format_message(c(
+  cliBullets(
     "i" = "Added programmatic population {.val {id}}. It lives in this session until you save.",
     "i" = saveNote
-  ))
+  )
 }
 
 messages$populationProgrammaticUnresolved <- function(id, scenarioName) {
-  cli::format_message(c(
+  cliBullets(
     "x" = "Population {.val {id}} referenced by scenario {.val {scenarioName}} was injected in a previous session and holds no data now.",
     "i" = "A programmatic population holds its {.cls Population} only in the session that added it.",
     "i" = "Re-add it with {.fn addPopulation} in this session, or run {.fn saveProject} once to freeze it to a CSV file that survives a reload."
-  ))
+  )
 }
 
 messages$populationPersistNoPopulationsFolder <- function(id) {
-  cli::format_message(c(
+  cliBullets(
     "x" = "Cannot save the programmatic population {.val {id}}: {.field populationsFolder} is not declared in {.code filePaths}.",
     "i" = "A programmatic population is written to a CSV file under {.field populationsFolder} on save. Declare {.field populationsFolder}, then save again."
-  ))
+  )
 }
 
 messages$populationPersistIdCollision <- function(ids) {
-  cli::format_message(c(
+  cliBullets(
     "x" = "Saving a programmatic population would overwrite an existing population file: {.file {ids}}.",
     "i" = "A programmatic population is written to {.file <id>.csv}; this clashes with a file already filed under the same id.",
     "i" = "Rename the population (its {.field id}) so the file names differ."
-  ))
+  )
 }
 
 messages$projectPathEscapesRoot <- function(fieldName, path, root) {
-  cli::format_message(c(
+  cliBullets(
     "x" = "{.field {fieldName}} {.val {path}} resolves outside the project \\
     folder.",
     "i" = "It must stay under {.path {root}}. A project file cannot reference \\
     a path outside the project."
-  ))
+  )
 }
 
 messages$pkmlOutsideSimulationsFolder <- function(pkmlPath, modelFile) {
-  cli::format_message(c(
+  cliBullets(
     "!" = "PKML {.file {pkmlPath}} is outside the project's \\
     {.field simulationsFolder}; storing an escaping relative path \\
     {.val {modelFile}}.",
     "i" = "This scenario will fail at run time because the model file \\
     resolves outside the project. Move the PKML under the simulations folder, \\
     or set a {.field simulationsFolder} that contains it."
-  ))
+  )
 }
 
 messages$duplicateSimulationsFolderKey <- function() {
-  cli::format_message(c(
+  cliBullets(
     "!" = "{.code filePaths} carries both the legacy {.field modelFolder} and \\
     the current {.field simulationsFolder}; using {.field simulationsFolder}.",
     "i" = "Remove the legacy {.field modelFolder} key to silence this warning."
-  ))
+  )
 }
 
 messages$observedDataNameCollision <- function(duplicates) {
-  cli::format_message(c(
+  cliBullets(
     "x" = "Duplicate observed-data set name{?s} across sources: {.val {duplicates}}.",
     "i" = "Each loaded {.cls DataSet} must have a unique name; rename the source or the data set."
-  ))
+  )
 }
 
 # Observed-data messages surfaced by the project validator (`validateProject()`)

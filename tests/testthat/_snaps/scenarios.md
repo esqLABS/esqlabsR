@@ -126,7 +126,8 @@
       project$setScenario("testscenario", simulationType = "Population")
     Condition
       Error:
-      ! `setScenario()` cannot set simulationType. i The settable fields are modelFile, individual, population, application, parameterSets, initialConditions, outputPaths, simulationTime, simulationTimeUnit, steadyState, steadyStateTime, steadyStateTimeUnit, overwriteFormulasInSS, readPopulationFromCSV, and solverSettings.
+      ! `setScenario()` cannot set simulationType.
+      i The settable fields are modelFile, individual, population, application, parameterSets, initialConditions, outputPaths, simulationTime, simulationTimeUnit, steadyState, steadyStateTime, steadyStateTimeUnit, overwriteFormulasInSS, readPopulationFromCSV, and solverSettings.
 
 # addScenario rejects an unsound solverSettings block
 
@@ -154,7 +155,8 @@
       addScenario(project, sc, modelFile = "Other.pkml")
     Condition
       Error in `addScenario()`:
-      ! A <Scenario> passed as `id` carries every field, so `modelFile` cannot be given alongside it. i Edit the record's own field and pass it back (`sc$modelFile <- "other.pkml"`), or name the scenario's id instead of the record.
+      ! A <Scenario> passed as `id` carries every field, so `modelFile` cannot be given alongside it.
+      i Edit the record's own field and pass it back (`sc$modelFile <- "other.pkml"`), or name the scenario's id instead of the record.
 
 ---
 
@@ -162,7 +164,8 @@
       setScenario(project, sc, individual = NULL)
     Condition
       Error in `setScenario()`:
-      ! A <Scenario> passed as `id` carries every field, so `individual` cannot be given alongside it. i Edit the record's own field and pass it back (`sc$modelFile <- "other.pkml"`), or name the scenario's id instead of the record.
+      ! A <Scenario> passed as `id` carries every field, so `individual` cannot be given alongside it.
+      i Edit the record's own field and pass it back (`sc$modelFile <- "other.pkml"`), or name the scenario's id instead of the record.
 
 # a scenario record passed with an unnamed field alongside it aborts
 
@@ -170,7 +173,9 @@
       setScenario(project, sc, "Other.pkml")
     Condition
       Error in `setScenario()`:
-      ! Every field must be named. x No name on field 1. i Pass each field as `name = value`.
+      ! Every field must be named.
+      x No name on field 1.
+      i Pass each field as `name = value`.
 
 ---
 
@@ -178,7 +183,9 @@
       setScenario(project, sc, individual = NULL, "Other.pkml")
     Condition
       Error in `setScenario()`:
-      ! Every field must be named. x No name on field 2. i Pass each field as `name = value`.
+      ! Every field must be named.
+      x No name on field 2.
+      i Pass each field as `name = value`.
 
 # setScenario aborts on a non-existent scenario, no file written
 

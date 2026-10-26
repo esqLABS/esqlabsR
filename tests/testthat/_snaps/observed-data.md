@@ -4,7 +4,8 @@
       loadObservedData(project)
     Condition
       Error in `loadObservedData()`:
-      ! x Invalid type "invalid_type" in `observedData` entry. i Must be one of: "excel", "pkml", "script", and "programmatic".
+      x Invalid type "invalid_type" in `observedData` entry.
+      i Must be one of: "excel", "pkml", "script", and "programmatic".
 
 # loadObservedData errors when excel entry is missing required fields
 
@@ -74,7 +75,9 @@
       saveProject(project)
     Condition
       Error in `.persistProgrammaticObservedData()`:
-      ! x Saving a programmatic observed-data source would overwrite another source: 'Collide.pkml'. i A programmatic source is written to '<name>.pkml'; this clashes with an existing source filed under the same name. i Rename the <DataSet> (its name) so the file names differ.
+      x Saving a programmatic observed-data source would overwrite another source: 'Collide.pkml'.
+      i A programmatic source is written to '<name>.pkml'; this clashes with an existing source filed under the same name.
+      i Rename the <DataSet> (its name) so the file names differ.
 
 # saveProject aborts persisting a programmatic DataSet with no dataFolder
 
@@ -82,7 +85,8 @@
       saveProject(project)
     Condition
       Error in `.persistProgrammaticObservedData()`:
-      ! x Cannot save the programmatic observed-data source "NoFolderSet": dataFolder is not declared in `filePaths`. i A programmatic source is written to a PKML file under dataFolder on save. Declare dataFolder, then save again.
+      x Cannot save the programmatic observed-data source "NoFolderSet": dataFolder is not declared in `filePaths`.
+      i A programmatic source is written to a PKML file under dataFolder on save. Declare dataFolder, then save again.
 
 # addObservedData rejects a duplicate declared id
 

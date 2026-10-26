@@ -910,10 +910,10 @@
             call = .call
           )
         }
-        cli::cli_warn(messages$scenarioBuildFailed(
-          scenarioName = name,
-          conditionMessage = conditionMessage(e)
-        ))
+        cli::cli_warn(
+          messages$scenarioBuildFailed(scenarioName = name),
+          parent = e
+        )
         NULL
       }
     )

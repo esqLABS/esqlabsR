@@ -1538,9 +1538,9 @@ projectStatus <- function(project, silent = FALSE) {
       cli::cli_warn(
         c(
           "Cannot compare the Excel configuration files to the project.",
-          "x" = conditionMessage(compareError),
           "i" = "The {.field excel_in_sync} status is reported as {.val NA}."
-        )
+        ),
+        parent = compareError
       )
     }
     return(invisible(result))

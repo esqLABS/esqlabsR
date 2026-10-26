@@ -44,5 +44,6 @@
     Condition
       Warning:
       x Failed to save results for scenario "testscenario".
-      i `<caller>`: argument "simulation" is of type <character>, but expected <Simulation>!
+      Caused by error in `<caller>`:
+      ! `<caller>`: argument "simulation" is of type <character>, but expected <Simulation>!
 

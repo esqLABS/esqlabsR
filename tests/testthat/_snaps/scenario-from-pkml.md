@@ -22,7 +22,9 @@
       outputPaths = c(aciclovir_pvb = "Organism|Some|Other|Path"))
     Condition
       Error in `.resolveScenarioOutputPaths()`:
-      ! x Output path id "aciclovir_pvb" already maps to a different path. i Existing: "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)" i Requested: "Organism|Some|Other|Path"
+      x Output path id "aciclovir_pvb" already maps to a different path.
+      i Existing: "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
+      i Requested: "Organism|Some|Other|Path"
 
 # unknown parameterSets abort and leave the project unchanged
 
@@ -108,7 +110,8 @@
         scenarios = "seeded"))
     Condition
       Warning:
-      ! The project has no simulationsFolder; storing an absolute model file path. i Set a simulationsFolder on the project so the scenario stores a portable relative path ('data/TestProject/Models/Simulations/Aciclovir.pkml').
+      ! The project has no simulationsFolder; storing an absolute model file path.
+      i Set a simulationsFolder on the project so the scenario stores a portable relative path ('data/TestProject/Models/Simulations/Aciclovir.pkml').
 
 # inconsistent vector argument lengths abort
 
@@ -117,5 +120,7 @@
       scenarios = c("A", "B", "C"))
     Condition
       Error in `.getScenarioCount()`:
-      ! Inconsistent vector argument lengths: x All vector arguments with length > 1 must have the same length i Found lengths: "2, 3"
+      ! Inconsistent vector argument lengths:
+      x All vector arguments with length > 1 must have the same length
+      i Found lengths: "2, 3"
 
