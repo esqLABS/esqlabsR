@@ -322,3 +322,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-10-26 11:08: The Design scenarios article shows that a scenario follows setOutputPath() at once, with no save or reload.
 - 2026-10-26 11:08: The Run simulations article says the reload needs both saved files and names them when one is missing.
 - 2026-10-26 11:08: The introduction slides load the project after importProjectFromExcel(), which returns a path.
+- 2026-10-26 12:19: The closing warning of runScenarios(stopIfFails = FALSE) names only the scenarios that produced no results, not every requested one. (#1329)

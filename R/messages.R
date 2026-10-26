@@ -38,6 +38,34 @@ messages <- ospsuite.utils::messages
 # (the `validationObservedData*` entries below); the remaining validators are
 # not yet migrated, so not all validation wording lives here.
 
+#' Format a catalog message that has bullets
+#'
+#' Formats each element of `...` with `cli::format_inline()` in `.envir`, keeps
+#' the names (`"i"`, `"x"`, `"!"`, `"*"`), and doubles every `{` and `}` in the
+#' result so the raising `cli_abort()` / `cli_warn()` / `cli_inform()` prints
+#' them as they are.
+#'
+#' @param ... Character templates, named by their bullet type.
+#' @param .envir Environment to interpolate the templates in.
+#' @returns A named character vector to pass to `cli_abort()`, `cli_warn()` or
+#'   `cli_inform()`.
+#' @keywords internal
+#' @noRd
+cliBullets <- function(..., .envir = parent.frame()) {
+  templates <- c(...)
+  formatted <- vapply(
+    templates,
+    cli::format_inline,
+    character(1),
+    .envir = .envir,
+    USE.NAMES = FALSE
+  )
+  formatted <- gsub("{", "{{", formatted, fixed = TRUE)
+  formatted <- gsub("}", "}}", formatted, fixed = TRUE)
+  names(formatted) <- names(templates)
+  formatted
+}
+
 # Parameters structure####
 messages$wrongXLSStructure <- function(
   filePath,
@@ -1417,7 +1445,7 @@ messages$quantityPathsNotFound <- function(simulationName, missingPaths) {
 # eighty, and the returned list gives every scenario an entry whatever happened
 # to it, so this is what tells the caller which ones to leave out.
 messages$scenariosSkipped <- function(scenarioNames) {
-  c(
+  cliBullets(
     "!" = "{length(scenarioNames)} of the scenarios produced no results: \\
     {.val {scenarioNames}}.",
     "i" = "Their entries carry {.code results = NULL}; select the ones that ran \\
