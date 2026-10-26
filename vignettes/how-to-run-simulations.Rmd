@@ -126,6 +126,8 @@ reloaded <- loadScenarioResults(
 
 The reloaded Scenario Result has the same structure as the one `runScenarios()` returns, so any code that works on one works on the other.
 
+The reload needs both the `.csv` and the `.pkml` file of each scenario. `saveScenarioResults()` writes the `.pkml` file by default, so do not pass `saveSimulationsToPKML = FALSE` for results you want to reload. If a file is missing, `loadScenarioResults()` stops before it loads any scenario, and the error names the scenario and the missing files.
+
 ## Change parameter values for one run
 
 Pass `customParams` to change parameter values for one run. The values are set after all parameter sets of the scenario, so they replace the values the parameter sets give. They apply to every scenario in the run.

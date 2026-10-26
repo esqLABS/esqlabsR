@@ -320,3 +320,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-10-26 10:31: Removed reloadProject() and Project$reload(); load the project again with loadProject() instead.
 - 2026-10-26 10:49: Dropped the leftover project$reload() mention from NEWS.
 - 2026-10-26 11:08: The Design scenarios article shows that a scenario follows setOutputPath() at once, with no save or reload.
+- 2026-10-26 11:08: The Run simulations article says the reload needs both saved files and names them when one is missing.
