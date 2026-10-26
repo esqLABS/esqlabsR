@@ -565,7 +565,8 @@ working tree.
 
 ```{r, eval = FALSE}
 # Excel -> working tree project
-project <- importProjectFromExcel("Project.xlsx")
+jsonPath <- importProjectFromExcel("Project.xlsx")
+project <- loadProject(jsonPath)
 
 # Project -> Excel mirror
 exportProjectToExcel(project, outputDir = "excel_export")
