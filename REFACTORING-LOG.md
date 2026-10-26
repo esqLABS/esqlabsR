@@ -319,3 +319,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-10-26 09:48: loadScenarioResults() checks for the saved pkml and csv files before it loads them, and names the scenario, the missing files, and the folder when one is missing. (#1331)
 - 2026-10-26 10:31: Removed reloadProject() and Project$reload(); load the project again with loadProject() instead.
 - 2026-10-26 10:49: Dropped the leftover project$reload() mention from NEWS.
+- 2026-10-26 11:08: The Design scenarios article shows that a scenario follows setOutputPath() at once, with no save or reload.

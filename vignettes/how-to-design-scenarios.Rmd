@@ -313,6 +313,12 @@ setOutputPath(
 project$definitions$outputPaths[["aciclovir_kidney"]]
 ```
 
+A scenario refers to an output path by its id, so the new path reaches every scenario that uses `aciclovir_kidney`, with no save or reload. The next run of `aciclovir_iv_ckd` records the new path:
+
+```{r}
+project$definitions$scenarios[["aciclovir_iv_ckd"]]$outputPaths
+```
+
 ## Renaming, duplicating, and removing scenarios
 
 A common move is to take a working scenario as a template for a new scenario. `duplicateScenario()` makes an independent copy under a new id:
