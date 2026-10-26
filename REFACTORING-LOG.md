@@ -318,3 +318,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-10-23 15:42: loadScenarioResults() no longer takes a project and returns every output path saved in the csv, so a reload matches the files on disk. (#1335)
 - 2026-10-26 09:48: loadScenarioResults() checks for the saved pkml and csv files before it loads them, and names the scenario, the missing files, and the folder when one is missing. (#1331)
 - 2026-10-26 10:31: Removed reloadProject() and Project$reload(); load the project again with loadProject() instead.
+- 2026-10-26 10:49: Dropped the leftover project$reload() mention from NEWS.
