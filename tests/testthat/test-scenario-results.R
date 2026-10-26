@@ -1,11 +1,51 @@
-test_that("loadScenarioResults throws an error when files don't exist", {
-  nonExistentFolder <- file.path(tempdir(), "non-existent-folder")
+test_that("loadScenarioResults reports a results folder that does not exist", {
+  withr::local_dir(withr::local_tempdir())
+
+  expect_snapshot(
+    loadScenarioResults("testscenario", resultsFolder = "no-such-folder"),
+    error = TRUE
+  )
+})
+
+test_that("loadScenarioResults names the scenario and the files missing from the folder", {
+  withr::local_dir(withr::local_tempdir())
+  dir.create("results")
+
+  expect_snapshot(
+    loadScenarioResults("testscenario", resultsFolder = "results"),
+    error = TRUE
+  )
+})
+
+test_that("loadScenarioResults checks every scenario before loading any", {
+  withr::local_dir(withr::local_tempdir())
+  dir.create("results")
+  # `first` has a csv but no pkml, as saveScenarioResults() leaves it with
+  # `saveSimulationsToPKML = FALSE`.
+  file.create(file.path("results", "first.csv"))
+
+  expect_snapshot(
+    loadScenarioResults("first", resultsFolder = "results"),
+    error = TRUE
+  )
+  # Once `first` has both files, they are empty and would fail to load, so an
+  # error about `Group/B` shows that no load ran before the check. It names
+  # `Group/B` as given, not by its file-safe form.
+  file.create(file.path("results", "first.pkml"))
+  expect_snapshot(
+    loadScenarioResults(c("first", "Group/B"), resultsFolder = "results"),
+    error = TRUE
+  )
+})
+
+test_that("loadScenarioResults error survives braces in the scenario name", {
+  withr::local_dir(withr::local_tempdir())
+  dir.create("results")
 
   expect_error(
-    loadScenarioResults(
-      scenarios = "testscenario",
-      resultsFolder = nonExistentFolder
-    )
+    loadScenarioResults("dose {high}", resultsFolder = "results"),
+    "dose {high}.pkml",
+    fixed = TRUE
   )
 })
 

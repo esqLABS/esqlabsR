@@ -118,7 +118,9 @@ saveScenarioResults <- function(
 #'
 #' @details This function requires simulation results AND the corresponding
 #' simulation files being located in the same folder (`resultsFolder`) and have
-#' the names of the scenarios.
+#' the names of the scenarios. It checks that `<scenario>.pkml` and
+#' `<scenario>.csv` exist for every scenario before it loads any of them, and
+#' stops with an error that names the scenario and the missing files.
 #'
 #' @returns A named list keyed by scenario name. Each entry mirrors the record
 #' produced by `runScenarios()`: `simulation` (the initialized `Simulation`
@@ -143,6 +145,29 @@ saveScenarioResults <- function(
 #' )
 #' }
 loadScenarioResults <- function(scenarios, resultsFolder) {
+  # Check every expected file before loading any. The backend fails on a
+  # missing file with a raw .NET exception that names neither the scenario nor
+  # the files this function expects.
+  if (!dir.exists(resultsFolder)) {
+    cli::cli_abort(messages$scenarioResultsFolderNotFound(resultsFolder))
+  }
+  for (scenarioName in scenarios) {
+    expectedFiles <- paste0(
+      gsub("[\\\\/]", "_", scenarioName),
+      c(".pkml", ".csv")
+    )
+    missingFiles <- expectedFiles[
+      !file.exists(file.path(resultsFolder, expectedFiles))
+    ]
+    if (length(missingFiles) > 0L) {
+      cli::cli_abort(messages$scenarioResultFilesNotFound(
+        scenarioName,
+        missingFiles,
+        resultsFolder
+      ))
+    }
+  }
+
   simulatedScenariosResults <- list()
   for (i in seq_along(scenarios)) {
     scenarioName <- scenarios[[i]]

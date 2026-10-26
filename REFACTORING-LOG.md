@@ -316,3 +316,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-10-23 15:00: The parameter structure length error is one line that names only the accepted lengths, so a single path no longer reads "length 1 or 1".
 - 2026-10-23 14:56: A scenario keeps only the ids of its output paths and looks up their paths each time it is read, so setOutputPath() and addOutputPath(overwrite = TRUE) reach the scenarios already in the session, and a scenario still using a removed output path shows it as unknown. (#1304)
 - 2026-10-23 15:42: loadScenarioResults() no longer takes a project and returns every output path saved in the csv, so a reload matches the files on disk. (#1335)
+- 2026-10-26 09:48: loadScenarioResults() checks for the saved pkml and csv files before it loads them, and names the scenario, the missing files, and the folder when one is missing. (#1331)

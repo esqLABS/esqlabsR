@@ -27,7 +27,9 @@ Load simulated scenarios from csv and pkml.
 \details{
 This function requires simulation results AND the corresponding
 simulation files being located in the same folder (\code{resultsFolder}) and have
-the names of the scenarios.
+the names of the scenarios. It checks that \verb{<scenario>.pkml} and
+\verb{<scenario>.csv} exist for every scenario before it loads any of them, and
+stops with an error that names the scenario and the missing files.
 }
 \examples{
 \dontrun{

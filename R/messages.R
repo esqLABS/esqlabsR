@@ -1457,6 +1457,32 @@ messages$scenarioResultNameCollision <- function(colliding) {
     "i" = "Rename the scenarios so their file-safe names differ before saving."
   ))
 }
+
+# Both entries below return the raw template: a scenario name or folder path
+# may contain `{` or `}`, so the raising `cli_abort()` interpolates them once
+# from its own frame.
+messages$scenarioResultsFolderNotFound <- function(resultsFolder) {
+  c(
+    "x" = "Cannot load scenario results: the folder {.path {resultsFolder}} \\
+    does not exist.",
+    "i" = "Pass the folder that {.fn saveScenarioResults} returned."
+  )
+}
+
+messages$scenarioResultFilesNotFound <- function(
+  scenarioName,
+  missingFiles,
+  resultsFolder
+) {
+  c(
+    "x" = "Cannot load results for scenario {.val {scenarioName}}: \\
+    {.file {missingFiles}} {?is/are} not in the results folder.",
+    "i" = "Looked in {.path {resultsFolder}}.",
+    "i" = "Check the scenario name and the folder. {.fn saveScenarioResults} \\
+    writes the {.file .pkml} file only when {.arg saveSimulationsToPKML} is \\
+    {.code TRUE}."
+  )
+}
 # sensitivity-calculation####
 messages$noPKDataToWrite <- function(saOutputFilePath) {
   cliFormat(
