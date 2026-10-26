@@ -1437,7 +1437,7 @@ exportProjectToExcel <- function(
 #'   the `status` field of [Project]).
 #' @export
 #' @family projectPersistence
-#' @seealso [saveProject()], [reloadProject()], [exportProjectToExcel()],
+#' @seealso [saveProject()], [exportProjectToExcel()],
 #'   [importProjectFromExcel()].
 #' @examples
 #' \dontrun{

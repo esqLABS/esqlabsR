@@ -43,7 +43,6 @@ Other projectPersistence:
 \code{\link[=initProject]{initProject()}},
 \code{\link[=loadProject]{loadProject()}},
 \code{\link[=projectStatus]{projectStatus()}},
-\code{\link[=reloadProject]{reloadProject()}},
 \code{\link[=restoreProject]{restoreProject()}},
 \code{\link[=saveProject]{saveProject()}},
 \code{\link[=snapshotProject]{snapshotProject()}}

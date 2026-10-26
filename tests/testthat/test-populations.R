@@ -844,14 +844,6 @@ test_that("removePopulation drops the injected object from the runtime store", {
   expect_false("injected" %in% names(project$definitions$populations))
 })
 
-test_that("reloadProject drops a session-injected Population", {
-  project <- testProject()
-  pop <- .injectablePopulation()
-  suppressMessages(addPopulation(project, "injected", pop))
-  suppressMessages(reloadProject(project))
-  expect_null(project$getProgrammaticPopulation("injected"))
-})
-
 # An id is canonicalized to lowercase while the csv file keeps the case its
 # author gave it, so deriving a literal `<id>.csv` resolved only on a
 # case-insensitive filesystem and failed on Linux (#1213).

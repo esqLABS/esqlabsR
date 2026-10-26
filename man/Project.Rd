@@ -12,7 +12,8 @@ Changes you make to a loaded project — with \code{addScenario()},
 \code{setIndividual()}, \code{removeParameterSet()}, and the other add/set/remove
 functions — live only in your R session until you write them to the
 project files with \code{\link[=saveProject]{saveProject()}}. This makes a loaded project a safe
-place to experiment: discard unsaved changes with \code{\link[=reloadProject]{reloadProject()}}, or
+place to experiment: discard unsaved changes by loading the project
+again with \code{\link[=loadProject]{loadProject()}}, or
 use \code{\link[=snapshotProject]{snapshotProject()}} / \code{\link[=restoreProject]{restoreProject()}} to set a save-point and
 return to it later.
 
@@ -185,7 +186,6 @@ differences, empty when everything is in sync). The same information
     \item \href{#method-Project-addPIOutputMapping}{\code{Project$addPIOutputMapping()}}
     \item \href{#method-Project-removePIOutputMapping}{\code{Project$removePIOutputMapping()}}
     \item \href{#method-Project-save}{\code{Project$save()}}
-    \item \href{#method-Project-reload}{\code{Project$reload()}}
     \item \href{#method-Project-validate}{\code{Project$validate()}}
     \item \href{#method-Project-ensureValid}{\code{Project$ensureValid()}}
     \item \href{#method-Project-rawFilePaths}{\code{Project$rawFilePaths()}}
@@ -1205,19 +1205,6 @@ belongs to. See \code{\link[=addPIParameter]{addPIParameter()}}.}
   \subsection{Usage}{
     \if{html}{\out{<div class="r">}}
     \preformatted{Project$save()}
-    \if{html}{\out{</div>}}
-  }
-}
-
-\if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-Project-reload"></a>}}
-\if{latex}{\out{\hypertarget{method-Project-reload}{}}}
-\subsection{\code{Project$reload()}}{
-  Discard in-memory edits and re-read from disk. See
-\code{\link[=reloadProject]{reloadProject()}}.
-  \subsection{Usage}{
-    \if{html}{\out{<div class="r">}}
-    \preformatted{Project$reload()}
     \if{html}{\out{</div>}}
   }
 }

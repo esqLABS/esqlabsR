@@ -507,7 +507,7 @@ test_that("saveProject persists a programmatic DataSet to PKML and it round-trip
   )))
 
   # The data survives a reload (fresh session, empty runtime store).
-  reloadProject(project)
+  project <- loadProject(project$info$projectFilePath)
   loaded <- loadObservedData(project)
   expect_true("RoundTripSet" %in% names(loaded))
   # A PKML round-trip converts through base units, so values return within
@@ -637,28 +637,6 @@ test_that("a programmatic name equal to an existing file basename saves cleanly"
     project$paths$dataFolder,
     "Aciclovir_TimeValuesData.xlsx.pkml"
   )))
-})
-
-# A programmatic DataSet is session-only runtime state, not part of the on-disk
-# tree, so reloadProject() (which re-reads the tree) must drop it: otherwise the
-# reloaded section loses the sentinel but loadObservedData() would still return
-# the discarded runtime dataset.
-test_that("reloadProject clears a session-only programmatic DataSet", {
-  project <- testProject()
-  state <- .projectSeam(project)
-  ds <- ospsuite::DataSet$new(name = "SessionOnlySet")
-  ds$setValues(xValues = c(1, 2), yValues = c(3, 4))
-
-  addObservedData(project, ds)
-  expect_true("SessionOnlySet" %in% names(state$.programmaticDataSets))
-  expect_true("SessionOnlySet" %in% names(loadObservedData(project)))
-
-  reloadProject(project)
-
-  # The reload returned the project to the on-disk state: the runtime store is
-  # cleared and the discarded dataset no longer surfaces via loadObservedData().
-  expect_false("SessionOnlySet" %in% names(state$.programmaticDataSets))
-  expect_false("SessionOnlySet" %in% names(loadObservedData(project)))
 })
 
 # removeObservedData write-through ----

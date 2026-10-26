@@ -31,15 +31,6 @@
       Error in `initProject()`:
       ! `name` must be a single non-NA string.
 
-# reloadProject() on an unbound in-memory project aborts
-
-    Code
-      reloadProject(project)
-    Condition
-      Error in `reloadProject()`:
-      ! This project does not have a project folder on disk, so there is nothing to reload.
-      i `reloadProject()` re-reads the project files from disk; this project was not loaded from a folder.
-
 # initProject does not scaffold over an unmigrated legacy Excel project
 
     Code

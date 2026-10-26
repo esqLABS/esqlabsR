@@ -20,7 +20,7 @@ restore into a fresh folder only. If \code{TRUE}, the contents of \code{dir} are
 replaced with the snapshot. When \code{dir} held an esqlabsR project, a
 warning reminds you that a \code{Project} you loaded from \code{dir} earlier no
 longer matches the files: continue with the returned project, or refresh
-the old one with \code{\link[=reloadProject]{reloadProject()}}. The recommended form is
+the old one by loading it again with \code{\link[=loadProject]{loadProject()}}. The recommended form is
 \code{p <- restoreProject(snap, dir, overwrite = TRUE)}.}
 
 \item{name}{Optional project name to give the restored project. A snapshot
@@ -71,7 +71,7 @@ snapshot <- snapshotProject(
 project <- restoreProject(snapshot, file.path(tempdir(), "restored"))
 }
 \seealso{
-\code{\link[=snapshotProject]{snapshotProject()}}, \code{\link[=loadProject]{loadProject()}}, \code{\link[=reloadProject]{reloadProject()}}.
+\code{\link[=snapshotProject]{snapshotProject()}}, \code{\link[=loadProject]{loadProject()}}.
 
 Other projectPersistence:
 \code{\link[=exampleProjectPath]{exampleProjectPath()}},
@@ -81,7 +81,6 @@ Other projectPersistence:
 \code{\link[=isProjectInitialized]{isProjectInitialized()}},
 \code{\link[=loadProject]{loadProject()}},
 \code{\link[=projectStatus]{projectStatus()}},
-\code{\link[=reloadProject]{reloadProject()}},
 \code{\link[=saveProject]{saveProject()}},
 \code{\link[=snapshotProject]{snapshotProject()}}
 }

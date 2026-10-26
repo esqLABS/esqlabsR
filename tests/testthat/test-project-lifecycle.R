@@ -425,49 +425,6 @@ test_that("saveProject() never warns about a stale Excel side-car", {
   expect_no_warning(saveProject(project))
 })
 
-# --- reloadProject() ----------------------------------------------------------
-
-test_that("reloadProject() discards in-memory edits and clears the dirty bit", {
-  project <- testProject()
-
-  addScenario(project, "willbediscarded", modelFile = "Aciclovir.pkml")
-  expect_true("willbediscarded" %in% names(project$definitions$scenarios))
-  expect_true(.isModified(project))
-
-  reloadProject(project)
-
-  expect_false("willbediscarded" %in% names(project$definitions$scenarios))
-  expect_false(.isModified(project))
-  expect_true(project$status$tree_in_sync)
-})
-
-test_that("a failed reloadProject() leaves the project's in-memory state untouched", {
-  project <- testProject()
-  addScenario(project, "willsurvive", modelFile = "Aciclovir.pkml")
-  expect_true(.isModified(project))
-
-  # `.loadProjectTree()` reads and validates the whole container before
-  # `.applyLoadedSections()` commits anything, so a corrupt container aborts
-  # before any private field is touched: nothing is half-read.
-  writeLines('{"schemaVersion": "99.0"}', project$info$projectFilePath)
-
-  expect_error(reloadProject(project), "Unsupported schemaVersion")
-  expect_true("willsurvive" %in% names(project$definitions$scenarios))
-  expect_true(.isModified(project))
-})
-
-test_that("a clean reloadProject() is silent", {
-  project <- testProject()
-  expect_no_message(reloadProject(project))
-})
-
-test_that("reloadProject() on an unbound in-memory project aborts", {
-  project <- Project$new()
-  .setInfoField(project, "schemaVersion", "2.0")
-
-  expect_snapshot(reloadProject(project), error = TRUE)
-})
-
 test_that("exampleProject() succeeds", {
   path <- exampleProjectPath()
   expect_true(file.exists(path))

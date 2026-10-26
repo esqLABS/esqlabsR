@@ -7,7 +7,7 @@
 # and `restoreProject()` materializes such a file back into a full
 # `definitions/<kind>/` tree project. The two are inverse operations
 # (snapshot then restore then snapshot is a fixed point). They sit alongside the
-# in-place lifecycle verbs (`loadProject()` / `saveProject()` / `reloadProject()`
+# in-place lifecycle verbs (`loadProject()` / `saveProject()`
 # in `R/project-lifecycle.R`); the tree-format machinery they drive
 # (`.writeProjectTree()`, the per-kind serialize/parse specs) lives in
 # `R/definition-files.R`.
@@ -18,7 +18,8 @@
 #'   single self-contained `.esqlabsR` file. Unsaved changes are included, so
 #'   the snapshot captures the project as it is right now — which also makes
 #'   it a good way to set an experiment aside: snapshot it, then go back to
-#'   the saved state with [reloadProject()]. The file content is JSON; the
+#'   the saved state by loading the project again with
+#'   [loadProject()]. The file content is JSON; the
 #'   `.esqlabsR` extension simply marks the file as a portable snapshot, so
 #'   it is not confused with the `Project.json` file of a project folder.
 #'
@@ -135,14 +136,14 @@ snapshotProject <- function(
 #'   replaced with the snapshot. When `dir` held an esqlabsR project, a
 #'   warning reminds you that a `Project` you loaded from `dir` earlier no
 #'   longer matches the files: continue with the returned project, or refresh
-#'   the old one with [reloadProject()]. The recommended form is
+#'   the old one by loading it again with [loadProject()]. The recommended form is
 #'   `p <- restoreProject(snap, dir, overwrite = TRUE)`.
 #'
 #' @returns A freshly loaded `Project` working from `dir`, with no unsaved
 #'   changes.
 #' @export
 #' @family projectPersistence
-#' @seealso [snapshotProject()], [loadProject()], [reloadProject()].
+#' @seealso [snapshotProject()], [loadProject()].
 #' @examples
 #' # Write a snapshot, then recreate a project folder from it.
 #' src <- file.path(tempdir(), "restore-src")

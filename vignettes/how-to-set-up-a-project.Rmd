@@ -42,7 +42,7 @@ Each definition section is a named list keyed by id:
 project$definitions$scenarios
 ```
 
-The sections are read-only. To change a definition, use the `add*`, `set*`, or `remove*` functions (see `vignette("how-to-design-scenarios")`), or edit its JSON file directly and then read the change in with `reloadProject()`, which also discards any edits you have not saved. When you edit a file by hand, keep the id lowercase and the same as the file name (see "Ids are always lowercase" below).
+The sections are read-only. To change a definition, use the `add*`, `set*`, or `remove*` functions (see `vignette("how-to-design-scenarios")`), or edit its JSON file directly and then read the change in by loading the project again with `loadProject()`, which also discards any edits you have not saved. When you edit a file by hand, keep the id lowercase and the same as the file name (see "Ids are always lowercase" below).
 
 If `loadProject()` spots a reference to something that does not exist, such as a scenario pointing at an individual that is not defined, it warns immediately but still returns the project, so you can inspect and repair it. For a full check of the project, run `validateProject()` (see `vignette("how-to-validate-a-project")`).
 
@@ -118,10 +118,10 @@ saveProject(editable)
 
 ## Discard unsaved edits
 
-`reloadProject()` is the undo. It throws away every unsaved change and re-reads the project from disk, in place, which makes it safe to try a few variants of a scenario and then back out of all of them.
+To undo every unsaved change, load the project again from disk. This makes it safe to try a few variants of a scenario and then back out of all of them.
 
 ```{r, eval = FALSE}
-reloadProject(editable)
+editable <- loadProject(editable$info$projectFilePath)
 ```
 
 ## Edit a project in Excel
@@ -226,7 +226,7 @@ shared
 
 The restored folder holds only `Project.json` and the `definitions/` folder. Before you run the project, copy the model, data, and population files into it, in the same subfolders as in the original project; `validateProject()` lists any file it cannot find.
 
-By default `restoreProject()` refuses any folder that is not empty, not just one that already holds a project, so a stray README or CSV is enough to stop it. Pass `overwrite = TRUE` to roll an existing project folder back to the snapshot. Only `Project.json` and the definitions are replaced; your model and data files stay. A project you loaded from that folder earlier is then out of date: continue with the project `restoreProject()` returns, or refresh the old one with `reloadProject()`.
+By default `restoreProject()` refuses any folder that is not empty, not just one that already holds a project, so a stray README or CSV is enough to stop it. Pass `overwrite = TRUE` to roll an existing project folder back to the snapshot. Only `Project.json` and the definitions are replaced; your model and data files stay. A project you loaded from that folder earlier is then out of date: continue with the project `restoreProject()` returns, or load the old one again with `loadProject()`.
 
 ## Where to go next
 

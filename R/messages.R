@@ -247,13 +247,6 @@ messages$saveProjectNoTree <- function() {
   )
 }
 
-messages$reloadProjectNoTree <- function() {
-  c(
-    "This project does not have a project folder on disk, so there is nothing to reload.",
-    "i" = "{.fn reloadProject} re-reads the project files from disk; this project was not loaded from a folder."
-  )
-}
-
 messages$projectAlreadyUpToDate <- function() {
   "Project is already up to date; nothing to save."
 }
@@ -338,7 +331,7 @@ messages$restoreOverwroteTree <- function(dir) {
     "!" = "Project objects loaded from this folder before the restore still \\
     contain the old project.",
     "i" = "Continue with the project returned by {.fn restoreProject}, or \\
-    call {.fn reloadProject} on the old object."
+    load it again with {.fn loadProject}."
   )
 }
 

@@ -42,7 +42,7 @@ project$status # the same information as a structured list
 }
 }
 \seealso{
-\code{\link[=saveProject]{saveProject()}}, \code{\link[=reloadProject]{reloadProject()}}, \code{\link[=exportProjectToExcel]{exportProjectToExcel()}},
+\code{\link[=saveProject]{saveProject()}}, \code{\link[=exportProjectToExcel]{exportProjectToExcel()}},
 \code{\link[=importProjectFromExcel]{importProjectFromExcel()}}.
 
 Other projectPersistence:
@@ -52,7 +52,6 @@ Other projectPersistence:
 \code{\link[=initProject]{initProject()}},
 \code{\link[=isProjectInitialized]{isProjectInitialized()}},
 \code{\link[=loadProject]{loadProject()}},
-\code{\link[=reloadProject]{reloadProject()}},
 \code{\link[=restoreProject]{restoreProject()}},
 \code{\link[=saveProject]{saveProject()}},
 \code{\link[=snapshotProject]{snapshotProject()}}
