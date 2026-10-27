@@ -49,7 +49,7 @@ saveProject(project) # clean save: "Project is already up to date; ..."
 }
 }
 \seealso{
-\code{\link[=loadProject]{loadProject()}}, \code{\link[=reloadProject]{reloadProject()}}, \code{\link[=snapshotProject]{snapshotProject()}},
+\code{\link[=loadProject]{loadProject()}}, \code{\link[=snapshotProject]{snapshotProject()}},
 \code{\link[=restoreProject]{restoreProject()}}, \code{\link[=projectStatus]{projectStatus()}}.
 
 Other projectPersistence:
@@ -60,7 +60,6 @@ Other projectPersistence:
 \code{\link[=isProjectInitialized]{isProjectInitialized()}},
 \code{\link[=loadProject]{loadProject()}},
 \code{\link[=projectStatus]{projectStatus()}},
-\code{\link[=reloadProject]{reloadProject()}},
 \code{\link[=restoreProject]{restoreProject()}},
 \code{\link[=snapshotProject]{snapshotProject()}}
 }

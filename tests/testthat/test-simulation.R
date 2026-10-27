@@ -64,6 +64,47 @@ test_that("`initializeSimulation()` does not fail when additionalInitialConditio
   expect_true(isOfType(simulationResults, "SimulationResults"))
 })
 
+test_that("`initializeSimulation()` stops on additionalParams values of another length", {
+  simulation <- loadSimulation(system.file(
+    "extdata",
+    "simple.pkml",
+    package = "ospsuite"
+  ))
+  volumeBefore <- getParameter("Organism|Liver|Volume", simulation)$value
+  expect_snapshot(
+    initializeSimulation(
+      simulation,
+      additionalParams = list(
+        paths = c("Organism|Liver|Volume", "Organism|Volume"),
+        values = c(2, 0.5, 9),
+        units = "l"
+      )
+    ),
+    error = TRUE
+  )
+  expect_equal(
+    getParameter("Organism|Liver|Volume", simulation)$value,
+    volumeBefore
+  )
+})
+
+test_that("`initializeSimulation()` applies a single value to every path", {
+  simulation <- loadSimulation(system.file(
+    "extdata",
+    "simple.pkml",
+    package = "ospsuite"
+  ))
+  paths <- c("Organism|Liver|Volume", "Organism|Volume")
+  initializeSimulation(
+    simulation,
+    additionalParams = list(units = "l", values = 0.5, paths = paths)
+  )
+  expect_equal(
+    ospsuite::getQuantityValuesByPath(paths, simulation, units = c("l", "l")),
+    c(0.5, 0.5)
+  )
+})
+
 test_that("`initializeSimulation()` names every path the model lacks and applies none", {
   # The backend names only the first path it cannot find. A misspelled
   # parameter and a misspelled molecule are both named, and the existing

@@ -170,6 +170,80 @@ test_that("setOutputPath stays in memory until saveProject()", {
   expect_equal(reloaded$definitions$outputPaths[[id]], before)
 })
 
+# Scenarios that record an output-path id ----
+
+# The output paths a run of `scenario` records: the columns of its output
+# values other than the individual id and the time.
+.recordedOutputPaths <- function(project, scenario) {
+  results <- runScenarios(project, scenarios = scenario)
+  setdiff(
+    names(results[[scenario]]$outputValues$data),
+    c("IndividualId", "Time")
+  )
+}
+
+kidneyPath <- "Organism|Kidney|Urine|Aciclovir|Concentration"
+
+test_that("setOutputPath reaches a scenario that records the id, in the session and after a reload", {
+  project <- testProject()
+  setOutputPath(project, "aciclovir_pvb", kidneyPath)
+
+  sc <- project$definitions$scenarios[["testscenario"]]
+  expect_identical(sc$outputPaths, c(aciclovir_pvb = kidneyPath))
+  expect_output(print(sc), kidneyPath, fixed = TRUE)
+  inSession <- .recordedOutputPaths(project, "testscenario")
+  expect_identical(inSession, kidneyPath)
+
+  saveProject(project)
+  reloaded <- loadProject(project$info$projectFilePath)
+  expect_identical(.recordedOutputPaths(reloaded, "testscenario"), inSession)
+})
+
+test_that("addOutputPath(overwrite = TRUE) reaches a scenario that records the id, in the session and after a reload", {
+  project <- testProject()
+  addOutputPath(project, "aciclovir_pvb", kidneyPath, overwrite = TRUE)
+
+  sc <- project$definitions$scenarios[["testscenario"]]
+  expect_identical(sc$outputPaths, c(aciclovir_pvb = kidneyPath))
+  expect_output(print(sc), kidneyPath, fixed = TRUE)
+  inSession <- .recordedOutputPaths(project, "testscenario")
+  expect_identical(inSession, kidneyPath)
+
+  saveProject(project)
+  reloaded <- loadProject(project$info$projectFilePath)
+  expect_identical(.recordedOutputPaths(reloaded, "testscenario"), inSession)
+})
+
+test_that("removeOutputPath leaves a scenario that still records the id with no path, and the run stops", {
+  project <- testProject()
+  # The id is also used by a parameter-identification task, which warns too.
+  expect_match(
+    capture_warnings(removeOutputPath(project, "aciclovir_pvb")),
+    "still referenced by 4 scenarios",
+    all = FALSE
+  )
+
+  sc <- project$definitions$scenarios[["testscenario"]]
+  expect_identical(sc$outputPaths, c(aciclovir_pvb = NA_character_))
+  expect_output(
+    print(sc),
+    "aciclovir_pvb (unknown output path)",
+    fixed = TRUE
+  )
+
+  results <- validateProject(project)
+  expect_true(results$crossReferences$hasCriticalErrors())
+  expect_match(
+    vapply(results$crossReferences$critical_errors, `[[`, "", "message"),
+    "references undefined outputPaths: aciclovir_pvb",
+    all = FALSE
+  )
+  expect_error(
+    runScenarios(project, scenarios = "testscenario"),
+    "critical validation error"
+  )
+})
+
 # Vectorized authoring ----
 
 test_that("addOutputPath recycles a single path to every id", {

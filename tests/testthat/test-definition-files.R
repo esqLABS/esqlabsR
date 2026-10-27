@@ -93,7 +93,7 @@ test_that("an unknown outputPathId is a lazy referential finding, not a load err
   # referential check at validateProject().
   scenarios <- .getSection(project, "scenarios")
   sc <- scenarios[["testscenario"]]
-  sc$outputPaths <- c(sc$outputPaths, Ghost = NA_character_)
+  sc$outputPaths <- c(sc$outputPaths, "Ghost")
   scenarios[["testscenario"]] <- sc
   # Write-through accepts it (structurally valid); referential check is lazy.
   expect_no_error(.setSection(project, "scenarios", scenarios))

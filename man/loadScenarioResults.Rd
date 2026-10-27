@@ -4,27 +4,20 @@
 \alias{loadScenarioResults}
 \title{Load simulated scenarios from csv and pkml.}
 \usage{
-loadScenarioResults(scenarios, resultsFolder, project = NULL)
+loadScenarioResults(scenarios, resultsFolder)
 }
 \arguments{
 \item{scenarios}{Names of simulated scenarios}
 
 \item{resultsFolder}{Path to the folder where simulation results as csv and
 the corresponding simulations as pkml are located.}
-
-\item{project}{Optional \code{Project} object (loaded with \code{loadProject()}) whose
-scenarios declare the output paths that were run. When supplied, the reloaded
-\code{outputValues} are restricted to each scenario's declared output paths, so
-the reloaded column set matches what \code{runScenarios()} produced. When \code{NULL}
-(default), all output paths recorded in the csv are extracted.}
 }
 \value{
 A named list keyed by scenario name. Each entry mirrors the record
 produced by \code{runScenarios()}: \code{simulation} (the initialized \code{Simulation}
 object with applied parameters), \code{results} (the \code{SimulationResults} object
-reloaded from csv), \code{outputValues} (the output values extracted for the
-scenario's declared output paths when \code{project} is supplied, otherwise for
-all recorded output paths), and \code{population} (the \code{Population} reloaded from
+reloaded from csv), \code{outputValues} (the output values of every output path
+saved in the csv), and \code{population} (the \code{Population} reloaded from
 \verb{<scenario>_population.csv} for population scenarios, or \code{NULL} for individual
 scenarios).
 }
@@ -34,7 +27,9 @@ Load simulated scenarios from csv and pkml.
 \details{
 This function requires simulation results AND the corresponding
 simulation files being located in the same folder (\code{resultsFolder}) and have
-the names of the scenarios.
+the names of the scenarios. It checks that \verb{<scenario>.pkml} and
+\verb{<scenario>.csv} exist for every scenario before it loads any of them, and
+stops with an error that names the scenario and the missing files.
 }
 \examples{
 \dontrun{
@@ -43,11 +38,10 @@ project <- loadProject("Project.json")
 simulatedScenariosResults <- runScenarios(project)
 resultsFolder <- saveScenarioResults(simulatedScenariosResults, project)
 
-# Now load the results, restricting to each scenario's declared output paths
+# Now load the results
 simulatedScenariosResults <- loadScenarioResults(
   scenarios = names(project$definitions$scenarios),
-  resultsFolder = resultsFolder,
-  project = project
+  resultsFolder = resultsFolder
 )
 }
 }

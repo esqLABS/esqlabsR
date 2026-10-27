@@ -204,11 +204,13 @@ readInitialConditionsFromXLS <- function(filePath, sheets = NULL) {
 #'
 #' @param parameters A parameter structure (a list with elements `paths`,
 #'   `values`, and `units`) or `NULL`. If `NULL`, it is treated as an empty
-#'   parameter structure.
+#'   parameter structure. `values` and `units` have one element per path, or
+#'   one element that is used for every path. Any other length stops with an
+#'   error.
 #' @param newParameters A parameter structure (a list with elements `paths`,
 #'   `values`, and `units`) or `NULL`. If `NULL`, it is treated as an empty
 #'   parameter structure whose entries will be added to or overwrite those in
-#'   `parameters`.
+#'   `parameters`. The lengths follow the same rule as in `parameters`.
 #'
 #' @details This function adds new parameter entries from `newParameters` to
 #'   `parameters`. If an entry with the same path is already present in
@@ -218,12 +220,12 @@ readInitialConditionsFromXLS <- function(filePath, sheets = NULL) {
 #' @returns Updated list of parameter paths, values, and units
 #' @export
 extendParameterStructure <- function(parameters, newParameters) {
-  .validateParametersStructure(
+  parameters <- .validateParametersStructure(
     parameterStructure = parameters,
     argumentName = "parameters",
     nullAllowed = TRUE
   )
-  .validateParametersStructure(
+  newParameters <- .validateParametersStructure(
     parameterStructure = newParameters,
     argumentName = "newParameters",
     nullAllowed = TRUE
@@ -1720,23 +1722,61 @@ removeInitialConditionEntry <- function(project, id, path) {
 #' Validate parameter list structure
 #'
 #' @param parameterStructure Object to be checked. Expected is a named list with
-#'   names "paths", "values", and "units".
+#'   the names "paths", "values", and "units", in any order. `values` and
+#'   `units` have one element per path, or one element that is used for every
+#'   path.
+#' @param argumentName Name of the checked argument, used in the error message.
+#' @param nullAllowed If `TRUE`, `NULL` is accepted and returned.
+#' @param call Environment of the function the error is attributed to.
 #'
 #' @keywords internal
-#' @returns `TRUE` if validation succeeded (silently). Throws an error otherwise.
+#' @returns The structure with its fields in the order `paths`, `values`,
+#'   `units`, and a `values` or `units` of length 1 repeated for every path
+#'   (invisibly). Throws an error if the structure is not valid.
 .validateParametersStructure <- function(
   parameterStructure,
   argumentName = NULL,
-  nullAllowed = FALSE
+  nullAllowed = FALSE,
+  call = rlang::caller_env()
 ) {
   if (is.null(parameterStructure) && nullAllowed) {
-    return(invisible(TRUE))
+    return(invisible(NULL))
   }
 
-  if (!identical(names(parameterStructure), c("paths", "values", "units"))) {
-    cli::cli_abort(messages$wrongParametersStructure(
-      argumentName = argumentName
-    ))
+  fieldNames <- c("paths", "values", "units")
+  if (
+    !is.list(parameterStructure) ||
+      length(parameterStructure) != 3L ||
+      !setequal(names(parameterStructure), fieldNames)
+  ) {
+    cli::cli_abort(
+      messages$wrongParametersStructure(argumentName = argumentName),
+      call = call
+    )
   }
-  return(invisible(TRUE))
+  parameterStructure <- parameterStructure[fieldNames]
+
+  # A shorter field would otherwise be reused from its start, giving a path
+  # the value of another one without a warning.
+  pathCount <- length(parameterStructure$paths)
+  for (field in c("values", "units")) {
+    fieldLength <- length(parameterStructure[[field]])
+    if (fieldLength == pathCount) {
+      next
+    }
+    if (fieldLength == 1L) {
+      parameterStructure[[field]] <- rep(parameterStructure[[field]], pathCount)
+      next
+    }
+    cli::cli_abort(
+      messages$parametersStructureLengthMismatch(
+        argumentName,
+        field,
+        fieldLength,
+        pathCount
+      ),
+      call = call
+    )
+  }
+  invisible(parameterStructure)
 }

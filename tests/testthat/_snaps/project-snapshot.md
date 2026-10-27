@@ -35,5 +35,5 @@
       Warning:
       Replaced the project in '<tmp-path>' with the snapshot.
       ! Project objects loaded from this folder before the restore still contain the old project.
-      i Continue with the project returned by `restoreProject()`, or call `reloadProject()` on the old object.
+      i Continue with the project returned by `restoreProject()`, or load it again with `loadProject()`.
 

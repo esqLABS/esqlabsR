@@ -311,9 +311,11 @@
       extendPopulationFromXLS(population, PopulationParameters, sheet = "UserDefinedVariability")
     Condition
       Warning:
-      x The specified excel sheet contains uncomplete row(s) i Using only complete rows to define population parameters
+      x The specified excel sheet contains uncomplete row(s)
+      i Using only complete rows to define population parameters
       Error in `extendPopulationFromXLS()`:
-      ! x The specified excel sheet does not contain any complete row * Please fill all the columns and try again.
+      x The specified excel sheet does not contain any complete row
+      * Please fill all the columns and try again.
 
 # proteinOntogenies refuses a value it cannot store, at the call
 
@@ -322,7 +324,9 @@
         proteinOntogenies = onto)
     Condition
       Error in `addPopulation()`:
-      ! `proteinOntogenies` must be a character vector of "Protein:Ontogeny" entries. x It is a <MoleculeOntogeny> object. i One entry per ontogeny, e.g. `c("CYP3A4:CYP3A4", "CYP2D6:CYP2C8")`, or the same pairs as one comma-joined string.
+      ! `proteinOntogenies` must be a character vector of "Protein:Ontogeny" entries.
+      x It is a <MoleculeOntogeny> object.
+      i One entry per ontogeny, e.g. `c("CYP3A4:CYP3A4", "CYP2D6:CYP2C8")`, or the same pairs as one comma-joined string.
 
 ---
 
@@ -330,7 +334,9 @@
       setPopulation(project, "testpopulation", proteinOntogenies = list(onto))
     Condition
       Error in `setPopulation()`:
-      ! `proteinOntogenies` must be a character vector of "Protein:Ontogeny" entries. x It is a <MoleculeOntogeny> object. i One entry per ontogeny, e.g. `c("CYP3A4:CYP3A4", "CYP2D6:CYP2C8")`, or the same pairs as one comma-joined string.
+      ! `proteinOntogenies` must be a character vector of "Protein:Ontogeny" entries.
+      x It is a <MoleculeOntogeny> object.
+      i One entry per ontogeny, e.g. `c("CYP3A4:CYP3A4", "CYP2D6:CYP2C8")`, or the same pairs as one comma-joined string.
 
 ---
 
@@ -339,7 +345,9 @@
         NA))
     Condition
       Error in `setPopulation()`:
-      ! `proteinOntogenies` must be a character vector of "Protein:Ontogeny" entries. x It is a character vector with a missing entry. i One entry per ontogeny, e.g. `c("CYP3A4:CYP3A4", "CYP2D6:CYP2C8")`, or the same pairs as one comma-joined string.
+      ! `proteinOntogenies` must be a character vector of "Protein:Ontogeny" entries.
+      x It is a character vector with a missing entry.
+      i One entry per ontogeny, e.g. `c("CYP3A4:CYP3A4", "CYP2D6:CYP2C8")`, or the same pairs as one comma-joined string.
 
 # setPopulation aborts on a non-existent population
 

@@ -55,7 +55,9 @@
       .assertAuthoringFieldsNamed(list("Rat"))
     Condition
       Error:
-      ! Every field must be named. x No name on field 1. i Pass each field as `name = value`.
+      ! Every field must be named.
+      x No name on field 1.
+      i Pass each field as `name = value`.
 
 ---
 
@@ -63,5 +65,7 @@
       .assertAuthoringFieldsNamed(list(species = "Rat", "UNKNOWN"))
     Condition
       Error:
-      ! Every field must be named. x No name on field 2. i Pass each field as `name = value`.
+      ! Every field must be named.
+      x No name on field 2.
+      i Pass each field as `name = value`.
 

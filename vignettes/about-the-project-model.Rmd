@@ -56,7 +56,7 @@ For a loaded project, **memory is the source of truth**. When you add a scenario
 The alternative, write-through (every edit immediately writing its file), is genuinely more convenient in the small. It was dropped because of what it does in the large:
 
 - **An abandoned experiment leaves debris.** Trying three variants of a scenario to see which one is right means three files on disk, two of which you now have to remember to delete.
-- **There is no way to back out.** With write-through, a mistake is already on disk by the time you notice it. With explicit save, `reloadProject()` discards every unsaved edit and re-reads from disk, which makes exploring safe.
+- **There is no way to back out.** With write-through, a mistake is already on disk by the time you notice it. With explicit save, loading the project again with `loadProject()` discards every unsaved edit, which makes exploring safe.
 - **History fills with noise.** Every intermediate state of an edit reaches the tree, so the commit that adds a scenario is indistinguishable from the ten that were on the way to it.
 
 Explicit save also makes one guarantee that write-through cannot: after `saveProject()`, the tree matches memory exactly, so `git diff` shows precisely the edits you intended and nothing else. A save with nothing to write says so and leaves the files alone, which means saving repeatedly is always safe.

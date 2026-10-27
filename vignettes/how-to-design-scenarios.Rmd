@@ -313,6 +313,12 @@ setOutputPath(
 project$definitions$outputPaths[["aciclovir_kidney"]]
 ```
 
+A scenario refers to an output path by its id, so the new path reaches every scenario that uses `aciclovir_kidney`, with no save or reload. The next run of `aciclovir_iv_ckd` records the new path:
+
+```{r}
+project$definitions$scenarios[["aciclovir_iv_ckd"]]$outputPaths
+```
+
 ## Renaming, duplicating, and removing scenarios
 
 A common move is to take a working scenario as a template for a new scenario. `duplicateScenario()` makes an independent copy under a new id:
@@ -362,7 +368,7 @@ Pass a vector of `pkmlFilePaths` to create several scenarios at once. Pass `scen
 
 ## Saving your work
 
-Every edit above exists only in your R session until you save it. Call `saveProject(project)` to write the edits to the `definitions/` folder, or `reloadProject(project)` to discard them and read the project files again. Edits you have not saved are lost when the R session ends; printing the project shows `[unsaved changes]` while there are any.
+Every edit above exists only in your R session until you save it. Call `saveProject(project)` to write the edits to the `definitions/` folder, or `project <- loadProject(project$info$projectFilePath)` to discard them and read the project files again. Edits you have not saved are lost when the R session ends; printing the project shows `[unsaved changes]` while there are any.
 
 ## Where to go next
 

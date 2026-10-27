@@ -311,3 +311,17 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-10-23 12:34: initializeSimulation() checks every parameter and initial-condition path before it applies any, and names all the missing ones with the simulation; a short customParams values or units vector is used for every path only when it has one element, any other length stops.
 - 2026-10-23 12:35: The How to run simulations article runs only one individual scenario when it is built, and describes the customParams length rule, the missing-path error, and the printed skip line as they are.
 - 2026-10-23 12:36: Brought the run-simulations article branch up to date with v6.
+- 2026-10-23 14:11: importProjectFromExcel(overwrite = TRUE) builds the project from the Excel files alone, so edits, new and deleted rows reach a project imported over itself, and definitions that exist only in the JSON files are deleted. (#1298)
+- 2026-10-23 14:24: Every parameter structure (customParams, initializeSimulation()'s additionalParams and additionalInitialConditions, extendParameterStructure()) follows one length rule, a single value or unit used for every path and any other length stopping, and its three names are accepted in any order.
+- 2026-10-23 15:00: The parameter structure length error is one line that names only the accepted lengths, so a single path no longer reads "length 1 or 1".
+- 2026-10-23 14:56: A scenario keeps only the ids of its output paths and looks up their paths each time it is read, so setOutputPath() and addOutputPath(overwrite = TRUE) reach the scenarios already in the session, and a scenario still using a removed output path shows it as unknown. (#1304)
+- 2026-10-23 15:42: loadScenarioResults() no longer takes a project and returns every output path saved in the csv, so a reload matches the files on disk. (#1335)
+- 2026-10-26 09:48: loadScenarioResults() checks for the saved pkml and csv files before it loads them, and names the scenario, the missing files, and the folder when one is missing. (#1331)
+- 2026-10-26 10:31: Removed reloadProject() and Project$reload(); load the project again with loadProject() instead.
+- 2026-10-26 10:49: Dropped the leftover project$reload() mention from NEWS.
+- 2026-10-26 11:08: The Design scenarios article shows that a scenario follows setOutputPath() at once, with no save or reload.
+- 2026-10-26 11:08: The Run simulations article says the reload needs both saved files and names them when one is missing.
+- 2026-10-26 11:08: The introduction slides load the project after importProjectFromExcel(), which returns a path.
+- 2026-10-26 12:19: The closing warning of runScenarios(stopIfFails = FALSE) names only the scenarios that produced no results, not every requested one. (#1329)
+- 2026-10-26 12:24: Bullets in error and warning messages start new lines again, and a value with braces prints as written; a nested error now shows below the warning as its cause. (#1343)
+- 2026-10-26 14:45: The name-collision error of saveScenarioResults() shows the backslash once, as "\\" instead of "\\\\".

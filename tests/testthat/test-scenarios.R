@@ -77,7 +77,7 @@ test_that("Scenario derives simulationType from populationId", {
 
 test_that(".parseScenarios returns list() for NULL input", {
   expect_identical(
-    .parseScenarios(NULL, list()),
+    .parseScenarios(NULL),
     list()
   )
 })
@@ -104,13 +104,13 @@ test_that(".parseScenarios reads a scenario's initialConditions references", {
     parameterSets = list("ps1"),
     initialConditions = list("ic1", "ic2")
   ))
-  sc <- .parseScenarios(raw, list())[["WithIC"]]
+  sc <- .parseScenarios(raw)[["WithIC"]]
   expect_identical(sc$initialConditions, c("ic1", "ic2"))
 })
 
 test_that(".parseScenarios leaves initialConditions NULL when JSON omits it", {
   raw <- list(list(name = "NoIC", modelFile = "m.pkml"))
-  sc <- .parseScenarios(raw, list())[["NoIC"]]
+  sc <- .parseScenarios(raw)[["NoIC"]]
   expect_null(sc$initialConditions)
 })
 
@@ -127,8 +127,7 @@ test_that("a scenario's initialConditions round-trips through serialize/parse", 
     list(stats::setNames(
       list(json$name, json$modelFile, json$initialConditions),
       c("name", "modelFile", "initialConditions")
-    )),
-    list()
+    ))
   )[["RT"]]
   expect_identical(reparsed$initialConditions, c("ic1", "ic2"))
 })
@@ -139,7 +138,7 @@ test_that(".parseScenarios reads a scenario's solverSettings block verbatim", {
     modelFile = "m.pkml",
     solverSettings = list(relTol = 1e-6, checkForNegativeValues = FALSE)
   ))
-  sc <- .parseScenarios(raw, list())[["Stiff"]]
+  sc <- .parseScenarios(raw)[["Stiff"]]
   expect_identical(
     sc$solverSettings,
     list(relTol = 1e-6, checkForNegativeValues = FALSE)
@@ -148,7 +147,7 @@ test_that(".parseScenarios reads a scenario's solverSettings block verbatim", {
 
 test_that(".parseScenarios leaves solverSettings NULL when JSON omits it", {
   raw <- list(list(name = "Plain", modelFile = "m.pkml"))
-  expect_null(.parseScenarios(raw, list())[["Plain"]]$solverSettings)
+  expect_null(.parseScenarios(raw)[["Plain"]]$solverSettings)
 })
 
 test_that("a scenario's solverSettings round-trips through serialize/parse", {
@@ -164,8 +163,7 @@ test_that("a scenario's solverSettings round-trips through serialize/parse", {
     list(stats::setNames(
       list(json$name, json$modelFile, json$solverSettings),
       c("name", "modelFile", "solverSettings")
-    )),
-    list()
+    ))
   )[["RTSolver"]]
   expect_identical(reparsed$solverSettings, list(relTol = 1e-6, hMax = 0.5))
 })
@@ -186,7 +184,7 @@ test_that("a hand-written empty solverSettings object is rejected on parse", {
     modelFile = "m.pkml",
     solverSettings = stats::setNames(list(), character(0))
   ))
-  expect_error(.parseScenarios(raw, list()), "empty object")
+  expect_error(.parseScenarios(raw), "empty object")
 })
 
 test_that(".parseScenarios sets simulationType=Population when populationId present", {
@@ -206,7 +204,7 @@ test_that(".parseScenarios defaults applicationProtocol to NA when JSON has null
       application = NULL
     )
   )
-  result <- .parseScenarios(raw, list())
+  result <- .parseScenarios(raw)
 
   expect_length(result, 1L)
   expect_true(is.na(result[["X"]]$applicationProtocol))
@@ -236,7 +234,7 @@ test_that(".parseScenarios coerces a whole-number steadyStateTime to double", {
       steadyStateTimeUnit = "min"
     )
   )
-  sc <- .parseScenarios(raw, list())[["WholeSS"]]
+  sc <- .parseScenarios(raw)[["WholeSS"]]
 
   expect_type(sc$steadyStateTime, "double")
   expect_identical(sc$steadyStateTime, 1000)
@@ -263,7 +261,7 @@ test_that(".parseScenarios errors when steadyStateTime set without unit", {
     )
   )
   expect_error(
-    .parseScenarios(raw, list()),
+    .parseScenarios(raw),
     "BadSS.*steadyStateTime.*steadyStateTimeUnit"
   )
 })
@@ -278,7 +276,7 @@ test_that(".parseScenarios parses simulationTime to a list of length-3 numerics"
   expect_identical(sc$simulationTimeUnit, "h")
 })
 
-test_that(".parseScenarios resolves outputPaths ids to literal outputPaths in declared order", {
+test_that("a loaded scenario reads its outputPaths ids as literal paths in declared order", {
   project <- exampleProject()
   sc <- project$definitions$scenarios[["aciclovir_iv_steadystate"]]
 
@@ -295,7 +293,7 @@ test_that(".parseScenarios resolves outputPaths ids to literal outputPaths in de
   )
 })
 
-test_that(".parseScenarios single outputPaths id resolves to a length-1 named character vector", {
+test_that("a loaded scenario with one outputPaths id reads a length-1 named character vector", {
   project <- exampleProject()
   sc <- project$definitions$scenarios[["aciclovir_iv"]]
 
@@ -308,9 +306,9 @@ test_that(".parseScenarios single outputPaths id resolves to a length-1 named ch
   )
 })
 
-test_that(".parseScenarios keeps unknown outputPaths ids as dangling refs (lazy)", {
+test_that(".fillScenarioOutputPaths keeps unknown outputPaths ids as dangling refs (lazy)", {
   # Referential integrity is lazy: an unknown output-path id does not abort
-  # the parse; it survives as a name with an NA literal path so the
+  # the read; it survives as a name with an NA literal path so the
   # cross-reference validator can flag it later.
   raw <- list(
     list(
@@ -322,14 +320,17 @@ test_that(".parseScenarios keeps unknown outputPaths ids as dangling refs (lazy)
   )
   outputPaths <- list(Aciclovir_PVB = "Organism|PVB|...")
 
-  sc <- .parseScenarios(raw, outputPaths)[["BadRefs"]]
-  expect_named(sc$outputPaths, c("Aciclovir_PVB", "Nope", "AlsoNope"))
+  sc <- .fillScenarioOutputPaths(.parseScenarios(raw), outputPaths)[[
+    "BadRefs"
+  ]]
   expect_identical(
-    unname(sc$outputPaths[["Aciclovir_PVB"]]),
-    "Organism|PVB|..."
+    sc$outputPaths,
+    c(
+      Aciclovir_PVB = "Organism|PVB|...",
+      Nope = NA_character_,
+      AlsoNope = NA_character_
+    )
   )
-  expect_true(is.na(sc$outputPaths[["Nope"]]))
-  expect_true(is.na(sc$outputPaths[["AlsoNope"]]))
 })
 
 test_that(".parseScenarios collapses duplicate outputPaths ids to one (first-seen order)", {
@@ -345,9 +346,44 @@ test_that(".parseScenarios collapses duplicate outputPaths ids to one (first-see
   )
   outputPaths <- list(a = "PATH_A", b = "PATH_B")
 
-  sc <- .parseScenarios(raw, outputPaths)[["Dups"]]
-  expect_named(sc$outputPaths, c("a", "b"))
-  expect_identical(unname(sc$outputPaths), c("PATH_A", "PATH_B"))
+  parsed <- .parseScenarios(raw)
+  expect_identical(parsed[["Dups"]]$outputPaths, c("a", "b"))
+  sc <- .fillScenarioOutputPaths(parsed, outputPaths)[["Dups"]]
+  expect_identical(sc$outputPaths, c(a = "PATH_A", b = "PATH_B"))
+})
+
+test_that("a scenario written back by an authoring function follows a later setOutputPath", {
+  # A scenario stores only its output-path ids, also after a write that starts
+  # from a record read through the accessor (paths filled in), so no write
+  # keeps a copy of a path that `setOutputPath()` would leave behind.
+  project <- testProject()
+  setScenario(project, "testscenario", simulationTime = "0, 12, 60")
+  setScenario(
+    project,
+    "testscenario_steadystate",
+    outputPaths = "aciclovir_pvb"
+  )
+  duplicateScenario(project, "testscenario", "copied")
+  renameScenario(project, "copied", "renamed")
+  record <- project$definitions$scenarios[["testscenario"]]
+  record$scenarioName <- "from_record"
+  addScenario(project, record)
+
+  newPath <- "Organism|Kidney|Urine|Aciclovir|Concentration"
+  setOutputPath(project, "aciclovir_pvb", newPath)
+
+  for (id in c(
+    "testscenario",
+    "testscenario_steadystate",
+    "renamed",
+    "from_record"
+  )) {
+    expect_identical(
+      project$definitions$scenarios[[id]]$outputPaths,
+      c(aciclovir_pvb = newPath),
+      label = id
+    )
+  }
 })
 
 test_that(".parseScenarios leaves outputPaths NULL when JSON omits outputPaths", {
@@ -358,7 +394,7 @@ test_that(".parseScenarios leaves outputPaths NULL when JSON omits outputPaths",
       modelFile = "m.pkml"
     )
   )
-  result <- .parseScenarios(raw, list())
+  result <- .parseScenarios(raw)
 
   expect_null(result[["NoOutputs"]]$outputPaths)
 })
@@ -1192,7 +1228,7 @@ test_that("the write path allows a dangling outputPathId as a lazy referential f
   # is the cross-reference validator that flags it later.
   scenarios <- .getSection(project, "scenarios")
   sc <- scenarios[["testscenario"]]
-  sc$outputPaths <- c(sc$outputPaths, Ghost = NA_character_)
+  sc$outputPaths <- c(sc$outputPaths, "Ghost")
   scenarios[["testscenario"]] <- sc
   expect_no_error(.setSection(project, "scenarios", scenarios))
 })

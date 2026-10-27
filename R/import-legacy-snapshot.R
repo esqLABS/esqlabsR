@@ -130,11 +130,10 @@
   # Name the folders that did not travel. This is the case the report always
   # applies to (a snapshot is a single file, and whether its assets were kept
   # beside it is up to whoever shared it), and it is the whole reason a scenario
-  # would otherwise fail with nothing but a File Not Found. Bound here, and named
-  # as the catalog entry's parameter, because the entry leaves its placeholders
-  # unglued for the raising call to interpolate.
-  missingFolders <- .missingUpgradedAssetFolders(project, dir)
-  cli::cli_inform(messages$upgradedLegacySnapshot(missingFolders))
+  # would otherwise fail with nothing but a File Not Found.
+  cli::cli_inform(messages$upgradedLegacySnapshot(
+    .missingUpgradedAssetFolders(project, dir)
+  ))
 
   # The overwrite replaced a live tree; any `Project` loaded from `dir` before
   # this call now points at stale in-memory state. Same warning the v6 restore

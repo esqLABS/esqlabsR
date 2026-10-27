@@ -4,7 +4,9 @@
       runScenarios(project, scenarios = "testscenario", simulationRunOptions = 4)
     Condition
       Error in `runScenarios()`:
-      ! `simulationRunOptions` must be an <ospsuite::SimulationRunOptions>, not a number. i Build one with `ospsuite::SimulationRunOptions$new(numberOfCores = 4)`. i To change how the solver behaves, pass `solverSettings` instead, as `list(relTol = 1e-6)`.
+      ! `simulationRunOptions` must be an <ospsuite::SimulationRunOptions>, not a number.
+      i Build one with `ospsuite::SimulationRunOptions$new(numberOfCores = 4)`.
+      i To change how the solver behaves, pass `solverSettings` instead, as `list(relTol = 1e-6)`.
 
 ---
 
@@ -13,7 +15,9 @@
         relTol = 1e-06))
     Condition
       Error in `buildSimulations()`:
-      ! `simulationRunOptions` must be an <ospsuite::SimulationRunOptions>, not a list. i Build one with `ospsuite::SimulationRunOptions$new(numberOfCores = 4)`. i To change how the solver behaves, pass `solverSettings` instead, as `list(relTol = 1e-6)`.
+      ! `simulationRunOptions` must be an <ospsuite::SimulationRunOptions>, not a list.
+      i Build one with `ospsuite::SimulationRunOptions$new(numberOfCores = 4)`.
+      i To change how the solver behaves, pass `solverSettings` instead, as `list(relTol = 1e-6)`.
 
 # buildSimulations reports an unsound solverSettings argument
 
@@ -46,8 +50,7 @@
           "Organism|Brain|Volume"), values = c(0.5, 0.6), units = "l"), validate = FALSE)
     Condition
       Error in `buildSimulations()`:
-      ! `customParams$values` must have length 1 or 3, one per path.
-      x It has length 2.
+      ! `customParams$values` has length 2, but it must have length 1 or 3, one element per path.
 
 # a user parameter path the model lacks still stops the build
 
@@ -68,7 +71,9 @@
         "populationscenariofromcsv"]], project, cache))
     Condition
       Warning:
-      ! Population "testpopulation" resolves to more than one population in this run. i Scenario "populationscenariofromcsv" resolves it as "csv", another scenario in the same run resolves it differently. i Each scenario gets the population it asks for. Check readPopulationFromCSV on the scenarios sharing this population.
+      ! Population "testpopulation" resolves to more than one population in this run.
+      i Scenario "populationscenariofromcsv" resolves it as "csv", another scenario in the same run resolves it differently.
+      i Each scenario gets the population it asks for. Check readPopulationFromCSV on the scenarios sharing this population.
 
 # a relative modelFile with NULL simulationsFolder aborts with a clear message
 
@@ -79,7 +84,8 @@
       ! Could not build scenario "testscenario".
       i Pass `stopIfFails = FALSE` to skip it and build the other scenarios.
       Caused by error in `.prepareScenario()`:
-      ! x Cannot resolve the model file for scenario "testscenario". i modelFile "Aciclovir.pkml" is relative but the project has no simulationsFolder to resolve it against.
+      x Cannot resolve the model file for scenario "testscenario".
+      i modelFile "Aciclovir.pkml" is relative but the project has no simulationsFolder to resolve it against.
 
 # a CSV-population scenario with NULL populationsFolder aborts with a clear message
 
@@ -91,5 +97,6 @@
       ! Could not build scenario "populationscenariofromcsv".
       i Pass `stopIfFails = FALSE` to skip it and build the other scenarios.
       Caused by error in `.resolveCsvPopulation()`:
-      ! x Cannot resolve the population csv for scenario "populationscenariofromcsv". i populationId "testpopulation" is read from a csv but the project has no populationsFolder to resolve it against.
+      x Cannot resolve the population csv for scenario "populationscenariofromcsv".
+      i populationId "testpopulation" is read from a csv but the project has no populationsFolder to resolve it against.
 

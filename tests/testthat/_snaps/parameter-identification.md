@@ -310,7 +310,8 @@
         outputPath = "DoesNotExist", observedData = "L")
     Condition
       Error in `addPIOutputMapping()`:
-      ! x outputPath "DoesNotExist" is neither a defined output-path id nor the model path of one. i Pass an output-path id (a key in `project$definitions$outputPaths`) or the literal model path of a defined output path; define new ones with `addOutputPath()`.
+      x outputPath "DoesNotExist" is neither a defined output-path id nor the model path of one.
+      i Pass an output-path id (a key in `project$definitions$outputPaths`) or the literal model path of a defined output path; define new ones with `addOutputPath()`.
 
 # addPIParameter() errors on an explicit duplicate id
 

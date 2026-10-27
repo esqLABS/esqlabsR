@@ -580,6 +580,34 @@ test_that("runScenarios(stopIfFails = FALSE) closes by naming every scenario tha
   expect_named(Filter(\(x) !is.null(x$results), out), character(0))
 })
 
+test_that("runScenarios(stopIfFails = FALSE) names only the scenarios that produced no results", {
+  # The closing warning once named every requested scenario, because its
+  # template was glued in the raising frame, where `scenarioNames` holds them
+  # all. A name with braces must also come through as written.
+  withr::local_options(lifecycle_verbosity = "quiet")
+  project <- .testProject()
+  addScenario(project, "broken_{1}", modelFile = "does-not-exist.pkml")
+
+  warnings <- character()
+  out <- withCallingHandlers(
+    runScenarios(
+      project,
+      scenarios = c("testscenario", "broken_{1}"),
+      stopIfFails = FALSE
+    ),
+    warning = function(w) {
+      warnings <<- c(warnings, conditionMessage(w))
+      invokeRestart("muffleWarning")
+    }
+  )
+  expect_named(Filter(\(x) !is.null(x$results), out), "testscenario")
+  summary <- grep("produced no results", warnings, value = TRUE)
+  expect_length(summary, 1)
+  expect_match(summary, "1 of the scenarios", fixed = TRUE)
+  expect_match(summary, "\"broken_{1}\"", fixed = TRUE)
+  expect_no_match(summary, "testscenario", fixed = TRUE)
+})
+
 test_that("a build failure under stopIfFails = TRUE names the scenario", {
   # A build error from the backend names neither the scenario nor the file, so a
   # batch of scenarios gave nothing to act on (#1213). The abort now carries the

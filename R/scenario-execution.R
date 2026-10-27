@@ -772,12 +772,11 @@
 ) {
   rlang::local_error_call(.call)
   validateIsOfType(project, "Project")
-  .validateParametersStructure(
+  customParams <- .validateParametersStructure(
     parameterStructure = customParams,
     argumentName = "customParams",
     nullAllowed = TRUE
   )
-  customParams <- .recycleCustomParams(customParams, call = .call)
   if (
     !is.null(simulationRunOptions) &&
       !inherits(simulationRunOptions, "SimulationRunOptions")
@@ -816,36 +815,6 @@
   }
   resolved$customParams <- customParams
   resolved
-}
-
-# `customParams` with its `values` and `units` matched to its `paths` by the
-# tidyverse recycling rule: a field of length 1 is used for every path, a field
-# as long as `paths` is kept, and any other length stops. Unchecked, a short
-# field is recycled silently when the scenario has parameter sets and stops in
-# the backend when it has none.
-# @keywords internal
-# @noRd
-.recycleCustomParams <- function(customParams, call = rlang::caller_env()) {
-  if (is.null(customParams)) {
-    return(NULL)
-  }
-  pathCount <- length(customParams$paths)
-  for (field in c("values", "units")) {
-    value <- customParams[[field]]
-    fieldLength <- length(value)
-    if (is.null(value) || fieldLength == pathCount) {
-      next
-    }
-    if (fieldLength == 1L) {
-      customParams[[field]] <- rep(value, pathCount)
-      next
-    }
-    cli::cli_abort(
-      messages$customParamsLengthMismatch(field, fieldLength, pathCount),
-      call = call
-    )
-  }
-  customParams
 }
 
 # .buildScenarioSimulations ----
@@ -941,10 +910,10 @@
             call = .call
           )
         }
-        cli::cli_warn(messages$scenarioBuildFailed(
-          scenarioName = name,
-          conditionMessage = conditionMessage(e)
-        ))
+        cli::cli_warn(
+          messages$scenarioBuildFailed(scenarioName = name),
+          parent = e
+        )
         NULL
       }
     )

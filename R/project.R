@@ -42,7 +42,8 @@
 #'   `setIndividual()`, `removeParameterSet()`, and the other add/set/remove
 #'   functions — live only in your R session until you write them to the
 #'   project files with [saveProject()]. This makes a loaded project a safe
-#'   place to experiment: discard unsaved changes with [reloadProject()], or
+#'   place to experiment: discard unsaved changes by loading the project
+#'   again with [loadProject()], or
 #'   use [snapshotProject()] / [restoreProject()] to set a save-point and
 #'   return to it later.
 #'
@@ -658,12 +659,6 @@ Project <- R6::R6Class(
       private$.impl(.saveProject_impl)
     },
 
-    #' @description Discard in-memory edits and re-read from disk. See
-    #'   [reloadProject()].
-    reload = function() {
-      private$.impl(.reloadProject_impl)
-    },
-
     #' @description Validate the project. See [validateProject()].
     validate = function() {
       private$.impl(.validateProject_impl)
@@ -746,7 +741,7 @@ Project <- R6::R6Class(
     # In-memory dirty bit: TRUE when the in-memory project has edits that have
     # not yet been reconciled to the on-disk `definitions/` tree. Set by
     # `.setSection()`, the container-metadata setters, and `.markModified()`;
-    # cleared on load / reload / a successful `saveProject()`. It feeds the
+    # cleared on load / a successful `saveProject()`. It feeds the
     # `print()` marker, the clean-save short-circuit, and the memory-vs-tree
     # axis of `projectStatus()`. A private field with no active binding keeps it
     # off the public surface. A freshly constructed in-memory project starts
@@ -766,7 +761,7 @@ Project <- R6::R6Class(
     # Session-only store for `Population` objects injected via
     # `addPopulation(project, id, <Population>)`. Keyed by population id; the
     # section carries only a `{type: "programmatic"}` sentinel. Frozen to CSV on
-    # save and dropped on reload, exactly like `.programmaticDataSets`.
+    # save, exactly like `.programmaticDataSets`.
     .programmaticPopulations = list(),
 
     # Backing stores for the container metadata + the section-data active
@@ -1028,7 +1023,16 @@ Project <- R6::R6Class(
         force(kind)
         list(
           get = function() {
-            .asDefinitionList(private$.getSection(kind), kind)
+            section <- private$.getSection(kind)
+            # A stored scenario holds only its output-path ids; each read fills
+            # in the paths the `outputPaths` section holds now.
+            if (identical(kind, "scenarios")) {
+              section <- .fillScenarioOutputPaths(
+                section,
+                private$.outputPaths
+              )
+            }
+            .asDefinitionList(section, kind)
           },
           set = NULL
         )
@@ -1249,6 +1253,12 @@ Project <- R6::R6Class(
     .setSection = function(kind, value) {
       field <- private$.sectionField(kind)
       value <- .unwrapDefinitionList(value)
+      # Scenarios are stored with their output-path ids only, so a record read
+      # through the accessor (paths filled in) does not store a copy of a path
+      # that `setOutputPath()` could later leave behind.
+      if (identical(kind, "scenarios")) {
+        value <- .storeScenarioOutputPathIds(value)
+      }
       private[[field]] <- value
       # Writing observed data invalidates the cached observed-data names, as the
       # active-binding setter did.
@@ -1316,16 +1326,6 @@ Project <- R6::R6Class(
     # tree. Called after a successful `saveProject()`.
     .clearModified = function() {
       private$.modified <- FALSE
-      invisible(self)
-    },
-
-    # Re-read the project from its bound file, discarding any in-memory edits
-    # (the undo). Re-runs the parser against `projectFilePath`, which overwrites
-    # every backing field and clears the dirty and validation flags. Object
-    # identity is preserved (the same R6 instance is mutated), so existing
-    # handles stay valid.
-    .reload = function() {
-      private$.applyLoadedSections(.loadProjectTree(private$.projectFilePath))
       invisible(self)
     },
 
@@ -1410,8 +1410,7 @@ Project <- R6::R6Class(
     # runtime-only state a tree carries no record of (session-added observed
     # data and populations, the observed-data names cache, the dirty and
     # validation flags) is reset to the just-loaded baseline. Shared by
-    # `initialize()` (constructing from a path) and `.reload()`, so load and
-    # reload commit identically.
+    # `initialize()` (constructing from a path).
     .applyLoadedSections = function(sections) {
       private$.projectFilePath <- sections$projectFilePath
       private$.projectDirPath <- sections$projectDirPath
@@ -1434,15 +1433,11 @@ Project <- R6::R6Class(
 
       # Session-only observed-data state (runtime programmatic DataSets added via
       # `addObservedData(project, <DataSet>)`, and the observed-data names cache)
-      # is not part of the on-disk tree, so a re-read must drop it: otherwise a
-      # `reloadProject()` would leave a programmatic dataset that the reloaded
-      # `observedData` section no longer carries, and `loadObservedData()` would
-      # still return the discarded runtime dataset. Reset it so a reload fully
-      # returns the object to the on-disk state.
+      # is not part of the on-disk tree, so a freshly loaded project starts
+      # without it.
       private$.programmaticDataSets <- list()
       private$.observedDataNamesCache <- NULL
-      # Same rationale for a session-injected `Population`: it lives only in the
-      # runtime store, so a re-read must drop it to fully return to on-disk state.
+      # Same for a session-injected `Population`.
       private$.programmaticPopulations <- list()
 
       private$.validatedSinceMutation <- FALSE

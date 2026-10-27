@@ -23,7 +23,8 @@ Updates the OSPS-notation path string bound to existing
 output-path ids, in memory; write the change to the output-path definition
 files with \code{\link[=saveProject]{saveProject()}}. The ids themselves are not changed (use
 \code{\link[=removeOutputPath]{removeOutputPath()}} + \code{\link[=addOutputPath]{addOutputPath()}} to rename), so
-every scenario that records these output paths keeps referencing them.
+every scenario that records these output paths keeps referencing them,
+and uses the new path at once when you print, build, or run it.
 The \code{outputPaths} definitions accessor is read-only, so this is the way to
 change a path in place. The call vectorizes over a vector of ids (see the
 recycling rule under Details); \code{path} is scalar-per-definition (one path

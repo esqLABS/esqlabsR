@@ -385,17 +385,18 @@ importProjectFromExcel <- function(
   filePathProps <- read$filePathProps
   conventionWorkbooks <- read$conventionWorkbooks
 
-  if (!dir.exists(dirname(outputPath))) {
-    dir.create(dirname(outputPath), recursive = TRUE)
-  }
-
-  # Bootstrap an in-memory project from the imported data by writing the inlined
-  # JSON to the container path and parsing it back. This inlined form is only a
-  # transient bootstrap: `.writeProjectTree()` below overwrites the container
-  # with the slim (`containerOnly`) shape, so the inlined file never survives the
-  # call. `Project$new()` (not `loadProject()`) parses it without running the
-  # cross-reference warning pass, so a project with dangling refs imports quietly
-  # under `silent`.
+  # Build an in-memory project from the imported data by writing the inlined
+  # JSON to a throwaway container and parsing it back. The container sits in a
+  # fresh folder of its own: a section loads from `definitions/<kind>/` beside
+  # the container whenever that folder exists, so a container written into
+  # `outputDir` would read back the project already there instead of the
+  # workbooks. `Project$new()` (not `loadProject()`) parses it without running
+  # the cross-reference warning pass, so a project with dangling refs imports
+  # quietly under `silent`.
+  treelessDir <- tempfile("excel_import")
+  dir.create(treelessDir)
+  on.exit(unlink(treelessDir, recursive = TRUE), add = TRUE)
+  treelessPath <- file.path(treelessDir, "Project.json")
   jsonText <- jsonlite::toJSON(
     jsonData,
     pretty = TRUE,
@@ -403,14 +404,16 @@ importProjectFromExcel <- function(
     digits = NA,
     null = "null"
   )
-  writeLines(jsonText, outputPath)
-  importedProject <- Project$new(projectFilePath = outputPath)
+  writeLines(jsonText, treelessPath)
+  importedProject <- Project$new(projectFilePath = treelessPath)
 
   # Write the imported project as a normal tree project: the slim
   # (`containerOnly`) `Project.json` container plus the `definitions/<kind>/`
   # tree, exactly what `saveProject()` and `initProject()` produce. There is one
   # canonical on-disk `Project.json` shape, so an imported project is
-  # indistinguishable from any other tree project. The Excel sync check compares
+  # indistinguishable from any other tree project. Over an existing project the
+  # tree writer deletes every definition file the workbooks do not define, so
+  # the result holds the Excel state alone. The Excel sync check compares
   # the in-memory project against the workbook (see `.compareJsonToExcel()`), so
   # it needs no inlined container to diff against.
   .writeProjectTree(importedProject, outputDir, containerPath = outputPath)
@@ -1434,7 +1437,7 @@ exportProjectToExcel <- function(
 #'   the `status` field of [Project]).
 #' @export
 #' @family projectPersistence
-#' @seealso [saveProject()], [reloadProject()], [exportProjectToExcel()],
+#' @seealso [saveProject()], [exportProjectToExcel()],
 #'   [importProjectFromExcel()].
 #' @examples
 #' \dontrun{
@@ -1535,9 +1538,9 @@ projectStatus <- function(project, silent = FALSE) {
       cli::cli_warn(
         c(
           "Cannot compare the Excel configuration files to the project.",
-          "x" = conditionMessage(compareError),
           "i" = "The {.field excel_in_sync} status is reported as {.val NA}."
-        )
+        ),
+        parent = compareError
       )
     }
     return(invisible(result))

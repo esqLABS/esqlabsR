@@ -1,11 +1,51 @@
-test_that("loadScenarioResults throws an error when files don't exist", {
-  nonExistentFolder <- file.path(tempdir(), "non-existent-folder")
+test_that("loadScenarioResults reports a results folder that does not exist", {
+  withr::local_dir(withr::local_tempdir())
+
+  expect_snapshot(
+    loadScenarioResults("testscenario", resultsFolder = "no-such-folder"),
+    error = TRUE
+  )
+})
+
+test_that("loadScenarioResults names the scenario and the files missing from the folder", {
+  withr::local_dir(withr::local_tempdir())
+  dir.create("results")
+
+  expect_snapshot(
+    loadScenarioResults("testscenario", resultsFolder = "results"),
+    error = TRUE
+  )
+})
+
+test_that("loadScenarioResults checks every scenario before loading any", {
+  withr::local_dir(withr::local_tempdir())
+  dir.create("results")
+  # `first` has a csv but no pkml, as saveScenarioResults() leaves it with
+  # `saveSimulationsToPKML = FALSE`.
+  file.create(file.path("results", "first.csv"))
+
+  expect_snapshot(
+    loadScenarioResults("first", resultsFolder = "results"),
+    error = TRUE
+  )
+  # Once `first` has both files, they are empty and would fail to load, so an
+  # error about `Group/B` shows that no load ran before the check. It names
+  # `Group/B` as given, not by its file-safe form.
+  file.create(file.path("results", "first.pkml"))
+  expect_snapshot(
+    loadScenarioResults(c("first", "Group/B"), resultsFolder = "results"),
+    error = TRUE
+  )
+})
+
+test_that("loadScenarioResults error survives braces in the scenario name", {
+  withr::local_dir(withr::local_tempdir())
+  dir.create("results")
 
   expect_error(
-    loadScenarioResults(
-      scenarios = "testscenario",
-      resultsFolder = nonExistentFolder
-    )
+    loadScenarioResults("dose {high}", resultsFolder = "results"),
+    "dose {high}.pkml",
+    fixed = TRUE
   )
 })
 
@@ -54,51 +94,37 @@ test_that("save/load round trip preserves population and outputValues (populatio
   )
 })
 
-test_that("loadScenarioResults with project restricts to the declared output paths", {
+test_that("loadScenarioResults returns every output path saved in the csv", {
   withr::local_options(lifecycle_verbosity = "quiet")
   project <- testProject()
   run <- runScenarios(project, scenarios = "testscenario")
 
-  resultsFolder <- withr::local_tempdir()
-  saveScenarioResults(run, project, outputFolder = resultsFolder)
-
-  # Simulate the case where the saved csv/pkml on disk record MORE output paths
-  # than the scenario declares (e.g. the model or scenario changed between save
-  # and reload): re-run the saved simulation with an extra recorded output and
-  # overwrite the artifacts. `testscenario` declares only `aciclovir_pvb`.
+  # Save a run that recorded one more output path than `testscenario`
+  # declares (`aciclovir_pvb` only), as when the scenario was edited after
+  # the save. The reload follows the saved files, not the scenario.
   simulation <- run$testscenario$simulation
-  declaredPaths <- unname(
-    project$definitions$scenarios[["testscenario"]]$outputPaths
+  savedPaths <- c(
+    project$definitions$outputPaths[["aciclovir_pvb"]],
+    project$definitions$outputPaths[["aciclovir_fat_cell"]]
   )
-  extraPath <- project$definitions$outputPaths[["aciclovir_fat_cell"]]
-  setOutputs(
-    quantitiesOrPaths = c(declaredPaths, extraPath),
-    simulation = simulation
-  )
-  expandedResults <- runSimulations(simulation)[[simulation$id]]
-  ospsuite::saveSimulation(
-    simulation,
-    filePath = file.path(resultsFolder, "testscenario.pkml")
-  )
-  ospsuite::exportResultsToCSV(
-    expandedResults,
-    filePath = file.path(resultsFolder, "testscenario.csv")
+  setOutputs(quantitiesOrPaths = savedPaths, simulation = simulation)
+  results <- runSimulations(simulation)[[simulation$id]]
+  resultsFolder <- withr::local_tempdir()
+  saveScenarioResults(
+    list(testscenario = list(simulation = simulation, results = results)),
+    project,
+    outputFolder = resultsFolder
   )
 
-  # With the project supplied, the reloaded output-path column set equals the
-  # column set `runScenarios()` produced: the extra recorded path is dropped.
-  reloaded <- loadScenarioResults(
-    "testscenario",
-    resultsFolder,
-    project = project
+  reloaded <- loadScenarioResults("testscenario", resultsFolder)
+
+  expect_setequal(
+    setdiff(
+      names(reloaded$testscenario$outputValues$data),
+      c("IndividualId", "Time")
+    ),
+    savedPaths
   )
-  expect_equal(
-    names(reloaded$testscenario$outputValues$data),
-    names(run$testscenario$outputValues$data)
-  )
-  # The declared path is present; the extra recorded path is not.
-  expect_true(declaredPaths %in% names(reloaded$testscenario$outputValues$data))
-  expect_false(extraPath %in% names(reloaded$testscenario$outputValues$data))
 })
 
 test_that("saveScenarioResults reports the real error rather than a path warning", {
@@ -173,9 +199,9 @@ test_that("saveScenarioResults aborts when two names collide after sanitization"
   # silently overwrite each other, so the save must abort before writing.
   colliding <- setNames(c(original, original), c("A/B", "A_B"))
   resultsFolder <- withr::local_tempdir()
-  expect_error(
+  expect_snapshot(
     saveScenarioResults(colliding, project, outputFolder = resultsFolder),
-    "collide"
+    error = TRUE
   )
   # Nothing was written.
   expect_length(list.files(resultsFolder), 0L)

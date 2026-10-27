@@ -104,7 +104,9 @@
         "CYP3A4,CYP2D6", "CYP3A4"))
     Condition
       Warning:
-      ! The protein ontogenies of individual "Indiv1" are not imported: the Protein and Ontogeny columns cannot be paired. i 2 proteins against 1 ontogeny; each protein needs exactly one ontogeny. i Fix the workbook, or write the pairs into a single Protein Ontogenies cell as "Protein:Ontogeny,Protein:Ontogeny".
+      ! The protein ontogenies of individual "Indiv1" are not imported: the Protein and Ontogeny columns cannot be paired.
+      i 2 proteins against 1 ontogeny; each protein needs exactly one ontogeny.
+      i Fix the workbook, or write the pairs into a single Protein Ontogenies cell as "Protein:Ontogeny,Protein:Ontogeny".
 
 ---
 
@@ -112,7 +114,9 @@
       pop <- .parseExcelPopulations(.legacyOntogenyPopulation("Pop1", "CYP3A4", NA))
     Condition
       Warning:
-      ! The protein ontogenies of population "Pop1" are not imported: the Protein and Ontogeny columns cannot be paired. i 1 protein against 0 ontogenies; each protein needs exactly one ontogeny. i Fix the workbook, or write the pairs into a single Protein Ontogenies cell as "Protein:Ontogeny,Protein:Ontogeny".
+      ! The protein ontogenies of population "Pop1" are not imported: the Protein and Ontogeny columns cannot be paired.
+      i 1 protein against 0 ontogenies; each protein needs exactly one ontogeny.
+      i Fix the workbook, or write the pairs into a single Protein Ontogenies cell as "Protein:Ontogeny,Protein:Ontogeny".
 
 # importProjectFromExcel aborts when two ids canonicalize to the same value
 
@@ -154,8 +158,12 @@
     Condition
       Warning:
       Cannot compare the Excel configuration files to the project.
-      x '<tmp-path>/Project.xlsx' is not a readable Excel project file. i It must be a valid .xlsx workbook (the project's 'Project.xlsx'). Caused by error in `utils::unzip()`: ! zip file '<tmp-path>/Project.xlsx' cannot be opened
       i The excel_in_sync status is reported as "NA".
+      Caused by error in `.compareJsonToExcel()`:
+      ! '<tmp-path>/Project.xlsx' is not a readable Excel project file.
+      i It must be a valid .xlsx workbook (the project's 'Project.xlsx').
+      Caused by error in `utils::unzip()`:
+      ! zip file '<tmp-path>/Project.xlsx' cannot be opened
 
 # .parseExcelScenarios aborts on an unparseable boolean cell
 

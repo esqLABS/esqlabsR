@@ -20,7 +20,7 @@
 #' @returns Object of type `Project`
 #' @export
 #' @family projectPersistence
-#' @seealso [saveProject()], [reloadProject()], [snapshotProject()],
+#' @seealso [saveProject()], [snapshotProject()],
 #'   [restoreProject()], [projectStatus()].
 #'
 #' @section Editing a loaded project:
@@ -40,8 +40,8 @@
 #'   assignment is an in-memory edit like any other, saved by [saveProject()].
 #'
 #'   Write your changes to the project files with [saveProject()]. Discard
-#'   unsaved changes and go back to what is saved on disk with
-#'   [reloadProject()]. Save the current state of the whole project to a
+#'   unsaved changes and go back to what is saved on disk by loading the
+#'   project again with `project <- loadProject(project$info$projectFilePath)`. Save the current state of the whole project to a
 #'   single file you can archive or share with [snapshotProject()], and
 #'   recreate a project folder from such a file (or roll an existing one
 #'   back) with [restoreProject()]. Check for unsaved changes and outdated
@@ -111,7 +111,7 @@ loadProject <- function(path = ".") {
 #
 # Everything this aborts on is a property of the file, not of the call that
 # opened it, and the path is reached from several entrypoints (`loadProject()`,
-# `Project$new()`, `ProjectConfiguration()`, `reloadProject()`). Attribute
+# `Project$new()`, `ProjectConfiguration()`). Attribute
 # those aborts to no function at all rather than to this helper, whose name
 # means nothing to the reader.
 #
@@ -139,15 +139,14 @@ loadProject <- function(path = ".") {
     # that `restoreProject()` upgrades. Name that call rather than reporting
     # a missing schema version. Every entrypoint that opens a project file
     # (`loadProject()`, `Project$new()`, the deprecated
-    # `ProjectConfiguration()`, `reloadProject()`) reads it through here, so
+    # `ProjectConfiguration()`) reads it through here, so
     # the one guard covers all of them.
     if (.isLegacySnapshot(jsonData)) {
       cli::cli_abort(messages$legacySnapshotNotLoadable(jsonPath))
     }
-    # `version` is bound here because the catalog entry leaves its
-    # placeholder unglued, so this call interpolates it exactly once.
-    version <- jsonData$schemaVersion %||% "<missing>"
-    cli::cli_abort(messages$unsupportedSchemaVersion(version))
+    cli::cli_abort(messages$unsupportedSchemaVersion(
+      jsonData$schemaVersion %||% "<missing>"
+    ))
   }
   .parseProjectSections(jsonData, jsonPath, dirname(jsonPath))
 }
@@ -217,11 +216,9 @@ loadProject <- function(path = ".") {
   # single-file snapshot with no tree falls back to the inline section in
   # `Project.json`. `.loadDefinitionTree()` resolves tree-vs-inline per kind and
   # the kind's spec parses the raw records into the in-memory shape. Output
-  # paths load before the two sections that dereference them against the
-  # project-level `outputPaths` map: scenarios dereference their
-  # `outputPathIds`, and a PI task's output mappings resolve each `outputPath`
-  # reference to the canonical id its definition was filed under. There is no
-  # live `Project` yet to hand either parser (both read
+  # paths load before parameter identification, whose output mappings resolve
+  # each `outputPath` reference to the canonical id its definition was filed
+  # under. There is no live `Project` yet to hand that parser (it reads
   # `project$definitions$outputPaths`), so a plain list exposing that one
   # field stands in for it. The `parameterSets` inline fallback merges any
   # legacy three-section `Project.json` into the one map (a clash aborts the
@@ -237,10 +234,6 @@ loadProject <- function(path = ".") {
     spec$parse(records, project)
   }
   outputPaths <- loadSection("outputPaths")
-  scenarios <- loadSection(
-    "scenarios",
-    list(definitions = list(outputPaths = outputPaths))
-  )
 
   list(
     projectFilePath = jsonPath,
@@ -254,7 +247,7 @@ loadProject <- function(path = ".") {
     filePathsData = filePathsData,
     excelData = excelData,
     outputPaths = outputPaths,
-    scenarios = scenarios,
+    scenarios = loadSection("scenarios"),
     parameterSets = loadSection("parameterSets"),
     initialConditions = loadSection("initialConditions"),
     individuals = loadSection("individuals"),
@@ -309,7 +302,7 @@ loadProject <- function(path = ".") {
 #' @returns Invisibly, the `project`.
 #' @export
 #' @family projectPersistence
-#' @seealso [loadProject()], [reloadProject()], [snapshotProject()],
+#' @seealso [loadProject()], [snapshotProject()],
 #'   [restoreProject()], [projectStatus()].
 #' @examples
 #' \dontrun{
@@ -386,59 +379,6 @@ saveProject <- function(project) {
   private$.esqlabsRVersion <- as.character(utils::packageVersion("esqlabsR"))
 
   private$.clearModified()
-  invisible(self)
-}
-
-#' Discard a project's unsaved changes and re-read it from disk
-#'
-#' @description The undo of saving: discard every unsaved change and re-read
-#'   the project from its files on disk, in place. The `Project` stays the
-#'   same object, so every variable that points to it stays valid.
-#'
-#'   `reloadProject()` always re-reads the project's files and updates the
-#'   project in place, so it also picks up changes made to the files outside
-#'   the R session (for example after [restoreProject()] rolled the project
-#'   back). It simply produces no announcement when there was nothing to
-#'   discard: unlike a clean [saveProject()], a clean reload prints nothing.
-#'
-#' @param project A `Project` with a folder on disk. A project that exists
-#'   only in the R session has nothing to reload from and aborts.
-#'
-#' @returns Invisibly, the `project`, with unsaved changes discarded.
-#' @export
-#' @family projectPersistence
-#' @seealso [loadProject()], [saveProject()], [snapshotProject()],
-#'   [restoreProject()], [projectStatus()].
-#' @examples
-#' \dontrun{
-#' project <- loadProject("Project.json")
-#' addScenario(project, "oops", modelFile = "model.pkml")
-#' reloadProject(project) # discard the edit, back to disk
-#' }
-reloadProject <- function(project) {
-  validateIsOfType(project, "Project")
-  project$reload()
-}
-
-# Implementation behind `project$reload()` / `reloadProject()`.
-#
-# @keywords internal
-# @noRd
-.reloadProject_impl <- function(self, private, .call) {
-  rlang::local_error_call(.call)
-  if (is.null(self$info$projectFilePath)) {
-    cli::cli_abort(messages$reloadProjectNoTree())
-  }
-
-  # Always re-read from disk, even when the handle is clean: a clean handle can
-  # still be stale after `restoreProject(..., overwrite = TRUE)` rolled the tree
-  # back, or after an external edit to the JSON, and the blessed rollback idiom
-  # relies on reload refreshing in place. "Silent when clean" is about the
-  # message only: `.reload()` emits no success announcement, so a clean reload
-  # stays quiet; the cross-reference warning re-fires only when there are
-  # genuine cross-ref errors, which is correct regardless of the dirty bit.
-  private$.reload()
-  .warnOnCrossReferenceErrors(self)
   invisible(self)
 }
 
@@ -546,14 +486,13 @@ isProjectInitialized <- function(destination = ".") {
   if (length(containers) == 1L) {
     return(fs::path_abs(containers[[1]]))
   }
-  # `folder` / `names` are bound here because both catalog entries leave their
-  # placeholders unglued, so the raising call interpolates them exactly once.
-  folder <- path
   if (length(containers) == 0L) {
-    cli::cli_abort(messages$noProjectContainerInFolder(folder))
+    cli::cli_abort(messages$noProjectContainerInFolder(path))
   }
-  names <- fs::path_file(containers)
-  cli::cli_abort(messages$multipleProjectContainersInFolder(folder, names))
+  cli::cli_abort(messages$multipleProjectContainersInFolder(
+    path,
+    fs::path_file(containers)
+  ))
 }
 
 # The paths of every project container directly inside `destination`: a `.json`

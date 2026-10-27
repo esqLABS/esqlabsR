@@ -97,10 +97,10 @@ saveScenarioResults <- function(
         ospsuite::exportResultsToCSV(results = results, filePath = outputPath)
       },
       error = function(cond) {
-        cli::cli_warn(messages$savingScenarioResult(
-          scenarioName = scenarioName,
-          conditionMessage = conditionMessage(cond)
-        ))
+        cli::cli_warn(
+          messages$savingScenarioResult(scenarioName = scenarioName),
+          parent = cond
+        )
       },
       warning = function(cond) {
         warning(cond)
@@ -115,22 +115,18 @@ saveScenarioResults <- function(
 #' @param scenarios Names of simulated scenarios
 #' @param resultsFolder Path to the folder where simulation results as csv and
 #' the corresponding simulations as pkml are located.
-#' @param project Optional `Project` object (loaded with `loadProject()`) whose
-#' scenarios declare the output paths that were run. When supplied, the reloaded
-#' `outputValues` are restricted to each scenario's declared output paths, so
-#' the reloaded column set matches what `runScenarios()` produced. When `NULL`
-#' (default), all output paths recorded in the csv are extracted.
 #'
 #' @details This function requires simulation results AND the corresponding
 #' simulation files being located in the same folder (`resultsFolder`) and have
-#' the names of the scenarios.
+#' the names of the scenarios. It checks that `<scenario>.pkml` and
+#' `<scenario>.csv` exist for every scenario before it loads any of them, and
+#' stops with an error that names the scenario and the missing files.
 #'
 #' @returns A named list keyed by scenario name. Each entry mirrors the record
 #' produced by `runScenarios()`: `simulation` (the initialized `Simulation`
 #' object with applied parameters), `results` (the `SimulationResults` object
-#' reloaded from csv), `outputValues` (the output values extracted for the
-#' scenario's declared output paths when `project` is supplied, otherwise for
-#' all recorded output paths), and `population` (the `Population` reloaded from
+#' reloaded from csv), `outputValues` (the output values of every output path
+#' saved in the csv), and `population` (the `Population` reloaded from
 #' `<scenario>_population.csv` for population scenarios, or `NULL` for individual
 #' scenarios).
 #'
@@ -142,15 +138,35 @@ saveScenarioResults <- function(
 #' simulatedScenariosResults <- runScenarios(project)
 #' resultsFolder <- saveScenarioResults(simulatedScenariosResults, project)
 #'
-#' # Now load the results, restricting to each scenario's declared output paths
+#' # Now load the results
 #' simulatedScenariosResults <- loadScenarioResults(
 #'   scenarios = names(project$definitions$scenarios),
-#'   resultsFolder = resultsFolder,
-#'   project = project
+#'   resultsFolder = resultsFolder
 #' )
 #' }
-loadScenarioResults <- function(scenarios, resultsFolder, project = NULL) {
-  validateIsOfType(project, "Project", nullAllowed = TRUE)
+loadScenarioResults <- function(scenarios, resultsFolder) {
+  # Check every expected file before loading any. The backend fails on a
+  # missing file with a raw .NET exception that names neither the scenario nor
+  # the files this function expects.
+  if (!dir.exists(resultsFolder)) {
+    cli::cli_abort(messages$scenarioResultsFolderNotFound(resultsFolder))
+  }
+  for (scenarioName in scenarios) {
+    expectedFiles <- paste0(
+      gsub("[\\\\/]", "_", scenarioName),
+      c(".pkml", ".csv")
+    )
+    missingFiles <- expectedFiles[
+      !file.exists(file.path(resultsFolder, expectedFiles))
+    ]
+    if (length(missingFiles) > 0L) {
+      cli::cli_abort(messages$scenarioResultFilesNotFound(
+        scenarioName,
+        missingFiles,
+        resultsFolder
+      ))
+    }
+  }
 
   simulatedScenariosResults <- list()
   for (i in seq_along(scenarios)) {
@@ -178,25 +194,9 @@ loadScenarioResults <- function(scenarios, resultsFolder, project = NULL) {
       population <- loadPopulation(populationPath)
     }
 
-    # Restrict the reloaded output values to the scenario's declared output
-    # paths when a project is supplied, mirroring how `runScenarios()` collects
-    # results (see `.collectScenarioResult()`); otherwise fall back to every
-    # output path recorded in the csv. This keeps a reload from silently gaining
-    # extra series relative to the original run.
-    quantitiesOrPaths <- results$allQuantityPaths
-    if (!is.null(project)) {
-      scenario <- project$definitions$scenarios[[scenarioName]]
-      if (!is.null(scenario) && !is.null(scenario$outputPaths)) {
-        quantitiesOrPaths <- getAllQuantitiesMatching(
-          unname(scenario$outputPaths),
-          simulation
-        )
-      }
-    }
-
     outputValues <- getOutputValues(
       results,
-      quantitiesOrPaths = quantitiesOrPaths,
+      quantitiesOrPaths = results$allQuantityPaths,
       population = population,
       addMetaData = FALSE
     )

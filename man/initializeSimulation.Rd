@@ -19,12 +19,14 @@ initializeSimulation(
 describing an individual. For a non-human species, the simulation is scaled
 to that species, see \code{\link[=applyIndividualParameters]{applyIndividualParameters()}}.}
 
-\item{additionalParams}{Optional named list with lists 'paths', 'values', and
-'units'.}
+\item{additionalParams}{Optional named list with vectors \code{paths}, \code{values},
+and \code{units}. \code{values} and \code{units} have one element per path, or one
+element that is used for every path. Any other length stops with an error.}
 
-\item{additionalInitialConditions}{Optional named list with lists 'paths',
-'values', and 'units', giving molecule start values to apply via
-\code{ospsuite::setQuantityValuesByPath()} after the parameters.}
+\item{additionalInitialConditions}{Optional named list with vectors \code{paths},
+\code{values}, and \code{units}, giving molecule start values to apply via
+\code{ospsuite::setQuantityValuesByPath()} after the parameters. The lengths
+follow the same rule as in \code{additionalParams}.}
 
 \item{stopIfParameterNotFound}{Logical. If \code{TRUE} (default), a path in
 \code{additionalParams} or \code{additionalInitialConditions} that the model does
