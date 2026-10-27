@@ -350,7 +350,7 @@
       print(project$definitions$scenarios[["testscenario"]])
     Output
       <Scenario>
-        * Name: testscenario
+        * Id: testscenario
         * Model: Aciclovir.pkml
         * Type: Individual
         * Individual: indiv1
@@ -369,7 +369,7 @@
       print(scenario)
     Output
       <Scenario>
-        * Name: outputs
+        * Id: outputs
         * Model: Aciclovir.pkml
         * Type: Individual
         * Individual: <empty string>
@@ -389,7 +389,7 @@
       print(scenario)
     Output
       <Scenario>
-        * Name: nooutputs
+        * Id: nooutputs
         * Model: Aciclovir.pkml
         * Type: Individual
         * Individual: <empty string>

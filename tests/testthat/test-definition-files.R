@@ -73,7 +73,7 @@ test_that("saveProject() structurally fail-fasts and leaves disk unchanged", {
   # any file is written.
   scenarios <- c(
     .getSection(project, "scenarios"),
-    list(bad = Scenario(scenarioName = "bad"))
+    list(bad = Scenario(id = "bad"))
   )
   .setSection(project, "scenarios", scenarios)
   expect_error(
@@ -196,14 +196,14 @@ test_that("a write-back plus saveProject() on a restored project preserves sibli
   expect_named(reloaded$definitions$scenarios, before, ignore.order = TRUE)
 })
 
-test_that("a scenarioName that disagrees with its list key aborts saveProject()", {
+test_that("a scenario id that disagrees with its list key aborts saveProject()", {
   project <- testProject()
   dir <- file.path(project$info$projectDirPath, "definitions", "scenarios")
   saveProject(project)
   before <- list.files(dir)
 
   # Store an existing scenario under a different key without updating its
-  # scenarioName. The structural backstop at save (the serialize-in-memory-first
+  # id. The structural backstop at save (the serialize-in-memory-first
   # guarantee) rejects the key/name disagreement before any file is written.
   scenarios <- .getSection(project, "scenarios")
   scenarios[["renamed"]] <- scenarios[["testscenario"]]
@@ -229,7 +229,7 @@ test_that("a write-back under a non-canonical key aborts saveProject()", {
   # addScenario().
   scenarios <- .getSection(project, "scenarios")
   sc <- scenarios[["testscenario"]]
-  sc$scenarioName <- "Renamed"
+  sc$id <- "Renamed"
   scenarios[["Renamed"]] <- sc
   .setSection(project, "scenarios", scenarios)
   expect_snapshot(
@@ -282,18 +282,18 @@ test_that("a scenario id with path separators is canonicalized, not rejected", {
 # validation must be a true superset of what the serializer requires (a
 # scenario that passes `.validateScenarioStructure` must always serialize).
 test_that("structural validation rejects a serializer-hostile scenario", {
-  # simulateSteadyState = TRUE with no steadyStateTimeUnit is what
+  # steadyState = TRUE with no steadyStateTimeUnit is what
   # `.scenarioToJson` aborts on; the structural validator must catch it first.
   sc <- Scenario(
-    scenarioName = "ss",
+    id = "ss",
     modelFile = "m.pkml",
-    simulateSteadyState = TRUE,
+    steadyState = TRUE,
     steadyStateTimeUnit = NULL
   )
   expect_snapshot(.validateScenarioStructure(sc, "ss"), error = TRUE)
 
   # outputPaths present but unnamed is the other serializer abort.
-  bad <- Scenario(scenarioName = "op", modelFile = "m.pkml")
+  bad <- Scenario(id = "op", modelFile = "m.pkml")
   bad$outputPaths <- "Organism|Drug"
   expect_snapshot(.validateScenarioStructure(bad, "op"), error = TRUE)
 })
@@ -313,7 +313,7 @@ test_that("saveProject() aborting on one scenario leaves the tree intact", {
   # `.setSection()` writes the raw section and marks the project modified.
   scenarios <- .getSection(project, "scenarios")
   hostile <- scenarios[[before[[1]]]]
-  hostile$simulateSteadyState <- TRUE
+  hostile$steadyState <- TRUE
   hostile$steadyStateTimeUnit <- NULL
   scenarios[[before[[1]]]] <- hostile
   .setSection(project, "scenarios", scenarios)
@@ -338,9 +338,9 @@ test_that("a multi-definition saveProject() aborting on one definition is atomic
 
   # Build a whole-section map: the existing scenarios plus one brand-new valid
   # scenario plus one new serializer-hostile scenario (steadyState, no unit).
-  valid <- Scenario(modelFile = "Aciclovir.pkml", scenarioName = "fresh_ok")
-  hostile <- Scenario(modelFile = "Aciclovir.pkml", scenarioName = "fresh_bad")
-  hostile$simulateSteadyState <- TRUE
+  valid <- Scenario(modelFile = "Aciclovir.pkml", id = "fresh_ok")
+  hostile <- Scenario(modelFile = "Aciclovir.pkml", id = "fresh_bad")
+  hostile$steadyState <- TRUE
   hostile$steadyStateTimeUnit <- NULL
 
   newSection <- c(

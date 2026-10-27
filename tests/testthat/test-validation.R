@@ -240,14 +240,14 @@ test_that(".validateScenarios flags missing modelFile and bad simulationType", {
   expect_gte(length(result$critical_errors), 1)
 })
 
-test_that(".validateScenarios flags Population scenario without populationId", {
+test_that(".validateScenarios flags Population scenario without population", {
   sc <- Scenario()
   sc$modelFile <- "model.pkml"
   sc$simulationType <- "Population"
-  sc$populationId <- ""
+  sc$population <- ""
   result <- .validateScenarios(list(s1 = sc))
   msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
-  expect_match(msgs, "populationId", all = FALSE)
+  expect_match(msgs, "has no population", all = FALSE)
 })
 
 test_that(".validateScenarios flags an unsound solverSettings block", {
@@ -329,7 +329,7 @@ test_that(".validateScenarios warns when a scenario's population csv is absent",
   sc <- Scenario(
     modelFile = "model.pkml",
     simulationType = "Population",
-    populationId = "testpopulation"
+    population = "testpopulation"
   )
   sc$readPopulationFromCSV <- TRUE
 
@@ -355,7 +355,7 @@ test_that(".validateScenarios passes when the population csv is on disk", {
   sc <- Scenario(
     modelFile = "model.pkml",
     simulationType = "Population",
-    populationId = "testpopulation"
+    population = "testpopulation"
   )
   sc$readPopulationFromCSV <- TRUE
 
@@ -378,7 +378,7 @@ test_that(".validateScenarios checks the file a csv population entry names", {
   sc <- Scenario(
     modelFile = "model.pkml",
     simulationType = "Population",
-    populationId = "frozen"
+    population = "frozen"
   )
 
   # No scenario flag: the entry's own `type` is what makes this a csv read, and
@@ -919,10 +919,10 @@ test_that(".validatePlots does not warn when the field matches its plotType", {
 
 # Cross-references ----
 
-test_that(".validateCrossReferences flags scenario referencing missing individualId", {
+test_that(".validateCrossReferences flags scenario referencing missing individual", {
   sc <- Scenario()
   sc$modelFile <- "x.pkml"
-  sc$individualId <- "Ghost"
+  sc$individual <- "Ghost"
   project <- .fakeProject(scenarios = list(s1 = sc))
   result <- .validateCrossReferences(project)
   msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
@@ -1047,8 +1047,8 @@ test_that(".validateCrossReferences resolves individuals/populations as named li
   populations <- list(P1 = list(species = "Human"))
   sc <- Scenario()
   sc$modelFile <- "x.pkml"
-  sc$individualId <- "I1"
-  sc$populationId <- "P1"
+  sc$individual <- "I1"
+  sc$population <- "P1"
   sc$simulationType <- "Population"
   project <- .fakeProject(
     scenarios = list(s1 = sc),
@@ -1066,7 +1066,7 @@ test_that(".validateCrossReferences evaluates whatever else in the project is br
   # validator found something, since it is the phase the run gate depends on.
   sc <- Scenario()
   sc$modelFile <- ""
-  sc$individualId <- "ghost"
+  sc$individual <- "ghost"
   project <- .fakeProject(scenarios = list(s1 = sc))
 
   sectionResult <- .scenariosValidatorAdapter(project)
@@ -1080,7 +1080,7 @@ test_that(".validateCrossReferences evaluates whatever else in the project is br
 
 test_that(".validateCrossReferences resolves a case-only mismatched reference", {
   # Disk keys are canonical (lower-cased); a hand-edited Project.json can carry a
-  # non-canonical reference. `individualId = 'Adult'` against a disk key of
+  # non-canonical reference. `individual = 'Adult'` against a disk key of
   # `adult` (and likewise for population / application / outputPath) must NOT be
   # flagged dangling: both sides are canonicalized before comparison.
   individuals <- list(adult = list(species = "Human", gender = "MALE"))
@@ -1088,9 +1088,9 @@ test_that(".validateCrossReferences resolves a case-only mismatched reference", 
   applications <- list(iv_bolus = list())
   sc <- Scenario()
   sc$modelFile <- "x.pkml"
-  sc$individualId <- "Adult"
-  sc$populationId <- "Elderly"
-  sc$applicationProtocol <- "IV_Bolus"
+  sc$individual <- "Adult"
+  sc$population <- "Elderly"
+  sc$application <- "IV_Bolus"
   sc$simulationType <- "Population"
   sc$outputPaths <- stats::setNames("Organism|A", "OutPath_1")
   project <- .fakeProject(
@@ -1113,7 +1113,7 @@ test_that(".validateCrossReferences resolves only the references the requested s
   # gap out of the `runScenarios()` gate.
   sc <- Scenario()
   sc$modelFile <- "m.pkml"
-  sc$individualId <- "ghost_individual"
+  sc$individual <- "ghost_individual"
   project <- .fakeProject(
     scenarios = list(s1 = sc),
     dataCombined = list(
@@ -1246,7 +1246,7 @@ test_that("a broken plots section leaves the run gate's cross-reference check in
   )
   sc <- Scenario()
   sc$modelFile <- "m.pkml"
-  sc$individualId <- "ghost_individual"
+  sc$individual <- "ghost_individual"
   project <- .fakeProject(
     scenarios = list(s1 = sc),
     # A critical error in a section a simulation is not built from: the plot

@@ -294,7 +294,7 @@
     if (is.null(pathIds) || any(pathIds == "")) {
       cli::cli_abort(
         c(
-          "Scenario {.val {sc$scenarioName}} has {.field outputPaths} without ids.",
+          "Scenario {.val {sc$id}} has {.field outputPaths} without ids.",
           "i" = "Expected a named character vector: id-as-name, literal-path-as-value."
         )
       )
@@ -315,9 +315,9 @@
     simTimeStr <- paste(intervals, collapse = "; ")
   }
 
-  if (sc$simulateSteadyState && is.null(sc$steadyStateTimeUnit)) {
+  if (sc$steadyState && is.null(sc$steadyStateTimeUnit)) {
     cli::cli_abort(c(
-      "Scenario {.val {sc$scenarioName}} has {.field simulateSteadyState}=TRUE \\
+      "Scenario {.val {sc$id}} has {.field steadyState}=TRUE \\
       but {.field steadyStateTimeUnit} is NULL.",
       "i" = "Set {.field steadyStateTimeUnit} (e.g. {.val min}) so the value \\
       can round-trip."
@@ -325,30 +325,24 @@
   }
 
   entry <- list(
-    name = sc$scenarioName,
-    individual = sc$individualId,
+    name = sc$id,
+    individual = sc$individual,
     # Emit the population id verbatim rather than keying off the derived
-    # `simulationType`, so a drifted record (populationId set while the
+    # `simulationType`, so a drifted record (population set while the
     # type reads "Individual") does not silently lose its population.
-    population = sc$populationId,
+    population = sc$population,
     readPopulationFromCSV = sc$readPopulationFromCSV,
     # `as.list(NULL)` -> `list()`; this collapses both "key absent" and
     # "empty array" in the parsed scenario to JSON `[]`. Matches the
     # end-state serializer in `json-as-primary-input-v2`.
-    parameterSets = as.list(sc$modelParameterSets),
+    parameterSets = as.list(sc$parameterSets),
     initialConditions = as.list(sc$initialConditions),
-    application = if (
-      is.null(sc$applicationProtocol) || is.na(sc$applicationProtocol)
-    ) {
-      NULL
-    } else {
-      sc$applicationProtocol
-    },
+    application = sc$application,
     simulationTime = simTimeStr,
     simulationTimeUnit = sc$simulationTimeUnit,
-    steadyState = sc$simulateSteadyState,
+    steadyState = sc$steadyState,
     # Emit the steady-state time/unit whenever a unit is declared,
-    # independently of `simulateSteadyState`. A declared time with the
+    # independently of `steadyState`. A declared time with the
     # flag off (e.g. `steadyState: false` plus a preset time) is valid
     # JSON the parser reads back, so dropping it would lose data.
     steadyStateTime = if (!is.null(sc$steadyStateTimeUnit)) {

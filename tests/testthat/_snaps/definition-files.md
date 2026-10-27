@@ -7,14 +7,14 @@
       Canonicalized 1 id to a safe form:
       * "My/Scenario" -> "my_scenario"
 
-# a scenarioName that disagrees with its list key aborts saveProject()
+# a scenario id that disagrees with its list key aborts saveProject()
 
     Code
       saveProject(project)
     Condition
       Error in `.validateScenarioStructure()`:
-      ! Scenario scenarioName "testscenario" does not match the key "renamed" it is stored under.
-      i Store a scenario under a key equal to its scenarioName (or leave scenarioName unset).
+      ! Scenario id "testscenario" does not match the key "renamed" it is stored under.
+      i Store a scenario under a key equal to its id (or leave id unset).
 
 # a write-back under a non-canonical key aborts saveProject()
 
@@ -49,7 +49,7 @@
       .validateScenarioStructure(sc, "ss")
     Condition
       Error in `.validateScenarioStructure()`:
-      ! Scenario "ss" has simulateSteadyState=TRUE but steadyStateTimeUnit is NULL.
+      ! Scenario "ss" has steadyState=TRUE but steadyStateTimeUnit is NULL.
       i Set steadyStateTimeUnit (e.g. "min") so the steady-state time can round-trip.
 
 ---

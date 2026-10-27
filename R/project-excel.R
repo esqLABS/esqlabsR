@@ -4350,7 +4350,7 @@ projectStatus <- function(project, silent = FALSE) {
   rows <- list()
   for (name in names(scenarioConfigs)) {
     sc <- scenarioConfigs[[name]]
-    paramSetsStr <- .formatArrayToCommaList(sc$modelParameterSets)
+    paramSetsStr <- .formatArrayToCommaList(sc$parameterSets)
     initialConditionsStr <- .formatArrayToCommaList(sc$initialConditions)
     # simulationTime -> string representation
     simTimeStr <- NA
@@ -4399,7 +4399,7 @@ projectStatus <- function(project, silent = FALSE) {
     ssTime <- NA
     ssTimeUnit <- NA
     if (
-      (isTRUE(sc$simulateSteadyState) || !is.null(sc$steadyStateTimeUnit)) &&
+      (isTRUE(sc$steadyState) || !is.null(sc$steadyStateTimeUnit)) &&
         !is.null(sc$steadyStateTime) &&
         !is.na(sc$steadyStateTime)
     ) {
@@ -4412,20 +4412,20 @@ projectStatus <- function(project, silent = FALSE) {
     }
 
     rows[[length(rows) + 1]] <- data.frame(
-      Scenario_name = sc$scenarioName,
-      IndividualId = sc$individualId %||% NA,
+      Scenario_name = sc$id,
+      IndividualId = sc$individual %||% NA,
       PopulationId = if (sc$simulationType == "Population") {
-        sc$populationId
+        sc$population
       } else {
         NA
       },
       ReadPopulationFromCSV = sc$readPopulationFromCSV %||% FALSE,
       ModelParameterSheets = paramSetsStr,
       InitialConditions = initialConditionsStr,
-      ApplicationProtocol = sc$applicationProtocol %||% NA,
+      ApplicationProtocol = sc$application %||% NA,
       SimulationTime = simTimeStr,
       SimulationTimeUnit = sc$simulationTimeUnit %||% NA,
-      SteadyState = sc$simulateSteadyState %||% FALSE,
+      SteadyState = sc$steadyState %||% FALSE,
       SteadyStateTime = ssTime,
       SteadyStateTimeUnit = ssTimeUnit,
       OverwriteFormulasInSS = sc$overwriteFormulasInSS %||% FALSE,

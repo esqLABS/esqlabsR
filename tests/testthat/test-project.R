@@ -249,10 +249,10 @@ test_that("loadProject() parses scenarios into Scenario objects keyed by name", 
 
   first <- project$definitions$scenarios[["aciclovir_iv"]]
   expect_s3_class(first, "Scenario")
-  expect_identical(first$scenarioName, "aciclovir_iv")
-  expect_identical(first$individualId, "adult_male")
-  expect_null(first$populationId)
-  expect_identical(first$modelParameterSets, c("global", "aciclovir"))
+  expect_identical(first$id, "aciclovir_iv")
+  expect_identical(first$individual, "adult_male")
+  expect_null(first$population)
+  expect_identical(first$parameterSets, c("global", "aciclovir"))
 })
 
 test_that("loadProject() preserves parameterSets as a single named list of sets", {
@@ -1069,7 +1069,7 @@ test_that("a subscript assignment through a section accessor is rejected", {
   expect_snapshot(
     error = TRUE,
     project$definitions$scenarios[["aciclovir_iv"]] <- Scenario(
-      scenarioName = "aciclovir_iv",
+      id = "aciclovir_iv",
       modelFile = "m.pkml"
     )
   )
@@ -1081,7 +1081,7 @@ test_that("a nested field assignment through a section accessor is rejected", {
   # the same read-modify-write the subscript form does, so it is rejected too.
   expect_snapshot(
     error = TRUE,
-    project$definitions$scenarios[["testscenario"]]$individualId <- "indiv1"
+    project$definitions$scenarios[["testscenario"]]$individual <- "indiv1"
   )
 })
 
@@ -1172,11 +1172,11 @@ test_that("reading a record, editing the copy, and re-submitting it is the suppo
 test_that("saveProject() rejects a wrong-typed scalar reference field", {
   project <- testProject()
   scenarios <- .getSection(project, "scenarios")
-  scenarios[["testscenario"]]$individualId <- list(a = 1)
+  scenarios[["testscenario"]]$individual <- list(a = 1)
   .setSection(project, "scenarios", scenarios)
   expect_error(
     saveProject(project),
-    "individualId.*single string"
+    "individual.*single string"
   )
 })
 

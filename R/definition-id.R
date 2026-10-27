@@ -10,7 +10,7 @@
 # deterministic canonicalizer (`.canonicalizeId()`) the moment it enters the
 # system: both when a definition is created (the `id` argument of an `add*`
 # / `set*` function) and when an id is referenced (a foreign-key argument
-# such as a scenario's `individualId` or its parameter-set list). Because the
+# such as a scenario's `individual` or its parameter-set list). Because the
 # transform is deterministic and applied identically on both sides, a
 # definition and a reference made from the same typed string always land on
 # the same canonical id, which is what makes lossy sanitization safe: a
@@ -130,7 +130,7 @@
 }
 
 # Canonicalize a foreign-key reference argument (e.g. a scenario's
-# `individualId`, or its `modelParameterSets` / `outputPathIds` vector) the
+# `individual`, or its `parameterSets` / `outputPaths` vector) the
 # same way `.canonicalizeId()` canonicalizes a definition's id, so a
 # reference made from the same typed string as the definition resolves to
 # it. `NULL` passes through unchanged (the reference is absent), and so does

@@ -63,9 +63,9 @@ Two behaviors are not visible from the table:
 - **Every reference is checked as the scenario is added.** If `individual`, `population`, `application`, or any entry in `parameterSets`, `initialConditions`, or `outputPaths` does not resolve, `addScenario()` aborts and nothing is created. The model file is not checked then; `validateProject()` warns when it is missing.
 - **Parameter sets are applied in layers.** First the scenario's own `parameterSets`, in the order you list them, then the parameter sets of its individual, then those of its application. Where two sets touch the same parameter, the one applied last wins: `c("global", "aciclovir", "ckd")` applies `global` first and lets `ckd` win, and a set of the individual or the application overrides all three.
 
-### On-disk keys and in-memory field names
+### Scenario files
 
-**A `definitions/scenarios/*.json` file uses the argument names above**, unchanged, with the id written as `name`. So a scenario file written by hand looks like this:
+**A `definitions/scenarios/*.json` file uses the argument names above**, unchanged, with the id written as `name`. A scenario record read from `project$definitions$scenarios` uses the same names, except that it holds the id as `id`. So a scenario file written by hand looks like this:
 
 ```json
 {
@@ -79,18 +79,7 @@ Two behaviors are not visible from the table:
 }
 ```
 
-The **parsed in-memory record** is what differs. A record read from `project$definitions$scenarios` renames the reference fields, so use these names when inspecting or editing a record in R:
-
-| Argument and on-disk key | In-memory record field |
-| --- | --- |
-| `individual` | `individualId` |
-| `population` | `populationId` |
-| `application` | `applicationProtocol` |
-| `parameterSets` | `modelParameterSets` |
-| `steadyState` | `simulateSteadyState` |
-| `name` (the id) | `scenarioName` |
-
-The in-memory record also carries `simulationType`, derived from whether a population is referenced.
+The record also carries `simulationType`, derived from whether a population is referenced.
 
 ### `solverSettings`
 

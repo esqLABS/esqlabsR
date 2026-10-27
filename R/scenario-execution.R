@@ -301,7 +301,7 @@
 
 # Pure function. Builds a `list(paths, values, units)` parameter
 # structure (or `NULL`) for one scenario. Layers, in order
-# (last-write-wins): scenario `modelParameterSets` -> individual
+# (last-write-wins): scenario `parameterSets` -> individual
 # `parameterSets` -> application `parameterSets` -> caller-supplied
 # `customParams`. Each of those reference fields is a
 # list of set ids, iterated in listed order; every id is looked up in
@@ -324,16 +324,16 @@
   # resolve their set ids against it.
   parameterSets <- project$definitions$parameterSets
 
-  # 1. modelParameterSets
+  # 1. scenario parameterSets
   params <- .extendWithParameterSets(
     params,
-    scenario$modelParameterSets,
+    scenario$parameterSets,
     parameterSets
   )
 
   # 2. individual parameterSets
-  if (!is.null(scenario$individualId) && !is.na(scenario$individualId)) {
-    indivData <- project$definitions$individuals[[scenario$individualId]]
+  if (!is.null(scenario$individual)) {
+    indivData <- project$definitions$individuals[[scenario$individual]]
     params <- .extendWithParameterSets(
       params,
       unlist(indivData$parameterSets),
@@ -342,15 +342,12 @@
   }
 
   # 3. application parameterSets
-  if (
-    !is.null(scenario$applicationProtocol) &&
-      !is.na(scenario$applicationProtocol)
-  ) {
-    appData <- project$definitions$applications[[scenario$applicationProtocol]]
+  if (!is.null(scenario$application)) {
+    appData <- project$definitions$applications[[scenario$application]]
     if (is.null(appData)) {
       cli::cli_abort(messages$applicationProtocolNotFound(
-        scenarioName = scenario$scenarioName,
-        applicationProtocol = scenario$applicationProtocol
+        scenarioName = scenario$id,
+        applicationProtocol = scenario$application
       ))
     }
     params <- .extendWithParameterSets(
@@ -373,7 +370,7 @@
 
 # Fold each named parameter set into `params`, skipping a set id that resolves
 # to nothing. The three layers a scenario draws sets from (its own
-# `modelParameterSets`, its individual's, and its application protocol's) merge
+# `parameterSets`, its individual's, and its application's) merge
 # the same way, each overriding the one before it.
 #
 # @keywords internal
@@ -398,19 +395,19 @@
 # comes from the runtime store; a `csv` entry loads its `file`; an entry with no
 # `type` is a demographics spec built via `createPopulationCharacteristics`,
 # unless the scenario's `readPopulationFromCSV` flag is set (back-compat: that
-# still loads `<populationId>.csv`). Resolved objects are cached per run, keyed
+# still loads `<population>.csv`). Resolved objects are cached per run, keyed
 # on the source they were resolved from, so a population two scenarios resolve
 # the same way is built or loaded once.
 # @keywords internal
 # @noRd
 .resolveScenarioPopulation <- function(scenario, project, cache) {
-  if (is.null(scenario$populationId)) {
+  if (is.null(scenario$population)) {
     cli::cli_abort(messages$noPopulationIdForPopulationScenario(
-      scenario$scenarioName
+      scenario$id
     ))
   }
 
-  popData <- project$definitions$populations[[scenario$populationId]]
+  popData <- project$definitions$populations[[scenario$population]]
   # The entry type wins over the scenario flag; a spec entry falls back to the
   # scenario's `readPopulationFromCSV` for the legacy CSV path.
   effectiveType <- popData$type %||%
@@ -423,7 +420,7 @@
   # have to coexist in one batch. `\r` cannot occur in a canonicalized id, which
   # substitutes every control and space character.
   key <- paste(
-    scenario$populationId,
+    scenario$population,
     effectiveType,
     popData$file %||% "",
     sep = "\r"
@@ -437,10 +434,10 @@
   # always a project mistake (typically `readPopulationFromCSV` set on one
   # scenario and not on another that shares the population), so say so.
   seenKeys <- names(cache$populations) %||% character()
-  if (any(startsWith(seenKeys, paste0(scenario$populationId, "\r")))) {
+  if (any(startsWith(seenKeys, paste0(scenario$population, "\r")))) {
     cli::cli_warn(messages$populationIdResolvedTwoWays(
-      populationId = scenario$populationId,
-      scenarioName = scenario$scenarioName,
+      populationId = scenario$population,
+      scenarioName = scenario$id,
       effectiveType = effectiveType
     ))
   }
@@ -451,11 +448,11 @@
     # without re-injecting) is fatal: a population scenario cannot run without
     # one.
     "programmatic" = project$getProgrammaticPopulation(
-      scenario$populationId
+      scenario$population
     ) %||%
       cli::cli_abort(messages$populationProgrammaticUnresolved(
-        id = scenario$populationId,
-        scenarioName = scenario$scenarioName
+        id = scenario$population,
+        scenarioName = scenario$id
       )),
     "csv" = .resolveCsvPopulation(scenario, project, popData),
     "spec" = .resolveSpecPopulation(scenario, popData)
@@ -465,7 +462,7 @@
 }
 
 # Load a population table from CSV. A `csv` entry names its own `file`; the
-# legacy scenario-flag path (no `file`) derives `<populationId>.csv`. Either way
+# legacy scenario-flag path (no `file`) derives `<population>.csv`. Either way
 # the resolved path must stay under the populations folder (a shared project
 # cannot escape itself via a `../` id), which must be declared.
 # @keywords internal
@@ -473,27 +470,27 @@
 .resolveCsvPopulation <- function(scenario, project, popData) {
   if (is.null(project$paths$populationsFolder)) {
     cli::cli_abort(messages$noPopulationsFolderForCSVPopulation(
-      scenarioName = scenario$scenarioName,
-      populationId = scenario$populationId
+      scenarioName = scenario$id,
+      populationId = scenario$population
     ))
   }
   fileName <- .populationCsvFileName(
-    scenario$populationId,
+    scenario$population,
     project$paths$populationsFolder,
     popData$file
   )
   populationPath <- .resolveProjectPath(
     fileName,
     project$paths$populationsFolder,
-    "populationId"
+    "population"
   )
   # Report an absent file here rather than handing a nonexistent path to the
   # backend, which fails with a raw .NET exception naming neither the scenario
   # nor the folder the file is expected in.
   if (!file.exists(populationPath)) {
     cli::cli_abort(messages$populationCsvNotFound(
-      scenarioName = scenario$scenarioName,
-      populationId = scenario$populationId,
+      scenarioName = scenario$id,
+      populationId = scenario$population,
       fileName = fileName,
       populationsFolder = project$paths$populationsFolder
     ))
@@ -508,8 +505,8 @@
 .resolveSpecPopulation <- function(scenario, popData) {
   if (is.null(popData)) {
     cli::cli_abort(messages$populationNotFoundForScenario(
-      populationId = scenario$populationId,
-      scenarioName = scenario$scenarioName
+      populationId = scenario$population,
+      scenarioName = scenario$id
     ))
   }
   moleculeOntogenies <- .readOntogeniesFromList(popData$proteinOntogenies)
@@ -587,7 +584,7 @@
     )
   } else {
     cli::cli_abort(messages$noSimulationsFolderForRelativeModelFile(
-      scenarioName = scenario$scenarioName,
+      scenarioName = scenario$id,
       modelFile = scenario$modelFile
     ))
   }
@@ -596,7 +593,7 @@
     filePath = modelFilePath,
     loadFromCache = FALSE
   )
-  simulation$name <- scenario$scenarioName
+  simulation$name <- scenario$id
 
   # 1a. Solver settings, project default < scenario block < call site
   .applySolverSettings(
@@ -616,15 +613,15 @@
 
   # 2b. IndividualCharacteristics
   individualCharacteristics <- NULL
-  if (!is.null(scenario$individualId) && !is.na(scenario$individualId)) {
-    indivData <- project$definitions$individuals[[scenario$individualId]]
+  if (!is.null(scenario$individual)) {
+    indivData <- project$definitions$individuals[[scenario$individual]]
     if (is.null(indivData)) {
       cli::cli_warn(messages$noIndividualCharacteristics(
-        scenarioName = scenario$scenarioName,
-        individualId = scenario$individualId
+        scenarioName = scenario$id,
+        individualId = scenario$individual
       ))
     } else {
-      cached <- cache$individuals[[scenario$individualId]]
+      cached <- cache$individuals[[scenario$individual]]
       if (!is.null(cached)) {
         individualCharacteristics <- cached
       } else {
@@ -646,7 +643,7 @@
           age = indivData$age,
           moleculeOntogenies = moleculeOntogenies
         )
-        cache$individuals[[scenario$individualId]] <- individualCharacteristics
+        cache$individuals[[scenario$individual]] <- individualCharacteristics
       }
     }
   }
@@ -663,7 +660,7 @@
   if (!is.null(scenario$simulationTime)) {
     if (is.null(scenario$simulationTimeUnit)) {
       cli::cli_abort(messages$scenarioMissingTimeUnit(
-        scenario$scenarioName
+        scenario$id
       ))
     }
     clearOutputIntervals(simulation)
@@ -716,7 +713,7 @@
 # Bring a scenario's simulation to steady state, when it asks for one: solve for
 # the steady-state quantity values at the scenario's `steadyStateTime` and write
 # them back as the simulation's start values. A scenario with
-# `simulateSteadyState` off is a no-op.
+# `steadyState` off is a no-op.
 #
 # `overwriteFormulasInSS` is the scenario's own spelling of the inverse of
 # `ospsuite`'s `ignoreIfFormula`: a quantity whose start value is a formula
@@ -733,7 +730,7 @@
   scenario,
   simulationRunOptions
 ) {
-  if (!scenario$simulateSteadyState) {
+  if (!scenario$steadyState) {
     return(invisible(simulation))
   }
   initialValues <- ospsuite::getSteadyState(
@@ -956,13 +953,13 @@
   outputValues <- NULL
   if (is.null(results)) {
     if (isTRUE(stopIfFails)) {
-      cli::cli_abort(messages$missingResultsForScenario(scenario$scenarioName))
+      cli::cli_abort(messages$missingResultsForScenario(scenario$id))
     }
     # A scenario skipped at build time (NULL simulation) already warned via
     # `scenarioBuildFailed()`; don't warn a second time for the same event. A
     # scenario that built but produced no results still warns here.
     if (!is.null(simulation)) {
-      cli::cli_warn(messages$missingResultsForScenario(scenario$scenarioName))
+      cli::cli_warn(messages$missingResultsForScenario(scenario$id))
     }
   } else {
     outputValues <- getOutputValues(

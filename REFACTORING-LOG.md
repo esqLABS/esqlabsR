@@ -326,3 +326,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-10-26 12:24: Bullets in error and warning messages start new lines again, and a value with braces prints as written; a nested error now shows below the warning as its cause. (#1343)
 - 2026-10-26 14:45: The name-collision error of saveScenarioResults() shows the backslash once, as "\\" instead of "\\\\".
 - 2026-10-27 11:22: setScenario() refuses a modelFile of NULL, NA or "" and leaves every scenario unchanged. (#1303)
+- 2026-10-27 11:58: A scenario record uses the names of the addScenario() arguments (id, individual, population, application, parameterSets, steadyState), and an absent application is NULL. (#1317)

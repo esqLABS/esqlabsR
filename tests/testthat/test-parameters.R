@@ -780,7 +780,7 @@ test_that("removeParameterSet removes a vector of ids in one saveProject()", {
 test_that("removeParameterSet warns when still referenced by a scenario, removes anyway", {
   project <- testProject()
   withr::local_options(cli.unicode = FALSE)
-  # `global` is a `modelParameterSets` entry of every scenario in the fixture.
+  # `global` is a `parameterSets` entry of every scenario in the fixture.
   expect_snapshot(removeParameterSet(project, "global"))
   expect_false("global" %in% names(project$definitions$parameterSets))
 })

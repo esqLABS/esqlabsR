@@ -1067,7 +1067,7 @@ messages$noPopulationsFolderForCSVPopulation <- function(
 ) {
   cliBullets(
     "x" = "Cannot resolve the population csv for scenario {.val {scenarioName}}.",
-    "i" = "{.field populationId} {.val {populationId}} is read from a csv but \\
+    "i" = "{.field population} {.val {populationId}} is read from a csv but \\
     the project has no {.field populationsFolder} to resolve it against."
   )
 }
@@ -1261,7 +1261,7 @@ messages$noIndividualCharacteristics <- function(
 messages$noPopulationIdForPopulationScenario <- function(scenarioName) {
   cliFormat(
     "Simulation type of the scenario with scenario name {.val {scenarioName}} is set to {.val Population},
-    but the field {.var populationId} is not set! Every population simulation scenario must have a population id defined"
+    but the field {.field population} is not set! Every population simulation scenario must have a population id defined"
   )
 }
 

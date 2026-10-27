@@ -259,9 +259,9 @@ Like every other edit, the new scenario exists only in your R session until you 
 
 ### Population scenarios
 
-To run a population scenario, pass a `population` id during scenario creation, or add a population later to the field `project$definitions$scenarios[["scenario_name"]]$populationId`; the scenario type changes automatically. If you also keep an `individual`, its parameter sets still apply.
+To run a population scenario, pass a `population` id during scenario creation, or add one later with `setScenario(project, "scenario_name", population = "population_id")`; the scenario type changes automatically. If you also keep an `individual`, its parameter sets still apply.
 
-`readPopulationFromCSV = TRUE` makes a population scenario read its population from a CSV file in the project's populations folder instead of sampling it. The CSV file must be named as the `populationId` defined in the scenario.
+`readPopulationFromCSV = TRUE` makes a population scenario read its population from a CSV file in the project's populations folder instead of sampling it. The CSV file must be named as the `population` id defined in the scenario.
 
 ### Simulating a steady-state
 
@@ -290,13 +290,11 @@ setScenario(
 project$definitions$scenarios[["aciclovir_iv_ckd"]]$simulationTime
 ```
 
-In the next example, we remove the individual assignment from the scenario by passing `NULL`. The consequence is that parameters describing the physiology will not be overwritten, and individual-specific parameter sets defined in `project$definitions$individuals$adult_male_ckd$parameterSets` will not be applied.
-
- In R, a scenario record calls this field `individualId`, not `individual`; `vignette("reference-definition-fields")` lists the fields whose names differ:
+In the next example, we remove the individual assignment from the scenario by passing `NULL`. The consequence is that parameters describing the physiology will not be overwritten, and individual-specific parameter sets defined in `project$definitions$individuals$adult_male_ckd$parameterSets` will not be applied. A scenario record read in R uses the same field names as the arguments:
 
 ```{r}
 setScenario(project, "aciclovir_iv_ckd", individual = NULL)
-project$definitions$scenarios[["aciclovir_iv_ckd"]]$individualId
+project$definitions$scenarios[["aciclovir_iv_ckd"]]$individual
 ```
 
 The same update logic applies to the supporting definitions.

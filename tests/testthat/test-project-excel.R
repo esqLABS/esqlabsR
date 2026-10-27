@@ -196,13 +196,13 @@ test_that("Excel round-trip defaults a non-steady-state scenario's steady-state 
   # project re-authored through `addScenario()`, so no round-trip diff (#1158).
   # The value is only used when steady-state is on.
   nonSteady <- "aciclovir_iv"
-  expect_false(isTRUE(before[[nonSteady]]$simulateSteadyState))
+  expect_false(isTRUE(before[[nonSteady]]$steadyState))
   expect_identical(after[[nonSteady]]$steadyStateTime, 1000)
   expect_identical(after[[nonSteady]]$steadyStateTimeUnit, "min")
 
   # A genuine steady-state scenario keeps its declared unit.
   steady <- "aciclovir_iv_steadystate"
-  expect_true(isTRUE(before[[steady]]$simulateSteadyState))
+  expect_true(isTRUE(before[[steady]]$steadyState))
   expect_identical(
     after[[steady]]$steadyStateTimeUnit,
     before[[steady]]$steadyStateTimeUnit
@@ -225,7 +225,7 @@ test_that("Excel round-trip keeps a steady-state time declared with the flag off
   before <- .unwrapDefinitionList(project$definitions$scenarios)
   after <- .unwrapDefinitionList(excelRoundTrip(project)$definitions$scenarios)
 
-  expect_false(isTRUE(after[["aciclovir_iv"]]$simulateSteadyState))
+  expect_false(isTRUE(after[["aciclovir_iv"]]$steadyState))
   expect_identical(after[["aciclovir_iv"]]$steadyStateTimeUnit, "h")
   expect_equal(
     after[["aciclovir_iv"]]$steadyStateTime,
@@ -4054,7 +4054,7 @@ test_that("quoted legacy cells resolve to the names they were written with", {
   expect_identical(
     imported$project$definitions$scenarios[[
       "adultscenario"
-    ]]$modelParameterSets,
+    ]]$parameterSets,
     c("global", "aciclovir", "sheet__with_comma")
   )
 
@@ -4383,7 +4383,7 @@ test_that("an individual with a parameter sheet but no biometrics row is dropped
 
   # The scenario keeps pointing at the individual that no longer exists.
   expect_identical(
-    imported$project$definitions$scenarios[["childscenario"]]$individualId,
+    imported$project$definitions$scenarios[["childscenario"]]$individual,
     "child"
   )
 
