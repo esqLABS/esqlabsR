@@ -50,8 +50,10 @@ The target reader of all user-facing documentation (roxygen `@description`, `@pa
 ## Pull requests
 
 - Open new PRs as **draft (WIP)**.
-- Every PR with user-facing changes needs at least one `NEWS.md` bullet, written for the end user. Add **one bullet per user-visible change**, not one per PR — a PR that changes three things visible to users gets three bullets. Do not combine unrelated changes into a single bullet.
-- Skip `NEWS.md` only when the PR has no user-facing change at all (internal refactoring, tests, CI, agent guidance).
+- `NEWS.md` describes the difference between the last release and the current state, not the history of the development cycle.
+- Every PR that changes what a user of the last release sees needs at least one `NEWS.md` bullet, written for the end user. Add **one bullet per user-visible change**, not one per PR: a PR that changes three things visible to users gets three bullets. Do not combine unrelated changes into a single bullet.
+- When a PR changes something added in the current development cycle (already in the development section), edit its existing bullet instead of adding a new one, and only if the bullet is now wrong.
+- Skip `NEWS.md` when the PR has no user-facing change compared to the last release: internal refactoring, tests, CI, agent guidance, or a fix for a bug added after the last release.
 - Each bullet names the affected function as `functionName()`, says what the user now sees or can do, and ends with the issue number in parentheses, e.g. `(#1056)`. File it under `## Breaking changes`, `## New features`, or `## Minor improvements and bug fixes` in the development section.
 
 ## Documentation / Rd files
