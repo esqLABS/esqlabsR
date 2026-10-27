@@ -154,7 +154,7 @@ test_that("snapshotProject freezes unsaved in-memory edits", {
   # The snapshot reflects memory (including the unsaved scenario), not disk.
   out <- snapshotProject(project, dir = dir, name = "study")
   raw <- jsonlite::fromJSON(out, simplifyVector = FALSE)
-  snapshotScenarioNames <- vapply(raw$scenarios, \(s) s$name, character(1L))
+  snapshotScenarioNames <- vapply(raw$scenarios, \(s) s$id, character(1L))
   expect_true("freshone" %in% snapshotScenarioNames)
 })
 
@@ -291,7 +291,7 @@ test_that("restoreProject warns about a dangling cross-reference once, not twice
   out <- snapshotProject(project, dir = withr::local_tempdir(), name = "study")
   raw <- jsonlite::fromJSON(out, simplifyVector = FALSE)
   for (i in seq_along(raw$scenarios)) {
-    if (identical(raw$scenarios[[i]]$name, "dangler")) {
+    if (identical(raw$scenarios[[i]]$id, "dangler")) {
       raw$scenarios[[i]]$individual <- "ghost"
     }
   }

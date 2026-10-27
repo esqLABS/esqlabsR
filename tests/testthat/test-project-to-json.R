@@ -440,7 +440,7 @@ test_that("round-trip preserves a steady-state scenario including unit conversio
 
   raw <- jsonlite::fromJSON(out, simplifyVector = FALSE)
   ss <- Filter(
-    function(s) s$name == "aciclovir_iv_steadystate",
+    function(s) s$id == "aciclovir_iv_steadystate",
     raw$scenarios
   )[[1L]]
 
@@ -459,7 +459,7 @@ test_that("round-trip preserves outputPaths order", {
 
   raw <- jsonlite::fromJSON(out, simplifyVector = FALSE)
   ss <- Filter(
-    function(s) s$name == "aciclovir_iv_steadystate",
+    function(s) s$id == "aciclovir_iv_steadystate",
     raw$scenarios
   )[[1L]]
 
@@ -474,7 +474,7 @@ test_that("round-trip preserves outputPaths order", {
 test_that("steadyState=false with a declared time and unit round-trips", {
   raw <- list(
     list(
-      name = "S",
+      id = "S",
       individual = "I",
       modelFile = "m.pkml",
       steadyState = FALSE,
@@ -503,7 +503,7 @@ test_that("steadyState=false with a declared time and unit round-trips", {
 test_that("a standalone simulationTimeUnit round-trips when simulationTime is null", {
   raw <- list(
     list(
-      name = "S",
+      id = "S",
       individual = "I",
       modelFile = "m.pkml",
       simulationTimeUnit = "h"
@@ -627,7 +627,7 @@ test_that(".scenariosToJson preserves both ids when two ids map to the same lite
       "alias":   "Organism|Brain|Drug"
     },
     "scenarios": [{
-      "name": "S",
+      "id": "S",
       "individual": "I",
       "population": null,
       "readPopulationFromCSV": false,

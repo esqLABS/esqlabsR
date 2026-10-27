@@ -399,9 +399,9 @@ test_that("a non-ASCII scenario name round-trips through the tree", {
   )
 })
 
-# A scenario file with no `name` field used to abort with an opaque base-R
-# index error naming nothing; it must now abort naming the file.
-test_that("a scenario file missing its name aborts naming the file", {
+# A scenario file with no `id` field must abort naming the file, not with an
+# opaque base-R index error.
+test_that("a scenario file missing its id aborts naming the file", {
   project <- testProject()
   dir <- file.path(project$info$projectDirPath, "definitions", "scenarios")
   f <- file.path(
@@ -410,7 +410,7 @@ test_that("a scenario file missing its name aborts naming the file", {
   )
 
   obj <- jsonlite::fromJSON(f, simplifyVector = FALSE)
-  obj$name <- NULL
+  obj$id <- NULL
   jsonlite::write_json(obj, f, auto_unbox = TRUE, null = "null", pretty = TRUE)
 
   expect_snapshot(
@@ -420,10 +420,9 @@ test_that("a scenario file missing its name aborts naming the file", {
   )
 })
 
-# A scenario file whose inner `name` disagrees with its filename used to load
-# keyed by the inner name, so a canonicalized reference would dangle. It must
-# now abort naming the file and the mismatch.
-test_that("a scenario file whose name disagrees with its filename aborts", {
+# A scenario file whose inner `id` disagrees with its filename must abort
+# naming the file and the mismatch, so no canonicalized reference dangles.
+test_that("a scenario file whose id disagrees with its filename aborts", {
   project <- testProject()
   dir <- file.path(project$info$projectDirPath, "definitions", "scenarios")
   f <- file.path(
@@ -432,7 +431,7 @@ test_that("a scenario file whose name disagrees with its filename aborts", {
   )
 
   obj <- jsonlite::fromJSON(f, simplifyVector = FALSE)
-  obj$name <- "differentname"
+  obj$id <- "differentname"
   jsonlite::write_json(obj, f, auto_unbox = TRUE, null = "null", pretty = TRUE)
 
   expect_snapshot(

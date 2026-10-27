@@ -800,7 +800,7 @@ test_that("the tree wins over a conflicting non-empty inline Project.json sectio
   treeModelFile <- project$definitions$scenarios[["testscenario"]]$modelFile
   raw$scenarios <- list(
     list(
-      name = "testscenario",
+      id = "testscenario",
       modelFile = "INLINE_SHOULD_NOT_WIN.pkml"
     )
   )

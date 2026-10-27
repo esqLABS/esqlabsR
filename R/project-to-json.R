@@ -325,7 +325,7 @@
   }
 
   entry <- list(
-    name = sc$id,
+    id = sc$id,
     individual = sc$individual,
     # Emit the population id verbatim rather than keying off the derived
     # `simulationType`, so a drifted record (population set while the

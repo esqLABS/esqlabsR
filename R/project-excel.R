@@ -1567,7 +1567,7 @@ projectStatus <- function(project, silent = FALSE) {
 #' Canonicalize every id and id-reference in an imported `Project.json` list
 #'
 #' Runs `.canonicalizeOneId()` over the keyed-section ids (`outputPaths`,
-#' `parameterSets`, `applications` map keys; the scenario `name` and the
+#' `parameterSets`, `applications` map keys; the scenario `id` and the
 #' `individualId` / `populationId` self-id fields of the individual /
 #' population records) and over every reference to one (a scenario's
 #' `individual`, `population`, `application`, `parameterSets`,
@@ -1662,9 +1662,9 @@ projectStatus <- function(project, silent = FALSE) {
   }
 
   if (!is.null(jsonData$scenarios)) {
-    checkRecordIds(jsonData$scenarios, "name")
+    checkRecordIds(jsonData$scenarios, "id")
     jsonData$scenarios <- lapply(jsonData$scenarios, function(sc) {
-      sc$name <- canonScalar(sc$name)
+      sc$id <- canonScalar(sc$id)
       sc$individual <- canonScalar(sc$individual)
       sc$population <- canonScalar(sc$population)
       sc$application <- canonScalar(sc$application)
@@ -2590,7 +2590,7 @@ projectStatus <- function(project, silent = FALSE) {
   for (i in seq_len(nrow(scenarioDf))) {
     row <- scenarioDf[i, ]
     scenario <- list(
-      name = as.character(row[["Scenario_name"]]),
+      id = as.character(row[["Scenario_name"]]),
       individual = .naToNull(as.character(row[["IndividualId"]])),
       population = .naToNull(as.character(row[["PopulationId"]])),
       readPopulationFromCSV = .naToNull(
@@ -3773,7 +3773,7 @@ projectStatus <- function(project, silent = FALSE) {
   # output path, which is the one wrong thing to tell the user.
   canonical <- vapply(
     scenarios %||% list(),
-    function(scenario) .canonicalizeOneId(as.character(scenario$name)),
+    function(scenario) .canonicalizeOneId(as.character(scenario$id)),
     character(1)
   )
   outputPathsOf <- function(name) {

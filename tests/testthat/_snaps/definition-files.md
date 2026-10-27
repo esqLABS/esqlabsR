@@ -79,25 +79,25 @@
       ! scenario "myscenario" already exists.
       i Pass `overwrite = TRUE` to replace it.
 
-# a scenario file missing its name aborts naming the file
+# a scenario file missing its id aborts naming the file
 
     Code
       loadProject(project$info$projectFilePath)
     Condition
       Error in `.keyedTreeRecordId()`:
-      ! A definition file for kind scenario has no usable name.
-      x name must be a single non-empty string (it names the definition and its file).
+      ! A definition file for kind scenario has no usable id.
+      x id must be a single non-empty string (it names the definition and its file).
       i Check '<project>/definitions/scenarios/populationscenario.json'.
 
-# a scenario file whose name disagrees with its filename aborts
+# a scenario file whose id disagrees with its filename aborts
 
     Code
       loadProject(project$info$projectFilePath)
     Condition
       Error in `.keyedTreeRecordId()`:
-      ! A definition file for kind scenario has a stored name that disagrees with its filename.
-      x name is "differentname" but the file is "populationscenario".json.
-      i The filename stem is the definition's id; rename the file or the name so they match. Check '<project>/definitions/scenarios/populationscenario.json'.
+      ! A definition file for kind scenario has a stored id that disagrees with its filename.
+      x id is "differentname" but the file is "populationscenario".json.
+      i The filename stem is the definition's id; rename the file or the id so they match. Check '<project>/definitions/scenarios/populationscenario.json'.
 
 # an observedData file whose id disagrees with its filename aborts
 

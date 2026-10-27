@@ -65,11 +65,11 @@ Two behaviors are not visible from the table:
 
 ### Scenario files
 
-**A `definitions/scenarios/*.json` file uses the argument names above**, unchanged, with the id written as `name`. A scenario record read from `project$definitions$scenarios` uses the same names, except that it holds the id as `id`. So a scenario file written by hand looks like this:
+**A `definitions/scenarios/*.json` file uses the argument names above**, unchanged, and so does a scenario record read from `project$definitions$scenarios`. So a scenario file written by hand looks like this:
 
 ```json
 {
-  "name": "aciclovir_iv",
+  "id": "aciclovir_iv",
   "modelFile": "Aciclovir.pkml",
   "individual": "adult_male",
   "application": "aciclovir_iv_250mg",

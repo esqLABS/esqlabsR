@@ -243,11 +243,11 @@ print.Scenario <- function(x, ...) {
 
   result <- list()
   for (entry in scenariosData) {
-    # The scenario name is the definition id and the filename stem; assert it is a
-    # usable scalar that matches the file before anything else, so a file with
-    # no `name` (or one disagreeing with its filename) aborts naming the file
+    # The scenario id is the filename stem; assert it is a usable scalar that
+    # matches the file before anything else, so a file with no `id` (or one
+    # disagreeing with its filename) aborts naming the file
     # rather than producing an opaque base-R index error or a dangling key.
-    id <- .keyedTreeRecordId(entry, "name", "scenario")
+    id <- .keyedTreeRecordId(entry, "id", "scenario")
     # Reject a malformed scalar field early, with a message naming the
     # scenario and field. A hand-edited file (e.g. the standard `jsonlite`
     # round-trip that turns `"population": null` into `{}`) otherwise
@@ -278,7 +278,7 @@ print.Scenario <- function(x, ...) {
     if (!is.null(entry[["steadyStateTime"]])) {
       if (is.null(entry[["steadyStateTimeUnit"]])) {
         cli::cli_abort(
-          "Scenario {.val {entry[['name']]}} has {.field steadyStateTime} set \\
+          "Scenario {.val {id}} has {.field steadyStateTime} set \\
           but {.field steadyStateTimeUnit} is null. Please specify a unit \\
           (e.g. {.val min})."
         )
@@ -404,7 +404,7 @@ print.Scenario <- function(x, ...) {
     return(invisible(NULL))
   }
   if (!is.character(value) || length(value) != 1L) {
-    name <- entry[["name"]] %||% "<unnamed>"
+    name <- entry[["id"]] %||% "<unnamed>"
     cli::cli_abort(c(
       "Scenario {.val {name}} has an invalid {.field {field}}.",
       "i" = "Expected a single string or {.code null}; check \\
@@ -672,7 +672,7 @@ print.Scenario <- function(x, ...) {
     ))
   }
   # The record's own `id` must agree with the key it is stored
-  # under, or the serialized JSON (`name = sc$id`) would contradict
+  # under, or the serialized JSON (`id = sc$id`) would contradict
   # the filename and the cross-reference key.
   if (
     !is.null(sc$id) &&

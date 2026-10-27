@@ -107,7 +107,7 @@ test_that(".parseScenarios copies basic fields for an individual scenario", {
 
 test_that(".parseScenarios reads a scenario's initialConditions references", {
   raw <- list(list(
-    name = "WithIC",
+    id = "WithIC",
     modelFile = "m.pkml",
     parameterSets = list("ps1"),
     initialConditions = list("ic1", "ic2")
@@ -117,7 +117,7 @@ test_that(".parseScenarios reads a scenario's initialConditions references", {
 })
 
 test_that(".parseScenarios leaves initialConditions NULL when JSON omits it", {
-  raw <- list(list(name = "NoIC", modelFile = "m.pkml"))
+  raw <- list(list(id = "NoIC", modelFile = "m.pkml"))
   sc <- .parseScenarios(raw)[["NoIC"]]
   expect_null(sc$initialConditions)
 })
@@ -133,8 +133,8 @@ test_that("a scenario's initialConditions round-trips through serialize/parse", 
 
   reparsed <- .parseScenarios(
     list(stats::setNames(
-      list(json$name, json$modelFile, json$initialConditions),
-      c("name", "modelFile", "initialConditions")
+      list(json$id, json$modelFile, json$initialConditions),
+      c("id", "modelFile", "initialConditions")
     ))
   )[["RT"]]
   expect_identical(reparsed$initialConditions, c("ic1", "ic2"))
@@ -142,7 +142,7 @@ test_that("a scenario's initialConditions round-trips through serialize/parse", 
 
 test_that(".parseScenarios reads a scenario's solverSettings block verbatim", {
   raw <- list(list(
-    name = "Stiff",
+    id = "Stiff",
     modelFile = "m.pkml",
     solverSettings = list(relTol = 1e-6, checkForNegativeValues = FALSE)
   ))
@@ -154,7 +154,7 @@ test_that(".parseScenarios reads a scenario's solverSettings block verbatim", {
 })
 
 test_that(".parseScenarios leaves solverSettings NULL when JSON omits it", {
-  raw <- list(list(name = "Plain", modelFile = "m.pkml"))
+  raw <- list(list(id = "Plain", modelFile = "m.pkml"))
   expect_null(.parseScenarios(raw)[["Plain"]]$solverSettings)
 })
 
@@ -169,8 +169,8 @@ test_that("a scenario's solverSettings round-trips through serialize/parse", {
 
   reparsed <- .parseScenarios(
     list(stats::setNames(
-      list(json$name, json$modelFile, json$solverSettings),
-      c("name", "modelFile", "solverSettings")
+      list(json$id, json$modelFile, json$solverSettings),
+      c("id", "modelFile", "solverSettings")
     ))
   )[["RTSolver"]]
   expect_identical(reparsed$solverSettings, list(relTol = 1e-6, hMax = 0.5))
@@ -188,7 +188,7 @@ test_that("a scenario without solverSettings emits no key at all", {
 
 test_that("a hand-written empty solverSettings object is rejected on parse", {
   raw <- list(list(
-    name = "Empty",
+    id = "Empty",
     modelFile = "m.pkml",
     solverSettings = stats::setNames(list(), character(0))
   ))
@@ -206,7 +206,7 @@ test_that(".parseScenarios sets simulationType=Population when population presen
 test_that(".parseScenarios leaves application NULL when JSON has null", {
   raw <- list(
     list(
-      name = "X",
+      id = "X",
       individual = "i",
       modelFile = "m.pkml",
       application = NULL
@@ -236,7 +236,7 @@ test_that(".parseScenarios coerces a whole-number steadyStateTime to double", {
   # breaking a byte-equivalent round trip.
   raw <- list(
     list(
-      name = "WholeSS",
+      id = "WholeSS",
       individual = "i",
       modelFile = "m.pkml",
       steadyStateTime = 1000L,
@@ -262,7 +262,7 @@ test_that(".parseScenarios leaves steadyState=FALSE when JSON omits/sets false",
 test_that(".parseScenarios errors when steadyStateTime set without unit", {
   raw <- list(
     list(
-      name = "BadSS",
+      id = "BadSS",
       individual = "i",
       modelFile = "m.pkml",
       steadyStateTime = 5,
@@ -321,7 +321,7 @@ test_that(".fillScenarioOutputPaths keeps unknown outputPaths ids as dangling re
   # cross-reference validator can flag it later.
   raw <- list(
     list(
-      name = "BadRefs",
+      id = "BadRefs",
       individual = "i",
       modelFile = "m.pkml",
       outputPaths = list("Aciclovir_PVB", "Nope", "AlsoNope")
@@ -347,7 +347,7 @@ test_that(".parseScenarios collapses duplicate outputPaths ids to one (first-see
   # entry so the path is never run or plotted twice, keeping first-seen order.
   raw <- list(
     list(
-      name = "Dups",
+      id = "Dups",
       individual = "i",
       modelFile = "m.pkml",
       outputPaths = list("a", "a", "b", "a")
@@ -398,7 +398,7 @@ test_that("a scenario written back by an authoring function follows a later setO
 test_that(".parseScenarios leaves outputPaths NULL when JSON omits outputPaths", {
   raw <- list(
     list(
-      name = "NoOutputs",
+      id = "NoOutputs",
       individual = "i",
       modelFile = "m.pkml"
     )
@@ -809,7 +809,7 @@ test_that("addScenario stores steadyStateTime in base units and round-trips the 
   out <- withr::local_tempfile(fileext = ".json")
   .saveProjectJson(project, out)
   raw <- jsonlite::fromJSON(out, simplifyVector = FALSE)
-  savedSS <- Filter(\(s) identical(s[["name"]], "ss"), raw$scenarios)[[1]]
+  savedSS <- Filter(\(s) identical(s[["id"]], "ss"), raw$scenarios)[[1]]
   expect_equal(savedSS$steadyStateTime, 10)
   expect_equal(savedSS$steadyStateTimeUnit, "h")
 

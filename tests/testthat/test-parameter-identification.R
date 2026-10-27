@@ -3275,8 +3275,8 @@ test_that(".parseExcelPI5xMappings derives a missing OutputPath column", {
     stringsAsFactors = FALSE
   )
   scenarios <- list(
-    list(name = "s1", outputPaths = list("pvb", "urine")),
-    list(name = "s2", outputPaths = list("pvb"))
+    list(id = "s1", outputPaths = list("pvb", "urine")),
+    list(id = "s2", outputPaths = list("pvb"))
   )
 
   mappings <- .parseExcelPI5xMappings(noColumn, "t1", scenarios)
@@ -3308,7 +3308,7 @@ test_that(".parseExcelPI5xMappings keeps and reports an underivable path", {
     mappings <- .parseExcelPI5xMappings(
       noColumn,
       "t1",
-      list(list(name = "s1"))
+      list(list(id = "s1"))
     ),
     class = "esqlabsR_importIncompletePIOutputMappings"
   )
@@ -3333,7 +3333,7 @@ test_that(".parseExcelPI5xMappings matches a scenario on its canonical id", {
     DataSet = "d1",
     stringsAsFactors = FALSE
   )
-  scenarios <- list(list(name = "Aciclovir_IV", outputPaths = list("pvb")))
+  scenarios <- list(list(id = "Aciclovir_IV", outputPaths = list("pvb")))
 
   mappings <- .parseExcelPI5xMappings(noColumn, "t1", scenarios)
 
@@ -3351,7 +3351,7 @@ test_that(".parseExcelPI5xMappings keeps a derived row with no DataSet", {
     DataSet = c(NA, "d1"),
     stringsAsFactors = FALSE
   )
-  scenarios <- list(list(name = "s1", outputPaths = list("pvb")))
+  scenarios <- list(list(id = "s1", outputPaths = list("pvb")))
 
   mappings <- .parseExcelPI5xMappings(noColumn, "t1", scenarios)
 
