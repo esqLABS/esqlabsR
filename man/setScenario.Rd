@@ -18,7 +18,7 @@ accepted, and then supplies every field; see the section below.}
 \code{population}, \code{application}, \code{parameterSets}, \code{initialConditions},
 \code{outputPaths}, \code{simulationTime}, \code{simulationTimeUnit}, \code{steadyState},
 \code{steadyStateTime}, \code{steadyStateTimeUnit}, \code{overwriteFormulasInSS},
-\code{readPopulationFromCSV}, \code{solverSettings}. Each takes the value
+\code{readPopulationFromCSV}, \code{solverSettings}, \code{label}. Each takes the value
 \code{\link[=addScenario]{addScenario()}} documents for it, but has no default here: an omitted
 field is left untouched, a field passed as \code{NULL} is cleared.
 Scalar-per-definition fields recycle/align across \code{id}; \code{parameterSets},

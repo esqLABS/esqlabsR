@@ -30,7 +30,7 @@ sets. \code{values} and \code{units} have one element per path, or one element
 that is used for every path. Any other length stops with an error.}
 
 \item{simulationRunOptions}{How the steady-state pre-solve is executed, for
-a scenario with \code{simulateSteadyState} set. Takes the same form as in
+a scenario with \code{steadyState} set. Takes the same form as in
 \code{\link[=runScenarios]{runScenarios()}}. The simulations returned here are not run, so it has no
 other effect.}
 

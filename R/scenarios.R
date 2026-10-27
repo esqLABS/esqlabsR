@@ -633,8 +633,8 @@ print.Scenario <- function(x, ...) {
       }
     }
 
-    # A label is free text, but one string: a hand-edited file can hold a number,
-    # an array or `null` spelled as an object, which no printout can show.
+    # A label is free text, but one string: a hand-edited file can hold a number
+    # or an array instead.
     if (!is.null(sc$label) && !.isScenarioLabel(sc$label)) {
       result$addCriticalError(
         "Validation",

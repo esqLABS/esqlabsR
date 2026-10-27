@@ -22,6 +22,7 @@ addScenario(
   overwriteFormulasInSS = FALSE,
   readPopulationFromCSV = FALSE,
   solverSettings = NULL,
+  label = NULL,
   overwrite = FALSE
 )
 }
@@ -94,6 +95,12 @@ setting to those two.
 The list counts as one value per scenario, so an \code{id} naming several
 scenarios gives each of them the same settings.}
 
+\item{label}{Character or \code{NULL} (default). A free-text name for the
+scenario, kept exactly as typed, for example \code{"Aciclovir IV 2.5 mg/kg"}.
+Unlike \code{id}, it is not changed to lowercase, so it keeps the spelling the
+id loses. It shows when you print the scenario or the scenarios of a
+project. Results and messages still name the scenario by its id.}
+
 \item{overwrite}{Logical. When \code{FALSE} (default), an id that already exists
 aborts. When \code{TRUE}, the existing scenario is replaced (last-write-wins).
 Distinct from \code{overwriteFormulasInSS}, which is a steady-state model
@@ -108,7 +115,8 @@ validating all references. The call vectorizes over a vector of ids (see
 the recycling rule under Details). Scalar-per-definition fields (\code{modelFile},
 \code{individual}, \code{population}, \code{application}, \code{simulationTime},
 \code{simulationTimeUnit}, \code{steadyState}, \code{steadyStateTime},
-\code{steadyStateTimeUnit}, \code{overwriteFormulasInSS}, \code{readPopulationFromCSV})
+\code{steadyStateTimeUnit}, \code{overwriteFormulasInSS}, \code{readPopulationFromCSV},
+\code{label})
 follow the recycle/align rule. The vector-valued-per-definition fields
 \code{parameterSets} and \code{outputPaths} are applied whole to every
 scenario; to give a different set per scenario, pass a list of the same

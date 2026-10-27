@@ -1770,7 +1770,11 @@ test_that("addScenario keeps a label exactly as typed while the id is canonicali
 
 test_that("addScenario sets no label unless one is passed", {
   project <- testProject()
-  suppressWarnings(addScenario(project, "MyScenario", modelFile = "Aciclovir.pkml"))
+  suppressWarnings(addScenario(
+    project,
+    "MyScenario",
+    modelFile = "Aciclovir.pkml"
+  ))
   saveProject(project)
 
   expect_null(project$definitions$scenarios[["myscenario"]]$label)

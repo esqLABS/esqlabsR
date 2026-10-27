@@ -399,9 +399,7 @@ createPlotsFromExcel <- function(...) {
   # opaquely at `configPlotIds <- vapply(..., function(p) p$id, ...)` in
   # `.createPlotGridsFromEntries()`. Mirrors the `id` guard in
   # `.assertPlotGridsBuildable()`.
-  if (
-    any(vapply(plotConfigurations, function(p) is.null(p$id), logical(1)))
-  ) {
+  if (any(vapply(plotConfigurations, function(p) is.null(p$id), logical(1)))) {
     msg <- messages$missingPlotId()
     cli::cli_abort("{msg}")
   }

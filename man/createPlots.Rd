@@ -49,8 +49,8 @@ already validated the project).}
 }
 \value{
 A named list of \strong{plot grids} keyed by Plot Grid name: one entry
-per requested plot grid (keyed by its \code{plotGridId}), unioned with one entry
-per requested standalone plot (keyed by its \code{plotId}) when \code{plots} is
+per requested plot grid (keyed by its \code{id}), unioned with one entry
+per requested standalone plot (keyed by its \code{id}) when \code{plots} is
 given. Note the list holds plot grids, not standalone \code{Plot} objects,
 unless standalone plots were explicitly requested via \code{plots}. An empty
 list when the project has no plots to build.
@@ -69,7 +69,7 @@ standalone single plots. DataCombined objects are resolved via
 With neither \code{plotGrids} nor \code{plots}, all plot grids declared in
 \code{plotGrids} definitions are built (the default). The two arguments are
 independent selectors: \code{plotGrids} selects plot grids (keyed by
-\code{plotGridId} in the result), \code{plots} selects standalone single plots
-(keyed by \code{plotId}). A \code{plotId} that is also part of a requested grid still
+\code{id} in the result), \code{plots} selects standalone single plots
+(keyed by \code{id}). A \code{id} that is also part of a requested grid still
 gets its own standalone entry.
 }

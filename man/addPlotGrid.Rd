@@ -11,7 +11,7 @@ addPlotGrid(project, id, plots, ...)
 
 \item{id}{Character vector of unique plot-grid ids (the number of grids to
 add). Each is canonicalized to a safe, lowercase id (a warning names the
-result if it changed). Stored in the \code{plotGridId} field.}
+result if it changed). Stored in the \code{id} field.}
 
 \item{plots}{The plot ids each grid includes (stored internally as a
 comma-separated string). A character vector is applied whole to every
@@ -38,7 +38,7 @@ The \code{project} object, invisibly.
 }
 \description{
 Add new entries to \code{plotGrids} definitions (a keyed list, one entry per grid).
-Errors if a \code{plotGridId} already exists or if any of the supplied \code{plots}
+Errors if a \code{id} already exists or if any of the supplied \code{plots}
 are not present in \code{plots} definitions.
 }
 \details{

@@ -965,7 +965,12 @@ test_that("a plot record and file use the addPlot() argument names", {
 
   expect_setequal(names(project$definitions$plots[["p2"]]), fields)
   saveProject(project)
-  file <- file.path(project$info$projectDirPath, "definitions", "plots", "p2.json")
+  file <- file.path(
+    project$info$projectDirPath,
+    "definitions",
+    "plots",
+    "p2.json"
+  )
   expect_setequal(names(jsonlite::read_json(file)), fields)
 })
 

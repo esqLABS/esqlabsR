@@ -4700,7 +4700,8 @@ test_that("importing a 5.x workbook keeps a Scenario_name that canonicalizing ch
     }
   )
 
-  scenarios <- importLegacyExcelProject(projectDir)$project$definitions$scenarios
+  imported <- importLegacyExcelProject(projectDir)
+  scenarios <- imported$project$definitions$scenarios
 
   # `AdultScenario` loses its capitals in the id and keeps them in the label;
   # `pi_scenario_2` is already canonical, so it gets no label.
@@ -4722,7 +4723,8 @@ test_that("a Label cell wins over the Scenario_name kept as the label", {
     }
   )
 
-  scenarios <- importLegacyExcelProject(projectDir)$project$definitions$scenarios
+  imported <- importLegacyExcelProject(projectDir)
+  scenarios <- imported$project$definitions$scenarios
 
   expect_identical(scenarios[["adultscenario"]]$label, "Adult, 2.5 mg/kg IV")
   expect_identical(scenarios[["childscenario"]]$label, "ChildScenario")
@@ -4734,7 +4736,9 @@ test_that(".dataCombinedPathsAsOutputPathIds writes the id only for a path one o
   plasma <- "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
   fat <- "Organism|Fat|Intracellular|Aciclovir|Concentration in container"
   urine <- "Organism|Kidney|Urine|Aciclovir|Concentration"
-  curve <- function(path) list(label = path, scenario = "aciclovir_iv", path = path)
+  curve <- function(path) {
+    list(label = path, scenario = "aciclovir_iv", path = path)
+  }
   jsonData <- list(
     outputPaths = list(
       aciclovir_pvb = plasma,
@@ -4758,7 +4762,8 @@ test_that(".dataCombinedPathsAsOutputPathIds writes the id only for a path one o
 test_that("importProjectFromExcel writes the output-path id of a 5.x DataCombined curve", {
   projectDir <- localLegacyExcelProject()
 
-  dataCombined <- importLegacyExcelProject(projectDir)$project$definitions$dataCombined
+  imported <- importLegacyExcelProject(projectDir)
+  dataCombined <- imported$project$definitions$dataCombined
 
   expect_identical(
     vapply(
@@ -4777,7 +4782,9 @@ test_that("a DataCombined output-path id survives an Excel export and import", {
   reimported <- excelRoundTrip(project)
 
   expect_identical(
-    reimported$definitions$dataCombined[["aciclovir_individual"]]$simulated[[1]]$path,
+    reimported$definitions$dataCombined[["aciclovir_individual"]]$simulated[[
+      1
+    ]]$path,
     "aciclovir_pvb"
   )
 })
