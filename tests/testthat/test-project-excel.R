@@ -4727,3 +4727,57 @@ test_that("a Label cell wins over the Scenario_name kept as the label", {
   expect_identical(scenarios[["adultscenario"]]$label, "Adult, 2.5 mg/kg IV")
   expect_identical(scenarios[["childscenario"]]$label, "ChildScenario")
 })
+
+# DataCombined output-path ids ----
+
+test_that(".dataCombinedPathsAsOutputPathIds writes the id only for a path one output path has", {
+  plasma <- "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
+  fat <- "Organism|Fat|Intracellular|Aciclovir|Concentration in container"
+  urine <- "Organism|Kidney|Urine|Aciclovir|Concentration"
+  curve <- function(path) list(label = path, scenario = "aciclovir_iv", path = path)
+  jsonData <- list(
+    outputPaths = list(
+      aciclovir_pvb = plasma,
+      aciclovir_fat = fat,
+      fat_tissue = fat
+    ),
+    dataCombined = list(list(
+      id = "aciclovir",
+      simulated = list(curve(plasma), curve(urine), curve(fat)),
+      observed = list(list(label = "Laskin 1982", dataSet = "laskin"))
+    ))
+  )
+
+  expected <- jsonData
+  # One output path has the plasma path: its id is written.
+  expected$dataCombined[[1]]$simulated[[1]]$path <- "aciclovir_pvb"
+  # No output path has the urine path, and two have the fat path: both stay.
+  expect_identical(.dataCombinedPathsAsOutputPathIds(jsonData), expected)
+})
+
+test_that("importProjectFromExcel writes the output-path id of a 5.x DataCombined curve", {
+  projectDir <- localLegacyExcelProject()
+
+  dataCombined <- importLegacyExcelProject(projectDir)$project$definitions$dataCombined
+
+  expect_identical(
+    vapply(
+      c("aciclovirpvb", "aciclovirpop"),
+      function(id) dataCombined[[id]]$simulated[[1]]$path,
+      character(1),
+      USE.NAMES = FALSE
+    ),
+    c("aciclovir_pvb", "aciclovir_pvb")
+  )
+})
+
+test_that("a DataCombined output-path id survives an Excel export and import", {
+  project <- exampleProject()
+
+  reimported <- excelRoundTrip(project)
+
+  expect_identical(
+    reimported$definitions$dataCombined[["aciclovir_individual"]]$simulated[[1]]$path,
+    "aciclovir_pvb"
+  )
+})

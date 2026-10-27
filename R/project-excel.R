@@ -754,6 +754,7 @@ importProjectFromExcel <- function(
   # `aciclovir_pvb`.
   jsonData$scenarios <- .keepScenarioNamesAsLabels(jsonData$scenarios)
   jsonData <- .canonicalizeProjectJsonIds(jsonData)
+  jsonData <- .dataCombinedPathsAsOutputPathIds(jsonData)
 
   # An observed curve that names no data set is kept as authored, so a user who
   # can still supply the missing piece is not silently robbed of the row. But
@@ -1213,6 +1214,11 @@ exportProjectToExcel <- function(
   currentJsonObj <- suppressWarnings(
     .canonicalizeProjectJsonIds(currentJsonObj)
   )
+  # The workbook side names a DataCombined output by its output-path id wherever
+  # one id has that path, so the memory side is read the same way: a curve
+  # written as the path and one written as that path's id show the same output.
+  originalJsonObj <- .dataCombinedPathsAsOutputPathIds(originalJsonObj)
+  currentJsonObj <- .dataCombinedPathsAsOutputPathIds(currentJsonObj)
 
   # Both sides are compared with their object keys in one order, because the
   # order a record's fields sit in carries no meaning and the round trip does not
@@ -2569,6 +2575,49 @@ projectStatus <- function(project, silent = FALSE) {
   "ModelFile",
   "OutputPathsIds"
 )
+
+# Write the `path` of each simulated DataCombined curve as the id of its output
+# path, when exactly one output-path definition has that exact path, so an
+# imported curve names its output the way a scenario does. With no match the
+# path is kept: a scenario without `outputPaths` simulates the model's own
+# outputs, which have no id. With several matches it is kept too, since no one
+# id is the right one. `jsonData` is a project container, with `dataCombined` as
+# an array of records and `outputPaths` as an `id -> path` map. Runs after
+# `.canonicalizeProjectJsonIds()`, so the ids written are the canonical ones.
+#
+# @keywords internal
+# @noRd
+.dataCombinedPathsAsOutputPathIds <- function(jsonData) {
+  outputPaths <- jsonData$outputPaths
+  if (length(jsonData$dataCombined) == 0L || length(outputPaths) == 0L) {
+    return(jsonData)
+  }
+  ids <- names(outputPaths)
+  paths <- vapply(
+    outputPaths,
+    function(path) {
+      if (is.character(path) && length(path) == 1L) path else NA_character_
+    },
+    character(1)
+  )
+  asId <- function(entry) {
+    path <- entry$path
+    if (is.character(path) && length(path) == 1L) {
+      match <- ids[!is.na(paths) & paths == path]
+      if (length(match) == 1L) {
+        entry$path <- match
+      }
+    }
+    entry
+  }
+  jsonData$dataCombined <- lapply(jsonData$dataCombined, function(dc) {
+    if (!is.null(dc$simulated)) {
+      dc$simulated <- lapply(dc$simulated, asId)
+    }
+    dc
+  })
+  jsonData
+}
 
 # Keep the `Scenario_name` text of each imported scenario as its label when
 # canonicalizing the id will change it, so the spelling a 5.x workbook used is
