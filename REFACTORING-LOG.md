@@ -332,3 +332,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-10-27 14:06: A scenario can carry an optional free-text label that keeps the name as typed; the Excel bridge writes and reads it, and a 5.x import keeps a changed Scenario_name as the label. (#1294)
 - 2026-10-27 14:13: The Excel import writes a DataCombined curve's path as its output-path id when exactly one output path has it, and the example project uses the id. (#1280)
 - 2026-10-27 14:18: The help pages are regenerated for the renamed and new scenario, plot and plot-grid fields.
+- 2026-10-27 16:54: Review fixes: a scenario record handed back to setScenario() clears the fields it leaves empty, labels drop wrapping quotes and are left off copies and off exports without labels, and an NA reference is refused on save. (#1294)

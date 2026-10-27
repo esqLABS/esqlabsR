@@ -335,7 +335,7 @@ test_that("createPlots(plots) returns a single plot keyed by its id", {
     validate = FALSE
   ))
 
-  # One entry, keyed by the id, holding the rendered single plot (not a
+  # One entry, keyed by the plot id, holding the rendered single plot (not a
   # 1-cell grid).
   expect_named(result, "p1")
   expect_false(inherits(result$p1, "patchwork"))
@@ -355,7 +355,7 @@ test_that("createPlots unions plotGrids and plots, keyed by id", {
   ))
 
   # The grid (keyed by id) and the standalone plot (keyed by id)
-  # both appear: a id that is also inside a requested grid still gets its
+  # both appear: a plot that is also inside a requested grid still gets its
   # own standalone entry (independent selectors, no de-dup).
   expect_setequal(names(result), c("individual_diagnostics", "p1"))
   expect_s3_class(result$individual_diagnostics, "patchwork")

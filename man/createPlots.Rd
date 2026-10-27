@@ -68,8 +68,8 @@ standalone single plots. DataCombined objects are resolved via
 
 With neither \code{plotGrids} nor \code{plots}, all plot grids declared in
 \code{plotGrids} definitions are built (the default). The two arguments are
-independent selectors: \code{plotGrids} selects plot grids (keyed by
-\code{id} in the result), \code{plots} selects standalone single plots
-(keyed by \code{id}). A \code{id} that is also part of a requested grid still
-gets its own standalone entry.
+independent selectors: \code{plotGrids} selects plot grids (keyed by their
+\code{id} in the result), \code{plots} selects standalone single plots (keyed by
+their \code{id}). A plot that is also part of a requested grid still gets its
+own standalone entry.
 }

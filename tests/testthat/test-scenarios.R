@@ -1007,11 +1007,10 @@ test_that("setScenario rejects an unsound solverSettings block", {
 # Passing a parsed Scenario record back ----
 
 test_that("a parsed scenario is accepted back by addScenario() unchanged", {
-  # The record's field names are the ones the runtime reads, not the authoring
-  # argument names, and three of its fields are stored in a different shape from
-  # the one authoring takes (resolved output paths, a parsed time grid, a
-  # base-unit steady-state time). Handing the record back has to survive all of
-  # that: the copy must equal the original in every field but its id.
+  # Three of the record's fields are stored in a different shape from the one
+  # authoring takes (resolved output paths, a parsed time grid, a base-unit
+  # steady-state time). Handing the record back has to survive all of that: the
+  # copy must equal the original in every field but its id.
   project <- testProject()
   setScenario(project, "testscenario", solverSettings = list(relTol = 1e-6))
   sc <- project$definitions$scenarios[["testscenario"]]
@@ -1070,6 +1069,30 @@ test_that("setScenario() takes a parsed scenario, so an edited record writes bac
   expect_equal(after$simulationTimeUnit, "min")
   rest <- setdiff(names(sc), "steadyStateTimeUnit")
   expect_equal(after[rest], sc[rest])
+})
+
+test_that("setScenario() clears the optional fields an edited record leaves empty", {
+  project <- testProject()
+  setScenario(project, "testscenario", label = "Aciclovir IV 250 mg")
+  sc <- project$definitions$scenarios[["testscenario"]]
+  sc$label <- NULL
+  sc$individual <- NULL
+  sc$application <- NULL
+  sc$simulationTime <- NULL
+
+  setScenario(project, sc)
+
+  after <- project$definitions$scenarios[["testscenario"]]
+  expect_equal(
+    after[c("label", "individual", "application", "simulationTime")],
+    list(
+      label = NULL,
+      individual = NULL,
+      application = NULL,
+      simulationTime = NULL
+    )
+  )
+  expect_identical(after$modelFile, "Aciclovir.pkml")
 })
 
 test_that("a scenario record passed with field arguments alongside it aborts", {
@@ -1876,4 +1899,33 @@ test_that("print shows a scenario's label after its id, and the section lists it
     print(project$definitions$scenarios[["testscenario"]])
     print(project$definitions$scenarios)
   })
+})
+
+test_that("print leaves out a label that is not one string, as the section print does", {
+  project <- testProject()
+  scenarios <- .getSection(project, "scenarios")
+  scenarios[["testscenario"]]["label"] <- list(list("Aciclovir", "IV"))
+  .setSection(project, "scenarios", scenarios)
+
+  printed <- utils::capture.output(
+    print(project$definitions$scenarios[["testscenario"]])
+  )
+  expect_false(any(grepl("Label", printed, fixed = TRUE)))
+})
+
+test_that("duplicateScenario gives the copy no label", {
+  project <- testProject()
+  setScenario(project, "testscenario", label = "Aciclovir IV 250 mg")
+
+  duplicateScenario(project, "testscenario", "testscenario_copy")
+
+  expect_identical(
+    project$definitions$scenarios[["testscenario"]]$label,
+    "Aciclovir IV 250 mg"
+  )
+  expect_null(project$definitions$scenarios[["testscenario_copy"]]$label)
+  expect_named(
+    project$definitions$scenarios[["testscenario_copy"]],
+    .scenarioFieldNames
+  )
 })

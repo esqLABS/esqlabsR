@@ -1723,8 +1723,7 @@ projectStatus <- function(project, silent = FALSE) {
   }
 
   # The three plots sections each persist as a keyed definition tree that keys
-  # files by a canonical id (`id` / `id` / `id`), so
-  # canonicalize those ids and every reference among the three together with the
+  # files by each record's canonical `id`, so canonicalize those ids and every reference among the three together with the
   # same deterministic helper, so the migrated tree's inner cross-references
   # still resolve. A plot's `dataCombined` rows also reference a scenario by id;
   # canonicalize that so it resolves against the (canonicalized) scenario
@@ -2622,17 +2621,18 @@ projectStatus <- function(project, silent = FALSE) {
 # Keep the `Scenario_name` text of each imported scenario as its label when
 # canonicalizing the id will change it, so the spelling a 5.x workbook used is
 # not lost: `Aciclovir_IV-2.5mg/kg` becomes the id `aciclovir_iv-2.5mg_kg` and
-# the label `Aciclovir_IV-2.5mg/kg`. A label the sheet gives in its `Label`
+# the label `Aciclovir_IV-2.5mg/kg`. Wrapping quotes are cell syntax, not part of
+# the name, so they are stripped first, as `.canonicalizeProjectJsonIds()` does:
+# a quoted `"aciclovir_iv"` gets no label. A label the sheet gives in its `Label`
 # column wins. Runs on the raw entries, before `.canonicalizeProjectJsonIds()`.
 #
 # @keywords internal
 # @noRd
 .keepScenarioNamesAsLabels <- function(scenarios) {
   lapply(scenarios, function(sc) {
-    name <- sc$id
-    if (is.null(sc$label) && .isScenarioLabel(name)) {
-      canonical <- .canonicalizeOneId(.stripWrappingQuotes(name))
-      if (!identical(canonical, name)) {
+    if (is.null(sc$label) && .isScenarioLabel(sc$id)) {
+      name <- .stripWrappingQuotes(sc$id)
+      if (!identical(.canonicalizeOneId(name), name)) {
         sc$label <- name
       }
     }
@@ -3020,8 +3020,8 @@ projectStatus <- function(project, silent = FALSE) {
 #' Parse Plots Excel file into the project's nested plots JSON structure
 #'
 #' Maps the legacy Excel plot sheets onto the v2.0 plots section so the import
-#' round-trips through the definition-file tree (which keys files by `id` /
-#' `id` / `id`). The `DataCombined` sheet is long-format
+#' round-trips through the definition-file tree (which keys files by each
+#' record's `id`). The `DataCombined` sheet is long-format
 #' (one row per simulated/observed curve, grouped by `DataCombinedName`); the
 #' `plotConfiguration` and `plotGrids` sheets carry the legacy `plotID` /
 #' `DataCombinedName` / `name` / `plotIDs` column spellings. Only these three
@@ -4143,8 +4143,8 @@ projectStatus <- function(project, silent = FALSE) {
 # Render a keyed list of plot / grid entries (each a named list of canonical
 # fields) back to one data.frame row per entry. Each field is a column named
 # after it, except the `id` field: it goes to the sheet's own id column
-# (`idColumn`, `id` / `id`), which `.parseExcelPlots()` reads back as
-# the id. Returns NULL for an empty part.
+# (`idColumn`: `plotId` on the plotConfiguration sheet, `plotGridId` on the
+# plotGrids sheet), which `.parseExcelPlots()` reads back as the id. Returns NULL for an empty part.
 #
 # @keywords internal
 # @noRd
@@ -4484,7 +4484,6 @@ projectStatus <- function(project, silent = FALSE) {
 
     rows[[length(rows) + 1]] <- data.frame(
       Scenario_name = sc$id,
-      Label = if (.isScenarioLabel(sc$label)) sc$label else NA,
       IndividualId = sc$individual %||% NA,
       PopulationId = if (sc$simulationType == "Population") {
         sc$population
@@ -4507,7 +4506,25 @@ projectStatus <- function(project, silent = FALSE) {
       stringsAsFactors = FALSE
     )
   }
-  do.call(rbind, rows)
+  df <- do.call(rbind, rows)
+  # The `Label` column goes next to `Scenario_name`, and only when a scenario has
+  # a label, so a project without labels exports the sheet a 5.x workbook has.
+  labels <- vapply(
+    scenarioConfigs,
+    function(sc) if (.isScenarioLabel(sc$label)) sc$label else NA_character_,
+    character(1),
+    USE.NAMES = FALSE
+  )
+  if (!is.null(df) && any(!is.na(labels))) {
+    df <- data.frame(
+      df[1L],
+      Label = labels,
+      df[-1L],
+      check.names = FALSE,
+      stringsAsFactors = FALSE
+    )
+  }
+  df
 }
 
 #' Extract private .filePathsData from a Project (the live working folders)

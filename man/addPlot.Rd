@@ -59,7 +59,7 @@ The \code{project} object, invisibly.
 }
 \description{
 Add one or more entries to \code{plots} definitions (a keyed list, one entry per
-plot). Errors if a \code{id} already exists, if a \code{dataCombined} is not
+plot). Errors if an \code{id} already exists, if a \code{dataCombined} is not
 present in \code{dataCombined} definitions, if a \code{plotType} is not one of the
 supported types, or if a field in \code{...} is not supported or has an invalid
 value. Nothing is added when one plot fails these checks.

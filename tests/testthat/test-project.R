@@ -1180,6 +1180,18 @@ test_that("saveProject() rejects a wrong-typed scalar reference field", {
   )
 })
 
+test_that("saveProject() rejects an NA reference field", {
+  # NULL is the only "no reference" value; an NA would reach the lookups.
+  project <- testProject()
+  scenarios <- .getSection(project, "scenarios")
+  scenarios[["testscenario"]]["application"] <- list(NA_character_)
+  .setSection(project, "scenarios", scenarios)
+  expect_error(
+    saveProject(project),
+    "application.*single string"
+  )
+})
+
 test_that("saveProject() rejects an unknown field on a record", {
   project <- testProject()
   scenarios <- .getSection(project, "scenarios")

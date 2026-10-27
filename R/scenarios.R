@@ -139,8 +139,10 @@ print.Scenario <- function(x, ...) {
   ospsuite.utils::ospPrintItems(
     c(
       list("Id" = x$id %||% ""),
-      # Only a scenario that has a label shows the line.
-      if (!is.null(x$label)) list("Label" = x$label),
+      # Only a scenario with a usable label shows the line. A label that is not
+      # one string is left out, as in the section print; `validateProject()`
+      # reports it.
+      if (.isScenarioLabel(x$label)) list("Label" = x$label),
       list(
         "Model" = x$modelFile %||% "",
         "Type" = x$simulationType %||% "",
@@ -764,11 +766,13 @@ print.Scenario <- function(x, ...) {
   # (`.scenarioToJson`) must be a length-1 scalar when present, or a wrong-typed
   # value (e.g. `individual <- list(...)`) would silently serialize to a
   # malformed definition file the parser then rejects on the next load. NULL is
-  # the "no reference" value (an Individual scenario has no population; a
-  # scenario may have no application).
+  # the only "no reference" value (an Individual scenario has no population; a
+  # scenario may have no application): an `NA` would reach the lookups, which
+  # skip only NULL.
   for (field in c("individual", "population", "application")) {
     val <- sc[[field]]
-    okScalar <- is.null(val) || (is.character(val) && length(val) == 1L)
+    okScalar <- is.null(val) ||
+      (is.character(val) && length(val) == 1L && !is.na(val))
     if (!okScalar) {
       cli::cli_abort(
         "Scenario {.val {name}} field {.field {field}} must be a single \\
@@ -1021,10 +1025,12 @@ buildSimulations <- function(
 #'   addScenario(project, sc, overwrite = TRUE)
 #'   ```
 #'
-#'   A field the record leaves unset is left to this function's default, exactly
-#'   as an absent key in the scenario's definition file is. To clear an optional
-#'   field, name the id and pass `NULL` for it
-#'   (`setScenario(project, "sc", individual = NULL)`).
+#'   An optional field the record leaves empty (`label`, `individual`,
+#'   `population`, `application`, `simulationTime`, `solverSettings`, or an
+#'   empty reference vector) is empty in the scenario too, so
+#'   `sc$individual <- NULL; setScenario(project, sc)` removes the individual. A
+#'   unit the record leaves empty (`simulationTimeUnit`, `steadyStateTimeUnit`)
+#'   is left to this function's default.
 #'
 #' @param project A `Project` object.
 #' @param id Character vector of ids (names) for the new scenarios (the number
@@ -1838,9 +1844,9 @@ renameScenario <- function(project, id, newId) {
   .assertScenarioTargetFree(self, newId)
 
   sc <- self$definitions$scenarios[[id]]
-  # Keep the record's stored name in step with its new key so the definition file
-  # the write-through emits (`name = sc$id`) and the key agree, which
-  # is what `.validateScenarioStructure()` enforces.
+  # Keep the record's `id` in step with its new key so the definition file
+  # `saveProject()` writes (`id = sc$id`) and the key agree, which is what
+  # `.validateScenarioStructure()` enforces.
   sc$id <- newId
 
   # Renaming de-references the old id just like removing it: warn about any
@@ -1863,7 +1869,9 @@ renameScenario <- function(project, id, newId) {
 #' @description Creates a deep copy of the scenario currently keyed `id` under
 #'   `newId`, leaving the original untouched. The copy is a new definition
 #'   written through to `newId` (the in-memory store and the on-disk project
-#'   both gain an independent scenario).
+#'   both gain an independent scenario). The copy has no `label`, since the
+#'   label names the original; give it one with `setScenario(project, newId,
+#'   label = ...)`.
 #'
 #'   Both `id` and `newId` are canonicalized the same way [addScenario()]
 #'   canonicalizes an id (lowercased, made a safe single-path-segment id, with
@@ -1898,9 +1906,11 @@ duplicateScenario <- function(project, id, newId) {
   .assertScenarioTargetFree(self, newId)
 
   # A `Scenario` is a plain-data list with copy semantics, so this is already a
-  # deep, independent copy; only its stored name has to follow the new key.
+  # deep, independent copy; only its id has to follow the new key. The label
+  # names the original scenario, so the copy starts without one.
   copy <- private$.getSection("scenarios")[[id]]
   copy$id <- newId
+  copy["label"] <- list(NULL)
 
   scenarios <- private$.getSection("scenarios")
   scenarios[[newId]] <- copy
@@ -1970,14 +1980,13 @@ duplicateScenario <- function(project, id, newId) {
 # `simulationTime` intervals is passed as it is, since the authoring functions
 # take that shape.
 #
-# The reference vectors are always passed, empty when the record has none, so a
-# record handed to `setScenario()` replaces them as its definition file would.
-# Any other `NULL` field is dropped rather than passed on, because an absent key
-# in a definition file means "the argument was not given": that is what lets the
-# authoring defaults apply, and it is what keeps `steadyStateTime` /
-# `steadyStateTimeUnit` round-tripping when the record declares no unit.
-# Clearing a reference stays an explicit
-# `setScenario(project, id, individual = NULL)`.
+# A field whose authoring default is "none" (`.scenarioClearableFields`, and the
+# reference vectors, passed empty when the record has none) is always passed, so
+# a record handed to `setScenario()` clears what the record leaves empty, and
+# `addScenario()` gets the value its default would give anyway. Any other `NULL`
+# field is dropped, so the authoring default applies: that is what keeps
+# `steadyStateTime` / `steadyStateTimeUnit` round-tripping when the record
+# declares no unit.
 #
 # @keywords internal
 # @noRd
@@ -2000,8 +2009,24 @@ duplicateScenario <- function(project, id, newId) {
   if (length(args$solverSettings) == 0L) {
     args["solverSettings"] <- list(NULL)
   }
-  Filter(Negate(is.null), args)
+  keep <- !vapply(args, is.null, logical(1)) |
+    names(args) %in% .scenarioClearableFields
+  args[keep]
 }
+
+# The optional scenario fields whose authoring default is `NULL`, so passing
+# `NULL` for one means "this scenario has none".
+#
+# @keywords internal
+# @noRd
+.scenarioClearableFields <- c(
+  "label",
+  "individual",
+  "population",
+  "application",
+  "simulationTime",
+  "solverSettings"
+)
 
 # Abort when a `Scenario` record is passed as `id` alongside field arguments.
 # The record is the whole field set, so an accompanying field would be silently

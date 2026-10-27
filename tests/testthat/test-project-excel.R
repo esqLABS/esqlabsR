@@ -4675,6 +4675,18 @@ test_that("a scenario label survives an Excel export and import", {
   )
 })
 
+test_that("exportProjectToExcel writes the Label column only when a scenario has a label", {
+  project <- exampleProject()
+  columns <- function(project) {
+    names(.scenarioConfigurationsToExcelDf(project$definitions$scenarios))
+  }
+
+  expect_false("Label" %in% columns(project))
+
+  setScenario(project, "aciclovir_iv", label = "Aciclovir IV 250 mg")
+  expect_identical(columns(project)[1:2], c("Scenario_name", "Label"))
+})
+
 test_that(".parseExcelScenarios reads the optional Label column", {
   withLabel <- .parseExcelScenarios(
     scenarioSheetRow(Label = "Aciclovir IV 250 mg")
@@ -4707,6 +4719,23 @@ test_that("importing a 5.x workbook keeps a Scenario_name that canonicalizing ch
   # `pi_scenario_2` is already canonical, so it gets no label.
   expect_identical(scenarios[["adultscenario"]]$label, "AdultScenario")
   expect_null(scenarios[["pi_scenario_2"]]$label)
+})
+
+test_that(".keepScenarioNamesAsLabels strips wrapping quotes before it compares and keeps", {
+  scenarios <- list(
+    list(id = "\"aciclovir_iv\""),
+    list(id = "\"Aciclovir_IV\""),
+    list(id = "Aciclovir_IV", label = "Aciclovir IV 250 mg")
+  )
+
+  expect_identical(
+    .keepScenarioNamesAsLabels(scenarios),
+    list(
+      list(id = "\"aciclovir_iv\""),
+      list(id = "\"Aciclovir_IV\"", label = "Aciclovir_IV"),
+      list(id = "Aciclovir_IV", label = "Aciclovir IV 250 mg")
+    )
+  )
 })
 
 test_that("a Label cell wins over the Scenario_name kept as the label", {

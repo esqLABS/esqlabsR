@@ -20,10 +20,10 @@
 #'
 #' With neither `plotGrids` nor `plots`, all plot grids declared in
 #' `plotGrids` definitions are built (the default). The two arguments are
-#' independent selectors: `plotGrids` selects plot grids (keyed by
-#' `id` in the result), `plots` selects standalone single plots
-#' (keyed by `id`). A `id` that is also part of a requested grid still
-#' gets its own standalone entry.
+#' independent selectors: `plotGrids` selects plot grids (keyed by their
+#' `id` in the result), `plots` selects standalone single plots (keyed by
+#' their `id`). A plot that is also part of a requested grid still gets its
+#' own standalone entry.
 #'
 #' @param project A `Project` (see [loadProject()]).
 #' @param plotGrids Names of plot grids to build. If `NULL` (default) and
@@ -557,8 +557,8 @@ createPlotsFromExcel <- function(...) {
   names(builtGrids) <- vapply(plotGrids, function(g) g$id, character(1))
 
   # Standalone single plots: return the rendered plot for each requested id
-  # (the same render a grid cell gets), keyed by `id`. A `id` that is
-  # also inside a requested grid still gets its own entry here (independent
+  # (the same render a grid cell gets), keyed by its id. A plot that is also
+  # inside a requested grid still gets its own entry here (independent
   # selectors). The grid entries and the standalone entries are unioned.
   standalonePlots <- plotList[intersect(standalonePlotIds, names(plotList))]
   # A plot without data to draw is NULL (the `ospsuite` plot function warns);

@@ -38,7 +38,7 @@ The \code{project} object, invisibly.
 }
 \description{
 Add new entries to \code{plotGrids} definitions (a keyed list, one entry per grid).
-Errors if a \code{id} already exists or if any of the supplied \code{plots}
+Errors if an \code{id} already exists or if any of the supplied \code{plots}
 are not present in \code{plots} definitions.
 }
 \details{

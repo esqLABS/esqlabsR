@@ -1050,8 +1050,8 @@
 
 # plots: three keyed kinds, one part of the `plots` definitions trio each.
 #
-# The serializers turn a part into an `id -> json-record` map keyed by the
-# part's id field (`id` / `id` / `id`); the parsers
+# The serializers turn a part into an `id -> json-record` map keyed by each
+# record's `id` field; the parsers
 # reassemble the part from the per-file records, validating each record's inner
 # id against its filename (`.keyedTreeRecordId`) so the on-disk filename stays
 # the authoritative key. Each part's in-memory shape (a keyed list whose entries

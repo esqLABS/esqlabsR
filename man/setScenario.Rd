@@ -132,10 +132,12 @@ sc$modelFile <- "Aciclovir_v2.pkml"
 addScenario(project, sc, overwrite = TRUE)
 }\if{html}{\out{</div>}}
 
-A field the record leaves unset is left to this function's default, exactly
-as an absent key in the scenario's definition file is. To clear an optional
-field, name the id and pass \code{NULL} for it
-(\code{setScenario(project, "sc", individual = NULL)}).
+An optional field the record leaves empty (\code{label}, \code{individual},
+\code{population}, \code{application}, \code{simulationTime}, \code{solverSettings}, or an
+empty reference vector) is empty in the scenario too, so
+\verb{sc$individual <- NULL; setScenario(project, sc)} removes the individual. A
+unit the record leaves empty (\code{simulationTimeUnit}, \code{steadyStateTimeUnit})
+is left to this function's default.
 }
 
 \seealso{

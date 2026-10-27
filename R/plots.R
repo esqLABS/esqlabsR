@@ -1259,7 +1259,7 @@ print.DataCombined <- function(x, ...) {
 #' Add a plot configuration to a Project
 #'
 #' Add one or more entries to `plots` definitions (a keyed list, one entry per
-#' plot). Errors if a `id` already exists, if a `dataCombined` is not
+#' plot). Errors if an `id` already exists, if a `dataCombined` is not
 #' present in `dataCombined` definitions, if a `plotType` is not one of the
 #' supported types, or if a field in `...` is not supported or has an invalid
 #' value. Nothing is added when one plot fails these checks.
@@ -1458,7 +1458,7 @@ removePlot <- function(project, id) {
 #' Add one or more plot grids to a Project
 #'
 #' Add new entries to `plotGrids` definitions (a keyed list, one entry per grid).
-#' Errors if a `id` already exists or if any of the supplied `plots`
+#' Errors if an `id` already exists or if any of the supplied `plots`
 #' are not present in `plots` definitions.
 #'
 #' @inherit vectorizedAuthoring details
