@@ -199,6 +199,52 @@
       ! Cannot modify scenario "ghost": it does not exist.
       i Use `addScenario()` to create it first.
 
+# setScenario refuses to clear the required modelFile
+
+    Code
+      setScenario(project, "testscenario", modelFile = NULL)
+    Condition
+      Error in `setScenario()`:
+      ! Cannot modify scenario "testscenario":
+      x modelFile is required and cannot be cleared; give the name of a '.pkml' file
+
+---
+
+    Code
+      setScenario(project, "testscenario", modelFile = NA)
+    Condition
+      Error in `setScenario()`:
+      ! Cannot modify scenario "testscenario":
+      x modelFile is required and cannot be cleared; give the name of a '.pkml' file
+
+---
+
+    Code
+      setScenario(project, "testscenario", modelFile = "")
+    Condition
+      Error in `setScenario()`:
+      ! Cannot modify scenario "testscenario":
+      x modelFile is required and cannot be cleared; give the name of a '.pkml' file
+
+# setScenario leaves every scenario unchanged when one of several ids gets an empty modelFile
+
+    Code
+      setScenario(project, c("testscenario", "populationscenario"), modelFile = c(
+        "Aciclovir.pkml", ""))
+    Condition
+      Error in `setScenario()`:
+      ! Cannot modify scenario "populationscenario":
+      x modelFile is required and cannot be cleared; give the name of a '.pkml' file
+
+---
+
+    Code
+      setScenario(project, c("testscenario", "populationscenario"), modelFile = NULL)
+    Condition
+      Error in `setScenario()`:
+      ! Cannot modify scenario "testscenario":
+      x modelFile is required and cannot be cleared; give the name of a '.pkml' file
+
 # setScenario rejects an unknown foreign key like addScenario
 
     Code

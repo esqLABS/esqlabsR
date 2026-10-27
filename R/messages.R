@@ -1322,6 +1322,16 @@ messages$unnamedAuthoringFields <- function(positions) {
   )
 }
 
+# One problem line of the `setScenario()` abort, for a `modelFile` passed as
+# `NULL`, `NA` or `""`. The model file is the one required scenario field, so
+# unlike the optional ones it cannot be cleared.
+messages$scenarioModelFileRequired <- function() {
+  cliFormat(
+    "{.field modelFile} is required and cannot be cleared; give the name \\
+    of a {.file .pkml} file"
+  )
+}
+
 # Raised when a name reaching `setScenario()`'s field set is not a scenario
 # field. Without the guard the value would be aligned as a per-definition field
 # and then dropped in silence.

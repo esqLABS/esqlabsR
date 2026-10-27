@@ -1201,15 +1201,60 @@ test_that("saveProject() fails fast on a structural violation, disk untouched", 
   dir <- file.path(project$info$projectDirPath, "definitions", "scenarios")
   beforeFile <- readLines(file.path(dir, "testscenario.json"))
 
-  # Clearing modelFile is a structural violation. The edit is accepted in
-  # memory; the abort happens at save (the serialize-in-memory-first guarantee),
-  # leaving disk unchanged.
-  setScenario(project, "testscenario", modelFile = NULL)
+  # A record without a modelFile is a structural violation. `setScenario()`
+  # refuses one, so it is written through the internal section seam; the abort
+  # happens at save (the serialize-in-memory-first guarantee), leaving disk
+  # unchanged.
+  scenarios <- .getSection(project, "scenarios")
+  scenarios[["testscenario"]]["modelFile"] <- list(NULL)
+  .setSection(project, "scenarios", scenarios)
   expect_error(
     saveProject(project),
     "modelFile"
   )
   expect_identical(readLines(file.path(dir, "testscenario.json")), beforeFile)
+})
+
+test_that("setScenario refuses to clear the required modelFile", {
+  project <- testProject()
+  before <- project$definitions$scenarios
+
+  expect_snapshot(
+    error = TRUE,
+    setScenario(project, "testscenario", modelFile = NULL)
+  )
+  expect_snapshot(
+    error = TRUE,
+    setScenario(project, "testscenario", modelFile = NA)
+  )
+  expect_snapshot(
+    error = TRUE,
+    setScenario(project, "testscenario", modelFile = "")
+  )
+  expect_equal(project$definitions$scenarios, before)
+})
+
+test_that("setScenario leaves every scenario unchanged when one of several ids gets an empty modelFile", {
+  project <- testProject()
+  before <- project$definitions$scenarios
+
+  expect_snapshot(
+    error = TRUE,
+    setScenario(
+      project,
+      c("testscenario", "populationscenario"),
+      modelFile = c("Aciclovir.pkml", "")
+    )
+  )
+  expect_snapshot(
+    error = TRUE,
+    setScenario(
+      project,
+      c("testscenario", "populationscenario"),
+      modelFile = NULL
+    )
+  )
+  expect_equal(project$definitions$scenarios, before)
 })
 
 test_that("setScenario rejects an unknown foreign key like addScenario", {

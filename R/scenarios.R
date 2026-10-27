@@ -1539,6 +1539,12 @@ setScenario <- function(project, id, ...) {
   errors <- character()
   supplied <- names(fields)
 
+  # The model file is required: a supplied value must be one `addScenario()`
+  # would accept, so `NULL`, `NA` or `""` cannot clear it.
+  if ("modelFile" %in% supplied && !.isNonEmptyString(fields$modelFile)) {
+    errors <- c(errors, messages$scenarioModelFileRequired())
+  }
+
   # Canonicalize the supplied foreign-key references (matching the definition
   # side) before validating, so a reference resolves to its definition.
   if ("individual" %in% supplied) {
