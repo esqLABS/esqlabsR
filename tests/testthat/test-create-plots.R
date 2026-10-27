@@ -33,40 +33,40 @@ test_that(".validateClassHasField is NA-safe when the object has NA names", {
 test_that("the plot-build assertion helpers raise cli (rlang) errors", {
   expect_error(
     .assertPlotConfigurationsBuildable(
-      list(a = list(plotId = "p1", plotType = "individual")),
+      list(a = list(id = "p1", plotType = "individual")),
       dataCombinedNames = character()
     ),
     class = "rlang_error"
   )
   expect_error(
     .assertPlotGridsBuildable(
-      list(g = list(plotGridId = "g1", plotIds = "ghost")),
+      list(g = list(id = "g1", plots = "ghost")),
       plotIDs = "p1"
     ),
     class = "rlang_error"
   )
 })
 
-test_that(".assertPlotGridsBuildable aborts on a grid missing its plotGridId", {
-  # A grid declaring plotIds but no plotGridId must be rejected up front,
+test_that(".assertPlotGridsBuildable aborts on a grid missing its id", {
+  # A grid declaring plots but no id must be rejected up front,
   # rather than slipping through to fail opaquely at grid-name assignment.
   expect_snapshot(
     error = TRUE,
     .assertPlotGridsBuildable(
-      list(list(plotIds = "p1")),
+      list(list(plots = "p1")),
       plotIDs = "p1"
     )
   )
 })
 
-test_that(".assertPlotConfigurationsBuildable aborts on a plot missing its plotId", {
-  # A single plot with no plotId must be rejected up front. The downstream
+test_that(".assertPlotConfigurationsBuildable aborts on a plot missing its id", {
+  # A single plot with no id must be rejected up front. The downstream
   # duplicate check only flags two-or-more missing ids, so one id-less entry
   # would otherwise slip through and fail opaquely at grid build.
   expect_snapshot(
     error = TRUE,
     .assertPlotConfigurationsBuildable(
-      list(list(dataCombinedId = "dc", plotType = "individual")),
+      list(list(dataCombined = "dc", plotType = "individual")),
       dataCombinedNames = "dc"
     )
   )
@@ -324,7 +324,7 @@ test_that("createPlots observedVsSimulated survives a dropped foldDistance colum
 
 # createPlots(plots = ...): standalone single plots ----
 
-test_that("createPlots(plots) returns a single plot keyed by plotId", {
+test_that("createPlots(plots) returns a single plot keyed by its id", {
   project <- exampleProject()
   simulated <- runScenarios(project, scenarios = "aciclovir_iv")
 
@@ -335,7 +335,7 @@ test_that("createPlots(plots) returns a single plot keyed by plotId", {
     validate = FALSE
   ))
 
-  # One entry, keyed by the plotId, holding the rendered single plot (not a
+  # One entry, keyed by the id, holding the rendered single plot (not a
   # 1-cell grid).
   expect_named(result, "p1")
   expect_false(inherits(result$p1, "patchwork"))
@@ -354,15 +354,15 @@ test_that("createPlots unions plotGrids and plots, keyed by id", {
     validate = FALSE
   ))
 
-  # The grid (keyed by plotGridId) and the standalone plot (keyed by plotId)
-  # both appear: a plotId that is also inside a requested grid still gets its
+  # The grid (keyed by id) and the standalone plot (keyed by id)
+  # both appear: a id that is also inside a requested grid still gets its
   # own standalone entry (independent selectors, no de-dup).
   expect_setequal(names(result), c("individual_diagnostics", "p1"))
   expect_s3_class(result$individual_diagnostics, "patchwork")
   expect_s3_class(result$p1, "ggplot")
 })
 
-test_that("createPlots(plots) aborts on an unknown plotId when stopIfNotFound", {
+test_that("createPlots(plots) aborts on an unknown plot id when stopIfNotFound", {
   project <- exampleProject()
   simulated <- runScenarios(project, scenarios = "aciclovir_iv")
 
@@ -378,7 +378,7 @@ test_that("createPlots(plots) aborts on an unknown plotId when stopIfNotFound", 
   )
 })
 
-test_that("createPlots(plots) drops an unknown plotId when not stopIfNotFound", {
+test_that("createPlots(plots) drops an unknown plot id when not stopIfNotFound", {
   project <- exampleProject()
   simulated <- runScenarios(project, scenarios = "aciclovir_iv")
 
@@ -806,8 +806,8 @@ test_that("the build guard rejects field problems even when validate = FALSE", {
     .assertPlotConfigurationsBuildable(
       list(
         p1 = list(
-          plotId = "p1",
-          dataCombinedId = "dc",
+          id = "p1",
+          dataCombined = "dc",
           plotType = "observedVsSimulated",
           xAxisScale = "log",
           yAxisScale = "linear",
@@ -1054,7 +1054,7 @@ test_that("every plot field changes the plot of the plot types that apply it", {
   withoutEffect <- character()
   for (check in checks) {
     base <- c(
-      list(plotId = "p", plotType = check$plotType),
+      list(id = "p", plotType = check$plotType),
       companions(check$field)
     )
     key <- paste(check$plotType, names(base)[-(1:2)], collapse = "/")
@@ -1093,7 +1093,7 @@ test_that("every plot field changes the plot of the plot types that apply it", {
     function(field) {
       element <- sub("FontFamily$", "", field)
       entry <- c(
-        list(plotId = "p", plotType = "individual"),
+        list(id = "p", plotType = "individual"),
         companions(field),
         stats::setNames(list(sample[[field]]), field)
       )
@@ -1114,7 +1114,7 @@ test_that("every plot field changes the plot of the plot types that apply it", {
   withEffect <- character()
   for (field in .plotFieldsNotSupportedYet) {
     plotType <- .plotFields[[field]]$appliesTo[[1]]
-    base <- list(plotId = "p", plotType = plotType)
+    base <- list(id = "p", plotType = plotType)
     entry <- c(base, sample[field])
     if (!identical(render(entry), render(base))) {
       withEffect <- c(withEffect, field)

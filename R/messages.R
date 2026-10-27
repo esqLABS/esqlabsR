@@ -693,16 +693,15 @@ messages$importSkippedPlotExportConfiguration <- function(
   )
 }
 
-messages$importDuplicatePlotIds <- function(sheet, idField, ids) {
+messages$importDuplicatePlotIds <- function(sheet, ids) {
   # Unglued, like its neighbours: a plot id is free text.
   envir <- new.env(parent = parent.frame())
   assign("sheet", sheet, envir = envir)
-  assign("idField", idField, envir = envir)
   assign("ids", ids, envir = envir)
   assign("n", length(ids), envir = envir)
   list(
     bullets = c(
-      "!" = "{cli::qty(n)}{n} {.field {idField}}{?s} {?is/are} used by more than \\
+      "!" = "{cli::qty(n)}{n} id{?s} {?is/are} used by more than \\
       one row of the {.field {sheet}} sheet: {.val {ids}}.",
       "i" = "Each id is one definition, built from the last row that carries it, \\
       so the earlier {cli::qty(n)}row{?s} {?is/are} not imported.",
@@ -1199,7 +1198,7 @@ messages$nrOfColorsShouldBePositive <- function(nrOfColors) {
 messages$plotIDsMustBeUnique <- function(duplicated_plotIDs = "") {
   duplicates <- paste(duplicated_plotIDs, collapse = ", ")
   cliFormat(
-    "plotId must be unique in plotConfiguration, but the following plotIds are duplicated: {.val {duplicates}}"
+    "Plot {.field id} must be unique in plotConfiguration, but the following ids are duplicated: {.val {duplicates}}"
   )
 }
 
@@ -1593,23 +1592,23 @@ messages$tickLabelsWithoutTicks <- function(
 
 messages$invalidPlotID <- function(plotIDs) {
   cliFormat(
-    "The plots with plotIds {.val {paste(plotIDs, collapse = ',\n')}} are used in the sheet
+    "The plots with ids {.val {paste(plotIDs, collapse = ',\n')}} are used in the sheet
     {.field plotGrids} but are not defined in the sheet {.var plotConfiguration}."
   )
 }
 
 messages$missingPlotIDs <- function() {
   cliFormat(
-    "Missing values found in mandatory column {.val plotIds} of sheet {.field plotGrids}. Fill in values to proceed."
+    "Missing values found in mandatory column {.val plots} of sheet {.field plotGrids}. Fill in values to proceed."
   )
 }
 
 messages$missingPlotGridId <- function() {
-  cliFormat("Every plot grid must declare a `plotGridId`.")
+  cliFormat("Every plot grid must declare an {.field id}.")
 }
 
 messages$missingPlotId <- function() {
-  cliFormat("Every plot must declare a `plotId`.")
+  cliFormat("Every plot must declare an {.field id}.")
 }
 
 messages$missingPlotType <- function() {
@@ -1620,7 +1619,7 @@ messages$missingPlotType <- function() {
 
 messages$missingDataCombinedName <- function() {
   cliFormat(
-    "Missing values found in mandatory column {.val dataCombinedId} of sheet {.var plotConfiguration}. Fill in values to proceed."
+    "Missing values found in mandatory column {.val dataCombined} of sheet {.var plotConfiguration}. Fill in values to proceed."
   )
 }
 

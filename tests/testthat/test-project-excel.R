@@ -295,7 +295,7 @@ test_that("Excel round-trip preserves a grid whose plot id had a comma canonical
     "grid_comma"
   ]]
 
-  expect_identical(.splitPlotIDs(grid$plotIds), c("p1", "cmax__ss"))
+  expect_identical(.splitPlotIDs(grid$plots), c("p1", "cmax__ss"))
 })
 
 # Regression (#1184): a grid's `plotIDs` cell is a multi-value Excel cell, and
@@ -330,10 +330,10 @@ test_that("a quoted 5.x plotIDs cell imports with the grid's members intact", {
 
   grids <- .unwrapDefinitionList(project$definitions$plotGrids)
   expect_identical(
-    .splitPlotIDs(grids[["aciclovir"]]$plotIds),
+    .splitPlotIDs(grids[["aciclovir"]]$plots),
     c("p1", "p2", "p3")
   )
-  expect_identical(.splitPlotIDs(grids[["aciclovir2"]]$plotIds), "p2")
+  expect_identical(.splitPlotIDs(grids[["aciclovir2"]]$plots), "p2")
 
   # The whole point: the imported project no longer reports the grid members as
   # unknown plot ids.
@@ -342,7 +342,7 @@ test_that("a quoted 5.x plotIDs cell imports with the grid's members intact", {
     function(e) e$message,
     character(1)
   )
-  expect_false(any(grepl("references unknown plotIds", plotErrors)))
+  expect_false(any(grepl("references unknown plots", plotErrors)))
 })
 
 test_that("exportProjectToExcel names the scenarios whose solverSettings it cannot carry", {
@@ -1278,7 +1278,7 @@ test_that("the individuals import skips a blank IndividualId row rather than inj
   paramSheetNames <- "Indiv1"
   sheetCanonical <- vapply(paramSheetNames, .canonicalizeOneId, character(1))
   linked <- lapply(individuals, function(indiv) {
-    indivCanonical <- .canonicalizeOneId(indiv$individualId)
+    indivCanonical <- .canonicalizeOneId(indiv$id)
     if (is.na(indivCanonical)) {
       return(indiv)
     }
@@ -2944,7 +2944,7 @@ test_that(".compareJsonToExcel writes nothing", {
 # order is exactly what the sort exists to normalize away.
 #
 # Every array section a real project holds carries a unique id per record
-# (`name`, `individualId`, `dataCombinedId`, ...), so no two records tie and the
+# (`id`), so no two records tie and the
 # key's precision does not currently reach the verdict. This guards the sort
 # itself rather than a live false-drift report: the records here are given the
 # same id so they differ only past the 4th decimal, which is where jsonlite's
@@ -3644,23 +3644,23 @@ test_that("a missing data file says the project will not validate", {
 test_that(".warnIncompleteObservedCurves names the affected combinations", {
   expect_snapshot(.warnIncompleteObservedCurves(list(
     list(
-      dataCombinedId = "plasma",
+      id = "plasma",
       simulated = list(list(label = "sim")),
       observed = list(list(label = "obs"))
     ),
     list(
-      dataCombinedId = "urine",
+      id = "urine",
       observed = list(list(label = "obs", dataSet = "d1"))
     ),
     list(
-      dataCombinedId = "fat",
+      id = "fat",
       observed = list(list(label = "obs", dataSet = ""))
     )
   )))
 
   # Nothing to say when every observed curve names a data set.
   expect_silent(.warnIncompleteObservedCurves(list(
-    list(dataCombinedId = "urine", observed = list(list(dataSet = "d1")))
+    list(id = "urine", observed = list(list(dataSet = "d1")))
   )))
   expect_silent(.warnIncompleteObservedCurves(NULL))
 })
@@ -3790,7 +3790,7 @@ test_that("two populations differing only in their ontogenies import differently
 
   # The ontogenies are the whole of the difference, once the id line is set aside.
   dropId <- function(lines) {
-    grep("populationId", lines, fixed = TRUE, invert = TRUE, value = TRUE)
+    grep("\"id\"", lines, fixed = TRUE, invert = TRUE, value = TRUE)
   }
   expect_false(identical(dropId(withOntogenies), dropId(withoutOntogenies)))
   expect_match(
@@ -4151,7 +4151,7 @@ test_that("a plot id spelled quoted and unquoted is one reused id, and reported"
 
   expect_setequal(names(imported$project$definitions$plots), c("p1", "p3"))
   expect_true(any(grepl("more than", imported$warnings, fixed = TRUE)))
-  expect_true(any(grepl("plotId", imported$warnings, fixed = TRUE)))
+  expect_true(any(grepl("plotConfiguration", imported$warnings, fixed = TRUE)))
 })
 
 # A section stored as an array of records is keyed by each record's own id field
@@ -4423,7 +4423,7 @@ test_that("two plot rows sharing an id lose one plot, and it is reported", {
 
   # And the loss is reported, naming the id more than one row used.
   expect_true(any(grepl("more than", imported$warnings, fixed = TRUE)))
-  expect_true(any(grepl("plotId", imported$warnings, fixed = TRUE)))
+  expect_true(any(grepl("plotConfiguration", imported$warnings, fixed = TRUE)))
 })
 
 # #1213 item 15: the 5.x `PIOutputMappings` sheet names the sheet of the data

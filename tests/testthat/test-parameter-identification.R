@@ -3520,3 +3520,20 @@ test_that(".assignPIBounds returns the runtime invisibly", {
   runtime <- .boundedRuntime(minValue = 0, maxValue = 10)
   expect_invisible(.assignPIBounds(runtime, minValue = 1, maxValue = 9))
 })
+
+test_that("a PI task record and file use the addPITask() argument names", {
+  project <- exampleProject()
+  arguments <- setdiff(names(formals(addPITask)), c("project", "overwrite"))
+
+  expect_setequal(
+    names(project$definitions$parameterIdentification[["aciclovirsimple"]]),
+    arguments
+  )
+  file <- file.path(
+    project$info$projectDirPath,
+    "definitions",
+    "parameter-identification",
+    "aciclovirsimple.json"
+  )
+  expect_setequal(names(jsonlite::read_json(file)), arguments)
+})

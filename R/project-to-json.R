@@ -392,7 +392,7 @@
 }
 
 # JSON array of individual objects. The in-memory shape is a named list
-# keyed by `individualId`; serialization re-attaches that key and otherwise
+# keyed by `id`; serialization re-attaches that key and otherwise
 # passes every field through in record order (mirroring `.populationsToJson`),
 # so unknown fields from a newer schema round-trip. `parameterSets` is
 # emitted as a JSON array.
@@ -406,12 +406,12 @@
     if (!is.null(indiv$parameterSets)) {
       indiv$parameterSets <- as.list(indiv$parameterSets)
     }
-    c(list(individualId = id), indiv)
+    c(list(id = id), indiv)
   }))
 }
 
 # JSON array of population objects. The in-memory shape is a named list
-# keyed by `populationId`; serialization re-attaches that key.
+# keyed by `id`; serialization re-attaches that key.
 .populationsToJson <- function(project) {
   populations <- project$definitions$populations
   if (is.null(populations) || length(populations) == 0L) {
@@ -419,7 +419,7 @@
   }
   unname(lapply(names(populations), function(id) {
     pop <- populations[[id]]
-    c(list(populationId = id), unclass(pop))
+    c(list(id = id), unclass(pop))
   }))
 }
 

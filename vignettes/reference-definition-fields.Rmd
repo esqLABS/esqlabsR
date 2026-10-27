@@ -284,7 +284,7 @@ Optional per-curve transforms, applied before plotting. An offset requires its u
 
 | Field | Required | Type | Notes |
 | --- | --- | --- | --- |
-| `dataCombined` | **yes** | id | Stored as `dataCombinedId`. Must reference a known DataCombined. |
+| `dataCombined` | **yes** | id | Must reference a known DataCombined. |
 | `plotType` | **yes** | one of the five below | An unknown value is a critical error. |
 
 ### Plot types
@@ -362,7 +362,7 @@ A plot accepts these esqlabsR 5.x settings, so a project or workbook that uses t
 
 | Field | Required | Type | Notes |
 | --- | --- | --- | --- |
-| `plots` | **yes** | character vector of plot ids | Stored as `plotIds`. Every plot listed becomes a panel. |
+| `plots` | **yes** | character vector of plot ids | Stored as one comma-separated string. Every plot listed becomes a panel. |
 
 `plots` is required, so nothing falls back to the model file. `...` accepts grid fields such as `title` and `subtitle`, and a grid without them is drawn untitled.
 

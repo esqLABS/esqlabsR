@@ -204,10 +204,10 @@ test_that(".dataCombinedToNestedJson re-adds the id field and drops empty sublis
   )
   json <- .dataCombinedToNestedJson(parsed)
   expect_length(json, 2)
-  expect_equal(json[[1]]$dataCombinedId, "DC1")
+  expect_equal(json[[1]]$id, "DC1")
   expect_equal(json[[1]]$simulated[[1]]$label, "a")
   expect_null(json[[1]]$observed) # empty observed dropped
-  expect_equal(json[[2]]$dataCombinedId, "DC2")
+  expect_equal(json[[2]]$id, "DC2")
   expect_null(json[[2]]$simulated)
   expect_equal(json[[2]]$observed[[1]]$label, "b")
 })
@@ -220,11 +220,11 @@ test_that(".dataCombinedToNestedJson handles NULL and empty input", {
 test_that(".plotEntriesToJson strips the entry class and drops the list name", {
   entries <- list(
     P1 = structure(
-      list(plotId = "P1", plotType = "individual", title = "T1"),
+      list(id = "P1", plotType = "individual", title = "T1"),
       class = c("Plot", "list")
     ),
     P2 = structure(
-      list(plotId = "P2", plotType = "population"),
+      list(id = "P2", plotType = "population"),
       class = c("Plot", "list")
     )
   )

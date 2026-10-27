@@ -1,12 +1,12 @@
 test_that(".parseNestedDataCombined re-keys by id and drops the id field", {
   raw <- list(
     list(
-      dataCombinedId = "DC1",
+      id = "DC1",
       simulated = list(list(label = "a")),
       observed = list()
     ),
     list(
-      dataCombinedId = "DC2",
+      id = "DC2",
       simulated = list(),
       observed = list(list(label = "b"))
     )
@@ -25,10 +25,10 @@ test_that(".parseNestedDataCombined returns empty list for NULL or empty input",
 
 test_that(".parsePlotEntries re-keys by id and drops absent fields", {
   raw <- list(
-    list(plotId = "P1", plotType = "individual", title = "T1"),
-    list(plotId = "P2", plotType = "population")
+    list(id = "P1", plotType = "individual", title = "T1"),
+    list(id = "P2", plotType = "population")
   )
-  parsed <- .parsePlotEntries(raw, "plotId", "Plot")
+  parsed <- .parsePlotEntries(raw, "id", "Plot")
   expect_named(parsed, c("P1", "P2"))
   expect_s3_class(parsed$P1, "Plot")
   expect_equal(parsed$P1$title, "T1")
@@ -37,9 +37,9 @@ test_that(".parsePlotEntries re-keys by id and drops absent fields", {
 })
 
 test_that(".parsePlotEntries returns an empty list for NULL or empty", {
-  expect_identical(.parsePlotEntries(NULL, "plotId", "Plot"), list())
+  expect_identical(.parsePlotEntries(NULL, "id", "Plot"), list())
   expect_identical(
-    .parsePlotEntries(list(), "plotId", "Plot"),
+    .parsePlotEntries(list(), "id", "Plot"),
     list()
   )
 })
@@ -187,8 +187,8 @@ test_that("addPlot adds N plots in one call (recycle + align + whole-vector)", {
 
   cfg <- project$definitions$plots
   expect_true(all(c("pa", "pb") %in% names(cfg)))
-  expect_identical(cfg$pa$dataCombinedId, "dc_a")
-  expect_identical(cfg$pb$dataCombinedId, "dc_b")
+  expect_identical(cfg$pa$dataCombined, "dc_a")
+  expect_identical(cfg$pb$dataCombined, "dc_b")
   expect_identical(cfg$pa$plotType, "individual")
   expect_identical(cfg$pa$title, "Plot A")
   expect_identical(cfg$pb$title, "Plot B")
@@ -328,8 +328,8 @@ test_that("addPlot stores the supported fields as given", {
   expect_equal(
     unclass(project$definitions$plots$p_ovs),
     list(
-      plotId = "p_ovs",
-      dataCombinedId = "dc_ok",
+      id = "p_ovs",
+      dataCombined = "dc_ok",
       plotType = "observedVsSimulated",
       xAxisScale = "linear",
       yAxisScale = "linear",
@@ -346,7 +346,7 @@ test_that(".validatePlots reports field problems as critical errors", {
     )
   )
   plot <- function(id, plotType, ...) {
-    list(plotId = id, dataCombinedId = "DC1", plotType = plotType, ...)
+    list(id = id, dataCombined = "DC1", plotType = plotType, ...)
   }
   plotConfig <- list(
     p_unknown = plot("p_unknown", "individual", lineColour = "red"),
@@ -394,8 +394,8 @@ test_that(".validatePlots accepts the 5.x plot settings", {
   )
   plotConfig <- list(
     p_ind = list(
-      plotId = "p_ind",
-      dataCombinedId = "DC1",
+      id = "p_ind",
+      dataCombined = "DC1",
       plotType = "individual",
       title = "Aciclovir, IV",
       titleColor = "navy",
@@ -410,8 +410,8 @@ test_that(".validatePlots accepts the 5.x plot settings", {
       lloqDirection = "horizontal"
     ),
     p_ovs = list(
-      plotId = "p_ovs",
-      dataCombinedId = "DC1",
+      id = "p_ovs",
+      dataCombined = "DC1",
       plotType = "observedVsSimulated",
       pointsColor = "red",
       lloqDirection = "vertical",
@@ -434,15 +434,15 @@ test_that(".validatePlots warns about plot fields that have no effect", {
   )
   plotConfig <- list(
     p_rvs = list(
-      plotId = "p_rvs",
-      dataCombinedId = "DC1",
+      id = "p_rvs",
+      dataCombined = "DC1",
       plotType = "residualsVsSimulated",
       xUnit = "h",
       ribbonsAlpha = 0.3
     ),
     p_ind = list(
-      plotId = "p_ind",
-      dataCombinedId = "DC1",
+      id = "p_ind",
+      dataCombined = "DC1",
       plotType = "individual",
       pointsColor = "red",
       titleColor = "navy",
@@ -451,8 +451,8 @@ test_that(".validatePlots warns about plot fields that have no effect", {
       displayLLOQ = FALSE
     ),
     p_ovs = list(
-      plotId = "p_ovs",
-      dataCombinedId = "DC1",
+      id = "p_ovs",
+      dataCombined = "DC1",
       plotType = "observedVsSimulated",
       linesLinetype = "dotted",
       foldLinesLegendDiagonal = TRUE
@@ -675,9 +675,9 @@ test_that("addPlotGrid vectorizes with per-grid plots and one write-through", {
   expect_true(all(
     c("grid_one", "grid_two") %in% names(reloaded$definitions$plotGrids)
   ))
-  expect_identical(reloaded$definitions$plotGrids$grid_one$plotIds, "g_p1")
+  expect_identical(reloaded$definitions$plotGrids$grid_one$plots, "g_p1")
   expect_identical(
-    reloaded$definitions$plotGrids$grid_two$plotIds,
+    reloaded$definitions$plotGrids$grid_two$plots,
     "g_p1, g_p2"
   )
 })
@@ -701,7 +701,7 @@ test_that("addPlotGrid accepts a plain list of plot ids for a single grid", {
   reloaded <- loadProject(project$info$projectFilePath)
   expect_identical(
     .splitPlotIDs(
-      reloaded$definitions$plotGrids$single_grid$plotIds
+      reloaded$definitions$plotGrids$single_grid$plots
     ),
     c("sp1", "sp2")
   )
@@ -728,7 +728,7 @@ test_that("addPlotGrid canonicalizes a comma out of a plot id and still resolves
   saveProject(project)
   reloaded <- loadProject(project$info$projectFilePath)
   expect_identical(
-    .splitPlotIDs(reloaded$definitions$plotGrids$comma_grid$plotIds),
+    .splitPlotIDs(reloaded$definitions$plotGrids$comma_grid$plots),
     "p_evil"
   )
 })
@@ -750,12 +750,12 @@ test_that(".validatePlots names the closest existing id for a dangling reference
     dataCombined = list(aciclovir_pvb = list()),
     plotConfig = list(
       p1 = list(
-        plotId = "p1",
-        dataCombinedId = "aciclovir_pbv",
+        id = "p1",
+        dataCombined = "aciclovir_pbv",
         plotType = "individual"
       )
     ),
-    plotGrids = list(grid = list(plotGridId = "grid", plotIds = "p2"))
+    plotGrids = list(grid = list(id = "grid", plots = "p2"))
   )
 
   expect_snapshot(cat(
@@ -770,9 +770,9 @@ test_that(".validatePlots reports an empty reference, which the missing-field lo
   result <- .validatePlots(
     dataCombined = list(aciclovir_pvb = list()),
     plotConfig = list(
-      p1 = list(plotId = "p1", dataCombinedId = "", plotType = "individual")
+      p1 = list(id = "p1", dataCombined = "", plotType = "individual")
     ),
-    plotGrids = list(grid = list(plotGridId = "grid", plotIds = "p1, "))
+    plotGrids = list(grid = list(id = "grid", plots = "p1, "))
   )
 
   messages <- vapply(
@@ -780,8 +780,8 @@ test_that(".validatePlots reports an empty reference, which the missing-field lo
     function(e) e$message,
     character(1)
   )
-  expect_true(any(grepl("unknown dataCombinedId", messages)))
-  expect_true(any(grepl("unknown plotIds", messages)))
+  expect_true(any(grepl("unknown dataCombined", messages)))
+  expect_true(any(grepl("unknown plots", messages)))
 })
 
 test_that("removePlot removes a vector of ids in one pass and warns on misses", {
@@ -912,9 +912,75 @@ test_that("classed plot definitions still behave as lists", {
   grid <- project$definitions$plotGrids[["individual_diagnostics"]]
   dc <- project$definitions$dataCombined[["aciclovir_individual"]]
   expect_type(plot, "list")
-  expect_identical(plot[["plotId"]], "p1")
+  expect_identical(plot[["id"]], "p1")
   expect_type(grid, "list")
-  expect_identical(grid[["plotGridId"]], "individual_diagnostics")
+  expect_identical(grid[["id"]], "individual_diagnostics")
   expect_type(dc, "list")
   expect_true(all(c("simulated", "observed") %in% names(dc)))
+})
+
+# A field has one name: the one the authoring argument takes, the definition
+# file stores, and the record read from `project$definitions` carries.
+test_that("a DataCombined record and file use the addDataCombined() argument names", {
+  project <- exampleProject()
+  addDataCombined(
+    project,
+    "aciclovir_urine",
+    simulated = list(list(
+      label = "Urine",
+      scenario = "aciclovir_iv",
+      path = "aciclovir_pvb"
+    )),
+    observed = list(list(label = "Observed", dataSet = "Laskin 1982"))
+  )
+  arguments <- setdiff(
+    names(formals(addDataCombined)),
+    c("project", "id", "overwrite")
+  )
+
+  expect_setequal(
+    names(project$definitions$dataCombined[["aciclovir_urine"]]),
+    arguments
+  )
+  saveProject(project)
+  file <- file.path(
+    project$info$projectDirPath,
+    "definitions",
+    "data-combined",
+    "aciclovir_urine.json"
+  )
+  expect_setequal(names(jsonlite::read_json(file)), c("id", arguments))
+})
+
+test_that("a plot record and file use the addPlot() argument names", {
+  project <- exampleProject()
+  addPlot(
+    project,
+    "p2",
+    dataCombined = "aciclovir_individual",
+    plotType = "individual",
+    title = "Aciclovir plasma"
+  )
+  fields <- c("id", "dataCombined", "plotType", "title")
+
+  expect_setequal(names(project$definitions$plots[["p2"]]), fields)
+  saveProject(project)
+  file <- file.path(project$info$projectDirPath, "definitions", "plots", "p2.json")
+  expect_setequal(names(jsonlite::read_json(file)), fields)
+})
+
+test_that("a plot grid record and file use the addPlotGrid() argument names", {
+  project <- exampleProject()
+  addPlotGrid(project, "overview", plots = "p1", title = "Overview")
+  fields <- c("id", "plots", "title")
+
+  expect_setequal(names(project$definitions$plotGrids[["overview"]]), fields)
+  saveProject(project)
+  file <- file.path(
+    project$info$projectDirPath,
+    "definitions",
+    "plot-grids",
+    "overview.json"
+  )
+  expect_setequal(names(jsonlite::read_json(file)), fields)
 })

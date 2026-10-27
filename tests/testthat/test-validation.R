@@ -832,25 +832,25 @@ test_that(".validatePlots warns when project has no plots sections", {
 # (`.validateDataCombined()`); its tests live in test-data-combined.R. The
 # `plots` adapter now only validates the plot list and plot grids.
 
-test_that(".validatePlots flags duplicate plotIds and unknown dataCombinedId", {
+test_that(".validatePlots flags duplicate plot ids and unknown dataCombined", {
   dataCombined <- list(
     DC1 = list(simulated = list(list(label = "L1", scenario = "S1")))
   )
-  # Two entries deliberately sharing the same plotId (a hand-edit could file
+  # Two entries deliberately sharing the same id (a hand-edit could file
   # both under one key only by colliding; here two list slots carry the same
-  # inner plotId) to exercise the duplicate-id check.
+  # inner id) to exercise the duplicate-id check.
   plotConfig <- list(
-    a = list(plotId = "p1", dataCombinedId = "dc1", plotType = "individual"),
+    a = list(id = "p1", dataCombined = "dc1", plotType = "individual"),
     b = list(
-      plotId = "p1",
-      dataCombinedId = "Unknown",
+      id = "p1",
+      dataCombined = "Unknown",
       plotType = "individual"
     )
   )
   result <- .validatePlots(dataCombined, plotConfig, list())
   msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
-  expect_match(msgs, "Duplicate plotId", all = FALSE)
-  expect_match(msgs, "unknown dataCombinedId", all = FALSE)
+  expect_match(msgs, "Duplicate id", all = FALSE)
+  expect_match(msgs, "unknown dataCombined", all = FALSE)
 })
 
 test_that(".validatePlots warns on plotType-irrelevant fields (non-blocking)", {
@@ -864,14 +864,14 @@ test_that(".validatePlots warns on plotType-irrelevant fields (non-blocking)", {
   # produce a warning, not a critical error (the plot still renders).
   plotConfig <- list(
     a = list(
-      plotId = "p_ind",
-      dataCombinedId = "DC1",
+      id = "p_ind",
+      dataCombined = "DC1",
       plotType = "individual",
       quantiles = "0.05, 0.5, 0.95"
     ),
     b = list(
-      plotId = "p_pop",
-      dataCombinedId = "DC1",
+      id = "p_pop",
+      dataCombined = "DC1",
       plotType = "population",
       foldDistance = "2"
     )
@@ -893,16 +893,16 @@ test_that(".validatePlots does not warn when the field matches its plotType", {
   # an observedVsSimulated plot are all legitimate: no irrelevant-field warning.
   plotConfig <- list(
     a = list(
-      plotId = "p_pop",
-      dataCombinedId = "DC1",
+      id = "p_pop",
+      dataCombined = "DC1",
       plotType = "population",
       quantiles = "0.05, 0.5, 0.95",
       aggregation = "quantiles",
       nsd = "2"
     ),
     b = list(
-      plotId = "p_ovs",
-      dataCombinedId = "DC1",
+      id = "p_ovs",
+      dataCombined = "DC1",
       plotType = "observedVsSimulated",
       foldDistance = "2"
     )
@@ -1253,8 +1253,8 @@ test_that("a broken plots section leaves the run gate's cross-reference check in
     # references a data combination the project does not define.
     plots = list(
       p1 = list(
-        plotId = "p1",
-        dataCombinedId = "ghost",
+        id = "p1",
+        dataCombined = "ghost",
         plotType = "individual"
       )
     )
@@ -1308,13 +1308,13 @@ test_that("createPlots(validate = TRUE) aborts on a clearly broken project", {
     dataCombined = list(),
     plots = list(
       p1 = list(
-        plotId = "p1",
-        dataCombinedId = "Ghost",
+        id = "p1",
+        dataCombined = "Ghost",
         plotType = "individual"
       )
     ),
     plotGrids = list(
-      g1 = list(plotGridId = "g1", plotIds = "p1")
+      g1 = list(id = "g1", plots = "p1")
     )
   )
   expect_snapshot(error = TRUE, createPlots(project))
@@ -1382,7 +1382,7 @@ test_that(".validatePlots flags an unknown plotType from JSON", {
     project,
     "plots",
     list(
-      p1 = list(plotId = "p1", dataCombinedId = "dc1", plotType = "bogusType")
+      p1 = list(id = "p1", dataCombined = "dc1", plotType = "bogusType")
     )
   )
   result <- .plotsValidatorAdapter(project)
@@ -1405,7 +1405,7 @@ test_that(".validatePlots hard-errors on unknown plotGrid plotIDs", {
   .setSection(
     project,
     "plotGrids",
-    list(g1 = list(plotGridId = "g1", plotIds = "ghost"))
+    list(g1 = list(id = "g1", plots = "ghost"))
   )
   result <- .plotsValidatorAdapter(project)
   msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
@@ -1416,7 +1416,7 @@ test_that(".validatePlots flags unknown plotGrid ids even with empty plotConfig"
   result <- .validatePlots(
     list(),
     list(),
-    list(g1 = list(plotGridId = "g1", plotIds = "ghost"))
+    list(g1 = list(id = "g1", plots = "ghost"))
   )
   msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
   expect_match(msgs, "ghost", all = FALSE)

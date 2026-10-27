@@ -315,7 +315,7 @@ test_that("a project with no initial-conditions tree surfaces an empty section",
   )
 })
 
-test_that("loadProject() preserves individuals as a named list keyed by individualId", {
+test_that("loadProject() preserves individuals as a named list keyed by id", {
   project <- exampleProject()
 
   expect_named(project$definitions$individuals, "adult_male")
@@ -325,7 +325,7 @@ test_that("loadProject() preserves individuals as a named list keyed by individu
   expect_identical(ind$parameterSets, "adult_male_default")
 })
 
-test_that("loadProject() preserves populations as a named list keyed by populationId", {
+test_that("loadProject() preserves populations as a named list keyed by id", {
   project <- exampleProject()
 
   expect_named(project$definitions$populations, "european_adults")
@@ -356,7 +356,7 @@ test_that("loadProject() preserves the observedData section", {
 test_that("loadProject() parses plots into three top-level keyed sections", {
   project <- exampleProject()
 
-  # dataCombined: named list keyed by id (no `dataCombinedId` field on entries)
+  # dataCombined: named list keyed by id (no `id` field on entries)
   expect_named(project$definitions$dataCombined, "aciclovir_individual")
   dc <- project$definitions$dataCombined$aciclovir_individual
   expect_named(dc, c("simulated", "observed"), ignore.order = TRUE)
@@ -368,11 +368,11 @@ test_that("loadProject() parses plots into three top-level keyed sections", {
   expect_named(project$definitions$plotGrids, "individual_diagnostics")
   p1 <- project$definitions$plots$p1
   expect_s3_class(p1, "Plot")
-  expect_identical(p1$plotId, "p1")
-  expect_identical(p1$dataCombinedId, "aciclovir_individual")
+  expect_identical(p1$id, "p1")
+  expect_identical(p1$dataCombined, "aciclovir_individual")
   grid <- project$definitions$plotGrids$individual_diagnostics
   expect_s3_class(grid, "PlotGrid")
-  expect_identical(grid$plotGridId, "individual_diagnostics")
+  expect_identical(grid$id, "individual_diagnostics")
 })
 
 test_that("loadProject() rejects a missing schemaVersion", {
