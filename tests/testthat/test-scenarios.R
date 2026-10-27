@@ -25,13 +25,14 @@ test_that("Scenario has the documented field defaults", {
   expect_null(sc$solverSettings)
 })
 
-test_that("as.list(Scenario()) exposes exactly the v2.0 schema fields", {
+test_that("as.list(Scenario()) exposes exactly the scenario fields", {
   sc <- Scenario()
 
   expect_named(
     as.list(sc),
     c(
       "id",
+      "label",
       "modelFile",
       "application",
       "individual",
@@ -1746,4 +1747,129 @@ test_that("print.Scenario shows an empty output-path block when there are none",
   local_reproducible_output()
   scenario <- Scenario(id = "nooutputs", modelFile = "Aciclovir.pkml")
   expect_snapshot(print(scenario))
+})
+
+# label ----
+
+test_that("addScenario keeps a label exactly as typed while the id is canonicalized", {
+  project <- testProject()
+  expect_warning(
+    addScenario(
+      project,
+      "Aciclovir_IV-2.5mg/kg",
+      modelFile = "Aciclovir.pkml",
+      label = "Aciclovir_IV-2.5mg/kg"
+    ),
+    "aciclovir_iv-2.5mg_kg"
+  )
+
+  sc <- project$definitions$scenarios[["aciclovir_iv-2.5mg_kg"]]
+  expect_identical(sc$id, "aciclovir_iv-2.5mg_kg")
+  expect_identical(sc$label, "Aciclovir_IV-2.5mg/kg")
+})
+
+test_that("addScenario sets no label unless one is passed", {
+  project <- testProject()
+  suppressWarnings(addScenario(project, "MyScenario", modelFile = "Aciclovir.pkml"))
+  saveProject(project)
+
+  expect_null(project$definitions$scenarios[["myscenario"]]$label)
+  file <- file.path(
+    project$info$projectDirPath,
+    "definitions",
+    "scenarios",
+    "myscenario.json"
+  )
+  expect_false("label" %in% names(jsonlite::read_json(file)))
+})
+
+test_that("a scenario label survives save, load, snapshot and restore", {
+  project <- testProject()
+  label <- "Aciclovir IV {250 mg} / Kidney"
+  setScenario(project, "testscenario", label = label)
+
+  saveProject(project)
+  reloaded <- loadProject(project$info$projectFilePath)
+  expect_identical(
+    reloaded$definitions$scenarios[["testscenario"]]$label,
+    label
+  )
+
+  snapshot <- snapshotProject(
+    reloaded,
+    dir = withr::local_tempdir(),
+    name = "with_label"
+  )
+  restored <- restoreProject(snapshot, withr::local_tempdir())
+  expect_identical(
+    restored$definitions$scenarios[["testscenario"]]$label,
+    label
+  )
+})
+
+test_that("setScenario sets a label and clears it with NULL", {
+  project <- testProject()
+
+  setScenario(project, "testscenario", label = "Aciclovir IV")
+  expect_identical(
+    project$definitions$scenarios[["testscenario"]]$label,
+    "Aciclovir IV"
+  )
+
+  setScenario(project, "testscenario", label = NULL)
+  expect_null(project$definitions$scenarios[["testscenario"]]$label)
+  expect_named(
+    project$definitions$scenarios[["testscenario"]],
+    .scenarioFieldNames
+  )
+})
+
+test_that("addScenario and setScenario refuse a label that is not one string", {
+  project <- testProject()
+  before <- project$definitions$scenarios
+
+  expect_snapshot(
+    error = TRUE,
+    addScenario(project, "numbered", modelFile = "Aciclovir.pkml", label = 1)
+  )
+  expect_snapshot(
+    error = TRUE,
+    setScenario(project, "testscenario", label = NA)
+  )
+  expect_equal(project$definitions$scenarios, before)
+})
+
+test_that("validateProject reports a hand-edited label that is not one string", {
+  project <- testProject()
+  saveProject(project)
+  file <- file.path(
+    project$info$projectDirPath,
+    "definitions",
+    "scenarios",
+    "testscenario.json"
+  )
+  entry <- jsonlite::read_json(file)
+  entry$label <- list("Aciclovir", "IV")
+  jsonlite::write_json(entry, file, auto_unbox = TRUE, null = "null")
+  reloaded <- loadProject(project$info$projectFilePath)
+
+  messages <- vapply(
+    validateProject(reloaded)$scenarios$critical_errors,
+    function(e) e$message,
+    character(1)
+  )
+  expect_true(
+    "Scenario 'testscenario' has a label that is not a single string" %in%
+      messages
+  )
+})
+
+test_that("print shows a scenario's label after its id, and the section lists it", {
+  project <- testProject()
+  setScenario(project, "testscenario", label = "Aciclovir IV 250 mg")
+
+  expect_snapshot({
+    print(project$definitions$scenarios[["testscenario"]])
+    print(project$definitions$scenarios)
+  })
 })

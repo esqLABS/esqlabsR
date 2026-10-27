@@ -127,7 +127,7 @@
     Condition
       Error:
       ! `setScenario()` cannot set simulationType.
-      i The settable fields are modelFile, individual, population, application, parameterSets, initialConditions, outputPaths, simulationTime, simulationTimeUnit, steadyState, steadyStateTime, steadyStateTimeUnit, overwriteFormulasInSS, readPopulationFromCSV, and solverSettings.
+      i The settable fields are modelFile, label, individual, population, application, parameterSets, initialConditions, outputPaths, simulationTime, simulationTimeUnit, steadyState, steadyStateTime, steadyStateTimeUnit, overwriteFormulasInSS, readPopulationFromCSV, and solverSettings.
 
 # addScenario rejects an unsound solverSettings block
 
@@ -401,4 +401,51 @@
         * Solver Settings: <empty string>
         * Output Paths:
           * <empty vector>
+
+# addScenario and setScenario refuse a label that is not one string
+
+    Code
+      addScenario(project, "numbered", modelFile = "Aciclovir.pkml", label = 1)
+    Condition
+      Error in `addScenario()`:
+      ! Cannot add scenario "numbered":
+      x label must be a single string or `NULL`
+
+---
+
+    Code
+      setScenario(project, "testscenario", label = NA)
+    Condition
+      Error in `setScenario()`:
+      ! Cannot modify scenario "testscenario":
+      x label must be a single string or `NULL`
+
+# print shows a scenario's label after its id, and the section lists it
+
+    Code
+      print(project$definitions$scenarios[["testscenario"]])
+    Output
+      <Scenario>
+        * Id: testscenario
+        * Label: Aciclovir IV 250 mg
+        * Model: Aciclovir.pkml
+        * Type: Individual
+        * Individual: indiv1
+        * Population: <empty string>
+        * Administration Protocol: aciclovir_iv_250mg
+        * Parameter Sets: global
+        * Initial Conditions: testinitialset
+        * Steady State: FALSE
+        * Solver Settings: <empty string>
+        * Output Paths:
+          * Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)
+    Code
+      print(project$definitions$scenarios)
+    Output
+      <DefinitionList>
+      scenarios (4 definitions):
+        * populationscenario
+        * populationscenariofromcsv
+        * testscenario (Aciclovir IV 250 mg)
+        * testscenario_steadystate
 

@@ -1331,6 +1331,12 @@ messages$scenarioModelFileRequired <- function() {
   )
 }
 
+# One problem line of the `addScenario()` / `setScenario()` abort, for a `label`
+# that is not one string.
+messages$scenarioLabelNotString <- function() {
+  cliFormat("{.field label} must be a single string or {.code NULL}")
+}
+
 # Raised when a name reaching `setScenario()`'s field set is not a scenario
 # field. Without the guard the value would be aligned as a per-definition field
 # and then dropped in silence.

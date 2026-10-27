@@ -12,6 +12,7 @@
 # `Scenario` does not change the JSON-shape contract.
 .scenarioFieldNames <- c(
   "id",
+  "label",
   "modelFile",
   "application",
   "individual",
@@ -44,6 +45,8 @@
 #'   and puts it back into the project; [saveProject()] then writes it to disk.
 #'
 #' @param id Character. Id of the scenario.
+#' @param label Character or `NULL`. Free-text name of the scenario, kept
+#'   exactly as typed. `NULL` when the scenario has none.
 #' @param modelFile Character. Name of the `.pkml` model file (relative to
 #'   the model folder).
 #' @param application Character or `NULL`. Id referencing `applications`
@@ -99,6 +102,7 @@
 #' @export
 Scenario <- function(
   id = NULL,
+  label = NULL,
   modelFile = NULL,
   application = NULL,
   individual = NULL,
@@ -133,17 +137,21 @@ as.list.Scenario <- function(x, ...) {
 print.Scenario <- function(x, ...) {
   ospsuite.utils::ospPrintClass(x)
   ospsuite.utils::ospPrintItems(
-    list(
-      "Id" = x$id %||% "",
-      "Model" = x$modelFile %||% "",
-      "Type" = x$simulationType %||% "",
-      "Individual" = x$individual %||% "",
-      "Population" = x$population %||% "",
-      "Administration Protocol" = x$application %||% "",
-      "Parameter Sets" = paste(x$parameterSets, collapse = ", "),
-      "Initial Conditions" = paste(x$initialConditions, collapse = ", "),
-      "Steady State" = x$steadyState %||% FALSE,
-      "Solver Settings" = paste(names(x$solverSettings), collapse = ", ")
+    c(
+      list("Id" = x$id %||% ""),
+      # Only a scenario that has a label shows the line.
+      if (!is.null(x$label)) list("Label" = x$label),
+      list(
+        "Model" = x$modelFile %||% "",
+        "Type" = x$simulationType %||% "",
+        "Individual" = x$individual %||% "",
+        "Population" = x$population %||% "",
+        "Administration Protocol" = x$application %||% "",
+        "Parameter Sets" = paste(x$parameterSets, collapse = ", "),
+        "Initial Conditions" = paste(x$initialConditions, collapse = ", "),
+        "Steady State" = x$steadyState %||% FALSE,
+        "Solver Settings" = paste(names(x$solverSettings), collapse = ", ")
+      )
     ),
     print_empty = TRUE
   )
@@ -304,6 +312,9 @@ print.Scenario <- function(x, ...) {
 
     result[[id]] <- Scenario(
       id = id,
+      # Kept verbatim, like `solverSettings` below: a label that is not a single
+      # string loads and is then reported by `validateProject()`.
+      label = entry[["label"]],
       modelFile = entry[["modelFile"]],
       application = entry[["application"]],
       individual = entry[["individual"]],
@@ -387,6 +398,16 @@ print.Scenario <- function(x, ...) {
     }
     sc
   })
+}
+
+# TRUE when `label` is a usable scenario label: one string, `NA` excluded. Any
+# text is allowed, the empty string included, because a label is never used as
+# an id.
+#
+# @keywords internal
+# @noRd
+.isScenarioLabel <- function(label) {
+  is.character(label) && length(label) == 1L && !is.na(label)
 }
 
 # Assert that a scenario JSON field, when present, is a length-1 string (or
@@ -610,6 +631,15 @@ print.Scenario <- function(x, ...) {
           )
         }
       }
+    }
+
+    # A label is free text, but one string: a hand-edited file can hold a number,
+    # an array or `null` spelled as an object, which no printout can show.
+    if (!is.null(sc$label) && !.isScenarioLabel(sc$label)) {
+      result$addCriticalError(
+        "Validation",
+        paste0("Scenario '", name, "' has a label that is not a single string")
+      )
     }
 
     # An unsound `solverSettings` block reaches here only from a hand-edited
@@ -968,7 +998,8 @@ buildSimulations <- function(
 #' the recycling rule under Details). Scalar-per-definition fields (`modelFile`,
 #' `individual`, `population`, `application`, `simulationTime`,
 #' `simulationTimeUnit`, `steadyState`, `steadyStateTime`,
-#' `steadyStateTimeUnit`, `overwriteFormulasInSS`, `readPopulationFromCSV`)
+#' `steadyStateTimeUnit`, `overwriteFormulasInSS`, `readPopulationFromCSV`,
+#' `label`)
 #' follow the recycle/align rule. The vector-valued-per-definition fields
 #' `parameterSets` and `outputPaths` are applied whole to every
 #' scenario; to give a different set per scenario, pass a list of the same
@@ -1046,6 +1077,11 @@ buildSimulations <- function(
 #'   setting to those two.
 #'   The list counts as one value per scenario, so an `id` naming several
 #'   scenarios gives each of them the same settings.
+#' @param label Character or `NULL` (default). A free-text name for the
+#'   scenario, kept exactly as typed, for example `"Aciclovir IV 2.5 mg/kg"`.
+#'   Unlike `id`, it is not changed to lowercase, so it keeps the spelling the
+#'   id loses. It shows when you print the scenario or the scenarios of a
+#'   project. Results and messages still name the scenario by its id.
 #' @param overwrite Logical. When `FALSE` (default), an id that already exists
 #'   aborts. When `TRUE`, the existing scenario is replaced (last-write-wins).
 #'   Distinct from `overwriteFormulasInSS`, which is a steady-state model
@@ -1072,6 +1108,7 @@ addScenario <- function(
   overwriteFormulasInSS = FALSE,
   readPopulationFromCSV = FALSE,
   solverSettings = NULL,
+  label = NULL,
   overwrite = FALSE
 ) {
   validateIsOfType(project, "Project")
@@ -1101,6 +1138,7 @@ addScenario <- function(
     overwriteFormulasInSS = overwriteFormulasInSS,
     readPopulationFromCSV = readPopulationFromCSV,
     solverSettings = solverSettings,
+    label = label,
     overwrite = overwrite
   )
 }
@@ -1130,6 +1168,7 @@ addScenario <- function(
   overwriteFormulasInSS = FALSE,
   readPopulationFromCSV = FALSE,
   solverSettings = NULL,
+  label = NULL,
   overwrite = FALSE,
   .call
 ) {
@@ -1143,6 +1182,7 @@ addScenario <- function(
     id,
     scalarFields = list(
       modelFile = modelFile,
+      label = label,
       individual = individual,
       population = population,
       application = application,
@@ -1200,6 +1240,9 @@ addScenario <- function(
   modelFile <- fields$modelFile
   if (!.isNonEmptyString(modelFile)) {
     errors <- c(errors, "modelFile must be a non-empty string")
+  }
+  if (!is.null(fields$label) && !.isScenarioLabel(fields$label)) {
+    errors <- c(errors, messages$scenarioLabelNotString())
   }
 
   # Canonicalize the foreign-key references the moment they enter the API, so a
@@ -1271,6 +1314,7 @@ addScenario <- function(
   steadyStateTimeUnit <- fields$steadyStateTimeUnit
   Scenario(
     id = id,
+    label = fields$label,
     modelFile = modelFile,
     application = application,
     individual = individual,
@@ -1384,7 +1428,7 @@ removeScenario <- function(project, id) {
 #'   `population`, `application`, `parameterSets`, `initialConditions`,
 #'   `outputPaths`, `simulationTime`, `simulationTimeUnit`, `steadyState`,
 #'   `steadyStateTime`, `steadyStateTimeUnit`, `overwriteFormulasInSS`,
-#'   `readPopulationFromCSV`, `solverSettings`. Each takes the value
+#'   `readPopulationFromCSV`, `solverSettings`, `label`. Each takes the value
 #'   [addScenario()] documents for it, but has no default here: an omitted
 #'   field is left untouched, a field passed as `NULL` is cleared.
 #'   Scalar-per-definition fields recycle/align across `id`; `parameterSets`,
@@ -1424,6 +1468,7 @@ setScenario <- function(project, id, ...) {
 # @noRd
 .settableScenarioFields <- c(
   "modelFile",
+  "label",
   "individual",
   "population",
   "application",
@@ -1534,6 +1579,14 @@ setScenario <- function(project, id, ...) {
   # would accept, so `NULL`, `NA` or `""` cannot clear it.
   if ("modelFile" %in% supplied && !.isNonEmptyString(fields$modelFile)) {
     errors <- c(errors, messages$scenarioModelFileRequired())
+  }
+  if (
+    "label" %in%
+      supplied &&
+      !is.null(fields$label) &&
+      !.isScenarioLabel(fields$label)
+  ) {
+    errors <- c(errors, messages$scenarioLabelNotString())
   }
 
   # Canonicalize the supplied foreign-key references (matching the definition
@@ -1652,6 +1705,9 @@ setScenario <- function(project, id, ...) {
   # `NULL` keeps its slot (the `[` form), so the record keeps its full shape.
   if ("modelFile" %in% supplied) {
     sc$modelFile <- fields$modelFile
+  }
+  if ("label" %in% supplied) {
+    sc["label"] <- list(fields$label)
   }
   if ("individual" %in% supplied) {
     sc["individual"] <- list(fields$individual)

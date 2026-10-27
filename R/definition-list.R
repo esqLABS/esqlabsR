@@ -67,8 +67,9 @@ format.DefinitionList <- function(x, ...) {
   utils::capture.output(print(x, ...))
 }
 
-# The ids a section shows when it prints. Every section but one is a named list
-# keyed by id, so its ids are its names. `observedData` is the exception: its
+# The ids a section shows when it prints. The scenarios section adds each
+# scenario's label (`.scenarioListIds()`). Every other section but one is a named
+# list keyed by id, so its ids are its names. `observedData` is the exception: its
 # JSON shape is an array, not a map, so it is stored as an unnamed list of
 # declarations and `names()` is `NULL`. Its ids are derived from each
 # declaration exactly as `removeObservedData()` derives the one it matches on
@@ -80,12 +81,40 @@ format.DefinitionList <- function(x, ...) {
 # @keywords internal
 # @noRd
 .definitionListIds <- function(x) {
-  if (!identical(attr(x, "definitionKind"), "observedData")) {
+  kind <- attr(x, "definitionKind")
+  if (identical(kind, "scenarios")) {
+    return(.scenarioListIds(x))
+  }
+  if (!identical(kind, "observedData")) {
     return(names(x))
   }
   ids <- .observedDataSectionIds(.unwrapDefinitionList(x))
   ids[is.na(ids)] <- "(no id)"
   ids
+}
+
+# The ids the scenarios section prints: each id, followed by the scenario's label
+# when it has one (`aciclovir_iv (Aciclovir IV 250 mg)`), so the name a modeler
+# typed shows next to the id the project uses. A label that is not one string is
+# left out here; `validateProject()` reports it.
+#
+# @keywords internal
+# @noRd
+.scenarioListIds <- function(x) {
+  ids <- names(x)
+  vapply(
+    seq_along(x),
+    function(i) {
+      entry <- x[[i]]
+      label <- if (is.list(entry)) entry[["label"]]
+      if (.isScenarioLabel(label) && nzchar(label)) {
+        paste0(ids[[i]], " (", label, ")")
+      } else {
+        ids[[i]]
+      }
+    },
+    character(1)
+  )
 }
 
 # Build the `ospPrintItems` title line for a section accessor: the section

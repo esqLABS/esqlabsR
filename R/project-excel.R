@@ -752,6 +752,7 @@ importProjectFromExcel <- function(
   # same Excel spelling as its definition still resolves). Excel ids that were
   # not already canonical (e.g. `Global`, `Aciclovir_PVB`) become `global`,
   # `aciclovir_pvb`.
+  jsonData$scenarios <- .keepScenarioNamesAsLabels(jsonData$scenarios)
   jsonData <- .canonicalizeProjectJsonIds(jsonData)
 
   # An observed curve that names no data set is kept as authored, so a user who
@@ -2547,8 +2548,8 @@ projectStatus <- function(project, silent = FALSE) {
   result
 }
 
-# The columns a Scenarios sheet must carry. `InitialConditions` is a newer,
-# optional column (an older sheet omits it), so it is validated separately.
+# The columns a Scenarios sheet must carry. `InitialConditions` and `Label` are
+# newer, optional columns (an older sheet omits them), so they are not listed.
 # Column access below uses `[[` (exact match) rather than `$` (partial match),
 # so a renamed column (e.g. `OutputPathsId` for `OutputPathsIds`) is caught by
 # the schema guard instead of silently resolving to a partial-prefix match or
@@ -2568,6 +2569,27 @@ projectStatus <- function(project, silent = FALSE) {
   "ModelFile",
   "OutputPathsIds"
 )
+
+# Keep the `Scenario_name` text of each imported scenario as its label when
+# canonicalizing the id will change it, so the spelling a 5.x workbook used is
+# not lost: `Aciclovir_IV-2.5mg/kg` becomes the id `aciclovir_iv-2.5mg_kg` and
+# the label `Aciclovir_IV-2.5mg/kg`. A label the sheet gives in its `Label`
+# column wins. Runs on the raw entries, before `.canonicalizeProjectJsonIds()`.
+#
+# @keywords internal
+# @noRd
+.keepScenarioNamesAsLabels <- function(scenarios) {
+  lapply(scenarios, function(sc) {
+    name <- sc$id
+    if (is.null(sc$label) && .isScenarioLabel(name)) {
+      canonical <- .canonicalizeOneId(.stripWrappingQuotes(name))
+      if (!identical(canonical, name)) {
+        sc$label <- name
+      }
+    }
+    sc
+  })
+}
 
 #' Parse Scenarios Excel sheet into JSON structure
 #' @param scenarioDf Data frame from the Scenarios sheet
@@ -2590,6 +2612,11 @@ projectStatus <- function(project, silent = FALSE) {
     row <- scenarioDf[i, ]
     scenario <- list(
       id = as.character(row[["Scenario_name"]]),
+      # `Label` is a newer column; an older Scenarios sheet omits it, and a blank
+      # cell means the scenario has no label.
+      label = if ("Label" %in% names(row)) {
+        .naToNull(as.character(row[["Label"]]))
+      },
       individual = .naToNull(as.character(row[["IndividualId"]])),
       population = .naToNull(as.character(row[["PopulationId"]])),
       readPopulationFromCSV = .naToNull(
@@ -4408,6 +4435,7 @@ projectStatus <- function(project, silent = FALSE) {
 
     rows[[length(rows) + 1]] <- data.frame(
       Scenario_name = sc$id,
+      Label = if (.isScenarioLabel(sc$label)) sc$label else NA,
       IndividualId = sc$individual %||% NA,
       PopulationId = if (sc$simulationType == "Population") {
         sc$population

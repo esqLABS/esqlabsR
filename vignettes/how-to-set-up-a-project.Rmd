@@ -195,7 +195,7 @@ projectStatus(editable)$excel_in_sync
 
 ### Notes
 
-**Ids are always lowercase.** Every id in a project is lowercase and filename-safe, because each id is also the name of a definition file (`vignette("about-the-project-model")` explains why). Import applies that rule without a message, and rewrites the references along with it, so a scenario you called `MyScenario` in the spreadsheet comes back as `myscenario`, and the next export writes `myscenario` into the spreadsheet. In R you can keep typing `MyScenario`: `runScenarios(project, scenarios = "MyScenario")` runs `myscenario` and tells you so.
+**Ids are always lowercase.** Every id in a project is lowercase and filename-safe, because each id is also the name of a definition file (`vignette("about-the-project-model")` explains why). Import applies that rule without a message, and rewrites the references along with it, so a scenario you called `MyScenario` in the spreadsheet comes back as `myscenario`, and the next export writes `myscenario` into the spreadsheet. In R you can keep typing `MyScenario`: `runScenarios(project, scenarios = "MyScenario")` runs `myscenario` and tells you so. A scenario keeps the name as you typed it in its `label`: the import stores `MyScenario` there when it changes the id, and a `Label` column in the scenarios spreadsheet sets it directly. `vignette("reference-definition-fields")` describes the field.
 
 **Solver settings are not exported.** A scenario's `solverSettings` has no column in the spreadsheets, so exporting warns and leaves it out, and a project imported from those spreadsheets has no scenario solver settings.
 

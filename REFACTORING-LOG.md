@@ -329,3 +329,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-10-27 11:58: A scenario record uses the names of the addScenario() arguments (id, individual, population, application, parameterSets, steadyState), and an absent application is NULL. (#1317)
 - 2026-10-27 12:06: A scenario definition file stores its id under the key "id" instead of "name".
 - 2026-10-27 12:20: Individual, population, data-combination, plot and plot-grid files store their own id under "id", and a plot or grid record uses the addPlot() and addPlotGrid() argument names.
+- 2026-10-27 14:06: A scenario can carry an optional free-text label that keeps the name as typed; the Excel bridge writes and reads it, and a 5.x import keeps a changed Scenario_name as the label. (#1294)

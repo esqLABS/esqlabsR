@@ -326,6 +326,9 @@
 
   entry <- list(
     id = sc$id,
+    # Left out below rather than written as `null` when there is none, so the
+    # file of a scenario without a label has no `label` key.
+    label = sc$label,
     individual = sc$individual,
     # Emit the population id verbatim rather than keying off the derived
     # `simulationType`, so a drifted record (population set while the
@@ -359,6 +362,9 @@
     modelFile = sc$modelFile,
     outputPaths = outputPathIds
   )
+  if (is.null(sc$label)) {
+    entry$label <- NULL
+  }
   # Omitted rather than emitted as `null` when the scenario sets no solver
   # setting: a `jsonlite` round-trip turns `"solverSettings": null` into `{}`,
   # which `.assertNoEmptyObjectFields()` rejects on the next load.

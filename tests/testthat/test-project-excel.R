@@ -4657,3 +4657,73 @@ test_that("Excel round-trip preserves a simulated entry that omits its label", {
     list(scenario = "aciclovir_iv", path = "Aciclovir_PVB")
   )
 })
+
+# Scenario label ----
+
+test_that("a scenario label survives an Excel export and import", {
+  project <- exampleProject()
+  setScenario(project, "aciclovir_iv", label = "Aciclovir IV 250 mg")
+
+  reimported <- excelRoundTrip(project)
+
+  expect_identical(
+    reimported$definitions$scenarios[["aciclovir_iv"]]$label,
+    "Aciclovir IV 250 mg"
+  )
+  expect_null(
+    reimported$definitions$scenarios[["aciclovir_iv_population"]]$label
+  )
+})
+
+test_that(".parseExcelScenarios reads the optional Label column", {
+  withLabel <- .parseExcelScenarios(
+    scenarioSheetRow(Label = "Aciclovir IV 250 mg")
+  )
+  blankLabel <- .parseExcelScenarios(scenarioSheetRow(Label = NA_character_))
+  noColumn <- .parseExcelScenarios(scenarioSheetRow())
+
+  expect_identical(withLabel[[1]]$label, "Aciclovir IV 250 mg")
+  expect_null(blankLabel[[1]]$label)
+  expect_null(noColumn[[1]]$label)
+})
+
+test_that("importing a 5.x workbook keeps a Scenario_name that canonicalizing changes as the label", {
+  projectDir <- localLegacyExcelProject()
+  editWorkbookSheets(
+    file.path(projectDir, "Configurations", "Scenarios.xlsx"),
+    function(sheets) {
+      scenarios <- sheets$Scenarios
+      scenarios$Scenario_name[scenarios$Scenario_name == "PIScenario2"] <-
+        "pi_scenario_2"
+      sheets$Scenarios <- scenarios
+      sheets
+    }
+  )
+
+  scenarios <- importLegacyExcelProject(projectDir)$project$definitions$scenarios
+
+  # `AdultScenario` loses its capitals in the id and keeps them in the label;
+  # `pi_scenario_2` is already canonical, so it gets no label.
+  expect_identical(scenarios[["adultscenario"]]$label, "AdultScenario")
+  expect_null(scenarios[["pi_scenario_2"]]$label)
+})
+
+test_that("a Label cell wins over the Scenario_name kept as the label", {
+  projectDir <- localLegacyExcelProject()
+  editWorkbookSheets(
+    file.path(projectDir, "Configurations", "Scenarios.xlsx"),
+    function(sheets) {
+      scenarios <- sheets$Scenarios
+      scenarios$Label <- NA_character_
+      scenarios$Label[scenarios$Scenario_name == "AdultScenario"] <-
+        "Adult, 2.5 mg/kg IV"
+      sheets$Scenarios <- scenarios
+      sheets
+    }
+  )
+
+  scenarios <- importLegacyExcelProject(projectDir)$project$definitions$scenarios
+
+  expect_identical(scenarios[["adultscenario"]]$label, "Adult, 2.5 mg/kg IV")
+  expect_identical(scenarios[["childscenario"]]$label, "ChildScenario")
+})
