@@ -325,3 +325,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-10-26 12:19: The closing warning of runScenarios(stopIfFails = FALSE) names only the scenarios that produced no results, not every requested one. (#1329)
 - 2026-10-26 12:24: Bullets in error and warning messages start new lines again, and a value with braces prints as written; a nested error now shows below the warning as its cause. (#1343)
 - 2026-10-26 14:45: The name-collision error of saveScenarioResults() shows the backslash once, as "\\" instead of "\\\\".
+- 2026-10-28 14:54: The standard importer configuration names the same unit for errors as for measurements; loaded data does not change, since both come from the Measurement unit column. (#757)

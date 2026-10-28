@@ -13,7 +13,7 @@
     </MappingDataFormatParameter>
     <MappingDataFormatParameter columnName="Error">
       <MappedColumn errorStdDev="Arithmetic Standard Deviation" name="Error">
-        <Unit columnName="Measurement unit" selectedUnit="mg/dl" />
+        <Unit columnName="Measurement unit" selectedUnit="mmol/l" />
       </MappedColumn>
     </MappingDataFormatParameter>
     <MetaDataFormatParameter columnName="Study Id" metaDataId="Study Id" isColumn="1" />
