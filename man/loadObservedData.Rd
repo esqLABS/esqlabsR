@@ -25,6 +25,40 @@ read from disk with no matching in-session \code{DataSet} (a hand-authored
 declaration, or a project opened before it was ever saved) resolves to
 nothing, and the load warns you by name.
 }
+\section{Error type of Excel data}{
+
+The importer configuration of an \code{excel} source gives one error type to
+every data set it loads. To set it per data set, fill an \verb{Error type}
+column in the workbook with \code{ASD} (arithmetic standard deviation) or \code{GSD}
+(geometric standard deviation), in any letter case. An empty cell keeps
+the error type of the importer configuration. All rows of one data set
+need exactly the same text.
+
+The loading stops with an error that names the data sets when a cell
+holds anything other than \code{ASD}, \code{GSD}, or nothing; when the rows of one
+data set differ; when a data set is \code{ASD} but the importer configuration
+itself is geometric; when the rows of a \code{GSD} data set use more than one
+unit for their errors (the \verb{Measurement unit} column in the example
+project);
+and when only some of the loaded sheets have the column, or a header is
+spelled differently, such as \verb{Error Type}.
+
+The column is read when the importer configuration lists it, as the one
+created by \code{initProject(type = "example")} does. A workbook without the
+column then loads with the error type of the configuration, and the data
+set names are the same as before the \verb{Error type} line was added.
+
+The \code{Error} values of an \code{ASD} data set are in the unit the importer
+configuration gives them (the \verb{Measurement unit} column in the example
+project). A geometric standard deviation is a factor without a unit, so
+the \code{Error} values of a \code{GSD} data set are used as written, a value below
+1 or an empty \code{Error} cell counts as missing, and all rows of the data set
+must use one unit.
+
+See \code{vignette("how-to-use-observed-data")} for the line to add to an
+importer configuration that does not list the column.
+}
+
 \section{Security}{
 
 A \code{script} observed-data source runs the R file it names, with
