@@ -249,6 +249,16 @@ Required fields by `type`:
 
 A file that does not exist on disk is a warning rather than an error, so a project whose data lives elsewhere still loads. A path that escapes the data folder is a critical error, matching the abort the loader raises.
 
+The workbook of an `excel` source can set the error type per data set in an optional `Error type` column, read when the importer configuration lists it (the configuration of `initProject(type = "example")` does):
+
+| `Error type` cell | Meaning |
+| --- | --- |
+| `ASD` | Arithmetic standard deviation, in the unit the importer configuration gives the `Error` column (the `Measurement unit` column in the example project). |
+| `GSD` | Geometric standard deviation, a factor without a unit. A value below 1 counts as missing, and all rows of the data set must have the same unit in the column the configuration reads the error unit from (`Measurement unit` in the example project). |
+| empty | The error type of the importer configuration. |
+
+`ASD` and `GSD` may be written in any letter case, the same in every row of a data set. The cells are checked when the data is loaded, not by `validateProject()`: any other value, different values within one data set, and the other cases listed in `vignette("how-to-use-observed-data")` are errors that name the data set and the sheet. `vignette("how-to-use-observed-data")` also shows the line to add to an importer configuration that does not list the column.
+
 Observed-data ids are matched **verbatim**, not canonicalized like every other definition kind. A saved programmatic source changes its id: `saveProject()` writes the `DataSet` to `<name>.pkml` and rewrites the entry as a `pkml` source, so afterwards you remove it by that file basename rather than by the original `DataSet` name.
 
 The source id and the DataSet name are different names; `vignette("about-the-plotting-model")` explains why. Read the DataSet name from `getObservedDataNames()`.

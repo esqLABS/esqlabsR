@@ -219,6 +219,38 @@ print.ObservedDataSource <- function(x, ...) {
 #' @returns A named list of [`ospsuite::DataSet`] objects. Empty list when
 #'   `observedData` definitions is empty or `NULL`.
 #'
+#' @section Error type of Excel data:
+#'   The importer configuration of an `excel` source gives one error type to
+#'   every data set it loads. To set it per data set, fill an `Error type`
+#'   column in the workbook with `ASD` (arithmetic standard deviation) or `GSD`
+#'   (geometric standard deviation), in any letter case. An empty cell keeps
+#'   the error type of the importer configuration. All rows of one data set
+#'   need exactly the same text.
+#'
+#'   The loading stops with an error that names the data sets when a cell
+#'   holds anything other than `ASD`, `GSD`, or nothing; when the rows of one
+#'   data set differ; when a data set is `ASD` but the importer configuration
+#'   itself is geometric; when the rows of a `GSD` data set use more than one
+#'   unit for their errors (the `Measurement unit` column in the example
+#'   project);
+#'   and when only some of the loaded sheets have the column, or a header is
+#'   spelled differently, such as `Error Type`.
+#'
+#'   The column is read when the importer configuration lists it, as the one
+#'   created by `initProject(type = "example")` does. A workbook without the
+#'   column then loads with the error type of the configuration, and the data
+#'   set names are the same as before the `Error type` line was added.
+#'
+#'   The `Error` values of an `ASD` data set are in the unit the importer
+#'   configuration gives them (the `Measurement unit` column in the example
+#'   project). A geometric standard deviation is a factor without a unit, so
+#'   the `Error` values of a `GSD` data set are used as written, a value below
+#'   1 or an empty `Error` cell counts as missing, and all rows of the data set
+#'   must use one unit.
+#'
+#'   See `vignette("how-to-use-observed-data")` for the line to add to an
+#'   importer configuration that does not list the column.
+#'
 #' @section Security:
 #'   A `script` observed-data source runs the R file it names, with
 #'   `source()`, on your machine when the data is resolved. Any R code in
