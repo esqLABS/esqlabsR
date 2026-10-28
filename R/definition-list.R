@@ -95,8 +95,8 @@ format.DefinitionList <- function(x, ...) {
 
 # The ids the scenarios section prints: each id, followed by the scenario's label
 # when it has one (`aciclovir_iv (Aciclovir IV 250 mg)`), so the name a modeler
-# typed shows next to the id the project uses. A label that is not one string is
-# left out here; `validateProject()` reports it.
+# typed shows next to the id the project uses. A label that is not one
+# non-empty string is left out here; `validateProject()` reports it.
 #
 # @keywords internal
 # @noRd
@@ -107,7 +107,7 @@ format.DefinitionList <- function(x, ...) {
     function(i) {
       entry <- x[[i]]
       label <- if (is.list(entry)) entry[["label"]]
-      if (.isScenarioLabel(label) && nzchar(label)) {
+      if (.isNonEmptyString(label)) {
         paste0(ids[[i]], " (", label, ")")
       } else {
         ids[[i]]

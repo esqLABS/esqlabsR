@@ -1851,7 +1851,7 @@ test_that("setScenario sets a label and clears it with NULL", {
   )
 })
 
-test_that("addScenario and setScenario refuse a label that is not one string", {
+test_that("addScenario and setScenario refuse a label that is not one non-empty string", {
   project <- testProject()
   before <- project$definitions$scenarios
 
@@ -1862,6 +1862,12 @@ test_that("addScenario and setScenario refuse a label that is not one string", {
   expect_snapshot(
     error = TRUE,
     setScenario(project, "testscenario", label = NA)
+  )
+  # An empty label would print in one place and not the other, and an Excel
+  # round trip reads its blank cell back as no label.
+  expect_snapshot(
+    error = TRUE,
+    setScenario(project, "testscenario", label = "")
   )
   expect_equal(project$definitions$scenarios, before)
 })
@@ -1886,7 +1892,7 @@ test_that("validateProject reports a hand-edited label that is not one string", 
     character(1)
   )
   expect_true(
-    "Scenario 'testscenario' has a label that is not a single string" %in%
+    "Scenario 'testscenario' has a label that is not a single non-empty string" %in%
       messages
   )
 })

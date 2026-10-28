@@ -2619,9 +2619,12 @@ projectStatus <- function(project, silent = FALSE) {
 }
 
 # Keep the `Scenario_name` text of each imported scenario as its label when
-# canonicalizing the id will change it, so the spelling a 5.x workbook used is
-# not lost: `Aciclovir_IV-2.5mg/kg` becomes the id `aciclovir_iv-2.5mg_kg` and
-# the label `Aciclovir_IV-2.5mg/kg`. Wrapping quotes are cell syntax, not part of
+# canonicalizing the id will change more than its case, so the spelling a 5.x
+# workbook used is not lost: `Aciclovir_IV-2.5mg/kg` becomes the id
+# `aciclovir_iv-2.5mg_kg` and the label `Aciclovir_IV-2.5mg/kg`. A name the id
+# only lowercases (`Aciclovir_IV`) gets no label, since the id already reads the
+# same; otherwise nearly every 5.x scenario would carry one, and a modeler who
+# cleared it could not say so in the workbook. Wrapping quotes are cell syntax, not part of
 # the name, so they are stripped first, as `.canonicalizeProjectJsonIds()` does:
 # a quoted `"aciclovir_iv"` gets no label. A label the sheet gives in its `Label`
 # column wins. Runs on the raw entries, before `.canonicalizeProjectJsonIds()`.
@@ -2630,9 +2633,9 @@ projectStatus <- function(project, silent = FALSE) {
 # @noRd
 .keepScenarioNamesAsLabels <- function(scenarios) {
   lapply(scenarios, function(sc) {
-    if (is.null(sc$label) && .isScenarioLabel(sc$id)) {
+    if (is.null(sc$label) && .isNonEmptyString(sc$id)) {
       name <- .stripWrappingQuotes(sc$id)
-      if (!identical(.canonicalizeOneId(name), name)) {
+      if (!identical(.canonicalizeOneId(name), tolower(name))) {
         sc$label <- name
       }
     }
@@ -3046,18 +3049,32 @@ projectStatus <- function(project, silent = FALSE) {
     }
     df
   }
+  # `idColumn` lists the sheet's id columns in order of preference: the id is
+  # the first one with a value, placed where the first id column sits.
   rowToFields <- function(df, i, idColumn, drop = character()) {
+    idValue <- NULL
+    for (col in intersect(idColumn, names(df))) {
+      idValue <- .naToNull(df[[col]][[i]])
+      if (!is.null(idValue)) {
+        break
+      }
+    }
     fields <- list()
     for (col in names(df)) {
       if (col %in% drop) {
+        next
+      }
+      if (col %in% idColumn) {
+        if (!is.null(idValue) && is.null(fields$id)) {
+          fields$id <- .plotFieldValue("id", idValue)
+        }
         next
       }
       val <- .naToNull(df[[col]][[i]])
       if (is.null(val)) {
         next
       }
-      field <- if (col %in% idColumn) "id" else col
-      fields[[field]] <- .plotFieldValue(field, val)
+      fields[[col]] <- .plotFieldValue(col, val)
     }
     fields
   }
@@ -3152,6 +3169,39 @@ projectStatus <- function(project, silent = FALSE) {
   .warnFormatted(
     messages$importDuplicatePlotIds(sheet, duplicated),
     "esqlabsR_importDuplicatePlotIds"
+  )
+}
+
+# Warn about the rows of a plot sheet whose two id columns both hold a value and
+# disagree. A sheet has two only when columns were merged by hand: the one an
+# export writes (`plotId` / `plotGridId`) and the 5.x one (`plotID` / `name`).
+# The import takes the first column of `idColumn`; without the warning a grid
+# that references the other id fails later with an unknown-plot error that does
+# not say why.
+#
+# @param df The sheet, as read.
+# @param idColumn The id columns, preferred one first.
+# @param sheet The sheet name, for the warning.
+# @returns Nothing, called for its warning.
+# @keywords internal
+# @noRd
+.warnConflictingPlotIdColumns <- function(df, idColumn, sheet) {
+  if (!all(idColumn %in% names(df))) {
+    return(invisible(NULL))
+  }
+  used <- as.character(df[[idColumn[[1]]]])
+  other <- as.character(df[[idColumn[[2]]]])
+  rows <- which(!is.na(used) & !is.na(other) & used != other)
+  if (length(rows) == 0L) {
+    return(invisible(NULL))
+  }
+  .warnFormatted(
+    messages$importConflictingPlotIdColumns(
+      sheet,
+      idColumn,
+      paste0(used[rows], " / ", other[rows])
+    ),
+    "esqlabsR_importConflictingPlotIdColumns"
   )
 }
 
@@ -3253,12 +3303,14 @@ projectStatus <- function(project, silent = FALSE) {
   if (is.null(df)) {
     return(list())
   }
+  idColumn <- c("plotId", "plotID")
+  .warnConflictingPlotIdColumns(df, idColumn, "plotConfiguration")
   records <- list()
   for (i in seq_len(nrow(df))) {
     fields <- rowToFields(
       df,
       i,
-      idColumn = c("plotID", "plotId"),
+      idColumn = idColumn,
       drop = "DataCombinedName"
     )
     # 5.x spelled the linear scale `"lin"`.
@@ -3290,12 +3342,14 @@ projectStatus <- function(project, silent = FALSE) {
   if (is.null(df)) {
     return(list())
   }
+  idColumn <- c("plotGridId", "name")
+  .warnConflictingPlotIdColumns(df, idColumn, "plotGrids")
   records <- list()
   for (i in seq_len(nrow(df))) {
     fields <- rowToFields(
       df,
       i,
-      idColumn = c("name", "plotGridId"),
+      idColumn = idColumn,
       drop = "plotIDs"
     )
     # Map the legacy `plotIDs` column onto the canonical `plots` JSON key; a
@@ -4511,7 +4565,7 @@ projectStatus <- function(project, silent = FALSE) {
   # a label, so a project without labels exports the sheet a 5.x workbook has.
   labels <- vapply(
     scenarioConfigs,
-    function(sc) if (.isScenarioLabel(sc$label)) sc$label else NA_character_,
+    function(sc) if (.isNonEmptyString(sc$label)) sc$label else NA_character_,
     character(1),
     USE.NAMES = FALSE
   )

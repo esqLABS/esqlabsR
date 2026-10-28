@@ -711,6 +711,26 @@ messages$importDuplicatePlotIds <- function(sheet, ids) {
   )
 }
 
+messages$importConflictingPlotIdColumns <- function(sheet, columns, pairs) {
+  # Unglued, like its neighbours: a plot id is free text.
+  envir <- new.env(parent = parent.frame())
+  assign("sheet", sheet, envir = envir)
+  assign("used", columns[[1]], envir = envir)
+  assign("other", columns[[2]], envir = envir)
+  assign("pairs", pairs, envir = envir)
+  assign("n", length(pairs), envir = envir)
+  list(
+    bullets = c(
+      "!" = "The {.field {sheet}} sheet has both a {.field {used}} and a \\
+      {.field {other}} column, and they hold different ids in {n} \\
+      row{?s} ({.field {used}} / {.field {other}}): {.val {pairs}}.",
+      "i" = "The id is taken from {.field {used}}. Keep one id column in \\
+      Excel and import again to use the other."
+    ),
+    envir = envir
+  )
+}
+
 messages$importSkippedNonNumericRows <- function(
   filePath,
   sheets,
@@ -1332,9 +1352,14 @@ messages$scenarioModelFileRequired <- function() {
 }
 
 # One problem line of the `addScenario()` / `setScenario()` abort, for a `label`
-# that is not one string.
+# that is not one non-empty string. It also names the way out, because a
+# record passed back to `setScenario()` carries a hand-edited label the caller
+# may not have touched.
 messages$scenarioLabelNotString <- function() {
-  cliFormat("{.field label} must be a single string or {.code NULL}")
+  cliFormat(
+    "{.field label} must be a single non-empty string or {.code NULL}; \\
+    set it to {.code NULL} to remove it"
+  )
 }
 
 # Raised when a name reaching `setScenario()`'s field set is not a scenario

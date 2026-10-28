@@ -402,14 +402,14 @@
         * Output Paths:
           * <empty vector>
 
-# addScenario and setScenario refuse a label that is not one string
+# addScenario and setScenario refuse a label that is not one non-empty string
 
     Code
       addScenario(project, "numbered", modelFile = "Aciclovir.pkml", label = 1)
     Condition
       Error in `addScenario()`:
       ! Cannot add scenario "numbered":
-      x label must be a single string or `NULL`
+      x label must be a single non-empty string or `NULL`; set it to `NULL` to remove it
 
 ---
 
@@ -418,7 +418,16 @@
     Condition
       Error in `setScenario()`:
       ! Cannot modify scenario "testscenario":
-      x label must be a single string or `NULL`
+      x label must be a single non-empty string or `NULL`; set it to `NULL` to remove it
+
+---
+
+    Code
+      setScenario(project, "testscenario", label = "")
+    Condition
+      Error in `setScenario()`:
+      ! Cannot modify scenario "testscenario":
+      x label must be a single non-empty string or `NULL`; set it to `NULL` to remove it
 
 # print shows a scenario's label after its id, and the section lists it
 

@@ -142,7 +142,7 @@ print.Scenario <- function(x, ...) {
       # Only a scenario with a usable label shows the line. A label that is not
       # one string is left out, as in the section print; `validateProject()`
       # reports it.
-      if (.isScenarioLabel(x$label)) list("Label" = x$label),
+      if (.isNonEmptyString(x$label)) list("Label" = x$label),
       list(
         "Model" = x$modelFile %||% "",
         "Type" = x$simulationType %||% "",
@@ -402,16 +402,6 @@ print.Scenario <- function(x, ...) {
   })
 }
 
-# TRUE when `label` is a usable scenario label: one string, `NA` excluded. Any
-# text is allowed, the empty string included, because a label is never used as
-# an id.
-#
-# @keywords internal
-# @noRd
-.isScenarioLabel <- function(label) {
-  is.character(label) && length(label) == 1L && !is.na(label)
-}
-
 # Assert that a scenario JSON field, when present, is a length-1 string (or
 # `NULL`/absent). Catches a hand-edited file that turned a scalar field into
 # an object/array (e.g. `"population": null` round-tripped to `{}`), which
@@ -635,12 +625,16 @@ print.Scenario <- function(x, ...) {
       }
     }
 
-    # A label is free text, but one string: a hand-edited file can hold a number
-    # or an array instead.
-    if (!is.null(sc$label) && !.isScenarioLabel(sc$label)) {
+    # A label is free text, but one non-empty string: a hand-edited file can
+    # hold `""`, a number or an array instead.
+    if (!is.null(sc$label) && !.isNonEmptyString(sc$label)) {
       result$addCriticalError(
         "Validation",
-        paste0("Scenario '", name, "' has a label that is not a single string")
+        paste0(
+          "Scenario '",
+          name,
+          "' has a label that is not a single non-empty string"
+        )
       )
     }
 
@@ -1247,7 +1241,7 @@ addScenario <- function(
   if (!.isNonEmptyString(modelFile)) {
     errors <- c(errors, "modelFile must be a non-empty string")
   }
-  if (!is.null(fields$label) && !.isScenarioLabel(fields$label)) {
+  if (!is.null(fields$label) && !.isNonEmptyString(fields$label)) {
     errors <- c(errors, messages$scenarioLabelNotString())
   }
 
@@ -1590,7 +1584,7 @@ setScenario <- function(project, id, ...) {
     "label" %in%
       supplied &&
       !is.null(fields$label) &&
-      !.isScenarioLabel(fields$label)
+      !.isNonEmptyString(fields$label)
   ) {
     errors <- c(errors, messages$scenarioLabelNotString())
   }

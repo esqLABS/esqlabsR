@@ -4699,14 +4699,14 @@ test_that(".parseExcelScenarios reads the optional Label column", {
   expect_null(noColumn[[1]]$label)
 })
 
-test_that("importing a 5.x workbook keeps a Scenario_name that canonicalizing changes as the label", {
+test_that("importing a 5.x workbook keeps a Scenario_name that canonicalizing changes beyond case as the label", {
   projectDir <- localLegacyExcelProject()
   editWorkbookSheets(
     file.path(projectDir, "Configurations", "Scenarios.xlsx"),
     function(sheets) {
       scenarios <- sheets$Scenarios
       scenarios$Scenario_name[scenarios$Scenario_name == "PIScenario2"] <-
-        "pi_scenario_2"
+        "PI Scenario 2"
       sheets$Scenarios <- scenarios
       sheets
     }
@@ -4715,25 +4715,27 @@ test_that("importing a 5.x workbook keeps a Scenario_name that canonicalizing ch
   imported <- importLegacyExcelProject(projectDir)
   scenarios <- imported$project$definitions$scenarios
 
-  # `AdultScenario` loses its capitals in the id and keeps them in the label;
-  # `pi_scenario_2` is already canonical, so it gets no label.
-  expect_identical(scenarios[["adultscenario"]]$label, "AdultScenario")
-  expect_null(scenarios[["pi_scenario_2"]]$label)
+  # `PI Scenario 2` loses its spaces in the id and keeps them in the label;
+  # `AdultScenario` only loses its capitals, so it gets no label.
+  expect_identical(scenarios[["pi_scenario_2"]]$label, "PI Scenario 2")
+  expect_null(scenarios[["adultscenario"]]$label)
 })
 
 test_that(".keepScenarioNamesAsLabels strips wrapping quotes before it compares and keeps", {
   scenarios <- list(
     list(id = "\"aciclovir_iv\""),
     list(id = "\"Aciclovir_IV\""),
-    list(id = "Aciclovir_IV", label = "Aciclovir IV 250 mg")
+    list(id = "\"Aciclovir IV\""),
+    list(id = "Aciclovir IV", label = "Aciclovir IV 250 mg")
   )
 
   expect_identical(
     .keepScenarioNamesAsLabels(scenarios),
     list(
       list(id = "\"aciclovir_iv\""),
-      list(id = "\"Aciclovir_IV\"", label = "Aciclovir_IV"),
-      list(id = "Aciclovir_IV", label = "Aciclovir IV 250 mg")
+      list(id = "\"Aciclovir_IV\""),
+      list(id = "\"Aciclovir IV\"", label = "Aciclovir IV"),
+      list(id = "Aciclovir IV", label = "Aciclovir IV 250 mg")
     )
   )
 })
@@ -4756,7 +4758,40 @@ test_that("a Label cell wins over the Scenario_name kept as the label", {
   scenarios <- imported$project$definitions$scenarios
 
   expect_identical(scenarios[["adultscenario"]]$label, "Adult, 2.5 mg/kg IV")
-  expect_identical(scenarios[["childscenario"]]$label, "ChildScenario")
+  expect_null(scenarios[["childscenario"]]$label)
+})
+
+test_that("a plot sheet with two id columns takes the exported one and warns when they disagree", {
+  plotsFile <- withr::local_tempfile(fileext = ".xlsx")
+  writexl::write_xlsx(
+    list(
+      plotConfiguration = data.frame(
+        plotID = c("p_old", "same"),
+        plotId = c("p_new", "same"),
+        DataCombinedName = c("dc", "dc"),
+        plotType = c("individual", "individual")
+      ),
+      plotGrids = data.frame(
+        name = "g_old",
+        plotGridId = "g_new",
+        plotIDs = "p_new"
+      )
+    ),
+    plotsFile
+  )
+
+  expect_warning(
+    expect_warning(
+      parsed <- .parseExcelPlots(plotsFile),
+      class = "esqlabsR_importConflictingPlotIdColumns"
+    ),
+    class = "esqlabsR_importConflictingPlotIdColumns"
+  )
+  expect_identical(
+    vapply(parsed$plotConfiguration, function(p) p$id, character(1)),
+    c("p_new", "same")
+  )
+  expect_identical(parsed$plotGrids[[1]]$id, "g_new")
 })
 
 # DataCombined output-path ids ----
