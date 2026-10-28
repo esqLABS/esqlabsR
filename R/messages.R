@@ -2227,6 +2227,143 @@ messages$observedDataNameCollision <- function(duplicates) {
   )
 }
 
+# `Error type` column of an Excel observed-data source. Data set and sheet names
+# are user text and may hold braces, hence `cliBullets()`, with each per-item
+# bullet reaching its values through an index into the list argument.
+
+# One `*` bullet per data set, `{.val name} (sheet {.val sheet})`, for a list of
+# `list(name =, sheet =)` that the calling catalog entry holds in its argument
+# named `listName`: `cliBullets()` interpolates the templates in that entry's
+# frame, so the name must match the argument.
+#
+# @keywords internal
+# @noRd
+.dataSetBullets <- function(listName, n) {
+  stats::setNames(
+    sprintf(
+      "{.val {%1$s[[%2$d]]$name}} (sheet {.val {%1$s[[%2$d]]$sheet}})",
+      listName,
+      seq_len(n)
+    ),
+    rep("*", n)
+  )
+}
+
+messages$observedDataErrorTypeColumnMissing <- function(
+  file,
+  importerConfiguration,
+  sheets,
+  misspelled = character(0)
+) {
+  misspelledNote <- if (length(misspelled) > 0) {
+    c(
+      "i" = "Found {.val {misspelled}}: the header must read exactly \\
+      {.val Error type}."
+    )
+  }
+  cliBullets(
+    "x" = "The importer configuration {.file {importerConfiguration}} reads an \\
+    {.field Error type} column, but {cli::qty(length(sheets))}sheet{?s} \\
+    {.val {sheets}} of {.file {file}} {?has/have} no such column.",
+    misspelledNote,
+    "i" = "Add an {.field Error type} column to {cli::qty(length(sheets))}\\
+    {?this sheet/these sheets} (its cells may stay empty), or remove the \\
+    {.field Error type} line from the importer configuration."
+  )
+}
+
+messages$observedDataErrorTypeConflict <- function(file, conflicts) {
+  conflictBullets <- vapply(
+    seq_along(conflicts),
+    function(i) {
+      emptyNote <- if (any(!nzchar(conflicts[[i]]$values))) {
+        ", plus empty cells"
+      } else {
+        ""
+      }
+      sprintf(
+        paste0(
+          "{.val {conflicts[[%1$d]]$name}} (sheet ",
+          "{.val {conflicts[[%1$d]]$sheet}}): ",
+          "{.val {setdiff(conflicts[[%1$d]]$values, \"\")}}%2$s"
+        ),
+        i,
+        emptyNote
+      )
+    },
+    character(1)
+  )
+  names(conflictBullets) <- rep("*", length(conflictBullets))
+  cliBullets(
+    "x" = "{cli::qty(length(conflicts))}The rows of {?a data set/some data \\
+    sets} in {.file {file}} have different values in the \\
+    {.field Error type} column:",
+    conflictBullets,
+    "i" = "Write the same value, {.val ASD} or {.val GSD}, in every row of a \\
+    data set, with the same letter case and no extra spaces, or leave the \\
+    column empty in every row of it."
+  )
+}
+
+messages$observedDataErrorTypeUnknown <- function(file, unknownValues) {
+  unknownBullets <- vapply(
+    seq_along(unknownValues),
+    function(i) {
+      sprintf(
+        paste0(
+          "{.val {unknownValues[[%1$d]]$value}} for ",
+          "{.val {unknownValues[[%1$d]]$name}} (sheet ",
+          "{.val {unknownValues[[%1$d]]$sheet}})"
+        ),
+        i
+      )
+    },
+    character(1)
+  )
+  names(unknownBullets) <- rep("*", length(unknownBullets))
+  cliBullets(
+    "x" = "Unknown {.field Error type} {cli::qty(length(unknownValues))}\\
+    value{?s} in {.file {file}}:",
+    unknownBullets,
+    "i" = "Use {.val ASD} (arithmetic standard deviation) or {.val GSD} \\
+    (geometric standard deviation), in any letter case but the same in every \\
+    row of a data set, or leave the cell empty to use the error type of the \\
+    importer configuration."
+  )
+}
+
+messages$observedDataErrorTypeArithmeticInGeometric <- function(
+  file,
+  importerConfiguration,
+  dataSets
+) {
+  cliBullets(
+    "x" = "The importer configuration {.file {importerConfiguration}} reads \\
+    the {.field Error} column as a geometric standard deviation, but \\
+    {cli::qty(length(dataSets))}{?a data set/some data sets} in \\
+    {.file {file}} {?has/have} the {.field Error type} {.val ASD}:",
+    .dataSetBullets("dataSets", length(dataSets)),
+    "i" = "That configuration has already stored every error value below 1 as \\
+    missing and the others without a unit, so they cannot be read back as \\
+    arithmetic standard deviations.",
+    "i" = "Use an importer configuration that reads arithmetic standard \\
+    deviations, such as the one in the example project, and mark the \\
+    geometric data sets with {.val GSD}."
+  )
+}
+
+messages$observedDataErrorTypeMixedUnits <- function(file, unitColumn, dataSets) {
+  cliBullets(
+    "x" = "{cli::qty(length(dataSets))}{?A data set/Some data sets} with the \\
+    {.field Error type} {.val GSD} in {.file {file}} {?uses/use} more than one \\
+    unit in the {.field {unitColumn}} column:",
+    .dataSetBullets("dataSets", length(dataSets)),
+    "i" = "A geometric standard deviation is a factor without a unit, and a \\
+    change of unit inside a data set would rescale some of the factors.",
+    "i" = "Use one unit in every row of a {.val GSD} data set."
+  )
+}
+
 # Observed-data messages surfaced by the project validator (`validateProject()`)
 # rather than by the load/add path. These are stored verbatim as the `message`
 # of a `validationResult` entry (a plain string, not a `cli`-tagged vector), so

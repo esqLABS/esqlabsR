@@ -139,3 +139,64 @@
         * Aciclovir_TimeValuesData.xlsx
         * simulated_plasma
 
+# Error type ASD under a geometric configuration aborts
+
+    Code
+      loadObservedData(project)
+    Condition
+      Error in `loadObservedData()`:
+      x The importer configuration 'importer.xml' reads the Error column as a geometric standard deviation, but a data set in 'data.xlsx' has the Error type "ASD":
+      * "B_Aciclovir_1_Human_MALE_PeripheralVenousBlood_Plasma_2.5 mg/kg_iv_" (sheet "B")
+      i That configuration has already stored every error value below 1 as missing and the others without a unit, so they cannot be read back as arithmetic standard deviations.
+      i Use an importer configuration that reads arithmetic standard deviations, such as the one in the example project, and mark the geometric data sets with "GSD".
+
+# different Error type values inside one data set abort
+
+    Code
+      loadObservedData(project)
+    Condition
+      Error in `loadObservedData()`:
+      x The rows of a data set in 'data.xlsx' have different values in the Error type column:
+      * "A_Aciclovir_1_Human_MALE_PeripheralVenousBlood_Plasma_2.5 mg/kg_iv_" (sheet "A"): "GSD" and "ASD"
+      i Write the same value, "ASD" or "GSD", in every row of a data set, with the same letter case and no extra spaces, or leave the column empty in every row of it.
+
+# an unknown Error type value aborts
+
+    Code
+      loadObservedData(project)
+    Condition
+      Error in `loadObservedData()`:
+      x Unknown Error type value in 'data.xlsx':
+      * "Geometric Standard Deviation" for "A_Aciclovir_1_Human_MALE_PeripheralVenousBlood_Plasma_2.5 mg/kg_iv_" (sheet "A")
+      i Use "ASD" (arithmetic standard deviation) or "GSD" (geometric standard deviation), in any letter case but the same in every row of a data set, or leave the cell empty to use the error type of the importer configuration.
+
+# a configuration that reads Error type aborts when only some sheets have the column
+
+    Code
+      loadObservedData(project)
+    Condition
+      Error in `loadObservedData()`:
+      x The importer configuration 'importer.xml' reads an Error type column, but sheet "B" of 'data.xlsx' has no such column.
+      i Add an Error type column to this sheet (its cells may stay empty), or remove the Error type line from the importer configuration.
+
+# an Error type header spelled differently aborts instead of being ignored
+
+    Code
+      loadObservedData(project)
+    Condition
+      Error in `loadObservedData()`:
+      x The importer configuration 'importer.xml' reads an Error type column, but sheet "A" of 'data.xlsx' has no such column.
+      i Found "Error Type": the header must read exactly "Error type".
+      i Add an Error type column to this sheet (its cells may stay empty), or remove the Error type line from the importer configuration.
+
+# a GSD data set with more than one measurement unit aborts
+
+    Code
+      loadObservedData(project)
+    Condition
+      Error in `loadObservedData()`:
+      x A data set with the Error type "GSD" in 'data.xlsx' uses more than one unit in the Measurement unit column:
+      * "A_Aciclovir_1_Human_MALE_PeripheralVenousBlood_Plasma_2.5 mg/kg_iv_" (sheet "A")
+      i A geometric standard deviation is a factor without a unit, and a change of unit inside a data set would rescale some of the factors.
+      i Use one unit in every row of a "GSD" data set.
+

@@ -939,3 +939,354 @@ test_that("printing the observedData section lists the declaration ids", {
   local_reproducible_output()
   expect_snapshot(print(project$definitions$observedData))
 })
+
+# Error type column (#757) ----
+
+# A throwaway project with one `excel` source, `data.xlsx`, whose sheets are
+# built from the template's Laskin sheet. `errorTypes` is a named list, one
+# element per sheet: `NULL` drops the `Error type` column from that sheet, a
+# vector fills it (recycled over the rows). `edit`, if given, is called as
+# `edit(data, sheet)` and returns the sheet's data. `mapped = FALSE` removes the
+# `Error type` line from the template's importer configuration;
+# `geometric = TRUE` makes the configuration's error type geometric;
+# `namingConventions = FALSE` removes its naming pattern, a string replaces it.
+errorTypeProject <- function(
+  errorTypes,
+  mapped = TRUE,
+  geometric = FALSE,
+  namingConventions = TRUE,
+  edit = NULL,
+  sheets = names(errorTypes),
+  envir = parent.frame()
+) {
+  tmpDir <- withr::local_tempdir(.local_envir = envir)
+  dataDir <- getTestDataFilePath("TestProject/Data")
+  template <- readxl::read_excel(
+    file.path(dataDir, "Aciclovir_TimeValuesData.xlsx"),
+    sheet = "Laskin 1982.Group A"
+  )
+  workbook <- lapply(names(errorTypes), function(sheet) {
+    data <- template
+    data[["Study Id"]] <- sheet
+    data[["Error type"]] <- NULL
+    if (!is.null(errorTypes[[sheet]])) {
+      data[["Error type"]] <- rep_len(errorTypes[[sheet]], nrow(data))
+    }
+    if (!is.null(edit)) {
+      data <- edit(data, sheet)
+    }
+    data
+  })
+  names(workbook) <- names(errorTypes)
+  writexl::write_xlsx(workbook, file.path(tmpDir, "data.xlsx"))
+
+  xml <- readLines(
+    file.path(dataDir, "esqlabs_dataImporter_configuration.xml"),
+    warn = FALSE
+  )
+  if (!mapped) {
+    xml <- xml[!grepl('metaDataId="Error type"', xml, fixed = TRUE)]
+  }
+  if (geometric) {
+    # ospsuite refuses a geometric error with a unit, so the error column gets
+    # a fixed empty unit instead of the `Measurement unit` column.
+    errorLine <- grep("errorStdDev=", xml, fixed = TRUE)
+    xml[errorLine] <- sub(
+      "Arithmetic Standard Deviation",
+      "Geometric Standard Deviation",
+      xml[errorLine],
+      fixed = TRUE
+    )
+    xml[errorLine + 1] <- '        <Unit selectedUnit="" />'
+  }
+  if (isFALSE(namingConventions)) {
+    xml <- sub(' namingConventions="[^"]*"', "", xml)
+  } else if (is.character(namingConventions)) {
+    xml <- sub(
+      'namingConventions="[^"]*"',
+      paste0('namingConventions="', namingConventions, '"'),
+      xml
+    )
+  }
+  writeLines(xml, file.path(tmpDir, "importer.xml"))
+
+  jsonPath <- file.path(tmpDir, "Project.json")
+  jsonlite::write_json(
+    list(
+      schemaVersion = "2.0",
+      filePaths = list(dataFolder = "."),
+      outputPaths = structure(list(), names = character(0)),
+      scenarios = list(),
+      observedData = list(list(
+        type = "excel",
+        file = "data.xlsx",
+        importerConfiguration = "importer.xml",
+        sheets = as.list(sheets)
+      ))
+    ),
+    jsonPath,
+    auto_unbox = TRUE,
+    null = "null"
+  )
+  loadProject(jsonPath)
+}
+
+errorTypesOf <- function(dataSets) {
+  unname(vapply(dataSets, function(ds) ds$yErrorType, character(1)))
+}
+
+asd <- ospsuite::DataErrorType$ArithmeticStdDev
+gsd <- ospsuite::DataErrorType$GeometricStdDev
+
+test_that("a sheet without an Error type column loads as before, with no warning", {
+  project <- errorTypeProject(list(A = NULL, B = NULL), mapped = FALSE)
+  expect_no_warning(dataSets <- loadObservedData(project))
+  expect_length(dataSets, 2)
+  expect_equal(errorTypesOf(dataSets), rep(asd, 2))
+  expect_equal(dataSets[[1]]$yErrorUnit, "mg/l")
+})
+
+test_that("a configuration that reads Error type loads sheets without the column as before", {
+  baseline <- loadObservedData(
+    errorTypeProject(list(A = NULL, B = NULL), mapped = FALSE)
+  )
+  project <- errorTypeProject(list(A = NULL, B = NULL))
+  expect_no_warning(dataSets <- loadObservedData(project))
+  expect_identical(names(dataSets), names(baseline))
+  expect_equal(
+    lapply(dataSets, ospsuite::dataSetToDataFrame),
+    lapply(baseline, ospsuite::dataSetToDataFrame)
+  )
+})
+
+test_that("Error type ASD keeps the arithmetic standard deviation and its unit", {
+  dataSets <- loadObservedData(errorTypeProject(list(A = "ASD")))
+  expect_equal(dataSets[[1]]$yErrorType, asd)
+  expect_equal(dataSets[[1]]$yErrorUnit, "mg/l")
+})
+
+test_that("Error type GSD sets a dimensionless geometric standard deviation", {
+  baseline <- loadObservedData(errorTypeProject(list(A = NULL)))
+  dataSets <- loadObservedData(errorTypeProject(list(A = "GSD")))
+  expect_identical(names(dataSets), names(baseline))
+  expect_equal(dataSets[[1]]$yErrorType, gsd)
+  expect_equal(dataSets[[1]]$yErrorUnit, "")
+  # The Error cells are taken as written, with no conversion from the
+  # measurement unit; a value below 1 (here the empty first cell, read as 0) is
+  # missing, as in a geometric importer configuration.
+  expected <- baseline[[1]]$yErrorValues
+  expect_true(any(expected < 1) && any(expected >= 1))
+  expected[expected < 1] <- NaN
+  expect_equal(dataSets[[1]]$yErrorValues, expected)
+  expect_equal(dataSets[[1]]$yValues, baseline[[1]]$yValues)
+})
+
+test_that("a GSD data set equals one loaded through a geometric configuration", {
+  fromColumn <- loadObservedData(errorTypeProject(list(A = "GSD")))
+  fromConfiguration <- loadObservedData(
+    errorTypeProject(list(A = NA_character_), geometric = TRUE)
+  )
+  actual <- ospsuite::dataSetToDataFrame(fromColumn[[1]])
+  actual[["Error type"]] <- NULL
+  # ospsuite stores values in single precision, and the two routes round
+  # through different units, so the last digits may differ.
+  expect_equal(
+    actual,
+    ospsuite::dataSetToDataFrame(fromConfiguration[[1]]),
+    tolerance = 1e-6
+  )
+})
+
+test_that("Error type values match in any letter case", {
+  dataSets <- loadObservedData(
+    errorTypeProject(list(A = "gsd", B = "Asd"))
+  )
+  expect_equal(errorTypesOf(dataSets), c(gsd, asd))
+})
+
+test_that("an empty Error type cell keeps the importer configuration's error type", {
+  dataSets <- loadObservedData(
+    errorTypeProject(list(A = "GSD", B = NA_character_))
+  )
+  expect_equal(errorTypesOf(dataSets), c(gsd, asd))
+
+  fromGeometric <- loadObservedData(errorTypeProject(
+    list(A = NA_character_, B = "GSD"),
+    geometric = TRUE
+  ))
+  expect_equal(errorTypesOf(fromGeometric), c(gsd, gsd))
+})
+
+test_that("Error type ASD under a geometric configuration aborts", {
+  # The geometric configuration has already stored error values below 1 as
+  # missing, so the arithmetic values cannot be recovered.
+  project <- errorTypeProject(
+    list(A = NA_character_, B = "ASD"),
+    geometric = TRUE
+  )
+  expect_snapshot(loadObservedData(project), error = TRUE)
+})
+
+test_that("different Error type values inside one data set abort", {
+  project <- errorTypeProject(list(A = c("GSD", "ASD")))
+  expect_snapshot(loadObservedData(project), error = TRUE)
+
+  # An empty cell next to a filled one is a different value too.
+  project <- errorTypeProject(list(A = c("GSD", NA)))
+  expect_error(loadObservedData(project), "plus empty cells")
+
+  # ospsuite groups rows by the cell as written, so a trailing space differs.
+  project <- errorTypeProject(list(A = c("GSD", "GSD ")))
+  expect_error(loadObservedData(project), '"GSD "', fixed = TRUE)
+})
+
+test_that("an unknown Error type value aborts", {
+  project <- errorTypeProject(
+    list(A = "Geometric Standard Deviation", B = "ASD")
+  )
+  expect_snapshot(loadObservedData(project), error = TRUE)
+})
+
+test_that("a configuration that reads Error type aborts when only some sheets have the column", {
+  project <- errorTypeProject(list(A = "GSD", B = NULL))
+  expect_snapshot(loadObservedData(project), error = TRUE)
+})
+
+test_that("an Error type header spelled differently aborts instead of being ignored", {
+  project <- errorTypeProject(
+    list(A = NULL),
+    edit = function(data, sheet) {
+      data[["Error Type"]] <- "GSD"
+      data
+    }
+  )
+  expect_snapshot(loadObservedData(project), error = TRUE)
+})
+
+test_that("a requested sheet missing from the workbook is left to ospsuite", {
+  withColumn <- loadObservedData(errorTypeProject(list(A = "GSD")))
+  dataSets <- suppressWarnings(loadObservedData(
+    errorTypeProject(list(A = "GSD"), sheets = c("A", "Ghost"))
+  ))
+  expect_identical(names(dataSets), names(withColumn))
+  expect_equal(errorTypesOf(dataSets), gsd)
+})
+
+test_that("a GSD data set with more than one measurement unit aborts", {
+  mixUnits <- function(data, sheet) {
+    data[["Measurement unit"]][-(1:5)] <- "µg/l"
+    data
+  }
+  project <- errorTypeProject(list(A = "GSD"), edit = mixUnits)
+  expect_snapshot(loadObservedData(project), error = TRUE)
+
+  # Mixed units are fine for an arithmetic standard deviation, which ospsuite
+  # converts along with the measurements.
+  project <- errorTypeProject(list(A = "ASD"), edit = mixUnits)
+  expect_equal(errorTypesOf(loadObservedData(project)), asd)
+})
+
+test_that("reading Error type keeps the names of a configuration without a naming pattern", {
+  baseline <- loadObservedData(errorTypeProject(
+    list(A = NULL),
+    mapped = FALSE,
+    namingConventions = FALSE
+  ))
+  empty <- loadObservedData(errorTypeProject(
+    list(A = NA_character_),
+    namingConventions = FALSE
+  ))
+  filled <- loadObservedData(errorTypeProject(
+    list(A = "GSD"),
+    namingConventions = FALSE
+  ))
+  absent <- loadObservedData(errorTypeProject(
+    list(A = NULL),
+    namingConventions = FALSE
+  ))
+  expect_identical(names(empty), names(baseline))
+  expect_identical(names(filled), names(baseline))
+  expect_identical(names(absent), names(baseline))
+})
+
+test_that("an empty Error type column the configuration does not read loads with no warning", {
+  project <- errorTypeProject(list(A = NA_character_), mapped = FALSE)
+  expect_no_warning(dataSets <- loadObservedData(project))
+  expect_equal(errorTypesOf(dataSets), asd)
+})
+
+test_that("a filled Error type column the configuration does not read is ignored, with no warning", {
+  project <- errorTypeProject(list(A = "GSD"), mapped = FALSE)
+  expect_no_warning(dataSets <- loadObservedData(project))
+  expect_equal(errorTypesOf(dataSets), asd)
+})
+
+test_that("a naming pattern the configuration spells out is used as written", {
+  dataSets <- loadObservedData(errorTypeProject(
+    list(A = "GSD"),
+    namingConventions = "{Study Id}_{Error type}"
+  ))
+  expect_named(dataSets, "A_GSD")
+})
+
+test_that("an empty namingConventions attribute counts as no naming pattern", {
+  baseline <- loadObservedData(errorTypeProject(
+    list(A = NULL),
+    mapped = FALSE,
+    namingConventions = FALSE
+  ))
+  filled <- loadObservedData(errorTypeProject(
+    list(A = "GSD"),
+    namingConventions = ""
+  ))
+  absent <- loadObservedData(errorTypeProject(
+    list(A = NULL),
+    namingConventions = ""
+  ))
+  expect_identical(names(filled), names(baseline))
+  expect_identical(names(absent), names(baseline))
+})
+
+test_that("an Error type in a written naming pattern leaves no text behind when the column is absent", {
+  dataSets <- loadObservedData(errorTypeProject(
+    list(A = NULL),
+    namingConventions = "{Error type}_{Study Id}"
+  ))
+  expect_named(dataSets, "A")
+})
+
+test_that("an Error type header with a trailing space aborts with the package message", {
+  project <- errorTypeProject(
+    list(A = NULL),
+    edit = function(data, sheet) {
+      data[["Error type "]] <- "GSD"
+      data
+    }
+  )
+  expect_error(loadObservedData(project), 'Found "Error type "', fixed = TRUE)
+})
+
+test_that("empty measurement unit cells in a GSD data set count as another unit", {
+  project <- errorTypeProject(
+    list(A = "GSD"),
+    edit = function(data, sheet) {
+      data[["Measurement unit"]][9:11] <- NA
+      data
+    }
+  )
+  expect_error(loadObservedData(project), "more than one unit")
+})
+
+test_that("a GSD data set with one unit loads next to a data set with mixed units", {
+  project <- errorTypeProject(
+    list(A = c(rep("GSD", 6), rep("ASD", 5))),
+    edit = function(data, sheet) {
+      data[["Subject Id"]] <- c(rep(1, 6), rep(2, 5))
+      data[["Measurement unit"]][10:11] <- "µg/l"
+      data
+    }
+  )
+  dataSets <- loadObservedData(project)
+  expect_length(dataSets, 2)
+  expect_equal(errorTypesOf(dataSets), c(gsd, asd))
+})

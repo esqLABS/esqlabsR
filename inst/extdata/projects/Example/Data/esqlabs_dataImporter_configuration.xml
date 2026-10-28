@@ -26,6 +26,7 @@
     <MetaDataFormatParameter columnName="Molecule" metaDataId="Molecule" isColumn="1" />
     <MetaDataFormatParameter columnName="Molecular Weight" metaDataId="Molecular Weight" isColumn="1" />
     <MetaDataFormatParameter columnName="Route" metaDataId="Route" isColumn="1" />
+    <MetaDataFormatParameter columnName="Error type" metaDataId="Error type" isColumn="1" />
     <GroupByDataFormatParameter columnName="Group Id" />
   </Parameters>
   <LoadedSheets>

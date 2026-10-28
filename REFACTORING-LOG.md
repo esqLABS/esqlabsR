@@ -327,3 +327,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-10-26 14:45: The name-collision error of saveScenarioResults() shows the backslash once, as "\\" instead of "\\\\".
 - 2026-10-28 14:54: The standard importer configuration names the same unit for errors as for measurements; loaded data does not change, since both come from the Measurement unit column. (#757)
 - 2026-10-28 14:54: The observed-data template workbook has an Error type column, filled with ASD. (#757)
+- 2026-10-28 14:54: Excel observed data takes each data set's error type, ASD or GSD, from the Error type column when the importer configuration reads it, as the standard one now does. (#757)

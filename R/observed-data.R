@@ -876,7 +876,7 @@ removeObservedData <- function(project, id) {
   filePath
 }
 
-.loadObservedExcel <- function(entry, dataFolder) {
+.loadObservedExcel <- function(entry, dataFolder, call = rlang::caller_env()) {
   filePath <- .resolveDataPath(entry$file, dataFolder, "file")
   importerPath <- .resolveDataPath(
     entry$importerConfiguration,
@@ -887,10 +887,404 @@ removeObservedData <- function(project, id) {
     configurationFilePath = importerPath
   )
   importerConfig$sheets <- unlist(entry$sheets)
-  ospsuite::loadDataSetsFromExcel(
+
+  # The `Error type` column is read only when the importer configuration maps
+  # it; otherwise the workbook loads untouched, whatever its columns.
+  readsErrorType <- .errorTypeColumn %in% importerConfig$groupingColumns
+  if (readsErrorType) {
+    headers <- .sheetHeaders(filePath, importerConfig$sheets)
+    readsErrorType <- .prepareErrorTypeColumn(
+      importerConfig,
+      entry,
+      headers,
+      importerPath,
+      call = call
+    )
+  }
+  dataSets <- ospsuite::loadDataSetsFromExcel(
     xlsFilePath = filePath,
     importerConfigurationOrPath = importerConfig,
     importAllSheets = FALSE
+  )
+  if (readsErrorType) {
+    .applyErrorTypes(
+      dataSets,
+      entry,
+      importerConfig,
+      filePath,
+      headers,
+      call = call
+    )
+  }
+  dataSets
+}
+
+# The Excel column (and metadata id) that sets each data set's error type.
+.errorTypeColumn <- "Error type"
+
+# Adjust `importerConfig`, which maps the `Error type` column, before loading.
+# Returns `TRUE` when the column is read.
+#
+# ospsuite fails on a mapped column that a sheet lacks, so when no requested
+# sheet has the column the mapping is removed and the workbook loads with the
+# configuration's error type. When only some sheets have it, or a header is
+# spelled differently (`Error Type`), loading aborts: removing the mapping then
+# would silently ignore the cells that are filled.
+#
+# @keywords internal
+# @noRd
+.prepareErrorTypeColumn <- function(
+  importerConfig,
+  entry,
+  headers,
+  importerPath,
+  call = rlang::caller_env()
+) {
+  # Without a `namingConventions` value, ospsuite names data sets after every
+  # metadata column, this one included, so mapping the column would rename
+  # every data set. Drop it from that default pattern to keep the names of the
+  # same configuration without the `Error type` line. A pattern the
+  # configuration spells out is used as written. The parsed configuration
+  # returns the default pattern as if it were written out, so the file itself
+  # tells the two apart.
+  configurationText <- paste(
+    readLines(importerPath, warn = FALSE),
+    collapse = " "
+  )
+  hasOwnPattern <- grepl(
+    "<ImporterConfiguration[^>]*\\snamingConventions\\s*=\\s*(\"[^\"]+\"|'[^']+')",
+    configurationText
+  )
+  if (!hasOwnPattern) {
+    importerConfig$namingPattern <- .dropErrorTypeFromPattern(
+      importerConfig$namingPattern
+    )
+  }
+
+  hasColumn <- vapply(
+    headers,
+    function(header) .errorTypeColumn %in% header,
+    logical(1)
+  )
+  if (length(hasColumn) > 0 && all(hasColumn)) {
+    return(TRUE)
+  }
+  misspelled <- unique(unlist(lapply(headers, function(header) {
+    header[
+      header != .errorTypeColumn &
+        .normalizeErrorTypeHeader(header) ==
+          .normalizeErrorTypeHeader(.errorTypeColumn)
+    ]
+  })))
+  if (!any(hasColumn) && length(misspelled) == 0) {
+    # Removing the mapping leaves the pattern as it is, and a `{Error type}`
+    # left in it would end up in the names as literal text.
+    importerConfig$removeGroupingColumn(.errorTypeColumn)
+    importerConfig$namingPattern <- .dropErrorTypeFromPattern(
+      importerConfig$namingPattern
+    )
+    return(FALSE)
+  }
+  cli::cli_abort(
+    messages$observedDataErrorTypeColumnMissing(
+      entry$file,
+      entry$importerConfiguration,
+      names(hasColumn)[!hasColumn],
+      misspelled
+    ),
+    call = call
+  )
+}
+
+# Header text with case and runs of spaces ignored, to spot an `Error type`
+# header typed slightly differently.
+#
+# @keywords internal
+# @noRd
+.normalizeErrorTypeHeader <- function(header) {
+  tolower(gsub("\\s+", " ", trimws(header)))
+}
+
+# Remove `{Error type}` from a naming pattern together with one separator next
+# to it, so `{Route}_{Error type}_{Group Id}` becomes `{Route}_{Group Id}`.
+#
+# @keywords internal
+# @noRd
+.dropErrorTypeFromPattern <- function(pattern) {
+  token <- paste0("[{]", .errorTypeColumn, "[}]")
+  pattern <- gsub(paste0("[^{}]", token), "", pattern)
+  gsub(paste0(token, "[^{}]?"), "", pattern)
+}
+
+# The header row of each requested sheet that exists in the workbook, by sheet
+# name, as written: ospsuite matches headers exactly, spaces included. A
+# requested sheet missing from the workbook, or a file `readxl` cannot read, is
+# left for ospsuite to report.
+#
+# @keywords internal
+# @noRd
+.sheetHeaders <- function(filePath, sheets) {
+  sheets <- tryCatch(
+    intersect(sheets, readxl::excel_sheets(filePath)),
+    error = function(e) character(0)
+  )
+  lapply(stats::setNames(sheets, sheets), function(sheet) {
+    names(readxl::read_excel(
+      filePath,
+      sheet = sheet,
+      n_max = 0,
+      trim_ws = FALSE,
+      .name_repair = "minimal"
+    ))
+  })
+}
+
+# Set `yErrorType` of each loaded data set from its `Error type` metadata.
+# `ASD` and `GSD` are accepted in any letter case; an empty cell leaves the
+# importer configuration's error type. A geometric standard deviation is
+# dimensionless, so ospsuite clears the error unit and keeps the values as
+# written, with no conversion from the measurement unit.
+#
+# Aborts, naming the data sets, on:
+# - different `Error type` cells in rows of one data set. ospsuite groups rows
+#   by every metadata column, so such rows come back as separate data sets
+#   that share all other metadata, the second one renamed with a `_1` suffix,
+#   which would break references to the data set by name.
+# - an unknown value.
+# - `ASD` under a geometric configuration: ospsuite has already stored every
+#   error value below 1 as missing, so the arithmetic values are lost.
+# - a `GSD` data set whose rows use different error units (see
+#   `.geometricSetsWithMixedUnits()`).
+#
+# @keywords internal
+# @noRd
+.applyErrorTypes <- function(
+  dataSets,
+  entry,
+  importerConfig,
+  filePath,
+  headers,
+  call = rlang::caller_env()
+) {
+  rawValues <- vapply(
+    dataSets,
+    function(ds) ds$metaData[[.errorTypeColumn]] %||% "",
+    character(1)
+  )
+  codes <- toupper(trimws(rawValues))
+  describe <- function(i) {
+    list(
+      name = dataSets[[i]]$name,
+      sheet = dataSets[[i]]$metaData[["Sheet"]] %||% ""
+    )
+  }
+
+  keys <- vapply(dataSets, .errorTypeSplitKey, character(1))
+  splitKeys <- unique(keys[duplicated(keys)])
+  if (length(splitKeys) > 0) {
+    conflicts <- lapply(splitKeys, function(key) {
+      members <- which(keys == key)
+      c(describe(members[[1]]), list(values = unique(rawValues[members])))
+    })
+    cli::cli_abort(
+      messages$observedDataErrorTypeConflict(entry$file, conflicts),
+      call = call
+    )
+  }
+
+  errorTypes <- c(
+    ASD = ospsuite::DataErrorType$ArithmeticStdDev,
+    GSD = ospsuite::DataErrorType$GeometricStdDev
+  )
+  unknown <- which(nzchar(codes) & !codes %in% names(errorTypes))
+  if (length(unknown) > 0) {
+    unknownValues <- lapply(unknown, function(i) {
+      c(describe(i), list(value = rawValues[[i]]))
+    })
+    cli::cli_abort(
+      messages$observedDataErrorTypeUnknown(entry$file, unknownValues),
+      call = call
+    )
+  }
+
+  if (
+    any(codes == "ASD") &&
+      identical(importerConfig$errorType, errorTypes[["GSD"]])
+  ) {
+    cli::cli_abort(
+      messages$observedDataErrorTypeArithmeticInGeometric(
+        entry$file,
+        entry$importerConfiguration,
+        lapply(which(codes == "ASD"), describe)
+      ),
+      call = call
+    )
+  }
+
+  geometric <- which(codes == "GSD")
+  if (length(geometric) > 0) {
+    mixed <- .geometricSetsWithMixedUnits(
+      dataSets[geometric],
+      keys[geometric],
+      importerConfig,
+      filePath,
+      headers
+    )
+    if (length(mixed) > 0) {
+      cli::cli_abort(
+        messages$observedDataErrorTypeMixedUnits(
+          entry$file,
+          importerConfig$errorUnit,
+          lapply(geometric[mixed], describe)
+        ),
+        call = call
+      )
+    }
+  }
+
+  # A data set whose cell names the configuration's own type is already loaded
+  # that way; the ospsuite setter is slow, so it is called only for a change.
+  for (i in which(nzchar(codes))) {
+    if (identical(errorTypes[[codes[[i]]]], importerConfig$errorType)) {
+      next
+    }
+    dataSet <- dataSets[[i]]
+    dataSet$yErrorType <- errorTypes[[codes[[i]]]]
+    if (codes[[i]] == "GSD") {
+      .dropInvalidGeometricErrors(dataSet)
+    }
+  }
+  invisible(dataSets)
+}
+
+# An arithmetic import converts every `Error` value of a data set to the unit
+# of its first row. For a `GSD` data set those values are unitless factors, so
+# a data set whose rows give different error units would have some factors
+# rescaled. Returns the positions in `geometricSets` of such data sets.
+#
+# Only a sheet whose error unit column holds more than one unit can contain
+# one, so only those sheets are loaded once more, grouped by the unit column as
+# well: a data set that then splits spans several units. Nothing to check when
+# the configuration itself is geometric (its import converts no error), or when
+# the error unit is a fixed unit rather than a column: then `errorUnit` returns
+# that unit, not a header.
+#
+# @keywords internal
+# @noRd
+.geometricSetsWithMixedUnits <- function(
+  geometricSets,
+  geometricKeys,
+  importerConfig,
+  filePath,
+  headers
+) {
+  unitColumn <- importerConfig$errorUnit
+  if (
+    identical(
+      importerConfig$errorType,
+      ospsuite::DataErrorType$GeometricStdDev
+    ) ||
+      is.null(unitColumn) ||
+      !nzchar(unitColumn) ||
+      unitColumn %in% importerConfig$groupingColumns
+  ) {
+    return(integer(0))
+  }
+  geometricSheets <- unique(vapply(
+    geometricSets,
+    function(ds) ds$metaData[["Sheet"]] %||% "",
+    character(1)
+  ))
+  mixedSheets <- Filter(
+    function(sheet) {
+      header <- headers[[sheet]]
+      if (!unitColumn %in% header) {
+        return(FALSE)
+      }
+      # An empty unit cell counts as a unit of its own: ospsuite converts such
+      # a row too.
+      units <- readxl::read_excel(
+        filePath,
+        sheet = sheet,
+        col_types = ifelse(header == unitColumn, "text", "skip"),
+        trim_ws = FALSE,
+        .name_repair = "minimal"
+      )[[1]]
+      length(unique(units)) > 1
+    },
+    geometricSheets
+  )
+  if (length(mixedSheets) == 0) {
+    return(integer(0))
+  }
+
+  sheets <- importerConfig$sheets
+  importerConfig$sheets <- mixedSheets
+  importerConfig$addGroupingColumn(unitColumn)
+  on.exit(
+    {
+      importerConfig$removeGroupingColumn(unitColumn)
+      importerConfig$sheets <- sheets
+    },
+    add = TRUE
+  )
+  byUnit <- ospsuite::loadDataSetsFromExcel(
+    xlsFilePath = filePath,
+    importerConfigurationOrPath = importerConfig,
+    importAllSheets = FALSE
+  )
+  unitKeys <- vapply(
+    byUnit,
+    function(ds) .errorTypeSplitKey(ds, ignore = unitColumn),
+    character(1)
+  )
+  which(geometricKeys %in% unitKeys[duplicated(unitKeys)])
+}
+
+# A geometric standard deviation is a factor of at least 1. When the importer
+# configuration itself is geometric, ospsuite stores a smaller value as missing
+# (NaN); an arithmetic import reads an empty `Error` cell as 0 instead. Applying
+# the same rule here keeps a `GSD` data set equal to one loaded through a
+# geometric configuration, and keeps a 0 from drawing an error bar to infinity.
+#
+# @keywords internal
+# @noRd
+.dropInvalidGeometricErrors <- function(dataSet) {
+  errors <- dataSet$yErrorValues
+  invalid <- !is.na(errors) & errors < 1
+  if (any(invalid)) {
+    errors[invalid] <- NaN
+    dataSet$setValues(
+      xValues = dataSet$xValues,
+      yValues = dataSet$yValues,
+      yErrorValues = errors
+    )
+  }
+  invisible(dataSet)
+}
+
+# Everything ospsuite groups a data set by, except its `Error type` and the
+# `ignore` columns: the sheet, the other metadata columns, and the molecular
+# weight (a grouping column that is stored outside the metadata). Data sets
+# with equal keys were one data set in the workbook.
+#
+# @keywords internal
+# @noRd
+.errorTypeSplitKey <- function(dataSet, ignore = character(0)) {
+  metaData <- dataSet$metaData
+  metaData[c(.errorTypeColumn, ignore)] <- NULL
+  metaData <- metaData[order(names(metaData))]
+  values <- vapply(
+    metaData,
+    function(value) paste(format(value), collapse = ","),
+    character(1)
+  )
+  paste(
+    c(
+      paste(names(metaData), values, sep = "="),
+      format(dataSet$molWeight %||% NA)
+    ),
+    collapse = "\u001f"
   )
 }
 
