@@ -25,7 +25,7 @@ This article assumes you know what a **Project** is and how to load one; see `vi
 
 ## Different ways to define and edit scenarios
 
-This article covers the functions and methods that allow to create and edit scenarios (and the underlying definitions) using R code. Other options include editing the Excel files, or using dedicated applications like the ESQapp (available in ESQlabs subscription).
+This article covers the functions and methods that allow to create and edit scenarios (and the underlying definitions) using R code. Other options include editing the Excel files (see "Scenarios in Excel" below), or using dedicated applications like the ESQapp (available in ESQlabs subscription).
 
 ## Following the examples in this article
 
@@ -370,6 +370,35 @@ Pass a vector of `pkmlFilePaths` to create several scenarios at once. Pass `scen
 
 Every edit above exists only in your R session until you save it. Call `saveProject(project)` to write the edits to the `definitions/` folder, or `project <- loadProject(project$info$projectFilePath)` to discard them and read the project files again. Edits you have not saved are lost when the R session ends; printing the project shows `[unsaved changes]` while there are any.
 
+## Scenarios in Excel
+
+The preferred way to create and edit scenarios is through the R functions above. The Excel files of a project show the same definitions as spreadsheets, which is useful for reviewing many scenarios at once. Editing them changes nothing until you read them back with `importProjectFromExcel()`, and the import rewrites the whole project from all the Excel files, so any definition you created in R and did not export is lost. `vignette("how-to-set-up-a-project")` explains how to write and read the Excel files, and how to check with `projectStatus()` whether they still match the project.
+
+The definitions of this article are in the Excel files in the project's `Configurations/` folder:
+
+| File | Sheet | Holds |
+| --- | --- | --- |
+| `Scenarios.xlsx` | `Scenarios` | One row per scenario. |
+| `Scenarios.xlsx` | `OutputPaths` | One row per output path: its id in `OutputPathId` and its full model path in `OutputPath`. |
+| `ModelParameters.xlsx` | one sheet per parameter set, named by its id | One row per parameter, in the columns `Container Path`, `Parameter Name`, `Value`, and `Units`. |
+| `InitialConditions.xlsx` | one sheet per initial-condition set, named by its id | One row per molecule, in the columns `Container Path`, `Molecule Name`, `Is Present`, `Value`, `Units`, `Scale Divisor`, and `Neg. Values Allowed`. |
+| `Individuals.xlsx` | `IndividualBiometrics` | One row per individual. The parameter sets named in its `ParameterSets` column are sheets of `ModelParameters.xlsx`. |
+| `Populations.xlsx` | the first sheet | One row per population. |
+| `Applications.xlsx` | `ApplicationProtocols` | One row per application: its id in `ApplicationId` and its parameter sets in `ParameterSets`. The parameter sets named there are sheets of `ModelParameters.xlsx`. |
+
+The columns of the `Scenarios` sheet match the arguments of `addScenario()`.
+
+A few rules apply to all these sheets:
+
+- **An empty cell leaves the field unset**, as an argument you leave out of `addScenario()` does.
+- **A cell that names several ids separates them with commas**, for example `global, aciclovir` in `ModelParameterSheets`. The order counts as it does in R: parameter sets are applied in the order you list them. The same holds for `InitialConditions`, `OutputPathsIds`, and the `ParameterSets` columns of the individual and application sheets.
+- **Ids are made lowercase** on import, together with every reference to them, as when you create a definition in R.
+- **The units of an individual are fixed by the column names**: `Weight [kg]`, `Height [cm]`, and `Age [year(s)]`. A population sets its weight, height, and BMI units in its own columns (`weightUnit`, `heightUnit`, `BMIUnit`).
+- **Protein ontogenies** are written as in R, `Protein:Ontogeny`, with several entries separated by commas.
+- **A scenario's solver settings are not in the sheet.** The `Scenarios` sheet has no columns for them (see "Solver settings" above).
+
+To change a scenario in Excel, edit its row and save the file, then read the Excel files back with `importProjectFromExcel()` and load the project with `loadProject()`. `vignette("how-to-set-up-a-project")` shows these steps and the round trip in full.
+Re
 ## Where to go next
 
 Next, validate what you built with `vignette("how-to-validate-a-project")`, then run it with `vignette("how-to-run-simulations")` and plot it with `vignette("how-to-plot-results")`.
