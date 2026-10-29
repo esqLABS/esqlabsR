@@ -195,7 +195,7 @@ projectStatus(editable)$excel_in_sync
 
 ### Project options in `Project.xlsx`
 
-The preferred way to edit projects options is through the R interface by accesing the `Project` object. The Excel file can be used for reviewing the information, but it is not recommended to edit the properties there. Remember to call `projectStatus`, `exportProjectToExcel`, or `importProjectFromExcel` when working with the Excel files directly.
+The preferred way to edit project options is through the R interface by accessing the `Project` object. The Excel file can be used for reviewing the information, but it is not recommended to edit the properties there. Remember to call `projectStatus`, `exportProjectToExcel`, or `importProjectFromExcel` when working with the Excel files directly.
 
 The project's own options are stored in `Project.xlsx`, the top-level file next to `Project.json`. Its first sheet, `Project`, is a table with one row per option, in three columns: `Property` names the option, `Value` holds its value, and `Description` says what it is.
 
