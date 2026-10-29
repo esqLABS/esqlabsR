@@ -14,7 +14,7 @@
     Condition
       Error in `.validateScenarioStructure()`:
       ! Scenario id "testscenario" does not match the key "renamed" it is stored under.
-      i Store a scenario under a key equal to its id (or leave id unset).
+      i Store a scenario under a key equal to its id.
 
 # a write-back under a non-canonical key aborts saveProject()
 

@@ -44,7 +44,7 @@
 #'   authoring function (`addScenario()` / `setScenario()`), which validates it
 #'   and puts it back into the project; [saveProject()] then writes it to disk.
 #'
-#' @param id Character. Id of the scenario.
+#' @param id Character. Id of the scenario. Required.
 #' @param label Character or `NULL`. Free-text name of the scenario, kept
 #'   exactly as typed. `NULL` when the scenario has none.
 #' @param modelFile Character. Name of the `.pkml` model file (relative to
@@ -101,7 +101,7 @@
 #'   above.
 #' @export
 Scenario <- function(
-  id = NULL,
+  id,
   label = NULL,
   modelFile = NULL,
   application = NULL,
@@ -120,6 +120,10 @@ Scenario <- function(
   initialConditions = NULL,
   solverSettings = NULL
 ) {
+  # A scenario is stored under its id, the name of its definition file.
+  if (missing(id) || !.isNonEmptyString(id)) {
+    cli::cli_abort(messages$scenarioIdRequired())
+  }
   # `mget()` reads every formal by name (the formals are exactly
   # `.scenarioFieldNames`, in order), keeping NULL-valued slots so the record
   # always carries the full shape regardless of which arguments are set.
@@ -138,7 +142,7 @@ print.Scenario <- function(x, ...) {
   ospsuite.utils::ospPrintClass(x)
   ospsuite.utils::ospPrintItems(
     c(
-      list("Id" = x$id %||% ""),
+      list("Id" = x$id),
       # Only a scenario with a usable label shows the line. A label that is not
       # one string is left out, as in the section print; `validateProject()`
       # reports it.
@@ -700,15 +704,11 @@ print.Scenario <- function(x, ...) {
   # The record's own `id` must agree with the key it is stored
   # under, or the serialized JSON (`id = sc$id`) would contradict
   # the filename and the cross-reference key.
-  if (
-    !is.null(sc$id) &&
-      !identical(sc$id, name)
-  ) {
+  if (!identical(sc$id, name)) {
     cli::cli_abort(c(
       "Scenario {.field id} {.val {sc$id}} does not match \\
       the key {.val {name}} it is stored under.",
-      "i" = "Store a scenario under a key equal to its {.field id} \\
-      (or leave {.field id} unset)."
+      "i" = "Store a scenario under a key equal to its {.field id}."
     ))
   }
   if (

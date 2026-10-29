@@ -1351,6 +1351,11 @@ messages$scenarioModelFileRequired <- function() {
   )
 }
 
+# Raised by `Scenario()` when it gets no id: a scenario is stored under its id.
+messages$scenarioIdRequired <- function() {
+  cliFormat("{.arg id} must be a single non-empty string.")
+}
+
 # One problem line of the `addScenario()` / `setScenario()` abort, for a `label`
 # that is not one non-empty string. It also names the way out, because a
 # record passed back to `setScenario()` carries a hand-edited label the caller

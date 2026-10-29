@@ -1,13 +1,13 @@
 # Tests for the Scenario class and the .parseScenarios helper.
 
 test_that("Scenario has the documented field defaults", {
-  sc <- Scenario()
+  sc <- Scenario(id = "sc")
 
   expect_s3_class(sc, "Scenario")
   expect_type(sc, "list")
 
   # Fields default to NULL except where the spec calls for a typed default.
-  expect_null(sc$id)
+  expect_identical(sc$id, "sc")
   expect_null(sc$modelFile)
   expect_null(sc$application)
   expect_null(sc$individual)
@@ -26,7 +26,7 @@ test_that("Scenario has the documented field defaults", {
 })
 
 test_that("as.list(Scenario()) exposes exactly the scenario fields", {
-  sc <- Scenario()
+  sc <- Scenario(id = "sc")
 
   expect_named(
     as.list(sc),
@@ -76,10 +76,15 @@ test_that("Scenario records have copy semantics", {
   expect_identical(sc$modelFile, "m.pkml")
 })
 
+test_that("Scenario requires an id", {
+  expect_snapshot(error = TRUE, Scenario())
+  expect_snapshot(error = TRUE, Scenario(id = NA_character_))
+})
+
 test_that("Scenario derives simulationType from population", {
-  expect_identical(Scenario()$simulationType, "Individual")
+  expect_identical(Scenario(id = "sc")$simulationType, "Individual")
   expect_identical(
-    Scenario(population = "Pop")$simulationType,
+    Scenario(id = "sc", population = "Pop")$simulationType,
     "Population"
   )
 })

@@ -1,3 +1,19 @@
+# Scenario requires an id
+
+    Code
+      Scenario()
+    Condition
+      Error in `Scenario()`:
+      ! `id` must be a single non-empty string.
+
+---
+
+    Code
+      Scenario(id = NA_character_)
+    Condition
+      Error in `Scenario()`:
+      ! `id` must be a single non-empty string.
+
 # addScenario aborts when a referenced individual is unknown
 
     Code

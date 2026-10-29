@@ -335,3 +335,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-10-27 16:54: Review fixes: a scenario record handed back to setScenario() clears the fields it leaves empty, labels drop wrapping quotes and are left off copies and off exports without labels, and an NA reference is refused on save. (#1294)
 - 2026-10-28 15:03: Review fixes: a scenario label must be a non-empty string, the Excel import keeps a scenario name as its label only when the id changes more than its case, and a plot sheet with two disagreeing id columns warns. (#1294)
 - 2026-10-29 15:51: The scenarios vignette drops a sentence that restated the obvious.
+- 2026-10-29 16:01: A scenario record always has an id: Scenario() refuses one without it.

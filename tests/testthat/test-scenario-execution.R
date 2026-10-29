@@ -1310,7 +1310,7 @@ test_that(".applyScenarioSteadyState is a no-op when the scenario does not ask f
     },
     .package = "ospsuite"
   )
-  scenario <- Scenario(modelFile = "m.pkml", steadyState = FALSE)
+  scenario <- Scenario(id = "sc", modelFile = "m.pkml", steadyState = FALSE)
   simulation <- .fakeSimulation()
 
   expect_identical(
@@ -1355,6 +1355,7 @@ test_that(".applyScenarioSteadyState solves at the scenario's time and writes th
     .package = "ospsuite"
   )
   scenario <- Scenario(
+    id = "sc",
     modelFile = "m.pkml",
     steadyState = TRUE,
     steadyStateTime = 600,
@@ -1389,6 +1390,7 @@ test_that(".applyScenarioSteadyState overwrites formulas when the scenario says 
     .package = "ospsuite"
   )
   scenario <- Scenario(
+    id = "sc",
     modelFile = "m.pkml",
     steadyState = TRUE,
     steadyStateTime = 600,

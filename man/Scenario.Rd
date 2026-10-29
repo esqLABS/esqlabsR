@@ -5,7 +5,7 @@
 \title{Create a Scenario}
 \usage{
 Scenario(
-  id = NULL,
+  id,
   label = NULL,
   modelFile = NULL,
   application = NULL,
@@ -26,7 +26,7 @@ Scenario(
 )
 }
 \arguments{
-\item{id}{Character. Id of the scenario.}
+\item{id}{Character. Id of the scenario. Required.}
 
 \item{label}{Character or \code{NULL}. Free-text name of the scenario, kept
 exactly as typed. \code{NULL} when the scenario has none.}

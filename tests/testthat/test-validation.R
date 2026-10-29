@@ -190,7 +190,7 @@ test_that("validateProject() flips the validation flag when clean", {
 
 test_that("validateProject() leaves the validation flag FALSE on errors", {
   project <- .fakeProject(
-    scenarios = list(Bad = Scenario())
+    scenarios = list(Bad = Scenario(id = "Bad"))
   )
 
   results <- validateProject(project)
@@ -234,14 +234,14 @@ test_that(".validateOutputPaths warns when ids collide on a path", {
 # Section adapter: scenarios ----
 
 test_that(".validateScenarios flags missing modelFile and bad simulationType", {
-  sc <- Scenario()
+  sc <- Scenario(id = "s1")
   sc$modelFile <- ""
   result <- .validateScenarios(list(s1 = sc))
   expect_gte(length(result$critical_errors), 1)
 })
 
 test_that(".validateScenarios flags Population scenario without population", {
-  sc <- Scenario()
+  sc <- Scenario(id = "s1")
   sc$modelFile <- "model.pkml"
   sc$simulationType <- "Population"
   sc$population <- ""
@@ -253,7 +253,7 @@ test_that(".validateScenarios flags Population scenario without population", {
 test_that(".validateScenarios flags an unsound solverSettings block", {
   # Both authoring doors reject one, so this catches a hand-edited definition
   # file: the solver would otherwise take a truncated value in silence.
-  sc <- Scenario(modelFile = "model.pkml")
+  sc <- Scenario(id = "s1", modelFile = "model.pkml")
   sc$solverSettings <- list(reltol = 1e-6, mxStep = 1.5)
   result <- .validateScenarios(list(s1 = sc))
   msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
@@ -265,13 +265,14 @@ test_that(".validateScenarios flags an unsound solverSettings block", {
 })
 
 test_that(".validateScenarios passes a sound solverSettings block", {
-  sc <- Scenario(modelFile = "model.pkml")
+  sc <- Scenario(id = "s1", modelFile = "model.pkml")
   sc$solverSettings <- list(relTol = 1e-6, checkForNegativeValues = FALSE)
   expect_length(.validateScenarios(list(s1 = sc))$critical_errors, 0L)
 })
 
 test_that(".validateScenarios warns when modelFile does not exist on disk", {
   sc <- Scenario(
+    id = "s1",
     modelFile = "missing.pkml",
     simulationType = "Individual"
   )
@@ -287,6 +288,7 @@ test_that(".validateScenarios passes when modelFile exists on disk", {
   dir <- withr::local_tempdir()
   file.create(file.path(dir, "model.pkml"))
   sc <- Scenario(
+    id = "s1",
     modelFile = "model.pkml",
     simulationType = "Individual"
   )
@@ -306,6 +308,7 @@ test_that(".validateScenarios flags a modelFile that escapes the simulations fol
   # than give false assurance: an escaping relative `modelFile` is a critical
   # error here, not a silent pass.
   sc <- Scenario(
+    id = "s1",
     modelFile = "../../../../etc/passwd",
     simulationType = "Individual"
   )
@@ -327,6 +330,7 @@ test_that(".validateScenarios warns when a scenario's population csv is absent",
   dir <- withr::local_tempdir()
   file.create(file.path(dir, "model.pkml"))
   sc <- Scenario(
+    id = "s1",
     modelFile = "model.pkml",
     simulationType = "Population",
     population = "testpopulation"
@@ -353,6 +357,7 @@ test_that(".validateScenarios passes when the population csv is on disk", {
   # Mixed case, as an author spells it, against the canonical lowercase id.
   file.create(file.path(populations, "TestPopulation.csv"))
   sc <- Scenario(
+    id = "s1",
     modelFile = "model.pkml",
     simulationType = "Population",
     population = "testpopulation"
@@ -376,6 +381,7 @@ test_that(".validateScenarios checks the file a csv population entry names", {
   dir <- withr::local_tempdir()
   file.create(file.path(dir, "model.pkml"))
   sc <- Scenario(
+    id = "s1",
     modelFile = "model.pkml",
     simulationType = "Population",
     population = "frozen"
@@ -920,7 +926,7 @@ test_that(".validatePlots does not warn when the field matches its plotType", {
 # Cross-references ----
 
 test_that(".validateCrossReferences flags scenario referencing missing individual", {
-  sc <- Scenario()
+  sc <- Scenario(id = "s1")
   sc$modelFile <- "x.pkml"
   sc$individual <- "Ghost"
   project <- .fakeProject(scenarios = list(s1 = sc))
@@ -998,7 +1004,7 @@ test_that(".validateCrossReferences suggests a near match for an application's p
 })
 
 test_that(".validateCrossReferences flags a scenario's dangling initialConditions", {
-  sc <- Scenario()
+  sc <- Scenario(id = "s1")
   sc$modelFile <- "x.pkml"
   sc$initialConditions <- "nope"
   project <- .fakeProject(
@@ -1011,7 +1017,7 @@ test_that(".validateCrossReferences flags a scenario's dangling initialCondition
 })
 
 test_that(".validateCrossReferences suggests a near match for a scenario's initialConditions", {
-  sc <- Scenario()
+  sc <- Scenario(id = "s1")
   sc$modelFile <- "x.pkml"
   sc$initialConditions <- "presysset2"
   project <- .fakeProject(
@@ -1029,7 +1035,7 @@ test_that(".validateCrossReferences suggests a near match for a scenario's initi
 })
 
 test_that(".validateCrossReferences passes a valid scenario initialConditions ref", {
-  sc <- Scenario()
+  sc <- Scenario(id = "s1")
   sc$modelFile <- "x.pkml"
   sc$initialConditions <- "real"
   project <- .fakeProject(
@@ -1045,7 +1051,7 @@ test_that(".validateCrossReferences resolves individuals/populations as named li
     I1 = list(species = "Human", gender = "MALE")
   )
   populations <- list(P1 = list(species = "Human"))
-  sc <- Scenario()
+  sc <- Scenario(id = "s1")
   sc$modelFile <- "x.pkml"
   sc$individual <- "I1"
   sc$population <- "P1"
@@ -1064,7 +1070,7 @@ test_that(".validateCrossReferences evaluates whatever else in the project is br
   # section AND names an individual the project does not define. Both are
   # reported: the cross-reference phase does not stand down because a section
   # validator found something, since it is the phase the run gate depends on.
-  sc <- Scenario()
+  sc <- Scenario(id = "s1")
   sc$modelFile <- ""
   sc$individual <- "ghost"
   project <- .fakeProject(scenarios = list(s1 = sc))
@@ -1086,7 +1092,7 @@ test_that(".validateCrossReferences resolves a case-only mismatched reference", 
   individuals <- list(adult = list(species = "Human", gender = "MALE"))
   populations <- list(elderly = list(species = "Human"))
   applications <- list(iv_bolus = list())
-  sc <- Scenario()
+  sc <- Scenario(id = "s1")
   sc$modelFile <- "x.pkml"
   sc$individual <- "Adult"
   sc$population <- "Elderly"
@@ -1111,7 +1117,7 @@ test_that(".validateCrossReferences resolves only the references the requested s
   # reference). A full run reports both; a run scoped to the sections a
   # simulation needs reports only the first, which is what keeps a plotting-only
   # gap out of the `runScenarios()` gate.
-  sc <- Scenario()
+  sc <- Scenario(id = "s1")
   sc$modelFile <- "m.pkml"
   sc$individual <- "ghost_individual"
   project <- .fakeProject(
@@ -1192,7 +1198,7 @@ test_that("ensureValid() short-circuits when the project is validated", {
 })
 
 test_that("ensureValid() aborts with a formatted summary on critical errors", {
-  sc <- Scenario()
+  sc <- Scenario(id = "s1")
   sc$modelFile <- ""
   project <- .fakeProject(scenarios = list(s1 = sc))
   expect_snapshot(
@@ -1210,7 +1216,7 @@ test_that("the run gate validates the initial conditions a scenario build applie
   # critical has to stop the build rather than fail inside `ospsuite`. Goes
   # through `.scenarioBuildPreflight()` so it tests the gate's real section
   # list, not a copy of it.
-  sc <- Scenario()
+  sc <- Scenario(id = "s1")
   sc$modelFile <- "m.pkml"
   project <- .fakeProject(
     scenarios = list(s1 = sc),
@@ -1244,7 +1250,7 @@ test_that("a broken plots section leaves the run gate's cross-reference check in
     "initialConditions",
     "crossReferences"
   )
-  sc <- Scenario()
+  sc <- Scenario(id = "s1")
   sc$modelFile <- "m.pkml"
   sc$individual <- "ghost_individual"
   project <- .fakeProject(
@@ -1280,7 +1286,7 @@ test_that("a plotting-only dangling reference does not block the run gate", {
     "initialConditions",
     "crossReferences"
   )
-  sc <- Scenario()
+  sc <- Scenario(id = "s1")
   sc$modelFile <- "m.pkml"
   project <- .fakeProject(
     scenarios = list(s1 = sc),
