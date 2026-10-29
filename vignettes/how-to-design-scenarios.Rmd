@@ -290,7 +290,7 @@ setScenario(
 project$definitions$scenarios[["aciclovir_iv_ckd"]]$simulationTime
 ```
 
-In the next example, we remove the individual assignment from the scenario by passing `NULL`. The consequence is that parameters describing the physiology will not be overwritten, and individual-specific parameter sets defined in `project$definitions$individuals$adult_male_ckd$parameterSets` will not be applied. A scenario record read in R uses the same field names as the arguments:
+In the next example, we remove the individual assignment from the scenario by passing `NULL`. The consequence is that parameters describing the physiology will not be overwritten, and individual-specific parameter sets defined in `project$definitions$individuals$adult_male_ckd$parameterSets` will not be applied.
 
 ```{r}
 setScenario(project, "aciclovir_iv_ckd", individual = NULL)
