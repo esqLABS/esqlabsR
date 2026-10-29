@@ -11,21 +11,22 @@
 # the v2.0 `Project.json` scenario entry shape so adding a method on
 # `Scenario` does not change the JSON-shape contract.
 .scenarioFieldNames <- c(
-  "scenarioName",
+  "id",
+  "label",
   "modelFile",
-  "applicationProtocol",
-  "individualId",
-  "populationId",
+  "application",
+  "individual",
+  "population",
   "outputPaths",
   "simulationType",
   "readPopulationFromCSV",
-  "simulateSteadyState",
+  "steadyState",
   "simulationTime",
   "simulationTimeUnit",
   "steadyStateTime",
   "steadyStateTimeUnit",
   "overwriteFormulasInSS",
-  "modelParameterSets",
+  "parameterSets",
   "initialConditions",
   "solverSettings"
 )
@@ -43,14 +44,16 @@
 #'   authoring function (`addScenario()` / `setScenario()`), which validates it
 #'   and puts it back into the project; [saveProject()] then writes it to disk.
 #'
-#' @param scenarioName Character. Name of the scenario.
+#' @param id Character. Id of the scenario. Required.
+#' @param label Character or `NULL`. Free-text name of the scenario, kept
+#'   exactly as typed. `NULL` when the scenario has none.
 #' @param modelFile Character. Name of the `.pkml` model file (relative to
 #'   the model folder).
-#' @param applicationProtocol Character or `NA`. Name of the application
-#'   protocol; `NA` when absent.
-#' @param individualId Character or `NULL`. ID referencing
+#' @param application Character or `NULL`. Id referencing `applications`
+#'   definitions.
+#' @param individual Character or `NULL`. Id referencing
 #'   `individuals` definitions.
-#' @param populationId Character or `NULL`. ID referencing
+#' @param population Character or `NULL`. Id referencing
 #'   `populations` definitions.
 #' @param outputPaths Named character vector of literal output paths.
 #'   Names are the ids referencing `outputPaths` definitions; values are the
@@ -62,11 +65,11 @@
 #'   that moment, and a record passed to [addScenario()] contributes its ids,
 #'   not its paths.
 #' @param simulationType Character. `"Individual"` or `"Population"`.
-#'   Defaults to `"Population"` when `populationId` is set,
+#'   Defaults to `"Population"` when `population` is set,
 #'   `"Individual"` otherwise.
 #' @param readPopulationFromCSV Logical. If `TRUE`, load population from
 #'   CSV.
-#' @param simulateSteadyState Logical. If `TRUE`, run steady-state before
+#' @param steadyState Logical. If `TRUE`, run steady-state before
 #'   the main simulation.
 #' @param simulationTime The parsed time grid: a list of length-3 numeric
 #'   vectors `c(start, end, resolution)`, one per interval. This is the stored
@@ -80,7 +83,7 @@
 #'   `steadyStateTime`, preserved for round-trip serialization.
 #' @param overwriteFormulasInSS Logical. Overwrite formula parameters
 #'   during steady-state.
-#' @param modelParameterSets Character vector. Parameter-set ids
+#' @param parameterSets Character vector. Parameter-set ids
 #'   referencing `parameterSets` definitions.
 #' @param initialConditions Character vector. Initial-condition set ids
 #'   referencing `initialConditions` definitions.
@@ -98,24 +101,29 @@
 #'   above.
 #' @export
 Scenario <- function(
-  scenarioName = NULL,
+  id,
+  label = NULL,
   modelFile = NULL,
-  applicationProtocol = NULL,
-  individualId = NULL,
-  populationId = NULL,
+  application = NULL,
+  individual = NULL,
+  population = NULL,
   outputPaths = NULL,
-  simulationType = if (is.null(populationId)) "Individual" else "Population",
+  simulationType = if (is.null(population)) "Individual" else "Population",
   readPopulationFromCSV = FALSE,
-  simulateSteadyState = FALSE,
+  steadyState = FALSE,
   simulationTime = NULL,
   simulationTimeUnit = NULL,
   steadyStateTime = 1000,
   steadyStateTimeUnit = NULL,
   overwriteFormulasInSS = FALSE,
-  modelParameterSets = NULL,
+  parameterSets = NULL,
   initialConditions = NULL,
   solverSettings = NULL
 ) {
+  # A scenario is stored under its id, the name of its definition file.
+  if (missing(id) || !.isNonEmptyString(id)) {
+    cli::cli_abort(messages$scenarioIdRequired())
+  }
   # `mget()` reads every formal by name (the formals are exactly
   # `.scenarioFieldNames`, in order), keeping NULL-valued slots so the record
   # always carries the full shape regardless of which arguments are set.
@@ -131,26 +139,25 @@ as.list.Scenario <- function(x, ...) {
 #' @exportS3Method
 #' @noRd
 print.Scenario <- function(x, ...) {
-  protocol <- if (
-    !is.null(x$applicationProtocol) && !is.na(x$applicationProtocol)
-  ) {
-    x$applicationProtocol
-  } else {
-    ""
-  }
   ospsuite.utils::ospPrintClass(x)
   ospsuite.utils::ospPrintItems(
-    list(
-      "Name" = x$scenarioName %||% "",
-      "Model" = x$modelFile %||% "",
-      "Type" = x$simulationType %||% "",
-      "Individual" = x$individualId %||% "",
-      "Population" = x$populationId %||% "",
-      "Administration Protocol" = protocol,
-      "Parameter Sets" = paste(x$modelParameterSets, collapse = ", "),
-      "Initial Conditions" = paste(x$initialConditions, collapse = ", "),
-      "Steady State" = x$simulateSteadyState %||% FALSE,
-      "Solver Settings" = paste(names(x$solverSettings), collapse = ", ")
+    c(
+      list("Id" = x$id),
+      # Only a scenario with a usable label shows the line. A label that is not
+      # one string is left out, as in the section print; `validateProject()`
+      # reports it.
+      if (.isNonEmptyString(x$label)) list("Label" = x$label),
+      list(
+        "Model" = x$modelFile %||% "",
+        "Type" = x$simulationType %||% "",
+        "Individual" = x$individual %||% "",
+        "Population" = x$population %||% "",
+        "Administration Protocol" = x$application %||% "",
+        "Parameter Sets" = paste(x$parameterSets, collapse = ", "),
+        "Initial Conditions" = paste(x$initialConditions, collapse = ", "),
+        "Steady State" = x$steadyState %||% FALSE,
+        "Solver Settings" = paste(names(x$solverSettings), collapse = ", ")
+      )
     ),
     print_empty = TRUE
   )
@@ -250,11 +257,11 @@ print.Scenario <- function(x, ...) {
 
   result <- list()
   for (entry in scenariosData) {
-    # The scenario name is the definition id and the filename stem; assert it is a
-    # usable scalar that matches the file before anything else, so a file with
-    # no `name` (or one disagreeing with its filename) aborts naming the file
+    # The scenario id is the filename stem; assert it is a usable scalar that
+    # matches the file before anything else, so a file with no `id` (or one
+    # disagreeing with its filename) aborts naming the file
     # rather than producing an opaque base-R index error or a dangling key.
-    scenarioName <- .keyedTreeRecordId(entry, "name", "scenario")
+    id <- .keyedTreeRecordId(entry, "id", "scenario")
     # Reject a malformed scalar field early, with a message naming the
     # scenario and field. A hand-edited file (e.g. the standard `jsonlite`
     # round-trip that turns `"population": null` into `{}`) otherwise
@@ -285,7 +292,7 @@ print.Scenario <- function(x, ...) {
     if (!is.null(entry[["steadyStateTime"]])) {
       if (is.null(entry[["steadyStateTimeUnit"]])) {
         cli::cli_abort(
-          "Scenario {.val {entry[['name']]}} has {.field steadyStateTime} set \\
+          "Scenario {.val {id}} has {.field steadyStateTime} set \\
           but {.field steadyStateTimeUnit} is null. Please specify a unit \\
           (e.g. {.val min})."
         )
@@ -309,21 +316,24 @@ print.Scenario <- function(x, ...) {
     # collapse to NULL, matching the serializer's array-shape symmetry.
     scenarioOutputPaths <- unique(unlist(entry[["outputPaths"]]))
 
-    result[[scenarioName]] <- Scenario(
-      scenarioName = scenarioName,
+    result[[id]] <- Scenario(
+      id = id,
+      # Kept verbatim, like `solverSettings` below: a label that is not a single
+      # string loads and is then reported by `validateProject()`.
+      label = entry[["label"]],
       modelFile = entry[["modelFile"]],
-      applicationProtocol = entry[["application"]] %||% NA,
-      individualId = entry[["individual"]],
-      populationId = entry[["population"]],
+      application = entry[["application"]],
+      individual = entry[["individual"]],
+      population = entry[["population"]],
       outputPaths = scenarioOutputPaths,
       readPopulationFromCSV = entry[["readPopulationFromCSV"]] %||% FALSE,
-      simulateSteadyState = isTRUE(entry[["steadyState"]]),
+      steadyState = isTRUE(entry[["steadyState"]]),
       simulationTime = simulationTime,
       simulationTimeUnit = simulationTimeUnit,
       steadyStateTime = steadyStateTime,
       steadyStateTimeUnit = steadyStateTimeUnit,
       overwriteFormulasInSS = entry[["overwriteFormulasInSS"]] %||% FALSE,
-      modelParameterSets = if (!is.null(entry[["parameterSets"]])) {
+      parameterSets = if (!is.null(entry[["parameterSets"]])) {
         unlist(entry[["parameterSets"]])
       },
       initialConditions = if (!is.null(entry[["initialConditions"]])) {
@@ -411,7 +421,7 @@ print.Scenario <- function(x, ...) {
     return(invisible(NULL))
   }
   if (!is.character(value) || length(value) != 1L) {
-    name <- entry[["name"]] %||% "<unnamed>"
+    name <- entry[["id"]] %||% "<unnamed>"
     cli::cli_abort(c(
       "Scenario {.val {name}} has an invalid {.field {field}}.",
       "i" = "Expected a single string or {.code null}; check \\
@@ -452,7 +462,7 @@ print.Scenario <- function(x, ...) {
 #'
 #' Per-entry checks: `modelFile` is set and non-empty, resolves on disk
 #' (warning), `simulationType` is one of the supported values,
-#' population-typed scenarios declare a `populationId`, and a scenario the
+#' population-typed scenarios declare a `population`, and a scenario the
 #' runtime would read from a csv file has that file on disk (warning).
 #'
 #' Cross-section reference checks (individual, parameterSets, application,
@@ -544,19 +554,19 @@ print.Scenario <- function(x, ...) {
       )
     }
 
-    # `.parseScenarios` already rejects a non-scalar `populationId` on load, so
-    # `sc$populationId` is a length-1 string or `NULL` here. Use a scalar-safe
+    # `.parseScenarios` already rejects a non-scalar `population` on load, so
+    # `sc$population` is a length-1 string or `NULL` here. Use a scalar-safe
     # emptiness test so a stray non-scalar value can never make the `&&`
     # operand `NA` and crash with an opaque internal error.
-    hasPopulationId <- !is.null(sc$populationId) &&
-      length(sc$populationId) == 1L &&
-      !is.na(sc$populationId) &&
-      nzchar(sc$populationId)
+    hasPopulationId <- !is.null(sc$population) &&
+      length(sc$population) == 1L &&
+      !is.na(sc$population) &&
+      nzchar(sc$population)
 
     if (simType == "Population" && !hasPopulationId) {
       result$addCriticalError(
         "Missing Fields",
-        paste0("Population scenario '", name, "' has no populationId")
+        paste0("Population scenario '", name, "' has no population")
       )
     }
 
@@ -566,7 +576,7 @@ print.Scenario <- function(x, ...) {
         paste0(
           "Scenario '",
           name,
-          "' has a populationId but simulationType is '",
+          "' has a population but simulationType is '",
           simType,
           "'; it will load as a Population scenario on the next reload."
         )
@@ -581,7 +591,7 @@ print.Scenario <- function(x, ...) {
     # decides. Graded like a missing `modelFile`: a warning, since the project
     # still parses and one absent input file should not block every scenario.
     if (hasPopulationId) {
-      popData <- populations[[sc$populationId]]
+      popData <- populations[[sc$population]]
       readsCsv <- identical(
         popData$type %||%
           (if (isTRUE(sc$readPopulationFromCSV)) "csv" else "spec"),
@@ -589,7 +599,7 @@ print.Scenario <- function(x, ...) {
       )
       if (readsCsv && !is.null(populationsFolder)) {
         fileName <- .populationCsvFileName(
-          sc$populationId,
+          sc$population,
           populationsFolder,
           popData$file
         )
@@ -610,13 +620,26 @@ print.Scenario <- function(x, ...) {
               "Scenario '",
               name,
               "' reads population '",
-              sc$populationId,
+              sc$population,
               "' from a non-existent csv file: ",
               fileName
             )
           )
         }
       }
+    }
+
+    # A label is free text, but one non-empty string: a hand-edited file can
+    # hold `""`, a number or an array instead.
+    if (!is.null(sc$label) && !.isNonEmptyString(sc$label)) {
+      result$addCriticalError(
+        "Validation",
+        paste0(
+          "Scenario '",
+          name,
+          "' has a label that is not a single non-empty string"
+        )
+      )
     }
 
     # An unsound `solverSettings` block reaches here only from a hand-edited
@@ -678,18 +701,14 @@ print.Scenario <- function(x, ...) {
       the key {.val {canonical}}."
     ))
   }
-  # The record's own `scenarioName` must agree with the key it is stored
-  # under, or the serialized JSON (`name = sc$scenarioName`) would contradict
+  # The record's own `id` must agree with the key it is stored
+  # under, or the serialized JSON (`id = sc$id`) would contradict
   # the filename and the cross-reference key.
-  if (
-    !is.null(sc$scenarioName) &&
-      !identical(sc$scenarioName, name)
-  ) {
+  if (!identical(sc$id, name)) {
     cli::cli_abort(c(
-      "Scenario {.field scenarioName} {.val {sc$scenarioName}} does not match \\
+      "Scenario {.field id} {.val {sc$id}} does not match \\
       the key {.val {name}} it is stored under.",
-      "i" = "Store a scenario under a key equal to its {.field scenarioName} \\
-      (or leave {.field scenarioName} unset)."
+      "i" = "Store a scenario under a key equal to its {.field id}."
     ))
   }
   if (
@@ -715,9 +734,9 @@ print.Scenario <- function(x, ...) {
   # (`.scenarioToJson`) requires: a record that passes here must always
   # serialize. The two checks below mirror the serializer's own aborts so a
   # write-through never validates a scenario the writer then chokes on.
-  if (isTRUE(sc$simulateSteadyState) && is.null(sc$steadyStateTimeUnit)) {
+  if (isTRUE(sc$steadyState) && is.null(sc$steadyStateTimeUnit)) {
     cli::cli_abort(c(
-      "Scenario {.val {name}} has {.field simulateSteadyState}=TRUE but \\
+      "Scenario {.val {name}} has {.field steadyState}=TRUE but \\
       {.field steadyStateTimeUnit} is NULL.",
       "i" = "Set {.field steadyStateTimeUnit} (e.g. {.val min}) so the \\
       steady-state time can round-trip."
@@ -739,15 +758,15 @@ print.Scenario <- function(x, ...) {
   }
   # The scalar reference fields the serializer emits verbatim
   # (`.scenarioToJson`) must be a length-1 scalar when present, or a wrong-typed
-  # value (e.g. `individualId <- list(...)`) would silently serialize to a
-  # malformed definition file the parser then rejects on the next load. NULL or a
-  # length-1 `NA` is allowed: both are the established "no reference" sentinel
-  # the serializer handles (an Individual scenario has no population; a scenario
-  # may have no application).
-  for (field in c("individualId", "populationId", "applicationProtocol")) {
+  # value (e.g. `individual <- list(...)`) would silently serialize to a
+  # malformed definition file the parser then rejects on the next load. NULL is
+  # the only "no reference" value (an Individual scenario has no population; a
+  # scenario may have no application): an `NA` would reach the lookups, which
+  # skip only NULL.
+  for (field in c("individual", "population", "application")) {
     val <- sc[[field]]
     okScalar <- is.null(val) ||
-      (length(val) == 1L && (is.character(val) || is.na(val)))
+      (is.character(val) && length(val) == 1L && !is.na(val))
     if (!okScalar) {
       cli::cli_abort(
         "Scenario {.val {name}} field {.field {field}} must be a single \\
@@ -917,7 +936,7 @@ runScenarios <- function(
 #'   that is used for every path. Any other length stops with an error.
 #' @inheritParams runScenarios
 #' @param simulationRunOptions How the steady-state pre-solve is executed, for
-#'   a scenario with `simulateSteadyState` set. Takes the same form as in
+#'   a scenario with `steadyState` set. Takes the same form as in
 #'   [runScenarios()]. The simulations returned here are not run, so it has no
 #'   other effect.
 #' @param validate Logical. If `TRUE` (default), runs the relevant
@@ -977,7 +996,8 @@ buildSimulations <- function(
 #' the recycling rule under Details). Scalar-per-definition fields (`modelFile`,
 #' `individual`, `population`, `application`, `simulationTime`,
 #' `simulationTimeUnit`, `steadyState`, `steadyStateTime`,
-#' `steadyStateTimeUnit`, `overwriteFormulasInSS`, `readPopulationFromCSV`)
+#' `steadyStateTimeUnit`, `overwriteFormulasInSS`, `readPopulationFromCSV`,
+#' `label`)
 #' follow the recycle/align rule. The vector-valued-per-definition fields
 #' `parameterSets` and `outputPaths` are applied whole to every
 #' scenario; to give a different set per scenario, pass a list of the same
@@ -999,10 +1019,12 @@ buildSimulations <- function(
 #'   addScenario(project, sc, overwrite = TRUE)
 #'   ```
 #'
-#'   A field the record leaves unset is left to this function's default, exactly
-#'   as an absent key in the scenario's definition file is. To clear an optional
-#'   field, name the id and pass `NULL` for it
-#'   (`setScenario(project, "sc", individual = NULL)`).
+#'   An optional field the record leaves empty (`label`, `individual`,
+#'   `population`, `application`, `simulationTime`, `solverSettings`, or an
+#'   empty reference vector) is empty in the scenario too, so
+#'   `sc$individual <- NULL; setScenario(project, sc)` removes the individual. A
+#'   unit the record leaves empty (`simulationTimeUnit`, `steadyStateTimeUnit`)
+#'   is left to this function's default.
 #'
 #' @param project A `Project` object.
 #' @param id Character vector of ids (names) for the new scenarios (the number
@@ -1055,6 +1077,11 @@ buildSimulations <- function(
 #'   setting to those two.
 #'   The list counts as one value per scenario, so an `id` naming several
 #'   scenarios gives each of them the same settings.
+#' @param label Character or `NULL` (default). A free-text name for the
+#'   scenario, kept exactly as typed, for example `"Aciclovir IV 2.5 mg/kg"`.
+#'   Unlike `id`, it is not changed to lowercase, so it keeps the spelling the
+#'   id loses. It shows when you print the scenario or the scenarios of a
+#'   project. Results and messages still name the scenario by its id.
 #' @param overwrite Logical. When `FALSE` (default), an id that already exists
 #'   aborts. When `TRUE`, the existing scenario is replaced (last-write-wins).
 #'   Distinct from `overwriteFormulasInSS`, which is a steady-state model
@@ -1081,6 +1108,7 @@ addScenario <- function(
   overwriteFormulasInSS = FALSE,
   readPopulationFromCSV = FALSE,
   solverSettings = NULL,
+  label = NULL,
   overwrite = FALSE
 ) {
   validateIsOfType(project, "Project")
@@ -1110,6 +1138,7 @@ addScenario <- function(
     overwriteFormulasInSS = overwriteFormulasInSS,
     readPopulationFromCSV = readPopulationFromCSV,
     solverSettings = solverSettings,
+    label = label,
     overwrite = overwrite
   )
 }
@@ -1139,6 +1168,7 @@ addScenario <- function(
   overwriteFormulasInSS = FALSE,
   readPopulationFromCSV = FALSE,
   solverSettings = NULL,
+  label = NULL,
   overwrite = FALSE,
   .call
 ) {
@@ -1152,6 +1182,7 @@ addScenario <- function(
     id,
     scalarFields = list(
       modelFile = modelFile,
+      label = label,
       individual = individual,
       population = population,
       application = application,
@@ -1209,6 +1240,9 @@ addScenario <- function(
   modelFile <- fields$modelFile
   if (!.isNonEmptyString(modelFile)) {
     errors <- c(errors, "modelFile must be a non-empty string")
+  }
+  if (!is.null(fields$label) && !.isNonEmptyString(fields$label)) {
+    errors <- c(errors, messages$scenarioLabelNotString())
   }
 
   # Canonicalize the foreign-key references the moment they enter the API, so a
@@ -1279,14 +1313,15 @@ addScenario <- function(
 
   steadyStateTimeUnit <- fields$steadyStateTimeUnit
   Scenario(
-    scenarioName = id,
+    id = id,
+    label = fields$label,
     modelFile = modelFile,
-    applicationProtocol = application %||% NA,
-    individualId = individual,
-    populationId = population,
+    application = application,
+    individual = individual,
+    population = population,
     outputPaths = outputPaths,
     readPopulationFromCSV = fields$readPopulationFromCSV,
-    simulateSteadyState = fields$steadyState,
+    steadyState = fields$steadyState,
     simulationTime = if (!is.null(fields$simulationTime)) {
       .parseSimulationTimeIntervals(fields$simulationTime)
     },
@@ -1301,7 +1336,7 @@ addScenario <- function(
     ),
     steadyStateTimeUnit = steadyStateTimeUnit,
     overwriteFormulasInSS = fields$overwriteFormulasInSS,
-    modelParameterSets = parameterSets,
+    parameterSets = parameterSets,
     initialConditions = initialConditions,
     solverSettings = fields$solverSettings
   )
@@ -1393,7 +1428,7 @@ removeScenario <- function(project, id) {
 #'   `population`, `application`, `parameterSets`, `initialConditions`,
 #'   `outputPaths`, `simulationTime`, `simulationTimeUnit`, `steadyState`,
 #'   `steadyStateTime`, `steadyStateTimeUnit`, `overwriteFormulasInSS`,
-#'   `readPopulationFromCSV`, `solverSettings`. Each takes the value
+#'   `readPopulationFromCSV`, `solverSettings`, `label`. Each takes the value
 #'   [addScenario()] documents for it, but has no default here: an omitted
 #'   field is left untouched, a field passed as `NULL` is cleared.
 #'   Scalar-per-definition fields recycle/align across `id`; `parameterSets`,
@@ -1433,6 +1468,7 @@ setScenario <- function(project, id, ...) {
 # @noRd
 .settableScenarioFields <- c(
   "modelFile",
+  "label",
   "individual",
   "population",
   "application",
@@ -1538,6 +1574,20 @@ setScenario <- function(project, id, ...) {
   sc <- project$definitions$scenarios[[id]]
   errors <- character()
   supplied <- names(fields)
+
+  # The model file is required: a supplied value must be one `addScenario()`
+  # would accept, so `NULL`, `NA` or `""` cannot clear it.
+  if ("modelFile" %in% supplied && !.isNonEmptyString(fields$modelFile)) {
+    errors <- c(errors, messages$scenarioModelFileRequired())
+  }
+  if (
+    "label" %in%
+      supplied &&
+      !is.null(fields$label) &&
+      !.isNonEmptyString(fields$label)
+  ) {
+    errors <- c(errors, messages$scenarioLabelNotString())
+  }
 
   # Canonicalize the supplied foreign-key references (matching the definition
   # side) before validating, so a reference resolves to its definition.
@@ -1651,17 +1701,19 @@ setScenario <- function(project, id, ...) {
     )
   }
 
-  # Apply each supplied field to the working record. The record's
-  # `applicationProtocol` field carries `NA` (not `NULL`) when absent,
-  # matching the Scenario() contract.
+  # Apply each supplied field to the working record. A reference cleared with
+  # `NULL` keeps its slot (the `[` form), so the record keeps its full shape.
   if ("modelFile" %in% supplied) {
     sc$modelFile <- fields$modelFile
   }
+  if ("label" %in% supplied) {
+    sc["label"] <- list(fields$label)
+  }
   if ("individual" %in% supplied) {
-    sc$individualId <- fields$individual
+    sc["individual"] <- list(fields$individual)
   }
   if ("population" %in% supplied) {
-    sc$populationId <- fields$population
+    sc["population"] <- list(fields$population)
     sc$simulationType <- if (is.null(fields$population)) {
       "Individual"
     } else {
@@ -1669,10 +1721,10 @@ setScenario <- function(project, id, ...) {
     }
   }
   if ("application" %in% supplied) {
-    sc$applicationProtocol <- fields$application %||% NA
+    sc["application"] <- list(fields$application)
   }
   if ("parameterSets" %in% supplied) {
-    sc$modelParameterSets <- fields$parameterSets
+    sc$parameterSets <- fields$parameterSets
   }
   if ("initialConditions" %in% supplied) {
     sc$initialConditions <- fields$initialConditions
@@ -1699,7 +1751,7 @@ setScenario <- function(project, id, ...) {
     sc$simulationTimeUnit <- fields$simulationTimeUnit
   }
   if ("steadyState" %in% supplied) {
-    sc$simulateSteadyState <- fields$steadyState
+    sc$steadyState <- fields$steadyState
   }
   if ("steadyStateTime" %in% supplied || "steadyStateTimeUnit" %in% supplied) {
     # steadyStateTime is stored in the base unit (minutes). When a value is
@@ -1786,10 +1838,10 @@ renameScenario <- function(project, id, newId) {
   .assertScenarioTargetFree(self, newId)
 
   sc <- self$definitions$scenarios[[id]]
-  # Keep the record's stored name in step with its new key so the definition file
-  # the write-through emits (`name = sc$scenarioName`) and the key agree, which
-  # is what `.validateScenarioStructure()` enforces.
-  sc$scenarioName <- newId
+  # Keep the record's `id` in step with its new key so the definition file
+  # `saveProject()` writes (`id = sc$id`) and the key agree, which is what
+  # `.validateScenarioStructure()` enforces.
+  sc$id <- newId
 
   # Renaming de-references the old id just like removing it: warn about any
   # holder still naming the scenario by its old id before the key changes.
@@ -1811,7 +1863,9 @@ renameScenario <- function(project, id, newId) {
 #' @description Creates a deep copy of the scenario currently keyed `id` under
 #'   `newId`, leaving the original untouched. The copy is a new definition
 #'   written through to `newId` (the in-memory store and the on-disk project
-#'   both gain an independent scenario).
+#'   both gain an independent scenario). The copy has no `label`, since the
+#'   label names the original; give it one with `setScenario(project, newId,
+#'   label = ...)`.
 #'
 #'   Both `id` and `newId` are canonicalized the same way [addScenario()]
 #'   canonicalizes an id (lowercased, made a safe single-path-segment id, with
@@ -1846,9 +1900,11 @@ duplicateScenario <- function(project, id, newId) {
   .assertScenarioTargetFree(self, newId)
 
   # A `Scenario` is a plain-data list with copy semantics, so this is already a
-  # deep, independent copy; only its stored name has to follow the new key.
+  # deep, independent copy; only its id has to follow the new key. The label
+  # names the original scenario, so the copy starts without one.
   copy <- private$.getSection("scenarios")[[id]]
-  copy$scenarioName <- newId
+  copy$id <- newId
+  copy["label"] <- list(NULL)
 
   scenarios <- private$.getSection("scenarios")
   scenarios[[newId]] <- copy
@@ -1911,32 +1967,60 @@ duplicateScenario <- function(project, id, newId) {
 # `addScenario()` / `setScenario()` take, so a scenario read out of a project can
 # be handed straight back to the function that authors one.
 #
-# The record's field names are the ones the runtime reads (`scenarioName`,
-# `individualId`, `applicationProtocol`, `modelParameterSets`,
-# `simulateSteadyState`), while the authoring arguments are named after the
-# fields a definition file carries. `.scenarioToJson()` already bridges the two,
-# because it is what every save writes through, so the record goes through it
-# rather than through a second translation table that could drift from it. That
-# also settles the three shape differences in one place: the literal
-# `outputPaths` map becomes the id array again, a multi-interval `simulationTime`
-# becomes its one string, and the base-unit `steadyStateTime` returns to its
-# declared unit.
+# The record's fields carry the argument names, so only three shapes differ:
+# the `id -> path` map of `outputPaths` becomes its ids again, the base-unit
+# `steadyStateTime` returns to its declared unit, and the derived
+# `simulationType` is dropped because it is not an argument. A list of
+# `simulationTime` intervals is passed as it is, since the authoring functions
+# take that shape.
 #
-# A `NULL` field is dropped rather than passed on, because an absent key in a
-# definition file means "the argument was not given": that is what lets the
-# authoring defaults apply, and it is what keeps `steadyStateTime` /
-# `steadyStateTimeUnit` round-tripping when the record declares no unit. Handing
-# back a record therefore behaves exactly like handing back the fields the
-# scenario's own file carries. Clearing a reference stays an explicit
-# `setScenario(project, id, individual = NULL)`.
+# A field whose authoring default is "none" (`.scenarioClearableFields`, and the
+# reference vectors, passed empty when the record has none) is always passed, so
+# a record handed to `setScenario()` clears what the record leaves empty, and
+# `addScenario()` gets the value its default would give anyway. Any other `NULL`
+# field is dropped, so the authoring default applies: that is what keeps
+# `steadyStateTime` / `steadyStateTimeUnit` round-tripping when the record
+# declares no unit.
 #
 # @keywords internal
 # @noRd
 .scenarioRecordArgs <- function(record) {
-  entry <- .scenarioToJson(record)
-  names(entry)[names(entry) == "name"] <- "id"
-  Filter(Negate(is.null), entry)
+  fields <- setdiff(.scenarioFieldNames, "simulationType")
+  args <- lapply(stats::setNames(fields, fields), function(f) record[[f]])
+  args$outputPaths <- names(record$outputPaths) %||% record$outputPaths
+  for (field in c("parameterSets", "initialConditions", "outputPaths")) {
+    args[field] <- list(args[[field]] %||% character(0))
+  }
+  args["steadyStateTime"] <- list(
+    if (!is.null(record$steadyStateTimeUnit)) {
+      ospsuite::toUnit(
+        quantityOrDimension = ospDimensions$Time,
+        values = record$steadyStateTime,
+        targetUnit = record$steadyStateTimeUnit
+      )
+    }
+  )
+  if (length(args$solverSettings) == 0L) {
+    args["solverSettings"] <- list(NULL)
+  }
+  keep <- !vapply(args, is.null, logical(1)) |
+    names(args) %in% .scenarioClearableFields
+  args[keep]
 }
+
+# The optional scenario fields whose authoring default is `NULL`, so passing
+# `NULL` for one means "this scenario has none".
+#
+# @keywords internal
+# @noRd
+.scenarioClearableFields <- c(
+  "label",
+  "individual",
+  "population",
+  "application",
+  "simulationTime",
+  "solverSettings"
+)
 
 # Abort when a `Scenario` record is passed as `id` alongside field arguments.
 # The record is the whole field set, so an accompanying field would be silently

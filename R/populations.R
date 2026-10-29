@@ -1,7 +1,7 @@
 # Parse ----
 #
 # Parse the `populations` JSON array into a named list keyed by
-# `populationId`. Numeric fields are coerced via `as.double`. Each entry
+# `id`. Numeric fields are coerced via `as.double`. Each entry
 # is stamped with `class = c("Population", "list")` to enable S3 dispatch.
 #
 # @keywords internal
@@ -24,11 +24,11 @@
   )
   result <- list()
   for (entry in populationsData) {
-    id <- .keyedTreeRecordId(entry, "populationId", "population")
+    id <- .keyedTreeRecordId(entry, "id", "population")
     .assertNoEmptyObjectFields(entry, "population")
     popData <- list()
     for (field in names(entry)) {
-      if (field == "populationId") {
+      if (field == "id") {
         next
       }
       val <- entry[[field]]

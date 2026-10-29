@@ -1,7 +1,7 @@
 test_that(".parseIndividuals passes through unknown fields", {
   raw <- list(
     list(
-      individualId = "I1",
+      id = "I1",
       species = "Human",
       weight = 70,
       futureField = "kept"
@@ -17,7 +17,7 @@ test_that(".parseIndividuals passes through unknown fields", {
 test_that("an individual carrying an unknown field round-trips through serialization", {
   raw <- list(
     list(
-      individualId = "I1",
+      id = "I1",
       species = "Human",
       gender = "MALE",
       futureField = "kept"
@@ -27,12 +27,12 @@ test_that("an individual carrying an unknown field round-trips through serializa
   project <- .fakeProject(individuals = individuals)
 
   out <- .individualsToJson(project)[[1L]]
-  expect_identical(out$individualId, "I1")
+  expect_identical(out$id, "I1")
   expect_identical(out$futureField, "kept")
-  # individualId leads; the remaining fields pass through in record order.
+  # id leads; the remaining fields pass through in record order.
   expect_identical(
     names(out),
-    c("individualId", "species", "gender", "futureField")
+    c("id", "species", "gender", "futureField")
   )
 })
 
@@ -47,7 +47,7 @@ test_that("addIndividual + removeIndividual round-trip leaves the section unchan
   expect_identical(project$definitions$individuals, before)
 })
 
-test_that("addIndividual aborts when individualId already exists", {
+test_that("addIndividual aborts when the id already exists", {
   project <- testProject()
   expect_snapshot(
     error = TRUE,
@@ -88,8 +88,8 @@ test_that(".parseIndividuals defaults an absent gender to UNKNOWN", {
   # definitions/individuals/*.json without a gender key must get the same
   # UNKNOWN default the authoring API and the Excel importer apply.
   parsed <- .parseIndividuals(list(
-    list(individualId = "beagle", species = "Dog", weight = 10),
-    list(individualId = "adult", species = "Human", gender = "FEMALE")
+    list(id = "beagle", species = "Dog", weight = 10),
+    list(id = "adult", species = "Human", gender = "FEMALE")
   ))
   expect_identical(parsed$beagle$gender, "UNKNOWN")
   expect_identical(parsed$adult$gender, "FEMALE")
@@ -579,4 +579,30 @@ test_that("setIndividual still clears a numeric field given NA", {
   setIndividual(project, "clearweight", weight = NA)
 
   expect_null(project$definitions$individuals$clearweight$weight)
+})
+
+test_that("an individual's record and file use the addIndividual() argument names", {
+  project <- testProject()
+  addIndividual(
+    project,
+    "adult_female",
+    species = "Human",
+    gender = "FEMALE",
+    weight = 60,
+    parameterSets = "global"
+  )
+  fields <- c("species", "gender", "weight", "parameterSets")
+
+  expect_setequal(
+    names(project$definitions$individuals[["adult_female"]]),
+    fields
+  )
+  saveProject(project)
+  file <- file.path(
+    project$info$projectDirPath,
+    "definitions",
+    "individuals",
+    "adult_female.json"
+  )
+  expect_setequal(names(jsonlite::read_json(file)), c("id", fields))
 })

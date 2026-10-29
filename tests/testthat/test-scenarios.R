@@ -1,51 +1,52 @@
 # Tests for the Scenario class and the .parseScenarios helper.
 
 test_that("Scenario has the documented field defaults", {
-  sc <- Scenario()
+  sc <- Scenario(id = "sc")
 
   expect_s3_class(sc, "Scenario")
   expect_type(sc, "list")
 
   # Fields default to NULL except where the spec calls for a typed default.
-  expect_null(sc$scenarioName)
+  expect_identical(sc$id, "sc")
   expect_null(sc$modelFile)
-  expect_null(sc$applicationProtocol)
-  expect_null(sc$individualId)
-  expect_null(sc$populationId)
+  expect_null(sc$application)
+  expect_null(sc$individual)
+  expect_null(sc$population)
   expect_null(sc$outputPaths)
   expect_identical(sc$simulationType, "Individual")
   expect_false(sc$readPopulationFromCSV)
-  expect_false(sc$simulateSteadyState)
+  expect_false(sc$steadyState)
   expect_null(sc$simulationTime)
   expect_null(sc$simulationTimeUnit)
   expect_identical(sc$steadyStateTime, 1000)
   expect_null(sc$steadyStateTimeUnit)
   expect_false(sc$overwriteFormulasInSS)
-  expect_null(sc$modelParameterSets)
+  expect_null(sc$parameterSets)
   expect_null(sc$solverSettings)
 })
 
-test_that("as.list(Scenario()) exposes exactly the v2.0 schema fields", {
-  sc <- Scenario()
+test_that("as.list(Scenario()) exposes exactly the scenario fields", {
+  sc <- Scenario(id = "sc")
 
   expect_named(
     as.list(sc),
     c(
-      "scenarioName",
+      "id",
+      "label",
       "modelFile",
-      "applicationProtocol",
-      "individualId",
-      "populationId",
+      "application",
+      "individual",
+      "population",
       "outputPaths",
       "simulationType",
       "readPopulationFromCSV",
-      "simulateSteadyState",
+      "steadyState",
       "simulationTime",
       "simulationTimeUnit",
       "steadyStateTime",
       "steadyStateTimeUnit",
       "overwriteFormulasInSS",
-      "modelParameterSets",
+      "parameterSets",
       "initialConditions",
       "solverSettings"
     )
@@ -59,18 +60,31 @@ test_that(".scenarioFieldNames stays in sync with the Scenario() formals", {
   expect_identical(.scenarioFieldNames, names(formals(Scenario)))
 })
 
+test_that("a Scenario record field has the name of its addScenario() argument", {
+  # `simulationType` is derived from `population` and has no argument.
+  expect_setequal(
+    setdiff(.scenarioFieldNames, "simulationType"),
+    setdiff(names(formals(addScenario)), c("project", "overwrite"))
+  )
+})
+
 test_that("Scenario records have copy semantics", {
-  sc <- Scenario(scenarioName = "A", modelFile = "m.pkml")
+  sc <- Scenario(id = "A", modelFile = "m.pkml")
   copy <- sc
   copy$modelFile <- "other.pkml"
 
   expect_identical(sc$modelFile, "m.pkml")
 })
 
-test_that("Scenario derives simulationType from populationId", {
-  expect_identical(Scenario()$simulationType, "Individual")
+test_that("Scenario requires an id", {
+  expect_snapshot(error = TRUE, Scenario())
+  expect_snapshot(error = TRUE, Scenario(id = NA_character_))
+})
+
+test_that("Scenario derives simulationType from population", {
+  expect_identical(Scenario(id = "sc")$simulationType, "Individual")
   expect_identical(
-    Scenario(populationId = "Pop")$simulationType,
+    Scenario(id = "sc", population = "Pop")$simulationType,
     "Population"
   )
 })
@@ -87,19 +101,19 @@ test_that(".parseScenarios copies basic fields for an individual scenario", {
   sc <- project$definitions$scenarios[["aciclovir_iv"]]
 
   expect_s3_class(sc, "Scenario")
-  expect_identical(sc$scenarioName, "aciclovir_iv")
+  expect_identical(sc$id, "aciclovir_iv")
   expect_identical(sc$modelFile, "Aciclovir.pkml")
-  expect_identical(sc$individualId, "adult_male")
-  expect_identical(sc$applicationProtocol, "aciclovir_iv_250mg")
-  expect_identical(sc$modelParameterSets, c("global", "aciclovir"))
-  expect_null(sc$populationId)
+  expect_identical(sc$individual, "adult_male")
+  expect_identical(sc$application, "aciclovir_iv_250mg")
+  expect_identical(sc$parameterSets, c("global", "aciclovir"))
+  expect_null(sc$population)
   expect_identical(sc$simulationType, "Individual")
   expect_false(sc$readPopulationFromCSV)
 })
 
 test_that(".parseScenarios reads a scenario's initialConditions references", {
   raw <- list(list(
-    name = "WithIC",
+    id = "WithIC",
     modelFile = "m.pkml",
     parameterSets = list("ps1"),
     initialConditions = list("ic1", "ic2")
@@ -109,14 +123,14 @@ test_that(".parseScenarios reads a scenario's initialConditions references", {
 })
 
 test_that(".parseScenarios leaves initialConditions NULL when JSON omits it", {
-  raw <- list(list(name = "NoIC", modelFile = "m.pkml"))
+  raw <- list(list(id = "NoIC", modelFile = "m.pkml"))
   sc <- .parseScenarios(raw)[["NoIC"]]
   expect_null(sc$initialConditions)
 })
 
 test_that("a scenario's initialConditions round-trips through serialize/parse", {
   sc <- Scenario(
-    scenarioName = "RT",
+    id = "RT",
     modelFile = "m.pkml",
     initialConditions = c("ic1", "ic2")
   )
@@ -125,8 +139,8 @@ test_that("a scenario's initialConditions round-trips through serialize/parse", 
 
   reparsed <- .parseScenarios(
     list(stats::setNames(
-      list(json$name, json$modelFile, json$initialConditions),
-      c("name", "modelFile", "initialConditions")
+      list(json$id, json$modelFile, json$initialConditions),
+      c("id", "modelFile", "initialConditions")
     ))
   )[["RT"]]
   expect_identical(reparsed$initialConditions, c("ic1", "ic2"))
@@ -134,7 +148,7 @@ test_that("a scenario's initialConditions round-trips through serialize/parse", 
 
 test_that(".parseScenarios reads a scenario's solverSettings block verbatim", {
   raw <- list(list(
-    name = "Stiff",
+    id = "Stiff",
     modelFile = "m.pkml",
     solverSettings = list(relTol = 1e-6, checkForNegativeValues = FALSE)
   ))
@@ -146,13 +160,13 @@ test_that(".parseScenarios reads a scenario's solverSettings block verbatim", {
 })
 
 test_that(".parseScenarios leaves solverSettings NULL when JSON omits it", {
-  raw <- list(list(name = "Plain", modelFile = "m.pkml"))
+  raw <- list(list(id = "Plain", modelFile = "m.pkml"))
   expect_null(.parseScenarios(raw)[["Plain"]]$solverSettings)
 })
 
 test_that("a scenario's solverSettings round-trips through serialize/parse", {
   sc <- Scenario(
-    scenarioName = "RTSolver",
+    id = "RTSolver",
     modelFile = "m.pkml",
     solverSettings = list(relTol = 1e-6, hMax = 0.5)
   )
@@ -161,8 +175,8 @@ test_that("a scenario's solverSettings round-trips through serialize/parse", {
 
   reparsed <- .parseScenarios(
     list(stats::setNames(
-      list(json$name, json$modelFile, json$solverSettings),
-      c("name", "modelFile", "solverSettings")
+      list(json$id, json$modelFile, json$solverSettings),
+      c("id", "modelFile", "solverSettings")
     ))
   )[["RTSolver"]]
   expect_identical(reparsed$solverSettings, list(relTol = 1e-6, hMax = 0.5))
@@ -172,7 +186,7 @@ test_that("a scenario without solverSettings emits no key at all", {
   # `null` is not an option: a `jsonlite` round-trip turns it into `{}`, which
   # `.assertNoEmptyObjectFields()` then rejects on load.
   json <- .scenarioToJson(Scenario(
-    scenarioName = "Plain",
+    id = "Plain",
     modelFile = "m.pkml"
   ))
   expect_false("solverSettings" %in% names(json))
@@ -180,25 +194,25 @@ test_that("a scenario without solverSettings emits no key at all", {
 
 test_that("a hand-written empty solverSettings object is rejected on parse", {
   raw <- list(list(
-    name = "Empty",
+    id = "Empty",
     modelFile = "m.pkml",
     solverSettings = stats::setNames(list(), character(0))
   ))
   expect_error(.parseScenarios(raw), "empty object")
 })
 
-test_that(".parseScenarios sets simulationType=Population when populationId present", {
+test_that(".parseScenarios sets simulationType=Population when population present", {
   project <- exampleProject()
   sc <- project$definitions$scenarios[["aciclovir_iv_population"]]
 
-  expect_identical(sc$populationId, "european_adults")
+  expect_identical(sc$population, "european_adults")
   expect_identical(sc$simulationType, "Population")
 })
 
-test_that(".parseScenarios defaults applicationProtocol to NA when JSON has null", {
+test_that(".parseScenarios leaves application NULL when JSON has null", {
   raw <- list(
     list(
-      name = "X",
+      id = "X",
       individual = "i",
       modelFile = "m.pkml",
       application = NULL
@@ -207,14 +221,15 @@ test_that(".parseScenarios defaults applicationProtocol to NA when JSON has null
   result <- .parseScenarios(raw)
 
   expect_length(result, 1L)
-  expect_true(is.na(result[["X"]]$applicationProtocol))
+  expect_named(result[["X"]], .scenarioFieldNames)
+  expect_null(result[["X"]]$application)
 })
 
 test_that(".parseScenarios converts steadyStateTime to base units (minutes)", {
   project <- exampleProject()
   sc <- project$definitions$scenarios[["aciclovir_iv_steadystate"]]
 
-  expect_true(sc$simulateSteadyState)
+  expect_true(sc$steadyState)
   # 1 hour -> 60 minutes
   expect_equal(sc$steadyStateTime, 60)
   expect_identical(sc$steadyStateTimeUnit, "h")
@@ -227,7 +242,7 @@ test_that(".parseScenarios coerces a whole-number steadyStateTime to double", {
   # breaking a byte-equivalent round trip.
   raw <- list(
     list(
-      name = "WholeSS",
+      id = "WholeSS",
       individual = "i",
       modelFile = "m.pkml",
       steadyStateTime = 1000L,
@@ -240,11 +255,11 @@ test_that(".parseScenarios coerces a whole-number steadyStateTime to double", {
   expect_identical(sc$steadyStateTime, 1000)
 })
 
-test_that(".parseScenarios leaves simulateSteadyState=FALSE when JSON omits/sets false", {
+test_that(".parseScenarios leaves steadyState=FALSE when JSON omits/sets false", {
   project <- exampleProject()
   sc <- project$definitions$scenarios[["aciclovir_iv"]]
 
-  expect_false(sc$simulateSteadyState)
+  expect_false(sc$steadyState)
   expect_null(sc$steadyStateTimeUnit)
   # The class default of 1000 stays put when JSON's steadyStateTime is null.
   expect_identical(sc$steadyStateTime, 1000)
@@ -253,7 +268,7 @@ test_that(".parseScenarios leaves simulateSteadyState=FALSE when JSON omits/sets
 test_that(".parseScenarios errors when steadyStateTime set without unit", {
   raw <- list(
     list(
-      name = "BadSS",
+      id = "BadSS",
       individual = "i",
       modelFile = "m.pkml",
       steadyStateTime = 5,
@@ -312,7 +327,7 @@ test_that(".fillScenarioOutputPaths keeps unknown outputPaths ids as dangling re
   # cross-reference validator can flag it later.
   raw <- list(
     list(
-      name = "BadRefs",
+      id = "BadRefs",
       individual = "i",
       modelFile = "m.pkml",
       outputPaths = list("Aciclovir_PVB", "Nope", "AlsoNope")
@@ -338,7 +353,7 @@ test_that(".parseScenarios collapses duplicate outputPaths ids to one (first-see
   # entry so the path is never run or plotted twice, keeping first-seen order.
   raw <- list(
     list(
-      name = "Dups",
+      id = "Dups",
       individual = "i",
       modelFile = "m.pkml",
       outputPaths = list("a", "a", "b", "a")
@@ -366,7 +381,7 @@ test_that("a scenario written back by an authoring function follows a later setO
   duplicateScenario(project, "testscenario", "copied")
   renameScenario(project, "copied", "renamed")
   record <- project$definitions$scenarios[["testscenario"]]
-  record$scenarioName <- "from_record"
+  record$id <- "from_record"
   addScenario(project, record)
 
   newPath <- "Organism|Kidney|Urine|Aciclovir|Concentration"
@@ -389,7 +404,7 @@ test_that("a scenario written back by an authoring function follows a later setO
 test_that(".parseScenarios leaves outputPaths NULL when JSON omits outputPaths", {
   raw <- list(
     list(
-      name = "NoOutputs",
+      id = "NoOutputs",
       individual = "i",
       modelFile = "m.pkml"
     )
@@ -610,7 +625,7 @@ test_that("addScenario treats a zero-length reference vector as none", {
   )
   sc <- project$definitions$scenarios[["nonerefs"]]
   expect_null(sc$outputPaths)
-  expect_null(sc$modelParameterSets)
+  expect_null(sc$parameterSets)
   expect_null(sc$initialConditions)
 })
 
@@ -627,7 +642,7 @@ test_that("addScenario treats the empty list jsonlite yields for [] as none", {
   )
   sc <- project$definitions$scenarios[["emptylist"]]
   expect_null(sc$outputPaths)
-  expect_null(sc$modelParameterSets)
+  expect_null(sc$parameterSets)
 })
 
 test_that("setScenario clears a reference field given a zero-length vector", {
@@ -800,7 +815,7 @@ test_that("addScenario stores steadyStateTime in base units and round-trips the 
   out <- withr::local_tempfile(fileext = ".json")
   .saveProjectJson(project, out)
   raw <- jsonlite::fromJSON(out, simplifyVector = FALSE)
-  savedSS <- Filter(\(s) identical(s[["name"]], "ss"), raw$scenarios)[[1]]
+  savedSS <- Filter(\(s) identical(s[["id"]], "ss"), raw$scenarios)[[1]]
   expect_equal(savedSS$steadyStateTime, 10)
   expect_equal(savedSS$steadyStateTimeUnit, "h")
 
@@ -997,11 +1012,10 @@ test_that("setScenario rejects an unsound solverSettings block", {
 # Passing a parsed Scenario record back ----
 
 test_that("a parsed scenario is accepted back by addScenario() unchanged", {
-  # The record's field names are the ones the runtime reads, not the authoring
-  # argument names, and three of its fields are stored in a different shape from
-  # the one authoring takes (resolved output paths, a parsed time grid, a
-  # base-unit steady-state time). Handing the record back has to survive all of
-  # that: the copy must equal the original in every field but its id.
+  # Three of the record's fields are stored in a different shape from the one
+  # authoring takes (resolved output paths, a parsed time grid, a base-unit
+  # steady-state time). Handing the record back has to survive all of that: the
+  # copy must equal the original in every field but its id.
   project <- testProject()
   setScenario(project, "testscenario", solverSettings = list(relTol = 1e-6))
   sc <- project$definitions$scenarios[["testscenario"]]
@@ -1060,6 +1074,30 @@ test_that("setScenario() takes a parsed scenario, so an edited record writes bac
   expect_equal(after$simulationTimeUnit, "min")
   rest <- setdiff(names(sc), "steadyStateTimeUnit")
   expect_equal(after[rest], sc[rest])
+})
+
+test_that("setScenario() clears the optional fields an edited record leaves empty", {
+  project <- testProject()
+  setScenario(project, "testscenario", label = "Aciclovir IV 250 mg")
+  sc <- project$definitions$scenarios[["testscenario"]]
+  sc$label <- NULL
+  sc$individual <- NULL
+  sc$application <- NULL
+  sc$simulationTime <- NULL
+
+  setScenario(project, sc)
+
+  after <- project$definitions$scenarios[["testscenario"]]
+  expect_equal(
+    after[c("label", "individual", "application", "simulationTime")],
+    list(
+      label = NULL,
+      individual = NULL,
+      application = NULL,
+      simulationTime = NULL
+    )
+  )
+  expect_identical(after$modelFile, "Aciclovir.pkml")
 })
 
 test_that("a scenario record passed with field arguments alongside it aborts", {
@@ -1168,18 +1206,18 @@ test_that("setScenario invalidates the validation cache", {
 test_that("setScenario can clear an optional field with NULL", {
   project <- testProject()
   expect_false(is.null(
-    project$definitions$scenarios[["populationscenario"]]$individualId
+    project$definitions$scenarios[["populationscenario"]]$individual
   ))
 
   setScenario(project, "populationscenario", individual = NULL)
 
   expect_null(
-    project$definitions$scenarios[["populationscenario"]]$individualId
+    project$definitions$scenarios[["populationscenario"]]$individual
   )
   saveProject(project)
   reloaded <- loadProject(project$info$projectFilePath)
   expect_null(
-    reloaded$definitions$scenarios[["populationscenario"]]$individualId
+    reloaded$definitions$scenarios[["populationscenario"]]$individual
   )
 })
 
@@ -1201,15 +1239,60 @@ test_that("saveProject() fails fast on a structural violation, disk untouched", 
   dir <- file.path(project$info$projectDirPath, "definitions", "scenarios")
   beforeFile <- readLines(file.path(dir, "testscenario.json"))
 
-  # Clearing modelFile is a structural violation. The edit is accepted in
-  # memory; the abort happens at save (the serialize-in-memory-first guarantee),
-  # leaving disk unchanged.
-  setScenario(project, "testscenario", modelFile = NULL)
+  # A record without a modelFile is a structural violation. `setScenario()`
+  # refuses one, so it is written through the internal section seam; the abort
+  # happens at save (the serialize-in-memory-first guarantee), leaving disk
+  # unchanged.
+  scenarios <- .getSection(project, "scenarios")
+  scenarios[["testscenario"]]["modelFile"] <- list(NULL)
+  .setSection(project, "scenarios", scenarios)
   expect_error(
     saveProject(project),
     "modelFile"
   )
   expect_identical(readLines(file.path(dir, "testscenario.json")), beforeFile)
+})
+
+test_that("setScenario refuses to clear the required modelFile", {
+  project <- testProject()
+  before <- project$definitions$scenarios
+
+  expect_snapshot(
+    error = TRUE,
+    setScenario(project, "testscenario", modelFile = NULL)
+  )
+  expect_snapshot(
+    error = TRUE,
+    setScenario(project, "testscenario", modelFile = NA)
+  )
+  expect_snapshot(
+    error = TRUE,
+    setScenario(project, "testscenario", modelFile = "")
+  )
+  expect_equal(project$definitions$scenarios, before)
+})
+
+test_that("setScenario leaves every scenario unchanged when one of several ids gets an empty modelFile", {
+  project <- testProject()
+  before <- project$definitions$scenarios
+
+  expect_snapshot(
+    error = TRUE,
+    setScenario(
+      project,
+      c("testscenario", "populationscenario"),
+      modelFile = c("Aciclovir.pkml", "")
+    )
+  )
+  expect_snapshot(
+    error = TRUE,
+    setScenario(
+      project,
+      c("testscenario", "populationscenario"),
+      modelFile = NULL
+    )
+  )
+  expect_equal(project$definitions$scenarios, before)
 })
 
 test_that("setScenario rejects an unknown foreign key like addScenario", {
@@ -1326,7 +1409,7 @@ test_that("renameScenario updates the record's stored name so a reload round-tri
   renameScenario(project, "testscenario", "renamed")
 
   expect_equal(
-    project$definitions$scenarios[["renamed"]]$scenarioName,
+    project$definitions$scenarios[["renamed"]]$id,
     "renamed"
   )
   # A reload re-derives scenarios from the tree; the new key must validate and
@@ -1339,7 +1422,7 @@ test_that("renameScenario updates the record's stored name so a reload round-tri
   )
   expect_true("renamed" %in% names(reloaded$definitions$scenarios))
   expect_equal(
-    reloaded$definitions$scenarios[["renamed"]]$scenarioName,
+    reloaded$definitions$scenarios[["renamed"]]$id,
     "renamed"
   )
   expect_no_error(validateProject(reloaded))
@@ -1411,7 +1494,7 @@ test_that("duplicateScenario creates an independent copy in memory, persisted on
   expect_true(all(
     c("testscenario", "copy") %in% names(project$definitions$scenarios)
   ))
-  expect_equal(project$definitions$scenarios[["copy"]]$scenarioName, "copy")
+  expect_equal(project$definitions$scenarios[["copy"]]$id, "copy")
   # On save, the copy is a new definition file alongside the original.
   saveProject(project)
   expect_true(file.exists(file.path(dir, "testscenario.json")))
@@ -1677,7 +1760,7 @@ test_that("print.Scenario lists output paths, flagging unresolved ids", {
   withr::local_options(cli.unicode = FALSE)
   local_reproducible_output()
   scenario <- Scenario(
-    scenarioName = "outputs",
+    id = "outputs",
     modelFile = "Aciclovir.pkml",
     outputPaths = c(
       plasma = "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)",
@@ -1690,6 +1773,170 @@ test_that("print.Scenario lists output paths, flagging unresolved ids", {
 test_that("print.Scenario shows an empty output-path block when there are none", {
   withr::local_options(cli.unicode = FALSE)
   local_reproducible_output()
-  scenario <- Scenario(scenarioName = "nooutputs", modelFile = "Aciclovir.pkml")
+  scenario <- Scenario(id = "nooutputs", modelFile = "Aciclovir.pkml")
   expect_snapshot(print(scenario))
+})
+
+# label ----
+
+test_that("addScenario keeps a label exactly as typed while the id is canonicalized", {
+  project <- testProject()
+  expect_warning(
+    addScenario(
+      project,
+      "Aciclovir_IV-2.5mg/kg",
+      modelFile = "Aciclovir.pkml",
+      label = "Aciclovir_IV-2.5mg/kg"
+    ),
+    "aciclovir_iv-2.5mg_kg"
+  )
+
+  sc <- project$definitions$scenarios[["aciclovir_iv-2.5mg_kg"]]
+  expect_identical(sc$id, "aciclovir_iv-2.5mg_kg")
+  expect_identical(sc$label, "Aciclovir_IV-2.5mg/kg")
+})
+
+test_that("addScenario sets no label unless one is passed", {
+  project <- testProject()
+  suppressWarnings(addScenario(
+    project,
+    "MyScenario",
+    modelFile = "Aciclovir.pkml"
+  ))
+  saveProject(project)
+
+  expect_null(project$definitions$scenarios[["myscenario"]]$label)
+  file <- file.path(
+    project$info$projectDirPath,
+    "definitions",
+    "scenarios",
+    "myscenario.json"
+  )
+  expect_false("label" %in% names(jsonlite::read_json(file)))
+})
+
+test_that("a scenario label survives save, load, snapshot and restore", {
+  project <- testProject()
+  label <- "Aciclovir IV {250 mg} / Kidney"
+  setScenario(project, "testscenario", label = label)
+
+  saveProject(project)
+  reloaded <- loadProject(project$info$projectFilePath)
+  expect_identical(
+    reloaded$definitions$scenarios[["testscenario"]]$label,
+    label
+  )
+
+  snapshot <- snapshotProject(
+    reloaded,
+    dir = withr::local_tempdir(),
+    name = "with_label"
+  )
+  restored <- restoreProject(snapshot, withr::local_tempdir())
+  expect_identical(
+    restored$definitions$scenarios[["testscenario"]]$label,
+    label
+  )
+})
+
+test_that("setScenario sets a label and clears it with NULL", {
+  project <- testProject()
+
+  setScenario(project, "testscenario", label = "Aciclovir IV")
+  expect_identical(
+    project$definitions$scenarios[["testscenario"]]$label,
+    "Aciclovir IV"
+  )
+
+  setScenario(project, "testscenario", label = NULL)
+  expect_null(project$definitions$scenarios[["testscenario"]]$label)
+  expect_named(
+    project$definitions$scenarios[["testscenario"]],
+    .scenarioFieldNames
+  )
+})
+
+test_that("addScenario and setScenario refuse a label that is not one non-empty string", {
+  project <- testProject()
+  before <- project$definitions$scenarios
+
+  expect_snapshot(
+    error = TRUE,
+    addScenario(project, "numbered", modelFile = "Aciclovir.pkml", label = 1)
+  )
+  expect_snapshot(
+    error = TRUE,
+    setScenario(project, "testscenario", label = NA)
+  )
+  # An empty label would print in one place and not the other, and an Excel
+  # round trip reads its blank cell back as no label.
+  expect_snapshot(
+    error = TRUE,
+    setScenario(project, "testscenario", label = "")
+  )
+  expect_equal(project$definitions$scenarios, before)
+})
+
+test_that("validateProject reports a hand-edited label that is not one string", {
+  project <- testProject()
+  saveProject(project)
+  file <- file.path(
+    project$info$projectDirPath,
+    "definitions",
+    "scenarios",
+    "testscenario.json"
+  )
+  entry <- jsonlite::read_json(file)
+  entry$label <- list("Aciclovir", "IV")
+  jsonlite::write_json(entry, file, auto_unbox = TRUE, null = "null")
+  reloaded <- loadProject(project$info$projectFilePath)
+
+  messages <- vapply(
+    validateProject(reloaded)$scenarios$critical_errors,
+    function(e) e$message,
+    character(1)
+  )
+  expect_true(
+    "Scenario 'testscenario' has a label that is not a single non-empty string" %in%
+      messages
+  )
+})
+
+test_that("print shows a scenario's label after its id, and the section lists it", {
+  project <- testProject()
+  setScenario(project, "testscenario", label = "Aciclovir IV 250 mg")
+
+  expect_snapshot({
+    print(project$definitions$scenarios[["testscenario"]])
+    print(project$definitions$scenarios)
+  })
+})
+
+test_that("print leaves out a label that is not one string, as the section print does", {
+  project <- testProject()
+  scenarios <- .getSection(project, "scenarios")
+  scenarios[["testscenario"]]["label"] <- list(list("Aciclovir", "IV"))
+  .setSection(project, "scenarios", scenarios)
+
+  printed <- utils::capture.output(
+    print(project$definitions$scenarios[["testscenario"]])
+  )
+  expect_false(any(grepl("Label", printed, fixed = TRUE)))
+})
+
+test_that("duplicateScenario gives the copy no label", {
+  project <- testProject()
+  setScenario(project, "testscenario", label = "Aciclovir IV 250 mg")
+
+  duplicateScenario(project, "testscenario", "testscenario_copy")
+
+  expect_identical(
+    project$definitions$scenarios[["testscenario"]]$label,
+    "Aciclovir IV 250 mg"
+  )
+  expect_null(project$definitions$scenarios[["testscenario_copy"]]$label)
+  expect_named(
+    project$definitions$scenarios[["testscenario_copy"]],
+    .scenarioFieldNames
+  )
 })

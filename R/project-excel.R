@@ -125,7 +125,7 @@
                 appended$renames
               ))
             }
-            indivCanonical <- .canonicalizeOneId(indiv$individualId)
+            indivCanonical <- .canonicalizeOneId(indiv$id)
             # A blank/NA individual id (e.g. a trailing blank row) matches
             # nothing: an `NA ==` comparison yields all-NA, and indexing by an
             # all-NA logical returns a vector of NAs, not an empty one, so guard
@@ -752,7 +752,9 @@ importProjectFromExcel <- function(
   # same Excel spelling as its definition still resolves). Excel ids that were
   # not already canonical (e.g. `Global`, `Aciclovir_PVB`) become `global`,
   # `aciclovir_pvb`.
+  jsonData$scenarios <- .keepScenarioNamesAsLabels(jsonData$scenarios)
   jsonData <- .canonicalizeProjectJsonIds(jsonData)
+  jsonData <- .dataCombinedPathsAsOutputPathIds(jsonData)
 
   # An observed curve that names no data set is kept as authored, so a user who
   # can still supply the missing piece is not silently robbed of the row. But
@@ -1014,11 +1016,11 @@ exportProjectToExcel <- function(
     if (!is.null(dcSheet)) {
       plotSheets[["DataCombined"]] <- dcSheet
     }
-    pcSheet <- .plotEntriesToExcelDf(plots)
+    pcSheet <- .plotEntriesToExcelDf(plots, "plotId")
     if (!is.null(pcSheet)) {
       plotSheets[["plotConfiguration"]] <- pcSheet
     }
-    pgSheet <- .plotEntriesToExcelDf(plotGrids)
+    pgSheet <- .plotEntriesToExcelDf(plotGrids, "plotGridId")
     if (!is.null(pgSheet)) {
       plotSheets[["plotGrids"]] <- pgSheet
     }
@@ -1212,6 +1214,11 @@ exportProjectToExcel <- function(
   currentJsonObj <- suppressWarnings(
     .canonicalizeProjectJsonIds(currentJsonObj)
   )
+  # The workbook side names a DataCombined output by its output-path id wherever
+  # one id has that path, so the memory side is read the same way: a curve
+  # written as the path and one written as that path's id show the same output.
+  originalJsonObj <- .dataCombinedPathsAsOutputPathIds(originalJsonObj)
+  currentJsonObj <- .dataCombinedPathsAsOutputPathIds(currentJsonObj)
 
   # Both sides are compared with their object keys in one order, because the
   # order a record's fields sit in carries no meaning and the round trip does not
@@ -1567,9 +1574,8 @@ projectStatus <- function(project, silent = FALSE) {
 #' Canonicalize every id and id-reference in an imported `Project.json` list
 #'
 #' Runs `.canonicalizeOneId()` over the keyed-section ids (`outputPaths`,
-#' `parameterSets`, `applications` map keys; the scenario `name` and the
-#' `individualId` / `populationId` self-id fields of the individual /
-#' population records) and over every reference to one (a scenario's
+#' `parameterSets`, `applications` map keys; the `id` field of the scenario,
+#' individual and population records) and over every reference to one (a scenario's
 #' `individual`, `population`, `application`, `parameterSets`,
 #' `outputPaths`; an individual's or application's `parameterSets`). The same
 #' deterministic transform is applied to a definition and to a reference, so a
@@ -1662,9 +1668,9 @@ projectStatus <- function(project, silent = FALSE) {
   }
 
   if (!is.null(jsonData$scenarios)) {
-    checkRecordIds(jsonData$scenarios, "name")
+    checkRecordIds(jsonData$scenarios, "id")
     jsonData$scenarios <- lapply(jsonData$scenarios, function(sc) {
-      sc$name <- canonScalar(sc$name)
+      sc$id <- canonScalar(sc$id)
       sc$individual <- canonScalar(sc$individual)
       sc$population <- canonScalar(sc$population)
       sc$application <- canonScalar(sc$application)
@@ -1676,9 +1682,9 @@ projectStatus <- function(project, silent = FALSE) {
   }
 
   if (!is.null(jsonData$individuals)) {
-    checkRecordIds(jsonData$individuals, "individualId")
+    checkRecordIds(jsonData$individuals, "id")
     jsonData$individuals <- lapply(jsonData$individuals, function(ind) {
-      ind$individualId <- canonScalar(ind$individualId)
+      ind$id <- canonScalar(ind$id)
       if (!is.null(ind$parameterSets)) {
         ind$parameterSets <- canonVec(ind$parameterSets)
       }
@@ -1687,9 +1693,9 @@ projectStatus <- function(project, silent = FALSE) {
   }
 
   if (!is.null(jsonData$populations)) {
-    checkRecordIds(jsonData$populations, "populationId")
+    checkRecordIds(jsonData$populations, "id")
     jsonData$populations <- lapply(jsonData$populations, function(pop) {
-      pop$populationId <- canonScalar(pop$populationId)
+      pop$id <- canonScalar(pop$id)
       pop
     })
   }
@@ -1717,8 +1723,7 @@ projectStatus <- function(project, silent = FALSE) {
   }
 
   # The three plots sections each persist as a keyed definition tree that keys
-  # files by a canonical id (`dataCombinedId` / `plotId` / `plotGridId`), so
-  # canonicalize those ids and every reference among the three together with the
+  # files by each record's canonical `id`, so canonicalize those ids and every reference among the three together with the
   # same deterministic helper, so the migrated tree's inner cross-references
   # still resolve. A plot's `dataCombined` rows also reference a scenario by id;
   # canonicalize that so it resolves against the (canonicalized) scenario
@@ -1726,7 +1731,7 @@ projectStatus <- function(project, silent = FALSE) {
   # data, whose ids are file basenames / DataSet names matched verbatim and
   # never canonicalized, so they are deliberately left untouched.
   if (!is.null(jsonData$dataCombined)) {
-    checkRecordIds(jsonData$dataCombined, "dataCombinedId")
+    checkRecordIds(jsonData$dataCombined, "id")
     canonEntryScenario <- function(entry) {
       entry$scenario <- canonScalar(entry$scenario)
       entry
@@ -1734,7 +1739,7 @@ projectStatus <- function(project, silent = FALSE) {
     jsonData$dataCombined <- lapply(
       jsonData$dataCombined,
       function(dc) {
-        dc$dataCombinedId <- canonScalar(dc$dataCombinedId)
+        dc$id <- canonScalar(dc$id)
         # Both entry blocks may name a scenario, and an observed row's `scenario`
         # is the same kind of reference as a simulated row's, so it gets the same
         # transform: leaving it at the Excel spelling would put two casings of one
@@ -1751,22 +1756,22 @@ projectStatus <- function(project, silent = FALSE) {
     )
   }
   if (!is.null(jsonData$plots)) {
-    checkRecordIds(jsonData$plots, "plotId")
+    checkRecordIds(jsonData$plots, "id")
     jsonData$plots <- lapply(
       jsonData$plots,
       function(plot) {
-        plot$plotId <- canonScalar(plot$plotId)
+        plot$id <- canonScalar(plot$id)
         plot$dataCombined <- canonScalar(plot$dataCombined)
         plot
       }
     )
   }
   if (!is.null(jsonData$plotGrids)) {
-    checkRecordIds(jsonData$plotGrids, "plotGridId")
+    checkRecordIds(jsonData$plotGrids, "id")
     jsonData$plotGrids <- lapply(
       jsonData$plotGrids,
       function(grid) {
-        grid$plotGridId <- canonScalar(grid$plotGridId)
+        grid$id <- canonScalar(grid$id)
         # `plots` is the grid's plot-id set stored as one comma-separated
         # string. A plot id may legally contain a comma, so decode and re-encode
         # with the escape-aware pair (`.splitPlotIDs()` / `.joinPlotIDs()`) that
@@ -2308,7 +2313,7 @@ projectStatus <- function(project, silent = FALSE) {
   ids <- character()
   sheets <- character()
   for (individual in individuals) {
-    id <- .canonicalizeOneId(as.character(individual$individualId))
+    id <- .canonicalizeOneId(as.character(individual$id))
     if (is.na(id)) {
       next
     }
@@ -2325,7 +2330,7 @@ projectStatus <- function(project, silent = FALSE) {
     if (length(lost) == 0L) {
       next
     }
-    ids <- c(ids, rep(as.character(individual$individualId), length(lost)))
+    ids <- c(ids, rep(as.character(individual$id), length(lost)))
     sheets <- c(sheets, lost)
   }
   if (length(ids) == 0L) {
@@ -2368,7 +2373,7 @@ projectStatus <- function(project, silent = FALSE) {
   defined <- vapply(
     individuals %||% list(),
     function(individual) {
-      .canonicalizeOneId(as.character(individual$individualId))
+      .canonicalizeOneId(as.character(individual$id))
     },
     character(1)
   )
@@ -2548,8 +2553,8 @@ projectStatus <- function(project, silent = FALSE) {
   result
 }
 
-# The columns a Scenarios sheet must carry. `InitialConditions` is a newer,
-# optional column (an older sheet omits it), so it is validated separately.
+# The columns a Scenarios sheet must carry. `InitialConditions` and `Label` are
+# newer, optional columns (an older sheet omits them), so they are not listed.
 # Column access below uses `[[` (exact match) rather than `$` (partial match),
 # so a renamed column (e.g. `OutputPathsId` for `OutputPathsIds`) is caught by
 # the schema guard instead of silently resolving to a partial-prefix match or
@@ -2569,6 +2574,74 @@ projectStatus <- function(project, silent = FALSE) {
   "ModelFile",
   "OutputPathsIds"
 )
+
+# Write the `path` of each simulated DataCombined curve as the id of its output
+# path, when exactly one output-path definition has that exact path, so an
+# imported curve names its output the way a scenario does. With no match the
+# path is kept: a scenario without `outputPaths` simulates the model's own
+# outputs, which have no id. With several matches it is kept too, since no one
+# id is the right one. `jsonData` is a project container, with `dataCombined` as
+# an array of records and `outputPaths` as an `id -> path` map. Runs after
+# `.canonicalizeProjectJsonIds()`, so the ids written are the canonical ones.
+#
+# @keywords internal
+# @noRd
+.dataCombinedPathsAsOutputPathIds <- function(jsonData) {
+  outputPaths <- jsonData$outputPaths
+  if (length(jsonData$dataCombined) == 0L || length(outputPaths) == 0L) {
+    return(jsonData)
+  }
+  ids <- names(outputPaths)
+  paths <- vapply(
+    outputPaths,
+    function(path) {
+      if (is.character(path) && length(path) == 1L) path else NA_character_
+    },
+    character(1)
+  )
+  asId <- function(entry) {
+    path <- entry$path
+    if (is.character(path) && length(path) == 1L) {
+      match <- ids[!is.na(paths) & paths == path]
+      if (length(match) == 1L) {
+        entry$path <- match
+      }
+    }
+    entry
+  }
+  jsonData$dataCombined <- lapply(jsonData$dataCombined, function(dc) {
+    if (!is.null(dc$simulated)) {
+      dc$simulated <- lapply(dc$simulated, asId)
+    }
+    dc
+  })
+  jsonData
+}
+
+# Keep the `Scenario_name` text of each imported scenario as its label when
+# canonicalizing the id will change more than its case, so the spelling a 5.x
+# workbook used is not lost: `Aciclovir_IV-2.5mg/kg` becomes the id
+# `aciclovir_iv-2.5mg_kg` and the label `Aciclovir_IV-2.5mg/kg`. A name the id
+# only lowercases (`Aciclovir_IV`) gets no label, since the id already reads the
+# same; otherwise nearly every 5.x scenario would carry one, and a modeler who
+# cleared it could not say so in the workbook. Wrapping quotes are cell syntax, not part of
+# the name, so they are stripped first, as `.canonicalizeProjectJsonIds()` does:
+# a quoted `"aciclovir_iv"` gets no label. A label the sheet gives in its `Label`
+# column wins. Runs on the raw entries, before `.canonicalizeProjectJsonIds()`.
+#
+# @keywords internal
+# @noRd
+.keepScenarioNamesAsLabels <- function(scenarios) {
+  lapply(scenarios, function(sc) {
+    if (is.null(sc$label) && .isNonEmptyString(sc$id)) {
+      name <- .stripWrappingQuotes(sc$id)
+      if (!identical(.canonicalizeOneId(name), tolower(name))) {
+        sc$label <- name
+      }
+    }
+    sc
+  })
+}
 
 #' Parse Scenarios Excel sheet into JSON structure
 #' @param scenarioDf Data frame from the Scenarios sheet
@@ -2590,7 +2663,12 @@ projectStatus <- function(project, silent = FALSE) {
   for (i in seq_len(nrow(scenarioDf))) {
     row <- scenarioDf[i, ]
     scenario <- list(
-      name = as.character(row[["Scenario_name"]]),
+      id = as.character(row[["Scenario_name"]]),
+      # `Label` is a newer column; an older Scenarios sheet omits it, and a blank
+      # cell means the scenario has no label.
+      label = if ("Label" %in% names(row)) {
+        .naToNull(as.character(row[["Label"]]))
+      },
       individual = .naToNull(as.character(row[["IndividualId"]])),
       population = .naToNull(as.character(row[["PopulationId"]])),
       readPopulationFromCSV = .naToNull(
@@ -2681,7 +2759,7 @@ projectStatus <- function(project, silent = FALSE) {
   }
   ids <- vapply(
     dataCombined[incomplete],
-    function(dc) as.character(dc$dataCombinedId),
+    function(dc) as.character(dc$id),
     character(1)
   )
   .warnFormatted(
@@ -2868,7 +2946,7 @@ projectStatus <- function(project, silent = FALSE) {
     # to the user. `[[` yields `NULL` for an absent column, which `.naToNull()`
     # turns into an absent field. Matches `.parseExcelScenarios()` below.
     indiv <- list(
-      individualId = as.character(row[["IndividualId"]]),
+      id = as.character(row[["IndividualId"]]),
       species = as.character(row[["Species"]]),
       population = as.character(row[["Population"]]),
       # A blank Gender cell defaults to UNKNOWN (the only valid PK-Sim gender
@@ -2915,7 +2993,7 @@ projectStatus <- function(project, silent = FALSE) {
     # `.parseExcelIndividuals()` above: every demographic here is optional, and
     # `$` on a parsed sheet warns about a column the workbook omits.
     pop <- list(
-      populationId = as.character(row[["PopulationName"]]),
+      id = as.character(row[["PopulationName"]]),
       species = as.character(row[["species"]]),
       population = as.character(row[["population"]]),
       numberOfIndividuals = .naToNull(as.numeric(row[["numberOfIndividuals"]])),
@@ -2945,8 +3023,8 @@ projectStatus <- function(project, silent = FALSE) {
 #' Parse Plots Excel file into the project's nested plots JSON structure
 #'
 #' Maps the legacy Excel plot sheets onto the v2.0 plots section so the import
-#' round-trips through the definition-file tree (which keys files by `plotId` /
-#' `plotGridId` / `dataCombinedId`). The `DataCombined` sheet is long-format
+#' round-trips through the definition-file tree (which keys files by each
+#' record's `id`). The `DataCombined` sheet is long-format
 #' (one row per simulated/observed curve, grouped by `DataCombinedName`); the
 #' `plotConfiguration` and `plotGrids` sheets carry the legacy `plotID` /
 #' `DataCombinedName` / `name` / `plotIDs` column spellings. Only these three
@@ -2971,18 +3049,32 @@ projectStatus <- function(project, silent = FALSE) {
     }
     df
   }
-  rowToFields <- function(df, i, idColumn, idField, drop = character()) {
+  # `idColumn` lists the sheet's id columns in order of preference: the id is
+  # the first one with a value, placed where the first id column sits.
+  rowToFields <- function(df, i, idColumn, drop = character()) {
+    idValue <- NULL
+    for (col in intersect(idColumn, names(df))) {
+      idValue <- .naToNull(df[[col]][[i]])
+      if (!is.null(idValue)) {
+        break
+      }
+    }
     fields <- list()
     for (col in names(df)) {
       if (col %in% drop) {
+        next
+      }
+      if (col %in% idColumn) {
+        if (!is.null(idValue) && is.null(fields$id)) {
+          fields$id <- .plotFieldValue("id", idValue)
+        }
         next
       }
       val <- .naToNull(df[[col]][[i]])
       if (is.null(val)) {
         next
       }
-      field <- if (identical(col, idColumn)) idField else col
-      fields[[field]] <- .plotFieldValue(field, val)
+      fields[[col]] <- .plotFieldValue(col, val)
     }
     fields
   }
@@ -2996,8 +3088,8 @@ projectStatus <- function(project, silent = FALSE) {
     rowToFields
   )
   plotGrids <- .parseExcelPlotGridSheet(readSheet("plotGrids"), rowToFields)
-  .warnDuplicatePlotIds(plotConfiguration, "plotId", "plotConfiguration")
-  .warnDuplicatePlotIds(plotGrids, "plotGridId", "plotGrids")
+  .warnDuplicatePlotIds(plotConfiguration, "plotConfiguration")
+  .warnDuplicatePlotIds(plotGrids, "plotGrids")
 
   list(
     dataCombined = .parseExcelDataCombinedSheet(readSheet("DataCombined")),
@@ -3055,19 +3147,18 @@ projectStatus <- function(project, silent = FALSE) {
 # same plot as a row that does not.
 #
 # @param records The parsed records of the sheet (an unnamed list).
-# @param idField The record field holding the id (`plotId` / `plotGridId`).
 # @param sheet The sheet name, for the warning.
 # @returns Nothing, called for its warning.
 # @keywords internal
 # @noRd
-.warnDuplicatePlotIds <- function(records, idField, sheet) {
+.warnDuplicatePlotIds <- function(records, sheet) {
   if (length(records) == 0L) {
     return(invisible(NULL))
   }
   ids <- vapply(
     records,
     function(record) {
-      .canonicalizeOneId(.stripWrappingQuotes(as.character(record[[idField]])))
+      .canonicalizeOneId(.stripWrappingQuotes(as.character(record[["id"]])))
     },
     character(1)
   )
@@ -3076,8 +3167,41 @@ projectStatus <- function(project, silent = FALSE) {
     return(invisible(NULL))
   }
   .warnFormatted(
-    messages$importDuplicatePlotIds(sheet, idField, duplicated),
+    messages$importDuplicatePlotIds(sheet, duplicated),
     "esqlabsR_importDuplicatePlotIds"
+  )
+}
+
+# Warn about the rows of a plot sheet whose two id columns both hold a value and
+# disagree. A sheet has two only when columns were merged by hand: the one an
+# export writes (`plotId` / `plotGridId`) and the 5.x one (`plotID` / `name`).
+# The import takes the first column of `idColumn`; without the warning a grid
+# that references the other id fails later with an unknown-plot error that does
+# not say why.
+#
+# @param df The sheet, as read.
+# @param idColumn The id columns, preferred one first.
+# @param sheet The sheet name, for the warning.
+# @returns Nothing, called for its warning.
+# @keywords internal
+# @noRd
+.warnConflictingPlotIdColumns <- function(df, idColumn, sheet) {
+  if (!all(idColumn %in% names(df))) {
+    return(invisible(NULL))
+  }
+  used <- as.character(df[[idColumn[[1]]]])
+  other <- as.character(df[[idColumn[[2]]]])
+  rows <- which(!is.na(used) & !is.na(other) & used != other)
+  if (length(rows) == 0L) {
+    return(invisible(NULL))
+  }
+  .warnFormatted(
+    messages$importConflictingPlotIdColumns(
+      sheet,
+      idColumn,
+      paste0(used[rows], " / ", other[rows])
+    ),
+    "esqlabsR_importConflictingPlotIdColumns"
   )
 }
 
@@ -3120,7 +3244,7 @@ projectStatus <- function(project, silent = FALSE) {
 
 # Group the long-format DataCombined sheet (one row per simulated/observed
 # curve, distinguished by the `dataType` column) into nested dataCombined
-# records keyed by `dataCombinedId` (the `DataCombinedName` column). A row with
+# records keyed by `id` (the `DataCombinedName` column). A row with
 # no `DataCombinedName` is dropped.
 #
 # @keywords internal
@@ -3159,7 +3283,7 @@ projectStatus <- function(project, silent = FALSE) {
     }
     if (is.null(grouped[[name]])) {
       grouped[[name]] <- list(
-        dataCombinedId = name,
+        id = name,
         simulated = list(),
         observed = list()
       )
@@ -3179,13 +3303,14 @@ projectStatus <- function(project, silent = FALSE) {
   if (is.null(df)) {
     return(list())
   }
+  idColumn <- c("plotId", "plotID")
+  .warnConflictingPlotIdColumns(df, idColumn, "plotConfiguration")
   records <- list()
   for (i in seq_len(nrow(df))) {
     fields <- rowToFields(
       df,
       i,
-      idColumn = "plotID",
-      idField = "plotId",
+      idColumn = idColumn,
       drop = "DataCombinedName"
     )
     # 5.x spelled the linear scale `"lin"`.
@@ -3203,7 +3328,7 @@ projectStatus <- function(project, silent = FALSE) {
         fields$dataCombined <- dataCombinedName
       }
     }
-    if (is.null(fields$plotId)) {
+    if (is.null(fields$id)) {
       next
     }
     records[[length(records) + 1L]] <- fields
@@ -3217,13 +3342,14 @@ projectStatus <- function(project, silent = FALSE) {
   if (is.null(df)) {
     return(list())
   }
+  idColumn <- c("plotGridId", "name")
+  .warnConflictingPlotIdColumns(df, idColumn, "plotGrids")
   records <- list()
   for (i in seq_len(nrow(df))) {
     fields <- rowToFields(
       df,
       i,
-      idColumn = "name",
-      idField = "plotGridId",
+      idColumn = idColumn,
       drop = "plotIDs"
     )
     # Map the legacy `plotIDs` column onto the canonical `plots` JSON key; a
@@ -3245,7 +3371,7 @@ projectStatus <- function(project, silent = FALSE) {
         .parseCommaListToArray(as.character(fields$plots))
       )
     }
-    if (is.null(fields$plotGridId)) {
+    if (is.null(fields$id)) {
       next
     }
     records[[length(records) + 1L]] <- fields
@@ -3773,7 +3899,7 @@ projectStatus <- function(project, silent = FALSE) {
   # output path, which is the one wrong thing to tell the user.
   canonical <- vapply(
     scenarios %||% list(),
-    function(scenario) .canonicalizeOneId(as.character(scenario$name)),
+    function(scenario) .canonicalizeOneId(as.character(scenario$id)),
     character(1)
   )
   outputPathsOf <- function(name) {
@@ -4069,18 +4195,17 @@ projectStatus <- function(project, silent = FALSE) {
 }
 
 # Render a keyed list of plot / grid entries (each a named list of canonical
-# fields) back to one data.frame row per entry. The in-memory reference field is
-# mapped back to its suffixless on-disk key (`dataCombinedId` -> `dataCombined`,
-# `plotIds` -> `plots`) so the exported column header matches the JSON key and
-# the sheet round-trips through `.parseExcelPlots()`. Returns NULL for an empty
-# part.
+# fields) back to one data.frame row per entry. Each field is a column named
+# after it, except the `id` field: it goes to the sheet's own id column
+# (`idColumn`: `plotId` on the plotConfiguration sheet, `plotGridId` on the
+# plotGrids sheet), which `.parseExcelPlots()` reads back as the id. Returns NULL for an empty part.
 #
 # @keywords internal
 # @noRd
-.plotEntriesToExcelDf <- function(entries) {
+.plotEntriesToExcelDf <- function(entries, idColumn) {
   entries <- entries %||% list()
   .recordsToExcelDf(unname(lapply(entries, function(e) {
-    e <- .plotRefFieldToKey(e, class(e)[[1]])
+    names(e)[names(e) == "id"] <- idColumn
     class(e) <- "list"
     e
   })))
@@ -4350,7 +4475,7 @@ projectStatus <- function(project, silent = FALSE) {
   rows <- list()
   for (name in names(scenarioConfigs)) {
     sc <- scenarioConfigs[[name]]
-    paramSetsStr <- .formatArrayToCommaList(sc$modelParameterSets)
+    paramSetsStr <- .formatArrayToCommaList(sc$parameterSets)
     initialConditionsStr <- .formatArrayToCommaList(sc$initialConditions)
     # simulationTime -> string representation
     simTimeStr <- NA
@@ -4399,7 +4524,7 @@ projectStatus <- function(project, silent = FALSE) {
     ssTime <- NA
     ssTimeUnit <- NA
     if (
-      (isTRUE(sc$simulateSteadyState) || !is.null(sc$steadyStateTimeUnit)) &&
+      (isTRUE(sc$steadyState) || !is.null(sc$steadyStateTimeUnit)) &&
         !is.null(sc$steadyStateTime) &&
         !is.na(sc$steadyStateTime)
     ) {
@@ -4412,20 +4537,20 @@ projectStatus <- function(project, silent = FALSE) {
     }
 
     rows[[length(rows) + 1]] <- data.frame(
-      Scenario_name = sc$scenarioName,
-      IndividualId = sc$individualId %||% NA,
+      Scenario_name = sc$id,
+      IndividualId = sc$individual %||% NA,
       PopulationId = if (sc$simulationType == "Population") {
-        sc$populationId
+        sc$population
       } else {
         NA
       },
       ReadPopulationFromCSV = sc$readPopulationFromCSV %||% FALSE,
       ModelParameterSheets = paramSetsStr,
       InitialConditions = initialConditionsStr,
-      ApplicationProtocol = sc$applicationProtocol %||% NA,
+      ApplicationProtocol = sc$application %||% NA,
       SimulationTime = simTimeStr,
       SimulationTimeUnit = sc$simulationTimeUnit %||% NA,
-      SteadyState = sc$simulateSteadyState %||% FALSE,
+      SteadyState = sc$steadyState %||% FALSE,
       SteadyStateTime = ssTime,
       SteadyStateTimeUnit = ssTimeUnit,
       OverwriteFormulasInSS = sc$overwriteFormulasInSS %||% FALSE,
@@ -4435,7 +4560,25 @@ projectStatus <- function(project, silent = FALSE) {
       stringsAsFactors = FALSE
     )
   }
-  do.call(rbind, rows)
+  df <- do.call(rbind, rows)
+  # The `Label` column goes next to `Scenario_name`, and only when a scenario has
+  # a label, so a project without labels exports the sheet a 5.x workbook has.
+  labels <- vapply(
+    scenarioConfigs,
+    function(sc) if (.isNonEmptyString(sc$label)) sc$label else NA_character_,
+    character(1),
+    USE.NAMES = FALSE
+  )
+  if (!is.null(df) && any(!is.na(labels))) {
+    df <- data.frame(
+      df[1L],
+      Label = labels,
+      df[-1L],
+      check.names = FALSE,
+      stringsAsFactors = FALSE
+    )
+  }
+  df
 }
 
 #' Extract private .filePathsData from a Project (the live working folders)

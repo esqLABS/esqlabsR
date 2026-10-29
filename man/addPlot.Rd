@@ -11,7 +11,7 @@ addPlot(project, id, dataCombined, plotType, ...)
 
 \item{id}{Character vector of unique plot identifiers (the number of plots
 to add). Each is canonicalized to a safe, lowercase id (a warning names
-the result if it changed). Stored in the \code{plotId} field.}
+the result if it changed). Stored in the \code{id} field.}
 
 \item{dataCombined}{Character, length 1 (recycled to all plots) or the
 same length as \code{id} (aligned by position). Each must reference an
@@ -59,7 +59,7 @@ The \code{project} object, invisibly.
 }
 \description{
 Add one or more entries to \code{plots} definitions (a keyed list, one entry per
-plot). Errors if a \code{plotId} already exists, if a \code{dataCombined} is not
+plot). Errors if an \code{id} already exists, if a \code{dataCombined} is not
 present in \code{dataCombined} definitions, if a \code{plotType} is not one of the
 supported types, or if a field in \code{...} is not supported or has an invalid
 value. Nothing is added when one plot fails these checks.

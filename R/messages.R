@@ -693,20 +693,39 @@ messages$importSkippedPlotExportConfiguration <- function(
   )
 }
 
-messages$importDuplicatePlotIds <- function(sheet, idField, ids) {
+messages$importDuplicatePlotIds <- function(sheet, ids) {
   # Unglued, like its neighbours: a plot id is free text.
   envir <- new.env(parent = parent.frame())
   assign("sheet", sheet, envir = envir)
-  assign("idField", idField, envir = envir)
   assign("ids", ids, envir = envir)
   assign("n", length(ids), envir = envir)
   list(
     bullets = c(
-      "!" = "{cli::qty(n)}{n} {.field {idField}}{?s} {?is/are} used by more than \\
+      "!" = "{cli::qty(n)}{n} id{?s} {?is/are} used by more than \\
       one row of the {.field {sheet}} sheet: {.val {ids}}.",
       "i" = "Each id is one definition, built from the last row that carries it, \\
       so the earlier {cli::qty(n)}row{?s} {?is/are} not imported.",
       "i" = "Give every row its own id in Excel and import again to keep them all."
+    ),
+    envir = envir
+  )
+}
+
+messages$importConflictingPlotIdColumns <- function(sheet, columns, pairs) {
+  # Unglued, like its neighbours: a plot id is free text.
+  envir <- new.env(parent = parent.frame())
+  assign("sheet", sheet, envir = envir)
+  assign("used", columns[[1]], envir = envir)
+  assign("other", columns[[2]], envir = envir)
+  assign("pairs", pairs, envir = envir)
+  assign("n", length(pairs), envir = envir)
+  list(
+    bullets = c(
+      "!" = "The {.field {sheet}} sheet has both a {.field {used}} and a \\
+      {.field {other}} column, and they hold different ids in {n} \\
+      row{?s} ({.field {used}} / {.field {other}}): {.val {pairs}}.",
+      "i" = "The id is taken from {.field {used}}. Keep one id column in \\
+      Excel and import again to use the other."
     ),
     envir = envir
   )
@@ -1067,7 +1086,7 @@ messages$noPopulationsFolderForCSVPopulation <- function(
 ) {
   cliBullets(
     "x" = "Cannot resolve the population csv for scenario {.val {scenarioName}}.",
-    "i" = "{.field populationId} {.val {populationId}} is read from a csv but \\
+    "i" = "{.field population} {.val {populationId}} is read from a csv but \\
     the project has no {.field populationsFolder} to resolve it against."
   )
 }
@@ -1199,7 +1218,7 @@ messages$nrOfColorsShouldBePositive <- function(nrOfColors) {
 messages$plotIDsMustBeUnique <- function(duplicated_plotIDs = "") {
   duplicates <- paste(duplicated_plotIDs, collapse = ", ")
   cliFormat(
-    "plotId must be unique in plotConfiguration, but the following plotIds are duplicated: {.val {duplicates}}"
+    "Plot {.field id} must be unique in plotConfiguration, but the following ids are duplicated: {.val {duplicates}}"
   )
 }
 
@@ -1261,7 +1280,7 @@ messages$noIndividualCharacteristics <- function(
 messages$noPopulationIdForPopulationScenario <- function(scenarioName) {
   cliFormat(
     "Simulation type of the scenario with scenario name {.val {scenarioName}} is set to {.val Population},
-    but the field {.var populationId} is not set! Every population simulation scenario must have a population id defined"
+    but the field {.field population} is not set! Every population simulation scenario must have a population id defined"
   )
 }
 
@@ -1319,6 +1338,32 @@ messages$unnamedAuthoringFields <- function(positions) {
     "Every field must be named.",
     "x" = "{cli::qty(length(positions))}No name on field{?s} {positions}.",
     "i" = "Pass each field as {.code name = value}."
+  )
+}
+
+# One problem line of the `setScenario()` abort, for a `modelFile` passed as
+# `NULL`, `NA` or `""`. The model file is the one required scenario field, so
+# unlike the optional ones it cannot be cleared.
+messages$scenarioModelFileRequired <- function() {
+  cliFormat(
+    "{.field modelFile} is required and cannot be cleared; give the name \\
+    of a {.file .pkml} file"
+  )
+}
+
+# Raised by `Scenario()` when it gets no id: a scenario is stored under its id.
+messages$scenarioIdRequired <- function() {
+  cliFormat("{.arg id} must be a single non-empty string.")
+}
+
+# One problem line of the `addScenario()` / `setScenario()` abort, for a `label`
+# that is not one non-empty string. It also names the way out, because a
+# record passed back to `setScenario()` carries a hand-edited label the caller
+# may not have touched.
+messages$scenarioLabelNotString <- function() {
+  cliFormat(
+    "{.field label} must be a single non-empty string or {.code NULL}; \\
+    set it to {.code NULL} to remove it"
   )
 }
 
@@ -1583,23 +1628,23 @@ messages$tickLabelsWithoutTicks <- function(
 
 messages$invalidPlotID <- function(plotIDs) {
   cliFormat(
-    "The plots with plotIds {.val {paste(plotIDs, collapse = ',\n')}} are used in the sheet
+    "The plots with ids {.val {paste(plotIDs, collapse = ',\n')}} are used in the sheet
     {.field plotGrids} but are not defined in the sheet {.var plotConfiguration}."
   )
 }
 
 messages$missingPlotIDs <- function() {
   cliFormat(
-    "Missing values found in mandatory column {.val plotIds} of sheet {.field plotGrids}. Fill in values to proceed."
+    "Missing values found in mandatory column {.val plots} of sheet {.field plotGrids}. Fill in values to proceed."
   )
 }
 
 messages$missingPlotGridId <- function() {
-  cliFormat("Every plot grid must declare a `plotGridId`.")
+  cliFormat("Every plot grid must declare an {.field id}.")
 }
 
 messages$missingPlotId <- function() {
-  cliFormat("Every plot must declare a `plotId`.")
+  cliFormat("Every plot must declare an {.field id}.")
 }
 
 messages$missingPlotType <- function() {
@@ -1610,7 +1655,7 @@ messages$missingPlotType <- function() {
 
 messages$missingDataCombinedName <- function() {
   cliFormat(
-    "Missing values found in mandatory column {.val dataCombinedId} of sheet {.var plotConfiguration}. Fill in values to proceed."
+    "Missing values found in mandatory column {.val dataCombined} of sheet {.var plotConfiguration}. Fill in values to proceed."
   )
 }
 

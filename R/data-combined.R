@@ -132,14 +132,14 @@ createDataCombined <- function(
   }
   ids <- unique(unlist(lapply(
     selectedGrids,
-    function(g) .splitPlotIDs(g$plotIds)
+    function(g) .splitPlotIDs(g$plots)
   )))
   plotConfig <- .unwrapDefinitionList(project$definitions$plots) %||% list()
   referenced <- plotConfig[intersect(names(plotConfig), ids)]
   if (length(referenced) == 0) {
     return(character(0))
   }
-  unique(unlist(lapply(referenced, function(p) p$dataCombinedId)))
+  unique(unlist(lapply(referenced, function(p) p$dataCombined)))
 }
 
 #' @rdname createDataCombined
@@ -463,7 +463,7 @@ createDataCombinedFromExcel <- function(...) {
     return(result)
   }
 
-  result <- .checkNoDuplicates(names(dataCombined), "dataCombinedId", result)
+  result <- .checkNoDuplicates(names(dataCombined), "id", result)
 
   for (id in names(dataCombined)) {
     dc <- dataCombined[[id]]

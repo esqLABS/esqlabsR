@@ -1,5 +1,5 @@
 {
-  "name": "aciclovir_iv_population",
+  "id": "aciclovir_iv_population",
   "individual": "adult_male",
   "population": "european_adults",
   "readPopulationFromCSV": false,

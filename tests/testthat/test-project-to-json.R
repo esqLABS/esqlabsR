@@ -204,10 +204,10 @@ test_that(".dataCombinedToNestedJson re-adds the id field and drops empty sublis
   )
   json <- .dataCombinedToNestedJson(parsed)
   expect_length(json, 2)
-  expect_equal(json[[1]]$dataCombinedId, "DC1")
+  expect_equal(json[[1]]$id, "DC1")
   expect_equal(json[[1]]$simulated[[1]]$label, "a")
   expect_null(json[[1]]$observed) # empty observed dropped
-  expect_equal(json[[2]]$dataCombinedId, "DC2")
+  expect_equal(json[[2]]$id, "DC2")
   expect_null(json[[2]]$simulated)
   expect_equal(json[[2]]$observed[[1]]$label, "b")
 })
@@ -220,11 +220,11 @@ test_that(".dataCombinedToNestedJson handles NULL and empty input", {
 test_that(".plotEntriesToJson strips the entry class and drops the list name", {
   entries <- list(
     P1 = structure(
-      list(plotId = "P1", plotType = "individual", title = "T1"),
+      list(id = "P1", plotType = "individual", title = "T1"),
       class = c("Plot", "list")
     ),
     P2 = structure(
-      list(plotId = "P2", plotType = "population"),
+      list(id = "P2", plotType = "population"),
       class = c("Plot", "list")
     )
   )
@@ -440,7 +440,7 @@ test_that("round-trip preserves a steady-state scenario including unit conversio
 
   raw <- jsonlite::fromJSON(out, simplifyVector = FALSE)
   ss <- Filter(
-    function(s) s$name == "aciclovir_iv_steadystate",
+    function(s) s$id == "aciclovir_iv_steadystate",
     raw$scenarios
   )[[1L]]
 
@@ -459,7 +459,7 @@ test_that("round-trip preserves outputPaths order", {
 
   raw <- jsonlite::fromJSON(out, simplifyVector = FALSE)
   ss <- Filter(
-    function(s) s$name == "aciclovir_iv_steadystate",
+    function(s) s$id == "aciclovir_iv_steadystate",
     raw$scenarios
   )[[1L]]
 
@@ -474,7 +474,7 @@ test_that("round-trip preserves outputPaths order", {
 test_that("steadyState=false with a declared time and unit round-trips", {
   raw <- list(
     list(
-      name = "S",
+      id = "S",
       individual = "I",
       modelFile = "m.pkml",
       steadyState = FALSE,
@@ -486,7 +486,7 @@ test_that("steadyState=false with a declared time and unit round-trips", {
   sc <- scenarios[["S"]]
 
   # Parser stored the time in base units (minutes) but kept the flag off.
-  expect_false(sc$simulateSteadyState)
+  expect_false(sc$steadyState)
   expect_equal(sc$steadyStateTime, 120)
   expect_identical(sc$steadyStateTimeUnit, "h")
 
@@ -503,7 +503,7 @@ test_that("steadyState=false with a declared time and unit round-trips", {
 test_that("a standalone simulationTimeUnit round-trips when simulationTime is null", {
   raw <- list(
     list(
-      name = "S",
+      id = "S",
       individual = "I",
       modelFile = "m.pkml",
       simulationTimeUnit = "h"
@@ -522,12 +522,12 @@ test_that("a standalone simulationTimeUnit round-trips when simulationTime is nu
 
 test_that("population is emitted even when simulationType has drifted", {
   sc <- Scenario(
-    scenarioName = "S",
+    id = "S",
     modelFile = "m.pkml",
-    individualId = "I"
+    individual = "I"
   )
-  # Drift: populationId set but type left at the Individual default.
-  sc$populationId <- "Pop"
+  # Drift: population set but type left at the Individual default.
+  sc$population <- "Pop"
   expect_identical(sc$simulationType, "Individual")
 
   project <- .fakeProject(scenarios = list(S = sc))
@@ -535,20 +535,20 @@ test_that("population is emitted even when simulationType has drifted", {
   expect_identical(out$population, "Pop")
 })
 
-test_that(".validateScenarios warns on populationId / simulationType drift", {
-  sc <- Scenario(scenarioName = "S", modelFile = "m.pkml")
-  sc$populationId <- "Pop"
+test_that(".validateScenarios warns on population / simulationType drift", {
+  sc <- Scenario(id = "S", modelFile = "m.pkml")
+  sc$population <- "Pop"
 
   result <- .validateScenarios(list(S = sc))
   msgs <- vapply(result$warnings, \(w) w$message, character(1))
-  expect_true(any(grepl("populationId but simulationType", msgs)))
+  expect_true(any(grepl("population but simulationType", msgs)))
 })
 
 test_that(".scenariosToJson keeps unknown outputPaths (referential, lazy)", {
   # An unknown outputPathId is a referential issue caught lazily by the
   # cross-reference validator, not a serialization error: the id round-trips
   # verbatim so a transiently-dangling reference is not lost on save.
-  sc <- Scenario(scenarioName = "S", modelFile = "m.pkml")
+  sc <- Scenario(id = "S", modelFile = "m.pkml")
   sc$outputPaths <- c(UnknownId = "Organism|NotDeclared|Path")
   project <- .fakeProject(scenarios = list(S = sc))
 
@@ -560,7 +560,7 @@ test_that(".scenarioToJson errors when outputPaths has unnamed elements", {
   # A project stores a scenario's output paths as bare ids and its accessor
   # always names them, so the bad state only reaches the serializer as an
   # edited record handed back to an authoring function; call it directly.
-  sc <- Scenario(scenarioName = "S", modelFile = "m.pkml")
+  sc <- Scenario(id = "S", modelFile = "m.pkml")
   sc$outputPaths <- unname(c(PVB = "Organism|PVB|Drug"))
 
   expect_error(
@@ -569,31 +569,31 @@ test_that(".scenarioToJson errors when outputPaths has unnamed elements", {
   )
 })
 
-test_that(".scenariosToJson errors when simulateSteadyState is TRUE without a unit", {
+test_that(".scenariosToJson errors when steadyState is TRUE without a unit", {
   # The round-trip cannot carry the steady-state time without a unit, so the
   # serializer must reject it. Built on an in-memory project to exercise the
   # serializer guard directly.
-  sc <- Scenario(scenarioName = "S", modelFile = "m.pkml")
-  sc$simulateSteadyState <- TRUE
+  sc <- Scenario(id = "S", modelFile = "m.pkml")
+  sc$steadyState <- TRUE
   project <- .fakeProject(scenarios = list(S = sc))
 
   expect_error(
     .projectToJson(project),
-    "S.*simulateSteadyState=TRUE.*steadyStateTimeUnit"
+    "S.*steadyState=TRUE.*steadyStateTimeUnit"
   )
 })
 
-test_that("round-trip preserves empty modelParameterSets as a JSON array", {
+test_that("round-trip preserves empty parameterSets as a JSON array", {
   project <- exampleProject()
   scenarios <- .getSection(project, "scenarios")
-  scenarios[["aciclovir_iv"]]$modelParameterSets <- character(0)
+  scenarios[["aciclovir_iv"]]$parameterSets <- character(0)
   .setSection(project, "scenarios", scenarios)
 
   out <- withr::local_tempfile(fileext = ".json")
   .saveProjectJson(project, out)
   raw <- jsonlite::fromJSON(out, simplifyVector = FALSE)
 
-  # Empty modelParameterSets must serialise as `[]`, not `null`, so the
+  # Empty parameterSets must serialise as `[]`, not `null`, so the
   # JSON shape stays an array.
   mp <- raw$scenarios[[1L]]$parameterSets
   expect_type(mp, "list")
@@ -627,7 +627,7 @@ test_that(".scenariosToJson preserves both ids when two ids map to the same lite
       "alias":   "Organism|Brain|Drug"
     },
     "scenarios": [{
-      "name": "S",
+      "id": "S",
       "individual": "I",
       "population": null,
       "readPopulationFromCSV": false,

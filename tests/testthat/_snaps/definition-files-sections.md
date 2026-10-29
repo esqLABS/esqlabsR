@@ -24,8 +24,8 @@
       loadProject(jsonPath)
     Condition
       Error in `.keyedTreeRecordId()`:
-      ! A definition file for kind individual has no usable individualId.
-      x individualId must be a single non-empty string (it names the definition and its file).
+      ! A definition file for kind individual has no usable id.
+      x id must be a single non-empty string (it names the definition and its file).
       i Check '<project>/definitions/individuals/adult_male.json'.
 
 # a keyed file whose inner id disagrees with its filename aborts
@@ -62,12 +62,12 @@
 # a plots entry whose stored id differs from its map key aborts
 
     Code
-      .serializePlotEntrySet(entries, "plotId", "plot")
+      .serializePlotEntrySet(entries, "id", "plot")
     Condition
       Error in `.serializePlotEntrySet()`:
-      ! A plot entry's plotId disagrees with its map key.
-      x The map key is "p1" but plotId is "p2".
-      i They must agree so the on-disk filename stays the authoritative key; store the entry under its plotId.
+      ! A plot entry's id disagrees with its map key.
+      x The map key is "p1" but id is "p2".
+      i They must agree so the on-disk filename stays the authoritative key; store the entry under its id.
 
 # a PI task whose $id differs from its map key aborts
 
