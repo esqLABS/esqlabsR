@@ -1,5 +1,5 @@
 {
-  "populationId": "testpopulation",
+  "id": "testpopulation",
   "species": "Human",
   "population": "European_ICRP_2002",
   "numberOfIndividuals": 2,

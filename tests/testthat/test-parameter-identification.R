@@ -3275,8 +3275,8 @@ test_that(".parseExcelPI5xMappings derives a missing OutputPath column", {
     stringsAsFactors = FALSE
   )
   scenarios <- list(
-    list(name = "s1", outputPaths = list("pvb", "urine")),
-    list(name = "s2", outputPaths = list("pvb"))
+    list(id = "s1", outputPaths = list("pvb", "urine")),
+    list(id = "s2", outputPaths = list("pvb"))
   )
 
   mappings <- .parseExcelPI5xMappings(noColumn, "t1", scenarios)
@@ -3308,7 +3308,7 @@ test_that(".parseExcelPI5xMappings keeps and reports an underivable path", {
     mappings <- .parseExcelPI5xMappings(
       noColumn,
       "t1",
-      list(list(name = "s1"))
+      list(list(id = "s1"))
     ),
     class = "esqlabsR_importIncompletePIOutputMappings"
   )
@@ -3333,7 +3333,7 @@ test_that(".parseExcelPI5xMappings matches a scenario on its canonical id", {
     DataSet = "d1",
     stringsAsFactors = FALSE
   )
-  scenarios <- list(list(name = "Aciclovir_IV", outputPaths = list("pvb")))
+  scenarios <- list(list(id = "Aciclovir_IV", outputPaths = list("pvb")))
 
   mappings <- .parseExcelPI5xMappings(noColumn, "t1", scenarios)
 
@@ -3351,7 +3351,7 @@ test_that(".parseExcelPI5xMappings keeps a derived row with no DataSet", {
     DataSet = c(NA, "d1"),
     stringsAsFactors = FALSE
   )
-  scenarios <- list(list(name = "s1", outputPaths = list("pvb")))
+  scenarios <- list(list(id = "s1", outputPaths = list("pvb")))
 
   mappings <- .parseExcelPI5xMappings(noColumn, "t1", scenarios)
 
@@ -3519,4 +3519,21 @@ test_that(".assignPIBounds sets bounds that overlap the model defaults", {
 test_that(".assignPIBounds returns the runtime invisibly", {
   runtime <- .boundedRuntime(minValue = 0, maxValue = 10)
   expect_invisible(.assignPIBounds(runtime, minValue = 1, maxValue = 9))
+})
+
+test_that("a PI task record and file use the addPITask() argument names", {
+  project <- exampleProject()
+  arguments <- setdiff(names(formals(addPITask)), c("project", "overwrite"))
+
+  expect_setequal(
+    names(project$definitions$parameterIdentification[["aciclovirsimple"]]),
+    arguments
+  )
+  file <- file.path(
+    project$info$projectDirPath,
+    "definitions",
+    "parameter-identification",
+    "aciclovirsimple.json"
+  )
+  expect_setequal(names(jsonlite::read_json(file)), arguments)
 })

@@ -196,13 +196,13 @@ test_that("Excel round-trip defaults a non-steady-state scenario's steady-state 
   # project re-authored through `addScenario()`, so no round-trip diff (#1158).
   # The value is only used when steady-state is on.
   nonSteady <- "aciclovir_iv"
-  expect_false(isTRUE(before[[nonSteady]]$simulateSteadyState))
+  expect_false(isTRUE(before[[nonSteady]]$steadyState))
   expect_identical(after[[nonSteady]]$steadyStateTime, 1000)
   expect_identical(after[[nonSteady]]$steadyStateTimeUnit, "min")
 
   # A genuine steady-state scenario keeps its declared unit.
   steady <- "aciclovir_iv_steadystate"
-  expect_true(isTRUE(before[[steady]]$simulateSteadyState))
+  expect_true(isTRUE(before[[steady]]$steadyState))
   expect_identical(
     after[[steady]]$steadyStateTimeUnit,
     before[[steady]]$steadyStateTimeUnit
@@ -225,7 +225,7 @@ test_that("Excel round-trip keeps a steady-state time declared with the flag off
   before <- .unwrapDefinitionList(project$definitions$scenarios)
   after <- .unwrapDefinitionList(excelRoundTrip(project)$definitions$scenarios)
 
-  expect_false(isTRUE(after[["aciclovir_iv"]]$simulateSteadyState))
+  expect_false(isTRUE(after[["aciclovir_iv"]]$steadyState))
   expect_identical(after[["aciclovir_iv"]]$steadyStateTimeUnit, "h")
   expect_equal(
     after[["aciclovir_iv"]]$steadyStateTime,
@@ -295,7 +295,7 @@ test_that("Excel round-trip preserves a grid whose plot id had a comma canonical
     "grid_comma"
   ]]
 
-  expect_identical(.splitPlotIDs(grid$plotIds), c("p1", "cmax__ss"))
+  expect_identical(.splitPlotIDs(grid$plots), c("p1", "cmax__ss"))
 })
 
 # Regression (#1184): a grid's `plotIDs` cell is a multi-value Excel cell, and
@@ -330,10 +330,10 @@ test_that("a quoted 5.x plotIDs cell imports with the grid's members intact", {
 
   grids <- .unwrapDefinitionList(project$definitions$plotGrids)
   expect_identical(
-    .splitPlotIDs(grids[["aciclovir"]]$plotIds),
+    .splitPlotIDs(grids[["aciclovir"]]$plots),
     c("p1", "p2", "p3")
   )
-  expect_identical(.splitPlotIDs(grids[["aciclovir2"]]$plotIds), "p2")
+  expect_identical(.splitPlotIDs(grids[["aciclovir2"]]$plots), "p2")
 
   # The whole point: the imported project no longer reports the grid members as
   # unknown plot ids.
@@ -342,7 +342,7 @@ test_that("a quoted 5.x plotIDs cell imports with the grid's members intact", {
     function(e) e$message,
     character(1)
   )
-  expect_false(any(grepl("references unknown plotIds", plotErrors)))
+  expect_false(any(grepl("references unknown plots", plotErrors)))
 })
 
 test_that("exportProjectToExcel names the scenarios whose solverSettings it cannot carry", {
@@ -1278,7 +1278,7 @@ test_that("the individuals import skips a blank IndividualId row rather than inj
   paramSheetNames <- "Indiv1"
   sheetCanonical <- vapply(paramSheetNames, .canonicalizeOneId, character(1))
   linked <- lapply(individuals, function(indiv) {
-    indivCanonical <- .canonicalizeOneId(indiv$individualId)
+    indivCanonical <- .canonicalizeOneId(indiv$id)
     if (is.na(indivCanonical)) {
       return(indiv)
     }
@@ -2944,7 +2944,7 @@ test_that(".compareJsonToExcel writes nothing", {
 # order is exactly what the sort exists to normalize away.
 #
 # Every array section a real project holds carries a unique id per record
-# (`name`, `individualId`, `dataCombinedId`, ...), so no two records tie and the
+# (`id`), so no two records tie and the
 # key's precision does not currently reach the verdict. This guards the sort
 # itself rather than a live false-drift report: the records here are given the
 # same id so they differ only past the 4th decimal, which is where jsonlite's
@@ -3644,23 +3644,23 @@ test_that("a missing data file says the project will not validate", {
 test_that(".warnIncompleteObservedCurves names the affected combinations", {
   expect_snapshot(.warnIncompleteObservedCurves(list(
     list(
-      dataCombinedId = "plasma",
+      id = "plasma",
       simulated = list(list(label = "sim")),
       observed = list(list(label = "obs"))
     ),
     list(
-      dataCombinedId = "urine",
+      id = "urine",
       observed = list(list(label = "obs", dataSet = "d1"))
     ),
     list(
-      dataCombinedId = "fat",
+      id = "fat",
       observed = list(list(label = "obs", dataSet = ""))
     )
   )))
 
   # Nothing to say when every observed curve names a data set.
   expect_silent(.warnIncompleteObservedCurves(list(
-    list(dataCombinedId = "urine", observed = list(list(dataSet = "d1")))
+    list(id = "urine", observed = list(list(dataSet = "d1")))
   )))
   expect_silent(.warnIncompleteObservedCurves(NULL))
 })
@@ -3790,7 +3790,7 @@ test_that("two populations differing only in their ontogenies import differently
 
   # The ontogenies are the whole of the difference, once the id line is set aside.
   dropId <- function(lines) {
-    grep("populationId", lines, fixed = TRUE, invert = TRUE, value = TRUE)
+    grep("\"id\"", lines, fixed = TRUE, invert = TRUE, value = TRUE)
   }
   expect_false(identical(dropId(withOntogenies), dropId(withoutOntogenies)))
   expect_match(
@@ -4054,7 +4054,7 @@ test_that("quoted legacy cells resolve to the names they were written with", {
   expect_identical(
     imported$project$definitions$scenarios[[
       "adultscenario"
-    ]]$modelParameterSets,
+    ]]$parameterSets,
     c("global", "aciclovir", "sheet__with_comma")
   )
 
@@ -4151,7 +4151,7 @@ test_that("a plot id spelled quoted and unquoted is one reused id, and reported"
 
   expect_setequal(names(imported$project$definitions$plots), c("p1", "p3"))
   expect_true(any(grepl("more than", imported$warnings, fixed = TRUE)))
-  expect_true(any(grepl("plotId", imported$warnings, fixed = TRUE)))
+  expect_true(any(grepl("plotConfiguration", imported$warnings, fixed = TRUE)))
 })
 
 # A section stored as an array of records is keyed by each record's own id field
@@ -4383,7 +4383,7 @@ test_that("an individual with a parameter sheet but no biometrics row is dropped
 
   # The scenario keeps pointing at the individual that no longer exists.
   expect_identical(
-    imported$project$definitions$scenarios[["childscenario"]]$individualId,
+    imported$project$definitions$scenarios[["childscenario"]]$individual,
     "child"
   )
 
@@ -4423,7 +4423,7 @@ test_that("two plot rows sharing an id lose one plot, and it is reported", {
 
   # And the loss is reported, naming the id more than one row used.
   expect_true(any(grepl("more than", imported$warnings, fixed = TRUE)))
-  expect_true(any(grepl("plotId", imported$warnings, fixed = TRUE)))
+  expect_true(any(grepl("plotConfiguration", imported$warnings, fixed = TRUE)))
 })
 
 # #1213 item 15: the 5.x `PIOutputMappings` sheet names the sheet of the data
@@ -4655,5 +4655,200 @@ test_that("Excel round-trip preserves a simulated entry that omits its label", {
   expect_identical(
     dc$simulated[[1]],
     list(scenario = "aciclovir_iv", path = "Aciclovir_PVB")
+  )
+})
+
+# Scenario label ----
+
+test_that("a scenario label survives an Excel export and import", {
+  project <- exampleProject()
+  setScenario(project, "aciclovir_iv", label = "Aciclovir IV 250 mg")
+
+  reimported <- excelRoundTrip(project)
+
+  expect_identical(
+    reimported$definitions$scenarios[["aciclovir_iv"]]$label,
+    "Aciclovir IV 250 mg"
+  )
+  expect_null(
+    reimported$definitions$scenarios[["aciclovir_iv_population"]]$label
+  )
+})
+
+test_that("exportProjectToExcel writes the Label column only when a scenario has a label", {
+  project <- exampleProject()
+  columns <- function(project) {
+    names(.scenarioConfigurationsToExcelDf(project$definitions$scenarios))
+  }
+
+  expect_false("Label" %in% columns(project))
+
+  setScenario(project, "aciclovir_iv", label = "Aciclovir IV 250 mg")
+  expect_identical(columns(project)[1:2], c("Scenario_name", "Label"))
+})
+
+test_that(".parseExcelScenarios reads the optional Label column", {
+  withLabel <- .parseExcelScenarios(
+    scenarioSheetRow(Label = "Aciclovir IV 250 mg")
+  )
+  blankLabel <- .parseExcelScenarios(scenarioSheetRow(Label = NA_character_))
+  noColumn <- .parseExcelScenarios(scenarioSheetRow())
+
+  expect_identical(withLabel[[1]]$label, "Aciclovir IV 250 mg")
+  expect_null(blankLabel[[1]]$label)
+  expect_null(noColumn[[1]]$label)
+})
+
+test_that("importing a 5.x workbook keeps a Scenario_name that canonicalizing changes beyond case as the label", {
+  projectDir <- localLegacyExcelProject()
+  editWorkbookSheets(
+    file.path(projectDir, "Configurations", "Scenarios.xlsx"),
+    function(sheets) {
+      scenarios <- sheets$Scenarios
+      scenarios$Scenario_name[scenarios$Scenario_name == "PIScenario2"] <-
+        "PI Scenario 2"
+      sheets$Scenarios <- scenarios
+      sheets
+    }
+  )
+
+  imported <- importLegacyExcelProject(projectDir)
+  scenarios <- imported$project$definitions$scenarios
+
+  # `PI Scenario 2` loses its spaces in the id and keeps them in the label;
+  # `AdultScenario` only loses its capitals, so it gets no label.
+  expect_identical(scenarios[["pi_scenario_2"]]$label, "PI Scenario 2")
+  expect_null(scenarios[["adultscenario"]]$label)
+})
+
+test_that(".keepScenarioNamesAsLabels strips wrapping quotes before it compares and keeps", {
+  scenarios <- list(
+    list(id = "\"aciclovir_iv\""),
+    list(id = "\"Aciclovir_IV\""),
+    list(id = "\"Aciclovir IV\""),
+    list(id = "Aciclovir IV", label = "Aciclovir IV 250 mg")
+  )
+
+  expect_identical(
+    .keepScenarioNamesAsLabels(scenarios),
+    list(
+      list(id = "\"aciclovir_iv\""),
+      list(id = "\"Aciclovir_IV\""),
+      list(id = "\"Aciclovir IV\"", label = "Aciclovir IV"),
+      list(id = "Aciclovir IV", label = "Aciclovir IV 250 mg")
+    )
+  )
+})
+
+test_that("a Label cell wins over the Scenario_name kept as the label", {
+  projectDir <- localLegacyExcelProject()
+  editWorkbookSheets(
+    file.path(projectDir, "Configurations", "Scenarios.xlsx"),
+    function(sheets) {
+      scenarios <- sheets$Scenarios
+      scenarios$Label <- NA_character_
+      scenarios$Label[scenarios$Scenario_name == "AdultScenario"] <-
+        "Adult, 2.5 mg/kg IV"
+      sheets$Scenarios <- scenarios
+      sheets
+    }
+  )
+
+  imported <- importLegacyExcelProject(projectDir)
+  scenarios <- imported$project$definitions$scenarios
+
+  expect_identical(scenarios[["adultscenario"]]$label, "Adult, 2.5 mg/kg IV")
+  expect_null(scenarios[["childscenario"]]$label)
+})
+
+test_that("a plot sheet with two id columns takes the exported one and warns when they disagree", {
+  plotsFile <- withr::local_tempfile(fileext = ".xlsx")
+  writexl::write_xlsx(
+    list(
+      plotConfiguration = data.frame(
+        plotID = c("p_old", "same"),
+        plotId = c("p_new", "same"),
+        DataCombinedName = c("dc", "dc"),
+        plotType = c("individual", "individual")
+      ),
+      plotGrids = data.frame(
+        name = "g_old",
+        plotGridId = "g_new",
+        plotIDs = "p_new"
+      )
+    ),
+    plotsFile
+  )
+
+  expect_warning(
+    expect_warning(
+      parsed <- .parseExcelPlots(plotsFile),
+      class = "esqlabsR_importConflictingPlotIdColumns"
+    ),
+    class = "esqlabsR_importConflictingPlotIdColumns"
+  )
+  expect_identical(
+    vapply(parsed$plotConfiguration, function(p) p$id, character(1)),
+    c("p_new", "same")
+  )
+  expect_identical(parsed$plotGrids[[1]]$id, "g_new")
+})
+
+# DataCombined output-path ids ----
+
+test_that(".dataCombinedPathsAsOutputPathIds writes the id only for a path one output path has", {
+  plasma <- "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"
+  fat <- "Organism|Fat|Intracellular|Aciclovir|Concentration in container"
+  urine <- "Organism|Kidney|Urine|Aciclovir|Concentration"
+  curve <- function(path) {
+    list(label = path, scenario = "aciclovir_iv", path = path)
+  }
+  jsonData <- list(
+    outputPaths = list(
+      aciclovir_pvb = plasma,
+      aciclovir_fat = fat,
+      fat_tissue = fat
+    ),
+    dataCombined = list(list(
+      id = "aciclovir",
+      simulated = list(curve(plasma), curve(urine), curve(fat)),
+      observed = list(list(label = "Laskin 1982", dataSet = "laskin"))
+    ))
+  )
+
+  expected <- jsonData
+  # One output path has the plasma path: its id is written.
+  expected$dataCombined[[1]]$simulated[[1]]$path <- "aciclovir_pvb"
+  # No output path has the urine path, and two have the fat path: both stay.
+  expect_identical(.dataCombinedPathsAsOutputPathIds(jsonData), expected)
+})
+
+test_that("importProjectFromExcel writes the output-path id of a 5.x DataCombined curve", {
+  projectDir <- localLegacyExcelProject()
+
+  imported <- importLegacyExcelProject(projectDir)
+  dataCombined <- imported$project$definitions$dataCombined
+
+  expect_identical(
+    vapply(
+      c("aciclovirpvb", "aciclovirpop"),
+      function(id) dataCombined[[id]]$simulated[[1]]$path,
+      character(1),
+      USE.NAMES = FALSE
+    ),
+    c("aciclovir_pvb", "aciclovir_pvb")
+  )
+})
+
+test_that("a DataCombined output-path id survives an Excel export and import", {
+  project <- exampleProject()
+
+  reimported <- excelRoundTrip(project)
+
+  expect_identical(
+    reimported$definitions$dataCombined[["aciclovir_individual"]]$simulated[[
+      1
+    ]]$path,
+    "aciclovir_pvb"
   )
 })

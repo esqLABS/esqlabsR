@@ -1,5 +1,5 @@
 {
-  "name": "populationscenario",
+  "id": "populationscenario",
   "individual": "indiv1",
   "population": "testpopulation",
   "readPopulationFromCSV": false,

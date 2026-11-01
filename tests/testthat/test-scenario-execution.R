@@ -427,7 +427,7 @@ test_that("runScenarios threads stopIfParameterNotFound through to .prepareScena
 })
 
 test_that(".collectScenarioResult aborts on a failed scenario when stopIfFails is TRUE", {
-  scenario <- list(scenarioName = "s1", outputPaths = NULL)
+  scenario <- list(id = "s1", outputPaths = NULL)
   expect_error(
     .collectScenarioResult(
       scenario = scenario,
@@ -441,7 +441,7 @@ test_that(".collectScenarioResult aborts on a failed scenario when stopIfFails i
 })
 
 test_that(".collectScenarioResult warns and returns NULL outputValues when stopIfFails is FALSE", {
-  scenario <- list(scenarioName = "s1", outputPaths = NULL)
+  scenario <- list(id = "s1", outputPaths = NULL)
   # A scenario that built (non-NULL simulation) but produced no results. A
   # NULL simulation instead means a build-time skip, which already warned.
   expect_warning(
@@ -461,7 +461,7 @@ test_that(".collectScenarioResult warns and returns NULL outputValues when stopI
 test_that(".collectScenarioResult does not warn again for a build-time skip", {
   # A NULL simulation means the scenario never built; `.buildScenarioSimulations()`
   # already warned, so collection records it silently.
-  scenario <- list(scenarioName = "s1", outputPaths = NULL)
+  scenario <- list(id = "s1", outputPaths = NULL)
   expect_no_warning(
     out <- .collectScenarioResult(
       scenario = scenario,
@@ -494,7 +494,7 @@ test_that(".buildScenarioSimulations aborts on a build-time failure by default",
   addScenario(project, "second", modelFile = "Aciclovir.pkml")
   local_mocked_bindings(
     .prepareScenario = function(scenario, ...) {
-      if (scenario$scenarioName == "second") {
+      if (scenario$id == "second") {
         cli::cli_abort("boom: missing model parameter path")
       }
       list(simulation = NULL, population = NULL)
@@ -511,7 +511,7 @@ test_that(".buildScenarioSimulations skips a build-time failure when stopIfFails
   addScenario(project, "second", modelFile = "Aciclovir.pkml")
   local_mocked_bindings(
     .prepareScenario = function(scenario, ...) {
-      if (scenario$scenarioName == "second") {
+      if (scenario$id == "second") {
         cli::cli_abort("boom: missing model parameter path")
       }
       list(simulation = NULL, population = NULL)
@@ -617,7 +617,7 @@ test_that("a build failure under stopIfFails = TRUE names the scenario", {
   addScenario(project, "second", modelFile = "Aciclovir.pkml")
   local_mocked_bindings(
     .prepareScenario = function(scenario, ...) {
-      if (scenario$scenarioName == "second") {
+      if (scenario$id == "second") {
         cli::cli_abort("a backend message naming nothing")
       }
       list(simulation = NULL, population = NULL)
@@ -890,19 +890,19 @@ test_that(".parameterSetToStructure returns NULL on empty input", {
 test_that(".mergeScenarioParameters returns NULL when no layer contributes", {
   project <- .testProject()
   scenario <- project$definitions$scenarios[["testscenario"]]
-  scenario$modelParameterSets <- NULL
-  scenario$individualId <- NULL
-  scenario$applicationProtocol <- NA
+  scenario$parameterSets <- NULL
+  scenario$individual <- NULL
+  scenario["application"] <- list(NULL)
   expect_null(
     .mergeScenarioParameters(scenario, project, customParams = NULL)
   )
 })
 
-test_that(".mergeScenarioParameters layer 1 (modelParameterSets) iterates listed groups in order", {
+test_that(".mergeScenarioParameters layer 1 (scenario parameterSets) iterates listed groups in order", {
   project <- .testProject()
   scenario <- project$definitions$scenarios[["testscenario_steadystate"]]
-  scenario$individualId <- NULL
-  scenario$applicationProtocol <- NA
+  scenario$individual <- NULL
+  scenario["application"] <- list(NULL)
   merged <- .mergeScenarioParameters(scenario, project, NULL)
   expect_true("Organism|Liver|EHC continuous fraction" %in% merged$paths)
   expect_true("Aciclovir|Lipophilicity" %in% merged$paths)
@@ -932,7 +932,7 @@ test_that(".mergeScenarioParameters layer 3 (application) overrides layer 1 on o
   apps <- .getSection(project, "applications")
   apps$aciclovir_iv_250mg$parameterSets <- list("override")
   .setSection(project, "applications", apps)
-  scenario$individualId <- NULL
+  scenario$individual <- NULL
   merged <- .mergeScenarioParameters(scenario, project, NULL)
   idx <- match("OverlapContainer|OverlapParam", merged$paths)
   expect_equal(merged$values[idx], 99)
@@ -951,33 +951,33 @@ test_that(".mergeScenarioParameters layer 4 (customParams) wins over all earlier
   expect_equal(merged$values[idx], 42)
 })
 
-test_that(".mergeScenarioParameters skips application layer when applicationProtocol is NA", {
+test_that(".mergeScenarioParameters skips application layer when application is NULL", {
   project <- .testProject()
   scenario <- project$definitions$scenarios[["testscenario"]]
-  scenario$applicationProtocol <- NA
-  scenario$modelParameterSets <- NULL
-  scenario$individualId <- NULL
+  scenario["application"] <- list(NULL)
+  scenario$parameterSets <- NULL
+  scenario$individual <- NULL
   expect_null(
     .mergeScenarioParameters(scenario, project, NULL)
   )
 })
 
-test_that(".mergeScenarioParameters errors when applicationProtocol is set but unknown", {
+test_that(".mergeScenarioParameters errors when application is set but unknown", {
   project <- .testProject()
   scenario <- project$definitions$scenarios[["testscenario"]]
-  scenario$applicationProtocol <- "DoesNotExist"
+  scenario$application <- "DoesNotExist"
   expect_error(
     .mergeScenarioParameters(scenario, project, NULL),
     regexp = "DoesNotExist"
   )
 })
 
-test_that(".mergeScenarioParameters silently skips an unknown modelParameterSets group", {
+test_that(".mergeScenarioParameters silently skips an unknown parameterSets group", {
   project <- .testProject()
   scenario <- project$definitions$scenarios[["testscenario"]]
-  scenario$modelParameterSets <- c("global", "DoesNotExist")
-  scenario$individualId <- NULL
-  scenario$applicationProtocol <- NA
+  scenario$parameterSets <- c("global", "DoesNotExist")
+  scenario$individual <- NULL
+  scenario["application"] <- list(NULL)
   merged <- .mergeScenarioParameters(scenario, project, NULL)
   expect_true("Organism|Liver|EHC continuous fraction" %in% merged$paths)
 })
@@ -991,8 +991,8 @@ test_that(".mergeScenarioParameters silently skips an unknown individual paramet
     "DoesNotExist"
   )
   .setSection(project, "individuals", individuals)
-  scenario$modelParameterSets <- NULL
-  scenario$applicationProtocol <- NA
+  scenario$parameterSets <- NULL
+  scenario["application"] <- list(NULL)
   merged <- .mergeScenarioParameters(scenario, project, NULL)
   expect_true("Organism|Kidney|GFR" %in% merged$paths)
 })
@@ -1006,8 +1006,8 @@ test_that(".mergeScenarioParameters silently skips an unknown application parame
     "DoesNotExist"
   )
   .setSection(project, "applications", apps)
-  scenario$modelParameterSets <- NULL
-  scenario$individualId <- NULL
+  scenario$parameterSets <- NULL
+  scenario$individual <- NULL
   merged <- .mergeScenarioParameters(scenario, project, NULL)
   expect_true(
     "Events|IV 250mg 10min|No formulation|Application_1|ProtocolSchemaItem|Dose" %in%
@@ -1310,7 +1310,7 @@ test_that(".applyScenarioSteadyState is a no-op when the scenario does not ask f
     },
     .package = "ospsuite"
   )
-  scenario <- Scenario(modelFile = "m.pkml", simulateSteadyState = FALSE)
+  scenario <- Scenario(id = "sc", modelFile = "m.pkml", steadyState = FALSE)
   simulation <- .fakeSimulation()
 
   expect_identical(
@@ -1355,8 +1355,9 @@ test_that(".applyScenarioSteadyState solves at the scenario's time and writes th
     .package = "ospsuite"
   )
   scenario <- Scenario(
+    id = "sc",
     modelFile = "m.pkml",
-    simulateSteadyState = TRUE,
+    steadyState = TRUE,
     steadyStateTime = 600,
     overwriteFormulasInSS = FALSE
   )
@@ -1389,8 +1390,9 @@ test_that(".applyScenarioSteadyState overwrites formulas when the scenario says 
     .package = "ospsuite"
   )
   scenario <- Scenario(
+    id = "sc",
     modelFile = "m.pkml",
-    simulateSteadyState = TRUE,
+    steadyState = TRUE,
     steadyStateTime = 600,
     overwriteFormulasInSS = TRUE
   )
@@ -1652,7 +1654,7 @@ test_that("one ontogeny, and a comma-joined pair of them, read fine", {
 })
 
 # #1213 item 6: a CSV population entry that names no `file` has its filename
-# derived as `<populationId>.csv`, and the id is canonicalized, which lowercases
+# derived as `<population>.csv`, and the id is canonicalized, which lowercases
 # it, while the copied file keeps the mixed case the workbook's author gave it.
 # The derived name is matched against the folder listing case-insensitively, so
 # the two spellings meet on a case-sensitive filesystem as well.
@@ -1672,7 +1674,7 @@ test_that("the derived population CSV filename resolves to the mixed-case file o
 
   populationsFolder <- imported$project$paths$populationsFolder
   present <- list.files(populationsFolder)
-  derived <- paste0(scenario$populationId, ".csv")
+  derived <- paste0(scenario$population, ".csv")
 
   expect_identical(present, "CsvPop.csv")
   expect_identical(derived, "csvpop.csv")
@@ -1680,7 +1682,7 @@ test_that("the derived population CSV filename resolves to the mixed-case file o
   # The two differ in case, and the file the run opens is the one on disk.
   expect_false(derived %in% present)
   expect_identical(
-    .populationCsvFileName(scenario$populationId, populationsFolder),
+    .populationCsvFileName(scenario$population, populationsFolder),
     "CsvPop.csv"
   )
 })

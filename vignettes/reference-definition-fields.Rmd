@@ -43,6 +43,7 @@ For why definitions are shaped this way, see `vignette("about-the-project-model"
 | Field | Required | Type | If omitted |
 | --- | --- | --- | --- |
 | `modelFile` | **yes** | string | Aborts. Named relative to the project's simulations folder. |
+| `label` | no | string | The scenario has no label. Free text, kept exactly as typed; see below. |
 | `individual` | no | id | The model's own individual is simulated, as exported from PK-Sim or MoBi. |
 | `population` | no | id | The scenario is an individual scenario. Supplying one makes it a population simulation. |
 | `application` | no | id | The dosing in the model file is used unchanged. |
@@ -58,18 +59,20 @@ For why definitions are shaped this way, see `vignette("about-the-project-model"
 | `readPopulationFromCSV` | no | logical | `FALSE`. |
 | `solverSettings` | no | named list | The project's `defaultSolverSettings` apply, and for a setting the project does not give, the value stored in the model file. |
 
-Two behaviors are not visible from the table:
+Three behaviors are not visible from the table:
 
 - **Every reference is checked as the scenario is added.** If `individual`, `population`, `application`, or any entry in `parameterSets`, `initialConditions`, or `outputPaths` does not resolve, `addScenario()` aborts and nothing is created. The model file is not checked then; `validateProject()` warns when it is missing.
+- **A label keeps the name as you typed it.** An id is changed to lowercase and filename-safe characters, so `"Aciclovir_IV-2.5mg/kg"` becomes `aciclovir_iv-2.5mg_kg`. The optional `label` is never changed, so it keeps the original spelling. `print()` shows it after the id, and printing `project$definitions$scenarios` shows it next to each id. Results, `runScenarios()` messages and plot curves use the id, not the label. Two scenarios can have the same label. Pass `label = NULL` to `setScenario()` to remove it.
 - **Parameter sets are applied in layers.** First the scenario's own `parameterSets`, in the order you list them, then the parameter sets of its individual, then those of its application. Where two sets touch the same parameter, the one applied last wins: `c("global", "aciclovir", "ckd")` applies `global` first and lets `ckd` win, and a set of the individual or the application overrides all three.
 
-### On-disk keys and in-memory field names
+### Scenario files
 
-**A `definitions/scenarios/*.json` file uses the argument names above**, unchanged, with the id written as `name`. So a scenario file written by hand looks like this:
+**A `definitions/scenarios/*.json` file uses the argument names above**, unchanged, and so does a scenario record read from `project$definitions$scenarios`. So a scenario file written by hand looks like this:
 
 ```json
 {
-  "name": "aciclovir_iv",
+  "id": "aciclovir_iv",
+  "label": "Aciclovir IV 250 mg",
   "modelFile": "Aciclovir.pkml",
   "individual": "adult_male",
   "application": "aciclovir_iv_250mg",
@@ -79,18 +82,7 @@ Two behaviors are not visible from the table:
 }
 ```
 
-The **parsed in-memory record** is what differs. A record read from `project$definitions$scenarios` renames the reference fields, so use these names when inspecting or editing a record in R:
-
-| Argument and on-disk key | In-memory record field |
-| --- | --- |
-| `individual` | `individualId` |
-| `population` | `populationId` |
-| `application` | `applicationProtocol` |
-| `parameterSets` | `modelParameterSets` |
-| `steadyState` | `simulateSteadyState` |
-| `name` (the id) | `scenarioName` |
-
-The in-memory record also carries `simulationType`, derived from whether a population is referenced.
+The record also carries `simulationType`, derived from whether a population is referenced.
 
 ### `solverSettings`
 
@@ -295,7 +287,7 @@ Optional per-curve transforms, applied before plotting. An offset requires its u
 
 | Field | Required | Type | Notes |
 | --- | --- | --- | --- |
-| `dataCombined` | **yes** | id | Stored as `dataCombinedId`. Must reference a known DataCombined. |
+| `dataCombined` | **yes** | id | Must reference a known DataCombined. |
 | `plotType` | **yes** | one of the five below | An unknown value is a critical error. |
 
 ### Plot types
@@ -373,7 +365,7 @@ A plot accepts these esqlabsR 5.x settings, so a project or workbook that uses t
 
 | Field | Required | Type | Notes |
 | --- | --- | --- | --- |
-| `plots` | **yes** | character vector of plot ids | Stored as `plotIds`. Every plot listed becomes a panel. |
+| `plots` | **yes** | character vector of plot ids | Stored as one comma-separated string. Every plot listed becomes a panel. |
 
 `plots` is required, so nothing falls back to the model file. `...` accepts grid fields such as `title` and `subtitle`, and a grid without them is drawn untitled.
 

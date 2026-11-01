@@ -294,7 +294,7 @@
     if (is.null(pathIds) || any(pathIds == "")) {
       cli::cli_abort(
         c(
-          "Scenario {.val {sc$scenarioName}} has {.field outputPaths} without ids.",
+          "Scenario {.val {sc$id}} has {.field outputPaths} without ids.",
           "i" = "Expected a named character vector: id-as-name, literal-path-as-value."
         )
       )
@@ -315,9 +315,9 @@
     simTimeStr <- paste(intervals, collapse = "; ")
   }
 
-  if (sc$simulateSteadyState && is.null(sc$steadyStateTimeUnit)) {
+  if (sc$steadyState && is.null(sc$steadyStateTimeUnit)) {
     cli::cli_abort(c(
-      "Scenario {.val {sc$scenarioName}} has {.field simulateSteadyState}=TRUE \\
+      "Scenario {.val {sc$id}} has {.field steadyState}=TRUE \\
       but {.field steadyStateTimeUnit} is NULL.",
       "i" = "Set {.field steadyStateTimeUnit} (e.g. {.val min}) so the value \\
       can round-trip."
@@ -325,30 +325,27 @@
   }
 
   entry <- list(
-    name = sc$scenarioName,
-    individual = sc$individualId,
+    id = sc$id,
+    # Left out below rather than written as `null` when there is none, so the
+    # file of a scenario without a label has no `label` key.
+    label = sc$label,
+    individual = sc$individual,
     # Emit the population id verbatim rather than keying off the derived
-    # `simulationType`, so a drifted record (populationId set while the
+    # `simulationType`, so a drifted record (population set while the
     # type reads "Individual") does not silently lose its population.
-    population = sc$populationId,
+    population = sc$population,
     readPopulationFromCSV = sc$readPopulationFromCSV,
     # `as.list(NULL)` -> `list()`; this collapses both "key absent" and
     # "empty array" in the parsed scenario to JSON `[]`. Matches the
     # end-state serializer in `json-as-primary-input-v2`.
-    parameterSets = as.list(sc$modelParameterSets),
+    parameterSets = as.list(sc$parameterSets),
     initialConditions = as.list(sc$initialConditions),
-    application = if (
-      is.null(sc$applicationProtocol) || is.na(sc$applicationProtocol)
-    ) {
-      NULL
-    } else {
-      sc$applicationProtocol
-    },
+    application = sc$application,
     simulationTime = simTimeStr,
     simulationTimeUnit = sc$simulationTimeUnit,
-    steadyState = sc$simulateSteadyState,
+    steadyState = sc$steadyState,
     # Emit the steady-state time/unit whenever a unit is declared,
-    # independently of `simulateSteadyState`. A declared time with the
+    # independently of `steadyState`. A declared time with the
     # flag off (e.g. `steadyState: false` plus a preset time) is valid
     # JSON the parser reads back, so dropping it would lose data.
     steadyStateTime = if (!is.null(sc$steadyStateTimeUnit)) {
@@ -365,6 +362,9 @@
     modelFile = sc$modelFile,
     outputPaths = outputPathIds
   )
+  if (is.null(sc$label)) {
+    entry$label <- NULL
+  }
   # Omitted rather than emitted as `null` when the scenario sets no solver
   # setting: a `jsonlite` round-trip turns `"solverSettings": null` into `{}`,
   # which `.assertNoEmptyObjectFields()` rejects on the next load.
@@ -398,7 +398,7 @@
 }
 
 # JSON array of individual objects. The in-memory shape is a named list
-# keyed by `individualId`; serialization re-attaches that key and otherwise
+# keyed by `id`; serialization re-attaches that key and otherwise
 # passes every field through in record order (mirroring `.populationsToJson`),
 # so unknown fields from a newer schema round-trip. `parameterSets` is
 # emitted as a JSON array.
@@ -412,12 +412,12 @@
     if (!is.null(indiv$parameterSets)) {
       indiv$parameterSets <- as.list(indiv$parameterSets)
     }
-    c(list(individualId = id), indiv)
+    c(list(id = id), indiv)
   }))
 }
 
 # JSON array of population objects. The in-memory shape is a named list
-# keyed by `populationId`; serialization re-attaches that key.
+# keyed by `id`; serialization re-attaches that key.
 .populationsToJson <- function(project) {
   populations <- project$definitions$populations
   if (is.null(populations) || length(populations) == 0L) {
@@ -425,7 +425,7 @@
   }
   unname(lapply(names(populations), function(id) {
     pop <- populations[[id]]
-    c(list(populationId = id), unclass(pop))
+    c(list(id = id), unclass(pop))
   }))
 }
 

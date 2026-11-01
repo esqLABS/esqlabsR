@@ -1,9 +1,9 @@
 # Plots sections: parse + validate + serialize + mutation.
 #
 # Owns the three top-level plots-related sections end-to-end:
-#   * the dataCombined definitions : named list keyed by `dataCombinedId`.
-#   * the plots definitions        : named list keyed by `plotId` (the plot list).
-#   * the plotGrids definitions    : named list keyed by `plotGridId`.
+#   * the dataCombined definitions : named list keyed by `id`.
+#   * the plots definitions        : named list keyed by `id` (the plot list).
+#   * the plotGrids definitions    : named list keyed by `id`.
 # Every entry is a named list of its fields, classed `c("DataCombined","list")`
 # / `c("Plot", "list")` / `c("PlotGrid", "list")` so a single definition
 # dispatches a print method. The keyed-list shape IS the per-file JSON shape,
@@ -25,15 +25,15 @@
 # Each plots section persists as its own keyed kind on disk
 # (`definitions/data-combined/`, `definitions/plots/`, `definitions/plot-grids/`).
 # Each is a keyed list:
-#   * dataCombined : named list keyed by `dataCombinedId` (drops the
+#   * dataCombined : named list keyed by `id` (drops the
 #                    redundant id field on each entry).
-#   * plots        : named list keyed by `plotId`; each entry classed
+#   * plots        : named list keyed by `id`; each entry classed
 #                    `c("Plot", "list")`, fields verbatim.
-#   * plotGrids    : named list keyed by `plotGridId`; each entry classed
+#   * plotGrids    : named list keyed by `id`; each entry classed
 #                    `c("PlotGrid", "list")`, fields verbatim (a grid's
-#                    `plotIds` is a comma-separated string).
+#                    `plots` is a comma-separated string).
 
-# Drop the redundant `dataCombinedId` field (it becomes the list key) and
+# Drop the redundant `id` field (it becomes the list key) and
 # re-key the list by id. Per-entry sub-lists (`simulated`, `observed`) pass
 # through verbatim so adding optional fields at the JSON level does not require
 # a code change here.
@@ -48,16 +48,16 @@
   for (i in seq_along(nestedData)) {
     dc <- nestedData[[i]]
     # Each dataCombined entry must be a named-list object carrying a scalar
-    # `dataCombinedId` (the key). A malformed shape (a scalar, an unnamed list,
-    # or a missing/empty `dataCombinedId`) would otherwise fail with an opaque
+    # `id` (the key). A malformed shape (a scalar, an unnamed list,
+    # or a missing/empty `id`) would otherwise fail with an opaque
     # base-R "subscript out of bounds" / "less than one element" error naming
     # nothing.
-    id <- if (is.list(dc)) dc[["dataCombinedId"]] else NULL
+    id <- if (is.list(dc)) dc[["id"]] else NULL
     if (is.null(id) || !is.character(id) || length(id) != 1L || is.na(id)) {
       cli::cli_abort(c(
         "Malformed {.field dataCombined} entry at position {i}.",
         "x" = "Each entry must be an object with a single \\
-        {.field dataCombinedId} field.",
+        {.field id} field.",
         "i" = "Check the {.field plots} section of the project file."
       ))
     }
@@ -78,11 +78,6 @@
 # class leaking into the on-disk JSON (the serializer rebuilds plain records).
 # `idClass` is the entry class to stamp (`"Plot"` or `"PlotGrid"`).
 #
-# The on-disk reference key is suffixless (`dataCombined` on a plot, `plots` on
-# a grid) while the in-memory record field keeps its id-suffixed name
-# (`dataCombinedId` / `plotIds`); `.plotRefKeyToField()` maps the JSON key onto
-# the record field at parse time (the serializer mirrors it).
-#
 # @keywords internal
 # @noRd
 .parsePlotEntries <- function(data, idField, idClass) {
@@ -96,69 +91,10 @@
       function(x) !(is.null(x) || (length(x) == 1L && is.na(x))),
       entry
     )
-    cleaned <- .plotRefKeyToField(cleaned, idClass)
     class(cleaned) <- c(idClass, "list")
     result[[id]] <- cleaned
   }
   result
-}
-
-# Map the suffixless on-disk reference key to its in-memory record field: a
-# plot's `dataCombined` JSON key becomes the `dataCombinedId` record field; a
-# grid's `plots` JSON key becomes the `plotIds` record field. The field is
-# renamed in place so round-trip diffs stay zero-noise. A record that already
-# carries only the record-field name (an in-memory entry built by `addPlot()` /
-# `addPlotGrid()`) passes through unchanged. `.plotRefFieldToKey()` is the
-# inverse, used at serialize time.
-#
-# @keywords internal
-# @noRd
-.plotRefKeyToField <- function(entry, idClass) {
-  mapping <- switch(
-    idClass,
-    Plot = c(dataCombined = "dataCombinedId"),
-    PlotGrid = c(plots = "plotIds"),
-    character()
-  )
-  .renamePlotKeys(entry, mapping)
-}
-
-# Inverse of `.plotRefKeyToField()`: map the in-memory record field back to the
-# suffixless on-disk reference key (`dataCombinedId` -> `dataCombined`,
-# `plotIds` -> `plots`). `idClass` is the entry class (`"Plot"` / `"PlotGrid"`).
-#
-# @keywords internal
-# @noRd
-.plotRefFieldToKey <- function(entry, idClass) {
-  mapping <- switch(
-    idClass,
-    Plot = c(dataCombinedId = "dataCombined"),
-    PlotGrid = c(plotIds = "plots"),
-    character()
-  )
-  .renamePlotKeys(entry, mapping)
-}
-
-# Rename the named members of a plot / grid record in place, preserving member
-# order so a round-trip leaves the on-disk field order untouched. `mapping` is a
-# named character vector `c(old = "new")`. A member absent from the record is a
-# no-op for that pair.
-#
-# @keywords internal
-# @noRd
-.renamePlotKeys <- function(entry, mapping) {
-  nms <- names(entry)
-  if (is.null(nms)) {
-    return(entry)
-  }
-  for (old in names(mapping)) {
-    hit <- which(nms == old)
-    if (length(hit) == 1L) {
-      nms[hit] <- mapping[[old]]
-    }
-  }
-  names(entry) <- nms
-  entry
 }
 
 # Print ----
@@ -169,8 +105,8 @@ print.Plot <- function(x, ...) {
   ospsuite.utils::ospPrintClass(x)
   ospsuite.utils::ospPrintItems(
     list(
-      "Plot Id" = x$plotId %||% "",
-      "DataCombined Id" = x$dataCombinedId %||% "",
+      "Plot Id" = x$id %||% "",
+      "DataCombined Id" = x$dataCombined %||% "",
       "Plot Type" = x$plotType %||% "",
       "Title" = x$title %||% ""
     ),
@@ -185,8 +121,8 @@ print.PlotGrid <- function(x, ...) {
   ospsuite.utils::ospPrintClass(x)
   ospsuite.utils::ospPrintItems(
     list(
-      "Plot Grid Id" = x$plotGridId %||% "",
-      "Plot Ids" = x$plotIds %||% "",
+      "Plot Grid Id" = x$id %||% "",
+      "Plot Ids" = x$plots %||% "",
       "Title" = x$title %||% ""
     ),
     print_empty = TRUE
@@ -229,13 +165,13 @@ print.DataCombined <- function(x, ...) {
 #'
 #' Covers `plots` (the plot list) and `plotGrids`. The shape of the
 #' `dataCombined` section is validated separately by `.validateDataCombined()`;
-#' `dataCombined` is passed here only so a plot's `dataCombinedId` can be
+#' `dataCombined` is passed here only so a plot's `dataCombined` can be
 #' checked against the set of known dataCombined ids.
-#'   * plot entries must declare `plotId`, `dataCombinedId`,
-#'     and `plotType`; `plotId` must be unique; `dataCombinedId` must
+#'   * plot entries must declare `id`, `dataCombined`,
+#'     and `plotType`; `id` must be unique; `dataCombined` must
 #'     reference a known dataCombined entry; `plotType` must be one of
 #'     `.validPlotTypes`.
-#'   * plotGrids entries reference plot ids via a comma-separated `plotIds`
+#'   * plotGrids entries reference plot ids via a comma-separated `plots`
 #'     string; unknown ids are a critical error, mirroring the hard failure
 #'     in `createPlots()`. This check also runs when the plot list is empty
 #'     (every referenced id is then unknown).
@@ -248,9 +184,9 @@ print.DataCombined <- function(x, ...) {
 #' scenarios) are validated in `.validateCrossReferences()`.
 #'
 #' @param dataCombined Named list from `dataCombined` definitions, used only as
-#'   the set of known ids a plot's `dataCombinedId` may reference.
+#'   the set of known ids a plot's `dataCombined` may reference.
 #' @param plotConfig Named list from `plots` definitions (the plot list, keyed
-#'   by `plotId`).
+#'   by `id`).
 #' @param plotGrids Named list from `plotGrids` definitions.
 #' @return validationResult.
 #' @keywords internal
@@ -280,12 +216,12 @@ print.DataCombined <- function(x, ...) {
   # on simulated, `label`/`dataSet` on observed) is validated by the
   # `dataCombined` adapter (`.validateDataCombined()`, `R/data-combined.R`).
   # Here `dataCombined` is used only as the set of known ids the plot list may
-  # reference (see the `dataCombinedId` check below).
+  # reference (see the `dataCombined` check below).
 
   if (length(plotConfig) == 0) {
     result$addWarning("Data", "plotConfiguration is empty")
   } else {
-    for (field in c("plotId", "dataCombinedId", "plotType")) {
+    for (field in c("id", "dataCombined", "plotType")) {
       missingField <- Filter(
         function(p) is.null(p[[field]]),
         plotConfig
@@ -300,10 +236,10 @@ print.DataCombined <- function(x, ...) {
 
     plotIds <- vapply(
       plotConfig,
-      function(p) p$plotId %||% NA_character_,
+      function(p) p$id %||% NA_character_,
       character(1)
     )
-    result <- .checkNoDuplicates(plotIds, "plotId", result)
+    result <- .checkNoDuplicates(plotIds, "id", result)
 
     plotTypes <- unlist(lapply(plotConfig, function(p) p$plotType))
     invalidTypes <- setdiff(plotTypes, .validPlotTypes)
@@ -321,11 +257,11 @@ print.DataCombined <- function(x, ...) {
 
     referencedDataCombined <- unlist(lapply(
       plotConfig,
-      function(p) p$dataCombinedId
+      function(p) p$dataCombined
     ))
     dataCombinedKeys <- names(dataCombined %||% list())
     # `setdiff()` rather than `.danglingRefs()`: `createPlots()` resolves a
-    # plot's `dataCombinedId` by exact lookup, so a reference this reports as
+    # plot's `dataCombined` by exact lookup, so a reference this reports as
     # resolved has to be one the build can actually find. It also keeps an
     # empty-string reference reportable, which the missing-field loop above
     # does not catch (`""` is not `NULL`).
@@ -337,7 +273,7 @@ print.DataCombined <- function(x, ...) {
       result$addCriticalError(
         "Invalid Reference",
         paste0(
-          "plotConfiguration references unknown dataCombinedId: ",
+          "plotConfiguration references unknown dataCombined: ",
           paste(invalidDataCombinedRefs, collapse = ", "),
           .suggestSuffixMulti(invalidDataCombinedRefs, dataCombinedKeys)
         )
@@ -363,24 +299,24 @@ print.DataCombined <- function(x, ...) {
   # is empty (the state after removing the last plot): every referenced id is
   # then unknown.
   if (length(plotGrids) > 0) {
-    # A plot with no `plotId` already raised its own critical error above; drop
+    # A plot with no `id` already raised its own critical error above; drop
     # it here so it cannot be offered as a `did you mean 'NA'` suggestion.
     knownPlotIds <- vapply(
       plotConfig,
-      function(p) p$plotId %||% NA_character_,
+      function(p) p$id %||% NA_character_,
       character(1)
     )
     knownPlotIds <- knownPlotIds[!is.na(knownPlotIds)]
     allGridIds <- unique(unlist(lapply(
       plotGrids,
-      function(g) .splitPlotIDs(g$plotIds)
+      function(g) .splitPlotIDs(g$plots)
     )))
     invalidGridRefs <- setdiff(allGridIds, knownPlotIds)
     if (length(invalidGridRefs) > 0) {
       result$addCriticalError(
         "Invalid Reference",
         paste0(
-          "plotGrids references unknown plotIds: ",
+          "plotGrids references unknown plots: ",
           paste(invalidGridRefs, collapse = ", "),
           .suggestSuffixMulti(invalidGridRefs, knownPlotIds)
         )
@@ -400,7 +336,7 @@ print.DataCombined <- function(x, ...) {
 #' `.plotFieldsNotSupportedYet`. This adds a non-blocking warning to `result`
 #' for each such field so the mismatch is surfaced without gating execution.
 #'
-#' @param plotConfig Named list from `plots` definitions (keyed by `plotId`).
+#' @param plotConfig Named list from `plots` definitions (keyed by `id`).
 #' @param result `validationResult` to mutate.
 #' @return The mutated `validationResult`.
 #' @keywords internal
@@ -412,7 +348,7 @@ print.DataCombined <- function(x, ...) {
     if (is.null(plotType) || !(plotType %in% .validPlotTypes)) {
       next
     }
-    plotId <- entry$plotId %||% "<unknown>"
+    plotId <- entry$id %||% "<unknown>"
     presentFields <- intersect(names(.plotFields), names(entry))
     # A field present but empty (NULL / NA) is not really "set"; skip it.
     presentFields <- Filter(
@@ -521,7 +457,7 @@ print.DataCombined <- function(x, ...) {
   .plotEntriesToJson(plotGrids)
 }
 
-# Inverts .parseNestedDataCombined: re-adds the `dataCombinedId` field from the
+# Inverts .parseNestedDataCombined: re-adds the `id` field from the
 # list key. Empty `simulated`/`observed` lists are omitted to keep the JSON
 # terse.
 #
@@ -533,7 +469,7 @@ print.DataCombined <- function(x, ...) {
   }
   unname(lapply(names(dataCombined), function(id) {
     dc <- dataCombined[[id]]
-    entry <- list(dataCombinedId = id)
+    entry <- list(id = id)
     if (length(dc$simulated) > 0) {
       entry$simulated <- dc$simulated
     }
@@ -546,11 +482,9 @@ print.DataCombined <- function(x, ...) {
 
 # Inverts `.parsePlotEntries`: turn a keyed list of plot / grid entries into a
 # plain unnamed JSON array of records (one object per entry). Each entry is
-# already the per-record shape; this maps the in-memory reference field back to
-# its suffixless on-disk key (`dataCombinedId` -> `dataCombined`, `plotIds` ->
-# `plots`), strips the entry class (`c("Plot", "list")` / `c("PlotGrid",
-# "list")`) so it never leaks into JSON, and drops the list name (the id field
-# is already a field of the record).
+# already the per-record shape; this strips the entry class (`c("Plot", "list")`
+# / `c("PlotGrid", "list")`) so it never leaks into JSON, and drops the list
+# name (the id field is already a field of the record).
 #
 # @keywords internal
 # @noRd
@@ -559,8 +493,6 @@ print.DataCombined <- function(x, ...) {
     return(list())
   }
   unname(lapply(entries, function(entry) {
-    idClass <- class(entry)[[1]]
-    entry <- .plotRefFieldToKey(entry, idClass)
     class(entry) <- "list"
     entry
   }))
@@ -587,7 +519,7 @@ print.DataCombined <- function(x, ...) {
 
 .timeProfilePlotTypes <- c("individual", "population")
 .residualPlotTypes <- c("residualsVsSimulated", "residualsVsTime")
-.plotIdentityFields <- c("plotId", "dataCombinedId", "plotType")
+.plotIdentityFields <- c("id", "dataCombined", "plotType")
 .plotAxisScales <- c("linear", "log")
 .plotFontFaces <- c("plain", "bold", "italic", "bold.italic")
 .plotAlignments <- c("left", "center", "right")
@@ -1002,7 +934,7 @@ print.DataCombined <- function(x, ...) {
 # @keywords internal
 # @noRd
 .plotEntryFieldErrors <- function(entry) {
-  plotId <- entry$plotId %||% "<unknown>"
+  plotId <- entry$id %||% "<unknown>"
   plotType <- entry$plotType
   errors <- character()
 
@@ -1283,7 +1215,7 @@ print.DataCombined <- function(x, ...) {
 # id into several. The pair below escapes a literal backslash as `\\` and a
 # literal comma as `\,` on the way in, and reverses it on the way out, so any
 # id (comma-bearing or not) survives the round trip. This is the sole in-memory
-# contract for the stored `plotIds` string; `addPlotGrid()` encodes with
+# contract for the stored `plots` string; `addPlotGrid()` encodes with
 # `.joinPlotIDs()` and every reader decodes with `.splitPlotIDs()`.
 #
 # @keywords internal
@@ -1327,7 +1259,7 @@ print.DataCombined <- function(x, ...) {
 #' Add a plot configuration to a Project
 #'
 #' Add one or more entries to `plots` definitions (a keyed list, one entry per
-#' plot). Errors if a `plotId` already exists, if a `dataCombined` is not
+#' plot). Errors if an `id` already exists, if a `dataCombined` is not
 #' present in `dataCombined` definitions, if a `plotType` is not one of the
 #' supported types, or if a field in `...` is not supported or has an invalid
 #' value. Nothing is added when one plot fails these checks.
@@ -1337,7 +1269,7 @@ print.DataCombined <- function(x, ...) {
 #' @param project A `Project` object.
 #' @param id Character vector of unique plot identifiers (the number of plots
 #'   to add). Each is canonicalized to a safe, lowercase id (a warning names
-#'   the result if it changed). Stored in the `plotId` field.
+#'   the result if it changed). Stored in the `id` field.
 #' @param dataCombined Character, length 1 (recycled to all plots) or the
 #'   same length as `id` (aligned by position). Each must reference an
 #'   existing DataCombined id on the project.
@@ -1454,11 +1386,11 @@ addPlot <- function(project, id, dataCombined, plotType, ...) {
 #
 # @keywords internal
 # @noRd
-.buildPlotEntry <- function(id, dataCombinedId, plotType, optionalFields) {
+.buildPlotEntry <- function(id, dataCombined, plotType, optionalFields) {
   entry <- c(
     list(
-      plotId = id,
-      dataCombinedId = dataCombinedId,
+      id = id,
+      dataCombined = dataCombined,
       plotType = plotType
     ),
     optionalFields
@@ -1469,7 +1401,7 @@ addPlot <- function(project, id, dataCombined, plotType, ...) {
 
 #' Remove one or more plot configurations from a Project
 #'
-#' Drop the entries with matching `plotId`s. Warns (and skips) any `id` not
+#' Drop the entries with matching `id`s. Warns (and skips) any `id` not
 #' found, and warns when a removed plot is still referenced by any `plotGrids`
 #' entry. All removals are written through in a single pass.
 #'
@@ -1507,7 +1439,7 @@ removePlot <- function(project, id) {
   if (length(grids) > 0) {
     referencingGrids <- names(grids)[vapply(
       grids,
-      function(g) any(toRemove %in% .splitPlotIDs(g$plotIds)),
+      function(g) any(toRemove %in% .splitPlotIDs(g$plots)),
       logical(1)
     )]
     if (length(referencingGrids) > 0) {
@@ -1526,7 +1458,7 @@ removePlot <- function(project, id) {
 #' Add one or more plot grids to a Project
 #'
 #' Add new entries to `plotGrids` definitions (a keyed list, one entry per grid).
-#' Errors if a `plotGridId` already exists or if any of the supplied `plots`
+#' Errors if an `id` already exists or if any of the supplied `plots`
 #' are not present in `plots` definitions.
 #'
 #' @inherit vectorizedAuthoring details
@@ -1534,7 +1466,7 @@ removePlot <- function(project, id) {
 #' @param project A `Project` object.
 #' @param id Character vector of unique plot-grid ids (the number of grids to
 #'   add). Each is canonicalized to a safe, lowercase id (a warning names the
-#'   result if it changed). Stored in the `plotGridId` field.
+#'   result if it changed). Stored in the `id` field.
 #' @param plots The plot ids each grid includes (stored internally as a
 #'   comma-separated string). A character vector is applied whole to every
 #'   grid; to give a different set of plot ids per grid, pass a list of the
@@ -1611,7 +1543,7 @@ addPlotGrid <- function(project, id, plots, ...) {
   unknown <- setdiff(unique(unlist(canonPlotIds)), existingPlotIDs)
   if (length(unknown) > 0L) {
     cli::cli_abort(c(
-      "{.arg plots} references unknown plotIds:",
+      "{.arg plots} references unknown plot ids:",
       "x" = "{.val {unknown}}"
     ))
   }
@@ -1622,8 +1554,8 @@ addPlotGrid <- function(project, id, plots, ...) {
   for (i in seq_len(n)) {
     entry <- c(
       list(
-        plotGridId = id[[i]],
-        plotIds = .joinPlotIDs(canonPlotIds[[i]])
+        id = id[[i]],
+        plots = .joinPlotIDs(canonPlotIds[[i]])
       ),
       perGridFields[[i]]
     )
@@ -1636,7 +1568,7 @@ addPlotGrid <- function(project, id, plots, ...) {
 
 #' Remove one or more plot grids from a Project
 #'
-#' Drop the entries with matching `plotGridId`s. Warns (and skips) any `id`
+#' Drop the entries with matching `id`s. Warns (and skips) any `id`
 #' not present. All removals are written through in a single pass.
 #'
 #' @param project A `Project` object.
@@ -1858,7 +1790,7 @@ removeDataCombined <- function(project, id) {
   if (length(plotCfg) > 0) {
     referencingPlots <- names(plotCfg)[vapply(
       plotCfg,
-      function(p) isTRUE(p$dataCombinedId %in% toRemove),
+      function(p) isTRUE(p$dataCombined %in% toRemove),
       logical(1)
     )]
     if (length(referencingPlots) > 0) {

@@ -16,7 +16,7 @@ way \code{\link[=addPlotGrid]{addPlotGrid()}} canonicalizes it.}
 The \code{project} object, invisibly.
 }
 \description{
-Drop the entries with matching \code{plotGridId}s. Warns (and skips) any \code{id}
+Drop the entries with matching \code{id}s. Warns (and skips) any \code{id}
 not present. All removals are written through in a single pass.
 }
 \seealso{

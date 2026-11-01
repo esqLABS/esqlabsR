@@ -354,7 +354,7 @@ test_that("a keyed file missing its id field aborts naming the file", {
   f <- list.files(dir, pattern = "\\.json$", full.names = TRUE)[[1]]
 
   obj <- jsonlite::fromJSON(f, simplifyVector = FALSE)
-  obj$individualId <- NULL
+  obj$id <- NULL
   jsonlite::write_json(obj, f, auto_unbox = TRUE, null = "null", pretty = TRUE)
 
   expect_snapshot(
@@ -499,7 +499,7 @@ test_that("a dangling cross-file plot ref is a lazy error, not a write abort", {
   # structural-only (the plot's own shape), so it does not abort. The dangling
   # ref is caught lazily by validateProject(), exactly as before the split.
   pc <- .getSection(project, "plots")
-  pc$p1$dataCombinedId <- "ghost_dc"
+  pc$p1$dataCombined <- "ghost_dc"
   .setSection(project, "plots", pc)
   saveProject(project)
   expect_true(file.exists(file.path(plotsDir, "p1.json")))
@@ -523,9 +523,9 @@ test_that("a grid pointing at a missing plot stays a lazy error after reload", {
   )
 
   # Repoint the grid at a plot id that does not exist; the grid write succeeds
-  # (its own structure is valid), the dangling plotIds ref is lazy.
+  # (its own structure is valid), the dangling plots ref is lazy.
   pg <- .getSection(project, "plotGrids")
-  pg$individual_diagnostics$plotIds <- "ghost_plot"
+  pg$individual_diagnostics$plots <- "ghost_plot"
   .setSection(project, "plotGrids", pg)
   saveProject(project)
   expect_true(file.exists(file.path(gridsDir, "individual_diagnostics.json")))
@@ -596,10 +596,10 @@ test_that("snapshot then restore is a fixed point over the three plots folders",
 # the filename), so the write must reject the mismatch up front rather than
 # emit an unreadable file.
 test_that("a plots entry whose stored id differs from its map key aborts", {
-  entries <- list(p1 = list(plotId = "p2"))
+  entries <- list(p1 = list(id = "p2"))
 
   expect_snapshot(
-    .serializePlotEntrySet(entries, "plotId", "plot"),
+    .serializePlotEntrySet(entries, "id", "plot"),
     error = TRUE
   )
 })

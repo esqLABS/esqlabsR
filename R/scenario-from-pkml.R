@@ -593,7 +593,7 @@ createScenariosFromPKML <- function(
     }
 
     specs[[i]] <- list(
-      scenarioName = scenarioName,
+      id = scenarioName,
       modelFile = modelFile,
       individual = if (!is.null(individual)) individual[[i]],
       population = if (!is.null(population)) population[[i]],
@@ -641,7 +641,7 @@ createScenariosFromPKML <- function(
         .addScenario_impl(
           self,
           private,
-          id = spec$scenarioName,
+          id = spec$id,
           modelFile = spec$modelFile,
           individual = spec$individual,
           population = spec$population,
@@ -683,7 +683,7 @@ createScenariosFromPKML <- function(
     }
   )
 
-  addedNames <- vapply(specs, function(spec) spec$scenarioName, character(1))
+  addedNames <- vapply(specs, function(spec) spec$id, character(1))
   if (length(addedNames) > 0) {
     cli::cli_inform(messages$scenariosAddedToProject(addedNames))
   }

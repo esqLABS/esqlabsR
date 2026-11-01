@@ -325,3 +325,16 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-10-26 12:19: The closing warning of runScenarios(stopIfFails = FALSE) names only the scenarios that produced no results, not every requested one. (#1329)
 - 2026-10-26 12:24: Bullets in error and warning messages start new lines again, and a value with braces prints as written; a nested error now shows below the warning as its cause. (#1343)
 - 2026-10-26 14:45: The name-collision error of saveScenarioResults() shows the backslash once, as "\\" instead of "\\\\".
+- 2026-10-27 11:22: setScenario() refuses a modelFile of NULL, NA or "" and leaves every scenario unchanged. (#1303)
+- 2026-10-27 11:58: A scenario record uses the names of the addScenario() arguments (id, individual, population, application, parameterSets, steadyState), and an absent application is NULL. (#1317)
+- 2026-10-27 12:06: A scenario definition file stores its id under the key "id" instead of "name".
+- 2026-10-27 12:20: Individual, population, data-combination, plot and plot-grid files store their own id under "id", and a plot or grid record uses the addPlot() and addPlotGrid() argument names.
+- 2026-10-27 14:06: A scenario can carry an optional free-text label that keeps the name as typed; the Excel bridge writes and reads it, and a 5.x import keeps a changed Scenario_name as the label. (#1294)
+- 2026-10-27 14:13: The Excel import writes a DataCombined curve's path as its output-path id when exactly one output path has it, and the example project uses the id. (#1280)
+- 2026-10-27 14:18: The help pages are regenerated for the renamed and new scenario, plot and plot-grid fields.
+- 2026-10-27 16:54: Review fixes: a scenario record handed back to setScenario() clears the fields it leaves empty, labels drop wrapping quotes and are left off copies and off exports without labels, and an NA reference is refused on save. (#1294)
+- 2026-10-28 15:03: Review fixes: a scenario label must be a non-empty string, the Excel import keeps a scenario name as its label only when the id changes more than its case, and a plot sheet with two disagreeing id columns warns. (#1294)
+- 2026-10-29 15:51: The scenarios vignette drops a sentence that restated the obvious.
+- 2026-10-29 16:01: A scenario record always has an id: Scenario() refuses one without it.
+- 2026-10-29 16:02: Two NEWS bullets, on the definition files and on scenario records, are shorter and less technical.
+- 2026-10-29 16:02: The NEWS bullet on imported curve paths no longer compares with unreleased behavior, and a quoted import error uses the current field name.

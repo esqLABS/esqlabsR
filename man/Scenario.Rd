@@ -5,38 +5,42 @@
 \title{Create a Scenario}
 \usage{
 Scenario(
-  scenarioName = NULL,
+  id,
+  label = NULL,
   modelFile = NULL,
-  applicationProtocol = NULL,
-  individualId = NULL,
-  populationId = NULL,
+  application = NULL,
+  individual = NULL,
+  population = NULL,
   outputPaths = NULL,
-  simulationType = if (is.null(populationId)) "Individual" else "Population",
+  simulationType = if (is.null(population)) "Individual" else "Population",
   readPopulationFromCSV = FALSE,
-  simulateSteadyState = FALSE,
+  steadyState = FALSE,
   simulationTime = NULL,
   simulationTimeUnit = NULL,
   steadyStateTime = 1000,
   steadyStateTimeUnit = NULL,
   overwriteFormulasInSS = FALSE,
-  modelParameterSets = NULL,
+  parameterSets = NULL,
   initialConditions = NULL,
   solverSettings = NULL
 )
 }
 \arguments{
-\item{scenarioName}{Character. Name of the scenario.}
+\item{id}{Character. Id of the scenario. Required.}
+
+\item{label}{Character or \code{NULL}. Free-text name of the scenario, kept
+exactly as typed. \code{NULL} when the scenario has none.}
 
 \item{modelFile}{Character. Name of the \code{.pkml} model file (relative to
 the model folder).}
 
-\item{applicationProtocol}{Character or \code{NA}. Name of the application
-protocol; \code{NA} when absent.}
+\item{application}{Character or \code{NULL}. Id referencing \code{applications}
+definitions.}
 
-\item{individualId}{Character or \code{NULL}. ID referencing
+\item{individual}{Character or \code{NULL}. Id referencing
 \code{individuals} definitions.}
 
-\item{populationId}{Character or \code{NULL}. ID referencing
+\item{population}{Character or \code{NULL}. Id referencing
 \code{populations} definitions.}
 
 \item{outputPaths}{Named character vector of literal output paths.
@@ -50,13 +54,13 @@ that moment, and a record passed to \code{\link[=addScenario]{addScenario()}} co
 not its paths.}
 
 \item{simulationType}{Character. \code{"Individual"} or \code{"Population"}.
-Defaults to \code{"Population"} when \code{populationId} is set,
+Defaults to \code{"Population"} when \code{population} is set,
 \code{"Individual"} otherwise.}
 
 \item{readPopulationFromCSV}{Logical. If \code{TRUE}, load population from
 CSV.}
 
-\item{simulateSteadyState}{Logical. If \code{TRUE}, run steady-state before
+\item{steadyState}{Logical. If \code{TRUE}, run steady-state before
 the main simulation.}
 
 \item{simulationTime}{The parsed time grid: a list of length-3 numeric
@@ -76,7 +80,7 @@ parse it to this shape.}
 \item{overwriteFormulasInSS}{Logical. Overwrite formula parameters
 during steady-state.}
 
-\item{modelParameterSets}{Character vector. Parameter-set ids
+\item{parameterSets}{Character vector. Parameter-set ids
 referencing \code{parameterSets} definitions.}
 
 \item{initialConditions}{Character vector. Initial-condition set ids

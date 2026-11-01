@@ -98,5 +98,5 @@
       i Pass `stopIfFails = FALSE` to skip it and build the other scenarios.
       Caused by error in `.resolveCsvPopulation()`:
       x Cannot resolve the population csv for scenario "populationscenariofromcsv".
-      i populationId "testpopulation" is read from a csv but the project has no populationsFolder to resolve it against.
+      i population "testpopulation" is read from a csv but the project has no populationsFolder to resolve it against.
 

@@ -1,4 +1,4 @@
-# addIndividual aborts when individualId already exists
+# addIndividual aborts when the id already exists
 
     Code
       addIndividual(project, "indiv1", species = "Human", gender = "MALE")

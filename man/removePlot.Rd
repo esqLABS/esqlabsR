@@ -16,7 +16,7 @@ removePlot(project, id)
 The \code{project} object, invisibly.
 }
 \description{
-Drop the entries with matching \code{plotId}s. Warns (and skips) any \code{id} not
+Drop the entries with matching \code{id}s. Warns (and skips) any \code{id} not
 found, and warns when a removed plot is still referenced by any \code{plotGrids}
 entry. All removals are written through in a single pass.
 }

@@ -1,3 +1,19 @@
+# Scenario requires an id
+
+    Code
+      Scenario()
+    Condition
+      Error in `Scenario()`:
+      ! `id` must be a single non-empty string.
+
+---
+
+    Code
+      Scenario(id = NA_character_)
+    Condition
+      Error in `Scenario()`:
+      ! `id` must be a single non-empty string.
+
 # addScenario aborts when a referenced individual is unknown
 
     Code
@@ -127,7 +143,7 @@
     Condition
       Error:
       ! `setScenario()` cannot set simulationType.
-      i The settable fields are modelFile, individual, population, application, parameterSets, initialConditions, outputPaths, simulationTime, simulationTimeUnit, steadyState, steadyStateTime, steadyStateTimeUnit, overwriteFormulasInSS, readPopulationFromCSV, and solverSettings.
+      i The settable fields are modelFile, label, individual, population, application, parameterSets, initialConditions, outputPaths, simulationTime, simulationTimeUnit, steadyState, steadyStateTime, steadyStateTimeUnit, overwriteFormulasInSS, readPopulationFromCSV, and solverSettings.
 
 # addScenario rejects an unsound solverSettings block
 
@@ -198,6 +214,52 @@
       Error in `setScenario()`:
       ! Cannot modify scenario "ghost": it does not exist.
       i Use `addScenario()` to create it first.
+
+# setScenario refuses to clear the required modelFile
+
+    Code
+      setScenario(project, "testscenario", modelFile = NULL)
+    Condition
+      Error in `setScenario()`:
+      ! Cannot modify scenario "testscenario":
+      x modelFile is required and cannot be cleared; give the name of a '.pkml' file
+
+---
+
+    Code
+      setScenario(project, "testscenario", modelFile = NA)
+    Condition
+      Error in `setScenario()`:
+      ! Cannot modify scenario "testscenario":
+      x modelFile is required and cannot be cleared; give the name of a '.pkml' file
+
+---
+
+    Code
+      setScenario(project, "testscenario", modelFile = "")
+    Condition
+      Error in `setScenario()`:
+      ! Cannot modify scenario "testscenario":
+      x modelFile is required and cannot be cleared; give the name of a '.pkml' file
+
+# setScenario leaves every scenario unchanged when one of several ids gets an empty modelFile
+
+    Code
+      setScenario(project, c("testscenario", "populationscenario"), modelFile = c(
+        "Aciclovir.pkml", ""))
+    Condition
+      Error in `setScenario()`:
+      ! Cannot modify scenario "populationscenario":
+      x modelFile is required and cannot be cleared; give the name of a '.pkml' file
+
+---
+
+    Code
+      setScenario(project, c("testscenario", "populationscenario"), modelFile = NULL)
+    Condition
+      Error in `setScenario()`:
+      ! Cannot modify scenario "testscenario":
+      x modelFile is required and cannot be cleared; give the name of a '.pkml' file
 
 # setScenario rejects an unknown foreign key like addScenario
 
@@ -304,7 +366,7 @@
       print(project$definitions$scenarios[["testscenario"]])
     Output
       <Scenario>
-        * Name: testscenario
+        * Id: testscenario
         * Model: Aciclovir.pkml
         * Type: Individual
         * Individual: indiv1
@@ -323,7 +385,7 @@
       print(scenario)
     Output
       <Scenario>
-        * Name: outputs
+        * Id: outputs
         * Model: Aciclovir.pkml
         * Type: Individual
         * Individual: <empty string>
@@ -343,7 +405,7 @@
       print(scenario)
     Output
       <Scenario>
-        * Name: nooutputs
+        * Id: nooutputs
         * Model: Aciclovir.pkml
         * Type: Individual
         * Individual: <empty string>
@@ -355,4 +417,60 @@
         * Solver Settings: <empty string>
         * Output Paths:
           * <empty vector>
+
+# addScenario and setScenario refuse a label that is not one non-empty string
+
+    Code
+      addScenario(project, "numbered", modelFile = "Aciclovir.pkml", label = 1)
+    Condition
+      Error in `addScenario()`:
+      ! Cannot add scenario "numbered":
+      x label must be a single non-empty string or `NULL`; set it to `NULL` to remove it
+
+---
+
+    Code
+      setScenario(project, "testscenario", label = NA)
+    Condition
+      Error in `setScenario()`:
+      ! Cannot modify scenario "testscenario":
+      x label must be a single non-empty string or `NULL`; set it to `NULL` to remove it
+
+---
+
+    Code
+      setScenario(project, "testscenario", label = "")
+    Condition
+      Error in `setScenario()`:
+      ! Cannot modify scenario "testscenario":
+      x label must be a single non-empty string or `NULL`; set it to `NULL` to remove it
+
+# print shows a scenario's label after its id, and the section lists it
+
+    Code
+      print(project$definitions$scenarios[["testscenario"]])
+    Output
+      <Scenario>
+        * Id: testscenario
+        * Label: Aciclovir IV 250 mg
+        * Model: Aciclovir.pkml
+        * Type: Individual
+        * Individual: indiv1
+        * Population: <empty string>
+        * Administration Protocol: aciclovir_iv_250mg
+        * Parameter Sets: global
+        * Initial Conditions: testinitialset
+        * Steady State: FALSE
+        * Solver Settings: <empty string>
+        * Output Paths:
+          * Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)
+    Code
+      print(project$definitions$scenarios)
+    Output
+      <DefinitionList>
+      scenarios (4 definitions):
+        * populationscenario
+        * populationscenariofromcsv
+        * testscenario (Aciclovir IV 250 mg)
+        * testscenario_steadystate
 

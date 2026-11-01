@@ -40,10 +40,8 @@ The \code{project} object, invisibly.
 \description{
 Adds parameter entries to the named set in \code{parameterSets} definitions.
 \code{containerPath}, \code{parameterName}, \code{value}, and \code{units} accept parallel
-vectors of equal length N to add all N entries in a single call (and a
-single write to disk); a scalar call (length-1 vectors) adds one entry.
-Building a large set with one vectorized call is far cheaper than a loop of
-scalar calls, since each call rewrites the whole set file.
+vectors of equal length N to add all N entries in a single call; a scalar
+call (length-1 vectors) adds one entry.
 }
 \details{
 Unlike the other \verb{add*} functions, which abort on a missing parent, this

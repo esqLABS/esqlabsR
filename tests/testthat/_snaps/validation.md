@@ -45,7 +45,7 @@
     Condition
       Error in `.abortValidationErrors()`:
       ! Cannot createPlots: project has 1 critical validation error.
-      x [plots] plotConfiguration references unknown dataCombinedId: Ghost
+      x [plots] plotConfiguration references unknown dataCombined: Ghost
       i Run `validateProject(project)` for a full report.
 
 # .abortValidationErrors escapes glue metacharacters in messages

@@ -20,10 +20,10 @@
 #'
 #' With neither `plotGrids` nor `plots`, all plot grids declared in
 #' `plotGrids` definitions are built (the default). The two arguments are
-#' independent selectors: `plotGrids` selects plot grids (keyed by
-#' `plotGridId` in the result), `plots` selects standalone single plots
-#' (keyed by `plotId`). A `plotId` that is also part of a requested grid still
-#' gets its own standalone entry.
+#' independent selectors: `plotGrids` selects plot grids (keyed by their
+#' `id` in the result), `plots` selects standalone single plots (keyed by
+#' their `id`). A plot that is also part of a requested grid still gets its
+#' own standalone entry.
 #'
 #' @param project A `Project` (see [loadProject()]).
 #' @param plotGrids Names of plot grids to build. If `NULL` (default) and
@@ -47,8 +47,8 @@
 #'   already validated the project).
 #'
 #' @returns A named list of **plot grids** keyed by Plot Grid name: one entry
-#'   per requested plot grid (keyed by its `plotGridId`), unioned with one entry
-#'   per requested standalone plot (keyed by its `plotId`) when `plots` is
+#'   per requested plot grid (keyed by its `id`), unioned with one entry
+#'   per requested standalone plot (keyed by its `id`) when `plots` is
 #'   given. Note the list holds plot grids, not standalone `Plot` objects,
 #'   unless standalone plots were explicitly requested via `plots`. An empty
 #'   list when the project has no plots to build.
@@ -111,7 +111,7 @@ createPlots <- function(
 
   gridReferencedPlotIds <- unique(unlist(lapply(
     selectedGrids,
-    function(g) .splitPlotIDs(g$plotIds)
+    function(g) .splitPlotIDs(g$plots)
   )))
   neededPlotIds <- union(gridReferencedPlotIds, selectedPlotIds)
   plotConfig <- allPlotConfig[intersect(names(allPlotConfig), neededPlotIds)]
@@ -125,7 +125,7 @@ createPlots <- function(
   if (is.null(dataCombinedList)) {
     standaloneDataCombinedNames <- unique(unlist(lapply(
       plotConfig[selectedPlotIds],
-      function(p) p$dataCombinedId
+      function(p) p$dataCombined
     )))
     dataCombinedList <- createDataCombined(
       project,
@@ -159,7 +159,7 @@ createPlotsFromExcel <- function(...) {
 #' Parse and validate comma-separated Excel field
 #'
 #' Parses comma-separated values from Excel and validates using ospsuite.utils.
-#' Provides Excel-specific error context (plotId, field name) for common issues.
+#' Provides Excel-specific error context (id, field name) for common issues.
 #'
 #' @param value Raw value from Excel cell
 #' @param fieldName Name of the field for error messages
@@ -373,8 +373,8 @@ createPlotsFromExcel <- function(...) {
 #'
 #' Mirrors the checks the lazy `.validatePlots()` runs (and so is redundant
 #' when `createPlots(validate = TRUE)`), but guards the build path itself:
-#' every plot must declare `dataCombinedId` and `plotType`, `plotId` must be
-#' unique, and every referenced `dataCombinedId` must be in the built list.
+#' every plot must declare `dataCombined` and `plotType`, `id` must be
+#' unique, and every referenced `dataCombined` must be in the built list.
 #'
 #' @param plotConfigurations Keyed list (one entry per plot).
 #' @param dataCombinedNames Ids of the DataCombined that are built and
@@ -387,21 +387,19 @@ createPlotsFromExcel <- function(...) {
 ) {
   ids <- vapply(
     plotConfigurations,
-    function(p) p$plotId %||% NA_character_,
+    function(p) p$id %||% NA_character_,
     character(1)
   )
-  dataCombinedIds <- lapply(plotConfigurations, function(p) p$dataCombinedId)
+  dataCombinedIds <- lapply(plotConfigurations, function(p) p$dataCombined)
   plotTypes <- lapply(plotConfigurations, function(p) p$plotType)
 
-  # Reject any plot missing its `plotId` up front. The duplicate check below
+  # Reject any plot missing its `id` up front. The duplicate check below
   # only catches two-or-more missing ids (`duplicated(c(NA, NA))` flags the
   # second); a single id-less entry would otherwise slip through and fail
-  # opaquely at `configPlotIds <- vapply(..., function(p) p$plotId, ...)` in
-  # `.createPlotGridsFromEntries()`. Mirrors the `plotGridId` guard in
+  # opaquely at `configPlotIds <- vapply(..., function(p) p$id, ...)` in
+  # `.createPlotGridsFromEntries()`. Mirrors the `id` guard in
   # `.assertPlotGridsBuildable()`.
-  if (
-    any(vapply(plotConfigurations, function(p) is.null(p$plotId), logical(1)))
-  ) {
+  if (any(vapply(plotConfigurations, function(p) is.null(p$id), logical(1)))) {
     msg <- messages$missingPlotId()
     cli::cli_abort("{msg}")
   }
@@ -445,7 +443,7 @@ createPlotsFromExcel <- function(...) {
 
 #' Validate the keyed-list plot grids before building.
 #'
-#' Every grid must declare `plotIds`, `plotGridId` must be unique, and every
+#' Every grid must declare `plots`, `id` must be unique, and every
 #' referenced plot id must be defined.
 #'
 #' @param plotGrids Keyed list (one entry per grid).
@@ -453,17 +451,17 @@ createPlotsFromExcel <- function(...) {
 #' @keywords internal
 #' @noRd
 .assertPlotGridsBuildable <- function(plotGrids, plotIDs) {
-  if (any(vapply(plotGrids, function(g) is.null(g$plotIds), logical(1)))) {
+  if (any(vapply(plotGrids, function(g) is.null(g$plots), logical(1)))) {
     msg <- messages$missingPlotIDs()
     cli::cli_abort("{msg}")
   }
-  if (any(vapply(plotGrids, function(g) is.null(g$plotGridId), logical(1)))) {
+  if (any(vapply(plotGrids, function(g) is.null(g$id), logical(1)))) {
     msg <- messages$missingPlotGridId()
     cli::cli_abort("{msg}")
   }
   gridIds <- vapply(
     plotGrids,
-    function(g) g$plotGridId %||% NA_character_,
+    function(g) g$id %||% NA_character_,
     character(1)
   )
   duplicatedGridIds <- gridIds[duplicated(gridIds)]
@@ -473,7 +471,7 @@ createPlotsFromExcel <- function(...) {
   }
   referencedPlotIds <- unique(unlist(lapply(
     plotGrids,
-    function(g) .splitPlotIDs(g$plotIds)
+    function(g) .splitPlotIDs(g$plots)
   )))
   missingPlots <- setdiff(referencedPlotIds, plotIDs)
   if (length(missingPlots) != 0) {
@@ -489,15 +487,15 @@ createPlotsFromExcel <- function(...) {
 #' Used by `createPlots(project, ...)`.
 #'
 #' @param plotConfigurations keyed list (one entry per plot), each entry a
-#'   named list with `plotId`, `dataCombinedId`, `plotType`, plus the fields of
+#'   named list with `id`, `dataCombined`, `plotType`, plus the fields of
 #'   `.plotFields`. Callers must pass only plots whose
-#'   `dataCombinedId` is built in `dataCombinedList`;
-#'   `.assertPlotConfigurationsBuildable()` aborts on any `dataCombinedId`
+#'   `dataCombined` is built in `dataCombinedList`;
+#'   `.assertPlotConfigurationsBuildable()` aborts on any `dataCombined`
 #'   missing from the list.
 #' @param plotGrids keyed list (one entry per grid), each entry a named list
-#'   with `plotGridId`, `plotIds` (comma-separated string), `title`.
+#'   with `id`, `plots` (comma-separated string), `title`.
 #' @param standalonePlotIds Character vector of plot ids to additionally
-#'   return as standalone single plots (each keyed by its `plotId` in the
+#'   return as standalone single plots (each keyed by its `id` in the
 #'   result).
 #' @param dataCombinedList named list of DataCombined objects keyed by name.
 #'
@@ -514,19 +512,19 @@ createPlotsFromExcel <- function(...) {
   )
   configPlotIds <- vapply(
     plotConfigurations,
-    function(p) p$plotId,
+    function(p) p$id,
     character(1)
   )
   .assertPlotGridsBuildable(plotGrids, unique(configPlotIds))
 
   plotList <- lapply(plotConfigurations, function(entry) {
-    .validateLogScaleAxisLimits(entry, entry$plotId)
-    .buildPlot(entry, dataCombinedList[[entry$dataCombinedId]])
+    .validateLogScaleAxisLimits(entry, entry$id)
+    .buildPlot(entry, dataCombinedList[[entry$dataCombined]])
   })
   names(plotList) <- configPlotIds
 
   defaultPlotGridConfig <- createEsqlabsPlotGridConfiguration()
-  gridStyleFields <- c("plotGridId", "plotIds", "title", "subtitle")
+  gridStyleFields <- c("id", "plots", "title", "subtitle")
   builtGrids <- lapply(plotGrids, function(entry) {
     plotGridConfiguration <- .createConfigurationFromEntry(
       defaultConfiguration = defaultPlotGridConfig,
@@ -543,7 +541,7 @@ createPlotsFromExcel <- function(...) {
       plotGridConfiguration$subtitle <- entry$subtitle
     }
     plotsToAdd <- plotList[intersect(
-      .splitPlotIDs(entry$plotIds),
+      .splitPlotIDs(entry$plots),
       configPlotIds
     )]
     plotsToAdd <- plotsToAdd[lengths(plotsToAdd) != 0]
@@ -556,11 +554,11 @@ createPlotsFromExcel <- function(...) {
     plotGridConfiguration$addPlots(plots = plotsToAdd)
     plotGrid(plotGridConfiguration)
   })
-  names(builtGrids) <- vapply(plotGrids, function(g) g$plotGridId, character(1))
+  names(builtGrids) <- vapply(plotGrids, function(g) g$id, character(1))
 
   # Standalone single plots: return the rendered plot for each requested id
-  # (the same render a grid cell gets), keyed by `plotId`. A `plotId` that is
-  # also inside a requested grid still gets its own entry here (independent
+  # (the same render a grid cell gets), keyed by its id. A plot that is also
+  # inside a requested grid still gets its own entry here (independent
   # selectors). The grid entries and the standalone entries are unioned.
   standalonePlots <- plotList[intersect(standalonePlotIds, names(plotList))]
   # A plot without data to draw is NULL (the `ospsuite` plot function warns);
