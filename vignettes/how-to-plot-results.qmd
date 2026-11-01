@@ -30,6 +30,7 @@ Clear, consistent figures are a core part of model diagnostics and of any report
 - apply the ESQlabs house style
 - export a figure to a file
 - work with the data behind a figure, such as the residuals
+- review and edit figures in the Excel files
 
 Every figure below uses the example project bundled with the package and the results of two of its scenarios.
 
@@ -347,8 +348,6 @@ Three fields apply only to `plotType = "population"`:
 
 ## Customize the plots
 
-`createPlots()` draws every plot in the ESQlabs house style: text sizes, line and point sizes, the legend at the top left, and the ESQlabs colors. The figures above have it by default. The house values are those of `createEsqlabsPlotConfiguration()`, and every setting you leave out of a Plot takes them.
-
 To change the look of one plot, provide the different properties as arguments to `addPlot`. Here the curve and its observed points are drawn in dark red, the legend goes inside the panel, and the title is bold:
 
 ```{r styled-plot}
@@ -464,14 +463,14 @@ Each curve keeps its own units in this table: here the simulated curve is in min
 
 ### Calculate residuals without a plot
 
-`calculateResiduals()` pairs every observed point with the simulated value at the same time, within each group that holds both, and returns the residuals as a table. Use it when you need the residuals as numbers, for example for a goodness-of-fit summary or a table in a report, rather than as a chart. `scaling` sets how a residual is calculated:
+`ospsuite::calculateResiduals()` pairs every observed point with the simulated value at the same time, within each group that holds both, and returns the residuals as a table. Use it when you need the residuals as numbers, for example for a goodness-of-fit summary or a table in a report, rather than as a chart. `scaling` sets how a residual is calculated:
 
 - `"log"`: log(simulated) minus log(observed), the residuals the residual plots above draw.
 - `"linear"`: simulated minus observed, in the unit of the observed data.
 - `"ratio"`: observed divided by simulated.
 
 ```{r residuals}
-residuals <- calculateResiduals(dataCombined, scaling = "log")
+residuals <- ospsuite::calculateResiduals(dataCombined, scaling = "log")
 head(residuals[, c(
   "group",
   "xValues",
@@ -488,10 +487,10 @@ Here the times and values come in hours and mg/l, the units of the observed data
 
 ### Draw a chart that has no plot type
 
-Every `{ospsuite}` chart function takes a DataCombined, including the ones no `plotType` covers. `plotResidualsAsHistogram()`, for example, draws the distribution of the residuals. The result is an ordinary `ggplot` object, like everything `createPlots()` returns, so the two can share one figure. Put them side by side with `patchwork::wrap_plots()`:
+Every `{ospsuite}` chart function takes a DataCombined, including the ones no `plotType` covers. `ospsuite::plotResidualsAsHistogram()`, for example, draws the distribution of the residuals. The result is an ordinary `ggplot` object, like everything `createPlots()` returns, so the two can share one figure. Put them side by side with `patchwork::wrap_plots()`:
 
 ```{r compose}
-residualHistogram <- plotResidualsAsHistogram(dataCombined)
+residualHistogram <- ospsuite::plotResidualsAsHistogram(dataCombined)
 
 patchwork::wrap_plots(single$p1, residualHistogram)
 ```
@@ -523,6 +522,38 @@ plotTimeProfile(handMade, xUnit = "h")
 ```
 
 A DataCombined built this way exists only in your R session: `saveProject()` does not store it, and `createPlots()` cannot draw it. For a figure you want to keep and build again, write a DataCombined definition with `addDataCombined()` instead.
+
+## Plots in Excel
+
+The preferred way to create and edit figures is through the R functions above. The Excel files of a project show the same definitions as spreadsheets, which is useful for reviewing many figures at once. Editing them changes nothing until you read them back with `importProjectFromExcel()`, and the import rewrites the whole project from all the Excel files, so any definition you created in R and did not export is lost. `vignette("how-to-set-up-a-project")` explains how to write and read the Excel files, and how to check with `projectStatus()` whether they still match the project.
+
+All three building blocks are in one file, `Plots.xlsx` in the project's `Configurations/` folder, one sheet each:
+
+| Sheet | Holds | Main columns |
+| --- | --- | --- |
+| `DataCombined` | One row per curve. The rows of one DataCombined share its id. | `DataCombinedName`, `dataType`, `label`, `group`, then `scenario` and `path` for a simulated curve, or `dataSet` for observed data |
+| `plotConfiguration` | One row per Plot. | `plotId`, `plotType`, `dataCombined`, then one column per plot setting |
+| `plotGrids` | One row per Plot Grid. | `plotGridId`, `plots`, `title` |
+
+**The `DataCombined` sheet** has one row per curve, not one per DataCombined. `DataCombinedName` is the id of the DataCombined the curve belongs to, so a DataCombined with a simulated curve and observed data takes two rows with the same `DataCombinedName`. `dataType` says which kind of curve the row holds, `simulated` or `observed`, and decides which columns it needs:
+
+- A simulated row names `scenario` and `path`. As in R, `path` is either a full model path or an output-path id, and `label` is optional.
+- An observed row names the DataSet in `dataSet` and always needs a `label`.
+- `group` pairs simulated and observed curves, as described in "Add observed data to a DataCombined".
+- The offset and scale-factor columns (`xOffsets`, `xOffsetsUnits`, `yOffsets`, `yOffsetsUnits`, `xScaleFactors`, `yScaleFactors`) shift or scale a curve. Leave them empty to draw the curve as it is. See [DataCombined: Transformations](https://www.open-systems-pharmacology.org/OSPSuite-R/articles/data-combined.html#transformations) for details on how transformations are applied.
+
+**The `plotConfiguration` sheet** has one row per Plot. `plotId`, `plotType`, and `dataCombined` correspond to the `id`, `plotType`, and `dataCombined` arguments of `addPlot()`. Every other column is a plot setting with the same name as in R, such as `title`, `xUnit`, `yAxisScale`, or `foldDistance`. The export writes a column only for the settings that at least one Plot uses, so to set another one, add a column named after the setting. `vignette("reference-definition-fields")` lists every setting and the plot types it applies to. A column with a name that is not a plot setting is reported by `validateProject()` as a critical error.
+
+**The `plotGrids` sheet** has one row per Plot Grid: its id in `plotGridId`, the Plots it arranges in `plots`, in the order they appear, and its `title`.
+
+The rules of the other Excel files apply here too:
+
+- **An empty cell leaves the setting unset**, so the Plot takes the ESQlabs default value or the default of the plotting function, as when you leave the setting out of `addPlot()`.
+- **A cell with several values separates them with commas**: `p1, aciclovir_profile` in `plots`, `0, 24` in `xValuesLimits`, or `0.05, 0.5, 0.95` in `quantiles`.
+- **Ids are made lowercase** on import, together with every reference to them.
+- **An `exportConfiguration` sheet** from a project made with an earlier version of `{esqlabsR}` is not read: the import warns about its rows. Save figures with `exportPlot()` instead (see "Export a finished figure").
+
+To change a figure in Excel, edit its rows and save the file, then read the Excel files back with `importProjectFromExcel()`, load the project with `loadProject()`, and build the figure with `createPlots()`.
 
 ## Where to go next
 
