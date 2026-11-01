@@ -338,3 +338,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-10-29 16:01: A scenario record always has an id: Scenario() refuses one without it.
 - 2026-10-29 16:02: Two NEWS bullets, on the definition files and on scenario records, are shorter and less technical.
 - 2026-10-29 16:02: The NEWS bullet on imported curve paths no longer compares with unreleased behavior, and a quoted import error uses the current field name.
+- 2026-11-01 16:31: The warning about a legacy exportConfiguration sheet suggests ospsuite.plots::exportPlot() for saving figures.
