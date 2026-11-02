@@ -25,7 +25,7 @@ This article assumes you know what a **Project** is and how to load one; see `vi
 
 ## Different ways to define and edit scenarios
 
-This article covers the functions and methods that allow to create and edit scenarios (and the underlying definitions) using R code. Other options include editing the Excel files, or using dedicated applications like the ESQapp (available in ESQlabs subscription).
+This article covers the functions and methods that allow to create and edit scenarios (and the underlying definitions) using R code. Other options include editing the Excel files (see "Scenarios in Excel" below), or using dedicated applications like the ESQapp (available in ESQlabs subscription).
 
 ## Following the examples in this article
 
@@ -56,7 +56,7 @@ project$definitions$scenarios[["aciclovir_as_exported"]]
 
 `modelFile` names the exported simulation file in the project's simulations folder (`Models/Simulations` in the example project). This one field is enough to run the scenario: `runScenarios(project, scenarios = "aciclovir_as_exported")`, covered in `vignette("how-to-run-simulations")`.
 
-Printing a scenario shows its settings. `Name` is the scenario's id, `Type` says whether it simulates an individual or a population, and `Administration Protocol` is its application. A field shown as `<empty string>` (or  `<empty vector>`) is not set, so what the model file carries is used instead. The time grid can be printed with `project$definitions$scenarios[["aciclovir_as_exported"]]$simulationTime`: `NULL` means the model file's own time grid is used.
+Printing a scenario shows its settings. `Id` is the scenario's id, `Type` says whether it simulates an individual or a population, and `Administration Protocol` is its application. A field shown as `<empty string>` (or  `<empty vector>`) is not set, so what the model file carries is used instead. The time grid can be printed with `project$definitions$scenarios[["aciclovir_as_exported"]]$simulationTime`: `NULL` means the model file's own time grid is used.
 
 ```{r}
 # Print scenario information
@@ -240,12 +240,21 @@ addScenario(
   parameterSets = c("global", "aciclovir"),
   outputPaths = c("aciclovir_pvb", "aciclovir_kidney"),
   simulationTime = "0, 24, 60",
-  simulationTimeUnit = "h"
+  simulationTimeUnit = "h",
+  label = "Aciclovir IV 250 mg, CKD patient"
 )
 project$definitions$scenarios[["aciclovir_iv_ckd"]]
 ```
 
-The id is also the scenario's name. Choose an id you can read later. An id such as `Aciclovir_IV-2.5mg/kg` is stored as `aciclovir_iv-2.5mg_kg`, and the original spelling is not kept.
+The id names the scenario in results and messages. Choose an id you can read later. An id such as `Aciclovir_IV-2.5mg/kg` is stored as `aciclovir_iv-2.5mg_kg`, so your spelling is not kept in the id.
+
+To keep a readable name, give the scenario a `label`, as above. A label is free text, kept exactly as you typed it. Printing a scenario shows it after the id, and printing the scenarios section shows it next to each id:
+
+```{r}
+project$definitions$scenarios
+```
+
+The label is only a description: results and messages still use the id. Change a label with `setScenario(label = )`, or remove it with `label = NULL`. Two scenarios can share a label, and `duplicateScenario()` gives the copy no label.
 
 As in the simplest scenario above, only `modelFile` is required. Each reference or setting you leave out will use the defaults defined in the simulation, except two: steady state is off unless you turn it on, and the solver settings come from the project's `defaultSolverSettings` where it has any. `vignette("reference-definition-fields")` lists every field with what happens when you omit it.
 
@@ -367,6 +376,36 @@ Pass a vector of `pkmlFilePaths` to create several scenarios at once. Pass `scen
 ## Saving your work
 
 Every edit above exists only in your R session until you save it. Call `saveProject(project)` to write the edits to the `definitions/` folder, or `project <- loadProject(project$info$projectFilePath)` to discard them and read the project files again. Edits you have not saved are lost when the R session ends; printing the project shows `[unsaved changes]` while there are any.
+
+## Scenarios in Excel
+
+The preferred way to create and edit scenarios is through the R functions above. The Excel files of a project show the same definitions as spreadsheets, which is useful for reviewing many scenarios at once. Editing them changes nothing until you read them back with `importProjectFromExcel()`, and the import rewrites the whole project from all the Excel files, so any definition you created in R and did not export is lost. `vignette("how-to-set-up-a-project")` explains how to write and read the Excel files, and how to check with `projectStatus()` whether they still match the project.
+
+The definitions of this article are in the Excel files in the project's `Configurations/` folder:
+
+| File | Sheet | Holds |
+| --- | --- | --- |
+| `Scenarios.xlsx` | `Scenarios` | One row per scenario. |
+| `Scenarios.xlsx` | `OutputPaths` | One row per output path: its id in `OutputPathId` and its full model path in `OutputPath`. |
+| `ModelParameters.xlsx` | one sheet per parameter set, named by its id | One row per parameter, in the columns `Container Path`, `Parameter Name`, `Value`, and `Units`. |
+| `InitialConditions.xlsx` | one sheet per initial-condition set, named by its id | One row per molecule, in the columns `Container Path`, `Molecule Name`, `Is Present`, `Value`, `Units`, `Scale Divisor`, and `Neg. Values Allowed`. |
+| `Individuals.xlsx` | `IndividualBiometrics` | One row per individual. The parameter sets named in its `ParameterSets` column are sheets of `ModelParameters.xlsx`. |
+| `Populations.xlsx` | the first sheet | One row per population. |
+| `Applications.xlsx` | `ApplicationProtocols` | One row per application: its id in `ApplicationId` and its parameter sets in `ParameterSets`. The parameter sets named there are sheets of `ModelParameters.xlsx`. |
+
+The columns of the `Scenarios` sheet match the arguments of `addScenario()`.
+
+A few rules apply to all these sheets:
+
+- **An empty cell leaves the field unset**, as an argument you leave out of `addScenario()` does.
+- **A cell that names several ids separates them with commas**, for example `global, aciclovir` in `ModelParameterSheets`. The order counts as it does in R: parameter sets are applied in the order you list them. The same holds for `InitialConditions`, `OutputPathsIds`, and the `ParameterSets` columns of the individual and application sheets.
+- **Ids are made lowercase** on import, together with every reference to them, as when you create a definition in R.
+- **A scenario's label is in a `Label` column** next to `Scenario_name`. The export writes the column only when a scenario has a label; add it yourself to give scenarios labels in Excel. When the import has to change a `Scenario_name` by more than its case to make it an id, it keeps the original name as the label: `Aciclovir_IV-2.5mg/kg` becomes the id `aciclovir_iv-2.5mg_kg` with the label `Aciclovir_IV-2.5mg/kg`. A `Label` cell you fill in takes precedence.
+- **The units of an individual are fixed by the column names**: `Weight [kg]`, `Height [cm]`, and `Age [year(s)]`. A population sets its weight, height, and BMI units in its own columns (`weightUnit`, `heightUnit`, `BMIUnit`).
+- **Protein ontogenies** are written as in R, `Protein:Ontogeny`, with several entries separated by commas.
+- **A scenario's solver settings are not in the sheet.** The `Scenarios` sheet has no columns for them (see "Solver settings" above).
+
+To change a scenario in Excel, edit its row and save the file, then read the Excel files back with `importProjectFromExcel()` and load the project with `loadProject()`. `vignette("how-to-set-up-a-project")` shows these steps and the round trip in full.
 
 ## Where to go next
 

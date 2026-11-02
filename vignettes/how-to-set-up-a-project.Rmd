@@ -135,7 +135,7 @@ The Excel files sit in the project folder, next to `Project.json`:
 ```
 MyProject/
 ├── Project.json
-├── Project.xlsx                        # working folders and file names
+├── Project.xlsx                        # project options (see below)
 ├── definitions/                        # project definitions in json format
 └── Configurations/                     # definitions in excel format
     ├── Applications.xlsx
@@ -193,11 +193,40 @@ To check where you stand, `projectStatus(project)` reports whether the Excel fil
 projectStatus(editable)$excel_in_sync
 ```
 
+### Project options in `Project.xlsx`
+
+The preferred way to edit project options is through the R interface by accessing the `Project` object. The Excel file can be used for reviewing the information, but it is not recommended to edit the properties there. Remember to call `projectStatus`, `exportProjectToExcel`, or `importProjectFromExcel` when working with the Excel files directly.
+
+The project's own options are stored in `Project.xlsx`, the top-level file next to `Project.json`. Its first sheet, `Project`, is a table with one row per option, in three columns: `Property` names the option, `Value` holds its value, and `Description` says what it is.
+
+| Property | What it sets | In R after loading |
+| --- | --- | --- |
+| `name`, `description` | The project's name and description. | `project$info$name`, `project$info$description` |
+| `simulationsFolder`, `populationsFolder`, `dataFolder`, `outputFolder` | The working folders for models, population files, observed data, and results. | `project$paths$simulationsFolder`, and so on |
+| `configurationsFolder` | The folder that holds the other Excel files. | |
+| `modelParamsFile`, `individualsFile`, `populationsFile`, `scenariosFile`, `applicationsFile`, `plotsFile`, `parameterIdentificationFile`, `initialConditionsFile` | The file name of each Excel file in `configurationsFolder`. | |
+| `dataFile`, `dataImporterConfigurationFile` | The observed-data workbook and the importer configuration that reads it, both in `dataFolder`. | `project$definitions$observedData` |
+| `schemaVersion`, `esqlabsRVersion` | Written by the export for information. Leave them as they are. | |
+
+Folder paths are relative to the project folder. A folder outside the project folder needs an environment variable in its path, such as `${SHARED_DATA}`; "Name the project and choose its folders" above shows how to set one.
+
+When the project sets solver defaults for all its scenarios (`defaultSolverSettings`), `Project.xlsx` has a second sheet, `DefaultSolverSettings`, with one row per setting in the columns `Setting`, `Value`, and `Description`. A project without solver defaults has no such sheet.
+
+The settings you can use are `absTol`, `relTol`, `h0`, `hMin`, `hMax`, `mxStep`, `useJacobian`, and `checkForNegativeValues`. To add solver defaults to a project that has none, add the sheet yourself, with the sheet name and the `Setting` and `Value` columns spelled as above. The import stops on an unknown setting, a value of the wrong type, or a setting named twice.
+
+To change an option:
+
+1. Open `Project.xlsx` in Excel, change the `Value` cell of the option, and save the file.
+2. Read the Excel files back with `importProjectFromExcel()`, as described above. The import rewrites the whole project from all the Excel files, not only from `Project.xlsx`.
+3. Load the project with `loadProject()` and check the new value, for example `project$info$name` or `project$defaultSolverSettings`.
+
+If you only want to change an option, you do not need Excel: assign the new value in R and save the project, as in "Name the project and choose its folders" above.
+
 ### Notes
 
 **Ids are always lowercase.** Every id in a project is lowercase and filename-safe, because each id is also the name of a definition file (`vignette("about-the-project-model")` explains why). Import applies that rule without a message, and rewrites the references along with it, so a scenario you called `MyScenario` in the spreadsheet comes back as `myscenario`, and the next export writes `myscenario` into the spreadsheet. In R you can keep typing `MyScenario`: `runScenarios(project, scenarios = "MyScenario")` runs `myscenario` and tells you so. A scenario keeps the name as you typed it in its `label`: the import stores `MyScenario` there when it changes the id, and a `Label` column in the scenarios spreadsheet sets it directly. `vignette("reference-definition-fields")` describes the field.
 
-**Solver settings are not exported.** A scenario's `solverSettings` has no column in the spreadsheets, so exporting warns and leaves it out, and a project imported from those spreadsheets has no scenario solver settings.
+**Solver settings are not exported.** A scenario's `solverSettings` has no column in the spreadsheets, so exporting warns and leaves it out, and a project imported from those spreadsheets has no scenario solver settings. The project's `defaultSolverSettings` are exported, to the `DefaultSolverSettings` sheet of `Project.xlsx`.
 
 **Only one observed-data workbook.** The Excel files can name only one observed-data workbook, the `dataFile` row in `Project.xlsx`. If the project has more than one observed-data source, or a PKML, script, or programmatic source, the export writes one Excel source and warns about the others. A project imported from these files has only that one source, reading every sheet of its workbook, and re-importing over the existing project removes the other sources from it.
 

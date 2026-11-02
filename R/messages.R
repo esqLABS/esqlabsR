@@ -686,8 +686,8 @@ messages$importSkippedPlotExportConfiguration <- function(
       },
       "i" = "A project has no field for a figure's filename, width or height: \\
       {.fn createPlots} returns the plot objects and the caller saves them, for \\
-      example with {.fn ggplot2::ggsave}, so the settings are not imported and \\
-      an export does not write them back."
+      example with {.fn ospsuite.plots::exportPlot}, so the settings are not \\
+      imported and an export does not write them back."
     ),
     envir = envir
   )

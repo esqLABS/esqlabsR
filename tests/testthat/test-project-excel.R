@@ -4492,6 +4492,7 @@ test_that("a filled legacy plots exportConfiguration sheet is reported, an empty
     fixed = TRUE
   )))
   expect_true(any(grepl("Aciclovir", imported$warnings, fixed = TRUE)))
+  expect_true(any(grepl("exportPlot", imported$warnings, fixed = TRUE)))
 })
 
 # #969: a 5.x `plotConfiguration` sheet styles each plot with columns such as
