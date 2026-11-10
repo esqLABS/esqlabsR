@@ -17,7 +17,7 @@ esqlabsR builds on the Open Systems Pharmacology ecosystem. When unsure about an
 
 - [`ospsuite`](https://github.com/Open-Systems-Pharmacology/OSPSuite-R) — core PBPK simulation interface
 - [`ospsuite.utils`](https://github.com/Open-Systems-Pharmacology/OSPSuite.RUtils) — validation and utility helpers
-- [`tlf`](https://github.com/Open-Systems-Pharmacology/TLF-Library) — plotting
+- [`tlf`](https://github.com/Open-Systems-Pharmacology/TLF-Library) — plotting, for `ospsuite` below version 13. From `ospsuite` 13 on, plotting uses [`ospsuite.plots`](https://github.com/Open-Systems-Pharmacology/OSPSuite.Plots); write new plotting code for it.
 - [`ospsuite.parameteridentification`](https://github.com/Open-Systems-Pharmacology/OSPSuite.ParameterIdentification) — parameter identification
 
 ## Coding conventions
