@@ -342,3 +342,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-11-12 11:50: The agent guide matches v6: `@returns`, namespace prefixes for imported packages, cli for all user messages, no `paste()` where cli already lists values, and the full set of NEWS headings.
 - 2026-11-12 12:09: Calls to ospsuite and ospsuite.utils functions carry their package prefix, and the tests mock those functions in their own package.
 - 2026-11-12 12:17: Message catalog entries let cli list vectors instead of pre-joining them with paste().
+- 2026-11-12 12:25: The agent guide prefers snapshot tests over hand-written identical checks, and says how to mock functions from other packages.
