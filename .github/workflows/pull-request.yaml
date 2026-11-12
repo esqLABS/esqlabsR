@@ -26,6 +26,12 @@ jobs:
     if: ${{ !cancelled() && needs.sync-remotes.result != 'failure' }} # a skipped fork-PR sync must not block the check, but a failure should
     uses: Open-Systems-Pharmacology/Workflows/.github/workflows/R-CMD-check-build.yaml@main
     with:
+      # ubuntu-latest is ubuntu-26.04, which has no libxml2.so.2, so ospsuite
+      # cannot load its .NET assemblies. Pin Ubuntu to 24.04 until it can.
+      os-matrix: >-
+        [{"os": "${{ vars.GHA_DEFAULT_RUNNER_WINDOWS || 'windows-latest' }}", "r": "release"},
+        {"os": "${{ vars.GHA_DEFAULT_RUNNER_UBUNTU || 'ubuntu-24.04' }}", "r": "release"},
+        {"os": "${{ vars.GHA_DEFAULT_RUNNER_MACOS || 'macos-latest' }}", "r": "release"}]
       setup-quarto: true
       extra-packages: local::.
       extra-repositories: https://open-systems-pharmacology.r-universe.dev
