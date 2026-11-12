@@ -33,7 +33,9 @@ esqlabsR builds on the Open Systems Pharmacology ecosystem. When unsure about an
 
 - Test whole structures in one assertion: `expect_equal(result, expected)` over multiple partial checks.
 - Compare against independently constructed expected values — never re-use the output of the function under test as the oracle.
+- Prefer `expect_snapshot(x)` over `expect_identical(x, <hand-written value>)` when `x` prints readably (a data frame, a list of records, a printed object). The snapshot also checks identity, and the `_snaps/` file shows reviewers the content under test; a change shows up in the PR diff. Read a new snapshot before you accept it: it is the expected value. A printed snapshot checks only what `print()` shows: it rounds doubles to 7 significant digits, and a `print()` method can leave out fields. For exact numbers or the full structure, use `expect_snapshot_value(x, style = "deparse")` or keep `expect_identical()` / `expect_equal()`.
 - Test errors and warnings against the specific message, preferably with `expect_snapshot(error = TRUE)`.
+- To mock a function from another package with `testthat::local_mocked_bindings()`, pass `.package = "<package>"`. The code calls it as `<package>::fn()`, so a mock in the esqlabsR namespace is never used.
 - Do not add tests that cannot fail for a real defect; avoid trivial assertions.
 - Use meaningful, domain-specific test data; avoid unexplained literals like `42` or `"foo"`.
 

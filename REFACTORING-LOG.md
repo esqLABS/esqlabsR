@@ -340,3 +340,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-10-29 16:02: The NEWS bullet on imported curve paths no longer compares with unreleased behavior, and a quoted import error uses the current field name.
 - 2026-11-01 16:31: The warning about a legacy exportConfiguration sheet suggests ospsuite.plots::exportPlot() for saving figures.
 - 2026-11-12 11:50: The agent guide matches v6: `@returns`, namespace prefixes for imported packages, cli for all user messages, no `paste()` where cli already lists values, and the full set of NEWS headings.
+- 2026-11-12 12:25: The agent guide prefers snapshot tests over hand-written identical checks, and says how to mock functions from other packages.
