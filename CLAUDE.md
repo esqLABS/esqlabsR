@@ -1,3 +1,5 @@
+Agent & contributor guidance for this repository lives in @AGENTS.md.
+
 <!-- refactoring-brief:start -->
 @REFACTORING.md
 <!-- refactoring-brief:end -->
