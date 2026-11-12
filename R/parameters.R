@@ -98,8 +98,8 @@
 #' @export
 readParametersFromXLS <- function(paramsXLSpath, sheets = NULL) {
   columnNames <- .parameterSheetColumns
-  validateIsString(paramsXLSpath)
-  validateIsString(sheets, nullAllowed = TRUE)
+  ospsuite.utils::validateIsString(paramsXLSpath)
+  ospsuite.utils::validateIsString(sheets, nullAllowed = TRUE)
 
   if (is.null(sheets)) {
     sheets <- c(1)
@@ -237,12 +237,12 @@ extendParameterStructure <- function(parameters, newParameters) {
   newParameters <- newParameters %||% emptyStructure
 
   # If the parameters structure is empty, return new parameters
-  if (isEmpty(parameters$paths)) {
+  if (ospsuite.utils::isEmpty(parameters$paths)) {
     return(newParameters)
   }
 
   # If the new parameters structure is empty, return parameters
-  if (isEmpty(newParameters$paths)) {
+  if (ospsuite.utils::isEmpty(newParameters$paths)) {
     return(parameters)
   }
 
@@ -315,8 +315,8 @@ extendParameterStructure <- function(parameters, newParameters) {
     "Scale Divisor",
     "Neg. Values Allowed"
   )
-  validateIsString(filePath)
-  validateIsString(sheets, nullAllowed = TRUE)
+  ospsuite.utils::validateIsString(filePath)
+  ospsuite.utils::validateIsString(sheets, nullAllowed = TRUE)
 
   if (is.null(sheets)) {
     sheets <- readxl::excel_sheets(filePath)[1L]
@@ -470,7 +470,7 @@ isParametersEqual <- function(
   checkFormulaValues = FALSE,
   compareFormulasByValue = FALSE
 ) {
-  validateIsOfType(c(parameter1, parameter2), "Parameter")
+  ospsuite.utils::validateIsOfType(c(parameter1, parameter2), "Parameter")
 
   # Check for the path
   if (parameter1$path != parameter2$path) {
@@ -767,7 +767,7 @@ print.InitialConditionSet <- function(x, ...) {
 #' @export
 #' @family parameters
 addParameterSet <- function(project, id, overwrite = FALSE) {
-  validateIsOfType(project, "Project")
+  ospsuite.utils::validateIsOfType(project, "Project")
   project$addParameterSet(id, overwrite)
 }
 
@@ -810,7 +810,7 @@ addParameterSet <- function(project, id, overwrite = FALSE) {
 #' @export
 #' @family parameters
 removeParameterSet <- function(project, id) {
-  validateIsOfType(project, "Project")
+  ospsuite.utils::validateIsOfType(project, "Project")
   project$removeParameterSet(id)
 }
 
@@ -876,7 +876,7 @@ addParameterEntry <- function(
   units = NULL,
   overwrite = FALSE
 ) {
-  validateIsOfType(project, "Project")
+  ospsuite.utils::validateIsOfType(project, "Project")
   project$addParameterEntry(
     id,
     containerPath,
@@ -963,7 +963,7 @@ removeParameterEntry <- function(
   containerPath,
   parameterName
 ) {
-  validateIsOfType(project, "Project")
+  ospsuite.utils::validateIsOfType(project, "Project")
   project$removeParameterEntry(id, containerPath, parameterName)
 }
 
@@ -1303,7 +1303,7 @@ removeParameterEntry <- function(
 #' @export
 #' @family parameters
 addInitialConditions <- function(project, id, overwrite = FALSE) {
-  validateIsOfType(project, "Project")
+  ospsuite.utils::validateIsOfType(project, "Project")
   project$addInitialConditions(id, overwrite)
 }
 
@@ -1353,7 +1353,7 @@ addInitialConditions <- function(project, id, overwrite = FALSE) {
 #' @export
 #' @family parameters
 removeInitialConditions <- function(project, id) {
-  validateIsOfType(project, "Project")
+  ospsuite.utils::validateIsOfType(project, "Project")
   project$removeInitialConditions(id)
 }
 
@@ -1415,7 +1415,7 @@ addInitialConditionEntry <- function(
   unit,
   overwrite = FALSE
 ) {
-  validateIsOfType(project, "Project")
+  ospsuite.utils::validateIsOfType(project, "Project")
   project$addInitialConditionEntry(id, path, value, unit, overwrite)
 }
 
@@ -1481,7 +1481,7 @@ addInitialConditionEntry <- function(
 #' @export
 #' @family parameters
 removeInitialConditionEntry <- function(project, id, path) {
-  validateIsOfType(project, "Project")
+  ospsuite.utils::validateIsOfType(project, "Project")
   project$removeInitialConditionEntry(id, path)
 }
 

@@ -202,7 +202,7 @@ print.Individual <- function(x, ...) {
 #' @export
 #' @family individual
 addIndividual <- function(project, id, species, ...) {
-  validateIsOfType(project, "Project")
+  ospsuite.utils::validateIsOfType(project, "Project")
   project$addIndividual(id, species, ...)
 }
 
@@ -376,7 +376,7 @@ addIndividual <- function(project, id, species, ...) {
 #' @export
 #' @family individual
 removeIndividual <- function(project, id) {
-  validateIsOfType(project, "Project")
+  ospsuite.utils::validateIsOfType(project, "Project")
   project$removeIndividual(id)
 }
 
@@ -439,7 +439,7 @@ removeIndividual <- function(project, id) {
 #' @export
 #' @family individual
 setIndividual <- function(project, id, ...) {
-  validateIsOfType(project, "Project")
+  ospsuite.utils::validateIsOfType(project, "Project")
   project$setIndividual(id, ...)
 }
 

@@ -31,7 +31,7 @@ executeInParallel <- function(
   nrOfCores = ospsuite::getOSPSuiteSetting("numberOfCores")
 ) {
   if (!is.null(outputNames)) {
-    validateIsSameLength(firstArguments, outputNames)
+    ospsuite.utils::validateIsSameLength(firstArguments, outputNames)
   }
 
   cl <- makeCluster(nrOfCores)

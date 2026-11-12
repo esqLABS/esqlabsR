@@ -29,7 +29,7 @@
 #' @export
 #' @family outputPath
 addOutputPath <- function(project, id, path, overwrite = FALSE) {
-  validateIsOfType(project, "Project")
+  ospsuite.utils::validateIsOfType(project, "Project")
   project$addOutputPath(id, path, overwrite)
 }
 
@@ -101,7 +101,7 @@ addOutputPath <- function(project, id, path, overwrite = FALSE) {
 #' @export
 #' @family outputPath
 removeOutputPath <- function(project, id) {
-  validateIsOfType(project, "Project")
+  ospsuite.utils::validateIsOfType(project, "Project")
   project$removeOutputPath(id)
 }
 
@@ -156,7 +156,7 @@ removeOutputPath <- function(project, id) {
 #' @export
 #' @family outputPath
 setOutputPath <- function(project, id, path) {
-  validateIsOfType(project, "Project")
+  ospsuite.utils::validateIsOfType(project, "Project")
   project$setOutputPath(id, path)
 }
 

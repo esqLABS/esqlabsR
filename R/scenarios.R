@@ -303,7 +303,7 @@ print.Scenario <- function(x, ...) {
       # record's `steadyStateTime` would be integer while a freshly built
       # scenario (default `1000`, a double) is double, breaking a round trip.
       steadyStateTime <- ospsuite::toBaseUnit(
-        quantityOrDimension = ospDimensions$Time,
+        quantityOrDimension = ospsuite::ospDimensions$Time,
         values = as.double(entry[["steadyStateTime"]]),
         unit = entry[["steadyStateTimeUnit"]]
       )
@@ -1111,7 +1111,7 @@ addScenario <- function(
   label = NULL,
   overwrite = FALSE
 ) {
-  validateIsOfType(project, "Project")
+  ospsuite.utils::validateIsOfType(project, "Project")
   if (inherits(id, "Scenario")) {
     .assertScenarioRecordAlone(
       .addScenarioExtraFields(match.call(), missing(modelFile))
@@ -1330,7 +1330,7 @@ addScenario <- function(
     # convert from the user-declared unit so a non-minute unit round-trips
     # correctly (the serializer converts back to steadyStateTimeUnit).
     steadyStateTime = ospsuite::toBaseUnit(
-      quantityOrDimension = ospDimensions$Time,
+      quantityOrDimension = ospsuite::ospDimensions$Time,
       values = fields$steadyStateTime,
       unit = steadyStateTimeUnit
     ),
@@ -1352,7 +1352,7 @@ addScenario <- function(
 #' @export
 #' @family scenario
 removeScenario <- function(project, id) {
-  validateIsOfType(project, "Project")
+  ospsuite.utils::validateIsOfType(project, "Project")
   project$removeScenario(id)
 }
 
@@ -1440,7 +1440,7 @@ removeScenario <- function(project, id) {
 #' @export
 #' @family scenario
 setScenario <- function(project, id, ...) {
-  validateIsOfType(project, "Project")
+  ospsuite.utils::validateIsOfType(project, "Project")
   dots <- list(...)
   # `overwrite` reaches the impl as an unknown field, which would name it in the
   # generic "cannot set" message. Say what it is instead: `addScenario()` is the
@@ -1771,7 +1771,7 @@ setScenario <- function(project, id, ...) {
         fields$steadyStateTime
       } else {
         ospsuite::toBaseUnit(
-          quantityOrDimension = ospDimensions$Time,
+          quantityOrDimension = ospsuite::ospDimensions$Time,
           values = fields$steadyStateTime,
           unit = newUnit
         )
@@ -1815,7 +1815,7 @@ setScenario <- function(project, id, ...) {
 #' @export
 #' @family scenario
 renameScenario <- function(project, id, newId) {
-  validateIsOfType(project, "Project")
+  ospsuite.utils::validateIsOfType(project, "Project")
   project$renameScenario(id, newId)
 }
 
@@ -1881,7 +1881,7 @@ renameScenario <- function(project, id, newId) {
 #' @export
 #' @family scenario
 duplicateScenario <- function(project, id, newId) {
-  validateIsOfType(project, "Project")
+  ospsuite.utils::validateIsOfType(project, "Project")
   project$duplicateScenario(id, newId)
 }
 
@@ -1994,7 +1994,7 @@ duplicateScenario <- function(project, id, newId) {
   args["steadyStateTime"] <- list(
     if (!is.null(record$steadyStateTimeUnit)) {
       ospsuite::toUnit(
-        quantityOrDimension = ospDimensions$Time,
+        quantityOrDimension = ospsuite::ospDimensions$Time,
         values = record$steadyStateTime,
         targetUnit = record$steadyStateTimeUnit
       )

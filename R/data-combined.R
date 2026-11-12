@@ -48,9 +48,9 @@ createDataCombined <- function(
   stopIfNotFound = TRUE,
   validate = TRUE
 ) {
-  validateIsOfType(project, "Project")
-  validateIsString(dataCombined, nullAllowed = TRUE)
-  validateIsString(plotGrids, nullAllowed = TRUE)
+  ospsuite.utils::validateIsOfType(project, "Project")
+  ospsuite.utils::validateIsString(dataCombined, nullAllowed = TRUE)
+  ospsuite.utils::validateIsString(plotGrids, nullAllowed = TRUE)
 
   if (is.null(dataCombined) && is.null(plotGrids)) {
     return(list())
@@ -172,7 +172,7 @@ createDataCombinedFromExcel <- function(...) {
   stopIfNotFound,
   call = rlang::caller_env()
 ) {
-  dataCombined <- DataCombined$new()
+  dataCombined <- ospsuite::DataCombined$new()
 
   # Collects entries whose simulated result could not be resolved (only reachable
   # when `stopIfNotFound = FALSE`). Their labels are dropped from the transform
@@ -394,7 +394,7 @@ createDataCombinedFromExcel <- function(...) {
       if (is.na(xTargetUnit)) {
         xTargetUnit <- ""
       }
-      xOffset <- toUnit(
+      xOffset <- ospsuite::toUnit(
         quantityOrDimension = singleRow$xDimension,
         values = as.numeric(entry$xOffsets),
         targetUnit = xTargetUnit,
@@ -408,13 +408,13 @@ createDataCombinedFromExcel <- function(...) {
       if (is.na(yTargetUnit)) {
         yTargetUnit <- ""
       }
-      yOffset <- toUnit(
+      yOffset <- ospsuite::toUnit(
         quantityOrDimension = singleRow$yDimension,
         values = as.numeric(entry$yOffsets),
         targetUnit = yTargetUnit,
         sourceUnit = entry$yOffsetsUnits,
         molWeight = singleRow$molWeight,
-        molWeightUnit = ospUnits$`Molecular weight`$`g/mol`
+        molWeightUnit = ospsuite::ospUnits$`Molecular weight`$`g/mol`
       )
     }
 

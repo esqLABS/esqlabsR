@@ -308,8 +308,8 @@ initializeSimulation <- function(
   additionalInitialConditions = NULL,
   stopIfParameterNotFound = TRUE
 ) {
-  validateIsOfType(simulation, "Simulation", nullAllowed = FALSE)
-  validateIsOfType(
+  ospsuite.utils::validateIsOfType(simulation, "Simulation", nullAllowed = FALSE)
+  ospsuite.utils::validateIsOfType(
     individualCharacteristics,
     "IndividualCharacteristics",
     nullAllowed = TRUE
@@ -351,7 +351,7 @@ initializeSimulation <- function(
   # Apply additional parameters
   if (!is.null(additionalParams)) {
     # Skip if the correct structure is supplied, but no parameters are defined
-    if (!isEmpty(additionalParams$paths)) {
+    if (!ospsuite.utils::isEmpty(additionalParams$paths)) {
       ospsuite::setParameterValuesByPath(
         parameterPaths = additionalParams$paths,
         values = additionalParams$values,
@@ -366,7 +366,7 @@ initializeSimulation <- function(
   # parameters so a start value overrides any parameter-driven default.
   if (!is.null(additionalInitialConditions)) {
     # Skip if the correct structure is supplied, but no entries are defined
-    if (!isEmpty(additionalInitialConditions$paths)) {
+    if (!ospsuite.utils::isEmpty(additionalInitialConditions$paths)) {
       ospsuite::setQuantityValuesByPath(
         quantityPaths = additionalInitialConditions$paths,
         values = additionalInitialConditions$values,
@@ -437,23 +437,23 @@ compareSimulations <- function(
   simulation2,
   compareFormulasByValue = FALSE
 ) {
-  paths1 <- getAllParameterPathsIn(simulation1)
-  paths2 <- getAllParameterPathsIn(simulation2)
+  paths1 <- ospsuite::getAllParameterPathsIn(simulation1)
+  paths2 <- ospsuite::getAllParameterPathsIn(simulation2)
   commonPaths <- intersect(paths1, paths2)
 
   # Get parameter that are present in one but not in another simulation
   pathsIn1NotIn2 <- setdiff(paths1, paths2)
-  paramsIn1NotIn2 <- getAllParametersMatching(pathsIn1NotIn2, simulation1)
+  paramsIn1NotIn2 <- ospsuite::getAllParametersMatching(pathsIn1NotIn2, simulation1)
   pathsIn2NotIn1 <- setdiff(paths2, paths1)
-  paramsIn2NotIn1 <- getAllParametersMatching(pathsIn2NotIn1, simulation2)
+  paramsIn2NotIn1 <- ospsuite::getAllParametersMatching(pathsIn2NotIn1, simulation2)
 
   # For parameters present in both simulations, compare parameters pair wise and
   # store them if they differ
   paramsDiff <- lapply(
     commonPaths,
     function(path) {
-      param1 <- getParameter(path, simulation1)
-      param2 <- getParameter(path, simulation2)
+      param1 <- ospsuite::getParameter(path, simulation1)
+      param2 <- ospsuite::getParameter(path, simulation2)
 
       if (
         !isParametersEqual(
@@ -507,8 +507,8 @@ compareSimulations <- function(
 #'   moleculeNames = "Aciclovir"
 #' )
 getAllApplicationParameters <- function(simulation, moleculeNames = NULL) {
-  validateIsOfType(simulation, "Simulation")
-  validateIsCharacter(moleculeNames, nullAllowed = TRUE)
+  ospsuite.utils::validateIsOfType(simulation, "Simulation")
+  ospsuite.utils::validateIsCharacter(moleculeNames, nullAllowed = TRUE)
 
   # If no molecules have been specified, get application parameters for all
   # molecules in the simulation
@@ -527,7 +527,7 @@ getAllApplicationParameters <- function(simulation, moleculeNames = NULL) {
     # get parent container of the application
     parentContainer <- application$startTime$parentContainer
     # Get all non-formula parameters of ProtocolSchemaItem
-    params <- getAllParametersMatching("*", parentContainer)
+    params <- ospsuite::getAllParametersMatching("*", parentContainer)
 
     for (param in params) {
       if (!param$isFormula) {

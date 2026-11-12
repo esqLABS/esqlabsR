@@ -191,7 +191,7 @@ createScenariosFromPKML <- function(
   readPopulationFromCSV = FALSE,
   paramSheets = lifecycle::deprecated()
 ) {
-  validateIsOfType(project, "Project")
+  ospsuite.utils::validateIsOfType(project, "Project")
   # The deprecation is signalled here, not in the `_impl`: `deprecate_soft()`
   # identifies the user through `caller_env(2)`, which only reaches the calling
   # code from this layer. Raised any deeper (through the method and
@@ -261,44 +261,44 @@ createScenariosFromPKML <- function(
   }
 
   # Validate inputs
-  validateIsCharacter(pkmlFilePaths)
+  ospsuite.utils::validateIsCharacter(pkmlFilePaths)
   if (!is.null(scenarios)) {
-    validateIsCharacter(scenarios)
+    ospsuite.utils::validateIsCharacter(scenarios)
   }
   if (!is.null(individual)) {
-    validateIsCharacter(individual)
+    ospsuite.utils::validateIsCharacter(individual)
   }
   if (!is.null(population)) {
-    validateIsCharacter(population)
+    ospsuite.utils::validateIsCharacter(population)
   }
   if (!is.null(application)) {
-    validateIsCharacter(application)
+    ospsuite.utils::validateIsCharacter(application)
   }
   if (!is.null(parameterSets)) {
-    validateIsCharacter(parameterSets)
+    ospsuite.utils::validateIsCharacter(parameterSets)
   }
   if (!is.null(outputPaths)) {
-    validateIsCharacter(outputPaths)
+    ospsuite.utils::validateIsCharacter(outputPaths)
   }
   # Take the numeric time grid too, as `addScenario()` does. Converting before
   # the count below matters: a length-3 numeric left as-is would be read there
   # as three scenarios.
   simulationTime <- .asSimulationTimeString(simulationTime)
   if (!is.null(simulationTime)) {
-    validateIsCharacter(simulationTime)
+    ospsuite.utils::validateIsCharacter(simulationTime)
   }
   if (!is.null(simulationTimeUnit)) {
-    validateIsCharacter(simulationTimeUnit)
+    ospsuite.utils::validateIsCharacter(simulationTimeUnit)
   }
-  validateIsLogical(steadyState)
+  ospsuite.utils::validateIsLogical(steadyState)
   if (!is.null(steadyStateTime)) {
-    validateIsNumeric(steadyStateTime)
+    ospsuite.utils::validateIsNumeric(steadyStateTime)
   }
   if (!is.null(steadyStateTimeUnit)) {
-    validateIsCharacter(steadyStateTimeUnit)
+    ospsuite.utils::validateIsCharacter(steadyStateTimeUnit)
   }
-  validateIsLogical(overwriteFormulasInSS)
-  validateIsLogical(readPopulationFromCSV)
+  ospsuite.utils::validateIsLogical(overwriteFormulasInSS)
+  ospsuite.utils::validateIsLogical(readPopulationFromCSV)
 
   # Get the number of scenarios to create based on vector arguments.
   # Note: project is excluded as it should always be a single object.
