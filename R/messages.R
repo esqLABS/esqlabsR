@@ -87,7 +87,7 @@ messages$wrongXLSStructure <- function(
 ) {
   ospsuite.utils::cliFormat(
     "Loading from XLS failed, the file {.file {filePath}} has wrong structure!
-    The file should contain columns {.val {paste(expectedColNames, collapse = \", \")}}. {optionalMessage}"
+    The file should contain columns {.val {cli::cli_vec(expectedColNames, list('vec-trunc' = Inf))}}. {optionalMessage}"
   )
 }
 
@@ -119,7 +119,7 @@ messages$missingValuesInParameters <- function(
   parameterPaths
 ) {
   ospsuite.utils::cliFormat(
-    "Missing or non-numeric values in parameters file {.file {filePath}} for parameter(s): {.val {paste(parameterPaths, collapse = ', ')}}. A numeric value must be specified for all parameters."
+    "Missing or non-numeric values in parameters file {.file {filePath}} for parameter(s): {.val {cli::cli_vec(parameterPaths, list('vec-trunc' = Inf))}}. A numeric value must be specified for all parameters."
   )
 }
 
@@ -128,7 +128,7 @@ messages$duplicateParameters <- function(
   parameterPaths
 ) {
   ospsuite.utils::cliFormat(
-    "Duplicate parameter path(s) in parameters file {.file {filePath}}: {.val {paste(parameterPaths, collapse = ', ')}}. Only the last value defined for each path is used."
+    "Duplicate parameter path(s) in parameters file {.file {filePath}}: {.val {cli::cli_vec(parameterPaths, list('vec-trunc' = Inf))}}. Only the last value defined for each path is used."
   )
 }
 
@@ -137,7 +137,7 @@ messages$missingUnitsInInitialConditions <- function(
   moleculePaths
 ) {
   ospsuite.utils::cliFormat(
-    "Missing units in initial values file {.file {filePath}} for molecule(s): {.val {paste(moleculePaths, collapse = ', ')}}. Units must be specified for all molecule initial values."
+    "Missing units in initial values file {.file {filePath}} for molecule(s): {.val {cli::cli_vec(moleculePaths, list('vec-trunc' = Inf))}}. Units must be specified for all molecule initial values."
   )
 }
 
@@ -146,7 +146,7 @@ messages$missingValuesInInitialConditions <- function(
   moleculePaths
 ) {
   ospsuite.utils::cliFormat(
-    "Missing or non-numeric values in initial values file {.file {filePath}} for molecule(s): {.val {paste(moleculePaths, collapse = ', ')}}. A numeric value must be specified for all present molecules."
+    "Missing or non-numeric values in initial values file {.file {filePath}} for molecule(s): {.val {cli::cli_vec(moleculePaths, list('vec-trunc' = Inf))}}. A numeric value must be specified for all present molecules."
   )
 }
 
@@ -155,7 +155,7 @@ messages$invalidIsPresentInInitialConditions <- function(
   moleculePaths
 ) {
   ospsuite.utils::cliFormat(
-    "Invalid 'Is Present' values in initial values file {.file {filePath}} for molecule(s): {.val {paste(moleculePaths, collapse = ', ')}}. 'Is Present' must be a logical value (TRUE/FALSE), numeric 1/0 (present/not present), or empty."
+    "Invalid 'Is Present' values in initial values file {.file {filePath}} for molecule(s): {.val {cli::cli_vec(moleculePaths, list('vec-trunc' = Inf))}}. 'Is Present' must be a logical value (TRUE/FALSE), numeric 1/0 (present/not present), or empty."
   )
 }
 
@@ -165,7 +165,7 @@ messages$missingPathInInitialConditions <- function(
   rows
 ) {
   ospsuite.utils::cliFormat(
-    "Missing {.field Container Path} or {.field Molecule Name} in initial values file {.file {filePath}}, sheet {.val {sheet}}, data row(s): {.val {paste(rows, collapse = ', ')}}."
+    "Missing {.field Container Path} or {.field Molecule Name} in initial values file {.file {filePath}}, sheet {.val {sheet}}, data row(s): {.val {cli::cli_vec(rows, list('vec-trunc' = Inf))}}."
   )
 }
 
@@ -174,7 +174,7 @@ messages$duplicateInitialConditions <- function(
   moleculePaths
 ) {
   ospsuite.utils::cliFormat(
-    "Duplicate molecule path(s) in initial values file {.file {filePath}}: {.val {paste(moleculePaths, collapse = ', ')}}. Only the last value defined for each path is used."
+    "Duplicate molecule path(s) in initial values file {.file {filePath}}: {.val {cli::cli_vec(moleculePaths, list('vec-trunc' = Inf))}}. Only the last value defined for each path is used."
   )
 }
 
@@ -1026,7 +1026,7 @@ messages$inconsistentArgumentLengths <- function(vectorLengths) {
   cliBullets(
     "Inconsistent vector argument lengths:",
     "x" = "All vector arguments with length > 1 must have the same length",
-    "i" = "Found lengths: {.val {paste(unique(vectorLengths), collapse = ', ')}}"
+    "i" = "Found lengths: {.val {unique(vectorLengths)}}"
   )
 }
 
@@ -1216,9 +1216,8 @@ messages$nrOfColorsShouldBePositive <- function(nrOfColors) {
 }
 
 messages$plotIDsMustBeUnique <- function(duplicated_plotIDs = "") {
-  duplicates <- paste(duplicated_plotIDs, collapse = ", ")
   ospsuite.utils::cliFormat(
-    "Plot {.field id} must be unique in plotConfiguration, but the following ids are duplicated: {.val {duplicates}}"
+    "Plot {.field id} must be unique in plotConfiguration, but the following ids are duplicated: {.val {cli::cli_vec(duplicated_plotIDs, list('vec-trunc' = Inf))}}"
   )
 }
 
@@ -1227,7 +1226,7 @@ messages$plotGridsNamesMustBeUnique <- function(
 ) {
   ospsuite.utils::cliFormat(
     "PlotGrids names must be unique in PlotGridConfiguration, but the following names are duplicated:
-    {.val {paste(duplicated_plotGridsNames, collapse = \"\n\")}}"
+    {.val {cli::cli_vec(duplicated_plotGridsNames, list('vec-trunc' = Inf))}}"
   )
 }
 
@@ -1523,7 +1522,7 @@ messages$noPKDataToWrite <- function(saOutputFilePath) {
 # sensitivity analysis plotting
 messages$noParameterFactor <- function(data, parameterFactor) {
   ospsuite.utils::cliFormat(
-    "{.arg parameterFactor} values of {parameterFactor} and {1 / parameterFactor} are not included in the sensitivity analysis results. Current values: {.val {paste(sort(unique(data$ParameterFactor)), collapse = ', ')}}. Please rerun the sensitivity analysis with the required values."
+    "{.arg parameterFactor} values of {parameterFactor} and {1 / parameterFactor} are not included in the sensitivity analysis results. Current values: {.val {sort(unique(data$ParameterFactor))}}. Please rerun the sensitivity analysis with the required values."
   )
 }
 
@@ -1541,7 +1540,7 @@ messages$cannotGetMoleculeFromQuantity <- function(
 messages$combineInvalidDataSetName <- function(dataSetNames) {
   ospsuite.utils::cliFormat(
     "The following data sets are not present in {.var observedData}:
-    {.val {paste(dataSetNames, collapse =',\n')}}. Data can not be added to {.var DataCombined} object."
+    {.val {cli::cli_vec(dataSetNames, list('vec-trunc' = Inf))}}. Data can not be added to {.var DataCombined} object."
   )
 }
 
@@ -1628,7 +1627,7 @@ messages$tickLabelsWithoutTicks <- function(
 
 messages$invalidPlotID <- function(plotIDs) {
   ospsuite.utils::cliFormat(
-    "The plots with ids {.val {paste(plotIDs, collapse = ',\n')}} are used in the sheet
+    "The plots with ids {.val {cli::cli_vec(plotIDs, list('vec-trunc' = Inf))}} are used in the sheet
     {.field plotGrids} but are not defined in the sheet {.var plotConfiguration}."
   )
 }
@@ -1662,21 +1661,21 @@ messages$missingDataCombinedName <- function() {
 messages$invalidDataCombinedName <- function(dataCombinedNames) {
   ospsuite.utils::cliFormat(
     "The following DataCombined are used in {.var plotConfiguration} sheet but are not present in {.var DataCombined} sheet:
-    {.val {paste(dataCombinedNames, collapse = ', ')}}"
+    {.val {cli::cli_vec(dataCombinedNames, list('vec-trunc' = Inf))}}"
   )
 }
 
 messages$dataCombinedNamesNotFound <- function(dataCombinedNames) {
   ospsuite.utils::cliFormat(
     "The following DataCombined names are not defined in the project:
-    {.val {paste(dataCombinedNames, collapse = ', ')}}"
+    {.val {cli::cli_vec(dataCombinedNames, list('vec-trunc' = Inf))}}"
   )
 }
 
 messages$ambiguousOutputPathRef <- function(path, ids) {
   ospsuite.utils::cliFormat(
     "The output path reference {.val {path}} matches several output path ids:
-    {.val {paste(ids, collapse = \", \")}}.
+    {.val {cli::cli_vec(ids, list('vec-trunc' = Inf))}}.
     Rename one of them, or write the model path in the entry instead."
   )
 }
@@ -1684,7 +1683,7 @@ messages$ambiguousOutputPathRef <- function(path, ids) {
 messages$duplicateDataCombinedLabels <- function(dataCombinedName, labels) {
   ospsuite.utils::cliFormat(
     "The DataCombined {.val {dataCombinedName}} has several curves with the label
-    {.val {paste(labels, collapse = \", \")}}. Curve labels must be unique within one
+    {.val {labels}}. Curve labels must be unique within one
     DataCombined; give each curve its own {.field label}."
   )
 }
@@ -1704,7 +1703,7 @@ messages$wrongOutputPath <- function(
     ospsuite.utils::cliFormat("Output path {.val {outputPathId}} ({.path {path}})")
   }
   ospsuite.utils::cliFormat(
-    "{named} is defined in the DataCombined {.val {paste(dataCombinedName, collapse = \", \")}}
+    "{named} is defined in the DataCombined {.val {dataCombinedName}}
     for scenario {.cls {scenarioName}} but has not been simulated.
     Please check that the output path is specified for this scenario."
   )
@@ -1716,7 +1715,7 @@ messages$scenarioRunFailed <- function(
   path
 ) {
   ospsuite.utils::cliFormat(
-    "The DataCombined {.val {paste(dataCombinedName, collapse = \", \")}} references the output path
+    "The DataCombined {.val {dataCombinedName}} references the output path
     {.path {path}} of scenario {.cls {scenarioName}}, but that scenario produced no results.
     Re-run the scenario and check that it completed successfully."
   )
@@ -1727,7 +1726,7 @@ messages$scenarioNotInResults <- function(
   scenarioName
 ) {
   ospsuite.utils::cliFormat(
-    "The DataCombined {.val {paste(dataCombinedName, collapse = \", \")}} references scenario
+    "The DataCombined {.val {dataCombinedName}} references scenario
     {.cls {scenarioName}}, but that scenario is not present in {.arg scenarioResults}.
     Check the scenario name and that it was included in the {.fn runScenarios} call."
   )
@@ -1736,20 +1735,20 @@ messages$scenarioNotInResults <- function(
 messages$plotGridNamesNotFound <- function(plotGridNames) {
   ospsuite.utils::cliFormat(
     "The following plot grids are not defined in the project:
-    {.val {paste(plotGridNames, collapse = ', ')}}"
+    {.val {cli::cli_vec(plotGridNames, list('vec-trunc' = Inf))}}"
   )
 }
 
 messages$plotIdsNotFound <- function(plotIds) {
   ospsuite.utils::cliFormat(
     "The following plots are not defined in the project:
-    {.val {paste(plotIds, collapse = ', ')}}"
+    {.val {cli::cli_vec(plotIds, list('vec-trunc' = Inf))}}"
   )
 }
 
 messages$invalidDataSetName <- function(dataSetNames) {
   ospsuite.utils::cliFormat(
-    "The following data sets are not present in {.var observedData}: {.val {paste0(dataSetNames, collapse = ',\n')}}"
+    "The following data sets are not present in {.var observedData}: {.val {cli::cli_vec(dataSetNames, list('vec-trunc' = Inf))}}"
   )
 }
 
@@ -1771,9 +1770,9 @@ messages$invalidSimulationResultNames <- function(
   ospsuite.utils::cliFormat(
     "The names of the simulationResults and parameterPaths must be the same.
     SimulationResults names:
-    {.val {paste(simulationResultNames, collapse = ', ')}},
+    {.val {cli::cli_vec(simulationResultNames, list('vec-trunc' = Inf))}},
     ParameterPaths names:
-    {.val {paste(parameterPaths, collapse = ', ')}}"
+    {.val {cli::cli_vec(parameterPaths, list('vec-trunc' = Inf))}}"
   )
 }
 
@@ -1797,7 +1796,7 @@ messages$sensitivityAnalysisSimulationFailure <- function(
 
 messages$absoluteVariationZeroInitialValue <- function(parameterPaths) {
   ospsuite.utils::cliFormat(
-    "{.code variationType = \"absolute\"} requires a non-zero initial value for every parameter, but the following parameter(s) have an initial value of 0: {.val {paste(parameterPaths, collapse = ', ')}}. Use {.code variationType = \"relative\"} or provide parameters with non-zero initial values."
+    "{.code variationType = \"absolute\"} requires a non-zero initial value for every parameter, but the following parameter(s) have an initial value of 0: {.val {cli::cli_vec(parameterPaths, list('vec-trunc' = Inf))}}. Use {.code variationType = \"relative\"} or provide parameters with non-zero initial values."
   )
 }
 
@@ -1811,7 +1810,7 @@ messages$sensitivityAllRunsFailed <- function(parameterPath) {
 messages$invalidCustomFunctionParameters <- function(providedParams) {
   ospsuite.utils::cliFormat(
     "The user-defined function must have either {.var x}, {.var y}, or both {.var x} and {.var y} as parameters.
-    Provided parameters are: {.val {paste(providedParams, collapse = ', ')}}"
+    Provided parameters are: {.val {providedParams}}"
   )
 }
 
@@ -1983,7 +1982,7 @@ messages$failedToCopyTemplate <- function(paths) {
 messages$PIDatasetNotFound <- function(datasetName, availableDatasets) {
   cliBullets(
     "x" = "Dataset {.val {datasetName}} not found",
-    "i" = "Available datasets: {.val {paste(availableDatasets, collapse = ', ')}}"
+    "i" = "Available datasets: {.val {cli::cli_vec(availableDatasets, list('vec-trunc' = Inf))}}"
   )
 }
 
@@ -2093,7 +2092,7 @@ messages$PIParameterUnitNotApplied <- function(id, unit, dimension) {
 messages$PIScenarioNotFound <- function(scenarioName, availableScenarios) {
   cliBullets(
     "x" = "Scenario {.val {scenarioName}} referenced in PI task configuration not found",
-    "i" = "Available scenarios: {.val {paste(availableScenarios, collapse = ', ')}}"
+    "i" = "Available scenarios: {.val {cli::cli_vec(availableScenarios, list('vec-trunc' = Inf))}}"
   )
 }
 
@@ -2287,7 +2286,7 @@ messages$observedDataInvalidType <- function(
   validTypes
 ) {
   ospsuite.utils::cliFormat(
-    "{entryLabel} has invalid type '{type}'. Must be one of: {paste(validTypes, collapse = \", \")}"
+    "{entryLabel} has invalid type '{type}'. Must be one of: {.or {.val {validTypes}}}"
   )
 }
 

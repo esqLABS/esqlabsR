@@ -4,7 +4,7 @@
       params <- readParametersFromXLS(paramsXLSpath = paramsXLSpath, sheets = sheets)
     Condition
       Warning:
-      Duplicate parameter path(s) in parameters file 'data/Parameters.xlsx': "Path1|Param1, Applications|Glucose_iv_infusion|Active". Only the last value defined for each path is used.
+      Duplicate parameter path(s) in parameters file 'data/Parameters.xlsx': "Path1|Param1" and "Applications|Glucose_iv_infusion|Active". Only the last value defined for each path is used.
 
 # `readParametersFromXLS()` errors on a non-numeric Value cell
 
@@ -322,7 +322,7 @@
       readInitialConditionsFromXLS(filePath = initialConditionsXLSpath, sheets = "BlankPath")
     Condition
       Error in `readInitialConditionsFromXLS()`:
-      x Missing Container Path or Molecule Name in initial values file 'data/InitialConditions.xlsx', sheet "BlankPath", data row(s): "1".
+      x Missing Container Path or Molecule Name in initial values file 'data/InitialConditions.xlsx', sheet "BlankPath", data row(s): 1.
 
 # `readInitialConditionsFromXLS()` errors when a sheet has the wrong structure
 
@@ -330,7 +330,7 @@
       readInitialConditionsFromXLS(filePath = initialConditionsXLSpath, sheets = "InvalidSheet")
     Condition
       Error in `readInitialConditionsFromXLS()`:
-      x Loading from XLS failed, the file 'data/InitialConditions.xlsx' has wrong structure!  The file should contain columns "Container Path, Molecule Name, Is Present, Value, Units, Scale Divisor, Neg. Values Allowed".
+      x Loading from XLS failed, the file 'data/InitialConditions.xlsx' has wrong structure!  The file should contain columns "Container Path", "Molecule Name", "Is Present", "Value", "Units", "Scale Divisor", and "Neg. Values Allowed".
 
 # setParameterValuesByPathWithCondition aborts on a values length mismatch
 
