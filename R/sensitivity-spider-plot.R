@@ -136,7 +136,7 @@ sensitivitySpiderPlot <- function(
 ) {
   # Input validation -------------------------------------
 
-  validateIsOfType(sensitivityCalculation, "SensitivityCalculation")
+  ospsuite.utils::validateIsOfType(sensitivityCalculation, "SensitivityCalculation")
 
   .validateCharVector(outputPaths, nullAllowed = TRUE)
   .validateCharVector(parameterPaths, nullAllowed = TRUE)
@@ -168,7 +168,7 @@ sensitivitySpiderPlot <- function(
   )
 
   # validate separately as these are not plot configuration settings
-  validateIsOption(
+  ospsuite.utils::validateIsOption(
     list(
       yAxisFacetScales = yAxisFacetScales,
       xAxisType = xAxisType,

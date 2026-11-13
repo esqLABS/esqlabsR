@@ -122,5 +122,5 @@
       Error in `.getScenarioCount()`:
       ! Inconsistent vector argument lengths:
       x All vector arguments with length > 1 must have the same length
-      i Found lengths: "2, 3"
+      i Found lengths: 2 and 3
 

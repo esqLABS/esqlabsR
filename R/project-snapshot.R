@@ -59,7 +59,7 @@ snapshotProject <- function(
   name = NULL,
   overwrite = FALSE
 ) {
-  validateIsOfType(project, "Project")
+  ospsuite.utils::validateIsOfType(project, "Project")
 
   # Resolve the filename stem. A NULL `name` gets the colon-free timestamped
   # default; a nameless project falls back to the fixed "project" stem.
@@ -161,9 +161,9 @@ restoreProject <- function(
   overwrite = FALSE,
   name = NULL
 ) {
-  validateIsString(snapshot)
-  validateIsString(dir)
-  validateIsString(name, nullAllowed = TRUE)
+  ospsuite.utils::validateIsString(snapshot)
+  ospsuite.utils::validateIsString(dir)
+  ospsuite.utils::validateIsString(name, nullAllowed = TRUE)
   if (!file.exists(snapshot)) {
     cli::cli_abort(messages$fileNotFound(snapshot))
   }

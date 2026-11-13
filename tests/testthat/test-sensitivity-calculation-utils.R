@@ -354,7 +354,8 @@ test_that("missing-baseline warning carries parameter context through sensitivit
       # percent-change groups have no baseline row.
       out[[1]][[1]] <- NULL
       out
-    }
+    },
+    .package = "ospsuite"
   )
 
   warnings <- testthat::capture_warnings(
@@ -382,7 +383,8 @@ test_that("sensitivityCalculation() does not error when every run for a paramete
       # Every run for the (single, constant) parameter fails.
       out[[1]][] <- NULL
       out
-    }
+    },
+    .package = "ospsuite"
   )
 
   expect_no_error(

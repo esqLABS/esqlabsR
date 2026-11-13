@@ -350,7 +350,7 @@
     # JSON the parser reads back, so dropping it would lose data.
     steadyStateTime = if (!is.null(sc$steadyStateTimeUnit)) {
       ospsuite::toUnit(
-        quantityOrDimension = ospDimensions$Time,
+        quantityOrDimension = ospsuite::ospDimensions$Time,
         values = sc$steadyStateTime,
         targetUnit = sc$steadyStateTimeUnit
       )

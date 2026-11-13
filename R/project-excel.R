@@ -342,8 +342,8 @@ importProjectFromExcel <- function(
   copyAssets = TRUE,
   projectFileName = "Project.json"
 ) {
-  validateIsString(projectConfigPath)
-  validateIsLogical(copyAssets)
+  ospsuite.utils::validateIsString(projectConfigPath)
+  ospsuite.utils::validateIsLogical(copyAssets)
   .validateFilenameSegment(projectFileName, messages$invalidProjectFileName)
 
   # The import writes beside the Excel project unless told otherwise, and the
@@ -506,7 +506,7 @@ importProjectFromExcel <- function(
   .call = rlang::caller_env()
 ) {
   rlang::local_error_call(.call)
-  validateIsString(projectConfigPath)
+  ospsuite.utils::validateIsString(projectConfigPath)
 
   if (!file.exists(projectConfigPath)) {
     cli::cli_abort(messages$fileNotFound(projectConfigPath))
@@ -811,7 +811,7 @@ exportProjectToExcel <- function(
   overwrite = FALSE,
   silent = FALSE
 ) {
-  validateIsOfType(project, "Project")
+  ospsuite.utils::validateIsOfType(project, "Project")
 
   if (is.null(outputDir)) {
     outputDir <- project$info$projectDirPath %||% "."
@@ -1453,7 +1453,7 @@ exportProjectToExcel <- function(
 #' project$status # the same information as a structured list
 #' }
 projectStatus <- function(project, silent = FALSE) {
-  validateIsOfType(project, "Project")
+  ospsuite.utils::validateIsOfType(project, "Project")
   invisible(.projectSyncStatus(project, silent = silent))
 }
 
@@ -4530,7 +4530,7 @@ projectStatus <- function(project, silent = FALSE) {
     ) {
       ssTimeUnit <- sc$steadyStateTimeUnit %||% "min"
       ssTime <- ospsuite::toUnit(
-        quantityOrDimension = ospDimensions$Time,
+        quantityOrDimension = ospsuite::ospDimensions$Time,
         values = sc$steadyStateTime,
         targetUnit = ssTimeUnit
       )

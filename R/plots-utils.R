@@ -127,7 +127,7 @@ esqlabsColors <- function(nrOfColors) {
 #' @examples
 #' col2hsv("yellow")
 col2hsv <- function(color) {
-  validateIsString(color)
+  ospsuite.utils::validateIsString(color)
   rgb <- col2rgb(color)
   return(grDevices::rgb2hsv(rgb))
 }
