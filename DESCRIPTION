@@ -73,6 +73,6 @@ Language: en-US
 Roxygen: list(markdown = TRUE)
 Remotes:
     ospsuite=Open-Systems-Pharmacology/OSPSuite-R,
-    rSharp=Open-Systems-Pharmacology/rSharp
+    rSharp=Open-Systems-Pharmacology/rSharp@v2.0.0,
 Additional_repositories: https://open-systems-pharmacology.r-universe.dev
 Config/roxygen2/version: 8.1.0
