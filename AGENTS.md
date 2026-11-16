@@ -24,15 +24,18 @@ esqlabsR builds on the Open Systems Pharmacology ecosystem. When unsure about an
 
 - Internal (non-exported) functions are named with a leading dot: `.validateParametersStructure()`, `.getEsqlabsColors()`. The dot marks a function as internal at every call site, so a reader never has to check `NAMESPACE` to know whether they are looking at part of the package's interface.
 - Type checking: use `ospsuite.utils::validateIsOfType()` / `ospsuite.utils::isOfType()` instead of native `inherits()` checks.
-- All user-facing messages, warnings, and errors live in `R/messages.R` as dedicated functions using `ospsuite.utils::cliFormat()` with cli markup (`{.val {x}}`, `{.arg {name}}`). Never inline message strings or build them with `paste()`.
-- Use explicit `package::function()` for functions from other packages. Never use `library()` or `require()` in package code. In tests, call esqlabsR's own functions directly, without a namespace prefix.
+- Raise user-facing errors, warnings, and messages with `cli::cli_abort()`, `cli::cli_warn()`, and `cli::cli_inform()`, never with base `stop()`, `warning()`, or `message()`. The one exception is a handler that re-raises the condition it caught, such as `stop(cnd)` after a rollback: the condition already has its text, so do not wrap it in a cli call. Keep the text in the `R/messages.R` catalog and use cli markup (`{.val {x}}`, `{.arg {name}}`); the header of `R/messages.R` says how to build an entry.
+- Do not join values with `paste()` when the function that receives them already does it. cli interpolation lists a vector by itself: `{.val {x}}` gives `"a", "b", and "c"`, and `{.or {.val {x}}}` gives `"a", "b", or "c"`, while `{.val {paste(x, collapse = ", ")}}` quotes the whole list as one value. `ospsuite.utils::cliFormat()` and `cli::cli_abort()` already join their arguments into lines. cli shortens a vector of more than 20 values with `…`; to show every value, pass `cli::cli_vec(x, list("vec-trunc" = Inf))`.
+- Use explicit `package::function()` for functions from other packages, also for `ospsuite` and `ospsuite.utils` functions that `NAMESPACE` imports (`ospsuite.utils::validateIsOfType()`, not `validateIsOfType()`). Never use `library()` or `require()` in package code. In tests, call esqlabsR's own functions directly, without a namespace prefix.
 - Use vectorized operations for simple vector math. For complex operations, prefer explicit `for` loops over `apply()`/`purrr::map()`.
 
 ## Testing
 
 - Test whole structures in one assertion: `expect_equal(result, expected)` over multiple partial checks.
 - Compare against independently constructed expected values — never re-use the output of the function under test as the oracle.
+- Prefer `expect_snapshot(x)` over `expect_identical(x, <hand-written value>)` when `x` prints readably (a data frame, a list of records, a printed object). The snapshot also checks identity, and the `_snaps/` file shows reviewers the content under test; a change shows up in the PR diff. Read a new snapshot before you accept it: it is the expected value. A printed snapshot checks only what `print()` shows: it rounds doubles to 7 significant digits, and a `print()` method can leave out fields. For exact numbers or the full structure, use `expect_snapshot_value(x, style = "deparse")` or keep `expect_identical()` / `expect_equal()`.
 - Test errors and warnings against the specific message, preferably with `expect_snapshot(error = TRUE)`.
+- To mock a function from another package with `testthat::local_mocked_bindings()`, pass `.package = "<package>"`. The code calls it as `<package>::fn()`, so a mock in the esqlabsR namespace is never used.
 - Do not add tests that cannot fail for a real defect; avoid trivial assertions.
 - Use meaningful, domain-specific test data; avoid unexplained literals like `42` or `"foo"`.
 
@@ -54,10 +57,10 @@ The target reader of all user-facing documentation (roxygen `@description`, `@pa
 - Every PR that changes what a user of the last release sees needs at least one `NEWS.md` bullet, written for the end user. Add **one bullet per user-visible change**, not one per PR: a PR that changes three things visible to users gets three bullets. Do not combine unrelated changes into a single bullet.
 - When a PR changes something added in the current development cycle (already in the development section), edit its existing bullet instead of adding a new one, and only if the bullet is now wrong.
 - Skip `NEWS.md` when the PR has no user-facing change compared to the last release: internal refactoring, tests, CI, agent guidance, or a fix for a bug added after the last release.
-- Each bullet names the affected function as `functionName()`, says what the user now sees or can do, and ends with the issue number in parentheses, e.g. `(#1056)`. File it under `## Breaking changes`, `## New features`, or `## Minor improvements and bug fixes` in the development section.
+- Each bullet names the affected function as `functionName()`, says what the user now sees or can do, and ends with the issue number in parentheses, e.g. `(#1056)`. File it under one of the development section's headings: `## Breaking changes`, `## Major changes`, `## New features`, `## Deprecations`, or `## Minor improvements and bug fixes`.
 
 ## Documentation / Rd files
 
-- Exported functions need complete roxygen2 docs: `@title`, `@param` (with types and defaults), `@return`, `@examples`.
+- Exported functions need complete roxygen2 docs: a title, `@param` (with types and defaults), `@returns`, `@examples`. The title is the first line of the roxygen block; an explicit `@title` tag is not needed.
 - Internal functions need minimal documentation plus `@keywords internal` and `@noRd`.
 - When updating roxygen documentation, do **not** automatically re-generate the `man/*.Rd` files (`devtools::document()`). Rd generation is done once at the end of the work, before the PR is marked ready for review.

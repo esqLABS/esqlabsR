@@ -49,7 +49,7 @@ addApplication <- function(
   parameterSets = NULL,
   overwrite = FALSE
 ) {
-  validateIsOfType(project, "Project")
+  ospsuite.utils::validateIsOfType(project, "Project")
   project$addApplication(id, parameterSets, overwrite)
 }
 
@@ -103,7 +103,7 @@ addApplication <- function(
 #' @export
 #' @family application
 removeApplication <- function(project, id) {
-  validateIsOfType(project, "Project")
+  ospsuite.utils::validateIsOfType(project, "Project")
   project$removeApplication(id)
 }
 
@@ -153,7 +153,7 @@ setApplicationParameterSets <- function(
   id,
   parameterSets
 ) {
-  validateIsOfType(project, "Project")
+  ospsuite.utils::validateIsOfType(project, "Project")
   project$setApplicationParameterSets(id, parameterSets)
 }
 

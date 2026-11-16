@@ -281,7 +281,7 @@ print.PopulationSource <- function(x, ...) {
 #' Possible gender entries as integer values
 #'
 #' @export
-GenderInt <- enum(list(
+GenderInt <- ospsuite.utils::enum(list(
   MALE = 1,
   FEMALE = 2,
   UNKNOWN = 3
@@ -311,12 +311,12 @@ extendPopulationByUserDefinedParams <- function(
   sdValues,
   distributions = Distributions$Normal
 ) {
-  validateIsOfType(population, "Population")
-  validateIsString(parameterPaths)
-  validateIsNumeric(c(meanValues, sdValues))
+  ospsuite.utils::validateIsOfType(population, "Population")
+  ospsuite.utils::validateIsString(parameterPaths)
+  ospsuite.utils::validateIsNumeric(c(meanValues, sdValues))
   distributions <- distributions %||%
     rep(Distributions$Normal, length(parameterPaths))
-  validateIsSameLength(parameterPaths, meanValues, sdValues, distributions)
+  ospsuite.utils::validateIsSameLength(parameterPaths, meanValues, sdValues, distributions)
 
   # Iterate through all parameters and sample a parameter values vector
   for (i in seq_along(parameterPaths)) {
@@ -354,9 +354,9 @@ extendPopulationByUserDefinedParams <- function(
 #' @import readxl
 #' @export
 extendPopulationFromXLS <- function(population, XLSpath, sheet = NULL) {
-  validateIsOfType(population, "Population")
-  validateIsString(XLSpath)
-  validateIsString(sheet, nullAllowed = TRUE)
+  ospsuite.utils::validateIsOfType(population, "Population")
+  ospsuite.utils::validateIsString(XLSpath)
+  ospsuite.utils::validateIsString(sheet, nullAllowed = TRUE)
   if (is.null(sheet)) {
     sheet <- 1
   }
@@ -424,7 +424,7 @@ extendPopulationFromXLS <- function(population, XLSpath, sheet = NULL) {
 
 #' Supported distributions for sampling
 #' @export
-Distributions <- enum(list(
+Distributions <- ospsuite.utils::enum(list(
   "Normal",
   "LogNormal"
 ))
@@ -440,7 +440,7 @@ Distributions <- enum(list(
 #' @returns Numerical vector of size n with randomly sampled values
 #' @export
 sampleRandomValue <- function(distribution, mean, sd, n) {
-  if (!enumHasKey(distribution, Distributions)) {
+  if (!ospsuite.utils::enumHasKey(distribution, Distributions)) {
     cli::cli_abort(messages$distributionNotSupported(distribution))
   }
 
@@ -511,7 +511,7 @@ addPopulation <- function(
   numberOfIndividuals = NULL,
   ...
 ) {
-  validateIsOfType(project, "Project")
+  ospsuite.utils::validateIsOfType(project, "Project")
   project$addPopulation(id, species, numberOfIndividuals, ...)
 }
 
@@ -770,7 +770,7 @@ addPopulation <- function(
 #' @export
 #' @family population
 removePopulation <- function(project, id) {
-  validateIsOfType(project, "Project")
+  ospsuite.utils::validateIsOfType(project, "Project")
   project$removePopulation(id)
 }
 
@@ -839,7 +839,7 @@ removePopulation <- function(project, id) {
 #' @export
 #' @family population
 setPopulation <- function(project, id, ...) {
-  validateIsOfType(project, "Project")
+  ospsuite.utils::validateIsOfType(project, "Project")
   project$setPopulation(id, ...)
 }
 

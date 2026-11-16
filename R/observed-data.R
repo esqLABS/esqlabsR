@@ -234,7 +234,7 @@ print.ObservedDataSource <- function(x, ...) {
 #' }
 #' @export
 loadObservedData <- function(project) {
-  validateIsOfType(project, "Project")
+  ospsuite.utils::validateIsOfType(project, "Project")
   project$loadObservedData()
 }
 
@@ -359,7 +359,7 @@ loadObservedData <- function(project) {
 #' @export
 #' @family observedData
 getObservedDataNames <- function(project) {
-  validateIsOfType(project, "Project")
+  ospsuite.utils::validateIsOfType(project, "Project")
   project$getObservedDataNames()
 }
 
@@ -437,7 +437,7 @@ getObservedDataNames <- function(project) {
 #' @export
 #' @family observedData
 addObservedData <- function(project, entry, overwrite = FALSE) {
-  validateIsOfType(project, "Project")
+  ospsuite.utils::validateIsOfType(project, "Project")
   project$addObservedData(entry, overwrite)
 }
 
@@ -646,7 +646,7 @@ addObservedData <- function(project, entry, overwrite = FALSE) {
 #' @export
 #' @family observedData
 removeObservedData <- function(project, id) {
-  validateIsOfType(project, "Project")
+  ospsuite.utils::validateIsOfType(project, "Project")
   project$removeObservedData(id)
 }
 

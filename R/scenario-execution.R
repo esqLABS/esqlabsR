@@ -495,7 +495,7 @@
       populationsFolder = project$paths$populationsFolder
     ))
   }
-  loadPopulation(populationPath)
+  ospsuite::loadPopulation(populationPath)
 }
 
 # Build a population from a demographics spec via
@@ -536,7 +536,7 @@
     }
   }
   popResult <- do.call(ospsuite::createPopulationCharacteristics, popArgs)
-  createPopulation(populationCharacteristics = popResult)$population
+  ospsuite::createPopulation(populationCharacteristics = popResult)$population
 }
 
 # .prepareScenario ----
@@ -650,7 +650,7 @@
 
   # 3. Set outputs
   if (!is.null(scenario$outputPaths)) {
-    setOutputs(
+    ospsuite::setOutputs(
       quantitiesOrPaths = unname(scenario$outputPaths),
       simulation = simulation
     )
@@ -663,23 +663,23 @@
         scenario$id
       ))
     }
-    clearOutputIntervals(simulation)
+    ospsuite::clearOutputIntervals(simulation)
     for (i in seq_along(scenario$simulationTime)) {
-      addOutputInterval(
+      ospsuite::addOutputInterval(
         simulation = simulation,
         startTime = ospsuite::toBaseUnit(
-          quantityOrDimension = ospDimensions$Time,
+          quantityOrDimension = ospsuite::ospDimensions$Time,
           values = scenario$simulationTime[[i]][1],
           unit = scenario$simulationTimeUnit
         ),
         endTime = ospsuite::toBaseUnit(
-          quantityOrDimension = ospDimensions$Time,
+          quantityOrDimension = ospsuite::ospDimensions$Time,
           values = scenario$simulationTime[[i]][2],
           unit = scenario$simulationTimeUnit
         ),
         resolution = scenario$simulationTime[[i]][3] /
           ospsuite::toBaseUnit(
-            quantityOrDimension = ospDimensions$Time,
+            quantityOrDimension = ospsuite::ospDimensions$Time,
             values = 1,
             unit = scenario$simulationTimeUnit
           )
@@ -768,7 +768,7 @@
   .call = rlang::caller_env()
 ) {
   rlang::local_error_call(.call)
-  validateIsOfType(project, "Project")
+  ospsuite.utils::validateIsOfType(project, "Project")
   customParams <- .validateParametersStructure(
     parameterStructure = customParams,
     argumentName = "customParams",
@@ -945,7 +945,7 @@
   # FALSE); there is nothing to resolve output quantities against, so leave
   # them NULL and let the no-results branch below record the skip.
   if (!is.null(simulation) && !is.null(scenario$outputPaths)) {
-    outputQuantities <- getAllQuantitiesMatching(
+    outputQuantities <- ospsuite::getAllQuantitiesMatching(
       unname(scenario$outputPaths),
       simulation
     )
@@ -962,7 +962,7 @@
       cli::cli_warn(messages$missingResultsForScenario(scenario$id))
     }
   } else {
-    outputValues <- getOutputValues(
+    outputValues <- ospsuite::getOutputValues(
       results,
       quantitiesOrPaths = outputQuantities,
       population = population,
@@ -997,7 +997,7 @@
     if (length(pair) != 2L) {
       cli::cli_abort(messages$wrongOntogenyStructure(parts[[i]]))
     }
-    validateEnumValue(value = pair[[2]], enum = ospsuite::StandardOntogeny)
+    ospsuite.utils::validateEnumValue(value = pair[[2]], enum = ospsuite::StandardOntogeny)
     out[[i]] <- ospsuite::MoleculeOntogeny$new(
       molecule = pair[[1]],
       ontogeny = ospsuite::StandardOntogeny[[pair[[2]]]]
@@ -1061,7 +1061,7 @@
   }
   simulationResults <- list()
   if (length(individualSimulations) > 0L) {
-    simulationResults <- runSimulations(
+    simulationResults <- ospsuite::runSimulations(
       simulations = individualSimulations,
       simulationRunOptions = simulationRunOptions
     )
@@ -1070,7 +1070,7 @@
   for (idx in seq_along(scenarioNames)) {
     p <- prepared[[idx]]
     if (!is.null(p) && !is.null(p$population)) {
-      populationResults <- runSimulations(
+      populationResults <- ospsuite::runSimulations(
         simulations = p$simulation,
         population = p$population,
         simulationRunOptions = simulationRunOptions

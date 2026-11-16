@@ -312,7 +312,7 @@ loadProject <- function(path = ".") {
 #' saveProject(project) # clean save: "Project is already up to date; ..."
 #' }
 saveProject <- function(project) {
-  validateIsOfType(project, "Project")
+  ospsuite.utils::validateIsOfType(project, "Project")
   project$save()
 }
 
@@ -650,7 +650,7 @@ initProject <- function(
   # `validateIsString()` checks type only, so it accepts a character vector of
   # any length and an `NA`. Either would reach the container as a JSON array or
   # a `null` in a scalar field and fail somewhere further away.
-  validateIsString(name)
+  ospsuite.utils::validateIsString(name)
   if (length(name) != 1L || is.na(name)) {
     cli::cli_abort(messages$invalidInitProjectName())
   }

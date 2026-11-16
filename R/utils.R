@@ -44,7 +44,7 @@ getIndexClosestToValue <- function(
     }
   }
 
-  validateIsNumeric(c(value, array))
+  ospsuite.utils::validateIsNumeric(c(value, array))
 
   # Calculate distances
   distances <- abs(array - value)
@@ -150,7 +150,7 @@ compareWithNA <- function(v1, v2) {
     fixed = TRUE
   )
   simulationTimeIntervals <- lapply(simulationTimeIntervals, as.numeric)
-  validateIsNumeric(simulationTimeIntervals)
+  ospsuite.utils::validateIsNumeric(simulationTimeIntervals)
   if (any(unlist(simulationTimeIntervals) < 0)) {
     msg <- messages$wrongTimeIntervalString(simulationTimeIntervalsString)
     cli::cli_abort("{msg}")
@@ -217,7 +217,7 @@ compareWithNA <- function(v1, v2) {
 #' )
 #' getMoleculeNameFromQuantity(quantity = quantity)
 getMoleculeNameFromQuantity <- function(quantity) {
-  validateIsOfType(quantity, "Quantity")
+  ospsuite.utils::validateIsOfType(quantity, "Quantity")
 
   quantityType <- quantity$quantityType
 
@@ -262,7 +262,7 @@ enumPutList <- function(key, values, enum, overwrite = FALSE) {
     msg <- messages$enumPutListMultipleKeys()
     cli::cli_abort("{msg}")
   }
-  if (enumHasKey(key, enum) && !overwrite) {
+  if (ospsuite.utils::enumHasKey(key, enum) && !overwrite) {
     msg <- messages$errorKeyInEnumPresent(key)
     cli::cli_abort("{msg}")
   }

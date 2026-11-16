@@ -481,7 +481,8 @@ test_that("runScenarios aborts by default when a scenario simulation produces no
   withr::local_options(lifecycle_verbosity = "quiet")
   project <- .testProject()
   local_mocked_bindings(
-    runSimulations = .mockNoResults
+    runSimulations = .mockNoResults,
+    .package = "ospsuite"
   )
   expect_error(
     runScenarios(project, scenarios = "testscenario"),
@@ -543,7 +544,8 @@ test_that("runScenarios(stopIfFails = FALSE) skips a build-time failure and coll
     outputPaths = "aciclovir_pvb"
   )
   local_mocked_bindings(
-    runSimulations = .mockNoResults
+    runSimulations = .mockNoResults,
+    .package = "ospsuite"
   )
   out <- suppressWarnings(
     runScenarios(project, stopIfFails = FALSE)
@@ -563,7 +565,7 @@ test_that("runScenarios(stopIfFails = FALSE) closes by naming every scenario tha
   withr::local_options(lifecycle_verbosity = "quiet")
   project <- .testProject()
   addScenario(project, "second", modelFile = "does-not-exist.pkml")
-  local_mocked_bindings(runSimulations = .mockNoResults)
+  local_mocked_bindings(runSimulations = .mockNoResults, .package = "ospsuite")
 
   warnings <- character()
   out <- withCallingHandlers(
@@ -738,7 +740,7 @@ test_that("a scenario skipped at build time warns once, not twice", {
   withr::local_options(lifecycle_verbosity = "quiet")
   project <- .testProject()
   addScenario(project, "second", modelFile = "does-not-exist.pkml")
-  local_mocked_bindings(runSimulations = .mockNoResults)
+  local_mocked_bindings(runSimulations = .mockNoResults, .package = "ospsuite")
   warnings <- character()
   withCallingHandlers(
     runScenarios(project, scenarios = "second", stopIfFails = FALSE),
@@ -761,7 +763,8 @@ test_that("runScenarios builds an individual that carries no age or height", {
   project <- .testProject()
   setIndividual(project, "indiv1", age = NULL, height = NULL)
   local_mocked_bindings(
-    runSimulations = .mockNoResults
+    runSimulations = .mockNoResults,
+    .package = "ospsuite"
   )
   # Two warnings: the per-scenario one, and the batch summary naming every
   # scenario that produced nothing.
@@ -827,7 +830,7 @@ test_that("runScenarios builds an individual carrying two protein ontogenies", {
     "indiv1",
     proteinOntogenies = c("CYP3A4:CYP3A4", "CYP2D6:CYP2C8")
   )
-  local_mocked_bindings(runSimulations = .mockNoResults)
+  local_mocked_bindings(runSimulations = .mockNoResults, .package = "ospsuite")
   # Two warnings: the per-scenario one, and the batch summary naming every
   # scenario that produced nothing.
   expect_warning(
@@ -848,7 +851,8 @@ test_that("runScenarios with stopIfFails = FALSE warns and returns NULL outputVa
   withr::local_options(lifecycle_verbosity = "quiet")
   project <- .testProject()
   local_mocked_bindings(
-    runSimulations = .mockNoResults
+    runSimulations = .mockNoResults,
+    .package = "ospsuite"
   )
   # Two warnings: the per-scenario one, and the batch summary naming every
   # scenario that produced nothing.
@@ -1534,7 +1538,8 @@ test_that(".resolveScenarioPopulation loads a csv entry from its own file", {
     loadPopulation = function(path) {
       seen <<- path
       loaded
-    }
+    },
+    .package = "ospsuite"
   )
   result <- .resolveScenarioPopulation(scenario, project, cache)
   expect_identical(result, loaded)

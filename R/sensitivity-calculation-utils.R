@@ -74,8 +74,8 @@
       names(simulationResults)
     )
   for (simResult in names(simulationResults)) {
-    pkDataFrame <- pkAnalysesToDataFrame(
-      calculatePKAnalyses(
+    pkDataFrame <- ospsuite::pkAnalysesToDataFrame(
+      ospsuite::calculatePKAnalyses(
         simulationResults[[simResult]]
       )
     )
@@ -170,13 +170,13 @@
 .calculateCustomPK <- function(simulationResults, customOutputFunctions) {
   # validate customOutputFunctions
   .validateIsNamedList(customOutputFunctions, nullAllowed = TRUE)
-  validateIsOfType(customOutputFunctions, "function", nullAllowed = TRUE)
+  ospsuite.utils::validateIsOfType(customOutputFunctions, "function", nullAllowed = TRUE)
 
   # extract all output paths
   outputPaths <- simulationResults$allQuantityPaths
 
   # extract simulation result values
-  simulationResultsDf <- simulationResultsToDataFrame(simulationResults)
+  simulationResultsDf <- ospsuite::simulationResultsToDataFrame(simulationResults)
 
   userPKValuePathList <- stats::setNames(
     vector("list", length(outputPaths)),
@@ -350,7 +350,7 @@
 #' @keywords internal
 #' @noRd
 .addParameterColumns <- function(data, simulationResults, parameterPath) {
-  parameter <- getAllParametersMatching(
+  parameter <- ospsuite::getAllParametersMatching(
     parameterPath,
     purrr::pluck(simulationResults, 1L, "simulation")
   )
@@ -398,7 +398,7 @@
 #' @noRd
 .validateVariationRange <- function(variationRange) {
   # only numbers allowed
-  validateIsNumeric(variationRange)
+  ospsuite.utils::validateIsNumeric(variationRange)
 
   # extract only unique values
   variationRange <- unique(variationRange)
@@ -426,7 +426,7 @@
 #' @keywords internal
 #' @noRd
 .normalizeVariationRange <- function(variationRange, parameterPaths) {
-  variationRange <- toList(variationRange)
+  variationRange <- ospsuite.utils::toList(variationRange)
 
   if (length(variationRange) == 1) {
     # Ensure the lengths of variationRange and parameterPath are equal
@@ -513,7 +513,7 @@
   }
 
   # Ensure all values are distinct
-  if (!hasOnlyDistinctValues(object)) {
+  if (!ospsuite.utils::hasOnlyDistinctValues(object)) {
     cli::cli_abort(messages$errorDuplicatedValues())
   }
 
@@ -531,7 +531,7 @@
 .validatePKParameters <- function(pkParameters) {
   if (
     !is.null(pkParameters) &&
-      !isIncluded(pkParameters, ospsuite::allPKParameterNames())
+      !ospsuite.utils::isIncluded(pkParameters, ospsuite::allPKParameterNames())
   ) {
     nsPKNames <- pkParameters[
       !pkParameters %in% ospsuite::allPKParameterNames()
@@ -554,12 +554,12 @@
   nullAllowed = FALSE,
   call = rlang::caller_env()
 ) {
-  validateIsOfType(object, "list", nullAllowed = nullAllowed)
+  ospsuite.utils::validateIsOfType(object, "list", nullAllowed = nullAllowed)
 
   if (!is.null(object)) {
     listNames <- names(object)
     argName <- deparse(substitute(object))
-    if (hasEmptyStrings(listNames)) {
+    if (ospsuite.utils::hasEmptyStrings(listNames)) {
       # `call` attributes the abort to the public function the user called,
       # rather than to this internal validator.
       cli::cli_abort(messages$notNamedList(argName), call = call)
@@ -663,9 +663,9 @@ saveSensitivityCalculation <- function(
   outputDir,
   overwrite = FALSE
 ) {
-  validateIsOfType(sensitivityCalculation, "SensitivityCalculation")
-  validateIsString(outputDir)
-  validateIsLogical(overwrite)
+  ospsuite.utils::validateIsOfType(sensitivityCalculation, "SensitivityCalculation")
+  ospsuite.utils::validateIsString(outputDir)
+  ospsuite.utils::validateIsLogical(overwrite)
 
   if (dir.exists(outputDir)) {
     if (!overwrite) {
@@ -753,8 +753,8 @@ saveSensitivityCalculation <- function(
 #' sensitivityCalculation <- loadSensitivityCalculation("output/my-sensitivity")
 #' }
 loadSensitivityCalculation <- function(outputDir, simulation = NULL) {
-  validateIsString(outputDir)
-  validateIsOfType(simulation, "Simulation", nullAllowed = TRUE)
+  ospsuite.utils::validateIsString(outputDir)
+  ospsuite.utils::validateIsOfType(simulation, "Simulation", nullAllowed = TRUE)
 
   metaPath <- file.path(outputDir, "sensitivityCalculation.meta")
   if (!file.exists(metaPath)) {

@@ -1313,7 +1313,7 @@ print.DataCombined <- function(x, ...) {
 #' @export
 #' @family plots
 addPlot <- function(project, id, dataCombined, plotType, ...) {
-  validateIsOfType(project, "Project")
+  ospsuite.utils::validateIsOfType(project, "Project")
   project$addPlot(id, dataCombined, plotType, ...)
 }
 
@@ -1412,7 +1412,7 @@ addPlot <- function(project, id, dataCombined, plotType, ...) {
 #' @export
 #' @family plots
 removePlot <- function(project, id) {
-  validateIsOfType(project, "Project")
+  ospsuite.utils::validateIsOfType(project, "Project")
   project$removePlot(id)
 }
 
@@ -1489,7 +1489,7 @@ removePlot <- function(project, id) {
 #' @export
 #' @family plots
 addPlotGrid <- function(project, id, plots, ...) {
-  validateIsOfType(project, "Project")
+  ospsuite.utils::validateIsOfType(project, "Project")
   project$addPlotGrid(id, plots, ...)
 }
 
@@ -1578,7 +1578,7 @@ addPlotGrid <- function(project, id, plots, ...) {
 #' @export
 #' @family plots
 removePlotGrid <- function(project, id) {
-  validateIsOfType(project, "Project")
+  ospsuite.utils::validateIsOfType(project, "Project")
   project$removePlotGrid(id)
 }
 
@@ -1650,7 +1650,7 @@ addDataCombined <- function(
   observed = list(),
   overwrite = FALSE
 ) {
-  validateIsOfType(project, "Project")
+  ospsuite.utils::validateIsOfType(project, "Project")
   project$addDataCombined(id, simulated, observed, overwrite)
 }
 
@@ -1760,7 +1760,7 @@ addDataCombined <- function(
 #' @export
 #' @family dataCombined
 removeDataCombined <- function(project, id) {
-  validateIsOfType(project, "Project")
+  ospsuite.utils::validateIsOfType(project, "Project")
   project$removeDataCombined(id)
 }
 

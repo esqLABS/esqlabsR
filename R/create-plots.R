@@ -65,7 +65,7 @@ createPlots <- function(
   stopIfNotFound = TRUE,
   validate = TRUE
 ) {
-  validateIsOfType(project, "Project")
+  ospsuite.utils::validateIsOfType(project, "Project")
   if (isTRUE(validate)) {
     project$ensureValid(
       sections = c(

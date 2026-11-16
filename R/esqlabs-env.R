@@ -19,7 +19,7 @@ esqlabsEnv$colorPalette <- NULL
 #' The returned names can be used with `getEsqlabsRSetting()` to look up the
 #' value of a global esqlabsR setting.
 #' @export
-esqlabsRSettingNames <- enum(names(esqlabsEnv))
+esqlabsRSettingNames <- ospsuite.utils::enum(names(esqlabsEnv))
 
 #' Get the value of a global esqlabsR setting.
 #'
