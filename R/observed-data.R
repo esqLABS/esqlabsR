@@ -276,30 +276,49 @@ loadObservedData <- function(project) {
     allDataSets,
     private$.programmaticDataSets
   )
-  # A `programmatic` sentinel resolves to nothing unless this session added its
-  # DataSet: the data lives only in the runtime store, so a sentinel read from
-  # disk (a reload, or a project opened elsewhere) has no backing DataSet and
-  # would silently vanish from the result. Warn by name so the drop is loud
-  # instead of surfacing later as an obscure dangling DataCombined reference.
-  unresolved <- .unresolvedProgrammaticNames(
-    self$definitions$observedData,
-    names(allDataSets)
-  )
-  if (length(unresolved) > 0) {
-    # `.loadObservedData_impl()` is reentered often (from `getObservedDataNames()`
-    # and `addObservedData()`, and on every `createDataCombined()`/`createPlots()`),
-    # so throttle to once per session per project rather than firing on every call.
-    cli::cli_warn(
-      messages$observedDataProgrammaticUnresolved(unresolved),
-      .frequency = "once",
-      .frequency_id = paste0(
-        "esqlabsR_observed_data_unresolved_programmatic_",
-        .projectWarningKey(self)
-      )
-    )
-  }
+  .warnUnresolvedProgrammatic(self, names(allDataSets))
   private$.observedDataNamesCache <- names(allDataSets)
   allDataSets
+}
+
+#' Warn about `programmatic` entries that resolved to no data
+#'
+#' A `programmatic` sentinel resolves to nothing unless this session added its
+#' DataSet: the data lives only in the runtime store, so a sentinel read from
+#' disk (a snapshot restored before saving, or a hand-written declaration) has
+#' no backing DataSet and would silently vanish from the result. Warns by name
+#' so the drop is loud instead of surfacing later as an obscure dangling
+#' DataCombined reference.
+#'
+#' Called both by a load and by a names lookup answered from the cache, so the
+#' first look at the observed data warns whichever way it comes. Both paths are
+#' reentered often (from `addObservedData()`, and on every
+#' `createDataCombined()` / `createPlots()`), so the warning is throttled to
+#' once per session per project rather than firing on every call.
+#'
+#' @param project A `Project` object.
+#' @param resolvedNames Names of the DataSets the observed data resolves to.
+#' @returns `NULL`, invisibly.
+#' @keywords internal
+#' @noRd
+.warnUnresolvedProgrammatic <- function(project, resolvedNames) {
+  unresolved <- .unresolvedProgrammaticNames(
+    project$definitions$observedData,
+    resolvedNames
+  )
+  if (length(unresolved) == 0) {
+    return(invisible(NULL))
+  }
+  cli::cli_warn(
+    messages$observedDataProgrammaticUnresolved(unresolved),
+    class = "esqlabsR_observedDataProgrammaticUnresolved",
+    .frequency = "once",
+    .frequency_id = paste0(
+      "esqlabsR_observed_data_unresolved_programmatic_",
+      .projectWarningKey(project)
+    )
+  )
+  invisible(NULL)
 }
 
 # A stable per-project key for once-per-session warning frequency ids, so a
@@ -371,6 +390,7 @@ getObservedDataNames <- function(project) {
 .getObservedDataNames_impl <- function(self, private, .call) {
   rlang::local_error_call(.call)
   if (!is.null(private$.observedDataNamesCache)) {
+    .warnUnresolvedProgrammatic(self, private$.observedDataNamesCache)
     return(private$.observedDataNamesCache)
   }
   # Reentrant call: pass the attribution call on rather than re-resolving it.
@@ -793,6 +813,10 @@ removeObservedData <- function(project, id) {
   if (any(types == "script", na.rm = TRUE)) {
     return(NULL)
   }
+  # Every warning raised by this lookup is muffled. "quiet" also stops rlang
+  # from counting a once-per-session warning as shown, so the user's own first
+  # look at the observed data still warns.
+  rlang::local_options(rlib_warning_verbosity = "quiet")
   tryCatch(
     suppressMessages(suppressWarnings(project$getObservedDataNames())),
     error = function(cnd) NULL

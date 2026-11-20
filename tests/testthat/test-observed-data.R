@@ -94,6 +94,106 @@ test_that("loadObservedData warns on orphan programmatic sentinels (no in-memory
   expect_length(result, 0L)
 })
 
+# A copy of the example project plus a `programmatic` declaration with no
+# `DataSet` behind it, as a snapshot taken before saving leaves one. The example
+# project has a parameter-identification task, so `loadProject()` and
+# `validateProject()` look up the observed-data names for their cross-reference
+# check before the user asks for them. Each copy is a new temp folder, so its
+# once-per-session warning has not been shown yet; resetting it after
+# `loadProject()` would hide exactly the defect these tests are about.
+.exampleProjectWithUnresolvedProgrammatic <- function(envir = parent.frame()) {
+  dir <- exampleProjectDir(envir)
+  jsonlite::write_json(
+    list(type = "programmatic", name = "Pilot_study"),
+    file.path(dir, "definitions", "observed-data", "Pilot_study.json"),
+    auto_unbox = TRUE
+  )
+  file.path(dir, "Project.json")
+}
+
+test_that("the first loadObservedData after loadProject warns about an unresolved programmatic source", {
+  projectPath <- .exampleProjectWithUnresolvedProgrammatic()
+  expect_no_warning(
+    project <- loadProject(projectPath),
+    class = "esqlabsR_observedDataProgrammaticUnresolved"
+  )
+  cnd <- expect_warning(
+    loadObservedData(project),
+    class = "esqlabsR_observedDataProgrammaticUnresolved"
+  )
+  expect_match(conditionMessage(cnd), "Pilot_study", fixed = TRUE)
+  # Once per project per session.
+  expect_no_warning(
+    loadObservedData(project),
+    class = "esqlabsR_observedDataProgrammaticUnresolved"
+  )
+})
+
+test_that("the first getObservedDataNames after loadProject warns about an unresolved programmatic source", {
+  project <- loadProject(.exampleProjectWithUnresolvedProgrammatic())
+  cnd <- expect_warning(
+    getObservedDataNames(project),
+    class = "esqlabsR_observedDataProgrammaticUnresolved"
+  )
+  expect_match(conditionMessage(cnd), "Pilot_study", fixed = TRUE)
+})
+
+test_that("the first addObservedData after loadProject warns about an unresolved programmatic source", {
+  project <- loadProject(.exampleProjectWithUnresolvedProgrammatic())
+  followUp <- ospsuite::DataSet$new(name = "Follow_up_visit")
+  followUp$setValues(xValues = c(0, 1, 3), yValues = c(0, 6, 2))
+  cnd <- expect_warning(
+    addObservedData(project, followUp),
+    class = "esqlabsR_observedDataProgrammaticUnresolved"
+  )
+  expect_match(conditionMessage(cnd), "Pilot_study", fixed = TRUE)
+})
+
+test_that("validateProject leaves the unresolved programmatic warning to the first load", {
+  project <- loadProject(.exampleProjectWithUnresolvedProgrammatic())
+  expect_no_warning(
+    validateProject(project),
+    class = "esqlabsR_observedDataProgrammaticUnresolved"
+  )
+  expect_warning(
+    loadObservedData(project),
+    class = "esqlabsR_observedDataProgrammaticUnresolved"
+  )
+})
+
+test_that("the unresolved programmatic warning does not return after a later validation or reload", {
+  projectPath <- .exampleProjectWithUnresolvedProgrammatic()
+  project <- loadProject(projectPath)
+  expect_warning(
+    loadObservedData(project),
+    class = "esqlabsR_observedDataProgrammaticUnresolved"
+  )
+
+  validateProject(project)
+  expect_no_warning(
+    loadObservedData(project),
+    class = "esqlabsR_observedDataProgrammaticUnresolved"
+  )
+
+  reloaded <- loadProject(projectPath)
+  expect_no_warning(
+    getObservedDataNames(reloaded),
+    class = "esqlabsR_observedDataProgrammaticUnresolved"
+  )
+  expect_no_warning(
+    loadObservedData(reloaded),
+    class = "esqlabsR_observedDataProgrammaticUnresolved"
+  )
+})
+
+test_that("loadProject keeps the user's rlib_warning_verbosity option", {
+  # The cross-reference lookup silences rlang warnings while it runs; the
+  # user's own setting must be back in place afterwards.
+  withr::local_options(rlib_warning_verbosity = "default")
+  exampleProject()
+  expect_identical(getOption("rlib_warning_verbosity"), "default")
+})
+
 test_that("loadObservedData errors when excel entry is missing required fields", {
   tmp <- withr::local_tempfile(fileext = ".json")
   jsonlite::write_json(
