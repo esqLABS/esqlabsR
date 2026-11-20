@@ -130,10 +130,7 @@ createDataCombined <- function(
   if (length(selectedGrids) == 0) {
     return(character(0))
   }
-  ids <- unique(unlist(lapply(
-    selectedGrids,
-    function(g) .splitPlotIDs(g$plots)
-  )))
+  ids <- .plotIdsOfGrids(selectedGrids)
   plotConfig <- .unwrapDefinitionList(project$definitions$plots) %||% list()
   referenced <- plotConfig[intersect(names(plotConfig), ids)]
   if (length(referenced) == 0) {

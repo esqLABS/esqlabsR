@@ -109,10 +109,7 @@ createPlots <- function(
   selectedGrids <- allPlotGrids[intersect(names(allPlotGrids), plotGrids)]
   selectedPlotIds <- intersect(plots, names(allPlotConfig))
 
-  gridReferencedPlotIds <- unique(unlist(lapply(
-    selectedGrids,
-    function(g) .splitPlotIDs(g$plots)
-  )))
+  gridReferencedPlotIds <- .plotIdsOfGrids(selectedGrids)
   neededPlotIds <- union(gridReferencedPlotIds, selectedPlotIds)
   plotConfig <- allPlotConfig[intersect(names(allPlotConfig), neededPlotIds)]
 
@@ -469,10 +466,7 @@ createPlotsFromExcel <- function(...) {
     msg <- messages$plotGridsNamesMustBeUnique(duplicatedGridIds)
     cli::cli_abort("{msg}")
   }
-  referencedPlotIds <- unique(unlist(lapply(
-    plotGrids,
-    function(g) .splitPlotIDs(g$plots)
-  )))
+  referencedPlotIds <- .plotIdsOfGrids(plotGrids)
   missingPlots <- setdiff(referencedPlotIds, plotIDs)
   if (length(missingPlots) != 0) {
     msg <- messages$invalidPlotID(missingPlots)
