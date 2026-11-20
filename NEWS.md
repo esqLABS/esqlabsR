@@ -14,6 +14,7 @@
 - `loadObservedDataFromExcel()` and `loadObservedDataFromPKML()` are removed; use `loadObservedData(project)` on a JSON-first `Project`. (#908)
 - `readPopulationCharacteristicsFromXLS()`, `readIndividualCharacteristicsFromXLS()`, `writeIndividualToXLS()`, `writeParameterStructureToXLS()`, and `exportParametersToXLS()` are removed. The supported Excel surface is restricted to Excel <-> JSON interop via `importProjectFromExcel()` and `exportProjectToExcel()`. (#908)
 - `ExportConfiguration` (R6 class) and `createEsqlabsExportConfiguration()` are removed. Save the plot objects returned by `createPlots()` directly via `ggplot2::ggsave()`. (#908)
+- `createDataCombinedFromExcel()` and `createPlotsFromExcel()` are removed; use `createDataCombined()` and `createPlots()` with a `Project` from `loadProject()`. The arguments `projectConfiguration`, `plotGridNames`, `dataCombinedNames`, and `simulatedScenarios` are now `project`, `plotGrids`, `dataCombined`, and `scenarioResults`. There is no `observedData` argument: the observed data is loaded from the project. `createPlots()` has no `outputFolder` argument and does not save figures; save them with `ospsuite.plots::exportPlot()`. (#908, #1361)
 - `createPlots()` draws its figures with the `{ospsuite}` plot functions built on `{ospsuite.plots}` (`plotTimeProfile()`, `plotPredictedVsObserved()`, `plotResidualsVsCovariate()`), so the figures look different, and `{tlf}` is no longer a dependency. `createEsqlabsPlotConfiguration()` returns a named list instead of a `DefaultPlotConfiguration` object; pass it to `sensitivitySpiderPlot()`, `sensitivityTornadoPlot()`, and `sensitivityTimeProfiles()` as before, and change its entries with `$`. (#969, #880, #944)
 - A plot keeps the plot settings of esqlabsR 5.x under the same names (titles and their text style, legend, axes, ticks, grid, backgrounds, colors, line, point, band, and error bar style, LLOQ, fold lines). `createPlots()` draws them with `{ospsuite.plots}`, except the few settings listed below that it cannot draw yet. `addPlot()` takes them through `...`, and `importProjectFromExcel()` and `exportProjectToExcel()` keep the `plotConfiguration` columns. A field name the plots do not know, or a value outside the rule of its field, is refused by `addPlot()` and reported by `validateProject()` as a critical error. (#969)
 - On a time profile, observed points take the color of their simulated curve, set by `linesColor`. `pointsColor` applies only to observed-versus-simulated and residual plots; `validateProject()` warns when a time profile sets it. (#969)
@@ -73,11 +74,7 @@
 
 ## Deprecations
 
-Deprecation intensity follows the lifecycle policy: forwarding shims that still work and have a direct replacement are soft-deprecated (a quiet, once-per-session note); shims that will be removed next cycle are deprecated with a warning on every call; hard removals are defunct and abort.
-
-### Soft-deprecated (quiet forwarding shims)
-
-- `createDataCombinedFromExcel()` and `createPlotsFromExcel()` forward to `createDataCombined()` / `createPlots()`; pass a `Project` from `loadProject()`. (#908)
+Deprecation intensity follows the lifecycle policy: shims that will be removed next cycle are deprecated with a warning on every call; hard removals are defunct and abort.
 
 ### Deprecated with a warning (removed next cycle)
 
