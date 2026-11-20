@@ -12,11 +12,13 @@
 #   - pkml   : ospsuite::loadDataSetFromPKML
 #   - script : R script sourced; must return DataSet or list of DataSets
 #   - programmatic : DataSets added at runtime via addObservedData(project).
-#                    The DataSet itself is not JSON-serializable, so it
-#                    is held on the Project's private slot
-#                    (.programmaticDataSets) and the JSON sentinel
-#                    `{type: "programmatic", name: ...}` is what
-#                    survives a round-trip.
+#                    The DataSet is held on the Project's private slot
+#                    (.programmaticDataSets) until saveProject() writes it
+#                    to `<name>.pkml` and rewrites the entry as a `pkml`
+#                    source. A sentinel `{type: "programmatic", name: ...}`
+#                    written without its DataSet (a snapshot taken before
+#                    saving, or a declaration written by hand) resolves to
+#                    no data until the DataSet is added again.
 
 # Print ----
 
@@ -338,7 +340,8 @@ loadObservedData <- function(project) {
 }
 
 # Names of `programmatic` sentinels with no backing DataSet in the resolved set
-# (their data was never added this session, or was lost across a reload).
+# (written without their DataSet, by a snapshot taken before saving or by hand,
+# and not added again in this session).
 #
 # @keywords internal
 # @noRd
