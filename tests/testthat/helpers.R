@@ -167,10 +167,17 @@ local_projectPath <- function(envir = parent.frame()) {
 #' touches the version-controlled fixture under `inst/extdata`. The copy is
 #' removed when the calling test finishes.
 exampleProject <- function(envir = parent.frame()) {
+  loadProject(file.path(exampleProjectDir(envir), "Project.json"))
+}
+
+#' Copy the bundled example project to a throwaway directory and return that
+#' directory, for a test that edits its files before loading it. Cleaned up
+#' when the calling test finishes.
+exampleProjectDir <- function(envir = parent.frame()) {
   src <- dirname(exampleProjectPath())
   dest <- withr::local_tempdir("Example_", .local_envir = envir)
   file.copy(list.files(src, full.names = TRUE), dest, recursive = TRUE)
-  loadProject(file.path(dest, "Project.json"))
+  dest
 }
 
 #' One row of an Excel `Scenarios` sheet, with every required column present.
