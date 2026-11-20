@@ -119,15 +119,13 @@ createPlots <- function(
 
   # Build DataCombined for the configs referenced by both selectors: the
   # requested grids and the explicitly requested standalone plots.
+  # `selectedPlotIds` holds only defined plot ids, so with
+  # `stopIfNotFound = FALSE` an unknown standalone plot id stays skipped here.
   if (is.null(dataCombinedList)) {
-    standaloneDataCombinedNames <- unique(unlist(lapply(
-      plotConfig[selectedPlotIds],
-      function(p) p$dataCombined
-    )))
     dataCombinedList <- createDataCombined(
       project,
-      dataCombined = standaloneDataCombinedNames,
       plotGrids = plotGrids,
+      plots = selectedPlotIds,
       scenarioResults = scenarioResults,
       stopIfNotFound = stopIfNotFound
     )

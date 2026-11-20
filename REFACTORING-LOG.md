@@ -347,3 +347,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-11-20 20:15: One helper lists the plot ids of plot grids, used wherever a grid's plots are read. (#1362)
 - 2026-11-20 20:16: createDataCombined() checks the requested plot grids before reading any file and finds their DataCombined through their plot ids. (#1362)
 - 2026-11-20 20:16: createDataCombined() also builds the DataCombined of the plots named in its new plots argument, with tests. (#1362)
+- 2026-11-20 20:16: createPlots() passes its standalone plots to createDataCombined() instead of looking up their DataCombined itself. (#1362)
