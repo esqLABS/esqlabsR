@@ -182,7 +182,7 @@ removeObservedData(project, c("extra_cohort.pkml", "Scratch measurement"))
 getObservedDataNames(project)
 ```
 
-If a removed source is still referenced by a DataCombined, the removal proceeds and leaves the reference dangling, which the next `validateProject()` (see `vignette("how-to-validate-a-project")`) reports as a problem, so prune the DataCombined too.
+If a DataCombined or a parameter identification output mapping still uses a DataSet of the removed source, the source is removed anyway and `removeObservedData()` warns you and names the DataCombined and parameter identification tasks that use it. Change or remove those definitions too; otherwise `createPlots()` or `runPI()` stops because the DataSet is missing. To find out which DataSets a source provides, the function reads its file; a source whose file cannot be read is removed without this check. A `script` source is not run for this; instead the function reminds you to check the DataCombined and parameter identification definitions that use observed data.
 
 ## Where to go next
 

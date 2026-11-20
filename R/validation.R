@@ -544,10 +544,10 @@ validationSummary <- function(validationResults) {
     }
     piHolders <- unique(piHolders)
     if (length(piHolders) > 0) {
-      cli::cli_warn(c(
-        "Removed outputPath {.val {id}} is still referenced by {length(piHolders)} parameter identification task{?s}:",
-        "*" = "{piHolders}",
-        "i" = "These PI tasks now have a dangling reference. Update or remove them."
+      cli::cli_warn(messages$removedStillReferencedByPITasks(
+        "outputPath",
+        id,
+        piHolders
       ))
     }
   }

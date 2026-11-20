@@ -888,6 +888,159 @@ test_that("removeObservedData warns and skips a not-found id in the batch", {
   expect_length(project$definitions$observedData, before - 1L)
 })
 
+# A DataCombined or a PI output mapping names a DataSet, not the source that
+# provides it, and a file-based source's id is its file basename. To find who
+# still uses a removed source, the removal reads the source's DataSet names.
+
+# A small measured plasma profile, named as a DataCombined or PI mapping would
+# reference it.
+plasmaDataSet <- function(name) {
+  dataSet <- ospsuite::DataSet$new(name = name)
+  dataSet$setValues(xValues = c(0.5, 1, 2), yValues = c(8.1, 5.4, 2.3))
+  dataSet
+}
+
+# Write the DataSet `name` to `<name>.pkml` in the data folder and declare it as
+# a pkml source, whose id is that file basename.
+addPkmlSource <- function(project, name) {
+  ospsuite::saveDataSetToPKML(
+    plasmaDataSet(name),
+    file.path(project$paths$dataFolder, paste0(name, ".pkml"))
+  )
+  addObservedData(project, list(type = "pkml", file = paste0(name, ".pkml")))
+  invisible(project)
+}
+
+# A script source that leaves a marker file behind if it is ever run.
+addMarkerScriptSource <- function(project, marker) {
+  writeLines(
+    paste0("file.create(", deparse(marker), ")"),
+    file.path(project$paths$dataFolder, "make_data.R")
+  )
+  addObservedData(project, list(type = "script", file = "make_data.R"))
+  invisible(project)
+}
+
+test_that("removeObservedData warns about the DataCombined and PI task using a removed Excel source", {
+  # The example project plots and fits the only DataSet of its Excel source.
+  project <- exampleProject()
+  expect_snapshot(removeObservedData(project, "Aciclovir_TimeValuesData.xlsx"))
+  expect_length(project$definitions$observedData, 0L)
+})
+
+test_that("removeObservedData warns about a DataCombined using a removed PKML source", {
+  project <- testProject()
+  addPkmlSource(project, "Aciclovir plasma")
+  addDataCombined(
+    project,
+    id = "aciclovir_plasma",
+    observed = list(list(label = "Plasma", dataSet = "Aciclovir plasma"))
+  )
+  expect_snapshot(removeObservedData(project, "Aciclovir plasma.pkml"))
+  expect_false(
+    "Aciclovir plasma.pkml" %in%
+      .observedDataSectionIds(project$definitions$observedData)
+  )
+})
+
+test_that("removeObservedData warns about a PI task fitting a removed PKML source", {
+  project <- testProject()
+  addPkmlSource(project, "Aciclovir plasma")
+  addPIOutputMapping(
+    project,
+    task = "aciclovirsimple",
+    outputPath = "aciclovir_pvb",
+    observedData = "Aciclovir plasma",
+    scenarios = "testscenario"
+  )
+  expect_snapshot(removeObservedData(project, "Aciclovir plasma.pkml"))
+})
+
+test_that("removeObservedData warns about a PI task fitting an unsaved programmatic DataSet", {
+  project <- testProject()
+  plasma <- plasmaDataSet("Aciclovir plasma")
+  suppressMessages(addObservedData(project, plasma))
+  addPIOutputMapping(
+    project,
+    task = "aciclovirsimple",
+    outputPath = "aciclovir_pvb",
+    observedData = "Aciclovir plasma",
+    scenarios = "testscenario"
+  )
+  expect_snapshot(removeObservedData(project, "Aciclovir plasma"))
+  expect_false("Aciclovir plasma" %in% getObservedDataNames(project))
+})
+
+test_that("removeObservedData does not warn when nothing uses the removed source", {
+  # The test project's PI task fits another DataSet, so the removal reads the
+  # PKML file and finds its DataSet unused.
+  project <- testProject()
+  addPkmlSource(project, "Aciclovir plasma")
+  expect_no_warning(removeObservedData(project, "Aciclovir plasma.pkml"))
+  expect_false(
+    "Aciclovir plasma.pkml" %in%
+      .observedDataSectionIds(project$definitions$observedData)
+  )
+})
+
+test_that("removeObservedData removes a source whose file is missing", {
+  # The test project's PI task fits observed data, so the removal tries to read
+  # the file it can no longer find.
+  project <- testProject()
+  addPkmlSource(project, "Aciclovir plasma")
+  expect_true(
+    file.remove(file.path(project$paths$dataFolder, "Aciclovir plasma.pkml"))
+  )
+  expect_no_error(removeObservedData(project, "Aciclovir plasma.pkml"))
+  expect_false(
+    "Aciclovir plasma.pkml" %in%
+      .observedDataSectionIds(project$definitions$observedData)
+  )
+})
+
+test_that("removeObservedData does not run a script source to check its use", {
+  project <- testProject()
+  marker <- file.path(withr::local_tempdir(), "script-ran")
+  addMarkerScriptSource(project, marker)
+  # The test project's PI task fits observed data, so the removal says what it
+  # could not check.
+  expect_snapshot(removeObservedData(project, "make_data.R"))
+  expect_false(file.exists(marker))
+  expect_false(
+    "make_data.R" %in%
+      .observedDataSectionIds(project$definitions$observedData)
+  )
+})
+
+test_that("removeObservedData is silent about a script source when no definition uses observed data", {
+  project <- .fakeProject()
+  addObservedData(project, list(type = "script", file = "make_data.R"))
+  expect_silent(removeObservedData(project, "make_data.R"))
+  expect_length(project$definitions$observedData, 0L)
+})
+
+test_that("removeObservedData reports each removed source of a batch in the order given", {
+  # The PKML source feeds a DataCombined, the Excel source the test project's
+  # PI task, and the script source cannot be checked without running it.
+  project <- testProject()
+  addPkmlSource(project, "Aciclovir plasma")
+  addDataCombined(
+    project,
+    id = "aciclovir_plasma",
+    observed = list(list(label = "Plasma", dataSet = "Aciclovir plasma"))
+  )
+  marker <- file.path(withr::local_tempdir(), "script-ran")
+  addMarkerScriptSource(project, marker)
+  ids <- c(
+    "Aciclovir plasma.pkml",
+    "Aciclovir_TimeValuesData.xlsx",
+    "make_data.R"
+  )
+  expect_snapshot(removeObservedData(project, ids))
+  expect_false(file.exists(marker))
+  expect_length(project$definitions$observedData, 0L)
+})
+
 # The remove path writes through to disk BEFORE clearing the runtime store, so a
 # Under explicit-save, removeObservedData() only mutates memory; a section that
 # still carries a colliding pair of file entries after the removal serializes

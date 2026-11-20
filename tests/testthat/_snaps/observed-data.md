@@ -107,6 +107,73 @@
       ! observedData entry with id "prog_src" is a programmatic source holding a <DataSet> in this session, so it cannot be overwritten with a configuration entry.
       i Remove it first with `removeObservedData()`, then add the configuration entry.
 
+# removeObservedData warns about the DataCombined and PI task using a removed Excel source
+
+    Code
+      removeObservedData(project, "Aciclovir_TimeValuesData.xlsx")
+    Condition
+      Warning:
+      Removed observedData "Aciclovir_TimeValuesData.xlsx" is still referenced by 1 dataCombined entry:
+      * aciclovir_individual
+      i These dataCombined entries now have a dangling reference. Update or remove them.
+      Warning:
+      Removed observedData "Aciclovir_TimeValuesData.xlsx" is still referenced by 1 parameter identification task:
+      * aciclovirsimple
+      i These PI tasks now have a dangling reference. Update or remove them.
+
+# removeObservedData warns about a DataCombined using a removed PKML source
+
+    Code
+      removeObservedData(project, "Aciclovir plasma.pkml")
+    Condition
+      Warning:
+      Removed observedData "Aciclovir plasma.pkml" is still referenced by 1 dataCombined entry:
+      * aciclovir_plasma
+      i These dataCombined entries now have a dangling reference. Update or remove them.
+
+# removeObservedData warns about a PI task fitting a removed PKML source
+
+    Code
+      removeObservedData(project, "Aciclovir plasma.pkml")
+    Condition
+      Warning:
+      Removed observedData "Aciclovir plasma.pkml" is still referenced by 1 parameter identification task:
+      * aciclovirsimple
+      i These PI tasks now have a dangling reference. Update or remove them.
+
+# removeObservedData warns about a PI task fitting an unsaved programmatic DataSet
+
+    Code
+      removeObservedData(project, "Aciclovir plasma")
+    Condition
+      Warning:
+      Removed observedData "Aciclovir plasma" is still referenced by 1 parameter identification task:
+      * aciclovirsimple
+      i These PI tasks now have a dangling reference. Update or remove them.
+
+# removeObservedData does not run a script source to check its use
+
+    Code
+      removeObservedData(project, "make_data.R")
+    Message
+      i Could not check whether the data of script source "make_data.R" is still used, because that would run the script. Check your DataCombined and parameter identification definitions.
+
+# removeObservedData reports each removed source of a batch in the order given
+
+    Code
+      removeObservedData(project, ids)
+    Condition
+      Warning:
+      Removed observedData "Aciclovir plasma.pkml" is still referenced by 1 dataCombined entry:
+      * aciclovir_plasma
+      i These dataCombined entries now have a dangling reference. Update or remove them.
+      Warning:
+      Removed observedData "Aciclovir_TimeValuesData.xlsx" is still referenced by 1 parameter identification task:
+      * aciclovirsimple
+      i These PI tasks now have a dangling reference. Update or remove them.
+    Message
+      i Could not check whether the data of script source "make_data.R" is still used, because that would run the script. Check your DataCombined and parameter identification definitions.
+
 # removeObservedData mutates memory only; a surviving collision aborts saveProject()
 
     Code
