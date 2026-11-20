@@ -351,3 +351,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-11-20 20:26: The script-source warning no longer repeats that it is shown once per session; the note the warning carries already says so. (#1366)
 - 2026-11-20 20:26: The warning for programmatic sources that resolved to no data says to add the DataSet again and save, instead of that such a source is never saved. (#1366)
 - 2026-11-20 20:28: The addObservedData() help and the definition-fields reference say that a DataSet fills a programmatic entry with no data without overwrite. (#1366)
+- 2026-11-20 20:29: The observed-data guide says plainly that an unsaved DataSet exists only in the R session, and the guide and the loadObservedData() help say how to bring back a programmatic source with no data. (#1366)

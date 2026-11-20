@@ -216,8 +216,9 @@ print.ObservedDataSource <- function(x, ...) {
 #' written by hand) has no data. The first time you look at the observed data
 #' in the session, with `loadObservedData()`, [getObservedDataNames()] or a
 #' function that uses them such as [createDataCombined()], a warning names it.
-#' Save the project with [saveProject()] before taking a snapshot to keep the
-#' data.
+#' To bring the data back, add the `DataSet` again with [addObservedData()] and
+#' save the project. Save the project with [saveProject()] before taking a
+#' snapshot to keep the data.
 #'
 #' @param project A `Project` object (see [loadProject()]).
 #' @returns A named list of [`ospsuite::DataSet`] objects. Empty list when
