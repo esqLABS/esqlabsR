@@ -4,8 +4,9 @@
 #' Builds [`ospsuite::DataCombined`] objects from a JSON-driven
 #' [Project][loadProject()]. The project's `dataCombined` section declares the
 #' simulated/observed entries; `loadObservedData(project)` resolves observed
-#' sources internally. Either `dataCombined` or `plotGrids` (or both)
-#' selects which DataCombined to build.
+#' sources internally. Any of `dataCombined`, `plotGrids` and `plots`
+#' selects which DataCombined to build; given together, they are combined, and
+#' a DataCombined selected more than once is built once.
 #'
 #' A simulated entry's `path` may be either a model quantity path or an
 #' output-path id (a key of the project's `outputPaths` definitions). An id is
@@ -26,24 +27,35 @@
 #'   any name is not declared in `dataCombined` definitions, an error is
 #'   thrown.
 #' @param plotGrids Names of plot grids whose DataCombined dependencies
-#'   should be built. Combined with `dataCombined` if both are given.
+#'   should be built. Combined with `dataCombined` and `plots` if several are
+#'   given.
+#' @param plots Character vector of plot ids, default `NULL`. The DataCombined
+#'   each plot draws from is built, so you can get the data behind a plot that
+#'   is not part of any plot grid, such as one you draw on its own with the
+#'   `plots` argument of [createPlots()]. Each id is looked up in the project's
+#'   `plots` definitions. Combined with `dataCombined` and `plotGrids` if
+#'   several are given.
 #' @param scenarioResults A named list of Scenario Results (as
 #'   returned by [runScenarios()]). Not the OSPS `SimulationResults`.
 #' @param stopIfNotFound If `TRUE` (default), the function errors when a
 #'   referenced simulated path or observed dataSet cannot be resolved. If
-#'   `FALSE`, a warning is emitted and the entry is skipped.
+#'   `FALSE`, a warning is emitted and the entry is skipped. An id in
+#'   `plotGrids` or `plots` that is not defined in the project always stops
+#'   with an error.
 #' @param validate If `TRUE` (default), the `dataCombined` section is validated
 #'   before any DataCombined is built, so a definition missing a required field
 #'   aborts with a clear message instead of failing mid-build.
 #'
-#' @returns A named list of `DataCombined` objects, one per requested name.
-#'   Empty list when no names are requested.
+#' @returns A named list of `DataCombined` objects, one per selected
+#'   DataCombined, named by its id. An empty list when none of `dataCombined`,
+#'   `plotGrids` and `plots` is given.
 #'
 #' @export
 createDataCombined <- function(
   project,
   dataCombined = NULL,
   plotGrids = NULL,
+  plots = NULL,
   scenarioResults = NULL,
   stopIfNotFound = TRUE,
   validate = TRUE
@@ -51,10 +63,39 @@ createDataCombined <- function(
   ospsuite.utils::validateIsOfType(project, "Project")
   ospsuite.utils::validateIsString(dataCombined, nullAllowed = TRUE)
   ospsuite.utils::validateIsString(plotGrids, nullAllowed = TRUE)
+  ospsuite.utils::validateIsString(plots, nullAllowed = TRUE)
 
-  if (is.null(dataCombined) && is.null(plotGrids)) {
+  if (is.null(dataCombined) && is.null(plotGrids) && is.null(plots)) {
     return(list())
   }
+
+  # The requested plot grids and plots are checked before any file is read,
+  # so a mistyped id stops at once. Both resolve to plot ids, and each plot
+  # adds the DataCombined it draws from.
+  plotIds <- NULL
+  if (!is.null(plotGrids)) {
+    allGrids <- .unwrapDefinitionList(project$definitions$plotGrids) %||%
+      list()
+    missingGrids <- setdiff(plotGrids[!is.na(plotGrids)], names(allGrids))
+    if (length(missingGrids) > 0) {
+      cli::cli_abort(messages$plotGridNamesNotFound(missingGrids))
+    }
+    plotIds <- .plotIdsOfGrids(allGrids[intersect(names(allGrids), plotGrids)])
+  }
+  if (!is.null(plots)) {
+    allPlotIds <- names(
+      .unwrapDefinitionList(project$definitions$plots) %||% list()
+    )
+    missingPlots <- setdiff(plots[!is.na(plots)], allPlotIds)
+    if (length(missingPlots) > 0) {
+      cli::cli_abort(messages$plotIdsNotFound(missingPlots))
+    }
+    plotIds <- union(plotIds, plots)
+  }
+  dataCombined <- union(
+    dataCombined,
+    .dataCombinedNamesForPlots(project, plotIds)
+  )
 
   # Pre-flight the dataCombined shape so a hand-edited definition file with a
   # missing required field (`label` / `scenario` / `path` / `dataSet`) aborts
@@ -67,20 +108,6 @@ createDataCombined <- function(
   }
 
   observedData <- loadObservedData(project)
-
-  if (!is.null(plotGrids)) {
-    allGridIds <- names(
-      .unwrapDefinitionList(project$definitions$plotGrids) %||% list()
-    )
-    missingGrids <- setdiff(plotGrids[!is.na(plotGrids)], allGridIds)
-    if (length(missingGrids) > 0) {
-      cli::cli_abort(messages$plotGridNamesNotFound(missingGrids))
-    }
-    dataCombined <- union(
-      dataCombined,
-      .extractDataCombinedNamesForPlotsFromProject(project, plotGrids)
-    )
-  }
 
   allSpecs <- .unwrapDefinitionList(project$definitions$dataCombined) %||%
     list()
@@ -117,25 +144,15 @@ createDataCombined <- function(
   dataCombinedList
 }
 
-# Find DataCombined names referenced by the requested plot grids.
+# Find DataCombined names referenced by the requested plots. Shared by the
+# `plotGrids` and `plots` selectors of `createDataCombined()`. Ids not defined
+# in the project are skipped.
 #
 # @keywords internal
 # @noRd
-.extractDataCombinedNamesForPlotsFromProject <- function(
-  project,
-  plotGrids
-) {
-  grids <- .unwrapDefinitionList(project$definitions$plotGrids) %||% list()
-  selectedGrids <- grids[intersect(names(grids), plotGrids)]
-  if (length(selectedGrids) == 0) {
-    return(character(0))
-  }
-  ids <- unique(unlist(lapply(
-    selectedGrids,
-    function(g) .splitPlotIDs(g$plots)
-  )))
+.dataCombinedNamesForPlots <- function(project, plots) {
   plotConfig <- .unwrapDefinitionList(project$definitions$plots) %||% list()
-  referenced <- plotConfig[intersect(names(plotConfig), ids)]
+  referenced <- plotConfig[intersect(names(plotConfig), plots)]
   if (length(referenced) == 0) {
     return(character(0))
   }

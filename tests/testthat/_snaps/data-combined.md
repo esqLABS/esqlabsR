@@ -6,6 +6,14 @@
       Error in `createDataCombined()`:
       ! The following plot grids are not defined in the project: "DoesNotExist"
 
+# createDataCombined errors when a requested plots id is unknown
+
+    Code
+      createDataCombined(project, plots = "ghost", stopIfNotFound = FALSE)
+    Condition
+      Error in `createDataCombined()`:
+      ! The following plots are not defined in the project: "ghost"
+
 # createDataCombined reports a failed scenario run distinctly
 
     Code

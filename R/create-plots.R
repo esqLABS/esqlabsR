@@ -109,10 +109,7 @@ createPlots <- function(
   selectedGrids <- allPlotGrids[intersect(names(allPlotGrids), plotGrids)]
   selectedPlotIds <- intersect(plots, names(allPlotConfig))
 
-  gridReferencedPlotIds <- unique(unlist(lapply(
-    selectedGrids,
-    function(g) .splitPlotIDs(g$plots)
-  )))
+  gridReferencedPlotIds <- .plotIdsOfGrids(selectedGrids)
   neededPlotIds <- union(gridReferencedPlotIds, selectedPlotIds)
   plotConfig <- allPlotConfig[intersect(names(allPlotConfig), neededPlotIds)]
 
@@ -122,15 +119,13 @@ createPlots <- function(
 
   # Build DataCombined for the configs referenced by both selectors: the
   # requested grids and the explicitly requested standalone plots.
+  # `selectedPlotIds` holds only defined plot ids, so with
+  # `stopIfNotFound = FALSE` an unknown standalone plot id stays skipped here.
   if (is.null(dataCombinedList)) {
-    standaloneDataCombinedNames <- unique(unlist(lapply(
-      plotConfig[selectedPlotIds],
-      function(p) p$dataCombined
-    )))
     dataCombinedList <- createDataCombined(
       project,
-      dataCombined = standaloneDataCombinedNames,
       plotGrids = plotGrids,
+      plots = selectedPlotIds,
       scenarioResults = scenarioResults,
       stopIfNotFound = stopIfNotFound
     )
@@ -469,10 +464,7 @@ createPlotsFromExcel <- function(...) {
     msg <- messages$plotGridsNamesMustBeUnique(duplicatedGridIds)
     cli::cli_abort("{msg}")
   }
-  referencedPlotIds <- unique(unlist(lapply(
-    plotGrids,
-    function(g) .splitPlotIDs(g$plots)
-  )))
+  referencedPlotIds <- .plotIdsOfGrids(plotGrids)
   missingPlots <- setdiff(referencedPlotIds, plotIDs)
   if (length(missingPlots) != 0) {
     msg <- messages$invalidPlotID(missingPlots)
