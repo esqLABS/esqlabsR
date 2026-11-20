@@ -171,7 +171,7 @@ addObservedData(project, scratch)
 
 Until you save, that `DataSet` lives on the in-memory project and the entry on disk is a `{type: "programmatic", name}` sentinel. On `saveProject()` the package writes the `DataSet` to a PKML file named after it (`Scratch measurement.pkml`) under the data folder and rewrites the entry to a `pkml` source. From then on it is an ordinary file-backed source: it survives a reload, and its remove id becomes the PKML file basename rather than the DataSet name.
 
-Because saving turns a `programmatic` source into a `pkml` file, the data folder must be declared before you save; a project with no data folder cannot write the PKML and stops with a clear message. A `programmatic` sentinel that reaches a fresh session without its `DataSet` (a declaration written by hand, or a project opened before it was ever saved) resolves to nothing, and the load warns you by name so it never vanishes silently.
+Because saving turns a `programmatic` source into a `pkml` file, the data folder must be declared before you save; a project with no data folder cannot write the PKML and stops with a clear message. A `programmatic` entry can reach a new session without its `DataSet`: when you take a snapshot with `snapshotProject()` before saving and restore it with `restoreProject()`, or when the declaration was written by hand. It then has no data, and the first time you look at the observed data in the session, with `loadObservedData()`, `getObservedDataNames()` or a function that uses them such as `createDataCombined()`, the package warns you and names the `DataSet`. Save the project before you take a snapshot to avoid this.
 
 ## Remove a source
 

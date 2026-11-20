@@ -210,10 +210,14 @@ print.ObservedDataSource <- function(x, ...) {
 #' `programmatic`. A `programmatic` declaration is a sentinel for a
 #' `DataSet` added at runtime with [addObservedData()]; its data lives in
 #' the session until you save, and [saveProject()] persists it to a PKML
-#' file and rewrites the entry as a `pkml` source. A `programmatic` sentinel
-#' read from disk with no matching in-session `DataSet` (a hand-authored
-#' declaration, or a project opened before it was ever saved) resolves to
-#' nothing, and the load warns you by name.
+#' file and rewrites the entry as a `pkml` source. A `programmatic` entry
+#' read from disk with no `DataSet` added in this session (one restored from a
+#' snapshot taken with [snapshotProject()] before saving, or a declaration
+#' written by hand) has no data. The first time you look at the observed data
+#' in the session, with `loadObservedData()`, [getObservedDataNames()] or a
+#' function that uses them such as [createDataCombined()], a warning names it.
+#' Save the project with [saveProject()] before taking a snapshot to keep the
+#' data.
 #'
 #' @param project A `Project` object (see [loadProject()]).
 #' @returns A named list of [`ospsuite::DataSet`] objects. Empty list when
@@ -369,9 +373,10 @@ loadObservedData <- function(project) {
 #' Get names of all observed data in a Project
 #'
 #' Returns the names of all DataSets that would be returned by
-#' [loadObservedData()]. On first call this loads the data to discover
-#' names; subsequent calls return cached names until a mutation
-#' invalidates the cache.
+#' [loadObservedData()]. The names are found by loading the observed data once
+#' and are reused until you change the project's observed data. Like
+#' [loadObservedData()], it warns you once per session about a `programmatic`
+#' entry with no `DataSet` added in this session.
 #'
 #' @param project A `Project` object (see [loadProject()]).
 #' @returns A character vector of DataSet names.
