@@ -68,30 +68,37 @@ test_that("loadObservedData errors when an entry has invalid type", {
   expect_snapshot(error = TRUE, loadObservedData(project))
 })
 
-test_that("loadObservedData warns on orphan programmatic sentinels (no in-memory DataSet)", {
-  tmp <- withr::local_tempfile(fileext = ".json")
+# A project file holding one `programmatic` declaration per name and no
+# `DataSet` behind any of them. Each call writes a new file, so each project
+# has its own once-per-session warning.
+.projectWithProgrammatic <- function(names, envir = parent.frame()) {
+  path <- withr::local_tempfile(fileext = ".json", .local_envir = envir)
   jsonlite::write_json(
     list(
       schemaVersion = "2.0",
       filePaths = list(dataFolder = "."),
       outputPaths = structure(list(), names = character(0)),
       scenarios = list(),
-      observedData = list(list(type = "programmatic", name = "x"))
+      observedData = lapply(names, function(name) {
+        list(type = "programmatic", name = name)
+      })
     ),
-    tmp,
+    path,
     auto_unbox = TRUE,
     null = "null"
   )
-  project <- loadProject(tmp)
-  # A reloaded project sees the sentinel entry but has no in-memory DataSet to
-  # back it (DataSets do not survive a JSON round-trip). loadObservedData warns
-  # that the source resolved to nothing and returns an empty result;
-  # addObservedData is the supported path for re-attaching the runtime DataSet.
-  expect_warning(
-    result <- loadObservedData(project),
-    "resolved to no data"
+  loadProject(path)
+}
+
+test_that("loadObservedData says how to bring back programmatic sources that resolved to no data", {
+  oneSource <- .projectWithProgrammatic("Scratch measurement")
+  twoSources <- .projectWithProgrammatic(
+    c("Scratch measurement", "Second measurement")
   )
+
+  expect_snapshot(result <- loadObservedData(oneSource))
   expect_length(result, 0L)
+  expect_snapshot(result <- loadObservedData(twoSources))
 })
 
 # A copy of the example project plus a `programmatic` declaration with no
@@ -317,9 +324,17 @@ test_that("loadObservedData sources script entries", {
     "esqlabsR_observed_data_script_source_",
     project$info$projectFilePath
   ))
-  expect_warning(
+  # The last line of the warning is the note rlang adds to a warning raised
+  # once per session. The message after it names the script by its temp path.
+  expect_snapshot(
     result <- loadObservedData(project),
-    "executing arbitrary R code"
+    transform = function(lines) {
+      gsub(
+        "'[^']*[/\\\\]make_dataset\\.R'",
+        "'<tmp-path>/make_dataset.R'",
+        lines
+      )
+    }
   )
   expect_named(result, "TestDataSet")
   expect_s3_class(result$TestDataSet, "DataSet")
@@ -613,6 +628,101 @@ test_that("saveProject persists a programmatic DataSet to PKML and it round-trip
   # A PKML round-trip converts through base units, so values return within
   # floating-point tolerance rather than bit-identical.
   expect_equal(loaded[["RoundTripSet"]]$yValues, c(5, 6, 7), tolerance = 1e-6)
+})
+
+# A programmatic entry can be written without its DataSet (a snapshot taken
+# before saving, or a declaration written by hand); here a save writes one. The
+# load warning tells the user to add the DataSet again and save; doing exactly
+# that must fill the existing entry, without `overwrite = TRUE`, and the save
+# must write it to PKML.
+test_that("re-adding the DataSet of a programmatic entry that resolved to no data, then saving, restores it", {
+  project <- testProject()
+  sentinel <- .asObservedDataSource(list(
+    type = "programmatic",
+    name = "Scratch measurement"
+  ))
+  .setSection(
+    project,
+    "observedData",
+    c(.getSection(project, "observedData"), list(sentinel))
+  )
+  saveProject(project)
+  project <- loadProject(project$info$projectFilePath)
+  # The first look at the observed data after the load warns about the entry.
+  expect_warning(
+    fixtureNames <- getObservedDataNames(project),
+    class = "esqlabsR_observedDataProgrammaticUnresolved"
+  )
+  before <- .getSection(project, "observedData")
+
+  ds <- ospsuite::DataSet$new(name = "Scratch measurement")
+  ds$setValues(xValues = c(0, 1, 2), yValues = c(5, 6, 7))
+  ds$xDimension <- ospsuite::ospDimensions$Time
+  # The warning was shown by the lookup above, once per session.
+  expect_no_warning(addObservedData(project, ds))
+  saveProject(project)
+
+  # The entry that held no data became the pkml source; nothing was appended.
+  isScratch <- vapply(
+    before,
+    function(e) identical(e$name, "Scratch measurement"),
+    logical(1)
+  )
+  persisted <- .asObservedDataSource(list(
+    type = "pkml",
+    file = "Scratch measurement.pkml"
+  ))
+  expected <- before
+  expected[isScratch] <- list(persisted)
+  expect_equal(.getSection(project, "observedData"), expected)
+
+  # A reload finds the data under its name, next to the fixture's own.
+  reloaded <- loadProject(project$info$projectFilePath)
+  loaded <- loadObservedData(reloaded)
+  expect_setequal(names(loaded), c(fixtureNames, "Scratch measurement"))
+  expect_equal(
+    loaded[["Scratch measurement"]]$yValues,
+    c(5, 6, 7),
+    tolerance = 1e-6
+  )
+})
+
+test_that("re-adding the DataSet of programmatic entries that share its name keeps one entry", {
+  # Only a hand-written project file can declare one name twice.
+  projectDir <- withr::local_tempdir()
+  projectPath <- file.path(projectDir, "Project.json")
+  sentinel <- list(type = "programmatic", name = "Scratch measurement")
+  jsonlite::write_json(
+    list(
+      schemaVersion = "2.0",
+      filePaths = list(dataFolder = "."),
+      outputPaths = structure(list(), names = character(0)),
+      scenarios = list(),
+      observedData = list(sentinel, sentinel)
+    ),
+    projectPath,
+    auto_unbox = TRUE,
+    null = "null"
+  )
+  project <- loadProject(projectPath)
+  ds <- ospsuite::DataSet$new(name = "Scratch measurement")
+  ds$setValues(xValues = c(0, 1, 2), yValues = c(5, 6, 7))
+  expect_warning(
+    suppressMessages(addObservedData(project, ds)),
+    class = "esqlabsR_observedDataProgrammaticUnresolved"
+  )
+  expect_equal(
+    .getSection(project, "observedData"),
+    list(.asObservedDataSource(sentinel))
+  )
+
+  suppressMessages(saveProject(project))
+  persisted <- .asObservedDataSource(list(
+    type = "pkml",
+    file = "Scratch measurement.pkml"
+  ))
+  expect_equal(.getSection(project, "observedData"), list(persisted))
+  expect_true(file.exists(file.path(projectDir, "Scratch measurement.pkml")))
 })
 
 # The PKML written for a programmatic DataSet is named <name>.pkml, so a

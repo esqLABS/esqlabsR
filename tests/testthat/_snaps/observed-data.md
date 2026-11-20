@@ -7,6 +7,28 @@
       x Invalid type "invalid_type" in `observedData` entry.
       i Must be one of: "excel", "pkml", "script", and "programmatic".
 
+# loadObservedData says how to bring back programmatic sources that resolved to no data
+
+    Code
+      result <- loadObservedData(oneSource)
+    Condition
+      Warning:
+      ! 1 programmatic observed-data source resolved to no data: "Scratch measurement".
+      i A <DataSet> added with `addObservedData()` is written to the data folder only when the project is saved with `saveProject()`. This project was not saved after it was added, for example because a snapshot was taken before saving.
+      i Add it again with `addObservedData()`, then save the project with `saveProject()`.
+      This warning is displayed once per session.
+
+---
+
+    Code
+      result <- loadObservedData(twoSources)
+    Condition
+      Warning:
+      ! 2 programmatic observed-data sources resolved to no data: "Scratch measurement" and "Second measurement".
+      i A <DataSet> added with `addObservedData()` is written to the data folder only when the project is saved with `saveProject()`. This project was not saved after they were added, for example because a snapshot was taken before saving.
+      i Add them again with `addObservedData()`, then save the project with `saveProject()`.
+      This warning is displayed once per session.
+
 # loadObservedData errors when excel entry is missing required fields
 
     Code
@@ -14,6 +36,18 @@
     Condition
       Error in `loadObservedData()`:
       ! `observedData` entry 1 (type "excel") is missing required fields importerConfiguration and sheets.
+
+# loadObservedData sources script entries
+
+    Code
+      result <- loadObservedData(project)
+    Condition
+      Warning:
+      ! This project runs an R script to build observed data, executing arbitrary R code on your machine.
+      i Only resolve observed data from a project you trust. See `?esqlabsR::loadObservedData()` for details.
+      This warning is displayed once per session.
+    Message
+      Sourcing observed-data script: '<tmp-path>/make_dataset.R'
 
 # loadObservedData errors when dataFolder is not declared
 

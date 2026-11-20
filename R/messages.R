@@ -2152,16 +2152,15 @@ messages$observedDataScriptSourcing <- function(filePath) {
 messages$observedDataScriptSecurityWarn <- function() {
   cliBullets(
     "!" = "This project runs an R script to build observed data, executing arbitrary R code on your machine.",
-    "i" = "Only resolve observed data from a project you trust. See {.help esqlabsR::loadObservedData} for details.",
-    "i" = "This warning is shown once per session."
+    "i" = "Only resolve observed data from a project you trust. See {.help esqlabsR::loadObservedData} for details."
   )
 }
 
 messages$observedDataProgrammaticUnresolved <- function(names) {
   cliBullets(
     "!" = "{length(names)} programmatic observed-data source{?s} resolved to no data: {.val {names}}.",
-    "i" = "A programmatic source holds its {.cls DataSet} only in the session that added it; it is not saved to disk.",
-    "i" = "Re-add {cli::qty(names)}{?it/them} with {.fn addObservedData} in this session, or declare {?it/them} as a {.code script} or {.code pkml} source to persist across a reload."
+    "i" = "A {.cls DataSet} added with {.fn addObservedData} is written to the data folder only when the project is saved with {.fn saveProject}. This project was not saved after {cli::qty(names)}{?it/they} {?was/were} added, for example because a snapshot was taken before saving.",
+    "i" = "Add {cli::qty(names)}{?it/them} again with {.fn addObservedData}, then save the project with {.fn saveProject}."
   )
 }
 

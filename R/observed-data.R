@@ -12,11 +12,13 @@
 #   - pkml   : ospsuite::loadDataSetFromPKML
 #   - script : R script sourced; must return DataSet or list of DataSets
 #   - programmatic : DataSets added at runtime via addObservedData(project).
-#                    The DataSet itself is not JSON-serializable, so it
-#                    is held on the Project's private slot
-#                    (.programmaticDataSets) and the JSON sentinel
-#                    `{type: "programmatic", name: ...}` is what
-#                    survives a round-trip.
+#                    The DataSet is held on the Project's private slot
+#                    (.programmaticDataSets) until saveProject() writes it
+#                    to `<name>.pkml` and rewrites the entry as a `pkml`
+#                    source. A sentinel `{type: "programmatic", name: ...}`
+#                    written without its DataSet (a snapshot taken before
+#                    saving, or a declaration written by hand) resolves to
+#                    no data until the DataSet is added again.
 
 # Print ----
 
@@ -216,8 +218,9 @@ print.ObservedDataSource <- function(x, ...) {
 #' written by hand) has no data. The first time you look at the observed data
 #' in the session, with `loadObservedData()`, [getObservedDataNames()] or a
 #' function that uses them such as [createDataCombined()], a warning names it.
-#' Save the project with [saveProject()] before taking a snapshot to keep the
-#' data.
+#' To bring the data back, add the `DataSet` again with [addObservedData()] and
+#' save the project. Save the project with [saveProject()] before taking a
+#' snapshot to keep the data.
 #'
 #' @param project A `Project` object (see [loadProject()]).
 #' @returns A named list of [`ospsuite::DataSet`] objects. Empty list when
@@ -337,7 +340,8 @@ loadObservedData <- function(project) {
 }
 
 # Names of `programmatic` sentinels with no backing DataSet in the resolved set
-# (their data was never added this session, or was lost across a reload).
+# (written without their DataSet, by a snapshot taken before saving or by hand,
+# and not added again in this session).
 #
 # @keywords internal
 # @noRd
@@ -446,18 +450,28 @@ getObservedDataNames <- function(project) {
 #' the data survives a reload. Saving therefore needs a data folder to be
 #' declared in the project's file paths.
 #'
+#' If a warning says that a `programmatic` entry has no data (for example after
+#' restoring a snapshot taken before saving), pass a `DataSet` with the same
+#' name again: it fills that entry, and [saveProject()] then writes it. Adding
+#' a `DataSet` can itself show that warning the first time in a session, before
+#' it fills the entry.
+#'
 #' @param project A `Project` object.
 #' @param entry An [`ospsuite::DataSet`] object, or a configuration list
 #'   carrying a `type` (`"excel"`, `"pkml"`, or `"script"`) and that type's
 #'   fields, as described above.
 #' @param overwrite Logical scalar. When `FALSE` (default), a source whose id
 #'   already exists (a `DataSet` name, or a configuration list's `id` or `file`
-#'   basename) aborts. When `TRUE`, the existing source with that id is replaced
-#'   (last-write-wins) as long as both are the same kind. A cross-kind
-#'   replacement is refused in either direction, because it would either strand
-#'   the session's `DataSet` or leave two sources resolving to one name: remove
-#'   the existing source with [removeObservedData()] first, then add the new
-#'   one.
+#'   basename) aborts. A `DataSet` whose name matches a `programmatic` entry
+#'   that has no data in this session (loading warns about it, for example
+#'   after a snapshot taken before saving) fills that entry; `overwrite` is not
+#'   needed unless the entry declares an `id` equal to that name. Save the
+#'   project with [saveProject()] afterwards. When `TRUE`, the existing source
+#'   with that id is replaced (last-write-wins) as long as both are the same
+#'   kind. A cross-kind replacement is refused in either direction, because it
+#'   would either strand the session's `DataSet` or leave two sources resolving
+#'   to one name: remove the existing source with [removeObservedData()] first,
+#'   then add the new one.
 #' @returns The `project` object, invisibly.
 #' @export
 #' @family observedData
@@ -508,22 +522,23 @@ addObservedData <- function(project, entry, overwrite = FALSE) {
     # in-memory mutations. Any on-disk id/basename collision is surfaced later,
     # by the serializer, when `saveProject()` reconciles the tree.
     observedData <- private$.getSection("observedData")
-    # On overwrite, replace the existing programmatic sentinel that carries this
-    # name in place. A DataSet is keyed by its `name`, so only a programmatic
-    # sentinel of the same name can be replaced in place.
-    replaceIdx <- if (overwrite) {
-      which(vapply(
-        observedData,
-        function(e) {
-          identical(e$type, "programmatic") && identical(e$name, name)
-        },
-        logical(1)
-      ))
-    } else {
-      integer()
-    }
+    # Replace a programmatic entry of this name in place rather than append a
+    # second one; both would be written to `<name>.pkml` at save. Without
+    # `overwrite` the clash check above has already ruled out that this entry
+    # holds a DataSet in this session (it would resolve under `name`), so it was
+    # read without its data and filling it loses nothing.
+    replaceIdx <- which(vapply(
+      observedData,
+      function(e) {
+        identical(e$type, "programmatic") && identical(e$name, name)
+      },
+      logical(1)
+    ))
     if (length(replaceIdx) > 0L) {
       observedData[[replaceIdx[[1]]]] <- sentinel
+      # Several entries of one name occur only in a hand-written project file;
+      # keep the first, so the save writes `<name>.pkml` once.
+      observedData[replaceIdx[-1]] <- NULL
     } else if (overwrite && clashes) {
       # The name collides with a file-based (pkml/excel/script) source, not a
       # programmatic one, so there is no programmatic entry to replace. Appending
@@ -541,7 +556,7 @@ addObservedData <- function(project, entry, overwrite = FALSE) {
     private$.setSection("observedData", observedData)
     private$.programmaticDataSets[[name]] <- entry
     # The observedData setter resets the names cache, so rebuild it after the
-    # write. On an overwrite the name is already in `existingNames`, so union
+    # write. The name may already be in `existingNames` (an overwrite), so union
     # rather than append to keep the cache free of duplicates.
     private$.observedDataNamesCache <- union(existingNames, name)
     cli::cli_inform(messages$observedDataProgrammaticAdded(
