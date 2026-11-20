@@ -344,3 +344,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-11-12 12:17: Message catalog entries let cli list vectors instead of pre-joining them with paste().
 - 2026-11-12 12:25: The agent guide prefers snapshot tests over hand-written identical checks, and says how to mock functions from other packages.
 - 2026-11-13 09:19: The agent guide allows base stop() and warning() to re-raise a condition that a handler caught.
+- 2026-11-20 20:52: createDataCombinedFromExcel() and createPlotsFromExcel() are removed, with their help-page entries and reference-index entries. (#1361)
