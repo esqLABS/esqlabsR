@@ -697,6 +697,10 @@ removeObservedData <- function(project, id) {
         logical(1)
       ))
       dropIdx <- c(dropIdx, matchIdx)
+      # Built from the name, not taken from `observedData[matchIdx]`: after a
+      # save that aborted in the tree write, the DataSet is still in the store
+      # while its entry has already become a `pkml` source, so no programmatic
+      # entry matches.
       removedEntries[[one]] <- list(list(type = "programmatic", name = one))
       next
     }
@@ -722,7 +726,7 @@ removeObservedData <- function(project, id) {
   if (length(missingIds) > 0L) {
     cli::cli_warn("observedData entry {.val {missingIds}} not found; no-op.")
   }
-  # Warn about every removed id that is still referenced, then drop everything in
+  # Warn about each removed id that is still referenced, then drop everything in
   # a single in-memory update. A not-found id contributes nothing to the update.
   .warnIfObservedDataReferenced(self, removedEntries)
   if (length(dropIdx) == 0L && length(programmaticNames) == 0L) {
@@ -749,9 +753,12 @@ removeObservedData <- function(project, id) {
 #
 # Both reference a DataSet by its name, which only an unsaved programmatic
 # source carries as its id, so each removed source is read for the names it
-# provides. The read is skipped when nothing references observed data at all, so
-# the common removal never opens a file. A `script` source is never run for this;
-# it gets a note that its use was not checked instead.
+# provides. The read is skipped when no DataCombined or PI output mapping uses
+# observed data. A `script` source is never run for this; it gets a note that
+# its use was not checked instead.
+#
+# A name that a remaining source also provides is still reported: two sources
+# providing one DataSet name abort every load (`observedDataNameCollision`).
 #
 # `removedEntries` is a list keyed by the removed id, each element the list of
 # declarations that id removes.
@@ -759,54 +766,44 @@ removeObservedData <- function(project, id) {
 # @keywords internal
 # @noRd
 .warnIfObservedDataReferenced <- function(project, removedEntries) {
-  dcRefs <- character()
-  dcIds <- character()
-  dataCombined <- .unwrapDefinitionList(project$definitions$dataCombined) %||%
-    list()
-  for (dcId in names(dataCombined)) {
-    for (entry in dataCombined[[dcId]]$observed %||% list()) {
-      dcRefs <- c(dcRefs, as.character(entry$dataSet))
-      dcIds <- c(dcIds, rep(dcId, length(entry$dataSet)))
-    }
-  }
-  piRefs <- character()
-  piIds <- character()
-  piTasks <- project$definitions$parameterIdentification %||% list()
-  for (taskId in names(piTasks)) {
-    for (mapping in piTasks[[taskId]]$outputMappings %||% list()) {
-      piRefs <- c(piRefs, as.character(mapping$observedDataId))
-      piIds <- c(piIds, rep(taskId, length(mapping$observedDataId)))
-    }
-  }
+  dcRefs <- .dataSetReferences(
+    project$definitions$dataCombined,
+    "observed",
+    "dataSet"
+  )
+  piRefs <- .dataSetReferences(
+    project$definitions$parameterIdentification,
+    "outputMappings",
+    "observedDataId"
+  )
   if (length(dcRefs) == 0L && length(piRefs) == 0L) {
     return(invisible(NULL))
   }
 
-  dataFolder <- project$paths$dataFolder
   for (one in names(removedEntries)) {
     entries <- removedEntries[[one]]
-    types <- vapply(
+    hasScript <- any(vapply(
       entries,
-      function(e) as.character(e$type %||% NA_character_),
-      character(1)
-    )
-    if (any(types == "script", na.rm = TRUE)) {
+      function(e) identical(e$type, "script"),
+      logical(1)
+    ))
+    if (hasScript) {
       cli::cli_inform(messages$observedDataRemovedScriptNotChecked(one))
     }
     dataSetNames <- unlist(lapply(
       entries,
       .observedDataSourceNames,
-      dataFolder = dataFolder
+      project = project
     ))
     # Exact match, as `createPlots()` and `runPI()` look a DataSet up by name.
-    dcHolders <- unique(dcIds[dcRefs %in% dataSetNames])
+    dcHolders <- unique(names(dcRefs)[dcRefs %in% dataSetNames])
     if (length(dcHolders) > 0L) {
       cli::cli_warn(messages$observedDataRemovedUsedByDataCombined(
         one,
         dcHolders
       ))
     }
-    piHolders <- unique(piIds[piRefs %in% dataSetNames])
+    piHolders <- unique(names(piRefs)[piRefs %in% dataSetNames])
     if (length(piHolders) > 0L) {
       cli::cli_warn(messages$removedStillReferencedByPITasks(
         "observedData",
@@ -818,30 +815,50 @@ removeObservedData <- function(project, id) {
   invisible(NULL)
 }
 
+# Internal helpers ----
+
 # The names of the DataSets one observed-data declaration provides, or `NULL`
 # when they cannot be known without running user code (a `script` source) or
-# the source cannot be read (a missing or broken file). An unreadable source is
-# not this caller's concern: the removal goes ahead regardless, and loading the
-# project's observed data reports the broken source.
+# the source cannot be read (a missing or broken file, or a data folder that
+# cannot be resolved). An unreadable source is not this caller's concern: the
+# removal goes ahead regardless, and loading the project's observed data
+# reports the broken source.
+#
+# The switch mirrors the one in `.loadObservedData_impl()`; a new source type
+# goes into both.
 #
 # @keywords internal
 # @noRd
-.observedDataSourceNames <- function(entry, dataFolder) {
-  type <- entry$type %||% NA_character_
-  if (identical(type, "programmatic")) {
-    return(entry$name)
-  }
-  if (!(type %in% c("excel", "pkml"))) {
-    return(NULL)
-  }
-  load <- if (type == "excel") .loadObservedExcel else .loadObservedPkml
+.observedDataSourceNames <- function(entry, project) {
   tryCatch(
-    names(suppressMessages(suppressWarnings(load(entry, dataFolder)))),
+    suppressMessages(suppressWarnings(switch(
+      entry$type,
+      "programmatic" = entry$name,
+      "excel" = names(.loadObservedExcel(entry, project$paths$dataFolder)),
+      "pkml" = names(.loadObservedPkml(entry, project$paths$dataFolder)),
+      NULL
+    ))),
     error = function(cnd) NULL
   )
 }
 
-# Internal helpers ----
+# The DataSet names that the definitions of one section reference, each named
+# by the id of the definition holding it. `listField` is the field listing a
+# definition's entries (a DataCombined's `observed`, a PI task's
+# `outputMappings`), `refField` the entry field naming the DataSet.
+#
+# @keywords internal
+# @noRd
+.dataSetReferences <- function(definitions, listField, refField) {
+  refs <- character()
+  for (defId in names(definitions)) {
+    for (item in definitions[[defId]][[listField]] %||% list()) {
+      ref <- as.character(item[[refField]])
+      refs <- c(refs, stats::setNames(ref, rep(defId, length(ref))))
+    }
+  }
+  refs
+}
 
 # The data-set names a cross-reference can resolve against, or `NULL` when the
 # project cannot be asked.
