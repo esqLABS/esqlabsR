@@ -74,7 +74,7 @@
 
 ## Deprecations
 
-The functions below still work but warn every time they are called; they will be removed in the next release. Functions removed in this release are listed under Breaking changes.
+The functions below still work but show a deprecation warning; they will be removed in the next release. Functions removed in this release are listed under Breaking changes.
 
 ### Deprecated with a warning (removed in the next release)
 

@@ -347,3 +347,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-11-20 20:52: createDataCombinedFromExcel() and createPlotsFromExcel() are removed, with their help-page entries and reference-index entries. (#1361)
 - 2026-11-20 20:52: NEWS lists the removal of createDataCombinedFromExcel() and createPlotsFromExcel() as a breaking change, with the renamed arguments, and drops their soft-deprecation entry. (#1361)
 - 2026-11-20 20:56: The NEWS deprecation intro is in plain words and no longer claims removed functions abort, and the removal bullet says project is now the first argument. (#1361)
+- 2026-11-20 20:57: The NEWS deprecation intro no longer says the warning appears on every call. (#1361)
