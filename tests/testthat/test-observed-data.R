@@ -888,6 +888,109 @@ test_that("removeObservedData warns and skips a not-found id in the batch", {
   expect_length(project$definitions$observedData, before - 1L)
 })
 
+# A DataCombined or a PI output mapping names a DataSet, not the source that
+# provides it, and a file-based source's id is its file basename. To find who
+# still uses a removed source, the removal reads the source's DataSet names.
+
+# Add a DataSet and save the project: the DataSet is written to
+# `Aciclovir plasma.pkml` and its entry becomes a pkml source with that id.
+addSavedPlasmaSource <- function(project) {
+  plasma <- ospsuite::DataSet$new(name = "Aciclovir plasma")
+  plasma$setValues(xValues = c(0.5, 1, 2), yValues = c(8.1, 5.4, 2.3))
+  suppressMessages(addObservedData(project, plasma))
+  saveProject(project)
+  invisible(project)
+}
+
+test_that("removeObservedData warns about the DataCombined and PI task using a removed Excel source", {
+  # The example project plots and fits the only DataSet of its Excel source.
+  project <- exampleProject()
+  expect_snapshot(removeObservedData(project, "Aciclovir_TimeValuesData.xlsx"))
+  expect_length(project$definitions$observedData, 0L)
+})
+
+test_that("removeObservedData warns about a DataCombined using a removed PKML source", {
+  project <- testProject()
+  addSavedPlasmaSource(project)
+  addDataCombined(
+    project,
+    id = "aciclovir_plasma",
+    observed = list(list(label = "Plasma", dataSet = "Aciclovir plasma"))
+  )
+  expect_snapshot(removeObservedData(project, "Aciclovir plasma.pkml"))
+  expect_false(
+    "Aciclovir plasma.pkml" %in%
+      .observedDataSectionIds(project$definitions$observedData)
+  )
+})
+
+test_that("removeObservedData warns about a PI task fitting a removed PKML source", {
+  project <- testProject()
+  addSavedPlasmaSource(project)
+  addPIOutputMapping(
+    project,
+    task = "aciclovirsimple",
+    outputPath = "aciclovir_pvb",
+    observedData = "Aciclovir plasma",
+    scenarios = "testscenario"
+  )
+  expect_snapshot(removeObservedData(project, "Aciclovir plasma.pkml"))
+})
+
+test_that("removeObservedData does not warn when nothing uses the removed source", {
+  # The test project's PI task fits another DataSet, so the removal reads the
+  # PKML file and finds its DataSet unused.
+  project <- testProject()
+  addSavedPlasmaSource(project)
+  expect_no_warning(removeObservedData(project, "Aciclovir plasma.pkml"))
+  expect_false(
+    "Aciclovir plasma.pkml" %in%
+      .observedDataSectionIds(project$definitions$observedData)
+  )
+})
+
+test_that("removeObservedData removes a source whose file is missing", {
+  # The test project's PI task fits observed data, so the removal tries to read
+  # the file it can no longer find.
+  project <- testProject()
+  addSavedPlasmaSource(project)
+  file.remove(file.path(project$paths$dataFolder, "Aciclovir plasma.pkml"))
+  expect_no_error(removeObservedData(project, "Aciclovir plasma.pkml"))
+  expect_false(
+    "Aciclovir plasma.pkml" %in%
+      .observedDataSectionIds(project$definitions$observedData)
+  )
+})
+
+test_that("removeObservedData does not run a script source to check its use", {
+  project <- testProject()
+  marker <- file.path(withr::local_tempdir(), "script-ran")
+  writeLines(
+    c(
+      paste0("file.create(", deparse(marker), ")"),
+      "ds <- ospsuite::DataSet$new(name = 'Aciclovir plasma')",
+      "ds$setValues(xValues = c(0.5, 1, 2), yValues = c(8.1, 5.4, 2.3))",
+      "ds"
+    ),
+    file.path(project$paths$dataFolder, "make_data.R")
+  )
+  addObservedData(project, list(type = "script", file = "make_data.R"))
+  # The test project's PI task fits observed data, so the removal says what it
+  # could not check.
+  expect_snapshot(removeObservedData(project, "make_data.R"))
+  expect_false(file.exists(marker))
+  expect_false(
+    "make_data.R" %in% .observedDataSectionIds(project$definitions$observedData)
+  )
+})
+
+test_that("removeObservedData is silent about a script source when no definition uses observed data", {
+  project <- .fakeProject()
+  addObservedData(project, list(type = "script", file = "make_data.R"))
+  expect_silent(removeObservedData(project, "make_data.R"))
+  expect_length(project$definitions$observedData, 0L)
+})
+
 # The remove path writes through to disk BEFORE clearing the runtime store, so a
 # Under explicit-save, removeObservedData() only mutates memory; a section that
 # still carries a colliding pair of file entries after the removal serializes

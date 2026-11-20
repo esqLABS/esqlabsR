@@ -2138,6 +2138,36 @@ messages$observedDataFileNotFound <- function(filePath) {
   ospsuite.utils::cliFormat("Observed-data source file not found: {.path {filePath}}.")
 }
 
+messages$observedDataRemovedUsedByDataCombined <- function(
+  id,
+  dataCombinedIds
+) {
+  cliBullets(
+    "Removed observedData {.val {id}} is still referenced by \\
+    {length(dataCombinedIds)} dataCombined entr{?y/ies}:",
+    "*" = "{dataCombinedIds}",
+    "i" = "These dataCombined entries now have a dangling reference. Update or \\
+    remove them."
+  )
+}
+
+messages$observedDataRemovedUsedByPITasks <- function(id, taskIds) {
+  cliBullets(
+    "Removed observedData {.val {id}} is still referenced by \\
+    {length(taskIds)} parameter identification task{?s}:",
+    "*" = "{taskIds}",
+    "i" = "These PI tasks now have a dangling reference. Update or remove them."
+  )
+}
+
+messages$observedDataRemovedScriptNotChecked <- function(id) {
+  cliBullets(
+    "i" = "Could not check whether the data of script source {.val {id}} is \\
+    still used, because that would run the script. Check your DataCombined \\
+    and parameter identification definitions."
+  )
+}
+
 messages$observedDataScriptWrongReturnType <- function(filePath, klass) {
   cliBullets(
     "x" = "Script {.path {filePath}} did not return a {.cls DataSet} or list of {.cls DataSet}.",
