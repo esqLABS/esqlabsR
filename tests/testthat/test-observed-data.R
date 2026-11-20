@@ -317,9 +317,17 @@ test_that("loadObservedData sources script entries", {
     "esqlabsR_observed_data_script_source_",
     project$info$projectFilePath
   ))
-  expect_warning(
+  # The last line of the warning is the note rlang adds to a warning raised
+  # once per session. The message after it names the script by its temp path.
+  expect_snapshot(
     result <- loadObservedData(project),
-    "executing arbitrary R code"
+    transform = function(lines) {
+      gsub(
+        "'[^']*[/\\\\]make_dataset\\.R'",
+        "'<tmp-path>/make_dataset.R'",
+        lines
+      )
+    }
   )
   expect_named(result, "TestDataSet")
   expect_s3_class(result$TestDataSet, "DataSet")

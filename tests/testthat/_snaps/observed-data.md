@@ -15,6 +15,18 @@
       Error in `loadObservedData()`:
       ! `observedData` entry 1 (type "excel") is missing required fields importerConfiguration and sheets.
 
+# loadObservedData sources script entries
+
+    Code
+      result <- loadObservedData(project)
+    Condition
+      Warning:
+      ! This project runs an R script to build observed data, executing arbitrary R code on your machine.
+      i Only resolve observed data from a project you trust. See `?esqlabsR::loadObservedData()` for details.
+      This warning is displayed once per session.
+    Message
+      Sourcing observed-data script: '<tmp-path>/make_dataset.R'
+
 # loadObservedData errors when dataFolder is not declared
 
     Code

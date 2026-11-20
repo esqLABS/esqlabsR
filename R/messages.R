@@ -2152,8 +2152,7 @@ messages$observedDataScriptSourcing <- function(filePath) {
 messages$observedDataScriptSecurityWarn <- function() {
   cliBullets(
     "!" = "This project runs an R script to build observed data, executing arbitrary R code on your machine.",
-    "i" = "Only resolve observed data from a project you trust. See {.help esqlabsR::loadObservedData} for details.",
-    "i" = "This warning is shown once per session."
+    "i" = "Only resolve observed data from a project you trust. See {.help esqlabsR::loadObservedData} for details."
   )
 }
 
