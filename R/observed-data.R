@@ -446,18 +446,27 @@ getObservedDataNames <- function(project) {
 #' the data survives a reload. Saving therefore needs a data folder to be
 #' declared in the project's file paths.
 #'
+#' If a warning says that a `programmatic` entry has no data (for example after
+#' restoring a snapshot taken before saving), pass a `DataSet` with the same
+#' name again: it fills that entry, and [saveProject()] then writes it. Adding
+#' a `DataSet` can itself show that warning the first time in a session, before
+#' it fills the entry.
+#'
 #' @param project A `Project` object.
 #' @param entry An [`ospsuite::DataSet`] object, or a configuration list
 #'   carrying a `type` (`"excel"`, `"pkml"`, or `"script"`) and that type's
 #'   fields, as described above.
 #' @param overwrite Logical scalar. When `FALSE` (default), a source whose id
 #'   already exists (a `DataSet` name, or a configuration list's `id` or `file`
-#'   basename) aborts. When `TRUE`, the existing source with that id is replaced
-#'   (last-write-wins) as long as both are the same kind. A cross-kind
-#'   replacement is refused in either direction, because it would either strand
-#'   the session's `DataSet` or leave two sources resolving to one name: remove
-#'   the existing source with [removeObservedData()] first, then add the new
-#'   one.
+#'   basename) aborts. A `DataSet` whose name matches a `programmatic` entry
+#'   that has no data in this session (loading warns about it, for example
+#'   after a snapshot taken before saving) fills that entry; `overwrite` is not
+#'   needed. Save the project with [saveProject()] afterwards. When `TRUE`, the
+#'   existing source with that id is replaced (last-write-wins) as long as both
+#'   are the same kind. A cross-kind replacement is refused in either direction,
+#'   because it would either strand the session's `DataSet` or leave two sources
+#'   resolving to one name: remove the existing source with
+#'   [removeObservedData()] first, then add the new one.
 #' @returns The `project` object, invisibly.
 #' @export
 #' @family observedData
