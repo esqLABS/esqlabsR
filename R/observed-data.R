@@ -465,12 +465,13 @@ getObservedDataNames <- function(project) {
 #'   basename) aborts. A `DataSet` whose name matches a `programmatic` entry
 #'   that has no data in this session (loading warns about it, for example
 #'   after a snapshot taken before saving) fills that entry; `overwrite` is not
-#'   needed. Save the project with [saveProject()] afterwards. When `TRUE`, the
-#'   existing source with that id is replaced (last-write-wins) as long as both
-#'   are the same kind. A cross-kind replacement is refused in either direction,
-#'   because it would either strand the session's `DataSet` or leave two sources
-#'   resolving to one name: remove the existing source with
-#'   [removeObservedData()] first, then add the new one.
+#'   needed unless the entry declares an `id` equal to that name. Save the
+#'   project with [saveProject()] afterwards. When `TRUE`, the existing source
+#'   with that id is replaced (last-write-wins) as long as both are the same
+#'   kind. A cross-kind replacement is refused in either direction, because it
+#'   would either strand the session's `DataSet` or leave two sources resolving
+#'   to one name: remove the existing source with [removeObservedData()] first,
+#'   then add the new one.
 #' @returns The `project` object, invisibly.
 #' @export
 #' @family observedData
