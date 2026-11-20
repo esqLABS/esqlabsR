@@ -508,22 +508,23 @@ addObservedData <- function(project, entry, overwrite = FALSE) {
     # in-memory mutations. Any on-disk id/basename collision is surfaced later,
     # by the serializer, when `saveProject()` reconciles the tree.
     observedData <- private$.getSection("observedData")
-    # On overwrite, replace the existing programmatic sentinel that carries this
-    # name in place. A DataSet is keyed by its `name`, so only a programmatic
-    # sentinel of the same name can be replaced in place.
-    replaceIdx <- if (overwrite) {
-      which(vapply(
-        observedData,
-        function(e) {
-          identical(e$type, "programmatic") && identical(e$name, name)
-        },
-        logical(1)
-      ))
-    } else {
-      integer()
-    }
+    # Replace a programmatic entry of this name in place rather than append a
+    # second one; both would be written to `<name>.pkml` at save. Without
+    # `overwrite` the clash check above has already ruled out that this entry
+    # holds a DataSet in this session (it would resolve under `name`), so it was
+    # read without its data and filling it loses nothing.
+    replaceIdx <- which(vapply(
+      observedData,
+      function(e) {
+        identical(e$type, "programmatic") && identical(e$name, name)
+      },
+      logical(1)
+    ))
     if (length(replaceIdx) > 0L) {
       observedData[[replaceIdx[[1]]]] <- sentinel
+      # Several entries of one name occur only in a hand-written project file;
+      # keep the first, so the save writes `<name>.pkml` once.
+      observedData[replaceIdx[-1]] <- NULL
     } else if (overwrite && clashes) {
       # The name collides with a file-based (pkml/excel/script) source, not a
       # programmatic one, so there is no programmatic entry to replace. Appending
@@ -541,7 +542,7 @@ addObservedData <- function(project, entry, overwrite = FALSE) {
     private$.setSection("observedData", observedData)
     private$.programmaticDataSets[[name]] <- entry
     # The observedData setter resets the names cache, so rebuild it after the
-    # write. On an overwrite the name is already in `existingNames`, so union
+    # write. The name may already be in `existingNames` (an overwrite), so union
     # rather than append to keep the cache free of duplicates.
     private$.observedDataNamesCache <- union(existingNames, name)
     cli::cli_inform(messages$observedDataProgrammaticAdded(

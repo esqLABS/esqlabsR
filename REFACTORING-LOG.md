@@ -347,3 +347,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-11-20 20:19: A test helper returns a throwaway copy of the example project folder, so a test can edit its files before loading it. (#1365)
 - 2026-11-20 20:19: The cross-reference check in loadProject() and validateProject() no longer uses up the warning about a programmatic source with no data, and getObservedDataNames() and addObservedData() show it too, so the user's first look at the observed data warns. (#1365)
 - 2026-11-20 20:19: The observed-data guide and the loadObservedData() and getObservedDataNames() help say that a snapshot taken before saving loses a programmatic DataSet, which calls warn about it, and to save first. (#1365)
+- 2026-11-20 20:26: Adding a DataSet whose programmatic entry resolved to no data fills that entry instead of adding a second one, so the next save writes it. (#1366)

@@ -615,6 +615,101 @@ test_that("saveProject persists a programmatic DataSet to PKML and it round-trip
   expect_equal(loaded[["RoundTripSet"]]$yValues, c(5, 6, 7), tolerance = 1e-6)
 })
 
+# A programmatic entry can be written without its DataSet (a snapshot taken
+# before saving, or a declaration written by hand); here a save writes one. The
+# load warning tells the user to add the DataSet again and save; doing exactly
+# that must fill the existing entry, without `overwrite = TRUE`, and the save
+# must write it to PKML.
+test_that("re-adding the DataSet of a programmatic entry that resolved to no data, then saving, restores it", {
+  project <- testProject()
+  sentinel <- .asObservedDataSource(list(
+    type = "programmatic",
+    name = "Scratch measurement"
+  ))
+  .setSection(
+    project,
+    "observedData",
+    c(.getSection(project, "observedData"), list(sentinel))
+  )
+  saveProject(project)
+  project <- loadProject(project$info$projectFilePath)
+  # The first look at the observed data after the load warns about the entry.
+  expect_warning(
+    fixtureNames <- getObservedDataNames(project),
+    class = "esqlabsR_observedDataProgrammaticUnresolved"
+  )
+  before <- .getSection(project, "observedData")
+
+  ds <- ospsuite::DataSet$new(name = "Scratch measurement")
+  ds$setValues(xValues = c(0, 1, 2), yValues = c(5, 6, 7))
+  ds$xDimension <- ospsuite::ospDimensions$Time
+  # The warning was shown by the lookup above, once per session.
+  expect_no_warning(addObservedData(project, ds))
+  saveProject(project)
+
+  # The entry that held no data became the pkml source; nothing was appended.
+  isScratch <- vapply(
+    before,
+    function(e) identical(e$name, "Scratch measurement"),
+    logical(1)
+  )
+  persisted <- .asObservedDataSource(list(
+    type = "pkml",
+    file = "Scratch measurement.pkml"
+  ))
+  expected <- before
+  expected[isScratch] <- list(persisted)
+  expect_equal(.getSection(project, "observedData"), expected)
+
+  # A reload finds the data under its name, next to the fixture's own.
+  reloaded <- loadProject(project$info$projectFilePath)
+  loaded <- loadObservedData(reloaded)
+  expect_setequal(names(loaded), c(fixtureNames, "Scratch measurement"))
+  expect_equal(
+    loaded[["Scratch measurement"]]$yValues,
+    c(5, 6, 7),
+    tolerance = 1e-6
+  )
+})
+
+test_that("re-adding the DataSet of programmatic entries that share its name keeps one entry", {
+  # Only a hand-written project file can declare one name twice.
+  projectDir <- withr::local_tempdir()
+  projectPath <- file.path(projectDir, "Project.json")
+  sentinel <- list(type = "programmatic", name = "Scratch measurement")
+  jsonlite::write_json(
+    list(
+      schemaVersion = "2.0",
+      filePaths = list(dataFolder = "."),
+      outputPaths = structure(list(), names = character(0)),
+      scenarios = list(),
+      observedData = list(sentinel, sentinel)
+    ),
+    projectPath,
+    auto_unbox = TRUE,
+    null = "null"
+  )
+  project <- loadProject(projectPath)
+  ds <- ospsuite::DataSet$new(name = "Scratch measurement")
+  ds$setValues(xValues = c(0, 1, 2), yValues = c(5, 6, 7))
+  expect_warning(
+    suppressMessages(addObservedData(project, ds)),
+    class = "esqlabsR_observedDataProgrammaticUnresolved"
+  )
+  expect_equal(
+    .getSection(project, "observedData"),
+    list(.asObservedDataSource(sentinel))
+  )
+
+  suppressMessages(saveProject(project))
+  persisted <- .asObservedDataSource(list(
+    type = "pkml",
+    file = "Scratch measurement.pkml"
+  ))
+  expect_equal(.getSection(project, "observedData"), list(persisted))
+  expect_true(file.exists(file.path(projectDir, "Scratch measurement.pkml")))
+})
+
 # The PKML written for a programmatic DataSet is named <name>.pkml, so a
 # programmatic name whose PKML file collides with an existing pkml source's
 # basename aborts at save, before any file is written. The abort must come
