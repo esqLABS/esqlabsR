@@ -345,3 +345,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-11-12 12:25: The agent guide prefers snapshot tests over hand-written identical checks, and says how to mock functions from other packages.
 - 2026-11-13 09:19: The agent guide allows base stop() and warning() to re-raise a condition that a handler caught.
 - 2026-11-20 20:15: One helper lists the plot ids of plot grids, used wherever a grid's plots are read. (#1362)
+- 2026-11-20 20:16: createDataCombined() checks the requested plot grids before reading any file and finds their DataCombined through their plot ids. (#1362)

@@ -56,6 +56,24 @@ createDataCombined <- function(
     return(list())
   }
 
+  # The requested plot grids are checked before any file is read, so a
+  # mistyped id stops at once. A grid resolves to its plot ids, and each plot
+  # adds the DataCombined it draws from.
+  plotIds <- NULL
+  if (!is.null(plotGrids)) {
+    allGrids <- .unwrapDefinitionList(project$definitions$plotGrids) %||%
+      list()
+    missingGrids <- setdiff(plotGrids[!is.na(plotGrids)], names(allGrids))
+    if (length(missingGrids) > 0) {
+      cli::cli_abort(messages$plotGridNamesNotFound(missingGrids))
+    }
+    plotIds <- .plotIdsOfGrids(allGrids[intersect(names(allGrids), plotGrids)])
+  }
+  dataCombined <- union(
+    dataCombined,
+    .dataCombinedNamesForPlots(project, plotIds)
+  )
+
   # Pre-flight the dataCombined shape so a hand-edited definition file with a
   # missing required field (`label` / `scenario` / `path` / `dataSet`) aborts
   # with a clean message here, rather than crashing mid-build on a NULL field.
@@ -67,20 +85,6 @@ createDataCombined <- function(
   }
 
   observedData <- loadObservedData(project)
-
-  if (!is.null(plotGrids)) {
-    allGridIds <- names(
-      .unwrapDefinitionList(project$definitions$plotGrids) %||% list()
-    )
-    missingGrids <- setdiff(plotGrids[!is.na(plotGrids)], allGridIds)
-    if (length(missingGrids) > 0) {
-      cli::cli_abort(messages$plotGridNamesNotFound(missingGrids))
-    }
-    dataCombined <- union(
-      dataCombined,
-      .extractDataCombinedNamesForPlotsFromProject(project, plotGrids)
-    )
-  }
 
   allSpecs <- .unwrapDefinitionList(project$definitions$dataCombined) %||%
     list()
@@ -117,22 +121,14 @@ createDataCombined <- function(
   dataCombinedList
 }
 
-# Find DataCombined names referenced by the requested plot grids.
+# Find DataCombined names referenced by the requested plots. Ids not defined
+# in the project are skipped.
 #
 # @keywords internal
 # @noRd
-.extractDataCombinedNamesForPlotsFromProject <- function(
-  project,
-  plotGrids
-) {
-  grids <- .unwrapDefinitionList(project$definitions$plotGrids) %||% list()
-  selectedGrids <- grids[intersect(names(grids), plotGrids)]
-  if (length(selectedGrids) == 0) {
-    return(character(0))
-  }
-  ids <- .plotIdsOfGrids(selectedGrids)
+.dataCombinedNamesForPlots <- function(project, plots) {
   plotConfig <- .unwrapDefinitionList(project$definitions$plots) %||% list()
-  referenced <- plotConfig[intersect(names(plotConfig), ids)]
+  referenced <- plotConfig[intersect(names(plotConfig), plots)]
   if (length(referenced) == 0) {
     return(character(0))
   }
