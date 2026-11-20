@@ -808,7 +808,11 @@ removeObservedData <- function(project, id) {
     }
     piHolders <- unique(piIds[piRefs %in% dataSetNames])
     if (length(piHolders) > 0L) {
-      cli::cli_warn(messages$observedDataRemovedUsedByPITasks(one, piHolders))
+      cli::cli_warn(messages$removedStillReferencedByPITasks(
+        "observedData",
+        one,
+        piHolders
+      ))
     }
   }
   invisible(NULL)

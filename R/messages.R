@@ -2108,6 +2108,17 @@ messages$PITaskNowEmpty <- function(task) {
   ospsuite.utils::cliFormat("PI task {.val {task}} is now empty and has been removed.")
 }
 
+# Shared by every remove*() whose definition a PI task can reference
+# (`removeOutputPath()`, `removeObservedData()`), so the wording cannot drift.
+messages$removedStillReferencedByPITasks <- function(kind, id, taskIds) {
+  cliBullets(
+    "Removed {kind} {.val {id}} is still referenced by {length(taskIds)} \\
+    parameter identification task{?s}:",
+    "*" = "{cli::cli_vec(taskIds, list('vec-trunc' = Inf))}",
+    "i" = "These PI tasks now have a dangling reference. Update or remove them."
+  )
+}
+
 messages$buildingPITask <- function(piTaskName) {
   ospsuite.utils::cliFormat("Building PI task: {.val {piTaskName}}")
 }
@@ -2145,18 +2156,9 @@ messages$observedDataRemovedUsedByDataCombined <- function(
   cliBullets(
     "Removed observedData {.val {id}} is still referenced by \\
     {length(dataCombinedIds)} dataCombined entr{?y/ies}:",
-    "*" = "{dataCombinedIds}",
+    "*" = "{cli::cli_vec(dataCombinedIds, list('vec-trunc' = Inf))}",
     "i" = "These dataCombined entries now have a dangling reference. Update or \\
     remove them."
-  )
-}
-
-messages$observedDataRemovedUsedByPITasks <- function(id, taskIds) {
-  cliBullets(
-    "Removed observedData {.val {id}} is still referenced by \\
-    {length(taskIds)} parameter identification task{?s}:",
-    "*" = "{taskIds}",
-    "i" = "These PI tasks now have a dangling reference. Update or remove them."
   )
 }
 

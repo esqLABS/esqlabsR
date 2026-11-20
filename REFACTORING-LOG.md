@@ -346,3 +346,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-11-13 09:19: The agent guide allows base stop() and warning() to re-raise a condition that a handler caught.
 - 2026-11-20 20:11: removeObservedData() reads a removed Excel or PKML source's DataSet names and warns about the DataCombined and PI tasks that still use them, and notes that a script source was not checked. (#1364)
 - 2026-11-20 20:11: The observed-data guide and removeObservedData() help say which definitions the removal warns about. (#1364)
+- 2026-11-20 20:21: removeOutputPath() and removeObservedData() raise their PI-task warning from one catalog entry, and the removal warnings list every id however many there are. (#1364)
