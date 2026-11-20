@@ -629,12 +629,13 @@ addObservedData <- function(project, entry, overwrite = FALSE) {
 #'
 #' A source is removed even when a DataCombined or a parameter identification
 #' output mapping still uses one of its DataSets; `removeObservedData()` then
-#' warns and names them. Change or remove those definitions too, otherwise
-#' [createPlots()] or [runPI()] stops because the DataSet is missing. To find
-#' the DataSets a source provides, the function reads its Excel or PKML file. A
-#' `script` source is not run for this: when the project has DataCombined or
-#' parameter identification definitions that use observed data, you are told to
-#' check them yourself.
+#' warns and names the DataCombined and parameter identification tasks that use
+#' it. Change or remove those definitions too, otherwise [createPlots()] or
+#' [runPI()] stops because the DataSet is missing. To find the DataSets a source
+#' provides, the function reads its Excel or PKML file; a source whose file
+#' cannot be read is removed without this check. A `script` source is not run
+#' for this: when the project has DataCombined or parameter identification
+#' definitions that use observed data, you are told to check them yourself.
 #'
 #' Unlike the other authoring functions, `addObservedData()` is not
 #' vectorized over ids: its second argument is a `DataSet` or a configuration

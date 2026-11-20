@@ -348,3 +348,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-11-20 20:11: The observed-data guide and removeObservedData() help say which definitions the removal warns about. (#1364)
 - 2026-11-20 20:21: removeOutputPath() and removeObservedData() raise their PI-task warning from one catalog entry, and the removal warnings list every id however many there are. (#1364)
 - 2026-11-20 20:21: The removeObservedData() reference check reads the data folder only inside its guarded file read, and its helpers are simpler. (#1364)
+- 2026-11-20 20:21: The removeObservedData() help and the observed-data guide say the warning names the DataCombined and PI tasks, and that an unreadable source is removed without the check. (#1364)
