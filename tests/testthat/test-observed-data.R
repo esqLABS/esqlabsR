@@ -68,30 +68,37 @@ test_that("loadObservedData errors when an entry has invalid type", {
   expect_snapshot(error = TRUE, loadObservedData(project))
 })
 
-test_that("loadObservedData warns on orphan programmatic sentinels (no in-memory DataSet)", {
-  tmp <- withr::local_tempfile(fileext = ".json")
+# A project file holding one `programmatic` declaration per name and no
+# `DataSet` behind any of them. Each call writes a new file, so each project
+# has its own once-per-session warning.
+.projectWithProgrammatic <- function(names, envir = parent.frame()) {
+  path <- withr::local_tempfile(fileext = ".json", .local_envir = envir)
   jsonlite::write_json(
     list(
       schemaVersion = "2.0",
       filePaths = list(dataFolder = "."),
       outputPaths = structure(list(), names = character(0)),
       scenarios = list(),
-      observedData = list(list(type = "programmatic", name = "x"))
+      observedData = lapply(names, function(name) {
+        list(type = "programmatic", name = name)
+      })
     ),
-    tmp,
+    path,
     auto_unbox = TRUE,
     null = "null"
   )
-  project <- loadProject(tmp)
-  # A reloaded project sees the sentinel entry but has no in-memory DataSet to
-  # back it (DataSets do not survive a JSON round-trip). loadObservedData warns
-  # that the source resolved to nothing and returns an empty result;
-  # addObservedData is the supported path for re-attaching the runtime DataSet.
-  expect_warning(
-    result <- loadObservedData(project),
-    "resolved to no data"
+  loadProject(path)
+}
+
+test_that("loadObservedData says how to bring back programmatic sources that resolved to no data", {
+  oneSource <- .projectWithProgrammatic("Scratch measurement")
+  twoSources <- .projectWithProgrammatic(
+    c("Scratch measurement", "Second measurement")
   )
+
+  expect_snapshot(result <- loadObservedData(oneSource))
   expect_length(result, 0L)
+  expect_snapshot(result <- loadObservedData(twoSources))
 })
 
 # A copy of the example project plus a `programmatic` declaration with no

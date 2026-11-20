@@ -7,6 +7,28 @@
       x Invalid type "invalid_type" in `observedData` entry.
       i Must be one of: "excel", "pkml", "script", and "programmatic".
 
+# loadObservedData says how to bring back programmatic sources that resolved to no data
+
+    Code
+      result <- loadObservedData(oneSource)
+    Condition
+      Warning:
+      ! 1 programmatic observed-data source resolved to no data: "Scratch measurement".
+      i A <DataSet> added with `addObservedData()` is written to the data folder only when the project is saved with `saveProject()`. This project was not saved after it was added, for example because a snapshot was taken before saving.
+      i Add it again with `addObservedData()`, then save the project with `saveProject()`.
+      This warning is displayed once per session.
+
+---
+
+    Code
+      result <- loadObservedData(twoSources)
+    Condition
+      Warning:
+      ! 2 programmatic observed-data sources resolved to no data: "Scratch measurement" and "Second measurement".
+      i A <DataSet> added with `addObservedData()` is written to the data folder only when the project is saved with `saveProject()`. This project was not saved after they were added, for example because a snapshot was taken before saving.
+      i Add them again with `addObservedData()`, then save the project with `saveProject()`.
+      This warning is displayed once per session.
+
 # loadObservedData errors when excel entry is missing required fields
 
     Code

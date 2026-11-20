@@ -349,3 +349,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-11-20 20:19: The observed-data guide and the loadObservedData() and getObservedDataNames() help say that a snapshot taken before saving loses a programmatic DataSet, which calls warn about it, and to save first. (#1365)
 - 2026-11-20 20:26: Adding a DataSet whose programmatic entry resolved to no data fills that entry instead of adding a second one, so the next save writes it. (#1366)
 - 2026-11-20 20:26: The script-source warning no longer repeats that it is shown once per session; the note the warning carries already says so. (#1366)
+- 2026-11-20 20:26: The warning for programmatic sources that resolved to no data says to add the DataSet again and save, instead of that such a source is never saved. (#1366)
