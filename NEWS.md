@@ -1,4 +1,4 @@
-# esqlabsR 6.0.0
+# esqlabsR (development version)
 
 ## Breaking changes
 
