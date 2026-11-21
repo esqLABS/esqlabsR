@@ -348,3 +348,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-11-21 16:35: Printing an Excel observed-data source that lists no sheets shows "Sheets: all sheets". (#1371)
 - 2026-11-21 16:35: The observed-data help page, vignettes and NEWS say an Excel source's sheets are optional and that leaving them out loads every sheet. (#1371)
 - 2026-11-21 16:52: The tests for Excel sources without sheets use the test project's own two-sheet workbook instead of a workbook built for the test. (#1371)
+- 2026-11-21 16:54: A test checks that an Excel source without sheets comes back from an Excel export and import listing every sheet and loading the same data. (#1371)
