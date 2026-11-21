@@ -163,7 +163,19 @@ test_that("sensitivityTimeProfiles creates expected default plot", {
       p$`Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)`
     )
   )
-  expect_snapshot(pb$plot$labels)
+  # Compare the labels as a plain list: the printed form of ggplot2's S7
+  # `labels` object depends on the installed S7 version.
+  expect_identical(
+    lapply(pb$plot$labels, identity),
+    list(
+      x = "Time [min]",
+      y = "Concentration (molar) [µmol/l]",
+      colour = "Parameter factor",
+      title = NULL,
+      group = "ParameterFactor",
+      alt = ""
+    )
+  )
 })
 
 test_that("sensitivityTimeProfiles applies user-defined parameter labels", {
