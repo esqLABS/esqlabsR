@@ -33,7 +33,7 @@ read from.
 
 Such a list always carries a \code{type}, plus the fields that type needs:\tabular{lll}{
    \code{type} \tab required fields \tab optional fields \cr
-   \code{"excel"} \tab \code{file}, \code{importerConfiguration}, \code{sheets} \tab \code{id} \cr
+   \code{"excel"} \tab \code{file}, \code{importerConfiguration} \tab \code{sheets}, \code{id} \cr
    \code{"pkml"} \tab \code{file} \tab \code{id} \cr
    \code{"script"} \tab \code{file} \tab \code{id} \cr
 }
@@ -42,7 +42,12 @@ Such a list always carries a \code{type}, plus the fields that type needs:\tabul
 \code{file} and \code{importerConfiguration} are paths \emph{relative to the project's data
 folder} (\code{project$paths$dataFolder}). A file sitting directly in that folder
 is \code{"observed.xlsx"}, not \code{"Data/observed.xlsx"}; one in a subfolder of it is
-\code{"subfolder/observed.xlsx"}. \code{sheets} lists the Excel sheet names to import.
+\code{"subfolder/observed.xlsx"}. \code{sheets} lists the Excel sheet names to import;
+left out or empty, every sheet of the workbook is imported. Sheets listed in
+the importer configuration file are not used: \code{sheets} alone decides. When
+every sheet is imported, each one must fit the importer configuration: a
+sheet that does not, such as a sheet of notes, makes loading the observed
+data fail, so list the sheets to import in \code{sheets} instead.
 A \code{script} source runs the R file it names (see the Security section of
 \code{\link[=loadObservedData]{loadObservedData()}}).
 
