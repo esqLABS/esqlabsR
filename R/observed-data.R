@@ -23,6 +23,11 @@
 #' @exportS3Method
 #' @noRd
 print.ObservedDataSource <- function(x, ...) {
+  sheets <- unlist(x$sheets)
+  # An Excel source that lists no sheets loads every sheet of its workbook.
+  if (identical(x$type, "excel") && length(sheets) == 0L) {
+    sheets <- "all sheets"
+  }
   ospsuite.utils::ospPrintClass(x)
   ospsuite.utils::ospPrintItems(
     list(
@@ -30,7 +35,7 @@ print.ObservedDataSource <- function(x, ...) {
       "File" = x$file %||% "",
       "Name" = x$name %||% "",
       "Importer Configuration" = x$importerConfiguration %||% "",
-      "Sheets" = paste(unlist(x$sheets), collapse = ", ")
+      "Sheets" = paste(sheets, collapse = ", ")
     ),
     print_empty = TRUE
   )

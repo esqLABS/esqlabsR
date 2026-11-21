@@ -1051,6 +1051,21 @@ test_that("print.ObservedDataSource renders the source declaration", {
   expect_snapshot(print(project$definitions$observedData[[1]]))
 })
 
+test_that("print.ObservedDataSource says an excel source without sheets loads all sheets", {
+  project <- testProject()
+  addObservedData(
+    project,
+    list(
+      type = "excel",
+      file = "Laskin1982_DoseGroups.xlsx",
+      importerConfiguration = "esqlabs_dataImporter_configuration.xml"
+    )
+  )
+  withr::local_options(cli.unicode = FALSE)
+  local_reproducible_output()
+  expect_snapshot(print(project$definitions$observedData[[2]]))
+})
+
 # The section is stored as an unnamed list, so printing it showed the count with
 # no ids underneath (#1281). It lists the same ids the authoring functions take.
 

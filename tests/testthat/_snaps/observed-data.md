@@ -129,6 +129,18 @@
         * Importer Configuration: esqlabs_dataImporter_configuration.xml
         * Sheets: Laskin 1982.Group A
 
+# print.ObservedDataSource says an excel source without sheets loads all sheets
+
+    Code
+      print(project$definitions$observedData[[2]])
+    Output
+      <ObservedDataSource>
+        * Type: excel
+        * File: Laskin1982_DoseGroups.xlsx
+        * Name: <empty string>
+        * Importer Configuration: esqlabs_dataImporter_configuration.xml
+        * Sheets: all sheets
+
 # printing the observedData section lists the declaration ids
 
     Code
