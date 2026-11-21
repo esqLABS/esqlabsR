@@ -1,0 +1,4 @@
+# The published site is built from main, which does not have this v6 article yet.
+^https://esqlabs\.github\.io/esqlabsR/articles/how-to-set-up-a-project\.html$
+# The OSP R-universe answers automated link checkers with 403 Forbidden.
+^https://open-systems-pharmacology\.r-universe\.dev/?$
