@@ -34,6 +34,7 @@ tests\^spelling
 ^tests/manual$
 ^revdep$
 ^\.covrignore$
+^\.lycheeignore$
 ^\.github/ISSUE_TEMPLATE$
 ^paper.*$
 references.bib
