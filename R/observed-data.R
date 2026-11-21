@@ -287,8 +287,8 @@ loadObservedData <- function(project) {
   )
   if (length(unresolved) > 0) {
     # `.loadObservedData_impl()` is reentered often (from `getObservedDataNames()`
-    # and `addObservedData()`, and on every `createDataCombined()`/`createPlots()`),
-    # so throttle to once per session per project rather than firing on every call.
+    # and on every `createDataCombined()`/`createPlots()`), so throttle to once
+    # per session per project rather than firing on every call.
     cli::cli_warn(
       messages$observedDataProgrammaticUnresolved(unresolved),
       .frequency = "once",
@@ -415,6 +415,12 @@ getObservedDataNames <- function(project) {
 #' in an Excel sheet, the name inside a PKML file), and that name, not the
 #' declaration's id, is what a `dataCombined` entry references.
 #'
+#' Adding a `DataSet` reads none of the project's sources and runs no script.
+#' A `DataSet` whose name equals the name of a data set inside an Excel, PKML
+#' or script source can therefore be accepted; the next time the observed data
+#' is loaded, by [loadObservedData()] or a function that uses it such as
+#' [createDataCombined()], it stops with an error naming the duplicate.
+#'
 #' A `DataSet` you pass lives in the R session until you save. On
 #' [saveProject()] it is written to a PKML file named `<DataSet name>.pkml`
 #' under the project's data folder and its entry becomes a `pkml` source, so
@@ -461,8 +467,13 @@ addObservedData <- function(project, entry, overwrite = FALSE) {
     # (a `/` in the name, e.g. from a unit like "mg/kg", would otherwise fail
     # later with an opaque low-level path error at save).
     .validateObservedDataId(paste0(name, ".pkml"), call = .call)
-    # Reentrant call: pass the attribution call on rather than re-resolving it.
-    existingNames <- .getObservedDataNames_impl(self, private, .call = .call)
+    # Check only the names known without reading a source: the names cache, when
+    # a lookup has filled it, and the session's DataSets. Reading the sources
+    # would run every `script` source and stop on any unreadable file. A clash
+    # with a name inside a source not read yet aborts the next load instead
+    # (`.mergeObservedDataSets()`).
+    namesCache <- private$.observedDataNamesCache
+    existingNames <- union(namesCache, names(private$.programmaticDataSets))
     # A DataSet collides on two axes, and both have to be checked: on the name
     # its data resolves under (`existingNames`), and on a declared `id`, which a
     # config entry can carry without ever resolving a data set of that name.
@@ -515,10 +526,13 @@ addObservedData <- function(project, entry, overwrite = FALSE) {
     }
     private$.setSection("observedData", observedData)
     private$.programmaticDataSets[[name]] <- entry
-    # The observedData setter resets the names cache, so rebuild it after the
-    # write. On an overwrite the name is already in `existingNames`, so union
-    # rather than append to keep the cache free of duplicates.
-    private$.observedDataNamesCache <- union(existingNames, name)
+    # The observedData setter resets the names cache, so restore it after the
+    # write when it was filled. On an overwrite the name is already in it, so
+    # union rather than append to keep the cache free of duplicates. An unfilled
+    # cache stays unfilled: the next lookup reads every source.
+    if (!is.null(namesCache)) {
+      private$.observedDataNamesCache <- union(namesCache, name)
+    }
     cli::cli_inform(messages$observedDataProgrammaticAdded(
       name,
       hasDataFolder = !is.null(self$paths$dataFolder)

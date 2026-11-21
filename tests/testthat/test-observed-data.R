@@ -419,6 +419,163 @@ test_that("addObservedData overwrite does not grow the observed-data name list",
   expect_equal(sum(getObservedDataNames(project) == "iter"), 1L)
 })
 
+# Adding a DataSet without reading the other sources ----
+
+# Declare a `script` source in the project's data folder that returns one
+# DataSet named `dataSetName` and writes `marker` each time it runs, so a test
+# can tell whether the script was run.
+.addMarkerScriptSource <- function(project, dataSetName, marker) {
+  writeLines(
+    c(
+      paste0("writeLines('sourced', ", deparse(marker), ")"),
+      paste0("ds <- ospsuite::DataSet$new(name = ", deparse(dataSetName), ")"),
+      "ds$setValues(xValues = c(0, 1, 2), yValues = c(0, 4.1, 2.3))",
+      "ds"
+    ),
+    file.path(project$paths$dataFolder, "digitized_plasma.R")
+  )
+  addObservedData(project, list(type = "script", file = "digitized_plasma.R"))
+}
+
+.plasmaDataSet <- function(name) {
+  ds <- ospsuite::DataSet$new(name = name)
+  ds$setValues(xValues = c(0, 1, 3), yValues = c(0, 6, 2))
+  ds
+}
+
+test_that("addObservedData with a DataSet runs no script source", {
+  project <- testProject()
+  marker <- withr::local_tempfile()
+  .addMarkerScriptSource(project, "Digitized plasma", marker)
+  # Re-arm the once-per-session script warning, so a script run would show it.
+  rlang::reset_warning_verbosity(paste0(
+    "esqlabsR_observed_data_script_source_",
+    project$info$projectFilePath
+  ))
+
+  expect_snapshot(
+    addObservedData(project, .plasmaDataSet("Scratch measurement"))
+  )
+  expect_false(file.exists(marker))
+  # The next lookup still finds the names of every source.
+  expect_identical(
+    suppressWarnings(suppressMessages(getObservedDataNames(project))),
+    c(testObservedDataId, "Digitized plasma", "Scratch measurement")
+  )
+})
+
+test_that("addObservedData with a DataSet succeeds when another source's file is missing", {
+  project <- testProject()
+  # A source whose PKML file is not exported yet. Adding it also clears the
+  # data-set names found when the project was loaded.
+  addObservedData(
+    project,
+    list(type = "pkml", file = "cohort_b_export.pkml")
+  )
+  scratch <- .plasmaDataSet("Scratch measurement")
+
+  suppressMessages(addObservedData(project, scratch))
+  expect_identical(
+    .projectSeam(project)$.programmaticDataSets,
+    list("Scratch measurement" = scratch)
+  )
+  expect_equal(
+    unclass(project$definitions$observedData[[3]]),
+    list(type = "programmatic", name = "Scratch measurement")
+  )
+})
+
+test_that("addObservedData with a DataSet asks a project without a data folder to declare one", {
+  project <- testProject()
+  # Adding a source clears the data-set names found when the project was
+  # loaded, so the Excel source would have to be read again to find them.
+  addObservedData(
+    project,
+    list(type = "pkml", file = "cohort_b_export.pkml")
+  )
+  project$paths$dataFolder <- NULL
+
+  expect_snapshot(
+    addObservedData(project, .plasmaDataSet("Scratch measurement"))
+  )
+})
+
+test_that("addObservedData aborts on a DataSet name an already loaded source holds", {
+  project <- testProject()
+  marker <- withr::local_tempfile()
+  .addMarkerScriptSource(project, "Digitized plasma", marker)
+  suppressWarnings(suppressMessages(getObservedDataNames(project)))
+
+  expect_snapshot(
+    error = TRUE,
+    addObservedData(project, .plasmaDataSet("Digitized plasma"))
+  )
+})
+
+test_that("addObservedData adds the DataSet name to the names already looked up", {
+  project <- testProject()
+  marker <- withr::local_tempfile()
+  .addMarkerScriptSource(project, "Digitized plasma", marker)
+  suppressWarnings(suppressMessages(getObservedDataNames(project)))
+  unlink(marker)
+
+  suppressMessages(
+    addObservedData(project, .plasmaDataSet("Scratch measurement"))
+  )
+  expect_identical(
+    getObservedDataNames(project),
+    c(testObservedDataId, "Digitized plasma", "Scratch measurement")
+  )
+  # The names came from the earlier lookup: the script did not run again.
+  expect_false(file.exists(marker))
+})
+
+test_that("addObservedData aborts on the name of a DataSet added in this session", {
+  project <- testProject()
+  suppressMessages(
+    addObservedData(project, .plasmaDataSet("Scratch measurement"))
+  )
+  # Adding a source clears the data-set names found so far; the DataSets added
+  # in this session are still known.
+  addObservedData(
+    project,
+    list(type = "pkml", file = "cohort_b_export.pkml")
+  )
+
+  expect_snapshot(
+    error = TRUE,
+    addObservedData(project, .plasmaDataSet("Scratch measurement"))
+  )
+})
+
+test_that("a DataSet clashes with a declared id without reading that source's file", {
+  project <- testProject()
+  # The PKML file does not exist: the clash is found from the id alone.
+  addObservedData(
+    project,
+    list(id = "cohort_b", type = "pkml", file = "cohort_b_export.pkml")
+  )
+
+  expect_snapshot(
+    error = TRUE,
+    addObservedData(project, .plasmaDataSet("cohort_b"))
+  )
+})
+
+test_that("a DataSet name equal to a data set inside a script source aborts the next load", {
+  project <- testProject()
+  marker <- withr::local_tempfile()
+  .addMarkerScriptSource(project, "Digitized plasma", marker)
+  suppressMessages(
+    addObservedData(project, .plasmaDataSet("Digitized plasma"))
+  )
+
+  expect_snapshot(
+    error = TRUE,
+    suppressWarnings(suppressMessages(loadObservedData(project)))
+  )
+})
+
 test_that("addObservedData overwrite = TRUE replaces a config entry in place", {
   project <- testProject()
   addObservedData(project, list(type = "pkml", file = "sub1/obs.pkml"))

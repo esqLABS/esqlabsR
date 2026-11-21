@@ -59,6 +59,58 @@
       ! observedData entry with name "prog_ds" already exists.
       i Pass `overwrite = TRUE` to replace it.
 
+# addObservedData with a DataSet runs no script source
+
+    Code
+      addObservedData(project, .plasmaDataSet("Scratch measurement"))
+    Message
+      i Added programmatic observed-data source "Scratch measurement". It lives in this session until you save.
+      i On `saveProject()` it is written to 'Scratch measurement.pkml' under the data folder, so it survives a reload.
+
+# addObservedData with a DataSet asks a project without a data folder to declare one
+
+    Code
+      addObservedData(project, .plasmaDataSet("Scratch measurement"))
+    Message
+      i Added programmatic observed-data source "Scratch measurement". It lives in this session until you save.
+      i Declare a dataFolder in `filePaths` before saving: `saveProject()` writes it to a PKML file there so it survives a reload, and aborts if no data folder is declared.
+
+# addObservedData aborts on a DataSet name an already loaded source holds
+
+    Code
+      addObservedData(project, .plasmaDataSet("Digitized plasma"))
+    Condition
+      Error in `addObservedData()`:
+      ! observedData entry with name "Digitized plasma" already exists.
+      i Pass `overwrite = TRUE` to replace it.
+
+# addObservedData aborts on the name of a DataSet added in this session
+
+    Code
+      addObservedData(project, .plasmaDataSet("Scratch measurement"))
+    Condition
+      Error in `addObservedData()`:
+      ! observedData entry with name "Scratch measurement" already exists.
+      i Pass `overwrite = TRUE` to replace it.
+
+# a DataSet clashes with a declared id without reading that source's file
+
+    Code
+      addObservedData(project, .plasmaDataSet("cohort_b"))
+    Condition
+      Error in `addObservedData()`:
+      ! observedData entry with name "cohort_b" already exists.
+      i Pass `overwrite = TRUE` to replace it.
+
+# a DataSet name equal to a data set inside a script source aborts the next load
+
+    Code
+      suppressWarnings(suppressMessages(loadObservedData(project)))
+    Condition
+      Error in `.mergeObservedDataSets()`:
+      x Duplicate observed-data set name across sources: "Digitized plasma".
+      i Each loaded <DataSet> must have a unique name; rename the source or the data set.
+
 # observedData declarations sharing a basename fail saveProject()
 
     Code
