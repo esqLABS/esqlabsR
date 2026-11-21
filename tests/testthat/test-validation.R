@@ -777,34 +777,21 @@ test_that(".validateObservedData warns on missing files when dataFolder set", {
 
 # The two observed-data validators, the project-validator adapter
 # (.validateObservedData) and the load/add-time guard (.validateObservedDataEntry),
-# share one required-field spec. An Excel source without `sheets`, or with an
-# empty `sheets`, loads every sheet of its workbook (#1371), so both accept it.
+# share one required-field spec. An Excel source's `sheets` is optional: left
+# out or empty, every sheet of the workbook loads (#1371).
 
-test_that("both observed-data validators accept an excel entry without sheets", {
-  missingSheets <- list(
-    type = "excel",
-    file = "Laskin1982_DoseGroups.xlsx",
-    importerConfiguration = "esqlabs_dataImporter_configuration.xml"
+test_that("both observed-data validators accept an excel entry with missing, empty or listed sheets", {
+  base <- list(type = "excel", file = "x.xlsx", importerConfiguration = "c.xml")
+  entries <- list(
+    missing = base,
+    empty = c(base, list(sheets = list())),
+    listed = c(base, list(sheets = list("Sheet1")))
   )
-  emptySheets <- c(missingSheets, list(sheets = list()))
-
-  for (entry in list(missingSheets, emptySheets)) {
-    result <- .validateObservedData(list(entry), NULL)
+  for (case in names(entries)) {
+    result <- .validateObservedData(list(entries[[case]]), NULL)
     expect_length(result$critical_errors, 0)
-    expect_true(.validateObservedDataEntry(entry, 1L))
+    expect_true(.validateObservedDataEntry(entries[[case]], 1L), label = case)
   }
-})
-
-test_that("both observed-data validators accept a well-formed excel entry", {
-  good <- list(
-    type = "excel",
-    file = "x.xlsx",
-    importerConfiguration = "c.xml",
-    sheets = list("Sheet1")
-  )
-  result <- .validateObservedData(list(good), NULL)
-  expect_length(result$critical_errors, 0)
-  expect_true(.validateObservedDataEntry(good, 1L))
 })
 
 # Section adapter: plots ----

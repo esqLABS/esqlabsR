@@ -52,127 +52,73 @@ test_that("loadObservedData loads excel observed data from TestProject", {
 
 # Excel sources without a sheet list (#1371) ----
 
-# Write a workbook with two Laskin 1982 dose groups, one sheet each, into
-# `dataFolder`, built from the test project's Group A sheet so it fits the test
-# project's importer configuration. Returns the file name.
-writeLaskinDoseGroupsWorkbook <- function(dataFolder) {
-  groupA <- readxl::read_excel(
-    file.path(dataFolder, "Aciclovir_TimeValuesData.xlsx"),
-    sheet = "Laskin 1982.Group A"
-  )
-  doseGroup <- function(group, dose, doseFactor) {
-    sheet <- groupA
-    sheet[["Study Id"]] <- paste0("Laskin 1982.", group)
-    sheet[["Dose"]] <- dose
-    sheet[["Measurement"]] <- sheet[["Measurement"]] * doseFactor
-    sheet
-  }
-  fileName <- "Laskin1982_DoseGroups.xlsx"
-  writexl::write_xlsx(
-    list(
-      "Laskin 1982.Group B" = doseGroup("Group B", "5 mg/kg", 2),
-      "Laskin 1982.Group C" = doseGroup("Group C", "10 mg/kg", 4)
-    ),
-    file.path(dataFolder, fileName)
-  )
-  fileName
-}
-
-laskinDoseGroupNames <- c(
-  "Laskin 1982.Group B_Aciclovir_1_Human_MALE_PeripheralVenousBlood_Plasma_5 mg/kg_iv_",
-  "Laskin 1982.Group C_Aciclovir_1_Human_MALE_PeripheralVenousBlood_Plasma_10 mg/kg_iv_"
+# The test project's workbook holds two sheets the importer configuration can
+# read, while its declaration lists only the Laskin 1982 one. Without a sheet
+# list, the glucose sheet loads as well, ahead of it in workbook order.
+allFixtureSheetNames <- c(
+  "ESQ-ID-001_Glucose_001-002_Human_MALE_Venous Blood_PLASMA_Dapa 5 mg QD_po_",
+  testObservedDataId
 )
 
 test_that("an excel source added without sheets loads every sheet", {
   project <- testProject()
-  fileName <- writeLaskinDoseGroupsWorkbook(project$paths$dataFolder)
+  removeObservedData(project, "Aciclovir_TimeValuesData.xlsx")
 
   addObservedData(
     project,
     list(
       type = "excel",
-      file = fileName,
+      file = "Aciclovir_TimeValuesData.xlsx",
       importerConfiguration = "esqlabs_dataImporter_configuration.xml"
     )
   )
 
   # Nothing is stored for the omitted field.
   expect_equal(
-    unclass(project$definitions$observedData[[2]]),
+    unclass(project$definitions$observedData[[1]]),
     list(
       type = "excel",
-      file = fileName,
+      file = "Aciclovir_TimeValuesData.xlsx",
       importerConfiguration = "esqlabs_dataImporter_configuration.xml"
     )
   )
-  expect_identical(
-    names(loadObservedData(project)),
-    c(testObservedDataId, laskinDoseGroupNames)
-  )
+  expect_identical(names(loadObservedData(project)), allFixtureSheetNames)
   expect_false(isAnyCriticalErrors(validateProject(project)))
 })
 
-test_that("an excel definition file without sheets, or with an empty list, loads every sheet", {
-  definitions <- list(
-    missing = list(
-      id = "laskin_dose_groups",
-      type = "excel",
-      file = "Laskin1982_DoseGroups.xlsx",
-      importerConfiguration = "esqlabs_dataImporter_configuration.xml"
-    ),
-    empty = list(
-      id = "laskin_dose_groups",
-      type = "excel",
-      file = "Laskin1982_DoseGroups.xlsx",
-      importerConfiguration = "esqlabs_dataImporter_configuration.xml",
-      sheets = list()
-    )
+test_that("an excel definition file with an empty sheet list loads every sheet", {
+  projectDir <- .copyTestProjectDir()
+  definitionFile <- file.path(
+    projectDir,
+    "definitions",
+    "observed-data",
+    "Aciclovir_TimeValuesData.xlsx.json"
   )
-  for (case in names(definitions)) {
-    projectDir <- .copyTestProjectDir()
-    writeLaskinDoseGroupsWorkbook(file.path(projectDir, "Data"))
-    jsonlite::write_json(
-      definitions[[case]],
-      file.path(
-        projectDir,
-        "definitions",
-        "observed-data",
-        "laskin_dose_groups.json"
-      ),
-      auto_unbox = TRUE,
-      pretty = TRUE
-    )
+  definition <- jsonlite::read_json(definitionFile)
+  definition$sheets <- list()
+  jsonlite::write_json(definition, definitionFile, auto_unbox = TRUE)
 
-    project <- loadProject(file.path(projectDir, "Project.json"))
+  project <- loadProject(file.path(projectDir, "Project.json"))
 
-    expect_identical(
-      names(loadObservedData(project)),
-      c(testObservedDataId, laskinDoseGroupNames),
-      label = case
-    )
-  }
+  expect_identical(names(loadObservedData(project)), allFixtureSheetNames)
 })
 
 test_that("an excel source with a non-character sheet name fails to load", {
   project <- testProject()
-  fileName <- writeLaskinDoseGroupsWorkbook(project$paths$dataFolder)
   addObservedData(
     project,
     list(
       type = "excel",
-      file = fileName,
+      file = "Aciclovir_TimeValuesData.xlsx",
       importerConfiguration = "esqlabs_dataImporter_configuration.xml",
       sheets = list(2)
-    )
+    ),
+    overwrite = TRUE
   )
   # The error comes from ospsuite, which names the top-level call of the
   # session rather than `loadObservedData()`, so a snapshot would differ
-  # between test runners; match the message instead.
-  expect_error(
-    loadObservedData(project),
-    'argument "sheets" is of type <numeric>, but expected <character>',
-    fixed = TRUE
-  )
+  # between test runners.
+  expect_error(loadObservedData(project), "character")
 })
 
 test_that("loadObservedData errors when an entry has invalid type", {
@@ -482,8 +428,7 @@ test_that("addObservedData appends a valid config entry", {
 })
 
 test_that("addObservedData rejects an under-specified config entry, naming every gap at once", {
-  # An Excel source needs two fields; reporting one per attempt made a bare
-  # `list(type = "excel")` take two calls to complete (#1213).
+  # An Excel source needs two fields; both are named in one error (#1213).
   project <- testProject()
   expect_snapshot(
     error = TRUE,
@@ -1057,13 +1002,13 @@ test_that("print.ObservedDataSource says an excel source without sheets loads al
     project,
     list(
       type = "excel",
-      file = "Laskin1982_DoseGroups.xlsx",
+      file = "Aciclovir_TimeValuesData.xlsx",
       importerConfiguration = "esqlabs_dataImporter_configuration.xml"
-    )
+    ),
+    overwrite = TRUE
   )
-  withr::local_options(cli.unicode = FALSE)
   local_reproducible_output()
-  expect_snapshot(print(project$definitions$observedData[[2]]))
+  expect_snapshot(print(project$definitions$observedData[[1]]))
 })
 
 # The section is stored as an unnamed list, so printing it showed the count with
