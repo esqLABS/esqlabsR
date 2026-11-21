@@ -186,10 +186,10 @@
 # .warnIncompleteObservedCurves names the affected combinations
 
     Code
-      .warnIncompleteObservedCurves(list(list(dataCombinedId = "plasma", simulated = list(
-        list(label = "sim")), observed = list(list(label = "obs"))), list(
-        dataCombinedId = "urine", observed = list(list(label = "obs", dataSet = "d1"))),
-      list(dataCombinedId = "fat", observed = list(list(label = "obs", dataSet = "")))))
+      .warnIncompleteObservedCurves(list(list(id = "plasma", simulated = list(list(
+        label = "sim")), observed = list(list(label = "obs"))), list(id = "urine",
+        observed = list(list(label = "obs", dataSet = "d1"))), list(id = "fat",
+        observed = list(list(label = "obs", dataSet = "")))))
     Condition
       Warning:
       ! 2 imported data combinations have an observed curve that names no data set: "plasma" and "fat".

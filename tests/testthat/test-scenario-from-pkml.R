@@ -243,7 +243,7 @@ test_that("comma-separated parameterSets are split and FK-validated", {
     parameterSets = "global, aciclovir"
   ))
   expect_identical(
-    project$definitions$scenarios[["seeded"]]$modelParameterSets,
+    project$definitions$scenarios[["seeded"]]$parameterSets,
     c("global", "aciclovir")
   )
 })
@@ -265,16 +265,14 @@ test_that("unknown parameterSets abort and leave the project unchanged", {
 
 # createScenariosFromPKML: application protocol ----
 
-test_that("applicationProtocol defaults to NA and the seeded scenario passes validation", {
+test_that("application defaults to NULL and the seeded scenario passes validation", {
   project <- testProject()
   suppressMessages(createScenariosFromPKML(
     pkmlInProject(project),
     project = project,
     scenarios = "seeded"
   ))
-  expect_true(is.na(
-    project$definitions$scenarios[["seeded"]]$applicationProtocol
-  ))
+  expect_null(project$definitions$scenarios[["seeded"]]$application)
   expect_false(isAnyCriticalErrors(validateProject(project)))
 })
 
@@ -290,7 +288,7 @@ test_that("a user application is taken verbatim without Excel sanitization", {
     application = longProtocol
   )))
   expect_identical(
-    project$definitions$scenarios[["seeded"]]$applicationProtocol,
+    project$definitions$scenarios[["seeded"]]$application,
     longProtocol
   )
 })
@@ -520,7 +518,7 @@ test_that("steadyState = TRUE seeds a base-unit steadyStateTime and a unit", {
     steadyStateTimeUnit = "h"
   ))
   sc <- project$definitions$scenarios[["ss"]]
-  expect_true(sc$simulateSteadyState)
+  expect_true(sc$steadyState)
   # 10 h stored in base units (minutes).
   expect_equal(sc$steadyStateTime, 600)
   expect_identical(sc$steadyStateTimeUnit, "h")

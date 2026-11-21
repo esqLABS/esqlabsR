@@ -1,5 +1,5 @@
 {
-  "name": "aciclovir_iv",
+  "id": "aciclovir_iv",
   "individual": "adult_male",
   "population": null,
   "readPopulationFromCSV": false,

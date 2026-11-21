@@ -109,11 +109,11 @@ sensitivityCalculation <- function(
 
   # Validate customOutputFunctions
   .validateIsNamedList(customOutputFunctions, nullAllowed = TRUE)
-  validateIsOfType(customOutputFunctions, "function", nullAllowed = TRUE)
+  ospsuite.utils::validateIsOfType(customOutputFunctions, "function", nullAllowed = TRUE)
 
   # Fail early to avoid costly failure after analysis is already carried out.
   if (!is.null(saOutputFilePath)) {
-    validateIsFileExtension(saOutputFilePath, "xlsx")
+    ospsuite.utils::validateIsFileExtension(saOutputFilePath, "xlsx")
   }
 
   # Creating SimulationResults batches ------------------------------------
@@ -128,7 +128,7 @@ sensitivityCalculation <- function(
   oldOutputSelections <- simulation$outputSelections$allOutputs
   on.exit(
     {
-      clearOutputs(simulation = simulation)
+      ospsuite::clearOutputs(simulation = simulation)
       for (outputSelection in oldOutputSelections) {
         ospsuite::addOutputs(
           quantitiesOrPaths = outputSelection$path,
@@ -138,7 +138,7 @@ sensitivityCalculation <- function(
     },
     add = TRUE
   )
-  setOutputs(quantitiesOrPaths = outputPaths, simulation = simulation)
+  ospsuite::setOutputs(quantitiesOrPaths = outputPaths, simulation = simulation)
 
   # Store initial value for each parameter
   initialValues <- vector("double", length(parameterPaths))
@@ -197,7 +197,7 @@ sensitivityCalculation <- function(
 
   # Create one batch for all constant parameters
   if (length(constantParamPaths) > 0) {
-    constantBatch <- createSimulationBatch(
+    constantBatch <- ospsuite::createSimulationBatch(
       simulation = simulation,
       parametersOrPaths = constantParamPaths
     )
@@ -223,7 +223,7 @@ sensitivityCalculation <- function(
 
   # Add batches for formula parameters
   for (formulaParamPath in formulaParamPaths) {
-    formulaBatch <- createSimulationBatch(
+    formulaBatch <- ospsuite::createSimulationBatch(
       simulation = simulation,
       parametersOrPaths = formulaParamPath
     )
@@ -243,7 +243,7 @@ sensitivityCalculation <- function(
   }
 
   # Simulate all batches in parallel
-  simulationBatchesResults <- runSimulationBatches(
+  simulationBatchesResults <- ospsuite::runSimulationBatches(
     simulationBatches = simulationBatches,
     simulationRunOptions = simulationRunOptions
   )

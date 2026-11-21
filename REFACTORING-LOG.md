@@ -325,7 +325,26 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-10-26 12:19: The closing warning of runScenarios(stopIfFails = FALSE) names only the scenarios that produced no results, not every requested one. (#1329)
 - 2026-10-26 12:24: Bullets in error and warning messages start new lines again, and a value with braces prints as written; a nested error now shows below the warning as its cause. (#1343)
 - 2026-10-26 14:45: The name-collision error of saveScenarioResults() shows the backslash once, as "\\" instead of "\\\\".
+- 2026-10-27 11:22: setScenario() refuses a modelFile of NULL, NA or "" and leaves every scenario unchanged. (#1303)
+- 2026-10-27 11:58: A scenario record uses the names of the addScenario() arguments (id, individual, population, application, parameterSets, steadyState), and an absent application is NULL. (#1317)
+- 2026-10-27 12:06: A scenario definition file stores its id under the key "id" instead of "name".
+- 2026-10-27 12:20: Individual, population, data-combination, plot and plot-grid files store their own id under "id", and a plot or grid record uses the addPlot() and addPlotGrid() argument names.
+- 2026-10-27 14:06: A scenario can carry an optional free-text label that keeps the name as typed; the Excel bridge writes and reads it, and a 5.x import keeps a changed Scenario_name as the label. (#1294)
+- 2026-10-27 14:13: The Excel import writes a DataCombined curve's path as its output-path id when exactly one output path has it, and the example project uses the id. (#1280)
+- 2026-10-27 14:18: The help pages are regenerated for the renamed and new scenario, plot and plot-grid fields.
+- 2026-10-27 16:54: Review fixes: a scenario record handed back to setScenario() clears the fields it leaves empty, labels drop wrapping quotes and are left off copies and off exports without labels, and an NA reference is refused on save. (#1294)
 - 2026-10-28 14:54: The standard importer configuration names the same unit for errors as for measurements; loaded data does not change, since both come from the Measurement unit column. (#757)
 - 2026-10-28 14:54: The observed-data template workbook has an Error type column, filled with ASD. (#757)
 - 2026-10-28 14:54: Excel observed data takes each data set's error type, ASD or GSD, from the Error type column when the importer configuration reads it, as the standard one now does. (#757)
 - 2026-10-28 14:54: The observed data article, the definition-fields reference, the loadObservedData() help, and NEWS describe the Error type column and the unit of a GSD. (#757)
+- 2026-10-28 15:03: Review fixes: a scenario label must be a non-empty string, the Excel import keeps a scenario name as its label only when the id changes more than its case, and a plot sheet with two disagreeing id columns warns. (#1294)
+- 2026-10-29 15:51: The scenarios vignette drops a sentence that restated the obvious.
+- 2026-10-29 16:01: A scenario record always has an id: Scenario() refuses one without it.
+- 2026-10-29 16:02: Two NEWS bullets, on the definition files and on scenario records, are shorter and less technical.
+- 2026-10-29 16:02: The NEWS bullet on imported curve paths no longer compares with unreleased behavior, and a quoted import error uses the current field name.
+- 2026-11-01 16:31: The warning about a legacy exportConfiguration sheet suggests ospsuite.plots::exportPlot() for saving figures.
+- 2026-11-12 11:50: The agent guide matches v6: `@returns`, namespace prefixes for imported packages, cli for all user messages, no `paste()` where cli already lists values, and the full set of NEWS headings.
+- 2026-11-12 12:09: Calls to ospsuite and ospsuite.utils functions carry their package prefix, and the tests mock those functions in their own package.
+- 2026-11-12 12:17: Message catalog entries let cli list vectors instead of pre-joining them with paste().
+- 2026-11-12 12:25: The agent guide prefers snapshot tests over hand-written identical checks, and says how to mock functions from other packages.
+- 2026-11-13 09:19: The agent guide allows base stop() and warning() to re-raise a condition that a handler caught.

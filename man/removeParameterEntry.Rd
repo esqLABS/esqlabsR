@@ -21,10 +21,10 @@ The \code{project} object, invisibly.
 \description{
 Removes parameter entries from the named set. \code{containerPath} and
 \code{parameterName} accept parallel vectors of equal length N to remove all N
-entries in a single call (and a single write to disk); a scalar call
-(length-1 vectors) removes one entry. If every entry of the set is removed,
-the set itself is auto-removed from \code{parameterSets} definitions. Warns if the
-set or any named entry doesn't exist.
+entries in a single call; a scalar call (length-1 vectors) removes one
+entry. If every entry of the set is removed, the set itself is auto-removed
+from \code{parameterSets} definitions. Warns if the set or any named entry
+doesn't exist.
 }
 \seealso{
 Other parameters:

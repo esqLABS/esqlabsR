@@ -22,44 +22,88 @@ knitr::opts_chunk$set(
 library(esqlabsR)
 ```
 
-Clear, consistent figures are a core part of model diagnostics and of any client-facing report. This article shows how to turn scenario results into figures with `{esqlabsR}`: first the plots a project already defines, then how to create your own, attach observed data, apply the esqLABS house style, and export to a file.
+Clear, consistent figures are a core part of model diagnostics and of any report. This article shows how to turn scenario results into figures with `{esqlabsR}`:
 
-Every figure below runs against the example project bundled with the package; loading it and running one scenario produces them all.
+- build the figures a project already defines
+- create your own figures and add observed data to them
+- plot a population
+- apply the ESQlabs house style
+- export a figure to a file
+- work with the data behind a figure, such as the residuals
+- review and edit figures in the Excel files
 
-Three building blocks recur below. A **DataCombined** says which simulated curves and which observed data belong together. A **Plot** describes one chart drawn from a DataCombined. A **Plot Grid** composes Plots into one laid-out figure. All three are stored as definitions in the project, so figures travel with it. `vignette("about-the-plotting-model")` explains why it takes three pieces rather than one, and `vignette("reference-definition-fields")` lists the fields of each.
+Every figure below uses the example project bundled with the package and the results of two of its scenarios.
 
-## Load the example and run a scenario
+Three building blocks recur below. A **DataCombined** says which simulated curves and which observed data belong together. A **Plot** describes one chart drawn from a DataCombined. A **Plot Grid** arranges Plots into one figure. All three are stored as definitions in the project. `vignette("about-the-plotting-model")` explains the structure in detail, and `vignette("reference-definition-fields")` lists the fields of each.
 
-Every figure in this article is built from the results of one simulated scenario. Work against a writable copy of the example so the figures you add later do not change the installed package: `initProject()` makes a fresh copy in a temporary directory, which you load and run the `aciclovir_iv` scenario against.
+## Load the example and run its scenarios
+
+Every figure in this article is built from scenario results. Work on a copy of the example, so the figures you add later do not change the installed package. `initProject()` copies the example to a temporary folder. Load the copy and run two of its scenarios: the individual scenario `aciclovir_iv` and the population scenario `aciclovir_iv_population`.
 
 ```{r setup-run}
 project_dir <- withr::local_tempdir()
-initProject(destination = project_dir, type = "example", createExcel = FALSE)
+initProject(destination = project_dir, type = "example", createExcel = TRUE)
 project <- loadProject(file.path(project_dir, "Project.json"))
 
 scenarioResults <- runScenarios(
   project,
-  scenarios = "aciclovir_iv"
+  scenarios = c("aciclovir_iv", "aciclovir_iv_population")
 )
+
+names(scenarioResults)
 ```
 
-The first `runScenarios()` call in a session initializes PK-Sim and is slow; later runs are fast. `scenarioResults` is keyed by scenario name; pass it to any plotting function below.
+`scenarioResults` is a list named by scenario id. Pass it to every plotting function below. A figure can only draw scenarios that are in this list, so run every scenario a figure needs before you build it.
+
+## Inspect the figures a project defines
+
+Each of the three building blocks has its own section under `project$definitions`: `dataCombined`, `plots`, and `plotGrids`. Print a section to see the ids it holds, and pick out one definition by its id. Start with the Plot Grids, the figures `createPlots()` builds by default:
+
+```{r inspect-grids}
+project$definitions$plotGrids
+project$definitions$plotGrids[["individual_diagnostics"]]
+```
+
+The grid `individual_diagnostics` holds one Plot, `p1`. Print that Plot to see its type and the DataCombined it draws from:
+
+```{r inspect-plot}
+project$definitions$plots[["p1"]]
+```
+
+Printing a Plot shows only four items. Its other settings, such as the time unit or the axis limits, are fields of the Plot. `names()` lists the fields that are set, and `$` reads one of them:
+
+```{r inspect-plot-fields}
+names(project$definitions$plots[["p1"]])
+project$definitions$plots[["p1"]]$xUnit
+```
+
+A setting that is not in this list takes the ESQlabs default value (see [Apply the ESQlabs house style](#apply-the-esqlabs-house-style)) or the default of the plotting function.
+
+`p1` draws from the DataCombined `aciclovir_individual`. Printing a DataCombined shows how many simulated and observed curves it holds.
+
+```{r inspect-datacombined}
+project$definitions$dataCombined[["aciclovir_individual"]]
+# Inspect the simulated curve definition
+project$definitions$dataCombined[["aciclovir_individual"]]$simulated[[1]]
+```
+
+A field shown as `NULL` is not set. The observed curves are under `$observed` in the same way. This curve comes from the scenario `aciclovir_iv`, so `scenarioResults` must hold that scenario for the figure to be built. `vignette("reference-definition-fields")` explains every field of the three definitions.
 
 ## Generate a project's predefined plots
 
-The example project already defines a **DataCombined** (`aciclovir_individual`), a **Plot** (`p1`, of type `individual`), and a **Plot Grid** (`individual_diagnostics`). `createPlots()` reads those definitions and builds the figures, resolving each **DataCombined** against the scenario results you pass in.
+`createPlots()` reads the definitions above and builds the figures. It fills each DataCombined with the simulated curves from `scenarioResults` and with the observed data the project declares.
 
 ```{r create-plots}
 plotGrids <- createPlots(project, scenarioResults = scenarioResults)
 ```
 
-Despite its name, `createPlots()` returns **Plot Grids**, not single **Plots**: the returned list is keyed by the project's **Plot Grid** names.
+Despite its name, `createPlots()` returns Plot Grids, not single Plots: the returned list is named after the project's Plot Grids.
 
 ```{r show-predefined}
 plotGrids$individual_diagnostics
 ```
 
-To build only a subset of the project's grids, pass their names to `plotGrids`.
+To build only some of the project's grids, pass their names to `plotGrids`.
 
 ```{r create-plots-subset}
 someGrids <- createPlots(
@@ -69,7 +113,7 @@ someGrids <- createPlots(
 )
 ```
 
-To render a single **Plot** on its own, without wrapping it in a grid, pass its id to `plots`. The result is keyed by the plot's id, and the entry is a single `ggplot` object rather than a `patchwork` grid.
+To draw a single Plot on its own, without a grid, pass its id to `plots`. The result is named by the plot's id, and the entry is a single `ggplot` object rather than a `patchwork` grid.
 
 ```{r create-plots-single}
 single <- createPlots(
@@ -81,23 +125,71 @@ single <- createPlots(
 single$p1
 ```
 
-`plotGrids` and `plots` are independent selectors, so you can request grids and standalone plots in the same call.
+You can ask for grids and single plots in the same call. The result then holds both.
 
-## Attach observed data
+```{r create-plots-both}
+both <- createPlots(
+  project,
+  plotGrids = "individual_diagnostics",
+  plots = "p1",
+  scenarioResults = scenarioResults
+)
 
-Comparing simulated curves against measurements is what makes a diagnostic figure useful. A project declares its observed data and resolves it on demand; how observed data enters a project (the four source types, the source definitions, and `loadObservedData()`) is covered in `vignette("how-to-use-observed-data")`. For plotting, you need just one name: the **DataSet name** a **DataCombined** references, which `getObservedDataNames()` lists.
+names(both)
+```
+
+## Observed data
+
+Comparing simulated curves against measurements is what makes a diagnostic figure useful. A project declares its observed data and loads the data when a figure needs it. `vignette("how-to-use-observed-data")` shows how observed data enters a project: the four source types, the source definitions, and `loadObservedData()`. For plotting, you need one name: the **DataSet name** that a DataCombined uses. `getObservedDataNames()` lists the names of all `DataSet` that are available in the project.
 
 ```{r observed}
 getObservedDataNames(project)
 ```
 
-Read this name from `getObservedDataNames()` rather than typing the long, fully qualified Excel name by hand. The predefined `aciclovir_individual` **DataCombined** already pairs the simulated curve with it, which is why the figure above overlays measurements on the prediction. Reference the same name when you write your own **DataCombined**.
+Copy the name from `getObservedDataNames()` rather than typing it by hand: it is long and easy to mistype. The predefined `aciclovir_individual` DataCombined already pairs the simulated curve with it, which is why the figure above shows the measurements on top of the prediction. Use the same name when you write your own DataCombined.
 
 ## Create your own figures
 
-Beyond a project's predefined figures, you can describe new ones in R with `addDataCombined()`, `addPlot()`, and `addPlotGrid()`. Like every other `add*` function, these edit the project in memory; `saveProject()` then writes each definition to the project's `definitions/data-combined/`, `definitions/plots/`, or `definitions/plot-grids/` folder. Because you made a writable copy above, a save lands in the temporary project, not the installed package.
+Beyond a project's predefined figures, you can create new ones in R with `addDataCombined()`, `addPlot()`, and `addPlotGrid()`. Like every other `add*` function, these change the project in your R session only. `saveProject()` writes the changes to the project files, one file per definition in the `definitions/data-combined/`, `definitions/plots/`, and `definitions/plot-grids/` folders.
 
-First, define a **DataCombined** that pairs the simulated peripheral-venous-blood curve with the observed data. Curves that share a `group` are plotted together.
+A new figure takes three steps: a DataCombined collects the curves, a Plot draws them, and a Plot Grid arranges the Plots into a figure.
+
+### Add simulation results to a DataCombined
+
+Read [Working with DataCombined](https://www.open-systems-pharmacology.org/OSPSuite-R/articles/data-combined.html) for details on the `DataCombined` concept.
+
+A simulated curve in a DataCombined names a `scenario` and a `path`: the scenario whose results to draw, and the model output to draw from them. `path` takes either of two forms:
+
+- the full model path in OSPS notation, such as `"Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)"`
+- the id of an Output Path definition, such as `"aciclovir_pvb"`
+
+Output Path definitions are the project's list of named model outputs. They are stored in the `definitions/output-paths/` folder, one file per id, and you add one with `addOutputPath()` (see `vignette("how-to-design-scenarios")`). Print them to see which ids you can use, and pick out one by its id to see the full path behind it:
+
+```{r output-paths}
+project$definitions$outputPaths
+project$definitions$outputPaths[["aciclovir_pvb"]]
+```
+
+Either form draws the same curve. The scenario must record that output, so check that the output path is among the scenario's `outputPaths`.
+
+`label` is optional on a simulated curve. Leave it out and the curve is named by what you wrote in `path`. Write the output-path id there to get a short legend entry:
+
+```{r add-datacombined-short}
+addDataCombined(
+  project,
+  id = "aciclovir_short",
+  simulated = list(list(
+    scenario = "aciclovir_iv",
+    path = "Aciclovir_PVB"
+  ))
+)
+```
+
+Case does not matter in an output-path id: `Aciclovir_PVB` finds the output path `aciclovir_pvb`, and the legend shows `Aciclovir_PVB` as you wrote it. A `path` that names no output-path id is read as a full model path, so a mistyped id is not reported as an unknown id.
+
+### Add observed data to a DataCombined
+
+A DataCombined can also hold observed data, listed under `observed`. Each observed curve names its DataSet by the DataSet name from `getObservedDataNames()` (see [Observed data](#observed-data)). The DataCombined below pairs the simulated peripheral venous blood curve, written here with its full path, with the observed data. Give both curves the same `group`.
 
 ```{r add-datacombined}
 observedName <- getObservedDataNames(project)[1]
@@ -119,22 +211,21 @@ addDataCombined(
 )
 ```
 
-`label` is optional on a simulated curve. Leave it out and the curve is named by whatever you wrote in `path`, so naming the output by its **output-path id** gives a short legend entry without repeating the name:
+Curves with the same `group` share one color and one legend entry. In the figures above, the colored legend entry `Aciclovir PVB` is the group, and the black entries are the curve labels. The group matters most for the observed-versus-simulated and residual plots: they compare a simulated curve only with the observed data in the same group. Without a group, those plots have nothing to compare, and `createPlots()` leaves them out of its result with a warning.
 
-```{r add-datacombined-short}
-addDataCombined(
-  project,
-  id = "aciclovir_short",
-  simulated = list(list(
-    scenario = "aciclovir_iv",
-    path = "Aciclovir_PVB"
-  ))
-)
-```
+An observed curve always needs a `label`, because DataSet names are long and make poor legend entries. Give every curve in one DataCombined its own label. A simulated curve without `label` is labeled by its `path`, so two such curves with the same `path`, for example the same output from two scenarios, clash. `addDataCombined()` stops on a repeated label and adds nothing.
 
-An output-path id is matched the way the project's other references are matched, so its spelling need not be the canonical one: `Aciclovir_PVB` finds the declared `aciclovir_pvb`. `label` is still required on an observed curve, because DataSet names are long and make poor legend entries. Within one **DataCombined**, the labels of all curves must be distinct, counting the ones taken from `path`; a repeat stops the plot rather than dropping a curve.
+### Choose a plot type
 
-Next, describe a **Plot** that draws from this **DataCombined**. The `plotType` selects the kind of chart: `individual` and `population` for time profiles, `observedVsSimulated`, `residualsVsSimulated`, and `residualsVsTime` for the diagnostic charts. Any plot setting can be passed through `...`, for example a `title`, an axis unit, axis limits, or a line color; `vignette("reference-definition-fields")` lists them and the plot types each one applies to.
+Next, describe a Plot that draws from this DataCombined. `plotType` selects the kind of chart, see [Plotting with `{ospsuite.plots}`](https://www.open-systems-pharmacology.org/OSPSuite-R/articles/plotting-with-ospsuite-plots.html) for details in the different plot types.
+
+- `individual`: a time profile.
+- `population`: a time profile with a band you choose, for a population scenario.
+- `observedVsSimulated`: observed values against simulated values.
+- `residualsVsSimulated`: residuals against simulated values.
+- `residualsVsTime`: residuals against time.
+
+Pass any plot setting through `...`, for example a `title`, an axis unit, axis limits, or a line color. `vignette("reference-definition-fields")` lists every setting and the plot types it applies to.
 
 ```{r add-plot}
 addPlot(
@@ -147,18 +238,44 @@ addPlot(
 )
 ```
 
-Finally, compose the **Plot** into a **Plot Grid**. A grid can hold a single plot or several; list every plot id you want in the figure.
+The same DataCombined can be used for plots of other types. Here an observed-versus-simulated plot, with fold lines at 2-fold around the line of identity, and a plot of the residuals over time:
+
+```{r add-plot-diagnostics}
+addPlot(
+  project,
+  id = "aciclovir_obs_vs_sim",
+  dataCombined = "aciclovir_report",
+  plotType = "observedVsSimulated",
+  title = "Observed vs. simulated",
+  foldDistance = 2
+)
+
+addPlot(
+  project,
+  id = "aciclovir_residuals",
+  dataCombined = "aciclovir_report",
+  plotType = "residualsVsTime",
+  title = "Residuals over time",
+  xUnit = "h"
+)
+```
+
+Both compare the simulated curve with the observed data of the same `group`, which is why `aciclovir_report` gives both curves the group `Aciclovir PVB`.
+
+### Arrange plots in a Plot Grid
+
+Finally, add the Plots to a Plot Grid. A grid can hold one plot or several; list every plot id you want in the figure, in the order they should appear.
 
 ```{r add-grid}
 addPlotGrid(
   project,
   id = "report_figure",
-  plots = "aciclovir_profile",
+  plots = c("aciclovir_profile", "aciclovir_obs_vs_sim", "aciclovir_residuals"),
   title = "Aciclovir report figure"
 )
 ```
 
-Build the grid you just defined the same way as the predefined ones.
+Create the figure using the grid:
 
 ```{r build-authored}
 reportGrids <- createPlots(
@@ -170,18 +287,19 @@ reportGrids <- createPlots(
 reportGrids$report_figure
 ```
 
-## Plot a population with percentile bands
+Save the project to write the new definitions to the project files:
 
-A population scenario needs `plotType = "population"`, which draws percentile bands across the virtual individuals instead of a single curve. Run the example project's population scenario first:
+```{r save}
+saveProject(project)
 
-```{r run-population}
-populationResults <- runScenarios(
-  project,
-  scenarios = "aciclovir_iv_population"
-)
+list.files(file.path(project_dir, "definitions", "plots"))
 ```
 
-The **DataCombined** is written exactly as for an individual scenario: name the population scenario and the output path.
+## Plot a population with percentile bands
+
+A population scenario is drawn as a band across the virtual individuals with either time-profile type. Use `plotType = "population"` to choose the band: which percentiles, or a mean with standard deviations. The results of the population scenario `aciclovir_iv_population` are already in `scenarioResults`.
+
+The DataCombined is written exactly as for an individual scenario: name the population scenario and the output path.
 
 ```{r population-datacombined}
 addDataCombined(
@@ -195,7 +313,7 @@ addDataCombined(
 )
 ```
 
-`quantiles` chooses which percentiles are drawn. It takes fractions, not percentages, so the conventional 5th, 50th and 95th percentiles are `c(0.05, 0.5, 0.95)`.
+`quantiles` chooses which percentiles are drawn. It takes fractions, not percentages, so the usual 5th, 50th, and 95th percentiles are `c(0.05, 0.5, 0.95)`.
 
 ```{r population-plot}
 addPlot(
@@ -205,33 +323,32 @@ addPlot(
   plotType = "population",
   quantiles = c(0.05, 0.5, 0.95),
   title = "Aciclovir IV, 5th / 50th / 95th percentile",
+  xUnit = "h",
   yAxisScale = "log"
 )
 
 populationPlots <- createPlots(
   project,
   plots = "aciclovir_population_range",
-  scenarioResults = populationResults
+  scenarioResults = scenarioResults
 )
 
 populationPlots$aciclovir_population_range
 ```
 
-To show a different range, change the fractions: `quantiles = c(0.25, 0.5, 0.75)` draws the interquartile band, and a narrow band such as `c(0.45, 0.5, 0.55)` de-emphasises the spread. Pass three probabilities (lower band, middle, upper band); a single value is not a supported shape and fails when the figure is built.
+To show a different range, change the fractions: `quantiles = c(0.25, 0.5, 0.75)` draws the interquartile range. Pass exactly three fractions: lower edge, middle line, upper edge.
 
-Three fields apply only to `plotType = "population"`. Setting one on any other plot type is ignored when the figure is built, and validation warns about it:
+Three fields apply only to `plotType = "population"`:
 
 | Field | Controls |
 | --- | --- |
-| `quantiles` | Which percentiles are drawn, as fractions. |
-| `aggregation` | How the individual trajectories are summarized. |
-| `nsd` | The number of standard deviations, when aggregating by mean and standard deviation. |
+| `quantiles` | Which percentiles are drawn, as three fractions. Default: the 5th, 50th, and 95th percentiles. Ignored if `aggregation` is not `quantiles` |
+| `aggregation` | How the individual curves are summarized: `"quantiles"` (the default), `"arithmetic"` (mean and standard deviation), or `"geometric"` (geometric mean and geometric standard deviation). |
+| `nsd` | How many standard deviations the band spans, with `aggregation` set to `"arithmetic"` or `"geometric"`. Default: 1. Ignored when `aggregation = "quantiles"`. |
 
-## Apply the ESQlabs house style
+## Customize the plots
 
-`createPlots()` draws every plot with the ESQlabs house style (text sizes, line and point sizes, legend at the top left, and the ESQlabs colors), so the figures above are house-styled out of the box. The house values are those of `createEsqlabsPlotConfiguration()`, and every setting you leave out of a **Plot** takes them.
-
-To change the look of one plot, set its fields. Here the curve and its observed points are drawn in dark red, the legend goes inside the panel, and the title is bold:
+To change the look of one plot, provide the different properties as arguments to `addPlot`. Here the curve and its observed points are drawn in dark red, the legend goes inside the panel, and the title is bold:
 
 ```{r styled-plot}
 addPlot(
@@ -256,71 +373,197 @@ styledPlots <- createPlots(
 styledPlots$aciclovir_styled
 ```
 
-On a time profile, a curve and its observed points share one color, set by `linesColor`; `pointsColor` colors the points of the observed-versus-simulated and residual plots.
-
-When you draw plots yourself with the `{ospsuite}` plot functions, such as `plotTimeProfile()` or `plotPredictedVsObserved()`, `createEsqlabsPlotGridConfiguration()` gives you the ESQlabs grid layout (panel tags, title size, alignment). Add your plots to it and draw the figure with `plotGrid()`:
-
-```{r esqlabs-grid}
-dataCombined <- createDataCombined(
-  project,
-  dataCombined = "aciclovir_report",
-  scenarioResults = scenarioResults
-)$aciclovir_report
-
-gridConfig <- createEsqlabsPlotGridConfiguration()
-gridConfig$title <- "Aciclovir IV, linear and log scale"
-gridConfig$addPlots(list(
-  plotTimeProfile(dataCombined),
-  plotTimeProfile(dataCombined, yScale = "log")
-))
-plotGrid(gridConfig)
-```
-
-`createEsqlabsPlotConfiguration()` returns the ESQlabs settings as a named list. The sensitivity plots take it as their `defaultPlotConfiguration`; see `vignette("how-to-customize-sensitivity-plots")`.
-
-The palette behind that look is `esqlabsColors()`, which extrapolates between the ESQlabs blue, red, and green for any number of curves. Use it whenever you need house colors outside the plotting helpers.
-
-```{r colors}
-esqlabsColors(3)
-```
-
 ## Export a finished figure
 
-A **Plot Grid** is a standard `ggplot`/`patchwork` object, so save it with `ggplot2::ggsave()`. Choose the file extension to pick the format (`.png`, `.pdf`, `.svg`, and so on) and set the size and resolution to suit your report.
+Save a figure with `ospsuite.plots::exportPlot()`. It writes one Plot or Plot Grid to a file, by default as a PNG image 16 cm wide at 300 dpi. When you do not give a `height`, it is calculated from the figure, so the panels keep their proportions and the text stays the same size in every figure you export. A legend above or below the panels that needs more room than that makes the figure wider: the report figure below, with its three legends in one row, comes out about 24 cm wide.
 
-```{r ggsave}
-outputDir <- withr::local_tempdir()
+The usual place for figures is the `Figures` folder in the project's results folder. `exportPlot()` creates the folder if it does not exist yet.
 
-ggplot2::ggsave(
-  filename = file.path(outputDir, "aciclovir_report.png"),
-  plot = reportGrids$report_figure,
-  width = 7,
-  height = 5,
-  dpi = 300
+```{r export-plot}
+figuresFolder <- file.path(project$paths$outputFolder, "Figures")
+
+ospsuite.plots::exportPlot(
+  reportGrids$report_figure,
+  filepath = figuresFolder,
+  filename = "aciclovir_report"
+)
+
+list.files(figuresFolder)
+```
+
+- **`filename` is given without an extension.** `exportPlot()` adds the extension of the file format, and replaces any extension you type: `"aciclovir_report.pdf"` still writes a PNG file.
+- **The format is set by `device`**: `"png"` (the default), `"pdf"`, `"svg"`, `"jpeg"`, `"tiff"`, or `"eps"`.
+- **The size is set by `width` and `height`**, in centimeters. With `width` alone, a wide legend can still make the figure wider; give both to fix the size exactly.
+- **Characters a file name cannot hold**, such as `/`, `:`, or `|`, are replaced by `_`, and `µ` by `u`. `exportPlot()` warns when it changes a name.
+
+Here the same figure is written as a PDF, 24 cm wide and 18 cm high:
+
+```{r export-plot-pdf}
+ospsuite.plots::exportPlot(
+  reportGrids$report_figure,
+  filepath = figuresFolder,
+  filename = "aciclovir_report",
+  device = "pdf",
+  width = 24,
+  height = 18
 )
 ```
 
-To export several figures, loop over the named list that `createPlots()` returns and write each grid to its own file, deriving the file name from the grid name.
+To change the defaults for every export in your R session, set them once with `ospsuite.plots::setOspsuite.plots.option()`, for example `ospsuite.plots::setOspsuite.plots.option("exportDevice", "pdf")`. The options are `exportWidth`, `exportUnits`, `exportDevice`, and `exportDpi`.
 
-```{r ggsave-loop}
-for (name in names(reportGrids)) {
-  ggplot2::ggsave(
-    filename = file.path(outputDir, paste0(name, ".png")),
-    plot = reportGrids[[name]]
+To export several figures, loop over the list that `createPlots()` returns and write each one to its own file, named after the Plot Grid or Plot:
+
+```{r export-plot-loop}
+for (name in names(plotGrids)) {
+  ospsuite.plots::exportPlot(
+    plotGrids[[name]],
+    filepath = figuresFolder,
+    filename = name
   )
 }
+
+list.files(figuresFolder)
 ```
 
-## Reach for a chart type this article does not cover
+## Work with a DataCombined in R
 
-The charts above are produced by the `{ospsuite}` plot functions, which are built on [`{ospsuite.plots}`](https://www.open-systems-pharmacology.org/OSPSuite.Plots/). The `{ospsuite}` DataCombined articles cover those chart types and their customization in depth.
+To draw a figure, `createPlots()` turns each DataCombined definition into a `DataCombined` object, the object the `{ospsuite}` chart functions draw from. `createDataCombined()` gives you those objects directly. Use it when you need the numbers behind a figure, or a chart that no `plotType` draws.
 
-Some chart types are not in `{ospsuite}` at all and live only in `{ospsuite.plots}`. If the figure you need is not one of the five `plotType` values, look there before building it by hand: it covers additional PBPK reporting figures on top of the ones reachable through a Plot definition.
+### Create a DataCombined from its definition
 
-Because everything `createPlots()` returns is an ordinary `ggplot` or `patchwork` object, a chart from another package and a chart from a Plot definition compose in the same figure.
+`createDataCombined()` takes the project, the ids of the DataCombined definitions to build, and the scenario results. It returns a list named by id. Instead of `DataCombined` ids, you can pass `plotGrids` to build every DataCombined that the named Plot Grids draw from.
+
+```{r create-datacombined}
+dataCombinedList <- createDataCombined(
+  project,
+  dataCombined = "aciclovir_report",
+  scenarioResults = scenarioResults
+)
+names(dataCombinedList)
+
+dataCombined <- dataCombinedList$aciclovir_report
+```
+
+The DataCombined is filled the same way as for a figure: the simulated curves come from `scenarioResults`, the observed data from the project's observed-data sources, and the curve labels, groups, offsets, and scale factors from the definition. `$toDataFrame()` returns every point of every curve as a table, one row per point:
+
+```{r datacombined-table}
+curveTable <- dataCombined$toDataFrame()
+head(curveTable[, c(
+  "name",
+  "group",
+  "dataType",
+  "xValues",
+  "xUnit",
+  "yValues",
+  "yUnit"
+)])
+```
+
+Each curve keeps its own units in this table: here the simulated curve is in minutes and µmol/l, and the observed data in hours and mg/l.
+
+### Calculate residuals without a plot
+
+`ospsuite::calculateResiduals()` pairs every observed point with the simulated value at the same time, within each group that holds both, and returns the residuals as a table. Use it when you need the residuals as numbers, for example for a goodness-of-fit summary or a table in a report, rather than as a chart. `scaling` sets how a residual is calculated:
+
+- `"log"`: log(simulated) minus log(observed), the residuals the residual plots above draw.
+- `"linear"`: simulated minus observed, in the unit of the observed data.
+- `"ratio"`: observed divided by simulated.
+
+```{r residuals}
+residuals <- ospsuite::calculateResiduals(dataCombined, scaling = "log")
+head(residuals[, c(
+  "group",
+  "xValues",
+  "yValuesObserved",
+  "yValuesSimulated",
+  "residualValues"
+)])
+
+# Mean absolute log residual
+mean(abs(residuals$residualValues))
+```
+
+Here the times and values come in hours and mg/l, the units of the observed data. Pass `xUnit` and `yUnit` to choose the units.
+
+### Draw a chart that has no plot type
+
+Every `{ospsuite}` chart function takes a DataCombined, including the ones no `plotType` covers. `ospsuite::plotResidualsAsHistogram()`, for example, draws the distribution of the residuals. The result is an ordinary `ggplot` object, like everything `createPlots()` returns, so the two can share one figure. Put them side by side with `patchwork::wrap_plots()`:
+
+```{r compose}
+residualHistogram <- ospsuite::plotResidualsAsHistogram(dataCombined)
+
+patchwork::wrap_plots(single$p1, residualHistogram)
+```
+
+The chart takes the `{ospsuite}` style, not the ESQlabs house style. "Where to go next" below lists more chart types without a `plotType`.
+
+### Build a DataCombined by hand
+
+For a one-off comparison that you do not want to keep in the project, create an empty DataCombined with `DataCombined$new()` and fill it yourself. `$addSimulationResults()` takes the simulation results of a scenario, found in `scenarioResults` under the scenario's id, and `$addDataSets()` takes observed data, which `loadObservedData()` loads from the project as a list named by DataSet name. As in a definition, give the simulated and the observed curve the same group to compare them:
+
+```{r datacombined-by-hand}
+handMade <- DataCombined$new()
+
+handMade$addSimulationResults(
+  scenarioResults$aciclovir_iv$results,
+  quantitiesOrPaths = "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)",
+  names = "Aciclovir simulated",
+  groups = "Aciclovir PVB"
+)
+
+observedData <- loadObservedData(project)
+handMade$addDataSets(
+  observedData[[observedName]],
+  names = "Aciclovir observed",
+  groups = "Aciclovir PVB"
+)
+
+plotTimeProfile(handMade, xUnit = "h")
+```
+
+A DataCombined built this way exists only in your R session: `saveProject()` does not store it, and `createPlots()` cannot draw it. For a figure you want to keep and build again, write a DataCombined definition with `addDataCombined()` instead.
+
+## Plots in Excel
+
+The preferred way to create and edit figures is through the R functions above. The Excel files of a project show the same definitions as spreadsheets, which is useful for reviewing many figures at once. Editing them changes nothing until you read them back with `importProjectFromExcel()`, and the import rewrites the whole project from all the Excel files, so any definition you created in R and did not export is lost. `vignette("how-to-set-up-a-project")` explains how to write and read the Excel files, and how to check with `projectStatus()` whether they still match the project.
+
+All three building blocks are in one file, `Plots.xlsx` in the project's `Configurations/` folder, one sheet each:
+
+| Sheet | Holds | Main columns |
+| --- | --- | --- |
+| `DataCombined` | One row per curve. The rows of one DataCombined share its id. | `DataCombinedName`, `dataType`, `label`, `group`, then `scenario` and `path` for a simulated curve, or `dataSet` for observed data |
+| `plotConfiguration` | One row per Plot. | `plotId`, `plotType`, `dataCombined`, then one column per plot setting |
+| `plotGrids` | One row per Plot Grid. | `plotGridId`, `plots`, `title` |
+
+**The `DataCombined` sheet** has one row per curve, not one per DataCombined. `DataCombinedName` is the id of the DataCombined the curve belongs to, so a DataCombined with a simulated curve and observed data takes two rows with the same `DataCombinedName`. `dataType` says which kind of curve the row holds, `simulated` or `observed`, and decides which columns it needs:
+
+- A simulated row names `scenario` and `path`. As in R, `path` is either a full model path or an output-path id, and `label` is optional.
+- An observed row names the DataSet in `dataSet` and always needs a `label`.
+- `group` pairs simulated and observed curves, as described in "Add observed data to a DataCombined".
+- The offset and scale-factor columns (`xOffsets`, `xOffsetsUnits`, `yOffsets`, `yOffsetsUnits`, `xScaleFactors`, `yScaleFactors`) shift or scale a curve. Leave them empty to draw the curve as it is. See [DataCombined: Transformations](https://www.open-systems-pharmacology.org/OSPSuite-R/articles/data-combined.html#transformations) for details on how transformations are applied.
+
+**The `plotConfiguration` sheet** has one row per Plot. `plotId`, `plotType`, and `dataCombined` correspond to the `id`, `plotType`, and `dataCombined` arguments of `addPlot()`. Every other column is a plot setting with the same name as in R, such as `title`, `xUnit`, `yAxisScale`, or `foldDistance`. The export writes a column only for the settings that at least one Plot uses, so to set another one, add a column named after the setting. `vignette("reference-definition-fields")` lists every setting and the plot types it applies to. A column with a name that is not a plot setting is reported by `validateProject()` as a critical error.
+
+**The `plotGrids` sheet** has one row per Plot Grid: its id in `plotGridId`, the Plots it arranges in `plots`, in the order they appear, and its `title`.
+
+The rules of the other Excel files apply here too:
+
+- **An empty cell leaves the setting unset**, so the Plot takes the ESQlabs default value or the default of the plotting function, as when you leave the setting out of `addPlot()`.
+- **A cell with several values separates them with commas**: `p1, aciclovir_profile` in `plots`, `0, 24` in `xValuesLimits`, or `0.05, 0.5, 0.95` in `quantiles`.
+- **Ids are made lowercase** on import, together with every reference to them.
+- **An `exportConfiguration` sheet** from a project made with an earlier version of `{esqlabsR}` is not read: the import warns about its rows. Save figures with `exportPlot()` instead (see "Export a finished figure").
+
+To change a figure in Excel, edit its rows and save the file, then read the Excel files back with `importProjectFromExcel()`, load the project with `loadProject()`, and build the figure with `createPlots()`.
 
 ## Where to go next
 
+The charts above are drawn by the `{ospsuite}` plot functions, which are built on [`{ospsuite.plots}`](https://www.open-systems-pharmacology.org/OSPSuite.Plots/). Three `{ospsuite}` articles cover those charts and how to change them: [Working with `DataCombined` class](https://www.open-systems-pharmacology.org/OSPSuite-R/articles/data-combined.html), [Visualizations with `DataCombined`](https://www.open-systems-pharmacology.org/OSPSuite-R/articles/data-combined-plotting.html), and [Plotting with ospsuite.plots](https://www.open-systems-pharmacology.org/OSPSuite-R/articles/plotting-with-ospsuite-plots.html).
+
+Some chart types have no `plotType`. Look for them before you build a chart by hand:
+
+- `{ospsuite}`: `plotResidualsAsHistogram()` and `plotQuantileQuantilePlot()`.
+- `{ospsuite.plots}`: `plotBoxWhisker()`, `plotHistogram()`, `plotQQ()`, `plotRatioVsCov()`, `plotRangeDistribution()`, and `plotForest()`.
+
 For loading the measurements these figures compare against, see `vignette("how-to-use-observed-data")`. For building and running the scenarios that feed them, see `vignette("how-to-design-scenarios")` and `vignette("how-to-run-simulations")`.
 
-For the plot types and every configuration field, see `vignette("reference-definition-fields")`. For why a figure takes three definitions and why `createPlots()` is keyed by plot grid, see `vignette("about-the-plotting-model")`.
+For the plot types and every configuration field, see `vignette("reference-definition-fields")`. For why a figure takes three definitions and why `createPlots()` returns Plot Grids, see `vignette("about-the-plotting-model")`.

@@ -18,7 +18,7 @@ accepted, and then supplies every field; see the section below.}
 \code{population}, \code{application}, \code{parameterSets}, \code{initialConditions},
 \code{outputPaths}, \code{simulationTime}, \code{simulationTimeUnit}, \code{steadyState},
 \code{steadyStateTime}, \code{steadyStateTimeUnit}, \code{overwriteFormulasInSS},
-\code{readPopulationFromCSV}, \code{solverSettings}. Each takes the value
+\code{readPopulationFromCSV}, \code{solverSettings}, \code{label}. Each takes the value
 \code{\link[=addScenario]{addScenario()}} documents for it, but has no default here: an omitted
 field is left untouched, a field passed as \code{NULL} is cleared.
 Scalar-per-definition fields recycle/align across \code{id}; \code{parameterSets},
@@ -132,10 +132,12 @@ sc$modelFile <- "Aciclovir_v2.pkml"
 addScenario(project, sc, overwrite = TRUE)
 }\if{html}{\out{</div>}}
 
-A field the record leaves unset is left to this function's default, exactly
-as an absent key in the scenario's definition file is. To clear an optional
-field, name the id and pass \code{NULL} for it
-(\code{setScenario(project, "sc", individual = NULL)}).
+An optional field the record leaves empty (\code{label}, \code{individual},
+\code{population}, \code{application}, \code{simulationTime}, \code{solverSettings}, or an
+empty reference vector) is empty in the scenario too, so
+\verb{sc$individual <- NULL; setScenario(project, sc)} removes the individual. A
+unit the record leaves empty (\code{simulationTimeUnit}, \code{steadyStateTimeUnit})
+is left to this function's default.
 }
 
 \seealso{

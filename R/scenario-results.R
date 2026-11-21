@@ -31,7 +31,7 @@ saveScenarioResults <- function(
   outputFolder = NULL,
   saveSimulationsToPKML = TRUE
 ) {
-  validateIsLogical(saveSimulationsToPKML)
+  ospsuite.utils::validateIsLogical(saveSimulationsToPKML)
 
   outputFolder <- outputFolder %||%
     file.path(
@@ -84,7 +84,7 @@ saveScenarioResults <- function(
           )
         }
         # Save population
-        if (isOfType(simulatedScenariosResults[[i]]$population, "Population")) {
+        if (ospsuite.utils::isOfType(simulatedScenariosResults[[i]]$population, "Population")) {
           ospsuite::exportPopulationToCSV(
             simulatedScenariosResults[[i]]$population,
             filePath = file.path(
@@ -175,11 +175,11 @@ loadScenarioResults <- function(scenarios, resultsFolder) {
     # Used only for loading the results, the name of the scenario is not changed.
     scenarioNameForPath <- gsub("[\\\\/]", "_", scenarioName)
 
-    simulation <- loadSimulation(
+    simulation <- ospsuite::loadSimulation(
       file.path(resultsFolder, paste0(scenarioNameForPath, ".pkml"))
     )
 
-    results <- importResultsFromCSV(
+    results <- ospsuite::importResultsFromCSV(
       simulation = simulation,
       filePaths = file.path(resultsFolder, paste0(scenarioNameForPath, ".csv"))
     )
@@ -191,10 +191,10 @@ loadScenarioResults <- function(scenarios, resultsFolder) {
     )
     population <- NULL
     if (file.exists(populationPath)) {
-      population <- loadPopulation(populationPath)
+      population <- ospsuite::loadPopulation(populationPath)
     }
 
-    outputValues <- getOutputValues(
+    outputValues <- ospsuite::getOutputValues(
       results,
       quantitiesOrPaths = results$allQuantityPaths,
       population = population,

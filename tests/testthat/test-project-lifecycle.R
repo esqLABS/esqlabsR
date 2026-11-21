@@ -127,7 +127,7 @@ test_that("loadProject() warns on a dangling cross-reference", {
       observedData = list(),
       outputPaths = list(O1 = "Organism|A|Concentration in container"),
       scenarios = list(list(
-        name = "S",
+        id = "S",
         individual = "Ghost",
         modelFile = "m.pkml",
         outputPaths = list("O1")

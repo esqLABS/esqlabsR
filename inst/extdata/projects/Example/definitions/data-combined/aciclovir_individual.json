@@ -1,10 +1,10 @@
 {
-  "dataCombinedId": "aciclovir_individual",
+  "id": "aciclovir_individual",
   "simulated": [
     {
       "label": "Aciclovir simulated",
       "scenario": "aciclovir_iv",
-      "path": "Organism|PeripheralVenousBlood|Aciclovir|Plasma (Peripheral Venous Blood)",
+      "path": "aciclovir_pvb",
       "group": "Aciclovir PVB",
       "xOffsets": null,
       "xOffsetsUnits": null,

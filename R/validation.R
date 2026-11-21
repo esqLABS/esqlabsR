@@ -474,14 +474,14 @@ validationSummary <- function(validationResults) {
 .warnIfReferenced <- function(project, definitionType, id) {
   if (definitionType == "parameterSet") {
     # A single parameter set can be referenced from three sides: a scenario's
-    # `modelParameterSets`, an individual's `parameterSets`, an application's
+    # `parameterSets`, an individual's `parameterSets`, an application's
     # `parameterSets`. Scan all three since they now share one namespace.
     holders <- character()
     scenarios <- project$definitions$scenarios %||% list()
     for (scName in names(scenarios)) {
       if (
         id %in%
-          (scenarios[[scName]]$modelParameterSets %||% character(0))
+          (scenarios[[scName]]$parameterSets %||% character(0))
       ) {
         holders <- c(holders, paste0("scenario '", scName, "'"))
       }
@@ -586,9 +586,9 @@ validationSummary <- function(validationResults) {
     sc <- scenarios[[name]]
     hit <- switch(
       definitionType,
-      "individual" = identical(sc$individualId, id),
-      "population" = identical(sc$populationId, id),
-      "application" = identical(sc$applicationProtocol, id),
+      "individual" = identical(sc$individual, id),
+      "population" = identical(sc$population, id),
+      "application" = identical(sc$application, id),
       "outputPath" = {
         # `sc$outputPaths` is a named vector keyed by output-path id (names are
         # the ids, values the resolved paths). Match on the id, not the resolved
@@ -914,7 +914,7 @@ validationSummary <- function(validationResults) {
 #'
 #' On-disk section keys are canonicalized (lower-cased, slugified) by the
 #' authoring / load path, but a hand-edited `Project.json` can carry a
-#' non-canonical reference (e.g. `individualId: "Adult"` against a disk key of
+#' non-canonical reference (e.g. `individual: "Adult"` against a disk key of
 #' `adult`). Cross-reference resolution must compare on the same footing, so
 #' both the reference side and the candidate keys are run through the same
 #' deterministic transform (`.canonicalizeOneId()`) before the `%in%` /
@@ -1095,9 +1095,8 @@ validationSummary <- function(validationResults) {
     sc <- scenarioList[[scName]]
 
     if (
-      !is.null(sc$individualId) &&
-        !is.na(sc$individualId) &&
-        !.refResolves(sc$individualId, individualIds)
+      !is.null(sc$individual) &&
+        !.refResolves(sc$individual, individualIds)
     ) {
       result$addCriticalError(
         "Invalid Reference",
@@ -1105,17 +1104,16 @@ validationSummary <- function(validationResults) {
           "Scenario '",
           scName,
           "' references undefined individual '",
-          sc$individualId,
+          sc$individual,
           "'",
-          .suggestSuffix(sc$individualId, individualIds)
+          .suggestSuffix(sc$individual, individualIds)
         )
       )
     }
 
     if (
-      !is.null(sc$populationId) &&
-        !is.na(sc$populationId) &&
-        !.refResolves(sc$populationId, populationIds)
+      !is.null(sc$population) &&
+        !.refResolves(sc$population, populationIds)
     ) {
       result$addCriticalError(
         "Invalid Reference",
@@ -1123,15 +1121,15 @@ validationSummary <- function(validationResults) {
           "Scenario '",
           scName,
           "' references undefined population '",
-          sc$populationId,
+          sc$population,
           "'",
-          .suggestSuffix(sc$populationId, populationIds)
+          .suggestSuffix(sc$population, populationIds)
         )
       )
     }
 
-    if (!is.null(sc$modelParameterSets) && length(sc$modelParameterSets) > 0) {
-      invalidSets <- .danglingRefs(sc$modelParameterSets, parameterSetKeys)
+    if (!is.null(sc$parameterSets) && length(sc$parameterSets) > 0) {
+      invalidSets <- .danglingRefs(sc$parameterSets, parameterSetKeys)
       if (length(invalidSets) > 0) {
         result$addCriticalError(
           "Invalid Reference",
@@ -1163,9 +1161,8 @@ validationSummary <- function(validationResults) {
     }
 
     if (
-      !is.null(sc$applicationProtocol) &&
-        !is.na(sc$applicationProtocol) &&
-        !.refResolves(sc$applicationProtocol, applicationKeys)
+      !is.null(sc$application) &&
+        !.refResolves(sc$application, applicationKeys)
     ) {
       result$addCriticalError(
         "Invalid Reference",
@@ -1173,9 +1170,9 @@ validationSummary <- function(validationResults) {
           "Scenario '",
           scName,
           "' references undefined application '",
-          sc$applicationProtocol,
+          sc$application,
           "'",
-          .suggestSuffix(sc$applicationProtocol, applicationKeys)
+          .suggestSuffix(sc$application, applicationKeys)
         )
       )
     }

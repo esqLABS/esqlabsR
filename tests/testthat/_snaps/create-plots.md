@@ -1,19 +1,19 @@
-# .assertPlotGridsBuildable aborts on a grid missing its plotGridId
+# .assertPlotGridsBuildable aborts on a grid missing its id
 
     Code
-      .assertPlotGridsBuildable(list(list(plotIds = "p1")), plotIDs = "p1")
+      .assertPlotGridsBuildable(list(list(plots = "p1")), plotIDs = "p1")
     Condition
       Error in `.assertPlotGridsBuildable()`:
-      ! Every plot grid must declare a `plotGridId`.
+      ! Every plot grid must declare an id.
 
-# .assertPlotConfigurationsBuildable aborts on a plot missing its plotId
+# .assertPlotConfigurationsBuildable aborts on a plot missing its id
 
     Code
-      .assertPlotConfigurationsBuildable(list(list(dataCombinedId = "dc", plotType = "individual")),
+      .assertPlotConfigurationsBuildable(list(list(dataCombined = "dc", plotType = "individual")),
       dataCombinedNames = "dc")
     Condition
       Error in `.assertPlotConfigurationsBuildable()`:
-      ! Every plot must declare a `plotId`.
+      ! Every plot must declare an id.
 
 # createPlots aborts on unknown plotGrids when stopIfNotFound
 
@@ -24,7 +24,7 @@
       Error in `createPlots()`:
       ! The following plot grids are not defined in the project: "DoesNotExist"
 
-# createPlots(plots) aborts on an unknown plotId when stopIfNotFound
+# createPlots(plots) aborts on an unknown plot id when stopIfNotFound
 
     Code
       createPlots(project, plots = "ghost_plot", scenarioResults = simulated,
@@ -46,9 +46,9 @@
 # the build guard rejects field problems even when validate = FALSE
 
     Code
-      .assertPlotConfigurationsBuildable(list(p1 = list(plotId = "p1",
-        dataCombinedId = "dc", plotType = "observedVsSimulated", xAxisScale = "log",
-        yAxisScale = "linear", pointSize = 2)), dataCombinedNames = "dc")
+      .assertPlotConfigurationsBuildable(list(p1 = list(id = "p1", dataCombined = "dc",
+        plotType = "observedVsSimulated", xAxisScale = "log", yAxisScale = "linear",
+        pointSize = 2)), dataCombinedNames = "dc")
     Condition
       Error in `.assertPlotConfigurationsBuildable()`:
       ! Invalid plot configuration fields:

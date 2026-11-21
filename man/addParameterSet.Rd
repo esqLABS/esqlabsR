@@ -23,9 +23,9 @@ The \code{project} object, invisibly.
 \description{
 Adds empty parameter sets to the project's single \code{parameterSets} section,
 vectorizing over a vector of ids (all N added in one in-memory edit). A
-scenario references the sets it applies through its \code{modelParameterSets}
-field, an individual or application through its \code{parameterSets} field; all
-three resolve against this one section.
+scenario, an individual or an application references the sets it applies
+through its \code{parameterSets} field; all three resolve against this one
+section.
 }
 \details{
 The id argument sets \code{N}, the number of definitions to act on, and cannot

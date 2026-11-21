@@ -101,7 +101,7 @@
 # a subscript assignment through a section accessor is rejected
 
     Code
-      project$definitions$scenarios[["aciclovir_iv"]] <- Scenario(scenarioName = "aciclovir_iv",
+      project$definitions$scenarios[["aciclovir_iv"]] <- Scenario(id = "aciclovir_iv",
         modelFile = "m.pkml")
     Condition
       Error in `[[<-`:
@@ -112,7 +112,7 @@
 # a nested field assignment through a section accessor is rejected
 
     Code
-      project$definitions$scenarios[["testscenario"]]$individualId <- "indiv1"
+      project$definitions$scenarios[["testscenario"]]$individual <- "indiv1"
     Condition
       Error in `[[<-`:
       ! scenarios is read-only and cannot be assigned into.

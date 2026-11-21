@@ -22,7 +22,8 @@ The \code{project} object, invisibly.
 Creates a deep copy of the scenario currently keyed \code{id} under
 \code{newId}, leaving the original untouched. The copy is a new definition
 written through to \code{newId} (the in-memory store and the on-disk project
-both gain an independent scenario).
+both gain an independent scenario). The copy has no \code{label}, since the
+label names the original; give it one with \code{setScenario(project, newId, label = ...)}.
 
 Both \code{id} and \code{newId} are canonicalized the same way \code{\link[=addScenario]{addScenario()}}
 canonicalizes an id (lowercased, made a safe single-path-segment id, with

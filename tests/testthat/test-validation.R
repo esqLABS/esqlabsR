@@ -190,7 +190,7 @@ test_that("validateProject() flips the validation flag when clean", {
 
 test_that("validateProject() leaves the validation flag FALSE on errors", {
   project <- .fakeProject(
-    scenarios = list(Bad = Scenario())
+    scenarios = list(Bad = Scenario(id = "Bad"))
   )
 
   results <- validateProject(project)
@@ -234,26 +234,26 @@ test_that(".validateOutputPaths warns when ids collide on a path", {
 # Section adapter: scenarios ----
 
 test_that(".validateScenarios flags missing modelFile and bad simulationType", {
-  sc <- Scenario()
+  sc <- Scenario(id = "s1")
   sc$modelFile <- ""
   result <- .validateScenarios(list(s1 = sc))
   expect_gte(length(result$critical_errors), 1)
 })
 
-test_that(".validateScenarios flags Population scenario without populationId", {
-  sc <- Scenario()
+test_that(".validateScenarios flags Population scenario without population", {
+  sc <- Scenario(id = "s1")
   sc$modelFile <- "model.pkml"
   sc$simulationType <- "Population"
-  sc$populationId <- ""
+  sc$population <- ""
   result <- .validateScenarios(list(s1 = sc))
   msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
-  expect_match(msgs, "populationId", all = FALSE)
+  expect_match(msgs, "has no population", all = FALSE)
 })
 
 test_that(".validateScenarios flags an unsound solverSettings block", {
   # Both authoring doors reject one, so this catches a hand-edited definition
   # file: the solver would otherwise take a truncated value in silence.
-  sc <- Scenario(modelFile = "model.pkml")
+  sc <- Scenario(id = "s1", modelFile = "model.pkml")
   sc$solverSettings <- list(reltol = 1e-6, mxStep = 1.5)
   result <- .validateScenarios(list(s1 = sc))
   msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
@@ -265,13 +265,14 @@ test_that(".validateScenarios flags an unsound solverSettings block", {
 })
 
 test_that(".validateScenarios passes a sound solverSettings block", {
-  sc <- Scenario(modelFile = "model.pkml")
+  sc <- Scenario(id = "s1", modelFile = "model.pkml")
   sc$solverSettings <- list(relTol = 1e-6, checkForNegativeValues = FALSE)
   expect_length(.validateScenarios(list(s1 = sc))$critical_errors, 0L)
 })
 
 test_that(".validateScenarios warns when modelFile does not exist on disk", {
   sc <- Scenario(
+    id = "s1",
     modelFile = "missing.pkml",
     simulationType = "Individual"
   )
@@ -287,6 +288,7 @@ test_that(".validateScenarios passes when modelFile exists on disk", {
   dir <- withr::local_tempdir()
   file.create(file.path(dir, "model.pkml"))
   sc <- Scenario(
+    id = "s1",
     modelFile = "model.pkml",
     simulationType = "Individual"
   )
@@ -306,6 +308,7 @@ test_that(".validateScenarios flags a modelFile that escapes the simulations fol
   # than give false assurance: an escaping relative `modelFile` is a critical
   # error here, not a silent pass.
   sc <- Scenario(
+    id = "s1",
     modelFile = "../../../../etc/passwd",
     simulationType = "Individual"
   )
@@ -327,9 +330,10 @@ test_that(".validateScenarios warns when a scenario's population csv is absent",
   dir <- withr::local_tempdir()
   file.create(file.path(dir, "model.pkml"))
   sc <- Scenario(
+    id = "s1",
     modelFile = "model.pkml",
     simulationType = "Population",
-    populationId = "testpopulation"
+    population = "testpopulation"
   )
   sc$readPopulationFromCSV <- TRUE
 
@@ -353,9 +357,10 @@ test_that(".validateScenarios passes when the population csv is on disk", {
   # Mixed case, as an author spells it, against the canonical lowercase id.
   file.create(file.path(populations, "TestPopulation.csv"))
   sc <- Scenario(
+    id = "s1",
     modelFile = "model.pkml",
     simulationType = "Population",
-    populationId = "testpopulation"
+    population = "testpopulation"
   )
   sc$readPopulationFromCSV <- TRUE
 
@@ -376,9 +381,10 @@ test_that(".validateScenarios checks the file a csv population entry names", {
   dir <- withr::local_tempdir()
   file.create(file.path(dir, "model.pkml"))
   sc <- Scenario(
+    id = "s1",
     modelFile = "model.pkml",
     simulationType = "Population",
-    populationId = "frozen"
+    population = "frozen"
   )
 
   # No scenario flag: the entry's own `type` is what makes this a csv read, and
@@ -832,25 +838,25 @@ test_that(".validatePlots warns when project has no plots sections", {
 # (`.validateDataCombined()`); its tests live in test-data-combined.R. The
 # `plots` adapter now only validates the plot list and plot grids.
 
-test_that(".validatePlots flags duplicate plotIds and unknown dataCombinedId", {
+test_that(".validatePlots flags duplicate plot ids and unknown dataCombined", {
   dataCombined <- list(
     DC1 = list(simulated = list(list(label = "L1", scenario = "S1")))
   )
-  # Two entries deliberately sharing the same plotId (a hand-edit could file
+  # Two entries deliberately sharing the same id (a hand-edit could file
   # both under one key only by colliding; here two list slots carry the same
-  # inner plotId) to exercise the duplicate-id check.
+  # inner id) to exercise the duplicate-id check.
   plotConfig <- list(
-    a = list(plotId = "p1", dataCombinedId = "dc1", plotType = "individual"),
+    a = list(id = "p1", dataCombined = "dc1", plotType = "individual"),
     b = list(
-      plotId = "p1",
-      dataCombinedId = "Unknown",
+      id = "p1",
+      dataCombined = "Unknown",
       plotType = "individual"
     )
   )
   result <- .validatePlots(dataCombined, plotConfig, list())
   msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
-  expect_match(msgs, "Duplicate plotId", all = FALSE)
-  expect_match(msgs, "unknown dataCombinedId", all = FALSE)
+  expect_match(msgs, "Duplicate id", all = FALSE)
+  expect_match(msgs, "unknown dataCombined", all = FALSE)
 })
 
 test_that(".validatePlots warns on plotType-irrelevant fields (non-blocking)", {
@@ -864,14 +870,14 @@ test_that(".validatePlots warns on plotType-irrelevant fields (non-blocking)", {
   # produce a warning, not a critical error (the plot still renders).
   plotConfig <- list(
     a = list(
-      plotId = "p_ind",
-      dataCombinedId = "DC1",
+      id = "p_ind",
+      dataCombined = "DC1",
       plotType = "individual",
       quantiles = "0.05, 0.5, 0.95"
     ),
     b = list(
-      plotId = "p_pop",
-      dataCombinedId = "DC1",
+      id = "p_pop",
+      dataCombined = "DC1",
       plotType = "population",
       foldDistance = "2"
     )
@@ -893,16 +899,16 @@ test_that(".validatePlots does not warn when the field matches its plotType", {
   # an observedVsSimulated plot are all legitimate: no irrelevant-field warning.
   plotConfig <- list(
     a = list(
-      plotId = "p_pop",
-      dataCombinedId = "DC1",
+      id = "p_pop",
+      dataCombined = "DC1",
       plotType = "population",
       quantiles = "0.05, 0.5, 0.95",
       aggregation = "quantiles",
       nsd = "2"
     ),
     b = list(
-      plotId = "p_ovs",
-      dataCombinedId = "DC1",
+      id = "p_ovs",
+      dataCombined = "DC1",
       plotType = "observedVsSimulated",
       foldDistance = "2"
     )
@@ -919,10 +925,10 @@ test_that(".validatePlots does not warn when the field matches its plotType", {
 
 # Cross-references ----
 
-test_that(".validateCrossReferences flags scenario referencing missing individualId", {
-  sc <- Scenario()
+test_that(".validateCrossReferences flags scenario referencing missing individual", {
+  sc <- Scenario(id = "s1")
   sc$modelFile <- "x.pkml"
-  sc$individualId <- "Ghost"
+  sc$individual <- "Ghost"
   project <- .fakeProject(scenarios = list(s1 = sc))
   result <- .validateCrossReferences(project)
   msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
@@ -998,7 +1004,7 @@ test_that(".validateCrossReferences suggests a near match for an application's p
 })
 
 test_that(".validateCrossReferences flags a scenario's dangling initialConditions", {
-  sc <- Scenario()
+  sc <- Scenario(id = "s1")
   sc$modelFile <- "x.pkml"
   sc$initialConditions <- "nope"
   project <- .fakeProject(
@@ -1011,7 +1017,7 @@ test_that(".validateCrossReferences flags a scenario's dangling initialCondition
 })
 
 test_that(".validateCrossReferences suggests a near match for a scenario's initialConditions", {
-  sc <- Scenario()
+  sc <- Scenario(id = "s1")
   sc$modelFile <- "x.pkml"
   sc$initialConditions <- "presysset2"
   project <- .fakeProject(
@@ -1029,7 +1035,7 @@ test_that(".validateCrossReferences suggests a near match for a scenario's initi
 })
 
 test_that(".validateCrossReferences passes a valid scenario initialConditions ref", {
-  sc <- Scenario()
+  sc <- Scenario(id = "s1")
   sc$modelFile <- "x.pkml"
   sc$initialConditions <- "real"
   project <- .fakeProject(
@@ -1045,10 +1051,10 @@ test_that(".validateCrossReferences resolves individuals/populations as named li
     I1 = list(species = "Human", gender = "MALE")
   )
   populations <- list(P1 = list(species = "Human"))
-  sc <- Scenario()
+  sc <- Scenario(id = "s1")
   sc$modelFile <- "x.pkml"
-  sc$individualId <- "I1"
-  sc$populationId <- "P1"
+  sc$individual <- "I1"
+  sc$population <- "P1"
   sc$simulationType <- "Population"
   project <- .fakeProject(
     scenarios = list(s1 = sc),
@@ -1064,9 +1070,9 @@ test_that(".validateCrossReferences evaluates whatever else in the project is br
   # section AND names an individual the project does not define. Both are
   # reported: the cross-reference phase does not stand down because a section
   # validator found something, since it is the phase the run gate depends on.
-  sc <- Scenario()
+  sc <- Scenario(id = "s1")
   sc$modelFile <- ""
-  sc$individualId <- "ghost"
+  sc$individual <- "ghost"
   project <- .fakeProject(scenarios = list(s1 = sc))
 
   sectionResult <- .scenariosValidatorAdapter(project)
@@ -1080,17 +1086,17 @@ test_that(".validateCrossReferences evaluates whatever else in the project is br
 
 test_that(".validateCrossReferences resolves a case-only mismatched reference", {
   # Disk keys are canonical (lower-cased); a hand-edited Project.json can carry a
-  # non-canonical reference. `individualId = 'Adult'` against a disk key of
+  # non-canonical reference. `individual = 'Adult'` against a disk key of
   # `adult` (and likewise for population / application / outputPath) must NOT be
   # flagged dangling: both sides are canonicalized before comparison.
   individuals <- list(adult = list(species = "Human", gender = "MALE"))
   populations <- list(elderly = list(species = "Human"))
   applications <- list(iv_bolus = list())
-  sc <- Scenario()
+  sc <- Scenario(id = "s1")
   sc$modelFile <- "x.pkml"
-  sc$individualId <- "Adult"
-  sc$populationId <- "Elderly"
-  sc$applicationProtocol <- "IV_Bolus"
+  sc$individual <- "Adult"
+  sc$population <- "Elderly"
+  sc$application <- "IV_Bolus"
   sc$simulationType <- "Population"
   sc$outputPaths <- stats::setNames("Organism|A", "OutPath_1")
   project <- .fakeProject(
@@ -1111,9 +1117,9 @@ test_that(".validateCrossReferences resolves only the references the requested s
   # reference). A full run reports both; a run scoped to the sections a
   # simulation needs reports only the first, which is what keeps a plotting-only
   # gap out of the `runScenarios()` gate.
-  sc <- Scenario()
+  sc <- Scenario(id = "s1")
   sc$modelFile <- "m.pkml"
-  sc$individualId <- "ghost_individual"
+  sc$individual <- "ghost_individual"
   project <- .fakeProject(
     scenarios = list(s1 = sc),
     dataCombined = list(
@@ -1192,7 +1198,7 @@ test_that("ensureValid() short-circuits when the project is validated", {
 })
 
 test_that("ensureValid() aborts with a formatted summary on critical errors", {
-  sc <- Scenario()
+  sc <- Scenario(id = "s1")
   sc$modelFile <- ""
   project <- .fakeProject(scenarios = list(s1 = sc))
   expect_snapshot(
@@ -1210,7 +1216,7 @@ test_that("the run gate validates the initial conditions a scenario build applie
   # critical has to stop the build rather than fail inside `ospsuite`. Goes
   # through `.scenarioBuildPreflight()` so it tests the gate's real section
   # list, not a copy of it.
-  sc <- Scenario()
+  sc <- Scenario(id = "s1")
   sc$modelFile <- "m.pkml"
   project <- .fakeProject(
     scenarios = list(s1 = sc),
@@ -1244,17 +1250,17 @@ test_that("a broken plots section leaves the run gate's cross-reference check in
     "initialConditions",
     "crossReferences"
   )
-  sc <- Scenario()
+  sc <- Scenario(id = "s1")
   sc$modelFile <- "m.pkml"
-  sc$individualId <- "ghost_individual"
+  sc$individual <- "ghost_individual"
   project <- .fakeProject(
     scenarios = list(s1 = sc),
     # A critical error in a section a simulation is not built from: the plot
     # references a data combination the project does not define.
     plots = list(
       p1 = list(
-        plotId = "p1",
-        dataCombinedId = "ghost",
+        id = "p1",
+        dataCombined = "ghost",
         plotType = "individual"
       )
     )
@@ -1280,7 +1286,7 @@ test_that("a plotting-only dangling reference does not block the run gate", {
     "initialConditions",
     "crossReferences"
   )
-  sc <- Scenario()
+  sc <- Scenario(id = "s1")
   sc$modelFile <- "m.pkml"
   project <- .fakeProject(
     scenarios = list(s1 = sc),
@@ -1308,13 +1314,13 @@ test_that("createPlots(validate = TRUE) aborts on a clearly broken project", {
     dataCombined = list(),
     plots = list(
       p1 = list(
-        plotId = "p1",
-        dataCombinedId = "Ghost",
+        id = "p1",
+        dataCombined = "Ghost",
         plotType = "individual"
       )
     ),
     plotGrids = list(
-      g1 = list(plotGridId = "g1", plotIds = "p1")
+      g1 = list(id = "g1", plots = "p1")
     )
   )
   expect_snapshot(error = TRUE, createPlots(project))
@@ -1382,7 +1388,7 @@ test_that(".validatePlots flags an unknown plotType from JSON", {
     project,
     "plots",
     list(
-      p1 = list(plotId = "p1", dataCombinedId = "dc1", plotType = "bogusType")
+      p1 = list(id = "p1", dataCombined = "dc1", plotType = "bogusType")
     )
   )
   result <- .plotsValidatorAdapter(project)
@@ -1405,7 +1411,7 @@ test_that(".validatePlots hard-errors on unknown plotGrid plotIDs", {
   .setSection(
     project,
     "plotGrids",
-    list(g1 = list(plotGridId = "g1", plotIds = "ghost"))
+    list(g1 = list(id = "g1", plots = "ghost"))
   )
   result <- .plotsValidatorAdapter(project)
   msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
@@ -1416,7 +1422,7 @@ test_that(".validatePlots flags unknown plotGrid ids even with empty plotConfig"
   result <- .validatePlots(
     list(),
     list(),
-    list(g1 = list(plotGridId = "g1", plotIds = "ghost"))
+    list(g1 = list(id = "g1", plots = "ghost"))
   )
   msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
   expect_match(msgs, "ghost", all = FALSE)

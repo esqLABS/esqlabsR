@@ -7,14 +7,14 @@
       Canonicalized 1 id to a safe form:
       * "My/Scenario" -> "my_scenario"
 
-# a scenarioName that disagrees with its list key aborts saveProject()
+# a scenario id that disagrees with its list key aborts saveProject()
 
     Code
       saveProject(project)
     Condition
       Error in `.validateScenarioStructure()`:
-      ! Scenario scenarioName "testscenario" does not match the key "renamed" it is stored under.
-      i Store a scenario under a key equal to its scenarioName (or leave scenarioName unset).
+      ! Scenario id "testscenario" does not match the key "renamed" it is stored under.
+      i Store a scenario under a key equal to its id.
 
 # a write-back under a non-canonical key aborts saveProject()
 
@@ -49,7 +49,7 @@
       .validateScenarioStructure(sc, "ss")
     Condition
       Error in `.validateScenarioStructure()`:
-      ! Scenario "ss" has simulateSteadyState=TRUE but steadyStateTimeUnit is NULL.
+      ! Scenario "ss" has steadyState=TRUE but steadyStateTimeUnit is NULL.
       i Set steadyStateTimeUnit (e.g. "min") so the steady-state time can round-trip.
 
 ---
@@ -79,25 +79,25 @@
       ! scenario "myscenario" already exists.
       i Pass `overwrite = TRUE` to replace it.
 
-# a scenario file missing its name aborts naming the file
+# a scenario file missing its id aborts naming the file
 
     Code
       loadProject(project$info$projectFilePath)
     Condition
       Error in `.keyedTreeRecordId()`:
-      ! A definition file for kind scenario has no usable name.
-      x name must be a single non-empty string (it names the definition and its file).
+      ! A definition file for kind scenario has no usable id.
+      x id must be a single non-empty string (it names the definition and its file).
       i Check '<project>/definitions/scenarios/populationscenario.json'.
 
-# a scenario file whose name disagrees with its filename aborts
+# a scenario file whose id disagrees with its filename aborts
 
     Code
       loadProject(project$info$projectFilePath)
     Condition
       Error in `.keyedTreeRecordId()`:
-      ! A definition file for kind scenario has a stored name that disagrees with its filename.
-      x name is "differentname" but the file is "populationscenario".json.
-      i The filename stem is the definition's id; rename the file or the name so they match. Check '<project>/definitions/scenarios/populationscenario.json'.
+      ! A definition file for kind scenario has a stored id that disagrees with its filename.
+      x id is "differentname" but the file is "populationscenario".json.
+      i The filename stem is the definition's id; rename the file or the id so they match. Check '<project>/definitions/scenarios/populationscenario.json'.
 
 # an observedData file whose id disagrees with its filename aborts
 

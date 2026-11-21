@@ -21,8 +21,8 @@ stringToNum <- function(
   uloqMode = ULOQMode$ULOQ
 ) {
   # Input validations
-  validateEnumValue(lloqMode, LLOQMode)
-  validateEnumValue(uloqMode, ULOQMode)
+  ospsuite.utils::validateEnumValue(lloqMode, LLOQMode)
+  ospsuite.utils::validateEnumValue(uloqMode, ULOQMode)
   # Remove all whitespaces
   string <- gsub(" ", "", string, fixed = TRUE)
   # Attempt to convert all passed values to numeric
@@ -146,17 +146,17 @@ calculateMeanDataSet <- function(
   outputYunit = NULL,
   outputMolWeight = NULL
 ) {
-  validateIsOfType(dataSets, "DataSet")
+  ospsuite.utils::validateIsOfType(dataSets, "DataSet")
   if (!any(c("arithmetic", "geometric") == method)) {
     msg <- messages$invalidMeanMethod()
     cli::cli_abort("{msg}")
   }
-  validateEnumValue(lloqMode, LLOQMode)
+  ospsuite.utils::validateEnumValue(lloqMode, LLOQMode)
 
   meanDataSet <- ospsuite::DataSet$new(name = "Mean")
   df <- ospsuite::dataSetToDataFrame(dataSets)
   # If df is empty, return an empty mean data set
-  if (isEmpty(df)) {
+  if (ospsuite.utils::isEmpty(df)) {
     meanDataSet$addMetaData(name = "Subject ID", value = "mean")
     return(meanDataSet)
   }
@@ -307,8 +307,8 @@ calculateMeanDataSet <- function(
 
 #' Possible entries for the `lloqMode` argument of `calculateMeans()`
 #' @export
-LLOQMode <- enum(list("LLOQ/2", "LLOQ", "ZERO", "ignore"))
+LLOQMode <- ospsuite.utils::enum(list("LLOQ/2", "LLOQ", "ZERO", "ignore"))
 
 #' Possible modes to treat values above the upper limit of quantification.
 #' @export
-ULOQMode <- enum(list("ULOQ", "ignore"))
+ULOQMode <- ospsuite.utils::enum(list("ULOQ", "ignore"))

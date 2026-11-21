@@ -14,7 +14,7 @@
 # Parse ----
 #
 # Parse the `individuals` JSON array into a named list keyed by
-# `individualId`. Like `.parsePopulations()`, every field except the key
+# `id`. Like `.parsePopulations()`, every field except the key
 # is passed through (unknown fields are preserved so newer-schema files
 # round-trip); the known numeric fields are coerced via `as.double` and
 # `parameterSets` / `proteinOntogenies` to a character vector (a JSON array is
@@ -29,11 +29,11 @@
   }
   result <- list()
   for (entry in individualsData) {
-    id <- .keyedTreeRecordId(entry, "individualId", "individual")
+    id <- .keyedTreeRecordId(entry, "id", "individual")
     .assertNoEmptyObjectFields(entry, "individual")
     indiv <- list()
     for (field in names(entry)) {
-      if (field == "individualId") {
+      if (field == "id") {
         next
       }
       val <- entry[[field]]
@@ -202,7 +202,7 @@ print.Individual <- function(x, ...) {
 #' @export
 #' @family individual
 addIndividual <- function(project, id, species, ...) {
-  validateIsOfType(project, "Project")
+  ospsuite.utils::validateIsOfType(project, "Project")
   project$addIndividual(id, species, ...)
 }
 
@@ -376,7 +376,7 @@ addIndividual <- function(project, id, species, ...) {
 #' @export
 #' @family individual
 removeIndividual <- function(project, id) {
-  validateIsOfType(project, "Project")
+  ospsuite.utils::validateIsOfType(project, "Project")
   project$removeIndividual(id)
 }
 
@@ -439,7 +439,7 @@ removeIndividual <- function(project, id) {
 #' @export
 #' @family individual
 setIndividual <- function(project, id, ...) {
-  validateIsOfType(project, "Project")
+  ospsuite.utils::validateIsOfType(project, "Project")
   project$setIndividual(id, ...)
 }
 

@@ -121,7 +121,7 @@ sensitivityTimeProfiles <- function(
 ) {
   # Input validation -------------------------------------
 
-  validateIsOfType(sensitivityCalculation, "SensitivityCalculation")
+  ospsuite.utils::validateIsOfType(sensitivityCalculation, "SensitivityCalculation")
   if (!is.null(xUnits)) {
     xUnits <- ospsuite.utils::toList(xUnits)
   }
@@ -131,7 +131,7 @@ sensitivityTimeProfiles <- function(
 
   if (!is.null(observedData)) {
     observedData <- ospsuite.utils::toList(observedData)
-    validateIsOfType(observedData, "DataSet")
+    ospsuite.utils::validateIsOfType(observedData, "DataSet")
   }
 
   .validateCharVector(outputPaths, nullAllowed = TRUE)
@@ -462,11 +462,11 @@ sensitivityTimeProfiles <- function(
       parameterPaths
     ))
   }
-  validateIsOfType(simulationResults, "list")
-  validateIsOfType(dataSets, "list", nullAllowed = TRUE)
+  ospsuite.utils::validateIsOfType(simulationResults, "list")
+  ospsuite.utils::validateIsOfType(dataSets, "list", nullAllowed = TRUE)
 
   # validate if xUnits are valid unit for time dimension
-  lapply(xUnits, validateEnumValue, ospUnits$Time, TRUE)
+  lapply(xUnits, ospsuite.utils::validateEnumValue, ospsuite::ospUnits$Time, TRUE)
 
   # prepare and validate units to be applied to outputPaths
   xUnits <- .adjustUnits(xUnits, outputPaths)
@@ -487,7 +487,7 @@ sensitivityTimeProfiles <- function(
     )
 
     for (outputPath in outputPaths) {
-      dataCombined <- DataCombined$new()
+      dataCombined <- ospsuite::DataCombined$new()
 
       # add multiple simulation results to dataCombined
       for (i in seq_along(parameterFactor)) {
@@ -524,13 +524,13 @@ sensitivityTimeProfiles <- function(
           yUnit = yUnits[[outputPath]]
         )
       ) {
-        outputPathList[[outputPath]] <- convertUnits(
+        outputPathList[[outputPath]] <- ospsuite::convertUnits(
           dataCombinedSpecifiedClone,
           xUnit = xUnits[[outputPath]],
           yUnit = yUnits[[outputPath]]
         )
       } else {
-        outputPathList[[outputPath]] <- convertUnits(dataCombined)
+        outputPathList[[outputPath]] <- ospsuite::convertUnits(dataCombined)
       }
     }
     parameterPathList[[parameterPath]] <- dplyr::bind_rows(
@@ -591,7 +591,7 @@ sensitivityTimeProfiles <- function(
 .isConvertableUnit <- function(dataCombined, xUnit = NULL, yUnit = NULL) {
   return(tryCatch(
     {
-      convertUnits(dataCombined, xUnit = xUnit, yUnit = yUnit)
+      ospsuite::convertUnits(dataCombined, xUnit = xUnit, yUnit = yUnit)
       TRUE
     },
     error = \(e) FALSE
@@ -610,7 +610,7 @@ sensitivityTimeProfiles <- function(
     return(rep(list(NULL), length(outputPaths)))
   }
   # validate if units are valid in any dimension
-  allowedUnits <- enum(unlist(ospUnits, use.names = FALSE))
+  allowedUnits <- ospsuite.utils::enum(unlist(ospsuite::ospUnits, use.names = FALSE))
   lapply(units, \(unit) {
     ospsuite.utils::validateEnumValue(unit, allowedUnits, nullAllowed = TRUE)
   })

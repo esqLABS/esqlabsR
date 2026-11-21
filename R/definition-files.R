@@ -39,11 +39,11 @@
 # on (file basename, or the programmatic DataSet name).
 #
 # The plots concern is three independent top-level keyed sections, each its own
-# kind: `dataCombined` (`data-combined/<dataCombinedId>.json`), `plots`
-# (`plots/<plotId>.json`, the plot list keyed by `plotId`), and `plotGrids`
-# (`plot-grids/<plotGridId>.json`), one file per definition like every other
-# section. The inner cross-references (a grid's `plotIds` -> a plot's `plotId`
-# -> a `dataCombinedId`) are validated lazily by `.validatePlots()`, not at
+# kind: `dataCombined` (`data-combined/<id>.json`), `plots`
+# (`plots/<id>.json`, the plot list keyed by `id`), and `plotGrids`
+# (`plot-grids/<id>.json`), one file per definition like every other
+# section. The inner cross-references (a grid's `plots` -> a plot's `id`
+# -> a `dataCombined`) are validated lazily by `.validatePlots()`, not at
 # write, so a dangling inner ref stays a Critical Error surfaced at
 # `validateProject()` / `createPlots()`, never a write-time abort. The derived
 # single-file snapshot inlines all three as three top-level JSON sections.
@@ -251,7 +251,7 @@
     ),
     # The plots concern is three independent top-level keyed sections, each its
     # own `definitions/<kind>/` tree: `dataCombined` (folder `data-combined`),
-    # `plots` (folder `plots`, the plot list keyed by `plotId`), and `plotGrids`
+    # `plots` (folder `plots`, the plot list keyed by `id`), and `plotGrids`
     # (folder `plot-grids`). Each `serialize` turns its keyed list into an
     # `id -> json-record` map; each `parse` rebuilds the keyed list from the
     # per-file records; each `inline` falls back to its own top-level snapshot
@@ -548,7 +548,7 @@
 # validating along the way); each `parse` reassembles the in-memory section
 # from the list of per-file records.
 
-# individuals: one file per individual, `{individualId, ...fields}`.
+# individuals: one file per individual, `{id, ...fields}`.
 #
 # @keywords internal
 # @noRd
@@ -561,12 +561,12 @@
     if (!is.null(indiv$parameterSets)) {
       indiv$parameterSets <- as.list(indiv$parameterSets)
     }
-    out[[id]] <- c(list(individualId = id), indiv)
+    out[[id]] <- c(list(id = id), indiv)
   }
   out
 }
 
-# populations: one file per population, `{populationId, ...fields}`.
+# populations: one file per population, `{id, ...fields}`.
 #
 # @keywords internal
 # @noRd
@@ -582,7 +582,7 @@
     # write it back verbatim; the run path aborts with an actionable message if a
     # scenario tries to use it. Matches how `.serializeObservedDataSet` handles
     # an orphan programmatic observed-data source.
-    out[[id]] <- c(list(populationId = id), pop)
+    out[[id]] <- c(list(id = id), pop)
   }
   out
 }
@@ -1050,8 +1050,8 @@
 
 # plots: three keyed kinds, one part of the `plots` definitions trio each.
 #
-# The serializers turn a part into an `id -> json-record` map keyed by the
-# part's id field (`dataCombinedId` / `plotId` / `plotGridId`); the parsers
+# The serializers turn a part into an `id -> json-record` map keyed by each
+# record's `id` field; the parsers
 # reassemble the part from the per-file records, validating each record's inner
 # id against its filename (`.keyedTreeRecordId`) so the on-disk filename stays
 # the authoritative key. Each part's in-memory shape (a keyed list whose entries
@@ -1060,7 +1060,7 @@
 # byte-identical to the inlined snapshot's per-entry shape.
 
 # data-combined: one file per dataCombined entry, the nested JSON object with
-# its `dataCombinedId` re-added (the list key). The serializer canonicalizes
+# its `id` re-added (the list key). The serializer canonicalizes
 # nothing; `.validateDefinitionTreeKey` enforces the key is already canonical.
 #
 # @keywords internal
@@ -1071,7 +1071,7 @@
   for (id in names(dataCombined)) {
     .validateDefinitionTreeKey(id, "dataCombined")
     dc <- dataCombined[[id]]
-    rec <- list(dataCombinedId = id)
+    rec <- list(id = id)
     if (length(dc$simulated %||% list()) > 0) {
       rec$simulated <- dc$simulated
     }
@@ -1090,11 +1090,11 @@
     return(list())
   }
   # Re-tag each record with the filename-checked key, then delegate to the
-  # shared nested-dataCombined parser (which re-keys by `dataCombinedId` and
-  # drops the id field). The key check guarantees the inner `dataCombinedId`
+  # shared nested-dataCombined parser (which re-keys by `id` and
+  # drops the id field). The key check guarantees the inner `id`
   # agrees with the filename for a tree-loaded record.
   for (rec in records) {
-    .keyedTreeRecordId(rec, "dataCombinedId", "dataCombined")
+    .keyedTreeRecordId(rec, "id", "dataCombined")
   }
   .parseNestedDataCombined(lapply(records, function(rec) {
     attr(rec, ".definitionFile") <- NULL
@@ -1103,40 +1103,38 @@
 }
 
 # plots: one file per plotConfiguration entry, the entry as a JSON object keyed
-# by `plotId`.
+# by `id`.
 #
 # @keywords internal
 # @noRd
 .serializePlotConfigurationSet <- function(plotConfiguration) {
-  .serializePlotEntrySet(plotConfiguration, "plotId", "plot")
+  .serializePlotEntrySet(plotConfiguration, "id", "plot")
 }
 
 # @keywords internal
 # @noRd
 .parsePlotConfigurationTree <- function(records) {
-  .parsePlotEntryTree(records, "plotId", "plot", "Plot")
+  .parsePlotEntryTree(records, "id", "plot", "Plot")
 }
 
 # plot-grids: one file per plotGrids entry, the entry as a JSON object keyed by
-# `plotGridId`.
+# `id`.
 #
 # @keywords internal
 # @noRd
 .serializePlotGridSet <- function(plotGrids) {
-  .serializePlotEntrySet(plotGrids, "plotGridId", "plotGrid")
+  .serializePlotEntrySet(plotGrids, "id", "plotGrid")
 }
 
 # @keywords internal
 # @noRd
 .parsePlotGridTree <- function(records) {
-  .parsePlotEntryTree(records, "plotGridId", "plotGrid", "PlotGrid")
+  .parsePlotEntryTree(records, "id", "plotGrid", "PlotGrid")
 }
 
 # Shared serializer for the two keyed-list plots parts. Each entry of the keyed
-# list is already the per-file record shape, so this maps the in-memory
-# reference field back to its suffixless on-disk key (`dataCombinedId` ->
-# `dataCombined`, `plotIds` -> `plots`), drops the entry class (so `c("Plot",
-# "list")` never leaks into JSON), validates the key, and emits an
+# list is already the per-file record shape, so this drops the entry class (so
+# `c("Plot", "list")` never leaks into JSON), validates the key, and emits an
 # `id -> record` map. An empty / NULL part serializes to an empty map.
 #
 # @keywords internal
@@ -1170,7 +1168,6 @@
         key; store the entry under its {.field {idField}}."
       ))
     }
-    rec <- .plotRefFieldToKey(rec, class(rec)[[1]])
     class(rec) <- "list"
     out[[id]] <- rec
   }

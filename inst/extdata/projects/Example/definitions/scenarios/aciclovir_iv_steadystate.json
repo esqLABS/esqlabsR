@@ -1,5 +1,5 @@
 {
-  "name": "aciclovir_iv_steadystate",
+  "id": "aciclovir_iv_steadystate",
   "individual": "adult_male",
   "population": null,
   "readPopulationFromCSV": false,

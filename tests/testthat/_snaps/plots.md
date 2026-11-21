@@ -94,8 +94,8 @@
     Code
       cat(vapply(result$critical_errors, function(e) e$message, character(1)), sep = "\n")
     Output
-      plotConfiguration references unknown dataCombinedId: aciclovir_pbv (did you mean 'aciclovir_pvb'?)
-      plotGrids references unknown plotIds: p2 (did you mean 'p1'?)
+      plotConfiguration references unknown dataCombined: aciclovir_pbv (did you mean 'aciclovir_pvb'?)
+      plotGrids references unknown plots: p2 (did you mean 'p1'?)
 
 # print.Plot renders a single plot configuration
 

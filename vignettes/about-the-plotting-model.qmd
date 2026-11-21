@@ -34,20 +34,20 @@ The payoff is reproducibility of a specific, practical kind. A figure that goes 
 classDiagram
     direction LR
     class DataCombined {
-        dataCombinedId
+        id
         simulated: label, scenario, path
         observed: label, dataSet
         ...
     }
     class Plot {
-        plotId
+        id
         dataCombined
         plotType
         title
         ...
     }
     class PlotGrid {
-        plotGridId
+        id
         plots
         title
         ...

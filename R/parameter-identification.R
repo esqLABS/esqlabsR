@@ -1379,7 +1379,7 @@ addPITask <- function(
   configuration = list(),
   overwrite = FALSE
 ) {
-  validateIsOfType(project, "Project")
+  ospsuite.utils::validateIsOfType(project, "Project")
   project$addPITask(
     id,
     scenarios,
@@ -1530,7 +1530,7 @@ addPITask <- function(
 #' @export
 #' @family parameterIdentification
 setPITask <- function(project, id, scenarios, configuration) {
-  validateIsOfType(project, "Project")
+  ospsuite.utils::validateIsOfType(project, "Project")
 
   # Capture only the fields the caller supplied, the same way `setScenario()`
   # does: `x[name] <- list(value)` keeps a supplied `NULL` (which clears the
@@ -1629,7 +1629,7 @@ setPITask <- function(project, id, scenarios, configuration) {
 #' @export
 #' @family parameterIdentification
 removePITask <- function(project, id) {
-  validateIsOfType(project, "Project")
+  ospsuite.utils::validateIsOfType(project, "Project")
   project$removePITask(id)
 }
 
@@ -1773,7 +1773,7 @@ addPIParameter <- function(
   id = NULL,
   overwrite = FALSE
 ) {
-  validateIsOfType(project, "Project")
+  ospsuite.utils::validateIsOfType(project, "Project")
   project$addPIParameter(
     task,
     path,
@@ -1876,7 +1876,7 @@ addPIParameter <- function(
 #' @export
 #' @family parameterIdentification
 removePIParameter <- function(project, task, id) {
-  validateIsOfType(project, "Project")
+  ospsuite.utils::validateIsOfType(project, "Project")
   project$removePIParameter(task, id)
 }
 
@@ -1959,7 +1959,7 @@ addPIOutputMapping <- function(
   id = NULL,
   overwrite = FALSE
 ) {
-  validateIsOfType(project, "Project")
+  ospsuite.utils::validateIsOfType(project, "Project")
   project$addPIOutputMapping(
     task,
     outputPath,
@@ -2057,7 +2057,7 @@ addPIOutputMapping <- function(
 #' @export
 #' @family parameterIdentification
 removePIOutputMapping <- function(project, task, id) {
-  validateIsOfType(project, "Project")
+  ospsuite.utils::validateIsOfType(project, "Project")
   project$removePIOutputMapping(task, id)
 }
 

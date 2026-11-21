@@ -249,10 +249,10 @@ test_that("loadProject() parses scenarios into Scenario objects keyed by name", 
 
   first <- project$definitions$scenarios[["aciclovir_iv"]]
   expect_s3_class(first, "Scenario")
-  expect_identical(first$scenarioName, "aciclovir_iv")
-  expect_identical(first$individualId, "adult_male")
-  expect_null(first$populationId)
-  expect_identical(first$modelParameterSets, c("global", "aciclovir"))
+  expect_identical(first$id, "aciclovir_iv")
+  expect_identical(first$individual, "adult_male")
+  expect_null(first$population)
+  expect_identical(first$parameterSets, c("global", "aciclovir"))
 })
 
 test_that("loadProject() preserves parameterSets as a single named list of sets", {
@@ -315,7 +315,7 @@ test_that("a project with no initial-conditions tree surfaces an empty section",
   )
 })
 
-test_that("loadProject() preserves individuals as a named list keyed by individualId", {
+test_that("loadProject() preserves individuals as a named list keyed by id", {
   project <- exampleProject()
 
   expect_named(project$definitions$individuals, "adult_male")
@@ -325,7 +325,7 @@ test_that("loadProject() preserves individuals as a named list keyed by individu
   expect_identical(ind$parameterSets, "adult_male_default")
 })
 
-test_that("loadProject() preserves populations as a named list keyed by populationId", {
+test_that("loadProject() preserves populations as a named list keyed by id", {
   project <- exampleProject()
 
   expect_named(project$definitions$populations, "european_adults")
@@ -356,7 +356,7 @@ test_that("loadProject() preserves the observedData section", {
 test_that("loadProject() parses plots into three top-level keyed sections", {
   project <- exampleProject()
 
-  # dataCombined: named list keyed by id (no `dataCombinedId` field on entries)
+  # dataCombined: named list keyed by id (no `id` field on entries)
   expect_named(project$definitions$dataCombined, "aciclovir_individual")
   dc <- project$definitions$dataCombined$aciclovir_individual
   expect_named(dc, c("simulated", "observed"), ignore.order = TRUE)
@@ -368,11 +368,11 @@ test_that("loadProject() parses plots into three top-level keyed sections", {
   expect_named(project$definitions$plotGrids, "individual_diagnostics")
   p1 <- project$definitions$plots$p1
   expect_s3_class(p1, "Plot")
-  expect_identical(p1$plotId, "p1")
-  expect_identical(p1$dataCombinedId, "aciclovir_individual")
+  expect_identical(p1$id, "p1")
+  expect_identical(p1$dataCombined, "aciclovir_individual")
   grid <- project$definitions$plotGrids$individual_diagnostics
   expect_s3_class(grid, "PlotGrid")
-  expect_identical(grid$plotGridId, "individual_diagnostics")
+  expect_identical(grid$id, "individual_diagnostics")
 })
 
 test_that("loadProject() rejects a missing schemaVersion", {
@@ -800,7 +800,7 @@ test_that("the tree wins over a conflicting non-empty inline Project.json sectio
   treeModelFile <- project$definitions$scenarios[["testscenario"]]$modelFile
   raw$scenarios <- list(
     list(
-      name = "testscenario",
+      id = "testscenario",
       modelFile = "INLINE_SHOULD_NOT_WIN.pkml"
     )
   )
@@ -1069,7 +1069,7 @@ test_that("a subscript assignment through a section accessor is rejected", {
   expect_snapshot(
     error = TRUE,
     project$definitions$scenarios[["aciclovir_iv"]] <- Scenario(
-      scenarioName = "aciclovir_iv",
+      id = "aciclovir_iv",
       modelFile = "m.pkml"
     )
   )
@@ -1081,7 +1081,7 @@ test_that("a nested field assignment through a section accessor is rejected", {
   # the same read-modify-write the subscript form does, so it is rejected too.
   expect_snapshot(
     error = TRUE,
-    project$definitions$scenarios[["testscenario"]]$individualId <- "indiv1"
+    project$definitions$scenarios[["testscenario"]]$individual <- "indiv1"
   )
 })
 
@@ -1172,11 +1172,23 @@ test_that("reading a record, editing the copy, and re-submitting it is the suppo
 test_that("saveProject() rejects a wrong-typed scalar reference field", {
   project <- testProject()
   scenarios <- .getSection(project, "scenarios")
-  scenarios[["testscenario"]]$individualId <- list(a = 1)
+  scenarios[["testscenario"]]$individual <- list(a = 1)
   .setSection(project, "scenarios", scenarios)
   expect_error(
     saveProject(project),
-    "individualId.*single string"
+    "individual.*single string"
+  )
+})
+
+test_that("saveProject() rejects an NA reference field", {
+  # NULL is the only "no reference" value; an NA would reach the lookups.
+  project <- testProject()
+  scenarios <- .getSection(project, "scenarios")
+  scenarios[["testscenario"]]["application"] <- list(NA_character_)
+  .setSection(project, "scenarios", scenarios)
+  expect_error(
+    saveProject(project),
+    "application.*single string"
   )
 })
 

@@ -706,7 +706,7 @@ test_that("removePopulation removes a vector of ids in one write-through", {
 test_that("removePopulation warns when still referenced by a scenario, removes anyway", {
   project <- testProject()
   withr::local_options(cli.unicode = FALSE)
-  # `testpopulation` is the `populationId` of two scenarios in the fixture.
+  # `testpopulation` is the `population` of two scenarios in the fixture.
   expect_snapshot(removePopulation(project, "testpopulation"))
   expect_false("testpopulation" %in% names(project$definitions$populations))
 })
@@ -732,9 +732,9 @@ test_that("print.Population renders a minimal population", {
 
 test_that(".parsePopulations stamps a demographics spec as Population, a source entry as PopulationSource", {
   parsed <- .parsePopulations(list(
-    list(populationId = "spec", species = "Human", numberOfIndividuals = 10),
-    list(populationId = "prog", type = "programmatic"),
-    list(populationId = "fromcsv", type = "csv", file = "fromcsv.csv")
+    list(id = "spec", species = "Human", numberOfIndividuals = 10),
+    list(id = "prog", type = "programmatic"),
+    list(id = "fromcsv", type = "csv", file = "fromcsv.csv")
   ))
   expect_s3_class(parsed$spec, "Population")
   expect_false(inherits(parsed$spec, "PopulationSource"))
@@ -972,4 +972,26 @@ test_that("setPopulation aborts on a NaN numeric field and keeps the old value",
 
   expect_error(setPopulation(project, "keepweight", weightMin = NaN))
   expect_equal(project$definitions$populations$keepweight$weightMin, 50)
+})
+
+test_that("a population's record and file use the addPopulation() argument names", {
+  project <- testProject()
+  addPopulation(
+    project,
+    "adults",
+    species = "Human",
+    numberOfIndividuals = 20,
+    proportionOfFemales = 50
+  )
+  fields <- c("species", "numberOfIndividuals", "proportionOfFemales")
+
+  expect_setequal(names(project$definitions$populations[["adults"]]), fields)
+  saveProject(project)
+  file <- file.path(
+    project$info$projectDirPath,
+    "definitions",
+    "populations",
+    "adults.json"
+  )
+  expect_setequal(names(jsonlite::read_json(file)), c("id", fields))
 })

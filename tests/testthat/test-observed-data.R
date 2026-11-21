@@ -611,7 +611,7 @@ test_that("a save that aborts mid-tree-write keeps the programmatic DataSet reco
   scenarios <- .getSection(project, "scenarios")
   hostileId <- names(scenarios)[[1]]
   hostile <- scenarios[[hostileId]]
-  hostile$simulateSteadyState <- TRUE
+  hostile$steadyState <- TRUE
   hostile$steadyStateTimeUnit <- NULL
   scenarios[[hostileId]] <- hostile
   .setSection(project, "scenarios", scenarios)

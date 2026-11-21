@@ -205,3 +205,21 @@ test_that("print.Application renders an empty protocol", {
   local_reproducible_output()
   expect_snapshot(print(project$definitions$applications[["empty"]]))
 })
+
+test_that("an application's record and file use the addApplication() argument names", {
+  project <- testProject()
+  addApplication(project, "aciclovir_iv_500mg", parameterSets = "aciclovir")
+
+  expect_named(
+    project$definitions$applications[["aciclovir_iv_500mg"]],
+    "parameterSets"
+  )
+  saveProject(project)
+  file <- file.path(
+    project$info$projectDirPath,
+    "definitions",
+    "applications",
+    "aciclovir_iv_500mg.json"
+  )
+  expect_setequal(names(jsonlite::read_json(file)), c("id", "parameterSets"))
+})

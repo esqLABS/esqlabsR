@@ -1,5 +1,5 @@
 {
-  "name": "testscenario_steadystate",
+  "id": "testscenario_steadystate",
   "individual": "indiv1",
   "population": null,
   "readPopulationFromCSV": false,

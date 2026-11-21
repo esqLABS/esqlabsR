@@ -780,7 +780,7 @@ test_that("removeParameterSet removes a vector of ids in one saveProject()", {
 test_that("removeParameterSet warns when still referenced by a scenario, removes anyway", {
   project <- testProject()
   withr::local_options(cli.unicode = FALSE)
-  # `global` is a `modelParameterSets` entry of every scenario in the fixture.
+  # `global` is a `parameterSets` entry of every scenario in the fixture.
   expect_snapshot(removeParameterSet(project, "global"))
   expect_false("global" %in% names(project$definitions$parameterSets))
 })
@@ -1330,5 +1330,41 @@ test_that(".splitParameterPathIntoContainerAndName aborts on a separator-less pa
   expect_snapshot(
     error = TRUE,
     .splitParameterPathIntoContainerAndName("Volume")
+  )
+})
+
+test_that("a parameter-set entry uses the addParameterEntry() argument names", {
+  project <- testProject()
+  addParameterEntry(
+    project,
+    "renal",
+    containerPath = "Organism|Kidney",
+    parameterName = "GFR",
+    value = 90,
+    units = "ml/min"
+  )
+
+  expect_named(
+    project$definitions$parameterSets[["renal"]][[1]],
+    setdiff(names(formals(addParameterEntry)), c("project", "id", "overwrite"))
+  )
+})
+
+test_that("an initial-condition entry uses the addInitialConditionEntry() argument names", {
+  project <- testProject()
+  addInitialConditionEntry(
+    project,
+    "plasma_start",
+    path = "Organism|PeripheralVenousBlood|Aciclovir|Plasma",
+    value = 0,
+    unit = "µmol/l"
+  )
+
+  expect_named(
+    project$definitions$initialConditions[["plasma_start"]][[1]],
+    setdiff(
+      names(formals(addInitialConditionEntry)),
+      c("project", "id", "overwrite")
+    )
   )
 })
