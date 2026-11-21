@@ -50,6 +50,131 @@ test_that("loadObservedData loads excel observed data from TestProject", {
   expect_true(all(vapply(result, inherits, logical(1), "DataSet")))
 })
 
+# Excel sources without a sheet list (#1371) ----
+
+# Write a workbook with two Laskin 1982 dose groups, one sheet each, into
+# `dataFolder`, built from the test project's Group A sheet so it fits the test
+# project's importer configuration. Returns the file name.
+writeLaskinDoseGroupsWorkbook <- function(dataFolder) {
+  groupA <- readxl::read_excel(
+    file.path(dataFolder, "Aciclovir_TimeValuesData.xlsx"),
+    sheet = "Laskin 1982.Group A"
+  )
+  doseGroup <- function(group, dose, doseFactor) {
+    sheet <- groupA
+    sheet[["Study Id"]] <- paste0("Laskin 1982.", group)
+    sheet[["Dose"]] <- dose
+    sheet[["Measurement"]] <- sheet[["Measurement"]] * doseFactor
+    sheet
+  }
+  fileName <- "Laskin1982_DoseGroups.xlsx"
+  writexl::write_xlsx(
+    list(
+      "Laskin 1982.Group B" = doseGroup("Group B", "5 mg/kg", 2),
+      "Laskin 1982.Group C" = doseGroup("Group C", "10 mg/kg", 4)
+    ),
+    file.path(dataFolder, fileName)
+  )
+  fileName
+}
+
+laskinDoseGroupNames <- c(
+  "Laskin 1982.Group B_Aciclovir_1_Human_MALE_PeripheralVenousBlood_Plasma_5 mg/kg_iv_",
+  "Laskin 1982.Group C_Aciclovir_1_Human_MALE_PeripheralVenousBlood_Plasma_10 mg/kg_iv_"
+)
+
+test_that("an excel source added without sheets loads every sheet", {
+  project <- testProject()
+  fileName <- writeLaskinDoseGroupsWorkbook(project$paths$dataFolder)
+
+  addObservedData(
+    project,
+    list(
+      type = "excel",
+      file = fileName,
+      importerConfiguration = "esqlabs_dataImporter_configuration.xml"
+    )
+  )
+
+  # Nothing is stored for the omitted field.
+  expect_equal(
+    unclass(project$definitions$observedData[[2]]),
+    list(
+      type = "excel",
+      file = fileName,
+      importerConfiguration = "esqlabs_dataImporter_configuration.xml"
+    )
+  )
+  expect_identical(
+    names(loadObservedData(project)),
+    c(testObservedDataId, laskinDoseGroupNames)
+  )
+  expect_false(isAnyCriticalErrors(validateProject(project)))
+})
+
+test_that("an excel definition file without sheets, or with an empty list, loads every sheet", {
+  definitions <- list(
+    missing = list(
+      id = "laskin_dose_groups",
+      type = "excel",
+      file = "Laskin1982_DoseGroups.xlsx",
+      importerConfiguration = "esqlabs_dataImporter_configuration.xml"
+    ),
+    empty = list(
+      id = "laskin_dose_groups",
+      type = "excel",
+      file = "Laskin1982_DoseGroups.xlsx",
+      importerConfiguration = "esqlabs_dataImporter_configuration.xml",
+      sheets = list()
+    )
+  )
+  for (case in names(definitions)) {
+    projectDir <- .copyTestProjectDir()
+    writeLaskinDoseGroupsWorkbook(file.path(projectDir, "Data"))
+    jsonlite::write_json(
+      definitions[[case]],
+      file.path(
+        projectDir,
+        "definitions",
+        "observed-data",
+        "laskin_dose_groups.json"
+      ),
+      auto_unbox = TRUE,
+      pretty = TRUE
+    )
+
+    project <- loadProject(file.path(projectDir, "Project.json"))
+
+    expect_identical(
+      names(loadObservedData(project)),
+      c(testObservedDataId, laskinDoseGroupNames),
+      label = case
+    )
+  }
+})
+
+test_that("an excel source with a non-character sheet name fails to load", {
+  project <- testProject()
+  fileName <- writeLaskinDoseGroupsWorkbook(project$paths$dataFolder)
+  addObservedData(
+    project,
+    list(
+      type = "excel",
+      file = fileName,
+      importerConfiguration = "esqlabs_dataImporter_configuration.xml",
+      sheets = list(2)
+    )
+  )
+  # The error comes from ospsuite, which names the top-level call of the
+  # session rather than `loadObservedData()`, so a snapshot would differ
+  # between test runners; match the message instead.
+  expect_error(
+    loadObservedData(project),
+    'argument "sheets" is of type <numeric>, but expected <character>',
+    fixed = TRUE
+  )
+})
+
 test_that("loadObservedData errors when an entry has invalid type", {
   tmp <- withr::local_tempfile(fileext = ".json")
   jsonlite::write_json(
@@ -357,8 +482,8 @@ test_that("addObservedData appends a valid config entry", {
 })
 
 test_that("addObservedData rejects an under-specified config entry, naming every gap at once", {
-  # An Excel source needs three fields; reporting one per attempt made a bare
-  # `list(type = "excel")` take three calls to complete (#1213).
+  # An Excel source needs two fields; reporting one per attempt made a bare
+  # `list(type = "excel")` take two calls to complete (#1213).
   project <- testProject()
   expect_snapshot(
     error = TRUE,

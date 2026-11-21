@@ -13,7 +13,7 @@
       loadObservedData(project)
     Condition
       Error in `loadObservedData()`:
-      ! `observedData` entry 1 (type "excel") is missing required fields importerConfiguration and sheets.
+      ! `observedData` entry 1 (type "excel") is missing required field importerConfiguration.
 
 # loadObservedData errors when dataFolder is not declared
 
@@ -29,7 +29,7 @@
       addObservedData(project, list(type = "excel", file = "x.xlsx"))
     Condition
       Error in `addObservedData()`:
-      ! `observedData` entry 2 (type "excel") is missing required fields importerConfiguration and sheets.
+      ! `observedData` entry 2 (type "excel") is missing required field importerConfiguration.
 
 ---
 
@@ -37,7 +37,7 @@
       addObservedData(project, list(type = "excel"))
     Condition
       Error in `addObservedData()`:
-      ! `observedData` entry 2 (type "excel") is missing required fields file, importerConfiguration, and sheets.
+      ! `observedData` entry 2 (type "excel") is missing required fields file and importerConfiguration.
 
 # addObservedData rejects a duplicate config entry file
 

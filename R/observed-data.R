@@ -53,10 +53,10 @@ print.ObservedDataSource <- function(x, ...) {
 # adapter, and `.validateObservedDataEntry`, the load/add-time guard) so they
 # can never disagree about which fields a source type requires.
 #
-# The rule an Excel source carries `sheets` (the sheet names to import), while
-# `pkml` / `script` sources are a single file and `programmatic` is a runtime
-# sentinel with no source fields at all. `sheets` is a required field for
-# `excel` in BOTH entry points.
+# An Excel source needs its workbook and importer configuration; its `sheets`
+# (the sheet names to import) are optional, since a missing or empty list loads
+# every sheet. `pkml` / `script` sources are a single file and `programmatic` is
+# a runtime sentinel with no source fields at all.
 #
 # @keywords internal
 # @noRd
@@ -65,7 +65,7 @@ print.ObservedDataSource <- function(x, ...) {
 .observedDataRequiredFields <- function(type) {
   switch(
     type,
-    "excel" = c("file", "importerConfiguration", "sheets"),
+    "excel" = c("file", "importerConfiguration"),
     "pkml" = "file",
     "script" = "file",
     "programmatic" = character(0),
@@ -73,9 +73,9 @@ print.ObservedDataSource <- function(x, ...) {
   )
 }
 
-# A field is "missing" when it is absent (`NULL`) or an empty collection
-# (`length 0`, e.g. `sheets = list()`). Both entry points use this one
-# predicate so an empty-but-present `sheets` is treated the same everywhere.
+# A field is "missing" when it is absent (`NULL`) or empty (`length 0`, e.g.
+# `file = character()`). Both entry points use this one predicate so an
+# empty-but-present required field is treated the same everywhere.
 #
 # @keywords internal
 # @noRd
@@ -133,7 +133,7 @@ print.ObservedDataSource <- function(x, ...) {
 
     # Required-field list is the single source of truth shared with the
     # load/add path (`.validateObservedDataEntry`), so the two entry points
-    # never disagree about, e.g., whether an Excel source needs `sheets`.
+    # never disagree about which fields a source type needs.
     for (field in .observedDataRequiredFields(entry$type)) {
       if (.observedDataFieldMissing(entry, field)) {
         result$addCriticalError(
@@ -841,9 +841,8 @@ removeObservedData <- function(project, id) {
     )
   }
   # Same required-field spec and same "missing" rule as the project validator
-  # (`.validateObservedData`), so a present-but-empty `sheets` on an Excel
-  # source is rejected here too rather than passing add/load and failing later
-  # under `validateProject()`.
+  # (`.validateObservedData`), so an entry rejected there is rejected here too
+  # rather than passing add/load and failing later under `validateProject()`.
   #
   # Every missing field is reported at once. Aborting on the first one made an
   # under-specified entry take one call per field to discover, although the
@@ -886,11 +885,14 @@ removeObservedData <- function(project, id) {
   importerConfig <- ospsuite::loadDataImporterConfiguration(
     configurationFilePath = importerPath
   )
-  importerConfig$sheets <- unlist(entry$sheets)
+  # The sheets come from the declaration only, never from the importer
+  # configuration: with the configuration's own list cleared, a missing or empty
+  # `sheets` makes ospsuite load every sheet of the workbook.
+  importerConfig$sheets <- NULL
   ospsuite::loadDataSetsFromExcel(
     xlsFilePath = filePath,
     importerConfigurationOrPath = importerConfig,
-    importAllSheets = FALSE
+    sheets = unlist(entry$sheets)
   )
 }
 

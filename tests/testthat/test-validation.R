@@ -777,41 +777,22 @@ test_that(".validateObservedData warns on missing files when dataFolder set", {
 
 # The two observed-data validators, the project-validator adapter
 # (.validateObservedData) and the load/add-time guard (.validateObservedDataEntry),
-# share one required-field spec. Both must treat `sheets` on an Excel source the
-# same way: an absent `sheets` and a present-but-empty `sheets` are both a
-# missing required field.
+# share one required-field spec. An Excel source without `sheets`, or with an
+# empty `sheets`, loads every sheet of its workbook (#1371), so both accept it.
 
-test_that("both observed-data validators require a present, non-empty sheets on excel", {
-  missingSheets <- list(type = "excel", file = "x", importerConfiguration = "c")
-  emptySheets <- list(
+test_that("both observed-data validators accept an excel entry without sheets", {
+  missingSheets <- list(
     type = "excel",
-    file = "x",
-    importerConfiguration = "c",
-    sheets = list()
+    file = "Laskin1982_DoseGroups.xlsx",
+    importerConfiguration = "esqlabs_dataImporter_configuration.xml"
   )
+  emptySheets <- c(missingSheets, list(sheets = list()))
 
-  # .validateObservedData (project validator): a critical error naming `sheets`.
-  missingResult <- .validateObservedData(list(missingSheets), NULL)
-  emptyResult <- .validateObservedData(list(emptySheets), NULL)
-  missingMsgs <- vapply(
-    missingResult$critical_errors,
-    \(e) e$message,
-    character(1)
-  )
-  emptyMsgs <- vapply(emptyResult$critical_errors, \(e) e$message, character(1))
-  expect_match(missingMsgs, "sheets", all = FALSE)
-  expect_match(emptyMsgs, "sheets", all = FALSE)
-
-  # .validateObservedDataEntry (load/add guard): aborts naming `sheets`.
-  # Before unification an empty-but-present `sheets` slipped through here.
-  expect_error(
-    .validateObservedDataEntry(missingSheets, 1L),
-    "sheets"
-  )
-  expect_error(
-    .validateObservedDataEntry(emptySheets, 1L),
-    "sheets"
-  )
+  for (entry in list(missingSheets, emptySheets)) {
+    result <- .validateObservedData(list(entry), NULL)
+    expect_length(result$critical_errors, 0)
+    expect_true(.validateObservedDataEntry(entry, 1L))
+  }
 })
 
 test_that("both observed-data validators accept a well-formed excel entry", {
