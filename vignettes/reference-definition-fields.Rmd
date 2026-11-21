@@ -236,7 +236,7 @@ Required fields by `type`:
 | `type` | **yes** | one of the four above | Critical error. |
 | `file` | per type | string | Critical error for `excel`, `pkml`, `script`. Relative to the project's data folder. |
 | `importerConfiguration` | `excel` only | string | Critical error for an `excel` source. |
-| `sheets` | no, `excel` only | character vector | Every sheet of the workbook is loaded, and an empty `sheets` does the same. Every sheet must then fit the importer configuration: a sheet that does not makes the load fail. |
+| `sheets` | no (`excel` only) | character vector | Left out or empty, every sheet of the workbook is loaded. Each sheet must then fit the importer configuration: a sheet that does not makes the load fail, so list the sheets to import instead. Sheets listed in the importer configuration file are not used. |
 | `id` | no | string | Inherited from the source: the file basename for a file-based source, the `DataSet` name for an unsaved programmatic one. |
 
 A file that does not exist on disk is a warning rather than an error, so a project whose data lives elsewhere still loads. A path that escapes the data folder is a critical error, matching the abort the loader raises.

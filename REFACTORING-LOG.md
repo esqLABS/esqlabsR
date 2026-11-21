@@ -349,3 +349,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-11-21 16:35: The observed-data help page, vignettes and NEWS say an Excel source's sheets are optional and that leaving them out loads every sheet. (#1371)
 - 2026-11-21 16:52: The tests for Excel sources without sheets use the test project's own two-sheet workbook instead of a workbook built for the test. (#1371)
 - 2026-11-21 16:54: A test checks that an Excel source without sheets comes back from an Excel export and import listing every sheet and loading the same data. (#1371)
+- 2026-11-21 16:54: The NEWS bullet and the observed-data docs describe optional Excel sheets the same way, including what to do when a sheet does not fit and that the importer configuration's sheets are not used. (#1371)
