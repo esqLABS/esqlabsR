@@ -226,7 +226,7 @@ Required fields by `type`:
 
 | `type` | Required fields | Reads |
 | --- | --- | --- |
-| `excel` | `file`, `importerConfiguration`, `sheets` | Sheets of a workbook through an OSPS data-importer configuration. |
+| `excel` | `file`, `importerConfiguration` | Sheets of a workbook through an OSPS data-importer configuration. |
 | `pkml` | `file` | A `DataSet` saved to a PKML file. |
 | `script` | `file` | An R script returning a `DataSet` or a list of them. |
 | `programmatic` | none | A `DataSet` built in the session. |
@@ -236,7 +236,7 @@ Required fields by `type`:
 | `type` | **yes** | one of the four above | Critical error. |
 | `file` | per type | string | Critical error for `excel`, `pkml`, `script`. Relative to the project's data folder. |
 | `importerConfiguration` | `excel` only | string | Critical error for an `excel` source. |
-| `sheets` | `excel` only | character vector | Critical error for an `excel` source. An empty but present `sheets` counts as missing. |
+| `sheets` | no, `excel` only | character vector | Every sheet of the workbook is loaded, and an empty `sheets` does the same. Every sheet must then fit the importer configuration: a sheet that does not makes the load fail. |
 | `id` | no | string | Inherited from the source: the file basename for a file-based source, the `DataSet` name for an unsaved programmatic one. |
 
 A file that does not exist on disk is a warning rather than an error, so a project whose data lives elsewhere still loads. A path that escapes the data folder is a critical error, matching the abort the loader raises.

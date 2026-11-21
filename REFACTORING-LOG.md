@@ -346,3 +346,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-11-13 09:19: The agent guide allows base stop() and warning() to re-raise a condition that a handler caught.
 - 2026-11-21 16:34: An Excel observed-data source without sheets, or with an empty list, loads every sheet of its workbook instead of being rejected. (#1371)
 - 2026-11-21 16:35: Printing an Excel observed-data source that lists no sheets shows "Sheets: all sheets". (#1371)
+- 2026-11-21 16:35: The observed-data help page, vignettes and NEWS say an Excel source's sheets are optional and that leaving them out loads every sheet. (#1371)

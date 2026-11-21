@@ -397,14 +397,17 @@ getObservedDataNames <- function(project) {
 #'
 #' | `type` | required fields | optional fields |
 #' | --- | --- | --- |
-#' | `"excel"` | `file`, `importerConfiguration`, `sheets` | `id` |
+#' | `"excel"` | `file`, `importerConfiguration` | `sheets`, `id` |
 #' | `"pkml"` | `file` | `id` |
 #' | `"script"` | `file` | `id` |
 #'
 #' `file` and `importerConfiguration` are paths *relative to the project's data
 #' folder* (`project$paths$dataFolder`). A file sitting directly in that folder
 #' is `"observed.xlsx"`, not `"Data/observed.xlsx"`; one in a subfolder of it is
-#' `"subfolder/observed.xlsx"`. `sheets` lists the Excel sheet names to import.
+#' `"subfolder/observed.xlsx"`. `sheets` lists the Excel sheet names to import;
+#' left out, every sheet of the workbook is imported. Every sheet must then fit
+#' the importer configuration: a sheet that does not, such as a sheet of notes,
+#' makes loading the observed data fail.
 #' A `script` source runs the R file it names (see the Security section of
 #' [loadObservedData()]).
 #'
