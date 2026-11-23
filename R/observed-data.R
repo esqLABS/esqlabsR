@@ -766,14 +766,13 @@ removeObservedData <- function(project, id) {
   }
 
   dropIdx <- unique(dropIdx)
-  # A removed programmatic source takes its DataSet out of the runtime store
-  # (keyed by the DataSet name, which is the source's id).
-  isProgrammatic <- vapply(
-    observedData[dropIdx],
-    \(e) identical(e$type, "programmatic"),
-    logical(1)
+  # A removed source takes its DataSet out of the session (keyed by the DataSet
+  # name, which is the source's id). That includes a source a failed save has
+  # already rewritten as `pkml` while its DataSet is still held.
+  programmaticNames <- intersect(
+    sectionIds[dropIdx],
+    names(private$.programmaticDataSets)
   )
-  programmaticNames <- sectionIds[dropIdx][isProgrammatic]
   # Update the in-memory section and the runtime store together (both pure
   # in-memory mutations under explicit-save; nothing touches disk until
   # `saveProject()`).

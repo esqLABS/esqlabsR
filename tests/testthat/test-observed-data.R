@@ -922,6 +922,29 @@ test_that("a DataSet clashes with the id a source takes from its file", {
   expect_snapshot(error = TRUE, addObservedData(project, ds))
 })
 
+test_that("removeObservedData drops the DataSet of a source a failed save already rewrote", {
+  # The save wrote the PKML and rewrote the entry as a `pkml` source, then
+  # aborted, so the DataSet is still held in the session.
+  project <- testProject()
+  state <- .projectSeam(project)
+  ds <- ospsuite::DataSet$new(name = "RecoverableSet")
+  ds$setValues(xValues = c(1, 2), yValues = c(3, 4))
+  suppressMessages(addObservedData(project, ds))
+  .persistProgrammaticObservedData(project, state)
+  expect_identical(
+    project$definitions$observedData[["RecoverableSet"]]$type,
+    "pkml"
+  )
+
+  removeObservedData(project, "RecoverableSet")
+
+  expect_false("RecoverableSet" %in% names(state$.programmaticDataSets))
+  expect_false(
+    "RecoverableSet" %in%
+      suppressWarnings(suppressMessages(getObservedDataNames(project)))
+  )
+})
+
 # removeObservedData write-through ----
 
 test_that("removeObservedData deletes the definition file on save", {

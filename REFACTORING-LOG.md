@@ -353,3 +353,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-11-23 15:47: addObservedData() refuses an observed-data id that differs from another only in case, the same rule saving uses. (#1368)
 - 2026-11-23 15:48: An observed-data source passed back to addObservedData() keeps the id it is stored under instead of being added again under a canonicalized id. (#1368)
 - 2026-11-23 15:49: A DataSet named like a programmatic observed-data source with no data is refused again without overwrite, instead of being added a second time. (#1368)
+- 2026-11-23 15:50: removeObservedData() drops the session DataSet of every removed source, also one a failed save already rewrote as a PKML source. (#1368)
