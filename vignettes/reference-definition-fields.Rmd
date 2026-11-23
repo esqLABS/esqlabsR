@@ -218,7 +218,7 @@ Every field here is required, so nothing falls back to the model file.
 
 The one field is required, so nothing falls back to the model file. An empty path value is a critical error. Two ids pointing at the same path is a warning, not an error, since sharing an output between scenarios is legitimate.
 
-## Observed data
+## Observed-data source
 
 `addObservedDataSource(project, entry)`, where `entry` is either a configuration list or a `DataSet` object. Unlike the other `add*` functions this one is not vectorized over ids: it adds one source per call.
 
