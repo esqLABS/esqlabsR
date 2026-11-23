@@ -909,10 +909,7 @@ test_that("saveProject aborts freezing an injected Population without a populati
   project$paths$populationsFolder <- NULL
   pop <- .injectablePopulation()
   suppressMessages(addPopulation(project, "injected", pop))
-  expect_error(
-    saveProject(project),
-    regexp = "populationsFolder"
-  )
+  expect_snapshot(saveProject(project), error = TRUE)
 })
 
 test_that("saveProject aborts when a frozen population CSV would collide with an existing file", {
@@ -928,10 +925,7 @@ test_that("saveProject aborts when a frozen population CSV would collide with an
 
   pop <- .injectablePopulation()
   suppressMessages(addPopulation(project, "injected", pop))
-  expect_error(
-    saveProject(project),
-    regexp = "would overwrite an existing population file"
-  )
+  expect_snapshot(saveProject(project), error = TRUE)
 })
 
 test_that("print.PopulationSource renders a csv and a programmatic source", {

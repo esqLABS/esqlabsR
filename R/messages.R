@@ -2186,15 +2186,15 @@ messages$observedDataProgrammaticAdded <- function(name, hasDataFolder = TRUE) {
     "Declare a {.field dataFolder} in {.code filePaths} before saving: {.fn saveProject} writes it to a PKML file there so it survives a reload, and aborts if no data folder is declared."
   }
   cliBullets(
-    "i" = "Added programmatic observed-data source {.val {name}}. It lives in this session until you save.",
+    "i" = "Added the {.cls DataSet} {.val {name}} as an observed-data source. It lives in this session until you save.",
     "i" = saveNote
   )
 }
 
 messages$observedDataPersistNoDataFolder <- function(name) {
   cliBullets(
-    "x" = "Cannot save the programmatic observed-data source {.val {name}}: {.field dataFolder} is not declared in {.code filePaths}.",
-    "i" = "A programmatic source is written to a PKML file under {.field dataFolder} on save. Declare {.field dataFolder}, then save again."
+    "x" = "Cannot save the {.cls DataSet} {.val {name}} added in this session: {.field dataFolder} is not declared in {.code filePaths}.",
+    "i" = "A {.cls DataSet} added with {.fn addObservedData} is written to a PKML file under {.field dataFolder} on save. Declare {.field dataFolder}, then save again."
   )
 }
 
@@ -2223,9 +2223,9 @@ messages$observedDataDefinitionFileCollision <- function(id) {
 
 messages$observedDataPersistFileCollision <- function(files) {
   cliBullets(
-    "x" = "Saving a programmatic observed-data source would overwrite the data file of another source: {.file {files}}.",
-    "i" = "A programmatic source is written to {.file <name>.pkml} in the data folder, a file another source already reads or another programmatic source is written to. File names that differ only in case are the same file on Windows and macOS.",
-    "i" = "Before saving, remove the source with {.fn removeObservedData} by its name, rename the {.cls DataSet}, and add it again with {.fn addObservedData}."
+    "x" = "Saving a {.cls DataSet} added in this session would overwrite the data file of another source: {.file {files}}.",
+    "i" = "The {.cls DataSet} would be written to {.file <name>.pkml} in the data folder, a file another source already reads or another {.cls DataSet} is written to. File names that differ only in case are the same file on Windows and macOS.",
+    "i" = "Before saving, remove the {.cls DataSet} with {.fn removeObservedData} by its name, rename it, and add it again with {.fn addObservedData}."
   )
 }
 

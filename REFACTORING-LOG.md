@@ -364,3 +364,7 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-11-23 16:58: The help pages of addObservedData(), removeObservedData() and Project are regenerated for stored observed-data ids. (#1368)
 - 2026-11-23 17:17: The observed-data docs say that only a file-based source is passed back to keep its id, and that a file without id gets it on a save after a change. (#1368)
 - 2026-11-23 17:24: A DataSet that replaces a programmatic source spelled in another case is refused when another source already provides its name or reads its PKML file. (#1368)
+- 2026-11-23 19:20: Observed-data messages and the removeObservedData() help speak of a DataSet added in this session, and the save-time id collision says to remove, rename and add the DataSet again. (#1367)
+- 2026-11-23 19:21: A save that stops on a DataSet added with addObservedData() names saveProject() in its error, not an internal function. (#1367)
+- 2026-11-23 19:22: A save that stops on a Population added with addPopulation() names saveProject() in its error, not an internal function.
+- 2026-11-23 18:40: The parent branch's DataSet wording and saveProject() error attribution are merged in, with DataSet sources keeping their id across a save. (#1368)

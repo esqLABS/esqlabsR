@@ -448,6 +448,25 @@
         * Weight Range: <empty string>
         * Height Range: <empty string>
 
+# saveProject aborts freezing an injected Population without a populations folder
+
+    Code
+      saveProject(project)
+    Condition
+      Error in `saveProject()`:
+      x Cannot save the programmatic population "injected": populationsFolder is not declared in `filePaths`.
+      i A programmatic population is written to a CSV file under populationsFolder on save. Declare populationsFolder, then save again.
+
+# saveProject aborts when a frozen population CSV would collide with an existing file
+
+    Code
+      saveProject(project)
+    Condition
+      Error in `saveProject()`:
+      x Saving a programmatic population would overwrite an existing population file: 'injected.csv'.
+      i A programmatic population is written to '<id>.csv'; this clashes with a file already filed under the same id.
+      i Rename the population (its id) so the file names differ.
+
 # print.PopulationSource renders a csv and a programmatic source
 
     Code

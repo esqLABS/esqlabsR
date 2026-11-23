@@ -341,11 +341,7 @@ saveProject <- function(project) {
   # serializes it below, and returns the names it persisted; those stay in the
   # runtime store until the whole save commits (below), so a tree write that
   # aborts leaves the DataSet recoverable rather than lost.
-  persistedProgrammatic <- .persistProgrammaticObservedData(
-    self,
-    private,
-    .call = .call
-  )
+  persistedProgrammatic <- .persistProgrammaticObservedData(self, private)
 
   # Same for a session-injected `Population`: freeze it to `<id>.csv` under the
   # populations folder and rewrite its sentinel to a `csv` source, so it survives
