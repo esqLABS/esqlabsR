@@ -1470,7 +1470,7 @@ test_that("a DataSet source keeps its name as id across a save and reload", {
   expect_false(file.exists(file.path(dir, "Scratch measurement.json")))
 })
 
-test_that("a programmatic source filled with its DataSet is saved under the same definition file", {
+test_that("a DataSet replaces a programmatic source with no data only with overwrite", {
   # A source with no data, as a snapshot taken before saving leaves it.
   project <- testProject()
   dir <- file.path(project$info$projectDirPath, "definitions", "observed-data")
@@ -1483,9 +1483,14 @@ test_that("a programmatic source filled with its DataSet is saved under the same
   scratch <- ospsuite::DataSet$new(name = "Scratch measurement")
   scratch$setValues(xValues = c(0, 1, 3), yValues = c(0, 6, 2))
 
-  suppressMessages(addObservedData(project, scratch, overwrite = TRUE))
-  saveProject(project)
+  expect_snapshot(error = TRUE, addObservedData(project, scratch))
 
+  suppressMessages(addObservedData(project, scratch, overwrite = TRUE))
+  expect_identical(
+    names(project$definitions$observedData),
+    c("Aciclovir_TimeValuesData.xlsx", "Scratch measurement")
+  )
+  saveProject(project)
   expect_identical(
     sort(list.files(dir)),
     c("Aciclovir_TimeValuesData.xlsx.json", "Scratch measurement.json")
@@ -1498,22 +1503,6 @@ test_that("a programmatic source filled with its DataSet is saved under the same
       file = "Scratch measurement.pkml"
     )
   )
-})
-
-test_that("a DataSet is not refused for the name of a programmatic source with no data", {
-  project <- testProject()
-  dir <- file.path(project$info$projectDirPath, "definitions", "observed-data")
-  jsonlite::write_json(
-    list(id = "Scratch measurement", type = "programmatic"),
-    file.path(dir, "Scratch measurement.json"),
-    auto_unbox = TRUE
-  )
-  project <- loadProject(project$info$projectFilePath)
-
-  expect_no_error(suppressMessages(addObservedData(
-    project,
-    ospsuite::DataSet$new(name = "Scratch measurement")
-  )))
 })
 
 test_that("a DataSet saved again under its name rewrites its own PKML file", {

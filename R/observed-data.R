@@ -507,8 +507,7 @@ addObservedData <- function(project, entry, overwrite = FALSE) {
     # Besides the name its data resolves under (`existingNames`), a DataSet
     # collides with the id of another source, whose definition file it would
     # share; a config entry can carry an id without resolving a data set of that
-    # name. The exception is a programmatic source with no DataSet in this
-    # session: it holds no data, so a DataSet of its name may fill it.
+    # name.
     sources <- self$definitions$observedData
     sectionIds <- names(sources) %||% character()
     isProgrammatic <- vapply(
@@ -516,8 +515,6 @@ addObservedData <- function(project, entry, overwrite = FALSE) {
       \(e) identical(e$type, "programmatic"),
       logical(1)
     )
-    holdsNoData <- isProgrammatic &
-      !(sectionIds %in% names(private$.programmaticDataSets))
     # Saving writes `<name>.pkml` into the data folder, so a source already
     # reading its data from that file would lose it, whatever its id.
     dataFolder <- self$paths$dataFolder
@@ -529,7 +526,7 @@ addObservedData <- function(project, entry, overwrite = FALSE) {
     sameId <- .observedDataIdMatches(name, sectionIds)
     clashes <- any(
       name %in% existingNames,
-      sameId & !holdsNoData,
+      sameId,
       savedFile %in% sourceFiles
     )
     .abortObservedDataIdCaseClash(name, sectionIds[sameId], overwrite)

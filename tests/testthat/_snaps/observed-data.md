@@ -228,6 +228,15 @@
       i To change a definition, edit its '.json' file or use an authoring function (e.g. `addScenario()` / `setScenario()` / `removeScenario()` and their per-section siblings).
       i To edit one record, read it, change the copy, then re-submit it with an authoring function: `sc <- project$definitions$scenarios[["id"]]; sc$field <- value; setScenario(project, "id", ...)`.
 
+# a DataSet replaces a programmatic source with no data only with overwrite
+
+    Code
+      addObservedData(project, scratch)
+    Condition
+      Error in `addObservedData()`:
+      ! observedData entry with name "Scratch measurement" already exists.
+      i Pass `overwrite = TRUE` to replace it.
+
 # addObservedData refuses an id that differs from another only in case
 
     Code
