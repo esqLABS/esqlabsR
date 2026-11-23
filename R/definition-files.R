@@ -493,18 +493,31 @@
   if (!dir.exists(dir)) {
     dir.create(dir, recursive = TRUE, showWarnings = FALSE)
   }
-  keep <- character()
+  keep <- paste0(names(serialized), ".json")
+  plan <- .definitionTreeFilePlan(list.files(dir, pattern = "\\.json$"), keep)
+  # Rename a file whose id changed only in case before writing it, so the file
+  # carries the id's spelling (writing alone keeps the old spelling where names
+  # ignore case). A rename that fails aborts like a failed delete below.
+  if (length(plan$renames) > 0L) {
+    renamed <- file.rename(
+      file.path(dir, names(plan$renames)),
+      file.path(dir, plan$renames)
+    )
+    if (!all(renamed)) {
+      cli::cli_abort(messages$failedToRenameDefinitionFiles(
+        file.path(dir, names(plan$renames)[!renamed])
+      ))
+    }
+  }
   for (id in names(serialized)) {
     .writeDefinitionJson(serialized[[id]], .definitionFilePath(dir, id))
-    keep <- c(keep, paste0(id, ".json"))
   }
-  existing <- list.files(dir, pattern = "\\.json$")
   # Delete stale files, checking each `file.remove()` result: a stale entry
   # that fails to delete (a permission or lock problem) would silently survive
   # and re-enter the section on the next `loadProject()`, so the section would
   # not match the set just written. Abort naming the file(s) rather than let a
   # ghost definition reappear.
-  stale <- setdiff(existing, keep)
+  stale <- plan$stale
   if (length(stale) > 0L) {
     removed <- file.remove(file.path(dir, stale))
     if (!all(removed)) {
@@ -514,6 +527,35 @@
     }
   }
   invisible(NULL)
+}
+
+# What `.writeDefinitionTree()` does to the files a `<kind>/` folder already
+# holds (`existing`), given the files it is about to write (`keep`). A file whose
+# name matches one to write only when case is ignored is renamed to that
+# spelling (`renames`, old name -> new name): on Windows and macOS the two are
+# one file, so it must neither be deleted as outdated nor keep its old
+# spelling. That is never done onto a file that exists under the exact name
+# (two spellings are two files only where names keep case); there the other
+# spelling is outdated. Every other file not written is outdated (`stale`). Ids
+# that are always lowercase never need a rename.
+#
+# @keywords internal
+# @noRd
+.definitionTreeFilePlan <- function(existing, keep) {
+  candidates <- existing[
+    !(existing %in% keep) & tolower(existing) %in% tolower(keep)
+  ]
+  targets <- keep[match(tolower(candidates), tolower(keep))]
+  rename <- !(targets %in% existing) & !duplicated(tolower(candidates))
+  renames <- if (any(rename)) {
+    stats::setNames(targets[rename], candidates[rename])
+  } else {
+    character(0)
+  }
+  list(
+    renames = renames,
+    stale = setdiff(existing, c(keep, names(renames)))
+  )
 }
 
 # Scenario tree helpers ----

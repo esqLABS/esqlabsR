@@ -645,6 +645,67 @@ test_that("a programmatic observedData id that escapes its directory aborts", {
 
 # Stale-file policy: the full-tree reconciler owns the `<kind>/` directory ----
 
+# On Windows and macOS a name that differs only in case is the same file: writing
+# `laskin 1982.pkml.json` over `Laskin 1982.pkml.json` keeps the old spelling, and
+# deleting that spelling as outdated would delete the definition just written.
+# The plan renames such a file to the id's spelling before writing instead, and
+# never counts it as outdated. These cases decide the plan from the names alone,
+# so they hold on a file system that tells the two spellings apart as well.
+test_that(".definitionTreeFilePlan renames a file whose name changes only in case", {
+  expect_identical(
+    .definitionTreeFilePlan(
+      existing = c("Laskin 1982.pkml.json", "removed.json", "kept.json"),
+      keep = c("laskin 1982.pkml.json", "kept.json")
+    ),
+    list(
+      renames = c("Laskin 1982.pkml.json" = "laskin 1982.pkml.json"),
+      stale = "removed.json"
+    )
+  )
+})
+
+test_that(".definitionTreeFilePlan leaves lowercase ids as before", {
+  expect_identical(
+    .definitionTreeFilePlan(
+      existing = c("aciclovir_iv.json", "orphan.json"),
+      keep = c("aciclovir_iv.json", "aciclovir_po.json")
+    ),
+    list(renames = character(0), stale = "orphan.json")
+  )
+})
+
+test_that(".definitionTreeFilePlan does not rename onto a file that exists", {
+  # Only possible where two spellings are two files; the exact name is written
+  # and the other spelling is outdated.
+  expect_identical(
+    .definitionTreeFilePlan(
+      existing = c("Laskin.json", "laskin.json", "LASKIN.json"),
+      keep = "laskin.json"
+    ),
+    list(renames = character(0), stale = c("Laskin.json", "LASKIN.json"))
+  )
+})
+
+test_that("saveProject files an observed-data id that changes only in case under the new spelling", {
+  project <- testProject()
+  dir <- file.path(project$info$projectDirPath, "definitions", "observed-data")
+  addObservedData(project, list(type = "pkml", file = "Laskin 1982.pkml"))
+  saveProject(project)
+  removeObservedData(project, "Laskin 1982.pkml")
+  addObservedData(project, list(type = "pkml", file = "laskin 1982.pkml"))
+
+  saveProject(project)
+
+  expect_identical(
+    sort(list.files(dir)),
+    c("Aciclovir_TimeValuesData.xlsx.json", "laskin 1982.pkml.json")
+  )
+  expect_identical(
+    jsonlite::read_json(file.path(dir, "laskin 1982.pkml.json"))$id,
+    "laskin 1982.pkml"
+  )
+})
+
 # A minimal on-disk tree project with one scenario, loaded without the
 # cross-reference warning pass, so these tests exercise the definition-tree writers
 # directly.

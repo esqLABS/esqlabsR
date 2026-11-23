@@ -1008,6 +1008,14 @@ messages$failedToRemoveStaleDefinitionFiles <- function(paths) {
   )
 }
 
+messages$failedToRenameDefinitionFiles <- function(paths) {
+  cliBullets(
+    "Failed to rename {length(paths)} definition file{?s} in the {.file definitions} folder to the new spelling of {?its/their} id.",
+    "x" = "{.file {paths}}",
+    "i" = "Check the file permissions, then save again."
+  )
+}
+
 messages$overwriteDestination <- function(path) {
   ospsuite.utils::cliFormat("Overwriting existing esqlabsR project in {.path {path}} ")
 }
