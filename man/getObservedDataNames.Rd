@@ -20,7 +20,7 @@ invalidates the cache.
 }
 \seealso{
 Other observedData:
-\code{\link[=addObservedData]{addObservedData()}},
-\code{\link[=removeObservedData]{removeObservedData()}}
+\code{\link[=addObservedDataSource]{addObservedDataSource()}},
+\code{\link[=removeObservedDataSource]{removeObservedDataSource()}}
 }
 \concept{observedData}

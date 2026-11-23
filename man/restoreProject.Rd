@@ -54,7 +54,7 @@ project), is accepted too. A monolithic snapshot written by a
 previous esqlabsR version (\code{snapshotProjectConfiguration()}) is also
 accepted and upgraded to the current project format on read, through the
 Excel bridge; observed data is not carried in such a snapshot, so add it
-with \code{\link[=addObservedData]{addObservedData()}} if a plot or parameter identification needs it.
+with \code{\link[=addObservedDataSource]{addObservedDataSource()}} if a plot or parameter identification needs it.
 The result is a normal project: \code{\link[=loadProject]{loadProject()}} opens it from \code{dir} with
 exactly the same content.
 }

@@ -23,7 +23,7 @@ loaded project itself is one. Reading a definition (for example
 \code{sc <- project$definitions$scenarios[["my_scenario"]]}) hands you an independent
 copy, so changing \code{sc} does not change the project until you re-submit
 it with the matching set function. The one exception is observed data
-added as a \code{DataSet} object via \code{\link[=addObservedData]{addObservedData()}}: the \code{DataSet} is
+added as a \code{DataSet} object via \code{\link[=addObservedDataSource]{addObservedDataSource()}}: the \code{DataSet} is
 shared, so changes to that object are seen by the project too.
 
 The public authoring methods (\code{project$addScenario(...)},
@@ -107,13 +107,13 @@ object.}
     \item{\code{definitions}}{The project's definition sections, as a read-only
 field group. Each section is one field: \code{outputPaths}, \code{scenarios},
 \code{parameterSets}, \code{initialConditions}, \code{individuals}, \code{populations},
-\code{applications}, \code{observedData}, \code{dataCombined}, \code{plots}, \code{plotGrids},
+\code{applications}, \code{observedDataSources}, \code{dataCombined}, \code{plots}, \code{plotGrids},
 \code{parameterIdentification}. Read a section with
 \code{project$definitions$scenarios} (returned as a printable, read-only
 named list keyed by id). An observed-data source is read by its id
 like any other definition
-(\code{project$definitions$observedData[["Aciclovir_TimeValuesData.xlsx"]]}),
-the id \code{\link[=removeObservedData]{removeObservedData()}} takes.
+(\code{project$definitions$observedDataSources[["Aciclovir_TimeValuesData.xlsx"]]}),
+the id \code{\link[=removeObservedDataSource]{removeObservedDataSource()}} takes.
 The group is read-only from the handle: every assignment form aborts.
 The only sanctioned way to change a section is
 an authoring function (\code{\link[=addScenario]{addScenario()}} / \code{\link[=setScenario]{setScenario()}} /
@@ -174,8 +174,8 @@ differences, empty when everything is in sync). The same information
     \item \href{#method-Project-removePlotGrid}{\code{Project$removePlotGrid()}}
     \item \href{#method-Project-addDataCombined}{\code{Project$addDataCombined()}}
     \item \href{#method-Project-removeDataCombined}{\code{Project$removeDataCombined()}}
-    \item \href{#method-Project-addObservedData}{\code{Project$addObservedData()}}
-    \item \href{#method-Project-removeObservedData}{\code{Project$removeObservedData()}}
+    \item \href{#method-Project-addObservedDataSource}{\code{Project$addObservedDataSource()}}
+    \item \href{#method-Project-removeObservedDataSource}{\code{Project$removeObservedDataSource()}}
     \item \href{#method-Project-loadObservedData}{\code{Project$loadObservedData()}}
     \item \href{#method-Project-getObservedDataNames}{\code{Project$getObservedDataNames()}}
     \item \href{#method-Project-addPITask}{\code{Project$addPITask()}}
@@ -938,20 +938,20 @@ the \verb{add*} authoring methods. See \code{\link[=addParameterEntry]{addParame
 }
 
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-Project-addObservedData"></a>}}
-\if{latex}{\out{\hypertarget{method-Project-addObservedData}{}}}
-\subsection{\code{Project$addObservedData()}}{
-  Add observed data. See \code{\link[=addObservedData]{addObservedData()}}.
+\if{html}{\out{<a id="method-Project-addObservedDataSource"></a>}}
+\if{latex}{\out{\hypertarget{method-Project-addObservedDataSource}{}}}
+\subsection{\code{Project$addObservedDataSource()}}{
+  Add an observed-data source. See \code{\link[=addObservedDataSource]{addObservedDataSource()}}.
   \subsection{Usage}{
     \if{html}{\out{<div class="r">}}
-    \preformatted{Project$addObservedData(entry, overwrite = FALSE)}
+    \preformatted{Project$addObservedDataSource(entry, overwrite = FALSE)}
     \if{html}{\out{</div>}}
   }
   \subsection{Arguments}{
     \if{html}{\out{<div class="arguments">}}
     \describe{
       \item{\code{entry}}{An observed-data source: a \code{DataSet} or a configuration list.
-See \code{\link[=addObservedData]{addObservedData()}}.}
+See \code{\link[=addObservedDataSource]{addObservedDataSource()}}.}
       \item{\code{overwrite}}{Logical scalar controlling duplicate-collision behaviour of
 the \verb{add*} authoring methods. See \code{\link[=addParameterEntry]{addParameterEntry()}}, \code{\link[=addPITask]{addPITask()}}.}
     }
@@ -960,13 +960,14 @@ the \verb{add*} authoring methods. See \code{\link[=addParameterEntry]{addParame
 }
 
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-Project-removeObservedData"></a>}}
-\if{latex}{\out{\hypertarget{method-Project-removeObservedData}{}}}
-\subsection{\code{Project$removeObservedData()}}{
-  Remove observed data. See \code{\link[=removeObservedData]{removeObservedData()}}.
+\if{html}{\out{<a id="method-Project-removeObservedDataSource"></a>}}
+\if{latex}{\out{\hypertarget{method-Project-removeObservedDataSource}{}}}
+\subsection{\code{Project$removeObservedDataSource()}}{
+  Remove observed-data sources. See
+\code{\link[=removeObservedDataSource]{removeObservedDataSource()}}.
   \subsection{Usage}{
     \if{html}{\out{<div class="r">}}
-    \preformatted{Project$removeObservedData(id)}
+    \preformatted{Project$removeObservedDataSource(id)}
     \if{html}{\out{</div>}}
   }
   \subsection{Arguments}{

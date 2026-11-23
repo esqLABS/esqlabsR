@@ -13,7 +13,7 @@ loadObservedData(project, sources = NULL)
 load, or \code{NULL} (default) to load every source. Only the sources you name
 are read, so a source you leave out cannot stop the load with a missing
 file or a data-set name another source also uses (and see the Security
-section). An id is matched as in \code{\link[=removeObservedData]{removeObservedData()}}. An id that names
+section). An id is matched as in \code{\link[=removeObservedDataSource]{removeObservedDataSource()}}. An id that names
 no source is an error listing the project's source ids. \code{character(0)}
 returns an empty list.}
 }
@@ -21,15 +21,15 @@ returns an empty list.}
 A named list of \code{\link[ospsuite:DataSet]{ospsuite::DataSet}} objects: those of the
 \code{excel}, \code{pkml} and \code{script} sources in the order the project declares
 them, followed by the \code{DataSet}s added in this session with
-\code{\link[=addObservedData]{addObservedData()}}. Empty list when \code{observedData} definitions is empty
-or \code{NULL}.
+\code{\link[=addObservedDataSource]{addObservedDataSource()}}. Empty list when the project has no observed-data
+sources.
 }
 \description{
-Reads the \code{observedData} declarations from a \link[=loadProject]{Project}
+Reads the observed-data sources from a \link[=loadProject]{Project}
 and returns the corresponding \code{\link[ospsuite:DataSet]{ospsuite::DataSet}} objects. Source
 types: \code{excel} (via importer configuration), \code{pkml}, \code{script}, and
 \code{programmatic}. A \code{programmatic} declaration is a sentinel for a
-\code{DataSet} added at runtime with \code{\link[=addObservedData]{addObservedData()}}; its data lives in
+\code{DataSet} added at runtime with \code{\link[=addObservedDataSource]{addObservedDataSource()}}; its data lives in
 the session until you save, and \code{\link[=saveProject]{saveProject()}} persists it to a PKML
 file and rewrites the entry as a \code{pkml} source. A \code{programmatic} sentinel
 read from disk with no matching in-session \code{DataSet} (a hand-authored
