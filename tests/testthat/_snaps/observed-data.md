@@ -363,7 +363,7 @@
     Condition
       Error:
       ! 'Project.json' was saved by an earlier development version of esqlabsR, which used other names for observed-data sources.
-      x The project's 'definitions' folder keeps them in the subfolder 'observed-data'.
+      x The project's 'definitions' folder has the subfolder 'observed-data'.
       i Rename the subfolder to 'observed-data-sources'.
 
 # loading a Project.json with the earlier observed-data key aborts
@@ -373,8 +373,32 @@
     Condition
       Error:
       ! 'Project.json' was saved by an earlier development version of esqlabsR, which used other names for observed-data sources.
-      x The file lists them under the key observedData.
+      x The file uses the key observedData.
       i Rename the key to observedDataSources.
+
+# loading a project with the earlier folder and key aborts naming both
+
+    Code
+      loadProject(path)
+    Condition
+      Error:
+      ! 'Project.json' was saved by an earlier development version of esqlabsR, which used other names for observed-data sources.
+      x The file uses the key observedData.
+      i Rename the key to observedDataSources.
+      x The project's 'definitions' folder has the subfolder 'observed-data'.
+      i Rename the subfolder to 'observed-data-sources'.
+
+# loading a project with both the earlier and the current names aborts
+
+    Code
+      loadProject(path)
+    Condition
+      Error:
+      ! 'Project.json' was saved by an earlier development version of esqlabsR, which used other names for observed-data sources.
+      x The file uses both the key observedData and the key observedDataSources.
+      i Move the sources listed under observedData to observedDataSources, then delete the key observedData.
+      x The project's 'definitions' folder has both the subfolder 'observed-data' and the subfolder 'observed-data-sources'.
+      i Move the definition files from 'observed-data' to 'observed-data-sources', then delete 'observed-data'.
 
 # restoring a snapshot with the earlier observed-data key aborts
 
@@ -383,6 +407,6 @@
     Condition
       Error in `restoreProject()`:
       ! 'aciclovir.esqlabsR' was saved by an earlier development version of esqlabsR, which used other names for observed-data sources.
-      x The file lists them under the key observedData.
+      x The file uses the key observedData.
       i Rename the key to observedDataSources.
 

@@ -2072,6 +2072,44 @@ test_that("loading a Project.json with the earlier observed-data key aborts", {
   expect_snapshot(loadProject(path), error = TRUE)
 })
 
+# A project saved by an earlier build usually carries both: the folder holding
+# its source files and the key, written as an empty list.
+test_that("loading a project with the earlier folder and key aborts naming both", {
+  dir <- .copyTestProjectDir()
+  definitionsDir <- file.path(dir, "definitions")
+  file.rename(
+    file.path(definitionsDir, "observed-data-sources"),
+    file.path(definitionsDir, earlierFolder)
+  )
+  path <- file.path(dir, "Project.json")
+  container <- jsonlite::read_json(path)
+  names(container)[names(container) == "observedDataSources"] <- earlierKey
+  jsonlite::write_json(container, path, auto_unbox = TRUE, null = "null")
+
+  expect_snapshot(loadProject(path), error = TRUE)
+})
+
+# A project opened with the current names and saved again gains the current
+# folder and key next to the earlier ones, so there is nothing to rename to.
+test_that("loading a project with both the earlier and the current names aborts", {
+  dir <- .copyTestProjectDir()
+  definitionsDir <- file.path(dir, "definitions")
+  dir.create(file.path(definitionsDir, earlierFolder))
+  file.copy(
+    list.files(
+      file.path(definitionsDir, "observed-data-sources"),
+      full.names = TRUE
+    ),
+    file.path(definitionsDir, earlierFolder)
+  )
+  path <- file.path(dir, "Project.json")
+  container <- jsonlite::read_json(path)
+  container[[earlierKey]] <- list()
+  jsonlite::write_json(container, path, auto_unbox = TRUE, null = "null")
+
+  expect_snapshot(loadProject(path), error = TRUE)
+})
+
 test_that("restoring a snapshot with the earlier observed-data key aborts", {
   snapshot <- snapshotProject(
     testProject(),

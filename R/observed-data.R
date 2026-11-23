@@ -46,8 +46,10 @@ print.ObservedDataSource <- function(x, ...) {
 # its observed-data sources under the key `observedData` and in the folder
 # `<definitions>/observed-data`. Read under the current names such a project
 # would show no sources at all and lose them on the next save, so the load
-# stops and names what to rename instead. `definitionsDir` is `NULL` for a
-# snapshot, which has no folder.
+# stops and names what to change instead. When the current key or folder is
+# there too (the project was saved again under the current names), the earlier
+# one cannot simply be renamed, so the message says to move its content over.
+# `definitionsDir` is `NULL` for a snapshot, which has no folder.
 #
 # @keywords internal
 # @noRd
@@ -63,11 +65,27 @@ print.ObservedDataSource <- function(x, ...) {
   if (!hasEarlierKey && !hasEarlierFolder) {
     return(invisible(NULL))
   }
+  # "rename" when only the earlier name is there, "move" when the current one
+  # is there as well, `NULL` when the earlier name is absent.
+  change <- function(hasEarlier, hasCurrent) {
+    if (!hasEarlier) {
+      return(NULL)
+    }
+    if (hasCurrent) "move" else "rename"
+  }
   cli::cli_abort(
     messages$observedDataEarlierLayout(
       container,
-      hasEarlierKey,
-      if (hasEarlierFolder) basename(definitionsDir)
+      keyChange = change(
+        hasEarlierKey,
+        "observedDataSources" %in% names(jsonData)
+      ),
+      folderChange = change(
+        hasEarlierFolder,
+        !is.null(definitionsDir) &&
+          dir.exists(file.path(definitionsDir, "observed-data-sources"))
+      ),
+      definitionsFolder = basename(definitionsDir %||% "")
     ),
     call = call
   )

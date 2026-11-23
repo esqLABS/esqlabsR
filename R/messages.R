@@ -2311,29 +2311,46 @@ messages$duplicateSimulationsFolderKey <- function() {
   )
 }
 
-# `definitionsFolder` is the folder name when it holds the earlier subfolder,
-# else `NULL`.
+# `keyChange` and `folderChange` are "rename" (only the earlier name is
+# there), "move" (the current name is there too) or `NULL` (nothing to change).
 messages$observedDataEarlierLayout <- function(
   container,
-  hasEarlierKey,
+  keyChange,
+  folderChange,
   definitionsFolder
 ) {
   cliBullets(
     "{.file {container}} was saved by an earlier development version of \\
     esqlabsR, which used other names for observed-data sources.",
-    if (hasEarlierKey) {
-      c(
-        "x" = "The file lists them under the key {.field observedData}.",
+    switch(
+      keyChange %||% "none",
+      rename = c(
+        "x" = "The file uses the key {.field observedData}.",
         "i" = "Rename the key to {.field observedDataSources}."
+      ),
+      move = c(
+        "x" = "The file uses both the key {.field observedData} and the key \\
+        {.field observedDataSources}.",
+        "i" = "Move the sources listed under {.field observedData} to \\
+        {.field observedDataSources}, then delete the key \\
+        {.field observedData}."
       )
-    },
-    if (!is.null(definitionsFolder)) {
-      c(
-        "x" = "The project's {.file {definitionsFolder}} folder keeps them in the \\
+    ),
+    switch(
+      folderChange %||% "none",
+      rename = c(
+        "x" = "The project's {.file {definitionsFolder}} folder has the \\
         subfolder {.file observed-data}.",
         "i" = "Rename the subfolder to {.file observed-data-sources}."
+      ),
+      move = c(
+        "x" = "The project's {.file {definitionsFolder}} folder has both the \\
+        subfolder {.file observed-data} and the subfolder \\
+        {.file observed-data-sources}.",
+        "i" = "Move the definition files from {.file observed-data} to \\
+        {.file observed-data-sources}, then delete {.file observed-data}."
       )
-    }
+    )
   )
 }
 
