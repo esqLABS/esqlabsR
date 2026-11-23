@@ -9,35 +9,21 @@ addObservedDataSource(project, entry, overwrite = FALSE)
 \arguments{
 \item{project}{A \code{Project} object.}
 
-\item{entry}{An \code{\link[ospsuite:DataSet]{ospsuite::DataSet}} object, or a configuration list
-carrying a \code{type} (\code{"excel"}, \code{"pkml"}, or \code{"script"}) and that type's
-fields, as described above.}
+\item{entry}{An \code{\link[ospsuite:DataSet]{ospsuite::DataSet}}, or a list with a \code{type} and that
+type's fields (see the table above).}
 
-\item{overwrite}{Logical scalar. When \code{FALSE} (default), a source whose id
-already exists (a \code{DataSet} name, or a configuration list's \code{id} or \code{file}
-basename) aborts. When \code{TRUE}, the existing source with that id is replaced
-(last-write-wins) as long as both are the same kind. A cross-kind
-replacement is refused, because it would either strand the session's
-\code{DataSet} or leave two sources resolving to one name: remove the existing
-source with \code{\link[=removeObservedDataSource]{removeObservedDataSource()}} first, then add the new one. A
-configuration list is always checked in full. For a \code{DataSet}, the refusal
-at add time covers the id of another source (such as a \code{DataSet} of the
-same name saved earlier), a source whose data file is \verb{<name>.pkml}, and
-the names of data sets loaded since the observed data last changed; any
-other clash with a data set inside an Excel, PKML or script source is
-reported the next time the observed data is loaded.}
+\item{overwrite}{Logical scalar. When \code{FALSE} (default), an id or \code{DataSet}
+name that already exists aborts. When \code{TRUE}, the existing source is
+replaced, but only by one of the same kind (a \code{DataSet} by a \code{DataSet}, a
+list by a list). To replace one kind with the other, remove the existing
+source with \code{\link[=removeObservedDataSource]{removeObservedDataSource()}} first.}
 }
 \value{
 The \code{project} object, invisibly.
 }
 \description{
-Adds one observed-data source: a declaration of where measured data comes
-from, not the data itself. \code{entry} is either an
-\code{\link[ospsuite:DataSet]{ospsuite::DataSet}} object (which becomes a \code{type = "programmatic"}
-declaration whose id is \code{dataSet$name}) or a list describing where the data
-is read from.
-
-Such a list always carries a \code{type}, plus the fields that type needs:\tabular{lll}{
+Adds one observed-data source. \code{entry} is either an \code{\link[ospsuite:DataSet]{ospsuite::DataSet}}
+built in the session, or a list naming the file the data is read from:\tabular{lll}{
    \code{type} \tab required fields \tab optional fields \cr
    \code{"excel"} \tab \code{file}, \code{importerConfiguration}, \code{sheets} \tab \code{id} \cr
    \code{"pkml"} \tab \code{file} \tab \code{id} \cr
@@ -45,53 +31,32 @@ Such a list always carries a \code{type}, plus the fields that type needs:\tabul
 }
 
 
-\code{file} and \code{importerConfiguration} are paths \emph{relative to the project's data
-folder} (\code{project$paths$dataFolder}). A file sitting directly in that folder
-is \code{"observed.xlsx"}, not \code{"Data/observed.xlsx"}; one in a subfolder of it is
-\code{"subfolder/observed.xlsx"}. \code{sheets} lists the Excel sheet names to import.
-A \code{script} source runs the R file it names (see the Security section of
-\code{\link[=loadObservedData]{loadObservedData()}}).
+Paths are relative to the project's data folder: \code{"observed.xlsx"}, not
+\code{"Data/observed.xlsx"}. A \code{script} source runs the R file it names (see the
+Security section of \code{\link[=loadObservedData]{loadObservedData()}}).
 
-\code{id} names the declaration itself: it becomes the declaration's file under
-the project's definitions folder (\verb{definitions/observed-data-sources/<id>.json} in
-the default layout) and is the id \code{\link[=removeObservedDataSource]{removeObservedDataSource()}} matches on. It is
-canonicalized like every other definition id (lowercased and made a safe
-filename segment), and you are told when that changes it, unless it is
-already the id of a source in the project or equal to the \code{file} basename.
-Left out, the \code{file} basename serves as both, kept exactly as the source
-spells it. Either way the id is stored in the declaration, so
-\code{project$definitions$observedDataSources[[id]]} reads it back and its \code{id} field
-shows it. A file-based declaration (\code{excel}, \code{pkml}, \code{script}) read that way
-can be passed back with \code{overwrite = TRUE} and keeps its id; a \code{DataSet}
-source is replaced by passing the \code{DataSet} itself with \code{overwrite = TRUE}.
-Two ids that differ only in case count as the same id, since their
-definition files are one file on Windows and macOS; this holds for a
-\code{DataSet} name too.
+\code{id} names the source: it is the name of its definition file and what
+\code{\link[=removeObservedDataSource]{removeObservedDataSource()}} takes. It is lowercased and made a safe file name,
+with a message when that changes it, unless it already names a source of
+the project or is the \code{file} basename. Left out, the \code{file} basename is used
+as it is. The source stores its id, so \code{project$definitions$observedDataSources[[id]]}
+reads it, and a file source read that way and passed back with
+\code{overwrite = TRUE} keeps it. Ids that differ only in case count as the same
+id. A \code{dataCombined} entry refers to the name of a data set inside the
+source, not to this id.
+}
+\details{
+A \code{DataSet} is stored as a \code{type = "programmatic"} entry whose id is its
+name, and its data stays in the R session until \code{\link[=saveProject]{saveProject()}} writes it to
+\verb{<name>.pkml} in the data folder. Saving therefore needs a data folder. From
+then on it is a \code{pkml} source that keeps its name as id.
 
-An id is not the name the data is known by: each imported
-\code{\link[ospsuite:DataSet]{ospsuite::DataSet}} carries the name its source gives it (the data-set name
-in an Excel sheet, the name inside a PKML file), and that name, not the
-declaration's id, is what a \code{dataCombined} entry references.
-
-Adding a \code{DataSet} reads none of the project's sources and runs no script,
-so its name is checked only against what the project already knows. Without
-\code{overwrite}, it is refused at once when its name is the id of another source
-(such as a \code{DataSet} of that name saved earlier), the name of a \code{DataSet}
-added in this session, or the name of a data set loaded since the project's
-observed data last changed. It is also refused when another source reads its
-data from \verb{<name>.pkml}, the file saving writes. A \code{DataSet} whose name
-equals another data set inside an Excel, PKML or script source can still be
-accepted: the next time the observed data is loaded, by \code{\link[=loadObservedData]{loadObservedData()}}
-or a function that uses it such as \code{\link[=createDataCombined]{createDataCombined()}}, it stops with an
-error naming the duplicate. Then remove the \code{DataSet} with
-\code{\link[=removeObservedDataSource]{removeObservedDataSource()}}, by its name, and add it again under another name.
-
-A \code{DataSet} you pass lives in the R session until you save. On
-\code{\link[=saveProject]{saveProject()}} it is written to a PKML file named \verb{<DataSet name>.pkml}
-under the project's data folder and its entry becomes a \code{pkml} source
-reading that file, so the data survives a reload. The source keeps the
-\code{DataSet} name as its id. Saving therefore needs a data folder to be
-declared in the project's file paths.
+Adding a \code{DataSet} reads no source and runs no script. Its name is refused
+at once when the project already knows it, for example from a \code{DataSet} of
+that name added or saved earlier. A clash with a data set inside an Excel,
+PKML or script source that has not been loaded yet stops the next
+\code{\link[=loadObservedData]{loadObservedData()}} with an error naming the duplicate. Then remove the
+\code{DataSet} with \code{\link[=removeObservedDataSource]{removeObservedDataSource()}}, rename it, and add it again.
 }
 \seealso{
 Other observedData:

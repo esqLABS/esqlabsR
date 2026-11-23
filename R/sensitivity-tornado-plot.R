@@ -110,7 +110,10 @@ sensitivityTornadoPlot <- function(
 ) {
   # Input validation -------------------------------------
 
-  ospsuite.utils::validateIsOfType(sensitivityCalculation, "SensitivityCalculation")
+  ospsuite.utils::validateIsOfType(
+    sensitivityCalculation,
+    "SensitivityCalculation"
+  )
   ospsuite.utils::validateIsOption(
     list(parameterFactor = parameterFactor),
     .getPlotConfigurationOptions("parameterFactor")
