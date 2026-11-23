@@ -228,9 +228,11 @@ print.ObservedDataSource <- function(x, ...) {
 #'   [addObservedData()] and the id the project stores both work. An id that
 #'   names no source of the project is an error that lists the ids there are.
 #'   `character(0)` loads nothing and returns an empty list.
-#' @returns A named list of [`ospsuite::DataSet`] objects, in the order the
-#'   project declares their sources. Empty list when `observedData` definitions
-#'   is empty or `NULL`.
+#' @returns A named list of [`ospsuite::DataSet`] objects: those of the
+#'   `excel`, `pkml` and `script` sources in the order the project declares
+#'   them, followed by the `DataSet`s added in this session with
+#'   [addObservedData()]. Empty list when `observedData` definitions is empty
+#'   or `NULL`.
 #'
 #' @section Security:
 #'   A `script` observed-data source runs the R file it names, with

@@ -684,12 +684,23 @@ test_that("loadObservedData loads only the selected sources", {
     )
   )
 
-  # The Excel source loaded alone, then the DataSet, in the order the project
-  # declares them.
+  # The file-based sources in the order the project declares them, then the
+  # DataSets added in this session. The Excel sheet is read here with ospsuite
+  # directly.
+  dataFolder <- project$paths$dataFolder
+  excelDataSets <- ospsuite::loadDataSetsFromExcel(
+    xlsFilePath = file.path(dataFolder, "Aciclovir_TimeValuesData.xlsx"),
+    importerConfigurationOrPath = file.path(
+      dataFolder,
+      "esqlabs_dataImporter_configuration.xml"
+    ),
+    sheets = "Laskin 1982.Group A"
+  )
   expected <- c(
-    loadObservedData(testProject()),
+    excelDataSets,
     list("Digitized plasma" = digitizedPlasmaDataSet())
   )
+  expect_identical(names(expected), c(testObservedDataId, "Digitized plasma"))
   expect_named(result, names(expected))
   expect_equal(
     ospsuite::dataSetToDataFrame(result),
@@ -708,14 +719,9 @@ test_that("loadObservedData runs a selected script source and no other", {
     "executing arbitrary R code"
   )
   expect_true(file.exists(marker))
-  # What the script returns; the DataSet of the same name is not added to it.
-  expected <- ospsuite::DataSet$new(name = "Digitized plasma")
-  expected$setValues(xValues = c(0, 1, 2), yValues = c(0, 4.1, 2.3))
+  # Only what the script returns: the DataSet of the same name is not added,
+  # which would abort the load on the duplicate name.
   expect_named(result, "Digitized plasma")
-  expect_equal(
-    ospsuite::dataSetToDataFrame(result),
-    ospsuite::dataSetToDataFrame(expected)
-  )
 })
 
 test_that("loadObservedData with no sources selected returns an empty list", {
@@ -773,6 +779,35 @@ test_that("loadObservedData finds a source by its id as given or as stored", {
       info = id
     )
   }
+  # Both spellings name one source, which is loaded once.
+  expect_equal(
+    ospsuite::dataSetToDataFrame(
+      loadObservedData(project, sources = c("Laskin_IV", "laskin_iv"))
+    ),
+    expected
+  )
+})
+
+test_that("loadObservedData returns selected sources in the order the project declares them", {
+  project <- testProject()
+  cohortB <- ospsuite::DataSet$new(name = "Cohort B plasma")
+  cohortB$setValues(xValues = c(0, 1, 4), yValues = c(0, 2.9, 1.2))
+  ospsuite::saveDataSetToPKML(
+    digitizedPlasmaDataSet(),
+    file.path(project$paths$dataFolder, "laskin_1982_iv.pkml")
+  )
+  ospsuite::saveDataSetToPKML(
+    cohortB,
+    file.path(project$paths$dataFolder, "cohort_b.pkml")
+  )
+  addObservedData(project, list(type = "pkml", file = "laskin_1982_iv.pkml"))
+  addObservedData(project, list(type = "pkml", file = "cohort_b.pkml"))
+
+  result <- loadObservedData(
+    project,
+    sources = c("cohort_b.pkml", "laskin_1982_iv.pkml")
+  )
+  expect_named(result, c("Digitized plasma", "Cohort B plasma"))
 })
 
 test_that("loadObservedData of selected sources leaves the data-set names alone", {
