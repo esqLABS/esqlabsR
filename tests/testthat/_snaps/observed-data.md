@@ -62,23 +62,23 @@
 # addObservedData with a DataSet runs no script source
 
     Code
-      addObservedData(project, .plasmaDataSet("Scratch measurement"))
+      addObservedData(project, ospsuite::DataSet$new(name = "Scratch measurement"))
     Message
       i Added programmatic observed-data source "Scratch measurement". It lives in this session until you save.
       i On `saveProject()` it is written to 'Scratch measurement.pkml' under the data folder, so it survives a reload.
 
-# addObservedData with a DataSet asks a project without a data folder to declare one
+# addObservedData with a DataSet reads no other source's file
 
     Code
-      addObservedData(project, .plasmaDataSet("Scratch measurement"))
+      addObservedData(project, ospsuite::DataSet$new(name = "Scratch measurement"))
     Message
       i Added programmatic observed-data source "Scratch measurement". It lives in this session until you save.
       i Declare a dataFolder in `filePaths` before saving: `saveProject()` writes it to a PKML file there so it survives a reload, and aborts if no data folder is declared.
 
-# addObservedData aborts on a DataSet name an already loaded source holds
+# addObservedData checks a DataSet name against the names already loaded
 
     Code
-      addObservedData(project, .plasmaDataSet("Digitized plasma"))
+      addObservedData(project, ospsuite::DataSet$new(name = "Digitized plasma"))
     Condition
       Error in `addObservedData()`:
       ! observedData entry with name "Digitized plasma" already exists.
@@ -87,27 +87,48 @@
 # addObservedData aborts on the name of a DataSet added in this session
 
     Code
-      addObservedData(project, .plasmaDataSet("Scratch measurement"))
+      addObservedData(project, ospsuite::DataSet$new(name = "Scratch measurement"))
     Condition
       Error in `addObservedData()`:
       ! observedData entry with name "Scratch measurement" already exists.
       i Pass `overwrite = TRUE` to replace it.
 
-# a DataSet clashes with a declared id without reading that source's file
+# addObservedData refuses a DataSet saved earlier under its name
 
     Code
-      addObservedData(project, .plasmaDataSet("cohort_b"))
+      addObservedData(project, scratch)
     Condition
       Error in `addObservedData()`:
-      ! observedData entry with name "cohort_b" already exists.
+      ! observedData entry with name "Scratch measurement" already exists.
       i Pass `overwrite = TRUE` to replace it.
+    Code
+      addObservedData(project, scratch, overwrite = TRUE)
+    Condition
+      Error in `addObservedData()`:
+      ! observedData entry with name "Scratch measurement" is a file-based source, not a programmatic one, so it cannot be overwritten with a <DataSet>.
+      i Remove it first with `removeObservedData()` (by its id, or its file basename), then add the <DataSet>.
 
-# a DataSet name equal to a data set inside a script source aborts the next load
+# addObservedData refuses a DataSet whose PKML file another source reads
+
+    Code
+      addObservedData(project, ospsuite::DataSet$new(name = "Cohort B"))
+    Condition
+      Error in `addObservedData()`:
+      ! observedData entry with name "Cohort B" already exists.
+      i Pass `overwrite = TRUE` to replace it.
+    Code
+      addObservedData(project, ospsuite::DataSet$new(name = "Cohort B"), overwrite = TRUE)
+    Condition
+      Error in `addObservedData()`:
+      ! observedData entry with name "Cohort B" is a file-based source, not a programmatic one, so it cannot be overwritten with a <DataSet>.
+      i Remove it first with `removeObservedData()` (by its id, or its file basename), then add the <DataSet>.
+
+# a DataSet name inside a script source not loaded yet aborts the next load
 
     Code
       suppressWarnings(suppressMessages(loadObservedData(project)))
     Condition
-      Error in `.mergeObservedDataSets()`:
+      Error in `loadObservedData()`:
       x Duplicate observed-data set name across sources: "Digitized plasma".
       i Each loaded <DataSet> must have a unique name; rename the source or the data set.
 
@@ -129,6 +150,26 @@
       Error in `.persistProgrammaticObservedData()`:
       x Saving a programmatic observed-data source would overwrite another source: 'Collide.pkml'.
       i A programmatic source is written to '<name>.pkml'; this clashes with an existing source filed under the same name.
+      i Rename the <DataSet> (its name) so the file names differ.
+
+# saveProject keeps the data file of a source filed under a declared id
+
+    Code
+      saveProject(project)
+    Condition
+      Error in `.persistProgrammaticObservedData()`:
+      x Saving a programmatic observed-data source would overwrite the data file of another source: 'Cohort B.pkml'.
+      i A programmatic source is written to '<name>.pkml' in the data folder, a file another source already reads or another programmatic source is written to. File names that differ only in case are the same file on Windows and macOS.
+      i Rename the <DataSet> (its name) so the file names differ.
+
+# saveProject refuses two DataSets whose names differ only in case
+
+    Code
+      saveProject(project)
+    Condition
+      Error in `.persistProgrammaticObservedData()`:
+      x Saving a programmatic observed-data source would overwrite the data file of another source: 'Cohort B.pkml' and 'cohort b.pkml'.
+      i A programmatic source is written to '<name>.pkml' in the data folder, a file another source already reads or another programmatic source is written to. File names that differ only in case are the same file on Windows and macOS.
       i Rename the <DataSet> (its name) so the file names differ.
 
 # saveProject aborts persisting a programmatic DataSet with no dataFolder
@@ -158,6 +199,15 @@
       Error in `addObservedData()`:
       ! observedData entry with id "prog_src" is a programmatic source holding a <DataSet> in this session, so it cannot be overwritten with a configuration entry.
       i Remove it first with `removeObservedData()`, then add the configuration entry.
+
+# a DataSet clashes with an existing declaration's declared id
+
+    Code
+      addObservedData(project, ospsuite::DataSet$new(name = "cohort_b"))
+    Condition
+      Error in `addObservedData()`:
+      ! observedData entry with name "cohort_b" already exists.
+      i Pass `overwrite = TRUE` to replace it.
 
 # removeObservedData mutates memory only; a surviving collision aborts saveProject()
 

@@ -215,7 +215,7 @@ test_that("loadObservedData sources script entries", {
   # does not depend on any earlier run of this test.
   rlang::reset_warning_verbosity(paste0(
     "esqlabsR_observed_data_script_source_",
-    project$info$projectFilePath
+    .projectWarningKey(project)
   ))
   expect_warning(
     result <- loadObservedData(project),
@@ -422,13 +422,13 @@ test_that("addObservedData overwrite does not grow the observed-data name list",
 # Adding a DataSet without reading the other sources ----
 
 # Declare a `script` source in the project's data folder that returns one
-# DataSet named `dataSetName` and writes `marker` each time it runs, so a test
-# can tell whether the script was run.
-.addMarkerScriptSource <- function(project, dataSetName, marker) {
+# DataSet named "Digitized plasma" and writes `marker` each time it runs, so a
+# test can tell whether the script was run.
+.addMarkerScriptSource <- function(project, marker) {
   writeLines(
     c(
       paste0("writeLines('sourced', ", deparse(marker), ")"),
-      paste0("ds <- ospsuite::DataSet$new(name = ", deparse(dataSetName), ")"),
+      "ds <- ospsuite::DataSet$new(name = 'Digitized plasma')",
       "ds$setValues(xValues = c(0, 1, 2), yValues = c(0, 4.1, 2.3))",
       "ds"
     ),
@@ -437,24 +437,21 @@ test_that("addObservedData overwrite does not grow the observed-data name list",
   addObservedData(project, list(type = "script", file = "digitized_plasma.R"))
 }
 
-.plasmaDataSet <- function(name) {
-  ds <- ospsuite::DataSet$new(name = name)
-  ds$setValues(xValues = c(0, 1, 3), yValues = c(0, 6, 2))
-  ds
-}
-
 test_that("addObservedData with a DataSet runs no script source", {
   project <- testProject()
   marker <- withr::local_tempfile()
-  .addMarkerScriptSource(project, "Digitized plasma", marker)
+  .addMarkerScriptSource(project, marker)
   # Re-arm the once-per-session script warning, so a script run would show it.
   rlang::reset_warning_verbosity(paste0(
     "esqlabsR_observed_data_script_source_",
-    project$info$projectFilePath
+    .projectWarningKey(project)
   ))
 
   expect_snapshot(
-    addObservedData(project, .plasmaDataSet("Scratch measurement"))
+    addObservedData(
+      project,
+      ospsuite::DataSet$new(name = "Scratch measurement")
+    )
   )
   expect_false(file.exists(marker))
   # The next lookup still finds the names of every source.
@@ -464,7 +461,7 @@ test_that("addObservedData with a DataSet runs no script source", {
   )
 })
 
-test_that("addObservedData with a DataSet succeeds when another source's file is missing", {
+test_that("addObservedData with a DataSet reads no other source's file", {
   project <- testProject()
   # A source whose PKML file is not exported yet. Adding it also clears the
   # data-set names found when the project was loaded.
@@ -472,59 +469,35 @@ test_that("addObservedData with a DataSet succeeds when another source's file is
     project,
     list(type = "pkml", file = "cohort_b_export.pkml")
   )
-  scratch <- .plasmaDataSet("Scratch measurement")
-
-  suppressMessages(addObservedData(project, scratch))
-  expect_identical(
-    .projectSeam(project)$.programmaticDataSets,
-    list("Scratch measurement" = scratch)
-  )
-  expect_equal(
-    unclass(project$definitions$observedData[[3]]),
-    list(type = "programmatic", name = "Scratch measurement")
-  )
-})
-
-test_that("addObservedData with a DataSet asks a project without a data folder to declare one", {
-  project <- testProject()
-  # Adding a source clears the data-set names found when the project was
-  # loaded, so the Excel source would have to be read again to find them.
-  addObservedData(
-    project,
-    list(type = "pkml", file = "cohort_b_export.pkml")
-  )
+  # Without a data folder, the Excel source cannot be found either.
   project$paths$dataFolder <- NULL
 
   expect_snapshot(
-    addObservedData(project, .plasmaDataSet("Scratch measurement"))
+    addObservedData(
+      project,
+      ospsuite::DataSet$new(name = "Scratch measurement")
+    )
   )
 })
 
-test_that("addObservedData aborts on a DataSet name an already loaded source holds", {
+test_that("addObservedData checks a DataSet name against the names already loaded", {
   project <- testProject()
   marker <- withr::local_tempfile()
-  .addMarkerScriptSource(project, "Digitized plasma", marker)
-  suppressWarnings(suppressMessages(getObservedDataNames(project)))
-
-  expect_snapshot(
-    error = TRUE,
-    addObservedData(project, .plasmaDataSet("Digitized plasma"))
-  )
-})
-
-test_that("addObservedData adds the DataSet name to the names already looked up", {
-  project <- testProject()
-  marker <- withr::local_tempfile()
-  .addMarkerScriptSource(project, "Digitized plasma", marker)
+  .addMarkerScriptSource(project, marker)
   suppressWarnings(suppressMessages(getObservedDataNames(project)))
   unlink(marker)
 
-  suppressMessages(
-    addObservedData(project, .plasmaDataSet("Scratch measurement"))
-  )
+  suppressMessages(addObservedData(
+    project,
+    ospsuite::DataSet$new(name = "Scratch measurement")
+  ))
   expect_identical(
     getObservedDataNames(project),
     c(testObservedDataId, "Digitized plasma", "Scratch measurement")
+  )
+  expect_snapshot(
+    error = TRUE,
+    addObservedData(project, ospsuite::DataSet$new(name = "Digitized plasma"))
   )
   # The names came from the earlier lookup: the script did not run again.
   expect_false(file.exists(marker))
@@ -532,9 +505,10 @@ test_that("addObservedData adds the DataSet name to the names already looked up"
 
 test_that("addObservedData aborts on the name of a DataSet added in this session", {
   project <- testProject()
-  suppressMessages(
-    addObservedData(project, .plasmaDataSet("Scratch measurement"))
-  )
+  suppressMessages(addObservedData(
+    project,
+    ospsuite::DataSet$new(name = "Scratch measurement")
+  ))
   # Adding a source clears the data-set names found so far; the DataSets added
   # in this session are still known.
   addObservedData(
@@ -544,35 +518,131 @@ test_that("addObservedData aborts on the name of a DataSet added in this session
 
   expect_snapshot(
     error = TRUE,
-    addObservedData(project, .plasmaDataSet("Scratch measurement"))
+    addObservedData(
+      project,
+      ospsuite::DataSet$new(name = "Scratch measurement")
+    )
   )
 })
 
-test_that("a DataSet clashes with a declared id without reading that source's file", {
-  project <- testProject()
-  # The PKML file does not exist: the clash is found from the id alone.
-  addObservedData(
-    project,
-    list(id = "cohort_b", type = "pkml", file = "cohort_b_export.pkml")
-  )
-
-  expect_snapshot(
-    error = TRUE,
-    addObservedData(project, .plasmaDataSet("cohort_b"))
-  )
-})
-
-test_that("a DataSet name equal to a data set inside a script source aborts the next load", {
+test_that("addObservedData refuses a DataSet saved earlier under its name", {
+  # Saving turns the DataSet into the source `Scratch measurement.pkml`. The
+  # script source keeps the data-set names unknown, so only that id shows the
+  # clash; without it, the add would succeed and the next load and save fail.
   project <- testProject()
   marker <- withr::local_tempfile()
-  .addMarkerScriptSource(project, "Digitized plasma", marker)
-  suppressMessages(
-    addObservedData(project, .plasmaDataSet("Digitized plasma"))
+  .addMarkerScriptSource(project, marker)
+  scratch <- ospsuite::DataSet$new(name = "Scratch measurement")
+  scratch$setValues(xValues = c(0, 1, 3), yValues = c(0, 6, 2))
+  suppressMessages(addObservedData(project, scratch))
+  suppressMessages(saveProject(project))
+
+  expect_snapshot(error = TRUE, {
+    addObservedData(project, scratch)
+    addObservedData(project, scratch, overwrite = TRUE)
+  })
+  expect_false(file.exists(marker))
+})
+
+test_that("addObservedData refuses a DataSet whose PKML file another source reads", {
+  # Saving the DataSet would write `<name>.pkml` into the data folder, the data
+  # file of a source filed under its own declared id.
+  project <- testProject()
+  addObservedData(
+    project,
+    list(id = "cohort_b", type = "pkml", file = "Cohort B.pkml")
   )
+
+  expect_snapshot(error = TRUE, {
+    addObservedData(project, ospsuite::DataSet$new(name = "Cohort B"))
+    addObservedData(
+      project,
+      ospsuite::DataSet$new(name = "Cohort B"),
+      overwrite = TRUE
+    )
+  })
+})
+
+test_that("addObservedData compares data files by where they lie", {
+  project <- testProject()
+  dataFolder <- project$paths$dataFolder
+  # Other spellings of `<name>.pkml` in the data folder. On Windows and macOS a
+  # name differing only in case is the same file.
+  sameFile <- list(
+    "Cohort C" = "./Cohort C.pkml",
+    "Cohort D" = "sub/../Cohort D.pkml",
+    "Cohort E" = file.path(dataFolder, "Cohort E.pkml"),
+    "Cohort F" = "cohort f.PKML"
+  )
+  for (name in names(sameFile)) {
+    addObservedData(
+      project,
+      list(
+        id = sub(" ", "_", tolower(name)),
+        type = "pkml",
+        file = sameFile[[name]]
+      )
+    )
+  }
+  # Different files: one in a subfolder, one unrelated, one outside the data
+  # folder (which the next load reports, not the add).
+  addObservedData(
+    project,
+    list(id = "cohort_g", type = "pkml", file = "sub/Cohort G.pkml")
+  )
+  addObservedData(
+    project,
+    list(id = "infusion", type = "pkml", file = "Infusion study.pkml")
+  )
+  addObservedData(
+    project,
+    list(id = "shared", type = "pkml", file = "../shared/Cohort H.pkml")
+  )
+
+  for (name in names(sameFile)) {
+    expect_error(
+      addObservedData(project, ospsuite::DataSet$new(name = name)),
+      "already exists",
+      info = name
+    )
+  }
+  for (name in c("Cohort G", "Cohort H")) {
+    expect_no_error(suppressMessages(
+      addObservedData(project, ospsuite::DataSet$new(name = name))
+    ))
+  }
+})
+
+test_that("a DataSet name inside a script source not loaded yet aborts the next load", {
+  project <- testProject()
+  marker <- withr::local_tempfile()
+  .addMarkerScriptSource(project, marker)
+  suppressMessages(addObservedData(
+    project,
+    ospsuite::DataSet$new(name = "Digitized plasma")
+  ))
 
   expect_snapshot(
     error = TRUE,
     suppressWarnings(suppressMessages(loadObservedData(project)))
+  )
+})
+
+test_that("overwrite = TRUE accepts a DataSet name inside a script source not loaded yet", {
+  # The add cannot see the name without running the script, so it is accepted
+  # and the next load reports the duplicate.
+  project <- testProject()
+  marker <- withr::local_tempfile()
+  .addMarkerScriptSource(project, marker)
+  suppressMessages(addObservedData(
+    project,
+    ospsuite::DataSet$new(name = "Digitized plasma"),
+    overwrite = TRUE
+  ))
+
+  expect_error(
+    suppressWarnings(suppressMessages(loadObservedData(project))),
+    "Duplicate observed-data set name"
   )
 })
 
@@ -678,18 +748,18 @@ test_that("saveProject persists a programmatic DataSet to PKML and it round-trip
 # before the write, so the existing file is left intact (no data loss).
 test_that("saveProject aborts on a programmatic-to-PKML basename collision", {
   project <- testProject()
-  # An existing pkml source living in the file "Collide.pkml" but producing a
-  # differently-named DataSet ("Other"), so it does not clash with the
-  # programmatic name at add time. The programmatic DataSet named "Collide"
-  # would persist to the same "Collide.pkml", colliding at save.
+  # The programmatic DataSet named "Collide" would persist to "Collide.pkml",
+  # the file of a pkml source producing a differently-named DataSet ("Other").
+  # The pkml source is added after the DataSet, so the add of the DataSet
+  # cannot see its id; the save is the last place to catch the collision.
+  ds <- ospsuite::DataSet$new(name = "Collide")
+  ds$setValues(xValues = c(1, 2), yValues = c(333, 444))
+  addObservedData(project, ds)
   existing <- ospsuite::DataSet$new(name = "Other")
   existing$setValues(xValues = c(0, 1), yValues = c(111, 222))
   collidePath <- file.path(project$paths$dataFolder, "Collide.pkml")
   ospsuite::saveDataSetToPKML(existing, collidePath)
   addObservedData(project, list(type = "pkml", file = "Collide.pkml"))
-  ds <- ospsuite::DataSet$new(name = "Collide")
-  ds$setValues(xValues = c(1, 2), yValues = c(333, 444))
-  addObservedData(project, ds)
 
   expect_snapshot(saveProject(project), error = TRUE)
 
@@ -700,6 +770,81 @@ test_that("saveProject aborts on a programmatic-to-PKML basename collision", {
     c(111, 222),
     tolerance = 1e-6
   )
+})
+
+test_that("saveProject keeps the data file of a source filed under a declared id", {
+  project <- testProject()
+  # The DataSet is added before the source that reads "Cohort B.pkml", so the
+  # add cannot see the clash; the save is the last place to catch it.
+  replacement <- ospsuite::DataSet$new(name = "Cohort B")
+  replacement$setValues(xValues = c(0, 1), yValues = c(999, 999))
+  suppressMessages(addObservedData(project, replacement))
+  original <- ospsuite::DataSet$new(name = "Cohort B")
+  original$setValues(xValues = c(0, 1), yValues = c(111, 222))
+  cohortPath <- file.path(project$paths$dataFolder, "Cohort B.pkml")
+  ospsuite::saveDataSetToPKML(original, cohortPath)
+  addObservedData(
+    project,
+    list(id = "cohort_b", type = "pkml", file = "Cohort B.pkml")
+  )
+
+  expect_snapshot(saveProject(project), error = TRUE)
+  expect_equal(
+    ospsuite::loadDataSetFromPKML(cohortPath)$yValues,
+    c(111, 222),
+    tolerance = 1e-6
+  )
+})
+
+test_that("saveProject compares data files by where they lie", {
+  # Each source reads `<name>.pkml` from the data folder under another
+  # spelling. The DataSet is added first, so only the save can catch it.
+  spellings <- c(
+    "./Cohort B.pkml",
+    "sub/../Cohort B.pkml",
+    "<dataFolder>/Cohort B.pkml",
+    "cohort b.PKML"
+  )
+  for (spelling in spellings) {
+    project <- testProject()
+    dataFolder <- project$paths$dataFolder
+    file <- sub("<dataFolder>", dataFolder, spelling, fixed = TRUE)
+    original <- ospsuite::DataSet$new(name = "Cohort B")
+    original$setValues(xValues = c(0, 1), yValues = c(111, 222))
+    existingPath <- file.path(dataFolder, basename(file))
+    ospsuite::saveDataSetToPKML(original, existingPath)
+    checksum <- tools::md5sum(existingPath)
+    replacement <- ospsuite::DataSet$new(name = "Cohort B")
+    replacement$setValues(xValues = c(0, 1), yValues = c(999, 999))
+    suppressMessages(addObservedData(project, replacement))
+    addObservedData(
+      project,
+      list(id = "cohort_b", type = "pkml", file = file)
+    )
+
+    expect_error(
+      saveProject(project),
+      "overwrite the data file of another source",
+      info = spelling
+    )
+    expect_identical(tools::md5sum(existingPath), checksum, info = spelling)
+  }
+})
+
+test_that("saveProject refuses two DataSets whose names differ only in case", {
+  # "Cohort B.pkml" and "cohort b.pkml" are one file on Windows and macOS.
+  project <- testProject()
+  upper <- ospsuite::DataSet$new(name = "Cohort B")
+  upper$setValues(xValues = c(0, 1), yValues = c(1, 2))
+  lower <- ospsuite::DataSet$new(name = "cohort b")
+  lower$setValues(xValues = c(0, 1), yValues = c(3, 4))
+  suppressMessages(addObservedData(project, upper))
+  suppressMessages(addObservedData(project, lower))
+
+  expect_snapshot(saveProject(project), error = TRUE)
+  expect_false(file.exists(
+    file.path(project$paths$dataFolder, "Cohort B.pkml")
+  ))
 })
 
 # Persisting a programmatic DataSet needs a data folder to write the PKML into;
@@ -1019,19 +1164,20 @@ test_that("a config entry cannot overwrite a live programmatic source", {
 })
 
 test_that("a DataSet clashes with an existing declaration's declared id", {
-  # The DataSet branch keys on resolved data-set names, which never see a
-  # declaration whose `id` was chosen by hand; without the id check the section
-  # would hold two entries filed under one id and only fail at save.
+  # A declared `id` is not the name of a data set, so only the id check sees
+  # the clash; without it the section would hold two entries filed under one
+  # id and only fail at save. The PKML file does not exist: the clash is found
+  # without reading it.
   project <- testProject()
-  dataFolder <- project$paths$dataFolder
-  src <- ospsuite::DataSet$new(name = "from_file")
-  src$setValues(xValues = c(1, 2), yValues = c(3, 4))
-  ospsuite::saveDataSetToPKML(src, file.path(dataFolder, "src.pkml"))
-  addObservedData(project, list(id = "obs", type = "pkml", file = "src.pkml"))
+  addObservedData(
+    project,
+    list(id = "cohort_b", type = "pkml", file = "cohort_b_export.pkml")
+  )
 
-  ds <- ospsuite::DataSet$new(name = "obs")
-  ds$setValues(xValues = c(1, 2), yValues = c(3, 4))
-  expect_error(addObservedData(project, ds), "already exists")
+  expect_snapshot(
+    error = TRUE,
+    addObservedData(project, ospsuite::DataSet$new(name = "cohort_b"))
+  )
 })
 
 test_that("removeObservedData warns and skips a not-found id in the batch", {

@@ -2198,6 +2198,14 @@ messages$observedDataPersistIdCollision <- function(ids) {
   )
 }
 
+messages$observedDataPersistFileCollision <- function(files) {
+  cliBullets(
+    "x" = "Saving a programmatic observed-data source would overwrite the data file of another source: {.file {files}}.",
+    "i" = "A programmatic source is written to {.file <name>.pkml} in the data folder, a file another source already reads or another programmatic source is written to. File names that differ only in case are the same file on Windows and macOS.",
+    "i" = "Rename the {.cls DataSet} (its {.field name}) so the file names differ."
+  )
+}
+
 messages$populationProgrammaticAdded <- function(
   id,
   hasPopulationsFolder = TRUE

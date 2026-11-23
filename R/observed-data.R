@@ -336,13 +336,17 @@ loadObservedData <- function(project) {
 # then shadow the earlier set when the list is indexed by name).
 #' @keywords internal
 #' @noRd
-.mergeObservedDataSets <- function(accumulated, incoming) {
+.mergeObservedDataSets <- function(
+  accumulated,
+  incoming,
+  call = rlang::caller_env()
+) {
   if (length(incoming) == 0) {
     return(accumulated)
   }
   duplicates <- intersect(names(accumulated), names(incoming))
   if (length(duplicates) > 0) {
-    cli::cli_abort(messages$observedDataNameCollision(duplicates))
+    cli::cli_abort(messages$observedDataNameCollision(duplicates), call = call)
   }
   c(accumulated, incoming)
 }
@@ -415,11 +419,19 @@ getObservedDataNames <- function(project) {
 #' in an Excel sheet, the name inside a PKML file), and that name, not the
 #' declaration's id, is what a `dataCombined` entry references.
 #'
-#' Adding a `DataSet` reads none of the project's sources and runs no script.
-#' A `DataSet` whose name equals the name of a data set inside an Excel, PKML
-#' or script source can therefore be accepted; the next time the observed data
-#' is loaded, by [loadObservedData()] or a function that uses it such as
-#' [createDataCombined()], it stops with an error naming the duplicate.
+#' Adding a `DataSet` reads none of the project's sources and runs no script,
+#' so its name is checked only against what the project already knows. Without
+#' `overwrite`, it is refused at once when its name is a declared `id`, the
+#' name of a `DataSet` added in this session, or the name of a data set loaded
+#' since the project's observed data last changed. It is also refused when a
+#' source's id or data file is `<name>.pkml`, as it is for a `DataSet` of that
+#' name saved earlier: saving would overwrite that file. A `DataSet` whose name
+#' equals another data set inside an Excel, PKML or script source can still be
+#' accepted: the next time the observed data is loaded, by [loadObservedData()]
+#' or a function that uses it such as [createDataCombined()], it stops with an
+#' error naming the duplicate. Then remove the `DataSet` with
+#' [removeObservedData()], by its name before saving or by `<name>.pkml` after
+#' saving, and add it again under another name.
 #'
 #' A `DataSet` you pass lives in the R session until you save. On
 #' [saveProject()] it is written to a PKML file named `<DataSet name>.pkml`
@@ -435,10 +447,15 @@ getObservedDataNames <- function(project) {
 #'   already exists (a `DataSet` name, or a configuration list's `id` or `file`
 #'   basename) aborts. When `TRUE`, the existing source with that id is replaced
 #'   (last-write-wins) as long as both are the same kind. A cross-kind
-#'   replacement is refused in either direction, because it would either strand
-#'   the session's `DataSet` or leave two sources resolving to one name: remove
-#'   the existing source with [removeObservedData()] first, then add the new
-#'   one.
+#'   replacement is refused, because it would either strand the session's
+#'   `DataSet` or leave two sources resolving to one name: remove the existing
+#'   source with [removeObservedData()] first, then add the new one. A
+#'   configuration list is always checked in full. For a `DataSet`, the refusal
+#'   at add time covers a declared `id`, a source whose id or data file is
+#'   `<name>.pkml` (such as a `DataSet` of the same name saved earlier), and the
+#'   names of data sets loaded since the observed data last changed; any other
+#'   clash with a data set inside an Excel, PKML or script source is reported
+#'   the next time the observed data is loaded.
 #' @returns The `project` object, invisibly.
 #' @export
 #' @family observedData
@@ -480,8 +497,32 @@ addObservedData <- function(project, entry, overwrite = FALSE) {
     # Only a *declared* id counts here. An id derived from a `file` basename is
     # not a clash: the sentinel is rewritten to `<name>.pkml` at save, so the
     # two never share a definition file on disk.
-    declaredIds <- .observedDataDeclaredIds(self$definitions$observedData)
-    clashes <- name %in% existingNames || name %in% declaredIds
+    sources <- self$definitions$observedData
+    declaredIds <- .observedDataDeclaredIds(sources)
+    # The exception is a file-based source whose id is `<name>.pkml`, the id a
+    # DataSet of this name is saved under: saving this one would write the same
+    # file, and that source most likely holds a data set of this name, which the
+    # names cache may not know yet.
+    isFileBased <- vapply(
+      sources %||% list(),
+      \(e) !identical(e$type, "programmatic"),
+      logical(1)
+    )
+    savedIds <- .observedDataSectionIds(sources)[isFileBased]
+    # Saving writes `<name>.pkml` into the data folder, so a source already
+    # reading its data from that file would lose it, whatever its id.
+    dataFolder <- self$paths$dataFolder
+    savedFile <- .observedDataResolvedFiles(paste0(name, ".pkml"), dataFolder)
+    sourceFiles <- .observedDataResolvedFiles(
+      .observedDataSourceFiles(sources),
+      dataFolder
+    )
+    clashes <- any(
+      name %in% existingNames,
+      name %in% declaredIds,
+      paste0(name, ".pkml") %in% savedIds,
+      savedFile %in% sourceFiles
+    )
     if (clashes && !overwrite) {
       cli::cli_abort(c(
         "observedData entry with name {.val {name}} already exists.",
@@ -514,7 +555,10 @@ addObservedData <- function(project, entry, overwrite = FALSE) {
       # The name collides with a file-based (pkml/excel/script) source, not a
       # programmatic one, so there is no programmatic entry to replace. Appending
       # would leave two sources resolving to the same name and only fail later,
-      # opaquely, at the next load/save. Abort now, naming the fix.
+      # at the next load/save. Abort now, naming the fix. This is best effort:
+      # `clashes` sees only the names known without reading a source, so a
+      # clash with a name inside a source not read yet is appended and reported
+      # by the next load.
       cli::cli_abort(c(
         "observedData entry with name {.val {name}} is a file-based source, \\
         not a programmatic one, so it cannot be overwritten with a {.cls DataSet}.",
@@ -824,6 +868,45 @@ removeObservedData <- function(project, id) {
   vapply(observedData %||% list(), .observedDataEntryIdOrNA, character(1))
 }
 
+# The `file` of every entry in the section as written (relative to the data
+# folder, or absolute), `NA` for one that names none (a programmatic entry).
+#
+# @keywords internal
+# @noRd
+.observedDataSourceFiles <- function(observedData) {
+  vapply(
+    observedData %||% list(),
+    \(e) .usableObservedDataId(e[["file"]]) %||% NA_character_,
+    character(1)
+  )
+}
+
+# Where each of `files` (paths relative to the data folder, or absolute) lies,
+# for comparing two names of one file: resolved against the data folder on the
+# text alone (`.` and `..` removed, nothing on disk read) and lowercased,
+# because Windows and macOS treat names differing only in case as one file.
+# `NA` stays `NA`. A path that escapes the data folder resolves like any other
+# instead of aborting: it is only compared here, and the load reports it.
+# Without a data folder, relative paths resolve against the working directory,
+# which keeps them comparable with each other.
+#
+# @keywords internal
+# @noRd
+.observedDataResolvedFiles <- function(files, dataFolder) {
+  absRoot <- as.character(fs::path_abs(dataFolder %||% "."))
+  vapply(
+    files,
+    function(file) {
+      if (is.na(file)) {
+        return(NA_character_)
+      }
+      tolower(.absoluteAgainstRoot(file, absRoot))
+    },
+    character(1),
+    USE.NAMES = FALSE
+  )
+}
+
 # Only the ids the declarations state outright. Distinct from
 # `.observedDataSectionIds()`, which also derives one for a declaration that
 # states none: a derived id can change under the declaration (a programmatic
@@ -989,8 +1072,8 @@ removeObservedData <- function(project, id) {
   }
 
   # Rewrite the whole section in memory and validate it clean BEFORE writing any
-  # PKML file, so a save that aborts (an unsafe name, or a basename that collides
-  # with another source's on-disk id) never overwrites an existing file: every
+  # PKML file, so a save that aborts (an unsafe name, an id another source has,
+  # or a data file another source reads) never overwrites an existing file: every
   # write below is known to land on a fresh, collision-free path. This upholds
   # the all-or-nothing save contract for the on-disk data files, not just the
   # definition tree.
@@ -1013,6 +1096,23 @@ removeObservedData <- function(project, id) {
   duplicates <- unique(ids[duplicated(ids)])
   if (length(duplicates) > 0) {
     cli::cli_abort(messages$observedDataPersistIdCollision(duplicates))
+  }
+  # No write may land on a file another source reads its data from (whatever
+  # that source's id), or on a file another write in this batch lands on. The
+  # paths are compared as `.observedDataResolvedFiles()` resolves them: on the
+  # text alone, ignoring case. Two names for one file through a symbolic or
+  # hard link are not detected.
+  targetFiles <- .observedDataResolvedFiles(fileNames, dataFolder)
+  otherFiles <- .observedDataResolvedFiles(
+    .observedDataSourceFiles(observedData[-toPersist]),
+    dataFolder
+  )
+  readByOther <- targetFiles %in% otherFiles
+  sharedInBatch <- duplicated(targetFiles) |
+    duplicated(targetFiles, fromLast = TRUE)
+  clashingFiles <- fileNames[readByOther | sharedInBatch]
+  if (length(clashingFiles) > 0) {
+    cli::cli_abort(messages$observedDataPersistFileCollision(clashingFiles))
   }
 
   # Materialize the folder (a from-scratch project may declare one that has no
