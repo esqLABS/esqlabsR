@@ -391,3 +391,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-11-23 19:30: The parent branch's Air formatting, roxygen 8.1.1 and shorter addObservedData() help are merged in, with the help naming addObservedDataSource(), removeObservedDataSource() and observedDataSources. (#1369)
 - 2026-11-23 19:31: The observed-data definition-file and export messages say source instead of declaration. (#1369)
 - 2026-11-23 19:31: validateProject() messages about an observed-data source start with a capital letter. (#1369)
+- 2026-11-23 19:31: A test comment about the earlier observed-data names says why they are held in variables without recounting the rename. (#1369)

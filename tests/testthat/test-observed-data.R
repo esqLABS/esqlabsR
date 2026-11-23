@@ -2047,8 +2047,7 @@ test_that("printing the observedDataSources section lists the declaration ids", 
 # observed-data sources under the key `observedData` and in the folder
 # `observed-data`. Read under the current names it would show no sources at all,
 # so the load stops and names what to rename. The earlier names are held in
-# variables so the rename script that produced the current names leaves them
-# alone.
+# variables so a rename that matches the earlier spelling leaves them alone.
 earlierKey <- "observedData"
 earlierFolder <- "observed-data"
 
