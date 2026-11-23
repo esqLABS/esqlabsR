@@ -139,7 +139,7 @@
       x id is "myset" but the file is "otherset".json.
       i The filename stem is the definition's id; rename the file or the id so they match. Check 'somewhere/otherset.json'.
 
-# a programmatic observedData name that escapes its directory aborts
+# a programmatic observedData id that escapes its directory aborts
 
     Code
       .serializeObservedDataSet(entries)
@@ -147,7 +147,7 @@
       Error in `.serializeObservedDataSet()`:
       ! observedData id "../escape" is not a single safe filename segment.
       x It must not contain a path separator or be "." / "..", so it cannot escape the observed-data definition directory.
-      i Give the declaration an id that is a single safe filename segment, or rename what it derives one from: a file basename, or a programmatic name.
+      i Give the declaration an id that is a single safe filename segment, or rename what it takes its id from: a file basename, or the name of a <DataSet>.
 
 # a full-tree write aborts when a stale file cannot be removed
 

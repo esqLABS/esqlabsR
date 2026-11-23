@@ -138,9 +138,9 @@
       saveProject(project)
     Condition
       Error in `.serializeObservedDataSet()`:
-      ! Two observedData declarations map to the same definition file 'obs.pkml.json'.
-      x The on-disk id is the declaration's id, or the file basename (the programmatic name) when it declares none, so two declarations sharing one collide.
-      i Give them distinct ids, or rename one so the basenames differ.
+      x Two observed-data sources would be saved to the same definition file 'obs.pkml.json'.
+      i Each source is saved to a file named after its id: the id it was given, or else its file basename. Ids that differ only in case are the same file on Windows and macOS.
+      i Give the sources distinct ids, or remove one with `removeObservedData()`.
 
 # saveProject aborts on a programmatic-to-PKML basename collision
 
@@ -148,9 +148,9 @@
       saveProject(project)
     Condition
       Error in `.persistProgrammaticObservedData()`:
-      x Saving a programmatic observed-data source would overwrite another source: 'Collide.pkml'.
-      i A programmatic source is written to '<name>.pkml'; this clashes with an existing source filed under the same name.
-      i Rename the <DataSet> (its name) so the file names differ.
+      x Saving a programmatic observed-data source would overwrite the data file of another source: 'Collide.pkml'.
+      i A programmatic source is written to '<name>.pkml' in the data folder, a file another source already reads or another programmatic source is written to. File names that differ only in case are the same file on Windows and macOS.
+      i Before saving, remove the source with `removeObservedData()` by its name, rename the <DataSet>, and add it again with `addObservedData()`.
 
 # saveProject keeps the data file of a source filed under a declared id
 
@@ -180,6 +180,15 @@
       Error in `.persistProgrammaticObservedData()`:
       x Cannot save the programmatic observed-data source "NoFolderSet": dataFolder is not declared in `filePaths`.
       i A programmatic source is written to a PKML file under dataFolder on save. Declare dataFolder, then save again.
+
+# a DataSet clashes with the id a source takes from its file
+
+    Code
+      addObservedData(project, ds)
+    Condition
+      Error in `addObservedData()`:
+      ! observedData entry with name "Aciclovir_TimeValuesData.xlsx" already exists.
+      i Pass `overwrite = TRUE` to replace it.
 
 # addObservedData rejects a duplicate declared id
 
@@ -215,9 +224,29 @@
       saveProject(project)
     Condition
       Error in `.serializeObservedDataSet()`:
-      ! Two observedData declarations map to the same definition file 'obs.pkml.json'.
-      x The on-disk id is the declaration's id, or the file basename (the programmatic name) when it declares none, so two declarations sharing one collide.
-      i Give them distinct ids, or rename one so the basenames differ.
+      x Two observed-data sources would be saved to the same definition file 'obs.pkml.json'.
+      i Each source is saved to a file named after its id: the id it was given, or else its file basename. Ids that differ only in case are the same file on Windows and macOS.
+      i Give the sources distinct ids, or remove one with `removeObservedData()`.
+
+# every observed-data source stores its id first and the section is keyed by it
+
+    Code
+      project$definitions$observedData[["Cohort B.pkml"]]$file <- "other.pkml"
+    Condition
+      Error in `[[<-`:
+      ! observedData is read-only and cannot be assigned into.
+      i To change a definition, edit its '.json' file or use an authoring function (e.g. `addScenario()` / `setScenario()` / `removeScenario()` and their per-section siblings).
+      i To edit one record, read it, change the copy, then re-submit it with an authoring function: `sc <- project$definitions$scenarios[["id"]]; sc$field <- value; setScenario(project, "id", ...)`.
+
+# saveProject refuses a DataSet whose name differs from another id only in case
+
+    Code
+      saveProject(project)
+    Condition
+      Error in `.serializeObservedDataSet()`:
+      x Two observed-data sources would be saved to the same definition file 'Cohort_B.json'.
+      i Each source is saved to a file named after its id: the id it was given, or else its file basename. Ids that differ only in case are the same file on Windows and macOS.
+      i Give the sources distinct ids, or remove one with `removeObservedData()`.
 
 # print.ObservedDataSource renders the source declaration
 
@@ -225,9 +254,9 @@
       print(project$definitions$observedData[[1]])
     Output
       <ObservedDataSource>
+        * Id: Aciclovir_TimeValuesData.xlsx
         * Type: excel
         * File: Aciclovir_TimeValuesData.xlsx
-        * Name: <empty string>
         * Importer Configuration: esqlabs_dataImporter_configuration.xml
         * Sheets: Laskin 1982.Group A
 

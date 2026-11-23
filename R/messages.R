@@ -2190,11 +2190,11 @@ messages$observedDataPersistNoDataFolder <- function(name) {
   )
 }
 
-messages$observedDataPersistIdCollision <- function(ids) {
+messages$observedDataDefinitionFileCollision <- function(id) {
   cliBullets(
-    "x" = "Saving a programmatic observed-data source would overwrite another source: {.file {ids}}.",
-    "i" = "A programmatic source is written to {.file <name>.pkml}; this clashes with an existing source filed under the same name.",
-    "i" = "Rename the {.cls DataSet} (its {.field name}) so the file names differ."
+    "x" = "Two observed-data sources would be saved to the same definition file {.file {id}.json}.",
+    "i" = "Each source is saved to a file named after its id: the {.field id} it was given, or else its {.field file} basename. Ids that differ only in case are the same file on Windows and macOS.",
+    "i" = "Give the sources distinct {.field id}s, or remove one with {.fn removeObservedData}."
   )
 }
 

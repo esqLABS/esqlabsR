@@ -35,10 +35,10 @@ initProject(destination = project_dir, type = "example", createExcel = FALSE)
 project <- loadProject(file.path(project_dir, "Project.json"))
 ```
 
-The example already ships with one observed-data source, an Excel source. You can see it as a definition on the project:
+The example already ships with one observed-data source, an Excel source. You can see it as a definition on the project, read by its id:
 
 ```{r}
-project$definitions$observedData[[1]]
+project$definitions$observedData[["Aciclovir_TimeValuesData.xlsx"]]
 ```
 
 ## Choose the name a source is known by
@@ -47,7 +47,7 @@ Two strings attach to every source, and they are not interchangeable. The **sour
 
 The working rule: **read the DataSet name from `getObservedDataNames()` rather than typing it**, and use the source id only to remove a source.
 
-Set an `id` when you want to choose that name yourself instead of inheriting it from the file. Since the id also names the definition file, the declaration below is stored as `definitions/observed-data/laskin_iv.json` rather than under the data file's name:
+Every source carries its id in its `id` field, and `project$definitions$observedData` is keyed by it. Set an `id` when you want to choose that name yourself instead of inheriting it from the file. Since the id also names the definition file, the declaration below is stored as `definitions/observed-data/laskin_iv.json` rather than under the data file's name:
 
 ```{r, eval = FALSE}
 addObservedData(
@@ -128,7 +128,7 @@ addObservedData(project, list(type = "pkml", file = "extra_cohort.pkml"))
 getObservedDataNames(project)
 ```
 
-The source definition is written to `definitions/observed-data/extra_cohort.pkml.json`; the PKML file stays under `Data/`, and the data is re-read from it whenever the project resolves observed data.
+The source id is the file basename, `extra_cohort.pkml`, so the source definition is written to `definitions/observed-data/extra_cohort.pkml.json`; the PKML file stays under `Data/`, and the data is re-read from it whenever the project resolves observed data.
 
 ## Source type 3: Script
 
@@ -169,7 +169,7 @@ scratch$setValues(xValues = c(0, 1, 3), yValues = c(0, 6, 2))
 addObservedData(project, scratch)
 ```
 
-Until you save, that `DataSet` lives on the in-memory project and the entry on disk is a `{type: "programmatic", name}` sentinel. On `saveProject()` the package writes the `DataSet` to a PKML file named after it (`Scratch measurement.pkml`) under the data folder and rewrites the entry to a `pkml` source. From then on it is an ordinary file-backed source: it survives a reload, and its remove id becomes the PKML file basename rather than the DataSet name.
+The source id is the DataSet name, `Scratch measurement`. Until you save, that `DataSet` lives on the in-memory project and its entry is `{id: "Scratch measurement", type: "programmatic"}`. On `saveProject()` the package writes the `DataSet` to a PKML file named after it (`Scratch measurement.pkml`) under the data folder and rewrites the entry to a `pkml` source reading that file. From then on it is an ordinary file-backed source that survives a reload, and it keeps its id: you remove it by the DataSet name before and after saving.
 
 Because saving turns a `programmatic` source into a `pkml` file, the data folder must be declared before you save; a project with no data folder cannot write the PKML and stops with a clear message. A `programmatic` sentinel that reaches a fresh session without its `DataSet` (a declaration written by hand, or a project opened before it was ever saved) resolves to nothing, and the load warns you by name so it never vanishes silently.
 

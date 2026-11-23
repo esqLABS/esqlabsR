@@ -348,3 +348,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-11-23 14:44: Adding or saving a DataSet no longer overwrites a PKML file another observed-data source reads, and the add-time name check is documented. (#1367)
 - 2026-11-23 14:45: The help page of addObservedData() is regenerated for the add-time name check. (#1367)
 - 2026-11-23 14:55: The save-time file-collision message tells the modeler to remove the DataSet's source, rename the DataSet and add it again. (#1367)
+- 2026-11-23 15:28: Every observed-data source now stores its id in its definition file, the section is keyed by id, and a saved DataSet keeps its name as id. (#1368)

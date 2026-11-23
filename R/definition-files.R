@@ -34,9 +34,10 @@
 #   plotGrids                -> plot-grids/               one file per grid
 #   parameterIdentification  -> parameter-identification/ one file per task
 #
-# A section keyed by an id is one file per id (the id is the filename). The
-# unnamed `observedData` list is keyed by the id `removeObservedData()` matches
-# on (file basename, or the programmatic DataSet name).
+# A section keyed by an id is one file per id (the id is the filename),
+# `observedData` included: every declaration stores its id, either the one the
+# user gave or the one derived from its source (file basename, or the
+# programmatic DataSet name).
 #
 # The plots concern is three independent top-level keyed sections, each its own
 # kind: `dataCombined` (`data-combined/<id>.json`), `plots`
@@ -850,9 +851,8 @@
   })
 }
 
-# observedData: one file per declaration, keyed by the id `removeObservedData()`
-# matches on (a declared `id`, else the file basename or the programmatic
-# DataSet name).
+# observedData: one file per declaration, keyed by its id, which every file
+# stores as its first field.
 #
 # @keywords internal
 # @noRd
@@ -862,21 +862,13 @@
   for (entry in observedData) {
     id <- .observedDataEntryId(entry)
     .validateObservedDataId(id)
-    # Two declarations whose `file` differs only by directory derive the same
-    # basename and would silently overwrite each other (one file on disk, the
-    # second declaration lost on reload). Fail fast naming the collision rather
-    # than dropping a declaration.
-    if (!is.null(out[[id]])) {
-      cli::cli_abort(c(
-        "Two observedData declarations map to the same definition file {.file {id}.json}.",
-        "x" = "The on-disk id is the declaration's {.field id}, or the file \\
-        basename (the programmatic name) when it declares none, so two \\
-        declarations sharing one collide.",
-        "i" = "Give them distinct {.field id}s, or rename one so the basenames \\
-        differ."
-      ))
+    # Two declarations filed under one id would overwrite each other's file (one
+    # file on disk, the second declaration lost on reload). Ids differing only
+    # in case are one file on Windows and macOS, so compare them ignoring case.
+    if (tolower(id) %in% tolower(names(out))) {
+      cli::cli_abort(messages$observedDataDefinitionFileCollision(id))
     }
-    out[[id]] <- unclass(entry)
+    out[[id]] <- .observedDataRecordWithId(entry)
   }
   out
 }
@@ -884,31 +876,81 @@
 # @keywords internal
 # @noRd
 .parseObservedDataTree <- function(records) {
-  # The in-memory `observedData` shape is an unnamed list of declarations; an
-  # absent section (`NULL`) is a bare `list()`.
+  # An absent section (`NULL`) is a bare `list()`.
   if (is.null(records)) {
     return(list())
   }
-  # Drop the transient `.definitionFile` load tag the tree loader attaches; it is
-  # used only for error messages, and must not leak into the in-memory record
-  # (which would make a tree-loaded section differ from an inline-loaded one).
-  # Stamp each declaration with `c("ObservedDataSource", "list")` so a single
-  # source dispatches its print method (the serializers strip it before JSON).
   records <- lapply(records, function(rec) {
     .assertObservedDataTreeRecordId(rec)
+    # A tree file is keyed by its filename, so a declaration that carries nothing
+    # to derive an id from takes the filename stem; `validateProject()` still
+    # reports the fields it is missing.
+    file <- attr(rec, ".definitionFile")
+    if (!is.null(file) && is.na(.observedDataEntryIdOrNA(rec))) {
+      rec$id <- tools::file_path_sans_ext(basename(file))
+    }
+    # Drop the transient `.definitionFile` load tag the tree loader attaches; it
+    # is used only for error messages, and must not leak into the in-memory
+    # record (which would make a tree-loaded section differ from an
+    # inline-loaded one).
     attr(rec, ".definitionFile") <- NULL
-    .asObservedDataSource(rec)
+    rec
   })
-  unname(records)
+  .observedDataSectionById(records)
 }
 
-# The load-side counterpart of `.keyedTreeRecordId()` for observedData, whose id
-# is only sometimes stored: a declaration either carries an `id` or derives one
-# from its source. Both must still agree with the filename, or the next
-# `saveProject()` files the declaration under a different name and reconciles
-# the loaded file away, and two files that derive one id load fine but make the
-# save abort. Checked only for a record read from a tree file; an inline
-# snapshot record has no filename to check against.
+# The in-memory shape of the `observedData` section: every declaration stores
+# its id as its first field and the list is named by those ids, like every
+# other section. A declaration without an `id` takes the one derived from its
+# source (`.observedDataEntryIdOrNA()`), spelled as the source spells it; a
+# `programmatic` one stores its DataSet name as `id`, not under `name`. A
+# declaration with nothing to derive an id from keeps none and is named `""`.
+# Each is stamped `ObservedDataSource` so a single source dispatches its print
+# method (the serializers strip it before JSON).
+#
+# @keywords internal
+# @noRd
+.observedDataSectionById <- function(observedData) {
+  if (length(observedData) == 0L) {
+    return(list())
+  }
+  records <- lapply(observedData, function(entry) {
+    .asObservedDataSource(.observedDataRecordWithId(entry))
+  })
+  ids <- .observedDataSectionIds(records)
+  names(records) <- ifelse(is.na(ids), "", ids)
+  records
+}
+
+# One declaration as a plain list with its id first. Converts the `name` a
+# `programmatic` declaration carried before it stored `id` (an earlier
+# development build, or a hand-written file); a stored `id` is kept as is.
+#
+# @keywords internal
+# @noRd
+.observedDataRecordWithId <- function(entry) {
+  entry <- unclass(entry)
+  if (identical(entry$type, "programmatic")) {
+    entry$id <- entry$id %||% entry$name
+    entry$name <- NULL
+  }
+  if (is.null(entry$id)) {
+    id <- .observedDataEntryIdOrNA(entry)
+    if (is.na(id)) {
+      return(entry)
+    }
+    entry$id <- id
+  }
+  c(list(id = entry$id), entry[names(entry) != "id"])
+}
+
+# The load-side counterpart of `.keyedTreeRecordId()` for observedData, whose
+# file may store no id: one written by hand, or by an earlier development build,
+# derives it from its source. Either way the id must agree with the filename,
+# or the next `saveProject()` files the declaration under a different name and
+# reconciles the loaded file away, and two files that derive one id load fine
+# but make the save abort. Checked only for a record read from a tree file; an
+# inline snapshot record has no filename to check against.
 #
 # A declaration with no derivable id at all passes here: reporting an
 # under-specified source is `validateProject()`'s job, not the loader's.
@@ -957,10 +999,10 @@
   entry
 }
 
-# The on-disk id of an observed-data declaration: its own `id` field when it
-# declares one, else the file basename for `excel`/`pkml`/`script` and the
-# DataSet name for `programmatic`. This is the id `removeObservedData()` matches
-# on, so the filename and that id agree.
+# The id of an observed-data declaration: its own `id` field, else (for a
+# declaration that stores none) the file basename for `excel`/`pkml`/`script`
+# and the DataSet name a `programmatic` declaration stored under `name`. This is
+# the id `removeObservedData()` matches on and the stem of the definition file.
 #
 # @keywords internal
 # @noRd
@@ -970,8 +1012,7 @@
     cli::cli_abort(
       c(
         "An observedData declaration has no id to name its definition file.",
-        "i" = "Give it an {.field id}, or let it derive one: a file-based entry \\
-        from its {.field file}, a programmatic entry from its {.field name}."
+        "i" = "Give it an {.field id}, or a {.field file} to take the id from."
       ),
       call = call
     )
@@ -989,9 +1030,8 @@
   id <- .usableObservedDataId(entry[["id"]])
   if (is.null(id)) {
     if (identical(entry$type, "programmatic")) {
-      # A programmatic name reaches the filename verbatim, unreduced: it is the
-      # user's `DataSet$name`, and `.validateObservedDataId()` rejects one that
-      # is not a safe segment rather than quietly reshaping it into one.
+      # Only a `programmatic` declaration read from a file written before it
+      # stored `id` has its DataSet name under `name`.
       id <- .usableObservedDataId(entry[["name"]])
     } else {
       file <- .usableObservedDataId(entry[["file"]])
@@ -1023,11 +1063,11 @@
 
 # The observed-data id becomes a filename via `.definitionFilePath(dir, id)`, so it
 # must be a single safe path segment or it could escape the kind directory. A
-# declared `id`, and a programmatic `name`, reach this verbatim (unlike the other
-# keyed kinds, whose key is validated by `.validateDefinitionTreeKey`). Reject
-# rather than rewrite: the id doubles as the match key for
-# `removeObservedData()`, so canonicalizing it would desync the on-disk filename
-# from the match key.
+# derived id (a file basename, a DataSet name) and an `id` read from a file reach
+# this verbatim (unlike the other keyed kinds, whose key is validated by
+# `.validateDefinitionTreeKey`). Reject rather than rewrite: the id doubles as
+# the match key for `removeObservedData()`, so canonicalizing it would desync the
+# on-disk filename from the match key.
 #
 # @keywords internal
 # @noRd
@@ -1039,8 +1079,8 @@
         "x" = "It must not contain a path separator or be {.val .} / {.val ..}, \\
         so it cannot escape the observed-data definition directory.",
         "i" = "Give the declaration an {.field id} that is a single safe \\
-        filename segment, or rename what it derives one from: a {.field file} \\
-        basename, or a programmatic {.field name}."
+        filename segment, or rename what it takes its id from: a {.field file} \\
+        basename, or the name of a {.cls DataSet}."
       ),
       call = call
     )

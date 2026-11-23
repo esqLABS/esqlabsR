@@ -353,7 +353,10 @@ test_that("addObservedData appends a valid config entry", {
   # The entry is classed as an ObservedDataSource (a transparent list wrapper
   # for printing); compare the fields, not the class.
   expect_s3_class(added, "ObservedDataSource")
-  expect_equal(unclass(added), list(type = "pkml", file = "extra.pkml"))
+  expect_equal(
+    unclass(added),
+    list(id = "extra.pkml", type = "pkml", file = "extra.pkml")
+  )
 })
 
 test_that("addObservedData rejects an under-specified config entry, naming every gap at once", {
@@ -882,12 +885,12 @@ test_that("addObservedData rejects a DataSet name that is not a safe filename", 
   expect_error(addObservedData(project, ds), "safe filename segment")
 })
 
-# A hand-authored `programmatic` sentinel with no `name` is schema-legal (a
+# A hand-authored `programmatic` sentinel with no `id` is schema-legal (a
 # programmatic entry has no required fields). The persist step must not crash on
-# `store[[NULL]]`; a name-less entry has no id to name its definition file, so
-# the save aborts with the serializer's clear "no id" message, not an opaque
+# it; an id-less entry has nothing to name its definition file, so the save
+# aborts with the serializer's clear "no id" message, not an opaque
 # `subscript out of bounds`.
-test_that("saveProject rejects a name-less programmatic sentinel with a clear error", {
+test_that("saveProject rejects an id-less programmatic sentinel with a clear error", {
   project <- testProject()
   observedData <- .getSection(project, "observedData")
   observedData <- c(observedData, list(list(type = "programmatic")))
@@ -923,22 +926,16 @@ test_that("a save that aborts mid-tree-write keeps the programmatic DataSet reco
   expect_true("RecoverableSet" %in% names(state$.programmaticDataSets))
 })
 
-# Since a programmatic DataSet persists to `<name>.pkml`, a name that equals an
-# existing file-based source's basename (e.g. an Excel `file`) no longer collides
-# with it: the persisted file is `<name>.pkml`, a distinct id. Lock in that this
-# now saves cleanly (it aborted before this PR).
-test_that("a programmatic name equal to an existing file basename saves cleanly", {
+# A DataSet keeps its name as its id, before and after saving, so a name equal
+# to the id a file-based source takes from its file basename would share that
+# source's definition file.
+test_that("a DataSet clashes with the id a source takes from its file", {
   project <- testProject()
-  # The fixture declares a file-based Excel source filed under this basename.
+  # The fixture declares an Excel source whose id is its file basename.
   ds <- ospsuite::DataSet$new(name = "Aciclovir_TimeValuesData.xlsx")
   ds$setValues(xValues = c(1, 2), yValues = c(3, 4))
-  addObservedData(project, ds)
 
-  expect_no_error(saveProject(project))
-  expect_true(file.exists(file.path(
-    project$paths$dataFolder,
-    "Aciclovir_TimeValuesData.xlsx.pkml"
-  )))
+  expect_snapshot(error = TRUE, addObservedData(project, ds))
 })
 
 # removeObservedData write-through ----
@@ -1208,7 +1205,7 @@ test_that("removeObservedData mutates memory only; a surviving collision aborts 
 
   # Seed a colliding pair of surviving entries directly into the backing field.
   state$.observedData <- list(
-    .asObservedDataSource(list(type = "programmatic", name = "myProgSet")),
+    .asObservedDataSource(list(id = "myProgSet", type = "programmatic")),
     .asObservedDataSource(list(type = "pkml", file = "dirA/obs.pkml")),
     .asObservedDataSource(list(type = "pkml", file = "dirB/obs.pkml"))
   )
@@ -1218,6 +1215,348 @@ test_that("removeObservedData mutates memory only; a surviving collision aborts 
   removeObservedData(project, "myProgSet")
   expect_false("myProgSet" %in% names(state$.programmaticDataSets))
   expect_snapshot(saveProject(project), error = TRUE)
+})
+
+# Stored ids ----
+
+test_that("every observed-data source stores its id first and the section is keyed by it", {
+  project <- testProject()
+  addObservedData(project, list(type = "pkml", file = "sub/Cohort B.pkml"))
+  suppressWarnings(addObservedData(
+    project,
+    list(id = "Laskin_IV", type = "pkml", file = "laskin_1982_iv.pkml")
+  ))
+  suppressMessages(addObservedData(
+    project,
+    ospsuite::DataSet$new(name = "Scratch measurement")
+  ))
+
+  expect_identical(
+    lapply(.unwrapDefinitionList(project$definitions$observedData), unclass),
+    list(
+      "Aciclovir_TimeValuesData.xlsx" = list(
+        id = "Aciclovir_TimeValuesData.xlsx",
+        type = "excel",
+        file = "Aciclovir_TimeValuesData.xlsx",
+        importerConfiguration = "esqlabs_dataImporter_configuration.xml",
+        sheets = list("Laskin 1982.Group A")
+      ),
+      "Cohort B.pkml" = list(
+        id = "Cohort B.pkml",
+        type = "pkml",
+        file = "sub/Cohort B.pkml"
+      ),
+      laskin_iv = list(
+        id = "laskin_iv",
+        type = "pkml",
+        file = "laskin_1982_iv.pkml"
+      ),
+      "Scratch measurement" = list(
+        id = "Scratch measurement",
+        type = "programmatic"
+      )
+    )
+  )
+  expect_s3_class(
+    project$definitions$observedData[["Cohort B.pkml"]],
+    "ObservedDataSource"
+  )
+  # Keyed by id, the section is still read-only.
+  expect_snapshot(
+    error = TRUE,
+    project$definitions$observedData[["Cohort B.pkml"]]$file <- "other.pkml"
+  )
+})
+
+test_that("saveProject writes the id first into every observed-data definition file", {
+  project <- testProject()
+  dir <- file.path(project$info$projectDirPath, "definitions", "observed-data")
+  addObservedData(project, list(type = "pkml", file = "sub/Cohort B.pkml"))
+  scratch <- ospsuite::DataSet$new(name = "Scratch measurement")
+  scratch$setValues(xValues = c(0, 1, 3), yValues = c(0, 6, 2))
+  suppressMessages(addObservedData(project, scratch))
+
+  saveProject(project)
+
+  files <- sort(list.files(dir))
+  expect_identical(
+    files,
+    c(
+      "Aciclovir_TimeValuesData.xlsx.json",
+      "Cohort B.pkml.json",
+      "Scratch measurement.json"
+    )
+  )
+  expect_identical(
+    lapply(file.path(dir, files), jsonlite::read_json),
+    list(
+      list(
+        id = "Aciclovir_TimeValuesData.xlsx",
+        type = "excel",
+        file = "Aciclovir_TimeValuesData.xlsx",
+        importerConfiguration = "esqlabs_dataImporter_configuration.xml",
+        sheets = list("Laskin 1982.Group A")
+      ),
+      list(id = "Cohort B.pkml", type = "pkml", file = "sub/Cohort B.pkml"),
+      list(
+        id = "Scratch measurement",
+        type = "pkml",
+        file = "Scratch measurement.pkml"
+      )
+    )
+  )
+})
+
+test_that("a definition file that stores no id, or a programmatic name, still loads", {
+  # Written by hand, or saved before every file stored its id.
+  project <- testProject()
+  dir <- file.path(project$info$projectDirPath, "definitions", "observed-data")
+  jsonlite::write_json(
+    list(type = "pkml", file = "Cohort B.pkml"),
+    file.path(dir, "Cohort B.pkml.json"),
+    auto_unbox = TRUE
+  )
+  jsonlite::write_json(
+    list(type = "programmatic", name = "Scratch measurement"),
+    file.path(dir, "Scratch measurement.json"),
+    auto_unbox = TRUE
+  )
+
+  reloaded <- loadProject(project$info$projectFilePath)
+  sources <- .unwrapDefinitionList(reloaded$definitions$observedData)
+  expect_identical(
+    lapply(sources[c("Cohort B.pkml", "Scratch measurement")], unclass),
+    list(
+      "Cohort B.pkml" = list(
+        id = "Cohort B.pkml",
+        type = "pkml",
+        file = "Cohort B.pkml"
+      ),
+      "Scratch measurement" = list(
+        id = "Scratch measurement",
+        type = "programmatic"
+      )
+    )
+  )
+
+  # The next save stores the id in both files, and no `name`.
+  .markModified(reloaded)
+  saveProject(reloaded)
+  expect_identical(
+    jsonlite::read_json(file.path(dir, "Cohort B.pkml.json")),
+    list(id = "Cohort B.pkml", type = "pkml", file = "Cohort B.pkml")
+  )
+  expect_identical(
+    jsonlite::read_json(file.path(dir, "Scratch measurement.json")),
+    list(id = "Scratch measurement", type = "programmatic")
+  )
+})
+
+test_that("a programmatic name in a project snapshot loads as its id", {
+  tmp <- withr::local_tempfile(fileext = ".json")
+  jsonlite::write_json(
+    list(
+      schemaVersion = "2.0",
+      filePaths = list(dataFolder = "."),
+      outputPaths = structure(list(), names = character(0)),
+      scenarios = list(),
+      observedData = list(
+        list(type = "programmatic", name = "Scratch measurement")
+      )
+    ),
+    tmp,
+    auto_unbox = TRUE,
+    null = "null"
+  )
+
+  project <- loadProject(tmp)
+
+  expect_identical(
+    lapply(.unwrapDefinitionList(project$definitions$observedData), unclass),
+    list(
+      "Scratch measurement" = list(
+        id = "Scratch measurement",
+        type = "programmatic"
+      )
+    )
+  )
+})
+
+test_that("snapshotProject writes observed data as an array of records with ids", {
+  project <- testProject()
+  suppressMessages(addObservedData(
+    project,
+    ospsuite::DataSet$new(name = "Scratch measurement")
+  ))
+
+  path <- snapshotProject(project, dir = withr::local_tempdir(), name = "obs")
+  written <- jsonlite::read_json(path)
+
+  # An array: no names, each record carrying its own `id`.
+  expect_identical(
+    written$observedData,
+    list(
+      list(
+        id = "Aciclovir_TimeValuesData.xlsx",
+        type = "excel",
+        file = "Aciclovir_TimeValuesData.xlsx",
+        importerConfiguration = "esqlabs_dataImporter_configuration.xml",
+        sheets = list("Laskin 1982.Group A")
+      ),
+      list(id = "Scratch measurement", type = "programmatic")
+    )
+  )
+})
+
+test_that("a source read from the project and passed back keeps its id", {
+  # The stored id equals the one taken from the file basename, so it is not
+  # treated as an id the user typed and canonicalized.
+  project <- testProject()
+  source <- project$definitions$observedData[["Aciclovir_TimeValuesData.xlsx"]]
+  source$sheets <- list("Laskin 1982.Group A", "Laskin 1982.Group B")
+
+  expect_no_warning(addObservedData(project, source, overwrite = TRUE))
+  expect_identical(
+    lapply(.unwrapDefinitionList(project$definitions$observedData), unclass),
+    list(
+      "Aciclovir_TimeValuesData.xlsx" = list(
+        id = "Aciclovir_TimeValuesData.xlsx",
+        type = "excel",
+        file = "Aciclovir_TimeValuesData.xlsx",
+        importerConfiguration = "esqlabs_dataImporter_configuration.xml",
+        sheets = list("Laskin 1982.Group A", "Laskin 1982.Group B")
+      )
+    )
+  )
+})
+
+test_that("a DataSet source keeps its name as id across a save and reload", {
+  project <- testProject()
+  dir <- file.path(project$info$projectDirPath, "definitions", "observed-data")
+  scratch <- ospsuite::DataSet$new(name = "Scratch measurement")
+  scratch$setValues(xValues = c(0, 1, 3), yValues = c(0, 6, 2))
+  suppressMessages(addObservedData(project, scratch))
+
+  saveProject(project)
+
+  expect_identical(
+    unclass(project$definitions$observedData[["Scratch measurement"]]),
+    list(
+      id = "Scratch measurement",
+      type = "pkml",
+      file = "Scratch measurement.pkml"
+    )
+  )
+  expect_true(file.exists(file.path(dir, "Scratch measurement.json")))
+  expect_false(file.exists(file.path(dir, "Scratch measurement.pkml.json")))
+
+  # Removed by the DataSet name after the save, and after a reload.
+  reloaded <- loadProject(project$info$projectFilePath)
+  for (p in list(project, reloaded)) {
+    removeObservedData(p, "Scratch measurement")
+    expect_identical(
+      names(p$definitions$observedData),
+      "Aciclovir_TimeValuesData.xlsx"
+    )
+  }
+  saveProject(reloaded)
+  expect_false(file.exists(file.path(dir, "Scratch measurement.json")))
+})
+
+test_that("a programmatic source filled with its DataSet is saved under the same definition file", {
+  # A source with no data, as a snapshot taken before saving leaves it.
+  project <- testProject()
+  dir <- file.path(project$info$projectDirPath, "definitions", "observed-data")
+  jsonlite::write_json(
+    list(id = "Scratch measurement", type = "programmatic"),
+    file.path(dir, "Scratch measurement.json"),
+    auto_unbox = TRUE
+  )
+  project <- loadProject(project$info$projectFilePath)
+  scratch <- ospsuite::DataSet$new(name = "Scratch measurement")
+  scratch$setValues(xValues = c(0, 1, 3), yValues = c(0, 6, 2))
+
+  suppressMessages(addObservedData(project, scratch, overwrite = TRUE))
+  saveProject(project)
+
+  expect_identical(
+    sort(list.files(dir)),
+    c("Aciclovir_TimeValuesData.xlsx.json", "Scratch measurement.json")
+  )
+  expect_identical(
+    jsonlite::read_json(file.path(dir, "Scratch measurement.json")),
+    list(
+      id = "Scratch measurement",
+      type = "pkml",
+      file = "Scratch measurement.pkml"
+    )
+  )
+})
+
+test_that("a DataSet is not refused for the name of a programmatic source with no data", {
+  project <- testProject()
+  dir <- file.path(project$info$projectDirPath, "definitions", "observed-data")
+  jsonlite::write_json(
+    list(id = "Scratch measurement", type = "programmatic"),
+    file.path(dir, "Scratch measurement.json"),
+    auto_unbox = TRUE
+  )
+  project <- loadProject(project$info$projectFilePath)
+
+  expect_no_error(suppressMessages(addObservedData(
+    project,
+    ospsuite::DataSet$new(name = "Scratch measurement")
+  )))
+})
+
+test_that("a DataSet saved again under its name rewrites its own PKML file", {
+  project <- testProject()
+  pkmlPath <- file.path(project$paths$dataFolder, "Scratch measurement.pkml")
+  first <- ospsuite::DataSet$new(name = "Scratch measurement")
+  first$setValues(xValues = c(0, 1, 3), yValues = c(0, 6, 2))
+  suppressMessages(addObservedData(project, first))
+  saveProject(project)
+
+  # Replaced in the same session, and again after a reload.
+  second <- ospsuite::DataSet$new(name = "Scratch measurement")
+  second$setValues(xValues = c(0, 1, 3), yValues = c(0, 7, 3))
+  removeObservedData(project, "Scratch measurement")
+  suppressMessages(addObservedData(project, second))
+  expect_no_error(saveProject(project))
+  expect_equal(
+    ospsuite::loadDataSetFromPKML(pkmlPath)$yValues,
+    c(0, 7, 3),
+    tolerance = 1e-6
+  )
+
+  reloaded <- loadProject(project$info$projectFilePath)
+  third <- ospsuite::DataSet$new(name = "Scratch measurement")
+  third$setValues(xValues = c(0, 1, 3), yValues = c(0, 8, 4))
+  removeObservedData(reloaded, "Scratch measurement")
+  suppressMessages(addObservedData(reloaded, third))
+  expect_no_error(saveProject(reloaded))
+  expect_equal(
+    ospsuite::loadDataSetFromPKML(pkmlPath)$yValues,
+    c(0, 8, 4),
+    tolerance = 1e-6
+  )
+})
+
+test_that("saveProject refuses a DataSet whose name differs from another id only in case", {
+  # `Cohort_B.json` and `cohort_b.json` are one file on Windows and macOS.
+  project <- testProject()
+  addObservedData(
+    project,
+    list(id = "cohort_b", type = "pkml", file = "cohort_b_export.pkml")
+  )
+  cohort <- ospsuite::DataSet$new(name = "Cohort_B")
+  cohort$setValues(xValues = c(0, 1), yValues = c(1, 2))
+  suppressMessages(addObservedData(project, cohort))
+
+  expect_snapshot(saveProject(project), error = TRUE)
+  expect_false(file.exists(
+    file.path(project$paths$dataFolder, "Cohort_B.pkml")
+  ))
 })
 
 # Print method ----

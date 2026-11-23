@@ -1131,7 +1131,12 @@ exportProjectToExcel <- function(
   if (length(unrepresented) > 0L) {
     .warnFormatted(
       messages$exportUndeclaredObservedData(
-        vapply(unrepresented, .observedDataEntryIdOrNA, character(1L))
+        vapply(
+          unrepresented,
+          .observedDataEntryIdOrNA,
+          character(1L),
+          USE.NAMES = FALSE
+        )
       ),
       "esqlabsR_exportUndeclaredObservedData"
     )

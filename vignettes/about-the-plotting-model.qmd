@@ -94,7 +94,7 @@ The cost is real and worth stating: a project is not self-contained without the 
 
 Every observed-data source carries two strings that are not always equal, and confusing them is the most common stumble in this part of the package:
 
-- **The source id** is the name the project knows the declaration by. It is the id you remove by, and it names the definition file. It is either the `id` you set, or, when you set none, it is inherited from the data source: the file basename for a file-based source, the `DataSet` name for an unsaved programmatic one.
+- **The source id** is the name the project knows the declaration by. It is the id you remove by, and it names the definition file. It is either the `id` you set, or, when you set none, it is taken from the data source: the file basename for a file-based source, the `DataSet` name for a programmatic one. The definition stores it in its `id` field.
 - **The DataSet name** is the name a DataCombined references. It comes from the data itself. An Excel importer, for instance, expands a sheet into a long, fully qualified name that nobody would choose by hand.
 
 They differ because they answer different questions. The source id identifies *the declaration you wrote*; the DataSet name identifies *a series inside the data*, and one declaration can produce several of them (an Excel source naming three sheets yields three DataSets). No single string can serve both roles.
@@ -111,7 +111,7 @@ For fixed data you already have, the answer is a file-backed source: `excel` for
 
 For derived data, the answer is `script`: an R file that computes the DataSet each time it is resolved. Reach for it when the data is not a fixed set of numbers but a recipe (digitized points that need transforming, a join across several inputs, a unit conversion applied to a raw file). The recipe then travels with the project and stays in step with its inputs, which is the whole point.
 
-`programmatic` is the one type that is not file-backed at the moment you create it, and that is worth being precise about. The DataSet lives only on the in-memory project, and reloading before you save discards it. `saveProject()` is what makes it durable: it writes the DataSet to a PKML file and rewrites the entry as a `pkml` source, so from then on it is an ordinary file-backed source, addressed by the PKML file's basename rather than the DataSet name.
+`programmatic` is the one type that is not file-backed at the moment you create it, and that is worth being precise about. The DataSet lives only on the in-memory project, and reloading before you save discards it. `saveProject()` is what makes it durable: it writes the DataSet to a PKML file and rewrites the entry as a `pkml` source, so from then on it is an ordinary file-backed source, still addressed by the DataSet name.
 
 So the `script` versus `programmatic` choice is not really about persistence, once that save has happened. It is about whether the numbers are a given or a computation.
 
