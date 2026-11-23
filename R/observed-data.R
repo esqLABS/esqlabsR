@@ -795,8 +795,8 @@ addObservedDataSource <- function(project, entry, overwrite = FALSE) {
 #' vector of ids and removes them all at once; [saveProject()] then deletes
 #' their definition files. Warns and skips any id with no matching entry.
 #'
-#' A source added as a `DataSet` has the `DataSet` name as its id, before and
-#' after [saveProject()] writes it to `<name>.pkml`.
+#' A `DataSet` added with [addObservedDataSource()] has its name as its id, before
+#' and after [saveProject()] writes it to `<name>.pkml`.
 #'
 #' Unlike the other authoring functions, `addObservedDataSource()` is not
 #' vectorized over ids: its second argument is a `DataSet` or a configuration
@@ -806,8 +806,8 @@ addObservedDataSource <- function(project, entry, overwrite = FALSE) {
 #' @param project A `Project` object.
 #' @param id Character vector of ids. An observed-data id is the `id` you gave
 #'   the source, or, when you gave none, comes from the data source itself (the
-#'   `DataSet` name for a source added as a `DataSet`, or the file basename for
-#'   a file-based source). Each is matched as the declaration stores it and,
+#'   name of a `DataSet` added with [addObservedDataSource()], or the file basename
+#'   for a file-based source). Each is matched as the declaration stores it and,
 #'   failing that, as [addObservedDataSource()] would have canonicalized it, so an id
 #'   taken from the source is found by the source's own spelling and one you
 #'   gave by either the form you authored or the canonical form you were given
@@ -1166,10 +1166,18 @@ removeObservedDataSource <- function(project, id) {
 # through the tree write leaves the DataSet recoverable (worst case is an orphan
 # PKML file, never lost data).
 #
+# Its errors are attributed to `call`, so a save that aborts here reads as
+# `Error in saveProject()`. The serializer checks it runs get `call` passed on:
+# their default caller is the serializer's own frame, not this one.
+#
 # @keywords internal
 # @noRd
-.persistProgrammaticObservedData <- function(self, private, .call = NULL) {
-  rlang::local_error_call(.call)
+.persistProgrammaticObservedData <- function(
+  self,
+  private,
+  call = rlang::caller_env()
+) {
+  rlang::local_error_call(call)
   observedData <- private$.getSection("observedDataSources")
   sectionIds <- names(observedData) %||% character()
   # A hand-authored `programmatic` sentinel may carry no id; it has no backing
@@ -1228,7 +1236,7 @@ removeObservedDataSource <- function(project, id) {
   }
   # The serializer's checks, run up front: every id a safe filename segment, and
   # no two entries filed under one id.
-  .serializeObservedDataSet(observedData, call = .call)
+  .serializeObservedDataSet(observedData, call = call)
 
   # Materialize the folder (a from-scratch project may declare one that has no
   # directory on disk yet), then write each PKML now that the batch is safe.
