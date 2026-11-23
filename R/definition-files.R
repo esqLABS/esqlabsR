@@ -863,9 +863,8 @@
     id <- .observedDataEntryId(entry)
     .validateObservedDataId(id)
     # Two declarations filed under one id would overwrite each other's file (one
-    # file on disk, the second declaration lost on reload). Ids differing only
-    # in case are one file on Windows and macOS, so compare them ignoring case.
-    if (tolower(id) %in% tolower(names(out))) {
+    # file on disk, the second declaration lost on reload).
+    if (any(.observedDataIdMatches(id, names(out)))) {
       cli::cli_abort(messages$observedDataDefinitionFileCollision(id))
     }
     out[[id]] <- .observedDataRecordWithId(entry)

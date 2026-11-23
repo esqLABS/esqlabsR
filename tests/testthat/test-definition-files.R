@@ -617,6 +617,16 @@ test_that("a tree-loaded initialConditions id must match its filename stem", {
   expect_snapshot(spec$parse(list(rec), NULL), error = TRUE)
 })
 
+# Ids that differ only in case are one definition file on Windows and macOS.
+test_that("observedData declarations whose ids differ only in case cannot be saved", {
+  entries <- list(
+    list(type = "pkml", file = "Laskin 1982.pkml"),
+    list(type = "pkml", file = "sub/laskin 1982.pkml")
+  )
+
+  expect_snapshot(.serializeObservedDataSet(entries), error = TRUE)
+})
+
 # observed-data id escape guard ----
 
 # The observed-data id becomes a filename, and a programmatic source's id (its

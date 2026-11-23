@@ -420,7 +420,9 @@ getObservedDataNames <- function(project) {
 #' way the id is stored in the declaration, so
 #' `project$definitions$observedData[[id]]` reads it back and its `id` field
 #' shows it. A declaration read that way can be passed back with
-#' `overwrite = TRUE` and keeps its id.
+#' `overwrite = TRUE` and keeps its id. Two ids that differ only in case count
+#' as the same id, since their definition files are one file on Windows and
+#' macOS; this holds for a `DataSet` name too.
 #'
 #' An id is not the name the data is known by: each imported
 #' [`ospsuite::DataSet`] carries the name its source gives it (the data-set name
@@ -522,11 +524,13 @@ addObservedData <- function(project, entry, overwrite = FALSE) {
       .observedDataSourceFiles(sources),
       dataFolder
     )
+    sameId <- .observedDataIdMatches(name, sectionIds)
     clashes <- any(
       name %in% existingNames,
-      name %in% sectionIds[!holdsNoData],
+      sameId & !holdsNoData,
       savedFile %in% sourceFiles
     )
+    .abortObservedDataIdCaseClash(name, sectionIds[sameId], overwrite)
     if (clashes && !overwrite) {
       cli::cli_abort(c(
         "observedData entry with name {.val {name}} already exists.",
@@ -542,11 +546,13 @@ addObservedData <- function(project, entry, overwrite = FALSE) {
     # On overwrite, replace the existing programmatic sentinel with this id in
     # place. Only a programmatic sentinel can be replaced by a DataSet.
     replaceIdx <- if (overwrite) {
-      which(isProgrammatic & sectionIds %in% name)
+      which(isProgrammatic & sameId)
     } else {
       integer()
     }
     if (length(replaceIdx) > 0L) {
+      # The replaced source may spell its id in another case; its DataSet goes.
+      private$.programmaticDataSets[[sectionIds[[replaceIdx[[1]]]]]] <- NULL
       observedData[[replaceIdx[[1]]]] <- sentinel
     } else if (overwrite && clashes) {
       # The name collides with a file-based (pkml/excel/script) source, not a
@@ -629,7 +635,9 @@ addObservedData <- function(project, entry, overwrite = FALSE) {
     entryId <- .observedDataEntryId(entry, call = .call)
     .validateObservedDataId(entryId, call = .call)
     existingIds <- names(self$definitions$observedData) %||% character()
-    if (entryId %in% existingIds && !overwrite) {
+    sameId <- .observedDataIdMatches(entryId, existingIds)
+    .abortObservedDataIdCaseClash(entryId, existingIds[sameId], overwrite)
+    if (any(sameId) && !overwrite) {
       cli::cli_abort(c(
         "observedData entry with id {.val {entryId}} already exists.",
         "i" = "Pass {.code overwrite = TRUE} to replace it."
@@ -639,7 +647,7 @@ addObservedData <- function(project, entry, overwrite = FALSE) {
     observedData <- private$.getSection("observedData")
     # On overwrite, replace the existing entry carrying this id in place;
     # otherwise append (a non-overwrite id clash aborted above).
-    replaceIdx <- if (overwrite) which(existingIds == entryId) else integer()
+    replaceIdx <- if (overwrite) which(sameId) else integer()
     if (
       length(replaceIdx) > 0L &&
         identical(observedData[[replaceIdx[[1]]]]$type, "programmatic")
@@ -719,6 +727,10 @@ removeObservedData <- function(project, id) {
   dropIdx <- integer()
   missingIds <- character()
   sectionIds <- names(observedData) %||% character()
+  # A lookup, unlike the add-time and save-time checks
+  # (`.observedDataIdMatches()`): those guard definition file names, which
+  # ignore case on Windows and macOS, while removing finds the one source the
+  # user names, so it matches the id as stored.
   entriesWithId <- function(key) which(sectionIds %in% key)
   for (one in id) {
     matchIdx <- entriesWithId(one)
@@ -836,6 +848,37 @@ removeObservedData <- function(project, id) {
   tryCatch(
     suppressMessages(suppressWarnings(project$getObservedDataNames())),
     error = function(cnd) NULL
+  )
+}
+
+# Which of `sectionIds` name the same definition file as `id`. Ids that differ
+# only in case are one file on Windows and macOS, so they are the same id.
+# Adding and saving a source both use this, so an id refused at save is already
+# refused where the user adds it.
+#
+# @keywords internal
+# @noRd
+.observedDataIdMatches <- function(id, sectionIds) {
+  !is.na(sectionIds) & tolower(sectionIds) == tolower(id)
+}
+
+# Without `overwrite`, refuse an id whose only match among the section's ids
+# (`matched`) is spelled in another case, naming both spellings.
+#
+# @keywords internal
+# @noRd
+.abortObservedDataIdCaseClash <- function(
+  id,
+  matched,
+  overwrite,
+  call = rlang::caller_env()
+) {
+  if (overwrite || length(matched) == 0L || id %in% matched) {
+    return(invisible(NULL))
+  }
+  cli::cli_abort(
+    messages$observedDataIdCaseClash(id, matched[[1]]),
+    call = call
   )
 }
 

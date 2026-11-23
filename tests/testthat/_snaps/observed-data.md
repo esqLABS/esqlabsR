@@ -162,16 +162,6 @@
       i A programmatic source is written to '<name>.pkml' in the data folder, a file another source already reads or another programmatic source is written to. File names that differ only in case are the same file on Windows and macOS.
       i Before saving, remove the source with `removeObservedData()` by its name, rename the <DataSet>, and add it again with `addObservedData()`.
 
-# saveProject refuses two DataSets whose names differ only in case
-
-    Code
-      saveProject(project)
-    Condition
-      Error in `.persistProgrammaticObservedData()`:
-      x Saving a programmatic observed-data source would overwrite the data file of another source: 'Cohort B.pkml' and 'cohort b.pkml'.
-      i A programmatic source is written to '<name>.pkml' in the data folder, a file another source already reads or another programmatic source is written to. File names that differ only in case are the same file on Windows and macOS.
-      i Before saving, remove the source with `removeObservedData()` by its name, rename the <DataSet>, and add it again with `addObservedData()`.
-
 # saveProject aborts persisting a programmatic DataSet with no dataFolder
 
     Code
@@ -238,15 +228,29 @@
       i To change a definition, edit its '.json' file or use an authoring function (e.g. `addScenario()` / `setScenario()` / `removeScenario()` and their per-section siblings).
       i To edit one record, read it, change the copy, then re-submit it with an authoring function: `sc <- project$definitions$scenarios[["id"]]; sc$field <- value; setScenario(project, "id", ...)`.
 
-# saveProject refuses a DataSet whose name differs from another id only in case
+# addObservedData refuses an id that differs from another only in case
 
     Code
-      saveProject(project)
+      addObservedData(project, list(type = "pkml", file = "sub/laskin 1982.pkml"))
     Condition
-      Error in `.serializeObservedDataSet()`:
-      x Two observed-data sources would be saved to the same definition file 'Cohort_B.json'.
-      i Each source is saved to a file named after its id: the id it was given, or else its file basename. Ids that differ only in case are the same file on Windows and macOS.
-      i Give the sources distinct ids, or remove one with `removeObservedData()`.
+      Error in `addObservedData()`:
+      x The observed-data id "laskin 1982.pkml" differs only in case from the id "Laskin 1982.pkml" of another source.
+      i Each source is saved to a definition file named after its id, and file names that differ only in case are the same file on Windows and macOS.
+      i Give the source another id, or a <DataSet> another name.
+    Code
+      addObservedData(project, ospsuite::DataSet$new(name = "Cohort"))
+    Condition
+      Error in `addObservedData()`:
+      x The observed-data id "Cohort" differs only in case from the id "cohort" of another source.
+      i Each source is saved to a definition file named after its id, and file names that differ only in case are the same file on Windows and macOS.
+      i Give the source another id, or a <DataSet> another name.
+    Code
+      addObservedData(project, ospsuite::DataSet$new(name = "cohort b"))
+    Condition
+      Error in `addObservedData()`:
+      x The observed-data id "cohort b" differs only in case from the id "Cohort B" of another source.
+      i Each source is saved to a definition file named after its id, and file names that differ only in case are the same file on Windows and macOS.
+      i Give the source another id, or a <DataSet> another name.
 
 # print.ObservedDataSource renders the source declaration
 

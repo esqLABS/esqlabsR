@@ -139,6 +139,16 @@
       x id is "myset" but the file is "otherset".json.
       i The filename stem is the definition's id; rename the file or the id so they match. Check 'somewhere/otherset.json'.
 
+# observedData declarations whose ids differ only in case cannot be saved
+
+    Code
+      .serializeObservedDataSet(entries)
+    Condition
+      Error in `.serializeObservedDataSet()`:
+      x Two observed-data sources would be saved to the same definition file 'laskin 1982.pkml.json'.
+      i Each source is saved to a file named after its id: the id it was given, or else its file basename. Ids that differ only in case are the same file on Windows and macOS.
+      i Give the sources distinct ids, or remove one with `removeObservedData()`.
+
 # a programmatic observedData id that escapes its directory aborts
 
     Code

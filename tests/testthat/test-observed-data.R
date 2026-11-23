@@ -834,22 +834,6 @@ test_that("saveProject compares data files by where they lie", {
   }
 })
 
-test_that("saveProject refuses two DataSets whose names differ only in case", {
-  # "Cohort B.pkml" and "cohort b.pkml" are one file on Windows and macOS.
-  project <- testProject()
-  upper <- ospsuite::DataSet$new(name = "Cohort B")
-  upper$setValues(xValues = c(0, 1), yValues = c(1, 2))
-  lower <- ospsuite::DataSet$new(name = "cohort b")
-  lower$setValues(xValues = c(0, 1), yValues = c(3, 4))
-  suppressMessages(addObservedData(project, upper))
-  suppressMessages(addObservedData(project, lower))
-
-  expect_snapshot(saveProject(project), error = TRUE)
-  expect_false(file.exists(
-    file.path(project$paths$dataFolder, "Cohort B.pkml")
-  ))
-})
-
 # Persisting a programmatic DataSet needs a data folder to write the PKML into;
 # a project with no dataFolder aborts at save with a clear message.
 test_that("saveProject aborts persisting a programmatic DataSet with no dataFolder", {
@@ -1542,21 +1526,29 @@ test_that("a DataSet saved again under its name rewrites its own PKML file", {
   )
 })
 
-test_that("saveProject refuses a DataSet whose name differs from another id only in case", {
-  # `Cohort_B.json` and `cohort_b.json` are one file on Windows and macOS.
+# `Cohort.json` and `cohort.json` are one file on Windows and macOS, so ids that
+# differ only in case are the same id, refused where the user adds the second.
+test_that("addObservedData refuses an id that differs from another only in case", {
   project <- testProject()
+  addObservedData(project, list(type = "pkml", file = "Laskin 1982.pkml"))
   addObservedData(
     project,
-    list(id = "cohort_b", type = "pkml", file = "cohort_b_export.pkml")
+    list(id = "cohort", type = "pkml", file = "cohort_export.pkml")
   )
-  cohort <- ospsuite::DataSet$new(name = "Cohort_B")
-  cohort$setValues(xValues = c(0, 1), yValues = c(1, 2))
-  suppressMessages(addObservedData(project, cohort))
-
-  expect_snapshot(saveProject(project), error = TRUE)
-  expect_false(file.exists(
-    file.path(project$paths$dataFolder, "Cohort_B.pkml")
+  suppressMessages(addObservedData(
+    project,
+    ospsuite::DataSet$new(name = "Cohort B")
   ))
+
+  expect_snapshot(error = TRUE, {
+    addObservedData(project, list(type = "pkml", file = "sub/laskin 1982.pkml"))
+    addObservedData(project, ospsuite::DataSet$new(name = "Cohort"))
+    addObservedData(project, ospsuite::DataSet$new(name = "cohort b"))
+  })
+  expect_identical(
+    names(project$definitions$observedData),
+    c("Aciclovir_TimeValuesData.xlsx", "Laskin 1982.pkml", "cohort", "Cohort B")
+  )
 })
 
 # Print method ----
