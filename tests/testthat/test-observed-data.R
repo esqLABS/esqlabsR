@@ -855,6 +855,32 @@ test_that("loadObservedData warns only about a selected programmatic source with
   expect_identical(result, list())
 })
 
+test_that("a warning about selected sources leaves the warning of a full load", {
+  project <- testProject()
+  for (name in c("Lost cohort A", "Lost cohort B")) {
+    suppressMessages(addObservedData(
+      project,
+      ospsuite::DataSet$new(name = name)
+    ))
+  }
+  # A reload loses the DataSets of sources that were never saved.
+  seam <- .projectSeam(project)
+  seam$.programmaticDataSets <- list()
+  rlang::reset_warning_verbosity(paste0(
+    "esqlabsR_observed_data_unresolved_programmatic_",
+    .projectWarningKey(project)
+  ))
+
+  expect_warning(
+    loadObservedData(project, sources = "Lost cohort A"),
+    "Lost cohort A"
+  )
+  # The full load, as createDataCombined() runs it, still names every source
+  # that resolved to no data.
+  expect_snapshot(result <- loadObservedData(project))
+  expect_named(result, testObservedDataId)
+})
+
 test_that("addObservedData overwrite = TRUE replaces a config entry in place", {
   project <- testProject()
   addObservedData(project, list(type = "pkml", file = "sub1/obs.pkml"))

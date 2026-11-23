@@ -325,13 +325,23 @@ loadObservedData <- function(project, sources = NULL) {
     # `.loadObservedData_impl()` is reentered often (from `getObservedDataNames()`
     # and on every `createDataCombined()`/`createPlots()`), so throttle to once
     # per session per project rather than firing on every call.
+    frequencyId <- paste0(
+      "esqlabsR_observed_data_unresolved_programmatic_",
+      .projectWarningKey(self)
+    )
+    if (!is.null(sources)) {
+      # A load of selected sources warns under a key of its own, so it never
+      # uses up the warning a full load gives about every such source.
+      frequencyId <- paste0(
+        frequencyId,
+        "_selected_",
+        paste(sort(unresolved), collapse = "|")
+      )
+    }
     cli::cli_warn(
       messages$observedDataProgrammaticUnresolved(unresolved),
       .frequency = "once",
-      .frequency_id = paste0(
-        "esqlabsR_observed_data_unresolved_programmatic_",
-        .projectWarningKey(self)
-      )
+      .frequency_id = frequencyId
     )
   }
   # The names of a subset are not the project's names.

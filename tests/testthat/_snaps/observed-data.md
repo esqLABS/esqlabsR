@@ -168,6 +168,17 @@
       i Re-add it with `addObservedData()` in this session, or declare it as a `script` or `pkml` source to persist across a reload.
       This warning is displayed once per session.
 
+# a warning about selected sources leaves the warning of a full load
+
+    Code
+      result <- loadObservedData(project)
+    Condition
+      Warning:
+      ! 2 programmatic observed-data sources resolved to no data: "Lost cohort A" and "Lost cohort B".
+      i A programmatic source holds its <DataSet> only in the session that added it; it is not saved to disk.
+      i Re-add them with `addObservedData()` in this session, or declare them as a `script` or `pkml` source to persist across a reload.
+      This warning is displayed once per session.
+
 # observedData declarations sharing a basename fail saveProject()
 
     Code
