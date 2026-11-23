@@ -136,7 +136,10 @@ sensitivitySpiderPlot <- function(
 ) {
   # Input validation -------------------------------------
 
-  ospsuite.utils::validateIsOfType(sensitivityCalculation, "SensitivityCalculation")
+  ospsuite.utils::validateIsOfType(
+    sensitivityCalculation,
+    "SensitivityCalculation"
+  )
 
   .validateCharVector(outputPaths, nullAllowed = TRUE)
   .validateCharVector(parameterPaths, nullAllowed = TRUE)

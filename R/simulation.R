@@ -308,7 +308,11 @@ initializeSimulation <- function(
   additionalInitialConditions = NULL,
   stopIfParameterNotFound = TRUE
 ) {
-  ospsuite.utils::validateIsOfType(simulation, "Simulation", nullAllowed = FALSE)
+  ospsuite.utils::validateIsOfType(
+    simulation,
+    "Simulation",
+    nullAllowed = FALSE
+  )
   ospsuite.utils::validateIsOfType(
     individualCharacteristics,
     "IndividualCharacteristics",
@@ -443,9 +447,15 @@ compareSimulations <- function(
 
   # Get parameter that are present in one but not in another simulation
   pathsIn1NotIn2 <- setdiff(paths1, paths2)
-  paramsIn1NotIn2 <- ospsuite::getAllParametersMatching(pathsIn1NotIn2, simulation1)
+  paramsIn1NotIn2 <- ospsuite::getAllParametersMatching(
+    pathsIn1NotIn2,
+    simulation1
+  )
   pathsIn2NotIn1 <- setdiff(paths2, paths1)
-  paramsIn2NotIn1 <- ospsuite::getAllParametersMatching(pathsIn2NotIn1, simulation2)
+  paramsIn2NotIn1 <- ospsuite::getAllParametersMatching(
+    pathsIn2NotIn1,
+    simulation2
+  )
 
   # For parameters present in both simulations, compare parameters pair wise and
   # store them if they differ
