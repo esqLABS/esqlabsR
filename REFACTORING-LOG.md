@@ -352,3 +352,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-11-23 19:21: A save that stops on a DataSet added with addObservedData() names saveProject() in its error, not an internal function. (#1367)
 - 2026-11-23 19:22: A save that stops on a Population added with addPopulation() names saveProject() in its error, not an internal function.
 - 2026-11-23 19:35: Ten R files are formatted with Air, which wraps lines longer than 80 characters; the code itself is unchanged.
+- 2026-11-23 19:35: DESCRIPTION records roxygen2 8.1.1, the version that last regenerated the help pages.
