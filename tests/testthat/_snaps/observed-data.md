@@ -160,7 +160,7 @@
       Error in `.persistProgrammaticObservedData()`:
       x Saving a programmatic observed-data source would overwrite the data file of another source: 'Cohort B.pkml'.
       i A programmatic source is written to '<name>.pkml' in the data folder, a file another source already reads or another programmatic source is written to. File names that differ only in case are the same file on Windows and macOS.
-      i Rename the <DataSet> (its name) so the file names differ.
+      i Before saving, remove the source with `removeObservedData()` by its name, rename the <DataSet>, and add it again with `addObservedData()`.
 
 # saveProject refuses two DataSets whose names differ only in case
 
@@ -170,7 +170,7 @@
       Error in `.persistProgrammaticObservedData()`:
       x Saving a programmatic observed-data source would overwrite the data file of another source: 'Cohort B.pkml' and 'cohort b.pkml'.
       i A programmatic source is written to '<name>.pkml' in the data folder, a file another source already reads or another programmatic source is written to. File names that differ only in case are the same file on Windows and macOS.
-      i Rename the <DataSet> (its name) so the file names differ.
+      i Before saving, remove the source with `removeObservedData()` by its name, rename the <DataSet>, and add it again with `addObservedData()`.
 
 # saveProject aborts persisting a programmatic DataSet with no dataFolder
 
