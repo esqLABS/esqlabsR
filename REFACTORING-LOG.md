@@ -366,3 +366,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-11-23 17:24: A DataSet that replaces a programmatic source spelled in another case is refused when another source already provides its name or reads its PKML file. (#1368)
 - 2026-11-23 17:39: removeObservedData() finds a source through a shared lookup that loading will also use. (#1370)
 - 2026-11-23 17:39: loadObservedData() takes a sources argument that loads only the observed-data sources with those ids. (#1370)
+- 2026-11-23 17:39: The observed-data vignette and NEWS describe loading only some observed-data sources. (#1370)

@@ -91,6 +91,13 @@ names(observed)
 
 `getObservedDataNames()` returns the same names without reloading (it caches after the first load), which is how you discover what a project knows before referencing it in a DataCombined.
 
+To load only some sources, pass their ids to `sources`. Only those sources are read, so a source you leave out cannot stop the load, for example because its file is missing or because its data set has the same name as one from another source, and a `script` source you leave out does not run. An id that names no source stops the load with a list of the source ids the project has. `getObservedDataNames()` still lists the data sets of every source.
+
+```{r}
+observed <- loadObservedData(project, sources = "Aciclovir_TimeValuesData.xlsx")
+names(observed)
+```
+
 ## Source type 1: Excel
 
 An `excel` source names a workbook, an importer configuration, and the sheets to read. The bundled example's source is exactly this. To add another, point at a file under the project's data folder and supply the importer configuration and sheet names:
@@ -155,7 +162,7 @@ addObservedData(project, list(type = "script", file = "scripts/literature_curve.
 The id of this source is the file basename, `literature_curve.R`, while the DataSet it produces is named `Digitized literature curve`, which is the name a DataCombined references. Because the script runs each time the data is resolved, anything you can compute in R (digitized points, a transformation of a raw file, a join across several inputs) becomes reproducible observed data.
 
 <div class="alert alert-warning">
-**Security.** A `script` source runs the R file it names on your machine, with `source()`, whenever the data is resolved. Any R code in that file executes. Treat a project the way you would treat a script someone sends you: only load and resolve observed data from a project you trust. The first time a session sources a `script` source, the package warns you that this is happening.
+**Security.** A `script` source runs the R file it names on your machine, with `source()`, whenever the data is resolved. Any R code in that file executes. Treat a project the way you would treat a script someone sends you: only load and resolve observed data from a project you trust. The first time a session sources a `script` source, the package warns you that this is happening. `loadObservedData(project, sources = )` runs only the `script` sources you name.
 </div>
 
 ## Source type 4: Programmatic
