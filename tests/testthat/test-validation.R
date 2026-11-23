@@ -1355,17 +1355,17 @@ test_that("validateProject() flags a scenario referencing a removed outputPath",
   expect_match(msgs, "aciclovir_fat_cell", all = FALSE)
 })
 
-test_that("removeObservedData warns when a dataCombined still references it", {
+test_that("removeObservedDataSource warns when a dataCombined still references it", {
   project <- .fakeProject()
   ds <- ospsuite::DataSet$new(name = "MyObs")
   ds$setValues(c(1, 2, 3), c(10, 20, 30))
-  suppressMessages(addObservedData(project, ds))
+  suppressMessages(addObservedDataSource(project, ds))
   addDataCombined(
     project,
     id = "dc1",
     observed = list(list(label = "obs", dataSet = "MyObs"))
   )
-  expect_snapshot(removeObservedData(project, "MyObs"))
+  expect_snapshot(removeObservedDataSource(project, "MyObs"))
 })
 
 # Section adapter: plots, plotType enum ----

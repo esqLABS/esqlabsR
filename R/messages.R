@@ -197,7 +197,9 @@ messages$humanIndividualForNonHumanModel <- function(simulationName, species) {
 
 # Enum####
 messages$enumPutListMultipleKeys <- function() {
-  ospsuite.utils::cliFormat("Trying to put multiple keys, but only one key is allowed!")
+  ospsuite.utils::cliFormat(
+    "Trying to put multiple keys, but only one key is allowed!"
+  )
 }
 
 # populations ####
@@ -267,7 +269,9 @@ messages$unsupportedSchemaVersion <- function(version) {
 }
 
 messages$invalidPathArgument <- function() {
-  ospsuite.utils::cliFormat("{.arg path} must be a single non-empty, non-NA string.")
+  ospsuite.utils::cliFormat(
+    "{.arg path} must be a single non-empty, non-NA string."
+  )
 }
 
 # Empty is allowed and is the default: it is the "leave whatever name the
@@ -874,7 +878,7 @@ messages$upgradedLegacySnapshot <- function(missingFolders = character()) {
     "i" = "Detected a previous-version project snapshot and upgraded it to the \\
     current project format.",
     "!" = "Observed data does not travel in a snapshot; add it with \\
-    {.fn addObservedData} if a plot or parameter identification needs it."
+    {.fn addObservedDataSource} if a plot or parameter identification needs it."
   )
   if (length(missingFolders) > 0L) {
     notice <- c(
@@ -1017,7 +1021,9 @@ messages$failedToRenameDefinitionFiles <- function(paths) {
 }
 
 messages$overwriteDestination <- function(path) {
-  ospsuite.utils::cliFormat("Overwriting existing esqlabsR project in {.path {path}} ")
+  ospsuite.utils::cliFormat(
+    "Overwriting existing esqlabsR project in {.path {path}} "
+  )
 }
 
 messages$failedToClearProjectArtifacts <- function(path) {
@@ -1708,7 +1714,9 @@ messages$wrongOutputPath <- function(
   named <- if (is.null(outputPathId)) {
     ospsuite.utils::cliFormat("Output path {.path {path}}")
   } else {
-    ospsuite.utils::cliFormat("Output path {.val {outputPathId}} ({.path {path}})")
+    ospsuite.utils::cliFormat(
+      "Output path {.val {outputPathId}} ({.path {path}})"
+    )
   }
   ospsuite.utils::cliFormat(
     "{named} is defined in the DataCombined {.val {dataCombinedName}}
@@ -1835,7 +1843,9 @@ messages$invalidVariationRangeLength <- function() {
 }
 
 messages$sensitivityCalculationNotFound <- function(path) {
-  ospsuite.utils::cliFormat("Sensitivity calculation not found at path {.file {path}}.")
+  ospsuite.utils::cliFormat(
+    "Sensitivity calculation not found at path {.file {path}}."
+  )
 }
 
 messages$noRetainedSimulationResults <- function() {
@@ -2109,11 +2119,15 @@ messages$PITaskNotFound <- function(task) {
 }
 
 messages$PIMemberNotFound <- function(label, id, task) {
-  ospsuite.utils::cliFormat("{label} {.val {id}} not found in task {.val {task}}; no-op.")
+  ospsuite.utils::cliFormat(
+    "{label} {.val {id}} not found in task {.val {task}}; no-op."
+  )
 }
 
 messages$PITaskNowEmpty <- function(task) {
-  ospsuite.utils::cliFormat("PI task {.val {task}} is now empty and has been removed.")
+  ospsuite.utils::cliFormat(
+    "PI task {.val {task}} is now empty and has been removed."
+  )
 }
 
 messages$buildingPITask <- function(piTaskName) {
@@ -2143,7 +2157,9 @@ messages$observedDataMissingFields <- function(entryIndex, type, fields) {
 }
 
 messages$observedDataFileNotFound <- function(filePath) {
-  ospsuite.utils::cliFormat("Observed-data source file not found: {.path {filePath}}.")
+  ospsuite.utils::cliFormat(
+    "Observed-data source file not found: {.path {filePath}}."
+  )
 }
 
 messages$observedDataScriptWrongReturnType <- function(filePath, klass) {
@@ -2169,7 +2185,7 @@ messages$observedDataProgrammaticUnresolved <- function(names) {
   cliBullets(
     "!" = "{length(names)} programmatic observed-data source{?s} resolved to no data: {.val {names}}.",
     "i" = "A programmatic source holds its {.cls DataSet} only in the session that added it; it is not saved to disk.",
-    "i" = "Re-add {cli::qty(names)}{?it/them} with {.fn addObservedData} in this session, or declare {?it/them} as a {.code script} or {.code pkml} source to persist across a reload."
+    "i" = "Re-add {cli::qty(names)}{?it/them} with {.fn addObservedDataSource} in this session, or declare {?it/them} as a {.code script} or {.code pkml} source to persist across a reload."
   )
 }
 
@@ -2201,7 +2217,7 @@ messages$observedDataPersistNoDataFolder <- function(name) {
 messages$observedDataProgrammaticOverwriteClash <- function(name, replaced) {
   cliBullets(
     "x" = "Cannot replace the observed-data source {.val {replaced}} with the {.cls DataSet} {.val {name}}: another source already provides a data set of that name or reads its data from {.file {paste0(name, '.pkml')}}.",
-    "i" = "Remove the other source first with {.fn removeObservedData} by its id, or give the {.cls DataSet} another name."
+    "i" = "Remove the other source first with {.fn removeObservedDataSource} by its id, or give the {.cls DataSet} another name."
   )
 }
 
@@ -2217,7 +2233,7 @@ messages$observedDataDefinitionFileCollision <- function(id) {
   cliBullets(
     "x" = "Two observed-data sources would be saved to the same definition file {.file {id}.json}.",
     "i" = "Each source is saved to a file named after its id: the {.field id} it was given, the name of its {.cls DataSet}, or else its {.field file} basename. Ids that differ only in case are the same file on Windows and macOS.",
-    "i" = "Give the sources distinct {.field id}s, or remove one with {.fn removeObservedData}. For a {.cls DataSet}, remove its source by its name, rename the {.cls DataSet}, and add it again with {.fn addObservedData}."
+    "i" = "Give the sources distinct {.field id}s, or remove one with {.fn removeObservedDataSource}. For a {.cls DataSet}, remove its source by its name, rename the {.cls DataSet}, and add it again with {.fn addObservedDataSource}."
   )
 }
 
@@ -2225,7 +2241,7 @@ messages$observedDataPersistFileCollision <- function(files) {
   cliBullets(
     "x" = "Saving a programmatic observed-data source would overwrite the data file of another source: {.file {files}}.",
     "i" = "A programmatic source is written to {.file <name>.pkml} in the data folder, a file another source already reads or another programmatic source is written to. File names that differ only in case are the same file on Windows and macOS.",
-    "i" = "Before saving, remove the source with {.fn removeObservedData} by its name, rename the {.cls DataSet}, and add it again with {.fn addObservedData}."
+    "i" = "Before saving, remove the source with {.fn removeObservedDataSource} by its name, rename the {.cls DataSet}, and add it again with {.fn addObservedDataSource}."
   )
 }
 
@@ -2337,7 +2353,9 @@ messages$validatorObservedDataMissingField <- function(
   type,
   field
 ) {
-  ospsuite.utils::cliFormat("{entryLabel} ({type}) is missing required field '{field}'")
+  ospsuite.utils::cliFormat(
+    "{entryLabel} ({type}) is missing required field '{field}'"
+  )
 }
 
 messages$validatorObservedDataFileNotFound <- function(entryLabel, file) {

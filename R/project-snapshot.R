@@ -115,7 +115,7 @@ snapshotProject <- function(
 #'   previous esqlabsR version (`snapshotProjectConfiguration()`) is also
 #'   accepted and upgraded to the current project format on read, through the
 #'   Excel bridge; observed data is not carried in such a snapshot, so add it
-#'   with [addObservedData()] if a plot or parameter identification needs it.
+#'   with [addObservedDataSource()] if a plot or parameter identification needs it.
 #'   The result is a normal project: [loadProject()] opens it from `dir` with
 #'   exactly the same content.
 #'

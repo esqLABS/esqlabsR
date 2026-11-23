@@ -259,7 +259,7 @@ test_that("saveProject() writes an observed-data (config) definition file", {
   project <- exampleProject()
   dir <- file.path(project$info$projectDirPath, "definitions", "observed-data")
 
-  addObservedData(
+  addObservedDataSource(
     project,
     list(type = "pkml", file = "extra.pkml")
   )

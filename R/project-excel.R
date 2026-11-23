@@ -2876,7 +2876,7 @@ projectStatus <- function(project, silent = FALSE) {
   # derived id is the basename verbatim, which makes the definition file
   # `<name>.xlsx.json` and keeps whatever spaces, commas and casing the data
   # file's name carried, so the declaration is not addressable by a
-  # `removeObservedData()` id the authoring API could ever produce.
+  # `removeObservedDataSource()` id the authoring API could ever produce.
   #
   # `file` / `importerConfiguration` are stored as given (relative to
   # `dataFolder`), not truncated to a basename: the loader resolves them under

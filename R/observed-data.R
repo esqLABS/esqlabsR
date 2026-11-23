@@ -4,14 +4,14 @@
 #   - users via loadObservedData(project) — the public dispatcher.
 #   - createDataCombined() internally to resolve observed sources.
 #   - validateProject() via .observedDataValidatorAdapter()
-#   - users via the public addObservedData / removeObservedData
+#   - users via the public addObservedDataSource / removeObservedDataSource
 #     functions.
 #
 # The four declared source types in v2.0 Project.json are:
 #   - excel  : ospsuite::loadDataSetsFromExcel via importer config
 #   - pkml   : ospsuite::loadDataSetFromPKML
 #   - script : R script sourced; must return DataSet or list of DataSets
-#   - programmatic : DataSets added at runtime via addObservedData(project).
+#   - programmatic : DataSets added at runtime via addObservedDataSource(project).
 #                    The DataSet itself is not JSON-serializable, so it
 #                    is held on the Project's private slot
 #                    (.programmaticDataSets), keyed by its name, and the
@@ -211,7 +211,7 @@ print.ObservedDataSource <- function(x, ...) {
 #' and returns the corresponding [`ospsuite::DataSet`] objects. Source
 #' types: `excel` (via importer configuration), `pkml`, `script`, and
 #' `programmatic`. A `programmatic` declaration is a sentinel for a
-#' `DataSet` added at runtime with [addObservedData()]; its data lives in
+#' `DataSet` added at runtime with [addObservedDataSource()]; its data lives in
 #' the session until you save, and [saveProject()] persists it to a PKML
 #' file and rewrites the entry as a `pkml` source. A `programmatic` sentinel
 #' read from disk with no matching in-session `DataSet` (a hand-authored
@@ -223,13 +223,13 @@ print.ObservedDataSource <- function(x, ...) {
 #'   load, or `NULL` (default) to load every source. Only the sources you name
 #'   are read, so a source you leave out cannot stop the load with a missing
 #'   file or a data-set name another source also uses (and see the Security
-#'   section). An id is matched as in [removeObservedData()]. An id that names
+#'   section). An id is matched as in [removeObservedDataSource()]. An id that names
 #'   no source is an error listing the project's source ids. `character(0)`
 #'   returns an empty list.
 #' @returns A named list of [`ospsuite::DataSet`] objects: those of the
 #'   `excel`, `pkml` and `script` sources in the order the project declares
 #'   them, followed by the `DataSet`s added in this session with
-#'   [addObservedData()]. Empty list when `observedData` definitions is empty
+#'   [addObservedDataSource()]. Empty list when `observedData` definitions is empty
 #'   or `NULL`.
 #'
 #' @section Security:
@@ -432,10 +432,11 @@ getObservedDataNames <- function(project) {
 
 # Public CRUD: observedData ----
 
-#' Add observed data to a Project
+#' Add an observed-data source to a Project
 #'
 #' @description
-#' Adds one observed-data declaration. `entry` is either an
+#' Adds one observed-data source: a declaration of where measured data comes
+#' from, not the data itself. `entry` is either an
 #' [`ospsuite::DataSet`] object (which becomes a `type = "programmatic"`
 #' declaration whose id is `dataSet$name`) or a list describing where the data
 #' is read from.
@@ -457,7 +458,7 @@ getObservedDataNames <- function(project) {
 #'
 #' `id` names the declaration itself: it becomes the declaration's file under
 #' the project's definitions folder (`definitions/observed-data/<id>.json` in
-#' the default layout) and is the id [removeObservedData()] matches on. It is
+#' the default layout) and is the id [removeObservedDataSource()] matches on. It is
 #' canonicalized like every other definition id (lowercased and made a safe
 #' filename segment), and you are told when that changes it, unless it is
 #' already the id of a source in the project or equal to the `file` basename.
@@ -487,7 +488,7 @@ getObservedDataNames <- function(project) {
 #' accepted: the next time the observed data is loaded, by [loadObservedData()]
 #' or a function that uses it such as [createDataCombined()], it stops with an
 #' error naming the duplicate. Then remove the `DataSet` with
-#' [removeObservedData()], by its name, and add it again under another name.
+#' [removeObservedDataSource()], by its name, and add it again under another name.
 #'
 #' A `DataSet` you pass lives in the R session until you save. On
 #' [saveProject()] it is written to a PKML file named `<DataSet name>.pkml`
@@ -506,7 +507,7 @@ getObservedDataNames <- function(project) {
 #'   (last-write-wins) as long as both are the same kind. A cross-kind
 #'   replacement is refused, because it would either strand the session's
 #'   `DataSet` or leave two sources resolving to one name: remove the existing
-#'   source with [removeObservedData()] first, then add the new one. A
+#'   source with [removeObservedDataSource()] first, then add the new one. A
 #'   configuration list is always checked in full. For a `DataSet`, the refusal
 #'   at add time covers the id of another source (such as a `DataSet` of the
 #'   same name saved earlier), a source whose data file is `<name>.pkml`, and
@@ -516,17 +517,17 @@ getObservedDataNames <- function(project) {
 #' @returns The `project` object, invisibly.
 #' @export
 #' @family observedData
-addObservedData <- function(project, entry, overwrite = FALSE) {
+addObservedDataSource <- function(project, entry, overwrite = FALSE) {
   ospsuite.utils::validateIsOfType(project, "Project")
-  project$addObservedData(entry, overwrite)
+  project$addObservedDataSource(entry, overwrite)
 }
 
-# Implementation behind `project$addObservedData()` / `addObservedData()`.
+# Implementation behind `project$addObservedDataSource()` / `addObservedDataSource()`.
 # Reaches the runtime programmatic store and names cache through `private`.
 #
 # @keywords internal
 # @noRd
-.addObservedData_impl <- function(
+.addObservedDataSource_impl <- function(
   self,
   private,
   entry,
@@ -629,7 +630,7 @@ addObservedData <- function(project, entry, overwrite = FALSE) {
       cli::cli_abort(c(
         "observedData entry with name {.val {name}} is a file-based source, \\
         not a programmatic one, so it cannot be overwritten with a {.cls DataSet}.",
-        "i" = "Remove it first with {.code removeObservedData()} by its \\
+        "i" = "Remove it first with {.code removeObservedDataSource()} by its \\
         {.field id}, then add the {.cls DataSet}."
       ))
     } else {
@@ -674,7 +675,7 @@ addObservedData <- function(project, entry, overwrite = FALSE) {
       call = .call
     )
     # A declared `id` names the entry everywhere (its definition file, and the
-    # key `removeObservedData()` matches), so it has to be a usable string
+    # key `removeObservedDataSource()` matches), so it has to be a usable string
     # before anything derives a filename from it.
     if (
       !is.null(entry[["id"]]) && is.null(.usableObservedDataId(entry[["id"]]))
@@ -699,7 +700,7 @@ addObservedData <- function(project, entry, overwrite = FALSE) {
     if (typedId) {
       entry[["id"]] <- .canonicalizeId(entry[["id"]])
     }
-    # Config entries are keyed by the id `removeObservedData()` matches on: the
+    # Config entries are keyed by the id `removeObservedDataSource()` matches on: the
     # entry's own `id` when it declares one, else its `file` basename. That id
     # also names the definition file, so reject an unsafe one here rather than
     # at save. Abort on a duplicate to match the other mutators' convention,
@@ -734,7 +735,7 @@ addObservedData <- function(project, entry, overwrite = FALSE) {
         "observedData entry with id {.val {entryId}} is a programmatic source \\
         holding a {.cls DataSet} in this session, so it cannot be overwritten \\
         with a configuration entry.",
-        "i" = "Remove it first with {.code removeObservedData()}, then add the \\
+        "i" = "Remove it first with {.code removeObservedDataSource()}, then add the \\
         configuration entry."
       ))
     }
@@ -762,7 +763,7 @@ addObservedData <- function(project, entry, overwrite = FALSE) {
 #' A source added as a `DataSet` has the `DataSet` name as its id, before and
 #' after [saveProject()] writes it to `<name>.pkml`.
 #'
-#' Unlike the other authoring functions, `addObservedData()` is not
+#' Unlike the other authoring functions, `addObservedDataSource()` is not
 #' vectorized over ids: its second argument is a `DataSet` or a configuration
 #' list, not an id, so it adds a single source per call. Add several sources
 #' with several calls.
@@ -772,23 +773,23 @@ addObservedData <- function(project, entry, overwrite = FALSE) {
 #'   the source, or, when you gave none, comes from the data source itself (the
 #'   `DataSet` name for a source added as a `DataSet`, or the file basename for
 #'   a file-based source). Each is matched as the declaration stores it and,
-#'   failing that, as [addObservedData()] would have canonicalized it, so an id
+#'   failing that, as [addObservedDataSource()] would have canonicalized it, so an id
 #'   taken from the source is found by the source's own spelling and one you
 #'   gave by either the form you authored or the canonical form you were given
 #'   back.
 #' @returns The `project` object, invisibly.
 #' @export
 #' @family observedData
-removeObservedData <- function(project, id) {
+removeObservedDataSource <- function(project, id) {
   ospsuite.utils::validateIsOfType(project, "Project")
-  project$removeObservedData(id)
+  project$removeObservedDataSource(id)
 }
 
-# Implementation behind `project$removeObservedData()` / `removeObservedData()`.
+# Implementation behind `project$removeObservedDataSource()` / `removeObservedDataSource()`.
 #
 # @keywords internal
 # @noRd
-.removeObservedData_impl <- function(self, private, id, .call) {
+.removeObservedDataSource_impl <- function(self, private, id, .call) {
   rlang::local_error_call(.call)
   .assertIdVector(id)
   observedData <- private$.getSection("observedData")
@@ -921,7 +922,7 @@ removeObservedData <- function(project, id) {
 # An id this section stores is one of two kinds, so the match takes two passes
 # rather than one transform. A derived id is the source's own string (a `file`
 # basename, a `DataSet` name), which only the verbatim pass finds; a declared id
-# is stored the way `addObservedData()` canonicalized it, so the id as the user
+# is stored the way `addObservedDataSource()` canonicalized it, so the id as the user
 # authored it needs the same transform to reach it. Verbatim first, so a derived
 # id that another entry's declared id happens to canonicalize to still wins its
 # own match.

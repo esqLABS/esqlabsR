@@ -59,10 +59,10 @@
       x [scenarios] Scenario S{1} also broken
       i Run `validateProject(project)` for a full report.
 
-# removeObservedData warns when a dataCombined still references it
+# removeObservedDataSource warns when a dataCombined still references it
 
     Code
-      removeObservedData(project, "MyObs")
+      removeObservedDataSource(project, "MyObs")
     Condition
       Warning:
       Removed observedData "MyObs" is still referenced by 1 dataCombined entry:

@@ -93,8 +93,8 @@ reference:
       - addOutputPath
       - removeOutputPath
       - setOutputPath
-      - addObservedData
-      - removeObservedData
+      - addObservedDataSource
+      - removeObservedDataSource
       - getObservedDataNames
       - addDataCombined
       - removeDataCombined

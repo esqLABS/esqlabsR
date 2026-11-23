@@ -1036,7 +1036,7 @@
 # The id of an observed-data declaration: its own `id` field, else (for a
 # declaration that stores none) the file basename for `excel`/`pkml`/`script`
 # and the DataSet name a `programmatic` declaration stored under `name`. This is
-# the id `removeObservedData()` matches on and the stem of the definition file.
+# the id `removeObservedDataSource()` matches on and the stem of the definition file.
 #
 # @keywords internal
 # @noRd
@@ -1100,7 +1100,7 @@
 # derived id (a file basename, a DataSet name) and an `id` read from a file reach
 # this verbatim (unlike the other keyed kinds, whose key is validated by
 # `.validateDefinitionTreeKey`). Reject rather than rewrite: the id doubles as
-# the match key for `removeObservedData()`, so canonicalizing it would desync the
+# the match key for `removeObservedDataSource()`, so canonicalizing it would desync the
 # on-disk filename from the match key.
 #
 # @keywords internal

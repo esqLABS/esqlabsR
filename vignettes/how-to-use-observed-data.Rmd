@@ -43,14 +43,14 @@ project$definitions$observedData[["Aciclovir_TimeValuesData.xlsx"]]
 
 ## Choose the name a source is known by
 
-Two strings attach to every source, and they are not interchangeable. The **source id** is what `loadObservedData()` and `removeObservedData()` match and what names the definition file. The **DataSet name** is what a DataCombined references and what `getObservedDataNames()` lists; it comes from the data itself, so an Excel sheet becomes a long, fully qualified name. `vignette("about-the-plotting-model")` explains why one string cannot serve both roles.
+Two strings attach to every source, and they are not interchangeable. The **source id** is what `loadObservedData()` and `removeObservedDataSource()` match and what names the definition file. The **DataSet name** is what a DataCombined references and what `getObservedDataNames()` lists; it comes from the data itself, so an Excel sheet becomes a long, fully qualified name. `vignette("about-the-plotting-model")` explains why one string cannot serve both roles.
 
 The working rule: **read the DataSet name from `getObservedDataNames()` rather than typing it**, and use the source id to read, load or remove a source.
 
 Every source carries its id in its `id` field, and `project$definitions$observedData` is keyed by it. Set an `id` when you want to choose that name yourself instead of inheriting it from the file. Since the id also names the definition file, the declaration below is stored as `definitions/observed-data/laskin_iv.json` rather than under the data file's name:
 
 ```{r, eval = FALSE}
-addObservedData(
+addObservedDataSource(
   project,
   list(
     id = "laskin_iv",
@@ -58,7 +58,7 @@ addObservedData(
     file = "laskin_1982_iv.pkml"
   )
 )
-removeObservedData(project, "laskin_iv")
+removeObservedDataSource(project, "laskin_iv")
 ```
 
 ```{r}
@@ -98,7 +98,7 @@ An `excel` source names a workbook, an importer configuration, and the sheets to
 ```{r, eval = FALSE}
 # shown but not run: the example already declares this exact source, and a
 # duplicate file id aborts
-addObservedData(
+addObservedDataSource(
   project,
   list(
     type = "excel",
@@ -124,7 +124,7 @@ pkml_data$xDimension <- ospsuite::ospDimensions$Time
 pkml_data$yDimension <- ospsuite::ospDimensions$`Concentration (molar)`
 ospsuite::saveDataSetToPKML(pkml_data, file.path(data_folder, "extra_cohort.pkml"))
 
-addObservedData(project, list(type = "pkml", file = "extra_cohort.pkml"))
+addObservedDataSource(project, list(type = "pkml", file = "extra_cohort.pkml"))
 getObservedDataNames(project)
 ```
 
@@ -149,7 +149,7 @@ writeLines(
   file.path(script_dir, "literature_curve.R")
 )
 
-addObservedData(project, list(type = "script", file = "scripts/literature_curve.R"))
+addObservedDataSource(project, list(type = "script", file = "scripts/literature_curve.R"))
 ```
 
 The id of this source is the file basename, `literature_curve.R`, while the DataSet it produces is named `Digitized literature curve`, which is the name a DataCombined references. Because the script runs each time the data is resolved, anything you can compute in R (digitized points, a transformation of a raw file, a join across several inputs) becomes reproducible observed data.
@@ -160,13 +160,13 @@ The id of this source is the file basename, `literature_curve.R`, while the Data
 
 ## Source type 4: Programmatic
 
-`addObservedData()` also accepts a `DataSet` you have already built in the session. Build it in R and pass it directly:
+`addObservedDataSource()` also accepts a `DataSet` you have already built in the session. Build it in R and pass it directly:
 
 ```{r}
 scratch <- ospsuite::DataSet$new(name = "Scratch measurement")
 scratch$setValues(xValues = c(0, 1, 3), yValues = c(0, 6, 2))
 
-addObservedData(project, scratch)
+addObservedDataSource(project, scratch)
 ```
 
 The source id is the DataSet name, `Scratch measurement`. Until you save, that `DataSet` lives only in your R session and its entry is `{id: "Scratch measurement", type: "programmatic"}`. On `saveProject()` the package writes the `DataSet` to a PKML file named after it (`Scratch measurement.pkml`) under the data folder and rewrites the entry to a `pkml` source reading that file. From then on it is an ordinary file-backed source that survives a reload, and it keeps its id: you remove it by the DataSet name before and after saving.
@@ -189,10 +189,10 @@ names(observed)
 
 ## Remove a source
 
-`removeObservedData()` takes the source id and accepts a vector to remove several at once:
+`removeObservedDataSource()` takes the source id and accepts a vector to remove several at once:
 
 ```{r}
-removeObservedData(project, c("extra_cohort.pkml", "Scratch measurement"))
+removeObservedDataSource(project, c("extra_cohort.pkml", "Scratch measurement"))
 getObservedDataNames(project)
 ```
 

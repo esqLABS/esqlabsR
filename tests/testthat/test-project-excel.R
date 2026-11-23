@@ -686,7 +686,7 @@ test_that("exporting a JSON-authored project declares its data and PI workbooks"
 # of several being picked silently.
 test_that("exporting several observed-data declarations writes one and names the rest", {
   project <- exampleProject()
-  addObservedData(
+  addObservedDataSource(
     project,
     list(
       type = "excel",
@@ -721,7 +721,7 @@ test_that("an Excel-imported project's own workbook names survive the export", {
   )))
   # A second declaration whose file differs from the one the container names:
   # without the container-wins rule the export would write this one instead.
-  addObservedData(
+  addObservedDataSource(
     project,
     list(
       type = "excel",
@@ -3896,7 +3896,7 @@ test_that("the imported observed-data declaration carries a canonicalized id", {
     list.files(file.path(imported$outputDir, "definitions", "observed-data")),
     "testproject_timevaluesdata.json"
   )
-  # And the section is keyed by that id, the handle `removeObservedData()`
+  # And the section is keyed by that id, the handle `removeObservedDataSource()`
   # matches on.
   expect_identical(
     names(imported$project$definitions$observedData),

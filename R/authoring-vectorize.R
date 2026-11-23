@@ -24,7 +24,7 @@
 # `addParameterEntry()` / `removeParameterEntry()` vectorize over parameter
 # entries (parallel `containerPath` / `parameterName` / `value` / `units`
 # vectors) for a single named set, a different axis than the id-sets-N rule.
-# `renameScenario()`, `duplicateScenario()`, `addObservedData()`, and the
+# `renameScenario()`, `duplicateScenario()`, `addObservedDataSource()`, and the
 # parameter-identification adders (`addPITask()` and its per-task sub-definition
 # helpers) act on a single definition per call.
 #
@@ -91,7 +91,7 @@
 #' entries (parallel `containerPath` / `parameterName` / `value` / `units`
 #' vectors) within a single named set, a different axis than the id-sets-`N`
 #' rule described here. `renameScenario()`, `duplicateScenario()`,
-#' `addObservedData()`, `addPITask()`, `setPITask()`, and the per-task
+#' `addObservedDataSource()`, `addPITask()`, `setPITask()`, and the per-task
 #' parameter-identification sub-definition helpers act on a single definition per
 #' call.
 #'

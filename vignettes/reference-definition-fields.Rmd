@@ -32,7 +32,7 @@ Each table's **If omitted** column is the one to read when you are deciding what
 Two conventions run through all of it:
 
 - Every `add*`, `set*`, and `remove*` function takes `project` first and the definition's `id` second. Only the fields after those are listed below.
-- Every `add*` function accepts `overwrite`, a logical defaulting to `FALSE`. An id that already exists aborts unless you pass `overwrite = TRUE`, which replaces the definition (last write wins). It is omitted from the tables. The one carve-out is `addObservedData()`: `overwrite = TRUE` replaces a source only when the new one is the same kind as the old, and a cross-kind replacement is refused, so remove the existing source with `removeObservedData()` first. Adding a `DataSet` reads none of the project's sources, so it is refused at add time only when its name is the id of another source (such as a `DataSet` of that name saved earlier), when another source reads its data from `<name>.pkml`, or when it is the name of a data set loaded since the observed data last changed; any other clash with a data set inside an Excel, PKML or script source is reported the next time the observed data is loaded.
+- Every `add*` function accepts `overwrite`, a logical defaulting to `FALSE`. An id that already exists aborts unless you pass `overwrite = TRUE`, which replaces the definition (last write wins). It is omitted from the tables. The one carve-out is `addObservedDataSource()`: `overwrite = TRUE` replaces a source only when the new one is the same kind as the old, and a cross-kind replacement is refused, so remove the existing source with `removeObservedDataSource()` first. Adding a `DataSet` reads none of the project's sources, so it is refused at add time only when its name is the id of another source (such as a `DataSet` of that name saved earlier), when another source reads its data from `<name>.pkml`, or when it is the name of a data set loaded since the observed data last changed; any other clash with a data set inside an Excel, PKML or script source is reported the next time the observed data is loaded.
 
 For why definitions are shaped this way, see `vignette("about-the-project-model")` and `vignette("about-the-plotting-model")`. For the project file and folder layout, see `vignette("reference-project-file")`.
 
@@ -220,7 +220,7 @@ The one field is required, so nothing falls back to the model file. An empty pat
 
 ## Observed data
 
-`addObservedData(project, entry)`, where `entry` is either a configuration list or a `DataSet` object. Unlike the other `add*` functions this one is not vectorized over ids: it adds one source per call.
+`addObservedDataSource(project, entry)`, where `entry` is either a configuration list or a `DataSet` object. Unlike the other `add*` functions this one is not vectorized over ids: it adds one source per call.
 
 Required fields by `type`:
 
@@ -444,7 +444,7 @@ addPlotGrid(project, c("g1", "g2"), plots = c("p1", "p2"))
 addPlotGrid(project, c("g1", "g2"), plots = list("p1", "p2"))
 ```
 
-`addObservedData()` is not vectorized at all: its second argument is an entry, not an id.
+`addObservedDataSource()` is not vectorized at all: its second argument is an entry, not an id.
 
 ## Sensitivity plot configuration
 

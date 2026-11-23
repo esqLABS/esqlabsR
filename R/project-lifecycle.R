@@ -36,7 +36,7 @@
 #'   for the name and description, and `project$paths$populationsFolder <- "..."`
 #'   for a working folder (see [Project] for the full field list). An
 #'   observed-data source's `file` and `importerConfiguration` are fields of the
-#'   declaration, so they are authored with [addObservedData()]. Every such
+#'   declaration, so they are authored with [addObservedDataSource()]. Every such
 #'   assignment is an in-memory edit like any other, saved by [saveProject()].
 #'
 #'   Write your changes to the project files with [saveProject()]. Discard

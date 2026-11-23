@@ -689,10 +689,10 @@ test_that(".definitionTreeFilePlan does not rename onto a file that exists", {
 test_that("saveProject files an observed-data id that changes only in case under the new spelling", {
   project <- testProject()
   dir <- file.path(project$info$projectDirPath, "definitions", "observed-data")
-  addObservedData(project, list(type = "pkml", file = "Laskin 1982.pkml"))
+  addObservedDataSource(project, list(type = "pkml", file = "Laskin 1982.pkml"))
   saveProject(project)
-  removeObservedData(project, "Laskin 1982.pkml")
-  addObservedData(project, list(type = "pkml", file = "laskin 1982.pkml"))
+  removeObservedDataSource(project, "Laskin 1982.pkml")
+  addObservedDataSource(project, list(type = "pkml", file = "laskin 1982.pkml"))
 
   saveProject(project)
 
@@ -772,10 +772,10 @@ test_that("saveProject aborts when a definition file cannot be renamed to its id
 
   project <- testProject()
   dir <- file.path(project$info$projectDirPath, "definitions", "observed-data")
-  addObservedData(project, list(type = "pkml", file = "Laskin 1982.pkml"))
+  addObservedDataSource(project, list(type = "pkml", file = "Laskin 1982.pkml"))
   saveProject(project)
-  removeObservedData(project, "Laskin 1982.pkml")
-  addObservedData(project, list(type = "pkml", file = "laskin 1982.pkml"))
+  removeObservedDataSource(project, "Laskin 1982.pkml")
+  addObservedDataSource(project, list(type = "pkml", file = "laskin 1982.pkml"))
 
   Sys.chmod(dir, mode = "0500")
   # Restore write permission on exit so the temp tree can be cleaned up even if

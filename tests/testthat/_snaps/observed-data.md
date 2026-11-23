@@ -23,105 +23,106 @@
       Error in `.resolveDataPath()`:
       ! dataFolder is not declared in `filePaths`; cannot resolve 'x.pkml'.
 
-# addObservedData rejects an under-specified config entry, naming every gap at once
+# addObservedDataSource rejects an under-specified config entry, naming every gap at once
 
     Code
-      addObservedData(project, list(type = "excel", file = "x.xlsx"))
+      addObservedDataSource(project, list(type = "excel", file = "x.xlsx"))
     Condition
-      Error in `addObservedData()`:
+      Error in `addObservedDataSource()`:
       ! `observedData` entry 2 (type "excel") is missing required fields importerConfiguration and sheets.
 
 ---
 
     Code
-      addObservedData(project, list(type = "excel"))
+      addObservedDataSource(project, list(type = "excel"))
     Condition
-      Error in `addObservedData()`:
+      Error in `addObservedDataSource()`:
       ! `observedData` entry 2 (type "excel") is missing required fields file, importerConfiguration, and sheets.
 
-# addObservedData rejects a duplicate config entry file
+# addObservedDataSource rejects a duplicate config entry file
 
     Code
-      addObservedData(project, list(type = "excel", file = "Aciclovir_TimeValuesData.xlsx",
+      addObservedDataSource(project, list(type = "excel", file = "Aciclovir_TimeValuesData.xlsx",
         importerConfiguration = "esqlabs_dataImporter_configuration.xml", sheets = list(
           "Laskin 1982.Group A")))
     Condition
-      Error in `addObservedData()`:
+      Error in `addObservedDataSource()`:
       ! observedData entry with id "Aciclovir_TimeValuesData.xlsx" already exists.
       i Pass `overwrite = TRUE` to replace it.
 
-# addObservedData aborts on a duplicate DataSet name, replaces with overwrite
+# addObservedDataSource aborts on a duplicate DataSet name, replaces with overwrite
 
     Code
-      addObservedData(project, ds2)
+      addObservedDataSource(project, ds2)
     Condition
-      Error in `addObservedData()`:
+      Error in `addObservedDataSource()`:
       ! observedData entry with name "prog_ds" already exists.
       i Pass `overwrite = TRUE` to replace it.
 
-# addObservedData with a DataSet runs no script source
+# addObservedDataSource with a DataSet runs no script source
 
     Code
-      addObservedData(project, ospsuite::DataSet$new(name = "Scratch measurement"))
+      addObservedDataSource(project, ospsuite::DataSet$new(name = "Scratch measurement"))
     Message
       i Added programmatic observed-data source "Scratch measurement". It lives in this session until you save.
       i On `saveProject()` it is written to 'Scratch measurement.pkml' under the data folder, so it survives a reload.
 
-# addObservedData with a DataSet reads no other source's file
+# addObservedDataSource with a DataSet reads no other source's file
 
     Code
-      addObservedData(project, ospsuite::DataSet$new(name = "Scratch measurement"))
+      addObservedDataSource(project, ospsuite::DataSet$new(name = "Scratch measurement"))
     Message
       i Added programmatic observed-data source "Scratch measurement". It lives in this session until you save.
       i Declare a dataFolder in `filePaths` before saving: `saveProject()` writes it to a PKML file there so it survives a reload, and aborts if no data folder is declared.
 
-# addObservedData checks a DataSet name against the names already loaded
+# addObservedDataSource checks a DataSet name against the names already loaded
 
     Code
-      addObservedData(project, ospsuite::DataSet$new(name = "Digitized plasma"))
+      addObservedDataSource(project, ospsuite::DataSet$new(name = "Digitized plasma"))
     Condition
-      Error in `addObservedData()`:
+      Error in `addObservedDataSource()`:
       ! observedData entry with name "Digitized plasma" already exists.
       i Pass `overwrite = TRUE` to replace it.
 
-# addObservedData aborts on the name of a DataSet added in this session
+# addObservedDataSource aborts on the name of a DataSet added in this session
 
     Code
-      addObservedData(project, ospsuite::DataSet$new(name = "Scratch measurement"))
+      addObservedDataSource(project, ospsuite::DataSet$new(name = "Scratch measurement"))
     Condition
-      Error in `addObservedData()`:
+      Error in `addObservedDataSource()`:
       ! observedData entry with name "Scratch measurement" already exists.
       i Pass `overwrite = TRUE` to replace it.
 
-# addObservedData refuses a DataSet saved earlier under its name
+# addObservedDataSource refuses a DataSet saved earlier under its name
 
     Code
-      addObservedData(project, scratch)
+      addObservedDataSource(project, scratch)
     Condition
-      Error in `addObservedData()`:
+      Error in `addObservedDataSource()`:
       ! observedData entry with name "Scratch measurement" already exists.
       i Pass `overwrite = TRUE` to replace it.
     Code
-      addObservedData(project, scratch, overwrite = TRUE)
+      addObservedDataSource(project, scratch, overwrite = TRUE)
     Condition
-      Error in `addObservedData()`:
+      Error in `addObservedDataSource()`:
       ! observedData entry with name "Scratch measurement" is a file-based source, not a programmatic one, so it cannot be overwritten with a <DataSet>.
-      i Remove it first with `removeObservedData()` by its id, then add the <DataSet>.
+      i Remove it first with `removeObservedDataSource()` by its id, then add the <DataSet>.
 
-# addObservedData refuses a DataSet whose PKML file another source reads
+# addObservedDataSource refuses a DataSet whose PKML file another source reads
 
     Code
-      addObservedData(project, ospsuite::DataSet$new(name = "Cohort B"))
+      addObservedDataSource(project, ospsuite::DataSet$new(name = "Cohort B"))
     Condition
-      Error in `addObservedData()`:
+      Error in `addObservedDataSource()`:
       ! observedData entry with name "Cohort B" already exists.
       i Pass `overwrite = TRUE` to replace it.
     Code
-      addObservedData(project, ospsuite::DataSet$new(name = "Cohort B"), overwrite = TRUE)
+      addObservedDataSource(project, ospsuite::DataSet$new(name = "Cohort B"),
+      overwrite = TRUE)
     Condition
-      Error in `addObservedData()`:
+      Error in `addObservedDataSource()`:
       ! observedData entry with name "Cohort B" is a file-based source, not a programmatic one, so it cannot be overwritten with a <DataSet>.
-      i Remove it first with `removeObservedData()` by its id, then add the <DataSet>.
+      i Remove it first with `removeObservedDataSource()` by its id, then add the <DataSet>.
 
 # a DataSet name inside a script source not loaded yet aborts the next load
 
@@ -165,7 +166,7 @@
       Warning:
       ! 1 programmatic observed-data source resolved to no data: "Lost cohort".
       i A programmatic source holds its <DataSet> only in the session that added it; it is not saved to disk.
-      i Re-add it with `addObservedData()` in this session, or declare it as a `script` or `pkml` source to persist across a reload.
+      i Re-add it with `addObservedDataSource()` in this session, or declare it as a `script` or `pkml` source to persist across a reload.
       This warning is displayed once per session.
 
 # a warning about selected sources leaves the warning of a full load
@@ -176,7 +177,7 @@
       Warning:
       ! 2 programmatic observed-data sources resolved to no data: "Lost cohort A" and "Lost cohort B".
       i A programmatic source holds its <DataSet> only in the session that added it; it is not saved to disk.
-      i Re-add them with `addObservedData()` in this session, or declare them as a `script` or `pkml` source to persist across a reload.
+      i Re-add them with `addObservedDataSource()` in this session, or declare them as a `script` or `pkml` source to persist across a reload.
       This warning is displayed once per session.
 
 # observedData declarations sharing a basename fail saveProject()
@@ -187,7 +188,7 @@
       Error in `.serializeObservedDataSet()`:
       x Two observed-data sources would be saved to the same definition file 'obs.pkml.json'.
       i Each source is saved to a file named after its id: the id it was given, the name of its <DataSet>, or else its file basename. Ids that differ only in case are the same file on Windows and macOS.
-      i Give the sources distinct ids, or remove one with `removeObservedData()`. For a <DataSet>, remove its source by its name, rename the <DataSet>, and add it again with `addObservedData()`.
+      i Give the sources distinct ids, or remove one with `removeObservedDataSource()`. For a <DataSet>, remove its source by its name, rename the <DataSet>, and add it again with `addObservedDataSource()`.
 
 # saveProject aborts on a programmatic-to-PKML basename collision
 
@@ -197,7 +198,7 @@
       Error in `saveProject()`:
       x Saving a programmatic observed-data source would overwrite the data file of another source: 'Collide.pkml'.
       i A programmatic source is written to '<name>.pkml' in the data folder, a file another source already reads or another programmatic source is written to. File names that differ only in case are the same file on Windows and macOS.
-      i Before saving, remove the source with `removeObservedData()` by its name, rename the <DataSet>, and add it again with `addObservedData()`.
+      i Before saving, remove the source with `removeObservedDataSource()` by its name, rename the <DataSet>, and add it again with `addObservedDataSource()`.
 
 # saveProject keeps the data file of a source filed under a declared id
 
@@ -207,7 +208,7 @@
       Error in `saveProject()`:
       x Saving a programmatic observed-data source would overwrite the data file of another source: 'Cohort B.pkml'.
       i A programmatic source is written to '<name>.pkml' in the data folder, a file another source already reads or another programmatic source is written to. File names that differ only in case are the same file on Windows and macOS.
-      i Before saving, remove the source with `removeObservedData()` by its name, rename the <DataSet>, and add it again with `addObservedData()`.
+      i Before saving, remove the source with `removeObservedDataSource()` by its name, rename the <DataSet>, and add it again with `addObservedDataSource()`.
 
 # saveProject aborts persisting a programmatic DataSet with no dataFolder
 
@@ -226,43 +227,43 @@
       Error in `saveProject()`:
       x Two observed-data sources would be saved to the same definition file 'Cohort B.json'.
       i Each source is saved to a file named after its id: the id it was given, the name of its <DataSet>, or else its file basename. Ids that differ only in case are the same file on Windows and macOS.
-      i Give the sources distinct ids, or remove one with `removeObservedData()`. For a <DataSet>, remove its source by its name, rename the <DataSet>, and add it again with `addObservedData()`.
+      i Give the sources distinct ids, or remove one with `removeObservedDataSource()`. For a <DataSet>, remove its source by its name, rename the <DataSet>, and add it again with `addObservedDataSource()`.
 
-# addObservedData rejects a duplicate declared id
+# addObservedDataSource rejects a duplicate declared id
 
     Code
-      addObservedData(project, list(id = "obs", type = "pkml", file = "b.pkml"))
+      addObservedDataSource(project, list(id = "obs", type = "pkml", file = "b.pkml"))
     Condition
-      Error in `addObservedData()`:
+      Error in `addObservedDataSource()`:
       ! observedData entry with id "obs" already exists.
       i Pass `overwrite = TRUE` to replace it.
 
 # a config entry cannot overwrite a live programmatic source
 
     Code
-      addObservedData(project, list(id = "prog_src", type = "pkml", file = "x.pkml"),
+      addObservedDataSource(project, list(id = "prog_src", type = "pkml", file = "x.pkml"),
       overwrite = TRUE)
     Condition
-      Error in `addObservedData()`:
+      Error in `addObservedDataSource()`:
       ! observedData entry with id "prog_src" is a programmatic source holding a <DataSet> in this session, so it cannot be overwritten with a configuration entry.
-      i Remove it first with `removeObservedData()`, then add the configuration entry.
+      i Remove it first with `removeObservedDataSource()`, then add the configuration entry.
 
 # a DataSet clashes with the id of another source
 
     Code
-      addObservedData(project, ospsuite::DataSet$new(name = "cohort_b"))
+      addObservedDataSource(project, ospsuite::DataSet$new(name = "cohort_b"))
     Condition
-      Error in `addObservedData()`:
+      Error in `addObservedDataSource()`:
       ! observedData entry with name "cohort_b" already exists.
       i Pass `overwrite = TRUE` to replace it.
     Code
-      addObservedData(project, ospsuite::DataSet$new(name = "Aciclovir_TimeValuesData.xlsx"))
+      addObservedDataSource(project, ospsuite::DataSet$new(name = "Aciclovir_TimeValuesData.xlsx"))
     Condition
-      Error in `addObservedData()`:
+      Error in `addObservedDataSource()`:
       ! observedData entry with name "Aciclovir_TimeValuesData.xlsx" already exists.
       i Pass `overwrite = TRUE` to replace it.
 
-# removeObservedData mutates memory only; a surviving collision aborts saveProject()
+# removeObservedDataSource mutates memory only; a surviving collision aborts saveProject()
 
     Code
       saveProject(project)
@@ -270,7 +271,7 @@
       Error in `.serializeObservedDataSet()`:
       x Two observed-data sources would be saved to the same definition file 'obs.pkml.json'.
       i Each source is saved to a file named after its id: the id it was given, the name of its <DataSet>, or else its file basename. Ids that differ only in case are the same file on Windows and macOS.
-      i Give the sources distinct ids, or remove one with `removeObservedData()`. For a <DataSet>, remove its source by its name, rename the <DataSet>, and add it again with `addObservedData()`.
+      i Give the sources distinct ids, or remove one with `removeObservedDataSource()`. For a <DataSet>, remove its source by its name, rename the <DataSet>, and add it again with `addObservedDataSource()`.
 
 # every observed-data source stores its id first and the section is keyed by it
 
@@ -285,32 +286,32 @@
 # a DataSet replaces a programmatic source with no data only with overwrite
 
     Code
-      addObservedData(project, scratch)
+      addObservedDataSource(project, scratch)
     Condition
-      Error in `addObservedData()`:
+      Error in `addObservedDataSource()`:
       ! observedData entry with name "Scratch measurement" already exists.
       i Pass `overwrite = TRUE` to replace it.
 
-# addObservedData refuses an id that differs from another only in case
+# addObservedDataSource refuses an id that differs from another only in case
 
     Code
-      addObservedData(project, list(type = "pkml", file = "sub/laskin 1982.pkml"))
+      addObservedDataSource(project, list(type = "pkml", file = "sub/laskin 1982.pkml"))
     Condition
-      Error in `addObservedData()`:
+      Error in `addObservedDataSource()`:
       x The observed-data id "laskin 1982.pkml" differs only in case from the id "Laskin 1982.pkml" of another source.
       i Each source is saved to a definition file named after its id, and file names that differ only in case are the same file on Windows and macOS.
       i Give the source another id, or a <DataSet> another name. To replace the other source with one of the same kind, pass `overwrite = TRUE`.
     Code
-      addObservedData(project, ospsuite::DataSet$new(name = "Cohort"))
+      addObservedDataSource(project, ospsuite::DataSet$new(name = "Cohort"))
     Condition
-      Error in `addObservedData()`:
+      Error in `addObservedDataSource()`:
       x The observed-data id "Cohort" differs only in case from the id "cohort" of another source.
       i Each source is saved to a definition file named after its id, and file names that differ only in case are the same file on Windows and macOS.
       i Give the source another id, or a <DataSet> another name. To replace the other source with one of the same kind, pass `overwrite = TRUE`.
     Code
-      addObservedData(project, ospsuite::DataSet$new(name = "cohort b"))
+      addObservedDataSource(project, ospsuite::DataSet$new(name = "cohort b"))
     Condition
-      Error in `addObservedData()`:
+      Error in `addObservedDataSource()`:
       x The observed-data id "cohort b" differs only in case from the id "Cohort B" of another source.
       i Each source is saved to a definition file named after its id, and file names that differ only in case are the same file on Windows and macOS.
       i Give the source another id, or a <DataSet> another name. To replace the other source with one of the same kind, pass `overwrite = TRUE`.
@@ -318,20 +319,20 @@
 # a DataSet overwrite is refused when another source provides its name
 
     Code
-      addObservedData(project, lower, overwrite = TRUE)
+      addObservedDataSource(project, lower, overwrite = TRUE)
     Condition
-      Error in `addObservedData()`:
+      Error in `addObservedDataSource()`:
       x Cannot replace the observed-data source "Cohort B" with the <DataSet> "cohort b": another source already provides a data set of that name or reads its data from 'cohort b.pkml'.
-      i Remove the other source first with `removeObservedData()` by its id, or give the <DataSet> another name.
+      i Remove the other source first with `removeObservedDataSource()` by its id, or give the <DataSet> another name.
 
 # a DataSet overwrite is refused when another source reads its PKML file
 
     Code
-      addObservedData(project, lower, overwrite = TRUE)
+      addObservedDataSource(project, lower, overwrite = TRUE)
     Condition
-      Error in `addObservedData()`:
+      Error in `addObservedDataSource()`:
       x Cannot replace the observed-data source "Cohort B" with the <DataSet> "cohort b": another source already provides a data set of that name or reads its data from 'cohort b.pkml'.
-      i Remove the other source first with `removeObservedData()` by its id, or give the <DataSet> another name.
+      i Remove the other source first with `removeObservedDataSource()` by its id, or give the <DataSet> another name.
 
 # print.ObservedDataSource renders the source declaration
 
