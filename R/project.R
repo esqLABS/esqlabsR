@@ -1259,6 +1259,10 @@ Project <- R6::R6Class(
       if (identical(kind, "scenarios")) {
         value <- .storeScenarioOutputPathIds(value)
       }
+      # Observed-data declarations are stored with their id and named by it.
+      if (identical(kind, "observedData")) {
+        value <- .observedDataSectionById(value)
+      }
       private[[field]] <- value
       # Writing observed data invalidates the cached observed-data names, as the
       # active-binding setter did.

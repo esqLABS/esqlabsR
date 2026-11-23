@@ -506,7 +506,7 @@ addObservedData <- function(project, entry, overwrite = FALSE) {
     # name. The exception is a programmatic source with no DataSet in this
     # session: it holds no data, so a DataSet of its name may fill it.
     sources <- self$definitions$observedData
-    sectionIds <- .observedDataSectionIds(sources)
+    sectionIds <- names(sources) %||% character()
     isProgrammatic <- vapply(
       sources %||% list(),
       \(e) identical(e$type, "programmatic"),
@@ -565,7 +565,6 @@ addObservedData <- function(project, entry, overwrite = FALSE) {
     } else {
       observedData <- c(observedData, list(sentinel))
     }
-    observedData <- .observedDataSectionById(observedData)
     private$.setSection("observedData", observedData)
     private$.programmaticDataSets[[name]] <- entry
     # The observedData setter resets the names cache, so restore it after the
@@ -629,7 +628,7 @@ addObservedData <- function(project, entry, overwrite = FALSE) {
     # unless overwriting.
     entryId <- .observedDataEntryId(entry, call = .call)
     .validateObservedDataId(entryId, call = .call)
-    existingIds <- .observedDataSectionIds(self$definitions$observedData)
+    existingIds <- names(self$definitions$observedData) %||% character()
     if (entryId %in% existingIds && !overwrite) {
       cli::cli_abort(c(
         "observedData entry with id {.val {entryId}} already exists.",
@@ -662,10 +661,7 @@ addObservedData <- function(project, entry, overwrite = FALSE) {
     } else {
       observedData <- c(observedData, list(entry))
     }
-    private$.setSection(
-      "observedData",
-      .observedDataSectionById(observedData)
-    )
+    private$.setSection("observedData", observedData)
     return(invisible(self))
   }
 
@@ -722,7 +718,7 @@ removeObservedData <- function(project, id) {
   # touches disk; persist with saveProject().
   dropIdx <- integer()
   missingIds <- character()
-  sectionIds <- .observedDataSectionIds(observedData)
+  sectionIds <- names(observedData) %||% character()
   entriesWithId <- function(key) which(sectionIds %in% key)
   for (one in id) {
     matchIdx <- entriesWithId(one)
@@ -767,10 +763,7 @@ removeObservedData <- function(project, id) {
   # Update the in-memory section and the runtime store together (both pure
   # in-memory mutations under explicit-save; nothing touches disk until
   # `saveProject()`).
-  private$.setSection(
-    "observedData",
-    .observedDataSectionById(observedData[-dropIdx])
-  )
+  private$.setSection("observedData", observedData[-dropIdx])
   for (name in programmaticNames) {
     private$.programmaticDataSets[[name]] <- NULL
   }
@@ -844,17 +837,6 @@ removeObservedData <- function(project, id) {
     suppressMessages(suppressWarnings(project$getObservedDataNames())),
     error = function(cnd) NULL
   )
-}
-
-# The declaration id of every entry in the section, `NA` for one that carries
-# nothing usable to derive an id from. One resolver for both kinds, so the
-# add-time collision check, the overwrite match, and the removal match all agree
-# on what an entry is called.
-#
-# @keywords internal
-# @noRd
-.observedDataSectionIds <- function(observedData) {
-  vapply(observedData %||% list(), .observedDataEntryIdOrNA, character(1))
 }
 
 # The `file` of every entry in the section as written (relative to the data
@@ -1022,7 +1004,7 @@ removeObservedData <- function(project, id) {
 # @noRd
 .persistProgrammaticObservedData <- function(self, private) {
   observedData <- private$.getSection("observedData")
-  sectionIds <- .observedDataSectionIds(observedData)
+  sectionIds <- names(observedData) %||% character()
   # A hand-authored `programmatic` sentinel may carry no id; it has no backing
   # DataSet, so it is left untouched, matching this function's orphan-sentinel
   # contract.
@@ -1094,7 +1076,7 @@ removeObservedData <- function(project, id) {
     )
   }
 
-  private$.setSection("observedData", .observedDataSectionById(observedData))
+  private$.setSection("observedData", observedData)
   # `.setSection("observedData", ...)` already reset the names cache; the entries
   # still resolve to the same DataSet names (now from PKML), so a rebuild on the
   # next read is correct. The runtime-store entries stay until the whole save

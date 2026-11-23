@@ -1055,7 +1055,7 @@ test_that("addObservedData canonicalizes a declared id", {
   )
   expect_true(
     "testproject_timevaluesdata" %in%
-      .observedDataSectionIds(project$definitions$observedData)
+      names(project$definitions$observedData)
   )
 
   saveProject(project)
@@ -1082,7 +1082,7 @@ test_that("addObservedData leaves a derived id and a DataSet name as they are", 
   addObservedData(project, list(type = "pkml", file = "sub/MyObs.pkml"))
 
   expect_setequal(
-    .observedDataSectionIds(project$definitions$observedData),
+    names(project$definitions$observedData),
     c("Aciclovir_TimeValuesData.xlsx", "MyObs.pkml", "MyProgSet")
   )
 })
@@ -1113,14 +1113,14 @@ test_that("removeObservedData finds every id kind by the spelling it was added w
   # canonical one that spelling was rewritten to.
   removeObservedData(project, "MyDeclared")
   expect_false(
-    "mydeclared" %in% .observedDataSectionIds(project$definitions$observedData)
+    "mydeclared" %in% names(project$definitions$observedData)
   )
 
   # A derived id and a programmatic `DataSet` name are matched verbatim, so
   # canonicalizing the search key unconditionally would strand both.
   removeObservedData(project, c("MyObs.pkml", "MyProgSet"))
   expect_setequal(
-    .observedDataSectionIds(project$definitions$observedData),
+    names(project$definitions$observedData),
     "Aciclovir_TimeValuesData.xlsx"
   )
   expect_false("MyProgSet" %in% getObservedDataNames(project))
@@ -1204,11 +1204,11 @@ test_that("removeObservedData mutates memory only; a surviving collision aborts 
   addObservedData(project, ds)
 
   # Seed a colliding pair of surviving entries directly into the backing field.
-  state$.observedData <- list(
-    .asObservedDataSource(list(id = "myProgSet", type = "programmatic")),
-    .asObservedDataSource(list(type = "pkml", file = "dirA/obs.pkml")),
-    .asObservedDataSource(list(type = "pkml", file = "dirB/obs.pkml"))
-  )
+  state$.observedData <- .observedDataSectionById(list(
+    list(id = "myProgSet", type = "programmatic"),
+    list(type = "pkml", file = "dirA/obs.pkml"),
+    list(type = "pkml", file = "dirB/obs.pkml")
+  ))
 
   # The removal succeeds in memory (the programmatic name is dropped from the
   # runtime store), but the surviving pair still collides at save time.

@@ -882,13 +882,6 @@
   }
   records <- lapply(records, function(rec) {
     .assertObservedDataTreeRecordId(rec)
-    # A tree file is keyed by its filename, so a declaration that carries nothing
-    # to derive an id from takes the filename stem; `validateProject()` still
-    # reports the fields it is missing.
-    file <- attr(rec, ".definitionFile")
-    if (!is.null(file) && is.na(.observedDataEntryIdOrNA(rec))) {
-      rec$id <- tools::file_path_sans_ext(basename(file))
-    }
     # Drop the transient `.definitionFile` load tag the tree loader attaches; it
     # is used only for error messages, and must not leak into the in-memory
     # record (which would make a tree-loaded section differ from an
@@ -900,53 +893,49 @@
 }
 
 # The in-memory shape of the `observedData` section: every declaration stores
-# its id as its first field and the list is named by those ids, like every
-# other section. A declaration without an `id` takes the one derived from its
-# source (`.observedDataEntryIdOrNA()`), spelled as the source spells it; a
-# `programmatic` one stores its DataSet name as `id`, not under `name`. A
-# declaration with nothing to derive an id from keeps none and is named `""`.
-# Each is stamped `ObservedDataSource` so a single source dispatches its print
-# method (the serializers strip it before JSON).
+# its id (`.observedDataEntryIdOrNA()`) as its first field and the list is named
+# by those ids, like every other section. A declaration with nothing to take an
+# id from stores none and is named `""`; `validateProject()` reports the fields
+# it is missing. Each is stamped `ObservedDataSource` so a single source
+# dispatches its print method (the serializers strip it before JSON).
+# `.setSection()` runs every write of the section through this.
 #
 # @keywords internal
 # @noRd
 .observedDataSectionById <- function(observedData) {
-  if (length(observedData) == 0L) {
-    return(list())
-  }
-  records <- lapply(observedData, function(entry) {
+  records <- lapply(observedData %||% list(), function(entry) {
     .asObservedDataSource(.observedDataRecordWithId(entry))
   })
-  ids <- .observedDataSectionIds(records)
-  names(records) <- ifelse(is.na(ids), "", ids)
+  names(records) <- vapply(
+    records,
+    \(e) .usableObservedDataId(e[["id"]]) %||% "",
+    character(1),
+    USE.NAMES = FALSE
+  )
   records
 }
 
-# One declaration as a plain list with its id first. Converts the `name` a
-# `programmatic` declaration carried before it stored `id` (an earlier
-# development build, or a hand-written file); a stored `id` is kept as is.
+# One declaration as a plain list with its id first. A `programmatic`
+# declaration may carry its DataSet name under `name` instead of `id`; it is
+# read as the id and stored as `id`.
 #
 # @keywords internal
 # @noRd
 .observedDataRecordWithId <- function(entry) {
   entry <- unclass(entry)
+  id <- .observedDataEntryIdOrNA(entry)
   if (identical(entry$type, "programmatic")) {
-    entry$id <- entry$id %||% entry$name
     entry$name <- NULL
   }
-  if (is.null(entry$id)) {
-    id <- .observedDataEntryIdOrNA(entry)
-    if (is.na(id)) {
-      return(entry)
-    }
-    entry$id <- id
+  if (is.na(id)) {
+    return(entry)
   }
-  c(list(id = entry$id), entry[names(entry) != "id"])
+  c(list(id = id), entry[names(entry) != "id"])
 }
 
 # The load-side counterpart of `.keyedTreeRecordId()` for observedData, whose
-# file may store no id: one written by hand, or by an earlier development build,
-# derives it from its source. Either way the id must agree with the filename,
+# file may store no id, and then takes it from its source. Either way the id
+# must agree with the filename,
 # or the next `saveProject()` files the declaration under a different name and
 # reconciles the loaded file away, and two files that derive one id load fine
 # but make the save abort. Checked only for a record read from a tree file; an
@@ -1030,8 +1019,8 @@
   id <- .usableObservedDataId(entry[["id"]])
   if (is.null(id)) {
     if (identical(entry$type, "programmatic")) {
-      # Only a `programmatic` declaration read from a file written before it
-      # stored `id` has its DataSet name under `name`.
+      # A `programmatic` declaration may carry its DataSet name under `name`
+      # instead of `id`.
       id <- .usableObservedDataId(entry[["name"]])
     } else {
       file <- .usableObservedDataId(entry[["file"]])

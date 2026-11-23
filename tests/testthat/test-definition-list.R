@@ -141,7 +141,12 @@ test_that(".definitionListIds labels an observedData declaration with no derivab
 })
 
 test_that(".definitionListIds returns no ids for an empty observedData section", {
-  expect_null(.definitionListIds(.asDefinitionList(list(), "observedData")))
+  expect_equal(
+    .definitionListIds(
+      .asDefinitionList(.observedDataSectionById(list()), "observedData")
+    ),
+    character(0)
+  )
 })
 
 test_that("printing the observedData section shows its ids", {

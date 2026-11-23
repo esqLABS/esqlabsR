@@ -617,22 +617,6 @@ test_that("a tree-loaded initialConditions id must match its filename stem", {
   expect_snapshot(spec$parse(list(rec), NULL), error = TRUE)
 })
 
-# A tree file is keyed by its filename, so a source that names nothing to take
-# an id from (a hand-written file missing its `file`) is filed under the stem.
-# `validateProject()` reports the missing field.
-test_that("a tree-loaded observedData record with nothing to take an id from takes its filename stem", {
-  spec <- .definitionTreeSpec("observedData")
-  rec <- list(type = "pkml")
-  attr(rec, ".definitionFile") <- "observed-data/laskin_iv.json"
-
-  parsed <- spec$parse(list(rec), NULL)
-
-  expect_identical(
-    lapply(parsed, unclass),
-    list(laskin_iv = list(id = "laskin_iv", type = "pkml"))
-  )
-})
-
 # observed-data id escape guard ----
 
 # The observed-data id becomes a filename, and a programmatic source's id (its
