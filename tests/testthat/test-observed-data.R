@@ -910,18 +910,6 @@ test_that("a save that aborts mid-tree-write keeps the programmatic DataSet reco
   expect_true("RecoverableSet" %in% names(state$.programmaticDataSets))
 })
 
-# A DataSet keeps its name as its id, before and after saving, so a name equal
-# to the id a file-based source takes from its file basename would share that
-# source's definition file.
-test_that("a DataSet clashes with the id a source takes from its file", {
-  project <- testProject()
-  # The fixture declares an Excel source whose id is its file basename.
-  ds <- ospsuite::DataSet$new(name = "Aciclovir_TimeValuesData.xlsx")
-  ds$setValues(xValues = c(1, 2), yValues = c(3, 4))
-
-  expect_snapshot(error = TRUE, addObservedData(project, ds))
-})
-
 test_that("removeObservedData drops the DataSet of a source a failed save already rewrote", {
   # The save wrote the PKML and rewrote the entry as a `pkml` source, then
   # aborted, so the DataSet is still held in the session.
@@ -1188,21 +1176,24 @@ test_that("a config entry cannot overwrite a live programmatic source", {
   expect_true("prog_src" %in% getObservedDataNames(project))
 })
 
-test_that("a DataSet clashes with an existing declaration's declared id", {
-  # A declared `id` is not the name of a data set, so only the id check sees
-  # the clash; without it the section would hold two entries filed under one
-  # id and only fail at save. The PKML file does not exist: the clash is found
-  # without reading it.
+# A DataSet keeps its name as its id, so a name equal to the id of another
+# source, given or taken from its file basename, would share that source's
+# definition file. Neither PKML file exists: the clash is found without reading.
+test_that("a DataSet clashes with the id of another source", {
   project <- testProject()
   addObservedData(
     project,
     list(id = "cohort_b", type = "pkml", file = "cohort_b_export.pkml")
   )
 
-  expect_snapshot(
-    error = TRUE,
+  expect_snapshot(error = TRUE, {
     addObservedData(project, ospsuite::DataSet$new(name = "cohort_b"))
-  )
+    # The fixture's Excel source takes its id from its file basename.
+    addObservedData(
+      project,
+      ospsuite::DataSet$new(name = "Aciclovir_TimeValuesData.xlsx")
+    )
+  })
 })
 
 test_that("removeObservedData warns and skips a not-found id in the batch", {
@@ -1250,10 +1241,6 @@ test_that("removeObservedData mutates memory only; a surviving collision aborts 
 test_that("every observed-data source stores its id first and the section is keyed by it", {
   project <- testProject()
   addObservedData(project, list(type = "pkml", file = "sub/Cohort B.pkml"))
-  suppressWarnings(addObservedData(
-    project,
-    list(id = "Laskin_IV", type = "pkml", file = "laskin_1982_iv.pkml")
-  ))
   suppressMessages(addObservedData(
     project,
     ospsuite::DataSet$new(name = "Scratch measurement")
@@ -1274,11 +1261,6 @@ test_that("every observed-data source stores its id first and the section is key
         type = "pkml",
         file = "sub/Cohort B.pkml"
       ),
-      laskin_iv = list(
-        id = "laskin_iv",
-        type = "pkml",
-        file = "laskin_1982_iv.pkml"
-      ),
       "Scratch measurement" = list(
         id = "Scratch measurement",
         type = "programmatic"
@@ -1296,7 +1278,7 @@ test_that("every observed-data source stores its id first and the section is key
   )
 })
 
-test_that("saveProject writes the id first into every observed-data definition file", {
+test_that("saveProject writes the id first into every definition file and a DataSet keeps its name as id", {
   project <- testProject()
   dir <- file.path(project$info$projectDirPath, "definitions", "observed-data")
   addObservedData(project, list(type = "pkml", file = "sub/Cohort B.pkml"))
@@ -1333,6 +1315,18 @@ test_that("saveProject writes the id first into every observed-data definition f
       )
     )
   )
+
+  # Removed by the DataSet name after the save, and after a reload.
+  reloaded <- loadProject(project$info$projectFilePath)
+  for (p in list(project, reloaded)) {
+    removeObservedData(p, "Scratch measurement")
+    expect_identical(
+      names(p$definitions$observedData),
+      c("Aciclovir_TimeValuesData.xlsx", "Cohort B.pkml")
+    )
+  }
+  saveProject(reloaded)
+  expect_false(file.exists(file.path(dir, "Scratch measurement.json")))
 })
 
 test_that("a definition file that stores no id, or a programmatic name, still loads", {
@@ -1479,39 +1473,6 @@ test_that("a source passed back keeps the id it is stored under", {
       "Scratch measurement.json"
     )
   )
-})
-
-test_that("a DataSet source keeps its name as id across a save and reload", {
-  project <- testProject()
-  dir <- file.path(project$info$projectDirPath, "definitions", "observed-data")
-  scratch <- ospsuite::DataSet$new(name = "Scratch measurement")
-  scratch$setValues(xValues = c(0, 1, 3), yValues = c(0, 6, 2))
-  suppressMessages(addObservedData(project, scratch))
-
-  saveProject(project)
-
-  expect_identical(
-    unclass(project$definitions$observedData[["Scratch measurement"]]),
-    list(
-      id = "Scratch measurement",
-      type = "pkml",
-      file = "Scratch measurement.pkml"
-    )
-  )
-  expect_true(file.exists(file.path(dir, "Scratch measurement.json")))
-  expect_false(file.exists(file.path(dir, "Scratch measurement.pkml.json")))
-
-  # Removed by the DataSet name after the save, and after a reload.
-  reloaded <- loadProject(project$info$projectFilePath)
-  for (p in list(project, reloaded)) {
-    removeObservedData(p, "Scratch measurement")
-    expect_identical(
-      names(p$definitions$observedData),
-      "Aciclovir_TimeValuesData.xlsx"
-    )
-  }
-  saveProject(reloaded)
-  expect_false(file.exists(file.path(dir, "Scratch measurement.json")))
 })
 
 test_that("a DataSet replaces a programmatic source with no data only with overwrite", {

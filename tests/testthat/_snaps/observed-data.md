@@ -171,15 +171,6 @@
       x Cannot save the programmatic observed-data source "NoFolderSet": dataFolder is not declared in `filePaths`.
       i A programmatic source is written to a PKML file under dataFolder on save. Declare dataFolder, then save again.
 
-# a DataSet clashes with the id a source takes from its file
-
-    Code
-      addObservedData(project, ds)
-    Condition
-      Error in `addObservedData()`:
-      ! observedData entry with name "Aciclovir_TimeValuesData.xlsx" already exists.
-      i Pass `overwrite = TRUE` to replace it.
-
 # saveProject refuses a DataSet that shares its id with another source before writing it
 
     Code
@@ -209,13 +200,19 @@
       ! observedData entry with id "prog_src" is a programmatic source holding a <DataSet> in this session, so it cannot be overwritten with a configuration entry.
       i Remove it first with `removeObservedData()`, then add the configuration entry.
 
-# a DataSet clashes with an existing declaration's declared id
+# a DataSet clashes with the id of another source
 
     Code
       addObservedData(project, ospsuite::DataSet$new(name = "cohort_b"))
     Condition
       Error in `addObservedData()`:
       ! observedData entry with name "cohort_b" already exists.
+      i Pass `overwrite = TRUE` to replace it.
+    Code
+      addObservedData(project, ospsuite::DataSet$new(name = "Aciclovir_TimeValuesData.xlsx"))
+    Condition
+      Error in `addObservedData()`:
+      ! observedData entry with name "Aciclovir_TimeValuesData.xlsx" already exists.
       i Pass `overwrite = TRUE` to replace it.
 
 # removeObservedData mutates memory only; a surviving collision aborts saveProject()
