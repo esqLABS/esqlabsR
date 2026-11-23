@@ -21,11 +21,11 @@ replacement is refused, because it would either strand the session's
 \code{DataSet} or leave two sources resolving to one name: remove the existing
 source with \code{\link[=removeObservedData]{removeObservedData()}} first, then add the new one. A
 configuration list is always checked in full. For a \code{DataSet}, the refusal
-at add time covers a declared \code{id}, a source whose id or data file is
-\verb{<name>.pkml} (such as a \code{DataSet} of the same name saved earlier), and the
-names of data sets loaded since the observed data last changed; any other
-clash with a data set inside an Excel, PKML or script source is reported
-the next time the observed data is loaded.}
+at add time covers the id of another source (such as a \code{DataSet} of the
+same name saved earlier), a source whose data file is \verb{<name>.pkml}, and
+the names of data sets loaded since the observed data last changed; any
+other clash with a data set inside an Excel, PKML or script source is
+reported the next time the observed data is loaded.}
 }
 \value{
 The \code{project} object, invisibly.
@@ -33,8 +33,8 @@ The \code{project} object, invisibly.
 \description{
 Adds one observed-data declaration. \code{entry} is either an
 \code{\link[ospsuite:DataSet]{ospsuite::DataSet}} object (which becomes a \code{type = "programmatic"}
-declaration keyed by \code{dataSet$name}) or a list describing where the data is
-read from.
+declaration whose id is \code{dataSet$name}) or a list describing where the data
+is read from.
 
 Such a list always carries a \code{type}, plus the fields that type needs:\tabular{lll}{
    \code{type} \tab required fields \tab optional fields \cr
@@ -55,8 +55,15 @@ A \code{script} source runs the R file it names (see the Security section of
 the project's definitions folder (\verb{definitions/observed-data/<id>.json} in
 the default layout) and is the id \code{\link[=removeObservedData]{removeObservedData()}} matches on. It is
 canonicalized like every other definition id (lowercased and made a safe
-filename segment), and you are told when that changes it. Left out, the
-\code{file} basename serves as both, kept exactly as the source spells it.
+filename segment), and you are told when that changes it, unless it is
+already the id of a source in the project or equal to the \code{file} basename.
+Left out, the \code{file} basename serves as both, kept exactly as the source
+spells it. Either way the id is stored in the declaration, so
+\code{project$definitions$observedData[[id]]} reads it back and its \code{id} field
+shows it. A declaration read that way can be passed back with
+\code{overwrite = TRUE} and keeps its id. Two ids that differ only in case count
+as the same id, since their definition files are one file on Windows and
+macOS; this holds for a \code{DataSet} name too.
 
 An id is not the name the data is known by: each imported
 \code{\link[ospsuite:DataSet]{ospsuite::DataSet}} carries the name its source gives it (the data-set name
@@ -65,22 +72,22 @@ declaration's id, is what a \code{dataCombined} entry references.
 
 Adding a \code{DataSet} reads none of the project's sources and runs no script,
 so its name is checked only against what the project already knows. Without
-\code{overwrite}, it is refused at once when its name is a declared \code{id}, the
-name of a \code{DataSet} added in this session, or the name of a data set loaded
-since the project's observed data last changed. It is also refused when a
-source's id or data file is \verb{<name>.pkml}, as it is for a \code{DataSet} of that
-name saved earlier: saving would overwrite that file. A \code{DataSet} whose name
+\code{overwrite}, it is refused at once when its name is the id of another source
+(such as a \code{DataSet} of that name saved earlier), the name of a \code{DataSet}
+added in this session, or the name of a data set loaded since the project's
+observed data last changed. It is also refused when another source reads its
+data from \verb{<name>.pkml}, the file saving writes. A \code{DataSet} whose name
 equals another data set inside an Excel, PKML or script source can still be
 accepted: the next time the observed data is loaded, by \code{\link[=loadObservedData]{loadObservedData()}}
 or a function that uses it such as \code{\link[=createDataCombined]{createDataCombined()}}, it stops with an
 error naming the duplicate. Then remove the \code{DataSet} with
-\code{\link[=removeObservedData]{removeObservedData()}}, by its name before saving or by \verb{<name>.pkml} after
-saving, and add it again under another name.
+\code{\link[=removeObservedData]{removeObservedData()}}, by its name, and add it again under another name.
 
 A \code{DataSet} you pass lives in the R session until you save. On
 \code{\link[=saveProject]{saveProject()}} it is written to a PKML file named \verb{<DataSet name>.pkml}
-under the project's data folder and its entry becomes a \code{pkml} source, so
-the data survives a reload. Saving therefore needs a data folder to be
+under the project's data folder and its entry becomes a \code{pkml} source
+reading that file, so the data survives a reload. The source keeps the
+\code{DataSet} name as its id. Saving therefore needs a data folder to be
 declared in the project's file paths.
 }
 \seealso{
