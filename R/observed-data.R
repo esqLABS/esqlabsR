@@ -1043,9 +1043,18 @@ removeObservedData <- function(project, id) {
 # through the tree write leaves the DataSet recoverable (worst case is an orphan
 # PKML file, never lost data).
 #
+# Its errors are attributed to `call`, so a save that aborts here reads as
+# `Error in saveProject()`. The helpers run through `lapply()` / `vapply()` get
+# `call` passed on: their default caller is the apply frame, not this one.
+#
 # @keywords internal
 # @noRd
-.persistProgrammaticObservedData <- function(self, private) {
+.persistProgrammaticObservedData <- function(
+  self,
+  private,
+  call = rlang::caller_env()
+) {
+  rlang::local_error_call(call)
   observedData <- private$.getSection("observedData")
   toPersist <- which(vapply(
     observedData,
@@ -1091,8 +1100,13 @@ removeObservedData <- function(project, id) {
   }
   # Same checks the serializer runs, but up front: each id a safe filename
   # segment, and no two entries sharing an id.
-  ids <- vapply(observedData, .observedDataEntryId, character(1))
-  lapply(ids, .validateObservedDataId)
+  ids <- vapply(
+    observedData,
+    .observedDataEntryId,
+    character(1),
+    call = call
+  )
+  lapply(ids, .validateObservedDataId, call = call)
   duplicates <- unique(ids[duplicated(ids)])
   if (length(duplicates) > 0) {
     cli::cli_abort(messages$observedDataPersistIdCollision(duplicates))

@@ -147,7 +147,7 @@
     Code
       saveProject(project)
     Condition
-      Error in `.persistProgrammaticObservedData()`:
+      Error in `saveProject()`:
       x Saving a <DataSet> added in this session would give it the same id as another source: "Collide.pkml".
       i A <DataSet> is saved under the id '<name>.pkml'. Another source already has that id, either declared or taken from its file name.
       i Before saving, remove the <DataSet> with `removeObservedData()` by its name, rename it, and add it again with `addObservedData()`.
@@ -157,7 +157,7 @@
     Code
       saveProject(project)
     Condition
-      Error in `.persistProgrammaticObservedData()`:
+      Error in `saveProject()`:
       x Saving a <DataSet> added in this session would overwrite the data file of another source: 'Cohort B.pkml'.
       i The <DataSet> would be written to '<name>.pkml' in the data folder, a file another source already reads or another <DataSet> is written to. File names that differ only in case are the same file on Windows and macOS.
       i Before saving, remove the <DataSet> with `removeObservedData()` by its name, rename it, and add it again with `addObservedData()`.
@@ -167,7 +167,7 @@
     Code
       saveProject(project)
     Condition
-      Error in `.persistProgrammaticObservedData()`:
+      Error in `saveProject()`:
       x Saving a <DataSet> added in this session would overwrite the data file of another source: 'Cohort B.pkml' and 'cohort b.pkml'.
       i The <DataSet> would be written to '<name>.pkml' in the data folder, a file another source already reads or another <DataSet> is written to. File names that differ only in case are the same file on Windows and macOS.
       i Before saving, remove the <DataSet> with `removeObservedData()` by its name, rename it, and add it again with `addObservedData()`.
@@ -177,7 +177,7 @@
     Code
       saveProject(project)
     Condition
-      Error in `.persistProgrammaticObservedData()`:
+      Error in `saveProject()`:
       x Cannot save the <DataSet> "NoFolderSet" added in this session: dataFolder is not declared in `filePaths`.
       i A <DataSet> added with `addObservedData()` is written to a PKML file under dataFolder on save. Declare dataFolder, then save again.
 

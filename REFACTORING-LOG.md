@@ -349,3 +349,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-11-23 14:45: The help page of addObservedData() is regenerated for the add-time name check. (#1367)
 - 2026-11-23 14:55: The save-time file-collision message tells the modeler to remove the DataSet's source, rename the DataSet and add it again. (#1367)
 - 2026-11-23 19:20: Observed-data messages and the removeObservedData() help speak of a DataSet added in this session, and the save-time id collision says to remove, rename and add the DataSet again. (#1367)
+- 2026-11-23 19:21: A save that stops on a DataSet added with addObservedData() names saveProject() in its error, not an internal function. (#1367)
