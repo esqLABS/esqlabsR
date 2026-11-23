@@ -757,23 +757,8 @@ removeObservedData <- function(project, id) {
   dropIdx <- integer()
   missingIds <- character()
   sectionIds <- names(observedData) %||% character()
-  # A lookup, unlike the add-time and save-time checks
-  # (`.observedDataIdMatches()`): those guard definition file names, which
-  # ignore case on Windows and macOS, while removing finds the one source the
-  # user names, so it matches the id as stored.
-  entriesWithId <- function(key) which(sectionIds %in% key)
   for (one in id) {
-    matchIdx <- entriesWithId(one)
-    if (length(matchIdx) == 0L) {
-      # An id this section stores is one of two kinds, so the match takes two
-      # passes rather than one transform. A derived id is the source's own
-      # string (a `file` basename, a `DataSet` name), which only the verbatim
-      # pass above finds; a declared id is stored the way `addObservedData()`
-      # canonicalized it, so the id as the user authored it needs the same
-      # transform to reach it. Verbatim first, so a derived id that another
-      # entry's declared id happens to canonicalize to still wins its own match.
-      matchIdx <- entriesWithId(.silentlyCanonicalized(.canonicalizeId(one)))
-    }
+    matchIdx <- .observedDataIndicesOfId(one, sectionIds)
     if (length(matchIdx) == 0L) {
       missingIds <- c(missingIds, one)
       next
@@ -878,6 +863,34 @@ removeObservedData <- function(project, id) {
     suppressMessages(suppressWarnings(project$getObservedDataNames())),
     error = function(cnd) NULL
   )
+}
+
+# The positions in the section of the source(s) the user means by `id`, or
+# `integer(0)` when it names none. Removing a source finds it here.
+#
+# A lookup, unlike the add-time and save-time checks
+# (`.observedDataIdMatches()`): those guard definition file names, which ignore
+# case on Windows and macOS, while a lookup finds the one source the user names,
+# so it matches the id as stored.
+#
+# An id this section stores is one of two kinds, so the match takes two passes
+# rather than one transform. A derived id is the source's own string (a `file`
+# basename, a `DataSet` name), which only the verbatim pass finds; a declared id
+# is stored the way `addObservedData()` canonicalized it, so the id as the user
+# authored it needs the same transform to reach it. Verbatim first, so a derived
+# id that another entry's declared id happens to canonicalize to still wins its
+# own match.
+#
+# @keywords internal
+# @noRd
+.observedDataIndicesOfId <- function(id, sectionIds) {
+  matchIdx <- which(sectionIds %in% id)
+  if (length(matchIdx) == 0L) {
+    matchIdx <- which(
+      sectionIds %in% .silentlyCanonicalized(.canonicalizeId(id))
+    )
+  }
+  matchIdx
 }
 
 # Which of `sectionIds` name the same definition file as `id`. Ids that differ
