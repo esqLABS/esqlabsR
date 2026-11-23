@@ -2313,6 +2313,8 @@ messages$duplicateSimulationsFolderKey <- function() {
 
 # `keyChange` and `folderChange` are "rename" (only the earlier name is
 # there), "move" (the current name is there too) or `NULL` (nothing to change).
+# `keyChange` is "toFolder" when the earlier key lists sources and the current
+# folder, which is read instead of the key, exists.
 messages$observedDataEarlierLayout <- function(
   container,
   keyChange,
@@ -2327,6 +2329,14 @@ messages$observedDataEarlierLayout <- function(
       rename = c(
         "x" = "The file uses the key {.field observedData}.",
         "i" = "Rename the key to {.field observedDataSources}."
+      ),
+      toFolder = c(
+        "x" = "The file lists sources under the key {.field observedData}, \\
+        but the project's {.file {definitionsFolder}} folder already has the \\
+        subfolder {.file observed-data-sources}, which is read instead.",
+        "i" = "Save each source listed under {.field observedData} as its own \\
+        definition file {.file <id>.json} in {.file observed-data-sources}, \\
+        then delete the key {.field observedData}."
       ),
       move = c(
         "x" = "The file uses both the key {.field observedData} and the key \\

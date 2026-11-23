@@ -2110,6 +2110,24 @@ test_that("loading a project with both the earlier and the current names aborts"
   expect_snapshot(loadProject(path), error = TRUE)
 })
 
+# The current folder is read in place of any source listed in the project file,
+# so renaming the earlier key would leave its sources unread and drop them on
+# the next save. They have to become definition files in the folder instead.
+test_that("loading a project whose earlier key lists sources next to the current folder aborts", {
+  dir <- .copyTestProjectDir()
+  path <- file.path(dir, "Project.json")
+  container <- jsonlite::read_json(path)
+  container[["observedDataSources"]] <- NULL
+  container[[earlierKey]] <- list(list(
+    id = "laskin_po",
+    type = "pkml",
+    file = "Laskin 1982 po.pkml"
+  ))
+  jsonlite::write_json(container, path, auto_unbox = TRUE, null = "null")
+
+  expect_snapshot(loadProject(path), error = TRUE)
+})
+
 test_that("restoring a snapshot with the earlier observed-data key aborts", {
   snapshot <- snapshotProject(
     testProject(),

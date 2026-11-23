@@ -400,6 +400,16 @@
       x The project's 'definitions' folder has both the subfolder 'observed-data' and the subfolder 'observed-data-sources'.
       i Move the definition files from 'observed-data' to 'observed-data-sources', then delete 'observed-data'.
 
+# loading a project whose earlier key lists sources next to the current folder aborts
+
+    Code
+      loadProject(path)
+    Condition
+      Error:
+      ! 'Project.json' was saved by an earlier development version of esqlabsR, which used other names for observed-data sources.
+      x The file lists sources under the key observedData, but the project's 'definitions' folder already has the subfolder 'observed-data-sources', which is read instead.
+      i Save each source listed under observedData as its own definition file '<id>.json' in 'observed-data-sources', then delete the key observedData.
+
 # restoring a snapshot with the earlier observed-data key aborts
 
     Code

@@ -49,7 +49,11 @@ print.ObservedDataSource <- function(x, ...) {
 # stops and names what to change instead. When the current key or folder is
 # there too (the project was saved again under the current names), the earlier
 # one cannot simply be renamed, so the message says to move its content over.
-# `definitionsDir` is `NULL` for a snapshot, which has no folder.
+# The loader reads the current folder in place of the key whenever the folder
+# exists, so sources listed under the earlier key next to that folder have to
+# become definition files in it: a renamed key would be ignored and its
+# sources dropped on the next save. `definitionsDir` is `NULL` for a snapshot,
+# which has no folder.
 #
 # @keywords internal
 # @noRd
@@ -73,18 +77,20 @@ print.ObservedDataSource <- function(x, ...) {
     }
     if (hasCurrent) "move" else "rename"
   }
+  hasCurrentFolder <- !is.null(definitionsDir) &&
+    dir.exists(file.path(definitionsDir, "observed-data-sources"))
+  keyChange <- if (
+    hasCurrentFolder && length(jsonData[["observedData"]]) > 0L
+  ) {
+    "toFolder"
+  } else {
+    change(hasEarlierKey, "observedDataSources" %in% names(jsonData))
+  }
   cli::cli_abort(
     messages$observedDataEarlierLayout(
       container,
-      keyChange = change(
-        hasEarlierKey,
-        "observedDataSources" %in% names(jsonData)
-      ),
-      folderChange = change(
-        hasEarlierFolder,
-        !is.null(definitionsDir) &&
-          dir.exists(file.path(definitionsDir, "observed-data-sources"))
-      ),
+      keyChange = keyChange,
+      folderChange = change(hasEarlierFolder, hasCurrentFolder),
       definitionsFolder = basename(definitionsDir %||% "")
     ),
     call = call
