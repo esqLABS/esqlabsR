@@ -121,7 +121,10 @@ sensitivityTimeProfiles <- function(
 ) {
   # Input validation -------------------------------------
 
-  ospsuite.utils::validateIsOfType(sensitivityCalculation, "SensitivityCalculation")
+  ospsuite.utils::validateIsOfType(
+    sensitivityCalculation,
+    "SensitivityCalculation"
+  )
   if (!is.null(xUnits)) {
     xUnits <- ospsuite.utils::toList(xUnits)
   }
@@ -466,7 +469,12 @@ sensitivityTimeProfiles <- function(
   ospsuite.utils::validateIsOfType(dataSets, "list", nullAllowed = TRUE)
 
   # validate if xUnits are valid unit for time dimension
-  lapply(xUnits, ospsuite.utils::validateEnumValue, ospsuite::ospUnits$Time, TRUE)
+  lapply(
+    xUnits,
+    ospsuite.utils::validateEnumValue,
+    ospsuite::ospUnits$Time,
+    TRUE
+  )
 
   # prepare and validate units to be applied to outputPaths
   xUnits <- .adjustUnits(xUnits, outputPaths)
@@ -610,7 +618,10 @@ sensitivityTimeProfiles <- function(
     return(rep(list(NULL), length(outputPaths)))
   }
   # validate if units are valid in any dimension
-  allowedUnits <- ospsuite.utils::enum(unlist(ospsuite::ospUnits, use.names = FALSE))
+  allowedUnits <- ospsuite.utils::enum(unlist(
+    ospsuite::ospUnits,
+    use.names = FALSE
+  ))
   lapply(units, \(unit) {
     ospsuite.utils::validateEnumValue(unit, allowedUnits, nullAllowed = TRUE)
   })
