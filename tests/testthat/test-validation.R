@@ -760,9 +760,8 @@ test_that(".validateObservedData flags unknown type and missing required fields"
   )
   result <- .validateObservedData(observedData, NULL)
   msgs <- vapply(result$critical_errors, \(e) e$message, character(1))
-  expect_match(msgs, "invalid type 'weird'", all = FALSE)
-  expect_match(msgs, "file", all = FALSE)
-  expect_match(msgs, "type", all = FALSE)
+  # Each message starts a sentence in the validation report with the source.
+  expect_snapshot(msgs)
 })
 
 test_that(".validateObservedData warns on missing files when dataFolder set", {

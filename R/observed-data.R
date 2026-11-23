@@ -145,7 +145,7 @@ print.ObservedDataSource <- function(x, ...) {
 
   for (i in seq_along(observedData)) {
     entry <- observedData[[i]]
-    entryLabel <- paste0("observed-data source ", i)
+    entryLabel <- paste0("Observed-data source ", i)
 
     if (is.null(entry$type)) {
       result$addCriticalError(

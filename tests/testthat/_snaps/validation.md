@@ -6,6 +6,17 @@
       Error in `validateProject()`:
       ! `project` must be a <Project> object; got <character>.
 
+# .validateObservedData flags unknown type and missing required fields
+
+    Code
+      msgs
+    Output
+      [1] "Observed-data source 1 has invalid type 'weird'. Must be one of: \"excel\", \"pkml\", \"script\", or \"programmatic\""
+      [2] "Observed-data source 2 (excel) is missing required field 'file'"                                                      
+      [3] "Observed-data source 2 (excel) is missing required field 'importerConfiguration'"                                     
+      [4] "Observed-data source 2 (excel) is missing required field 'sheets'"                                                    
+      [5] "Observed-data source 3 is missing required field 'type'"                                                              
+
 # .validatePlots warns on plotType-irrelevant fields (non-blocking)
 
     Code
