@@ -664,7 +664,7 @@ test_that(".definitionTreeFilePlan renames a file whose name changes only in cas
   )
 })
 
-test_that(".definitionTreeFilePlan leaves lowercase ids as before", {
+test_that(".definitionTreeFilePlan renames nothing when ids are lowercase", {
   expect_identical(
     .definitionTreeFilePlan(
       existing = c("aciclovir_iv.json", "orphan.json"),

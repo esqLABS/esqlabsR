@@ -2202,7 +2202,7 @@ messages$observedDataIdCaseClash <- function(id, existing) {
   cliBullets(
     "x" = "The observed-data id {.val {id}} differs only in case from the id {.val {existing}} of another source.",
     "i" = "Each source is saved to a definition file named after its id, and file names that differ only in case are the same file on Windows and macOS.",
-    "i" = "Give the source another {.field id}, or a {.cls DataSet} another name."
+    "i" = "Give the source another {.field id}, or a {.cls DataSet} another name. To replace the other source with one of the same kind, pass {.code overwrite = TRUE}."
   )
 }
 

@@ -418,8 +418,7 @@ getObservedDataNames <- function(project) {
 #' filename segment), and you are told when that changes it, unless it is
 #' already the id of a source in the project or equal to the `file` basename.
 #' Left out, the `file` basename serves as both, kept exactly as the source
-#' spells it. Either
-#' way the id is stored in the declaration, so
+#' spells it. Either way the id is stored in the declaration, so
 #' `project$definitions$observedData[[id]]` reads it back and its `id` field
 #' shows it. A declaration read that way can be passed back with
 #' `overwrite = TRUE` and keeps its id. Two ids that differ only in case count

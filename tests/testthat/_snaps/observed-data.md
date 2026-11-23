@@ -252,21 +252,21 @@
       Error in `addObservedData()`:
       x The observed-data id "laskin 1982.pkml" differs only in case from the id "Laskin 1982.pkml" of another source.
       i Each source is saved to a definition file named after its id, and file names that differ only in case are the same file on Windows and macOS.
-      i Give the source another id, or a <DataSet> another name.
+      i Give the source another id, or a <DataSet> another name. To replace the other source with one of the same kind, pass `overwrite = TRUE`.
     Code
       addObservedData(project, ospsuite::DataSet$new(name = "Cohort"))
     Condition
       Error in `addObservedData()`:
       x The observed-data id "Cohort" differs only in case from the id "cohort" of another source.
       i Each source is saved to a definition file named after its id, and file names that differ only in case are the same file on Windows and macOS.
-      i Give the source another id, or a <DataSet> another name.
+      i Give the source another id, or a <DataSet> another name. To replace the other source with one of the same kind, pass `overwrite = TRUE`.
     Code
       addObservedData(project, ospsuite::DataSet$new(name = "cohort b"))
     Condition
       Error in `addObservedData()`:
       x The observed-data id "cohort b" differs only in case from the id "Cohort B" of another source.
       i Each source is saved to a definition file named after its id, and file names that differ only in case are the same file on Windows and macOS.
-      i Give the source another id, or a <DataSet> another name.
+      i Give the source another id, or a <DataSet> another name. To replace the other source with one of the same kind, pass `overwrite = TRUE`.
 
 # print.ObservedDataSource renders the source declaration
 
