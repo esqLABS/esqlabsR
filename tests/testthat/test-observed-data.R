@@ -1361,7 +1361,7 @@ test_that("a definition file that stores no id, or a programmatic name, still lo
     )
   )
 
-  # The next save stores the id in both files, and no `name`.
+  # A save after a change stores the id in both files, and no `name`.
   .markModified(reloaded)
   saveProject(reloaded)
   expect_identical(

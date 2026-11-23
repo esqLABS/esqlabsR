@@ -362,3 +362,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-11-23 16:31: A test covers the save that aborts when a definition file cannot be renamed to its id's new spelling, and the message's plural is fixed. (#1368)
 - 2026-11-23 16:32: The case-clash message of addObservedData() mentions overwrite, and a help paragraph and a test name read cleanly. (#1368)
 - 2026-11-23 16:58: The help pages of addObservedData(), removeObservedData() and Project are regenerated for stored observed-data ids. (#1368)
+- 2026-11-23 17:17: The observed-data docs say that only a file-based source is passed back to keep its id, and that a file without id gets it on a save after a change. (#1368)

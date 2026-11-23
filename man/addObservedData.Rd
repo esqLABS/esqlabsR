@@ -60,10 +60,12 @@ already the id of a source in the project or equal to the \code{file} basename.
 Left out, the \code{file} basename serves as both, kept exactly as the source
 spells it. Either way the id is stored in the declaration, so
 \code{project$definitions$observedData[[id]]} reads it back and its \code{id} field
-shows it. A declaration read that way can be passed back with
-\code{overwrite = TRUE} and keeps its id. Two ids that differ only in case count
-as the same id, since their definition files are one file on Windows and
-macOS; this holds for a \code{DataSet} name too.
+shows it. A file-based declaration (\code{excel}, \code{pkml}, \code{script}) read that way
+can be passed back with \code{overwrite = TRUE} and keeps its id; a \code{DataSet}
+source is replaced by passing the \code{DataSet} itself with \code{overwrite = TRUE}.
+Two ids that differ only in case count as the same id, since their
+definition files are one file on Windows and macOS; this holds for a
+\code{DataSet} name too.
 
 An id is not the name the data is known by: each imported
 \code{\link[ospsuite:DataSet]{ospsuite::DataSet}} carries the name its source gives it (the data-set name

@@ -420,10 +420,12 @@ getObservedDataNames <- function(project) {
 #' Left out, the `file` basename serves as both, kept exactly as the source
 #' spells it. Either way the id is stored in the declaration, so
 #' `project$definitions$observedData[[id]]` reads it back and its `id` field
-#' shows it. A declaration read that way can be passed back with
-#' `overwrite = TRUE` and keeps its id. Two ids that differ only in case count
-#' as the same id, since their definition files are one file on Windows and
-#' macOS; this holds for a `DataSet` name too.
+#' shows it. A file-based declaration (`excel`, `pkml`, `script`) read that way
+#' can be passed back with `overwrite = TRUE` and keeps its id; a `DataSet`
+#' source is replaced by passing the `DataSet` itself with `overwrite = TRUE`.
+#' Two ids that differ only in case count as the same id, since their
+#' definition files are one file on Windows and macOS; this holds for a
+#' `DataSet` name too.
 #'
 #' An id is not the name the data is known by: each imported
 #' [`ospsuite::DataSet`] carries the name its source gives it (the data-set name
