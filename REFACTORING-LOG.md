@@ -395,3 +395,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-11-23 19:33: A project carrying both the earlier and the current observed-data key or folder is told to move its sources over rather than rename, and the key is described as used rather than listing sources. (#1369)
 - 2026-11-23 19:34: restoreProject() checks a snapshot for the earlier observed-data key before creating the target folder, so a refused restore leaves nothing behind. (#1369)
 - 2026-11-23 20:18: A project whose earlier observedData key lists sources next to the current observed-data-sources folder is told to save them as definition files in that folder, since the folder is read instead of the key. (#1369)
+- 2026-11-23 20:18: The restoreProject() help says that a single-file project must list its observed-data sources under observedDataSources and that one using the earlier observedData key is refused. (#1369)

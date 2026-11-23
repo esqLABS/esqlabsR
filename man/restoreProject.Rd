@@ -50,7 +50,10 @@ snapshot.
 Snapshots are usually \code{.esqlabsR} files written by \code{\link[=snapshotProject]{snapshotProject()}},
 but a \code{Project.json} in which all sections are written out in the file
 itself, rather than in a \verb{definitions/} folder (a legacy single-file
-project), is accepted too. A monolithic snapshot written by a
+project), is accepted too. Its observed-data sources must be listed under
+the key \code{observedDataSources}: a file saved by an earlier development
+version that still uses the key \code{observedData} is refused, with a message
+saying what to rename. A monolithic snapshot written by a
 previous esqlabsR version (\code{snapshotProjectConfiguration()}) is also
 accepted and upgraded to the current project format on read, through the
 Excel bridge; observed data is not carried in such a snapshot, so add it

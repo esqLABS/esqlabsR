@@ -111,7 +111,10 @@ snapshotProject <- function(
 #'   Snapshots are usually `.esqlabsR` files written by [snapshotProject()],
 #'   but a `Project.json` in which all sections are written out in the file
 #'   itself, rather than in a `definitions/` folder (a legacy single-file
-#'   project), is accepted too. A monolithic snapshot written by a
+#'   project), is accepted too. Its observed-data sources must be listed under
+#'   the key `observedDataSources`: a file saved by an earlier development
+#'   version that still uses the key `observedData` is refused, with a message
+#'   saying what to rename. A monolithic snapshot written by a
 #'   previous esqlabsR version (`snapshotProjectConfiguration()`) is also
 #'   accepted and upgraded to the current project format on read, through the
 #'   Excel bridge; observed data is not carried in such a snapshot, so add it
