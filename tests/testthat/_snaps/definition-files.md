@@ -159,6 +159,18 @@
       x It must not contain a path separator or be "." / "..", so it cannot escape the observed-data definition directory.
       i Give the declaration an id that is a single safe filename segment, or rename what it takes its id from: a file basename, or the name of a <DataSet>.
 
+# saveProject aborts when a definition file cannot be renamed to its id's new spelling
+
+    Code
+      saveProject(project)
+    Condition
+      Warning in `file.rename()`:
+      cannot rename file '<project>/definitions/observed-data/Laskin 1982.pkml.json' to '<project>/definitions/observed-data/laskin 1982.pkml.json', reason 'Permission denied'
+      Error in `.writeDefinitionTree()`:
+      ! Failed to rename 1 definition file in the 'definitions' folder to the new spelling of its id.
+      x '<project>/definitions/observed-data/Laskin 1982.pkml.json'
+      i Check the file permissions, then save again.
+
 # a full-tree write aborts when a stale file cannot be removed
 
     Code

@@ -760,6 +760,36 @@ test_that("saveProject() reconciles an orphan away (make-disk-look-like-memory)"
   expect_true(file.exists(file.path(scenariosDir, "keptadd.json")))
 })
 
+test_that("saveProject aborts when a definition file cannot be renamed to its id's new spelling", {
+  # Simulate a rename failure by making the definition directory read-only.
+  # This relies on POSIX directory-write permission, which is not portable to
+  # Windows, and root ignores it.
+  skip_on_os("windows")
+  skip_if(
+    Sys.info()[["effective_user"]] == "root",
+    "root ignores directory permissions"
+  )
+
+  project <- testProject()
+  dir <- file.path(project$info$projectDirPath, "definitions", "observed-data")
+  addObservedData(project, list(type = "pkml", file = "Laskin 1982.pkml"))
+  saveProject(project)
+  removeObservedData(project, "Laskin 1982.pkml")
+  addObservedData(project, list(type = "pkml", file = "laskin 1982.pkml"))
+
+  Sys.chmod(dir, mode = "0500")
+  # Restore write permission on exit so the temp tree can be cleaned up even if
+  # the expectation fails.
+  withr::defer(Sys.chmod(dir, mode = "0700"))
+
+  expect_snapshot(
+    error = TRUE,
+    saveProject(project),
+    transform = .redactTmpPath
+  )
+  expect_true(file.exists(file.path(dir, "Laskin 1982.pkml.json")))
+})
+
 test_that("a full-tree write aborts when a stale file cannot be removed", {
   # Simulate a delete failure by making the definition directory read-only, so
   # `file.remove()` on its contents returns FALSE. This relies on POSIX
