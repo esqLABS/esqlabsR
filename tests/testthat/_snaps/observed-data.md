@@ -139,15 +139,15 @@
     Condition
       Error in `.serializeObservedDataSet()`:
       x Two observed-data sources would be saved to the same definition file 'obs.pkml.json'.
-      i Each source is saved to a file named after its id: the id it was given, or else its file basename. Ids that differ only in case are the same file on Windows and macOS.
-      i Give the sources distinct ids, or remove one with `removeObservedData()`.
+      i Each source is saved to a file named after its id: the id it was given, the name of its <DataSet>, or else its file basename. Ids that differ only in case are the same file on Windows and macOS.
+      i Give the sources distinct ids, or remove one with `removeObservedData()`. For a <DataSet>, remove its source by its name, rename the <DataSet>, and add it again with `addObservedData()`.
 
 # saveProject aborts on a programmatic-to-PKML basename collision
 
     Code
       saveProject(project)
     Condition
-      Error in `.persistProgrammaticObservedData()`:
+      Error in `saveProject()`:
       x Saving a programmatic observed-data source would overwrite the data file of another source: 'Collide.pkml'.
       i A programmatic source is written to '<name>.pkml' in the data folder, a file another source already reads or another programmatic source is written to. File names that differ only in case are the same file on Windows and macOS.
       i Before saving, remove the source with `removeObservedData()` by its name, rename the <DataSet>, and add it again with `addObservedData()`.
@@ -157,7 +157,7 @@
     Code
       saveProject(project)
     Condition
-      Error in `.persistProgrammaticObservedData()`:
+      Error in `saveProject()`:
       x Saving a programmatic observed-data source would overwrite the data file of another source: 'Cohort B.pkml'.
       i A programmatic source is written to '<name>.pkml' in the data folder, a file another source already reads or another programmatic source is written to. File names that differ only in case are the same file on Windows and macOS.
       i Before saving, remove the source with `removeObservedData()` by its name, rename the <DataSet>, and add it again with `addObservedData()`.
@@ -167,7 +167,7 @@
     Code
       saveProject(project)
     Condition
-      Error in `.persistProgrammaticObservedData()`:
+      Error in `saveProject()`:
       x Cannot save the programmatic observed-data source "NoFolderSet": dataFolder is not declared in `filePaths`.
       i A programmatic source is written to a PKML file under dataFolder on save. Declare dataFolder, then save again.
 
@@ -179,6 +179,16 @@
       Error in `addObservedData()`:
       ! observedData entry with name "Aciclovir_TimeValuesData.xlsx" already exists.
       i Pass `overwrite = TRUE` to replace it.
+
+# saveProject refuses a DataSet that shares its id with another source before writing it
+
+    Code
+      saveProject(project)
+    Condition
+      Error in `saveProject()`:
+      x Two observed-data sources would be saved to the same definition file 'Cohort B.json'.
+      i Each source is saved to a file named after its id: the id it was given, the name of its <DataSet>, or else its file basename. Ids that differ only in case are the same file on Windows and macOS.
+      i Give the sources distinct ids, or remove one with `removeObservedData()`. For a <DataSet>, remove its source by its name, rename the <DataSet>, and add it again with `addObservedData()`.
 
 # addObservedData rejects a duplicate declared id
 
@@ -215,8 +225,8 @@
     Condition
       Error in `.serializeObservedDataSet()`:
       x Two observed-data sources would be saved to the same definition file 'obs.pkml.json'.
-      i Each source is saved to a file named after its id: the id it was given, or else its file basename. Ids that differ only in case are the same file on Windows and macOS.
-      i Give the sources distinct ids, or remove one with `removeObservedData()`.
+      i Each source is saved to a file named after its id: the id it was given, the name of its <DataSet>, or else its file basename. Ids that differ only in case are the same file on Windows and macOS.
+      i Give the sources distinct ids, or remove one with `removeObservedData()`. For a <DataSet>, remove its source by its name, rename the <DataSet>, and add it again with `addObservedData()`.
 
 # every observed-data source stores its id first and the section is keyed by it
 

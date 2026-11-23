@@ -146,8 +146,8 @@
     Condition
       Error in `.serializeObservedDataSet()`:
       x Two observed-data sources would be saved to the same definition file 'laskin 1982.pkml.json'.
-      i Each source is saved to a file named after its id: the id it was given, or else its file basename. Ids that differ only in case are the same file on Windows and macOS.
-      i Give the sources distinct ids, or remove one with `removeObservedData()`.
+      i Each source is saved to a file named after its id: the id it was given, the name of its <DataSet>, or else its file basename. Ids that differ only in case are the same file on Windows and macOS.
+      i Give the sources distinct ids, or remove one with `removeObservedData()`. For a <DataSet>, remove its source by its name, rename the <DataSet>, and add it again with `addObservedData()`.
 
 # a programmatic observedData id that escapes its directory aborts
 

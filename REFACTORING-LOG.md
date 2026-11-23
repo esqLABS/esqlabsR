@@ -355,3 +355,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-11-23 15:49: A DataSet named like a programmatic observed-data source with no data is refused again without overwrite, instead of being added a second time. (#1368)
 - 2026-11-23 15:50: removeObservedData() drops the session DataSet of every removed source, also one a failed save already rewrote as a PKML source. (#1368)
 - 2026-11-23 15:51: Saving renames a definition file whose id changed only in case instead of deleting it as outdated, which on Windows and macOS deleted the definition just written. (#1368)
+- 2026-11-23 15:54: Saving errors about a programmatic observed-data source name saveProject(), and the shared-definition-file error says how to fix a DataSet. (#1368)

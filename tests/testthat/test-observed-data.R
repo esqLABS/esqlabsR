@@ -945,6 +945,27 @@ test_that("removeObservedData drops the DataSet of a source a failed save alread
   )
 })
 
+test_that("saveProject refuses a DataSet that shares its id with another source before writing it", {
+  # The section is set directly: adding the second source is refused.
+  project <- testProject()
+  cohort <- ospsuite::DataSet$new(name = "Cohort B")
+  cohort$setValues(xValues = c(0, 1), yValues = c(1, 2))
+  suppressMessages(addObservedData(project, cohort))
+  .setSection(
+    project,
+    "observedData",
+    c(
+      .getSection(project, "observedData"),
+      list(list(type = "script", file = "scripts/Cohort B"))
+    )
+  )
+
+  expect_snapshot(saveProject(project), error = TRUE)
+  expect_false(file.exists(
+    file.path(project$paths$dataFolder, "Cohort B.pkml")
+  ))
+})
+
 # removeObservedData write-through ----
 
 test_that("removeObservedData deletes the definition file on save", {

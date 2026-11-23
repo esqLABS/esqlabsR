@@ -2209,8 +2209,8 @@ messages$observedDataIdCaseClash <- function(id, existing) {
 messages$observedDataDefinitionFileCollision <- function(id) {
   cliBullets(
     "x" = "Two observed-data sources would be saved to the same definition file {.file {id}.json}.",
-    "i" = "Each source is saved to a file named after its id: the {.field id} it was given, or else its {.field file} basename. Ids that differ only in case are the same file on Windows and macOS.",
-    "i" = "Give the sources distinct {.field id}s, or remove one with {.fn removeObservedData}."
+    "i" = "Each source is saved to a file named after its id: the {.field id} it was given, the name of its {.cls DataSet}, or else its {.field file} basename. Ids that differ only in case are the same file on Windows and macOS.",
+    "i" = "Give the sources distinct {.field id}s, or remove one with {.fn removeObservedData}. For a {.cls DataSet}, remove its source by its name, rename the {.cls DataSet}, and add it again with {.fn addObservedData}."
   )
 }
 

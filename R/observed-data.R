@@ -1046,7 +1046,8 @@ removeObservedData <- function(project, id) {
 #
 # @keywords internal
 # @noRd
-.persistProgrammaticObservedData <- function(self, private) {
+.persistProgrammaticObservedData <- function(self, private, .call = NULL) {
+  rlang::local_error_call(.call)
   observedData <- private$.getSection("observedData")
   sectionIds <- names(observedData) %||% character()
   # A hand-authored `programmatic` sentinel may carry no id; it has no backing
@@ -1105,7 +1106,7 @@ removeObservedData <- function(project, id) {
   }
   # The serializer's checks, run up front: every id a safe filename segment, and
   # no two entries filed under one id.
-  .serializeObservedDataSet(observedData)
+  .serializeObservedDataSet(observedData, call = .call)
 
   # Materialize the folder (a from-scratch project may declare one that has no
   # directory on disk yet), then write each PKML now that the batch is safe.

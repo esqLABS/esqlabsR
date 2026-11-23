@@ -894,20 +894,24 @@
 }
 
 # observedData: one file per declaration, keyed by its id, which every file
-# stores as its first field.
+# stores as its first field. `call` is the call an abort names: the save, when
+# the save runs these checks before writing any PKML file.
 #
 # @keywords internal
 # @noRd
-.serializeObservedDataSet <- function(observedData) {
+.serializeObservedDataSet <- function(observedData, call = environment()) {
   observedData <- observedData %||% list()
   out <- list()
   for (entry in observedData) {
-    id <- .observedDataEntryId(entry)
-    .validateObservedDataId(id)
+    id <- .observedDataEntryId(entry, call = call)
+    .validateObservedDataId(id, call = call)
     # Two declarations filed under one id would overwrite each other's file (one
     # file on disk, the second declaration lost on reload).
     if (any(.observedDataIdMatches(id, names(out)))) {
-      cli::cli_abort(messages$observedDataDefinitionFileCollision(id))
+      cli::cli_abort(
+        messages$observedDataDefinitionFileCollision(id),
+        call = call
+      )
     }
     out[[id]] <- .observedDataRecordWithId(entry)
   }
