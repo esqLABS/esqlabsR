@@ -346,3 +346,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-11-13 09:19: The agent guide allows base stop() and warning() to re-raise a condition that a handler caught.
 - 2026-11-21 16:02: Adding a DataSet with addObservedData() no longer reads the other observed-data sources or runs their scripts. (#1367)
 - 2026-11-23 14:44: Adding or saving a DataSet no longer overwrites a PKML file another observed-data source reads, and the add-time name check is documented. (#1367)
+- 2026-11-23 14:45: The help page of addObservedData() is regenerated for the add-time name check. (#1367)
