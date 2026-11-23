@@ -268,6 +268,24 @@
       i Each source is saved to a definition file named after its id, and file names that differ only in case are the same file on Windows and macOS.
       i Give the source another id, or a <DataSet> another name. To replace the other source with one of the same kind, pass `overwrite = TRUE`.
 
+# a DataSet overwrite is refused when another source provides its name
+
+    Code
+      addObservedData(project, lower, overwrite = TRUE)
+    Condition
+      Error in `addObservedData()`:
+      x Cannot replace the observed-data source "Cohort B" with the <DataSet> "cohort b": another source already provides a data set of that name or reads its data from 'cohort b.pkml'.
+      i Remove the other source first with `removeObservedData()` by its id, or give the <DataSet> another name.
+
+# a DataSet overwrite is refused when another source reads its PKML file
+
+    Code
+      addObservedData(project, lower, overwrite = TRUE)
+    Condition
+      Error in `addObservedData()`:
+      x Cannot replace the observed-data source "Cohort B" with the <DataSet> "cohort b": another source already provides a data set of that name or reads its data from 'cohort b.pkml'.
+      i Remove the other source first with `removeObservedData()` by its id, or give the <DataSet> another name.
+
 # print.ObservedDataSource renders the source declaration
 
     Code

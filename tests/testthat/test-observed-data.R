@@ -1635,6 +1635,61 @@ test_that("overwriting a file source spelled in another case replaces its data-s
   )
 })
 
+# Replacing a programmatic source spelled in another case must not leave two
+# sources providing the new name, or another source's PKML file overwritten.
+test_that("a DataSet overwrite is refused when another source provides its name", {
+  project <- testProject()
+  state <- .projectSeam(project)
+  upper <- ospsuite::DataSet$new(name = "Cohort B")
+  upper$setValues(xValues = c(0, 1), yValues = c(1, 2))
+  suppressMessages(addObservedData(project, upper))
+  # A PKML source holding a data set named "cohort b", known once loaded.
+  exported <- ospsuite::DataSet$new(name = "cohort b")
+  exported$setValues(xValues = c(0, 1), yValues = c(5, 6))
+  ospsuite::saveDataSetToPKML(
+    exported,
+    file.path(project$paths$dataFolder, "cohort_b_export.pkml")
+  )
+  addObservedData(project, list(type = "pkml", file = "cohort_b_export.pkml"))
+  getObservedDataNames(project)
+  lower <- ospsuite::DataSet$new(name = "cohort b")
+  lower$setValues(xValues = c(0, 1), yValues = c(3, 4))
+
+  expect_snapshot(
+    error = TRUE,
+    addObservedData(project, lower, overwrite = TRUE)
+  )
+  expect_identical(
+    names(project$definitions$observedData),
+    c("Aciclovir_TimeValuesData.xlsx", "Cohort B", "cohort_b_export.pkml")
+  )
+  expect_identical(names(state$.programmaticDataSets), "Cohort B")
+})
+
+test_that("a DataSet overwrite is refused when another source reads its PKML file", {
+  project <- testProject()
+  state <- .projectSeam(project)
+  upper <- ospsuite::DataSet$new(name = "Cohort B")
+  upper$setValues(xValues = c(0, 1), yValues = c(1, 2))
+  suppressMessages(addObservedData(project, upper))
+  addObservedData(
+    project,
+    list(id = "cohort_b_lab", type = "pkml", file = "cohort b.pkml")
+  )
+  lower <- ospsuite::DataSet$new(name = "cohort b")
+  lower$setValues(xValues = c(0, 1), yValues = c(3, 4))
+
+  expect_snapshot(
+    error = TRUE,
+    addObservedData(project, lower, overwrite = TRUE)
+  )
+  expect_identical(
+    names(project$definitions$observedData),
+    c("Aciclovir_TimeValuesData.xlsx", "Cohort B", "cohort_b_lab")
+  )
+  expect_identical(names(state$.programmaticDataSets), "Cohort B")
+})
+
 # Print method ----
 
 test_that("print.ObservedDataSource renders the source declaration", {

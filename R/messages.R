@@ -2198,6 +2198,13 @@ messages$observedDataPersistNoDataFolder <- function(name) {
   )
 }
 
+messages$observedDataProgrammaticOverwriteClash <- function(name, replaced) {
+  cliBullets(
+    "x" = "Cannot replace the observed-data source {.val {replaced}} with the {.cls DataSet} {.val {name}}: another source already provides a data set of that name or reads its data from {.file {paste0(name, '.pkml')}}.",
+    "i" = "Remove the other source first with {.fn removeObservedData} by its id, or give the {.cls DataSet} another name."
+  )
+}
+
 messages$observedDataIdCaseClash <- function(id, existing) {
   cliBullets(
     "x" = "The observed-data id {.val {id}} differs only in case from the id {.val {existing}} of another source.",

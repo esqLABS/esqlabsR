@@ -552,8 +552,26 @@ addObservedData <- function(project, entry, overwrite = FALSE) {
     }
     replacedId <- character(0)
     if (length(replaceIdx) > 0L) {
-      # The replaced source may spell its id in another case; its DataSet goes.
+      # The replaced source may spell its id in another case, so the checks
+      # above may have matched only it. Check the name again against what the
+      # other sources are known to provide: the names known without reading a
+      # source (less the replaced source's own, its id), their ids, and the
+      # files they read. This is best effort like the checks above: a name
+      # inside a source not read yet is reported by the next load.
       replacedId <- sectionIds[[replaceIdx[[1]]]]
+      others <- seq_along(sectionIds) != replaceIdx[[1]]
+      clashesWithOthers <- any(
+        name %in% setdiff(existingNames, replacedId),
+        sameId & others,
+        savedFile %in% sourceFiles[others]
+      )
+      if (clashesWithOthers) {
+        cli::cli_abort(messages$observedDataProgrammaticOverwriteClash(
+          name,
+          replacedId
+        ))
+      }
+      # The replaced source's DataSet goes.
       private$.programmaticDataSets[[replacedId]] <- NULL
       observedData[[replaceIdx[[1]]]] <- sentinel
     } else if (overwrite && clashes) {
