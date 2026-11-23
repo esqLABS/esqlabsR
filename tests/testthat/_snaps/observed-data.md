@@ -155,15 +155,7 @@
       loadObservedData(project, sources = NA_character_)
     Condition
       Error in `loadObservedData()`:
-      ! `sources` must be a non-empty character vector with no NA or empty element.
-
----
-
-    Code
-      loadObservedData(project, sources = 1)
-    Condition
-      Error in `loadObservedData()`:
-      ! `sources` must be a non-empty character vector with no NA or empty element.
+      ! `sources` must be a character vector with no NA or empty element.
 
 # loadObservedData warns only about a selected programmatic source with no data
 

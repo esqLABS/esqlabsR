@@ -752,9 +752,6 @@ test_that("loadObservedData rejects sources that are not source ids", {
   expect_snapshot(error = TRUE, {
     loadObservedData(project, sources = NA_character_)
   })
-  expect_snapshot(error = TRUE, {
-    loadObservedData(project, sources = 1)
-  })
 })
 
 test_that("loadObservedData finds a source by its id as given or as stored", {

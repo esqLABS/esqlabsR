@@ -367,3 +367,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-11-23 17:39: removeObservedData() finds a source through a shared lookup that loading will also use. (#1370)
 - 2026-11-23 17:39: loadObservedData() takes a sources argument that loads only the observed-data sources with those ids. (#1370)
 - 2026-11-23 17:39: The observed-data vignette and NEWS describe loading only some observed-data sources. (#1370)
+- 2026-11-23 17:58: An invalid sources argument of loadObservedData() no longer says the ids must be non-empty, since selecting none is allowed. (#1370)

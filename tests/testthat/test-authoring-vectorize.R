@@ -9,6 +9,16 @@ test_that(".assertIdVector rejects empty, NA, or non-character ids", {
   expect_snapshot(error = TRUE, .assertIdVector(1:3))
 })
 
+test_that(".assertIdVector with allowEmpty accepts no ids but still rejects NA", {
+  expect_identical(
+    .assertIdVector(character(0), allowEmpty = TRUE),
+    character(0)
+  )
+  expect_snapshot(error = TRUE, {
+    .assertIdVector(c("a", NA), arg = "sources", allowEmpty = TRUE)
+  })
+})
+
 test_that(".recycleField recycles a length-1 value to all N", {
   expect_identical(
     .recycleField("x", 3L, "f"),

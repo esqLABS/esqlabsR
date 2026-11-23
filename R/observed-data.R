@@ -264,10 +264,7 @@ loadObservedData <- function(project, sources = NULL) {
 .loadObservedData_impl <- function(self, private, sources = NULL, .call) {
   rlang::local_error_call(.call)
   if (!is.null(sources)) {
-    if (is.character(sources) && length(sources) == 0L) {
-      return(list())
-    }
-    .assertIdVector(sources, arg = "sources")
+    .assertIdVector(sources, arg = "sources", allowEmpty = TRUE)
   }
   observedData <- private$.getSection("observedData") %||% list()
   sectionIds <- names(observedData) %||% character()
