@@ -43,9 +43,9 @@ project$definitions$observedData[["Aciclovir_TimeValuesData.xlsx"]]
 
 ## Choose the name a source is known by
 
-Two strings attach to every source, and they are not interchangeable. The **source id** is what `removeObservedData()` matches and what names the definition file. The **DataSet name** is what a DataCombined references and what `getObservedDataNames()` lists; it comes from the data itself, so an Excel sheet becomes a long, fully qualified name. `vignette("about-the-plotting-model")` explains why one string cannot serve both roles.
+Two strings attach to every source, and they are not interchangeable. The **source id** is what `loadObservedData()` and `removeObservedData()` match and what names the definition file. The **DataSet name** is what a DataCombined references and what `getObservedDataNames()` lists; it comes from the data itself, so an Excel sheet becomes a long, fully qualified name. `vignette("about-the-plotting-model")` explains why one string cannot serve both roles.
 
-The working rule: **read the DataSet name from `getObservedDataNames()` rather than typing it**, and use the source id to read or remove a source.
+The working rule: **read the DataSet name from `getObservedDataNames()` rather than typing it**, and use the source id to read, load or remove a source.
 
 Every source carries its id in its `id` field, and `project$definitions$observedData` is keyed by it. Set an `id` when you want to choose that name yourself instead of inheriting it from the file. Since the id also names the definition file, the declaration below is stored as `definitions/observed-data/laskin_iv.json` rather than under the data file's name:
 
@@ -82,7 +82,7 @@ addDataCombined(
 
 ## Loading observed data
 
-`loadObservedData()` resolves every declared source into a named list of `DataSet` objects, keyed by DataSet name. `createDataCombined()` (and therefore `createPlots()`) calls it internally to evaluate the observed side of a figure, so you rarely call it yourself.
+By default, `loadObservedData()` resolves every declared source into a named list of `DataSet` objects, keyed by DataSet name (to load only some sources, see [Load only some sources](#load-only-some-sources) below). `createDataCombined()` (and therefore `createPlots()`) calls it internally to evaluate the observed side of a figure, so you rarely call it yourself.
 
 ```{r}
 observed <- loadObservedData(project)
@@ -90,13 +90,6 @@ names(observed)
 ```
 
 `getObservedDataNames()` returns the same names without reloading (it caches after the first load), which is how you discover what a project knows before referencing it in a DataCombined.
-
-To load only some sources, pass their ids to `sources`. Only those sources are read, so a source you leave out cannot stop the load, for example because its file is missing or because its data set has the same name as one from another source, and a `script` source you leave out does not run. An id that names no source stops the load with a list of the source ids the project has. `getObservedDataNames()` still lists the data sets of every source.
-
-```{r}
-observed <- loadObservedData(project, sources = "Aciclovir_TimeValuesData.xlsx")
-names(observed)
-```
 
 ## Source type 1: Excel
 
@@ -179,6 +172,20 @@ addObservedData(project, scratch)
 The source id is the DataSet name, `Scratch measurement`. Until you save, that `DataSet` lives only in your R session and its entry is `{id: "Scratch measurement", type: "programmatic"}`. On `saveProject()` the package writes the `DataSet` to a PKML file named after it (`Scratch measurement.pkml`) under the data folder and rewrites the entry to a `pkml` source reading that file. From then on it is an ordinary file-backed source that survives a reload, and it keeps its id: you remove it by the DataSet name before and after saving.
 
 Because saving turns a `programmatic` source into a `pkml` file, the data folder must be declared before you save; a project with no data folder cannot write the PKML and stops with a clear message. A `programmatic` sentinel that reaches a fresh session without its `DataSet` (a declaration written by hand, or a project opened before it was ever saved) resolves to nothing, and the load warns you by name so it never vanishes silently.
+
+## Load only some sources
+
+To load only some sources, pass their ids to `sources`. Only those sources are read, so a source you leave out cannot stop the load, for example because its file is missing or because its data set has the same name as one from another source, and a `script` source you leave out does not run. An id that names no source stops the load with a list of the source ids the project has. `getObservedDataNames()` still lists the data sets of every source.
+
+The project now declares four sources. This loads two of them; the script source `literature_curve.R` does not run:
+
+```{r}
+observed <- loadObservedData(
+  project,
+  sources = c("extra_cohort.pkml", "Scratch measurement")
+)
+names(observed)
+```
 
 ## Remove a source
 

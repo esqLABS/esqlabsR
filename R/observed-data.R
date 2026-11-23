@@ -220,14 +220,12 @@ print.ObservedDataSource <- function(x, ...) {
 #'
 #' @param project A `Project` object (see [loadProject()]).
 #' @param sources Character vector of the ids of the observed-data sources to
-#'   load, or `NULL` (default) to load every source of the project. Only the
-#'   sources you name are read: a `script` source you leave out does not run,
-#'   and a source you leave out cannot stop the load with a missing file or a
-#'   data-set name another source also uses. Each id is matched the way
-#'   [removeObservedData()] matches it, so the id as you gave it to
-#'   [addObservedData()] and the id the project stores both work. An id that
-#'   names no source of the project is an error that lists the ids there are.
-#'   `character(0)` loads nothing and returns an empty list.
+#'   load, or `NULL` (default) to load every source. Only the sources you name
+#'   are read, so a source you leave out cannot stop the load with a missing
+#'   file or a data-set name another source also uses (and see the Security
+#'   section). An id is matched as in [removeObservedData()]. An id that names
+#'   no source is an error listing the project's source ids. `character(0)`
+#'   returns an empty list.
 #' @returns A named list of [`ospsuite::DataSet`] objects: those of the
 #'   `excel`, `pkml` and `script` sources in the order the project declares
 #'   them, followed by the `DataSet`s added in this session with
@@ -403,8 +401,8 @@ loadObservedData <- function(project, sources = NULL) {
 
 #' Get names of all observed data in a Project
 #'
-#' Returns the names of all DataSets that would be returned by
-#' [loadObservedData()]. On first call this loads the data to discover
+#' Returns the names of all DataSets that `loadObservedData(project)` would
+#' return, for every source of the project. On first call this loads the data to discover
 #' names; subsequent calls return cached names until a mutation
 #' invalidates the cache.
 #'
