@@ -219,8 +219,18 @@ print.ObservedDataSource <- function(x, ...) {
 #' nothing, and the load warns you by name.
 #'
 #' @param project A `Project` object (see [loadProject()]).
-#' @returns A named list of [`ospsuite::DataSet`] objects. Empty list when
-#'   `observedData` definitions is empty or `NULL`.
+#' @param sources Character vector of the ids of the observed-data sources to
+#'   load, or `NULL` (default) to load every source of the project. Only the
+#'   sources you name are read: a `script` source you leave out does not run,
+#'   and a source you leave out cannot stop the load with a missing file or a
+#'   data-set name another source also uses. Each id is matched the way
+#'   [removeObservedData()] matches it, so the id as you gave it to
+#'   [addObservedData()] and the id the project stores both work. An id that
+#'   names no source of the project is an error that lists the ids there are.
+#'   `character(0)` loads nothing and returns an empty list.
+#' @returns A named list of [`ospsuite::DataSet`] objects, in the order the
+#'   project declares their sources. Empty list when `observedData` definitions
+#'   is empty or `NULL`.
 #'
 #' @section Security:
 #'   A `script` observed-data source runs the R file it names, with
@@ -229,16 +239,20 @@ print.ObservedDataSource <- function(x, ...) {
 #'   script someone sends you: only load and resolve observed data from a
 #'   project you trust. This applies to `loadObservedData()` and to anything
 #'   that resolves observed data for you, such as [createDataCombined()].
+#'   `loadObservedData(project, sources = )` runs only the `script` sources
+#'   you select.
 #'
 #' @examples
 #' \dontrun{
 #' project <- loadProject("path/to/Project.json")
 #' dataSets <- loadObservedData(project)
+#' # Only the data of one source
+#' dataSets <- loadObservedData(project, sources = "Aciclovir_TimeValuesData.xlsx")
 #' }
 #' @export
-loadObservedData <- function(project) {
+loadObservedData <- function(project, sources = NULL) {
   ospsuite.utils::validateIsOfType(project, "Project")
-  project$loadObservedData()
+  project$loadObservedData(sources)
 }
 
 # Implementation behind `project$loadObservedData()` / `loadObservedData()`.
@@ -247,17 +261,40 @@ loadObservedData <- function(project) {
 #
 # @keywords internal
 # @noRd
-.loadObservedData_impl <- function(self, private, .call) {
+.loadObservedData_impl <- function(self, private, sources = NULL, .call) {
   rlang::local_error_call(.call)
-  if (
-    is.null(self$definitions$observedData) ||
-      length(self$definitions$observedData) == 0
-  ) {
+  if (!is.null(sources)) {
+    if (is.character(sources) && length(sources) == 0L) {
+      return(list())
+    }
+    .assertIdVector(sources, arg = "sources")
+  }
+  observedData <- private$.getSection("observedData") %||% list()
+  sectionIds <- names(observedData) %||% character()
+  selected <- seq_along(observedData)
+  programmaticDataSets <- private$.programmaticDataSets
+  if (!is.null(sources)) {
+    matched <- lapply(
+      sources,
+      .observedDataIndicesOfId,
+      sectionIds = sectionIds
+    )
+    unknown <- unique(sources[lengths(matched) == 0L])
+    if (length(unknown) > 0L) {
+      cli::cli_abort(messages$observedDataUnknownSources(unknown, sectionIds))
+    }
+    selected <- sort(unique(unlist(matched)))
+    programmaticDataSets <- programmaticDataSets[intersect(
+      names(programmaticDataSets),
+      sectionIds[selected]
+    )]
+  }
+  if (length(selected) == 0L) {
     return(list())
   }
   allDataSets <- list()
-  for (i in seq_along(self$definitions$observedData)) {
-    entry <- self$definitions$observedData[[i]]
+  for (i in selected) {
+    entry <- observedData[[i]]
     .validateObservedDataEntry(entry, i)
     dataSets <- switch(
       entry$type,
@@ -274,18 +311,15 @@ loadObservedData <- function(project) {
       allDataSets <- .mergeObservedDataSets(allDataSets, dataSets)
     }
   }
-  # Merge runtime programmatic store, then cache names.
-  allDataSets <- .mergeObservedDataSets(
-    allDataSets,
-    private$.programmaticDataSets
-  )
+  # Merge the DataSets this session added.
+  allDataSets <- .mergeObservedDataSets(allDataSets, programmaticDataSets)
   # A `programmatic` sentinel resolves to nothing unless this session added its
   # DataSet: the data lives only in the runtime store, so a sentinel read from
   # disk (a reload, or a project opened elsewhere) has no backing DataSet and
   # would silently vanish from the result. Warn by name so the drop is loud
   # instead of surfacing later as an obscure dangling DataCombined reference.
   unresolved <- .unresolvedProgrammaticNames(
-    self$definitions$observedData,
+    observedData[selected],
     names(allDataSets)
   )
   if (length(unresolved) > 0) {
@@ -301,7 +335,10 @@ loadObservedData <- function(project) {
       )
     )
   }
-  private$.observedDataNamesCache <- names(allDataSets)
+  # The names of a subset are not the project's names.
+  if (is.null(sources)) {
+    private$.observedDataNamesCache <- names(allDataSets)
+  }
   allDataSets
 }
 
@@ -866,7 +903,8 @@ removeObservedData <- function(project, id) {
 }
 
 # The positions in the section of the source(s) the user means by `id`, or
-# `integer(0)` when it names none. Removing a source finds it here.
+# `integer(0)` when it names none. Removing and loading a source both find it
+# here.
 #
 # A lookup, unlike the add-time and save-time checks
 # (`.observedDataIdMatches()`): those guard definition file names, which ignore

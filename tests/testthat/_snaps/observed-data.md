@@ -132,6 +132,50 @@
       x Duplicate observed-data set name across sources: "Digitized plasma".
       i Each loaded <DataSet> must have a unique name; rename the source or the data set.
 
+# loadObservedData aborts on an unknown source id, listing the ids
+
+    Code
+      loadObservedData(project, sources = c("Aciclovir_TimeValuesData.xlsx",
+        "laskin_po.pkml"))
+    Condition
+      Error in `loadObservedData()`:
+      ! Unknown `sources`: "laskin_po.pkml". Available: "Aciclovir_TimeValuesData.xlsx", "digitized_plasma.R", "cohort_b_export.pkml", and "Digitized plasma".
+
+---
+
+    Code
+      emptyProject$loadObservedData(sources = "laskin_po.pkml")
+    Condition
+      Error:
+      ! Unknown `sources`: "laskin_po.pkml". The project has no observed-data sources.
+
+# loadObservedData rejects sources that are not source ids
+
+    Code
+      loadObservedData(project, sources = NA_character_)
+    Condition
+      Error in `loadObservedData()`:
+      ! `sources` must be a non-empty character vector with no NA or empty element.
+
+---
+
+    Code
+      loadObservedData(project, sources = 1)
+    Condition
+      Error in `loadObservedData()`:
+      ! `sources` must be a non-empty character vector with no NA or empty element.
+
+# loadObservedData warns only about a selected programmatic source with no data
+
+    Code
+      result <- loadObservedData(project, sources = "Lost cohort")
+    Condition
+      Warning:
+      ! 1 programmatic observed-data source resolved to no data: "Lost cohort".
+      i A programmatic source holds its <DataSet> only in the session that added it; it is not saved to disk.
+      i Re-add it with `addObservedData()` in this session, or declare it as a `script` or `pkml` source to persist across a reload.
+      This warning is displayed once per session.
+
 # observedData declarations sharing a basename fail saveProject()
 
     Code

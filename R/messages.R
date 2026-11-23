@@ -2295,6 +2295,17 @@ messages$duplicateSimulationsFolderKey <- function() {
   )
 }
 
+messages$observedDataUnknownSources <- function(unknown, available) {
+  if (length(available) == 0L) {
+    return(cliBullets(
+      "Unknown {.arg sources}: {.val {unknown}}. The project has no observed-data sources."
+    ))
+  }
+  cliBullets(
+    "Unknown {.arg sources}: {.val {unknown}}. Available: {.val {cli::cli_vec(available, list('vec-trunc' = Inf))}}."
+  )
+}
+
 messages$observedDataNameCollision <- function(duplicates) {
   cliBullets(
     "x" = "Duplicate observed-data set name{?s} across sources: {.val {duplicates}}.",
