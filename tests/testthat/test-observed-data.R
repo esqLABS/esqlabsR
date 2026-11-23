@@ -1568,6 +1568,73 @@ test_that("addObservedData refuses an id that differs from another only in case"
   )
 })
 
+# Replacing a source whose id is spelled in another case drops the replaced
+# source's data-set name from the names the project knows, not only its entry.
+test_that("overwriting a DataSet source spelled in another case replaces its data-set name", {
+  project <- testProject()
+  dir <- file.path(project$info$projectDirPath, "definitions", "observed-data")
+  state <- .projectSeam(project)
+  upper <- ospsuite::DataSet$new(name = "Cohort B")
+  upper$setValues(xValues = c(0, 1), yValues = c(1, 2))
+  lower <- ospsuite::DataSet$new(name = "cohort b")
+  lower$setValues(xValues = c(0, 1), yValues = c(3, 4))
+  suppressMessages(addObservedData(project, upper))
+  getObservedDataNames(project)
+
+  suppressMessages(addObservedData(project, lower, overwrite = TRUE))
+
+  expect_identical(
+    names(project$definitions$observedData),
+    c("Aciclovir_TimeValuesData.xlsx", "cohort b")
+  )
+  expect_identical(names(state$.programmaticDataSets), "cohort b")
+  expect_identical(
+    getObservedDataNames(project),
+    c(testObservedDataId, "cohort b")
+  )
+  saveProject(project)
+  expect_identical(
+    sort(list.files(dir)),
+    c("Aciclovir_TimeValuesData.xlsx.json", "cohort b.json")
+  )
+})
+
+test_that("overwriting a file source spelled in another case replaces its data-set name", {
+  project <- testProject()
+  dir <- file.path(project$info$projectDirPath, "definitions", "observed-data")
+  dataFolder <- project$paths$dataFolder
+  for (name in c("Cohort", "COHORT")) {
+    ds <- ospsuite::DataSet$new(name = name)
+    ds$setValues(xValues = c(0, 1), yValues = c(1, 2))
+    ospsuite::saveDataSetToPKML(
+      ds,
+      file.path(dataFolder, paste0(name, ".pkml"))
+    )
+  }
+  addObservedData(project, list(type = "pkml", file = "Cohort.pkml"))
+  getObservedDataNames(project)
+
+  addObservedData(
+    project,
+    list(id = "COHORT.pkml", type = "pkml", file = "COHORT.pkml"),
+    overwrite = TRUE
+  )
+
+  expect_identical(
+    names(project$definitions$observedData),
+    c("Aciclovir_TimeValuesData.xlsx", "COHORT.pkml")
+  )
+  expect_identical(
+    getObservedDataNames(project),
+    c(testObservedDataId, "COHORT")
+  )
+  saveProject(project)
+  expect_identical(
+    sort(list.files(dir)),
+    c("Aciclovir_TimeValuesData.xlsx.json", "COHORT.pkml.json")
+  )
+})
+
 # Print method ----
 
 test_that("print.ObservedDataSource renders the source declaration", {

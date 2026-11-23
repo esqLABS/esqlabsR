@@ -549,9 +549,11 @@ addObservedData <- function(project, entry, overwrite = FALSE) {
     } else {
       integer()
     }
+    replacedId <- character(0)
     if (length(replaceIdx) > 0L) {
       # The replaced source may spell its id in another case; its DataSet goes.
-      private$.programmaticDataSets[[sectionIds[[replaceIdx[[1]]]]]] <- NULL
+      replacedId <- sectionIds[[replaceIdx[[1]]]]
+      private$.programmaticDataSets[[replacedId]] <- NULL
       observedData[[replaceIdx[[1]]]] <- sentinel
     } else if (overwrite && clashes) {
       # The name collides with a file-based (pkml/excel/script) source, not a
@@ -573,11 +575,15 @@ addObservedData <- function(project, entry, overwrite = FALSE) {
     private$.setSection("observedData", observedData)
     private$.programmaticDataSets[[name]] <- entry
     # The observedData setter resets the names cache, so restore it after the
-    # write when it was filled. On an overwrite the name is already in it, so
-    # union rather than append to keep the cache free of duplicates. An unfilled
-    # cache stays unfilled: the next lookup reads every source.
+    # write when it was filled. A replaced programmatic source resolved to its
+    # id, which may be spelled in another case than `name`, so that name leaves
+    # the cache; `union()` keeps `name` once when the spelling is the same. An
+    # unfilled cache stays unfilled: the next lookup reads every source.
     if (!is.null(namesCache)) {
-      private$.observedDataNamesCache <- union(namesCache, name)
+      private$.observedDataNamesCache <- union(
+        setdiff(namesCache, replacedId),
+        name
+      )
     }
     cli::cli_inform(messages$observedDataProgrammaticAdded(
       name,
@@ -645,6 +651,9 @@ addObservedData <- function(project, entry, overwrite = FALSE) {
         "i" = "Pass {.code overwrite = TRUE} to replace it."
       ))
     }
+    # The data-set names inside a config source are known only by reading it, so
+    # neither the names it adds nor those of a source it replaces can be patched
+    # into the cache: leave it unset, and the next lookup reads every source.
     private$.observedDataNamesCache <- NULL
     observedData <- private$.getSection("observedData")
     # On overwrite, replace the existing entry carrying this id in place;

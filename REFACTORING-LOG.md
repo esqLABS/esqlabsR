@@ -358,3 +358,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-11-23 15:54: Saving errors about a programmatic observed-data source name saveProject(), and the shared-definition-file error says how to fix a DataSet. (#1368)
 - 2026-11-23 15:54: The observed-data id tests are merged where two tests covered the same behavior. (#1368)
 - 2026-11-23 15:55: Observed-data docs and messages drop developer wording and state that the source id is also the key a source is read by. (#1368)
+- 2026-11-23 16:30: Overwriting a DataSet source spelled in another case removes the old data-set name from the names the project lists. (#1368)
