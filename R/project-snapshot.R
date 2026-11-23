@@ -182,11 +182,15 @@ restoreProject <- function(
   # warn about stale handles below (an unrelated non-empty dir has no live
   # `Project` bound to it to go stale).
   replacedExistingTree <- isProjectInitialized(dir)
+
+  # Read and check the snapshot before creating `dir`, so a snapshot the
+  # restore refuses leaves nothing behind.
+  jsonData <- jsonlite::fromJSON(snapshot, simplifyVector = FALSE)
+  .abortOnEarlierObservedDataLayout(jsonData, fs::path_file(snapshot))
+
   if (!dir.exists(dir)) {
     dir.create(dir, recursive = TRUE, showWarnings = FALSE)
   }
-
-  jsonData <- jsonlite::fromJSON(snapshot, simplifyVector = FALSE)
 
   # A previous-version monolithic snapshot (Excel workbooks dumped to one JSON by
   # an older `snapshotProjectConfiguration()`) is not a v6 `Project.json`; upgrade
@@ -201,8 +205,6 @@ restoreProject <- function(
       name = name
     ))
   }
-
-  .abortOnEarlierObservedDataLayout(jsonData, fs::path_file(snapshot))
 
   # A legacy or hand-authored snapshot may carry non-canonical ids (e.g.
   # `Sim_A`, `Aciclovir_PVB`), but the definition tree keys files by canonical id,

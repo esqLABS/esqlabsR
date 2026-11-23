@@ -393,3 +393,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-11-23 19:31: validateProject() messages about an observed-data source start with a capital letter. (#1369)
 - 2026-11-23 19:31: A test comment about the earlier observed-data names says why they are held in variables without recounting the rename. (#1369)
 - 2026-11-23 19:33: A project carrying both the earlier and the current observed-data key or folder is told to move its sources over rather than rename, and the key is described as used rather than listing sources. (#1369)
+- 2026-11-23 19:34: restoreProject() checks a snapshot for the earlier observed-data key before creating the target folder, so a refused restore leaves nothing behind. (#1369)

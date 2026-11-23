@@ -2119,8 +2119,8 @@ test_that("restoring a snapshot with the earlier observed-data key aborts", {
   json <- jsonlite::read_json(snapshot)
   names(json)[names(json) == "observedDataSources"] <- earlierKey
   jsonlite::write_json(json, snapshot, auto_unbox = TRUE, null = "null")
-  dir <- withr::local_tempdir()
+  dir <- file.path(withr::local_tempdir(), "restored")
 
   expect_snapshot(restoreProject(snapshot, dir), error = TRUE)
-  expect_length(list.files(dir), 0L)
+  expect_false(dir.exists(dir))
 })
