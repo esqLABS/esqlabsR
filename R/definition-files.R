@@ -1001,7 +1001,7 @@
     cli::cli_abort(c(
       "An observed-data source definition file has an unusable {.field id}.",
       "x" = "{.field id} must be a single non-empty string (it names the \\
-      declaration and its file).",
+      source and its file).",
       "i" = "Check {.file {file}}."
     ))
   }
@@ -1011,9 +1011,9 @@
     cli::cli_abort(c(
       "An observed-data source definition file has an id that disagrees with its \\
       filename.",
-      "x" = "The declaration's id is {.val {id}} but the file is \\
+      "x" = "The source's id is {.val {id}} but the file is \\
       {.val {stem}}.json.",
-      "i" = "The filename stem is the declaration's id; rename the file, or \\
+      "i" = "The filename stem is the source's id; rename the file, or \\
       the {.field id} it declares (or the {.field file} it derives one from), \\
       so they match. Check {.file {file}}."
     ))
@@ -1112,7 +1112,7 @@
         "Observed-data source id {.val {id}} is not a single safe filename segment.",
         "x" = "It must not contain a path separator or be {.val .} / {.val ..}, \\
         so it cannot escape the observed-data definition directory.",
-        "i" = "Give the declaration an {.field id} that is a single safe \\
+        "i" = "Give the source an {.field id} that is a single safe \\
         filename segment, or rename what it takes its id from: a {.field file} \\
         basename, or the name of a {.cls DataSet}."
       ),

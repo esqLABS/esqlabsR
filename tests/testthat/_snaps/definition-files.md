@@ -106,8 +106,8 @@
     Condition
       Error in `.assertObservedDataTreeRecordId()`:
       ! An observed-data source definition file has an id that disagrees with its filename.
-      x The declaration's id is "elsewhere" but the file is "mismatch".json.
-      i The filename stem is the declaration's id; rename the file, or the id it declares (or the file it derives one from), so they match. Check '<project>/definitions/observed-data-sources/mismatch.json'.
+      x The source's id is "elsewhere" but the file is "mismatch".json.
+      i The filename stem is the source's id; rename the file, or the id it declares (or the file it derives one from), so they match. Check '<project>/definitions/observed-data-sources/mismatch.json'.
 
 # an observed-data source file whose id is not a string aborts
 
@@ -116,7 +116,7 @@
     Condition
       Error in `.assertObservedDataTreeRecordId()`:
       ! An observed-data source definition file has an unusable id.
-      x id must be a single non-empty string (it names the declaration and its file).
+      x id must be a single non-empty string (it names the source and its file).
       i Check '<project>/definitions/observed-data-sources/obs.pkml.json'.
 
 # a non-scalar scalar field fails load naming the scenario and field
@@ -157,7 +157,7 @@
       Error in `.serializeObservedDataSet()`:
       ! Observed-data source id "../escape" is not a single safe filename segment.
       x It must not contain a path separator or be "." / "..", so it cannot escape the observed-data definition directory.
-      i Give the declaration an id that is a single safe filename segment, or rename what it takes its id from: a file basename, or the name of a <DataSet>.
+      i Give the source an id that is a single safe filename segment, or rename what it takes its id from: a file basename, or the name of a <DataSet>.
 
 # saveProject aborts when a definition file cannot be renamed to its id's new spelling
 

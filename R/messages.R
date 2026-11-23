@@ -915,7 +915,7 @@ messages$exportUndeclaredObservedData <- function(ids) {
   list(
     bullets = c(
       "!" = "{cli::qty(n)}The Excel project configuration can name a single \\
-      experimental-data workbook, so {n} observed-data declaration{?s} \\
+      experimental-data workbook, so {n} observed-data source{?s} \\
       {?was/were} not written: {.val {ids}}.",
       "i" = "{cli::qty(n)}Anything that reads {?it/them} resolves only in the \\
       JSON project, not in a project re-imported from these workbooks."
