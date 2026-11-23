@@ -435,12 +435,8 @@ getObservedDataNames <- function(project) {
 #' Add observed data to a Project
 #'
 #' @description
-#' Adds one observed-data declaration. `entry` is either an
-#' [`ospsuite::DataSet`] object (which becomes a `type = "programmatic"`
-#' declaration whose id is `dataSet$name`) or a list describing where the data
-#' is read from.
-#'
-#' Such a list always carries a `type`, plus the fields that type needs:
+#' Adds one observed-data source. `entry` is either an [`ospsuite::DataSet`]
+#' built in the session, or a list naming the file the data is read from:
 #'
 #' | `type` | required fields | optional fields |
 #' | --- | --- | --- |
@@ -448,71 +444,41 @@ getObservedDataNames <- function(project) {
 #' | `"pkml"` | `file` | `id` |
 #' | `"script"` | `file` | `id` |
 #'
-#' `file` and `importerConfiguration` are paths *relative to the project's data
-#' folder* (`project$paths$dataFolder`). A file sitting directly in that folder
-#' is `"observed.xlsx"`, not `"Data/observed.xlsx"`; one in a subfolder of it is
-#' `"subfolder/observed.xlsx"`. `sheets` lists the Excel sheet names to import.
-#' A `script` source runs the R file it names (see the Security section of
-#' [loadObservedData()]).
+#' Paths are relative to the project's data folder: `"observed.xlsx"`, not
+#' `"Data/observed.xlsx"`. A `script` source runs the R file it names (see the
+#' Security section of [loadObservedData()]).
 #'
-#' `id` names the declaration itself: it becomes the declaration's file under
-#' the project's definitions folder (`definitions/observed-data/<id>.json` in
-#' the default layout) and is the id [removeObservedData()] matches on. It is
-#' canonicalized like every other definition id (lowercased and made a safe
-#' filename segment), and you are told when that changes it, unless it is
-#' already the id of a source in the project or equal to the `file` basename.
-#' Left out, the `file` basename serves as both, kept exactly as the source
-#' spells it. Either way the id is stored in the declaration, so
-#' `project$definitions$observedData[[id]]` reads it back and its `id` field
-#' shows it. A file-based declaration (`excel`, `pkml`, `script`) read that way
-#' can be passed back with `overwrite = TRUE` and keeps its id; a `DataSet`
-#' source is replaced by passing the `DataSet` itself with `overwrite = TRUE`.
-#' Two ids that differ only in case count as the same id, since their
-#' definition files are one file on Windows and macOS; this holds for a
-#' `DataSet` name too.
+#' `id` names the source: it is the name of its definition file and what
+#' [removeObservedData()] takes. It is lowercased and made a safe file name,
+#' with a message when that changes it, unless it already names a source of
+#' the project or is the `file` basename. Left out, the `file` basename is used
+#' as it is. The source stores its id, so `project$definitions$observedData[[id]]`
+#' reads it, and a file source read that way and passed back with
+#' `overwrite = TRUE` keeps it. Ids that differ only in case count as the same
+#' id. A `dataCombined` entry refers to the name of a data set inside the
+#' source, not to this id.
 #'
-#' An id is not the name the data is known by: each imported
-#' [`ospsuite::DataSet`] carries the name its source gives it (the data-set name
-#' in an Excel sheet, the name inside a PKML file), and that name, not the
-#' declaration's id, is what a `dataCombined` entry references.
+#' @details
+#' A `DataSet` is stored as a `type = "programmatic"` entry whose id is its
+#' name, and its data stays in the R session until [saveProject()] writes it to
+#' `<name>.pkml` in the data folder. Saving therefore needs a data folder. From
+#' then on it is a `pkml` source that keeps its name as id.
 #'
-#' Adding a `DataSet` reads none of the project's sources and runs no script,
-#' so its name is checked only against what the project already knows. Without
-#' `overwrite`, it is refused at once when its name is the id of another source
-#' (such as a `DataSet` of that name saved earlier), the name of a `DataSet`
-#' added in this session, or the name of a data set loaded since the project's
-#' observed data last changed. It is also refused when another source reads its
-#' data from `<name>.pkml`, the file saving writes. A `DataSet` whose name
-#' equals another data set inside an Excel, PKML or script source can still be
-#' accepted: the next time the observed data is loaded, by [loadObservedData()]
-#' or a function that uses it such as [createDataCombined()], it stops with an
-#' error naming the duplicate. Then remove the `DataSet` with
-#' [removeObservedData()], by its name, and add it again under another name.
-#'
-#' A `DataSet` you pass lives in the R session until you save. On
-#' [saveProject()] it is written to a PKML file named `<DataSet name>.pkml`
-#' under the project's data folder and its entry becomes a `pkml` source
-#' reading that file, so the data survives a reload. The source keeps the
-#' `DataSet` name as its id. Saving therefore needs a data folder to be
-#' declared in the project's file paths.
+#' Adding a `DataSet` reads no source and runs no script. Its name is refused
+#' at once when the project already knows it, for example from a `DataSet` of
+#' that name added or saved earlier. A clash with a data set inside an Excel,
+#' PKML or script source that has not been loaded yet stops the next
+#' [loadObservedData()] with an error naming the duplicate. Then remove the
+#' `DataSet` with [removeObservedData()], rename it, and add it again.
 #'
 #' @param project A `Project` object.
-#' @param entry An [`ospsuite::DataSet`] object, or a configuration list
-#'   carrying a `type` (`"excel"`, `"pkml"`, or `"script"`) and that type's
-#'   fields, as described above.
-#' @param overwrite Logical scalar. When `FALSE` (default), a source whose id
-#'   already exists (a `DataSet` name, or a configuration list's `id` or `file`
-#'   basename) aborts. When `TRUE`, the existing source with that id is replaced
-#'   (last-write-wins) as long as both are the same kind. A cross-kind
-#'   replacement is refused, because it would either strand the session's
-#'   `DataSet` or leave two sources resolving to one name: remove the existing
-#'   source with [removeObservedData()] first, then add the new one. A
-#'   configuration list is always checked in full. For a `DataSet`, the refusal
-#'   at add time covers the id of another source (such as a `DataSet` of the
-#'   same name saved earlier), a source whose data file is `<name>.pkml`, and
-#'   the names of data sets loaded since the observed data last changed; any
-#'   other clash with a data set inside an Excel, PKML or script source is
-#'   reported the next time the observed data is loaded.
+#' @param entry An [`ospsuite::DataSet`], or a list with a `type` and that
+#'   type's fields (see the table above).
+#' @param overwrite Logical scalar. When `FALSE` (default), an id or `DataSet`
+#'   name that already exists aborts. When `TRUE`, the existing source is
+#'   replaced, but only by one of the same kind (a `DataSet` by a `DataSet`, a
+#'   list by a list). To replace one kind with the other, remove the existing
+#'   source with [removeObservedData()] first.
 #' @returns The `project` object, invisibly.
 #' @export
 #' @family observedData

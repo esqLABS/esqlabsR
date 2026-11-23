@@ -377,3 +377,8 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-11-23 19:22: A save that stops on a Population added with addPopulation() names saveProject() in its error, not an internal function.
 - 2026-11-23 18:40: The parent branch's DataSet wording and saveProject() error attribution are merged in, with DataSet sources keeping their id across a save. (#1368)
 - 2026-11-23 18:41: The parent branch's DataSet save wording and saveProject() error attribution are merged in with loading selected observed-data sources. (#1370)
+- 2026-11-23 19:35: Ten R files are formatted with Air, which wraps lines longer than 80 characters; the code itself is unchanged.
+- 2026-11-23 19:35: DESCRIPTION records roxygen2 8.1.1, the version that last regenerated the help pages.
+- 2026-11-23 19:55: The addObservedData() help is shorter: the add-time name check is described once, in Details, without the full list of checks. (#1367)
+- 2026-11-23 19:21: The parent branch's Air formatting, roxygen 8.1.1 and shorter addObservedData() help are merged in, with the help saying that a source stores its id and keeps it across a save. (#1368)
+- 2026-11-23 19:22: The parent branch's Air formatting, roxygen 8.1.1 and shorter addObservedData() help are merged in with loading selected observed-data sources. (#1370)
