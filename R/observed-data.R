@@ -564,8 +564,8 @@ addObservedData <- function(project, entry, overwrite = FALSE) {
       cli::cli_abort(c(
         "observedData entry with name {.val {name}} is a file-based source, \\
         not a programmatic one, so it cannot be overwritten with a {.cls DataSet}.",
-        "i" = "Remove it first with {.code removeObservedData()} (by its \\
-        {.field id}, or its file basename), then add the {.cls DataSet}."
+        "i" = "Remove it first with {.code removeObservedData()} by its \\
+        {.field id}, then add the {.cls DataSet}."
       ))
     } else {
       observedData <- c(observedData, list(sentinel))
@@ -683,9 +683,9 @@ addObservedData <- function(project, entry, overwrite = FALSE) {
 #' Remove one or more observed-data sources from a Project
 #'
 #' Removes by the source's id, the `id` field of each entry in
-#' `project$definitions$observedData` (also the names of that list). Vectorizes
-#' over a vector of ids, removing each in one in-memory update; persist with
-#' [saveProject()]. Warns and skips any id with no matching entry.
+#' `project$definitions$observedData` (also the names of that list). Accepts a
+#' vector of ids and removes them all at once; [saveProject()] then deletes
+#' their definition files. Warns and skips any id with no matching entry.
 #'
 #' A source added as a `DataSet` has the `DataSet` name as its id, before and
 #' after [saveProject()] writes it to `<name>.pkml`.

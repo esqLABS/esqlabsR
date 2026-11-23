@@ -106,7 +106,7 @@
     Condition
       Error in `addObservedData()`:
       ! observedData entry with name "Scratch measurement" is a file-based source, not a programmatic one, so it cannot be overwritten with a <DataSet>.
-      i Remove it first with `removeObservedData()` (by its id, or its file basename), then add the <DataSet>.
+      i Remove it first with `removeObservedData()` by its id, then add the <DataSet>.
 
 # addObservedData refuses a DataSet whose PKML file another source reads
 
@@ -121,7 +121,7 @@
     Condition
       Error in `addObservedData()`:
       ! observedData entry with name "Cohort B" is a file-based source, not a programmatic one, so it cannot be overwritten with a <DataSet>.
-      i Remove it first with `removeObservedData()` (by its id, or its file basename), then add the <DataSet>.
+      i Remove it first with `removeObservedData()` by its id, then add the <DataSet>.
 
 # a DataSet name inside a script source not loaded yet aborts the next load
 

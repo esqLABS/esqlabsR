@@ -111,7 +111,7 @@ For fixed data you already have, the answer is a file-backed source: `excel` for
 
 For derived data, the answer is `script`: an R file that computes the DataSet each time it is resolved. Reach for it when the data is not a fixed set of numbers but a recipe (digitized points that need transforming, a join across several inputs, a unit conversion applied to a raw file). The recipe then travels with the project and stays in step with its inputs, which is the whole point.
 
-`programmatic` is the one type that is not file-backed at the moment you create it, and that is worth being precise about. The DataSet lives only on the in-memory project, and reloading before you save discards it. `saveProject()` is what makes it durable: it writes the DataSet to a PKML file and rewrites the entry as a `pkml` source, so from then on it is an ordinary file-backed source, still addressed by the DataSet name.
+`programmatic` is the one type that is not file-backed at the moment you create it, and that is worth being precise about. The DataSet lives only in your R session, and reloading before you save discards it. `saveProject()` is what makes it durable: it writes the DataSet to a PKML file and rewrites the entry as a `pkml` source, so from then on it is an ordinary file-backed source, still addressed by the DataSet name.
 
 So the `script` versus `programmatic` choice is not really about persistence, once that save has happened. It is about whether the numbers are a given or a computation.
 
