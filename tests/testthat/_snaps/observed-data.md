@@ -64,7 +64,7 @@
     Code
       addObservedData(project, ospsuite::DataSet$new(name = "Scratch measurement"))
     Message
-      i Added programmatic observed-data source "Scratch measurement". It lives in this session until you save.
+      i Added the <DataSet> "Scratch measurement" as an observed-data source. It lives in this session until you save.
       i On `saveProject()` it is written to 'Scratch measurement.pkml' under the data folder, so it survives a reload.
 
 # addObservedData with a DataSet reads no other source's file
@@ -72,7 +72,7 @@
     Code
       addObservedData(project, ospsuite::DataSet$new(name = "Scratch measurement"))
     Message
-      i Added programmatic observed-data source "Scratch measurement". It lives in this session until you save.
+      i Added the <DataSet> "Scratch measurement" as an observed-data source. It lives in this session until you save.
       i Declare a dataFolder in `filePaths` before saving: `saveProject()` writes it to a PKML file there so it survives a reload, and aborts if no data folder is declared.
 
 # addObservedData checks a DataSet name against the names already loaded
@@ -148,9 +148,9 @@
       saveProject(project)
     Condition
       Error in `.persistProgrammaticObservedData()`:
-      x Saving a programmatic observed-data source would overwrite another source: 'Collide.pkml'.
-      i A programmatic source is written to '<name>.pkml'; this clashes with an existing source filed under the same name.
-      i Rename the <DataSet> (its name) so the file names differ.
+      x Saving a <DataSet> added in this session would give it the same id as another source: "Collide.pkml".
+      i A <DataSet> is saved under the id '<name>.pkml'. Another source already has that id, either declared or taken from its file name.
+      i Before saving, remove the <DataSet> with `removeObservedData()` by its name, rename it, and add it again with `addObservedData()`.
 
 # saveProject keeps the data file of a source filed under a declared id
 
@@ -158,9 +158,9 @@
       saveProject(project)
     Condition
       Error in `.persistProgrammaticObservedData()`:
-      x Saving a programmatic observed-data source would overwrite the data file of another source: 'Cohort B.pkml'.
-      i A programmatic source is written to '<name>.pkml' in the data folder, a file another source already reads or another programmatic source is written to. File names that differ only in case are the same file on Windows and macOS.
-      i Before saving, remove the source with `removeObservedData()` by its name, rename the <DataSet>, and add it again with `addObservedData()`.
+      x Saving a <DataSet> added in this session would overwrite the data file of another source: 'Cohort B.pkml'.
+      i The <DataSet> would be written to '<name>.pkml' in the data folder, a file another source already reads or another <DataSet> is written to. File names that differ only in case are the same file on Windows and macOS.
+      i Before saving, remove the <DataSet> with `removeObservedData()` by its name, rename it, and add it again with `addObservedData()`.
 
 # saveProject refuses two DataSets whose names differ only in case
 
@@ -168,9 +168,9 @@
       saveProject(project)
     Condition
       Error in `.persistProgrammaticObservedData()`:
-      x Saving a programmatic observed-data source would overwrite the data file of another source: 'Cohort B.pkml' and 'cohort b.pkml'.
-      i A programmatic source is written to '<name>.pkml' in the data folder, a file another source already reads or another programmatic source is written to. File names that differ only in case are the same file on Windows and macOS.
-      i Before saving, remove the source with `removeObservedData()` by its name, rename the <DataSet>, and add it again with `addObservedData()`.
+      x Saving a <DataSet> added in this session would overwrite the data file of another source: 'Cohort B.pkml' and 'cohort b.pkml'.
+      i The <DataSet> would be written to '<name>.pkml' in the data folder, a file another source already reads or another <DataSet> is written to. File names that differ only in case are the same file on Windows and macOS.
+      i Before saving, remove the <DataSet> with `removeObservedData()` by its name, rename it, and add it again with `addObservedData()`.
 
 # saveProject aborts persisting a programmatic DataSet with no dataFolder
 
@@ -178,8 +178,8 @@
       saveProject(project)
     Condition
       Error in `.persistProgrammaticObservedData()`:
-      x Cannot save the programmatic observed-data source "NoFolderSet": dataFolder is not declared in `filePaths`.
-      i A programmatic source is written to a PKML file under dataFolder on save. Declare dataFolder, then save again.
+      x Cannot save the <DataSet> "NoFolderSet" added in this session: dataFolder is not declared in `filePaths`.
+      i A <DataSet> added with `addObservedData()` is written to a PKML file under dataFolder on save. Declare dataFolder, then save again.
 
 # addObservedData rejects a duplicate declared id
 

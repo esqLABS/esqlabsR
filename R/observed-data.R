@@ -680,10 +680,10 @@ addObservedData <- function(project, entry, overwrite = FALSE) {
 #' in-memory update; persist with [saveProject()]. Warns and skips any id with
 #' no matching entry.
 #'
-#' Note a programmatic source changes its id once saved: [saveProject()] writes
-#' the `DataSet` to `<name>.pkml` and rewrites the entry as a `pkml` source, so
-#' after a save you remove it by that file basename (`"<name>.pkml"`), not by the
-#' original `DataSet` name.
+#' Note that a `DataSet` added with [addObservedData()] changes its id once
+#' saved: [saveProject()] writes the `DataSet` to `<name>.pkml` and rewrites the
+#' entry as a `pkml` source, so after a save you remove it by that file basename
+#' (`"<name>.pkml"`), not by the original `DataSet` name.
 #'
 #' Unlike the other authoring functions, `addObservedData()` is not
 #' vectorized over ids: its second argument is a `DataSet` or a configuration
@@ -693,13 +693,13 @@ addObservedData <- function(project, entry, overwrite = FALSE) {
 #' @param project A `Project` object.
 #' @param id Character vector of ids. An observed-data id is the declaration's
 #'   `id` field, or, when it declares none, comes from the data source itself
-#'   (the `DataSet` name of an unsaved programmatic source, or a file basename
-#'   for a file-based source). Each is matched as the declaration stores it and,
-#'   failing that, as [addObservedData()] would have canonicalized it, so a
-#'   derived id is found by the source's own spelling and a declared one by
-#'   either the form you authored or the canonical form you were given back. A
-#'   saved programmatic source that declares no `id` is matched by its
-#'   `<name>.pkml` basename (see the note above).
+#'   (the name of a `DataSet` added with [addObservedData()] and not saved yet,
+#'   or a file basename for a file-based source). Each is matched as the
+#'   declaration stores it and, failing that, as [addObservedData()] would have
+#'   canonicalized it, so a derived id is found by the source's own spelling
+#'   and a declared one by either the form you authored or the canonical form
+#'   you were given back. A `DataSet` saved with [saveProject()] is matched by
+#'   its `<name>.pkml` basename (see the note above).
 #' @returns The `project` object, invisibly.
 #' @export
 #' @family observedData
