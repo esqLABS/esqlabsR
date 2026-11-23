@@ -371,3 +371,4 @@ One bullet per commit, newest at the bottom: `- YYYY-MM-DD HH:MM: plain-language
 - 2026-11-23 17:59: The loadObservedData() help states that session DataSets come after the file-based sources, and tests cover the order, repeated ids and an Excel source read directly. (#1370)
 - 2026-11-23 18:00: A warning about selected programmatic sources with no data no longer keeps a later full load from warning about all of them. (#1370)
 - 2026-11-23 18:00: The observed-data vignette shows loading some sources once the example declares several, and the help of loadObservedData() and getObservedDataNames() reads more tightly. (#1370)
+- 2026-11-23 18:13: The help pages of loadObservedData(), getObservedDataNames() and Project are regenerated for the sources argument. (#1370)

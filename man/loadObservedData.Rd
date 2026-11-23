@@ -4,14 +4,25 @@
 \alias{loadObservedData}
 \title{Load observed data declared in a Project}
 \usage{
-loadObservedData(project)
+loadObservedData(project, sources = NULL)
 }
 \arguments{
 \item{project}{A \code{Project} object (see \code{\link[=loadProject]{loadProject()}}).}
+
+\item{sources}{Character vector of the ids of the observed-data sources to
+load, or \code{NULL} (default) to load every source. Only the sources you name
+are read, so a source you leave out cannot stop the load with a missing
+file or a data-set name another source also uses (and see the Security
+section). An id is matched as in \code{\link[=removeObservedData]{removeObservedData()}}. An id that names
+no source is an error listing the project's source ids. \code{character(0)}
+returns an empty list.}
 }
 \value{
-A named list of \code{\link[ospsuite:DataSet]{ospsuite::DataSet}} objects. Empty list when
-\code{observedData} definitions is empty or \code{NULL}.
+A named list of \code{\link[ospsuite:DataSet]{ospsuite::DataSet}} objects: those of the
+\code{excel}, \code{pkml} and \code{script} sources in the order the project declares
+them, followed by the \code{DataSet}s added in this session with
+\code{\link[=addObservedData]{addObservedData()}}. Empty list when \code{observedData} definitions is empty
+or \code{NULL}.
 }
 \description{
 Reads the \code{observedData} declarations from a \link[=loadProject]{Project}
@@ -33,11 +44,15 @@ that file executes, so treat a project the same way you would treat a
 script someone sends you: only load and resolve observed data from a
 project you trust. This applies to \code{loadObservedData()} and to anything
 that resolves observed data for you, such as \code{\link[=createDataCombined]{createDataCombined()}}.
+\code{loadObservedData(project, sources = )} runs only the \code{script} sources
+you select.
 }
 
 \examples{
 \dontrun{
 project <- loadProject("path/to/Project.json")
 dataSets <- loadObservedData(project)
+# Only the data of one source
+dataSets <- loadObservedData(project, sources = "Aciclovir_TimeValuesData.xlsx")
 }
 }
